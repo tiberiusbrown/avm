@@ -2,47 +2,66 @@
 ; Interpreter
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Architecture Notes (See docs/arch.md for more info)
-
-; Memory Layout
-;
-;    0x100–0x4FF    1024 bytes     Static globals
-;    0x500-0x8FF    1024 bytes     Display framebuffer
-;    0x900-0x9FF    256 bytes      VM Stack
-
-; Fixed interpreter state
-;
-;    r0-r1      Dispatch multiply result / native MUL result / scratch
-;    r2         Constant zero; SPI dummy-transmit value
-;    r3         Scratch
-;    r4         Scratch
-;    r5         VM FLAGS
-;    r6         Current bytecode opcode / operand scratch
-;    r7         Constant: dispatch-slot stride in AVR words
-;
-; VM register file
-;
-;    r8-r9      VM Register r4
-;    r10-r11    VM Register r5
-;    r12-r13    VM Register r6
-;    r14-r15    VM Register r7
-;
-;    r16-r17    VM Register r0   ; compact
-;    r18-r19    VM Register r1   ; compact
-;    r20-r21    VM Register r2   ; compact
-;    r22-r23    VM Register r3   ; compact
-;
-; Addressing and dispatch
-;
-;    r24-r25    Logical PC within current bank
-;    r26-r27    X: general address scratch
-;    r28-r29    Y: VM stack pointer
-;    r30-r31    Z: dispatch target / address scratch
-;
-; Non-GPR architectural state
-;
-;    GPIOR1     Code Bank (CB)
-;    GPIOR2     Program Bank (PB)
+;; ; ------------------------------------------------------------
+;; ; Native dispatch and interpreter state
+;; ; ------------------------------------------------------------
+;; 
+;; AVR r0-r1      Native MUL result
+;;                Dispatch table offset
+;;                General temporary scratch
+;; 
+;; AVR r2         Permanent zero
+;;                SPI dummy-transmit byte
+;; 
+;; AVR r3         Interpreter scratch
+;; 
+;; AVR r4         Interpreter scratch
+;; 
+;; AVR r5         AVM FLAGS
+;; 
+;; AVR r6         Current bytecode opcode
+;;                Operand or secondary-opcode scratch
+;; 
+;; AVR r7         Constant
+;;                Dispatch-slot stride in AVR words
+;; 
+;; ; ------------------------------------------------------------
+;; ; AVM general-purpose register file
+;; ; ------------------------------------------------------------
+;; 
+;; AVR r8-r9      AVM r0
+;; AVR r10-r11    AVM r1
+;; AVR r12-r13    AVM r2
+;; AVR r14-r15    AVM r3
+;; 
+;; AVR r16-r17    AVM r4 = c0
+;; AVR r18-r19    AVM r5 = c1
+;; AVR r20-r21    AVM r6 = c2
+;; AVR r22-r23    AVM r7 = c3
+;; 
+;; ; ------------------------------------------------------------
+;; ; Addressing and dispatch
+;; ; ------------------------------------------------------------
+;; 
+;; AVR r24-r25    AVM PC
+;; 
+;; AVR r26-r27    X
+;;                General interpreter address scratch
+;; 
+;; AVR r28-r29    Y
+;;                AVM SP
+;; 
+;; AVR r30-r31    Z
+;;                Dispatch target
+;;                Secondary-table target
+;;                General address scratch
+;; 
+;; ; ------------------------------------------------------------
+;; ; Persistent bank state
+;; ; ------------------------------------------------------------
+;; 
+;; GPIOR1         CB
+;; GPIOR2         PB
 
 #define INSTR_ALIGN 6
 
@@ -66,10 +85,38 @@
 #define VM_R6  r20
 #define VM_R7  r22
 
+#define VM_R0L  r8
+#define VM_R1L  r10
+#define VM_R2L  r12
+#define VM_R3L  r14
+#define VM_R4L  r16
+#define VM_R5L  r18
+#define VM_R6L  r20
+#define VM_R7L  r22
+
+#define VM_R0H  r9
+#define VM_R1H  r11
+#define VM_R2H  r13
+#define VM_R3H  r15
+#define VM_R4H  r17
+#define VM_R5H  r19
+#define VM_R6H  r21
+#define VM_R7H  r23
+
 #define VM_C0  VM_R4
 #define VM_C1  VM_R5
 #define VM_C2  VM_R6
 #define VM_C3  VM_R7
+
+#define VM_C0L  VM_R4L
+#define VM_C1L  VM_R5L
+#define VM_C2L  VM_R6L
+#define VM_C3L  VM_R7L
+
+#define VM_C0H  VM_R4H
+#define VM_C1H  VM_R5H
+#define VM_C2H  VM_R6H
+#define VM_C3H  VM_R7H
 
 #include "device.h"
 
@@ -173,83 +220,24 @@ reset_loop:
 
 abvm_interp:
 
-I_00__MOV_c0_c0:
-    delay_4
-    movw VM_C0, VM_C0
+I_00__CLR_c0:
+    delay_3
+    clr  VM_C0L
+    clr  VM_C0H
     dispatch_reverse
 
-I_00__MOV_c0_c1:
+I_01__MOV c0, c1:
     delay_4
     movw VM_C0, VM_C1
     dispatch_reverse
 
-I_00__MOV_c0_c2:
+I_02__MOV c0, c2:
     delay_4
     movw VM_C0, VM_C2
     dispatch_reverse
 
-I_00__MOV_c0_c3:
+I_03__MOV c0, c3:
     delay_4
     movw VM_C0, VM_C3
     dispatch_reverse
 
-I_00__MOV_c1_c0:
-    .word 0xC000
-    .word 0xC000
-    movw VM_C1, VM_C0
-    dispatch_reverse
-
-I_00__MOV_c1_c1:
-    delay_4
-    movw VM_C1, VM_C1
-    dispatch_reverse
-
-I_00__MOV_c1_c2:
-    delay_4
-    movw VM_C1, VM_C2
-    dispatch_reverse
-
-I_00__MOV_c1_c3:
-    delay_4
-    movw VM_C1, VM_C3
-    dispatch_reverse
-
-I_00__MOV_c2_c0:
-    delay_4
-    movw VM_C2, VM_C0
-    dispatch_reverse
-
-I_00__MOV_c2_c1:
-    delay_4
-    movw VM_C2, VM_C1
-    dispatch_reverse
-
-I_00__MOV_c2_c2:
-    delay_4
-    movw VM_C2, VM_C2
-    dispatch_reverse
-
-I_00__MOV_c2_c3:
-    delay_4
-    movw VM_C2, VM_C3
-    dispatch_reverse
-
-I_00__MOV_c3_c0:
-    delay_4
-    movw VM_C3, VM_C0
-    dispatch_reverse
-
-I_00__MOV_c3_c1:
-    delay_4
-    movw VM_C3, VM_C1
-    dispatch_reverse
-
-I_00__MOV_c3_c2:
-    delay_4
-    movw VM_C3, VM_C2
-    dispatch_reverse
-
-I_00__MOV_c3_c3:
-    delay_4
-    movw VM_C3, VM_C3
-    dispatch_reverse

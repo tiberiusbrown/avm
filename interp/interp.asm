@@ -205,6 +205,10 @@ reset_loop:
     .align INSTR_ALIGN
 .endm
 
+.macro delay_1
+    nop
+.endm
+
 .macro delay_2
     .word 0xC000   ; rjmp .+0
 .endm
@@ -301,5 +305,117 @@ I_0E__MOV_c3_c2:
 I_0F__CLR_c3:
     delay_3
     clr  VM_C3L
+    clr  VM_C3H
+    dispatch_reverse
+
+I_10__LD8_c0_c0:
+    delay_1
+    movw r26, VM_C0
+    ld   VM_C0L, X
+    clr  VM_C0H
+    dispatch_reverse
+
+I_11__LD8_c0_c1:
+    delay_1
+    movw r26, VM_C1
+    ld   VM_C0L, X
+    clr  VM_C0H
+    dispatch_reverse
+
+I_12__LD8_c0_c2:
+    delay_1
+    movw r26, VM_C2
+    ld   VM_C0L, X
+    clr  VM_C0H
+    dispatch_reverse
+
+I_13__LD8_c0_c3:
+    delay_1
+    movw r26, VM_C3
+    ld   VM_C0L, X
+    clr  VM_C0H
+    dispatch_reverse
+
+I_14__LD8_c1_c0:
+    delay_1
+    movw r26, VM_C0
+    ld   VM_C1L, X
+    clr  VM_C1H
+    dispatch_reverse
+
+I_15__LD8_c1_c1:
+    delay_1
+    movw r26, VM_C1
+    ld   VM_C1L, X
+    clr  VM_C1H
+    dispatch_reverse
+
+I_16__LD8_c1_c2:
+    delay_1
+    movw r26, VM_C2
+    ld   VM_C1L, X
+    clr  VM_C1H
+    dispatch_reverse
+
+I_17__LD8_c1_c3:
+    delay_1
+    movw r26, VM_C3
+    ld   VM_C1L, X
+    clr  VM_C1H
+    dispatch_reverse
+
+I_18__LD8_c2_c0:
+    delay_1
+    movw r26, VM_C0
+    ld   VM_C2L, X
+    clr  VM_C2H
+    dispatch_reverse
+
+I_19__LD8_c2_c1:
+    delay_1
+    movw r26, VM_C1
+    ld   VM_C2L, X
+    clr  VM_C2H
+    dispatch_reverse
+
+I_1A__LD8_c2_c2:
+    delay_1
+    movw r26, VM_C2
+    ld   VM_C2L, X
+    clr  VM_C2H
+    dispatch_reverse
+
+I_1B__LD8_c2_c3:
+    delay_1
+    movw r26, VM_C3
+    ld   VM_C2L, X
+    clr  VM_C2H
+    dispatch_reverse
+
+I_1C__LD8_c3_c0:
+    delay_1
+    movw r26, VM_C0
+    ld   VM_C3L, X
+    clr  VM_C3H
+    dispatch_reverse
+
+I_1D__LD8_c3_c1:
+    delay_1
+    movw r26, VM_C1
+    ld   VM_C3L, X
+    clr  VM_C3H
+    dispatch_reverse
+
+I_1E__LD8_c3_c2:
+    delay_1
+    movw r26, VM_C2
+    ld   VM_C3L, X
+    clr  VM_C3H
+    dispatch_reverse
+
+I_1F__LD8_c3_c3:
+    delay_1
+    movw r26, VM_C3
+    ld   VM_C3L, X
     clr  VM_C3H
     dispatch_reverse

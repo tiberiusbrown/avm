@@ -515,3 +515,99 @@ I_2F__ST8_c3_c3:
     movw r26, VM_C3
     st   X, VM_C3
     dispatch_reverse
+
+I_30__LD16_c0_c0:
+    movw r26, VM_C0
+    ld   VM_C0L, X+
+    ld   VM_C0H, X
+    dispatch_reverse
+
+I_31__LD16_c0_c1:
+    movw r26, VM_C1
+    ld   VM_C0L, X+
+    ld   VM_C0H, X
+    dispatch_reverse
+
+I_32__LD16_c0_c2:
+    movw r26, VM_C2
+    ld   VM_C0L, X+
+    ld   VM_C0H, X
+    dispatch_reverse
+
+I_33__LD16_c0_c3:
+    movw r26, VM_C3
+    ld   VM_C0L, X+
+    ld   VM_C0H, X
+    dispatch_reverse
+
+I_34__LD16_c1_c0:
+    movw r26, VM_C0
+    ld   VM_C1L, X+
+    ld   VM_C1H, X
+    dispatch_reverse
+
+I_35__LD16_c1_c1:
+    movw r26, VM_C1
+    ld   VM_C1L, X+
+    ld   VM_C1H, X
+    dispatch_reverse
+
+I_36__LD16_c1_c2:
+    movw r26, VM_C2
+    ld   VM_C1L, X+
+    ld   VM_C1H, X
+    dispatch_reverse
+
+I_37__LD16_c1_c3:
+    movw r26, VM_C3
+    ld   VM_C1L, X+
+    ld   VM_C1H, X
+    dispatch_reverse
+
+I_38__LD16_c2_c0:
+    movw r26, VM_C0
+    ld   VM_C2L, X+
+    ld   VM_C2H, X
+    dispatch_reverse
+
+I_39__LD16_c2_c1:
+    movw r26, VM_C1
+    ld   VM_C2L, X+
+    ld   VM_C2H, X
+    dispatch_reverse
+
+I_3A__LD16_c2_c2:
+    movw r26, VM_C2
+    ld   VM_C2L, X+
+    ld   VM_C2H, X
+    dispatch_reverse
+
+I_3B__LD16_c2_c3:
+    movw r26, VM_C3
+    ld   VM_C2L, X+
+    ld   VM_C2H, X
+    dispatch_reverse
+
+I_3C__LD16_c3_c0:
+    movw r26, VM_C0
+    ld   VM_C3L, X+
+    ld   VM_C3H, X
+    dispatch_reverse
+
+I_3D__LD16_c3_c1:
+    movw r26, VM_C1
+    ld   VM_C3L, X+
+    ld   VM_C3H, X
+    dispatch_reverse
+
+I_3E__LD16_c3_c2:
+    movw r26, VM_C2
+    ld   VM_C3L, X+
+    ld   VM_C3H, X
+    dispatch_reverse
+
+I_3F__LD16_c3_c3:
+    movw r26, VM_C3
+    ld   VM_C3L, X+
+    ld   VM_C3H, X
+    dispatch_reverse

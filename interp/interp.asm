@@ -57,6 +57,20 @@
 #define VM_SPL r28
 #define VM_SPH r29
 
+#define VM_R0  r8
+#define VM_R1  r10
+#define VM_R2  r12
+#define VM_R3  r14
+#define VM_R4  r16
+#define VM_R5  r18
+#define VM_R6  r20
+#define VM_R7  r22
+
+#define VM_C0  VM_R4
+#define VM_C1  VM_R5
+#define VM_C2  VM_R6
+#define VM_C3  VM_R7
+
 #include "device.h"
 
 .section .vectors,"ax",@progbits
@@ -109,14 +123,16 @@ reset_handler:
     clr  ZERO
     ldi  r24, (1<<(INSTR_ALIGN-1))
     mov  C_INSTR_ALIGN, r24
-1:  rjmp 1b
+reset_loop:
+    rjmp reset_loop
 
 .section .text
 .align 8
 
+; 18-cycle cadence, needs 8 cycles from start of instruction
 .macro dispatch
     in   r6, SPDR
-    out  SPDR, r2
+    out  SPDR, ZERO
     adiw VM_PC, 1
     mul  r6, C_INSTR_ALIGN
     movw r30, r0
@@ -124,9 +140,116 @@ reset_handler:
     ijmp
 .endm
 
+; 17-cycle cadence but needs 5 cycles from start of instruction
+.macro dispatch_reverse_noalign
+    adiw VM_PC, 1
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+    mul  r6, C_INSTR_ALIGN
+    movw r30, r0
+    inc  r30
+    ijmp
+.endm
+
+.macro dispatch_reverse
+    dispatch_reverse_noalign
+    .align INSTR_ALIGN
+.endm
+
+.macro delay_2
+    .word 0xC000   ; rjmp .+0
+.endm
+
+.macro delay_3
+    lpm
+.endm
+
+.macro delay_4
+    delay_2
+    delay_2
+.endm
+
 abvm_interp:
 
-; 00 : MOV c0, c0
+I_00__MOV_c0_c0:
+    delay_4
+    movw VM_C0, VM_C0
+    dispatch_reverse
 
-    dispatch
-    .align INSTR_ALIGN
+I_00__MOV_c0_c1:
+    delay_4
+    movw VM_C0, VM_C1
+    dispatch_reverse
+
+I_00__MOV_c0_c2:
+    delay_4
+    movw VM_C0, VM_C2
+    dispatch_reverse
+
+I_00__MOV_c0_c3:
+    delay_4
+    movw VM_C0, VM_C3
+    dispatch_reverse
+
+I_00__MOV_c1_c0:
+    .word 0xC000
+    .word 0xC000
+    movw VM_C1, VM_C0
+    dispatch_reverse
+
+I_00__MOV_c1_c1:
+    delay_4
+    movw VM_C1, VM_C1
+    dispatch_reverse
+
+I_00__MOV_c1_c2:
+    delay_4
+    movw VM_C1, VM_C2
+    dispatch_reverse
+
+I_00__MOV_c1_c3:
+    delay_4
+    movw VM_C1, VM_C3
+    dispatch_reverse
+
+I_00__MOV_c2_c0:
+    delay_4
+    movw VM_C2, VM_C0
+    dispatch_reverse
+
+I_00__MOV_c2_c1:
+    delay_4
+    movw VM_C2, VM_C1
+    dispatch_reverse
+
+I_00__MOV_c2_c2:
+    delay_4
+    movw VM_C2, VM_C2
+    dispatch_reverse
+
+I_00__MOV_c2_c3:
+    delay_4
+    movw VM_C2, VM_C3
+    dispatch_reverse
+
+I_00__MOV_c3_c0:
+    delay_4
+    movw VM_C3, VM_C0
+    dispatch_reverse
+
+I_00__MOV_c3_c1:
+    delay_4
+    movw VM_C3, VM_C1
+    dispatch_reverse
+
+I_00__MOV_c3_c2:
+    delay_4
+    movw VM_C3, VM_C2
+    dispatch_reverse
+
+I_00__MOV_c3_c3:
+    delay_4
+    movw VM_C3, VM_C3
+    dispatch_reverse

@@ -226,18 +226,80 @@ I_00__CLR_c0:
     clr  VM_C0H
     dispatch_reverse
 
-I_01__MOV c0, c1:
+I_01__MOV_c0_c1:
     delay_4
     movw VM_C0, VM_C1
     dispatch_reverse
 
-I_02__MOV c0, c2:
+I_02__MOV_c0_c2:
     delay_4
     movw VM_C0, VM_C2
     dispatch_reverse
 
-I_03__MOV c0, c3:
+I_03__MOV_c0_c3:
     delay_4
     movw VM_C0, VM_C3
     dispatch_reverse
 
+I_04__MOV_c1_c0:
+    delay_4
+    movw VM_C1, VM_C0
+    dispatch_reverse
+
+I_05__CLR_c1:
+    delay_3
+    clr  VM_C1L
+    clr  VM_C1H
+    dispatch_reverse
+
+I_06__MOV_c1_c2:
+    delay_4
+    movw VM_C1, VM_C2
+    dispatch_reverse
+
+I_07__MOV_c1_c3:
+    delay_4
+    movw VM_C1, VM_C3
+    dispatch_reverse
+
+I_08__MOV_c2_c0:
+    delay_4
+    movw VM_C2, VM_C0
+    dispatch_reverse
+
+I_09__MOV_c2_c1:
+    delay_4
+    movw VM_C2, VM_C1
+    dispatch_reverse
+
+I_0A__CLR_c2:
+    delay_3
+    clr  VM_C2L
+    clr  VM_C2H
+    dispatch_reverse
+
+I_0B__MOV_c2_c3:
+    delay_4
+    movw VM_C2, VM_C3
+    dispatch_reverse
+
+I_0C__MOV_c3_c0:
+    delay_4
+    movw VM_C3, VM_C0
+    dispatch_reverse
+
+I_0D__MOV_c3_c1:
+    delay_4
+    movw VM_C3, VM_C1
+    dispatch_reverse
+
+I_0E__MOV_c3_c2:
+    delay_4
+    movw VM_C3, VM_C2
+    dispatch_reverse
+
+I_0F__CLR_c3:
+    delay_3
+    clr  VM_C3L
+    clr  VM_C3H
+    dispatch_reverse

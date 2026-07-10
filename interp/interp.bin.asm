@@ -52,10 +52,10 @@ Disassembly of section .text:
 0000008a <__ctors_end>:
 	...
 
-00000100 <I_00__MOV_c0_c0>:
- 100:	00 c0       	rjmp	.+0      	; 0x102 <I_00__MOV_c0_c0+0x2>
- 102:	00 c0       	rjmp	.+0      	; 0x104 <I_00__MOV_c0_c0+0x4>
- 104:	88 01       	movw	r16, r16
+00000100 <I_00__CLR_c0>:
+ 100:	c8 95       	lpm
+ 102:	00 27       	eor	r16, r16
+ 104:	11 27       	eor	r17, r17
  106:	01 96       	adiw	r24, 0x01	; 1
  108:	f8 94       	cli
  10a:	2e bc       	out	0x2e, r2	; 46
@@ -67,9 +67,9 @@ Disassembly of section .text:
  116:	09 94       	ijmp
 	...
 
-00000140 <I_00__MOV_c0_c1>:
- 140:	00 c0       	rjmp	.+0      	; 0x142 <I_00__MOV_c0_c1+0x2>
- 142:	00 c0       	rjmp	.+0      	; 0x144 <I_00__MOV_c0_c1+0x4>
+00000140 <I_01__MOV_c0_c1>:
+ 140:	00 c0       	rjmp	.+0      	; 0x142 <I_01__MOV_c0_c1+0x2>
+ 142:	00 c0       	rjmp	.+0      	; 0x144 <I_01__MOV_c0_c1+0x4>
  144:	89 01       	movw	r16, r18
  146:	01 96       	adiw	r24, 0x01	; 1
  148:	f8 94       	cli
@@ -82,9 +82,9 @@ Disassembly of section .text:
  156:	09 94       	ijmp
 	...
 
-00000180 <I_00__MOV_c0_c2>:
- 180:	00 c0       	rjmp	.+0      	; 0x182 <I_00__MOV_c0_c2+0x2>
- 182:	00 c0       	rjmp	.+0      	; 0x184 <I_00__MOV_c0_c2+0x4>
+00000180 <I_02__MOV_c0_c2>:
+ 180:	00 c0       	rjmp	.+0      	; 0x182 <I_02__MOV_c0_c2+0x2>
+ 182:	00 c0       	rjmp	.+0      	; 0x184 <I_02__MOV_c0_c2+0x4>
  184:	8a 01       	movw	r16, r20
  186:	01 96       	adiw	r24, 0x01	; 1
  188:	f8 94       	cli
@@ -97,9 +97,9 @@ Disassembly of section .text:
  196:	09 94       	ijmp
 	...
 
-000001c0 <I_00__MOV_c0_c3>:
- 1c0:	00 c0       	rjmp	.+0      	; 0x1c2 <I_00__MOV_c0_c3+0x2>
- 1c2:	00 c0       	rjmp	.+0      	; 0x1c4 <I_00__MOV_c0_c3+0x4>
+000001c0 <I_03__MOV_c0_c3>:
+ 1c0:	00 c0       	rjmp	.+0      	; 0x1c2 <I_03__MOV_c0_c3+0x2>
+ 1c2:	00 c0       	rjmp	.+0      	; 0x1c4 <I_03__MOV_c0_c3+0x4>
  1c4:	8b 01       	movw	r16, r22
  1c6:	01 96       	adiw	r24, 0x01	; 1
  1c8:	f8 94       	cli
@@ -112,9 +112,9 @@ Disassembly of section .text:
  1d6:	09 94       	ijmp
 	...
 
-00000200 <I_00__MOV_c1_c0>:
- 200:	00 c0       	rjmp	.+0      	; 0x202 <I_00__MOV_c1_c0+0x2>
- 202:	00 c0       	rjmp	.+0      	; 0x204 <I_00__MOV_c1_c0+0x4>
+00000200 <I_04__MOV_c1_c0>:
+ 200:	00 c0       	rjmp	.+0      	; 0x202 <I_04__MOV_c1_c0+0x2>
+ 202:	00 c0       	rjmp	.+0      	; 0x204 <I_04__MOV_c1_c0+0x4>
  204:	98 01       	movw	r18, r16
  206:	01 96       	adiw	r24, 0x01	; 1
  208:	f8 94       	cli
@@ -127,10 +127,10 @@ Disassembly of section .text:
  216:	09 94       	ijmp
 	...
 
-00000240 <I_00__MOV_c1_c1>:
- 240:	00 c0       	rjmp	.+0      	; 0x242 <I_00__MOV_c1_c1+0x2>
- 242:	00 c0       	rjmp	.+0      	; 0x244 <I_00__MOV_c1_c1+0x4>
- 244:	99 01       	movw	r18, r18
+00000240 <I_05__CLR_c1>:
+ 240:	c8 95       	lpm
+ 242:	22 27       	eor	r18, r18
+ 244:	33 27       	eor	r19, r19
  246:	01 96       	adiw	r24, 0x01	; 1
  248:	f8 94       	cli
  24a:	2e bc       	out	0x2e, r2	; 46
@@ -142,9 +142,9 @@ Disassembly of section .text:
  256:	09 94       	ijmp
 	...
 
-00000280 <I_00__MOV_c1_c2>:
- 280:	00 c0       	rjmp	.+0      	; 0x282 <I_00__MOV_c1_c2+0x2>
- 282:	00 c0       	rjmp	.+0      	; 0x284 <I_00__MOV_c1_c2+0x4>
+00000280 <I_06__MOV_c1_c2>:
+ 280:	00 c0       	rjmp	.+0      	; 0x282 <I_06__MOV_c1_c2+0x2>
+ 282:	00 c0       	rjmp	.+0      	; 0x284 <I_06__MOV_c1_c2+0x4>
  284:	9a 01       	movw	r18, r20
  286:	01 96       	adiw	r24, 0x01	; 1
  288:	f8 94       	cli
@@ -157,9 +157,9 @@ Disassembly of section .text:
  296:	09 94       	ijmp
 	...
 
-000002c0 <I_00__MOV_c1_c3>:
- 2c0:	00 c0       	rjmp	.+0      	; 0x2c2 <I_00__MOV_c1_c3+0x2>
- 2c2:	00 c0       	rjmp	.+0      	; 0x2c4 <I_00__MOV_c1_c3+0x4>
+000002c0 <I_07__MOV_c1_c3>:
+ 2c0:	00 c0       	rjmp	.+0      	; 0x2c2 <I_07__MOV_c1_c3+0x2>
+ 2c2:	00 c0       	rjmp	.+0      	; 0x2c4 <I_07__MOV_c1_c3+0x4>
  2c4:	9b 01       	movw	r18, r22
  2c6:	01 96       	adiw	r24, 0x01	; 1
  2c8:	f8 94       	cli
@@ -172,9 +172,9 @@ Disassembly of section .text:
  2d6:	09 94       	ijmp
 	...
 
-00000300 <I_00__MOV_c2_c0>:
- 300:	00 c0       	rjmp	.+0      	; 0x302 <I_00__MOV_c2_c0+0x2>
- 302:	00 c0       	rjmp	.+0      	; 0x304 <I_00__MOV_c2_c0+0x4>
+00000300 <I_08__MOV_c2_c0>:
+ 300:	00 c0       	rjmp	.+0      	; 0x302 <I_08__MOV_c2_c0+0x2>
+ 302:	00 c0       	rjmp	.+0      	; 0x304 <I_08__MOV_c2_c0+0x4>
  304:	a8 01       	movw	r20, r16
  306:	01 96       	adiw	r24, 0x01	; 1
  308:	f8 94       	cli
@@ -187,9 +187,9 @@ Disassembly of section .text:
  316:	09 94       	ijmp
 	...
 
-00000340 <I_00__MOV_c2_c1>:
- 340:	00 c0       	rjmp	.+0      	; 0x342 <I_00__MOV_c2_c1+0x2>
- 342:	00 c0       	rjmp	.+0      	; 0x344 <I_00__MOV_c2_c1+0x4>
+00000340 <I_09__MOV_c2_c1>:
+ 340:	00 c0       	rjmp	.+0      	; 0x342 <I_09__MOV_c2_c1+0x2>
+ 342:	00 c0       	rjmp	.+0      	; 0x344 <I_09__MOV_c2_c1+0x4>
  344:	a9 01       	movw	r20, r18
  346:	01 96       	adiw	r24, 0x01	; 1
  348:	f8 94       	cli
@@ -202,10 +202,10 @@ Disassembly of section .text:
  356:	09 94       	ijmp
 	...
 
-00000380 <I_00__MOV_c2_c2>:
- 380:	00 c0       	rjmp	.+0      	; 0x382 <I_00__MOV_c2_c2+0x2>
- 382:	00 c0       	rjmp	.+0      	; 0x384 <I_00__MOV_c2_c2+0x4>
- 384:	aa 01       	movw	r20, r20
+00000380 <I_0A__CLR_c2>:
+ 380:	c8 95       	lpm
+ 382:	44 27       	eor	r20, r20
+ 384:	55 27       	eor	r21, r21
  386:	01 96       	adiw	r24, 0x01	; 1
  388:	f8 94       	cli
  38a:	2e bc       	out	0x2e, r2	; 46
@@ -217,9 +217,9 @@ Disassembly of section .text:
  396:	09 94       	ijmp
 	...
 
-000003c0 <I_00__MOV_c2_c3>:
- 3c0:	00 c0       	rjmp	.+0      	; 0x3c2 <I_00__MOV_c2_c3+0x2>
- 3c2:	00 c0       	rjmp	.+0      	; 0x3c4 <I_00__MOV_c2_c3+0x4>
+000003c0 <I_0B__MOV_c2_c3>:
+ 3c0:	00 c0       	rjmp	.+0      	; 0x3c2 <I_0B__MOV_c2_c3+0x2>
+ 3c2:	00 c0       	rjmp	.+0      	; 0x3c4 <I_0B__MOV_c2_c3+0x4>
  3c4:	ab 01       	movw	r20, r22
  3c6:	01 96       	adiw	r24, 0x01	; 1
  3c8:	f8 94       	cli
@@ -232,9 +232,9 @@ Disassembly of section .text:
  3d6:	09 94       	ijmp
 	...
 
-00000400 <I_00__MOV_c3_c0>:
- 400:	00 c0       	rjmp	.+0      	; 0x402 <I_00__MOV_c3_c0+0x2>
- 402:	00 c0       	rjmp	.+0      	; 0x404 <I_00__MOV_c3_c0+0x4>
+00000400 <I_0C__MOV_c3_c0>:
+ 400:	00 c0       	rjmp	.+0      	; 0x402 <I_0C__MOV_c3_c0+0x2>
+ 402:	00 c0       	rjmp	.+0      	; 0x404 <I_0C__MOV_c3_c0+0x4>
  404:	b8 01       	movw	r22, r16
  406:	01 96       	adiw	r24, 0x01	; 1
  408:	f8 94       	cli
@@ -247,9 +247,9 @@ Disassembly of section .text:
  416:	09 94       	ijmp
 	...
 
-00000440 <I_00__MOV_c3_c1>:
- 440:	00 c0       	rjmp	.+0      	; 0x442 <I_00__MOV_c3_c1+0x2>
- 442:	00 c0       	rjmp	.+0      	; 0x444 <I_00__MOV_c3_c1+0x4>
+00000440 <I_0D__MOV_c3_c1>:
+ 440:	00 c0       	rjmp	.+0      	; 0x442 <I_0D__MOV_c3_c1+0x2>
+ 442:	00 c0       	rjmp	.+0      	; 0x444 <I_0D__MOV_c3_c1+0x4>
  444:	b9 01       	movw	r22, r18
  446:	01 96       	adiw	r24, 0x01	; 1
  448:	f8 94       	cli
@@ -262,9 +262,9 @@ Disassembly of section .text:
  456:	09 94       	ijmp
 	...
 
-00000480 <I_00__MOV_c3_c2>:
- 480:	00 c0       	rjmp	.+0      	; 0x482 <I_00__MOV_c3_c2+0x2>
- 482:	00 c0       	rjmp	.+0      	; 0x484 <I_00__MOV_c3_c2+0x4>
+00000480 <I_0E__MOV_c3_c2>:
+ 480:	00 c0       	rjmp	.+0      	; 0x482 <I_0E__MOV_c3_c2+0x2>
+ 482:	00 c0       	rjmp	.+0      	; 0x484 <I_0E__MOV_c3_c2+0x4>
  484:	ba 01       	movw	r22, r20
  486:	01 96       	adiw	r24, 0x01	; 1
  488:	f8 94       	cli
@@ -277,10 +277,10 @@ Disassembly of section .text:
  496:	09 94       	ijmp
 	...
 
-000004c0 <I_00__MOV_c3_c3>:
- 4c0:	00 c0       	rjmp	.+0      	; 0x4c2 <I_00__MOV_c3_c3+0x2>
- 4c2:	00 c0       	rjmp	.+0      	; 0x4c4 <I_00__MOV_c3_c3+0x4>
- 4c4:	bb 01       	movw	r22, r22
+000004c0 <I_0F__CLR_c3>:
+ 4c0:	c8 95       	lpm
+ 4c2:	66 27       	eor	r22, r22
+ 4c4:	77 27       	eor	r23, r23
  4c6:	01 96       	adiw	r24, 0x01	; 1
  4c8:	f8 94       	cli
  4ca:	2e bc       	out	0x2e, r2	; 46

@@ -815,3 +815,115 @@ I_5F__LDI1_c3:
     ldi  VM_C3L, lo8(1)
     ldi  VM_C3H, hi8(1)
     dispatch_reverse
+
+I_60__ST8_POST_c0_c0:
+    delay_1
+    movw r26, VM_C0
+    st   X+, VM_C0
+    movw VM_C0, r26
+    dispatch_reverse
+
+I_61__ST8_POST_c0_c1:
+    delay_1
+    movw r26, VM_C0
+    st   X+, VM_C1
+    movw VM_C0, r26
+    dispatch_reverse
+
+I_62__ST8_POST_c0_c2:
+    delay_1
+    movw r26, VM_C0
+    st   X+, VM_C2
+    movw VM_C0, r26
+    dispatch_reverse
+
+I_63__ST8_POST_c0_c3:
+    delay_1
+    movw r26, VM_C0
+    st   X+, VM_C3
+    movw VM_C0, r26
+    dispatch_reverse
+
+I_64__ST8_POST_c1_c0:
+    delay_1
+    movw r26, VM_C1
+    st   X+, VM_C0
+    movw VM_C1, r26
+    dispatch_reverse
+
+I_65__ST8_POST_c1_c1:
+    delay_1
+    movw r26, VM_C1
+    st   X+, VM_C1
+    movw VM_C1, r26
+    dispatch_reverse
+
+I_66__ST8_POST_c1_c2:
+    delay_1
+    movw r26, VM_C1
+    st   X+, VM_C2
+    movw VM_C1, r26
+    dispatch_reverse
+
+I_67__ST8_POST_c1_c3:
+    delay_1
+    movw r26, VM_C1
+    st   X+, VM_C3
+    movw VM_C1, r26
+    dispatch_reverse
+
+I_68__ST8_POST_c2_c0:
+    delay_1
+    movw r26, VM_C2
+    st   X+, VM_C0
+    movw VM_C2, r26
+    dispatch_reverse
+
+I_69__ST8_POST_c2_c1:
+    delay_1
+    movw r26, VM_C2
+    st   X+, VM_C1
+    movw VM_C2, r26
+    dispatch_reverse
+
+I_6A__ST8_POST_c2_c2:
+    delay_1
+    movw r26, VM_C2
+    st   X+, VM_C2
+    movw VM_C2, r26
+    dispatch_reverse
+
+I_6B__ST8_POST_c2_c3:
+    delay_1
+    movw r26, VM_C2
+    st   X+, VM_C3
+    movw VM_C2, r26
+    dispatch_reverse
+
+I_6C__ST8_POST_c3_c0:
+    delay_1
+    movw r26, VM_C3
+    st   X+, VM_C0
+    movw VM_C3, r26
+    dispatch_reverse
+
+I_6D__ST8_POST_c3_c1:
+    delay_1
+    movw r26, VM_C3
+    st   X+, VM_C1
+    movw VM_C3, r26
+    dispatch_reverse
+
+I_6E__ST8_POST_c3_c2:
+    delay_1
+    movw r26, VM_C3
+    st   X+, VM_C2
+    movw VM_C3, r26
+    dispatch_reverse
+
+I_6F__ST8_POST_c3_c3:
+    delay_1
+    movw r26, VM_C3
+    st   X+, VM_C3
+    movw VM_C3, r26
+    dispatch_reverse

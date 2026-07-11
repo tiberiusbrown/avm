@@ -311,11 +311,11 @@ emit_ld8 0x1D, I_1D__LD8_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_ld8 0x1E, I_1E__LD8_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld8 0x1F, I_1F__LD8_c3_c3, VM_C3L, VM_C3H, VM_C3
 
-.macro emit_st8 opcode, label, addr, src
+.macro emit_st8 opcode, label, dst, srcl
     handler_begin \opcode, \label
     delay_2
-    movw r26, \addr
-    st   X, \src
+    movw r26, \dst
+    st   X, \srcl
     dispatch_reverse
     handler_end \opcode
 .endm
@@ -340,9 +340,9 @@ emit_st8 0x2D, I_2D__ST8_c3_c1, VM_C3, VM_C1L
 emit_st8 0x2E, I_2E__ST8_c3_c2, VM_C3, VM_C2L
 emit_st8 0x2F, I_2F__ST8_c3_c3, VM_C3, VM_C3L
 
-.macro emit_ld16 opcode, label, dstl, dsth, addr
+.macro emit_ld16 opcode, label, dstl, dsth, src
     handler_begin \opcode, \label
-    movw r26, \addr
+    movw r26, \src
     ld   \dstl, X+
     ld   \dsth, X
     dispatch_reverse
@@ -369,9 +369,9 @@ emit_ld16 0x3D, I_3D__LD16_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_ld16 0x3E, I_3E__LD16_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld16 0x3F, I_3F__LD16_c3_c3, VM_C3L, VM_C3H, VM_C3
 
-.macro emit_st16 opcode, label, addr, srcl, srch
+.macro emit_st16 opcode, label, dst, srcl, srch
     handler_begin \opcode, \label
-    movw r26, \addr
+    movw r26, \dst
     st   X+, \srcl
     st   X, \srch
     dispatch_reverse
@@ -398,17 +398,17 @@ emit_st16 0x4D, I_4D__ST16_c3_c1, VM_C3, VM_C1L, VM_C1H
 emit_st16 0x4E, I_4E__ST16_c3_c2, VM_C3, VM_C2L, VM_C2H
 emit_st16 0x4F, I_4F__ST16_c3_c3, VM_C3, VM_C3L, VM_C3H
 
-.macro emit_ld8_post opcode, label, dstl, dsth, addr, imm=0
+.macro emit_ld8_post opcode, label, dstl, dsth, src, imm=0
     handler_begin \opcode, \label
     .if \imm
         delay_3
         ldi  \dstl, lo8(1)
         ldi  \dsth, hi8(1)
     .else
-        movw r26, \addr
+        movw r26, \src
         ld   \dstl, X+
         clr  \dsth
-        movw \addr, r26
+        movw \src, r26
     .endif
     dispatch_reverse
     handler_end \opcode
@@ -434,118 +434,35 @@ emit_ld8_post 0x5D, I_5D__LD8_POST_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_ld8_post 0x5E, I_5E__LD8_POST_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld8_post 0x5F, I_5F__LDI1_c3,        VM_C3L, VM_C3H, VM_C3, 1
 
-
-I_60__ST8_POST_c0_c0:
+.macro emit_st8_post opcode, label, dst, srcl
+    handler_begin \opcode, \label
     delay_1
-    movw r26, VM_C0
-    st   X+, VM_C0L
-    movw VM_C0, r26
+    movw r26, \dst
+    st   X+, \srcl
+    movw \dst, r26
     dispatch_reverse
+    handler_end \opcode
+.endm
 
-I_61__ST8_POST_c0_c1:
-    delay_1
-    movw r26, VM_C0
-    st   X+, VM_C1L
-    movw VM_C0, r26
-    dispatch_reverse
+emit_st8_post 0x60, I_60__ST8_POST_c0_c0, VM_C0, VM_C0L
+emit_st8_post 0x61, I_61__ST8_POST_c0_c1, VM_C0, VM_C1L
+emit_st8_post 0x62, I_62__ST8_POST_c0_c2, VM_C0, VM_C2L
+emit_st8_post 0x63, I_63__ST8_POST_c0_c3, VM_C0, VM_C3L
 
-I_62__ST8_POST_c0_c2:
-    delay_1
-    movw r26, VM_C0
-    st   X+, VM_C2L
-    movw VM_C0, r26
-    dispatch_reverse
+emit_st8_post 0x64, I_64__ST8_POST_c1_c0, VM_C1, VM_C0L
+emit_st8_post 0x65, I_65__ST8_POST_c1_c1, VM_C1, VM_C1L
+emit_st8_post 0x66, I_66__ST8_POST_c1_c2, VM_C1, VM_C2L
+emit_st8_post 0x67, I_67__ST8_POST_c1_c3, VM_C1, VM_C3L
 
-I_63__ST8_POST_c0_c3:
-    delay_1
-    movw r26, VM_C0
-    st   X+, VM_C3L
-    movw VM_C0, r26
-    dispatch_reverse
+emit_st8_post 0x68, I_68__ST8_POST_c2_c0, VM_C2, VM_C0L
+emit_st8_post 0x69, I_69__ST8_POST_c2_c1, VM_C2, VM_C1L
+emit_st8_post 0x6A, I_6A__ST8_POST_c2_c2, VM_C2, VM_C2L
+emit_st8_post 0x6B, I_6B__ST8_POST_c2_c3, VM_C2, VM_C3L
 
-I_64__ST8_POST_c1_c0:
-    delay_1
-    movw r26, VM_C1
-    st   X+, VM_C0L
-    movw VM_C1, r26
-    dispatch_reverse
-
-I_65__ST8_POST_c1_c1:
-    delay_1
-    movw r26, VM_C1
-    st   X+, VM_C1L
-    movw VM_C1, r26
-    dispatch_reverse
-
-I_66__ST8_POST_c1_c2:
-    delay_1
-    movw r26, VM_C1
-    st   X+, VM_C2L
-    movw VM_C1, r26
-    dispatch_reverse
-
-I_67__ST8_POST_c1_c3:
-    delay_1
-    movw r26, VM_C1
-    st   X+, VM_C3L
-    movw VM_C1, r26
-    dispatch_reverse
-
-I_68__ST8_POST_c2_c0:
-    delay_1
-    movw r26, VM_C2
-    st   X+, VM_C0L
-    movw VM_C2, r26
-    dispatch_reverse
-
-I_69__ST8_POST_c2_c1:
-    delay_1
-    movw r26, VM_C2
-    st   X+, VM_C1L
-    movw VM_C2, r26
-    dispatch_reverse
-
-I_6A__ST8_POST_c2_c2:
-    delay_1
-    movw r26, VM_C2
-    st   X+, VM_C2L
-    movw VM_C2, r26
-    dispatch_reverse
-
-I_6B__ST8_POST_c2_c3:
-    delay_1
-    movw r26, VM_C2
-    st   X+, VM_C3L
-    movw VM_C2, r26
-    dispatch_reverse
-
-I_6C__ST8_POST_c3_c0:
-    delay_1
-    movw r26, VM_C3
-    st   X+, VM_C0L
-    movw VM_C3, r26
-    dispatch_reverse
-
-I_6D__ST8_POST_c3_c1:
-    delay_1
-    movw r26, VM_C3
-    st   X+, VM_C1L
-    movw VM_C3, r26
-    dispatch_reverse
-
-I_6E__ST8_POST_c3_c2:
-    delay_1
-    movw r26, VM_C3
-    st   X+, VM_C2L
-    movw VM_C3, r26
-    dispatch_reverse
-
-I_6F__ST8_POST_c3_c3:
-    delay_1
-    movw r26, VM_C3
-    st   X+, VM_C3L
-    movw VM_C3, r26
-    dispatch_reverse
+emit_st8_post 0x6C, I_6C__ST8_POST_c3_c0, VM_C3, VM_C0L
+emit_st8_post 0x6D, I_6D__ST8_POST_c3_c1, VM_C3, VM_C1L
+emit_st8_post 0x6E, I_6E__ST8_POST_c3_c2, VM_C3, VM_C2L
+emit_st8_post 0x6F, I_6F__ST8_POST_c3_c3, VM_C3, VM_C3L
 
 I_70__PUSH16_r0:
     delay_1

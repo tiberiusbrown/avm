@@ -1383,8 +1383,8 @@ Opcode:
 Operand:
 
 ```text
-bits 7:5 = condition
-bits 4:0 = signed five-bit byte displacement
+bits 7:3 = signed five-bit displacement
+bits 2:0 = condition
 ```
 
 Instruction:

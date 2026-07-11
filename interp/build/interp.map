@@ -115,7 +115,7 @@ Linker script and memory map
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x211e
+.text           0x00000000     0x227e
  *(.vectors)
  *(.vectors)
  *(.progmem.gcc*)
@@ -160,12 +160,12 @@ Linker script and memory map
  *(.init9)
  *(.init9)
  *(.text)
- .text          0x00000000     0x211e build\interp.o
+ .text          0x00000000     0x227e build\interp.o
                 0x00000000                __vectors
                 0x00000200                abvm_interp
-                0x0000211e                        . = ALIGN (0x2)
+                0x0000227e                        . = ALIGN (0x2)
  *(.text.*)
-                0x0000211e                        . = ALIGN (0x2)
+                0x0000227e                        . = ALIGN (0x2)
  *(.fini9)
  *(.fini9)
  *(.fini8)
@@ -189,12 +189,12 @@ Linker script and memory map
  *(.hightext)
  *(.hightext*)
  *(.progmemx.*)
-                0x0000211e                        . = ALIGN (0x2)
+                0x0000227e                        . = ALIGN (0x2)
  *(.jumptables)
  *(.jumptables*)
-                0x0000211e                        _etext = .
+                0x0000227e                        _etext = .
 
-.data           0x00800100        0x0 load address 0x0000211e
+.data           0x00800100        0x0 load address 0x0000227e
                 [!provide]                        PROVIDE (__data_start = .)
  *(.data)
  .data          0x00800100        0x0 build\interp.o
@@ -214,8 +214,8 @@ Linker script and memory map
  *(.bss*)
  *(COMMON)
                 [!provide]                        PROVIDE (__bss_end = .)
-                0x0000211e                        __data_load_start = LOADADDR (.data)
-                0x0000211e                        __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x0000227e                        __data_load_start = LOADADDR (.data)
+                0x0000227e                        __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800100        0x0
                 [!provide]                        PROVIDE (__noinit_start = .)
@@ -263,8 +263,8 @@ Linker script and memory map
 .comment
  *(.comment)
 
-.avr.prop       0x00000000      0x99b
- .avr.prop      0x00000000      0x99b build\interp.o
+.avr.prop       0x00000000      0xa09
+ .avr.prop      0x00000000      0xa09 build\interp.o
 
 .gnu.build.attributes
  *(.gnu.build.attributes .gnu.build.attributes.*)

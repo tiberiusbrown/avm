@@ -4701,9 +4701,9 @@ Disassembly of section .text:
 
 00001f00 <I_E8__DEC16_r0>:
     1f00:	30 fa       	bst	r3, 0
-    1f02:	af ef       	ldi	r26, 0xFF	; 255
-    1f04:	8a 0e       	add	r8, r26
-    1f06:	92 1c       	adc	r9, r2
+    1f02:	a1 e0       	ldi	r26, 0x01	; 1
+    1f04:	8a 1a       	sub	r8, r26
+    1f06:	92 08       	sbc	r9, r2
     1f08:	3f b6       	in	r3, 0x3f	; 63
     1f0a:	30 f8       	bld	r3, 0
     1f0c:	b5 c1       	rjmp	.+874    	; 0x2278 <dispatch_func>
@@ -4719,9 +4719,9 @@ Disassembly of section .text:
 
 00001f20 <I_E9__DEC16_r1>:
     1f20:	30 fa       	bst	r3, 0
-    1f22:	af ef       	ldi	r26, 0xFF	; 255
-    1f24:	aa 0e       	add	r10, r26
-    1f26:	b2 1c       	adc	r11, r2
+    1f22:	a1 e0       	ldi	r26, 0x01	; 1
+    1f24:	aa 1a       	sub	r10, r26
+    1f26:	b2 08       	sbc	r11, r2
     1f28:	3f b6       	in	r3, 0x3f	; 63
     1f2a:	30 f8       	bld	r3, 0
     1f2c:	a5 c1       	rjmp	.+842    	; 0x2278 <dispatch_func>
@@ -4737,9 +4737,9 @@ Disassembly of section .text:
 
 00001f40 <I_EA__DEC16_r2>:
     1f40:	30 fa       	bst	r3, 0
-    1f42:	af ef       	ldi	r26, 0xFF	; 255
-    1f44:	ca 0e       	add	r12, r26
-    1f46:	d2 1c       	adc	r13, r2
+    1f42:	a1 e0       	ldi	r26, 0x01	; 1
+    1f44:	ca 1a       	sub	r12, r26
+    1f46:	d2 08       	sbc	r13, r2
     1f48:	3f b6       	in	r3, 0x3f	; 63
     1f4a:	30 f8       	bld	r3, 0
     1f4c:	95 c1       	rjmp	.+810    	; 0x2278 <dispatch_func>
@@ -4755,9 +4755,9 @@ Disassembly of section .text:
 
 00001f60 <I_EB__DEC16_r3>:
     1f60:	30 fa       	bst	r3, 0
-    1f62:	af ef       	ldi	r26, 0xFF	; 255
-    1f64:	ea 0e       	add	r14, r26
-    1f66:	f2 1c       	adc	r15, r2
+    1f62:	a1 e0       	ldi	r26, 0x01	; 1
+    1f64:	ea 1a       	sub	r14, r26
+    1f66:	f2 08       	sbc	r15, r2
     1f68:	3f b6       	in	r3, 0x3f	; 63
     1f6a:	30 f8       	bld	r3, 0
     1f6c:	85 c1       	rjmp	.+778    	; 0x2278 <dispatch_func>
@@ -4773,9 +4773,9 @@ Disassembly of section .text:
 
 00001f80 <I_EC__DEC16_r4>:
     1f80:	30 fa       	bst	r3, 0
-    1f82:	af ef       	ldi	r26, 0xFF	; 255
-    1f84:	0a 0f       	add	r16, r26
-    1f86:	12 1d       	adc	r17, r2
+    1f82:	a1 e0       	ldi	r26, 0x01	; 1
+    1f84:	0a 1b       	sub	r16, r26
+    1f86:	12 09       	sbc	r17, r2
     1f88:	3f b6       	in	r3, 0x3f	; 63
     1f8a:	30 f8       	bld	r3, 0
     1f8c:	75 c1       	rjmp	.+746    	; 0x2278 <dispatch_func>
@@ -4791,9 +4791,9 @@ Disassembly of section .text:
 
 00001fa0 <I_ED__DEC16_r5>:
     1fa0:	30 fa       	bst	r3, 0
-    1fa2:	af ef       	ldi	r26, 0xFF	; 255
-    1fa4:	2a 0f       	add	r18, r26
-    1fa6:	32 1d       	adc	r19, r2
+    1fa2:	a1 e0       	ldi	r26, 0x01	; 1
+    1fa4:	2a 1b       	sub	r18, r26
+    1fa6:	32 09       	sbc	r19, r2
     1fa8:	3f b6       	in	r3, 0x3f	; 63
     1faa:	30 f8       	bld	r3, 0
     1fac:	65 c1       	rjmp	.+714    	; 0x2278 <dispatch_func>
@@ -4809,9 +4809,9 @@ Disassembly of section .text:
 
 00001fc0 <I_EE__DEC16_r6>:
     1fc0:	30 fa       	bst	r3, 0
-    1fc2:	af ef       	ldi	r26, 0xFF	; 255
-    1fc4:	4a 0f       	add	r20, r26
-    1fc6:	52 1d       	adc	r21, r2
+    1fc2:	a1 e0       	ldi	r26, 0x01	; 1
+    1fc4:	4a 1b       	sub	r20, r26
+    1fc6:	52 09       	sbc	r21, r2
     1fc8:	3f b6       	in	r3, 0x3f	; 63
     1fca:	30 f8       	bld	r3, 0
     1fcc:	55 c1       	rjmp	.+682    	; 0x2278 <dispatch_func>
@@ -4827,9 +4827,9 @@ Disassembly of section .text:
 
 00001fe0 <I_EF__DEC16_r7>:
     1fe0:	30 fa       	bst	r3, 0
-    1fe2:	af ef       	ldi	r26, 0xFF	; 255
-    1fe4:	6a 0f       	add	r22, r26
-    1fe6:	72 1d       	adc	r23, r2
+    1fe2:	a1 e0       	ldi	r26, 0x01	; 1
+    1fe4:	6a 1b       	sub	r22, r26
+    1fe6:	72 09       	sbc	r23, r2
     1fe8:	3f b6       	in	r3, 0x3f	; 63
     1fea:	30 f8       	bld	r3, 0
     1fec:	45 c1       	rjmp	.+650    	; 0x2278 <dispatch_func>

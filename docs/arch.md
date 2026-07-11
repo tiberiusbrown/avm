@@ -951,6 +951,78 @@ C = product bit 15
 
 `ZEXT8`, `SEXT8`, `SWAP8`, `GETSP`, `SETSP`, `MTPB`, and `MFPB` preserve flags.
 
+### 27.10 Negation
+
+`NEG16` behaves as a 16-bit subtraction of the operand from zero:
+
+```text
+result = (0 - operand) mod 2^16
+
+C = operand != 0
+Z = result == 0
+N = result bit 15
+V = operand == 0x8000
+S = N xor V
+```
+
+### 27.11 Fixed one-bit shifts
+
+The fixed shift instructions update all five AVM flags.
+
+`LSL16` sets:
+
+```text
+C = old operand bit 15
+Z = result == 0
+N = result bit 15
+V = N xor C
+S = N xor V
+```
+
+`LSR16` sets:
+
+```text
+C = old operand bit 0
+Z = result == 0
+N = 0
+V = N xor C
+S = N xor V
+```
+
+`ASR16` sets:
+
+```text
+C = old operand bit 0
+Z = result == 0
+N = result bit 15
+V = N xor C
+S = N xor V
+```
+
+`LSR8` and `ASR8` leave bits `15:8` of the destination unchanged, but their flags describe only the low-byte operation:
+
+```text
+C = old low-byte bit 0
+Z = low8(result) == 0
+N = result bit 7
+V = N xor C
+S = N xor V
+```
+
+For `LSR8`, `N` is necessarily zero.
+
+### 27.12 Variable shifts
+
+For `SHL16V`, `LSR16V`, and `ASR16V`:
+
+```text
+count = low4(source)
+```
+
+A count of zero leaves the destination and all AVM flags unchanged.
+
+For a nonzero count, the value and flags are exactly those obtained by applying the corresponding fixed one-bit shift repeatedly `count` times. The final flags therefore come from the last one-bit shift: `C` is the last bit shifted out, while `Z`, `N`, `V`, and `S` describe the final shift step and result.
+
 ---
 
 ## 28. Branch conditions
@@ -974,7 +1046,7 @@ The dedicated conditional-branch opcodes implement:
 
 ## 29. General encoding rules
 
-Instructions are one to five bytes long.
+Instructions are one to four bytes long.
 
 The first byte is the primary opcode.
 
@@ -1444,6 +1516,22 @@ The register number is encoded in the low three bits of the secondary opcode.
 
 `SETSP` copies `rN` into SP.
 
+The remaining unary operations have the following value semantics:
+
+```text
+NEG16 rN: rN = (0 - rN) mod 2^16
+LSL16 rN: rN = (rN << 1) mod 2^16
+LSR16 rN: rN = unsigned(rN) >> 1
+ASR16 rN: rN = signed(rN) >> 1
+LSR8  rN: low8(rN) = unsigned(low8(rN)) >> 1
+ASR8  rN: low8(rN) = signed(low8(rN)) >> 1
+ZEXT8 rN: rN = zero_extend(low8(rN))
+SEXT8 rN: rN = sign_extend(low8(rN))
+SWAP8 rN: low8(rN) = swap_nibbles(low8(rN))
+```
+
+`LSR8`, `ASR8`, and `SWAP8` leave bits `15:8` unchanged. All source values are captured before the destination is written.
+
 ---
 
 ## 45. Binary ALU secondary opcodes
@@ -1482,7 +1570,11 @@ Variable shifts use:
 count = low4(rS)
 ```
 
-The source-language result is only required for valid shift counts.
+The destination value and shift count are captured before the destination is written, so `rD` and `rS` may be the same register. `SHL16V` discards bits shifted above bit 15, `LSR16V` shifts in zeroes, and `ASR16V` shifts in copies of the sign bit.
+
+A zero count preserves both the destination and all AVM flags. A nonzero variable shift has the same value and flags as repeatedly applying the corresponding fixed one-bit shift, with the final flags supplied by the last shift step as specified in Section 27.12.
+
+The source-language result is only required for valid shift counts. The machine instruction itself is defined for every encoded count from 0 through 15.
 
 `MULS8` and `MULSU8` support every architectural register, but compact registers are substantially cheaper on the native implementation. LLVM should strongly prefer `c0–c3` for signed and mixed-sign multiply operands.
 
@@ -1598,13 +1690,23 @@ The following secondary opcodes are followed by `RRSPEC`:
 
 Displaced forms have one additional signed byte.
 
-`LEA` does not access memory and preserves flags.
+For displaced forms:
+
+```text
+effectiveAddress = (original rA + sign_extend(simm8)) mod 2^16
+```
+
+`LEA` writes this effective address without accessing memory and preserves flags.
+
+Postincrement operations capture the original address and store value, when applicable, before modifying either architectural operand. The address register is incremented by one for byte operations and by two for word operations, modulo `2^16`.
 
 Postincrement load forms require `rD != rA`.
 
 A diagnostic implementation traps an illegal overlap. Optimized behavior is undefined.
 
-These are the only postincrement load and store encodings in this ISA version. Compact-register operands do not produce a shorter primary encoding.
+Word loads and stores access the second byte at `(effectiveAddress + 1) mod 2^16`.
+
+These are the only postincrement load and store encodings in this ISA version. Compact-register operands do not produce a shorter primary encoding. All operations in this section preserve flags.
 
 ---
 
@@ -1620,6 +1722,8 @@ The register is encoded in the low three secondary-opcode bits.
 | `0x28–0x2F` | `STSP16 [SP+u8],rN` | unsigned byte offset |
 
 Byte loads zero-extend.
+
+The effective address is `(original SP + u8) mod 2^16`. Word accesses use the next data-space byte modulo `2^16`. The architectural SP is not modified. These operations preserve flags.
 
 ---
 
@@ -1643,7 +1747,9 @@ address = addr16
 
 No global-data or framebuffer base is added. These instructions can directly access globals, the framebuffer, the VM stack, native AVR I/O registers, or any other data-space address.
 
-Byte loads zero-extend. Word accesses transfer two little-endian bytes beginning at `addr16`.
+Byte loads zero-extend. Word accesses transfer two little-endian bytes beginning at `addr16`; the second byte is accessed at `(addr16 + 1) mod 2^16`.
+
+These operations preserve flags.
 
 The former `LEAG` and framebuffer-specific direct-access instructions do not exist. Ordinary address constants are materialized directly, and the framebuffer is addressed through its fixed data-space location.
 
@@ -1662,6 +1768,14 @@ The following subopcodes are followed by `RRSPEC`:
 | `0x84–0xFF` | Reserved                |
 
 Displaced forms include one signed displacement byte.
+
+The effective program-space address is formed as a 24-bit addition:
+
+```text
+effectiveAddress = (PB:rA + sign_extend(simm8)) mod 2^24
+```
+
+Carry or borrow from the low 16-bit word therefore propagates into the bank byte. Neither `PB` nor `rA` is modified. Non-displaced forms use `PB:rA` directly. A word load accesses `effectiveAddress` and `(effectiveAddress + 1) mod 2^24`.
 
 Byte loads zero-extend.
 

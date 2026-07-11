@@ -841,16 +841,16 @@ emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
 ; 0xE0-0xEF: INC16/DEC16 rN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_inc_or_dec opcode, label, dstl, dsth, imm
+.macro emit_inc_or_dec opcode, label, dstl, dsth, opl, oph
     handler_begin \opcode, \label
 
     ; INC16/DEC16 preserve architectural C while updating Z/N/V/S.
     ; Save the old AVM carry in native SREG.T, which ADD/ADC preserve.
     bst  VM_FLAGS, SREG_C
 
-    ldi  r26, lo8(\imm)
-    add  \dstl, r26
-    adc  \dsth, ZERO
+    ldi  r26, 1
+    \opl \dstl, r26
+    \oph \dsth, ZERO
 
     in   VM_FLAGS, SREG
     bld  VM_FLAGS, SREG_C
@@ -859,22 +859,22 @@ emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
     handler_end \opcode
 .endm
 
-emit_inc_or_dec 0xE0, I_E0__INC16_r0, VM_R0L, VM_R0H, 1
-emit_inc_or_dec 0xE1, I_E1__INC16_r1, VM_R1L, VM_R1H, 1
-emit_inc_or_dec 0xE2, I_E2__INC16_r2, VM_R2L, VM_R2H, 1
-emit_inc_or_dec 0xE3, I_E3__INC16_r3, VM_R3L, VM_R3H, 1
-emit_inc_or_dec 0xE4, I_E4__INC16_r4, VM_R4L, VM_R4H, 1
-emit_inc_or_dec 0xE5, I_E5__INC16_r5, VM_R5L, VM_R5H, 1
-emit_inc_or_dec 0xE6, I_E6__INC16_r6, VM_R6L, VM_R6H, 1
-emit_inc_or_dec 0xE7, I_E7__INC16_r7, VM_R7L, VM_R7H, 1
-emit_inc_or_dec 0xE8, I_E8__DEC16_r0, VM_R0L, VM_R0H, -1
-emit_inc_or_dec 0xE9, I_E9__DEC16_r1, VM_R1L, VM_R1H, -1
-emit_inc_or_dec 0xEA, I_EA__DEC16_r2, VM_R2L, VM_R2H, -1
-emit_inc_or_dec 0xEB, I_EB__DEC16_r3, VM_R3L, VM_R3H, -1
-emit_inc_or_dec 0xEC, I_EC__DEC16_r4, VM_R4L, VM_R4H, -1
-emit_inc_or_dec 0xED, I_ED__DEC16_r5, VM_R5L, VM_R5H, -1
-emit_inc_or_dec 0xEE, I_EE__DEC16_r6, VM_R6L, VM_R6H, -1
-emit_inc_or_dec 0xEF, I_EF__DEC16_r7, VM_R7L, VM_R7H, -1
+emit_inc_or_dec 0xE0, I_E0__INC16_r0, VM_R0L, VM_R0H, add, adc
+emit_inc_or_dec 0xE1, I_E1__INC16_r1, VM_R1L, VM_R1H, add, adc
+emit_inc_or_dec 0xE2, I_E2__INC16_r2, VM_R2L, VM_R2H, add, adc
+emit_inc_or_dec 0xE3, I_E3__INC16_r3, VM_R3L, VM_R3H, add, adc
+emit_inc_or_dec 0xE4, I_E4__INC16_r4, VM_R4L, VM_R4H, add, adc
+emit_inc_or_dec 0xE5, I_E5__INC16_r5, VM_R5L, VM_R5H, add, adc
+emit_inc_or_dec 0xE6, I_E6__INC16_r6, VM_R6L, VM_R6H, add, adc
+emit_inc_or_dec 0xE7, I_E7__INC16_r7, VM_R7L, VM_R7H, add, adc
+emit_inc_or_dec 0xE8, I_E8__DEC16_r0, VM_R0L, VM_R0H, sub, sbc
+emit_inc_or_dec 0xE9, I_E9__DEC16_r1, VM_R1L, VM_R1H, sub, sbc
+emit_inc_or_dec 0xEA, I_EA__DEC16_r2, VM_R2L, VM_R2H, sub, sbc
+emit_inc_or_dec 0xEB, I_EB__DEC16_r3, VM_R3L, VM_R3H, sub, sbc
+emit_inc_or_dec 0xEC, I_EC__DEC16_r4, VM_R4L, VM_R4H, sub, sbc
+emit_inc_or_dec 0xED, I_ED__DEC16_r5, VM_R5L, VM_R5H, sub, sbc
+emit_inc_or_dec 0xEE, I_EE__DEC16_r6, VM_R6L, VM_R6H, sub, sbc
+emit_inc_or_dec 0xEF, I_EF__DEC16_r7, VM_R7L, VM_R7H, sub, sbc
 
 .macro emit_ldi8 opcode, label, dstl, dsth
     handler_begin \opcode, \label

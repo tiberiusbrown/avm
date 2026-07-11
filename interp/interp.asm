@@ -1104,8 +1104,6 @@ f4_lsr16_family:
 f4_asr16_family:
 f4_lsr8_family:
 f4_asr8_family:
-f4_zext8_family:
-f4_sext8_family:
 f4_swap8_family:
 f4_getsp_family:
 f4_setsp_family:
@@ -1191,6 +1189,32 @@ f4_mfpb_family:
 
     ; Address decoding and the two stores outlast the minimum SPI transfer
     ; interval.  The prefetched primary opcode is therefore complete.
+    rjmp dispatch_func
+
+f4_zext8_family:
+    ; Select the AVM register from the low three secondary-opcode bits and
+    ; address its high byte directly.  The low byte and VM_FLAGS are unchanged.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -9
+    clr  r27
+    st   X, ZERO
+    rjmp dispatch_func
+
+f4_sext8_family:
+    ; Load the selected register's low byte, convert its sign bit to 0x00 or
+    ; 0xFF in scratch, and write that value to the high byte.  Native flag
+    ; changes are intentionally not copied to the architectural VM_FLAGS.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r4, X+
+    lsl  r4
+    sbc  r4, r4
+    st   X, r4
     rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

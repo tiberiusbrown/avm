@@ -63,12 +63,16 @@
 ;; GPIOR1         CB
 ;; GPIOR2         PB
 
-#define INSTR_ALIGN 6
+#define DISPATCH_ORG 0x0200
+#define DISPATCH_ALIGN 6
 
-#define ZERO          r2
-#define C_INSTR_ALIGN r7
+#define ZERO r2
+#define C_DISPATCH_ALIGN r7
 
 #define VM_FLAGS r5
+
+#define VM_CB GPIOR1
+#define VM_PB GPIOR2
 
 #define VM_PC  r24
 #define VM_PCL r24
@@ -123,12 +127,12 @@
 
 #include "32u4.h"
 
-.section .vectors,"ax",@progbits
+.section .text,"ax",@progbits
+.org 0x0000
 .global __vectors
-.type __vectors, @function
 
 ; ATmega32U4 interrupt vector table.
-; Each vector is one 16-bit RJMP instruction.  The table contains the reset
+; Each vector is one 32-bit JMP instruction. The table contains the reset
 ; vector followed by the 31 device interrupt vectors, in datasheet order.
 __vectors:
     jmp reset_handler       ;  0 RESET
@@ -173,10 +177,13 @@ reset_handler:
 
     ; Initialize registers for VM
     clr  ZERO
-    ldi  r24, (1<<(INSTR_ALIGN-1))
-    mov  C_INSTR_ALIGN, r24
+    ldi  r26, (1<<(DISPATCH_ALIGN-1))
+    mov  C_DISPATCH_ALIGN, r26
     ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
     ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
+    clr  VM_FLAGS
+    out  VM_CB, ZERO
+    out  VM_PB, ZERO
 
     ; Initialize SPI
 
@@ -186,35 +193,37 @@ reset_handler:
 reset_loop:
     rjmp reset_loop
 
-.section .text
-
 ; 18-cycle cadence, needs 8 cycles from start of instruction
 .macro dispatch
     in   r6, SPDR
     out  SPDR, ZERO
     adiw VM_PC, 1
-    mul  r6, C_INSTR_ALIGN
+    mul  r6, C_DISPATCH_ALIGN
     movw r30, r0
     inc  r31
     ijmp
 .endm
 
 ; 17-cycle cadence but needs 5 cycles from start of instruction
-.macro dispatch_reverse_noalign
+.macro dispatch_reverse
     adiw VM_PC, 1
     cli
     out  SPDR, ZERO
     in   r6, SPDR
     sei
-    mul  r6, C_INSTR_ALIGN
+    mul  r6, C_DISPATCH_ALIGN
     movw r30, r0
     inc  r31
     ijmp
 .endm
 
-.macro dispatch_reverse
-    dispatch_reverse_noalign
-    .align INSTR_ALIGN
+.macro handler_begin opcode, label
+    .org (((\opcode) << DISPATCH_ALIGN) + DISPATCH_ORG)
+\label:
+.endm
+
+.macro handler_end opcode
+    .org ((((\opcode) + 1) << DISPATCH_ALIGN) + DISPATCH_ORG)
 .endm
 
 .macro delay_1
@@ -234,93 +243,43 @@ reset_loop:
     delay_2
 .endm
 
-.align 9
-
+.org DISPATCH_ORG
+.global abvm_interp
 abvm_interp:
 
-I_00__CLR_c0:
-    delay_3
-    clr  VM_C0L
-    clr  VM_C0H
+.macro emit_mov_or_clr opcode, label, dst, dstl, dsth, src, same=0
+    handler_begin \opcode, \label
+    .if \same
+        delay_3
+        clr  \dstl
+        clr  \dsth
+    .else
+        delay_4
+        movw \dst, \src
+    .endif
     dispatch_reverse
+    handler_end \opcode
+.endm
 
-I_01__MOV_c0_c1:
-    delay_4
-    movw VM_C0, VM_C1
-    dispatch_reverse
+emit_mov_or_clr 0x00, I_00__CLR_c0,     VM_C0, VM_C0L, VM_C0H, VM_C0, 1
+emit_mov_or_clr 0x01, I_01__MOV_c0_c1,  VM_C0, VM_C0L, VM_C0H, VM_C1
+emit_mov_or_clr 0x02, I_02__MOV_c0_c2,  VM_C0, VM_C0L, VM_C0H, VM_C2
+emit_mov_or_clr 0x03, I_03__MOV_c0_c3,  VM_C0, VM_C0L, VM_C0H, VM_C3
 
-I_02__MOV_c0_c2:
-    delay_4
-    movw VM_C0, VM_C2
-    dispatch_reverse
+emit_mov_or_clr 0x04, I_04__MOV_c1_c0,  VM_C1, VM_C1L, VM_C1H, VM_C0
+emit_mov_or_clr 0x05, I_05__CLR_c1,     VM_C1, VM_C1L, VM_C1H, VM_C1, 1
+emit_mov_or_clr 0x06, I_06__MOV_c1_c2,  VM_C1, VM_C1L, VM_C1H, VM_C2
+emit_mov_or_clr 0x07, I_07__MOV_c1_c3,  VM_C1, VM_C1L, VM_C1H, VM_C3
 
-I_03__MOV_c0_c3:
-    delay_4
-    movw VM_C0, VM_C3
-    dispatch_reverse
+emit_mov_or_clr 0x08, I_08__MOV_c2_c0,  VM_C2, VM_C2L, VM_C2H, VM_C0
+emit_mov_or_clr 0x09, I_09__MOV_c2_c1,  VM_C2, VM_C2L, VM_C2H, VM_C1
+emit_mov_or_clr 0x0A, I_0A__CLR_c2,     VM_C2, VM_C2L, VM_C2H, VM_C2, 1
+emit_mov_or_clr 0x0B, I_0B__MOV_c2_c3,  VM_C2, VM_C2L, VM_C2H, VM_C3
 
-I_04__MOV_c1_c0:
-    delay_4
-    movw VM_C1, VM_C0
-    dispatch_reverse
-
-I_05__CLR_c1:
-    delay_3
-    clr  VM_C1L
-    clr  VM_C1H
-    dispatch_reverse
-
-I_06__MOV_c1_c2:
-    delay_4
-    movw VM_C1, VM_C2
-    dispatch_reverse
-
-I_07__MOV_c1_c3:
-    delay_4
-    movw VM_C1, VM_C3
-    dispatch_reverse
-
-I_08__MOV_c2_c0:
-    delay_4
-    movw VM_C2, VM_C0
-    dispatch_reverse
-
-I_09__MOV_c2_c1:
-    delay_4
-    movw VM_C2, VM_C1
-    dispatch_reverse
-
-I_0A__CLR_c2:
-    delay_3
-    clr  VM_C2L
-    clr  VM_C2H
-    dispatch_reverse
-
-I_0B__MOV_c2_c3:
-    delay_4
-    movw VM_C2, VM_C3
-    dispatch_reverse
-
-I_0C__MOV_c3_c0:
-    delay_4
-    movw VM_C3, VM_C0
-    dispatch_reverse
-
-I_0D__MOV_c3_c1:
-    delay_4
-    movw VM_C3, VM_C1
-    dispatch_reverse
-
-I_0E__MOV_c3_c2:
-    delay_4
-    movw VM_C3, VM_C2
-    dispatch_reverse
-
-I_0F__CLR_c3:
-    delay_3
-    clr  VM_C3L
-    clr  VM_C3H
-    dispatch_reverse
+emit_mov_or_clr 0x0C, I_0C__MOV_c3_c0,  VM_C3, VM_C3L, VM_C3H, VM_C0
+emit_mov_or_clr 0x0D, I_0D__MOV_c3_c1,  VM_C3, VM_C3L, VM_C3H, VM_C1
+emit_mov_or_clr 0x0E, I_0E__MOV_c3_c2,  VM_C3, VM_C3L, VM_C3H, VM_C2
+emit_mov_or_clr 0x0F, I_0F__CLR_c3,     VM_C3, VM_C3L, VM_C3H, VM_C3, 1
 
 I_10__LD8_c0_c0:
     delay_1
@@ -833,112 +792,112 @@ I_5F__LDI1_c3:
 I_60__ST8_POST_c0_c0:
     delay_1
     movw r26, VM_C0
-    st   X+, VM_C0
+    st   X+, VM_C0L
     movw VM_C0, r26
     dispatch_reverse
 
 I_61__ST8_POST_c0_c1:
     delay_1
     movw r26, VM_C0
-    st   X+, VM_C1
+    st   X+, VM_C1L
     movw VM_C0, r26
     dispatch_reverse
 
 I_62__ST8_POST_c0_c2:
     delay_1
     movw r26, VM_C0
-    st   X+, VM_C2
+    st   X+, VM_C2L
     movw VM_C0, r26
     dispatch_reverse
 
 I_63__ST8_POST_c0_c3:
     delay_1
     movw r26, VM_C0
-    st   X+, VM_C3
+    st   X+, VM_C3L
     movw VM_C0, r26
     dispatch_reverse
 
 I_64__ST8_POST_c1_c0:
     delay_1
     movw r26, VM_C1
-    st   X+, VM_C0
+    st   X+, VM_C0L
     movw VM_C1, r26
     dispatch_reverse
 
 I_65__ST8_POST_c1_c1:
     delay_1
     movw r26, VM_C1
-    st   X+, VM_C1
+    st   X+, VM_C1L
     movw VM_C1, r26
     dispatch_reverse
 
 I_66__ST8_POST_c1_c2:
     delay_1
     movw r26, VM_C1
-    st   X+, VM_C2
+    st   X+, VM_C2L
     movw VM_C1, r26
     dispatch_reverse
 
 I_67__ST8_POST_c1_c3:
     delay_1
     movw r26, VM_C1
-    st   X+, VM_C3
+    st   X+, VM_C3L
     movw VM_C1, r26
     dispatch_reverse
 
 I_68__ST8_POST_c2_c0:
     delay_1
     movw r26, VM_C2
-    st   X+, VM_C0
+    st   X+, VM_C0L
     movw VM_C2, r26
     dispatch_reverse
 
 I_69__ST8_POST_c2_c1:
     delay_1
     movw r26, VM_C2
-    st   X+, VM_C1
+    st   X+, VM_C1L
     movw VM_C2, r26
     dispatch_reverse
 
 I_6A__ST8_POST_c2_c2:
     delay_1
     movw r26, VM_C2
-    st   X+, VM_C2
+    st   X+, VM_C2L
     movw VM_C2, r26
     dispatch_reverse
 
 I_6B__ST8_POST_c2_c3:
     delay_1
     movw r26, VM_C2
-    st   X+, VM_C3
+    st   X+, VM_C3L
     movw VM_C2, r26
     dispatch_reverse
 
 I_6C__ST8_POST_c3_c0:
     delay_1
     movw r26, VM_C3
-    st   X+, VM_C0
+    st   X+, VM_C0L
     movw VM_C3, r26
     dispatch_reverse
 
 I_6D__ST8_POST_c3_c1:
     delay_1
     movw r26, VM_C3
-    st   X+, VM_C1
+    st   X+, VM_C1L
     movw VM_C3, r26
     dispatch_reverse
 
 I_6E__ST8_POST_c3_c2:
     delay_1
     movw r26, VM_C3
-    st   X+, VM_C2
+    st   X+, VM_C2L
     movw VM_C3, r26
     dispatch_reverse
 
 I_6F__ST8_POST_c3_c3:
     delay_1
     movw r26, VM_C3
-    st   X+, VM_C3
+    st   X+, VM_C3L
     movw VM_C3, r26
     dispatch_reverse
 

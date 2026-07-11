@@ -26,7 +26,7 @@ if not exist "%AVR_HOME%\avr\lib\ldscripts\avr5.x" (
 avr-gcc -c -x assembler-with-cpp -mmcu=atmega32u4 interp.asm -o interp.o
 if errorlevel 1 exit /b 1
 
-avr-ld -T "%AVR_HOME%\avr\lib\ldscripts\avr5.x" -Tdata=0x800100 interp.o -o interp.elf
+avr-ld --section-start=.text=0x0000 -Tdata=0x800100 interp.o -o interp.elf
 if errorlevel 1 exit /b 1
 
 avr-objdump -d -j .text interp.elf > interp.bin.asm

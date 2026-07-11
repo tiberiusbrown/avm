@@ -775,13 +775,78 @@ emit_cmp8_or_tst 0xBE, I_BE__CMP8_c3_c2,  VM_C3L, VM_C2L
 emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xC0-0xCF: BEQ.S
+; 0xC0-0xDF: BEQ.S / BNE.S
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; TODO: implement this
+; One-byte short equality branches.  The displacement is relative to nextPC,
+; so the taken path first advances PC past the opcode and then adds disp.
+;
+; The untaken path retains the sequential SPI stream and is padded to the same
+; five pre-dispatch cycles used by the surrounding one-byte handlers.
+;
+; A taken branch discards the speculative sequential byte, seeks the flash to
+; CB:PC, primes a read of the target opcode, and dispatches it without changing
+; PC again (PC already names the target opcode).
+.macro emit_branch_short opcode, label, skip, disp
+    handler_begin \opcode, \label
 
-; seek to PC (PB/PC)
-; requires 13 additional cycles before fetching first byte from SPDR
+    \skip VM_FLAGS, SREG_Z
+    rjmp branch_short_dispatch_reverse_func
+
+    adiw VM_PC, 1
+    subi VM_PCL, lo8(-(\disp))
+    sbci VM_PCH, hi8(-(\disp))
+
+    rcall fx_seek_to_pc
+    in   r6, SPDR
+    out  SPDR, ZERO
+    mul  r6, C_DISPATCH_STRIDE_WORDS
+    movw r30, r0
+    subi r31, hi8(-(DISPATCH_ORG))
+    ijmp
+
+    handler_end \opcode
+.endm
+
+emit_branch_short 0xC0, I_C0__BEQ_S_m8, sbrs, -8
+emit_branch_short 0xC1, I_C1__BEQ_S_m7, sbrs, -7
+emit_branch_short 0xC2, I_C2__BEQ_S_m6, sbrs, -6
+emit_branch_short 0xC3, I_C3__BEQ_S_m5, sbrs, -5
+emit_branch_short 0xC4, I_C4__BEQ_S_m4, sbrs, -4
+emit_branch_short 0xC5, I_C5__BEQ_S_m3, sbrs, -3
+emit_branch_short 0xC6, I_C6__BEQ_S_m2, sbrs, -2
+emit_branch_short 0xC7, I_C7__BEQ_S_m1, sbrs, -1
+emit_branch_short 0xC8, I_C8__BEQ_S_p1, sbrs,  1
+emit_branch_short 0xC9, I_C9__BEQ_S_p2, sbrs,  2
+emit_branch_short 0xCA, I_CA__BEQ_S_p3, sbrs,  3
+emit_branch_short 0xCB, I_CB__BEQ_S_p4, sbrs,  4
+emit_branch_short 0xCC, I_CC__BEQ_S_p5, sbrs,  5
+emit_branch_short 0xCD, I_CD__BEQ_S_p6, sbrs,  6
+emit_branch_short 0xCE, I_CE__BEQ_S_p7, sbrs,  7
+emit_branch_short 0xCF, I_CF__BEQ_S_p8, sbrs,  8
+
+emit_branch_short 0xD0, I_D0__BNE_S_m8, sbrc, -8
+emit_branch_short 0xD1, I_D1__BNE_S_m7, sbrc, -7
+emit_branch_short 0xD2, I_D2__BNE_S_m6, sbrc, -6
+emit_branch_short 0xD3, I_D3__BNE_S_m5, sbrc, -5
+emit_branch_short 0xD4, I_D4__BNE_S_m4, sbrc, -4
+emit_branch_short 0xD5, I_D5__BNE_S_m3, sbrc, -3
+emit_branch_short 0xD6, I_D6__BNE_S_m2, sbrc, -2
+emit_branch_short 0xD7, I_D7__BNE_S_m1, sbrc, -1
+emit_branch_short 0xD8, I_D8__BNE_S_p1, sbrc,  1
+emit_branch_short 0xD9, I_D9__BNE_S_p2, sbrc,  2
+emit_branch_short 0xDA, I_DA__BNE_S_p3, sbrc,  3
+emit_branch_short 0xDB, I_DB__BNE_S_p4, sbrc,  4
+emit_branch_short 0xDC, I_DC__BNE_S_p5, sbrc,  5
+emit_branch_short 0xDD, I_DD__BNE_S_p6, sbrc,  6
+emit_branch_short 0xDE, I_DE__BNE_S_p7, sbrc,  7
+emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
+
+branch_short_dispatch_reverse_func:
+    delay_2
+    dispatch_reverse
+
+; seek to PC (CB/PC)
 fx_seek_to_pc:
     fx_disable
     ldi  r30, SFC_READ
@@ -790,7 +855,7 @@ fx_seek_to_pc:
     lds  r26, data_page_data+0
     add  r26, VM_PCH
     lds  r27, data_page_data+1
-    in   r30, VM_PB
+    in   r30, VM_CB
     adc  r27, r30
     rcall fx_seek_delay_10
     out  SPDR, r27
@@ -798,6 +863,12 @@ fx_seek_to_pc:
     out  SPDR, r26
     rcall fx_seek_delay_17
     out  SPDR, VM_PCL
+    rcall fx_seek_delay_17
+    out  SPDR, r2
+    ; wait 16 cycles: 2 + 10 + 4 (from ret)
+    ; this way, the next byte is ready to read when this method returns
+    delay_2
+    rcall fx_seek_delay_10
     ret
 
 fx_seek_delay_17:

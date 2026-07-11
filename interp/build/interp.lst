@@ -5,10 +5,7 @@ SYMBOL TABLE:
 00000000 l    d  .text	00000000 .text
 000000ae l       .text	00000000 reset_handler
 000000ac l       .text	00000000 default_isr
-00000108 l       .text	00000000 fx_init_delay_17
-00000106 l       .text	00000000 reset_loop
-0000010a l       .text	00000000 fx_init_delay_14
-0000010c l       .text	00000000 fx_init_delay_7
+000022b8 l       .text	00000000 startup_func
 00000200 l       .text	00000000 I_00__CLR_c0
 00000220 l       .text	00000000 I_01__MOV_c0_c1
 00000240 l       .text	00000000 I_02__MOV_c0_c2
@@ -278,12 +275,40 @@ SYMBOL TABLE:
 000022b6 l       .text	00000000 fx_seek_delay_7
 000022b4 l       .text	00000000 fx_seek_delay_10
 000022b2 l       .text	00000000 fx_seek_delay_17
-000000e4 l       .text	00000000 .L11
-000000ea l       .text	00000000 .L21
-00002178 l       .text	00000000 .L12
-00002198 l       .text	00000000 .L13
+000024b8 l       .text	00000000 fx_spi_transfer_blocking
+000024c4 l       .text	00000000 fx_startup_wake_delay
+00002340 l       .text	00000000 startup_find_development_image
+00002370 l       .text	00000000 startup_read_header
+0000245a l       .text	00000000 startup_try_tail
+00002454 l       .text	00000000 startup_invalid_image
+0000249e l       .text	00000000 fx_startup_begin_read
+000024b4 l       .text	00000000 fx_startup_read_byte
+00002418 l       .text	00000000 startup_copy_data
+00002410 l       .text	00000000 startup_clear_static_loop
+00002440 l       .text	00000000 startup_enter_image
+00002434 l       .text	00000000 startup_copy_data_loop
+00002458 l       .text	00000000 startup_invalid_image_loop
+00002498 l       .text	00000000 startup_try_tail_fail
+0000249a l       .text	00000000 startup_try_tail_fail_disabled
+00002178 l       .text	00000000 .L11
+00002198 l       .text	00000000 .L12
+0000235e l       .text	00000000 .L13
+00002384 l       .text	00000000 .L14
+0000238c l       .text	00000000 .L15
+00002394 l       .text	00000000 .L16
+0000239c l       .text	00000000 .L17
+000023a4 l       .text	00000000 .L18
+000023da l       .text	00000000 .L19
+000023e8 l       .text	00000000 .L110
+000023e2 l       .text	00000000 .L21
+000023f6 l       .text	00000000 .L22
+000023f0 l       .text	00000000 .L31
+00002404 l       .text	00000000 .L32
+0000242c l       .text	00000000 .L41
+000024ba l       .text	00000000 .L111
+000024c6 l       .text	00000000 .L112
 00000000 g       .text	00000000 __trampolines_start
-000022b8 g       .text	00000000 _etext
+000024cc g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00000000 g       .text	000000ac __vectors
@@ -345,62 +370,53 @@ Disassembly of section .text:
       ac:	ff cf       	rjmp	.-2      	; 0xac <default_isr>
 
 000000ae <reset_handler>:
-      ae:	22 24       	eor	r2, r2
-      b0:	a0 e1       	ldi	r26, 0x10	; 16
-      b2:	7a 2e       	mov	r7, r26
-      b4:	c0 e0       	ldi	r28, 0x00	; 0
-      b6:	da e0       	ldi	r29, 0x0A	; 10
-      b8:	33 24       	eor	r3, r3
-      ba:	2a bc       	out	0x2a, r2	; 42
-      bc:	2b bc       	out	0x2b, r2	; 43
-      be:	a0 e5       	ldi	r26, 0x50	; 80
-      c0:	ac bd       	out	0x2c, r26	; 44
-      c2:	a1 e0       	ldi	r26, 0x01	; 1
-      c4:	ad bd       	out	0x2d, r26	; 45
-      c6:	5e 9a       	sbi	0x0b, 6	; 11
-      c8:	e4 e1       	ldi	r30, 0x14	; 20
-      ca:	f0 e0       	ldi	r31, 0x00	; 0
-      cc:	a5 91       	lpm	r26, Z+
-      ce:	b5 91       	lpm	r27, Z+
-      d0:	05 90       	lpm	r0, Z+
-      d2:	15 90       	lpm	r1, Z+
-      d4:	a8 51       	subi	r26, 0x18	; 24
-      d6:	b5 49       	sbci	r27, 0x95	; 149
-      d8:	29 f4       	brne	.+10     	; 0xe4 <.L1^B1>
-      da:	aa 27       	eor	r26, r26
-      dc:	bb 27       	eor	r27, r27
-      de:	44 24       	eor	r4, r4
-      e0:	55 24       	eor	r5, r5
-      e2:	03 c0       	rjmp	.+6      	; 0xea <.L2^B1>
-
-000000e4 <.L1^B1>:
-      e4:	32 96       	adiw	r30, 0x02	; 2
-      e6:	45 90       	lpm	r4, Z+
-      e8:	55 90       	lpm	r5, Z+
-
-000000ea <.L2^B1>:
-      ea:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_edata+0x900>
-      ee:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_edata+0x901>
-      f2:	40 92 02 0a 	sts	0x0A02, r4	; 0x800a02 <_edata+0x902>
-      f6:	50 92 03 0a 	sts	0x0A03, r5	; 0x800a03 <_edata+0x903>
-      fa:	5a 98       	cbi	0x0b, 2	; 11
-      fc:	ab ea       	ldi	r26, 0xAB	; 171
-      fe:	ae bd       	out	0x2e, r26	; 46
-     100:	03 d0       	rcall	.+6      	; 0x108 <fx_init_delay_17>
-     102:	5a 9a       	sbi	0x0b, 2	; 11
-     104:	78 94       	sei
-
-00000106 <reset_loop>:
-     106:	ff cf       	rjmp	.-2      	; 0x106 <reset_loop>
-
-00000108 <fx_init_delay_17>:
-     108:	c8 95       	lpm
-
-0000010a <fx_init_delay_14>:
-     10a:	00 d0       	rcall	.+0      	; 0x10c <fx_init_delay_7>
-
-0000010c <fx_init_delay_7>:
-     10c:	08 95       	ret
+      ae:	0c 94 5c 11 	jmp	0x22b8	; 0x22b8 <startup_func>
+      b2:	00 00       	nop
+      b4:	00 00       	nop
+      b6:	00 00       	nop
+      b8:	00 00       	nop
+      ba:	00 00       	nop
+      bc:	00 00       	nop
+      be:	00 00       	nop
+      c0:	00 00       	nop
+      c2:	00 00       	nop
+      c4:	00 00       	nop
+      c6:	00 00       	nop
+      c8:	00 00       	nop
+      ca:	00 00       	nop
+      cc:	00 00       	nop
+      ce:	00 00       	nop
+      d0:	00 00       	nop
+      d2:	00 00       	nop
+      d4:	00 00       	nop
+      d6:	00 00       	nop
+      d8:	00 00       	nop
+      da:	00 00       	nop
+      dc:	00 00       	nop
+      de:	00 00       	nop
+      e0:	00 00       	nop
+      e2:	00 00       	nop
+      e4:	00 00       	nop
+      e6:	00 00       	nop
+      e8:	00 00       	nop
+      ea:	00 00       	nop
+      ec:	00 00       	nop
+      ee:	00 00       	nop
+      f0:	00 00       	nop
+      f2:	00 00       	nop
+      f4:	00 00       	nop
+      f6:	00 00       	nop
+      f8:	00 00       	nop
+      fa:	00 00       	nop
+      fc:	00 00       	nop
+      fe:	00 00       	nop
+     100:	00 00       	nop
+     102:	00 00       	nop
+     104:	00 00       	nop
+     106:	00 00       	nop
+     108:	00 00       	nop
+     10a:	00 00       	nop
+     10c:	00 00       	nop
      10e:	00 00       	nop
      110:	00 00       	nop
      112:	00 00       	nop
@@ -5052,10 +5068,10 @@ Disassembly of section .text:
     216e:	78 94       	sei
     2170:	a3 2d       	mov	r26, r3
     2172:	a3 70       	andi	r26, 0x03	; 3
-    2174:	09 f4       	brne	.+2      	; 0x2178 <.L1^B2>
+    2174:	09 f4       	brne	.+2      	; 0x2178 <.L1^B1>
     2176:	71 c0       	rjmp	.+226    	; 0x225a <branch_rel8_not_taken_func>
 
-00002178 <.L1^B2>:
+00002178 <.L1^B1>:
     2178:	72 c0       	rjmp	.+228    	; 0x225e <branch_rel8_taken_func>
     217a:	00 00       	nop
     217c:	00 00       	nop
@@ -5072,10 +5088,10 @@ Disassembly of section .text:
     218e:	78 94       	sei
     2190:	a3 2d       	mov	r26, r3
     2192:	a3 70       	andi	r26, 0x03	; 3
-    2194:	09 f0       	breq	.+2      	; 0x2198 <.L1^B3>
+    2194:	09 f0       	breq	.+2      	; 0x2198 <.L1^B2>
     2196:	61 c0       	rjmp	.+194    	; 0x225a <branch_rel8_not_taken_func>
 
-00002198 <.L1^B3>:
+00002198 <.L1^B2>:
     2198:	62 c0       	rjmp	.+196    	; 0x225e <branch_rel8_taken_func>
     219a:	00 00       	nop
     219c:	00 00       	nop
@@ -5250,3 +5266,307 @@ Disassembly of section .text:
 
 000022b6 <fx_seek_delay_7>:
     22b6:	08 95       	ret
+
+000022b8 <startup_func>:
+    22b8:	f8 94       	cli
+    22ba:	af ef       	ldi	r26, 0xFF	; 255
+    22bc:	ad bf       	out	0x3d, r26	; 61
+    22be:	aa e0       	ldi	r26, 0x0A	; 10
+    22c0:	ae bf       	out	0x3e, r26	; 62
+    22c2:	22 24       	eor	r2, r2
+    22c4:	a0 e1       	ldi	r26, 0x10	; 16
+    22c6:	7a 2e       	mov	r7, r26
+    22c8:	c0 e0       	ldi	r28, 0x00	; 0
+    22ca:	da e0       	ldi	r29, 0x0A	; 10
+    22cc:	33 24       	eor	r3, r3
+    22ce:	2a bc       	out	0x2a, r2	; 42
+    22d0:	2b bc       	out	0x2b, r2	; 43
+    22d2:	20 92 00 0a 	sts	0x0A00, r2	; 0x800a00 <_edata+0x900>
+    22d6:	20 92 01 0a 	sts	0x0A01, r2	; 0x800a01 <_edata+0x901>
+    22da:	20 92 02 0a 	sts	0x0A02, r2	; 0x800a02 <_edata+0x902>
+    22de:	20 92 03 0a 	sts	0x0A03, r2	; 0x800a03 <_edata+0x903>
+    22e2:	20 92 04 0a 	sts	0x0A04, r2	; 0x800a04 <_edata+0x904>
+    22e6:	20 92 05 0a 	sts	0x0A05, r2	; 0x800a05 <_edata+0x905>
+    22ea:	20 92 06 0a 	sts	0x0A06, r2	; 0x800a06 <_edata+0x906>
+    22ee:	a0 e5       	ldi	r26, 0x50	; 80
+    22f0:	ac bd       	out	0x2c, r26	; 44
+    22f2:	a1 e0       	ldi	r26, 0x01	; 1
+    22f4:	ad bd       	out	0x2d, r26	; 45
+    22f6:	5e 9a       	sbi	0x0b, 6	; 11
+    22f8:	5a 9a       	sbi	0x0b, 2	; 11
+    22fa:	5a 98       	cbi	0x0b, 2	; 11
+    22fc:	eb ea       	ldi	r30, 0xAB	; 171
+    22fe:	dc d0       	rcall	.+440    	; 0x24b8 <fx_spi_transfer_blocking>
+    2300:	5a 9a       	sbi	0x0b, 2	; 11
+    2302:	e0 d0       	rcall	.+448    	; 0x24c4 <fx_startup_wake_delay>
+    2304:	e4 e1       	ldi	r30, 0x14	; 20
+    2306:	f0 e0       	ldi	r31, 0x00	; 0
+    2308:	45 91       	lpm	r20, Z+
+    230a:	55 91       	lpm	r21, Z+
+    230c:	48 31       	cpi	r20, 0x18	; 24
+    230e:	c1 f4       	brne	.+48     	; 0x2340 <startup_find_development_image>
+    2310:	55 39       	cpi	r21, 0x95	; 149
+    2312:	b1 f4       	brne	.+44     	; 0x2340 <startup_find_development_image>
+    2314:	b5 91       	lpm	r27, Z+
+    2316:	a5 91       	lpm	r26, Z+
+    2318:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_edata+0x900>
+    231c:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_edata+0x901>
+    2320:	45 91       	lpm	r20, Z+
+    2322:	55 91       	lpm	r21, Z+
+    2324:	48 31       	cpi	r20, 0x18	; 24
+    2326:	21 f5       	brne	.+72     	; 0x2370 <startup_read_header>
+    2328:	55 39       	cpi	r21, 0x95	; 149
+    232a:	11 f5       	brne	.+68     	; 0x2370 <startup_read_header>
+    232c:	b5 91       	lpm	r27, Z+
+    232e:	a5 91       	lpm	r26, Z+
+    2330:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_edata+0x902>
+    2334:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_edata+0x903>
+    2338:	a1 e0       	ldi	r26, 0x01	; 1
+    233a:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_edata+0x906>
+    233e:	18 c0       	rjmp	.+48     	; 0x2370 <startup_read_header>
+
+00002340 <startup_find_development_image>:
+    2340:	6f ef       	ldi	r22, 0xFF	; 255
+    2342:	bf ef       	ldi	r27, 0xFF	; 255
+    2344:	a8 ef       	ldi	r26, 0xF8	; 248
+    2346:	44 27       	eor	r20, r20
+    2348:	55 27       	eor	r21, r21
+    234a:	87 d0       	rcall	.+270    	; 0x245a <startup_try_tail>
+    234c:	88 f0       	brcs	.+34     	; 0x2370 <startup_read_header>
+    234e:	6f ef       	ldi	r22, 0xFF	; 255
+    2350:	bf ee       	ldi	r27, 0xEF	; 239
+    2352:	a8 ef       	ldi	r26, 0xF8	; 248
+    2354:	40 ef       	ldi	r20, 0xF0	; 240
+    2356:	5f ef       	ldi	r21, 0xFF	; 255
+    2358:	80 d0       	rcall	.+256    	; 0x245a <startup_try_tail>
+    235a:	08 f0       	brcs	.+2      	; 0x235e <.L1^B3>
+    235c:	7b c0       	rjmp	.+246    	; 0x2454 <startup_invalid_image>
+
+0000235e <.L1^B3>:
+    235e:	a0 ef       	ldi	r26, 0xF0	; 240
+    2360:	bf ef       	ldi	r27, 0xFF	; 255
+    2362:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_edata+0x902>
+    2366:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_edata+0x903>
+    236a:	a1 e0       	ldi	r26, 0x01	; 1
+    236c:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_edata+0x906>
+
+00002370 <startup_read_header>:
+    2370:	aa 27       	eor	r26, r26
+    2372:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_edata+0x900>
+    2376:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_edata+0x901>
+    237a:	91 d0       	rcall	.+290    	; 0x249e <fx_startup_begin_read>
+    237c:	9b d0       	rcall	.+310    	; 0x24b4 <fx_startup_read_byte>
+    237e:	e1 34       	cpi	r30, 0x41	; 65
+    2380:	09 f0       	breq	.+2      	; 0x2384 <.L1^B4>
+    2382:	68 c0       	rjmp	.+208    	; 0x2454 <startup_invalid_image>
+
+00002384 <.L1^B4>:
+    2384:	97 d0       	rcall	.+302    	; 0x24b4 <fx_startup_read_byte>
+    2386:	e6 35       	cpi	r30, 0x56	; 86
+    2388:	09 f0       	breq	.+2      	; 0x238c <.L1^B5>
+    238a:	64 c0       	rjmp	.+200    	; 0x2454 <startup_invalid_image>
+
+0000238c <.L1^B5>:
+    238c:	93 d0       	rcall	.+294    	; 0x24b4 <fx_startup_read_byte>
+    238e:	ed 34       	cpi	r30, 0x4D	; 77
+    2390:	09 f0       	breq	.+2      	; 0x2394 <.L1^B6>
+    2392:	60 c0       	rjmp	.+192    	; 0x2454 <startup_invalid_image>
+
+00002394 <.L1^B6>:
+    2394:	8f d0       	rcall	.+286    	; 0x24b4 <fx_startup_read_byte>
+    2396:	e1 30       	cpi	r30, 0x01	; 1
+    2398:	09 f0       	breq	.+2      	; 0x239c <.L1^B7>
+    239a:	5c c0       	rjmp	.+184    	; 0x2454 <startup_invalid_image>
+
+0000239c <.L1^B7>:
+    239c:	8b d0       	rcall	.+278    	; 0x24b4 <fx_startup_read_byte>
+    239e:	e1 30       	cpi	r30, 0x01	; 1
+    23a0:	09 f0       	breq	.+2      	; 0x23a4 <.L1^B8>
+    23a2:	58 c0       	rjmp	.+176    	; 0x2454 <startup_invalid_image>
+
+000023a4 <.L1^B8>:
+    23a4:	87 d0       	rcall	.+270    	; 0x24b4 <fx_startup_read_byte>
+    23a6:	8e 2f       	mov	r24, r30
+    23a8:	85 d0       	rcall	.+266    	; 0x24b4 <fx_startup_read_byte>
+    23aa:	9e 2f       	mov	r25, r30
+    23ac:	83 d0       	rcall	.+262    	; 0x24b4 <fx_startup_read_byte>
+    23ae:	ea bd       	out	0x2a, r30	; 42
+    23b0:	81 d0       	rcall	.+258    	; 0x24b4 <fx_startup_read_byte>
+    23b2:	0e 2f       	mov	r16, r30
+    23b4:	7f d0       	rcall	.+254    	; 0x24b4 <fx_startup_read_byte>
+    23b6:	1e 2f       	mov	r17, r30
+    23b8:	7d d0       	rcall	.+250    	; 0x24b4 <fx_startup_read_byte>
+    23ba:	2e 2f       	mov	r18, r30
+    23bc:	7b d0       	rcall	.+246    	; 0x24b4 <fx_startup_read_byte>
+    23be:	3e 2f       	mov	r19, r30
+    23c0:	79 d0       	rcall	.+242    	; 0x24b4 <fx_startup_read_byte>
+    23c2:	4e 2f       	mov	r20, r30
+    23c4:	e0 93 04 0a 	sts	0x0A04, r30	; 0x800a04 <_edata+0x904>
+    23c8:	75 d0       	rcall	.+234    	; 0x24b4 <fx_startup_read_byte>
+    23ca:	5e 2f       	mov	r21, r30
+    23cc:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <_edata+0x905>
+    23d0:	5a 9a       	sbi	0x0b, 2	; 11
+    23d2:	20 17       	cp	r18, r16
+    23d4:	31 07       	cpc	r19, r17
+    23d6:	08 f4       	brcc	.+2      	; 0x23da <.L1^B9>
+    23d8:	3d c0       	rjmp	.+122    	; 0x2454 <startup_invalid_image>
+
+000023da <.L1^B9>:
+    23da:	34 30       	cpi	r19, 0x04	; 4
+    23dc:	28 f0       	brcs	.+10     	; 0x23e8 <.L1^B10>
+    23de:	09 f0       	breq	.+2      	; 0x23e2 <.L2^B1>
+    23e0:	39 c0       	rjmp	.+114    	; 0x2454 <startup_invalid_image>
+
+000023e2 <.L2^B1>:
+    23e2:	22 23       	and	r18, r18
+    23e4:	09 f0       	breq	.+2      	; 0x23e8 <.L1^B10>
+    23e6:	36 c0       	rjmp	.+108    	; 0x2454 <startup_invalid_image>
+
+000023e8 <.L1^B10>:
+    23e8:	54 30       	cpi	r21, 0x04	; 4
+    23ea:	28 f0       	brcs	.+10     	; 0x23f6 <.L2^B2>
+    23ec:	09 f0       	breq	.+2      	; 0x23f0 <.L3^B1>
+    23ee:	32 c0       	rjmp	.+100    	; 0x2454 <startup_invalid_image>
+
+000023f0 <.L3^B1>:
+    23f0:	44 23       	and	r20, r20
+    23f2:	09 f0       	breq	.+2      	; 0x23f6 <.L2^B2>
+    23f4:	2f c0       	rjmp	.+94     	; 0x2454 <startup_invalid_image>
+
+000023f6 <.L2^B2>:
+    23f6:	42 15       	cp	r20, r2
+    23f8:	52 05       	cpc	r21, r2
+    23fa:	21 f0       	breq	.+8      	; 0x2404 <.L3^B2>
+    23fc:	a0 91 06 0a 	lds	r26, 0x0A06	; 0x800a06 <_edata+0x906>
+    2400:	a0 ff       	sbrs	r26, 0
+    2402:	28 c0       	rjmp	.+80     	; 0x2454 <startup_invalid_image>
+
+00002404 <.L3^B2>:
+    2404:	a0 e0       	ldi	r26, 0x00	; 0
+    2406:	b1 e0       	ldi	r27, 0x01	; 1
+    2408:	a9 01       	movw	r20, r18
+    240a:	42 15       	cp	r20, r2
+    240c:	52 05       	cpc	r21, r2
+    240e:	21 f0       	breq	.+8      	; 0x2418 <startup_copy_data>
+
+00002410 <startup_clear_static_loop>:
+    2410:	2d 92       	st	X+, r2
+    2412:	41 50       	subi	r20, 0x01	; 1
+    2414:	50 40       	sbci	r21, 0x00	; 0
+    2416:	e1 f7       	brne	.-8      	; 0x2410 <startup_clear_static_loop>
+
+00002418 <startup_copy_data>:
+    2418:	02 15       	cp	r16, r2
+    241a:	12 05       	cpc	r17, r2
+    241c:	89 f0       	breq	.+34     	; 0x2440 <startup_enter_image>
+    241e:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_edata+0x900>
+    2422:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_edata+0x901>
+    2426:	b3 95       	inc	r27
+    2428:	09 f4       	brne	.+2      	; 0x242c <.L4^B1>
+    242a:	43 94       	inc	r4
+
+0000242c <.L4^B1>:
+    242c:	aa 27       	eor	r26, r26
+    242e:	37 d0       	rcall	.+110    	; 0x249e <fx_startup_begin_read>
+    2430:	a0 e0       	ldi	r26, 0x00	; 0
+    2432:	b1 e0       	ldi	r27, 0x01	; 1
+
+00002434 <startup_copy_data_loop>:
+    2434:	3f d0       	rcall	.+126    	; 0x24b4 <fx_startup_read_byte>
+    2436:	ed 93       	st	X+, r30
+    2438:	01 50       	subi	r16, 0x01	; 1
+    243a:	10 40       	sbci	r17, 0x00	; 0
+    243c:	d9 f7       	brne	.-10     	; 0x2434 <startup_copy_data_loop>
+    243e:	5a 9a       	sbi	0x0b, 2	; 11
+
+00002440 <startup_enter_image>:
+    2440:	2b bc       	out	0x2b, r2	; 43
+    2442:	21 df       	rcall	.-446    	; 0x2286 <fx_seek_to_pc>
+    2444:	6e b4       	in	r6, 0x2e	; 46
+    2446:	2e bc       	out	0x2e, r2	; 46
+    2448:	78 94       	sei
+    244a:	00 00       	nop
+    244c:	67 9c       	mul	r6, r7
+    244e:	f0 01       	movw	r30, r0
+    2450:	ff 5f       	subi	r31, 0xFF	; 255
+    2452:	09 94       	ijmp
+
+00002454 <startup_invalid_image>:
+    2454:	f8 94       	cli
+    2456:	5a 9a       	sbi	0x0b, 2	; 11
+
+00002458 <startup_invalid_image_loop>:
+    2458:	ff cf       	rjmp	.-2      	; 0x2458 <startup_invalid_image_loop>
+
+0000245a <startup_try_tail>:
+    245a:	21 d0       	rcall	.+66     	; 0x249e <fx_startup_begin_read>
+    245c:	2b d0       	rcall	.+86     	; 0x24b4 <fx_startup_read_byte>
+    245e:	e1 34       	cpi	r30, 0x41	; 65
+    2460:	d9 f4       	brne	.+54     	; 0x2498 <startup_try_tail_fail>
+    2462:	28 d0       	rcall	.+80     	; 0x24b4 <fx_startup_read_byte>
+    2464:	e6 35       	cpi	r30, 0x56	; 86
+    2466:	c1 f4       	brne	.+48     	; 0x2498 <startup_try_tail_fail>
+    2468:	25 d0       	rcall	.+74     	; 0x24b4 <fx_startup_read_byte>
+    246a:	e4 35       	cpi	r30, 0x54	; 84
+    246c:	a9 f4       	brne	.+42     	; 0x2498 <startup_try_tail_fail>
+    246e:	22 d0       	rcall	.+68     	; 0x24b4 <fx_startup_read_byte>
+    2470:	e1 30       	cpi	r30, 0x01	; 1
+    2472:	91 f4       	brne	.+36     	; 0x2498 <startup_try_tail_fail>
+    2474:	1f d0       	rcall	.+62     	; 0x24b4 <fx_startup_read_byte>
+    2476:	0e 2e       	mov	r0, r30
+    2478:	1d d0       	rcall	.+58     	; 0x24b4 <fx_startup_read_byte>
+    247a:	1e 2e       	mov	r1, r30
+    247c:	5a 9a       	sbi	0x0b, 2	; 11
+    247e:	02 14       	cp	r0, r2
+    2480:	12 04       	cpc	r1, r2
+    2482:	59 f0       	breq	.+22     	; 0x249a <startup_try_tail_fail_disabled>
+    2484:	a4 2f       	mov	r26, r20
+    2486:	b5 2f       	mov	r27, r21
+    2488:	a0 19       	sub	r26, r0
+    248a:	b1 09       	sbc	r27, r1
+    248c:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_edata+0x900>
+    2490:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_edata+0x901>
+    2494:	08 94       	sec
+    2496:	08 95       	ret
+
+00002498 <startup_try_tail_fail>:
+    2498:	5a 9a       	sbi	0x0b, 2	; 11
+
+0000249a <startup_try_tail_fail_disabled>:
+    249a:	88 94       	clc
+    249c:	08 95       	ret
+
+0000249e <fx_startup_begin_read>:
+    249e:	5a 9a       	sbi	0x0b, 2	; 11
+    24a0:	5a 98       	cbi	0x0b, 2	; 11
+    24a2:	e3 e0       	ldi	r30, 0x03	; 3
+    24a4:	09 d0       	rcall	.+18     	; 0x24b8 <fx_spi_transfer_blocking>
+    24a6:	e6 2f       	mov	r30, r22
+    24a8:	07 d0       	rcall	.+14     	; 0x24b8 <fx_spi_transfer_blocking>
+    24aa:	eb 2f       	mov	r30, r27
+    24ac:	05 d0       	rcall	.+10     	; 0x24b8 <fx_spi_transfer_blocking>
+    24ae:	ea 2f       	mov	r30, r26
+    24b0:	03 d0       	rcall	.+6      	; 0x24b8 <fx_spi_transfer_blocking>
+    24b2:	08 95       	ret
+
+000024b4 <fx_startup_read_byte>:
+    24b4:	e2 2d       	mov	r30, r2
+    24b6:	00 c0       	rjmp	.+0      	; 0x24b8 <fx_spi_transfer_blocking>
+
+000024b8 <fx_spi_transfer_blocking>:
+    24b8:	ee bd       	out	0x2e, r30	; 46
+
+000024ba <.L1^B11>:
+    24ba:	fd b5       	in	r31, 0x2d	; 45
+    24bc:	f7 ff       	sbrs	r31, 7
+    24be:	fd cf       	rjmp	.-6      	; 0x24ba <.L1^B11>
+    24c0:	ee b5       	in	r30, 0x2e	; 46
+    24c2:	08 95       	ret
+
+000024c4 <fx_startup_wake_delay>:
+    24c4:	a0 e2       	ldi	r26, 0x20	; 32
+
+000024c6 <.L1^B12>:
+    24c6:	aa 95       	dec	r26
+    24c8:	f1 f7       	brne	.-4      	; 0x24c6 <.L1^B12>
+    24ca:	08 95       	ret

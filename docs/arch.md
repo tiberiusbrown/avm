@@ -428,16 +428,24 @@ The global region is:
 0x0100–0x04FF
 ```
 
-It contains:
+The linker lays out writable static storage as one contiguous range beginning at `0x0100`:
 
-* `.data`
-* `.bss`
-* Static-duration local objects
-* C++ static objects
-* Compiler-generated static data
-* Fixed-capacity application state
+```text
+0x0100                       start of .data
+0x0100 + dataSize            start of .bss
+0x0100 + staticSize          first byte after static storage
+```
 
-The linker MUST reject an image whose required static SRAM exceeds 1,024 bytes.
+`dataSize` is the number of initialized bytes copied from the linked image. `staticSize` is the total size of initialized and zero-initialized static storage. Therefore:
+
+```text
+0 <= dataSize <= staticSize <= 1024
+bssSize = staticSize - dataSize
+```
+
+Linker-created padding inside `.data` or `.bss` is included in these sizes. Static-duration local objects, C++ static objects, compiler-generated writable data, and fixed-capacity application state are assigned within the same contiguous range.
+
+The linker MUST reject an image whose `staticSize` exceeds 1,024 bytes.
 
 There is no heap after `.bss`.
 
@@ -563,7 +571,14 @@ AVM address space one is a 24-bit logical, read-only program space:
 0x000000–0xFFFFFF
 ```
 
-It contains:
+The first 256 bytes are reserved for the linked-image header:
+
+```text
+0x000000–0x0000FF  AVM image header
+0x000100–...       Linker-placed program payload
+```
+
+The payload may contain, in any linker-selected order:
 
 * Bytecode.
 * Read-only constants.
@@ -573,7 +588,12 @@ It contains:
 * Constructor tables.
 * Initial values for `.data`.
 * Function pointers.
+* Optional debugger metadata.
 * Other immutable assets.
+
+The format does not require a global code region followed by a global data region. The linker may interleave or cluster code and immutable data when that improves bank placement, locality, or relaxation.
+
+For every stored image byte, the file offset is equal to its logical program-space address. The image header is therefore addressable as program data, although ordinary source-language objects are never allocated within it.
 
 The null program pointer is:
 
@@ -581,7 +601,7 @@ The null program pointer is:
 0x000000
 ```
 
-No allocatable symbol may be placed at logical program address zero.
+No allocatable symbol may be placed below logical address `0x000100`.
 
 Program-space stores do not exist.
 
@@ -595,11 +615,19 @@ The loader supplies a 24-bit physical image base:
 imageBase
 ```
 
+`imageBase` points to header byte `0x00` and MUST be aligned to 256 bytes:
+
+```text
+imageBase mod 256 = 0
+```
+
 A logical program-space address is translated as:
 
 ```text
 physicalFlashAddress = imageBase + logicalProgramAddress
 ```
+
+Because both the image base and the 256-byte header are page-aligned, every logical 256-byte page has the same 256-byte alignment in external flash. The first payload page begins at physical address `imageBase + 0x100`.
 
 This addition is performed when:
 
@@ -610,7 +638,7 @@ This addition is performed when:
 
 It is not performed for every sequential byte because the SPI flash read stream advances internally.
 
-The loader MUST reject an image whose physical placement would overflow the available external-flash address range.
+The loader or image packer MUST reject an image whose physical base is not 256-byte aligned or whose placement would overflow the available external-flash address range.
 
 ---
 
@@ -1661,7 +1689,7 @@ Flags are preserved.
 
 `JMP16` and `CALL16` use an absolute low-16-bit address in the current bank.
 
-`SYS` invokes a separately versioned platform service. Program termination, frame yielding, debugger breaks, and explicit guest assertions or traps are system services rather than dedicated ISA instructions.
+`SYS` invokes a service in the Arduboy system ABI. Program termination, frame yielding, debugger breaks, and explicit guest assertions or traps are system services rather than dedicated ISA instructions.
 
 ---
 
@@ -2053,7 +2081,7 @@ A cross-bank tail call MUST use a jump, not a call, so the callee returns direct
 
 ## 65. `SYS`
 
-`SYS imm8` invokes a service in the separately versioned Arduboy system ABI.
+`SYS imm8` invokes a service in the Arduboy system ABI. The service ABI may be maintained as a separate specification, but linked images express their complete interpreter compatibility through the single `runtimeVersion` field described in Part XVI.
 
 Unless a service specifies otherwise:
 
@@ -2515,7 +2543,9 @@ Virtual-function pointers are 24-bit function pointers.
 
 # Part XIV — Assembler, ELF, and Linker
 
-## 84. Object format
+## 84. Object and linked-image formats
+
+### 84.1 Relocatable objects
 
 The compiler toolchain should use little-endian ELF objects.
 
@@ -2534,9 +2564,42 @@ Recommended sections:
 .debug_*
 ```
 
-`.text`, `.rodata`, constructor arrays, and `.data` load images reside in program space.
+`.text`, `.rodata`, and constructor arrays reside in program space.
 
-`.data` and `.bss` receive native data-space addresses in SRAM.
+`.data` and `.bss` receive native data-space virtual addresses beginning at `0x0100`. The linker places all initialized writable objects first and all zero-initialized writable objects immediately afterward, producing the contiguous SRAM layout defined in Section 13.
+
+Debug information and other non-runtime metadata remain in the ELF file or a sidecar file. They are not required in the flat executable image.
+
+### 84.2 Final linked image
+
+The normal executable output is the flat AVM linked-image format defined in Part XVI.
+
+The linker reserves logical/file offsets `0x000000–0x0000FF` for the header. The contiguous `.data` initializer image begins at logical/file offset `0x000100`. The first ordinary program-space section begins at:
+
+```text
+programStart = align_up(0x000100 + dataSize, 0x100)
+```
+
+The bytes between the end of the `.data` initializer and `programStart` are `0xFF` padding. This keeps the first code page 256-byte aligned without requiring separate header fields for load addresses.
+
+For every stored byte:
+
+```text
+file offset = logical program-space address
+```
+
+The startup entry section is normally placed at `programStart`, but the three-byte `entryPoint` field is authoritative. After `programStart`, the linker may interleave code, read-only constants, constructor arrays, jump tables, and other immutable program data as appropriate for locality and bank placement. `.bss` occupies no bytes in the linked image.
+
+The final eight bytes of the linked image are a mandatory tail locator. The image writer chooses:
+
+```text
+fileSize   = align_up(endOfPayload + 8, 0x100)
+tailOffset = fileSize - 8
+```
+
+All unused bytes before the tail are filled with `0xFF`. The tail stores its own magic and the total image length in 256-byte pages. This allows an emulator or development build placed at the end of the FX address space to reconstruct the header address without a size field in the header.
+
+The linker or final image writer synthesizes the header and tail after final layout and relaxation, computes `headerCrc32`, and verifies that the complete file length is a multiple of 256 bytes.
 
 ---
 
@@ -2888,66 +2951,290 @@ Interrupt handlers should:
 
 ## 102. Startup sequence
 
-The loader or startup runtime performs:
+The interpreter supports two ways to discover the physical image and save locations.
 
-1. Validate the image header and ISA version.
-2. Install the physical `imageBase`.
-3. Set `SP = 0x0A00`.
-4. Initialize PB.
-5. Copy `.data` initializers from program space to SRAM.
-6. Clear `.bss`.
-7. Optionally clear the framebuffer.
-8. Run static constructors.
-9. Set `CB:PC` to the entry point.
-10. Start sequential instruction fetch.
+### 102.1 Arduboy FX flashcart launch
 
-General-purpose registers are unspecified at raw image entry unless the runtime ABI specifies otherwise.
+The FX flashcart loader communicates the selected image and save pages through the two reserved interrupt-vector slots used by the Arduboy FX convention:
 
-The C runtime entry point supplies valid arguments to `main`.
+| Internal-flash address | Size | Meaning |
+| ---------------------: | ---: | ------- |
+| `0x0014` | 2 | Data-vector key, little-endian `0x9518` |
+| `0x0016` | 2 | Image base page, stored high byte then low byte |
+| `0x0018` | 2 | Save-vector key, little-endian `0x9518` |
+| `0x001A` | 2 | Save base page, stored high byte then low byte |
+
+The interpreter first checks the data-vector key. When it is present, the following page number is authoritative and identifies the 256-byte physical page containing the AVM header. The save-vector key is checked independently; a missing save key is permitted only when the linked image requests `saveSize == 0`.
+
+The page convention matches the Arduboy FX library: a page value `P` represents physical byte address `P << 8`.
+
+### 102.2 Development and emulator launch
+
+When the flashcart data-vector key is absent, the interpreter searches for the mandatory AVM tail locator in the two development placements supported by the packer:
+
+```text
+0xFFFFF8  image ends at the end of the 16 MiB flash; no save sector follows
+0xFFEFF8  image ends immediately before the final 4 KiB save sector
+```
+
+The first location is checked first. If neither location contains a valid tail magic, startup fails.
+
+For a tail found in physical page `tailPage`, the image header page is reconstructed as:
+
+```text
+imageBasePage = tailPage + 1 - imagePageCount
+imageBase     = imageBasePage << 8
+```
+
+When the tail is found at `0xFFEFF8`, the save sector begins at physical page `0xFFF0`. When the tail is found at `0xFFFFF8`, no development save area exists and an image with nonzero `saveSize` is rejected.
+
+### 102.3 Minimal on-device initialization
+
+After discovering the physical image location, the normal Arduboy interpreter checks only:
+
+```text
+magic == { 0x41, 0x56, 0x4D, 0x01 }
+runtimeVersion == 1
+dataSize <= staticSize
+staticSize <= 1024
+saveSize <= 1024
+saveSize == 0 or a valid save page was supplied or discovered
+```
+
+The magic bytes are ASCII `AVM` followed by linked-image format revision `1`. `runtimeVersion` is one combined compatibility number covering the bytecode ISA, calling convention, memory model, startup contract, and system ABI.
+
+The interpreter then performs:
+
+1. Install the physical image base page and save page.
+2. Set the native AVR hardware stack to the top of SRAM.
+3. Set AVM `SP = 0x0A00`.
+4. Set `PB = 0` and clear AVM flags.
+5. Clear `staticSize` bytes beginning at SRAM address `0x0100`.
+6. Copy `dataSize` bytes from logical program address `0x000100` to SRAM address `0x0100`.
+7. Retain `saveSize` and the physical save page for the system ABI.
+8. Set `CB:PC` to `entryPoint`.
+9. Start an FX read stream at the physical translation of `entryPoint`.
+10. Fetch the first opcode, start fetching its following byte, enable interrupts, and enter primary dispatch.
+
+Clearing all static storage before copying `.data` is intentionally used instead of separately calculating and clearing the `.bss` suffix. The maximum region is only 1,024 bytes and this keeps startup logic straightforward.
+
+The linked entry point names the runtime startup symbol, conventionally `_start`. `_start` runs static constructors, performs any desired framebuffer initialization, calls `main`, runs required termination handlers, and invokes the appropriate system service when `main` returns.
+
+A diagnostic interpreter MAY additionally verify `headerCrc32`, the tail reserved field, entry-point alignment, image bounds, and reserved header bytes. These checks are intentionally omitted from the normal Arduboy path.
+
+General-purpose AVM registers are unspecified at raw image entry unless the runtime ABI specifies otherwise.
 
 ---
 
-## 103. Image header
+## 103. Linked binary image format
 
-A suitable host-side header is:
+### 103.1 General layout
+
+An AVM executable is a flat little-endian binary with this layout:
+
+```text
+0x000000–0x0000FF                           Fixed 256-byte header
+0x000100–0x000100+dataSize-1                Contiguous .data initializer image
+...–programStart-1                          0xFF alignment padding
+programStart–...                            Linker-placed program-space contents
+...–fileSize-9                              0xFF final padding
+fileSize-8–fileSize-1                       Mandatory eight-byte tail locator
+```
+
+where:
+
+```text
+programStart = align_up(0x000100 + dataSize, 0x100)
+fileSize     = align_up(endOfPayload + 8, 0x100)
+file offset  = logical program-space address
+fileSize mod 0x100 = 0
+```
+
+The first code page therefore remains 256-byte aligned even when initialized writable data is present. After `programStart`, code and immutable data need not occupy separate global ranges; the linker may interleave them while respecting function-bank and target-alignment requirements.
+
+There are no `programSize` or `imageSize` fields in the header. The tail's `imagePageCount` provides the complete linked-image length when a locator-based launch needs it.
+
+The physical `imageBase` MUST be 256-byte aligned. Because the flat image length is also a multiple of 256 bytes, ordinary flashcart packing preserves page alignment automatically.
+
+### 103.2 Header byte layout
+
+All multi-byte integer fields are unsigned and little-endian. `entryPoint` is a packed 24-bit program address.
+
+| Offset | Size | Field | Description |
+| -----: | ---: | ----- | ----------- |
+| `0x00` | 4 | `magic` | Bytes `41 56 4D 01`: ASCII `AVM` plus header-format revision `1` |
+| `0x04` | 1 | `runtimeVersion` | Required combined interpreter compatibility version; version one is `1` |
+| `0x05` | 3 | `entryPoint` | Logical program address of `_start` |
+| `0x08` | 2 | `dataSize` | Number of initialized static bytes copied from logical address `0x000100` |
+| `0x0A` | 2 | `staticSize` | Total `.data` plus `.bss` SRAM usage beginning at `0x0100` |
+| `0x0C` | 2 | `saveSize` | Requested persistent bytes, from `0` through `1024` |
+| `0x0E` | 238 | — | Reserved; must be zero in header-format revision one |
+| `0xFC` | 4 | `headerCrc32` | CRC-32 of header bytes `0x00–0xFB` |
+
+A corresponding serialization description is:
 
 ```c
 struct AvmImageHeader {
-    uint32_t magic;
-    uint16_t isaVersion;
-    uint16_t systemAbiVersion;
-
-    uint32_t entryPoint;          // Must fit in 24 bits
-    uint32_t programSize;         // Must not exceed 0x1000000
-
-    uint32_t textOffset;
-    uint32_t textSize;
-
-    uint32_t rodataOffset;
-    uint32_t rodataSize;
-
-    uint32_t dataImageOffset;     // Program-space logical offset
-    uint16_t dataImageSize;
-    uint16_t bssSize;
-
-    uint16_t requiredStaticBytes;
-    uint16_t estimatedStackBytes;
-
-    uint16_t flags;
-    uint32_t crc32;
+    uint8_t  magic[4];
+    uint8_t  runtimeVersion;
+    uint8_t  entryPoint[3];
+    uint16_t dataSize;
+    uint16_t staticSize;
+    uint16_t saveSize;
+    uint8_t  reserved[238];
+    uint32_t headerCrc32;
 };
 ```
 
-The packer must validate:
+This is a serialization description, not a native compiler-layout contract. Host tools should write fields explicitly or verify that any host structure is packed and exactly 256 bytes.
+
+### 103.3 Header checksum
+
+`headerCrc32` uses CRC-32/ISO-HDLC and covers exactly the first 252 header bytes:
 
 ```text
+CRC input  = header[0x00 .. 0xFB]
+stored CRC = little-endian header[0xFC .. 0xFF]
+```
+
+Because the checksum field follows the covered range, no zeroing or self-referential checksum rule is required.
+
+The linker or image writer MUST populate `headerCrc32`. Host tools and diagnostic interpreters SHOULD verify it. A normal Arduboy interpreter MAY omit CRC verification.
+
+### 103.4 Static initialization layout
+
+The linker emits all initialized writable objects as one contiguous initializer image beginning at logical address `0x000100`. At startup these bytes are copied to SRAM beginning at `0x0100`.
+
+Zero-initialized writable objects immediately follow initialized objects in SRAM and occupy no bytes in the image:
+
+```text
+.data source       = program address 0x000100
+.data destination  = SRAM 0x0100
+.data length       = dataSize
+.bss destination   = SRAM 0x0100 + dataSize
+.bss length        = staticSize - dataSize
+```
+
+The required invariants are:
+
+```text
+0 <= dataSize <= staticSize <= 1024
+```
+
+The current interpreter implements this by clearing all `staticSize` bytes and then copying the `dataSize`-byte initializer prefix over the cleared region.
+
+Internal linker padding is included in `dataSize` or `staticSize` as appropriate. Static constructors and destructors are ordinary program-space arrays referenced by `_start` through linker-defined symbols; they need no header entries.
+
+### 103.5 Save storage
+
+`saveSize` is a 16-bit exact byte count and MUST be no greater than 1,024. Zero means that the image requests no persistent storage.
+
+On Arduboy FX, the outer packer reserves a whole 4 KiB erase sector when save storage is present, even though the AVM program-visible size is at most 1,024 bytes. The save area is outside AVM logical program space.
+
+For a normal flashcart launch, the loader supplies its physical page using the keyed save vector. For development placement with a save sector, the linked image ends at physical address `0xFFF000` and the save sector occupies:
+
+```text
+0xFFF000–0xFFFFFF
+```
+
+The system ABI must enforce `saveSize` even though the physical erase sector is larger.
+
+### 103.6 Tail locator
+
+The mandatory tail locator occupies the final eight bytes of every linked image:
+
+| Tail offset | Size | Field | Description |
+| ----------: | ---: | ----- | ----------- |
+| `+0x00` | 4 | `magic` | Bytes `41 56 54 01`: ASCII `AVT` plus tail-format revision `1` |
+| `+0x04` | 2 | `imagePageCount` | Total linked-image length in 256-byte pages |
+| `+0x06` | 2 | — | Reserved; must be zero |
+
+A serialization description is:
+
+```c
+struct AvmImageTail {
+    uint8_t  magic[4];
+    uint16_t imagePageCount;
+    uint16_t reserved;
+};
+```
+
+The required relationship is:
+
+```text
+imagePageCount = fileSize / 256
+```
+
+When the tail is read from physical page `tailPage`, the page containing the header is:
+
+```text
+imageBasePage = tailPage + 1 - imagePageCount
+```
+
+The tail magic is intentionally different from the header magic. The normal flashcart path does not need to inspect the tail because the image page is supplied by the keyed vector; the tail remains mandatory so the same linked binary can be used directly by emulators and development upload tools.
+
+### 103.7 Development placement
+
+A development uploader or emulator places the same linked image in one of two forms.
+
+Without save storage:
+
+```text
+image end = 0x1000000
+tail      = 0xFFFFF8
+```
+
+With a final save sector:
+
+```text
+image end   = 0xFFF000
+tail        = 0xFFEFF8
+save sector = 0xFFF000–0xFFFFFF
+```
+
+The image start is determined from the tail page count and need not be stored anywhere else. In both forms the linked image itself is unchanged; only its physical placement differs.
+
+### 103.8 Metadata and debugging
+
+Source-file tables, line tables, symbols, build identifiers, and other debugging metadata are intentionally absent from the runtime header and tail. They remain in the ELF file, a sidecar debug file, or outer package metadata.
+
+This keeps the interpreter-visible format fixed and allows release images to discard debugging information without changing startup behavior.
+
+### 103.9 Linker and packer validation
+
+The linker or image writer MUST validate:
+
+```text
+header magic is exactly 41 56 4D 01
+runtimeVersion is the selected target runtime version
 entryPoint fits in 24 bits
-programSize ≤ 16 MiB
-static SRAM ≤ 1 KiB
-estimated VM stack ≤ 256 bytes
-no symbol occupies program address zero
+entryPoint is an even instruction boundary
+programStart <= entryPoint < tailOffset
+dataSize <= staticSize <= 1024
+saveSize <= 1024
+all reserved header bytes are zero
+headerCrc32 is correct
+programStart = align_up(0x000100 + dataSize, 0x100)
+tail magic is exactly 41 56 54 01
+imagePageCount == fileSize / 256
+imagePageCount != 0
+tail reserved bytes are zero
+all alignment gaps and non-tail final padding contain 0xFF
+fileSize is a multiple of 256 bytes
 all bank-layout rules are satisfied
 ```
+
+The physical packer MUST additionally validate:
+
+```text
+imageBase mod 256 = 0
+imageBase + fileSize fits in external flash
+flashcart image and save allocations do not overlap
+for development without save: imageBase + fileSize == 0x1000000
+for development with save:    imageBase + fileSize == 0xFFF000
+```
+
+The minimal on-device checks are the smaller set listed in Section 102.3. All other validation belongs to host tooling unless a diagnostic interpreter elects to repeat it.
 
 ---
 
@@ -2966,8 +3253,15 @@ A diagnostic build should detect:
 * Misaligned far target.
 * Invalid data-space postincrement load overlap.
 * Jump to a non-instruction boundary.
-* Program address outside the image.
+* Program address outside the packed image extent when that extent is known.
 * Program-pointer overflow.
+* Invalid image magic or unsupported `runtimeVersion`.
+* `dataSize > staticSize`, `staticSize > 1024`, or `saveSize > 1024`.
+* Nonzero reserved header bytes.
+* Header checksum failure when checksum verification is enabled.
+* Missing or malformed image tail, invalid tail page count, or inconsistent development placement.
+* Invalid entry point, `.data` prefix, alignment padding, or final file padding.
+* Misaligned physical image placement.
 * Unsupported system-service identifier.
 
 ---
@@ -3036,31 +3330,33 @@ Any assignment within `0x50–0x6F` should be justified by measured dynamic byte
 
 ## 108. Versioning rules
 
-The image header carries:
+The linked image carries three compact version markers:
 
 ```text
-isaVersion
-systemAbiVersion
+header magic[3]  header and basic file-layout revision
+tail magic[3]    tail-locator revision
+runtimeVersion   complete interpreter compatibility revision
 ```
 
-The core ISA version governs:
+The first three header-magic bytes are always ASCII `AVM`; the fourth byte identifies the serialization of the 256-byte header and basic linked-image layout. The tail uses ASCII `AVT` plus its own revision byte. An incompatible change to either structure requires changing the corresponding revision byte.
 
-* Opcode semantics.
-* Register model.
-* Pointer representation.
-* Calling convention.
-* Memory layout.
-* Object format and relocations.
+`runtimeVersion` is a deliberately coarse one-byte compatibility number. It covers the complete contract required to execute an image:
 
-The system ABI version governs:
+* Opcode encodings and semantics.
+* Architectural register and flag behavior.
+* Pointer representation and memory layout.
+* Calling convention and return-address format.
+* Runtime startup contract.
+* `SYS` identifiers and service signatures.
+* Save-data behavior visible to the program.
 
-* `SYS` identifiers.
-* Service signatures.
-* Display and audio facilities.
-* Save-data behavior.
-* Host integration.
+An image names one required `runtimeVersion`. An interpreter may accept one value or an explicit set of values that it implements. The current version-one format uses `runtimeVersion = 1`.
 
-Reserved opcodes must trap or remain undefined until introduced by a later ISA version.
+There are no separate ISA-version, system-ABI-version, image-flags, or required-feature fields in the runtime header. If a new capability is fully backward compatible and an image does not depend on it, no version change is needed. If an image requires a new interpreter-visible capability, a new `runtimeVersion` is assigned.
+
+This coarse versioning intentionally favors a small and fast Arduboy startup path over fine-grained capability negotiation. Toolchain documents may still version the ISA and system ABI independently for development purposes, but the linker maps the selected combination to one runtime compatibility value.
+
+Reserved opcodes must trap or remain undefined until introduced by a later runtime version.
 
 ---
 
@@ -3136,6 +3432,12 @@ Reserved primary range:
     0x50–0x6F reserved for profile-guided future use
     Postincrement load/store remains in memory extension 0xFD
 
+Linked image:
+    256-byte header at logical address 0
+    .data initializer begins at logical address 0x000100
+    Mandatory 8-byte AVT tail stores imagePageCount
+    Development tail is found at 0xFFFFF8 or 0xFFEFF8
+
 Allocation model:
     Static SRAM only
     No heap
@@ -3143,6 +3445,19 @@ Allocation model:
 LLVM address spaces:
     AS0 AVR data space, 16-bit pointers
     AS1 program space, 24-bit pointers
+
+Linked image:
+    0x000000–0x0000FF fixed 256-byte header
+    Magic is 41 56 4D 01; runtimeVersion is one compatibility byte
+    .data initializer begins at logical/file offset 0x000100
+    .data copies to SRAM 0x0100; .bss follows it contiguously
+    First ordinary program section begins at the next 256-byte boundary
+    File offsets equal logical program addresses
+    File length, not a header field, is the stored image size
+    Physical image base and flat file length are 256-byte aligned
+    Header CRC is stored at 0xFC and covers bytes 0x00–0xFB
+    saveSize is a 16-bit value limited to 1024 bytes
+    Code and immutable data may be interleaved after programStart
 ```
 
 This specification provides the architectural contract required to implement the AVM interpreter, assembler, linker, runtime, and LLVM/Clang backend.

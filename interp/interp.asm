@@ -6,14 +6,20 @@
 ;;     0x0100–0x04FF globals
 ;;     0x0500–0x08FF framebuffer
 ;;     0x0900–0x09FF VM stack
-;;     0x0A00-0x0A03 FX data/save page
-;;     0x0A04–0x0AFF interpreter-private
+;;     0x0A00-0x0A03 FX image/save page
+;;     0x0A04-0x0A05 requested save size
+;;     0x0A06       startup flags
+;;     0x0A07–0x0AFF interpreter-private
 
 #define data_globals    0x0100
 #define data_display    0x0500
 #define data_stack      0x0900
-#define data_page_data  0x0A00
-#define data_page_save  (data_page_data+2)
+#define data_page_data      0x0A00
+#define data_page_save      (data_page_data+2)
+#define data_save_size      (data_page_save+2)
+#define data_startup_flags  (data_save_size+2)
+
+#define STARTUP_SAVE_PAGE_VALID  0
 
 ;; ; ------------------------------------------------------------
 ;; ; Native dispatch and interpreter state
@@ -192,8 +198,37 @@ sbi  CS_PORT, CS_BIT
 #define FX_PORT  PORTD
 #define FX_BIT   PORTD2
 
-#define FX_VECTOR_KEY_POINTER  0x0014
-#define FX_VECTOR_KEY          0x9518
+#define FX_VECTOR_KEY_POINTER       0x0014
+#define FX_DATA_VECTOR_PAGE_POINTER 0x0016
+#define FX_SAVE_VECTOR_KEY_POINTER  0x0018
+#define FX_SAVE_VECTOR_PAGE_POINTER 0x001A
+#define FX_VECTOR_KEY               0x9518
+
+; AVM linked-image header constants.
+#define AVM_HEADER_MAGIC0       0x41
+#define AVM_HEADER_MAGIC1       0x56
+#define AVM_HEADER_MAGIC2       0x4D
+#define AVM_HEADER_MAGIC3       0x01
+#define AVM_RUNTIME_VERSION     0x01
+#define AVM_DATA_IMAGE_OFFSET   0x0100
+
+; The mandatory eight-byte image tail occupies the final eight bytes of the
+; linked image. Only the first six bytes are needed by startup:
+;   41 56 54 01, imagePageCountLo, imagePageCountHi
+#define AVM_TAIL_MAGIC0         0x41
+#define AVM_TAIL_MAGIC1         0x56
+#define AVM_TAIL_MAGIC2         0x54
+#define AVM_TAIL_MAGIC3         0x01
+#define AVM_TAIL_OFFSET_IN_PAGE 0xF8
+
+; Development/emulator images either end at the end of the 16 MiB flash or
+; end immediately before a final 4 KiB save sector.
+#define FX_DEV_TAIL_NOSAVE_HI   0xFF
+#define FX_DEV_TAIL_NOSAVE_MID  0xFF
+#define FX_DEV_TAIL_SAVE_HI     0xFF
+#define FX_DEV_TAIL_SAVE_MID    0xEF
+#define FX_DEV_SAVE_PAGE_LO     0xF0
+#define FX_DEV_SAVE_PAGE_HI     0xFF
 
 .macro fx_enable
 cbi  FX_PORT, FX_BIT
@@ -279,74 +314,9 @@ default_isr:
     rjmp default_isr
 
 reset_handler:
-
-    ; Initialize registers for VM
-    clr  ZERO
-    ldi  r26, DISPATCH_STRIDE_WORDS
-    mov  C_DISPATCH_STRIDE_WORDS, r26
-    ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
-    ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
-    clr  VM_FLAGS
-    out  VM_CB, ZERO
-    out  VM_PB, ZERO
-
-    ; Initialize SPI
-    ; Bytecode streaming uses fixed timing rather than polling SPIF.
-    ; SPIE must remain clear. ISRs must not access SPI.
-    ldi  r26, (_BV(SPE) | _BV(MSTR))
-    out  SPCR, r26
-    ldi  r26, _BV(SPI2X)
-    out  SPSR, r26
-
-    ; Initialize display
-
-    ; Initialize flash chip
-    display_disable
-    ldi  r30, lo8(FX_VECTOR_KEY_POINTER)
-    ldi  r31, hi8(FX_VECTOR_KEY_POINTER)
-    lpm  r26, Z+
-    lpm  r27, Z+
-    lpm  r0, Z+
-    lpm  r1, Z+
-    subi r26, lo8(FX_VECTOR_KEY)
-    sbci r27, hi8(FX_VECTOR_KEY)
-    brne 1f
-
-    ; TODO: missing signatures, so look at end of flash for data/save pages
-    clr  r26
-    clr  r27
-    clr  r4
-    clr  r5
-    rjmp 2f
-
-1:
-    adiw r30, 2
-    lpm  r4, Z+
-    lpm  r5, Z+
-2:
-    sts  data_page_data+0, r26
-    sts  data_page_data+1, r27
-    sts  data_page_save+0, r4
-    sts  data_page_save+1, r5
-
-    fx_enable
-    ldi  r26, SFC_RELEASE_POWERDOWN
-    out  SPDR, r26
-    rcall fx_init_delay_17
-    fx_disable
-
-    ; Dispatch always runs with interrupts enabled
-    sei
-
-reset_loop:
-    rjmp reset_loop
-
-fx_init_delay_17:
-    delay_3
-fx_init_delay_14:
-    rcall fx_init_delay_7
-fx_init_delay_7:
-    ret
+    ; Keep the vector area small. The complete startup path is placed after
+    ; the fixed-stride dispatch table so it cannot collide with .org 0x0200.
+    jmp startup_func
 
 ; 18-cycle cadence, needs 8 cycles from start of instruction
 .macro dispatch
@@ -1169,3 +1139,378 @@ fx_seek_delay_10:
     lpm
 fx_seek_delay_7:
     ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Reset/startup
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Startup supports both Arduboy FX flashcart launches and development/emulator
+; placement at the end of the 16 MiB FX address space.
+;
+; Flashcart mode:
+;   * reserved interrupt-vector slots contain 0x9518 keys
+;   * data/save page numbers follow each key in big-endian byte order
+;
+; Development mode:
+;   * check the AVM tail at 0xFFFFF8 (no save sector)
+;   * otherwise check 0xFFEFF8 (final 4 KiB is the save sector)
+;   * imageBasePage = tailPage + 1 - imagePageCount
+;
+; Normal startup validates only the fields needed for safe initialization.
+startup_func:
+    cli
+
+    ; Native AVR hardware stack. The VM stack is held separately in Y.
+    ldi  r26, lo8(RAMEND)
+    out  SPL, r26
+    ldi  r26, hi8(RAMEND)
+    out  SPH, r26
+
+    ; Initialize persistent interpreter state.
+    clr  ZERO
+    ldi  r26, DISPATCH_STRIDE_WORDS
+    mov  C_DISPATCH_STRIDE_WORDS, r26
+    ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
+    ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
+    clr  VM_FLAGS
+    out  VM_CB, ZERO
+    out  VM_PB, ZERO
+    sts  data_page_data+0, ZERO
+    sts  data_page_data+1, ZERO
+    sts  data_page_save+0, ZERO
+    sts  data_page_save+1, ZERO
+    sts  data_save_size+0, ZERO
+    sts  data_save_size+1, ZERO
+    sts  data_startup_flags, ZERO
+
+    ; Initialize SPI. Startup uses SPIF polling; the bytecode interpreter uses
+    ; the fixed-cadence transfer pipeline after the first opcode is primed.
+    ldi  r26, (_BV(SPE) | _BV(MSTR))
+    out  SPCR, r26
+    ldi  r26, _BV(SPI2X)
+    out  SPSR, r26
+
+    display_disable
+    fx_disable
+
+    ; Release the W25Q128 from power-down.
+    fx_enable
+    ldi  r30, SFC_RELEASE_POWERDOWN
+    rcall fx_spi_transfer_blocking
+    fx_disable
+    rcall fx_startup_wake_delay
+
+    ; Prefer the page values installed by the FX flashcart bootloader.
+    ldi  r30, lo8(FX_VECTOR_KEY_POINTER)
+    ldi  r31, hi8(FX_VECTOR_KEY_POINTER)
+    lpm  r20, Z+
+    lpm  r21, Z+
+    cpi  r20, lo8(FX_VECTOR_KEY)
+    brne startup_find_development_image
+    cpi  r21, hi8(FX_VECTOR_KEY)
+    brne startup_find_development_image
+
+    ; The flashcart stores page words high byte first in program flash.
+    lpm  r27, Z+
+    lpm  r26, Z+
+    sts  data_page_data+0, r26
+    sts  data_page_data+1, r27
+
+    ; A save page is independently keyed and may be absent.
+    lpm  r20, Z+
+    lpm  r21, Z+
+    cpi  r20, lo8(FX_VECTOR_KEY)
+    brne startup_read_header
+    cpi  r21, hi8(FX_VECTOR_KEY)
+    brne startup_read_header
+    lpm  r27, Z+
+    lpm  r26, Z+
+    sts  data_page_save+0, r26
+    sts  data_page_save+1, r27
+    ldi  r26, _BV(STARTUP_SAVE_PAGE_VALID)
+    sts  data_startup_flags, r26
+    rjmp startup_read_header
+
+startup_find_development_image:
+    ; First try an image whose tail is at the physical end of flash. This form
+    ; has no following save sector.
+    ldi  r22, FX_DEV_TAIL_NOSAVE_HI
+    ldi  r27, FX_DEV_TAIL_NOSAVE_MID
+    ldi  r26, AVM_TAIL_OFFSET_IN_PAGE
+    clr  r20                      ; tailPage + 1 = 0x0000
+    clr  r21
+    rcall startup_try_tail
+    brcs startup_read_header
+
+    ; Then try an image ending immediately before the final 4 KiB save sector.
+    ldi  r22, FX_DEV_TAIL_SAVE_HI
+    ldi  r27, FX_DEV_TAIL_SAVE_MID
+    ldi  r26, AVM_TAIL_OFFSET_IN_PAGE
+    ldi  r20, FX_DEV_SAVE_PAGE_LO ; tailPage + 1 = save page
+    ldi  r21, FX_DEV_SAVE_PAGE_HI
+    rcall startup_try_tail
+    brcs 1f
+    rjmp startup_invalid_image
+1:
+
+    ldi  r26, FX_DEV_SAVE_PAGE_LO
+    ldi  r27, FX_DEV_SAVE_PAGE_HI
+    sts  data_page_save+0, r26
+    sts  data_page_save+1, r27
+    ldi  r26, _BV(STARTUP_SAVE_PAGE_VALID)
+    sts  data_startup_flags, r26
+
+startup_read_header:
+    ; Begin a read at imageBase + 0x000000.
+    clr  r26
+    lds  r27, data_page_data+0
+    lds  r22, data_page_data+1
+    rcall fx_startup_begin_read
+
+    ; magic[4]
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_HEADER_MAGIC0
+    breq 1f
+    rjmp startup_invalid_image
+1:
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_HEADER_MAGIC1
+    breq 1f
+    rjmp startup_invalid_image
+1:
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_HEADER_MAGIC2
+    breq 1f
+    rjmp startup_invalid_image
+1:
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_HEADER_MAGIC3
+    breq 1f
+    rjmp startup_invalid_image
+1:
+
+    ; One coarse compatibility byte covers the ISA, ABI, and runtime services.
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_RUNTIME_VERSION
+    breq 1f
+    rjmp startup_invalid_image
+1:
+
+    ; entryPoint, packed little-endian 24-bit logical address.
+    rcall fx_startup_read_byte
+    mov  VM_PCL, r30
+    rcall fx_startup_read_byte
+    mov  VM_PCH, r30
+    rcall fx_startup_read_byte
+    out  VM_CB, r30
+
+    ; dataSize in r16:r17.
+    rcall fx_startup_read_byte
+    mov  r16, r30
+    rcall fx_startup_read_byte
+    mov  r17, r30
+
+    ; staticSize in r18:r19.
+    rcall fx_startup_read_byte
+    mov  r18, r30
+    rcall fx_startup_read_byte
+    mov  r19, r30
+
+    ; saveSize is retained for the system ABI.
+    rcall fx_startup_read_byte
+    mov  r20, r30
+    sts  data_save_size+0, r30
+    rcall fx_startup_read_byte
+    mov  r21, r30
+    sts  data_save_size+1, r30
+    fx_disable
+
+    ; dataSize <= staticSize.
+    cp   r18, r16
+    cpc  r19, r17
+    brsh 1f
+    rjmp startup_invalid_image
+1:
+
+    ; staticSize <= 1024. Values below 0x0400 are accepted; 0x0400 itself is
+    ; accepted only when the low byte is zero.
+    cpi  r19, 0x04
+    brlo 1f
+    breq 2f
+    rjmp startup_invalid_image
+2:
+    tst  r18
+    breq 1f
+    rjmp startup_invalid_image
+1:
+
+    ; saveSize <= 1024.
+    cpi  r21, 0x04
+    brlo 2f
+    breq 3f
+    rjmp startup_invalid_image
+3:
+    tst  r20
+    breq 2f
+    rjmp startup_invalid_image
+2:
+
+    ; A nonzero save request requires either a keyed flashcart save page or the
+    ; development layout with a final 4 KiB save sector.
+    cp   r20, ZERO
+    cpc  r21, ZERO
+    breq 3f
+    lds  r26, data_startup_flags
+    sbrs r26, STARTUP_SAVE_PAGE_VALID
+    rjmp startup_invalid_image
+3:
+
+    ; Clear all static SRAM first. The initializer copy below overwrites the
+    ; first dataSize bytes, leaving the remaining bytes as zeroed .bss.
+    ldi  r26, lo8(data_globals)
+    ldi  r27, hi8(data_globals)
+    movw r20, r18
+    cp   r20, ZERO
+    cpc  r21, ZERO
+    breq startup_copy_data
+startup_clear_static_loop:
+    st   X+, ZERO
+    subi r20, 1
+    sbci r21, 0
+    brne startup_clear_static_loop
+
+startup_copy_data:
+    cp   r16, ZERO
+    cpc  r17, ZERO
+    breq startup_enter_image
+
+    ; .data initializers always begin one page after the header.
+    lds  r27, data_page_data+0
+    lds  r22, data_page_data+1
+    inc  r27
+    brne 4f
+    inc  r4
+4:
+    clr  r26
+    rcall fx_startup_begin_read
+    ldi  r26, lo8(data_globals)
+    ldi  r27, hi8(data_globals)
+startup_copy_data_loop:
+    rcall fx_startup_read_byte
+    st   X+, r30
+    subi r16, 1
+    sbci r17, 0
+    brne startup_copy_data_loop
+    fx_disable
+
+startup_enter_image:
+    ; PB starts at zero. CB:PC already contains entryPoint.
+    out  VM_PB, ZERO
+
+    ; Seek to entryPoint and prime both the opcode and following-byte transfer.
+    rcall fx_seek_to_pc
+    in   r6, SPDR
+    out  SPDR, ZERO
+    sei
+    delay_1
+    mul  r6, C_DISPATCH_STRIDE_WORDS
+    movw r30, r0
+    subi r31, hi8(-((DISPATCH_ORG)>>1))
+    ijmp
+
+startup_invalid_image:
+    cli
+    fx_disable
+startup_invalid_image_loop:
+    rjmp startup_invalid_image_loop
+
+; Try a development tail.
+;
+; Input:
+;   r22:r27:r26 = physical address of tail magic
+;   r21:r20     = page immediately following the tail page
+;
+; Output:
+;   C = 1 and data_page_data installed when valid
+;   C = 0 otherwise
+startup_try_tail:
+    rcall fx_startup_begin_read
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_TAIL_MAGIC0
+    brne startup_try_tail_fail
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_TAIL_MAGIC1
+    brne startup_try_tail_fail
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_TAIL_MAGIC2
+    brne startup_try_tail_fail
+    rcall fx_startup_read_byte
+    cpi  r30, AVM_TAIL_MAGIC3
+    brne startup_try_tail_fail
+
+    ; imagePageCount, little-endian. Zero is never valid.
+    rcall fx_startup_read_byte
+    mov  r0, r30
+    rcall fx_startup_read_byte
+    mov  r1, r30
+    fx_disable
+    cp   r0, ZERO
+    cpc  r1, ZERO
+    breq startup_try_tail_fail_disabled
+
+    ; imageBasePage = pageAfterTail - imagePageCount.
+    mov  r26, r20
+    mov  r27, r21
+    sub  r26, r0
+    sbc  r27, r1
+    sts  data_page_data+0, r26
+    sts  data_page_data+1, r27
+    sec
+    ret
+
+startup_try_tail_fail:
+    fx_disable
+startup_try_tail_fail_disabled:
+    clc
+    ret
+
+; Begin a blocking SFC_READ command.
+;
+; Input physical byte address: r22:r27:r26 (high:middle:low).
+fx_startup_begin_read:
+    fx_disable
+    fx_enable
+    ldi  r30, SFC_READ
+    rcall fx_spi_transfer_blocking
+    mov  r30, r22
+    rcall fx_spi_transfer_blocking
+    mov  r30, r27
+    rcall fx_spi_transfer_blocking
+    mov  r30, r26
+    rcall fx_spi_transfer_blocking
+    ret
+
+; Read one byte from an already-open startup read stream.
+; Result is returned in r30.
+fx_startup_read_byte:
+    mov  r30, ZERO
+    rjmp fx_spi_transfer_blocking
+
+; Blocking SPI byte transfer. Input/output: r30. Clobbers r31.
+fx_spi_transfer_blocking:
+    out  SPDR, r30
+1:
+    in   r31, SPSR
+    sbrs r31, SPIF
+    rjmp 1b
+    in   r30, SPDR
+    ret
+
+; Conservative post-wakeup delay. Startup is not cycle critical.
+fx_startup_wake_delay:
+    ldi  r26, 32
+1:
+    dec  r26
+    brne 1b
+    ret
+

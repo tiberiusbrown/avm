@@ -9,12 +9,14 @@
 
 The interpreter already implements the operand-specialized primary families from `0x00` through `0xF3`, the dedicated conditional branches at `0xF5–0xFC`, and the reserved primary slots at `0x50–0x6F`.
 
+The `0xF4` and `0xFD` primary handlers now share the required extension-prefix state: they advance `PC` to the secondary opcode, read it into `r6`, start transferring byte 2, and dispatch through separate 256-entry one-word `RJMP` tables. Architecturally valid entries have named family skeletons, `0xF4:0xBC` reaches the existing `CMPI6` implementation, and reserved entries reach a distinct common invalid-secondary path. Except for `CMPI6`, the family skeletons still enter the common unimplemented-instruction loop.
+
 The remaining architectural work is:
 
 | Primary opcode | Remaining work |
 | --- | --- |
-| `0xF4` | All secondary operations except `CMPI6` (`0xBC`) |
-| `0xFD` | Entire memory/program-space secondary page |
+| `0xF4` | Implement the semantics behind the existing family skeletons; `CMPI6` (`0xBC`) is complete |
+| `0xFD` | Implement the semantics behind the existing memory/program-space family skeletons |
 | `0xFE` | `JMPF` and `CALLF` |
 | `0xFF` | `RET` |
 
@@ -40,16 +42,18 @@ These are semantic clarifications rather than encoding changes.
 
 Most of the remaining instructions should be small front ends around common out-of-line helpers. Implementing the shared machinery first prevents every secondary handler from independently solving SPI timing, dynamic register decoding, flags, and control-flow restart.
 
-### 3.1 Secondary dispatch tables
+The secondary-table decode and extension-prefix portions of this infrastructure are complete. The fetch primitives, register decoding, flag helpers, seek/restart helpers, and call-stack helpers below remain to be implemented as their first consumers are added.
 
-Use one 256-entry table for `0xF4` and one for `0xFD`. Each entry should be a one-word `RJMP` to a family handler.
+### 3.1 Secondary dispatch tables (implemented)
+
+The interpreter now uses one 256-entry table for `0xF4` and one for `0xFD`. Each entry is a one-word `RJMP` to a family handler or to the common invalid-secondary path.
 
 Because each table entry is one AVR word, the secondary opcode is already the word offset; no multiplication is required:
 
 ```asm
 ; r6 = secondary opcode
-ldi  ZL, lo8(f4_secondary_table >> 1)
-ldi  ZH, hi8(f4_secondary_table >> 1)
+ldi  ZL, lo8(pm(f4_secondary_table))
+ldi  ZH, hi8(pm(f4_secondary_table))
 add  ZL, r6
 adc  ZH, ZERO
 ijmp
@@ -66,7 +70,7 @@ Benefits:
 - Reserved values map to a common invalid-opcode routine.
 - The primary dispatch stride remains independent of extension complexity.
 
-A 256-entry `RJMP` table occupies 512 bytes. If a target family is outside `RJMP` range, place a nearby veneer after the table or use a two-level range decoder. Avoid changing the ISA to accommodate internal-flash layout.
+A 256-entry `RJMP` table occupies 512 bytes. The current family labels alias nearby veneers, keeping all targets within `RJMP` range, and assembler assertions require each table to occupy exactly 256 words. If later handlers move outside `RJMP` range, retain a nearby veneer after the table or use a two-level range decoder. Avoid changing the ISA to accommodate internal-flash layout.
 
 ### 3.2 Extension-byte fetch states
 
@@ -77,7 +81,7 @@ PC   = address of the primary opcode
 SPDR = transferring the secondary opcode
 ```
 
-After the common extension prefix reads the secondary opcode:
+After the implemented common extension prefix reads the secondary opcode:
 
 ```text
 PC   = address of the secondary opcode
@@ -229,7 +233,7 @@ Implement operations that require no extra operand beyond the secondary opcode:
 - `MTPB` and `MFPB` `0xE0–0xEF`.
 - `NOP` `0xF3`.
 
-This phase validates the secondary jump table and the two-byte fallthrough path.
+The secondary jump-table structure is already build-validated. This phase validates the two-byte fallthrough behavior and replaces the corresponding family skeletons with working handlers.
 
 ### Phase 2 — RRSPEC ALU operations
 
@@ -245,7 +249,7 @@ This validates dynamic register decode, alias handling, and architectural flags.
 Implement:
 
 - Immediate families `0x70–0xB7`.
-- Existing `CMPI6` integration at `0xBC`.
+- Preserve the completed `CMPI6` table integration at `0xBC` while adding the other immediate and relocated-core handlers.
 - `ADJSP` `0xBF`.
 - Compact stack-relative operations `0xF9–0xFA`.
 
@@ -386,7 +390,7 @@ Do not special-case compact operands in the interpreter. Compact compression bel
 
 ### 5.5 Relocated `CMPI6`, jump, call, and stack adjustment
 
-- Keep the existing `CMPI6` decode but route it through the common F4 secondary table.
+- The existing `CMPI6` decode is now routed through the common F4 secondary table; preserve that path and its SPI cadence as adjacent handlers are implemented.
 - `JMP rel8` reads the signed displacement as the final sequential byte, computes `nextPC + displacement`, and seeks without launching a fallthrough fetch.
 - `CALL rel8` computes the same target, pushes `CB:nextPC`, then seeks.
 - `ADJSP` performs 16-bit signed addition to `Y` and preserves AVM flags.

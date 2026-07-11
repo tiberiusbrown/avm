@@ -325,7 +325,7 @@ reset_handler:
     adiw VM_PC, 1
     mul  r6, C_DISPATCH_STRIDE_WORDS
     movw r30, r0
-    subi r31, hi8(-((DISPATCH_ORG)>>1))
+    subi r31, hi8(-(pm(DISPATCH_ORG)))
     ijmp
 .endm
 
@@ -338,7 +338,7 @@ reset_handler:
     sei
     mul  r6, C_DISPATCH_STRIDE_WORDS
     movw r30, r0
-    subi r31, hi8(-((DISPATCH_ORG)>>1))
+    subi r31, hi8(-(pm(DISPATCH_ORG)))
     ijmp
 .endm
 
@@ -969,12 +969,12 @@ emit_branch_rel8_mask 0xFC, I_FC__BRUGT_rel8, breq
 
     handler_begin 0xFD, I_FD__ext_memory_program
 
-    ; TODO: secondary dispatch.
-    ; RRSPEC now uses:
-    ;   bit 7     reserved
-    ;   bits 6:4  destination
-    ;   bit 3     reserved
-    ;   bits 2:0  source/address
+    ; The secondary-opcode transfer was started by the preceding dispatch.
+    ; Account for the secondary byte, then fetch it while starting the first
+    ; secondary operand (or the following primary opcode for a two-byte form).
+    adiw VM_PC, 1
+    delay_3
+    rjmp fd_extension_decode_func
 
     handler_end 0xFD
 
@@ -1006,18 +1006,230 @@ dispatch_reverse_func:
 ; 0xF4 secondary dispatch
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Emit a run of one-word secondary-table entries.  Keeping the runs grouped by
+; ISA family makes the complete 256-entry maps reviewable without changing the
+; table representation used at run time.
+.macro secondary_entries count, target
+    .rept \count
+        rjmp \target
+    .endr
+.endm
+
 f4_extension_decode_func:
     cli
     out  SPDR, ZERO
     in   r6, SPDR
     sei
 
-    ; Preserve the already-implemented CMPI6 operation at its relocated
-    ; secondary opcode.  The remaining F4 secondary operations are still
-    ; intentionally unimplemented in this partial interpreter.
-    mov  r26, r6
-    cpi  r26, 0xBC
-    breq f4_cmpi6_decode_func
+    ; Each table entry is one AVR word, so the secondary opcode is already the
+    ; word offset required by IJMP.
+    ldi  r30, lo8(pm(f4_secondary_table))
+    ldi  r31, hi8(pm(f4_secondary_table))
+    add  r30, r6
+    adc  r31, ZERO
+    ijmp
+
+f4_secondary_table:
+    secondary_entries 8, f4_not16_family
+    secondary_entries 8, f4_neg16_family
+    secondary_entries 8, f4_lsl16_family
+    secondary_entries 8, f4_lsr16_family
+    secondary_entries 8, f4_asr16_family
+    secondary_entries 8, f4_lsr8_family
+    secondary_entries 8, f4_asr8_family
+    secondary_entries 8, f4_zext8_family
+    secondary_entries 8, f4_sext8_family
+    secondary_entries 8, f4_swap8_family
+    secondary_entries 8, f4_getsp_family
+    secondary_entries 8, f4_setsp_family
+    secondary_entries 1, f4_and_family
+    secondary_entries 1, f4_or_family
+    secondary_entries 1, f4_xor_family
+    secondary_entries 1, f4_bic_family
+    secondary_entries 1, f4_adc_family
+    secondary_entries 1, f4_sbc_family
+    secondary_entries 1, f4_cmp8_family
+    secondary_entries 1, f4_cpc16_family
+    secondary_entries 1, f4_mulu8_family
+    secondary_entries 1, f4_muls8_family
+    secondary_entries 1, f4_mulsu8_family
+    secondary_entries 1, f4_shl16v_family
+    secondary_entries 1, f4_lsr16v_family
+    secondary_entries 1, f4_asr16v_family
+    secondary_entries 2, invalid_secondary_instruction_func
+    secondary_entries 8, f4_ldi16_family
+    secondary_entries 8, f4_ldi8_family
+    secondary_entries 8, f4_addi16_family
+    secondary_entries 8, f4_subi16_family
+    secondary_entries 8, f4_andi16_family
+    secondary_entries 8, f4_ori16_family
+    secondary_entries 8, f4_xori16_family
+    secondary_entries 8, f4_cmpi16_family
+    secondary_entries 8, f4_cmpi8_family
+    secondary_entries 1, f4_mov_family
+    secondary_entries 1, f4_add_family
+    secondary_entries 1, f4_sub_family
+    secondary_entries 1, f4_cmp16_family
+    secondary_entries 1, f4_cmpi6_decode_func
+    secondary_entries 1, f4_jmp_rel8_family
+    secondary_entries 1, f4_call_rel8_family
+    secondary_entries 1, f4_adjsp_family
+    secondary_entries 8, f4_jmpr_family
+    secondary_entries 8, f4_callr_family
+    secondary_entries 8, f4_jmpp_family
+    secondary_entries 8, f4_callp_family
+    secondary_entries 8, f4_mtpb_family
+    secondary_entries 8, f4_mfpb_family
+    secondary_entries 1, f4_ldpbi_family
+    secondary_entries 1, f4_jmp16_family
+    secondary_entries 1, f4_call16_family
+    secondary_entries 1, f4_nop_family
+    secondary_entries 1, f4_sys_family
+    secondary_entries 4, invalid_secondary_instruction_func
+    secondary_entries 1, f4_ldsp_compact_family
+    secondary_entries 1, f4_stsp_compact_family
+    secondary_entries 5, invalid_secondary_instruction_func
+f4_secondary_table_end:
+
+.if ((f4_secondary_table_end - f4_secondary_table) != (256 * 2))
+    .error "F4 secondary dispatch table must contain exactly 256 words"
+.endif
+
+; Valid families intentionally remain skeletons.  Consecutive labels alias one
+; nearby veneer so every table RJMP stays comfortably within range.
+f4_not16_family:
+f4_neg16_family:
+f4_lsl16_family:
+f4_lsr16_family:
+f4_asr16_family:
+f4_lsr8_family:
+f4_asr8_family:
+f4_zext8_family:
+f4_sext8_family:
+f4_swap8_family:
+f4_getsp_family:
+f4_setsp_family:
+f4_and_family:
+f4_or_family:
+f4_xor_family:
+f4_bic_family:
+f4_adc_family:
+f4_sbc_family:
+f4_cmp8_family:
+f4_cpc16_family:
+f4_mulu8_family:
+f4_muls8_family:
+f4_mulsu8_family:
+f4_shl16v_family:
+f4_lsr16v_family:
+f4_asr16v_family:
+f4_ldi16_family:
+f4_ldi8_family:
+f4_addi16_family:
+f4_subi16_family:
+f4_andi16_family:
+f4_ori16_family:
+f4_xori16_family:
+f4_cmpi16_family:
+f4_cmpi8_family:
+f4_mov_family:
+f4_add_family:
+f4_sub_family:
+f4_cmp16_family:
+f4_jmp_rel8_family:
+f4_call_rel8_family:
+f4_adjsp_family:
+f4_jmpr_family:
+f4_callr_family:
+f4_jmpp_family:
+f4_callp_family:
+f4_mtpb_family:
+f4_mfpb_family:
+f4_ldpbi_family:
+f4_jmp16_family:
+f4_call16_family:
+f4_nop_family:
+f4_sys_family:
+f4_ldsp_compact_family:
+f4_stsp_compact_family:
+    rjmp unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xFD secondary dispatch
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+fd_extension_decode_func:
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ldi  r30, lo8(pm(fd_secondary_table))
+    ldi  r31, hi8(pm(fd_secondary_table))
+    add  r30, r6
+    adc  r31, ZERO
+    ijmp
+
+fd_secondary_table:
+    secondary_entries 1, fd_ld8_indirect_family
+    secondary_entries 1, fd_st8_indirect_family
+    secondary_entries 1, fd_ld16_indirect_family
+    secondary_entries 1, fd_st16_indirect_family
+    secondary_entries 1, fd_ld8_post_family
+    secondary_entries 1, fd_st8_post_family
+    secondary_entries 1, fd_ld16_post_family
+    secondary_entries 1, fd_st16_post_family
+    secondary_entries 1, fd_lea_displaced_family
+    secondary_entries 1, fd_ld8_displaced_family
+    secondary_entries 1, fd_st8_displaced_family
+    secondary_entries 1, fd_ld16_displaced_family
+    secondary_entries 1, fd_st16_displaced_family
+    secondary_entries 3, invalid_secondary_instruction_func
+    secondary_entries 8, fd_ldsp8_family
+    secondary_entries 8, fd_stsp8_family
+    secondary_entries 8, fd_ldsp16_family
+    secondary_entries 8, fd_stsp16_family
+    secondary_entries 8, fd_ldm8_family
+    secondary_entries 8, fd_stm8_family
+    secondary_entries 8, fd_ldm16_family
+    secondary_entries 8, fd_stm16_family
+    secondary_entries 48, invalid_secondary_instruction_func
+    secondary_entries 1, fd_ldp8_family
+    secondary_entries 1, fd_ldp16_family
+    secondary_entries 1, fd_ldp8_displaced_family
+    secondary_entries 1, fd_ldp16_displaced_family
+    secondary_entries 124, invalid_secondary_instruction_func
+fd_secondary_table_end:
+
+.if ((fd_secondary_table_end - fd_secondary_table) != (256 * 2))
+    .error "FD secondary dispatch table must contain exactly 256 words"
+.endif
+
+fd_ld8_indirect_family:
+fd_st8_indirect_family:
+fd_ld16_indirect_family:
+fd_st16_indirect_family:
+fd_ld8_post_family:
+fd_st8_post_family:
+fd_ld16_post_family:
+fd_st16_post_family:
+fd_lea_displaced_family:
+fd_ld8_displaced_family:
+fd_st8_displaced_family:
+fd_ld16_displaced_family:
+fd_st16_displaced_family:
+fd_ldsp8_family:
+fd_stsp8_family:
+fd_ldsp16_family:
+fd_stsp16_family:
+fd_ldm8_family:
+fd_stm8_family:
+fd_ldm16_family:
+fd_stm16_family:
+fd_ldp8_family:
+fd_ldp16_family:
+fd_ldp8_displaced_family:
+fd_ldp16_displaced_family:
     rjmp unimplemented_instruction_func
 
 f4_cmpi6_decode_func:
@@ -1026,11 +1238,11 @@ f4_cmpi6_decode_func:
     adiw VM_PC, 1
 
     ; The first OUT above started the CMPI6 operand transfer.  Including the
-    ; decoder instructions above, this padding places the next OUT 17 cycles
-    ; later.  It starts fetching the following primary opcode while IN reads
-    ; the completed CMPI6 operand.
+    ; secondary-table dispatch above, this padding places the next OUT 17
+    ; cycles later.  It starts fetching the following primary opcode while IN
+    ; reads the completed CMPI6 operand.
     delay_4
-    delay_4
+    delay_2
     cli
     out  SPDR, ZERO
     in   r6, SPDR
@@ -1103,6 +1315,9 @@ branch_rel8_taken_func:
 
 unimplemented_instruction_func:
     rjmp unimplemented_instruction_func
+
+invalid_secondary_instruction_func:
+    rjmp invalid_secondary_instruction_func
 
 ; The next opcode has long since completed transferring.
 dispatch_func:

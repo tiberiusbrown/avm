@@ -68,6 +68,8 @@
 #define ZERO          r2
 #define C_INSTR_ALIGN r7
 
+#define VM_FLAGS r5
+
 #define VM_PC  r24
 #define VM_PCL r24
 #define VM_PCH r25
@@ -1026,4 +1028,116 @@ I_7F__POP16_r7:
     delay_1
     ld   VM_R7L, Y+
     ld   VM_R7H, Y+
+    dispatch_reverse
+
+I_80__ADD_c0_c0:
+    delay_2
+    add  VM_C0L, VM_C0L
+    adc  VM_C0H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_81__ADD_c0_c1:
+    delay_2
+    add  VM_C0L, VM_C1L
+    adc  VM_C0H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_82__ADD_c0_c2:
+    delay_2
+    add  VM_C0L, VM_C2L
+    adc  VM_C0H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_83__ADD_c0_c3:
+    delay_2
+    add  VM_C0L, VM_C3L
+    adc  VM_C0H, VM_C3H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_84__ADD_c1_c0:
+    delay_2
+    add  VM_C1L, VM_C0L
+    adc  VM_C1H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_85__ADD_c1_c1:
+    delay_2
+    add  VM_C1L, VM_C1L
+    adc  VM_C1H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_86__ADD_c1_c2:
+    delay_2
+    add  VM_C1L, VM_C2L
+    adc  VM_C1H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_87__ADD_c1_c3:
+    delay_2
+    add  VM_C1L, VM_C3L
+    adc  VM_C1H, VM_C3H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_88__ADD_c2_c0:
+    delay_2
+    add  VM_C2L, VM_C0L
+    adc  VM_C2H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_89__ADD_c2_c1:
+    delay_2
+    add  VM_C2L, VM_C1L
+    adc  VM_C2H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_8A__ADD_c2_c2:
+    delay_2
+    add  VM_C2L, VM_C2L
+    adc  VM_C2H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_8B__ADD_c2_c3:
+    delay_2
+    add  VM_C2L, VM_C3L
+    adc  VM_C2H, VM_C3H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_8C__ADD_c3_c0:
+    delay_2
+    add  VM_C3L, VM_C0L
+    adc  VM_C3H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_8D__ADD_c3_c1:
+    delay_2
+    add  VM_C3L, VM_C1L
+    adc  VM_C3H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_8E__ADD_c3_c2:
+    delay_2
+    add  VM_C3L, VM_C2L
+    adc  VM_C3H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_8F__ADD_c3_c3:
+    delay_2
+    add  VM_C3L, VM_C3L
+    adc  VM_C3H, VM_C3H
+    in   VM_FLAGS, SREG
     dispatch_reverse

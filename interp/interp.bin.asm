@@ -2017,3 +2017,259 @@ Disassembly of section .text:
     20d4:	e3 95       	inc	r30
     20d6:	09 94       	ijmp
 	...
+
+00002100 <I_80__ADD_c0_c0>:
+    2100:	00 c0       	rjmp	.+0      	; 0x2102 <I_80__ADD_c0_c0+0x2>
+    2102:	00 0f       	add	r16, r16
+    2104:	11 1f       	adc	r17, r17
+    2106:	5f b6       	in	r5, 0x3f	; 63
+    2108:	01 96       	adiw	r24, 0x01	; 1
+    210a:	f8 94       	cli
+    210c:	2e bc       	out	0x2e, r2	; 46
+    210e:	6e b4       	in	r6, 0x2e	; 46
+    2110:	78 94       	sei
+    2112:	67 9c       	mul	r6, r7
+    2114:	f0 01       	movw	r30, r0
+    2116:	e3 95       	inc	r30
+    2118:	09 94       	ijmp
+	...
+
+00002140 <I_81__ADD_c0_c1>:
+    2140:	00 c0       	rjmp	.+0      	; 0x2142 <I_81__ADD_c0_c1+0x2>
+    2142:	02 0f       	add	r16, r18
+    2144:	13 1f       	adc	r17, r19
+    2146:	5f b6       	in	r5, 0x3f	; 63
+    2148:	01 96       	adiw	r24, 0x01	; 1
+    214a:	f8 94       	cli
+    214c:	2e bc       	out	0x2e, r2	; 46
+    214e:	6e b4       	in	r6, 0x2e	; 46
+    2150:	78 94       	sei
+    2152:	67 9c       	mul	r6, r7
+    2154:	f0 01       	movw	r30, r0
+    2156:	e3 95       	inc	r30
+    2158:	09 94       	ijmp
+	...
+
+00002180 <I_82__ADD_c0_c2>:
+    2180:	00 c0       	rjmp	.+0      	; 0x2182 <I_82__ADD_c0_c2+0x2>
+    2182:	04 0f       	add	r16, r20
+    2184:	15 1f       	adc	r17, r21
+    2186:	5f b6       	in	r5, 0x3f	; 63
+    2188:	01 96       	adiw	r24, 0x01	; 1
+    218a:	f8 94       	cli
+    218c:	2e bc       	out	0x2e, r2	; 46
+    218e:	6e b4       	in	r6, 0x2e	; 46
+    2190:	78 94       	sei
+    2192:	67 9c       	mul	r6, r7
+    2194:	f0 01       	movw	r30, r0
+    2196:	e3 95       	inc	r30
+    2198:	09 94       	ijmp
+	...
+
+000021c0 <I_83__ADD_c0_c3>:
+    21c0:	00 c0       	rjmp	.+0      	; 0x21c2 <I_83__ADD_c0_c3+0x2>
+    21c2:	06 0f       	add	r16, r22
+    21c4:	17 1f       	adc	r17, r23
+    21c6:	5f b6       	in	r5, 0x3f	; 63
+    21c8:	01 96       	adiw	r24, 0x01	; 1
+    21ca:	f8 94       	cli
+    21cc:	2e bc       	out	0x2e, r2	; 46
+    21ce:	6e b4       	in	r6, 0x2e	; 46
+    21d0:	78 94       	sei
+    21d2:	67 9c       	mul	r6, r7
+    21d4:	f0 01       	movw	r30, r0
+    21d6:	e3 95       	inc	r30
+    21d8:	09 94       	ijmp
+	...
+
+00002200 <I_84__ADD_c1_c0>:
+    2200:	00 c0       	rjmp	.+0      	; 0x2202 <I_84__ADD_c1_c0+0x2>
+    2202:	20 0f       	add	r18, r16
+    2204:	31 1f       	adc	r19, r17
+    2206:	5f b6       	in	r5, 0x3f	; 63
+    2208:	01 96       	adiw	r24, 0x01	; 1
+    220a:	f8 94       	cli
+    220c:	2e bc       	out	0x2e, r2	; 46
+    220e:	6e b4       	in	r6, 0x2e	; 46
+    2210:	78 94       	sei
+    2212:	67 9c       	mul	r6, r7
+    2214:	f0 01       	movw	r30, r0
+    2216:	e3 95       	inc	r30
+    2218:	09 94       	ijmp
+	...
+
+00002240 <I_85__ADD_c1_c1>:
+    2240:	00 c0       	rjmp	.+0      	; 0x2242 <I_85__ADD_c1_c1+0x2>
+    2242:	22 0f       	add	r18, r18
+    2244:	33 1f       	adc	r19, r19
+    2246:	5f b6       	in	r5, 0x3f	; 63
+    2248:	01 96       	adiw	r24, 0x01	; 1
+    224a:	f8 94       	cli
+    224c:	2e bc       	out	0x2e, r2	; 46
+    224e:	6e b4       	in	r6, 0x2e	; 46
+    2250:	78 94       	sei
+    2252:	67 9c       	mul	r6, r7
+    2254:	f0 01       	movw	r30, r0
+    2256:	e3 95       	inc	r30
+    2258:	09 94       	ijmp
+	...
+
+00002280 <I_86__ADD_c1_c2>:
+    2280:	00 c0       	rjmp	.+0      	; 0x2282 <I_86__ADD_c1_c2+0x2>
+    2282:	24 0f       	add	r18, r20
+    2284:	35 1f       	adc	r19, r21
+    2286:	5f b6       	in	r5, 0x3f	; 63
+    2288:	01 96       	adiw	r24, 0x01	; 1
+    228a:	f8 94       	cli
+    228c:	2e bc       	out	0x2e, r2	; 46
+    228e:	6e b4       	in	r6, 0x2e	; 46
+    2290:	78 94       	sei
+    2292:	67 9c       	mul	r6, r7
+    2294:	f0 01       	movw	r30, r0
+    2296:	e3 95       	inc	r30
+    2298:	09 94       	ijmp
+	...
+
+000022c0 <I_87__ADD_c1_c3>:
+    22c0:	00 c0       	rjmp	.+0      	; 0x22c2 <I_87__ADD_c1_c3+0x2>
+    22c2:	26 0f       	add	r18, r22
+    22c4:	37 1f       	adc	r19, r23
+    22c6:	5f b6       	in	r5, 0x3f	; 63
+    22c8:	01 96       	adiw	r24, 0x01	; 1
+    22ca:	f8 94       	cli
+    22cc:	2e bc       	out	0x2e, r2	; 46
+    22ce:	6e b4       	in	r6, 0x2e	; 46
+    22d0:	78 94       	sei
+    22d2:	67 9c       	mul	r6, r7
+    22d4:	f0 01       	movw	r30, r0
+    22d6:	e3 95       	inc	r30
+    22d8:	09 94       	ijmp
+	...
+
+00002300 <I_88__ADD_c2_c0>:
+    2300:	00 c0       	rjmp	.+0      	; 0x2302 <I_88__ADD_c2_c0+0x2>
+    2302:	40 0f       	add	r20, r16
+    2304:	51 1f       	adc	r21, r17
+    2306:	5f b6       	in	r5, 0x3f	; 63
+    2308:	01 96       	adiw	r24, 0x01	; 1
+    230a:	f8 94       	cli
+    230c:	2e bc       	out	0x2e, r2	; 46
+    230e:	6e b4       	in	r6, 0x2e	; 46
+    2310:	78 94       	sei
+    2312:	67 9c       	mul	r6, r7
+    2314:	f0 01       	movw	r30, r0
+    2316:	e3 95       	inc	r30
+    2318:	09 94       	ijmp
+	...
+
+00002340 <I_89__ADD_c2_c1>:
+    2340:	00 c0       	rjmp	.+0      	; 0x2342 <I_89__ADD_c2_c1+0x2>
+    2342:	42 0f       	add	r20, r18
+    2344:	53 1f       	adc	r21, r19
+    2346:	5f b6       	in	r5, 0x3f	; 63
+    2348:	01 96       	adiw	r24, 0x01	; 1
+    234a:	f8 94       	cli
+    234c:	2e bc       	out	0x2e, r2	; 46
+    234e:	6e b4       	in	r6, 0x2e	; 46
+    2350:	78 94       	sei
+    2352:	67 9c       	mul	r6, r7
+    2354:	f0 01       	movw	r30, r0
+    2356:	e3 95       	inc	r30
+    2358:	09 94       	ijmp
+	...
+
+00002380 <I_8A__ADD_c2_c2>:
+    2380:	00 c0       	rjmp	.+0      	; 0x2382 <I_8A__ADD_c2_c2+0x2>
+    2382:	44 0f       	add	r20, r20
+    2384:	55 1f       	adc	r21, r21
+    2386:	5f b6       	in	r5, 0x3f	; 63
+    2388:	01 96       	adiw	r24, 0x01	; 1
+    238a:	f8 94       	cli
+    238c:	2e bc       	out	0x2e, r2	; 46
+    238e:	6e b4       	in	r6, 0x2e	; 46
+    2390:	78 94       	sei
+    2392:	67 9c       	mul	r6, r7
+    2394:	f0 01       	movw	r30, r0
+    2396:	e3 95       	inc	r30
+    2398:	09 94       	ijmp
+	...
+
+000023c0 <I_8B__ADD_c2_c3>:
+    23c0:	00 c0       	rjmp	.+0      	; 0x23c2 <I_8B__ADD_c2_c3+0x2>
+    23c2:	46 0f       	add	r20, r22
+    23c4:	57 1f       	adc	r21, r23
+    23c6:	5f b6       	in	r5, 0x3f	; 63
+    23c8:	01 96       	adiw	r24, 0x01	; 1
+    23ca:	f8 94       	cli
+    23cc:	2e bc       	out	0x2e, r2	; 46
+    23ce:	6e b4       	in	r6, 0x2e	; 46
+    23d0:	78 94       	sei
+    23d2:	67 9c       	mul	r6, r7
+    23d4:	f0 01       	movw	r30, r0
+    23d6:	e3 95       	inc	r30
+    23d8:	09 94       	ijmp
+	...
+
+00002400 <I_8C__ADD_c3_c0>:
+    2400:	00 c0       	rjmp	.+0      	; 0x2402 <I_8C__ADD_c3_c0+0x2>
+    2402:	60 0f       	add	r22, r16
+    2404:	71 1f       	adc	r23, r17
+    2406:	5f b6       	in	r5, 0x3f	; 63
+    2408:	01 96       	adiw	r24, 0x01	; 1
+    240a:	f8 94       	cli
+    240c:	2e bc       	out	0x2e, r2	; 46
+    240e:	6e b4       	in	r6, 0x2e	; 46
+    2410:	78 94       	sei
+    2412:	67 9c       	mul	r6, r7
+    2414:	f0 01       	movw	r30, r0
+    2416:	e3 95       	inc	r30
+    2418:	09 94       	ijmp
+	...
+
+00002440 <I_8D__ADD_c3_c1>:
+    2440:	00 c0       	rjmp	.+0      	; 0x2442 <I_8D__ADD_c3_c1+0x2>
+    2442:	62 0f       	add	r22, r18
+    2444:	73 1f       	adc	r23, r19
+    2446:	5f b6       	in	r5, 0x3f	; 63
+    2448:	01 96       	adiw	r24, 0x01	; 1
+    244a:	f8 94       	cli
+    244c:	2e bc       	out	0x2e, r2	; 46
+    244e:	6e b4       	in	r6, 0x2e	; 46
+    2450:	78 94       	sei
+    2452:	67 9c       	mul	r6, r7
+    2454:	f0 01       	movw	r30, r0
+    2456:	e3 95       	inc	r30
+    2458:	09 94       	ijmp
+	...
+
+00002480 <I_8E__ADD_c3_c2>:
+    2480:	00 c0       	rjmp	.+0      	; 0x2482 <I_8E__ADD_c3_c2+0x2>
+    2482:	64 0f       	add	r22, r20
+    2484:	75 1f       	adc	r23, r21
+    2486:	5f b6       	in	r5, 0x3f	; 63
+    2488:	01 96       	adiw	r24, 0x01	; 1
+    248a:	f8 94       	cli
+    248c:	2e bc       	out	0x2e, r2	; 46
+    248e:	6e b4       	in	r6, 0x2e	; 46
+    2490:	78 94       	sei
+    2492:	67 9c       	mul	r6, r7
+    2494:	f0 01       	movw	r30, r0
+    2496:	e3 95       	inc	r30
+    2498:	09 94       	ijmp
+	...
+
+000024c0 <I_8F__ADD_c3_c3>:
+    24c0:	00 c0       	rjmp	.+0      	; 0x24c2 <I_8F__ADD_c3_c3+0x2>
+    24c2:	66 0f       	add	r22, r22
+    24c4:	77 1f       	adc	r23, r23
+    24c6:	5f b6       	in	r5, 0x3f	; 63
+    24c8:	01 96       	adiw	r24, 0x01	; 1
+    24ca:	f8 94       	cli
+    24cc:	2e bc       	out	0x2e, r2	; 46
+    24ce:	6e b4       	in	r6, 0x2e	; 46
+    24d0:	78 94       	sei
+    24d2:	67 9c       	mul	r6, r7
+    24d4:	f0 01       	movw	r30, r0
+    24d6:	e3 95       	inc	r30
+    24d8:	09 94       	ijmp
+	...

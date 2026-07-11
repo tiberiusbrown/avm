@@ -77,8 +77,8 @@
 ;; GPIOR2         PB
 
 #define DISPATCH_ORG             0x0200
-#define DISPATCH_SLOT_LOG2       6
-#define DISPATCH_STRIDE_WORDS    (1 << (DISPATCH_SLOT_LOG2 - 1))
+#define DISPATCH_STRIDE_WORDS    32
+#define DISPATCH_STRIDE_BYTES    (2 * (DISPATCH_STRIDE_WORDS))
 #define C_DISPATCH_STRIDE_WORDS  r7
 
 #define ZERO r2
@@ -373,12 +373,12 @@ fx_init_delay_7:
 .endm
 
 .macro handler_begin opcode, label
-    .org (((\opcode) << DISPATCH_SLOT_LOG2) + DISPATCH_ORG)
+    .org (((\opcode) * DISPATCH_STRIDE_BYTES) + DISPATCH_ORG)
 \label:
 .endm
 
 .macro handler_end opcode
-    .org ((((\opcode) + 1) << DISPATCH_SLOT_LOG2) + DISPATCH_ORG)
+    .org ((((\opcode) + 1) * DISPATCH_STRIDE_BYTES) + DISPATCH_ORG)
 .endm
 
 .org DISPATCH_ORG

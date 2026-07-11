@@ -282,12 +282,13 @@ emit_mov_or_clr 0x0E, I_0E__MOV_c3_c2,  VM_C3, VM_C3L, VM_C3H, VM_C2
 emit_mov_or_clr 0x0F, I_0F__CLR_c3,     VM_C3, VM_C3L, VM_C3H, VM_C3, 1
 
 .macro emit_ld8 opcode, label, dstl, dsth, src
-\label:
+    handler_begin \opcode, \label
     delay_1
     movw r26, \src
     ld   \dstl, X
     clr  \dsth
     dispatch_reverse
+    handler_end \opcode
 .endm
 
 emit_ld8 0x10, I_10__LD8_c0_c0, VM_C0L, VM_C0H, VM_C0
@@ -311,11 +312,12 @@ emit_ld8 0x1E, I_1E__LD8_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld8 0x1F, I_1F__LD8_c3_c3, VM_C3L, VM_C3H, VM_C3
 
 .macro emit_st8 opcode, label, addr, src
-\label:
+    handler_begin \opcode, \label
     delay_2
     movw r26, \addr
     st   X, \src
     dispatch_reverse
+    handler_end \opcode
 .endm
 
 emit_st8 0x20, I_20__ST8_c0_c0, VM_C0, VM_C0L
@@ -338,197 +340,95 @@ emit_st8 0x2D, I_2D__ST8_c3_c1, VM_C3, VM_C1L
 emit_st8 0x2E, I_2E__ST8_c3_c2, VM_C3, VM_C2L
 emit_st8 0x2F, I_2F__ST8_c3_c3, VM_C3, VM_C3L
 
-I_30__LD16_c0_c0:
-    movw r26, VM_C0
-    ld   VM_C0L, X+
-    ld   VM_C0H, X
+.macro emit_ld16 opcode, label, dstl, dsth, addr
+    handler_begin \opcode, \label
+    movw r26, \addr
+    ld   \dstl, X+
+    ld   \dsth, X
     dispatch_reverse
+    handler_end \opcode
+.endm
 
-I_31__LD16_c0_c1:
-    movw r26, VM_C1
-    ld   VM_C0L, X+
-    ld   VM_C0H, X
-    dispatch_reverse
+emit_ld16 0x30, I_30__LD16_c0_c0, VM_C0L, VM_C0H, VM_C0
+emit_ld16 0x31, I_31__LD16_c0_c1, VM_C0L, VM_C0H, VM_C1
+emit_ld16 0x32, I_32__LD16_c0_c2, VM_C0L, VM_C0H, VM_C2
+emit_ld16 0x33, I_33__LD16_c0_c3, VM_C0L, VM_C0H, VM_C3
 
-I_32__LD16_c0_c2:
-    movw r26, VM_C2
-    ld   VM_C0L, X+
-    ld   VM_C0H, X
-    dispatch_reverse
+emit_ld16 0x34, I_34__LD16_c1_c0, VM_C1L, VM_C1H, VM_C0
+emit_ld16 0x35, I_35__LD16_c1_c1, VM_C1L, VM_C1H, VM_C1
+emit_ld16 0x36, I_36__LD16_c1_c2, VM_C1L, VM_C1H, VM_C2
+emit_ld16 0x37, I_37__LD16_c1_c3, VM_C1L, VM_C1H, VM_C3
 
-I_33__LD16_c0_c3:
-    movw r26, VM_C3
-    ld   VM_C0L, X+
-    ld   VM_C0H, X
-    dispatch_reverse
+emit_ld16 0x38, I_38__LD16_c2_c0, VM_C2L, VM_C2H, VM_C0
+emit_ld16 0x39, I_39__LD16_c2_c1, VM_C2L, VM_C2H, VM_C1
+emit_ld16 0x3A, I_3A__LD16_c2_c2, VM_C2L, VM_C2H, VM_C2
+emit_ld16 0x3B, I_3B__LD16_c2_c3, VM_C2L, VM_C2H, VM_C3
 
-I_34__LD16_c1_c0:
-    movw r26, VM_C0
-    ld   VM_C1L, X+
-    ld   VM_C1H, X
-    dispatch_reverse
+emit_ld16 0x3C, I_3C__LD16_c3_c0, VM_C3L, VM_C3H, VM_C0
+emit_ld16 0x3D, I_3D__LD16_c3_c1, VM_C3L, VM_C3H, VM_C1
+emit_ld16 0x3E, I_3E__LD16_c3_c2, VM_C3L, VM_C3H, VM_C2
+emit_ld16 0x3F, I_3F__LD16_c3_c3, VM_C3L, VM_C3H, VM_C3
 
-I_35__LD16_c1_c1:
-    movw r26, VM_C1
-    ld   VM_C1L, X+
-    ld   VM_C1H, X
+.macro emit_st16 opcode, label, addr, srcl, srch
+    handler_begin \opcode, \label
+    movw r26, \addr
+    st   X+, \srcl
+    st   X, \srch
     dispatch_reverse
+    handler_end \opcode
+.endm
 
-I_36__LD16_c1_c2:
-    movw r26, VM_C2
-    ld   VM_C1L, X+
-    ld   VM_C1H, X
-    dispatch_reverse
+emit_st16 0x40, I_40__ST16_c0_c0, VM_C0, VM_C0L, VM_C0H
+emit_st16 0x41, I_41__ST16_c0_c1, VM_C0, VM_C1L, VM_C1H
+emit_st16 0x42, I_42__ST16_c0_c2, VM_C0, VM_C2L, VM_C2H
+emit_st16 0x43, I_43__ST16_c0_c3, VM_C0, VM_C3L, VM_C3H
 
-I_37__LD16_c1_c3:
-    movw r26, VM_C3
-    ld   VM_C1L, X+
-    ld   VM_C1H, X
-    dispatch_reverse
+emit_st16 0x44, I_44__ST16_c1_c0, VM_C1, VM_C0L, VM_C0H
+emit_st16 0x45, I_45__ST16_c1_c1, VM_C1, VM_C1L, VM_C1H
+emit_st16 0x46, I_46__ST16_c1_c2, VM_C1, VM_C2L, VM_C2H
+emit_st16 0x47, I_47__ST16_c1_c3, VM_C1, VM_C3L, VM_C3H
 
-I_38__LD16_c2_c0:
-    movw r26, VM_C0
-    ld   VM_C2L, X+
-    ld   VM_C2H, X
-    dispatch_reverse
+emit_st16 0x48, I_48__ST16_c2_c0, VM_C2, VM_C0L, VM_C0H
+emit_st16 0x49, I_49__ST16_c2_c1, VM_C2, VM_C1L, VM_C1H
+emit_st16 0x4A, I_4A__ST16_c2_c2, VM_C2, VM_C2L, VM_C2H
+emit_st16 0x4B, I_4B__ST16_c2_c3, VM_C2, VM_C3L, VM_C3H
 
-I_39__LD16_c2_c1:
-    movw r26, VM_C1
-    ld   VM_C2L, X+
-    ld   VM_C2H, X
-    dispatch_reverse
+emit_st16 0x4C, I_4C__ST16_c3_c0, VM_C3, VM_C0L, VM_C0H
+emit_st16 0x4D, I_4D__ST16_c3_c1, VM_C3, VM_C1L, VM_C1H
+emit_st16 0x4E, I_4E__ST16_c3_c2, VM_C3, VM_C2L, VM_C2H
+emit_st16 0x4F, I_4F__ST16_c3_c3, VM_C3, VM_C3L, VM_C3H
 
-I_3A__LD16_c2_c2:
-    movw r26, VM_C2
-    ld   VM_C2L, X+
-    ld   VM_C2H, X
-    dispatch_reverse
 
-I_3B__LD16_c2_c3:
-    movw r26, VM_C3
-    ld   VM_C2L, X+
-    ld   VM_C2H, X
-    dispatch_reverse
 
-I_3C__LD16_c3_c0:
-    movw r26, VM_C0
-    ld   VM_C3L, X+
-    ld   VM_C3H, X
-    dispatch_reverse
 
-I_3D__LD16_c3_c1:
-    movw r26, VM_C1
-    ld   VM_C3L, X+
-    ld   VM_C3H, X
-    dispatch_reverse
 
-I_3E__LD16_c3_c2:
-    movw r26, VM_C2
-    ld   VM_C3L, X+
-    ld   VM_C3H, X
-    dispatch_reverse
 
-I_3F__LD16_c3_c3:
-    movw r26, VM_C3
-    ld   VM_C3L, X+
-    ld   VM_C3H, X
-    dispatch_reverse
 
-I_40__ST16_c0_c0:
-    movw r26, VM_C0
-    st   X+, VM_C0L
-    st   X, VM_C0H
-    dispatch_reverse
 
-I_41__ST16_c0_c1:
-    movw r26, VM_C0
-    st   X+, VM_C1L
-    st   X, VM_C1H
-    dispatch_reverse
 
-I_42__ST16_c0_c2:
-    movw r26, VM_C0
-    st   X+, VM_C2L
-    st   X, VM_C2H
-    dispatch_reverse
 
-I_43__ST16_c0_c3:
-    movw r26, VM_C0
-    st   X+, VM_C3L
-    st   X, VM_C3H
-    dispatch_reverse
 
-I_44__ST16_c1_c0:
-    movw r26, VM_C1
-    st   X+, VM_C0L
-    st   X, VM_C0H
-    dispatch_reverse
 
-I_45__ST16_c1_c1:
-    movw r26, VM_C1
-    st   X+, VM_C1L
-    st   X, VM_C1H
-    dispatch_reverse
 
-I_46__ST16_c1_c2:
-    movw r26, VM_C1
-    st   X+, VM_C2L
-    st   X, VM_C2H
-    dispatch_reverse
 
-I_47__ST16_c1_c3:
-    movw r26, VM_C1
-    st   X+, VM_C3L
-    st   X, VM_C3H
-    dispatch_reverse
 
-I_48__ST16_c2_c0:
-    movw r26, VM_C2
-    st   X+, VM_C0L
-    st   X, VM_C0H
-    dispatch_reverse
 
-I_49__ST16_c2_c1:
-    movw r26, VM_C2
-    st   X+, VM_C1L
-    st   X, VM_C1H
-    dispatch_reverse
 
-I_4A__ST16_c2_c2:
-    movw r26, VM_C2
-    st   X+, VM_C2L
-    st   X, VM_C2H
-    dispatch_reverse
 
-I_4B__ST16_c2_c3:
-    movw r26, VM_C2
-    st   X+, VM_C3L
-    st   X, VM_C3H
-    dispatch_reverse
 
-I_4C__ST16_c3_c0:
-    movw r26, VM_C3
-    st   X+, VM_C0L
-    st   X, VM_C0H
-    dispatch_reverse
 
-I_4D__ST16_c3_c1:
-    movw r26, VM_C3
-    st   X+, VM_C1L
-    st   X, VM_C1H
-    dispatch_reverse
 
-I_4E__ST16_c3_c2:
-    movw r26, VM_C3
-    st   X+, VM_C2L
-    st   X, VM_C2H
-    dispatch_reverse
 
-I_4F__ST16_c3_c3:
-    movw r26, VM_C3
-    st   X+, VM_C3L
-    st   X, VM_C3H
-    dispatch_reverse
+
+
+
+
+
+
+
+
+
+
 
 I_50__LDI1_c0:
     delay_3

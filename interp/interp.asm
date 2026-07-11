@@ -72,6 +72,7 @@
 #define VM_PCL r24
 #define VM_PCH r25
 
+#define VM_SP_INITIAL_VALUE 0x0900
 #define VM_SP  r28
 #define VM_SPL r28
 #define VM_SPH r29
@@ -167,9 +168,12 @@ default_isr:
     rjmp default_isr
 
 reset_handler:
+    ; initialize registers for VM
     clr  ZERO
     ldi  r24, (1<<(INSTR_ALIGN-1))
     mov  C_INSTR_ALIGN, r24
+    ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
+    ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
 reset_loop:
     rjmp reset_loop
 
@@ -926,4 +930,100 @@ I_6F__ST8_POST_c3_c3:
     movw r26, VM_C3
     st   X+, VM_C3
     movw VM_C3, r26
+    dispatch_reverse
+
+I_70__PUSH16_r0:
+    delay_1
+    st   -Y, VM_R0H
+    st   -Y, VM_R0L
+    dispatch_reverse
+
+I_71__PUSH16_r1:
+    delay_1
+    st   -Y, VM_R1H
+    st   -Y, VM_R1L
+    dispatch_reverse
+
+I_72__PUSH16_r2:
+    delay_1
+    st   -Y, VM_R2H
+    st   -Y, VM_R2L
+    dispatch_reverse
+
+I_73__PUSH16_r3:
+    delay_1
+    st   -Y, VM_R3H
+    st   -Y, VM_R3L
+    dispatch_reverse
+
+I_74__PUSH16_r4:
+    delay_1
+    st   -Y, VM_R4H
+    st   -Y, VM_R4L
+    dispatch_reverse
+
+I_75__PUSH16_r5:
+    delay_1
+    st   -Y, VM_R5H
+    st   -Y, VM_R5L
+    dispatch_reverse
+
+I_76__PUSH16_r6:
+    delay_1
+    st   -Y, VM_R6H
+    st   -Y, VM_R6L
+    dispatch_reverse
+
+I_77__PUSH16_r7:
+    delay_1
+    st   -Y, VM_R7H
+    st   -Y, VM_R7L
+    dispatch_reverse
+
+I_78__POP16_r0:
+    delay_1
+    ld   VM_R0L, Y+
+    ld   VM_R0H, Y+
+    dispatch_reverse
+
+I_79__POP16_r1:
+    delay_1
+    ld   VM_R1L, Y+
+    ld   VM_R1H, Y+
+    dispatch_reverse
+
+I_7A__POP16_r2:
+    delay_1
+    ld   VM_R2L, Y+
+    ld   VM_R2H, Y+
+    dispatch_reverse
+
+I_7B__POP16_r3:
+    delay_1
+    ld   VM_R3L, Y+
+    ld   VM_R3H, Y+
+    dispatch_reverse
+
+I_7C__POP16_r4:
+    delay_1
+    ld   VM_R4L, Y+
+    ld   VM_R4H, Y+
+    dispatch_reverse
+
+I_7D__POP16_r5:
+    delay_1
+    ld   VM_R5L, Y+
+    ld   VM_R5H, Y+
+    dispatch_reverse
+
+I_7E__POP16_r6:
+    delay_1
+    ld   VM_R6L, Y+
+    ld   VM_R6H, Y+
+    dispatch_reverse
+
+I_7F__POP16_r7:
+    delay_1
+    ld   VM_R7L, Y+
+    ld   VM_R7H, Y+
     dispatch_reverse

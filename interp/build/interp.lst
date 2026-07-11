@@ -166,8 +166,40 @@ SYMBOL TABLE:
 00002940 l       .text	00000000 I_9D__SUB_c3_c1
 00002980 l       .text	00000000 I_9E__SUB_c3_c2
 000029c0 l       .text	00000000 I_9F__SUB_c3_c3
+00002a00 l       .text	00000000 I_A0__TST16_c0
+00002a40 l       .text	00000000 I_A1__CMP16_c0_c1
+00002a80 l       .text	00000000 I_A2__CMP16_c0_c2
+00002ac0 l       .text	00000000 I_A3__CMP16_c0_c3
+00002b00 l       .text	00000000 I_A4__CMP16_c1_c0
+00002b40 l       .text	00000000 I_A5__TST16_c1
+00002b80 l       .text	00000000 I_A6__CMP16_c1_c2
+00002bc0 l       .text	00000000 I_A7__CMP16_c1_c3
+00002c00 l       .text	00000000 I_A8__CMP16_c2_c0
+00002c40 l       .text	00000000 I_A9__CMP16_c2_c1
+00002c80 l       .text	00000000 I_AA__TST16_c2
+00002cc0 l       .text	00000000 I_AB__CMP16_c2_c3
+00002d00 l       .text	00000000 I_AC__CMP16_c3_c0
+00002d40 l       .text	00000000 I_AD__CMP16_c3_c1
+00002d80 l       .text	00000000 I_AE__CMP16_c3_c2
+00002dc0 l       .text	00000000 I_AF__TST16_c3
+00002e00 l       .text	00000000 I_B0__TST8_c0
+00002e40 l       .text	00000000 I_B1__CMP8_c0_c1
+00002e80 l       .text	00000000 I_B2__CMP8_c0_c2
+00002ec0 l       .text	00000000 I_B3__CMP8_c0_c3
+00002f00 l       .text	00000000 I_B4__CMP8_c1_c0
+00002f40 l       .text	00000000 I_B5__TST8_c1
+00002f80 l       .text	00000000 I_B6__CMP8_c1_c2
+00002fc0 l       .text	00000000 I_B7__CMP8_c1_c3
+00003000 l       .text	00000000 I_B8__CMP8_c2_c0
+00003040 l       .text	00000000 I_B9__CMP8_c2_c1
+00003080 l       .text	00000000 I_BA__TST8_c2
+000030c0 l       .text	00000000 I_BB__CMP8_c2_c3
+00003100 l       .text	00000000 I_BC__CMP8_c3_c0
+00003140 l       .text	00000000 I_BD__CMP8_c3_c1
+00003180 l       .text	00000000 I_BE__CMP8_c3_c2
+000031c0 l       .text	00000000 I_BF__TST8_c3
 00000000 g       .text	00000000 __trampolines_start
-00002a00 g       .text	00000000 _etext
+00003200 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00000000 g       .text	000000ac __vectors
@@ -5840,3 +5872,1091 @@ Disassembly of section .text:
     29fa:	00 00       	nop
     29fc:	00 00       	nop
     29fe:	00 00       	nop
+
+00002a00 <I_A0__TST16_c0>:
+    2a00:	50 fa       	bst	r5, 0
+    2a02:	02 15       	cp	r16, r2
+    2a04:	12 05       	cpc	r17, r2
+    2a06:	5f b6       	in	r5, 0x3f	; 63
+    2a08:	50 f8       	bld	r5, 0
+    2a0a:	01 96       	adiw	r24, 0x01	; 1
+    2a0c:	f8 94       	cli
+    2a0e:	2e bc       	out	0x2e, r2	; 46
+    2a10:	6e b4       	in	r6, 0x2e	; 46
+    2a12:	78 94       	sei
+    2a14:	67 9c       	mul	r6, r7
+    2a16:	f0 01       	movw	r30, r0
+    2a18:	fe 5f       	subi	r31, 0xFE	; 254
+    2a1a:	09 94       	ijmp
+    2a1c:	00 00       	nop
+    2a1e:	00 00       	nop
+    2a20:	00 00       	nop
+    2a22:	00 00       	nop
+    2a24:	00 00       	nop
+    2a26:	00 00       	nop
+    2a28:	00 00       	nop
+    2a2a:	00 00       	nop
+    2a2c:	00 00       	nop
+    2a2e:	00 00       	nop
+    2a30:	00 00       	nop
+    2a32:	00 00       	nop
+    2a34:	00 00       	nop
+    2a36:	00 00       	nop
+    2a38:	00 00       	nop
+    2a3a:	00 00       	nop
+    2a3c:	00 00       	nop
+    2a3e:	00 00       	nop
+
+00002a40 <I_A1__CMP16_c0_c1>:
+    2a40:	00 c0       	rjmp	.+0      	; 0x2a42 <I_A1__CMP16_c0_c1+0x2>
+    2a42:	02 17       	cp	r16, r18
+    2a44:	13 07       	cpc	r17, r19
+    2a46:	5f b6       	in	r5, 0x3f	; 63
+    2a48:	01 96       	adiw	r24, 0x01	; 1
+    2a4a:	f8 94       	cli
+    2a4c:	2e bc       	out	0x2e, r2	; 46
+    2a4e:	6e b4       	in	r6, 0x2e	; 46
+    2a50:	78 94       	sei
+    2a52:	67 9c       	mul	r6, r7
+    2a54:	f0 01       	movw	r30, r0
+    2a56:	fe 5f       	subi	r31, 0xFE	; 254
+    2a58:	09 94       	ijmp
+    2a5a:	00 00       	nop
+    2a5c:	00 00       	nop
+    2a5e:	00 00       	nop
+    2a60:	00 00       	nop
+    2a62:	00 00       	nop
+    2a64:	00 00       	nop
+    2a66:	00 00       	nop
+    2a68:	00 00       	nop
+    2a6a:	00 00       	nop
+    2a6c:	00 00       	nop
+    2a6e:	00 00       	nop
+    2a70:	00 00       	nop
+    2a72:	00 00       	nop
+    2a74:	00 00       	nop
+    2a76:	00 00       	nop
+    2a78:	00 00       	nop
+    2a7a:	00 00       	nop
+    2a7c:	00 00       	nop
+    2a7e:	00 00       	nop
+
+00002a80 <I_A2__CMP16_c0_c2>:
+    2a80:	00 c0       	rjmp	.+0      	; 0x2a82 <I_A2__CMP16_c0_c2+0x2>
+    2a82:	04 17       	cp	r16, r20
+    2a84:	15 07       	cpc	r17, r21
+    2a86:	5f b6       	in	r5, 0x3f	; 63
+    2a88:	01 96       	adiw	r24, 0x01	; 1
+    2a8a:	f8 94       	cli
+    2a8c:	2e bc       	out	0x2e, r2	; 46
+    2a8e:	6e b4       	in	r6, 0x2e	; 46
+    2a90:	78 94       	sei
+    2a92:	67 9c       	mul	r6, r7
+    2a94:	f0 01       	movw	r30, r0
+    2a96:	fe 5f       	subi	r31, 0xFE	; 254
+    2a98:	09 94       	ijmp
+    2a9a:	00 00       	nop
+    2a9c:	00 00       	nop
+    2a9e:	00 00       	nop
+    2aa0:	00 00       	nop
+    2aa2:	00 00       	nop
+    2aa4:	00 00       	nop
+    2aa6:	00 00       	nop
+    2aa8:	00 00       	nop
+    2aaa:	00 00       	nop
+    2aac:	00 00       	nop
+    2aae:	00 00       	nop
+    2ab0:	00 00       	nop
+    2ab2:	00 00       	nop
+    2ab4:	00 00       	nop
+    2ab6:	00 00       	nop
+    2ab8:	00 00       	nop
+    2aba:	00 00       	nop
+    2abc:	00 00       	nop
+    2abe:	00 00       	nop
+
+00002ac0 <I_A3__CMP16_c0_c3>:
+    2ac0:	00 c0       	rjmp	.+0      	; 0x2ac2 <I_A3__CMP16_c0_c3+0x2>
+    2ac2:	06 17       	cp	r16, r22
+    2ac4:	17 07       	cpc	r17, r23
+    2ac6:	5f b6       	in	r5, 0x3f	; 63
+    2ac8:	01 96       	adiw	r24, 0x01	; 1
+    2aca:	f8 94       	cli
+    2acc:	2e bc       	out	0x2e, r2	; 46
+    2ace:	6e b4       	in	r6, 0x2e	; 46
+    2ad0:	78 94       	sei
+    2ad2:	67 9c       	mul	r6, r7
+    2ad4:	f0 01       	movw	r30, r0
+    2ad6:	fe 5f       	subi	r31, 0xFE	; 254
+    2ad8:	09 94       	ijmp
+    2ada:	00 00       	nop
+    2adc:	00 00       	nop
+    2ade:	00 00       	nop
+    2ae0:	00 00       	nop
+    2ae2:	00 00       	nop
+    2ae4:	00 00       	nop
+    2ae6:	00 00       	nop
+    2ae8:	00 00       	nop
+    2aea:	00 00       	nop
+    2aec:	00 00       	nop
+    2aee:	00 00       	nop
+    2af0:	00 00       	nop
+    2af2:	00 00       	nop
+    2af4:	00 00       	nop
+    2af6:	00 00       	nop
+    2af8:	00 00       	nop
+    2afa:	00 00       	nop
+    2afc:	00 00       	nop
+    2afe:	00 00       	nop
+
+00002b00 <I_A4__CMP16_c1_c0>:
+    2b00:	00 c0       	rjmp	.+0      	; 0x2b02 <I_A4__CMP16_c1_c0+0x2>
+    2b02:	20 17       	cp	r18, r16
+    2b04:	31 07       	cpc	r19, r17
+    2b06:	5f b6       	in	r5, 0x3f	; 63
+    2b08:	01 96       	adiw	r24, 0x01	; 1
+    2b0a:	f8 94       	cli
+    2b0c:	2e bc       	out	0x2e, r2	; 46
+    2b0e:	6e b4       	in	r6, 0x2e	; 46
+    2b10:	78 94       	sei
+    2b12:	67 9c       	mul	r6, r7
+    2b14:	f0 01       	movw	r30, r0
+    2b16:	fe 5f       	subi	r31, 0xFE	; 254
+    2b18:	09 94       	ijmp
+    2b1a:	00 00       	nop
+    2b1c:	00 00       	nop
+    2b1e:	00 00       	nop
+    2b20:	00 00       	nop
+    2b22:	00 00       	nop
+    2b24:	00 00       	nop
+    2b26:	00 00       	nop
+    2b28:	00 00       	nop
+    2b2a:	00 00       	nop
+    2b2c:	00 00       	nop
+    2b2e:	00 00       	nop
+    2b30:	00 00       	nop
+    2b32:	00 00       	nop
+    2b34:	00 00       	nop
+    2b36:	00 00       	nop
+    2b38:	00 00       	nop
+    2b3a:	00 00       	nop
+    2b3c:	00 00       	nop
+    2b3e:	00 00       	nop
+
+00002b40 <I_A5__TST16_c1>:
+    2b40:	50 fa       	bst	r5, 0
+    2b42:	22 15       	cp	r18, r2
+    2b44:	32 05       	cpc	r19, r2
+    2b46:	5f b6       	in	r5, 0x3f	; 63
+    2b48:	50 f8       	bld	r5, 0
+    2b4a:	01 96       	adiw	r24, 0x01	; 1
+    2b4c:	f8 94       	cli
+    2b4e:	2e bc       	out	0x2e, r2	; 46
+    2b50:	6e b4       	in	r6, 0x2e	; 46
+    2b52:	78 94       	sei
+    2b54:	67 9c       	mul	r6, r7
+    2b56:	f0 01       	movw	r30, r0
+    2b58:	fe 5f       	subi	r31, 0xFE	; 254
+    2b5a:	09 94       	ijmp
+    2b5c:	00 00       	nop
+    2b5e:	00 00       	nop
+    2b60:	00 00       	nop
+    2b62:	00 00       	nop
+    2b64:	00 00       	nop
+    2b66:	00 00       	nop
+    2b68:	00 00       	nop
+    2b6a:	00 00       	nop
+    2b6c:	00 00       	nop
+    2b6e:	00 00       	nop
+    2b70:	00 00       	nop
+    2b72:	00 00       	nop
+    2b74:	00 00       	nop
+    2b76:	00 00       	nop
+    2b78:	00 00       	nop
+    2b7a:	00 00       	nop
+    2b7c:	00 00       	nop
+    2b7e:	00 00       	nop
+
+00002b80 <I_A6__CMP16_c1_c2>:
+    2b80:	00 c0       	rjmp	.+0      	; 0x2b82 <I_A6__CMP16_c1_c2+0x2>
+    2b82:	24 17       	cp	r18, r20
+    2b84:	35 07       	cpc	r19, r21
+    2b86:	5f b6       	in	r5, 0x3f	; 63
+    2b88:	01 96       	adiw	r24, 0x01	; 1
+    2b8a:	f8 94       	cli
+    2b8c:	2e bc       	out	0x2e, r2	; 46
+    2b8e:	6e b4       	in	r6, 0x2e	; 46
+    2b90:	78 94       	sei
+    2b92:	67 9c       	mul	r6, r7
+    2b94:	f0 01       	movw	r30, r0
+    2b96:	fe 5f       	subi	r31, 0xFE	; 254
+    2b98:	09 94       	ijmp
+    2b9a:	00 00       	nop
+    2b9c:	00 00       	nop
+    2b9e:	00 00       	nop
+    2ba0:	00 00       	nop
+    2ba2:	00 00       	nop
+    2ba4:	00 00       	nop
+    2ba6:	00 00       	nop
+    2ba8:	00 00       	nop
+    2baa:	00 00       	nop
+    2bac:	00 00       	nop
+    2bae:	00 00       	nop
+    2bb0:	00 00       	nop
+    2bb2:	00 00       	nop
+    2bb4:	00 00       	nop
+    2bb6:	00 00       	nop
+    2bb8:	00 00       	nop
+    2bba:	00 00       	nop
+    2bbc:	00 00       	nop
+    2bbe:	00 00       	nop
+
+00002bc0 <I_A7__CMP16_c1_c3>:
+    2bc0:	00 c0       	rjmp	.+0      	; 0x2bc2 <I_A7__CMP16_c1_c3+0x2>
+    2bc2:	26 17       	cp	r18, r22
+    2bc4:	37 07       	cpc	r19, r23
+    2bc6:	5f b6       	in	r5, 0x3f	; 63
+    2bc8:	01 96       	adiw	r24, 0x01	; 1
+    2bca:	f8 94       	cli
+    2bcc:	2e bc       	out	0x2e, r2	; 46
+    2bce:	6e b4       	in	r6, 0x2e	; 46
+    2bd0:	78 94       	sei
+    2bd2:	67 9c       	mul	r6, r7
+    2bd4:	f0 01       	movw	r30, r0
+    2bd6:	fe 5f       	subi	r31, 0xFE	; 254
+    2bd8:	09 94       	ijmp
+    2bda:	00 00       	nop
+    2bdc:	00 00       	nop
+    2bde:	00 00       	nop
+    2be0:	00 00       	nop
+    2be2:	00 00       	nop
+    2be4:	00 00       	nop
+    2be6:	00 00       	nop
+    2be8:	00 00       	nop
+    2bea:	00 00       	nop
+    2bec:	00 00       	nop
+    2bee:	00 00       	nop
+    2bf0:	00 00       	nop
+    2bf2:	00 00       	nop
+    2bf4:	00 00       	nop
+    2bf6:	00 00       	nop
+    2bf8:	00 00       	nop
+    2bfa:	00 00       	nop
+    2bfc:	00 00       	nop
+    2bfe:	00 00       	nop
+
+00002c00 <I_A8__CMP16_c2_c0>:
+    2c00:	00 c0       	rjmp	.+0      	; 0x2c02 <I_A8__CMP16_c2_c0+0x2>
+    2c02:	40 17       	cp	r20, r16
+    2c04:	51 07       	cpc	r21, r17
+    2c06:	5f b6       	in	r5, 0x3f	; 63
+    2c08:	01 96       	adiw	r24, 0x01	; 1
+    2c0a:	f8 94       	cli
+    2c0c:	2e bc       	out	0x2e, r2	; 46
+    2c0e:	6e b4       	in	r6, 0x2e	; 46
+    2c10:	78 94       	sei
+    2c12:	67 9c       	mul	r6, r7
+    2c14:	f0 01       	movw	r30, r0
+    2c16:	fe 5f       	subi	r31, 0xFE	; 254
+    2c18:	09 94       	ijmp
+    2c1a:	00 00       	nop
+    2c1c:	00 00       	nop
+    2c1e:	00 00       	nop
+    2c20:	00 00       	nop
+    2c22:	00 00       	nop
+    2c24:	00 00       	nop
+    2c26:	00 00       	nop
+    2c28:	00 00       	nop
+    2c2a:	00 00       	nop
+    2c2c:	00 00       	nop
+    2c2e:	00 00       	nop
+    2c30:	00 00       	nop
+    2c32:	00 00       	nop
+    2c34:	00 00       	nop
+    2c36:	00 00       	nop
+    2c38:	00 00       	nop
+    2c3a:	00 00       	nop
+    2c3c:	00 00       	nop
+    2c3e:	00 00       	nop
+
+00002c40 <I_A9__CMP16_c2_c1>:
+    2c40:	00 c0       	rjmp	.+0      	; 0x2c42 <I_A9__CMP16_c2_c1+0x2>
+    2c42:	42 17       	cp	r20, r18
+    2c44:	53 07       	cpc	r21, r19
+    2c46:	5f b6       	in	r5, 0x3f	; 63
+    2c48:	01 96       	adiw	r24, 0x01	; 1
+    2c4a:	f8 94       	cli
+    2c4c:	2e bc       	out	0x2e, r2	; 46
+    2c4e:	6e b4       	in	r6, 0x2e	; 46
+    2c50:	78 94       	sei
+    2c52:	67 9c       	mul	r6, r7
+    2c54:	f0 01       	movw	r30, r0
+    2c56:	fe 5f       	subi	r31, 0xFE	; 254
+    2c58:	09 94       	ijmp
+    2c5a:	00 00       	nop
+    2c5c:	00 00       	nop
+    2c5e:	00 00       	nop
+    2c60:	00 00       	nop
+    2c62:	00 00       	nop
+    2c64:	00 00       	nop
+    2c66:	00 00       	nop
+    2c68:	00 00       	nop
+    2c6a:	00 00       	nop
+    2c6c:	00 00       	nop
+    2c6e:	00 00       	nop
+    2c70:	00 00       	nop
+    2c72:	00 00       	nop
+    2c74:	00 00       	nop
+    2c76:	00 00       	nop
+    2c78:	00 00       	nop
+    2c7a:	00 00       	nop
+    2c7c:	00 00       	nop
+    2c7e:	00 00       	nop
+
+00002c80 <I_AA__TST16_c2>:
+    2c80:	50 fa       	bst	r5, 0
+    2c82:	42 15       	cp	r20, r2
+    2c84:	52 05       	cpc	r21, r2
+    2c86:	5f b6       	in	r5, 0x3f	; 63
+    2c88:	50 f8       	bld	r5, 0
+    2c8a:	01 96       	adiw	r24, 0x01	; 1
+    2c8c:	f8 94       	cli
+    2c8e:	2e bc       	out	0x2e, r2	; 46
+    2c90:	6e b4       	in	r6, 0x2e	; 46
+    2c92:	78 94       	sei
+    2c94:	67 9c       	mul	r6, r7
+    2c96:	f0 01       	movw	r30, r0
+    2c98:	fe 5f       	subi	r31, 0xFE	; 254
+    2c9a:	09 94       	ijmp
+    2c9c:	00 00       	nop
+    2c9e:	00 00       	nop
+    2ca0:	00 00       	nop
+    2ca2:	00 00       	nop
+    2ca4:	00 00       	nop
+    2ca6:	00 00       	nop
+    2ca8:	00 00       	nop
+    2caa:	00 00       	nop
+    2cac:	00 00       	nop
+    2cae:	00 00       	nop
+    2cb0:	00 00       	nop
+    2cb2:	00 00       	nop
+    2cb4:	00 00       	nop
+    2cb6:	00 00       	nop
+    2cb8:	00 00       	nop
+    2cba:	00 00       	nop
+    2cbc:	00 00       	nop
+    2cbe:	00 00       	nop
+
+00002cc0 <I_AB__CMP16_c2_c3>:
+    2cc0:	00 c0       	rjmp	.+0      	; 0x2cc2 <I_AB__CMP16_c2_c3+0x2>
+    2cc2:	46 17       	cp	r20, r22
+    2cc4:	57 07       	cpc	r21, r23
+    2cc6:	5f b6       	in	r5, 0x3f	; 63
+    2cc8:	01 96       	adiw	r24, 0x01	; 1
+    2cca:	f8 94       	cli
+    2ccc:	2e bc       	out	0x2e, r2	; 46
+    2cce:	6e b4       	in	r6, 0x2e	; 46
+    2cd0:	78 94       	sei
+    2cd2:	67 9c       	mul	r6, r7
+    2cd4:	f0 01       	movw	r30, r0
+    2cd6:	fe 5f       	subi	r31, 0xFE	; 254
+    2cd8:	09 94       	ijmp
+    2cda:	00 00       	nop
+    2cdc:	00 00       	nop
+    2cde:	00 00       	nop
+    2ce0:	00 00       	nop
+    2ce2:	00 00       	nop
+    2ce4:	00 00       	nop
+    2ce6:	00 00       	nop
+    2ce8:	00 00       	nop
+    2cea:	00 00       	nop
+    2cec:	00 00       	nop
+    2cee:	00 00       	nop
+    2cf0:	00 00       	nop
+    2cf2:	00 00       	nop
+    2cf4:	00 00       	nop
+    2cf6:	00 00       	nop
+    2cf8:	00 00       	nop
+    2cfa:	00 00       	nop
+    2cfc:	00 00       	nop
+    2cfe:	00 00       	nop
+
+00002d00 <I_AC__CMP16_c3_c0>:
+    2d00:	00 c0       	rjmp	.+0      	; 0x2d02 <I_AC__CMP16_c3_c0+0x2>
+    2d02:	60 17       	cp	r22, r16
+    2d04:	71 07       	cpc	r23, r17
+    2d06:	5f b6       	in	r5, 0x3f	; 63
+    2d08:	01 96       	adiw	r24, 0x01	; 1
+    2d0a:	f8 94       	cli
+    2d0c:	2e bc       	out	0x2e, r2	; 46
+    2d0e:	6e b4       	in	r6, 0x2e	; 46
+    2d10:	78 94       	sei
+    2d12:	67 9c       	mul	r6, r7
+    2d14:	f0 01       	movw	r30, r0
+    2d16:	fe 5f       	subi	r31, 0xFE	; 254
+    2d18:	09 94       	ijmp
+    2d1a:	00 00       	nop
+    2d1c:	00 00       	nop
+    2d1e:	00 00       	nop
+    2d20:	00 00       	nop
+    2d22:	00 00       	nop
+    2d24:	00 00       	nop
+    2d26:	00 00       	nop
+    2d28:	00 00       	nop
+    2d2a:	00 00       	nop
+    2d2c:	00 00       	nop
+    2d2e:	00 00       	nop
+    2d30:	00 00       	nop
+    2d32:	00 00       	nop
+    2d34:	00 00       	nop
+    2d36:	00 00       	nop
+    2d38:	00 00       	nop
+    2d3a:	00 00       	nop
+    2d3c:	00 00       	nop
+    2d3e:	00 00       	nop
+
+00002d40 <I_AD__CMP16_c3_c1>:
+    2d40:	00 c0       	rjmp	.+0      	; 0x2d42 <I_AD__CMP16_c3_c1+0x2>
+    2d42:	62 17       	cp	r22, r18
+    2d44:	73 07       	cpc	r23, r19
+    2d46:	5f b6       	in	r5, 0x3f	; 63
+    2d48:	01 96       	adiw	r24, 0x01	; 1
+    2d4a:	f8 94       	cli
+    2d4c:	2e bc       	out	0x2e, r2	; 46
+    2d4e:	6e b4       	in	r6, 0x2e	; 46
+    2d50:	78 94       	sei
+    2d52:	67 9c       	mul	r6, r7
+    2d54:	f0 01       	movw	r30, r0
+    2d56:	fe 5f       	subi	r31, 0xFE	; 254
+    2d58:	09 94       	ijmp
+    2d5a:	00 00       	nop
+    2d5c:	00 00       	nop
+    2d5e:	00 00       	nop
+    2d60:	00 00       	nop
+    2d62:	00 00       	nop
+    2d64:	00 00       	nop
+    2d66:	00 00       	nop
+    2d68:	00 00       	nop
+    2d6a:	00 00       	nop
+    2d6c:	00 00       	nop
+    2d6e:	00 00       	nop
+    2d70:	00 00       	nop
+    2d72:	00 00       	nop
+    2d74:	00 00       	nop
+    2d76:	00 00       	nop
+    2d78:	00 00       	nop
+    2d7a:	00 00       	nop
+    2d7c:	00 00       	nop
+    2d7e:	00 00       	nop
+
+00002d80 <I_AE__CMP16_c3_c2>:
+    2d80:	00 c0       	rjmp	.+0      	; 0x2d82 <I_AE__CMP16_c3_c2+0x2>
+    2d82:	64 17       	cp	r22, r20
+    2d84:	75 07       	cpc	r23, r21
+    2d86:	5f b6       	in	r5, 0x3f	; 63
+    2d88:	01 96       	adiw	r24, 0x01	; 1
+    2d8a:	f8 94       	cli
+    2d8c:	2e bc       	out	0x2e, r2	; 46
+    2d8e:	6e b4       	in	r6, 0x2e	; 46
+    2d90:	78 94       	sei
+    2d92:	67 9c       	mul	r6, r7
+    2d94:	f0 01       	movw	r30, r0
+    2d96:	fe 5f       	subi	r31, 0xFE	; 254
+    2d98:	09 94       	ijmp
+    2d9a:	00 00       	nop
+    2d9c:	00 00       	nop
+    2d9e:	00 00       	nop
+    2da0:	00 00       	nop
+    2da2:	00 00       	nop
+    2da4:	00 00       	nop
+    2da6:	00 00       	nop
+    2da8:	00 00       	nop
+    2daa:	00 00       	nop
+    2dac:	00 00       	nop
+    2dae:	00 00       	nop
+    2db0:	00 00       	nop
+    2db2:	00 00       	nop
+    2db4:	00 00       	nop
+    2db6:	00 00       	nop
+    2db8:	00 00       	nop
+    2dba:	00 00       	nop
+    2dbc:	00 00       	nop
+    2dbe:	00 00       	nop
+
+00002dc0 <I_AF__TST16_c3>:
+    2dc0:	50 fa       	bst	r5, 0
+    2dc2:	62 15       	cp	r22, r2
+    2dc4:	72 05       	cpc	r23, r2
+    2dc6:	5f b6       	in	r5, 0x3f	; 63
+    2dc8:	50 f8       	bld	r5, 0
+    2dca:	01 96       	adiw	r24, 0x01	; 1
+    2dcc:	f8 94       	cli
+    2dce:	2e bc       	out	0x2e, r2	; 46
+    2dd0:	6e b4       	in	r6, 0x2e	; 46
+    2dd2:	78 94       	sei
+    2dd4:	67 9c       	mul	r6, r7
+    2dd6:	f0 01       	movw	r30, r0
+    2dd8:	fe 5f       	subi	r31, 0xFE	; 254
+    2dda:	09 94       	ijmp
+    2ddc:	00 00       	nop
+    2dde:	00 00       	nop
+    2de0:	00 00       	nop
+    2de2:	00 00       	nop
+    2de4:	00 00       	nop
+    2de6:	00 00       	nop
+    2de8:	00 00       	nop
+    2dea:	00 00       	nop
+    2dec:	00 00       	nop
+    2dee:	00 00       	nop
+    2df0:	00 00       	nop
+    2df2:	00 00       	nop
+    2df4:	00 00       	nop
+    2df6:	00 00       	nop
+    2df8:	00 00       	nop
+    2dfa:	00 00       	nop
+    2dfc:	00 00       	nop
+    2dfe:	00 00       	nop
+
+00002e00 <I_B0__TST8_c0>:
+    2e00:	00 00       	nop
+    2e02:	50 fa       	bst	r5, 0
+    2e04:	00 23       	and	r16, r16
+    2e06:	5f b6       	in	r5, 0x3f	; 63
+    2e08:	50 f8       	bld	r5, 0
+    2e0a:	01 96       	adiw	r24, 0x01	; 1
+    2e0c:	f8 94       	cli
+    2e0e:	2e bc       	out	0x2e, r2	; 46
+    2e10:	6e b4       	in	r6, 0x2e	; 46
+    2e12:	78 94       	sei
+    2e14:	67 9c       	mul	r6, r7
+    2e16:	f0 01       	movw	r30, r0
+    2e18:	fe 5f       	subi	r31, 0xFE	; 254
+    2e1a:	09 94       	ijmp
+    2e1c:	00 00       	nop
+    2e1e:	00 00       	nop
+    2e20:	00 00       	nop
+    2e22:	00 00       	nop
+    2e24:	00 00       	nop
+    2e26:	00 00       	nop
+    2e28:	00 00       	nop
+    2e2a:	00 00       	nop
+    2e2c:	00 00       	nop
+    2e2e:	00 00       	nop
+    2e30:	00 00       	nop
+    2e32:	00 00       	nop
+    2e34:	00 00       	nop
+    2e36:	00 00       	nop
+    2e38:	00 00       	nop
+    2e3a:	00 00       	nop
+    2e3c:	00 00       	nop
+    2e3e:	00 00       	nop
+
+00002e40 <I_B1__CMP8_c0_c1>:
+    2e40:	c8 95       	lpm
+    2e42:	02 17       	cp	r16, r18
+    2e44:	5f b6       	in	r5, 0x3f	; 63
+    2e46:	01 96       	adiw	r24, 0x01	; 1
+    2e48:	f8 94       	cli
+    2e4a:	2e bc       	out	0x2e, r2	; 46
+    2e4c:	6e b4       	in	r6, 0x2e	; 46
+    2e4e:	78 94       	sei
+    2e50:	67 9c       	mul	r6, r7
+    2e52:	f0 01       	movw	r30, r0
+    2e54:	fe 5f       	subi	r31, 0xFE	; 254
+    2e56:	09 94       	ijmp
+    2e58:	00 00       	nop
+    2e5a:	00 00       	nop
+    2e5c:	00 00       	nop
+    2e5e:	00 00       	nop
+    2e60:	00 00       	nop
+    2e62:	00 00       	nop
+    2e64:	00 00       	nop
+    2e66:	00 00       	nop
+    2e68:	00 00       	nop
+    2e6a:	00 00       	nop
+    2e6c:	00 00       	nop
+    2e6e:	00 00       	nop
+    2e70:	00 00       	nop
+    2e72:	00 00       	nop
+    2e74:	00 00       	nop
+    2e76:	00 00       	nop
+    2e78:	00 00       	nop
+    2e7a:	00 00       	nop
+    2e7c:	00 00       	nop
+    2e7e:	00 00       	nop
+
+00002e80 <I_B2__CMP8_c0_c2>:
+    2e80:	c8 95       	lpm
+    2e82:	04 17       	cp	r16, r20
+    2e84:	5f b6       	in	r5, 0x3f	; 63
+    2e86:	01 96       	adiw	r24, 0x01	; 1
+    2e88:	f8 94       	cli
+    2e8a:	2e bc       	out	0x2e, r2	; 46
+    2e8c:	6e b4       	in	r6, 0x2e	; 46
+    2e8e:	78 94       	sei
+    2e90:	67 9c       	mul	r6, r7
+    2e92:	f0 01       	movw	r30, r0
+    2e94:	fe 5f       	subi	r31, 0xFE	; 254
+    2e96:	09 94       	ijmp
+    2e98:	00 00       	nop
+    2e9a:	00 00       	nop
+    2e9c:	00 00       	nop
+    2e9e:	00 00       	nop
+    2ea0:	00 00       	nop
+    2ea2:	00 00       	nop
+    2ea4:	00 00       	nop
+    2ea6:	00 00       	nop
+    2ea8:	00 00       	nop
+    2eaa:	00 00       	nop
+    2eac:	00 00       	nop
+    2eae:	00 00       	nop
+    2eb0:	00 00       	nop
+    2eb2:	00 00       	nop
+    2eb4:	00 00       	nop
+    2eb6:	00 00       	nop
+    2eb8:	00 00       	nop
+    2eba:	00 00       	nop
+    2ebc:	00 00       	nop
+    2ebe:	00 00       	nop
+
+00002ec0 <I_B3__CMP8_c0_c3>:
+    2ec0:	c8 95       	lpm
+    2ec2:	06 17       	cp	r16, r22
+    2ec4:	5f b6       	in	r5, 0x3f	; 63
+    2ec6:	01 96       	adiw	r24, 0x01	; 1
+    2ec8:	f8 94       	cli
+    2eca:	2e bc       	out	0x2e, r2	; 46
+    2ecc:	6e b4       	in	r6, 0x2e	; 46
+    2ece:	78 94       	sei
+    2ed0:	67 9c       	mul	r6, r7
+    2ed2:	f0 01       	movw	r30, r0
+    2ed4:	fe 5f       	subi	r31, 0xFE	; 254
+    2ed6:	09 94       	ijmp
+    2ed8:	00 00       	nop
+    2eda:	00 00       	nop
+    2edc:	00 00       	nop
+    2ede:	00 00       	nop
+    2ee0:	00 00       	nop
+    2ee2:	00 00       	nop
+    2ee4:	00 00       	nop
+    2ee6:	00 00       	nop
+    2ee8:	00 00       	nop
+    2eea:	00 00       	nop
+    2eec:	00 00       	nop
+    2eee:	00 00       	nop
+    2ef0:	00 00       	nop
+    2ef2:	00 00       	nop
+    2ef4:	00 00       	nop
+    2ef6:	00 00       	nop
+    2ef8:	00 00       	nop
+    2efa:	00 00       	nop
+    2efc:	00 00       	nop
+    2efe:	00 00       	nop
+
+00002f00 <I_B4__CMP8_c1_c0>:
+    2f00:	c8 95       	lpm
+    2f02:	20 17       	cp	r18, r16
+    2f04:	5f b6       	in	r5, 0x3f	; 63
+    2f06:	01 96       	adiw	r24, 0x01	; 1
+    2f08:	f8 94       	cli
+    2f0a:	2e bc       	out	0x2e, r2	; 46
+    2f0c:	6e b4       	in	r6, 0x2e	; 46
+    2f0e:	78 94       	sei
+    2f10:	67 9c       	mul	r6, r7
+    2f12:	f0 01       	movw	r30, r0
+    2f14:	fe 5f       	subi	r31, 0xFE	; 254
+    2f16:	09 94       	ijmp
+    2f18:	00 00       	nop
+    2f1a:	00 00       	nop
+    2f1c:	00 00       	nop
+    2f1e:	00 00       	nop
+    2f20:	00 00       	nop
+    2f22:	00 00       	nop
+    2f24:	00 00       	nop
+    2f26:	00 00       	nop
+    2f28:	00 00       	nop
+    2f2a:	00 00       	nop
+    2f2c:	00 00       	nop
+    2f2e:	00 00       	nop
+    2f30:	00 00       	nop
+    2f32:	00 00       	nop
+    2f34:	00 00       	nop
+    2f36:	00 00       	nop
+    2f38:	00 00       	nop
+    2f3a:	00 00       	nop
+    2f3c:	00 00       	nop
+    2f3e:	00 00       	nop
+
+00002f40 <I_B5__TST8_c1>:
+    2f40:	00 00       	nop
+    2f42:	50 fa       	bst	r5, 0
+    2f44:	22 23       	and	r18, r18
+    2f46:	5f b6       	in	r5, 0x3f	; 63
+    2f48:	50 f8       	bld	r5, 0
+    2f4a:	01 96       	adiw	r24, 0x01	; 1
+    2f4c:	f8 94       	cli
+    2f4e:	2e bc       	out	0x2e, r2	; 46
+    2f50:	6e b4       	in	r6, 0x2e	; 46
+    2f52:	78 94       	sei
+    2f54:	67 9c       	mul	r6, r7
+    2f56:	f0 01       	movw	r30, r0
+    2f58:	fe 5f       	subi	r31, 0xFE	; 254
+    2f5a:	09 94       	ijmp
+    2f5c:	00 00       	nop
+    2f5e:	00 00       	nop
+    2f60:	00 00       	nop
+    2f62:	00 00       	nop
+    2f64:	00 00       	nop
+    2f66:	00 00       	nop
+    2f68:	00 00       	nop
+    2f6a:	00 00       	nop
+    2f6c:	00 00       	nop
+    2f6e:	00 00       	nop
+    2f70:	00 00       	nop
+    2f72:	00 00       	nop
+    2f74:	00 00       	nop
+    2f76:	00 00       	nop
+    2f78:	00 00       	nop
+    2f7a:	00 00       	nop
+    2f7c:	00 00       	nop
+    2f7e:	00 00       	nop
+
+00002f80 <I_B6__CMP8_c1_c2>:
+    2f80:	c8 95       	lpm
+    2f82:	24 17       	cp	r18, r20
+    2f84:	5f b6       	in	r5, 0x3f	; 63
+    2f86:	01 96       	adiw	r24, 0x01	; 1
+    2f88:	f8 94       	cli
+    2f8a:	2e bc       	out	0x2e, r2	; 46
+    2f8c:	6e b4       	in	r6, 0x2e	; 46
+    2f8e:	78 94       	sei
+    2f90:	67 9c       	mul	r6, r7
+    2f92:	f0 01       	movw	r30, r0
+    2f94:	fe 5f       	subi	r31, 0xFE	; 254
+    2f96:	09 94       	ijmp
+    2f98:	00 00       	nop
+    2f9a:	00 00       	nop
+    2f9c:	00 00       	nop
+    2f9e:	00 00       	nop
+    2fa0:	00 00       	nop
+    2fa2:	00 00       	nop
+    2fa4:	00 00       	nop
+    2fa6:	00 00       	nop
+    2fa8:	00 00       	nop
+    2faa:	00 00       	nop
+    2fac:	00 00       	nop
+    2fae:	00 00       	nop
+    2fb0:	00 00       	nop
+    2fb2:	00 00       	nop
+    2fb4:	00 00       	nop
+    2fb6:	00 00       	nop
+    2fb8:	00 00       	nop
+    2fba:	00 00       	nop
+    2fbc:	00 00       	nop
+    2fbe:	00 00       	nop
+
+00002fc0 <I_B7__CMP8_c1_c3>:
+    2fc0:	c8 95       	lpm
+    2fc2:	26 17       	cp	r18, r22
+    2fc4:	5f b6       	in	r5, 0x3f	; 63
+    2fc6:	01 96       	adiw	r24, 0x01	; 1
+    2fc8:	f8 94       	cli
+    2fca:	2e bc       	out	0x2e, r2	; 46
+    2fcc:	6e b4       	in	r6, 0x2e	; 46
+    2fce:	78 94       	sei
+    2fd0:	67 9c       	mul	r6, r7
+    2fd2:	f0 01       	movw	r30, r0
+    2fd4:	fe 5f       	subi	r31, 0xFE	; 254
+    2fd6:	09 94       	ijmp
+    2fd8:	00 00       	nop
+    2fda:	00 00       	nop
+    2fdc:	00 00       	nop
+    2fde:	00 00       	nop
+    2fe0:	00 00       	nop
+    2fe2:	00 00       	nop
+    2fe4:	00 00       	nop
+    2fe6:	00 00       	nop
+    2fe8:	00 00       	nop
+    2fea:	00 00       	nop
+    2fec:	00 00       	nop
+    2fee:	00 00       	nop
+    2ff0:	00 00       	nop
+    2ff2:	00 00       	nop
+    2ff4:	00 00       	nop
+    2ff6:	00 00       	nop
+    2ff8:	00 00       	nop
+    2ffa:	00 00       	nop
+    2ffc:	00 00       	nop
+    2ffe:	00 00       	nop
+
+00003000 <I_B8__CMP8_c2_c0>:
+    3000:	c8 95       	lpm
+    3002:	40 17       	cp	r20, r16
+    3004:	5f b6       	in	r5, 0x3f	; 63
+    3006:	01 96       	adiw	r24, 0x01	; 1
+    3008:	f8 94       	cli
+    300a:	2e bc       	out	0x2e, r2	; 46
+    300c:	6e b4       	in	r6, 0x2e	; 46
+    300e:	78 94       	sei
+    3010:	67 9c       	mul	r6, r7
+    3012:	f0 01       	movw	r30, r0
+    3014:	fe 5f       	subi	r31, 0xFE	; 254
+    3016:	09 94       	ijmp
+    3018:	00 00       	nop
+    301a:	00 00       	nop
+    301c:	00 00       	nop
+    301e:	00 00       	nop
+    3020:	00 00       	nop
+    3022:	00 00       	nop
+    3024:	00 00       	nop
+    3026:	00 00       	nop
+    3028:	00 00       	nop
+    302a:	00 00       	nop
+    302c:	00 00       	nop
+    302e:	00 00       	nop
+    3030:	00 00       	nop
+    3032:	00 00       	nop
+    3034:	00 00       	nop
+    3036:	00 00       	nop
+    3038:	00 00       	nop
+    303a:	00 00       	nop
+    303c:	00 00       	nop
+    303e:	00 00       	nop
+
+00003040 <I_B9__CMP8_c2_c1>:
+    3040:	c8 95       	lpm
+    3042:	42 17       	cp	r20, r18
+    3044:	5f b6       	in	r5, 0x3f	; 63
+    3046:	01 96       	adiw	r24, 0x01	; 1
+    3048:	f8 94       	cli
+    304a:	2e bc       	out	0x2e, r2	; 46
+    304c:	6e b4       	in	r6, 0x2e	; 46
+    304e:	78 94       	sei
+    3050:	67 9c       	mul	r6, r7
+    3052:	f0 01       	movw	r30, r0
+    3054:	fe 5f       	subi	r31, 0xFE	; 254
+    3056:	09 94       	ijmp
+    3058:	00 00       	nop
+    305a:	00 00       	nop
+    305c:	00 00       	nop
+    305e:	00 00       	nop
+    3060:	00 00       	nop
+    3062:	00 00       	nop
+    3064:	00 00       	nop
+    3066:	00 00       	nop
+    3068:	00 00       	nop
+    306a:	00 00       	nop
+    306c:	00 00       	nop
+    306e:	00 00       	nop
+    3070:	00 00       	nop
+    3072:	00 00       	nop
+    3074:	00 00       	nop
+    3076:	00 00       	nop
+    3078:	00 00       	nop
+    307a:	00 00       	nop
+    307c:	00 00       	nop
+    307e:	00 00       	nop
+
+00003080 <I_BA__TST8_c2>:
+    3080:	00 00       	nop
+    3082:	50 fa       	bst	r5, 0
+    3084:	44 23       	and	r20, r20
+    3086:	5f b6       	in	r5, 0x3f	; 63
+    3088:	50 f8       	bld	r5, 0
+    308a:	01 96       	adiw	r24, 0x01	; 1
+    308c:	f8 94       	cli
+    308e:	2e bc       	out	0x2e, r2	; 46
+    3090:	6e b4       	in	r6, 0x2e	; 46
+    3092:	78 94       	sei
+    3094:	67 9c       	mul	r6, r7
+    3096:	f0 01       	movw	r30, r0
+    3098:	fe 5f       	subi	r31, 0xFE	; 254
+    309a:	09 94       	ijmp
+    309c:	00 00       	nop
+    309e:	00 00       	nop
+    30a0:	00 00       	nop
+    30a2:	00 00       	nop
+    30a4:	00 00       	nop
+    30a6:	00 00       	nop
+    30a8:	00 00       	nop
+    30aa:	00 00       	nop
+    30ac:	00 00       	nop
+    30ae:	00 00       	nop
+    30b0:	00 00       	nop
+    30b2:	00 00       	nop
+    30b4:	00 00       	nop
+    30b6:	00 00       	nop
+    30b8:	00 00       	nop
+    30ba:	00 00       	nop
+    30bc:	00 00       	nop
+    30be:	00 00       	nop
+
+000030c0 <I_BB__CMP8_c2_c3>:
+    30c0:	c8 95       	lpm
+    30c2:	46 17       	cp	r20, r22
+    30c4:	5f b6       	in	r5, 0x3f	; 63
+    30c6:	01 96       	adiw	r24, 0x01	; 1
+    30c8:	f8 94       	cli
+    30ca:	2e bc       	out	0x2e, r2	; 46
+    30cc:	6e b4       	in	r6, 0x2e	; 46
+    30ce:	78 94       	sei
+    30d0:	67 9c       	mul	r6, r7
+    30d2:	f0 01       	movw	r30, r0
+    30d4:	fe 5f       	subi	r31, 0xFE	; 254
+    30d6:	09 94       	ijmp
+    30d8:	00 00       	nop
+    30da:	00 00       	nop
+    30dc:	00 00       	nop
+    30de:	00 00       	nop
+    30e0:	00 00       	nop
+    30e2:	00 00       	nop
+    30e4:	00 00       	nop
+    30e6:	00 00       	nop
+    30e8:	00 00       	nop
+    30ea:	00 00       	nop
+    30ec:	00 00       	nop
+    30ee:	00 00       	nop
+    30f0:	00 00       	nop
+    30f2:	00 00       	nop
+    30f4:	00 00       	nop
+    30f6:	00 00       	nop
+    30f8:	00 00       	nop
+    30fa:	00 00       	nop
+    30fc:	00 00       	nop
+    30fe:	00 00       	nop
+
+00003100 <I_BC__CMP8_c3_c0>:
+    3100:	c8 95       	lpm
+    3102:	60 17       	cp	r22, r16
+    3104:	5f b6       	in	r5, 0x3f	; 63
+    3106:	01 96       	adiw	r24, 0x01	; 1
+    3108:	f8 94       	cli
+    310a:	2e bc       	out	0x2e, r2	; 46
+    310c:	6e b4       	in	r6, 0x2e	; 46
+    310e:	78 94       	sei
+    3110:	67 9c       	mul	r6, r7
+    3112:	f0 01       	movw	r30, r0
+    3114:	fe 5f       	subi	r31, 0xFE	; 254
+    3116:	09 94       	ijmp
+    3118:	00 00       	nop
+    311a:	00 00       	nop
+    311c:	00 00       	nop
+    311e:	00 00       	nop
+    3120:	00 00       	nop
+    3122:	00 00       	nop
+    3124:	00 00       	nop
+    3126:	00 00       	nop
+    3128:	00 00       	nop
+    312a:	00 00       	nop
+    312c:	00 00       	nop
+    312e:	00 00       	nop
+    3130:	00 00       	nop
+    3132:	00 00       	nop
+    3134:	00 00       	nop
+    3136:	00 00       	nop
+    3138:	00 00       	nop
+    313a:	00 00       	nop
+    313c:	00 00       	nop
+    313e:	00 00       	nop
+
+00003140 <I_BD__CMP8_c3_c1>:
+    3140:	c8 95       	lpm
+    3142:	62 17       	cp	r22, r18
+    3144:	5f b6       	in	r5, 0x3f	; 63
+    3146:	01 96       	adiw	r24, 0x01	; 1
+    3148:	f8 94       	cli
+    314a:	2e bc       	out	0x2e, r2	; 46
+    314c:	6e b4       	in	r6, 0x2e	; 46
+    314e:	78 94       	sei
+    3150:	67 9c       	mul	r6, r7
+    3152:	f0 01       	movw	r30, r0
+    3154:	fe 5f       	subi	r31, 0xFE	; 254
+    3156:	09 94       	ijmp
+    3158:	00 00       	nop
+    315a:	00 00       	nop
+    315c:	00 00       	nop
+    315e:	00 00       	nop
+    3160:	00 00       	nop
+    3162:	00 00       	nop
+    3164:	00 00       	nop
+    3166:	00 00       	nop
+    3168:	00 00       	nop
+    316a:	00 00       	nop
+    316c:	00 00       	nop
+    316e:	00 00       	nop
+    3170:	00 00       	nop
+    3172:	00 00       	nop
+    3174:	00 00       	nop
+    3176:	00 00       	nop
+    3178:	00 00       	nop
+    317a:	00 00       	nop
+    317c:	00 00       	nop
+    317e:	00 00       	nop
+
+00003180 <I_BE__CMP8_c3_c2>:
+    3180:	c8 95       	lpm
+    3182:	64 17       	cp	r22, r20
+    3184:	5f b6       	in	r5, 0x3f	; 63
+    3186:	01 96       	adiw	r24, 0x01	; 1
+    3188:	f8 94       	cli
+    318a:	2e bc       	out	0x2e, r2	; 46
+    318c:	6e b4       	in	r6, 0x2e	; 46
+    318e:	78 94       	sei
+    3190:	67 9c       	mul	r6, r7
+    3192:	f0 01       	movw	r30, r0
+    3194:	fe 5f       	subi	r31, 0xFE	; 254
+    3196:	09 94       	ijmp
+    3198:	00 00       	nop
+    319a:	00 00       	nop
+    319c:	00 00       	nop
+    319e:	00 00       	nop
+    31a0:	00 00       	nop
+    31a2:	00 00       	nop
+    31a4:	00 00       	nop
+    31a6:	00 00       	nop
+    31a8:	00 00       	nop
+    31aa:	00 00       	nop
+    31ac:	00 00       	nop
+    31ae:	00 00       	nop
+    31b0:	00 00       	nop
+    31b2:	00 00       	nop
+    31b4:	00 00       	nop
+    31b6:	00 00       	nop
+    31b8:	00 00       	nop
+    31ba:	00 00       	nop
+    31bc:	00 00       	nop
+    31be:	00 00       	nop
+
+000031c0 <I_BF__TST8_c3>:
+    31c0:	00 00       	nop
+    31c2:	50 fa       	bst	r5, 0
+    31c4:	66 23       	and	r22, r22
+    31c6:	5f b6       	in	r5, 0x3f	; 63
+    31c8:	50 f8       	bld	r5, 0
+    31ca:	01 96       	adiw	r24, 0x01	; 1
+    31cc:	f8 94       	cli
+    31ce:	2e bc       	out	0x2e, r2	; 46
+    31d0:	6e b4       	in	r6, 0x2e	; 46
+    31d2:	78 94       	sei
+    31d4:	67 9c       	mul	r6, r7
+    31d6:	f0 01       	movw	r30, r0
+    31d8:	fe 5f       	subi	r31, 0xFE	; 254
+    31da:	09 94       	ijmp
+    31dc:	00 00       	nop
+    31de:	00 00       	nop
+    31e0:	00 00       	nop
+    31e2:	00 00       	nop
+    31e4:	00 00       	nop
+    31e6:	00 00       	nop
+    31e8:	00 00       	nop
+    31ea:	00 00       	nop
+    31ec:	00 00       	nop
+    31ee:	00 00       	nop
+    31f0:	00 00       	nop
+    31f2:	00 00       	nop
+    31f4:	00 00       	nop
+    31f6:	00 00       	nop
+    31f8:	00 00       	nop
+    31fa:	00 00       	nop
+    31fc:	00 00       	nop
+    31fe:	00 00       	nop

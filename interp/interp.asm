@@ -563,3 +563,95 @@ emit_add_or_sub 0x9C, I_9C__SUB_c3_c0, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
 emit_add_or_sub 0x9D, I_9D__SUB_c3_c1, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
 emit_add_or_sub 0x9E, I_9E__SUB_c3_c2, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
 emit_add_or_sub 0x9F, I_9F__SUB_c3_c3, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xA0-0xAF: CMP16 / TST16
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.macro emit_cmp16_or_tst opcode, label, dstl, dsth, srcl, srch, same=0
+    handler_begin \opcode, \label
+
+    .if \same
+        ; TST16 updates Z/N/V/S but preserves the old AVM carry.
+        ;
+        ; BST copies VM_FLAGS.C into native SREG.T.
+        ; CP/CPC do not modify T.
+        ; BLD restores that saved bit after SREG is captured.
+        bst  VM_FLAGS, 0
+        cp   \dstl, ZERO
+        cpc  \dsth, ZERO
+        in   VM_FLAGS, SREG
+        bld  VM_FLAGS, 0
+    .else
+        ; 2-cycle padding + CP + CPC + IN = 5 cycles.
+        delay_2
+        cp   \dstl, \srcl
+        cpc  \dsth, \srch
+        in   VM_FLAGS, SREG
+    .endif
+
+    dispatch_reverse
+    handler_end \opcode
+.endm
+
+emit_cmp16_or_tst 0xA0, I_A0__TST16_c0,     VM_C0L, VM_C0H, VM_C0L, VM_C0H, 1
+emit_cmp16_or_tst 0xA1, I_A1__CMP16_c0_c1,  VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_cmp16_or_tst 0xA2, I_A2__CMP16_c0_c2,  VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_cmp16_or_tst 0xA3, I_A3__CMP16_c0_c3,  VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_cmp16_or_tst 0xA4, I_A4__CMP16_c1_c0,  VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_cmp16_or_tst 0xA5, I_A5__TST16_c1,     VM_C1L, VM_C1H, VM_C1L, VM_C1H, 1
+emit_cmp16_or_tst 0xA6, I_A6__CMP16_c1_c2,  VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_cmp16_or_tst 0xA7, I_A7__CMP16_c1_c3,  VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_cmp16_or_tst 0xA8, I_A8__CMP16_c2_c0,  VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_cmp16_or_tst 0xA9, I_A9__CMP16_c2_c1,  VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_cmp16_or_tst 0xAA, I_AA__TST16_c2,     VM_C2L, VM_C2H, VM_C2L, VM_C2H, 1
+emit_cmp16_or_tst 0xAB, I_AB__CMP16_c2_c3,  VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_cmp16_or_tst 0xAC, I_AC__CMP16_c3_c0,  VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_cmp16_or_tst 0xAD, I_AD__CMP16_c3_c1,  VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_cmp16_or_tst 0xAE, I_AE__CMP16_c3_c2,  VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_cmp16_or_tst 0xAF, I_AF__TST16_c3,     VM_C3L, VM_C3H, VM_C3L, VM_C3H, 1
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xB0-0xBF: CMP8 / TST8
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.macro emit_cmp8_or_tst opcode, label, dstl, srcl, same=0
+    handler_begin \opcode, \label
+
+    .if \same
+        ; TST8 updates Z/N/V/S but preserves the old AVM carry.
+        ;
+        ; N is derived from bit 7 and V is cleared by TST,
+        ; so S = N as required for an 8-bit zero test.
+        delay_1
+        bst  VM_FLAGS, 0
+        tst  \dstl
+        in   VM_FLAGS, SREG
+        bld  VM_FLAGS, 0
+    .else
+        ; 3-cycle padding + CP + IN = 5 cycles.
+        delay_3
+        cp   \dstl, \srcl
+        in   VM_FLAGS, SREG
+    .endif
+
+    dispatch_reverse
+    handler_end \opcode
+.endm
+
+emit_cmp8_or_tst 0xB0, I_B0__TST8_c0,     VM_C0L, VM_C0L, 1
+emit_cmp8_or_tst 0xB1, I_B1__CMP8_c0_c1,  VM_C0L, VM_C1L
+emit_cmp8_or_tst 0xB2, I_B2__CMP8_c0_c2,  VM_C0L, VM_C2L
+emit_cmp8_or_tst 0xB3, I_B3__CMP8_c0_c3,  VM_C0L, VM_C3L
+emit_cmp8_or_tst 0xB4, I_B4__CMP8_c1_c0,  VM_C1L, VM_C0L
+emit_cmp8_or_tst 0xB5, I_B5__TST8_c1,     VM_C1L, VM_C1L, 1
+emit_cmp8_or_tst 0xB6, I_B6__CMP8_c1_c2,  VM_C1L, VM_C2L
+emit_cmp8_or_tst 0xB7, I_B7__CMP8_c1_c3,  VM_C1L, VM_C3L
+emit_cmp8_or_tst 0xB8, I_B8__CMP8_c2_c0,  VM_C2L, VM_C0L
+emit_cmp8_or_tst 0xB9, I_B9__CMP8_c2_c1,  VM_C2L, VM_C1L
+emit_cmp8_or_tst 0xBA, I_BA__TST8_c2,     VM_C2L, VM_C2L, 1
+emit_cmp8_or_tst 0xBB, I_BB__CMP8_c2_c3,  VM_C2L, VM_C3L
+emit_cmp8_or_tst 0xBC, I_BC__CMP8_c3_c0,  VM_C3L, VM_C0L
+emit_cmp8_or_tst 0xBD, I_BD__CMP8_c3_c1,  VM_C3L, VM_C1L
+emit_cmp8_or_tst 0xBE, I_BE__CMP8_c3_c2,  VM_C3L, VM_C2L
+emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1

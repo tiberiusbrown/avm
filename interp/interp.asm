@@ -1141,3 +1141,115 @@ I_8F__ADD_c3_c3:
     adc  VM_C3H, VM_C3H
     in   VM_FLAGS, SREG
     dispatch_reverse
+
+I_90__SUB_c0_c0:
+    delay_2
+    sub  VM_C0L, VM_C0L
+    sbc  VM_C0H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_91__SUB_c0_c1:
+    delay_2
+    sub  VM_C0L, VM_C1L
+    sbc  VM_C0H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_92__SUB_c0_c2:
+    delay_2
+    sub  VM_C0L, VM_C2L
+    sbc  VM_C0H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_93__SUB_c0_c3:
+    delay_2
+    sub  VM_C0L, VM_C3L
+    sbc  VM_C0H, VM_C3H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_94__SUB_c1_c0:
+    delay_2
+    sub  VM_C1L, VM_C0L
+    sbc  VM_C1H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_95__SUB_c1_c1:
+    delay_2
+    sub  VM_C1L, VM_C1L
+    sbc  VM_C1H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_96__SUB_c1_c2:
+    delay_2
+    sub  VM_C1L, VM_C2L
+    sbc  VM_C1H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_97__SUB_c1_c3:
+    delay_2
+    sub  VM_C1L, VM_C3L
+    sbc  VM_C1H, VM_C3H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_98__SUB_c2_c0:
+    delay_2
+    sub  VM_C2L, VM_C0L
+    sbc  VM_C2H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_99__SUB_c2_c1:
+    delay_2
+    sub  VM_C2L, VM_C1L
+    sbc  VM_C2H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_9A__SUB_c2_c2:
+    delay_2
+    sub  VM_C2L, VM_C2L
+    sbc  VM_C2H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_9B__SUB_c2_c3:
+    delay_2
+    sub  VM_C2L, VM_C3L
+    sbc  VM_C2H, VM_C3H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_9C__SUB_c3_c0:
+    delay_2
+    sub  VM_C3L, VM_C0L
+    sbc  VM_C3H, VM_C0H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_9D__SUB_c3_c1:
+    delay_2
+    sub  VM_C3L, VM_C1L
+    sbc  VM_C3H, VM_C1H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_9E__SUB_c3_c2:
+    delay_2
+    sub  VM_C3L, VM_C2L
+    sbc  VM_C3H, VM_C2H
+    in   VM_FLAGS, SREG
+    dispatch_reverse
+
+I_9F__SUB_c3_c3:
+    delay_2
+    sub  VM_C3L, VM_C3L
+    sbc  VM_C3H, VM_C3H
+    in   VM_FLAGS, SREG
+    dispatch_reverse

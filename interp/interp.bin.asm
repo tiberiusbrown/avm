@@ -2273,3 +2273,259 @@ Disassembly of section .text:
     24d6:	e3 95       	inc	r30
     24d8:	09 94       	ijmp
 	...
+
+00002500 <I_90__SUB_c0_c0>:
+    2500:	00 c0       	rjmp	.+0      	; 0x2502 <I_90__SUB_c0_c0+0x2>
+    2502:	00 1b       	sub	r16, r16
+    2504:	11 0b       	sbc	r17, r17
+    2506:	5f b6       	in	r5, 0x3f	; 63
+    2508:	01 96       	adiw	r24, 0x01	; 1
+    250a:	f8 94       	cli
+    250c:	2e bc       	out	0x2e, r2	; 46
+    250e:	6e b4       	in	r6, 0x2e	; 46
+    2510:	78 94       	sei
+    2512:	67 9c       	mul	r6, r7
+    2514:	f0 01       	movw	r30, r0
+    2516:	e3 95       	inc	r30
+    2518:	09 94       	ijmp
+	...
+
+00002540 <I_91__SUB_c0_c1>:
+    2540:	00 c0       	rjmp	.+0      	; 0x2542 <I_91__SUB_c0_c1+0x2>
+    2542:	02 1b       	sub	r16, r18
+    2544:	13 0b       	sbc	r17, r19
+    2546:	5f b6       	in	r5, 0x3f	; 63
+    2548:	01 96       	adiw	r24, 0x01	; 1
+    254a:	f8 94       	cli
+    254c:	2e bc       	out	0x2e, r2	; 46
+    254e:	6e b4       	in	r6, 0x2e	; 46
+    2550:	78 94       	sei
+    2552:	67 9c       	mul	r6, r7
+    2554:	f0 01       	movw	r30, r0
+    2556:	e3 95       	inc	r30
+    2558:	09 94       	ijmp
+	...
+
+00002580 <I_92__SUB_c0_c2>:
+    2580:	00 c0       	rjmp	.+0      	; 0x2582 <I_92__SUB_c0_c2+0x2>
+    2582:	04 1b       	sub	r16, r20
+    2584:	15 0b       	sbc	r17, r21
+    2586:	5f b6       	in	r5, 0x3f	; 63
+    2588:	01 96       	adiw	r24, 0x01	; 1
+    258a:	f8 94       	cli
+    258c:	2e bc       	out	0x2e, r2	; 46
+    258e:	6e b4       	in	r6, 0x2e	; 46
+    2590:	78 94       	sei
+    2592:	67 9c       	mul	r6, r7
+    2594:	f0 01       	movw	r30, r0
+    2596:	e3 95       	inc	r30
+    2598:	09 94       	ijmp
+	...
+
+000025c0 <I_93__SUB_c0_c3>:
+    25c0:	00 c0       	rjmp	.+0      	; 0x25c2 <I_93__SUB_c0_c3+0x2>
+    25c2:	06 1b       	sub	r16, r22
+    25c4:	17 0b       	sbc	r17, r23
+    25c6:	5f b6       	in	r5, 0x3f	; 63
+    25c8:	01 96       	adiw	r24, 0x01	; 1
+    25ca:	f8 94       	cli
+    25cc:	2e bc       	out	0x2e, r2	; 46
+    25ce:	6e b4       	in	r6, 0x2e	; 46
+    25d0:	78 94       	sei
+    25d2:	67 9c       	mul	r6, r7
+    25d4:	f0 01       	movw	r30, r0
+    25d6:	e3 95       	inc	r30
+    25d8:	09 94       	ijmp
+	...
+
+00002600 <I_94__SUB_c1_c0>:
+    2600:	00 c0       	rjmp	.+0      	; 0x2602 <I_94__SUB_c1_c0+0x2>
+    2602:	20 1b       	sub	r18, r16
+    2604:	31 0b       	sbc	r19, r17
+    2606:	5f b6       	in	r5, 0x3f	; 63
+    2608:	01 96       	adiw	r24, 0x01	; 1
+    260a:	f8 94       	cli
+    260c:	2e bc       	out	0x2e, r2	; 46
+    260e:	6e b4       	in	r6, 0x2e	; 46
+    2610:	78 94       	sei
+    2612:	67 9c       	mul	r6, r7
+    2614:	f0 01       	movw	r30, r0
+    2616:	e3 95       	inc	r30
+    2618:	09 94       	ijmp
+	...
+
+00002640 <I_95__SUB_c1_c1>:
+    2640:	00 c0       	rjmp	.+0      	; 0x2642 <I_95__SUB_c1_c1+0x2>
+    2642:	22 1b       	sub	r18, r18
+    2644:	33 0b       	sbc	r19, r19
+    2646:	5f b6       	in	r5, 0x3f	; 63
+    2648:	01 96       	adiw	r24, 0x01	; 1
+    264a:	f8 94       	cli
+    264c:	2e bc       	out	0x2e, r2	; 46
+    264e:	6e b4       	in	r6, 0x2e	; 46
+    2650:	78 94       	sei
+    2652:	67 9c       	mul	r6, r7
+    2654:	f0 01       	movw	r30, r0
+    2656:	e3 95       	inc	r30
+    2658:	09 94       	ijmp
+	...
+
+00002680 <I_96__SUB_c1_c2>:
+    2680:	00 c0       	rjmp	.+0      	; 0x2682 <I_96__SUB_c1_c2+0x2>
+    2682:	24 1b       	sub	r18, r20
+    2684:	35 0b       	sbc	r19, r21
+    2686:	5f b6       	in	r5, 0x3f	; 63
+    2688:	01 96       	adiw	r24, 0x01	; 1
+    268a:	f8 94       	cli
+    268c:	2e bc       	out	0x2e, r2	; 46
+    268e:	6e b4       	in	r6, 0x2e	; 46
+    2690:	78 94       	sei
+    2692:	67 9c       	mul	r6, r7
+    2694:	f0 01       	movw	r30, r0
+    2696:	e3 95       	inc	r30
+    2698:	09 94       	ijmp
+	...
+
+000026c0 <I_97__SUB_c1_c3>:
+    26c0:	00 c0       	rjmp	.+0      	; 0x26c2 <I_97__SUB_c1_c3+0x2>
+    26c2:	26 1b       	sub	r18, r22
+    26c4:	37 0b       	sbc	r19, r23
+    26c6:	5f b6       	in	r5, 0x3f	; 63
+    26c8:	01 96       	adiw	r24, 0x01	; 1
+    26ca:	f8 94       	cli
+    26cc:	2e bc       	out	0x2e, r2	; 46
+    26ce:	6e b4       	in	r6, 0x2e	; 46
+    26d0:	78 94       	sei
+    26d2:	67 9c       	mul	r6, r7
+    26d4:	f0 01       	movw	r30, r0
+    26d6:	e3 95       	inc	r30
+    26d8:	09 94       	ijmp
+	...
+
+00002700 <I_98__SUB_c2_c0>:
+    2700:	00 c0       	rjmp	.+0      	; 0x2702 <I_98__SUB_c2_c0+0x2>
+    2702:	40 1b       	sub	r20, r16
+    2704:	51 0b       	sbc	r21, r17
+    2706:	5f b6       	in	r5, 0x3f	; 63
+    2708:	01 96       	adiw	r24, 0x01	; 1
+    270a:	f8 94       	cli
+    270c:	2e bc       	out	0x2e, r2	; 46
+    270e:	6e b4       	in	r6, 0x2e	; 46
+    2710:	78 94       	sei
+    2712:	67 9c       	mul	r6, r7
+    2714:	f0 01       	movw	r30, r0
+    2716:	e3 95       	inc	r30
+    2718:	09 94       	ijmp
+	...
+
+00002740 <I_99__SUB_c2_c1>:
+    2740:	00 c0       	rjmp	.+0      	; 0x2742 <I_99__SUB_c2_c1+0x2>
+    2742:	42 1b       	sub	r20, r18
+    2744:	53 0b       	sbc	r21, r19
+    2746:	5f b6       	in	r5, 0x3f	; 63
+    2748:	01 96       	adiw	r24, 0x01	; 1
+    274a:	f8 94       	cli
+    274c:	2e bc       	out	0x2e, r2	; 46
+    274e:	6e b4       	in	r6, 0x2e	; 46
+    2750:	78 94       	sei
+    2752:	67 9c       	mul	r6, r7
+    2754:	f0 01       	movw	r30, r0
+    2756:	e3 95       	inc	r30
+    2758:	09 94       	ijmp
+	...
+
+00002780 <I_9A__SUB_c2_c2>:
+    2780:	00 c0       	rjmp	.+0      	; 0x2782 <I_9A__SUB_c2_c2+0x2>
+    2782:	44 1b       	sub	r20, r20
+    2784:	55 0b       	sbc	r21, r21
+    2786:	5f b6       	in	r5, 0x3f	; 63
+    2788:	01 96       	adiw	r24, 0x01	; 1
+    278a:	f8 94       	cli
+    278c:	2e bc       	out	0x2e, r2	; 46
+    278e:	6e b4       	in	r6, 0x2e	; 46
+    2790:	78 94       	sei
+    2792:	67 9c       	mul	r6, r7
+    2794:	f0 01       	movw	r30, r0
+    2796:	e3 95       	inc	r30
+    2798:	09 94       	ijmp
+	...
+
+000027c0 <I_9B__SUB_c2_c3>:
+    27c0:	00 c0       	rjmp	.+0      	; 0x27c2 <I_9B__SUB_c2_c3+0x2>
+    27c2:	46 1b       	sub	r20, r22
+    27c4:	57 0b       	sbc	r21, r23
+    27c6:	5f b6       	in	r5, 0x3f	; 63
+    27c8:	01 96       	adiw	r24, 0x01	; 1
+    27ca:	f8 94       	cli
+    27cc:	2e bc       	out	0x2e, r2	; 46
+    27ce:	6e b4       	in	r6, 0x2e	; 46
+    27d0:	78 94       	sei
+    27d2:	67 9c       	mul	r6, r7
+    27d4:	f0 01       	movw	r30, r0
+    27d6:	e3 95       	inc	r30
+    27d8:	09 94       	ijmp
+	...
+
+00002800 <I_9C__SUB_c3_c0>:
+    2800:	00 c0       	rjmp	.+0      	; 0x2802 <I_9C__SUB_c3_c0+0x2>
+    2802:	60 1b       	sub	r22, r16
+    2804:	71 0b       	sbc	r23, r17
+    2806:	5f b6       	in	r5, 0x3f	; 63
+    2808:	01 96       	adiw	r24, 0x01	; 1
+    280a:	f8 94       	cli
+    280c:	2e bc       	out	0x2e, r2	; 46
+    280e:	6e b4       	in	r6, 0x2e	; 46
+    2810:	78 94       	sei
+    2812:	67 9c       	mul	r6, r7
+    2814:	f0 01       	movw	r30, r0
+    2816:	e3 95       	inc	r30
+    2818:	09 94       	ijmp
+	...
+
+00002840 <I_9D__SUB_c3_c1>:
+    2840:	00 c0       	rjmp	.+0      	; 0x2842 <I_9D__SUB_c3_c1+0x2>
+    2842:	62 1b       	sub	r22, r18
+    2844:	73 0b       	sbc	r23, r19
+    2846:	5f b6       	in	r5, 0x3f	; 63
+    2848:	01 96       	adiw	r24, 0x01	; 1
+    284a:	f8 94       	cli
+    284c:	2e bc       	out	0x2e, r2	; 46
+    284e:	6e b4       	in	r6, 0x2e	; 46
+    2850:	78 94       	sei
+    2852:	67 9c       	mul	r6, r7
+    2854:	f0 01       	movw	r30, r0
+    2856:	e3 95       	inc	r30
+    2858:	09 94       	ijmp
+	...
+
+00002880 <I_9E__SUB_c3_c2>:
+    2880:	00 c0       	rjmp	.+0      	; 0x2882 <I_9E__SUB_c3_c2+0x2>
+    2882:	64 1b       	sub	r22, r20
+    2884:	75 0b       	sbc	r23, r21
+    2886:	5f b6       	in	r5, 0x3f	; 63
+    2888:	01 96       	adiw	r24, 0x01	; 1
+    288a:	f8 94       	cli
+    288c:	2e bc       	out	0x2e, r2	; 46
+    288e:	6e b4       	in	r6, 0x2e	; 46
+    2890:	78 94       	sei
+    2892:	67 9c       	mul	r6, r7
+    2894:	f0 01       	movw	r30, r0
+    2896:	e3 95       	inc	r30
+    2898:	09 94       	ijmp
+	...
+
+000028c0 <I_9F__SUB_c3_c3>:
+    28c0:	00 c0       	rjmp	.+0      	; 0x28c2 <I_9F__SUB_c3_c3+0x2>
+    28c2:	66 1b       	sub	r22, r22
+    28c4:	77 0b       	sbc	r23, r23
+    28c6:	5f b6       	in	r5, 0x3f	; 63
+    28c8:	01 96       	adiw	r24, 0x01	; 1
+    28ca:	f8 94       	cli
+    28cc:	2e bc       	out	0x2e, r2	; 46
+    28ce:	6e b4       	in	r6, 0x2e	; 46
+    28d0:	78 94       	sei
+    28d2:	67 9c       	mul	r6, r7
+    28d4:	f0 01       	movw	r30, r0
+    28d6:	e3 95       	inc	r30
+    28d8:	09 94       	ijmp
+	...

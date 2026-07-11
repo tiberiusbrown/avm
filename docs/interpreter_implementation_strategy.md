@@ -20,32 +20,6 @@ The remaining architectural work is:
 
 The `0x50–0x6F` primary range should remain reserved. Its handlers should eventually jump to one common invalid-opcode path rather than permanently spinning in 32 separate local loops, but no architectural operation should be assigned there yet.
 
-### Existing interpreter issue to correct first
-
-The current `emit_inc_or_dec` macro implements `DEC16` by adding `0xFFFF` with an `ADD/ADC` sequence. That sequence does not perform a correct 16-bit decrement because the carry from the low-byte addition has the wrong polarity for the high byte.
-
-Use separate increment and decrement sequences:
-
-```asm
-; INC16
-add  dstL, one
-adc  dstH, ZERO
-
-; DEC16
-sub  dstL, one
-sbc  dstH, ZERO
-```
-
-Both paths must continue to preserve the architectural carry bit while updating `Z/N/V/S`.
-
-There is also a harmless comment typo above `POP16`: its range is `0x78–0x7F`, not `0x70–0x77`.
-
-The current `fx_seek_to_pc` helper appears to treat the physical image base as a two-byte page number and passes `PCL` through unchanged. The architecture still permits an arbitrary 24-bit `imageBase`. Before implementing program-space loads, either generalize the interpreter to add all three image-base bytes or make 256-byte image alignment an explicit image-format requirement. This strategy preserves the current architectural contract and recommends the general 24-bit helper.
-
-The reset path currently stops in `reset_loop`; loading an entry point and beginning the first SPI opcode fetch is a separate startup task and is outside the remaining-opcode plan.
-
----
-
 ## 2. ISA clarifications made during this review
 
 No opcode reassignment was necessary. The updated architecture specification makes the following implementation-relevant behavior explicit:

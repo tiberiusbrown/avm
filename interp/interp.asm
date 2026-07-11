@@ -3,13 +3,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; SRAM:
-;;     0x0100–0x04FF globals
-;;     0x0500–0x08FF framebuffer
-;;     0x0900–0x09FF VM stack
-;;     0x0A00-0x0A03 FX image/save page
-;;     0x0A04-0x0A05 requested save size
-;;     0x0A06       startup flags
-;;     0x0A07–0x0AFF interpreter-private
+;;     0x0100–0x04FF  globals
+;;     0x0500–0x08FF  framebuffer
+;;     0x0900–0x09FF  VM stack
+;;     0x0A00-0x0A03  FX image/save page
+;;     0x0A04-0x0A05  requested save size
+;;     0x0A06         startup flags
+;;     0x0A07–0x0AFF  interpreter-private
 
 #define data_globals    0x0100
 #define data_display    0x0500

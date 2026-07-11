@@ -63,11 +63,12 @@
 ;; GPIOR1         CB
 ;; GPIOR2         PB
 
-#define DISPATCH_ORG 0x0200
-#define DISPATCH_ALIGN 6
+#define DISPATCH_ORG             0x0200
+#define DISPATCH_SLOT_LOG2       6
+#define DISPATCH_STRIDE_WORDS    (1 << (DISPATCH_SLOT_LOG2 - 1))
+#define C_DISPATCH_STRIDE_WORDS  r7
 
 #define ZERO r2
-#define C_DISPATCH_ALIGN r7
 
 #define VM_FLAGS r5
 
@@ -127,46 +128,62 @@
 
 #include "32u4.h"
 
+#if (DISPATCH_ORG & 0xFF) != 0
+#error "Dispatch calculation requires lo8(DISPATCH_ORG) == 0x00"
+#endif
+
 .section .text,"ax",@progbits
 .org 0x0000
 .global __vectors
 
 ; ATmega32U4 interrupt vector table.
 ; Each vector is one 32-bit JMP instruction. The table contains the reset
-; vector followed by the 31 device interrupt vectors, in datasheet order.
+; vector followed by the device interrupt vectors, including reserved slots,
+; in datasheet order.
 __vectors:
     jmp reset_handler       ;  0 RESET
     jmp default_isr         ;  1 INT0
     jmp default_isr         ;  2 INT1
     jmp default_isr         ;  3 INT2
     jmp default_isr         ;  4 INT3
-    jmp default_isr         ;  5 INT6
-    jmp default_isr         ;  6 PCINT0
-    jmp default_isr         ;  7 USB GENERAL
-    jmp default_isr         ;  8 USB ENDPOINT/COM
-    jmp default_isr         ;  9 WDT
-    jmp default_isr         ; 10 TIMER1 CAPTURE
-    jmp default_isr         ; 11 TIMER1 COMPA
-    jmp default_isr         ; 12 TIMER1 COMPB
-    jmp default_isr         ; 13 TIMER1 COMPC
-    jmp default_isr         ; 14 TIMER1 OVERFLOW
-    jmp default_isr         ; 15 TIMER0 COMPA
-    jmp default_isr         ; 16 TIMER0 COMPB
-    jmp default_isr         ; 17 TIMER0 OVERFLOW
-    jmp default_isr         ; 18 SPI
-    jmp default_isr         ; 19 USART1 RX
-    jmp default_isr         ; 20 USART1 UDRE
-    jmp default_isr         ; 21 USART1 TX
-    jmp default_isr         ; 22 ANALOG COMPARATOR
-    jmp default_isr         ; 23 ADC
-    jmp default_isr         ; 24 EEPROM READY
-    jmp default_isr         ; 25 TIMER3 CAPTURE
-    jmp default_isr         ; 26 TIMER3 COMPA
-    jmp default_isr         ; 27 TIMER3 COMPB
-    jmp default_isr         ; 28 TIMER3 COMPC
-    jmp default_isr         ; 29 TIMER3 OVERFLOW
-    jmp default_isr         ; 30 TWI
-    jmp default_isr         ; 31 SPM READY
+    jmp default_isr         ;  5 RESERVED
+    jmp default_isr         ;  6 RESERVED
+    jmp default_isr         ;  7 INT6
+    jmp default_isr         ;  8 RESERVED
+    jmp default_isr         ;  9 PCINT0
+    jmp default_isr         ; 10 USB GENERAL
+    jmp default_isr         ; 11 USB ENDPOINT
+    jmp default_isr         ; 12 WDT
+    jmp default_isr         ; 13 RESERVED
+    jmp default_isr         ; 14 RESERVED
+    jmp default_isr         ; 15 RESERVED
+    jmp default_isr         ; 16 TIMER1 CAPTURE
+    jmp default_isr         ; 17 TIMER1 COMPA
+    jmp default_isr         ; 18 TIMER1 COMPB
+    jmp default_isr         ; 19 TIMER1 COMPC
+    jmp default_isr         ; 20 TIMER1 OVERFLOW
+    jmp default_isr         ; 21 TIMER0 COMPA
+    jmp default_isr         ; 22 TIMER0 COMPB
+    jmp default_isr         ; 23 TIMER0 OVERFLOW
+    jmp default_isr         ; 24 SPI
+    jmp default_isr         ; 25 USART1 RX
+    jmp default_isr         ; 26 USART1 UDRE
+    jmp default_isr         ; 27 USART1 TX
+    jmp default_isr         ; 28 ANALOG COMPARATOR
+    jmp default_isr         ; 29 ADC
+    jmp default_isr         ; 30 EEPROM READY
+    jmp default_isr         ; 31 TIMER3 CAPTURE
+    jmp default_isr         ; 32 TIMER3 COMPA
+    jmp default_isr         ; 33 TIMER3 COMPB
+    jmp default_isr         ; 34 TIMER3 COMPC
+    jmp default_isr         ; 35 TIMER3 OVERFLOW
+    jmp default_isr         ; 36 TWI
+    jmp default_isr         ; 37 SPM READY
+    jmp default_isr         ; 38 TIMER4 COMPA
+    jmp default_isr         ; 39 TIMER4 COMPB
+    jmp default_isr         ; 40 TIMER4 COMPD
+    jmp default_isr         ; 41 TIMER4 OVERFLOW
+    jmp default_isr         ; 42 TIMER4 FPF
 
 .size __vectors, .-__vectors
 
@@ -177,8 +194,8 @@ reset_handler:
 
     ; Initialize registers for VM
     clr  ZERO
-    ldi  r26, (1<<(DISPATCH_ALIGN-1))
-    mov  C_DISPATCH_ALIGN, r26
+    ldi  r26, DISPATCH_STRIDE_WORDS
+    mov  C_DISPATCH_STRIDE_WORDS, r26
     ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
     ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
     clr  VM_FLAGS
@@ -198,9 +215,9 @@ reset_loop:
     in   r6, SPDR
     out  SPDR, ZERO
     adiw VM_PC, 1
-    mul  r6, C_DISPATCH_ALIGN
+    mul  r6, C_DISPATCH_STRIDE_WORDS
     movw r30, r0
-    inc  r31
+    subi r31, hi8(-(DISPATCH_ORG))
     ijmp
 .endm
 
@@ -211,19 +228,19 @@ reset_loop:
     out  SPDR, ZERO
     in   r6, SPDR
     sei
-    mul  r6, C_DISPATCH_ALIGN
+    mul  r6, C_DISPATCH_STRIDE_WORDS
     movw r30, r0
-    inc  r31
+    subi r31, hi8(-(DISPATCH_ORG))
     ijmp
 .endm
 
 .macro handler_begin opcode, label
-    .org (((\opcode) << DISPATCH_ALIGN) + DISPATCH_ORG)
+    .org (((\opcode) << DISPATCH_SLOT_LOG2) + DISPATCH_ORG)
 \label:
 .endm
 
 .macro handler_end opcode
-    .org ((((\opcode) + 1) << DISPATCH_ALIGN) + DISPATCH_ORG)
+    .org ((((\opcode) + 1) << DISPATCH_SLOT_LOG2) + DISPATCH_ORG)
 .endm
 
 .macro delay_1

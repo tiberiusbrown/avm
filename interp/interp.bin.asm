@@ -5,55 +5,66 @@ interp.elf:     file format elf32-avr
 Disassembly of section .text:
 
 00000000 <__vectors>:
-       0:	0c 94 41 00 	jmp	0x82	; 0x82 <reset_handler>
-       4:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-       8:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-       c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      10:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      14:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      18:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      1c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      20:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      24:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      28:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      2c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      30:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      34:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      38:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      3c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      40:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      44:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      48:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      4c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      50:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      54:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      58:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      5c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      60:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      64:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      68:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      6c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      70:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      74:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      78:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
-      7c:	0c 94 40 00 	jmp	0x80	; 0x80 <default_isr>
+       0:	0c 94 57 00 	jmp	0xae	; 0xae <reset_handler>
+       4:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+       8:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+       c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      10:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      14:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      18:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      1c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      20:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      24:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      28:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      2c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      30:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      34:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      38:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      3c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      40:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      44:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      48:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      4c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      50:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      54:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      58:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      5c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      60:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      64:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      68:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      6c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      70:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      74:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      78:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      7c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      80:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      84:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      88:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      8c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      90:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      94:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      98:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      9c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      a0:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      a4:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
+      a8:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
 
-00000080 <default_isr>:
-      80:	ff cf       	rjmp	.-2      	; 0x80 <default_isr>
+000000ac <default_isr>:
+      ac:	ff cf       	rjmp	.-2      	; 0xac <default_isr>
 
-00000082 <reset_handler>:
-      82:	22 24       	eor	r2, r2
-      84:	a0 e2       	ldi	r26, 0x20	; 32
-      86:	7a 2e       	mov	r7, r26
-      88:	c0 e0       	ldi	r28, 0x00	; 0
-      8a:	da e0       	ldi	r29, 0x0A	; 10
-      8c:	55 24       	eor	r5, r5
-      8e:	2a bc       	out	0x2a, r2	; 42
-      90:	2b bc       	out	0x2b, r2	; 43
-      92:	78 94       	sei
+000000ae <reset_handler>:
+      ae:	22 24       	eor	r2, r2
+      b0:	a0 e2       	ldi	r26, 0x20	; 32
+      b2:	7a 2e       	mov	r7, r26
+      b4:	c0 e0       	ldi	r28, 0x00	; 0
+      b6:	da e0       	ldi	r29, 0x0A	; 10
+      b8:	55 24       	eor	r5, r5
+      ba:	2a bc       	out	0x2a, r2	; 42
+      bc:	2b bc       	out	0x2b, r2	; 43
+      be:	78 94       	sei
 
-00000094 <reset_loop>:
-      94:	ff cf       	rjmp	.-2      	; 0x94 <reset_loop>
+000000c0 <reset_loop>:
+      c0:	ff cf       	rjmp	.-2      	; 0xc0 <reset_loop>
 	...
 
 00000200 <abvm_interp>:
@@ -67,7 +78,7 @@ Disassembly of section .text:
      20e:	78 94       	sei
      210:	67 9c       	mul	r6, r7
      212:	f0 01       	movw	r30, r0
-     214:	f3 95       	inc	r31
+     214:	fe 5f       	subi	r31, 0xFE	; 254
      216:	09 94       	ijmp
 	...
 
@@ -82,7 +93,7 @@ Disassembly of section .text:
      24e:	78 94       	sei
      250:	67 9c       	mul	r6, r7
      252:	f0 01       	movw	r30, r0
-     254:	f3 95       	inc	r31
+     254:	fe 5f       	subi	r31, 0xFE	; 254
      256:	09 94       	ijmp
 	...
 
@@ -97,7 +108,7 @@ Disassembly of section .text:
      28e:	78 94       	sei
      290:	67 9c       	mul	r6, r7
      292:	f0 01       	movw	r30, r0
-     294:	f3 95       	inc	r31
+     294:	fe 5f       	subi	r31, 0xFE	; 254
      296:	09 94       	ijmp
 	...
 
@@ -112,7 +123,7 @@ Disassembly of section .text:
      2ce:	78 94       	sei
      2d0:	67 9c       	mul	r6, r7
      2d2:	f0 01       	movw	r30, r0
-     2d4:	f3 95       	inc	r31
+     2d4:	fe 5f       	subi	r31, 0xFE	; 254
      2d6:	09 94       	ijmp
 	...
 
@@ -127,7 +138,7 @@ Disassembly of section .text:
      30e:	78 94       	sei
      310:	67 9c       	mul	r6, r7
      312:	f0 01       	movw	r30, r0
-     314:	f3 95       	inc	r31
+     314:	fe 5f       	subi	r31, 0xFE	; 254
      316:	09 94       	ijmp
 	...
 
@@ -142,7 +153,7 @@ Disassembly of section .text:
      34e:	78 94       	sei
      350:	67 9c       	mul	r6, r7
      352:	f0 01       	movw	r30, r0
-     354:	f3 95       	inc	r31
+     354:	fe 5f       	subi	r31, 0xFE	; 254
      356:	09 94       	ijmp
 	...
 
@@ -157,7 +168,7 @@ Disassembly of section .text:
      38e:	78 94       	sei
      390:	67 9c       	mul	r6, r7
      392:	f0 01       	movw	r30, r0
-     394:	f3 95       	inc	r31
+     394:	fe 5f       	subi	r31, 0xFE	; 254
      396:	09 94       	ijmp
 	...
 
@@ -172,7 +183,7 @@ Disassembly of section .text:
      3ce:	78 94       	sei
      3d0:	67 9c       	mul	r6, r7
      3d2:	f0 01       	movw	r30, r0
-     3d4:	f3 95       	inc	r31
+     3d4:	fe 5f       	subi	r31, 0xFE	; 254
      3d6:	09 94       	ijmp
 	...
 
@@ -187,7 +198,7 @@ Disassembly of section .text:
      40e:	78 94       	sei
      410:	67 9c       	mul	r6, r7
      412:	f0 01       	movw	r30, r0
-     414:	f3 95       	inc	r31
+     414:	fe 5f       	subi	r31, 0xFE	; 254
      416:	09 94       	ijmp
 	...
 
@@ -202,7 +213,7 @@ Disassembly of section .text:
      44e:	78 94       	sei
      450:	67 9c       	mul	r6, r7
      452:	f0 01       	movw	r30, r0
-     454:	f3 95       	inc	r31
+     454:	fe 5f       	subi	r31, 0xFE	; 254
      456:	09 94       	ijmp
 	...
 
@@ -217,7 +228,7 @@ Disassembly of section .text:
      48e:	78 94       	sei
      490:	67 9c       	mul	r6, r7
      492:	f0 01       	movw	r30, r0
-     494:	f3 95       	inc	r31
+     494:	fe 5f       	subi	r31, 0xFE	; 254
      496:	09 94       	ijmp
 	...
 
@@ -232,7 +243,7 @@ Disassembly of section .text:
      4ce:	78 94       	sei
      4d0:	67 9c       	mul	r6, r7
      4d2:	f0 01       	movw	r30, r0
-     4d4:	f3 95       	inc	r31
+     4d4:	fe 5f       	subi	r31, 0xFE	; 254
      4d6:	09 94       	ijmp
 	...
 
@@ -247,7 +258,7 @@ Disassembly of section .text:
      50e:	78 94       	sei
      510:	67 9c       	mul	r6, r7
      512:	f0 01       	movw	r30, r0
-     514:	f3 95       	inc	r31
+     514:	fe 5f       	subi	r31, 0xFE	; 254
      516:	09 94       	ijmp
 	...
 
@@ -262,7 +273,7 @@ Disassembly of section .text:
      54e:	78 94       	sei
      550:	67 9c       	mul	r6, r7
      552:	f0 01       	movw	r30, r0
-     554:	f3 95       	inc	r31
+     554:	fe 5f       	subi	r31, 0xFE	; 254
      556:	09 94       	ijmp
 	...
 
@@ -277,7 +288,7 @@ Disassembly of section .text:
      58e:	78 94       	sei
      590:	67 9c       	mul	r6, r7
      592:	f0 01       	movw	r30, r0
-     594:	f3 95       	inc	r31
+     594:	fe 5f       	subi	r31, 0xFE	; 254
      596:	09 94       	ijmp
 	...
 
@@ -292,7 +303,7 @@ Disassembly of section .text:
      5ce:	78 94       	sei
      5d0:	67 9c       	mul	r6, r7
      5d2:	f0 01       	movw	r30, r0
-     5d4:	f3 95       	inc	r31
+     5d4:	fe 5f       	subi	r31, 0xFE	; 254
      5d6:	09 94       	ijmp
 	...
 
@@ -308,7 +319,7 @@ Disassembly of section .text:
      610:	78 94       	sei
      612:	67 9c       	mul	r6, r7
      614:	f0 01       	movw	r30, r0
-     616:	f3 95       	inc	r31
+     616:	fe 5f       	subi	r31, 0xFE	; 254
      618:	09 94       	ijmp
 	...
 
@@ -324,7 +335,7 @@ Disassembly of section .text:
      650:	78 94       	sei
      652:	67 9c       	mul	r6, r7
      654:	f0 01       	movw	r30, r0
-     656:	f3 95       	inc	r31
+     656:	fe 5f       	subi	r31, 0xFE	; 254
      658:	09 94       	ijmp
 	...
 
@@ -340,7 +351,7 @@ Disassembly of section .text:
      690:	78 94       	sei
      692:	67 9c       	mul	r6, r7
      694:	f0 01       	movw	r30, r0
-     696:	f3 95       	inc	r31
+     696:	fe 5f       	subi	r31, 0xFE	; 254
      698:	09 94       	ijmp
 	...
 
@@ -356,7 +367,7 @@ Disassembly of section .text:
      6d0:	78 94       	sei
      6d2:	67 9c       	mul	r6, r7
      6d4:	f0 01       	movw	r30, r0
-     6d6:	f3 95       	inc	r31
+     6d6:	fe 5f       	subi	r31, 0xFE	; 254
      6d8:	09 94       	ijmp
 	...
 
@@ -372,7 +383,7 @@ Disassembly of section .text:
      710:	78 94       	sei
      712:	67 9c       	mul	r6, r7
      714:	f0 01       	movw	r30, r0
-     716:	f3 95       	inc	r31
+     716:	fe 5f       	subi	r31, 0xFE	; 254
      718:	09 94       	ijmp
 	...
 
@@ -388,7 +399,7 @@ Disassembly of section .text:
      750:	78 94       	sei
      752:	67 9c       	mul	r6, r7
      754:	f0 01       	movw	r30, r0
-     756:	f3 95       	inc	r31
+     756:	fe 5f       	subi	r31, 0xFE	; 254
      758:	09 94       	ijmp
 	...
 
@@ -404,7 +415,7 @@ Disassembly of section .text:
      790:	78 94       	sei
      792:	67 9c       	mul	r6, r7
      794:	f0 01       	movw	r30, r0
-     796:	f3 95       	inc	r31
+     796:	fe 5f       	subi	r31, 0xFE	; 254
      798:	09 94       	ijmp
 	...
 
@@ -420,7 +431,7 @@ Disassembly of section .text:
      7d0:	78 94       	sei
      7d2:	67 9c       	mul	r6, r7
      7d4:	f0 01       	movw	r30, r0
-     7d6:	f3 95       	inc	r31
+     7d6:	fe 5f       	subi	r31, 0xFE	; 254
      7d8:	09 94       	ijmp
 	...
 
@@ -436,7 +447,7 @@ Disassembly of section .text:
      810:	78 94       	sei
      812:	67 9c       	mul	r6, r7
      814:	f0 01       	movw	r30, r0
-     816:	f3 95       	inc	r31
+     816:	fe 5f       	subi	r31, 0xFE	; 254
      818:	09 94       	ijmp
 	...
 
@@ -452,7 +463,7 @@ Disassembly of section .text:
      850:	78 94       	sei
      852:	67 9c       	mul	r6, r7
      854:	f0 01       	movw	r30, r0
-     856:	f3 95       	inc	r31
+     856:	fe 5f       	subi	r31, 0xFE	; 254
      858:	09 94       	ijmp
 	...
 
@@ -468,7 +479,7 @@ Disassembly of section .text:
      890:	78 94       	sei
      892:	67 9c       	mul	r6, r7
      894:	f0 01       	movw	r30, r0
-     896:	f3 95       	inc	r31
+     896:	fe 5f       	subi	r31, 0xFE	; 254
      898:	09 94       	ijmp
 	...
 
@@ -484,7 +495,7 @@ Disassembly of section .text:
      8d0:	78 94       	sei
      8d2:	67 9c       	mul	r6, r7
      8d4:	f0 01       	movw	r30, r0
-     8d6:	f3 95       	inc	r31
+     8d6:	fe 5f       	subi	r31, 0xFE	; 254
      8d8:	09 94       	ijmp
 	...
 
@@ -500,7 +511,7 @@ Disassembly of section .text:
      910:	78 94       	sei
      912:	67 9c       	mul	r6, r7
      914:	f0 01       	movw	r30, r0
-     916:	f3 95       	inc	r31
+     916:	fe 5f       	subi	r31, 0xFE	; 254
      918:	09 94       	ijmp
 	...
 
@@ -516,7 +527,7 @@ Disassembly of section .text:
      950:	78 94       	sei
      952:	67 9c       	mul	r6, r7
      954:	f0 01       	movw	r30, r0
-     956:	f3 95       	inc	r31
+     956:	fe 5f       	subi	r31, 0xFE	; 254
      958:	09 94       	ijmp
 	...
 
@@ -532,7 +543,7 @@ Disassembly of section .text:
      990:	78 94       	sei
      992:	67 9c       	mul	r6, r7
      994:	f0 01       	movw	r30, r0
-     996:	f3 95       	inc	r31
+     996:	fe 5f       	subi	r31, 0xFE	; 254
      998:	09 94       	ijmp
 	...
 
@@ -548,7 +559,7 @@ Disassembly of section .text:
      9d0:	78 94       	sei
      9d2:	67 9c       	mul	r6, r7
      9d4:	f0 01       	movw	r30, r0
-     9d6:	f3 95       	inc	r31
+     9d6:	fe 5f       	subi	r31, 0xFE	; 254
      9d8:	09 94       	ijmp
 	...
 
@@ -563,7 +574,7 @@ Disassembly of section .text:
      a0e:	78 94       	sei
      a10:	67 9c       	mul	r6, r7
      a12:	f0 01       	movw	r30, r0
-     a14:	f3 95       	inc	r31
+     a14:	fe 5f       	subi	r31, 0xFE	; 254
      a16:	09 94       	ijmp
 	...
 
@@ -578,7 +589,7 @@ Disassembly of section .text:
      a4e:	78 94       	sei
      a50:	67 9c       	mul	r6, r7
      a52:	f0 01       	movw	r30, r0
-     a54:	f3 95       	inc	r31
+     a54:	fe 5f       	subi	r31, 0xFE	; 254
      a56:	09 94       	ijmp
 	...
 
@@ -593,7 +604,7 @@ Disassembly of section .text:
      a8e:	78 94       	sei
      a90:	67 9c       	mul	r6, r7
      a92:	f0 01       	movw	r30, r0
-     a94:	f3 95       	inc	r31
+     a94:	fe 5f       	subi	r31, 0xFE	; 254
      a96:	09 94       	ijmp
 	...
 
@@ -608,7 +619,7 @@ Disassembly of section .text:
      ace:	78 94       	sei
      ad0:	67 9c       	mul	r6, r7
      ad2:	f0 01       	movw	r30, r0
-     ad4:	f3 95       	inc	r31
+     ad4:	fe 5f       	subi	r31, 0xFE	; 254
      ad6:	09 94       	ijmp
 	...
 
@@ -623,7 +634,7 @@ Disassembly of section .text:
      b0e:	78 94       	sei
      b10:	67 9c       	mul	r6, r7
      b12:	f0 01       	movw	r30, r0
-     b14:	f3 95       	inc	r31
+     b14:	fe 5f       	subi	r31, 0xFE	; 254
      b16:	09 94       	ijmp
 	...
 
@@ -638,7 +649,7 @@ Disassembly of section .text:
      b4e:	78 94       	sei
      b50:	67 9c       	mul	r6, r7
      b52:	f0 01       	movw	r30, r0
-     b54:	f3 95       	inc	r31
+     b54:	fe 5f       	subi	r31, 0xFE	; 254
      b56:	09 94       	ijmp
 	...
 
@@ -653,7 +664,7 @@ Disassembly of section .text:
      b8e:	78 94       	sei
      b90:	67 9c       	mul	r6, r7
      b92:	f0 01       	movw	r30, r0
-     b94:	f3 95       	inc	r31
+     b94:	fe 5f       	subi	r31, 0xFE	; 254
      b96:	09 94       	ijmp
 	...
 
@@ -668,7 +679,7 @@ Disassembly of section .text:
      bce:	78 94       	sei
      bd0:	67 9c       	mul	r6, r7
      bd2:	f0 01       	movw	r30, r0
-     bd4:	f3 95       	inc	r31
+     bd4:	fe 5f       	subi	r31, 0xFE	; 254
      bd6:	09 94       	ijmp
 	...
 
@@ -683,7 +694,7 @@ Disassembly of section .text:
      c0e:	78 94       	sei
      c10:	67 9c       	mul	r6, r7
      c12:	f0 01       	movw	r30, r0
-     c14:	f3 95       	inc	r31
+     c14:	fe 5f       	subi	r31, 0xFE	; 254
      c16:	09 94       	ijmp
 	...
 
@@ -698,7 +709,7 @@ Disassembly of section .text:
      c4e:	78 94       	sei
      c50:	67 9c       	mul	r6, r7
      c52:	f0 01       	movw	r30, r0
-     c54:	f3 95       	inc	r31
+     c54:	fe 5f       	subi	r31, 0xFE	; 254
      c56:	09 94       	ijmp
 	...
 
@@ -713,7 +724,7 @@ Disassembly of section .text:
      c8e:	78 94       	sei
      c90:	67 9c       	mul	r6, r7
      c92:	f0 01       	movw	r30, r0
-     c94:	f3 95       	inc	r31
+     c94:	fe 5f       	subi	r31, 0xFE	; 254
      c96:	09 94       	ijmp
 	...
 
@@ -728,7 +739,7 @@ Disassembly of section .text:
      cce:	78 94       	sei
      cd0:	67 9c       	mul	r6, r7
      cd2:	f0 01       	movw	r30, r0
-     cd4:	f3 95       	inc	r31
+     cd4:	fe 5f       	subi	r31, 0xFE	; 254
      cd6:	09 94       	ijmp
 	...
 
@@ -743,7 +754,7 @@ Disassembly of section .text:
      d0e:	78 94       	sei
      d10:	67 9c       	mul	r6, r7
      d12:	f0 01       	movw	r30, r0
-     d14:	f3 95       	inc	r31
+     d14:	fe 5f       	subi	r31, 0xFE	; 254
      d16:	09 94       	ijmp
 	...
 
@@ -758,7 +769,7 @@ Disassembly of section .text:
      d4e:	78 94       	sei
      d50:	67 9c       	mul	r6, r7
      d52:	f0 01       	movw	r30, r0
-     d54:	f3 95       	inc	r31
+     d54:	fe 5f       	subi	r31, 0xFE	; 254
      d56:	09 94       	ijmp
 	...
 
@@ -773,7 +784,7 @@ Disassembly of section .text:
      d8e:	78 94       	sei
      d90:	67 9c       	mul	r6, r7
      d92:	f0 01       	movw	r30, r0
-     d94:	f3 95       	inc	r31
+     d94:	fe 5f       	subi	r31, 0xFE	; 254
      d96:	09 94       	ijmp
 	...
 
@@ -788,7 +799,7 @@ Disassembly of section .text:
      dce:	78 94       	sei
      dd0:	67 9c       	mul	r6, r7
      dd2:	f0 01       	movw	r30, r0
-     dd4:	f3 95       	inc	r31
+     dd4:	fe 5f       	subi	r31, 0xFE	; 254
      dd6:	09 94       	ijmp
 	...
 
@@ -803,7 +814,7 @@ Disassembly of section .text:
      e0e:	78 94       	sei
      e10:	67 9c       	mul	r6, r7
      e12:	f0 01       	movw	r30, r0
-     e14:	f3 95       	inc	r31
+     e14:	fe 5f       	subi	r31, 0xFE	; 254
      e16:	09 94       	ijmp
 	...
 
@@ -818,7 +829,7 @@ Disassembly of section .text:
      e4e:	78 94       	sei
      e50:	67 9c       	mul	r6, r7
      e52:	f0 01       	movw	r30, r0
-     e54:	f3 95       	inc	r31
+     e54:	fe 5f       	subi	r31, 0xFE	; 254
      e56:	09 94       	ijmp
 	...
 
@@ -833,7 +844,7 @@ Disassembly of section .text:
      e8e:	78 94       	sei
      e90:	67 9c       	mul	r6, r7
      e92:	f0 01       	movw	r30, r0
-     e94:	f3 95       	inc	r31
+     e94:	fe 5f       	subi	r31, 0xFE	; 254
      e96:	09 94       	ijmp
 	...
 
@@ -848,7 +859,7 @@ Disassembly of section .text:
      ece:	78 94       	sei
      ed0:	67 9c       	mul	r6, r7
      ed2:	f0 01       	movw	r30, r0
-     ed4:	f3 95       	inc	r31
+     ed4:	fe 5f       	subi	r31, 0xFE	; 254
      ed6:	09 94       	ijmp
 	...
 
@@ -863,7 +874,7 @@ Disassembly of section .text:
      f0e:	78 94       	sei
      f10:	67 9c       	mul	r6, r7
      f12:	f0 01       	movw	r30, r0
-     f14:	f3 95       	inc	r31
+     f14:	fe 5f       	subi	r31, 0xFE	; 254
      f16:	09 94       	ijmp
 	...
 
@@ -878,7 +889,7 @@ Disassembly of section .text:
      f4e:	78 94       	sei
      f50:	67 9c       	mul	r6, r7
      f52:	f0 01       	movw	r30, r0
-     f54:	f3 95       	inc	r31
+     f54:	fe 5f       	subi	r31, 0xFE	; 254
      f56:	09 94       	ijmp
 	...
 
@@ -893,7 +904,7 @@ Disassembly of section .text:
      f8e:	78 94       	sei
      f90:	67 9c       	mul	r6, r7
      f92:	f0 01       	movw	r30, r0
-     f94:	f3 95       	inc	r31
+     f94:	fe 5f       	subi	r31, 0xFE	; 254
      f96:	09 94       	ijmp
 	...
 
@@ -908,7 +919,7 @@ Disassembly of section .text:
      fce:	78 94       	sei
      fd0:	67 9c       	mul	r6, r7
      fd2:	f0 01       	movw	r30, r0
-     fd4:	f3 95       	inc	r31
+     fd4:	fe 5f       	subi	r31, 0xFE	; 254
      fd6:	09 94       	ijmp
 	...
 
@@ -923,7 +934,7 @@ Disassembly of section .text:
     100e:	78 94       	sei
     1010:	67 9c       	mul	r6, r7
     1012:	f0 01       	movw	r30, r0
-    1014:	f3 95       	inc	r31
+    1014:	fe 5f       	subi	r31, 0xFE	; 254
     1016:	09 94       	ijmp
 	...
 
@@ -938,7 +949,7 @@ Disassembly of section .text:
     104e:	78 94       	sei
     1050:	67 9c       	mul	r6, r7
     1052:	f0 01       	movw	r30, r0
-    1054:	f3 95       	inc	r31
+    1054:	fe 5f       	subi	r31, 0xFE	; 254
     1056:	09 94       	ijmp
 	...
 
@@ -953,7 +964,7 @@ Disassembly of section .text:
     108e:	78 94       	sei
     1090:	67 9c       	mul	r6, r7
     1092:	f0 01       	movw	r30, r0
-    1094:	f3 95       	inc	r31
+    1094:	fe 5f       	subi	r31, 0xFE	; 254
     1096:	09 94       	ijmp
 	...
 
@@ -968,7 +979,7 @@ Disassembly of section .text:
     10ce:	78 94       	sei
     10d0:	67 9c       	mul	r6, r7
     10d2:	f0 01       	movw	r30, r0
-    10d4:	f3 95       	inc	r31
+    10d4:	fe 5f       	subi	r31, 0xFE	; 254
     10d6:	09 94       	ijmp
 	...
 
@@ -983,7 +994,7 @@ Disassembly of section .text:
     110e:	78 94       	sei
     1110:	67 9c       	mul	r6, r7
     1112:	f0 01       	movw	r30, r0
-    1114:	f3 95       	inc	r31
+    1114:	fe 5f       	subi	r31, 0xFE	; 254
     1116:	09 94       	ijmp
 	...
 
@@ -998,7 +1009,7 @@ Disassembly of section .text:
     114e:	78 94       	sei
     1150:	67 9c       	mul	r6, r7
     1152:	f0 01       	movw	r30, r0
-    1154:	f3 95       	inc	r31
+    1154:	fe 5f       	subi	r31, 0xFE	; 254
     1156:	09 94       	ijmp
 	...
 
@@ -1013,7 +1024,7 @@ Disassembly of section .text:
     118e:	78 94       	sei
     1190:	67 9c       	mul	r6, r7
     1192:	f0 01       	movw	r30, r0
-    1194:	f3 95       	inc	r31
+    1194:	fe 5f       	subi	r31, 0xFE	; 254
     1196:	09 94       	ijmp
 	...
 
@@ -1028,7 +1039,7 @@ Disassembly of section .text:
     11ce:	78 94       	sei
     11d0:	67 9c       	mul	r6, r7
     11d2:	f0 01       	movw	r30, r0
-    11d4:	f3 95       	inc	r31
+    11d4:	fe 5f       	subi	r31, 0xFE	; 254
     11d6:	09 94       	ijmp
 	...
 
@@ -1043,7 +1054,7 @@ Disassembly of section .text:
     120e:	78 94       	sei
     1210:	67 9c       	mul	r6, r7
     1212:	f0 01       	movw	r30, r0
-    1214:	f3 95       	inc	r31
+    1214:	fe 5f       	subi	r31, 0xFE	; 254
     1216:	09 94       	ijmp
 	...
 
@@ -1058,7 +1069,7 @@ Disassembly of section .text:
     124e:	78 94       	sei
     1250:	67 9c       	mul	r6, r7
     1252:	f0 01       	movw	r30, r0
-    1254:	f3 95       	inc	r31
+    1254:	fe 5f       	subi	r31, 0xFE	; 254
     1256:	09 94       	ijmp
 	...
 
@@ -1073,7 +1084,7 @@ Disassembly of section .text:
     128e:	78 94       	sei
     1290:	67 9c       	mul	r6, r7
     1292:	f0 01       	movw	r30, r0
-    1294:	f3 95       	inc	r31
+    1294:	fe 5f       	subi	r31, 0xFE	; 254
     1296:	09 94       	ijmp
 	...
 
@@ -1088,7 +1099,7 @@ Disassembly of section .text:
     12ce:	78 94       	sei
     12d0:	67 9c       	mul	r6, r7
     12d2:	f0 01       	movw	r30, r0
-    12d4:	f3 95       	inc	r31
+    12d4:	fe 5f       	subi	r31, 0xFE	; 254
     12d6:	09 94       	ijmp
 	...
 
@@ -1103,7 +1114,7 @@ Disassembly of section .text:
     130e:	78 94       	sei
     1310:	67 9c       	mul	r6, r7
     1312:	f0 01       	movw	r30, r0
-    1314:	f3 95       	inc	r31
+    1314:	fe 5f       	subi	r31, 0xFE	; 254
     1316:	09 94       	ijmp
 	...
 
@@ -1118,7 +1129,7 @@ Disassembly of section .text:
     134e:	78 94       	sei
     1350:	67 9c       	mul	r6, r7
     1352:	f0 01       	movw	r30, r0
-    1354:	f3 95       	inc	r31
+    1354:	fe 5f       	subi	r31, 0xFE	; 254
     1356:	09 94       	ijmp
 	...
 
@@ -1133,7 +1144,7 @@ Disassembly of section .text:
     138e:	78 94       	sei
     1390:	67 9c       	mul	r6, r7
     1392:	f0 01       	movw	r30, r0
-    1394:	f3 95       	inc	r31
+    1394:	fe 5f       	subi	r31, 0xFE	; 254
     1396:	09 94       	ijmp
 	...
 
@@ -1148,7 +1159,7 @@ Disassembly of section .text:
     13ce:	78 94       	sei
     13d0:	67 9c       	mul	r6, r7
     13d2:	f0 01       	movw	r30, r0
-    13d4:	f3 95       	inc	r31
+    13d4:	fe 5f       	subi	r31, 0xFE	; 254
     13d6:	09 94       	ijmp
 	...
 
@@ -1163,7 +1174,7 @@ Disassembly of section .text:
     140e:	78 94       	sei
     1410:	67 9c       	mul	r6, r7
     1412:	f0 01       	movw	r30, r0
-    1414:	f3 95       	inc	r31
+    1414:	fe 5f       	subi	r31, 0xFE	; 254
     1416:	09 94       	ijmp
 	...
 
@@ -1178,7 +1189,7 @@ Disassembly of section .text:
     144e:	78 94       	sei
     1450:	67 9c       	mul	r6, r7
     1452:	f0 01       	movw	r30, r0
-    1454:	f3 95       	inc	r31
+    1454:	fe 5f       	subi	r31, 0xFE	; 254
     1456:	09 94       	ijmp
 	...
 
@@ -1193,7 +1204,7 @@ Disassembly of section .text:
     148e:	78 94       	sei
     1490:	67 9c       	mul	r6, r7
     1492:	f0 01       	movw	r30, r0
-    1494:	f3 95       	inc	r31
+    1494:	fe 5f       	subi	r31, 0xFE	; 254
     1496:	09 94       	ijmp
 	...
 
@@ -1208,7 +1219,7 @@ Disassembly of section .text:
     14ce:	78 94       	sei
     14d0:	67 9c       	mul	r6, r7
     14d2:	f0 01       	movw	r30, r0
-    14d4:	f3 95       	inc	r31
+    14d4:	fe 5f       	subi	r31, 0xFE	; 254
     14d6:	09 94       	ijmp
 	...
 
@@ -1223,7 +1234,7 @@ Disassembly of section .text:
     150e:	78 94       	sei
     1510:	67 9c       	mul	r6, r7
     1512:	f0 01       	movw	r30, r0
-    1514:	f3 95       	inc	r31
+    1514:	fe 5f       	subi	r31, 0xFE	; 254
     1516:	09 94       	ijmp
 	...
 
@@ -1238,7 +1249,7 @@ Disassembly of section .text:
     154e:	78 94       	sei
     1550:	67 9c       	mul	r6, r7
     1552:	f0 01       	movw	r30, r0
-    1554:	f3 95       	inc	r31
+    1554:	fe 5f       	subi	r31, 0xFE	; 254
     1556:	09 94       	ijmp
 	...
 
@@ -1253,7 +1264,7 @@ Disassembly of section .text:
     158e:	78 94       	sei
     1590:	67 9c       	mul	r6, r7
     1592:	f0 01       	movw	r30, r0
-    1594:	f3 95       	inc	r31
+    1594:	fe 5f       	subi	r31, 0xFE	; 254
     1596:	09 94       	ijmp
 	...
 
@@ -1268,7 +1279,7 @@ Disassembly of section .text:
     15ce:	78 94       	sei
     15d0:	67 9c       	mul	r6, r7
     15d2:	f0 01       	movw	r30, r0
-    15d4:	f3 95       	inc	r31
+    15d4:	fe 5f       	subi	r31, 0xFE	; 254
     15d6:	09 94       	ijmp
 	...
 
@@ -1283,7 +1294,7 @@ Disassembly of section .text:
     160e:	78 94       	sei
     1610:	67 9c       	mul	r6, r7
     1612:	f0 01       	movw	r30, r0
-    1614:	f3 95       	inc	r31
+    1614:	fe 5f       	subi	r31, 0xFE	; 254
     1616:	09 94       	ijmp
 	...
 
@@ -1299,7 +1310,7 @@ Disassembly of section .text:
     1650:	78 94       	sei
     1652:	67 9c       	mul	r6, r7
     1654:	f0 01       	movw	r30, r0
-    1656:	f3 95       	inc	r31
+    1656:	fe 5f       	subi	r31, 0xFE	; 254
     1658:	09 94       	ijmp
 	...
 
@@ -1315,7 +1326,7 @@ Disassembly of section .text:
     1690:	78 94       	sei
     1692:	67 9c       	mul	r6, r7
     1694:	f0 01       	movw	r30, r0
-    1696:	f3 95       	inc	r31
+    1696:	fe 5f       	subi	r31, 0xFE	; 254
     1698:	09 94       	ijmp
 	...
 
@@ -1331,7 +1342,7 @@ Disassembly of section .text:
     16d0:	78 94       	sei
     16d2:	67 9c       	mul	r6, r7
     16d4:	f0 01       	movw	r30, r0
-    16d6:	f3 95       	inc	r31
+    16d6:	fe 5f       	subi	r31, 0xFE	; 254
     16d8:	09 94       	ijmp
 	...
 
@@ -1347,7 +1358,7 @@ Disassembly of section .text:
     1710:	78 94       	sei
     1712:	67 9c       	mul	r6, r7
     1714:	f0 01       	movw	r30, r0
-    1716:	f3 95       	inc	r31
+    1716:	fe 5f       	subi	r31, 0xFE	; 254
     1718:	09 94       	ijmp
 	...
 
@@ -1362,7 +1373,7 @@ Disassembly of section .text:
     174e:	78 94       	sei
     1750:	67 9c       	mul	r6, r7
     1752:	f0 01       	movw	r30, r0
-    1754:	f3 95       	inc	r31
+    1754:	fe 5f       	subi	r31, 0xFE	; 254
     1756:	09 94       	ijmp
 	...
 
@@ -1378,7 +1389,7 @@ Disassembly of section .text:
     1790:	78 94       	sei
     1792:	67 9c       	mul	r6, r7
     1794:	f0 01       	movw	r30, r0
-    1796:	f3 95       	inc	r31
+    1796:	fe 5f       	subi	r31, 0xFE	; 254
     1798:	09 94       	ijmp
 	...
 
@@ -1394,7 +1405,7 @@ Disassembly of section .text:
     17d0:	78 94       	sei
     17d2:	67 9c       	mul	r6, r7
     17d4:	f0 01       	movw	r30, r0
-    17d6:	f3 95       	inc	r31
+    17d6:	fe 5f       	subi	r31, 0xFE	; 254
     17d8:	09 94       	ijmp
 	...
 
@@ -1410,7 +1421,7 @@ Disassembly of section .text:
     1810:	78 94       	sei
     1812:	67 9c       	mul	r6, r7
     1814:	f0 01       	movw	r30, r0
-    1816:	f3 95       	inc	r31
+    1816:	fe 5f       	subi	r31, 0xFE	; 254
     1818:	09 94       	ijmp
 	...
 
@@ -1426,7 +1437,7 @@ Disassembly of section .text:
     1850:	78 94       	sei
     1852:	67 9c       	mul	r6, r7
     1854:	f0 01       	movw	r30, r0
-    1856:	f3 95       	inc	r31
+    1856:	fe 5f       	subi	r31, 0xFE	; 254
     1858:	09 94       	ijmp
 	...
 
@@ -1441,7 +1452,7 @@ Disassembly of section .text:
     188e:	78 94       	sei
     1890:	67 9c       	mul	r6, r7
     1892:	f0 01       	movw	r30, r0
-    1894:	f3 95       	inc	r31
+    1894:	fe 5f       	subi	r31, 0xFE	; 254
     1896:	09 94       	ijmp
 	...
 
@@ -1457,7 +1468,7 @@ Disassembly of section .text:
     18d0:	78 94       	sei
     18d2:	67 9c       	mul	r6, r7
     18d4:	f0 01       	movw	r30, r0
-    18d6:	f3 95       	inc	r31
+    18d6:	fe 5f       	subi	r31, 0xFE	; 254
     18d8:	09 94       	ijmp
 	...
 
@@ -1473,7 +1484,7 @@ Disassembly of section .text:
     1910:	78 94       	sei
     1912:	67 9c       	mul	r6, r7
     1914:	f0 01       	movw	r30, r0
-    1916:	f3 95       	inc	r31
+    1916:	fe 5f       	subi	r31, 0xFE	; 254
     1918:	09 94       	ijmp
 	...
 
@@ -1489,7 +1500,7 @@ Disassembly of section .text:
     1950:	78 94       	sei
     1952:	67 9c       	mul	r6, r7
     1954:	f0 01       	movw	r30, r0
-    1956:	f3 95       	inc	r31
+    1956:	fe 5f       	subi	r31, 0xFE	; 254
     1958:	09 94       	ijmp
 	...
 
@@ -1505,7 +1516,7 @@ Disassembly of section .text:
     1990:	78 94       	sei
     1992:	67 9c       	mul	r6, r7
     1994:	f0 01       	movw	r30, r0
-    1996:	f3 95       	inc	r31
+    1996:	fe 5f       	subi	r31, 0xFE	; 254
     1998:	09 94       	ijmp
 	...
 
@@ -1520,7 +1531,7 @@ Disassembly of section .text:
     19ce:	78 94       	sei
     19d0:	67 9c       	mul	r6, r7
     19d2:	f0 01       	movw	r30, r0
-    19d4:	f3 95       	inc	r31
+    19d4:	fe 5f       	subi	r31, 0xFE	; 254
     19d6:	09 94       	ijmp
 	...
 
@@ -1536,7 +1547,7 @@ Disassembly of section .text:
     1a10:	78 94       	sei
     1a12:	67 9c       	mul	r6, r7
     1a14:	f0 01       	movw	r30, r0
-    1a16:	f3 95       	inc	r31
+    1a16:	fe 5f       	subi	r31, 0xFE	; 254
     1a18:	09 94       	ijmp
 	...
 
@@ -1552,7 +1563,7 @@ Disassembly of section .text:
     1a50:	78 94       	sei
     1a52:	67 9c       	mul	r6, r7
     1a54:	f0 01       	movw	r30, r0
-    1a56:	f3 95       	inc	r31
+    1a56:	fe 5f       	subi	r31, 0xFE	; 254
     1a58:	09 94       	ijmp
 	...
 
@@ -1568,7 +1579,7 @@ Disassembly of section .text:
     1a90:	78 94       	sei
     1a92:	67 9c       	mul	r6, r7
     1a94:	f0 01       	movw	r30, r0
-    1a96:	f3 95       	inc	r31
+    1a96:	fe 5f       	subi	r31, 0xFE	; 254
     1a98:	09 94       	ijmp
 	...
 
@@ -1584,7 +1595,7 @@ Disassembly of section .text:
     1ad0:	78 94       	sei
     1ad2:	67 9c       	mul	r6, r7
     1ad4:	f0 01       	movw	r30, r0
-    1ad6:	f3 95       	inc	r31
+    1ad6:	fe 5f       	subi	r31, 0xFE	; 254
     1ad8:	09 94       	ijmp
 	...
 
@@ -1600,7 +1611,7 @@ Disassembly of section .text:
     1b10:	78 94       	sei
     1b12:	67 9c       	mul	r6, r7
     1b14:	f0 01       	movw	r30, r0
-    1b16:	f3 95       	inc	r31
+    1b16:	fe 5f       	subi	r31, 0xFE	; 254
     1b18:	09 94       	ijmp
 	...
 
@@ -1616,7 +1627,7 @@ Disassembly of section .text:
     1b50:	78 94       	sei
     1b52:	67 9c       	mul	r6, r7
     1b54:	f0 01       	movw	r30, r0
-    1b56:	f3 95       	inc	r31
+    1b56:	fe 5f       	subi	r31, 0xFE	; 254
     1b58:	09 94       	ijmp
 	...
 
@@ -1632,7 +1643,7 @@ Disassembly of section .text:
     1b90:	78 94       	sei
     1b92:	67 9c       	mul	r6, r7
     1b94:	f0 01       	movw	r30, r0
-    1b96:	f3 95       	inc	r31
+    1b96:	fe 5f       	subi	r31, 0xFE	; 254
     1b98:	09 94       	ijmp
 	...
 
@@ -1648,7 +1659,7 @@ Disassembly of section .text:
     1bd0:	78 94       	sei
     1bd2:	67 9c       	mul	r6, r7
     1bd4:	f0 01       	movw	r30, r0
-    1bd6:	f3 95       	inc	r31
+    1bd6:	fe 5f       	subi	r31, 0xFE	; 254
     1bd8:	09 94       	ijmp
 	...
 
@@ -1664,7 +1675,7 @@ Disassembly of section .text:
     1c10:	78 94       	sei
     1c12:	67 9c       	mul	r6, r7
     1c14:	f0 01       	movw	r30, r0
-    1c16:	f3 95       	inc	r31
+    1c16:	fe 5f       	subi	r31, 0xFE	; 254
     1c18:	09 94       	ijmp
 	...
 
@@ -1680,7 +1691,7 @@ Disassembly of section .text:
     1c50:	78 94       	sei
     1c52:	67 9c       	mul	r6, r7
     1c54:	f0 01       	movw	r30, r0
-    1c56:	f3 95       	inc	r31
+    1c56:	fe 5f       	subi	r31, 0xFE	; 254
     1c58:	09 94       	ijmp
 	...
 
@@ -1696,7 +1707,7 @@ Disassembly of section .text:
     1c90:	78 94       	sei
     1c92:	67 9c       	mul	r6, r7
     1c94:	f0 01       	movw	r30, r0
-    1c96:	f3 95       	inc	r31
+    1c96:	fe 5f       	subi	r31, 0xFE	; 254
     1c98:	09 94       	ijmp
 	...
 
@@ -1712,7 +1723,7 @@ Disassembly of section .text:
     1cd0:	78 94       	sei
     1cd2:	67 9c       	mul	r6, r7
     1cd4:	f0 01       	movw	r30, r0
-    1cd6:	f3 95       	inc	r31
+    1cd6:	fe 5f       	subi	r31, 0xFE	; 254
     1cd8:	09 94       	ijmp
 	...
 
@@ -1728,7 +1739,7 @@ Disassembly of section .text:
     1d10:	78 94       	sei
     1d12:	67 9c       	mul	r6, r7
     1d14:	f0 01       	movw	r30, r0
-    1d16:	f3 95       	inc	r31
+    1d16:	fe 5f       	subi	r31, 0xFE	; 254
     1d18:	09 94       	ijmp
 	...
 
@@ -1744,7 +1755,7 @@ Disassembly of section .text:
     1d50:	78 94       	sei
     1d52:	67 9c       	mul	r6, r7
     1d54:	f0 01       	movw	r30, r0
-    1d56:	f3 95       	inc	r31
+    1d56:	fe 5f       	subi	r31, 0xFE	; 254
     1d58:	09 94       	ijmp
 	...
 
@@ -1760,7 +1771,7 @@ Disassembly of section .text:
     1d90:	78 94       	sei
     1d92:	67 9c       	mul	r6, r7
     1d94:	f0 01       	movw	r30, r0
-    1d96:	f3 95       	inc	r31
+    1d96:	fe 5f       	subi	r31, 0xFE	; 254
     1d98:	09 94       	ijmp
 	...
 
@@ -1776,7 +1787,7 @@ Disassembly of section .text:
     1dd0:	78 94       	sei
     1dd2:	67 9c       	mul	r6, r7
     1dd4:	f0 01       	movw	r30, r0
-    1dd6:	f3 95       	inc	r31
+    1dd6:	fe 5f       	subi	r31, 0xFE	; 254
     1dd8:	09 94       	ijmp
 	...
 
@@ -1791,7 +1802,7 @@ Disassembly of section .text:
     1e0e:	78 94       	sei
     1e10:	67 9c       	mul	r6, r7
     1e12:	f0 01       	movw	r30, r0
-    1e14:	f3 95       	inc	r31
+    1e14:	fe 5f       	subi	r31, 0xFE	; 254
     1e16:	09 94       	ijmp
 	...
 
@@ -1806,7 +1817,7 @@ Disassembly of section .text:
     1e4e:	78 94       	sei
     1e50:	67 9c       	mul	r6, r7
     1e52:	f0 01       	movw	r30, r0
-    1e54:	f3 95       	inc	r31
+    1e54:	fe 5f       	subi	r31, 0xFE	; 254
     1e56:	09 94       	ijmp
 	...
 
@@ -1821,7 +1832,7 @@ Disassembly of section .text:
     1e8e:	78 94       	sei
     1e90:	67 9c       	mul	r6, r7
     1e92:	f0 01       	movw	r30, r0
-    1e94:	f3 95       	inc	r31
+    1e94:	fe 5f       	subi	r31, 0xFE	; 254
     1e96:	09 94       	ijmp
 	...
 
@@ -1836,7 +1847,7 @@ Disassembly of section .text:
     1ece:	78 94       	sei
     1ed0:	67 9c       	mul	r6, r7
     1ed2:	f0 01       	movw	r30, r0
-    1ed4:	f3 95       	inc	r31
+    1ed4:	fe 5f       	subi	r31, 0xFE	; 254
     1ed6:	09 94       	ijmp
 	...
 
@@ -1851,7 +1862,7 @@ Disassembly of section .text:
     1f0e:	78 94       	sei
     1f10:	67 9c       	mul	r6, r7
     1f12:	f0 01       	movw	r30, r0
-    1f14:	f3 95       	inc	r31
+    1f14:	fe 5f       	subi	r31, 0xFE	; 254
     1f16:	09 94       	ijmp
 	...
 
@@ -1866,7 +1877,7 @@ Disassembly of section .text:
     1f4e:	78 94       	sei
     1f50:	67 9c       	mul	r6, r7
     1f52:	f0 01       	movw	r30, r0
-    1f54:	f3 95       	inc	r31
+    1f54:	fe 5f       	subi	r31, 0xFE	; 254
     1f56:	09 94       	ijmp
 	...
 
@@ -1881,7 +1892,7 @@ Disassembly of section .text:
     1f8e:	78 94       	sei
     1f90:	67 9c       	mul	r6, r7
     1f92:	f0 01       	movw	r30, r0
-    1f94:	f3 95       	inc	r31
+    1f94:	fe 5f       	subi	r31, 0xFE	; 254
     1f96:	09 94       	ijmp
 	...
 
@@ -1896,7 +1907,7 @@ Disassembly of section .text:
     1fce:	78 94       	sei
     1fd0:	67 9c       	mul	r6, r7
     1fd2:	f0 01       	movw	r30, r0
-    1fd4:	f3 95       	inc	r31
+    1fd4:	fe 5f       	subi	r31, 0xFE	; 254
     1fd6:	09 94       	ijmp
 	...
 
@@ -1911,7 +1922,7 @@ Disassembly of section .text:
     200e:	78 94       	sei
     2010:	67 9c       	mul	r6, r7
     2012:	f0 01       	movw	r30, r0
-    2014:	f3 95       	inc	r31
+    2014:	fe 5f       	subi	r31, 0xFE	; 254
     2016:	09 94       	ijmp
 	...
 
@@ -1926,7 +1937,7 @@ Disassembly of section .text:
     204e:	78 94       	sei
     2050:	67 9c       	mul	r6, r7
     2052:	f0 01       	movw	r30, r0
-    2054:	f3 95       	inc	r31
+    2054:	fe 5f       	subi	r31, 0xFE	; 254
     2056:	09 94       	ijmp
 	...
 
@@ -1941,7 +1952,7 @@ Disassembly of section .text:
     208e:	78 94       	sei
     2090:	67 9c       	mul	r6, r7
     2092:	f0 01       	movw	r30, r0
-    2094:	f3 95       	inc	r31
+    2094:	fe 5f       	subi	r31, 0xFE	; 254
     2096:	09 94       	ijmp
 	...
 
@@ -1956,7 +1967,7 @@ Disassembly of section .text:
     20ce:	78 94       	sei
     20d0:	67 9c       	mul	r6, r7
     20d2:	f0 01       	movw	r30, r0
-    20d4:	f3 95       	inc	r31
+    20d4:	fe 5f       	subi	r31, 0xFE	; 254
     20d6:	09 94       	ijmp
 	...
 
@@ -1971,7 +1982,7 @@ Disassembly of section .text:
     210e:	78 94       	sei
     2110:	67 9c       	mul	r6, r7
     2112:	f0 01       	movw	r30, r0
-    2114:	f3 95       	inc	r31
+    2114:	fe 5f       	subi	r31, 0xFE	; 254
     2116:	09 94       	ijmp
 	...
 
@@ -1986,7 +1997,7 @@ Disassembly of section .text:
     214e:	78 94       	sei
     2150:	67 9c       	mul	r6, r7
     2152:	f0 01       	movw	r30, r0
-    2154:	f3 95       	inc	r31
+    2154:	fe 5f       	subi	r31, 0xFE	; 254
     2156:	09 94       	ijmp
 	...
 
@@ -2001,7 +2012,7 @@ Disassembly of section .text:
     218e:	78 94       	sei
     2190:	67 9c       	mul	r6, r7
     2192:	f0 01       	movw	r30, r0
-    2194:	f3 95       	inc	r31
+    2194:	fe 5f       	subi	r31, 0xFE	; 254
     2196:	09 94       	ijmp
 	...
 
@@ -2016,7 +2027,7 @@ Disassembly of section .text:
     21ce:	78 94       	sei
     21d0:	67 9c       	mul	r6, r7
     21d2:	f0 01       	movw	r30, r0
-    21d4:	f3 95       	inc	r31
+    21d4:	fe 5f       	subi	r31, 0xFE	; 254
     21d6:	09 94       	ijmp
 	...
 
@@ -2032,7 +2043,7 @@ Disassembly of section .text:
     2210:	78 94       	sei
     2212:	67 9c       	mul	r6, r7
     2214:	f0 01       	movw	r30, r0
-    2216:	f3 95       	inc	r31
+    2216:	fe 5f       	subi	r31, 0xFE	; 254
     2218:	09 94       	ijmp
 	...
 
@@ -2048,7 +2059,7 @@ Disassembly of section .text:
     2250:	78 94       	sei
     2252:	67 9c       	mul	r6, r7
     2254:	f0 01       	movw	r30, r0
-    2256:	f3 95       	inc	r31
+    2256:	fe 5f       	subi	r31, 0xFE	; 254
     2258:	09 94       	ijmp
 	...
 
@@ -2064,7 +2075,7 @@ Disassembly of section .text:
     2290:	78 94       	sei
     2292:	67 9c       	mul	r6, r7
     2294:	f0 01       	movw	r30, r0
-    2296:	f3 95       	inc	r31
+    2296:	fe 5f       	subi	r31, 0xFE	; 254
     2298:	09 94       	ijmp
 	...
 
@@ -2080,7 +2091,7 @@ Disassembly of section .text:
     22d0:	78 94       	sei
     22d2:	67 9c       	mul	r6, r7
     22d4:	f0 01       	movw	r30, r0
-    22d6:	f3 95       	inc	r31
+    22d6:	fe 5f       	subi	r31, 0xFE	; 254
     22d8:	09 94       	ijmp
 	...
 
@@ -2096,7 +2107,7 @@ Disassembly of section .text:
     2310:	78 94       	sei
     2312:	67 9c       	mul	r6, r7
     2314:	f0 01       	movw	r30, r0
-    2316:	f3 95       	inc	r31
+    2316:	fe 5f       	subi	r31, 0xFE	; 254
     2318:	09 94       	ijmp
 	...
 
@@ -2112,7 +2123,7 @@ Disassembly of section .text:
     2350:	78 94       	sei
     2352:	67 9c       	mul	r6, r7
     2354:	f0 01       	movw	r30, r0
-    2356:	f3 95       	inc	r31
+    2356:	fe 5f       	subi	r31, 0xFE	; 254
     2358:	09 94       	ijmp
 	...
 
@@ -2128,7 +2139,7 @@ Disassembly of section .text:
     2390:	78 94       	sei
     2392:	67 9c       	mul	r6, r7
     2394:	f0 01       	movw	r30, r0
-    2396:	f3 95       	inc	r31
+    2396:	fe 5f       	subi	r31, 0xFE	; 254
     2398:	09 94       	ijmp
 	...
 
@@ -2144,7 +2155,7 @@ Disassembly of section .text:
     23d0:	78 94       	sei
     23d2:	67 9c       	mul	r6, r7
     23d4:	f0 01       	movw	r30, r0
-    23d6:	f3 95       	inc	r31
+    23d6:	fe 5f       	subi	r31, 0xFE	; 254
     23d8:	09 94       	ijmp
 	...
 
@@ -2160,7 +2171,7 @@ Disassembly of section .text:
     2410:	78 94       	sei
     2412:	67 9c       	mul	r6, r7
     2414:	f0 01       	movw	r30, r0
-    2416:	f3 95       	inc	r31
+    2416:	fe 5f       	subi	r31, 0xFE	; 254
     2418:	09 94       	ijmp
 	...
 
@@ -2176,7 +2187,7 @@ Disassembly of section .text:
     2450:	78 94       	sei
     2452:	67 9c       	mul	r6, r7
     2454:	f0 01       	movw	r30, r0
-    2456:	f3 95       	inc	r31
+    2456:	fe 5f       	subi	r31, 0xFE	; 254
     2458:	09 94       	ijmp
 	...
 
@@ -2192,7 +2203,7 @@ Disassembly of section .text:
     2490:	78 94       	sei
     2492:	67 9c       	mul	r6, r7
     2494:	f0 01       	movw	r30, r0
-    2496:	f3 95       	inc	r31
+    2496:	fe 5f       	subi	r31, 0xFE	; 254
     2498:	09 94       	ijmp
 	...
 
@@ -2208,7 +2219,7 @@ Disassembly of section .text:
     24d0:	78 94       	sei
     24d2:	67 9c       	mul	r6, r7
     24d4:	f0 01       	movw	r30, r0
-    24d6:	f3 95       	inc	r31
+    24d6:	fe 5f       	subi	r31, 0xFE	; 254
     24d8:	09 94       	ijmp
 	...
 
@@ -2224,7 +2235,7 @@ Disassembly of section .text:
     2510:	78 94       	sei
     2512:	67 9c       	mul	r6, r7
     2514:	f0 01       	movw	r30, r0
-    2516:	f3 95       	inc	r31
+    2516:	fe 5f       	subi	r31, 0xFE	; 254
     2518:	09 94       	ijmp
 	...
 
@@ -2240,7 +2251,7 @@ Disassembly of section .text:
     2550:	78 94       	sei
     2552:	67 9c       	mul	r6, r7
     2554:	f0 01       	movw	r30, r0
-    2556:	f3 95       	inc	r31
+    2556:	fe 5f       	subi	r31, 0xFE	; 254
     2558:	09 94       	ijmp
 	...
 
@@ -2256,7 +2267,7 @@ Disassembly of section .text:
     2590:	78 94       	sei
     2592:	67 9c       	mul	r6, r7
     2594:	f0 01       	movw	r30, r0
-    2596:	f3 95       	inc	r31
+    2596:	fe 5f       	subi	r31, 0xFE	; 254
     2598:	09 94       	ijmp
 	...
 
@@ -2272,7 +2283,7 @@ Disassembly of section .text:
     25d0:	78 94       	sei
     25d2:	67 9c       	mul	r6, r7
     25d4:	f0 01       	movw	r30, r0
-    25d6:	f3 95       	inc	r31
+    25d6:	fe 5f       	subi	r31, 0xFE	; 254
     25d8:	09 94       	ijmp
 	...
 
@@ -2288,7 +2299,7 @@ Disassembly of section .text:
     2610:	78 94       	sei
     2612:	67 9c       	mul	r6, r7
     2614:	f0 01       	movw	r30, r0
-    2616:	f3 95       	inc	r31
+    2616:	fe 5f       	subi	r31, 0xFE	; 254
     2618:	09 94       	ijmp
 	...
 
@@ -2304,7 +2315,7 @@ Disassembly of section .text:
     2650:	78 94       	sei
     2652:	67 9c       	mul	r6, r7
     2654:	f0 01       	movw	r30, r0
-    2656:	f3 95       	inc	r31
+    2656:	fe 5f       	subi	r31, 0xFE	; 254
     2658:	09 94       	ijmp
 	...
 
@@ -2320,7 +2331,7 @@ Disassembly of section .text:
     2690:	78 94       	sei
     2692:	67 9c       	mul	r6, r7
     2694:	f0 01       	movw	r30, r0
-    2696:	f3 95       	inc	r31
+    2696:	fe 5f       	subi	r31, 0xFE	; 254
     2698:	09 94       	ijmp
 	...
 
@@ -2336,7 +2347,7 @@ Disassembly of section .text:
     26d0:	78 94       	sei
     26d2:	67 9c       	mul	r6, r7
     26d4:	f0 01       	movw	r30, r0
-    26d6:	f3 95       	inc	r31
+    26d6:	fe 5f       	subi	r31, 0xFE	; 254
     26d8:	09 94       	ijmp
 	...
 
@@ -2352,7 +2363,7 @@ Disassembly of section .text:
     2710:	78 94       	sei
     2712:	67 9c       	mul	r6, r7
     2714:	f0 01       	movw	r30, r0
-    2716:	f3 95       	inc	r31
+    2716:	fe 5f       	subi	r31, 0xFE	; 254
     2718:	09 94       	ijmp
 	...
 
@@ -2368,7 +2379,7 @@ Disassembly of section .text:
     2750:	78 94       	sei
     2752:	67 9c       	mul	r6, r7
     2754:	f0 01       	movw	r30, r0
-    2756:	f3 95       	inc	r31
+    2756:	fe 5f       	subi	r31, 0xFE	; 254
     2758:	09 94       	ijmp
 	...
 
@@ -2384,7 +2395,7 @@ Disassembly of section .text:
     2790:	78 94       	sei
     2792:	67 9c       	mul	r6, r7
     2794:	f0 01       	movw	r30, r0
-    2796:	f3 95       	inc	r31
+    2796:	fe 5f       	subi	r31, 0xFE	; 254
     2798:	09 94       	ijmp
 	...
 
@@ -2400,7 +2411,7 @@ Disassembly of section .text:
     27d0:	78 94       	sei
     27d2:	67 9c       	mul	r6, r7
     27d4:	f0 01       	movw	r30, r0
-    27d6:	f3 95       	inc	r31
+    27d6:	fe 5f       	subi	r31, 0xFE	; 254
     27d8:	09 94       	ijmp
 	...
 
@@ -2416,7 +2427,7 @@ Disassembly of section .text:
     2810:	78 94       	sei
     2812:	67 9c       	mul	r6, r7
     2814:	f0 01       	movw	r30, r0
-    2816:	f3 95       	inc	r31
+    2816:	fe 5f       	subi	r31, 0xFE	; 254
     2818:	09 94       	ijmp
 	...
 
@@ -2432,7 +2443,7 @@ Disassembly of section .text:
     2850:	78 94       	sei
     2852:	67 9c       	mul	r6, r7
     2854:	f0 01       	movw	r30, r0
-    2856:	f3 95       	inc	r31
+    2856:	fe 5f       	subi	r31, 0xFE	; 254
     2858:	09 94       	ijmp
 	...
 
@@ -2448,7 +2459,7 @@ Disassembly of section .text:
     2890:	78 94       	sei
     2892:	67 9c       	mul	r6, r7
     2894:	f0 01       	movw	r30, r0
-    2896:	f3 95       	inc	r31
+    2896:	fe 5f       	subi	r31, 0xFE	; 254
     2898:	09 94       	ijmp
 	...
 
@@ -2464,7 +2475,7 @@ Disassembly of section .text:
     28d0:	78 94       	sei
     28d2:	67 9c       	mul	r6, r7
     28d4:	f0 01       	movw	r30, r0
-    28d6:	f3 95       	inc	r31
+    28d6:	fe 5f       	subi	r31, 0xFE	; 254
     28d8:	09 94       	ijmp
 	...
 
@@ -2480,7 +2491,7 @@ Disassembly of section .text:
     2910:	78 94       	sei
     2912:	67 9c       	mul	r6, r7
     2914:	f0 01       	movw	r30, r0
-    2916:	f3 95       	inc	r31
+    2916:	fe 5f       	subi	r31, 0xFE	; 254
     2918:	09 94       	ijmp
 	...
 
@@ -2496,7 +2507,7 @@ Disassembly of section .text:
     2950:	78 94       	sei
     2952:	67 9c       	mul	r6, r7
     2954:	f0 01       	movw	r30, r0
-    2956:	f3 95       	inc	r31
+    2956:	fe 5f       	subi	r31, 0xFE	; 254
     2958:	09 94       	ijmp
 	...
 
@@ -2512,7 +2523,7 @@ Disassembly of section .text:
     2990:	78 94       	sei
     2992:	67 9c       	mul	r6, r7
     2994:	f0 01       	movw	r30, r0
-    2996:	f3 95       	inc	r31
+    2996:	fe 5f       	subi	r31, 0xFE	; 254
     2998:	09 94       	ijmp
 	...
 
@@ -2528,6 +2539,6 @@ Disassembly of section .text:
     29d0:	78 94       	sei
     29d2:	67 9c       	mul	r6, r7
     29d4:	f0 01       	movw	r30, r0
-    29d6:	f3 95       	inc	r31
+    29d6:	fe 5f       	subi	r31, 0xFE	; 254
     29d8:	09 94       	ijmp
 	...

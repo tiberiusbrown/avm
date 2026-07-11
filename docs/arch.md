@@ -181,7 +181,7 @@ AVR r6         Current bytecode opcode
                Operand or secondary-opcode scratch
 
 AVR r7         Constant
-               Dispatch-slot stride in AVR words
+               Primary dispatch-slot multiplier in AVR words
 
 ; ------------------------------------------------------------
 ; AVM general-purpose register file
@@ -323,7 +323,6 @@ program-space access address = PB:rN
 `PB` is used by:
 
 * Program-data loads.
-* Program-data loads with postincrement.
 * Indirect far jumps.
 * Indirect far calls.
 
@@ -377,7 +376,7 @@ The address `0x0A00` is one byte beyond the top of the VM stack and is a valid i
 |   4 | `S`  | Signed result, `N xor V` |
 | 5–7 | —    | Reserved                 |
 
-The interpreter stores `FLAGS` in native AVR `r5`.
+The interpreter stores `FLAGS` in native AVR `r3`.
 
 Reserved bits are ignored by guest semantics.
 
@@ -1012,8 +1011,7 @@ A malformed reserved encoding is:
 | `0x20–0x2F` | Compact `ST8`                                     |
 | `0x30–0x3F` | Compact `LD16`                                    |
 | `0x40–0x4F` | Compact `ST16`                                    |
-| `0x50–0x5F` | Compact `LD8_POST`; diagonal encodings are `LDI1` |
-| `0x60–0x6F` | Compact `ST8_POST`                                |
+| `0x50–0x6F` | Reserved for profile-guided future use            |
 | `0x70–0x77` | `PUSH16`                                          |
 | `0x78–0x7F` | `POP16`                                           |
 | `0x80–0x8F` | Compact `ADD`                                     |
@@ -1127,51 +1125,15 @@ All memory operations preserve flags.
 
 ---
 
-## 34. Compact postincrement memory
+## 34. Reserved primary opcode space: `0x50–0x6F`
 
-### 34.1 Byte load with postincrement: `0x50–0x5F`
+The 32 primary opcodes from `0x50` through `0x6F` are reserved.
 
-For `cD != cA`:
+Version-one assemblers and compilers MUST NOT emit these encodings. A diagnostic interpreter SHOULD report execution of one of these opcodes as an invalid instruction. Optimized execution may treat it as unrestricted undefined behavior.
 
-```asm
-LD8_POST cD, [cA]+
-```
+The range is intentionally preserved as two contiguous 16-opcode blocks so that future profiling can justify complete operand-specialized compact families without fragmenting the primary map. Candidate uses must be evaluated using LLVM-generated workloads, including dynamic instruction frequency, compact-register eligibility, bytecode-size reduction, dispatch elimination, and native handler cost.
 
-Semantics:
-
-```text
-address = cA
-cA = cA + 1
-cD = zero_extend(memory8[address])
-```
-
-The four diagonal encodings are:
-
-```text
-0x50  LDI1 c0
-0x55  LDI1 c1
-0x5A  LDI1 c2
-0x5F  LDI1 c3
-```
-
-`LDI1` writes `0x0001` and preserves flags.
-
-### 34.2 Byte store with postincrement: `0x60–0x6F`
-
-```asm
-ST8_POST [cA]+, cS
-```
-
-Semantics:
-
-```text
-address = cA
-value = low8(cS)
-memory8[address] = value
-cA = cA + 1
-```
-
-Source and address may be the same register.
+Postincrement data-space loads and stores remain available through the `0xFD` memory extension. There is no compact primary postincrement encoding and no `LDI1` primary instruction in this ISA version.
 
 ---
 
@@ -1641,6 +1603,8 @@ Displaced forms have one additional signed byte.
 Postincrement load forms require `rD != rA`.
 
 A diagnostic implementation traps an illegal overlap. Optimized behavior is undefined.
+
+These are the only postincrement load and store encodings in this ISA version. Compact-register operands do not produce a shorter primary encoding.
 
 ---
 
@@ -2156,7 +2120,6 @@ LDM8
 LDP8
 LDI8
 CLR
-LDI1
 MFPB
 ```
 
@@ -2231,8 +2194,8 @@ Special cases:
 * `MOV cN,cN` must be removed or left in extended form because the primary diagonal is `CLR`.
 * `CMP16 cN,cN` must be constant-folded or left extended because the primary diagonal is `TST16`.
 * `CMP8 cN,cN` has the same restriction.
-* `LD8_POST cN,[cN]+` cannot use the primary form because its diagonal encoding is `LDI1`.
-* Generic postincrement loads with destination equal to address are illegal and require a temporary.
+* Postincrement memory operations have no one-byte compact form; compact physical registers do not change their `0xFD` encoding.
+* Postincrement loads with destination equal to address are illegal and require a temporary.
 
 ---
 
@@ -2283,39 +2246,44 @@ Division and remainder should initially use runtime helpers.
 
 ## 77. Addressing-mode selection
 
-The backend should prefer, in order:
+The backend should recognize postincrement address updates before register allocation and represent them with target pseudos. Final lowering occurs after physical registers are known.
 
-1. Compact postincrement access.
-2. Compact indirect access.
-3. Compact stack-relative access.
-4. Direct data-space access.
-5. Generic full-register indirect access.
-6. Generic displaced access.
-7. Materialized pointer plus indirect access.
+For a legal postincrement operation, the backend should compare:
 
-Examples:
+* A single generic `0xFD` postincrement instruction, which supports all registers and eliminates a separate architectural increment.
+* A compact primary load or store followed by `INC16`, when the operands are compact registers.
+
+For byte accesses, the compact two-instruction sequence is shorter in bytecode, while the extension form may reduce handler and dispatch work. The target cost model should select between them according to the optimization goal and measured interpreter costs. Word postincrement operations are more likely to favor the extension form because an explicit increment by two requires additional work.
+
+Apart from that choice, the backend should generally prefer:
+
+1. Compact indirect access.
+2. Compact stack-relative access.
+3. Direct data-space access.
+4. Generic full-register indirect access.
+5. Generic displaced access.
+6. Materialized pointer plus indirect access.
+
+For example:
 
 ```c
 x = *p++;
 ```
 
-should form:
+should first form the machine-level operation:
 
 ```asm
-LD8_POST cD,[cA]+
+LD8_POST rD,[rA]+
 ```
 
-when possible.
-
-```c
-*p++ = x;
-```
-
-should form:
+After register allocation, it may remain the `0xFD` extension instruction or expand to:
 
 ```asm
-ST8_POST [cA]+,cS
+LD8  cD,[cA]
+INC16 cA
 ```
+
+when that is preferable. Stores follow the same policy.
 
 ---
 
@@ -2568,68 +2536,37 @@ aligned_veneer:
 
 ## 89. Primary dispatch table
 
-The interpreter uses 256 fixed primary slots.
+The interpreter uses 256 fixed-stride primary slots, one for each primary opcode. Every primary opcode therefore has a distinct operand-specialized native entry point.
 
-Each slot is:
+The slot stride is an interpreter implementation parameter rather than an architectural constant. It MAY be changed when handler-size requirements change, provided that:
 
-```text
-32 bytes
-16 AVR instruction words
-```
+* Every primary slot uses the same stride.
+* Native AVR `r7` contains that stride expressed in AVR instruction words.
+* The dispatch calculation and table placement agree on the configured stride.
+* Each opcode's entry point remains computable directly from the opcode without an additional lookup.
 
-The entire table is:
-
-```text
-8 KiB
-```
-
-The table base is aligned to at least 32 bytes.
-
-Every primary opcode therefore has a distinct operand-specialized native entry point.
+The slot size, table alignment, and total dispatch-table footprint are not part of the AVM ISA and need not remain stable between interpreter implementations.
 
 ---
 
 ## 90. Dispatch sequence
 
-At dispatch:
+Primary dispatch multiplies the opcode by the configured fixed-slot stride held in native AVR `r7`, adds the dispatch-table base, and jumps to the resulting entry point. A representative sequence is:
 
 ```asm
 in    r6, SPDR
 out   SPDR, r2
+adiw  r24, 1
 
 mul   r6, r7
 movw  r30, r0
-
-subi  r30, lo8(-(dispatch_table >> 1))
-sbci  r31, hi8(-(dispatch_table >> 1))
-
+; Add the implementation-selected dispatch-table base to Z.
 ijmp
 ```
 
-With:
+With `r2 = 0`, the multiplication computes the handler offset in AVR instruction words. The exact table placement, base-address sequence, slot stride, dispatch latency, and instruction count are interpreter implementation details.
 
-```text
-r2 = 0
-r7 = 16
-```
-
-the multiplication computes the handler offset in AVR words.
-
-Representative dispatch cost:
-
-```text
-IN          1 cycle
-OUT         1 cycle
-MUL         2 cycles
-MOVW        1 cycle
-SUBI        1 cycle
-SBCI        1 cycle
-IJMP        2 cycles
--------------------
-Total       9 cycles
-```
-
-A stricter table placement may permit a shorter base-address sequence.
+An implementation MAY select table alignment and placement that simplify addition of the table base. Changing those choices does not change the AVM ISA or bytecode format.
 
 ---
 
@@ -2639,16 +2576,16 @@ At primary handler entry:
 
 ```text
 r2       = 0
-r7       = 16
+r7       = configured primary dispatch-slot stride in AVR words
 r24:r25  = current opcode address
 Y        = AVM SP
 GPIOR1   = CB
 GPIOR2   = PB
-r5       = AVM FLAGS
+r3       = AVM FLAGS
 SPDR     = fetching the byte following the opcode
 ```
 
-`r0:r1`, `r3`, `r4`, `r6`, `X`, and `Z` may be treated as scratch unless the particular dispatch path requires otherwise.
+`r0:r1`, `r4`, `r5`, `r6`, `X`, and `Z` may be treated as scratch unless the particular dispatch path requires otherwise.
 
 ---
 
@@ -2736,7 +2673,7 @@ A taken control transfer discards the speculative sequential byte.
 
 ## 96. Slot overflow
 
-A primary handler that does not fit in 16 AVR words must:
+A primary handler that does not fit in the configured dispatch-slot stride must:
 
 1. Perform any profitable fast prefix in its slot.
 2. Jump to shared out-of-line code.
@@ -2744,17 +2681,17 @@ A primary handler that does not fit in 16 AVR words must:
 
 Extension-page primary handlers naturally enter secondary dispatch logic.
 
-A 32-byte slot is 16 AVR words, not necessarily 16 native instructions, because some AVR instructions occupy two words.
+Alternatively, the interpreter may increase the uniform dispatch-slot stride and rebuild the table. The stride is measured in AVR instruction words; it is not necessarily equal to the number of native instructions because some AVR instructions occupy two words.
 
 ---
 
 ## 97. FLAGS implementation
 
-A flag-producing native sequence saves relevant native status into AVR `r5`.
+A flag-producing native sequence saves relevant native status into AVR `r3`.
 
 The dispatch `MUL` subsequently destroys native status without affecting saved AVM FLAGS.
 
-Branch handlers inspect `r5`.
+Branch handlers inspect `r3`.
 
 `ADC`, `SBC`, and `CPC16` handlers reconstruct the native carry input from saved AVM `C` before executing the native arithmetic sequence.
 
@@ -2809,7 +2746,7 @@ After returning, it must:
 
 * Restore AVM registers.
 * Restore `r2 = 0`.
-* Restore `r7 = 16`.
+* Restore `r7` to the configured primary dispatch-slot stride in AVR words.
 * Restore any bank or PC state.
 * Resume the bytecode stream.
 
@@ -2828,7 +2765,7 @@ Interrupt handlers should:
 * Minimize hardware-stack use.
 * Avoid calling deep native routines.
 * Avoid modifying `GPIOR1` or `GPIOR2` without saving them.
-* Preserve `r2`, `r5`, `r7`, `PC`, and VM register storage.
+* Preserve `r2`, `r3`, `r7`, `PC`, and VM register storage.
 * Restore the SPI/interpreter state if an interrupt can touch the SPI peripheral.
 
 ---
@@ -2908,6 +2845,7 @@ A diagnostic build should detect:
 
 * VM stack overflow and underflow.
 * Illegal register-specifier reserved bits.
+* Reserved primary opcodes.
 * Invalid extension subopcodes.
 * Instruction crossing a bank boundary.
 * Fallthrough across a bank boundary.
@@ -2943,17 +2881,18 @@ The normal distribution toolchain should validate bytecode before packaging it.
 
 ## 106. Version-one priorities
 
-The primary opcode map is weighted toward:
+The assigned primary opcode map is weighted toward:
 
 * Register and memory movement.
-* Compact byte and word memory access.
-* Postincrement traversal.
+* Compact byte and word indirect memory access.
 * Compact arithmetic.
 * Comparisons and tests.
 * Short equality branches.
 * Stack operations.
 
-Register-register `AND`, `OR`, and `XOR` use extension encodings rather than consuming 48 primary opcodes.
+Postincrement data-space operations remain available through the memory extension rather than consuming primary opcode families. Register-register `AND`, `OR`, and `XOR` likewise remain extension encodings.
+
+The contiguous range `0x50–0x6F` is intentionally unassigned pending LLVM code-generation experience and profiling. It represents one eighth of the primary opcode space and should be allocated only when measured workloads identify instruction families whose one-byte operand-specialized forms justify that cost.
 
 ---
 
@@ -2972,10 +2911,12 @@ The toolchain should collect:
 * Taken versus not-taken branches.
 * Register-register versus immediate bitwise operations.
 * Postincrement memory frequency.
+* Frequency and cost of `0xFD` postincrement operations versus compact access-plus-increment sequences.
 * Program-space scalar-load and bulk-copy frequency.
 * Native handler cycle distributions.
+* Candidate-family compact-register eligibility after register allocation.
 
-Potential future primary encodings should be justified by measured dynamic byte-fetch savings.
+Any assignment within `0x50–0x6F` should be justified by measured dynamic byte-fetch savings, dispatch reduction, and handler-cycle improvement across representative LLVM-generated applications.
 
 ---
 
@@ -3036,11 +2977,11 @@ Special state:
     SP    AVR Y
     CB    GPIOR1
     PB    GPIOR2
-    FLAGS AVR r5
+    FLAGS AVR r3
 
 Interpreter constants:
     AVR r2 = zero
-    AVR r7 = 16
+    AVR r7 = configured primary dispatch-slot stride in AVR words
 
 Data-space conventions:
     0x0000–0x00FF native registers and I/O
@@ -3073,10 +3014,13 @@ Calling convention:
     Three-byte return addresses
 
 Primary dispatch:
-    256 slots
-    32 bytes per slot
-    8 KiB total
-    Approximately nine-cycle dispatch
+    256 fixed-stride slots
+    AVR r7 contains the configured stride in instruction words
+    Slot size, table footprint, placement, and dispatch timing are implementation-defined
+
+Reserved primary range:
+    0x50–0x6F reserved for profile-guided future use
+    Postincrement load/store remains in memory extension 0xFD
 
 Allocation model:
     Static SRAM only

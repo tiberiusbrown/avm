@@ -77,7 +77,7 @@
 ;; GPIOR2         PB
 
 #define DISPATCH_ORG             0x0200
-#define DISPATCH_STRIDE_WORDS    16
+#define DISPATCH_STRIDE_WORDS    14
 #define DISPATCH_STRIDE_BYTES    (2 * (DISPATCH_STRIDE_WORDS))
 #define C_DISPATCH_STRIDE_WORDS  r7
 
@@ -166,8 +166,8 @@
 #  define SREG_I  (7)
 #endif
 
-#if (DISPATCH_ORG & 0xFF) != 0
-#error "Dispatch calculation requires lo8(DISPATCH_ORG) == 0x00"
+#if (DISPATCH_ORG & 0x1FF) != 0
+#error "Dispatch calculation requires lo8(DISPATCH_ORG/2) == 0x00"
 #endif
 
 ; display
@@ -355,7 +355,7 @@ fx_init_delay_7:
     adiw VM_PC, 1
     mul  r6, C_DISPATCH_STRIDE_WORDS
     movw r30, r0
-    subi r31, hi8(-(DISPATCH_ORG))
+    subi r31, hi8(-((DISPATCH_ORG)>>1))
     ijmp
 .endm
 
@@ -368,7 +368,7 @@ fx_init_delay_7:
     sei
     mul  r6, C_DISPATCH_STRIDE_WORDS
     movw r30, r0
-    subi r31, hi8(-(DISPATCH_ORG))
+    subi r31, hi8(-((DISPATCH_ORG)>>1))
     ijmp
 .endm
 

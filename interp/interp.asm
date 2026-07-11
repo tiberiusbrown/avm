@@ -74,7 +74,7 @@
 #define VM_PCL r24
 #define VM_PCH r25
 
-#define VM_SP_INITIAL_VALUE 0x0900
+#define VM_SP_INITIAL_VALUE 0x0A00
 #define VM_SP  r28
 #define VM_SPL r28
 #define VM_SPH r29
@@ -121,7 +121,7 @@
 #define VM_C2H  VM_R6H
 #define VM_C3H  VM_R7H
 
-#include "device.h"
+#include "32u4.h"
 
 .section .vectors,"ax",@progbits
 .global __vectors
@@ -170,17 +170,23 @@ default_isr:
     rjmp default_isr
 
 reset_handler:
-    ; initialize registers for VM
+
+    ; Initialize registers for VM
     clr  ZERO
     ldi  r24, (1<<(INSTR_ALIGN-1))
     mov  C_INSTR_ALIGN, r24
     ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
     ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
+
+    ; Initialize SPI
+
+    ; Dispatch always runs with interrupts enabled
+    sei
+
 reset_loop:
     rjmp reset_loop
 
 .section .text
-.align 8
 
 ; 18-cycle cadence, needs 8 cycles from start of instruction
 .macro dispatch
@@ -189,7 +195,7 @@ reset_loop:
     adiw VM_PC, 1
     mul  r6, C_INSTR_ALIGN
     movw r30, r0
-    inc  r30
+    inc  r31
     ijmp
 .endm
 
@@ -202,7 +208,7 @@ reset_loop:
     sei
     mul  r6, C_INSTR_ALIGN
     movw r30, r0
-    inc  r30
+    inc  r31
     ijmp
 .endm
 
@@ -227,6 +233,8 @@ reset_loop:
     delay_2
     delay_2
 .endm
+
+.align 9
 
 abvm_interp:
 
@@ -429,97 +437,97 @@ I_1F__LD8_c3_c3:
 I_20__ST8_c0_c0:
     delay_2
     movw r26, VM_C0
-    st   X, VM_C0
+    st   X, VM_C0L
     dispatch_reverse
 
 I_21__ST8_c0_c1:
     delay_2
     movw r26, VM_C0
-    st   X, VM_C1
+    st   X, VM_C1L
     dispatch_reverse
 
 I_22__ST8_c0_c2:
     delay_2
     movw r26, VM_C0
-    st   X, VM_C2
+    st   X, VM_C2L
     dispatch_reverse
 
 I_23__ST8_c0_c3:
     delay_2
     movw r26, VM_C0
-    st   X, VM_C3
+    st   X, VM_C3L
     dispatch_reverse
 
 I_24__ST8_c1_c0:
     delay_2
     movw r26, VM_C1
-    st   X, VM_C0
+    st   X, VM_C0L
     dispatch_reverse
 
 I_25__ST8_c1_c1:
     delay_2
     movw r26, VM_C1
-    st   X, VM_C1
+    st   X, VM_C1L
     dispatch_reverse
 
 I_26__ST8_c1_c2:
     delay_2
     movw r26, VM_C1
-    st   X, VM_C2
+    st   X, VM_C2L
     dispatch_reverse
 
 I_27__ST8_c1_c3:
     delay_2
     movw r26, VM_C1
-    st   X, VM_C3
+    st   X, VM_C3L
     dispatch_reverse
 
 I_28__ST8_c2_c0:
     delay_2
     movw r26, VM_C2
-    st   X, VM_C0
+    st   X, VM_C0L
     dispatch_reverse
 
 I_29__ST8_c2_c1:
     delay_2
     movw r26, VM_C2
-    st   X, VM_C1
+    st   X, VM_C1L
     dispatch_reverse
 
 I_2A__ST8_c2_c2:
     delay_2
     movw r26, VM_C2
-    st   X, VM_C2
+    st   X, VM_C2L
     dispatch_reverse
 
 I_2B__ST8_c2_c3:
     delay_2
     movw r26, VM_C2
-    st   X, VM_C3
+    st   X, VM_C3L
     dispatch_reverse
 
 I_2C__ST8_c3_c0:
     delay_2
     movw r26, VM_C3
-    st   X, VM_C0
+    st   X, VM_C0L
     dispatch_reverse
 
 I_2D__ST8_c3_c1:
     delay_2
     movw r26, VM_C3
-    st   X, VM_C1
+    st   X, VM_C1L
     dispatch_reverse
 
 I_2E__ST8_c3_c2:
     delay_2
     movw r26, VM_C3
-    st   X, VM_C2
+    st   X, VM_C2L
     dispatch_reverse
 
 I_2F__ST8_c3_c3:
     delay_2
     movw r26, VM_C3
-    st   X, VM_C3
+    st   X, VM_C3L
     dispatch_reverse
 
 I_30__LD16_c0_c0:
@@ -721,31 +729,31 @@ I_50__LDI1_c0:
     dispatch_reverse
 
 I_51__LD8_POST_c0_c1:
-    movw r26, VM_C0
-    ld   VM_C1L, X+
-    clr  VM_C1H
-    movw VM_C0, r26
-    dispatch_reverse
-
-I_52__LD8_POST_c0_c2:
-    movw r26, VM_C0
-    ld   VM_C2L, X+
-    clr  VM_C2H
-    movw VM_C0, r26
-    dispatch_reverse
-
-I_53__LD8_POST_c0_c3:
-    movw r26, VM_C0
-    ld   VM_C3L, X+
-    clr  VM_C3H
-    movw VM_C0, r26
-    dispatch_reverse
-
-I_54__LD8_POST_c1_c0:
     movw r26, VM_C1
     ld   VM_C0L, X+
     clr  VM_C0H
     movw VM_C1, r26
+    dispatch_reverse
+
+I_52__LD8_POST_c0_c2:
+    movw r26, VM_C2
+    ld   VM_C0L, X+
+    clr  VM_C0H
+    movw VM_C2, r26
+    dispatch_reverse
+
+I_53__LD8_POST_c0_c3:
+    movw r26, VM_C3
+    ld   VM_C0L, X+
+    clr  VM_C0H
+    movw VM_C3, r26
+    dispatch_reverse
+
+I_54__LD8_POST_c1_c0:
+    movw r26, VM_C0
+    ld   VM_C1L, X+
+    clr  VM_C1H
+    movw VM_C0, r26
     dispatch_reverse
 
 I_55__LDI1_c1:
@@ -755,31 +763,31 @@ I_55__LDI1_c1:
     dispatch_reverse
 
 I_56__LD8_POST_c1_c2:
-    movw r26, VM_C1
-    ld   VM_C2L, X+
-    clr  VM_C2H
-    movw VM_C1, r26
-    dispatch_reverse
-
-I_57__LD8_POST_c1_c3:
-    movw r26, VM_C1
-    ld   VM_C3L, X+
-    clr  VM_C3H
-    movw VM_C1, r26
-    dispatch_reverse
-
-I_58__LD8_POST_c2_c0:
-    movw r26, VM_C2
-    ld   VM_C0L, X+
-    clr  VM_C0H
-    movw VM_C2, r26
-    dispatch_reverse
-
-I_59__LD8_POST_c2_c1:
     movw r26, VM_C2
     ld   VM_C1L, X+
     clr  VM_C1H
     movw VM_C2, r26
+    dispatch_reverse
+
+I_57__LD8_POST_c1_c3:
+    movw r26, VM_C3
+    ld   VM_C1L, X+
+    clr  VM_C1H
+    movw VM_C3, r26
+    dispatch_reverse
+
+I_58__LD8_POST_c2_c0:
+    movw r26, VM_C0
+    ld   VM_C2L, X+
+    clr  VM_C2H
+    movw VM_C0, r26
+    dispatch_reverse
+
+I_59__LD8_POST_c2_c1:
+    movw r26, VM_C1
+    ld   VM_C2L, X+
+    clr  VM_C2H
+    movw VM_C1, r26
     dispatch_reverse
 
 I_5A__LDI1_c2:
@@ -789,31 +797,31 @@ I_5A__LDI1_c2:
     dispatch_reverse
 
 I_5B__LD8_POST_c2_c3:
-    movw r26, VM_C2
-    ld   VM_C3L, X+
-    clr  VM_C3H
-    movw VM_C2, r26
-    dispatch_reverse
-
-I_5C__LD8_POST_c3_c0:
-    movw r26, VM_C3
-    ld   VM_C0L, X+
-    clr  VM_C0H
-    movw VM_C3, r26
-    dispatch_reverse
-
-I_5D__LD8_POST_c3_c1:
-    movw r26, VM_C3
-    ld   VM_C1L, X+
-    clr  VM_C1H
-    movw VM_C3, r26
-    dispatch_reverse
-
-I_5E__LD8_POST_c3_c2:
     movw r26, VM_C3
     ld   VM_C2L, X+
     clr  VM_C2H
     movw VM_C3, r26
+    dispatch_reverse
+
+I_5C__LD8_POST_c3_c0:
+    movw r26, VM_C0
+    ld   VM_C3L, X+
+    clr  VM_C3H
+    movw VM_C0, r26
+    dispatch_reverse
+
+I_5D__LD8_POST_c3_c1:
+    movw r26, VM_C1
+    ld   VM_C3L, X+
+    clr  VM_C3H
+    movw VM_C1, r26
+    dispatch_reverse
+
+I_5E__LD8_POST_c3_c2:
+    movw r26, VM_C2
+    ld   VM_C3L, X+
+    clr  VM_C3H
+    movw VM_C2, r26
     dispatch_reverse
 
 I_5F__LDI1_c3:

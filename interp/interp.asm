@@ -464,322 +464,82 @@ emit_st8_post 0x6D, I_6D__ST8_POST_c3_c1, VM_C3, VM_C1L
 emit_st8_post 0x6E, I_6E__ST8_POST_c3_c2, VM_C3, VM_C2L
 emit_st8_post 0x6F, I_6F__ST8_POST_c3_c3, VM_C3, VM_C3L
 
-I_70__PUSH16_r0:
+.macro emit_push16 opcode, label, srch, srcl
+    handler_begin \opcode, \label
     delay_1
-    st   -Y, VM_R0H
-    st   -Y, VM_R0L
+    st   -Y, \srch
+    st   -Y, \srcl
     dispatch_reverse
+    handler_end \opcode
+.endm
 
-I_71__PUSH16_r1:
+.macro emit_pop16 opcode, label, dstl, dsth
+    handler_begin \opcode, \label
     delay_1
-    st   -Y, VM_R1H
-    st   -Y, VM_R1L
+    ld   \dstl, Y+
+    ld   \dsth, Y+
     dispatch_reverse
+    handler_end \opcode
+.endm
 
-I_72__PUSH16_r2:
-    delay_1
-    st   -Y, VM_R2H
-    st   -Y, VM_R2L
-    dispatch_reverse
+emit_push16 0x70, I_70__PUSH16_r0, VM_R0H, VM_R0L
+emit_push16 0x71, I_71__PUSH16_r1, VM_R1H, VM_R1L
+emit_push16 0x72, I_72__PUSH16_r2, VM_R2H, VM_R2L
+emit_push16 0x73, I_73__PUSH16_r3, VM_R3H, VM_R3L
+emit_push16 0x74, I_74__PUSH16_r4, VM_R4H, VM_R4L
+emit_push16 0x75, I_75__PUSH16_r5, VM_R5H, VM_R5L
+emit_push16 0x76, I_76__PUSH16_r6, VM_R6H, VM_R6L
+emit_push16 0x77, I_77__PUSH16_r7, VM_R7H, VM_R7L
 
-I_73__PUSH16_r3:
-    delay_1
-    st   -Y, VM_R3H
-    st   -Y, VM_R3L
-    dispatch_reverse
+emit_pop16 0x78, I_78__POP16_r0, VM_R0L, VM_R0H
+emit_pop16 0x79, I_79__POP16_r1, VM_R1L, VM_R1H
+emit_pop16 0x7A, I_7A__POP16_r2, VM_R2L, VM_R2H
+emit_pop16 0x7B, I_7B__POP16_r3, VM_R3L, VM_R3H
+emit_pop16 0x7C, I_7C__POP16_r4, VM_R4L, VM_R4H
+emit_pop16 0x7D, I_7D__POP16_r5, VM_R5L, VM_R5H
+emit_pop16 0x7E, I_7E__POP16_r6, VM_R6L, VM_R6H
+emit_pop16 0x7F, I_7F__POP16_r7, VM_R7L, VM_R7H
 
-I_74__PUSH16_r4:
-    delay_1
-    st   -Y, VM_R4H
-    st   -Y, VM_R4L
-    dispatch_reverse
-
-I_75__PUSH16_r5:
-    delay_1
-    st   -Y, VM_R5H
-    st   -Y, VM_R5L
-    dispatch_reverse
-
-I_76__PUSH16_r6:
-    delay_1
-    st   -Y, VM_R6H
-    st   -Y, VM_R6L
-    dispatch_reverse
-
-I_77__PUSH16_r7:
-    delay_1
-    st   -Y, VM_R7H
-    st   -Y, VM_R7L
-    dispatch_reverse
-
-I_78__POP16_r0:
-    delay_1
-    ld   VM_R0L, Y+
-    ld   VM_R0H, Y+
-    dispatch_reverse
-
-I_79__POP16_r1:
-    delay_1
-    ld   VM_R1L, Y+
-    ld   VM_R1H, Y+
-    dispatch_reverse
-
-I_7A__POP16_r2:
-    delay_1
-    ld   VM_R2L, Y+
-    ld   VM_R2H, Y+
-    dispatch_reverse
-
-I_7B__POP16_r3:
-    delay_1
-    ld   VM_R3L, Y+
-    ld   VM_R3H, Y+
-    dispatch_reverse
-
-I_7C__POP16_r4:
-    delay_1
-    ld   VM_R4L, Y+
-    ld   VM_R4H, Y+
-    dispatch_reverse
-
-I_7D__POP16_r5:
-    delay_1
-    ld   VM_R5L, Y+
-    ld   VM_R5H, Y+
-    dispatch_reverse
-
-I_7E__POP16_r6:
-    delay_1
-    ld   VM_R6L, Y+
-    ld   VM_R6H, Y+
-    dispatch_reverse
-
-I_7F__POP16_r7:
-    delay_1
-    ld   VM_R7L, Y+
-    ld   VM_R7H, Y+
-    dispatch_reverse
-
-I_80__ADD_c0_c0:
+.macro emit_add_or_sub opcode, label, lowop, highop, dstl, dsth, srcl, srch
+    handler_begin \opcode, \label
     delay_2
-    add  VM_C0L, VM_C0L
-    adc  VM_C0H, VM_C0H
+    \lowop \dstl, \srcl
+    \highop \dsth, \srch
     in   VM_FLAGS, SREG
     dispatch_reverse
+    handler_end \opcode
+.endm
 
-I_81__ADD_c0_c1:
-    delay_2
-    add  VM_C0L, VM_C1L
-    adc  VM_C0H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
+emit_add_or_sub 0x80, I_80__ADD_c0_c0, add, adc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_add_or_sub 0x81, I_81__ADD_c0_c1, add, adc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_add_or_sub 0x82, I_82__ADD_c0_c2, add, adc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_add_or_sub 0x83, I_83__ADD_c0_c3, add, adc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_add_or_sub 0x84, I_84__ADD_c1_c0, add, adc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_add_or_sub 0x85, I_85__ADD_c1_c1, add, adc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_add_or_sub 0x86, I_86__ADD_c1_c2, add, adc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_add_or_sub 0x87, I_87__ADD_c1_c3, add, adc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_add_or_sub 0x88, I_88__ADD_c2_c0, add, adc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_add_or_sub 0x89, I_89__ADD_c2_c1, add, adc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_add_or_sub 0x8A, I_8A__ADD_c2_c2, add, adc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_add_or_sub 0x8B, I_8B__ADD_c2_c3, add, adc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_add_or_sub 0x8C, I_8C__ADD_c3_c0, add, adc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_add_or_sub 0x8D, I_8D__ADD_c3_c1, add, adc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_add_or_sub 0x8E, I_8E__ADD_c3_c2, add, adc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_add_or_sub 0x8F, I_8F__ADD_c3_c3, add, adc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
-I_82__ADD_c0_c2:
-    delay_2
-    add  VM_C0L, VM_C2L
-    adc  VM_C0H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_83__ADD_c0_c3:
-    delay_2
-    add  VM_C0L, VM_C3L
-    adc  VM_C0H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_84__ADD_c1_c0:
-    delay_2
-    add  VM_C1L, VM_C0L
-    adc  VM_C1H, VM_C0H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_85__ADD_c1_c1:
-    delay_2
-    add  VM_C1L, VM_C1L
-    adc  VM_C1H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_86__ADD_c1_c2:
-    delay_2
-    add  VM_C1L, VM_C2L
-    adc  VM_C1H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_87__ADD_c1_c3:
-    delay_2
-    add  VM_C1L, VM_C3L
-    adc  VM_C1H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_88__ADD_c2_c0:
-    delay_2
-    add  VM_C2L, VM_C0L
-    adc  VM_C2H, VM_C0H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_89__ADD_c2_c1:
-    delay_2
-    add  VM_C2L, VM_C1L
-    adc  VM_C2H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_8A__ADD_c2_c2:
-    delay_2
-    add  VM_C2L, VM_C2L
-    adc  VM_C2H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_8B__ADD_c2_c3:
-    delay_2
-    add  VM_C2L, VM_C3L
-    adc  VM_C2H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_8C__ADD_c3_c0:
-    delay_2
-    add  VM_C3L, VM_C0L
-    adc  VM_C3H, VM_C0H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_8D__ADD_c3_c1:
-    delay_2
-    add  VM_C3L, VM_C1L
-    adc  VM_C3H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_8E__ADD_c3_c2:
-    delay_2
-    add  VM_C3L, VM_C2L
-    adc  VM_C3H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_8F__ADD_c3_c3:
-    delay_2
-    add  VM_C3L, VM_C3L
-    adc  VM_C3H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_90__SUB_c0_c0:
-    delay_2
-    sub  VM_C0L, VM_C0L
-    sbc  VM_C0H, VM_C0H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_91__SUB_c0_c1:
-    delay_2
-    sub  VM_C0L, VM_C1L
-    sbc  VM_C0H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_92__SUB_c0_c2:
-    delay_2
-    sub  VM_C0L, VM_C2L
-    sbc  VM_C0H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_93__SUB_c0_c3:
-    delay_2
-    sub  VM_C0L, VM_C3L
-    sbc  VM_C0H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_94__SUB_c1_c0:
-    delay_2
-    sub  VM_C1L, VM_C0L
-    sbc  VM_C1H, VM_C0H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_95__SUB_c1_c1:
-    delay_2
-    sub  VM_C1L, VM_C1L
-    sbc  VM_C1H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_96__SUB_c1_c2:
-    delay_2
-    sub  VM_C1L, VM_C2L
-    sbc  VM_C1H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_97__SUB_c1_c3:
-    delay_2
-    sub  VM_C1L, VM_C3L
-    sbc  VM_C1H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_98__SUB_c2_c0:
-    delay_2
-    sub  VM_C2L, VM_C0L
-    sbc  VM_C2H, VM_C0H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_99__SUB_c2_c1:
-    delay_2
-    sub  VM_C2L, VM_C1L
-    sbc  VM_C2H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_9A__SUB_c2_c2:
-    delay_2
-    sub  VM_C2L, VM_C2L
-    sbc  VM_C2H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_9B__SUB_c2_c3:
-    delay_2
-    sub  VM_C2L, VM_C3L
-    sbc  VM_C2H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_9C__SUB_c3_c0:
-    delay_2
-    sub  VM_C3L, VM_C0L
-    sbc  VM_C3H, VM_C0H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_9D__SUB_c3_c1:
-    delay_2
-    sub  VM_C3L, VM_C1L
-    sbc  VM_C3H, VM_C1H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_9E__SUB_c3_c2:
-    delay_2
-    sub  VM_C3L, VM_C2L
-    sbc  VM_C3H, VM_C2H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-
-I_9F__SUB_c3_c3:
-    delay_2
-    sub  VM_C3L, VM_C3L
-    sbc  VM_C3H, VM_C3H
-    in   VM_FLAGS, SREG
-    dispatch_reverse
+emit_add_or_sub 0x90, I_90__SUB_c0_c0, sub, sbc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_add_or_sub 0x91, I_91__SUB_c0_c1, sub, sbc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_add_or_sub 0x92, I_92__SUB_c0_c2, sub, sbc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_add_or_sub 0x93, I_93__SUB_c0_c3, sub, sbc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_add_or_sub 0x94, I_94__SUB_c1_c0, sub, sbc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_add_or_sub 0x95, I_95__SUB_c1_c1, sub, sbc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_add_or_sub 0x96, I_96__SUB_c1_c2, sub, sbc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_add_or_sub 0x97, I_97__SUB_c1_c3, sub, sbc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_add_or_sub 0x98, I_98__SUB_c2_c0, sub, sbc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_add_or_sub 0x99, I_99__SUB_c2_c1, sub, sbc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_add_or_sub 0x9A, I_9A__SUB_c2_c2, sub, sbc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_add_or_sub 0x9B, I_9B__SUB_c2_c3, sub, sbc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_add_or_sub 0x9C, I_9C__SUB_c3_c0, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_add_or_sub 0x9D, I_9D__SUB_c3_c1, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_add_or_sub 0x9E, I_9E__SUB_c3_c2, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_add_or_sub 0x9F, I_9F__SUB_c3_c3, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H

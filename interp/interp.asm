@@ -202,7 +202,10 @@ reset_handler:
     out  VM_CB, ZERO
     out  VM_PB, ZERO
 
-    ; Initialize SPI
+    ; Initialize SPI.
+    ; Bytecode streaming uses fixed timing rather than polling SPIF.
+    ; SPIE must remain clear. ISRs must not access SPI.
+
 
     ; Dispatch always runs with interrupts enabled
     sei
@@ -481,7 +484,7 @@ emit_st8_post 0x6D, I_6D__ST8_POST_c3_c1, VM_C3, VM_C1L
 emit_st8_post 0x6E, I_6E__ST8_POST_c3_c2, VM_C3, VM_C2L
 emit_st8_post 0x6F, I_6F__ST8_POST_c3_c3, VM_C3, VM_C3L
 
-.macro emit_push16 opcode, label, srch, srcl
+.macro emit_push16 opcode, label, srcl, srch
     handler_begin \opcode, \label
     delay_1
     st   -Y, \srch
@@ -499,14 +502,14 @@ emit_st8_post 0x6F, I_6F__ST8_POST_c3_c3, VM_C3, VM_C3L
     handler_end \opcode
 .endm
 
-emit_push16 0x70, I_70__PUSH16_r0, VM_R0H, VM_R0L
-emit_push16 0x71, I_71__PUSH16_r1, VM_R1H, VM_R1L
-emit_push16 0x72, I_72__PUSH16_r2, VM_R2H, VM_R2L
-emit_push16 0x73, I_73__PUSH16_r3, VM_R3H, VM_R3L
-emit_push16 0x74, I_74__PUSH16_r4, VM_R4H, VM_R4L
-emit_push16 0x75, I_75__PUSH16_r5, VM_R5H, VM_R5L
-emit_push16 0x76, I_76__PUSH16_r6, VM_R6H, VM_R6L
-emit_push16 0x77, I_77__PUSH16_r7, VM_R7H, VM_R7L
+emit_push16 0x70, I_70__PUSH16_r0, VM_R0L, VM_R0H
+emit_push16 0x71, I_71__PUSH16_r1, VM_R1L, VM_R1H
+emit_push16 0x72, I_72__PUSH16_r2, VM_R2L, VM_R2H
+emit_push16 0x73, I_73__PUSH16_r3, VM_R3L, VM_R3H
+emit_push16 0x74, I_74__PUSH16_r4, VM_R4L, VM_R4H
+emit_push16 0x75, I_75__PUSH16_r5, VM_R5L, VM_R5H
+emit_push16 0x76, I_76__PUSH16_r6, VM_R6L, VM_R6H
+emit_push16 0x77, I_77__PUSH16_r7, VM_R7L, VM_R7H
 
 emit_pop16 0x78, I_78__POP16_r0, VM_R0L, VM_R0H
 emit_pop16 0x79, I_79__POP16_r1, VM_R1L, VM_R1H

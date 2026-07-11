@@ -23,16 +23,18 @@ if not exist "%AVR_HOME%\avr\lib\ldscripts\avr5.x" (
     exit /b 1
 )
 
-avr-gcc -c -x assembler-with-cpp -mmcu=atmega32u4 interp.asm -o interp.o
+avr-gcc -c -x assembler-with-cpp -mmcu=atmega32u4 interp.asm -o build\interp.o
 if errorlevel 1 exit /b 1
 
-avr-ld -T "%AVR_HOME%\avr\lib\ldscripts\avr5.x" --section-start=.text=0x0000 -Tdata=0x800100 interp.o -o interp.elf
+avr-ld -T "%AVR_HOME%\avr\lib\ldscripts\avr5.x" ^
+    --section-start=.text=0x0000 ^
+    -Tdata=0x800100 ^
+    -Map=build\interp.map ^
+    build\interp.o -o build\interp.elf
 if errorlevel 1 exit /b 1
 
-avr-objdump -d -j .text interp.elf > interp.bin.asm
+avr-objdump -D -z -t -j .text build\interp.elf > build\interp.lst
 if errorlevel 1 exit /b 1
 
-avr-objcopy -O ihex interp.elf interp.hex
+avr-objcopy -O ihex build\interp.elf build\interp.hex
 if errorlevel 1 exit /b 1
-
-echo Built interp.elf, interp.bin.asm, and interp.hex

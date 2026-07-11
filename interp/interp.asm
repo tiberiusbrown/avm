@@ -1143,7 +1143,6 @@ f4_jmpr_family:
 f4_callr_family:
 f4_jmpp_family:
 f4_callp_family:
-f4_mtpb_family:
 f4_mfpb_family:
 f4_ldpbi_family:
 f4_jmp16_family:
@@ -1160,6 +1159,23 @@ f4_nop_family:
     ; VM_PC to that prefetched opcode and dispatch it.
     delay_2
     rjmp dispatch_reverse_func
+
+f4_mtpb_family:
+    ; The low three secondary-opcode bits select r0-r7.  Convert that index to
+    ; the native data-space address of the register's low byte (r8, r10, ...,
+    ; r22), then install it as PB.  VM_FLAGS is architectural state in r3 and
+    ; remains untouched by the native address arithmetic.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r4, X
+    out  VM_PB, r4
+
+    ; Register decoding outlasts the minimum SPI transfer interval, so the
+    ; prefetched primary opcode is complete and can use normal dispatch.
+    rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xFD secondary dispatch

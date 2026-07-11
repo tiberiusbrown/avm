@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    d  .text	00000000 .text
 000000ae l       .text	00000000 reset_handler
 000000ac l       .text	00000000 default_isr
-000000c0 l       .text	00000000 reset_loop
+000000c8 l       .text	00000000 reset_loop
 00000200 l       .text	00000000 I_00__CLR_c0
 00000240 l       .text	00000000 I_01__MOV_c0_c1
 00000280 l       .text	00000000 I_02__MOV_c0_c2
@@ -269,14 +269,14 @@ Disassembly of section .text:
       b8:	55 24       	eor	r5, r5
       ba:	2a bc       	out	0x2a, r2	; 42
       bc:	2b bc       	out	0x2b, r2	; 43
-      be:	78 94       	sei
+      be:	a0 e5       	ldi	r26, 0x50	; 80
+      c0:	ac bd       	out	0x2c, r26	; 44
+      c2:	a1 e0       	ldi	r26, 0x01	; 1
+      c4:	ad bd       	out	0x2d, r26	; 45
+      c6:	78 94       	sei
 
-000000c0 <reset_loop>:
-      c0:	ff cf       	rjmp	.-2      	; 0xc0 <reset_loop>
-      c2:	00 00       	nop
-      c4:	00 00       	nop
-      c6:	00 00       	nop
-      c8:	00 00       	nop
+000000c8 <reset_loop>:
+      c8:	ff cf       	rjmp	.-2      	; 0xc8 <reset_loop>
       ca:	00 00       	nop
       cc:	00 00       	nop
       ce:	00 00       	nop

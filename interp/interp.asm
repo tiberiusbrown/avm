@@ -126,7 +126,8 @@
 #define VM_C2H  VM_R6H
 #define VM_C3H  VM_R7H
 
-#include "32u4.h"
+#define __SFR_OFFSET 0
+#include <avr/io.h>
 
 #if (DISPATCH_ORG & 0xFF) != 0
 #error "Dispatch calculation requires lo8(DISPATCH_ORG) == 0x00"
@@ -205,7 +206,10 @@ reset_handler:
     ; Initialize SPI.
     ; Bytecode streaming uses fixed timing rather than polling SPIF.
     ; SPIE must remain clear. ISRs must not access SPI.
-
+    ldi  r26, (_BV(SPE) | _BV(MSTR))
+    out  SPCR, r26
+    ldi  r26, _BV(SPI2X)
+    out  SPSR, r26
 
     ; Dispatch always runs with interrupts enabled
     sei

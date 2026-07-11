@@ -385,6 +385,10 @@ fx_init_delay_7:
 .global abvm_interp
 abvm_interp:
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x00-0x0F: MOV cD, cS / CLR cD
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 .macro emit_mov_or_clr opcode, label, dst, dstl, dsth, src, same=0
     handler_begin \opcode, \label
     .if \same
@@ -403,21 +407,22 @@ emit_mov_or_clr 0x00, I_00__CLR_c0,     VM_C0, VM_C0L, VM_C0H, VM_C0, 1
 emit_mov_or_clr 0x01, I_01__MOV_c0_c1,  VM_C0, VM_C0L, VM_C0H, VM_C1
 emit_mov_or_clr 0x02, I_02__MOV_c0_c2,  VM_C0, VM_C0L, VM_C0H, VM_C2
 emit_mov_or_clr 0x03, I_03__MOV_c0_c3,  VM_C0, VM_C0L, VM_C0H, VM_C3
-
 emit_mov_or_clr 0x04, I_04__MOV_c1_c0,  VM_C1, VM_C1L, VM_C1H, VM_C0
 emit_mov_or_clr 0x05, I_05__CLR_c1,     VM_C1, VM_C1L, VM_C1H, VM_C1, 1
 emit_mov_or_clr 0x06, I_06__MOV_c1_c2,  VM_C1, VM_C1L, VM_C1H, VM_C2
 emit_mov_or_clr 0x07, I_07__MOV_c1_c3,  VM_C1, VM_C1L, VM_C1H, VM_C3
-
 emit_mov_or_clr 0x08, I_08__MOV_c2_c0,  VM_C2, VM_C2L, VM_C2H, VM_C0
 emit_mov_or_clr 0x09, I_09__MOV_c2_c1,  VM_C2, VM_C2L, VM_C2H, VM_C1
 emit_mov_or_clr 0x0A, I_0A__CLR_c2,     VM_C2, VM_C2L, VM_C2H, VM_C2, 1
 emit_mov_or_clr 0x0B, I_0B__MOV_c2_c3,  VM_C2, VM_C2L, VM_C2H, VM_C3
-
 emit_mov_or_clr 0x0C, I_0C__MOV_c3_c0,  VM_C3, VM_C3L, VM_C3H, VM_C0
 emit_mov_or_clr 0x0D, I_0D__MOV_c3_c1,  VM_C3, VM_C3L, VM_C3H, VM_C1
 emit_mov_or_clr 0x0E, I_0E__MOV_c3_c2,  VM_C3, VM_C3L, VM_C3H, VM_C2
 emit_mov_or_clr 0x0F, I_0F__CLR_c3,     VM_C3, VM_C3L, VM_C3H, VM_C3, 1
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x10-0x1F: LD8 cD, [cS]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_ld8 opcode, label, dstl, dsth, src
     handler_begin \opcode, \label
@@ -433,21 +438,22 @@ emit_ld8 0x10, I_10__LD8_c0_c0, VM_C0L, VM_C0H, VM_C0
 emit_ld8 0x11, I_11__LD8_c0_c1, VM_C0L, VM_C0H, VM_C1
 emit_ld8 0x12, I_12__LD8_c0_c2, VM_C0L, VM_C0H, VM_C2
 emit_ld8 0x13, I_13__LD8_c0_c3, VM_C0L, VM_C0H, VM_C3
-
 emit_ld8 0x14, I_14__LD8_c1_c0, VM_C1L, VM_C1H, VM_C0
 emit_ld8 0x15, I_15__LD8_c1_c1, VM_C1L, VM_C1H, VM_C1
 emit_ld8 0x16, I_16__LD8_c1_c2, VM_C1L, VM_C1H, VM_C2
 emit_ld8 0x17, I_17__LD8_c1_c3, VM_C1L, VM_C1H, VM_C3
-
 emit_ld8 0x18, I_18__LD8_c2_c0, VM_C2L, VM_C2H, VM_C0
 emit_ld8 0x19, I_19__LD8_c2_c1, VM_C2L, VM_C2H, VM_C1
 emit_ld8 0x1A, I_1A__LD8_c2_c2, VM_C2L, VM_C2H, VM_C2
 emit_ld8 0x1B, I_1B__LD8_c2_c3, VM_C2L, VM_C2H, VM_C3
-
 emit_ld8 0x1C, I_1C__LD8_c3_c0, VM_C3L, VM_C3H, VM_C0
 emit_ld8 0x1D, I_1D__LD8_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_ld8 0x1E, I_1E__LD8_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld8 0x1F, I_1F__LD8_c3_c3, VM_C3L, VM_C3H, VM_C3
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x20-0x2F: ST8 [cD], cS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_st8 opcode, label, dst, srcl
     handler_begin \opcode, \label
@@ -462,21 +468,22 @@ emit_st8 0x20, I_20__ST8_c0_c0, VM_C0, VM_C0L
 emit_st8 0x21, I_21__ST8_c0_c1, VM_C0, VM_C1L
 emit_st8 0x22, I_22__ST8_c0_c2, VM_C0, VM_C2L
 emit_st8 0x23, I_23__ST8_c0_c3, VM_C0, VM_C3L
-
 emit_st8 0x24, I_24__ST8_c1_c0, VM_C1, VM_C0L
 emit_st8 0x25, I_25__ST8_c1_c1, VM_C1, VM_C1L
 emit_st8 0x26, I_26__ST8_c1_c2, VM_C1, VM_C2L
 emit_st8 0x27, I_27__ST8_c1_c3, VM_C1, VM_C3L
-
 emit_st8 0x28, I_28__ST8_c2_c0, VM_C2, VM_C0L
 emit_st8 0x29, I_29__ST8_c2_c1, VM_C2, VM_C1L
 emit_st8 0x2A, I_2A__ST8_c2_c2, VM_C2, VM_C2L
 emit_st8 0x2B, I_2B__ST8_c2_c3, VM_C2, VM_C3L
-
 emit_st8 0x2C, I_2C__ST8_c3_c0, VM_C3, VM_C0L
 emit_st8 0x2D, I_2D__ST8_c3_c1, VM_C3, VM_C1L
 emit_st8 0x2E, I_2E__ST8_c3_c2, VM_C3, VM_C2L
 emit_st8 0x2F, I_2F__ST8_c3_c3, VM_C3, VM_C3L
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x30-0x3F: LD16 cD, [cS]
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_ld16 opcode, label, dstl, dsth, src
     handler_begin \opcode, \label
@@ -491,21 +498,22 @@ emit_ld16 0x30, I_30__LD16_c0_c0, VM_C0L, VM_C0H, VM_C0
 emit_ld16 0x31, I_31__LD16_c0_c1, VM_C0L, VM_C0H, VM_C1
 emit_ld16 0x32, I_32__LD16_c0_c2, VM_C0L, VM_C0H, VM_C2
 emit_ld16 0x33, I_33__LD16_c0_c3, VM_C0L, VM_C0H, VM_C3
-
 emit_ld16 0x34, I_34__LD16_c1_c0, VM_C1L, VM_C1H, VM_C0
 emit_ld16 0x35, I_35__LD16_c1_c1, VM_C1L, VM_C1H, VM_C1
 emit_ld16 0x36, I_36__LD16_c1_c2, VM_C1L, VM_C1H, VM_C2
 emit_ld16 0x37, I_37__LD16_c1_c3, VM_C1L, VM_C1H, VM_C3
-
 emit_ld16 0x38, I_38__LD16_c2_c0, VM_C2L, VM_C2H, VM_C0
 emit_ld16 0x39, I_39__LD16_c2_c1, VM_C2L, VM_C2H, VM_C1
 emit_ld16 0x3A, I_3A__LD16_c2_c2, VM_C2L, VM_C2H, VM_C2
 emit_ld16 0x3B, I_3B__LD16_c2_c3, VM_C2L, VM_C2H, VM_C3
-
 emit_ld16 0x3C, I_3C__LD16_c3_c0, VM_C3L, VM_C3H, VM_C0
 emit_ld16 0x3D, I_3D__LD16_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_ld16 0x3E, I_3E__LD16_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld16 0x3F, I_3F__LD16_c3_c3, VM_C3L, VM_C3H, VM_C3
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x40-0x4F: ST16 [cD], cS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_st16 opcode, label, dst, srcl, srch
     handler_begin \opcode, \label
@@ -520,21 +528,22 @@ emit_st16 0x40, I_40__ST16_c0_c0, VM_C0, VM_C0L, VM_C0H
 emit_st16 0x41, I_41__ST16_c0_c1, VM_C0, VM_C1L, VM_C1H
 emit_st16 0x42, I_42__ST16_c0_c2, VM_C0, VM_C2L, VM_C2H
 emit_st16 0x43, I_43__ST16_c0_c3, VM_C0, VM_C3L, VM_C3H
-
 emit_st16 0x44, I_44__ST16_c1_c0, VM_C1, VM_C0L, VM_C0H
 emit_st16 0x45, I_45__ST16_c1_c1, VM_C1, VM_C1L, VM_C1H
 emit_st16 0x46, I_46__ST16_c1_c2, VM_C1, VM_C2L, VM_C2H
 emit_st16 0x47, I_47__ST16_c1_c3, VM_C1, VM_C3L, VM_C3H
-
 emit_st16 0x48, I_48__ST16_c2_c0, VM_C2, VM_C0L, VM_C0H
 emit_st16 0x49, I_49__ST16_c2_c1, VM_C2, VM_C1L, VM_C1H
 emit_st16 0x4A, I_4A__ST16_c2_c2, VM_C2, VM_C2L, VM_C2H
 emit_st16 0x4B, I_4B__ST16_c2_c3, VM_C2, VM_C3L, VM_C3H
-
 emit_st16 0x4C, I_4C__ST16_c3_c0, VM_C3, VM_C0L, VM_C0H
 emit_st16 0x4D, I_4D__ST16_c3_c1, VM_C3, VM_C1L, VM_C1H
 emit_st16 0x4E, I_4E__ST16_c3_c2, VM_C3, VM_C2L, VM_C2H
 emit_st16 0x4F, I_4F__ST16_c3_c3, VM_C3, VM_C3L, VM_C3H
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x50-0x5F: LD8 cD, [cS]+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_ld8_post opcode, label, dstl, dsth, src, imm=0
     handler_begin \opcode, \label
@@ -556,21 +565,22 @@ emit_ld8_post 0x50, I_50__LDI1_c0,        VM_C0L, VM_C0H, VM_C0, 1
 emit_ld8_post 0x51, I_51__LD8_POST_c0_c1, VM_C0L, VM_C0H, VM_C1
 emit_ld8_post 0x52, I_52__LD8_POST_c0_c2, VM_C0L, VM_C0H, VM_C2
 emit_ld8_post 0x53, I_53__LD8_POST_c0_c3, VM_C0L, VM_C0H, VM_C3
-
 emit_ld8_post 0x54, I_54__LD8_POST_c1_c0, VM_C1L, VM_C1H, VM_C0
 emit_ld8_post 0x55, I_55__LDI1_c1,        VM_C1L, VM_C1H, VM_C1, 1
 emit_ld8_post 0x56, I_56__LD8_POST_c1_c2, VM_C1L, VM_C1H, VM_C2
 emit_ld8_post 0x57, I_57__LD8_POST_c1_c3, VM_C1L, VM_C1H, VM_C3
-
 emit_ld8_post 0x58, I_58__LD8_POST_c2_c0, VM_C2L, VM_C2H, VM_C0
 emit_ld8_post 0x59, I_59__LD8_POST_c2_c1, VM_C2L, VM_C2H, VM_C1
 emit_ld8_post 0x5A, I_5A__LDI1_c2,        VM_C2L, VM_C2H, VM_C2, 1
 emit_ld8_post 0x5B, I_5B__LD8_POST_c2_c3, VM_C2L, VM_C2H, VM_C3
-
 emit_ld8_post 0x5C, I_5C__LD8_POST_c3_c0, VM_C3L, VM_C3H, VM_C0
 emit_ld8_post 0x5D, I_5D__LD8_POST_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_ld8_post 0x5E, I_5E__LD8_POST_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld8_post 0x5F, I_5F__LDI1_c3,        VM_C3L, VM_C3H, VM_C3, 1
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x60-0x6F: ST8 [cD]+, cS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_st8_post opcode, label, dst, srcl
     handler_begin \opcode, \label
@@ -586,36 +596,28 @@ emit_st8_post 0x60, I_60__ST8_POST_c0_c0, VM_C0, VM_C0L
 emit_st8_post 0x61, I_61__ST8_POST_c0_c1, VM_C0, VM_C1L
 emit_st8_post 0x62, I_62__ST8_POST_c0_c2, VM_C0, VM_C2L
 emit_st8_post 0x63, I_63__ST8_POST_c0_c3, VM_C0, VM_C3L
-
 emit_st8_post 0x64, I_64__ST8_POST_c1_c0, VM_C1, VM_C0L
 emit_st8_post 0x65, I_65__ST8_POST_c1_c1, VM_C1, VM_C1L
 emit_st8_post 0x66, I_66__ST8_POST_c1_c2, VM_C1, VM_C2L
 emit_st8_post 0x67, I_67__ST8_POST_c1_c3, VM_C1, VM_C3L
-
 emit_st8_post 0x68, I_68__ST8_POST_c2_c0, VM_C2, VM_C0L
 emit_st8_post 0x69, I_69__ST8_POST_c2_c1, VM_C2, VM_C1L
 emit_st8_post 0x6A, I_6A__ST8_POST_c2_c2, VM_C2, VM_C2L
 emit_st8_post 0x6B, I_6B__ST8_POST_c2_c3, VM_C2, VM_C3L
-
 emit_st8_post 0x6C, I_6C__ST8_POST_c3_c0, VM_C3, VM_C0L
 emit_st8_post 0x6D, I_6D__ST8_POST_c3_c1, VM_C3, VM_C1L
 emit_st8_post 0x6E, I_6E__ST8_POST_c3_c2, VM_C3, VM_C2L
 emit_st8_post 0x6F, I_6F__ST8_POST_c3_c3, VM_C3, VM_C3L
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x70-0x77: PUSH16 rS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_push16 opcode, label, srcl, srch
     handler_begin \opcode, \label
     delay_1
     st   -Y, \srch
     st   -Y, \srcl
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-.macro emit_pop16 opcode, label, dstl, dsth
-    handler_begin \opcode, \label
-    delay_1
-    ld   \dstl, Y+
-    ld   \dsth, Y+
     dispatch_reverse
     handler_end \opcode
 .endm
@@ -629,6 +631,19 @@ emit_push16 0x75, I_75__PUSH16_r5, VM_R5L, VM_R5H
 emit_push16 0x76, I_76__PUSH16_r6, VM_R6L, VM_R6H
 emit_push16 0x77, I_77__PUSH16_r7, VM_R7L, VM_R7H
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x70-0x77: POP16 rD
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.macro emit_pop16 opcode, label, dstl, dsth
+    handler_begin \opcode, \label
+    delay_1
+    ld   \dstl, Y+
+    ld   \dsth, Y+
+    dispatch_reverse
+    handler_end \opcode
+.endm
+
 emit_pop16 0x78, I_78__POP16_r0, VM_R0L, VM_R0H
 emit_pop16 0x79, I_79__POP16_r1, VM_R1L, VM_R1H
 emit_pop16 0x7A, I_7A__POP16_r2, VM_R2L, VM_R2H
@@ -637,6 +652,10 @@ emit_pop16 0x7C, I_7C__POP16_r4, VM_R4L, VM_R4H
 emit_pop16 0x7D, I_7D__POP16_r5, VM_R5L, VM_R5H
 emit_pop16 0x7E, I_7E__POP16_r6, VM_R6L, VM_R6H
 emit_pop16 0x7F, I_7F__POP16_r7, VM_R7L, VM_R7H
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x80-0x9F: ADD/SUB cD, cS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .macro emit_add_or_sub opcode, label, lowop, highop, dstl, dsth, srcl, srch
     handler_begin \opcode, \label
@@ -842,9 +861,87 @@ emit_branch_short 0xDD, I_DD__BNE_S_p6, sbrc,  6
 emit_branch_short 0xDE, I_DE__BNE_S_p7, sbrc,  7
 emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE0-0xEF: INC16/DEC16 rN
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.macro emit_inc_or_dec opcode, label, dstl, dsth, imm
+    handler_begin \opcode, \label
+
+    ; INC16/DEC16 preserve architectural C while updating Z/N/V/S.
+    ; Save the old AVM carry in native SREG.T, which ADD/ADC preserve.
+    bst  VM_FLAGS, SREG_C
+
+    ldi  r26, lo8(\imm)
+    add  \dstl, r26
+    adc  \dsth, ZERO
+
+    in   VM_FLAGS, SREG
+    bld  VM_FLAGS, SREG_C
+
+    rjmp dispatch_func
+    handler_end \opcode
+.endm
+
+emit_inc_or_dec 0xE0, I_E0__INC16_r0, VM_R0L, VM_R0H, 1
+emit_inc_or_dec 0xE1, I_E1__INC16_r1, VM_R1L, VM_R1H, 1
+emit_inc_or_dec 0xE2, I_E2__INC16_r2, VM_R2L, VM_R2H, 1
+emit_inc_or_dec 0xE3, I_E3__INC16_r3, VM_R3L, VM_R3H, 1
+emit_inc_or_dec 0xE4, I_E4__INC16_r4, VM_R4L, VM_R4H, 1
+emit_inc_or_dec 0xE5, I_E5__INC16_r5, VM_R5L, VM_R5H, 1
+emit_inc_or_dec 0xE6, I_E6__INC16_r6, VM_R6L, VM_R6H, 1
+emit_inc_or_dec 0xE7, I_E7__INC16_r7, VM_R7L, VM_R7H, 1
+emit_inc_or_dec 0xE8, I_E8__DEC16_r0, VM_R0L, VM_R0H, -1
+emit_inc_or_dec 0xE9, I_E9__DEC16_r1, VM_R1L, VM_R1H, -1
+emit_inc_or_dec 0xEA, I_EA__DEC16_r2, VM_R2L, VM_R2H, -1
+emit_inc_or_dec 0xEB, I_EB__DEC16_r3, VM_R3L, VM_R3H, -1
+emit_inc_or_dec 0xEC, I_EC__DEC16_r4, VM_R4L, VM_R4H, -1
+emit_inc_or_dec 0xED, I_ED__DEC16_r5, VM_R5L, VM_R5H, -1
+emit_inc_or_dec 0xEE, I_EE__DEC16_r6, VM_R6L, VM_R6H, -1
+emit_inc_or_dec 0xEF, I_EF__DEC16_r7, VM_R7L, VM_R7H, -1
+
+.macro emit_ldi8 opcode, label, dstl, dsth
+    handler_begin \opcode, \label
+
+    ; The immediate transfer was started by the preceding dispatch.
+    ;
+    ; Previous OUT-to-handler-entry latency is 9 cycles. These eight
+    ; cycles place this OUT exactly 17 cycles after the previous OUT:
+    ;
+    ;     delay_4 + delay_3 + CLI = 8
+    ;
+    ; OUT starts fetching the next opcode; IN reads the completed immediate.
+    delay_4
+    delay_3
+    cli
+    out  SPDR, ZERO
+    in   \dstl, SPDR
+    sei
+
+    ; Account for the immediate byte and zero-extend the value.
+    ; dispatch_reverse accounts for the opcode byte.
+    adiw VM_PC, 1
+    clr  \dsth
+
+    rjmp ldi8_dispatch_reverse_func
+
+    handler_end \opcode
+.endm
+
+emit_ldi8 0xF0, I_F0__LDI8_c0, VM_C0L, VM_C0H
+emit_ldi8 0xF1, I_F1__LDI8_c1, VM_C1L, VM_C1H
+emit_ldi8 0xF2, I_F2__LDI8_c2, VM_C2L, VM_C2H
+emit_ldi8 0xF3, I_F3__LDI8_c3, VM_C3L, VM_C3H
+
+ldi8_dispatch_reverse_func:
+    delay_4
 branch_short_dispatch_reverse_func:
     delay_2
+dispatch_reverse_func:
     dispatch_reverse
+
+dispatch_func:
+    dispatch
 
 ; seek to PC (CB/PC)
 fx_seek_to_pc:

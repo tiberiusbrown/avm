@@ -1352,8 +1352,8 @@ Opcode:
 Operand:
 
 ```text
-bits 7:6 = compact register
-bits 5:0 = signed six-bit immediate
+bits 7:2 = signed six-bit immediate
+bits 1:0 = compact register
 ```
 
 Instruction:

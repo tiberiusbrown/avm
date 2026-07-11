@@ -2,6 +2,19 @@
 ; Interpreter
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;; SRAM:
+;;     0x0100–0x04FF globals
+;;     0x0500–0x08FF framebuffer
+;;     0x0900–0x09FF VM stack
+;;     0x0A00-0x0A03 FX data/save page
+;;     0x0A04–0x0AFF interpreter-private
+
+#define data_globals    0x0100
+#define data_display    0x0500
+#define data_stack      0x0900
+#define data_page_data  0x0A00
+#define data_page_save  (data_page_data+2)
+
 ;; ; ------------------------------------------------------------
 ;; ; Native dispatch and interpreter state
 ;; ; ------------------------------------------------------------
@@ -13,11 +26,11 @@
 ;; AVR r2         Permanent zero
 ;;                SPI dummy-transmit byte
 ;; 
-;; AVR r3         Interpreter scratch
+;; AVR r3         AVM FLAGS
 ;; 
 ;; AVR r4         Interpreter scratch
 ;; 
-;; AVR r5         AVM FLAGS
+;; AVR r5         Interpreter scratch
 ;; 
 ;; AVR r6         Current bytecode opcode
 ;;                Operand or secondary-opcode scratch
@@ -70,7 +83,7 @@
 
 #define ZERO r2
 
-#define VM_FLAGS r5
+#define VM_FLAGS r3
 
 #define VM_CB GPIOR1
 #define VM_PB GPIOR2
@@ -128,10 +141,84 @@
 
 #define __SFR_OFFSET 0
 #include <avr/io.h>
+#ifndef SREG_C
+#  define SREG_C  (0)
+#endif
+#ifndef SREG_Z
+#  define SREG_Z  (1)
+#endif
+#ifndef SREG_N
+#  define SREG_N  (2)
+#endif
+#ifndef SREG_V
+#  define SREG_V  (3)
+#endif
+#ifndef SREG_S
+#  define SREG_S  (4)
+#endif
+#ifndef SREG_H
+#  define SREG_H  (5)
+#endif
+#ifndef SREG_T
+#  define SREG_T  (6)
+#endif
+#ifndef SREG_I
+#  define SREG_I  (7)
+#endif
 
 #if (DISPATCH_ORG & 0xFF) != 0
 #error "Dispatch calculation requires lo8(DISPATCH_ORG) == 0x00"
 #endif
+
+; display
+#define CS_PORT  PORTD
+#define CS_BIT   PORTD6
+
+.macro display_enable
+cbi  CS_PORT, CS_BIT
+.endm
+
+.macro display_disable
+sbi  CS_PORT, CS_BIT
+.endm
+
+; Serial Flash Commands (W25Q128)
+#define SFC_READ               0x03
+#define SFC_WRITE_ENABLE       0x06
+#define SFC_WRITE              0x02
+#define SFC_ERASE              0x20
+#define SFC_RELEASE_POWERDOWN  0xAB
+
+#define FX_PORT  PORTD
+#define FX_BIT   PORTD2
+
+#define FX_VECTOR_KEY_POINTER  0x0014
+#define FX_VECTOR_KEY          0x9518
+
+.macro fx_enable
+cbi  FX_PORT, FX_BIT
+.endm
+
+.macro fx_disable
+sbi  FX_PORT, FX_BIT
+.endm
+
+.macro delay_1
+    nop
+.endm
+
+.macro delay_2
+    .word 0xC000   ; rjmp .+0
+.endm
+
+.macro delay_3
+    lpm
+.endm
+
+.macro delay_4
+    delay_2
+    delay_2
+.endm
 
 .section .text,"ax",@progbits
 .org 0x0000
@@ -203,7 +290,7 @@ reset_handler:
     out  VM_CB, ZERO
     out  VM_PB, ZERO
 
-    ; Initialize SPI.
+    ; Initialize SPI
     ; Bytecode streaming uses fixed timing rather than polling SPIF.
     ; SPIE must remain clear. ISRs must not access SPI.
     ldi  r26, (_BV(SPE) | _BV(MSTR))
@@ -211,11 +298,55 @@ reset_handler:
     ldi  r26, _BV(SPI2X)
     out  SPSR, r26
 
+    ; Initialize display
+
+    ; Initialize flash chip
+    display_disable
+    ldi  r30, lo8(FX_VECTOR_KEY_POINTER)
+    ldi  r31, hi8(FX_VECTOR_KEY_POINTER)
+    lpm  r26, Z+
+    lpm  r27, Z+
+    lpm  r0, Z+
+    lpm  r1, Z+
+    subi r26, lo8(FX_VECTOR_KEY)
+    sbci r27, hi8(FX_VECTOR_KEY)
+    brne 1f
+
+    ; TODO: missing signatures, so look at end of flash for data/save pages
+    clr  r26
+    clr  r27
+    clr  r4
+    clr  r5
+    rjmp 2f
+
+1:
+    adiw r30, 2
+    lpm  r4, Z+
+    lpm  r5, Z+
+2:
+    sts  data_page_data+0, r26
+    sts  data_page_data+1, r27
+    sts  data_page_save+0, r4
+    sts  data_page_save+1, r5
+
+    fx_enable
+    ldi  r26, SFC_RELEASE_POWERDOWN
+    out  SPDR, r26
+    rcall fx_init_delay_17
+    fx_disable
+
     ; Dispatch always runs with interrupts enabled
     sei
 
 reset_loop:
     rjmp reset_loop
+
+fx_init_delay_17:
+    delay_3
+fx_init_delay_14:
+    rcall fx_init_delay_7
+fx_init_delay_7:
+    ret
 
 ; 18-cycle cadence, needs 8 cycles from start of instruction
 .macro dispatch
@@ -248,23 +379,6 @@ reset_loop:
 
 .macro handler_end opcode
     .org ((((\opcode) + 1) << DISPATCH_SLOT_LOG2) + DISPATCH_ORG)
-.endm
-
-.macro delay_1
-    nop
-.endm
-
-.macro delay_2
-    .word 0xC000   ; rjmp .+0
-.endm
-
-.macro delay_3
-    lpm
-.endm
-
-.macro delay_4
-    delay_2
-    delay_2
 .endm
 
 .org DISPATCH_ORG
@@ -659,3 +773,36 @@ emit_cmp8_or_tst 0xBC, I_BC__CMP8_c3_c0,  VM_C3L, VM_C0L
 emit_cmp8_or_tst 0xBD, I_BD__CMP8_c3_c1,  VM_C3L, VM_C1L
 emit_cmp8_or_tst 0xBE, I_BE__CMP8_c3_c2,  VM_C3L, VM_C2L
 emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xC0-0xCF: BEQ.S
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; TODO: implement this
+
+; seek to PC (PB/PC)
+; requires 13 additional cycles before fetching first byte from SPDR
+fx_seek_to_pc:
+    fx_disable
+    ldi  r30, SFC_READ
+    fx_enable
+    out  SPDR, r30
+    lds  r26, data_page_data+0
+    add  r26, VM_PCH
+    lds  r27, data_page_data+1
+    in   r30, VM_PB
+    adc  r27, r30
+    rcall fx_seek_delay_10
+    out  SPDR, r27
+    rcall fx_seek_delay_17
+    out  SPDR, r26
+    rcall fx_seek_delay_17
+    out  SPDR, VM_PCL
+    ret
+
+fx_seek_delay_17:
+    rcall fx_seek_delay_7
+fx_seek_delay_10:
+    lpm
+fx_seek_delay_7:
+    ret

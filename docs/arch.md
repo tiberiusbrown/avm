@@ -172,16 +172,16 @@ AVR r0-r1      Native MUL result
 AVR r2         Permanent zero
                SPI dummy-transmit byte
 
-AVR r3         Interpreter scratch
+AVR r3         AVM FLAGS
 
 AVR r4         Interpreter scratch
 
-AVR r5         AVM FLAGS
+AVR r5         Interpreter scratch
 
 AVR r6         Current bytecode opcode
                Operand or secondary-opcode scratch
 
-AVR r7         Constant 32
+AVR r7         Constant
                Dispatch-slot stride in AVR words
 
 ; ------------------------------------------------------------

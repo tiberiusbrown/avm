@@ -5,7 +5,10 @@ SYMBOL TABLE:
 00000000 l    d  .text	00000000 .text
 000000ae l       .text	00000000 reset_handler
 000000ac l       .text	00000000 default_isr
-000000c8 l       .text	00000000 reset_loop
+00000108 l       .text	00000000 fx_init_delay_17
+00000106 l       .text	00000000 reset_loop
+0000010a l       .text	00000000 fx_init_delay_14
+0000010c l       .text	00000000 fx_init_delay_7
 00000200 l       .text	00000000 I_00__CLR_c0
 00000240 l       .text	00000000 I_01__MOV_c0_c1
 00000280 l       .text	00000000 I_02__MOV_c0_c2
@@ -198,8 +201,14 @@ SYMBOL TABLE:
 00003140 l       .text	00000000 I_BD__CMP8_c3_c1
 00003180 l       .text	00000000 I_BE__CMP8_c3_c2
 000031c0 l       .text	00000000 I_BF__TST8_c3
+00003200 l       .text	00000000 fx_seek_to_pc
+00003226 l       .text	00000000 fx_seek_delay_10
+00003224 l       .text	00000000 fx_seek_delay_17
+00003228 l       .text	00000000 fx_seek_delay_7
+000000e4 l       .text	00000000 .L11
+000000ea l       .text	00000000 .L21
 00000000 g       .text	00000000 __trampolines_start
-00003200 g       .text	00000000 _etext
+0000322a g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00000000 g       .text	000000ac __vectors
@@ -266,51 +275,57 @@ Disassembly of section .text:
       b2:	7a 2e       	mov	r7, r26
       b4:	c0 e0       	ldi	r28, 0x00	; 0
       b6:	da e0       	ldi	r29, 0x0A	; 10
-      b8:	55 24       	eor	r5, r5
+      b8:	33 24       	eor	r3, r3
       ba:	2a bc       	out	0x2a, r2	; 42
       bc:	2b bc       	out	0x2b, r2	; 43
       be:	a0 e5       	ldi	r26, 0x50	; 80
       c0:	ac bd       	out	0x2c, r26	; 44
       c2:	a1 e0       	ldi	r26, 0x01	; 1
       c4:	ad bd       	out	0x2d, r26	; 45
-      c6:	78 94       	sei
+      c6:	5e 9a       	sbi	0x0b, 6	; 11
+      c8:	e4 e1       	ldi	r30, 0x14	; 20
+      ca:	f0 e0       	ldi	r31, 0x00	; 0
+      cc:	a5 91       	lpm	r26, Z+
+      ce:	b5 91       	lpm	r27, Z+
+      d0:	05 90       	lpm	r0, Z+
+      d2:	15 90       	lpm	r1, Z+
+      d4:	a8 51       	subi	r26, 0x18	; 24
+      d6:	b5 49       	sbci	r27, 0x95	; 149
+      d8:	29 f4       	brne	.+10     	; 0xe4 <.L1^B1>
+      da:	aa 27       	eor	r26, r26
+      dc:	bb 27       	eor	r27, r27
+      de:	44 24       	eor	r4, r4
+      e0:	55 24       	eor	r5, r5
+      e2:	03 c0       	rjmp	.+6      	; 0xea <.L2^B1>
 
-000000c8 <reset_loop>:
-      c8:	ff cf       	rjmp	.-2      	; 0xc8 <reset_loop>
-      ca:	00 00       	nop
-      cc:	00 00       	nop
-      ce:	00 00       	nop
-      d0:	00 00       	nop
-      d2:	00 00       	nop
-      d4:	00 00       	nop
-      d6:	00 00       	nop
-      d8:	00 00       	nop
-      da:	00 00       	nop
-      dc:	00 00       	nop
-      de:	00 00       	nop
-      e0:	00 00       	nop
-      e2:	00 00       	nop
-      e4:	00 00       	nop
-      e6:	00 00       	nop
-      e8:	00 00       	nop
-      ea:	00 00       	nop
-      ec:	00 00       	nop
-      ee:	00 00       	nop
-      f0:	00 00       	nop
-      f2:	00 00       	nop
-      f4:	00 00       	nop
-      f6:	00 00       	nop
-      f8:	00 00       	nop
-      fa:	00 00       	nop
-      fc:	00 00       	nop
-      fe:	00 00       	nop
-     100:	00 00       	nop
-     102:	00 00       	nop
-     104:	00 00       	nop
-     106:	00 00       	nop
-     108:	00 00       	nop
-     10a:	00 00       	nop
-     10c:	00 00       	nop
+000000e4 <.L1^B1>:
+      e4:	32 96       	adiw	r30, 0x02	; 2
+      e6:	45 90       	lpm	r4, Z+
+      e8:	55 90       	lpm	r5, Z+
+
+000000ea <.L2^B1>:
+      ea:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_edata+0x900>
+      ee:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_edata+0x901>
+      f2:	40 92 02 0a 	sts	0x0A02, r4	; 0x800a02 <_edata+0x902>
+      f6:	50 92 03 0a 	sts	0x0A03, r5	; 0x800a03 <_edata+0x903>
+      fa:	5a 98       	cbi	0x0b, 2	; 11
+      fc:	ab ea       	ldi	r26, 0xAB	; 171
+      fe:	ae bd       	out	0x2e, r26	; 46
+     100:	03 d0       	rcall	.+6      	; 0x108 <fx_init_delay_17>
+     102:	5a 9a       	sbi	0x0b, 2	; 11
+     104:	78 94       	sei
+
+00000106 <reset_loop>:
+     106:	ff cf       	rjmp	.-2      	; 0x106 <reset_loop>
+
+00000108 <fx_init_delay_17>:
+     108:	c8 95       	lpm
+
+0000010a <fx_init_delay_14>:
+     10a:	00 d0       	rcall	.+0      	; 0x10c <fx_init_delay_7>
+
+0000010c <fx_init_delay_7>:
+     10c:	08 95       	ret
      10e:	00 00       	nop
      110:	00 00       	nop
      112:	00 00       	nop
@@ -4789,7 +4804,7 @@ Disassembly of section .text:
     2200:	00 c0       	rjmp	.+0      	; 0x2202 <I_80__ADD_c0_c0+0x2>
     2202:	00 0f       	add	r16, r16
     2204:	11 1f       	adc	r17, r17
-    2206:	5f b6       	in	r5, 0x3f	; 63
+    2206:	3f b6       	in	r3, 0x3f	; 63
     2208:	01 96       	adiw	r24, 0x01	; 1
     220a:	f8 94       	cli
     220c:	2e bc       	out	0x2e, r2	; 46
@@ -4823,7 +4838,7 @@ Disassembly of section .text:
     2240:	00 c0       	rjmp	.+0      	; 0x2242 <I_81__ADD_c0_c1+0x2>
     2242:	02 0f       	add	r16, r18
     2244:	13 1f       	adc	r17, r19
-    2246:	5f b6       	in	r5, 0x3f	; 63
+    2246:	3f b6       	in	r3, 0x3f	; 63
     2248:	01 96       	adiw	r24, 0x01	; 1
     224a:	f8 94       	cli
     224c:	2e bc       	out	0x2e, r2	; 46
@@ -4857,7 +4872,7 @@ Disassembly of section .text:
     2280:	00 c0       	rjmp	.+0      	; 0x2282 <I_82__ADD_c0_c2+0x2>
     2282:	04 0f       	add	r16, r20
     2284:	15 1f       	adc	r17, r21
-    2286:	5f b6       	in	r5, 0x3f	; 63
+    2286:	3f b6       	in	r3, 0x3f	; 63
     2288:	01 96       	adiw	r24, 0x01	; 1
     228a:	f8 94       	cli
     228c:	2e bc       	out	0x2e, r2	; 46
@@ -4891,7 +4906,7 @@ Disassembly of section .text:
     22c0:	00 c0       	rjmp	.+0      	; 0x22c2 <I_83__ADD_c0_c3+0x2>
     22c2:	06 0f       	add	r16, r22
     22c4:	17 1f       	adc	r17, r23
-    22c6:	5f b6       	in	r5, 0x3f	; 63
+    22c6:	3f b6       	in	r3, 0x3f	; 63
     22c8:	01 96       	adiw	r24, 0x01	; 1
     22ca:	f8 94       	cli
     22cc:	2e bc       	out	0x2e, r2	; 46
@@ -4925,7 +4940,7 @@ Disassembly of section .text:
     2300:	00 c0       	rjmp	.+0      	; 0x2302 <I_84__ADD_c1_c0+0x2>
     2302:	20 0f       	add	r18, r16
     2304:	31 1f       	adc	r19, r17
-    2306:	5f b6       	in	r5, 0x3f	; 63
+    2306:	3f b6       	in	r3, 0x3f	; 63
     2308:	01 96       	adiw	r24, 0x01	; 1
     230a:	f8 94       	cli
     230c:	2e bc       	out	0x2e, r2	; 46
@@ -4959,7 +4974,7 @@ Disassembly of section .text:
     2340:	00 c0       	rjmp	.+0      	; 0x2342 <I_85__ADD_c1_c1+0x2>
     2342:	22 0f       	add	r18, r18
     2344:	33 1f       	adc	r19, r19
-    2346:	5f b6       	in	r5, 0x3f	; 63
+    2346:	3f b6       	in	r3, 0x3f	; 63
     2348:	01 96       	adiw	r24, 0x01	; 1
     234a:	f8 94       	cli
     234c:	2e bc       	out	0x2e, r2	; 46
@@ -4993,7 +5008,7 @@ Disassembly of section .text:
     2380:	00 c0       	rjmp	.+0      	; 0x2382 <I_86__ADD_c1_c2+0x2>
     2382:	24 0f       	add	r18, r20
     2384:	35 1f       	adc	r19, r21
-    2386:	5f b6       	in	r5, 0x3f	; 63
+    2386:	3f b6       	in	r3, 0x3f	; 63
     2388:	01 96       	adiw	r24, 0x01	; 1
     238a:	f8 94       	cli
     238c:	2e bc       	out	0x2e, r2	; 46
@@ -5027,7 +5042,7 @@ Disassembly of section .text:
     23c0:	00 c0       	rjmp	.+0      	; 0x23c2 <I_87__ADD_c1_c3+0x2>
     23c2:	26 0f       	add	r18, r22
     23c4:	37 1f       	adc	r19, r23
-    23c6:	5f b6       	in	r5, 0x3f	; 63
+    23c6:	3f b6       	in	r3, 0x3f	; 63
     23c8:	01 96       	adiw	r24, 0x01	; 1
     23ca:	f8 94       	cli
     23cc:	2e bc       	out	0x2e, r2	; 46
@@ -5061,7 +5076,7 @@ Disassembly of section .text:
     2400:	00 c0       	rjmp	.+0      	; 0x2402 <I_88__ADD_c2_c0+0x2>
     2402:	40 0f       	add	r20, r16
     2404:	51 1f       	adc	r21, r17
-    2406:	5f b6       	in	r5, 0x3f	; 63
+    2406:	3f b6       	in	r3, 0x3f	; 63
     2408:	01 96       	adiw	r24, 0x01	; 1
     240a:	f8 94       	cli
     240c:	2e bc       	out	0x2e, r2	; 46
@@ -5095,7 +5110,7 @@ Disassembly of section .text:
     2440:	00 c0       	rjmp	.+0      	; 0x2442 <I_89__ADD_c2_c1+0x2>
     2442:	42 0f       	add	r20, r18
     2444:	53 1f       	adc	r21, r19
-    2446:	5f b6       	in	r5, 0x3f	; 63
+    2446:	3f b6       	in	r3, 0x3f	; 63
     2448:	01 96       	adiw	r24, 0x01	; 1
     244a:	f8 94       	cli
     244c:	2e bc       	out	0x2e, r2	; 46
@@ -5129,7 +5144,7 @@ Disassembly of section .text:
     2480:	00 c0       	rjmp	.+0      	; 0x2482 <I_8A__ADD_c2_c2+0x2>
     2482:	44 0f       	add	r20, r20
     2484:	55 1f       	adc	r21, r21
-    2486:	5f b6       	in	r5, 0x3f	; 63
+    2486:	3f b6       	in	r3, 0x3f	; 63
     2488:	01 96       	adiw	r24, 0x01	; 1
     248a:	f8 94       	cli
     248c:	2e bc       	out	0x2e, r2	; 46
@@ -5163,7 +5178,7 @@ Disassembly of section .text:
     24c0:	00 c0       	rjmp	.+0      	; 0x24c2 <I_8B__ADD_c2_c3+0x2>
     24c2:	46 0f       	add	r20, r22
     24c4:	57 1f       	adc	r21, r23
-    24c6:	5f b6       	in	r5, 0x3f	; 63
+    24c6:	3f b6       	in	r3, 0x3f	; 63
     24c8:	01 96       	adiw	r24, 0x01	; 1
     24ca:	f8 94       	cli
     24cc:	2e bc       	out	0x2e, r2	; 46
@@ -5197,7 +5212,7 @@ Disassembly of section .text:
     2500:	00 c0       	rjmp	.+0      	; 0x2502 <I_8C__ADD_c3_c0+0x2>
     2502:	60 0f       	add	r22, r16
     2504:	71 1f       	adc	r23, r17
-    2506:	5f b6       	in	r5, 0x3f	; 63
+    2506:	3f b6       	in	r3, 0x3f	; 63
     2508:	01 96       	adiw	r24, 0x01	; 1
     250a:	f8 94       	cli
     250c:	2e bc       	out	0x2e, r2	; 46
@@ -5231,7 +5246,7 @@ Disassembly of section .text:
     2540:	00 c0       	rjmp	.+0      	; 0x2542 <I_8D__ADD_c3_c1+0x2>
     2542:	62 0f       	add	r22, r18
     2544:	73 1f       	adc	r23, r19
-    2546:	5f b6       	in	r5, 0x3f	; 63
+    2546:	3f b6       	in	r3, 0x3f	; 63
     2548:	01 96       	adiw	r24, 0x01	; 1
     254a:	f8 94       	cli
     254c:	2e bc       	out	0x2e, r2	; 46
@@ -5265,7 +5280,7 @@ Disassembly of section .text:
     2580:	00 c0       	rjmp	.+0      	; 0x2582 <I_8E__ADD_c3_c2+0x2>
     2582:	64 0f       	add	r22, r20
     2584:	75 1f       	adc	r23, r21
-    2586:	5f b6       	in	r5, 0x3f	; 63
+    2586:	3f b6       	in	r3, 0x3f	; 63
     2588:	01 96       	adiw	r24, 0x01	; 1
     258a:	f8 94       	cli
     258c:	2e bc       	out	0x2e, r2	; 46
@@ -5299,7 +5314,7 @@ Disassembly of section .text:
     25c0:	00 c0       	rjmp	.+0      	; 0x25c2 <I_8F__ADD_c3_c3+0x2>
     25c2:	66 0f       	add	r22, r22
     25c4:	77 1f       	adc	r23, r23
-    25c6:	5f b6       	in	r5, 0x3f	; 63
+    25c6:	3f b6       	in	r3, 0x3f	; 63
     25c8:	01 96       	adiw	r24, 0x01	; 1
     25ca:	f8 94       	cli
     25cc:	2e bc       	out	0x2e, r2	; 46
@@ -5333,7 +5348,7 @@ Disassembly of section .text:
     2600:	00 c0       	rjmp	.+0      	; 0x2602 <I_90__SUB_c0_c0+0x2>
     2602:	00 1b       	sub	r16, r16
     2604:	11 0b       	sbc	r17, r17
-    2606:	5f b6       	in	r5, 0x3f	; 63
+    2606:	3f b6       	in	r3, 0x3f	; 63
     2608:	01 96       	adiw	r24, 0x01	; 1
     260a:	f8 94       	cli
     260c:	2e bc       	out	0x2e, r2	; 46
@@ -5367,7 +5382,7 @@ Disassembly of section .text:
     2640:	00 c0       	rjmp	.+0      	; 0x2642 <I_91__SUB_c0_c1+0x2>
     2642:	02 1b       	sub	r16, r18
     2644:	13 0b       	sbc	r17, r19
-    2646:	5f b6       	in	r5, 0x3f	; 63
+    2646:	3f b6       	in	r3, 0x3f	; 63
     2648:	01 96       	adiw	r24, 0x01	; 1
     264a:	f8 94       	cli
     264c:	2e bc       	out	0x2e, r2	; 46
@@ -5401,7 +5416,7 @@ Disassembly of section .text:
     2680:	00 c0       	rjmp	.+0      	; 0x2682 <I_92__SUB_c0_c2+0x2>
     2682:	04 1b       	sub	r16, r20
     2684:	15 0b       	sbc	r17, r21
-    2686:	5f b6       	in	r5, 0x3f	; 63
+    2686:	3f b6       	in	r3, 0x3f	; 63
     2688:	01 96       	adiw	r24, 0x01	; 1
     268a:	f8 94       	cli
     268c:	2e bc       	out	0x2e, r2	; 46
@@ -5435,7 +5450,7 @@ Disassembly of section .text:
     26c0:	00 c0       	rjmp	.+0      	; 0x26c2 <I_93__SUB_c0_c3+0x2>
     26c2:	06 1b       	sub	r16, r22
     26c4:	17 0b       	sbc	r17, r23
-    26c6:	5f b6       	in	r5, 0x3f	; 63
+    26c6:	3f b6       	in	r3, 0x3f	; 63
     26c8:	01 96       	adiw	r24, 0x01	; 1
     26ca:	f8 94       	cli
     26cc:	2e bc       	out	0x2e, r2	; 46
@@ -5469,7 +5484,7 @@ Disassembly of section .text:
     2700:	00 c0       	rjmp	.+0      	; 0x2702 <I_94__SUB_c1_c0+0x2>
     2702:	20 1b       	sub	r18, r16
     2704:	31 0b       	sbc	r19, r17
-    2706:	5f b6       	in	r5, 0x3f	; 63
+    2706:	3f b6       	in	r3, 0x3f	; 63
     2708:	01 96       	adiw	r24, 0x01	; 1
     270a:	f8 94       	cli
     270c:	2e bc       	out	0x2e, r2	; 46
@@ -5503,7 +5518,7 @@ Disassembly of section .text:
     2740:	00 c0       	rjmp	.+0      	; 0x2742 <I_95__SUB_c1_c1+0x2>
     2742:	22 1b       	sub	r18, r18
     2744:	33 0b       	sbc	r19, r19
-    2746:	5f b6       	in	r5, 0x3f	; 63
+    2746:	3f b6       	in	r3, 0x3f	; 63
     2748:	01 96       	adiw	r24, 0x01	; 1
     274a:	f8 94       	cli
     274c:	2e bc       	out	0x2e, r2	; 46
@@ -5537,7 +5552,7 @@ Disassembly of section .text:
     2780:	00 c0       	rjmp	.+0      	; 0x2782 <I_96__SUB_c1_c2+0x2>
     2782:	24 1b       	sub	r18, r20
     2784:	35 0b       	sbc	r19, r21
-    2786:	5f b6       	in	r5, 0x3f	; 63
+    2786:	3f b6       	in	r3, 0x3f	; 63
     2788:	01 96       	adiw	r24, 0x01	; 1
     278a:	f8 94       	cli
     278c:	2e bc       	out	0x2e, r2	; 46
@@ -5571,7 +5586,7 @@ Disassembly of section .text:
     27c0:	00 c0       	rjmp	.+0      	; 0x27c2 <I_97__SUB_c1_c3+0x2>
     27c2:	26 1b       	sub	r18, r22
     27c4:	37 0b       	sbc	r19, r23
-    27c6:	5f b6       	in	r5, 0x3f	; 63
+    27c6:	3f b6       	in	r3, 0x3f	; 63
     27c8:	01 96       	adiw	r24, 0x01	; 1
     27ca:	f8 94       	cli
     27cc:	2e bc       	out	0x2e, r2	; 46
@@ -5605,7 +5620,7 @@ Disassembly of section .text:
     2800:	00 c0       	rjmp	.+0      	; 0x2802 <I_98__SUB_c2_c0+0x2>
     2802:	40 1b       	sub	r20, r16
     2804:	51 0b       	sbc	r21, r17
-    2806:	5f b6       	in	r5, 0x3f	; 63
+    2806:	3f b6       	in	r3, 0x3f	; 63
     2808:	01 96       	adiw	r24, 0x01	; 1
     280a:	f8 94       	cli
     280c:	2e bc       	out	0x2e, r2	; 46
@@ -5639,7 +5654,7 @@ Disassembly of section .text:
     2840:	00 c0       	rjmp	.+0      	; 0x2842 <I_99__SUB_c2_c1+0x2>
     2842:	42 1b       	sub	r20, r18
     2844:	53 0b       	sbc	r21, r19
-    2846:	5f b6       	in	r5, 0x3f	; 63
+    2846:	3f b6       	in	r3, 0x3f	; 63
     2848:	01 96       	adiw	r24, 0x01	; 1
     284a:	f8 94       	cli
     284c:	2e bc       	out	0x2e, r2	; 46
@@ -5673,7 +5688,7 @@ Disassembly of section .text:
     2880:	00 c0       	rjmp	.+0      	; 0x2882 <I_9A__SUB_c2_c2+0x2>
     2882:	44 1b       	sub	r20, r20
     2884:	55 0b       	sbc	r21, r21
-    2886:	5f b6       	in	r5, 0x3f	; 63
+    2886:	3f b6       	in	r3, 0x3f	; 63
     2888:	01 96       	adiw	r24, 0x01	; 1
     288a:	f8 94       	cli
     288c:	2e bc       	out	0x2e, r2	; 46
@@ -5707,7 +5722,7 @@ Disassembly of section .text:
     28c0:	00 c0       	rjmp	.+0      	; 0x28c2 <I_9B__SUB_c2_c3+0x2>
     28c2:	46 1b       	sub	r20, r22
     28c4:	57 0b       	sbc	r21, r23
-    28c6:	5f b6       	in	r5, 0x3f	; 63
+    28c6:	3f b6       	in	r3, 0x3f	; 63
     28c8:	01 96       	adiw	r24, 0x01	; 1
     28ca:	f8 94       	cli
     28cc:	2e bc       	out	0x2e, r2	; 46
@@ -5741,7 +5756,7 @@ Disassembly of section .text:
     2900:	00 c0       	rjmp	.+0      	; 0x2902 <I_9C__SUB_c3_c0+0x2>
     2902:	60 1b       	sub	r22, r16
     2904:	71 0b       	sbc	r23, r17
-    2906:	5f b6       	in	r5, 0x3f	; 63
+    2906:	3f b6       	in	r3, 0x3f	; 63
     2908:	01 96       	adiw	r24, 0x01	; 1
     290a:	f8 94       	cli
     290c:	2e bc       	out	0x2e, r2	; 46
@@ -5775,7 +5790,7 @@ Disassembly of section .text:
     2940:	00 c0       	rjmp	.+0      	; 0x2942 <I_9D__SUB_c3_c1+0x2>
     2942:	62 1b       	sub	r22, r18
     2944:	73 0b       	sbc	r23, r19
-    2946:	5f b6       	in	r5, 0x3f	; 63
+    2946:	3f b6       	in	r3, 0x3f	; 63
     2948:	01 96       	adiw	r24, 0x01	; 1
     294a:	f8 94       	cli
     294c:	2e bc       	out	0x2e, r2	; 46
@@ -5809,7 +5824,7 @@ Disassembly of section .text:
     2980:	00 c0       	rjmp	.+0      	; 0x2982 <I_9E__SUB_c3_c2+0x2>
     2982:	64 1b       	sub	r22, r20
     2984:	75 0b       	sbc	r23, r21
-    2986:	5f b6       	in	r5, 0x3f	; 63
+    2986:	3f b6       	in	r3, 0x3f	; 63
     2988:	01 96       	adiw	r24, 0x01	; 1
     298a:	f8 94       	cli
     298c:	2e bc       	out	0x2e, r2	; 46
@@ -5843,7 +5858,7 @@ Disassembly of section .text:
     29c0:	00 c0       	rjmp	.+0      	; 0x29c2 <I_9F__SUB_c3_c3+0x2>
     29c2:	66 1b       	sub	r22, r22
     29c4:	77 0b       	sbc	r23, r23
-    29c6:	5f b6       	in	r5, 0x3f	; 63
+    29c6:	3f b6       	in	r3, 0x3f	; 63
     29c8:	01 96       	adiw	r24, 0x01	; 1
     29ca:	f8 94       	cli
     29cc:	2e bc       	out	0x2e, r2	; 46
@@ -5874,11 +5889,11 @@ Disassembly of section .text:
     29fe:	00 00       	nop
 
 00002a00 <I_A0__TST16_c0>:
-    2a00:	50 fa       	bst	r5, 0
+    2a00:	30 fa       	bst	r3, 0
     2a02:	02 15       	cp	r16, r2
     2a04:	12 05       	cpc	r17, r2
-    2a06:	5f b6       	in	r5, 0x3f	; 63
-    2a08:	50 f8       	bld	r5, 0
+    2a06:	3f b6       	in	r3, 0x3f	; 63
+    2a08:	30 f8       	bld	r3, 0
     2a0a:	01 96       	adiw	r24, 0x01	; 1
     2a0c:	f8 94       	cli
     2a0e:	2e bc       	out	0x2e, r2	; 46
@@ -5911,7 +5926,7 @@ Disassembly of section .text:
     2a40:	00 c0       	rjmp	.+0      	; 0x2a42 <I_A1__CMP16_c0_c1+0x2>
     2a42:	02 17       	cp	r16, r18
     2a44:	13 07       	cpc	r17, r19
-    2a46:	5f b6       	in	r5, 0x3f	; 63
+    2a46:	3f b6       	in	r3, 0x3f	; 63
     2a48:	01 96       	adiw	r24, 0x01	; 1
     2a4a:	f8 94       	cli
     2a4c:	2e bc       	out	0x2e, r2	; 46
@@ -5945,7 +5960,7 @@ Disassembly of section .text:
     2a80:	00 c0       	rjmp	.+0      	; 0x2a82 <I_A2__CMP16_c0_c2+0x2>
     2a82:	04 17       	cp	r16, r20
     2a84:	15 07       	cpc	r17, r21
-    2a86:	5f b6       	in	r5, 0x3f	; 63
+    2a86:	3f b6       	in	r3, 0x3f	; 63
     2a88:	01 96       	adiw	r24, 0x01	; 1
     2a8a:	f8 94       	cli
     2a8c:	2e bc       	out	0x2e, r2	; 46
@@ -5979,7 +5994,7 @@ Disassembly of section .text:
     2ac0:	00 c0       	rjmp	.+0      	; 0x2ac2 <I_A3__CMP16_c0_c3+0x2>
     2ac2:	06 17       	cp	r16, r22
     2ac4:	17 07       	cpc	r17, r23
-    2ac6:	5f b6       	in	r5, 0x3f	; 63
+    2ac6:	3f b6       	in	r3, 0x3f	; 63
     2ac8:	01 96       	adiw	r24, 0x01	; 1
     2aca:	f8 94       	cli
     2acc:	2e bc       	out	0x2e, r2	; 46
@@ -6013,7 +6028,7 @@ Disassembly of section .text:
     2b00:	00 c0       	rjmp	.+0      	; 0x2b02 <I_A4__CMP16_c1_c0+0x2>
     2b02:	20 17       	cp	r18, r16
     2b04:	31 07       	cpc	r19, r17
-    2b06:	5f b6       	in	r5, 0x3f	; 63
+    2b06:	3f b6       	in	r3, 0x3f	; 63
     2b08:	01 96       	adiw	r24, 0x01	; 1
     2b0a:	f8 94       	cli
     2b0c:	2e bc       	out	0x2e, r2	; 46
@@ -6044,11 +6059,11 @@ Disassembly of section .text:
     2b3e:	00 00       	nop
 
 00002b40 <I_A5__TST16_c1>:
-    2b40:	50 fa       	bst	r5, 0
+    2b40:	30 fa       	bst	r3, 0
     2b42:	22 15       	cp	r18, r2
     2b44:	32 05       	cpc	r19, r2
-    2b46:	5f b6       	in	r5, 0x3f	; 63
-    2b48:	50 f8       	bld	r5, 0
+    2b46:	3f b6       	in	r3, 0x3f	; 63
+    2b48:	30 f8       	bld	r3, 0
     2b4a:	01 96       	adiw	r24, 0x01	; 1
     2b4c:	f8 94       	cli
     2b4e:	2e bc       	out	0x2e, r2	; 46
@@ -6081,7 +6096,7 @@ Disassembly of section .text:
     2b80:	00 c0       	rjmp	.+0      	; 0x2b82 <I_A6__CMP16_c1_c2+0x2>
     2b82:	24 17       	cp	r18, r20
     2b84:	35 07       	cpc	r19, r21
-    2b86:	5f b6       	in	r5, 0x3f	; 63
+    2b86:	3f b6       	in	r3, 0x3f	; 63
     2b88:	01 96       	adiw	r24, 0x01	; 1
     2b8a:	f8 94       	cli
     2b8c:	2e bc       	out	0x2e, r2	; 46
@@ -6115,7 +6130,7 @@ Disassembly of section .text:
     2bc0:	00 c0       	rjmp	.+0      	; 0x2bc2 <I_A7__CMP16_c1_c3+0x2>
     2bc2:	26 17       	cp	r18, r22
     2bc4:	37 07       	cpc	r19, r23
-    2bc6:	5f b6       	in	r5, 0x3f	; 63
+    2bc6:	3f b6       	in	r3, 0x3f	; 63
     2bc8:	01 96       	adiw	r24, 0x01	; 1
     2bca:	f8 94       	cli
     2bcc:	2e bc       	out	0x2e, r2	; 46
@@ -6149,7 +6164,7 @@ Disassembly of section .text:
     2c00:	00 c0       	rjmp	.+0      	; 0x2c02 <I_A8__CMP16_c2_c0+0x2>
     2c02:	40 17       	cp	r20, r16
     2c04:	51 07       	cpc	r21, r17
-    2c06:	5f b6       	in	r5, 0x3f	; 63
+    2c06:	3f b6       	in	r3, 0x3f	; 63
     2c08:	01 96       	adiw	r24, 0x01	; 1
     2c0a:	f8 94       	cli
     2c0c:	2e bc       	out	0x2e, r2	; 46
@@ -6183,7 +6198,7 @@ Disassembly of section .text:
     2c40:	00 c0       	rjmp	.+0      	; 0x2c42 <I_A9__CMP16_c2_c1+0x2>
     2c42:	42 17       	cp	r20, r18
     2c44:	53 07       	cpc	r21, r19
-    2c46:	5f b6       	in	r5, 0x3f	; 63
+    2c46:	3f b6       	in	r3, 0x3f	; 63
     2c48:	01 96       	adiw	r24, 0x01	; 1
     2c4a:	f8 94       	cli
     2c4c:	2e bc       	out	0x2e, r2	; 46
@@ -6214,11 +6229,11 @@ Disassembly of section .text:
     2c7e:	00 00       	nop
 
 00002c80 <I_AA__TST16_c2>:
-    2c80:	50 fa       	bst	r5, 0
+    2c80:	30 fa       	bst	r3, 0
     2c82:	42 15       	cp	r20, r2
     2c84:	52 05       	cpc	r21, r2
-    2c86:	5f b6       	in	r5, 0x3f	; 63
-    2c88:	50 f8       	bld	r5, 0
+    2c86:	3f b6       	in	r3, 0x3f	; 63
+    2c88:	30 f8       	bld	r3, 0
     2c8a:	01 96       	adiw	r24, 0x01	; 1
     2c8c:	f8 94       	cli
     2c8e:	2e bc       	out	0x2e, r2	; 46
@@ -6251,7 +6266,7 @@ Disassembly of section .text:
     2cc0:	00 c0       	rjmp	.+0      	; 0x2cc2 <I_AB__CMP16_c2_c3+0x2>
     2cc2:	46 17       	cp	r20, r22
     2cc4:	57 07       	cpc	r21, r23
-    2cc6:	5f b6       	in	r5, 0x3f	; 63
+    2cc6:	3f b6       	in	r3, 0x3f	; 63
     2cc8:	01 96       	adiw	r24, 0x01	; 1
     2cca:	f8 94       	cli
     2ccc:	2e bc       	out	0x2e, r2	; 46
@@ -6285,7 +6300,7 @@ Disassembly of section .text:
     2d00:	00 c0       	rjmp	.+0      	; 0x2d02 <I_AC__CMP16_c3_c0+0x2>
     2d02:	60 17       	cp	r22, r16
     2d04:	71 07       	cpc	r23, r17
-    2d06:	5f b6       	in	r5, 0x3f	; 63
+    2d06:	3f b6       	in	r3, 0x3f	; 63
     2d08:	01 96       	adiw	r24, 0x01	; 1
     2d0a:	f8 94       	cli
     2d0c:	2e bc       	out	0x2e, r2	; 46
@@ -6319,7 +6334,7 @@ Disassembly of section .text:
     2d40:	00 c0       	rjmp	.+0      	; 0x2d42 <I_AD__CMP16_c3_c1+0x2>
     2d42:	62 17       	cp	r22, r18
     2d44:	73 07       	cpc	r23, r19
-    2d46:	5f b6       	in	r5, 0x3f	; 63
+    2d46:	3f b6       	in	r3, 0x3f	; 63
     2d48:	01 96       	adiw	r24, 0x01	; 1
     2d4a:	f8 94       	cli
     2d4c:	2e bc       	out	0x2e, r2	; 46
@@ -6353,7 +6368,7 @@ Disassembly of section .text:
     2d80:	00 c0       	rjmp	.+0      	; 0x2d82 <I_AE__CMP16_c3_c2+0x2>
     2d82:	64 17       	cp	r22, r20
     2d84:	75 07       	cpc	r23, r21
-    2d86:	5f b6       	in	r5, 0x3f	; 63
+    2d86:	3f b6       	in	r3, 0x3f	; 63
     2d88:	01 96       	adiw	r24, 0x01	; 1
     2d8a:	f8 94       	cli
     2d8c:	2e bc       	out	0x2e, r2	; 46
@@ -6384,11 +6399,11 @@ Disassembly of section .text:
     2dbe:	00 00       	nop
 
 00002dc0 <I_AF__TST16_c3>:
-    2dc0:	50 fa       	bst	r5, 0
+    2dc0:	30 fa       	bst	r3, 0
     2dc2:	62 15       	cp	r22, r2
     2dc4:	72 05       	cpc	r23, r2
-    2dc6:	5f b6       	in	r5, 0x3f	; 63
-    2dc8:	50 f8       	bld	r5, 0
+    2dc6:	3f b6       	in	r3, 0x3f	; 63
+    2dc8:	30 f8       	bld	r3, 0
     2dca:	01 96       	adiw	r24, 0x01	; 1
     2dcc:	f8 94       	cli
     2dce:	2e bc       	out	0x2e, r2	; 46
@@ -6419,10 +6434,10 @@ Disassembly of section .text:
 
 00002e00 <I_B0__TST8_c0>:
     2e00:	00 00       	nop
-    2e02:	50 fa       	bst	r5, 0
+    2e02:	30 fa       	bst	r3, 0
     2e04:	00 23       	and	r16, r16
-    2e06:	5f b6       	in	r5, 0x3f	; 63
-    2e08:	50 f8       	bld	r5, 0
+    2e06:	3f b6       	in	r3, 0x3f	; 63
+    2e08:	30 f8       	bld	r3, 0
     2e0a:	01 96       	adiw	r24, 0x01	; 1
     2e0c:	f8 94       	cli
     2e0e:	2e bc       	out	0x2e, r2	; 46
@@ -6454,7 +6469,7 @@ Disassembly of section .text:
 00002e40 <I_B1__CMP8_c0_c1>:
     2e40:	c8 95       	lpm
     2e42:	02 17       	cp	r16, r18
-    2e44:	5f b6       	in	r5, 0x3f	; 63
+    2e44:	3f b6       	in	r3, 0x3f	; 63
     2e46:	01 96       	adiw	r24, 0x01	; 1
     2e48:	f8 94       	cli
     2e4a:	2e bc       	out	0x2e, r2	; 46
@@ -6488,7 +6503,7 @@ Disassembly of section .text:
 00002e80 <I_B2__CMP8_c0_c2>:
     2e80:	c8 95       	lpm
     2e82:	04 17       	cp	r16, r20
-    2e84:	5f b6       	in	r5, 0x3f	; 63
+    2e84:	3f b6       	in	r3, 0x3f	; 63
     2e86:	01 96       	adiw	r24, 0x01	; 1
     2e88:	f8 94       	cli
     2e8a:	2e bc       	out	0x2e, r2	; 46
@@ -6522,7 +6537,7 @@ Disassembly of section .text:
 00002ec0 <I_B3__CMP8_c0_c3>:
     2ec0:	c8 95       	lpm
     2ec2:	06 17       	cp	r16, r22
-    2ec4:	5f b6       	in	r5, 0x3f	; 63
+    2ec4:	3f b6       	in	r3, 0x3f	; 63
     2ec6:	01 96       	adiw	r24, 0x01	; 1
     2ec8:	f8 94       	cli
     2eca:	2e bc       	out	0x2e, r2	; 46
@@ -6556,7 +6571,7 @@ Disassembly of section .text:
 00002f00 <I_B4__CMP8_c1_c0>:
     2f00:	c8 95       	lpm
     2f02:	20 17       	cp	r18, r16
-    2f04:	5f b6       	in	r5, 0x3f	; 63
+    2f04:	3f b6       	in	r3, 0x3f	; 63
     2f06:	01 96       	adiw	r24, 0x01	; 1
     2f08:	f8 94       	cli
     2f0a:	2e bc       	out	0x2e, r2	; 46
@@ -6589,10 +6604,10 @@ Disassembly of section .text:
 
 00002f40 <I_B5__TST8_c1>:
     2f40:	00 00       	nop
-    2f42:	50 fa       	bst	r5, 0
+    2f42:	30 fa       	bst	r3, 0
     2f44:	22 23       	and	r18, r18
-    2f46:	5f b6       	in	r5, 0x3f	; 63
-    2f48:	50 f8       	bld	r5, 0
+    2f46:	3f b6       	in	r3, 0x3f	; 63
+    2f48:	30 f8       	bld	r3, 0
     2f4a:	01 96       	adiw	r24, 0x01	; 1
     2f4c:	f8 94       	cli
     2f4e:	2e bc       	out	0x2e, r2	; 46
@@ -6624,7 +6639,7 @@ Disassembly of section .text:
 00002f80 <I_B6__CMP8_c1_c2>:
     2f80:	c8 95       	lpm
     2f82:	24 17       	cp	r18, r20
-    2f84:	5f b6       	in	r5, 0x3f	; 63
+    2f84:	3f b6       	in	r3, 0x3f	; 63
     2f86:	01 96       	adiw	r24, 0x01	; 1
     2f88:	f8 94       	cli
     2f8a:	2e bc       	out	0x2e, r2	; 46
@@ -6658,7 +6673,7 @@ Disassembly of section .text:
 00002fc0 <I_B7__CMP8_c1_c3>:
     2fc0:	c8 95       	lpm
     2fc2:	26 17       	cp	r18, r22
-    2fc4:	5f b6       	in	r5, 0x3f	; 63
+    2fc4:	3f b6       	in	r3, 0x3f	; 63
     2fc6:	01 96       	adiw	r24, 0x01	; 1
     2fc8:	f8 94       	cli
     2fca:	2e bc       	out	0x2e, r2	; 46
@@ -6692,7 +6707,7 @@ Disassembly of section .text:
 00003000 <I_B8__CMP8_c2_c0>:
     3000:	c8 95       	lpm
     3002:	40 17       	cp	r20, r16
-    3004:	5f b6       	in	r5, 0x3f	; 63
+    3004:	3f b6       	in	r3, 0x3f	; 63
     3006:	01 96       	adiw	r24, 0x01	; 1
     3008:	f8 94       	cli
     300a:	2e bc       	out	0x2e, r2	; 46
@@ -6726,7 +6741,7 @@ Disassembly of section .text:
 00003040 <I_B9__CMP8_c2_c1>:
     3040:	c8 95       	lpm
     3042:	42 17       	cp	r20, r18
-    3044:	5f b6       	in	r5, 0x3f	; 63
+    3044:	3f b6       	in	r3, 0x3f	; 63
     3046:	01 96       	adiw	r24, 0x01	; 1
     3048:	f8 94       	cli
     304a:	2e bc       	out	0x2e, r2	; 46
@@ -6759,10 +6774,10 @@ Disassembly of section .text:
 
 00003080 <I_BA__TST8_c2>:
     3080:	00 00       	nop
-    3082:	50 fa       	bst	r5, 0
+    3082:	30 fa       	bst	r3, 0
     3084:	44 23       	and	r20, r20
-    3086:	5f b6       	in	r5, 0x3f	; 63
-    3088:	50 f8       	bld	r5, 0
+    3086:	3f b6       	in	r3, 0x3f	; 63
+    3088:	30 f8       	bld	r3, 0
     308a:	01 96       	adiw	r24, 0x01	; 1
     308c:	f8 94       	cli
     308e:	2e bc       	out	0x2e, r2	; 46
@@ -6794,7 +6809,7 @@ Disassembly of section .text:
 000030c0 <I_BB__CMP8_c2_c3>:
     30c0:	c8 95       	lpm
     30c2:	46 17       	cp	r20, r22
-    30c4:	5f b6       	in	r5, 0x3f	; 63
+    30c4:	3f b6       	in	r3, 0x3f	; 63
     30c6:	01 96       	adiw	r24, 0x01	; 1
     30c8:	f8 94       	cli
     30ca:	2e bc       	out	0x2e, r2	; 46
@@ -6828,7 +6843,7 @@ Disassembly of section .text:
 00003100 <I_BC__CMP8_c3_c0>:
     3100:	c8 95       	lpm
     3102:	60 17       	cp	r22, r16
-    3104:	5f b6       	in	r5, 0x3f	; 63
+    3104:	3f b6       	in	r3, 0x3f	; 63
     3106:	01 96       	adiw	r24, 0x01	; 1
     3108:	f8 94       	cli
     310a:	2e bc       	out	0x2e, r2	; 46
@@ -6862,7 +6877,7 @@ Disassembly of section .text:
 00003140 <I_BD__CMP8_c3_c1>:
     3140:	c8 95       	lpm
     3142:	62 17       	cp	r22, r18
-    3144:	5f b6       	in	r5, 0x3f	; 63
+    3144:	3f b6       	in	r3, 0x3f	; 63
     3146:	01 96       	adiw	r24, 0x01	; 1
     3148:	f8 94       	cli
     314a:	2e bc       	out	0x2e, r2	; 46
@@ -6896,7 +6911,7 @@ Disassembly of section .text:
 00003180 <I_BE__CMP8_c3_c2>:
     3180:	c8 95       	lpm
     3182:	64 17       	cp	r22, r20
-    3184:	5f b6       	in	r5, 0x3f	; 63
+    3184:	3f b6       	in	r3, 0x3f	; 63
     3186:	01 96       	adiw	r24, 0x01	; 1
     3188:	f8 94       	cli
     318a:	2e bc       	out	0x2e, r2	; 46
@@ -6929,10 +6944,10 @@ Disassembly of section .text:
 
 000031c0 <I_BF__TST8_c3>:
     31c0:	00 00       	nop
-    31c2:	50 fa       	bst	r5, 0
+    31c2:	30 fa       	bst	r3, 0
     31c4:	66 23       	and	r22, r22
-    31c6:	5f b6       	in	r5, 0x3f	; 63
-    31c8:	50 f8       	bld	r5, 0
+    31c6:	3f b6       	in	r3, 0x3f	; 63
+    31c8:	30 f8       	bld	r3, 0
     31ca:	01 96       	adiw	r24, 0x01	; 1
     31cc:	f8 94       	cli
     31ce:	2e bc       	out	0x2e, r2	; 46
@@ -6960,3 +6975,30 @@ Disassembly of section .text:
     31fa:	00 00       	nop
     31fc:	00 00       	nop
     31fe:	00 00       	nop
+
+00003200 <fx_seek_to_pc>:
+    3200:	5a 9a       	sbi	0x0b, 2	; 11
+    3202:	e3 e0       	ldi	r30, 0x03	; 3
+    3204:	5a 98       	cbi	0x0b, 2	; 11
+    3206:	ee bd       	out	0x2e, r30	; 46
+    3208:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_edata+0x900>
+    320c:	a9 0f       	add	r26, r25
+    320e:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_edata+0x901>
+    3212:	eb b5       	in	r30, 0x2b	; 43
+    3214:	be 1f       	adc	r27, r30
+    3216:	07 d0       	rcall	.+14     	; 0x3226 <fx_seek_delay_10>
+    3218:	be bd       	out	0x2e, r27	; 46
+    321a:	04 d0       	rcall	.+8      	; 0x3224 <fx_seek_delay_17>
+    321c:	ae bd       	out	0x2e, r26	; 46
+    321e:	02 d0       	rcall	.+4      	; 0x3224 <fx_seek_delay_17>
+    3220:	8e bd       	out	0x2e, r24	; 46
+    3222:	08 95       	ret
+
+00003224 <fx_seek_delay_17>:
+    3224:	01 d0       	rcall	.+2      	; 0x3228 <fx_seek_delay_7>
+
+00003226 <fx_seek_delay_10>:
+    3226:	c8 95       	lpm
+
+00003228 <fx_seek_delay_7>:
+    3228:	08 95       	ret

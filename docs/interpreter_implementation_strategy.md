@@ -220,14 +220,6 @@ Replace permanent local self-loops with one common routine. A diagnostic build s
 
 ## 4. Recommended implementation order
 
-### Phase 0 — Correctness prerequisites
-
-1. Correct `DEC16`.
-2. Fix the `POP16` range comment.
-3. Add common invalid-opcode handling.
-4. Add generated assertions that every primary handler fits the configured dispatch stride.
-5. Add an optional debug check for `SPIF` before operand reads.
-
 ### Phase 1 — Two-byte `0xF4` operations
 
 Implement operations that require no extra operand beyond the secondary opcode:

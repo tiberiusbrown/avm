@@ -933,6 +933,23 @@ emit_ldi8 0xF1, I_F1__LDI8_c1, VM_C1L, VM_C1H
 emit_ldi8 0xF2, I_F2__LDI8_c2, VM_C2L, VM_C2H
 emit_ldi8 0xF3, I_F3__LDI8_c3, VM_C3L, VM_C3H
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xF4: CMPI6 cN, simm6
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    handler_begin 0xF4, I_F4__CMPI6_cN_simm6
+
+    ; Operand encoding:
+    ;   bits 7:2 = signed six-bit immediate
+    ;   bits 1:0 = compact register
+    adiw VM_PC, 1
+    delay_3
+    rjmp cmpi6_decode_func
+
+    handler_end 0xF4
+
+
+
 ldi8_dispatch_reverse_func:
     delay_4
 branch_short_dispatch_reverse_func:
@@ -940,6 +957,48 @@ branch_short_dispatch_reverse_func:
 dispatch_reverse_func:
     dispatch_reverse
 
+cmpi6_decode_func:
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+    ; Construct the native data-space address of cN:
+    ;
+    ;   c0 low = r16
+    ;   c1 low = r18
+    ;   c2 low = r20
+    ;   c3 low = r22
+    ;
+    ;   address = 16 + 2 * (operand & 3)
+    mov  r26, r6
+    andi r26, 0x03
+    lsl  r26
+    subi r26, -16
+    clr  r27
+
+    ; Convert [simm6:6][cN:2] into a signed eight-bit immediate.
+    asr  r6
+    asr  r6
+
+    ; Load the selected compact register through data space.
+    ld   r4, X+
+    ld   r5, X
+
+    ; Sign-extend the immediate from r6 into r0:r6.
+    ;
+    ; LSL places the sign bit into C, then SBC produces:
+    ;   r0 = 0x00 when the immediate is nonnegative
+    ;   r0 = 0xFF when the immediate is negative
+    mov  r0, r6
+    lsl  r0
+    sbc  r0, r0
+
+    ; Compare selected cN against sign_extend(simm6).
+    cp   r4, r6
+    cpc  r5, r0
+    in   VM_FLAGS, SREG
+
+    ; The next opcode has long since completed transferring.
 dispatch_func:
     dispatch
 

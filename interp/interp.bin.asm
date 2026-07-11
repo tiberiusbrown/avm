@@ -1271,8 +1271,6 @@ Disassembly of section .text:
     15d4:	f3 95       	inc	r31
     15d6:	09 94       	ijmp
 	...
-
-00001600 <I_50__LDI1_c0>:
     1600:	c8 95       	lpm
     1602:	01 e0       	ldi	r16, 0x01	; 1
     1604:	10 e0       	ldi	r17, 0x00	; 0
@@ -1285,8 +1283,6 @@ Disassembly of section .text:
     1612:	f0 01       	movw	r30, r0
     1614:	f3 95       	inc	r31
     1616:	09 94       	ijmp
-
-00001618 <I_51__LD8_POST_c0_c1>:
     1618:	d9 01       	movw	r26, r18
     161a:	0d 91       	ld	r16, X+
     161c:	11 27       	eor	r17, r17
@@ -1300,8 +1296,6 @@ Disassembly of section .text:
     162c:	f0 01       	movw	r30, r0
     162e:	f3 95       	inc	r31
     1630:	09 94       	ijmp
-
-00001632 <I_52__LD8_POST_c0_c2>:
     1632:	da 01       	movw	r26, r20
     1634:	0d 91       	ld	r16, X+
     1636:	11 27       	eor	r17, r17
@@ -1315,8 +1309,6 @@ Disassembly of section .text:
     1646:	f0 01       	movw	r30, r0
     1648:	f3 95       	inc	r31
     164a:	09 94       	ijmp
-
-0000164c <I_53__LD8_POST_c0_c3>:
     164c:	db 01       	movw	r26, r22
     164e:	0d 91       	ld	r16, X+
     1650:	11 27       	eor	r17, r17
@@ -1330,8 +1322,6 @@ Disassembly of section .text:
     1660:	f0 01       	movw	r30, r0
     1662:	f3 95       	inc	r31
     1664:	09 94       	ijmp
-
-00001666 <I_54__LD8_POST_c1_c0>:
     1666:	d8 01       	movw	r26, r16
     1668:	2d 91       	ld	r18, X+
     166a:	33 27       	eor	r19, r19
@@ -1345,8 +1335,6 @@ Disassembly of section .text:
     167a:	f0 01       	movw	r30, r0
     167c:	f3 95       	inc	r31
     167e:	09 94       	ijmp
-
-00001680 <I_55__LDI1_c1>:
     1680:	c8 95       	lpm
     1682:	21 e0       	ldi	r18, 0x01	; 1
     1684:	30 e0       	ldi	r19, 0x00	; 0
@@ -1359,8 +1347,6 @@ Disassembly of section .text:
     1692:	f0 01       	movw	r30, r0
     1694:	f3 95       	inc	r31
     1696:	09 94       	ijmp
-
-00001698 <I_56__LD8_POST_c1_c2>:
     1698:	da 01       	movw	r26, r20
     169a:	2d 91       	ld	r18, X+
     169c:	33 27       	eor	r19, r19
@@ -1374,8 +1360,6 @@ Disassembly of section .text:
     16ac:	f0 01       	movw	r30, r0
     16ae:	f3 95       	inc	r31
     16b0:	09 94       	ijmp
-
-000016b2 <I_57__LD8_POST_c1_c3>:
     16b2:	db 01       	movw	r26, r22
     16b4:	2d 91       	ld	r18, X+
     16b6:	33 27       	eor	r19, r19
@@ -1389,8 +1373,6 @@ Disassembly of section .text:
     16c6:	f0 01       	movw	r30, r0
     16c8:	f3 95       	inc	r31
     16ca:	09 94       	ijmp
-
-000016cc <I_58__LD8_POST_c2_c0>:
     16cc:	d8 01       	movw	r26, r16
     16ce:	4d 91       	ld	r20, X+
     16d0:	55 27       	eor	r21, r21
@@ -1404,8 +1386,6 @@ Disassembly of section .text:
     16e0:	f0 01       	movw	r30, r0
     16e2:	f3 95       	inc	r31
     16e4:	09 94       	ijmp
-
-000016e6 <I_59__LD8_POST_c2_c1>:
     16e6:	d9 01       	movw	r26, r18
     16e8:	4d 91       	ld	r20, X+
     16ea:	55 27       	eor	r21, r21
@@ -1419,8 +1399,6 @@ Disassembly of section .text:
     16fa:	f0 01       	movw	r30, r0
     16fc:	f3 95       	inc	r31
     16fe:	09 94       	ijmp
-
-00001700 <I_5A__LDI1_c2>:
     1700:	c8 95       	lpm
     1702:	41 e0       	ldi	r20, 0x01	; 1
     1704:	50 e0       	ldi	r21, 0x00	; 0
@@ -1433,8 +1411,6 @@ Disassembly of section .text:
     1712:	f0 01       	movw	r30, r0
     1714:	f3 95       	inc	r31
     1716:	09 94       	ijmp
-
-00001718 <I_5B__LD8_POST_c2_c3>:
     1718:	db 01       	movw	r26, r22
     171a:	4d 91       	ld	r20, X+
     171c:	55 27       	eor	r21, r21
@@ -1448,8 +1424,6 @@ Disassembly of section .text:
     172c:	f0 01       	movw	r30, r0
     172e:	f3 95       	inc	r31
     1730:	09 94       	ijmp
-
-00001732 <I_5C__LD8_POST_c3_c0>:
     1732:	d8 01       	movw	r26, r16
     1734:	6d 91       	ld	r22, X+
     1736:	77 27       	eor	r23, r23
@@ -1463,8 +1437,6 @@ Disassembly of section .text:
     1746:	f0 01       	movw	r30, r0
     1748:	f3 95       	inc	r31
     174a:	09 94       	ijmp
-
-0000174c <I_5D__LD8_POST_c3_c1>:
     174c:	d9 01       	movw	r26, r18
     174e:	6d 91       	ld	r22, X+
     1750:	77 27       	eor	r23, r23
@@ -1478,8 +1450,6 @@ Disassembly of section .text:
     1760:	f0 01       	movw	r30, r0
     1762:	f3 95       	inc	r31
     1764:	09 94       	ijmp
-
-00001766 <I_5E__LD8_POST_c3_c2>:
     1766:	da 01       	movw	r26, r20
     1768:	6d 91       	ld	r22, X+
     176a:	77 27       	eor	r23, r23
@@ -1493,8 +1463,6 @@ Disassembly of section .text:
     177a:	f0 01       	movw	r30, r0
     177c:	f3 95       	inc	r31
     177e:	09 94       	ijmp
-
-00001780 <I_5F__LDI1_c3>:
     1780:	c8 95       	lpm
     1782:	61 e0       	ldi	r22, 0x01	; 1
     1784:	70 e0       	ldi	r23, 0x00	; 0

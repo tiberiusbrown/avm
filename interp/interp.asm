@@ -1148,11 +1148,18 @@ f4_mfpb_family:
 f4_ldpbi_family:
 f4_jmp16_family:
 f4_call16_family:
-f4_nop_family:
 f4_sys_family:
 f4_ldsp_compact_family:
 f4_stsp_compact_family:
     rjmp unimplemented_instruction_func
+
+f4_nop_family:
+    ; The extension prefix has already advanced VM_PC to the secondary opcode
+    ; and started fetching the following primary opcode.  Pad the secondary
+    ; table path to the 17-cycle SPI cadence, then let dispatch_reverse advance
+    ; VM_PC to that prefetched opcode and dispatch it.
+    delay_2
+    rjmp dispatch_reverse_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xFD secondary dispatch

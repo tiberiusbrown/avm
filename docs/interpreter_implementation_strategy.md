@@ -9,13 +9,13 @@
 
 The interpreter already implements the operand-specialized primary families from `0x00` through `0xF3`, the dedicated conditional branches at `0xF5–0xFC`, and the reserved primary slots at `0x50–0x6F`.
 
-The `0xF4` and `0xFD` primary handlers now share the required extension-prefix state: they advance `PC` to the secondary opcode, read it into `r6`, start transferring byte 2, and dispatch through separate 256-entry one-word `RJMP` tables. Architecturally valid entries have named family skeletons, `0xF4:0xBC` reaches the existing `CMPI6` implementation, and reserved entries reach a distinct common invalid-secondary path. Except for `CMPI6`, the family skeletons still enter the common unimplemented-instruction loop.
+The `0xF4` and `0xFD` primary handlers now share the required extension-prefix state: they advance `PC` to the secondary opcode, read it into `r6`, start transferring byte 2, and dispatch through separate 256-entry one-word `RJMP` tables. Architecturally valid entries have named family skeletons, `0xF4:0xBC` reaches the existing `CMPI6` implementation, `0xF4:0xF3` implements `NOP`, and reserved entries reach a distinct common invalid-secondary path. Except for `CMPI6` and `NOP`, the family skeletons still enter the common unimplemented-instruction loop.
 
 The remaining architectural work is:
 
 | Primary opcode | Remaining work |
 | --- | --- |
-| `0xF4` | Implement the semantics behind the existing family skeletons; `CMPI6` (`0xBC`) is complete |
+| `0xF4` | Implement the semantics behind the existing family skeletons; `CMPI6` (`0xBC`) and `NOP` (`0xF3`) are complete |
 | `0xFD` | Implement the semantics behind the existing memory/program-space family skeletons |
 | `0xFE` | `JMPF` and `CALLF` |
 | `0xFF` | `RET` |
@@ -231,7 +231,7 @@ Implement operations that require no extra operand beyond the secondary opcode:
 - Unary operations `0x00–0x5F`.
 - Indirect jumps/calls `0xC0–0xDF`.
 - `MTPB` and `MFPB` `0xE0–0xEF`.
-- `NOP` `0xF3`.
+- `NOP` `0xF3` (implemented).
 
 The secondary jump-table structure is already build-validated. This phase validates the two-byte fallthrough behavior and replaces the corresponding family skeletons with working handlers.
 
@@ -429,7 +429,7 @@ All preserve flags.
 ### 5.9 `JMP16`, `CALL16`, `NOP`, and `SYS`
 
 - `JMP16/CALL16` read a little-endian target PC and retain the current bank.
-- `NOP` uses the already-prefetched next primary opcode.
+- `NOP` uses the already-prefetched next primary opcode (implemented with the normal reverse-dispatch cadence).
 - `SYS` should initially dispatch through a 256-entry service table or a bounds-checked pointer table. Unsupported services go to the common fault path.
 
 A native ABI bridge must preserve every AVM register that the native ABI can clobber, restore `ZERO`, restore the configured dispatch multiplier in `r7`, and restart the instruction stream if the service used SPI.

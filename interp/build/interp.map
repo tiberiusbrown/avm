@@ -115,7 +115,7 @@ Linker script and memory map
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x28f8
+.text           0x00000000     0x290a
  *(.vectors)
  *(.vectors)
  *(.progmem.gcc*)
@@ -160,12 +160,12 @@ Linker script and memory map
  *(.init9)
  *(.init9)
  *(.text)
- .text          0x00000000     0x28f8 build\interp.o
+ .text          0x00000000     0x290a build\interp.o
                 0x00000000                __vectors
                 0x00000200                abvm_interp
-                0x000028f8                        . = ALIGN (0x2)
+                0x0000290a                        . = ALIGN (0x2)
  *(.text.*)
-                0x000028f8                        . = ALIGN (0x2)
+                0x0000290a                        . = ALIGN (0x2)
  *(.fini9)
  *(.fini9)
  *(.fini8)
@@ -189,12 +189,12 @@ Linker script and memory map
  *(.hightext)
  *(.hightext*)
  *(.progmemx.*)
-                0x000028f8                        . = ALIGN (0x2)
+                0x0000290a                        . = ALIGN (0x2)
  *(.jumptables)
  *(.jumptables*)
-                0x000028f8                        _etext = .
+                0x0000290a                        _etext = .
 
-.data           0x00800100        0x0 load address 0x000028f8
+.data           0x00800100        0x0 load address 0x0000290a
                 [!provide]                        PROVIDE (__data_start = .)
  *(.data)
  .data          0x00800100        0x0 build\interp.o
@@ -214,8 +214,8 @@ Linker script and memory map
  *(.bss*)
  *(COMMON)
                 [!provide]                        PROVIDE (__bss_end = .)
-                0x000028f8                        __data_load_start = LOADADDR (.data)
-                0x000028f8                        __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x0000290a                        __data_load_start = LOADADDR (.data)
+                0x0000290a                        __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800100        0x0
                 [!provide]                        PROVIDE (__noinit_start = .)

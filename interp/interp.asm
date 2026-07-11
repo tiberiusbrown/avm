@@ -1143,7 +1143,6 @@ f4_jmpr_family:
 f4_callr_family:
 f4_jmpp_family:
 f4_callp_family:
-f4_mfpb_family:
 f4_ldpbi_family:
 f4_jmp16_family:
 f4_call16_family:
@@ -1175,6 +1174,23 @@ f4_mtpb_family:
 
     ; Register decoding outlasts the minimum SPI transfer interval, so the
     ; prefetched primary opcode is complete and can use normal dispatch.
+    rjmp dispatch_func
+
+f4_mfpb_family:
+    ; Convert the register index in the low three secondary-opcode bits to the
+    ; native data-space address of the selected AVM register.  MFPB writes PB
+    ; to the low byte and zero-extends it through the high byte.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    in   r4, VM_PB
+    st   X+, r4
+    st   X, ZERO
+
+    ; Address decoding and the two stores outlast the minimum SPI transfer
+    ; interval.  The prefetched primary opcode is therefore complete.
     rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

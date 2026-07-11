@@ -2,3 +2,6 @@
 	path = deps/llvm-project
 	url = https://github.com/tiberiusbrown/llvm-project.git
 	shallow = true
+[submodule "deps/Ardens"]
+	path = deps/Ardens
+	url = https://github.com/tiberiusbrown/Ardens.git

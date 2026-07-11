@@ -1,6 +1,6 @@
 # AVM Assembly Interpreter: Remaining Opcode Implementation Strategy
 
-**Baseline:** `interp(6).asm` and the accompanying AVM architecture draft  
+**Baseline:** `interp.asm` and the accompanying AVM architecture draft  
 **Scope:** Complete the unimplemented `0xF4`, `0xFD`, `0xFE`, and `0xFF` handlers while preserving the existing streamed-SPI execution model.
 
 ---

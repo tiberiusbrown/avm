@@ -310,101 +310,33 @@ emit_ld8 0x1D, I_1D__LD8_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_ld8 0x1E, I_1E__LD8_c3_c2, VM_C3L, VM_C3H, VM_C2
 emit_ld8 0x1F, I_1F__LD8_c3_c3, VM_C3L, VM_C3H, VM_C3
 
-I_20__ST8_c0_c0:
+.macro emit_st8 opcode, label, addr, src
+\label:
     delay_2
-    movw r26, VM_C0
-    st   X, VM_C0L
+    movw r26, \addr
+    st   X, \src
     dispatch_reverse
+.endm
 
-I_21__ST8_c0_c1:
-    delay_2
-    movw r26, VM_C0
-    st   X, VM_C1L
-    dispatch_reverse
+emit_st8 0x20, I_20__ST8_c0_c0, VM_C0, VM_C0L
+emit_st8 0x21, I_21__ST8_c0_c1, VM_C0, VM_C1L
+emit_st8 0x22, I_22__ST8_c0_c2, VM_C0, VM_C2L
+emit_st8 0x23, I_23__ST8_c0_c3, VM_C0, VM_C3L
 
-I_22__ST8_c0_c2:
-    delay_2
-    movw r26, VM_C0
-    st   X, VM_C2L
-    dispatch_reverse
+emit_st8 0x24, I_24__ST8_c1_c0, VM_C1, VM_C0L
+emit_st8 0x25, I_25__ST8_c1_c1, VM_C1, VM_C1L
+emit_st8 0x26, I_26__ST8_c1_c2, VM_C1, VM_C2L
+emit_st8 0x27, I_27__ST8_c1_c3, VM_C1, VM_C3L
 
-I_23__ST8_c0_c3:
-    delay_2
-    movw r26, VM_C0
-    st   X, VM_C3L
-    dispatch_reverse
+emit_st8 0x28, I_28__ST8_c2_c0, VM_C2, VM_C0L
+emit_st8 0x29, I_29__ST8_c2_c1, VM_C2, VM_C1L
+emit_st8 0x2A, I_2A__ST8_c2_c2, VM_C2, VM_C2L
+emit_st8 0x2B, I_2B__ST8_c2_c3, VM_C2, VM_C3L
 
-I_24__ST8_c1_c0:
-    delay_2
-    movw r26, VM_C1
-    st   X, VM_C0L
-    dispatch_reverse
-
-I_25__ST8_c1_c1:
-    delay_2
-    movw r26, VM_C1
-    st   X, VM_C1L
-    dispatch_reverse
-
-I_26__ST8_c1_c2:
-    delay_2
-    movw r26, VM_C1
-    st   X, VM_C2L
-    dispatch_reverse
-
-I_27__ST8_c1_c3:
-    delay_2
-    movw r26, VM_C1
-    st   X, VM_C3L
-    dispatch_reverse
-
-I_28__ST8_c2_c0:
-    delay_2
-    movw r26, VM_C2
-    st   X, VM_C0L
-    dispatch_reverse
-
-I_29__ST8_c2_c1:
-    delay_2
-    movw r26, VM_C2
-    st   X, VM_C1L
-    dispatch_reverse
-
-I_2A__ST8_c2_c2:
-    delay_2
-    movw r26, VM_C2
-    st   X, VM_C2L
-    dispatch_reverse
-
-I_2B__ST8_c2_c3:
-    delay_2
-    movw r26, VM_C2
-    st   X, VM_C3L
-    dispatch_reverse
-
-I_2C__ST8_c3_c0:
-    delay_2
-    movw r26, VM_C3
-    st   X, VM_C0L
-    dispatch_reverse
-
-I_2D__ST8_c3_c1:
-    delay_2
-    movw r26, VM_C3
-    st   X, VM_C1L
-    dispatch_reverse
-
-I_2E__ST8_c3_c2:
-    delay_2
-    movw r26, VM_C3
-    st   X, VM_C2L
-    dispatch_reverse
-
-I_2F__ST8_c3_c3:
-    delay_2
-    movw r26, VM_C3
-    st   X, VM_C3L
-    dispatch_reverse
+emit_st8 0x2C, I_2C__ST8_c3_c0, VM_C3, VM_C0L
+emit_st8 0x2D, I_2D__ST8_c3_c1, VM_C3, VM_C1L
+emit_st8 0x2E, I_2E__ST8_c3_c2, VM_C3, VM_C2L
+emit_st8 0x2F, I_2F__ST8_c3_c3, VM_C3, VM_C3L
 
 I_30__LD16_c0_c0:
     movw r26, VM_C0

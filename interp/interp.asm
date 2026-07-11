@@ -1104,9 +1104,6 @@ f4_lsr16_family:
 f4_asr16_family:
 f4_lsr8_family:
 f4_asr8_family:
-f4_swap8_family:
-f4_getsp_family:
-f4_setsp_family:
 f4_and_family:
 f4_or_family:
 f4_xor_family:
@@ -1215,6 +1212,44 @@ f4_sext8_family:
     lsl  r4
     sbc  r4, r4
     st   X, r4
+    rjmp dispatch_func
+
+f4_swap8_family:
+    ; SWAP8 modifies only the selected register's low byte.  Its high byte and
+    ; the architectural flags remain unchanged.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r4, X
+    swap r4
+    st   X, r4
+    rjmp dispatch_func
+
+f4_getsp_family:
+    ; Copy the current native Y value (the AVM stack pointer) into the selected
+    ; AVM register in little-endian order.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    st   X+, VM_SPL
+    st   X, VM_SPH
+    rjmp dispatch_func
+
+f4_setsp_family:
+    ; Stage both bytes before replacing Y.  AVM registers do not overlap Y,
+    ; but staging keeps the operation independent of pointer update details.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r4, X+
+    ld   r5, X
+    movw VM_SP, r4
     rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

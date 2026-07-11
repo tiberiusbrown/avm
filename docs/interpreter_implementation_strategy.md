@@ -9,13 +9,13 @@
 
 The interpreter already implements the operand-specialized primary families from `0x00` through `0xF3`, the dedicated conditional branches at `0xF5–0xFC`, and the reserved primary slots at `0x50–0x6F`.
 
-The `0xF4` and `0xFD` primary handlers now share the required extension-prefix state: they advance `PC` to the secondary opcode, read it into `r6`, start transferring byte 2, and dispatch through separate 256-entry one-word `RJMP` tables. Architecturally valid entries have named family skeletons, `0xF4:0x38–0x47` implements `ZEXT8/SEXT8`, `0xF4:0xBC` reaches the existing `CMPI6` implementation, `0xF4:0xE0–0xEF` implements `MTPB/MFPB`, `0xF4:0xF3` implements `NOP`, and reserved entries reach a distinct common invalid-secondary path. Except for these completed families, the remaining family skeletons still enter the common unimplemented-instruction loop.
+The `0xF4` and `0xFD` primary handlers now share the required extension-prefix state: they advance `PC` to the secondary opcode, read it into `r6`, start transferring byte 2, and dispatch through separate 256-entry one-word `RJMP` tables. Architecturally valid entries have named family skeletons, `0xF4:0x38–0x5F` implements `ZEXT8/SEXT8/SWAP8/GETSP/SETSP`, `0xF4:0xBC` reaches the existing `CMPI6` implementation, `0xF4:0xE0–0xEF` implements `MTPB/MFPB`, `0xF4:0xF3` implements `NOP`, and reserved entries reach a distinct common invalid-secondary path. Except for these completed families, the remaining family skeletons still enter the common unimplemented-instruction loop.
 
 The remaining architectural work is:
 
 | Primary opcode | Remaining work |
 | --- | --- |
-| `0xF4` | Implement the semantics behind the existing family skeletons; `ZEXT8/SEXT8` (`0x38–0x47`), `CMPI6` (`0xBC`), `MTPB/MFPB` (`0xE0–0xEF`), and `NOP` (`0xF3`) are complete |
+| `0xF4` | Implement the semantics behind the existing family skeletons; `ZEXT8/SEXT8/SWAP8/GETSP/SETSP` (`0x38–0x5F`), `CMPI6` (`0xBC`), `MTPB/MFPB` (`0xE0–0xEF`), and `NOP` (`0xF3`) are complete |
 | `0xFD` | Implement the semantics behind the existing memory/program-space family skeletons |
 | `0xFE` | `JMPF` and `CALLF` |
 | `0xFF` | `RET` |
@@ -310,9 +310,9 @@ All unary handlers derive `rN` from `secondary & 7`, load the value to scratch, 
 | `ASR8` | `asr low` | Commit native byte-shift flags; high unchanged |
 | `ZEXT8` | `clr high` | Preserve (implemented) |
 | `SEXT8` | Copy bit 7 into all high-byte bits | Preserve (implemented) |
-| `SWAP8` | `swap low` | Preserve; high unchanged |
-| `GETSP` | Store `Y` into selected AVM register | Preserve |
-| `SETSP` | Load selected AVM register into `Y` | Preserve |
+| `SWAP8` | `swap low` | Preserve; high unchanged (implemented) |
+| `GETSP` | Store `Y` into selected AVM register | Preserve (implemented) |
+| `SETSP` | Load selected AVM register into `Y` | Preserve (implemented) |
 
 For `NOT16`, do not use the flags from the second `COM` directly; they describe only the high byte. Test the complete 16-bit result and merge the old carry.
 

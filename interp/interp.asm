@@ -542,72 +542,48 @@ emit_st16 0x4E, I_4E__ST16_c3_c2, VM_C3, VM_C2L, VM_C2H
 emit_st16 0x4F, I_4F__ST16_c3_c3, VM_C3, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x50-0x5F: LD8 cD, [cS]+
+; 0x50-0x6F: Reserved (pending usage based on profiling)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_ld8_post opcode, label, dstl, dsth, src, imm=0
+.macro emit_reserved opcode, label
     handler_begin \opcode, \label
-    .if \imm
-        delay_3
-        ldi  \dstl, lo8(1)
-        ldi  \dsth, hi8(1)
-    .else
-        movw r26, \src
-        ld   \dstl, X+
-        clr  \dsth
-        movw \src, r26
-    .endif
-    dispatch_reverse
+    rjmp \label
     handler_end \opcode
 .endm
 
-emit_ld8_post 0x50, I_50__LDI1_c0,        VM_C0L, VM_C0H, VM_C0, 1
-emit_ld8_post 0x51, I_51__LD8_POST_c0_c1, VM_C0L, VM_C0H, VM_C1
-emit_ld8_post 0x52, I_52__LD8_POST_c0_c2, VM_C0L, VM_C0H, VM_C2
-emit_ld8_post 0x53, I_53__LD8_POST_c0_c3, VM_C0L, VM_C0H, VM_C3
-emit_ld8_post 0x54, I_54__LD8_POST_c1_c0, VM_C1L, VM_C1H, VM_C0
-emit_ld8_post 0x55, I_55__LDI1_c1,        VM_C1L, VM_C1H, VM_C1, 1
-emit_ld8_post 0x56, I_56__LD8_POST_c1_c2, VM_C1L, VM_C1H, VM_C2
-emit_ld8_post 0x57, I_57__LD8_POST_c1_c3, VM_C1L, VM_C1H, VM_C3
-emit_ld8_post 0x58, I_58__LD8_POST_c2_c0, VM_C2L, VM_C2H, VM_C0
-emit_ld8_post 0x59, I_59__LD8_POST_c2_c1, VM_C2L, VM_C2H, VM_C1
-emit_ld8_post 0x5A, I_5A__LDI1_c2,        VM_C2L, VM_C2H, VM_C2, 1
-emit_ld8_post 0x5B, I_5B__LD8_POST_c2_c3, VM_C2L, VM_C2H, VM_C3
-emit_ld8_post 0x5C, I_5C__LD8_POST_c3_c0, VM_C3L, VM_C3H, VM_C0
-emit_ld8_post 0x5D, I_5D__LD8_POST_c3_c1, VM_C3L, VM_C3H, VM_C1
-emit_ld8_post 0x5E, I_5E__LD8_POST_c3_c2, VM_C3L, VM_C3H, VM_C2
-emit_ld8_post 0x5F, I_5F__LDI1_c3,        VM_C3L, VM_C3H, VM_C3, 1
+emit_reserved 0x50, I_50__RESERVED
+emit_reserved 0x51, I_51__RESERVED
+emit_reserved 0x52, I_52__RESERVED
+emit_reserved 0x53, I_53__RESERVED
+emit_reserved 0x54, I_54__RESERVED
+emit_reserved 0x55, I_55__RESERVED
+emit_reserved 0x56, I_56__RESERVED
+emit_reserved 0x57, I_57__RESERVED
+emit_reserved 0x58, I_58__RESERVED
+emit_reserved 0x59, I_59__RESERVED
+emit_reserved 0x5A, I_5A__RESERVED
+emit_reserved 0x5B, I_5B__RESERVED
+emit_reserved 0x5C, I_5C__RESERVED
+emit_reserved 0x5D, I_5D__RESERVED
+emit_reserved 0x5E, I_5E__RESERVED
+emit_reserved 0x5F, I_5F__RESERVED
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x60-0x6F: ST8 [cD]+, cS
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-.macro emit_st8_post opcode, label, dst, srcl
-    handler_begin \opcode, \label
-    delay_1
-    movw r26, \dst
-    st   X+, \srcl
-    movw \dst, r26
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_st8_post 0x60, I_60__ST8_POST_c0_c0, VM_C0, VM_C0L
-emit_st8_post 0x61, I_61__ST8_POST_c0_c1, VM_C0, VM_C1L
-emit_st8_post 0x62, I_62__ST8_POST_c0_c2, VM_C0, VM_C2L
-emit_st8_post 0x63, I_63__ST8_POST_c0_c3, VM_C0, VM_C3L
-emit_st8_post 0x64, I_64__ST8_POST_c1_c0, VM_C1, VM_C0L
-emit_st8_post 0x65, I_65__ST8_POST_c1_c1, VM_C1, VM_C1L
-emit_st8_post 0x66, I_66__ST8_POST_c1_c2, VM_C1, VM_C2L
-emit_st8_post 0x67, I_67__ST8_POST_c1_c3, VM_C1, VM_C3L
-emit_st8_post 0x68, I_68__ST8_POST_c2_c0, VM_C2, VM_C0L
-emit_st8_post 0x69, I_69__ST8_POST_c2_c1, VM_C2, VM_C1L
-emit_st8_post 0x6A, I_6A__ST8_POST_c2_c2, VM_C2, VM_C2L
-emit_st8_post 0x6B, I_6B__ST8_POST_c2_c3, VM_C2, VM_C3L
-emit_st8_post 0x6C, I_6C__ST8_POST_c3_c0, VM_C3, VM_C0L
-emit_st8_post 0x6D, I_6D__ST8_POST_c3_c1, VM_C3, VM_C1L
-emit_st8_post 0x6E, I_6E__ST8_POST_c3_c2, VM_C3, VM_C2L
-emit_st8_post 0x6F, I_6F__ST8_POST_c3_c3, VM_C3, VM_C3L
+emit_reserved 0x60, I_60__RESERVED
+emit_reserved 0x61, I_61__RESERVED
+emit_reserved 0x62, I_62__RESERVED
+emit_reserved 0x63, I_63__RESERVED
+emit_reserved 0x64, I_64__RESERVED
+emit_reserved 0x65, I_65__RESERVED
+emit_reserved 0x66, I_66__RESERVED
+emit_reserved 0x67, I_67__RESERVED
+emit_reserved 0x68, I_68__RESERVED
+emit_reserved 0x69, I_69__RESERVED
+emit_reserved 0x6A, I_6A__RESERVED
+emit_reserved 0x6B, I_6B__RESERVED
+emit_reserved 0x6C, I_6C__RESERVED
+emit_reserved 0x6D, I_6D__RESERVED
+emit_reserved 0x6E, I_6E__RESERVED
+emit_reserved 0x6F, I_6F__RESERVED
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x70-0x77: PUSH16 rS

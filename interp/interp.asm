@@ -934,89 +934,101 @@ emit_ldi8 0xF2, I_F2__LDI8_c2, VM_C2L, VM_C2H
 emit_ldi8 0xF3, I_F3__LDI8_c3, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF4: CMPI6 cN, simm6
+; 0xF4: ALU, Control, System, and Relocated-Core Extension
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    handler_begin 0xF4, I_F4__CMPI6_cN_simm6
+    handler_begin 0xF4, I_F4__ext_alu_ctrl_sys_core
 
-    ; Operand encoding:
-    ;   bits 7:2 = signed six-bit immediate
-    ;   bits 1:0 = compact register
+    ; The secondary-opcode transfer was started by the preceding dispatch.
+    ; Account for the secondary byte, then fetch it while starting the first
+    ; secondary operand (or the following primary opcode for a two-byte form).
     adiw VM_PC, 1
     delay_3
-    rjmp cmpi6_decode_func
+    rjmp f4_extension_decode_func
 
     handler_end 0xF4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF5: BRcc rel5
+; 0xF5-0xFC: General Conditional Branches, rel8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    handler_begin 0xF5, I_F5__BRcc_rel5
+; Each condition has a dedicated primary opcode.  At handler entry SPDR is
+; transferring the signed displacement byte and VM_PC names the primary
+; opcode.  The prefix below:
+;
+;   * advances VM_PC to the displacement byte,
+;   * reads the displacement into r6,
+;   * starts fetching the speculative fallthrough opcode, and
+;   * performs a condition-specific test of saved AVM FLAGS.
+;
+; The not-taken path preserves the sequential SPI stream.  The taken path
+; discards it, computes nextPC + sign_extend(rel8), and seeks to the target.
+.macro emit_branch_rel8_bit opcode, label, skip, flag
+    handler_begin \opcode, \label
 
-    handler_end 0xF5
+    ; Previous OUT-to-handler-entry latency is nine cycles.  These eight
+    ; cycles place this OUT exactly 17 cycles after the preceding OUT.
+    adiw VM_PC, 1
+    delay_4
+    delay_1
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ; For branch-on-set use SBRS; for branch-on-clear use SBRC.  A satisfied
+    ; condition skips the not-taken jump.
+    \skip VM_FLAGS, \flag
+    rjmp branch_rel8_not_taken_func
+    rjmp branch_rel8_taken_func
+
+    handler_end \opcode
+.endm
+
+.macro emit_branch_rel8_mask opcode, label, take_branch
+    handler_begin \opcode, \label
+
+    adiw VM_PC, 1
+    delay_4
+    delay_1
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ; ULE and UGT depend on C|Z.  r26 is interpreter scratch and supports
+    ; ANDI directly.
+    mov  r26, VM_FLAGS
+    andi r26, (_BV(SREG_C) | _BV(SREG_Z))
+    \take_branch 1f
+    rjmp branch_rel8_not_taken_func
+1:
+    rjmp branch_rel8_taken_func
+
+    handler_end \opcode
+.endm
+
+emit_branch_rel8_bit  0xF5, I_F5__BREQ_rel8,  sbrs, SREG_Z
+emit_branch_rel8_bit  0xF6, I_F6__BRNE_rel8,  sbrc, SREG_Z
+emit_branch_rel8_bit  0xF7, I_F7__BRULT_rel8, sbrs, SREG_C
+emit_branch_rel8_bit  0xF8, I_F8__BRUGE_rel8, sbrc, SREG_C
+emit_branch_rel8_bit  0xF9, I_F9__BRSLT_rel8, sbrs, SREG_S
+emit_branch_rel8_bit  0xFA, I_FA__BRSGE_rel8, sbrc, SREG_S
+emit_branch_rel8_mask 0xFB, I_FB__BRULE_rel8, brne
+emit_branch_rel8_mask 0xFC, I_FC__BRUGT_rel8, breq
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF6: JMP rel8
+; 0xFD: Memory and Program-Space Extension
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    handler_begin 0xF6, I_F6__JMP_rel8
+    handler_begin 0xFD, I_FD__ext_memory_program
 
-    handler_end 0xF6
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF7: LDSP[8/16] cN, [SP+u5]
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xF7, I_F6__LDSP_cN_u5
-
-    handler_end 0xF7
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF8: STSP[8/16] [SP+u5], cN
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xF8, I_F8__STSP_u5_cN
-
-    handler_end 0xF8
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF9: CALL rel8
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xF9, I_F9__CALL_rel8
-
-    handler_end 0xF9
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFA: ADJSP simm8
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xFA, I_FA__ADJSP_simm8
-
-    handler_end 0xFA
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFB: Full Register Extension
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xFB, I_FB__ext_full_register
-
-    handler_end 0xFB
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFC: ALU, Control, and System Extension
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xFC, I_FC__ext_alu_ctrl_sys
-
-    handler_end 0xFC
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFD: Memory Extension
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xFD, I_FD__ext_memory
+    ; TODO: secondary dispatch.
+    ; RRSPEC now uses:
+    ;   bit 7     reserved
+    ;   bits 6:4  destination
+    ;   bit 3     reserved
+    ;   bits 2:0  source/address
 
     handler_end 0xFD
 
@@ -1044,18 +1056,45 @@ branch_short_dispatch_reverse_func:
 dispatch_reverse_func:
     dispatch_reverse
 
-cmpi6_decode_func:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xF4 secondary dispatch
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+f4_extension_decode_func:
     cli
     out  SPDR, ZERO
     in   r6, SPDR
     sei
+
+    ; Preserve the already-implemented CMPI6 operation at its relocated
+    ; secondary opcode.  The remaining F4 secondary operations are still
+    ; intentionally unimplemented in this partial interpreter.
+    mov  r26, r6
+    cpi  r26, 0xBC
+    breq f4_cmpi6_decode_func
+    rjmp unimplemented_instruction_func
+
+f4_cmpi6_decode_func:
+    ; VM_PC currently names the secondary opcode.  Advance it to the CMPI6
+    ; operand so the final dispatch advances to the following primary opcode.
+    adiw VM_PC, 1
+
+    ; The first OUT above started the CMPI6 operand transfer.  Including the
+    ; decoder instructions above, this padding places the next OUT 17 cycles
+    ; later.  It starts fetching the following primary opcode while IN reads
+    ; the completed CMPI6 operand.
+    delay_4
+    delay_4
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ; Operand encoding:
+    ;   bits 7:2 = signed six-bit immediate
+    ;   bits 1:0 = compact register
+    ;
     ; Construct the native data-space address of cN:
-    ;
-    ;   c0 low = r16
-    ;   c1 low = r18
-    ;   c2 low = r20
-    ;   c3 low = r22
-    ;
     ;   address = 16 + 2 * (operand & 3)
     mov  r26, r6
     andi r26, 0x03
@@ -1072,10 +1111,6 @@ cmpi6_decode_func:
     ld   r5, X
 
     ; Sign-extend the immediate from r6 into r0:r6.
-    ;
-    ; LSL places the sign bit into C, then SBC produces:
-    ;   r0 = 0x00 when the immediate is nonnegative
-    ;   r0 = 0xFF when the immediate is negative
     mov  r0, r6
     lsl  r0
     sbc  r0, r0
@@ -1085,7 +1120,45 @@ cmpi6_decode_func:
     cpc  r5, r0
     in   VM_FLAGS, SREG
 
-    ; The next opcode has long since completed transferring.
+    ; The following primary opcode has completed transferring.
+    rjmp dispatch_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; General rel8 branch continuations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+branch_rel8_not_taken_func:
+    ; The shortest condition path reaches here five cycles after the OUT that
+    ; started fetching the fallthrough opcode. dispatch_reverse executes three
+    ; cycles before its OUT, so pad nine cycles to maintain the 17-cycle
+    ; OUT-to-OUT SPI cadence.
+    rcall fx_seek_delay_7
+    rjmp dispatch_reverse_func
+
+branch_rel8_taken_func:
+    ; The primary handler advanced PC to the displacement byte.  Advance once
+    ; more to nextPC, then add the signed displacement in r6.
+    adiw VM_PC, 1
+    add  VM_PCL, r6
+    adc  VM_PCH, ZERO
+    sbrc r6, 7
+    dec  VM_PCH
+
+    ; Discard the speculative fallthrough byte and restart the stream at the
+    ; branch target.  PC already names the target opcode, so do not increment
+    ; it before entering the target handler.
+    rcall fx_seek_to_pc
+    in   r6, SPDR
+    out  SPDR, ZERO
+    mul  r6, C_DISPATCH_STRIDE_WORDS
+    movw r30, r0
+    subi r31, hi8(-(DISPATCH_ORG))
+    ijmp
+
+unimplemented_instruction_func:
+    rjmp unimplemented_instruction_func
+
+; The next opcode has long since completed transferring.
 dispatch_func:
     dispatch
 

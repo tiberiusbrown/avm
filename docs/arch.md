@@ -2732,17 +2732,17 @@ The interpreter uses 256 fixed primary slots.
 Each slot is:
 
 ```text
-64 bytes
-32 AVR instruction words
+32 bytes
+16 AVR instruction words
 ```
 
 The entire table is:
 
 ```text
-16 KiB
+8 KiB
 ```
 
-The table base is aligned to at least 64 bytes.
+The table base is aligned to at least 32 bytes.
 
 Every primary opcode therefore has a distinct operand-specialized native entry point.
 
@@ -2769,7 +2769,7 @@ With:
 
 ```text
 r2 = 0
-r7 = 32
+r7 = 16
 ```
 
 the multiplication computes the handler offset in AVR words.
@@ -2798,7 +2798,7 @@ At primary handler entry:
 
 ```text
 r2       = 0
-r7       = 32
+r7       = 16
 r24:r25  = current opcode address
 Y        = AVM SP
 GPIOR1   = CB
@@ -2895,7 +2895,7 @@ A taken control transfer discards the speculative sequential byte.
 
 ## 101. Slot overflow
 
-A primary handler that does not fit in 32 AVR words must:
+A primary handler that does not fit in 16 AVR words must:
 
 1. Perform any profitable fast prefix in its slot.
 2. Jump to shared out-of-line code.
@@ -2903,7 +2903,7 @@ A primary handler that does not fit in 32 AVR words must:
 
 Extension-page primary handlers naturally enter secondary dispatch logic.
 
-A 64-byte slot is 32 AVR words, not necessarily 32 native instructions, because some AVR instructions occupy two words.
+A 32-byte slot is 16 AVR words, not necessarily 16 native instructions, because some AVR instructions occupy two words.
 
 ---
 
@@ -2969,7 +2969,7 @@ After returning, it must:
 
 * Restore AVM registers.
 * Restore `r2 = 0`.
-* Restore `r7 = 32`.
+* Restore `r7 = 16`.
 * Restore any bank or PC state.
 * Resume the bytecode stream.
 
@@ -3202,7 +3202,7 @@ Special state:
 
 Interpreter constants:
     AVR r2 = zero
-    AVR r7 = 32
+    AVR r7 = 16
 
 SRAM:
     0x0100–0x04FF globals
@@ -3235,8 +3235,8 @@ Calling convention:
 
 Primary dispatch:
     256 slots
-    64 bytes per slot
-    16 KiB total
+    32 bytes per slot
+    8 KiB total
     Approximately nine-cycle dispatch
 
 Allocation model:

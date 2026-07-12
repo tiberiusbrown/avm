@@ -862,12 +862,22 @@ emit_unimplemented_primary 0xE3, I_E3__ext_transfer_condition
     handler_end 0xE4
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE5-0xE8: Direct control/address operations (not implemented)
+; 0xE5-0xE8: Direct control and address operations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_unimplemented_primary 0xE5, I_E5__JMP_rel8
-emit_unimplemented_primary 0xE6, I_E6__CALL_rel8
-emit_unimplemented_primary 0xE7, I_E7__ADJSP_simm8
+    handler_begin 0xE5, I_E5__JMP_rel8
+    rjmp e5_jmp_rel8_func
+    handler_end 0xE5
+
+    handler_begin 0xE6, I_E6__CALL_rel8
+    rjmp e6_call_rel8_func
+    handler_end 0xE6
+
+    handler_begin 0xE7, I_E7__ADJSP_simm8
+    rjmp e7_adjsp_func
+    handler_end 0xE7
+
+; LDPBI remains intentionally unimplemented.
 emit_unimplemented_primary 0xE8, I_E8__LDPBI_imm8
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -888,8 +898,13 @@ emit_unimplemented_primary 0xE8, I_E8__LDPBI_imm8
 ; 0xEA-0xEC: Direct control and NOP
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_unimplemented_primary 0xEA, I_EA__JMP16_addr16
-emit_unimplemented_primary 0xEB, I_EB__CALL16_addr16
+    handler_begin 0xEA, I_EA__JMP16_addr16
+    rjmp ea_jmp16_func
+    handler_end 0xEA
+
+    handler_begin 0xEB, I_EB__CALL16_addr16
+    rjmp eb_call16_func
+    handler_end 0xEB
 
     handler_begin 0xEC, I_EC__NOP
     delay_3
@@ -1040,7 +1055,7 @@ emit_branch_rel8_mask 0xFC, I_FC__BRUGT_rel8, breq
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     handler_begin 0xFE, I_FE__JMPF_CALLF
-    jmp  unimplemented_instruction_func
+    rjmp fe_far_control_func
     handler_end 0xFE
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1048,8 +1063,172 @@ emit_branch_rel8_mask 0xFC, I_FC__BRUGT_rel8, breq
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     handler_begin 0xFF, I_FF__RET
-    jmp  unimplemented_instruction_func
+    rjmp ff_ret_func
     handler_end 0xFF
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Direct control-flow and stack-frame support
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Push the logical return address currently held in CB:PC.
+;
+; The final stack layout is:
+;   [SP+0] = return bits 7:0
+;   [SP+1] = return bits 15:8
+;   [SP+2] = return bits 23:16
+;
+; Clobbers r26 and native SREG only. AVM CC is held separately in VM_FLAGS.
+push_return_address_func:
+    in   r26, VM_CB
+    st   -Y, r26
+    st   -Y, VM_PCH
+    st   -Y, VM_PCL
+    ret
+
+; Restart the external-flash stream at the already-installed CB:PC and enter
+; the selected primary handler. PC already names the target opcode, so this
+; path deliberately does not increment it.
+seek_and_dispatch_current_pc_func:
+    rcall fx_seek_to_pc
+    in   r6, SPDR
+    out  SPDR, ZERO
+    ; Match the normal dispatch path's pre-IJMP cadence so operand-bearing
+    ; target handlers do not read the just-issued SPI transfer too early.
+    delay_1
+    mul  r6, C_DISPATCH_STRIDE_WORDS
+    movw r30, r0
+    subi r31, hi8(-(pm(DISPATCH_ORG)))
+    ijmp
+
+; E5 rel8: unconditional same-bank relative jump.
+e5_jmp_rel8_func:
+    ; PC advances from the primary opcode to the displacement byte while the
+    ; transfer that was started by the preceding dispatch completes.
+    adiw VM_PC, 1
+    delay_4
+    delay_2
+    in   r6, SPDR
+
+    ; The displacement is relative to nextPC.
+    adiw VM_PC, 1
+    add  VM_PCL, r6
+    adc  VM_PCH, ZERO
+    sbrc r6, 7
+    dec  VM_PCH
+    rjmp seek_and_dispatch_current_pc_func
+
+; E6 rel8: push CB:nextPC and perform a same-bank relative call.
+e6_call_rel8_func:
+    adiw VM_PC, 1
+    delay_4
+    delay_2
+    in   r6, SPDR
+
+    ; Install nextPC long enough to push the complete return address.
+    adiw VM_PC, 1
+    rcall push_return_address_func
+
+    add  VM_PCL, r6
+    adc  VM_PCH, ZERO
+    sbrc r6, 7
+    dec  VM_PCH
+    rjmp seek_and_dispatch_current_pc_func
+
+; E7 simm8: SP = SP + sign_extend(simm8).
+e7_adjsp_func:
+    ; Start fetching the following primary opcode while reading the immediate.
+    adiw VM_PC, 1
+    delay_4
+    delay_1
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    add  VM_SPL, r6
+    adc  VM_SPH, ZERO
+    sbrc r6, 7
+    dec  VM_SPH
+
+    ; PC still names the immediate byte. dispatch_reverse advances it to the
+    ; already-prefetched following opcode. The native arithmetic flags are not
+    ; copied to VM_FLAGS, so architectural CC is preserved.
+    rcall fx_seek_delay_7
+    rjmp dispatch_reverse_func
+
+; Fetch a little-endian 16-bit direct target into r5:r4.
+;
+; At entry the low target byte is already in flight. No fallthrough byte is
+; fetched because both users transfer control unconditionally.
+fetch_direct_target16_func:
+    delay_4
+    delay_4
+    out  SPDR, ZERO
+    in   r4, SPDR
+    rcall fx_seek_delay_17
+    in   r5, SPDR
+    ret
+
+; EA addr16: absolute jump within the current bank.
+ea_jmp16_func:
+    rcall fetch_direct_target16_func
+    movw VM_PC, r4
+    rjmp seek_and_dispatch_current_pc_func
+
+; EB addr16: push CB:nextPC and call an absolute address in the current bank.
+eb_call16_func:
+    rcall fetch_direct_target16_func
+
+    ; The instruction is three bytes: opcode plus two address bytes.
+    adiw VM_PC, 3
+    rcall push_return_address_func
+
+    movw VM_PC, r4
+    rjmp seek_and_dispatch_current_pc_func
+
+; FE T0 T1 T2: direct far jump/call.
+;
+; T0 bit 0 selects CALLF when set. The target is T2:T1:(T0 & 0xFE).
+; All far targets are therefore even. No speculative fallthrough transfer is
+; issued after T2 because both forms replace the execution address.
+fe_far_control_func:
+    delay_4
+    delay_4
+    out  SPDR, ZERO
+    in   r4, SPDR                 ; T0
+    rcall fx_seek_delay_17
+    out  SPDR, ZERO
+    in   r5, SPDR                 ; T1
+    rcall fx_seek_delay_17
+    in   r6, SPDR                 ; T2 / target bank
+
+    sbrc r4, 0
+    rjmp fe_callf_func
+
+fe_jmpf_func:
+    lsr  r4
+    lsl  r4
+    movw VM_PC, r4
+    out  VM_CB, r6
+    rjmp seek_and_dispatch_current_pc_func
+
+fe_callf_func:
+    ; Preserve the encoded target while CB:nextPC is pushed.
+    lsr  r4
+    lsl  r4
+    adiw VM_PC, 4
+    rcall push_return_address_func
+    movw VM_PC, r4
+    out  VM_CB, r6
+    rjmp seek_and_dispatch_current_pc_func
+
+; FF: discard the speculative sequential byte, pop CB:PC, and restart fetch.
+ff_ret_func:
+    ld   VM_PCL, Y+
+    ld   VM_PCH, Y+
+    ld   r6, Y+
+    out  VM_CB, r6
+    rjmp seek_and_dispatch_current_pc_func
 
 ; Keep common trap targets close to all secondary dispatch tables. Primary
 ; handlers use absolute JMP because the earliest primary slots are outside
@@ -1751,7 +1930,7 @@ startup_copy_data:
     lds  r22, data_page_data+1
     inc  r27
     brne 4f
-    inc  r4
+    inc  r22
 4:
     clr  r26
     rcall fx_startup_begin_read

@@ -9,13 +9,13 @@
 
 The interpreter already implements the operand-specialized primary families from `0x00` through `0xF3`, the dedicated conditional branches at `0xF5–0xFC`, and the reserved primary slots at `0x50–0x6F`.
 
-The `0xF4` and `0xFD` primary handlers now share the required extension-prefix state: they advance `PC` to the secondary opcode, read it into `r6`, start transferring byte 2, and dispatch through separate 256-entry one-word `RJMP` tables. Architecturally valid entries have named family skeletons, `0xF4:0x38–0x5F` implements `ZEXT8/SEXT8/SWAP8/GETSP/SETSP`, `0xF4:0xBC` reaches the existing `CMPI6` implementation, `0xF4:0xE0–0xEF` implements `MTPB/MFPB`, `0xF4:0xF3` implements `NOP`, and reserved entries reach a distinct common invalid-secondary path. Except for these completed families, the remaining family skeletons still enter the common unimplemented-instruction loop.
+The `0xF4` and `0xFD` primary handlers now share the required extension-prefix state: they advance `PC` to the secondary opcode, read it into `r6`, start transferring byte 2, and dispatch through separate 256-entry one-word `RJMP` tables. Architecturally valid entries have named family skeletons, `0xF4:0x00–0x0F` implements `NOT16/NEG16`, `0xF4:0x38–0x5F` implements `ZEXT8/SEXT8/SWAP8/GETSP/SETSP`, `0xF4:0xBC` reaches the existing `CMPI6` implementation, `0xF4:0xE0–0xEF` implements `MTPB/MFPB`, `0xF4:0xF3` implements `NOP`, and reserved entries reach a distinct common invalid-secondary path. Except for these completed families, the remaining family skeletons still enter the common unimplemented-instruction loop.
 
 The remaining architectural work is:
 
 | Primary opcode | Remaining work |
 | --- | --- |
-| `0xF4` | Implement the semantics behind the existing family skeletons; `ZEXT8/SEXT8/SWAP8/GETSP/SETSP` (`0x38–0x5F`), `CMPI6` (`0xBC`), `MTPB/MFPB` (`0xE0–0xEF`), and `NOP` (`0xF3`) are complete |
+| `0xF4` | Implement the semantics behind the existing family skeletons; `NOT16/NEG16` (`0x00–0x0F`), `ZEXT8/SEXT8/SWAP8/GETSP/SETSP` (`0x38–0x5F`), `CMPI6` (`0xBC`), `MTPB/MFPB` (`0xE0–0xEF`), and `NOP` (`0xF3`) are complete |
 | `0xFD` | Implement the semantics behind the existing memory/program-space family skeletons |
 | `0xFE` | `JMPF` and `CALLF` |
 | `0xFF` | `RET` |
@@ -301,8 +301,8 @@ All unary handlers derive `rN` from `secondary & 7`, load the value to scratch, 
 
 | Family | Suggested native sequence | AVM flags |
 | --- | --- | --- |
-| `NOT16` | `com low; com high` | Recompute `Z/N/V/S`; preserve `C` |
-| `NEG16` | Clear a scratch word, then `sub`/`sbc` the staged operand | Commit the resulting 16-bit subtraction flags |
+| `NOT16` | `com low; com high` | Recompute `Z/N/V/S`; preserve `C` (implemented) |
+| `NEG16` | Clear a scratch word, then `sub`/`sbc` the staged operand | Commit the resulting 16-bit subtraction flags (implemented) |
 | `LSL16` | `lsl low; rol high` | Commit the final native flags; cumulative `Z` describes the whole word |
 | `LSR16` | `lsr high; ror low` | Reconstruct whole-word `Z/N`; retain final `C`; synthesize `V/S` |
 | `ASR16` | `asr high; ror low` | Reconstruct whole-word `Z/N`; retain final `C`; synthesize `V/S` |

@@ -1097,8 +1097,6 @@ f4_secondary_table_end:
 
 ; Valid families intentionally remain skeletons.  Consecutive labels alias one
 ; nearby veneer so every table RJMP stays comfortably within range.
-f4_not16_family:
-f4_neg16_family:
 f4_lsl16_family:
 f4_lsr16_family:
 f4_asr16_family:
@@ -1250,6 +1248,49 @@ f4_setsp_family:
     ld   r4, X+
     ld   r5, X
     movw VM_SP, r4
+    rjmp dispatch_func
+
+f4_not16_family:
+    ; Load and complement the complete selected word before writing it back.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r4, X+
+    ld   r5, X
+    com  r4
+    com  r5
+    st   X, r5
+    st   -X, r4
+
+    ; A word compare against zero produces cumulative Z and the high-byte N,
+    ; with V clear and S equal to N.  Preserve the old architectural carry in
+    ; T while replacing VM_FLAGS with those complete-word result flags.
+    bst  VM_FLAGS, SREG_C
+    cp   r4, ZERO
+    cpc  r5, ZERO
+    in   VM_FLAGS, SREG
+    bld  VM_FLAGS, SREG_C
+    rjmp dispatch_func
+
+f4_neg16_family:
+    ; Form 0 - operand in scratch.  SUB followed by SBC produces the required
+    ; word-wide C/Z/N/V/S values, including cumulative zero in the high step.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r4, X+
+    ld   r5, X
+    mov  r0, ZERO
+    mov  r1, ZERO
+    sub  r0, r4
+    sbc  r1, r5
+    st   X, r1
+    st   -X, r0
+    in   VM_FLAGS, SREG
     rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

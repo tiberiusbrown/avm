@@ -1102,11 +1102,9 @@ f4_secondary_table_end:
 ; Valid families intentionally remain skeletons.  Consecutive labels alias one
 ; nearby veneer so every table RJMP stays comfortably within range.
 f4_lsl16_family:
-f4_lsr16_family:
 f4_asr16_family:
 f4_lsr8_family:
 f4_asr8_family:
-f4_and_family:
 f4_or_family:
 f4_xor_family:
 f4_bic_family:
@@ -1146,6 +1144,73 @@ f4_call16_family:
 f4_ldsp_compact_family:
 f4_stsp_compact_family:
     rjmp unimplemented_instruction_func
+
+f4_lsr16_family:
+    ; The register number is carried in the low secondary-opcode bits.  Shift
+    ; the complete word in place, high byte first so ROR propagates bit 8.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r4, X+
+    ld   r5, X
+    lsr  r5
+    ror  r4
+    st   X, r5
+    st   -X, r4
+
+    ; Preserve the shifted-out bit while deriving word-wide Z and the defined
+    ; logical-shift N/V/S bits (N=0, V=C, S=C).
+    in   r26, SREG
+    andi r26, _BV(SREG_C)
+    mov  r1, r4
+    or   r1, r5
+    brne 1f
+    ori  r26, _BV(SREG_Z)
+1:
+    sbrc r26, SREG_C
+    ori  r26, (_BV(SREG_V) | _BV(SREG_S))
+    mov  VM_FLAGS, r26
+    rjmp dispatch_func
+
+f4_and_family:
+    ; Fetch RRSPEC while starting the following primary opcode.
+    adiw VM_PC, 1
+    delay_4
+    delay_2
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ; Capture both operands before writing, including when rD == rS.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+    ld   r0, X+
+    ld   r1, X
+    mov  r26, r6
+    swap r26
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    ld   r4, X+
+    ld   r5, X
+    and  r4, r0
+    and  r5, r1
+    st   X, r5
+    st   -X, r4
+
+    ; Logical operations preserve C and define Z/N/V/S from the word result.
+    bst  VM_FLAGS, SREG_C
+    cp   r4, ZERO
+    cpc  r5, ZERO
+    in   VM_FLAGS, SREG
+    bld  VM_FLAGS, SREG_C
+    rjmp dispatch_func
 
 f4_nop_family:
     ; The extension prefix has already advanced VM_PC to the secondary opcode

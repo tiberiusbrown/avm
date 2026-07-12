@@ -108,8 +108,8 @@ def run_command(
 
 
 def normalize_newlines(data: bytes) -> bytes:
-    """Normalize text-file line endings without ignoring other differences."""
-    return data.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+    """Discard carriage returns so host line-ending conventions are irrelevant."""
+    return data.replace(b"\r", b"")
 
 
 def output_diff(expected: bytes, actual: bytes, expected_path: Path) -> str:

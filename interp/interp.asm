@@ -32,7 +32,7 @@
 ;; AVR r2         Permanent zero
 ;;                SPI dummy-transmit byte
 ;; 
-;; AVR r3         AVM FLAGS
+;; AVR r3         AVM CC (C/Z/S in SREG bit positions)
 ;; 
 ;; AVR r4         Interpreter scratch
 ;; 
@@ -89,6 +89,7 @@
 
 #define ZERO r2
 
+; AVM architectural CC uses only C/Z/S; other SREG bits may be retained.
 #define VM_FLAGS r3
 
 #define VM_CB GPIOR1
@@ -516,48 +517,72 @@ emit_st16 0x4E, I_4E__ST16_c3_c2, VM_C3, VM_C2L, VM_C2H
 emit_st16 0x4F, I_4F__ST16_c3_c3, VM_C3, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x50-0x6F: Reserved (pending usage based on profiling)
+; 0x50-0x57: AND A, rS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_reserved opcode, label
+; A is the architectural alias of c0/r4. This is the existing implemented
+; 16-bit AND operation, remapped to the new one-byte accumulator encoding.
+; AVM CC is preserved even though the native AND instructions modify SREG.
+.macro emit_and_a opcode, label, srcl, srch
     handler_begin \opcode, \label
-    rjmp \label
+    delay_3
+    and  VM_C0L, \srcl
+    and  VM_C0H, \srch
+    dispatch_reverse
     handler_end \opcode
 .endm
 
-emit_reserved 0x50, I_50__RESERVED
-emit_reserved 0x51, I_51__RESERVED
-emit_reserved 0x52, I_52__RESERVED
-emit_reserved 0x53, I_53__RESERVED
-emit_reserved 0x54, I_54__RESERVED
-emit_reserved 0x55, I_55__RESERVED
-emit_reserved 0x56, I_56__RESERVED
-emit_reserved 0x57, I_57__RESERVED
-emit_reserved 0x58, I_58__RESERVED
-emit_reserved 0x59, I_59__RESERVED
-emit_reserved 0x5A, I_5A__RESERVED
-emit_reserved 0x5B, I_5B__RESERVED
-emit_reserved 0x5C, I_5C__RESERVED
-emit_reserved 0x5D, I_5D__RESERVED
-emit_reserved 0x5E, I_5E__RESERVED
-emit_reserved 0x5F, I_5F__RESERVED
+emit_and_a 0x50, I_50__AND_A_r0, VM_R0L, VM_R0H
+emit_and_a 0x51, I_51__AND_A_r1, VM_R1L, VM_R1H
+emit_and_a 0x52, I_52__AND_A_r2, VM_R2L, VM_R2H
+emit_and_a 0x53, I_53__AND_A_r3, VM_R3L, VM_R3H
+emit_and_a 0x54, I_54__AND_A_r4, VM_R4L, VM_R4H
+emit_and_a 0x55, I_55__AND_A_r5, VM_R5L, VM_R5H
+emit_and_a 0x56, I_56__AND_A_r6, VM_R6L, VM_R6H
+emit_and_a 0x57, I_57__AND_A_r7, VM_R7L, VM_R7H
 
-emit_reserved 0x60, I_60__RESERVED
-emit_reserved 0x61, I_61__RESERVED
-emit_reserved 0x62, I_62__RESERVED
-emit_reserved 0x63, I_63__RESERVED
-emit_reserved 0x64, I_64__RESERVED
-emit_reserved 0x65, I_65__RESERVED
-emit_reserved 0x66, I_66__RESERVED
-emit_reserved 0x67, I_67__RESERVED
-emit_reserved 0x68, I_68__RESERVED
-emit_reserved 0x69, I_69__RESERVED
-emit_reserved 0x6A, I_6A__RESERVED
-emit_reserved 0x6B, I_6B__RESERVED
-emit_reserved 0x6C, I_6C__RESERVED
-emit_reserved 0x6D, I_6D__RESERVED
-emit_reserved 0x6E, I_6E__RESERVED
-emit_reserved 0x6F, I_6F__RESERVED
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x58-0x6F: OR/XOR/BIC accumulator forms (not implemented)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.macro emit_unimplemented_primary opcode, label
+    handler_begin \opcode, \label
+    jmp  unimplemented_instruction_func
+    handler_end \opcode
+.endm
+
+.macro emit_invalid_primary opcode, label
+    handler_begin \opcode, \label
+    jmp  invalid_primary_instruction_func
+    handler_end \opcode
+.endm
+
+emit_unimplemented_primary 0x58, I_58__OR_A_r0
+emit_unimplemented_primary 0x59, I_59__OR_A_r1
+emit_unimplemented_primary 0x5A, I_5A__OR_A_r2
+emit_unimplemented_primary 0x5B, I_5B__OR_A_r3
+emit_unimplemented_primary 0x5C, I_5C__OR_A_r4
+emit_unimplemented_primary 0x5D, I_5D__OR_A_r5
+emit_unimplemented_primary 0x5E, I_5E__OR_A_r6
+emit_unimplemented_primary 0x5F, I_5F__OR_A_r7
+
+emit_unimplemented_primary 0x60, I_60__XOR_A_r0
+emit_unimplemented_primary 0x61, I_61__XOR_A_r1
+emit_unimplemented_primary 0x62, I_62__XOR_A_r2
+emit_unimplemented_primary 0x63, I_63__XOR_A_r3
+emit_unimplemented_primary 0x64, I_64__XOR_A_r4
+emit_unimplemented_primary 0x65, I_65__XOR_A_r5
+emit_unimplemented_primary 0x66, I_66__XOR_A_r6
+emit_unimplemented_primary 0x67, I_67__XOR_A_r7
+
+emit_unimplemented_primary 0x68, I_68__BIC_A_r0
+emit_unimplemented_primary 0x69, I_69__BIC_A_r1
+emit_unimplemented_primary 0x6A, I_6A__BIC_A_r2
+emit_unimplemented_primary 0x6B, I_6B__BIC_A_r3
+emit_unimplemented_primary 0x6C, I_6C__BIC_A_r4
+emit_unimplemented_primary 0x6D, I_6D__BIC_A_r5
+emit_unimplemented_primary 0x6E, I_6E__BIC_A_r6
+emit_unimplemented_primary 0x6F, I_6F__BIC_A_r7
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x70-0x77: PUSH16 rS
@@ -659,16 +684,11 @@ emit_add_or_sub 0x9F, I_9F__SUB_c3_c3, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
     handler_begin \opcode, \label
 
     .if \same
-        ; TST16 updates Z/N/V/S but preserves the old AVM carry.
-        ;
-        ; BST copies VM_FLAGS.C into native SREG.T.
-        ; CP/CPC do not modify T.
-        ; BLD restores that saved bit after SREG is captured.
-        bst  VM_FLAGS, 0
+        ; TST16 is a comparison against zero and replaces all architectural CC.
+        delay_2
         cp   \dstl, ZERO
         cpc  \dsth, ZERO
         in   VM_FLAGS, SREG
-        bld  VM_FLAGS, 0
     .else
         ; 2-cycle padding + CP + CPC + IN = 5 cycles.
         delay_2
@@ -706,15 +726,10 @@ emit_cmp16_or_tst 0xAF, I_AF__TST16_c3,     VM_C3L, VM_C3H, VM_C3L, VM_C3H, 1
     handler_begin \opcode, \label
 
     .if \same
-        ; TST8 updates Z/N/V/S but preserves the old AVM carry.
-        ;
-        ; N is derived from bit 7 and V is cleared by TST,
-        ; so S = N as required for an 8-bit zero test.
-        delay_1
-        bst  VM_FLAGS, 0
-        tst  \dstl
+        ; TST8 is a comparison against zero and replaces all architectural CC.
+        delay_3
+        cp   \dstl, ZERO
         in   VM_FLAGS, SREG
-        bld  VM_FLAGS, 0
     .else
         ; 3-cycle padding + CP + IN = 5 cycles.
         delay_3
@@ -747,7 +762,8 @@ emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1
 ; 0xC0-0xDF: BEQ.S / BNE.S
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; One-byte short equality branches.  The displacement is relative to nextPC,
+; One-byte short equality branches encode {-9..-2,+1..+8}. The displacement
+; is relative to nextPC,
 ; so the taken path first advances PC past the opcode and then adds disp.
 ;
 ; The untaken path retains the sequential SPI stream and is padded to the same
@@ -766,7 +782,7 @@ emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1
     subi VM_PCL, lo8(-(\disp))
     sbci VM_PCH, hi8(-(\disp))
 
-    rcall fx_seek_to_pc
+    call fx_seek_to_pc
     in   r6, SPDR
     out  SPDR, ZERO
     mul  r6, C_DISPATCH_STRIDE_WORDS
@@ -777,14 +793,14 @@ emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1
     handler_end \opcode
 .endm
 
-emit_branch_short 0xC0, I_C0__BEQ_S_m8, sbrs, -8
-emit_branch_short 0xC1, I_C1__BEQ_S_m7, sbrs, -7
-emit_branch_short 0xC2, I_C2__BEQ_S_m6, sbrs, -6
-emit_branch_short 0xC3, I_C3__BEQ_S_m5, sbrs, -5
-emit_branch_short 0xC4, I_C4__BEQ_S_m4, sbrs, -4
-emit_branch_short 0xC5, I_C5__BEQ_S_m3, sbrs, -3
-emit_branch_short 0xC6, I_C6__BEQ_S_m2, sbrs, -2
-emit_branch_short 0xC7, I_C7__BEQ_S_m1, sbrs, -1
+emit_branch_short 0xC0, I_C0__BEQ_S_m9, sbrs, -9
+emit_branch_short 0xC1, I_C1__BEQ_S_m8, sbrs, -8
+emit_branch_short 0xC2, I_C2__BEQ_S_m7, sbrs, -7
+emit_branch_short 0xC3, I_C3__BEQ_S_m6, sbrs, -6
+emit_branch_short 0xC4, I_C4__BEQ_S_m5, sbrs, -5
+emit_branch_short 0xC5, I_C5__BEQ_S_m4, sbrs, -4
+emit_branch_short 0xC6, I_C6__BEQ_S_m3, sbrs, -3
+emit_branch_short 0xC7, I_C7__BEQ_S_m2, sbrs, -2
 emit_branch_short 0xC8, I_C8__BEQ_S_p1, sbrs,  1
 emit_branch_short 0xC9, I_C9__BEQ_S_p2, sbrs,  2
 emit_branch_short 0xCA, I_CA__BEQ_S_p3, sbrs,  3
@@ -794,14 +810,14 @@ emit_branch_short 0xCD, I_CD__BEQ_S_p6, sbrs,  6
 emit_branch_short 0xCE, I_CE__BEQ_S_p7, sbrs,  7
 emit_branch_short 0xCF, I_CF__BEQ_S_p8, sbrs,  8
 
-emit_branch_short 0xD0, I_D0__BNE_S_m8, sbrc, -8
-emit_branch_short 0xD1, I_D1__BNE_S_m7, sbrc, -7
-emit_branch_short 0xD2, I_D2__BNE_S_m6, sbrc, -6
-emit_branch_short 0xD3, I_D3__BNE_S_m5, sbrc, -5
-emit_branch_short 0xD4, I_D4__BNE_S_m4, sbrc, -4
-emit_branch_short 0xD5, I_D5__BNE_S_m3, sbrc, -3
-emit_branch_short 0xD6, I_D6__BNE_S_m2, sbrc, -2
-emit_branch_short 0xD7, I_D7__BNE_S_m1, sbrc, -1
+emit_branch_short 0xD0, I_D0__BNE_S_m9, sbrc, -9
+emit_branch_short 0xD1, I_D1__BNE_S_m8, sbrc, -8
+emit_branch_short 0xD2, I_D2__BNE_S_m7, sbrc, -7
+emit_branch_short 0xD3, I_D3__BNE_S_m6, sbrc, -6
+emit_branch_short 0xD4, I_D4__BNE_S_m5, sbrc, -5
+emit_branch_short 0xD5, I_D5__BNE_S_m4, sbrc, -4
+emit_branch_short 0xD6, I_D6__BNE_S_m3, sbrc, -3
+emit_branch_short 0xD7, I_D7__BNE_S_m2, sbrc, -2
 emit_branch_short 0xD8, I_D8__BNE_S_p1, sbrc,  1
 emit_branch_short 0xD9, I_D9__BNE_S_p2, sbrc,  2
 emit_branch_short 0xDA, I_DA__BNE_S_p3, sbrc,  3
@@ -812,43 +828,81 @@ emit_branch_short 0xDE, I_DE__BNE_S_p7, sbrc,  7
 emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE0-0xEF: INC16/DEC16 rN
+; 0xE0-0xE3: Revised extension pages
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_inc_or_dec opcode, label, dstl, dsth, opl, oph
-    handler_begin \opcode, \label
+    handler_begin 0xE0, I_E0__ext_misc
 
-    ; INC16/DEC16 preserve architectural C while updating Z/N/V/S.
-    ; Save the old AVM carry in native SREG.T, which ADD/ADC preserve.
-    bst  VM_FLAGS, SREG_C
+    ; Account for the secondary opcode, then fetch it while starting the
+    ; following primary opcode.
+    adiw VM_PC, 1
+    delay_3
+    rjmp e0_extension_decode_func
 
-    ldi  r26, 1
-    \opl \dstl, r26
-    \oph \dsth, ZERO
+    handler_end 0xE0
 
-    in   VM_FLAGS, SREG
-    bld  VM_FLAGS, SREG_C
+; The E1 pair, E2 accumulator, and E3 transfer/condition pages are part of the
+; revised ISA but have no implemented handlers yet.
+emit_unimplemented_primary 0xE1, I_E1__ext_pair
+emit_unimplemented_primary 0xE2, I_E2__ext_accumulator
+emit_unimplemented_primary 0xE3, I_E3__ext_transfer_condition
 
-    rjmp dispatch_func
-    handler_end \opcode
-.endm
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE4: CMPI6 cN, simm6
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_inc_or_dec 0xE0, I_E0__INC16_r0, VM_R0L, VM_R0H, add, adc
-emit_inc_or_dec 0xE1, I_E1__INC16_r1, VM_R1L, VM_R1H, add, adc
-emit_inc_or_dec 0xE2, I_E2__INC16_r2, VM_R2L, VM_R2H, add, adc
-emit_inc_or_dec 0xE3, I_E3__INC16_r3, VM_R3L, VM_R3H, add, adc
-emit_inc_or_dec 0xE4, I_E4__INC16_r4, VM_R4L, VM_R4H, add, adc
-emit_inc_or_dec 0xE5, I_E5__INC16_r5, VM_R5L, VM_R5H, add, adc
-emit_inc_or_dec 0xE6, I_E6__INC16_r6, VM_R6L, VM_R6H, add, adc
-emit_inc_or_dec 0xE7, I_E7__INC16_r7, VM_R7L, VM_R7H, add, adc
-emit_inc_or_dec 0xE8, I_E8__DEC16_r0, VM_R0L, VM_R0H, sub, sbc
-emit_inc_or_dec 0xE9, I_E9__DEC16_r1, VM_R1L, VM_R1H, sub, sbc
-emit_inc_or_dec 0xEA, I_EA__DEC16_r2, VM_R2L, VM_R2H, sub, sbc
-emit_inc_or_dec 0xEB, I_EB__DEC16_r3, VM_R3L, VM_R3H, sub, sbc
-emit_inc_or_dec 0xEC, I_EC__DEC16_r4, VM_R4L, VM_R4H, sub, sbc
-emit_inc_or_dec 0xED, I_ED__DEC16_r5, VM_R5L, VM_R5H, sub, sbc
-emit_inc_or_dec 0xEE, I_EE__DEC16_r6, VM_R6L, VM_R6H, sub, sbc
-emit_inc_or_dec 0xEF, I_EF__DEC16_r7, VM_R7L, VM_R7H, sub, sbc
+    handler_begin 0xE4, I_E4__CMPI6_cN_simm6
+
+    ; Account for the packed operand. The out-of-line body starts fetching the
+    ; following primary opcode at the normal SPI cadence.
+    adiw VM_PC, 1
+    delay_3
+    rjmp e4_cmpi6_func
+
+    handler_end 0xE4
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE5-0xE8: Direct control/address operations (not implemented)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_unimplemented_primary 0xE5, I_E5__JMP_rel8
+emit_unimplemented_primary 0xE6, I_E6__CALL_rel8
+emit_unimplemented_primary 0xE7, I_E7__ADJSP_simm8
+emit_unimplemented_primary 0xE8, I_E8__LDPBI_imm8
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE9: SYS service8
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+    handler_begin 0xE9, I_E9__SYS_service8
+
+    ; Account for the service byte. The out-of-line body reads it and starts
+    ; fetching the following primary opcode.
+    adiw VM_PC, 1
+    delay_3
+    rjmp e9_sys_decode_func
+
+    handler_end 0xE9
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xEA-0xEC: Direct control and NOP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_unimplemented_primary 0xEA, I_EA__JMP16_addr16
+emit_unimplemented_primary 0xEB, I_EB__CALL16_addr16
+
+    handler_begin 0xEC, I_EC__NOP
+    delay_3
+    rjmp dispatch_reverse_func
+    handler_end 0xEC
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xED-0xEF: Reserved
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_invalid_primary 0xED, I_ED__RESERVED
+emit_invalid_primary 0xEE, I_EE__RESERVED
+emit_invalid_primary 0xEF, I_EF__RESERVED
 
 .macro emit_ldi8 opcode, label, dstl, dsth
     handler_begin \opcode, \label
@@ -884,14 +938,13 @@ emit_ldi8 0xF2, I_F2__LDI8_c2, VM_C2L, VM_C2H
 emit_ldi8 0xF3, I_F3__LDI8_c3, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF4: ALU, Control, System, and Relocated-Core Extension
+; 0xF4: Compact ALU extension page
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-    handler_begin 0xF4, I_F4__ext_alu_ctrl_sys_core
+    handler_begin 0xF4, I_F4__ext_compact_alu
 
-    ; The secondary-opcode transfer was started by the preceding dispatch.
-    ; Account for the secondary byte, then fetch it while starting the first
-    ; secondary operand (or the following primary opcode for a two-byte form).
+    ; Account for the secondary opcode, then fetch it while starting the
+    ; following primary opcode.
     adiw VM_PC, 1
     delay_3
     rjmp f4_extension_decode_func
@@ -987,7 +1040,7 @@ emit_branch_rel8_mask 0xFC, I_FC__BRUGT_rel8, breq
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     handler_begin 0xFE, I_FE__JMPF_CALLF
-
+    jmp  unimplemented_instruction_func
     handler_end 0xFE
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -995,9 +1048,23 @@ emit_branch_rel8_mask 0xFC, I_FC__BRUGT_rel8, breq
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     handler_begin 0xFF, I_FF__RET
-
+    jmp  unimplemented_instruction_func
     handler_end 0xFF
 
+; Keep common trap targets close to all secondary dispatch tables. Primary
+; handlers use absolute JMP because the earliest primary slots are outside
+; RJMP range of the end of the fixed dispatch table.
+unimplemented_instruction_func:
+    rjmp unimplemented_instruction_func
+
+invalid_primary_instruction_func:
+    rjmp invalid_primary_instruction_func
+
+invalid_secondary_instruction_func:
+    rjmp invalid_secondary_instruction_func
+
+invalid_syscall_func:
+    rjmp invalid_syscall_func
 
 ldi8_dispatch_reverse_func:
     delay_4
@@ -1007,17 +1074,176 @@ dispatch_reverse_func:
     dispatch_reverse
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF4 secondary dispatch
+; Shared secondary-table support
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Emit a run of one-word secondary-table entries.  Keeping the runs grouped by
-; ISA family makes the complete 256-entry maps reviewable without changing the
-; table representation used at run time.
 .macro secondary_entries count, target
     .rept \count
         rjmp \target
     .endr
 .endm
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE0 miscellaneous extension page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+e0_extension_decode_func:
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ldi  r30, lo8(pm(e0_secondary_table))
+    ldi  r31, hi8(pm(e0_secondary_table))
+    add  r30, r6
+    adc  r31, ZERO
+    ijmp
+
+e0_secondary_table:
+    secondary_entries 8, e0_not16_family       ; 00-07
+    secondary_entries 8, e0_neg16_family       ; 08-0F
+    secondary_entries 8, e0_inc16_family       ; 10-17
+    secondary_entries 8, e0_dec16_family       ; 18-1F
+    secondary_entries 8, unimplemented_instruction_func ; 20-27 LSL16
+    secondary_entries 8, e0_lsr16_family       ; 28-2F
+    secondary_entries 8, unimplemented_instruction_func ; 30-37 ASR16
+    secondary_entries 8, unimplemented_instruction_func ; 38-3F LSR8
+    secondary_entries 8, unimplemented_instruction_func ; 40-47 ASR8
+    secondary_entries 8, e0_zext8_family       ; 48-4F
+    secondary_entries 8, e0_sext8_family       ; 50-57
+    secondary_entries 8, e0_swap8_family       ; 58-5F
+    secondary_entries 8, e0_getsp_family       ; 60-67
+    secondary_entries 8, e0_setsp_family       ; 68-6F
+    secondary_entries 8, e0_mtpb_family        ; 70-77
+    secondary_entries 8, e0_mfpb_family        ; 78-7F
+    secondary_entries 120, unimplemented_instruction_func ; 80-F7
+    secondary_entries 8, invalid_secondary_instruction_func ; F8-FF
+e0_secondary_table_end:
+
+.if ((e0_secondary_table_end - e0_secondary_table) != (256 * 2))
+    .error "E0 secondary dispatch table must contain exactly 256 words"
+.endif
+
+.macro e0_select_register
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+.endm
+
+e0_not16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    com  r4
+    com  r5
+    st   X, r5
+    st   -X, r4
+    ; Revised NOT16 preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_neg16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    mov  r0, ZERO
+    mov  r1, ZERO
+    sub  r0, r4
+    sbc  r1, r5
+    st   X, r1
+    st   -X, r0
+    ; Revised NEG16 preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_inc16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    inc  r4
+    brne 1f
+    inc  r5
+1:
+    st   X, r5
+    st   -X, r4
+    ; Revised INC16 preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_dec16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    tst  r4
+    brne 1f
+    dec  r5
+1:
+    dec  r4
+    st   X, r5
+    st   -X, r4
+    ; Revised DEC16 preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_lsr16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    lsr  r5
+    ror  r4
+    st   X, r5
+    st   -X, r4
+    ; Revised LSR16 preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_zext8_family:
+    e0_select_register
+    adiw r26, 1
+    st   X, ZERO
+    rjmp dispatch_func
+
+e0_sext8_family:
+    e0_select_register
+    ld   r4, X+
+    lsl  r4
+    sbc  r4, r4
+    st   X, r4
+    rjmp dispatch_func
+
+e0_swap8_family:
+    e0_select_register
+    ld   r4, X
+    swap r4
+    st   X, r4
+    rjmp dispatch_func
+
+e0_getsp_family:
+    e0_select_register
+    st   X+, VM_SPL
+    st   X, VM_SPH
+    rjmp dispatch_func
+
+e0_setsp_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    movw VM_SP, r4
+    rjmp dispatch_func
+
+e0_mtpb_family:
+    e0_select_register
+    ld   r4, X
+    out  VM_PB, r4
+    rjmp dispatch_func
+
+e0_mfpb_family:
+    e0_select_register
+    in   r4, VM_PB
+    st   X+, r4
+    st   X, ZERO
+    rjmp dispatch_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xF4 compact ALU extension page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 f4_extension_decode_func:
     cli
@@ -1025,224 +1251,71 @@ f4_extension_decode_func:
     in   r6, SPDR
     sei
 
-    ; Each table entry is one AVR word, so the secondary opcode is already the
-    ; word offset required by IJMP.
     ldi  r30, lo8(pm(f4_secondary_table))
     ldi  r31, hi8(pm(f4_secondary_table))
     add  r30, r6
     adc  r31, ZERO
     ijmp
 
+; No revised F4 form has an implemented handler yet. Valid operations trap at
+; the common unimplemented path; the reserved 0xF0-0xFF range is invalid.
 f4_secondary_table:
-    secondary_entries 8, f4_not16_family
-    secondary_entries 8, f4_neg16_family
-    secondary_entries 8, f4_lsl16_family
-    secondary_entries 8, f4_lsr16_family
-    secondary_entries 8, f4_asr16_family
-    secondary_entries 8, f4_lsr8_family
-    secondary_entries 8, f4_asr8_family
-    secondary_entries 8, f4_zext8_family
-    secondary_entries 8, f4_sext8_family
-    secondary_entries 8, f4_swap8_family
-    secondary_entries 8, f4_getsp_family
-    secondary_entries 8, f4_setsp_family
-    secondary_entries 1, f4_and_family
-    secondary_entries 1, f4_or_family
-    secondary_entries 1, f4_xor_family
-    secondary_entries 1, f4_bic_family
-    secondary_entries 1, f4_adc_family
-    secondary_entries 1, f4_sbc_family
-    secondary_entries 1, f4_cmp8_family
-    secondary_entries 1, f4_cpc16_family
-    secondary_entries 1, f4_mulu8_family
-    secondary_entries 1, f4_muls8_family
-    secondary_entries 1, f4_mulsu8_family
-    secondary_entries 1, f4_shl16v_family
-    secondary_entries 1, f4_lsr16v_family
-    secondary_entries 1, f4_asr16v_family
-    secondary_entries 2, invalid_secondary_instruction_func
-    secondary_entries 8, f4_ldi16_family
-    secondary_entries 8, f4_ldi8_family
-    secondary_entries 8, f4_addi16_family
-    secondary_entries 8, f4_subi16_family
-    secondary_entries 8, f4_andi16_family
-    secondary_entries 8, f4_ori16_family
-    secondary_entries 8, f4_xori16_family
-    secondary_entries 8, f4_cmpi16_family
-    secondary_entries 8, f4_cmpi8_family
-    secondary_entries 1, f4_mov_family
-    secondary_entries 1, f4_add_family
-    secondary_entries 1, f4_sub_family
-    secondary_entries 1, f4_cmp16_family
-    secondary_entries 1, f4_cmpi6_decode_func
-    secondary_entries 1, f4_jmp_rel8_family
-    secondary_entries 1, f4_call_rel8_family
-    secondary_entries 1, f4_adjsp_family
-    secondary_entries 8, f4_jmpr_family
-    secondary_entries 8, f4_callr_family
-    secondary_entries 8, f4_jmpp_family
-    secondary_entries 8, f4_callp_family
-    secondary_entries 8, f4_mtpb_family
-    secondary_entries 8, f4_mfpb_family
-    secondary_entries 1, f4_ldpbi_family
-    secondary_entries 1, f4_jmp16_family
-    secondary_entries 1, f4_call16_family
-    secondary_entries 1, f4_nop_family
-    secondary_entries 1, f4_sys_family
-    secondary_entries 4, invalid_secondary_instruction_func
-    secondary_entries 1, f4_ldsp_compact_family
-    secondary_entries 1, f4_stsp_compact_family
-    secondary_entries 5, invalid_secondary_instruction_func
+    secondary_entries 240, unimplemented_instruction_func
+    secondary_entries 16, invalid_secondary_instruction_func
 f4_secondary_table_end:
 
 .if ((f4_secondary_table_end - f4_secondary_table) != (256 * 2))
     .error "F4 secondary dispatch table must contain exactly 256 words"
 .endif
 
-; Valid families intentionally remain skeletons.  Consecutive labels alias one
-; nearby veneer so every table RJMP stays comfortably within range.
-f4_lsl16_family:
-f4_asr16_family:
-f4_lsr8_family:
-f4_asr8_family:
-f4_or_family:
-f4_xor_family:
-f4_bic_family:
-f4_adc_family:
-f4_sbc_family:
-f4_cmp8_family:
-f4_cpc16_family:
-f4_mulu8_family:
-f4_muls8_family:
-f4_mulsu8_family:
-f4_shl16v_family:
-f4_lsr16v_family:
-f4_asr16v_family:
-f4_ldi16_family:
-f4_ldi8_family:
-f4_addi16_family:
-f4_subi16_family:
-f4_andi16_family:
-f4_ori16_family:
-f4_xori16_family:
-f4_cmpi16_family:
-f4_cmpi8_family:
-f4_mov_family:
-f4_add_family:
-f4_sub_family:
-f4_cmp16_family:
-f4_jmp_rel8_family:
-f4_call_rel8_family:
-f4_adjsp_family:
-f4_jmpr_family:
-f4_callr_family:
-f4_jmpp_family:
-f4_callp_family:
-f4_ldpbi_family:
-f4_jmp16_family:
-f4_call16_family:
-f4_ldsp_compact_family:
-f4_stsp_compact_family:
-    rjmp unimplemented_instruction_func
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE4 CMPI6 direct-primary body
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-f4_lsr16_family:
-    ; The register number is carried in the low secondary-opcode bits.  Shift
-    ; the complete word in place, high byte first so ROR propagates bit 8.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    ld   r4, X+
-    ld   r5, X
-    lsr  r5
-    ror  r4
-    st   X, r5
-    st   -X, r4
-
-    ; Preserve the shifted-out bit while deriving word-wide Z and the defined
-    ; logical-shift N/V/S bits (N=0, V=C, S=C).
-    in   r26, SREG
-    andi r26, _BV(SREG_C)
-    mov  r1, r4
-    or   r1, r5
-    brne 1f
-    ori  r26, _BV(SREG_Z)
-1:
-    sbrc r26, SREG_C
-    ori  r26, (_BV(SREG_V) | _BV(SREG_S))
-    mov  VM_FLAGS, r26
-    rjmp dispatch_func
-
-f4_and_family:
-    ; Fetch RRSPEC while starting the following primary opcode.
-    adiw VM_PC, 1
-    delay_4
-    delay_2
+e4_cmpi6_func:
+    ; Start fetching the following primary opcode and read the packed operand.
     cli
     out  SPDR, ZERO
     in   r6, SPDR
     sei
 
-    ; Capture both operands before writing, including when rD == rS.
+    ; Operand encoding:
+    ;   bits 7:2 = signed six-bit immediate
+    ;   bits 1:0 = compact register
     mov  r26, r6
-    andi r26, 0x07
+    andi r26, 0x03
     lsl  r26
-    subi r26, -8
+    subi r26, -16
     clr  r27
-    ld   r0, X+
-    ld   r1, X
-    mov  r26, r6
-    swap r26
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
+
+    asr  r6
+    asr  r6
+
     ld   r4, X+
     ld   r5, X
-    and  r4, r0
-    and  r5, r1
-    st   X, r5
-    st   -X, r4
 
-    ; Logical operations preserve C and define Z/N/V/S from the word result.
-    bst  VM_FLAGS, SREG_C
-    cp   r4, ZERO
-    cpc  r5, ZERO
+    mov  r0, r6
+    lsl  r0
+    sbc  r0, r0
+
+    cp   r4, r6
+    cpc  r5, r0
     in   VM_FLAGS, SREG
-    bld  VM_FLAGS, SREG_C
     rjmp dispatch_func
-
-f4_nop_family:
-    ; The extension prefix has already advanced VM_PC to the secondary opcode
-    ; and started fetching the following primary opcode.  Pad the secondary
-    ; table path to the 17-cycle SPI cadence, then let dispatch_reverse advance
-    ; VM_PC to that prefetched opcode and dispatch it.
-    delay_2
-    rjmp dispatch_reverse_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SYS service dispatch
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-f4_sys_family:
-    ; VM_PC currently names the SYS secondary opcode. Advance it to the service
-    ; identifier so the final dispatch advances to the following instruction.
-    adiw VM_PC, 1
-
-    ; The F4 decoder started transferring the service identifier. At entry to
-    ; this family, ten cycles have elapsed since that OUT. These seven cycles
-    ; place the next OUT at the normal 17-cycle SPI cadence. It starts fetching
-    ; the following primary opcode while IN reads the completed service ID.
-    delay_4
+e9_sys_decode_func:
+    ; Start fetching the following primary opcode and read the service ID.
     cli
     out  SPDR, ZERO
     in   r6, SPDR
     sei
+    rjmp sys_dispatch_func
 
 sys_dispatch_func:
-    ; Each SYS service has one one-word table entry. The unsigned service ID in
-    ; r6 is already the AVR-word offset required by IJMP. New services are added
-    ; by replacing the corresponding invalid entry with their handler label.
     ldi  r30, lo8(pm(sys_dispatch_table))
     ldi  r31, hi8(pm(sys_dispatch_table))
     add  r30, r6
@@ -1263,9 +1336,9 @@ sys_dispatch_func:
 .endif
 
 sys_dispatch_table:
-    sys_entries 1,   sys_debug_putc_func  ; 0x00: debug_putc
-    sys_entries 1,   sys_debug_break_func ; 0x01: debug_break
-    sys_entries 254, invalid_syscall_func ; 0x02-0xFF: reserved
+    sys_entries 1,   sys_debug_putc_func
+    sys_entries 1,   sys_debug_break_func
+    sys_entries 254, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if ((sys_dispatch_table_end - sys_dispatch_table) != (256 * 2))
@@ -1273,167 +1346,14 @@ sys_dispatch_table_end:
 .endif
 
 sys_debug_putc_func:
-    ; SYS 0: debug_putc(low8(c0)). The simulator records a direct UEDATX write
-    ; as serial output. No USB setup, endpoint selection, readiness check,
-    ; buffering, packet commit, character translation, or retry is performed.
+    ; SYS DEBUG_PUTC writes low8(A), where A aliases c0/r4.
     sts  UEDATX, VM_C0L
-
-    ; The table lookup and service body leave two cycles of padding before the
-    ; common dispatch path to retain the 17-cycle SPI OUT-to-OUT cadence.
     delay_2
     rjmp dispatch_func
 
 sys_debug_break_func:
-    ; SYS 1: debug_break(). Execute one native AVR BREAK instruction. Ardens
-    ; headless mode treats this as a stop condition. If a debugger subsequently
-    ; resumes execution, AVM execution continues with the prefetched instruction
-    ; following SYS 1. BREAK itself does not modify AVM architectural state.
     break
-
-    ; BREAK is one cycle, versus the two-cycle STS in debug_putc. Three cycles
-    ; of padding keep the same 17-cycle SPI OUT-to-OUT cadence on resume.
     delay_3
-    rjmp dispatch_func
-
-f4_mtpb_family:
-    ; The low three secondary-opcode bits select r0-r7.  Convert that index to
-    ; the native data-space address of the register's low byte (r8, r10, ...,
-    ; r22), then install it as PB.  VM_FLAGS is architectural state in r3 and
-    ; remains untouched by the native address arithmetic.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    ld   r4, X
-    out  VM_PB, r4
-
-    ; Register decoding outlasts the minimum SPI transfer interval, so the
-    ; prefetched primary opcode is complete and can use normal dispatch.
-    rjmp dispatch_func
-
-f4_mfpb_family:
-    ; Convert the register index in the low three secondary-opcode bits to the
-    ; native data-space address of the selected AVM register.  MFPB writes PB
-    ; to the low byte and zero-extends it through the high byte.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    in   r4, VM_PB
-    st   X+, r4
-    st   X, ZERO
-
-    ; Address decoding and the two stores outlast the minimum SPI transfer
-    ; interval.  The prefetched primary opcode is therefore complete.
-    rjmp dispatch_func
-
-f4_zext8_family:
-    ; Select the AVM register from the low three secondary-opcode bits and
-    ; address its high byte directly.  The low byte and VM_FLAGS are unchanged.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -9
-    clr  r27
-    st   X, ZERO
-    rjmp dispatch_func
-
-f4_sext8_family:
-    ; Load the selected register's low byte, convert its sign bit to 0x00 or
-    ; 0xFF in scratch, and write that value to the high byte.  Native flag
-    ; changes are intentionally not copied to the architectural VM_FLAGS.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    ld   r4, X+
-    lsl  r4
-    sbc  r4, r4
-    st   X, r4
-    rjmp dispatch_func
-
-f4_swap8_family:
-    ; SWAP8 modifies only the selected register's low byte.  Its high byte and
-    ; the architectural flags remain unchanged.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    ld   r4, X
-    swap r4
-    st   X, r4
-    rjmp dispatch_func
-
-f4_getsp_family:
-    ; Copy the current native Y value (the AVM stack pointer) into the selected
-    ; AVM register in little-endian order.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    st   X+, VM_SPL
-    st   X, VM_SPH
-    rjmp dispatch_func
-
-f4_setsp_family:
-    ; Stage both bytes before replacing Y.  AVM registers do not overlap Y,
-    ; but staging keeps the operation independent of pointer update details.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    ld   r4, X+
-    ld   r5, X
-    movw VM_SP, r4
-    rjmp dispatch_func
-
-f4_not16_family:
-    ; Load and complement the complete selected word before writing it back.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    ld   r4, X+
-    ld   r5, X
-    com  r4
-    com  r5
-    st   X, r5
-    st   -X, r4
-
-    ; A word compare against zero produces cumulative Z and the high-byte N,
-    ; with V clear and S equal to N.  Preserve the old architectural carry in
-    ; T while replacing VM_FLAGS with those complete-word result flags.
-    bst  VM_FLAGS, SREG_C
-    cp   r4, ZERO
-    cpc  r5, ZERO
-    in   VM_FLAGS, SREG
-    bld  VM_FLAGS, SREG_C
-    rjmp dispatch_func
-
-f4_neg16_family:
-    ; Form 0 - operand in scratch.  SUB followed by SBC produces the required
-    ; word-wide C/Z/N/V/S values, including cumulative zero in the high step.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-    ld   r4, X+
-    ld   r5, X
-    mov  r0, ZERO
-    mov  r1, ZERO
-    sub  r0, r4
-    sbc  r1, r5
-    st   X, r1
-    st   -X, r0
-    in   VM_FLAGS, SREG
     rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1514,55 +1434,6 @@ fd_ldp8_displaced_family:
 fd_ldp16_displaced_family:
     rjmp unimplemented_instruction_func
 
-f4_cmpi6_decode_func:
-    ; VM_PC currently names the secondary opcode.  Advance it to the CMPI6
-    ; operand so the final dispatch advances to the following primary opcode.
-    adiw VM_PC, 1
-
-    ; The first OUT above started the CMPI6 operand transfer.  Including the
-    ; secondary-table dispatch above, this padding places the next OUT 17
-    ; cycles later.  It starts fetching the following primary opcode while IN
-    ; reads the completed CMPI6 operand.
-    delay_4
-    delay_2
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ; Operand encoding:
-    ;   bits 7:2 = signed six-bit immediate
-    ;   bits 1:0 = compact register
-    ;
-    ; Construct the native data-space address of cN:
-    ;   address = 16 + 2 * (operand & 3)
-    mov  r26, r6
-    andi r26, 0x03
-    lsl  r26
-    subi r26, -16
-    clr  r27
-
-    ; Convert [simm6:6][cN:2] into a signed eight-bit immediate.
-    asr  r6
-    asr  r6
-
-    ; Load the selected compact register through data space.
-    ld   r4, X+
-    ld   r5, X
-
-    ; Sign-extend the immediate from r6 into r0:r6.
-    mov  r0, r6
-    lsl  r0
-    sbc  r0, r0
-
-    ; Compare selected cN against sign_extend(simm6).
-    cp   r4, r6
-    cpc  r5, r0
-    in   VM_FLAGS, SREG
-
-    ; The following primary opcode has completed transferring.
-    rjmp dispatch_func
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; General rel8 branch continuations
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1594,15 +1465,6 @@ branch_rel8_taken_func:
     movw r30, r0
     subi r31, hi8(-(DISPATCH_ORG))
     ijmp
-
-unimplemented_instruction_func:
-    rjmp unimplemented_instruction_func
-
-invalid_secondary_instruction_func:
-    rjmp invalid_secondary_instruction_func
-
-invalid_syscall_func:
-    rjmp invalid_syscall_func
 
 ; The next opcode has long since completed transferring.
 dispatch_func:

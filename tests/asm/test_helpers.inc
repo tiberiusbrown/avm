@@ -17,7 +17,10 @@
     .rept 12
         lsr16 c0
     .endr
-    and c0, c1
+    ; AND A,r5 (c1). A aliases c0/r4 and the revised one-byte accumulator family
+    ; occupies 0x50-0x57.  Spell the encoding directly until the MC parser's
+    ; accumulator syntax is available.
+    .byte 0x55
     add c0, c3
     sys 0
 
@@ -25,18 +28,18 @@
     .rept 8
         lsr16 c0
     .endr
-    and c0, c1
+    .byte 0x55
     add c0, c3
     sys 0
 
     mov c0, c2
     swap8 c0
-    and c0, c1
+    .byte 0x55
     add c0, c3
     sys 0
 
     mov c0, c2
-    and c0, c1
+    .byte 0x55
     add c0, c3
     sys 0
 
@@ -63,6 +66,13 @@
     ldi8 \src, \sv
     and \dst, \src
     print_reg16 \dst
+.endm
+
+.macro test_and_a src, opcode, av, sv
+    ldi8 c0, \av
+    ldi8 \src, \sv
+    .byte \opcode
+    print_reg16 c0
 .endm
 
 .macro test_swap reg, value

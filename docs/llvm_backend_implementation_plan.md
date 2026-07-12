@@ -17,7 +17,90 @@ The source of truth for the target is `docs/arch.md`. The LLVM fork is located a
 
 The plan uses current LLVM concepts—target registration, TableGen descriptions, the MC layer, GlobalISel's `CallLowering`, `LegalizerInfo`, `RegisterBankInfo`, and `InstructionSelector`, MIR tests, and LLD target support. Exact APIs must always be taken from the checked-in fork rather than copied blindly from online documentation.
 
-This revision is anchored to the supplied top-level `CMakeLists.txt` and the current diff against `deps/llvm-project`. The diff is a snapshot of work already started, not a patch that later agents should blindly reapply. At every step, the checked-out source tree, `git status`, tracked diffs, and untracked files are authoritative.
+This revision is anchored to the supplied top-level `CMakeLists.txt` and the current diff against `deps/llvm-project`. The diff is a snapshot of work already started, not a patch that later agents should blindly reapply. Each step assumes both the top-level repository and the nested `deps/llvm-project` repository are clean before the step starts. During and after the step, the staged, unstaged, and untracked changes in both repositories are authoritative.
+
+## Independent review workflow
+
+Each implementation step should be reviewed in a fresh agent session before its changes are accepted when the step is marked **Independent review: Recommended**, and whenever a lower-risk step produces surprising changes or unresolved failures.
+
+The implementation workflow assumes that **both Git repositories are clean immediately before each step begins**:
+
+- The top-level AVM repository at the repository root.
+- The nested LLVM repository at `deps/llvm-project`.
+
+Consequently, the union of the current changes in those two repositories is the complete review scope for the step. The top-level repository may report only that `deps/llvm-project` is dirty; that is not sufficient. The reviewer must inspect the nested repository's own status, staged diff, unstaged diff, and untracked files directly.
+
+Independent review is strongly recommended after Steps **5, 8, 11, 15, 17, 21-24, 26, 28, 32-33, 36, 38-41, and 46**. It is optional for lower-risk steps unless the implementation produced surprising changes, broad target-independent edits, or unresolved failures.
+
+### How to combine the reviewer prompt with a step prompt
+
+1. Start a fresh reviewer session in the same working tree after the implementation agent stops and before committing, accepting, reverting, or otherwise altering the step's changes.
+2. Paste the complete **Reusable reviewer prompt** below.
+3. Immediately after it, paste the complete original **Agent prompt** from the implementation step being reviewed. Do not paste only the step title, goal, or acceptance checklist; the reviewer needs the full copyable prompt.
+4. Do not paste the entire plan unless the reviewer identifies a specific need for broader context. The reusable reviewer prompt followed by the original step prompt is the intended complete input.
+5. Do not include the step's **Recommended agent profile** line in the copied implementation prompt. Model recommendations are plan-execution metadata, not implementation requirements or review criteria.
+6. The reviewer should inspect and test the implementation rather than relying on the implementation agent's summary. It may make narrowly scoped corrections that are clearly required by the reviewed step, but it must not start later steps or rewrite the implementation wholesale.
+
+The combined reviewer input should have this shape:
+
+```text
+[Reusable reviewer prompt from this header]
+
+[Complete Agent prompt from the step being reviewed]
+```
+
+### Reusable reviewer prompt
+
+```text
+You are independently reviewing one completed step of the AVM LLVM backend plan. The complete original Agent prompt for that step follows this reviewer prompt and defines the entire intended scope, requirements, acceptance checks, and deliverables. Treat that following prompt as the specification for this review. Do not implement later steps.
+
+Assume that both Git repositories were clean immediately before the implementation step began:
+1. the top-level AVM repository at the current repository root; and
+2. the nested LLVM repository at `deps/llvm-project`.
+
+The union of all current staged, unstaged, and untracked changes in those two repositories is therefore the complete implementation to review. Inspect both repositories explicitly. At minimum, run the equivalent of:
+
+Top-level repository:
+- `git status --short`
+- `git diff --stat`
+- `git diff`
+- `git diff --cached --stat`
+- `git diff --cached`
+- `git ls-files --others --exclude-standard`
+
+Nested LLVM repository:
+- `git -C deps/llvm-project status --short`
+- `git -C deps/llvm-project diff --stat`
+- `git -C deps/llvm-project diff`
+- `git -C deps/llvm-project diff --cached --stat`
+- `git -C deps/llvm-project diff --cached`
+- `git -C deps/llvm-project ls-files --others --exclude-standard`
+
+Open and review the full contents of every newly created untracked file in either repository because ordinary `git diff` does not include those files. The top-level repository may merely show `deps/llvm-project` as dirty; always inspect the nested repository directly. Do not review unrelated historical commits unless a current change requires context.
+
+Refer to `docs/arch.md` as the architectural source of truth. The LLVM fork is in `deps/llvm-project`. Use the repository-root `CMakeLists.txt`, the existing `build/` directory, its configured generator, and only the Debug configuration. Every `cmake --build` command must include `--config Debug`; every `ctest` command must include `-C Debug`; direct tool invocations must use Debug artifacts. On Windows, if `build/CMakeCache.txt` records Ninja or Ninja Multi-Config with MSVC `cl.exe`, initialize the matching Visual Studio/MSVC developer environment before building, using the same installation and toolset that configured the tree. Use `vswhere.exe` and the matching `vcvars64.bat` or `VsDevCmd.bat` when needed. Do not hard-code Visual Studio, MSVC, or Windows SDK versions, and do not add toolchain header paths to CMake files.
+
+Review the implementation against every item in the following original step prompt. In particular:
+- Verify that the combined changes across both repositories stay within the assigned step and do not implement later milestones.
+- Verify architectural fidelity to `docs/arch.md`, including any ISA, ABI, ELF, linker, image-format, or address-space details relevant to the step.
+- Verify that existing AVM work was extended rather than duplicated, accidentally reverted, or inconsistently implemented between the top-level repository and `deps/llvm-project`.
+- Verify that source, TableGen, CMake, and test changes use APIs and conventions from the checked-in LLVM fork.
+- Verify that tests meaningfully exercise the required behavior, including important negative and boundary cases, rather than merely increasing coverage superficially.
+- Re-run the narrowest relevant Debug build and test commands needed to validate the step. Do not accept claimed test results without checking them when feasible.
+- Check generated-file discipline, Markdown deliverable paths under `docs/llvm_plan/`, and the absence of unrelated cleanup in either repository.
+- Identify correctness risks, missing acceptance criteria, weak diagnostics, unstable encodings or relocation numbers, and integration issues likely to break later steps.
+
+Produce a review report with these sections:
+1. Verdict: `ACCEPT`, `ACCEPT WITH MINOR FIXES`, or `REJECT`.
+2. Scope reviewed: separately summarize the top-level repository changes and the `deps/llvm-project` changes, including staged, unstaged, and untracked files.
+3. Findings: list issues in descending severity, with exact file and line references where possible.
+4. Acceptance-criteria audit: mark each requirement from the original step prompt as satisfied, partially satisfied, or unsatisfied.
+5. Build and test verification: list the exact commands run and their results.
+6. Corrections made: list any narrowly scoped edits you made, or state that none were made.
+7. Remaining risks or follow-up items: include only items relevant to this step; do not begin later steps.
+
+If the implementation is correct, say so clearly and still document the evidence. If it is not correct, make only focused fixes that are unambiguously within this step; otherwise leave the code unchanged and explain precisely what the implementation agent must correct. Stop after the review and any focused corrections. Do not proceed to the next implementation step.
+```
 
 ## Current repository and build snapshot
 
@@ -92,7 +175,7 @@ The current patch therefore represents a partially connected scaffold. Early wor
 4. Use the repository-root `CMakeLists.txt` as the normal configuration entry point. Preserve command-line cache override behavior. The current minimal baseline leaves `LLVM_EXPERIMENTAL_TARGETS_TO_BUILD` empty until the skeletal AVM target libraries exist.
 5. Use `build/` as the canonical build directory and reuse its existing CMake generator. Every `cmake --build` invocation must include `--config Debug`; every `ctest` invocation must include `-C Debug`; direct tool invocations must select Debug artifacts. Re-run root CMake only when a step explicitly requires a configuration change. Never switch generators in-place or create an alternate normal build directory.
 6. On Windows, inspect `build/CMakeCache.txt` before building. If it records Ninja or Ninja Multi-Config with MSVC `cl.exe`, initialize the matching Visual Studio/MSVC developer environment and run the build from that same shell. Use `vswhere.exe` when needed to locate the matching installation, then call its `vcvars64.bat` or `VsDevCmd.bat`. Do not use a different MSVC version, hard-code Visual Studio/MSVC/Windows SDK versions, or add toolchain header paths to CMake files. Missing `vector`, `stdio.h`, `stdint.h`, or `windows.h` usually indicates that this environment was not initialized.
-7. Before editing, inspect `git status`, the current diff under `deps/llvm-project`, and untracked files. Extend existing AVM work; do not reapply or recreate changes already present.
+7. Before editing, inspect staged, unstaged, and untracked changes in both the top-level repository and the nested `deps/llvm-project` repository. Use `git -C deps/llvm-project ...` for the nested repository rather than relying on the top-level repository merely reporting it as dirty. Extend existing AVM work; do not reapply or recreate changes already present.
 8. Before the Clang phase, do not require `clang` to be in the default build. The default project list is currently `lld` only.
 9. Place every Markdown document created or updated as a plan deliverable under `docs/llvm_plan/`. Create that directory when first needed. The architecture specification remains at `docs/arch.md` and must not be moved.
 10. Do not silently change the ISA or ABI. When `docs/arch.md` is ambiguous or conflicts with LLVM requirements, record the issue in `docs/llvm_plan/avm-llvm-open-issues.md`, choose the least invasive temporary implementation only when necessary, and add a test that makes the temporary behavior visible.
@@ -101,6 +184,38 @@ The current patch therefore represents a partially connected scaffold. Early wor
 13. Prefer small MIR, LLVM IR, MC, object, Clang, and LLD `lit` tests over large end-to-end fixtures until the final phases.
 14. Preserve generated-file discipline: edit TableGen and source inputs, not generated build outputs.
 15. Beginning with Step 11, retain the restricted assembly-to-image path as a fast MC/interpreter regression route. Later linker and image work must extend the same image serialization and validation implementation rather than creating a second incompatible writer.
+16. Use the per-step recommended model profile shown outside the copyable Agent prompt when available, but do not copy model recommendations into the implementation prompt. Run each implementation step in a fresh session with only that step's Agent prompt. For review, use a separate fresh session and combine the reusable reviewer prompt in the document header with the original step prompt exactly as instructed. Model choice never permits an agent to skip tests, exceed scope, or modify `docs/arch.md` silently.
+
+## Recommended models and execution settings
+
+These recommendations assume access to the GPT-5.6 coding-model family described below. Model availability and labels may vary by client; when an exact option is unavailable, use the nearest available coding model with equivalent reasoning depth. The model choice is an execution recommendation, not part of the AVM architecture or acceptance criteria.
+
+### Default execution profile
+
+Use the following profile for most substantive implementation steps:
+
+```text
+Model: GPT-5.6 Sol
+Reasoning: High
+Execution: One local/workspace coding agent with terminal and write access
+Session: Fresh session for the individual step
+Prompt context: Copy only that step's agent prompt
+Repository state: Accepted output of all preceding steps
+Network: Off or approval-required unless external documentation is genuinely needed
+```
+
+Use **GPT-5.6 Sol with Medium reasoning** for straightforward repository plumbing or documentation, and **GPT-5.6 Sol with Extra High reasoning** for the most architecture-sensitive ABI, legalization, address-space, linker, relaxation, and image-layout work. Escalate a difficult or failed Extra High attempt to **Sol Max** rather than immediately broadening the task.
+
+### Other model profiles
+
+- **GPT-5.6 Terra, Medium reasoning:** suitable for bounded audits, mechanical CMake integration, repetitive TableGen or test additions after the design is settled, straightforward build fixes, and documentation updates. Do not use Terra as the sole implementer for novel ABI, GlobalISel, address-space, or LLD design without a later Sol review.
+- **GPT-5.6 Luna, Low or Medium reasoning:** reserve for narrow mechanical subwork such as generating repetitive test cases, inventorying files or symbols, renaming documented paths, or running a known command sequence. Do not assign an entire substantive backend step to Luna.
+- **GPT-5.6 Sol Max:** use selectively when a High or Extra High run failed to converge, when several LLVM subsystem designs must be compared, when a change spans MC, CodeGen, ELF, and LLD, or when a proposed change would modify `docs/arch.md`.
+- **Ultra/multi-agent mode:** use only for read-only or naturally separable audits, profiling analysis, test-matrix design, or final traceability review. Do not let multiple agents edit the same working tree concurrently. One primary agent must synthesize any parallel findings.
+
+### Per-step profile notation
+
+Each step below includes a **Recommended agent profile** outside its copyable Agent prompt. These profile lines are execution guidance only and must not be copied into the implementation or reviewer prompt. `Independent review: Recommended` means the implementation should receive the review described in the document header before the next dependent step begins. Model selection does not relax the step's scope, deliverables, build requirements, or acceptance checks.
 
 ## Recommended milestone gates
 
@@ -133,6 +248,8 @@ These are background references only. The checked-in source under `deps/llvm-pro
 **Depends on:** None
 
 **Goal:** Determine exactly which parts of the supplied AVM patch are already present, identify missing or untracked companion files, and document a reproducible baseline using the repository-root CMake configuration.
+
+**Recommended agent profile:** `GPT-5.6 Terra` with `Medium` reasoning. This is a bounded repository audit and reproducibility task. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -169,6 +286,8 @@ Before finishing, run the narrowest relevant build and tests available in the cu
 **Depends on:** Step 1
 
 **Goal:** Turn the partially connected current diff into a self-consistent, buildable, test-covered foundation without yet implementing AVM instruction encoding or code generation.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Medium` reasoning. The work is mostly target-independent plumbing, but it touches several shared LLVM and LLD registries. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -207,6 +326,8 @@ Before finishing, build through the repository-root CMake configuration and run 
 
 **Goal:** Allow `llc` to construct an AVM `TargetMachine` and report the correct data layout, even though instruction selection is not yet functional.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Target-component and TargetMachine bring-up requires careful matching to the checked-in LLVM revision. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -243,6 +364,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Model all allocatable registers, subregisters, compact classes, compound pairs, and special nonallocatable state in TableGen and target register-info code.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Register-class design is foundational and affects all later CodeGen work. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -275,6 +398,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 4
 
 **Goal:** Create a single authoritative TableGen instruction database covering the Version 1 ISA, including primary encodings, extension pages, operand constraints, flags, and control-flow properties.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. The full instruction/encoding model is broad and mistakes propagate into MC, CodeGen, and the interpreter. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -310,6 +435,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Make AVM `MCInst` objects printable in stable canonical assembly syntax.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. MC assembly information and printing are substantial but follow the settled instruction model. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -342,6 +469,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 6
 
 **Goal:** Encode concrete AVM `MCInst` instructions into exactly the byte sequences defined by the architecture.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Encoding, fixup, and validation errors can be subtle and byte-level correctness is essential. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -376,6 +505,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Make `llvm-mc -filetype=obj` produce valid little-endian AVM ELF relocatable objects with AVM relocation records.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. ELF object emission and relocation recording establish a long-lived binary contract. **Independent review:** Recommended before proceeding.
+
 ### Agent prompt
 
 ```text
@@ -408,6 +539,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 8
 
 **Goal:** Decode AVM bytes into concrete `MCInst` objects with correct instruction lengths and invalid-encoding behavior.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. The disassembler is bounded but must exactly mirror the encoding definitions. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -442,6 +575,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Parse canonical and permitted alias AVM assembly into `MCInst` objects and relocatable expressions.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. The parser is sizeable and syntax-sensitive but can follow established MC patterns. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -474,6 +609,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 10
 
 **Goal:** Produce interpreter-consumable AVM images from hand-written assembly before GlobalISel, full LLD relocation handling, bank placement, and linker relaxation exist.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. This is the first interpreter-consumable image milestone and must not create a conflicting image path. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -525,6 +662,8 @@ Before finishing, build `llvm-mc`, `llvm-objdump`, and the new image-tool target
 
 **Goal:** Create the target's GlobalISel components and pass pipeline so a minimal function can progress through IR translation to an intentional selection failure.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. GlobalISel pipeline bring-up requires coherent target hooks even before full selection exists. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -557,6 +696,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 12
 
 **Goal:** Shape generic MIR into the legal scalar, pointer, memory, and control types expected by the AVM selector.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Legalization decisions for unusual integer and pointer types constrain the entire backend. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -591,6 +732,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Map generic virtual registers to AVM register banks and prepare them for allocation into 8-bit, 16-bit, and pair register classes.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Register-bank mapping is foundational but has a relatively contained implementation surface. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -623,6 +766,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 14
 
 **Goal:** Lower formal arguments and return values according to the AVM calling convention, before implementing call instructions themselves.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. The custom calling convention, packed arguments, and 24-bit pointers are architecture-sensitive. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -658,6 +803,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Produce the first complete target instructions for a minimal function and simple value movement.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Basic selection is central but comparatively local once legalization and register banks exist. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -690,6 +837,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 16
 
 **Goal:** Lower 8/16-bit arithmetic, logical operations, compares, and flag dependencies with architecture-correct semantics.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Explicit FLAGS dependencies and cumulative-zero semantics are easy to implement plausibly but incorrectly. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -724,6 +873,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Lower IR control flow to relaxable AVM branch and jump pseudos while preserving flag dependencies and same-bank semantics.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Branch lowering is important but can build directly on the settled FLAGS model. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -756,6 +907,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 18
 
 **Goal:** Support AS0 memory operations and choose the initial generic AVM addressing forms without relying on physical compact registers.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Data-space addressing is substantial but uses conventional 16-bit pointer behavior. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -791,6 +944,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Map LLVM frame objects and incoming/outgoing stack slots to AVM stack-relative instructions or explicit address calculations.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Frame-index elimination is bounded once frame and addressing rules are established. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -823,6 +978,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 20
 
 **Goal:** Generate ABI-correct function frames and restore SP and callee-saved registers on every return path.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. The 256-byte stack, callee saves, and three-byte return addresses demand careful frame reasoning. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -857,6 +1014,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Implement ABI-correct function calls using relaxable direct-call pseudos and the architecture's universal three-byte return-address convention.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Calls, returns, tail calls, and relaxation pseudos cross ABI and control-flow boundaries. **Independent review:** Recommended before proceeding.
+
 ### Agent prompt
 
 ```text
@@ -890,6 +1049,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Support LLVM address-space-one pointers as 24-bit logical values represented in memory by three bytes and in registers by an even-aligned pair of 16-bit registers.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. The 24-bit address-space-one pointer representation is unusual and impacts legalization and ABI behavior. **Independent review:** Recommended before proceeding.
+
 ### Agent prompt
 
 ```text
@@ -922,6 +1083,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 23
 
 **Goal:** Implement AVM's separate program-bank latch and all AS1 dereference and indirect-call/jump operations.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. PB dependencies, program-space loads, and indirect far control flow span multiple backend concepts. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -957,6 +1120,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Make byte operations and materialized booleans efficient while respecting the architecture's partial-register and canonicalization rules.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Byte and boolean canonicalization is detailed but bounded by explicit architectural rules. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -990,6 +1155,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 25
 
 **Goal:** Support the primary 32-bit integer operations by decomposing values into legal 16-bit register pairs and instruction sequences.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Multiword arithmetic and cumulative flags require precise cross-word semantics. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -1025,6 +1192,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Complete scalar shift and multiplication support and establish a correct policy for division, remainder, floating point, and larger unsupported operations.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Shift, multiply, and libcall lowering are substantial but comparatively conventional after prior groundwork. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1057,6 +1226,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 27
 
 **Goal:** Complete the calling convention for variadic functions, packed stack arguments, `va_list`, and common aggregate passing/return cases.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Variadic and aggregate ABI cases are error-prone and must match the custom calling convention exactly. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -1091,6 +1262,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Lower symbols and organize ELF sections according to AVM's split data/program address spaces and startup layout.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Section and constant placement are broad but governed by a clear memory-layout specification. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1123,6 +1296,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 29
 
 **Goal:** Generate efficient and correct switch code while recognizing the high cost of program-space jump-table reads.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Switch policy is primarily a target-cost and lowering task with measurable outcomes. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -1157,6 +1332,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Recognize load/store-plus-pointer-update patterns and preserve them as target pseudos until final physical-register costs are known.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Pre-RA postincrement formation is a focused combine and cost-model problem. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1189,6 +1366,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 31
 
 **Goal:** Convert eligible physical-register instructions into one-byte compact primary encodings after register allocation.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Post-RA compression must preserve semantics while exploiting physical-register encodings. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -1223,6 +1402,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Translate machine basic-block and symbol control-flow pseudos into conservative concrete encodings and relocation hints suitable for assembler and linker relaxation.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Pseudo expansion and relaxation metadata form the contract between CodeGen and the linker. **Independent review:** Recommended before proceeding.
+
 ### Agent prompt
 
 ```text
@@ -1256,6 +1437,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Teach target-independent optimizers and code generation about AVM code size, compact registers, expensive taken control flow, and expensive program-space loads.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Cost models and allocation preferences should be implemented conservatively and measured later. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1288,6 +1471,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 34
 
 **Goal:** Extend the repository's AVM-focused LLVM+LLD configuration to include Clang, then teach Clang the AVM C/C++ data model, target triple, address spaces, and ABI-visible type properties.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Clang data-model integration is broad but follows the already established LLVM target ABI. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -1325,6 +1510,8 @@ Before finishing, build `clang` through the root configuration and run the narro
 
 **Goal:** Make the Clang driver invoke the AVM backend correctly and expose a usable C/C++ spelling for address-space-one program data.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Driver behavior and program-space source-language support cross Clang, LLVM address spaces, and linking. **Independent review:** Recommended before proceeding.
+
 ### Agent prompt
 
 ```text
@@ -1358,6 +1545,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Supply the helper functions and startup/runtime objects required by code generated by the backend.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Runtime builtins and startup are sizeable but have explicit ABI and image-format contracts. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1390,6 +1579,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 37
 
 **Goal:** Replace the minimal LLD scaffold introduced in Step 2 with complete AVM relocation application and linked-ELF layout support, while preserving the existing CMake and target-dispatch integration from the current patch.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Completing LLD relocation semantics is a high-risk binary-correctness milestone; use Sol Max if design ambiguity remains. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -1427,6 +1618,8 @@ Before finishing, build `ld.lld` through the repository-root configuration and r
 
 **Goal:** Enforce the architectural rule that no function, instruction, basic-block fallthrough, or sequential path crosses a 64 KiB program bank.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Bank constraints and placement require global layout reasoning; use Sol Max if the first design does not converge. **Independent review:** Recommended before proceeding.
+
 ### Agent prompt
 
 ```text
@@ -1461,6 +1654,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Shrink conservative far calls/jumps and conditional branches after final placement, and insert veneers when alignment or range requires them.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Relaxation and veneers are iterative linker transformations with subtle range and alignment invariants; use Sol Max when needed. **Independent review:** Recommended before proceeding.
+
 ### Agent prompt
 
 ```text
@@ -1494,6 +1689,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 40
 
 **Goal:** Extend the early `llvm-avm-image` implementation to convert fully linked AVM ELF files into production images without regressing the restricted assembly-test path.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Extra High` reasoning. Production image generation must preserve linker placement and exactly implement header, CRC, data, padding, and tail rules; use Sol Max when needed. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 
@@ -1534,6 +1731,8 @@ Before finishing, build the image-tool target through the repository-root config
 
 **Goal:** Make generated code debuggable without placing nonruntime metadata in the flat image.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Debug and metadata support spans several formats but follows established implementation contracts. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1566,6 +1765,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 42
 
 **Goal:** Verify the complete Clang-to-image toolchain and architecture semantics with small deterministic programs.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. End-to-end conformance requires broad coverage and disciplined fixture design. **Independent review:** Optional unless the diff or failures are surprising.
 
 ### Agent prompt
 
@@ -1600,6 +1801,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Ensure malformed assembly, objects, relocations, layouts, and images fail safely with actionable diagnostics.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Diagnostics and fuzzing benefit from strong reasoning but can be decomposed into bounded negative cases. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1633,6 +1836,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 
 **Goal:** Collect the measurements required by the architecture before assigning reserved opcodes or finalizing cost thresholds.
 
+**Recommended agent profile:** `GPT-5.6 Sol` with `High` reasoning. Profiling and policy tuning require synthesis across measurements; Terra may assist with mechanical corpus/report work. **Independent review:** Optional unless the diff or failures are surprising.
+
 ### Agent prompt
 
 ```text
@@ -1665,6 +1870,8 @@ Before finishing, run the narrowest relevant build and lit/unit tests plus any A
 **Depends on:** Step 45
 
 **Goal:** Turn the working backend into a maintainable toolchain component with explicit versioning and repeatable release checks.
+
+**Recommended agent profile:** `GPT-5.6 Sol` with `Medium` reasoning. Use Medium for the documentation work, followed by an independent Sol High final implementation and traceability audit. **Independent review:** Recommended before proceeding.
 
 ### Agent prompt
 

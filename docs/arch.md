@@ -1689,7 +1689,7 @@ Flags are preserved.
 
 `JMP16` and `CALL16` use an absolute low-16-bit address in the current bank.
 
-`SYS` invokes a service in the Arduboy system ABI. Program termination, frame yielding, debugger breaks, and explicit guest assertions or traps are system services rather than dedicated ISA instructions.
+`SYS` invokes the Arduboy system-ABI service selected by the following `imm8` service identifier. Service `0` is `debug_putc`, defined in Section 65. Program termination, frame yielding, debugger breaks, and explicit guest assertions or traps are system services rather than dedicated ISA instructions.
 
 ---
 
@@ -2081,7 +2081,7 @@ A cross-bank tail call MUST use a jump, not a call, so the callee returns direct
 
 ## 65. `SYS`
 
-`SYS imm8` invokes a service in the Arduboy system ABI. The service ABI may be maintained as a separate specification, but linked images express their complete interpreter compatibility through the single `runtimeVersion` field described in Part XVI.
+`SYS imm8` invokes a service in the Arduboy system ABI. The byte following the `SYS` secondary opcode is an unsigned service identifier. Linked images express their complete interpreter compatibility through the single `runtimeVersion` field described in Part XVI.
 
 Unless a service specifies otherwise:
 
@@ -2093,22 +2093,51 @@ FLAGS  clobbered
 SP     preserved
 ```
 
-Likely service categories include:
+### 65.1 Service identifiers
 
-* Display submission.
-* Input sampling.
-* Audio control.
-* Frame timing and yield.
-* Program exit or termination.
-* Debugger break.
-* Assertion and explicit guest-fault reporting.
-* Random-number generation.
-* Bulk flash-to-SRAM copy.
-* Sprite rendering from program space.
-* Save-data access.
-* Debug output.
+| Service ID | Name         | Purpose                                      |
+| ---------: | ------------ | -------------------------------------------- |
+|        `0` | `debug_putc` | Write one byte to the simulator debug stream |
+|    `1–255` | Reserved     | Unassigned                                   |
 
-Service identifiers and detailed signatures belong in a separate system-ABI specification so that platform facilities can evolve without changing the integer ISA.
+An unsupported or reserved service identifier is an invalid system-service request. A diagnostic interpreter MUST trap it. Optimized execution may treat it as unrestricted undefined behavior.
+
+### 65.2 `SYS 0`: `debug_putc`
+
+Assembly syntax:
+
+```asm
+SYS 0
+```
+
+Input:
+
+```text
+low8(c0)  byte to write
+```
+
+The high byte of `c0` is ignored. The service has no result.
+
+The interpreter performs exactly one direct write of `low8(c0)` to the ATmega32U4 `UEDATX` register. It does not initialize the USB peripheral, select or configure an endpoint, test endpoint readiness, wait for buffer space, commit a packet, add framing, translate newline characters, or retry the write.
+
+This service is intended as a minimal debug-output hook. An Arduboy simulator may record every `UEDATX` write as serial output even when no complete USB stack is running. On physical hardware, externally observable USB behavior depends entirely on the current native USB endpoint configuration and state.
+
+`debug_putc` is nonblocking from the AVM service contract's perspective and preserves all AVM architectural state other than normal instruction progression:
+
+```text
+c0–c3   preserved
+r0–r3   preserved
+PB      preserved
+FLAGS   preserved
+SP      preserved
+CB:PC   advances normally to the following instruction
+```
+
+Future services should be assigned additional identifiers in this section. Each service MUST specify its arguments, results, clobbers, blocking behavior, and hardware side effects.
+
+The AVR interpreter implements `SYS` with a 256-entry, one-native-word dispatch table indexed directly by the unsigned service identifier. Each table entry branches to the corresponding service handler. Entries for unsupported or reserved identifiers branch to the invalid-system-service handler. Adding a service consists of assigning its identifier, replacing that table entry with the new handler target, and implementing a handler that ultimately resumes the common primary dispatch path. The table representation and native handler placement are interpreter implementation details and do not alter the `SYS imm8` encoding.
+
+Likely future service categories include display submission, input sampling, audio control, frame timing and yield, program termination, debugger breaks, explicit guest-fault reporting, random-number generation, bulk flash-to-SRAM copies, sprite rendering, save-data access, and richer debug output.
 
 ---
 
@@ -3441,6 +3470,11 @@ Linked image:
 Allocation model:
     Static SRAM only
     No heap
+
+System ABI:
+    SYS 0 = debug_putc
+    Input byte is low8(c0)
+    Interpreter writes it directly to UEDATX
 
 LLVM address spaces:
     AS0 AVR data space, 16-bit pointers

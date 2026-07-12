@@ -221,6 +221,9 @@ sbi  CS_PORT, CS_BIT
 #define AVM_TAIL_MAGIC3         0x01
 #define AVM_TAIL_OFFSET_IN_PAGE 0xF8
 
+; Arduboy system ABI service identifiers.
+#define SYS_DEBUG_PUTC          0x00
+
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
 #define FX_DEV_TAIL_NOSAVE_HI   0xFF
@@ -1139,7 +1142,6 @@ f4_callp_family:
 f4_ldpbi_family:
 f4_jmp16_family:
 f4_call16_family:
-f4_sys_family:
 f4_ldsp_compact_family:
 f4_stsp_compact_family:
     rjmp unimplemented_instruction_func
@@ -1151,6 +1153,65 @@ f4_nop_family:
     ; VM_PC to that prefetched opcode and dispatch it.
     delay_2
     rjmp dispatch_reverse_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SYS service dispatch
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+f4_sys_family:
+    ; VM_PC currently names the SYS secondary opcode. Advance it to the service
+    ; identifier so the final dispatch advances to the following instruction.
+    adiw VM_PC, 1
+
+    ; The F4 decoder started transferring the service identifier. At entry to
+    ; this family, ten cycles have elapsed since that OUT. These seven cycles
+    ; place the next OUT at the normal 17-cycle SPI cadence. It starts fetching
+    ; the following primary opcode while IN reads the completed service ID.
+    delay_4
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+sys_dispatch_func:
+    ; Each SYS service has one one-word table entry. The unsigned service ID in
+    ; r6 is already the AVR-word offset required by IJMP. New services are added
+    ; by replacing the corresponding invalid entry with their handler label.
+    ldi  r30, lo8(pm(sys_dispatch_table))
+    ldi  r31, hi8(pm(sys_dispatch_table))
+    add  r30, r6
+    adc  r31, ZERO
+    ijmp
+
+.macro sys_entries count, target
+    .rept \count
+        rjmp \target
+    .endr
+.endm
+
+.if (SYS_DEBUG_PUTC != 0x00)
+    .error "SYS_DEBUG_PUTC must occupy dispatch-table entry 0"
+.endif
+
+sys_dispatch_table:
+    sys_entries 1,   sys_debug_putc_func ; 0x00: debug_putc
+    sys_entries 255, invalid_syscall_func ; 0x01-0xFF: reserved
+sys_dispatch_table_end:
+
+.if ((sys_dispatch_table_end - sys_dispatch_table) != (256 * 2))
+    .error "SYS dispatch table must contain exactly 256 words"
+.endif
+
+sys_debug_putc_func:
+    ; SYS 0: debug_putc(low8(c0)). The simulator records a direct UEDATX write
+    ; as serial output. No USB setup, endpoint selection, readiness check,
+    ; buffering, packet commit, character translation, or retry is performed.
+    sts  UEDATX, VM_C0L
+
+    ; The table lookup and service body leave two cycles of padding before the
+    ; common dispatch path to retain the 17-cycle SPI OUT-to-OUT cadence.
+    delay_2
+    rjmp dispatch_func
 
 f4_mtpb_family:
     ; The low three secondary-opcode bits select r0-r7.  Convert that index to
@@ -1457,6 +1518,9 @@ unimplemented_instruction_func:
 
 invalid_secondary_instruction_func:
     rjmp invalid_secondary_instruction_func
+
+invalid_syscall_func:
+    rjmp invalid_syscall_func
 
 ; The next opcode has long since completed transferring.
 dispatch_func:

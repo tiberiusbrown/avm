@@ -6268,9 +6268,9 @@ Disassembly of section .text:
     2980:	09 94       	ijmp
 
 00002982 <fx_seek_to_pc>:
-    2982:	5a 9a       	sbi	0x0b, 2	; 11
+    2982:	59 9a       	sbi	0x0b, 1	; 11
     2984:	e3 e0       	ldi	r30, 0x03	; 3
-    2986:	5a 98       	cbi	0x0b, 2	; 11
+    2986:	59 98       	cbi	0x0b, 1	; 11
     2988:	ee bd       	out	0x2e, r30	; 46
     298a:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_end+0x900>
     298e:	a9 0f       	add	r26, r25
@@ -6324,11 +6324,11 @@ Disassembly of section .text:
     29ee:	a1 e0       	ldi	r26, 0x01	; 1
     29f0:	ad bd       	out	0x2d, r26	; 45
     29f2:	5e 9a       	sbi	0x0b, 6	; 11
-    29f4:	5a 9a       	sbi	0x0b, 2	; 11
-    29f6:	5a 98       	cbi	0x0b, 2	; 11
+    29f4:	59 9a       	sbi	0x0b, 1	; 11
+    29f6:	59 98       	cbi	0x0b, 1	; 11
     29f8:	eb ea       	ldi	r30, 0xAB	; 171
     29fa:	dc d0       	rcall	.+440    	; 0x2bb4 <fx_spi_transfer_blocking>
-    29fc:	5a 9a       	sbi	0x0b, 2	; 11
+    29fc:	59 9a       	sbi	0x0b, 1	; 11
     29fe:	e0 d0       	rcall	.+448    	; 0x2bc0 <fx_startup_wake_delay>
     2a00:	e4 e1       	ldi	r30, 0x14	; 20
     2a02:	f0 e0       	ldi	r31, 0x00	; 0
@@ -6436,7 +6436,7 @@ Disassembly of section .text:
     2ac4:	75 d0       	rcall	.+234    	; 0x2bb0 <fx_startup_read_byte>
     2ac6:	5e 2f       	mov	r21, r30
     2ac8:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <_end+0x905>
-    2acc:	5a 9a       	sbi	0x0b, 2	; 11
+    2acc:	59 9a       	sbi	0x0b, 1	; 11
     2ace:	20 17       	cp	r18, r16
     2ad0:	31 07       	cpc	r19, r17
     2ad2:	08 f4       	brcc	.+2      	; 0x2ad6 <.L1^B9>
@@ -6508,7 +6508,7 @@ Disassembly of section .text:
     2b34:	01 50       	subi	r16, 0x01	; 1
     2b36:	10 40       	sbci	r17, 0x00	; 0
     2b38:	d9 f7       	brne	.-10     	; 0x2b30 <startup_copy_data_loop>
-    2b3a:	5a 9a       	sbi	0x0b, 2	; 11
+    2b3a:	59 9a       	sbi	0x0b, 1	; 11
 
 00002b3c <startup_enter_image>:
     2b3c:	2b bc       	out	0x2b, r2	; 43
@@ -6524,7 +6524,7 @@ Disassembly of section .text:
 
 00002b50 <startup_invalid_image>:
     2b50:	f8 94       	cli
-    2b52:	5a 9a       	sbi	0x0b, 2	; 11
+    2b52:	59 9a       	sbi	0x0b, 1	; 11
 
 00002b54 <startup_invalid_image_loop>:
     2b54:	ff cf       	rjmp	.-2      	; 0x2b54 <startup_invalid_image_loop>
@@ -6547,7 +6547,7 @@ Disassembly of section .text:
     2b72:	0e 2e       	mov	r0, r30
     2b74:	1d d0       	rcall	.+58     	; 0x2bb0 <fx_startup_read_byte>
     2b76:	1e 2e       	mov	r1, r30
-    2b78:	5a 9a       	sbi	0x0b, 2	; 11
+    2b78:	59 9a       	sbi	0x0b, 1	; 11
     2b7a:	02 14       	cp	r0, r2
     2b7c:	12 04       	cpc	r1, r2
     2b7e:	59 f0       	breq	.+22     	; 0x2b96 <startup_try_tail_fail_disabled>
@@ -6561,15 +6561,15 @@ Disassembly of section .text:
     2b92:	08 95       	ret
 
 00002b94 <startup_try_tail_fail>:
-    2b94:	5a 9a       	sbi	0x0b, 2	; 11
+    2b94:	59 9a       	sbi	0x0b, 1	; 11
 
 00002b96 <startup_try_tail_fail_disabled>:
     2b96:	88 94       	clc
     2b98:	08 95       	ret
 
 00002b9a <fx_startup_begin_read>:
-    2b9a:	5a 9a       	sbi	0x0b, 2	; 11
-    2b9c:	5a 98       	cbi	0x0b, 2	; 11
+    2b9a:	59 9a       	sbi	0x0b, 1	; 11
+    2b9c:	59 98       	cbi	0x0b, 1	; 11
     2b9e:	e3 e0       	ldi	r30, 0x03	; 3
     2ba0:	09 d0       	rcall	.+18     	; 0x2bb4 <fx_spi_transfer_blocking>
     2ba2:	e6 2f       	mov	r30, r22

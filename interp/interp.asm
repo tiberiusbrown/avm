@@ -782,13 +782,9 @@ emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1
     subi VM_PCL, lo8(-(\disp))
     sbci VM_PCH, hi8(-(\disp))
 
-    call fx_seek_to_pc
-    in   r6, SPDR
-    out  SPDR, ZERO
-    mul  r6, C_DISPATCH_STRIDE_WORDS
-    movw r30, r0
-    subi r31, hi8(-(DISPATCH_ORG))
-    ijmp
+    ; Use the common restart path so the target handler observes the same
+    ; OUT-to-handler-entry timing as ordinary sequential dispatch.
+    jmp  seek_and_dispatch_current_pc_func
 
     handler_end \opcode
 .endm
@@ -1092,9 +1088,15 @@ seek_and_dispatch_current_pc_func:
     rcall fx_seek_to_pc
     in   r6, SPDR
     out  SPDR, ZERO
-    ; Match the normal dispatch path's pre-IJMP cadence so operand-bearing
-    ; target handlers do not read the just-issued SPI transfer too early.
-    delay_1
+    ; Normal dispatch takes nine cycles from the OUT that starts the operand
+    ; transfer through entry to the selected handler:
+    ;
+    ;   OUT + ADIW(2) + MUL(2) + MOVW + SUBI + IJMP(2) = 9
+    ;
+    ; This restart path has no ADIW, so use a two-cycle delay. A one-cycle
+    ; delay enters the resumed handler one cycle early and can make its first
+    ; pipelined SPI access collide with the still-active operand transfer.
+    delay_2
     mul  r6, C_DISPATCH_STRIDE_WORDS
     movw r30, r0
     subi r31, hi8(-(pm(DISPATCH_ORG)))
@@ -1635,15 +1637,9 @@ branch_rel8_taken_func:
     dec  VM_PCH
 
     ; Discard the speculative fallthrough byte and restart the stream at the
-    ; branch target.  PC already names the target opcode, so do not increment
-    ; it before entering the target handler.
-    rcall fx_seek_to_pc
-    in   r6, SPDR
-    out  SPDR, ZERO
-    mul  r6, C_DISPATCH_STRIDE_WORDS
-    movw r30, r0
-    subi r31, hi8(-(DISPATCH_ORG))
-    ijmp
+    ; branch target. PC already names the target opcode, so the common restart
+    ; path dispatches it without incrementing PC.
+    rjmp seek_and_dispatch_current_pc_func
 
 ; The next opcode has long since completed transferring.
 dispatch_func:

@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    d  .text	00000000 .text
 000000ae l       .text	00000000 reset_handler
 000000ac l       .text	00000000 default_isr
-00002cbc l       .text	00000000 startup_func
+00002cb0 l       .text	00000000 startup_func
 00000200 l       .text	00000000 I_00__CLR_c0
 00000220 l       .text	00000000 I_01__MOV_c0_c1
 00000240 l       .text	00000000 I_02__MOV_c0_c2
@@ -201,7 +201,7 @@ SYMBOL TABLE:
 000019e0 l       .text	00000000 I_BF__TST8_c3
 00001a00 l       .text	00000000 I_C0__BEQ_S_m9
 000022ce l       .text	00000000 branch_short_dispatch_reverse_func
-00002c8a l       .text	00000000 fx_seek_to_pc
+0000220a l       .text	00000000 seek_and_dispatch_current_pc_func
 00001a20 l       .text	00000000 I_C1__BEQ_S_m8
 00001a40 l       .text	00000000 I_C2__BEQ_S_m7
 00001a60 l       .text	00000000 I_C3__BEQ_S_m6
@@ -283,10 +283,10 @@ SYMBOL TABLE:
 000021e0 l       .text	00000000 I_FF__RET
 000022b8 l       .text	00000000 ff_ret_func
 00002200 l       .text	00000000 push_return_address_func
-0000220a l       .text	00000000 seek_and_dispatch_current_pc_func
-00002cba l       .text	00000000 fx_seek_delay_7
+00002c7e l       .text	00000000 fx_seek_to_pc
+00002cae l       .text	00000000 fx_seek_delay_7
 00002264 l       .text	00000000 fetch_direct_target16_func
-00002cb6 l       .text	00000000 fx_seek_delay_17
+00002caa l       .text	00000000 fx_seek_delay_17
 000022aa l       .text	00000000 fe_callf_func
 000022a0 l       .text	00000000 fe_jmpf_func
 000022c6 l       .text	00000000 invalid_secondary_instruction_func
@@ -305,7 +305,7 @@ SYMBOL TABLE:
 000025ce l       .text	00000000 e0_mtpb_family
 000025de l       .text	00000000 e0_mfpb_family
 000024f4 l       .text	00000000 e0_secondary_table_end
-00002c7c l       .text	00000000 dispatch_func
+00002c70 l       .text	00000000 dispatch_func
 00002602 l       .text	00000000 f4_secondary_table
 00002802 l       .text	00000000 f4_secondary_table_end
 00002834 l       .text	00000000 sys_dispatch_func
@@ -340,43 +340,43 @@ SYMBOL TABLE:
 00002c5e l       .text	00000000 fd_ldp8_displaced_family
 00002c5e l       .text	00000000 fd_ldp16_displaced_family
 00002c5e l       .text	00000000 fd_secondary_table_end
-00002cb8 l       .text	00000000 fx_seek_delay_10
-00002ebc l       .text	00000000 fx_spi_transfer_blocking
-00002ec8 l       .text	00000000 fx_startup_wake_delay
-00002d44 l       .text	00000000 startup_find_development_image
-00002d74 l       .text	00000000 startup_read_header
-00002e5e l       .text	00000000 startup_try_tail
-00002e58 l       .text	00000000 startup_invalid_image
-00002ea2 l       .text	00000000 fx_startup_begin_read
-00002eb8 l       .text	00000000 fx_startup_read_byte
-00002e1c l       .text	00000000 startup_copy_data
-00002e14 l       .text	00000000 startup_clear_static_loop
-00002e44 l       .text	00000000 startup_enter_image
-00002e38 l       .text	00000000 startup_copy_data_loop
-00002e5c l       .text	00000000 startup_invalid_image_loop
-00002e9c l       .text	00000000 startup_try_tail_fail
-00002e9e l       .text	00000000 startup_try_tail_fail_disabled
+00002cac l       .text	00000000 fx_seek_delay_10
+00002eb0 l       .text	00000000 fx_spi_transfer_blocking
+00002ebc l       .text	00000000 fx_startup_wake_delay
+00002d38 l       .text	00000000 startup_find_development_image
+00002d68 l       .text	00000000 startup_read_header
+00002e52 l       .text	00000000 startup_try_tail
+00002e4c l       .text	00000000 startup_invalid_image
+00002e96 l       .text	00000000 fx_startup_begin_read
+00002eac l       .text	00000000 fx_startup_read_byte
+00002e10 l       .text	00000000 startup_copy_data
+00002e08 l       .text	00000000 startup_clear_static_loop
+00002e38 l       .text	00000000 startup_enter_image
+00002e2c l       .text	00000000 startup_copy_data_loop
+00002e50 l       .text	00000000 startup_invalid_image_loop
+00002e90 l       .text	00000000 startup_try_tail_fail
+00002e92 l       .text	00000000 startup_try_tail_fail_disabled
 00002178 l       .text	00000000 .L11
 00002198 l       .text	00000000 .L12
 0000253c l       .text	00000000 .L13
 00002556 l       .text	00000000 .L14
-00002d62 l       .text	00000000 .L15
-00002d88 l       .text	00000000 .L16
-00002d90 l       .text	00000000 .L17
-00002d98 l       .text	00000000 .L18
-00002da0 l       .text	00000000 .L19
-00002da8 l       .text	00000000 .L110
-00002dde l       .text	00000000 .L111
-00002dec l       .text	00000000 .L112
-00002de6 l       .text	00000000 .L21
-00002dfa l       .text	00000000 .L22
-00002df4 l       .text	00000000 .L31
-00002e08 l       .text	00000000 .L32
-00002e30 l       .text	00000000 .L41
-00002ebe l       .text	00000000 .L113
-00002eca l       .text	00000000 .L114
+00002d56 l       .text	00000000 .L15
+00002d7c l       .text	00000000 .L16
+00002d84 l       .text	00000000 .L17
+00002d8c l       .text	00000000 .L18
+00002d94 l       .text	00000000 .L19
+00002d9c l       .text	00000000 .L110
+00002dd2 l       .text	00000000 .L111
+00002de0 l       .text	00000000 .L112
+00002dda l       .text	00000000 .L21
+00002dee l       .text	00000000 .L22
+00002de8 l       .text	00000000 .L31
+00002dfc l       .text	00000000 .L32
+00002e24 l       .text	00000000 .L41
+00002eb2 l       .text	00000000 .L113
+00002ebe l       .text	00000000 .L114
 00000000 g       .text	00000000 __trampolines_start
-00002ed0 g       .text	00000000 _etext
+00002ec4 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00810000 g       .text	00000000 __eeprom_end
@@ -440,7 +440,7 @@ Disassembly of section .text:
       ac:	ff cf       	rjmp	.-2      	; 0xac <default_isr>
 
 000000ae <reset_handler>:
-      ae:	0c 94 5e 16 	jmp	0x2cbc	; 0x2cbc <startup_func>
+      ae:	0c 94 58 16 	jmp	0x2cb0	; 0x2cb0 <startup_func>
       b2:	00 00       	nop
       b4:	00 00       	nop
       b6:	00 00       	nop
@@ -4047,13 +4047,13 @@ Disassembly of section .text:
     1a04:	01 96       	adiw	r24, 0x01	; 1
     1a06:	89 50       	subi	r24, 0x09	; 9
     1a08:	90 40       	sbci	r25, 0x00	; 0
-    1a0a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1a0e:	6e b4       	in	r6, 0x2e	; 46
-    1a10:	2e bc       	out	0x2e, r2	; 46
-    1a12:	67 9c       	mul	r6, r7
-    1a14:	f0 01       	movw	r30, r0
-    1a16:	fe 5f       	subi	r31, 0xFE	; 254
-    1a18:	09 94       	ijmp
+    1a0a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1a0e:	00 00       	nop
+    1a10:	00 00       	nop
+    1a12:	00 00       	nop
+    1a14:	00 00       	nop
+    1a16:	00 00       	nop
+    1a18:	00 00       	nop
     1a1a:	00 00       	nop
     1a1c:	00 00       	nop
     1a1e:	00 00       	nop
@@ -4064,13 +4064,13 @@ Disassembly of section .text:
     1a24:	01 96       	adiw	r24, 0x01	; 1
     1a26:	88 50       	subi	r24, 0x08	; 8
     1a28:	90 40       	sbci	r25, 0x00	; 0
-    1a2a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1a2e:	6e b4       	in	r6, 0x2e	; 46
-    1a30:	2e bc       	out	0x2e, r2	; 46
-    1a32:	67 9c       	mul	r6, r7
-    1a34:	f0 01       	movw	r30, r0
-    1a36:	fe 5f       	subi	r31, 0xFE	; 254
-    1a38:	09 94       	ijmp
+    1a2a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1a2e:	00 00       	nop
+    1a30:	00 00       	nop
+    1a32:	00 00       	nop
+    1a34:	00 00       	nop
+    1a36:	00 00       	nop
+    1a38:	00 00       	nop
     1a3a:	00 00       	nop
     1a3c:	00 00       	nop
     1a3e:	00 00       	nop
@@ -4081,13 +4081,13 @@ Disassembly of section .text:
     1a44:	01 96       	adiw	r24, 0x01	; 1
     1a46:	87 50       	subi	r24, 0x07	; 7
     1a48:	90 40       	sbci	r25, 0x00	; 0
-    1a4a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1a4e:	6e b4       	in	r6, 0x2e	; 46
-    1a50:	2e bc       	out	0x2e, r2	; 46
-    1a52:	67 9c       	mul	r6, r7
-    1a54:	f0 01       	movw	r30, r0
-    1a56:	fe 5f       	subi	r31, 0xFE	; 254
-    1a58:	09 94       	ijmp
+    1a4a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1a4e:	00 00       	nop
+    1a50:	00 00       	nop
+    1a52:	00 00       	nop
+    1a54:	00 00       	nop
+    1a56:	00 00       	nop
+    1a58:	00 00       	nop
     1a5a:	00 00       	nop
     1a5c:	00 00       	nop
     1a5e:	00 00       	nop
@@ -4098,13 +4098,13 @@ Disassembly of section .text:
     1a64:	01 96       	adiw	r24, 0x01	; 1
     1a66:	86 50       	subi	r24, 0x06	; 6
     1a68:	90 40       	sbci	r25, 0x00	; 0
-    1a6a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1a6e:	6e b4       	in	r6, 0x2e	; 46
-    1a70:	2e bc       	out	0x2e, r2	; 46
-    1a72:	67 9c       	mul	r6, r7
-    1a74:	f0 01       	movw	r30, r0
-    1a76:	fe 5f       	subi	r31, 0xFE	; 254
-    1a78:	09 94       	ijmp
+    1a6a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1a6e:	00 00       	nop
+    1a70:	00 00       	nop
+    1a72:	00 00       	nop
+    1a74:	00 00       	nop
+    1a76:	00 00       	nop
+    1a78:	00 00       	nop
     1a7a:	00 00       	nop
     1a7c:	00 00       	nop
     1a7e:	00 00       	nop
@@ -4115,13 +4115,13 @@ Disassembly of section .text:
     1a84:	01 96       	adiw	r24, 0x01	; 1
     1a86:	85 50       	subi	r24, 0x05	; 5
     1a88:	90 40       	sbci	r25, 0x00	; 0
-    1a8a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1a8e:	6e b4       	in	r6, 0x2e	; 46
-    1a90:	2e bc       	out	0x2e, r2	; 46
-    1a92:	67 9c       	mul	r6, r7
-    1a94:	f0 01       	movw	r30, r0
-    1a96:	fe 5f       	subi	r31, 0xFE	; 254
-    1a98:	09 94       	ijmp
+    1a8a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1a8e:	00 00       	nop
+    1a90:	00 00       	nop
+    1a92:	00 00       	nop
+    1a94:	00 00       	nop
+    1a96:	00 00       	nop
+    1a98:	00 00       	nop
     1a9a:	00 00       	nop
     1a9c:	00 00       	nop
     1a9e:	00 00       	nop
@@ -4132,13 +4132,13 @@ Disassembly of section .text:
     1aa4:	01 96       	adiw	r24, 0x01	; 1
     1aa6:	84 50       	subi	r24, 0x04	; 4
     1aa8:	90 40       	sbci	r25, 0x00	; 0
-    1aaa:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1aae:	6e b4       	in	r6, 0x2e	; 46
-    1ab0:	2e bc       	out	0x2e, r2	; 46
-    1ab2:	67 9c       	mul	r6, r7
-    1ab4:	f0 01       	movw	r30, r0
-    1ab6:	fe 5f       	subi	r31, 0xFE	; 254
-    1ab8:	09 94       	ijmp
+    1aaa:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1aae:	00 00       	nop
+    1ab0:	00 00       	nop
+    1ab2:	00 00       	nop
+    1ab4:	00 00       	nop
+    1ab6:	00 00       	nop
+    1ab8:	00 00       	nop
     1aba:	00 00       	nop
     1abc:	00 00       	nop
     1abe:	00 00       	nop
@@ -4149,13 +4149,13 @@ Disassembly of section .text:
     1ac4:	01 96       	adiw	r24, 0x01	; 1
     1ac6:	83 50       	subi	r24, 0x03	; 3
     1ac8:	90 40       	sbci	r25, 0x00	; 0
-    1aca:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1ace:	6e b4       	in	r6, 0x2e	; 46
-    1ad0:	2e bc       	out	0x2e, r2	; 46
-    1ad2:	67 9c       	mul	r6, r7
-    1ad4:	f0 01       	movw	r30, r0
-    1ad6:	fe 5f       	subi	r31, 0xFE	; 254
-    1ad8:	09 94       	ijmp
+    1aca:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1ace:	00 00       	nop
+    1ad0:	00 00       	nop
+    1ad2:	00 00       	nop
+    1ad4:	00 00       	nop
+    1ad6:	00 00       	nop
+    1ad8:	00 00       	nop
     1ada:	00 00       	nop
     1adc:	00 00       	nop
     1ade:	00 00       	nop
@@ -4166,13 +4166,13 @@ Disassembly of section .text:
     1ae4:	01 96       	adiw	r24, 0x01	; 1
     1ae6:	82 50       	subi	r24, 0x02	; 2
     1ae8:	90 40       	sbci	r25, 0x00	; 0
-    1aea:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1aee:	6e b4       	in	r6, 0x2e	; 46
-    1af0:	2e bc       	out	0x2e, r2	; 46
-    1af2:	67 9c       	mul	r6, r7
-    1af4:	f0 01       	movw	r30, r0
-    1af6:	fe 5f       	subi	r31, 0xFE	; 254
-    1af8:	09 94       	ijmp
+    1aea:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1aee:	00 00       	nop
+    1af0:	00 00       	nop
+    1af2:	00 00       	nop
+    1af4:	00 00       	nop
+    1af6:	00 00       	nop
+    1af8:	00 00       	nop
     1afa:	00 00       	nop
     1afc:	00 00       	nop
     1afe:	00 00       	nop
@@ -4183,13 +4183,13 @@ Disassembly of section .text:
     1b04:	01 96       	adiw	r24, 0x01	; 1
     1b06:	8f 5f       	subi	r24, 0xFF	; 255
     1b08:	9f 4f       	sbci	r25, 0xFF	; 255
-    1b0a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1b0e:	6e b4       	in	r6, 0x2e	; 46
-    1b10:	2e bc       	out	0x2e, r2	; 46
-    1b12:	67 9c       	mul	r6, r7
-    1b14:	f0 01       	movw	r30, r0
-    1b16:	fe 5f       	subi	r31, 0xFE	; 254
-    1b18:	09 94       	ijmp
+    1b0a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1b0e:	00 00       	nop
+    1b10:	00 00       	nop
+    1b12:	00 00       	nop
+    1b14:	00 00       	nop
+    1b16:	00 00       	nop
+    1b18:	00 00       	nop
     1b1a:	00 00       	nop
     1b1c:	00 00       	nop
     1b1e:	00 00       	nop
@@ -4200,13 +4200,13 @@ Disassembly of section .text:
     1b24:	01 96       	adiw	r24, 0x01	; 1
     1b26:	8e 5f       	subi	r24, 0xFE	; 254
     1b28:	9f 4f       	sbci	r25, 0xFF	; 255
-    1b2a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1b2e:	6e b4       	in	r6, 0x2e	; 46
-    1b30:	2e bc       	out	0x2e, r2	; 46
-    1b32:	67 9c       	mul	r6, r7
-    1b34:	f0 01       	movw	r30, r0
-    1b36:	fe 5f       	subi	r31, 0xFE	; 254
-    1b38:	09 94       	ijmp
+    1b2a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1b2e:	00 00       	nop
+    1b30:	00 00       	nop
+    1b32:	00 00       	nop
+    1b34:	00 00       	nop
+    1b36:	00 00       	nop
+    1b38:	00 00       	nop
     1b3a:	00 00       	nop
     1b3c:	00 00       	nop
     1b3e:	00 00       	nop
@@ -4217,13 +4217,13 @@ Disassembly of section .text:
     1b44:	01 96       	adiw	r24, 0x01	; 1
     1b46:	8d 5f       	subi	r24, 0xFD	; 253
     1b48:	9f 4f       	sbci	r25, 0xFF	; 255
-    1b4a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1b4e:	6e b4       	in	r6, 0x2e	; 46
-    1b50:	2e bc       	out	0x2e, r2	; 46
-    1b52:	67 9c       	mul	r6, r7
-    1b54:	f0 01       	movw	r30, r0
-    1b56:	fe 5f       	subi	r31, 0xFE	; 254
-    1b58:	09 94       	ijmp
+    1b4a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1b4e:	00 00       	nop
+    1b50:	00 00       	nop
+    1b52:	00 00       	nop
+    1b54:	00 00       	nop
+    1b56:	00 00       	nop
+    1b58:	00 00       	nop
     1b5a:	00 00       	nop
     1b5c:	00 00       	nop
     1b5e:	00 00       	nop
@@ -4234,13 +4234,13 @@ Disassembly of section .text:
     1b64:	01 96       	adiw	r24, 0x01	; 1
     1b66:	8c 5f       	subi	r24, 0xFC	; 252
     1b68:	9f 4f       	sbci	r25, 0xFF	; 255
-    1b6a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1b6e:	6e b4       	in	r6, 0x2e	; 46
-    1b70:	2e bc       	out	0x2e, r2	; 46
-    1b72:	67 9c       	mul	r6, r7
-    1b74:	f0 01       	movw	r30, r0
-    1b76:	fe 5f       	subi	r31, 0xFE	; 254
-    1b78:	09 94       	ijmp
+    1b6a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1b6e:	00 00       	nop
+    1b70:	00 00       	nop
+    1b72:	00 00       	nop
+    1b74:	00 00       	nop
+    1b76:	00 00       	nop
+    1b78:	00 00       	nop
     1b7a:	00 00       	nop
     1b7c:	00 00       	nop
     1b7e:	00 00       	nop
@@ -4251,13 +4251,13 @@ Disassembly of section .text:
     1b84:	01 96       	adiw	r24, 0x01	; 1
     1b86:	8b 5f       	subi	r24, 0xFB	; 251
     1b88:	9f 4f       	sbci	r25, 0xFF	; 255
-    1b8a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1b8e:	6e b4       	in	r6, 0x2e	; 46
-    1b90:	2e bc       	out	0x2e, r2	; 46
-    1b92:	67 9c       	mul	r6, r7
-    1b94:	f0 01       	movw	r30, r0
-    1b96:	fe 5f       	subi	r31, 0xFE	; 254
-    1b98:	09 94       	ijmp
+    1b8a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1b8e:	00 00       	nop
+    1b90:	00 00       	nop
+    1b92:	00 00       	nop
+    1b94:	00 00       	nop
+    1b96:	00 00       	nop
+    1b98:	00 00       	nop
     1b9a:	00 00       	nop
     1b9c:	00 00       	nop
     1b9e:	00 00       	nop
@@ -4268,13 +4268,13 @@ Disassembly of section .text:
     1ba4:	01 96       	adiw	r24, 0x01	; 1
     1ba6:	8a 5f       	subi	r24, 0xFA	; 250
     1ba8:	9f 4f       	sbci	r25, 0xFF	; 255
-    1baa:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1bae:	6e b4       	in	r6, 0x2e	; 46
-    1bb0:	2e bc       	out	0x2e, r2	; 46
-    1bb2:	67 9c       	mul	r6, r7
-    1bb4:	f0 01       	movw	r30, r0
-    1bb6:	fe 5f       	subi	r31, 0xFE	; 254
-    1bb8:	09 94       	ijmp
+    1baa:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1bae:	00 00       	nop
+    1bb0:	00 00       	nop
+    1bb2:	00 00       	nop
+    1bb4:	00 00       	nop
+    1bb6:	00 00       	nop
+    1bb8:	00 00       	nop
     1bba:	00 00       	nop
     1bbc:	00 00       	nop
     1bbe:	00 00       	nop
@@ -4285,13 +4285,13 @@ Disassembly of section .text:
     1bc4:	01 96       	adiw	r24, 0x01	; 1
     1bc6:	89 5f       	subi	r24, 0xF9	; 249
     1bc8:	9f 4f       	sbci	r25, 0xFF	; 255
-    1bca:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1bce:	6e b4       	in	r6, 0x2e	; 46
-    1bd0:	2e bc       	out	0x2e, r2	; 46
-    1bd2:	67 9c       	mul	r6, r7
-    1bd4:	f0 01       	movw	r30, r0
-    1bd6:	fe 5f       	subi	r31, 0xFE	; 254
-    1bd8:	09 94       	ijmp
+    1bca:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1bce:	00 00       	nop
+    1bd0:	00 00       	nop
+    1bd2:	00 00       	nop
+    1bd4:	00 00       	nop
+    1bd6:	00 00       	nop
+    1bd8:	00 00       	nop
     1bda:	00 00       	nop
     1bdc:	00 00       	nop
     1bde:	00 00       	nop
@@ -4302,13 +4302,13 @@ Disassembly of section .text:
     1be4:	01 96       	adiw	r24, 0x01	; 1
     1be6:	88 5f       	subi	r24, 0xF8	; 248
     1be8:	9f 4f       	sbci	r25, 0xFF	; 255
-    1bea:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1bee:	6e b4       	in	r6, 0x2e	; 46
-    1bf0:	2e bc       	out	0x2e, r2	; 46
-    1bf2:	67 9c       	mul	r6, r7
-    1bf4:	f0 01       	movw	r30, r0
-    1bf6:	fe 5f       	subi	r31, 0xFE	; 254
-    1bf8:	09 94       	ijmp
+    1bea:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1bee:	00 00       	nop
+    1bf0:	00 00       	nop
+    1bf2:	00 00       	nop
+    1bf4:	00 00       	nop
+    1bf6:	00 00       	nop
+    1bf8:	00 00       	nop
     1bfa:	00 00       	nop
     1bfc:	00 00       	nop
     1bfe:	00 00       	nop
@@ -4319,13 +4319,13 @@ Disassembly of section .text:
     1c04:	01 96       	adiw	r24, 0x01	; 1
     1c06:	89 50       	subi	r24, 0x09	; 9
     1c08:	90 40       	sbci	r25, 0x00	; 0
-    1c0a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1c0e:	6e b4       	in	r6, 0x2e	; 46
-    1c10:	2e bc       	out	0x2e, r2	; 46
-    1c12:	67 9c       	mul	r6, r7
-    1c14:	f0 01       	movw	r30, r0
-    1c16:	fe 5f       	subi	r31, 0xFE	; 254
-    1c18:	09 94       	ijmp
+    1c0a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1c0e:	00 00       	nop
+    1c10:	00 00       	nop
+    1c12:	00 00       	nop
+    1c14:	00 00       	nop
+    1c16:	00 00       	nop
+    1c18:	00 00       	nop
     1c1a:	00 00       	nop
     1c1c:	00 00       	nop
     1c1e:	00 00       	nop
@@ -4336,13 +4336,13 @@ Disassembly of section .text:
     1c24:	01 96       	adiw	r24, 0x01	; 1
     1c26:	88 50       	subi	r24, 0x08	; 8
     1c28:	90 40       	sbci	r25, 0x00	; 0
-    1c2a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1c2e:	6e b4       	in	r6, 0x2e	; 46
-    1c30:	2e bc       	out	0x2e, r2	; 46
-    1c32:	67 9c       	mul	r6, r7
-    1c34:	f0 01       	movw	r30, r0
-    1c36:	fe 5f       	subi	r31, 0xFE	; 254
-    1c38:	09 94       	ijmp
+    1c2a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1c2e:	00 00       	nop
+    1c30:	00 00       	nop
+    1c32:	00 00       	nop
+    1c34:	00 00       	nop
+    1c36:	00 00       	nop
+    1c38:	00 00       	nop
     1c3a:	00 00       	nop
     1c3c:	00 00       	nop
     1c3e:	00 00       	nop
@@ -4353,13 +4353,13 @@ Disassembly of section .text:
     1c44:	01 96       	adiw	r24, 0x01	; 1
     1c46:	87 50       	subi	r24, 0x07	; 7
     1c48:	90 40       	sbci	r25, 0x00	; 0
-    1c4a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1c4e:	6e b4       	in	r6, 0x2e	; 46
-    1c50:	2e bc       	out	0x2e, r2	; 46
-    1c52:	67 9c       	mul	r6, r7
-    1c54:	f0 01       	movw	r30, r0
-    1c56:	fe 5f       	subi	r31, 0xFE	; 254
-    1c58:	09 94       	ijmp
+    1c4a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1c4e:	00 00       	nop
+    1c50:	00 00       	nop
+    1c52:	00 00       	nop
+    1c54:	00 00       	nop
+    1c56:	00 00       	nop
+    1c58:	00 00       	nop
     1c5a:	00 00       	nop
     1c5c:	00 00       	nop
     1c5e:	00 00       	nop
@@ -4370,13 +4370,13 @@ Disassembly of section .text:
     1c64:	01 96       	adiw	r24, 0x01	; 1
     1c66:	86 50       	subi	r24, 0x06	; 6
     1c68:	90 40       	sbci	r25, 0x00	; 0
-    1c6a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1c6e:	6e b4       	in	r6, 0x2e	; 46
-    1c70:	2e bc       	out	0x2e, r2	; 46
-    1c72:	67 9c       	mul	r6, r7
-    1c74:	f0 01       	movw	r30, r0
-    1c76:	fe 5f       	subi	r31, 0xFE	; 254
-    1c78:	09 94       	ijmp
+    1c6a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1c6e:	00 00       	nop
+    1c70:	00 00       	nop
+    1c72:	00 00       	nop
+    1c74:	00 00       	nop
+    1c76:	00 00       	nop
+    1c78:	00 00       	nop
     1c7a:	00 00       	nop
     1c7c:	00 00       	nop
     1c7e:	00 00       	nop
@@ -4387,13 +4387,13 @@ Disassembly of section .text:
     1c84:	01 96       	adiw	r24, 0x01	; 1
     1c86:	85 50       	subi	r24, 0x05	; 5
     1c88:	90 40       	sbci	r25, 0x00	; 0
-    1c8a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1c8e:	6e b4       	in	r6, 0x2e	; 46
-    1c90:	2e bc       	out	0x2e, r2	; 46
-    1c92:	67 9c       	mul	r6, r7
-    1c94:	f0 01       	movw	r30, r0
-    1c96:	fe 5f       	subi	r31, 0xFE	; 254
-    1c98:	09 94       	ijmp
+    1c8a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1c8e:	00 00       	nop
+    1c90:	00 00       	nop
+    1c92:	00 00       	nop
+    1c94:	00 00       	nop
+    1c96:	00 00       	nop
+    1c98:	00 00       	nop
     1c9a:	00 00       	nop
     1c9c:	00 00       	nop
     1c9e:	00 00       	nop
@@ -4404,13 +4404,13 @@ Disassembly of section .text:
     1ca4:	01 96       	adiw	r24, 0x01	; 1
     1ca6:	84 50       	subi	r24, 0x04	; 4
     1ca8:	90 40       	sbci	r25, 0x00	; 0
-    1caa:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1cae:	6e b4       	in	r6, 0x2e	; 46
-    1cb0:	2e bc       	out	0x2e, r2	; 46
-    1cb2:	67 9c       	mul	r6, r7
-    1cb4:	f0 01       	movw	r30, r0
-    1cb6:	fe 5f       	subi	r31, 0xFE	; 254
-    1cb8:	09 94       	ijmp
+    1caa:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1cae:	00 00       	nop
+    1cb0:	00 00       	nop
+    1cb2:	00 00       	nop
+    1cb4:	00 00       	nop
+    1cb6:	00 00       	nop
+    1cb8:	00 00       	nop
     1cba:	00 00       	nop
     1cbc:	00 00       	nop
     1cbe:	00 00       	nop
@@ -4421,13 +4421,13 @@ Disassembly of section .text:
     1cc4:	01 96       	adiw	r24, 0x01	; 1
     1cc6:	83 50       	subi	r24, 0x03	; 3
     1cc8:	90 40       	sbci	r25, 0x00	; 0
-    1cca:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1cce:	6e b4       	in	r6, 0x2e	; 46
-    1cd0:	2e bc       	out	0x2e, r2	; 46
-    1cd2:	67 9c       	mul	r6, r7
-    1cd4:	f0 01       	movw	r30, r0
-    1cd6:	fe 5f       	subi	r31, 0xFE	; 254
-    1cd8:	09 94       	ijmp
+    1cca:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1cce:	00 00       	nop
+    1cd0:	00 00       	nop
+    1cd2:	00 00       	nop
+    1cd4:	00 00       	nop
+    1cd6:	00 00       	nop
+    1cd8:	00 00       	nop
     1cda:	00 00       	nop
     1cdc:	00 00       	nop
     1cde:	00 00       	nop
@@ -4438,13 +4438,13 @@ Disassembly of section .text:
     1ce4:	01 96       	adiw	r24, 0x01	; 1
     1ce6:	82 50       	subi	r24, 0x02	; 2
     1ce8:	90 40       	sbci	r25, 0x00	; 0
-    1cea:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1cee:	6e b4       	in	r6, 0x2e	; 46
-    1cf0:	2e bc       	out	0x2e, r2	; 46
-    1cf2:	67 9c       	mul	r6, r7
-    1cf4:	f0 01       	movw	r30, r0
-    1cf6:	fe 5f       	subi	r31, 0xFE	; 254
-    1cf8:	09 94       	ijmp
+    1cea:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1cee:	00 00       	nop
+    1cf0:	00 00       	nop
+    1cf2:	00 00       	nop
+    1cf4:	00 00       	nop
+    1cf6:	00 00       	nop
+    1cf8:	00 00       	nop
     1cfa:	00 00       	nop
     1cfc:	00 00       	nop
     1cfe:	00 00       	nop
@@ -4455,13 +4455,13 @@ Disassembly of section .text:
     1d04:	01 96       	adiw	r24, 0x01	; 1
     1d06:	8f 5f       	subi	r24, 0xFF	; 255
     1d08:	9f 4f       	sbci	r25, 0xFF	; 255
-    1d0a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1d0e:	6e b4       	in	r6, 0x2e	; 46
-    1d10:	2e bc       	out	0x2e, r2	; 46
-    1d12:	67 9c       	mul	r6, r7
-    1d14:	f0 01       	movw	r30, r0
-    1d16:	fe 5f       	subi	r31, 0xFE	; 254
-    1d18:	09 94       	ijmp
+    1d0a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1d0e:	00 00       	nop
+    1d10:	00 00       	nop
+    1d12:	00 00       	nop
+    1d14:	00 00       	nop
+    1d16:	00 00       	nop
+    1d18:	00 00       	nop
     1d1a:	00 00       	nop
     1d1c:	00 00       	nop
     1d1e:	00 00       	nop
@@ -4472,13 +4472,13 @@ Disassembly of section .text:
     1d24:	01 96       	adiw	r24, 0x01	; 1
     1d26:	8e 5f       	subi	r24, 0xFE	; 254
     1d28:	9f 4f       	sbci	r25, 0xFF	; 255
-    1d2a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1d2e:	6e b4       	in	r6, 0x2e	; 46
-    1d30:	2e bc       	out	0x2e, r2	; 46
-    1d32:	67 9c       	mul	r6, r7
-    1d34:	f0 01       	movw	r30, r0
-    1d36:	fe 5f       	subi	r31, 0xFE	; 254
-    1d38:	09 94       	ijmp
+    1d2a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1d2e:	00 00       	nop
+    1d30:	00 00       	nop
+    1d32:	00 00       	nop
+    1d34:	00 00       	nop
+    1d36:	00 00       	nop
+    1d38:	00 00       	nop
     1d3a:	00 00       	nop
     1d3c:	00 00       	nop
     1d3e:	00 00       	nop
@@ -4489,13 +4489,13 @@ Disassembly of section .text:
     1d44:	01 96       	adiw	r24, 0x01	; 1
     1d46:	8d 5f       	subi	r24, 0xFD	; 253
     1d48:	9f 4f       	sbci	r25, 0xFF	; 255
-    1d4a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1d4e:	6e b4       	in	r6, 0x2e	; 46
-    1d50:	2e bc       	out	0x2e, r2	; 46
-    1d52:	67 9c       	mul	r6, r7
-    1d54:	f0 01       	movw	r30, r0
-    1d56:	fe 5f       	subi	r31, 0xFE	; 254
-    1d58:	09 94       	ijmp
+    1d4a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1d4e:	00 00       	nop
+    1d50:	00 00       	nop
+    1d52:	00 00       	nop
+    1d54:	00 00       	nop
+    1d56:	00 00       	nop
+    1d58:	00 00       	nop
     1d5a:	00 00       	nop
     1d5c:	00 00       	nop
     1d5e:	00 00       	nop
@@ -4506,13 +4506,13 @@ Disassembly of section .text:
     1d64:	01 96       	adiw	r24, 0x01	; 1
     1d66:	8c 5f       	subi	r24, 0xFC	; 252
     1d68:	9f 4f       	sbci	r25, 0xFF	; 255
-    1d6a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1d6e:	6e b4       	in	r6, 0x2e	; 46
-    1d70:	2e bc       	out	0x2e, r2	; 46
-    1d72:	67 9c       	mul	r6, r7
-    1d74:	f0 01       	movw	r30, r0
-    1d76:	fe 5f       	subi	r31, 0xFE	; 254
-    1d78:	09 94       	ijmp
+    1d6a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1d6e:	00 00       	nop
+    1d70:	00 00       	nop
+    1d72:	00 00       	nop
+    1d74:	00 00       	nop
+    1d76:	00 00       	nop
+    1d78:	00 00       	nop
     1d7a:	00 00       	nop
     1d7c:	00 00       	nop
     1d7e:	00 00       	nop
@@ -4523,13 +4523,13 @@ Disassembly of section .text:
     1d84:	01 96       	adiw	r24, 0x01	; 1
     1d86:	8b 5f       	subi	r24, 0xFB	; 251
     1d88:	9f 4f       	sbci	r25, 0xFF	; 255
-    1d8a:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1d8e:	6e b4       	in	r6, 0x2e	; 46
-    1d90:	2e bc       	out	0x2e, r2	; 46
-    1d92:	67 9c       	mul	r6, r7
-    1d94:	f0 01       	movw	r30, r0
-    1d96:	fe 5f       	subi	r31, 0xFE	; 254
-    1d98:	09 94       	ijmp
+    1d8a:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1d8e:	00 00       	nop
+    1d90:	00 00       	nop
+    1d92:	00 00       	nop
+    1d94:	00 00       	nop
+    1d96:	00 00       	nop
+    1d98:	00 00       	nop
     1d9a:	00 00       	nop
     1d9c:	00 00       	nop
     1d9e:	00 00       	nop
@@ -4540,13 +4540,13 @@ Disassembly of section .text:
     1da4:	01 96       	adiw	r24, 0x01	; 1
     1da6:	8a 5f       	subi	r24, 0xFA	; 250
     1da8:	9f 4f       	sbci	r25, 0xFF	; 255
-    1daa:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1dae:	6e b4       	in	r6, 0x2e	; 46
-    1db0:	2e bc       	out	0x2e, r2	; 46
-    1db2:	67 9c       	mul	r6, r7
-    1db4:	f0 01       	movw	r30, r0
-    1db6:	fe 5f       	subi	r31, 0xFE	; 254
-    1db8:	09 94       	ijmp
+    1daa:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1dae:	00 00       	nop
+    1db0:	00 00       	nop
+    1db2:	00 00       	nop
+    1db4:	00 00       	nop
+    1db6:	00 00       	nop
+    1db8:	00 00       	nop
     1dba:	00 00       	nop
     1dbc:	00 00       	nop
     1dbe:	00 00       	nop
@@ -4557,13 +4557,13 @@ Disassembly of section .text:
     1dc4:	01 96       	adiw	r24, 0x01	; 1
     1dc6:	89 5f       	subi	r24, 0xF9	; 249
     1dc8:	9f 4f       	sbci	r25, 0xFF	; 255
-    1dca:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1dce:	6e b4       	in	r6, 0x2e	; 46
-    1dd0:	2e bc       	out	0x2e, r2	; 46
-    1dd2:	67 9c       	mul	r6, r7
-    1dd4:	f0 01       	movw	r30, r0
-    1dd6:	fe 5f       	subi	r31, 0xFE	; 254
-    1dd8:	09 94       	ijmp
+    1dca:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1dce:	00 00       	nop
+    1dd0:	00 00       	nop
+    1dd2:	00 00       	nop
+    1dd4:	00 00       	nop
+    1dd6:	00 00       	nop
+    1dd8:	00 00       	nop
     1dda:	00 00       	nop
     1ddc:	00 00       	nop
     1dde:	00 00       	nop
@@ -4574,13 +4574,13 @@ Disassembly of section .text:
     1de4:	01 96       	adiw	r24, 0x01	; 1
     1de6:	88 5f       	subi	r24, 0xF8	; 248
     1de8:	9f 4f       	sbci	r25, 0xFF	; 255
-    1dea:	0e 94 45 16 	call	0x2c8a	; 0x2c8a <fx_seek_to_pc>
-    1dee:	6e b4       	in	r6, 0x2e	; 46
-    1df0:	2e bc       	out	0x2e, r2	; 46
-    1df2:	67 9c       	mul	r6, r7
-    1df4:	f0 01       	movw	r30, r0
-    1df6:	fe 5f       	subi	r31, 0xFE	; 254
-    1df8:	09 94       	ijmp
+    1dea:	0c 94 05 11 	jmp	0x220a	; 0x220a <seek_and_dispatch_current_pc_func>
+    1dee:	00 00       	nop
+    1df0:	00 00       	nop
+    1df2:	00 00       	nop
+    1df4:	00 00       	nop
+    1df6:	00 00       	nop
+    1df8:	00 00       	nop
     1dfa:	00 00       	nop
     1dfc:	00 00       	nop
     1dfe:	00 00       	nop
@@ -5166,10 +5166,10 @@ Disassembly of section .text:
     2208:	08 95       	ret
 
 0000220a <seek_and_dispatch_current_pc_func>:
-    220a:	3f d5       	rcall	.+2686   	; 0x2c8a <fx_seek_to_pc>
+    220a:	39 d5       	rcall	.+2674   	; 0x2c7e <fx_seek_to_pc>
     220c:	6e b4       	in	r6, 0x2e	; 46
     220e:	2e bc       	out	0x2e, r2	; 46
-    2210:	00 00       	nop
+    2210:	00 c0       	rjmp	.+0      	; 0x2212 <seek_and_dispatch_current_pc_func+0x8>
     2212:	67 9c       	mul	r6, r7
     2214:	f0 01       	movw	r30, r0
     2216:	ff 5f       	subi	r31, 0xFF	; 255
@@ -5215,7 +5215,7 @@ Disassembly of section .text:
     225a:	d2 1d       	adc	r29, r2
     225c:	67 fc       	sbrc	r6, 7
     225e:	da 95       	dec	r29
-    2260:	2c d5       	rcall	.+2648   	; 0x2cba <fx_seek_delay_7>
+    2260:	26 d5       	rcall	.+2636   	; 0x2cae <fx_seek_delay_7>
     2262:	36 c0       	rjmp	.+108    	; 0x22d0 <dispatch_reverse_func>
 
 00002264 <fetch_direct_target16_func>:
@@ -5225,7 +5225,7 @@ Disassembly of section .text:
     226a:	00 c0       	rjmp	.+0      	; 0x226c <fetch_direct_target16_func+0x8>
     226c:	2e bc       	out	0x2e, r2	; 46
     226e:	4e b4       	in	r4, 0x2e	; 46
-    2270:	22 d5       	rcall	.+2628   	; 0x2cb6 <fx_seek_delay_17>
+    2270:	1c d5       	rcall	.+2616   	; 0x2caa <fx_seek_delay_17>
     2272:	5e b4       	in	r5, 0x2e	; 46
     2274:	08 95       	ret
 
@@ -5248,10 +5248,10 @@ Disassembly of section .text:
     228c:	00 c0       	rjmp	.+0      	; 0x228e <fe_far_control_func+0x8>
     228e:	2e bc       	out	0x2e, r2	; 46
     2290:	4e b4       	in	r4, 0x2e	; 46
-    2292:	11 d5       	rcall	.+2594   	; 0x2cb6 <fx_seek_delay_17>
+    2292:	0b d5       	rcall	.+2582   	; 0x2caa <fx_seek_delay_17>
     2294:	2e bc       	out	0x2e, r2	; 46
     2296:	5e b4       	in	r5, 0x2e	; 46
-    2298:	0e d5       	rcall	.+2588   	; 0x2cb6 <fx_seek_delay_17>
+    2298:	08 d5       	rcall	.+2576   	; 0x2caa <fx_seek_delay_17>
     229a:	6e b4       	in	r6, 0x2e	; 46
     229c:	40 fc       	sbrc	r4, 0
     229e:	05 c0       	rjmp	.+10     	; 0x22aa <fe_callf_func>
@@ -5590,7 +5590,7 @@ Disassembly of section .text:
     2504:	50 94       	com	r5
     2506:	5c 92       	st	X, r5
     2508:	4e 92       	st	-X, r4
-    250a:	b8 c3       	rjmp	.+1904   	; 0x2c7c <dispatch_func>
+    250a:	b2 c3       	rjmp	.+1892   	; 0x2c70 <dispatch_func>
 
 0000250c <e0_neg16_family>:
     250c:	a6 2d       	mov	r26, r6
@@ -5606,7 +5606,7 @@ Disassembly of section .text:
     2520:	15 08       	sbc	r1, r5
     2522:	1c 92       	st	X, r1
     2524:	0e 92       	st	-X, r0
-    2526:	aa c3       	rjmp	.+1876   	; 0x2c7c <dispatch_func>
+    2526:	a4 c3       	rjmp	.+1864   	; 0x2c70 <dispatch_func>
 
 00002528 <e0_inc16_family>:
     2528:	a6 2d       	mov	r26, r6
@@ -5623,7 +5623,7 @@ Disassembly of section .text:
 0000253c <.L1^B3>:
     253c:	5c 92       	st	X, r5
     253e:	4e 92       	st	-X, r4
-    2540:	9d c3       	rjmp	.+1850   	; 0x2c7c <dispatch_func>
+    2540:	97 c3       	rjmp	.+1838   	; 0x2c70 <dispatch_func>
 
 00002542 <e0_dec16_family>:
     2542:	a6 2d       	mov	r26, r6
@@ -5641,7 +5641,7 @@ Disassembly of section .text:
     2556:	4a 94       	dec	r4
     2558:	5c 92       	st	X, r5
     255a:	4e 92       	st	-X, r4
-    255c:	8f c3       	rjmp	.+1822   	; 0x2c7c <dispatch_func>
+    255c:	89 c3       	rjmp	.+1810   	; 0x2c70 <dispatch_func>
 
 0000255e <e0_lsr16_family>:
     255e:	a6 2d       	mov	r26, r6
@@ -5655,7 +5655,7 @@ Disassembly of section .text:
     256e:	47 94       	ror	r4
     2570:	5c 92       	st	X, r5
     2572:	4e 92       	st	-X, r4
-    2574:	83 c3       	rjmp	.+1798   	; 0x2c7c <dispatch_func>
+    2574:	7d c3       	rjmp	.+1786   	; 0x2c70 <dispatch_func>
 
 00002576 <e0_zext8_family>:
     2576:	a6 2d       	mov	r26, r6
@@ -5665,7 +5665,7 @@ Disassembly of section .text:
     257e:	bb 27       	eor	r27, r27
     2580:	11 96       	adiw	r26, 0x01	; 1
     2582:	2c 92       	st	X, r2
-    2584:	7b c3       	rjmp	.+1782   	; 0x2c7c <dispatch_func>
+    2584:	75 c3       	rjmp	.+1770   	; 0x2c70 <dispatch_func>
 
 00002586 <e0_sext8_family>:
     2586:	a6 2d       	mov	r26, r6
@@ -5677,7 +5677,7 @@ Disassembly of section .text:
     2592:	44 0c       	add	r4, r4
     2594:	44 08       	sbc	r4, r4
     2596:	4c 92       	st	X, r4
-    2598:	71 c3       	rjmp	.+1762   	; 0x2c7c <dispatch_func>
+    2598:	6b c3       	rjmp	.+1750   	; 0x2c70 <dispatch_func>
 
 0000259a <e0_swap8_family>:
     259a:	a6 2d       	mov	r26, r6
@@ -5688,7 +5688,7 @@ Disassembly of section .text:
     25a4:	4c 90       	ld	r4, X
     25a6:	42 94       	swap	r4
     25a8:	4c 92       	st	X, r4
-    25aa:	68 c3       	rjmp	.+1744   	; 0x2c7c <dispatch_func>
+    25aa:	62 c3       	rjmp	.+1732   	; 0x2c70 <dispatch_func>
 
 000025ac <e0_getsp_family>:
     25ac:	a6 2d       	mov	r26, r6
@@ -5698,7 +5698,7 @@ Disassembly of section .text:
     25b4:	bb 27       	eor	r27, r27
     25b6:	cd 93       	st	X+, r28
     25b8:	dc 93       	st	X, r29
-    25ba:	60 c3       	rjmp	.+1728   	; 0x2c7c <dispatch_func>
+    25ba:	5a c3       	rjmp	.+1716   	; 0x2c70 <dispatch_func>
 
 000025bc <e0_setsp_family>:
     25bc:	a6 2d       	mov	r26, r6
@@ -5709,7 +5709,7 @@ Disassembly of section .text:
     25c6:	4d 90       	ld	r4, X+
     25c8:	5c 90       	ld	r5, X
     25ca:	e2 01       	movw	r28, r4
-    25cc:	57 c3       	rjmp	.+1710   	; 0x2c7c <dispatch_func>
+    25cc:	51 c3       	rjmp	.+1698   	; 0x2c70 <dispatch_func>
 
 000025ce <e0_mtpb_family>:
     25ce:	a6 2d       	mov	r26, r6
@@ -5719,7 +5719,7 @@ Disassembly of section .text:
     25d6:	bb 27       	eor	r27, r27
     25d8:	4c 90       	ld	r4, X
     25da:	4b bc       	out	0x2b, r4	; 43
-    25dc:	4f c3       	rjmp	.+1694   	; 0x2c7c <dispatch_func>
+    25dc:	49 c3       	rjmp	.+1682   	; 0x2c70 <dispatch_func>
 
 000025de <e0_mfpb_family>:
     25de:	a6 2d       	mov	r26, r6
@@ -5730,7 +5730,7 @@ Disassembly of section .text:
     25e8:	4b b4       	in	r4, 0x2b	; 43
     25ea:	4d 92       	st	X+, r4
     25ec:	2c 92       	st	X, r2
-    25ee:	46 c3       	rjmp	.+1676   	; 0x2c7c <dispatch_func>
+    25ee:	40 c3       	rjmp	.+1664   	; 0x2c70 <dispatch_func>
 
 000025f0 <f4_extension_decode_func>:
     25f0:	f8 94       	cli
@@ -6021,7 +6021,7 @@ Disassembly of section .text:
     2822:	46 14       	cp	r4, r6
     2824:	50 04       	cpc	r5, r0
     2826:	3f b6       	in	r3, 0x3f	; 63
-    2828:	29 c2       	rjmp	.+1106   	; 0x2c7c <dispatch_func>
+    2828:	23 c2       	rjmp	.+1094   	; 0x2c70 <dispatch_func>
 
 0000282a <e9_sys_decode_func>:
     282a:	f8 94       	cli
@@ -6298,12 +6298,12 @@ Disassembly of section .text:
 00002a3e <sys_debug_putc_func>:
     2a3e:	00 93 f1 00 	sts	0x00F1, r16	; 0x8000f1 <__DATA_REGION_ORIGIN__+0x91>
     2a42:	00 c0       	rjmp	.+0      	; 0x2a44 <sys_debug_putc_func+0x6>
-    2a44:	1b c1       	rjmp	.+566    	; 0x2c7c <dispatch_func>
+    2a44:	15 c1       	rjmp	.+554    	; 0x2c70 <dispatch_func>
 
 00002a46 <sys_debug_break_func>:
     2a46:	98 95       	break
     2a48:	c8 95       	lpm
-    2a4a:	18 c1       	rjmp	.+560    	; 0x2c7c <dispatch_func>
+    2a4a:	12 c1       	rjmp	.+548    	; 0x2c70 <dispatch_func>
 
 00002a4c <fd_extension_decode_func>:
     2a4c:	f8 94       	cli
@@ -6578,7 +6578,7 @@ Disassembly of section .text:
     2c5e:	31 cb       	rjmp	.-2462   	; 0x22c2 <unimplemented_instruction_func>
 
 00002c60 <branch_rel8_not_taken_func>:
-    2c60:	2c d0       	rcall	.+88     	; 0x2cba <fx_seek_delay_7>
+    2c60:	26 d0       	rcall	.+76     	; 0x2cae <fx_seek_delay_7>
     2c62:	36 cb       	rjmp	.-2452   	; 0x22d0 <dispatch_reverse_func>
 
 00002c64 <branch_rel8_taken_func>:
@@ -6587,354 +6587,348 @@ Disassembly of section .text:
     2c68:	92 1d       	adc	r25, r2
     2c6a:	67 fc       	sbrc	r6, 7
     2c6c:	9a 95       	dec	r25
-    2c6e:	0d d0       	rcall	.+26     	; 0x2c8a <fx_seek_to_pc>
+    2c6e:	cd ca       	rjmp	.-2662   	; 0x220a <seek_and_dispatch_current_pc_func>
+
+00002c70 <dispatch_func>:
     2c70:	6e b4       	in	r6, 0x2e	; 46
     2c72:	2e bc       	out	0x2e, r2	; 46
-    2c74:	67 9c       	mul	r6, r7
-    2c76:	f0 01       	movw	r30, r0
-    2c78:	fe 5f       	subi	r31, 0xFE	; 254
-    2c7a:	09 94       	ijmp
+    2c74:	01 96       	adiw	r24, 0x01	; 1
+    2c76:	67 9c       	mul	r6, r7
+    2c78:	f0 01       	movw	r30, r0
+    2c7a:	ff 5f       	subi	r31, 0xFF	; 255
+    2c7c:	09 94       	ijmp
 
-00002c7c <dispatch_func>:
-    2c7c:	6e b4       	in	r6, 0x2e	; 46
-    2c7e:	2e bc       	out	0x2e, r2	; 46
-    2c80:	01 96       	adiw	r24, 0x01	; 1
-    2c82:	67 9c       	mul	r6, r7
-    2c84:	f0 01       	movw	r30, r0
-    2c86:	ff 5f       	subi	r31, 0xFF	; 255
-    2c88:	09 94       	ijmp
+00002c7e <fx_seek_to_pc>:
+    2c7e:	59 9a       	sbi	0x0b, 1	; 11
+    2c80:	e3 e0       	ldi	r30, 0x03	; 3
+    2c82:	59 98       	cbi	0x0b, 1	; 11
+    2c84:	ee bd       	out	0x2e, r30	; 46
+    2c86:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_end+0x900>
+    2c8a:	a9 0f       	add	r26, r25
+    2c8c:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_end+0x901>
+    2c90:	ea b5       	in	r30, 0x2a	; 42
+    2c92:	be 1f       	adc	r27, r30
+    2c94:	0b d0       	rcall	.+22     	; 0x2cac <fx_seek_delay_10>
+    2c96:	be bd       	out	0x2e, r27	; 46
+    2c98:	08 d0       	rcall	.+16     	; 0x2caa <fx_seek_delay_17>
+    2c9a:	ae bd       	out	0x2e, r26	; 46
+    2c9c:	06 d0       	rcall	.+12     	; 0x2caa <fx_seek_delay_17>
+    2c9e:	8e bd       	out	0x2e, r24	; 46
+    2ca0:	04 d0       	rcall	.+8      	; 0x2caa <fx_seek_delay_17>
+    2ca2:	2e bc       	out	0x2e, r2	; 46
+    2ca4:	00 c0       	rjmp	.+0      	; 0x2ca6 <fx_seek_to_pc+0x28>
+    2ca6:	02 d0       	rcall	.+4      	; 0x2cac <fx_seek_delay_10>
+    2ca8:	08 95       	ret
 
-00002c8a <fx_seek_to_pc>:
-    2c8a:	59 9a       	sbi	0x0b, 1	; 11
-    2c8c:	e3 e0       	ldi	r30, 0x03	; 3
-    2c8e:	59 98       	cbi	0x0b, 1	; 11
-    2c90:	ee bd       	out	0x2e, r30	; 46
-    2c92:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_end+0x900>
-    2c96:	a9 0f       	add	r26, r25
-    2c98:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_end+0x901>
-    2c9c:	ea b5       	in	r30, 0x2a	; 42
-    2c9e:	be 1f       	adc	r27, r30
-    2ca0:	0b d0       	rcall	.+22     	; 0x2cb8 <fx_seek_delay_10>
-    2ca2:	be bd       	out	0x2e, r27	; 46
-    2ca4:	08 d0       	rcall	.+16     	; 0x2cb6 <fx_seek_delay_17>
-    2ca6:	ae bd       	out	0x2e, r26	; 46
-    2ca8:	06 d0       	rcall	.+12     	; 0x2cb6 <fx_seek_delay_17>
-    2caa:	8e bd       	out	0x2e, r24	; 46
-    2cac:	04 d0       	rcall	.+8      	; 0x2cb6 <fx_seek_delay_17>
-    2cae:	2e bc       	out	0x2e, r2	; 46
-    2cb0:	00 c0       	rjmp	.+0      	; 0x2cb2 <fx_seek_to_pc+0x28>
-    2cb2:	02 d0       	rcall	.+4      	; 0x2cb8 <fx_seek_delay_10>
-    2cb4:	08 95       	ret
+00002caa <fx_seek_delay_17>:
+    2caa:	01 d0       	rcall	.+2      	; 0x2cae <fx_seek_delay_7>
 
-00002cb6 <fx_seek_delay_17>:
-    2cb6:	01 d0       	rcall	.+2      	; 0x2cba <fx_seek_delay_7>
+00002cac <fx_seek_delay_10>:
+    2cac:	c8 95       	lpm
 
-00002cb8 <fx_seek_delay_10>:
-    2cb8:	c8 95       	lpm
+00002cae <fx_seek_delay_7>:
+    2cae:	08 95       	ret
 
-00002cba <fx_seek_delay_7>:
-    2cba:	08 95       	ret
+00002cb0 <startup_func>:
+    2cb0:	f8 94       	cli
+    2cb2:	af ef       	ldi	r26, 0xFF	; 255
+    2cb4:	ad bf       	out	0x3d, r26	; 61
+    2cb6:	aa e0       	ldi	r26, 0x0A	; 10
+    2cb8:	ae bf       	out	0x3e, r26	; 62
+    2cba:	22 24       	eor	r2, r2
+    2cbc:	a0 e1       	ldi	r26, 0x10	; 16
+    2cbe:	7a 2e       	mov	r7, r26
+    2cc0:	c0 e0       	ldi	r28, 0x00	; 0
+    2cc2:	da e0       	ldi	r29, 0x0A	; 10
+    2cc4:	33 24       	eor	r3, r3
+    2cc6:	2a bc       	out	0x2a, r2	; 42
+    2cc8:	2b bc       	out	0x2b, r2	; 43
+    2cca:	20 92 00 0a 	sts	0x0A00, r2	; 0x800a00 <_end+0x900>
+    2cce:	20 92 01 0a 	sts	0x0A01, r2	; 0x800a01 <_end+0x901>
+    2cd2:	20 92 02 0a 	sts	0x0A02, r2	; 0x800a02 <_end+0x902>
+    2cd6:	20 92 03 0a 	sts	0x0A03, r2	; 0x800a03 <_end+0x903>
+    2cda:	20 92 04 0a 	sts	0x0A04, r2	; 0x800a04 <_end+0x904>
+    2cde:	20 92 05 0a 	sts	0x0A05, r2	; 0x800a05 <_end+0x905>
+    2ce2:	20 92 06 0a 	sts	0x0A06, r2	; 0x800a06 <_end+0x906>
+    2ce6:	a0 e5       	ldi	r26, 0x50	; 80
+    2ce8:	ac bd       	out	0x2c, r26	; 44
+    2cea:	a1 e0       	ldi	r26, 0x01	; 1
+    2cec:	ad bd       	out	0x2d, r26	; 45
+    2cee:	5e 9a       	sbi	0x0b, 6	; 11
+    2cf0:	59 9a       	sbi	0x0b, 1	; 11
+    2cf2:	59 98       	cbi	0x0b, 1	; 11
+    2cf4:	eb ea       	ldi	r30, 0xAB	; 171
+    2cf6:	dc d0       	rcall	.+440    	; 0x2eb0 <fx_spi_transfer_blocking>
+    2cf8:	59 9a       	sbi	0x0b, 1	; 11
+    2cfa:	e0 d0       	rcall	.+448    	; 0x2ebc <fx_startup_wake_delay>
+    2cfc:	e4 e1       	ldi	r30, 0x14	; 20
+    2cfe:	f0 e0       	ldi	r31, 0x00	; 0
+    2d00:	45 91       	lpm	r20, Z+
+    2d02:	55 91       	lpm	r21, Z+
+    2d04:	48 31       	cpi	r20, 0x18	; 24
+    2d06:	c1 f4       	brne	.+48     	; 0x2d38 <startup_find_development_image>
+    2d08:	55 39       	cpi	r21, 0x95	; 149
+    2d0a:	b1 f4       	brne	.+44     	; 0x2d38 <startup_find_development_image>
+    2d0c:	b5 91       	lpm	r27, Z+
+    2d0e:	a5 91       	lpm	r26, Z+
+    2d10:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
+    2d14:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
+    2d18:	45 91       	lpm	r20, Z+
+    2d1a:	55 91       	lpm	r21, Z+
+    2d1c:	48 31       	cpi	r20, 0x18	; 24
+    2d1e:	21 f5       	brne	.+72     	; 0x2d68 <startup_read_header>
+    2d20:	55 39       	cpi	r21, 0x95	; 149
+    2d22:	11 f5       	brne	.+68     	; 0x2d68 <startup_read_header>
+    2d24:	b5 91       	lpm	r27, Z+
+    2d26:	a5 91       	lpm	r26, Z+
+    2d28:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
+    2d2c:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
+    2d30:	a1 e0       	ldi	r26, 0x01	; 1
+    2d32:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
+    2d36:	18 c0       	rjmp	.+48     	; 0x2d68 <startup_read_header>
 
-00002cbc <startup_func>:
-    2cbc:	f8 94       	cli
-    2cbe:	af ef       	ldi	r26, 0xFF	; 255
-    2cc0:	ad bf       	out	0x3d, r26	; 61
-    2cc2:	aa e0       	ldi	r26, 0x0A	; 10
-    2cc4:	ae bf       	out	0x3e, r26	; 62
-    2cc6:	22 24       	eor	r2, r2
-    2cc8:	a0 e1       	ldi	r26, 0x10	; 16
-    2cca:	7a 2e       	mov	r7, r26
-    2ccc:	c0 e0       	ldi	r28, 0x00	; 0
-    2cce:	da e0       	ldi	r29, 0x0A	; 10
-    2cd0:	33 24       	eor	r3, r3
-    2cd2:	2a bc       	out	0x2a, r2	; 42
-    2cd4:	2b bc       	out	0x2b, r2	; 43
-    2cd6:	20 92 00 0a 	sts	0x0A00, r2	; 0x800a00 <_end+0x900>
-    2cda:	20 92 01 0a 	sts	0x0A01, r2	; 0x800a01 <_end+0x901>
-    2cde:	20 92 02 0a 	sts	0x0A02, r2	; 0x800a02 <_end+0x902>
-    2ce2:	20 92 03 0a 	sts	0x0A03, r2	; 0x800a03 <_end+0x903>
-    2ce6:	20 92 04 0a 	sts	0x0A04, r2	; 0x800a04 <_end+0x904>
-    2cea:	20 92 05 0a 	sts	0x0A05, r2	; 0x800a05 <_end+0x905>
-    2cee:	20 92 06 0a 	sts	0x0A06, r2	; 0x800a06 <_end+0x906>
-    2cf2:	a0 e5       	ldi	r26, 0x50	; 80
-    2cf4:	ac bd       	out	0x2c, r26	; 44
-    2cf6:	a1 e0       	ldi	r26, 0x01	; 1
-    2cf8:	ad bd       	out	0x2d, r26	; 45
-    2cfa:	5e 9a       	sbi	0x0b, 6	; 11
-    2cfc:	59 9a       	sbi	0x0b, 1	; 11
-    2cfe:	59 98       	cbi	0x0b, 1	; 11
-    2d00:	eb ea       	ldi	r30, 0xAB	; 171
-    2d02:	dc d0       	rcall	.+440    	; 0x2ebc <fx_spi_transfer_blocking>
-    2d04:	59 9a       	sbi	0x0b, 1	; 11
-    2d06:	e0 d0       	rcall	.+448    	; 0x2ec8 <fx_startup_wake_delay>
-    2d08:	e4 e1       	ldi	r30, 0x14	; 20
-    2d0a:	f0 e0       	ldi	r31, 0x00	; 0
-    2d0c:	45 91       	lpm	r20, Z+
-    2d0e:	55 91       	lpm	r21, Z+
-    2d10:	48 31       	cpi	r20, 0x18	; 24
-    2d12:	c1 f4       	brne	.+48     	; 0x2d44 <startup_find_development_image>
-    2d14:	55 39       	cpi	r21, 0x95	; 149
-    2d16:	b1 f4       	brne	.+44     	; 0x2d44 <startup_find_development_image>
-    2d18:	b5 91       	lpm	r27, Z+
-    2d1a:	a5 91       	lpm	r26, Z+
-    2d1c:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
-    2d20:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
-    2d24:	45 91       	lpm	r20, Z+
-    2d26:	55 91       	lpm	r21, Z+
-    2d28:	48 31       	cpi	r20, 0x18	; 24
-    2d2a:	21 f5       	brne	.+72     	; 0x2d74 <startup_read_header>
-    2d2c:	55 39       	cpi	r21, 0x95	; 149
-    2d2e:	11 f5       	brne	.+68     	; 0x2d74 <startup_read_header>
-    2d30:	b5 91       	lpm	r27, Z+
-    2d32:	a5 91       	lpm	r26, Z+
-    2d34:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
-    2d38:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
-    2d3c:	a1 e0       	ldi	r26, 0x01	; 1
-    2d3e:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
-    2d42:	18 c0       	rjmp	.+48     	; 0x2d74 <startup_read_header>
+00002d38 <startup_find_development_image>:
+    2d38:	6f ef       	ldi	r22, 0xFF	; 255
+    2d3a:	bf ef       	ldi	r27, 0xFF	; 255
+    2d3c:	a8 ef       	ldi	r26, 0xF8	; 248
+    2d3e:	44 27       	eor	r20, r20
+    2d40:	55 27       	eor	r21, r21
+    2d42:	87 d0       	rcall	.+270    	; 0x2e52 <startup_try_tail>
+    2d44:	88 f0       	brcs	.+34     	; 0x2d68 <startup_read_header>
+    2d46:	6f ef       	ldi	r22, 0xFF	; 255
+    2d48:	bf ee       	ldi	r27, 0xEF	; 239
+    2d4a:	a8 ef       	ldi	r26, 0xF8	; 248
+    2d4c:	40 ef       	ldi	r20, 0xF0	; 240
+    2d4e:	5f ef       	ldi	r21, 0xFF	; 255
+    2d50:	80 d0       	rcall	.+256    	; 0x2e52 <startup_try_tail>
+    2d52:	08 f0       	brcs	.+2      	; 0x2d56 <.L1^B5>
+    2d54:	7b c0       	rjmp	.+246    	; 0x2e4c <startup_invalid_image>
 
-00002d44 <startup_find_development_image>:
-    2d44:	6f ef       	ldi	r22, 0xFF	; 255
-    2d46:	bf ef       	ldi	r27, 0xFF	; 255
-    2d48:	a8 ef       	ldi	r26, 0xF8	; 248
-    2d4a:	44 27       	eor	r20, r20
-    2d4c:	55 27       	eor	r21, r21
-    2d4e:	87 d0       	rcall	.+270    	; 0x2e5e <startup_try_tail>
-    2d50:	88 f0       	brcs	.+34     	; 0x2d74 <startup_read_header>
-    2d52:	6f ef       	ldi	r22, 0xFF	; 255
-    2d54:	bf ee       	ldi	r27, 0xEF	; 239
-    2d56:	a8 ef       	ldi	r26, 0xF8	; 248
-    2d58:	40 ef       	ldi	r20, 0xF0	; 240
-    2d5a:	5f ef       	ldi	r21, 0xFF	; 255
-    2d5c:	80 d0       	rcall	.+256    	; 0x2e5e <startup_try_tail>
-    2d5e:	08 f0       	brcs	.+2      	; 0x2d62 <.L1^B5>
-    2d60:	7b c0       	rjmp	.+246    	; 0x2e58 <startup_invalid_image>
+00002d56 <.L1^B5>:
+    2d56:	a0 ef       	ldi	r26, 0xF0	; 240
+    2d58:	bf ef       	ldi	r27, 0xFF	; 255
+    2d5a:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
+    2d5e:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
+    2d62:	a1 e0       	ldi	r26, 0x01	; 1
+    2d64:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
 
-00002d62 <.L1^B5>:
-    2d62:	a0 ef       	ldi	r26, 0xF0	; 240
-    2d64:	bf ef       	ldi	r27, 0xFF	; 255
-    2d66:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
-    2d6a:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
-    2d6e:	a1 e0       	ldi	r26, 0x01	; 1
-    2d70:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
+00002d68 <startup_read_header>:
+    2d68:	aa 27       	eor	r26, r26
+    2d6a:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
+    2d6e:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
+    2d72:	91 d0       	rcall	.+290    	; 0x2e96 <fx_startup_begin_read>
+    2d74:	9b d0       	rcall	.+310    	; 0x2eac <fx_startup_read_byte>
+    2d76:	e1 34       	cpi	r30, 0x41	; 65
+    2d78:	09 f0       	breq	.+2      	; 0x2d7c <.L1^B6>
+    2d7a:	68 c0       	rjmp	.+208    	; 0x2e4c <startup_invalid_image>
 
-00002d74 <startup_read_header>:
-    2d74:	aa 27       	eor	r26, r26
-    2d76:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
-    2d7a:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
-    2d7e:	91 d0       	rcall	.+290    	; 0x2ea2 <fx_startup_begin_read>
-    2d80:	9b d0       	rcall	.+310    	; 0x2eb8 <fx_startup_read_byte>
-    2d82:	e1 34       	cpi	r30, 0x41	; 65
-    2d84:	09 f0       	breq	.+2      	; 0x2d88 <.L1^B6>
-    2d86:	68 c0       	rjmp	.+208    	; 0x2e58 <startup_invalid_image>
+00002d7c <.L1^B6>:
+    2d7c:	97 d0       	rcall	.+302    	; 0x2eac <fx_startup_read_byte>
+    2d7e:	e6 35       	cpi	r30, 0x56	; 86
+    2d80:	09 f0       	breq	.+2      	; 0x2d84 <.L1^B7>
+    2d82:	64 c0       	rjmp	.+200    	; 0x2e4c <startup_invalid_image>
 
-00002d88 <.L1^B6>:
-    2d88:	97 d0       	rcall	.+302    	; 0x2eb8 <fx_startup_read_byte>
-    2d8a:	e6 35       	cpi	r30, 0x56	; 86
-    2d8c:	09 f0       	breq	.+2      	; 0x2d90 <.L1^B7>
-    2d8e:	64 c0       	rjmp	.+200    	; 0x2e58 <startup_invalid_image>
+00002d84 <.L1^B7>:
+    2d84:	93 d0       	rcall	.+294    	; 0x2eac <fx_startup_read_byte>
+    2d86:	ed 34       	cpi	r30, 0x4D	; 77
+    2d88:	09 f0       	breq	.+2      	; 0x2d8c <.L1^B8>
+    2d8a:	60 c0       	rjmp	.+192    	; 0x2e4c <startup_invalid_image>
 
-00002d90 <.L1^B7>:
-    2d90:	93 d0       	rcall	.+294    	; 0x2eb8 <fx_startup_read_byte>
-    2d92:	ed 34       	cpi	r30, 0x4D	; 77
-    2d94:	09 f0       	breq	.+2      	; 0x2d98 <.L1^B8>
-    2d96:	60 c0       	rjmp	.+192    	; 0x2e58 <startup_invalid_image>
+00002d8c <.L1^B8>:
+    2d8c:	8f d0       	rcall	.+286    	; 0x2eac <fx_startup_read_byte>
+    2d8e:	e1 30       	cpi	r30, 0x01	; 1
+    2d90:	09 f0       	breq	.+2      	; 0x2d94 <.L1^B9>
+    2d92:	5c c0       	rjmp	.+184    	; 0x2e4c <startup_invalid_image>
 
-00002d98 <.L1^B8>:
-    2d98:	8f d0       	rcall	.+286    	; 0x2eb8 <fx_startup_read_byte>
-    2d9a:	e1 30       	cpi	r30, 0x01	; 1
-    2d9c:	09 f0       	breq	.+2      	; 0x2da0 <.L1^B9>
-    2d9e:	5c c0       	rjmp	.+184    	; 0x2e58 <startup_invalid_image>
+00002d94 <.L1^B9>:
+    2d94:	8b d0       	rcall	.+278    	; 0x2eac <fx_startup_read_byte>
+    2d96:	e1 30       	cpi	r30, 0x01	; 1
+    2d98:	09 f0       	breq	.+2      	; 0x2d9c <.L1^B10>
+    2d9a:	58 c0       	rjmp	.+176    	; 0x2e4c <startup_invalid_image>
 
-00002da0 <.L1^B9>:
-    2da0:	8b d0       	rcall	.+278    	; 0x2eb8 <fx_startup_read_byte>
-    2da2:	e1 30       	cpi	r30, 0x01	; 1
-    2da4:	09 f0       	breq	.+2      	; 0x2da8 <.L1^B10>
-    2da6:	58 c0       	rjmp	.+176    	; 0x2e58 <startup_invalid_image>
+00002d9c <.L1^B10>:
+    2d9c:	87 d0       	rcall	.+270    	; 0x2eac <fx_startup_read_byte>
+    2d9e:	8e 2f       	mov	r24, r30
+    2da0:	85 d0       	rcall	.+266    	; 0x2eac <fx_startup_read_byte>
+    2da2:	9e 2f       	mov	r25, r30
+    2da4:	83 d0       	rcall	.+262    	; 0x2eac <fx_startup_read_byte>
+    2da6:	ea bd       	out	0x2a, r30	; 42
+    2da8:	81 d0       	rcall	.+258    	; 0x2eac <fx_startup_read_byte>
+    2daa:	0e 2f       	mov	r16, r30
+    2dac:	7f d0       	rcall	.+254    	; 0x2eac <fx_startup_read_byte>
+    2dae:	1e 2f       	mov	r17, r30
+    2db0:	7d d0       	rcall	.+250    	; 0x2eac <fx_startup_read_byte>
+    2db2:	2e 2f       	mov	r18, r30
+    2db4:	7b d0       	rcall	.+246    	; 0x2eac <fx_startup_read_byte>
+    2db6:	3e 2f       	mov	r19, r30
+    2db8:	79 d0       	rcall	.+242    	; 0x2eac <fx_startup_read_byte>
+    2dba:	4e 2f       	mov	r20, r30
+    2dbc:	e0 93 04 0a 	sts	0x0A04, r30	; 0x800a04 <_end+0x904>
+    2dc0:	75 d0       	rcall	.+234    	; 0x2eac <fx_startup_read_byte>
+    2dc2:	5e 2f       	mov	r21, r30
+    2dc4:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <_end+0x905>
+    2dc8:	59 9a       	sbi	0x0b, 1	; 11
+    2dca:	20 17       	cp	r18, r16
+    2dcc:	31 07       	cpc	r19, r17
+    2dce:	08 f4       	brcc	.+2      	; 0x2dd2 <.L1^B11>
+    2dd0:	3d c0       	rjmp	.+122    	; 0x2e4c <startup_invalid_image>
 
-00002da8 <.L1^B10>:
-    2da8:	87 d0       	rcall	.+270    	; 0x2eb8 <fx_startup_read_byte>
-    2daa:	8e 2f       	mov	r24, r30
-    2dac:	85 d0       	rcall	.+266    	; 0x2eb8 <fx_startup_read_byte>
-    2dae:	9e 2f       	mov	r25, r30
-    2db0:	83 d0       	rcall	.+262    	; 0x2eb8 <fx_startup_read_byte>
-    2db2:	ea bd       	out	0x2a, r30	; 42
-    2db4:	81 d0       	rcall	.+258    	; 0x2eb8 <fx_startup_read_byte>
-    2db6:	0e 2f       	mov	r16, r30
-    2db8:	7f d0       	rcall	.+254    	; 0x2eb8 <fx_startup_read_byte>
-    2dba:	1e 2f       	mov	r17, r30
-    2dbc:	7d d0       	rcall	.+250    	; 0x2eb8 <fx_startup_read_byte>
-    2dbe:	2e 2f       	mov	r18, r30
-    2dc0:	7b d0       	rcall	.+246    	; 0x2eb8 <fx_startup_read_byte>
-    2dc2:	3e 2f       	mov	r19, r30
-    2dc4:	79 d0       	rcall	.+242    	; 0x2eb8 <fx_startup_read_byte>
-    2dc6:	4e 2f       	mov	r20, r30
-    2dc8:	e0 93 04 0a 	sts	0x0A04, r30	; 0x800a04 <_end+0x904>
-    2dcc:	75 d0       	rcall	.+234    	; 0x2eb8 <fx_startup_read_byte>
-    2dce:	5e 2f       	mov	r21, r30
-    2dd0:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <_end+0x905>
-    2dd4:	59 9a       	sbi	0x0b, 1	; 11
-    2dd6:	20 17       	cp	r18, r16
-    2dd8:	31 07       	cpc	r19, r17
-    2dda:	08 f4       	brcc	.+2      	; 0x2dde <.L1^B11>
-    2ddc:	3d c0       	rjmp	.+122    	; 0x2e58 <startup_invalid_image>
+00002dd2 <.L1^B11>:
+    2dd2:	34 30       	cpi	r19, 0x04	; 4
+    2dd4:	28 f0       	brcs	.+10     	; 0x2de0 <.L1^B12>
+    2dd6:	09 f0       	breq	.+2      	; 0x2dda <.L2^B1>
+    2dd8:	39 c0       	rjmp	.+114    	; 0x2e4c <startup_invalid_image>
 
-00002dde <.L1^B11>:
-    2dde:	34 30       	cpi	r19, 0x04	; 4
-    2de0:	28 f0       	brcs	.+10     	; 0x2dec <.L1^B12>
-    2de2:	09 f0       	breq	.+2      	; 0x2de6 <.L2^B1>
-    2de4:	39 c0       	rjmp	.+114    	; 0x2e58 <startup_invalid_image>
+00002dda <.L2^B1>:
+    2dda:	22 23       	and	r18, r18
+    2ddc:	09 f0       	breq	.+2      	; 0x2de0 <.L1^B12>
+    2dde:	36 c0       	rjmp	.+108    	; 0x2e4c <startup_invalid_image>
 
-00002de6 <.L2^B1>:
-    2de6:	22 23       	and	r18, r18
-    2de8:	09 f0       	breq	.+2      	; 0x2dec <.L1^B12>
-    2dea:	36 c0       	rjmp	.+108    	; 0x2e58 <startup_invalid_image>
+00002de0 <.L1^B12>:
+    2de0:	54 30       	cpi	r21, 0x04	; 4
+    2de2:	28 f0       	brcs	.+10     	; 0x2dee <.L2^B2>
+    2de4:	09 f0       	breq	.+2      	; 0x2de8 <.L3^B1>
+    2de6:	32 c0       	rjmp	.+100    	; 0x2e4c <startup_invalid_image>
 
-00002dec <.L1^B12>:
-    2dec:	54 30       	cpi	r21, 0x04	; 4
-    2dee:	28 f0       	brcs	.+10     	; 0x2dfa <.L2^B2>
-    2df0:	09 f0       	breq	.+2      	; 0x2df4 <.L3^B1>
-    2df2:	32 c0       	rjmp	.+100    	; 0x2e58 <startup_invalid_image>
+00002de8 <.L3^B1>:
+    2de8:	44 23       	and	r20, r20
+    2dea:	09 f0       	breq	.+2      	; 0x2dee <.L2^B2>
+    2dec:	2f c0       	rjmp	.+94     	; 0x2e4c <startup_invalid_image>
 
-00002df4 <.L3^B1>:
-    2df4:	44 23       	and	r20, r20
-    2df6:	09 f0       	breq	.+2      	; 0x2dfa <.L2^B2>
-    2df8:	2f c0       	rjmp	.+94     	; 0x2e58 <startup_invalid_image>
+00002dee <.L2^B2>:
+    2dee:	42 15       	cp	r20, r2
+    2df0:	52 05       	cpc	r21, r2
+    2df2:	21 f0       	breq	.+8      	; 0x2dfc <.L3^B2>
+    2df4:	a0 91 06 0a 	lds	r26, 0x0A06	; 0x800a06 <_end+0x906>
+    2df8:	a0 ff       	sbrs	r26, 0
+    2dfa:	28 c0       	rjmp	.+80     	; 0x2e4c <startup_invalid_image>
 
-00002dfa <.L2^B2>:
-    2dfa:	42 15       	cp	r20, r2
-    2dfc:	52 05       	cpc	r21, r2
-    2dfe:	21 f0       	breq	.+8      	; 0x2e08 <.L3^B2>
-    2e00:	a0 91 06 0a 	lds	r26, 0x0A06	; 0x800a06 <_end+0x906>
-    2e04:	a0 ff       	sbrs	r26, 0
-    2e06:	28 c0       	rjmp	.+80     	; 0x2e58 <startup_invalid_image>
+00002dfc <.L3^B2>:
+    2dfc:	a0 e0       	ldi	r26, 0x00	; 0
+    2dfe:	b1 e0       	ldi	r27, 0x01	; 1
+    2e00:	a9 01       	movw	r20, r18
+    2e02:	42 15       	cp	r20, r2
+    2e04:	52 05       	cpc	r21, r2
+    2e06:	21 f0       	breq	.+8      	; 0x2e10 <startup_copy_data>
 
-00002e08 <.L3^B2>:
-    2e08:	a0 e0       	ldi	r26, 0x00	; 0
-    2e0a:	b1 e0       	ldi	r27, 0x01	; 1
-    2e0c:	a9 01       	movw	r20, r18
-    2e0e:	42 15       	cp	r20, r2
-    2e10:	52 05       	cpc	r21, r2
-    2e12:	21 f0       	breq	.+8      	; 0x2e1c <startup_copy_data>
+00002e08 <startup_clear_static_loop>:
+    2e08:	2d 92       	st	X+, r2
+    2e0a:	41 50       	subi	r20, 0x01	; 1
+    2e0c:	50 40       	sbci	r21, 0x00	; 0
+    2e0e:	e1 f7       	brne	.-8      	; 0x2e08 <startup_clear_static_loop>
 
-00002e14 <startup_clear_static_loop>:
-    2e14:	2d 92       	st	X+, r2
-    2e16:	41 50       	subi	r20, 0x01	; 1
-    2e18:	50 40       	sbci	r21, 0x00	; 0
-    2e1a:	e1 f7       	brne	.-8      	; 0x2e14 <startup_clear_static_loop>
+00002e10 <startup_copy_data>:
+    2e10:	02 15       	cp	r16, r2
+    2e12:	12 05       	cpc	r17, r2
+    2e14:	89 f0       	breq	.+34     	; 0x2e38 <startup_enter_image>
+    2e16:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
+    2e1a:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
+    2e1e:	b3 95       	inc	r27
+    2e20:	09 f4       	brne	.+2      	; 0x2e24 <.L4^B1>
+    2e22:	63 95       	inc	r22
 
-00002e1c <startup_copy_data>:
-    2e1c:	02 15       	cp	r16, r2
-    2e1e:	12 05       	cpc	r17, r2
-    2e20:	89 f0       	breq	.+34     	; 0x2e44 <startup_enter_image>
-    2e22:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
-    2e26:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
-    2e2a:	b3 95       	inc	r27
-    2e2c:	09 f4       	brne	.+2      	; 0x2e30 <.L4^B1>
-    2e2e:	63 95       	inc	r22
+00002e24 <.L4^B1>:
+    2e24:	aa 27       	eor	r26, r26
+    2e26:	37 d0       	rcall	.+110    	; 0x2e96 <fx_startup_begin_read>
+    2e28:	a0 e0       	ldi	r26, 0x00	; 0
+    2e2a:	b1 e0       	ldi	r27, 0x01	; 1
 
-00002e30 <.L4^B1>:
-    2e30:	aa 27       	eor	r26, r26
-    2e32:	37 d0       	rcall	.+110    	; 0x2ea2 <fx_startup_begin_read>
-    2e34:	a0 e0       	ldi	r26, 0x00	; 0
-    2e36:	b1 e0       	ldi	r27, 0x01	; 1
+00002e2c <startup_copy_data_loop>:
+    2e2c:	3f d0       	rcall	.+126    	; 0x2eac <fx_startup_read_byte>
+    2e2e:	ed 93       	st	X+, r30
+    2e30:	01 50       	subi	r16, 0x01	; 1
+    2e32:	10 40       	sbci	r17, 0x00	; 0
+    2e34:	d9 f7       	brne	.-10     	; 0x2e2c <startup_copy_data_loop>
+    2e36:	59 9a       	sbi	0x0b, 1	; 11
 
-00002e38 <startup_copy_data_loop>:
-    2e38:	3f d0       	rcall	.+126    	; 0x2eb8 <fx_startup_read_byte>
-    2e3a:	ed 93       	st	X+, r30
-    2e3c:	01 50       	subi	r16, 0x01	; 1
-    2e3e:	10 40       	sbci	r17, 0x00	; 0
-    2e40:	d9 f7       	brne	.-10     	; 0x2e38 <startup_copy_data_loop>
-    2e42:	59 9a       	sbi	0x0b, 1	; 11
+00002e38 <startup_enter_image>:
+    2e38:	2b bc       	out	0x2b, r2	; 43
+    2e3a:	21 df       	rcall	.-446    	; 0x2c7e <fx_seek_to_pc>
+    2e3c:	6e b4       	in	r6, 0x2e	; 46
+    2e3e:	2e bc       	out	0x2e, r2	; 46
+    2e40:	78 94       	sei
+    2e42:	00 00       	nop
+    2e44:	67 9c       	mul	r6, r7
+    2e46:	f0 01       	movw	r30, r0
+    2e48:	ff 5f       	subi	r31, 0xFF	; 255
+    2e4a:	09 94       	ijmp
 
-00002e44 <startup_enter_image>:
-    2e44:	2b bc       	out	0x2b, r2	; 43
-    2e46:	21 df       	rcall	.-446    	; 0x2c8a <fx_seek_to_pc>
-    2e48:	6e b4       	in	r6, 0x2e	; 46
-    2e4a:	2e bc       	out	0x2e, r2	; 46
-    2e4c:	78 94       	sei
-    2e4e:	00 00       	nop
-    2e50:	67 9c       	mul	r6, r7
-    2e52:	f0 01       	movw	r30, r0
-    2e54:	ff 5f       	subi	r31, 0xFF	; 255
-    2e56:	09 94       	ijmp
+00002e4c <startup_invalid_image>:
+    2e4c:	f8 94       	cli
+    2e4e:	59 9a       	sbi	0x0b, 1	; 11
 
-00002e58 <startup_invalid_image>:
-    2e58:	f8 94       	cli
-    2e5a:	59 9a       	sbi	0x0b, 1	; 11
+00002e50 <startup_invalid_image_loop>:
+    2e50:	ff cf       	rjmp	.-2      	; 0x2e50 <startup_invalid_image_loop>
 
-00002e5c <startup_invalid_image_loop>:
-    2e5c:	ff cf       	rjmp	.-2      	; 0x2e5c <startup_invalid_image_loop>
+00002e52 <startup_try_tail>:
+    2e52:	21 d0       	rcall	.+66     	; 0x2e96 <fx_startup_begin_read>
+    2e54:	2b d0       	rcall	.+86     	; 0x2eac <fx_startup_read_byte>
+    2e56:	e1 34       	cpi	r30, 0x41	; 65
+    2e58:	d9 f4       	brne	.+54     	; 0x2e90 <startup_try_tail_fail>
+    2e5a:	28 d0       	rcall	.+80     	; 0x2eac <fx_startup_read_byte>
+    2e5c:	e6 35       	cpi	r30, 0x56	; 86
+    2e5e:	c1 f4       	brne	.+48     	; 0x2e90 <startup_try_tail_fail>
+    2e60:	25 d0       	rcall	.+74     	; 0x2eac <fx_startup_read_byte>
+    2e62:	e4 35       	cpi	r30, 0x54	; 84
+    2e64:	a9 f4       	brne	.+42     	; 0x2e90 <startup_try_tail_fail>
+    2e66:	22 d0       	rcall	.+68     	; 0x2eac <fx_startup_read_byte>
+    2e68:	e1 30       	cpi	r30, 0x01	; 1
+    2e6a:	91 f4       	brne	.+36     	; 0x2e90 <startup_try_tail_fail>
+    2e6c:	1f d0       	rcall	.+62     	; 0x2eac <fx_startup_read_byte>
+    2e6e:	0e 2e       	mov	r0, r30
+    2e70:	1d d0       	rcall	.+58     	; 0x2eac <fx_startup_read_byte>
+    2e72:	1e 2e       	mov	r1, r30
+    2e74:	59 9a       	sbi	0x0b, 1	; 11
+    2e76:	02 14       	cp	r0, r2
+    2e78:	12 04       	cpc	r1, r2
+    2e7a:	59 f0       	breq	.+22     	; 0x2e92 <startup_try_tail_fail_disabled>
+    2e7c:	a4 2f       	mov	r26, r20
+    2e7e:	b5 2f       	mov	r27, r21
+    2e80:	a0 19       	sub	r26, r0
+    2e82:	b1 09       	sbc	r27, r1
+    2e84:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
+    2e88:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
+    2e8c:	08 94       	sec
+    2e8e:	08 95       	ret
 
-00002e5e <startup_try_tail>:
-    2e5e:	21 d0       	rcall	.+66     	; 0x2ea2 <fx_startup_begin_read>
-    2e60:	2b d0       	rcall	.+86     	; 0x2eb8 <fx_startup_read_byte>
-    2e62:	e1 34       	cpi	r30, 0x41	; 65
-    2e64:	d9 f4       	brne	.+54     	; 0x2e9c <startup_try_tail_fail>
-    2e66:	28 d0       	rcall	.+80     	; 0x2eb8 <fx_startup_read_byte>
-    2e68:	e6 35       	cpi	r30, 0x56	; 86
-    2e6a:	c1 f4       	brne	.+48     	; 0x2e9c <startup_try_tail_fail>
-    2e6c:	25 d0       	rcall	.+74     	; 0x2eb8 <fx_startup_read_byte>
-    2e6e:	e4 35       	cpi	r30, 0x54	; 84
-    2e70:	a9 f4       	brne	.+42     	; 0x2e9c <startup_try_tail_fail>
-    2e72:	22 d0       	rcall	.+68     	; 0x2eb8 <fx_startup_read_byte>
-    2e74:	e1 30       	cpi	r30, 0x01	; 1
-    2e76:	91 f4       	brne	.+36     	; 0x2e9c <startup_try_tail_fail>
-    2e78:	1f d0       	rcall	.+62     	; 0x2eb8 <fx_startup_read_byte>
-    2e7a:	0e 2e       	mov	r0, r30
-    2e7c:	1d d0       	rcall	.+58     	; 0x2eb8 <fx_startup_read_byte>
-    2e7e:	1e 2e       	mov	r1, r30
-    2e80:	59 9a       	sbi	0x0b, 1	; 11
-    2e82:	02 14       	cp	r0, r2
-    2e84:	12 04       	cpc	r1, r2
-    2e86:	59 f0       	breq	.+22     	; 0x2e9e <startup_try_tail_fail_disabled>
-    2e88:	a4 2f       	mov	r26, r20
-    2e8a:	b5 2f       	mov	r27, r21
-    2e8c:	a0 19       	sub	r26, r0
-    2e8e:	b1 09       	sbc	r27, r1
-    2e90:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
-    2e94:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
-    2e98:	08 94       	sec
-    2e9a:	08 95       	ret
+00002e90 <startup_try_tail_fail>:
+    2e90:	59 9a       	sbi	0x0b, 1	; 11
 
-00002e9c <startup_try_tail_fail>:
-    2e9c:	59 9a       	sbi	0x0b, 1	; 11
+00002e92 <startup_try_tail_fail_disabled>:
+    2e92:	88 94       	clc
+    2e94:	08 95       	ret
 
-00002e9e <startup_try_tail_fail_disabled>:
-    2e9e:	88 94       	clc
-    2ea0:	08 95       	ret
+00002e96 <fx_startup_begin_read>:
+    2e96:	59 9a       	sbi	0x0b, 1	; 11
+    2e98:	59 98       	cbi	0x0b, 1	; 11
+    2e9a:	e3 e0       	ldi	r30, 0x03	; 3
+    2e9c:	09 d0       	rcall	.+18     	; 0x2eb0 <fx_spi_transfer_blocking>
+    2e9e:	e6 2f       	mov	r30, r22
+    2ea0:	07 d0       	rcall	.+14     	; 0x2eb0 <fx_spi_transfer_blocking>
+    2ea2:	eb 2f       	mov	r30, r27
+    2ea4:	05 d0       	rcall	.+10     	; 0x2eb0 <fx_spi_transfer_blocking>
+    2ea6:	ea 2f       	mov	r30, r26
+    2ea8:	03 d0       	rcall	.+6      	; 0x2eb0 <fx_spi_transfer_blocking>
+    2eaa:	08 95       	ret
 
-00002ea2 <fx_startup_begin_read>:
-    2ea2:	59 9a       	sbi	0x0b, 1	; 11
-    2ea4:	59 98       	cbi	0x0b, 1	; 11
-    2ea6:	e3 e0       	ldi	r30, 0x03	; 3
-    2ea8:	09 d0       	rcall	.+18     	; 0x2ebc <fx_spi_transfer_blocking>
-    2eaa:	e6 2f       	mov	r30, r22
-    2eac:	07 d0       	rcall	.+14     	; 0x2ebc <fx_spi_transfer_blocking>
-    2eae:	eb 2f       	mov	r30, r27
-    2eb0:	05 d0       	rcall	.+10     	; 0x2ebc <fx_spi_transfer_blocking>
-    2eb2:	ea 2f       	mov	r30, r26
-    2eb4:	03 d0       	rcall	.+6      	; 0x2ebc <fx_spi_transfer_blocking>
-    2eb6:	08 95       	ret
+00002eac <fx_startup_read_byte>:
+    2eac:	e2 2d       	mov	r30, r2
+    2eae:	00 c0       	rjmp	.+0      	; 0x2eb0 <fx_spi_transfer_blocking>
 
-00002eb8 <fx_startup_read_byte>:
-    2eb8:	e2 2d       	mov	r30, r2
-    2eba:	00 c0       	rjmp	.+0      	; 0x2ebc <fx_spi_transfer_blocking>
+00002eb0 <fx_spi_transfer_blocking>:
+    2eb0:	ee bd       	out	0x2e, r30	; 46
 
-00002ebc <fx_spi_transfer_blocking>:
-    2ebc:	ee bd       	out	0x2e, r30	; 46
+00002eb2 <.L1^B13>:
+    2eb2:	fd b5       	in	r31, 0x2d	; 45
+    2eb4:	f7 ff       	sbrs	r31, 7
+    2eb6:	fd cf       	rjmp	.-6      	; 0x2eb2 <.L1^B13>
+    2eb8:	ee b5       	in	r30, 0x2e	; 46
+    2eba:	08 95       	ret
 
-00002ebe <.L1^B13>:
-    2ebe:	fd b5       	in	r31, 0x2d	; 45
-    2ec0:	f7 ff       	sbrs	r31, 7
-    2ec2:	fd cf       	rjmp	.-6      	; 0x2ebe <.L1^B13>
-    2ec4:	ee b5       	in	r30, 0x2e	; 46
-    2ec6:	08 95       	ret
+00002ebc <fx_startup_wake_delay>:
+    2ebc:	a0 e2       	ldi	r26, 0x20	; 32
 
-00002ec8 <fx_startup_wake_delay>:
-    2ec8:	a0 e2       	ldi	r26, 0x20	; 32
-
-00002eca <.L1^B14>:
-    2eca:	aa 95       	dec	r26
-    2ecc:	f1 f7       	brne	.-4      	; 0x2eca <.L1^B14>
-    2ece:	08 95       	ret
+00002ebe <.L1^B14>:
+    2ebe:	aa 95       	dec	r26
+    2ec0:	f1 f7       	brne	.-4      	; 0x2ebe <.L1^B14>
+    2ec2:	08 95       	ret

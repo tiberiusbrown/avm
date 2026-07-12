@@ -19,10 +19,10 @@ r0-r7   eight 16-bit architectural registers
 c0-c3   compact aliases for r4-r7
 A       accumulator alias for c0/r4; no additional storage
 q0      r0:r1,  q1 = r2:r3,  q2 = r4:r5,  q3 = r6:r7
-CC      architectural comparison state containing only C, Z, and S
+CC      architectural condition state containing only C, Z, and S
 ```
 
-Only comparison and test instructions replace CC. All ordinary arithmetic, logical, shift, multiply, move, memory, stack, and address operations preserve CC. A branch or `CSET` reads CC without modifying it.
+Comparison and test instructions replace CC. The one-byte compact `ADD cD,cS` and `SUB cD,cS` instructions also replace CC because the current direct AVR handlers can capture native `SREG` with no increase over the 17-cycle cadence. All other arithmetic, logical, shift, multiply, move, memory, stack, and address operations preserve CC. A branch or `CSET` reads CC without modifying it.
 
 The comparison meanings are:
 
@@ -32,7 +32,63 @@ The comparison meanings are:
 | `Z` | operands are equal |
 | `S` | signed left operand is less than signed right operand |
 
-## 3. Cycle-estimation model
+For the one-byte compact arithmetic instructions, CC is the native 16-bit AVR result of the direct byte-pair operation:
+
+| Instruction | `C` | `Z` | `S` |
+|---|---|---|---|
+| `ADD cD,cS` | carry out of bit 15 | 16-bit result is zero | native `N xor V` for the 16-bit result |
+| `SUB cD,cS` | borrow from bit 15 | 16-bit result is zero | signed original `cD` is less than `cS` |
+
+The interpreter may retain other native `SREG` bits internally, but they are not architectural and software must not depend on them.
+
+## 3. Revised `RRSPEC` encoding
+
+`RRSPEC` remains one byte containing two four-bit register fields:
+
+```text
+bits 7:4   operand 0 register
+bits 3:0   operand 1 register
+```
+
+Each nibble stores the register index already multiplied by two:
+
+| AVM register | Nibble | Effective AVR low-byte address |
+|---|---:|---:|
+| `r0` | `0x0` | `0x08` (`AVR r8`) |
+| `r1` | `0x2` | `0x0A` (`AVR r10`) |
+| `r2` | `0x4` | `0x0C` (`AVR r12`) |
+| `r3` | `0x6` | `0x0E` (`AVR r14`) |
+| `r4` | `0x8` | `0x10` (`AVR r16`) |
+| `r5` | `0xA` | `0x12` (`AVR r18`) |
+| `r6` | `0xC` | `0x14` (`AVR r20`) |
+| `r7` | `0xE` | `0x16` (`AVR r22`) |
+
+The effective native data-space address is therefore:
+
+```text
+AVR_low_byte_address = 8 + encoded_nibble
+```
+
+For a two-register instruction, operand 0 is encoded in the high nibble and operand 1 in the low nibble. Thus `LD8 rD,[rA]` encodes `rD` high and `rA` low, while `ST8 [rA],rS` encodes `rA` high and `rS` low.
+
+A handler can decode each field without a shift:
+
+```asm
+; Low-nibble operand
+mov  r26, r6
+andi r26, 0x0E
+subi r26, -8
+
+; High-nibble operand
+mov  r26, r6
+swap r26
+andi r26, 0x0E
+subi r26, -8
+```
+
+Compared with the previous three-bit register index, this removes one `LSL` per decoded register. Ordinary two-register `RRSPEC` instructions are therefore estimated two AVR cycles faster.
+
+## 4. Cycle-estimation model
 
 Cycle counts are measured from entry to the current primary-opcode handler through entry to the next primary-opcode handler. Thus they include operand fetch, secondary dispatch, instruction work, and dispatch of the following instruction.
 
@@ -43,14 +99,15 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | Two-byte operand-specialized extension | about 34 cycles |
 | Three-byte sequential instruction before extra decode work | about 51 cycles |
 | Four-byte sequential instruction before extra decode work | about 68 cycles |
+| Decode both registers from revised pre-scaled `RRSPEC` | about 2 cycles less than the old index encoding |
 | One current-style SPI stream restart and target dispatch | about 105 cycles |
 | Program-space scalar load | two stream seeks plus one or two data transfers |
 
 `NT` and `T` mean not taken and taken. For variable shifts, `n` is the masked run-time shift count. At 16 MHz, 16 AVR cycles are approximately 1 microsecond.
 
-## 4. Exhaustive instruction tables
+## 5. Exhaustive instruction tables
 
-### 4.1. Primary compact and hot instructions
+### 5.1. Primary compact and hot instructions
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
@@ -66,16 +123,16 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `68–6F` | `BIC A,rS` | A = A & ~rS. | 1 | ≈17 | Preserve | A specialized handler can use MOVW+COM+COM+AND+AND and still fit the current one-byte cadence. |
 | `70–77` | `PUSH16 rS` | Decrement SP by two and push a 16-bit register in little-endian stack order. | 1 | ≈17 | Preserve |  |
 | `78–7F` | `POP16 rD` | Pop a 16-bit register and increment SP by two. | 1 | ≈17 | Preserve |  |
-| `80–8F` | `ADD cD,cS` | cD = cD + cS modulo 2^16. | 1 | ≈17 | Preserve |  |
-| `90–9F` | `SUB cD,cS` | cD = cD - cS modulo 2^16. | 1 | ≈17 | Preserve |  |
+| `80–8F` | `ADD cD,cS` | cD = cD + cS modulo 2^16. | 1 | ≈17 | Replace C/Z/S | Uses the current `ADD`/`ADC`/`IN SREG` sequence; flag capture has no cycle penalty. |
+| `90–9F` | `SUB cD,cS` | cD = cD - cS modulo 2^16. | 1 | ≈17 | Replace C/Z/S | Uses the current `SUB`/`SBC`/`IN SREG` sequence; flag capture has no cycle penalty. |
 | `A0–AF, off-diagonal` | `CMP16 cL,cR` | Set CC from a 16-bit comparison without changing operands. | 1 | ≈17 | Replace C/Z/S |  |
 | `A0/A5/AA/AF` | `TST16 cN` | Set CC from a 16-bit comparison against zero. | 1 | ≈17 | Replace C/Z/S |  |
 | `B0–BF, off-diagonal` | `CMP8 cL,cR` | Set CC from an 8-bit comparison of the low bytes. | 1 | ≈17 | Replace C/Z/S |  |
 | `B0/B5/BA/BF` | `TST8 cN` | Set CC from an 8-bit comparison of the low byte against zero. | 1 | ≈17 | Replace C/Z/S |  |
-| `C0–CF` | `BEQ.S disp4` | Branch when Z=1 using the embedded displacement set {-8..-1,+1..+8}. | 1 | NT ≈17; T ≈114 | Read |  |
-| `D0–DF` | `BNE.S disp4` | Branch when Z=0 using the embedded displacement set {-8..-1,+1..+8}. | 1 | NT ≈17; T ≈114 | Read |  |
+| `C0–CF` | `BEQ.S disp4` | Branch when Z=1 using the embedded displacement set {-9..-2,+1..+8}. | 1 | NT ≈17; T ≈114 | Read |  |
+| `D0–DF` | `BNE.S disp4` | Branch when Z=0 using the embedded displacement set {-9..-2,+1..+8}. | 1 | NT ≈17; T ≈114 | Read |  |
 
-### 4.2. E0 miscellaneous extension page
+### 5.2. E0 miscellaneous extension page
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
@@ -112,7 +169,7 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `E0 F0–F7` | `TST8 rN` | Set CC from a full-register low-byte comparison against zero. | 2 | ≈34 | Replace C/Z/S |  |
 | `E0 F8–FF` | `Reserved` | Reserved for future miscellaneous instructions. | — | — | — |  |
 
-### 4.3. E1 32-bit pair ALU extension page
+### 5.3. E1 32-bit pair ALU extension page
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
@@ -128,7 +185,7 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `E1 9dddss` | `ASR32V qD,qS` | Arithmetic right shift qD by low5(qS). | 2 | ≈39 + 7n | Preserve | n = low5(qS); about 39–256 cycles. |
 | `E1 Adddss–Fdddss` | `Reserved` | Reserved pair-page operations. | — | — | — |  |
 
-### 4.4. E2 accumulator ALU extension page
+### 5.4. E2 accumulator ALU extension page
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
@@ -149,7 +206,7 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `E2 0Esss` | `ASR16V A,rS` | Arithmetic right shift A by low4(rS). | 2 | ≈38 + 5n | Preserve | n = low4(rS); about 38–113 cycles. |
 | `E2 0Fsss–1Fsss` | `Reserved` | Reserved accumulator operations. | — | — | — |  |
 
-### 4.5. E3 register transfer and condition extension page
+### 5.5. E3 register transfer and condition extension page
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
@@ -158,7 +215,7 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `E3 10dddsss` | `MOV8S rD,bS` | Copy a low byte and sign-extend it to 16 bits. | 2 | ≈34 | Preserve |  |
 | `E3 11cccddd` | `CSET rD,cc` | Materialize an AVM condition as 0 or 1 in rD. | 2 | ≈34–38 | Read | cc encodes EQ, NE, ULT, UGE, SLT, SGE, ULE, or UGT. |
 
-### 4.6. Direct primary immediate, control, and system instructions
+### 5.6. Direct primary immediate, control, and system instructions
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
@@ -175,14 +232,14 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `EC` | `NOP` | No architectural effect. | 1 | ≈17 | Preserve |  |
 | `ED–EF` | `Reserved` | Reserved primary opcodes. | — | — | — |  |
 
-### 4.7. F0-FC compact immediates, compact ALU page, and branches
+### 5.7. F0-FC compact immediates, compact ALU page, and branches
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
 | `F0–F3 imm8` | `LDI8 cD,imm8` | Load an 8-bit immediate into a compact register and zero-extend it. | 2 | ≈34 | Preserve |  |
 | `F4 0dddss` | `MOV cD,cS (extended)` | Alternate compact-page move. | 2 | ≈34 | Preserve | Normally dominated by the one-byte primary MOV encoding. |
-| `F4 1dddss` | `ADD cD,cS (extended)` | Alternate compact-page 16-bit add. | 2 | ≈34 | Preserve | Normally dominated by the one-byte primary ADD encoding. |
-| `F4 2dddss` | `SUB cD,cS (extended)` | Alternate compact-page 16-bit subtract. | 2 | ≈34 | Preserve | Normally dominated by the one-byte primary SUB encoding. |
+| `F4 1dddss` | `ADD.NF cD,cS` | Non-flagging compact-page 16-bit add. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `ADD`. |
+| `F4 2dddss` | `SUB.NF cD,cS` | Non-flagging compact-page 16-bit subtract. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `SUB`. |
 | `F4 3dddss` | `AND cD,cS` | Compact 16-bit bitwise AND. | 2 | ≈34 | Preserve |  |
 | `F4 4dddss` | `OR cD,cS` | Compact 16-bit bitwise OR. | 2 | ≈34 | Preserve |  |
 | `F4 5dddss` | `XOR cD,cS` | Compact 16-bit bitwise XOR. | 2 | ≈34 | Preserve |  |
@@ -205,23 +262,23 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `FB rel8` | `BRULE rel8` | Branch when C\|Z is nonzero. | 2 | NT ≈35–36; T ≈133–134 | Read |  |
 | `FC rel8` | `BRUGT rel8` | Branch when C=0 and Z=0. | 2 | NT ≈35–36; T ≈133–134 | Read |  |
 
-### 4.8. FD data-space and program-space extension page
+### 5.8. FD data-space and program-space extension page
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
-| `FD 00 RRSPEC` | `LD8 rD,[rA]` | Generic register-indirect byte load with zero extension. | 3 | ≈62–66 | Preserve |  |
-| `FD 01 RRSPEC` | `ST8 [rA],rS` | Generic register-indirect byte store. | 3 | ≈60–64 | Preserve |  |
-| `FD 02 RRSPEC` | `LD16 rD,[rA]` | Generic register-indirect 16-bit load. | 3 | ≈64–68 | Preserve |  |
-| `FD 03 RRSPEC` | `ST16 [rA],rS` | Generic register-indirect 16-bit store. | 3 | ≈62–66 | Preserve |  |
-| `FD 04 RRSPEC` | `LD8 rD,[rA+]` | Load a byte, zero-extend it, then increment rA by one. | 3 | ≈66–71 | Preserve |  |
-| `FD 05 RRSPEC` | `ST8 [rA+],rS` | Store a byte, then increment rA by one. | 3 | ≈64–69 | Preserve |  |
-| `FD 06 RRSPEC` | `LD16 rD,[rA+]` | Load a word, then increment rA by two. | 3 | ≈68–73 | Preserve |  |
-| `FD 07 RRSPEC` | `ST16 [rA+],rS` | Store a word, then increment rA by two. | 3 | ≈66–71 | Preserve |  |
-| `FD 08 RRSPEC disp8` | `LEA rD,[rA+simm8]` | Compute a signed-eight-bit displaced data-space address. | 4 | ≈76–82 | Preserve |  |
-| `FD 09 RRSPEC disp8` | `LD8 rD,[rA+simm8]` | Displaced byte load with zero extension. | 4 | ≈80–86 | Preserve |  |
-| `FD 0A RRSPEC disp8` | `ST8 [rA+simm8],rS` | Displaced byte store. | 4 | ≈78–84 | Preserve |  |
-| `FD 0B RRSPEC disp8` | `LD16 rD,[rA+simm8]` | Displaced 16-bit load. | 4 | ≈82–88 | Preserve |  |
-| `FD 0C RRSPEC disp8` | `ST16 [rA+simm8],rS` | Displaced 16-bit store. | 4 | ≈80–86 | Preserve |  |
+| `FD 00 RRSPEC` | `LD8 rD,[rA]` | Generic register-indirect byte load with zero extension. | 3 | ≈60–64 | Preserve |  |
+| `FD 01 RRSPEC` | `ST8 [rA],rS` | Generic register-indirect byte store. | 3 | ≈58–62 | Preserve |  |
+| `FD 02 RRSPEC` | `LD16 rD,[rA]` | Generic register-indirect 16-bit load. | 3 | ≈62–66 | Preserve |  |
+| `FD 03 RRSPEC` | `ST16 [rA],rS` | Generic register-indirect 16-bit store. | 3 | ≈60–64 | Preserve |  |
+| `FD 04 RRSPEC` | `LD8 rD,[rA+]` | Load a byte, zero-extend it, then increment rA by one. | 3 | ≈64–69 | Preserve |  |
+| `FD 05 RRSPEC` | `ST8 [rA+],rS` | Store a byte, then increment rA by one. | 3 | ≈62–67 | Preserve |  |
+| `FD 06 RRSPEC` | `LD16 rD,[rA+]` | Load a word, then increment rA by two. | 3 | ≈66–71 | Preserve |  |
+| `FD 07 RRSPEC` | `ST16 [rA+],rS` | Store a word, then increment rA by two. | 3 | ≈64–69 | Preserve |  |
+| `FD 08 RRSPEC disp8` | `LEA rD,[rA+simm8]` | Compute a signed-eight-bit displaced data-space address. | 4 | ≈74–80 | Preserve |  |
+| `FD 09 RRSPEC disp8` | `LD8 rD,[rA+simm8]` | Displaced byte load with zero extension. | 4 | ≈78–84 | Preserve |  |
+| `FD 0A RRSPEC disp8` | `ST8 [rA+simm8],rS` | Displaced byte store. | 4 | ≈76–82 | Preserve |  |
+| `FD 0B RRSPEC disp8` | `LD16 rD,[rA+simm8]` | Displaced 16-bit load. | 4 | ≈80–86 | Preserve |  |
+| `FD 0C RRSPEC disp8` | `ST16 [rA+simm8],rS` | Displaced 16-bit store. | 4 | ≈78–84 | Preserve |  |
 | `FD 10–17 u8` | `LDSP8 rN,[SP+u8]` | Load a stack-relative byte and zero-extend it. | 3 | ≈58–64 | Preserve |  |
 | `FD 18–1F u8` | `STSP8 [SP+u8],rN` | Store a stack-relative byte. | 3 | ≈56–62 | Preserve |  |
 | `FD 20–27 u8` | `LDSP16 rN,[SP+u8]` | Load a stack-relative 16-bit word. | 3 | ≈60–66 | Preserve |  |
@@ -230,13 +287,13 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `FD 38–3F addr16` | `STM8 addr16,rN` | Store a byte to an absolute data-space address. | 4 | ≈70–76 | Preserve |  |
 | `FD 40–47 addr16` | `LDM16 rN,addr16` | Load a 16-bit word from an absolute data-space address. | 4 | ≈74–80 | Preserve |  |
 | `FD 48–4F addr16` | `STM16 addr16,rN` | Store a 16-bit word to an absolute data-space address. | 4 | ≈72–78 | Preserve |  |
-| `FD 80 RRSPEC` | `LDP8 rD,[PB:rA]` | Load one byte from program space, zero-extend it, then restore the instruction stream. | 3 | ≈235–250 | Preserve | Requires a data-stream seek and a code-stream seek. |
-| `FD 81 RRSPEC` | `LDP16 rD,[PB:rA]` | Load a little-endian word from program space, then restore the instruction stream. | 3 | ≈250–268 | Preserve | Requires two seeks and two program-data transfers. |
-| `FD 82 RRSPEC disp8` | `LDP8 rD,[PB:rA+simm8]` | Displaced program-space byte load. | 4 | ≈252–270 | Preserve | Requires two seeks. |
-| `FD 83 RRSPEC disp8` | `LDP16 rD,[PB:rA+simm8]` | Displaced program-space 16-bit load. | 4 | ≈268–286 | Preserve | Requires two seeks. |
+| `FD 80 RRSPEC` | `LDP8 rD,[PB:rA]` | Load one byte from program space, zero-extend it, then restore the instruction stream. | 3 | ≈233–248 | Preserve | Requires a data-stream seek and a code-stream seek. |
+| `FD 81 RRSPEC` | `LDP16 rD,[PB:rA]` | Load a little-endian word from program space, then restore the instruction stream. | 3 | ≈248–266 | Preserve | Requires two seeks and two program-data transfers. |
+| `FD 82 RRSPEC disp8` | `LDP8 rD,[PB:rA+simm8]` | Displaced program-space byte load. | 4 | ≈250–268 | Preserve | Requires two seeks. |
+| `FD 83 RRSPEC disp8` | `LDP16 rD,[PB:rA+simm8]` | Displaced program-space 16-bit load. | 4 | ≈266–284 | Preserve | Requires two seeks. |
 | `FD other` | `Reserved` | All other FD secondary opcodes are reserved. | — | — | — |  |
 
-### 4.9. Far control and return
+### 5.9. Far control and return
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
@@ -244,51 +301,54 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `FE T0 T1 T2, link=1` | `CALLF target24` | Push the three-byte return address and far-call a two-byte-aligned 24-bit target. | 4 | ≈171–178 | Preserve |  |
 | `FF` | `RET` | Pop CB:PC from the VM stack and restart fetch at the return address. | 1 | ≈112–120 | Preserve |  |
 
-## 5. Important timing conclusions
+## 6. Important timing conclusions
+
+The one-byte short-branch encoding deliberately omits displacement `-1`. Because short-branch displacements are relative to `nextPC`, `-1` would branch back to the branch instruction itself. The negative encoding range is instead `-9` through `-2`, preserving eight backward choices while extending the useful backward reach by one byte. The positive range remains `+1` through `+8`.
+
 
 1. The hot one-byte compact and accumulator instructions remain at approximately 17 cycles.
 2. A specialized two-byte ALU page is approximately 34 cycles, roughly half the estimated cost of the current three-byte `F4 + operation + RRSPEC` pattern.
-3. Generic `RRSPEC` data-space memory instructions remain moderately expensive because they must calculate native register-file addresses at run time.
+3. Generic `RRSPEC` data-space memory instructions remain moderately expensive, but the pre-scaled nibble encoding removes one `LSL` per decoded register and saves about two cycles for ordinary two-register forms.
 4. Taken control transfers are dominated by restarting the external-flash read stream, not by opcode decoding.
 5. Program-space scalar loads are exceptionally expensive because they interrupt the code stream, seek to data, transfer data, and seek back to code.
-6. Removing routine ALU flag production saves several AVR operations per handler and makes direct operand-specialized implementations practical.
+6. Removing routine ALU flag production saves several AVR operations per handler. The one-byte compact `ADD` and `SUB` are the intentional exception because their existing native flag capture already fits the 17-cycle cadence.
 
-## 6. Encoding issues to resolve before freezing the ISA
+## 7. Encoding issues to resolve before freezing the ISA
 
-### 6.1 Duplicate F4 operations
+### 7.1 Flag-preserving F4 arithmetic and remaining duplicates
 
-The proposed `F4` compact ALU page currently contains extended `MOV`, `ADD`, `SUB`, `CMP16`, and `CMP8` forms even though all compact combinations already have one-byte primary encodings. These secondary ranges should probably be reassigned to additional useful operations or reserved before the ISA is frozen.
+The `F4` `ADD.NF` and `SUB.NF` forms are intentionally retained as non-flagging alternatives to the one-byte compact `ADD` and `SUB`; LLVM can use them when CC is live across an arithmetic operation. Extended `MOV`, `CMP16`, and `CMP8` remain true duplicates of one-byte primary forms and should probably be reassigned or reserved before the ISA is frozen.
 
-### 6.2 CMPI6 remains partly decoded at run time
+### 7.2 CMPI6 remains partly decoded at run time
 
 The direct two-byte `CMPI6` is much cheaper than the current three-byte extended form, but its packed register field still requires a small address calculation. Four dedicated primary opcodes would reduce the estimate toward 34 cycles, but would consume three additional primary slots.
 
-### 6.3 Variable shifts are still loop operations
+### 7.3 Variable shifts are still loop operations
 
 Operand specialization removes register decode, but AVR has no variable-count word shift. Their run time therefore remains proportional to the shift count. LLVM should use fixed shifts, strength reduction, or helper sequences when profitable.
 
-### 6.4 CSETM is intentionally omitted
+### 7.4 CSETM is intentionally omitted
 
 This report assigns the final quarter of the `E3` page to `CSET`. A full-width all-zero/all-one mask can be formed as `CSET` followed by flag-neutral `NEG16`. A dedicated `CSETM` can be added later if profiling justifies another encoding.
 
-### 6.5 Compact stack-relative forms are omitted
+### 7.5 Compact stack-relative forms are omitted
 
 The earlier compact `LDSP/STSP` forms are not assigned in this map. Stack slots use the `FD` three-byte `u8` forms. Restoring two-byte compact stack forms may be worthwhile if frame-offset profiling shows they are among the most frequent instructions.
 
-## 7. Instructions removed from the old flag/carry model
+## 8. Instructions removed from the old flag/carry model
 
 | Removed instruction or behavior | Replacement |
 |---|---|
 | `ADC rD,rS` | `ADD32 qD,qS` for 32-bit arithmetic; runtime helpers for wider arithmetic |
 | `SBC rD,rS` | `SUB32 qD,qS` for 32-bit arithmetic; runtime helpers for wider arithmetic |
 | `CPC16 rL,rR` | `CMP32 qL,qR` |
-| ALU-produced branch flags | Explicit `CMP`, `CMPI`, or `TST` immediately before the branch or `CSET` |
-| Partial flag updates or carry preservation | Every non-compare preserves all CC; every compare/test replaces all C/Z/S |
+| General ALU-produced branch flags | Explicit `CMP`, `CMPI`, or `TST`; primary compact `ADD`/`SUB` may feed branches directly when their arithmetic flags are desired |
+| Partial flag updates or carry preservation | Every flag-writing instruction replaces all C/Z/S; all other instructions preserve all CC |
 | Generic ALU `RRSPEC` | Compact `F4`, accumulator `E2`, pair `E1`, or moves through `E3` |
 
-## 8. Confidence and validation plan
+## 9. Confidence and validation plan
 
-The approximately 17-cycle primary timings are high-confidence because they match the current padded handlers. Two-byte specialized estimates are medium-confidence because they assume the same secondary dispatch organization as the current `F4` table. Generic memory, control-transfer, and program-load estimates are lower-confidence until handlers are implemented and measured.
+The approximately 17-cycle primary timings are high-confidence because they match the current padded handlers, including flag-producing compact `ADD` and `SUB`. Two-byte specialized estimates are medium-confidence because they assume the same secondary dispatch organization as the current `F4` table. Revised `RRSPEC` estimates directly account for removal of two `LSL` instructions, but generic memory, control-transfer, and program-load totals remain lower-confidence until handlers are implemented and measured.
 
 Before freezing the cost model:
 

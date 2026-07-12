@@ -28,3 +28,38 @@ set(ARDENS_SDL       ON  CACHE BOOL "" FORCE)
 # libraries on which that executable depends.
 add_subdirectory(deps/Ardens ardens-build EXCLUDE_FROM_ALL)
 add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+set(AVM_TEST_HEADLESS_MS     "5000")
+set(AVM_TEST_TIMEOUT_SECONDS "30")
+set(AVM_TEST_SCRIPT          "${CMAKE_CURRENT_SOURCE_DIR}/tests/avm_tests.py")
+set(AVM_ASM_TEST_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/tests/asm")
+set(AVM_TEST_WORK_DIR        "${CMAKE_CURRENT_BINARY_DIR}/tests/$<CONFIG>")
+set(AVM_INTERPRETER_HEX      "${CMAKE_CURRENT_SOURCE_DIR}/interp/build/interp.hex")
+
+# Build the required LLVM tools and Ardens, then run the unified AVM test
+# driver. The driver currently processes tests/asm/*.asm files, but may later
+# be extended to compile and run C/C++ tests as well.
+add_custom_target(avm_tests
+    COMMAND
+        "${Python3_EXECUTABLE}"
+        "${AVM_TEST_SCRIPT}"
+        --llvm-mc "$<TARGET_FILE:llvm-mc>"
+        --llvm-avm-image "$<TARGET_FILE:llvm-avm-image>"
+        --ardens "$<TARGET_FILE:Ardens>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --asm-dir "${AVM_ASM_TEST_DIR}"
+        --work-dir "${AVM_TEST_WORK_DIR}"
+        --headless-ms "${AVM_TEST_HEADLESS_MS}"
+        --timeout-seconds "${AVM_TEST_TIMEOUT_SECONDS}"
+    DEPENDS
+        llvm-mc
+        llvm-avm-image
+        Ardens
+        "${AVM_TEST_SCRIPT}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Running AVM tests with the Ardens debugger"
+    USES_TERMINAL
+    VERBATIM
+)

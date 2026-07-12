@@ -223,6 +223,7 @@ sbi  CS_PORT, CS_BIT
 
 ; Arduboy system ABI service identifiers.
 #define SYS_DEBUG_PUTC          0x00
+#define SYS_DEBUG_BREAK         0x01
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -1192,10 +1193,14 @@ sys_dispatch_func:
 .if (SYS_DEBUG_PUTC != 0x00)
     .error "SYS_DEBUG_PUTC must occupy dispatch-table entry 0"
 .endif
+.if (SYS_DEBUG_BREAK != 0x01)
+    .error "SYS_DEBUG_BREAK must occupy dispatch-table entry 1"
+.endif
 
 sys_dispatch_table:
-    sys_entries 1,   sys_debug_putc_func ; 0x00: debug_putc
-    sys_entries 255, invalid_syscall_func ; 0x01-0xFF: reserved
+    sys_entries 1,   sys_debug_putc_func  ; 0x00: debug_putc
+    sys_entries 1,   sys_debug_break_func ; 0x01: debug_break
+    sys_entries 254, invalid_syscall_func ; 0x02-0xFF: reserved
 sys_dispatch_table_end:
 
 .if ((sys_dispatch_table_end - sys_dispatch_table) != (256 * 2))
@@ -1211,6 +1216,18 @@ sys_debug_putc_func:
     ; The table lookup and service body leave two cycles of padding before the
     ; common dispatch path to retain the 17-cycle SPI OUT-to-OUT cadence.
     delay_2
+    rjmp dispatch_func
+
+sys_debug_break_func:
+    ; SYS 1: debug_break(). Execute one native AVR BREAK instruction. Ardens
+    ; headless mode treats this as a stop condition. If a debugger subsequently
+    ; resumes execution, AVM execution continues with the prefetched instruction
+    ; following SYS 1. BREAK itself does not modify AVM architectural state.
+    break
+
+    ; BREAK is one cycle, versus the two-cycle STS in debug_putc. Three cycles
+    ; of padding keep the same 17-cycle SPI OUT-to-OUT cadence on resume.
+    delay_3
     rjmp dispatch_func
 
 f4_mtpb_family:

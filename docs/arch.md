@@ -1689,7 +1689,7 @@ Flags are preserved.
 
 `JMP16` and `CALL16` use an absolute low-16-bit address in the current bank.
 
-`SYS` invokes the Arduboy system-ABI service selected by the following `imm8` service identifier. Service `0` is `debug_putc`, defined in Section 65. Program termination, frame yielding, debugger breaks, and explicit guest assertions or traps are system services rather than dedicated ISA instructions.
+`SYS` invokes the Arduboy system-ABI service selected by the following `imm8` service identifier. Service `0` is `debug_putc` and service `1` is `debug_break`, both defined in Section 65. Program termination, frame yielding, and explicit guest assertions or traps are system services rather than dedicated ISA instructions.
 
 ---
 
@@ -2095,10 +2095,11 @@ SP     preserved
 
 ### 65.1 Service identifiers
 
-| Service ID | Name         | Purpose                                      |
-| ---------: | ------------ | -------------------------------------------- |
-|        `0` | `debug_putc` | Write one byte to the simulator debug stream |
-|    `1–255` | Reserved     | Unassigned                                   |
+| Service ID | Name          | Purpose                                      |
+| ---------: | ------------- | -------------------------------------------- |
+|        `0` | `debug_putc`  | Write one byte to the simulator debug stream |
+|        `1` | `debug_break` | Execute a native AVR debugger break           |
+|    `2–255` | Reserved      | Unassigned                                   |
 
 An unsupported or reserved service identifier is an invalid system-service request. A diagnostic interpreter MUST trap it. Optimized execution may treat it as unrestricted undefined behavior.
 
@@ -2133,11 +2134,34 @@ SP      preserved
 CB:PC   advances normally to the following instruction
 ```
 
+### 65.3 `SYS 1`: `debug_break`
+
+Assembly syntax:
+
+```asm
+SYS 1
+```
+
+The service has no arguments and no result. The interpreter executes exactly one native ATmega32U4 `BREAK` instruction. A simulator or attached debugger may stop execution at that instruction. In particular, Ardens headless mode may use the native break as an early-success termination point after observing all preceding debug output.
+
+If execution is resumed after the break, AVM execution continues normally with the instruction following `SYS 1`. The service preserves all AVM architectural state other than normal instruction progression:
+
+```text
+c0–c3   preserved
+r0–r3   preserved
+PB      preserved
+FLAGS   preserved
+SP      preserved
+CB:PC   advances normally to the following instruction
+```
+
+On physical hardware, debugger-visible behavior is the native behavior of the ATmega32U4 `BREAK` instruction and depends on the active debugging environment.
+
 Future services should be assigned additional identifiers in this section. Each service MUST specify its arguments, results, clobbers, blocking behavior, and hardware side effects.
 
 The AVR interpreter implements `SYS` with a 256-entry, one-native-word dispatch table indexed directly by the unsigned service identifier. Each table entry branches to the corresponding service handler. Entries for unsupported or reserved identifiers branch to the invalid-system-service handler. Adding a service consists of assigning its identifier, replacing that table entry with the new handler target, and implementing a handler that ultimately resumes the common primary dispatch path. The table representation and native handler placement are interpreter implementation details and do not alter the `SYS imm8` encoding.
 
-Likely future service categories include display submission, input sampling, audio control, frame timing and yield, program termination, debugger breaks, explicit guest-fault reporting, random-number generation, bulk flash-to-SRAM copies, sprite rendering, save-data access, and richer debug output.
+Likely future service categories include display submission, input sampling, audio control, frame timing and yield, program termination, explicit guest-fault reporting, random-number generation, bulk flash-to-SRAM copies, sprite rendering, save-data access, and richer debug output.
 
 ---
 
@@ -3475,6 +3499,8 @@ System ABI:
     SYS 0 = debug_putc
     Input byte is low8(c0)
     Interpreter writes it directly to UEDATX
+    SYS 1 = debug_break
+    Interpreter executes one native AVR BREAK instruction
 
 LLVM address spaces:
     AS0 AVR data space, 16-bit pointers

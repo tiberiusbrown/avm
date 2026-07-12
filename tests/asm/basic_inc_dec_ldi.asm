@@ -1,38 +1,27 @@
+.include "tests/asm/test_helpers.inc"
 .section .text,"ax",@progbits
 .globl _start
 .type _start, @function
 .p2align 1
 
+.macro test_ldi reg, value
+    ldi8 \reg, \value
+    print_reg16 \reg
+.endm
+
 _start:
-    inc16 r0
-    inc16 r1
-    inc16 r2
-    inc16 r3
-    inc16 r4
-    inc16 r5
-    inc16 r6
-    inc16 r7
-    dec16 r0
-    dec16 r1
-    dec16 r2
-    dec16 r3
-    dec16 r4
-    dec16 r5
-    dec16 r6
-    dec16 r7
-    ldi8 c0, '0'
-    ldi8 c1, '1'
-    ldi8 c2, '2'
-    ldi8 c3, '3'
-    ldi8 c0, 'A'
-    inc16 c0
-    sys 0
-    dec16 c0
-    sys 0
-    ldi8 c0, 'L'
-    ldi8 c1, 1
-    add c0, c1
-    sys 0
+    test_inc16 c0, 0x00
+    test_inc16 c1, 0x0f
+    test_inc16 c2, 0x7f
+    test_inc16 c3, 0xff
+    test_dec16 c0, 0x00
+    test_dec16 c1, 0x01
+    test_dec16 c2, 0x80
+    test_dec16 c3, 0xff
+    test_ldi c0, 0x00
+    test_ldi c1, 0x0f
+    test_ldi c2, 0x80
+    test_ldi c3, 0xff
     sys 1
 
 .size _start, .-_start

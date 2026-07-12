@@ -70,3 +70,28 @@
     swap8 \reg
     print_reg16 \reg
 .endm
+
+.macro test_mov dst, src, dv, sv
+    ldi8 \dst, \dv
+    ldi8 \src, \sv
+    mov \dst, \src
+    print_reg16 \dst
+.endm
+
+.macro test_clr reg, value
+    ldi8 \reg, \value
+    clr \reg
+    print_reg16 \reg
+.endm
+
+.macro test_inc16 reg, value
+    ldi8 \reg, \value
+    inc16 \reg
+    print_reg16 \reg
+.endm
+
+.macro test_dec16 reg, value
+    ldi8 \reg, \value
+    dec16 \reg
+    print_reg16 \reg
+.endm

@@ -29,18 +29,85 @@ set(ARDENS_SDL       ON  CACHE BOOL "" FORCE)
 add_subdirectory(deps/Ardens ardens-build EXCLUDE_FROM_ALL)
 add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
 
+set(AVM_INTERPRETER_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/interp")
+set(AVM_INTERPRETER_BUILD_DIR
+    "${AVM_INTERPRETER_DIR}/build")
+set(AVM_INTERPRETER_SOURCE
+    "${AVM_INTERPRETER_DIR}/interp.asm")
+set(AVM_INTERPRETER_BUILD_CMAKE
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake")
+set(AVM_INTERPRETER_OBJECT
+    "${AVM_INTERPRETER_BUILD_DIR}/interp.o")
+set(AVM_INTERPRETER_ELF
+    "${AVM_INTERPRETER_BUILD_DIR}/interp.elf")
+set(AVM_INTERPRETER_MAP
+    "${AVM_INTERPRETER_BUILD_DIR}/interp.map")
+set(AVM_INTERPRETER_LISTING
+    "${AVM_INTERPRETER_BUILD_DIR}/interp.lst")
+set(AVM_INTERPRETER_HEX
+    "${AVM_INTERPRETER_BUILD_DIR}/interp.hex")
+set(AVM_INTERPRETER_SIZE_BINARY
+    "${AVM_INTERPRETER_BUILD_DIR}/interp.size.bin")
+
+set(AVM_INTERPRETER_MAX_SIZE 29696 CACHE STRING "")
+set(AVM_AVR_GCC     "" CACHE FILEPATH "")
+set(AVM_AVR_OBJCOPY "" CACHE FILEPATH "")
+set(AVM_AVR_OBJDUMP "" CACHE FILEPATH "")
+
+set(AVM_INTERPRETER_OUTPUTS
+    "${AVM_INTERPRETER_OBJECT}"
+    "${AVM_INTERPRETER_ELF}"
+    "${AVM_INTERPRETER_MAP}"
+    "${AVM_INTERPRETER_LISTING}"
+    "${AVM_INTERPRETER_HEX}"
+)
+
+# Build through a CMake script rather than a platform-specific shell script.
+# Tool discovery occurs when this target is built, so an AVR toolchain is not
+# required merely to configure or build unrelated LLVM targets.
+add_custom_command(
+    OUTPUT ${AVM_INTERPRETER_OUTPUTS}
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DAVR_GCC:FILEPATH=${AVM_AVR_GCC}"
+        "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
+        "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
+        "-DSOURCE:FILEPATH=${AVM_INTERPRETER_SOURCE}"
+        "-DOUTPUT_OBJECT:FILEPATH=${AVM_INTERPRETER_OBJECT}"
+        "-DOUTPUT_ELF:FILEPATH=${AVM_INTERPRETER_ELF}"
+        "-DOUTPUT_MAP:FILEPATH=${AVM_INTERPRETER_MAP}"
+        "-DOUTPUT_LISTING:FILEPATH=${AVM_INTERPRETER_LISTING}"
+        "-DOUTPUT_HEX:FILEPATH=${AVM_INTERPRETER_HEX}"
+        "-DTEMP_SIZE_BINARY:FILEPATH=${AVM_INTERPRETER_SIZE_BINARY}"
+        "-DMAX_INTERP_SIZE:STRING=${AVM_INTERPRETER_MAX_SIZE}"
+        -P "${AVM_INTERPRETER_BUILD_CMAKE}"
+    DEPENDS
+        "${AVM_INTERPRETER_SOURCE}"
+        "${AVM_INTERPRETER_BUILD_CMAKE}"
+    COMMENT "Building the AVR AVM interpreter"
+    USES_TERMINAL
+    VERBATIM
+)
+
+add_custom_target(avm_interpreter
+    DEPENDS ${AVM_INTERPRETER_OUTPUTS}
+)
+
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
-set(AVM_TEST_HEADLESS_MS     "5000")
-set(AVM_TEST_TIMEOUT_SECONDS "30")
-set(AVM_TEST_SCRIPT          "${CMAKE_CURRENT_SOURCE_DIR}/tests/avm_tests.py")
-set(AVM_ASM_TEST_DIR         "${CMAKE_CURRENT_SOURCE_DIR}/tests/asm")
-set(AVM_TEST_WORK_DIR        "${CMAKE_CURRENT_BINARY_DIR}/tests/$<CONFIG>")
-set(AVM_INTERPRETER_HEX      "${CMAKE_CURRENT_SOURCE_DIR}/interp/build/interp.hex")
+set(AVM_TEST_HEADLESS_MS "5000" CACHE STRING "")
+set(AVM_TEST_TIMEOUT_SECONDS "30" CACHE STRING "")
 
-# Build the required LLVM tools and Ardens, then run the unified AVM test
-# driver. The driver currently processes tests/asm/*.asm files, but may later
-# be extended to compile and run C/C++ tests as well.
+set(AVM_TEST_SCRIPT
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/avm_tests.py")
+set(AVM_ASM_TEST_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/asm")
+set(AVM_TEST_WORK_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/tests/$<CONFIG>")
+
+# Build the required LLVM tools, Ardens, and the AVR interpreter, then run the
+# unified AVM test driver.
 add_custom_target(avm_tests
     COMMAND
         "${Python3_EXECUTABLE}"
@@ -57,6 +124,7 @@ add_custom_target(avm_tests
         llvm-mc
         llvm-avm-image
         Ardens
+        avm_interpreter
         "${AVM_TEST_SCRIPT}"
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
     COMMENT "Running AVM tests with the Ardens debugger"

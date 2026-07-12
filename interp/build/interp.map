@@ -15,6 +15,10 @@ user_signatures  0x00850000         0x00000400         rw!x
 
 Linker script and memory map
 
+Address of section .data set to 0x800100
+Address of section .text set to 0x0
+Address of section .data set to 0x800100
+LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
                 0x00000000                        __TEXT_REGION_ORIGIN__ = DEFINED (__TEXT_REGION_ORIGIN__)?__TEXT_REGION_ORIGIN__:0x0
                 0x00020000                        __TEXT_REGION_LENGTH__ = DEFINED (__TEXT_REGION_LENGTH__)?__TEXT_REGION_LENGTH__:0x20000
                 0x00800060                        __DATA_REGION_ORIGIN__ = DEFINED (__DATA_REGION_ORIGIN__)?__DATA_REGION_ORIGIN__:0x800060
@@ -160,7 +164,7 @@ Linker script and memory map
  *(.init9)
  *(.init9)
  *(.text)
- .text          0x00000000     0x2bc8 build\interp.o
+ .text          0x00000000     0x2bc8 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
                 0x00000000                __vectors
                 0x00000200                abvm_interp
                 0x00002bc8                        . = ALIGN (0x2)
@@ -197,7 +201,7 @@ Linker script and memory map
 .data           0x00800100        0x0 load address 0x00002bc8
                 [!provide]                        PROVIDE (__data_start = .)
  *(.data)
- .data          0x00800100        0x0 build\interp.o
+ .data          0x00800100        0x0 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  *(.data*)
  *(.gnu.linkonce.d*)
  *(.rodata)
@@ -210,7 +214,7 @@ Linker script and memory map
 .bss            0x00800100        0x0
                 [!provide]                        PROVIDE (__bss_start = .)
  *(.bss)
- .bss           0x00800100        0x0 build\interp.o
+ .bss           0x00800100        0x0 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  *(.bss*)
  *(COMMON)
                 [!provide]                        PROVIDE (__bss_end = .)
@@ -264,7 +268,7 @@ Linker script and memory map
  *(.comment)
 
 .avr.prop       0x00000000      0xa09
- .avr.prop      0x00000000      0xa09 build\interp.o
+ .avr.prop      0x00000000      0xa09 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
 
 .gnu.build.attributes
  *(.gnu.build.attributes .gnu.build.attributes.*)
@@ -352,8 +356,5 @@ Linker script and memory map
 
 .debug_sup
  *(.debug_sup)
-Address of section .text set to 0x0
-Address of section .data set to 0x800100
-LOAD build\interp.o
-OUTPUT(build\interp.elf elf32-avr)
+OUTPUT(C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.elf elf32-avr)
 LOAD linker stubs

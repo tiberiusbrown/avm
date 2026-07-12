@@ -1,5 +1,5 @@
 
-build\interp.elf:     file format elf32-avr
+C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.elf:     file format elf32-avr
 
 SYMBOL TABLE:
 00000000 l    d  .text	00000000 .text
@@ -403,10 +403,12 @@ SYMBOL TABLE:
 00002bc8 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
+00810000 g       .text	00000000 __eeprom_end
 00000000 g       .text	000000ac __vectors
 00000000 g       .text	00000000 __ctors_start
 00000000 g       .text	00000000 __dtors_start
 00000000 g       .text	00000000 __ctors_end
+00800100 g       .text	00000000 _end
 00000200 g       .text	00000000 abvm_interp
 
 
@@ -6270,9 +6272,9 @@ Disassembly of section .text:
     2984:	e3 e0       	ldi	r30, 0x03	; 3
     2986:	5a 98       	cbi	0x0b, 2	; 11
     2988:	ee bd       	out	0x2e, r30	; 46
-    298a:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_edata+0x900>
+    298a:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_end+0x900>
     298e:	a9 0f       	add	r26, r25
-    2990:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_edata+0x901>
+    2990:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_end+0x901>
     2994:	ea b5       	in	r30, 0x2a	; 42
     2996:	be 1f       	adc	r27, r30
     2998:	0b d0       	rcall	.+22     	; 0x29b0 <fx_seek_delay_10>
@@ -6310,13 +6312,13 @@ Disassembly of section .text:
     29c8:	33 24       	eor	r3, r3
     29ca:	2a bc       	out	0x2a, r2	; 42
     29cc:	2b bc       	out	0x2b, r2	; 43
-    29ce:	20 92 00 0a 	sts	0x0A00, r2	; 0x800a00 <_edata+0x900>
-    29d2:	20 92 01 0a 	sts	0x0A01, r2	; 0x800a01 <_edata+0x901>
-    29d6:	20 92 02 0a 	sts	0x0A02, r2	; 0x800a02 <_edata+0x902>
-    29da:	20 92 03 0a 	sts	0x0A03, r2	; 0x800a03 <_edata+0x903>
-    29de:	20 92 04 0a 	sts	0x0A04, r2	; 0x800a04 <_edata+0x904>
-    29e2:	20 92 05 0a 	sts	0x0A05, r2	; 0x800a05 <_edata+0x905>
-    29e6:	20 92 06 0a 	sts	0x0A06, r2	; 0x800a06 <_edata+0x906>
+    29ce:	20 92 00 0a 	sts	0x0A00, r2	; 0x800a00 <_end+0x900>
+    29d2:	20 92 01 0a 	sts	0x0A01, r2	; 0x800a01 <_end+0x901>
+    29d6:	20 92 02 0a 	sts	0x0A02, r2	; 0x800a02 <_end+0x902>
+    29da:	20 92 03 0a 	sts	0x0A03, r2	; 0x800a03 <_end+0x903>
+    29de:	20 92 04 0a 	sts	0x0A04, r2	; 0x800a04 <_end+0x904>
+    29e2:	20 92 05 0a 	sts	0x0A05, r2	; 0x800a05 <_end+0x905>
+    29e6:	20 92 06 0a 	sts	0x0A06, r2	; 0x800a06 <_end+0x906>
     29ea:	a0 e5       	ldi	r26, 0x50	; 80
     29ec:	ac bd       	out	0x2c, r26	; 44
     29ee:	a1 e0       	ldi	r26, 0x01	; 1
@@ -6338,8 +6340,8 @@ Disassembly of section .text:
     2a0e:	b1 f4       	brne	.+44     	; 0x2a3c <startup_find_development_image>
     2a10:	b5 91       	lpm	r27, Z+
     2a12:	a5 91       	lpm	r26, Z+
-    2a14:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_edata+0x900>
-    2a18:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_edata+0x901>
+    2a14:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
+    2a18:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
     2a1c:	45 91       	lpm	r20, Z+
     2a1e:	55 91       	lpm	r21, Z+
     2a20:	48 31       	cpi	r20, 0x18	; 24
@@ -6348,10 +6350,10 @@ Disassembly of section .text:
     2a26:	11 f5       	brne	.+68     	; 0x2a6c <startup_read_header>
     2a28:	b5 91       	lpm	r27, Z+
     2a2a:	a5 91       	lpm	r26, Z+
-    2a2c:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_edata+0x902>
-    2a30:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_edata+0x903>
+    2a2c:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
+    2a30:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
     2a34:	a1 e0       	ldi	r26, 0x01	; 1
-    2a36:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_edata+0x906>
+    2a36:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
     2a3a:	18 c0       	rjmp	.+48     	; 0x2a6c <startup_read_header>
 
 00002a3c <startup_find_development_image>:
@@ -6374,15 +6376,15 @@ Disassembly of section .text:
 00002a5a <.L1^B3>:
     2a5a:	a0 ef       	ldi	r26, 0xF0	; 240
     2a5c:	bf ef       	ldi	r27, 0xFF	; 255
-    2a5e:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_edata+0x902>
-    2a62:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_edata+0x903>
+    2a5e:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
+    2a62:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
     2a66:	a1 e0       	ldi	r26, 0x01	; 1
-    2a68:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_edata+0x906>
+    2a68:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
 
 00002a6c <startup_read_header>:
     2a6c:	aa 27       	eor	r26, r26
-    2a6e:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_edata+0x900>
-    2a72:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_edata+0x901>
+    2a6e:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
+    2a72:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
     2a76:	91 d0       	rcall	.+290    	; 0x2b9a <fx_startup_begin_read>
     2a78:	9b d0       	rcall	.+310    	; 0x2bb0 <fx_startup_read_byte>
     2a7a:	e1 34       	cpi	r30, 0x41	; 65
@@ -6430,10 +6432,10 @@ Disassembly of section .text:
     2aba:	3e 2f       	mov	r19, r30
     2abc:	79 d0       	rcall	.+242    	; 0x2bb0 <fx_startup_read_byte>
     2abe:	4e 2f       	mov	r20, r30
-    2ac0:	e0 93 04 0a 	sts	0x0A04, r30	; 0x800a04 <_edata+0x904>
+    2ac0:	e0 93 04 0a 	sts	0x0A04, r30	; 0x800a04 <_end+0x904>
     2ac4:	75 d0       	rcall	.+234    	; 0x2bb0 <fx_startup_read_byte>
     2ac6:	5e 2f       	mov	r21, r30
-    2ac8:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <_edata+0x905>
+    2ac8:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <_end+0x905>
     2acc:	5a 9a       	sbi	0x0b, 2	; 11
     2ace:	20 17       	cp	r18, r16
     2ad0:	31 07       	cpc	r19, r17
@@ -6466,7 +6468,7 @@ Disassembly of section .text:
     2af2:	42 15       	cp	r20, r2
     2af4:	52 05       	cpc	r21, r2
     2af6:	21 f0       	breq	.+8      	; 0x2b00 <.L3^B2>
-    2af8:	a0 91 06 0a 	lds	r26, 0x0A06	; 0x800a06 <_edata+0x906>
+    2af8:	a0 91 06 0a 	lds	r26, 0x0A06	; 0x800a06 <_end+0x906>
     2afc:	a0 ff       	sbrs	r26, 0
     2afe:	28 c0       	rjmp	.+80     	; 0x2b50 <startup_invalid_image>
 
@@ -6488,8 +6490,8 @@ Disassembly of section .text:
     2b14:	02 15       	cp	r16, r2
     2b16:	12 05       	cpc	r17, r2
     2b18:	89 f0       	breq	.+34     	; 0x2b3c <startup_enter_image>
-    2b1a:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_edata+0x900>
-    2b1e:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_edata+0x901>
+    2b1a:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
+    2b1e:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
     2b22:	b3 95       	inc	r27
     2b24:	09 f4       	brne	.+2      	; 0x2b28 <.L4^B1>
     2b26:	43 94       	inc	r4
@@ -6553,8 +6555,8 @@ Disassembly of section .text:
     2b82:	b5 2f       	mov	r27, r21
     2b84:	a0 19       	sub	r26, r0
     2b86:	b1 09       	sbc	r27, r1
-    2b88:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_edata+0x900>
-    2b8c:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_edata+0x901>
+    2b88:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
+    2b8c:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
     2b90:	08 94       	sec
     2b92:	08 95       	ret
 

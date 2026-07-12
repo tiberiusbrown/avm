@@ -2,5 +2,6 @@
     "files.associations": {
         "*.asm": "avr"
     },
-    "assembly.comments.lineComment": ";"
+    "cmake.generator": "Ninja",
+    "cmake.buildDirectory": "${workspaceFolder}/build"
 }

@@ -128,6 +128,8 @@
 ;   127: ADD32 q0,q1
 ;   128: SUB32 q0,q1
 ;   129: CMP32 q0,q1
+;   130: JMPP q0
+;   131: CALLP q0
 
 ; AVM instruction-cycle benchmark image
 ;
@@ -139,7 +141,7 @@
 ;
 ; The implemented-instruction inventory contains 104 architectural forms.
 ; Branches are emitted in both taken and not-taken forms, and every CSET
-; condition is emitted for both true and false results.  This produces 129
+; condition is emitted for both true and false results.  This produces 131
 ; timing entries while still covering every implemented form.
 
 .section .text,"ax",@progbits
@@ -1158,6 +1160,31 @@ _start:
     sys SYS_DEBUG_BREAK
     cmp32 q0, q1
     sys SYS_DEBUG_BREAK
+
+    ; [130] JMPP q0
+    ; q0 is a canonical 24-bit code pointer:
+    ;   r0 = prog_lo16(target)
+    ;   low8(r1) = prog_hi8(target)
+    ;   high8(r1) = 0 (LDI8 zero-extends)
+    ldi16 r0, prog_lo16(.L_jmpp_target)
+    ldi8  r1, prog_hi8(.L_jmpp_target)
+    sys SYS_DEBUG_BREAK
+    jmpp q0
+    sys SYS_DEBUG_BREAK    ; unreachable if JMPP succeeds
+.L_jmpp_target:
+    sys SYS_DEBUG_BREAK
+
+    ; [131] CALLP q0
+    ldi16 r0, prog_lo16(.L_callp_target)
+    ldi8  r1, prog_hi8(.L_callp_target)
+    sys SYS_DEBUG_BREAK
+    callp q0
+.L_callp_return:
+    jmp .L_callp_done
+.L_callp_target:
+    sys SYS_DEBUG_BREAK
+    ret
+.L_callp_done:
 
     ; Restore the original stack pointer before entering the sentinel loop.
     adjsp 64

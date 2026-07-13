@@ -1438,7 +1438,18 @@ e0_secondary_table:
     secondary_entries 4, invalid_secondary_instruction_func ; 8C-8F reserved
     secondary_entries 48, e0_imm16_family      ; 90-BF ALU/CMPI16
     secondary_entries 8, e0_imm8_family        ; C0-C7 CMPI8
-    secondary_entries 32, unimplemented_instruction_func ; C8-E7 control
+    secondary_entries 8, unimplemented_instruction_func ; C8-CF JMPR r0-r7
+    secondary_entries 8, unimplemented_instruction_func ; D0-D7 CALLR r0-r7
+    rjmp e0_jmpp_q0                            ; D8 JMPP q0
+    rjmp e0_jmpp_q1                            ; D9 JMPP q1
+    rjmp e0_jmpp_q2                            ; DA JMPP q2
+    rjmp e0_jmpp_q3                            ; DB JMPP q3
+    secondary_entries 4, invalid_secondary_instruction_func ; DC-DF reserved
+    rjmp e0_callp_q0                           ; E0 CALLP q0
+    rjmp e0_callp_q1                           ; E1 CALLP q1
+    rjmp e0_callp_q2                           ; E2 CALLP q2
+    rjmp e0_callp_q3                           ; E3 CALLP q3
+    secondary_entries 4, invalid_secondary_instruction_func ; E4-E7 reserved
     secondary_entries 4, e0_tst16_family       ; E8-EB TST16 r0-r3
     secondary_entries 4, invalid_secondary_instruction_func ; EC-EF reserved
     secondary_entries 4, e0_tst8_family        ; F0-F3 TST8 r0-r3
@@ -1552,6 +1563,49 @@ e0_mfpb_family:
     st   X+, r4
     st   X, ZERO
     rjmp dispatch_func
+
+; E0 D8-DB: JMPP qN
+; E0 E0-E3: CALLP qN
+;
+; Register-form code pointers are canonical 24-bit values:
+;   low q-register       = target PC bits 15:0
+;   low byte of high q-register = target CB bits 23:16
+;   high byte of high q-register = zero in canonical form
+;
+; Optimized execution does not validate the unused top byte. Both operations
+; preserve PB and AVM CC. At entry, PC names the E0 secondary byte and the
+; decoder has started a speculative transfer of the following primary opcode.
+;
+; JMPP reaches fx_seek_to_pc's flash deselect at the 17-cycle boundary from the
+; decoder OUT, so no additional transfer-drain delay is required.
+
+.macro emit_e0_jmpp label, target_pc, target_cb
+\label:
+    movw VM_PC, \target_pc
+    out  VM_CB, \target_cb
+    rjmp seek_and_dispatch_current_pc_func
+.endm
+
+.macro emit_e0_callp label, target_pc, target_cb
+\label:
+    ; Return address is the byte following the two-byte E0 instruction.
+    adiw VM_PC, 1
+    rcall push_return_address_func
+    movw VM_PC, \target_pc
+    out  VM_CB, \target_cb
+    rjmp seek_and_dispatch_current_pc_func
+.endm
+
+; q0 = r0:r1, q1 = r2:r3, q2 = r4:r5, q3 = r6:r7.
+emit_e0_jmpp e0_jmpp_q0, VM_R0, VM_R1L
+emit_e0_jmpp e0_jmpp_q1, VM_R2, VM_R3L
+emit_e0_jmpp e0_jmpp_q2, VM_R4, VM_R5L
+emit_e0_jmpp e0_jmpp_q3, VM_R6, VM_R7L
+
+emit_e0_callp e0_callp_q0, VM_R0, VM_R1L
+emit_e0_callp e0_callp_q1, VM_R2, VM_R3L
+emit_e0_callp e0_callp_q2, VM_R4, VM_R5L
+emit_e0_callp e0_callp_q3, VM_R6, VM_R7L
 
 ; Immediate-family entry invariant:
 ;   * PC names the E0 secondary opcode.

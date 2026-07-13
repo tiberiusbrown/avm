@@ -235,8 +235,9 @@ SYMBOL TABLE:
 00001e00 l       .text	00000000 I_E0__ext_misc
 000022f6 l       .text	00000000 e0_extension_decode_func
 00001e20 l       .text	00000000 I_E1__ext_pair
-000022c6 l       .text	00000000 unimplemented_instruction_func
+000039ea l       .text	00000000 e1_extension_decode_func
 00001e40 l       .text	00000000 I_E2__ext_accumulator
+000022c6 l       .text	00000000 unimplemented_instruction_func
 00001e60 l       .text	00000000 I_E3__ext_transfer_condition
 00002308 l       .text	00000000 e3_extension_decode_func
 00001e80 l       .text	00000000 I_E4__CMPI6_cN_simm6
@@ -476,6 +477,13 @@ SYMBOL TABLE:
 000039cc l       .text	00000000 f4_bic_c3_c3
 00003728 l       .text	00000000 f4_secondary_table_end
 000039dc l       .text	00000000 f4_dispatch_func
+00003a1e l       .text	00000000 e1_mov32_family
+00003a32 l       .text	00000000 e1_add32_family
+00003a56 l       .text	00000000 e1_sub32_family
+00003a7a l       .text	00000000 e1_cmp32_family
+00003a9a l       .text	00000000 e1_invalid_secondary_instruction_func
+00003a98 l       .text	00000000 e1_unimplemented_instruction_func
+00003a9c l       .text	00000000 e1_dispatch_func
 00002178 l       .text	00000000 .L11
 00002198 l       .text	00000000 .L12
 00002324 l       .text	00000000 .L13
@@ -501,8 +509,9 @@ SYMBOL TABLE:
 000032c6 l       .text	00000000 .L41
 00003354 l       .text	00000000 .L117
 00003360 l       .text	00000000 .L118
+00003a1c l       .text	00000000 .L119
 00000000 g       .text	00000000 __trampolines_start
-000039ea g       .text	00000000 _etext
+00003aaa g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00810000 g       .text	00000000 __eeprom_end
@@ -4754,9 +4763,9 @@ Disassembly of section .text:
     1e1e:	00 00       	nop
 
 00001e20 <I_E1__ext_pair>:
-    1e20:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-    1e24:	00 00       	nop
-    1e26:	00 00       	nop
+    1e20:	01 96       	adiw	r24, 0x01	; 1
+    1e22:	00 c0       	rjmp	.+0      	; 0x1e24 <I_E1__ext_pair+0x4>
+    1e24:	0c 94 f5 1c 	jmp	0x39ea	; 0x39ea <e1_extension_decode_func>
     1e28:	00 00       	nop
     1e2a:	00 00       	nop
     1e2c:	00 00       	nop
@@ -8798,3 +8807,117 @@ Disassembly of section .text:
     39e4:	f0 01       	movw	r30, r0
     39e6:	ff 5f       	subi	r31, 0xFF	; 255
     39e8:	09 94       	ijmp
+
+000039ea <e1_extension_decode_func>:
+    39ea:	f8 94       	cli
+    39ec:	2e bc       	out	0x2e, r2	; 46
+    39ee:	6e b4       	in	r6, 0x2e	; 46
+    39f0:	78 94       	sei
+    39f2:	a6 2d       	mov	r26, r6
+    39f4:	ac 70       	andi	r26, 0x0C	; 12
+    39f6:	a8 5f       	subi	r26, 0xF8	; 248
+    39f8:	e6 2d       	mov	r30, r6
+    39fa:	e3 70       	andi	r30, 0x03	; 3
+    39fc:	ee 0f       	add	r30, r30
+    39fe:	ee 0f       	add	r30, r30
+    3a00:	e8 5f       	subi	r30, 0xF8	; 248
+    3a02:	ff 27       	eor	r31, r31
+    3a04:	b6 2d       	mov	r27, r6
+    3a06:	b0 7f       	andi	r27, 0xF0	; 240
+    3a08:	51 f0       	breq	.+20     	; 0x3a1e <e1_mov32_family>
+    3a0a:	b0 31       	cpi	r27, 0x10	; 16
+    3a0c:	91 f0       	breq	.+36     	; 0x3a32 <e1_add32_family>
+    3a0e:	b0 32       	cpi	r27, 0x20	; 32
+    3a10:	11 f1       	breq	.+68     	; 0x3a56 <e1_sub32_family>
+    3a12:	b0 36       	cpi	r27, 0x60	; 96
+    3a14:	91 f1       	breq	.+100    	; 0x3a7a <e1_cmp32_family>
+    3a16:	b0 3a       	cpi	r27, 0xA0	; 160
+    3a18:	08 f0       	brcs	.+2      	; 0x3a1c <.L1^B19>
+    3a1a:	3f c0       	rjmp	.+126    	; 0x3a9a <e1_invalid_secondary_instruction_func>
+
+00003a1c <.L1^B19>:
+    3a1c:	3d c0       	rjmp	.+122    	; 0x3a98 <e1_unimplemented_instruction_func>
+
+00003a1e <e1_mov32_family>:
+    3a1e:	bb 27       	eor	r27, r27
+    3a20:	01 90       	ld	r0, Z+
+    3a22:	0d 92       	st	X+, r0
+    3a24:	01 90       	ld	r0, Z+
+    3a26:	0d 92       	st	X+, r0
+    3a28:	01 90       	ld	r0, Z+
+    3a2a:	0d 92       	st	X+, r0
+    3a2c:	00 80       	ld	r0, Z
+    3a2e:	0c 92       	st	X, r0
+    3a30:	35 c0       	rjmp	.+106    	; 0x3a9c <e1_dispatch_func>
+
+00003a32 <e1_add32_family>:
+    3a32:	bb 27       	eor	r27, r27
+    3a34:	0c 90       	ld	r0, X
+    3a36:	41 90       	ld	r4, Z+
+    3a38:	04 0c       	add	r0, r4
+    3a3a:	0d 92       	st	X+, r0
+    3a3c:	0c 90       	ld	r0, X
+    3a3e:	41 90       	ld	r4, Z+
+    3a40:	04 1c       	adc	r0, r4
+    3a42:	0d 92       	st	X+, r0
+    3a44:	0c 90       	ld	r0, X
+    3a46:	41 90       	ld	r4, Z+
+    3a48:	04 1c       	adc	r0, r4
+    3a4a:	0d 92       	st	X+, r0
+    3a4c:	0c 90       	ld	r0, X
+    3a4e:	40 80       	ld	r4, Z
+    3a50:	04 1c       	adc	r0, r4
+    3a52:	0c 92       	st	X, r0
+    3a54:	23 c0       	rjmp	.+70     	; 0x3a9c <e1_dispatch_func>
+
+00003a56 <e1_sub32_family>:
+    3a56:	bb 27       	eor	r27, r27
+    3a58:	0c 90       	ld	r0, X
+    3a5a:	41 90       	ld	r4, Z+
+    3a5c:	04 18       	sub	r0, r4
+    3a5e:	0d 92       	st	X+, r0
+    3a60:	0c 90       	ld	r0, X
+    3a62:	41 90       	ld	r4, Z+
+    3a64:	04 08       	sbc	r0, r4
+    3a66:	0d 92       	st	X+, r0
+    3a68:	0c 90       	ld	r0, X
+    3a6a:	41 90       	ld	r4, Z+
+    3a6c:	04 08       	sbc	r0, r4
+    3a6e:	0d 92       	st	X+, r0
+    3a70:	0c 90       	ld	r0, X
+    3a72:	40 80       	ld	r4, Z
+    3a74:	04 08       	sbc	r0, r4
+    3a76:	0c 92       	st	X, r0
+    3a78:	11 c0       	rjmp	.+34     	; 0x3a9c <e1_dispatch_func>
+
+00003a7a <e1_cmp32_family>:
+    3a7a:	bb 27       	eor	r27, r27
+    3a7c:	0d 90       	ld	r0, X+
+    3a7e:	41 90       	ld	r4, Z+
+    3a80:	04 14       	cp	r0, r4
+    3a82:	0d 90       	ld	r0, X+
+    3a84:	41 90       	ld	r4, Z+
+    3a86:	04 04       	cpc	r0, r4
+    3a88:	0d 90       	ld	r0, X+
+    3a8a:	41 90       	ld	r4, Z+
+    3a8c:	04 04       	cpc	r0, r4
+    3a8e:	0c 90       	ld	r0, X
+    3a90:	40 80       	ld	r4, Z
+    3a92:	04 04       	cpc	r0, r4
+    3a94:	3f b6       	in	r3, 0x3f	; 63
+    3a96:	02 c0       	rjmp	.+4      	; 0x3a9c <e1_dispatch_func>
+
+00003a98 <e1_unimplemented_instruction_func>:
+    3a98:	ff cf       	rjmp	.-2      	; 0x3a98 <e1_unimplemented_instruction_func>
+
+00003a9a <e1_invalid_secondary_instruction_func>:
+    3a9a:	ff cf       	rjmp	.-2      	; 0x3a9a <e1_invalid_secondary_instruction_func>
+
+00003a9c <e1_dispatch_func>:
+    3a9c:	6e b4       	in	r6, 0x2e	; 46
+    3a9e:	2e bc       	out	0x2e, r2	; 46
+    3aa0:	01 96       	adiw	r24, 0x01	; 1
+    3aa2:	67 9c       	mul	r6, r7
+    3aa4:	f0 01       	movw	r30, r0
+    3aa6:	ff 5f       	subi	r31, 0xFF	; 255
+    3aa8:	09 94       	ijmp

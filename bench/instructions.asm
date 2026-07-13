@@ -124,6 +124,10 @@
 ;   123: LDP16 r0,[PB:r6]
 ;   124: LDP8 r0,[PB:r6+4]
 ;   125: LDP16 r0,[PB:r6+4]
+;   126: MOV32 q0,q1
+;   127: ADD32 q0,q1
+;   128: SUB32 q0,q1
+;   129: CMP32 q0,q1
 
 ; AVM instruction-cycle benchmark image
 ;
@@ -133,9 +137,9 @@
 ;   * The break-to-break baseline is subtracted from every ordinary entry.
 ;   * SYS DEBUG_BREAK itself is reported directly from that baseline.
 ;
-; The implemented-instruction inventory contains 100 architectural forms.
+; The implemented-instruction inventory contains 104 architectural forms.
 ; Branches are emitted in both taken and not-taken forms, and every CSET
-; condition is emitted for both true and false results.  This produces 125
+; condition is emitted for both true and false results.  This produces 129
 ; timing entries while still covering every implemented form.
 
 .section .text,"ax",@progbits
@@ -1117,6 +1121,42 @@ _start:
     ldi16 r6, 0x0100
     sys SYS_DEBUG_BREAK
     ldp16 r0, [pb:r6 + 4]
+    sys SYS_DEBUG_BREAK
+
+    ; [126] MOV32 q0,q1
+    ldi16 r0, 0x1111
+    ldi16 r1, 0x2222
+    ldi16 r2, 0x3333
+    ldi16 r3, 0x4444
+    sys SYS_DEBUG_BREAK
+    mov32 q0, q1
+    sys SYS_DEBUG_BREAK
+
+    ; [127] ADD32 q0,q1
+    ldi16 r0, 0xffff
+    ldi16 r1, 0x1234
+    ldi16 r2, 0x0001
+    ldi16 r3, 0x4321
+    sys SYS_DEBUG_BREAK
+    add32 q0, q1
+    sys SYS_DEBUG_BREAK
+
+    ; [128] SUB32 q0,q1
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x5678
+    ldi16 r2, 0x0001
+    ldi16 r3, 0x1234
+    sys SYS_DEBUG_BREAK
+    sub32 q0, q1
+    sys SYS_DEBUG_BREAK
+
+    ; [129] CMP32 q0,q1
+    ldi16 r0, 0x5678
+    ldi16 r1, 0x1234
+    ldi16 r2, 0x5679
+    ldi16 r3, 0x1234
+    sys SYS_DEBUG_BREAK
+    cmp32 q0, q1
     sys SYS_DEBUG_BREAK
 
     ; Restore the original stack pointer before entering the sentinel loop.

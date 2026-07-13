@@ -867,8 +867,16 @@ emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
 
     handler_end 0xE0
 
-; The E1 pair and E2 accumulator pages remain unimplemented.
-emit_unimplemented_primary 0xE1, I_E1__ext_pair
+; E1 is the 32-bit aligned-register-pair ALU page. The uncommon pair
+; operations use compact shared X/Z handlers rather than operand-specialized
+; executable tables.
+    handler_begin 0xE1, I_E1__ext_pair
+    adiw VM_PC, 1
+    delay_2
+    jmp  e1_extension_decode_func
+    handler_end 0xE1
+
+; The E2 accumulator page remains unimplemented.
 emit_unimplemented_primary 0xE2, I_E2__ext_accumulator
 
     handler_begin 0xE3, I_E3__ext_transfer_condition
@@ -3404,4 +3412,195 @@ f4_invalid_secondary_instruction_func:
     rjmp f4_invalid_secondary_instruction_func
 
 f4_dispatch_func:
+    dispatch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE1 32-bit aligned-register-pair ALU extension page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Secondary encoding:
+;   0ddss  MOV32 qD,qS
+;   1ddss  ADD32 qD,qS
+;   2ddss  SUB32 qD,qS
+;   6ddss  CMP32 qL,qR
+;
+; q0 = r0:r1, q1 = r2:r3, q2 = r4:r5, q3 = r6:r7. Each q-register
+; occupies four consecutive native AVR registers. Bits 3:2 are therefore
+; already the destination/left byte offset, while bits 1:0 need only be
+; multiplied by four for the source/right offset.
+;
+; These instructions are expected to be uncommon, so one shared handler per
+; operation is used instead of a 256-entry table and 64 specialized slots.
+; X addresses qD/qL and Z addresses qS/qR.
+
+e1_extension_decode_func:
+    ; Possible future optimization:
+    ;
+    ; A 64-entry dispatch table indexed by (secondary >> 2) could dispatch on
+    ; both the operation nibble and qD/qL. Each valid entry would jump to a
+    ; destination-specialized handler while retaining generic source decode.
+    ; This would let MOV32/ADD32/SUB32/CMP32 operate directly on the selected
+    ; native destination registers, eliminating destination address decode and
+    ; the destination-side LD/ST traffic used by the shared X/Z handlers.
+    ;
+    ; Estimated effect versus this compact implementation:
+    ;   MOV32: about 6 cycles faster
+    ;   ADD32: about 16 cycles faster
+    ;   SUB32: about 18 cycles faster
+    ;   CMP32: about 12 cycles faster
+    ;
+    ; Expected cost is roughly 250 additional bytes, for a total E1 cost near
+    ; 450 bytes. This remains much smaller than full source+destination
+    ; specialization, but is not currently justified because 32-bit operations
+    ; are expected to be uncommon in typical Arduboy software.
+    ;
+    ; Read the secondary opcode while starting the following primary opcode.
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ; Decode the pair operands once for every E1 operation:
+    ;   X = native low-byte address of qD/qL
+    ;   Z = native low-byte address of qS/qR
+    ;
+    ; r27 temporarily holds the operation nibble. Each implemented handler
+    ; clears it before dereferencing X.
+    mov  r26, r6
+    andi r26, 0x0C
+    subi r26, -8
+
+    mov  r30, r6
+    andi r30, 0x03
+    lsl  r30
+    lsl  r30
+    subi r30, -8
+    clr  r31
+
+    ; Dispatch only on the operation nibble. Encodings 3x-5x and 7x-9x are
+    ; defined but not implemented; Ax-Fx are reserved/invalid. Keep this ANDI
+    ; last so its Z result can select MOV32 without an extra comparison.
+    mov  r27, r6
+    andi r27, 0xF0
+    breq e1_mov32_family
+    cpi  r27, 0x10
+    breq e1_add32_family
+    cpi  r27, 0x20
+    breq e1_sub32_family
+    cpi  r27, 0x60
+    breq e1_cmp32_family
+    cpi  r27, 0xA0
+    brlo 1f
+    rjmp e1_invalid_secondary_instruction_func
+1:
+    rjmp e1_unimplemented_instruction_func
+
+; E1 0ddss: MOV32 qD,qS
+;
+; Loading each byte before storing it gives ordinary transfer semantics for
+; qD == qS. MOV32 preserves AVM CC.
+e1_mov32_family:
+    clr  r27
+    ld   r0, Z+
+    st   X+, r0
+    ld   r0, Z+
+    st   X+, r0
+    ld   r0, Z+
+    st   X+, r0
+    ld   r0, Z
+    st   X, r0
+    rjmp e1_dispatch_func
+
+; E1 1ddss: ADD32 qD,qS
+;
+; The operation is unrolled so native carry propagates directly across all
+; four bytes. The source byte is read before the destination byte is written,
+; including qD == qS. AVM CC is preserved.
+e1_add32_family:
+    clr  r27
+
+    ld   r0, X
+    ld   r4, Z+
+    add  r0, r4
+    st   X+, r0
+
+    ld   r0, X
+    ld   r4, Z+
+    adc  r0, r4
+    st   X+, r0
+
+    ld   r0, X
+    ld   r4, Z+
+    adc  r0, r4
+    st   X+, r0
+
+    ld   r0, X
+    ld   r4, Z
+    adc  r0, r4
+    st   X, r0
+    rjmp e1_dispatch_func
+
+; E1 2ddss: SUB32 qD,qS
+;
+; The operation is unrolled so native borrow propagates directly across all
+; four bytes. AVM CC is preserved.
+e1_sub32_family:
+    clr  r27
+
+    ld   r0, X
+    ld   r4, Z+
+    sub  r0, r4
+    st   X+, r0
+
+    ld   r0, X
+    ld   r4, Z+
+    sbc  r0, r4
+    st   X+, r0
+
+    ld   r0, X
+    ld   r4, Z+
+    sbc  r0, r4
+    st   X+, r0
+
+    ld   r0, X
+    ld   r4, Z
+    sbc  r0, r4
+    st   X, r0
+    rjmp e1_dispatch_func
+
+; E1 6ddss: CMP32 qL,qR
+;
+; This path is deliberately unrolled. CPC accumulates equality through native
+; Z, so loop-counter arithmetic between bytes would corrupt the 32-bit Z
+; result. The final CP/CPC state is copied to architectural C/Z/S.
+e1_cmp32_family:
+    clr  r27
+
+    ld   r0, X+
+    ld   r4, Z+
+    cp   r0, r4
+
+    ld   r0, X+
+    ld   r4, Z+
+    cpc  r0, r4
+
+    ld   r0, X+
+    ld   r4, Z+
+    cpc  r0, r4
+
+    ld   r0, X
+    ld   r4, Z
+    cpc  r0, r4
+
+    in   VM_FLAGS, SREG
+    rjmp e1_dispatch_func
+
+; Keep the local continuations close enough for all RJMP/BRxx sites.
+e1_unimplemented_instruction_func:
+    rjmp e1_unimplemented_instruction_func
+
+e1_invalid_secondary_instruction_func:
+    rjmp e1_invalid_secondary_instruction_func
+
+e1_dispatch_func:
     dispatch

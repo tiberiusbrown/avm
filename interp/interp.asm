@@ -837,11 +837,20 @@ emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
 
     handler_end 0xE0
 
-; The E1 pair, E2 accumulator, and E3 transfer/condition pages are part of the
-; revised ISA but have no implemented handlers yet.
+; The E1 pair and E2 accumulator pages remain unimplemented.
 emit_unimplemented_primary 0xE1, I_E1__ext_pair
 emit_unimplemented_primary 0xE2, I_E2__ext_accumulator
-emit_unimplemented_primary 0xE3, I_E3__ext_transfer_condition
+
+    handler_begin 0xE3, I_E3__ext_transfer_condition
+
+    ; Account for the secondary opcode, then fetch it while starting the
+    ; following primary opcode. MOV16 uses an executable specialized table;
+    ; MOV8Z, MOV8S, and CSET use compact generic handlers.
+    adiw VM_PC, 1
+    delay_3
+    rjmp e3_extension_decode_func
+
+    handler_end 0xE3
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE4: CMPI6 cN, simm6
@@ -1261,6 +1270,32 @@ dispatch_reverse_func:
     dispatch_reverse
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; General rel8 branch continuations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+branch_rel8_not_taken_func:
+    ; The shortest condition path reaches here five cycles after the OUT that
+    ; started fetching the fallthrough opcode. dispatch_reverse executes three
+    ; cycles before its OUT, so pad nine cycles to maintain the 17-cycle
+    ; OUT-to-OUT SPI cadence.
+    rcall fx_seek_delay_7
+    rjmp dispatch_reverse_func
+
+branch_rel8_taken_func:
+    ; The primary handler advanced PC to the displacement byte.  Advance once
+    ; more to nextPC, then add the signed displacement in r6.
+    adiw VM_PC, 1
+    add  VM_PCL, r6
+    adc  VM_PCH, ZERO
+    sbrc r6, 7
+    dec  VM_PCH
+
+    ; Discard the speculative fallthrough byte and restart the stream at the
+    ; branch target. PC already names the target opcode, so the common restart
+    ; path dispatches it without incrementing PC.
+    rjmp seek_and_dispatch_current_pc_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Shared secondary-table support
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -1285,6 +1320,37 @@ e0_extension_decode_func:
     add  r30, r6
     adc  r31, ZERO
     ijmp
+
+; E3 reads the packed secondary byte while starting the following primary
+; opcode. MOV16 is the hot form: its 00dddsss encoding indexes a two-word
+; executable slot containing MOVW plus a jump to the local dispatch copy.
+; MOV8Z, MOV8S, and CSET share compact generic handlers.
+e3_extension_decode_func:
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ; Select the instruction family from bits 7:6. The MOV16 not-taken path is
+    ; deliberately arranged to preserve a 17-cycle OUT-to-OUT cadence.
+    mov  r26, r6
+    andi r26, 0xC0
+    brne 1f
+
+    ; 00dddsss: two AVR words per executable MOV16 table slot.
+    lsl  r6
+    ldi  r30, lo8(pm(e3_mov16_table))
+    ldi  r31, hi8(pm(e3_mov16_table))
+    add  r30, r6
+    adc  r31, ZERO
+    ijmp
+
+1:
+    cpi  r26, 0xC0
+    breq 2f
+    jmp  e3_mov8_family
+2:
+    jmp  e3_cset_family
 
 e0_secondary_table:
     secondary_entries 8, e0_not16_family       ; 00-07
@@ -2097,32 +2163,6 @@ fd_ldp8_displaced_family:
 fd_ldp16_displaced_family:
     rjmp unimplemented_instruction_func
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; General rel8 branch continuations
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-branch_rel8_not_taken_func:
-    ; The shortest condition path reaches here five cycles after the OUT that
-    ; started fetching the fallthrough opcode. dispatch_reverse executes three
-    ; cycles before its OUT, so pad nine cycles to maintain the 17-cycle
-    ; OUT-to-OUT SPI cadence.
-    rcall fx_seek_delay_7
-    rjmp dispatch_reverse_func
-
-branch_rel8_taken_func:
-    ; The primary handler advanced PC to the displacement byte.  Advance once
-    ; more to nextPC, then add the signed displacement in r6.
-    adiw VM_PC, 1
-    add  VM_PCL, r6
-    adc  VM_PCH, ZERO
-    sbrc r6, 7
-    dec  VM_PCH
-
-    ; Discard the speculative fallthrough byte and restart the stream at the
-    ; branch target. PC already names the target opcode, so the common restart
-    ; path dispatches it without incrementing PC.
-    rjmp seek_and_dispatch_current_pc_func
-
 ; The next opcode has long since completed transferring.
 dispatch_func:
     dispatch
@@ -2533,3 +2573,206 @@ fx_startup_wake_delay:
     brne 1b
     ret
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE3 register transfer and condition extension page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Secondary-byte encoding:
+;   00dddsss  MOV16 rD,rS
+;   01dddsss  MOV8Z rD,bS
+;   10dddsss  MOV8S rD,bS
+;   11cccddd  CSET rD,cc
+;
+; Only MOV16 is operand-specialized. Its executable fixed-stride table avoids
+; both a separate RJMP table and separate handler bodies. The remaining forms
+; decode the register-file addresses through data space and share their bodies.
+
+; 01dddsss / 10dddsss: MOV8Z and MOV8S share all operand decoding. Bit 7
+; selects sign extension; bit 7 is clear for MOV8Z and set for MOV8S.
+e3_mov8_family:
+    ; X = native low-byte address of rS.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+
+    ; Z = native low-byte address of rD.
+    mov  r30, r6
+    andi r30, 0x38
+    lsr  r30
+    lsr  r30
+    subi r30, -8
+    clr  r31
+
+    ; Capture the source before writing either destination byte, so all aliasing
+    ; combinations retain ordinary register-transfer semantics.
+    ld   r4, X
+    mov  r5, r4
+    lsl  r5
+    sbc  r5, r5
+    sbrs r6, 7
+    clr  r5
+    st   Z+, r4
+    st   Z, r5
+    rjmp e3_dispatch_func
+
+; 11cccddd: CSET uses one generic destination decode and an eight-entry
+; condition table. The condition handlers materialize 0 or 1 in r30.
+e3_cset_family:
+    ; X = native low-byte address of rD.
+    mov  r26, r6
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    clr  r27
+
+    ; Convert ccc in bits 5:3 to a one-word condition-table index.
+    mov  r30, r6
+    andi r30, 0x38
+    lsr  r30
+    lsr  r30
+    lsr  r30
+    clr  r31
+    subi r30, lo8(-(pm(e3_cset_table)))
+    sbci r31, hi8(-(pm(e3_cset_table)))
+    ijmp
+
+e3_cset_table:
+    rjmp e3_cset_eq
+    rjmp e3_cset_ne
+    rjmp e3_cset_ult
+    rjmp e3_cset_uge
+    rjmp e3_cset_slt
+    rjmp e3_cset_sge
+    rjmp e3_cset_ule
+    rjmp e3_cset_ugt
+e3_cset_table_end:
+
+.if ((e3_cset_table_end - e3_cset_table) != (8 * 2))
+    .error "E3 CSET dispatch table must contain exactly eight words"
+.endif
+
+.macro emit_e3_cset_bit label, skip, flag
+\label:
+    clr  r30
+    \skip VM_FLAGS, \flag
+    inc  r30
+    rjmp e3_cset_finish
+.endm
+
+emit_e3_cset_bit e3_cset_eq,  sbrc, SREG_Z
+emit_e3_cset_bit e3_cset_ne,  sbrs, SREG_Z
+emit_e3_cset_bit e3_cset_ult, sbrc, SREG_C
+emit_e3_cset_bit e3_cset_uge, sbrs, SREG_C
+emit_e3_cset_bit e3_cset_slt, sbrc, SREG_S
+emit_e3_cset_bit e3_cset_sge, sbrs, SREG_S
+
+; ULE = C | Z. NEG converts a nonzero masked value into native carry, CLR
+; preserves carry, and ADC materializes it as 0 or 1.
+e3_cset_ule:
+    mov  r30, VM_FLAGS
+    andi r30, (_BV(SREG_C) | _BV(SREG_Z))
+    neg  r30
+    clr  r30
+    adc  r30, ZERO
+    rjmp e3_cset_finish
+
+; UGT = !(C | Z). LDI preserves native carry, so SBC computes 1-C.
+e3_cset_ugt:
+    mov  r30, VM_FLAGS
+    andi r30, (_BV(SREG_C) | _BV(SREG_Z))
+    neg  r30
+    ldi  r30, 1
+    sbc  r30, ZERO
+    rjmp e3_cset_finish
+
+e3_cset_finish:
+    st   X+, r30
+    st   X, ZERO
+    rjmp e3_dispatch_func
+
+; Each MOV16 slot is exactly two AVR words. The secondary value 00dddsss is
+; multiplied by two in the decoder and added directly to this word-addressed
+; table, so the selected slot performs the register copy without an extra
+; table jump or runtime operand decode.
+.macro emit_e3_mov16_slot dst, src
+    movw \dst, \src
+    rjmp e3_dispatch_func
+.endm
+
+e3_mov16_table:
+    emit_e3_mov16_slot VM_R0, VM_R0
+    emit_e3_mov16_slot VM_R0, VM_R1
+    emit_e3_mov16_slot VM_R0, VM_R2
+    emit_e3_mov16_slot VM_R0, VM_R3
+    emit_e3_mov16_slot VM_R0, VM_R4
+    emit_e3_mov16_slot VM_R0, VM_R5
+    emit_e3_mov16_slot VM_R0, VM_R6
+    emit_e3_mov16_slot VM_R0, VM_R7
+    emit_e3_mov16_slot VM_R1, VM_R0
+    emit_e3_mov16_slot VM_R1, VM_R1
+    emit_e3_mov16_slot VM_R1, VM_R2
+    emit_e3_mov16_slot VM_R1, VM_R3
+    emit_e3_mov16_slot VM_R1, VM_R4
+    emit_e3_mov16_slot VM_R1, VM_R5
+    emit_e3_mov16_slot VM_R1, VM_R6
+    emit_e3_mov16_slot VM_R1, VM_R7
+    emit_e3_mov16_slot VM_R2, VM_R0
+    emit_e3_mov16_slot VM_R2, VM_R1
+    emit_e3_mov16_slot VM_R2, VM_R2
+    emit_e3_mov16_slot VM_R2, VM_R3
+    emit_e3_mov16_slot VM_R2, VM_R4
+    emit_e3_mov16_slot VM_R2, VM_R5
+    emit_e3_mov16_slot VM_R2, VM_R6
+    emit_e3_mov16_slot VM_R2, VM_R7
+    emit_e3_mov16_slot VM_R3, VM_R0
+    emit_e3_mov16_slot VM_R3, VM_R1
+    emit_e3_mov16_slot VM_R3, VM_R2
+    emit_e3_mov16_slot VM_R3, VM_R3
+    emit_e3_mov16_slot VM_R3, VM_R4
+    emit_e3_mov16_slot VM_R3, VM_R5
+    emit_e3_mov16_slot VM_R3, VM_R6
+    emit_e3_mov16_slot VM_R3, VM_R7
+    emit_e3_mov16_slot VM_R4, VM_R0
+    emit_e3_mov16_slot VM_R4, VM_R1
+    emit_e3_mov16_slot VM_R4, VM_R2
+    emit_e3_mov16_slot VM_R4, VM_R3
+    emit_e3_mov16_slot VM_R4, VM_R4
+    emit_e3_mov16_slot VM_R4, VM_R5
+    emit_e3_mov16_slot VM_R4, VM_R6
+    emit_e3_mov16_slot VM_R4, VM_R7
+    emit_e3_mov16_slot VM_R5, VM_R0
+    emit_e3_mov16_slot VM_R5, VM_R1
+    emit_e3_mov16_slot VM_R5, VM_R2
+    emit_e3_mov16_slot VM_R5, VM_R3
+    emit_e3_mov16_slot VM_R5, VM_R4
+    emit_e3_mov16_slot VM_R5, VM_R5
+    emit_e3_mov16_slot VM_R5, VM_R6
+    emit_e3_mov16_slot VM_R5, VM_R7
+    emit_e3_mov16_slot VM_R6, VM_R0
+    emit_e3_mov16_slot VM_R6, VM_R1
+    emit_e3_mov16_slot VM_R6, VM_R2
+    emit_e3_mov16_slot VM_R6, VM_R3
+    emit_e3_mov16_slot VM_R6, VM_R4
+    emit_e3_mov16_slot VM_R6, VM_R5
+    emit_e3_mov16_slot VM_R6, VM_R6
+    emit_e3_mov16_slot VM_R6, VM_R7
+    emit_e3_mov16_slot VM_R7, VM_R0
+    emit_e3_mov16_slot VM_R7, VM_R1
+    emit_e3_mov16_slot VM_R7, VM_R2
+    emit_e3_mov16_slot VM_R7, VM_R3
+    emit_e3_mov16_slot VM_R7, VM_R4
+    emit_e3_mov16_slot VM_R7, VM_R5
+    emit_e3_mov16_slot VM_R7, VM_R6
+    emit_e3_mov16_slot VM_R7, VM_R7
+e3_mov16_table_end:
+
+.if ((e3_mov16_table_end - e3_mov16_table) != (64 * 4))
+    .error "E3 MOV16 executable table must contain 64 two-word slots"
+.endif
+
+; Local sequential dispatch keeps every executable MOV16 slot and generic E3
+; handler within RJMP range.
+e3_dispatch_func:
+    dispatch

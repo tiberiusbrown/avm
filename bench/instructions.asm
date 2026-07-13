@@ -23,113 +23,117 @@
 ;   022: NEG16 r0
 ;   023: INC16 r0
 ;   024: DEC16 r0
-;   025: LSR16 r0
-;   026: ZEXT8 r0
-;   027: SEXT8 r0
-;   028: SWAP8 r0
-;   029: GETSP r0
-;   030: SETSP r0
-;   031: MTPB r0
-;   032: MFPB r0
-;   033: MOV16 r6,r0
-;   034: MOV8Z r6,b0
-;   035: MOV8S r6,b0
-;   036: CSET r6,EQ (true)
-;   037: CSET r6,EQ (false)
-;   038: CSET r6,NE (true)
-;   039: CSET r6,NE (false)
-;   040: CSET r6,ULT (true)
-;   041: CSET r6,ULT (false)
-;   042: CSET r6,UGE (true)
-;   043: CSET r6,UGE (false)
-;   044: CSET r6,SLT (true)
-;   045: CSET r6,SLT (false)
-;   046: CSET r6,SGE (true)
-;   047: CSET r6,SGE (false)
-;   048: CSET r6,ULE (true)
-;   049: CSET r6,ULE (false)
-;   050: CSET r6,UGT (true)
-;   051: CSET r6,UGT (false)
-;   052: CMPI6 c0,-17
-;   053: JMP rel8
-;   054: CALL rel8
-;   055: ADJSP 0
-;   056: SYS DEBUG_PUTC
-;   057: JMP16 addr16
-;   058: CALL16 addr16
-;   059: NOP
-;   060: LDI8 c0,imm8
-;   061: BREQ (not taken)
-;   062: BREQ (taken)
-;   063: BRNE (not taken)
-;   064: BRNE (taken)
-;   065: BRULT (not taken)
-;   066: BRULT (taken)
-;   067: BRUGE (not taken)
-;   068: BRUGE (taken)
-;   069: BRSLT (not taken)
-;   070: BRSLT (taken)
-;   071: BRSGE (not taken)
-;   072: BRSGE (taken)
-;   073: BRULE (not taken)
-;   074: BRULE (taken)
-;   075: BRUGT (not taken)
-;   076: BRUGT (taken)
-;   077: LD8 r0,[r6]
-;   078: ST8 [r6],r0
-;   079: LD16 r0,[r6]
-;   080: ST16 [r6],r0
-;   081: LD8 r0,[r6]+
-;   082: ST8 [r6]+,r0
-;   083: LD16 r0,[r6]+
-;   084: ST16 [r6]+,r0
-;   085: LEA r0,[r6+4]
-;   086: LD8 r0,[r6+4]
-;   087: ST8 [r6+4],r0
-;   088: LD16 r0,[r6+4]
-;   089: ST16 [r6+4],r0
-;   090: LDSP8 r0,[SP+8]
-;   091: STSP8 [SP+8],r0
-;   092: LDSP16 r0,[SP+8]
-;   093: STSP16 [SP+8],r0
-;   094: LDM8 r0,0x0100
-;   095: STM8 0x0100,r0
-;   096: LDM16 r0,0x0100
-;   097: STM16 0x0100,r0
-;   098: JMPF target24
-;   099: CALLF target24
-;   100: RET
-;   101: LDI16 r0,imm16
-;   102: LDI8 r0,imm8
-;   103: ADDI16 r0,imm16
-;   104: SUBI16 r0,imm16
-;   105: ANDI16 r0,imm16
-;   106: ORI16 r0,imm16
-;   107: XORI16 r0,imm16
-;   108: CMPI16 r0,imm16
-;   109: CMPI8 r0,imm8
-;   110: TST16 r0
-;   111: TST8 r0
-;   112: OR A,r0
-;   113: XOR A,r0
-;   114: BIC A,r0
-;   115: ADD.NF c2,c3
-;   116: SUB.NF c2,c3
-;   117: AND c2,c3
-;   118: OR c2,c3
-;   119: XOR c2,c3
-;   120: BIC c2,c3
-;   121: LDPBI 0
-;   122: LDP8 r0,[PB:r6]
-;   123: LDP16 r0,[PB:r6]
-;   124: LDP8 r0,[PB:r6+4]
-;   125: LDP16 r0,[PB:r6+4]
-;   126: MOV32 q0,q1
-;   127: ADD32 q0,q1
-;   128: SUB32 q0,q1
-;   129: CMP32 q0,q1
-;   130: JMPP q0
-;   131: CALLP q0
+;   025: LSL16 r0
+;   026: LSR16 r0
+;   027: ASR16 r0
+;   028: LSR8 r0
+;   029: ASR8 r0
+;   030: ZEXT8 r0
+;   031: SEXT8 r0
+;   032: SWAP8 r0
+;   033: GETSP r0
+;   034: SETSP r0
+;   035: MTPB r0
+;   036: MFPB r0
+;   037: MOV16 r6,r0
+;   038: MOV8Z r6,b0
+;   039: MOV8S r6,b0
+;   040: CSET r6,EQ (true)
+;   041: CSET r6,EQ (false)
+;   042: CSET r6,NE (true)
+;   043: CSET r6,NE (false)
+;   044: CSET r6,ULT (true)
+;   045: CSET r6,ULT (false)
+;   046: CSET r6,UGE (true)
+;   047: CSET r6,UGE (false)
+;   048: CSET r6,SLT (true)
+;   049: CSET r6,SLT (false)
+;   050: CSET r6,SGE (true)
+;   051: CSET r6,SGE (false)
+;   052: CSET r6,ULE (true)
+;   053: CSET r6,ULE (false)
+;   054: CSET r6,UGT (true)
+;   055: CSET r6,UGT (false)
+;   056: CMPI6 c0,-17
+;   057: JMP rel8
+;   058: CALL rel8
+;   059: ADJSP 0
+;   060: SYS DEBUG_PUTC
+;   061: JMP16 addr16
+;   062: CALL16 addr16
+;   063: NOP
+;   064: LDI8 c0,imm8
+;   065: BREQ (not taken)
+;   066: BREQ (taken)
+;   067: BRNE (not taken)
+;   068: BRNE (taken)
+;   069: BRULT (not taken)
+;   070: BRULT (taken)
+;   071: BRUGE (not taken)
+;   072: BRUGE (taken)
+;   073: BRSLT (not taken)
+;   074: BRSLT (taken)
+;   075: BRSGE (not taken)
+;   076: BRSGE (taken)
+;   077: BRULE (not taken)
+;   078: BRULE (taken)
+;   079: BRUGT (not taken)
+;   080: BRUGT (taken)
+;   081: LD8 r0,[r6]
+;   082: ST8 [r6],r0
+;   083: LD16 r0,[r6]
+;   084: ST16 [r6],r0
+;   085: LD8 r0,[r6]+
+;   086: ST8 [r6]+,r0
+;   087: LD16 r0,[r6]+
+;   088: ST16 [r6]+,r0
+;   089: LEA r0,[r6+4]
+;   090: LD8 r0,[r6+4]
+;   091: ST8 [r6+4],r0
+;   092: LD16 r0,[r6+4]
+;   093: ST16 [r6+4],r0
+;   094: LDSP8 r0,[SP+8]
+;   095: STSP8 [SP+8],r0
+;   096: LDSP16 r0,[SP+8]
+;   097: STSP16 [SP+8],r0
+;   098: LDM8 r0,0x0100
+;   099: STM8 0x0100,r0
+;   100: LDM16 r0,0x0100
+;   101: STM16 0x0100,r0
+;   102: JMPF target24
+;   103: CALLF target24
+;   104: RET
+;   105: LDI16 r0,imm16
+;   106: LDI8 r0,imm8
+;   107: ADDI16 r0,imm16
+;   108: SUBI16 r0,imm16
+;   109: ANDI16 r0,imm16
+;   110: ORI16 r0,imm16
+;   111: XORI16 r0,imm16
+;   112: CMPI16 r0,imm16
+;   113: CMPI8 r0,imm8
+;   114: TST16 r0
+;   115: TST8 r0
+;   116: OR A,r0
+;   117: XOR A,r0
+;   118: BIC A,r0
+;   119: ADD.NF c2,c3
+;   120: SUB.NF c2,c3
+;   121: AND c2,c3
+;   122: OR c2,c3
+;   123: XOR c2,c3
+;   124: BIC c2,c3
+;   125: LDPBI 0
+;   126: LDP8 r0,[PB:r6]
+;   127: LDP16 r0,[PB:r6]
+;   128: LDP8 r0,[PB:r6+4]
+;   129: LDP16 r0,[PB:r6+4]
+;   130: MOV32 q0,q1
+;   131: ADD32 q0,q1
+;   132: SUB32 q0,q1
+;   133: CMP32 q0,q1
+;   134: JMPP q0
+;   135: CALLP q0
 
 ; AVM instruction-cycle benchmark image
 ;
@@ -139,9 +143,9 @@
 ;   * The break-to-break baseline is subtracted from every ordinary entry.
 ;   * SYS DEBUG_BREAK itself is reported directly from that baseline.
 ;
-; The implemented-instruction inventory contains 104 architectural forms.
+; The implemented-instruction inventory contains 108 architectural forms.
 ; Branches are emitted in both taken and not-taken forms, and every CSET
-; condition is emitted for both true and false results.  This produces 131
+; condition is emitted for both true and false results.  This produces 135
 ; timing entries while still covering every implemented form.
 
 .section .text,"ax",@progbits
@@ -340,14 +344,40 @@ _start:
     dec16 r0
     sys SYS_DEBUG_BREAK
 
-    ; [025] LSR16 r0
+    ; [025] LSL16 r0
+    ldi16 r0, 0x4081
+    sys SYS_DEBUG_BREAK
+    lsl16 r0
+    sys SYS_DEBUG_BREAK
+
+    ; [026] LSR16 r0
     ldi8 c1, 0x80
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     lsr16 r0
     sys SYS_DEBUG_BREAK
 
-    ; [026] ZEXT8 r0
+    ; [027] ASR16 r0
+    ldi16 r0, 0x8001
+    sys SYS_DEBUG_BREAK
+    asr16 r0
+    sys SYS_DEBUG_BREAK
+
+    ; [028] LSR8 r0
+    ; The nonzero high byte also checks that only b0 is shifted.
+    ldi16 r0, 0xab81
+    sys SYS_DEBUG_BREAK
+    lsr8 r0
+    sys SYS_DEBUG_BREAK
+
+    ; [029] ASR8 r0
+    ; The nonzero high byte also checks that only b0 is shifted.
+    ldi16 r0, 0xab81
+    sys SYS_DEBUG_BREAK
+    asr8 r0
+    sys SYS_DEBUG_BREAK
+
+    ; [030] ZEXT8 r0
     ldi8 c1, 0x80
     sext8 r5
     mov16 r0, r5
@@ -355,93 +385,93 @@ _start:
     zext8 r0
     sys SYS_DEBUG_BREAK
 
-    ; [027] SEXT8 r0
+    ; [031] SEXT8 r0
     ldi8 c1, 0x80
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     sext8 r0
     sys SYS_DEBUG_BREAK
 
-    ; [028] SWAP8 r0
+    ; [032] SWAP8 r0
     ldi8 c1, 0x3c
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     swap8 r0
     sys SYS_DEBUG_BREAK
 
-    ; [029] GETSP r0
+    ; [033] GETSP r0
     sys SYS_DEBUG_BREAK
     getsp r0
     sys SYS_DEBUG_BREAK
 
-    ; [030] SETSP r0
+    ; [034] SETSP r0
     getsp r0
     sys SYS_DEBUG_BREAK
     setsp r0
     sys SYS_DEBUG_BREAK
 
-    ; [031] MTPB r0
+    ; [035] MTPB r0
     ldi8 c1, 0
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     mtpb r0
     sys SYS_DEBUG_BREAK
 
-    ; [032] MFPB r0
+    ; [036] MFPB r0
     sys SYS_DEBUG_BREAK
     mfpb r0
     sys SYS_DEBUG_BREAK
 
-    ; [033] MOV16 r6,r0
+    ; [037] MOV16 r6,r0
     ldi8 c1, 0x5a
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     mov16 r6, r0
     sys SYS_DEBUG_BREAK
 
-    ; [034] MOV8Z r6,b0
+    ; [038] MOV8Z r6,b0
     ldi8 c1, 0x80
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     mov8z r6, b0
     sys SYS_DEBUG_BREAK
 
-    ; [035] MOV8S r6,b0
+    ; [039] MOV8S r6,b0
     ldi8 c1, 0x80
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     mov8s r6, b0
     sys SYS_DEBUG_BREAK
 
-    ; [036] CSET r6,EQ (true)
+    ; [040] CSET r6,EQ (true)
     ldi8 c0, 0
     tst16 c0
     sys SYS_DEBUG_BREAK
     cset r6, eq
     sys SYS_DEBUG_BREAK
 
-    ; [037] CSET r6,EQ (false)
+    ; [041] CSET r6,EQ (false)
     ldi8 c0, 1
     tst16 c0
     sys SYS_DEBUG_BREAK
     cset r6, eq
     sys SYS_DEBUG_BREAK
 
-    ; [038] CSET r6,NE (true)
+    ; [042] CSET r6,NE (true)
     ldi8 c0, 1
     tst16 c0
     sys SYS_DEBUG_BREAK
     cset r6, ne
     sys SYS_DEBUG_BREAK
 
-    ; [039] CSET r6,NE (false)
+    ; [043] CSET r6,NE (false)
     ldi8 c0, 0
     tst16 c0
     sys SYS_DEBUG_BREAK
     cset r6, ne
     sys SYS_DEBUG_BREAK
 
-    ; [040] CSET r6,ULT (true)
+    ; [044] CSET r6,ULT (true)
     ldi8 c0, 0
     ldi8 c1, 1
     cmp16 c0, c1
@@ -449,7 +479,7 @@ _start:
     cset r6, ult
     sys SYS_DEBUG_BREAK
 
-    ; [041] CSET r6,ULT (false)
+    ; [045] CSET r6,ULT (false)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
@@ -457,7 +487,7 @@ _start:
     cset r6, ult
     sys SYS_DEBUG_BREAK
 
-    ; [042] CSET r6,UGE (true)
+    ; [046] CSET r6,UGE (true)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
@@ -465,7 +495,7 @@ _start:
     cset r6, uge
     sys SYS_DEBUG_BREAK
 
-    ; [043] CSET r6,UGE (false)
+    ; [047] CSET r6,UGE (false)
     ldi8 c0, 0
     ldi8 c1, 1
     cmp16 c0, c1
@@ -473,7 +503,7 @@ _start:
     cset r6, uge
     sys SYS_DEBUG_BREAK
 
-    ; [044] CSET r6,SLT (true)
+    ; [048] CSET r6,SLT (true)
     ldi8 c0, 0x80
     sext8 r4
     ldi8 c1, 0
@@ -482,7 +512,7 @@ _start:
     cset r6, slt
     sys SYS_DEBUG_BREAK
 
-    ; [045] CSET r6,SLT (false)
+    ; [049] CSET r6,SLT (false)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
@@ -490,7 +520,7 @@ _start:
     cset r6, slt
     sys SYS_DEBUG_BREAK
 
-    ; [046] CSET r6,SGE (true)
+    ; [050] CSET r6,SGE (true)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
@@ -498,7 +528,7 @@ _start:
     cset r6, sge
     sys SYS_DEBUG_BREAK
 
-    ; [047] CSET r6,SGE (false)
+    ; [051] CSET r6,SGE (false)
     ldi8 c0, 0x80
     sext8 r4
     ldi8 c1, 0
@@ -507,14 +537,14 @@ _start:
     cset r6, sge
     sys SYS_DEBUG_BREAK
 
-    ; [048] CSET r6,ULE (true)
+    ; [052] CSET r6,ULE (true)
     ldi8 c0, 0
     tst16 c0
     sys SYS_DEBUG_BREAK
     cset r6, ule
     sys SYS_DEBUG_BREAK
 
-    ; [049] CSET r6,ULE (false)
+    ; [053] CSET r6,ULE (false)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
@@ -522,7 +552,7 @@ _start:
     cset r6, ule
     sys SYS_DEBUG_BREAK
 
-    ; [050] CSET r6,UGT (true)
+    ; [054] CSET r6,UGT (true)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
@@ -530,27 +560,27 @@ _start:
     cset r6, ugt
     sys SYS_DEBUG_BREAK
 
-    ; [051] CSET r6,UGT (false)
+    ; [055] CSET r6,UGT (false)
     ldi8 c0, 0
     tst16 c0
     sys SYS_DEBUG_BREAK
     cset r6, ugt
     sys SYS_DEBUG_BREAK
 
-    ; [052] CMPI6 c0,-17
+    ; [056] CMPI6 c0,-17
     ldi8 c0, 9
     sys SYS_DEBUG_BREAK
     cmpi6 c0, -17
     sys SYS_DEBUG_BREAK
 
-    ; [053] JMP rel8
+    ; [057] JMP rel8
     sys SYS_DEBUG_BREAK
     jmp .L_jmp_rel_target
     nop
 .L_jmp_rel_target:
     sys SYS_DEBUG_BREAK
 
-    ; [054] CALL rel8
+    ; [058] CALL rel8
     sys SYS_DEBUG_BREAK
     call .L_call_rel_target
 .L_call_rel_return:
@@ -560,25 +590,25 @@ _start:
     ret
 .L_call_rel_done:
 
-    ; [055] ADJSP 0
+    ; [059] ADJSP 0
     sys SYS_DEBUG_BREAK
     adjsp 0
     sys SYS_DEBUG_BREAK
 
-    ; [056] SYS DEBUG_PUTC
+    ; [060] SYS DEBUG_PUTC
     ldi8 c0, 0x2e
     sys SYS_DEBUG_BREAK
     sys SYS_DEBUG_PUTC
     sys SYS_DEBUG_BREAK
 
-    ; [057] JMP16 addr16
+    ; [061] JMP16 addr16
     sys SYS_DEBUG_BREAK
     jmp16 .L_jmp16_target
     nop
 .L_jmp16_target:
     sys SYS_DEBUG_BREAK
 
-    ; [058] CALL16 addr16
+    ; [062] CALL16 addr16
     sys SYS_DEBUG_BREAK
     call16 .L_call16_target
 .L_call16_return:
@@ -588,165 +618,165 @@ _start:
     ret
 .L_call16_done:
 
-    ; [059] NOP
+    ; [063] NOP
     sys SYS_DEBUG_BREAK
     nop
     sys SYS_DEBUG_BREAK
 
-    ; [060] LDI8 c0,imm8
+    ; [064] LDI8 c0,imm8
     sys SYS_DEBUG_BREAK
     ldi8 c0, 0xa5
     sys SYS_DEBUG_BREAK
 
-    ; [061] BREQ (not taken)
+    ; [065] BREQ (not taken)
     ldi8 c0, 1
     tst16 c0
     sys SYS_DEBUG_BREAK
-    breq .L_general_61
-    sys SYS_DEBUG_BREAK
-.L_general_61:
-
-    ; [062] BREQ (taken)
-    ldi8 c0, 0
-    tst16 c0
-    sys SYS_DEBUG_BREAK
-    breq .L_general_62
-    sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
-.L_general_62:
-    sys SYS_DEBUG_BREAK
-
-    ; [063] BRNE (not taken)
-    ldi8 c0, 0
-    tst16 c0
-    sys SYS_DEBUG_BREAK
-    brne .L_general_63
-    sys SYS_DEBUG_BREAK
-.L_general_63:
-
-    ; [064] BRNE (taken)
-    ldi8 c0, 1
-    tst16 c0
-    sys SYS_DEBUG_BREAK
-    brne .L_general_64
-    sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
-.L_general_64:
-    sys SYS_DEBUG_BREAK
-
-    ; [065] BRULT (not taken)
-    ldi8 c0, 1
-    ldi8 c1, 0
-    cmp16 c0, c1
-    sys SYS_DEBUG_BREAK
-    brult .L_general_65
+    breq .L_general_65
     sys SYS_DEBUG_BREAK
 .L_general_65:
 
-    ; [066] BRULT (taken)
+    ; [066] BREQ (taken)
     ldi8 c0, 0
-    ldi8 c1, 1
-    cmp16 c0, c1
+    tst16 c0
     sys SYS_DEBUG_BREAK
-    brult .L_general_66
+    breq .L_general_66
     sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
 .L_general_66:
     sys SYS_DEBUG_BREAK
 
-    ; [067] BRUGE (not taken)
+    ; [067] BRNE (not taken)
     ldi8 c0, 0
-    ldi8 c1, 1
-    cmp16 c0, c1
+    tst16 c0
     sys SYS_DEBUG_BREAK
-    bruge .L_general_67
+    brne .L_general_67
     sys SYS_DEBUG_BREAK
 .L_general_67:
 
-    ; [068] BRUGE (taken)
+    ; [068] BRNE (taken)
     ldi8 c0, 1
-    ldi8 c1, 0
-    cmp16 c0, c1
+    tst16 c0
     sys SYS_DEBUG_BREAK
-    bruge .L_general_68
+    brne .L_general_68
     sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
 .L_general_68:
     sys SYS_DEBUG_BREAK
 
-    ; [069] BRSLT (not taken)
+    ; [069] BRULT (not taken)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
     sys SYS_DEBUG_BREAK
-    brslt .L_general_69
+    brult .L_general_69
     sys SYS_DEBUG_BREAK
 .L_general_69:
 
-    ; [070] BRSLT (taken)
-    ldi8 c0, 0x80
-    sext8 r4
-    ldi8 c1, 0
+    ; [070] BRULT (taken)
+    ldi8 c0, 0
+    ldi8 c1, 1
     cmp16 c0, c1
     sys SYS_DEBUG_BREAK
-    brslt .L_general_70
+    brult .L_general_70
     sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
 .L_general_70:
     sys SYS_DEBUG_BREAK
 
-    ; [071] BRSGE (not taken)
+    ; [071] BRUGE (not taken)
+    ldi8 c0, 0
+    ldi8 c1, 1
+    cmp16 c0, c1
+    sys SYS_DEBUG_BREAK
+    bruge .L_general_71
+    sys SYS_DEBUG_BREAK
+.L_general_71:
+
+    ; [072] BRUGE (taken)
+    ldi8 c0, 1
+    ldi8 c1, 0
+    cmp16 c0, c1
+    sys SYS_DEBUG_BREAK
+    bruge .L_general_72
+    sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
+.L_general_72:
+    sys SYS_DEBUG_BREAK
+
+    ; [073] BRSLT (not taken)
+    ldi8 c0, 1
+    ldi8 c1, 0
+    cmp16 c0, c1
+    sys SYS_DEBUG_BREAK
+    brslt .L_general_73
+    sys SYS_DEBUG_BREAK
+.L_general_73:
+
+    ; [074] BRSLT (taken)
     ldi8 c0, 0x80
     sext8 r4
     ldi8 c1, 0
     cmp16 c0, c1
     sys SYS_DEBUG_BREAK
-    brsge .L_general_71
-    sys SYS_DEBUG_BREAK
-.L_general_71:
-
-    ; [072] BRSGE (taken)
-    ldi8 c0, 1
-    ldi8 c1, 0
-    cmp16 c0, c1
-    sys SYS_DEBUG_BREAK
-    brsge .L_general_72
-    sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
-.L_general_72:
-    sys SYS_DEBUG_BREAK
-
-    ; [073] BRULE (not taken)
-    ldi8 c0, 1
-    ldi8 c1, 0
-    cmp16 c0, c1
-    sys SYS_DEBUG_BREAK
-    brule .L_general_73
-    sys SYS_DEBUG_BREAK
-.L_general_73:
-
-    ; [074] BRULE (taken)
-    ldi8 c0, 0
-    tst16 c0
-    sys SYS_DEBUG_BREAK
-    brule .L_general_74
+    brslt .L_general_74
     sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
 .L_general_74:
     sys SYS_DEBUG_BREAK
 
-    ; [075] BRUGT (not taken)
-    ldi8 c0, 0
-    tst16 c0
+    ; [075] BRSGE (not taken)
+    ldi8 c0, 0x80
+    sext8 r4
+    ldi8 c1, 0
+    cmp16 c0, c1
     sys SYS_DEBUG_BREAK
-    brugt .L_general_75
+    brsge .L_general_75
     sys SYS_DEBUG_BREAK
 .L_general_75:
 
-    ; [076] BRUGT (taken)
+    ; [076] BRSGE (taken)
     ldi8 c0, 1
     ldi8 c1, 0
     cmp16 c0, c1
     sys SYS_DEBUG_BREAK
-    brugt .L_general_76
+    brsge .L_general_76
     sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
 .L_general_76:
     sys SYS_DEBUG_BREAK
 
-    ; [077] LD8 r0,[r6]
+    ; [077] BRULE (not taken)
+    ldi8 c0, 1
+    ldi8 c1, 0
+    cmp16 c0, c1
+    sys SYS_DEBUG_BREAK
+    brule .L_general_77
+    sys SYS_DEBUG_BREAK
+.L_general_77:
+
+    ; [078] BRULE (taken)
+    ldi8 c0, 0
+    tst16 c0
+    sys SYS_DEBUG_BREAK
+    brule .L_general_78
+    sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
+.L_general_78:
+    sys SYS_DEBUG_BREAK
+
+    ; [079] BRUGT (not taken)
+    ldi8 c0, 0
+    tst16 c0
+    sys SYS_DEBUG_BREAK
+    brugt .L_general_79
+    sys SYS_DEBUG_BREAK
+.L_general_79:
+
+    ; [080] BRUGT (taken)
+    ldi8 c0, 1
+    ldi8 c1, 0
+    cmp16 c0, c1
+    sys SYS_DEBUG_BREAK
+    brugt .L_general_80
+    sys SYS_DEBUG_BREAK    ; skipped fall-through breakpoint
+.L_general_80:
+    sys SYS_DEBUG_BREAK
+
+    ; [081] LD8 r0,[r6]
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -756,7 +786,7 @@ _start:
     ld8 r0, [r6]
     sys SYS_DEBUG_BREAK
 
-    ; [078] ST8 [r6],r0
+    ; [082] ST8 [r6],r0
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -766,7 +796,7 @@ _start:
     st8 [r6], r0
     sys SYS_DEBUG_BREAK
 
-    ; [079] LD16 r0,[r6]
+    ; [083] LD16 r0,[r6]
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -776,7 +806,7 @@ _start:
     ld16 r0, [r6]
     sys SYS_DEBUG_BREAK
 
-    ; [080] ST16 [r6],r0
+    ; [084] ST16 [r6],r0
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -786,7 +816,7 @@ _start:
     st16 [r6], r0
     sys SYS_DEBUG_BREAK
 
-    ; [081] LD8 r0,[r6]+
+    ; [085] LD8 r0,[r6]+
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -796,7 +826,7 @@ _start:
     ld8 r0, [r6]+
     sys SYS_DEBUG_BREAK
 
-    ; [082] ST8 [r6]+,r0
+    ; [086] ST8 [r6]+,r0
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -806,7 +836,7 @@ _start:
     st8 [r6]+, r0
     sys SYS_DEBUG_BREAK
 
-    ; [083] LD16 r0,[r6]+
+    ; [087] LD16 r0,[r6]+
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -816,7 +846,7 @@ _start:
     ld16 r0, [r6]+
     sys SYS_DEBUG_BREAK
 
-    ; [084] ST16 [r6]+,r0
+    ; [088] ST16 [r6]+,r0
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -826,7 +856,7 @@ _start:
     st16 [r6]+, r0
     sys SYS_DEBUG_BREAK
 
-    ; [085] LEA r0,[r6+4]
+    ; [089] LEA r0,[r6+4]
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -834,7 +864,7 @@ _start:
     lea r0, [r6 + 4]
     sys SYS_DEBUG_BREAK
 
-    ; [086] LD8 r0,[r6+4]
+    ; [090] LD8 r0,[r6+4]
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -844,7 +874,7 @@ _start:
     ld8 r0, [r6 + 4]
     sys SYS_DEBUG_BREAK
 
-    ; [087] ST8 [r6+4],r0
+    ; [091] ST8 [r6+4],r0
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -854,7 +884,7 @@ _start:
     st8 [r6 + 4], r0
     sys SYS_DEBUG_BREAK
 
-    ; [088] LD16 r0,[r6+4]
+    ; [092] LD16 r0,[r6+4]
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -864,7 +894,7 @@ _start:
     ld16 r0, [r6 + 4]
     sys SYS_DEBUG_BREAK
 
-    ; [089] ST16 [r6+4],r0
+    ; [093] ST16 [r6+4],r0
     mov c2, c3
     ldi8 c1, 16
     add c2, c1
@@ -874,7 +904,7 @@ _start:
     st16 [r6 + 4], r0
     sys SYS_DEBUG_BREAK
 
-    ; [090] LDSP8 r0,[SP+8]
+    ; [094] LDSP8 r0,[SP+8]
     ldi8 c1, 0x5a
     mov16 r0, r5
     stsp8 [sp + 8], r0
@@ -882,14 +912,14 @@ _start:
     ldsp8 r0, [sp + 8]
     sys SYS_DEBUG_BREAK
 
-    ; [091] STSP8 [SP+8],r0
+    ; [095] STSP8 [SP+8],r0
     ldi8 c1, 0x5a
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     stsp8 [sp + 8], r0
     sys SYS_DEBUG_BREAK
 
-    ; [092] LDSP16 r0,[SP+8]
+    ; [096] LDSP16 r0,[SP+8]
     ldi8 c1, 0x5a
     mov16 r0, r5
     stsp16 [sp + 8], r0
@@ -897,14 +927,14 @@ _start:
     ldsp16 r0, [sp + 8]
     sys SYS_DEBUG_BREAK
 
-    ; [093] STSP16 [SP+8],r0
+    ; [097] STSP16 [SP+8],r0
     ldi8 c1, 0x5a
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     stsp16 [sp + 8], r0
     sys SYS_DEBUG_BREAK
 
-    ; [094] LDM8 r0,0x0100
+    ; [098] LDM8 r0,0x0100
     ldi8 c1, 0x5a
     mov16 r0, r5
     stm8 0x0100, r0
@@ -912,14 +942,14 @@ _start:
     ldm8 r0, 0x0100
     sys SYS_DEBUG_BREAK
 
-    ; [095] STM8 0x0100,r0
+    ; [099] STM8 0x0100,r0
     ldi8 c1, 0x5a
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     stm8 0x0100, r0
     sys SYS_DEBUG_BREAK
 
-    ; [096] LDM16 r0,0x0100
+    ; [100] LDM16 r0,0x0100
     ldi8 c1, 0x5a
     mov16 r0, r5
     stm16 0x0100, r0
@@ -927,14 +957,14 @@ _start:
     ldm16 r0, 0x0100
     sys SYS_DEBUG_BREAK
 
-    ; [097] STM16 0x0100,r0
+    ; [101] STM16 0x0100,r0
     ldi8 c1, 0x5a
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
     stm16 0x0100, r0
     sys SYS_DEBUG_BREAK
 
-    ; [098] JMPF target24
+    ; [102] JMPF target24
     sys SYS_DEBUG_BREAK
     jmpf .L_jmpf_target
     nop
@@ -942,7 +972,7 @@ _start:
 .L_jmpf_target:
     sys SYS_DEBUG_BREAK
 
-    ; [099] CALLF target24
+    ; [103] CALLF target24
     sys SYS_DEBUG_BREAK
     callf .L_callf_target
 .L_callf_return:
@@ -953,7 +983,7 @@ _start:
     ret
 .L_callf_done:
 
-    ; [100] RET
+    ; [104] RET
     call .L_ret_bench_body
 .L_ret_bench_return:
     sys SYS_DEBUG_BREAK
@@ -963,169 +993,169 @@ _start:
     ret
 .L_ret_bench_done:
 
-    ; [101] LDI16 r0,imm16
+    ; [105] LDI16 r0,imm16
     sys SYS_DEBUG_BREAK
     ldi16 r0, 0xa55a
     sys SYS_DEBUG_BREAK
 
-    ; [102] LDI8 r0,imm8
+    ; [106] LDI8 r0,imm8
     ; Seed a nonzero high byte so the benchmark also exercises zero extension.
     ldi16 r0, 0xffff
     sys SYS_DEBUG_BREAK
     ldi8 r0, 0xa5
     sys SYS_DEBUG_BREAK
 
-    ; [103] ADDI16 r0,imm16
+    ; [107] ADDI16 r0,imm16
     ldi16 r0, 0x1234
     sys SYS_DEBUG_BREAK
     addi16 r0, 0x4321
     sys SYS_DEBUG_BREAK
 
-    ; [104] SUBI16 r0,imm16
+    ; [108] SUBI16 r0,imm16
     ldi16 r0, 0x5678
     sys SYS_DEBUG_BREAK
     subi16 r0, 0x1234
     sys SYS_DEBUG_BREAK
 
-    ; [105] ANDI16 r0,imm16
+    ; [109] ANDI16 r0,imm16
     ldi16 r0, 0xf0f3
     sys SYS_DEBUG_BREAK
     andi16 r0, 0x0ff0
     sys SYS_DEBUG_BREAK
 
-    ; [106] ORI16 r0,imm16
+    ; [110] ORI16 r0,imm16
     ldi16 r0, 0x0f00
     sys SYS_DEBUG_BREAK
     ori16 r0, 0x00f3
     sys SYS_DEBUG_BREAK
 
-    ; [107] XORI16 r0,imm16
+    ; [111] XORI16 r0,imm16
     ldi16 r0, 0xaaaa
     sys SYS_DEBUG_BREAK
     xori16 r0, 0x0ff0
     sys SYS_DEBUG_BREAK
 
-    ; [108] CMPI16 r0,imm16
+    ; [112] CMPI16 r0,imm16
     ldi16 r0, 0x1234
     sys SYS_DEBUG_BREAK
     cmpi16 r0, 0x5678
     sys SYS_DEBUG_BREAK
 
-    ; [109] CMPI8 r0,imm8
+    ; [113] CMPI8 r0,imm8
     ldi16 r0, 0xab34
     sys SYS_DEBUG_BREAK
     cmpi8 r0, 0x56
     sys SYS_DEBUG_BREAK
 
-    ; [110] TST16 r0
+    ; [114] TST16 r0
     ldi16 r0, 0x8000
     sys SYS_DEBUG_BREAK
     tst16 r0
     sys SYS_DEBUG_BREAK
 
-    ; [111] TST8 r0
+    ; [115] TST8 r0
     ldi16 r0, 0xab80
     sys SYS_DEBUG_BREAK
     tst8 r0
     sys SYS_DEBUG_BREAK
 
-    ; [112] OR A,r0
+    ; [116] OR A,r0
     ldi16 c0, 0x1234
     ldi16 r0, 0xa5a5
     sys SYS_DEBUG_BREAK
     or a, r0
     sys SYS_DEBUG_BREAK
 
-    ; [113] XOR A,r0
+    ; [117] XOR A,r0
     ldi16 c0, 0x55aa
     ldi16 r0, 0x0ff0
     sys SYS_DEBUG_BREAK
     xor a, r0
     sys SYS_DEBUG_BREAK
 
-    ; [114] BIC A,r0
+    ; [118] BIC A,r0
     ldi16 c0, 0xffff
     ldi16 r0, 0x0ff0
     sys SYS_DEBUG_BREAK
     bic a, r0
     sys SYS_DEBUG_BREAK
 
-    ; [115] ADD.NF c2,c3
+    ; [119] ADD.NF c2,c3
     ldi16 c2, 0x1234
     ldi16 c3, 0x0102
     sys SYS_DEBUG_BREAK
     add.nf c2, c3
     sys SYS_DEBUG_BREAK
 
-    ; [116] SUB.NF c2,c3
+    ; [120] SUB.NF c2,c3
     ldi16 c2, 0x1234
     ldi16 c3, 0x0102
     sys SYS_DEBUG_BREAK
     sub.nf c2, c3
     sys SYS_DEBUG_BREAK
 
-    ; [117] AND c2,c3
+    ; [121] AND c2,c3
     ldi16 c2, 0xa55a
     ldi16 c3, 0x0ff0
     sys SYS_DEBUG_BREAK
     and c2, c3
     sys SYS_DEBUG_BREAK
 
-    ; [118] OR c2,c3
+    ; [122] OR c2,c3
     ldi16 c2, 0xa005
     ldi16 c3, 0x0ff0
     sys SYS_DEBUG_BREAK
     or c2, c3
     sys SYS_DEBUG_BREAK
 
-    ; [119] XOR c2,c3
+    ; [123] XOR c2,c3
     ldi16 c2, 0x55aa
     ldi16 c3, 0x0ff0
     sys SYS_DEBUG_BREAK
     xor c2, c3
     sys SYS_DEBUG_BREAK
 
-    ; [120] BIC c2,c3
+    ; [124] BIC c2,c3
     ldi16 c2, 0xffff
     ldi16 c3, 0x0ff0
     sys SYS_DEBUG_BREAK
     bic c2, c3
     sys SYS_DEBUG_BREAK
 
-    ; [121] LDPBI 0
+    ; [125] LDPBI 0
     sys SYS_DEBUG_BREAK
     ldpbi 0
     sys SYS_DEBUG_BREAK
 
-    ; [122] LDP8 r0,[PB:r6]
+    ; [126] LDP8 r0,[PB:r6]
     ldpbi 0
     ldi16 r6, 0x0100
     sys SYS_DEBUG_BREAK
     ldp8 r0, [pb:r6]
     sys SYS_DEBUG_BREAK
 
-    ; [123] LDP16 r0,[PB:r6]
+    ; [127] LDP16 r0,[PB:r6]
     ldpbi 0
     ldi16 r6, 0x0100
     sys SYS_DEBUG_BREAK
     ldp16 r0, [pb:r6]
     sys SYS_DEBUG_BREAK
 
-    ; [124] LDP8 r0,[PB:r6+4]
+    ; [128] LDP8 r0,[PB:r6+4]
     ldpbi 0
     ldi16 r6, 0x0100
     sys SYS_DEBUG_BREAK
     ldp8 r0, [pb:r6 + 4]
     sys SYS_DEBUG_BREAK
 
-    ; [125] LDP16 r0,[PB:r6+4]
+    ; [129] LDP16 r0,[PB:r6+4]
     ldpbi 0
     ldi16 r6, 0x0100
     sys SYS_DEBUG_BREAK
     ldp16 r0, [pb:r6 + 4]
     sys SYS_DEBUG_BREAK
 
-    ; [126] MOV32 q0,q1
+    ; [130] MOV32 q0,q1
     ldi16 r0, 0x1111
     ldi16 r1, 0x2222
     ldi16 r2, 0x3333
@@ -1134,7 +1164,7 @@ _start:
     mov32 q0, q1
     sys SYS_DEBUG_BREAK
 
-    ; [127] ADD32 q0,q1
+    ; [131] ADD32 q0,q1
     ldi16 r0, 0xffff
     ldi16 r1, 0x1234
     ldi16 r2, 0x0001
@@ -1143,7 +1173,7 @@ _start:
     add32 q0, q1
     sys SYS_DEBUG_BREAK
 
-    ; [128] SUB32 q0,q1
+    ; [132] SUB32 q0,q1
     ldi16 r0, 0x0000
     ldi16 r1, 0x5678
     ldi16 r2, 0x0001
@@ -1152,7 +1182,7 @@ _start:
     sub32 q0, q1
     sys SYS_DEBUG_BREAK
 
-    ; [129] CMP32 q0,q1
+    ; [133] CMP32 q0,q1
     ldi16 r0, 0x5678
     ldi16 r1, 0x1234
     ldi16 r2, 0x5679
@@ -1161,7 +1191,7 @@ _start:
     cmp32 q0, q1
     sys SYS_DEBUG_BREAK
 
-    ; [130] JMPP q0
+    ; [134] JMPP q0
     ; q0 is a canonical 24-bit code pointer:
     ;   r0 = prog_lo16(target)
     ;   low8(r1) = prog_hi8(target)
@@ -1174,7 +1204,7 @@ _start:
 .L_jmpp_target:
     sys SYS_DEBUG_BREAK
 
-    ; [131] CALLP q0
+    ; [135] CALLP q0
     ldi16 r0, prog_lo16(.L_callp_target)
     ldi8  r1, prog_hi8(.L_callp_target)
     sys SYS_DEBUG_BREAK

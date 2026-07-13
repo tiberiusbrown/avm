@@ -22,7 +22,11 @@
    48   NEG16 r0
    47   INC16 r0
    48   DEC16 r0
+   46   LSL16 r0
    46   LSR16 r0
+   46   ASR16 r0
+   41   LSR8 r0
+   41   ASR8 r0
    54   ZEXT8 r0
    54   SEXT8 r0
    41   SWAP8 r0

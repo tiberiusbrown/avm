@@ -1421,12 +1421,12 @@ e0_secondary_table:
     secondary_entries 8, e0_neg16_family       ; 08-0F
     secondary_entries 8, e0_inc16_family       ; 10-17
     secondary_entries 8, e0_dec16_family       ; 18-1F
-    secondary_entries 4, unimplemented_instruction_func  ; 20-23 LSL16 r0-r3
+    secondary_entries 4, e0_lsl16_family       ; 20-23 LSL16 r0-r3
     secondary_entries 4, invalid_secondary_instruction_func ; 24-27 reserved
     secondary_entries 8, e0_lsr16_family       ; 28-2F
-    secondary_entries 8, unimplemented_instruction_func ; 30-37 ASR16
-    secondary_entries 8, unimplemented_instruction_func ; 38-3F LSR8
-    secondary_entries 8, unimplemented_instruction_func ; 40-47 ASR8
+    secondary_entries 8, e0_asr16_family       ; 30-37 ASR16
+    secondary_entries 8, e0_lsr8_family        ; 38-3F LSR8
+    secondary_entries 8, e0_asr8_family        ; 40-47 ASR8
     secondary_entries 16, invalid_secondary_instruction_func ; 48-57 reserved
     secondary_entries 8, e0_swap8_family       ; 58-5F
     secondary_entries 8, e0_getsp_family       ; 60-67
@@ -1520,6 +1520,17 @@ e0_dec16_family:
     ; Revised DEC16 preserves all AVM CC.
     rjmp dispatch_func
 
+e0_lsl16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    lsl  r4
+    rol  r5
+    st   X, r5
+    st   -X, r4
+    ; Revised LSL16 preserves all AVM CC.
+    rjmp dispatch_func
+
 e0_lsr16_family:
     e0_select_register
     ld   r4, X+
@@ -1529,6 +1540,33 @@ e0_lsr16_family:
     st   X, r5
     st   -X, r4
     ; Revised LSR16 preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_asr16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    asr  r5
+    ror  r4
+    st   X, r5
+    st   -X, r4
+    ; Revised ASR16 preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_lsr8_family:
+    e0_select_register
+    ld   r4, X
+    lsr  r4
+    st   X, r4
+    ; LSR8 changes only the low byte and preserves all AVM CC.
+    rjmp dispatch_func
+
+e0_asr8_family:
+    e0_select_register
+    ld   r4, X
+    asr  r4
+    st   X, r4
+    ; ASR8 changes only the low byte and preserves all AVM CC.
     rjmp dispatch_func
 
 e0_swap8_family:

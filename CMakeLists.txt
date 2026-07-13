@@ -133,6 +133,8 @@ set(AVM_TEST_SCRIPT
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/avm_tests.py")
 set(AVM_ASM_TEST_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/asm")
+set(AVM_C_TEST_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/c")
 set(AVM_TEST_WORK_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/tests/$<CONFIG>")
 
@@ -143,15 +145,18 @@ add_custom_target(avm_tests
         "${Python3_EXECUTABLE}"
         "${AVM_TEST_SCRIPT}"
         --llvm-mc "$<TARGET_FILE:llvm-mc>"
+        --clang "$<TARGET_FILE:clang>"
         --llvm-avm-image "$<TARGET_FILE:llvm-avm-image>"
         --ardens "$<TARGET_FILE:Ardens>"
         --interpreter "${AVM_INTERPRETER_HEX}"
         --asm-dir "${AVM_ASM_TEST_DIR}"
+        --c-dir "${AVM_C_TEST_DIR}"
         --work-dir "${AVM_TEST_WORK_DIR}"
         --headless-ms "${AVM_TEST_HEADLESS_MS}"
         --timeout-seconds "${AVM_TEST_TIMEOUT_SECONDS}"
     DEPENDS
         llvm-mc
+        clang
         llvm-avm-image
         Ardens
         avm_interpreter

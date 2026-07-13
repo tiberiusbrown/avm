@@ -140,20 +140,22 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `E0 08–0F` | `NEG16 rN` | Two's-complement negate a 16-bit register. | 2 | ≈34 | Preserve |  |
 | `E0 10–17` | `INC16 rN` | Increment a 16-bit register modulo 2^16. | 2 | ≈34 | Preserve |  |
 | `E0 18–1F` | `DEC16 rN` | Decrement a 16-bit register modulo 2^16. | 2 | ≈34 | Preserve |  |
-| `E0 20–27` | `LSL16 rN` | Shift a 16-bit register left by one; zero enters bit 0. | 2 | ≈34 | Preserve |  |
+| `E0 20–23` | `LSL16 rN` | Shift non-compact register `r0` through `r3` left by one; zero enters bit 0. | 2 | ≈34 | Preserve | Compact `r4` through `r7` use `ADD.NF cN,cN`, which has the same result and preserves CC. |
+| `E0 24–27` | `Reserved` | Reserved former compact-register `LSL16` encodings. | — | — | — | Code generation must not emit these encodings. |
 | `E0 28–2F` | `LSR16 rN` | Logical right shift a 16-bit register by one. | 2 | ≈34 | Preserve |  |
 | `E0 30–37` | `ASR16 rN` | Arithmetic right shift a 16-bit register by one. | 2 | ≈34 | Preserve |  |
 | `E0 38–3F` | `LSR8 rN` | Logical right shift only the low byte; preserve the high byte. | 2 | ≈34 | Preserve |  |
 | `E0 40–47` | `ASR8 rN` | Arithmetic right shift only the low byte; preserve the high byte. | 2 | ≈34 | Preserve |  |
-| `E0 48–4F` | `ZEXT8 rN` | Zero-extend the low byte through the high byte. | 2 | ≈34 | Preserve |  |
-| `E0 50–57` | `SEXT8 rN` | Sign-extend the low byte through the high byte. | 2 | ≈34 | Preserve |  |
+| `E0 48–4F` | `Reserved` | Reserved former `ZEXT8 rN` encodings. | — | — | — | The assembler may retain `ZEXT8 rN` as an alias for `MOV8Z rN,bN` on E3. |
+| `E0 50–57` | `Reserved` | Reserved former `SEXT8 rN` encodings. | — | — | — | The assembler may retain `SEXT8 rN` as an alias for `MOV8S rN,bN` on E3. |
 | `E0 58–5F` | `SWAP8 rN` | Swap the high and low nibbles of the low byte. | 2 | ≈34 | Preserve |  |
 | `E0 60–67` | `GETSP rN` | Copy the VM stack pointer into rN. | 2 | ≈34 | Preserve |  |
 | `E0 68–6F` | `SETSP rN` | Replace the VM stack pointer with rN. | 2 | ≈34 | Preserve |  |
 | `E0 70–77` | `MTPB rN` | PB = low8(rN). | 2 | ≈34 | Preserve |  |
 | `E0 78–7F` | `MFPB rN` | rN = zero_extend(PB). | 2 | ≈34 | Preserve |  |
 | `E0 80–87 + imm16` | `LDI16 rN,imm16` | Load a 16-bit immediate. | 4 | ≈68 | Preserve |  |
-| `E0 88–8F + imm8` | `LDI8 rN,imm8` | Load an 8-bit immediate and zero-extend it. | 3 | ≈51 | Preserve |  |
+| `E0 88–8B + imm8` | `LDI8 rN,imm8` | Load an 8-bit immediate into non-compact `r0` through `r3` and zero-extend it. | 3 | ≈51 | Preserve |  |
+| `E0 8C–8F` | `Reserved` | Reserved former compact-register `LDI8` encodings. | — | — | — | Compact `r4` through `r7` use the shorter primary `F0–F3 LDI8 cN,imm8` forms. |
 | `E0 90–97 + imm16` | `ADDI16 rN,imm16` | Add a 16-bit immediate modulo 2^16. | 4 | ≈68–70 | Preserve |  |
 | `E0 98–9F + imm16` | `SUBI16 rN,imm16` | Subtract a 16-bit immediate modulo 2^16. | 4 | ≈68–70 | Preserve |  |
 | `E0 A0–A7 + imm16` | `ANDI16 rN,imm16` | Bitwise AND with a 16-bit immediate. | 4 | ≈68–70 | Preserve |  |
@@ -165,8 +167,10 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `E0 D0–D7` | `CALLR rN` | Push the three-byte return address, then jump within the current code bank to PC=rN. | 2 | ≈141 | Preserve | Requires one SPI stream restart. |
 | `E0 D8–DF` | `JMPP rN` | Far jump to PB:rN and copy PB into CB. | 2 | ≈136 | Preserve | Requires one SPI stream restart. |
 | `E0 E0–E7` | `CALLP rN` | Push the return address and far-call PB:rN. | 2 | ≈143 | Preserve | Requires one SPI stream restart. |
-| `E0 E8–EF` | `TST16 rN` | Set CC from a full-register 16-bit comparison against zero. | 2 | ≈34 | Replace C/Z/S |  |
-| `E0 F0–F7` | `TST8 rN` | Set CC from a full-register low-byte comparison against zero. | 2 | ≈34 | Replace C/Z/S |  |
+| `E0 E8–EB` | `TST16 rN` | Set CC from a 16-bit comparison of non-compact `r0` through `r3` against zero. | 2 | ≈34 | Replace C/Z/S |  |
+| `E0 EC–EF` | `Reserved` | Reserved former compact-register `TST16` encodings. | — | — | — | Compact `r4` through `r7` use primary `A0/A5/AA/AF`. |
+| `E0 F0–F3` | `TST8 rN` | Set CC from a low-byte comparison of non-compact `r0` through `r3` against zero. | 2 | ≈34 | Replace C/Z/S |  |
+| `E0 F4–F7` | `Reserved` | Reserved former compact-register `TST8` encodings. | — | — | — | Compact `r4` through `r7` use primary `B0/B5/BA/BF`. |
 | `E0 F8–FF` | `Reserved` | Reserved for future miscellaneous instructions. | — | — | — |  |
 
 ### 5.3. E1 32-bit pair ALU extension page
@@ -339,15 +343,34 @@ The `F4` `ADD.NF` and `SUB.NF` forms are intentionally retained as non-flagging 
 
 The direct two-byte `CMPI6` is much cheaper than the current three-byte extended form, but its packed register field still requires a small address calculation. Four dedicated primary opcodes would reduce the estimate toward 34 cycles, but would consume three additional primary slots.
 
-### 7.3 Variable shifts are still loop operations
+### 7.3 Redundant E0 forms are intentionally omitted
+
+E0 keeps register-indexed forms only when no equal-or-better encoding already
+exists elsewhere:
+
+- `E0 20–23` encode `LSL16` only for `r0` through `r3`; `24–27` are reserved.
+  Compact left shifts use `ADD.NF cN,cN`, or primary `ADD cN,cN` only when
+  replacing CC is acceptable.
+- `E0 48–57` are reserved. `ZEXT8 rN` and `SEXT8 rN` may remain assembler
+  aliases, but must encode as `MOV8Z rN,bN` and `MOV8S rN,bN` on E3.
+- `E0 88–8B` encode `LDI8` only for `r0` through `r3`; `8C–8F` are reserved.
+  Compact registers use primary `F0–F3`.
+- `E0 E8–EB` and `F0–F3` encode `TST16` and `TST8` only for `r0` through
+  `r3`. `EC–EF` and `F4–F7` are reserved; compact registers use the diagonal
+  primary test encodings.
+
+Code generators, assemblers, and disassemblers must not treat the reserved E0
+ranges as valid encodings.
+
+### 7.4 Variable shifts are still loop operations
 
 Operand specialization removes register decode, but AVR has no variable-count word shift. Their run time therefore remains proportional to the shift count. LLVM should use fixed shifts, strength reduction, or helper sequences when profitable.
 
-### 7.4 CSETM is intentionally omitted
+### 7.5 CSETM is intentionally omitted
 
 This report assigns the final quarter of the `E3` page to `CSET`. A full-width all-zero/all-one mask can be formed as `CSET` followed by flag-neutral `NEG16`. A dedicated `CSETM` can be added later if profiling justifies another encoding.
 
-### 7.5 Compact stack-relative forms are omitted
+### 7.6 Compact stack-relative forms are omitted
 
 The earlier compact `LDSP/STSP` forms are not assigned in this map. Stack slots use the `FD` three-byte `u8` forms. Restoring two-byte compact stack forms may be worthwhile if frame-offset profiling shows they are among the most frequent instructions.
 
@@ -374,4 +397,4 @@ Before freezing the cost model:
 4. Measure program-space loads with both one-byte and two-byte results.
 5. Feed measured costs into LLVM scheduling and instruction-cost hooks.
 
-**Instruction-form rows in this report:** 146
+**Instruction-form rows in this report:** 150

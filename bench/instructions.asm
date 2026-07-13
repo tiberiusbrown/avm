@@ -32,8 +32,8 @@
 ;   031: MTPB r0
 ;   032: MFPB r0
 ;   033: MOV16 r6,r0
-;   034: MOV8Z r6,r0
-;   035: MOV8S r6,r0
+;   034: MOV8Z r6,b0
+;   035: MOV8S r6,b0
 ;   036: CSET r6,EQ (true)
 ;   037: CSET r6,EQ (false)
 ;   038: CSET r6,NE (true)
@@ -397,18 +397,18 @@ _start:
     mov16 r6, r0
     sys SYS_DEBUG_BREAK
 
-    ; [034] MOV8Z r6,r0
+    ; [034] MOV8Z r6,b0
     ldi8 c1, 0x80
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
-    mov8z r6, r0
+    mov8z r6, b0
     sys SYS_DEBUG_BREAK
 
-    ; [035] MOV8S r6,r0
+    ; [035] MOV8S r6,b0
     ldi8 c1, 0x80
     mov16 r0, r5
     sys SYS_DEBUG_BREAK
-    mov8s r6, r0
+    mov8s r6, b0
     sys SYS_DEBUG_BREAK
 
     ; [036] CSET r6,EQ (true)

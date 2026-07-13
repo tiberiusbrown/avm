@@ -1408,31 +1408,42 @@ e3_extension_decode_func:
 2:
     jmp  e3_cset_family
 
+; Reserved E0 cleanup:
+;   24-27  former compact LSL16; compact shifts use F4 ADD.NF cN,cN
+;   48-4F  former ZEXT8; assembler aliases encode as E3 MOV8Z rN,bN
+;   50-57  former SEXT8; assembler aliases encode as E3 MOV8S rN,bN
+;   8C-8F  former compact LDI8; compact loads use primary F0-F3
+;   EC-EF  former compact TST16; compact tests use primary A0/A5/AA/AF
+;   F4-F7  former compact TST8; compact tests use primary B0/B5/BA/BF
+;
 e0_secondary_table:
     secondary_entries 8, e0_not16_family       ; 00-07
     secondary_entries 8, e0_neg16_family       ; 08-0F
     secondary_entries 8, e0_inc16_family       ; 10-17
     secondary_entries 8, e0_dec16_family       ; 18-1F
-    secondary_entries 8, unimplemented_instruction_func ; 20-27 LSL16
+    secondary_entries 4, unimplemented_instruction_func  ; 20-23 LSL16 r0-r3
+    secondary_entries 4, invalid_secondary_instruction_func ; 24-27 reserved
     secondary_entries 8, e0_lsr16_family       ; 28-2F
     secondary_entries 8, unimplemented_instruction_func ; 30-37 ASR16
     secondary_entries 8, unimplemented_instruction_func ; 38-3F LSR8
     secondary_entries 8, unimplemented_instruction_func ; 40-47 ASR8
-    secondary_entries 8, e0_zext8_family       ; 48-4F
-    secondary_entries 8, e0_sext8_family       ; 50-57
+    secondary_entries 16, invalid_secondary_instruction_func ; 48-57 reserved
     secondary_entries 8, e0_swap8_family       ; 58-5F
     secondary_entries 8, e0_getsp_family       ; 60-67
     secondary_entries 8, e0_setsp_family       ; 68-6F
     secondary_entries 8, e0_mtpb_family        ; 70-77
     secondary_entries 8, e0_mfpb_family        ; 78-7F
     secondary_entries 8, e0_imm16_family       ; 80-87 LDI16
-    secondary_entries 8, e0_imm8_family        ; 88-8F LDI8
+    secondary_entries 4, e0_imm8_family        ; 88-8B LDI8 r0-r3
+    secondary_entries 4, invalid_secondary_instruction_func ; 8C-8F reserved
     secondary_entries 48, e0_imm16_family      ; 90-BF ALU/CMPI16
     secondary_entries 8, e0_imm8_family        ; C0-C7 CMPI8
     secondary_entries 32, unimplemented_instruction_func ; C8-E7 control
-    secondary_entries 8, e0_tst16_family       ; E8-EF
-    secondary_entries 8, e0_tst8_family        ; F0-F7
-    secondary_entries 8, invalid_secondary_instruction_func ; F8-FF
+    secondary_entries 4, e0_tst16_family       ; E8-EB TST16 r0-r3
+    secondary_entries 4, invalid_secondary_instruction_func ; EC-EF reserved
+    secondary_entries 4, e0_tst8_family        ; F0-F3 TST8 r0-r3
+    secondary_entries 4, invalid_secondary_instruction_func ; F4-F7 reserved
+    secondary_entries 8, invalid_secondary_instruction_func ; F8-FF reserved
 e0_secondary_table_end:
 
 .if ((e0_secondary_table_end - e0_secondary_table) != (256 * 2))
@@ -1507,20 +1518,6 @@ e0_lsr16_family:
     st   X, r5
     st   -X, r4
     ; Revised LSR16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_zext8_family:
-    e0_select_register
-    adiw r26, 1
-    st   X, ZERO
-    rjmp dispatch_func
-
-e0_sext8_family:
-    e0_select_register
-    ld   r4, X+
-    lsl  r4
-    sbc  r4, r4
-    st   X, r4
     rjmp dispatch_func
 
 e0_swap8_family:
@@ -1683,7 +1680,7 @@ e0_cmpi16_operation:
     in   VM_FLAGS, SREG
     rjmp dispatch_func
 
-; E0 88-8F / C0-C7: bit 6 distinguishes zero-extending LDI8 from CMPI8.
+; E0 88-8B / C0-C7: bit 6 distinguishes zero-extending LDI8 from CMPI8.
 e0_imm8_family:
     e0_select_register
     e0_fetch_first_immediate r4
@@ -1701,7 +1698,7 @@ e0_ldi8_operation:
     st   X, ZERO
     rjmp e0_imm8_finish_func
 
-; E0 E8-EF: TST16 rN
+; E0 E8-EB: TST16 r0-r3
 e0_tst16_family:
     e0_select_register
     ld   r4, X+
@@ -1711,7 +1708,7 @@ e0_tst16_family:
     in   VM_FLAGS, SREG
     rjmp dispatch_func
 
-; E0 F0-F7: TST8 rN
+; E0 F0-F3: TST8 r0-r3
 e0_tst8_family:
     e0_select_register
     ld   r4, X

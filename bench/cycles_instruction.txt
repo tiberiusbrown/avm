@@ -23,16 +23,16 @@
    47   INC16 r0
    48   DEC16 r0
    46   LSR16 r0
-   40   ZEXT8 r0
-   42   SEXT8 r0
+   54   ZEXT8 r0
+   54   SEXT8 r0
    41   SWAP8 r0
    40   GETSP r0
    41   SETSP r0
    39   MTPB r0
    41   MFPB r0
    35   MOV16 r6,r0
-   54   MOV8Z r6,r0
-   54   MOV8S r6,r0
+   54   MOV8Z r6,b0
+   54   MOV8S r6,b0
    59   CSET r6,EQ (true)
    59   CSET r6,EQ (false)
    59   CSET r6,NE (true)

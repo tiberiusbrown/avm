@@ -171,40 +171,55 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 
 ### 5.3. E1 32-bit pair ALU extension page
 
-| Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
-|---|---|---|---:|---:|---|---|
-| `E1 0dddss` | `MOV32 qD,qS` | Copy one aligned 32-bit register pair to another. | 2 | ≈34 | Preserve |  |
-| `E1 1dddss` | `ADD32 qD,qS` | qD = qD + qS modulo 2^32. | 2 | ≈34–36 | Preserve |  |
-| `E1 2dddss` | `SUB32 qD,qS` | qD = qD - qS modulo 2^32. | 2 | ≈34–36 | Preserve |  |
-| `E1 3dddss` | `AND32 qD,qS` | 32-bit bitwise AND. | 2 | ≈34–36 | Preserve |  |
-| `E1 4dddss` | `OR32 qD,qS` | 32-bit bitwise OR. | 2 | ≈34–36 | Preserve |  |
-| `E1 5dddss` | `XOR32 qD,qS` | 32-bit bitwise XOR. | 2 | ≈34–36 | Preserve |  |
-| `E1 6dddss` | `CMP32 qL,qR` | Set CC from a 32-bit comparison. | 2 | ≈35–37 | Replace C/Z/S |  |
-| `E1 7dddss` | `SHL32V qD,qS` | Shift qD left by low5(qS). | 2 | ≈39 + 7n | Preserve | n = low5(qS); about 39–256 cycles. |
-| `E1 8dddss` | `LSR32V qD,qS` | Logical right shift qD by low5(qS). | 2 | ≈39 + 7n | Preserve | n = low5(qS); about 39–256 cycles. |
-| `E1 9dddss` | `ASR32V qD,qS` | Arithmetic right shift qD by low5(qS). | 2 | ≈39 + 7n | Preserve | n = low5(qS); about 39–256 cycles. |
-| `E1 Adddss–Fdddss` | `Reserved` | Reserved pair-page operations. | — | — | — |  |
+The E1 secondary byte uses the following layout:
 
-### 5.4. E2 accumulator ALU extension page
+```text
+bits 7:4   operation
+bits 3:2   destination/left q-register
+bits 1:0   source/right q-register
+```
+
+Each two-bit pair field selects one of `q0` through `q3`.
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
-| `E2 00sss` | `MOV A,rS` | Copy any 16-bit register into A. | 2 | ≈34 | Preserve |  |
-| `E2 01sss` | `ADD A,rS` | A = A + rS modulo 2^16. | 2 | ≈34 | Preserve |  |
-| `E2 02sss` | `SUB A,rS` | A = A - rS modulo 2^16. | 2 | ≈34 | Preserve |  |
-| `E2 03sss` | `AND A,rS` | A = A & rS. | 2 | ≈34 | Preserve | Assembler should prefer the one-byte 50–57 form. |
-| `E2 04sss` | `OR A,rS` | A = A \| rS. | 2 | ≈34 | Preserve | Assembler should prefer the one-byte 58–5F form. |
-| `E2 05sss` | `XOR A,rS` | A = A ^ rS. | 2 | ≈34 | Preserve | Assembler should prefer the one-byte 60–67 form. |
-| `E2 06sss` | `BIC A,rS` | A = A & ~rS. | 2 | ≈34 | Preserve | Assembler should prefer the one-byte 68–6F form. |
-| `E2 07sss` | `CMP16 A,rS` | Set CC from a 16-bit comparison. | 2 | ≈34 | Replace C/Z/S |  |
-| `E2 08sss` | `CMP8 A,rS` | Set CC from a low-byte comparison. | 2 | ≈34 | Replace C/Z/S |  |
-| `E2 09sss` | `MULU8 A,rS` | A = unsigned(low8(A)) × unsigned(low8(rS)). | 2 | ≈34–36 | Preserve |  |
-| `E2 0Asss` | `MULS8 A,rS` | A = signed(low8(A)) × signed(low8(rS)). | 2 | ≈34–38 | Preserve |  |
-| `E2 0Bsss` | `MULSU8 A,rS` | A = signed(low8(A)) × unsigned(low8(rS)). | 2 | ≈34–38 | Preserve |  |
-| `E2 0Csss` | `SHL16V A,rS` | Shift A left by low4(rS). | 2 | ≈38 + 5n | Preserve | n = low4(rS); about 38–113 cycles. |
-| `E2 0Dsss` | `LSR16V A,rS` | Logical right shift A by low4(rS). | 2 | ≈38 + 5n | Preserve | n = low4(rS); about 38–113 cycles. |
-| `E2 0Esss` | `ASR16V A,rS` | Arithmetic right shift A by low4(rS). | 2 | ≈38 + 5n | Preserve | n = low4(rS); about 38–113 cycles. |
-| `E2 0Fsss–1Fsss` | `Reserved` | Reserved accumulator operations. | — | — | — |  |
+| `E1 0ddss` | `MOV32 qD,qS` | Copy one aligned 32-bit register pair to another. | 2 | ≈34 | Preserve |  |
+| `E1 1ddss` | `ADD32 qD,qS` | qD = qD + qS modulo 2^32. | 2 | ≈34–36 | Preserve |  |
+| `E1 2ddss` | `SUB32 qD,qS` | qD = qD - qS modulo 2^32. | 2 | ≈34–36 | Preserve |  |
+| `E1 3ddss` | `AND32 qD,qS` | 32-bit bitwise AND. | 2 | ≈34–36 | Preserve |  |
+| `E1 4ddss` | `OR32 qD,qS` | 32-bit bitwise OR. | 2 | ≈34–36 | Preserve |  |
+| `E1 5ddss` | `XOR32 qD,qS` | 32-bit bitwise XOR. | 2 | ≈34–36 | Preserve |  |
+| `E1 6ddss` | `CMP32 qL,qR` | Set CC from a 32-bit comparison. | 2 | ≈35–37 | Replace C/Z/S |  |
+| `E1 7ddss` | `SHL32V qD,qS` | Shift qD left by low5(qS). | 2 | ≈39 + 7n | Preserve | n = low5(qS); about 39–256 cycles. |
+| `E1 8ddss` | `LSR32V qD,qS` | Logical right shift qD by low5(qS). | 2 | ≈39 + 7n | Preserve | n = low5(qS); about 39–256 cycles. |
+| `E1 9ddss` | `ASR32V qD,qS` | Arithmetic right shift qD by low5(qS). | 2 | ≈39 + 7n | Preserve | n = low5(qS); about 39–256 cycles. |
+| `E1 Addss–Fddss` | `Reserved` | Reserved pair-page operations. | — | — | — |  |
+
+### 5.4. E2 accumulator/non-compact-source ALU extension page
+
+The E2 secondary byte uses the following layout:
+
+```text
+bits 7:2   operation
+bits 1:0   source register
+```
+
+The two-bit source field selects only `r0` through `r3`. Compact sources `r4` through `r7` use their one-byte primary forms or the compact `F4` page. The accumulator logical operations `AND`, `OR`, `XOR`, and `BIC` are omitted from E2 because the one-byte `50–6F` forms already accept all eight source registers. Each operation below therefore occupies four consecutive secondary-byte values.
+
+| Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
+|---|---|---|---:|---:|---|---|
+| `E2 00–03` | `MOV A,rS` | Copy non-compact register rS into A. | 2 | ≈34 | Preserve | rS is `r0` through `r3`, selected by bits 1:0. |
+| `E2 04–07` | `ADD.NF A,rS` | A = A + rS modulo 2^16 without changing CC. | 2 | ≈34 | Preserve | Compact sources use `F4 ADD.NF`; use the one-byte `ADD` when replacing CC is acceptable. |
+| `E2 08–0B` | `SUB.NF A,rS` | A = A - rS modulo 2^16 without changing CC. | 2 | ≈34 | Preserve | Compact sources use `F4 SUB.NF`; use the one-byte `SUB` when replacing CC is acceptable. |
+| `E2 0C–0F` | `CMP16 A,rS` | Set CC from a 16-bit comparison. | 2 | ≈34 | Replace C/Z/S | Compact sources use the one-byte primary `CMP16` forms. |
+| `E2 10–13` | `CMP8 A,rS` | Set CC from a low-byte comparison. | 2 | ≈34 | Replace C/Z/S | Compact sources use the one-byte primary `CMP8` forms. |
+| `E2 14–17` | `MULU8 A,rS` | A = unsigned(low8(A)) × unsigned(low8(rS)). | 2 | ≈34–36 | Preserve | Compact sources use `F4 MULU8`. |
+| `E2 18–1B` | `MULS8 A,rS` | A = signed(low8(A)) × signed(low8(rS)). | 2 | ≈34–38 | Preserve | Compact sources use `F4 MULS8`. |
+| `E2 1C–1F` | `MULSU8 A,rS` | A = signed(low8(A)) × unsigned(low8(rS)). | 2 | ≈34–38 | Preserve | Compact sources use `F4 MULSU8`. |
+| `E2 20–23` | `SHL16V A,rS` | Shift A left by low4(rS). | 2 | ≈38 + 5n | Preserve | n = low4(rS); compact sources use `F4 SHL16V`. |
+| `E2 24–27` | `LSR16V A,rS` | Logical right shift A by low4(rS). | 2 | ≈38 + 5n | Preserve | n = low4(rS); compact sources use `F4 LSR16V`. |
+| `E2 28–2B` | `ASR16V A,rS` | Arithmetic right shift A by low4(rS). | 2 | ≈38 + 5n | Preserve | n = low4(rS); compact sources use `F4 ASR16V`. |
+| `E2 2C–FF` | `Reserved` | Reserved accumulator operations. | — | — | — |  |
 
 ### 5.5. E3 register transfer and condition extension page
 
@@ -237,22 +252,22 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
 | `F0–F3 imm8` | `LDI8 cD,imm8` | Load an 8-bit immediate into a compact register and zero-extend it. | 2 | ≈34 | Preserve |  |
-| `F4 0dddss` | `MOV cD,cS (extended)` | Alternate compact-page move. | 2 | ≈34 | Preserve | Normally dominated by the one-byte primary MOV encoding. |
-| `F4 1dddss` | `ADD.NF cD,cS` | Non-flagging compact-page 16-bit add. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `ADD`. |
-| `F4 2dddss` | `SUB.NF cD,cS` | Non-flagging compact-page 16-bit subtract. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `SUB`. |
-| `F4 3dddss` | `AND cD,cS` | Compact 16-bit bitwise AND. | 2 | ≈34 | Preserve |  |
-| `F4 4dddss` | `OR cD,cS` | Compact 16-bit bitwise OR. | 2 | ≈34 | Preserve |  |
-| `F4 5dddss` | `XOR cD,cS` | Compact 16-bit bitwise XOR. | 2 | ≈34 | Preserve |  |
-| `F4 6dddss` | `BIC cD,cS` | Compact 16-bit bit clear: cD = cD & ~cS. | 2 | ≈34 | Preserve |  |
-| `F4 7dddss` | `CMP16 cL,cR (extended)` | Alternate compact-page 16-bit compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP16 encoding. |
-| `F4 8dddss` | `CMP8 cL,cR (extended)` | Alternate compact-page low-byte compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP8 encoding. |
-| `F4 9dddss` | `MULU8 cD,cS` | Unsigned 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–36 | Preserve |  |
-| `F4 Adddss` | `MULS8 cD,cS` | Signed 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–38 | Preserve |  |
-| `F4 Bdddss` | `MULSU8 cD,cS` | Signed-by-unsigned 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–38 | Preserve |  |
-| `F4 Cdddss` | `SHL16V cD,cS` | Shift cD left by low4(cS). | 2 | ≈38 + 5n | Preserve | n = low4(cS); about 38–113 cycles. |
-| `F4 Ddddss` | `LSR16V cD,cS` | Logical right shift cD by low4(cS). | 2 | ≈38 + 5n | Preserve | n = low4(cS); about 38–113 cycles. |
-| `F4 Edddss` | `ASR16V cD,cS` | Arithmetic right shift cD by low4(cS). | 2 | ≈38 + 5n | Preserve | n = low4(cS); about 38–113 cycles. |
-| `F4 Fdddss` | `Reserved` | Reserved compact binary operation. | — | — | — |  |
+| `F4 0ddss` | `MOV cD,cS (extended)` | Alternate compact-page move. | 2 | ≈34 | Preserve | Normally dominated by the one-byte primary MOV encoding. |
+| `F4 1ddss` | `ADD.NF cD,cS` | Non-flagging compact-page 16-bit add. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `ADD`. |
+| `F4 2ddss` | `SUB.NF cD,cS` | Non-flagging compact-page 16-bit subtract. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `SUB`. |
+| `F4 3ddss` | `AND cD,cS` | Compact 16-bit bitwise AND. | 2 | ≈34 | Preserve |  |
+| `F4 4ddss` | `OR cD,cS` | Compact 16-bit bitwise OR. | 2 | ≈34 | Preserve |  |
+| `F4 5ddss` | `XOR cD,cS` | Compact 16-bit bitwise XOR. | 2 | ≈34 | Preserve |  |
+| `F4 6ddss` | `BIC cD,cS` | Compact 16-bit bit clear: cD = cD & ~cS. | 2 | ≈34 | Preserve |  |
+| `F4 7ddss` | `CMP16 cL,cR (extended)` | Alternate compact-page 16-bit compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP16 encoding. |
+| `F4 8ddss` | `CMP8 cL,cR (extended)` | Alternate compact-page low-byte compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP8 encoding. |
+| `F4 9ddss` | `MULU8 cD,cS` | Unsigned 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–36 | Preserve |  |
+| `F4 Addss` | `MULS8 cD,cS` | Signed 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–38 | Preserve |  |
+| `F4 Bddss` | `MULSU8 cD,cS` | Signed-by-unsigned 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–38 | Preserve |  |
+| `F4 Cddss` | `SHL16V cD,cS` | Shift cD left by low4(cS). | 2 | ≈38 + 5n | Preserve | n = low4(cS); about 38–113 cycles. |
+| `F4 Dddss` | `LSR16V cD,cS` | Logical right shift cD by low4(cS). | 2 | ≈38 + 5n | Preserve | n = low4(cS); about 38–113 cycles. |
+| `F4 Eddss` | `ASR16V cD,cS` | Arithmetic right shift cD by low4(cS). | 2 | ≈38 + 5n | Preserve | n = low4(cS); about 38–113 cycles. |
+| `F4 Fddss` | `Reserved` | Reserved compact binary operation. | — | — | — |  |
 | `F5 rel8` | `BREQ rel8` | Branch when Z=1. | 2 | NT ≈34; T ≈132 | Read |  |
 | `F6 rel8` | `BRNE rel8` | Branch when Z=0. | 2 | NT ≈34; T ≈132 | Read |  |
 | `F7 rel8` | `BRULT rel8` | Branch when C=1. | 2 | NT ≈34; T ≈132 | Read |  |
@@ -315,9 +330,9 @@ The one-byte short-branch encoding deliberately omits displacement `-1`. Because
 
 ## 7. Encoding issues to resolve before freezing the ISA
 
-### 7.1 Flag-preserving F4 arithmetic and remaining duplicates
+### 7.1 Flag-preserving F4 arithmetic, E2 source specialization, and remaining duplicates
 
-The `F4` `ADD.NF` and `SUB.NF` forms are intentionally retained as non-flagging alternatives to the one-byte compact `ADD` and `SUB`; LLVM can use them when CC is live across an arithmetic operation. Extended `MOV`, `CMP16`, and `CMP8` remain true duplicates of one-byte primary forms and should probably be reassigned or reserved before the ISA is frozen.
+The `F4` `ADD.NF` and `SUB.NF` forms are intentionally retained as non-flagging alternatives to the one-byte compact `ADD` and `SUB`; LLVM can use them when CC is live across an arithmetic operation. E2 now covers only non-compact sources `r0` through `r3`; compact-source accumulator operations use the one-byte primary encodings or F4. E2 does not duplicate `AND`, `OR`, `XOR`, or `BIC`, because the one-byte accumulator forms already accept all eight registers. Extended `F4` `MOV`, `CMP16`, and `CMP8` remain true duplicates of one-byte primary forms and should probably be reassigned or reserved before the ISA is frozen.
 
 ### 7.2 CMPI6 remains partly decoded at run time
 
@@ -358,4 +373,4 @@ Before freezing the cost model:
 4. Measure program-space loads with both one-byte and two-byte results.
 5. Feed measured costs into LLVM scheduling and instruction-cost hooks.
 
-**Instruction-form rows in this report:** 149
+**Instruction-form rows in this report:** 145

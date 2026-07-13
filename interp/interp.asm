@@ -542,8 +542,65 @@ emit_and_a 0x56, I_56__AND_A_r6, VM_R6L, VM_R6H
 emit_and_a 0x57, I_57__AND_A_r7, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x58-0x6F: OR/XOR/BIC accumulator forms (not implemented)
+; 0x58-0x67: OR/XOR A, rS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; OR and XOR use the same five pre-dispatch cycles as AND:
+;   delay_3 + low-byte operation + high-byte operation.
+; Native SREG is modified, but architectural AVM CC remains in VM_FLAGS.
+.macro emit_logic_a opcode, label, operation, srcl, srch
+    handler_begin \opcode, \label
+    delay_3
+    \operation VM_C0L, \srcl
+    \operation VM_C0H, \srch
+    dispatch_reverse
+    handler_end \opcode
+.endm
+
+emit_logic_a 0x58, I_58__OR_A_r0,  or,  VM_R0L, VM_R0H
+emit_logic_a 0x59, I_59__OR_A_r1,  or,  VM_R1L, VM_R1H
+emit_logic_a 0x5A, I_5A__OR_A_r2,  or,  VM_R2L, VM_R2H
+emit_logic_a 0x5B, I_5B__OR_A_r3,  or,  VM_R3L, VM_R3H
+emit_logic_a 0x5C, I_5C__OR_A_r4,  or,  VM_R4L, VM_R4H
+emit_logic_a 0x5D, I_5D__OR_A_r5,  or,  VM_R5L, VM_R5H
+emit_logic_a 0x5E, I_5E__OR_A_r6,  or,  VM_R6L, VM_R6H
+emit_logic_a 0x5F, I_5F__OR_A_r7,  or,  VM_R7L, VM_R7H
+
+emit_logic_a 0x60, I_60__XOR_A_r0, eor, VM_R0L, VM_R0H
+emit_logic_a 0x61, I_61__XOR_A_r1, eor, VM_R1L, VM_R1H
+emit_logic_a 0x62, I_62__XOR_A_r2, eor, VM_R2L, VM_R2H
+emit_logic_a 0x63, I_63__XOR_A_r3, eor, VM_R3L, VM_R3H
+emit_logic_a 0x64, I_64__XOR_A_r4, eor, VM_R4L, VM_R4H
+emit_logic_a 0x65, I_65__XOR_A_r5, eor, VM_R5L, VM_R5H
+emit_logic_a 0x66, I_66__XOR_A_r6, eor, VM_R6L, VM_R6H
+emit_logic_a 0x67, I_67__XOR_A_r7, eor, VM_R7L, VM_R7H
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0x68-0x6F: BIC A, rS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; BIC computes A &= ~rS without modifying rS. MOVW copies the complete source
+; before A is changed, which also gives BIC A,A the expected zero result.
+; MOVW + COM + COM + AND + AND is exactly five pre-dispatch cycles.
+.macro emit_bic_a opcode, label, src
+    handler_begin \opcode, \label
+    movw r4, \src
+    com  r4
+    com  r5
+    and  VM_C0L, r4
+    and  VM_C0H, r5
+    dispatch_reverse
+    handler_end \opcode
+.endm
+
+emit_bic_a 0x68, I_68__BIC_A_r0, VM_R0
+emit_bic_a 0x69, I_69__BIC_A_r1, VM_R1
+emit_bic_a 0x6A, I_6A__BIC_A_r2, VM_R2
+emit_bic_a 0x6B, I_6B__BIC_A_r3, VM_R3
+emit_bic_a 0x6C, I_6C__BIC_A_r4, VM_R4
+emit_bic_a 0x6D, I_6D__BIC_A_r5, VM_R5
+emit_bic_a 0x6E, I_6E__BIC_A_r6, VM_R6
+emit_bic_a 0x6F, I_6F__BIC_A_r7, VM_R7
 
 .macro emit_unimplemented_primary opcode, label
     handler_begin \opcode, \label
@@ -556,33 +613,6 @@ emit_and_a 0x57, I_57__AND_A_r7, VM_R7L, VM_R7H
     jmp  invalid_primary_instruction_func
     handler_end \opcode
 .endm
-
-emit_unimplemented_primary 0x58, I_58__OR_A_r0
-emit_unimplemented_primary 0x59, I_59__OR_A_r1
-emit_unimplemented_primary 0x5A, I_5A__OR_A_r2
-emit_unimplemented_primary 0x5B, I_5B__OR_A_r3
-emit_unimplemented_primary 0x5C, I_5C__OR_A_r4
-emit_unimplemented_primary 0x5D, I_5D__OR_A_r5
-emit_unimplemented_primary 0x5E, I_5E__OR_A_r6
-emit_unimplemented_primary 0x5F, I_5F__OR_A_r7
-
-emit_unimplemented_primary 0x60, I_60__XOR_A_r0
-emit_unimplemented_primary 0x61, I_61__XOR_A_r1
-emit_unimplemented_primary 0x62, I_62__XOR_A_r2
-emit_unimplemented_primary 0x63, I_63__XOR_A_r3
-emit_unimplemented_primary 0x64, I_64__XOR_A_r4
-emit_unimplemented_primary 0x65, I_65__XOR_A_r5
-emit_unimplemented_primary 0x66, I_66__XOR_A_r6
-emit_unimplemented_primary 0x67, I_67__XOR_A_r7
-
-emit_unimplemented_primary 0x68, I_68__BIC_A_r0
-emit_unimplemented_primary 0x69, I_69__BIC_A_r1
-emit_unimplemented_primary 0x6A, I_6A__BIC_A_r2
-emit_unimplemented_primary 0x6B, I_6B__BIC_A_r3
-emit_unimplemented_primary 0x6C, I_6C__BIC_A_r4
-emit_unimplemented_primary 0x6D, I_6D__BIC_A_r5
-emit_unimplemented_primary 0x6E, I_6E__BIC_A_r6
-emit_unimplemented_primary 0x6F, I_6F__BIC_A_r7
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x70-0x77: PUSH16 rS

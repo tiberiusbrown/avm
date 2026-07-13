@@ -278,7 +278,7 @@ def main() -> int:
 
     failures: List[Tuple[Path, str]] = []
     test_labels = [
-        f"[{index}/{len(tests)}] {asm_path.name}"
+        f"[{index:>2}/{len(tests)}] {asm_path.name}"
         for index, asm_path in enumerate(tests, start=1)
     ]
     result_column = max(len(label) for label in test_labels) + 2

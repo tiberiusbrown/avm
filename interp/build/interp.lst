@@ -95,7 +95,6 @@ SYMBOL TABLE:
 00000cc0 l       .text	00000000 I_56__AND_A_r6
 00000ce0 l       .text	00000000 I_57__AND_A_r7
 00000d00 l       .text	00000000 I_58__OR_A_r0
-000022c6 l       .text	00000000 unimplemented_instruction_func
 00000d20 l       .text	00000000 I_59__OR_A_r1
 00000d40 l       .text	00000000 I_5A__OR_A_r2
 00000d60 l       .text	00000000 I_5B__OR_A_r3
@@ -236,6 +235,7 @@ SYMBOL TABLE:
 00001e00 l       .text	00000000 I_E0__ext_misc
 000022f6 l       .text	00000000 e0_extension_decode_func
 00001e20 l       .text	00000000 I_E1__ext_pair
+000022c6 l       .text	00000000 unimplemented_instruction_func
 00001e40 l       .text	00000000 I_E2__ext_accumulator
 00001e60 l       .text	00000000 I_E3__ext_transfer_condition
 00002308 l       .text	00000000 e3_extension_decode_func
@@ -2228,410 +2228,434 @@ Disassembly of section .text:
      cfe:	00 00       	nop
 
 00000d00 <I_58__OR_A_r0>:
-     d00:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     d04:	00 00       	nop
-     d06:	00 00       	nop
-     d08:	00 00       	nop
-     d0a:	00 00       	nop
-     d0c:	00 00       	nop
-     d0e:	00 00       	nop
-     d10:	00 00       	nop
-     d12:	00 00       	nop
-     d14:	00 00       	nop
-     d16:	00 00       	nop
+     d00:	c8 95       	lpm
+     d02:	08 29       	or	r16, r8
+     d04:	19 29       	or	r17, r9
+     d06:	01 96       	adiw	r24, 0x01	; 1
+     d08:	f8 94       	cli
+     d0a:	2e bc       	out	0x2e, r2	; 46
+     d0c:	6e b4       	in	r6, 0x2e	; 46
+     d0e:	78 94       	sei
+     d10:	67 9c       	mul	r6, r7
+     d12:	f0 01       	movw	r30, r0
+     d14:	ff 5f       	subi	r31, 0xFF	; 255
+     d16:	09 94       	ijmp
      d18:	00 00       	nop
      d1a:	00 00       	nop
      d1c:	00 00       	nop
      d1e:	00 00       	nop
 
 00000d20 <I_59__OR_A_r1>:
-     d20:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     d24:	00 00       	nop
-     d26:	00 00       	nop
-     d28:	00 00       	nop
-     d2a:	00 00       	nop
-     d2c:	00 00       	nop
-     d2e:	00 00       	nop
-     d30:	00 00       	nop
-     d32:	00 00       	nop
-     d34:	00 00       	nop
-     d36:	00 00       	nop
+     d20:	c8 95       	lpm
+     d22:	0a 29       	or	r16, r10
+     d24:	1b 29       	or	r17, r11
+     d26:	01 96       	adiw	r24, 0x01	; 1
+     d28:	f8 94       	cli
+     d2a:	2e bc       	out	0x2e, r2	; 46
+     d2c:	6e b4       	in	r6, 0x2e	; 46
+     d2e:	78 94       	sei
+     d30:	67 9c       	mul	r6, r7
+     d32:	f0 01       	movw	r30, r0
+     d34:	ff 5f       	subi	r31, 0xFF	; 255
+     d36:	09 94       	ijmp
      d38:	00 00       	nop
      d3a:	00 00       	nop
      d3c:	00 00       	nop
      d3e:	00 00       	nop
 
 00000d40 <I_5A__OR_A_r2>:
-     d40:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     d44:	00 00       	nop
-     d46:	00 00       	nop
-     d48:	00 00       	nop
-     d4a:	00 00       	nop
-     d4c:	00 00       	nop
-     d4e:	00 00       	nop
-     d50:	00 00       	nop
-     d52:	00 00       	nop
-     d54:	00 00       	nop
-     d56:	00 00       	nop
+     d40:	c8 95       	lpm
+     d42:	0c 29       	or	r16, r12
+     d44:	1d 29       	or	r17, r13
+     d46:	01 96       	adiw	r24, 0x01	; 1
+     d48:	f8 94       	cli
+     d4a:	2e bc       	out	0x2e, r2	; 46
+     d4c:	6e b4       	in	r6, 0x2e	; 46
+     d4e:	78 94       	sei
+     d50:	67 9c       	mul	r6, r7
+     d52:	f0 01       	movw	r30, r0
+     d54:	ff 5f       	subi	r31, 0xFF	; 255
+     d56:	09 94       	ijmp
      d58:	00 00       	nop
      d5a:	00 00       	nop
      d5c:	00 00       	nop
      d5e:	00 00       	nop
 
 00000d60 <I_5B__OR_A_r3>:
-     d60:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     d64:	00 00       	nop
-     d66:	00 00       	nop
-     d68:	00 00       	nop
-     d6a:	00 00       	nop
-     d6c:	00 00       	nop
-     d6e:	00 00       	nop
-     d70:	00 00       	nop
-     d72:	00 00       	nop
-     d74:	00 00       	nop
-     d76:	00 00       	nop
+     d60:	c8 95       	lpm
+     d62:	0e 29       	or	r16, r14
+     d64:	1f 29       	or	r17, r15
+     d66:	01 96       	adiw	r24, 0x01	; 1
+     d68:	f8 94       	cli
+     d6a:	2e bc       	out	0x2e, r2	; 46
+     d6c:	6e b4       	in	r6, 0x2e	; 46
+     d6e:	78 94       	sei
+     d70:	67 9c       	mul	r6, r7
+     d72:	f0 01       	movw	r30, r0
+     d74:	ff 5f       	subi	r31, 0xFF	; 255
+     d76:	09 94       	ijmp
      d78:	00 00       	nop
      d7a:	00 00       	nop
      d7c:	00 00       	nop
      d7e:	00 00       	nop
 
 00000d80 <I_5C__OR_A_r4>:
-     d80:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     d84:	00 00       	nop
-     d86:	00 00       	nop
-     d88:	00 00       	nop
-     d8a:	00 00       	nop
-     d8c:	00 00       	nop
-     d8e:	00 00       	nop
-     d90:	00 00       	nop
-     d92:	00 00       	nop
-     d94:	00 00       	nop
-     d96:	00 00       	nop
+     d80:	c8 95       	lpm
+     d82:	00 2b       	or	r16, r16
+     d84:	11 2b       	or	r17, r17
+     d86:	01 96       	adiw	r24, 0x01	; 1
+     d88:	f8 94       	cli
+     d8a:	2e bc       	out	0x2e, r2	; 46
+     d8c:	6e b4       	in	r6, 0x2e	; 46
+     d8e:	78 94       	sei
+     d90:	67 9c       	mul	r6, r7
+     d92:	f0 01       	movw	r30, r0
+     d94:	ff 5f       	subi	r31, 0xFF	; 255
+     d96:	09 94       	ijmp
      d98:	00 00       	nop
      d9a:	00 00       	nop
      d9c:	00 00       	nop
      d9e:	00 00       	nop
 
 00000da0 <I_5D__OR_A_r5>:
-     da0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     da4:	00 00       	nop
-     da6:	00 00       	nop
-     da8:	00 00       	nop
-     daa:	00 00       	nop
-     dac:	00 00       	nop
-     dae:	00 00       	nop
-     db0:	00 00       	nop
-     db2:	00 00       	nop
-     db4:	00 00       	nop
-     db6:	00 00       	nop
+     da0:	c8 95       	lpm
+     da2:	02 2b       	or	r16, r18
+     da4:	13 2b       	or	r17, r19
+     da6:	01 96       	adiw	r24, 0x01	; 1
+     da8:	f8 94       	cli
+     daa:	2e bc       	out	0x2e, r2	; 46
+     dac:	6e b4       	in	r6, 0x2e	; 46
+     dae:	78 94       	sei
+     db0:	67 9c       	mul	r6, r7
+     db2:	f0 01       	movw	r30, r0
+     db4:	ff 5f       	subi	r31, 0xFF	; 255
+     db6:	09 94       	ijmp
      db8:	00 00       	nop
      dba:	00 00       	nop
      dbc:	00 00       	nop
      dbe:	00 00       	nop
 
 00000dc0 <I_5E__OR_A_r6>:
-     dc0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     dc4:	00 00       	nop
-     dc6:	00 00       	nop
-     dc8:	00 00       	nop
-     dca:	00 00       	nop
-     dcc:	00 00       	nop
-     dce:	00 00       	nop
-     dd0:	00 00       	nop
-     dd2:	00 00       	nop
-     dd4:	00 00       	nop
-     dd6:	00 00       	nop
+     dc0:	c8 95       	lpm
+     dc2:	04 2b       	or	r16, r20
+     dc4:	15 2b       	or	r17, r21
+     dc6:	01 96       	adiw	r24, 0x01	; 1
+     dc8:	f8 94       	cli
+     dca:	2e bc       	out	0x2e, r2	; 46
+     dcc:	6e b4       	in	r6, 0x2e	; 46
+     dce:	78 94       	sei
+     dd0:	67 9c       	mul	r6, r7
+     dd2:	f0 01       	movw	r30, r0
+     dd4:	ff 5f       	subi	r31, 0xFF	; 255
+     dd6:	09 94       	ijmp
      dd8:	00 00       	nop
      dda:	00 00       	nop
      ddc:	00 00       	nop
      dde:	00 00       	nop
 
 00000de0 <I_5F__OR_A_r7>:
-     de0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     de4:	00 00       	nop
-     de6:	00 00       	nop
-     de8:	00 00       	nop
-     dea:	00 00       	nop
-     dec:	00 00       	nop
-     dee:	00 00       	nop
-     df0:	00 00       	nop
-     df2:	00 00       	nop
-     df4:	00 00       	nop
-     df6:	00 00       	nop
+     de0:	c8 95       	lpm
+     de2:	06 2b       	or	r16, r22
+     de4:	17 2b       	or	r17, r23
+     de6:	01 96       	adiw	r24, 0x01	; 1
+     de8:	f8 94       	cli
+     dea:	2e bc       	out	0x2e, r2	; 46
+     dec:	6e b4       	in	r6, 0x2e	; 46
+     dee:	78 94       	sei
+     df0:	67 9c       	mul	r6, r7
+     df2:	f0 01       	movw	r30, r0
+     df4:	ff 5f       	subi	r31, 0xFF	; 255
+     df6:	09 94       	ijmp
      df8:	00 00       	nop
      dfa:	00 00       	nop
      dfc:	00 00       	nop
      dfe:	00 00       	nop
 
 00000e00 <I_60__XOR_A_r0>:
-     e00:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     e04:	00 00       	nop
-     e06:	00 00       	nop
-     e08:	00 00       	nop
-     e0a:	00 00       	nop
-     e0c:	00 00       	nop
-     e0e:	00 00       	nop
-     e10:	00 00       	nop
-     e12:	00 00       	nop
-     e14:	00 00       	nop
-     e16:	00 00       	nop
+     e00:	c8 95       	lpm
+     e02:	08 25       	eor	r16, r8
+     e04:	19 25       	eor	r17, r9
+     e06:	01 96       	adiw	r24, 0x01	; 1
+     e08:	f8 94       	cli
+     e0a:	2e bc       	out	0x2e, r2	; 46
+     e0c:	6e b4       	in	r6, 0x2e	; 46
+     e0e:	78 94       	sei
+     e10:	67 9c       	mul	r6, r7
+     e12:	f0 01       	movw	r30, r0
+     e14:	ff 5f       	subi	r31, 0xFF	; 255
+     e16:	09 94       	ijmp
      e18:	00 00       	nop
      e1a:	00 00       	nop
      e1c:	00 00       	nop
      e1e:	00 00       	nop
 
 00000e20 <I_61__XOR_A_r1>:
-     e20:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     e24:	00 00       	nop
-     e26:	00 00       	nop
-     e28:	00 00       	nop
-     e2a:	00 00       	nop
-     e2c:	00 00       	nop
-     e2e:	00 00       	nop
-     e30:	00 00       	nop
-     e32:	00 00       	nop
-     e34:	00 00       	nop
-     e36:	00 00       	nop
+     e20:	c8 95       	lpm
+     e22:	0a 25       	eor	r16, r10
+     e24:	1b 25       	eor	r17, r11
+     e26:	01 96       	adiw	r24, 0x01	; 1
+     e28:	f8 94       	cli
+     e2a:	2e bc       	out	0x2e, r2	; 46
+     e2c:	6e b4       	in	r6, 0x2e	; 46
+     e2e:	78 94       	sei
+     e30:	67 9c       	mul	r6, r7
+     e32:	f0 01       	movw	r30, r0
+     e34:	ff 5f       	subi	r31, 0xFF	; 255
+     e36:	09 94       	ijmp
      e38:	00 00       	nop
      e3a:	00 00       	nop
      e3c:	00 00       	nop
      e3e:	00 00       	nop
 
 00000e40 <I_62__XOR_A_r2>:
-     e40:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     e44:	00 00       	nop
-     e46:	00 00       	nop
-     e48:	00 00       	nop
-     e4a:	00 00       	nop
-     e4c:	00 00       	nop
-     e4e:	00 00       	nop
-     e50:	00 00       	nop
-     e52:	00 00       	nop
-     e54:	00 00       	nop
-     e56:	00 00       	nop
+     e40:	c8 95       	lpm
+     e42:	0c 25       	eor	r16, r12
+     e44:	1d 25       	eor	r17, r13
+     e46:	01 96       	adiw	r24, 0x01	; 1
+     e48:	f8 94       	cli
+     e4a:	2e bc       	out	0x2e, r2	; 46
+     e4c:	6e b4       	in	r6, 0x2e	; 46
+     e4e:	78 94       	sei
+     e50:	67 9c       	mul	r6, r7
+     e52:	f0 01       	movw	r30, r0
+     e54:	ff 5f       	subi	r31, 0xFF	; 255
+     e56:	09 94       	ijmp
      e58:	00 00       	nop
      e5a:	00 00       	nop
      e5c:	00 00       	nop
      e5e:	00 00       	nop
 
 00000e60 <I_63__XOR_A_r3>:
-     e60:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     e64:	00 00       	nop
-     e66:	00 00       	nop
-     e68:	00 00       	nop
-     e6a:	00 00       	nop
-     e6c:	00 00       	nop
-     e6e:	00 00       	nop
-     e70:	00 00       	nop
-     e72:	00 00       	nop
-     e74:	00 00       	nop
-     e76:	00 00       	nop
+     e60:	c8 95       	lpm
+     e62:	0e 25       	eor	r16, r14
+     e64:	1f 25       	eor	r17, r15
+     e66:	01 96       	adiw	r24, 0x01	; 1
+     e68:	f8 94       	cli
+     e6a:	2e bc       	out	0x2e, r2	; 46
+     e6c:	6e b4       	in	r6, 0x2e	; 46
+     e6e:	78 94       	sei
+     e70:	67 9c       	mul	r6, r7
+     e72:	f0 01       	movw	r30, r0
+     e74:	ff 5f       	subi	r31, 0xFF	; 255
+     e76:	09 94       	ijmp
      e78:	00 00       	nop
      e7a:	00 00       	nop
      e7c:	00 00       	nop
      e7e:	00 00       	nop
 
 00000e80 <I_64__XOR_A_r4>:
-     e80:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     e84:	00 00       	nop
-     e86:	00 00       	nop
-     e88:	00 00       	nop
-     e8a:	00 00       	nop
-     e8c:	00 00       	nop
-     e8e:	00 00       	nop
-     e90:	00 00       	nop
-     e92:	00 00       	nop
-     e94:	00 00       	nop
-     e96:	00 00       	nop
+     e80:	c8 95       	lpm
+     e82:	00 27       	eor	r16, r16
+     e84:	11 27       	eor	r17, r17
+     e86:	01 96       	adiw	r24, 0x01	; 1
+     e88:	f8 94       	cli
+     e8a:	2e bc       	out	0x2e, r2	; 46
+     e8c:	6e b4       	in	r6, 0x2e	; 46
+     e8e:	78 94       	sei
+     e90:	67 9c       	mul	r6, r7
+     e92:	f0 01       	movw	r30, r0
+     e94:	ff 5f       	subi	r31, 0xFF	; 255
+     e96:	09 94       	ijmp
      e98:	00 00       	nop
      e9a:	00 00       	nop
      e9c:	00 00       	nop
      e9e:	00 00       	nop
 
 00000ea0 <I_65__XOR_A_r5>:
-     ea0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     ea4:	00 00       	nop
-     ea6:	00 00       	nop
-     ea8:	00 00       	nop
-     eaa:	00 00       	nop
-     eac:	00 00       	nop
-     eae:	00 00       	nop
-     eb0:	00 00       	nop
-     eb2:	00 00       	nop
-     eb4:	00 00       	nop
-     eb6:	00 00       	nop
+     ea0:	c8 95       	lpm
+     ea2:	02 27       	eor	r16, r18
+     ea4:	13 27       	eor	r17, r19
+     ea6:	01 96       	adiw	r24, 0x01	; 1
+     ea8:	f8 94       	cli
+     eaa:	2e bc       	out	0x2e, r2	; 46
+     eac:	6e b4       	in	r6, 0x2e	; 46
+     eae:	78 94       	sei
+     eb0:	67 9c       	mul	r6, r7
+     eb2:	f0 01       	movw	r30, r0
+     eb4:	ff 5f       	subi	r31, 0xFF	; 255
+     eb6:	09 94       	ijmp
      eb8:	00 00       	nop
      eba:	00 00       	nop
      ebc:	00 00       	nop
      ebe:	00 00       	nop
 
 00000ec0 <I_66__XOR_A_r6>:
-     ec0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     ec4:	00 00       	nop
-     ec6:	00 00       	nop
-     ec8:	00 00       	nop
-     eca:	00 00       	nop
-     ecc:	00 00       	nop
-     ece:	00 00       	nop
-     ed0:	00 00       	nop
-     ed2:	00 00       	nop
-     ed4:	00 00       	nop
-     ed6:	00 00       	nop
+     ec0:	c8 95       	lpm
+     ec2:	04 27       	eor	r16, r20
+     ec4:	15 27       	eor	r17, r21
+     ec6:	01 96       	adiw	r24, 0x01	; 1
+     ec8:	f8 94       	cli
+     eca:	2e bc       	out	0x2e, r2	; 46
+     ecc:	6e b4       	in	r6, 0x2e	; 46
+     ece:	78 94       	sei
+     ed0:	67 9c       	mul	r6, r7
+     ed2:	f0 01       	movw	r30, r0
+     ed4:	ff 5f       	subi	r31, 0xFF	; 255
+     ed6:	09 94       	ijmp
      ed8:	00 00       	nop
      eda:	00 00       	nop
      edc:	00 00       	nop
      ede:	00 00       	nop
 
 00000ee0 <I_67__XOR_A_r7>:
-     ee0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     ee4:	00 00       	nop
-     ee6:	00 00       	nop
-     ee8:	00 00       	nop
-     eea:	00 00       	nop
-     eec:	00 00       	nop
-     eee:	00 00       	nop
-     ef0:	00 00       	nop
-     ef2:	00 00       	nop
-     ef4:	00 00       	nop
-     ef6:	00 00       	nop
+     ee0:	c8 95       	lpm
+     ee2:	06 27       	eor	r16, r22
+     ee4:	17 27       	eor	r17, r23
+     ee6:	01 96       	adiw	r24, 0x01	; 1
+     ee8:	f8 94       	cli
+     eea:	2e bc       	out	0x2e, r2	; 46
+     eec:	6e b4       	in	r6, 0x2e	; 46
+     eee:	78 94       	sei
+     ef0:	67 9c       	mul	r6, r7
+     ef2:	f0 01       	movw	r30, r0
+     ef4:	ff 5f       	subi	r31, 0xFF	; 255
+     ef6:	09 94       	ijmp
      ef8:	00 00       	nop
      efa:	00 00       	nop
      efc:	00 00       	nop
      efe:	00 00       	nop
 
 00000f00 <I_68__BIC_A_r0>:
-     f00:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     f04:	00 00       	nop
-     f06:	00 00       	nop
-     f08:	00 00       	nop
-     f0a:	00 00       	nop
-     f0c:	00 00       	nop
-     f0e:	00 00       	nop
-     f10:	00 00       	nop
-     f12:	00 00       	nop
-     f14:	00 00       	nop
-     f16:	00 00       	nop
-     f18:	00 00       	nop
-     f1a:	00 00       	nop
+     f00:	24 01       	movw	r4, r8
+     f02:	40 94       	com	r4
+     f04:	50 94       	com	r5
+     f06:	04 21       	and	r16, r4
+     f08:	15 21       	and	r17, r5
+     f0a:	01 96       	adiw	r24, 0x01	; 1
+     f0c:	f8 94       	cli
+     f0e:	2e bc       	out	0x2e, r2	; 46
+     f10:	6e b4       	in	r6, 0x2e	; 46
+     f12:	78 94       	sei
+     f14:	67 9c       	mul	r6, r7
+     f16:	f0 01       	movw	r30, r0
+     f18:	ff 5f       	subi	r31, 0xFF	; 255
+     f1a:	09 94       	ijmp
      f1c:	00 00       	nop
      f1e:	00 00       	nop
 
 00000f20 <I_69__BIC_A_r1>:
-     f20:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     f24:	00 00       	nop
-     f26:	00 00       	nop
-     f28:	00 00       	nop
-     f2a:	00 00       	nop
-     f2c:	00 00       	nop
-     f2e:	00 00       	nop
-     f30:	00 00       	nop
-     f32:	00 00       	nop
-     f34:	00 00       	nop
-     f36:	00 00       	nop
-     f38:	00 00       	nop
-     f3a:	00 00       	nop
+     f20:	25 01       	movw	r4, r10
+     f22:	40 94       	com	r4
+     f24:	50 94       	com	r5
+     f26:	04 21       	and	r16, r4
+     f28:	15 21       	and	r17, r5
+     f2a:	01 96       	adiw	r24, 0x01	; 1
+     f2c:	f8 94       	cli
+     f2e:	2e bc       	out	0x2e, r2	; 46
+     f30:	6e b4       	in	r6, 0x2e	; 46
+     f32:	78 94       	sei
+     f34:	67 9c       	mul	r6, r7
+     f36:	f0 01       	movw	r30, r0
+     f38:	ff 5f       	subi	r31, 0xFF	; 255
+     f3a:	09 94       	ijmp
      f3c:	00 00       	nop
      f3e:	00 00       	nop
 
 00000f40 <I_6A__BIC_A_r2>:
-     f40:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     f44:	00 00       	nop
-     f46:	00 00       	nop
-     f48:	00 00       	nop
-     f4a:	00 00       	nop
-     f4c:	00 00       	nop
-     f4e:	00 00       	nop
-     f50:	00 00       	nop
-     f52:	00 00       	nop
-     f54:	00 00       	nop
-     f56:	00 00       	nop
-     f58:	00 00       	nop
-     f5a:	00 00       	nop
+     f40:	26 01       	movw	r4, r12
+     f42:	40 94       	com	r4
+     f44:	50 94       	com	r5
+     f46:	04 21       	and	r16, r4
+     f48:	15 21       	and	r17, r5
+     f4a:	01 96       	adiw	r24, 0x01	; 1
+     f4c:	f8 94       	cli
+     f4e:	2e bc       	out	0x2e, r2	; 46
+     f50:	6e b4       	in	r6, 0x2e	; 46
+     f52:	78 94       	sei
+     f54:	67 9c       	mul	r6, r7
+     f56:	f0 01       	movw	r30, r0
+     f58:	ff 5f       	subi	r31, 0xFF	; 255
+     f5a:	09 94       	ijmp
      f5c:	00 00       	nop
      f5e:	00 00       	nop
 
 00000f60 <I_6B__BIC_A_r3>:
-     f60:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     f64:	00 00       	nop
-     f66:	00 00       	nop
-     f68:	00 00       	nop
-     f6a:	00 00       	nop
-     f6c:	00 00       	nop
-     f6e:	00 00       	nop
-     f70:	00 00       	nop
-     f72:	00 00       	nop
-     f74:	00 00       	nop
-     f76:	00 00       	nop
-     f78:	00 00       	nop
-     f7a:	00 00       	nop
+     f60:	27 01       	movw	r4, r14
+     f62:	40 94       	com	r4
+     f64:	50 94       	com	r5
+     f66:	04 21       	and	r16, r4
+     f68:	15 21       	and	r17, r5
+     f6a:	01 96       	adiw	r24, 0x01	; 1
+     f6c:	f8 94       	cli
+     f6e:	2e bc       	out	0x2e, r2	; 46
+     f70:	6e b4       	in	r6, 0x2e	; 46
+     f72:	78 94       	sei
+     f74:	67 9c       	mul	r6, r7
+     f76:	f0 01       	movw	r30, r0
+     f78:	ff 5f       	subi	r31, 0xFF	; 255
+     f7a:	09 94       	ijmp
      f7c:	00 00       	nop
      f7e:	00 00       	nop
 
 00000f80 <I_6C__BIC_A_r4>:
-     f80:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     f84:	00 00       	nop
-     f86:	00 00       	nop
-     f88:	00 00       	nop
-     f8a:	00 00       	nop
-     f8c:	00 00       	nop
-     f8e:	00 00       	nop
-     f90:	00 00       	nop
-     f92:	00 00       	nop
-     f94:	00 00       	nop
-     f96:	00 00       	nop
-     f98:	00 00       	nop
-     f9a:	00 00       	nop
+     f80:	28 01       	movw	r4, r16
+     f82:	40 94       	com	r4
+     f84:	50 94       	com	r5
+     f86:	04 21       	and	r16, r4
+     f88:	15 21       	and	r17, r5
+     f8a:	01 96       	adiw	r24, 0x01	; 1
+     f8c:	f8 94       	cli
+     f8e:	2e bc       	out	0x2e, r2	; 46
+     f90:	6e b4       	in	r6, 0x2e	; 46
+     f92:	78 94       	sei
+     f94:	67 9c       	mul	r6, r7
+     f96:	f0 01       	movw	r30, r0
+     f98:	ff 5f       	subi	r31, 0xFF	; 255
+     f9a:	09 94       	ijmp
      f9c:	00 00       	nop
      f9e:	00 00       	nop
 
 00000fa0 <I_6D__BIC_A_r5>:
-     fa0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     fa4:	00 00       	nop
-     fa6:	00 00       	nop
-     fa8:	00 00       	nop
-     faa:	00 00       	nop
-     fac:	00 00       	nop
-     fae:	00 00       	nop
-     fb0:	00 00       	nop
-     fb2:	00 00       	nop
-     fb4:	00 00       	nop
-     fb6:	00 00       	nop
-     fb8:	00 00       	nop
-     fba:	00 00       	nop
+     fa0:	29 01       	movw	r4, r18
+     fa2:	40 94       	com	r4
+     fa4:	50 94       	com	r5
+     fa6:	04 21       	and	r16, r4
+     fa8:	15 21       	and	r17, r5
+     faa:	01 96       	adiw	r24, 0x01	; 1
+     fac:	f8 94       	cli
+     fae:	2e bc       	out	0x2e, r2	; 46
+     fb0:	6e b4       	in	r6, 0x2e	; 46
+     fb2:	78 94       	sei
+     fb4:	67 9c       	mul	r6, r7
+     fb6:	f0 01       	movw	r30, r0
+     fb8:	ff 5f       	subi	r31, 0xFF	; 255
+     fba:	09 94       	ijmp
      fbc:	00 00       	nop
      fbe:	00 00       	nop
 
 00000fc0 <I_6E__BIC_A_r6>:
-     fc0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     fc4:	00 00       	nop
-     fc6:	00 00       	nop
-     fc8:	00 00       	nop
-     fca:	00 00       	nop
-     fcc:	00 00       	nop
-     fce:	00 00       	nop
-     fd0:	00 00       	nop
-     fd2:	00 00       	nop
-     fd4:	00 00       	nop
-     fd6:	00 00       	nop
-     fd8:	00 00       	nop
-     fda:	00 00       	nop
+     fc0:	2a 01       	movw	r4, r20
+     fc2:	40 94       	com	r4
+     fc4:	50 94       	com	r5
+     fc6:	04 21       	and	r16, r4
+     fc8:	15 21       	and	r17, r5
+     fca:	01 96       	adiw	r24, 0x01	; 1
+     fcc:	f8 94       	cli
+     fce:	2e bc       	out	0x2e, r2	; 46
+     fd0:	6e b4       	in	r6, 0x2e	; 46
+     fd2:	78 94       	sei
+     fd4:	67 9c       	mul	r6, r7
+     fd6:	f0 01       	movw	r30, r0
+     fd8:	ff 5f       	subi	r31, 0xFF	; 255
+     fda:	09 94       	ijmp
      fdc:	00 00       	nop
      fde:	00 00       	nop
 
 00000fe0 <I_6F__BIC_A_r7>:
-     fe0:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-     fe4:	00 00       	nop
-     fe6:	00 00       	nop
-     fe8:	00 00       	nop
-     fea:	00 00       	nop
-     fec:	00 00       	nop
-     fee:	00 00       	nop
-     ff0:	00 00       	nop
-     ff2:	00 00       	nop
-     ff4:	00 00       	nop
-     ff6:	00 00       	nop
-     ff8:	00 00       	nop
-     ffa:	00 00       	nop
+     fe0:	2b 01       	movw	r4, r22
+     fe2:	40 94       	com	r4
+     fe4:	50 94       	com	r5
+     fe6:	04 21       	and	r16, r4
+     fe8:	15 21       	and	r17, r5
+     fea:	01 96       	adiw	r24, 0x01	; 1
+     fec:	f8 94       	cli
+     fee:	2e bc       	out	0x2e, r2	; 46
+     ff0:	6e b4       	in	r6, 0x2e	; 46
+     ff2:	78 94       	sei
+     ff4:	67 9c       	mul	r6, r7
+     ff6:	f0 01       	movw	r30, r0
+     ff8:	ff 5f       	subi	r31, 0xFF	; 255
+     ffa:	09 94       	ijmp
      ffc:	00 00       	nop
      ffe:	00 00       	nop
 

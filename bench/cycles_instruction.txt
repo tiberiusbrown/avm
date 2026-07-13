@@ -106,6 +106,9 @@
    81   ORI16 r0,imm16
    81   XORI16 r0,imm16
    78   CMPI16 r0,imm16
-  162   CMPI8 r0,imm8
-   75   TST16 r0
-   38   TST8 r0
+   54   CMPI8 r0,imm8
+   43   TST16 r0
+   40   TST8 r0
+   17   OR A,r0
+   17   XOR A,r0
+   17   BIC A,r0

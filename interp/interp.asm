@@ -1594,27 +1594,503 @@ fd_secondary_table_end:
     .error "FD secondary dispatch table must contain exactly 256 words"
 .endif
 
+;*******************************************************************************
+; FD data-space handlers
+;
+; The decoder has read the FD secondary opcode into r6 and started the first
+; operand transfer. PC names the secondary opcode.
+;
+; Revised RRSPEC nibbles are pre-scaled register offsets:
+;   nibble = 2 * architectural register number
+;   native low-byte address = 8 + nibble
+;
+; For two-register forms operand 0 is in the high nibble and operand 1 is in
+; the low nibble.
+;*******************************************************************************
+
+; Decode a pre-scaled RRSPEC field to the low-byte native register-file address.
+.macro fd_decode_low_x spec
+    mov  r26, \spec
+    andi r26, 0x0E
+    subi r26, -8
+    clr  r27
+.endm
+
+.macro fd_decode_high_x spec
+    mov  r26, \spec
+    swap r26
+    andi r26, 0x0E
+    subi r26, -8
+    clr  r27
+.endm
+
+.macro fd_decode_low_z spec
+    mov  r30, \spec
+    andi r30, 0x0E
+    subi r30, -8
+    clr  r31
+.endm
+
+.macro fd_decode_high_z spec
+    mov  r30, \spec
+    swap r30
+    andi r30, 0x0E
+    subi r30, -8
+    clr  r31
+.endm
+
+; For secondary-opcode ranges whose low three bits directly select r0-r7.
+.macro fd_select_secondary_reg_z
+    mov  r30, r6
+    andi r30, 0x07
+    lsl  r30
+    subi r30, -8
+    clr  r31
+.endm
+
+; Read the first operand byte into r6 and start the following byte. This macro
+; is used immediately on entry to an FD family whose first operand is RRSPEC.
+; The eight pre-OUT cycles preserve the normal 17-cycle SPI cadence.
+.macro fd_fetch_rrspec
+    adiw VM_PC, 1
+    delay_4
+    delay_1
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+.endm
+
+; Stack-relative and absolute-memory families spend five cycles selecting rN
+; before this macro. Together with ADIW+CLI, the next OUT occurs 17 cycles
+; after the decoder's OUT.
+.macro fd_fetch_first_selected_operand dst
+    adiw VM_PC, 1
+    cli
+    out  SPDR, ZERO
+    in   \dst, SPDR
+    sei
+.endm
+
+; The first absolute-address byte was just read and the high byte is in flight.
+; Start fetching the following primary opcode while reading that high byte.
+.macro fd_fetch_absolute_high dst
+    adiw VM_PC, 1
+    delay_4
+    delay_4
+    delay_3
+    cli
+    out  SPDR, ZERO
+    in   \dst, SPDR
+    sei
+.endm
+
+; The displaced handlers have already decoded and captured both RRSPEC
+; operands while the displacement byte was transferring.
+.macro fd_fetch_displacement dst
+    adiw VM_PC, 1
+    cli
+    out  SPDR, ZERO
+    in   \dst, SPDR
+    sei
+.endm
+
+; All FD handlers reach here after starting the following primary opcode.
+; Seven conservative cycles guarantee that even the shortest handler does not
+; read that opcode before its SPI transfer completes.
+fd_finish_func:
+    rcall fx_seek_delay_7
+    rjmp dispatch_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FD 00-03: generic register-indirect loads and stores
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; FD 00 RRSPEC: LD8 rD,[rA]
 fd_ld8_indirect_family:
+    fd_fetch_rrspec
+
+    ; Capture the original address before the destination can be overwritten.
+    fd_decode_low_x r6
+    ld   r4, X+
+    ld   r5, X
+
+    movw r30, r4
+    ld   r4, Z
+
+    fd_decode_high_x r6
+    st   X+, r4
+    st   X, ZERO
+    rjmp fd_finish_func
+
+; FD 01 RRSPEC: ST8 [rA],rS
 fd_st8_indirect_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6
+    ld   r4, X+
+    ld   r5, X
+
+    ; Capture the source before touching the addressed data byte.
+    fd_decode_low_x r6
+    ld   r0, X
+
+    movw r30, r4
+    st   Z, r0
+    rjmp fd_finish_func
+
+; FD 02 RRSPEC: LD16 rD,[rA]
 fd_ld16_indirect_family:
+    fd_fetch_rrspec
+
+    fd_decode_low_x r6
+    ld   r4, X+
+    ld   r5, X
+
+    movw r30, r4
+    ld   r0, Z+
+    ld   r1, Z
+
+    fd_decode_high_x r6
+    st   X+, r0
+    st   X, r1
+    rjmp fd_finish_func
+
+; FD 03 RRSPEC: ST16 [rA],rS
 fd_st16_indirect_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6
+    ld   r4, X+
+    ld   r5, X
+
+    fd_decode_low_x r6
+    ld   r0, X+
+    ld   r1, X
+
+    movw r30, r4
+    st   Z+, r0
+    st   Z, r1
+    rjmp fd_finish_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FD 04-07: generic postincrement loads and stores
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; FD 04 RRSPEC: LD8 rD,[rA+]
+; rD == rA is invalid by the ISA operand restriction.
 fd_ld8_post_family:
+    fd_fetch_rrspec
+
+    ; Z remains positioned at the high byte of rA so the updated address can be
+    ; written back after the memory operation.
+    fd_decode_low_z r6
+    ld   r4, Z+
+    ld   r5, Z
+
+    movw r26, r4
+    ld   r0, X+
+
+    st   Z, r27
+    st   -Z, r26
+
+    fd_decode_high_z r6
+    st   Z+, r0
+    st   Z, ZERO
+    rjmp fd_finish_func
+
+; FD 05 RRSPEC: ST8 [rA+],rS
 fd_st8_post_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_z r6
+    ld   r4, Z+
+    ld   r5, Z
+
+    ; Capture rS before updating rA, including the rS == rA case.
+    fd_decode_low_x r6
+    ld   r0, X
+
+    movw r26, r4
+    st   X+, r0
+
+    st   Z, r27
+    st   -Z, r26
+    rjmp fd_finish_func
+
+; FD 06 RRSPEC: LD16 rD,[rA+]
+; rD == rA is invalid by the ISA operand restriction.
 fd_ld16_post_family:
+    fd_fetch_rrspec
+
+    fd_decode_low_z r6
+    ld   r4, Z+
+    ld   r5, Z
+
+    movw r26, r4
+    ld   r0, X+
+    ld   r1, X+
+
+    st   Z, r27
+    st   -Z, r26
+
+    fd_decode_high_z r6
+    st   Z+, r0
+    st   Z, r1
+    rjmp fd_finish_func
+
+; FD 07 RRSPEC: ST16 [rA+],rS
 fd_st16_post_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_z r6
+    ld   r4, Z+
+    ld   r5, Z
+
+    fd_decode_low_x r6
+    ld   r0, X+
+    ld   r1, X
+
+    movw r26, r4
+    st   X+, r0
+    st   X+, r1
+
+    st   Z, r27
+    st   -Z, r26
+    rjmp fd_finish_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FD 08-0C: LEA and signed-displaced loads and stores
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; FD 08 RRSPEC disp8: LEA rD,[rA+simm8]
 fd_lea_displaced_family:
+    fd_fetch_rrspec
+
+    fd_decode_low_x r6
+    ld   r4, X+
+    ld   r5, X
+    fd_decode_high_z r6
+
+    fd_fetch_displacement r6
+
+    add  r4, r6
+    adc  r5, ZERO
+    sbrc r6, 7
+    dec  r5
+
+    st   Z+, r4
+    st   Z, r5
+    rjmp fd_finish_func
+
+; FD 09 RRSPEC disp8: LD8 rD,[rA+simm8]
 fd_ld8_displaced_family:
+    fd_fetch_rrspec
+
+    fd_decode_low_x r6
+    ld   r4, X+
+    ld   r5, X
+    fd_decode_high_z r6
+
+    fd_fetch_displacement r6
+
+    add  r4, r6
+    adc  r5, ZERO
+    sbrc r6, 7
+    dec  r5
+
+    movw r26, r4
+    ld   r0, X
+    st   Z+, r0
+    st   Z, ZERO
+    rjmp fd_finish_func
+
+; FD 0A RRSPEC disp8: ST8 [rA+simm8],rS
 fd_st8_displaced_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6
+    ld   r4, X+
+    ld   r5, X
+
+    fd_decode_low_z r6
+    ld   r0, Z
+
+    fd_fetch_displacement r6
+
+    add  r4, r6
+    adc  r5, ZERO
+    sbrc r6, 7
+    dec  r5
+
+    movw r26, r4
+    st   X, r0
+    rjmp fd_finish_func
+
+; FD 0B RRSPEC disp8: LD16 rD,[rA+simm8]
 fd_ld16_displaced_family:
+    fd_fetch_rrspec
+
+    fd_decode_low_x r6
+    ld   r4, X+
+    ld   r5, X
+    fd_decode_high_z r6
+
+    fd_fetch_displacement r6
+
+    add  r4, r6
+    adc  r5, ZERO
+    sbrc r6, 7
+    dec  r5
+
+    movw r26, r4
+    ld   r0, X+
+    ld   r1, X
+    st   Z+, r0
+    st   Z, r1
+    rjmp fd_finish_func
+
+; FD 0C RRSPEC disp8: ST16 [rA+simm8],rS
 fd_st16_displaced_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6
+    ld   r4, X+
+    ld   r5, X
+
+    fd_decode_low_z r6
+    ld   r0, Z+
+    ld   r1, Z
+
+    fd_fetch_displacement r6
+
+    add  r4, r6
+    adc  r5, ZERO
+    sbrc r6, 7
+    dec  r5
+
+    movw r26, r4
+    st   X+, r0
+    st   X, r1
+    rjmp fd_finish_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FD 10-2F: stack-relative loads and stores
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; FD 10-17 u8: LDSP8 rN,[SP+u8]
 fd_ldsp8_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r6
+
+    movw r26, VM_SP
+    add  r26, r6
+    adc  r27, ZERO
+    ld   r0, X
+
+    st   Z+, r0
+    st   Z, ZERO
+    rjmp fd_finish_func
+
+; FD 18-1F u8: STSP8 [SP+u8],rN
 fd_stsp8_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r6
+
+    ld   r0, Z
+    movw r26, VM_SP
+    add  r26, r6
+    adc  r27, ZERO
+    st   X, r0
+    rjmp fd_finish_func
+
+; FD 20-27 u8: LDSP16 rN,[SP+u8]
 fd_ldsp16_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r6
+
+    movw r26, VM_SP
+    add  r26, r6
+    adc  r27, ZERO
+    ld   r0, X+
+    ld   r1, X
+
+    st   Z+, r0
+    st   Z, r1
+    rjmp fd_finish_func
+
+; FD 28-2F u8: STSP16 [SP+u8],rN
 fd_stsp16_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r6
+
+    ld   r0, Z+
+    ld   r1, Z
+
+    movw r26, VM_SP
+    add  r26, r6
+    adc  r27, ZERO
+    st   X+, r0
+    st   X, r1
+    rjmp fd_finish_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FD 30-4F: absolute data-space loads and stores
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; FD 30-37 addr16: LDM8 rN,addr16
 fd_ldm8_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r4
+    fd_fetch_absolute_high r5
+
+    movw r26, r4
+    ld   r0, X
+    st   Z+, r0
+    st   Z, ZERO
+    rjmp fd_finish_func
+
+; FD 38-3F addr16: STM8 addr16,rN
 fd_stm8_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r4
+    fd_fetch_absolute_high r5
+
+    ld   r0, Z
+    movw r26, r4
+    st   X, r0
+    rjmp fd_finish_func
+
+; FD 40-47 addr16: LDM16 rN,addr16
 fd_ldm16_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r4
+    fd_fetch_absolute_high r5
+
+    movw r26, r4
+    ld   r0, X+
+    ld   r1, X
+    st   Z+, r0
+    st   Z, r1
+    rjmp fd_finish_func
+
+; FD 48-4F addr16: STM16 addr16,rN
 fd_stm16_family:
+    fd_select_secondary_reg_z
+    fd_fetch_first_selected_operand r4
+    fd_fetch_absolute_high r5
+
+    ld   r0, Z+
+    ld   r1, Z
+    movw r26, r4
+    st   X+, r0
+    st   X, r1
+    rjmp fd_finish_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FD 80-83: program-space loads remain intentionally unimplemented
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 fd_ldp8_family:
 fd_ldp16_family:
 fd_ldp8_displaced_family:

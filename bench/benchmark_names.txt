@@ -1,0 +1,100 @@
+001 SYS DEBUG_BREAK
+002 CLR c0
+003 MOV c0,c1
+004 LD8 c0,[c2]
+005 ST8 [c2],c1
+006 LD16 c0,[c2]
+007 ST16 [c2],c1
+008 AND A,r0
+009 PUSH16 r0
+010 POP16 r0
+011 ADD c0,c1
+012 SUB c0,c1
+013 CMP16 c0,c1
+014 TST16 c0
+015 CMP8 c0,c1
+016 TST8 c0
+017 BEQ.S (not taken)
+018 BEQ.S (taken)
+019 BNE.S (not taken)
+020 BNE.S (taken)
+021 NOT16 r0
+022 NEG16 r0
+023 INC16 r0
+024 DEC16 r0
+025 LSR16 r0
+026 ZEXT8 r0
+027 SEXT8 r0
+028 SWAP8 r0
+029 GETSP r0
+030 SETSP r0
+031 MTPB r0
+032 MFPB r0
+033 MOV16 r6,r0
+034 MOV8Z r6,r0
+035 MOV8S r6,r0
+036 CSET r6,EQ (true)
+037 CSET r6,EQ (false)
+038 CSET r6,NE (true)
+039 CSET r6,NE (false)
+040 CSET r6,ULT (true)
+041 CSET r6,ULT (false)
+042 CSET r6,UGE (true)
+043 CSET r6,UGE (false)
+044 CSET r6,SLT (true)
+045 CSET r6,SLT (false)
+046 CSET r6,SGE (true)
+047 CSET r6,SGE (false)
+048 CSET r6,ULE (true)
+049 CSET r6,ULE (false)
+050 CSET r6,UGT (true)
+051 CSET r6,UGT (false)
+052 CMPI6 c0,-17
+053 JMP rel8
+054 CALL rel8
+055 ADJSP 0
+056 SYS DEBUG_PUTC
+057 JMP16 addr16
+058 CALL16 addr16
+059 NOP
+060 LDI8 c0,imm8
+061 BREQ (not taken)
+062 BREQ (taken)
+063 BRNE (not taken)
+064 BRNE (taken)
+065 BRULT (not taken)
+066 BRULT (taken)
+067 BRUGE (not taken)
+068 BRUGE (taken)
+069 BRSLT (not taken)
+070 BRSLT (taken)
+071 BRSGE (not taken)
+072 BRSGE (taken)
+073 BRULE (not taken)
+074 BRULE (taken)
+075 BRUGT (not taken)
+076 BRUGT (taken)
+077 LD8 r0,[r6]
+078 ST8 [r6],r0
+079 LD16 r0,[r6]
+080 ST16 [r6],r0
+081 LD8 r0,[r6+]
+082 ST8 [r6+],r0
+083 LD16 r0,[r6+]
+084 ST16 [r6+],r0
+085 LEA r0,[r6+4]
+086 LD8 r0,[r6+4]
+087 ST8 [r6+4],r0
+088 LD16 r0,[r6+4]
+089 ST16 [r6+4],r0
+090 LDSP8 r0,[SP+8]
+091 STSP8 [SP+8],r0
+092 LDSP16 r0,[SP+8]
+093 STSP16 [SP+8],r0
+094 LDM8 r0,0x0100
+095 STM8 0x0100,r0
+096 LDM16 r0,0x0100
+097 STM16 0x0100,r0
+098 JMPF target24
+099 CALLF target24
+100 RET

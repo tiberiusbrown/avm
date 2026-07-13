@@ -1,0 +1,100 @@
+   37   SYS DEBUG_BREAK
+   17   CLR c0
+   17   MOV c0,c1
+   17   LD8 c0,[c2]
+   17   ST8 [c2],c1
+   17   LD16 c0,[c2]
+   17   ST16 [c2],c1
+   17   AND A,r0
+   17   PUSH16 r0
+   17   POP16 r0
+   17   ADD c0,c1
+   17   SUB c0,c1
+   17   CMP16 c0,c1
+   17   TST16 c0
+   17   CMP8 c0,c1
+   17   TST8 c0
+   17   BEQ.S (not taken)
+  116   BEQ.S (taken)
+   17   BNE.S (not taken)
+  116   BNE.S (taken)
+   46   NOT16 r0
+   48   NEG16 r0
+   47   INC16 r0
+   48   DEC16 r0
+   46   LSR16 r0
+   40   ZEXT8 r0
+   42   SEXT8 r0
+   41   SWAP8 r0
+   40   GETSP r0
+   41   SETSP r0
+   39   MTPB r0
+   41   MFPB r0
+   35   MOV16 r6,r0
+   54   MOV8Z r6,r0
+   54   MOV8S r6,r0
+   59   CSET r6,EQ (true)
+   59   CSET r6,EQ (false)
+   59   CSET r6,NE (true)
+   59   CSET r6,NE (false)
+   59   CSET r6,ULT (true)
+   59   CSET r6,ULT (false)
+   59   CSET r6,UGE (true)
+   59   CSET r6,UGE (false)
+   59   CSET r6,SLT (true)
+   59   CSET r6,SLT (false)
+   59   CSET r6,SGE (true)
+   59   CSET r6,SGE (false)
+   61   CSET r6,ULE (true)
+   61   CSET r6,ULE (false)
+   61   CSET r6,UGT (true)
+   61   CSET r6,UGT (false)
+   40   CMPI6 c0,-17
+  126   JMP rel8
+  140   CALL rel8
+   38   ADJSP 0
+   37   SYS DEBUG_PUTC
+  182   JMP16 addr16
+    0   CALL16 addr16
+   69   NOP
+   69   LDI8 c0,imm8
+   69   BREQ (not taken)
+   51   BREQ (taken)
+   51   BRNE (not taken)
+   51   BRNE (taken)
+   51   BRULT (not taken)
+   85   BRULT (taken)
+   85   BRUGE (not taken)
+   85   BRUGE (taken)
+   85   BRSLT (not taken)
+  127   BRSLT (taken)
+   85   BRSGE (not taken)
+   85   BRSGE (taken)
+  127   BRULE (not taken)
+   51   BRULE (taken)
+   85   BRUGT (not taken)
+   85   BRUGT (taken)
+   51   LD8 r0,[r6]
+   34   ST8 [r6],r0
+    0   LD16 r0,[r6]
+    0   ST16 [r6],r0
+  248   LD8 r0,[r6+]
+   34   ST8 [r6+],r0
+    0   LD16 r0,[r6+]
+   39   ST16 [r6+],r0
+   41   LEA r0,[r6+4]
+   35   LD8 r0,[r6+4]
+   54   ST8 [r6+4],r0
+   54   LD16 r0,[r6+4]
+   59   ST16 [r6+4],r0
+   59   LDSP8 r0,[SP+8]
+   59   STSP8 [SP+8],r0
+   59   LDSP16 r0,[SP+8]
+   59   STSP16 [SP+8],r0
+   59   LDM8 r0,0x0100
+   59   STM8 0x0100,r0
+   59   LDM16 r0,0x0100
+   59   STM16 0x0100,r0
+   59   JMPF target24
+   59   CALLF target24
+   59   RET

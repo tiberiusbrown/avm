@@ -131,3 +131,85 @@ add_custom_target(avm_tests
     USES_TERMINAL
     VERBATIM
 )
+
+# -----------------------------------------------------------------------------
+# AVM instruction-cycle benchmark
+# -----------------------------------------------------------------------------
+
+set(AVM_BENCH_DIR
+    "${CMAKE_CURRENT_SOURCE_DIR}/bench")
+set(AVM_BENCH_SOURCE
+    "${AVM_BENCH_DIR}/avm_bench.cpp")
+set(AVM_BENCH_ASM
+    "${AVM_BENCH_DIR}/instructions.asm")
+set(AVM_BENCH_BUILD_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/bench")
+set(AVM_BENCH_OBJECT
+    "${AVM_BENCH_BUILD_DIR}/instructions.o")
+set(AVM_BENCH_IMAGE
+    "${AVM_BENCH_BUILD_DIR}/instructions.bin")
+
+# Assemble the benchmark bytecode as one AVM ET_REL object.  The current
+# restricted llvm-avm-image path consumes exactly one relocatable object and
+# resolves _start while producing the complete interpreter-ready image.
+add_custom_command(
+    OUTPUT "${AVM_BENCH_OBJECT}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_BENCH_BUILD_DIR}"
+    COMMAND
+        "$<TARGET_FILE:llvm-mc>"
+        -triple=avm-unknown-arduboyfx
+        -filetype=obj
+        -o "${AVM_BENCH_OBJECT}"
+        "${AVM_BENCH_ASM}"
+    DEPENDS
+        llvm-mc
+        "${AVM_BENCH_ASM}"
+    COMMENT "Assembling AVM instruction benchmarks"
+    VERBATIM
+)
+
+add_custom_command(
+    OUTPUT "${AVM_BENCH_IMAGE}"
+    COMMAND
+        "$<TARGET_FILE:llvm-avm-image>"
+        create
+        "${AVM_BENCH_OBJECT}"
+        -o "${AVM_BENCH_IMAGE}"
+    DEPENDS
+        llvm-avm-image
+        "${AVM_BENCH_OBJECT}"
+    COMMENT "Building the AVM instruction benchmark image"
+    VERBATIM
+)
+
+add_custom_target(avm_bench_image
+    DEPENDS "${AVM_BENCH_IMAGE}"
+)
+
+add_executable(avm_bench
+    "${AVM_BENCH_SOURCE}"
+)
+target_compile_features(avm_bench PRIVATE cxx_std_17)
+target_link_libraries(avm_bench PRIVATE ardensdebuggerlib)
+target_compile_definitions(avm_bench PRIVATE
+    AVM_BENCH_DIR="${AVM_BENCH_DIR}"
+    AVM_BENCHMARK_DIR="${AVM_BENCH_DIR}"
+    AVM_BENCH_INSTRUCTIONS_BIN="${AVM_BENCH_IMAGE}"
+    AVM_BENCH_INTERPRETER_HEX="${AVM_INTERPRETER_HEX}"
+)
+add_dependencies(avm_bench
+    avm_bench_image
+    avm_interpreter
+)
+
+# Convenience target.  avm_bench itself is a normal build target; this target
+# additionally runs it with the generated image and interpreter available at
+# the compile-time paths above.
+add_custom_target(avm_bench_run
+    COMMAND "$<TARGET_FILE:avm_bench>"
+    DEPENDS avm_bench
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    COMMENT "Running AVM instruction-cycle benchmarks"
+    USES_TERMINAL
+    VERBATIM
+)

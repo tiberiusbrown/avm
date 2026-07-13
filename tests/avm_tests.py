@@ -18,6 +18,15 @@ import sys
 from typing import List, Sequence, Tuple
 
 
+FAIL_BANNER = (
+    "#####    ###    #####  #      ",
+    "#       #   #     #    #      ",
+    "####    #####     #    #      ",
+    "#       #   #     #    #      ",
+    "#       #   #   #####  #####  ",
+)
+
+
 class TestCommandError(RuntimeError):
     """Raised when one stage of an assembly test fails."""
 
@@ -268,9 +277,14 @@ def main() -> int:
     work_dir.mkdir(parents=True, exist_ok=True)
 
     failures: List[Tuple[Path, str]] = []
+    test_labels = [
+        f"[{index}/{len(tests)}] {asm_path.name}"
+        for index, asm_path in enumerate(tests, start=1)
+    ]
+    result_column = max(len(label) for label in test_labels) + 2
+
     print(f"Running {len(tests)} AVM assembly test(s)")
-    for index, asm_path in enumerate(tests, start=1):
-        print(f"[{index}/{len(tests)}] {asm_path.name}")
+    for asm_path, test_label in zip(tests, test_labels):
         try:
             run_test(
                 asm_path,
@@ -285,9 +299,13 @@ def main() -> int:
             )
         except TestCommandError as exc:
             failures.append((asm_path, str(exc)))
-            print("  FAILED")
+            print(f"{test_label:<{result_column}}FAIL")
+            print()
+            for line in FAIL_BANNER:
+                print(f"    {line}")
+            print()
         else:
-            print("  passed")
+            print(f"{test_label:<{result_column}}PASS")
 
     if failures:
         print()

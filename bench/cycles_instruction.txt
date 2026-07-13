@@ -54,47 +54,47 @@
   140   CALL rel8
    38   ADJSP 0
    37   SYS DEBUG_PUTC
-  182   JMP16 addr16
-    0   CALL16 addr16
-   69   NOP
-   69   LDI8 c0,imm8
-   69   BREQ (not taken)
-   51   BREQ (taken)
-   51   BRNE (not taken)
-   51   BRNE (taken)
-   51   BRULT (not taken)
-   85   BRULT (taken)
-   85   BRUGE (not taken)
-   85   BRUGE (taken)
-   85   BRSLT (not taken)
+  147   JMP16 addr16
+  163   CALL16 addr16
+   17   NOP
+   34   LDI8 c0,imm8
+   35   BREQ (not taken)
+  130   BREQ (taken)
+   35   BRNE (not taken)
+  130   BRNE (taken)
+  217   BRULT (not taken)
+    0   BRULT (taken)
+  215   BRUGE (not taken)
+    0   BRUGE (taken)
+  257   BRSLT (not taken)
   127   BRSLT (taken)
    85   BRSGE (not taken)
-   85   BRSGE (taken)
-  127   BRULE (not taken)
-   51   BRULE (taken)
-   85   BRUGT (not taken)
-   85   BRUGT (taken)
-   51   LD8 r0,[r6]
-   34   ST8 [r6],r0
-    0   LD16 r0,[r6]
-    0   ST16 [r6],r0
-  248   LD8 r0,[r6+]
-   34   ST8 [r6+],r0
-    0   LD16 r0,[r6+]
-   39   ST16 [r6+],r0
-   41   LEA r0,[r6+4]
-   35   LD8 r0,[r6+4]
-   54   ST8 [r6+4],r0
-   54   LD16 r0,[r6+4]
-   59   ST16 [r6+4],r0
-   59   LDSP8 r0,[SP+8]
-   59   STSP8 [SP+8],r0
-   59   LDSP16 r0,[SP+8]
-   59   STSP16 [SP+8],r0
-   59   LDM8 r0,0x0100
-   59   STM8 0x0100,r0
-   59   LDM16 r0,0x0100
-   59   STM16 0x0100,r0
-   59   JMPF target24
-   59   CALLF target24
-   59   RET
+    0   BRSGE (taken)
+   37   BRULE (not taken)
+  132   BRULE (taken)
+  215   BRUGT (not taken)
+  119   BRUGT (taken)
+  137   LD8 r0,[r6]
+  119   ST8 [r6],r0
+  137   LD16 r0,[r6]
+  119   ST16 [r6],r0
+  137   LD8 r0,[r6+]
+  119   ST8 [r6+],r0
+  137   LD16 r0,[r6+]
+   68   ST16 [r6+],r0
+  181   LEA r0,[r6+4]
+  137   LD8 r0,[r6+4]
+  185   ST8 [r6+4],r0
+  137   LD16 r0,[r6+4]
+  127   ST16 [r6+4],r0
+   69   LDSP8 r0,[SP+8]
+  131   STSP8 [SP+8],r0
+   69   LDSP16 r0,[SP+8]
+  142   STSP16 [SP+8],r0
+   69   LDM8 r0,0x0100
+  146   STM8 0x0100,r0
+   69   LDM16 r0,0x0100
+    0   STM16 0x0100,r0
+    0   JMPF target24
+  388   CALLF target24
+  164   RET

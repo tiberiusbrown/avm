@@ -542,14 +542,14 @@ _start:
 
     ; [057] JMP16 addr16
     sys SYS_DEBUG_BREAK
-    jmp16 .L_jmp16_target - _start
+    jmp16 .L_jmp16_target
     nop
 .L_jmp16_target:
     sys SYS_DEBUG_BREAK
 
     ; [058] CALL16 addr16
     sys SYS_DEBUG_BREAK
-    call16 .L_call16_target - _start
+    call16 .L_call16_target
 .L_call16_return:
     jmp .L_call16_done
 .L_call16_target:
@@ -905,7 +905,7 @@ _start:
 
     ; [098] JMPF target24
     sys SYS_DEBUG_BREAK
-    jmpf .L_jmpf_target - _start
+    jmpf .L_jmpf_target
     nop
     .p2align 1
 .L_jmpf_target:
@@ -913,7 +913,7 @@ _start:
 
     ; [099] CALLF target24
     sys SYS_DEBUG_BREAK
-    callf .L_callf_target - _start
+    callf .L_callf_target
 .L_callf_return:
     jmp .L_callf_done
     .p2align 1

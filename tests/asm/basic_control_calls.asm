@@ -17,10 +17,12 @@ relative_start:
     call relative_callee
     putc R
 
-    call16 0x011e
+    call16 0x0122
     putc D
-    callf 0x000124
+    callf 0x000128
     putc H
+    ldi8 c0, 10
+    sys 0
     sys 1
 
 .p2align 1

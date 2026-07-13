@@ -1230,6 +1230,12 @@ ff_ret_func:
     ld   VM_PCH, Y+
     ld   r6, Y+
     out  VM_CB, r6
+    ; RET reaches the restart path before the speculative byte issued while
+    ; dispatching 0xFF has completed. Drain that transfer before toggling the
+    ; flash chip select; otherwise an operand-bearing return target can read
+    ; stale SPDR data. Other taken-control paths have already spent at least
+    ; this long decoding their operands.
+    delay_4
     rjmp seek_and_dispatch_current_pc_func
 
 ; Keep common trap targets close to all secondary dispatch tables. Primary

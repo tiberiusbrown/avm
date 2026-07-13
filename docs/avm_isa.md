@@ -255,10 +255,11 @@ The two-bit source field selects only `r0` through `r3`. Compact sources `r4` th
 | `F4 0ddss` | `MOV cD,cS (extended)` | Alternate compact-page move. | 2 | ≈34 | Preserve | Normally dominated by the one-byte primary MOV encoding. |
 | `F4 1ddss` | `ADD.NF cD,cS` | Non-flagging compact-page 16-bit add. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `ADD`. |
 | `F4 2ddss` | `SUB.NF cD,cS` | Non-flagging compact-page 16-bit subtract. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `SUB`. |
-| `F4 3ddss` | `AND cD,cS` | Compact 16-bit bitwise AND. | 2 | ≈34 | Preserve |  |
-| `F4 4ddss` | `OR cD,cS` | Compact 16-bit bitwise OR. | 2 | ≈34 | Preserve |  |
-| `F4 5ddss` | `XOR cD,cS` | Compact 16-bit bitwise XOR. | 2 | ≈34 | Preserve |  |
-| `F4 6ddss` | `BIC cD,cS` | Compact 16-bit bit clear: cD = cD & ~cS. | 2 | ≈34 | Preserve |  |
+| `F4 3ddss`, `dd≠00` | `AND cD,cS` | Compact 16-bit bitwise AND. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `AND A,rS`. |
+| `F4 4ddss`, `dd≠00` | `OR cD,cS` | Compact 16-bit bitwise OR. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `OR A,rS`. |
+| `F4 5ddss`, `dd≠00` | `XOR cD,cS` | Compact 16-bit bitwise XOR. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `XOR A,rS`. |
+| `F4 6ddss`, `dd≠00` | `BIC cD,cS` | Compact 16-bit bit clear: cD = cD & ~cS. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `BIC A,rS`. |
+| `F4 30–33, 40–43, 50–53, 60–63` | `Reserved` | Removed compact logical encodings with destination `c0`/A. | — | — | — | The equivalent one-byte accumulator opcodes `50–6F` accept all eight source registers. |
 | `F4 7ddss` | `CMP16 cL,cR (extended)` | Alternate compact-page 16-bit compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP16 encoding. |
 | `F4 8ddss` | `CMP8 cL,cR (extended)` | Alternate compact-page low-byte compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP8 encoding. |
 | `F4 9ddss` | `MULU8 cD,cS` | Unsigned 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–36 | Preserve |  |
@@ -332,7 +333,7 @@ The one-byte short-branch encoding deliberately omits displacement `-1`. Because
 
 ### 7.1 Flag-preserving F4 arithmetic, E2 source specialization, and remaining duplicates
 
-The `F4` `ADD.NF` and `SUB.NF` forms are intentionally retained as non-flagging alternatives to the one-byte compact `ADD` and `SUB`; LLVM can use them when CC is live across an arithmetic operation. E2 now covers only non-compact sources `r0` through `r3`; compact-source accumulator operations use the one-byte primary encodings or F4. E2 does not duplicate `AND`, `OR`, `XOR`, or `BIC`, because the one-byte accumulator forms already accept all eight registers. Extended `F4` `MOV`, `CMP16`, and `CMP8` remain true duplicates of one-byte primary forms and should probably be reassigned or reserved before the ISA is frozen.
+The `F4` `ADD.NF` and `SUB.NF` forms are intentionally retained as non-flagging alternatives to the one-byte compact `ADD` and `SUB`; LLVM can use them when CC is live across an arithmetic operation. E2 now covers only non-compact sources `r0` through `r3`; compact-source accumulator operations use the one-byte primary encodings or F4. E2 does not duplicate `AND`, `OR`, `XOR`, or `BIC`, because the one-byte accumulator forms already accept all eight registers. For the same reason, the F4 logical encodings with destination `c0`/A (`30–33`, `40–43`, `50–53`, and `60–63`) are reserved; only destinations `c1` through `c3` remain valid in those families. Extended `F4` `MOV`, `CMP16`, and `CMP8` remain true duplicates of one-byte primary forms and should probably be reassigned or reserved before the ISA is frozen.
 
 ### 7.2 CMPI6 remains partly decoded at run time
 
@@ -373,4 +374,4 @@ Before freezing the cost model:
 4. Measure program-space loads with both one-byte and two-byte results.
 5. Feed measured costs into LLVM scheduling and instruction-cost hooks.
 
-**Instruction-form rows in this report:** 145
+**Instruction-form rows in this report:** 146

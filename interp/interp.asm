@@ -993,11 +993,12 @@ emit_ldi8 0xF3, I_F3__LDI8_c3, VM_C3L, VM_C3H
 
     handler_begin 0xF4, I_F4__ext_compact_alu
 
-    ; Account for the secondary opcode, then fetch it while starting the
-    ; following primary opcode.
+    ; Account for the secondary opcode, then transfer to the out-of-line F4
+    ; implementation. JMP is one cycle longer than RJMP, so delay_2 preserves
+    ; the original seven-cycle path to the decoder.
     adiw VM_PC, 1
-    delay_3
-    rjmp f4_extension_decode_func
+    delay_2
+    jmp  f4_extension_decode_func
 
     handler_end 0xF4
 
@@ -1694,33 +1695,6 @@ e0_tst8_family:
     cp   r4, ZERO
     in   VM_FLAGS, SREG
     rjmp dispatch_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF4 compact ALU extension page
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-f4_extension_decode_func:
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ldi  r30, lo8(pm(f4_secondary_table))
-    ldi  r31, hi8(pm(f4_secondary_table))
-    add  r30, r6
-    adc  r31, ZERO
-    ijmp
-
-; No revised F4 form has an implemented handler yet. Valid operations trap at
-; the common unimplemented path; the reserved 0xF0-0xFF range is invalid.
-f4_secondary_table:
-    secondary_entries 240, unimplemented_instruction_func
-    secondary_entries 16, invalid_secondary_instruction_func
-f4_secondary_table_end:
-
-.if ((f4_secondary_table_end - f4_secondary_table) != (256 * 2))
-    .error "F4 secondary dispatch table must contain exactly 256 words"
-.endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE4 CMPI6 direct-primary body
@@ -2976,4 +2950,258 @@ e3_mov16_table_end:
 ; Local sequential dispatch keeps every executable MOV16 slot and generic E3
 ; handler within RJMP range.
 e3_dispatch_func:
+    dispatch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xF4 compact ALU extension page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; This section is placed after the rest of the interpreter so its executable
+; operand-specialized slots do not push existing RCALL/RJMP sites out of range.
+f4_extension_decode_func:
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ldi  r30, lo8(pm(f4_secondary_table))
+    ldi  r31, hi8(pm(f4_secondary_table))
+    add  r30, r6
+    adc  r31, ZERO
+    ijmp
+
+; F4 secondary encoding:
+;   bits 7:4 = operation
+;   bits 3:2 = compact destination c0-c3
+;   bits 1:0 = compact source c0-c3
+;
+; The implemented 10-2F and 34-3F/44-4F/54-5F/64-6F ranges use
+; operand-specialized executable slots. Logical destinations c0/A are
+; reserved because the one-byte accumulator forms already cover them.
+; Decoder OUT-to-slot-entry timing leaves eight cycles before the next OUT.
+; Arithmetic/logical slots use delay_3 + two native operations + RJMP;
+; BIC uses MOVW + COM + COM + AND + AND + RJMP. The local dispatch then
+; issues its OUT exactly 17 cycles after the decoder OUT, retaining the
+; intended approximately 34-cycle cadence for the two-byte instruction.
+; Native SREG changes are not copied to VM_FLAGS, so AVM CC is preserved.
+
+f4_secondary_table:
+    secondary_entries 16, f4_unimplemented_instruction_func ; 00-0F MOV
+    ; 10-1F ADD.NF
+    rjmp f4_add_nf_c0_c0
+    rjmp f4_add_nf_c0_c1
+    rjmp f4_add_nf_c0_c2
+    rjmp f4_add_nf_c0_c3
+    rjmp f4_add_nf_c1_c0
+    rjmp f4_add_nf_c1_c1
+    rjmp f4_add_nf_c1_c2
+    rjmp f4_add_nf_c1_c3
+    rjmp f4_add_nf_c2_c0
+    rjmp f4_add_nf_c2_c1
+    rjmp f4_add_nf_c2_c2
+    rjmp f4_add_nf_c2_c3
+    rjmp f4_add_nf_c3_c0
+    rjmp f4_add_nf_c3_c1
+    rjmp f4_add_nf_c3_c2
+    rjmp f4_add_nf_c3_c3
+    ; 20-2F SUB.NF
+    rjmp f4_sub_nf_c0_c0
+    rjmp f4_sub_nf_c0_c1
+    rjmp f4_sub_nf_c0_c2
+    rjmp f4_sub_nf_c0_c3
+    rjmp f4_sub_nf_c1_c0
+    rjmp f4_sub_nf_c1_c1
+    rjmp f4_sub_nf_c1_c2
+    rjmp f4_sub_nf_c1_c3
+    rjmp f4_sub_nf_c2_c0
+    rjmp f4_sub_nf_c2_c1
+    rjmp f4_sub_nf_c2_c2
+    rjmp f4_sub_nf_c2_c3
+    rjmp f4_sub_nf_c3_c0
+    rjmp f4_sub_nf_c3_c1
+    rjmp f4_sub_nf_c3_c2
+    rjmp f4_sub_nf_c3_c3
+    ; 30-3F AND; 30-33 are reserved c0/A destinations
+    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_and_c1_c0
+    rjmp f4_and_c1_c1
+    rjmp f4_and_c1_c2
+    rjmp f4_and_c1_c3
+    rjmp f4_and_c2_c0
+    rjmp f4_and_c2_c1
+    rjmp f4_and_c2_c2
+    rjmp f4_and_c2_c3
+    rjmp f4_and_c3_c0
+    rjmp f4_and_c3_c1
+    rjmp f4_and_c3_c2
+    rjmp f4_and_c3_c3
+    ; 40-4F OR; 40-43 are reserved c0/A destinations
+    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_or_c1_c0
+    rjmp f4_or_c1_c1
+    rjmp f4_or_c1_c2
+    rjmp f4_or_c1_c3
+    rjmp f4_or_c2_c0
+    rjmp f4_or_c2_c1
+    rjmp f4_or_c2_c2
+    rjmp f4_or_c2_c3
+    rjmp f4_or_c3_c0
+    rjmp f4_or_c3_c1
+    rjmp f4_or_c3_c2
+    rjmp f4_or_c3_c3
+    ; 50-5F XOR; 50-53 are reserved c0/A destinations
+    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_xor_c1_c0
+    rjmp f4_xor_c1_c1
+    rjmp f4_xor_c1_c2
+    rjmp f4_xor_c1_c3
+    rjmp f4_xor_c2_c0
+    rjmp f4_xor_c2_c1
+    rjmp f4_xor_c2_c2
+    rjmp f4_xor_c2_c3
+    rjmp f4_xor_c3_c0
+    rjmp f4_xor_c3_c1
+    rjmp f4_xor_c3_c2
+    rjmp f4_xor_c3_c3
+    ; 60-6F BIC; 60-63 are reserved c0/A destinations
+    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_bic_c1_c0
+    rjmp f4_bic_c1_c1
+    rjmp f4_bic_c1_c2
+    rjmp f4_bic_c1_c3
+    rjmp f4_bic_c2_c0
+    rjmp f4_bic_c2_c1
+    rjmp f4_bic_c2_c2
+    rjmp f4_bic_c2_c3
+    rjmp f4_bic_c3_c0
+    rjmp f4_bic_c3_c1
+    rjmp f4_bic_c3_c2
+    rjmp f4_bic_c3_c3
+    secondary_entries 128, f4_unimplemented_instruction_func ; 70-EF
+    secondary_entries 16, f4_invalid_secondary_instruction_func ; F0-FF
+f4_secondary_table_end:
+
+.if ((f4_secondary_table_end - f4_secondary_table) != (256 * 2))
+    .error "F4 secondary dispatch table must contain exactly 256 words"
+.endif
+
+.macro emit_f4_binary_slot label, lowop, highop, dstl, dsth, srcl, srch
+\label:
+    delay_3
+    \lowop  \dstl, \srcl
+    \highop \dsth, \srch
+    rjmp f4_dispatch_func
+.endm
+
+.macro emit_f4_bic_slot label, dstl, dsth, src
+\label:
+    movw r4, \src
+    com  r4
+    com  r5
+    and  \dstl, r4
+    and  \dsth, r5
+    rjmp f4_dispatch_func
+.endm
+
+; F4 10-1F: ADD.NF cD,cS
+emit_f4_binary_slot f4_add_nf_c0_c0, add, adc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_add_nf_c0_c1, add, adc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_add_nf_c0_c2, add, adc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_add_nf_c0_c3, add, adc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_add_nf_c1_c0, add, adc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_add_nf_c1_c1, add, adc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_add_nf_c1_c2, add, adc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_add_nf_c1_c3, add, adc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_add_nf_c2_c0, add, adc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_add_nf_c2_c1, add, adc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_add_nf_c2_c2, add, adc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_add_nf_c2_c3, add, adc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_add_nf_c3_c0, add, adc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_add_nf_c3_c1, add, adc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_add_nf_c3_c2, add, adc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_add_nf_c3_c3, add, adc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+
+; F4 20-2F: SUB.NF cD,cS
+emit_f4_binary_slot f4_sub_nf_c0_c0, sub, sbc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_sub_nf_c0_c1, sub, sbc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_sub_nf_c0_c2, sub, sbc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_sub_nf_c0_c3, sub, sbc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_sub_nf_c1_c0, sub, sbc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_sub_nf_c1_c1, sub, sbc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_sub_nf_c1_c2, sub, sbc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_sub_nf_c1_c3, sub, sbc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_sub_nf_c2_c0, sub, sbc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_sub_nf_c2_c1, sub, sbc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_sub_nf_c2_c2, sub, sbc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_sub_nf_c2_c3, sub, sbc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_sub_nf_c3_c0, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_sub_nf_c3_c1, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_sub_nf_c3_c2, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_sub_nf_c3_c3, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+
+; F4 34-3F: AND cD,cS (cD = c1-c3)
+emit_f4_binary_slot f4_and_c1_c0, and, and, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_and_c1_c1, and, and, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_and_c1_c2, and, and, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_and_c1_c3, and, and, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_and_c2_c0, and, and, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_and_c2_c1, and, and, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_and_c2_c2, and, and, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_and_c2_c3, and, and, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_and_c3_c0, and, and, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_and_c3_c1, and, and, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_and_c3_c2, and, and, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_and_c3_c3, and, and, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+
+; F4 44-4F: OR cD,cS (cD = c1-c3)
+emit_f4_binary_slot f4_or_c1_c0, or, or, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_or_c1_c1, or, or, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_or_c1_c2, or, or, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_or_c1_c3, or, or, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_or_c2_c0, or, or, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_or_c2_c1, or, or, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_or_c2_c2, or, or, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_or_c2_c3, or, or, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_or_c3_c0, or, or, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_or_c3_c1, or, or, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_or_c3_c2, or, or, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_or_c3_c3, or, or, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+
+; F4 54-5F: XOR cD,cS (cD = c1-c3)
+emit_f4_binary_slot f4_xor_c1_c0, eor, eor, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_xor_c1_c1, eor, eor, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_xor_c1_c2, eor, eor, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_xor_c1_c3, eor, eor, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_xor_c2_c0, eor, eor, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_xor_c2_c1, eor, eor, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_xor_c2_c2, eor, eor, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_xor_c2_c3, eor, eor, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_f4_binary_slot f4_xor_c3_c0, eor, eor, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_f4_binary_slot f4_xor_c3_c1, eor, eor, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_f4_binary_slot f4_xor_c3_c2, eor, eor, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_f4_binary_slot f4_xor_c3_c3, eor, eor, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+
+; F4 64-6F: BIC cD,cS (cD = c1-c3)
+emit_f4_bic_slot f4_bic_c1_c0, VM_C1L, VM_C1H, VM_C0
+emit_f4_bic_slot f4_bic_c1_c1, VM_C1L, VM_C1H, VM_C1
+emit_f4_bic_slot f4_bic_c1_c2, VM_C1L, VM_C1H, VM_C2
+emit_f4_bic_slot f4_bic_c1_c3, VM_C1L, VM_C1H, VM_C3
+emit_f4_bic_slot f4_bic_c2_c0, VM_C2L, VM_C2H, VM_C0
+emit_f4_bic_slot f4_bic_c2_c1, VM_C2L, VM_C2H, VM_C1
+emit_f4_bic_slot f4_bic_c2_c2, VM_C2L, VM_C2H, VM_C2
+emit_f4_bic_slot f4_bic_c2_c3, VM_C2L, VM_C2H, VM_C3
+emit_f4_bic_slot f4_bic_c3_c0, VM_C3L, VM_C3H, VM_C0
+emit_f4_bic_slot f4_bic_c3_c1, VM_C3L, VM_C3H, VM_C1
+emit_f4_bic_slot f4_bic_c3_c2, VM_C3L, VM_C3H, VM_C2
+emit_f4_bic_slot f4_bic_c3_c3, VM_C3L, VM_C3H, VM_C3
+
+; Keep local trap targets and sequential dispatch within RJMP range of every
+; F4 table entry and executable slot.
+f4_unimplemented_instruction_func:
+    rjmp f4_unimplemented_instruction_func
+
+f4_invalid_secondary_instruction_func:
+    rjmp f4_invalid_secondary_instruction_func
+
+f4_dispatch_func:
     dispatch

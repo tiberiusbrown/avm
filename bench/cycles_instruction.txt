@@ -112,3 +112,9 @@
    17   OR A,r0
    17   XOR A,r0
    17   BIC A,r0
+   36   ADD.NF c2,c3
+   36   SUB.NF c2,c3
+   36   AND c2,c3
+   36   OR c2,c3
+   36   XOR c2,c3
+   36   BIC c2,c3

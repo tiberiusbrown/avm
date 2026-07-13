@@ -98,3 +98,14 @@
   164   JMPF target24
   181   CALLF target24
   122   RET
+   75   LDI16 r0,imm16
+   54   LDI8 r0,imm8
+   81   ADDI16 r0,imm16
+   81   SUBI16 r0,imm16
+   81   ANDI16 r0,imm16
+   81   ORI16 r0,imm16
+   81   XORI16 r0,imm16
+   78   CMPI16 r0,imm16
+  162   CMPI8 r0,imm8
+   75   TST16 r0
+   38   TST8 r0

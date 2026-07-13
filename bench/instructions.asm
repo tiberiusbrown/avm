@@ -99,6 +99,17 @@
 ;   098: JMPF target24
 ;   099: CALLF target24
 ;   100: RET
+;   101: LDI16 r0,imm16
+;   102: LDI8 r0,imm8
+;   103: ADDI16 r0,imm16
+;   104: SUBI16 r0,imm16
+;   105: ANDI16 r0,imm16
+;   106: ORI16 r0,imm16
+;   107: XORI16 r0,imm16
+;   108: CMPI16 r0,imm16
+;   109: CMPI8 r0,imm8
+;   110: TST16 r0
+;   111: TST8 r0
 
 ; AVM instruction-cycle benchmark image
 ;
@@ -108,9 +119,9 @@
 ;   * The break-to-break baseline is subtracted from every ordinary entry.
 ;   * SYS DEBUG_BREAK itself is reported directly from that baseline.
 ;
-; The implemented-instruction inventory contains 75 architectural forms.
+; The implemented-instruction inventory contains 86 architectural forms.
 ; Branches are emitted in both taken and not-taken forms, and every CSET
-; condition is emitted for both true and false results.  This produces 100
+; condition is emitted for both true and false results.  This produces 111
 ; timing entries while still covering every implemented form.
 
 .section .text,"ax",@progbits
@@ -931,6 +942,72 @@ _start:
     sys SYS_DEBUG_BREAK
     ret
 .L_ret_bench_done:
+
+    ; [101] LDI16 r0,imm16
+    sys SYS_DEBUG_BREAK
+    ldi16 r0, 0xa55a
+    sys SYS_DEBUG_BREAK
+
+    ; [102] LDI8 r0,imm8
+    ; Seed a nonzero high byte so the benchmark also exercises zero extension.
+    ldi16 r0, 0xffff
+    sys SYS_DEBUG_BREAK
+    ldi8 r0, 0xa5
+    sys SYS_DEBUG_BREAK
+
+    ; [103] ADDI16 r0,imm16
+    ldi16 r0, 0x1234
+    sys SYS_DEBUG_BREAK
+    addi16 r0, 0x4321
+    sys SYS_DEBUG_BREAK
+
+    ; [104] SUBI16 r0,imm16
+    ldi16 r0, 0x5678
+    sys SYS_DEBUG_BREAK
+    subi16 r0, 0x1234
+    sys SYS_DEBUG_BREAK
+
+    ; [105] ANDI16 r0,imm16
+    ldi16 r0, 0xf0f3
+    sys SYS_DEBUG_BREAK
+    andi16 r0, 0x0ff0
+    sys SYS_DEBUG_BREAK
+
+    ; [106] ORI16 r0,imm16
+    ldi16 r0, 0x0f00
+    sys SYS_DEBUG_BREAK
+    ori16 r0, 0x00f3
+    sys SYS_DEBUG_BREAK
+
+    ; [107] XORI16 r0,imm16
+    ldi16 r0, 0xaaaa
+    sys SYS_DEBUG_BREAK
+    xori16 r0, 0x0ff0
+    sys SYS_DEBUG_BREAK
+
+    ; [108] CMPI16 r0,imm16
+    ldi16 r0, 0x1234
+    sys SYS_DEBUG_BREAK
+    cmpi16 r0, 0x5678
+    sys SYS_DEBUG_BREAK
+
+    ; [109] CMPI8 r0,imm8
+    ldi16 r0, 0xab34
+    sys SYS_DEBUG_BREAK
+    cmpi8 r0, 0x56
+    sys SYS_DEBUG_BREAK
+
+    ; [110] TST16 r0
+    ldi16 r0, 0x8000
+    sys SYS_DEBUG_BREAK
+    tst16 r0
+    sys SYS_DEBUG_BREAK
+
+    ; [111] TST8 r0
+    ldi16 r0, 0xab80
+    sys SYS_DEBUG_BREAK
+    tst8 r0
+    sys SYS_DEBUG_BREAK
 
     ; Restore the original stack pointer before entering the sentinel loop.
     adjsp 64

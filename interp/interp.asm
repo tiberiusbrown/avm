@@ -1371,7 +1371,13 @@ e0_secondary_table:
     secondary_entries 8, e0_setsp_family       ; 68-6F
     secondary_entries 8, e0_mtpb_family        ; 70-77
     secondary_entries 8, e0_mfpb_family        ; 78-7F
-    secondary_entries 120, unimplemented_instruction_func ; 80-F7
+    secondary_entries 8, e0_imm16_family       ; 80-87 LDI16
+    secondary_entries 8, e0_imm8_family        ; 88-8F LDI8
+    secondary_entries 48, e0_imm16_family      ; 90-BF ALU/CMPI16
+    secondary_entries 8, e0_imm8_family        ; C0-C7 CMPI8
+    secondary_entries 32, unimplemented_instruction_func ; C8-E7 control
+    secondary_entries 8, e0_tst16_family       ; E8-EF
+    secondary_entries 8, e0_tst8_family        ; F0-F7
     secondary_entries 8, invalid_secondary_instruction_func ; F8-FF
 e0_secondary_table_end:
 
@@ -1494,6 +1500,169 @@ e0_mfpb_family:
     in   r4, VM_PB
     st   X+, r4
     st   X, ZERO
+    rjmp dispatch_func
+
+; Immediate-family entry invariant:
+;   * PC names the E0 secondary opcode.
+;   * The decoder's OUT has started the first immediate byte.
+;   * r6 still contains the secondary opcode until the immediate is read.
+;   * X may safely retain the selected AVM register-file address.
+;
+; The first fetch advances PC to immediate byte 0, reads it, and starts byte 1
+; (or the following primary opcode for an imm8 instruction). Register selection
+; consumes five cycles; ADIW+CLI supply the remaining three pre-OUT cycles for
+; the normal 17-cycle SPI OUT-to-OUT cadence.
+.macro e0_fetch_first_immediate dst
+    adiw VM_PC, 1
+    cli
+    out  SPDR, ZERO
+    in   \dst, SPDR
+    sei
+.endm
+
+; After the first immediate byte has been read, advance PC to byte 1, read it,
+; and start the following primary opcode. This matches the cadence used by the
+; FD absolute-address handlers.
+.macro e0_fetch_second_immediate dst
+    adiw VM_PC, 1
+    delay_4
+    delay_4
+    delay_3
+    cli
+    out  SPDR, ZERO
+    in   \dst, SPDR
+    sei
+.endm
+
+; The imm8 paths have only enough work for a 13-cycle post-OUT interval.
+; Three cycles of padding complete the 16-cycle SPI transfer before dispatch
+; reads the following primary opcode. The generic imm16 decode is already long
+; enough and dispatches directly.
+e0_imm8_finish_func:
+    delay_3
+    rjmp dispatch_func
+
+; E0 80-87 and 90-BF: all imm16 forms share fetch and register decode. The
+; operation index is (secondary & 0x78) >> 3:
+;   0 LDI16, 1 unused, 2 ADDI16, 3 SUBI16,
+;   4 ANDI16, 5 ORI16, 6 XORI16, 7 CMPI16.
+e0_imm16_family:
+    e0_select_register
+    e0_fetch_first_immediate r4
+    e0_fetch_second_immediate r5
+
+    mov  r30, r6
+    andi r30, 0x78
+    lsr  r30
+    lsr  r30
+    lsr  r30
+    clr  r31
+    subi r30, lo8(-(pm(e0_imm16_operation_table)))
+    sbci r31, hi8(-(pm(e0_imm16_operation_table)))
+    ijmp
+
+e0_imm16_operation_table:
+    rjmp e0_ldi16_operation
+    rjmp invalid_secondary_instruction_func
+    rjmp e0_addi16_operation
+    rjmp e0_subi16_operation
+    rjmp e0_andi16_operation
+    rjmp e0_ori16_operation
+    rjmp e0_xori16_operation
+    rjmp e0_cmpi16_operation
+
+e0_ldi16_operation:
+    st   X+, r4
+    st   X, r5
+    rjmp dispatch_func
+
+e0_addi16_operation:
+    ld   r0, X+
+    ld   r1, X
+    add  r0, r4
+    adc  r1, r5
+    st   X, r1
+    st   -X, r0
+    rjmp dispatch_func
+
+e0_subi16_operation:
+    ld   r0, X+
+    ld   r1, X
+    sub  r0, r4
+    sbc  r1, r5
+    st   X, r1
+    st   -X, r0
+    rjmp dispatch_func
+
+e0_andi16_operation:
+    ld   r0, X+
+    ld   r1, X
+    and  r0, r4
+    and  r1, r5
+    st   X, r1
+    st   -X, r0
+    rjmp dispatch_func
+
+e0_ori16_operation:
+    ld   r0, X+
+    ld   r1, X
+    or   r0, r4
+    or   r1, r5
+    st   X, r1
+    st   -X, r0
+    rjmp dispatch_func
+
+e0_xori16_operation:
+    ld   r0, X+
+    ld   r1, X
+    eor  r0, r4
+    eor  r1, r5
+    st   X, r1
+    st   -X, r0
+    rjmp dispatch_func
+
+e0_cmpi16_operation:
+    ld   r0, X+
+    ld   r1, X
+    cp   r0, r4
+    cpc  r1, r5
+    in   VM_FLAGS, SREG
+    rjmp dispatch_func
+
+; E0 88-8F / C0-C7: bit 6 distinguishes zero-extending LDI8 from CMPI8.
+e0_imm8_family:
+    e0_select_register
+    e0_fetch_first_immediate r4
+    sbrs r6, 6
+    rjmp e0_ldi8_operation
+
+    ld   r0, X
+    cp   r0, r4
+    in   VM_FLAGS, SREG
+    nop
+    rjmp e0_imm8_finish_func
+
+e0_ldi8_operation:
+    st   X+, r4
+    st   X, ZERO
+    rjmp e0_imm8_finish_func
+
+; E0 E8-EF: TST16 rN
+e0_tst16_family:
+    e0_select_register
+    ld   r4, X+
+    ld   r5, X
+    cp   r4, ZERO
+    cpc  r5, ZERO
+    in   VM_FLAGS, SREG
+    rjmp dispatch_func
+
+; E0 F0-F7: TST8 rN
+e0_tst8_family:
+    e0_select_register
+    ld   r4, X
+    cp   r4, ZERO
+    in   VM_FLAGS, SREG
     rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

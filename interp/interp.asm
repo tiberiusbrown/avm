@@ -1343,6 +1343,8 @@ e3_extension_decode_func:
     ldi  r31, hi8(pm(e3_mov16_table))
     add  r30, r6
     adc  r31, ZERO
+    ; We have one cycle to spare before dispatch timing.
+    nop
     ijmp
 
 1:

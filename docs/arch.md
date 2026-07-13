@@ -981,7 +981,7 @@ LLVM's target infrastructure represents these distinctions through the target da
 The current backend data layout is:
 
 ```text
-e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-n8:16-S8
+e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-i64:8-f16:8-f32:8-n8:16-S8
 ```
 
 Meaning:
@@ -989,7 +989,8 @@ Meaning:
 - Little-endian.
 - Default pointers are 16-bit data-space pointers.
 - Address-space-one pointers are 24 bits.
-- Integer ABI alignment is one byte.
+- Scalar ABI alignment is one byte, including 64-bit integers and 16-bit and
+  32-bit floating-point values.
 - Native integer widths are 8 and 16 bits.
 - Stack alignment is one byte.
 

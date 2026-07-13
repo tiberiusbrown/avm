@@ -4,10 +4,40 @@ project(avm LANGUAGES C CXX ASM)
 
 set(LLVM_TARGETS_TO_BUILD              ""    CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM" CACHE STRING "" FORCE)
-set(LLVM_ENABLE_PROJECTS               "lld" CACHE STRING "" FORCE)
+set(LLVM_ENABLE_PROJECTS               "clang;lld" CACHE STRING "" FORCE)
 set(LLVM_BUILD_TOOLS                   ON    CACHE BOOL   "" FORCE)
 
 add_subdirectory(deps/llvm-project/llvm llvm-build)
+
+add_custom_target(avm_clang DEPENDS clang)
+add_custom_target(avm_toolchain
+    DEPENDS clang llc llvm-mc llvm-objdump llvm-readobj llvm-avm-image)
+
+set(AVM_CODEGEN_SMOKE_SOURCE
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/codegen_smoke.c")
+set(AVM_CODEGEN_SMOKE_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/tests/codegen-smoke")
+set(AVM_CODEGEN_SMOKE_ASM
+    "${AVM_CODEGEN_SMOKE_DIR}/codegen_smoke.s")
+set(AVM_CODEGEN_SMOKE_OBJECT
+    "${AVM_CODEGEN_SMOKE_DIR}/codegen_smoke.o")
+
+add_custom_command(
+    OUTPUT "${AVM_CODEGEN_SMOKE_ASM}" "${AVM_CODEGEN_SMOKE_OBJECT}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_CODEGEN_SMOKE_DIR}"
+    COMMAND "$<TARGET_FILE:clang>" --target=avm-unknown-arduboyfx
+            -ffreestanding -fno-builtin -S "${AVM_CODEGEN_SMOKE_SOURCE}"
+            -o "${AVM_CODEGEN_SMOKE_ASM}"
+    COMMAND "$<TARGET_FILE:clang>" --target=avm-unknown-arduboyfx
+            -ffreestanding -fno-builtin -c "${AVM_CODEGEN_SMOKE_SOURCE}"
+            -o "${AVM_CODEGEN_SMOKE_OBJECT}"
+    COMMAND "$<TARGET_FILE:llvm-readobj>" -h -r "${AVM_CODEGEN_SMOKE_OBJECT}"
+    DEPENDS clang llvm-readobj "${AVM_CODEGEN_SMOKE_SOURCE}"
+    COMMENT "Compiling the AVM Clang code-generation smoke test"
+    VERBATIM)
+
+add_custom_target(avm_codegen_smoke
+    DEPENDS "${AVM_CODEGEN_SMOKE_ASM}" "${AVM_CODEGEN_SMOKE_OBJECT}")
 
 # Build only the Ardens debugger application. Keep Ardens's bundled LLVM
 # integration disabled so it does not download or build its own LLVM tree.

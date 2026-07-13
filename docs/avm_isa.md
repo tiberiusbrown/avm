@@ -117,10 +117,14 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `20–2F` | `ST8 [cD],cS` | Store the low byte of a compact source register through a compact address register. | 1 | ≈17 | Preserve |  |
 | `30–3F` | `LD16 cD,[cS]` | Load a little-endian 16-bit word through a compact address register. | 1 | ≈17 | Preserve |  |
 | `40–4F` | `ST16 [cD],cS` | Store a little-endian 16-bit word through a compact address register. | 1 | ≈17 | Preserve |  |
-| `50–57` | `AND A,rS` | A = A & rS, where A is the alias of c0/r4. | 1 | ≈17 | Preserve |  |
-| `58–5F` | `OR A,rS` | A = A \| rS. | 1 | ≈17 | Preserve |  |
-| `60–67` | `XOR A,rS` | A = A ^ rS. | 1 | ≈17 | Preserve |  |
-| `68–6F` | `BIC A,rS` | A = A & ~rS. | 1 | ≈17 | Preserve | A specialized handler can use MOVW+COM+COM+AND+AND and still fit the current one-byte cadence. |
+| `50–53, 55–57` | `AND A,rS` | A = A & rS, where A is the alias of c0/r4 and rS is not A itself. | 1 | ≈17 | Preserve | `AND A,A` is canonicalized to `NOP`. |
+| `54` | `Reserved` | Reserved former `AND A,A` encoding. | — | — | — | Use `NOP`. |
+| `58–5B, 5D–5F` | `OR A,rS` | A = A \| rS, where rS is not A itself. | 1 | ≈17 | Preserve | `OR A,A` is canonicalized to `NOP`. |
+| `5C` | `Reserved` | Reserved former `OR A,A` encoding. | — | — | — | Use `NOP`. |
+| `60–63, 65–67` | `XOR A,rS` | A = A ^ rS, where rS is not A itself. | 1 | ≈17 | Preserve | `XOR A,A` is canonicalized to `CLR c0`. |
+| `64` | `Reserved` | Reserved former `XOR A,A` encoding. | — | — | — | Use `CLR c0`. |
+| `68–6B, 6D–6F` | `BIC A,rS` | A = A & ~rS, where rS is not A itself. | 1 | ≈17 | Preserve | A specialized handler can use MOVW+COM+COM+AND+AND and still fit the current one-byte cadence. |
+| `6C` | `Reserved` | Reserved former `BIC A,A` encoding. | — | — | — | Use `CLR c0`. |
 | `70–77` | `PUSH16 rS` | Decrement SP by two and push a 16-bit register in little-endian stack order. | 1 | ≈17 | Preserve |  |
 | `78–7F` | `POP16 rD` | Pop a 16-bit register and increment SP by two. | 1 | ≈17 | Preserve |  |
 | `80–8F` | `ADD cD,cS` | cD = cD + cS modulo 2^16. | 1 | ≈17 | Replace C/Z/S | Uses the current `ADD`/`ADC`/`IN SREG` sequence; flag capture has no cycle penalty. |
@@ -165,13 +169,31 @@ Cycle counts are measured from entry to the current primary-opcode handler throu
 | `E0 C0–C7 + imm8` | `CMPI8 rN,imm8` | Set CC from an 8-bit low-byte/immediate comparison. | 3 | ≈52–54 | Replace C/Z/S |  |
 | `E0 C8–CF` | `JMPR rN` | Jump within the current code bank to PC=rN. | 2 | ≈134 | Preserve | Requires one SPI stream restart. |
 | `E0 D0–D7` | `CALLR rN` | Push the three-byte return address, then jump within the current code bank to PC=rN. | 2 | ≈141 | Preserve | Requires one SPI stream restart. |
-| `E0 D8–DF` | `JMPP rN` | Far jump to PB:rN and copy PB into CB. | 2 | ≈136 | Preserve | Requires one SPI stream restart. |
-| `E0 E0–E7` | `CALLP rN` | Push the return address and far-call PB:rN. | 2 | ≈143 | Preserve | Requires one SPI stream restart. |
+| `E0 D8–DB` | `JMPP qN` | Far jump through a canonical 24-bit program pointer in qN: CB = bits 23:16 and PC = bits 15:0. | 2 | ≈136 | Preserve | PB is preserved; requires one SPI stream restart. |
+| `E0 DC–DF` | `Reserved` | Reserved former register/PB-based JMPP encodings. | — | — | — | Indirect far jumps use `JMPP q0–q3`. |
+| `E0 E0–E3` | `CALLP qN` | Push the return address, then far-call through a canonical 24-bit function pointer in qN. | 2 | ≈143 | Preserve | PB is preserved; requires one SPI stream restart. |
+| `E0 E4–E7` | `Reserved` | Reserved former register/PB-based CALLP encodings. | — | — | — | Indirect far calls use `CALLP q0–q3`. |
 | `E0 E8–EB` | `TST16 rN` | Set CC from a 16-bit comparison of non-compact `r0` through `r3` against zero. | 2 | ≈34 | Replace C/Z/S |  |
 | `E0 EC–EF` | `Reserved` | Reserved former compact-register `TST16` encodings. | — | — | — | Compact `r4` through `r7` use primary `A0/A5/AA/AF`. |
 | `E0 F0–F3` | `TST8 rN` | Set CC from a low-byte comparison of non-compact `r0` through `r3` against zero. | 2 | ≈34 | Replace C/Z/S |  |
 | `E0 F4–F7` | `Reserved` | Reserved former compact-register `TST8` encodings. | — | — | — | Compact `r4` through `r7` use primary `B0/B5/BA/BF`. |
 | `E0 F8–FF` | `Reserved` | Reserved for future miscellaneous instructions. | — | — | — |  |
+
+
+`JMPP` and `CALLP` interpret their pair operand as a canonical register-form
+24-bit code pointer:
+
+```text
+qN low register             = target bits 15:0
+qN high register low byte   = target bits 23:16
+qN high register high byte  = 0
+```
+
+The target bank is copied directly from the pair into `CB`; `PB` is neither
+read nor modified. A diagnostic implementation may reject a nonzero high byte
+in the pair's high register. Optimized execution may treat such a noncanonical
+pointer as undefined.
+
 
 ### 5.3. E1 32-bit pair ALU extension page
 
@@ -208,11 +230,11 @@ bits 7:2   operation
 bits 1:0   source register
 ```
 
-The two-bit source field selects only `r0` through `r3`. Compact sources `r4` through `r7` use their one-byte primary forms or the compact `F4` page. The accumulator logical operations `AND`, `OR`, `XOR`, and `BIC` are omitted from E2 because the one-byte `50–6F` forms already accept all eight source registers. Each operation below therefore occupies four consecutive secondary-byte values.
+The two-bit source field selects only `r0` through `r3`. Compact sources `r4` through `r7` use their one-byte primary forms or the compact `F4` page. The accumulator logical operations `AND`, `OR`, `XOR`, and `BIC` are omitted from E2 because the one-byte accumulator forms already accept every non-self source register. `MOV A,rS` is also omitted because E3 `MOV16 A,rS` has identical semantics and length. Each remaining operation occupies four consecutive secondary-byte values.
 
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
-| `E2 00–03` | `MOV A,rS` | Copy non-compact register rS into A. | 2 | ≈34 | Preserve | rS is `r0` through `r3`, selected by bits 1:0. |
+| `E2 00–03` | `Reserved` | Reserved former `MOV A,rS` encodings. | — | — | — | Use E3 `MOV16 A,rS`. |
 | `E2 04–07` | `ADD.NF A,rS` | A = A + rS modulo 2^16 without changing CC. | 2 | ≈34 | Preserve | Compact sources use `F4 ADD.NF`; use the one-byte `ADD` when replacing CC is acceptable. |
 | `E2 08–0B` | `SUB.NF A,rS` | A = A - rS modulo 2^16 without changing CC. | 2 | ≈34 | Preserve | Compact sources use `F4 SUB.NF`; use the one-byte `SUB` when replacing CC is acceptable. |
 | `E2 0C–0F` | `CMP16 A,rS` | Set CC from a 16-bit comparison. | 2 | ≈34 | Replace C/Z/S | Compact sources use the one-byte primary `CMP16` forms. |
@@ -256,16 +278,16 @@ The two-bit source field selects only `r0` through `r3`. Compact sources `r4` th
 | Encoding | Mnemonic | Function | Bytes | Estimated AVR cycles | CC | Notes |
 |---|---|---|---:|---:|---|---|
 | `F0–F3 imm8` | `LDI8 cD,imm8` | Load an 8-bit immediate into a compact register and zero-extend it. | 2 | ≈34 | Preserve |  |
-| `F4 0ddss` | `MOV cD,cS (extended)` | Alternate compact-page move. | 2 | ≈34 | Preserve | Normally dominated by the one-byte primary MOV encoding. |
-| `F4 1ddss` | `ADD.NF cD,cS` | Non-flagging compact-page 16-bit add. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `ADD`. |
-| `F4 2ddss` | `SUB.NF cD,cS` | Non-flagging compact-page 16-bit subtract. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `SUB`. |
-| `F4 3ddss`, `dd≠00` | `AND cD,cS` | Compact 16-bit bitwise AND. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `AND A,rS`. |
-| `F4 4ddss`, `dd≠00` | `OR cD,cS` | Compact 16-bit bitwise OR. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `OR A,rS`. |
-| `F4 5ddss`, `dd≠00` | `XOR cD,cS` | Compact 16-bit bitwise XOR. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `XOR A,rS`. |
-| `F4 6ddss`, `dd≠00` | `BIC cD,cS` | Compact 16-bit bit clear: cD = cD & ~cS. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; `c0`/A uses one-byte `BIC A,rS`. |
-| `F4 30–33, 40–43, 50–53, 60–63` | `Reserved` | Removed compact logical encodings with destination `c0`/A. | — | — | — | The equivalent one-byte accumulator opcodes `50–6F` accept all eight source registers. |
-| `F4 7ddss` | `CMP16 cL,cR (extended)` | Alternate compact-page 16-bit compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP16 encoding. |
-| `F4 8ddss` | `CMP8 cL,cR (extended)` | Alternate compact-page low-byte compare. | 2 | ≈34 | Replace C/Z/S | Normally dominated by the one-byte primary CMP8 encoding. |
+| `F4 00–0F` | `Reserved` | Reserved former extended compact `MOV` encodings. | — | — | — | Off-diagonal moves use primary `00–0F`; self-moves use `NOP`. |
+| `F4 1ddss` | `ADD.NF cD,cS` | Non-flagging compact-page 16-bit add. | 2 | ≈34 | Preserve | Use when CC must survive; otherwise prefer the one-byte flag-producing `ADD`. Diagonal forms provide flag-preserving left shifts. |
+| `F4 2ddss`, `dd≠ss` | `SUB.NF cD,cS` | Non-flagging compact-page 16-bit subtract. | 2 | ≈34 | Preserve | Diagonal forms are reserved because `SUB.NF cN,cN` is exactly `CLR cN`. |
+| `F4 20/25/2A/2F` | `Reserved` | Reserved diagonal `SUB.NF cN,cN` encodings. | — | — | — | Use `CLR cN`. |
+| `F4 3ddss`, `dd≠00`, `dd≠ss` | `AND cD,cS` | Compact 16-bit bitwise AND. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; self-AND is `NOP`. |
+| `F4 4ddss`, `dd≠00`, `dd≠ss` | `OR cD,cS` | Compact 16-bit bitwise OR. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; self-OR is `NOP`. |
+| `F4 5ddss`, `dd≠00`, `dd≠ss` | `XOR cD,cS` | Compact 16-bit bitwise XOR. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; self-XOR is `CLR cN`. |
+| `F4 6ddss`, `dd≠00`, `dd≠ss` | `BIC cD,cS` | Compact 16-bit bit clear: cD = cD & ~cS. | 2 | ≈34 | Preserve | Destination is `c1` through `c3`; self-BIC is `CLR cN`. |
+| `F4 30–33, 35/3A/3F, 40–43, 45/4A/4F, 50–53, 55/5A/5F, 60–63, 65/6A/6F` | `Reserved` | Reserved compact logical duplicates and self-operation degeneracies. | — | — | — | Use one-byte accumulator forms, `NOP`, or `CLR` as appropriate. |
+| `F4 70–8F` | `Reserved` | Reserved former extended compact `CMP16` and `CMP8` encodings. | — | — | — | Off-diagonal compares use one-byte primary forms; diagonal self-compares are not retained as architectural operations. |
 | `F4 9ddss` | `MULU8 cD,cS` | Unsigned 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–36 | Preserve |  |
 | `F4 Addss` | `MULS8 cD,cS` | Signed 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–38 | Preserve |  |
 | `F4 Bddss` | `MULSU8 cD,cS` | Signed-by-unsigned 8×8 multiply into a 16-bit compact destination. | 2 | ≈34–38 | Preserve |  |
@@ -335,15 +357,57 @@ The one-byte short-branch encoding deliberately omits displacement `-1`. Because
 
 ## 7. Encoding issues to resolve before freezing the ISA
 
-### 7.1 Flag-preserving F4 arithmetic, E2 source specialization, and remaining duplicates
+### 7.1 Duplicate encodings removed before ISA freeze
 
-The `F4` `ADD.NF` and `SUB.NF` forms are intentionally retained as non-flagging alternatives to the one-byte compact `ADD` and `SUB`; LLVM can use them when CC is live across an arithmetic operation. E2 now covers only non-compact sources `r0` through `r3`; compact-source accumulator operations use the one-byte primary encodings or F4. E2 does not duplicate `AND`, `OR`, `XOR`, or `BIC`, because the one-byte accumulator forms already accept all eight registers. For the same reason, the F4 logical encodings with destination `c0`/A (`30–33`, `40–43`, `50–53`, and `60–63`) are reserved; only destinations `c1` through `c3` remain valid in those families. Extended `F4` `MOV`, `CMP16`, and `CMP8` remain true duplicates of one-byte primary forms and should probably be reassigned or reserved before the ISA is frozen.
+The ISA now reserves dedicated encodings that are equal to or dominated by an
+existing canonical instruction:
 
-### 7.2 CMPI6 remains partly decoded at run time
+- Primary `AND A,A` and `OR A,A` use `NOP`; primary `XOR A,A` and `BIC A,A`
+  use `CLR c0`.
+- E2 `MOV A,r0-r3` uses E3 `MOV16 A,rS`.
+- F4 extended `MOV`, `CMP16`, and `CMP8` are removed.
+- F4 diagonal `SUB.NF`, `AND`, `OR`, `XOR`, and `BIC` encodings are removed
+  where they collapse exactly to `CLR` or `NOP`.
+- The redundant E0 forms listed in section 7.5 remain reserved.
+
+Assemblers may accept convenient aliases, but must emit the canonical encoding.
+Code generators and disassemblers must not produce the reserved forms.
+
+### 7.2 Canonical code-pointer representation
+
+Program and function pointers are always 24-bit values. In memory they occupy
+three packed little-endian bytes; in registers they occupy one canonical
+aligned `qN` pair. `JMPP` and `CALLP` consume that pair directly and preserve
+`PB`.
+
+`PB:rN` remains only a program-data addressing form. It is not the ABI
+representation of a live function pointer.
+
+### 7.3 Intentional overlapping general forms retained
+
+Some semantically overlapping encodings remain because removing them would
+fragment an otherwise useful general form or add checks to hot interpreter
+paths:
+
+- E3 `MOV16` remains legal for compact-register operands, although assemblers
+  should choose the one-byte primary compact move or `NOP` when possible.
+- FD generic memory forms remain legal when all operands are compact, although
+  assemblers should choose the corresponding one-byte compact load/store.
+- Narrow immediates may fit wider immediate instructions, displaced forms may
+  use displacement zero, and relative/absolute/far control forms may overlap
+  in range. These are intentional width/range alternatives.
+- Short equality branches and general equality branches intentionally overlap;
+  relaxation should choose the shortest form that reaches.
+
+These are canonicalization opportunities, not reserved encodings, because
+invalidating them would complicate decoding without reclaiming a practical
+contiguous opcode family.
+
+### 7.4 CMPI6 remains partly decoded at run time
 
 The direct two-byte `CMPI6` is much cheaper than the current three-byte extended form, but its packed register field still requires a small address calculation. Four dedicated primary opcodes would reduce the estimate toward 34 cycles, but would consume three additional primary slots.
 
-### 7.3 Redundant E0 forms are intentionally omitted
+### 7.5 Redundant E0 forms are intentionally omitted
 
 E0 keeps register-indexed forms only when no equal-or-better encoding already
 exists elsewhere:
@@ -362,15 +426,15 @@ exists elsewhere:
 Code generators, assemblers, and disassemblers must not treat the reserved E0
 ranges as valid encodings.
 
-### 7.4 Variable shifts are still loop operations
+### 7.6 Variable shifts are still loop operations
 
 Operand specialization removes register decode, but AVR has no variable-count word shift. Their run time therefore remains proportional to the shift count. LLVM should use fixed shifts, strength reduction, or helper sequences when profitable.
 
-### 7.5 CSETM is intentionally omitted
+### 7.7 CSETM is intentionally omitted
 
 This report assigns the final quarter of the `E3` page to `CSET`. A full-width all-zero/all-one mask can be formed as `CSET` followed by flag-neutral `NEG16`. A dedicated `CSETM` can be added later if profiling justifies another encoding.
 
-### 7.6 Compact stack-relative forms are omitted
+### 7.8 Compact stack-relative forms are omitted
 
 The earlier compact `LDSP/STSP` forms are not assigned in this map. Stack slots use the `FD` three-byte `u8` forms. Restoring two-byte compact stack forms may be worthwhile if frame-offset profiling shows they are among the most frequent instructions.
 
@@ -397,4 +461,4 @@ Before freezing the cost model:
 4. Measure program-space loads with both one-byte and two-byte results.
 5. Feed measured costs into LLVM scheduling and instruction-cost hooks.
 
-**Instruction-form rows in this report:** 150
+**Instruction-form rows in this report:** 156

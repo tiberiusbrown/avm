@@ -265,22 +265,23 @@ The ordinary sequential path MUST NOT propagate `PC` overflow into `CB`. Linker 
 
 ## 10. Program-address bank latch
 
-`PB` is a separate bank latch used to construct program-space addresses:
+`PB` is a separate bank latch used only to construct program-data addresses:
 
 ```text
-program-space address = PB:rN
+program-data address = PB:rN
 ```
-
-`PB` is used for program-data access and indirect far control flow.
 
 `PB` is distinct from `CB`:
 
 ```text
 CB:PC  = current bytecode execution address
-PB:rN  = independently constructed program-space address
+PB:rN  = independently constructed program-data address
 ```
 
 Changing `PB` does not affect sequential instruction execution.
+
+Indirect jumps and calls do not consume `PB`; they consume a canonical 24-bit
+program or function pointer held in an aligned `qN` pair.
 
 `PB` is caller-saved under the ABI.
 
@@ -646,6 +647,23 @@ Program-pointer arithmetic is unsigned 24-bit arithmetic.
 Data-space and program-space pointers belong to disjoint address spaces. Implicit conversion between them is forbidden.
 
 Explicit integer conversion may be supported as a target extension, but a converted pointer is meaningful only in the destination address space when the program explicitly establishes that contract.
+
+### 22.4 Indirect control-flow use
+
+An indirect jump, call, or tail call consumes a canonical register-form pointer
+in one aligned `qN` pair:
+
+```text
+bits 15:0   = low register of qN
+bits 23:16  = low byte of the high register
+bits 31:24  = zero
+```
+
+The instruction copies bits `23:16` into `CB` and bits `15:0` into `PC`.
+`PB` is not an operand and is preserved by the indirect-control instruction.
+
+A diagnostic implementation may reject a nonzero `bits 31:24`. Optimized
+execution may treat a noncanonical register-form program pointer as undefined.
 
 ---
 
@@ -1065,7 +1083,9 @@ Instructions that replace or consume `CC` must model the corresponding implicit 
 
 The scheduler and peephole passes must not move a `CC`-defining operation across a dependent branch or condition materialization.
 
-Operations that access or replace `PB` must model it explicitly. Calls and system services model their ABI clobbers.
+Operations that access or replace `PB` must model it explicitly. Indirect
+jump/call instructions consume a `qN` pointer and do not use or define `PB`.
+Calls and system services model their ABI clobbers.
 
 Because dispatch overwrites native `SREG`, compiler-visible `CC` represents saved architectural state, not transient native flags.
 
@@ -1077,7 +1097,8 @@ The default code model is large.
 
 Unresolved direct calls and jumps should initially use relaxable relocations that permit the linker to select the shortest valid final form.
 
-Indirect function calls use the packed 24-bit function-pointer representation.
+Indirect function calls and indirect tail calls consume the canonical 24-bit
+function-pointer representation in an aligned `qN` pair. They do not use `PB`.
 
 The initial C++ environment should support:
 
@@ -1719,6 +1740,13 @@ Execution address:
 
 Program-data address:
     PB:rN
+
+Indirect code-pointer operand:
+    canonical 24-bit pointer in qN
+    low register = bits 15:0
+    low byte of high register = bits 23:16
+    high byte of high register = 0
+    PB is preserved
 
 Code banks:
     256 banks

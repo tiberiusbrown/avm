@@ -118,3 +118,8 @@
    36   OR c2,c3
    36   XOR c2,c3
    36   BIC c2,c3
+   34   LDPBI 0
+  266   LDP8 r0,[PB:r6]
+  281   LDP16 r0,[PB:r6]
+  278   LDP8 r0,[PB:r6+4]
+  293   LDP16 r0,[PB:r6+4]

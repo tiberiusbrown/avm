@@ -912,8 +912,23 @@ emit_unimplemented_primary 0xE2, I_E2__ext_accumulator
     rjmp e7_adjsp_func
     handler_end 0xE7
 
-; LDPBI remains intentionally unimplemented.
-emit_unimplemented_primary 0xE8, I_E8__LDPBI_imm8
+    handler_begin 0xE8, I_E8__LDPBI_imm8
+
+    ; The immediate transfer was started by the preceding dispatch. Match the
+    ; direct LDI8 cadence: read imm8 while starting the following opcode, then
+    ; install the new program-data bank without changing AVM CC.
+    delay_4
+    delay_3
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    adiw VM_PC, 1
+    out  VM_PB, r6
+    rjmp ldi8_dispatch_reverse_func
+
+    handler_end 0xE8
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE9: SYS service8
@@ -2329,18 +2344,191 @@ fd_stm16_family:
     rjmp fd_finish_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FD 80-83: program-space loads remain intentionally unimplemented
+; FD 80-83: program-space loads
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; Program-space operands use the same pre-scaled RRSPEC layout as the other FD
+; two-register forms: high nibble = rD, low nibble = rA. The complete logical
+; source address is PB:rA. All source address bytes and the destination data-
+; space pointer are captured before the destination is written, so rD == rA is
+; well-defined for both byte and word loads.
+;
+; fx_read_data_bytes is shared by all four handlers. It reads from a logical
+; image-relative 24-bit address and leaves X one byte beyond the copied data.
+
+; FD 80 RRSPEC: LDP8 rD,[PB:rA]
 fd_ldp8_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6          ; X = destination register low byte
+    fd_decode_low_z r6           ; Z = address register low byte
+    ld   r4, Z+                  ; logical address bits 7:0
+    ld   r5, Z                   ; logical address bits 15:8
+    in   r6, VM_PB               ; logical address bits 23:16
+
+    ; PC currently names RRSPEC. Resume at the following primary opcode after
+    ; the data read has interrupted the sequential code stream.
+    adiw VM_PC, 1
+    ldi  r30, 1
+    clr  r31
+    rcall fx_read_data_bytes
+
+    ; The byte load zero-extends. fx_read_data_bytes left X at rD.high.
+    st   X, ZERO
+    jmp  seek_and_dispatch_current_pc_func
+
+; FD 81 RRSPEC: LDP16 rD,[PB:rA]
 fd_ldp16_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6
+    fd_decode_low_z r6
+    ld   r4, Z+
+    ld   r5, Z
+    in   r6, VM_PB
+
+    adiw VM_PC, 1
+    ldi  r30, 2
+    clr  r31
+    rcall fx_read_data_bytes
+    jmp  seek_and_dispatch_current_pc_func
+
+; FD 82 RRSPEC disp8: LDP8 rD,[PB:rA+simm8]
 fd_ldp8_displaced_family:
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6
+    fd_decode_low_z r6
+    ld   r4, Z+
+    ld   r5, Z
+
+    ; Read simm8 while starting a speculative transfer of the following opcode.
+    ; Add the signed displacement to the complete 24-bit PB:rA address without
+    ; modifying PB or rA.
+    fd_fetch_displacement r30
+    in   r6, VM_PB
+    add  r4, r30
+    adc  r5, ZERO
+    adc  r6, ZERO
+    sbrs r30, 7
+    rjmp 1f
+    ldi  r31, 1
+    sub  r5, r31
+    sbc  r6, ZERO
+1:
+    adiw VM_PC, 1
+    ldi  r30, 1
+    clr  r31
+    rcall fx_read_data_bytes
+
+    st   X, ZERO
+    jmp  seek_and_dispatch_current_pc_func
+
+; FD 83 RRSPEC disp8: LDP16 rD,[PB:rA+simm8]
 fd_ldp16_displaced_family:
-    rjmp unimplemented_instruction_func
+    fd_fetch_rrspec
+
+    fd_decode_high_x r6
+    fd_decode_low_z r6
+    ld   r4, Z+
+    ld   r5, Z
+
+    fd_fetch_displacement r30
+    in   r6, VM_PB
+    add  r4, r30
+    adc  r5, ZERO
+    adc  r6, ZERO
+    sbrs r30, 7
+    rjmp 1f
+    ldi  r31, 1
+    sub  r5, r31
+    sbc  r6, ZERO
+1:
+    adiw VM_PC, 1
+    ldi  r30, 2
+    clr  r31
+    rcall fx_read_data_bytes
+    jmp  seek_and_dispatch_current_pc_func
 
 ; The next opcode has long since completed transferring.
 dispatch_func:
     dispatch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Generic program-data read
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Read a nonzero number of bytes from an image-relative logical program address
+; into AVR data space. This is deliberately generic so SYS services such as a
+; future memcpy_P can use the same optimized flash transaction.
+;
+; Input:
+;   r6:r5:r4 = logical source address, high:middle:low
+;   X         = destination data-space pointer
+;   r31:r30   = nonzero byte count
+;
+; Output:
+;   X         = one byte past the copied range
+;
+; Clobbers r0:r1, r4:r6, r30:r31. Preserves native SREG and every AVM register
+; except bytes explicitly addressed through X, and does not modify VM_FLAGS.
+; The routine closes the flash transaction before returning; callers that
+; interrupted bytecode execution must subsequently restart the code stream.
+fx_read_data_bytes:
+    ; Preserve the count while r30 is used for the READ command and image-base
+    ; addition. r0:r1 are otherwise interpreter scratch outside MUL dispatch.
+    movw r0, r30
+
+    fx_disable
+    ldi  r30, SFC_READ
+    fx_enable
+    out  SPDR, r30
+
+    ; Translate the image-relative logical address to a physical flash address:
+    ; physical = (data_page_data << 8) + logical.
+    lds  r30, data_page_data+0
+    add  r5, r30
+    lds  r30, data_page_data+1
+    adc  r6, r30
+
+    rcall fx_seek_delay_11
+    out  SPDR, r6
+
+    ; The logical high address byte is no longer needed. Keep saved SREG in r6
+    ; and shorten this delay by one cycle so address writes remain 17 apart.
+    in   r6, SREG
+    rcall fx_seek_delay_16
+    out  SPDR, r5
+    rcall fx_seek_delay_17
+    out  SPDR, r4
+    rcall fx_seek_delay_16
+    out  SPDR, ZERO
+
+    ; Restore and predecrement the count. A one-byte request skips directly to
+    ; the final read; longer requests use a 17-cycle pipelined transfer loop.
+    movw r30, r0
+    sbiw r30, 1
+    delay_2
+    breq 2f
+    delay_2
+
+1:
+    rcall fx_seek_delay_7
+    cli
+    out  SPDR, ZERO
+    in   r0, SPDR
+    out  SREG, r6
+    st   X+, r0
+    subi r30, 1
+    sbci r31, 0
+    brne 1b
+
+2:
+    rcall fx_seek_delay_9
+    in   r0, SPDR
+    st   X+, r0
+    fx_disable
+    ret
 
 ; seek to PC (CB/PC)
 fx_seek_to_pc:
@@ -2367,10 +2555,22 @@ fx_seek_to_pc:
     rcall fx_seek_delay_10
     ret
 
+; Fixed delay ladder. Each name denotes total cycles from the calling RCALL
+; through the returning RET, matching the cadence used by the SPI pipeline.
 fx_seek_delay_17:
-    rcall fx_seek_delay_7
+    nop
+fx_seek_delay_16:
+    delay_2
+fx_seek_delay_14:
+    ; Three-cycle fall-through delay that does not clobber r0.
+    delay_2
+    nop
+fx_seek_delay_11:
+    nop
 fx_seek_delay_10:
-    lpm
+    nop
+fx_seek_delay_9:
+    delay_2
 fx_seek_delay_7:
     ret
 

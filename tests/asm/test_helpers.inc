@@ -68,13 +68,6 @@
     print_reg16 \dst
 .endm
 
-.macro test_and_a src, opcode, av, sv
-    ldi8 c0, \av
-    ldi8 \src, \sv
-    .byte \opcode
-    print_reg16 c0
-.endm
-
 .macro test_swap reg, value
     ldi8 \reg, \value
     swap8 \reg

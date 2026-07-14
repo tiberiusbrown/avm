@@ -133,3 +133,9 @@
    64   CMP32 q0,q1
   130   JMPP q0
   146   CALLP q0
+   38   MULU8 A,r0
+   39   MULS8 A,r1
+   39   MULSU8 A,r2
+   36   MULU8 c1,c2
+   36   MULS8 c2,c3
+   36   MULSU8 c3,c1

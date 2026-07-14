@@ -848,6 +848,18 @@ emit_st16 0x4D, I_4D__ST16_c3_c1, VM_C3, VM_C1L, VM_C1H
 emit_st16 0x4E, I_4E__ST16_c3_c2, VM_C3, VM_C2L, VM_C2H
 emit_st16 0x4F, I_4F__ST16_c3_c3, VM_C3, VM_C3L, VM_C3H
 
+.macro emit_unimplemented_primary opcode, label
+    handler_begin \opcode, \label
+    jmp  unimplemented_instruction_func
+    handler_end \opcode
+.endm
+
+.macro emit_invalid_primary opcode, label
+    handler_begin \opcode, \label
+    jmp  invalid_primary_instruction_func
+    handler_end \opcode
+.endm
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x50-0x57: AND A, rS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -868,7 +880,7 @@ emit_and_a 0x50, I_50__AND_A_r0, VM_R0L, VM_R0H
 emit_and_a 0x51, I_51__AND_A_r1, VM_R1L, VM_R1H
 emit_and_a 0x52, I_52__AND_A_r2, VM_R2L, VM_R2H
 emit_and_a 0x53, I_53__AND_A_r3, VM_R3L, VM_R3H
-emit_and_a 0x54, I_54__AND_A_r4, VM_R4L, VM_R4H
+emit_invalid_primary 0x54, I_54__RESERVED_AND_A_A
 emit_and_a 0x55, I_55__AND_A_r5, VM_R5L, VM_R5H
 emit_and_a 0x56, I_56__AND_A_r6, VM_R6L, VM_R6H
 emit_and_a 0x57, I_57__AND_A_r7, VM_R7L, VM_R7H
@@ -893,7 +905,7 @@ emit_logic_a 0x58, I_58__OR_A_r0,  or,  VM_R0L, VM_R0H
 emit_logic_a 0x59, I_59__OR_A_r1,  or,  VM_R1L, VM_R1H
 emit_logic_a 0x5A, I_5A__OR_A_r2,  or,  VM_R2L, VM_R2H
 emit_logic_a 0x5B, I_5B__OR_A_r3,  or,  VM_R3L, VM_R3H
-emit_logic_a 0x5C, I_5C__OR_A_r4,  or,  VM_R4L, VM_R4H
+emit_invalid_primary 0x5C, I_5C__RESERVED_OR_A_A
 emit_logic_a 0x5D, I_5D__OR_A_r5,  or,  VM_R5L, VM_R5H
 emit_logic_a 0x5E, I_5E__OR_A_r6,  or,  VM_R6L, VM_R6H
 emit_logic_a 0x5F, I_5F__OR_A_r7,  or,  VM_R7L, VM_R7H
@@ -902,7 +914,7 @@ emit_logic_a 0x60, I_60__XOR_A_r0, eor, VM_R0L, VM_R0H
 emit_logic_a 0x61, I_61__XOR_A_r1, eor, VM_R1L, VM_R1H
 emit_logic_a 0x62, I_62__XOR_A_r2, eor, VM_R2L, VM_R2H
 emit_logic_a 0x63, I_63__XOR_A_r3, eor, VM_R3L, VM_R3H
-emit_logic_a 0x64, I_64__XOR_A_r4, eor, VM_R4L, VM_R4H
+emit_invalid_primary 0x64, I_64__RESERVED_XOR_A_A
 emit_logic_a 0x65, I_65__XOR_A_r5, eor, VM_R5L, VM_R5H
 emit_logic_a 0x66, I_66__XOR_A_r6, eor, VM_R6L, VM_R6H
 emit_logic_a 0x67, I_67__XOR_A_r7, eor, VM_R7L, VM_R7H
@@ -912,7 +924,7 @@ emit_logic_a 0x67, I_67__XOR_A_r7, eor, VM_R7L, VM_R7H
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; BIC computes A &= ~rS without modifying rS. MOVW copies the complete source
-; before A is changed, which also gives BIC A,A the expected zero result.
+; before A is changed. The self-form BIC A,A is reserved and traps.
 ; MOVW + COM + COM + AND + AND is exactly five pre-dispatch cycles.
 .macro emit_bic_a opcode, label, src
     handler_begin \opcode, \label
@@ -929,22 +941,10 @@ emit_bic_a 0x68, I_68__BIC_A_r0, VM_R0
 emit_bic_a 0x69, I_69__BIC_A_r1, VM_R1
 emit_bic_a 0x6A, I_6A__BIC_A_r2, VM_R2
 emit_bic_a 0x6B, I_6B__BIC_A_r3, VM_R3
-emit_bic_a 0x6C, I_6C__BIC_A_r4, VM_R4
+emit_invalid_primary 0x6C, I_6C__RESERVED_BIC_A_A
 emit_bic_a 0x6D, I_6D__BIC_A_r5, VM_R5
 emit_bic_a 0x6E, I_6E__BIC_A_r6, VM_R6
 emit_bic_a 0x6F, I_6F__BIC_A_r7, VM_R7
-
-.macro emit_unimplemented_primary opcode, label
-    handler_begin \opcode, \label
-    jmp  unimplemented_instruction_func
-    handler_end \opcode
-.endm
-
-.macro emit_invalid_primary opcode, label
-    handler_begin \opcode, \label
-    jmp  invalid_primary_instruction_func
-    handler_end \opcode
-.endm
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x70-0x77: PUSH16 rS
@@ -1208,8 +1208,14 @@ emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
     jmp  e1_extension_decode_func
     handler_end 0xE1
 
-; The E2 accumulator page remains unimplemented.
-emit_unimplemented_primary 0xE2, I_E2__ext_accumulator
+; E2 is the accumulator/noncompact-source ALU page. Multiplication is
+; implemented here; the remaining defined operations retain the unimplemented
+; trap, while reserved encodings use the invalid-secondary trap.
+    handler_begin 0xE2, I_E2__ext_accumulator
+    adiw VM_PC, 1
+    delay_2
+    jmp  e2_extension_decode_func
+    handler_end 0xE2
 
     handler_begin 0xE3, I_E3__ext_transfer_condition
 
@@ -3799,18 +3805,17 @@ f4_extension_decode_func:
 ;   bits 3:2 = compact destination c0-c3
 ;   bits 1:0 = compact source c0-c3
 ;
-; The implemented 10-2F and 34-3F/44-4F/54-5F/64-6F ranges use
-; operand-specialized executable slots. Logical destinations c0/A are
-; reserved because the one-byte accumulator forms already cover them.
-; Decoder OUT-to-slot-entry timing leaves eight cycles before the next OUT.
-; Arithmetic/logical slots use delay_3 + two native operations + RJMP;
-; BIC uses MOVW + COM + COM + AND + AND + RJMP. The local dispatch then
-; issues its OUT exactly 17 cycles after the decoder OUT, retaining the
-; intended approximately 34-cycle cadence for the two-byte instruction.
-; Native SREG changes are not copied to VM_FLAGS, so AVM CC is preserved.
+; The implemented arithmetic, logical, and multiply ranges use
+; operand-specialized executable slots. Logical destinations c0/A and all
+; architecturally reserved duplicate/self encodings dispatch to the invalid
+; trap. Decoder OUT-to-slot-entry timing leaves eight cycles before the next
+; OUT. Arithmetic/logical slots and native two-cycle multiply slots are padded
+; so the local dispatch issues its OUT exactly 17 cycles after the decoder OUT,
+; retaining the intended approximately 34-cycle cadence. Native SREG changes
+; are not copied to VM_FLAGS, so AVM CC is preserved.
 
 f4_secondary_table:
-    secondary_entries 16, f4_unimplemented_instruction_func ; 00-0F MOV
+    secondary_entries 16, f4_invalid_secondary_instruction_func ; 00-0F reserved MOV duplicates
     ; 10-1F ADD.NF
     rjmp f4_add_nf_c0_c0
     rjmp f4_add_nf_c0_c1
@@ -3828,81 +3833,145 @@ f4_secondary_table:
     rjmp f4_add_nf_c3_c1
     rjmp f4_add_nf_c3_c2
     rjmp f4_add_nf_c3_c3
-    ; 20-2F SUB.NF
-    rjmp f4_sub_nf_c0_c0
+    ; 20-2F SUB.NF; diagonal forms are reserved aliases of CLR
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_sub_nf_c0_c1
     rjmp f4_sub_nf_c0_c2
     rjmp f4_sub_nf_c0_c3
     rjmp f4_sub_nf_c1_c0
-    rjmp f4_sub_nf_c1_c1
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_sub_nf_c1_c2
     rjmp f4_sub_nf_c1_c3
     rjmp f4_sub_nf_c2_c0
     rjmp f4_sub_nf_c2_c1
-    rjmp f4_sub_nf_c2_c2
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_sub_nf_c2_c3
     rjmp f4_sub_nf_c3_c0
     rjmp f4_sub_nf_c3_c1
     rjmp f4_sub_nf_c3_c2
-    rjmp f4_sub_nf_c3_c3
-    ; 30-3F AND; 30-33 are reserved c0/A destinations
-    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    ; 30-3F AND; c0 destinations and self-forms are reserved
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_and_c1_c0
-    rjmp f4_and_c1_c1
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_and_c1_c2
     rjmp f4_and_c1_c3
     rjmp f4_and_c2_c0
     rjmp f4_and_c2_c1
-    rjmp f4_and_c2_c2
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_and_c2_c3
     rjmp f4_and_c3_c0
     rjmp f4_and_c3_c1
     rjmp f4_and_c3_c2
-    rjmp f4_and_c3_c3
-    ; 40-4F OR; 40-43 are reserved c0/A destinations
-    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    ; 40-4F OR; c0 destinations and self-forms are reserved
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_or_c1_c0
-    rjmp f4_or_c1_c1
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_or_c1_c2
     rjmp f4_or_c1_c3
     rjmp f4_or_c2_c0
     rjmp f4_or_c2_c1
-    rjmp f4_or_c2_c2
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_or_c2_c3
     rjmp f4_or_c3_c0
     rjmp f4_or_c3_c1
     rjmp f4_or_c3_c2
-    rjmp f4_or_c3_c3
-    ; 50-5F XOR; 50-53 are reserved c0/A destinations
-    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    ; 50-5F XOR; c0 destinations and self-forms are reserved
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_xor_c1_c0
-    rjmp f4_xor_c1_c1
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_xor_c1_c2
     rjmp f4_xor_c1_c3
     rjmp f4_xor_c2_c0
     rjmp f4_xor_c2_c1
-    rjmp f4_xor_c2_c2
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_xor_c2_c3
     rjmp f4_xor_c3_c0
     rjmp f4_xor_c3_c1
     rjmp f4_xor_c3_c2
-    rjmp f4_xor_c3_c3
-    ; 60-6F BIC; 60-63 are reserved c0/A destinations
-    secondary_entries 4, f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    ; 60-6F BIC; c0 destinations and self-forms are reserved
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_bic_c1_c0
-    rjmp f4_bic_c1_c1
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_bic_c1_c2
     rjmp f4_bic_c1_c3
     rjmp f4_bic_c2_c0
     rjmp f4_bic_c2_c1
-    rjmp f4_bic_c2_c2
+    rjmp f4_invalid_secondary_instruction_func
     rjmp f4_bic_c2_c3
     rjmp f4_bic_c3_c0
     rjmp f4_bic_c3_c1
     rjmp f4_bic_c3_c2
-    rjmp f4_bic_c3_c3
-    secondary_entries 128, f4_unimplemented_instruction_func ; 70-EF
-    secondary_entries 16, f4_invalid_secondary_instruction_func ; F0-FF
+    rjmp f4_invalid_secondary_instruction_func
+    secondary_entries 32, f4_invalid_secondary_instruction_func ; 70-8F reserved CMP duplicates
+    ; 90-9F MULU8 cD,cS
+    rjmp f4_mulu8_c0_c0
+    rjmp f4_mulu8_c0_c1
+    rjmp f4_mulu8_c0_c2
+    rjmp f4_mulu8_c0_c3
+    rjmp f4_mulu8_c1_c0
+    rjmp f4_mulu8_c1_c1
+    rjmp f4_mulu8_c1_c2
+    rjmp f4_mulu8_c1_c3
+    rjmp f4_mulu8_c2_c0
+    rjmp f4_mulu8_c2_c1
+    rjmp f4_mulu8_c2_c2
+    rjmp f4_mulu8_c2_c3
+    rjmp f4_mulu8_c3_c0
+    rjmp f4_mulu8_c3_c1
+    rjmp f4_mulu8_c3_c2
+    rjmp f4_mulu8_c3_c3
+    ; A0-AF MULS8 cD,cS
+    rjmp f4_muls8_c0_c0
+    rjmp f4_muls8_c0_c1
+    rjmp f4_muls8_c0_c2
+    rjmp f4_muls8_c0_c3
+    rjmp f4_muls8_c1_c0
+    rjmp f4_muls8_c1_c1
+    rjmp f4_muls8_c1_c2
+    rjmp f4_muls8_c1_c3
+    rjmp f4_muls8_c2_c0
+    rjmp f4_muls8_c2_c1
+    rjmp f4_muls8_c2_c2
+    rjmp f4_muls8_c2_c3
+    rjmp f4_muls8_c3_c0
+    rjmp f4_muls8_c3_c1
+    rjmp f4_muls8_c3_c2
+    rjmp f4_muls8_c3_c3
+    ; B0-BF MULSU8 cD,cS
+    rjmp f4_mulsu8_c0_c0
+    rjmp f4_mulsu8_c0_c1
+    rjmp f4_mulsu8_c0_c2
+    rjmp f4_mulsu8_c0_c3
+    rjmp f4_mulsu8_c1_c0
+    rjmp f4_mulsu8_c1_c1
+    rjmp f4_mulsu8_c1_c2
+    rjmp f4_mulsu8_c1_c3
+    rjmp f4_mulsu8_c2_c0
+    rjmp f4_mulsu8_c2_c1
+    rjmp f4_mulsu8_c2_c2
+    rjmp f4_mulsu8_c2_c3
+    rjmp f4_mulsu8_c3_c0
+    rjmp f4_mulsu8_c3_c1
+    rjmp f4_mulsu8_c3_c2
+    rjmp f4_mulsu8_c3_c3
+    secondary_entries 48, f4_unimplemented_instruction_func ; C0-EF defined variable shifts
+    secondary_entries 16, f4_invalid_secondary_instruction_func ; F0-FF reserved
 f4_secondary_table_end:
 
 .if ((f4_secondary_table_end - f4_secondary_table) != (256 * 2))
@@ -3946,78 +4015,127 @@ emit_f4_binary_slot f4_add_nf_c3_c2, add, adc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_add_nf_c3_c3, add, adc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ; F4 20-2F: SUB.NF cD,cS
-emit_f4_binary_slot f4_sub_nf_c0_c0, sub, sbc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_sub_nf_c0_c1, sub, sbc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_sub_nf_c0_c2, sub, sbc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_sub_nf_c0_c3, sub, sbc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_sub_nf_c1_c0, sub, sbc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_sub_nf_c1_c1, sub, sbc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_sub_nf_c1_c2, sub, sbc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_sub_nf_c1_c3, sub, sbc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_sub_nf_c2_c0, sub, sbc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_sub_nf_c2_c1, sub, sbc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_sub_nf_c2_c2, sub, sbc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_sub_nf_c2_c3, sub, sbc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_sub_nf_c3_c0, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_sub_nf_c3_c1, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_sub_nf_c3_c2, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_sub_nf_c3_c3, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ; F4 34-3F: AND cD,cS (cD = c1-c3)
 emit_f4_binary_slot f4_and_c1_c0, and, and, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_and_c1_c1, and, and, VM_C1L, VM_C1H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_and_c1_c2, and, and, VM_C1L, VM_C1H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_and_c1_c3, and, and, VM_C1L, VM_C1H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_and_c2_c0, and, and, VM_C2L, VM_C2H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_and_c2_c1, and, and, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_and_c2_c2, and, and, VM_C2L, VM_C2H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_and_c2_c3, and, and, VM_C2L, VM_C2H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_and_c3_c0, and, and, VM_C3L, VM_C3H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_and_c3_c1, and, and, VM_C3L, VM_C3H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_and_c3_c2, and, and, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_and_c3_c3, and, and, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ; F4 44-4F: OR cD,cS (cD = c1-c3)
 emit_f4_binary_slot f4_or_c1_c0, or, or, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_or_c1_c1, or, or, VM_C1L, VM_C1H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_or_c1_c2, or, or, VM_C1L, VM_C1H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_or_c1_c3, or, or, VM_C1L, VM_C1H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_or_c2_c0, or, or, VM_C2L, VM_C2H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_or_c2_c1, or, or, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_or_c2_c2, or, or, VM_C2L, VM_C2H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_or_c2_c3, or, or, VM_C2L, VM_C2H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_or_c3_c0, or, or, VM_C3L, VM_C3H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_or_c3_c1, or, or, VM_C3L, VM_C3H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_or_c3_c2, or, or, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_or_c3_c3, or, or, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ; F4 54-5F: XOR cD,cS (cD = c1-c3)
 emit_f4_binary_slot f4_xor_c1_c0, eor, eor, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_xor_c1_c1, eor, eor, VM_C1L, VM_C1H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_xor_c1_c2, eor, eor, VM_C1L, VM_C1H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_xor_c1_c3, eor, eor, VM_C1L, VM_C1H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_xor_c2_c0, eor, eor, VM_C2L, VM_C2H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_xor_c2_c1, eor, eor, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_xor_c2_c2, eor, eor, VM_C2L, VM_C2H, VM_C2L, VM_C2H
 emit_f4_binary_slot f4_xor_c2_c3, eor, eor, VM_C2L, VM_C2H, VM_C3L, VM_C3H
 emit_f4_binary_slot f4_xor_c3_c0, eor, eor, VM_C3L, VM_C3H, VM_C0L, VM_C0H
 emit_f4_binary_slot f4_xor_c3_c1, eor, eor, VM_C3L, VM_C3H, VM_C1L, VM_C1H
 emit_f4_binary_slot f4_xor_c3_c2, eor, eor, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_xor_c3_c3, eor, eor, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ; F4 64-6F: BIC cD,cS (cD = c1-c3)
 emit_f4_bic_slot f4_bic_c1_c0, VM_C1L, VM_C1H, VM_C0
-emit_f4_bic_slot f4_bic_c1_c1, VM_C1L, VM_C1H, VM_C1
 emit_f4_bic_slot f4_bic_c1_c2, VM_C1L, VM_C1H, VM_C2
 emit_f4_bic_slot f4_bic_c1_c3, VM_C1L, VM_C1H, VM_C3
 emit_f4_bic_slot f4_bic_c2_c0, VM_C2L, VM_C2H, VM_C0
 emit_f4_bic_slot f4_bic_c2_c1, VM_C2L, VM_C2H, VM_C1
-emit_f4_bic_slot f4_bic_c2_c2, VM_C2L, VM_C2H, VM_C2
 emit_f4_bic_slot f4_bic_c2_c3, VM_C2L, VM_C2H, VM_C3
 emit_f4_bic_slot f4_bic_c3_c0, VM_C3L, VM_C3H, VM_C0
 emit_f4_bic_slot f4_bic_c3_c1, VM_C3L, VM_C3H, VM_C1
 emit_f4_bic_slot f4_bic_c3_c2, VM_C3L, VM_C3H, VM_C2
-emit_f4_bic_slot f4_bic_c3_c3, VM_C3L, VM_C3H, VM_C3
+
+; F4 90-BF: compact 8x8 multiplies. All compact low bytes occupy AVR
+; r16-r23, so MULS and MULSU can operate on the architectural operands
+; directly. MUL writes r1:r0; MOVW installs the complete 16-bit result.
+.macro emit_f4_mul_slot label, operation, dst, dstl, srcl
+\label:
+    delay_2
+    \operation \dstl, \srcl
+    movw \dst, r0
+    rjmp f4_dispatch_func
+.endm
+
+; MULU8
+emit_f4_mul_slot f4_mulu8_c0_c0, mul, VM_C0, VM_C0L, VM_C0L
+emit_f4_mul_slot f4_mulu8_c0_c1, mul, VM_C0, VM_C0L, VM_C1L
+emit_f4_mul_slot f4_mulu8_c0_c2, mul, VM_C0, VM_C0L, VM_C2L
+emit_f4_mul_slot f4_mulu8_c0_c3, mul, VM_C0, VM_C0L, VM_C3L
+emit_f4_mul_slot f4_mulu8_c1_c0, mul, VM_C1, VM_C1L, VM_C0L
+emit_f4_mul_slot f4_mulu8_c1_c1, mul, VM_C1, VM_C1L, VM_C1L
+emit_f4_mul_slot f4_mulu8_c1_c2, mul, VM_C1, VM_C1L, VM_C2L
+emit_f4_mul_slot f4_mulu8_c1_c3, mul, VM_C1, VM_C1L, VM_C3L
+emit_f4_mul_slot f4_mulu8_c2_c0, mul, VM_C2, VM_C2L, VM_C0L
+emit_f4_mul_slot f4_mulu8_c2_c1, mul, VM_C2, VM_C2L, VM_C1L
+emit_f4_mul_slot f4_mulu8_c2_c2, mul, VM_C2, VM_C2L, VM_C2L
+emit_f4_mul_slot f4_mulu8_c2_c3, mul, VM_C2, VM_C2L, VM_C3L
+emit_f4_mul_slot f4_mulu8_c3_c0, mul, VM_C3, VM_C3L, VM_C0L
+emit_f4_mul_slot f4_mulu8_c3_c1, mul, VM_C3, VM_C3L, VM_C1L
+emit_f4_mul_slot f4_mulu8_c3_c2, mul, VM_C3, VM_C3L, VM_C2L
+emit_f4_mul_slot f4_mulu8_c3_c3, mul, VM_C3, VM_C3L, VM_C3L
+
+; MULS8
+emit_f4_mul_slot f4_muls8_c0_c0, muls, VM_C0, VM_C0L, VM_C0L
+emit_f4_mul_slot f4_muls8_c0_c1, muls, VM_C0, VM_C0L, VM_C1L
+emit_f4_mul_slot f4_muls8_c0_c2, muls, VM_C0, VM_C0L, VM_C2L
+emit_f4_mul_slot f4_muls8_c0_c3, muls, VM_C0, VM_C0L, VM_C3L
+emit_f4_mul_slot f4_muls8_c1_c0, muls, VM_C1, VM_C1L, VM_C0L
+emit_f4_mul_slot f4_muls8_c1_c1, muls, VM_C1, VM_C1L, VM_C1L
+emit_f4_mul_slot f4_muls8_c1_c2, muls, VM_C1, VM_C1L, VM_C2L
+emit_f4_mul_slot f4_muls8_c1_c3, muls, VM_C1, VM_C1L, VM_C3L
+emit_f4_mul_slot f4_muls8_c2_c0, muls, VM_C2, VM_C2L, VM_C0L
+emit_f4_mul_slot f4_muls8_c2_c1, muls, VM_C2, VM_C2L, VM_C1L
+emit_f4_mul_slot f4_muls8_c2_c2, muls, VM_C2, VM_C2L, VM_C2L
+emit_f4_mul_slot f4_muls8_c2_c3, muls, VM_C2, VM_C2L, VM_C3L
+emit_f4_mul_slot f4_muls8_c3_c0, muls, VM_C3, VM_C3L, VM_C0L
+emit_f4_mul_slot f4_muls8_c3_c1, muls, VM_C3, VM_C3L, VM_C1L
+emit_f4_mul_slot f4_muls8_c3_c2, muls, VM_C3, VM_C3L, VM_C2L
+emit_f4_mul_slot f4_muls8_c3_c3, muls, VM_C3, VM_C3L, VM_C3L
+
+; MULSU8
+emit_f4_mul_slot f4_mulsu8_c0_c0, mulsu, VM_C0, VM_C0L, VM_C0L
+emit_f4_mul_slot f4_mulsu8_c0_c1, mulsu, VM_C0, VM_C0L, VM_C1L
+emit_f4_mul_slot f4_mulsu8_c0_c2, mulsu, VM_C0, VM_C0L, VM_C2L
+emit_f4_mul_slot f4_mulsu8_c0_c3, mulsu, VM_C0, VM_C0L, VM_C3L
+emit_f4_mul_slot f4_mulsu8_c1_c0, mulsu, VM_C1, VM_C1L, VM_C0L
+emit_f4_mul_slot f4_mulsu8_c1_c1, mulsu, VM_C1, VM_C1L, VM_C1L
+emit_f4_mul_slot f4_mulsu8_c1_c2, mulsu, VM_C1, VM_C1L, VM_C2L
+emit_f4_mul_slot f4_mulsu8_c1_c3, mulsu, VM_C1, VM_C1L, VM_C3L
+emit_f4_mul_slot f4_mulsu8_c2_c0, mulsu, VM_C2, VM_C2L, VM_C0L
+emit_f4_mul_slot f4_mulsu8_c2_c1, mulsu, VM_C2, VM_C2L, VM_C1L
+emit_f4_mul_slot f4_mulsu8_c2_c2, mulsu, VM_C2, VM_C2L, VM_C2L
+emit_f4_mul_slot f4_mulsu8_c2_c3, mulsu, VM_C2, VM_C2L, VM_C3L
+emit_f4_mul_slot f4_mulsu8_c3_c0, mulsu, VM_C3, VM_C3L, VM_C0L
+emit_f4_mul_slot f4_mulsu8_c3_c1, mulsu, VM_C3, VM_C3L, VM_C1L
+emit_f4_mul_slot f4_mulsu8_c3_c2, mulsu, VM_C3, VM_C3L, VM_C2L
+emit_f4_mul_slot f4_mulsu8_c3_c3, mulsu, VM_C3, VM_C3L, VM_C3L
 
 ; Keep local trap targets and sequential dispatch within RJMP range of every
 ; F4 table entry and executable slot.
@@ -4220,3 +4338,101 @@ e1_invalid_secondary_instruction_func:
 
 e1_dispatch_func:
     dispatch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE2 accumulator/noncompact-source ALU extension page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Secondary encoding relevant here:
+;   14-17  MULU8  A,r0-r3
+;   18-1B  MULS8  A,r0-r3
+;   1C-1F  MULSU8 A,r0-r3
+;
+; 00-03 and 2C-FF are reserved and therefore invalid. Other defined E2
+; operations remain unimplemented. The decoder starts the following primary
+; opcode before selecting a compact 48-entry secondary table.
+e2_extension_decode_func:
+    cli
+    out  SPDR, ZERO
+    in   r6, SPDR
+    sei
+
+    ; E2 currently defines encodings only below 0x30. r6 cannot be used by
+    ; CPI, so use r26 for the range check and retain r6 as the table index.
+    mov  r26, r6
+    cpi  r26, 0x30
+    brlo 1f
+    rjmp e2_invalid_secondary_instruction_func
+1:
+    ldi  r30, lo8(pm(e2_secondary_table))
+    ldi  r31, hi8(pm(e2_secondary_table))
+    add  r30, r6
+    adc  r31, ZERO
+    ijmp
+
+e2_secondary_table:
+    secondary_entries 4,  e2_invalid_secondary_instruction_func ; 00-03 reserved
+    secondary_entries 16, e2_unimplemented_instruction_func     ; 04-13 defined
+    rjmp e2_mulu8_A_r0                                           ; 14
+    rjmp e2_mulu8_A_r1                                           ; 15
+    rjmp e2_mulu8_A_r2                                           ; 16
+    rjmp e2_mulu8_A_r3                                           ; 17
+    rjmp e2_muls8_A_r0                                           ; 18
+    rjmp e2_muls8_A_r1                                           ; 19
+    rjmp e2_muls8_A_r2                                           ; 1A
+    rjmp e2_muls8_A_r3                                           ; 1B
+    rjmp e2_mulsu8_A_r0                                          ; 1C
+    rjmp e2_mulsu8_A_r1                                          ; 1D
+    rjmp e2_mulsu8_A_r2                                          ; 1E
+    rjmp e2_mulsu8_A_r3                                          ; 1F
+    secondary_entries 12, e2_unimplemented_instruction_func     ; 20-2B defined
+    secondary_entries 4,  e2_invalid_secondary_instruction_func ; 2C-2F reserved
+e2_secondary_table_end:
+
+.if ((e2_secondary_table_end - e2_secondary_table) != (48 * 2))
+    .error "E2 secondary dispatch table must contain exactly 48 words"
+.endif
+
+.macro emit_e2_mulu8_slot label, srcl
+\label:
+    mul  VM_C0L, \srcl
+    movw VM_C0, r0
+    rjmp e2_dispatch_func
+.endm
+
+; MULS/MULSU require high-register operands. A.low is already r16; copy the
+; noncompact source byte to A.high/r17, which is part of the overwritten result,
+; before issuing the native multiply.
+.macro emit_e2_signed_mul_slot label, operation, srcl
+\label:
+    mov  VM_C0H, \srcl
+    \operation VM_C0L, VM_C0H
+    movw VM_C0, r0
+    rjmp e2_dispatch_func
+.endm
+
+emit_e2_mulu8_slot e2_mulu8_A_r0, VM_R0L
+emit_e2_mulu8_slot e2_mulu8_A_r1, VM_R1L
+emit_e2_mulu8_slot e2_mulu8_A_r2, VM_R2L
+emit_e2_mulu8_slot e2_mulu8_A_r3, VM_R3L
+
+emit_e2_signed_mul_slot e2_muls8_A_r0, muls, VM_R0L
+emit_e2_signed_mul_slot e2_muls8_A_r1, muls, VM_R1L
+emit_e2_signed_mul_slot e2_muls8_A_r2, muls, VM_R2L
+emit_e2_signed_mul_slot e2_muls8_A_r3, muls, VM_R3L
+
+emit_e2_signed_mul_slot e2_mulsu8_A_r0, mulsu, VM_R0L
+emit_e2_signed_mul_slot e2_mulsu8_A_r1, mulsu, VM_R1L
+emit_e2_signed_mul_slot e2_mulsu8_A_r2, mulsu, VM_R2L
+emit_e2_signed_mul_slot e2_mulsu8_A_r3, mulsu, VM_R3L
+
+; Keep local continuations within RJMP range of the compact decoder and slots.
+e2_unimplemented_instruction_func:
+    rjmp e2_unimplemented_instruction_func
+
+e2_invalid_secondary_instruction_func:
+    rjmp e2_invalid_secondary_instruction_func
+
+e2_dispatch_func:
+    dispatch
+

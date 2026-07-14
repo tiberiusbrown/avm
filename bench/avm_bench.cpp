@@ -30,7 +30,7 @@
 namespace {
 
 constexpr std::uint64_t kAdvanceLimit = 10'000'000'000'000ull;
-constexpr std::size_t kExpectedBenchmarkCount = 135;
+constexpr std::size_t kExpectedBenchmarkCount = 141;
 
 struct options_t {
     std::filesystem::path interpreter = AVM_BENCH_INTERPRETER_HEX;

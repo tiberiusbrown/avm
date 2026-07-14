@@ -92,7 +92,8 @@ SYMBOL TABLE:
 00000c20 l       .text	00000000 I_51__AND_A_r1
 00000c40 l       .text	00000000 I_52__AND_A_r2
 00000c60 l       .text	00000000 I_53__AND_A_r3
-00000c80 l       .text	00000000 I_54__AND_A_r4
+00000c80 l       .text	00000000 I_54__RESERVED_AND_A_A
+000022c8 l       .text	00000000 invalid_primary_instruction_func
 00000ca0 l       .text	00000000 I_55__AND_A_r5
 00000cc0 l       .text	00000000 I_56__AND_A_r6
 00000ce0 l       .text	00000000 I_57__AND_A_r7
@@ -100,7 +101,7 @@ SYMBOL TABLE:
 00000d20 l       .text	00000000 I_59__OR_A_r1
 00000d40 l       .text	00000000 I_5A__OR_A_r2
 00000d60 l       .text	00000000 I_5B__OR_A_r3
-00000d80 l       .text	00000000 I_5C__OR_A_r4
+00000d80 l       .text	00000000 I_5C__RESERVED_OR_A_A
 00000da0 l       .text	00000000 I_5D__OR_A_r5
 00000dc0 l       .text	00000000 I_5E__OR_A_r6
 00000de0 l       .text	00000000 I_5F__OR_A_r7
@@ -108,7 +109,7 @@ SYMBOL TABLE:
 00000e20 l       .text	00000000 I_61__XOR_A_r1
 00000e40 l       .text	00000000 I_62__XOR_A_r2
 00000e60 l       .text	00000000 I_63__XOR_A_r3
-00000e80 l       .text	00000000 I_64__XOR_A_r4
+00000e80 l       .text	00000000 I_64__RESERVED_XOR_A_A
 00000ea0 l       .text	00000000 I_65__XOR_A_r5
 00000ec0 l       .text	00000000 I_66__XOR_A_r6
 00000ee0 l       .text	00000000 I_67__XOR_A_r7
@@ -116,7 +117,7 @@ SYMBOL TABLE:
 00000f20 l       .text	00000000 I_69__BIC_A_r1
 00000f40 l       .text	00000000 I_6A__BIC_A_r2
 00000f60 l       .text	00000000 I_6B__BIC_A_r3
-00000f80 l       .text	00000000 I_6C__BIC_A_r4
+00000f80 l       .text	00000000 I_6C__RESERVED_BIC_A_A
 00000fa0 l       .text	00000000 I_6D__BIC_A_r5
 00000fc0 l       .text	00000000 I_6E__BIC_A_r6
 00000fe0 l       .text	00000000 I_6F__BIC_A_r7
@@ -237,9 +238,9 @@ SYMBOL TABLE:
 00001e00 l       .text	00000000 I_E0__ext_misc
 000022f6 l       .text	00000000 e0_extension_decode_func
 00001e20 l       .text	00000000 I_E1__ext_pair
-00003b36 l       .text	00000000 e1_extension_decode_func
+00003c2a l       .text	00000000 e1_extension_decode_func
 00001e40 l       .text	00000000 I_E2__ext_accumulator
-000022c6 l       .text	00000000 unimplemented_instruction_func
+00003cea l       .text	00000000 e2_extension_decode_func
 00001e60 l       .text	00000000 I_E3__ext_transfer_condition
 00002308 l       .text	00000000 e3_extension_decode_func
 00001e80 l       .text	00000000 I_E4__CMPI6_cN_simm6
@@ -261,7 +262,6 @@ SYMBOL TABLE:
 00001f80 l       .text	00000000 I_EC__NOP
 000022d4 l       .text	00000000 dispatch_reverse_func
 00001fa0 l       .text	00000000 I_ED__RESERVED
-000022c8 l       .text	00000000 invalid_primary_instruction_func
 00001fc0 l       .text	00000000 I_EE__RESERVED
 00001fe0 l       .text	00000000 I_EF__RESERVED
 00002000 l       .text	00000000 I_F0__LDI8_c0
@@ -293,6 +293,7 @@ SYMBOL TABLE:
 000031d6 l       .text	00000000 fx_seek_delay_17
 000022aa l       .text	00000000 fe_callf_func
 000022a0 l       .text	00000000 fe_jmpf_func
+000022c6 l       .text	00000000 unimplemented_instruction_func
 000022ca l       .text	00000000 invalid_secondary_instruction_func
 000022cc l       .text	00000000 invalid_syscall_func
 00002330 l       .text	00000000 e0_secondary_table
@@ -414,7 +415,7 @@ SYMBOL TABLE:
 0000354e l       .text	00000000 e3_cset_finish
 00003654 l       .text	00000000 e3_mov16_table_end
 00003674 l       .text	00000000 f4_secondary_table
-00003b24 l       .text	00000000 f4_unimplemented_instruction_func
+00003c1a l       .text	00000000 f4_invalid_secondary_instruction_func
 00003874 l       .text	00000000 f4_add_nf_c0_c0
 0000387c l       .text	00000000 f4_add_nf_c0_c1
 00003884 l       .text	00000000 f4_add_nf_c0_c2
@@ -431,80 +432,129 @@ SYMBOL TABLE:
 000038dc l       .text	00000000 f4_add_nf_c3_c1
 000038e4 l       .text	00000000 f4_add_nf_c3_c2
 000038ec l       .text	00000000 f4_add_nf_c3_c3
-000038f4 l       .text	00000000 f4_sub_nf_c0_c0
-000038fc l       .text	00000000 f4_sub_nf_c0_c1
-00003904 l       .text	00000000 f4_sub_nf_c0_c2
-0000390c l       .text	00000000 f4_sub_nf_c0_c3
-00003914 l       .text	00000000 f4_sub_nf_c1_c0
-0000391c l       .text	00000000 f4_sub_nf_c1_c1
-00003924 l       .text	00000000 f4_sub_nf_c1_c2
-0000392c l       .text	00000000 f4_sub_nf_c1_c3
-00003934 l       .text	00000000 f4_sub_nf_c2_c0
-0000393c l       .text	00000000 f4_sub_nf_c2_c1
-00003944 l       .text	00000000 f4_sub_nf_c2_c2
-0000394c l       .text	00000000 f4_sub_nf_c2_c3
-00003954 l       .text	00000000 f4_sub_nf_c3_c0
-0000395c l       .text	00000000 f4_sub_nf_c3_c1
-00003964 l       .text	00000000 f4_sub_nf_c3_c2
-0000396c l       .text	00000000 f4_sub_nf_c3_c3
-00003b26 l       .text	00000000 f4_invalid_secondary_instruction_func
-00003974 l       .text	00000000 f4_and_c1_c0
-0000397c l       .text	00000000 f4_and_c1_c1
-00003984 l       .text	00000000 f4_and_c1_c2
-0000398c l       .text	00000000 f4_and_c1_c3
-00003994 l       .text	00000000 f4_and_c2_c0
-0000399c l       .text	00000000 f4_and_c2_c1
-000039a4 l       .text	00000000 f4_and_c2_c2
-000039ac l       .text	00000000 f4_and_c2_c3
-000039b4 l       .text	00000000 f4_and_c3_c0
-000039bc l       .text	00000000 f4_and_c3_c1
-000039c4 l       .text	00000000 f4_and_c3_c2
-000039cc l       .text	00000000 f4_and_c3_c3
-000039d4 l       .text	00000000 f4_or_c1_c0
-000039dc l       .text	00000000 f4_or_c1_c1
-000039e4 l       .text	00000000 f4_or_c1_c2
-000039ec l       .text	00000000 f4_or_c1_c3
-000039f4 l       .text	00000000 f4_or_c2_c0
-000039fc l       .text	00000000 f4_or_c2_c1
-00003a04 l       .text	00000000 f4_or_c2_c2
-00003a0c l       .text	00000000 f4_or_c2_c3
-00003a14 l       .text	00000000 f4_or_c3_c0
-00003a1c l       .text	00000000 f4_or_c3_c1
-00003a24 l       .text	00000000 f4_or_c3_c2
-00003a2c l       .text	00000000 f4_or_c3_c3
-00003a34 l       .text	00000000 f4_xor_c1_c0
-00003a3c l       .text	00000000 f4_xor_c1_c1
-00003a44 l       .text	00000000 f4_xor_c1_c2
-00003a4c l       .text	00000000 f4_xor_c1_c3
-00003a54 l       .text	00000000 f4_xor_c2_c0
-00003a5c l       .text	00000000 f4_xor_c2_c1
-00003a64 l       .text	00000000 f4_xor_c2_c2
-00003a6c l       .text	00000000 f4_xor_c2_c3
-00003a74 l       .text	00000000 f4_xor_c3_c0
-00003a7c l       .text	00000000 f4_xor_c3_c1
-00003a84 l       .text	00000000 f4_xor_c3_c2
-00003a8c l       .text	00000000 f4_xor_c3_c3
-00003a94 l       .text	00000000 f4_bic_c1_c0
-00003aa0 l       .text	00000000 f4_bic_c1_c1
-00003aac l       .text	00000000 f4_bic_c1_c2
-00003ab8 l       .text	00000000 f4_bic_c1_c3
-00003ac4 l       .text	00000000 f4_bic_c2_c0
-00003ad0 l       .text	00000000 f4_bic_c2_c1
-00003adc l       .text	00000000 f4_bic_c2_c2
-00003ae8 l       .text	00000000 f4_bic_c2_c3
-00003af4 l       .text	00000000 f4_bic_c3_c0
-00003b00 l       .text	00000000 f4_bic_c3_c1
-00003b0c l       .text	00000000 f4_bic_c3_c2
-00003b18 l       .text	00000000 f4_bic_c3_c3
+000038f4 l       .text	00000000 f4_sub_nf_c0_c1
+000038fc l       .text	00000000 f4_sub_nf_c0_c2
+00003904 l       .text	00000000 f4_sub_nf_c0_c3
+0000390c l       .text	00000000 f4_sub_nf_c1_c0
+00003914 l       .text	00000000 f4_sub_nf_c1_c2
+0000391c l       .text	00000000 f4_sub_nf_c1_c3
+00003924 l       .text	00000000 f4_sub_nf_c2_c0
+0000392c l       .text	00000000 f4_sub_nf_c2_c1
+00003934 l       .text	00000000 f4_sub_nf_c2_c3
+0000393c l       .text	00000000 f4_sub_nf_c3_c0
+00003944 l       .text	00000000 f4_sub_nf_c3_c1
+0000394c l       .text	00000000 f4_sub_nf_c3_c2
+00003954 l       .text	00000000 f4_and_c1_c0
+0000395c l       .text	00000000 f4_and_c1_c2
+00003964 l       .text	00000000 f4_and_c1_c3
+0000396c l       .text	00000000 f4_and_c2_c0
+00003974 l       .text	00000000 f4_and_c2_c1
+0000397c l       .text	00000000 f4_and_c2_c3
+00003984 l       .text	00000000 f4_and_c3_c0
+0000398c l       .text	00000000 f4_and_c3_c1
+00003994 l       .text	00000000 f4_and_c3_c2
+0000399c l       .text	00000000 f4_or_c1_c0
+000039a4 l       .text	00000000 f4_or_c1_c2
+000039ac l       .text	00000000 f4_or_c1_c3
+000039b4 l       .text	00000000 f4_or_c2_c0
+000039bc l       .text	00000000 f4_or_c2_c1
+000039c4 l       .text	00000000 f4_or_c2_c3
+000039cc l       .text	00000000 f4_or_c3_c0
+000039d4 l       .text	00000000 f4_or_c3_c1
+000039dc l       .text	00000000 f4_or_c3_c2
+000039e4 l       .text	00000000 f4_xor_c1_c0
+000039ec l       .text	00000000 f4_xor_c1_c2
+000039f4 l       .text	00000000 f4_xor_c1_c3
+000039fc l       .text	00000000 f4_xor_c2_c0
+00003a04 l       .text	00000000 f4_xor_c2_c1
+00003a0c l       .text	00000000 f4_xor_c2_c3
+00003a14 l       .text	00000000 f4_xor_c3_c0
+00003a1c l       .text	00000000 f4_xor_c3_c1
+00003a24 l       .text	00000000 f4_xor_c3_c2
+00003a2c l       .text	00000000 f4_bic_c1_c0
+00003a38 l       .text	00000000 f4_bic_c1_c2
+00003a44 l       .text	00000000 f4_bic_c1_c3
+00003a50 l       .text	00000000 f4_bic_c2_c0
+00003a5c l       .text	00000000 f4_bic_c2_c1
+00003a68 l       .text	00000000 f4_bic_c2_c3
+00003a74 l       .text	00000000 f4_bic_c3_c0
+00003a80 l       .text	00000000 f4_bic_c3_c1
+00003a8c l       .text	00000000 f4_bic_c3_c2
+00003a98 l       .text	00000000 f4_mulu8_c0_c0
+00003aa0 l       .text	00000000 f4_mulu8_c0_c1
+00003aa8 l       .text	00000000 f4_mulu8_c0_c2
+00003ab0 l       .text	00000000 f4_mulu8_c0_c3
+00003ab8 l       .text	00000000 f4_mulu8_c1_c0
+00003ac0 l       .text	00000000 f4_mulu8_c1_c1
+00003ac8 l       .text	00000000 f4_mulu8_c1_c2
+00003ad0 l       .text	00000000 f4_mulu8_c1_c3
+00003ad8 l       .text	00000000 f4_mulu8_c2_c0
+00003ae0 l       .text	00000000 f4_mulu8_c2_c1
+00003ae8 l       .text	00000000 f4_mulu8_c2_c2
+00003af0 l       .text	00000000 f4_mulu8_c2_c3
+00003af8 l       .text	00000000 f4_mulu8_c3_c0
+00003b00 l       .text	00000000 f4_mulu8_c3_c1
+00003b08 l       .text	00000000 f4_mulu8_c3_c2
+00003b10 l       .text	00000000 f4_mulu8_c3_c3
+00003b18 l       .text	00000000 f4_muls8_c0_c0
+00003b20 l       .text	00000000 f4_muls8_c0_c1
+00003b28 l       .text	00000000 f4_muls8_c0_c2
+00003b30 l       .text	00000000 f4_muls8_c0_c3
+00003b38 l       .text	00000000 f4_muls8_c1_c0
+00003b40 l       .text	00000000 f4_muls8_c1_c1
+00003b48 l       .text	00000000 f4_muls8_c1_c2
+00003b50 l       .text	00000000 f4_muls8_c1_c3
+00003b58 l       .text	00000000 f4_muls8_c2_c0
+00003b60 l       .text	00000000 f4_muls8_c2_c1
+00003b68 l       .text	00000000 f4_muls8_c2_c2
+00003b70 l       .text	00000000 f4_muls8_c2_c3
+00003b78 l       .text	00000000 f4_muls8_c3_c0
+00003b80 l       .text	00000000 f4_muls8_c3_c1
+00003b88 l       .text	00000000 f4_muls8_c3_c2
+00003b90 l       .text	00000000 f4_muls8_c3_c3
+00003b98 l       .text	00000000 f4_mulsu8_c0_c0
+00003ba0 l       .text	00000000 f4_mulsu8_c0_c1
+00003ba8 l       .text	00000000 f4_mulsu8_c0_c2
+00003bb0 l       .text	00000000 f4_mulsu8_c0_c3
+00003bb8 l       .text	00000000 f4_mulsu8_c1_c0
+00003bc0 l       .text	00000000 f4_mulsu8_c1_c1
+00003bc8 l       .text	00000000 f4_mulsu8_c1_c2
+00003bd0 l       .text	00000000 f4_mulsu8_c1_c3
+00003bd8 l       .text	00000000 f4_mulsu8_c2_c0
+00003be0 l       .text	00000000 f4_mulsu8_c2_c1
+00003be8 l       .text	00000000 f4_mulsu8_c2_c2
+00003bf0 l       .text	00000000 f4_mulsu8_c2_c3
+00003bf8 l       .text	00000000 f4_mulsu8_c3_c0
+00003c00 l       .text	00000000 f4_mulsu8_c3_c1
+00003c08 l       .text	00000000 f4_mulsu8_c3_c2
+00003c10 l       .text	00000000 f4_mulsu8_c3_c3
+00003c18 l       .text	00000000 f4_unimplemented_instruction_func
 00003874 l       .text	00000000 f4_secondary_table_end
-00003b28 l       .text	00000000 f4_dispatch_func
-00003b6a l       .text	00000000 e1_mov32_family
-00003b7e l       .text	00000000 e1_add32_family
-00003ba2 l       .text	00000000 e1_sub32_family
-00003bc6 l       .text	00000000 e1_cmp32_family
-00003be6 l       .text	00000000 e1_invalid_secondary_instruction_func
-00003be4 l       .text	00000000 e1_unimplemented_instruction_func
-00003be8 l       .text	00000000 e1_dispatch_func
+00003c1c l       .text	00000000 f4_dispatch_func
+00003c5e l       .text	00000000 e1_mov32_family
+00003c72 l       .text	00000000 e1_add32_family
+00003c96 l       .text	00000000 e1_sub32_family
+00003cba l       .text	00000000 e1_cmp32_family
+00003cda l       .text	00000000 e1_invalid_secondary_instruction_func
+00003cd8 l       .text	00000000 e1_unimplemented_instruction_func
+00003cdc l       .text	00000000 e1_dispatch_func
+00003dbe l       .text	00000000 e2_invalid_secondary_instruction_func
+00003d04 l       .text	00000000 e2_secondary_table
+00003dbc l       .text	00000000 e2_unimplemented_instruction_func
+00003d64 l       .text	00000000 e2_mulu8_A_r0
+00003d6a l       .text	00000000 e2_mulu8_A_r1
+00003d70 l       .text	00000000 e2_mulu8_A_r2
+00003d76 l       .text	00000000 e2_mulu8_A_r3
+00003d7c l       .text	00000000 e2_muls8_A_r0
+00003d84 l       .text	00000000 e2_muls8_A_r1
+00003d8c l       .text	00000000 e2_muls8_A_r2
+00003d94 l       .text	00000000 e2_muls8_A_r3
+00003d9c l       .text	00000000 e2_mulsu8_A_r0
+00003da4 l       .text	00000000 e2_mulsu8_A_r1
+00003dac l       .text	00000000 e2_mulsu8_A_r2
+00003db4 l       .text	00000000 e2_mulsu8_A_r3
+00003d64 l       .text	00000000 e2_secondary_table_end
+00003dc0 l       .text	00000000 e2_dispatch_func
 00002178 l       .text	00000000 .L11
 00002198 l       .text	00000000 .L12
 00002324 l       .text	00000000 .L13
@@ -534,9 +584,10 @@ SYMBOL TABLE:
 0000346c l       .text	00000000 .L119
 0000347a l       .text	00000000 .L120
 00003494 l       .text	00000000 .L121
-00003b68 l       .text	00000000 .L122
+00003c5c l       .text	00000000 .L122
+00003cfa l       .text	00000000 .L123
 00000000 g       .text	00000000 __trampolines_start
-00003bf6 g       .text	00000000 _etext
+00003dce g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00810000 g       .text	00000000 __eeprom_end
@@ -2277,19 +2328,18 @@ Disassembly of section .text:
      c7c:	00 00       	nop
      c7e:	00 00       	nop
 
-00000c80 <I_54__AND_A_r4>:
-     c80:	c8 95       	lpm
-     c82:	00 23       	and	r16, r16
-     c84:	11 23       	and	r17, r17
-     c86:	01 96       	adiw	r24, 0x01	; 1
-     c88:	f8 94       	cli
-     c8a:	2e bc       	out	0x2e, r2	; 46
-     c8c:	6e b4       	in	r6, 0x2e	; 46
-     c8e:	78 94       	sei
-     c90:	67 9c       	mul	r6, r7
-     c92:	f0 01       	movw	r30, r0
-     c94:	ff 5f       	subi	r31, 0xFF	; 255
-     c96:	09 94       	ijmp
+00000c80 <I_54__RESERVED_AND_A_A>:
+     c80:	0c 94 64 11 	jmp	0x22c8	; 0x22c8 <invalid_primary_instruction_func>
+     c84:	00 00       	nop
+     c86:	00 00       	nop
+     c88:	00 00       	nop
+     c8a:	00 00       	nop
+     c8c:	00 00       	nop
+     c8e:	00 00       	nop
+     c90:	00 00       	nop
+     c92:	00 00       	nop
+     c94:	00 00       	nop
+     c96:	00 00       	nop
      c98:	00 00       	nop
      c9a:	00 00       	nop
      c9c:	00 00       	nop
@@ -2421,19 +2471,18 @@ Disassembly of section .text:
      d7c:	00 00       	nop
      d7e:	00 00       	nop
 
-00000d80 <I_5C__OR_A_r4>:
-     d80:	c8 95       	lpm
-     d82:	00 2b       	or	r16, r16
-     d84:	11 2b       	or	r17, r17
-     d86:	01 96       	adiw	r24, 0x01	; 1
-     d88:	f8 94       	cli
-     d8a:	2e bc       	out	0x2e, r2	; 46
-     d8c:	6e b4       	in	r6, 0x2e	; 46
-     d8e:	78 94       	sei
-     d90:	67 9c       	mul	r6, r7
-     d92:	f0 01       	movw	r30, r0
-     d94:	ff 5f       	subi	r31, 0xFF	; 255
-     d96:	09 94       	ijmp
+00000d80 <I_5C__RESERVED_OR_A_A>:
+     d80:	0c 94 64 11 	jmp	0x22c8	; 0x22c8 <invalid_primary_instruction_func>
+     d84:	00 00       	nop
+     d86:	00 00       	nop
+     d88:	00 00       	nop
+     d8a:	00 00       	nop
+     d8c:	00 00       	nop
+     d8e:	00 00       	nop
+     d90:	00 00       	nop
+     d92:	00 00       	nop
+     d94:	00 00       	nop
+     d96:	00 00       	nop
      d98:	00 00       	nop
      d9a:	00 00       	nop
      d9c:	00 00       	nop
@@ -2565,19 +2614,18 @@ Disassembly of section .text:
      e7c:	00 00       	nop
      e7e:	00 00       	nop
 
-00000e80 <I_64__XOR_A_r4>:
-     e80:	c8 95       	lpm
-     e82:	00 27       	eor	r16, r16
-     e84:	11 27       	eor	r17, r17
-     e86:	01 96       	adiw	r24, 0x01	; 1
-     e88:	f8 94       	cli
-     e8a:	2e bc       	out	0x2e, r2	; 46
-     e8c:	6e b4       	in	r6, 0x2e	; 46
-     e8e:	78 94       	sei
-     e90:	67 9c       	mul	r6, r7
-     e92:	f0 01       	movw	r30, r0
-     e94:	ff 5f       	subi	r31, 0xFF	; 255
-     e96:	09 94       	ijmp
+00000e80 <I_64__RESERVED_XOR_A_A>:
+     e80:	0c 94 64 11 	jmp	0x22c8	; 0x22c8 <invalid_primary_instruction_func>
+     e84:	00 00       	nop
+     e86:	00 00       	nop
+     e88:	00 00       	nop
+     e8a:	00 00       	nop
+     e8c:	00 00       	nop
+     e8e:	00 00       	nop
+     e90:	00 00       	nop
+     e92:	00 00       	nop
+     e94:	00 00       	nop
+     e96:	00 00       	nop
      e98:	00 00       	nop
      e9a:	00 00       	nop
      e9c:	00 00       	nop
@@ -2709,21 +2757,20 @@ Disassembly of section .text:
      f7c:	00 00       	nop
      f7e:	00 00       	nop
 
-00000f80 <I_6C__BIC_A_r4>:
-     f80:	28 01       	movw	r4, r16
-     f82:	40 94       	com	r4
-     f84:	50 94       	com	r5
-     f86:	04 21       	and	r16, r4
-     f88:	15 21       	and	r17, r5
-     f8a:	01 96       	adiw	r24, 0x01	; 1
-     f8c:	f8 94       	cli
-     f8e:	2e bc       	out	0x2e, r2	; 46
-     f90:	6e b4       	in	r6, 0x2e	; 46
-     f92:	78 94       	sei
-     f94:	67 9c       	mul	r6, r7
-     f96:	f0 01       	movw	r30, r0
-     f98:	ff 5f       	subi	r31, 0xFF	; 255
-     f9a:	09 94       	ijmp
+00000f80 <I_6C__RESERVED_BIC_A_A>:
+     f80:	0c 94 64 11 	jmp	0x22c8	; 0x22c8 <invalid_primary_instruction_func>
+     f84:	00 00       	nop
+     f86:	00 00       	nop
+     f88:	00 00       	nop
+     f8a:	00 00       	nop
+     f8c:	00 00       	nop
+     f8e:	00 00       	nop
+     f90:	00 00       	nop
+     f92:	00 00       	nop
+     f94:	00 00       	nop
+     f96:	00 00       	nop
+     f98:	00 00       	nop
+     f9a:	00 00       	nop
      f9c:	00 00       	nop
      f9e:	00 00       	nop
 
@@ -4786,7 +4833,7 @@ Disassembly of section .text:
 00001e20 <I_E1__ext_pair>:
     1e20:	01 96       	adiw	r24, 0x01	; 1
     1e22:	00 c0       	rjmp	.+0      	; 0x1e24 <I_E1__ext_pair+0x4>
-    1e24:	0c 94 9b 1d 	jmp	0x3b36	; 0x3b36 <e1_extension_decode_func>
+    1e24:	0c 94 15 1e 	jmp	0x3c2a	; 0x3c2a <e1_extension_decode_func>
     1e28:	00 00       	nop
     1e2a:	00 00       	nop
     1e2c:	00 00       	nop
@@ -4801,9 +4848,9 @@ Disassembly of section .text:
     1e3e:	00 00       	nop
 
 00001e40 <I_E2__ext_accumulator>:
-    1e40:	0c 94 63 11 	jmp	0x22c6	; 0x22c6 <unimplemented_instruction_func>
-    1e44:	00 00       	nop
-    1e46:	00 00       	nop
+    1e40:	01 96       	adiw	r24, 0x01	; 1
+    1e42:	00 c0       	rjmp	.+0      	; 0x1e44 <I_E2__ext_accumulator+0x4>
+    1e44:	0c 94 75 1e 	jmp	0x3cea	; 0x3cea <e2_extension_decode_func>
     1e48:	00 00       	nop
     1e4a:	00 00       	nop
     1e4c:	00 00       	nop
@@ -8255,22 +8302,22 @@ Disassembly of section .text:
     3672:	09 94       	ijmp
 
 00003674 <f4_secondary_table>:
-    3674:	57 c2       	rjmp	.+1198   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3676:	56 c2       	rjmp	.+1196   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3678:	55 c2       	rjmp	.+1194   	; 0x3b24 <f4_unimplemented_instruction_func>
-    367a:	54 c2       	rjmp	.+1192   	; 0x3b24 <f4_unimplemented_instruction_func>
-    367c:	53 c2       	rjmp	.+1190   	; 0x3b24 <f4_unimplemented_instruction_func>
-    367e:	52 c2       	rjmp	.+1188   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3680:	51 c2       	rjmp	.+1186   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3682:	50 c2       	rjmp	.+1184   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3684:	4f c2       	rjmp	.+1182   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3686:	4e c2       	rjmp	.+1180   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3688:	4d c2       	rjmp	.+1178   	; 0x3b24 <f4_unimplemented_instruction_func>
-    368a:	4c c2       	rjmp	.+1176   	; 0x3b24 <f4_unimplemented_instruction_func>
-    368c:	4b c2       	rjmp	.+1174   	; 0x3b24 <f4_unimplemented_instruction_func>
-    368e:	4a c2       	rjmp	.+1172   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3690:	49 c2       	rjmp	.+1170   	; 0x3b24 <f4_unimplemented_instruction_func>
-    3692:	48 c2       	rjmp	.+1168   	; 0x3b24 <f4_unimplemented_instruction_func>
+    3674:	d2 c2       	rjmp	.+1444   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3676:	d1 c2       	rjmp	.+1442   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3678:	d0 c2       	rjmp	.+1440   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    367a:	cf c2       	rjmp	.+1438   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    367c:	ce c2       	rjmp	.+1436   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    367e:	cd c2       	rjmp	.+1434   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3680:	cc c2       	rjmp	.+1432   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3682:	cb c2       	rjmp	.+1430   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3684:	ca c2       	rjmp	.+1428   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3686:	c9 c2       	rjmp	.+1426   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3688:	c8 c2       	rjmp	.+1424   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    368a:	c7 c2       	rjmp	.+1422   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    368c:	c6 c2       	rjmp	.+1420   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    368e:	c5 c2       	rjmp	.+1418   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3690:	c4 c2       	rjmp	.+1416   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3692:	c3 c2       	rjmp	.+1414   	; 0x3c1a <f4_invalid_secondary_instruction_func>
     3694:	ef c0       	rjmp	.+478    	; 0x3874 <f4_add_nf_c0_c0>
     3696:	f2 c0       	rjmp	.+484    	; 0x387c <f4_add_nf_c0_c1>
     3698:	f5 c0       	rjmp	.+490    	; 0x3884 <f4_add_nf_c0_c2>
@@ -8287,860 +8334,1196 @@ Disassembly of section .text:
     36ae:	16 c1       	rjmp	.+556    	; 0x38dc <f4_add_nf_c3_c1>
     36b0:	19 c1       	rjmp	.+562    	; 0x38e4 <f4_add_nf_c3_c2>
     36b2:	1c c1       	rjmp	.+568    	; 0x38ec <f4_add_nf_c3_c3>
-    36b4:	1f c1       	rjmp	.+574    	; 0x38f4 <f4_sub_nf_c0_c0>
-    36b6:	22 c1       	rjmp	.+580    	; 0x38fc <f4_sub_nf_c0_c1>
-    36b8:	25 c1       	rjmp	.+586    	; 0x3904 <f4_sub_nf_c0_c2>
-    36ba:	28 c1       	rjmp	.+592    	; 0x390c <f4_sub_nf_c0_c3>
-    36bc:	2b c1       	rjmp	.+598    	; 0x3914 <f4_sub_nf_c1_c0>
-    36be:	2e c1       	rjmp	.+604    	; 0x391c <f4_sub_nf_c1_c1>
-    36c0:	31 c1       	rjmp	.+610    	; 0x3924 <f4_sub_nf_c1_c2>
-    36c2:	34 c1       	rjmp	.+616    	; 0x392c <f4_sub_nf_c1_c3>
-    36c4:	37 c1       	rjmp	.+622    	; 0x3934 <f4_sub_nf_c2_c0>
-    36c6:	3a c1       	rjmp	.+628    	; 0x393c <f4_sub_nf_c2_c1>
-    36c8:	3d c1       	rjmp	.+634    	; 0x3944 <f4_sub_nf_c2_c2>
-    36ca:	40 c1       	rjmp	.+640    	; 0x394c <f4_sub_nf_c2_c3>
-    36cc:	43 c1       	rjmp	.+646    	; 0x3954 <f4_sub_nf_c3_c0>
-    36ce:	46 c1       	rjmp	.+652    	; 0x395c <f4_sub_nf_c3_c1>
-    36d0:	49 c1       	rjmp	.+658    	; 0x3964 <f4_sub_nf_c3_c2>
-    36d2:	4c c1       	rjmp	.+664    	; 0x396c <f4_sub_nf_c3_c3>
-    36d4:	28 c2       	rjmp	.+1104   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36d6:	27 c2       	rjmp	.+1102   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36d8:	26 c2       	rjmp	.+1100   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36da:	25 c2       	rjmp	.+1098   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36dc:	4b c1       	rjmp	.+662    	; 0x3974 <f4_and_c1_c0>
-    36de:	4e c1       	rjmp	.+668    	; 0x397c <f4_and_c1_c1>
-    36e0:	51 c1       	rjmp	.+674    	; 0x3984 <f4_and_c1_c2>
-    36e2:	54 c1       	rjmp	.+680    	; 0x398c <f4_and_c1_c3>
-    36e4:	57 c1       	rjmp	.+686    	; 0x3994 <f4_and_c2_c0>
-    36e6:	5a c1       	rjmp	.+692    	; 0x399c <f4_and_c2_c1>
-    36e8:	5d c1       	rjmp	.+698    	; 0x39a4 <f4_and_c2_c2>
-    36ea:	60 c1       	rjmp	.+704    	; 0x39ac <f4_and_c2_c3>
-    36ec:	63 c1       	rjmp	.+710    	; 0x39b4 <f4_and_c3_c0>
-    36ee:	66 c1       	rjmp	.+716    	; 0x39bc <f4_and_c3_c1>
-    36f0:	69 c1       	rjmp	.+722    	; 0x39c4 <f4_and_c3_c2>
-    36f2:	6c c1       	rjmp	.+728    	; 0x39cc <f4_and_c3_c3>
-    36f4:	18 c2       	rjmp	.+1072   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36f6:	17 c2       	rjmp	.+1070   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36f8:	16 c2       	rjmp	.+1068   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36fa:	15 c2       	rjmp	.+1066   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    36fc:	6b c1       	rjmp	.+726    	; 0x39d4 <f4_or_c1_c0>
-    36fe:	6e c1       	rjmp	.+732    	; 0x39dc <f4_or_c1_c1>
-    3700:	71 c1       	rjmp	.+738    	; 0x39e4 <f4_or_c1_c2>
-    3702:	74 c1       	rjmp	.+744    	; 0x39ec <f4_or_c1_c3>
-    3704:	77 c1       	rjmp	.+750    	; 0x39f4 <f4_or_c2_c0>
-    3706:	7a c1       	rjmp	.+756    	; 0x39fc <f4_or_c2_c1>
-    3708:	7d c1       	rjmp	.+762    	; 0x3a04 <f4_or_c2_c2>
-    370a:	80 c1       	rjmp	.+768    	; 0x3a0c <f4_or_c2_c3>
-    370c:	83 c1       	rjmp	.+774    	; 0x3a14 <f4_or_c3_c0>
-    370e:	86 c1       	rjmp	.+780    	; 0x3a1c <f4_or_c3_c1>
-    3710:	89 c1       	rjmp	.+786    	; 0x3a24 <f4_or_c3_c2>
-    3712:	8c c1       	rjmp	.+792    	; 0x3a2c <f4_or_c3_c3>
-    3714:	08 c2       	rjmp	.+1040   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3716:	07 c2       	rjmp	.+1038   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3718:	06 c2       	rjmp	.+1036   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    371a:	05 c2       	rjmp	.+1034   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    371c:	8b c1       	rjmp	.+790    	; 0x3a34 <f4_xor_c1_c0>
-    371e:	8e c1       	rjmp	.+796    	; 0x3a3c <f4_xor_c1_c1>
-    3720:	91 c1       	rjmp	.+802    	; 0x3a44 <f4_xor_c1_c2>
-    3722:	94 c1       	rjmp	.+808    	; 0x3a4c <f4_xor_c1_c3>
-    3724:	97 c1       	rjmp	.+814    	; 0x3a54 <f4_xor_c2_c0>
-    3726:	9a c1       	rjmp	.+820    	; 0x3a5c <f4_xor_c2_c1>
-    3728:	9d c1       	rjmp	.+826    	; 0x3a64 <f4_xor_c2_c2>
-    372a:	a0 c1       	rjmp	.+832    	; 0x3a6c <f4_xor_c2_c3>
-    372c:	a3 c1       	rjmp	.+838    	; 0x3a74 <f4_xor_c3_c0>
-    372e:	a6 c1       	rjmp	.+844    	; 0x3a7c <f4_xor_c3_c1>
-    3730:	a9 c1       	rjmp	.+850    	; 0x3a84 <f4_xor_c3_c2>
-    3732:	ac c1       	rjmp	.+856    	; 0x3a8c <f4_xor_c3_c3>
-    3734:	f8 c1       	rjmp	.+1008   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3736:	f7 c1       	rjmp	.+1006   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3738:	f6 c1       	rjmp	.+1004   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    373a:	f5 c1       	rjmp	.+1002   	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    373c:	ab c1       	rjmp	.+854    	; 0x3a94 <f4_bic_c1_c0>
-    373e:	b0 c1       	rjmp	.+864    	; 0x3aa0 <f4_bic_c1_c1>
-    3740:	b5 c1       	rjmp	.+874    	; 0x3aac <f4_bic_c1_c2>
-    3742:	ba c1       	rjmp	.+884    	; 0x3ab8 <f4_bic_c1_c3>
-    3744:	bf c1       	rjmp	.+894    	; 0x3ac4 <f4_bic_c2_c0>
-    3746:	c4 c1       	rjmp	.+904    	; 0x3ad0 <f4_bic_c2_c1>
-    3748:	c9 c1       	rjmp	.+914    	; 0x3adc <f4_bic_c2_c2>
-    374a:	ce c1       	rjmp	.+924    	; 0x3ae8 <f4_bic_c2_c3>
-    374c:	d3 c1       	rjmp	.+934    	; 0x3af4 <f4_bic_c3_c0>
-    374e:	d8 c1       	rjmp	.+944    	; 0x3b00 <f4_bic_c3_c1>
-    3750:	dd c1       	rjmp	.+954    	; 0x3b0c <f4_bic_c3_c2>
-    3752:	e2 c1       	rjmp	.+964    	; 0x3b18 <f4_bic_c3_c3>
-    3754:	e7 c1       	rjmp	.+974    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3756:	e6 c1       	rjmp	.+972    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3758:	e5 c1       	rjmp	.+970    	; 0x3b24 <f4_unimplemented_instruction_func>
-    375a:	e4 c1       	rjmp	.+968    	; 0x3b24 <f4_unimplemented_instruction_func>
-    375c:	e3 c1       	rjmp	.+966    	; 0x3b24 <f4_unimplemented_instruction_func>
-    375e:	e2 c1       	rjmp	.+964    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3760:	e1 c1       	rjmp	.+962    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3762:	e0 c1       	rjmp	.+960    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3764:	df c1       	rjmp	.+958    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3766:	de c1       	rjmp	.+956    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3768:	dd c1       	rjmp	.+954    	; 0x3b24 <f4_unimplemented_instruction_func>
-    376a:	dc c1       	rjmp	.+952    	; 0x3b24 <f4_unimplemented_instruction_func>
-    376c:	db c1       	rjmp	.+950    	; 0x3b24 <f4_unimplemented_instruction_func>
-    376e:	da c1       	rjmp	.+948    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3770:	d9 c1       	rjmp	.+946    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3772:	d8 c1       	rjmp	.+944    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3774:	d7 c1       	rjmp	.+942    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3776:	d6 c1       	rjmp	.+940    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3778:	d5 c1       	rjmp	.+938    	; 0x3b24 <f4_unimplemented_instruction_func>
-    377a:	d4 c1       	rjmp	.+936    	; 0x3b24 <f4_unimplemented_instruction_func>
-    377c:	d3 c1       	rjmp	.+934    	; 0x3b24 <f4_unimplemented_instruction_func>
-    377e:	d2 c1       	rjmp	.+932    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3780:	d1 c1       	rjmp	.+930    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3782:	d0 c1       	rjmp	.+928    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3784:	cf c1       	rjmp	.+926    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3786:	ce c1       	rjmp	.+924    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3788:	cd c1       	rjmp	.+922    	; 0x3b24 <f4_unimplemented_instruction_func>
-    378a:	cc c1       	rjmp	.+920    	; 0x3b24 <f4_unimplemented_instruction_func>
-    378c:	cb c1       	rjmp	.+918    	; 0x3b24 <f4_unimplemented_instruction_func>
-    378e:	ca c1       	rjmp	.+916    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3790:	c9 c1       	rjmp	.+914    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3792:	c8 c1       	rjmp	.+912    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3794:	c7 c1       	rjmp	.+910    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3796:	c6 c1       	rjmp	.+908    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3798:	c5 c1       	rjmp	.+906    	; 0x3b24 <f4_unimplemented_instruction_func>
-    379a:	c4 c1       	rjmp	.+904    	; 0x3b24 <f4_unimplemented_instruction_func>
-    379c:	c3 c1       	rjmp	.+902    	; 0x3b24 <f4_unimplemented_instruction_func>
-    379e:	c2 c1       	rjmp	.+900    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37a0:	c1 c1       	rjmp	.+898    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37a2:	c0 c1       	rjmp	.+896    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37a4:	bf c1       	rjmp	.+894    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37a6:	be c1       	rjmp	.+892    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37a8:	bd c1       	rjmp	.+890    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37aa:	bc c1       	rjmp	.+888    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ac:	bb c1       	rjmp	.+886    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ae:	ba c1       	rjmp	.+884    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37b0:	b9 c1       	rjmp	.+882    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37b2:	b8 c1       	rjmp	.+880    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37b4:	b7 c1       	rjmp	.+878    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37b6:	b6 c1       	rjmp	.+876    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37b8:	b5 c1       	rjmp	.+874    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ba:	b4 c1       	rjmp	.+872    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37bc:	b3 c1       	rjmp	.+870    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37be:	b2 c1       	rjmp	.+868    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37c0:	b1 c1       	rjmp	.+866    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37c2:	b0 c1       	rjmp	.+864    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37c4:	af c1       	rjmp	.+862    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37c6:	ae c1       	rjmp	.+860    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37c8:	ad c1       	rjmp	.+858    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ca:	ac c1       	rjmp	.+856    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37cc:	ab c1       	rjmp	.+854    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ce:	aa c1       	rjmp	.+852    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37d0:	a9 c1       	rjmp	.+850    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37d2:	a8 c1       	rjmp	.+848    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37d4:	a7 c1       	rjmp	.+846    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37d6:	a6 c1       	rjmp	.+844    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37d8:	a5 c1       	rjmp	.+842    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37da:	a4 c1       	rjmp	.+840    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37dc:	a3 c1       	rjmp	.+838    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37de:	a2 c1       	rjmp	.+836    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37e0:	a1 c1       	rjmp	.+834    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37e2:	a0 c1       	rjmp	.+832    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37e4:	9f c1       	rjmp	.+830    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37e6:	9e c1       	rjmp	.+828    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37e8:	9d c1       	rjmp	.+826    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ea:	9c c1       	rjmp	.+824    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ec:	9b c1       	rjmp	.+822    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37ee:	9a c1       	rjmp	.+820    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37f0:	99 c1       	rjmp	.+818    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37f2:	98 c1       	rjmp	.+816    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37f4:	97 c1       	rjmp	.+814    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37f6:	96 c1       	rjmp	.+812    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37f8:	95 c1       	rjmp	.+810    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37fa:	94 c1       	rjmp	.+808    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37fc:	93 c1       	rjmp	.+806    	; 0x3b24 <f4_unimplemented_instruction_func>
-    37fe:	92 c1       	rjmp	.+804    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3800:	91 c1       	rjmp	.+802    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3802:	90 c1       	rjmp	.+800    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3804:	8f c1       	rjmp	.+798    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3806:	8e c1       	rjmp	.+796    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3808:	8d c1       	rjmp	.+794    	; 0x3b24 <f4_unimplemented_instruction_func>
-    380a:	8c c1       	rjmp	.+792    	; 0x3b24 <f4_unimplemented_instruction_func>
-    380c:	8b c1       	rjmp	.+790    	; 0x3b24 <f4_unimplemented_instruction_func>
-    380e:	8a c1       	rjmp	.+788    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3810:	89 c1       	rjmp	.+786    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3812:	88 c1       	rjmp	.+784    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3814:	87 c1       	rjmp	.+782    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3816:	86 c1       	rjmp	.+780    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3818:	85 c1       	rjmp	.+778    	; 0x3b24 <f4_unimplemented_instruction_func>
-    381a:	84 c1       	rjmp	.+776    	; 0x3b24 <f4_unimplemented_instruction_func>
-    381c:	83 c1       	rjmp	.+774    	; 0x3b24 <f4_unimplemented_instruction_func>
-    381e:	82 c1       	rjmp	.+772    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3820:	81 c1       	rjmp	.+770    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3822:	80 c1       	rjmp	.+768    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3824:	7f c1       	rjmp	.+766    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3826:	7e c1       	rjmp	.+764    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3828:	7d c1       	rjmp	.+762    	; 0x3b24 <f4_unimplemented_instruction_func>
-    382a:	7c c1       	rjmp	.+760    	; 0x3b24 <f4_unimplemented_instruction_func>
-    382c:	7b c1       	rjmp	.+758    	; 0x3b24 <f4_unimplemented_instruction_func>
-    382e:	7a c1       	rjmp	.+756    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3830:	79 c1       	rjmp	.+754    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3832:	78 c1       	rjmp	.+752    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3834:	77 c1       	rjmp	.+750    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3836:	76 c1       	rjmp	.+748    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3838:	75 c1       	rjmp	.+746    	; 0x3b24 <f4_unimplemented_instruction_func>
-    383a:	74 c1       	rjmp	.+744    	; 0x3b24 <f4_unimplemented_instruction_func>
-    383c:	73 c1       	rjmp	.+742    	; 0x3b24 <f4_unimplemented_instruction_func>
-    383e:	72 c1       	rjmp	.+740    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3840:	71 c1       	rjmp	.+738    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3842:	70 c1       	rjmp	.+736    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3844:	6f c1       	rjmp	.+734    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3846:	6e c1       	rjmp	.+732    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3848:	6d c1       	rjmp	.+730    	; 0x3b24 <f4_unimplemented_instruction_func>
-    384a:	6c c1       	rjmp	.+728    	; 0x3b24 <f4_unimplemented_instruction_func>
-    384c:	6b c1       	rjmp	.+726    	; 0x3b24 <f4_unimplemented_instruction_func>
-    384e:	6a c1       	rjmp	.+724    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3850:	69 c1       	rjmp	.+722    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3852:	68 c1       	rjmp	.+720    	; 0x3b24 <f4_unimplemented_instruction_func>
-    3854:	68 c1       	rjmp	.+720    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3856:	67 c1       	rjmp	.+718    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3858:	66 c1       	rjmp	.+716    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    385a:	65 c1       	rjmp	.+714    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    385c:	64 c1       	rjmp	.+712    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    385e:	63 c1       	rjmp	.+710    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3860:	62 c1       	rjmp	.+708    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3862:	61 c1       	rjmp	.+706    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3864:	60 c1       	rjmp	.+704    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3866:	5f c1       	rjmp	.+702    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3868:	5e c1       	rjmp	.+700    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    386a:	5d c1       	rjmp	.+698    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    386c:	5c c1       	rjmp	.+696    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    386e:	5b c1       	rjmp	.+694    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3870:	5a c1       	rjmp	.+692    	; 0x3b26 <f4_invalid_secondary_instruction_func>
-    3872:	59 c1       	rjmp	.+690    	; 0x3b26 <f4_invalid_secondary_instruction_func>
+    36b4:	b2 c2       	rjmp	.+1380   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36b6:	1e c1       	rjmp	.+572    	; 0x38f4 <f4_sub_nf_c0_c1>
+    36b8:	21 c1       	rjmp	.+578    	; 0x38fc <f4_sub_nf_c0_c2>
+    36ba:	24 c1       	rjmp	.+584    	; 0x3904 <f4_sub_nf_c0_c3>
+    36bc:	27 c1       	rjmp	.+590    	; 0x390c <f4_sub_nf_c1_c0>
+    36be:	ad c2       	rjmp	.+1370   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36c0:	29 c1       	rjmp	.+594    	; 0x3914 <f4_sub_nf_c1_c2>
+    36c2:	2c c1       	rjmp	.+600    	; 0x391c <f4_sub_nf_c1_c3>
+    36c4:	2f c1       	rjmp	.+606    	; 0x3924 <f4_sub_nf_c2_c0>
+    36c6:	32 c1       	rjmp	.+612    	; 0x392c <f4_sub_nf_c2_c1>
+    36c8:	a8 c2       	rjmp	.+1360   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36ca:	34 c1       	rjmp	.+616    	; 0x3934 <f4_sub_nf_c2_c3>
+    36cc:	37 c1       	rjmp	.+622    	; 0x393c <f4_sub_nf_c3_c0>
+    36ce:	3a c1       	rjmp	.+628    	; 0x3944 <f4_sub_nf_c3_c1>
+    36d0:	3d c1       	rjmp	.+634    	; 0x394c <f4_sub_nf_c3_c2>
+    36d2:	a3 c2       	rjmp	.+1350   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36d4:	a2 c2       	rjmp	.+1348   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36d6:	a1 c2       	rjmp	.+1346   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36d8:	a0 c2       	rjmp	.+1344   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36da:	9f c2       	rjmp	.+1342   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36dc:	3b c1       	rjmp	.+630    	; 0x3954 <f4_and_c1_c0>
+    36de:	9d c2       	rjmp	.+1338   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36e0:	3d c1       	rjmp	.+634    	; 0x395c <f4_and_c1_c2>
+    36e2:	40 c1       	rjmp	.+640    	; 0x3964 <f4_and_c1_c3>
+    36e4:	43 c1       	rjmp	.+646    	; 0x396c <f4_and_c2_c0>
+    36e6:	46 c1       	rjmp	.+652    	; 0x3974 <f4_and_c2_c1>
+    36e8:	98 c2       	rjmp	.+1328   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36ea:	48 c1       	rjmp	.+656    	; 0x397c <f4_and_c2_c3>
+    36ec:	4b c1       	rjmp	.+662    	; 0x3984 <f4_and_c3_c0>
+    36ee:	4e c1       	rjmp	.+668    	; 0x398c <f4_and_c3_c1>
+    36f0:	51 c1       	rjmp	.+674    	; 0x3994 <f4_and_c3_c2>
+    36f2:	93 c2       	rjmp	.+1318   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36f4:	92 c2       	rjmp	.+1316   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36f6:	91 c2       	rjmp	.+1314   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36f8:	90 c2       	rjmp	.+1312   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36fa:	8f c2       	rjmp	.+1310   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    36fc:	4f c1       	rjmp	.+670    	; 0x399c <f4_or_c1_c0>
+    36fe:	8d c2       	rjmp	.+1306   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3700:	51 c1       	rjmp	.+674    	; 0x39a4 <f4_or_c1_c2>
+    3702:	54 c1       	rjmp	.+680    	; 0x39ac <f4_or_c1_c3>
+    3704:	57 c1       	rjmp	.+686    	; 0x39b4 <f4_or_c2_c0>
+    3706:	5a c1       	rjmp	.+692    	; 0x39bc <f4_or_c2_c1>
+    3708:	88 c2       	rjmp	.+1296   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    370a:	5c c1       	rjmp	.+696    	; 0x39c4 <f4_or_c2_c3>
+    370c:	5f c1       	rjmp	.+702    	; 0x39cc <f4_or_c3_c0>
+    370e:	62 c1       	rjmp	.+708    	; 0x39d4 <f4_or_c3_c1>
+    3710:	65 c1       	rjmp	.+714    	; 0x39dc <f4_or_c3_c2>
+    3712:	83 c2       	rjmp	.+1286   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3714:	82 c2       	rjmp	.+1284   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3716:	81 c2       	rjmp	.+1282   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3718:	80 c2       	rjmp	.+1280   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    371a:	7f c2       	rjmp	.+1278   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    371c:	63 c1       	rjmp	.+710    	; 0x39e4 <f4_xor_c1_c0>
+    371e:	7d c2       	rjmp	.+1274   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3720:	65 c1       	rjmp	.+714    	; 0x39ec <f4_xor_c1_c2>
+    3722:	68 c1       	rjmp	.+720    	; 0x39f4 <f4_xor_c1_c3>
+    3724:	6b c1       	rjmp	.+726    	; 0x39fc <f4_xor_c2_c0>
+    3726:	6e c1       	rjmp	.+732    	; 0x3a04 <f4_xor_c2_c1>
+    3728:	78 c2       	rjmp	.+1264   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    372a:	70 c1       	rjmp	.+736    	; 0x3a0c <f4_xor_c2_c3>
+    372c:	73 c1       	rjmp	.+742    	; 0x3a14 <f4_xor_c3_c0>
+    372e:	76 c1       	rjmp	.+748    	; 0x3a1c <f4_xor_c3_c1>
+    3730:	79 c1       	rjmp	.+754    	; 0x3a24 <f4_xor_c3_c2>
+    3732:	73 c2       	rjmp	.+1254   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3734:	72 c2       	rjmp	.+1252   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3736:	71 c2       	rjmp	.+1250   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3738:	70 c2       	rjmp	.+1248   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    373a:	6f c2       	rjmp	.+1246   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    373c:	77 c1       	rjmp	.+750    	; 0x3a2c <f4_bic_c1_c0>
+    373e:	6d c2       	rjmp	.+1242   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3740:	7b c1       	rjmp	.+758    	; 0x3a38 <f4_bic_c1_c2>
+    3742:	80 c1       	rjmp	.+768    	; 0x3a44 <f4_bic_c1_c3>
+    3744:	85 c1       	rjmp	.+778    	; 0x3a50 <f4_bic_c2_c0>
+    3746:	8a c1       	rjmp	.+788    	; 0x3a5c <f4_bic_c2_c1>
+    3748:	68 c2       	rjmp	.+1232   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    374a:	8e c1       	rjmp	.+796    	; 0x3a68 <f4_bic_c2_c3>
+    374c:	93 c1       	rjmp	.+806    	; 0x3a74 <f4_bic_c3_c0>
+    374e:	98 c1       	rjmp	.+816    	; 0x3a80 <f4_bic_c3_c1>
+    3750:	9d c1       	rjmp	.+826    	; 0x3a8c <f4_bic_c3_c2>
+    3752:	63 c2       	rjmp	.+1222   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3754:	62 c2       	rjmp	.+1220   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3756:	61 c2       	rjmp	.+1218   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3758:	60 c2       	rjmp	.+1216   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    375a:	5f c2       	rjmp	.+1214   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    375c:	5e c2       	rjmp	.+1212   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    375e:	5d c2       	rjmp	.+1210   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3760:	5c c2       	rjmp	.+1208   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3762:	5b c2       	rjmp	.+1206   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3764:	5a c2       	rjmp	.+1204   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3766:	59 c2       	rjmp	.+1202   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3768:	58 c2       	rjmp	.+1200   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    376a:	57 c2       	rjmp	.+1198   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    376c:	56 c2       	rjmp	.+1196   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    376e:	55 c2       	rjmp	.+1194   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3770:	54 c2       	rjmp	.+1192   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3772:	53 c2       	rjmp	.+1190   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3774:	52 c2       	rjmp	.+1188   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3776:	51 c2       	rjmp	.+1186   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3778:	50 c2       	rjmp	.+1184   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    377a:	4f c2       	rjmp	.+1182   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    377c:	4e c2       	rjmp	.+1180   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    377e:	4d c2       	rjmp	.+1178   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3780:	4c c2       	rjmp	.+1176   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3782:	4b c2       	rjmp	.+1174   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3784:	4a c2       	rjmp	.+1172   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3786:	49 c2       	rjmp	.+1170   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3788:	48 c2       	rjmp	.+1168   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    378a:	47 c2       	rjmp	.+1166   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    378c:	46 c2       	rjmp	.+1164   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    378e:	45 c2       	rjmp	.+1162   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3790:	44 c2       	rjmp	.+1160   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3792:	43 c2       	rjmp	.+1158   	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3794:	81 c1       	rjmp	.+770    	; 0x3a98 <f4_mulu8_c0_c0>
+    3796:	84 c1       	rjmp	.+776    	; 0x3aa0 <f4_mulu8_c0_c1>
+    3798:	87 c1       	rjmp	.+782    	; 0x3aa8 <f4_mulu8_c0_c2>
+    379a:	8a c1       	rjmp	.+788    	; 0x3ab0 <f4_mulu8_c0_c3>
+    379c:	8d c1       	rjmp	.+794    	; 0x3ab8 <f4_mulu8_c1_c0>
+    379e:	90 c1       	rjmp	.+800    	; 0x3ac0 <f4_mulu8_c1_c1>
+    37a0:	93 c1       	rjmp	.+806    	; 0x3ac8 <f4_mulu8_c1_c2>
+    37a2:	96 c1       	rjmp	.+812    	; 0x3ad0 <f4_mulu8_c1_c3>
+    37a4:	99 c1       	rjmp	.+818    	; 0x3ad8 <f4_mulu8_c2_c0>
+    37a6:	9c c1       	rjmp	.+824    	; 0x3ae0 <f4_mulu8_c2_c1>
+    37a8:	9f c1       	rjmp	.+830    	; 0x3ae8 <f4_mulu8_c2_c2>
+    37aa:	a2 c1       	rjmp	.+836    	; 0x3af0 <f4_mulu8_c2_c3>
+    37ac:	a5 c1       	rjmp	.+842    	; 0x3af8 <f4_mulu8_c3_c0>
+    37ae:	a8 c1       	rjmp	.+848    	; 0x3b00 <f4_mulu8_c3_c1>
+    37b0:	ab c1       	rjmp	.+854    	; 0x3b08 <f4_mulu8_c3_c2>
+    37b2:	ae c1       	rjmp	.+860    	; 0x3b10 <f4_mulu8_c3_c3>
+    37b4:	b1 c1       	rjmp	.+866    	; 0x3b18 <f4_muls8_c0_c0>
+    37b6:	b4 c1       	rjmp	.+872    	; 0x3b20 <f4_muls8_c0_c1>
+    37b8:	b7 c1       	rjmp	.+878    	; 0x3b28 <f4_muls8_c0_c2>
+    37ba:	ba c1       	rjmp	.+884    	; 0x3b30 <f4_muls8_c0_c3>
+    37bc:	bd c1       	rjmp	.+890    	; 0x3b38 <f4_muls8_c1_c0>
+    37be:	c0 c1       	rjmp	.+896    	; 0x3b40 <f4_muls8_c1_c1>
+    37c0:	c3 c1       	rjmp	.+902    	; 0x3b48 <f4_muls8_c1_c2>
+    37c2:	c6 c1       	rjmp	.+908    	; 0x3b50 <f4_muls8_c1_c3>
+    37c4:	c9 c1       	rjmp	.+914    	; 0x3b58 <f4_muls8_c2_c0>
+    37c6:	cc c1       	rjmp	.+920    	; 0x3b60 <f4_muls8_c2_c1>
+    37c8:	cf c1       	rjmp	.+926    	; 0x3b68 <f4_muls8_c2_c2>
+    37ca:	d2 c1       	rjmp	.+932    	; 0x3b70 <f4_muls8_c2_c3>
+    37cc:	d5 c1       	rjmp	.+938    	; 0x3b78 <f4_muls8_c3_c0>
+    37ce:	d8 c1       	rjmp	.+944    	; 0x3b80 <f4_muls8_c3_c1>
+    37d0:	db c1       	rjmp	.+950    	; 0x3b88 <f4_muls8_c3_c2>
+    37d2:	de c1       	rjmp	.+956    	; 0x3b90 <f4_muls8_c3_c3>
+    37d4:	e1 c1       	rjmp	.+962    	; 0x3b98 <f4_mulsu8_c0_c0>
+    37d6:	e4 c1       	rjmp	.+968    	; 0x3ba0 <f4_mulsu8_c0_c1>
+    37d8:	e7 c1       	rjmp	.+974    	; 0x3ba8 <f4_mulsu8_c0_c2>
+    37da:	ea c1       	rjmp	.+980    	; 0x3bb0 <f4_mulsu8_c0_c3>
+    37dc:	ed c1       	rjmp	.+986    	; 0x3bb8 <f4_mulsu8_c1_c0>
+    37de:	f0 c1       	rjmp	.+992    	; 0x3bc0 <f4_mulsu8_c1_c1>
+    37e0:	f3 c1       	rjmp	.+998    	; 0x3bc8 <f4_mulsu8_c1_c2>
+    37e2:	f6 c1       	rjmp	.+1004   	; 0x3bd0 <f4_mulsu8_c1_c3>
+    37e4:	f9 c1       	rjmp	.+1010   	; 0x3bd8 <f4_mulsu8_c2_c0>
+    37e6:	fc c1       	rjmp	.+1016   	; 0x3be0 <f4_mulsu8_c2_c1>
+    37e8:	ff c1       	rjmp	.+1022   	; 0x3be8 <f4_mulsu8_c2_c2>
+    37ea:	02 c2       	rjmp	.+1028   	; 0x3bf0 <f4_mulsu8_c2_c3>
+    37ec:	05 c2       	rjmp	.+1034   	; 0x3bf8 <f4_mulsu8_c3_c0>
+    37ee:	08 c2       	rjmp	.+1040   	; 0x3c00 <f4_mulsu8_c3_c1>
+    37f0:	0b c2       	rjmp	.+1046   	; 0x3c08 <f4_mulsu8_c3_c2>
+    37f2:	0e c2       	rjmp	.+1052   	; 0x3c10 <f4_mulsu8_c3_c3>
+    37f4:	11 c2       	rjmp	.+1058   	; 0x3c18 <f4_unimplemented_instruction_func>
+    37f6:	10 c2       	rjmp	.+1056   	; 0x3c18 <f4_unimplemented_instruction_func>
+    37f8:	0f c2       	rjmp	.+1054   	; 0x3c18 <f4_unimplemented_instruction_func>
+    37fa:	0e c2       	rjmp	.+1052   	; 0x3c18 <f4_unimplemented_instruction_func>
+    37fc:	0d c2       	rjmp	.+1050   	; 0x3c18 <f4_unimplemented_instruction_func>
+    37fe:	0c c2       	rjmp	.+1048   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3800:	0b c2       	rjmp	.+1046   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3802:	0a c2       	rjmp	.+1044   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3804:	09 c2       	rjmp	.+1042   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3806:	08 c2       	rjmp	.+1040   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3808:	07 c2       	rjmp	.+1038   	; 0x3c18 <f4_unimplemented_instruction_func>
+    380a:	06 c2       	rjmp	.+1036   	; 0x3c18 <f4_unimplemented_instruction_func>
+    380c:	05 c2       	rjmp	.+1034   	; 0x3c18 <f4_unimplemented_instruction_func>
+    380e:	04 c2       	rjmp	.+1032   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3810:	03 c2       	rjmp	.+1030   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3812:	02 c2       	rjmp	.+1028   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3814:	01 c2       	rjmp	.+1026   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3816:	00 c2       	rjmp	.+1024   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3818:	ff c1       	rjmp	.+1022   	; 0x3c18 <f4_unimplemented_instruction_func>
+    381a:	fe c1       	rjmp	.+1020   	; 0x3c18 <f4_unimplemented_instruction_func>
+    381c:	fd c1       	rjmp	.+1018   	; 0x3c18 <f4_unimplemented_instruction_func>
+    381e:	fc c1       	rjmp	.+1016   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3820:	fb c1       	rjmp	.+1014   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3822:	fa c1       	rjmp	.+1012   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3824:	f9 c1       	rjmp	.+1010   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3826:	f8 c1       	rjmp	.+1008   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3828:	f7 c1       	rjmp	.+1006   	; 0x3c18 <f4_unimplemented_instruction_func>
+    382a:	f6 c1       	rjmp	.+1004   	; 0x3c18 <f4_unimplemented_instruction_func>
+    382c:	f5 c1       	rjmp	.+1002   	; 0x3c18 <f4_unimplemented_instruction_func>
+    382e:	f4 c1       	rjmp	.+1000   	; 0x3c18 <f4_unimplemented_instruction_func>
+    3830:	f3 c1       	rjmp	.+998    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3832:	f2 c1       	rjmp	.+996    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3834:	f1 c1       	rjmp	.+994    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3836:	f0 c1       	rjmp	.+992    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3838:	ef c1       	rjmp	.+990    	; 0x3c18 <f4_unimplemented_instruction_func>
+    383a:	ee c1       	rjmp	.+988    	; 0x3c18 <f4_unimplemented_instruction_func>
+    383c:	ed c1       	rjmp	.+986    	; 0x3c18 <f4_unimplemented_instruction_func>
+    383e:	ec c1       	rjmp	.+984    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3840:	eb c1       	rjmp	.+982    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3842:	ea c1       	rjmp	.+980    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3844:	e9 c1       	rjmp	.+978    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3846:	e8 c1       	rjmp	.+976    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3848:	e7 c1       	rjmp	.+974    	; 0x3c18 <f4_unimplemented_instruction_func>
+    384a:	e6 c1       	rjmp	.+972    	; 0x3c18 <f4_unimplemented_instruction_func>
+    384c:	e5 c1       	rjmp	.+970    	; 0x3c18 <f4_unimplemented_instruction_func>
+    384e:	e4 c1       	rjmp	.+968    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3850:	e3 c1       	rjmp	.+966    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3852:	e2 c1       	rjmp	.+964    	; 0x3c18 <f4_unimplemented_instruction_func>
+    3854:	e2 c1       	rjmp	.+964    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3856:	e1 c1       	rjmp	.+962    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3858:	e0 c1       	rjmp	.+960    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    385a:	df c1       	rjmp	.+958    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    385c:	de c1       	rjmp	.+956    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    385e:	dd c1       	rjmp	.+954    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3860:	dc c1       	rjmp	.+952    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3862:	db c1       	rjmp	.+950    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3864:	da c1       	rjmp	.+948    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3866:	d9 c1       	rjmp	.+946    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3868:	d8 c1       	rjmp	.+944    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    386a:	d7 c1       	rjmp	.+942    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    386c:	d6 c1       	rjmp	.+940    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    386e:	d5 c1       	rjmp	.+938    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3870:	d4 c1       	rjmp	.+936    	; 0x3c1a <f4_invalid_secondary_instruction_func>
+    3872:	d3 c1       	rjmp	.+934    	; 0x3c1a <f4_invalid_secondary_instruction_func>
 
 00003874 <f4_add_nf_c0_c0>:
     3874:	c8 95       	lpm
     3876:	00 0f       	add	r16, r16
     3878:	11 1f       	adc	r17, r17
-    387a:	56 c1       	rjmp	.+684    	; 0x3b28 <f4_dispatch_func>
+    387a:	d0 c1       	rjmp	.+928    	; 0x3c1c <f4_dispatch_func>
 
 0000387c <f4_add_nf_c0_c1>:
     387c:	c8 95       	lpm
     387e:	02 0f       	add	r16, r18
     3880:	13 1f       	adc	r17, r19
-    3882:	52 c1       	rjmp	.+676    	; 0x3b28 <f4_dispatch_func>
+    3882:	cc c1       	rjmp	.+920    	; 0x3c1c <f4_dispatch_func>
 
 00003884 <f4_add_nf_c0_c2>:
     3884:	c8 95       	lpm
     3886:	04 0f       	add	r16, r20
     3888:	15 1f       	adc	r17, r21
-    388a:	4e c1       	rjmp	.+668    	; 0x3b28 <f4_dispatch_func>
+    388a:	c8 c1       	rjmp	.+912    	; 0x3c1c <f4_dispatch_func>
 
 0000388c <f4_add_nf_c0_c3>:
     388c:	c8 95       	lpm
     388e:	06 0f       	add	r16, r22
     3890:	17 1f       	adc	r17, r23
-    3892:	4a c1       	rjmp	.+660    	; 0x3b28 <f4_dispatch_func>
+    3892:	c4 c1       	rjmp	.+904    	; 0x3c1c <f4_dispatch_func>
 
 00003894 <f4_add_nf_c1_c0>:
     3894:	c8 95       	lpm
     3896:	20 0f       	add	r18, r16
     3898:	31 1f       	adc	r19, r17
-    389a:	46 c1       	rjmp	.+652    	; 0x3b28 <f4_dispatch_func>
+    389a:	c0 c1       	rjmp	.+896    	; 0x3c1c <f4_dispatch_func>
 
 0000389c <f4_add_nf_c1_c1>:
     389c:	c8 95       	lpm
     389e:	22 0f       	add	r18, r18
     38a0:	33 1f       	adc	r19, r19
-    38a2:	42 c1       	rjmp	.+644    	; 0x3b28 <f4_dispatch_func>
+    38a2:	bc c1       	rjmp	.+888    	; 0x3c1c <f4_dispatch_func>
 
 000038a4 <f4_add_nf_c1_c2>:
     38a4:	c8 95       	lpm
     38a6:	24 0f       	add	r18, r20
     38a8:	35 1f       	adc	r19, r21
-    38aa:	3e c1       	rjmp	.+636    	; 0x3b28 <f4_dispatch_func>
+    38aa:	b8 c1       	rjmp	.+880    	; 0x3c1c <f4_dispatch_func>
 
 000038ac <f4_add_nf_c1_c3>:
     38ac:	c8 95       	lpm
     38ae:	26 0f       	add	r18, r22
     38b0:	37 1f       	adc	r19, r23
-    38b2:	3a c1       	rjmp	.+628    	; 0x3b28 <f4_dispatch_func>
+    38b2:	b4 c1       	rjmp	.+872    	; 0x3c1c <f4_dispatch_func>
 
 000038b4 <f4_add_nf_c2_c0>:
     38b4:	c8 95       	lpm
     38b6:	40 0f       	add	r20, r16
     38b8:	51 1f       	adc	r21, r17
-    38ba:	36 c1       	rjmp	.+620    	; 0x3b28 <f4_dispatch_func>
+    38ba:	b0 c1       	rjmp	.+864    	; 0x3c1c <f4_dispatch_func>
 
 000038bc <f4_add_nf_c2_c1>:
     38bc:	c8 95       	lpm
     38be:	42 0f       	add	r20, r18
     38c0:	53 1f       	adc	r21, r19
-    38c2:	32 c1       	rjmp	.+612    	; 0x3b28 <f4_dispatch_func>
+    38c2:	ac c1       	rjmp	.+856    	; 0x3c1c <f4_dispatch_func>
 
 000038c4 <f4_add_nf_c2_c2>:
     38c4:	c8 95       	lpm
     38c6:	44 0f       	add	r20, r20
     38c8:	55 1f       	adc	r21, r21
-    38ca:	2e c1       	rjmp	.+604    	; 0x3b28 <f4_dispatch_func>
+    38ca:	a8 c1       	rjmp	.+848    	; 0x3c1c <f4_dispatch_func>
 
 000038cc <f4_add_nf_c2_c3>:
     38cc:	c8 95       	lpm
     38ce:	46 0f       	add	r20, r22
     38d0:	57 1f       	adc	r21, r23
-    38d2:	2a c1       	rjmp	.+596    	; 0x3b28 <f4_dispatch_func>
+    38d2:	a4 c1       	rjmp	.+840    	; 0x3c1c <f4_dispatch_func>
 
 000038d4 <f4_add_nf_c3_c0>:
     38d4:	c8 95       	lpm
     38d6:	60 0f       	add	r22, r16
     38d8:	71 1f       	adc	r23, r17
-    38da:	26 c1       	rjmp	.+588    	; 0x3b28 <f4_dispatch_func>
+    38da:	a0 c1       	rjmp	.+832    	; 0x3c1c <f4_dispatch_func>
 
 000038dc <f4_add_nf_c3_c1>:
     38dc:	c8 95       	lpm
     38de:	62 0f       	add	r22, r18
     38e0:	73 1f       	adc	r23, r19
-    38e2:	22 c1       	rjmp	.+580    	; 0x3b28 <f4_dispatch_func>
+    38e2:	9c c1       	rjmp	.+824    	; 0x3c1c <f4_dispatch_func>
 
 000038e4 <f4_add_nf_c3_c2>:
     38e4:	c8 95       	lpm
     38e6:	64 0f       	add	r22, r20
     38e8:	75 1f       	adc	r23, r21
-    38ea:	1e c1       	rjmp	.+572    	; 0x3b28 <f4_dispatch_func>
+    38ea:	98 c1       	rjmp	.+816    	; 0x3c1c <f4_dispatch_func>
 
 000038ec <f4_add_nf_c3_c3>:
     38ec:	c8 95       	lpm
     38ee:	66 0f       	add	r22, r22
     38f0:	77 1f       	adc	r23, r23
-    38f2:	1a c1       	rjmp	.+564    	; 0x3b28 <f4_dispatch_func>
+    38f2:	94 c1       	rjmp	.+808    	; 0x3c1c <f4_dispatch_func>
 
-000038f4 <f4_sub_nf_c0_c0>:
+000038f4 <f4_sub_nf_c0_c1>:
     38f4:	c8 95       	lpm
-    38f6:	00 1b       	sub	r16, r16
-    38f8:	11 0b       	sbc	r17, r17
-    38fa:	16 c1       	rjmp	.+556    	; 0x3b28 <f4_dispatch_func>
+    38f6:	02 1b       	sub	r16, r18
+    38f8:	13 0b       	sbc	r17, r19
+    38fa:	90 c1       	rjmp	.+800    	; 0x3c1c <f4_dispatch_func>
 
-000038fc <f4_sub_nf_c0_c1>:
+000038fc <f4_sub_nf_c0_c2>:
     38fc:	c8 95       	lpm
-    38fe:	02 1b       	sub	r16, r18
-    3900:	13 0b       	sbc	r17, r19
-    3902:	12 c1       	rjmp	.+548    	; 0x3b28 <f4_dispatch_func>
+    38fe:	04 1b       	sub	r16, r20
+    3900:	15 0b       	sbc	r17, r21
+    3902:	8c c1       	rjmp	.+792    	; 0x3c1c <f4_dispatch_func>
 
-00003904 <f4_sub_nf_c0_c2>:
+00003904 <f4_sub_nf_c0_c3>:
     3904:	c8 95       	lpm
-    3906:	04 1b       	sub	r16, r20
-    3908:	15 0b       	sbc	r17, r21
-    390a:	0e c1       	rjmp	.+540    	; 0x3b28 <f4_dispatch_func>
+    3906:	06 1b       	sub	r16, r22
+    3908:	17 0b       	sbc	r17, r23
+    390a:	88 c1       	rjmp	.+784    	; 0x3c1c <f4_dispatch_func>
 
-0000390c <f4_sub_nf_c0_c3>:
+0000390c <f4_sub_nf_c1_c0>:
     390c:	c8 95       	lpm
-    390e:	06 1b       	sub	r16, r22
-    3910:	17 0b       	sbc	r17, r23
-    3912:	0a c1       	rjmp	.+532    	; 0x3b28 <f4_dispatch_func>
+    390e:	20 1b       	sub	r18, r16
+    3910:	31 0b       	sbc	r19, r17
+    3912:	84 c1       	rjmp	.+776    	; 0x3c1c <f4_dispatch_func>
 
-00003914 <f4_sub_nf_c1_c0>:
+00003914 <f4_sub_nf_c1_c2>:
     3914:	c8 95       	lpm
-    3916:	20 1b       	sub	r18, r16
-    3918:	31 0b       	sbc	r19, r17
-    391a:	06 c1       	rjmp	.+524    	; 0x3b28 <f4_dispatch_func>
+    3916:	24 1b       	sub	r18, r20
+    3918:	35 0b       	sbc	r19, r21
+    391a:	80 c1       	rjmp	.+768    	; 0x3c1c <f4_dispatch_func>
 
-0000391c <f4_sub_nf_c1_c1>:
+0000391c <f4_sub_nf_c1_c3>:
     391c:	c8 95       	lpm
-    391e:	22 1b       	sub	r18, r18
-    3920:	33 0b       	sbc	r19, r19
-    3922:	02 c1       	rjmp	.+516    	; 0x3b28 <f4_dispatch_func>
+    391e:	26 1b       	sub	r18, r22
+    3920:	37 0b       	sbc	r19, r23
+    3922:	7c c1       	rjmp	.+760    	; 0x3c1c <f4_dispatch_func>
 
-00003924 <f4_sub_nf_c1_c2>:
+00003924 <f4_sub_nf_c2_c0>:
     3924:	c8 95       	lpm
-    3926:	24 1b       	sub	r18, r20
-    3928:	35 0b       	sbc	r19, r21
-    392a:	fe c0       	rjmp	.+508    	; 0x3b28 <f4_dispatch_func>
+    3926:	40 1b       	sub	r20, r16
+    3928:	51 0b       	sbc	r21, r17
+    392a:	78 c1       	rjmp	.+752    	; 0x3c1c <f4_dispatch_func>
 
-0000392c <f4_sub_nf_c1_c3>:
+0000392c <f4_sub_nf_c2_c1>:
     392c:	c8 95       	lpm
-    392e:	26 1b       	sub	r18, r22
-    3930:	37 0b       	sbc	r19, r23
-    3932:	fa c0       	rjmp	.+500    	; 0x3b28 <f4_dispatch_func>
+    392e:	42 1b       	sub	r20, r18
+    3930:	53 0b       	sbc	r21, r19
+    3932:	74 c1       	rjmp	.+744    	; 0x3c1c <f4_dispatch_func>
 
-00003934 <f4_sub_nf_c2_c0>:
+00003934 <f4_sub_nf_c2_c3>:
     3934:	c8 95       	lpm
-    3936:	40 1b       	sub	r20, r16
-    3938:	51 0b       	sbc	r21, r17
-    393a:	f6 c0       	rjmp	.+492    	; 0x3b28 <f4_dispatch_func>
+    3936:	46 1b       	sub	r20, r22
+    3938:	57 0b       	sbc	r21, r23
+    393a:	70 c1       	rjmp	.+736    	; 0x3c1c <f4_dispatch_func>
 
-0000393c <f4_sub_nf_c2_c1>:
+0000393c <f4_sub_nf_c3_c0>:
     393c:	c8 95       	lpm
-    393e:	42 1b       	sub	r20, r18
-    3940:	53 0b       	sbc	r21, r19
-    3942:	f2 c0       	rjmp	.+484    	; 0x3b28 <f4_dispatch_func>
+    393e:	60 1b       	sub	r22, r16
+    3940:	71 0b       	sbc	r23, r17
+    3942:	6c c1       	rjmp	.+728    	; 0x3c1c <f4_dispatch_func>
 
-00003944 <f4_sub_nf_c2_c2>:
+00003944 <f4_sub_nf_c3_c1>:
     3944:	c8 95       	lpm
-    3946:	44 1b       	sub	r20, r20
-    3948:	55 0b       	sbc	r21, r21
-    394a:	ee c0       	rjmp	.+476    	; 0x3b28 <f4_dispatch_func>
+    3946:	62 1b       	sub	r22, r18
+    3948:	73 0b       	sbc	r23, r19
+    394a:	68 c1       	rjmp	.+720    	; 0x3c1c <f4_dispatch_func>
 
-0000394c <f4_sub_nf_c2_c3>:
+0000394c <f4_sub_nf_c3_c2>:
     394c:	c8 95       	lpm
-    394e:	46 1b       	sub	r20, r22
-    3950:	57 0b       	sbc	r21, r23
-    3952:	ea c0       	rjmp	.+468    	; 0x3b28 <f4_dispatch_func>
+    394e:	64 1b       	sub	r22, r20
+    3950:	75 0b       	sbc	r23, r21
+    3952:	64 c1       	rjmp	.+712    	; 0x3c1c <f4_dispatch_func>
 
-00003954 <f4_sub_nf_c3_c0>:
+00003954 <f4_and_c1_c0>:
     3954:	c8 95       	lpm
-    3956:	60 1b       	sub	r22, r16
-    3958:	71 0b       	sbc	r23, r17
-    395a:	e6 c0       	rjmp	.+460    	; 0x3b28 <f4_dispatch_func>
+    3956:	20 23       	and	r18, r16
+    3958:	31 23       	and	r19, r17
+    395a:	60 c1       	rjmp	.+704    	; 0x3c1c <f4_dispatch_func>
 
-0000395c <f4_sub_nf_c3_c1>:
+0000395c <f4_and_c1_c2>:
     395c:	c8 95       	lpm
-    395e:	62 1b       	sub	r22, r18
-    3960:	73 0b       	sbc	r23, r19
-    3962:	e2 c0       	rjmp	.+452    	; 0x3b28 <f4_dispatch_func>
+    395e:	24 23       	and	r18, r20
+    3960:	35 23       	and	r19, r21
+    3962:	5c c1       	rjmp	.+696    	; 0x3c1c <f4_dispatch_func>
 
-00003964 <f4_sub_nf_c3_c2>:
+00003964 <f4_and_c1_c3>:
     3964:	c8 95       	lpm
-    3966:	64 1b       	sub	r22, r20
-    3968:	75 0b       	sbc	r23, r21
-    396a:	de c0       	rjmp	.+444    	; 0x3b28 <f4_dispatch_func>
+    3966:	26 23       	and	r18, r22
+    3968:	37 23       	and	r19, r23
+    396a:	58 c1       	rjmp	.+688    	; 0x3c1c <f4_dispatch_func>
 
-0000396c <f4_sub_nf_c3_c3>:
+0000396c <f4_and_c2_c0>:
     396c:	c8 95       	lpm
-    396e:	66 1b       	sub	r22, r22
-    3970:	77 0b       	sbc	r23, r23
-    3972:	da c0       	rjmp	.+436    	; 0x3b28 <f4_dispatch_func>
+    396e:	40 23       	and	r20, r16
+    3970:	51 23       	and	r21, r17
+    3972:	54 c1       	rjmp	.+680    	; 0x3c1c <f4_dispatch_func>
 
-00003974 <f4_and_c1_c0>:
+00003974 <f4_and_c2_c1>:
     3974:	c8 95       	lpm
-    3976:	20 23       	and	r18, r16
-    3978:	31 23       	and	r19, r17
-    397a:	d6 c0       	rjmp	.+428    	; 0x3b28 <f4_dispatch_func>
+    3976:	42 23       	and	r20, r18
+    3978:	53 23       	and	r21, r19
+    397a:	50 c1       	rjmp	.+672    	; 0x3c1c <f4_dispatch_func>
 
-0000397c <f4_and_c1_c1>:
+0000397c <f4_and_c2_c3>:
     397c:	c8 95       	lpm
-    397e:	22 23       	and	r18, r18
-    3980:	33 23       	and	r19, r19
-    3982:	d2 c0       	rjmp	.+420    	; 0x3b28 <f4_dispatch_func>
+    397e:	46 23       	and	r20, r22
+    3980:	57 23       	and	r21, r23
+    3982:	4c c1       	rjmp	.+664    	; 0x3c1c <f4_dispatch_func>
 
-00003984 <f4_and_c1_c2>:
+00003984 <f4_and_c3_c0>:
     3984:	c8 95       	lpm
-    3986:	24 23       	and	r18, r20
-    3988:	35 23       	and	r19, r21
-    398a:	ce c0       	rjmp	.+412    	; 0x3b28 <f4_dispatch_func>
+    3986:	60 23       	and	r22, r16
+    3988:	71 23       	and	r23, r17
+    398a:	48 c1       	rjmp	.+656    	; 0x3c1c <f4_dispatch_func>
 
-0000398c <f4_and_c1_c3>:
+0000398c <f4_and_c3_c1>:
     398c:	c8 95       	lpm
-    398e:	26 23       	and	r18, r22
-    3990:	37 23       	and	r19, r23
-    3992:	ca c0       	rjmp	.+404    	; 0x3b28 <f4_dispatch_func>
+    398e:	62 23       	and	r22, r18
+    3990:	73 23       	and	r23, r19
+    3992:	44 c1       	rjmp	.+648    	; 0x3c1c <f4_dispatch_func>
 
-00003994 <f4_and_c2_c0>:
+00003994 <f4_and_c3_c2>:
     3994:	c8 95       	lpm
-    3996:	40 23       	and	r20, r16
-    3998:	51 23       	and	r21, r17
-    399a:	c6 c0       	rjmp	.+396    	; 0x3b28 <f4_dispatch_func>
+    3996:	64 23       	and	r22, r20
+    3998:	75 23       	and	r23, r21
+    399a:	40 c1       	rjmp	.+640    	; 0x3c1c <f4_dispatch_func>
 
-0000399c <f4_and_c2_c1>:
+0000399c <f4_or_c1_c0>:
     399c:	c8 95       	lpm
-    399e:	42 23       	and	r20, r18
-    39a0:	53 23       	and	r21, r19
-    39a2:	c2 c0       	rjmp	.+388    	; 0x3b28 <f4_dispatch_func>
+    399e:	20 2b       	or	r18, r16
+    39a0:	31 2b       	or	r19, r17
+    39a2:	3c c1       	rjmp	.+632    	; 0x3c1c <f4_dispatch_func>
 
-000039a4 <f4_and_c2_c2>:
+000039a4 <f4_or_c1_c2>:
     39a4:	c8 95       	lpm
-    39a6:	44 23       	and	r20, r20
-    39a8:	55 23       	and	r21, r21
-    39aa:	be c0       	rjmp	.+380    	; 0x3b28 <f4_dispatch_func>
+    39a6:	24 2b       	or	r18, r20
+    39a8:	35 2b       	or	r19, r21
+    39aa:	38 c1       	rjmp	.+624    	; 0x3c1c <f4_dispatch_func>
 
-000039ac <f4_and_c2_c3>:
+000039ac <f4_or_c1_c3>:
     39ac:	c8 95       	lpm
-    39ae:	46 23       	and	r20, r22
-    39b0:	57 23       	and	r21, r23
-    39b2:	ba c0       	rjmp	.+372    	; 0x3b28 <f4_dispatch_func>
+    39ae:	26 2b       	or	r18, r22
+    39b0:	37 2b       	or	r19, r23
+    39b2:	34 c1       	rjmp	.+616    	; 0x3c1c <f4_dispatch_func>
 
-000039b4 <f4_and_c3_c0>:
+000039b4 <f4_or_c2_c0>:
     39b4:	c8 95       	lpm
-    39b6:	60 23       	and	r22, r16
-    39b8:	71 23       	and	r23, r17
-    39ba:	b6 c0       	rjmp	.+364    	; 0x3b28 <f4_dispatch_func>
+    39b6:	40 2b       	or	r20, r16
+    39b8:	51 2b       	or	r21, r17
+    39ba:	30 c1       	rjmp	.+608    	; 0x3c1c <f4_dispatch_func>
 
-000039bc <f4_and_c3_c1>:
+000039bc <f4_or_c2_c1>:
     39bc:	c8 95       	lpm
-    39be:	62 23       	and	r22, r18
-    39c0:	73 23       	and	r23, r19
-    39c2:	b2 c0       	rjmp	.+356    	; 0x3b28 <f4_dispatch_func>
+    39be:	42 2b       	or	r20, r18
+    39c0:	53 2b       	or	r21, r19
+    39c2:	2c c1       	rjmp	.+600    	; 0x3c1c <f4_dispatch_func>
 
-000039c4 <f4_and_c3_c2>:
+000039c4 <f4_or_c2_c3>:
     39c4:	c8 95       	lpm
-    39c6:	64 23       	and	r22, r20
-    39c8:	75 23       	and	r23, r21
-    39ca:	ae c0       	rjmp	.+348    	; 0x3b28 <f4_dispatch_func>
+    39c6:	46 2b       	or	r20, r22
+    39c8:	57 2b       	or	r21, r23
+    39ca:	28 c1       	rjmp	.+592    	; 0x3c1c <f4_dispatch_func>
 
-000039cc <f4_and_c3_c3>:
+000039cc <f4_or_c3_c0>:
     39cc:	c8 95       	lpm
-    39ce:	66 23       	and	r22, r22
-    39d0:	77 23       	and	r23, r23
-    39d2:	aa c0       	rjmp	.+340    	; 0x3b28 <f4_dispatch_func>
+    39ce:	60 2b       	or	r22, r16
+    39d0:	71 2b       	or	r23, r17
+    39d2:	24 c1       	rjmp	.+584    	; 0x3c1c <f4_dispatch_func>
 
-000039d4 <f4_or_c1_c0>:
+000039d4 <f4_or_c3_c1>:
     39d4:	c8 95       	lpm
-    39d6:	20 2b       	or	r18, r16
-    39d8:	31 2b       	or	r19, r17
-    39da:	a6 c0       	rjmp	.+332    	; 0x3b28 <f4_dispatch_func>
+    39d6:	62 2b       	or	r22, r18
+    39d8:	73 2b       	or	r23, r19
+    39da:	20 c1       	rjmp	.+576    	; 0x3c1c <f4_dispatch_func>
 
-000039dc <f4_or_c1_c1>:
+000039dc <f4_or_c3_c2>:
     39dc:	c8 95       	lpm
-    39de:	22 2b       	or	r18, r18
-    39e0:	33 2b       	or	r19, r19
-    39e2:	a2 c0       	rjmp	.+324    	; 0x3b28 <f4_dispatch_func>
+    39de:	64 2b       	or	r22, r20
+    39e0:	75 2b       	or	r23, r21
+    39e2:	1c c1       	rjmp	.+568    	; 0x3c1c <f4_dispatch_func>
 
-000039e4 <f4_or_c1_c2>:
+000039e4 <f4_xor_c1_c0>:
     39e4:	c8 95       	lpm
-    39e6:	24 2b       	or	r18, r20
-    39e8:	35 2b       	or	r19, r21
-    39ea:	9e c0       	rjmp	.+316    	; 0x3b28 <f4_dispatch_func>
+    39e6:	20 27       	eor	r18, r16
+    39e8:	31 27       	eor	r19, r17
+    39ea:	18 c1       	rjmp	.+560    	; 0x3c1c <f4_dispatch_func>
 
-000039ec <f4_or_c1_c3>:
+000039ec <f4_xor_c1_c2>:
     39ec:	c8 95       	lpm
-    39ee:	26 2b       	or	r18, r22
-    39f0:	37 2b       	or	r19, r23
-    39f2:	9a c0       	rjmp	.+308    	; 0x3b28 <f4_dispatch_func>
+    39ee:	24 27       	eor	r18, r20
+    39f0:	35 27       	eor	r19, r21
+    39f2:	14 c1       	rjmp	.+552    	; 0x3c1c <f4_dispatch_func>
 
-000039f4 <f4_or_c2_c0>:
+000039f4 <f4_xor_c1_c3>:
     39f4:	c8 95       	lpm
-    39f6:	40 2b       	or	r20, r16
-    39f8:	51 2b       	or	r21, r17
-    39fa:	96 c0       	rjmp	.+300    	; 0x3b28 <f4_dispatch_func>
+    39f6:	26 27       	eor	r18, r22
+    39f8:	37 27       	eor	r19, r23
+    39fa:	10 c1       	rjmp	.+544    	; 0x3c1c <f4_dispatch_func>
 
-000039fc <f4_or_c2_c1>:
+000039fc <f4_xor_c2_c0>:
     39fc:	c8 95       	lpm
-    39fe:	42 2b       	or	r20, r18
-    3a00:	53 2b       	or	r21, r19
-    3a02:	92 c0       	rjmp	.+292    	; 0x3b28 <f4_dispatch_func>
+    39fe:	40 27       	eor	r20, r16
+    3a00:	51 27       	eor	r21, r17
+    3a02:	0c c1       	rjmp	.+536    	; 0x3c1c <f4_dispatch_func>
 
-00003a04 <f4_or_c2_c2>:
+00003a04 <f4_xor_c2_c1>:
     3a04:	c8 95       	lpm
-    3a06:	44 2b       	or	r20, r20
-    3a08:	55 2b       	or	r21, r21
-    3a0a:	8e c0       	rjmp	.+284    	; 0x3b28 <f4_dispatch_func>
+    3a06:	42 27       	eor	r20, r18
+    3a08:	53 27       	eor	r21, r19
+    3a0a:	08 c1       	rjmp	.+528    	; 0x3c1c <f4_dispatch_func>
 
-00003a0c <f4_or_c2_c3>:
+00003a0c <f4_xor_c2_c3>:
     3a0c:	c8 95       	lpm
-    3a0e:	46 2b       	or	r20, r22
-    3a10:	57 2b       	or	r21, r23
-    3a12:	8a c0       	rjmp	.+276    	; 0x3b28 <f4_dispatch_func>
+    3a0e:	46 27       	eor	r20, r22
+    3a10:	57 27       	eor	r21, r23
+    3a12:	04 c1       	rjmp	.+520    	; 0x3c1c <f4_dispatch_func>
 
-00003a14 <f4_or_c3_c0>:
+00003a14 <f4_xor_c3_c0>:
     3a14:	c8 95       	lpm
-    3a16:	60 2b       	or	r22, r16
-    3a18:	71 2b       	or	r23, r17
-    3a1a:	86 c0       	rjmp	.+268    	; 0x3b28 <f4_dispatch_func>
+    3a16:	60 27       	eor	r22, r16
+    3a18:	71 27       	eor	r23, r17
+    3a1a:	00 c1       	rjmp	.+512    	; 0x3c1c <f4_dispatch_func>
 
-00003a1c <f4_or_c3_c1>:
+00003a1c <f4_xor_c3_c1>:
     3a1c:	c8 95       	lpm
-    3a1e:	62 2b       	or	r22, r18
-    3a20:	73 2b       	or	r23, r19
-    3a22:	82 c0       	rjmp	.+260    	; 0x3b28 <f4_dispatch_func>
+    3a1e:	62 27       	eor	r22, r18
+    3a20:	73 27       	eor	r23, r19
+    3a22:	fc c0       	rjmp	.+504    	; 0x3c1c <f4_dispatch_func>
 
-00003a24 <f4_or_c3_c2>:
+00003a24 <f4_xor_c3_c2>:
     3a24:	c8 95       	lpm
-    3a26:	64 2b       	or	r22, r20
-    3a28:	75 2b       	or	r23, r21
-    3a2a:	7e c0       	rjmp	.+252    	; 0x3b28 <f4_dispatch_func>
+    3a26:	64 27       	eor	r22, r20
+    3a28:	75 27       	eor	r23, r21
+    3a2a:	f8 c0       	rjmp	.+496    	; 0x3c1c <f4_dispatch_func>
 
-00003a2c <f4_or_c3_c3>:
-    3a2c:	c8 95       	lpm
-    3a2e:	66 2b       	or	r22, r22
-    3a30:	77 2b       	or	r23, r23
-    3a32:	7a c0       	rjmp	.+244    	; 0x3b28 <f4_dispatch_func>
+00003a2c <f4_bic_c1_c0>:
+    3a2c:	28 01       	movw	r4, r16
+    3a2e:	40 94       	com	r4
+    3a30:	50 94       	com	r5
+    3a32:	24 21       	and	r18, r4
+    3a34:	35 21       	and	r19, r5
+    3a36:	f2 c0       	rjmp	.+484    	; 0x3c1c <f4_dispatch_func>
 
-00003a34 <f4_xor_c1_c0>:
-    3a34:	c8 95       	lpm
-    3a36:	20 27       	eor	r18, r16
-    3a38:	31 27       	eor	r19, r17
-    3a3a:	76 c0       	rjmp	.+236    	; 0x3b28 <f4_dispatch_func>
+00003a38 <f4_bic_c1_c2>:
+    3a38:	2a 01       	movw	r4, r20
+    3a3a:	40 94       	com	r4
+    3a3c:	50 94       	com	r5
+    3a3e:	24 21       	and	r18, r4
+    3a40:	35 21       	and	r19, r5
+    3a42:	ec c0       	rjmp	.+472    	; 0x3c1c <f4_dispatch_func>
 
-00003a3c <f4_xor_c1_c1>:
-    3a3c:	c8 95       	lpm
-    3a3e:	22 27       	eor	r18, r18
-    3a40:	33 27       	eor	r19, r19
-    3a42:	72 c0       	rjmp	.+228    	; 0x3b28 <f4_dispatch_func>
+00003a44 <f4_bic_c1_c3>:
+    3a44:	2b 01       	movw	r4, r22
+    3a46:	40 94       	com	r4
+    3a48:	50 94       	com	r5
+    3a4a:	24 21       	and	r18, r4
+    3a4c:	35 21       	and	r19, r5
+    3a4e:	e6 c0       	rjmp	.+460    	; 0x3c1c <f4_dispatch_func>
 
-00003a44 <f4_xor_c1_c2>:
-    3a44:	c8 95       	lpm
-    3a46:	24 27       	eor	r18, r20
-    3a48:	35 27       	eor	r19, r21
-    3a4a:	6e c0       	rjmp	.+220    	; 0x3b28 <f4_dispatch_func>
+00003a50 <f4_bic_c2_c0>:
+    3a50:	28 01       	movw	r4, r16
+    3a52:	40 94       	com	r4
+    3a54:	50 94       	com	r5
+    3a56:	44 21       	and	r20, r4
+    3a58:	55 21       	and	r21, r5
+    3a5a:	e0 c0       	rjmp	.+448    	; 0x3c1c <f4_dispatch_func>
 
-00003a4c <f4_xor_c1_c3>:
-    3a4c:	c8 95       	lpm
-    3a4e:	26 27       	eor	r18, r22
-    3a50:	37 27       	eor	r19, r23
-    3a52:	6a c0       	rjmp	.+212    	; 0x3b28 <f4_dispatch_func>
+00003a5c <f4_bic_c2_c1>:
+    3a5c:	29 01       	movw	r4, r18
+    3a5e:	40 94       	com	r4
+    3a60:	50 94       	com	r5
+    3a62:	44 21       	and	r20, r4
+    3a64:	55 21       	and	r21, r5
+    3a66:	da c0       	rjmp	.+436    	; 0x3c1c <f4_dispatch_func>
 
-00003a54 <f4_xor_c2_c0>:
-    3a54:	c8 95       	lpm
-    3a56:	40 27       	eor	r20, r16
-    3a58:	51 27       	eor	r21, r17
-    3a5a:	66 c0       	rjmp	.+204    	; 0x3b28 <f4_dispatch_func>
+00003a68 <f4_bic_c2_c3>:
+    3a68:	2b 01       	movw	r4, r22
+    3a6a:	40 94       	com	r4
+    3a6c:	50 94       	com	r5
+    3a6e:	44 21       	and	r20, r4
+    3a70:	55 21       	and	r21, r5
+    3a72:	d4 c0       	rjmp	.+424    	; 0x3c1c <f4_dispatch_func>
 
-00003a5c <f4_xor_c2_c1>:
-    3a5c:	c8 95       	lpm
-    3a5e:	42 27       	eor	r20, r18
-    3a60:	53 27       	eor	r21, r19
-    3a62:	62 c0       	rjmp	.+196    	; 0x3b28 <f4_dispatch_func>
+00003a74 <f4_bic_c3_c0>:
+    3a74:	28 01       	movw	r4, r16
+    3a76:	40 94       	com	r4
+    3a78:	50 94       	com	r5
+    3a7a:	64 21       	and	r22, r4
+    3a7c:	75 21       	and	r23, r5
+    3a7e:	ce c0       	rjmp	.+412    	; 0x3c1c <f4_dispatch_func>
 
-00003a64 <f4_xor_c2_c2>:
-    3a64:	c8 95       	lpm
-    3a66:	44 27       	eor	r20, r20
-    3a68:	55 27       	eor	r21, r21
-    3a6a:	5e c0       	rjmp	.+188    	; 0x3b28 <f4_dispatch_func>
+00003a80 <f4_bic_c3_c1>:
+    3a80:	29 01       	movw	r4, r18
+    3a82:	40 94       	com	r4
+    3a84:	50 94       	com	r5
+    3a86:	64 21       	and	r22, r4
+    3a88:	75 21       	and	r23, r5
+    3a8a:	c8 c0       	rjmp	.+400    	; 0x3c1c <f4_dispatch_func>
 
-00003a6c <f4_xor_c2_c3>:
-    3a6c:	c8 95       	lpm
-    3a6e:	46 27       	eor	r20, r22
-    3a70:	57 27       	eor	r21, r23
-    3a72:	5a c0       	rjmp	.+180    	; 0x3b28 <f4_dispatch_func>
+00003a8c <f4_bic_c3_c2>:
+    3a8c:	2a 01       	movw	r4, r20
+    3a8e:	40 94       	com	r4
+    3a90:	50 94       	com	r5
+    3a92:	64 21       	and	r22, r4
+    3a94:	75 21       	and	r23, r5
+    3a96:	c2 c0       	rjmp	.+388    	; 0x3c1c <f4_dispatch_func>
 
-00003a74 <f4_xor_c3_c0>:
-    3a74:	c8 95       	lpm
-    3a76:	60 27       	eor	r22, r16
-    3a78:	71 27       	eor	r23, r17
-    3a7a:	56 c0       	rjmp	.+172    	; 0x3b28 <f4_dispatch_func>
+00003a98 <f4_mulu8_c0_c0>:
+    3a98:	00 c0       	rjmp	.+0      	; 0x3a9a <f4_mulu8_c0_c0+0x2>
+    3a9a:	00 9f       	mul	r16, r16
+    3a9c:	80 01       	movw	r16, r0
+    3a9e:	be c0       	rjmp	.+380    	; 0x3c1c <f4_dispatch_func>
 
-00003a7c <f4_xor_c3_c1>:
-    3a7c:	c8 95       	lpm
-    3a7e:	62 27       	eor	r22, r18
-    3a80:	73 27       	eor	r23, r19
-    3a82:	52 c0       	rjmp	.+164    	; 0x3b28 <f4_dispatch_func>
+00003aa0 <f4_mulu8_c0_c1>:
+    3aa0:	00 c0       	rjmp	.+0      	; 0x3aa2 <f4_mulu8_c0_c1+0x2>
+    3aa2:	02 9f       	mul	r16, r18
+    3aa4:	80 01       	movw	r16, r0
+    3aa6:	ba c0       	rjmp	.+372    	; 0x3c1c <f4_dispatch_func>
 
-00003a84 <f4_xor_c3_c2>:
-    3a84:	c8 95       	lpm
-    3a86:	64 27       	eor	r22, r20
-    3a88:	75 27       	eor	r23, r21
-    3a8a:	4e c0       	rjmp	.+156    	; 0x3b28 <f4_dispatch_func>
+00003aa8 <f4_mulu8_c0_c2>:
+    3aa8:	00 c0       	rjmp	.+0      	; 0x3aaa <f4_mulu8_c0_c2+0x2>
+    3aaa:	04 9f       	mul	r16, r20
+    3aac:	80 01       	movw	r16, r0
+    3aae:	b6 c0       	rjmp	.+364    	; 0x3c1c <f4_dispatch_func>
 
-00003a8c <f4_xor_c3_c3>:
-    3a8c:	c8 95       	lpm
-    3a8e:	66 27       	eor	r22, r22
-    3a90:	77 27       	eor	r23, r23
-    3a92:	4a c0       	rjmp	.+148    	; 0x3b28 <f4_dispatch_func>
+00003ab0 <f4_mulu8_c0_c3>:
+    3ab0:	00 c0       	rjmp	.+0      	; 0x3ab2 <f4_mulu8_c0_c3+0x2>
+    3ab2:	06 9f       	mul	r16, r22
+    3ab4:	80 01       	movw	r16, r0
+    3ab6:	b2 c0       	rjmp	.+356    	; 0x3c1c <f4_dispatch_func>
 
-00003a94 <f4_bic_c1_c0>:
-    3a94:	28 01       	movw	r4, r16
-    3a96:	40 94       	com	r4
-    3a98:	50 94       	com	r5
-    3a9a:	24 21       	and	r18, r4
-    3a9c:	35 21       	and	r19, r5
-    3a9e:	44 c0       	rjmp	.+136    	; 0x3b28 <f4_dispatch_func>
+00003ab8 <f4_mulu8_c1_c0>:
+    3ab8:	00 c0       	rjmp	.+0      	; 0x3aba <f4_mulu8_c1_c0+0x2>
+    3aba:	20 9f       	mul	r18, r16
+    3abc:	90 01       	movw	r18, r0
+    3abe:	ae c0       	rjmp	.+348    	; 0x3c1c <f4_dispatch_func>
 
-00003aa0 <f4_bic_c1_c1>:
-    3aa0:	29 01       	movw	r4, r18
-    3aa2:	40 94       	com	r4
-    3aa4:	50 94       	com	r5
-    3aa6:	24 21       	and	r18, r4
-    3aa8:	35 21       	and	r19, r5
-    3aaa:	3e c0       	rjmp	.+124    	; 0x3b28 <f4_dispatch_func>
+00003ac0 <f4_mulu8_c1_c1>:
+    3ac0:	00 c0       	rjmp	.+0      	; 0x3ac2 <f4_mulu8_c1_c1+0x2>
+    3ac2:	22 9f       	mul	r18, r18
+    3ac4:	90 01       	movw	r18, r0
+    3ac6:	aa c0       	rjmp	.+340    	; 0x3c1c <f4_dispatch_func>
 
-00003aac <f4_bic_c1_c2>:
-    3aac:	2a 01       	movw	r4, r20
-    3aae:	40 94       	com	r4
-    3ab0:	50 94       	com	r5
-    3ab2:	24 21       	and	r18, r4
-    3ab4:	35 21       	and	r19, r5
-    3ab6:	38 c0       	rjmp	.+112    	; 0x3b28 <f4_dispatch_func>
+00003ac8 <f4_mulu8_c1_c2>:
+    3ac8:	00 c0       	rjmp	.+0      	; 0x3aca <f4_mulu8_c1_c2+0x2>
+    3aca:	24 9f       	mul	r18, r20
+    3acc:	90 01       	movw	r18, r0
+    3ace:	a6 c0       	rjmp	.+332    	; 0x3c1c <f4_dispatch_func>
 
-00003ab8 <f4_bic_c1_c3>:
-    3ab8:	2b 01       	movw	r4, r22
-    3aba:	40 94       	com	r4
-    3abc:	50 94       	com	r5
-    3abe:	24 21       	and	r18, r4
-    3ac0:	35 21       	and	r19, r5
-    3ac2:	32 c0       	rjmp	.+100    	; 0x3b28 <f4_dispatch_func>
+00003ad0 <f4_mulu8_c1_c3>:
+    3ad0:	00 c0       	rjmp	.+0      	; 0x3ad2 <f4_mulu8_c1_c3+0x2>
+    3ad2:	26 9f       	mul	r18, r22
+    3ad4:	90 01       	movw	r18, r0
+    3ad6:	a2 c0       	rjmp	.+324    	; 0x3c1c <f4_dispatch_func>
 
-00003ac4 <f4_bic_c2_c0>:
-    3ac4:	28 01       	movw	r4, r16
-    3ac6:	40 94       	com	r4
-    3ac8:	50 94       	com	r5
-    3aca:	44 21       	and	r20, r4
-    3acc:	55 21       	and	r21, r5
-    3ace:	2c c0       	rjmp	.+88     	; 0x3b28 <f4_dispatch_func>
+00003ad8 <f4_mulu8_c2_c0>:
+    3ad8:	00 c0       	rjmp	.+0      	; 0x3ada <f4_mulu8_c2_c0+0x2>
+    3ada:	40 9f       	mul	r20, r16
+    3adc:	a0 01       	movw	r20, r0
+    3ade:	9e c0       	rjmp	.+316    	; 0x3c1c <f4_dispatch_func>
 
-00003ad0 <f4_bic_c2_c1>:
-    3ad0:	29 01       	movw	r4, r18
-    3ad2:	40 94       	com	r4
-    3ad4:	50 94       	com	r5
-    3ad6:	44 21       	and	r20, r4
-    3ad8:	55 21       	and	r21, r5
-    3ada:	26 c0       	rjmp	.+76     	; 0x3b28 <f4_dispatch_func>
+00003ae0 <f4_mulu8_c2_c1>:
+    3ae0:	00 c0       	rjmp	.+0      	; 0x3ae2 <f4_mulu8_c2_c1+0x2>
+    3ae2:	42 9f       	mul	r20, r18
+    3ae4:	a0 01       	movw	r20, r0
+    3ae6:	9a c0       	rjmp	.+308    	; 0x3c1c <f4_dispatch_func>
 
-00003adc <f4_bic_c2_c2>:
-    3adc:	2a 01       	movw	r4, r20
-    3ade:	40 94       	com	r4
-    3ae0:	50 94       	com	r5
-    3ae2:	44 21       	and	r20, r4
-    3ae4:	55 21       	and	r21, r5
-    3ae6:	20 c0       	rjmp	.+64     	; 0x3b28 <f4_dispatch_func>
+00003ae8 <f4_mulu8_c2_c2>:
+    3ae8:	00 c0       	rjmp	.+0      	; 0x3aea <f4_mulu8_c2_c2+0x2>
+    3aea:	44 9f       	mul	r20, r20
+    3aec:	a0 01       	movw	r20, r0
+    3aee:	96 c0       	rjmp	.+300    	; 0x3c1c <f4_dispatch_func>
 
-00003ae8 <f4_bic_c2_c3>:
-    3ae8:	2b 01       	movw	r4, r22
-    3aea:	40 94       	com	r4
-    3aec:	50 94       	com	r5
-    3aee:	44 21       	and	r20, r4
-    3af0:	55 21       	and	r21, r5
-    3af2:	1a c0       	rjmp	.+52     	; 0x3b28 <f4_dispatch_func>
+00003af0 <f4_mulu8_c2_c3>:
+    3af0:	00 c0       	rjmp	.+0      	; 0x3af2 <f4_mulu8_c2_c3+0x2>
+    3af2:	46 9f       	mul	r20, r22
+    3af4:	a0 01       	movw	r20, r0
+    3af6:	92 c0       	rjmp	.+292    	; 0x3c1c <f4_dispatch_func>
 
-00003af4 <f4_bic_c3_c0>:
-    3af4:	28 01       	movw	r4, r16
-    3af6:	40 94       	com	r4
-    3af8:	50 94       	com	r5
-    3afa:	64 21       	and	r22, r4
-    3afc:	75 21       	and	r23, r5
-    3afe:	14 c0       	rjmp	.+40     	; 0x3b28 <f4_dispatch_func>
+00003af8 <f4_mulu8_c3_c0>:
+    3af8:	00 c0       	rjmp	.+0      	; 0x3afa <f4_mulu8_c3_c0+0x2>
+    3afa:	60 9f       	mul	r22, r16
+    3afc:	b0 01       	movw	r22, r0
+    3afe:	8e c0       	rjmp	.+284    	; 0x3c1c <f4_dispatch_func>
 
-00003b00 <f4_bic_c3_c1>:
-    3b00:	29 01       	movw	r4, r18
-    3b02:	40 94       	com	r4
-    3b04:	50 94       	com	r5
-    3b06:	64 21       	and	r22, r4
-    3b08:	75 21       	and	r23, r5
-    3b0a:	0e c0       	rjmp	.+28     	; 0x3b28 <f4_dispatch_func>
+00003b00 <f4_mulu8_c3_c1>:
+    3b00:	00 c0       	rjmp	.+0      	; 0x3b02 <f4_mulu8_c3_c1+0x2>
+    3b02:	62 9f       	mul	r22, r18
+    3b04:	b0 01       	movw	r22, r0
+    3b06:	8a c0       	rjmp	.+276    	; 0x3c1c <f4_dispatch_func>
 
-00003b0c <f4_bic_c3_c2>:
-    3b0c:	2a 01       	movw	r4, r20
-    3b0e:	40 94       	com	r4
-    3b10:	50 94       	com	r5
-    3b12:	64 21       	and	r22, r4
-    3b14:	75 21       	and	r23, r5
-    3b16:	08 c0       	rjmp	.+16     	; 0x3b28 <f4_dispatch_func>
+00003b08 <f4_mulu8_c3_c2>:
+    3b08:	00 c0       	rjmp	.+0      	; 0x3b0a <f4_mulu8_c3_c2+0x2>
+    3b0a:	64 9f       	mul	r22, r20
+    3b0c:	b0 01       	movw	r22, r0
+    3b0e:	86 c0       	rjmp	.+268    	; 0x3c1c <f4_dispatch_func>
 
-00003b18 <f4_bic_c3_c3>:
-    3b18:	2b 01       	movw	r4, r22
-    3b1a:	40 94       	com	r4
-    3b1c:	50 94       	com	r5
-    3b1e:	64 21       	and	r22, r4
-    3b20:	75 21       	and	r23, r5
-    3b22:	02 c0       	rjmp	.+4      	; 0x3b28 <f4_dispatch_func>
+00003b10 <f4_mulu8_c3_c3>:
+    3b10:	00 c0       	rjmp	.+0      	; 0x3b12 <f4_mulu8_c3_c3+0x2>
+    3b12:	66 9f       	mul	r22, r22
+    3b14:	b0 01       	movw	r22, r0
+    3b16:	82 c0       	rjmp	.+260    	; 0x3c1c <f4_dispatch_func>
 
-00003b24 <f4_unimplemented_instruction_func>:
-    3b24:	ff cf       	rjmp	.-2      	; 0x3b24 <f4_unimplemented_instruction_func>
+00003b18 <f4_muls8_c0_c0>:
+    3b18:	00 c0       	rjmp	.+0      	; 0x3b1a <f4_muls8_c0_c0+0x2>
+    3b1a:	00 02       	muls	r16, r16
+    3b1c:	80 01       	movw	r16, r0
+    3b1e:	7e c0       	rjmp	.+252    	; 0x3c1c <f4_dispatch_func>
 
-00003b26 <f4_invalid_secondary_instruction_func>:
-    3b26:	ff cf       	rjmp	.-2      	; 0x3b26 <f4_invalid_secondary_instruction_func>
+00003b20 <f4_muls8_c0_c1>:
+    3b20:	00 c0       	rjmp	.+0      	; 0x3b22 <f4_muls8_c0_c1+0x2>
+    3b22:	02 02       	muls	r16, r18
+    3b24:	80 01       	movw	r16, r0
+    3b26:	7a c0       	rjmp	.+244    	; 0x3c1c <f4_dispatch_func>
 
-00003b28 <f4_dispatch_func>:
-    3b28:	6e b4       	in	r6, 0x2e	; 46
-    3b2a:	2e bc       	out	0x2e, r2	; 46
-    3b2c:	01 96       	adiw	r24, 0x01	; 1
-    3b2e:	67 9c       	mul	r6, r7
-    3b30:	f0 01       	movw	r30, r0
-    3b32:	ff 5f       	subi	r31, 0xFF	; 255
-    3b34:	09 94       	ijmp
+00003b28 <f4_muls8_c0_c2>:
+    3b28:	00 c0       	rjmp	.+0      	; 0x3b2a <f4_muls8_c0_c2+0x2>
+    3b2a:	04 02       	muls	r16, r20
+    3b2c:	80 01       	movw	r16, r0
+    3b2e:	76 c0       	rjmp	.+236    	; 0x3c1c <f4_dispatch_func>
 
-00003b36 <e1_extension_decode_func>:
-    3b36:	f8 94       	cli
-    3b38:	2e bc       	out	0x2e, r2	; 46
-    3b3a:	6e b4       	in	r6, 0x2e	; 46
-    3b3c:	78 94       	sei
-    3b3e:	a6 2d       	mov	r26, r6
-    3b40:	ac 70       	andi	r26, 0x0C	; 12
-    3b42:	a8 5f       	subi	r26, 0xF8	; 248
-    3b44:	e6 2d       	mov	r30, r6
-    3b46:	e3 70       	andi	r30, 0x03	; 3
-    3b48:	ee 0f       	add	r30, r30
-    3b4a:	ee 0f       	add	r30, r30
-    3b4c:	e8 5f       	subi	r30, 0xF8	; 248
-    3b4e:	ff 27       	eor	r31, r31
-    3b50:	b6 2d       	mov	r27, r6
-    3b52:	b0 7f       	andi	r27, 0xF0	; 240
-    3b54:	51 f0       	breq	.+20     	; 0x3b6a <e1_mov32_family>
-    3b56:	b0 31       	cpi	r27, 0x10	; 16
-    3b58:	91 f0       	breq	.+36     	; 0x3b7e <e1_add32_family>
-    3b5a:	b0 32       	cpi	r27, 0x20	; 32
-    3b5c:	11 f1       	breq	.+68     	; 0x3ba2 <e1_sub32_family>
-    3b5e:	b0 36       	cpi	r27, 0x60	; 96
-    3b60:	91 f1       	breq	.+100    	; 0x3bc6 <e1_cmp32_family>
-    3b62:	b0 3a       	cpi	r27, 0xA0	; 160
-    3b64:	08 f0       	brcs	.+2      	; 0x3b68 <.L1^B22>
-    3b66:	3f c0       	rjmp	.+126    	; 0x3be6 <e1_invalid_secondary_instruction_func>
+00003b30 <f4_muls8_c0_c3>:
+    3b30:	00 c0       	rjmp	.+0      	; 0x3b32 <f4_muls8_c0_c3+0x2>
+    3b32:	06 02       	muls	r16, r22
+    3b34:	80 01       	movw	r16, r0
+    3b36:	72 c0       	rjmp	.+228    	; 0x3c1c <f4_dispatch_func>
 
-00003b68 <.L1^B22>:
-    3b68:	3d c0       	rjmp	.+122    	; 0x3be4 <e1_unimplemented_instruction_func>
+00003b38 <f4_muls8_c1_c0>:
+    3b38:	00 c0       	rjmp	.+0      	; 0x3b3a <f4_muls8_c1_c0+0x2>
+    3b3a:	20 02       	muls	r18, r16
+    3b3c:	90 01       	movw	r18, r0
+    3b3e:	6e c0       	rjmp	.+220    	; 0x3c1c <f4_dispatch_func>
 
-00003b6a <e1_mov32_family>:
-    3b6a:	bb 27       	eor	r27, r27
-    3b6c:	01 90       	ld	r0, Z+
-    3b6e:	0d 92       	st	X+, r0
-    3b70:	01 90       	ld	r0, Z+
-    3b72:	0d 92       	st	X+, r0
-    3b74:	01 90       	ld	r0, Z+
-    3b76:	0d 92       	st	X+, r0
-    3b78:	00 80       	ld	r0, Z
-    3b7a:	0c 92       	st	X, r0
-    3b7c:	35 c0       	rjmp	.+106    	; 0x3be8 <e1_dispatch_func>
+00003b40 <f4_muls8_c1_c1>:
+    3b40:	00 c0       	rjmp	.+0      	; 0x3b42 <f4_muls8_c1_c1+0x2>
+    3b42:	22 02       	muls	r18, r18
+    3b44:	90 01       	movw	r18, r0
+    3b46:	6a c0       	rjmp	.+212    	; 0x3c1c <f4_dispatch_func>
 
-00003b7e <e1_add32_family>:
-    3b7e:	bb 27       	eor	r27, r27
-    3b80:	0c 90       	ld	r0, X
-    3b82:	41 90       	ld	r4, Z+
-    3b84:	04 0c       	add	r0, r4
-    3b86:	0d 92       	st	X+, r0
-    3b88:	0c 90       	ld	r0, X
-    3b8a:	41 90       	ld	r4, Z+
-    3b8c:	04 1c       	adc	r0, r4
-    3b8e:	0d 92       	st	X+, r0
-    3b90:	0c 90       	ld	r0, X
-    3b92:	41 90       	ld	r4, Z+
-    3b94:	04 1c       	adc	r0, r4
-    3b96:	0d 92       	st	X+, r0
-    3b98:	0c 90       	ld	r0, X
-    3b9a:	40 80       	ld	r4, Z
-    3b9c:	04 1c       	adc	r0, r4
-    3b9e:	0c 92       	st	X, r0
-    3ba0:	23 c0       	rjmp	.+70     	; 0x3be8 <e1_dispatch_func>
+00003b48 <f4_muls8_c1_c2>:
+    3b48:	00 c0       	rjmp	.+0      	; 0x3b4a <f4_muls8_c1_c2+0x2>
+    3b4a:	24 02       	muls	r18, r20
+    3b4c:	90 01       	movw	r18, r0
+    3b4e:	66 c0       	rjmp	.+204    	; 0x3c1c <f4_dispatch_func>
 
-00003ba2 <e1_sub32_family>:
-    3ba2:	bb 27       	eor	r27, r27
-    3ba4:	0c 90       	ld	r0, X
-    3ba6:	41 90       	ld	r4, Z+
-    3ba8:	04 18       	sub	r0, r4
-    3baa:	0d 92       	st	X+, r0
-    3bac:	0c 90       	ld	r0, X
-    3bae:	41 90       	ld	r4, Z+
-    3bb0:	04 08       	sbc	r0, r4
-    3bb2:	0d 92       	st	X+, r0
-    3bb4:	0c 90       	ld	r0, X
-    3bb6:	41 90       	ld	r4, Z+
-    3bb8:	04 08       	sbc	r0, r4
-    3bba:	0d 92       	st	X+, r0
-    3bbc:	0c 90       	ld	r0, X
-    3bbe:	40 80       	ld	r4, Z
-    3bc0:	04 08       	sbc	r0, r4
-    3bc2:	0c 92       	st	X, r0
-    3bc4:	11 c0       	rjmp	.+34     	; 0x3be8 <e1_dispatch_func>
+00003b50 <f4_muls8_c1_c3>:
+    3b50:	00 c0       	rjmp	.+0      	; 0x3b52 <f4_muls8_c1_c3+0x2>
+    3b52:	26 02       	muls	r18, r22
+    3b54:	90 01       	movw	r18, r0
+    3b56:	62 c0       	rjmp	.+196    	; 0x3c1c <f4_dispatch_func>
 
-00003bc6 <e1_cmp32_family>:
-    3bc6:	bb 27       	eor	r27, r27
-    3bc8:	0d 90       	ld	r0, X+
-    3bca:	41 90       	ld	r4, Z+
-    3bcc:	04 14       	cp	r0, r4
-    3bce:	0d 90       	ld	r0, X+
-    3bd0:	41 90       	ld	r4, Z+
-    3bd2:	04 04       	cpc	r0, r4
-    3bd4:	0d 90       	ld	r0, X+
-    3bd6:	41 90       	ld	r4, Z+
-    3bd8:	04 04       	cpc	r0, r4
-    3bda:	0c 90       	ld	r0, X
-    3bdc:	40 80       	ld	r4, Z
-    3bde:	04 04       	cpc	r0, r4
-    3be0:	3f b6       	in	r3, 0x3f	; 63
-    3be2:	02 c0       	rjmp	.+4      	; 0x3be8 <e1_dispatch_func>
+00003b58 <f4_muls8_c2_c0>:
+    3b58:	00 c0       	rjmp	.+0      	; 0x3b5a <f4_muls8_c2_c0+0x2>
+    3b5a:	40 02       	muls	r20, r16
+    3b5c:	a0 01       	movw	r20, r0
+    3b5e:	5e c0       	rjmp	.+188    	; 0x3c1c <f4_dispatch_func>
 
-00003be4 <e1_unimplemented_instruction_func>:
-    3be4:	ff cf       	rjmp	.-2      	; 0x3be4 <e1_unimplemented_instruction_func>
+00003b60 <f4_muls8_c2_c1>:
+    3b60:	00 c0       	rjmp	.+0      	; 0x3b62 <f4_muls8_c2_c1+0x2>
+    3b62:	42 02       	muls	r20, r18
+    3b64:	a0 01       	movw	r20, r0
+    3b66:	5a c0       	rjmp	.+180    	; 0x3c1c <f4_dispatch_func>
 
-00003be6 <e1_invalid_secondary_instruction_func>:
-    3be6:	ff cf       	rjmp	.-2      	; 0x3be6 <e1_invalid_secondary_instruction_func>
+00003b68 <f4_muls8_c2_c2>:
+    3b68:	00 c0       	rjmp	.+0      	; 0x3b6a <f4_muls8_c2_c2+0x2>
+    3b6a:	44 02       	muls	r20, r20
+    3b6c:	a0 01       	movw	r20, r0
+    3b6e:	56 c0       	rjmp	.+172    	; 0x3c1c <f4_dispatch_func>
 
-00003be8 <e1_dispatch_func>:
-    3be8:	6e b4       	in	r6, 0x2e	; 46
-    3bea:	2e bc       	out	0x2e, r2	; 46
-    3bec:	01 96       	adiw	r24, 0x01	; 1
-    3bee:	67 9c       	mul	r6, r7
-    3bf0:	f0 01       	movw	r30, r0
-    3bf2:	ff 5f       	subi	r31, 0xFF	; 255
-    3bf4:	09 94       	ijmp
+00003b70 <f4_muls8_c2_c3>:
+    3b70:	00 c0       	rjmp	.+0      	; 0x3b72 <f4_muls8_c2_c3+0x2>
+    3b72:	46 02       	muls	r20, r22
+    3b74:	a0 01       	movw	r20, r0
+    3b76:	52 c0       	rjmp	.+164    	; 0x3c1c <f4_dispatch_func>
+
+00003b78 <f4_muls8_c3_c0>:
+    3b78:	00 c0       	rjmp	.+0      	; 0x3b7a <f4_muls8_c3_c0+0x2>
+    3b7a:	60 02       	muls	r22, r16
+    3b7c:	b0 01       	movw	r22, r0
+    3b7e:	4e c0       	rjmp	.+156    	; 0x3c1c <f4_dispatch_func>
+
+00003b80 <f4_muls8_c3_c1>:
+    3b80:	00 c0       	rjmp	.+0      	; 0x3b82 <f4_muls8_c3_c1+0x2>
+    3b82:	62 02       	muls	r22, r18
+    3b84:	b0 01       	movw	r22, r0
+    3b86:	4a c0       	rjmp	.+148    	; 0x3c1c <f4_dispatch_func>
+
+00003b88 <f4_muls8_c3_c2>:
+    3b88:	00 c0       	rjmp	.+0      	; 0x3b8a <f4_muls8_c3_c2+0x2>
+    3b8a:	64 02       	muls	r22, r20
+    3b8c:	b0 01       	movw	r22, r0
+    3b8e:	46 c0       	rjmp	.+140    	; 0x3c1c <f4_dispatch_func>
+
+00003b90 <f4_muls8_c3_c3>:
+    3b90:	00 c0       	rjmp	.+0      	; 0x3b92 <f4_muls8_c3_c3+0x2>
+    3b92:	66 02       	muls	r22, r22
+    3b94:	b0 01       	movw	r22, r0
+    3b96:	42 c0       	rjmp	.+132    	; 0x3c1c <f4_dispatch_func>
+
+00003b98 <f4_mulsu8_c0_c0>:
+    3b98:	00 c0       	rjmp	.+0      	; 0x3b9a <f4_mulsu8_c0_c0+0x2>
+    3b9a:	00 03       	mulsu	r16, r16
+    3b9c:	80 01       	movw	r16, r0
+    3b9e:	3e c0       	rjmp	.+124    	; 0x3c1c <f4_dispatch_func>
+
+00003ba0 <f4_mulsu8_c0_c1>:
+    3ba0:	00 c0       	rjmp	.+0      	; 0x3ba2 <f4_mulsu8_c0_c1+0x2>
+    3ba2:	02 03       	mulsu	r16, r18
+    3ba4:	80 01       	movw	r16, r0
+    3ba6:	3a c0       	rjmp	.+116    	; 0x3c1c <f4_dispatch_func>
+
+00003ba8 <f4_mulsu8_c0_c2>:
+    3ba8:	00 c0       	rjmp	.+0      	; 0x3baa <f4_mulsu8_c0_c2+0x2>
+    3baa:	04 03       	mulsu	r16, r20
+    3bac:	80 01       	movw	r16, r0
+    3bae:	36 c0       	rjmp	.+108    	; 0x3c1c <f4_dispatch_func>
+
+00003bb0 <f4_mulsu8_c0_c3>:
+    3bb0:	00 c0       	rjmp	.+0      	; 0x3bb2 <f4_mulsu8_c0_c3+0x2>
+    3bb2:	06 03       	mulsu	r16, r22
+    3bb4:	80 01       	movw	r16, r0
+    3bb6:	32 c0       	rjmp	.+100    	; 0x3c1c <f4_dispatch_func>
+
+00003bb8 <f4_mulsu8_c1_c0>:
+    3bb8:	00 c0       	rjmp	.+0      	; 0x3bba <f4_mulsu8_c1_c0+0x2>
+    3bba:	20 03       	mulsu	r18, r16
+    3bbc:	90 01       	movw	r18, r0
+    3bbe:	2e c0       	rjmp	.+92     	; 0x3c1c <f4_dispatch_func>
+
+00003bc0 <f4_mulsu8_c1_c1>:
+    3bc0:	00 c0       	rjmp	.+0      	; 0x3bc2 <f4_mulsu8_c1_c1+0x2>
+    3bc2:	22 03       	mulsu	r18, r18
+    3bc4:	90 01       	movw	r18, r0
+    3bc6:	2a c0       	rjmp	.+84     	; 0x3c1c <f4_dispatch_func>
+
+00003bc8 <f4_mulsu8_c1_c2>:
+    3bc8:	00 c0       	rjmp	.+0      	; 0x3bca <f4_mulsu8_c1_c2+0x2>
+    3bca:	24 03       	mulsu	r18, r20
+    3bcc:	90 01       	movw	r18, r0
+    3bce:	26 c0       	rjmp	.+76     	; 0x3c1c <f4_dispatch_func>
+
+00003bd0 <f4_mulsu8_c1_c3>:
+    3bd0:	00 c0       	rjmp	.+0      	; 0x3bd2 <f4_mulsu8_c1_c3+0x2>
+    3bd2:	26 03       	mulsu	r18, r22
+    3bd4:	90 01       	movw	r18, r0
+    3bd6:	22 c0       	rjmp	.+68     	; 0x3c1c <f4_dispatch_func>
+
+00003bd8 <f4_mulsu8_c2_c0>:
+    3bd8:	00 c0       	rjmp	.+0      	; 0x3bda <f4_mulsu8_c2_c0+0x2>
+    3bda:	40 03       	mulsu	r20, r16
+    3bdc:	a0 01       	movw	r20, r0
+    3bde:	1e c0       	rjmp	.+60     	; 0x3c1c <f4_dispatch_func>
+
+00003be0 <f4_mulsu8_c2_c1>:
+    3be0:	00 c0       	rjmp	.+0      	; 0x3be2 <f4_mulsu8_c2_c1+0x2>
+    3be2:	42 03       	mulsu	r20, r18
+    3be4:	a0 01       	movw	r20, r0
+    3be6:	1a c0       	rjmp	.+52     	; 0x3c1c <f4_dispatch_func>
+
+00003be8 <f4_mulsu8_c2_c2>:
+    3be8:	00 c0       	rjmp	.+0      	; 0x3bea <f4_mulsu8_c2_c2+0x2>
+    3bea:	44 03       	mulsu	r20, r20
+    3bec:	a0 01       	movw	r20, r0
+    3bee:	16 c0       	rjmp	.+44     	; 0x3c1c <f4_dispatch_func>
+
+00003bf0 <f4_mulsu8_c2_c3>:
+    3bf0:	00 c0       	rjmp	.+0      	; 0x3bf2 <f4_mulsu8_c2_c3+0x2>
+    3bf2:	46 03       	mulsu	r20, r22
+    3bf4:	a0 01       	movw	r20, r0
+    3bf6:	12 c0       	rjmp	.+36     	; 0x3c1c <f4_dispatch_func>
+
+00003bf8 <f4_mulsu8_c3_c0>:
+    3bf8:	00 c0       	rjmp	.+0      	; 0x3bfa <f4_mulsu8_c3_c0+0x2>
+    3bfa:	60 03       	mulsu	r22, r16
+    3bfc:	b0 01       	movw	r22, r0
+    3bfe:	0e c0       	rjmp	.+28     	; 0x3c1c <f4_dispatch_func>
+
+00003c00 <f4_mulsu8_c3_c1>:
+    3c00:	00 c0       	rjmp	.+0      	; 0x3c02 <f4_mulsu8_c3_c1+0x2>
+    3c02:	62 03       	mulsu	r22, r18
+    3c04:	b0 01       	movw	r22, r0
+    3c06:	0a c0       	rjmp	.+20     	; 0x3c1c <f4_dispatch_func>
+
+00003c08 <f4_mulsu8_c3_c2>:
+    3c08:	00 c0       	rjmp	.+0      	; 0x3c0a <f4_mulsu8_c3_c2+0x2>
+    3c0a:	64 03       	mulsu	r22, r20
+    3c0c:	b0 01       	movw	r22, r0
+    3c0e:	06 c0       	rjmp	.+12     	; 0x3c1c <f4_dispatch_func>
+
+00003c10 <f4_mulsu8_c3_c3>:
+    3c10:	00 c0       	rjmp	.+0      	; 0x3c12 <f4_mulsu8_c3_c3+0x2>
+    3c12:	66 03       	mulsu	r22, r22
+    3c14:	b0 01       	movw	r22, r0
+    3c16:	02 c0       	rjmp	.+4      	; 0x3c1c <f4_dispatch_func>
+
+00003c18 <f4_unimplemented_instruction_func>:
+    3c18:	ff cf       	rjmp	.-2      	; 0x3c18 <f4_unimplemented_instruction_func>
+
+00003c1a <f4_invalid_secondary_instruction_func>:
+    3c1a:	ff cf       	rjmp	.-2      	; 0x3c1a <f4_invalid_secondary_instruction_func>
+
+00003c1c <f4_dispatch_func>:
+    3c1c:	6e b4       	in	r6, 0x2e	; 46
+    3c1e:	2e bc       	out	0x2e, r2	; 46
+    3c20:	01 96       	adiw	r24, 0x01	; 1
+    3c22:	67 9c       	mul	r6, r7
+    3c24:	f0 01       	movw	r30, r0
+    3c26:	ff 5f       	subi	r31, 0xFF	; 255
+    3c28:	09 94       	ijmp
+
+00003c2a <e1_extension_decode_func>:
+    3c2a:	f8 94       	cli
+    3c2c:	2e bc       	out	0x2e, r2	; 46
+    3c2e:	6e b4       	in	r6, 0x2e	; 46
+    3c30:	78 94       	sei
+    3c32:	a6 2d       	mov	r26, r6
+    3c34:	ac 70       	andi	r26, 0x0C	; 12
+    3c36:	a8 5f       	subi	r26, 0xF8	; 248
+    3c38:	e6 2d       	mov	r30, r6
+    3c3a:	e3 70       	andi	r30, 0x03	; 3
+    3c3c:	ee 0f       	add	r30, r30
+    3c3e:	ee 0f       	add	r30, r30
+    3c40:	e8 5f       	subi	r30, 0xF8	; 248
+    3c42:	ff 27       	eor	r31, r31
+    3c44:	b6 2d       	mov	r27, r6
+    3c46:	b0 7f       	andi	r27, 0xF0	; 240
+    3c48:	51 f0       	breq	.+20     	; 0x3c5e <e1_mov32_family>
+    3c4a:	b0 31       	cpi	r27, 0x10	; 16
+    3c4c:	91 f0       	breq	.+36     	; 0x3c72 <e1_add32_family>
+    3c4e:	b0 32       	cpi	r27, 0x20	; 32
+    3c50:	11 f1       	breq	.+68     	; 0x3c96 <e1_sub32_family>
+    3c52:	b0 36       	cpi	r27, 0x60	; 96
+    3c54:	91 f1       	breq	.+100    	; 0x3cba <e1_cmp32_family>
+    3c56:	b0 3a       	cpi	r27, 0xA0	; 160
+    3c58:	08 f0       	brcs	.+2      	; 0x3c5c <.L1^B22>
+    3c5a:	3f c0       	rjmp	.+126    	; 0x3cda <e1_invalid_secondary_instruction_func>
+
+00003c5c <.L1^B22>:
+    3c5c:	3d c0       	rjmp	.+122    	; 0x3cd8 <e1_unimplemented_instruction_func>
+
+00003c5e <e1_mov32_family>:
+    3c5e:	bb 27       	eor	r27, r27
+    3c60:	01 90       	ld	r0, Z+
+    3c62:	0d 92       	st	X+, r0
+    3c64:	01 90       	ld	r0, Z+
+    3c66:	0d 92       	st	X+, r0
+    3c68:	01 90       	ld	r0, Z+
+    3c6a:	0d 92       	st	X+, r0
+    3c6c:	00 80       	ld	r0, Z
+    3c6e:	0c 92       	st	X, r0
+    3c70:	35 c0       	rjmp	.+106    	; 0x3cdc <e1_dispatch_func>
+
+00003c72 <e1_add32_family>:
+    3c72:	bb 27       	eor	r27, r27
+    3c74:	0c 90       	ld	r0, X
+    3c76:	41 90       	ld	r4, Z+
+    3c78:	04 0c       	add	r0, r4
+    3c7a:	0d 92       	st	X+, r0
+    3c7c:	0c 90       	ld	r0, X
+    3c7e:	41 90       	ld	r4, Z+
+    3c80:	04 1c       	adc	r0, r4
+    3c82:	0d 92       	st	X+, r0
+    3c84:	0c 90       	ld	r0, X
+    3c86:	41 90       	ld	r4, Z+
+    3c88:	04 1c       	adc	r0, r4
+    3c8a:	0d 92       	st	X+, r0
+    3c8c:	0c 90       	ld	r0, X
+    3c8e:	40 80       	ld	r4, Z
+    3c90:	04 1c       	adc	r0, r4
+    3c92:	0c 92       	st	X, r0
+    3c94:	23 c0       	rjmp	.+70     	; 0x3cdc <e1_dispatch_func>
+
+00003c96 <e1_sub32_family>:
+    3c96:	bb 27       	eor	r27, r27
+    3c98:	0c 90       	ld	r0, X
+    3c9a:	41 90       	ld	r4, Z+
+    3c9c:	04 18       	sub	r0, r4
+    3c9e:	0d 92       	st	X+, r0
+    3ca0:	0c 90       	ld	r0, X
+    3ca2:	41 90       	ld	r4, Z+
+    3ca4:	04 08       	sbc	r0, r4
+    3ca6:	0d 92       	st	X+, r0
+    3ca8:	0c 90       	ld	r0, X
+    3caa:	41 90       	ld	r4, Z+
+    3cac:	04 08       	sbc	r0, r4
+    3cae:	0d 92       	st	X+, r0
+    3cb0:	0c 90       	ld	r0, X
+    3cb2:	40 80       	ld	r4, Z
+    3cb4:	04 08       	sbc	r0, r4
+    3cb6:	0c 92       	st	X, r0
+    3cb8:	11 c0       	rjmp	.+34     	; 0x3cdc <e1_dispatch_func>
+
+00003cba <e1_cmp32_family>:
+    3cba:	bb 27       	eor	r27, r27
+    3cbc:	0d 90       	ld	r0, X+
+    3cbe:	41 90       	ld	r4, Z+
+    3cc0:	04 14       	cp	r0, r4
+    3cc2:	0d 90       	ld	r0, X+
+    3cc4:	41 90       	ld	r4, Z+
+    3cc6:	04 04       	cpc	r0, r4
+    3cc8:	0d 90       	ld	r0, X+
+    3cca:	41 90       	ld	r4, Z+
+    3ccc:	04 04       	cpc	r0, r4
+    3cce:	0c 90       	ld	r0, X
+    3cd0:	40 80       	ld	r4, Z
+    3cd2:	04 04       	cpc	r0, r4
+    3cd4:	3f b6       	in	r3, 0x3f	; 63
+    3cd6:	02 c0       	rjmp	.+4      	; 0x3cdc <e1_dispatch_func>
+
+00003cd8 <e1_unimplemented_instruction_func>:
+    3cd8:	ff cf       	rjmp	.-2      	; 0x3cd8 <e1_unimplemented_instruction_func>
+
+00003cda <e1_invalid_secondary_instruction_func>:
+    3cda:	ff cf       	rjmp	.-2      	; 0x3cda <e1_invalid_secondary_instruction_func>
+
+00003cdc <e1_dispatch_func>:
+    3cdc:	6e b4       	in	r6, 0x2e	; 46
+    3cde:	2e bc       	out	0x2e, r2	; 46
+    3ce0:	01 96       	adiw	r24, 0x01	; 1
+    3ce2:	67 9c       	mul	r6, r7
+    3ce4:	f0 01       	movw	r30, r0
+    3ce6:	ff 5f       	subi	r31, 0xFF	; 255
+    3ce8:	09 94       	ijmp
+
+00003cea <e2_extension_decode_func>:
+    3cea:	f8 94       	cli
+    3cec:	2e bc       	out	0x2e, r2	; 46
+    3cee:	6e b4       	in	r6, 0x2e	; 46
+    3cf0:	78 94       	sei
+    3cf2:	a6 2d       	mov	r26, r6
+    3cf4:	a0 33       	cpi	r26, 0x30	; 48
+    3cf6:	08 f0       	brcs	.+2      	; 0x3cfa <.L1^B23>
+    3cf8:	62 c0       	rjmp	.+196    	; 0x3dbe <e2_invalid_secondary_instruction_func>
+
+00003cfa <.L1^B23>:
+    3cfa:	e2 e8       	ldi	r30, 0x82	; 130
+    3cfc:	fe e1       	ldi	r31, 0x1E	; 30
+    3cfe:	e6 0d       	add	r30, r6
+    3d00:	f2 1d       	adc	r31, r2
+    3d02:	09 94       	ijmp
+
+00003d04 <e2_secondary_table>:
+    3d04:	5c c0       	rjmp	.+184    	; 0x3dbe <e2_invalid_secondary_instruction_func>
+    3d06:	5b c0       	rjmp	.+182    	; 0x3dbe <e2_invalid_secondary_instruction_func>
+    3d08:	5a c0       	rjmp	.+180    	; 0x3dbe <e2_invalid_secondary_instruction_func>
+    3d0a:	59 c0       	rjmp	.+178    	; 0x3dbe <e2_invalid_secondary_instruction_func>
+    3d0c:	57 c0       	rjmp	.+174    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d0e:	56 c0       	rjmp	.+172    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d10:	55 c0       	rjmp	.+170    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d12:	54 c0       	rjmp	.+168    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d14:	53 c0       	rjmp	.+166    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d16:	52 c0       	rjmp	.+164    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d18:	51 c0       	rjmp	.+162    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d1a:	50 c0       	rjmp	.+160    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d1c:	4f c0       	rjmp	.+158    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d1e:	4e c0       	rjmp	.+156    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d20:	4d c0       	rjmp	.+154    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d22:	4c c0       	rjmp	.+152    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d24:	4b c0       	rjmp	.+150    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d26:	4a c0       	rjmp	.+148    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d28:	49 c0       	rjmp	.+146    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d2a:	48 c0       	rjmp	.+144    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d2c:	1b c0       	rjmp	.+54     	; 0x3d64 <e2_mulu8_A_r0>
+    3d2e:	1d c0       	rjmp	.+58     	; 0x3d6a <e2_mulu8_A_r1>
+    3d30:	1f c0       	rjmp	.+62     	; 0x3d70 <e2_mulu8_A_r2>
+    3d32:	21 c0       	rjmp	.+66     	; 0x3d76 <e2_mulu8_A_r3>
+    3d34:	23 c0       	rjmp	.+70     	; 0x3d7c <e2_muls8_A_r0>
+    3d36:	26 c0       	rjmp	.+76     	; 0x3d84 <e2_muls8_A_r1>
+    3d38:	29 c0       	rjmp	.+82     	; 0x3d8c <e2_muls8_A_r2>
+    3d3a:	2c c0       	rjmp	.+88     	; 0x3d94 <e2_muls8_A_r3>
+    3d3c:	2f c0       	rjmp	.+94     	; 0x3d9c <e2_mulsu8_A_r0>
+    3d3e:	32 c0       	rjmp	.+100    	; 0x3da4 <e2_mulsu8_A_r1>
+    3d40:	35 c0       	rjmp	.+106    	; 0x3dac <e2_mulsu8_A_r2>
+    3d42:	38 c0       	rjmp	.+112    	; 0x3db4 <e2_mulsu8_A_r3>
+    3d44:	3b c0       	rjmp	.+118    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d46:	3a c0       	rjmp	.+116    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d48:	39 c0       	rjmp	.+114    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d4a:	38 c0       	rjmp	.+112    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d4c:	37 c0       	rjmp	.+110    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d4e:	36 c0       	rjmp	.+108    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d50:	35 c0       	rjmp	.+106    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d52:	34 c0       	rjmp	.+104    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d54:	33 c0       	rjmp	.+102    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d56:	32 c0       	rjmp	.+100    	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d58:	31 c0       	rjmp	.+98     	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d5a:	30 c0       	rjmp	.+96     	; 0x3dbc <e2_unimplemented_instruction_func>
+    3d5c:	30 c0       	rjmp	.+96     	; 0x3dbe <e2_invalid_secondary_instruction_func>
+    3d5e:	2f c0       	rjmp	.+94     	; 0x3dbe <e2_invalid_secondary_instruction_func>
+    3d60:	2e c0       	rjmp	.+92     	; 0x3dbe <e2_invalid_secondary_instruction_func>
+    3d62:	2d c0       	rjmp	.+90     	; 0x3dbe <e2_invalid_secondary_instruction_func>
+
+00003d64 <e2_mulu8_A_r0>:
+    3d64:	08 9d       	mul	r16, r8
+    3d66:	80 01       	movw	r16, r0
+    3d68:	2b c0       	rjmp	.+86     	; 0x3dc0 <e2_dispatch_func>
+
+00003d6a <e2_mulu8_A_r1>:
+    3d6a:	0a 9d       	mul	r16, r10
+    3d6c:	80 01       	movw	r16, r0
+    3d6e:	28 c0       	rjmp	.+80     	; 0x3dc0 <e2_dispatch_func>
+
+00003d70 <e2_mulu8_A_r2>:
+    3d70:	0c 9d       	mul	r16, r12
+    3d72:	80 01       	movw	r16, r0
+    3d74:	25 c0       	rjmp	.+74     	; 0x3dc0 <e2_dispatch_func>
+
+00003d76 <e2_mulu8_A_r3>:
+    3d76:	0e 9d       	mul	r16, r14
+    3d78:	80 01       	movw	r16, r0
+    3d7a:	22 c0       	rjmp	.+68     	; 0x3dc0 <e2_dispatch_func>
+
+00003d7c <e2_muls8_A_r0>:
+    3d7c:	18 2d       	mov	r17, r8
+    3d7e:	01 02       	muls	r16, r17
+    3d80:	80 01       	movw	r16, r0
+    3d82:	1e c0       	rjmp	.+60     	; 0x3dc0 <e2_dispatch_func>
+
+00003d84 <e2_muls8_A_r1>:
+    3d84:	1a 2d       	mov	r17, r10
+    3d86:	01 02       	muls	r16, r17
+    3d88:	80 01       	movw	r16, r0
+    3d8a:	1a c0       	rjmp	.+52     	; 0x3dc0 <e2_dispatch_func>
+
+00003d8c <e2_muls8_A_r2>:
+    3d8c:	1c 2d       	mov	r17, r12
+    3d8e:	01 02       	muls	r16, r17
+    3d90:	80 01       	movw	r16, r0
+    3d92:	16 c0       	rjmp	.+44     	; 0x3dc0 <e2_dispatch_func>
+
+00003d94 <e2_muls8_A_r3>:
+    3d94:	1e 2d       	mov	r17, r14
+    3d96:	01 02       	muls	r16, r17
+    3d98:	80 01       	movw	r16, r0
+    3d9a:	12 c0       	rjmp	.+36     	; 0x3dc0 <e2_dispatch_func>
+
+00003d9c <e2_mulsu8_A_r0>:
+    3d9c:	18 2d       	mov	r17, r8
+    3d9e:	01 03       	mulsu	r16, r17
+    3da0:	80 01       	movw	r16, r0
+    3da2:	0e c0       	rjmp	.+28     	; 0x3dc0 <e2_dispatch_func>
+
+00003da4 <e2_mulsu8_A_r1>:
+    3da4:	1a 2d       	mov	r17, r10
+    3da6:	01 03       	mulsu	r16, r17
+    3da8:	80 01       	movw	r16, r0
+    3daa:	0a c0       	rjmp	.+20     	; 0x3dc0 <e2_dispatch_func>
+
+00003dac <e2_mulsu8_A_r2>:
+    3dac:	1c 2d       	mov	r17, r12
+    3dae:	01 03       	mulsu	r16, r17
+    3db0:	80 01       	movw	r16, r0
+    3db2:	06 c0       	rjmp	.+12     	; 0x3dc0 <e2_dispatch_func>
+
+00003db4 <e2_mulsu8_A_r3>:
+    3db4:	1e 2d       	mov	r17, r14
+    3db6:	01 03       	mulsu	r16, r17
+    3db8:	80 01       	movw	r16, r0
+    3dba:	02 c0       	rjmp	.+4      	; 0x3dc0 <e2_dispatch_func>
+
+00003dbc <e2_unimplemented_instruction_func>:
+    3dbc:	ff cf       	rjmp	.-2      	; 0x3dbc <e2_unimplemented_instruction_func>
+
+00003dbe <e2_invalid_secondary_instruction_func>:
+    3dbe:	ff cf       	rjmp	.-2      	; 0x3dbe <e2_invalid_secondary_instruction_func>
+
+00003dc0 <e2_dispatch_func>:
+    3dc0:	6e b4       	in	r6, 0x2e	; 46
+    3dc2:	2e bc       	out	0x2e, r2	; 46
+    3dc4:	01 96       	adiw	r24, 0x01	; 1
+    3dc6:	67 9c       	mul	r6, r7
+    3dc8:	f0 01       	movw	r30, r0
+    3dca:	ff 5f       	subi	r31, 0xFF	; 255
+    3dcc:	09 94       	ijmp

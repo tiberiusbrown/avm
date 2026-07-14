@@ -134,6 +134,12 @@
 ;   133: CMP32 q0,q1
 ;   134: JMPP q0
 ;   135: CALLP q0
+;   136: MULU8 A,r0
+;   137: MULS8 A,r1
+;   138: MULSU8 A,r2
+;   139: MULU8 c1,c2
+;   140: MULS8 c2,c3
+;   141: MULSU8 c3,c1
 
 ; AVM instruction-cycle benchmark image
 ;
@@ -143,9 +149,9 @@
 ;   * The break-to-break baseline is subtracted from every ordinary entry.
 ;   * SYS DEBUG_BREAK itself is reported directly from that baseline.
 ;
-; The implemented-instruction inventory contains 108 architectural forms.
+; The implemented-instruction inventory contains 114 architectural forms.
 ; Branches are emitted in both taken and not-taken forms, and every CSET
-; condition is emitted for both true and false results.  This produces 135
+; condition is emitted for both true and false results.  This produces 141
 ; timing entries while still covering every implemented form.
 
 .section .text,"ax",@progbits
@@ -1215,6 +1221,54 @@ _start:
     sys SYS_DEBUG_BREAK
     ret
 .L_callp_done:
+
+    ; E2 accumulator/non-compact-source multiplication page. These three
+    ; entries exercise all unsigned/signed operand interpretations.
+
+    ; [136] MULU8 A,r0
+    ldi8 c0, 0xf3          ; unsigned 243
+    ldi8 r0, 0x11          ; unsigned 17
+    sys SYS_DEBUG_BREAK
+    mulu8 a, r0
+    sys SYS_DEBUG_BREAK
+
+    ; [137] MULS8 A,r1
+    ldi8 c0, 0xf3          ; signed -13
+    ldi8 r1, 0x11          ; signed 17
+    sys SYS_DEBUG_BREAK
+    muls8 a, r1
+    sys SYS_DEBUG_BREAK
+
+    ; [138] MULSU8 A,r2
+    ldi8 c0, 0xf9          ; signed -7
+    ldi8 r2, 0xc8          ; unsigned 200
+    sys SYS_DEBUG_BREAK
+    mulsu8 a, r2
+    sys SYS_DEBUG_BREAK
+
+    ; F4 compact-register multiplication page. Use different destination/source
+    ; pairs so the benchmark reaches distinct operand-specialized table slots.
+
+    ; [139] MULU8 c1,c2
+    ldi8 c1, 0xf3          ; unsigned 243
+    ldi8 c2, 0x11          ; unsigned 17
+    sys SYS_DEBUG_BREAK
+    mulu8 c1, c2
+    sys SYS_DEBUG_BREAK
+
+    ; [140] MULS8 c2,c3
+    ldi8 c2, 0xf3          ; signed -13
+    ldi8 c3, 0x11          ; signed 17
+    sys SYS_DEBUG_BREAK
+    muls8 c2, c3
+    sys SYS_DEBUG_BREAK
+
+    ; [141] MULSU8 c3,c1
+    ldi8 c3, 0xf9          ; signed -7
+    ldi8 c1, 0xc8          ; unsigned 200
+    sys SYS_DEBUG_BREAK
+    mulsu8 c3, c1
+    sys SYS_DEBUG_BREAK
 
     ; Restore the original stack pointer before entering the sentinel loop.
     adjsp 64

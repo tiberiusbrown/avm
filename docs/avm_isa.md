@@ -265,9 +265,7 @@ The two-bit source field selects only `r0` through `r3`. Compact sources `r4` th
 | `E6 rel8` | `CALL rel8` | Push the return address and perform a same-bank PC-relative call. | 2 | ≈137–141 | Preserve |  |
 | `E7 simm8` | `ADJSP simm8` | SP = SP + sign_extend(simm8). | 2 | ≈34 | Preserve |  |
 | `E8 imm8` | `LDPBI imm8` | PB = imm8. | 2 | ≈34 | Preserve |  |
-| `E9 service8` | `SYS service8` | Invoke a system-ABI service selected by an immediate identifier. | 2 | ≈38 + service | Preserve | Table dispatch and service body make timing service-dependent. |
-| `E9 00` | `SYS DEBUG_PUTC` | Write low8(A) to the simulator/debug character output service. | 2 | ≈40–44 | Preserve |  |
-| `E9 01` | `SYS DEBUG_BREAK` | Execute the native AVR BREAK service. | 2 | Stops; ≈39 if resumed | Preserve |  |
+| `E9 imm8` | `SYS imm8` | Invoke the system call whose table index is `imm8`. | 2 | ≈38 + service | Preserve | The immediate byte is an index into the system-call table; individual system calls are defined by the system ABI, not the ISA. |
 | `EA addr16` | `JMP16 addr16` | Absolute same-bank jump to a 16-bit PC. | 3 | ≈147–151 | Preserve |  |
 | `EB addr16` | `CALL16 addr16` | Push the return address and call an absolute 16-bit PC in the current bank. | 3 | ≈154–158 | Preserve |  |
 | `EC` | `NOP` | No architectural effect. | 1 | ≈17 | Preserve |  |
@@ -461,4 +459,4 @@ Before freezing the cost model:
 4. Measure program-space loads with both one-byte and two-byte results.
 5. Feed measured costs into LLVM scheduling and instruction-cost hooks.
 
-**Instruction-form rows in this report:** 156
+**Instruction-form rows in this report:** 154

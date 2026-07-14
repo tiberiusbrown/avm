@@ -9,7 +9,8 @@
 ;;     0x0A00-0x0A03  FX image/save page
 ;;     0x0A04-0x0A05  requested save size
 ;;     0x0A06         startup flags
-;;     0x0A07–0x0AFF  interpreter-private
+;;     0x0A07–0x0A0A  millisecond counter (little-endian uint32)
+;;     0x0A0B–0x0AFF  interpreter-private
 
 #define data_globals    0x0100
 #define data_display    0x0500
@@ -18,8 +19,280 @@
 #define data_page_save      (data_page_data+2)
 #define data_save_size      (data_page_save+2)
 #define data_startup_flags  (data_save_size+2)
+#define data_millis         (data_startup_flags+1)
 
 #define STARTUP_SAVE_PAGE_VALID  0
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Hardware configuration
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Select at most one complete device preset on the assembler command line:
+;
+;   -DAVM_DEVICE_ARDUBOY_FX    Arduboy FX; FX chip select is SDA/PD1.
+;   -DAVM_DEVICE_ARDUBOY_MINI  Arduboy Mini; FX chip select is HWB/PE2.
+;   -DAVM_DEVICE_ARDUBOY_FXC   Arduboy FX-C; FX chip select is HWB/PE2.
+;
+; AVM_DEVICE_ARDUBOY_FX is the default so existing builds retain their current
+; flash wiring. Presets provide defaults only: any individual AVM_* definition
+; supplied by the build overrides the corresponding preset/default value.
+;
+; Supported SPI display controller selections (choose at most one):
+;
+;   -DAVM_DISPLAY_SSD1306      Default for all standard device presets.
+;   -DAVM_DISPLAY_SSD1309
+;   -DAVM_DISPLAY_SH1106
+;   -DAVM_OLED_CONTRAST=value  Default: 0xCF.
+;
+; Arduboy2-compatible OLED_SSD1306, OLED_SSD1309, OLED_SH1106, and
+; OLED_CONTRAST definitions are also accepted. I2C display definitions are
+; intentionally rejected; this interpreter startup supports SPI displays only.
+;
+; Pin overrides are triples consisting of PORT, DDR, and bit definitions:
+;
+;   AVM_OLED_CS_PORT / AVM_OLED_CS_DDR / AVM_OLED_CS_BIT
+;   AVM_OLED_DC_PORT / AVM_OLED_DC_DDR / AVM_OLED_DC_BIT
+;   AVM_OLED_RST_PORT / AVM_OLED_RST_DDR / AVM_OLED_RST_BIT
+;   AVM_FX_PORT / AVM_FX_DDR / AVM_FX_BIT
+;   AVM_BUTTON_{LEFT,RIGHT,UP,DOWN,A,B}_{PORT,DDR,BIT}
+;   AVM_LED_{RED,GREEN,BLUE,TX,RX}_{PORT,DDR,BIT}
+;   AVM_RANDOM_SEED_PORT / AVM_RANDOM_SEED_DDR / AVM_RANDOM_SEED_BIT
+;
+; The hardware SPI pins are fixed by the ATmega32U4: PB1=SCK, PB2=MOSI, and
+; PB3=MISO. Set AVM_INIT_RGB_LED or AVM_INIT_TX_RX_LEDS to 0 to omit those
+; outputs. Set AVM_INIT_BUTTONS or AVM_INIT_RANDOM_SEED_ADC to 0 to omit those
+; inputs. Startup resets and configures the OLED controller, but deliberately
+; does not clear the framebuffer or OLED display RAM; the future display SYS
+; service will own the first screen update.
+
+#if !defined(AVM_DEVICE_ARDUBOY_FX) && \
+    !defined(AVM_DEVICE_ARDUBOY_MINI) && \
+    !defined(AVM_DEVICE_ARDUBOY_FXC)
+#  define AVM_DEVICE_ARDUBOY_FX
+#endif
+
+#if (defined(AVM_DEVICE_ARDUBOY_FX) + \
+     defined(AVM_DEVICE_ARDUBOY_MINI) + \
+     defined(AVM_DEVICE_ARDUBOY_FXC)) > 1
+#  error "Select only one AVM_DEVICE_* preset"
+#endif
+
+; Normalize Arduboy2/homemade display-selection names.
+#if defined(OLED_SSD1306) && !defined(AVM_DISPLAY_SSD1306)
+#  define AVM_DISPLAY_SSD1306
+#endif
+#if defined(OLED_SSD1309) && !defined(AVM_DISPLAY_SSD1309)
+#  define AVM_DISPLAY_SSD1309
+#endif
+#if defined(OLED_SH1106) && !defined(AVM_DISPLAY_SH1106)
+#  define AVM_DISPLAY_SH1106
+#endif
+
+#if defined(OLED_SSD1306_I2C) || defined(OLED_SSD1306_I2CX) || \
+    defined(OLED_SH1106_I2C) || defined(AVM_DISPLAY_I2C)
+#  error "I2C displays are not supported by interpreter startup"
+#endif
+
+#if !defined(AVM_DISPLAY_SSD1306) && \
+    !defined(AVM_DISPLAY_SSD1309) && \
+    !defined(AVM_DISPLAY_SH1106)
+#  define AVM_DISPLAY_SSD1306
+#endif
+
+#if (defined(AVM_DISPLAY_SSD1306) + \
+     defined(AVM_DISPLAY_SSD1309) + \
+     defined(AVM_DISPLAY_SH1106)) > 1
+#  error "Select only one SPI AVM_DISPLAY_* controller"
+#endif
+
+#ifndef AVM_OLED_CONTRAST
+#  ifdef OLED_CONTRAST
+#    define AVM_OLED_CONTRAST OLED_CONTRAST
+#  else
+#    define AVM_OLED_CONTRAST 0xCF
+#  endif
+#endif
+
+#ifndef AVM_INIT_RGB_LED
+#  define AVM_INIT_RGB_LED 1
+#endif
+#ifndef AVM_INIT_TX_RX_LEDS
+#  define AVM_INIT_TX_RX_LEDS 1
+#endif
+#ifndef AVM_INIT_BUTTONS
+#  define AVM_INIT_BUTTONS 1
+#endif
+#ifndef AVM_INIT_RANDOM_SEED_ADC
+#  define AVM_INIT_RANDOM_SEED_ADC 1
+#endif
+
+; Common OLED wiring for the supported device presets.
+#ifndef AVM_OLED_CS_PORT
+#  define AVM_OLED_CS_PORT PORTD
+#endif
+#ifndef AVM_OLED_CS_DDR
+#  define AVM_OLED_CS_DDR DDRD
+#endif
+#ifndef AVM_OLED_CS_BIT
+#  define AVM_OLED_CS_BIT PORTD6
+#endif
+
+#ifndef AVM_OLED_DC_PORT
+#  define AVM_OLED_DC_PORT PORTD
+#endif
+#ifndef AVM_OLED_DC_DDR
+#  define AVM_OLED_DC_DDR DDRD
+#endif
+#ifndef AVM_OLED_DC_BIT
+#  define AVM_OLED_DC_BIT PORTD4
+#endif
+
+#ifndef AVM_OLED_RST_PORT
+#  define AVM_OLED_RST_PORT PORTD
+#endif
+#ifndef AVM_OLED_RST_DDR
+#  define AVM_OLED_RST_DDR DDRD
+#endif
+#ifndef AVM_OLED_RST_BIT
+#  define AVM_OLED_RST_BIT PORTD7
+#endif
+
+; Device-specific serial-flash chip select.
+#ifndef AVM_FX_PORT
+#  if defined(AVM_DEVICE_ARDUBOY_FX)
+#    define AVM_FX_PORT PORTD
+#  else
+#    define AVM_FX_PORT PORTE
+#  endif
+#endif
+#ifndef AVM_FX_DDR
+#  if defined(AVM_DEVICE_ARDUBOY_FX)
+#    define AVM_FX_DDR DDRD
+#  else
+#    define AVM_FX_DDR DDRE
+#  endif
+#endif
+#ifndef AVM_FX_BIT
+#  if defined(AVM_DEVICE_ARDUBOY_FX)
+#    define AVM_FX_BIT PORTD1
+#  else
+#    define AVM_FX_BIT PORTE2
+#  endif
+#endif
+
+; Common button wiring for the supported device presets.
+#ifndef AVM_BUTTON_LEFT_PORT
+#  define AVM_BUTTON_LEFT_PORT PORTF
+#endif
+#ifndef AVM_BUTTON_LEFT_DDR
+#  define AVM_BUTTON_LEFT_DDR DDRF
+#endif
+#ifndef AVM_BUTTON_LEFT_BIT
+#  define AVM_BUTTON_LEFT_BIT PORTF5
+#endif
+#ifndef AVM_BUTTON_RIGHT_PORT
+#  define AVM_BUTTON_RIGHT_PORT PORTF
+#endif
+#ifndef AVM_BUTTON_RIGHT_DDR
+#  define AVM_BUTTON_RIGHT_DDR DDRF
+#endif
+#ifndef AVM_BUTTON_RIGHT_BIT
+#  define AVM_BUTTON_RIGHT_BIT PORTF6
+#endif
+#ifndef AVM_BUTTON_UP_PORT
+#  define AVM_BUTTON_UP_PORT PORTF
+#endif
+#ifndef AVM_BUTTON_UP_DDR
+#  define AVM_BUTTON_UP_DDR DDRF
+#endif
+#ifndef AVM_BUTTON_UP_BIT
+#  define AVM_BUTTON_UP_BIT PORTF7
+#endif
+#ifndef AVM_BUTTON_DOWN_PORT
+#  define AVM_BUTTON_DOWN_PORT PORTF
+#endif
+#ifndef AVM_BUTTON_DOWN_DDR
+#  define AVM_BUTTON_DOWN_DDR DDRF
+#endif
+#ifndef AVM_BUTTON_DOWN_BIT
+#  define AVM_BUTTON_DOWN_BIT PORTF4
+#endif
+#ifndef AVM_BUTTON_A_PORT
+#  define AVM_BUTTON_A_PORT PORTE
+#endif
+#ifndef AVM_BUTTON_A_DDR
+#  define AVM_BUTTON_A_DDR DDRE
+#endif
+#ifndef AVM_BUTTON_A_BIT
+#  define AVM_BUTTON_A_BIT PORTE6
+#endif
+#ifndef AVM_BUTTON_B_PORT
+#  define AVM_BUTTON_B_PORT PORTB
+#endif
+#ifndef AVM_BUTTON_B_DDR
+#  define AVM_BUTTON_B_DDR DDRB
+#endif
+#ifndef AVM_BUTTON_B_BIT
+#  define AVM_BUTTON_B_BIT PORTB4
+#endif
+
+; Standard active-low RGB and USB activity LEDs.
+#ifndef AVM_LED_RED_PORT
+#  define AVM_LED_RED_PORT PORTB
+#endif
+#ifndef AVM_LED_RED_DDR
+#  define AVM_LED_RED_DDR DDRB
+#endif
+#ifndef AVM_LED_RED_BIT
+#  define AVM_LED_RED_BIT PORTB6
+#endif
+#ifndef AVM_LED_GREEN_PORT
+#  define AVM_LED_GREEN_PORT PORTB
+#endif
+#ifndef AVM_LED_GREEN_DDR
+#  define AVM_LED_GREEN_DDR DDRB
+#endif
+#ifndef AVM_LED_GREEN_BIT
+#  define AVM_LED_GREEN_BIT PORTB7
+#endif
+#ifndef AVM_LED_BLUE_PORT
+#  define AVM_LED_BLUE_PORT PORTB
+#endif
+#ifndef AVM_LED_BLUE_DDR
+#  define AVM_LED_BLUE_DDR DDRB
+#endif
+#ifndef AVM_LED_BLUE_BIT
+#  define AVM_LED_BLUE_BIT PORTB5
+#endif
+#ifndef AVM_LED_TX_PORT
+#  define AVM_LED_TX_PORT PORTD
+#endif
+#ifndef AVM_LED_TX_DDR
+#  define AVM_LED_TX_DDR DDRD
+#endif
+#ifndef AVM_LED_TX_BIT
+#  define AVM_LED_TX_BIT PORTD5
+#endif
+#ifndef AVM_LED_RX_PORT
+#  define AVM_LED_RX_PORT PORTB
+#endif
+#ifndef AVM_LED_RX_DDR
+#  define AVM_LED_RX_DDR DDRB
+#endif
+#ifndef AVM_LED_RX_BIT
+#  define AVM_LED_RX_BIT PORTB0
+#endif
+
+#ifndef AVM_RANDOM_SEED_PORT
+#  define AVM_RANDOM_SEED_PORT PORTF
+#endif
+#ifndef AVM_RANDOM_SEED_DDR
+#  define AVM_RANDOM_SEED_DDR DDRF
+#endif
+#ifndef AVM_RANDOM_SEED_BIT
+#  define AVM_RANDOM_SEED_BIT PORTF1
+#endif
 
 ;; ; ------------------------------------------------------------
 ;; ; Native dispatch and interpreter state
@@ -177,16 +450,44 @@
 #error "Dispatch calculation requires lo8(DISPATCH_ORG/2) == 0x00"
 #endif
 
-; display
-#define CS_PORT  PORTD
-#define CS_BIT   PORTD6
-
+; OLED display control. All supported controllers use active-low CS and reset,
+; with D/C low for commands and high for display data.
 .macro display_enable
-cbi  CS_PORT, CS_BIT
+    cbi  AVM_OLED_CS_PORT, AVM_OLED_CS_BIT
 .endm
 
 .macro display_disable
-sbi  CS_PORT, CS_BIT
+    sbi  AVM_OLED_CS_PORT, AVM_OLED_CS_BIT
+.endm
+
+.macro display_command_mode
+    cbi  AVM_OLED_DC_PORT, AVM_OLED_DC_BIT
+.endm
+
+.macro display_data_mode
+    sbi  AVM_OLED_DC_PORT, AVM_OLED_DC_BIT
+.endm
+
+; Generic GPIO setup helpers. PORT is written before DDR for outputs so OLED,
+; flash, and active-low LED pins never glitch through an unintended level.
+.macro pin_output_high port, ddr, bit
+    sbi  \port, \bit
+    sbi  \ddr,  \bit
+.endm
+
+.macro pin_output_low port, ddr, bit
+    cbi  \port, \bit
+    sbi  \ddr,  \bit
+.endm
+
+.macro pin_input_pullup port, ddr, bit
+    cbi  \ddr,  \bit
+    sbi  \port, \bit
+.endm
+
+.macro pin_input_floating port, ddr, bit
+    cbi  \ddr,  \bit
+    cbi  \port, \bit
 .endm
 
 ; Serial Flash Commands (W25Q128)
@@ -195,9 +496,6 @@ sbi  CS_PORT, CS_BIT
 #define SFC_WRITE              0x02
 #define SFC_ERASE              0x20
 #define SFC_RELEASE_POWERDOWN  0xAB
-
-#define FX_PORT  PORTD
-#define FX_BIT   PORTD1
 
 #define FX_VECTOR_KEY_POINTER       0x0014
 #define FX_DATA_VECTOR_PAGE_POINTER 0x0016
@@ -236,11 +534,11 @@ sbi  CS_PORT, CS_BIT
 #define FX_DEV_SAVE_PAGE_HI     0xFF
 
 .macro fx_enable
-cbi  FX_PORT, FX_BIT
+cbi  AVM_FX_PORT, AVM_FX_BIT
 .endm
 
 .macro fx_disable
-sbi  FX_PORT, FX_BIT
+sbi  AVM_FX_PORT, AVM_FX_BIT
 .endm
 
 .macro delay_1
@@ -290,7 +588,7 @@ __vectors:
     jmp default_isr         ; 18 TIMER1 COMPB
     jmp default_isr         ; 19 TIMER1 COMPC
     jmp default_isr         ; 20 TIMER1 OVERFLOW
-    jmp default_isr         ; 21 TIMER0 COMPA
+    jmp timer0_compa_isr    ; 21 TIMER0 COMPA
     jmp default_isr         ; 22 TIMER0 COMPB
     jmp default_isr         ; 23 TIMER0 OVERFLOW
     jmp default_isr         ; 24 SPI
@@ -317,6 +615,38 @@ __vectors:
 
 default_isr:
     rjmp default_isr
+
+; Timer0 compare-A fires once per millisecond. Preserve the interrupted native
+; state; the VM register file may be live in any AVR register when this runs.
+timer0_compa_isr:
+    push r0
+    in   r0, SREG
+    push r0
+
+    lds  r0, data_millis+0
+    inc  r0
+    sts  data_millis+0, r0
+    brne timer0_compa_isr_done
+
+    lds  r0, data_millis+1
+    inc  r0
+    sts  data_millis+1, r0
+    brne timer0_compa_isr_done
+
+    lds  r0, data_millis+2
+    inc  r0
+    sts  data_millis+2, r0
+    brne timer0_compa_isr_done
+
+    lds  r0, data_millis+3
+    inc  r0
+    sts  data_millis+3, r0
+
+timer0_compa_isr_done:
+    pop  r0
+    out  SREG, r0
+    pop  r0
+    reti
 
 reset_handler:
     ; Keep the vector area small. The complete startup path is placed after
@@ -2697,8 +3027,21 @@ startup_func:
     ldi  r26, hi8(RAMEND)
     out  SPH, r26
 
-    ; Initialize persistent interpreter state.
+    ; Unconditionally clear all SRAM from 0x0100 through RAMEND. This must run
+    ; before any startup state is stored in SRAM and before Timer0 is started.
+    ; reset_handler reaches startup_func with JMP, so the native stack is empty
+    ; while its backing SRAM is cleared.
     clr  ZERO
+    ldi  r26, lo8(0x0100)
+    ldi  r27, hi8(0x0100)
+startup_clear_ram_loop:
+    st   X+, ZERO
+    cpi  r26, lo8(RAMEND + 1)
+    brne startup_clear_ram_loop
+    cpi  r27, hi8(RAMEND + 1)
+    brne startup_clear_ram_loop
+
+    ; Initialize persistent interpreter state.
     ldi  r26, DISPATCH_STRIDE_WORDS
     mov  C_DISPATCH_STRIDE_WORDS, r26
     ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
@@ -2714,15 +3057,21 @@ startup_func:
     sts  data_save_size+1, ZERO
     sts  data_startup_flags, ZERO
 
+    ; Configure the complete Arduboy GPIO set before enabling SPI. This leaves
+    ; the OLED selected and held in reset, while keeping the FX flash deselected.
+    rcall hardware_init_pins_func
+
     ; Initialize SPI. Startup uses SPIF polling; the bytecode interpreter uses
     ; the fixed-cadence transfer pipeline after the first opcode is primed.
+    ; Mode 0, MSB first, f_CPU/2 matches Arduboy2 bootSPI().
     ldi  r26, (_BV(SPE) | _BV(MSTR))
     out  SPCR, r26
     ldi  r26, _BV(SPI2X)
     out  SPSR, r26
 
-    display_disable
-    fx_disable
+    ; Reset and configure the selected SPI OLED controller. This intentionally
+    ; does not write pixel data or clear either display RAM or data_display.
+    rcall oled_startup_init_func
 
     ; Release the W25Q128 from power-down.
     fx_enable
@@ -2896,20 +3245,9 @@ startup_read_header:
     rjmp startup_invalid_image
 3:
 
-    ; Clear all static SRAM first. The initializer copy below overwrites the
-    ; first dataSize bytes, leaving the remaining bytes as zeroed .bss.
-    ldi  r26, lo8(data_globals)
-    ldi  r27, hi8(data_globals)
-    movw r20, r18
-    cp   r20, ZERO
-    cpc  r21, ZERO
-    breq startup_copy_data
-startup_clear_static_loop:
-    st   X+, ZERO
-    subi r20, 1
-    sbci r21, 0
-    brne startup_clear_static_loop
-
+    ; All SRAM was cleared before startup state was initialized. The copy below
+    ; installs only the nonzero .data prefix; globals beyond dataSize remain
+    ; zero-initialized.
 startup_copy_data:
     cp   r16, ZERO
     cpc  r17, ZERO
@@ -2935,6 +3273,10 @@ startup_copy_data_loop:
     fx_disable
 
 startup_enter_image:
+    ; Timer0 is initialized only after the unconditional SRAM clear and .data
+    ; copy. Its compare interrupt becomes globally active at the SEI below.
+    rcall timer0_init_func
+
     ; PB starts at zero. CB:PC already contains entryPoint.
     out  VM_PB, ZERO
 
@@ -2954,6 +3296,31 @@ startup_invalid_image:
     fx_disable
 startup_invalid_image_loop:
     rjmp startup_invalid_image_loop
+
+; Configure Timer0 for a 1 kHz compare-A interrupt at f_CPU = 16 MHz:
+;   CTC mode, prescaler 64, OCR0A = 249.
+; Global interrupts remain disabled until startup_enter_image executes SEI.
+timer0_init_func:
+    ; Stop Timer0 and mask its interrupts while replacing any bootloader state.
+    out  TCCR0B, ZERO
+    sts  TIMSK0, ZERO
+
+    ldi  r26, _BV(WGM01)
+    out  TCCR0A, r26
+    out  TCNT0, ZERO
+    ldi  r26, 249
+    out  OCR0A, r26
+
+    ; Clear a stale compare-A flag before unmasking the interrupt.
+    ldi  r26, _BV(OCF0A)
+    out  TIFR0, r26
+    ldi  r26, _BV(OCIE0A)
+    sts  TIMSK0, r26
+
+    ; Start Timer0 at f_CPU/64.
+    ldi  r26, (_BV(CS01) | _BV(CS00))
+    out  TCCR0B, r26
+    ret
 
 ; Try a development tail.
 ;
@@ -3044,6 +3411,136 @@ fx_startup_wake_delay:
     dec  r26
     brne 1b
     ret
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Device pin and OLED startup
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Establish the same supported-device idle levels used by Arduboy2 bootPins,
+; while changing only explicitly configured pins rather than replacing complete
+; PORT/DDR registers. The speaker pins remain untouched, as in Arduboy2.
+hardware_init_pins_func:
+    ; Shared ATmega32U4 hardware SPI bus: SCK and MOSI outputs low, MISO input
+    ; without a pull-up. These pins cannot be remapped by a device preset.
+    pin_output_low    PORTB, DDRB, PORTB1
+    pin_output_low    PORTB, DDRB, PORTB2
+    pin_input_floating PORTB, DDRB, PORTB3
+
+    ; Keep the serial flash inactive while the display is reset and configured.
+    pin_output_high AVM_FX_PORT, AVM_FX_DDR, AVM_FX_BIT
+
+    ; Arduboy2 starts with OLED CS asserted, D/C high, and reset asserted low.
+    pin_output_low  AVM_OLED_CS_PORT,  AVM_OLED_CS_DDR,  AVM_OLED_CS_BIT
+    pin_output_high AVM_OLED_DC_PORT,  AVM_OLED_DC_DDR,  AVM_OLED_DC_BIT
+    pin_output_low  AVM_OLED_RST_PORT, AVM_OLED_RST_DDR, AVM_OLED_RST_BIT
+
+#if AVM_INIT_RGB_LED
+    ; Active-low RGB channels off.
+    pin_output_high AVM_LED_RED_PORT,   AVM_LED_RED_DDR,   AVM_LED_RED_BIT
+    pin_output_high AVM_LED_GREEN_PORT, AVM_LED_GREEN_DDR, AVM_LED_GREEN_BIT
+    pin_output_high AVM_LED_BLUE_PORT,  AVM_LED_BLUE_DDR,  AVM_LED_BLUE_BIT
+#endif
+
+#if AVM_INIT_TX_RX_LEDS
+    ; Active-low USB activity LEDs off.
+    pin_output_high AVM_LED_TX_PORT, AVM_LED_TX_DDR, AVM_LED_TX_BIT
+    pin_output_high AVM_LED_RX_PORT, AVM_LED_RX_DDR, AVM_LED_RX_BIT
+#endif
+
+#if AVM_INIT_BUTTONS
+    ; All six buttons are active low and use internal pull-ups.
+    pin_input_pullup AVM_BUTTON_LEFT_PORT,  AVM_BUTTON_LEFT_DDR,  AVM_BUTTON_LEFT_BIT
+    pin_input_pullup AVM_BUTTON_RIGHT_PORT, AVM_BUTTON_RIGHT_DDR, AVM_BUTTON_RIGHT_BIT
+    pin_input_pullup AVM_BUTTON_UP_PORT,    AVM_BUTTON_UP_DDR,    AVM_BUTTON_UP_BIT
+    pin_input_pullup AVM_BUTTON_DOWN_PORT,  AVM_BUTTON_DOWN_DDR,  AVM_BUTTON_DOWN_BIT
+    pin_input_pullup AVM_BUTTON_A_PORT,     AVM_BUTTON_A_DDR,     AVM_BUTTON_A_BIT
+    pin_input_pullup AVM_BUTTON_B_PORT,     AVM_BUTTON_B_DDR,     AVM_BUTTON_B_BIT
+#endif
+
+#if AVM_INIT_RANDOM_SEED_ADC
+    ; Match Arduboy2's floating ADC1 random-seed input and initial mux choice.
+    pin_input_floating AVM_RANDOM_SEED_PORT, AVM_RANDOM_SEED_DDR, AVM_RANDOM_SEED_BIT
+    ldi  r26, (_BV(REFS0) | _BV(REFS1) | _BV(MUX0))
+    sts  ADMUX, r26
+#endif
+    ret
+
+; Approximately 5 ms at 16 MHz. Startup timing is intentionally conservative
+; and is not part of the bytecode interpreter's cycle contract.
+oled_reset_delay_5ms_func:
+    ldi  r24, 104
+1:
+    clr  r25
+2:
+    dec  r25
+    brne 2b
+    dec  r24
+    brne 1b
+    ret
+
+; Blocking SPI transfer used while Z walks the OLED command table.
+; Input/output: r26. Clobbers r27; preserves Z.
+oled_spi_transfer_blocking_func:
+    out  SPDR, r26
+1:
+    in   r27, SPSR
+    sbrs r27, SPIF
+    rjmp 1b
+    in   r26, SPDR
+    ret
+
+; Reset the OLED and send the Arduboy2-derived controller boot sequence.
+; No display RAM is written here.
+oled_startup_init_func:
+    rcall oled_reset_delay_5ms_func
+    sbi   AVM_OLED_RST_PORT, AVM_OLED_RST_BIT
+    rcall oled_reset_delay_5ms_func
+
+    display_enable
+    display_command_mode
+
+    ldi  r30, lo8(oled_boot_program)
+    ldi  r31, hi8(oled_boot_program)
+    ldi  r24, lo8(oled_boot_program_end - oled_boot_program)
+1:
+    lpm  r26, Z+
+    rcall oled_spi_transfer_blocking_func
+    dec  r24
+    brne 1b
+
+    ; Leave the shared SPI bus idle and ready for the FX flash transaction.
+    display_data_mode
+    display_disable
+    fx_disable
+    ret
+
+; Commands follow Arduboy2's lcdBootProgram for the corresponding SPI display.
+oled_boot_program:
+#if defined(AVM_DISPLAY_SH1106)
+    .byte 0x8D, 0x14                 ; enable charge pump
+    .byte 0xA1                       ; segment remap
+    .byte 0xC8                       ; COM scan direction
+    .byte 0x81, AVM_OLED_CONTRAST    ; contrast
+    .byte 0xD9, 0xF1                 ; precharge
+    .byte 0x02                       ; SH1106 visible column starts at 2
+    .byte 0xAF                       ; display on
+#else
+    .byte 0xD5, 0xF0                 ; display clock divisor
+#  if defined(AVM_DISPLAY_SSD1309)
+    .byte 0xE3, 0xE3                 ; SSD1309 has no charge-pump command
+#  else
+    .byte 0x8D, 0x14                 ; SSD1306 charge pump on
+#  endif
+    .byte 0xA1                       ; segment remap
+    .byte 0xC8                       ; COM scan direction
+    .byte 0x81, AVM_OLED_CONTRAST    ; contrast
+    .byte 0xD9, 0xF1                 ; precharge
+    .byte 0xAF                       ; display on
+    .byte 0x20, 0x00                 ; horizontal addressing mode
+#endif
+oled_boot_program_end:
+    .balign 2
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE3 register transfer and condition extension page

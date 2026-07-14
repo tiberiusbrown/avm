@@ -363,9 +363,9 @@ def main() -> int:
             print()
             for line in FAIL_BANNER:
                 print(f"    {line}")
-            print()
+            print(flush=True)
         else:
-            print(f"{test_label:<{result_column}}PASS")
+            print(f"{test_label:<{result_column}}PASS", flush=True)
 
     if failures:
         print()

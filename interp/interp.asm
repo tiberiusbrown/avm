@@ -523,6 +523,8 @@
 ; Arduboy system ABI service identifiers.
 #define SYS_DEBUG_PUTC          0x00
 #define SYS_DEBUG_BREAK         0x01
+#define SYS_MILLIS              0x02
+#define SYS_MILLIS32            0x03
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -2204,11 +2206,19 @@ sys_dispatch_func:
 .if (SYS_DEBUG_BREAK != 0x01)
     .error "SYS_DEBUG_BREAK must occupy dispatch-table entry 1"
 .endif
+.if (SYS_MILLIS != 0x02)
+    .error "SYS_MILLIS must occupy dispatch-table entry 2"
+.endif
+.if (SYS_MILLIS32 != 0x03)
+    .error "SYS_MILLIS32 must occupy dispatch-table entry 3"
+.endif
 
 sys_dispatch_table:
     sys_entries 1,   sys_debug_putc_func
     sys_entries 1,   sys_debug_break_func
-    sys_entries 254, invalid_syscall_func
+    sys_entries 1,   sys_millis_func
+    sys_entries 1,   sys_millis32_func
+    sys_entries 252, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if ((sys_dispatch_table_end - sys_dispatch_table) != (256 * 2))
@@ -2224,6 +2234,26 @@ sys_debug_putc_func:
 sys_debug_break_func:
     break
     delay_3
+    rjmp dispatch_func
+
+; Return a coherent low 16-bit snapshot of the millisecond counter in c0.
+; Timer0 cannot update either byte while the snapshot is being loaded.
+sys_millis_func:
+    cli
+    lds  VM_C0L, data_millis+0
+    lds  VM_C0H, data_millis+1
+    sei
+    rjmp dispatch_func
+
+; Return a coherent 32-bit snapshot of the millisecond counter, with the low
+; half in c0 and the high half in c1.
+sys_millis32_func:
+    cli
+    lds  VM_C0L, data_millis+0
+    lds  VM_C0H, data_millis+1
+    lds  VM_C1L, data_millis+2
+    lds  VM_C1H, data_millis+3
+    sei
     rjmp dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -839,6 +839,8 @@ This avoids a register-save area and compound register/stack iteration.
 | `i64` | `r4:r7`, when permitted |
 | Large aggregate | hidden data-space result pointer |
 
+For `i8` and `bool` returns, only bits `7:0` of `A` are defined. Bits `15:8` of `A` are unspecified and are not required to be cleared by the callee. A caller that widens an `i8` result must perform the extension required by the source type: zero-extension for an unsigned byte and sign-extension for a signed byte. A returned `bool` is canonical in the low byte as zero or one, while the high byte remains unspecified.
+
 A hidden structure-result pointer consumes the first argument unit.
 
 ---

@@ -294,131 +294,86 @@
 #  define AVM_RANDOM_SEED_BIT PORTF1
 #endif
 
-;; ; ------------------------------------------------------------
-;; ; Native dispatch and interpreter state
-;; ; ------------------------------------------------------------
-;; 
-;; AVR r0-r1      Native MUL result
-;;                Dispatch table offset
-;;                General temporary scratch
-;; 
-;; AVR r2         Permanent zero
-;;                SPI dummy-transmit byte
-;; 
-;; AVR r3         AVM CC (C/Z/S in SREG bit positions)
-;; 
-;; AVR r4         Interpreter scratch
-;; 
-;; AVR r5         Interpreter scratch
-;; 
-;; AVR r6         Current bytecode opcode
-;;                Operand or secondary-opcode scratch
-;; 
-;; AVR r7         Constant
-;;                Dispatch-slot stride in AVR words
-;; 
-;; ; ------------------------------------------------------------
-;; ; AVM general-purpose register file
-;; ; ------------------------------------------------------------
-;; 
-;; AVR r8-r9      AVM r0
-;; AVR r10-r11    AVM r1
-;; AVR r12-r13    AVM r2
-;; AVR r14-r15    AVM r3
-;; 
-;; AVR r16-r17    AVM r4 = c0
-;; AVR r18-r19    AVM r5 = c1
-;; AVR r20-r21    AVM r6 = c2
-;; AVR r22-r23    AVM r7 = c3
-;; 
-;; ; ------------------------------------------------------------
-;; ; Addressing and dispatch
-;; ; ------------------------------------------------------------
-;; 
-;; AVR r24-r25    AVM PC
-;; 
-;; AVR r26-r27    X
-;;                General interpreter address scratch
-;; 
-;; AVR r28-r29    Y
-;;                AVM SP
-;; 
-;; AVR r30-r31    Z
-;;                Dispatch target
-;;                Secondary-table target
-;;                General address scratch
-;; 
-;; ; ------------------------------------------------------------
-;; ; Persistent bank state
-;; ; ------------------------------------------------------------
-;; 
-;; GPIOR1         CB
-;; GPIOR2         PB
 
-#define DISPATCH_ORG             0x0200
-#define DISPATCH_STRIDE_WORDS    16
-#define DISPATCH_STRIDE_BYTES    (2 * (DISPATCH_STRIDE_WORDS))
-#define C_DISPATCH_STRIDE_WORDS  r7
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Native register allocation and architectural state
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; AVR r0:r1     MUL result and unrestricted interpreter scratch
+; AVR r2        permanent zero; SPI dummy-transmit byte
+; AVR r3        permanent one
+; AVR r4:r6     24-bit VM program counter, little-endian
+; AVR r7        permanent four; primary-table stride in AVR words
+; AVR r8:r23    AVM architectural registers r0-r7
+; AVR r24:r27   general interpreter scratch (X is r26:r27)
+; AVR r28:r29   AVM stack pointer (Y)
+; AVR r30:r31   general scratch and dispatch target (Z)
+; GPIOR0        architectural VM_FLAGS
+;
+; r2, r3, and r7 are initialized once and are immutable thereafter. Native
+; r0:r1 have no ABI zero-register requirement; this runtime is assembly-only.
 
-#define ZERO r2
+#define PRIMARY_TABLE_ORG          0x0200
+#define PRIMARY_STRIDE_WORDS       4
+#define PRIMARY_STRIDE_BYTES       (2 * PRIMARY_STRIDE_WORDS)
+#define PRIMARY_OPCODE             r24
 
-; AVM architectural CC uses only C/Z/S; other SREG bits may be retained.
-#define VM_FLAGS r3
+#define ZERO                       r2
+#define ONE                        r3
+#define FOUR                       r7
 
-#define VM_CB GPIOR1
-#define VM_PB GPIOR2
+#define VM_PCL                     r4
+#define VM_PCM                     r5
+#define VM_PCH                     r6
 
-#define VM_PC  r24
-#define VM_PCL r24
-#define VM_PCH r25
+#define VM_FLAGS                   GPIOR0
 
-#define VM_SP_INITIAL_VALUE 0x0A00
-#define VM_SP  r28
-#define VM_SPL r28
-#define VM_SPH r29
+#define VM_SP_INITIAL_VALUE        0x0A00
+#define VM_SP                      r28
+#define VM_SPL                     r28
+#define VM_SPH                     r29
 
-#define VM_R0  r8
-#define VM_R1  r10
-#define VM_R2  r12
-#define VM_R3  r14
-#define VM_R4  r16
-#define VM_R5  r18
-#define VM_R6  r20
-#define VM_R7  r22
+#define VM_R0                      r8
+#define VM_R1                      r10
+#define VM_R2                      r12
+#define VM_R3                      r14
+#define VM_R4                      r16
+#define VM_R5                      r18
+#define VM_R6                      r20
+#define VM_R7                      r22
 
-#define VM_R0L  r8
-#define VM_R1L  r10
-#define VM_R2L  r12
-#define VM_R3L  r14
-#define VM_R4L  r16
-#define VM_R5L  r18
-#define VM_R6L  r20
-#define VM_R7L  r22
+#define VM_R0L                     r8
+#define VM_R1L                     r10
+#define VM_R2L                     r12
+#define VM_R3L                     r14
+#define VM_R4L                     r16
+#define VM_R5L                     r18
+#define VM_R6L                     r20
+#define VM_R7L                     r22
 
-#define VM_R0H  r9
-#define VM_R1H  r11
-#define VM_R2H  r13
-#define VM_R3H  r15
-#define VM_R4H  r17
-#define VM_R5H  r19
-#define VM_R6H  r21
-#define VM_R7H  r23
+#define VM_R0H                     r9
+#define VM_R1H                     r11
+#define VM_R2H                     r13
+#define VM_R3H                     r15
+#define VM_R4H                     r17
+#define VM_R5H                     r19
+#define VM_R6H                     r21
+#define VM_R7H                     r23
 
-#define VM_C0  VM_R4
-#define VM_C1  VM_R5
-#define VM_C2  VM_R6
-#define VM_C3  VM_R7
+#define VM_C0                      VM_R4
+#define VM_C1                      VM_R5
+#define VM_C2                      VM_R6
+#define VM_C3                      VM_R7
 
-#define VM_C0L  VM_R4L
-#define VM_C1L  VM_R5L
-#define VM_C2L  VM_R6L
-#define VM_C3L  VM_R7L
+#define VM_C0L                     VM_R4L
+#define VM_C1L                     VM_R5L
+#define VM_C2L                     VM_R6L
+#define VM_C3L                     VM_R7L
 
-#define VM_C0H  VM_R4H
-#define VM_C1H  VM_R5H
-#define VM_C2H  VM_R6H
-#define VM_C3H  VM_R7H
-
+#define VM_C0H                     VM_R4H
+#define VM_C1H                     VM_R5H
+#define VM_C2H                     VM_R6H
+#define VM_C3H                     VM_R7H
 #define __SFR_OFFSET 0
 #include <avr/io.h>
 #ifndef SREG_C
@@ -446,10 +401,9 @@
 #  define SREG_I  (7)
 #endif
 
-#if (DISPATCH_ORG & 0x1FF) != 0
-#error "Dispatch calculation requires lo8(DISPATCH_ORG/2) == 0x00"
+#if (PRIMARY_TABLE_ORG & 0x1FF) != 0
+#  error "Primary dispatch requires 256-word (512-byte) alignment"
 #endif
-
 ; OLED display control. All supported controllers use active-low CS and reset,
 ; with D/C low for commands and high for display data.
 .macro display_enable
@@ -519,13 +473,6 @@
 #define AVM_TAIL_MAGIC2         0x54
 #define AVM_TAIL_MAGIC3         0x01
 #define AVM_TAIL_OFFSET_IN_PAGE 0xF8
-
-; Arduboy system ABI service identifiers.
-#define SYS_DEBUG_PUTC          0x00
-#define SYS_DEBUG_BREAK         0x01
-#define SYS_MILLIS              0x02
-#define SYS_MILLIS32            0x03
-
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
 #define FX_DEV_TAIL_NOSAVE_HI   0xFF
@@ -655,2355 +602,521 @@ reset_handler:
     ; the fixed-stride dispatch table so it cannot collide with .org 0x0200.
     jmp startup_func
 
-; 18-cycle cadence, needs 8 cycles from start of instruction
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Primary dispatch machinery
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; The primary table has 256 fixed four-word slots. A completed short handler
+; will eventually end with RJMP to a shared cadence tail; a longer primary
+; handler may use its fourth word to forward to an out-of-line continuation.
+; For this migration skeleton every architecturally defined opcode traps as
+; unimplemented and every reserved opcode traps as invalid.
+
+; Standard 18-cycle sequential dispatch. PRIMARY_OPCODE is the byte fetched
+; for the next instruction; the 24-bit VM PC advances by one byte.
 .macro dispatch
-    in   r6, SPDR
+    in   PRIMARY_OPCODE, SPDR
     out  SPDR, ZERO
-    adiw VM_PC, 1
-    mul  r6, C_DISPATCH_STRIDE_WORDS
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    mul  PRIMARY_OPCODE, FOUR
     movw r30, r0
-    subi r31, hi8(-(pm(DISPATCH_ORG)))
+    subi r31, hi8(-(pm(primary_table)))
     ijmp
 .endm
 
-; 17-cycle cadence but needs 5 cycles from start of instruction
+; Reverse-order 17-cycle sequential dispatch. CLI protects the SPDR read/start
+; handoff, while the carry from the low-byte PC increment remains live until
+; the middle and high bytes are updated.
 .macro dispatch_reverse
-    adiw VM_PC, 1
+    add  VM_PCL, ONE
     cli
     out  SPDR, ZERO
-    in   r6, SPDR
+    in   PRIMARY_OPCODE, SPDR
     sei
-    mul  r6, C_DISPATCH_STRIDE_WORDS
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    mul  PRIMARY_OPCODE, FOUR
     movw r30, r0
-    subi r31, hi8(-(pm(DISPATCH_ORG)))
+    subi r31, hi8(-(pm(primary_table)))
     ijmp
 .endm
 
-.macro handler_begin opcode, label
-    .org (((\opcode) * DISPATCH_STRIDE_BYTES) + DISPATCH_ORG)
+; A skeleton slot is exactly four AVR words. The three unreachable NOPs reserve
+; the words that a future direct handler or setup sequence may occupy.
+.macro emit_primary_stub label, target
 \label:
+    rjmp \target
+    nop
+    nop
+    nop
+.Lprimary_stub_end_\@:
+    .if (.Lprimary_stub_end_\@ - \label) != PRIMARY_STRIDE_BYTES
+        .error "primary dispatch slot is not exactly four words"
+    .endif
 .endm
 
-.macro handler_end opcode
-    .org ((((\opcode) + 1) * DISPATCH_STRIDE_BYTES) + DISPATCH_ORG)
-.endm
-
-.org DISPATCH_ORG
+.org PRIMARY_TABLE_ORG
+.global primary_table
 .global abvm_interp
+primary_table:
 abvm_interp:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x00-0x0F: MOV cD, cS / CLR cD
+; 0x00-0x0F: MOV cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_mov_or_clr opcode, label, dst, dstl, dsth, src, same=0
-    handler_begin \opcode, \label
-    .if \same
-        delay_3
-        clr  \dstl
-        clr  \dsth
-    .else
-        delay_4
-        movw \dst, \src
-    .endif
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_mov_or_clr 0x00, I_00__CLR_c0,     VM_C0, VM_C0L, VM_C0H, VM_C0, 1
-emit_mov_or_clr 0x01, I_01__MOV_c0_c1,  VM_C0, VM_C0L, VM_C0H, VM_C1
-emit_mov_or_clr 0x02, I_02__MOV_c0_c2,  VM_C0, VM_C0L, VM_C0H, VM_C2
-emit_mov_or_clr 0x03, I_03__MOV_c0_c3,  VM_C0, VM_C0L, VM_C0H, VM_C3
-emit_mov_or_clr 0x04, I_04__MOV_c1_c0,  VM_C1, VM_C1L, VM_C1H, VM_C0
-emit_mov_or_clr 0x05, I_05__CLR_c1,     VM_C1, VM_C1L, VM_C1H, VM_C1, 1
-emit_mov_or_clr 0x06, I_06__MOV_c1_c2,  VM_C1, VM_C1L, VM_C1H, VM_C2
-emit_mov_or_clr 0x07, I_07__MOV_c1_c3,  VM_C1, VM_C1L, VM_C1H, VM_C3
-emit_mov_or_clr 0x08, I_08__MOV_c2_c0,  VM_C2, VM_C2L, VM_C2H, VM_C0
-emit_mov_or_clr 0x09, I_09__MOV_c2_c1,  VM_C2, VM_C2L, VM_C2H, VM_C1
-emit_mov_or_clr 0x0A, I_0A__CLR_c2,     VM_C2, VM_C2L, VM_C2H, VM_C2, 1
-emit_mov_or_clr 0x0B, I_0B__MOV_c2_c3,  VM_C2, VM_C2L, VM_C2H, VM_C3
-emit_mov_or_clr 0x0C, I_0C__MOV_c3_c0,  VM_C3, VM_C3L, VM_C3H, VM_C0
-emit_mov_or_clr 0x0D, I_0D__MOV_c3_c1,  VM_C3, VM_C3L, VM_C3H, VM_C1
-emit_mov_or_clr 0x0E, I_0E__MOV_c3_c2,  VM_C3, VM_C3L, VM_C3H, VM_C2
-emit_mov_or_clr 0x0F, I_0F__CLR_c3,     VM_C3, VM_C3L, VM_C3H, VM_C3, 1
+emit_primary_stub primary_00, unimplemented_instruction_func
+emit_primary_stub primary_01, unimplemented_instruction_func
+emit_primary_stub primary_02, unimplemented_instruction_func
+emit_primary_stub primary_03, unimplemented_instruction_func
+emit_primary_stub primary_04, unimplemented_instruction_func
+emit_primary_stub primary_05, unimplemented_instruction_func
+emit_primary_stub primary_06, unimplemented_instruction_func
+emit_primary_stub primary_07, unimplemented_instruction_func
+emit_primary_stub primary_08, unimplemented_instruction_func
+emit_primary_stub primary_09, unimplemented_instruction_func
+emit_primary_stub primary_0A, unimplemented_instruction_func
+emit_primary_stub primary_0B, unimplemented_instruction_func
+emit_primary_stub primary_0C, unimplemented_instruction_func
+emit_primary_stub primary_0D, unimplemented_instruction_func
+emit_primary_stub primary_0E, unimplemented_instruction_func
+emit_primary_stub primary_0F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x10-0x1F: LD8 cD, [cS]
+; 0x10-0x1F: ADD cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_ld8 opcode, label, dstl, dsth, src
-    handler_begin \opcode, \label
-    delay_1
-    movw r26, \src
-    ld   \dstl, X
-    clr  \dsth
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_ld8 0x10, I_10__LD8_c0_c0, VM_C0L, VM_C0H, VM_C0
-emit_ld8 0x11, I_11__LD8_c0_c1, VM_C0L, VM_C0H, VM_C1
-emit_ld8 0x12, I_12__LD8_c0_c2, VM_C0L, VM_C0H, VM_C2
-emit_ld8 0x13, I_13__LD8_c0_c3, VM_C0L, VM_C0H, VM_C3
-emit_ld8 0x14, I_14__LD8_c1_c0, VM_C1L, VM_C1H, VM_C0
-emit_ld8 0x15, I_15__LD8_c1_c1, VM_C1L, VM_C1H, VM_C1
-emit_ld8 0x16, I_16__LD8_c1_c2, VM_C1L, VM_C1H, VM_C2
-emit_ld8 0x17, I_17__LD8_c1_c3, VM_C1L, VM_C1H, VM_C3
-emit_ld8 0x18, I_18__LD8_c2_c0, VM_C2L, VM_C2H, VM_C0
-emit_ld8 0x19, I_19__LD8_c2_c1, VM_C2L, VM_C2H, VM_C1
-emit_ld8 0x1A, I_1A__LD8_c2_c2, VM_C2L, VM_C2H, VM_C2
-emit_ld8 0x1B, I_1B__LD8_c2_c3, VM_C2L, VM_C2H, VM_C3
-emit_ld8 0x1C, I_1C__LD8_c3_c0, VM_C3L, VM_C3H, VM_C0
-emit_ld8 0x1D, I_1D__LD8_c3_c1, VM_C3L, VM_C3H, VM_C1
-emit_ld8 0x1E, I_1E__LD8_c3_c2, VM_C3L, VM_C3H, VM_C2
-emit_ld8 0x1F, I_1F__LD8_c3_c3, VM_C3L, VM_C3H, VM_C3
+emit_primary_stub primary_10, unimplemented_instruction_func
+emit_primary_stub primary_11, unimplemented_instruction_func
+emit_primary_stub primary_12, unimplemented_instruction_func
+emit_primary_stub primary_13, unimplemented_instruction_func
+emit_primary_stub primary_14, unimplemented_instruction_func
+emit_primary_stub primary_15, unimplemented_instruction_func
+emit_primary_stub primary_16, unimplemented_instruction_func
+emit_primary_stub primary_17, unimplemented_instruction_func
+emit_primary_stub primary_18, unimplemented_instruction_func
+emit_primary_stub primary_19, unimplemented_instruction_func
+emit_primary_stub primary_1A, unimplemented_instruction_func
+emit_primary_stub primary_1B, unimplemented_instruction_func
+emit_primary_stub primary_1C, unimplemented_instruction_func
+emit_primary_stub primary_1D, unimplemented_instruction_func
+emit_primary_stub primary_1E, unimplemented_instruction_func
+emit_primary_stub primary_1F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x20-0x2F: ST8 [cD], cS
+; 0x20-0x2F: SUB cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_st8 opcode, label, dst, srcl
-    handler_begin \opcode, \label
-    delay_2
-    movw r26, \dst
-    st   X, \srcl
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_st8 0x20, I_20__ST8_c0_c0, VM_C0, VM_C0L
-emit_st8 0x21, I_21__ST8_c0_c1, VM_C0, VM_C1L
-emit_st8 0x22, I_22__ST8_c0_c2, VM_C0, VM_C2L
-emit_st8 0x23, I_23__ST8_c0_c3, VM_C0, VM_C3L
-emit_st8 0x24, I_24__ST8_c1_c0, VM_C1, VM_C0L
-emit_st8 0x25, I_25__ST8_c1_c1, VM_C1, VM_C1L
-emit_st8 0x26, I_26__ST8_c1_c2, VM_C1, VM_C2L
-emit_st8 0x27, I_27__ST8_c1_c3, VM_C1, VM_C3L
-emit_st8 0x28, I_28__ST8_c2_c0, VM_C2, VM_C0L
-emit_st8 0x29, I_29__ST8_c2_c1, VM_C2, VM_C1L
-emit_st8 0x2A, I_2A__ST8_c2_c2, VM_C2, VM_C2L
-emit_st8 0x2B, I_2B__ST8_c2_c3, VM_C2, VM_C3L
-emit_st8 0x2C, I_2C__ST8_c3_c0, VM_C3, VM_C0L
-emit_st8 0x2D, I_2D__ST8_c3_c1, VM_C3, VM_C1L
-emit_st8 0x2E, I_2E__ST8_c3_c2, VM_C3, VM_C2L
-emit_st8 0x2F, I_2F__ST8_c3_c3, VM_C3, VM_C3L
+emit_primary_stub primary_20, unimplemented_instruction_func
+emit_primary_stub primary_21, unimplemented_instruction_func
+emit_primary_stub primary_22, unimplemented_instruction_func
+emit_primary_stub primary_23, unimplemented_instruction_func
+emit_primary_stub primary_24, unimplemented_instruction_func
+emit_primary_stub primary_25, unimplemented_instruction_func
+emit_primary_stub primary_26, unimplemented_instruction_func
+emit_primary_stub primary_27, unimplemented_instruction_func
+emit_primary_stub primary_28, unimplemented_instruction_func
+emit_primary_stub primary_29, unimplemented_instruction_func
+emit_primary_stub primary_2A, unimplemented_instruction_func
+emit_primary_stub primary_2B, unimplemented_instruction_func
+emit_primary_stub primary_2C, unimplemented_instruction_func
+emit_primary_stub primary_2D, unimplemented_instruction_func
+emit_primary_stub primary_2E, unimplemented_instruction_func
+emit_primary_stub primary_2F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x30-0x3F: LD16 cD, [cS]
+; 0x30-0x3F: CMP cL,cR
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_ld16 opcode, label, dstl, dsth, src
-    handler_begin \opcode, \label
-    movw r26, \src
-    ld   \dstl, X+
-    ld   \dsth, X
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_ld16 0x30, I_30__LD16_c0_c0, VM_C0L, VM_C0H, VM_C0
-emit_ld16 0x31, I_31__LD16_c0_c1, VM_C0L, VM_C0H, VM_C1
-emit_ld16 0x32, I_32__LD16_c0_c2, VM_C0L, VM_C0H, VM_C2
-emit_ld16 0x33, I_33__LD16_c0_c3, VM_C0L, VM_C0H, VM_C3
-emit_ld16 0x34, I_34__LD16_c1_c0, VM_C1L, VM_C1H, VM_C0
-emit_ld16 0x35, I_35__LD16_c1_c1, VM_C1L, VM_C1H, VM_C1
-emit_ld16 0x36, I_36__LD16_c1_c2, VM_C1L, VM_C1H, VM_C2
-emit_ld16 0x37, I_37__LD16_c1_c3, VM_C1L, VM_C1H, VM_C3
-emit_ld16 0x38, I_38__LD16_c2_c0, VM_C2L, VM_C2H, VM_C0
-emit_ld16 0x39, I_39__LD16_c2_c1, VM_C2L, VM_C2H, VM_C1
-emit_ld16 0x3A, I_3A__LD16_c2_c2, VM_C2L, VM_C2H, VM_C2
-emit_ld16 0x3B, I_3B__LD16_c2_c3, VM_C2L, VM_C2H, VM_C3
-emit_ld16 0x3C, I_3C__LD16_c3_c0, VM_C3L, VM_C3H, VM_C0
-emit_ld16 0x3D, I_3D__LD16_c3_c1, VM_C3L, VM_C3H, VM_C1
-emit_ld16 0x3E, I_3E__LD16_c3_c2, VM_C3L, VM_C3H, VM_C2
-emit_ld16 0x3F, I_3F__LD16_c3_c3, VM_C3L, VM_C3H, VM_C3
+emit_primary_stub primary_30, unimplemented_instruction_func
+emit_primary_stub primary_31, unimplemented_instruction_func
+emit_primary_stub primary_32, unimplemented_instruction_func
+emit_primary_stub primary_33, unimplemented_instruction_func
+emit_primary_stub primary_34, unimplemented_instruction_func
+emit_primary_stub primary_35, unimplemented_instruction_func
+emit_primary_stub primary_36, unimplemented_instruction_func
+emit_primary_stub primary_37, unimplemented_instruction_func
+emit_primary_stub primary_38, unimplemented_instruction_func
+emit_primary_stub primary_39, unimplemented_instruction_func
+emit_primary_stub primary_3A, unimplemented_instruction_func
+emit_primary_stub primary_3B, unimplemented_instruction_func
+emit_primary_stub primary_3C, unimplemented_instruction_func
+emit_primary_stub primary_3D, unimplemented_instruction_func
+emit_primary_stub primary_3E, unimplemented_instruction_func
+emit_primary_stub primary_3F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x40-0x4F: ST16 [cD], cS
+; 0x40-0x4F: LD8U cD,[cA]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_st16 opcode, label, dst, srcl, srch
-    handler_begin \opcode, \label
-    movw r26, \dst
-    st   X+, \srcl
-    st   X, \srch
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_st16 0x40, I_40__ST16_c0_c0, VM_C0, VM_C0L, VM_C0H
-emit_st16 0x41, I_41__ST16_c0_c1, VM_C0, VM_C1L, VM_C1H
-emit_st16 0x42, I_42__ST16_c0_c2, VM_C0, VM_C2L, VM_C2H
-emit_st16 0x43, I_43__ST16_c0_c3, VM_C0, VM_C3L, VM_C3H
-emit_st16 0x44, I_44__ST16_c1_c0, VM_C1, VM_C0L, VM_C0H
-emit_st16 0x45, I_45__ST16_c1_c1, VM_C1, VM_C1L, VM_C1H
-emit_st16 0x46, I_46__ST16_c1_c2, VM_C1, VM_C2L, VM_C2H
-emit_st16 0x47, I_47__ST16_c1_c3, VM_C1, VM_C3L, VM_C3H
-emit_st16 0x48, I_48__ST16_c2_c0, VM_C2, VM_C0L, VM_C0H
-emit_st16 0x49, I_49__ST16_c2_c1, VM_C2, VM_C1L, VM_C1H
-emit_st16 0x4A, I_4A__ST16_c2_c2, VM_C2, VM_C2L, VM_C2H
-emit_st16 0x4B, I_4B__ST16_c2_c3, VM_C2, VM_C3L, VM_C3H
-emit_st16 0x4C, I_4C__ST16_c3_c0, VM_C3, VM_C0L, VM_C0H
-emit_st16 0x4D, I_4D__ST16_c3_c1, VM_C3, VM_C1L, VM_C1H
-emit_st16 0x4E, I_4E__ST16_c3_c2, VM_C3, VM_C2L, VM_C2H
-emit_st16 0x4F, I_4F__ST16_c3_c3, VM_C3, VM_C3L, VM_C3H
-
-.macro emit_unimplemented_primary opcode, label
-    handler_begin \opcode, \label
-    jmp  unimplemented_instruction_func
-    handler_end \opcode
-.endm
-
-.macro emit_invalid_primary opcode, label
-    handler_begin \opcode, \label
-    jmp  invalid_primary_instruction_func
-    handler_end \opcode
-.endm
+emit_primary_stub primary_40, unimplemented_instruction_func
+emit_primary_stub primary_41, unimplemented_instruction_func
+emit_primary_stub primary_42, unimplemented_instruction_func
+emit_primary_stub primary_43, unimplemented_instruction_func
+emit_primary_stub primary_44, unimplemented_instruction_func
+emit_primary_stub primary_45, unimplemented_instruction_func
+emit_primary_stub primary_46, unimplemented_instruction_func
+emit_primary_stub primary_47, unimplemented_instruction_func
+emit_primary_stub primary_48, unimplemented_instruction_func
+emit_primary_stub primary_49, unimplemented_instruction_func
+emit_primary_stub primary_4A, unimplemented_instruction_func
+emit_primary_stub primary_4B, unimplemented_instruction_func
+emit_primary_stub primary_4C, unimplemented_instruction_func
+emit_primary_stub primary_4D, unimplemented_instruction_func
+emit_primary_stub primary_4E, unimplemented_instruction_func
+emit_primary_stub primary_4F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x50-0x57: AND A, rS
+; 0x50-0x5F: ST8 [cA],cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; A is the architectural alias of c0/r4. This is the existing implemented
-; 16-bit AND operation, remapped to the new one-byte accumulator encoding.
-; AVM CC is preserved even though the native AND instructions modify SREG.
-.macro emit_and_a opcode, label, srcl, srch
-    handler_begin \opcode, \label
-    delay_3
-    and  VM_C0L, \srcl
-    and  VM_C0H, \srch
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_and_a 0x50, I_50__AND_A_r0, VM_R0L, VM_R0H
-emit_and_a 0x51, I_51__AND_A_r1, VM_R1L, VM_R1H
-emit_and_a 0x52, I_52__AND_A_r2, VM_R2L, VM_R2H
-emit_and_a 0x53, I_53__AND_A_r3, VM_R3L, VM_R3H
-emit_invalid_primary 0x54, I_54__RESERVED_AND_A_A
-emit_and_a 0x55, I_55__AND_A_r5, VM_R5L, VM_R5H
-emit_and_a 0x56, I_56__AND_A_r6, VM_R6L, VM_R6H
-emit_and_a 0x57, I_57__AND_A_r7, VM_R7L, VM_R7H
+emit_primary_stub primary_50, unimplemented_instruction_func
+emit_primary_stub primary_51, unimplemented_instruction_func
+emit_primary_stub primary_52, unimplemented_instruction_func
+emit_primary_stub primary_53, unimplemented_instruction_func
+emit_primary_stub primary_54, unimplemented_instruction_func
+emit_primary_stub primary_55, unimplemented_instruction_func
+emit_primary_stub primary_56, unimplemented_instruction_func
+emit_primary_stub primary_57, unimplemented_instruction_func
+emit_primary_stub primary_58, unimplemented_instruction_func
+emit_primary_stub primary_59, unimplemented_instruction_func
+emit_primary_stub primary_5A, unimplemented_instruction_func
+emit_primary_stub primary_5B, unimplemented_instruction_func
+emit_primary_stub primary_5C, unimplemented_instruction_func
+emit_primary_stub primary_5D, unimplemented_instruction_func
+emit_primary_stub primary_5E, unimplemented_instruction_func
+emit_primary_stub primary_5F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x58-0x67: OR/XOR A, rS
+; 0x60-0x6F: LD16 cD,[cA]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; OR and XOR use the same five pre-dispatch cycles as AND:
-;   delay_3 + low-byte operation + high-byte operation.
-; Native SREG is modified, but architectural AVM CC remains in VM_FLAGS.
-.macro emit_logic_a opcode, label, operation, srcl, srch
-    handler_begin \opcode, \label
-    delay_3
-    \operation VM_C0L, \srcl
-    \operation VM_C0H, \srch
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_logic_a 0x58, I_58__OR_A_r0,  or,  VM_R0L, VM_R0H
-emit_logic_a 0x59, I_59__OR_A_r1,  or,  VM_R1L, VM_R1H
-emit_logic_a 0x5A, I_5A__OR_A_r2,  or,  VM_R2L, VM_R2H
-emit_logic_a 0x5B, I_5B__OR_A_r3,  or,  VM_R3L, VM_R3H
-emit_invalid_primary 0x5C, I_5C__RESERVED_OR_A_A
-emit_logic_a 0x5D, I_5D__OR_A_r5,  or,  VM_R5L, VM_R5H
-emit_logic_a 0x5E, I_5E__OR_A_r6,  or,  VM_R6L, VM_R6H
-emit_logic_a 0x5F, I_5F__OR_A_r7,  or,  VM_R7L, VM_R7H
-
-emit_logic_a 0x60, I_60__XOR_A_r0, eor, VM_R0L, VM_R0H
-emit_logic_a 0x61, I_61__XOR_A_r1, eor, VM_R1L, VM_R1H
-emit_logic_a 0x62, I_62__XOR_A_r2, eor, VM_R2L, VM_R2H
-emit_logic_a 0x63, I_63__XOR_A_r3, eor, VM_R3L, VM_R3H
-emit_invalid_primary 0x64, I_64__RESERVED_XOR_A_A
-emit_logic_a 0x65, I_65__XOR_A_r5, eor, VM_R5L, VM_R5H
-emit_logic_a 0x66, I_66__XOR_A_r6, eor, VM_R6L, VM_R6H
-emit_logic_a 0x67, I_67__XOR_A_r7, eor, VM_R7L, VM_R7H
+emit_primary_stub primary_60, unimplemented_instruction_func
+emit_primary_stub primary_61, unimplemented_instruction_func
+emit_primary_stub primary_62, unimplemented_instruction_func
+emit_primary_stub primary_63, unimplemented_instruction_func
+emit_primary_stub primary_64, unimplemented_instruction_func
+emit_primary_stub primary_65, unimplemented_instruction_func
+emit_primary_stub primary_66, unimplemented_instruction_func
+emit_primary_stub primary_67, unimplemented_instruction_func
+emit_primary_stub primary_68, unimplemented_instruction_func
+emit_primary_stub primary_69, unimplemented_instruction_func
+emit_primary_stub primary_6A, unimplemented_instruction_func
+emit_primary_stub primary_6B, unimplemented_instruction_func
+emit_primary_stub primary_6C, unimplemented_instruction_func
+emit_primary_stub primary_6D, unimplemented_instruction_func
+emit_primary_stub primary_6E, unimplemented_instruction_func
+emit_primary_stub primary_6F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x68-0x6F: BIC A, rS
+; 0x70-0x7F: ST16 [cA],cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; BIC computes A &= ~rS without modifying rS. MOVW copies the complete source
-; before A is changed. The self-form BIC A,A is reserved and traps.
-; MOVW + COM + COM + AND + AND is exactly five pre-dispatch cycles.
-.macro emit_bic_a opcode, label, src
-    handler_begin \opcode, \label
-    movw r4, \src
-    com  r4
-    com  r5
-    and  VM_C0L, r4
-    and  VM_C0H, r5
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_bic_a 0x68, I_68__BIC_A_r0, VM_R0
-emit_bic_a 0x69, I_69__BIC_A_r1, VM_R1
-emit_bic_a 0x6A, I_6A__BIC_A_r2, VM_R2
-emit_bic_a 0x6B, I_6B__BIC_A_r3, VM_R3
-emit_invalid_primary 0x6C, I_6C__RESERVED_BIC_A_A
-emit_bic_a 0x6D, I_6D__BIC_A_r5, VM_R5
-emit_bic_a 0x6E, I_6E__BIC_A_r6, VM_R6
-emit_bic_a 0x6F, I_6F__BIC_A_r7, VM_R7
+emit_primary_stub primary_70, unimplemented_instruction_func
+emit_primary_stub primary_71, unimplemented_instruction_func
+emit_primary_stub primary_72, unimplemented_instruction_func
+emit_primary_stub primary_73, unimplemented_instruction_func
+emit_primary_stub primary_74, unimplemented_instruction_func
+emit_primary_stub primary_75, unimplemented_instruction_func
+emit_primary_stub primary_76, unimplemented_instruction_func
+emit_primary_stub primary_77, unimplemented_instruction_func
+emit_primary_stub primary_78, unimplemented_instruction_func
+emit_primary_stub primary_79, unimplemented_instruction_func
+emit_primary_stub primary_7A, unimplemented_instruction_func
+emit_primary_stub primary_7B, unimplemented_instruction_func
+emit_primary_stub primary_7C, unimplemented_instruction_func
+emit_primary_stub primary_7D, unimplemented_instruction_func
+emit_primary_stub primary_7E, unimplemented_instruction_func
+emit_primary_stub primary_7F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x70-0x77: PUSH16 rS
+; 0x80-0x8F: AND cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_push16 opcode, label, srcl, srch
-    handler_begin \opcode, \label
-    delay_1
-    st   -Y, \srch
-    st   -Y, \srcl
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_push16 0x70, I_70__PUSH16_r0, VM_R0L, VM_R0H
-emit_push16 0x71, I_71__PUSH16_r1, VM_R1L, VM_R1H
-emit_push16 0x72, I_72__PUSH16_r2, VM_R2L, VM_R2H
-emit_push16 0x73, I_73__PUSH16_r3, VM_R3L, VM_R3H
-emit_push16 0x74, I_74__PUSH16_r4, VM_R4L, VM_R4H
-emit_push16 0x75, I_75__PUSH16_r5, VM_R5L, VM_R5H
-emit_push16 0x76, I_76__PUSH16_r6, VM_R6L, VM_R6H
-emit_push16 0x77, I_77__PUSH16_r7, VM_R7L, VM_R7H
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x78-0x7F: POP16 rD
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-.macro emit_pop16 opcode, label, dstl, dsth
-    handler_begin \opcode, \label
-    delay_1
-    ld   \dstl, Y+
-    ld   \dsth, Y+
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_pop16 0x78, I_78__POP16_r0, VM_R0L, VM_R0H
-emit_pop16 0x79, I_79__POP16_r1, VM_R1L, VM_R1H
-emit_pop16 0x7A, I_7A__POP16_r2, VM_R2L, VM_R2H
-emit_pop16 0x7B, I_7B__POP16_r3, VM_R3L, VM_R3H
-emit_pop16 0x7C, I_7C__POP16_r4, VM_R4L, VM_R4H
-emit_pop16 0x7D, I_7D__POP16_r5, VM_R5L, VM_R5H
-emit_pop16 0x7E, I_7E__POP16_r6, VM_R6L, VM_R6H
-emit_pop16 0x7F, I_7F__POP16_r7, VM_R7L, VM_R7H
+emit_primary_stub primary_80, unimplemented_instruction_func
+emit_primary_stub primary_81, unimplemented_instruction_func
+emit_primary_stub primary_82, unimplemented_instruction_func
+emit_primary_stub primary_83, unimplemented_instruction_func
+emit_primary_stub primary_84, unimplemented_instruction_func
+emit_primary_stub primary_85, unimplemented_instruction_func
+emit_primary_stub primary_86, unimplemented_instruction_func
+emit_primary_stub primary_87, unimplemented_instruction_func
+emit_primary_stub primary_88, unimplemented_instruction_func
+emit_primary_stub primary_89, unimplemented_instruction_func
+emit_primary_stub primary_8A, unimplemented_instruction_func
+emit_primary_stub primary_8B, unimplemented_instruction_func
+emit_primary_stub primary_8C, unimplemented_instruction_func
+emit_primary_stub primary_8D, unimplemented_instruction_func
+emit_primary_stub primary_8E, unimplemented_instruction_func
+emit_primary_stub primary_8F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x80-0x9F: ADD/SUB cD, cS
+; 0x90-0x9F: OR cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_add_or_sub opcode, label, lowop, highop, dstl, dsth, srcl, srch
-    handler_begin \opcode, \label
-    delay_2
-    \lowop \dstl, \srcl
-    \highop \dsth, \srch
-    in   VM_FLAGS, SREG
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_add_or_sub 0x80, I_80__ADD_c0_c0, add, adc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_add_or_sub 0x81, I_81__ADD_c0_c1, add, adc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_add_or_sub 0x82, I_82__ADD_c0_c2, add, adc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_add_or_sub 0x83, I_83__ADD_c0_c3, add, adc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_add_or_sub 0x84, I_84__ADD_c1_c0, add, adc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_add_or_sub 0x85, I_85__ADD_c1_c1, add, adc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_add_or_sub 0x86, I_86__ADD_c1_c2, add, adc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_add_or_sub 0x87, I_87__ADD_c1_c3, add, adc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_add_or_sub 0x88, I_88__ADD_c2_c0, add, adc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_add_or_sub 0x89, I_89__ADD_c2_c1, add, adc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_add_or_sub 0x8A, I_8A__ADD_c2_c2, add, adc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_add_or_sub 0x8B, I_8B__ADD_c2_c3, add, adc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_add_or_sub 0x8C, I_8C__ADD_c3_c0, add, adc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_add_or_sub 0x8D, I_8D__ADD_c3_c1, add, adc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_add_or_sub 0x8E, I_8E__ADD_c3_c2, add, adc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_add_or_sub 0x8F, I_8F__ADD_c3_c3, add, adc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
-
-emit_add_or_sub 0x90, I_90__SUB_c0_c0, sub, sbc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_add_or_sub 0x91, I_91__SUB_c0_c1, sub, sbc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_add_or_sub 0x92, I_92__SUB_c0_c2, sub, sbc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_add_or_sub 0x93, I_93__SUB_c0_c3, sub, sbc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_add_or_sub 0x94, I_94__SUB_c1_c0, sub, sbc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_add_or_sub 0x95, I_95__SUB_c1_c1, sub, sbc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_add_or_sub 0x96, I_96__SUB_c1_c2, sub, sbc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_add_or_sub 0x97, I_97__SUB_c1_c3, sub, sbc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_add_or_sub 0x98, I_98__SUB_c2_c0, sub, sbc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_add_or_sub 0x99, I_99__SUB_c2_c1, sub, sbc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_add_or_sub 0x9A, I_9A__SUB_c2_c2, sub, sbc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_add_or_sub 0x9B, I_9B__SUB_c2_c3, sub, sbc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_add_or_sub 0x9C, I_9C__SUB_c3_c0, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_add_or_sub 0x9D, I_9D__SUB_c3_c1, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_add_or_sub 0x9E, I_9E__SUB_c3_c2, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_add_or_sub 0x9F, I_9F__SUB_c3_c3, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+emit_primary_stub primary_90, unimplemented_instruction_func
+emit_primary_stub primary_91, unimplemented_instruction_func
+emit_primary_stub primary_92, unimplemented_instruction_func
+emit_primary_stub primary_93, unimplemented_instruction_func
+emit_primary_stub primary_94, unimplemented_instruction_func
+emit_primary_stub primary_95, unimplemented_instruction_func
+emit_primary_stub primary_96, unimplemented_instruction_func
+emit_primary_stub primary_97, unimplemented_instruction_func
+emit_primary_stub primary_98, unimplemented_instruction_func
+emit_primary_stub primary_99, unimplemented_instruction_func
+emit_primary_stub primary_9A, unimplemented_instruction_func
+emit_primary_stub primary_9B, unimplemented_instruction_func
+emit_primary_stub primary_9C, unimplemented_instruction_func
+emit_primary_stub primary_9D, unimplemented_instruction_func
+emit_primary_stub primary_9E, unimplemented_instruction_func
+emit_primary_stub primary_9F, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xA0-0xAF: CMP16 / TST16
+; 0xA0-0xAF: XOR cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_cmp16_or_tst opcode, label, dstl, dsth, srcl, srch, same=0
-    handler_begin \opcode, \label
-
-    .if \same
-        ; TST16 is a comparison against zero and replaces all architectural CC.
-        delay_2
-        cp   \dstl, ZERO
-        cpc  \dsth, ZERO
-        in   VM_FLAGS, SREG
-    .else
-        ; 2-cycle padding + CP + CPC + IN = 5 cycles.
-        delay_2
-        cp   \dstl, \srcl
-        cpc  \dsth, \srch
-        in   VM_FLAGS, SREG
-    .endif
-
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_cmp16_or_tst 0xA0, I_A0__TST16_c0,     VM_C0L, VM_C0H, VM_C0L, VM_C0H, 1
-emit_cmp16_or_tst 0xA1, I_A1__CMP16_c0_c1,  VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_cmp16_or_tst 0xA2, I_A2__CMP16_c0_c2,  VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_cmp16_or_tst 0xA3, I_A3__CMP16_c0_c3,  VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_cmp16_or_tst 0xA4, I_A4__CMP16_c1_c0,  VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_cmp16_or_tst 0xA5, I_A5__TST16_c1,     VM_C1L, VM_C1H, VM_C1L, VM_C1H, 1
-emit_cmp16_or_tst 0xA6, I_A6__CMP16_c1_c2,  VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_cmp16_or_tst 0xA7, I_A7__CMP16_c1_c3,  VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_cmp16_or_tst 0xA8, I_A8__CMP16_c2_c0,  VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_cmp16_or_tst 0xA9, I_A9__CMP16_c2_c1,  VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_cmp16_or_tst 0xAA, I_AA__TST16_c2,     VM_C2L, VM_C2H, VM_C2L, VM_C2H, 1
-emit_cmp16_or_tst 0xAB, I_AB__CMP16_c2_c3,  VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_cmp16_or_tst 0xAC, I_AC__CMP16_c3_c0,  VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_cmp16_or_tst 0xAD, I_AD__CMP16_c3_c1,  VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_cmp16_or_tst 0xAE, I_AE__CMP16_c3_c2,  VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_cmp16_or_tst 0xAF, I_AF__TST16_c3,     VM_C3L, VM_C3H, VM_C3L, VM_C3H, 1
+emit_primary_stub primary_A0, unimplemented_instruction_func
+emit_primary_stub primary_A1, unimplemented_instruction_func
+emit_primary_stub primary_A2, unimplemented_instruction_func
+emit_primary_stub primary_A3, unimplemented_instruction_func
+emit_primary_stub primary_A4, unimplemented_instruction_func
+emit_primary_stub primary_A5, unimplemented_instruction_func
+emit_primary_stub primary_A6, unimplemented_instruction_func
+emit_primary_stub primary_A7, unimplemented_instruction_func
+emit_primary_stub primary_A8, unimplemented_instruction_func
+emit_primary_stub primary_A9, unimplemented_instruction_func
+emit_primary_stub primary_AA, unimplemented_instruction_func
+emit_primary_stub primary_AB, unimplemented_instruction_func
+emit_primary_stub primary_AC, unimplemented_instruction_func
+emit_primary_stub primary_AD, unimplemented_instruction_func
+emit_primary_stub primary_AE, unimplemented_instruction_func
+emit_primary_stub primary_AF, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xB0-0xBF: CMP8 / TST8
+; 0xB0-0xB7: PUSH16 rN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.macro emit_cmp8_or_tst opcode, label, dstl, srcl, same=0
-    handler_begin \opcode, \label
-
-    .if \same
-        ; TST8 is a comparison against zero and replaces all architectural CC.
-        delay_3
-        cp   \dstl, ZERO
-        in   VM_FLAGS, SREG
-    .else
-        ; 3-cycle padding + CP + IN = 5 cycles.
-        delay_3
-        cp   \dstl, \srcl
-        in   VM_FLAGS, SREG
-    .endif
-
-    dispatch_reverse
-    handler_end \opcode
-.endm
-
-emit_cmp8_or_tst 0xB0, I_B0__TST8_c0,     VM_C0L, VM_C0L, 1
-emit_cmp8_or_tst 0xB1, I_B1__CMP8_c0_c1,  VM_C0L, VM_C1L
-emit_cmp8_or_tst 0xB2, I_B2__CMP8_c0_c2,  VM_C0L, VM_C2L
-emit_cmp8_or_tst 0xB3, I_B3__CMP8_c0_c3,  VM_C0L, VM_C3L
-emit_cmp8_or_tst 0xB4, I_B4__CMP8_c1_c0,  VM_C1L, VM_C0L
-emit_cmp8_or_tst 0xB5, I_B5__TST8_c1,     VM_C1L, VM_C1L, 1
-emit_cmp8_or_tst 0xB6, I_B6__CMP8_c1_c2,  VM_C1L, VM_C2L
-emit_cmp8_or_tst 0xB7, I_B7__CMP8_c1_c3,  VM_C1L, VM_C3L
-emit_cmp8_or_tst 0xB8, I_B8__CMP8_c2_c0,  VM_C2L, VM_C0L
-emit_cmp8_or_tst 0xB9, I_B9__CMP8_c2_c1,  VM_C2L, VM_C1L
-emit_cmp8_or_tst 0xBA, I_BA__TST8_c2,     VM_C2L, VM_C2L, 1
-emit_cmp8_or_tst 0xBB, I_BB__CMP8_c2_c3,  VM_C2L, VM_C3L
-emit_cmp8_or_tst 0xBC, I_BC__CMP8_c3_c0,  VM_C3L, VM_C0L
-emit_cmp8_or_tst 0xBD, I_BD__CMP8_c3_c1,  VM_C3L, VM_C1L
-emit_cmp8_or_tst 0xBE, I_BE__CMP8_c3_c2,  VM_C3L, VM_C2L
-emit_cmp8_or_tst 0xBF, I_BF__TST8_c3,     VM_C3L, VM_C3L, 1
+emit_primary_stub primary_B0_push16_r0, unimplemented_instruction_func
+emit_primary_stub primary_B1_push16_r1, unimplemented_instruction_func
+emit_primary_stub primary_B2_push16_r2, unimplemented_instruction_func
+emit_primary_stub primary_B3_push16_r3, unimplemented_instruction_func
+emit_primary_stub primary_B4_push16_r4, unimplemented_instruction_func
+emit_primary_stub primary_B5_push16_r5, unimplemented_instruction_func
+emit_primary_stub primary_B6_push16_r6, unimplemented_instruction_func
+emit_primary_stub primary_B7_push16_r7, unimplemented_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xC0-0xDF: BEQ.S / BNE.S
+; 0xB8-0xBF: POP16 rN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; One-byte short equality branches encode {-9..-2,+1..+8}. The displacement
-; is relative to nextPC,
-; so the taken path first advances PC past the opcode and then adds disp.
+emit_primary_stub primary_B8_pop16_r0, unimplemented_instruction_func
+emit_primary_stub primary_B9_pop16_r1, unimplemented_instruction_func
+emit_primary_stub primary_BA_pop16_r2, unimplemented_instruction_func
+emit_primary_stub primary_BB_pop16_r3, unimplemented_instruction_func
+emit_primary_stub primary_BC_pop16_r4, unimplemented_instruction_func
+emit_primary_stub primary_BD_pop16_r5, unimplemented_instruction_func
+emit_primary_stub primary_BE_pop16_r6, unimplemented_instruction_func
+emit_primary_stub primary_BF_pop16_r7, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xC0-0xC3: LDI8 cD,imm8
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_C0_ldi8_c0, unimplemented_instruction_func
+emit_primary_stub primary_C1_ldi8_c1, unimplemented_instruction_func
+emit_primary_stub primary_C2_ldi8_c2, unimplemented_instruction_func
+emit_primary_stub primary_C3_ldi8_c3, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xC4-0xC7: LDI16 cD,imm16
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_C4_ldi16_c0, unimplemented_instruction_func
+emit_primary_stub primary_C5_ldi16_c1, unimplemented_instruction_func
+emit_primary_stub primary_C6_ldi16_c2, unimplemented_instruction_func
+emit_primary_stub primary_C7_ldi16_c3, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xC8-0xCB: ADDI.S8 cD,simm8
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_C8_addi_s8_c0, unimplemented_instruction_func
+emit_primary_stub primary_C9_addi_s8_c1, unimplemented_instruction_func
+emit_primary_stub primary_CA_addi_s8_c2, unimplemented_instruction_func
+emit_primary_stub primary_CB_addi_s8_c3, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xCC-0xCF: CMPI.S8 cL,simm8
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_CC_cmpi_s8_c0, unimplemented_instruction_func
+emit_primary_stub primary_CD_cmpi_s8_c1, unimplemented_instruction_func
+emit_primary_stub primary_CE_cmpi_s8_c2, unimplemented_instruction_func
+emit_primary_stub primary_CF_cmpi_s8_c3, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xD0-0xD3: conditional branches
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_D0_conditional_branch, unimplemented_instruction_func
+emit_primary_stub primary_D1_conditional_branch, unimplemented_instruction_func
+emit_primary_stub primary_D2_conditional_branch, unimplemented_instruction_func
+emit_primary_stub primary_D3_conditional_branch, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xD4-0xD7: relative control, ADJSP, and SYS
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_D4_jmp_rel8, unimplemented_instruction_func
+emit_primary_stub primary_D5_call_rel8, unimplemented_instruction_func
+emit_primary_stub primary_D6_adjsp, unimplemented_instruction_func
+emit_primary_stub primary_D7_sys, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xD8-0xDF: reserved
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_D8_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_D9_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_DA_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_DB_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_DC_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_DD_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_DE_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_DF_reserved, invalid_primary_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE0-0xE3: direct near/far control
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_E0_jmp16, unimplemented_instruction_func
+emit_primary_stub primary_E1_call16, unimplemented_instruction_func
+emit_primary_stub primary_E2_jmpf, unimplemented_instruction_func
+emit_primary_stub primary_E3_callf, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE4-0xE7: JMPP qN
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_E4_jmpp_q0, unimplemented_instruction_func
+emit_primary_stub primary_E5_jmpp_q1, unimplemented_instruction_func
+emit_primary_stub primary_E6_jmpp_q2, unimplemented_instruction_func
+emit_primary_stub primary_E7_jmpp_q3, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xE8-0xEB: CALLP qN
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_E8_callp_q0, unimplemented_instruction_func
+emit_primary_stub primary_E9_callp_q1, unimplemented_instruction_func
+emit_primary_stub primary_EA_callp_q2, unimplemented_instruction_func
+emit_primary_stub primary_EB_callp_q3, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xEC-0xEE: reserved
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_EC_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_ED_reserved, invalid_primary_instruction_func
+emit_primary_stub primary_EE_reserved, invalid_primary_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xEF: RET
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_EF_ret, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xF0-0xFE: secondary-page prefixes
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_F0_cold_veneer_page, unimplemented_instruction_func
+emit_primary_stub primary_F1_dense_2word_page, unimplemented_instruction_func
+emit_primary_stub primary_F2_dense_3word_page_a, unimplemented_instruction_func
+emit_primary_stub primary_F3_dense_3word_page_b, unimplemented_instruction_func
+emit_primary_stub primary_F4_dense_3word_page_c, unimplemented_instruction_func
+emit_primary_stub primary_F5_dense_4word_page_a, unimplemented_instruction_func
+emit_primary_stub primary_F6_dense_4word_page_b, unimplemented_instruction_func
+emit_primary_stub primary_F7_dense_5word_page_a, unimplemented_instruction_func
+emit_primary_stub primary_F8_simple_condition_page, unimplemented_instruction_func
+emit_primary_stub primary_F9_runtime_bitwise_page, unimplemented_instruction_func
+emit_primary_stub primary_FA_variable_shift_page, unimplemented_instruction_func
+emit_primary_stub primary_FB_cmov_eq_ne_page, unimplemented_instruction_func
+emit_primary_stub primary_FC_cmov_ult_uge_page, unimplemented_instruction_func
+emit_primary_stub primary_FD_cmov_slt_sge_page, unimplemented_instruction_func
+emit_primary_stub primary_FE_mul16_page, unimplemented_instruction_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xFF: reserved
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+emit_primary_stub primary_FF_reserved, invalid_primary_instruction_func
+
+primary_table_end:
+.if (primary_table_end - primary_table) != (256 * PRIMARY_STRIDE_BYTES)
+    .error "primary dispatch table is not exactly 256 four-word slots"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Post-table migration scaffolding
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; The untaken path retains the sequential SPI stream and is padded to the same
-; five pre-dispatch cycles used by the surrounding one-byte handlers.
-;
-; A taken branch discards the speculative sequential byte, seeks the flash to
-; CB:PC, primes a read of the target opcode, and dispatches it without changing
-; PC again (PC already names the target opcode).
-.macro emit_branch_short opcode, label, skip, disp
-    handler_begin \opcode, \label
-
-    \skip VM_FLAGS, SREG_Z
-    rjmp branch_short_dispatch_reverse_func
-
-    adiw VM_PC, 1
-    subi VM_PCL, lo8(-(\disp))
-    sbci VM_PCH, hi8(-(\disp))
-
-    ; Use the common restart path so the target handler observes the same
-    ; OUT-to-handler-entry timing as ordinary sequential dispatch.
-    jmp  seek_and_dispatch_current_pc_func
-
-    handler_end \opcode
-.endm
-
-emit_branch_short 0xC0, I_C0__BEQ_S_m9, sbrs, -9
-emit_branch_short 0xC1, I_C1__BEQ_S_m8, sbrs, -8
-emit_branch_short 0xC2, I_C2__BEQ_S_m7, sbrs, -7
-emit_branch_short 0xC3, I_C3__BEQ_S_m6, sbrs, -6
-emit_branch_short 0xC4, I_C4__BEQ_S_m5, sbrs, -5
-emit_branch_short 0xC5, I_C5__BEQ_S_m4, sbrs, -4
-emit_branch_short 0xC6, I_C6__BEQ_S_m3, sbrs, -3
-emit_branch_short 0xC7, I_C7__BEQ_S_m2, sbrs, -2
-emit_branch_short 0xC8, I_C8__BEQ_S_p1, sbrs,  1
-emit_branch_short 0xC9, I_C9__BEQ_S_p2, sbrs,  2
-emit_branch_short 0xCA, I_CA__BEQ_S_p3, sbrs,  3
-emit_branch_short 0xCB, I_CB__BEQ_S_p4, sbrs,  4
-emit_branch_short 0xCC, I_CC__BEQ_S_p5, sbrs,  5
-emit_branch_short 0xCD, I_CD__BEQ_S_p6, sbrs,  6
-emit_branch_short 0xCE, I_CE__BEQ_S_p7, sbrs,  7
-emit_branch_short 0xCF, I_CF__BEQ_S_p8, sbrs,  8
-
-emit_branch_short 0xD0, I_D0__BNE_S_m9, sbrc, -9
-emit_branch_short 0xD1, I_D1__BNE_S_m8, sbrc, -8
-emit_branch_short 0xD2, I_D2__BNE_S_m7, sbrc, -7
-emit_branch_short 0xD3, I_D3__BNE_S_m6, sbrc, -6
-emit_branch_short 0xD4, I_D4__BNE_S_m5, sbrc, -5
-emit_branch_short 0xD5, I_D5__BNE_S_m4, sbrc, -4
-emit_branch_short 0xD6, I_D6__BNE_S_m3, sbrc, -3
-emit_branch_short 0xD7, I_D7__BNE_S_m2, sbrc, -2
-emit_branch_short 0xD8, I_D8__BNE_S_p1, sbrc,  1
-emit_branch_short 0xD9, I_D9__BNE_S_p2, sbrc,  2
-emit_branch_short 0xDA, I_DA__BNE_S_p3, sbrc,  3
-emit_branch_short 0xDB, I_DB__BNE_S_p4, sbrc,  4
-emit_branch_short 0xDC, I_DC__BNE_S_p5, sbrc,  5
-emit_branch_short 0xDD, I_DD__BNE_S_p6, sbrc,  6
-emit_branch_short 0xDE, I_DE__BNE_S_p7, sbrc,  7
-emit_branch_short 0xDF, I_DF__BNE_S_p8, sbrc,  8
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE0-0xE3: Revised extension pages
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xE0, I_E0__ext_misc
-
-    ; Account for the secondary opcode, then fetch it while starting the
-    ; following primary opcode.
-    adiw VM_PC, 1
-    delay_3
-    rjmp e0_extension_decode_func
-
-    handler_end 0xE0
-
-; E1 is the 32-bit aligned-register-pair ALU page. The uncommon pair
-; operations use compact shared X/Z handlers rather than operand-specialized
-; executable tables.
-    handler_begin 0xE1, I_E1__ext_pair
-    adiw VM_PC, 1
-    delay_2
-    jmp  e1_extension_decode_func
-    handler_end 0xE1
-
-; E2 is the accumulator/noncompact-source ALU page. Multiplication is
-; implemented here; the remaining defined operations retain the unimplemented
-; trap, while reserved encodings use the invalid-secondary trap.
-    handler_begin 0xE2, I_E2__ext_accumulator
-    adiw VM_PC, 1
-    delay_2
-    jmp  e2_extension_decode_func
-    handler_end 0xE2
-
-    handler_begin 0xE3, I_E3__ext_transfer_condition
-
-    ; Account for the secondary opcode, then fetch it while starting the
-    ; following primary opcode. MOV16 uses an executable specialized table;
-    ; MOV8Z, MOV8S, and CSET use compact generic handlers.
-    adiw VM_PC, 1
-    delay_3
-    rjmp e3_extension_decode_func
-
-    handler_end 0xE3
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE4: CMPI6 cN, simm6
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xE4, I_E4__CMPI6_cN_simm6
-
-    ; Account for the packed operand. The out-of-line body starts fetching the
-    ; following primary opcode at the normal SPI cadence.
-    adiw VM_PC, 1
-    delay_3
-    rjmp e4_cmpi6_func
-
-    handler_end 0xE4
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE5-0xE8: Direct control and address operations
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xE5, I_E5__JMP_rel8
-    rjmp e5_jmp_rel8_func
-    handler_end 0xE5
-
-    handler_begin 0xE6, I_E6__CALL_rel8
-    rjmp e6_call_rel8_func
-    handler_end 0xE6
-
-    handler_begin 0xE7, I_E7__ADJSP_simm8
-    rjmp e7_adjsp_func
-    handler_end 0xE7
-
-    handler_begin 0xE8, I_E8__LDPBI_imm8
-
-    ; The immediate transfer was started by the preceding dispatch. Match the
-    ; direct LDI8 cadence: read imm8 while starting the following opcode, then
-    ; install the new program-data bank without changing AVM CC.
-    delay_4
-    delay_3
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    adiw VM_PC, 1
-    out  VM_PB, r6
-    rjmp ldi8_dispatch_reverse_func
-
-    handler_end 0xE8
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE9: SYS service8
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xE9, I_E9__SYS_service8
-
-    ; Account for the service byte. The out-of-line body reads it and starts
-    ; fetching the following primary opcode.
-    adiw VM_PC, 1
-    delay_3
-    rjmp e9_sys_decode_func
-
-    handler_end 0xE9
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xEA-0xEC: Direct control and NOP
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xEA, I_EA__JMP16_addr16
-    rjmp ea_jmp16_func
-    handler_end 0xEA
-
-    handler_begin 0xEB, I_EB__CALL16_addr16
-    rjmp eb_call16_func
-    handler_end 0xEB
-
-    handler_begin 0xEC, I_EC__NOP
-    delay_3
-    rjmp dispatch_reverse_func
-    handler_end 0xEC
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xED-0xEF: Reserved
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-emit_invalid_primary 0xED, I_ED__RESERVED
-emit_invalid_primary 0xEE, I_EE__RESERVED
-emit_invalid_primary 0xEF, I_EF__RESERVED
-
-.macro emit_ldi8 opcode, label, dstl, dsth
-    handler_begin \opcode, \label
-
-    ; The immediate transfer was started by the preceding dispatch.
-    ;
-    ; Previous OUT-to-handler-entry latency is 9 cycles. These eight
-    ; cycles place this OUT exactly 17 cycles after the previous OUT:
-    ;
-    ;     delay_4 + delay_3 + CLI = 8
-    ;
-    ; OUT starts fetching the next opcode; IN reads the completed immediate.
-    delay_4
-    delay_3
-    cli
-    out  SPDR, ZERO
-    in   \dstl, SPDR
-    sei
-
-    ; Account for the immediate byte and zero-extend the value.
-    ; dispatch_reverse accounts for the opcode byte.
-    adiw VM_PC, 1
-    clr  \dsth
-
-    rjmp ldi8_dispatch_reverse_func
-
-    handler_end \opcode
-.endm
-
-emit_ldi8 0xF0, I_F0__LDI8_c0, VM_C0L, VM_C0H
-emit_ldi8 0xF1, I_F1__LDI8_c1, VM_C1L, VM_C1H
-emit_ldi8 0xF2, I_F2__LDI8_c2, VM_C2L, VM_C2H
-emit_ldi8 0xF3, I_F3__LDI8_c3, VM_C3L, VM_C3H
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF4: Compact ALU extension page
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xF4, I_F4__ext_compact_alu
-
-    ; Account for the secondary opcode, then transfer to the out-of-line F4
-    ; implementation. JMP is one cycle longer than RJMP, so delay_2 preserves
-    ; the original seven-cycle path to the decoder.
-    adiw VM_PC, 1
-    delay_2
-    jmp  f4_extension_decode_func
-
-    handler_end 0xF4
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF5-0xFC: General Conditional Branches, rel8
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Each condition has a dedicated primary opcode.  At handler entry SPDR is
-; transferring the signed displacement byte and VM_PC names the primary
-; opcode.  The prefix below:
-;
-;   * advances VM_PC to the displacement byte,
-;   * reads the displacement into r6,
-;   * starts fetching the speculative fallthrough opcode, and
-;   * performs a condition-specific test of saved AVM FLAGS.
-;
-; The not-taken path preserves the sequential SPI stream.  The taken path
-; discards it, computes nextPC + sign_extend(rel8), and seeks to the target.
-.macro emit_branch_rel8_bit opcode, label, skip, flag
-    handler_begin \opcode, \label
-
-    ; Previous OUT-to-handler-entry latency is nine cycles.  These eight
-    ; cycles place this OUT exactly 17 cycles after the preceding OUT.
-    adiw VM_PC, 1
-    delay_4
-    delay_1
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ; For branch-on-set use SBRS; for branch-on-clear use SBRC.  A satisfied
-    ; condition skips the not-taken jump.
-    \skip VM_FLAGS, \flag
-    rjmp branch_rel8_not_taken_func
-    rjmp branch_rel8_taken_func
-
-    handler_end \opcode
-.endm
-
-.macro emit_branch_rel8_mask opcode, label, take_branch
-    handler_begin \opcode, \label
-
-    adiw VM_PC, 1
-    delay_4
-    delay_1
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ; ULE and UGT depend on C|Z.  r26 is interpreter scratch and supports
-    ; ANDI directly.
-    mov  r26, VM_FLAGS
-    andi r26, (_BV(SREG_C) | _BV(SREG_Z))
-    \take_branch 1f
-    rjmp branch_rel8_not_taken_func
-1:
-    rjmp branch_rel8_taken_func
-
-    handler_end \opcode
-.endm
-
-emit_branch_rel8_bit  0xF5, I_F5__BREQ_rel8,  sbrs, SREG_Z
-emit_branch_rel8_bit  0xF6, I_F6__BRNE_rel8,  sbrc, SREG_Z
-emit_branch_rel8_bit  0xF7, I_F7__BRULT_rel8, sbrs, SREG_C
-emit_branch_rel8_bit  0xF8, I_F8__BRUGE_rel8, sbrc, SREG_C
-emit_branch_rel8_bit  0xF9, I_F9__BRSLT_rel8, sbrs, SREG_S
-emit_branch_rel8_bit  0xFA, I_FA__BRSGE_rel8, sbrc, SREG_S
-emit_branch_rel8_mask 0xFB, I_FB__BRULE_rel8, brne
-emit_branch_rel8_mask 0xFC, I_FC__BRUGT_rel8, breq
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFD: Memory and Program-Space Extension
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xFD, I_FD__ext_memory_program
-
-    ; The secondary-opcode transfer was started by the preceding dispatch.
-    ; Account for the secondary byte, then fetch it while starting the first
-    ; secondary operand (or the following primary opcode for a two-byte form).
-    adiw VM_PC, 1
-    delay_3
-    rjmp fd_extension_decode_func
-
-    handler_end 0xFD
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFE: Direct Far Control (JMPF/CALLF)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xFE, I_FE__JMPF_CALLF
-    rjmp fe_far_control_func
-    handler_end 0xFE
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFF: RET
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-    handler_begin 0xFF, I_FF__RET
-    rjmp ff_ret_func
-    handler_end 0xFF
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Direct control-flow and stack-frame support
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Push the logical return address currently held in CB:PC.
-;
-; The final stack layout is:
-;   [SP+0] = return bits 7:0
-;   [SP+1] = return bits 15:8
-;   [SP+2] = return bits 23:16
-;
-; Clobbers r26 and native SREG only. AVM CC is held separately in VM_FLAGS.
-push_return_address_func:
-    in   r26, VM_CB
-    st   -Y, r26
-    st   -Y, VM_PCH
-    st   -Y, VM_PCL
-    ret
-
-; Restart the external-flash stream at the already-installed CB:PC and enter
-; the selected primary handler. PC already names the target opcode, so this
-; path deliberately does not increment it.
-seek_and_dispatch_current_pc_func:
-    rcall fx_seek_to_pc
-    in   r6, SPDR
-    out  SPDR, ZERO
-    ; Normal dispatch takes nine cycles from the OUT that starts the operand
-    ; transfer through entry to the selected handler:
-    ;
-    ;   OUT + ADIW(2) + MUL(2) + MOVW + SUBI + IJMP(2) = 9
-    ;
-    ; This restart path has no ADIW, so use a two-cycle delay. A one-cycle
-    ; delay enters the resumed handler one cycle early and can make its first
-    ; pipelined SPI access collide with the still-active operand transfer.
-    delay_2
-    mul  r6, C_DISPATCH_STRIDE_WORDS
-    movw r30, r0
-    subi r31, hi8(-(pm(DISPATCH_ORG)))
-    ijmp
-
-; E5 rel8: unconditional same-bank relative jump.
-e5_jmp_rel8_func:
-    ; PC advances from the primary opcode to the displacement byte while the
-    ; transfer that was started by the preceding dispatch completes.
-    adiw VM_PC, 1
-    delay_4
-    delay_2
-    in   r6, SPDR
-
-    ; The displacement is relative to nextPC.
-    adiw VM_PC, 1
-    add  VM_PCL, r6
-    adc  VM_PCH, ZERO
-    sbrc r6, 7
-    dec  VM_PCH
-    rjmp seek_and_dispatch_current_pc_func
-
-; E6 rel8: push CB:nextPC and perform a same-bank relative call.
-e6_call_rel8_func:
-    adiw VM_PC, 1
-    delay_4
-    delay_2
-    in   r6, SPDR
-
-    ; Install nextPC long enough to push the complete return address.
-    adiw VM_PC, 1
-    rcall push_return_address_func
-
-    add  VM_PCL, r6
-    adc  VM_PCH, ZERO
-    sbrc r6, 7
-    dec  VM_PCH
-    rjmp seek_and_dispatch_current_pc_func
-
-; E7 simm8: SP = SP + sign_extend(simm8).
-e7_adjsp_func:
-    ; Start fetching the following primary opcode while reading the immediate.
-    adiw VM_PC, 1
-    delay_4
-    delay_1
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    add  VM_SPL, r6
-    adc  VM_SPH, ZERO
-    sbrc r6, 7
-    dec  VM_SPH
-
-    ; PC still names the immediate byte. dispatch_reverse advances it to the
-    ; already-prefetched following opcode. The native arithmetic flags are not
-    ; copied to VM_FLAGS, so architectural CC is preserved.
-    rcall fx_seek_delay_7
-    rjmp dispatch_reverse_func
-
-; Fetch a little-endian 16-bit direct target into r5:r4.
-;
-; At entry the low target byte is already in flight. No fallthrough byte is
-; fetched because both users transfer control unconditionally.
-fetch_direct_target16_func:
-    delay_4
-    delay_4
-    out  SPDR, ZERO
-    in   r4, SPDR
-    rcall fx_seek_delay_17
-    in   r5, SPDR
-    ret
-
-; EA addr16: absolute jump within the current bank.
-ea_jmp16_func:
-    rcall fetch_direct_target16_func
-    movw VM_PC, r4
-    rjmp seek_and_dispatch_current_pc_func
-
-; EB addr16: push CB:nextPC and call an absolute address in the current bank.
-eb_call16_func:
-    rcall fetch_direct_target16_func
-
-    ; The instruction is three bytes: opcode plus two address bytes.
-    adiw VM_PC, 3
-    rcall push_return_address_func
-
-    movw VM_PC, r4
-    rjmp seek_and_dispatch_current_pc_func
-
-; FE T0 T1 T2: direct far jump/call.
-;
-; T0 bit 0 selects CALLF when set. The target is T2:T1:(T0 & 0xFE).
-; All far targets are therefore even. No speculative fallthrough transfer is
-; issued after T2 because both forms replace the execution address.
-fe_far_control_func:
-    delay_4
-    delay_4
-    out  SPDR, ZERO
-    in   r4, SPDR                 ; T0
-    rcall fx_seek_delay_17
-    out  SPDR, ZERO
-    in   r5, SPDR                 ; T1
-    rcall fx_seek_delay_17
-    in   r6, SPDR                 ; T2 / target bank
-
-    sbrc r4, 0
-    rjmp fe_callf_func
-
-fe_jmpf_func:
-    lsr  r4
-    lsl  r4
-    movw VM_PC, r4
-    out  VM_CB, r6
-    rjmp seek_and_dispatch_current_pc_func
-
-fe_callf_func:
-    ; Preserve the encoded target while CB:nextPC is pushed.
-    lsr  r4
-    lsl  r4
-    adiw VM_PC, 4
-    rcall push_return_address_func
-    movw VM_PC, r4
-    out  VM_CB, r6
-    rjmp seek_and_dispatch_current_pc_func
-
-; FF: discard the speculative sequential byte, pop CB:PC, and restart fetch.
-ff_ret_func:
-    ld   VM_PCL, Y+
-    ld   VM_PCH, Y+
-    ld   r6, Y+
-    out  VM_CB, r6
-    ; RET reaches the restart path before the speculative byte issued while
-    ; dispatching 0xFF has completed. Drain that transfer before toggling the
-    ; flash chip select; otherwise an operand-bearing return target can read
-    ; stale SPDR data. Other taken-control paths have already spent at least
-    ; this long decoding their operands.
-    delay_4
-    rjmp seek_and_dispatch_current_pc_func
-
-; Keep common trap targets close to all secondary dispatch tables. Primary
-; handlers use absolute JMP because the earliest primary slots are outside
-; RJMP range of the end of the fixed dispatch table.
+; Secondary decoders, condition gates, executable secondary tables, and all
+; instruction bodies are intentionally absent. They should be added after the
+; primary table in the single-section order defined by the implementation
+; guide, without interior power-of-two alignment.
+
+; Exact cadence tails retained as implementation scaffolding. Future handlers
+; may RJMP to these labels once their native work and required padding are
+; known. Additional copies will be placed according to the final layout plan.
+cluster_tail_17_delay_1:
+    nop
+cluster_tail_17:
+    dispatch_reverse
+
+cluster_tail_18_delay_2:
+    rjmp cluster_tail_18
+cluster_tail_18_delay_1:
+    nop
+cluster_tail_18:
+    dispatch
+
+; Defined encodings stop here until their handlers are implemented.
 unimplemented_instruction_func:
     rjmp unimplemented_instruction_func
 
+; Reserved primary encodings stop here.
 invalid_primary_instruction_func:
     rjmp invalid_primary_instruction_func
 
+; Reserved secondary encodings and unknown SYS services will use these shared
+; traps once their decoders are introduced.
 invalid_secondary_instruction_func:
     rjmp invalid_secondary_instruction_func
 
 invalid_syscall_func:
     rjmp invalid_syscall_func
 
-ldi8_dispatch_reverse_func:
-    delay_4
-branch_short_dispatch_reverse_func:
-    delay_2
-dispatch_reverse_func:
-    dispatch_reverse
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; General rel8 branch continuations
+; External-flash bytecode stream positioning
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-branch_rel8_not_taken_func:
-    ; The shortest condition path reaches here five cycles after the OUT that
-    ; started fetching the fallthrough opcode. dispatch_reverse executes three
-    ; cycles before its OUT, so pad nine cycles to maintain the 17-cycle
-    ; OUT-to-OUT SPI cadence.
-    rcall fx_seek_delay_7
-    rjmp dispatch_reverse_func
-
-branch_rel8_taken_func:
-    ; The primary handler advanced PC to the displacement byte.  Advance once
-    ; more to nextPC, then add the signed displacement in r6.
-    adiw VM_PC, 1
-    add  VM_PCL, r6
-    adc  VM_PCH, ZERO
-    sbrc r6, 7
-    dec  VM_PCH
-
-    ; Discard the speculative fallthrough byte and restart the stream at the
-    ; branch target. PC already names the target opcode, so the common restart
-    ; path dispatches it without incrementing PC.
-    rjmp seek_and_dispatch_current_pc_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Shared secondary-table support
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-.macro secondary_entries count, target
-    .rept \count
-        rjmp \target
-    .endr
-.endm
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE0 miscellaneous extension page
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-e0_extension_decode_func:
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ldi  r30, lo8(pm(e0_secondary_table))
-    ldi  r31, hi8(pm(e0_secondary_table))
-    add  r30, r6
-    adc  r31, ZERO
-    ijmp
-
-; E3 reads the packed secondary byte while starting the following primary
-; opcode. MOV16 is the hot form: its 00dddsss encoding indexes a two-word
-; executable slot containing MOVW plus a jump to the local dispatch copy.
-; MOV8Z, MOV8S, and CSET share compact generic handlers.
-e3_extension_decode_func:
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ; Select the instruction family from bits 7:6. The MOV16 not-taken path is
-    ; deliberately arranged to preserve a 17-cycle OUT-to-OUT cadence.
-    mov  r26, r6
-    andi r26, 0xC0
-    brne 1f
-
-    ; 00dddsss: two AVR words per executable MOV16 table slot.
-    lsl  r6
-    ldi  r30, lo8(pm(e3_mov16_table))
-    ldi  r31, hi8(pm(e3_mov16_table))
-    add  r30, r6
-    adc  r31, ZERO
-    ; We have one cycle to spare before dispatch timing.
-    nop
-    ijmp
-
-1:
-    cpi  r26, 0xC0
-    breq 2f
-    jmp  e3_mov8_family
-2:
-    jmp  e3_cset_family
-
-; Reserved E0 cleanup:
-;   24-27  former compact LSL16; compact shifts use F4 ADD.NF cN,cN
-;   48-4F  former ZEXT8; assembler aliases encode as E3 MOV8Z rN,bN
-;   50-57  former SEXT8; assembler aliases encode as E3 MOV8S rN,bN
-;   8C-8F  former compact LDI8; compact loads use primary F0-F3
-;   EC-EF  former compact TST16; compact tests use primary A0/A5/AA/AF
-;   F4-F7  former compact TST8; compact tests use primary B0/B5/BA/BF
-;
-e0_secondary_table:
-    secondary_entries 8, e0_not16_family       ; 00-07
-    secondary_entries 8, e0_neg16_family       ; 08-0F
-    secondary_entries 8, e0_inc16_family       ; 10-17
-    secondary_entries 8, e0_dec16_family       ; 18-1F
-    secondary_entries 4, e0_lsl16_family       ; 20-23 LSL16 r0-r3
-    secondary_entries 4, invalid_secondary_instruction_func ; 24-27 reserved
-    secondary_entries 8, e0_lsr16_family       ; 28-2F
-    secondary_entries 8, e0_asr16_family       ; 30-37 ASR16
-    secondary_entries 8, e0_lsr8_family        ; 38-3F LSR8
-    secondary_entries 8, e0_asr8_family        ; 40-47 ASR8
-    secondary_entries 16, invalid_secondary_instruction_func ; 48-57 reserved
-    secondary_entries 8, e0_swap8_family       ; 58-5F
-    secondary_entries 8, e0_getsp_family       ; 60-67
-    secondary_entries 8, e0_setsp_family       ; 68-6F
-    secondary_entries 8, e0_mtpb_family        ; 70-77
-    secondary_entries 8, e0_mfpb_family        ; 78-7F
-    secondary_entries 8, e0_imm16_family       ; 80-87 LDI16
-    secondary_entries 4, e0_imm8_family        ; 88-8B LDI8 r0-r3
-    secondary_entries 4, invalid_secondary_instruction_func ; 8C-8F reserved
-    secondary_entries 48, e0_imm16_family      ; 90-BF ALU/CMPI16
-    secondary_entries 8, e0_imm8_family        ; C0-C7 CMPI8
-    secondary_entries 8, unimplemented_instruction_func ; C8-CF JMPR r0-r7
-    secondary_entries 8, unimplemented_instruction_func ; D0-D7 CALLR r0-r7
-    rjmp e0_jmpp_q0                            ; D8 JMPP q0
-    rjmp e0_jmpp_q1                            ; D9 JMPP q1
-    rjmp e0_jmpp_q2                            ; DA JMPP q2
-    rjmp e0_jmpp_q3                            ; DB JMPP q3
-    secondary_entries 4, invalid_secondary_instruction_func ; DC-DF reserved
-    rjmp e0_callp_q0                           ; E0 CALLP q0
-    rjmp e0_callp_q1                           ; E1 CALLP q1
-    rjmp e0_callp_q2                           ; E2 CALLP q2
-    rjmp e0_callp_q3                           ; E3 CALLP q3
-    secondary_entries 4, invalid_secondary_instruction_func ; E4-E7 reserved
-    secondary_entries 4, e0_tst16_family       ; E8-EB TST16 r0-r3
-    secondary_entries 4, invalid_secondary_instruction_func ; EC-EF reserved
-    secondary_entries 4, e0_tst8_family        ; F0-F3 TST8 r0-r3
-    secondary_entries 4, invalid_secondary_instruction_func ; F4-F7 reserved
-    secondary_entries 8, invalid_secondary_instruction_func ; F8-FF reserved
-e0_secondary_table_end:
-
-.if ((e0_secondary_table_end - e0_secondary_table) != (256 * 2))
-    .error "E0 secondary dispatch table must contain exactly 256 words"
-.endif
-
-.macro e0_select_register
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-.endm
-
-e0_not16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    com  r4
-    com  r5
-    st   X, r5
-    st   -X, r4
-    ; Revised NOT16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_neg16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    mov  r0, ZERO
-    mov  r1, ZERO
-    sub  r0, r4
-    sbc  r1, r5
-    st   X, r1
-    st   -X, r0
-    ; Revised NEG16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_inc16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    inc  r4
-    brne 1f
-    inc  r5
-1:
-    st   X, r5
-    st   -X, r4
-    ; Revised INC16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_dec16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    tst  r4
-    brne 1f
-    dec  r5
-1:
-    dec  r4
-    st   X, r5
-    st   -X, r4
-    ; Revised DEC16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_lsl16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    lsl  r4
-    rol  r5
-    st   X, r5
-    st   -X, r4
-    ; Revised LSL16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_lsr16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    lsr  r5
-    ror  r4
-    st   X, r5
-    st   -X, r4
-    ; Revised LSR16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_asr16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    asr  r5
-    ror  r4
-    st   X, r5
-    st   -X, r4
-    ; Revised ASR16 preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_lsr8_family:
-    e0_select_register
-    ld   r4, X
-    lsr  r4
-    st   X, r4
-    ; LSR8 changes only the low byte and preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_asr8_family:
-    e0_select_register
-    ld   r4, X
-    asr  r4
-    st   X, r4
-    ; ASR8 changes only the low byte and preserves all AVM CC.
-    rjmp dispatch_func
-
-e0_swap8_family:
-    e0_select_register
-    ld   r4, X
-    swap r4
-    st   X, r4
-    rjmp dispatch_func
-
-e0_getsp_family:
-    e0_select_register
-    st   X+, VM_SPL
-    st   X, VM_SPH
-    rjmp dispatch_func
-
-e0_setsp_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    movw VM_SP, r4
-    rjmp dispatch_func
-
-e0_mtpb_family:
-    e0_select_register
-    ld   r4, X
-    out  VM_PB, r4
-    rjmp dispatch_func
-
-e0_mfpb_family:
-    e0_select_register
-    in   r4, VM_PB
-    st   X+, r4
-    st   X, ZERO
-    rjmp dispatch_func
-
-; E0 D8-DB: JMPP qN
-; E0 E0-E3: CALLP qN
-;
-; Register-form code pointers are canonical 24-bit values:
-;   low q-register       = target PC bits 15:0
-;   low byte of high q-register = target CB bits 23:16
-;   high byte of high q-register = zero in canonical form
-;
-; Optimized execution does not validate the unused top byte. Both operations
-; preserve PB and AVM CC. At entry, PC names the E0 secondary byte and the
-; decoder has started a speculative transfer of the following primary opcode.
-;
-; JMPP reaches fx_seek_to_pc's flash deselect at the 17-cycle boundary from the
-; decoder OUT, so no additional transfer-drain delay is required.
-
-.macro emit_e0_jmpp label, target_pc, target_cb
-\label:
-    movw VM_PC, \target_pc
-    out  VM_CB, \target_cb
-    rjmp seek_and_dispatch_current_pc_func
-.endm
-
-.macro emit_e0_callp label, target_pc, target_cb
-\label:
-    ; Return address is the byte following the two-byte E0 instruction.
-    adiw VM_PC, 1
-    rcall push_return_address_func
-    movw VM_PC, \target_pc
-    out  VM_CB, \target_cb
-    rjmp seek_and_dispatch_current_pc_func
-.endm
-
-; q0 = r0:r1, q1 = r2:r3, q2 = r4:r5, q3 = r6:r7.
-emit_e0_jmpp e0_jmpp_q0, VM_R0, VM_R1L
-emit_e0_jmpp e0_jmpp_q1, VM_R2, VM_R3L
-emit_e0_jmpp e0_jmpp_q2, VM_R4, VM_R5L
-emit_e0_jmpp e0_jmpp_q3, VM_R6, VM_R7L
-
-emit_e0_callp e0_callp_q0, VM_R0, VM_R1L
-emit_e0_callp e0_callp_q1, VM_R2, VM_R3L
-emit_e0_callp e0_callp_q2, VM_R4, VM_R5L
-emit_e0_callp e0_callp_q3, VM_R6, VM_R7L
-
-; Immediate-family entry invariant:
-;   * PC names the E0 secondary opcode.
-;   * The decoder's OUT has started the first immediate byte.
-;   * r6 still contains the secondary opcode until the immediate is read.
-;   * X may safely retain the selected AVM register-file address.
-;
-; The first fetch advances PC to immediate byte 0, reads it, and starts byte 1
-; (or the following primary opcode for an imm8 instruction). Register selection
-; consumes five cycles; ADIW+CLI supply the remaining three pre-OUT cycles for
-; the normal 17-cycle SPI OUT-to-OUT cadence.
-.macro e0_fetch_first_immediate dst
-    adiw VM_PC, 1
-    cli
-    out  SPDR, ZERO
-    in   \dst, SPDR
-    sei
-.endm
-
-; After the first immediate byte has been read, advance PC to byte 1, read it,
-; and start the following primary opcode. This matches the cadence used by the
-; FD absolute-address handlers.
-.macro e0_fetch_second_immediate dst
-    adiw VM_PC, 1
-    delay_4
-    delay_4
-    delay_3
-    cli
-    out  SPDR, ZERO
-    in   \dst, SPDR
-    sei
-.endm
-
-; The imm8 paths have only enough work for a 13-cycle post-OUT interval.
-; Three cycles of padding complete the 16-cycle SPI transfer before dispatch
-; reads the following primary opcode. The generic imm16 decode is already long
-; enough and dispatches directly.
-e0_imm8_finish_func:
-    delay_3
-    rjmp dispatch_func
-
-; E0 80-87 and 90-BF: all imm16 forms share fetch and register decode. The
-; operation index is (secondary & 0x78) >> 3:
-;   0 LDI16, 1 unused, 2 ADDI16, 3 SUBI16,
-;   4 ANDI16, 5 ORI16, 6 XORI16, 7 CMPI16.
-e0_imm16_family:
-    e0_select_register
-    e0_fetch_first_immediate r4
-    e0_fetch_second_immediate r5
-
-    mov  r30, r6
-    andi r30, 0x78
-    lsr  r30
-    lsr  r30
-    lsr  r30
-    clr  r31
-    subi r30, lo8(-(pm(e0_imm16_operation_table)))
-    sbci r31, hi8(-(pm(e0_imm16_operation_table)))
-    ijmp
-
-e0_imm16_operation_table:
-    rjmp e0_ldi16_operation
-    rjmp invalid_secondary_instruction_func
-    rjmp e0_addi16_operation
-    rjmp e0_subi16_operation
-    rjmp e0_andi16_operation
-    rjmp e0_ori16_operation
-    rjmp e0_xori16_operation
-    rjmp e0_cmpi16_operation
-
-e0_ldi16_operation:
-    st   X+, r4
-    st   X, r5
-    rjmp dispatch_func
-
-e0_addi16_operation:
-    ld   r0, X+
-    ld   r1, X
-    add  r0, r4
-    adc  r1, r5
-    st   X, r1
-    st   -X, r0
-    rjmp dispatch_func
-
-e0_subi16_operation:
-    ld   r0, X+
-    ld   r1, X
-    sub  r0, r4
-    sbc  r1, r5
-    st   X, r1
-    st   -X, r0
-    rjmp dispatch_func
-
-e0_andi16_operation:
-    ld   r0, X+
-    ld   r1, X
-    and  r0, r4
-    and  r1, r5
-    st   X, r1
-    st   -X, r0
-    rjmp dispatch_func
-
-e0_ori16_operation:
-    ld   r0, X+
-    ld   r1, X
-    or   r0, r4
-    or   r1, r5
-    st   X, r1
-    st   -X, r0
-    rjmp dispatch_func
-
-e0_xori16_operation:
-    ld   r0, X+
-    ld   r1, X
-    eor  r0, r4
-    eor  r1, r5
-    st   X, r1
-    st   -X, r0
-    rjmp dispatch_func
-
-e0_cmpi16_operation:
-    ld   r0, X+
-    ld   r1, X
-    cp   r0, r4
-    cpc  r1, r5
-    in   VM_FLAGS, SREG
-    rjmp dispatch_func
-
-; E0 88-8B / C0-C7: bit 6 distinguishes zero-extending LDI8 from CMPI8.
-e0_imm8_family:
-    e0_select_register
-    e0_fetch_first_immediate r4
-    sbrs r6, 6
-    rjmp e0_ldi8_operation
-
-    ld   r0, X
-    cp   r0, r4
-    in   VM_FLAGS, SREG
-    nop
-    rjmp e0_imm8_finish_func
-
-e0_ldi8_operation:
-    st   X+, r4
-    st   X, ZERO
-    rjmp e0_imm8_finish_func
-
-; E0 E8-EB: TST16 r0-r3
-e0_tst16_family:
-    e0_select_register
-    ld   r4, X+
-    ld   r5, X
-    cp   r4, ZERO
-    cpc  r5, ZERO
-    in   VM_FLAGS, SREG
-    rjmp dispatch_func
-
-; E0 F0-F3: TST8 r0-r3
-e0_tst8_family:
-    e0_select_register
-    ld   r4, X
-    cp   r4, ZERO
-    in   VM_FLAGS, SREG
-    rjmp dispatch_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE4 CMPI6 direct-primary body
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-e4_cmpi6_func:
-    ; Start fetching the following primary opcode and read the packed operand.
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ; Operand encoding:
-    ;   bits 7:2 = signed six-bit immediate
-    ;   bits 1:0 = compact register
-    mov  r26, r6
-    andi r26, 0x03
-    lsl  r26
-    subi r26, -16
-    clr  r27
-
-    asr  r6
-    asr  r6
-
-    ld   r4, X+
-    ld   r5, X
-
-    mov  r0, r6
-    lsl  r0
-    sbc  r0, r0
-
-    cp   r4, r6
-    cpc  r5, r0
-    in   VM_FLAGS, SREG
-    rjmp dispatch_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; SYS service dispatch
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-e9_sys_decode_func:
-    ; Start fetching the following primary opcode and read the service ID.
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-    rjmp sys_dispatch_func
-
-sys_dispatch_func:
-    ldi  r30, lo8(pm(sys_dispatch_table))
-    ldi  r31, hi8(pm(sys_dispatch_table))
-    add  r30, r6
-    adc  r31, ZERO
-    ijmp
-
-.macro sys_entries count, target
-    .rept \count
-        rjmp \target
-    .endr
-.endm
-
-.if (SYS_DEBUG_PUTC != 0x00)
-    .error "SYS_DEBUG_PUTC must occupy dispatch-table entry 0"
-.endif
-.if (SYS_DEBUG_BREAK != 0x01)
-    .error "SYS_DEBUG_BREAK must occupy dispatch-table entry 1"
-.endif
-.if (SYS_MILLIS != 0x02)
-    .error "SYS_MILLIS must occupy dispatch-table entry 2"
-.endif
-.if (SYS_MILLIS32 != 0x03)
-    .error "SYS_MILLIS32 must occupy dispatch-table entry 3"
-.endif
-
-sys_dispatch_table:
-    sys_entries 1,   sys_debug_putc_func
-    sys_entries 1,   sys_debug_break_func
-    sys_entries 1,   sys_millis_func
-    sys_entries 1,   sys_millis32_func
-    sys_entries 252, invalid_syscall_func
-sys_dispatch_table_end:
-
-.if ((sys_dispatch_table_end - sys_dispatch_table) != (256 * 2))
-    .error "SYS dispatch table must contain exactly 256 words"
-.endif
-
-sys_debug_putc_func:
-    ; SYS DEBUG_PUTC writes low8(A), where A aliases c0/r4.
-    sts  UEDATX, VM_C0L
-    delay_2
-    rjmp dispatch_func
-
-sys_debug_break_func:
-    break
-    delay_3
-    rjmp dispatch_func
-
-; Return a coherent low 16-bit snapshot of the millisecond counter in c0.
-; Timer0 cannot update either byte while the snapshot is being loaded.
-sys_millis_func:
-    cli
-    lds  VM_C0L, data_millis+0
-    lds  VM_C0H, data_millis+1
-    sei
-    rjmp dispatch_func
-
-; Return a coherent 32-bit snapshot of the millisecond counter, with the low
-; half in c0 and the high half in c1.
-sys_millis32_func:
-    cli
-    lds  VM_C0L, data_millis+0
-    lds  VM_C0H, data_millis+1
-    lds  VM_C1L, data_millis+2
-    lds  VM_C1H, data_millis+3
-    sei
-    rjmp dispatch_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFD secondary dispatch
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-fd_extension_decode_func:
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ldi  r30, lo8(pm(fd_secondary_table))
-    ldi  r31, hi8(pm(fd_secondary_table))
-    add  r30, r6
-    adc  r31, ZERO
-    ijmp
-
-fd_secondary_table:
-    secondary_entries 1, fd_ld8_indirect_family
-    secondary_entries 1, fd_st8_indirect_family
-    secondary_entries 1, fd_ld16_indirect_family
-    secondary_entries 1, fd_st16_indirect_family
-    secondary_entries 1, fd_ld8_post_family
-    secondary_entries 1, fd_st8_post_family
-    secondary_entries 1, fd_ld16_post_family
-    secondary_entries 1, fd_st16_post_family
-    secondary_entries 1, fd_lea_displaced_family
-    secondary_entries 1, fd_ld8_displaced_family
-    secondary_entries 1, fd_st8_displaced_family
-    secondary_entries 1, fd_ld16_displaced_family
-    secondary_entries 1, fd_st16_displaced_family
-    secondary_entries 3, invalid_secondary_instruction_func
-    secondary_entries 8, fd_ldsp8_family
-    secondary_entries 8, fd_stsp8_family
-    secondary_entries 8, fd_ldsp16_family
-    secondary_entries 8, fd_stsp16_family
-    secondary_entries 8, fd_ldm8_family
-    secondary_entries 8, fd_stm8_family
-    secondary_entries 8, fd_ldm16_family
-    secondary_entries 8, fd_stm16_family
-    secondary_entries 48, invalid_secondary_instruction_func
-    secondary_entries 1, fd_ldp8_family
-    secondary_entries 1, fd_ldp16_family
-    secondary_entries 1, fd_ldp8_displaced_family
-    secondary_entries 1, fd_ldp16_displaced_family
-    secondary_entries 124, invalid_secondary_instruction_func
-fd_secondary_table_end:
-
-.if ((fd_secondary_table_end - fd_secondary_table) != (256 * 2))
-    .error "FD secondary dispatch table must contain exactly 256 words"
-.endif
-
-;*******************************************************************************
-; FD data-space handlers
-;
-; The decoder has read the FD secondary opcode into r6 and started the first
-; operand transfer. PC names the secondary opcode.
-;
-; Revised RRSPEC nibbles are pre-scaled register offsets:
-;   nibble = 2 * architectural register number
-;   native low-byte address = 8 + nibble
-;
-; For two-register forms operand 0 is in the high nibble and operand 1 is in
-; the low nibble.
-;*******************************************************************************
-
-; Decode a pre-scaled RRSPEC field to the low-byte native register-file address.
-.macro fd_decode_low_x spec
-    mov  r26, \spec
-    andi r26, 0x0E
-    subi r26, -8
-    clr  r27
-.endm
-
-.macro fd_decode_high_x spec
-    mov  r26, \spec
-    swap r26
-    andi r26, 0x0E
-    subi r26, -8
-    clr  r27
-.endm
-
-.macro fd_decode_low_z spec
-    mov  r30, \spec
-    andi r30, 0x0E
-    subi r30, -8
-    clr  r31
-.endm
-
-.macro fd_decode_high_z spec
-    mov  r30, \spec
-    swap r30
-    andi r30, 0x0E
-    subi r30, -8
-    clr  r31
-.endm
-
-; For secondary-opcode ranges whose low three bits directly select r0-r7.
-.macro fd_select_secondary_reg_z
-    mov  r30, r6
-    andi r30, 0x07
-    lsl  r30
-    subi r30, -8
-    clr  r31
-.endm
-
-; Read the first operand byte into r6 and start the following byte. This macro
-; is used immediately on entry to an FD family whose first operand is RRSPEC.
-; The eight pre-OUT cycles preserve the normal 17-cycle SPI cadence.
-.macro fd_fetch_rrspec
-    adiw VM_PC, 1
-    delay_4
-    delay_1
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-.endm
-
-; Stack-relative and absolute-memory families spend five cycles selecting rN
-; before this macro. Together with ADIW+CLI, the next OUT occurs 17 cycles
-; after the decoder's OUT.
-.macro fd_fetch_first_selected_operand dst
-    adiw VM_PC, 1
-    cli
-    out  SPDR, ZERO
-    in   \dst, SPDR
-    sei
-.endm
-
-; The first absolute-address byte was just read and the high byte is in flight.
-; Start fetching the following primary opcode while reading that high byte.
-.macro fd_fetch_absolute_high dst
-    adiw VM_PC, 1
-    delay_4
-    delay_4
-    delay_3
-    cli
-    out  SPDR, ZERO
-    in   \dst, SPDR
-    sei
-.endm
-
-; The displaced handlers have already decoded and captured both RRSPEC
-; operands while the displacement byte was transferring.
-.macro fd_fetch_displacement dst
-    adiw VM_PC, 1
-    cli
-    out  SPDR, ZERO
-    in   \dst, SPDR
-    sei
-.endm
-
-; All FD handlers reach here after starting the following primary opcode.
-; Seven conservative cycles guarantee that even the shortest handler does not
-; read that opcode before its SPI transfer completes.
-fd_finish_func:
-    rcall fx_seek_delay_7
-    rjmp dispatch_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FD 00-03: generic register-indirect loads and stores
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; FD 00 RRSPEC: LD8 rD,[rA]
-fd_ld8_indirect_family:
-    fd_fetch_rrspec
-
-    ; Capture the original address before the destination can be overwritten.
-    fd_decode_low_x r6
-    ld   r4, X+
-    ld   r5, X
-
-    movw r30, r4
-    ld   r4, Z
-
-    fd_decode_high_x r6
-    st   X+, r4
-    st   X, ZERO
-    rjmp fd_finish_func
-
-; FD 01 RRSPEC: ST8 [rA],rS
-fd_st8_indirect_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6
-    ld   r4, X+
-    ld   r5, X
-
-    ; Capture the source before touching the addressed data byte.
-    fd_decode_low_x r6
-    ld   r0, X
-
-    movw r30, r4
-    st   Z, r0
-    rjmp fd_finish_func
-
-; FD 02 RRSPEC: LD16 rD,[rA]
-fd_ld16_indirect_family:
-    fd_fetch_rrspec
-
-    fd_decode_low_x r6
-    ld   r4, X+
-    ld   r5, X
-
-    movw r30, r4
-    ld   r0, Z+
-    ld   r1, Z
-
-    fd_decode_high_x r6
-    st   X+, r0
-    st   X, r1
-    rjmp fd_finish_func
-
-; FD 03 RRSPEC: ST16 [rA],rS
-fd_st16_indirect_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6
-    ld   r4, X+
-    ld   r5, X
-
-    fd_decode_low_x r6
-    ld   r0, X+
-    ld   r1, X
-
-    movw r30, r4
-    st   Z+, r0
-    st   Z, r1
-    rjmp fd_finish_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FD 04-07: generic postincrement loads and stores
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; FD 04 RRSPEC: LD8 rD,[rA+]
-; rD == rA is invalid by the ISA operand restriction.
-fd_ld8_post_family:
-    fd_fetch_rrspec
-
-    ; Z remains positioned at the high byte of rA so the updated address can be
-    ; written back after the memory operation.
-    fd_decode_low_z r6
-    ld   r4, Z+
-    ld   r5, Z
-
-    movw r26, r4
-    ld   r0, X+
-
-    st   Z, r27
-    st   -Z, r26
-
-    fd_decode_high_z r6
-    st   Z+, r0
-    st   Z, ZERO
-    rjmp fd_finish_func
-
-; FD 05 RRSPEC: ST8 [rA+],rS
-fd_st8_post_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_z r6
-    ld   r4, Z+
-    ld   r5, Z
-
-    ; Capture rS before updating rA, including the rS == rA case.
-    fd_decode_low_x r6
-    ld   r0, X
-
-    movw r26, r4
-    st   X+, r0
-
-    st   Z, r27
-    st   -Z, r26
-    rjmp fd_finish_func
-
-; FD 06 RRSPEC: LD16 rD,[rA+]
-; rD == rA is invalid by the ISA operand restriction.
-fd_ld16_post_family:
-    fd_fetch_rrspec
-
-    fd_decode_low_z r6
-    ld   r4, Z+
-    ld   r5, Z
-
-    movw r26, r4
-    ld   r0, X+
-    ld   r1, X+
-
-    st   Z, r27
-    st   -Z, r26
-
-    fd_decode_high_z r6
-    st   Z+, r0
-    st   Z, r1
-    rjmp fd_finish_func
-
-; FD 07 RRSPEC: ST16 [rA+],rS
-fd_st16_post_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_z r6
-    ld   r4, Z+
-    ld   r5, Z
-
-    fd_decode_low_x r6
-    ld   r0, X+
-    ld   r1, X
-
-    movw r26, r4
-    st   X+, r0
-    st   X+, r1
-
-    st   Z, r27
-    st   -Z, r26
-    rjmp fd_finish_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FD 08-0C: LEA and signed-displaced loads and stores
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; FD 08 RRSPEC disp8: LEA rD,[rA+simm8]
-fd_lea_displaced_family:
-    fd_fetch_rrspec
-
-    fd_decode_low_x r6
-    ld   r4, X+
-    ld   r5, X
-    fd_decode_high_z r6
-
-    fd_fetch_displacement r6
-
-    add  r4, r6
-    adc  r5, ZERO
-    sbrc r6, 7
-    dec  r5
-
-    st   Z+, r4
-    st   Z, r5
-    rjmp fd_finish_func
-
-; FD 09 RRSPEC disp8: LD8 rD,[rA+simm8]
-fd_ld8_displaced_family:
-    fd_fetch_rrspec
-
-    fd_decode_low_x r6
-    ld   r4, X+
-    ld   r5, X
-    fd_decode_high_z r6
-
-    fd_fetch_displacement r6
-
-    add  r4, r6
-    adc  r5, ZERO
-    sbrc r6, 7
-    dec  r5
-
-    movw r26, r4
-    ld   r0, X
-    st   Z+, r0
-    st   Z, ZERO
-    rjmp fd_finish_func
-
-; FD 0A RRSPEC disp8: ST8 [rA+simm8],rS
-fd_st8_displaced_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6
-    ld   r4, X+
-    ld   r5, X
-
-    fd_decode_low_z r6
-    ld   r0, Z
-
-    fd_fetch_displacement r6
-
-    add  r4, r6
-    adc  r5, ZERO
-    sbrc r6, 7
-    dec  r5
-
-    movw r26, r4
-    st   X, r0
-    rjmp fd_finish_func
-
-; FD 0B RRSPEC disp8: LD16 rD,[rA+simm8]
-fd_ld16_displaced_family:
-    fd_fetch_rrspec
-
-    fd_decode_low_x r6
-    ld   r4, X+
-    ld   r5, X
-    fd_decode_high_z r6
-
-    fd_fetch_displacement r6
-
-    add  r4, r6
-    adc  r5, ZERO
-    sbrc r6, 7
-    dec  r5
-
-    movw r26, r4
-    ld   r0, X+
-    ld   r1, X
-    st   Z+, r0
-    st   Z, r1
-    rjmp fd_finish_func
-
-; FD 0C RRSPEC disp8: ST16 [rA+simm8],rS
-fd_st16_displaced_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6
-    ld   r4, X+
-    ld   r5, X
-
-    fd_decode_low_z r6
-    ld   r0, Z+
-    ld   r1, Z
-
-    fd_fetch_displacement r6
-
-    add  r4, r6
-    adc  r5, ZERO
-    sbrc r6, 7
-    dec  r5
-
-    movw r26, r4
-    st   X+, r0
-    st   X, r1
-    rjmp fd_finish_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FD 10-2F: stack-relative loads and stores
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; FD 10-17 u8: LDSP8 rN,[SP+u8]
-fd_ldsp8_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r6
-
-    movw r26, VM_SP
-    add  r26, r6
-    adc  r27, ZERO
-    ld   r0, X
-
-    st   Z+, r0
-    st   Z, ZERO
-    rjmp fd_finish_func
-
-; FD 18-1F u8: STSP8 [SP+u8],rN
-fd_stsp8_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r6
-
-    ld   r0, Z
-    movw r26, VM_SP
-    add  r26, r6
-    adc  r27, ZERO
-    st   X, r0
-    rjmp fd_finish_func
-
-; FD 20-27 u8: LDSP16 rN,[SP+u8]
-fd_ldsp16_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r6
-
-    movw r26, VM_SP
-    add  r26, r6
-    adc  r27, ZERO
-    ld   r0, X+
-    ld   r1, X
-
-    st   Z+, r0
-    st   Z, r1
-    rjmp fd_finish_func
-
-; FD 28-2F u8: STSP16 [SP+u8],rN
-fd_stsp16_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r6
-
-    ld   r0, Z+
-    ld   r1, Z
-
-    movw r26, VM_SP
-    add  r26, r6
-    adc  r27, ZERO
-    st   X+, r0
-    st   X, r1
-    rjmp fd_finish_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FD 30-4F: absolute data-space loads and stores
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; FD 30-37 addr16: LDM8 rN,addr16
-fd_ldm8_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r4
-    fd_fetch_absolute_high r5
-
-    movw r26, r4
-    ld   r0, X
-    st   Z+, r0
-    st   Z, ZERO
-    rjmp fd_finish_func
-
-; FD 38-3F addr16: STM8 addr16,rN
-fd_stm8_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r4
-    fd_fetch_absolute_high r5
-
-    ld   r0, Z
-    movw r26, r4
-    st   X, r0
-    rjmp fd_finish_func
-
-; FD 40-47 addr16: LDM16 rN,addr16
-fd_ldm16_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r4
-    fd_fetch_absolute_high r5
-
-    movw r26, r4
-    ld   r0, X+
-    ld   r1, X
-    st   Z+, r0
-    st   Z, r1
-    rjmp fd_finish_func
-
-; FD 48-4F addr16: STM16 addr16,rN
-fd_stm16_family:
-    fd_select_secondary_reg_z
-    fd_fetch_first_selected_operand r4
-    fd_fetch_absolute_high r5
-
-    ld   r0, Z+
-    ld   r1, Z
-    movw r26, r4
-    st   X+, r0
-    st   X, r1
-    rjmp fd_finish_func
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FD 80-83: program-space loads
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Program-space operands use the same pre-scaled RRSPEC layout as the other FD
-; two-register forms: high nibble = rD, low nibble = rA. The complete logical
-; source address is PB:rA. All source address bytes and the destination data-
-; space pointer are captured before the destination is written, so rD == rA is
-; well-defined for both byte and word loads.
-;
-; fx_read_data_bytes is shared by all four handlers. It reads from a logical
-; image-relative 24-bit address and leaves X one byte beyond the copied data.
-
-; FD 80 RRSPEC: LDP8 rD,[PB:rA]
-fd_ldp8_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6          ; X = destination register low byte
-    fd_decode_low_z r6           ; Z = address register low byte
-    ld   r4, Z+                  ; logical address bits 7:0
-    ld   r5, Z                   ; logical address bits 15:8
-    in   r6, VM_PB               ; logical address bits 23:16
-
-    ; PC currently names RRSPEC. Resume at the following primary opcode after
-    ; the data read has interrupted the sequential code stream.
-    adiw VM_PC, 1
-    ldi  r30, 1
-    clr  r31
-    rcall fx_read_data_bytes
-
-    ; The byte load zero-extends. fx_read_data_bytes left X at rD.high.
-    st   X, ZERO
-    jmp  seek_and_dispatch_current_pc_func
-
-; FD 81 RRSPEC: LDP16 rD,[PB:rA]
-fd_ldp16_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6
-    fd_decode_low_z r6
-    ld   r4, Z+
-    ld   r5, Z
-    in   r6, VM_PB
-
-    adiw VM_PC, 1
-    ldi  r30, 2
-    clr  r31
-    rcall fx_read_data_bytes
-    jmp  seek_and_dispatch_current_pc_func
-
-; FD 82 RRSPEC disp8: LDP8 rD,[PB:rA+simm8]
-fd_ldp8_displaced_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6
-    fd_decode_low_z r6
-    ld   r4, Z+
-    ld   r5, Z
-
-    ; Read simm8 while starting a speculative transfer of the following opcode.
-    ; Add the signed displacement to the complete 24-bit PB:rA address without
-    ; modifying PB or rA.
-    fd_fetch_displacement r30
-    in   r6, VM_PB
-    add  r4, r30
-    adc  r5, ZERO
-    adc  r6, ZERO
-    sbrs r30, 7
-    rjmp 1f
-    ldi  r31, 1
-    sub  r5, r31
-    sbc  r6, ZERO
-1:
-    adiw VM_PC, 1
-    ldi  r30, 1
-    clr  r31
-    rcall fx_read_data_bytes
-
-    st   X, ZERO
-    jmp  seek_and_dispatch_current_pc_func
-
-; FD 83 RRSPEC disp8: LDP16 rD,[PB:rA+simm8]
-fd_ldp16_displaced_family:
-    fd_fetch_rrspec
-
-    fd_decode_high_x r6
-    fd_decode_low_z r6
-    ld   r4, Z+
-    ld   r5, Z
-
-    fd_fetch_displacement r30
-    in   r6, VM_PB
-    add  r4, r30
-    adc  r5, ZERO
-    adc  r6, ZERO
-    sbrs r30, 7
-    rjmp 1f
-    ldi  r31, 1
-    sub  r5, r31
-    sbc  r6, ZERO
-1:
-    adiw VM_PC, 1
-    ldi  r30, 2
-    clr  r31
-    rcall fx_read_data_bytes
-    jmp  seek_and_dispatch_current_pc_func
-
-; The next opcode has long since completed transferring.
-dispatch_func:
-    dispatch
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Generic program-data read
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Read a nonzero number of bytes from an image-relative logical program address
-; into AVR data space. This is deliberately generic so SYS services such as a
-; future memcpy_P can use the same optimized flash transaction.
-;
-; Input:
-;   r6:r5:r4 = logical source address, high:middle:low
-;   X         = destination data-space pointer
-;   r31:r30   = nonzero byte count
-;
-; Output:
-;   X         = one byte past the copied range
-;
-; Clobbers r0:r1, r4:r6, r30:r31. Preserves native SREG and every AVM register
-; except bytes explicitly addressed through X, and does not modify VM_FLAGS.
-; The routine closes the flash transaction before returning; callers that
-; interrupted bytecode execution must subsequently restart the code stream.
-fx_read_data_bytes:
-    ; Preserve the count while r30 is used for the READ command and image-base
-    ; addition. r0:r1 are otherwise interpreter scratch outside MUL dispatch.
-    movw r0, r30
-
-    fx_disable
-    ldi  r30, SFC_READ
-    fx_enable
-    out  SPDR, r30
-
-    ; Translate the image-relative logical address to a physical flash address:
-    ; physical = (data_page_data << 8) + logical.
-    lds  r30, data_page_data+0
-    add  r5, r30
-    lds  r30, data_page_data+1
-    adc  r6, r30
-
-    rcall fx_seek_delay_11
-    out  SPDR, r6
-
-    ; The logical high address byte is no longer needed. Keep saved SREG in r6
-    ; and shorten this delay by one cycle so address writes remain 17 apart.
-    in   r6, SREG
-    rcall fx_seek_delay_16
-    out  SPDR, r5
-    rcall fx_seek_delay_17
-    out  SPDR, r4
-    rcall fx_seek_delay_16
-    out  SPDR, ZERO
-
-    ; Restore and predecrement the count. A one-byte request skips directly to
-    ; the final read; longer requests use a 17-cycle pipelined transfer loop.
-    movw r30, r0
-    sbiw r30, 1
-    delay_2
-    breq 2f
-    delay_2
-
-1:
-    rcall fx_seek_delay_7
-    cli
-    out  SPDR, ZERO
-    in   r0, SPDR
-    out  SREG, r6
-    st   X+, r0
-    subi r30, 1
-    sbci r31, 0
-    brne 1b
-
-2:
-    rcall fx_seek_delay_9
-    in   r0, SPDR
-    st   X+, r0
-    fx_disable
-    ret
-
-; seek to PC (CB/PC)
+; Seek to the current 24-bit image-relative VM PC and prime one byte. The
+; physical W25Q128 address is (data_page_data << 8) + VM_PC, modulo 24 bits.
 fx_seek_to_pc:
     fx_disable
     ldi  r30, SFC_READ
     fx_enable
     out  SPDR, r30
+
     lds  r26, data_page_data+0
-    add  r26, VM_PCH
+    add  r26, VM_PCM
     lds  r27, data_page_data+1
-    in   r30, VM_CB
-    adc  r27, r30
+    adc  r27, VM_PCH
+
     rcall fx_seek_delay_10
     out  SPDR, r27
     rcall fx_seek_delay_17
@@ -3011,9 +1124,10 @@ fx_seek_to_pc:
     rcall fx_seek_delay_17
     out  SPDR, VM_PCL
     rcall fx_seek_delay_17
-    out  SPDR, r2
-    ; wait 16 cycles: 2 + 10 + 4 (from ret)
-    ; this way, the next byte is ready to read when this method returns
+    out  SPDR, ZERO
+
+    ; Wait 16 cycles: 2 + 10 + 4 from RET. The addressed byte is ready in
+    ; SPDR when this routine returns.
     delay_2
     rcall fx_seek_delay_10
     ret
@@ -3067,7 +1181,13 @@ startup_func:
     ; before any startup state is stored in SRAM and before Timer0 is started.
     ; reset_handler reaches startup_func with JMP, so the native stack is empty
     ; while its backing SRAM is cleared.
+    ; Establish the immutable interpreter constants before any helper runs.
     clr  ZERO
+    ldi  r26, 1
+    mov  ONE, r26
+    ldi  r26, 4
+    mov  FOUR, r26
+
     ldi  r26, lo8(0x0100)
     ldi  r27, hi8(0x0100)
 startup_clear_ram_loop:
@@ -3077,21 +1197,11 @@ startup_clear_ram_loop:
     cpi  r27, hi8(RAMEND + 1)
     brne startup_clear_ram_loop
 
-    ; Initialize persistent interpreter state.
-    ldi  r26, DISPATCH_STRIDE_WORDS
-    mov  C_DISPATCH_STRIDE_WORDS, r26
+    ; Initialize persistent architectural and startup state. VM_FLAGS lives
+    ; in low-I/O GPIOR0; VM PC is loaded from the image header below.
     ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
     ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
-    clr  VM_FLAGS
-    out  VM_CB, ZERO
-    out  VM_PB, ZERO
-    sts  data_page_data+0, ZERO
-    sts  data_page_data+1, ZERO
-    sts  data_page_save+0, ZERO
-    sts  data_page_save+1, ZERO
-    sts  data_save_size+0, ZERO
-    sts  data_save_size+1, ZERO
-    sts  data_startup_flags, ZERO
+    out  VM_FLAGS, ZERO
 
     ; Configure the complete Arduboy GPIO set before enabling SPI. This leaves
     ; the OLED selected and held in reset, while keeping the FX flash deselected.
@@ -3212,13 +1322,13 @@ startup_read_header:
     rjmp startup_invalid_image
 1:
 
-    ; entryPoint, packed little-endian 24-bit logical address.
+    ; entryPoint, packed little-endian 24-bit image-relative address.
     rcall fx_startup_read_byte
     mov  VM_PCL, r30
     rcall fx_startup_read_byte
-    mov  VM_PCH, r30
+    mov  VM_PCM, r30
     rcall fx_startup_read_byte
-    out  VM_CB, r30
+    mov  VM_PCH, r30
 
     ; dataSize in r16:r17.
     rcall fx_startup_read_byte
@@ -3313,18 +1423,16 @@ startup_enter_image:
     ; copy. Its compare interrupt becomes globally active at the SEI below.
     rcall timer0_init_func
 
-    ; PB starts at zero. CB:PC already contains entryPoint.
-    out  VM_PB, ZERO
-
-    ; Seek to entryPoint and prime both the opcode and following-byte transfer.
+    ; VM_PCH:VM_PCM:VM_PCL already contains the image entry point. Seek to
+    ; it, consume the first primary opcode, and start the following transfer.
     rcall fx_seek_to_pc
-    in   r6, SPDR
+    in   PRIMARY_OPCODE, SPDR
     out  SPDR, ZERO
     sei
     delay_1
-    mul  r6, C_DISPATCH_STRIDE_WORDS
+    mul  PRIMARY_OPCODE, FOUR
     movw r30, r0
-    subi r31, hi8(-((DISPATCH_ORG)>>1))
+    subi r31, hi8(-(pm(primary_table)))
     ijmp
 
 startup_invalid_image:
@@ -3576,863 +1684,3 @@ oled_boot_program:
     .byte 0x20, 0x00                 ; horizontal addressing mode
 #endif
 oled_boot_program_end:
-    .balign 2
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE3 register transfer and condition extension page
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Secondary-byte encoding:
-;   00dddsss  MOV16 rD,rS
-;   01dddsss  MOV8Z rD,bS
-;   10dddsss  MOV8S rD,bS
-;   11cccddd  CSET rD,cc
-;
-; Only MOV16 is operand-specialized. Its executable fixed-stride table avoids
-; both a separate RJMP table and separate handler bodies. The remaining forms
-; decode the register-file addresses through data space and share their bodies.
-
-; 01dddsss / 10dddsss: MOV8Z and MOV8S share all operand decoding. Bit 7
-; selects sign extension; bit 7 is clear for MOV8Z and set for MOV8S.
-e3_mov8_family:
-    ; X = native low-byte address of rS.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-
-    ; Z = native low-byte address of rD.
-    mov  r30, r6
-    andi r30, 0x38
-    lsr  r30
-    lsr  r30
-    subi r30, -8
-    clr  r31
-
-    ; Capture the source before writing either destination byte, so all aliasing
-    ; combinations retain ordinary register-transfer semantics.
-    ld   r4, X
-    mov  r5, r4
-    lsl  r5
-    sbc  r5, r5
-    sbrs r6, 7
-    clr  r5
-    st   Z+, r4
-    st   Z, r5
-    rjmp e3_dispatch_func
-
-; 11cccddd: CSET uses one generic destination decode and an eight-entry
-; condition table. The condition handlers materialize 0 or 1 in r30.
-e3_cset_family:
-    ; X = native low-byte address of rD.
-    mov  r26, r6
-    andi r26, 0x07
-    lsl  r26
-    subi r26, -8
-    clr  r27
-
-    ; Convert ccc in bits 5:3 to a one-word condition-table index.
-    mov  r30, r6
-    andi r30, 0x38
-    lsr  r30
-    lsr  r30
-    lsr  r30
-    clr  r31
-    subi r30, lo8(-(pm(e3_cset_table)))
-    sbci r31, hi8(-(pm(e3_cset_table)))
-    ijmp
-
-e3_cset_table:
-    rjmp e3_cset_eq
-    rjmp e3_cset_ne
-    rjmp e3_cset_ult
-    rjmp e3_cset_uge
-    rjmp e3_cset_slt
-    rjmp e3_cset_sge
-    rjmp e3_cset_ule
-    rjmp e3_cset_ugt
-e3_cset_table_end:
-
-.if ((e3_cset_table_end - e3_cset_table) != (8 * 2))
-    .error "E3 CSET dispatch table must contain exactly eight words"
-.endif
-
-.macro emit_e3_cset_bit label, skip, flag
-\label:
-    clr  r30
-    \skip VM_FLAGS, \flag
-    inc  r30
-    rjmp e3_cset_finish
-.endm
-
-emit_e3_cset_bit e3_cset_eq,  sbrc, SREG_Z
-emit_e3_cset_bit e3_cset_ne,  sbrs, SREG_Z
-emit_e3_cset_bit e3_cset_ult, sbrc, SREG_C
-emit_e3_cset_bit e3_cset_uge, sbrs, SREG_C
-emit_e3_cset_bit e3_cset_slt, sbrc, SREG_S
-emit_e3_cset_bit e3_cset_sge, sbrs, SREG_S
-
-; ULE = C | Z. NEG converts a nonzero masked value into native carry, CLR
-; preserves carry, and ADC materializes it as 0 or 1.
-e3_cset_ule:
-    mov  r30, VM_FLAGS
-    andi r30, (_BV(SREG_C) | _BV(SREG_Z))
-    neg  r30
-    clr  r30
-    adc  r30, ZERO
-    rjmp e3_cset_finish
-
-; UGT = !(C | Z). LDI preserves native carry, so SBC computes 1-C.
-e3_cset_ugt:
-    mov  r30, VM_FLAGS
-    andi r30, (_BV(SREG_C) | _BV(SREG_Z))
-    neg  r30
-    ldi  r30, 1
-    sbc  r30, ZERO
-    rjmp e3_cset_finish
-
-e3_cset_finish:
-    st   X+, r30
-    st   X, ZERO
-    rjmp e3_dispatch_func
-
-; Each MOV16 slot is exactly two AVR words. The secondary value 00dddsss is
-; multiplied by two in the decoder and added directly to this word-addressed
-; table, so the selected slot performs the register copy without an extra
-; table jump or runtime operand decode.
-.macro emit_e3_mov16_slot dst, src
-    movw \dst, \src
-    rjmp e3_dispatch_func
-.endm
-
-e3_mov16_table:
-    emit_e3_mov16_slot VM_R0, VM_R0
-    emit_e3_mov16_slot VM_R0, VM_R1
-    emit_e3_mov16_slot VM_R0, VM_R2
-    emit_e3_mov16_slot VM_R0, VM_R3
-    emit_e3_mov16_slot VM_R0, VM_R4
-    emit_e3_mov16_slot VM_R0, VM_R5
-    emit_e3_mov16_slot VM_R0, VM_R6
-    emit_e3_mov16_slot VM_R0, VM_R7
-    emit_e3_mov16_slot VM_R1, VM_R0
-    emit_e3_mov16_slot VM_R1, VM_R1
-    emit_e3_mov16_slot VM_R1, VM_R2
-    emit_e3_mov16_slot VM_R1, VM_R3
-    emit_e3_mov16_slot VM_R1, VM_R4
-    emit_e3_mov16_slot VM_R1, VM_R5
-    emit_e3_mov16_slot VM_R1, VM_R6
-    emit_e3_mov16_slot VM_R1, VM_R7
-    emit_e3_mov16_slot VM_R2, VM_R0
-    emit_e3_mov16_slot VM_R2, VM_R1
-    emit_e3_mov16_slot VM_R2, VM_R2
-    emit_e3_mov16_slot VM_R2, VM_R3
-    emit_e3_mov16_slot VM_R2, VM_R4
-    emit_e3_mov16_slot VM_R2, VM_R5
-    emit_e3_mov16_slot VM_R2, VM_R6
-    emit_e3_mov16_slot VM_R2, VM_R7
-    emit_e3_mov16_slot VM_R3, VM_R0
-    emit_e3_mov16_slot VM_R3, VM_R1
-    emit_e3_mov16_slot VM_R3, VM_R2
-    emit_e3_mov16_slot VM_R3, VM_R3
-    emit_e3_mov16_slot VM_R3, VM_R4
-    emit_e3_mov16_slot VM_R3, VM_R5
-    emit_e3_mov16_slot VM_R3, VM_R6
-    emit_e3_mov16_slot VM_R3, VM_R7
-    emit_e3_mov16_slot VM_R4, VM_R0
-    emit_e3_mov16_slot VM_R4, VM_R1
-    emit_e3_mov16_slot VM_R4, VM_R2
-    emit_e3_mov16_slot VM_R4, VM_R3
-    emit_e3_mov16_slot VM_R4, VM_R4
-    emit_e3_mov16_slot VM_R4, VM_R5
-    emit_e3_mov16_slot VM_R4, VM_R6
-    emit_e3_mov16_slot VM_R4, VM_R7
-    emit_e3_mov16_slot VM_R5, VM_R0
-    emit_e3_mov16_slot VM_R5, VM_R1
-    emit_e3_mov16_slot VM_R5, VM_R2
-    emit_e3_mov16_slot VM_R5, VM_R3
-    emit_e3_mov16_slot VM_R5, VM_R4
-    emit_e3_mov16_slot VM_R5, VM_R5
-    emit_e3_mov16_slot VM_R5, VM_R6
-    emit_e3_mov16_slot VM_R5, VM_R7
-    emit_e3_mov16_slot VM_R6, VM_R0
-    emit_e3_mov16_slot VM_R6, VM_R1
-    emit_e3_mov16_slot VM_R6, VM_R2
-    emit_e3_mov16_slot VM_R6, VM_R3
-    emit_e3_mov16_slot VM_R6, VM_R4
-    emit_e3_mov16_slot VM_R6, VM_R5
-    emit_e3_mov16_slot VM_R6, VM_R6
-    emit_e3_mov16_slot VM_R6, VM_R7
-    emit_e3_mov16_slot VM_R7, VM_R0
-    emit_e3_mov16_slot VM_R7, VM_R1
-    emit_e3_mov16_slot VM_R7, VM_R2
-    emit_e3_mov16_slot VM_R7, VM_R3
-    emit_e3_mov16_slot VM_R7, VM_R4
-    emit_e3_mov16_slot VM_R7, VM_R5
-    emit_e3_mov16_slot VM_R7, VM_R6
-    emit_e3_mov16_slot VM_R7, VM_R7
-e3_mov16_table_end:
-
-.if ((e3_mov16_table_end - e3_mov16_table) != (64 * 4))
-    .error "E3 MOV16 executable table must contain 64 two-word slots"
-.endif
-
-; Local sequential dispatch keeps every executable MOV16 slot and generic E3
-; handler within RJMP range.
-e3_dispatch_func:
-    dispatch
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xF4 compact ALU extension page
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; This section is placed after the rest of the interpreter so its executable
-; operand-specialized slots do not push existing RCALL/RJMP sites out of range.
-f4_extension_decode_func:
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ldi  r30, lo8(pm(f4_secondary_table))
-    ldi  r31, hi8(pm(f4_secondary_table))
-    add  r30, r6
-    adc  r31, ZERO
-    ijmp
-
-; F4 secondary encoding:
-;   bits 7:4 = operation
-;   bits 3:2 = compact destination c0-c3
-;   bits 1:0 = compact source c0-c3
-;
-; The implemented arithmetic, logical, and multiply ranges use
-; operand-specialized executable slots. Logical destinations c0/A and all
-; architecturally reserved duplicate/self encodings dispatch to the invalid
-; trap. Decoder OUT-to-slot-entry timing leaves eight cycles before the next
-; OUT. Arithmetic/logical slots and native two-cycle multiply slots are padded
-; so the local dispatch issues its OUT exactly 17 cycles after the decoder OUT,
-; retaining the intended approximately 34-cycle cadence. Native SREG changes
-; are not copied to VM_FLAGS, so AVM CC is preserved.
-
-f4_secondary_table:
-    secondary_entries 16, f4_invalid_secondary_instruction_func ; 00-0F reserved MOV duplicates
-    ; 10-1F ADD.NF
-    rjmp f4_add_nf_c0_c0
-    rjmp f4_add_nf_c0_c1
-    rjmp f4_add_nf_c0_c2
-    rjmp f4_add_nf_c0_c3
-    rjmp f4_add_nf_c1_c0
-    rjmp f4_add_nf_c1_c1
-    rjmp f4_add_nf_c1_c2
-    rjmp f4_add_nf_c1_c3
-    rjmp f4_add_nf_c2_c0
-    rjmp f4_add_nf_c2_c1
-    rjmp f4_add_nf_c2_c2
-    rjmp f4_add_nf_c2_c3
-    rjmp f4_add_nf_c3_c0
-    rjmp f4_add_nf_c3_c1
-    rjmp f4_add_nf_c3_c2
-    rjmp f4_add_nf_c3_c3
-    ; 20-2F SUB.NF; diagonal forms are reserved aliases of CLR
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_sub_nf_c0_c1
-    rjmp f4_sub_nf_c0_c2
-    rjmp f4_sub_nf_c0_c3
-    rjmp f4_sub_nf_c1_c0
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_sub_nf_c1_c2
-    rjmp f4_sub_nf_c1_c3
-    rjmp f4_sub_nf_c2_c0
-    rjmp f4_sub_nf_c2_c1
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_sub_nf_c2_c3
-    rjmp f4_sub_nf_c3_c0
-    rjmp f4_sub_nf_c3_c1
-    rjmp f4_sub_nf_c3_c2
-    rjmp f4_invalid_secondary_instruction_func
-    ; 30-3F AND; c0 destinations and self-forms are reserved
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_and_c1_c0
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_and_c1_c2
-    rjmp f4_and_c1_c3
-    rjmp f4_and_c2_c0
-    rjmp f4_and_c2_c1
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_and_c2_c3
-    rjmp f4_and_c3_c0
-    rjmp f4_and_c3_c1
-    rjmp f4_and_c3_c2
-    rjmp f4_invalid_secondary_instruction_func
-    ; 40-4F OR; c0 destinations and self-forms are reserved
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_or_c1_c0
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_or_c1_c2
-    rjmp f4_or_c1_c3
-    rjmp f4_or_c2_c0
-    rjmp f4_or_c2_c1
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_or_c2_c3
-    rjmp f4_or_c3_c0
-    rjmp f4_or_c3_c1
-    rjmp f4_or_c3_c2
-    rjmp f4_invalid_secondary_instruction_func
-    ; 50-5F XOR; c0 destinations and self-forms are reserved
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_xor_c1_c0
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_xor_c1_c2
-    rjmp f4_xor_c1_c3
-    rjmp f4_xor_c2_c0
-    rjmp f4_xor_c2_c1
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_xor_c2_c3
-    rjmp f4_xor_c3_c0
-    rjmp f4_xor_c3_c1
-    rjmp f4_xor_c3_c2
-    rjmp f4_invalid_secondary_instruction_func
-    ; 60-6F BIC; c0 destinations and self-forms are reserved
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_bic_c1_c0
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_bic_c1_c2
-    rjmp f4_bic_c1_c3
-    rjmp f4_bic_c2_c0
-    rjmp f4_bic_c2_c1
-    rjmp f4_invalid_secondary_instruction_func
-    rjmp f4_bic_c2_c3
-    rjmp f4_bic_c3_c0
-    rjmp f4_bic_c3_c1
-    rjmp f4_bic_c3_c2
-    rjmp f4_invalid_secondary_instruction_func
-    secondary_entries 32, f4_invalid_secondary_instruction_func ; 70-8F reserved CMP duplicates
-    ; 90-9F MULU8 cD,cS
-    rjmp f4_mulu8_c0_c0
-    rjmp f4_mulu8_c0_c1
-    rjmp f4_mulu8_c0_c2
-    rjmp f4_mulu8_c0_c3
-    rjmp f4_mulu8_c1_c0
-    rjmp f4_mulu8_c1_c1
-    rjmp f4_mulu8_c1_c2
-    rjmp f4_mulu8_c1_c3
-    rjmp f4_mulu8_c2_c0
-    rjmp f4_mulu8_c2_c1
-    rjmp f4_mulu8_c2_c2
-    rjmp f4_mulu8_c2_c3
-    rjmp f4_mulu8_c3_c0
-    rjmp f4_mulu8_c3_c1
-    rjmp f4_mulu8_c3_c2
-    rjmp f4_mulu8_c3_c3
-    ; A0-AF MULS8 cD,cS
-    rjmp f4_muls8_c0_c0
-    rjmp f4_muls8_c0_c1
-    rjmp f4_muls8_c0_c2
-    rjmp f4_muls8_c0_c3
-    rjmp f4_muls8_c1_c0
-    rjmp f4_muls8_c1_c1
-    rjmp f4_muls8_c1_c2
-    rjmp f4_muls8_c1_c3
-    rjmp f4_muls8_c2_c0
-    rjmp f4_muls8_c2_c1
-    rjmp f4_muls8_c2_c2
-    rjmp f4_muls8_c2_c3
-    rjmp f4_muls8_c3_c0
-    rjmp f4_muls8_c3_c1
-    rjmp f4_muls8_c3_c2
-    rjmp f4_muls8_c3_c3
-    ; B0-BF MULSU8 cD,cS
-    rjmp f4_mulsu8_c0_c0
-    rjmp f4_mulsu8_c0_c1
-    rjmp f4_mulsu8_c0_c2
-    rjmp f4_mulsu8_c0_c3
-    rjmp f4_mulsu8_c1_c0
-    rjmp f4_mulsu8_c1_c1
-    rjmp f4_mulsu8_c1_c2
-    rjmp f4_mulsu8_c1_c3
-    rjmp f4_mulsu8_c2_c0
-    rjmp f4_mulsu8_c2_c1
-    rjmp f4_mulsu8_c2_c2
-    rjmp f4_mulsu8_c2_c3
-    rjmp f4_mulsu8_c3_c0
-    rjmp f4_mulsu8_c3_c1
-    rjmp f4_mulsu8_c3_c2
-    rjmp f4_mulsu8_c3_c3
-    secondary_entries 48, f4_unimplemented_instruction_func ; C0-EF defined variable shifts
-    secondary_entries 16, f4_invalid_secondary_instruction_func ; F0-FF reserved
-f4_secondary_table_end:
-
-.if ((f4_secondary_table_end - f4_secondary_table) != (256 * 2))
-    .error "F4 secondary dispatch table must contain exactly 256 words"
-.endif
-
-.macro emit_f4_binary_slot label, lowop, highop, dstl, dsth, srcl, srch
-\label:
-    delay_3
-    \lowop  \dstl, \srcl
-    \highop \dsth, \srch
-    rjmp f4_dispatch_func
-.endm
-
-.macro emit_f4_bic_slot label, dstl, dsth, src
-\label:
-    movw r4, \src
-    com  r4
-    com  r5
-    and  \dstl, r4
-    and  \dsth, r5
-    rjmp f4_dispatch_func
-.endm
-
-; F4 10-1F: ADD.NF cD,cS
-emit_f4_binary_slot f4_add_nf_c0_c0, add, adc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_add_nf_c0_c1, add, adc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_add_nf_c0_c2, add, adc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_add_nf_c0_c3, add, adc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_add_nf_c1_c0, add, adc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_add_nf_c1_c1, add, adc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_add_nf_c1_c2, add, adc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_add_nf_c1_c3, add, adc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_add_nf_c2_c0, add, adc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_add_nf_c2_c1, add, adc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_add_nf_c2_c2, add, adc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_add_nf_c2_c3, add, adc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_add_nf_c3_c0, add, adc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_add_nf_c3_c1, add, adc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_add_nf_c3_c2, add, adc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_add_nf_c3_c3, add, adc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
-
-; F4 20-2F: SUB.NF cD,cS
-emit_f4_binary_slot f4_sub_nf_c0_c1, sub, sbc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_sub_nf_c0_c2, sub, sbc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_sub_nf_c0_c3, sub, sbc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_sub_nf_c1_c0, sub, sbc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_sub_nf_c1_c2, sub, sbc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_sub_nf_c1_c3, sub, sbc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_sub_nf_c2_c0, sub, sbc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_sub_nf_c2_c1, sub, sbc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_sub_nf_c2_c3, sub, sbc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_sub_nf_c3_c0, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_sub_nf_c3_c1, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_sub_nf_c3_c2, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-
-; F4 34-3F: AND cD,cS (cD = c1-c3)
-emit_f4_binary_slot f4_and_c1_c0, and, and, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_and_c1_c2, and, and, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_and_c1_c3, and, and, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_and_c2_c0, and, and, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_and_c2_c1, and, and, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_and_c2_c3, and, and, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_and_c3_c0, and, and, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_and_c3_c1, and, and, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_and_c3_c2, and, and, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-
-; F4 44-4F: OR cD,cS (cD = c1-c3)
-emit_f4_binary_slot f4_or_c1_c0, or, or, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_or_c1_c2, or, or, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_or_c1_c3, or, or, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_or_c2_c0, or, or, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_or_c2_c1, or, or, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_or_c2_c3, or, or, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_or_c3_c0, or, or, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_or_c3_c1, or, or, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_or_c3_c2, or, or, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-
-; F4 54-5F: XOR cD,cS (cD = c1-c3)
-emit_f4_binary_slot f4_xor_c1_c0, eor, eor, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_xor_c1_c2, eor, eor, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_f4_binary_slot f4_xor_c1_c3, eor, eor, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_xor_c2_c0, eor, eor, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_xor_c2_c1, eor, eor, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_xor_c2_c3, eor, eor, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_f4_binary_slot f4_xor_c3_c0, eor, eor, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_f4_binary_slot f4_xor_c3_c1, eor, eor, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_f4_binary_slot f4_xor_c3_c2, eor, eor, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-
-; F4 64-6F: BIC cD,cS (cD = c1-c3)
-emit_f4_bic_slot f4_bic_c1_c0, VM_C1L, VM_C1H, VM_C0
-emit_f4_bic_slot f4_bic_c1_c2, VM_C1L, VM_C1H, VM_C2
-emit_f4_bic_slot f4_bic_c1_c3, VM_C1L, VM_C1H, VM_C3
-emit_f4_bic_slot f4_bic_c2_c0, VM_C2L, VM_C2H, VM_C0
-emit_f4_bic_slot f4_bic_c2_c1, VM_C2L, VM_C2H, VM_C1
-emit_f4_bic_slot f4_bic_c2_c3, VM_C2L, VM_C2H, VM_C3
-emit_f4_bic_slot f4_bic_c3_c0, VM_C3L, VM_C3H, VM_C0
-emit_f4_bic_slot f4_bic_c3_c1, VM_C3L, VM_C3H, VM_C1
-emit_f4_bic_slot f4_bic_c3_c2, VM_C3L, VM_C3H, VM_C2
-
-; F4 90-BF: compact 8x8 multiplies. All compact low bytes occupy AVR
-; r16-r23, so MULS and MULSU can operate on the architectural operands
-; directly. MUL writes r1:r0; MOVW installs the complete 16-bit result.
-.macro emit_f4_mul_slot label, operation, dst, dstl, srcl
-\label:
-    delay_2
-    \operation \dstl, \srcl
-    movw \dst, r0
-    rjmp f4_dispatch_func
-.endm
-
-; MULU8
-emit_f4_mul_slot f4_mulu8_c0_c0, mul, VM_C0, VM_C0L, VM_C0L
-emit_f4_mul_slot f4_mulu8_c0_c1, mul, VM_C0, VM_C0L, VM_C1L
-emit_f4_mul_slot f4_mulu8_c0_c2, mul, VM_C0, VM_C0L, VM_C2L
-emit_f4_mul_slot f4_mulu8_c0_c3, mul, VM_C0, VM_C0L, VM_C3L
-emit_f4_mul_slot f4_mulu8_c1_c0, mul, VM_C1, VM_C1L, VM_C0L
-emit_f4_mul_slot f4_mulu8_c1_c1, mul, VM_C1, VM_C1L, VM_C1L
-emit_f4_mul_slot f4_mulu8_c1_c2, mul, VM_C1, VM_C1L, VM_C2L
-emit_f4_mul_slot f4_mulu8_c1_c3, mul, VM_C1, VM_C1L, VM_C3L
-emit_f4_mul_slot f4_mulu8_c2_c0, mul, VM_C2, VM_C2L, VM_C0L
-emit_f4_mul_slot f4_mulu8_c2_c1, mul, VM_C2, VM_C2L, VM_C1L
-emit_f4_mul_slot f4_mulu8_c2_c2, mul, VM_C2, VM_C2L, VM_C2L
-emit_f4_mul_slot f4_mulu8_c2_c3, mul, VM_C2, VM_C2L, VM_C3L
-emit_f4_mul_slot f4_mulu8_c3_c0, mul, VM_C3, VM_C3L, VM_C0L
-emit_f4_mul_slot f4_mulu8_c3_c1, mul, VM_C3, VM_C3L, VM_C1L
-emit_f4_mul_slot f4_mulu8_c3_c2, mul, VM_C3, VM_C3L, VM_C2L
-emit_f4_mul_slot f4_mulu8_c3_c3, mul, VM_C3, VM_C3L, VM_C3L
-
-; MULS8
-emit_f4_mul_slot f4_muls8_c0_c0, muls, VM_C0, VM_C0L, VM_C0L
-emit_f4_mul_slot f4_muls8_c0_c1, muls, VM_C0, VM_C0L, VM_C1L
-emit_f4_mul_slot f4_muls8_c0_c2, muls, VM_C0, VM_C0L, VM_C2L
-emit_f4_mul_slot f4_muls8_c0_c3, muls, VM_C0, VM_C0L, VM_C3L
-emit_f4_mul_slot f4_muls8_c1_c0, muls, VM_C1, VM_C1L, VM_C0L
-emit_f4_mul_slot f4_muls8_c1_c1, muls, VM_C1, VM_C1L, VM_C1L
-emit_f4_mul_slot f4_muls8_c1_c2, muls, VM_C1, VM_C1L, VM_C2L
-emit_f4_mul_slot f4_muls8_c1_c3, muls, VM_C1, VM_C1L, VM_C3L
-emit_f4_mul_slot f4_muls8_c2_c0, muls, VM_C2, VM_C2L, VM_C0L
-emit_f4_mul_slot f4_muls8_c2_c1, muls, VM_C2, VM_C2L, VM_C1L
-emit_f4_mul_slot f4_muls8_c2_c2, muls, VM_C2, VM_C2L, VM_C2L
-emit_f4_mul_slot f4_muls8_c2_c3, muls, VM_C2, VM_C2L, VM_C3L
-emit_f4_mul_slot f4_muls8_c3_c0, muls, VM_C3, VM_C3L, VM_C0L
-emit_f4_mul_slot f4_muls8_c3_c1, muls, VM_C3, VM_C3L, VM_C1L
-emit_f4_mul_slot f4_muls8_c3_c2, muls, VM_C3, VM_C3L, VM_C2L
-emit_f4_mul_slot f4_muls8_c3_c3, muls, VM_C3, VM_C3L, VM_C3L
-
-; MULSU8
-emit_f4_mul_slot f4_mulsu8_c0_c0, mulsu, VM_C0, VM_C0L, VM_C0L
-emit_f4_mul_slot f4_mulsu8_c0_c1, mulsu, VM_C0, VM_C0L, VM_C1L
-emit_f4_mul_slot f4_mulsu8_c0_c2, mulsu, VM_C0, VM_C0L, VM_C2L
-emit_f4_mul_slot f4_mulsu8_c0_c3, mulsu, VM_C0, VM_C0L, VM_C3L
-emit_f4_mul_slot f4_mulsu8_c1_c0, mulsu, VM_C1, VM_C1L, VM_C0L
-emit_f4_mul_slot f4_mulsu8_c1_c1, mulsu, VM_C1, VM_C1L, VM_C1L
-emit_f4_mul_slot f4_mulsu8_c1_c2, mulsu, VM_C1, VM_C1L, VM_C2L
-emit_f4_mul_slot f4_mulsu8_c1_c3, mulsu, VM_C1, VM_C1L, VM_C3L
-emit_f4_mul_slot f4_mulsu8_c2_c0, mulsu, VM_C2, VM_C2L, VM_C0L
-emit_f4_mul_slot f4_mulsu8_c2_c1, mulsu, VM_C2, VM_C2L, VM_C1L
-emit_f4_mul_slot f4_mulsu8_c2_c2, mulsu, VM_C2, VM_C2L, VM_C2L
-emit_f4_mul_slot f4_mulsu8_c2_c3, mulsu, VM_C2, VM_C2L, VM_C3L
-emit_f4_mul_slot f4_mulsu8_c3_c0, mulsu, VM_C3, VM_C3L, VM_C0L
-emit_f4_mul_slot f4_mulsu8_c3_c1, mulsu, VM_C3, VM_C3L, VM_C1L
-emit_f4_mul_slot f4_mulsu8_c3_c2, mulsu, VM_C3, VM_C3L, VM_C2L
-emit_f4_mul_slot f4_mulsu8_c3_c3, mulsu, VM_C3, VM_C3L, VM_C3L
-
-; Keep local trap targets and sequential dispatch within RJMP range of every
-; F4 table entry and executable slot.
-f4_unimplemented_instruction_func:
-    rjmp f4_unimplemented_instruction_func
-
-f4_invalid_secondary_instruction_func:
-    rjmp f4_invalid_secondary_instruction_func
-
-f4_dispatch_func:
-    dispatch
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE1 32-bit aligned-register-pair ALU extension page
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Secondary encoding:
-;   0ddss  MOV32 qD,qS
-;   1ddss  ADD32 qD,qS
-;   2ddss  SUB32 qD,qS
-;   6ddss  CMP32 qL,qR
-;
-; q0 = r0:r1, q1 = r2:r3, q2 = r4:r5, q3 = r6:r7. Each q-register
-; occupies four consecutive native AVR registers. Bits 3:2 are therefore
-; already the destination/left byte offset, while bits 1:0 need only be
-; multiplied by four for the source/right offset.
-;
-; These instructions are expected to be uncommon, so one shared handler per
-; operation is used instead of a 256-entry table and 64 specialized slots.
-; X addresses qD/qL and Z addresses qS/qR.
-
-e1_extension_decode_func:
-    ; Possible future optimization:
-    ;
-    ; A 64-entry dispatch table indexed by (secondary >> 2) could dispatch on
-    ; both the operation nibble and qD/qL. Each valid entry would jump to a
-    ; destination-specialized handler while retaining generic source decode.
-    ; This would let MOV32/ADD32/SUB32/CMP32 operate directly on the selected
-    ; native destination registers, eliminating destination address decode and
-    ; the destination-side LD/ST traffic used by the shared X/Z handlers.
-    ;
-    ; Estimated effect versus this compact implementation:
-    ;   MOV32: about 6 cycles faster
-    ;   ADD32: about 16 cycles faster
-    ;   SUB32: about 18 cycles faster
-    ;   CMP32: about 12 cycles faster
-    ;
-    ; Expected cost is roughly 250 additional bytes, for a total E1 cost near
-    ; 450 bytes. This remains much smaller than full source+destination
-    ; specialization, but is not currently justified because 32-bit operations
-    ; are expected to be uncommon in typical Arduboy software.
-    ;
-    ; Read the secondary opcode while starting the following primary opcode.
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ; Decode the pair operands once for every E1 operation:
-    ;   X = native low-byte address of qD/qL
-    ;   Z = native low-byte address of qS/qR
-    ;
-    ; r27 temporarily holds the operation nibble. Each implemented handler
-    ; clears it before dereferencing X.
-    mov  r26, r6
-    andi r26, 0x0C
-    subi r26, -8
-
-    mov  r30, r6
-    andi r30, 0x03
-    lsl  r30
-    lsl  r30
-    subi r30, -8
-    clr  r31
-
-    ; Dispatch only on the operation nibble. Encodings 3x-5x and 7x-9x are
-    ; defined but not implemented; Ax-Fx are reserved/invalid. Keep this ANDI
-    ; last so its Z result can select MOV32 without an extra comparison.
-    mov  r27, r6
-    andi r27, 0xF0
-    breq e1_mov32_family
-    cpi  r27, 0x10
-    breq e1_add32_family
-    cpi  r27, 0x20
-    breq e1_sub32_family
-    cpi  r27, 0x60
-    breq e1_cmp32_family
-    cpi  r27, 0xA0
-    brlo 1f
-    rjmp e1_invalid_secondary_instruction_func
-1:
-    rjmp e1_unimplemented_instruction_func
-
-; E1 0ddss: MOV32 qD,qS
-;
-; Loading each byte before storing it gives ordinary transfer semantics for
-; qD == qS. MOV32 preserves AVM CC.
-e1_mov32_family:
-    clr  r27
-    ld   r0, Z+
-    st   X+, r0
-    ld   r0, Z+
-    st   X+, r0
-    ld   r0, Z+
-    st   X+, r0
-    ld   r0, Z
-    st   X, r0
-    rjmp e1_dispatch_func
-
-; E1 1ddss: ADD32 qD,qS
-;
-; The operation is unrolled so native carry propagates directly across all
-; four bytes. The source byte is read before the destination byte is written,
-; including qD == qS. AVM CC is preserved.
-e1_add32_family:
-    clr  r27
-
-    ld   r0, X
-    ld   r4, Z+
-    add  r0, r4
-    st   X+, r0
-
-    ld   r0, X
-    ld   r4, Z+
-    adc  r0, r4
-    st   X+, r0
-
-    ld   r0, X
-    ld   r4, Z+
-    adc  r0, r4
-    st   X+, r0
-
-    ld   r0, X
-    ld   r4, Z
-    adc  r0, r4
-    st   X, r0
-    rjmp e1_dispatch_func
-
-; E1 2ddss: SUB32 qD,qS
-;
-; The operation is unrolled so native borrow propagates directly across all
-; four bytes. AVM CC is preserved.
-e1_sub32_family:
-    clr  r27
-
-    ld   r0, X
-    ld   r4, Z+
-    sub  r0, r4
-    st   X+, r0
-
-    ld   r0, X
-    ld   r4, Z+
-    sbc  r0, r4
-    st   X+, r0
-
-    ld   r0, X
-    ld   r4, Z+
-    sbc  r0, r4
-    st   X+, r0
-
-    ld   r0, X
-    ld   r4, Z
-    sbc  r0, r4
-    st   X, r0
-    rjmp e1_dispatch_func
-
-; E1 6ddss: CMP32 qL,qR
-;
-; This path is deliberately unrolled. CPC accumulates equality through native
-; Z, so loop-counter arithmetic between bytes would corrupt the 32-bit Z
-; result. The final CP/CPC state is copied to architectural C/Z/S.
-e1_cmp32_family:
-    clr  r27
-
-    ld   r0, X+
-    ld   r4, Z+
-    cp   r0, r4
-
-    ld   r0, X+
-    ld   r4, Z+
-    cpc  r0, r4
-
-    ld   r0, X+
-    ld   r4, Z+
-    cpc  r0, r4
-
-    ld   r0, X
-    ld   r4, Z
-    cpc  r0, r4
-
-    in   VM_FLAGS, SREG
-    rjmp e1_dispatch_func
-
-; Keep the local continuations close enough for all RJMP/BRxx sites.
-e1_unimplemented_instruction_func:
-    rjmp e1_unimplemented_instruction_func
-
-e1_invalid_secondary_instruction_func:
-    rjmp e1_invalid_secondary_instruction_func
-
-e1_dispatch_func:
-    dispatch
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xE2 accumulator/noncompact-source ALU extension page
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; Secondary encoding relevant here:
-;   14-17  MULU8  A,r0-r3
-;   18-1B  MULS8  A,r0-r3
-;   1C-1F  MULSU8 A,r0-r3
-;
-; 00-03 and 2C-FF are reserved and therefore invalid. Other defined E2
-; operations remain unimplemented. The decoder starts the following primary
-; opcode before selecting a compact 48-entry secondary table.
-e2_extension_decode_func:
-    cli
-    out  SPDR, ZERO
-    in   r6, SPDR
-    sei
-
-    ; E2 currently defines encodings only below 0x30. r6 cannot be used by
-    ; CPI, so use r26 for the range check and retain r6 as the table index.
-    mov  r26, r6
-    cpi  r26, 0x30
-    brlo 1f
-    rjmp e2_invalid_secondary_instruction_func
-1:
-    ldi  r30, lo8(pm(e2_secondary_table))
-    ldi  r31, hi8(pm(e2_secondary_table))
-    add  r30, r6
-    adc  r31, ZERO
-    ijmp
-
-e2_secondary_table:
-    secondary_entries 4,  e2_invalid_secondary_instruction_func ; 00-03 reserved
-    secondary_entries 16, e2_unimplemented_instruction_func     ; 04-13 defined
-    rjmp e2_mulu8_A_r0                                           ; 14
-    rjmp e2_mulu8_A_r1                                           ; 15
-    rjmp e2_mulu8_A_r2                                           ; 16
-    rjmp e2_mulu8_A_r3                                           ; 17
-    rjmp e2_muls8_A_r0                                           ; 18
-    rjmp e2_muls8_A_r1                                           ; 19
-    rjmp e2_muls8_A_r2                                           ; 1A
-    rjmp e2_muls8_A_r3                                           ; 1B
-    rjmp e2_mulsu8_A_r0                                          ; 1C
-    rjmp e2_mulsu8_A_r1                                          ; 1D
-    rjmp e2_mulsu8_A_r2                                          ; 1E
-    rjmp e2_mulsu8_A_r3                                          ; 1F
-    secondary_entries 12, e2_unimplemented_instruction_func     ; 20-2B defined
-    secondary_entries 4,  e2_invalid_secondary_instruction_func ; 2C-2F reserved
-e2_secondary_table_end:
-
-.if ((e2_secondary_table_end - e2_secondary_table) != (48 * 2))
-    .error "E2 secondary dispatch table must contain exactly 48 words"
-.endif
-
-.macro emit_e2_mulu8_slot label, srcl
-\label:
-    mul  VM_C0L, \srcl
-    movw VM_C0, r0
-    rjmp e2_dispatch_func
-.endm
-
-; MULS/MULSU require high-register operands. A.low is already r16; copy the
-; noncompact source byte to A.high/r17, which is part of the overwritten result,
-; before issuing the native multiply.
-.macro emit_e2_signed_mul_slot label, operation, srcl
-\label:
-    mov  VM_C0H, \srcl
-    \operation VM_C0L, VM_C0H
-    movw VM_C0, r0
-    rjmp e2_dispatch_func
-.endm
-
-emit_e2_mulu8_slot e2_mulu8_A_r0, VM_R0L
-emit_e2_mulu8_slot e2_mulu8_A_r1, VM_R1L
-emit_e2_mulu8_slot e2_mulu8_A_r2, VM_R2L
-emit_e2_mulu8_slot e2_mulu8_A_r3, VM_R3L
-
-emit_e2_signed_mul_slot e2_muls8_A_r0, muls, VM_R0L
-emit_e2_signed_mul_slot e2_muls8_A_r1, muls, VM_R1L
-emit_e2_signed_mul_slot e2_muls8_A_r2, muls, VM_R2L
-emit_e2_signed_mul_slot e2_muls8_A_r3, muls, VM_R3L
-
-emit_e2_signed_mul_slot e2_mulsu8_A_r0, mulsu, VM_R0L
-emit_e2_signed_mul_slot e2_mulsu8_A_r1, mulsu, VM_R1L
-emit_e2_signed_mul_slot e2_mulsu8_A_r2, mulsu, VM_R2L
-emit_e2_signed_mul_slot e2_mulsu8_A_r3, mulsu, VM_R3L
-
-; Keep local continuations within RJMP range of the compact decoder and slots.
-e2_unimplemented_instruction_func:
-    rjmp e2_unimplemented_instruction_func
-
-e2_invalid_secondary_instruction_func:
-    rjmp e2_invalid_secondary_instruction_func
-
-e2_dispatch_func:
-    dispatch
-

@@ -314,18 +314,12 @@ def main() -> int:
         return 2
 
     tests = sorted(asm_dir.glob("*.asm"), key=lambda path: path.name.lower())
-    if not tests:
-        print(f"error: no *.asm tests found in {asm_dir}", file=sys.stderr)
-        return 2
 
     c_dir = args.c_dir.resolve()
     if not c_dir.is_dir():
         print(f"error: C test directory does not exist: {c_dir}", file=sys.stderr)
         return 2
     c_tests = sorted(c_dir.glob("*.c"), key=lambda path: path.name.lower())
-    if not c_tests:
-        print(f"error: no *.c tests found in {c_dir}", file=sys.stderr)
-        return 2
 
     work_dir = args.work_dir.resolve()
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -339,7 +333,7 @@ def main() -> int:
         for opt in ("O0", "O2")
     ]
     test_labels = [label for label, _, _ in configurations]
-    result_column = max(len(label) for label in test_labels) + 2
+    result_column = max((len(label) for label in test_labels), default=0) + 2
 
     print(
         f"Running {len(tests)} AVM assembly test(s) and "

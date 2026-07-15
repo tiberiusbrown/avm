@@ -616,7 +616,7 @@ reset_handler:
 ;
 ; The primary table has 256 fixed four-word slots. A completed short handler
 ; ends with RJMP to a shared cadence tail; a longer primary handler may use its
-; fourth word to forward to an out-of-line continuation. Opcodes 0x00-0xCF are
+; fourth word to forward to an out-of-line continuation. Opcodes 0x00-0xD7 are
 ; implemented directly below. Later defined opcodes remain migration stubs and
 ; reserved encodings trap as invalid.
 
@@ -1080,19 +1080,32 @@ emit_primary_immediate primary_CF_cmpi_s8_c3, cmpi_s8_c3_apply, fetch_simm8_then
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xD0-0xD3: conditional branches
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; All D0-D6 instructions have one signed byte operand. The primary slot
+; advances VM_PC from the opcode to that operand and forwards to an out-of-line
+; continuation. This exactly fills the fixed four-word primary slot.
 
-emit_primary_stub primary_D0_conditional_branch, unimplemented_instruction_func
-emit_primary_stub primary_D1_conditional_branch, unimplemented_instruction_func
-emit_primary_stub primary_D2_conditional_branch, unimplemented_instruction_func
-emit_primary_stub primary_D3_conditional_branch, unimplemented_instruction_func
+.macro emit_primary_rel8 label, target
+\label:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    rjmp \target
+    assert_primary_slot_width \label
+.endm
+
+emit_primary_rel8 primary_D0_breq_rel8,  breq_rel8_decode_func
+emit_primary_rel8 primary_D1_brne_rel8,  brne_rel8_decode_func
+emit_primary_rel8 primary_D2_brult_rel8, brult_rel8_decode_func
+emit_primary_rel8 primary_D3_brslt_rel8, brslt_rel8_decode_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xD4-0xD7: relative control, ADJSP, and SYS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_D4_jmp_rel8, unimplemented_instruction_func
-emit_primary_stub primary_D5_call_rel8, unimplemented_instruction_func
-emit_primary_stub primary_D6_adjsp, unimplemented_instruction_func
+emit_primary_rel8 primary_D4_jmp_rel8,  jmp_rel8_func
+emit_primary_rel8 primary_D5_call_rel8, call_rel8_func
+emit_primary_rel8 primary_D6_adjsp,     adjsp_simm8_func
 
 ; Account for the service byte in the 24-bit VM PC. The out-of-line decoder
 ; reads that byte from SPDR and immediately starts fetching the following
@@ -1211,7 +1224,7 @@ primary_table_end:
 ; Post-table migration scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; The direct one-byte primary families 00-BF are complete. Secondary decoders,
+; Primary opcodes 00-D7 are complete. Secondary decoders,
 ; condition gates, executable secondary tables, and the remaining instruction
 ; bodies are still absent. They should be added after the primary table in the
 ; single-section order defined by the implementation guide, without interior
@@ -1367,6 +1380,126 @@ emit_cmpi_s8_apply cmpi_s8_c2_apply, VM_C2L, VM_C2H
 emit_cmpi_s8_apply cmpi_s8_c3_apply, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; D0-D6 relative control and stack adjustment
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; At entry to each continuation, VM_PC points at the signed operand byte and
+; SPDR contains that byte. Conditional branches immediately start a speculative
+; fetch of the fallthrough opcode. A not-taken branch preserves that stream;
+; a taken branch discards it and restarts at nextPC + sign_extend(rel8).
+
+.macro emit_branch_rel8_decode label, skipop, flag
+\label:
+    cli
+    out  SPDR, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    sei
+
+    ; A satisfied condition skips the not-taken jump. SBIS implements a
+    ; branch-on-set condition; SBIC implements a branch-on-clear condition.
+    \skipop VM_FLAGS, \flag
+    rjmp branch_rel8_not_taken_func
+    rjmp branch_rel8_taken_func
+.endm
+
+emit_branch_rel8_decode breq_rel8_decode_func,  sbis, SREG_Z
+emit_branch_rel8_decode brne_rel8_decode_func,  sbic, SREG_Z
+emit_branch_rel8_decode brult_rel8_decode_func, sbis, SREG_C
+emit_branch_rel8_decode brslt_rel8_decode_func, sbis, SREG_S
+
+branch_rel8_not_taken_func:
+    ; PRIMARY_OPCODE contains the ignored displacement and VM_PC still names
+    ; that byte. Seven cycles of padding make dispatch_reverse start the byte
+    ; after the fallthrough opcode at the normal 17-cycle SPI cadence.
+    rcall fx_seek_delay_7
+    rjmp cluster_tail_17
+
+branch_rel8_taken_func:
+    ; Form the signed high extension only on the taken path. Both sign cases
+    ; take two cycles, which also lets the speculative fallthrough transfer
+    ; finish before seek_and_dispatch_func toggles flash chip select.
+    clr  r25
+    sbrc PRIMARY_OPCODE, 7
+    com  r25
+
+    ; Convert the operand address to nextPC, then add the signed displacement
+    ; in the full modulo-2^24 program address space.
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    add  VM_PCL, PRIMARY_OPCODE
+    adc  VM_PCM, r25
+    adc  VM_PCH, r25
+    rjmp seek_and_dispatch_func
+
+; D4 and D5 use fully specialized continuations. Duplicating the operand
+; fetch, sign extension, next-PC calculation, and target addition removes the
+; shared opcode test and avoids RCALL/RET overhead on CALL.
+jmp_rel8_func:
+    ; The operand transfer was started by the preceding primary dispatch. The
+    ; two-cycle delay places this read at the normal SPI byte boundary.
+    delay_2
+    in   r26, SPDR
+
+    clr  r25
+    sbrc r26, 7
+    com  r25
+
+    ; VM_PC currently names the displacement byte. Advance to nextPC, apply
+    ; the signed displacement in modulo-2^24 arithmetic, and restart the stream.
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    add  VM_PCL, r26
+    adc  VM_PCM, r25
+    adc  VM_PCH, r25
+    rjmp seek_and_dispatch_func
+
+call_rel8_func:
+    ; Fetch and sign-extend the displacement exactly as for JMP rel8.
+    delay_2
+    in   r26, SPDR
+
+    clr  r25
+    sbrc r26, 7
+    com  r25
+
+    ; Advance to nextPC and push that 24-bit return address in the canonical
+    ; little-endian stack layout: [SP+0]=PCL, [SP+1]=PCM, [SP+2]=PCH.
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    st   -Y, VM_PCH
+    st   -Y, VM_PCM
+    st   -Y, VM_PCL
+
+    ; Form the branch target only after preserving nextPC, then restart the
+    ; external-flash stream at that target.
+    add  VM_PCL, r26
+    adc  VM_PCM, r25
+    adc  VM_PCH, r25
+    rjmp seek_and_dispatch_func
+
+adjsp_simm8_func:
+    ; Read simm8 while starting the following primary opcode. VM_PC remains on
+    ; the operand byte so dispatch_reverse advances it exactly once afterward.
+    cli
+    out  SPDR, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    sei
+
+    clr  r25
+    sbrc PRIMARY_OPCODE, 7
+    com  r25
+    add  VM_SPL, PRIMARY_OPCODE
+    adc  VM_SPH, r25
+
+    ; Preserve the sequential stream and architectural VM_FLAGS. This delay
+    ; makes the next SPI OUT occur at the standard 17-cycle byte cadence.
+    delay_4
+    rjmp cluster_tail_17_delay_1
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SYS service dispatch
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -1453,11 +1586,10 @@ sys_millis32_func:
     sei
     rjmp cluster_tail_18
 
-; Shared continuation for JMPP and future taken control-flow instructions.
+; Shared continuation for JMPP and taken control-flow instructions.
 ; On entry, VM_PCH:VM_PCM:VM_PCL is the new image-relative program counter.
-; Replace this placeholder with code that seeks the external-flash stream to
-; VM_PC, consumes the target primary opcode, starts its following-byte fetch,
-; and dispatches directly to that primary slot without advancing VM_PC first.
+; Seek the external-flash stream to VM_PC, consume the target primary opcode,
+; start its following-byte fetch, and dispatch directly to that primary slot.
 seek_and_dispatch_func:
     fx_disable
     ldi  r30, SFC_READ

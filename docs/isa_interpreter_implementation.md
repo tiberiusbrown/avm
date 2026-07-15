@@ -258,7 +258,53 @@ The four 8-bit multiplication forms use compact registers, which map to AVR `r16
 
 The dispatch cadence is determined by handler work, not by the low-register PC alone.
 
-### 5.1. Exact primary cadence tails
+### 5.1. SPI byte-transfer and handoff rules
+
+The external flash SPI transfer requires sixteen native cycles after an `OUT SPDR,...` before the received byte is complete. With the initiating `OUT` designated cycle 0, the completed byte is available for an `IN SPDR` on cycle 17.
+
+There are exactly two legal byte-to-byte handoff schedules:
+
+#### Exact 17-cycle reverse handoff
+
+Use the reverse-order handoff whenever the next `OUT` can be placed **exactly** seventeen cycles after the preceding `OUT`:
+
+```asm
+; preceding OUT occurred at cycle 0
+; exactly fifteen cycles of work or delay occur here
+cli                     ; cycle 16
+out   SPDR, ZERO        ; cycle 17: start the next transfer
+in    byte, SPDR        ; cycle 18: read the completed previous transfer
+sei                     ; cycle 19
+```
+
+The `OUT` must land exactly on cycle 17. The received byte from the preceding transfer is already complete at that point, so the interpreter may start the next transfer before reading it. `CLI` and `SEI` protect the critical `OUT`/`IN` pair from interruption; an ISR between them could disturb `SPDR` or extend the interval in which the previous received byte remains unread.
+
+This is the preferred schedule whenever the surrounding instruction work and padding can hit the exact cycle-17 boundary. It produces a 17-cycle `OUT`-to-`OUT` cadence.
+
+#### Standard 18-cycle-or-later handoff
+
+If the interpreter cannot place the next `OUT` exactly on cycle 17, it must read the completed byte first and then start the next transfer:
+
+```asm
+; preceding OUT occurred at cycle 0
+; sixteen or more cycles of work or delay occur here
+in    byte, SPDR        ; cycle 17 or later
+out   SPDR, ZERO        ; cycle 18 or later
+```
+
+This produces an 18-cycle minimum `OUT`-to-`OUT` cadence. It is not selected according to whether the next transmitted byte is meaningful; it is selected because the handler missed, or cannot use, the exact cycle-17 reverse-handoff boundary.
+
+The reverse form must not be used late. Once cycle 17 cannot be met exactly, use `IN; OUT` so the completed receive byte is consumed before a later transfer is launched.
+
+For every primary tail, operand-fetch continuation, secondary-page decoder, and table handler:
+
+1. Count from the preceding `OUT SPDR,...`.
+2. Prefer `CLI; OUT; IN; SEI` if the new `OUT` can occur exactly on cycle 17.
+3. Otherwise use `IN; OUT`, with the `OUT` on cycle 18 or later.
+4. Add padding only to reach one of those legal boundaries; do not insert an arbitrary one-cycle delay that turns an attainable 17-cycle handoff into an 18-cycle handoff.
+5. When an instruction ends the sequential flash stream, such as a taken control transfer, only the final operand `IN` must occur no earlier than cycle 17; no following sequential `OUT` is required before the stream-seek routine begins.
+
+### 5.2. Exact primary cadence tails
 
 The standard dispatch has an 18-cycle `OUT`-to-`OUT` cadence. Its dispatch body takes eleven cycles, leaving seven cycles for the instruction body, its final `RJMP`, and any selected delay:
 

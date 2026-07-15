@@ -1137,11 +1137,42 @@ emit_primary_stub primary_DF_reserved, invalid_primary_instruction_func
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE0-0xE3: direct near/far control
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; JMP16/CALL16 consume a little-endian signed 16-bit displacement relative to
+; the address immediately following the three-byte instruction. Their primary
+; slots advance VM_PC from the opcode to the low displacement byte.
+;
+; JMPF/CALLF consume a little-endian absolute 24-bit image-relative target.
+; JMPF does not need the sequential VM_PC, so its slot spends the same three
+; setup cycles as the other direct-control slots only to preserve the first-byte
+; SPI read timing. CALLF advances directly from the opcode to nextPC with FOUR
+; so the return address is ready to push while later target bytes are fetched.
 
-emit_primary_stub primary_E0_jmp16, unimplemented_instruction_func
-emit_primary_stub primary_E1_call16, unimplemented_instruction_func
-emit_primary_stub primary_E2_jmpf, unimplemented_instruction_func
-emit_primary_stub primary_E3_callf, unimplemented_instruction_func
+.macro emit_primary_rel16 label, target
+\label:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    rjmp \target
+    assert_primary_slot_width \label
+.endm
+
+emit_primary_rel16 primary_E0_jmp16,  jmp_rel16_func
+emit_primary_rel16 primary_E1_call16, call_rel16_func
+
+primary_E2_jmpf:
+    nop
+    nop
+    nop
+    rjmp jmp_far_func
+    assert_primary_slot_width primary_E2_jmpf
+
+primary_E3_callf:
+    add  VM_PCL, FOUR
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    rjmp call_far_func
+    assert_primary_slot_width primary_E3_callf
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE4-0xE7: JMPP qN
@@ -1498,6 +1529,129 @@ adjsp_simm8_func:
     ; makes the next SPI OUT occur at the standard 17-cycle byte cadence.
     delay_4
     rjmp cluster_tail_17_delay_1
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; E0-E3 direct near/far control
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; The first operand byte was started by the primary dispatch. All four primary
+; slots deliberately enter their specialized continuation fourteen cycles after
+; that OUT, so a two-cycle delay places the first IN at the normal byte boundary.
+;
+; The inter-byte delays are filled with useful PC and stack work whenever
+; possible. In particular, CALL16 and CALLF push their complete return address
+; while a later operand byte is transferring, so their entry-to-seek latency is
+; the same as the corresponding jump form.
+
+jmp_rel16_func:
+    ; Read rel16[7:0] and start rel16[15:8].
+    delay_2
+    in   r26, SPDR
+    out  SPDR, ZERO
+
+    ; Advance from the low operand through the high operand to nextPC. Together
+    ; with nine delay cycles and the final IN, this fills the 17-cycle SPI byte
+    ; interval exactly.
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    delay_4
+    delay_3
+    delay_2
+    in   r27, SPDR
+
+    ; Add sign_extend(rel16) to nextPC in modulo-2^24 arithmetic.
+    clr  r25
+    sbrc r27, 7
+    com  r25
+    add  VM_PCL, r26
+    adc  VM_PCM, r27
+    adc  VM_PCH, r25
+    rjmp seek_and_dispatch_func
+
+call_rel16_func:
+    ; Read rel16[7:0] and start rel16[15:8].
+    delay_2
+    in   r26, SPDR
+    out  SPDR, ZERO
+
+    ; Form nextPC, push it in the canonical little-endian stack layout, and use
+    ; the remaining transfer slack before reading rel16[15:8].
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    st   -Y, VM_PCH
+    st   -Y, VM_PCM
+    st   -Y, VM_PCL
+    delay_3
+    in   r27, SPDR
+
+    ; Apply the signed displacement only after preserving nextPC.
+    clr  r25
+    sbrc r27, 7
+    com  r25
+    add  VM_PCL, r26
+    adc  VM_PCM, r27
+    adc  VM_PCH, r25
+    rjmp seek_and_dispatch_func
+
+jmp_far_func:
+    ; Fetch target[7:0], target[15:8], and target[23:16] at exact 17-cycle
+    ; byte intervals. The sequential VM_PC is irrelevant for an absolute jump.
+    delay_2
+    in   r24, SPDR
+    out  SPDR, ZERO
+    delay_4
+    delay_4
+    delay_4
+    delay_3
+    in   r25, SPDR
+    out  SPDR, ZERO
+    delay_4
+    delay_4
+    delay_4
+    delay_3
+    in   r26, SPDR
+
+    mov  VM_PCL, r24
+    mov  VM_PCM, r25
+    mov  VM_PCH, r26
+    rjmp seek_and_dispatch_func
+
+call_far_func:
+    ; The primary slot has already advanced VM_PC by four, so it is nextPC.
+    ; Fetch target[7:0] and start target[15:8].
+    delay_2
+    in   r24, SPDR
+    out  SPDR, ZERO
+
+    ; Hide the complete return-address push inside the second target byte's SPI
+    ; transfer, then read target[15:8] and start target[23:16].
+    st   -Y, VM_PCH
+    st   -Y, VM_PCM
+    st   -Y, VM_PCL
+    delay_4
+    delay_3
+    delay_2
+    in   r25, SPDR
+    out  SPDR, ZERO
+
+    ; Finish the absolute target fetch and install it as the new VM PC.
+    delay_4
+    delay_4
+    delay_4
+    delay_3
+    in   r26, SPDR
+    mov  VM_PCL, r24
+    mov  VM_PCM, r25
+    mov  VM_PCH, r26
+    rjmp seek_and_dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SYS service dispatch

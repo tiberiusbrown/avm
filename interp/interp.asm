@@ -1157,21 +1157,21 @@ emit_primary_stub primary_DF_reserved, invalid_primary_instruction_func
     assert_primary_slot_width \label
 .endm
 
-emit_primary_rel16 primary_E0_jmp16,  jmp_rel16_func
-emit_primary_rel16 primary_E1_call16, call_rel16_func
+emit_primary_rel16 primary_E0_jmp16,  jmp_call_rel16_func
+emit_primary_rel16 primary_E1_call16, jmp_call_rel16_func
 
 primary_E2_jmpf:
     nop
     nop
     nop
-    rjmp jmp_far_func
+    rjmp jmp_call_far_func
     assert_primary_slot_width primary_E2_jmpf
 
 primary_E3_callf:
     add  VM_PCL, FOUR
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
-    rjmp call_far_func
+    rjmp jmp_call_far_func
     assert_primary_slot_width primary_E3_callf
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1255,7 +1255,7 @@ primary_table_end:
 ; Post-table migration scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Primary opcodes 00-D7 are complete. Secondary decoders,
+; Primary opcodes 00-E7 are complete. Secondary decoders,
 ; condition gates, executable secondary tables, and the remaining instruction
 ; bodies are still absent. They should be added after the primary table in the
 ; single-section order defined by the implementation guide, without interior
@@ -1323,9 +1323,10 @@ fetch_simm8_then_ijmp:
     com  r25
     ijmp
 
-; Consume a little-endian 16-bit immediate. The first OUT starts imm16[15:8].
-; Twelve cycles of delay after the 24-bit PC update make the second OUT occur
-; exactly seventeen cycles later and start the following primary opcode.
+; Consume a little-endian 16-bit immediate. The low-byte handoff uses the
+; standard 18-cycle IN/OUT schedule. While the high byte transfers, complete
+; the second PC increment, use a callable delay for the remaining slack, and
+; perform an exact reverse-order 17-cycle handoff for the following opcode.
 fetch_imm16_then_ijmp:
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
@@ -1336,11 +1337,11 @@ fetch_imm16_then_ijmp:
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
-    delay_4
-    delay_4
-    delay_4
-    in   r25, SPDR
+    rcall fx_seek_delay_12
+    cli
     out  SPDR, ZERO
+    in   r25, SPDR
+    sei
     ijmp
 
 ; The following-opcode transfer needs sixteen cycles before dispatch reads it.
@@ -1350,6 +1351,13 @@ immediate_result_tail_delay_9:
     delay_4
     delay_3
     rjmp cluster_tail_18
+
+; The reverse-order high-byte handoff in LDI16 reaches its apply stub two
+; cycles later than the other immediate families. Use the shorter seven-cycle
+; landing so the following primary opcode is still read at its first legal time.
+immediate_result_tail_delay_7:
+    delay_3
+    rjmp cluster_tail_18_delay_2
 
 immediate_result_tail_delay_6:
     delay_4
@@ -1372,7 +1380,7 @@ cmpi_s8_flags_commit_delay_4:
 \label:
     mov  \dstl, PRIMARY_OPCODE
     mov  \dsth, r25
-    rjmp immediate_result_tail_delay_9
+    rjmp immediate_result_tail_delay_7
 .endm
 
 .macro emit_addi_s8_apply label, dstl, dsth
@@ -1421,6 +1429,10 @@ emit_cmpi_s8_apply cmpi_s8_c3_apply, VM_C3L, VM_C3H
 
 .macro emit_branch_rel8_decode label, skipop, flag
 \label:
+    ; The primary slot enters fifteen cycles after the operand-starting OUT.
+    ; One cycle of padding followed by the protected reverse handoff places the
+    ; speculative fallthrough OUT at the exact 17-cycle boundary.
+    nop
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
@@ -1514,6 +1526,9 @@ call_rel8_func:
 adjsp_simm8_func:
     ; Read simm8 while starting the following primary opcode. VM_PC remains on
     ; the operand byte so dispatch_reverse advances it exactly once afterward.
+    ; The one-cycle landing makes the reverse OUT occur exactly 17 cycles after
+    ; the operand-starting OUT from the preceding dispatch.
+    nop
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
@@ -1526,7 +1541,7 @@ adjsp_simm8_func:
     adc  VM_SPH, r25
 
     ; Preserve the sequential stream and architectural VM_FLAGS. This delay
-    ; makes the next SPI OUT occur at the standard 17-cycle byte cadence.
+    ; makes the next SPI OUT occur at the reverse-order 17-cycle cadence.
     delay_4
     rjmp cluster_tail_17_delay_1
 
@@ -1534,33 +1549,40 @@ adjsp_simm8_func:
 ; E0-E3 direct near/far control
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; The first operand byte was started by the primary dispatch. All four primary
-; slots deliberately enter their specialized continuation fourteen cycles after
-; that OUT, so a two-cycle delay places the first IN at the normal byte boundary.
-;
-; The inter-byte delays are filled with useful PC and stack work whenever
-; possible. In particular, CALL16 and CALLF push their complete return address
-; while a later operand byte is transferring, so their entry-to-seek latency is
-; the same as the corresponding jump form.
+; The first operand byte was started by the primary dispatch. Each paired
+; JMP/CALL continuation reaches the exact 17-cycle boundary with useful work,
+; then uses CLI/OUT/IN/SEI to launch the next operand byte. Opcode bit 0 selects
+; the call path, but its conditional return-address push is completely hidden
+; inside operand-transfer slack, so the paired forms retain equal latency.
+; Remaining idle intervals use the shared callable delay ladder.
 
-jmp_rel16_func:
-    ; Read rel16[7:0] and start rel16[15:8].
-    delay_2
-    in   r26, SPDR
+jmp_call_rel16_func:
+    ; Fetch rel16[7:0] and launch rel16[15:8] with the exact reverse-order
+    ; 17-cycle handoff. VM_PC initially names rel16[7:0].
+    add  VM_PCL, ONE
+    cli
     out  SPDR, ZERO
+    in   r26, SPDR
+    sei
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
 
-    ; Advance from the low operand through the high operand to nextPC. Together
-    ; with nine delay cycles and the final IN, this fills the 17-cycle SPI byte
-    ; interval exactly.
+    ; Advance through rel16[15:8] to nextPC. Opcode bit 0 distinguishes CALL16
+    ; from JMP16. Both paths consume the same nine-cycle transfer slack:
+    ; CALL16 uses a three-cycle skip plus three two-cycle stores, while JMP16
+    ; uses a four-cycle test/JMP plus a three-cycle delay and two-cycle RJMP.
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
-    add  VM_PCL, ONE
-    adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
-    delay_4
-    delay_3
-    delay_2
+    sbrs PRIMARY_OPCODE, 0
+    jmp  jmp_rel16_wait
+
+    ; CALL16: preserve nextPC before applying the signed displacement.
+    st   -Y, VM_PCH
+    st   -Y, VM_PCM
+    st   -Y, VM_PCL
+
+rel16_read_high:
     in   r27, SPDR
 
     ; Add sign_extend(rel16) to nextPC in modulo-2^24 arithmetic.
@@ -1572,86 +1594,48 @@ jmp_rel16_func:
     adc  VM_PCH, r25
     rjmp seek_and_dispatch_func
 
-call_rel16_func:
-    ; Read rel16[7:0] and start rel16[15:8].
-    delay_2
-    in   r26, SPDR
-    out  SPDR, ZERO
+jmp_rel16_wait:
+    delay_3
+    rjmp rel16_read_high
 
-    ; Form nextPC, push it in the canonical little-endian stack layout, and use
-    ; the remaining transfer slack before reading rel16[15:8].
-    add  VM_PCL, ONE
-    adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
-    add  VM_PCL, ONE
-    adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
+jmp_call_far_func:
+    ; Preserve opcode bit 0 before target[7:0] replaces PRIMARY_OPCODE. The MOV
+    ; occupies the same one-cycle landing used by the specialized handlers, so
+    ; target[15:8] still launches at the exact first 17-cycle boundary.
+    mov  r27, PRIMARY_OPCODE
+    cli
+    out  SPDR, ZERO
+    in   r24, SPDR
+    sei
+
+    ; E3 CALLF has already advanced VM_PC to nextPC in its primary slot. The
+    ; CALL path uses the middle-byte transfer slack to push it. The E2 JMPF
+    ; path uses an equal-time wait, so both launch target[23:16] at cycle 17.
+    sbrs r27, 0
+    jmp  jmp_far_wait
     st   -Y, VM_PCH
     st   -Y, VM_PCM
     st   -Y, VM_PCL
-    delay_3
-    in   r27, SPDR
+    delay_4
 
-    ; Apply the signed displacement only after preserving nextPC.
-    clr  r25
-    sbrc r27, 7
-    com  r25
-    add  VM_PCL, r26
-    adc  VM_PCM, r27
-    adc  VM_PCH, r25
-    rjmp seek_and_dispatch_func
-
-jmp_far_func:
-    ; Fetch target[7:0], target[15:8], and target[23:16] at exact 17-cycle
-    ; byte intervals. The sequential VM_PC is irrelevant for an absolute jump.
-    delay_2
-    in   r24, SPDR
+far_launch_high:
+    cli
     out  SPDR, ZERO
-    delay_4
-    delay_4
-    delay_4
-    delay_3
     in   r25, SPDR
-    out  SPDR, ZERO
-    delay_4
-    delay_4
-    delay_4
-    delay_3
-    in   r26, SPDR
+    sei
 
+    ; No further byte must be launched. Read target[23:16] at its earliest
+    ; legal cycle, then install the complete absolute image-relative target.
+    rcall fx_seek_delay_14
+    in   r26, SPDR
     mov  VM_PCL, r24
     mov  VM_PCM, r25
     mov  VM_PCH, r26
     rjmp seek_and_dispatch_func
 
-call_far_func:
-    ; The primary slot has already advanced VM_PC by four, so it is nextPC.
-    ; Fetch target[7:0] and start target[15:8].
-    delay_2
-    in   r24, SPDR
-    out  SPDR, ZERO
-
-    ; Hide the complete return-address push inside the second target byte's SPI
-    ; transfer, then read target[15:8] and start target[23:16].
-    st   -Y, VM_PCH
-    st   -Y, VM_PCM
-    st   -Y, VM_PCL
-    delay_4
-    delay_3
-    delay_2
-    in   r25, SPDR
-    out  SPDR, ZERO
-
-    ; Finish the absolute target fetch and install it as the new VM PC.
-    delay_4
-    delay_4
-    delay_4
-    delay_3
-    in   r26, SPDR
-    mov  VM_PCL, r24
-    mov  VM_PCM, r25
-    mov  VM_PCH, r26
-    rjmp seek_and_dispatch_func
+jmp_far_wait:
+    rcall fx_seek_delay_7
+    rjmp far_launch_high
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SYS service dispatch
@@ -1667,6 +1651,9 @@ call_far_func:
 ; consumes that opcode, starts its following byte, advances the PC, and enters
 ; its four-word primary slot.
 sys_decode_func:
+    ; The D7 primary slot reaches this continuation fifteen cycles after the
+    ; service-byte transfer began. Land the reverse OUT exactly on cycle 17.
+    nop
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
@@ -1826,13 +1813,17 @@ fx_seek_to_pc:
 
 ; Fixed delay ladder. Each name denotes total cycles from the calling RCALL
 ; through the returning RET, matching the cadence used by the SPI pipeline.
+; Entries 7 and 9-14 cover the operand-fetch slack used below without
+; repeated inline delay sequences. No current path requires an 8-cycle call.
 fx_seek_delay_17:
     nop
 fx_seek_delay_16:
     delay_2
 fx_seek_delay_14:
-    ; Three-cycle fall-through delay that does not clobber r0.
-    delay_2
+    nop
+fx_seek_delay_13:
+    nop
+fx_seek_delay_12:
     nop
 fx_seek_delay_11:
     nop

@@ -326,6 +326,12 @@
 #define SECONDARY_MULTIPLIER       r26
 #define SECONDARY_SREG             r27
 
+; FB-FD shared conditional-move gate scratch allocation.
+#define CMOV_SAVED_SREG            r24
+#define CMOV_TEST                  r25
+#define CMOV_SECONDARY             r26
+#define CMOV_MASK                  r27
+
 #define ZERO                       r2
 #define ONE                        r3
 #define FOUR                       r7
@@ -794,6 +800,17 @@ reset_handler:
     ldi  r30, lo8(pm(\table))
     ldi  r31, hi8(pm(\table))
     rjmp \width_stub
+    assert_primary_slot_width \label
+.endm
+
+; FB-FD each preload a one-bit architectural-condition mask and the shared
+; two-word CMOV table address. The secondary byte is already in flight.
+.macro emit_primary_cmov_page label, mask
+\label:
+    ldi  CMOV_MASK, \mask
+    ldi  r30, lo8(pm(cmov_table))
+    ldi  r31, hi8(pm(cmov_table))
+    rjmp cmov_gate
     assert_primary_slot_width \label
 .endm
 
@@ -1291,16 +1308,18 @@ emit_primary_bounded_page primary_F7_dense_5word_page_a, 0x90, f7_table, seconda
 ; F8 bound 0x30, five-word slots.
 emit_primary_bounded_page primary_F8_simple_condition_page, 0x30, f8_table, secondary_width_5_stub
 
-; F9 has no executable table. FB-FD use a separate shared condition gate;
-; their 64-entry shared move table is emitted below, but the gate remains
-; intentionally unimplemented.
-emit_primary_stub primary_F9_runtime_bitwise_page, unimplemented_instruction_func
+; F9 is a dedicated table-free runtime decoder. Its primary slot only forwards
+; to the nearby exact-width handler; the secondary byte is already in flight.
+emit_primary_stub primary_F9_runtime_bitwise_page, f9_bitop_entry
 
 ; FA bound 0x30, two-word forwarding slots.
 emit_primary_bounded_page primary_FA_variable_shift_page, 0x30, fa_forward_table, secondary_width_2_stub
-emit_primary_stub primary_FB_cmov_eq_ne_page, unimplemented_instruction_func
-emit_primary_stub primary_FC_cmov_ult_uge_page, unimplemented_instruction_func
-emit_primary_stub primary_FD_cmov_slt_sge_page, unimplemented_instruction_func
+
+; FB-FD share one condition gate and one 64-entry operand table. Bit 6 of the
+; secondary byte selects the inverse condition; bit 7 is reserved.
+emit_primary_cmov_page primary_FB_cmov_eq_ne_page,  (1 << SREG_Z)
+emit_primary_cmov_page primary_FC_cmov_ult_uge_page, (1 << SREG_C)
+emit_primary_cmov_page primary_FD_cmov_slt_sge_page, (1 << SREG_S)
 ; FE bound 0x40, two-word forwarding slots.
 emit_primary_bounded_page primary_FE_mul16_page, 0x40, fe_forward_table, secondary_width_2_stub
 
@@ -1313,6 +1332,93 @@ emit_primary_stub primary_FF_reserved, invalid_primary_instruction_func
 primary_table_end:
 .if (primary_table_end - primary_table) != (256 * PRIMARY_STRIDE_BYTES)
     .error "primary dispatch table is not exactly 256 four-word slots"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; F9 dedicated runtime-decoded full-register bitwise page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Encoding: F9 oodddsss
+;   bits 7:5  destination register r0-r7
+;   bits 4:2  source register r0-r7
+;   bits 1:0  00=AND, 01=OR, 10=XOR, 11=invalid
+;
+; The primary-slot RJMP plus the five instructions through OUT place the
+; speculative following-primary OUT exactly 18 cycles after the OUT that
+; started the secondary byte. Both architectural operands are loaded before
+; writeback, so destination/source aliasing is fully defined.
+
+f9_bitop_entry:
+    ; Consume the secondary byte in the VM PC and immediately start the
+    ; speculative following-primary transfer.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    cli
+    out   SPDR, ZERO
+    in    SECONDARY_OPCODE, SPDR
+    sei
+
+    ; X = native register-file address of destination rD.
+    mov   r26, SECONDARY_OPCODE
+    swap  r26
+    andi  r26, 0x0e
+    subi  r26, -8
+    mov   r27, ZERO
+
+    ; Z = native register-file address of source rS.
+    mov   r30, SECONDARY_OPCODE
+    lsr   r30
+    andi  r30, 0x0e
+    subi  r30, -8
+    mov   r31, ZERO
+
+    ; Preserve operation bits without another scratch register:
+    ; carry = original bit 0, SECONDARY_OPCODE bit 0 = original bit 1.
+    lsr   SECONDARY_OPCODE
+
+    ; Capture both complete original operands before modifying rD.
+    ld    r0,  X+
+    ld    r1,  X
+    ld    r25, Z+
+    ld    r27, Z
+
+    ; SECONDARY_OPCODE bit 0 selects low (AND/OR) versus high
+    ; (XOR/invalid) operation groups.
+    sbrc  SECONDARY_OPCODE, 0
+    rjmp  .Lf9_high_operation
+
+    ; Low group: carry selects AND=0 or OR=1.
+    brcc  .Lf9_and
+    or    r0, r25
+    or    r1, r27
+    rjmp  .Lf9_store
+
+.Lf9_and:
+    and   r0, r25
+    and   r1, r27
+
+.Lf9_store:
+    ; Loading source high into r27 temporarily replaced XH. All architectural
+    ; register-file addresses are below 0x100, so restore XH to zero.
+    mov   r27, ZERO
+    st    X,  r1
+    st    -X, r0
+    rjmp  cluster_a_tail_18
+
+.Lf9_high_operation:
+    ; High group: carry selects XOR=0 or invalid=1.
+    brcs  .Lf9_invalid
+    eor   r0, r25
+    eor   r1, r27
+    rjmp  .Lf9_store
+
+.Lf9_invalid:
+    rjmp  invalid_secondary_instruction_func
+
+f9_bitop_end:
+.if (f9_bitop_end - f9_bitop_entry) != 78
+    .error "dedicated F9 runtime bitwise handler must occupy exactly 39 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1408,14 +1514,65 @@ bounded_page_decoder_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FB-FD shared conditional-move gate
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Entry state:
+;   * CMOV_MASK identifies Z, C, or S for the selected prefix.
+;   * Z contains the AVR word address of cmov_table.
+;   * The secondary byte is completing in SPDR.
+;
+; The gate consumes that byte, starts speculative fetch of the following
+; primary opcode, applies bit-6 inversion, and indexes the table only when the
+; selected condition is true. Bit 7 is invalid. Architectural VM_FLAGS is read
+; but never modified.
+cmov_gate:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    in    CMOV_SAVED_SREG, SREG
+    cli
+    in    CMOV_SECONDARY, SPDR
+    out   SPDR, ZERO
+    out   SREG, CMOV_SAVED_SREG
+
+    cpi   CMOV_SECONDARY, 0x80
+    brsh  cmov_invalid
+
+    in    CMOV_TEST, VM_FLAGS
+    sbrc  CMOV_SECONDARY, 6
+    com   CMOV_TEST
+    and   CMOV_TEST, CMOV_MASK
+    breq  cmov_no_move
+
+    andi  CMOV_SECONDARY, 0x3F
+    lsl   CMOV_SECONDARY
+    add   r30, CMOV_SECONDARY
+    adc   r31, ZERO
+    ijmp
+
+cmov_no_move:
+    rjmp  cluster_a_tail
+
+cmov_invalid:
+    rjmp  invalid_secondary
+
+cmov_gate_end:
+.if (cmov_gate_end - cmov_gate) != 44
+    .error "FB-FD shared condition gate must occupy exactly 22 AVR words"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Post-table migration scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; All defined non-prefix primary opcodes 00-EF are complete. The generic
 ; bounded-page decoder, secondary cadence clusters, and every specified
 ; executable secondary table are present. The fixed-width self-contained F1-F8
-; pages are implemented; F0, F9, FA, FB-FD, and FE still require their dedicated
-; veneers, decoders/gates, forwarding bodies, or shared implementations.
+; pages, the dedicated F9 runtime bitwise decoder, and the FB-FD shared
+; conditional-move gate/table are implemented; F0, FA, and FE still require
+; their dedicated veneers, forwarding bodies, or shared implementations.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -2451,6 +2608,16 @@ invalid_syscall_func:
     .endif
 .endm
 
+.macro emit_cmov_entry dst, src
+.Lcmov_start_\@:
+    movw  \dst, \src
+    rjmp  cmov_tail
+.Lcmov_end_\@:
+    .if (.Lcmov_end_\@ - .Lcmov_start_\@) != 4
+        .error "FB-FD CMOV entry is not exactly two AVR words"
+    .endif
+.endm
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Secondary-page cadence clusters and table insertion anchors
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2461,10 +2628,14 @@ invalid_syscall_func:
 
 ; Cluster A serves F0/F1/F2/F3, the dedicated F9 decoder, cold F0 bodies, the
 ; FB-FD condition gate/table, and FE/FA shared bodies where specified.
-; F1's one-cycle slots need two landing cycles after the bounded decoder's
-; one-cycle valid branch. Keep this extra landing outside the 24-word cluster.
-cluster_a_tail_17_delay_2:
+; The CMOV false path reaches this landing twelve cycles after launching the
+; following-primary transfer. NOP plus the two-cycle RJMP supply exactly three
+; cycles, so the reverse tail's OUT lands on cycle 17. The two-cycle F1 landing
+; shares the RJMP. Keep both entries outside the measured 24-word cluster.
+cluster_a_tail:
     nop
+cluster_a_tail_17_delay_2:
+    rjmp cluster_a_tail_17
 cluster_a_start:
 cluster_a_tail_17_delay_1:
     nop
@@ -2477,7 +2648,6 @@ flags_commit_a_18_delay_1:
     out  VM_FLAGS, SECONDARY_OPCODE
 cluster_a_tail_18_delay_1:
     nop
-cluster_a_tail:
 cluster_a_tail_18:
     dispatch
 cluster_a_end:
@@ -4330,6 +4500,7 @@ cluster_c_tail_18_delay_2:
 cluster_c_tail_18_delay_1:
     nop
 cluster_c_tail:
+cmov_tail:
 cluster_c_tail_18:
     dispatch
 cluster_c_end:
@@ -4337,10 +4508,9 @@ cluster_c_end:
     .error "secondary cadence Cluster C must occupy 23 AVR words"
 .endif
 
-; F8 contains its exact CSET slots. FA, the shared FB-FD operand table, and FE
-; retain final-width placeholders immediately below Cluster C. FB-FD will
-; validate secondary < 0x80 in its condition gate, then use bits 5:0 to select
-; one of the 64 two-word entries in cmov_table.
+; F8 contains its exact CSET slots. FA and FE retain final-width forwarding
+; placeholders. FB-FD validate secondary < 0x80 in the shared condition gate,
+; then use bits 5:0 to select one of the 64 two-word MOVW entries below.
 secondary_tables_after_cluster_c:
 secondary_unimplemented_c_func:
     rjmp secondary_unimplemented_b_func
@@ -4449,7 +4619,141 @@ f8_table_end:
 .endif
 
 emit_secondary_trap_table fa_forward_table, fa_forward_table_end, 0x30, 2, secondary_unimplemented_c_func
-emit_secondary_trap_table cmov_table,       cmov_table_end,       0x40, 2, secondary_unimplemented_c_func
+
+cmov_table:
+    ; 00: CMOV r0,r0
+    emit_cmov_entry r8, r8
+    ; 01: CMOV r0,r1
+    emit_cmov_entry r8, r10
+    ; 02: CMOV r0,r2
+    emit_cmov_entry r8, r12
+    ; 03: CMOV r0,r3
+    emit_cmov_entry r8, r14
+    ; 04: CMOV r0,r4
+    emit_cmov_entry r8, r16
+    ; 05: CMOV r0,r5
+    emit_cmov_entry r8, r18
+    ; 06: CMOV r0,r6
+    emit_cmov_entry r8, r20
+    ; 07: CMOV r0,r7
+    emit_cmov_entry r8, r22
+    ; 08: CMOV r1,r0
+    emit_cmov_entry r10, r8
+    ; 09: CMOV r1,r1
+    emit_cmov_entry r10, r10
+    ; 0A: CMOV r1,r2
+    emit_cmov_entry r10, r12
+    ; 0B: CMOV r1,r3
+    emit_cmov_entry r10, r14
+    ; 0C: CMOV r1,r4
+    emit_cmov_entry r10, r16
+    ; 0D: CMOV r1,r5
+    emit_cmov_entry r10, r18
+    ; 0E: CMOV r1,r6
+    emit_cmov_entry r10, r20
+    ; 0F: CMOV r1,r7
+    emit_cmov_entry r10, r22
+    ; 10: CMOV r2,r0
+    emit_cmov_entry r12, r8
+    ; 11: CMOV r2,r1
+    emit_cmov_entry r12, r10
+    ; 12: CMOV r2,r2
+    emit_cmov_entry r12, r12
+    ; 13: CMOV r2,r3
+    emit_cmov_entry r12, r14
+    ; 14: CMOV r2,r4
+    emit_cmov_entry r12, r16
+    ; 15: CMOV r2,r5
+    emit_cmov_entry r12, r18
+    ; 16: CMOV r2,r6
+    emit_cmov_entry r12, r20
+    ; 17: CMOV r2,r7
+    emit_cmov_entry r12, r22
+    ; 18: CMOV r3,r0
+    emit_cmov_entry r14, r8
+    ; 19: CMOV r3,r1
+    emit_cmov_entry r14, r10
+    ; 1A: CMOV r3,r2
+    emit_cmov_entry r14, r12
+    ; 1B: CMOV r3,r3
+    emit_cmov_entry r14, r14
+    ; 1C: CMOV r3,r4
+    emit_cmov_entry r14, r16
+    ; 1D: CMOV r3,r5
+    emit_cmov_entry r14, r18
+    ; 1E: CMOV r3,r6
+    emit_cmov_entry r14, r20
+    ; 1F: CMOV r3,r7
+    emit_cmov_entry r14, r22
+    ; 20: CMOV r4,r0
+    emit_cmov_entry r16, r8
+    ; 21: CMOV r4,r1
+    emit_cmov_entry r16, r10
+    ; 22: CMOV r4,r2
+    emit_cmov_entry r16, r12
+    ; 23: CMOV r4,r3
+    emit_cmov_entry r16, r14
+    ; 24: CMOV r4,r4
+    emit_cmov_entry r16, r16
+    ; 25: CMOV r4,r5
+    emit_cmov_entry r16, r18
+    ; 26: CMOV r4,r6
+    emit_cmov_entry r16, r20
+    ; 27: CMOV r4,r7
+    emit_cmov_entry r16, r22
+    ; 28: CMOV r5,r0
+    emit_cmov_entry r18, r8
+    ; 29: CMOV r5,r1
+    emit_cmov_entry r18, r10
+    ; 2A: CMOV r5,r2
+    emit_cmov_entry r18, r12
+    ; 2B: CMOV r5,r3
+    emit_cmov_entry r18, r14
+    ; 2C: CMOV r5,r4
+    emit_cmov_entry r18, r16
+    ; 2D: CMOV r5,r5
+    emit_cmov_entry r18, r18
+    ; 2E: CMOV r5,r6
+    emit_cmov_entry r18, r20
+    ; 2F: CMOV r5,r7
+    emit_cmov_entry r18, r22
+    ; 30: CMOV r6,r0
+    emit_cmov_entry r20, r8
+    ; 31: CMOV r6,r1
+    emit_cmov_entry r20, r10
+    ; 32: CMOV r6,r2
+    emit_cmov_entry r20, r12
+    ; 33: CMOV r6,r3
+    emit_cmov_entry r20, r14
+    ; 34: CMOV r6,r4
+    emit_cmov_entry r20, r16
+    ; 35: CMOV r6,r5
+    emit_cmov_entry r20, r18
+    ; 36: CMOV r6,r6
+    emit_cmov_entry r20, r20
+    ; 37: CMOV r6,r7
+    emit_cmov_entry r20, r22
+    ; 38: CMOV r7,r0
+    emit_cmov_entry r22, r8
+    ; 39: CMOV r7,r1
+    emit_cmov_entry r22, r10
+    ; 3A: CMOV r7,r2
+    emit_cmov_entry r22, r12
+    ; 3B: CMOV r7,r3
+    emit_cmov_entry r22, r14
+    ; 3C: CMOV r7,r4
+    emit_cmov_entry r22, r16
+    ; 3D: CMOV r7,r5
+    emit_cmov_entry r22, r18
+    ; 3E: CMOV r7,r6
+    emit_cmov_entry r22, r20
+    ; 3F: CMOV r7,r7
+    emit_cmov_entry r22, r22
+cmov_table_end:
+.if (cmov_table_end - cmov_table) != (2 * 0x40 * 2)
+    .error "cmov_table has incorrect size"
+.endif
+
 emit_secondary_trap_table fe_forward_table, fe_forward_table_end, 0x40, 2, secondary_unimplemented_c_func
 
 ; The active secondary executable tables must occupy exactly 7,276 bytes.

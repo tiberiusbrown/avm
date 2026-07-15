@@ -1133,11 +1133,25 @@ emit_primary_stub primary_E3_callf, unimplemented_instruction_func
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE4-0xE7: JMPP qN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; A program pointer uses the first register of qN for bits 15:0 and the low
+; byte of the second register for bits 23:16. The unused top byte of qN is
+; ignored. Each primary slot installs that 24-bit address as the current VM PC
+; and forwards to the shared stream-seek/primary-dispatch handler.
 
-emit_primary_stub primary_E4_jmpp_q0, unimplemented_instruction_func
-emit_primary_stub primary_E5_jmpp_q1, unimplemented_instruction_func
-emit_primary_stub primary_E6_jmpp_q2, unimplemented_instruction_func
-emit_primary_stub primary_E7_jmpp_q3, unimplemented_instruction_func
+.macro emit_primary_jmpp label, ptr16, ptr23_16
+\label:
+    movw VM_PCL, \ptr16
+    mov  VM_PCH, \ptr23_16
+    delay_3
+    rjmp seek_and_dispatch_func
+    assert_primary_slot_width \label
+.endm
+
+emit_primary_jmpp primary_E4_jmpp_q0, VM_R0, VM_R1L
+emit_primary_jmpp primary_E5_jmpp_q1, VM_R2, VM_R3L
+emit_primary_jmpp primary_E6_jmpp_q2, VM_R4, VM_R5L
+emit_primary_jmpp primary_E7_jmpp_q3, VM_R6, VM_R7L
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE8-0xEB: CALLP qN
@@ -1438,6 +1452,43 @@ sys_millis32_func:
     lds  VM_C1H, data_millis+3
     sei
     rjmp cluster_tail_18
+
+; Shared continuation for JMPP and future taken control-flow instructions.
+; On entry, VM_PCH:VM_PCM:VM_PCL is the new image-relative program counter.
+; Replace this placeholder with code that seeks the external-flash stream to
+; VM_PC, consumes the target primary opcode, starts its following-byte fetch,
+; and dispatches directly to that primary slot without advancing VM_PC first.
+seek_and_dispatch_func:
+    fx_disable
+    ldi  r30, SFC_READ
+    fx_enable
+    out  SPDR, r30
+
+    lds  r26, data_page_data+0
+    add  r26, VM_PCM
+    lds  r27, data_page_data+1
+    adc  r27, VM_PCH
+
+    rcall fx_seek_delay_10
+    out  SPDR, r27
+    rcall fx_seek_delay_17
+    out  SPDR, r26
+    rcall fx_seek_delay_17
+    out  SPDR, VM_PCL
+    rcall fx_seek_delay_16
+    out  SPDR, ZERO
+    rcall fx_seek_delay_14
+    add  VM_PCL, ONE
+    cli
+    out  SPDR, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    sei
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    mul  PRIMARY_OPCODE, FOUR
+    movw r30, r0
+    subi r31, hi8(-(pm(primary_table)))
+    ijmp
 
 ; Defined encodings stop here until their handlers are implemented.
 unimplemented_instruction_func:

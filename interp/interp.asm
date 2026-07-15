@@ -473,6 +473,13 @@
 #define AVM_TAIL_MAGIC2         0x54
 #define AVM_TAIL_MAGIC3         0x01
 #define AVM_TAIL_OFFSET_IN_PAGE 0xF8
+
+; Arduboy system ABI service identifiers.
+#define SYS_DEBUG_PUTC          0x00
+#define SYS_DEBUG_BREAK         0x01
+#define SYS_MILLIS              0x02
+#define SYS_MILLIS32            0x03
+
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
 #define FX_DEV_TAIL_NOSAVE_HI   0xFF
@@ -973,7 +980,20 @@ emit_primary_stub primary_D3_conditional_branch, unimplemented_instruction_func
 emit_primary_stub primary_D4_jmp_rel8, unimplemented_instruction_func
 emit_primary_stub primary_D5_call_rel8, unimplemented_instruction_func
 emit_primary_stub primary_D6_adjsp, unimplemented_instruction_func
-emit_primary_stub primary_D7_sys, unimplemented_instruction_func
+
+; Account for the service byte in the 24-bit VM PC. The out-of-line decoder
+; reads that byte from SPDR and immediately starts fetching the following
+; primary opcode. This setup plus the final RJMP exactly fills the four-word
+; primary slot.
+primary_D7_sys:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    rjmp sys_decode_func
+primary_D7_sys_end:
+.if (primary_D7_sys_end - primary_D7_sys) != PRIMARY_STRIDE_BYTES
+    .error "SYS primary dispatch slot is not exactly four words"
+.endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xD8-0xDF: reserved
@@ -1077,12 +1097,101 @@ cluster_tail_17_delay_1:
 cluster_tail_17:
     dispatch_reverse
 
+cluster_tail_18_delay_3:
+    nop
 cluster_tail_18_delay_2:
     rjmp cluster_tail_18
 cluster_tail_18_delay_1:
     nop
 cluster_tail_18:
     dispatch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SYS service dispatch
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Entry state:
+;   * VM PC points at the following primary opcode.
+;   * SPDR contains the completed service byte.
+;   * The byte following the service has not yet been started.
+;
+; The protected SPDR handoff starts fetching the following primary opcode and
+; captures the service ID. Each service returns through cluster_tail_18, which
+; consumes that opcode, starts its following byte, advances the PC, and enters
+; its four-word primary slot.
+sys_decode_func:
+    cli
+    out  SPDR, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    sei
+
+sys_dispatch_func:
+    ldi  r30, lo8(pm(sys_dispatch_table))
+    ldi  r31, hi8(pm(sys_dispatch_table))
+    add  r30, PRIMARY_OPCODE
+    adc  r31, ZERO
+    ijmp
+
+.macro sys_entries count, target
+    .rept \count
+        rjmp \target
+    .endr
+.endm
+
+.if (SYS_DEBUG_PUTC != 0x00)
+    .error "SYS_DEBUG_PUTC must occupy dispatch-table entry 0"
+.endif
+.if (SYS_DEBUG_BREAK != 0x01)
+    .error "SYS_DEBUG_BREAK must occupy dispatch-table entry 1"
+.endif
+.if (SYS_MILLIS != 0x02)
+    .error "SYS_MILLIS must occupy dispatch-table entry 2"
+.endif
+.if (SYS_MILLIS32 != 0x03)
+    .error "SYS_MILLIS32 must occupy dispatch-table entry 3"
+.endif
+
+; One AVR word per service number. The service byte therefore indexes this
+; table directly in program-memory word-address space.
+sys_dispatch_table:
+    sys_entries 1,   sys_debug_putc_func
+    sys_entries 1,   sys_debug_break_func
+    sys_entries 1,   sys_millis_func
+    sys_entries 1,   sys_millis32_func
+    sys_entries 252, invalid_syscall_func
+sys_dispatch_table_end:
+
+.if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
+    .error "SYS dispatch table must contain exactly 256 one-word entries"
+.endif
+
+sys_debug_putc_func:
+    ; DEBUG_PUTC writes low8(c0) to the emulator/debug USB endpoint register.
+    sts  UEDATX, VM_C0L
+    rjmp cluster_tail_18_delay_2
+
+sys_debug_break_func:
+    break
+    rjmp cluster_tail_18_delay_3
+
+; Return a coherent low 16-bit snapshot of the millisecond counter in c0.
+sys_millis_func:
+    cli
+    lds  VM_C0L, data_millis+0
+    lds  VM_C0H, data_millis+1
+    sei
+    rjmp cluster_tail_18
+
+; Return a coherent 32-bit snapshot with the low half in c0 and high half in
+; c1. Timer0 cannot update the counter during the four-byte snapshot.
+sys_millis32_func:
+    cli
+    lds  VM_C0L, data_millis+0
+    lds  VM_C0H, data_millis+1
+    lds  VM_C1L, data_millis+2
+    lds  VM_C1H, data_millis+3
+    sei
+    rjmp cluster_tail_18
 
 ; Defined encodings stop here until their handlers are implemented.
 unimplemented_instruction_func:

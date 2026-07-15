@@ -616,7 +616,7 @@ reset_handler:
 ;
 ; The primary table has 256 fixed four-word slots. A completed short handler
 ; ends with RJMP to a shared cadence tail; a longer primary handler may use its
-; fourth word to forward to an out-of-line continuation. Opcodes 0x00-0xBF are
+; fourth word to forward to an out-of-line continuation. Opcodes 0x00-0xCF are
 ; implemented directly below. Later defined opcodes remain migration stubs and
 ; reserved encodings trap as invalid.
 
@@ -762,6 +762,18 @@ reset_handler:
     ld   \dstl, Y+
     ld   \dsth, Y+
     rjmp cluster_tail_18_delay_1
+    nop
+    assert_primary_slot_width \label
+.endm
+
+; Multi-byte primary slots preload a destination-specific apply address in Z,
+; then forward to a family-shared operand-fetch continuation. The fourth word
+; is padding so every slot retains the fixed four-word primary stride.
+.macro emit_primary_immediate label, apply, fetch
+\label:
+    ldi  r30, lo8(pm(\apply))
+    ldi  r31, hi8(pm(\apply))
+    rjmp \fetch
     nop
     assert_primary_slot_width \label
 .endm
@@ -1033,37 +1045,37 @@ emit_primary_pop16 primary_BF_pop16_r7, VM_R7L, VM_R7H
 ; 0xC0-0xC3: LDI8 cD,imm8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_C0_ldi8_c0, unimplemented_instruction_func
-emit_primary_stub primary_C1_ldi8_c1, unimplemented_instruction_func
-emit_primary_stub primary_C2_ldi8_c2, unimplemented_instruction_func
-emit_primary_stub primary_C3_ldi8_c3, unimplemented_instruction_func
+emit_primary_immediate primary_C0_ldi8_c0, ldi8_c0_apply, fetch_imm8_then_ijmp
+emit_primary_immediate primary_C1_ldi8_c1, ldi8_c1_apply, fetch_imm8_then_ijmp
+emit_primary_immediate primary_C2_ldi8_c2, ldi8_c2_apply, fetch_imm8_then_ijmp
+emit_primary_immediate primary_C3_ldi8_c3, ldi8_c3_apply, fetch_imm8_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xC4-0xC7: LDI16 cD,imm16
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_C4_ldi16_c0, unimplemented_instruction_func
-emit_primary_stub primary_C5_ldi16_c1, unimplemented_instruction_func
-emit_primary_stub primary_C6_ldi16_c2, unimplemented_instruction_func
-emit_primary_stub primary_C7_ldi16_c3, unimplemented_instruction_func
+emit_primary_immediate primary_C4_ldi16_c0, ldi16_c0_apply, fetch_imm16_then_ijmp
+emit_primary_immediate primary_C5_ldi16_c1, ldi16_c1_apply, fetch_imm16_then_ijmp
+emit_primary_immediate primary_C6_ldi16_c2, ldi16_c2_apply, fetch_imm16_then_ijmp
+emit_primary_immediate primary_C7_ldi16_c3, ldi16_c3_apply, fetch_imm16_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xC8-0xCB: ADDI.S8 cD,simm8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_C8_addi_s8_c0, unimplemented_instruction_func
-emit_primary_stub primary_C9_addi_s8_c1, unimplemented_instruction_func
-emit_primary_stub primary_CA_addi_s8_c2, unimplemented_instruction_func
-emit_primary_stub primary_CB_addi_s8_c3, unimplemented_instruction_func
+emit_primary_immediate primary_C8_addi_s8_c0, addi_s8_c0_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_C9_addi_s8_c1, addi_s8_c1_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CA_addi_s8_c2, addi_s8_c2_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CB_addi_s8_c3, addi_s8_c3_apply, fetch_simm8_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xCC-0xCF: CMPI.S8 cL,simm8
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_CC_cmpi_s8_c0, unimplemented_instruction_func
-emit_primary_stub primary_CD_cmpi_s8_c1, unimplemented_instruction_func
-emit_primary_stub primary_CE_cmpi_s8_c2, unimplemented_instruction_func
-emit_primary_stub primary_CF_cmpi_s8_c3, unimplemented_instruction_func
+emit_primary_immediate primary_CC_cmpi_s8_c0, cmpi_s8_c0_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CD_cmpi_s8_c1, cmpi_s8_c1_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CE_cmpi_s8_c2, cmpi_s8_c2_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CF_cmpi_s8_c3, cmpi_s8_c3_apply, fetch_simm8_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xD0-0xD3: conditional branches
@@ -1215,6 +1227,130 @@ cluster_tail_18_delay_1:
     nop
 cluster_tail_18:
     dispatch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; C0-CF compact immediate instructions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; At entry to each fetch continuation, the first immediate byte was started by
+; the dispatch that selected the primary slot. Z contains the word address of
+; the destination-specialized apply stub. PRIMARY_OPCODE (r24) carries imm8 or
+; the low byte of imm16; r25 carries the sign extension or imm16 high byte.
+;
+; The fetch paths leave VM PC naming the final immediate byte. Their final OUT
+; starts the following primary opcode; the apply stubs delay until that byte is
+; ready, then standard dispatch advances PC to it and enters its primary slot.
+
+; Consume one unsigned immediate byte and start the following primary opcode.
+; From primary-slot entry to the OUT is eight cycles; including the preceding
+; dispatch, this preserves the normal 17/18-cycle SPI byte cadence.
+fetch_imm8_then_ijmp:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    out  SPDR, ZERO
+    ijmp
+
+; Consume one signed immediate byte, start the following primary opcode, and
+; form its 16-bit sign extension in r25 before entering the selected apply stub.
+fetch_simm8_then_ijmp:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    out  SPDR, ZERO
+    clr  r25
+    sbrc PRIMARY_OPCODE, 7
+    com  r25
+    ijmp
+
+; Consume a little-endian 16-bit immediate. The first OUT starts imm16[15:8].
+; Twelve cycles of delay after the 24-bit PC update make the second OUT occur
+; exactly seventeen cycles later and start the following primary opcode.
+fetch_imm16_then_ijmp:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    out  SPDR, ZERO
+
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    delay_4
+    delay_4
+    delay_4
+    in   r25, SPDR
+    out  SPDR, ZERO
+    ijmp
+
+; The following-opcode transfer needs sixteen cycles before dispatch reads it.
+; These shared landings provide the family-specific remainder after IJMP,
+; native work, and the apply stub's final RJMP.
+immediate_result_tail_delay_9:
+    delay_4
+    delay_3
+    rjmp cluster_tail_18
+
+immediate_result_tail_delay_6:
+    delay_4
+    rjmp cluster_tail_18
+
+; CMPI.S8 has one extra native instruction to capture SREG. Four cycles before
+; the existing flag commit make its following-opcode read occur at cycle 16.
+cmpi_s8_flags_commit_delay_4:
+    delay_2
+    rjmp flags_commit_18
+
+.macro emit_ldi8_apply label, dstl, dsth
+\label:
+    mov  \dstl, PRIMARY_OPCODE
+    clr  \dsth
+    rjmp immediate_result_tail_delay_9
+.endm
+
+.macro emit_ldi16_apply label, dstl, dsth
+\label:
+    mov  \dstl, PRIMARY_OPCODE
+    mov  \dsth, r25
+    rjmp immediate_result_tail_delay_9
+.endm
+
+.macro emit_addi_s8_apply label, dstl, dsth
+\label:
+    add  \dstl, PRIMARY_OPCODE
+    adc  \dsth, r25
+    rjmp immediate_result_tail_delay_6
+.endm
+
+.macro emit_cmpi_s8_apply label, lhsl, lhsh
+\label:
+    cp   \lhsl, PRIMARY_OPCODE
+    cpc  \lhsh, r25
+    in   PRIMARY_OPCODE, SREG
+    rjmp cmpi_s8_flags_commit_delay_4
+.endm
+
+emit_ldi8_apply ldi8_c0_apply, VM_C0L, VM_C0H
+emit_ldi8_apply ldi8_c1_apply, VM_C1L, VM_C1H
+emit_ldi8_apply ldi8_c2_apply, VM_C2L, VM_C2H
+emit_ldi8_apply ldi8_c3_apply, VM_C3L, VM_C3H
+
+emit_ldi16_apply ldi16_c0_apply, VM_C0L, VM_C0H
+emit_ldi16_apply ldi16_c1_apply, VM_C1L, VM_C1H
+emit_ldi16_apply ldi16_c2_apply, VM_C2L, VM_C2H
+emit_ldi16_apply ldi16_c3_apply, VM_C3L, VM_C3H
+
+emit_addi_s8_apply addi_s8_c0_apply, VM_C0L, VM_C0H
+emit_addi_s8_apply addi_s8_c1_apply, VM_C1L, VM_C1H
+emit_addi_s8_apply addi_s8_c2_apply, VM_C2L, VM_C2H
+emit_addi_s8_apply addi_s8_c3_apply, VM_C3L, VM_C3H
+
+emit_cmpi_s8_apply cmpi_s8_c0_apply, VM_C0L, VM_C0H
+emit_cmpi_s8_apply cmpi_s8_c1_apply, VM_C1L, VM_C1H
+emit_cmpi_s8_apply cmpi_s8_c2_apply, VM_C2L, VM_C2H
+emit_cmpi_s8_apply cmpi_s8_c3_apply, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SYS service dispatch

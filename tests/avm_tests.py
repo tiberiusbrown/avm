@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build, link, and run the AVM assembly and freestanding C test suites.
+"""Build, link, and run the AVM assembly test suite.
 
 Each ``name.asm`` file must have a sibling ``name_output.txt`` file containing
-the expected serial output. The restricted ``llvm-avm-image create`` operation
-is the link/image-layout step for the current AVM toolchain.
+the expected serial output. ``ld.lld`` creates the authoritative linked ELF;
+``llvm-avm-image create`` only packages that executable ELF.
 """
 
 from __future__ import annotations
@@ -34,7 +34,8 @@ class TestCommandError(RuntimeError):
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--llvm-mc", required=True, type=Path)
-    parser.add_argument("--clang", required=True, type=Path)
+    parser.add_argument("--lld", required=True, type=Path)
+    parser.add_argument("--llvm-objdump", required=True, type=Path)
     parser.add_argument("--llvm-avm-image", required=True, type=Path)
     parser.add_argument("--ardens", required=True, type=Path)
     parser.add_argument("--interpreter", required=True, type=Path)
@@ -146,6 +147,8 @@ def link_and_run(
     artifact_dir: Path,
     artifact_name: str,
     *,
+    lld: Path,
+    llvm_objdump: Path,
     llvm_avm_image: Path,
     ardens: Path,
     interpreter: Path,
@@ -157,18 +160,48 @@ def link_and_run(
         raise TestCommandError(f"missing expected-output file: {expected_path}")
 
     artifact_dir.mkdir(parents=True, exist_ok=True)
+    elf_path = artifact_dir / f"{artifact_name}.elf"
+    disassembly_path = artifact_dir / f"{artifact_name}.dis"
     image_path = artifact_dir / f"{artifact_name}.bin"
     serial_path = artifact_dir / f"{artifact_name}_actual.txt"
 
-    for path in (image_path, serial_path):
+    for path in (elf_path, disassembly_path, image_path, serial_path):
         path.unlink(missing_ok=True)
 
-    # Restricted single-object link and image-layout step.
+    # LLD is the only link step. The linked ELF retains final symbols and is
+    # the artifact inspected by objdump before it is packaged.
+    run_command(
+        (
+            lld,
+            "-flavor",
+            "gnu",
+            "--entry=_start",
+            "-o",
+            elf_path,
+            object_path,
+        ),
+        timeout_seconds=timeout_seconds,
+        verbose=verbose,
+    )
+    with disassembly_path.open("wb") as output:
+        command = [str(llvm_objdump), "--disassemble", "--syms", str(elf_path)]
+        if verbose:
+            print(f"    $ {command_text(command)}")
+        result = subprocess.run(command, stdout=output, stderr=subprocess.PIPE,
+                                timeout=timeout_seconds, check=False)
+        if result.returncode != 0:
+            raise TestCommandError(
+                f"command exited with status {result.returncode}:\n"
+                f"    {command_text(command)}\n"
+                + result.stderr.decode("utf-8", errors="backslashreplace")
+            )
+
+    # The packer consumes an ET_EXEC only and performs no linking.
     run_command(
         (
             llvm_avm_image,
             "create",
-            object_path,
+            elf_path,
             "-o",
             image_path,
         ),
@@ -251,36 +284,6 @@ def run_asm_test(asm_path: Path, **kwargs) -> None:
     )
 
 
-def run_c_test(c_path: Path, optimization: str, *, clang: Path, **kwargs) -> None:
-    work_dir = kwargs.pop("work_dir") / "c" / optimization
-    work_dir.mkdir(parents=True, exist_ok=True)
-    object_path = work_dir / f"{c_path.stem}.o"
-    object_path.unlink(missing_ok=True)
-    run_command(
-        (
-            clang,
-            "--target=avm-unknown-arduboyfx",
-            "-std=c11",
-            "-ffreestanding",
-            "-fno-builtin",
-            f"-{optimization}",
-            "-c",
-            c_path,
-            "-o",
-            object_path,
-        ),
-        timeout_seconds=kwargs["timeout_seconds"],
-        verbose=kwargs["verbose"],
-    )
-    link_and_run(
-        object_path,
-        c_path.with_name(f"{c_path.stem}_output.txt"),
-        work_dir,
-        c_path.stem,
-        **kwargs,
-    )
-
-
 def main() -> int:
     args = parse_args()
 
@@ -293,7 +296,8 @@ def main() -> int:
 
     try:
         llvm_mc = require_file(args.llvm_mc, "llvm-mc")
-        clang = require_file(args.clang, "clang")
+        lld = require_file(args.lld, "lld")
+        llvm_objdump = require_file(args.llvm_objdump, "llvm-objdump")
         llvm_avm_image = require_file(
             args.llvm_avm_image, "llvm-avm-image"
         )
@@ -315,42 +319,27 @@ def main() -> int:
 
     tests = sorted(asm_dir.glob("*.asm"), key=lambda path: path.name.lower())
 
-    c_dir = args.c_dir.resolve()
-    if not c_dir.is_dir():
-        print(f"error: C test directory does not exist: {c_dir}", file=sys.stderr)
-        return 2
-    c_tests = sorted(c_dir.glob("*.c"), key=lambda path: path.name.lower())
-
     work_dir = args.work_dir.resolve()
     work_dir.mkdir(parents=True, exist_ok=True)
 
     failures: List[Tuple[str, str]] = []
-    configurations = [
-        (f"[ASM] {path.name}", path, None) for path in tests
-    ] + [
-        (f"[C {opt}] {path.name}", path, opt)
-        for path in c_tests
-        for opt in ("O0", "O2")
-    ]
+    configurations = [(f"[ASM] {path.name}", path) for path in tests]
     test_labels = [label for label, _, _ in configurations]
     result_column = max((len(label) for label in test_labels), default=0) + 2
 
     print(
-        f"Running {len(tests)} AVM assembly test(s) and "
-        f"{len(c_tests) * 2} C configuration(s)"
+        f"Running {len(tests)} AVM assembly test(s)"
     )
-    for test_label, source_path, optimization in configurations:
+    for test_label, source_path in configurations:
         try:
             common = dict(
+                lld=lld, llvm_objdump=llvm_objdump,
                 llvm_avm_image=llvm_avm_image, ardens=ardens,
                 interpreter=interpreter, work_dir=work_dir,
                 headless_ms=args.headless_ms,
                 timeout_seconds=args.timeout_seconds, verbose=args.verbose,
             )
-            if optimization is None:
-                run_asm_test(source_path, llvm_mc=llvm_mc, **common)
-            else:
-                run_c_test(source_path, optimization, clang=clang, **common)
+            run_asm_test(source_path, llvm_mc=llvm_mc, **common)
         except TestCommandError as exc:
             failures.append((test_label, str(exc)))
             print(f"{test_label:<{result_column}}FAIL")

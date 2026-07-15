@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(avm LANGUAGES C CXX ASM)
 
+# AVM is an experimental MC-only target. It stays in LLVM's target list so
+# tools such as LLD can link its MC libraries, but has no code generator.
 set(LLVM_TARGETS_TO_BUILD              ""    CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM" CACHE STRING "" FORCE)
 set(LLVM_ENABLE_PROJECTS               "clang;lld" CACHE STRING "" FORCE)
@@ -9,9 +11,12 @@ set(LLVM_BUILD_TOOLS                   ON    CACHE BOOL   "" FORCE)
 
 add_subdirectory(deps/llvm-project/llvm llvm-build)
 
-add_custom_target(avm_clang DEPENDS clang)
 add_custom_target(avm_toolchain
-    DEPENDS clang llc llvm-mc llvm-objdump llvm-readobj llvm-avm-image)
+    DEPENDS llvm-mc llvm-objdump llvm-readobj lld llvm-avm-image)
+
+# LLD's CMake target is `lld`; on Windows the GNU driver is emitted as the
+# ld.lld sibling alias.  Keep the invocation explicit and generator-safe.
+set(AVM_LD_LLD "$<TARGET_FILE_DIR:lld>/ld.lld${CMAKE_EXECUTABLE_SUFFIX}")
 
 # Build only the Ardens debugger application. Keep Ardens's bundled LLVM
 # integration disabled so it does not download or build its own LLVM tree.
@@ -112,14 +117,15 @@ set(AVM_C_TEST_DIR
 set(AVM_TEST_WORK_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/tests/$<CONFIG>")
 
-# Build the required LLVM tools, Ardens, and the AVR interpreter, then run the
-# unified AVM test driver.
+# Build the assembly-level LLVM tools, Ardens, and the AVR interpreter, then
+# run the unified AVM assembly test driver.
 add_custom_target(avm_tests
     COMMAND
         "${Python3_EXECUTABLE}"
         "${AVM_TEST_SCRIPT}"
         --llvm-mc "$<TARGET_FILE:llvm-mc>"
-        --clang "$<TARGET_FILE:clang>"
+        --lld "${AVM_LD_LLD}"
+        --llvm-objdump "$<TARGET_FILE:llvm-objdump>"
         --llvm-avm-image "$<TARGET_FILE:llvm-avm-image>"
         --ardens "$<TARGET_FILE:Ardens>"
         --interpreter "${AVM_INTERPRETER_HEX}"
@@ -130,7 +136,8 @@ add_custom_target(avm_tests
         --timeout-seconds "${AVM_TEST_TIMEOUT_SECONDS}"
     DEPENDS
         llvm-mc
-        clang
+        lld
+        llvm-objdump
         llvm-avm-image
         Ardens
         avm_interpreter
@@ -157,10 +164,11 @@ set(AVM_BENCH_OBJECT
     "${AVM_BENCH_BUILD_DIR}/instructions.o")
 set(AVM_BENCH_IMAGE
     "${AVM_BENCH_BUILD_DIR}/instructions.bin")
+set(AVM_BENCH_ELF
+    "${AVM_BENCH_BUILD_DIR}/instructions.elf")
 
-# Assemble the benchmark bytecode as one AVM ET_REL object.  The current
-# restricted llvm-avm-image path consumes exactly one relocatable object and
-# resolves _start while producing the complete interpreter-ready image.
+# Assemble the benchmark bytecode as one AVM ET_REL object. LLD performs the
+# link step; llvm-avm-image packages the resulting executable ELF.
 add_custom_command(
     OUTPUT "${AVM_BENCH_OBJECT}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_BENCH_BUILD_DIR}"
@@ -178,13 +186,18 @@ add_custom_command(
 )
 
 add_custom_command(
-    OUTPUT "${AVM_BENCH_IMAGE}"
+    OUTPUT "${AVM_BENCH_ELF}" "${AVM_BENCH_IMAGE}"
+    COMMAND
+        "${AVM_LD_LLD}"
+        "${AVM_BENCH_OBJECT}"
+        -o "${AVM_BENCH_ELF}"
     COMMAND
         "$<TARGET_FILE:llvm-avm-image>"
         create
-        "${AVM_BENCH_OBJECT}"
+        "${AVM_BENCH_ELF}"
         -o "${AVM_BENCH_IMAGE}"
     DEPENDS
+        lld
         llvm-avm-image
         "${AVM_BENCH_OBJECT}"
     COMMENT "Building the AVM instruction benchmark image"

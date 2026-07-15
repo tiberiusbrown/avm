@@ -1,145 +1,79 @@
-# Arduboy Virtual Machine Architecture
+# Arduboy Virtual Machine Interface Specification
 
 **Status:** Version 1 design draft  
-**Target host:** ATmega32U4-based Arduboy FX  
-**Intended consumers:** AVR assembly interpreter, LLVM backend, Clang target, assembler, linker, image packer, debugger, runtime library, and system libraries
+**Intended consumers:** LLVM backend, Clang target, assembler, disassembler, linker, image writer, debugger, validator, runtime library, system libraries, and conforming VM implementations
 
 ---
 
-## 1. Document scope and authority
+## 1. Scope and authority
 
-The Arduboy Virtual Machine, abbreviated **AVM**, is a compact bytecode architecture designed to execute applications directly from external SPI flash on an ATmega32U4.
+The Arduboy Virtual Machine, abbreviated **AVM**, is a compact bytecode architecture with:
 
-This document defines the non-instruction architectural contract:
+- Eight 16-bit general-purpose registers.
+- A flat 24-bit program counter and read-only program address space.
+- A 16-bit data address space.
+- A downward-growing VM stack.
+- A three-bit architectural condition state.
+- A defined calling convention, system ABI, object-file model, and linked-image format.
 
-- Architectural state and register organization.
-- Data and program address spaces.
-- Pointer and scalar data representation.
+This document is the normative Version 1 interface specification. It defines:
+
+- Architectural state.
+- Scalar, pointer, and aggregate representation.
+- Every instruction encoding and operand-byte format.
+- Instruction semantics and condition-state behavior.
 - Calling convention.
-- System ABI.
-- LLVM and Clang target model.
-- ELF, relocation, linker, and flat-image contracts.
-- Interpreter integration requirements.
-- Startup, save-storage, and image-discovery behavior.
-- Diagnostics, compatibility, and undefined behavior.
+- System-service ABI.
+- LLVM and Clang target contracts.
+- ELF relocations and linker responsibilities.
+- Flat-image layout, startup state, diagnostics, and versioning.
 
-The instruction set is specified separately in:
-
-```text
-docs/avm_isa.md
-```
-
-That document is the sole normative source for:
-
-- Primary and secondary opcode assignments.
-- Instruction mnemonics and operand forms.
-- Encoded lengths and operand-byte formats.
-- Instruction value semantics.
-- Per-instruction condition-code effects.
-- Branch displacement encodings.
-- Reserved instruction encodings.
-- Native AVR cycle estimates.
-
-Instruction-level information is intentionally not duplicated here. If this document and `docs/avm_isa.md` appear to disagree about an instruction encoding or instruction semantic, `docs/avm_isa.md` is authoritative.
+Implementation details and performance estimates are outside this specification.
 
 ---
 
-## 2. Design goals
-
-AVM is optimized for:
-
-- Bytecode programs and immutable assets larger than 64 KiB.
-- Sequential bytecode streaming from SPI flash.
-- One-byte encodings for high-frequency operations.
-- A handwritten AVR assembly interpreter.
-- Eight virtual registers permanently resident in native AVR registers.
-- Operand-specialized primary dispatch.
-- Direct mapping of VM data pointers to ATmega32U4 data-space addresses.
-- A custom LLVM and Clang target.
-- C and a useful freestanding subset of C++.
-- Static allocation without a general-purpose heap.
-
-AVM does not attempt to:
-
-- Provide memory protection in optimized execution mode.
-- Provide a built-in dynamically allocated heap.
-- Guarantee constant instruction timing.
-- Efficiently support unrestricted 64-bit arithmetic.
-- Support an individual function larger than 64 KiB.
-- Support self-modifying code.
-
----
-
-## 3. Host constraints and design rationale
-
-The ATmega32U4 data address space places the 32 native CPU registers at `0x0000–0x001F`, I/O and extended I/O below `0x0100`, and 2,560 bytes of internal SRAM at `0x0100–0x0AFF`. Native register-indirect addressing can address the register file as data memory, and only native `Y` and `Z` support displacement addressing. ([Microchip][1])
-
-The device provides three general-purpose I/O registers. `GPIOR1` and `GPIOR2` are accessible through one-cycle `IN` and `OUT`, making them suitable for persistent bank state. ([Microchip][1])
-
-Important native AVR register restrictions include:
-
-- Immediate ALU operations generally require native registers `r16–r31`.
-- `ADIW` and `SBIW` operate only on pairs beginning at `r24`, `r26`, `r28`, or `r30`.
-- `MULS` uses the high native register set.
-- `MULSU` is restricted to native registers `r16–r23`.
-- Native multiplication places its result in `r1:r0`.
-
-These restrictions motivate placing the compact AVM registers in native `r16–r23`, placing logical `PC` in `r24:r25`, placing AVM `SP` in native `Y`, and reserving native `r0:r1` as multiplication and dispatch scratch. ([Microchip][2])
-
----
-
-## 4. Terminology and notation
+## 2. Terminology and notation
 
 The words **MUST**, **MUST NOT**, **SHOULD**, and **MAY** describe architectural requirements and recommendations.
 
 ```text
-rN      One of the eight 16-bit architectural registers r0-r7
-bN      The low byte of rN
-cN      One of the four compact-register aliases c0-c3
-A       Accumulator alias for c0/r4
-qN      One of the four aligned 32-bit register-pair aliases q0-q3
-PC      Sixteen-bit offset of the current instruction
-CB      Current code bank
-PB      Program-address bank latch
-SP      VM stack pointer
-CC      Architectural condition state
+rN        One of the eight 16-bit registers r0-r7
+low8(rN)  Bits 7:0 of rN
+high8(rN) Bits 15:8 of rN
+cN        Compact alias c0-c3
+qN        Aligned 32-bit pair q0-q3
+PC        Flat 24-bit logical program counter
+SP        16-bit VM stack pointer
+CC        Architectural condition state
 ```
 
-Existing interpreter source may use the implementation name `VM_FLAGS` for the native register that stores `CC`. `CC` is the architectural name.
+Multi-byte quantities are little-endian unless stated otherwise.
 
-Multi-byte values use little-endian order unless explicitly stated otherwise.
+Arithmetic on 8-, 16-, 24-, and 32-bit values is modulo the corresponding power of two unless the instruction explicitly performs signed extension, comparison, or arithmetic right shift.
 
 ---
 
 # Part I — Architectural State
 
-## 5. General-purpose registers
+## 3. General-purpose registers
 
-AVM has eight 16-bit general-purpose registers:
+AVM has eight 16-bit registers:
 
 ```text
 r0  r1  r2  r3  r4  r5  r6  r7
 ```
 
-A register may hold:
+Each register may hold:
 
 - A 16-bit integer.
-- A directly mapped data-space pointer.
+- A 16-bit data pointer.
+- A byte value in bits `7:0`.
 - One word of a larger integer.
-- Part of a 24-bit program pointer.
-- Two independently managed byte values, although only the low byte has a distinct architectural name.
+- Part of a canonical program or function pointer.
 
-The low byte of each register is named:
+There is no separate architectural byte-register file.
 
-```text
-b0  b1  b2  b3  b4  b5  b6  b7
-```
-
-`bN` aliases bits `7:0` of `rN`. It is not separate storage.
-
----
-
-## 6. Compact registers and accumulator
+## 4. Compact registers
 
 The compact aliases are:
 
@@ -150,21 +84,11 @@ c2 = r6
 c3 = r7
 ```
 
-The accumulator alias is:
+Compact aliases name the same storage as their corresponding `rN` registers. They exist only to select shorter instruction encodings and the preferred ABI register class.
 
-```text
-A = c0 = r4
-```
+## 5. Aligned 32-bit register pairs
 
-`A` does not add architectural storage. It names the register selected by accumulator-oriented instruction families and remains the first argument and return-value register under the calling convention.
-
-The compact aliases exist because the corresponding native AVR registers occupy `r16–r23`, where the host ISA offers its strongest immediate and signed-multiply support.
-
----
-
-## 7. Aligned 32-bit register pairs
-
-The four aligned pair aliases are:
+The aligned pair aliases are:
 
 ```text
 q0 = r0:r1
@@ -173,123 +97,37 @@ q2 = r4:r5
 q3 = r6:r7
 ```
 
-Within each pair:
+For each `qN`:
 
 ```text
 first register   = bits 15:0
 second register  = bits 31:16
 ```
 
-The same pair representation is used for:
+The pair aliases do not add storage.
 
-- 32-bit integer values.
-- 32-bit floating-point values.
-- Register-form 24-bit program and function pointers.
-- Multiword argument and return allocation.
+## 6. Program counter
 
-A 24-bit pointer held in a pair uses the low register for bits `15:0` and the low byte of the high register for bits `23:16`. The remaining high byte is zero in canonical form.
-
----
-
-## 8. Native AVR register assignment
-
-The current handwritten interpreter uses:
-
-```asm
-; Native dispatch and interpreter state
-AVR r0-r1      Native MUL result, dispatch offset, scratch
-AVR r2         Permanent zero and SPI dummy byte
-AVR r3         AVM CC storage; may retain nonarchitectural SREG bits
-AVR r4-r5      Interpreter scratch
-AVR r6         Current opcode or operand scratch
-AVR r7         Primary dispatch-slot stride in AVR words
-
-; AVM register file
-AVR r8-r9      AVM r0
-AVR r10-r11    AVM r1
-AVR r12-r13    AVM r2
-AVR r14-r15    AVM r3
-AVR r16-r17    AVM r4 = c0 = A
-AVR r18-r19    AVM r5 = c1
-AVR r20-r21    AVM r6 = c2
-AVR r22-r23    AVM r7 = c3
-
-; Addressing and dispatch
-AVR r24-r25    AVM PC
-AVR r26-r27    X, interpreter address scratch
-AVR r28-r29    Y, AVM SP
-AVR r30-r31    Z, dispatch and address scratch
-
-; Persistent bank state
-GPIOR1         CB
-GPIOR2         PB
-```
-
-The mapping of an AVM register to the native register-file data address is regular:
+`PC` is a flat 24-bit logical address:
 
 ```text
-AVM rN low byte  = AVR r(8 + 2N)
-AVM rN high byte = AVR r(9 + 2N)
+PC[23:0]
 ```
 
-This mapping is an interpreter contract used by generic handlers and debugger integrations. The ISA operand encodings that exploit it are defined only in `docs/avm_isa.md`.
+At instruction execution, `PC` identifies the first byte of the current instruction.
 
----
-
-## 9. Program counter and code bank
-
-The architectural execution address is 24 bits:
+Unless an instruction transfers control, execution continues at:
 
 ```text
-CB:PC
+nextPC = PC + encoded_instruction_length
 ```
 
-`CB` contains bits `23:16`.  
-`PC` contains bits `15:0`.
+Relative displacements are measured from `nextPC`.
 
-At entry to a primary instruction handler:
 
-```text
-PC = logical address of the current primary opcode byte
-```
+## 7. Stack pointer
 
-Each handler computes the following instruction address from the encoded instruction length defined by `docs/avm_isa.md`.
-
-Relative control-flow displacements are relative to the address immediately following the complete instruction.
-
-The ordinary sequential path MUST NOT propagate `PC` overflow into `CB`. Linker constraints prevent valid fallthrough from crossing a 64 KiB bank boundary.
-
-`CB` changes only through control transfers that explicitly replace the bank, return, startup, or debugger/trap recovery. Near control flow and sequential execution leave `CB` unchanged.
-
----
-
-## 10. Program-address bank latch
-
-`PB` is a separate bank latch used only to construct program-data addresses:
-
-```text
-program-data address = PB:rN
-```
-
-`PB` is distinct from `CB`:
-
-```text
-CB:PC  = current bytecode execution address
-PB:rN  = independently constructed program-data address
-```
-
-Changing `PB` does not affect sequential instruction execution.
-
-Indirect jumps and calls do not consume `PB`; they consume a canonical 24-bit
-program or function pointer held in an aligned `qN` pair.
-
-`PB` is caller-saved under the ABI.
-
----
-
-## 11. Stack pointer
-
-`SP` is a 16-bit directly mapped data-space pointer held in native `Y`.
+`SP` is a 16-bit data-space pointer.
 
 The initial value is:
 
@@ -297,100 +135,76 @@ The initial value is:
 SP = 0x0A00
 ```
 
-The VM stack grows downward into:
+The conventional VM stack range is:
 
 ```text
-0x0900–0x09FF
+0x0900-0x09FF
 ```
 
-`0x0A00` is the valid empty-stack value immediately above the VM stack.
+The stack grows downward. There is no red zone.
 
-There is no red zone. Stack overflow and underflow are undefined behavior in optimized execution mode.
+## 8. Architectural condition state
 
----
+`CC` contains three architecturally visible bits:
 
-## 12. Architectural condition state
-
-AVM exposes only three architectural condition bits:
-
-| Bit | Name | Architectural role |
+| Bit | Name | Meaning after compare/test |
 |---:|---|---|
-| 0 | `C` | Unsigned carry/borrow or unsigned-less condition |
-| 1 | `Z` | Zero/equal condition |
-| 4 | `S` | Signed-result or signed-less condition |
+| 0 | `C` | Unsigned left operand is less than unsigned right operand |
+| 1 | `Z` | Operands are equal, or tested value is zero |
+| 4 | `S` | Signed left operand is less than signed right operand |
 
-The bit positions intentionally match the corresponding AVR `SREG` positions.
-
-After comparison and test operations:
+Only these instruction families replace `CC`:
 
 ```text
-C = unsigned left operand is less than unsigned right operand
-Z = operands are equal
-S = signed left operand is less than signed right operand
+CMP
+CMPI.S8
+CMP32
+TST8
+TST16
 ```
 
-The one-byte compact add and subtract operations also replace `CC` using the native 16-bit AVR arithmetic result:
+All other instructions preserve `CC`.
 
-```text
-ADD: C = carry, Z = result is zero, S = N xor V
-SUB: C = borrow, Z = result is zero, S = signed left operand is less than right
-```
-
-All other instructions preserve `CC` unless `docs/avm_isa.md` explicitly identifies them as condition-producing.
-
-The interpreter stores `CC` in native AVR `r3`. It MAY retain other native `SREG` bits in that byte for implementation convenience, but those bits are not architectural and guest software MUST NOT depend on them.
-
-Native dispatch modifies AVR `SREG`. Conditional operations therefore consume saved `CC`, not the transient native status left by dispatch.
+Nonarchitectural bits in the storage used for `CC` are unspecified and MUST NOT be observed by guest code.
 
 ---
 
-# Part II — Memory and Address Spaces
+# Part II — Memory, Pointers, and Data Representation
 
-## 13. Data address space
+## 9. Data address space
 
-AVM address space zero is the complete 16-bit ATmega32U4 data address space.
-
-An AVM data pointer is the native data-space address:
+Address space zero is a 16-bit byte-addressed data space:
 
 ```text
-native data-space address = AVM pointer
+0x0000-0xFFFF
 ```
 
-No bias or translation is applied.
-
-The ISA permits access to the full `0x0000–0xFFFF` range, including native registers, I/O, SRAM, framebuffer storage, interpreter-reserved regions, and unimplemented addresses. Access to an address not implemented by the target device has target-defined behavior.
+A data pointer is the raw 16-bit address. No bias or translation is applied by the ISA.
 
 The conventional runtime layout is:
 
 | Address | Size | Conventional purpose |
 |---|---:|---|
-| `0x0000–0x001F` | 32 bytes | Native AVR register file |
-| `0x0020–0x00FF` | 224 bytes | AVR I/O and extended I/O |
-| `0x0100–0x04FF` | 1,024 bytes | Static global storage |
-| `0x0500–0x08FF` | 1,024 bytes | Display framebuffer |
-| `0x0900–0x09FF` | 256 bytes | VM stack |
-| `0x0A00–0x0AFF` | 256 bytes | Interpreter state and native stack |
-| `0x0B00–0xFFFF` | — | Unimplemented or target-specific |
+| `0x0000-0x00FF` | 256 bytes | Platform-mapped low data space |
+| `0x0100-0x04FF` | 1,024 bytes | Static global storage |
+| `0x0500-0x08FF` | 1,024 bytes | Display framebuffer |
+| `0x0900-0x09FF` | 256 bytes | VM stack |
+| `0x0A00-0x0AFF` | 256 bytes | Runtime-reserved data |
+| `0x0B00-0xFFFF` | — | Platform-defined or unimplemented |
 
-The null data pointer is:
+The null data pointer is `0x0000`.
 
-```text
-0x0000
-```
+Access to unsupported, reserved, or platform-defined addresses has target-defined behavior and may be rejected by a validating implementation.
 
-This representation does not make hardware address zero inaccessible. Source-language null dereferences remain undefined, while explicit low-level code may form address zero through integer conversion or absolute data-space access.
+## 10. Static storage and framebuffer
 
----
-
-## 14. Static global storage
-
-The global region is:
+Writable static storage occupies:
 
 ```text
-0x0100–0x04FF
+0x0100-0x04FF
 ```
 
-Writable static storage is laid out contiguously:
+Layout:
 
 ```text
 0x0100                       start of .data
@@ -398,89 +212,159 @@ Writable static storage is laid out contiguously:
 0x0100 + staticSize          first byte after static storage
 ```
 
-Required invariants:
+Required:
 
 ```text
 0 <= dataSize <= staticSize <= 1024
-bssSize = staticSize - dataSize
 ```
-
-Linker-created padding within `.data` or `.bss` is included in these sizes.
-
-Static-duration local objects, C++ static objects, compiler-generated writable data, and fixed-capacity application state all occupy this same region.
-
-There is no heap after `.bss`.
-
----
-
-## 15. Framebuffer
 
 The framebuffer occupies:
 
 ```text
-0x0500–0x08FF
+0x0500-0x08FF
 ```
 
-It is ordinary guest-writable SRAM.
-
-The conventional Arduboy page layout is:
+The conventional pixel mapping is:
 
 ```text
-address = 0x0500 + x + 128 × (y >> 3)
+address = 0x0500 + x + 128 * (y >> 3)
 bit     = y & 7
 ```
 
-The architecture assigns no pixel semantics beyond the fixed address range. Graphics libraries and system services define higher-level behavior.
+## 11. Program address space
 
----
-
-## 16. VM stack and interpreter-reserved SRAM
-
-The VM stack occupies:
+Address space one is a 24-bit byte-addressed, read-only program space:
 
 ```text
-0x0900–0x09FF
+0x000000-0xFFFFFF
 ```
 
-The range:
+The first 256 bytes are reserved for the linked-image header:
 
 ```text
-0x0A00–0x0AFF
+0x000000-0x0000FF  image header
+0x000100-...       linked payload
 ```
 
-is reserved for interpreter implementation state, including:
+The null program pointer is `0x000000`.
 
-- Native AVR stack.
-- Physical image and save-page state.
-- Runtime configuration.
-- Debugger and service state.
-- Saved state for native ABI bridges.
+Program-space stores do not exist.
 
-The architecture does not prevent guest access to this range. Guest writes may corrupt interpreter state and are undefined unless a separately documented system service assigns meaning to them.
+## 12. Program and function pointers
 
-The implementation MUST ensure that fixed interpreter state and the descending native stack cannot collide under supported interrupt and service nesting.
+### 12.1. Memory representation
 
----
+Program and function pointers are packed little-endian 24-bit values:
 
-## 17. Raw data-space access
+```text
+byte 0 = bits 7:0
+byte 1 = bits 15:8
+byte 2 = bits 23:16
+```
 
-All data-memory addressing uses raw 16-bit native addresses.
+```text
+sizeof(program pointer)  = 3
+sizeof(function pointer) = 3
+alignment                = 1
+```
 
-Consequences include:
+### 12.2. Register representation
 
-- Low addresses may intentionally access native registers or I/O.
-- The framebuffer is addressed through its fixed SRAM range.
-- Guest code is not isolated from peripherals or interpreter state.
-- Hardware-register access observes native read, write, and side-effect behavior.
-- Untrusted bytecode MUST NOT execute without validation or a separately sandboxed interpreter.
+A program or function pointer in registers occupies one `qN`:
 
----
+```text
+low register                  = bits 15:0
+low byte of high register     = bits 23:16
+high byte of high register    = zero
+```
 
-## 18. Allocation model
+Canonical register-form pointers therefore satisfy:
 
-AVM provides no general-purpose dynamic allocation.
+```text
+qN[31:24] = 0
+```
 
-The standard runtime does not provide usable implementations of:
+### 12.3. Pointer arithmetic
+
+Program-pointer arithmetic is unsigned 24-bit arithmetic.
+
+Data and program pointers belong to disjoint address spaces. Implicit conversion between them is forbidden. Explicit integer conversion is target-defined.
+
+
+## 13. Program-space layout constraints
+
+The program address space is flat across the full range:
+
+```text
+0x000000-0xFFFFFF
+```
+
+The linker MAY place functions, basic blocks, jump tables, constants, and other program-resident objects anywhere in that range, subject only to:
+
+1. No instruction may extend past `0xFFFFFF`.
+2. Every control-flow target must identify the first byte of a valid instruction.
+3. Every direct or indirect target must satisfy any alignment requirement of the selected instruction form.
+4. Every program-resident object must fit entirely within the 24-bit address space.
+5. Relative control transfers must fit their encoded displacement range.
+6. Absolute and indirect control transfers may cross any `0xXXXXXX` address boundary.
+
+Functions, basic blocks, fallthrough paths, and program data may freely cross 64 KiB boundaries.
+
+## 14. Endianness and alignment
+
+AVM is little-endian.
+
+All scalar ABI alignments are one byte.
+
+Unaligned 16-, 24-, 32-, and 64-bit memory objects are permitted.
+
+The VM stack has one-byte alignment.
+
+## 15. C and C++ data model
+
+| Type | Size |
+|---|---:|
+| `bool` | 1 byte |
+| `char` | 1 byte |
+| `short` | 2 bytes |
+| `int` | 2 bytes |
+| `long` | 4 bytes |
+| `long long` | 8 bytes |
+| `float` | 4 bytes |
+| `double` | 4 bytes |
+| `long double` | 4 bytes |
+| Data pointer | 2 bytes |
+| Program pointer | 3 bytes |
+| Function pointer | 3 bytes |
+| `size_t` | 2 bytes |
+| `ptrdiff_t` | 2 bytes |
+| `wchar_t` | 2 bytes |
+
+Plain `char` is signed by default.
+
+`bool` is represented canonically as zero or one.
+
+## 16. Byte and larger values in registers
+
+A byte value occupies `low8(rN)`.
+
+The instruction definition determines the high byte:
+
+- `LD8U`, `LDM8U`, `LDSP8U`, `LDP8U`, `LDI8`, `ZEXT8`, `MUL8`, `BOOL`, and `CSET` clear it.
+- `LD8S`, `LDSP8S`, `LDP8S`, and `SEXT8` sign-extend it.
+- Byte stores use only `low8(rN)`.
+- `SWAP8` modifies only `low8(rN)` and preserves `high8(rN)`.
+
+A 32-bit integer occupies one `qN`.
+
+A 64-bit integer occupies four 16-bit registers or is lowered through runtime helpers.
+
+
+## 16.1. Allocation model
+
+AVM provides no architectural general-purpose heap.
+
+The standard freestanding runtime does not provide usable implementations of:
 
 ```text
 malloc
@@ -495,284 +379,770 @@ Placement `new` is permitted.
 
 Variable-length arrays and unrestricted dynamic `alloca` SHOULD be disabled.
 
-A program may implement a fixed-capacity allocator within its global or stack storage, but such an allocator has no architectural status.
+A program may implement a fixed-capacity allocator within its own global or stack storage, but that allocator has no architectural status.
+---
+
+# Part III — ISA Encoding
+
+## 17. General encoding rules
+
+Instruction bytes are stored in increasing program-address order.
+
+Immediate and address operands are little-endian:
+
+```text
+imm16 / addr16 / rel16:
+    low byte, then high byte
+
+target24:
+    low byte, middle byte, high byte
+```
+
+Reserved primary opcodes, out-of-range secondary bytes, malformed operand specifiers, and prohibited operand aliases are invalid instructions.
+
+Except for the five condition-producing families listed in Section 8, every instruction preserves `CC`.
+
+## 18. Register-field conventions
+
+### 18.1. Compact matrix byte
+
+For primary opcodes `00-AF`:
+
+```text
+bits 3:2  destination, address, or left compact register
+bits 1:0  source, address, or right compact register
+```
+
+Register code `0-3` selects `c0-c3`.
+
+### 18.2. Full-register pair index `PAIR48`
+
+Several dense pages omit compact/compact forms because those have one-byte encodings.
+
+For destination/left register `d` and source/right register `s`:
+
+```text
+if d in r0-r3:
+    PAIR48(d,s) = 8*d + s                    ; 00-1F
+
+else if d in r4-r7 and s in r0-r3:
+    PAIR48(d,s) = 0x20 + 4*(d-4) + s        ; 20-2F
+
+else:
+    use the one-byte compact/compact form
+```
+
+### 18.3. Compact-pointer ordinary-memory index
+
+For compact pointer `cA` and noncompact data register `rN`, where `N=0-3`:
+
+```text
+MEM16(cA,rN) = 4*A + N
+```
+
+### 18.4. Compact-pointer postincrement-memory index
+
+For compact pointer `cA` and any data register `rN`, where `N=0-7`:
+
+```text
+MEM32(cA,rN) = 8*A + N
+```
+
+### 18.5. Stack-offset compact index
+
+For unsigned four-bit stack displacement `u4` and compact register `cN`:
+
+```text
+STACK64(u4,cN) = 4*u4 + N
+```
+
+### 18.6. Program-load operand byte `PSPEC`
+
+Program-space scalar loads use:
+
+```text
+bits 7:4  destination register code = 2*rD
+bits 3:0  address-pair code         = 4*qA
+```
+
+Program-space pair loads use:
+
+```text
+bits 7:4  destination-pair code = 4*qD
+bits 3:0  address-pair code     = 4*qA
+```
+
+Thus:
+
+```text
+rN code = 2*N   -> 0,2,4,6,8,10,12,14
+qN code = 4*N   -> 0,4,8,12
+```
+
+Any other `PSPEC` value is invalid.
+
+### 18.7. Cold 32-bit operand byte `RRSPEC32`
+
+```text
+bits 7:4  high operand code
+bits 3:0  low operand code
+```
+
+Codes:
+
+```text
+rN = 2*N
+qN = 4*N
+```
+
+Interpretation:
+
+```text
+CMP32: high=qL, low=qR
+LD32:  high=qD, low=rA
+ST32:  high=qS, low=rA
+```
+
+Malformed alignment codes are invalid.
+
+### 18.8. Cold general-memory operand byte
+
+```text
+dddWaaaP
+```
+
+| Field | Meaning |
+|---|---|
+| `ddd` bits `7:5` | Data register `rD` or `rS` |
+| `W` bit `4` | `0` byte, `1` word |
+| `aaa` bits `3:1` | Pointer register `rA` |
+| `P` bit `0` | `0` ordinary, `1` postincrement |
+
+Every bit pattern selects valid registers and modifiers.
 
 ---
 
-## 19. Program address space
+# Part IV — Complete Opcode Map
 
-AVM address space one is a 24-bit logical, read-only program space:
+## 19. Primary opcode map
+
+| Primary | Encoding / instruction | Length | `CC` |
+|---:|---|---:|---|
+| `00-0F` | `MOV cD,cS` | 1 | Preserve |
+| `10-1F` | `ADD cD,cS` | 1 | Preserve |
+| `20-2F` | `SUB cD,cS` | 1 | Preserve |
+| `30-3F` | `CMP cL,cR` | 1 | Replace |
+| `40-4F` | `LD8U cD,[cA]` | 1 | Preserve |
+| `50-5F` | `ST8 [cA],cS` | 1 | Preserve |
+| `60-6F` | `LD16 cD,[cA]` | 1 | Preserve |
+| `70-7F` | `ST16 [cA],cS` | 1 | Preserve |
+| `80-8F` | `AND cD,cS` | 1 | Preserve |
+| `90-9F` | `OR cD,cS` | 1 | Preserve |
+| `A0-AF` | `XOR cD,cS` | 1 | Preserve |
+| `B0-B7` | `PUSH16 rN` | 1 | Preserve |
+| `B8-BF` | `POP16 rN` | 1 | Preserve |
+| `C0-C3` | `LDI8 cD,imm8` | 2 | Preserve |
+| `C4-C7` | `LDI16 cD,imm16` | 3 | Preserve |
+| `C8-CB` | `ADDI.S8 cD,simm8` | 2 | Preserve |
+| `CC-CF` | `CMPI.S8 cL,simm8` | 2 | Replace |
+| `D0` | `BREQ rel8` | 2 | Preserve |
+| `D1` | `BRNE rel8` | 2 | Preserve |
+| `D2` | `BRULT rel8` | 2 | Preserve |
+| `D3` | `BRSLT rel8` | 2 | Preserve |
+| `D4` | `JMP rel8` | 2 | Preserve |
+| `D5` | `CALL rel8` | 2 | Preserve |
+| `D6` | `ADJSP simm8` | 2 | Preserve |
+| `D7` | `SYS service8` | 2 | Service-defined; default preserve |
+| `D8-DF` | Reserved | — | — |
+| `E0` | `JMP16 rel16` | 3 | Preserve |
+| `E1` | `CALL16 rel16` | 3 | Preserve |
+| `E2` | `JMPF target24` | 4 | Preserve |
+| `E3` | `CALLF target24` | 4 | Preserve |
+| `E4-E7` | `JMPP qN` | 1 | Preserve |
+| `E8-EB` | `CALLP qN` | 1 | Preserve |
+| `EC-EE` | Reserved | — | — |
+| `EF` | `RET` | 1 | Preserve |
+| `F0` | Cold-form page | 2-4 | Instruction-defined |
+| `F1` | Dense page 1 | 2 | Instruction-defined |
+| `F2` | Dense page 2 | 2 | Preserve |
+| `F3` | Dense page 3 | 2 | Preserve |
+| `F4` | Dense page 4 | 2 | Instruction-defined |
+| `F5` | Dense page 5 | 2 | Instruction-defined |
+| `F6` | Dense page 6 | 2 | Instruction-defined |
+| `F7` | Dense page 7 | 2 | Preserve |
+| `F8` | `CSET` page | 2 | Preserve |
+| `F9` | General bitwise page | 2 | Preserve |
+| `FA` | Variable-shift page | 2 | Preserve |
+| `FB-FD` | Conditional-move pages | 2 | Preserve |
+| `FE` | `MUL16` page | 2 | Preserve |
+| `FF` | Reserved | — | — |
+
+## 20. One-byte instruction semantics
+
+### 20.1. Compact register matrices
+
+For `00-AF`, the low nibble is the compact matrix from Section 18.1.
+
+| Range | Instruction | Semantics |
+|---|---|---|
+| `00-0F` | `MOV cD,cS` | `cD = cS` |
+| `10-1F` | `ADD cD,cS` | `cD = low16(cD + cS)` |
+| `20-2F` | `SUB cD,cS` | `cD = low16(cD - cS)` |
+| `30-3F` | `CMP cL,cR` | Replace `CC` from 16-bit comparison; registers unchanged |
+| `40-4F` | `LD8U cD,[cA]` | `cD = zero_extend8(mem8[cA])` |
+| `50-5F` | `ST8 [cA],cS` | `mem8[cA] = low8(cS)` |
+| `60-6F` | `LD16 cD,[cA]` | `cD = mem16le[cA]` |
+| `70-7F` | `ST16 [cA],cS` | `mem16le[cA] = cS` |
+| `80-8F` | `AND cD,cS` | `cD = cD & cS` |
+| `90-9F` | `OR cD,cS` | `cD = cD | cS` |
+| `A0-AF` | `XOR cD,cS` | `cD = cD ^ cS` |
+
+Canonical aliases:
 
 ```text
-0x000000–0xFFFFFF
+NOP    = MOV c0,c0
+CLR cN = XOR cN,cN
 ```
 
-The first 256 bytes are reserved for the linked-image header:
+### 20.2. Stack register operations
 
 ```text
-0x000000–0x0000FF  image header
-0x000100–...       linked program payload
+B0 + N    PUSH16 rN
+B8 + N    POP16 rN
 ```
 
-The payload may contain:
-
-- Bytecode.
-- Read-only constants.
-- Strings.
-- Graphics and other immutable assets.
-- Jump tables.
-- Constructor and destructor tables.
-- `.data` initializers.
-- Function pointers.
-- Optional runtime metadata.
-
-After the required header and contiguous `.data` initializer prefix, code and immutable data may be interleaved according to linker policy.
-
-For every stored image byte:
+`PUSH16 rN`:
 
 ```text
-file offset = logical program-space address
+SP = SP - 2
+mem8[SP+0] = low8(rN)
+mem8[SP+1] = high8(rN)
 ```
 
-The null program pointer is:
+`POP16 rN`:
 
 ```text
-0x000000
+rN = mem16le[SP]
+SP = SP + 2
 ```
 
-No allocatable symbol may be placed below logical address `0x000100`.
+## 21. Immediate instructions
 
-Program-space stores do not exist.
+Compact destination is selected by the low two bits of the primary opcode.
+
+| Primary | Instruction | Semantics |
+|---:|---|---|
+| `C0-C3` | `LDI8 cD,imm8` | `cD = zero_extend8(imm8)` |
+| `C4-C7` | `LDI16 cD,imm16` | `cD = imm16` |
+| `C8-CB` | `ADDI.S8 cD,simm8` | `cD = low16(cD + sign_extend8(simm8))` |
+| `CC-CF` | `CMPI.S8 cL,simm8` | Compare `cL` with `sign_extend8(simm8)` and replace `CC` |
+
+## 22. Control-flow and system instructions
+
+### 22.1. Conditions
+
+```text
+EQ   CC.Z == 1
+NE   CC.Z == 0
+ULT  CC.C == 1
+UGE  CC.C == 0
+SLT  CC.S == 1
+SGE  CC.S == 0
+```
+
+The ISA directly encodes branches for `EQ`, `NE`, `ULT`, and `SLT`. Other branch conditions are formed by inversion, fallthrough selection, or operand swapping.
+
+### 22.2. Relative branches and transfers
+
+For all relative forms:
+
+```text
+target = nextPC + sign_extend(displacement)
+```
+
+The target is computed in the full 24-bit program address space.
+
+| Opcode | Instruction | Action |
+|---:|---|---|
+| `D0` | `BREQ rel8` | Set `PC=target` if `Z=1` |
+| `D1` | `BRNE rel8` | Set `PC=target` if `Z=0` |
+| `D2` | `BRULT rel8` | Set `PC=target` if `C=1` |
+| `D3` | `BRSLT rel8` | Set `PC=target` if `S=1` |
+| `D4` | `JMP rel8` | Set `PC=target` |
+| `D5` | `CALL rel8` | Push `nextPC`; set `PC=target` |
+| `E0` | `JMP16 rel16` | Set `PC=target` |
+| `E1` | `CALL16 rel16` | Push `nextPC`; set `PC=target` |
+
+### 22.3. Absolute and indirect transfers
+
+| Opcode | Instruction | Action |
+|---:|---|---|
+| `E2` | `JMPF target24` | `PC = target24` |
+| `E3` | `CALLF target24` | Push `nextPC`; `PC = target24` |
+| `E4-E7` | `JMPP qN` | Require canonical `qN`; `PC = qN[23:0]` |
+| `E8-EB` | `CALLP qN` | Push `nextPC`; require canonical `qN`; `PC = qN[23:0]` |
+| `EF` | `RET` | Pop a 24-bit return address into `PC` |
+
+A call pushes its three-byte return address as:
+
+```text
+SP = SP - 3
+mem8[SP+0] = nextPC[7:0]
+mem8[SP+1] = nextPC[15:8]
+mem8[SP+2] = nextPC[23:16]
+```
+
+`RET` performs the inverse operation and then adds three to `SP`.
+
+### 22.4. Stack adjustment and services
+
+`ADJSP simm8`:
+
+```text
+SP = low16(SP + sign_extend8(simm8))
+```
+
+`SYS service8` invokes the service identified by the unsigned byte operand.
 
 ---
 
-## 20. Physical flash translation
+# Part V — Secondary Opcode Pages
 
-The loader supplies a 24-bit physical image base:
+## 23. `F0` cold-form page
+
+Valid secondary values are `00-6D`. Values `6E-FF` are invalid.
+
+### 23.1. Immediate and stack-relative forms
+
+| Secondary | Instruction | Length | Semantics |
+|---:|---|---:|---|
+| `00-03` | `LDI8 r0-r3,imm8` | 3 | Zero-extend `imm8` into selected register |
+| `04-07` | `LDI16 r0-r3,imm16` | 4 | Load `imm16` |
+| `08-0B` | `ADDI.S8 r0-r3,simm8` | 3 | Add sign-extended immediate modulo `2^16` |
+| `0C-0F` | `CMPI.S8 r0-r3,simm8` | 3 | Compare against sign-extended immediate; replace `CC` |
+| `10-17` | `LEASP rN,u8` | 3 | `rN = low16(SP + u8)` |
+| `18-1F` | `LDSP8U rN,[SP+u8]` | 3 | Zero-extended byte load |
+| `20-27` | `LDSP8S rN,[SP+u8]` | 3 | Sign-extended byte load |
+| `28-2F` | `STSP8 [SP+u8],rN` | 3 | Store `low8(rN)` |
+| `30-37` | `LDSP16 rN,[SP+u8]` | 3 | Little-endian word load |
+| `38-3F` | `STSP16 [SP+u8],rN` | 3 | Little-endian word store |
+
+Within each eight-entry family, the low three bits select `rN`. Within each four-entry family, the low two bits select `r0-r3`.
+
+The offset does not modify `SP`.
+
+### 23.2. Absolute data-space forms
+
+| Secondary | Instruction | Length | Semantics |
+|---:|---|---:|---|
+| `40-47` | `LDM8U rN,addr16` | 4 | `rN = zero_extend8(mem8[addr16])` |
+| `48-4F` | `STM8 addr16,rN` | 4 | `mem8[addr16] = low8(rN)` |
+| `50-57` | `LDM16 rN,addr16` | 4 | `rN = mem16le[addr16]` |
+| `58-5F` | `STM16 addr16,rN` | 4 | `mem16le[addr16] = rN` |
+
+The low three secondary bits select `rN`.
+
+### 23.3. Program-space forms
+
+Each instruction is followed by `PSPEC` from Section 18.6.
+
+| Secondary | Instruction | Length | Semantics |
+|---:|---|---:|---|
+| `60` | `LDP8U rD,[qA]` | 3 | Zero-extended program byte load |
+| `61` | `LDP8S rD,[qA]` | 3 | Sign-extended program byte load |
+| `62` | `LDP16 rD,[qA]` | 3 | Little-endian 16-bit program load |
+| `63` | `LDP24 qD,[qA]` | 3 | Load 24 packed bits and clear bits `31:24` |
+| `64` | `LDP32 qD,[qA]` | 3 | Little-endian 32-bit program load |
+| `65` | `LDP8U rD,[qA+]` | 3 | Load byte, then add 1 to `qA` |
+| `66` | `LDP16 rD,[qA+]` | 3 | Load word, then add 2 to `qA` |
+| `67` | `LDP24 qD,[qA+]` | 3 | Load canonical pointer, then add 3 to `qA` |
+| `68` | `LDP32 qD,[qA+]` | 3 | Load dword, then add 4 to `qA` |
+
+`qA` MUST be canonical before the access.
+
+For postincrement loads, the destination MUST NOT overlap the address pair:
+
+- Scalar destinations may not be either component register of `qA`.
+- Pair destinations may not equal `qA`.
+
+Non-postincrement loads permit overlap because the effective address is the original `qA` value.
+
+### 23.4. Cold 32-bit forms
+
+Each instruction is followed by `RRSPEC32` from Section 18.7.
+
+| Secondary | Instruction | Length | Semantics |
+|---:|---|---:|---|
+| `69` | `CMP32 qL,qR` | 3 | Compare 32-bit values; replace `CC` |
+| `6A` | `LD32 qD,[rA]` | 3 | `qD = mem32le[rA]` |
+| `6B` | `ST32 [rA],qS` | 3 | `mem32le[rA] = qS` |
+
+`CMP32 qL,qL` is legal.
+
+For ordinary `LD32` and `ST32`, overlap between the pair operand and `rA` is legal; the effective address is the original `rA` value.
+
+### 23.5. Cold general-pointer memory forms
+
+Each instruction is followed by `dddWaaaP` from Section 18.8.
+
+| Secondary | Instruction family | Length |
+|---:|---|---:|
+| `6C` | Load | 3 |
+| `6D` | Store | 3 |
+
+Decoded load semantics:
 
 ```text
-imageBase
+W=0, P=0  LD8U rD,[rA]
+W=1, P=0  LD16 rD,[rA]
+W=0, P=1  LD8U rD,[rA+]
+W=1, P=1  LD16 rD,[rA+]
 ```
 
-`imageBase` points to logical address zero and MUST be aligned to 256 bytes:
+Decoded store semantics:
 
 ```text
-imageBase mod 256 = 0
+W=0, P=0  ST8 [rA],rS
+W=1, P=0  ST16 [rA],rS
+W=0, P=1  ST8 [rA+],rS
+W=1, P=1  ST16 [rA+],rS
 ```
 
-Translation is:
+Postincrement adds one for byte operations and two for word operations.
+
+Ordinary loads and all stores permit `rD/rS == rA`. Postincrement loads reserve `rD == rA`.
+
+## 24. `F1` register, stack-byte, and SP page
+
+Valid secondary values are `00-8F`.
+
+| Secondary | Encoding | Instruction | Semantics |
+|---:|---|---|---|
+| `00-2F` | `PAIR48(rD,rS)` | `MOV rD,rS` | `rD = rS` |
+| `30-6F` | `30 + STACK64(u4,cS)` | `STSP8 [SP+u4],cS` | Store `low8(cS)` |
+| `70-77` | `70 + rD` | `ZEXT8 rD` | Clear `high8(rD)` |
+| `78-7F` | `78 + rD` | `SWAP8 rD` | Exchange low-byte nibbles; preserve high byte |
+| `80-87` | `80 + rD` | `GETSP rD` | `rD = SP` |
+| `88-8F` | `88 + rS` | `SETSP rS` | `SP = rS` |
+
+## 25. `F2` full-register arithmetic page
+
+Valid secondary values are `00-5F`.
+
+| Secondary | Encoding | Instruction | Semantics |
+|---:|---|---|---|
+| `00-2F` | `PAIR48(rD,rS)` | `ADD rD,rS` | `rD = low16(rD + rS)` |
+| `30-5F` | `30 + PAIR48(rD,rS)` | `SUB rD,rS` | `rD = low16(rD - rS)` |
+
+Compact/compact operands use the one-byte forms.
+
+## 26. `F3` compact-pointer byte-store, multiply, and stack-byte page
+
+Valid secondary values are `00-7F`.
+
+| Secondary | Encoding | Instruction | Semantics |
+|---:|---|---|---|
+| `00-0F` | `MEM16(cA,rS)` | `ST8 [cA],rS` for `rS=r0-r3` | Store `low8(rS)` |
+| `10-1F` | `10 + 4*cD + cS` | `MULU8.W cD,cS` | `cD = unsigned8(cD) * unsigned8(cS)` |
+| `20-2F` | `20 + 4*cD + cS` | `MULS8.W cD,cS` | `cD = signed8(cD) * signed8(cS)` |
+| `30-3F` | `30 + 4*cD + cS` | `MULSU8.W cD,cS` | `cD = signed8(cD) * unsigned8(cS)` |
+| `40-7F` | `40 + STACK64(u4,cD)` | `LDSP8U cD,[SP+u4]` | Zero-extended byte load |
+
+The widening multiply result is the complete 16-bit product.
+
+## 27. `F4` stack-word, shift, unary, and test page
+
+Valid secondary values are `00-B7`.
+
+| Secondary | Encoding | Instruction | Semantics / `CC` |
+|---:|---|---|---|
+| `00-3F` | `STACK64(u4,cD)` | `LDSP16 cD,[SP+u4]` | Load word; preserve |
+| `40-7F` | `40 + STACK64(u4,cS)` | `STSP16 [SP+u4],cS` | Store word; preserve |
+| `80-87` | `80 + rD` | `LSL16.1 rD` | Logical left shift by 1; preserve |
+| `88-8F` | `88 + rD` | `LSR16.1 rD` | Logical right shift by 1; preserve |
+| `90-97` | `90 + rD` | `ASR16.1 rD` | Arithmetic right shift by 1; preserve |
+| `98-9F` | `98 + rD` | `NOT16 rD` | Bitwise complement; preserve |
+| `A0-A7` | `A0 + rD` | `TST8 rD` | Compare signed/unsigned low byte with zero; replace |
+| `A8-AF` | `A8 + rD` | `INC16 rD` | Add one modulo `2^16`; preserve |
+| `B0-B7` | `B0 + rD` | `DEC16 rD` | Subtract one modulo `2^16`; preserve |
+
+For `TST8`:
 
 ```text
-physicalFlashAddress = imageBase + logicalProgramAddress
+C = 0
+Z = (low8(rD) == 0)
+S = (signed8(low8(rD)) < 0)
 ```
 
-This translation is performed when:
+## 28. `F5` compare and ordinary compact-pointer memory page
 
-- Entering the image.
-- Restarting fetch after control transfer.
-- Restarting fetch after program-data access.
-- Performing program-data access.
+Valid secondary values are `00-5F`.
 
-It is not performed for each sequential byte because the external SPI read stream advances internally.
+| Secondary | Encoding | Instruction | Semantics / `CC` |
+|---:|---|---|---|
+| `00-2F` | `PAIR48(rL,rR)` | `CMP rL,rR` | Compare 16-bit values; replace |
+| `30-3F` | `30 + MEM16(cA,rD)` | `LD8U rD,[cA]`, `rD=r0-r3` | Zero-extended byte load; preserve |
+| `40-4F` | `40 + MEM16(cA,rD)` | `LD16 rD,[cA]`, `rD=r0-r3` | Word load; preserve |
+| `50-5F` | `50 + MEM16(cA,rS)` | `ST16 [cA],rS`, `rS=r0-r3` | Word store; preserve |
 
-The image packer MUST reject placement that is not page aligned or would exceed the physical flash address range.
+Compact data registers use the one-byte primary forms.
+
+## 29. `F6` postincrement byte-store and unary page
+
+Valid secondary values are `00-4F`.
+
+| Secondary | Encoding | Instruction | Semantics / `CC` |
+|---:|---|---|---|
+| `00-1F` | `MEM32(cA,rS)` | `ST8 [cA+],rS` | Store byte; `cA += 1`; preserve |
+| `20-27` | `20 + rD` | `BSWAP16 rD` | Exchange low and high bytes; preserve |
+| `28-2F` | `28 + rD` | `TST16 rD` | Compare 16-bit value with zero; replace |
+| `30-3F` | `30 + 4*cD + cS` | `MUL8 cD,cS` | `cD = zero_extend8(low8(cD)*low8(cS))` |
+| `40-47` | `40 + rD` | `SEXT8 rD` | Sign-extend low byte |
+| `48-4F` | `48 + rD` | `NEG16 rD` | `rD = low16(-rD)` |
+
+For `TST16`:
+
+```text
+C = 0
+Z = (rD == 0)
+S = (signed16(rD) < 0)
+```
+
+Stores permit `cA == rS`; the stored byte is the original source value.
+
+## 30. `F7` postincrement word-memory and 32-bit page
+
+Valid secondary values are `00-8F`.
+
+| Secondary | Encoding | Instruction | Semantics |
+|---:|---|---|---|
+| `00-1F` | `MEM32(cA,rD)` | `LD8U rD,[cA+]` | Load byte; zero-extend; `cA += 1` |
+| `20-3F` | `20 + MEM32(cA,rD)` | `LD16 rD,[cA+]` | Load word; `cA += 2` |
+| `40-5F` | `40 + MEM32(cA,rS)` | `ST16 [cA+],rS` | Store word; `cA += 2` |
+| `60-6F` | `60 + 4*qD + qS` | `ADD32 qD,qS` | `qD = low32(qD + qS)` |
+| `70-7F` | `70 + 4*qD + qS` | `SUB32 qD,qS` | `qD = low32(qD - qS)` |
+| `80-83` | `80 + qD` | `LSR32.1 qD` | Logical right shift by 1 |
+| `84-87` | `84 + qD` | `ASR32.1 qD` | Arithmetic right shift by 1 |
+| `88-8F` | `88 + rD` | `BOOL rD` | `rD = (rD != 0) ? 1 : 0` |
+
+Postincrement loads reserve `rD == cA`. Stores permit `rS == cA`.
+
+## 31. `F8` condition materialization page
+
+Valid secondary values are `00-2F`.
+
+| Secondary | Instruction | Result |
+|---:|---|---|
+| `00-07` | `CSET.EQ rD` | `rD = Z ? 1 : 0` |
+| `08-0F` | `CSET.NE rD` | `rD = !Z ? 1 : 0` |
+| `10-17` | `CSET.ULT rD` | `rD = C ? 1 : 0` |
+| `18-1F` | `CSET.UGE rD` | `rD = !C ? 1 : 0` |
+| `20-27` | `CSET.SLT rD` | `rD = S ? 1 : 0` |
+| `28-2F` | `CSET.SGE rD` | `rD = !S ? 1 : 0` |
+
+The low three bits select `rD`. Results are 16-bit zero or one.
+
+`CSET.ULE` and `CSET.UGT` have no direct encodings. They are formed by swapping comparison operands and using `CSET.UGE` or `CSET.ULT`.
+
+## 32. `F9` full-register bitwise page
+
+```text
+F9 oodddsss
+```
+
+| Field | Meaning |
+|---|---|
+| `ddd` bits `7:5` | Destination `rD` |
+| `sss` bits `4:2` | Source `rS` |
+| `oo` bits `1:0` | Operation |
+
+Operation codes:
+
+```text
+00  AND rD,rS
+01  OR  rD,rS
+10  XOR rD,rS
+11  invalid
+```
+
+Semantics are 16-bit bitwise operations. All aliases, including `rD == rS`, are legal.
+
+Compact/compact combinations are valid but noncanonical; assemblers SHOULD emit the corresponding one-byte form.
+
+## 33. `FA` variable-shift page
+
+Valid secondary values are `00-2F`.
+
+Within each family:
+
+```text
+bits 3:2  destination cD
+bits 1:0  count register cCount
+```
+
+| Secondary | Instruction |
+|---:|---|
+| `00-0F` | `SHL16V cD,cCount` |
+| `10-1F` | `LSR16V cD,cCount` |
+| `20-2F` | `ASR16V cD,cCount` |
+
+The shift count is:
+
+```text
+count = low8(cCount) & 15
+```
+
+The count register is preserved. `cD == cCount` is legal; the original count is used.
+
+## 34. `FB-FD` conditional-move pages
+
+All three pages require:
+
+```text
+secondary < 0x80
+bit 6      invert condition
+bits 5:3   destination rD
+bits 2:0   source rS
+```
+
+| Prefix | `00-3F` | `40-7F` |
+|---:|---|---|
+| `FB` | `CMOV.EQ rD,rS` | `CMOV.NE rD,rS` |
+| `FC` | `CMOV.ULT rD,rS` | `CMOV.UGE rD,rS` |
+| `FD` | `CMOV.SLT rD,rS` | `CMOV.SGE rD,rS` |
+
+Semantics:
+
+```text
+if condition:
+    rD = rS
+else:
+    rD is unchanged
+```
+
+`rD == rS` is legal. `CC` is preserved.
+
+Unsigned `ULE` and `UGT` are formed by swapping comparison operands and using `UGE` or `ULT`.
+
+## 35. `FE` multiply page
+
+Valid secondary values are `00-3F`.
+
+```text
+bits 5:3  destination rD
+bits 2:0  source rS
+```
+
+Instruction:
+
+```text
+MUL16 rD,rS
+```
+
+Semantics:
+
+```text
+rD = low16(rD * rS)
+```
+
+Signed and unsigned multiplication have identical low sixteen bits, so one instruction serves both.
+
+All aliases, including `rD == rS`, are legal.
 
 ---
 
-## 21. Program banks
+# Part VI — Instruction Semantic Details
 
-The logical program space contains 256 banks of 64 KiB:
+## 36. Comparison semantics
+
+For an `n`-bit comparison of `L` and `R`:
 
 ```text
-Bank 0     0x000000–0x00FFFF
-Bank 1     0x010000–0x01FFFF
-...
-Bank 255   0xFF0000–0xFFFFFF
+C = unsigned_n(L) < unsigned_n(R)
+Z = bit_pattern_n(L) == bit_pattern_n(R)
+S = signed_n(L) < signed_n(R)
 ```
 
-The linker MUST enforce:
+`CMP` uses `n=16`.
 
-1. No instruction crosses a bank boundary.
-2. No function crosses a bank boundary.
-3. No basic-block fallthrough crosses a bank boundary.
-4. No sequential path wraps `PC` from `0xFFFF` to `0x0000`.
-5. Every bank-ending path uses an explicit control transfer.
-6. Unused terminal bank space is filled with an invalid or diagnostic-fault encoding.
-7. Every direct far target is two-byte aligned.
-8. Every address-taken function is two-byte aligned.
-9. Cross-bank entry points are aligned or reached through aligned veneers.
+`CMP32` uses `n=32`.
 
-An individual function larger than 64 KiB is unsupported.
+`CMPI.S8` sign-extends its immediate to 16 bits and then performs a 16-bit comparison.
+
+`TST8` compares the low byte with signed/unsigned zero.
+
+`TST16` compares the full register with zero.
+
+## 37. Load and store semantics
+
+All multi-byte memory operations use little-endian byte order.
+
+For a postincrement operation:
+
+1. The memory access uses the original pointer.
+2. The pointer is increased by the access width.
+3. Source values are the original register values.
+4. Prohibited load aliases are invalid encodings.
+
+Memory access does not change `CC`.
+
+## 38. Arithmetic and logical semantics
+
+All noncomparison arithmetic and logical operations preserve `CC`.
+
+```text
+ADD / ADDI / INC     modulo 2^16
+SUB / DEC / NEG      modulo 2^16
+ADD32 / SUB32        modulo 2^32
+MUL8                 low 8 bits, then zero-extension
+MUL16                low 16 bits
+widening byte MUL    complete 16-bit product
+```
+
+Logical and shift operations operate on the stated width.
+
+## 39. Canonical assembler pseudos
+
+The following names do not require separate encodings:
+
+```text
+NOP         MOV c0,c0
+CLR cN      XOR cN,cN
+MOV32 qD,qS two MOV instructions
+LSL32.1 qD  ADD32 qD,qD
+CSET.ULE    swapped compare + CSET.UGE
+CSET.UGT    swapped compare + CSET.ULT
+CMOV.ULE    swapped compare + CMOV.UGE
+CMOV.UGT    swapped compare + CMOV.ULT
+```
+
+An assembler MAY expose additional aliases provided they lower to the normative encodings above.
 
 ---
 
-## 22. Program and function pointers
+# Part VII — Calling Convention
 
-### 22.1 Memory representation
-
-A program or function pointer is three packed little-endian bytes:
-
-```text
-byte 0 = bits 7:0
-byte 1 = bits 15:8
-byte 2 = bits 23:16
-```
-
-```text
-sizeof(program pointer)  = 3
-sizeof(function pointer) = 3
-alignment                = 1
-```
-
-### 22.2 Register representation
-
-A program pointer in registers occupies one aligned `qN` pair:
-
-```text
-low register             = bits 15:0
-low byte of high register = bits 23:16
-high byte of high register = 0
-```
-
-The high word is canonical in the range:
-
-```text
-0x0000–0x00FF
-```
-
-### 22.3 Arithmetic and conversions
-
-Program-pointer arithmetic is unsigned 24-bit arithmetic.
-
-Data-space and program-space pointers belong to disjoint address spaces. Implicit conversion between them is forbidden.
-
-Explicit integer conversion may be supported as a target extension, but a converted pointer is meaningful only in the destination address space when the program explicitly establishes that contract.
-
-### 22.4 Indirect control-flow use
-
-An indirect jump, call, or tail call consumes a canonical register-form pointer
-in one aligned `qN` pair:
-
-```text
-bits 15:0   = low register of qN
-bits 23:16  = low byte of the high register
-bits 31:24  = zero
-```
-
-The instruction copies bits `23:16` into `CB` and bits `15:0` into `PC`.
-`PB` is not an operand and is preserved by the indirect-control instruction.
-
-A diagnostic implementation may reject a nonzero `bits 31:24`. Optimized
-execution may treat a noncanonical register-form program pointer as undefined.
-
----
-
-# Part III — Data Representation
-
-## 23. Endianness and alignment
-
-AVM is little-endian.
-
-All scalar ABI alignments are one byte.
-
-Unaligned 16-bit, 24-bit, 32-bit, and 64-bit objects are permitted.
-
-The stack has one-byte alignment.
-
-Structures receive no target-imposed alignment padding beyond explicit language requirements.
-
----
-
-## 24. C and C++ data model
-
-Recommended target sizes are:
-
-| Type | Size |
-|---|---:|
-| `bool` | 1 byte |
-| `char` | 1 byte |
-| `short` | 2 bytes |
-| `int` | 2 bytes |
-| `long` | 4 bytes |
-| `long long` | 8 bytes |
-| `float` | 4 bytes |
-| `double` | 4 bytes initially |
-| `long double` | 4 bytes initially |
-| Data pointer | 2 bytes |
-| Program pointer | 3 bytes |
-| Function pointer | 3 bytes |
-| `size_t` | 2 bytes |
-| `ptrdiff_t` | 2 bytes |
-| `wchar_t` | 2 bytes |
-
-Plain `char` is signed by default.
-
-`bool` is represented canonically as zero or one.
-
-`size_t` is 16 bits, so no single source-language object may exceed 65,535 bytes. A complete program may exceed that size because it consists of multiple functions and objects.
-
-Enums use a 16-bit signed representation by default unless short-enum behavior is requested.
-
----
-
-## 25. Byte values in registers
-
-A byte value occupies the low byte of a 16-bit register.
-
-Byte-producing operations that promise canonical zero extension clear bits `15:8`. The exact list of such instructions is maintained in `docs/avm_isa.md`.
-
-Byte stores use only the low byte.
-
-The backend must track whether a byte producer has already canonicalized the high byte so that redundant extension operations can be eliminated.
-
----
-
-## 26. Larger integers
-
-A 32-bit integer occupies one `qN` pair:
-
-```text
-low register   = bits 15:0
-high register  = bits 31:16
-```
-
-A 64-bit integer occupies four 16-bit registers or is lowered through runtime helpers.
-
-The revised ISA contains direct 32-bit pair operations, but the architecture does not require every compiler phase to legalize `i32` immediately. Early backend implementations may expand unsupported operations until complete instruction selection exists.
-
----
-
-# Part IV — Calling Convention
-
-## 27. Register volatility
+## 40. Register volatility
 
 | State | ABI role |
 |---|---|
-| `r4–r7` / `c0–c3` | Caller-saved |
-| `A` | Caller-saved; alias of `r4` |
-| `r0–r3` | Callee-saved |
+| `r4-r7` / `c0-c3` | Caller-saved |
+| `r0-r3` | Callee-saved |
 | `r3` | Optional frame pointer |
-| `PB` | Caller-saved |
-| `CC` | Caller-saved |
-| `SP` | Restored by callee |
-| `CB` | Restored by return/control flow |
+| `CC` | Caller-saved across ordinary function calls |
+| `SP` | Restored by the callee |
+| `PC` | Controlled by call, jump, tail-call, and return |
 
-The compact register class is the preferred argument, result, and temporary class.
-
----
-
-## 28. Register arguments
+## 41. Register arguments
 
 Arguments are assigned in 16-bit units:
 
 ```text
-unit 0 -> c0 = r4 = A
+unit 0 -> c0 = r4
 unit 1 -> c1 = r5
 unit 2 -> c2 = r6
 unit 3 -> c3 = r7
 ```
-
-Typical unit counts are:
 
 | Type | Units |
 |---|---:|
@@ -783,26 +1153,22 @@ Typical unit counts are:
 | Program/function pointer | 2 |
 | `i64` | 4 |
 
-A 32-bit first argument occupies `q2 = r4:r5`. A second 32-bit argument occupies `q3 = r6:r7`.
+A value that does not completely fit in the remaining units is passed entirely on the stack.
 
-A program pointer uses one unit for the low word and one unit for the zero-extended bank byte.
+Arguments are never split between registers and stack.
 
-An argument that does not completely fit in the remaining units is passed entirely on the stack. Arguments are never split between registers and stack.
-
----
-
-## 29. Stack arguments
+## 42. Stack arguments
 
 The caller allocates outgoing stack-argument storage before the call.
 
 Stack arguments:
 
 - Appear in source order at ascending addresses.
-- Use their natural ABI size.
+- Use natural ABI size.
 - Have one-byte alignment.
-- Are packed without alignment gaps unless explicitly attributed.
+- Are packed without implicit alignment gaps.
 
-All call forms push a three-byte return address. Callee entry therefore sees:
+A callee entered by any call sees:
 
 ```text
 SP+0  return address bits 7:0
@@ -813,174 +1179,204 @@ SP+3  first stack-argument byte
 
 The caller removes outgoing stack arguments after return.
 
----
-
-## 30. Variadic functions
+## 43. Variadic functions
 
 All arguments to a variadic function are passed on the stack, including named arguments.
 
 Default argument promotions apply.
 
-`va_list` is a 16-bit data-space pointer.
+`va_list` is a 16-bit data pointer.
 
-This avoids a register-save area and compound register/stack iteration.
-
----
-
-## 31. Return values
+## 44. Return values
 
 | Return type | Location |
 |---|---|
-| `i8`, `bool` | low byte of `A` |
-| `i16` | `A` |
-| Data pointer | `A` |
+| `i8`, `bool` | `low8(c0)` |
+| `i16` | `c0` |
+| Data pointer | `c0` |
 | `i32` | `q2 = r4:r5` |
-| Program/function pointer | low word in `r4`, bank word in `r5` |
+| Program/function pointer | canonical pointer in `q2` |
 | `i64` | `r4:r7`, when permitted |
-| Large aggregate | hidden data-space result pointer |
+| Large aggregate | Hidden data-space result pointer |
 
-For `i8` and `bool` returns, only bits `7:0` of `A` are defined. Bits `15:8` of `A` are unspecified and are not required to be cleared by the callee. A caller that widens an `i8` result must perform the extension required by the source type: zero-extension for an unsigned byte and sign-extension for a signed byte. A returned `bool` is canonical in the low byte as zero or one, while the high byte remains unspecified.
+For `i8` and `bool`, `high8(c0)` is unspecified.
 
-A hidden structure-result pointer consumes the first argument unit.
+A returned `bool` is zero or one in the low byte.
 
----
-
-## 32. Frames and tail calls
+## 45. Frames and tail calls
 
 A function saves only the callee-saved registers it uses.
 
-The default is frame-pointer omission.
+Frame-pointer omission is the default.
 
-When a frame pointer is required, `r3` holds the stack position established after saving the previous frame pointer and before allocating local storage.
+When required, `r3` is the frame pointer established after saving its incoming value and before local allocation.
 
-Dynamic stack allocation is discouraged.
-
-A tail call restores the current frame and transfers control without creating a new return record. A cross-bank tail call must use a jump form so the final callee returns directly to the original caller.
-
-The exact instruction sequences used for prologues, epilogues, stack adjustment, and tail transfer are defined by the backend using the instruction forms in `docs/avm_isa.md`.
+A tail call restores the current frame and transfers control without creating a new return address.
 
 ---
 
-# Part V — System ABI
+# Part VIII — System ABI
 
-## 33. Service invocation
+## 46. Service invocation
 
-The ISA provides an immediate system-service invocation instruction defined in `docs/avm_isa.md`.
+`SYS service8` invokes the runtime service identified by the unsigned immediate operand.
 
-Unless a service states otherwise:
+Every service has an explicit interface consisting of:
+
+- Service identifier.
+- Logical arguments and results.
+- Fixed physical input and result registers.
+- Preserved architectural registers and state.
+- Observable side effects.
+- Ordering and optimization constraints.
+
+A result register is an explicit definition, not a clobber. “Clobbers nothing else” means that every general-purpose register outside the result, plus `CC` and `SP`, is preserved.
+
+Unsupported service identifiers are invalid instructions.
+
+The assembler exposes the generic machine instruction:
 
 ```text
-c0-c3 / A  arguments and results
-r0-r3      preserved
-PB         clobbered
-CC         clobbered
-SP         preserved
+SYS service8
 ```
 
-A service specification MUST define:
+LLVM IR SHOULD NOT expose a generic service-number intrinsic. Each supported service has its own typed target intrinsic as specified in Section 53.
 
-- Identifier.
-- Arguments.
-- Results.
-- Preserved and clobbered state.
-- Blocking behavior.
-- Hardware side effects.
-- Simulator-specific behavior, if any.
+## 47. Defined services
 
----
+| ID | Name | Inputs | Results | Other clobbers |
+|---:|---|---|---|---|
+| `0` | `debug_putc` | `low8(c0)` | None | None |
+| `1` | `debug_break` | None | None | None |
+| `2` | `millis` | None | `c0` | None |
+| `3` | `millis32` | None | `q2 = c0:c1` | None |
+| `4-255` | Reserved | — | — | — |
 
-## 34. Defined services
+All four defined services preserve:
 
-| Service ID | Name | Purpose |
-|---:|---|---|
-| `0` | `debug_putc` | Write one byte to the simulator debug stream |
-| `1` | `debug_break` | Execute a native AVR debugger break |
-| `2–255` | Reserved | Unassigned |
+```text
+CC
+SP
+every general-purpose register not listed as a result
+```
 
-An unsupported service identifier is invalid. A diagnostic interpreter MUST trap it. Optimized execution may treat it as unrestricted undefined behavior.
+### 47.1. `debug_putc`
 
-### 34.1 `debug_putc`
+Encoding:
+
+```text
+D7 00
+```
 
 Input:
 
 ```text
-low8(A) = byte to write
+low8(c0) = byte to emit
 ```
 
-The interpreter performs one direct write to ATmega32U4 `UEDATX`.
+The service emits one byte to the implementation-defined debug output stream.
 
-It does not initialize USB, select an endpoint, test readiness, wait for buffer space, commit a packet, translate characters, or retry.
+The service reads only `low8(c0)`. It preserves the complete value of `c0`, including `high8(c0)`, and preserves every other architectural register and state item.
 
-A simulator may record each `UEDATX` write as serial output even without a complete USB stack.
+The output operation is externally observable. It MUST NOT be removed, duplicated, speculated, combined with another call, or reordered across another observable system service.
 
-This service preserves:
+### 47.2. `debug_break`
+
+Encoding:
 
 ```text
-r0-r7
-PB
-CC
-SP
+D7 01
 ```
 
-apart from normal instruction progression.
-
-### 34.2 `debug_break`
-
-The interpreter executes one native AVR `BREAK`.
-
-A simulator or debugger may stop execution. If execution resumes, AVM continues with the following instruction.
-
-This service preserves:
+Inputs and results:
 
 ```text
-r0-r7
-PB
-CC
-SP
+none
 ```
 
-apart from normal instruction progression.
+The service requests a debugger or simulator breakpoint. An implementation may stop execution and later resume at the following instruction.
+
+The service preserves all general-purpose registers, `CC`, and `SP`.
+
+The breakpoint is externally observable. It MUST remain at its program-order position and MUST NOT be removed, duplicated, speculated, or commoned.
+
+### 47.3. `millis`
+
+Encoding:
+
+```text
+D7 02
+```
+
+Input:
+
+```text
+none
+```
+
+Result:
+
+```text
+c0 = low16(elapsed_milliseconds)
+```
+
+`elapsed_milliseconds` is an implementation-maintained unsigned millisecond counter whose epoch is runtime startup. The result wraps modulo `2^16`.
+
+The service defines the complete 16-bit `c0` register and preserves `c1-c3`, `r0-r3`, `CC`, and `SP`.
+
+Each invocation observes the current timer state. Calls MUST NOT be removed, duplicated, speculated, common-subexpression eliminated, or hoisted from their program-order position.
+
+### 47.4. `millis32`
+
+Encoding:
+
+```text
+D7 03
+```
+
+Input:
+
+```text
+none
+```
+
+Result:
+
+```text
+q2 = c0:c1 = low32(elapsed_milliseconds)
+```
+
+The result wraps modulo `2^32`.
+
+The service defines the complete 32-bit pair `q2`, and therefore defines both `c0` and `c1`. It preserves `c2-c3`, `r0-r3`, `CC`, and `SP`.
+
+Each invocation observes the current timer state. Calls MUST NOT be removed, duplicated, speculated, common-subexpression eliminated, or hoisted from their program-order position.
 
 ---
 
-# Part VI — LLVM and Clang Target
+# Part IX — LLVM and Clang Target Contract
 
-## 35. Target identity
-
-The canonical target triple is:
+## 48. Target identity
 
 ```text
-avm-unknown-arduboyfx
+target triple: avm-unknown-arduboyfx
+EM_AVM:        0x4156
 ```
 
-The ELF machine identifier used by the current toolchain is:
+## 49. LLVM address spaces
 
 ```text
-EM_AVM = 0x4156
-```
-
----
-
-## 36. LLVM address spaces
-
-```text
-address space 0 = ATmega32U4 data space
-address space 1 = AVM program space
+address space 0 = 16-bit data space
+address space 1 = 24-bit program space
 ```
 
 Functions reside in address space one.
 
 Unqualified C data pointers use address space zero.
 
-A Clang target extension such as `__flash` should produce an address-space-one pointer.
+A target extension such as `__flash` should produce an address-space-one pointer.
 
-LLVM's target infrastructure represents these distinctions through the target data layout, register information, instruction definitions, lowering, and object emission. ([LLVM][3])
-
----
-
-## 37. LLVM data layout
-
-The current backend data layout is:
+## 50. LLVM data layout
 
 ```text
 e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-i64:8-f16:8-f32:8-n8:16-S8
@@ -989,61 +1385,116 @@ e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-i64:8-f16:8-f32:8-n8:16-S8
 Meaning:
 
 - Little-endian.
-- Default pointers are 16-bit data-space pointers.
+- Address-space-zero pointers are 16 bits.
 - Address-space-one pointers are 24 bits.
-- Scalar ABI alignment is one byte, including 64-bit integers and 16-bit and
-  32-bit floating-point values.
+- Scalar ABI alignment is one byte.
 - Native integer widths are 8 and 16 bits.
 - Stack alignment is one byte.
 
-Functions and program-resident objects use address space one by target policy.
+## 51. LLVM register classes
 
----
-
-## 38. LLVM register classes
-
-Required scalar classes are:
+Required physical register classes are:
 
 ```text
 GPR16   = r0-r7
 CGPR16  = r4-r7
 
-GPR8    = b0-b7
-CGPR8   = b4-b7
+GPR8    = low-byte subregisters of r0-r7
+CGPR8   = low-byte subregisters of r4-r7
+
+PTR16   = r0-r7
+CPTR16  = r4-r7
+
+GPR32   = q0-q3
+CGPR32  = q2-q3
 ```
 
-Required 32-bit pair representation:
+Class relationships:
 
 ```text
-GPR32 = q0-q3
+CGPR16  is a subclass of GPR16
+CGPR8   is a subclass of GPR8
+CPTR16  has the same members as CGPR16
+CGPR32  is a subclass of GPR32
 ```
 
-A preferred compact-pair subset may contain:
+`PTR16` contains every register that may legally hold a data pointer. Its preferred allocation order is:
 
 ```text
+r4, r5, r6, r7, r0, r1, r2, r3
+```
+
+This compact-first order improves selection of fast compact-pointer memory instructions without making noncompact pointers illegal.
+
+`CPTR16` is used only by instructions whose final encoding requires a compact pointer.
+
+The 32-bit pair classes are:
+
+```text
+q0 = r0:r1
+q1 = r2:r3
 q2 = r4:r5
 q3 = r6:r7
 ```
 
-Program-pointer values use the same aligned pair representation with a canonical high word.
+Each `qN` aliases both constituent 16-bit registers. `CGPR32` identifies pairs whose two constituent registers are compact.
 
-`A`, `c0`, and `r4` are aliases, not separate physical registers.
+Recommended subregister indices are:
 
-`CC`, `PB`, `SP`, and `CB` are nonallocatable architectural state.
+```text
+sub_lo16
+sub_hi16
+```
 
----
+The byte classes alias only the low-byte subregisters of the corresponding 16-bit registers. They are not independently allocatable storage.
 
-## 39. Type legalization policy
+Instructions that define a zero-extended or sign-extended byte result define the complete `GPR16` destination, not merely a `GPR8` subregister. Examples include:
+
+```text
+LD8U
+LD8S
+LDI8
+ZEXT8
+SEXT8
+BOOL
+CSET
+MUL8
+```
+
+Instructions that modify only the low byte while preserving the high byte may use a `GPR8` definition. `SWAP8` is the primary example.
+
+Program and function pointers use the same physical members as `GPR32` but carry the canonical-value invariant:
+
+```text
+bits 31:24 = 0
+```
+
+The backend SHOULD model these values through a semantic operand class or value type named:
+
+```text
+PROGPTR
+```
+
+`PROGPTR` may be implemented as:
+
+- A distinct operand type backed by `GPR32`.
+- A custom `p1:24` value lowered into `GPR32`.
+- A canonicalization pseudo plus `GPR32`.
+
+A separate physical register class is not required because `PROGPTR` has the same physical members as `GPR32`.
+
+`CC`, `SP`, and `PC` are nonallocatable architectural state.
+
+## 52. Legalization and instruction selection
 
 Directly representable values include:
 
 ```text
 i8
 i16
+i32
 p0:16
 ```
-
-The register file also directly represents `i32` through `qN` pairs.
 
 Program pointers are custom-lowered:
 
@@ -1051,57 +1502,162 @@ Program pointers are custom-lowered:
 p1:24
 ```
 
-`i1` should remain in `CC` through compare-and-branch patterns when possible, or be materialized as canonical zero/one.
-
-`i64` and unsupported floating-point operations are expanded or lowered to compiler-runtime helpers.
-
-During early backend bring-up, `i32` operations may be expanded until the complete 32-bit instruction-selection path is available.
-
----
-
-## 40. Backend policy
-
-`docs/avm_isa.md` is the source of truth for machine instruction definitions and encoding choices.
-
 The backend should:
 
-1. Legalize IR into AVM-supported scalar and pointer representations.
-2. Preserve explicit dependencies on `CC`, `PB`, `SP`, and `CB`.
-3. Allocate argument and short-lived values preferentially to compact registers.
-4. Allocate long-lived values preferentially to callee-saved registers.
-5. Represent 32-bit values with aligned `qN` pairs.
-6. Select compact encodings only after physical register assignment when encoding depends on the final register class.
-7. Perform branch and call relaxation after layout.
-8. Keep stack objects with the highest dynamic access frequency at the cheapest offsets.
-9. Diagnose statically provable stack use above 256 bytes.
-10. Emit stack-usage metadata.
+1. Prefer `CGPR16` for arguments and short-lived scalar values when doing so does not increase spill cost.
+2. Allocate pointer-valued virtual registers from `PTR16` using compact-first allocation order.
+3. Use `CPTR16` only for instructions whose final machine encoding requires a compact pointer.
+4. Use a general pointer pseudo before physical register assignment when the final fast or cold memory form depends on the assigned register.
+5. Expand that pseudo after physical register assignment:
+   - Pointer in `r4-r7`: select the fast compact-pointer form.
+   - Pointer in `r0-r3`: select `F0 6C` or `F0 6D`.
+6. Prefer `CGPR32` for values likely to benefit from decomposition into compact 16-bit operations.
+7. Use `GPR32` for direct pair operations that accept every `qN`.
+8. Represent address-space-one and function-pointer values as canonical `PROGPTR` values backed by `GPR32`.
+9. Model `CC` definitions and uses explicitly.
+10. Select compact encodings after physical register assignment.
+11. Relax branches and calls after layout.
+12. Place frequently accessed stack objects at low offsets.
+13. Diagnose statically provable VM-stack use above 256 bytes.
+14. Emit stack-usage metadata.
 
-Instruction-specific combine, compression, and relaxation rules belong in the ISA and backend implementation documents rather than here.
+A typical pre-allocation memory pseudo accepts:
 
----
+```text
+data register: GPR16
+pointer:       PTR16
+```
 
-## 41. Explicit machine dependencies
+After allocation it becomes either:
 
-Instructions that replace or consume `CC` must model the corresponding implicit physical-register definitions and uses.
+```text
+fast compact-pointer instruction
+```
 
-The scheduler and peephole passes must not move a `CC`-defining operation across a dependent branch or condition materialization.
+or:
 
-Operations that access or replace `PB` must model it explicitly. Indirect
-jump/call instructions consume a `qN` pointer and do not use or define `PB`.
-Calls and system services model their ABI clobbers.
+```text
+cold F0 6C/6D instruction
+```
 
-Because dispatch overwrites native `SREG`, compiler-visible `CC` represents saved architectural state, not transient native flags.
+This avoids forcing every pointer into `CPTR16` and avoids unnecessary pointer copies.
 
----
+`i64` and unsupported floating-point operations are expanded or lowered to runtime helpers.
 
-## 42. Code model and C++ policy
+## 53. LLVM system-service intrinsics
+
+Each defined AVM service SHOULD have a dedicated target intrinsic.
+
+Recommended LLVM IR interfaces:
+
+```llvm
+declare void @llvm.avm.debug.putc(i8 %value)
+declare void @llvm.avm.debug.break()
+declare i16  @llvm.avm.millis()
+declare i32  @llvm.avm.millis32()
+```
+
+A generic intrinsic such as:
+
+```llvm
+declare ... @llvm.avm.sys(i8 %service, ...)
+```
+
+SHOULD NOT be used as the public target interface because it cannot express service-specific types, fixed-register constraints, clobbers, or optimization behavior precisely.
+
+### 53.1. Intrinsic-to-machine lowering
+
+| LLVM intrinsic | Machine encoding | Fixed physical uses | Fixed physical definitions |
+|---|---|---|---|
+| `llvm.avm.debug.putc(i8)` | `SYS 0` | `low8(c0)` | None |
+| `llvm.avm.debug.break()` | `SYS 1` | None | None |
+| `llvm.avm.millis()` | `SYS 2` | None | `c0` |
+| `llvm.avm.millis32()` | `SYS 3` | None | `q2` |
+
+The backend inserts copies between virtual values and fixed physical registers as needed.
+
+For `debug_putc`, the argument copy targets only the low-byte subregister of `c0`; the service instruction itself has an implicit use of `low8(c0)` and no register definitions.
+
+For `millis`, the service instruction has an implicit definition of `c0`.
+
+For `millis32`, the service instruction has an implicit definition of `q2`, which aliases definitions of both `c0` and `c1`.
+
+These machine instructions are not ordinary function calls and SHOULD NOT carry a call-preserved register mask. Their exact physical uses and definitions are represented directly.
+
+### 53.2. Register and state modeling
+
+The machine-level service instructions have these operand effects:
+
+```text
+SYS_DEBUG_PUTC:
+    implicit-use low8(c0)
+    no implicit register definitions
+    preserve CC and SP
+
+SYS_DEBUG_BREAK:
+    no implicit register uses
+    no implicit register definitions
+    preserve CC and SP
+
+SYS_MILLIS:
+    implicit-def c0
+    no other register definitions
+    preserve CC and SP
+
+SYS_MILLIS32:
+    implicit-def q2
+    no other register definitions
+    preserve CC and SP
+```
+
+A live value occupying a fixed argument or result register is handled through normal register allocation, copying, spilling, or live-range splitting. The fact that a service itself preserves a register does not prevent an argument setup copy from replacing the previous value in that register.
+
+### 53.3. Optimization and scheduling attributes
+
+All four intrinsics are semantically side-effecting target operations.
+
+The backend and middle end MUST NOT:
+
+- Remove an invocation whose result is unused.
+- Duplicate an invocation.
+- Speculate an invocation.
+- Common-subexpression eliminate repeated invocations.
+- Merge adjacent invocations.
+- Reorder invocations relative to other observable system services.
+
+`millis` and `millis32` access evolving external timer state. Equal argument lists do not imply equal results.
+
+The intrinsics do not access the AVM data or program address spaces and may be modeled as having no LLVM memory effects. They must nevertheless retain an explicit side-effect or chain dependency. Suitable target representations include:
+
+- A target intrinsic marked as having side effects and no memory access.
+- A chain-carrying SelectionDAG node.
+- A side-effecting GlobalISel generic or target instruction.
+- A `MachineInstr` with unmodeled side effects and exact implicit operands.
+
+`debug_break` SHOULD additionally be treated as a scheduling barrier at its source position.
+
+### 53.4. Clang and runtime-library exposure
+
+Source-language interfaces SHOULD be provided through target builtins or freestanding runtime declarations rather than requiring applications to name LLVM intrinsics directly.
+
+Recommended C interfaces:
+
+```c
+void     __avm_debug_putc(unsigned char value);
+void     __avm_debug_break(void);
+uint16_t __avm_millis(void);
+uint32_t __avm_millis32(void);
+```
+
+A Clang builtin or runtime wrapper lowers each interface to its corresponding LLVM intrinsic.
+
+The ordinary C signatures do not expose fixed register assignments. Those assignments are properties of target lowering, not the source-language calling convention.
+
+## 54. Code model and C++ policy
 
 The default code model is large.
 
-Unresolved direct calls and jumps should initially use relaxable relocations that permit the linker to select the shortest valid final form.
-
-Indirect function calls and indirect tail calls consume the canonical 24-bit
-function-pointer representation in an aligned `qN` pair. They do not use `PB`.
+Direct calls and jumps should use relaxable relocations so the linker can choose the shortest valid form for the final 24-bit layout.
 
 The initial C++ environment should support:
 
@@ -1112,21 +1668,17 @@ The initial C++ environment should support:
 - Placement `new`.
 - Function overloading.
 
-The initial runtime should normally disable exceptions and RTTI.
-
-General dynamic allocation is unavailable.
-
-Virtual tables and related metadata reside in program space.
+Exceptions, RTTI, and general dynamic allocation are normally disabled.
 
 ---
 
-# Part VII — ELF, Linker, and Flat Image
+# Part X — ELF, Linker, and Image Contract
 
-## 43. Relocatable object format
+## 55. Relocatable object format
 
 The toolchain uses little-endian ELF32 relocatable objects.
 
-Recommended sections include:
+Recommended sections:
 
 ```text
 .text
@@ -1143,13 +1695,7 @@ Recommended sections include:
 
 `.data` and `.bss` receive data-space virtual addresses beginning at `0x0100`.
 
-Debug information remains in the ELF file or a sidecar and is not required in the flat runtime image.
-
----
-
-## 44. Relocation classes
-
-The object format defines:
+## 56. Relocations
 
 ```text
 R_AVM_NONE
@@ -1158,59 +1704,51 @@ R_AVM_PROG24
 R_AVM_PROG_LO16
 R_AVM_PROG_HI8
 R_AVM_PCREL8
-R_AVM_BANK16
 R_AVM_FAR24
 R_AVM_RELAX
 ```
-
-Roles:
 
 | Relocation | Purpose |
 |---|---|
 | `R_AVM_DATA16` | Absolute data-space address |
 | `R_AVM_PROG24` | Packed 24-bit logical program address |
-| `R_AVM_PROG_LO16` | Low 16 bits of program address |
-| `R_AVM_PROG_HI8` | Program-address bank byte |
+| `R_AVM_PROG_LO16` | Low 16 bits of a program address |
+| `R_AVM_PROG_HI8` | Bits `23:16` of a program address |
 | `R_AVM_PCREL8` | Signed relative control-flow displacement |
-| `R_AVM_BANK16` | Same-bank absolute low-16-bit address |
-| `R_AVM_FAR24` | Packed far-control target |
+| `R_AVM_FAR24` | Packed 24-bit absolute control-flow target |
 | `R_AVM_RELAX` | Linker relaxation marker |
 
-A far-control relocation must preserve any non-address control bit embedded in the encoded low byte.
 
----
-
-## 45. Linker responsibilities
+## 57. Linker responsibilities
 
 The linker must:
 
-1. Keep each function within one 64 KiB bank.
-2. Prevent instruction and fallthrough crossing at bank boundaries.
-3. Align address-taken and far-entry functions as required.
-4. Cluster related functions for locality.
-5. Insert veneers when required.
-6. Relax calls, jumps, and conditional transfers after layout.
-7. Lay out initialized writable data as one contiguous prefix.
-8. Lay out zero-initialized writable data immediately after it in SRAM.
-9. Synthesize the runtime header and tail.
-10. Validate all image and bank invariants.
-11. Fill unused runtime bytes with the required values.
+1. Lay out code and program-resident data anywhere within the flat 24-bit program space.
+2. Ensure that no instruction or program object extends beyond `0xFFFFFF`.
+3. Ensure every control-flow target is a valid instruction boundary.
+4. Satisfy alignment requirements for address-taken and explicitly aligned symbols.
+5. Cluster related functions and data for locality when profitable.
+6. Insert veneers or thunks only when required by displacement or encoding limits.
+7. Relax calls, jumps, and conditional transfers after layout.
+8. Lay out initialized writable data as one contiguous prefix.
+9. Lay out zero-initialized writable data immediately after it.
+10. Synthesize the runtime header and tail.
+11. Validate instruction encodings, operand aliases, relocations, and address-range invariants.
+12. Fill unused runtime bytes with the required padding.
 
-The exact instruction forms selected by relaxation are defined in `docs/avm_isa.md`.
+The linker places no 64 KiB boundary restrictions on functions, basic blocks, fallthrough, jump tables, or program data.
 
----
-
-## 46. Final linked-image layout
+## 58. Linked-image layout
 
 The executable image is a flat little-endian binary:
 
 ```text
-0x000000–0x0000FF                           fixed header
-0x000100–0x000100+dataSize-1                .data initializer
-...–programStart-1                          0xFF padding
-programStart–...                            program-space contents
-...–fileSize-9                              0xFF final padding
-fileSize-8–fileSize-1                       mandatory tail
+0x000000-0x0000FF                           fixed header
+0x000100-0x000100+dataSize-1                .data initializer
+...-programStart-1                          0xFF padding
+programStart-...                            program-space contents
+...-fileSize-9                              0xFF final padding
+fileSize-8-fileSize-1                       mandatory tail
 ```
 
 Definitions:
@@ -1218,313 +1756,38 @@ Definitions:
 ```text
 programStart = align_up(0x000100 + dataSize, 0x100)
 fileSize     = align_up(endOfPayload + 8, 0x100)
-file offset  = logical program-space address
+file offset  = logical program address
 fileSize mod 0x100 = 0
 ```
 
 `.bss` occupies no bytes in the image.
 
-After `programStart`, code and immutable data may be interleaved.
-
----
-
-# Part VIII — Interpreter Integration
-
-## 47. Primary dispatch
-
-The interpreter uses 256 fixed-stride primary slots, one for each primary opcode.
-
-The stride is an implementation parameter, not part of the ISA or binary compatibility contract.
-
-Requirements:
-
-- Every primary slot uses the same stride.
-- Native AVR `r7` contains the stride in AVR instruction words.
-- Dispatch calculation and table placement agree.
-- The handler entry point is computable directly from the primary opcode.
-- A handler that does not fit may jump to shared out-of-line code.
-
-The slot size, table placement, alignment, and dispatch latency may change between interpreter builds.
-
----
-
-## 48. Handler-entry invariants
-
-At primary handler entry:
-
-```text
-r2       = 0
-r7       = primary dispatch stride in AVR words
-r24:r25  = current primary opcode address
-Y        = AVM SP
-GPIOR1   = CB
-GPIOR2   = PB
-r3       = AVM CC storage
-SPDR     = transferring the byte following the primary opcode
-```
-
-Native `r0:r1`, `r4:r6`, `X`, and `Z` are scratch unless a dispatch path states otherwise.
-
-Compact primary handlers directly name the mapped AVR registers. Generic handlers may index the native register file through the regular mapping in Section 8.
-
----
-
-## 49. Sequential fetch pipeline
-
-For each additional sequential instruction byte:
-
-1. Complete the current SPI transfer.
-2. Read `SPDR`.
-3. Write zero from native `r2` to `SPDR`.
-4. Begin transferring the following byte.
-5. Decode or execute while the transfer proceeds.
-
-The final speculative transfer is the next primary opcode on fallthrough.
-
-A taken transfer discards any speculative sequential byte.
-
-Instruction length and operand sequencing are defined in `docs/avm_isa.md`.
-
----
-
-## 50. Stream restart
-
-A taken control transfer:
-
-1. Computes the logical target.
-2. Updates `CB` and/or `PC`.
-3. Adds `imageBase`.
-4. Starts a new SPI read command.
-5. Primes target-byte fetch.
-6. Dispatches the target primary opcode.
-
-A program-space data load similarly interrupts the sequential stream, performs the data read, and restarts instruction fetch at the following logical instruction address.
-
-The architecture exposes no exact cycle cost.
-
----
-
-## 51. Native ABI bridges
-
-Before calling ordinary AVR compiler-generated code, the interpreter must:
-
-- Clear native `r1`.
-- Save AVM values occupying native call-clobbered registers.
-- Save interpreter special state.
-- Ensure sufficient native stack space.
-
-After return, it must:
-
-- Restore AVM registers.
-- Restore `r2 = 0`.
-- Restore native `r7` to the dispatch stride.
-- Restore `CC`, bank state, PC state, and SPI-stream state.
-- Resume bytecode execution.
-
-Frequently used services should remain handwritten assembly where practical.
-
----
-
-## 52. Interrupt handling
-
-An interrupt handler must save every native register it modifies, including interpreter-fixed registers.
-
-Interrupt handlers should:
-
-- Minimize native stack use.
-- Avoid deep native calls.
-- Preserve `GPIOR1` and `GPIOR2`.
-- Preserve native `r2`, `r3`, `r7`, AVM register storage, and logical PC.
-- Preserve or restore SPI state if the handler touches the SPI peripheral.
-
----
-
-# Part IX — Startup and Image Format
-
-## 53. Image discovery
-
-The interpreter supports two discovery paths:
-
-1. Arduboy FX flashcart launch using keyed interrupt-vector words.
-2. Development or emulator launch using the mandatory image tail.
-
-### 53.1 Flashcart launch
-
-| Internal-flash address | Size | Meaning |
-|---:|---:|---|
-| `0x0014` | 2 | Data-vector key, little-endian `0x9518` |
-| `0x0016` | 2 | Image base page, stored high byte then low byte |
-| `0x0018` | 2 | Save-vector key, little-endian `0x9518` |
-| `0x001A` | 2 | Save base page, stored high byte then low byte |
-
-A page value `P` represents physical address:
-
-```text
-P << 8
-```
-
-The image key and save key are checked independently.
-
-A missing save page is permitted only when `saveSize == 0`.
-
-### 53.2 Development and emulator launch
-
-When the flashcart image key is absent, the interpreter checks:
-
-```text
-0xFFFFF8  image ends at the end of 16 MiB flash
-0xFFEFF8  image ends before a final 4 KiB save sector
-```
-
-For a tail in physical page `tailPage`:
-
-```text
-imageBasePage = tailPage + 1 - imagePageCount
-imageBase     = imageBasePage << 8
-```
-
-When the tail is at `0xFFEFF8`, the save sector begins at physical page `0xFFF0`.
-
----
-
-## 54. Minimal startup validation
-
-The normal interpreter validates:
-
-```text
-header magic is 41 56 4D 01
-runtimeVersion is supported
-dataSize <= staticSize
-staticSize <= 1024
-saveSize <= 1024
-saveSize == 0 or a save page exists
-```
-
-The interpreter then:
-
-1. Installs image and save-page state.
-2. Initializes the native AVR stack.
-3. Sets AVM `SP = 0x0A00`.
-4. Clears `PB` and `CC`.
-5. Clears `staticSize` bytes at SRAM `0x0100`.
-6. Copies `dataSize` bytes from logical address `0x000100` to SRAM `0x0100`.
-7. Retains save configuration for system services.
-8. Installs `CB:PC = entryPoint`.
-9. Starts an SPI read at the translated entry point.
-10. Primes the first instruction and enters dispatch.
-
-General-purpose AVM registers are unspecified at raw image entry unless the runtime ABI states otherwise.
-
----
-
-## 55. Header layout
+## 59. Header
 
 The header is exactly 256 bytes.
-
-All multi-byte fields are little-endian. `entryPoint` is packed 24-bit.
 
 | Offset | Size | Field | Description |
 |---:|---:|---|---|
 | `0x00` | 4 | `magic` | `41 56 4D 01` |
-| `0x04` | 1 | `runtimeVersion` | Combined interpreter compatibility version |
-| `0x05` | 3 | `entryPoint` | Logical address of runtime entry |
+| `0x04` | 1 | `runtimeVersion` | Execution-contract version |
+| `0x05` | 3 | `entryPoint` | Logical runtime entry address |
 | `0x08` | 2 | `dataSize` | Initialized static bytes |
 | `0x0A` | 2 | `staticSize` | Total `.data + .bss` bytes |
 | `0x0C` | 2 | `saveSize` | Requested persistent bytes |
-| `0x0E` | 238 | reserved | Must be zero |
-| `0xFC` | 4 | `headerCrc32` | CRC of bytes `0x00–0xFB` |
+| `0x0E` | 238 | `reserved` | Must be zero |
+| `0xFC` | 4 | `headerCrc32` | CRC of bytes `0x00-0xFB` |
 
-Serialization description:
+`headerCrc32` uses CRC-32/ISO-HDLC and is stored little-endian.
 
-```c
-struct AvmImageHeader {
-    uint8_t  magic[4];
-    uint8_t  runtimeVersion;
-    uint8_t  entryPoint[3];
-    uint16_t dataSize;
-    uint16_t staticSize;
-    uint16_t saveSize;
-    uint8_t  reserved[238];
-    uint32_t headerCrc32;
-};
-```
-
-This is a byte-serialization contract, not a native host-structure ABI.
-
----
-
-## 56. Header checksum
-
-`headerCrc32` uses CRC-32/ISO-HDLC over:
-
-```text
-header[0x00 .. 0xFB]
-```
-
-The stored value is little-endian at `0xFC–0xFF`.
-
-Host tools MUST generate it.
-
-Diagnostic tools SHOULD verify it.
-
-The normal device interpreter MAY omit CRC verification.
-
----
-
-## 57. Static initialization
-
-```text
-.data source       = logical program address 0x000100
-.data destination  = SRAM 0x0100
-.data length       = dataSize
-.bss destination   = SRAM 0x0100 + dataSize
-.bss length        = staticSize - dataSize
-```
-
-Required:
-
-```text
-0 <= dataSize <= staticSize <= 1024
-```
-
-The current startup strategy clears the full `staticSize` region and copies the `.data` prefix over it.
-
----
-
-## 58. Save storage
-
-`saveSize` is an exact byte count from zero through 1,024.
-
-The outer FX packer reserves a complete 4 KiB erase sector when persistent storage exists.
-
-The system ABI must enforce `saveSize` even though the physical sector is larger.
-
-For development placement with save storage:
-
-```text
-image end   = 0xFFF000
-save sector = 0xFFF000–0xFFFFFF
-```
-
----
-
-## 59. Tail locator
+## 60. Tail locator
 
 The final eight bytes are:
 
 | Tail offset | Size | Field | Description |
 |---:|---:|---|---|
 | `+0x00` | 4 | `magic` | `41 56 54 01` |
-| `+0x04` | 2 | `imagePageCount` | Total file length in 256-byte pages |
-| `+0x06` | 2 | reserved | Must be zero |
-
-```c
-struct AvmImageTail {
-    uint8_t  magic[4];
-    uint16_t imagePageCount;
-    uint16_t reserved;
-};
-```
+| `+0x04` | 2 | `imagePageCount` | File size in 256-byte pages |
+| `+0x06` | 2 | `reserved` | Must be zero |
 
 Required:
 
@@ -1533,262 +1796,155 @@ imagePageCount = fileSize / 256
 imagePageCount != 0
 ```
 
-The header page is recovered as:
+## 61. Startup state
 
-```text
-imageBasePage = tailPage + 1 - imagePageCount
-```
-
----
-
-## 60. Development placement
-
-Without save storage:
-
-```text
-image end = 0x1000000
-tail      = 0xFFFFF8
-```
-
-With a final save sector:
-
-```text
-image end   = 0xFFF000
-tail        = 0xFFEFF8
-save sector = 0xFFF000–0xFFFFFF
-```
-
-The linked image bytes are identical in both modes. Only physical placement differs.
-
----
-
-## 61. Image validation
-
-The linker or image writer MUST validate:
+A loader or runtime validates at least:
 
 ```text
 header magic
 supported runtimeVersion
-entryPoint fits in 24 bits
-entryPoint is a valid aligned instruction boundary
-programStart <= entryPoint < tailOffset
 dataSize <= staticSize <= 1024
 saveSize <= 1024
-reserved header bytes are zero
-headerCrc32 is correct
-programStart = align_up(0x000100 + dataSize, 0x100)
-tail magic
-imagePageCount == fileSize / 256
-imagePageCount != 0
-tail reserved bytes are zero
-alignment and final padding are 0xFF
-fileSize is a multiple of 256 bytes
-all bank-layout rules are satisfied
+valid entry point
 ```
 
-The physical packer additionally validates:
+It then establishes:
 
 ```text
-imageBase mod 256 = 0
-imageBase + fileSize fits in flash
-image and save allocations do not overlap
-development placement reaches the required physical end address
+SP = 0x0A00
+CC = 0
+PC = entryPoint
 ```
 
-Debug metadata remains outside the runtime header and tail.
+It clears `staticSize` bytes beginning at data address `0x0100`, then copies `dataSize` bytes from program address `0x000100` to data address `0x0100`.
 
+General-purpose registers are unspecified at raw image entry unless a higher-level runtime ABI states otherwise.
+
+
+## 61.1. Persistent save storage
+
+`saveSize` is an exact byte count from zero through 1,024.
+
+When `saveSize` is nonzero, the runtime provides a persistent storage object of at least that many bytes and exposes access only through defined system services or runtime-library contracts.
+
+Guest code MUST NOT assume a data-space address for persistent storage.
+
+A packer MAY reserve a larger physical erase unit, but bytes beyond `saveSize` are not part of the program-visible save object.
 ---
 
-# Part X — Diagnostics and Compatibility
+# Part XI — Validation, Undefined Behavior, and Versioning
 
-## 62. Diagnostic interpreter
+## 62. Validation requirements
 
-A diagnostic build should detect:
+A validating tool or VM should detect:
 
-- VM stack overflow and underflow.
-- Invalid or reserved instruction encodings.
-- Malformed operand bytes.
-- Instruction or fallthrough crossing a bank boundary.
-- Invalid or misaligned control-flow target.
-- Illegal operand overlap.
-- Program access outside the packed image.
-- Program-pointer overflow.
-- Invalid image magic or unsupported `runtimeVersion`.
-- Invalid static or save sizes.
-- Nonzero reserved header or tail bytes.
-- Header checksum failure.
-- Missing or inconsistent tail information.
-- Invalid entry point or padding.
-- Misaligned physical placement.
-- Unsupported system-service identifier.
-
-Instruction-specific diagnostics belong to `docs/avm_isa.md`.
-
----
-
-## 63. Optimized execution
-
-Optimized execution may define the following as unrestricted undefined behavior:
-
-- Access to unsupported data-space addresses.
-- Invalid program-space access.
+- Reserved or malformed instruction encodings.
+- Invalid secondary-page values.
+- Malformed `PSPEC` or `RRSPEC32`.
+- Prohibited postincrement-load aliases.
 - Stack overflow or underflow.
+- Invalid or misaligned control-flow targets.
+- Instruction or object placement beyond the 24-bit program-space limit.
+- Program access outside the image.
+- Noncanonical indirect pointers.
+- Unsupported system-service identifiers.
+- Invalid image header, tail, sizes, CRC, or padding.
+- `programStart` or `entryPoint` outside the linked payload.
+- Missing persistent storage when `saveSize` is nonzero.
+
+## 63. Unchecked execution
+
+Unchecked execution may treat the following as unrestricted undefined behavior:
+
 - Illegal or reserved instruction.
-- Malformed operand encoding.
+- Malformed operand byte.
+- Prohibited operand alias.
 - Jump into the middle of an instruction.
-- Violation of an operand restriction.
-- Execution past a bank boundary.
-- Execution of unvalidated bytecode.
-- Corruption of interpreter-reserved SRAM.
+- Instruction or object placement beyond the 24-bit program-space limit.
+- Stack overflow or underflow.
+- Unsupported data-space access.
+- Invalid program-space access.
+- Noncanonical pointer use.
+- Corruption of runtime-reserved data.
 
-The distribution toolchain should validate bytecode before packaging it.
-
----
+Distribution tooling SHOULD validate bytecode before packaging.
 
 ## 64. Versioning
 
 The linked image carries:
 
 ```text
-header magic[3]  header and basic file-layout revision
+header magic[3]  file-layout revision
 tail magic[3]    tail-locator revision
 runtimeVersion   complete execution-contract revision
 ```
 
-`runtimeVersion` covers:
-
-- The instruction set defined by `docs/avm_isa.md`.
-- Architectural register, pair, accumulator, and `CC` behavior.
-- Pointer representation and memory layout.
-- Calling convention and return-address format.
-- Startup contract.
-- System-service identifiers and signatures.
-- Program-visible save behavior.
-
-There are no separate ISA-version, ABI-version, image-feature, or capability fields in the runtime header.
-
-Because Version 1 remains a design draft and no stable Version 1 binary contract has been published, the revised accumulator/pair/CC ISA remains:
+Version 1 uses:
 
 ```text
 runtimeVersion = 1
 ```
 
-After Version 1 binaries are published, any incompatible change to the execution contract requires a new `runtimeVersion`.
+`runtimeVersion` covers:
 
-A compatible implementation may accept one version or an explicit set of versions.
+- Architectural state.
+- Complete instruction encoding and semantics.
+- Pointer representation.
+- Calling convention.
+- System ABI.
+- Startup contract.
+- Program-visible save behavior.
+
+After stable Version 1 binaries are published, any incompatible change requires a new `runtimeVersion`.
 
 ---
 
-# Part XI — Consolidated Summary
+# Part XII — Consolidated Interface Summary
 
 ```text
-Instruction specification:
-    docs/avm_isa.md is the sole source for encodings and instruction semantics
-
-Architectural registers:
-    r0-r7, each 16 bits
-
-Compact aliases:
-    c0 = r4
-    c1 = r5
-    c2 = r6
-    c3 = r7
-
-Accumulator:
-    A = c0 = r4
-
-Aligned 32-bit pairs:
-    q0 = r0:r1
-    q1 = r2:r3
-    q2 = r4:r5
-    q3 = r6:r7
-
-Condition state:
-    CC contains architectural C, Z, and S only
-    Compare/test and compact ADD/SUB replace CC
-    Other instructions preserve CC unless docs/avm_isa.md says otherwise
-
-Native AVM register mapping:
-    r0 -> AVR r8:r9
-    r1 -> AVR r10:r11
-    r2 -> AVR r12:r13
-    r3 -> AVR r14:r15
-    r4 -> AVR r16:r17
-    r5 -> AVR r18:r19
-    r6 -> AVR r20:r21
-    r7 -> AVR r22:r23
+Registers:
+    r0-r7, 16 bits each
+    c0-c3 alias r4-r7
+    q0-q3 alias aligned register pairs
 
 Special state:
-    PC    AVR r24:r25
-    SP    AVR Y
-    CB    GPIOR1
-    PB    GPIOR2
-    CC    AVR r3
+    PC  24 bits
+    SP  16 bits
+    CC  C/Z/S condition bits
 
-Data-space conventions:
-    0x0000-0x00FF native registers and I/O
-    0x0100-0x04FF globals
-    0x0500-0x08FF framebuffer
-    0x0900-0x09FF VM stack
-    0x0A00-0x0AFF interpreter-reserved
-
-Pointers:
-    Data pointer      16 bits
-    Program pointer   24 bits
-    Function pointer  24 bits
-    Null pointers     all zero
-
-Execution address:
-    CB:PC
-
-Program-data address:
-    PB:rN
-
-Indirect code-pointer operand:
-    canonical 24-bit pointer in qN
-    low register = bits 15:0
-    low byte of high register = bits 23:16
-    high byte of high register = 0
-    PB is preserved
-
-Code banks:
-    256 banks
-    64 KiB each
-    No instruction, function, or fallthrough crosses a bank
+Address spaces:
+    AS0 data, 16-bit pointers
+    AS1 program, 24-bit pointers, read-only
 
 Calling convention:
-    A/c0-c3 caller-saved arguments and results
+    c0-c3 caller-saved arguments/results
     r0-r3 callee-saved
     r3 optional frame pointer
-    Three-byte return addresses
+    three-byte return addresses
 
-Allocation model:
-    Static SRAM only
-    No general-purpose heap
+ISA:
+    one-byte compact matrices at 00-AF
+    immediate/control primaries at B0-EF
+    secondary pages F0-FE
+    FF reserved
 
-LLVM:
-    Triple avm-unknown-arduboyfx
-    EM_AVM = 0x4156
-    AS0 data space with 16-bit pointers
-    AS1 program space with 24-bit pointers
+Flags:
+    CMP, CMPI.S8, CMP32, TST8, TST16 replace CC
+    every other instruction preserves CC
 
-Linked image:
-    256-byte AVM header at logical address zero
-    .data initializer begins at logical address 0x000100
-    programStart is the next 256-byte boundary after .data
+Image:
+    256-byte header
+    .data initializer at 0x000100
+    mandatory 8-byte tail
     file offsets equal logical program addresses
-    mandatory 8-byte AVT tail stores imagePageCount
-    header CRC at 0xFC covers bytes 0x00-0xFB
-    saveSize is limited to 1024 bytes
-    image base and file size are 256-byte aligned
 
-System ABI:
-    service 0 = debug_putc(low8(A))
-    service 1 = debug_break
+Toolchain:
+    avm-unknown-arduboyfx
+    ELF32 little-endian
+    EM_AVM = 0x4156
+    PTR16 uses r0-r7 with compact-first allocation
+    CPTR16 uses r4-r7 for compact-pointer-only encodings
+    GPR32 uses q0-q3
+    CGPR32 uses q2-q3
+    PROGPTR is a canonical 24-bit value backed by GPR32
 ```
-
-This document, together with `docs/avm_isa.md`, defines the Version 1 AVM execution contract.
-
-[1]: https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7766-8-bit-AVR-ATmega16U4-32U4_Datasheet.pdf "ATmega16U4/32U4 Datasheet"
-[2]: https://ww1.microchip.com/downloads/en/DeviceDoc/AVR-InstructionSet-Manual-DS40002198.pdf "AVR Instruction Set Manual"
-[3]: https://llvm.org/docs/WritingAnLLVMBackend.html "Writing an LLVM Backend"

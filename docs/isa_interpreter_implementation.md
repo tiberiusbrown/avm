@@ -262,6 +262,39 @@ The dispatch cadence is determined by handler work, not by the low-register PC a
 
 The external flash SPI transfer requires sixteen native cycles after an `OUT SPDR,...` before the received byte is complete. With the initiating `OUT` designated cycle 0, the completed byte is available for an `IN SPDR` on cycle 17.
 
+#### Primary-slot entry cycle
+
+For cadence accounting, the first native instruction in the selected primary-table slot begins on **cycle 10 after the dispatch's most recent `OUT SPDR,...`**. This is true for both dispatch forms:
+
+```asm
+; Standard dispatch: OUT is cycle 0; selected primary slot starts at cycle 10.
+in    primary, SPDR
+out   SPDR, ZERO
+add   VM_PCL, ONE
+adc   VM_PCM, ZERO
+adc   VM_PCH, ZERO
+mul   primary, FOUR
+movw  r30, r0
+subi  r31, hi8(-(pm(primary_table)))
+ijmp
+
+; Reverse dispatch: its OUT is cycle 0; selected primary slot also starts at
+; cycle 10. The low-byte PC ADD occurs before that OUT.
+add   VM_PCL, ONE
+cli
+out   SPDR, ZERO
+in    primary, SPDR
+sei
+adc   VM_PCM, ZERO
+adc   VM_PCH, ZERO
+mul   primary, FOUR
+movw  r30, r0
+subi  r31, hi8(-(pm(primary_table)))
+ijmp
+```
+
+Consequently, a primary slot that must perform a reverse handoff on cycle 17 has only cycles 10 through 15 available before its `CLI` and `OUT`. Include all slot instructions, taken jumps into continuations, and continuation instructions in that seven-cycle window. For example, a slot containing `NOP; RJMP handler` reaches the handler on cycle 13, leaving cycles 13 through 15 for three one-cycle instructions before `CLI` on cycle 16 and `OUT` on cycle 17.
+
 There are exactly two legal byte-to-byte handoff schedules:
 
 #### Exact 17-cycle reverse handoff

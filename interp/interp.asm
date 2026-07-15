@@ -615,10 +615,10 @@ reset_handler:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; The primary table has 256 fixed four-word slots. A completed short handler
-; will eventually end with RJMP to a shared cadence tail; a longer primary
-; handler may use its fourth word to forward to an out-of-line continuation.
-; For this migration skeleton every architecturally defined opcode traps as
-; unimplemented and every reserved opcode traps as invalid.
+; ends with RJMP to a shared cadence tail; a longer primary handler may use its
+; fourth word to forward to an out-of-line continuation. Opcodes 0x00-0xBF are
+; implemented directly below. Later defined opcodes remain migration stubs and
+; reserved encodings trap as invalid.
 
 ; Standard 18-cycle sequential dispatch. PRIMARY_OPCODE is the byte fetched
 ; for the next instruction; the 24-bit VM PC advances by one byte.
@@ -665,6 +665,107 @@ reset_handler:
     .endif
 .endm
 
+
+; All direct primary-emission macros below produce exactly four AVR words.
+; Padding after an unconditional RJMP is unreachable and exists only to retain
+; the fixed primary-table stride.
+
+.macro assert_primary_slot_width label
+.Lprimary_slot_end_\@:
+    .if (.Lprimary_slot_end_\@ - \label) != PRIMARY_STRIDE_BYTES
+        .error "implemented primary dispatch slot is not exactly four words"
+    .endif
+.endm
+
+; 3 handler cycles plus one landing-pad cycle -> 17-cycle cadence.
+.macro emit_primary_mov label, dst, src
+\label:
+    movw \dst, \src
+    rjmp cluster_tail_17_delay_1
+    nop
+    nop
+    assert_primary_slot_width \label
+.endm
+
+; 4 handler cycles -> 17-cycle cadence.
+.macro emit_primary_binary label, lowop, highop, dstl, dsth, srcl, srch
+\label:
+    \lowop  \dstl, \srcl
+    \highop \dsth, \srch
+    rjmp cluster_tail_17
+    nop
+    assert_primary_slot_width \label
+.endm
+
+; Capture native SREG in PRIMARY_OPCODE and commit it to architectural
+; VM_FLAGS through a dedicated 18-cycle dispatch landing.
+.macro emit_primary_cmp label, lhsl, lhsh, rhsl, rhsh
+\label:
+    cp   \lhsl, \rhsl
+    cpc  \lhsh, \rhsh
+    in   PRIMARY_OPCODE, SREG
+    rjmp flags_commit_18_delay_1
+    assert_primary_slot_width \label
+.endm
+
+; Capture the address in X before overwriting the destination. This preserves
+; the specified alias behavior when cD == cA.
+.macro emit_primary_ld8u label, dstl, dsth, addr
+\label:
+    movw r26, \addr
+    ld   \dstl, X
+    clr  \dsth
+    rjmp cluster_tail_18_delay_1
+    assert_primary_slot_width \label
+.endm
+
+.macro emit_primary_st8 label, addr, srcl
+\label:
+    movw r26, \addr
+    st   X, \srcl
+    rjmp cluster_tail_18_delay_2
+    nop
+    assert_primary_slot_width \label
+.endm
+
+.macro emit_primary_ld16 label, dstl, dsth, addr
+\label:
+    movw r26, \addr
+    ld   \dstl, X+
+    ld   \dsth, X
+    rjmp cluster_tail_18
+    assert_primary_slot_width \label
+.endm
+
+.macro emit_primary_st16 label, addr, srcl, srch
+\label:
+    movw r26, \addr
+    st   X+, \srcl
+    st   X,  \srch
+    rjmp cluster_tail_18
+    assert_primary_slot_width \label
+.endm
+
+; The VM stack grows downward. PUSH stores high then low so VM_SP points at
+; the little-endian low byte; POP reverses the operation.
+.macro emit_primary_push16 label, srcl, srch
+\label:
+    st   -Y, \srch
+    st   -Y, \srcl
+    rjmp cluster_tail_18_delay_1
+    nop
+    assert_primary_slot_width \label
+.endm
+
+.macro emit_primary_pop16 label, dstl, dsth
+\label:
+    ld   \dstl, Y+
+    ld   \dsth, Y+
+    rjmp cluster_tail_18_delay_1
+    nop
+    assert_primary_slot_width \label
+.endm
+
 .org PRIMARY_TABLE_ORG
 .global primary_table
 .global abvm_interp
@@ -675,258 +776,258 @@ abvm_interp:
 ; 0x00-0x0F: MOV cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_00, unimplemented_instruction_func
-emit_primary_stub primary_01, unimplemented_instruction_func
-emit_primary_stub primary_02, unimplemented_instruction_func
-emit_primary_stub primary_03, unimplemented_instruction_func
-emit_primary_stub primary_04, unimplemented_instruction_func
-emit_primary_stub primary_05, unimplemented_instruction_func
-emit_primary_stub primary_06, unimplemented_instruction_func
-emit_primary_stub primary_07, unimplemented_instruction_func
-emit_primary_stub primary_08, unimplemented_instruction_func
-emit_primary_stub primary_09, unimplemented_instruction_func
-emit_primary_stub primary_0A, unimplemented_instruction_func
-emit_primary_stub primary_0B, unimplemented_instruction_func
-emit_primary_stub primary_0C, unimplemented_instruction_func
-emit_primary_stub primary_0D, unimplemented_instruction_func
-emit_primary_stub primary_0E, unimplemented_instruction_func
-emit_primary_stub primary_0F, unimplemented_instruction_func
+emit_primary_mov primary_00, VM_C0, VM_C0
+emit_primary_mov primary_01, VM_C0, VM_C1
+emit_primary_mov primary_02, VM_C0, VM_C2
+emit_primary_mov primary_03, VM_C0, VM_C3
+emit_primary_mov primary_04, VM_C1, VM_C0
+emit_primary_mov primary_05, VM_C1, VM_C1
+emit_primary_mov primary_06, VM_C1, VM_C2
+emit_primary_mov primary_07, VM_C1, VM_C3
+emit_primary_mov primary_08, VM_C2, VM_C0
+emit_primary_mov primary_09, VM_C2, VM_C1
+emit_primary_mov primary_0A, VM_C2, VM_C2
+emit_primary_mov primary_0B, VM_C2, VM_C3
+emit_primary_mov primary_0C, VM_C3, VM_C0
+emit_primary_mov primary_0D, VM_C3, VM_C1
+emit_primary_mov primary_0E, VM_C3, VM_C2
+emit_primary_mov primary_0F, VM_C3, VM_C3
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x10-0x1F: ADD cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_10, unimplemented_instruction_func
-emit_primary_stub primary_11, unimplemented_instruction_func
-emit_primary_stub primary_12, unimplemented_instruction_func
-emit_primary_stub primary_13, unimplemented_instruction_func
-emit_primary_stub primary_14, unimplemented_instruction_func
-emit_primary_stub primary_15, unimplemented_instruction_func
-emit_primary_stub primary_16, unimplemented_instruction_func
-emit_primary_stub primary_17, unimplemented_instruction_func
-emit_primary_stub primary_18, unimplemented_instruction_func
-emit_primary_stub primary_19, unimplemented_instruction_func
-emit_primary_stub primary_1A, unimplemented_instruction_func
-emit_primary_stub primary_1B, unimplemented_instruction_func
-emit_primary_stub primary_1C, unimplemented_instruction_func
-emit_primary_stub primary_1D, unimplemented_instruction_func
-emit_primary_stub primary_1E, unimplemented_instruction_func
-emit_primary_stub primary_1F, unimplemented_instruction_func
+emit_primary_binary primary_10, add, adc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_primary_binary primary_11, add, adc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_primary_binary primary_12, add, adc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_primary_binary primary_13, add, adc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_primary_binary primary_14, add, adc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_primary_binary primary_15, add, adc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_primary_binary primary_16, add, adc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_primary_binary primary_17, add, adc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_primary_binary primary_18, add, adc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_primary_binary primary_19, add, adc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_primary_binary primary_1A, add, adc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_primary_binary primary_1B, add, adc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_primary_binary primary_1C, add, adc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_primary_binary primary_1D, add, adc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_primary_binary primary_1E, add, adc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_primary_binary primary_1F, add, adc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x20-0x2F: SUB cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_20, unimplemented_instruction_func
-emit_primary_stub primary_21, unimplemented_instruction_func
-emit_primary_stub primary_22, unimplemented_instruction_func
-emit_primary_stub primary_23, unimplemented_instruction_func
-emit_primary_stub primary_24, unimplemented_instruction_func
-emit_primary_stub primary_25, unimplemented_instruction_func
-emit_primary_stub primary_26, unimplemented_instruction_func
-emit_primary_stub primary_27, unimplemented_instruction_func
-emit_primary_stub primary_28, unimplemented_instruction_func
-emit_primary_stub primary_29, unimplemented_instruction_func
-emit_primary_stub primary_2A, unimplemented_instruction_func
-emit_primary_stub primary_2B, unimplemented_instruction_func
-emit_primary_stub primary_2C, unimplemented_instruction_func
-emit_primary_stub primary_2D, unimplemented_instruction_func
-emit_primary_stub primary_2E, unimplemented_instruction_func
-emit_primary_stub primary_2F, unimplemented_instruction_func
+emit_primary_binary primary_20, sub, sbc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_primary_binary primary_21, sub, sbc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_primary_binary primary_22, sub, sbc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_primary_binary primary_23, sub, sbc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_primary_binary primary_24, sub, sbc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_primary_binary primary_25, sub, sbc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_primary_binary primary_26, sub, sbc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_primary_binary primary_27, sub, sbc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_primary_binary primary_28, sub, sbc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_primary_binary primary_29, sub, sbc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_primary_binary primary_2A, sub, sbc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_primary_binary primary_2B, sub, sbc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_primary_binary primary_2C, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_primary_binary primary_2D, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_primary_binary primary_2E, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_primary_binary primary_2F, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x30-0x3F: CMP cL,cR
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_30, unimplemented_instruction_func
-emit_primary_stub primary_31, unimplemented_instruction_func
-emit_primary_stub primary_32, unimplemented_instruction_func
-emit_primary_stub primary_33, unimplemented_instruction_func
-emit_primary_stub primary_34, unimplemented_instruction_func
-emit_primary_stub primary_35, unimplemented_instruction_func
-emit_primary_stub primary_36, unimplemented_instruction_func
-emit_primary_stub primary_37, unimplemented_instruction_func
-emit_primary_stub primary_38, unimplemented_instruction_func
-emit_primary_stub primary_39, unimplemented_instruction_func
-emit_primary_stub primary_3A, unimplemented_instruction_func
-emit_primary_stub primary_3B, unimplemented_instruction_func
-emit_primary_stub primary_3C, unimplemented_instruction_func
-emit_primary_stub primary_3D, unimplemented_instruction_func
-emit_primary_stub primary_3E, unimplemented_instruction_func
-emit_primary_stub primary_3F, unimplemented_instruction_func
+emit_primary_cmp primary_30, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_primary_cmp primary_31, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_primary_cmp primary_32, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_primary_cmp primary_33, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_primary_cmp primary_34, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_primary_cmp primary_35, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_primary_cmp primary_36, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_primary_cmp primary_37, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_primary_cmp primary_38, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_primary_cmp primary_39, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_primary_cmp primary_3A, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_primary_cmp primary_3B, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_primary_cmp primary_3C, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_primary_cmp primary_3D, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_primary_cmp primary_3E, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_primary_cmp primary_3F, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x40-0x4F: LD8U cD,[cA]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_40, unimplemented_instruction_func
-emit_primary_stub primary_41, unimplemented_instruction_func
-emit_primary_stub primary_42, unimplemented_instruction_func
-emit_primary_stub primary_43, unimplemented_instruction_func
-emit_primary_stub primary_44, unimplemented_instruction_func
-emit_primary_stub primary_45, unimplemented_instruction_func
-emit_primary_stub primary_46, unimplemented_instruction_func
-emit_primary_stub primary_47, unimplemented_instruction_func
-emit_primary_stub primary_48, unimplemented_instruction_func
-emit_primary_stub primary_49, unimplemented_instruction_func
-emit_primary_stub primary_4A, unimplemented_instruction_func
-emit_primary_stub primary_4B, unimplemented_instruction_func
-emit_primary_stub primary_4C, unimplemented_instruction_func
-emit_primary_stub primary_4D, unimplemented_instruction_func
-emit_primary_stub primary_4E, unimplemented_instruction_func
-emit_primary_stub primary_4F, unimplemented_instruction_func
+emit_primary_ld8u primary_40, VM_C0L, VM_C0H, VM_C0
+emit_primary_ld8u primary_41, VM_C0L, VM_C0H, VM_C1
+emit_primary_ld8u primary_42, VM_C0L, VM_C0H, VM_C2
+emit_primary_ld8u primary_43, VM_C0L, VM_C0H, VM_C3
+emit_primary_ld8u primary_44, VM_C1L, VM_C1H, VM_C0
+emit_primary_ld8u primary_45, VM_C1L, VM_C1H, VM_C1
+emit_primary_ld8u primary_46, VM_C1L, VM_C1H, VM_C2
+emit_primary_ld8u primary_47, VM_C1L, VM_C1H, VM_C3
+emit_primary_ld8u primary_48, VM_C2L, VM_C2H, VM_C0
+emit_primary_ld8u primary_49, VM_C2L, VM_C2H, VM_C1
+emit_primary_ld8u primary_4A, VM_C2L, VM_C2H, VM_C2
+emit_primary_ld8u primary_4B, VM_C2L, VM_C2H, VM_C3
+emit_primary_ld8u primary_4C, VM_C3L, VM_C3H, VM_C0
+emit_primary_ld8u primary_4D, VM_C3L, VM_C3H, VM_C1
+emit_primary_ld8u primary_4E, VM_C3L, VM_C3H, VM_C2
+emit_primary_ld8u primary_4F, VM_C3L, VM_C3H, VM_C3
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x50-0x5F: ST8 [cA],cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_50, unimplemented_instruction_func
-emit_primary_stub primary_51, unimplemented_instruction_func
-emit_primary_stub primary_52, unimplemented_instruction_func
-emit_primary_stub primary_53, unimplemented_instruction_func
-emit_primary_stub primary_54, unimplemented_instruction_func
-emit_primary_stub primary_55, unimplemented_instruction_func
-emit_primary_stub primary_56, unimplemented_instruction_func
-emit_primary_stub primary_57, unimplemented_instruction_func
-emit_primary_stub primary_58, unimplemented_instruction_func
-emit_primary_stub primary_59, unimplemented_instruction_func
-emit_primary_stub primary_5A, unimplemented_instruction_func
-emit_primary_stub primary_5B, unimplemented_instruction_func
-emit_primary_stub primary_5C, unimplemented_instruction_func
-emit_primary_stub primary_5D, unimplemented_instruction_func
-emit_primary_stub primary_5E, unimplemented_instruction_func
-emit_primary_stub primary_5F, unimplemented_instruction_func
+emit_primary_st8 primary_50, VM_C0, VM_C0L
+emit_primary_st8 primary_51, VM_C0, VM_C1L
+emit_primary_st8 primary_52, VM_C0, VM_C2L
+emit_primary_st8 primary_53, VM_C0, VM_C3L
+emit_primary_st8 primary_54, VM_C1, VM_C0L
+emit_primary_st8 primary_55, VM_C1, VM_C1L
+emit_primary_st8 primary_56, VM_C1, VM_C2L
+emit_primary_st8 primary_57, VM_C1, VM_C3L
+emit_primary_st8 primary_58, VM_C2, VM_C0L
+emit_primary_st8 primary_59, VM_C2, VM_C1L
+emit_primary_st8 primary_5A, VM_C2, VM_C2L
+emit_primary_st8 primary_5B, VM_C2, VM_C3L
+emit_primary_st8 primary_5C, VM_C3, VM_C0L
+emit_primary_st8 primary_5D, VM_C3, VM_C1L
+emit_primary_st8 primary_5E, VM_C3, VM_C2L
+emit_primary_st8 primary_5F, VM_C3, VM_C3L
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x60-0x6F: LD16 cD,[cA]
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_60, unimplemented_instruction_func
-emit_primary_stub primary_61, unimplemented_instruction_func
-emit_primary_stub primary_62, unimplemented_instruction_func
-emit_primary_stub primary_63, unimplemented_instruction_func
-emit_primary_stub primary_64, unimplemented_instruction_func
-emit_primary_stub primary_65, unimplemented_instruction_func
-emit_primary_stub primary_66, unimplemented_instruction_func
-emit_primary_stub primary_67, unimplemented_instruction_func
-emit_primary_stub primary_68, unimplemented_instruction_func
-emit_primary_stub primary_69, unimplemented_instruction_func
-emit_primary_stub primary_6A, unimplemented_instruction_func
-emit_primary_stub primary_6B, unimplemented_instruction_func
-emit_primary_stub primary_6C, unimplemented_instruction_func
-emit_primary_stub primary_6D, unimplemented_instruction_func
-emit_primary_stub primary_6E, unimplemented_instruction_func
-emit_primary_stub primary_6F, unimplemented_instruction_func
+emit_primary_ld16 primary_60, VM_C0L, VM_C0H, VM_C0
+emit_primary_ld16 primary_61, VM_C0L, VM_C0H, VM_C1
+emit_primary_ld16 primary_62, VM_C0L, VM_C0H, VM_C2
+emit_primary_ld16 primary_63, VM_C0L, VM_C0H, VM_C3
+emit_primary_ld16 primary_64, VM_C1L, VM_C1H, VM_C0
+emit_primary_ld16 primary_65, VM_C1L, VM_C1H, VM_C1
+emit_primary_ld16 primary_66, VM_C1L, VM_C1H, VM_C2
+emit_primary_ld16 primary_67, VM_C1L, VM_C1H, VM_C3
+emit_primary_ld16 primary_68, VM_C2L, VM_C2H, VM_C0
+emit_primary_ld16 primary_69, VM_C2L, VM_C2H, VM_C1
+emit_primary_ld16 primary_6A, VM_C2L, VM_C2H, VM_C2
+emit_primary_ld16 primary_6B, VM_C2L, VM_C2H, VM_C3
+emit_primary_ld16 primary_6C, VM_C3L, VM_C3H, VM_C0
+emit_primary_ld16 primary_6D, VM_C3L, VM_C3H, VM_C1
+emit_primary_ld16 primary_6E, VM_C3L, VM_C3H, VM_C2
+emit_primary_ld16 primary_6F, VM_C3L, VM_C3H, VM_C3
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x70-0x7F: ST16 [cA],cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_70, unimplemented_instruction_func
-emit_primary_stub primary_71, unimplemented_instruction_func
-emit_primary_stub primary_72, unimplemented_instruction_func
-emit_primary_stub primary_73, unimplemented_instruction_func
-emit_primary_stub primary_74, unimplemented_instruction_func
-emit_primary_stub primary_75, unimplemented_instruction_func
-emit_primary_stub primary_76, unimplemented_instruction_func
-emit_primary_stub primary_77, unimplemented_instruction_func
-emit_primary_stub primary_78, unimplemented_instruction_func
-emit_primary_stub primary_79, unimplemented_instruction_func
-emit_primary_stub primary_7A, unimplemented_instruction_func
-emit_primary_stub primary_7B, unimplemented_instruction_func
-emit_primary_stub primary_7C, unimplemented_instruction_func
-emit_primary_stub primary_7D, unimplemented_instruction_func
-emit_primary_stub primary_7E, unimplemented_instruction_func
-emit_primary_stub primary_7F, unimplemented_instruction_func
+emit_primary_st16 primary_70, VM_C0, VM_C0L, VM_C0H
+emit_primary_st16 primary_71, VM_C0, VM_C1L, VM_C1H
+emit_primary_st16 primary_72, VM_C0, VM_C2L, VM_C2H
+emit_primary_st16 primary_73, VM_C0, VM_C3L, VM_C3H
+emit_primary_st16 primary_74, VM_C1, VM_C0L, VM_C0H
+emit_primary_st16 primary_75, VM_C1, VM_C1L, VM_C1H
+emit_primary_st16 primary_76, VM_C1, VM_C2L, VM_C2H
+emit_primary_st16 primary_77, VM_C1, VM_C3L, VM_C3H
+emit_primary_st16 primary_78, VM_C2, VM_C0L, VM_C0H
+emit_primary_st16 primary_79, VM_C2, VM_C1L, VM_C1H
+emit_primary_st16 primary_7A, VM_C2, VM_C2L, VM_C2H
+emit_primary_st16 primary_7B, VM_C2, VM_C3L, VM_C3H
+emit_primary_st16 primary_7C, VM_C3, VM_C0L, VM_C0H
+emit_primary_st16 primary_7D, VM_C3, VM_C1L, VM_C1H
+emit_primary_st16 primary_7E, VM_C3, VM_C2L, VM_C2H
+emit_primary_st16 primary_7F, VM_C3, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x80-0x8F: AND cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_80, unimplemented_instruction_func
-emit_primary_stub primary_81, unimplemented_instruction_func
-emit_primary_stub primary_82, unimplemented_instruction_func
-emit_primary_stub primary_83, unimplemented_instruction_func
-emit_primary_stub primary_84, unimplemented_instruction_func
-emit_primary_stub primary_85, unimplemented_instruction_func
-emit_primary_stub primary_86, unimplemented_instruction_func
-emit_primary_stub primary_87, unimplemented_instruction_func
-emit_primary_stub primary_88, unimplemented_instruction_func
-emit_primary_stub primary_89, unimplemented_instruction_func
-emit_primary_stub primary_8A, unimplemented_instruction_func
-emit_primary_stub primary_8B, unimplemented_instruction_func
-emit_primary_stub primary_8C, unimplemented_instruction_func
-emit_primary_stub primary_8D, unimplemented_instruction_func
-emit_primary_stub primary_8E, unimplemented_instruction_func
-emit_primary_stub primary_8F, unimplemented_instruction_func
+emit_primary_binary primary_80, and, and, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_primary_binary primary_81, and, and, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_primary_binary primary_82, and, and, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_primary_binary primary_83, and, and, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_primary_binary primary_84, and, and, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_primary_binary primary_85, and, and, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_primary_binary primary_86, and, and, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_primary_binary primary_87, and, and, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_primary_binary primary_88, and, and, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_primary_binary primary_89, and, and, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_primary_binary primary_8A, and, and, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_primary_binary primary_8B, and, and, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_primary_binary primary_8C, and, and, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_primary_binary primary_8D, and, and, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_primary_binary primary_8E, and, and, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_primary_binary primary_8F, and, and, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x90-0x9F: OR cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_90, unimplemented_instruction_func
-emit_primary_stub primary_91, unimplemented_instruction_func
-emit_primary_stub primary_92, unimplemented_instruction_func
-emit_primary_stub primary_93, unimplemented_instruction_func
-emit_primary_stub primary_94, unimplemented_instruction_func
-emit_primary_stub primary_95, unimplemented_instruction_func
-emit_primary_stub primary_96, unimplemented_instruction_func
-emit_primary_stub primary_97, unimplemented_instruction_func
-emit_primary_stub primary_98, unimplemented_instruction_func
-emit_primary_stub primary_99, unimplemented_instruction_func
-emit_primary_stub primary_9A, unimplemented_instruction_func
-emit_primary_stub primary_9B, unimplemented_instruction_func
-emit_primary_stub primary_9C, unimplemented_instruction_func
-emit_primary_stub primary_9D, unimplemented_instruction_func
-emit_primary_stub primary_9E, unimplemented_instruction_func
-emit_primary_stub primary_9F, unimplemented_instruction_func
+emit_primary_binary primary_90, or, or, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_primary_binary primary_91, or, or, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_primary_binary primary_92, or, or, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_primary_binary primary_93, or, or, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_primary_binary primary_94, or, or, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_primary_binary primary_95, or, or, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_primary_binary primary_96, or, or, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_primary_binary primary_97, or, or, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_primary_binary primary_98, or, or, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_primary_binary primary_99, or, or, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_primary_binary primary_9A, or, or, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_primary_binary primary_9B, or, or, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_primary_binary primary_9C, or, or, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_primary_binary primary_9D, or, or, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_primary_binary primary_9E, or, or, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_primary_binary primary_9F, or, or, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xA0-0xAF: XOR cD,cS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_A0, unimplemented_instruction_func
-emit_primary_stub primary_A1, unimplemented_instruction_func
-emit_primary_stub primary_A2, unimplemented_instruction_func
-emit_primary_stub primary_A3, unimplemented_instruction_func
-emit_primary_stub primary_A4, unimplemented_instruction_func
-emit_primary_stub primary_A5, unimplemented_instruction_func
-emit_primary_stub primary_A6, unimplemented_instruction_func
-emit_primary_stub primary_A7, unimplemented_instruction_func
-emit_primary_stub primary_A8, unimplemented_instruction_func
-emit_primary_stub primary_A9, unimplemented_instruction_func
-emit_primary_stub primary_AA, unimplemented_instruction_func
-emit_primary_stub primary_AB, unimplemented_instruction_func
-emit_primary_stub primary_AC, unimplemented_instruction_func
-emit_primary_stub primary_AD, unimplemented_instruction_func
-emit_primary_stub primary_AE, unimplemented_instruction_func
-emit_primary_stub primary_AF, unimplemented_instruction_func
+emit_primary_binary primary_A0, eor, eor, VM_C0L, VM_C0H, VM_C0L, VM_C0H
+emit_primary_binary primary_A1, eor, eor, VM_C0L, VM_C0H, VM_C1L, VM_C1H
+emit_primary_binary primary_A2, eor, eor, VM_C0L, VM_C0H, VM_C2L, VM_C2H
+emit_primary_binary primary_A3, eor, eor, VM_C0L, VM_C0H, VM_C3L, VM_C3H
+emit_primary_binary primary_A4, eor, eor, VM_C1L, VM_C1H, VM_C0L, VM_C0H
+emit_primary_binary primary_A5, eor, eor, VM_C1L, VM_C1H, VM_C1L, VM_C1H
+emit_primary_binary primary_A6, eor, eor, VM_C1L, VM_C1H, VM_C2L, VM_C2H
+emit_primary_binary primary_A7, eor, eor, VM_C1L, VM_C1H, VM_C3L, VM_C3H
+emit_primary_binary primary_A8, eor, eor, VM_C2L, VM_C2H, VM_C0L, VM_C0H
+emit_primary_binary primary_A9, eor, eor, VM_C2L, VM_C2H, VM_C1L, VM_C1H
+emit_primary_binary primary_AA, eor, eor, VM_C2L, VM_C2H, VM_C2L, VM_C2H
+emit_primary_binary primary_AB, eor, eor, VM_C2L, VM_C2H, VM_C3L, VM_C3H
+emit_primary_binary primary_AC, eor, eor, VM_C3L, VM_C3H, VM_C0L, VM_C0H
+emit_primary_binary primary_AD, eor, eor, VM_C3L, VM_C3H, VM_C1L, VM_C1H
+emit_primary_binary primary_AE, eor, eor, VM_C3L, VM_C3H, VM_C2L, VM_C2H
+emit_primary_binary primary_AF, eor, eor, VM_C3L, VM_C3H, VM_C3L, VM_C3H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xB0-0xB7: PUSH16 rN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_B0_push16_r0, unimplemented_instruction_func
-emit_primary_stub primary_B1_push16_r1, unimplemented_instruction_func
-emit_primary_stub primary_B2_push16_r2, unimplemented_instruction_func
-emit_primary_stub primary_B3_push16_r3, unimplemented_instruction_func
-emit_primary_stub primary_B4_push16_r4, unimplemented_instruction_func
-emit_primary_stub primary_B5_push16_r5, unimplemented_instruction_func
-emit_primary_stub primary_B6_push16_r6, unimplemented_instruction_func
-emit_primary_stub primary_B7_push16_r7, unimplemented_instruction_func
+emit_primary_push16 primary_B0_push16_r0, VM_R0L, VM_R0H
+emit_primary_push16 primary_B1_push16_r1, VM_R1L, VM_R1H
+emit_primary_push16 primary_B2_push16_r2, VM_R2L, VM_R2H
+emit_primary_push16 primary_B3_push16_r3, VM_R3L, VM_R3H
+emit_primary_push16 primary_B4_push16_r4, VM_R4L, VM_R4H
+emit_primary_push16 primary_B5_push16_r5, VM_R5L, VM_R5H
+emit_primary_push16 primary_B6_push16_r6, VM_R6L, VM_R6H
+emit_primary_push16 primary_B7_push16_r7, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xB8-0xBF: POP16 rN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_B8_pop16_r0, unimplemented_instruction_func
-emit_primary_stub primary_B9_pop16_r1, unimplemented_instruction_func
-emit_primary_stub primary_BA_pop16_r2, unimplemented_instruction_func
-emit_primary_stub primary_BB_pop16_r3, unimplemented_instruction_func
-emit_primary_stub primary_BC_pop16_r4, unimplemented_instruction_func
-emit_primary_stub primary_BD_pop16_r5, unimplemented_instruction_func
-emit_primary_stub primary_BE_pop16_r6, unimplemented_instruction_func
-emit_primary_stub primary_BF_pop16_r7, unimplemented_instruction_func
+emit_primary_pop16 primary_B8_pop16_r0, VM_R0L, VM_R0H
+emit_primary_pop16 primary_B9_pop16_r1, VM_R1L, VM_R1H
+emit_primary_pop16 primary_BA_pop16_r2, VM_R2L, VM_R2H
+emit_primary_pop16 primary_BB_pop16_r3, VM_R3L, VM_R3H
+emit_primary_pop16 primary_BC_pop16_r4, VM_R4L, VM_R4H
+emit_primary_pop16 primary_BD_pop16_r5, VM_R5L, VM_R5H
+emit_primary_pop16 primary_BE_pop16_r6, VM_R6L, VM_R6H
+emit_primary_pop16 primary_BF_pop16_r7, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xC0-0xC3: LDI8 cD,imm8
@@ -1084,14 +1185,23 @@ primary_table_end:
 ; Post-table migration scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Secondary decoders, condition gates, executable secondary tables, and all
-; instruction bodies are intentionally absent. They should be added after the
-; primary table in the single-section order defined by the implementation
-; guide, without interior power-of-two alignment.
+; The direct one-byte primary families 00-BF are complete. Secondary decoders,
+; condition gates, executable secondary tables, and the remaining instruction
+; bodies are still absent. They should be added after the primary table in the
+; single-section order defined by the implementation guide, without interior
+; power-of-two alignment.
 
-; Exact cadence tails retained as implementation scaffolding. Future handlers
-; may RJMP to these labels once their native work and required padding are
-; known. Additional copies will be placed according to the final layout plan.
+; Direct 00-BF handlers use these exact cadence landings. Later secondary
+; pages may add local copies when required by layout or RJMP reach.
+
+; CMP captures native SREG in PRIMARY_OPCODE (r24). The one-cycle landing pad
+; plus OUT and the standard dispatch body produce an exact 18-cycle cadence.
+flags_commit_18_delay_1:
+    nop
+flags_commit_18:
+    out  VM_FLAGS, PRIMARY_OPCODE
+    dispatch
+
 cluster_tail_17_delay_1:
     nop
 cluster_tail_17:

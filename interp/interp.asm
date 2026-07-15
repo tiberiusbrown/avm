@@ -326,7 +326,6 @@
 #define SECONDARY_MULTIPLIER       r26
 
 ; FB-FD shared conditional-move gate scratch allocation.
-#define CMOV_SAVED_SREG            r24
 #define CMOV_TEST                  r25
 #define CMOV_SECONDARY             r26
 #define CMOV_MASK                  r27
@@ -630,15 +629,19 @@ reset_handler:
 ; The primary table has 256 fixed four-word slots. A completed short handler
 ; ends with RJMP to a shared cadence tail; a longer primary handler may use its
 ; fourth word to forward to an out-of-line continuation. All defined non-prefix
-; primary opcodes through 0xEF are implemented below; F0-FE remain secondary-
-; page migration stubs and reserved encodings trap as invalid.
+; primary opcodes through 0xEF are implemented below. The implemented secondary
+; pages use the decoder and cadence infrastructure after the primary table;
+; reserved encodings trap as invalid.
 
-; Standard 18-cycle sequential dispatch. PRIMARY_OPCODE is the byte fetched
-; for the next instruction; the 24-bit VM PC advances by one byte.
+; Standard 18-cycle sequential dispatch. Advance the low PC byte before
+; reading the completed opcode. IN and OUT preserve carry, so the middle and
+; high-byte updates remain a valid 24-bit increment after the handoff. Moving
+; this one instruction before OUT makes the selected primary slot begin on
+; cycle 9 after OUT.
 .macro dispatch
+    add  VM_PCL, ONE
     in   PRIMARY_OPCODE, SPDR
     out  SPDR, ZERO
-    add  VM_PCL, ONE
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
     mul  PRIMARY_OPCODE, FOUR
@@ -647,19 +650,18 @@ reset_handler:
     ijmp
 .endm
 
-; Reverse-order 17-cycle sequential dispatch. Advance the low and middle PC
-; bytes before the protected SPDR handoff. CLI, OUT, IN, and SEI preserve the
-; carry from the middle-byte ADC until the high-byte ADC after the handoff.
-; This ordering makes the selected primary slot begin on cycle 10 after OUT,
-; matching the standard dispatch.
+; Reverse-order 17-cycle sequential dispatch. Complete the entire 24-bit PC
+; increment before the protected SPDR handoff. CLI, OUT, IN, and SEI preserve
+; SREG, and the shorter post-OUT path makes the selected primary slot begin on
+; cycle 9 after OUT, matching the standard dispatch.
 .macro dispatch_reverse
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
     sei
-    adc  VM_PCH, ZERO
     mul  PRIMARY_OPCODE, FOUR
     movw r30, r0
     subi r31, hi8(-(pm(primary_table)))
@@ -788,8 +790,8 @@ reset_handler:
 \label:
     ldi  r30, lo8(pm(\apply))
     ldi  r31, hi8(pm(\apply))
-    rjmp \fetch
     nop
+    rjmp \fetch
     assert_primary_slot_width \label
 .endm
 
@@ -1224,8 +1226,8 @@ primary_E3_callf:
 \label:
     movw VM_PCL, \ptr16
     mov  VM_PCH, \ptr23_16
-    delay_3
-    rjmp seek_and_dispatch_func
+    delay_2
+    rjmp jmpp_seek_and_dispatch_func
     assert_primary_slot_width \label
 .endm
 
@@ -1309,12 +1311,13 @@ emit_primary_bounded_page primary_F7_dense_5word_page_a, 0x90, f7_table, seconda
 ; F8 bound 0x30, five-word slots.
 emit_primary_bounded_page primary_F8_simple_condition_page, 0x30, f8_table, secondary_width_5_stub
 
-; F9 is a dedicated table-free runtime decoder. Every primary slot begins on
-; cycle 10 after the preceding SPI OUT. The leading NOP therefore shifts the
-; handler's reverse handoff so its OUT lands exactly on cycle 17.
+; F9 is a dedicated table-free runtime decoder. Primary slots now begin on
+; cycle 9 after the preceding SPI OUT. The direct RJMP reaches the handler on
+; cycle 11; two independent pointer-high clears then fill the remaining slack
+; so the reverse OUT still lands exactly on cycle 17.
 primary_F9_runtime_bitwise_page:
-    nop
     rjmp  f9_bitop_entry
+    nop
     nop
     nop
     assert_primary_slot_width primary_F9_runtime_bitwise_page
@@ -1350,18 +1353,22 @@ primary_table_end:
 ;   bits 4:2  source register r0-r7
 ;   bits 1:0  00=AND, 01=OR, 10=XOR, 11=invalid
 ;
-; Primary-slot execution begins on cycle 10 after the OUT that started the
-; secondary byte. The slot's leading NOP, its RJMP, and the five instructions
-; through OUT place the speculative following-primary OUT exactly on cycle 17.
-; Both architectural operands are loaded before writeback, so
-; destination/source aliasing is fully defined.
+; Primary-slot execution begins on cycle 9 after the OUT that started the
+; secondary byte. The slot RJMP reaches this handler on cycle 11. Clearing XH
+; and ZH is independent of the secondary byte, so those two useful instructions
+; fill cycles 14 and 15 before CLI/OUT on cycles 16/17. Both architectural
+; operands are loaded before writeback, so destination/source aliasing is fully
+; defined.
 
 f9_bitop_entry:
     ; Consume the secondary byte in the VM PC and immediately start the
-    ; speculative following-primary transfer.
+    ; speculative following-primary transfer. Pre-clear the register-file
+    ; pointer high bytes while the secondary transfer is still in flight.
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
+    mov   r27, ZERO
+    mov   r31, ZERO
     cli
     out   SPDR, ZERO
     in    SECONDARY_OPCODE, SPDR
@@ -1372,14 +1379,12 @@ f9_bitop_entry:
     swap  r26
     andi  r26, 0x0e
     subi  r26, -8
-    mov   r27, ZERO
 
     ; Z = native register-file address of source rS.
     mov   r30, SECONDARY_OPCODE
     lsr   r30
     andi  r30, 0x0e
     subi  r30, -8
-    mov   r31, ZERO
 
     ; Preserve operation bits without another scratch register:
     ; carry = original bit 0, SECONDARY_OPCODE bit 0 = original bit 1.
@@ -1444,15 +1449,15 @@ f9_bitop_end:
 
 bounded_width_2_decode_start:
 bounded_width_2_decode:
-    ; The primary slot reaches this path with three cycles remaining before
-    ; the exact reverse-handoff boundary. Advance the low PC byte first so its
-    ; carry remains live across CLI/OUT/IN/SEI.
+    ; The primary slot reaches this path on cycle 14. Advance the low and
+    ; middle PC bytes before CLI so the reverse OUT lands exactly on cycle 17;
+    ; CLI/OUT/IN/SEI preserve carry into the high-byte ADC after the handoff.
     add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
     cli
     out  SPDR, ZERO
     in   SECONDARY_OPCODE, SPDR
     sei
-    adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
 
     ; All three width-two pages have a contiguous valid range beginning at 0.
@@ -1546,20 +1551,18 @@ bounded_page_decoder_end:
 ;   * Z contains the AVR word address of cmov_table.
 ;   * The secondary byte is completing in SPDR.
 ;
-; The gate consumes that byte, starts speculative fetch of the following
-; primary opcode, applies bit-6 inversion, and indexes the table only when the
-; selected condition is true. Bit 7 is invalid. Architectural VM_FLAGS is read
-; but never modified.
+; The gate consumes that byte with the standard cycle-17/18 IN/OUT handoff,
+; applies bit-6 inversion, and indexes the table only when the selected
+; condition is true. Bit 7 is invalid. Architectural VM_FLAGS is read but never
+; modified.
 cmov_gate:
+    ; The prefix slot reaches this gate on cycle 14. Complete the PC increment
+    ; during cycles 14-16, then use the standard IN/OUT handoff on cycles 17/18.
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
-
-    in    CMOV_SAVED_SREG, SREG
-    cli
     in    CMOV_SECONDARY, SPDR
     out   SPDR, ZERO
-    out   SREG, CMOV_SAVED_SREG
 
     cpi   CMOV_SECONDARY, 0x80
     brsh  cmov_invalid
@@ -1583,8 +1586,8 @@ cmov_invalid:
     rjmp  invalid_secondary
 
 cmov_gate_end:
-.if (cmov_gate_end - cmov_gate) != 44
-    .error "FB-FD shared condition gate must occupy exactly 22 AVR words"
+.if (cmov_gate_end - cmov_gate) != 38
+    .error "FB-FD shared condition gate must occupy exactly 19 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1594,9 +1597,9 @@ cmov_gate_end:
 ; All defined non-prefix primary opcodes 00-EF are complete. The generic
 ; bounded-page decoder, secondary cadence clusters, and every specified
 ; executable secondary table are present. The fixed-width self-contained F1-F8
-; pages, the dedicated F9 runtime bitwise decoder, and the FB-FD shared
-; conditional-move gate/table are implemented; F0, FA, and FE still require
-; their dedicated veneers, forwarding bodies, or shared implementations.
+; pages, the dedicated F9 runtime bitwise decoder, the FB-FD shared
+; conditional-move gate/table, and the FE MUL16 page are implemented. F0 and FA
+; still require their dedicated veneers, forwarding bodies, or shared bodies.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -1684,47 +1687,47 @@ fetch_imm16_then_ijmp:
 ; The following-opcode transfer needs sixteen cycles before dispatch reads it.
 ; These shared landings provide the family-specific remainder after IJMP,
 ; native work, and the apply stub's final RJMP.
-immediate_result_tail_delay_9:
+immediate_result_tail_delay_8:
     delay_4
-    delay_3
+    delay_2
     rjmp cluster_tail_18
 
 ; The reverse-order high-byte handoff in LDI16 reaches its apply stub two
-; cycles later than the other immediate families. Use the shorter seven-cycle
-; landing so the following primary opcode is still read at its first legal time.
-immediate_result_tail_delay_7:
-    delay_3
-    rjmp cluster_tail_18_delay_2
-
+; cycles later than the other immediate families. The six-cycle landing keeps
+; the following-primary dispatch at its earliest legal standard handoff.
 immediate_result_tail_delay_6:
-    delay_4
+    delay_3
+    rjmp cluster_tail_18_delay_1
+
+immediate_result_tail_delay_5:
+    delay_3
     rjmp cluster_tail_18
 
-; CMPI.S8 has one extra native instruction to capture SREG. Four cycles before
-; the existing flag commit make its following-opcode read occur at cycle 16.
-cmpi_s8_flags_commit_delay_4:
-    delay_2
+; CMPI.S8 has one extra native instruction to capture SREG. Three cycles before
+; the existing flag commit compensate for the longer cycle-9 dispatch preamble.
+cmpi_s8_flags_commit_delay_3:
+    nop
     rjmp flags_commit_18
 
 .macro emit_ldi8_apply label, dstl, dsth
 \label:
     mov  \dstl, PRIMARY_OPCODE
     clr  \dsth
-    rjmp immediate_result_tail_delay_9
+    rjmp immediate_result_tail_delay_8
 .endm
 
 .macro emit_ldi16_apply label, dstl, dsth
 \label:
     mov  \dstl, PRIMARY_OPCODE
     mov  \dsth, r25
-    rjmp immediate_result_tail_delay_7
+    rjmp immediate_result_tail_delay_6
 .endm
 
 .macro emit_addi_s8_apply label, dstl, dsth
 \label:
     add  \dstl, PRIMARY_OPCODE
     adc  \dsth, r25
-    rjmp immediate_result_tail_delay_6
+    rjmp immediate_result_tail_delay_5
 .endm
 
 .macro emit_cmpi_s8_apply label, lhsl, lhsh
@@ -1732,7 +1735,7 @@ cmpi_s8_flags_commit_delay_4:
     cp   \lhsl, PRIMARY_OPCODE
     cpc  \lhsh, r25
     in   PRIMARY_OPCODE, SREG
-    rjmp cmpi_s8_flags_commit_delay_4
+    rjmp cmpi_s8_flags_commit_delay_3
 .endm
 
 emit_ldi8_apply ldi8_c0_apply, VM_C0L, VM_C0H
@@ -1766,10 +1769,10 @@ emit_cmpi_s8_apply cmpi_s8_c3_apply, VM_C3L, VM_C3H
 
 .macro emit_branch_rel8_decode label, skipop, flag
 \label:
-    ; The primary slot enters fifteen cycles after the operand-starting OUT.
-    ; One cycle of padding followed by the protected reverse handoff places the
-    ; speculative fallthrough OUT at the exact 17-cycle boundary.
-    nop
+    ; The primary slot now reaches this continuation on cycle 14 after the
+    ; operand-starting OUT. A two-cycle landing followed by the protected
+    ; reverse handoff places the speculative fallthrough OUT exactly on 17.
+    delay_2
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
@@ -1789,9 +1792,10 @@ emit_branch_rel8_decode brslt_rel8_decode_func, sbis, SREG_S
 
 branch_rel8_not_taken_func:
     ; PRIMARY_OPCODE contains the ignored displacement and VM_PC still names
-    ; that byte. Seven cycles of padding make dispatch_reverse start the byte
-    ; after the fallthrough opcode at the normal 17-cycle SPI cadence.
-    rcall interp_delay_7
+    ; that byte. Six inline cycles of padding let the longer cycle-9 reverse
+    ; dispatch still place its OUT exactly on the 17-cycle boundary.
+    delay_4
+    delay_2
     rjmp cluster_tail_17
 
 branch_rel8_taken_func:
@@ -1817,8 +1821,9 @@ branch_rel8_taken_func:
 ; shared opcode test and avoids RCALL/RET overhead on CALL.
 jmp_rel8_func:
     ; The operand transfer was started by the preceding primary dispatch. The
-    ; two-cycle delay places this read at the normal SPI byte boundary.
-    delay_2
+    ; continuation now begins one cycle earlier, so a three-cycle delay places
+    ; this read at the first legal SPI byte boundary.
+    delay_3
     in   r26, SPDR
 
     clr  r25
@@ -1837,7 +1842,7 @@ jmp_rel8_func:
 
 call_rel8_func:
     ; Fetch and sign-extend the displacement exactly as for JMP rel8.
-    delay_2
+    delay_3
     in   r26, SPDR
 
     clr  r25
@@ -1863,9 +1868,9 @@ call_rel8_func:
 adjsp_simm8_func:
     ; Read simm8 while starting the following primary opcode. VM_PC remains on
     ; the operand byte so dispatch_reverse advances it exactly once afterward.
-    ; The one-cycle landing makes the reverse OUT occur exactly 17 cycles after
-    ; the operand-starting OUT from the preceding dispatch.
-    nop
+    ; The continuation begins on cycle 14, so the two-cycle landing makes the
+    ; reverse OUT occur exactly 17 cycles after the operand-starting OUT.
+    delay_2
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
@@ -1880,7 +1885,7 @@ adjsp_simm8_func:
     ; Preserve the sequential stream and architectural VM_FLAGS. This delay
     ; makes the next SPI OUT occur at the reverse-order 17-cycle cadence.
     delay_4
-    rjmp cluster_tail_17_delay_1
+    rjmp cluster_tail_17
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; E0-E3 direct near/far control
@@ -1897,11 +1902,11 @@ jmp_call_rel16_func:
     ; Fetch rel16[7:0] and launch rel16[15:8] with the exact reverse-order
     ; 17-cycle handoff. VM_PC initially names rel16[7:0].
     add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
     cli
     out  SPDR, ZERO
     in   r26, SPDR
     sei
-    adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
 
     ; Advance through rel16[15:8] to nextPC. Opcode bit 0 distinguishes CALL16
@@ -1920,10 +1925,12 @@ jmp_call_rel16_func:
     st   -Y, VM_PCL
 
 rel16_read_high:
+    ; CLR is independent of the high displacement byte and fills the final
+    ; cycle before that byte becomes readable.
+    clr  r25
     in   r27, SPDR
 
     ; Add sign_extend(rel16) to nextPC in modulo-2^24 arithmetic.
-    clr  r25
     sbrc r27, 7
     com  r25
     add  VM_PCL, r26
@@ -1940,6 +1947,7 @@ jmp_call_far_func:
     ; occupies the same one-cycle landing used by the specialized handlers, so
     ; target[15:8] still launches at the exact first 17-cycle boundary.
     mov  r27, PRIMARY_OPCODE
+    nop
     cli
     out  SPDR, ZERO
     in   r24, SPDR
@@ -1988,17 +1996,17 @@ jmp_far_wait:
 ; consumes that opcode, starts its following byte, advances the PC, and enters
 ; its four-word primary slot.
 sys_decode_func:
-    ; The D7 primary slot reaches this continuation fifteen cycles after the
-    ; service-byte transfer began. Land the reverse OUT exactly on cycle 17.
-    nop
+    ; The D7 primary slot reaches this continuation on cycle 14. Preloading the
+    ; dispatch-table base fills cycles 14 and 15, then the reverse OUT lands on
+    ; cycle 17 without a pure delay.
+    ldi  r30, lo8(pm(sys_dispatch_table))
+    ldi  r31, hi8(pm(sys_dispatch_table))
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
     sei
 
 sys_dispatch_func:
-    ldi  r30, lo8(pm(sys_dispatch_table))
-    ldi  r31, hi8(pm(sys_dispatch_table))
     add  r30, PRIMARY_OPCODE
     adc  r31, ZERO
     ijmp
@@ -2039,11 +2047,11 @@ sys_dispatch_table_end:
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(c0) to the emulator/debug USB endpoint register.
     sts  UEDATX, VM_C0L
-    rjmp cluster_tail_18_delay_2
+    rjmp cluster_tail_18_delay_1
 
 sys_debug_break_func:
     break
-    rjmp cluster_tail_18_delay_3
+    rjmp cluster_tail_18_delay_2
 
 ; Return a coherent low 16-bit snapshot of the millisecond counter in c0.
 sys_millis_func:
@@ -2063,6 +2071,11 @@ sys_millis32_func:
     lds  VM_C1H, data_millis+3
     sei
     rjmp cluster_tail_18
+
+; JMPP reaches this one-word forwarding landing on cycle 15; its RJMP enters
+; the seek handler on cycle 17, after the discarded speculative byte completes.
+jmpp_seek_and_dispatch_func:
+    rjmp seek_and_dispatch_func
 
 ; CALLP shared prologue. The primary slot has preserved the selected target in
 ; r26:r25:r24 while VM_PC still contains the one-byte call's sequential return
@@ -2098,14 +2111,14 @@ seek_and_dispatch_func:
     out  SPDR, VM_PCL
     rcall interp_delay_16
     out  SPDR, ZERO
-    rcall interp_delay_14
+    rcall interp_delay_12
     add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
     sei
-    adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
     mul  PRIMARY_OPCODE, FOUR
     movw r30, r0
     subi r31, hi8(-(pm(primary_table)))
@@ -2182,7 +2195,7 @@ invalid_syscall_func:
 .macro emit_f1_mov dst, src
 .Lf1_mov_start_\@:
     movw  \dst, \src
-    rjmp  cluster_a_tail_17_delay_2
+    rjmp  cluster_a_tail_17_delay_1
 .Lf1_mov_end_\@:
     .if (.Lf1_mov_end_\@ - .Lf1_mov_start_\@) != 4
         .error "F1 MOV slot is not exactly two words"
@@ -2192,7 +2205,7 @@ invalid_syscall_func:
 .macro emit_f1_stsp8 src, q
 .Lf1_stsp8_start_\@:
     std   Y+\q, \src
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  cluster_a_tail_17
 .Lf1_stsp8_end_\@:
     .if (.Lf1_stsp8_end_\@ - .Lf1_stsp8_start_\@) != 4
         .error "F1 STSP8 slot is not exactly two words"
@@ -2202,7 +2215,7 @@ invalid_syscall_func:
 .macro emit_f1_zext8 dsth
 .Lf1_zext8_start_\@:
     clr   \dsth
-    rjmp  cluster_a_tail_17_delay_2
+    rjmp  cluster_a_tail_17_delay_1
 .Lf1_zext8_end_\@:
     .if (.Lf1_zext8_end_\@ - .Lf1_zext8_start_\@) != 4
         .error "F1 ZEXT8 slot is not exactly two words"
@@ -2212,7 +2225,7 @@ invalid_syscall_func:
 .macro emit_f1_swap8 dstl
 .Lf1_swap8_start_\@:
     swap  \dstl
-    rjmp  cluster_a_tail_17_delay_2
+    rjmp  cluster_a_tail_17_delay_1
 .Lf1_swap8_end_\@:
     .if (.Lf1_swap8_end_\@ - .Lf1_swap8_start_\@) != 4
         .error "F1 SWAP8 slot is not exactly two words"
@@ -2222,7 +2235,7 @@ invalid_syscall_func:
 .macro emit_f1_getsp dst
 .Lf1_getsp_start_\@:
     movw  \dst, VM_SP
-    rjmp  cluster_a_tail_17_delay_2
+    rjmp  cluster_a_tail_17_delay_1
 .Lf1_getsp_end_\@:
     .if (.Lf1_getsp_end_\@ - .Lf1_getsp_start_\@) != 4
         .error "F1 GETSP slot is not exactly two words"
@@ -2232,7 +2245,7 @@ invalid_syscall_func:
 .macro emit_f1_setsp src
 .Lf1_setsp_start_\@:
     movw  VM_SP, \src
-    rjmp  cluster_a_tail_17_delay_2
+    rjmp  cluster_a_tail_17_delay_1
 .Lf1_setsp_end_\@:
     .if (.Lf1_setsp_end_\@ - .Lf1_setsp_start_\@) != 4
         .error "F1 SETSP slot is not exactly two words"
@@ -2243,7 +2256,7 @@ invalid_syscall_func:
 .Lf2_add_start_\@:
     add   \dstl, \srcl
     adc   \dsth, \srch
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  cluster_a_tail_17
 .Lf2_add_end_\@:
     .if (.Lf2_add_end_\@ - .Lf2_add_start_\@) != 6
         .error "F2 ADD slot is not exactly three words"
@@ -2254,7 +2267,7 @@ invalid_syscall_func:
 .Lf2_sub_start_\@:
     sub   \dstl, \srcl
     sbc   \dsth, \srch
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  cluster_a_tail_17
 .Lf2_sub_end_\@:
     .if (.Lf2_sub_end_\@ - .Lf2_sub_start_\@) != 6
         .error "F2 SUB slot is not exactly three words"
@@ -2265,7 +2278,7 @@ invalid_syscall_func:
 .Lf3_st8_start_\@:
     movw  r26, \addr
     st    X, \srcl
-    rjmp  cluster_a_tail_18_delay_2
+    rjmp  cluster_a_tail_18_delay_1
 .Lf3_st8_end_\@:
     .if (.Lf3_st8_end_\@ - .Lf3_st8_start_\@) != 6
         .error "F3 ST8 slot is not exactly three words"
@@ -2276,7 +2289,7 @@ invalid_syscall_func:
 .Lf3_mul_start_\@:
     \op   \dstl, \srcl
     movw  \dstl, r0
-    rjmp  cluster_a_tail_18_delay_2
+    rjmp  cluster_a_tail_18_delay_1
 .Lf3_mul_end_\@:
     .if (.Lf3_mul_end_\@ - .Lf3_mul_start_\@) != 6
         .error "F3 widening multiply slot is not exactly three words"
@@ -2287,7 +2300,7 @@ invalid_syscall_func:
 .Lf3_ldsp8u_start_\@:
     ldd   \dstl, Y+\q
     clr   \dsth
-    rjmp  cluster_a_tail_18_delay_2
+    rjmp  cluster_a_tail_18_delay_1
 .Lf3_ldsp8u_end_\@:
     .if (.Lf3_ldsp8u_end_\@ - .Lf3_ldsp8u_start_\@) != 6
         .error "F3 LDSP8U slot is not exactly three words"
@@ -2298,7 +2311,7 @@ invalid_syscall_func:
 .Lf4_ldsp16_start_\@:
     ldd   \dstl, Y+\q0
     ldd   \dsth, Y+\q1
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf4_ldsp16_end_\@:
     .if (.Lf4_ldsp16_end_\@ - .Lf4_ldsp16_start_\@) != 6
         .error "F4 LDSP16 slot is not exactly three words"
@@ -2309,7 +2322,7 @@ invalid_syscall_func:
 .Lf4_stsp16_start_\@:
     std   Y+\q0, \srcl
     std   Y+\q1, \srch
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf4_stsp16_end_\@:
     .if (.Lf4_stsp16_end_\@ - .Lf4_stsp16_start_\@) != 6
         .error "F4 STSP16 slot is not exactly three words"
@@ -2320,7 +2333,7 @@ invalid_syscall_func:
 .Lf4_shift_start_\@:
     \op_hi \dsth
     \op_lo \dstl
-    rjmp  cluster_b_tail_17_delay_1
+    rjmp  cluster_b_tail_17
 .Lf4_shift_end_\@:
     .if (.Lf4_shift_end_\@ - .Lf4_shift_start_\@) != 6
         .error "F4 shift slot is not exactly three words"
@@ -2331,7 +2344,7 @@ invalid_syscall_func:
 .Lf4_lsl16_start_\@:
     lsl   \dstl
     rol   \dsth
-    rjmp  cluster_b_tail_17_delay_1
+    rjmp  cluster_b_tail_17
 .Lf4_lsl16_end_\@:
     .if (.Lf4_lsl16_end_\@ - .Lf4_lsl16_start_\@) != 6
         .error "F4 LSL16 slot is not exactly three words"
@@ -2342,7 +2355,7 @@ invalid_syscall_func:
 .Lf4_not16_start_\@:
     com   \dstl
     com   \dsth
-    rjmp  cluster_b_tail_17_delay_1
+    rjmp  cluster_b_tail_17
 .Lf4_not16_end_\@:
     .if (.Lf4_not16_end_\@ - .Lf4_not16_start_\@) != 6
         .error "F4 NOT16 slot is not exactly three words"
@@ -2353,7 +2366,7 @@ invalid_syscall_func:
 .Lf4_tst8_start_\@:
     cp    \dstl, ZERO
     in    SECONDARY_OPCODE, SREG
-    rjmp  flags_commit_b_18_delay_2
+    rjmp  flags_commit_b_18_delay_1
 .Lf4_tst8_end_\@:
     .if (.Lf4_tst8_end_\@ - .Lf4_tst8_start_\@) != 6
         .error "F4 TST8 slot is not exactly three words"
@@ -2364,7 +2377,7 @@ invalid_syscall_func:
 .Lf4_inc16_start_\@:
     add   \dstl, ONE
     adc   \dsth, ZERO
-    rjmp  cluster_b_tail_17_delay_1
+    rjmp  cluster_b_tail_17
 .Lf4_inc16_end_\@:
     .if (.Lf4_inc16_end_\@ - .Lf4_inc16_start_\@) != 6
         .error "F4 INC16 slot is not exactly three words"
@@ -2375,7 +2388,7 @@ invalid_syscall_func:
 .Lf4_dec16_start_\@:
     sub   \dstl, ONE
     sbc   \dsth, ZERO
-    rjmp  cluster_b_tail_17_delay_1
+    rjmp  cluster_b_tail_17
 .Lf4_dec16_end_\@:
     .if (.Lf4_dec16_end_\@ - .Lf4_dec16_start_\@) != 6
         .error "F4 DEC16 slot is not exactly three words"
@@ -2399,7 +2412,7 @@ invalid_syscall_func:
     movw  r26, \addr
     ld    \dstl, X
     clr   \dsth
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf5_ld8u_end_\@:
     .if (.Lf5_ld8u_end_\@ - .Lf5_ld8u_start_\@) != 8
         .error "F5 LD8U slot is not exactly four words"
@@ -2435,7 +2448,7 @@ invalid_syscall_func:
     movw  r26, \addr
     st    X+, \srcl
     movw  \addr, r26
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf6_st8_post_end_\@:
     .if (.Lf6_st8_post_end_\@ - .Lf6_st8_post_start_\@) != 8
         .error "F6 ST8 postincrement slot is not exactly four words"
@@ -2447,7 +2460,7 @@ invalid_syscall_func:
     mov   SECONDARY_OPCODE, \dstl
     mov   \dstl, \dsth
     mov   \dsth, SECONDARY_OPCODE
-    rjmp  cluster_b_tail_18_delay_2
+    rjmp  cluster_b_tail_18_delay_1
 .Lf6_bswap16_end_\@:
     .if (.Lf6_bswap16_end_\@ - .Lf6_bswap16_start_\@) != 8
         .error "F6 BSWAP16 slot is not exactly four words"
@@ -2471,7 +2484,7 @@ invalid_syscall_func:
     mul   \dstl, \srcl
     mov   \dstl, r0
     clr   \dsth
-    rjmp  cluster_b_tail_18_delay_1
+    rjmp  cluster_b_tail_18
 .Lf6_mul8_end_\@:
     .if (.Lf6_mul8_end_\@ - .Lf6_mul8_start_\@) != 8
         .error "F6 MUL8 slot is not exactly four words"
@@ -2483,7 +2496,7 @@ invalid_syscall_func:
     clr   \dsth
     sbrc  \dstl, 7
     dec   \dsth
-    rjmp  cluster_b_tail_18_delay_2
+    rjmp  cluster_b_tail_18_delay_1
 .Lf6_sext8_end_\@:
     .if (.Lf6_sext8_end_\@ - .Lf6_sext8_start_\@) != 8
         .error "F6 SEXT8 slot is not exactly four words"
@@ -2495,7 +2508,7 @@ invalid_syscall_func:
     neg   \dstl
     adc   \dsth, ZERO
     neg   \dsth
-    rjmp  cluster_b_tail_18_delay_2
+    rjmp  cluster_b_tail_18_delay_1
 .Lf6_neg16_end_\@:
     .if (.Lf6_neg16_end_\@ - .Lf6_neg16_start_\@) != 8
         .error "F6 NEG16 slot is not exactly four words"
@@ -2547,7 +2560,7 @@ invalid_syscall_func:
     adc   \d1, \s1
     adc   \d2, \s2
     adc   \d3, \s3
-    rjmp  cluster_c_tail_18_delay_1
+    rjmp  cluster_c_tail_18
 .Lf7_add32_end_\@:
     .if (.Lf7_add32_end_\@ - .Lf7_add32_start_\@) != 10
         .error "F7 ADD32 slot is not exactly five words"
@@ -2560,7 +2573,7 @@ invalid_syscall_func:
     sbc   \d1, \s1
     sbc   \d2, \s2
     sbc   \d3, \s3
-    rjmp  cluster_c_tail_18_delay_1
+    rjmp  cluster_c_tail_18
 .Lf7_sub32_end_\@:
     .if (.Lf7_sub32_end_\@ - .Lf7_sub32_start_\@) != 10
         .error "F7 SUB32 slot is not exactly five words"
@@ -2573,7 +2586,7 @@ invalid_syscall_func:
     ror   \d2
     ror   \d1
     ror   \d0
-    rjmp  cluster_c_tail_18_delay_1
+    rjmp  cluster_c_tail_18
 .Lf7_lsr32_end_\@:
     .if (.Lf7_lsr32_end_\@ - .Lf7_lsr32_start_\@) != 10
         .error "F7 LSR32 slot is not exactly five words"
@@ -2586,7 +2599,7 @@ invalid_syscall_func:
     ror   \d2
     ror   \d1
     ror   \d0
-    rjmp  cluster_c_tail_18_delay_1
+    rjmp  cluster_c_tail_18
 .Lf7_asr32_end_\@:
     .if (.Lf7_asr32_end_\@ - .Lf7_asr32_start_\@) != 10
         .error "F7 ASR32 slot is not exactly five words"
@@ -2599,7 +2612,7 @@ invalid_syscall_func:
     clr   \dsth
     cpse  \dstl, ZERO
     mov   \dstl, ONE
-    rjmp  cluster_c_tail_18_delay_1
+    rjmp  cluster_c_tail_18
 .Lf7_bool_end_\@:
     .if (.Lf7_bool_end_\@ - .Lf7_bool_start_\@) != 10
         .error "F7 BOOL slot is not exactly five words"
@@ -2625,7 +2638,7 @@ invalid_syscall_func:
     clr   \dsth
     \skipop VM_FLAGS, \flag_bit
     mov   \dstl, ONE
-    rjmp  cluster_c_tail_18_delay_1
+    rjmp  cluster_c_tail_18
 .Lf8_cset_end_\@:
     .if (.Lf8_cset_end_\@ - .Lf8_cset_start_\@) != 10
         .error "F8 CSET slot is not exactly five words"

@@ -264,13 +264,14 @@ The external flash SPI transfer requires sixteen native cycles after an `OUT SPD
 
 #### Primary-slot entry cycle
 
-For cadence accounting, the first native instruction in the selected primary-table slot begins on **cycle 10 after the dispatch's most recent `OUT SPDR,...`**. This is true for both dispatch forms:
+For cadence accounting, the first native instruction in the selected primary-table slot begins on **cycle 9 after the dispatch's most recent `OUT SPDR,...`**. Both dispatch forms deliberately move one additional PC-update instruction before that `OUT`:
 
 ```asm
-; Standard dispatch: OUT is cycle 0; selected primary slot starts at cycle 10.
+; Standard dispatch: OUT is cycle 0; selected primary slot starts at cycle 9.
+; ADD executes before IN. IN and OUT preserve carry into the two ADCs.
+add   VM_PCL, ONE
 in    primary, SPDR
 out   SPDR, ZERO
-add   VM_PCL, ONE
 adc   VM_PCM, ZERO
 adc   VM_PCH, ZERO
 mul   primary, FOUR
@@ -278,25 +279,26 @@ movw  r30, r0
 subi  r31, hi8(-(pm(primary_table)))
 ijmp
 
-; Reverse dispatch: its OUT is cycle 0; selected primary slot also starts at
-; cycle 10. The low- and middle-byte PC updates occur before that OUT. CLI,
-; OUT, IN, and SEI preserve the carry into the high-byte ADC after the handoff.
+; Reverse dispatch: OUT is cycle 0; selected primary slot also starts at 9.
+; The complete 24-bit PC increment occurs before the protected handoff.
 add   VM_PCL, ONE
 adc   VM_PCM, ZERO
+adc   VM_PCH, ZERO
 cli
 out   SPDR, ZERO
 in    primary, SPDR
 sei
-adc   VM_PCH, ZERO
 mul   primary, FOUR
 movw  r30, r0
 subi  r31, hi8(-(pm(primary_table)))
 ijmp
 ```
 
-Consequently, a primary slot that must perform a reverse handoff on cycle 17 has only cycles 10 through 15 available before its `CLI` and `OUT`. Include all slot instructions, taken jumps into continuations, and continuation instructions in that seven-cycle window. For example, a slot containing `NOP; RJMP handler` reaches the handler on cycle 13, leaving cycles 13 through 15 for three one-cycle instructions before `CLI` on cycle 16 and `OUT` on cycle 17.
+Using the dispatch `OUT` as cycle 0, both paths execute `MUL` on cycles 3-4, `IJMP` on cycles 7-8, and the selected slot on cycle 9. `IN`, `OUT`, `CLI`, and `SEI` preserve `SREG`; interrupt handlers must also restore `SREG`, so the carry chains remain valid.
 
-The reverse dispatch must update `VM_PCM` before `CLI; OUT; IN; SEI`. Moving that middle-byte `ADC` after the handoff adds one post-`OUT` cycle and delays primary-slot entry to cycle 11. The handoff instructions do not modify carry, so the carry produced by the middle-byte `ADC` remains valid for the subsequent `VM_PCH` update. Interrupt handlers must preserve `SREG`, as required elsewhere in this specification.
+A primary slot that constructs its own cycle-17 reverse handoff has cycles 9 through 15 for slot and continuation work, followed by `CLI` on cycle 16 and `OUT` on cycle 17. A slot containing only `RJMP handler` reaches the handler on cycle 11, leaving five one-cycle work positions before `CLI`.
+
+The standard dispatch moves only the low-byte `ADD` ahead of `IN`; moving either `ADC` there would require the completed opcode read to be delayed or would make the standard and reverse post-`OUT` paths asymmetric. The reverse dispatch moves all three PC-update instructions ahead of `OUT`, which is the minimum post-`OUT` schedule that keeps both dispatches aligned at cycle 9.
 
 There are exactly two legal byte-to-byte handoff schedules:
 
@@ -348,9 +350,9 @@ The standard dispatch has an 18-cycle `OUT`-to-`OUT` cadence. Its dispatch body 
 cluster_tail_18_delay_1:
     nop
 cluster_tail_18:
+    add   r4, r3
     in    primary, SPDR
     out   SPDR, r2
-    add   r4, r3
     adc   r5, r2
     adc   r6, r2
     mul   primary, r7
@@ -367,11 +369,11 @@ cluster_tail_17_delay_1:
 cluster_tail_17:
     add   r4, r3
     adc   r5, r2
+    adc   r6, r2
     cli
     out   SPDR, r2
     in    primary, SPDR
     sei
-    adc   r6, r2
     mul   primary, r7
     movw  r30, r0
     subi  r31, hi8(-(pm(primary_table)))
@@ -424,6 +426,51 @@ Taken control flow and program-space loads restart the external-flash stream and
 | Return | ~122 |
 | Program-space scalar load | ~268-305 |
 
+
+### 5.3. Cycle-9 migration audit
+
+Moving primary entry from cycle 10 to cycle 9 does not change the 17- and 18-cycle transfer limits. The extra pre-`OUT` PC work consumes the newly available cycle in direct primary tails, so `00-BF` retain their existing latency. Multi-byte and secondary paths were retimed as follows:
+
+| Family | Required retiming | Instruction-latency impact |
+|---|---|---:|
+| `00-BF` direct primary forms | No slot changes; dispatch pre-`OUT` work grows by one cycle | 0 |
+| `C0-CF` compact immediates | Execute the primary-slot padding `NOP`; remove one result-tail delay cycle | 0 |
+| `D0-D3` not taken | Two-cycle first landing; six-cycle final inline wait | 0 |
+| `D0-D3` taken, `D4-D5` | Delay operand read by one; faster seek dispatch | -1 |
+| `D6 ADJSP` | Two-cycle first landing; remove one final landing cycle | 0 |
+| `D7 SYS` | Preload the service-table base before the reverse handoff | -2 debug services; -1 millisecond services |
+| `E0-E1` | Move the middle PC `ADC` before `OUT`; move `CLR` before the high-byte `IN` | -2 |
+| `E2-E3` | Add one common pre-handoff `NOP`; faster seek dispatch | -1 |
+| `E4-E7 JMPP` | One-word forwarding landing prevents premature flash deselect | -1 |
+| `E8-EB CALLP`, `EF RET` | No pre-seek change; faster seek dispatch | -2 |
+| `F1-F4`, most `F5-F8` slots | Remove one explicit cluster-tail delay cycle | -1 |
+| Fixed-width slots already using a no-delay standard tail | No removable slack | 0 |
+| `F9` | Move XH/ZH clears before `OUT` | -1 |
+| `FB-FD` | Standard `IN; OUT` at cycles 17/18; remove unnecessary SREG wrapper | -3 |
+| `FE MUL16` | Width-two decode is retimed, but its no-delay final tail has no slack | 0 |
+
+The current fixed-width secondary latencies from prefix-slot entry through next-primary-slot entry are:
+
+| Family | Cycles |
+|---|---:|
+| `F1` | 37 |
+| `F2` | 38 |
+| `F3` | 38 |
+| `F4` | 38 |
+| `F5 CMP`, `F5 LD16`, `F5 ST16` | 39 |
+| `F5 LD8U` | 38 |
+| `F6 TST16` | 39 |
+| Other implemented `F6` forms | 38 |
+| `F7 LD8U+` | 39 |
+| `F7 LD16+`, `F7 ST16+` | 40 |
+| Other implemented `F7` forms | 38 |
+| `F8` | 38 |
+| `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
+| `FB-FD` false / true | 36 / 37 |
+| `FE MUL16` | 46 |
+
+The retiming adds four AVR words in the branch/far-control/JMPP paths and removes three words from the CMOV gate, for a net implementation growth of **one AVR word / two bytes**.
+
 ---
 
 ## 6. Primary opcode map
@@ -448,34 +495,34 @@ Taken control flow and program-space loads restart the external-flash stream and
 | `C8-CB` | `ADDI.S8 cD,simm8` | 2 | 34-36 |
 | `CC-CF` | `CMPI.S8 cL,simm8` | 2 | 35-36 |
 | `D0-D3` | Conditional branches | 2 | 35-36 NT; ~130 T |
-| `D4` | `JMP rel8` | 2 | ~126 |
-| `D5` | `CALL rel8` | 2 | ~140 |
+| `D4` | `JMP rel8` | 2 | ~125 |
+| `D5` | `CALL rel8` | 2 | ~139 |
 | `D6` | `ADJSP simm8` | 2 | 36-38 |
-| `D7` | `SYS service8` | 2 | ~37 plus service |
+| `D7` | `SYS service8` | 2 | ~36 plus service |
 | `D8-DF` | Reserved | — | trap |
-| `E0` | `JMP16 rel16` | 3 | ~147 |
-| `E1` | `CALL16 rel16` | 3 | ~163 |
-| `E2` | `JMPF target24` | 4 | ~164 |
-| `E3` | `CALLF target24` | 4 | ~181 |
-| `E4-E7` | `JMPP qN` | 1 | ~130 |
-| `E8-EB` | `CALLP qN` | 1 | ~146 |
+| `E0` | `JMP16 rel16` | 3 | ~145 |
+| `E1` | `CALL16 rel16` | 3 | ~161 |
+| `E2` | `JMPF target24` | 4 | ~163 |
+| `E3` | `CALLF target24` | 4 | ~180 |
+| `E4-E7` | `JMPP qN` | 1 | ~129 |
+| `E8-EB` | `CALLP qN` | 1 | ~144 |
 | `EC-EE` | Reserved | — | trap |
-| `EF` | `RET` | 1 | ~122 |
+| `EF` | `RET` | 1 | ~120 |
 | `F0` | Bounded 1-word cold-form veneer page | 2-4 | varies |
-| `F1` | Bounded dense 2-word page | 2 | 34-36 |
-| `F2` | Bounded dense 3-word page A | 2 | 35-36 |
-| `F3` | Bounded dense 3-word page B | 2 | 35-36 |
-| `F4` | Bounded dense 3-word page C | 2 | ~36 |
-| `F5` | Bounded dense 4-word page A | 2 | 35-36 |
-| `F6` | Bounded dense 4-word page B | 2 | ~36-38 |
-| `F7` | Bounded dense 5-word page A | 2 | ~36-38 |
-| `F8` | Bounded dense 5-word simple-condition page | 2 | ~36-38 |
-| `F9` | Dedicated runtime-decoded full-register bitwise page | 2 | ~54-56 |
+| `F1` | Bounded dense 2-word page | 2 | 37 |
+| `F2` | Bounded dense 3-word page A | 2 | 38 |
+| `F3` | Bounded dense 3-word page B | 2 | 38 |
+| `F4` | Bounded dense 3-word page C | 2 | 38 |
+| `F5` | Bounded dense 4-word page A | 2 | 38-39 |
+| `F6` | Bounded dense 4-word page B | 2 | 38-39 |
+| `F7` | Bounded dense 5-word page A | 2 | 38-40 |
+| `F8` | Bounded dense 5-word simple-condition page | 2 | 38 |
+| `F9` | Dedicated runtime-decoded full-register bitwise page | 2 | 52-54 |
 | `FA` | Bounded dense 2-word variable-shift forwarding page | 2 | variable; ~43-79 |
-| `FB` | `CMOV.EQ` / `CMOV.NE` condition-family prefix | 2 | ~36-38 false; ~40-42 true |
-| `FC` | `CMOV.ULT` / `CMOV.UGE` condition-family prefix | 2 | ~36-38 false; ~40-42 true |
-| `FD` | `CMOV.SLT` / `CMOV.SGE` condition-family prefix | 2 | ~36-38 false; ~40-42 true |
-| `FE` | Bounded 2-word `MUL16` forwarding page | 2 | ~44-47 |
+| `FB` | `CMOV.EQ` / `CMOV.NE` condition-family prefix | 2 | 36 false; 37 true |
+| `FC` | `CMOV.ULT` / `CMOV.UGE` condition-family prefix | 2 | 36 false; 37 true |
+| `FD` | `CMOV.SLT` / `CMOV.SGE` condition-family prefix | 2 | 36 false; 37 true |
+| `FE` | Bounded 2-word `MUL16` forwarding page | 2 | 46 |
 | `FF` | Reserved | — | trap |
 
 All fifteen secondary-page prefixes occupy the contiguous range `F0-FE`. `F0-F8`, `FA`, and `FE` use the generic bounded-page machinery; `F9` uses a dedicated runtime decoder; and `FB-FD` use the shared condition gate. Their decoder entries and gates are emitted immediately after the primary table, while executable tables and shared bodies are ordered later according to the single-section layout in Section 26.
@@ -1518,7 +1565,7 @@ bits 1:0  operation
 
 All 64 register combinations are representable for each valid operation. Compact/compact combinations are legal duplicate encodings, but assemblers and LLVM must canonicalize them to the one-byte `80-AF` compact forms.
 
-### 18.1. Primary-slot entry and 18-cycle secondary cadence
+### 18.1. Primary-slot entry and 17-cycle secondary cadence
 
 The fixed four-word primary slot contains:
 
@@ -1529,22 +1576,24 @@ nop
 nop
 ```
 
-Only the `RJMP` executes. The dedicated entry completes the 24-bit PC increment and starts the speculative following-primary transfer:
+The slot begins on cycle 9 and reaches the dedicated entry on cycle 11. The entry performs the PC increment and pre-clears the high bytes of the two register-file pointers while the secondary byte is still transferring:
 
 ```asm
 f9_bitop_entry:
     add   r4, r3
     adc   r5, r2
     adc   r6, r2
+    mov   XH, r2
+    mov   ZH, r2
     cli
     out   SPDR, r2
     in    secondary, SPDR
     sei
 ```
 
-The primary-slot `RJMP` costs two cycles, and the five instructions through `OUT` cost another five. The secondary-byte transfer has an exact **18-cycle OUT-to-OUT cadence**.
+The `OUT` lands exactly on cycle 17. Moving the two independent pointer-high clears before the handoff removes the need for pure delay and shortens the post-`OUT` decode path by two cycles. The complete handler remains exactly 39 words.
 
-The `OUT` occurs before the buffered `SPDR` read while interrupts are masked, matching the reverse-order transfer strategy used elsewhere. The following primary byte begins transferring before runtime operand decoding starts.
+The resulting complete family latencies are 52 cycles for `AND`, 53 for `OR`, and 54 for `XOR`.
 
 ### 18.2. Runtime register-file pointer decode
 
@@ -1881,31 +1930,27 @@ The speculative secondary byte is already in flight when the primary slot is ent
 
 ### 20.2. Common condition gate
 
-The common body consumes the secondary byte, advances the 24-bit program counter, starts speculative fetch of the following primary opcode, validates bit 7, applies the inversion bit, and enters the shared table only when the condition is true. The SPI read/restart sequence is protected against an interrupt occurring between reading `SPDR` and starting the next transfer:
+The prefix slot reaches the common gate on cycle 14. The gate completes the 24-bit PC increment on cycles 14-16, reads the completed secondary byte on cycle 17, and launches the speculative following-primary transfer with a standard `IN; OUT` handoff on cycle 18:
 
 ```asm
 cmov_gate:
     add   r4, r3
     adc   r5, r2
     adc   r6, r2
-
-    in    saved_sreg, SREG
-    cli
     in    secondary, SPDR
     out   SPDR, r2              ; begin fetching the following primary opcode
-    out   SREG, saved_sreg
 
     cpi   secondary, 0x80
     brsh  cmov_invalid
 
     in    ctest, GPIOR0
-    sbrc  secondary, 6            ; bit 6 selects the inverse condition
-    com   ctest                    ; skip and execute paths are both two cycles
+    sbrc  secondary, 6          ; bit 6 selects the inverse condition
+    com   ctest                 ; skip and execute paths are both two cycles
     and   ctest, cmask
     breq  cmov_no_move
 
-    andi  secondary, 0x3F         ; dddsss operand index
-    lsl   secondary               ; two AVR words per shared-table entry
+    andi  secondary, 0x3F       ; dddsss operand index
+    lsl   secondary             ; two AVR words per shared-table entry
     add   ZL, secondary
     adc   ZH, ZERO
     ijmp
@@ -1917,7 +1962,7 @@ cmov_invalid:
     rjmp  invalid_secondary
 ```
 
-This sequence is exactly **22 AVR words / 44 bytes**, including the local false and invalid exits. Complementing all bits of `ctest` is safe because `cmask` immediately discards every bit except the selected architectural condition. `SBRC` plus the optional one-word `COM` has equal native timing whether inversion is requested or not.
+The standard handoff reads `SPDR` before launching the next transfer, so no interrupt masking or SREG save/restore is required. The complete gate is exactly **19 AVR words / 38 bytes**. Complementing all bits of `ctest` is safe because `cmask` immediately discards every bit except the selected architectural condition.
 
 The `AND` intentionally sets native AVR `Z`; the following `BREQ` tests that temporary native result, not architectural `VM_FLAGS`.
 
@@ -1957,11 +2002,11 @@ The condition-false path performs the bounds check and condition gate but avoids
 
 | Path | Expected cycles | Notes |
 |---|---:|---|
-| Condition false | ~36-38 | Goes directly to `cmov_tail` |
-| Condition true | ~40-42 | Indexes the shared table and executes `MOVW` |
+| Condition false | 36 | Goes directly to Cluster A's reverse tail |
+| Condition true | 37 | Indexes the shared table and executes `MOVW` |
 
 The two paths need not be padded to equal time. If deterministic timing is later required, the false path can receive local delay padding without changing the encoding or shared-table layout.
-The PC-update and interrupt-mask instructions shown in the gate execute during the secondary-byte transfer window, so making them explicit does not by itself increase the stated `CMOV` latency.
+The PC update executes during the secondary-byte transfer window. The gate uses the earliest legal standard handoff, so no additional wait padding is required.
 
 For LLVM `select`, the destination should normally be initialized with the false value and the conditional move should name the true value:
 
@@ -1977,9 +2022,9 @@ The backend may invert the condition and exchange the true and false values to i
 
 ```text
 64 shared entries * 2 words * 2 bytes       = 256 bytes
-shared 22-word condition gate                =  44 bytes
+shared 19-word condition gate                =  38 bytes
                                                 ---------
-exact incremental code outside primary slots = 300 bytes
+exact incremental code outside primary slots = 294 bytes
 ```
 
 The three primary slots are already included in the fixed 2048-byte primary table. The false path uses cluster A's shared cadence tail and true table entries use cluster C's shared cadence tail, so no page-local tail or placement allowance is charged here.
@@ -2058,7 +2103,7 @@ RJMP                    2
                         12 cycles
 ```
 
-The two-word forwarding entry adds three native cycles (`MOVW` plus `RJMP`). Including secondary fetch, bounds checking, fixed-stride dispatch, and the page tail, estimated total latency is **44-47 cycles**. The latency is independent of operand values and aliasing.
+The two-word forwarding entry adds three native cycles (`MOVW` plus `RJMP`). Including secondary fetch, bounds checking, fixed-stride dispatch, and the page tail, implemented total latency is **46 cycles**. The latency is independent of operand values and aliasing.
 
 Code-size estimate:
 
@@ -2154,20 +2199,16 @@ A representative organization is:
 ; Primary slot: one of four destination-specialized entries
 ldi   ZL, lo8(pm(ldi8_cD_apply))
 ldi   ZH, hi8(pm(ldi8_cD_apply))
+nop                               ; executed cycle-9 retiming padding
 rjmp  fetch_imm8_then_ijmp
-nop
 
 ; Shared continuation
 fetch_imm8_then_ijmp:
-    ; schedule the PC update and interrupt masking while the byte is in flight
     add   r4, r3
     adc   r5, r2
     adc   r6, r2
-    in    saved_sreg, SREG
-    cli
-    in    t0, SPDR
-    out   SPDR, r2
-    out   SREG, saved_sreg
+    in    t0, SPDR                 ; cycle 17
+    out   SPDR, r2                 ; cycle 18
     ijmp
 
 ldi8_cD_apply:
@@ -2248,8 +2289,7 @@ near invalid-secondary RJMP shim        =  1 word
 total                                      25 words = 50 bytes
 ```
 
-The eleven generic direct bounded pages are `F0-F8`, `FA`, and `FE`. `F9` uses its dedicated decoder and `FB-FD` use their separate shared condition gate. The multiplier load and extra `RJMP` occur while the secondary byte is still in flight, so they do not change the documented generic-page latencies.
-The 24-bit PC increment and interrupt-mask instructions are scheduled before `SPDR` becomes ready and replace wait padding; they do not add to the post-transfer critical path.
+The eleven generic direct bounded pages are `F0-F8`, `FA`, and `FE`. `F9` uses its dedicated decoder and `FB-FD` use their separate shared condition gate. The generic multiplier-stub path reaches a standard cycle-17/18 `IN; OUT` handoff. The shared two-word decoder instead uses an exact cycle-17 reverse handoff. In both cases, PC-update work occupies transfer slack rather than extending the post-transfer critical path.
 
 All fifteen secondary prefixes `F0-FE` are active. The generic decoder serves `F0-F8`, `FA`, and `FE`; the dedicated `F9` bitwise handler is placed near the primary table; and `FB-FD` use their shared condition gate. Executable tables and shared bodies are laid out in several `RJMP`-reachable clusters.
 
@@ -2264,10 +2304,10 @@ All fifteen secondary prefixes `F0-FE` are active. The generic decoder serves `F
 | `E4-EB` `JMPP`/`CALLP` | Control-transfer cost, with up to two forwarding cycles |
 | `EF` `RET` | Return-stream restart cost, with up to two forwarding cycles |
 | `F0-F8` dense pages | Fast forms use their page cadence; cold pointer forms take ~69-78 cycles |
-| `F9` runtime bitwise page | AND ~54, OR ~55, XOR ~56 cycles |
-| `FA` variable shifts | Approximately 43-79 cycles |
-| `FB-FD` conditional moves | Approximately 36-38 cycles false / 40-42 cycles true |
-| `FE MUL16` | Approximately 44-47 cycles |
+| `F9` runtime bitwise page | AND 52, OR 53, XOR 54 cycles |
+| `FA` variable shifts | Approximately 43-79 cycles before final implementation audit |
+| `FB-FD` conditional moves | 36 cycles false / 37 cycles true |
+| `FE MUL16` | 46 cycles |
 
 The primary dispatch multiplier is a two-cycle AVR `MUL`.
 
@@ -2312,7 +2352,7 @@ CP + BRSH in the generic decoder    2 words
 adjacent invalid-secondary RJMP     1 word
 ```
 
-The comparison and invalid shim are emitted once, not once per page. Each page contributes only its preloaded limit and two-word multiplier stub, already included in the 50-byte shared decoder/stub block.
+The comparison and invalid shim are emitted once, not once per page. Each page contributes only its preloaded limit and two-word multiplier stub, included in the 68-byte combined bounded-decoder infrastructure.
 
 For two- through four-word pages, these two valid-path cycles should replace cadence padding. For larger pages, the check remains worthwhile even if it contributes to a small overrun: omitting the unused table tail saves hundreds or thousands of bytes.
 
@@ -2326,22 +2366,21 @@ The eleven generic direct pages perform this upper-bound check. `FB-FD` use `sec
 slotAddressWords = tableBaseWords + secondary * slotWords
 ```
 
-Every direct bounded page uses one generic multiplier-based decoder. Each page stub loads `slotWords` as an immediate while the secondary byte is still transferring. The decoder advances the full 24-bit VM program counter and protects the `SPDR` handoff:
+### 25.1. Generic multiplier decoder
+
+`F0` and `F2-F8` use four two-word width stubs and one generic multiplier decoder. With cycle-9 primary entry, the setup/stub path reaches the secondary-byte `IN` on cycle 17 and the following-primary `OUT` on cycle 18:
 
 ```asm
 bounded_page_decode:
+    in    secondary, SPDR
+    out   SPDR, ZERO
+
     add   r4, r3
     adc   r5, r2
     adc   r6, r2
 
-    in    saved_sreg, SREG
-    cli
-    in    secondary, SPDR
-    out   SPDR, r2
-    out   SREG, saved_sreg
-
     cp    secondary, page_limit
-    brsh  invalid_secondary       ; nearby one-word RJMP shim
+    brsh  invalid_secondary
 
     mul   secondary, page_multiplier
     add   ZL, r0
@@ -2352,9 +2391,33 @@ invalid_secondary:
     rjmp  trap_entry
 ```
 
-The low-register-PC decoder is **14 words**, and the nearby invalid shim is one word. Pages with the same slot width share the same two-word multiplier stub. The complete decoder/stub region is exactly **25 words / 50 bytes**.
+Reading `SPDR` before the new `OUT` makes this a standard handoff; it needs no interrupt mask or SREG wrapper. The four width stubs plus decoder and invalid shim occupy **20 words / 40 bytes**.
 
-Using `MUL` for widths 1, 2, and 4 costs no extra visible instruction latency because the decoder runs under the in-flight secondary transfer. It saves more code than maintaining separate shift-based decoders for five slot widths.
+### 25.2. Shared two-word decoder
+
+`F1`, `FA`, and `FE` bypass a multiplier-loading stub and share a dedicated two-word decoder. Their primary slots jump directly to this path on cycle 14:
+
+```asm
+bounded_width_2_decode:
+    add   r4, r3
+    adc   r5, r2
+    cli
+    out   SPDR, ZERO             ; exact cycle 17
+    in    secondary, SPDR
+    sei
+    adc   r6, r2
+
+    cp    secondary, page_limit
+    brsh  invalid_secondary
+
+    add   ZL, secondary
+    adc   ZH, ZERO
+    add   ZL, secondary
+    adc   ZH, ZERO
+    ijmp
+```
+
+The two complete 16-bit additions preserve the ninth offset bit for `F1` entries `0x80-0x8F`. This decoder occupies **14 words / 28 bytes**. The complete bounded-decoder infrastructure is therefore **34 words / 68 bytes**.
 
 ## 26. Single-section physical layout and jump relaxation
 
@@ -2369,33 +2432,33 @@ The cold general-pointer subsystem is adjacent to the other `F0` bodies. Dense c
 | Order | Block | Start word | End word, exclusive | Words | Bytes |
 |---:|---|---:|---:|---:|---:|
 | 1 | Four-word primary table | 0 | 1024 | 1024 | 2048 |
-| 2 | Generic secondary decoder, invalid shim, and five width-shared stubs | 1024 | 1049 | 25 | 50 |
-| 3 | Exact dedicated `F9` runtime bitwise handler | 1049 | 1088 | 39 | 78 |
-| 4 | Shared `FB-FD` condition gate | 1088 | 1110 | 22 | 44 |
-| 5 | `C0-CF` immediate fetch/apply block | 1110 | 1182 | 72 | 144 |
-| 6 | Control transfer and stream-restart block | 1182 | 1562 | 380 | 760 |
-| 7 | Trap entry and `SYS` decoder/bridge | 1562 | 1610 | 48 | 96 |
-| 8 | Cluster A cadence tails and compact-CMP flag commit | 1610 | 1634 | 24 | 48 |
-| 9 | `F0` 110-entry veneer table | 1634 | 1744 | 110 | 220 |
-| 10 | `F0` immediate, stack, absolute, and program-space bodies | 1744 | 2496 | 752 | 1504 |
-| 11 | Exact shared `F0` cold-32 subsystem | 2496 | 2560 | 64 | 128 |
-| 12 | Exact shared `F0` cold general-pointer subsystem | 2560 | 2609 | 49 | 98 |
-| 13 | `F1` table | 2609 | 2897 | 288 | 576 |
-| 14 | `F2` table | 2897 | 3185 | 288 | 576 |
-| 15 | `F3` table | 3185 | 3569 | 384 | 768 |
-| 16 | Cluster B cadence tails and `TST8`/`CMP`/`TST16` commits | 3569 | 3594 | 25 | 50 |
-| 17 | `F4` table | 3594 | 4146 | 552 | 1104 |
-| 18 | `F5` table | 4146 | 4530 | 384 | 768 |
-| 19 | `F6` table | 4530 | 4850 | 320 | 640 |
-| 20 | `F7` table | 4850 | 5570 | 720 | 1440 |
-| 21 | Cluster C 17/18-cycle cadence tails | 5570 | 5593 | 23 | 46 |
-| 22 | `F8` table | 5593 | 5833 | 240 | 480 |
-| 23 | `FA` forwarding table | 5833 | 5929 | 96 | 192 |
-| 24 | Twelve shared `FA` shift bodies | 5929 | 6077 | 148 | 296 |
-| 25 | Shared `FB-FD` move table | 6077 | 6205 | 128 | 256 |
-| 26 | `FE` forwarding table | 6205 | 6333 | 128 | 256 |
-| 27 | Eight shared `FE` multiplication bodies | 6333 | 6397 | 64 | 128 |
-|  | **Planning end** |  | **6397** | **6397** | **12,794** |
+| 2 | Generic and shared width-two bounded decoders | 1024 | 1058 | 34 | 68 |
+| 3 | Exact dedicated `F9` runtime bitwise handler | 1058 | 1097 | 39 | 78 |
+| 4 | Shared `FB-FD` condition gate | 1097 | 1116 | 19 | 38 |
+| 5 | `C0-CF` immediate fetch/apply block | 1116 | 1188 | 72 | 144 |
+| 6 | Control transfer and stream-restart block | 1188 | 1572 | 384 | 768 |
+| 7 | Trap entry and `SYS` decoder/bridge | 1572 | 1620 | 48 | 96 |
+| 8 | Cluster A cadence tails and compact-CMP flag commit | 1620 | 1644 | 24 | 48 |
+| 9 | `F0` 110-entry veneer table | 1644 | 1754 | 110 | 220 |
+| 10 | `F0` immediate, stack, absolute, and program-space bodies | 1754 | 2506 | 752 | 1504 |
+| 11 | Exact shared `F0` cold-32 subsystem | 2506 | 2570 | 64 | 128 |
+| 12 | Exact shared `F0` cold general-pointer subsystem | 2570 | 2619 | 49 | 98 |
+| 13 | `F1` table | 2619 | 2907 | 288 | 576 |
+| 14 | `F2` table | 2907 | 3195 | 288 | 576 |
+| 15 | `F3` table | 3195 | 3579 | 384 | 768 |
+| 16 | Cluster B cadence tails and `TST8`/`CMP`/`TST16` commits | 3579 | 3604 | 25 | 50 |
+| 17 | `F4` table | 3604 | 4156 | 552 | 1104 |
+| 18 | `F5` table | 4156 | 4540 | 384 | 768 |
+| 19 | `F6` table | 4540 | 4860 | 320 | 640 |
+| 20 | `F7` table | 4860 | 5580 | 720 | 1440 |
+| 21 | Cluster C 17/18-cycle cadence tails | 5580 | 5603 | 23 | 46 |
+| 22 | `F8` table | 5603 | 5843 | 240 | 480 |
+| 23 | `FA` forwarding table | 5843 | 5939 | 96 | 192 |
+| 24 | Twelve shared `FA` shift bodies | 5939 | 6087 | 148 | 296 |
+| 25 | Shared `FB-FD` move table | 6087 | 6215 | 128 | 256 |
+| 26 | `FE` forwarding table | 6215 | 6343 | 128 | 256 |
+| 27 | Eight shared `FE` multiplication bodies | 6343 | 6407 | 64 | 128 |
+|  | **Planning end** |  | **6407** | **6407** | **12,814** |
 
 The `F9`, cold-32, and cold general-pointer subsystems have exact word counts. Four implementation blocks use planning ranges as listed in Section 34.
 
@@ -2412,18 +2475,18 @@ cluster_tail_17_delay_1:
 cluster_tail_17:
     add   r4, r3
     adc   r5, r2
+    adc   r6, r2
     cli
     out   SPDR, r2
     in    primary, SPDR
     sei
-    adc   r6, r2
     mul   primary, r7
     movw  r30, r0
     subi  r31, hi8(-(pm(primary_table)))
     ijmp
 ```
 
-The tail body is eleven words; the optional one-cycle delay makes the complete reverse region twelve words.
+The tail body remains eleven words; the optional one-cycle delay makes the complete reverse region twelve words.
 
 #### Standard 18-cycle tail
 
@@ -2433,9 +2496,9 @@ cluster_tail_18_delay_2:
 cluster_tail_18_delay_1:
     nop
 cluster_tail_18:
+    add   r4, r3
     in    primary, SPDR
     out   SPDR, r2
-    add   r4, r3
     adc   r5, r2
     adc   r6, r2
     mul   primary, r7
@@ -2444,7 +2507,7 @@ cluster_tail_18:
     ijmp
 ```
 
-The standard tail body is nine words. A one-word `RJMP` provides a two-cycle delay without two `NOP` words.
+The standard tail body remains nine words. A one-word `RJMP` provides a two-cycle delay without two `NOP` words.
 
 #### Cluster A commit arrangement
 
@@ -2701,21 +2764,21 @@ The compact-pointer dense tables contain only fast forms. The two table-free col
 
 | Opcode | Instruction | Bytes | Cycles |
 |---:|---|---:|---:|
-| `D0` | `BREQ rel8` | 2 | 35 NT; ~130 T |
-| `D1` | `BRNE rel8` | 2 | 35 NT; ~130 T |
-| `D2` | `BRULT rel8` | 2 | 35 NT; ~130 T |
-| `D3` | `BRSLT rel8` | 2 | 35 NT; ~130 T |
-| `D4` | `JMP rel8` | 2 | ~126 |
-| `D5` | `CALL rel8` | 2 | ~140 |
+| `D0` | `BREQ rel8` | 2 | 35 NT; ~129 T |
+| `D1` | `BRNE rel8` | 2 | 35 NT; ~129 T |
+| `D2` | `BRULT rel8` | 2 | 35 NT; ~129 T |
+| `D3` | `BRSLT rel8` | 2 | 35 NT; ~129 T |
+| `D4` | `JMP rel8` | 2 | ~125 |
+| `D5` | `CALL rel8` | 2 | ~139 |
 | `D6` | `ADJSP simm8` | 2 | 36-38 |
-| `D7` | `SYS service8` | 2 | ~37 plus service |
-| `E0` | `JMP16 rel16` | 3 | ~147 |
-| `E1` | `CALL16 rel16` | 3 | ~163 |
-| `E2` | `JMPF target24` | 4 | ~164 |
-| `E3` | `CALLF target24` | 4 | ~181 |
-| `E4-E7` | `JMPP qN` | 1 | ~130 |
-| `E8-EB` | `CALLP qN` | 1 | ~146 |
-| `EF` | `RET` | 1 | ~122 |
+| `D7` | `SYS service8` | 2 | ~36 plus service |
+| `E0` | `JMP16 rel16` | 3 | ~145 |
+| `E1` | `CALL16 rel16` | 3 | ~161 |
+| `E2` | `JMPF target24` | 4 | ~163 |
+| `E3` | `CALLF target24` | 4 | ~180 |
+| `E4-E7` | `JMPP qN` | 1 | ~129 |
+| `E8-EB` | `CALLP qN` | 1 | ~144 |
+| `EF` | `RET` | 1 | ~120 |
 
 All relative displacements are signed and relative to the address immediately following the complete instruction. `JMP16` and `CALL16` retain the active code bank and use their signed 16-bit displacement to select the target within that bank. `JMPF` and `CALLF` carry an explicit 24-bit target and are separate opcodes.
 
@@ -2895,11 +2958,11 @@ The active secondary executable tables total 7,276 bytes. `F9` has no executable
 | Shared `F0` cold general-pointer subsystem | 98 | exact, 49 words |
 | Twelve shared `FA` shift bodies | 296 | exact |
 | Eight shared `FE` multiplication bodies | 128 | exact |
-| Shared `FB-FD` condition gate | 44 | exact |
-| Generic decoder, invalid shim, and five width-shared stubs | 50 | exact |
+| Shared `FB-FD` condition gate | 38 | exact |
+| Generic decoder/stubs plus shared width-two decoder | 68 | exact |
 | Three cadence clusters and GPIOR0 commit shims | 144 | exact |
 | Interior alignment and jump veneers | 0 | proved unnecessary |
-| **Layout-fixed subtotal** | **10,290** | — |
+| **Layout-fixed subtotal** | **10,302** | — |
 
 ### 34.2. Implementation budgets
 
@@ -2907,23 +2970,23 @@ The active secondary executable tables total 7,276 bytes. `F9` has no executable
 |---|---:|---:|
 | `F0` immediate, stack, absolute, and program-space bodies | 1,504 | 1,408-1,664 |
 | `C0-CF` immediate fetch/apply block | 144 | 136-184 |
-| Control transfer and stream-restart block | 760 | 700-840 |
+| Control transfer and stream-restart block | 768 | 700-840 |
 | Trap entry and `SYS` decoder/bridge | 96 | 80-112 |
 
 ### 34.3. Total
 
 ```text
-  10,290  exact/layout-fixed
-+  2,504  budgeted blocks
+  10,302  exact/layout-fixed
++  2,512  budgeted blocks
 ---------
-  12,794 bytes = 12.49 KiB = 6,397 AVR words
+  12,814 bytes = 12.51 KiB = 6,407 AVR words
 ```
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower | 12,614 | 12.32 |
-| Planning | **12,794** | **12.49** |
-| Upper | 13,090 | 12.78 |
+| Lower | 12,626 | 12.33 |
+| Planning | **12,814** | **12.51** |
+| Upper | 13,102 | 12.80 |
 
 The 476-byte range comes entirely from the four budgeted blocks.
 

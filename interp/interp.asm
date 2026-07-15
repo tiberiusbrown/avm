@@ -616,9 +616,9 @@ reset_handler:
 ;
 ; The primary table has 256 fixed four-word slots. A completed short handler
 ; ends with RJMP to a shared cadence tail; a longer primary handler may use its
-; fourth word to forward to an out-of-line continuation. Opcodes 0x00-0xD7 are
-; implemented directly below. Later defined opcodes remain migration stubs and
-; reserved encodings trap as invalid.
+; fourth word to forward to an out-of-line continuation. All defined non-prefix
+; primary opcodes through 0xEF are implemented below; F0-FE remain secondary-
+; page migration stubs and reserved encodings trap as invalid.
 
 ; Standard 18-cycle sequential dispatch. PRIMARY_OPCODE is the byte fetched
 ; for the next instruction; the 24-bit VM PC advances by one byte.
@@ -1200,11 +1200,26 @@ emit_primary_jmpp primary_E7_jmpp_q3, VM_R6, VM_R7L
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE8-0xEB: CALLP qN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; CALLP is a one-byte instruction, so VM_PC already contains the sequential
+; return address at primary-slot entry. Preserve the selected 24-bit program
+; pointer in scratch before the shared prologue pushes VM_PC and installs the
+; target. The speculative sequential-byte transfer has ample time to finish
+; before the shared seek handler toggles flash chip select; no delay is needed.
 
-emit_primary_stub primary_E8_callp_q0, unimplemented_instruction_func
-emit_primary_stub primary_E9_callp_q1, unimplemented_instruction_func
-emit_primary_stub primary_EA_callp_q2, unimplemented_instruction_func
-emit_primary_stub primary_EB_callp_q3, unimplemented_instruction_func
+.macro emit_primary_callp label, ptr16, ptr23_16
+\label:
+    movw r24, \ptr16
+    mov  r26, \ptr23_16
+    rjmp push_pc_seek_and_dispatch_func
+    nop
+    assert_primary_slot_width \label
+.endm
+
+emit_primary_callp primary_E8_callp_q0, VM_R0, VM_R1L
+emit_primary_callp primary_E9_callp_q1, VM_R2, VM_R3L
+emit_primary_callp primary_EA_callp_q2, VM_R4, VM_R5L
+emit_primary_callp primary_EB_callp_q3, VM_R6, VM_R7L
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xEC-0xEE: reserved
@@ -1217,8 +1232,19 @@ emit_primary_stub primary_EE_reserved, invalid_primary_instruction_func
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xEF: RET
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Return addresses are stored little-endian at VM_SP: low, middle, high. RET
+; restores the complete 24-bit VM PC directly in its four-word primary slot and
+; enters the common stream-restart handler. No forwarding body or delay is
+; required; the three two-cycle loads already outlast the discarded speculative
+; byte transfer before flash chip select is toggled.
 
-emit_primary_stub primary_EF_ret, unimplemented_instruction_func
+primary_EF_ret:
+    ld   VM_PCL, Y+
+    ld   VM_PCM, Y+
+    ld   VM_PCH, Y+
+    rjmp seek_and_dispatch_func
+    assert_primary_slot_width primary_EF_ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xF0-0xFE: secondary-page prefixes
@@ -1255,9 +1281,9 @@ primary_table_end:
 ; Post-table migration scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Primary opcodes 00-E7 are complete. Secondary decoders,
-; condition gates, executable secondary tables, and the remaining instruction
-; bodies are still absent. They should be added after the primary table in the
+; All defined non-prefix primary opcodes 00-EF are complete. Secondary decoders,
+; condition gates, executable secondary tables, and their instruction bodies
+; are still absent. They should be added after the primary table in the
 ; single-section order defined by the implementation guide, without interior
 ; power-of-two alignment.
 
@@ -1727,7 +1753,18 @@ sys_millis32_func:
     sei
     rjmp cluster_tail_18
 
-; Shared continuation for JMPP and taken control-flow instructions.
+; CALLP shared prologue. The primary slot has preserved the selected target in
+; r26:r25:r24 while VM_PC still contains the one-byte call's sequential return
+; address. Push the return PC in canonical little-endian stack layout, install
+; the target, and fall through directly into the common seek handler.
+push_pc_seek_and_dispatch_func:
+    st   -Y, VM_PCH
+    st   -Y, VM_PCM
+    st   -Y, VM_PCL
+    movw VM_PCL, r24
+    mov  VM_PCH, r26
+
+; Shared continuation for JMPP, CALLP, RET, and taken control-flow instructions.
 ; On entry, VM_PCH:VM_PCM:VM_PCL is the new image-relative program counter.
 ; Seek the external-flash stream to VM_PC, consume the target primary opcode,
 ; start its following-byte fetch, and dispatch directly to that primary slot.
@@ -1763,7 +1800,7 @@ seek_and_dispatch_func:
     subi r31, hi8(-(pm(primary_table)))
     ijmp
 
-; Defined encodings stop here until their handlers are implemented.
+; Unimplemented secondary-prefix encodings stop here until their decoders exist.
 unimplemented_instruction_func:
     rjmp unimplemented_instruction_func
 

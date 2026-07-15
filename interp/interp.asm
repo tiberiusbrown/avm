@@ -647,16 +647,18 @@ reset_handler:
     ijmp
 .endm
 
-; Reverse-order 17-cycle sequential dispatch. CLI protects the SPDR read/start
-; handoff, while the carry from the low-byte PC increment remains live until
-; the middle and high bytes are updated.
+; Reverse-order 17-cycle sequential dispatch. Advance the low and middle PC
+; bytes before the protected SPDR handoff. CLI, OUT, IN, and SEI preserve the
+; carry from the middle-byte ADC until the high-byte ADC after the handoff.
+; This ordering makes the selected primary slot begin on cycle 10 after OUT,
+; matching the standard dispatch.
 .macro dispatch_reverse
     add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
     sei
-    adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
     mul  PRIMARY_OPCODE, FOUR
     movw r30, r0

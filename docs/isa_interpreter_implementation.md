@@ -279,13 +279,14 @@ subi  r31, hi8(-(pm(primary_table)))
 ijmp
 
 ; Reverse dispatch: its OUT is cycle 0; selected primary slot also starts at
-; cycle 10. The low-byte PC ADD occurs before that OUT.
+; cycle 10. The low- and middle-byte PC updates occur before that OUT. CLI,
+; OUT, IN, and SEI preserve the carry into the high-byte ADC after the handoff.
 add   VM_PCL, ONE
+adc   VM_PCM, ZERO
 cli
 out   SPDR, ZERO
 in    primary, SPDR
 sei
-adc   VM_PCM, ZERO
 adc   VM_PCH, ZERO
 mul   primary, FOUR
 movw  r30, r0
@@ -294,6 +295,8 @@ ijmp
 ```
 
 Consequently, a primary slot that must perform a reverse handoff on cycle 17 has only cycles 10 through 15 available before its `CLI` and `OUT`. Include all slot instructions, taken jumps into continuations, and continuation instructions in that seven-cycle window. For example, a slot containing `NOP; RJMP handler` reaches the handler on cycle 13, leaving cycles 13 through 15 for three one-cycle instructions before `CLI` on cycle 16 and `OUT` on cycle 17.
+
+The reverse dispatch must update `VM_PCM` before `CLI; OUT; IN; SEI`. Moving that middle-byte `ADC` after the handoff adds one post-`OUT` cycle and delays primary-slot entry to cycle 11. The handoff instructions do not modify carry, so the carry produced by the middle-byte `ADC` remains valid for the subsequent `VM_PCH` update. Interrupt handlers must preserve `SREG`, as required elsewhere in this specification.
 
 There are exactly two legal byte-to-byte handoff schedules:
 
@@ -363,11 +366,11 @@ cluster_tail_17_delay_1:
     nop
 cluster_tail_17:
     add   r4, r3
+    adc   r5, r2
     cli
     out   SPDR, r2
     in    primary, SPDR
     sei
-    adc   r5, r2
     adc   r6, r2
     mul   primary, r7
     movw  r30, r0
@@ -2408,11 +2411,11 @@ cluster_tail_17_delay_1:
     nop
 cluster_tail_17:
     add   r4, r3
+    adc   r5, r2
     cli
     out   SPDR, r2
     in    primary, SPDR
     sei
-    adc   r5, r2
     adc   r6, r2
     mul   primary, r7
     movw  r30, r0

@@ -314,6 +314,8 @@ def run_asm_test(
             llvm_mc,
             "-triple=avm-unknown-arduboyfx",
             "-filetype=obj",
+            "-I",
+            asm_path.parent,
             asm_path,
             "-o",
             object_path,

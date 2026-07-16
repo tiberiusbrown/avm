@@ -1142,8 +1142,8 @@ emit_primary_rel8 primary_D3_brslt_rel8, brslt_rel8_decode_func
 ; 0xD4-0xD7: relative control, ADJSP, and SYS
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_rel8 primary_D4_jmp_rel8,  jmp_rel8_func
-emit_primary_rel8 primary_D5_call_rel8, call_rel8_func
+emit_primary_rel8 primary_D4_jmp8_rel8,  jmp8_rel8_func
+emit_primary_rel8 primary_D5_call8_rel8, call8_rel8_func
 emit_primary_rel8 primary_D6_adjsp,     adjsp_simm8_func
 
 ; Account for the service byte in the 24-bit VM PC. The out-of-line decoder
@@ -1289,8 +1289,8 @@ primary_EF_ret:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ; Each bounded page advertises its architectural upper bound and uses its
-; final natural slot width. F1-F8 and FE execute implemented entries; F0 and
-; FA retain final-width trap placeholders until their shared bodies are added.
+; final natural slot width. F1-F9, FA, FB-FD, and FE execute implemented
+; entries; F0 retains one-word veneer placeholders until its bodies are added.
 ; F0 bound 0x6E, one-word veneer slots.
 emit_primary_bounded_page primary_F0_cold_veneer_page, 0x6E, f0_veneer_table, secondary_width_1_stub
 ; F1 bound 0x90, two-word slots.
@@ -1818,8 +1818,8 @@ branch_rel8_taken_func:
 
 ; D4 and D5 use fully specialized continuations. Duplicating the operand
 ; fetch, sign extension, next-PC calculation, and target addition removes the
-; shared opcode test and avoids RCALL/RET overhead on CALL.
-jmp_rel8_func:
+; shared opcode test and avoids RCALL/RET overhead on CALL8.
+jmp8_rel8_func:
     ; The operand transfer was started by the preceding primary dispatch. The
     ; continuation now begins one cycle earlier, so a three-cycle delay places
     ; this read at the first legal SPI byte boundary.
@@ -1840,8 +1840,8 @@ jmp_rel8_func:
     adc  VM_PCH, r25
     rjmp seek_and_dispatch_func
 
-call_rel8_func:
-    ; Fetch and sign-extend the displacement exactly as for JMP rel8.
+call8_rel8_func:
+    ; Fetch and sign-extend the displacement exactly as for JMP8 rel8.
     delay_3
     in   r26, SPDR
 
@@ -2664,8 +2664,8 @@ invalid_syscall_func:
 ; Future secondary tables are inserted at the marked anchors so every slot's
 ; final RJMP remains comfortably within range without changing these sequences.
 
-; Cluster A serves F0/F1/F2/F3, the dedicated F9 decoder, cold F0 bodies, the
-; FB-FD condition gate/table, and FE/FA shared bodies where specified.
+; Cluster A serves F0/F1/F2/F3, the dedicated F9 decoder, cold F0 bodies,
+; and the FB-FD condition gate/table. FA and FE shared bodies use Cluster C.
 ; The CMOV false path reaches this landing twelve cycles after launching the
 ; following-primary transfer. NOP plus the two-cycle RJMP supply exactly three
 ; cycles, so the reverse tail's OUT lands on cycle 17. The two-cycle F1 landing
@@ -3674,14 +3674,11 @@ cluster_c_end:
     .error "secondary cadence Cluster C must occupy 23 AVR words"
 .endif
 
-; F8 contains its exact CSET slots. FA retains final-width forwarding trap
-; placeholders; FE contains its implemented MUL16 forwarding entries and bodies.
-; FB-FD validate secondary < 0x80 in the shared condition gate,
+; F8 contains its exact CSET slots. FA and FE contain forwarding entries and
+; destination-specialized shared bodies. FB-FD validate secondary < 0x80 in
+; the shared condition gate,
 ; then use bits 5:0 to select one of the 64 two-word MOVW entries below.
 secondary_tables_after_cluster_c:
-secondary_unimplemented_c_func:
-    rjmp secondary_unimplemented_b_func
-
 f8_table:
     ; F8: bounded five-word simple-condition materialization table
     emit_f8_cset r8, r9, SREG_Z, sbic
@@ -3737,7 +3734,164 @@ f8_table_end:
     .error "f8_table has incorrect size"
 .endif
 
-emit_secondary_trap_table fa_forward_table, fa_forward_table_end, 0x30, 2, secondary_unimplemented_c_func
+; FA contains 48 two-word forwarding entries followed by twelve
+; destination-specialized variable-shift bodies. Each entry copies low4(count)
+; to native r26 before the destination can be overwritten, so cD == cCount is
+; valid and the architectural count register is otherwise preserved.
+
+.macro emit_fa_shift_forward countl, target
+.Lfa_forward_start_\@:
+    mov   r26, \countl
+    rjmp  \target
+.Lfa_forward_end_\@:
+    .if (.Lfa_forward_end_\@ - .Lfa_forward_start_\@) != 4
+        .error "FA shift forwarding entry is not exactly two AVR words"
+    .endif
+.endm
+
+.macro emit_fa_shl_body label, dstl, dsth
+\label:
+    andi  r26, 15
+    sbrs  r26, 3
+    rjmp  .Lfa_shl_no8_\@
+    mov   \dsth, \dstl
+    clr   \dstl
+    andi  r26, 7
+.Lfa_shl_no8_\@:
+    breq  .Lfa_shl_done_\@
+.Lfa_shl_loop_\@:
+    lsl   \dstl
+    rol   \dsth
+    dec   r26
+    brne  .Lfa_shl_loop_\@
+.Lfa_shl_done_\@:
+    rjmp  cluster_c_tail_18
+.Lfa_shl_end_\@:
+    .if (.Lfa_shl_end_\@ - \label) != 24
+        .error "FA SHL16V shared body is not exactly twelve AVR words"
+    .endif
+.endm
+
+.macro emit_fa_lsr_body label, dstl, dsth
+\label:
+    andi  r26, 15
+    sbrs  r26, 3
+    rjmp  .Lfa_lsr_no8_\@
+    mov   \dstl, \dsth
+    clr   \dsth
+    andi  r26, 7
+.Lfa_lsr_no8_\@:
+    breq  .Lfa_lsr_done_\@
+.Lfa_lsr_loop_\@:
+    lsr   \dsth
+    ror   \dstl
+    dec   r26
+    brne  .Lfa_lsr_loop_\@
+.Lfa_lsr_done_\@:
+    rjmp  cluster_c_tail_18
+.Lfa_lsr_end_\@:
+    .if (.Lfa_lsr_end_\@ - \label) != 24
+        .error "FA LSR16V shared body is not exactly twelve AVR words"
+    .endif
+.endm
+
+.macro emit_fa_asr_body label, dstl, dsth
+\label:
+    andi  r26, 15
+    sbrs  r26, 3
+    rjmp  .Lfa_asr_no8_\@
+    mov   \dstl, \dsth
+    lsl   \dsth
+    sbc   \dsth, \dsth
+    andi  r26, 7
+.Lfa_asr_no8_\@:
+    breq  .Lfa_asr_done_\@
+.Lfa_asr_loop_\@:
+    asr   \dsth
+    ror   \dstl
+    dec   r26
+    brne  .Lfa_asr_loop_\@
+.Lfa_asr_done_\@:
+    rjmp  cluster_c_tail_18
+.Lfa_asr_end_\@:
+    .if (.Lfa_asr_end_\@ - \label) != 26
+        .error "FA ASR16V shared body is not exactly thirteen AVR words"
+    .endif
+.endm
+
+fa_forward_table:
+    emit_fa_shift_forward r16, fa_shl_c0
+    emit_fa_shift_forward r18, fa_shl_c0
+    emit_fa_shift_forward r20, fa_shl_c0
+    emit_fa_shift_forward r22, fa_shl_c0
+    emit_fa_shift_forward r16, fa_shl_c1
+    emit_fa_shift_forward r18, fa_shl_c1
+    emit_fa_shift_forward r20, fa_shl_c1
+    emit_fa_shift_forward r22, fa_shl_c1
+    emit_fa_shift_forward r16, fa_shl_c2
+    emit_fa_shift_forward r18, fa_shl_c2
+    emit_fa_shift_forward r20, fa_shl_c2
+    emit_fa_shift_forward r22, fa_shl_c2
+    emit_fa_shift_forward r16, fa_shl_c3
+    emit_fa_shift_forward r18, fa_shl_c3
+    emit_fa_shift_forward r20, fa_shl_c3
+    emit_fa_shift_forward r22, fa_shl_c3
+    emit_fa_shift_forward r16, fa_lsr_c0
+    emit_fa_shift_forward r18, fa_lsr_c0
+    emit_fa_shift_forward r20, fa_lsr_c0
+    emit_fa_shift_forward r22, fa_lsr_c0
+    emit_fa_shift_forward r16, fa_lsr_c1
+    emit_fa_shift_forward r18, fa_lsr_c1
+    emit_fa_shift_forward r20, fa_lsr_c1
+    emit_fa_shift_forward r22, fa_lsr_c1
+    emit_fa_shift_forward r16, fa_lsr_c2
+    emit_fa_shift_forward r18, fa_lsr_c2
+    emit_fa_shift_forward r20, fa_lsr_c2
+    emit_fa_shift_forward r22, fa_lsr_c2
+    emit_fa_shift_forward r16, fa_lsr_c3
+    emit_fa_shift_forward r18, fa_lsr_c3
+    emit_fa_shift_forward r20, fa_lsr_c3
+    emit_fa_shift_forward r22, fa_lsr_c3
+    emit_fa_shift_forward r16, fa_asr_c0
+    emit_fa_shift_forward r18, fa_asr_c0
+    emit_fa_shift_forward r20, fa_asr_c0
+    emit_fa_shift_forward r22, fa_asr_c0
+    emit_fa_shift_forward r16, fa_asr_c1
+    emit_fa_shift_forward r18, fa_asr_c1
+    emit_fa_shift_forward r20, fa_asr_c1
+    emit_fa_shift_forward r22, fa_asr_c1
+    emit_fa_shift_forward r16, fa_asr_c2
+    emit_fa_shift_forward r18, fa_asr_c2
+    emit_fa_shift_forward r20, fa_asr_c2
+    emit_fa_shift_forward r22, fa_asr_c2
+    emit_fa_shift_forward r16, fa_asr_c3
+    emit_fa_shift_forward r18, fa_asr_c3
+    emit_fa_shift_forward r20, fa_asr_c3
+    emit_fa_shift_forward r22, fa_asr_c3
+fa_forward_table_end:
+.if (fa_forward_table_end - fa_forward_table) != (2 * 0x30 * 2)
+    .error "fa_forward_table has incorrect size"
+.endif
+
+; The shift-by-eight path reduces counts 8-15 to a byte transfer followed by
+; at most seven single-bit iterations. Counts 0-7 use only the loop.
+emit_fa_shl_body fa_shl_c0, r16, r17
+emit_fa_shl_body fa_shl_c1, r18, r19
+emit_fa_shl_body fa_shl_c2, r20, r21
+emit_fa_shl_body fa_shl_c3, r22, r23
+emit_fa_lsr_body fa_lsr_c0, r16, r17
+emit_fa_lsr_body fa_lsr_c1, r18, r19
+emit_fa_lsr_body fa_lsr_c2, r20, r21
+emit_fa_lsr_body fa_lsr_c3, r22, r23
+emit_fa_asr_body fa_asr_c0, r16, r17
+emit_fa_asr_body fa_asr_c1, r18, r19
+emit_fa_asr_body fa_asr_c2, r20, r21
+emit_fa_asr_body fa_asr_c3, r22, r23
+
+fa_shift_bodies_end:
+.if (fa_shift_bodies_end - fa_forward_table_end) != ((8 * 12 + 4 * 13) * 2)
+    .error "FA shared shift bodies must occupy exactly 296 bytes"
+.endif
 
 cmov_table:
     emit_cmov_entry r8, r8

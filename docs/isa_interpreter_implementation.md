@@ -486,8 +486,8 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `C8-CB` | `ADDI.S8 cD,simm8` | 2 | 35 |
 | `CC-CF` | `CMPI.S8 cL,simm8` | 2 | 35 |
 | `D0-D3` | Conditional branches | 2 | 35 not taken; 127 taken |
-| `D4` | `JMP rel8` | 2 | 121 |
-| `D5` | `CALL rel8` | 2 | 127 |
+| `D4` | `JMP8 rel8` | 2 | 121 |
+| `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | 31 / 31 / 34 / 38 for services `00-03` |
 | `D8-DF` | Reserved | — | trap |
@@ -1726,9 +1726,9 @@ Bounds: `secondary < 0x30`.
 
 | Secondary | Instruction | Entries | Target cycles |
 |---|---|---:|---:|
-| `00-0F` | `SHL16V cD,cCount` | 16 | ~43 at count 0; ~46 at 1; ~45 at 8; ~78 at 15 |
-| `10-1F` | `LSR16V cD,cCount` | 16 | ~43 at count 0; ~46 at 1; ~45 at 8; ~78 at 15 |
-| `20-2F` | `ASR16V cD,cCount` | 16 | ~43 at count 0; ~46 at 1; ~46 at 8; ~79 at 15 |
+| `00-0F` | `SHL16V cD,cCount` | 16 | ~42 at count 0; ~45 at 1; ~44 at 8; ~77 at 15 |
+| `10-1F` | `LSR16V cD,cCount` | 16 | ~42 at count 0; ~45 at 1; ~44 at 8; ~77 at 15 |
+| `20-2F` | `ASR16V cD,cCount` | 16 | ~42 at count 0; ~45 at 1; ~45 at 8; ~78 at 15 |
 
 Within each sixteen-entry family:
 
@@ -1765,7 +1765,7 @@ There are twelve shared bodies: one for each combination of three operations and
 exact page-specific table and bodies            488 bytes
 ```
 
-The primary slot, one two-word page stub, generic bounds decoder, invalid path, and cluster C cadence tail are accounted for globally in Sections 26 and 34 rather than charged again to `FA`.
+The primary slot, shared width-two decoder, invalid path, and Cluster C cadence tail are accounted for globally in Sections 26 and 34 rather than charged again to `FA`.
 
 ```asm
 ; SHL16V cD,cCount
@@ -1784,7 +1784,7 @@ fa_shl_cD:
     dec   t0
     brne  2b
 3:
-    rjmp  fa_tail
+    rjmp  cluster_c_tail_18
 
 ; LSR16V cD,cCount
 fa_lsr_cD:
@@ -1802,7 +1802,7 @@ fa_lsr_cD:
     dec   t0
     brne  2b
 3:
-    rjmp  fa_tail
+    rjmp  cluster_c_tail_18
 
 ; ASR16V cD,cCount
 fa_asr_cD:
@@ -1821,20 +1821,20 @@ fa_asr_cD:
     dec   t0
     brne  2b
 3:
-    rjmp  fa_tail
+    rjmp  cluster_c_tail_18
 ```
 
 The shift-by-eight path reduces counts `8-15` to one byte-transfer sequence plus a loop of at most seven iterations. Counts `0-7` use the ordinary loop. The target complete instruction latency is:
 
 | Count | `SHL16V` / `LSR16V` | `ASR16V` |
 |---:|---:|---:|
-| 0 | ~43 | ~43 |
-| 1 | ~46 | ~46 |
-| 4 | ~61 | ~61 |
-| 7 | ~76 | ~76 |
-| 8 | ~45 | ~46 |
-| 12 | ~63 | ~64 |
-| 15 | ~78 | ~79 |
+| 0 | ~42 | ~42 |
+| 1 | ~45 | ~45 |
+| 4 | ~60 | ~60 |
+| 7 | ~75 | ~75 |
+| 8 | ~44 | ~45 |
+| 12 | ~62 | ~63 |
+| 15 | ~77 | ~78 |
 
 LLVM should select constant shifts independently: use one or more `.1` instructions for small compile-time counts and reserve these forms for genuinely variable counts. `CSET.ULE` and `CSET.UGT` require no encodings; the backend canonicalizes them by swapping compare operands and using `CSET.UGE` or `CSET.ULT`, respectively.
 
@@ -2723,8 +2723,8 @@ The compact-pointer dense tables contain only fast forms. The two table-free col
 | Opcode | Instruction | Bytes | Reference cycles |
 |---:|---|---:|---:|
 | `D0-D3` | Conditional branches | 2 | 35 not taken; 127 taken |
-| `D4` | `JMP rel8` | 2 | 121 |
-| `D5` | `CALL rel8` | 2 | 127 |
+| `D4` | `JMP8 rel8` | 2 | 121 |
+| `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | 31 (`DEBUG_PUTC`), 31 (`DEBUG_BREAK`), 34 (`MILLIS`), 38 (`MILLIS32`) |
 | `E0` | `JMP16 rel16` | 3 | 134 |

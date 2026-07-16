@@ -2540,15 +2540,35 @@ fileSize-8-fileSize-1                       mandatory tail
 Definitions:
 
 ```text
-programStart = align_up(0x000100 + dataSize, 0x100)
-fileSize     = align_up(endOfPayload + 8, 0x100)
-file offset  = logical program address
+programStart   = align_up(0x000100 + dataSize, 0x100)
+endOfPayload   = first byte after the highest occupied payload byte
+fileSize       = align_up(endOfPayload + 8, 0x100)
+file offset    = logical program address
 fileSize mod 0x100 = 0
 ```
 
 Here `dataSize` is the total byte count of `.saved + .data`, not merely the
 ordinary `.data` suffix. Every static byte, including every language-level
 zero-initialized byte, occupies one initializer byte in the flat image.
+
+The Version 1 tail uses an unsigned 16-bit page count, so a packaged image is
+limited to:
+
+```text
+maximum imagePageCount = 0xFFFF
+maximum fileSize       = 0xFFFF00 bytes
+maximum endOfPayload   = 0xFFFEF8
+highest payload byte   = 0xFFFEF7
+```
+
+Program-space addresses remain architecturally 24-bit through `0xFFFFFF`, but
+program bytes at logical addresses `0xFFFEF8-0xFFFFFF` cannot be represented in
+a Version 1 flat image because the mandatory tail and page-aligned file size
+would make `imagePageCount` overflow.
+
+A linked AVM `ET_EXEC` may use the full architectural address range. A
+Version 1 image packer MUST reject an otherwise valid ELF when packaging it
+would require a file larger than `0xFFFF00` bytes.
 
 ## 69. Header
 
@@ -2580,8 +2600,13 @@ Required:
 
 ```text
 imagePageCount = fileSize / 256
-imagePageCount != 0
+1 <= imagePageCount <= 0xFFFF
+fileSize <= 0xFFFF00
 ```
+
+The stored value is an unsigned 16-bit little-endian integer. A packer MUST
+diagnose an image that would require `imagePageCount = 0x10000` or greater; it
+MUST NOT wrap, truncate, or encode zero.
 
 ## 71. Startup state
 
@@ -2658,6 +2683,7 @@ A validating tool or VM should detect:
 - Noncanonical indirect pointers.
 - Unsupported system-service identifiers.
 - Invalid image header, tail, sizes, CRC, or padding.
+- A flat image larger than `0xFFFF00` bytes or an overflowing 16-bit `imagePageCount`.
 - Invalid persistent save-object size, format, or integrity when a save object is present.
 - Relocation overflow.
 - Unsupported TLS, common symbols, or dynamic stack allocation.
@@ -2772,5 +2798,8 @@ Image:
     saveSize and total dataSize fields
     contiguous .saved + .data initializer at 0x000100
     mandatory 8-byte tail
+    unsigned 16-bit imagePageCount
+    maximum file size 0xFFFF00 bytes
+    highest representable payload byte 0xFFFEF7
     file offsets equal logical program addresses
 ```

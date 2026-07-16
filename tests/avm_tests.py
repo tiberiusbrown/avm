@@ -160,6 +160,7 @@ def write_disassembly(
         llvm_objdump,
         "--disassemble",
         "--syms",
+        "--symbolize-operands",
         elf_path,
     )
     if verbose:

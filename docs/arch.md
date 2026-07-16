@@ -204,19 +204,34 @@ Writable static storage occupies:
 0x0100-0x04FF
 ```
 
+All static storage has explicit initializer bytes in the image. AVM has no runtime
+`.bss` region and no allocated `SHT_NOBITS` static-storage section.
+
 Layout:
 
 ```text
-0x0100                       start of .data
-0x0100 + dataSize            start of .bss
-0x0100 + staticSize          first byte after static storage
+0x0100                       start of .saved
+0x0100 + saveSize            start of .data
+0x0100 + dataSize            first byte after static storage
+```
+
+Definitions:
+
+```text
+saveSize         = size of the persistent .saved prefix
+dataSize         = total size of .saved + .data
+ordinaryDataSize = dataSize - saveSize
 ```
 
 Required:
 
 ```text
-0 <= dataSize <= staticSize <= 1024
+0 <= saveSize <= dataSize <= 1024
 ```
+
+All `.saved` bytes are contiguous and precede all ordinary `.data` bytes.
+A zero-initialized global contributes explicit zero initializer bytes to its
+own section.
 
 The framebuffer occupies:
 
@@ -1999,6 +2014,14 @@ The initial C++ environment supports:
 
 Exceptions, RTTI, general dynamic allocation, and thread-local storage are disabled.
 
+Persistent global variables are placed in `.saved` or `.saved.*`. Ordinary
+global variables are placed in `.data` or `.data.*`. The frontend or runtime
+headers MAY provide a target-specific source attribute or macro for selecting
+persistent storage, but the ELF section contract is authoritative.
+
+Zero-initialized globals in either class are emitted with explicit zero
+initializer bytes.
+
 ---
 
 # Part X — MC and Assembly Language Contract
@@ -2150,8 +2173,8 @@ Required directives include:
 ```text
 .text
 .rodata
+.saved
 .data
-.bss
 .section
 .globl
 .weak
@@ -2285,8 +2308,8 @@ For an allocated section, these flags are mutually exclusive and identify the AV
 |---|---|---|---|
 | `.text` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_EXECINSTR | SHF_AVM_PROGSPACE` | Program |
 | `.rodata` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
+| `.saved` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_WRITE | SHF_AVM_DATASPACE` | Data |
 | `.data` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_WRITE | SHF_AVM_DATASPACE` | Data |
-| `.bss` | `SHT_NOBITS` | `SHF_ALLOC | SHF_WRITE | SHF_AVM_DATASPACE` | Data |
 | `.init_array` | `SHT_INIT_ARRAY` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
 | `.fini_array` | `SHT_FINI_ARRAY` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
 | `.avm.metadata` | `SHT_PROGBITS` | No `SHF_ALLOC` by default | None |
@@ -2309,6 +2332,17 @@ element     = packed 24-bit function pointer
 relocation  = R_AVM_PROG24
 ```
 
+`.saved` and `.saved.*` contain persistent global objects. `.data` and `.data.*`
+contain ordinary global objects. Both initialized and language-level
+zero-initialized objects use `SHT_PROGBITS`; zero-initialized objects contribute
+explicit zero bytes.
+
+A linked image merges all live `.saved` inputs before all live `.data` inputs.
+The complete `.saved` range is therefore one contiguous prefix beginning at
+data address `0x0100`.
+
+Allocated AVM data-space `SHT_NOBITS` sections are unsupported.
+
 ### 64.3. Symbols and unsupported ELF features
 
 In `ET_REL`, symbol values are section-relative.
@@ -2325,7 +2359,7 @@ In a linked image:
 
 Default section alignment is one byte. Explicit stronger alignment is honored.
 
-`SHN_COMMON`, thread-local-storage sections, and target small-data sections are unsupported. Tentative definitions are emitted into `.bss`.
+`SHN_COMMON`, thread-local-storage sections, and target small-data sections are unsupported. Tentative definitions are emitted into `.data` with explicit zero initializer bytes.
 
 COMDAT and ELF section groups use standard ELF semantics.
 
@@ -2478,12 +2512,14 @@ The linker must:
 4. Honor explicit symbol and section alignment.
 5. Insert no range veneer when a 24-bit absolute form can express the target.
 6. Relax marked calls, jumps, and conditional transfers.
-7. Lay out initialized writable data as one contiguous data-space prefix.
-8. Lay out zero-initialized writable data immediately after it.
-9. Emit the `.data` initializer bytes into the linked program image.
-10. Synthesize the runtime header and tail.
-11. Validate encodings, aliases, relocations, and address ranges.
-12. Fill required padding bytes.
+7. Lay out all live `.saved` input sections as one contiguous data-space prefix beginning at `0x0100`.
+8. Lay out all live ordinary `.data` input sections immediately after `.saved`.
+9. Materialize language-level zero-initialized globals as explicit zero bytes; do not create a runtime `.bss`.
+10. Emit the complete `.saved + .data` initializer prefix into the linked program image.
+11. Record both `saveSize` and total `dataSize` in the runtime header.
+12. Synthesize the runtime header and tail.
+13. Validate encodings, aliases, relocations, section ordering, and address ranges.
+14. Fill required padding bytes.
 
 Functions, basic blocks, fallthrough, jump tables, and program data may cross any 64 KiB address boundary.
 
@@ -2493,7 +2529,8 @@ The executable image is a flat little-endian binary:
 
 ```text
 0x000000-0x0000FF                           fixed header
-0x000100-0x000100+dataSize-1                .data initializer
+0x000100-0x000100+saveSize-1                .saved default initializer
+0x000100+saveSize-0x000100+dataSize-1       ordinary .data initializer
 ...-programStart-1                          0xFF padding
 programStart-...                            program-space contents
 ...-fileSize-9                              0xFF final padding
@@ -2509,7 +2546,9 @@ file offset  = logical program address
 fileSize mod 0x100 = 0
 ```
 
-`.bss` occupies no bytes in the flat image.
+Here `dataSize` is the total byte count of `.saved + .data`, not merely the
+ordinary `.data` suffix. Every static byte, including every language-level
+zero-initialized byte, occupies one initializer byte in the flat image.
 
 ## 69. Header
 
@@ -2520,10 +2559,9 @@ The header is exactly 256 bytes.
 | `0x00` | 4 | `magic` | `41 56 4D 01` |
 | `0x04` | 1 | `runtimeVersion` | Execution-contract version |
 | `0x05` | 3 | `entryPoint` | Logical runtime entry address |
-| `0x08` | 2 | `dataSize` | Initialized static bytes |
-| `0x0A` | 2 | `staticSize` | Total `.data + .bss` bytes |
-| `0x0C` | 2 | `saveSize` | Requested persistent bytes |
-| `0x0E` | 238 | `reserved` | Must be zero |
+| `0x08` | 2 | `dataSize` | Total `.saved + .data` initializer bytes |
+| `0x0A` | 2 | `saveSize` | Persistent prefix bytes within `dataSize` |
+| `0x0C` | 240 | `reserved` | Must be zero |
 | `0xFC` | 4 | `headerCrc32` | CRC of bytes `0x00-0xFB` |
 
 `headerCrc32` uses CRC-32/ISO-HDLC and is stored little-endian.
@@ -2552,8 +2590,7 @@ A loader or runtime validates at least:
 ```text
 header magic
 supported runtimeVersion
-dataSize <= staticSize <= 1024
-saveSize <= 1024
+0 <= saveSize <= dataSize <= 1024
 valid entry point
 ```
 
@@ -2565,19 +2602,42 @@ CC = 0
 PC = entryPoint
 ```
 
-It clears `staticSize` bytes beginning at data address `0x0100`, then copies `dataSize` bytes from program address `0x000100` to data address `0x0100`.
+Static initialization is:
+
+1. If a valid persistent save object is available, copy exactly `saveSize`
+   bytes from that object to data address `0x0100`.
+2. Otherwise, copy the default `.saved` initializer from program address
+   `0x000100` to data address `0x0100`.
+3. Always copy the remaining `dataSize - saveSize` ordinary initializer bytes
+   from program address `0x000100 + saveSize` to data address
+   `0x0100 + saveSize`.
+
+No static clearing pass is performed because all static bytes have explicit
+initializer bytes.
 
 General-purpose registers are unspecified at raw image entry unless a higher-level runtime ABI states otherwise.
 
 ## 71.1. Persistent save storage
 
-`saveSize` is an exact byte count from zero through 1,024.
+The persistent program-visible range is exactly:
 
-When `saveSize` is nonzero, the runtime provides a persistent storage object of at least that many bytes and exposes access only through defined system services or runtime-library contracts.
+```text
+data address 0x0100 through 0x0100 + saveSize - 1
+```
 
-Guest code MUST NOT assume a data-space address for persistent storage.
+It corresponds to the linked `.saved` section and is always a contiguous prefix
+of static storage.
 
-A packer MAY reserve a larger physical erase unit, but bytes beyond `saveSize` are not part of the program-visible save object.
+A save operation persists exactly those `saveSize` bytes. A load operation
+restores exactly those bytes and does not modify the following ordinary
+`.data` range.
+
+When no valid persistent object exists, the image’s `.saved` initializer
+provides the initial value. This permits both explicitly initialized and
+zero-initialized saved global variables.
+
+A packer or storage backend MAY reserve a larger physical erase unit, but bytes
+beyond `saveSize` are not part of the program-visible save object.
 
 ---
 
@@ -2598,7 +2658,7 @@ A validating tool or VM should detect:
 - Noncanonical indirect pointers.
 - Unsupported system-service identifiers.
 - Invalid image header, tail, sizes, CRC, or padding.
-- Missing persistent storage when `saveSize` is nonzero.
+- Invalid persistent save-object size, format, or integrity when a save object is present.
 - Relocation overflow.
 - Unsupported TLS, common symbols, or dynamic stack allocation.
 
@@ -2709,7 +2769,8 @@ ELF:
 
 Image:
     256-byte header
-    .data initializer at 0x000100
+    saveSize and total dataSize fields
+    contiguous .saved + .data initializer at 0x000100
     mandatory 8-byte tail
     file offsets equal logical program addresses
 ```

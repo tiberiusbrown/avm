@@ -3,7 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; SRAM:
-;;     0x0100–0x04FF  globals
+;;     0x0100–0x04FF  static storage (.saved + .data, including zero-initialized bytes)
 ;;     0x0500–0x08FF  framebuffer
 ;;     0x0900–0x09FF  VM stack
 ;;     0x0A00-0x0A03  FX image/save page
@@ -474,8 +474,10 @@
 #define AVM_HEADER_MAGIC1       0x56
 #define AVM_HEADER_MAGIC2       0x4D
 #define AVM_HEADER_MAGIC3       0x01
-#define AVM_RUNTIME_VERSION     0x01
-#define AVM_DATA_IMAGE_OFFSET   0x0100
+#define AVM_RUNTIME_VERSION          0x01
+#define AVM_HEADER_DATA_SIZE_OFFSET 0x08
+#define AVM_HEADER_SAVE_SIZE_OFFSET 0x0A
+#define AVM_DATA_IMAGE_OFFSET         0x0100
 
 ; The mandatory eight-byte image tail occupies the final eight bytes of the
 ; linked image. Only the first six bytes are needed by startup:
@@ -4252,10 +4254,6 @@ startup_func:
     ldi  r26, hi8(RAMEND)
     out  SPH, r26
 
-    ; Unconditionally clear all SRAM from 0x0100 through RAMEND. This must run
-    ; before any startup state is stored in SRAM and before Timer0 is started.
-    ; reset_handler reaches startup_func with JMP, so the native stack is empty
-    ; while its backing SRAM is cleared.
     ; Establish the immutable interpreter constants before any helper runs.
     clr  ZERO
     ldi  r26, 1
@@ -4263,17 +4261,17 @@ startup_func:
     ldi  r26, 4
     mov  FOUR, r26
 
-    ldi  r26, lo8(0x0100)
-    ldi  r27, hi8(0x0100)
-startup_clear_ram_loop:
-    st   X+, ZERO
-    cpi  r26, lo8(RAMEND + 1)
-    brne startup_clear_ram_loop
-    cpi  r27, hi8(RAMEND + 1)
-    brne startup_clear_ram_loop
+    ; Application static storage is initialized by copying the complete data
+    ; image below. There is no separate .bss region or SRAM-clear pass. Clear
+    ; only interpreter-private state that is not supplied by the image.
+    sts  data_startup_flags, ZERO
+    sts  data_millis+0, ZERO
+    sts  data_millis+1, ZERO
+    sts  data_millis+2, ZERO
+    sts  data_millis+3, ZERO
 
-    ; Initialize persistent architectural and startup state. VM_FLAGS lives
-    ; in low-I/O GPIOR0; VM PC is loaded from the image header below.
+    ; Initialize persistent architectural state. VM_FLAGS lives in low-I/O
+    ; GPIOR0; VM PC is loaded from the image header below.
     ldi  VM_SPL, lo8(VM_SP_INITIAL_VALUE)
     ldi  VM_SPH, hi8(VM_SP_INITIAL_VALUE)
     out  VM_FLAGS, ZERO
@@ -4405,19 +4403,15 @@ startup_read_header:
     rcall fx_startup_read_byte
     mov  VM_PCH, r30
 
-    ; dataSize in r16:r17.
+    ; dataSize at header offset 0x08. This is the complete .saved + .data
+    ; image size, including bytes whose initial value is zero. It is also the
+    ; number of bytes copied from image offset 0x0100 to SRAM address 0x0100.
     rcall fx_startup_read_byte
     mov  r16, r30
     rcall fx_startup_read_byte
     mov  r17, r30
 
-    ; staticSize in r18:r19.
-    rcall fx_startup_read_byte
-    mov  r18, r30
-    rcall fx_startup_read_byte
-    mov  r19, r30
-
-    ; saveSize is retained for the system ABI.
+    ; saveSize at header offset 0x0A, retained for the system ABI.
     rcall fx_startup_read_byte
     mov  r20, r30
     sts  data_save_size+0, r30
@@ -4426,38 +4420,29 @@ startup_read_header:
     sts  data_save_size+1, r30
     fx_disable
 
-    ; dataSize <= staticSize.
-    cp   r18, r16
-    cpc  r19, r17
+    ; saveSize <= dataSize because the saved region is part of the data image
+    ; copied into SRAM.
+    cp   r16, r20
+    cpc  r17, r21
     brsh 1f
     rjmp startup_invalid_image
 1:
 
-    ; staticSize <= 1024. Values below 0x0400 are accepted; 0x0400 itself is
+    ; dataSize <= 1024. Values below 0x0400 are accepted; 0x0400 itself is
     ; accepted only when the low byte is zero.
-    cpi  r19, 0x04
+    cpi  r17, 0x04
     brlo 1f
     breq 2f
     rjmp startup_invalid_image
 2:
-    tst  r18
+    tst  r16
     breq 1f
     rjmp startup_invalid_image
 1:
 
-    ; saveSize <= 1024.
-    cpi  r21, 0x04
-    brlo 2f
-    breq 3f
-    rjmp startup_invalid_image
-3:
-    tst  r20
-    breq 2f
-    rjmp startup_invalid_image
-2:
-
     ; A nonzero save request requires either a keyed flashcart save page or the
-    ; development layout with a final 4 KiB save sector.
+    ; development layout with a final 4 KiB save sector. The preceding checks
+    ; already imply saveSize <= 1024.
     cp   r20, ZERO
     cpc  r21, ZERO
     breq 3f
@@ -4466,15 +4451,15 @@ startup_read_header:
     rjmp startup_invalid_image
 3:
 
-    ; All SRAM was cleared before startup state was initialized. The copy below
-    ; installs only the nonzero .data prefix; globals beyond dataSize remain
-    ; zero-initialized.
+    ; Copy the complete data image, including explicitly stored zero bytes.
+    ; No separate .bss clear is performed.
 startup_copy_data:
     cp   r16, ZERO
     cpc  r17, ZERO
     breq startup_enter_image
 
-    ; .data initializers always begin one page after the header.
+    ; Static initializers always begin at image offset 0x0100, one page after
+    ; the header.
     lds  r27, data_page_data+0
     lds  r22, data_page_data+1
     inc  r27
@@ -4494,8 +4479,8 @@ startup_copy_data_loop:
     fx_disable
 
 startup_enter_image:
-    ; Timer0 is initialized only after the unconditional SRAM clear and .data
-    ; copy. Its compare interrupt becomes globally active at the SEI below.
+    ; Timer0 is initialized only after the data image copy. Its compare
+    ; interrupt becomes globally active at the SEI below.
     rcall timer0_init_func
 
     ; VM_PCH:VM_PCM:VM_PCL already contains the image entry point. Seek to

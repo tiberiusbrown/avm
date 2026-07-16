@@ -27,6 +27,8 @@ The reference interpreter is organized around the following design choices:
 
 Unless otherwise noted, the cycle figures for the reference interpreter are measured from entry to one primary handler through entry to the next primary handler.
 
+The linked-image format places `dataSize` as a little-endian 16-bit value at header offset `0x08` and `saveSize` as a little-endian 16-bit value at offset `0x0A`. `dataSize` is the combined `.saved` and `.data` size. The complete data image, including zero-initialized objects, begins at image offset `0x0100` and exactly `dataSize` bytes are copied to SRAM address `0x0100`. The format has no separate `.bss` region, so startup does not clear application SRAM before this copy.
+
 ---
 
 ## 2. Register architecture

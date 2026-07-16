@@ -545,17 +545,22 @@ Every bit pattern selects valid registers and modifiers.
 | `C4-C7` | `LDI16 cD,imm16` | 3 | Preserve |
 | `C8-CB` | `ADDI.S8 cD,simm8` | 2 | Preserve |
 | `CC-CF` | `CMPI.S8 cL,simm8` | 2 | Replace |
-| `D0` | `BREQ rel8` | 2 | Preserve |
-| `D1` | `BRNE rel8` | 2 | Preserve |
-| `D2` | `BRULT rel8` | 2 | Preserve |
-| `D3` | `BRSLT rel8` | 2 | Preserve |
+| `D0` | `BREQ8 rel8` | 2 | Preserve |
+| `D1` | `BRNE8 rel8` | 2 | Preserve |
+| `D2` | `BRULT8 rel8` | 2 | Preserve |
+| `D3` | `BRSLT8 rel8` | 2 | Preserve |
 | `D4` | `JMP8 rel8` | 2 | Preserve |
 | `D5` | `CALL8 rel8` | 2 | Preserve |
 | `D6` | `ADJSP simm8` | 2 | Preserve |
 | `D7` | `SYS service8` | 2 | Service-defined; default preserve |
-| `D8` | `BRUGE rel8` | 2 | Preserve |
-| `D9` | `BRSGE rel8` | 2 | Preserve |
-| `DA-DF` | Reserved | — | — |
+| `D8` | `BRUGE8 rel8` | 2 | Preserve |
+| `D9` | `BRSGE8 rel8` | 2 | Preserve |
+| `DA` | `BREQ16 rel16` | 3 | Preserve |
+| `DB` | `BRNE16 rel16` | 3 | Preserve |
+| `DC` | `BRULT16 rel16` | 3 | Preserve |
+| `DD` | `BRUGE16 rel16` | 3 | Preserve |
+| `DE` | `BRSLT16 rel16` | 3 | Preserve |
+| `DF` | `BRSGE16 rel16` | 3 | Preserve |
 | `E0` | `JMP16 rel16` | 3 | Preserve |
 | `E1` | `CALL16 rel16` | 3 | Preserve |
 | `E2` | `JMPF target24` | 4 | Preserve |
@@ -652,7 +657,7 @@ SLT  CC.S == 1
 SGE  CC.S == 0
 ```
 
-The ISA directly encodes branches for `EQ`, `NE`, `ULT`, `UGE`, `SLT`, and `SGE`. Unsigned `ULE` and `UGT` branch conditions are formed by swapping comparison operands and using `UGE` or `ULT`.
+The ISA directly encodes branches for `EQ`, `NE`, `ULT`, `UGE`, `SLT`, and `SGE` with both signed 8-bit and signed 16-bit relative displacements. Unsigned `ULE` and `UGT` branch conditions are formed by swapping comparison operands and using `UGE` or `ULT`.
 
 ### 22.2. Relative branches and transfers
 
@@ -666,14 +671,20 @@ The target is computed in the full 24-bit program address space.
 
 | Opcode | Instruction | Action |
 |---:|---|---|
-| `D0` | `BREQ rel8` | Set `PC=target` if `Z=1` |
-| `D1` | `BRNE rel8` | Set `PC=target` if `Z=0` |
-| `D2` | `BRULT rel8` | Set `PC=target` if `C=1` |
-| `D3` | `BRSLT rel8` | Set `PC=target` if `S=1` |
+| `D0` | `BREQ8 rel8` | Set `PC=target` if `Z=1` |
+| `D1` | `BRNE8 rel8` | Set `PC=target` if `Z=0` |
+| `D2` | `BRULT8 rel8` | Set `PC=target` if `C=1` |
+| `D3` | `BRSLT8 rel8` | Set `PC=target` if `S=1` |
 | `D4` | `JMP8 rel8` | Set `PC=target` |
 | `D5` | `CALL8 rel8` | Push `nextPC`; set `PC=target` |
-| `D8` | `BRUGE rel8` | Set `PC=target` if `C=0` |
-| `D9` | `BRSGE rel8` | Set `PC=target` if `S=0` |
+| `D8` | `BRUGE8 rel8` | Set `PC=target` if `C=0` |
+| `D9` | `BRSGE8 rel8` | Set `PC=target` if `S=0` |
+| `DA` | `BREQ16 rel16` | Set `PC=target` if `Z=1` |
+| `DB` | `BRNE16 rel16` | Set `PC=target` if `Z=0` |
+| `DC` | `BRULT16 rel16` | Set `PC=target` if `C=1` |
+| `DD` | `BRUGE16 rel16` | Set `PC=target` if `C=0` |
+| `DE` | `BRSLT16 rel16` | Set `PC=target` if `S=1` |
+| `DF` | `BRSGE16 rel16` | Set `PC=target` if `S=0` |
 | `E0` | `JMP16 rel16` | Set `PC=target` |
 | `E1` | `CALL16 rel16` | Push `nextPC`; set `PC=target` |
 
@@ -2061,9 +2072,23 @@ A zero stack displacement prints as `[sp+0]`.
 
 ### 61.5. Exact and relaxable control-transfer spelling
 
-Exact encoded forms use width-specific mnemonics:
+Exact encoded forms use these mnemonics:
 
 ```text
+breq8 rel8
+brne8 rel8
+brult8 rel8
+bruge8 rel8
+brslt8 rel8
+brsge8 rel8
+
+breq16 rel16
+brne16 rel16
+brult16 rel16
+bruge16 rel16
+brslt16 rel16
+brsge16 rel16
+
 jmp8 rel8
 jmp16 rel16
 jmpf target24
@@ -2077,22 +2102,29 @@ The assembler accepts these relaxable pseudos:
 ```text
 jmp symbol
 call symbol
-br.eq symbol
-br.ne symbol
-br.ult symbol
-br.uge symbol
-br.slt symbol
-br.sge symbol
+breq symbol
+brne symbol
+brult symbol
+bruge symbol
+brslt symbol
+brsge symbol
 ```
 
-Relaxable pseudos emit a maximal valid sequence plus `R_AVM_RELAX`. Their operands MUST be relocatable symbolic program-target expressions, optionally with a constant addend. Pure absolute expressions are invalid for `JMP`, `CALL`, and the `BR.*` pseudos.
+Relaxable pseudos emit a maximal valid sequence plus `R_AVM_RELAX`. Their operands MUST be relocatable symbolic program-target expressions, optionally with a constant addend. Pure absolute expressions are invalid for `jmp`, `call`, `breq`, `brne`, `brult`, `bruge`, `brslt`, and `brsge`.
 
 There is no mnemonic overloading between exact and relaxable forms:
 
 ```text
+breq8 / brne8 / brult8 / bruge8 / brslt8 / brsge8
+    exact signed-8-bit conditional branches
+
+breq16 / brne16 / brult16 / bruge16 / brslt16 / brsge16
+    exact signed-16-bit conditional branches
+
 jmp8 / jmp16 / jmpf       exact encoded jumps
 call8 / call16 / callf    exact encoded calls
-jmp / call                relaxable symbolic pseudos
+jmp / call / breq / brne / brult / bruge / brslt / brsge
+    relaxable symbolic pseudos
 ```
 
 An exact mnemonic without `R_AVM_RELAX` is never widened or shrunk. An overflow in an exact form is an error.
@@ -2158,7 +2190,7 @@ Required target expression modifiers:
 %prog24(symbol + addend)
 ```
 
-Instruction operands select `R_AVM_PCREL8`, `R_AVM_PCREL16`, or `R_AVM_FAR24` according to the encoded form.
+Instruction operands select `R_AVM_PCREL8`, `R_AVM_PCREL16`, or `R_AVM_FAR24` according to the encoded form. The six short conditional branches use `R_AVM_PCREL8`; the six `*16` conditional branches use `R_AVM_PCREL16`.
 
 Sections default to one-byte alignment unless an explicit directive requires more.
 
@@ -2376,10 +2408,10 @@ The pushed return address is always the address after the final relaxed instruct
 
 ### 66.3. Conditional-branch relaxation
 
-All six directly encoded conditions use the same maximal relaxable sequence:
+All six conditions use the same maximal relaxable sequence:
 
 ```text
-inverse-condition rel8 over JMPF
+inverse-condition +4
 JMPF target
 ```
 
@@ -2391,38 +2423,46 @@ ULT <-> UGE
 SLT <-> SGE
 ```
 
-The maximal sequence is six bytes:
+The maximal sequence is six bytes. The linker selects the shortest direct branch whose displacement fits after accounting for the candidate instruction's own length and all other layout changes:
 
 ```text
-inverse-condition +4
-JMPF target
+6 bytes: inverse-condition +4; JMPF target
+3 bytes: requested-condition16 rel16
+2 bytes: requested-condition rel8
 ```
 
-When the final target fits the requested condition's signed `rel8` range, the entire sequence relaxes to the direct two-byte conditional branch.
-
-Otherwise, the linker MAY relax the embedded `JMPF` to `JMP16` while retaining the inverse-condition skip:
+The direct mappings are:
 
 ```text
-inverse-condition +4 ; JMPF target     total 6 bytes
-inverse-condition +3 ; JMP16 target    total 5 bytes
+pseudo   signed-16-bit form   signed-8-bit form
+
+breq     BREQ16               BREQ8
+brne     BRNE16               BRNE8
+brult    BRULT16              BRULT8
+bruge    BRUGE16              BRUGE8
+brslt    BRSLT16              BRSLT8
+brsge    BRSGE16              BRSGE8
 ```
 
-When the requested condition's target fits signed `rel8`, the complete sequence relaxes directly to the corresponding exact two-byte branch:
+For a relaxation site beginning at `P` and final target `T`:
 
 ```text
-br.eq  -> BREQ
-br.ne  -> BRNE
-br.ult -> BRULT
-br.uge -> BRUGE
-br.slt -> BRSLT
-br.sge -> BRSGE
+requested-condition rel8:
+    displacement = T - (P + 2)
+    range        = -128..127
+
+requested-condition16 rel16:
+    displacement = T - (P + 3)
+    range        = -32768..32767
 ```
 
-There is no intermediate inverse-condition-plus-`JMP8` relaxation form. At each size change, the inverse-branch skip displacement and the selected jump displacement are recomputed from their respective `nextPC` values. A relaxation is valid only when the final target fits the selected form after accounting for all size changes.
+The linker MUST choose the two-byte form when its signed `rel8` displacement fits. Otherwise it MUST choose the three-byte `*16` form when its signed `rel16` displacement fits. Otherwise it retains the six-byte maximal sequence.
+
+There is no five-byte inverse-condition-plus-`JMP16` relaxation form and no four-byte inverse-condition-plus-`JMP8` form. A relaxation is valid only when the final target fits the selected direct form after accounting for all size changes.
 
 ### 66.4. Explicit nonrelaxable forms
 
-The exact mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, `CALLF`, `BREQ`, `BRNE`, `BRULT`, `BRUGE`, `BRSLT`, and `BRSGE` never receive `R_AVM_RELAX` and are never widened or shrunk.
+The exact mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, `CALLF`, `BREQ8`, `BRNE8`, `BRULT8`, `BRUGE8`, `BRSLT8`, `BRSGE8`, `BREQ16`, `BRNE16`, `BRULT16`, `BRUGE16`, `BRSLT16`, and `BRSGE16` never receive `R_AVM_RELAX` and are never widened or shrunk.
 
 A relocation overflow in an exact form is an error.
 

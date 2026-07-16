@@ -1134,10 +1134,10 @@ emit_primary_immediate primary_CF_cmpi_s8_c3, cmpi_s8_c3_apply, fetch_simm8_then
     assert_primary_slot_width \label
 .endm
 
-emit_primary_rel8 primary_D0_breq_rel8,  breq_rel8_decode_func
-emit_primary_rel8 primary_D1_brne_rel8,  brne_rel8_decode_func
-emit_primary_rel8 primary_D2_brult_rel8, brult_rel8_decode_func
-emit_primary_rel8 primary_D3_brslt_rel8, brslt_rel8_decode_func
+emit_primary_rel8 primary_D0_breq8_rel8,  breq8_rel8_decode_func
+emit_primary_rel8 primary_D1_brne8_rel8,  brne8_rel8_decode_func
+emit_primary_rel8 primary_D2_brult8_rel8, brult8_rel8_decode_func
+emit_primary_rel8 primary_D3_brslt8_rel8, brslt8_rel8_decode_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xD4-0xD7: relative control, ADJSP, and SYS
@@ -1165,19 +1165,32 @@ primary_D7_sys_end:
 ; 0xD8-0xD9: inverted conditional branches
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_rel8 primary_D8_bruge_rel8, bruge_rel8_decode_func
-emit_primary_rel8 primary_D9_brsge_rel8, brsge_rel8_decode_func
+emit_primary_rel8 primary_D8_bruge8_rel8, bruge8_rel8_decode_func
+emit_primary_rel8 primary_D9_brsge8_rel8, brsge8_rel8_decode_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xDA-0xDF: reserved
+; 0xDA-0xDF: 16-bit conditional branches
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Each slot preloads the selected architectural-flag mask, advances VM_PC from
+; the opcode to rel16[7:0], and forwards to the shared decoder. Opcode bit 0
+; selects the inverted condition within each flag pair.
 
-emit_primary_stub primary_DA_reserved, invalid_primary_instruction_func
-emit_primary_stub primary_DB_reserved, invalid_primary_instruction_func
-emit_primary_stub primary_DC_reserved, invalid_primary_instruction_func
-emit_primary_stub primary_DD_reserved, invalid_primary_instruction_func
-emit_primary_stub primary_DE_reserved, invalid_primary_instruction_func
-emit_primary_stub primary_DF_reserved, invalid_primary_instruction_func
+.macro emit_primary_branch16 label, mask
+\label:
+    ldi  r25, \mask
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    rjmp branch_rel16_decode_func
+    assert_primary_slot_width \label
+.endm
+
+emit_primary_branch16 primary_DA_breq16_rel16,  (1 << SREG_Z)
+emit_primary_branch16 primary_DB_brne16_rel16,  (1 << SREG_Z)
+emit_primary_branch16 primary_DC_brult16_rel16, (1 << SREG_C)
+emit_primary_branch16 primary_DD_bruge16_rel16, (1 << SREG_C)
+emit_primary_branch16 primary_DE_brslt16_rel16, (1 << SREG_S)
+emit_primary_branch16 primary_DF_brsge16_rel16, (1 << SREG_S)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xE0-0xE3: direct near/far control
@@ -1602,9 +1615,9 @@ cmov_gate_end:
 ; All defined non-prefix primary opcodes 00-EF are complete. The generic
 ; bounded-page decoder, secondary cadence clusters, and every specified
 ; executable secondary table are present. The fixed-width self-contained F1-F8
-; pages, the dedicated F9 runtime bitwise decoder, the FB-FD shared
-; conditional-move gate/table, and the FE MUL16 page are implemented. F0 and FA
-; still require their dedicated veneers, forwarding bodies, or shared bodies.
+; pages, the dedicated F9 runtime bitwise decoder, the FA variable-shift page,
+; the FB-FD shared conditional-move gate/table, and the FE MUL16 page are
+; implemented. Only the F0 veneer bodies and shared subsystems remain.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -1790,12 +1803,12 @@ emit_cmpi_s8_apply cmpi_s8_c3_apply, VM_C3L, VM_C3H
     rjmp branch_rel8_taken_func
 .endm
 
-emit_branch_rel8_decode breq_rel8_decode_func,  sbis, SREG_Z
-emit_branch_rel8_decode brne_rel8_decode_func,  sbic, SREG_Z
-emit_branch_rel8_decode brult_rel8_decode_func, sbis, SREG_C
-emit_branch_rel8_decode brslt_rel8_decode_func, sbis, SREG_S
-emit_branch_rel8_decode bruge_rel8_decode_func, sbic, SREG_C
-emit_branch_rel8_decode brsge_rel8_decode_func, sbic, SREG_S
+emit_branch_rel8_decode breq8_rel8_decode_func,  sbis, SREG_Z
+emit_branch_rel8_decode brne8_rel8_decode_func,  sbic, SREG_Z
+emit_branch_rel8_decode brult8_rel8_decode_func, sbis, SREG_C
+emit_branch_rel8_decode brslt8_rel8_decode_func, sbis, SREG_S
+emit_branch_rel8_decode bruge8_rel8_decode_func, sbic, SREG_C
+emit_branch_rel8_decode brsge8_rel8_decode_func, sbic, SREG_S
 
 branch_rel8_not_taken_func:
     ; PRIMARY_OPCODE contains the ignored displacement and VM_PC still names
@@ -1823,6 +1836,66 @@ branch_rel8_taken_func:
     adc  VM_PCM, r25
     adc  VM_PCH, r25
     rjmp seek_and_dispatch_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; DA-DF 16-bit conditional branches
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Primary-slot entry begins on cycle 9 after the OUT that started rel16[7:0].
+; The slot and common prologue place a reverse handoff on cycle 17, launching
+; rel16[15:8]. The condition is resolved while that byte transfers.
+;
+; A false condition launches the fallthrough opcode at the next cycle-17
+; boundary and reuses the rel8 not-taken continuation. A true condition advances
+; VM_PC to nextPC and enters the existing signed-rel16 target-add suffix, so its
+; seek timing matches JMP16/CALL16.
+branch_rel16_decode_func:
+    ; Complete the carry chain started in the primary slot, capture the saved
+    ; architectural flags, and launch rel16[15:8] exactly on cycle 17.
+    adc  VM_PCH, ZERO
+    in   r27, VM_FLAGS
+    cli
+    out  SPDR, ZERO
+    in   r26, SPDR
+    sei
+
+    ; VM_PC named rel16[7:0] on entry. Advance it to rel16[15:8] while the high
+    ; byte transfers. Opcode bit 0 requests the inverse condition; complementing
+    ; the flag byte before masking makes all six conditions share one test.
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    sbrc PRIMARY_OPCODE, 0
+    com  r27
+    and  r27, r25
+    brne branch_rel16_taken_func
+
+branch_rel16_not_taken_func:
+    ; The false path begins on cycle 27. Six cycles of delay place a reverse
+    ; handoff on cycle 34, launching the fallthrough primary opcode. VM_PC still
+    ; names the high displacement byte, matching branch_rel8_not_taken_func's
+    ; expected final-operand state.
+    delay_4
+    delay_2
+    cli
+    out  SPDR, ZERO
+    in   PRIMARY_OPCODE, SPDR
+    sei
+    rjmp branch_rel8_not_taken_func
+
+branch_rel16_taken_func:
+    ; The taken path begins on cycle 28. Advance from the high displacement byte
+    ; to nextPC, then arrive at rel16_read_high with CLR on cycle 33 and IN on
+    ; cycle 34, exactly matching the JMP16/CALL16 high-byte schedule.
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    rjmp rel16_read_high
+
+branch_rel16_block_end:
+.if (branch_rel16_block_end - branch_rel16_decode_func) != (25 * 2)
+    .error "16-bit conditional branch subsystem must occupy exactly 50 bytes"
+.endif
 
 ; D4 and D5 use fully specialized continuations. Duplicating the operand
 ; fetch, sign extension, next-PC calculation, and target addition removes the
@@ -2158,7 +2231,7 @@ interp_delay_9:
 interp_delay_7:
     ret
 
-; Valid but not-yet-implemented F0 and FA table entries ultimately stop here.
+; Valid but not-yet-implemented F0 veneer entries ultimately stop here.
 unimplemented_instruction_func:
     rjmp unimplemented_instruction_func
 

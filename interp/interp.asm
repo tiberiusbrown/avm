@@ -1342,8 +1342,16 @@ primary_F9_runtime_bitwise_page:
     nop
     assert_primary_slot_width primary_F9_runtime_bitwise_page
 
-; FA bound 0x30, two-word forwarding slots.
-emit_primary_bounded_page primary_FA_variable_shift_page, 0x30, fa_forward_table, bounded_width_2_decode
+; FA 00-2F retains the original register-count shifts, FA 30-EF adds
+; immediate-count shifts, and F0-FF is reserved. The slot preloads the
+; register-forwarding base plus the low byte of a compact immediate jump base,
+; then enters the dedicated decoder below.
+primary_FA_shift_page:
+    ldi  r27, lo8(pm(fa_immediate_jump_table - 6))
+    ldi  r30, lo8(pm(fa_forward_table))
+    ldi  r31, hi8(pm(fa_forward_table))
+    rjmp fa_shift_decode
+    assert_primary_slot_width primary_FA_shift_page
 
 ; FB-FD share one condition gate and one 64-entry operand table. Bit 6 of the
 ; secondary byte selects the inverse condition; bit 7 is reserved.
@@ -1455,12 +1463,69 @@ f9_bitop_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FA combined immediate/register-count shift decoder
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Encoding:
+;   FA 00-2F  original register-count encodings
+;   FA 30-EF  immediate count; subtract 0x30, then bits 7:6 select the
+;             operation, bits 5:4 the destination, and bits 3:0 the count
+;   FA F0-FF  reserved
+;
+; The primary slot reaches this decoder on cycle 14. The following primary
+; opcode is launched with the exact cycle-17 reverse handoff. Both valid paths
+; enter the existing destination-specific shift body on cycle 32, matching the
+; previous FA register-count latency.
+;
+; The low-byte-only table arithmetic is intentional. The immediate jump base,
+; its thirteen entries, and all 48 two-word forwarding entries must occupy the
+; same 256-word AVR program-memory page. Assertions beside the tables enforce
+; that layout invariant.
+fa_shift_decode_start:
+fa_shift_decode:
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    cli
+    out  SPDR, ZERO
+    in   SECONDARY_OPCODE, SPDR
+    sei
+    adc  VM_PCH, ZERO
+
+    cpi  SECONDARY_OPCODE, 0x30
+    brlo .Lfa_register_count
+
+    ; Immediate form. Preserve the complete secondary in r26; the shared body
+    ; masks it to the low four-bit count. The high nibble directly selects one
+    ; of twelve body jumps through a base pre-biased by three entries. A high
+    ; nibble of 0xF selects the thirteenth, invalid entry.
+    mov   r26, SECONDARY_OPCODE
+    swap  SECONDARY_OPCODE
+    andi  SECONDARY_OPCODE, 0x0f
+    mov   r30, r27
+    add   r30, SECONDARY_OPCODE
+    ijmp
+
+.Lfa_register_count:
+    ; Original 00-2F encoding. The taken classification branch costs one cycle;
+    ; the explicit NOP balances the path so the forwarding entry still begins
+    ; on cycle 29 and the shared body on cycle 32.
+    add   r30, SECONDARY_OPCODE
+    add   r30, SECONDARY_OPCODE
+    nop
+    ijmp
+fa_shift_decode_end:
+.if (fa_shift_decode_end - fa_shift_decode_start) != 38
+    .error "dedicated FA shift decoder must occupy exactly 19 AVR words"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Generic bounded-secondary decoders
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; F1, FA, and FE use two-word executable-table slots. Their primary prefix
+; F1 and FE use two-word executable-table slots. Their primary prefix
 ; slots preload the entry limit and table base, then jump directly to the
-; shared width-two decoder below. Bypassing a multiplier-loading stub leaves
+; shared width-two decoder below. FA uses the dedicated combined shift decoder
+; above. Bypassing a multiplier-loading stub leaves
 ; enough time to use the exact 17-cycle reverse SPI handoff.
 ;
 ; F0 and F2-F8 use the generic multiplier decoder. Their primary prefix slots
@@ -1480,7 +1545,7 @@ bounded_width_2_decode:
     sei
     adc  VM_PCH, ZERO
 
-    ; All three width-two pages have a contiguous valid range beginning at 0.
+    ; Both shared width-two pages have a contiguous valid range beginning at 0.
     cp   SECONDARY_OPCODE, SECONDARY_LIMIT
     brsh invalid_secondary
 
@@ -1617,9 +1682,9 @@ cmov_gate_end:
 ; All defined non-prefix primary opcodes 00-EF are complete. The generic
 ; bounded-page decoder, secondary cadence clusters, and every specified
 ; executable secondary table are present. The fixed-width self-contained F1-F8
-; pages, the dedicated F9 runtime bitwise decoder, the FA variable-shift page,
-; the FB-FD shared conditional-move gate/table, and the FE MUL16 page are
-; implemented. Only the F0 veneer bodies and shared subsystems remain.
+; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
+; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
+; page are implemented. Only the F0 veneer bodies and shared subsystems remain.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -2240,12 +2305,13 @@ invalid_syscall_func:
     rjmp invalid_syscall_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Fixed-width secondary tables and F0/FA trap scaffolds
+; Fixed-width secondary tables and F0 trap scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; F1-F8 use their exact operand-specialized native sequences. F0 and FA retain
-; final-width trap slots: the first word jumps to a nearby local trap and the
-; remaining words, when any, are unreachable padding.
+; F1-F8 use their exact operand-specialized native sequences. F0 retains
+; final-width trap slots: the first word jumps to a nearby local trap and any
+; remaining words are unreachable padding. FA traps reserved values through
+; its immediate body-jump table.
 
 .macro emit_secondary_trap_table label, end_label, count, width, trap
 \label:
@@ -3748,9 +3814,10 @@ cluster_c_end:
     .error "secondary cadence Cluster C must occupy 23 AVR words"
 .endif
 
-; F8 contains its exact CSET slots. FA and FE contain forwarding entries and
-; destination-specialized shared bodies. FB-FD validate secondary < 0x80 in
-; the shared condition gate,
+; F8 contains its exact CSET slots. FA contains immediate body jumps,
+; register-count forwarding entries, and destination-specialized shift bodies;
+; FE contains forwarding entries and destination-specialized multiplication
+; bodies. FB-FD validate secondary < 0x80 in the shared condition gate,
 ; then use bits 5:0 to select one of the 64 two-word MOVW entries below.
 secondary_tables_after_cluster_c:
 f8_table:
@@ -3808,10 +3875,11 @@ f8_table_end:
     .error "f8_table has incorrect size"
 .endif
 
-; FA contains 48 two-word forwarding entries followed by twelve
-; destination-specialized variable-shift bodies. Each entry copies low4(count)
-; to native r26 before the destination can be overwritten, so cD == cCount is
-; valid and the architectural count register is otherwise preserved.
+; FA contains a thirteen-entry immediate body-jump table, 48 two-word
+; register-count forwarding entries, and twelve destination-specialized shared
+; shift bodies. Register entries copy low4(count) to native r26 before the
+; destination can be overwritten, so cD == cCount remains valid. Immediate
+; forms place the encoded count in r26 before entering the same bodies.
 
 .macro emit_fa_shift_forward countl, target
 .Lfa_forward_start_\@:
@@ -3893,6 +3961,26 @@ f8_table_end:
     .endif
 .endm
 
+fa_immediate_jump_table:
+    rjmp  fa_shl_c0
+    rjmp  fa_shl_c1
+    rjmp  fa_shl_c2
+    rjmp  fa_shl_c3
+    rjmp  fa_lsr_c0
+    rjmp  fa_lsr_c1
+    rjmp  fa_lsr_c2
+    rjmp  fa_lsr_c3
+    rjmp  fa_asr_c0
+    rjmp  fa_asr_c1
+    rjmp  fa_asr_c2
+    rjmp  fa_asr_c3
+fa_immediate_invalid:
+    rjmp  fa_immediate_invalid
+fa_immediate_jump_table_end:
+.if (fa_immediate_jump_table_end - fa_immediate_jump_table) != (13 * 2)
+    .error "FA immediate jump table must occupy exactly thirteen AVR words"
+.endif
+
 fa_forward_table:
     emit_fa_shift_forward r16, fa_shl_c0
     emit_fa_shift_forward r18, fa_shl_c0
@@ -3945,6 +4033,13 @@ fa_forward_table:
 fa_forward_table_end:
 .if (fa_forward_table_end - fa_forward_table) != (2 * 0x30 * 2)
     .error "fa_forward_table has incorrect size"
+.endif
+
+; The decoder deliberately omits high-byte additions. Keep the pre-biased
+; immediate base, its final entry, and the complete forwarding table within one
+; 512-byte region (one 256-word AVR program-memory page).
+.if (((fa_immediate_jump_table - 6 - primary_table) / 512) != ((fa_forward_table_end - 2 - primary_table) / 512))
+    .error "FA decode tables cross a 256-word program-memory page"
 .endif
 
 ; The shift-by-eight path reduces counts 8-15 to a byte transfer followed by
@@ -4159,9 +4254,9 @@ fe_mul16_bodies_end:
     .error "FE MUL16 shared bodies must occupy exactly 128 bytes"
 .endif
 
-; The active secondary executable tables must occupy exactly 7,276 bytes.
-.if ((f0_veneer_table_end - f0_veneer_table) + (f1_table_end - f1_table) + (f2_table_end - f2_table) + (f3_table_end - f3_table) + (f4_table_end - f4_table) + (f5_table_end - f5_table) + (f6_table_end - f6_table) + (f7_table_end - f7_table) + (f8_table_end - f8_table) + (fa_forward_table_end - fa_forward_table) + (cmov_table_end - cmov_table) + (fe_forward_table_end - fe_forward_table)) != 7276
-    .error "secondary executable tables must occupy exactly 7276 bytes"
+; The active secondary executable tables must occupy exactly 7,302 bytes.
+.if ((f0_veneer_table_end - f0_veneer_table) + (f1_table_end - f1_table) + (f2_table_end - f2_table) + (f3_table_end - f3_table) + (f4_table_end - f4_table) + (f5_table_end - f5_table) + (f6_table_end - f6_table) + (f7_table_end - f7_table) + (f8_table_end - f8_table) + (fa_immediate_jump_table_end - fa_immediate_jump_table) + (fa_forward_table_end - fa_forward_table) + (cmov_table_end - cmov_table) + (fe_forward_table_end - fe_forward_table)) != 7302
+    .error "secondary executable tables must occupy exactly 7302 bytes"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

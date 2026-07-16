@@ -594,7 +594,7 @@ Every bit pattern selects valid registers and modifiers.
 | `F7` | Dense page 7 | 2 | Preserve |
 | `F8` | `CSET` page | 2 | Preserve |
 | `F9` | General bitwise page | 2 | Preserve |
-| `FA` | Variable-shift page | 2 | Preserve |
+| `FA` | Compact 16-bit shift page | 2 | Preserve |
 | `FB-FD` | Conditional-move pages | 2 | Preserve |
 | `FE` | `MUL16` page | 2 | Preserve |
 | `FF` | Reserved | — | — |
@@ -999,30 +999,72 @@ Semantics are 16-bit bitwise operations. All aliases, including `rD == rS`, are 
 
 Compact/compact combinations are valid but noncanonical; assemblers SHOULD emit the corresponding one-byte form.
 
-## 33. `FA` variable-shift page
+## 33. `FA` compact 16-bit shift page
 
-Valid secondary values are `00-2F`.
-
-Within each family:
-
-```text
-bits 3:2  destination cD
-bits 1:0  count register cCount
-```
+All instructions in this section use primary opcode `FA` and one secondary
+byte. Secondary values `00-EF` are valid. Values `F0-FF` are reserved and
+trap as invalid instructions.
 
 | Secondary | Instruction |
 |---:|---|
 | `00-0F` | `SHL16V cD,cCount` |
 | `10-1F` | `LSR16V cD,cCount` |
 | `20-2F` | `ASR16V cD,cCount` |
+| `30-6F` | `LSL16I cD,imm4` |
+| `70-AF` | `LSR16I cD,imm4` |
+| `B0-EF` | `ASR16I cD,imm4` |
+| `F0-FF` | Reserved / trap |
 
-The shift count is:
+Variable-count encodings use:
 
 ```text
-count = low8(cCount) & 15
+SHL16V secondary = 0x00 + (cD << 2) + cCount
+LSR16V secondary = 0x10 + (cD << 2) + cCount
+ASR16V secondary = 0x20 + (cD << 2) + cCount
 ```
 
-The count register is preserved. `cD == cCount` is legal; the original count is used.
+For these forms:
+
+```text
+bits 3:2  destination cD
+bits 1:0  count register cCount
+count     = low8(cCount) & 15
+```
+
+The count register is preserved. `cD == cCount` is legal; the original count
+is used.
+
+Immediate-count encodings use:
+
+```text
+LSL16I secondary = 0x30 + (cD << 4) + imm4
+LSR16I secondary = 0x70 + (cD << 4) + imm4
+ASR16I secondary = 0xB0 + (cD << 4) + imm4
+```
+
+For these forms:
+
+```text
+bits 5:4  destination cD
+bits 3:0  immediate shift count imm4
+imm4      = 0-15
+```
+
+Semantics:
+
+```text
+SHL16V / LSL16I:
+    cD = low16(cD << count)
+
+LSR16V / LSR16I:
+    cD = unsigned16(cD) >> count
+
+ASR16V / ASR16I:
+    cD = signed16(cD) >> count
+```
+
+For an immediate form, `count = imm4`. A count of zero leaves `cD`
+unchanged. All six shift families preserve `CC`.
 
 ## 34. `FB-FD` conditional-move pages
 
@@ -1773,7 +1815,13 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `BR_JT` / switch | Custom program-space jump table or branch tree | — | — | — |
 | `MEMCPY`, `MEMMOVE`, `MEMSET` | Inline small constants; helper otherwise | — | — | — |
 
-Variable-shift instructions may mask their hardware count. Selecting them is valid when the excess-count cases are already undefined or poison under LLVM semantics, or when the backend has explicitly constrained the count.
+The `FA` page provides compact-register variable and immediate 16-bit shifts.
+Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
+Variable shifts mask the hardware count with `& 15`; selecting them is valid
+when excess-count cases are already undefined or poison under LLVM semantics,
+or when the backend has explicitly constrained the count. Constant shifts
+outside `0-15` require normal LLVM legalization rather than truncating the
+constant into the four-bit instruction field.
 
 Program-pointer arithmetic is lowered as unsigned 24-bit arithmetic in `GPR32`, followed by canonicalization of bits `31:24` when required.
 

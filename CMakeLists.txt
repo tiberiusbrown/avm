@@ -193,7 +193,6 @@ add_custom_command(
         -o "${AVM_BENCH_ELF}"
     COMMAND
         "$<TARGET_FILE:llvm-avm-image>"
-        create
         "${AVM_BENCH_ELF}"
         -o "${AVM_BENCH_IMAGE}"
     DEPENDS

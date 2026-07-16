@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build, link, and run the AVM assembly test suite.
+"""Build, link, package, and run the AVM assembly test suite.
 
 Each ``name.asm`` file must have a sibling ``name_output.txt`` file containing
 the expected serial output. ``ld.lld`` creates the authoritative linked ELF;
-``llvm-avm-image create`` only packages that executable ELF.
+``llvm-avm-image`` validates and packages that executable ELF.
 """
 
 from __future__ import annotations
@@ -40,7 +40,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--ardens", required=True, type=Path)
     parser.add_argument("--interpreter", required=True, type=Path)
     parser.add_argument("--asm-dir", required=True, type=Path)
+
+    # Retained for compatibility with the existing CMake invocation. C tests
+    # are not run by this assembly-only driver yet.
     parser.add_argument("--c-dir", required=True, type=Path)
+
     parser.add_argument("--work-dir", required=True, type=Path)
     parser.add_argument(
         "--headless-ms",
@@ -62,31 +66,33 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def command_text(command: Sequence[str]) -> str:
+def command_text(command: Sequence[object]) -> str:
+    values = [str(arg) for arg in command]
     if os.name == "nt":
-        return subprocess.list2cmdline(list(command))
-    return shlex.join(command)
+        return subprocess.list2cmdline(values)
+    return shlex.join(values)
 
 
 def require_file(path: Path, description: str) -> Path:
-    path = path.resolve()
-    if not path.is_file():
-        raise FileNotFoundError(f"{description} does not exist: {path}")
-    return path
+    resolved = path.resolve()
+    if not resolved.is_file():
+        raise FileNotFoundError(f"{description} does not exist: {resolved}")
+    return resolved
 
 
 def run_command(
-    command: Sequence[str],
+    command: Sequence[object],
     *,
     timeout_seconds: float,
     verbose: bool,
-) -> subprocess.CompletedProcess:
-    command = [str(arg) for arg in command]
+) -> subprocess.CompletedProcess[bytes]:
+    values = [str(arg) for arg in command]
     if verbose:
-        print(f"    $ {command_text(command)}")
+        print(f"    $ {command_text(values)}")
+
     try:
         result = subprocess.run(
-            command,
+            values,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout_seconds,
@@ -95,12 +101,12 @@ def run_command(
     except subprocess.TimeoutExpired as exc:
         raise TestCommandError(
             f"command timed out after {timeout_seconds:g} seconds:\n"
-            f"    {command_text(command)}"
+            f"    {command_text(values)}"
         ) from exc
     except OSError as exc:
         raise TestCommandError(
-            f"could not execute command:\n"
-            f"    {command_text(command)}\n"
+            "could not execute command:\n"
+            f"    {command_text(values)}\n"
             f"{exc}"
         ) from exc
 
@@ -109,18 +115,19 @@ def run_command(
         stderr = result.stderr.decode("utf-8", errors="backslashreplace")
         message = [
             f"command exited with status {result.returncode}:",
-            f"    {command_text(command)}",
+            f"    {command_text(values)}",
         ]
         if stdout:
             message.extend(("stdout:", stdout.rstrip("\n")))
         if stderr:
             message.extend(("stderr:", stderr.rstrip("\n")))
         raise TestCommandError("\n".join(message))
+
     return result
 
 
 def normalize_newlines(data: bytes) -> bytes:
-    """Discard carriage returns so host line-ending conventions are irrelevant."""
+    """Discard carriage returns so host line endings do not affect results."""
     return data.replace(b"\r", b"")
 
 
@@ -139,6 +146,52 @@ def output_diff(expected: bytes, actual: bytes, expected_path: Path) -> str:
             tofile="actual serial output",
         )
     )
+
+
+def write_disassembly(
+    llvm_objdump: Path,
+    elf_path: Path,
+    disassembly_path: Path,
+    *,
+    timeout_seconds: float,
+    verbose: bool,
+) -> None:
+    command = (
+        llvm_objdump,
+        "--disassemble",
+        "--syms",
+        elf_path,
+    )
+    if verbose:
+        print(f"    $ {command_text(command)}")
+
+    try:
+        with disassembly_path.open("wb") as output:
+            result = subprocess.run(
+                [str(arg) for arg in command],
+                stdout=output,
+                stderr=subprocess.PIPE,
+                timeout=timeout_seconds,
+                check=False,
+            )
+    except subprocess.TimeoutExpired as exc:
+        raise TestCommandError(
+            f"command timed out after {timeout_seconds:g} seconds:\n"
+            f"    {command_text(command)}"
+        ) from exc
+    except OSError as exc:
+        raise TestCommandError(
+            "could not execute command:\n"
+            f"    {command_text(command)}\n"
+            f"{exc}"
+        ) from exc
+
+    if result.returncode != 0:
+        raise TestCommandError(
+            f"command exited with status {result.returncode}:\n"
+            f"    {command_text(command)}\n"
+            + result.stderr.decode("utf-8", errors="backslashreplace")
+        )
 
 
 def link_and_run(
@@ -168,8 +221,8 @@ def link_and_run(
     for path in (elf_path, disassembly_path, image_path, serial_path):
         path.unlink(missing_ok=True)
 
-    # LLD is the only link step. The linked ELF retains final symbols and is
-    # the artifact inspected by objdump before it is packaged.
+    # LLD is the only link step. The ELF remains the authoritative linked
+    # artifact and is inspected before packaging.
     run_command(
         (
             lld,
@@ -183,24 +236,20 @@ def link_and_run(
         timeout_seconds=timeout_seconds,
         verbose=verbose,
     )
-    with disassembly_path.open("wb") as output:
-        command = [str(llvm_objdump), "--disassemble", "--syms", str(elf_path)]
-        if verbose:
-            print(f"    $ {command_text(command)}")
-        result = subprocess.run(command, stdout=output, stderr=subprocess.PIPE,
-                                timeout=timeout_seconds, check=False)
-        if result.returncode != 0:
-            raise TestCommandError(
-                f"command exited with status {result.returncode}:\n"
-                f"    {command_text(command)}\n"
-                + result.stderr.decode("utf-8", errors="backslashreplace")
-            )
 
-    # The packer consumes an ET_EXEC only and performs no linking.
+    write_disassembly(
+        llvm_objdump,
+        elf_path,
+        disassembly_path,
+        timeout_seconds=timeout_seconds,
+        verbose=verbose,
+    )
+
+    # llvm-avm-image accepts a linked ET_EXEC directly. Its validation is part
+    # of packaging; it has no separate "create" or "validate" subcommand.
     run_command(
         (
             llvm_avm_image,
-            "create",
             elf_path,
             "-o",
             image_path,
@@ -209,19 +258,8 @@ def link_and_run(
         verbose=verbose,
     )
 
-    # Validate the generated image before passing it to the emulator.
-    run_command(
-        (
-            llvm_avm_image,
-            "validate",
-            image_path,
-        ),
-        timeout_seconds=timeout_seconds,
-        verbose=verbose,
-    )
-
     # Ardens loads the interpreter as the Arduboy program and the AVM image as
-    # FX data. In headless mode stdout consists only of emulated serial bytes.
+    # FX data. In headless mode stdout consists of emulated serial bytes.
     result = run_command(
         (
             ardens,
@@ -258,27 +296,36 @@ def link_and_run(
         raise TestCommandError("\n".join(details))
 
 
-def run_asm_test(asm_path: Path, **kwargs) -> None:
-    work_dir = kwargs.pop("work_dir") / "asm"
-    work_dir.mkdir(parents=True, exist_ok=True)
-    object_path = work_dir / f"{asm_path.stem}.o"
+def run_asm_test(
+    asm_path: Path,
+    *,
+    llvm_mc: Path,
+    work_dir: Path,
+    **kwargs: object,
+) -> None:
+    asm_work_dir = work_dir / "asm"
+    asm_work_dir.mkdir(parents=True, exist_ok=True)
+
+    object_path = asm_work_dir / f"{asm_path.stem}.o"
     object_path.unlink(missing_ok=True)
+
     run_command(
         (
-            kwargs.pop("llvm_mc"),
+            llvm_mc,
             "-triple=avm-unknown-arduboyfx",
             "-filetype=obj",
             asm_path,
             "-o",
             object_path,
         ),
-        timeout_seconds=kwargs["timeout_seconds"],
-        verbose=kwargs["verbose"],
+        timeout_seconds=float(kwargs["timeout_seconds"]),
+        verbose=bool(kwargs["verbose"]),
     )
+
     link_and_run(
         object_path,
         asm_path.with_name(f"{asm_path.stem}_output.txt"),
-        work_dir,
+        asm_work_dir,
         asm_path.stem,
         **kwargs,
     )
@@ -317,6 +364,10 @@ def main() -> int:
         )
         return 2
 
+    # Resolve the retained compatibility argument so malformed paths are still
+    # visible in verbose/debugging contexts, but do not require C tests yet.
+    _c_dir = args.c_dir.resolve()
+
     tests = sorted(asm_dir.glob("*.asm"), key=lambda path: path.name.lower())
 
     work_dir = args.work_dir.resolve()
@@ -324,22 +375,31 @@ def main() -> int:
 
     failures: List[Tuple[str, str]] = []
     configurations = [(f"[ASM] {path.name}", path) for path in tests]
-    test_labels = [label for label, _, _ in configurations]
+
+    # Each configuration is a two-tuple: (display label, source path).
+    test_labels = [label for label, _ in configurations]
     result_column = max((len(label) for label in test_labels), default=0) + 2
 
-    print(
-        f"Running {len(tests)} AVM assembly test(s)"
-    )
+    print(f"Running {len(tests)} AVM assembly test(s)")
+
     for test_label, source_path in configurations:
         try:
             common = dict(
-                lld=lld, llvm_objdump=llvm_objdump,
-                llvm_avm_image=llvm_avm_image, ardens=ardens,
-                interpreter=interpreter, work_dir=work_dir,
+                lld=lld,
+                llvm_objdump=llvm_objdump,
+                llvm_avm_image=llvm_avm_image,
+                ardens=ardens,
+                interpreter=interpreter,
                 headless_ms=args.headless_ms,
-                timeout_seconds=args.timeout_seconds, verbose=args.verbose,
+                timeout_seconds=args.timeout_seconds,
+                verbose=args.verbose,
             )
-            run_asm_test(source_path, llvm_mc=llvm_mc, **common)
+            run_asm_test(
+                source_path,
+                llvm_mc=llvm_mc,
+                work_dir=work_dir,
+                **common,
+            )
         except TestCommandError as exc:
             failures.append((test_label, str(exc)))
             print(f"{test_label:<{result_column}}FAIL")
@@ -358,9 +418,9 @@ def main() -> int:
             print(f"--- {test_label} ---")
             encoding = sys.stdout.encoding or "utf-8"
             print(
-                message.encode(encoding, errors="backslashreplace").decode(
-                    encoding
-                )
+                message.encode(
+                    encoding, errors="backslashreplace"
+                ).decode(encoding)
             )
         return 1
 

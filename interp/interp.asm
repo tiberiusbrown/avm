@@ -1632,6 +1632,10 @@ flags_commit_18:
     out  VM_FLAGS, PRIMARY_OPCODE
     dispatch
 
+; CMPI.S8 captures native SREG in PRIMARY_OPCODE, commits it here, then
+; uses the one-cycle landing below to reach an exact reverse-order handoff.
+cmpi_s8_flags_commit_17:
+    out  VM_FLAGS, PRIMARY_OPCODE
 cluster_tail_17_delay_1:
     nop
 cluster_tail_17:
@@ -1656,8 +1660,8 @@ cluster_tail_18:
 ; the low byte of imm16; r25 carries the sign extension or imm16 high byte.
 ;
 ; The fetch paths leave VM PC naming the final immediate byte. Their final OUT
-; starts the following primary opcode; the apply stubs delay until that byte is
-; ready, then standard dispatch advances PC to it and enters its primary slot.
+; starts the following primary opcode. The apply stubs use the available slack
+; to reach an exact reverse-order 17-cycle handoff for that opcode.
 
 ; Consume one unsigned immediate byte and start the following primary opcode.
 ; From primary-slot entry to the OUT is eight cycles; including the preceding
@@ -1704,50 +1708,37 @@ fetch_imm16_then_ijmp:
     sei
     ijmp
 
-; The following-opcode transfer needs sixteen cycles before dispatch reads it.
-; These shared landings provide the family-specific remainder after IJMP,
-; native work, and the apply stub's final RJMP.
-immediate_result_tail_delay_8:
-    delay_4
+; The apply paths have enough slack to use the reverse-order dispatch. These
+; shared entries contribute exactly six, four, or three cycles before entering
+; cluster_tail_17, whose PC update and protected OUT place the next transfer at
+; the exact 17-cycle boundary.
+immediate_result_tail_reverse_delay_6:
     delay_2
-    rjmp cluster_tail_18
-
-; The reverse-order high-byte handoff in LDI16 reaches its apply stub two
-; cycles later than the other immediate families. The six-cycle landing keeps
-; the following-primary dispatch at its earliest legal standard handoff.
-immediate_result_tail_delay_6:
-    delay_3
-    rjmp cluster_tail_18_delay_1
-
-immediate_result_tail_delay_5:
-    delay_3
-    rjmp cluster_tail_18
-
-; CMPI.S8 has one extra native instruction to capture SREG. Three cycles before
-; the existing flag commit compensate for the longer cycle-9 dispatch preamble.
-cmpi_s8_flags_commit_delay_3:
+immediate_result_tail_reverse_delay_4:
     nop
-    rjmp flags_commit_18
+immediate_result_tail_reverse_delay_3:
+    nop
+    rjmp cluster_tail_17
 
 .macro emit_ldi8_apply label, dstl, dsth
 \label:
     mov  \dstl, PRIMARY_OPCODE
     clr  \dsth
-    rjmp immediate_result_tail_delay_8
+    rjmp immediate_result_tail_reverse_delay_6
 .endm
 
 .macro emit_ldi16_apply label, dstl, dsth
 \label:
     mov  \dstl, PRIMARY_OPCODE
     mov  \dsth, r25
-    rjmp immediate_result_tail_delay_6
+    rjmp immediate_result_tail_reverse_delay_4
 .endm
 
 .macro emit_addi_s8_apply label, dstl, dsth
 \label:
     add  \dstl, PRIMARY_OPCODE
     adc  \dsth, r25
-    rjmp immediate_result_tail_delay_5
+    rjmp immediate_result_tail_reverse_delay_3
 .endm
 
 .macro emit_cmpi_s8_apply label, lhsl, lhsh
@@ -1755,7 +1746,7 @@ cmpi_s8_flags_commit_delay_3:
     cp   \lhsl, PRIMARY_OPCODE
     cpc  \lhsh, r25
     in   PRIMARY_OPCODE, SREG
-    rjmp cmpi_s8_flags_commit_delay_3
+    rjmp cmpi_s8_flags_commit_17
 .endm
 
 emit_ldi8_apply ldi8_c0_apply, VM_C0L, VM_C0H

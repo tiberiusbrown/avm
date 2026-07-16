@@ -92,3 +92,41 @@ debug_print_compact_regs:
 
     pop16 r0
     ret
+
+; debug_print_newline:
+;   Emits a newline and preserves every general-purpose register and CC.
+.type debug_print_newline, @function
+debug_print_newline:
+    push16 r4
+    ldi8 c0, '\n'
+    sys debug_putc
+    pop16 r4
+    ret
+
+; debug_print_r0_line:
+;   Prints r0 as four nibble characters followed by a newline.
+;   Preserves every general-purpose register and CC.
+.type debug_print_r0_line, @function
+debug_print_r0_line:
+    call debug_print_r0
+    call debug_print_newline
+    ret
+
+; debug_print_bool_r0:
+;   Prints "A" when r0 is zero and "B" when r0 is one.
+;   Intended for CSET results. Preserves every general-purpose register and CC.
+.type debug_print_bool_r0, @function
+debug_print_bool_r0:
+    push16 r0
+    push16 r4
+    push16 r5
+
+    mov r4, r0
+    ldi8 c1, 'A'
+    add c0, c1
+    sys debug_putc
+
+    pop16 r5
+    pop16 r4
+    pop16 r0
+    ret

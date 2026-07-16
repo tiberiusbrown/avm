@@ -2241,8 +2241,8 @@ A linked ELF image MAY use `ET_EXEC`; its `e_entry` is the zero-extended 24-bit 
 ### 64.1. Target section flags
 
 ```text
-SHF_AVM_PROGSPACE = 0x00100000
-SHF_AVM_DATASPACE = 0x00200000
+SHF_AVM_PROGSPACE = 0x10000000
+SHF_AVM_DATASPACE = 0x20000000
 ```
 
 For an allocated section, these flags are mutually exclusive and identify the AVM address space.

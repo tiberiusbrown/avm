@@ -549,8 +549,8 @@ Every bit pattern selects valid registers and modifiers.
 | `D1` | `BRNE rel8` | 2 | Preserve |
 | `D2` | `BRULT rel8` | 2 | Preserve |
 | `D3` | `BRSLT rel8` | 2 | Preserve |
-| `D4` | `JMP rel8` | 2 | Preserve |
-| `D5` | `CALL rel8` | 2 | Preserve |
+| `D4` | `JMP8 rel8` | 2 | Preserve |
+| `D5` | `CALL8 rel8` | 2 | Preserve |
 | `D6` | `ADJSP simm8` | 2 | Preserve |
 | `D7` | `SYS service8` | 2 | Service-defined; default preserve |
 | `D8-DF` | Reserved | — | — |
@@ -668,8 +668,8 @@ The target is computed in the full 24-bit program address space.
 | `D1` | `BRNE rel8` | Set `PC=target` if `Z=0` |
 | `D2` | `BRULT rel8` | Set `PC=target` if `C=1` |
 | `D3` | `BRSLT rel8` | Set `PC=target` if `S=1` |
-| `D4` | `JMP rel8` | Set `PC=target` |
-| `D5` | `CALL rel8` | Push `nextPC`; set `PC=target` |
+| `D4` | `JMP8 rel8` | Set `PC=target` |
+| `D5` | `CALL8 rel8` | Push `nextPC`; set `PC=target` |
 | `E0` | `JMP16 rel16` | Set `PC=target` |
 | `E1` | `CALL16 rel16` | Push `nextPC`; set `PC=target` |
 
@@ -1971,7 +1971,7 @@ Clang builtins or runtime wrappers lower these interfaces to the target intrinsi
 
 The default code model is large.
 
-Direct calls and jumps use relaxable relocations so the linker can choose the shortest valid form for the final 24-bit layout.
+Source-level direct jumps and calls normally use the relaxable pseudos `JMP symbol` and `CALL symbol`, allowing the linker to choose the shortest valid form for the final 24-bit layout. Exact-width forms use the distinct mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, and `CALLF`.
 
 The initial C++ environment supports:
 
@@ -2057,21 +2057,21 @@ A zero stack displacement prints as `[sp+0]`.
 
 ### 61.5. Exact and relaxable control-transfer spelling
 
-Exact encoded forms retain the ISA mnemonic:
+Exact encoded forms use width-specific mnemonics:
 
 ```text
-jmp rel8
+jmp8 rel8
 jmp16 rel16
 jmpf target24
-call rel8
+call8 rel8
 call16 rel16
 callf target24
 ```
 
-The assembler also accepts relaxable pseudos:
+The assembler accepts these relaxable pseudos:
 
 ```text
-j symbol
+jmp symbol
 call symbol
 br.eq symbol
 br.ne symbol
@@ -2079,7 +2079,17 @@ br.ult symbol
 br.slt symbol
 ```
 
-Relaxable pseudos emit a maximal valid sequence plus `R_AVM_RELAX`. For `call`, a relocatable symbolic operand selects the relaxable pseudo, while an absolute constant operand selects the exact signed-8-bit instruction form.
+Relaxable pseudos emit a maximal valid sequence plus `R_AVM_RELAX`. Their operands MUST be relocatable symbolic program-target expressions, optionally with a constant addend. Pure absolute expressions are invalid for `JMP`, `CALL`, and the `BR.*` pseudos.
+
+There is no mnemonic overloading between exact and relaxable forms:
+
+```text
+jmp8 / jmp16 / jmpf       exact encoded jumps
+call8 / call16 / callf    exact encoded calls
+jmp / call                relaxable symbolic pseudos
+```
+
+An exact mnemonic without `R_AVM_RELAX` is never widened or shrunk. An overflow in an exact form is an error.
 
 ### 61.6. Canonical printing and pseudos
 
@@ -2345,7 +2355,7 @@ The linker updates:
 ### 66.1. Unconditional jump relaxation
 
 ```text
-JMPF target24  -> JMP16 rel16 -> JMP rel8
+JMPF target24  -> JMP16 rel16 -> JMP8 rel8
 ```
 
 A step is permitted when the target fits the smaller form after accounting for the smaller instruction's own `nextPC`.
@@ -2353,7 +2363,7 @@ A step is permitted when the target fits the smaller form after accounting for t
 ### 66.2. Call relaxation
 
 ```text
-CALLF target24 -> CALL16 rel16 -> CALL rel8
+CALLF target24 -> CALL16 rel16 -> CALL8 rel8
 ```
 
 The pushed return address is always the address after the final relaxed instruction.
@@ -2373,7 +2383,7 @@ For `ULT` and `SLT`, whose inverse conditions lack direct branch opcodes, the ma
 
 ```text
 requested-condition rel8 to JMPF
-JMP rel8 over JMPF
+JMP8 rel8 over JMPF
 JMPF target
 ```
 
@@ -2381,11 +2391,11 @@ Total maximal size: eight bytes.
 
 When the final target fits signed `rel8`, either sequence relaxes to the direct two-byte conditional branch.
 
-If it does not fit, the linker may relax only the embedded `JMPF` to `JMP16` or `JMP` when valid.
+If it does not fit, the linker may relax only the embedded `JMPF` to `JMP16` or `JMP8` when valid.
 
 ### 66.4. Explicit nonrelaxable forms
 
-An exact mnemonic without `R_AVM_RELAX` is never widened or shrunk.
+The exact mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, `CALLF`, `BREQ`, `BRNE`, `BRULT`, and `BRSLT` never receive `R_AVM_RELAX` and are never widened or shrunk.
 
 A relocation overflow in an exact form is an error.
 

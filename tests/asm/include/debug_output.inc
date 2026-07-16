@@ -20,7 +20,7 @@
 .type debug_print_r0, @function
 debug_print_r0:
     ; c0 is the DEBUG_PUTC argument. c2 holds the working value and c3
-    ; alternately holds the shift count, nibble mask, and character base.
+    ; alternately holds the nibble mask and character base.
     push16 r4
     push16 r5
     push16 r6
@@ -28,8 +28,7 @@ debug_print_r0:
 
     ; Bits 15:12.
     mov r6, r0
-    ldi8 c3, 12
-    lsr16v c2, c3
+    lsr16i c2, 12
     ldi8 c3, 0x0f
     and c2, c3
     ldi8 c3, 'A'
@@ -39,8 +38,7 @@ debug_print_r0:
 
     ; Bits 11:8.
     mov r6, r0
-    ldi8 c3, 8
-    lsr16v c2, c3
+    lsr16i c2, 8
     ldi8 c3, 0x0f
     and c2, c3
     ldi8 c3, 'A'
@@ -50,8 +48,7 @@ debug_print_r0:
 
     ; Bits 7:4.
     mov r6, r0
-    ldi8 c3, 4
-    lsr16v c2, c3
+    lsr16i c2, 4
     ldi8 c3, 0x0f
     and c2, c3
     ldi8 c3, 'A'

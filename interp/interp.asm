@@ -2131,9 +2131,9 @@ jmp_far_wait:
 ;   * The byte following the service has not yet been started.
 ;
 ; The protected SPDR handoff starts fetching the following primary opcode and
-; captures the service ID. Each service returns through cluster_tail_18, which
-; consumes that opcode, starts its following byte, advances the PC, and enters
-; its four-word primary slot.
+; captures the service ID. Each service returns through a cadence-appropriate
+; cluster tail, which consumes that opcode, starts its following byte, advances
+; the PC, and enters its four-word primary slot.
 sys_decode_func:
     ; The D7 primary slot reaches this continuation on cycle 14. Preloading the
     ; dispatch-table base fills cycles 14 and 15, then the reverse OUT lands on
@@ -2185,12 +2185,16 @@ sys_dispatch_table_end:
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(c0) to the emulator/debug USB endpoint register.
+    ; STS plus the table dispatch leaves the reverse tail ready to launch the
+    ; byte after the following opcode exactly 17 cycles after its prior OUT.
     sts  UEDATX, VM_C0L
-    rjmp cluster_tail_18_delay_1
+    rjmp cluster_tail_17
 
 sys_debug_break_func:
+    ; BREAK is one cycle shorter than DEBUG_PUTC's STS. Use the existing
+    ; one-cycle reverse landing so its next OUT also occurs at cycle 17.
     break
-    rjmp cluster_tail_18_delay_2
+    rjmp cluster_tail_17_delay_1
 
 ; Return a coherent low 16-bit snapshot of the millisecond counter in c0.
 sys_millis_func:
@@ -2253,10 +2257,7 @@ seek_and_dispatch_func:
     out  SPDR, VM_PCL
     rcall interp_delay_16
     out  SPDR, ZERO
-    rcall interp_delay_12
-    add  VM_PCL, ONE
-    adc  VM_PCM, ZERO
-    adc  VM_PCH, ZERO
+    rcall interp_delay_15
     cli
     out  SPDR, ZERO
     in   PRIMARY_OPCODE, SPDR
@@ -2273,7 +2274,9 @@ seek_and_dispatch_func:
 interp_delay_17:
     nop
 interp_delay_16:
-    delay_2
+    nop
+interp_delay_15:
+    nop
 interp_delay_14:
     nop
 interp_delay_13:

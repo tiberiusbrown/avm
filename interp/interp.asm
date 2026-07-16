@@ -1428,11 +1428,12 @@ primary_F9_runtime_bitwise_page:
     assert_primary_slot_width primary_F9_runtime_bitwise_page
 
 ; FA 00-2F retains the original register-count shifts, FA 30-EF adds
-; immediate-count shifts, and F0-FF is reserved. The slot preloads the
-; register-forwarding base plus the low byte of a compact immediate jump base,
-; then enters the dedicated decoder below.
+; immediate-count shifts, and F0-FF is reserved. The slot preloads the complete
+; register-forwarding-table address. The immediate path derives its own full
+; 16-bit table address from that base, so the FA tables no longer require page
+; alignment.
 primary_FA_shift_page:
-    ldi  r27, lo8(pm(fa_immediate_jump_table - 6))
+    nop
     ldi  r30, lo8(pm(fa_forward_table))
     ldi  r31, hi8(pm(fa_forward_table))
     rjmp fa_shift_decode
@@ -1558,14 +1559,17 @@ f9_bitop_end:
 ;   FA F0-FF  reserved
 ;
 ; The primary slot reaches this decoder on cycle 14. The following primary
-; opcode is launched with the exact cycle-17 reverse handoff. Both valid paths
-; enter the existing destination-specific shift body on cycle 32, matching the
-; previous FA register-count latency.
+; opcode is launched with the exact cycle-17 reverse handoff. Register-count
+; forms enter their forwarding entry on cycle 29 and the shared shift body on
+; cycle 32, preserving their previous latency. Immediate forms enter the shared
+; body on cycle 34 because their full 16-bit table-address calculation adds two
+; cycles.
 ;
-; The low-byte-only table arithmetic is intentional. The immediate jump base,
-; its thirteen entries, and all 48 two-word forwarding entries must occupy the
-; same 256-word AVR program-memory page. Assertions beside the tables enforce
-; that layout invariant.
+; Z contains the complete word address of fa_forward_table. Register-count
+; forms index that table with full carry propagation at the original latency.
+; Immediate forms subtract sixteen words to obtain the pre-biased immediate
+; base, then perform a full 16-bit add. This removes all table-alignment
+; constraints at a two-cycle cost to immediate forms only.
 fa_shift_decode_start:
 fa_shift_decode:
     add  VM_PCL, ONE
@@ -1586,21 +1590,23 @@ fa_shift_decode:
     mov   r26, SECONDARY_OPCODE
     swap  SECONDARY_OPCODE
     andi  SECONDARY_OPCODE, 0x0f
-    mov   r30, r27
+    sbiw  r30, 16
     add   r30, SECONDARY_OPCODE
+    adc   r31, ZERO
     ijmp
 
 .Lfa_register_count:
-    ; Original 00-2F encoding. The taken classification branch costs one cycle;
-    ; the explicit NOP balances the path so the forwarding entry still begins
-    ; on cycle 29 and the shared body on cycle 32.
+    ; Original 00-2F encoding. Multiplying the two-word slot index by two and
+    ; propagating carry through ZH takes the same three cycles as the previous
+    ; pair of low-byte ADDs plus balancing NOP, so variable-shift latency is
+    ; unchanged even when the forwarding table crosses a page boundary.
+    lsl   SECONDARY_OPCODE
     add   r30, SECONDARY_OPCODE
-    add   r30, SECONDARY_OPCODE
-    nop
+    adc   r31, ZERO
     ijmp
 fa_shift_decode_end:
-.if (fa_shift_decode_end - fa_shift_decode_start) != 38
-    .error "dedicated FA shift decoder must occupy exactly 19 AVR words"
+.if (fa_shift_decode_end - fa_shift_decode_start) != 40
+    .error "dedicated FA shift decoder must occupy exactly 20 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1769,8 +1775,9 @@ cmov_gate_end:
 ; executable secondary table are present. The fixed-width self-contained F1-F8
 ; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
-; page are implemented. F0 now has shared operand-fetch and register-decode
-; infrastructure; its operation-specific veneer bodies remain unimplemented.
+; page are implemented. F0 has shared operand-fetch/register-decode
+; infrastructure, and secondaries 00-3F are implemented. Remaining F0 veneer
+; bodies still trap as unimplemented.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -2953,6 +2960,32 @@ f0_fetch_u8_end:
     .error "shared F0 one-byte fetch helper must occupy exactly six AVR words"
 .endif
 
+; Fetch a stack displacement while preserving the F0 secondary long enough
+; to decode its low three bits into an architectural-register pointer in X.
+; Z receives SP+u8 without modifying SP. The following primary opcode is
+; launched before both address calculations, so all useful decode work overlaps
+; its SPI transfer.
+f0_fetch_stack_u8_decode_r_to_xz_start:
+f0_fetch_stack_u8_decode_r_to_xz:
+    mov  r26, SECONDARY_OPCODE
+    in   F0_OPERAND_LO, SPDR
+    out  SPDR, ZERO
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    andi r26, 0x07
+    lsl  r26
+    subi r26, -8
+    mov  r27, ZERO
+    movw r30, VM_SP
+    add  r30, F0_OPERAND_LO
+    adc  r31, ZERO
+    ret
+f0_fetch_stack_u8_decode_r_to_xz_end:
+.if (f0_fetch_stack_u8_decode_r_to_xz_end - f0_fetch_stack_u8_decode_r_to_xz_start) != 28
+    .error "shared F0 stack fetch/decode helper must occupy exactly fourteen AVR words"
+.endif
+
 ; Fetch a little-endian 16-bit operand. The low byte is read at cycle 35 and
 ; the high-byte transfer starts at cycle 36. Advancing VM_PC by two consumes
 ; both operand bytes; three four-cycle delays place the high-byte IN at cycle
@@ -3048,9 +3081,61 @@ emit_f0_cmpi_s8_body f0_cmpi_s8_r1_body, VM_R1L, VM_R1H
 emit_f0_cmpi_s8_body f0_cmpi_s8_r2_body, VM_R2L, VM_R2H
 emit_f0_cmpi_s8_body f0_cmpi_s8_r3_body, VM_R3L, VM_R3H
 
-; F0 retains one-word veneers for the remaining cold forms. The first sixteen
-; secondaries are implemented above; the local F0 trap remains before the group
-; for short RJMP reach.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; F0 10-3F: stack-relative forms
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; All six families share the stack fetch/decode helper. On return, X addresses
+; the selected architectural register, Z is SP+u8, VM_PC names the displacement,
+; and the following primary opcode is already in flight. SP itself is unchanged.
+
+f0_leasp_r_body:
+    rcall f0_fetch_stack_u8_decode_r_to_xz
+    st    X+, r30
+    st    X,  r31
+    rjmp  cluster_tail_18
+
+f0_ldsp8u_r_body:
+    rcall f0_fetch_stack_u8_decode_r_to_xz
+    ld    r0, Z
+    st    X+, r0
+    st    X,  ZERO
+    rjmp  cluster_tail_18
+
+f0_ldsp8s_r_body:
+    rcall f0_fetch_stack_u8_decode_r_to_xz
+    ld    r0, Z
+    st    X+, r0
+    lsl   r0
+    sbc   r0, r0
+    st    X, r0
+    rjmp  cluster_tail_18
+
+f0_stsp8_r_body:
+    rcall f0_fetch_stack_u8_decode_r_to_xz
+    ld    r0, X
+    st    Z, r0
+    rjmp  cluster_tail_18
+
+f0_ldsp16_r_body:
+    rcall f0_fetch_stack_u8_decode_r_to_xz
+    ld    r0, Z+
+    ld    r1, Z
+    st    X+, r0
+    st    X,  r1
+    rjmp  cluster_tail_18
+
+f0_stsp16_r_body:
+    rcall f0_fetch_stack_u8_decode_r_to_xz
+    ld    r0, X+
+    ld    r1, X
+    st    Z+, r0
+    st    Z,  r1
+    rjmp  cluster_tail_18
+
+; F0 retains one-word veneers for the remaining cold forms. Secondaries 00-3F
+; are implemented above; the local F0 trap remains before the group for short
+; RJMP reach.
 secondary_tables_before_cluster_b:
 secondary_unimplemented_a_func:
     rjmp unimplemented_instruction_func
@@ -3076,7 +3161,37 @@ f0_veneer_table:
     rjmp  f0_cmpi_s8_r2_body
     rjmp  f0_cmpi_s8_r3_body
 
-    .rept (0x6E - 0x10)
+    ; 10-17: LEASP r0-r7,u8
+    .rept 8
+        rjmp f0_leasp_r_body
+    .endr
+
+    ; 18-1F: LDSP8U r0-r7,[SP+u8]
+    .rept 8
+        rjmp f0_ldsp8u_r_body
+    .endr
+
+    ; 20-27: LDSP8S r0-r7,[SP+u8]
+    .rept 8
+        rjmp f0_ldsp8s_r_body
+    .endr
+
+    ; 28-2F: STSP8 [SP+u8],r0-r7
+    .rept 8
+        rjmp f0_stsp8_r_body
+    .endr
+
+    ; 30-37: LDSP16 r0-r7,[SP+u8]
+    .rept 8
+        rjmp f0_ldsp16_r_body
+    .endr
+
+    ; 38-3F: STSP16 [SP+u8],r0-r7
+    .rept 8
+        rjmp f0_stsp16_r_body
+    .endr
+
+    .rept (0x6E - 0x40)
         rjmp secondary_unimplemented_a_func
     .endr
 f0_veneer_table_end:
@@ -4276,13 +4391,6 @@ fa_forward_table:
 fa_forward_table_end:
 .if (fa_forward_table_end - fa_forward_table) != (2 * 0x30 * 2)
     .error "fa_forward_table has incorrect size"
-.endif
-
-; The decoder deliberately omits high-byte additions. Keep the pre-biased
-; immediate base, its final entry, and the complete forwarding table within one
-; 512-byte region (one 256-word AVR program-memory page).
-.if (((fa_immediate_jump_table - 6 - primary_table) / 512) != ((fa_forward_table_end - 2 - primary_table) / 512))
-    .error "FA decode tables cross a 256-word program-memory page"
 .endif
 
 ; The shift-by-eight path reduces counts 8-15 to a byte transfer followed by

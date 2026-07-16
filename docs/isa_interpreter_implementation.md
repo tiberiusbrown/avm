@@ -1,17 +1,17 @@
-# AVM ISA and Interpreter Implementation Specification
+# AVM ISA Opcode Map and AVR Interpreter Implementation Guide
 
-**Status:** Normative architecture, opcode-map, and interpreter implementation specification  
+**Status:** ISA architecture and opcode-map specification with AVR implementation design notes  
 **Target host:** ATmega32U4 Arduboy FX interpreter  
 **Priority:** Performance of LLVM-generated C and C++ code  
-**Timing basis:** Sequential SPI byte fetch using the exact 17-cycle reverse-order and 18-cycle standard dispatch schedules; slower handlers extend the cadence only when their native work exceeds the available slack.
+**Reference timing basis:** Sequential SPI byte fetch using the 17-cycle reverse-order and 18-cycle standard dispatch schedules described in Section 5; slower handlers extend the cadence when their native work exceeds the available slack.
 
 ---
 
 ## 1. Scope
 
-This document defines the AVM opcode map and interpreter organization with global memory, a framebuffer, a VM stack, 16-bit data pointers, and 24-bit program pointers.
+This document defines the AVM opcode map and instruction semantics, then develops an efficient interpreter organization for the ATmega32U4. The ISA encodings and architectural behavior are authoritative. The AVR register allocation, table organization, assembly sequences, cycle counts, physical layout, and code-size figures describe a reference implementation and explain the design choices that make the ISA efficient to interpret; they are not mandatory implementation details or ISA-level performance guarantees.
 
-An implementation conforming to this specification shall satisfy the following rules:
+The reference interpreter is organized around the following design choices:
 
 1. A one-byte opcode directly selects native AVR operands.
 2. A hot two-byte instruction uses the entire second byte as an executable-table index.
@@ -22,10 +22,10 @@ An implementation conforming to this specification shall satisfy the following r
 7. Internal holes that cannot be moved to the tail remain same-width trap slots.
 8. Hot dense instructions do not perform run-time architectural-register decoding; explicitly cold `F0` forms and the table-free `F9` page may do so.
 9. Additional encoded bytes normally contain actual immediates, displacements, or addresses.
-10. The primary dispatch table uses a fixed four-word, eight-byte stride. A primary slot either executes a complete short handler ending in `RJMP` to a shared cadence tail, or performs up to three words of setup and uses its fourth word to forward to an out-of-line continuation.
-11. The code-size accounting region begins at the primary table. The primary table is aligned to 256 AVR words (512 bytes); no alignment padding before it is included in the accounted size. All following code is emitted in one text section without interior power-of-two alignment gaps.
+10. The reference interpreter uses a fixed four-word, eight-byte primary dispatch stride. A primary slot either executes a complete short handler ending in `RJMP` to a shared cadence tail, or performs up to three words of setup and uses its fourth word to forward to an out-of-line continuation.
+11. For the size comparisons in this guide, the accounting region begins at the primary table. The primary table is aligned to 256 AVR words (512 bytes); no alignment padding before it is included in the accounted size. The reference layout emits the following code in one text section without interior power-of-two alignment gaps.
 
-All instruction cycle counts are measured from entry to one primary handler through entry to the next primary handler.
+Unless otherwise noted, the cycle figures for the reference interpreter are measured from entry to one primary handler through entry to the next primary handler.
 
 ---
 
@@ -416,7 +416,7 @@ Those are targets, not automatic multiples. Operand-fetch continuations, taken c
 
 Taken control flow and program-space loads restart the external-flash stream and remain much slower:
 
-| Class | Required cycles |
+| Class | Reference cycles |
 |---|---:|
 | Not-taken conditional branch | 35 |
 | Taken conditional branch | 127 |
@@ -428,11 +428,11 @@ Taken control flow and program-space loads restart the external-flash stream and
 | Program-space scalar load | ~268-305 |
 
 
-### 5.3. Cycle-9 dispatch requirements and family latencies
+### 5.3. Cycle-9 reference dispatch schedule and family latencies
 
-Both standard and reverse dispatch shall begin executing the selected primary slot on cycle 9 after the dispatch `OUT`. The standard form moves `ADD VM_PCL,ONE` before `IN`; the reverse form completes the full 24-bit PC increment before `CLI`. The four handoff instructions preserve carry, and every interrupt handler shall preserve `SREG`.
+In the reference schedule, both standard and reverse dispatch begin executing the selected primary slot on cycle 9 after the dispatch `OUT`. The standard form moves `ADD VM_PCL,ONE` before `IN`; the reverse form completes the full 24-bit PC increment before `CLI`. The four handoff instructions preserve carry; this schedule assumes interrupt handlers restore the interrupted `SREG`.
 
-Primary continuations and secondary decoders shall be scheduled from this cycle-9 entry invariant:
+The reference continuations and secondary decoders are scheduled from this cycle-9 entry point:
 
 - direct `00-BF` handlers retain the 17- and 18-cycle cadence limits from Section 5.2;
 - compact-immediate slots execute their cycle-9 padding word before forwarding;
@@ -442,7 +442,7 @@ Primary continuations and secondary decoders shall be scheduled from this cycle-
 - `FB-FD` use the standard `IN; OUT` handoff without an unnecessary native-`SREG` wrapper;
 - taken control flow and indirect control enter the common seek/restart path as soon as their target and required return address are complete.
 
-The required fixed-width secondary latencies from prefix-slot entry through next-primary-slot entry are:
+The resulting fixed-width secondary latencies for the shown organization, measured from prefix-slot entry through next-primary-slot entry, are:
 
 | Family | Cycles |
 |---|---:|
@@ -827,7 +827,7 @@ f0_st32:
 
 The transfer body is nine words and eighteen cycles including the final `RJMP`.
 
-Required complete latency:
+Reference complete latency:
 
 ```text
 17  prefix-to-secondary interval
@@ -856,7 +856,7 @@ f0_ld32:
 
 The transfer body is also nine words and eighteen cycles including its final `RJMP`.
 
-Required complete latency:
+Reference complete latency:
 
 ```text
 17  prefix-to-secondary interval
@@ -899,7 +899,7 @@ f0_cmp32:
 
 After all four left bytes are loaded, native `r26` may safely replace `XL` as the right-byte scratch register. Native `r1` has no zero-register ABI requirement.
 
-Required complete latency:
+Reference complete latency:
 
 ```text
 17  prefix-to-secondary interval
@@ -1137,7 +1137,7 @@ F0 primary -> secondary    17
 secondary -> RRSPEC        17
 ```
 
-The required final execution intervals and complete latencies are:
+The reference execution intervals and complete latencies are:
 
 | Operation | Final execution interval | Complete cycles |
 |---|---:|---:|
@@ -1150,7 +1150,7 @@ The required final execution intervals and complete latencies are:
 | `ST8 [rA+],rS` | 42 | **76** |
 | `ST16 [rA+],rS` | 44 | **78** |
 
-The shared code favors the load path by allowing it to fall through into the postincrement helper. Duplicating the three-word helper could remove two cycles from postincrement paths at a cost of six bytes; the compact shared form is specified.
+The shared code favors the load path by allowing it to fall through into the postincrement helper. Duplicating the three-word helper could remove two cycles from postincrement paths at a cost of six bytes; the compact shared form is shown here.
 
 
 ## 10. `F1`: bounded 2-word table
@@ -1702,7 +1702,7 @@ The carry established by `LSR secondary` survives all four operand loads. No run
 
 The primary slot is part of the fixed 2,048-byte primary table and adds no incremental bytes to this page-specific total.
 
-### 18.6. Required latencies
+### 18.6. Reference latencies
 
 The primary slot and pre-handoff work place the speculative following-primary `OUT` exactly on cycle 17. The operation paths then reach Cluster A at different times because `AND`, `OR`, and `XOR` take different selection paths.
 
@@ -1975,12 +1975,12 @@ The same table is reached from all six architectural conditions. Condition-false
 
 The condition-false path performs the bounds check and condition gate but avoids fixed-stride table indexing, `IJMP`, and `MOVW`. The condition-true path adds those operations. Neither path restarts the external-flash stream.
 
-| Path | Required cycles | Notes |
+| Path | Reference cycles | Notes |
 |---|---:|---|
 | Condition false | 36 | Goes directly to Cluster A's reverse tail |
 | Condition true | 37 | Indexes the shared table and executes `MOVW` |
 
-The two paths shall not be padded to equal time; the required totals are 36 cycles for condition false and 37 cycles for condition true.
+The shown implementation does not pad the two paths to equal time; it takes 36 cycles when the condition is false and 37 cycles when it is true.
 The PC update executes during the secondary-byte transfer window. The gate uses the earliest legal standard handoff, so no additional wait padding is required.
 
 For LLVM `select`, the destination should normally be initialized with the false value and the conditional move should name the true value:
@@ -2079,7 +2079,7 @@ RJMP                    2
                         12 cycles
 ```
 
-The two-word forwarding entry adds three native cycles (`MOVW` plus `RJMP`). Including secondary fetch, bounds checking, fixed-stride dispatch, and the page tail, the required complete latency is **46 cycles**. The latency is independent of operand values and aliasing.
+The two-word forwarding entry adds three native cycles (`MOVW` plus `RJMP`). Including secondary fetch, bounds checking, fixed-stride dispatch, and the page tail, the shown organization completes in **46 cycles**. The latency is independent of operand values and aliasing.
 
 Exact page-specific code size:
 
@@ -2169,7 +2169,7 @@ The exact-fit families cannot carry local delay padding. Their final `RJMP` sele
 
 The `C0-CF` immediate families do not require sixteen fully duplicated continuation bodies. A compact implementation preloads an operation-stub address or an exact native register-file address in the four-word primary slot, then uses one family-shared operand-fetch continuation. The continuation consumes the immediate byte or bytes, starts the following transfer, and enters a short destination-specialized operation stub.
 
-The implementation shall use the following organization:
+One compact organization is:
 
 ```asm
 ; Primary slot: one of four destination-specialized entries
@@ -2195,7 +2195,7 @@ ldi8_cD_apply:
 
 `LDI16` uses an analogous two-byte fetch continuation. `ADDI.S8` and `CMPI.S8` share the signed-immediate fetch path but use separate destination-specialized apply stubs. This avoids run-time register decoding while keeping the continuation code bounded.
 
-The `C0-CF` continuation and apply-stub block shall occupy **182 bytes**. Required complete latencies are:
+In the reference layout, the `C0-CF` continuation and apply-stub block occupies **182 bytes**. Its complete latencies are:
 
 | Family | Cycles |
 |---|---:|
@@ -2206,9 +2206,9 @@ The `C0-CF` continuation and apply-stub block shall occupy **182 bytes**. Requir
 
 The extra `RJMP`/`IJMP` work is hidden inside the operand-transfer windows except where reflected in those exact totals.
 
-The `D0-D7` two-byte branch, `ADJSP`, and `SYS` forms shall use their operand-transfer window as specified in Section 30. `E0-E3` shall use their additional transfer slack to meet the stated latencies.
+The reference handlers use the operand-transfer window for the `D0-D7` two-byte branch, `ADJSP`, and `SYS` forms as described in Section 30. The `E0-E3` handlers use their additional transfer slack to reach the listed latencies.
 
-The one-byte indirect-control and return forms use the shared seek/restart handler. Their required totals are 109 cycles for `JMPP`, 116 for `CALLP`, and 109 for `RET`.
+The one-byte indirect-control and return forms can share the seek/restart handler. In the reference schedule they take 109 cycles for `JMPP`, 116 for `CALLP`, and 109 for `RET`.
 
 ### 22.3. Secondary prefixes
 
@@ -2253,11 +2253,11 @@ total                                       34 words / 68 bytes
 
 The bounded pages are `F0-F8`, `FA`, and `FE`. `F9` uses its dedicated decoder and `FB-FD` use their separate shared condition gate. The generic multiplier-stub path reaches a standard cycle-17/18 `IN; OUT` handoff. The shared two-word decoder instead uses an exact cycle-17 reverse handoff. In both cases, PC-update work occupies transfer slack rather than extending the post-transfer critical path.
 
-All fifteen secondary prefixes `F0-FE` shall use the decode, table, forwarding, and shared-body structures defined in Sections 9-21. The generic multiplier decoder serves `F0` and `F2-F8`; the shared width-two decoder serves `F1`, `FA`, and `FE`; the dedicated `F9` bitwise handler is placed near the primary table; and `FB-FD` use their shared condition gate. Executable tables and shared bodies shall be laid out in the `RJMP`-reachable clusters defined in Section 26.
+The reference interpreter uses the decode, table, forwarding, and shared-body structures in Sections 9-21 for the fifteen secondary prefixes `F0-FE`. The generic multiplier decoder serves `F0` and `F2-F8`; the shared width-two decoder serves `F1`, `FA`, and `FE`; the dedicated `F9` bitwise handler is placed near the primary table; and `FB-FD` use their shared condition gate. The example physical layout places executable tables and shared bodies in the `RJMP`-reachable clusters described in Section 26.
 
-### 22.4. Required latency summary
+### 22.4. Reference latency summary
 
-| Instruction class | Required complete latency |
+| Instruction class | Reference complete latency |
 |---|---|
 | `00-BF` direct one-byte instructions | Selected 17- or 18-cycle cadence from Sections 5 and 27 |
 | `C0-CF` immediate instructions | 35 / 52 / 35 / 35 by family |
@@ -2316,7 +2316,7 @@ adjacent invalid-secondary RJMP     1 word
 
 The comparison and invalid shim are emitted once, not once per page. Each page contributes only its preloaded limit and two-word multiplier stub, included in the 68-byte combined bounded-decoder infrastructure.
 
-For two- through four-word pages, these two valid-path cycles shall replace cadence padding. For larger pages, the check remains worthwhile even if it contributes to a small overrun: omitting the unused table tail saves hundreds or thousands of bytes.
+For two- through four-word pages, these two valid-path cycles can replace cadence padding. For larger pages, the check remains worthwhile even if it contributes to a small overrun: omitting the unused table tail saves hundreds or thousands of bytes.
 
 The eleven bounded pages perform this upper-bound check in either the generic or shared width-two decoder. `FB-FD` use `secondary < 0x80`; bit 6 selects the inverse condition and bits 5:0 index the shared table. `F9` needs no register-field bounds check because each operand is a three-bit index; operation value `11` traps locally. `FE` uses `secondary < 0x40`. The duplicate compact-register combinations removed from `F1`, `F2`, and `F5` make their valid ranges contiguous, so no internal range test is required.
 
@@ -2387,9 +2387,9 @@ The two complete 16-bit additions preserve the ninth offset bit for `F1` entries
 
 The code-size accounting region begins at a 256-word-aligned `primary_table`. Alignment padding before that symbol is outside the reported implementation size. No interior block requires alignment greater than one AVR word.
 
-### 26.2. Required order and budgeted word ranges
+### 26.2. Reference order and estimated word ranges
 
-The completed interpreter core shall use the following single-section order. Fixed-size blocks shall use the stated sizes. The ordinary `F0` body block uses the budgeted allocation from Section 34; implementations may vary within the permitted size range provided all static transfers remain in range and no interior power-of-two alignment gaps are introduced.
+The following single-section order is a reference layout that keeps the major static transfers in range. The listed fixed-size blocks reflect the shown assembly sequences. The ordinary `F0` body block uses the budgeted allocation from Section 34; implementations may vary within the permitted size range provided all static transfers remain in range and no interior power-of-two alignment gaps are introduced.
 
 | Order | Block | Start word | End word, exclusive | Words | Bytes |
 |---:|---|---:|---:|---:|---:|
@@ -2419,13 +2419,13 @@ The completed interpreter core shall use the following single-section order. Fix
 | 24 | Shared `FB-FD` move table | 6192 | 6320 | 128 | 256 |
 | 25 | `FE` forwarding table | 6320 | 6448 | 128 | 256 |
 | 26 | Eight `FE` multiplication bodies | 6448 | 6512 | 64 | 128 |
-|  | **Budgeted end** |  | **6512** | **6512** | **13,024** |
+|  | **Reference end** |  | **6512** | **6512** | **13,024** |
 
 Startup-only helpers and startup code follow this endpoint and are excluded from the core-size accounting region.
 
 ### 26.3. Exact shared cadence-tail sequences
 
-The dispatch schedules shall remain 17 and 18 cycles.
+The shown cadence tails implement 17- and 18-cycle schedules.
 
 #### Reverse-order 17-cycle tail
 
@@ -2519,21 +2519,21 @@ cluster_c_tail_18:
 
 Cluster C occupies 23 words. The cold pointer handlers return through Cluster A, so they require no additional cadence cluster.
 
-### 26.4. Static-transfer reach requirements
+### 26.4. Static-transfer reach considerations
 
-AVR `RJMP` and `RCALL` reach `-2048..+2047` words relative to the following instruction. Every static transfer shall remain within that range in the completed layout.
+AVR `RJMP` and `RCALL` reach `-2048..+2047` words relative to the following instruction. Any layout using these short transfers needs to keep each target within that range.
 
-The layout shall satisfy these placement constraints:
+The reference layout is arranged so that:
 
-- the primary `F9` slot shall reach the dedicated `F9` handler directly;
-- the `F9` handler shall reach Cluster A directly;
-- all `F4-F7` entries shall reach their assigned Cluster B or Cluster C continuation;
-- every `FA` forwarding entry shall reach its destination-specific shift body;
-- every `FE` forwarding entry shall reach its destination-specific multiplication body;
-- every `FA` and `FE` shared body shall reach Cluster C;
-- delay ladders shall be duplicated locally when a shared `RCALL` delay would exceed range.
+- the primary `F9` slot reaches the dedicated `F9` handler directly;
+- the `F9` handler reaches Cluster A directly;
+- all `F4-F7` entries reach their assigned Cluster B or Cluster C continuation;
+- every `FA` forwarding entry reaches its destination-specific shift body;
+- every `FE` forwarding entry reaches its destination-specific multiplication body;
+- every `FA` and `FE` shared body reaches Cluster C;
+- delay ladders are duplicated locally when a shared `RCALL` delay would exceed range.
 
-The final GNU AVR link shall reject any out-of-range static transfer; no automatic trampoline or long-jump allowance is included in the size budget.
+A final GNU AVR link is useful for catching out-of-range static transfers. The reference size estimate does not reserve space for automatic trampolines or long-jump expansion.
 
 ### 26.5. Conditional-branch relaxation
 
@@ -2541,7 +2541,7 @@ Short conditional branches inside handlers target local labels or nearby one-wor
 
 ### 26.6. Assembly layout assertions
 
-The implementation shall assert every fixed block start and end from Section 26.2, each dense slot width, and every static transfer displacement.
+Compile-time assertions for the reference block boundaries, dense slot widths, and static-transfer displacements make layout regressions easier to detect.
 
 ### 26.7. Latency consequences of the physical layout
 
@@ -2641,7 +2641,7 @@ mov   dL, r3
 rjmp  cluster_c_tail_18
 ```
 
-Conditional branches use `SBIC`/`SBIS` and the structure shown in this specification. `CMOV` performs one `IN` in its shared gate.
+Conditional branches use `SBIC`/`SBIS` in the structure shown in this guide. `CMOV` performs one `IN` in its shared gate.
 
 ### 27.5. Sequences that do not improve
 
@@ -2659,7 +2659,7 @@ sbrc  dL, 7
 dec   dH
 ```
 
-`BSWAP16`, widening 8-bit multiplies, variable shifts, fast compact-pointer loads/stores, `ADD32`, `SUB32`, and the one-bit 32-bit shifts shall use the sequences shown in their page definitions. Noncompact pointers shall use the separately specified `F0` subsystem.
+The sequences shown in the page definitions illustrate efficient implementations of `BSWAP16`, widening 8-bit multiplies, variable shifts, fast compact-pointer loads/stores, `ADD32`, `SUB32`, and the one-bit 32-bit shifts. Noncompact pointers can use the separately specified `F0` subsystem.
 
 ### 27.6. Fixed-width family latencies
 
@@ -2681,7 +2681,7 @@ dec   dH
 | `FB-FD` condition false / true | 36 / 37 |
 | `FE MUL16` | 46 |
 
-`F0` and `FA` shall meet the page-specific cycle requirements stated in Sections 9 and 19.
+Sections 9 and 19 give the cycle targets used when sizing and arranging the reference `F0` and `FA` handlers.
 
 ---
 
@@ -2720,7 +2720,7 @@ The compact-pointer dense tables contain only fast forms. The two table-free col
 
 ## 30. Control-flow primaries
 
-| Opcode | Instruction | Bytes | Required cycles |
+| Opcode | Instruction | Bytes | Reference cycles |
 |---:|---|---:|---:|
 | `D0-D3` | Conditional branches | 2 | 35 not taken; 127 taken |
 | `D4` | `JMP rel8` | 2 | 121 |
@@ -2856,7 +2856,7 @@ Use `MUL16 rD,rS` for a general non-widening product and model the destination a
 
 ## 32. Code-size accounting scope
 
-Included in the interpreter-core size budget:
+Included in the reference interpreter-core size estimate:
 
 - the 256-entry primary dispatch area;
 - shared sequential dispatch and cadence tails;
@@ -2866,7 +2866,7 @@ Included in the interpreter-core size budget:
 - reserved-instruction traps;
 - the `SYS` opcode decoder and bridge entry/exit.
 
-Excluded from the interpreter-core size budget:
+Excluded from the reference interpreter-core size estimate:
 
 - startup and vectors;
 - interrupt handlers;
@@ -2899,28 +2899,28 @@ all executable tables            9,324 bytes
 
 The secondary executable tables total **7,276 bytes**. `F9` has no executable table. Runtime-decoded `F0` subsystems are accounted for separately.
 
-## 34. Core-size budget
+## 34. Reference core-size estimate
 
-### 34.1. Fixed baseline and variable components
+### 34.1. Reference baseline and variable components
 
-The fixed core excluding the ordinary `F0` bodies, the two shared `F0` runtime-decoded subsystems, and the twelve `FA` bodies occupies **10,998 bytes**. The remaining component budgets are:
+For the shown layout, the core excluding the ordinary `F0` bodies, the two shared `F0` runtime-decoded subsystems, and the twelve `FA` bodies occupies **10,998 bytes**. The remaining components are estimated as follows:
 
-| Component | Budgeted bytes | Permitted range |
+| Component | Reference bytes | Estimated range |
 |---|---:|---:|
 | `F0` immediate, stack, absolute, and program-space bodies | 1,504 | 1,408-1,664 |
 | Shared `F0` cold-32 subsystem | 128 | exact |
 | Shared `F0` cold general-pointer subsystem | 98 | exact |
 | Twelve shared `FA` shift bodies | 296 | exact |
 
-### 34.2. Completed-core budget
+### 34.2. Reference completed-core estimate
 
 | Case | Bytes | KiB |
 |---|---:|---:|
 | Lower bound | 12,928 | 12.63 |
-| Budget target | **13,024** | **12.72** |
+| Reference target | **13,024** | **12.72** |
 | Upper bound | 13,184 | 12.88 |
 
-The completed core shall target 13,024 bytes and shall not exceed 13,184 bytes without revising this specification and revalidating all static-transfer ranges.
+The reference design targets about 13,024 bytes, with 13,184 bytes as a practical upper estimate before the physical layout and short-transfer ranges should be revisited.
 
 ## 35. Four-word primary-stride rationale
 
@@ -2930,7 +2930,7 @@ A four-word primary slot keeps the primary table at 2,048 bytes while allowing:
 - up to three setup words followed by one forwarding `RJMP`;
 - one fixed dispatch multiplier, `r7 = 4`, measured in AVR words.
 
-An eight-word primary table would consume another 2,048 bytes. The specified `C0-CF` continuation and apply-stub block occupies 182 bytes. Even conservatively charging that entire block against the four-word design, the net code-size advantage is at least:
+An eight-word primary table would consume another 2,048 bytes. The reference `C0-CF` continuation and apply-stub block occupies 182 bytes. Even conservatively charging that entire block against the four-word design, the net code-size advantage is at least:
 
 ```text
 2,048 - 182 = 1,866 bytes
@@ -2938,15 +2938,15 @@ An eight-word primary table would consume another 2,048 bytes. The specified `C0
 
 The four-word design preserves direct `RJMP` reach to nearby continuations and keeps the dispatch calculation to one native `MUL`.
 
-## 36. Size-budget uncertainty
+## 36. Size-estimate uncertainty
 
-The completed-core range varies only with the ordinary `F0` bodies. The cold-32, cold-pointer, and `FA` shared-body sizes are fixed by their specified implementations.
+In this estimate, the completed-core range varies mainly with the ordinary `F0` bodies. The cold-32, cold-pointer, and `FA` shared-body sizes are fixed for the shown implementation sequences.
 
-Any change to the ordinary `F0` body allocation shall preserve the one-word veneer table and shall trigger a new static-transfer reach check, particularly for backward edges into Clusters A and C.
+If the ordinary `F0` bodies change substantially, it is prudent to retain the one-word veneer organization and recheck static-transfer reach, particularly for backward edges into Clusters A and C.
 
-## 37. Validation requirements
+## 37. Suggested validation checklist
 
-A conforming implementation shall:
+A thorough implementation should:
 
 1. verify the cadence of every `F0` veneer body, including program-space stream interruption and restart;
 2. verify count-dependent timing for all twelve `FA` variable-shift bodies;
@@ -2955,14 +2955,14 @@ A conforming implementation shall:
 5. exhaustively test condition flags, invalid encodings, memory aliasing, postincrement reservations, and call/return stack behavior;
 6. test every jump, call, and return across low-, middle-, and high-byte PC carry and wrap boundaries;
 7. validate `F9` and `MUL16` for every operand alias class;
-8. compile representative programs and compare observed latency and flash use with the requirements in this document.
+8. compile representative programs and compare observed latency and flash use with the reference figures in this guide.
 
-## 38. Conformance validation sequence
+## 38. Suggested validation sequence
 
 1. Assemble and link the complete interpreter with GNU AVR.
 2. Verify all compile-time size assertions and static-transfer ranges.
 3. Run exhaustive per-encoding tests, including invalid and reserved encodings.
 4. Run targeted 24-bit PC and stack tests for every control-flow form.
 5. Run operand-alias and boundary-value tests for every memory, arithmetic, and multiplication family.
-6. Compile a representative Arduboy corpus and confirm that code size and instruction timing satisfy this specification.
+6. Compile a representative Arduboy corpus and compare code size and instruction timing with the reference design.
 

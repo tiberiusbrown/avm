@@ -1120,9 +1120,10 @@ emit_primary_immediate primary_CF_cmpi_s8_c3, cmpi_s8_c3_apply, fetch_simm8_then
 ; 0xD0-0xD3: conditional branches
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; All D0-D6 instructions have one signed byte operand. The primary slot
-; advances VM_PC from the opcode to that operand and forwards to an out-of-line
-; continuation. This exactly fills the fixed four-word primary slot.
+; All D0-D6 and D8-D9 instructions have one signed byte operand. The primary
+; slot advances VM_PC from the opcode to that operand and forwards to an
+; out-of-line continuation. This exactly fills the fixed four-word primary
+; slot.
 
 .macro emit_primary_rel8 label, target
 \label:
@@ -1161,11 +1162,16 @@ primary_D7_sys_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xD8-0xDF: reserved
+; 0xD8-0xD9: inverted conditional branches
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_D8_reserved, invalid_primary_instruction_func
-emit_primary_stub primary_D9_reserved, invalid_primary_instruction_func
+emit_primary_rel8 primary_D8_bruge_rel8, bruge_rel8_decode_func
+emit_primary_rel8 primary_D9_brsge_rel8, brsge_rel8_decode_func
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xDA-0xDF: reserved
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 emit_primary_stub primary_DA_reserved, invalid_primary_instruction_func
 emit_primary_stub primary_DB_reserved, invalid_primary_instruction_func
 emit_primary_stub primary_DC_reserved, invalid_primary_instruction_func
@@ -1788,6 +1794,8 @@ emit_branch_rel8_decode breq_rel8_decode_func,  sbis, SREG_Z
 emit_branch_rel8_decode brne_rel8_decode_func,  sbic, SREG_Z
 emit_branch_rel8_decode brult_rel8_decode_func, sbis, SREG_C
 emit_branch_rel8_decode brslt_rel8_decode_func, sbis, SREG_S
+emit_branch_rel8_decode bruge_rel8_decode_func, sbic, SREG_C
+emit_branch_rel8_decode brsge_rel8_decode_func, sbic, SREG_S
 
 branch_rel8_not_taken_func:
     ; PRIMARY_OPCODE contains the ignored displacement and VM_PC still names

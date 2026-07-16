@@ -553,7 +553,9 @@ Every bit pattern selects valid registers and modifiers.
 | `D5` | `CALL8 rel8` | 2 | Preserve |
 | `D6` | `ADJSP simm8` | 2 | Preserve |
 | `D7` | `SYS service8` | 2 | Service-defined; default preserve |
-| `D8-DF` | Reserved | — | — |
+| `D8` | `BRUGE rel8` | 2 | Preserve |
+| `D9` | `BRSGE rel8` | 2 | Preserve |
+| `DA-DF` | Reserved | — | — |
 | `E0` | `JMP16 rel16` | 3 | Preserve |
 | `E1` | `CALL16 rel16` | 3 | Preserve |
 | `E2` | `JMPF target24` | 4 | Preserve |
@@ -650,7 +652,7 @@ SLT  CC.S == 1
 SGE  CC.S == 0
 ```
 
-The ISA directly encodes branches for `EQ`, `NE`, `ULT`, and `SLT`. Other branch conditions are formed by inversion, fallthrough selection, or operand swapping.
+The ISA directly encodes branches for `EQ`, `NE`, `ULT`, `UGE`, `SLT`, and `SGE`. Unsigned `ULE` and `UGT` branch conditions are formed by swapping comparison operands and using `UGE` or `ULT`.
 
 ### 22.2. Relative branches and transfers
 
@@ -670,6 +672,8 @@ The target is computed in the full 24-bit program address space.
 | `D3` | `BRSLT rel8` | Set `PC=target` if `S=1` |
 | `D4` | `JMP8 rel8` | Set `PC=target` |
 | `D5` | `CALL8 rel8` | Push `nextPC`; set `PC=target` |
+| `D8` | `BRUGE rel8` | Set `PC=target` if `C=0` |
+| `D9` | `BRSGE rel8` | Set `PC=target` if `S=0` |
 | `E0` | `JMP16 rel16` | Set `PC=target` |
 | `E1` | `CALL16 rel16` | Push `nextPC`; set `PC=target` |
 
@@ -2076,7 +2080,9 @@ call symbol
 br.eq symbol
 br.ne symbol
 br.ult symbol
+br.uge symbol
 br.slt symbol
+br.sge symbol
 ```
 
 Relaxable pseudos emit a maximal valid sequence plus `R_AVM_RELAX`. Their operands MUST be relocatable symbolic program-target expressions, optionally with a constant addend. Pure absolute expressions are invalid for `JMP`, `CALL`, and the `BR.*` pseudos.
@@ -2370,32 +2376,53 @@ The pushed return address is always the address after the final relaxed instruct
 
 ### 66.3. Conditional-branch relaxation
 
-For `EQ` and `NE`, the maximal relaxable sequence is:
+All six directly encoded conditions use the same maximal relaxable sequence:
 
 ```text
 inverse-condition rel8 over JMPF
 JMPF target
 ```
 
-Total maximal size: six bytes.
-
-For `ULT` and `SLT`, whose inverse conditions lack direct branch opcodes, the maximal sequence is:
+Condition pairs are:
 
 ```text
-requested-condition rel8 to JMPF
-JMP8 rel8 over JMPF
+EQ  <-> NE
+ULT <-> UGE
+SLT <-> SGE
+```
+
+The maximal sequence is six bytes:
+
+```text
+inverse-condition +4
 JMPF target
 ```
 
-Total maximal size: eight bytes.
+When the final target fits the requested condition's signed `rel8` range, the entire sequence relaxes to the direct two-byte conditional branch.
 
-When the final target fits signed `rel8`, either sequence relaxes to the direct two-byte conditional branch.
+Otherwise, the linker MAY relax the embedded `JMPF` to `JMP16` while retaining the inverse-condition skip:
 
-If it does not fit, the linker may relax only the embedded `JMPF` to `JMP16` or `JMP8` when valid.
+```text
+inverse-condition +4 ; JMPF target     total 6 bytes
+inverse-condition +3 ; JMP16 target    total 5 bytes
+```
+
+When the requested condition's target fits signed `rel8`, the complete sequence relaxes directly to the corresponding exact two-byte branch:
+
+```text
+br.eq  -> BREQ
+br.ne  -> BRNE
+br.ult -> BRULT
+br.uge -> BRUGE
+br.slt -> BRSLT
+br.sge -> BRSGE
+```
+
+There is no intermediate inverse-condition-plus-`JMP8` relaxation form. At each size change, the inverse-branch skip displacement and the selected jump displacement are recomputed from their respective `nextPC` values. A relaxation is valid only when the final target fits the selected form after accounting for all size changes.
 
 ### 66.4. Explicit nonrelaxable forms
 
-The exact mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, `CALLF`, `BREQ`, `BRNE`, `BRULT`, and `BRSLT` never receive `R_AVM_RELAX` and are never widened or shrunk.
+The exact mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, `CALLF`, `BREQ`, `BRNE`, `BRULT`, `BRUGE`, `BRSLT`, and `BRSGE` never receive `R_AVM_RELAX` and are never widened or shrunk.
 
 A relocation overflow in an exact form is an error.
 

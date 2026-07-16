@@ -485,12 +485,17 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `C4-C7` | `LDI16 cD,imm16` | 3 | 52 |
 | `C8-CB` | `ADDI.S8 cD,simm8` | 2 | 35 |
 | `CC-CF` | `CMPI.S8 cL,simm8` | 2 | 35 |
-| `D0-D3` | Conditional branches | 2 | 35 not taken; 127 taken |
+| `D0` | `BREQ rel8` | 2 | 35 not taken; 127 taken |
+| `D1` | `BRNE rel8` | 2 | 35 not taken; 127 taken |
+| `D2` | `BRULT rel8` | 2 | 35 not taken; 127 taken |
+| `D3` | `BRSLT rel8` | 2 | 35 not taken; 127 taken |
 | `D4` | `JMP8 rel8` | 2 | 121 |
 | `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | 31 / 31 / 34 / 38 for services `00-03` |
-| `D8-DF` | Reserved | — | trap |
+| `D8` | `BRUGE rel8` | 2 | 35 not taken; 127 taken |
+| `D9` | `BRSGE rel8` | 2 | 35 not taken; 127 taken |
+| `DA-DF` | Reserved | — | trap |
 | `E0` | `JMP16 rel16` | 3 | 134 |
 | `E1` | `CALL16 rel16` | 3 | 134 |
 | `E2` | `JMPF target24` | 4 | 149 |
@@ -2398,28 +2403,28 @@ The following single-section order is a reference layout that keeps the major st
 | 3 | Shared width-two decoder | 1063 | 1077 | 14 | 28 |
 | 4 | Generic decoder and four width stubs | 1077 | 1097 | 20 | 40 |
 | 5 | Shared `FB-FD` condition gate | 1097 | 1116 | 19 | 38 |
-| 6 | Primary continuations, compact tails, `SYS` table, seek/restart, local delays, and traps | 1116 | 1719 | 603 | 1206 |
-| 7 | Cluster-A false-path landing and cadence cluster | 1719 | 1745 | 26 | 52 |
-| 8 | Local F0 trap plus `F0` veneer table | 1745 | 1856 | 111 | 222 |
-| 9 | `F0` immediate, stack, absolute, and program-space bodies | 1856 | 2608 | 752 | 1504 |
-| 10 | Shared `F0` cold-32 subsystem | 2608 | 2672 | 64 | 128 |
-| 11 | Shared `F0` cold general-pointer subsystem | 2672 | 2721 | 49 | 98 |
-| 12 | `F1` table | 2721 | 3009 | 288 | 576 |
-| 13 | `F2` table | 3009 | 3297 | 288 | 576 |
-| 14 | `F3` table | 3297 | 3681 | 384 | 768 |
-| 15 | Cluster B and two local trap shims | 3681 | 3708 | 27 | 54 |
-| 16 | `F4` table | 3708 | 4260 | 552 | 1104 |
-| 17 | `F5` table | 4260 | 4644 | 384 | 768 |
-| 18 | `F6` table | 4644 | 4964 | 320 | 640 |
-| 19 | `F7` table | 4964 | 5684 | 720 | 1440 |
-| 20 | Cluster C and local trap shim | 5684 | 5708 | 24 | 48 |
-| 21 | `F8` table | 5708 | 5948 | 240 | 480 |
-| 22 | `FA` forwarding table | 5948 | 6044 | 96 | 192 |
-| 23 | Twelve shared `FA` shift bodies | 6044 | 6192 | 148 | 296 |
-| 24 | Shared `FB-FD` move table | 6192 | 6320 | 128 | 256 |
-| 25 | `FE` forwarding table | 6320 | 6448 | 128 | 256 |
-| 26 | Eight `FE` multiplication bodies | 6448 | 6512 | 64 | 128 |
-|  | **Reference end** |  | **6512** | **6512** | **13,024** |
+| 6 | Primary continuations, compact tails, `SYS` table, seek/restart, local delays, and traps | 1116 | 1735 | 619 | 1238 |
+| 7 | Cluster-A false-path landing and cadence cluster | 1735 | 1761 | 26 | 52 |
+| 8 | Local F0 trap plus `F0` veneer table | 1761 | 1872 | 111 | 222 |
+| 9 | `F0` immediate, stack, absolute, and program-space bodies | 1872 | 2624 | 752 | 1504 |
+| 10 | Shared `F0` cold-32 subsystem | 2624 | 2688 | 64 | 128 |
+| 11 | Shared `F0` cold general-pointer subsystem | 2688 | 2737 | 49 | 98 |
+| 12 | `F1` table | 2737 | 3025 | 288 | 576 |
+| 13 | `F2` table | 3025 | 3313 | 288 | 576 |
+| 14 | `F3` table | 3313 | 3697 | 384 | 768 |
+| 15 | Cluster B and two local trap shims | 3697 | 3724 | 27 | 54 |
+| 16 | `F4` table | 3724 | 4276 | 552 | 1104 |
+| 17 | `F5` table | 4276 | 4660 | 384 | 768 |
+| 18 | `F6` table | 4660 | 4980 | 320 | 640 |
+| 19 | `F7` table | 4980 | 5700 | 720 | 1440 |
+| 20 | Cluster C and local trap shim | 5700 | 5724 | 24 | 48 |
+| 21 | `F8` table | 5724 | 5964 | 240 | 480 |
+| 22 | `FA` forwarding table | 5964 | 6060 | 96 | 192 |
+| 23 | Twelve shared `FA` shift bodies | 6060 | 6208 | 148 | 296 |
+| 24 | Shared `FB-FD` move table | 6208 | 6336 | 128 | 256 |
+| 25 | `FE` forwarding table | 6336 | 6464 | 128 | 256 |
+| 26 | Eight `FE` multiplication bodies | 6464 | 6528 | 64 | 128 |
+|  | **Reference end** |  | **6528** | **6528** | **13,056** |
 
 Startup-only helpers and startup code follow this endpoint and are excluded from the core-size accounting region.
 
@@ -2722,11 +2727,16 @@ The compact-pointer dense tables contain only fast forms. The two table-free col
 
 | Opcode | Instruction | Bytes | Reference cycles |
 |---:|---|---:|---:|
-| `D0-D3` | Conditional branches | 2 | 35 not taken; 127 taken |
+| `D0` | `BREQ rel8` | 2 | 35 not taken; 127 taken |
+| `D1` | `BRNE rel8` | 2 | 35 not taken; 127 taken |
+| `D2` | `BRULT rel8` | 2 | 35 not taken; 127 taken |
+| `D3` | `BRSLT rel8` | 2 | 35 not taken; 127 taken |
 | `D4` | `JMP8 rel8` | 2 | 121 |
 | `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | 31 (`DEBUG_PUTC`), 31 (`DEBUG_BREAK`), 34 (`MILLIS`), 38 (`MILLIS32`) |
+| `D8` | `BRUGE rel8` | 2 | 35 not taken; 127 taken |
+| `D9` | `BRSGE rel8` | 2 | 35 not taken; 127 taken |
 | `E0` | `JMP16 rel16` | 3 | 134 |
 | `E1` | `CALL16 rel16` | 3 | 134 |
 | `E2` | `JMPF target24` | 4 | 149 |
@@ -2737,7 +2747,18 @@ The compact-pointer dense tables contain only fast forms. The two table-free col
 
 All relative displacements are signed and relative to the address immediately following the complete instruction. `JMP16` and `CALL16` retain the active code bank and use their signed 16-bit displacement to select the target within that bank. `JMPF` and `CALLF` carry an explicit 24-bit target and are separate opcodes.
 
-Conditional branches use `SBIC`/`SBIS GPIOR0,bit`. LLVM should invert branches and swap compare operands to make the likely path fall through. `CALLF` uses native `r7` to add four to the low-register 24-bit PC when forming its return address.
+The six short branch conditions are:
+
+```text
+BREQ   Z == 1
+BRNE   Z == 0
+BRULT  C == 1
+BRUGE  C == 0
+BRSLT  S == 1
+BRSGE  S == 0
+```
+
+Conditional branches use `SBIC`/`SBIS GPIOR0,bit`. The six specialized decode paths occupy eight AVR words each; adding `BRUGE` and `BRSGE` therefore adds 32 bytes outside the fixed primary table. LLVM should invert branches and swap compare operands to make the likely path fall through. `CALLF` uses native `r7` to add four to the low-register 24-bit PC when forming its return address.
 
 
 ## 31. LLVM lowering notes
@@ -2903,7 +2924,7 @@ The secondary executable tables total **7,276 bytes**. `F9` has no executable ta
 
 ### 34.1. Reference baseline and variable components
 
-For the shown layout, the core excluding the ordinary `F0` bodies, the two shared `F0` runtime-decoded subsystems, and the twelve `FA` bodies occupies **10,998 bytes**. The remaining components are estimated as follows:
+For the shown layout, the core excluding the ordinary `F0` bodies, the two shared `F0` runtime-decoded subsystems, and the twelve `FA` bodies occupies **11,030 bytes**. The remaining components are estimated as follows:
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
@@ -2916,11 +2937,11 @@ For the shown layout, the core excluding the ordinary `F0` bodies, the two share
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 12,928 | 12.63 |
-| Reference target | **13,024** | **12.72** |
-| Upper bound | 13,184 | 12.88 |
+| Lower bound | 12,960 | 12.66 |
+| Reference target | **13,056** | **12.75** |
+| Upper bound | 13,216 | 12.91 |
 
-The reference design targets about 13,024 bytes, with 13,184 bytes as a practical upper estimate before the physical layout and short-transfer ranges should be revisited.
+The reference design targets about 13,056 bytes, with 13,216 bytes as a practical upper estimate before the physical layout and short-transfer ranges should be revisited.
 
 ## 35. Four-word primary-stride rationale
 

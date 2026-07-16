@@ -652,8 +652,8 @@ reset_handler:
 
 ; Reverse-order 17-cycle sequential dispatch. Complete the entire 24-bit PC
 ; increment before the protected SPDR handoff. CLI, OUT, IN, and SEI preserve
-; SREG, and the shorter post-OUT path makes the selected primary slot begin on
-; cycle 9 after OUT, matching the standard dispatch.
+; the arithmetic flags, including carry; the shorter post-OUT path makes the
+; selected primary slot begin on cycle 9 after OUT, matching standard dispatch.
 .macro dispatch_reverse
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
@@ -1240,18 +1240,17 @@ emit_primary_jmpp primary_E7_jmpp_q3, VM_R6, VM_R7L
 ; 0xE8-0xEB: CALLP qN
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; CALLP is a one-byte instruction, so VM_PC already contains the sequential
-; return address at primary-slot entry. Preserve the selected 24-bit program
-; pointer in scratch before the shared prologue pushes VM_PC and installs the
-; target. The speculative sequential-byte transfer has ample time to finish
-; before the shared seek handler toggles flash chip select; no delay is needed.
+; VM_PC names the CALLP opcode at primary-slot entry. Preserve the selected
+; 24-bit target in scratch, begin advancing VM_PC to the sequential return
+; address in the otherwise-unused fourth slot word, then let the shared
+; prologue finish the carry chain before pushing PC+1 and installing the target.
 
 .macro emit_primary_callp label, ptr16, ptr23_16
 \label:
     movw r24, \ptr16
     mov  r26, \ptr23_16
+    add  VM_PCL, ONE
     rjmp push_pc_seek_and_dispatch_func
-    nop
     assert_primary_slot_width \label
 .endm
 
@@ -1289,9 +1288,9 @@ primary_EF_ret:
 ; 0xF0-0xFE: secondary-page prefixes
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Each bounded page now advertises its architectural upper bound. Every valid
-; entry is present at its specified natural width and currently forwards to a
-; nearby unimplemented-secondary trap.
+; Each bounded page advertises its architectural upper bound and uses its
+; final natural slot width. F1-F8 and FE execute implemented entries; F0 and
+; FA retain final-width trap placeholders until their shared bodies are added.
 ; F0 bound 0x6E, one-word veneer slots.
 emit_primary_bounded_page primary_F0_cold_veneer_page, 0x6E, f0_veneer_table, secondary_width_1_stub
 ; F1 bound 0x90, two-word slots.
@@ -1348,7 +1347,7 @@ primary_table_end:
 ; F9 dedicated runtime-decoded full-register bitwise page
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Encoding: F9 oodddsss
+; Encoding: F9 dddsssoo
 ;   bits 7:5  destination register r0-r7
 ;   bits 4:2  source register r0-r7
 ;   bits 1:0  00=AND, 01=OR, 10=XOR, 11=invalid
@@ -1792,8 +1791,9 @@ emit_branch_rel8_decode brslt_rel8_decode_func, sbis, SREG_S
 
 branch_rel8_not_taken_func:
     ; PRIMARY_OPCODE contains the ignored displacement and VM_PC still names
-    ; that byte. Six inline cycles of padding let the longer cycle-9 reverse
-    ; dispatch still place its OUT exactly on the 17-cycle boundary.
+    ; that byte. Six inline cycles of padding route through the reverse-order
+    ; dispatch body, with the next OUT occurring 18 cycles after the speculative
+    ; fallthrough OUT.
     delay_4
     delay_2
     rjmp cluster_tail_17
@@ -2077,11 +2077,14 @@ sys_millis32_func:
 jmpp_seek_and_dispatch_func:
     rjmp seek_and_dispatch_func
 
-; CALLP shared prologue. The primary slot has preserved the selected target in
-; r26:r25:r24 while VM_PC still contains the one-byte call's sequential return
-; address. Push the return PC in canonical little-endian stack layout, install
-; the target, and fall through directly into the common seek handler.
+; CALLP shared prologue. The primary slot preserved the selected target in
+; r26:r25:r24 and performed the low-byte increment from the CALLP opcode to its
+; sequential return address. Finish the 24-bit carry chain, push PC+1 in
+; canonical little-endian stack layout, install the target, and fall through
+; directly into the common seek handler.
 push_pc_seek_and_dispatch_func:
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
     st   -Y, VM_PCH
     st   -Y, VM_PCM
     st   -Y, VM_PCL
@@ -2147,8 +2150,7 @@ interp_delay_9:
 interp_delay_7:
     ret
 
-; Dedicated secondary-prefix encodings whose distinct decoders/gates are not
-; yet present stop here. Generic bounded prefixes use invalid_secondary instead.
+; Valid but not-yet-implemented F0 and FA table entries ultimately stop here.
 unimplemented_instruction_func:
     rjmp unimplemented_instruction_func
 
@@ -2156,8 +2158,7 @@ unimplemented_instruction_func:
 invalid_primary_instruction_func:
     rjmp invalid_primary_instruction_func
 
-; Reserved secondary encodings, zero-entry page placeholders, and unknown SYS
-; services use these shared traps.
+; Reserved secondary encodings and unknown SYS services use these shared traps.
 invalid_secondary_instruction_func:
     rjmp invalid_secondary_instruction_func
 
@@ -2165,12 +2166,12 @@ invalid_syscall_func:
     rjmp invalid_syscall_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Fixed-width secondary tables and remaining trap scaffolds
+; Fixed-width secondary tables and F0/FA trap scaffolds
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; F1-F8 use their exact operand-specialized native sequences. Pages that still
-; await dedicated bodies retain final-width trap slots: the first word jumps to
-; a nearby local trap and the remaining words are unreachable padding.
+; F1-F8 use their exact operand-specialized native sequences. F0 and FA retain
+; final-width trap slots: the first word jumps to a nearby local trap and the
+; remaining words, when any, are unreachable padding.
 
 .macro emit_secondary_trap_table label, end_label, count, width, trap
 \label:
@@ -3673,8 +3674,9 @@ cluster_c_end:
     .error "secondary cadence Cluster C must occupy 23 AVR words"
 .endif
 
-; F8 contains its exact CSET slots. FA and FE retain final-width forwarding
-; placeholders. FB-FD validate secondary < 0x80 in the shared condition gate,
+; F8 contains its exact CSET slots. FA retains final-width forwarding trap
+; placeholders; FE contains its implemented MUL16 forwarding entries and bodies.
+; FB-FD validate secondary < 0x80 in the shared condition gate,
 ; then use bits 5:0 to select one of the 64 two-word MOVW entries below.
 secondary_tables_after_cluster_c:
 secondary_unimplemented_c_func:

@@ -325,6 +325,15 @@
 #define SECONDARY_LIMIT            r25
 #define SECONDARY_MULTIPLIER       r26
 
+; Shared F0 operand-fetch ABI. The one-byte helper returns the consumed byte in
+; F0_OPERAND_LO. The two-byte helper returns a little-endian operand in
+; F0_OPERAND_HI:F0_OPERAND_LO. F0_SPEC aliases the one-byte result for RRSPEC
+; and future program-space operand specifiers.
+#define F0_OPERAND_LO              r24
+#define F0_OPERAND_HI              r25
+#define F0_SPEC                    r24
+#define F0_DECODE_SCRATCH          r25
+
 ; FB-FD shared conditional-move gate scratch allocation.
 #define CMOV_TEST                  r25
 #define CMOV_SECONDARY             r26
@@ -526,6 +535,82 @@ sbi  AVM_FX_PORT, AVM_FX_BIT
 .macro delay_4
     delay_2
     delay_2
+.endm
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Shared F0 register-file decode macros
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; These macros convert architectural register indices or pre-scaled RRSPEC
+; offsets into native AVR data-space pointers. They intentionally inline at the
+; eventual cold handler so decoding adds no RCALL/RET overhead. All
+; architectural registers occupy native r8-r23, below data-space address 0x100.
+;
+; The input scratch register must be in r16-r31 because ANDI/SUBI are used. The
+; macro may be called with scratch == pointer-low; the explicit MOV remains
+; valid in that case. Native flags are clobbered.
+
+.macro f0_decode_r_index_to_ptr scratch, ptrl, ptrh
+    andi  \scratch, 0x07
+    lsl   \scratch
+    subi  \scratch, -8
+    mov   \ptrl, \scratch
+    mov   \ptrh, ZERO
+.endm
+
+.macro f0_decode_q_index_to_ptr scratch, ptrl, ptrh
+    andi  \scratch, 0x03
+    lsl   \scratch
+    lsl   \scratch
+    subi  \scratch, -8
+    mov   \ptrl, \scratch
+    mov   \ptrh, ZERO
+.endm
+
+; Decode dddWaaaP used by F0 6C-6D. X receives the data-register pointer from
+; bits 7:5 and Z receives the address-register pointer from bits 3:1. The
+; original specifier is preserved so W and P remain available to the handler.
+; F0_DECODE_SCRATCH is clobbered.
+.macro f0_decode_general_pointer_spec spec
+    mov   F0_DECODE_SCRATCH, \spec
+    swap  F0_DECODE_SCRATCH
+    andi  F0_DECODE_SCRATCH, 0x0e
+    subi  F0_DECODE_SCRATCH, -8
+    mov   r26, F0_DECODE_SCRATCH
+    mov   r27, ZERO
+
+    mov   F0_DECODE_SCRATCH, \spec
+    lsr   F0_DECODE_SCRATCH
+    andi  F0_DECODE_SCRATCH, 0x0e
+    subi  F0_DECODE_SCRATCH, -8
+    mov   r30, F0_DECODE_SCRATCH
+    mov   r31, ZERO
+.endm
+
+; Decode the pre-scaled nibble offsets used by F0 69-6B. X receives the high
+; nibble operand and Z the low nibble operand. Alignment validation remains the
+; responsibility of the operation-specific handler. F0_DECODE_SCRATCH is
+; clobbered.
+.macro f0_decode_prescaled_pair_spec spec
+    mov   F0_DECODE_SCRATCH, \spec
+    swap  F0_DECODE_SCRATCH
+    andi  F0_DECODE_SCRATCH, 0x0f
+    subi  F0_DECODE_SCRATCH, -8
+    mov   r26, F0_DECODE_SCRATCH
+    mov   r27, ZERO
+
+    mov   F0_DECODE_SCRATCH, \spec
+    andi  F0_DECODE_SCRATCH, 0x0f
+    subi  F0_DECODE_SCRATCH, -8
+    mov   r30, F0_DECODE_SCRATCH
+    mov   r31, ZERO
+.endm
+
+; Sign-extend a fetched byte in F0_OPERAND_LO into F0_OPERAND_HI.
+.macro f0_sign_extend_operand
+    clr   F0_OPERAND_HI
+    sbrc  F0_OPERAND_LO, 7
+    com   F0_OPERAND_HI
 .endm
 
 .section .text,"ax",@progbits
@@ -1684,7 +1769,8 @@ cmov_gate_end:
 ; executable secondary table are present. The fixed-width self-contained F1-F8
 ; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
-; page are implemented. Only the F0 veneer bodies and shared subsystems remain.
+; page are implemented. F0 now has shared operand-fetch and register-decode
+; infrastructure; its operation-specific veneer bodies remain unimplemented.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -2836,13 +2922,167 @@ cluster_a_end:
     .error "secondary cadence Cluster A must occupy 24 AVR words"
 .endif
 
-; F0 retains one-word veneer placeholders; F1-F3 contain their exact native
-; slots. The local F0 trap remains before the group for short RJMP reach.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Shared F0 trailing-operand fetch helpers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; The generic F0 decoder reads the secondary at cycle 17 and launches the first
+; trailing operand at cycle 18. Decoder completion, IJMP, and a one-word veneer
+; place an operation-specific body at cycle 32. When RCALL is the body's first
+; instruction, these helpers begin at cycle 35, the first legal IN cycle for
+; that transfer. A body may perform setup before RCALL; that only delays the
+; standard IN/OUT handoff and remains safe.
+;
+; Both helpers return with VM_PC naming the final consumed operand and with the
+; following primary opcode already in flight. The operation body must finish by
+; entering an appropriate cadence tail, which advances VM_PC from the final
+; operand to the following opcode.
+
+f0_fetch_u8_start:
+f0_fetch_spec:
+f0_fetch_s8:
+f0_fetch_u8:
+    in   F0_OPERAND_LO, SPDR
+    out  SPDR, ZERO
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    ret
+f0_fetch_u8_end:
+.if (f0_fetch_u8_end - f0_fetch_u8_start) != 12
+    .error "shared F0 one-byte fetch helper must occupy exactly six AVR words"
+.endif
+
+; Fetch a little-endian 16-bit operand. The low byte is read at cycle 35 and
+; the high-byte transfer starts at cycle 36. Advancing VM_PC by two consumes
+; both operand bytes; three four-cycle delays place the high-byte IN at cycle
+; 53 and the speculative following-primary OUT at cycle 54.
+f0_fetch_u16_start:
+f0_fetch_addr16:
+f0_fetch_imm16:
+f0_fetch_u16:
+    in   F0_OPERAND_LO, SPDR
+    out  SPDR, ZERO
+    ldi  F0_OPERAND_HI, 2
+    add  VM_PCL, F0_OPERAND_HI
+    adc  VM_PCM, ZERO
+    adc  VM_PCH, ZERO
+    delay_4
+    delay_4
+    delay_4
+    in   F0_OPERAND_HI, SPDR
+    out  SPDR, ZERO
+    ret
+f0_fetch_u16_end:
+.if (f0_fetch_u16_end - f0_fetch_u16_start) != 30
+    .error "shared F0 two-byte fetch helper must occupy exactly fifteen AVR words"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; F0 00-0F: noncompact immediate instructions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Each one-word F0 veneer RJMPs directly to a destination-specialized body. The
+; body's first instruction is RCALL to one of the shared trailing-operand fetch
+; helpers above. One-byte forms fetch imm8 at cycle 35 and launch the following
+; primary opcode at cycle 36; two-byte forms read imm16[15:8] at cycle 53 and
+; launch the following primary opcode at cycle 54. The apply stubs then use the
+; same reverse or standard cadence tails as the compact primary immediates.
+
+.macro emit_f0_ldi8_body label, dstl, dsth
+\label:
+    rcall f0_fetch_u8
+    mov   \dstl, F0_OPERAND_LO
+    clr   \dsth
+    rjmp  cluster_tail_17_delay_1
+.endm
+
+.macro emit_f0_ldi16_body label, dstl, dsth
+\label:
+    rcall f0_fetch_u16
+    mov   \dstl, F0_OPERAND_LO
+    mov   \dsth, F0_OPERAND_HI
+    rjmp  immediate_result_tail_reverse_delay_4
+.endm
+
+.macro emit_f0_addi_s8_body label, dstl, dsth
+\label:
+    rcall f0_fetch_s8
+    clr   F0_OPERAND_HI
+    sbrc  F0_OPERAND_LO, 7
+    com   F0_OPERAND_HI
+    add   \dstl, F0_OPERAND_LO
+    adc   \dsth, F0_OPERAND_HI
+    rjmp  cluster_tail_18_delay_1
+.endm
+
+.macro emit_f0_cmpi_s8_body label, lhsl, lhsh
+\label:
+    rcall f0_fetch_s8
+    clr   F0_OPERAND_HI
+    sbrc  F0_OPERAND_LO, 7
+    com   F0_OPERAND_HI
+    cp    \lhsl, F0_OPERAND_LO
+    cpc   \lhsh, F0_OPERAND_HI
+    in    PRIMARY_OPCODE, SREG
+    rjmp  flags_commit_18
+.endm
+
+emit_f0_ldi8_body    f0_ldi8_r0_body,    VM_R0L, VM_R0H
+emit_f0_ldi8_body    f0_ldi8_r1_body,    VM_R1L, VM_R1H
+emit_f0_ldi8_body    f0_ldi8_r2_body,    VM_R2L, VM_R2H
+emit_f0_ldi8_body    f0_ldi8_r3_body,    VM_R3L, VM_R3H
+
+emit_f0_ldi16_body   f0_ldi16_r0_body,   VM_R0L, VM_R0H
+emit_f0_ldi16_body   f0_ldi16_r1_body,   VM_R1L, VM_R1H
+emit_f0_ldi16_body   f0_ldi16_r2_body,   VM_R2L, VM_R2H
+emit_f0_ldi16_body   f0_ldi16_r3_body,   VM_R3L, VM_R3H
+
+emit_f0_addi_s8_body f0_addi_s8_r0_body, VM_R0L, VM_R0H
+emit_f0_addi_s8_body f0_addi_s8_r1_body, VM_R1L, VM_R1H
+emit_f0_addi_s8_body f0_addi_s8_r2_body, VM_R2L, VM_R2H
+emit_f0_addi_s8_body f0_addi_s8_r3_body, VM_R3L, VM_R3H
+
+emit_f0_cmpi_s8_body f0_cmpi_s8_r0_body, VM_R0L, VM_R0H
+emit_f0_cmpi_s8_body f0_cmpi_s8_r1_body, VM_R1L, VM_R1H
+emit_f0_cmpi_s8_body f0_cmpi_s8_r2_body, VM_R2L, VM_R2H
+emit_f0_cmpi_s8_body f0_cmpi_s8_r3_body, VM_R3L, VM_R3H
+
+; F0 retains one-word veneers for the remaining cold forms. The first sixteen
+; secondaries are implemented above; the local F0 trap remains before the group
+; for short RJMP reach.
 secondary_tables_before_cluster_b:
 secondary_unimplemented_a_func:
     rjmp unimplemented_instruction_func
 
-emit_secondary_trap_table f0_veneer_table, f0_veneer_table_end, 0x6E, 1, secondary_unimplemented_a_func
+f0_veneer_table:
+    rjmp  f0_ldi8_r0_body
+    rjmp  f0_ldi8_r1_body
+    rjmp  f0_ldi8_r2_body
+    rjmp  f0_ldi8_r3_body
+
+    rjmp  f0_ldi16_r0_body
+    rjmp  f0_ldi16_r1_body
+    rjmp  f0_ldi16_r2_body
+    rjmp  f0_ldi16_r3_body
+
+    rjmp  f0_addi_s8_r0_body
+    rjmp  f0_addi_s8_r1_body
+    rjmp  f0_addi_s8_r2_body
+    rjmp  f0_addi_s8_r3_body
+
+    rjmp  f0_cmpi_s8_r0_body
+    rjmp  f0_cmpi_s8_r1_body
+    rjmp  f0_cmpi_s8_r2_body
+    rjmp  f0_cmpi_s8_r3_body
+
+    .rept (0x6E - 0x10)
+        rjmp secondary_unimplemented_a_func
+    .endr
+f0_veneer_table_end:
+.if (f0_veneer_table_end - f0_veneer_table) != (2 * 0x6E)
+    .error "F0 veneer table has incorrect size"
+.endif
 
 f1_table:
     ; F1: bounded two-word dense table

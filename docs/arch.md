@@ -530,6 +530,23 @@ dddWaaaP
 
 Every bit pattern selects valid registers and modifiers.
 
+### 18.9. Division/remainder operand byte
+
+The `EC` instruction family uses:
+
+```text
+oo ddd sss
+```
+
+| Field | Meaning |
+|---|---|
+| `oo` bits `7:6` | Operation selector |
+| `ddd` bits `5:3` | Destination and dividend register `rD` |
+| `sss` bits `2:0` | Preserved source and divisor register `rS` |
+
+Every bit pattern is valid. The complete original values of both operands are
+used. `rD == rS` is legal.
+
 ---
 
 # Part IV — Complete Opcode Map
@@ -577,7 +594,8 @@ Every bit pattern selects valid registers and modifiers.
 | `E3` | `CALLF target24` | 4 | Preserve |
 | `E4-E7` | `JMPP qN` | 1 | Preserve |
 | `E8-EB` | `CALLP qN` | 1 | Preserve |
-| `EC-EE` | Reserved | — | — |
+| `EC` | `UDIV16` / `UREM16` / `SDIV16` / `SREM16` | 2 | Preserve |
+| `ED-EE` | Reserved | — | — |
 | `EF` | `RET` | 1 | Preserve |
 | `F0` | Cold-form page | 2-4 | Instruction-defined |
 | `F1` | Dense page 1 | 2 | Instruction-defined |
@@ -719,7 +737,65 @@ mem8[SP+2] = nextPC[23:16]
 
 `RET` performs the inverse operation and then adds three to `SP`.
 
-### 22.4. Stack adjustment and services
+### 22.4. 16-bit division and remainder
+
+Encoding:
+
+```text
+EC oo ddd sss
+```
+
+```text
+bits 7:6  operation
+bits 5:3  destination and dividend rD
+bits 2:0  preserved source and divisor rS
+```
+
+| `oo` | Instruction | Result written to `rD` |
+|---:|---|---|
+| `00` | `UDIV16 rD,rS` | Unsigned quotient |
+| `01` | `UREM16 rD,rS` | Unsigned remainder |
+| `10` | `SDIV16 rD,rS` | Signed quotient, truncated toward zero |
+| `11` | `SREM16 rD,rS` | Signed remainder with the dividend's sign |
+
+`rD` supplies the dividend and receives the selected result. `rS` supplies the
+divisor and is not independently written. When the operands are distinct,
+`rS` is preserved. The implementation uses both complete original operands
+before writing `rD`, so `rD == rS` is legal; in that case the shared register
+receives the result.
+
+For nonzero divisors:
+
+```text
+UDIV16(a,b) = floor(unsigned16(a) / unsigned16(b))
+UREM16(a,b) = unsigned16(a) mod unsigned16(b)
+
+SDIV16(a,b) = trunc_toward_zero(signed16(a) / signed16(b))
+SREM16(a,b) = signed16(a) - SDIV16(a,b) * signed16(b)
+```
+
+The signed remainder is zero or has the same sign as the dividend.
+
+Division by zero has deterministic architectural results:
+
+```text
+UDIV16(a,0) = 0xFFFF
+SDIV16(a,0) = 0xFFFF
+UREM16(a,0) = a
+SREM16(a,0) = a
+```
+
+The signed overflow case also has deterministic modulo-16-bit results:
+
+```text
+SDIV16(0x8000,0xFFFF) = 0x8000
+SREM16(0x8000,0xFFFF) = 0x0000
+```
+
+All four instructions preserve every unrelated general-purpose register,
+`CC`, and `SP`. A distinct `rS` is preserved.
+
+### 22.5. Stack adjustment and services
 
 `ADJSP simm8`:
 
@@ -1164,7 +1240,12 @@ ADD32 / SUB32        modulo 2^32
 MUL8                 low 8 bits, then zero-extension
 MUL16                low 16 bits
 widening byte MUL    complete 16-bit product
+UDIV16 / UREM16      unsigned 16-bit quotient / remainder
+SDIV16 / SREM16      signed 16-bit quotient / remainder, truncating toward zero
 ```
+
+Division and remainder use the deterministic zero-divisor and signed-overflow
+results defined in Section 22.4.
 
 Logical and shift operations operate on the stated width.
 
@@ -1786,8 +1867,8 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | Constant, copy, phi | Legal/custom subregister | Legal | Legal | Expand |
 | `ADD`, `SUB` | Promote to `i16`, truncate | Legal | Legal | Expand or helper |
 | `MUL` | Custom byte/widening selection | Legal | Helper until direct ISA support | Helper |
-| `UDIV`, `SDIV` | Promote to `i16` helper | Helper | Helper | Helper |
-| `UREM`, `SREM` | Promote to `i16` helper | Helper | Helper | Helper |
+| `UDIV`, `SDIV` | Promote to `i16`, select direct instruction, truncate | Legal direct `UDIV16` / `SDIV16` | Helper | Helper |
+| `UREM`, `SREM` | Promote to `i16`, select direct instruction, truncate | Legal direct `UREM16` / `SREM16` | Helper | Helper |
 | `AND`, `OR`, `XOR` | Promote/truncate | Legal | Split into two `i16` operations | Expand |
 | `SHL`, `LSHR`, `ASHR` | Promote/truncate | Custom direct selection | Custom direct/sequence/helper | Helper |
 | `ROTL`, `ROTR`, funnel shifts | Expand | Expand | Expand | Expand |
@@ -1820,7 +1901,11 @@ constant into the four-bit instruction field.
 
 Program-pointer arithmetic is lowered as unsigned 24-bit arithmetic in `GPR32`, followed by canonicalization of bits `31:24` when required.
 
-Future direct division, remainder, and floating-point instructions may replace helper calls during instruction selection without changing the language ABI or helper signatures.
+The `EC` family directly implements all four `i16` division and remainder
+operations. Wider integer division and remainder continue to use helpers.
+Future direct wide-integer or floating-point instructions may replace helper
+calls during instruction selection without changing the language ABI or helper
+signatures.
 
 ## 56. Runtime helper ABI
 
@@ -1833,16 +1918,30 @@ Pure arithmetic helpers:
 - Have no data-memory side effects.
 - Are nonthrowing and return normally for defined inputs.
 
-Division by zero and signed overflow in `INT_MIN / -1` have no guaranteed result because the corresponding LLVM operations are undefined or poison for those inputs.
+The ISA defines deterministic results for division by zero and signed
+`INT_MIN / -1`, as specified in Section 22.4. LLVM IR division and remainder
+operations nevertheless retain LLVM's undefined or poison semantics for those
+inputs. The backend may therefore select the direct instructions without
+inserting guards; the deterministic edge results remain observable to assembly
+programs and other producers whose semantics permit those inputs.
 
 ### 56.1. Integer division and remainder helpers
+
+Direct `i16` division and remainder use the `EC` instructions. The following
+16-bit helper names are reserved compatibility entry points and MAY be supplied
+by a runtime for previously generated objects, but new instruction selection
+SHOULD NOT call them:
 
 ```c
 uint16_t __avm_udivhi3(uint16_t, uint16_t);
 int16_t  __avm_divhi3(int16_t, int16_t);
 uint16_t __avm_umodhi3(uint16_t, uint16_t);
 int16_t  __avm_modhi3(int16_t, int16_t);
+```
 
+Wide integer division and remainder continue to use helpers:
+
+```c
 uint32_t __avm_udivsi3(uint32_t, uint32_t);
 int32_t  __avm_divsi3(int32_t, int32_t);
 uint32_t __avm_umodsi3(uint32_t, uint32_t);
@@ -1982,14 +2081,17 @@ The backend should:
 4. Expand the pseudo after allocation:
    - Pointer in `r4-r7`: fast encoding requiring an upper-register pointer.
    - Pointer in `r0-r3`: cold `F0 6C/6D` encoding.
-5. Prefer `UpperGPR32` for values likely to decompose into one-byte word operations.
-6. Use `GPR32` for pair instructions accepting every `qN`.
-7. Represent address-space-one values as canonical `PROGPTR`.
-8. Model `CC` definitions and uses explicitly.
-9. Select one-byte encodings after physical register assignment.
-10. Place frequently accessed stack objects at low offsets.
-11. Diagnose statically provable stack use above 256 bytes.
-12. Emit stack-usage metadata.
+5. Select `i16` `UDIV`, `UREM`, `SDIV`, and `SREM` directly to the two-address
+   `EC` instructions. The destination is both the original dividend use and the
+   result definition; the divisor source is preserved.
+6. Prefer `UpperGPR32` for values likely to decompose into one-byte word operations.
+7. Use `GPR32` for pair instructions accepting every `qN`.
+8. Represent address-space-one values as canonical `PROGPTR`.
+9. Model `CC` definitions and uses explicitly.
+10. Select one-byte encodings after physical register assignment.
+11. Place frequently accessed stack objects at low offsets.
+12. Diagnose statically provable stack use above 256 bytes.
+13. Emit stack-usage metadata.
 
 ## 59. LLVM system-service intrinsics
 
@@ -2119,6 +2221,18 @@ cc
 An instruction using a 16-bit register prints `rN`. An instruction using an aligned pair prints `qN`.
 
 `rN` and `qN` are accepted only where the instruction's register constraints permit them.
+
+The canonical division and remainder spellings are:
+
+```text
+udiv16 rD,rS
+urem16 rD,rS
+sdiv16 rD,rS
+srem16 rD,rS
+```
+
+Both operands must be `r0-r7`. The printer emits the destination/dividend first
+and the preserved source/divisor second.
 
 ### 61.4. Memory operands
 

@@ -19,7 +19,9 @@
 ;   * Conditional instructions are measured both taken/true and not-taken/false.
 ;   * Every variable and immediate 16-bit shift family is measured at counts
 ;     0 through 15.
-;   * Operand aliases are not duplicated when they execute the same path.
+;   * Division/remainder samples zero-divisor bypass, byte/word magnitude
+;     cores, sparse/dense quotient bits, signed correction, and operand aliasing.
+;   * Operand aliases are otherwise omitted when they execute the same path.
 ;
 ; benchmark_names.txt is intentionally unnumbered.
 
@@ -1453,6 +1455,377 @@ _start:
     ldi16 r1, 0x4321
     sys debug_break
     .byte 0xfe, 0x01
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r0,r1 (0xa5a5 / 0x0000; zero-divisor fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; zero-divisor fast path.
+    ldi16 r0, 0xa5a5
+    ldi16 r1, 0x0000
+    sys debug_break
+    udiv16 r0, r1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r2,r3 (0x0007 / 0x00ff; 8-bit core, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, quotient popcount 0.
+    ldi16 r2, 0x0007
+    ldi16 r3, 0x00ff
+    sys debug_break
+    udiv16 r2, r3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r1,r6 (0x0080 / 0x0001; 8-bit core, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, quotient popcount 1.
+    ldi16 r1, 0x0080
+    ldi16 r6, 0x0001
+    sys debug_break
+    udiv16 r1, r6
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r4,r5 (0x00ff / 0x0001; 8-bit core, quotient popcount 8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, quotient popcount 8.
+    ldi16 r4, 0x00ff
+    ldi16 r5, 0x0001
+    sys debug_break
+    udiv16 r4, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r6,r7 (0x1234 / 0x8000; 16-bit core, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, quotient popcount 0.
+    ldi16 r6, 0x1234
+    ldi16 r7, 0x8000
+    sys debug_break
+    udiv16 r6, r7
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r3,r4 (0x8000 / 0x0001; 16-bit core, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, quotient popcount 1.
+    ldi16 r3, 0x8000
+    ldi16 r4, 0x0001
+    sys debug_break
+    udiv16 r3, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r7,r0 (0xffff / 0x0001; 16-bit core, quotient popcount 16)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, quotient popcount 16.
+    ldi16 r7, 0xffff
+    ldi16 r0, 0x0001
+    sys debug_break
+    udiv16 r7, r0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UDIV16 r5,r5 (0x00a5 / 0x00a5; 8-bit core, rD == rS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, rD == rS.
+    ldi16 r5, 0x00a5
+    sys debug_break
+    udiv16 r5, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r0,r1 (0xa5a5 / 0x0000; zero-divisor fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; zero-divisor fast path.
+    ldi16 r0, 0xa5a5
+    ldi16 r1, 0x0000
+    sys debug_break
+    urem16 r0, r1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r2,r3 (0x0007 / 0x00ff; 8-bit core, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, quotient popcount 0.
+    ldi16 r2, 0x0007
+    ldi16 r3, 0x00ff
+    sys debug_break
+    urem16 r2, r3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r1,r6 (0x0080 / 0x0001; 8-bit core, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, quotient popcount 1.
+    ldi16 r1, 0x0080
+    ldi16 r6, 0x0001
+    sys debug_break
+    urem16 r1, r6
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r4,r5 (0x00ff / 0x0001; 8-bit core, quotient popcount 8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, quotient popcount 8.
+    ldi16 r4, 0x00ff
+    ldi16 r5, 0x0001
+    sys debug_break
+    urem16 r4, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r6,r7 (0x1234 / 0x8000; 16-bit core, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, quotient popcount 0.
+    ldi16 r6, 0x1234
+    ldi16 r7, 0x8000
+    sys debug_break
+    urem16 r6, r7
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r3,r4 (0x8000 / 0x0001; 16-bit core, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, quotient popcount 1.
+    ldi16 r3, 0x8000
+    ldi16 r4, 0x0001
+    sys debug_break
+    urem16 r3, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r7,r0 (0xffff / 0x0001; 16-bit core, quotient popcount 16)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, quotient popcount 16.
+    ldi16 r7, 0xffff
+    ldi16 r0, 0x0001
+    sys debug_break
+    urem16 r7, r0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: UREM16 r5,r5 (0x00a5 / 0x00a5; 8-bit core, rD == rS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, rD == rS.
+    ldi16 r5, 0x00a5
+    sys debug_break
+    urem16 r5, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r0,r1 (0xcfc7 / 0x0000; zero-divisor fast path, negative dividend)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; zero-divisor fast path, negative dividend.
+    ldi16 r0, 0xcfc7
+    ldi16 r1, 0x0000
+    sys debug_break
+    sdiv16 r0, r1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r2,r3 (0x0007 / 0x007f; 8-bit core, positive operands, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, positive operands, quotient popcount 0.
+    ldi16 r2, 0x0007
+    ldi16 r3, 0x007f
+    sys debug_break
+    sdiv16 r2, r3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r1,r6 (0xff80 / 0x0001; 8-bit core, one negative input, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, one negative input, quotient popcount 1.
+    ldi16 r1, 0xff80
+    ldi16 r6, 0x0001
+    sys debug_break
+    sdiv16 r1, r6
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r4,r5 (0xff01 / 0x0001; 8-bit core, one negative input, quotient popcount 8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, one negative input, quotient popcount 8.
+    ldi16 r4, 0xff01
+    ldi16 r5, 0x0001
+    sys debug_break
+    sdiv16 r4, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r6,r7 (0x1234 / 0x7fff; 16-bit core, positive operands, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, positive operands, quotient popcount 0.
+    ldi16 r6, 0x1234
+    ldi16 r7, 0x7fff
+    sys debug_break
+    sdiv16 r6, r7
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r3,r4 (0x8000 / 0x0100; 16-bit core, one negative input, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, one negative input, quotient popcount 1.
+    ldi16 r3, 0x8000
+    ldi16 r4, 0x0100
+    sys debug_break
+    sdiv16 r3, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r7,r0 (0x8001 / 0x0001; 16-bit core, one negative input, quotient popcount 15)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, one negative input, quotient popcount 15.
+    ldi16 r7, 0x8001
+    ldi16 r0, 0x0001
+    sys debug_break
+    sdiv16 r7, r0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r5,r2 (0x8000 / 0xffff; 16-bit core, INT16_MIN / -1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, INT16_MIN / -1.
+    ldi16 r5, 0x8000
+    ldi16 r2, 0xffff
+    sys debug_break
+    sdiv16 r5, r2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SDIV16 r4,r4 (0xffff / 0xffff; 8-bit core, two negative inputs, rD == rS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, two negative inputs, rD == rS.
+    ldi16 r4, 0xffff
+    sys debug_break
+    sdiv16 r4, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r0,r1 (0xcfc7 / 0x0000; zero-divisor fast path, negative dividend)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; zero-divisor fast path, negative dividend.
+    ldi16 r0, 0xcfc7
+    ldi16 r1, 0x0000
+    sys debug_break
+    srem16 r0, r1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r2,r3 (0x0007 / 0x007f; 8-bit core, positive operands, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, positive operands, quotient popcount 0.
+    ldi16 r2, 0x0007
+    ldi16 r3, 0x007f
+    sys debug_break
+    srem16 r2, r3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r1,r6 (0xff80 / 0x0001; 8-bit core, one negative input, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, one negative input, quotient popcount 1.
+    ldi16 r1, 0xff80
+    ldi16 r6, 0x0001
+    sys debug_break
+    srem16 r1, r6
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r4,r5 (0xff01 / 0xffff; 8-bit core, two negative inputs, quotient popcount 8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, two negative inputs, quotient popcount 8.
+    ldi16 r4, 0xff01
+    ldi16 r5, 0xffff
+    sys debug_break
+    srem16 r4, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r6,r7 (0x1234 / 0x7fff; 16-bit core, positive operands, quotient popcount 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, positive operands, quotient popcount 0.
+    ldi16 r6, 0x1234
+    ldi16 r7, 0x7fff
+    sys debug_break
+    srem16 r6, r7
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r3,r4 (0x8000 / 0x0100; 16-bit core, one negative input, quotient popcount 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, one negative input, quotient popcount 1.
+    ldi16 r3, 0x8000
+    ldi16 r4, 0x0100
+    sys debug_break
+    srem16 r3, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r7,r0 (0x8001 / 0xffff; 16-bit core, two negative inputs, quotient popcount 15)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, two negative inputs, quotient popcount 15.
+    ldi16 r7, 0x8001
+    ldi16 r0, 0xffff
+    sys debug_break
+    srem16 r7, r0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r5,r2 (0x8000 / 0xffff; 16-bit core, INT16_MIN / -1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 16-bit core, INT16_MIN / -1.
+    ldi16 r5, 0x8000
+    ldi16 r2, 0xffff
+    sys debug_break
+    srem16 r5, r2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SREM16 r4,r4 (0xffff / 0xffff; 8-bit core, two negative inputs, rD == rS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ; 8-bit core, two negative inputs, rD == rS.
+    ldi16 r4, 0xffff
+    sys debug_break
+    srem16 r4, r4
     sys debug_break
 
 ; -----------------------------------------------------------------------------

@@ -1357,10 +1357,28 @@ emit_primary_callp primary_EA_callp_q2, VM_R4, VM_R5L
 emit_primary_callp primary_EB_callp_q3, VM_R6, VM_R7L
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xEC-0xEE: reserved
+; 0xEC: source-preserving 16-bit division and remainder
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Encoding: EC oo ddd sss
+;   bits 7:6  00=UDIV16, 01=UREM16, 10=SDIV16, 11=SREM16
+;   bits 5:3  destination/dividend rD
+;   bits 2:0  source/divisor rS
+;
+; The primary slot forwards to a table-free runtime decoder. The secondary
+; byte is already in flight when the slot begins.
+
+primary_EC_divrem16_page:
+    rjmp  ec_divrem16_entry
+    nop
+    nop
+    nop
+    assert_primary_slot_width primary_EC_divrem16_page
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; 0xED-0xEE: reserved
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_stub primary_EC_reserved, invalid_primary_instruction_func
 emit_primary_stub primary_ED_reserved, invalid_primary_instruction_func
 emit_primary_stub primary_EE_reserved, invalid_primary_instruction_func
 
@@ -1447,6 +1465,163 @@ emit_primary_stub primary_FF_reserved, invalid_primary_instruction_func
 primary_table_end:
 .if (primary_table_end - primary_table) != (256 * PRIMARY_STRIDE_BYTES)
     .error "primary dispatch table is not exactly 256 four-word slots"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; EC dedicated runtime-decoded 16-bit division/remainder page
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Encoding: EC oo ddd sss
+;   oo=00  UDIV16 rD,rS
+;   oo=01  UREM16 rD,rS
+;   oo=10  SDIV16 rD,rS
+;   oo=11  SREM16 rD,rS
+;
+; rD supplies the dividend and receives the selected result. rS is preserved,
+; and rD == rS is legal because both complete operands are captured before
+; writeback. Architectural VM_FLAGS are preserved.
+;
+; The loop is a compact restoring divider. r24:r25 is the shifting
+; dividend/quotient, r26:r27 is the unsigned divisor magnitude, and r0:r1 is
+; the partial remainder. r30 retains the destination register-file address;
+; its otherwise-unused high bits carry operation metadata:
+;
+;   bit 7  signed operation
+;   bit 6  select remainder rather than quotient
+;   bit 5  negate the selected signed result
+;
+; Division by zero is deterministic: DIV returns 0xFFFF and REM returns the
+; original dividend. Signed INT_MIN / -1 returns INT_MIN with remainder zero.
+;
+; Primary-slot entry occurs on cycle 9 after the secondary-byte OUT. The slot
+; RJMP reaches this handler on cycle 11. Clearing XH and ZH fills cycles 14 and
+; 15, allowing the speculative following-primary OUT to land exactly on cycle
+; 17. The long arithmetic body then finishes through a late standard tail.
+
+ec_divrem16_entry:
+    ; Consume the secondary byte in the VM PC and start the speculative
+    ; following-primary transfer at the exact reverse-handoff boundary.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    mov   r27, ZERO
+    mov   r31, ZERO
+    cli
+    out   SPDR, ZERO
+    in    SECONDARY_OPCODE, SPDR
+    sei
+
+    ; Z = native register-file address of destination/dividend rD.
+    mov   r30, SECONDARY_OPCODE
+    lsr   r30
+    lsr   r30
+    andi  r30, 0x0e
+    subi  r30, -8
+
+    ; X = native register-file address of preserved source/divisor rS.
+    mov   r26, SECONDARY_OPCODE
+    lsl   r26
+    andi  r26, 0x0e
+    subi  r26, -8
+
+    ; Capture the original dividend without advancing Z. This permits rD == rS.
+    ld    r0, Z
+    ldd   r1, Z+1
+
+    ; Preserve oo in the unused high bits of the destination address.
+    andi  SECONDARY_OPCODE, 0xc0
+    or    r30, SECONDARY_OPCODE
+
+    ; Capture the complete divisor before any destination writeback, then move
+    ; both operands into the divider's working allocation.
+    ld    r24, X+
+    ld    r25, X
+    movw  r26, r24
+    movw  r24, r0
+
+    ; Define division by zero without entering the 16-iteration loop.
+    mov   r31, r26
+    or    r31, r27
+    breq  .Lec_divrem16_zero
+
+    ; Signed forms convert both inputs to unsigned magnitudes. For quotient,
+    ; the correction sign is dividend_sign XOR divisor_sign; for remainder it
+    ; is the original dividend sign, matching C/LLVM truncation semantics.
+    sbrs  r30, 7
+    rjmp  .Lec_divrem16_magnitudes_ready
+
+    mov   r31, r25
+    sbrs  r30, 6
+    eor   r31, r27
+    sbrc  r31, 7
+    ori   r30, 0x20
+
+    sbrs  r25, 7
+    rjmp  .Lec_divrem16_dividend_positive
+    neg   r24
+    adc   r25, ZERO
+    neg   r25
+.Lec_divrem16_dividend_positive:
+
+    sbrs  r27, 7
+    rjmp  .Lec_divrem16_magnitudes_ready
+    neg   r26
+    adc   r27, ZERO
+    neg   r27
+
+.Lec_divrem16_magnitudes_ready:
+    clr   r0
+    clr   r1
+    ldi   r31, 16
+
+.Lec_divrem16_loop:
+    ; Shift the next dividend bit into the partial remainder. r24:r25 becomes
+    ; the quotient as one result bit is inserted per iteration.
+    lsl   r24
+    rol   r25
+    rol   r0
+    rol   r1
+
+    cp    r0, r26
+    cpc   r1, r27
+    brlo  .Lec_divrem16_no_subtract
+    sub   r0, r26
+    sbc   r1, r27
+    ori   r24, 1
+.Lec_divrem16_no_subtract:
+    dec   r31
+    brne  .Lec_divrem16_loop
+
+    ; Select quotient or remainder in constant time.
+    sbrc  r30, 6
+    movw  r24, r0
+
+    ; Correct the sign of the selected signed result when required.
+    sbrs  r30, 5
+    rjmp  .Lec_divrem16_store
+    neg   r24
+    adc   r25, ZERO
+    neg   r25
+    rjmp  .Lec_divrem16_store
+
+.Lec_divrem16_zero:
+    ; r24:r25 still contains the original dividend. REM keeps it; DIV returns
+    ; all ones for both signed and unsigned forms.
+    sbrc  r30, 6
+    rjmp  .Lec_divrem16_store
+    ser   r24
+    ser   r25
+
+.Lec_divrem16_store:
+    andi  r30, 0x1f
+    mov   r31, ZERO
+    st    Z+, r24
+    st    Z,  r25
+    rjmp  cluster_a_tail_18
+
+ec_divrem16_end:
+.if (ec_divrem16_end - ec_divrem16_entry) != 156
+    .error "EC 16-bit division/remainder handler must occupy exactly 78 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -1761,10 +1936,10 @@ cmov_gate_end:
 ; Post-table migration scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; All defined non-prefix primary opcodes 00-EF are complete. The generic
+; All defined non-prefix primary opcodes 00-EC and EF are complete. The generic
 ; bounded-page decoder, secondary cadence clusters, and every specified
 ; executable secondary table are present. The fixed-width self-contained F1-F8
-; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
+; pages, the dedicated EC division and F9 runtime bitwise decoders, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
 ; page are implemented. F0 has shared operand-fetch/register-decode
 ; infrastructure and all valid secondaries 00-6D are implemented, including

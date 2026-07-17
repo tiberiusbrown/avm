@@ -333,6 +333,9 @@
 #define F0_OPERAND_HI              r25
 #define F0_SPEC                    r24
 #define F0_DECODE_SCRATCH          r25
+; F0 69-6B keep the trailing pre-scaled RRSPEC in native r25. The secondary
+; opcode is normalized in r24 to 0=CMP32, 1=LD32, 2=ST32 before this byte is read.
+#define F0_COLD32_SPEC             r25
 ; F0 6C-6D keep dddWaaaP in native r1 after the reverse-order fetch.
 ; Native r1 has no ABI zero-register requirement in this assembly-only runtime.
 #define F0_COLDMEM_SPEC            r1
@@ -1384,7 +1387,7 @@ primary_EF_ret:
 
 ; Each bounded page advertises its architectural upper bound and uses its
 ; final natural slot width. F1-F9, FA, FB-FD, and FE execute implemented
-; entries. F0 uses one-word veneers; secondaries 00-5F are implemented.
+; entries. F0 uses one-word veneers; secondaries 00-5F and 69-6D are implemented.
 ; F0 bound 0x6E, one-word veneer slots.
 emit_primary_bounded_page primary_F0_cold_veneer_page, 0x6E, f0_veneer_table, secondary_width_1_stub
 ; F1 bound 0x90, two-word slots.
@@ -1764,8 +1767,9 @@ cmov_gate_end:
 ; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
 ; page are implemented. F0 has shared operand-fetch/register-decode
-; infrastructure, secondaries 00-5F are implemented, and 6C-6D provide the
-; shared general-pointer data-space forms. Remaining F0 veneers still trap.
+; infrastructure, secondaries 00-5F are implemented, 69-6B provide the
+; shared cold 32-bit forms, and 6C-6D provide the shared general-pointer
+; data-space forms. Only the F0 60-68 program-space veneers still trap.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -3203,6 +3207,129 @@ f0_absolute_bodies_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; F0 69-6B: shared cold 32-bit forms
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; RRSPEC contains two pre-scaled native register-file offsets:
+;   bits 7:4  high operand: qL / qD / qS
+;   bits 3:0  low operand:  qR / rA
+;
+; Valid q offsets are 0,4,8,12 and valid r offsets are 0,2,...,14. Common
+; validation rejects a non-q high operand or an odd low operand; CMP32 also
+; rejects a low operand that is not q-aligned. X addresses the high operand
+; and Z addresses the low operand.
+;
+; The generic width-one F0 decoder launches RRSPEC at cycle 9 after F0-slot
+; entry and reaches this one-word veneer body at cycle 23. The one required
+; cadence slot normalizes secondary 69-6B to operation indices 0-2. The ADD,
+; CLI, and OUT then launch the following primary at cycle 26, exactly 17 cycles
+; after RRSPEC. This current-decoder adaptation is one word smaller than the
+; guide's three-cycle landing while preserving the same shared organization.
+;
+; Memory forms capture the complete 16-bit effective address before touching
+; the selected q pair, so LD32 and ST32 permit q/address-register overlap.
+; CMP32 captures the complete left operand before reusing XL as scratch, so
+; qL == qR is fully defined.
+
+f0_cold32_start:
+f0_cold32_delay_1:
+    subi  SECONDARY_OPCODE, 0x69  ; 0=CMP32, 1=LD32, 2=ST32
+f0_cold32:
+    add   VM_PCL, ONE
+    cli
+    out   SPDR, ZERO
+    in    F0_COLD32_SPEC, SPDR
+    sei
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; Common validity: high operand must be q-aligned and low operand r-aligned.
+    mov   r26, F0_COLD32_SPEC
+    andi  r26, 0x31
+    brne  f0_cold32_invalid
+
+    ; X = native register-file pointer for the high operand.
+    mov   r26, F0_COLD32_SPEC
+    swap  r26
+    andi  r26, 0x0f
+    subi  r26, -8
+    mov   r27, ZERO
+
+    ; Z = native register-file pointer for the low operand.
+    mov   r30, F0_COLD32_SPEC
+    andi  r30, 0x0f
+    subi  r30, -8
+    mov   r31, ZERO
+
+    ; Operation index zero selects CMP32; memory forms share address capture.
+    tst   SECONDARY_OPCODE
+    breq  f0_cold32_cmp32
+
+    ; Capture the effective data-space address before reading/writing a
+    ; potentially overlapping q operand.
+    ld    r0, Z+
+    ld    r1, Z
+    movw  Z, r0
+
+    ; Operation index one is LD32; index two falls through to ST32.
+    cpi   SECONDARY_OPCODE, 1
+    breq  f0_cold32_ld32
+
+f0_cold32_st32:
+    ld    r24, X+
+    st    Z+, r24
+    ld    r24, X+
+    st    Z+, r24
+    ld    r24, X+
+    st    Z+, r24
+    ld    r24, X
+    st    Z,  r24
+    rjmp  cluster_a_tail_18
+
+f0_cold32_ld32:
+    ld    r24, Z+
+    st    X+, r24
+    ld    r24, Z+
+    st    X+, r24
+    ld    r24, Z+
+    st    X+, r24
+    ld    r24, Z
+    st    X,  r24
+    rjmp  cluster_a_tail_18
+
+f0_cold32_cmp32:
+    ; CMP32 additionally requires the low operand to be q-aligned.
+    sbrc  F0_COLD32_SPEC, 1
+    rjmp  f0_cold32_invalid
+
+    ; Preserve all four left bytes before XL is reused as right-byte scratch.
+    ld    r0,  X+
+    ld    r1,  X+
+    ld    r24, X+
+    ld    r25, X
+
+    ld    r26, Z+
+    cp    r0,  r26
+    ld    r26, Z+
+    cpc   r1,  r26
+    ld    r26, Z+
+    cpc   r24, r26
+    ld    r26, Z
+    cpc   r25, r26
+
+    in    r24, SREG
+    out   VM_FLAGS, r24
+    rjmp  cluster_a_tail_18
+
+f0_cold32_invalid:
+    rjmp  invalid_secondary_instruction_func
+
+f0_cold32_end:
+.if (f0_cold32_end - f0_cold32_start) != 126
+    .error "F0 cold-32 subsystem must occupy exactly sixty-three AVR words"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; F0 6C-6D: general-pointer data-space forms
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -3305,7 +3432,7 @@ f0_coldmem_end:
 .endif
 
 ; F0 retains one-word veneers for the remaining cold forms. Secondaries 00-5F
-; and 6C-6D are implemented above; the local F0 trap remains before the group
+; and 69-6D are implemented above; the local F0 trap remains before the group
 ; for short RJMP reach.
 secondary_tables_before_cluster_b:
 secondary_unimplemented_a_func:
@@ -3382,10 +3509,15 @@ f0_veneer_table:
         rjmp f0_stm16_r_body
     .endr
 
-    ; 60-6B: program-space and cold-32 forms remain unimplemented.
-    .rept (0x6C - 0x60)
+    ; 60-68: program-space forms remain unimplemented.
+    .rept (0x69 - 0x60)
         rjmp secondary_unimplemented_a_func
     .endr
+
+    ; 69-6B: CMP32 / LD32 / ST32; trailing byte is pre-scaled RRSPEC.
+    rjmp  f0_cold32_delay_1
+    rjmp  f0_cold32_delay_1
+    rjmp  f0_cold32_delay_1
 
     ; 6C-6D: general-pointer load/store; trailing byte is dddWaaaP.
     rjmp  f0_coldmem_delay_1

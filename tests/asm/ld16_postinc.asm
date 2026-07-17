@@ -5,37 +5,37 @@
 .globl _start
 .type _start, @function
 _start:
-    ldi16 c0, 0x0680
-    ldi8 c1, 0x30
-    st8 [c0], c1
-    ldi16 c0, 0x0681
-    ldi16 c1, 0x0000
-    st16 [c0], c1
-    ldi16 c0, 0x0683
-    ldi8 c1, 0xc0
-    st8 [c0], c1
+    ldi16 r4, 0x0680
+    ldi8 r5, 0x30
+    st8 [r4], r5
+    ldi16 r4, 0x0681
+    ldi16 r5, 0x0000
+    st16 [r4], r5
+    ldi16 r4, 0x0683
+    ldi8 r5, 0xc0
+    st8 [r4], r5
 
-    ; POST pointer c0, data r0, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0x8700
+    ; POST pointer r4, data r0, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0x8700
     push16 r5
     pop16 r0
-    ldi16 c1, 0x6401
+    ldi16 r5, 0x6401
     push16 r5
     pop16 r1
-    ldi16 c0, 0x0681
-    ld16 r0, [c0+]
+    ldi16 r4, 0x0681
+    ld16 r0, [r4+]
     push16 r0
     push16 r4
     push16 r1
-    ldi16 c0, 0x0680
-    ld16 c1, [c0]
+    ldi16 r4, 0x0680
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0682
-    ld16 c1, [c0]
+    ldi16 r4, 0x0682
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -81,37 +81,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_000_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0684
-    ldi8 c1, 0x39
-    st8 [c0], c1
-    ldi16 c0, 0x0685
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x0687
-    ldi8 c1, 0xc7
-    st8 [c0], c1
+    ldi16 r4, 0x0684
+    ldi8 r5, 0x39
+    st8 [r4], r5
+    ldi16 r4, 0x0685
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x0687
+    ldi8 r5, 0xc7
+    st8 [r4], r5
 
-    ; POST pointer c0, data r0, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x8739
+    ; POST pointer r4, data r0, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x8739
     push16 r5
     pop16 r0
-    ldi16 c1, 0x644e
+    ldi16 r5, 0x644e
     push16 r5
     pop16 r1
-    ldi16 c0, 0x0685
-    ld16 r0, [c0+]
+    ldi16 r4, 0x0685
+    ld16 r0, [r4+]
     push16 r0
     push16 r4
     push16 r1
-    ldi16 c0, 0x0684
-    ld16 c1, [c0]
+    ldi16 r4, 0x0684
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0686
-    ld16 c1, [c0]
+    ldi16 r4, 0x0686
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -157,37 +157,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_001_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0688
-    ldi8 c1, 0x42
-    st8 [c0], c1
-    ldi16 c0, 0x0689
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x068b
-    ldi8 c1, 0xcf
-    st8 [c0], c1
+    ldi16 r4, 0x0688
+    ldi8 r5, 0x42
+    st8 [r4], r5
+    ldi16 r4, 0x0689
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x068b
+    ldi8 r5, 0xcf
+    st8 [r4], r5
 
-    ; POST pointer c0, data r1, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x8773
+    ; POST pointer r4, data r1, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x8773
     push16 r5
     pop16 r1
-    ldi16 c1, 0x639a
+    ldi16 r5, 0x639a
     push16 r5
     pop16 r0
-    ldi16 c0, 0x0689
-    ld16 r1, [c0+]
+    ldi16 r4, 0x0689
+    ld16 r1, [r4+]
     push16 r1
     push16 r4
     push16 r0
-    ldi16 c0, 0x0688
-    ld16 c1, [c0]
+    ldi16 r4, 0x0688
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x068a
-    ld16 c1, [c0]
+    ldi16 r4, 0x068a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -233,37 +233,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_002_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x068c
-    ldi8 c1, 0x4b
-    st8 [c0], c1
-    ldi16 c0, 0x068d
-    ldi16 c1, 0x7fff
-    st16 [c0], c1
-    ldi16 c0, 0x068f
-    ldi8 c1, 0xd6
-    st8 [c0], c1
+    ldi16 r4, 0x068c
+    ldi8 r5, 0x4b
+    st8 [r4], r5
+    ldi16 r4, 0x068d
+    ldi16 r5, 0x7fff
+    st16 [r4], r5
+    ldi16 r4, 0x068f
+    ldi8 r5, 0xd6
+    st8 [r4], r5
 
-    ; POST pointer c0, data r1, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0x87ac
+    ; POST pointer r4, data r1, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0x87ac
     push16 r5
     pop16 r1
-    ldi16 c1, 0x63e7
+    ldi16 r5, 0x63e7
     push16 r5
     pop16 r0
-    ldi16 c0, 0x068d
-    ld16 r1, [c0+]
+    ldi16 r4, 0x068d
+    ld16 r1, [r4+]
     push16 r1
     push16 r4
     push16 r0
-    ldi16 c0, 0x068c
-    ld16 c1, [c0]
+    ldi16 r4, 0x068c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x068e
-    ld16 c1, [c0]
+    ldi16 r4, 0x068e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -309,37 +309,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_003_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0690
-    ldi8 c1, 0x54
-    st8 [c0], c1
-    ldi16 c0, 0x0691
-    ldi16 c1, 0x7fff
-    st16 [c0], c1
-    ldi16 c0, 0x0693
-    ldi8 c1, 0xde
-    st8 [c0], c1
+    ldi16 r4, 0x0690
+    ldi8 r5, 0x54
+    st8 [r4], r5
+    ldi16 r4, 0x0691
+    ldi16 r5, 0x7fff
+    st16 [r4], r5
+    ldi16 r4, 0x0693
+    ldi8 r5, 0xde
+    st8 [r4], r5
 
-    ; POST pointer c0, data r2, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x87e6
+    ; POST pointer r4, data r2, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x87e6
     push16 r5
     pop16 r2
-    ldi16 c1, 0x6434
+    ldi16 r5, 0x6434
     push16 r5
     pop16 r0
-    ldi16 c0, 0x0691
-    ld16 r2, [c0+]
+    ldi16 r4, 0x0691
+    ld16 r2, [r4+]
     push16 r2
     push16 r4
     push16 r0
-    ldi16 c0, 0x0690
-    ld16 c1, [c0]
+    ldi16 r4, 0x0690
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0692
-    ld16 c1, [c0]
+    ldi16 r4, 0x0692
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -385,37 +385,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_004_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0694
-    ldi8 c1, 0x5d
-    st8 [c0], c1
-    ldi16 c0, 0x0695
-    ldi16 c1, 0xffff
-    st16 [c0], c1
-    ldi16 c0, 0x0697
-    ldi8 c1, 0xe5
-    st8 [c0], c1
+    ldi16 r4, 0x0694
+    ldi8 r5, 0x5d
+    st8 [r4], r5
+    ldi16 r4, 0x0695
+    ldi16 r5, 0xffff
+    st16 [r4], r5
+    ldi16 r4, 0x0697
+    ldi8 r5, 0xe5
+    st8 [r4], r5
 
-    ; POST pointer c0, data r2, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x881f
+    ; POST pointer r4, data r2, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x881f
     push16 r5
     pop16 r2
-    ldi16 c1, 0x6481
+    ldi16 r5, 0x6481
     push16 r5
     pop16 r0
-    ldi16 c0, 0x0695
-    ld16 r2, [c0+]
+    ldi16 r4, 0x0695
+    ld16 r2, [r4+]
     push16 r2
     push16 r4
     push16 r0
-    ldi16 c0, 0x0694
-    ld16 c1, [c0]
+    ldi16 r4, 0x0694
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0696
-    ld16 c1, [c0]
+    ldi16 r4, 0x0696
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -461,37 +461,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_005_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0698
-    ldi8 c1, 0x66
-    st8 [c0], c1
-    ldi16 c0, 0x0699
-    ldi16 c1, 0xffff
-    st16 [c0], c1
-    ldi16 c0, 0x069b
-    ldi8 c1, 0xed
-    st8 [c0], c1
+    ldi16 r4, 0x0698
+    ldi8 r5, 0x66
+    st8 [r4], r5
+    ldi16 r4, 0x0699
+    ldi16 r5, 0xffff
+    st16 [r4], r5
+    ldi16 r4, 0x069b
+    ldi8 r5, 0xed
+    st8 [r4], r5
 
-    ; POST pointer c0, data r3, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x8859
+    ; POST pointer r4, data r3, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x8859
     push16 r5
     pop16 r3
-    ldi16 c1, 0x64ce
+    ldi16 r5, 0x64ce
     push16 r5
     pop16 r0
-    ldi16 c0, 0x0699
-    ld16 r3, [c0+]
+    ldi16 r4, 0x0699
+    ld16 r3, [r4+]
     push16 r3
     push16 r4
     push16 r0
-    ldi16 c0, 0x0698
-    ld16 c1, [c0]
+    ldi16 r4, 0x0698
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x069a
-    ld16 c1, [c0]
+    ldi16 r4, 0x069a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -537,37 +537,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_006_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x069c
-    ldi8 c1, 0x6f
-    st8 [c0], c1
-    ldi16 c0, 0x069d
-    ldi16 c1, 0x0000
-    st16 [c0], c1
-    ldi16 c0, 0x069f
-    ldi8 c1, 0xf4
-    st8 [c0], c1
+    ldi16 r4, 0x069c
+    ldi8 r5, 0x6f
+    st8 [r4], r5
+    ldi16 r4, 0x069d
+    ldi16 r5, 0x0000
+    st16 [r4], r5
+    ldi16 r4, 0x069f
+    ldi8 r5, 0xf4
+    st8 [r4], r5
 
-    ; POST pointer c0, data r3, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x8892
+    ; POST pointer r4, data r3, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x8892
     push16 r5
     pop16 r3
-    ldi16 c1, 0x651b
+    ldi16 r5, 0x651b
     push16 r5
     pop16 r0
-    ldi16 c0, 0x069d
-    ld16 r3, [c0+]
+    ldi16 r4, 0x069d
+    ld16 r3, [r4+]
     push16 r3
     push16 r4
     push16 r0
-    ldi16 c0, 0x069c
-    ld16 c1, [c0]
+    ldi16 r4, 0x069c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x069e
-    ld16 c1, [c0]
+    ldi16 r4, 0x069e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -613,37 +613,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_007_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06a0
-    ldi8 c1, 0x78
-    st8 [c0], c1
-    ldi16 c0, 0x06a1
-    ldi16 c1, 0x0000
-    st16 [c0], c1
-    ldi16 c0, 0x06a3
-    ldi8 c1, 0xfd
-    st8 [c0], c1
+    ldi16 r4, 0x06a0
+    ldi8 r5, 0x78
+    st8 [r4], r5
+    ldi16 r4, 0x06a1
+    ldi16 r5, 0x0000
+    st16 [r4], r5
+    ldi16 r4, 0x06a3
+    ldi8 r5, 0xfd
+    st8 [r4], r5
 
-    ; POST pointer c0, data r5, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c2, 0x88cd
+    ; POST pointer r4, data r5, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r6, 0x88cd
     push16 r6
     pop16 r5
-    ldi16 c2, 0x6568
+    ldi16 r6, 0x6568
     push16 r6
     pop16 r0
-    ldi16 c0, 0x06a1
-    ld16 r5, [c0+]
+    ldi16 r4, 0x06a1
+    ld16 r5, [r4+]
     push16 r5
     push16 r4
     push16 r0
-    ldi16 c0, 0x06a0
-    ld16 c1, [c0]
+    ldi16 r4, 0x06a0
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06a2
-    ld16 c1, [c0]
+    ldi16 r4, 0x06a2
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -689,37 +689,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_008_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06a4
-    ldi8 c1, 0x81
-    st8 [c0], c1
-    ldi16 c0, 0x06a5
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x06a7
-    ldi8 c1, 0x04
-    st8 [c0], c1
+    ldi16 r4, 0x06a4
+    ldi8 r5, 0x81
+    st8 [r4], r5
+    ldi16 r4, 0x06a5
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x06a7
+    ldi8 r5, 0x04
+    st8 [r4], r5
 
-    ; POST pointer c0, data r5, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c2, 0x8906
+    ; POST pointer r4, data r5, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r6, 0x8906
     push16 r6
     pop16 r5
-    ldi16 c2, 0x65b5
+    ldi16 r6, 0x65b5
     push16 r6
     pop16 r0
-    ldi16 c0, 0x06a5
-    ld16 r5, [c0+]
+    ldi16 r4, 0x06a5
+    ld16 r5, [r4+]
     push16 r5
     push16 r4
     push16 r0
-    ldi16 c0, 0x06a4
-    ld16 c1, [c0]
+    ldi16 r4, 0x06a4
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06a6
-    ld16 c1, [c0]
+    ldi16 r4, 0x06a6
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -765,37 +765,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_009_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06a8
-    ldi8 c1, 0x8a
-    st8 [c0], c1
-    ldi16 c0, 0x06a9
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x06ab
-    ldi8 c1, 0x0c
-    st8 [c0], c1
+    ldi16 r4, 0x06a8
+    ldi8 r5, 0x8a
+    st8 [r4], r5
+    ldi16 r4, 0x06a9
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x06ab
+    ldi8 r5, 0x0c
+    st8 [r4], r5
 
-    ; POST pointer c0, data r6, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0x8940
+    ; POST pointer r4, data r6, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0x8940
     push16 r5
     pop16 r6
-    ldi16 c1, 0x6602
+    ldi16 r5, 0x6602
     push16 r5
     pop16 r0
-    ldi16 c0, 0x06a9
-    ld16 r6, [c0+]
+    ldi16 r4, 0x06a9
+    ld16 r6, [r4+]
     push16 r6
     push16 r4
     push16 r0
-    ldi16 c0, 0x06a8
-    ld16 c1, [c0]
+    ldi16 r4, 0x06a8
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06aa
-    ld16 c1, [c0]
+    ldi16 r4, 0x06aa
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -841,37 +841,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_00a_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06ac
-    ldi8 c1, 0x93
-    st8 [c0], c1
-    ldi16 c0, 0x06ad
-    ldi16 c1, 0x7fff
-    st16 [c0], c1
-    ldi16 c0, 0x06af
-    ldi8 c1, 0x13
-    st8 [c0], c1
+    ldi16 r4, 0x06ac
+    ldi8 r5, 0x93
+    st8 [r4], r5
+    ldi16 r4, 0x06ad
+    ldi16 r5, 0x7fff
+    st16 [r4], r5
+    ldi16 r4, 0x06af
+    ldi8 r5, 0x13
+    st8 [r4], r5
 
-    ; POST pointer c0, data r6, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x8979
+    ; POST pointer r4, data r6, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x8979
     push16 r5
     pop16 r6
-    ldi16 c1, 0x664f
+    ldi16 r5, 0x664f
     push16 r5
     pop16 r0
-    ldi16 c0, 0x06ad
-    ld16 r6, [c0+]
+    ldi16 r4, 0x06ad
+    ld16 r6, [r4+]
     push16 r6
     push16 r4
     push16 r0
-    ldi16 c0, 0x06ac
-    ld16 c1, [c0]
+    ldi16 r4, 0x06ac
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06ae
-    ld16 c1, [c0]
+    ldi16 r4, 0x06ae
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -917,37 +917,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_00b_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06b0
-    ldi8 c1, 0x9c
-    st8 [c0], c1
-    ldi16 c0, 0x06b1
-    ldi16 c1, 0x7fff
-    st16 [c0], c1
-    ldi16 c0, 0x06b3
-    ldi8 c1, 0x1b
-    st8 [c0], c1
+    ldi16 r4, 0x06b0
+    ldi8 r5, 0x9c
+    st8 [r4], r5
+    ldi16 r4, 0x06b1
+    ldi16 r5, 0x7fff
+    st16 [r4], r5
+    ldi16 r4, 0x06b3
+    ldi8 r5, 0x1b
+    st8 [r4], r5
 
-    ; POST pointer c0, data r7, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x89b3
+    ; POST pointer r4, data r7, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x89b3
     push16 r5
     pop16 r7
-    ldi16 c1, 0x669c
+    ldi16 r5, 0x669c
     push16 r5
     pop16 r0
-    ldi16 c0, 0x06b1
-    ld16 r7, [c0+]
+    ldi16 r4, 0x06b1
+    ld16 r7, [r4+]
     push16 r7
     push16 r4
     push16 r0
-    ldi16 c0, 0x06b0
-    ld16 c1, [c0]
+    ldi16 r4, 0x06b0
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06b2
-    ld16 c1, [c0]
+    ldi16 r4, 0x06b2
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -993,37 +993,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_00c_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06b4
-    ldi8 c1, 0xa5
-    st8 [c0], c1
-    ldi16 c0, 0x06b5
-    ldi16 c1, 0xffff
-    st16 [c0], c1
-    ldi16 c0, 0x06b7
-    ldi8 c1, 0x22
-    st8 [c0], c1
+    ldi16 r4, 0x06b4
+    ldi8 r5, 0xa5
+    st8 [r4], r5
+    ldi16 r4, 0x06b5
+    ldi16 r5, 0xffff
+    st16 [r4], r5
+    ldi16 r4, 0x06b7
+    ldi8 r5, 0x22
+    st8 [r4], r5
 
-    ; POST pointer c0, data r7, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0x89ec
+    ; POST pointer r4, data r7, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0x89ec
     push16 r5
     pop16 r7
-    ldi16 c1, 0x66e9
+    ldi16 r5, 0x66e9
     push16 r5
     pop16 r0
-    ldi16 c0, 0x06b5
-    ld16 r7, [c0+]
+    ldi16 r4, 0x06b5
+    ld16 r7, [r4+]
     push16 r7
     push16 r4
     push16 r0
-    ldi16 c0, 0x06b4
-    ld16 c1, [c0]
+    ldi16 r4, 0x06b4
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06b6
-    ld16 c1, [c0]
+    ldi16 r4, 0x06b6
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1069,37 +1069,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_00d_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06b8
-    ldi8 c1, 0xaf
-    st8 [c0], c1
-    ldi16 c0, 0x06b9
-    ldi16 c1, 0xa55a
-    st16 [c0], c1
-    ldi16 c0, 0x06bb
-    ldi8 c1, 0x22
-    st8 [c0], c1
+    ldi16 r4, 0x06b8
+    ldi8 r5, 0xaf
+    st8 [r4], r5
+    ldi16 r4, 0x06b9
+    ldi16 r5, 0xa55a
+    st16 [r4], r5
+    ldi16 r4, 0x06bb
+    ldi8 r5, 0x22
+    st8 [r4], r5
 
-    ; POST pointer c1, data r0, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8a1e
+    ; POST pointer r5, data r0, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8a1e
     push16 r4
     pop16 r0
-    ldi16 c0, 0x6837
+    ldi16 r4, 0x6837
     push16 r4
     pop16 r1
-    ldi16 c1, 0x06b9
-    ld16 r0, [c1+]
+    ldi16 r5, 0x06b9
+    ld16 r0, [r5+]
     push16 r0
     push16 r5
     push16 r1
-    ldi16 c0, 0x06b8
-    ld16 c1, [c0]
+    ldi16 r4, 0x06b8
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06ba
-    ld16 c1, [c0]
+    ldi16 r4, 0x06ba
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1145,37 +1145,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_00e_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x06bc
-    ldi8 c1, 0xb8
-    st8 [c0], c1
-    ldi16 c0, 0x06bd
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x06bf
-    ldi8 c1, 0x29
-    st8 [c0], c1
+    ldi16 r4, 0x06bc
+    ldi8 r5, 0xb8
+    st8 [r4], r5
+    ldi16 r4, 0x06bd
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x06bf
+    ldi8 r5, 0x29
+    st8 [r4], r5
 
-    ; POST pointer c1, data r0, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8a57
+    ; POST pointer r5, data r0, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8a57
     push16 r4
     pop16 r0
-    ldi16 c0, 0x6884
+    ldi16 r4, 0x6884
     push16 r4
     pop16 r1
-    ldi16 c1, 0x06bd
-    ld16 r0, [c1+]
+    ldi16 r5, 0x06bd
+    ld16 r0, [r5+]
     push16 r0
     push16 r5
     push16 r1
-    ldi16 c0, 0x06bc
-    ld16 c1, [c0]
+    ldi16 r4, 0x06bc
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x06be
-    ld16 c1, [c0]
+    ldi16 r4, 0x06be
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1221,37 +1221,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_00f_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0600
-    ldi8 c1, 0xc1
-    st8 [c0], c1
-    ldi16 c0, 0x0601
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x0603
-    ldi8 c1, 0x31
-    st8 [c0], c1
+    ldi16 r4, 0x0600
+    ldi8 r5, 0xc1
+    st8 [r4], r5
+    ldi16 r4, 0x0601
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x0603
+    ldi8 r5, 0x31
+    st8 [r4], r5
 
-    ; POST pointer c1, data r1, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8a91
+    ; POST pointer r5, data r1, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8a91
     push16 r4
     pop16 r1
-    ldi16 c0, 0x67d0
+    ldi16 r4, 0x67d0
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0601
-    ld16 r1, [c1+]
+    ldi16 r5, 0x0601
+    ld16 r1, [r5+]
     push16 r1
     push16 r5
     push16 r0
-    ldi16 c0, 0x0600
-    ld16 c1, [c0]
+    ldi16 r4, 0x0600
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0602
-    ld16 c1, [c0]
+    ldi16 r4, 0x0602
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1297,37 +1297,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_010_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0604
-    ldi8 c1, 0xca
-    st8 [c0], c1
-    ldi16 c0, 0x0605
-    ldi16 c1, 0x0100
-    st16 [c0], c1
-    ldi16 c0, 0x0607
-    ldi8 c1, 0x38
-    st8 [c0], c1
+    ldi16 r4, 0x0604
+    ldi8 r5, 0xca
+    st8 [r4], r5
+    ldi16 r4, 0x0605
+    ldi16 r5, 0x0100
+    st16 [r4], r5
+    ldi16 r4, 0x0607
+    ldi8 r5, 0x38
+    st8 [r4], r5
 
-    ; POST pointer c1, data r1, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8aca
+    ; POST pointer r5, data r1, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8aca
     push16 r4
     pop16 r1
-    ldi16 c0, 0x681d
+    ldi16 r4, 0x681d
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0605
-    ld16 r1, [c1+]
+    ldi16 r5, 0x0605
+    ld16 r1, [r5+]
     push16 r1
     push16 r5
     push16 r0
-    ldi16 c0, 0x0604
-    ld16 c1, [c0]
+    ldi16 r4, 0x0604
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0606
-    ld16 c1, [c0]
+    ldi16 r4, 0x0606
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1373,37 +1373,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_011_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0608
-    ldi8 c1, 0xd3
-    st8 [c0], c1
-    ldi16 c0, 0x0609
-    ldi16 c1, 0x0100
-    st16 [c0], c1
-    ldi16 c0, 0x060b
-    ldi8 c1, 0x40
-    st8 [c0], c1
+    ldi16 r4, 0x0608
+    ldi8 r5, 0xd3
+    st8 [r4], r5
+    ldi16 r4, 0x0609
+    ldi16 r5, 0x0100
+    st16 [r4], r5
+    ldi16 r4, 0x060b
+    ldi8 r5, 0x40
+    st8 [r4], r5
 
-    ; POST pointer c1, data r2, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8b04
+    ; POST pointer r5, data r2, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8b04
     push16 r4
     pop16 r2
-    ldi16 c0, 0x686a
+    ldi16 r4, 0x686a
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0609
-    ld16 r2, [c1+]
+    ldi16 r5, 0x0609
+    ld16 r2, [r5+]
     push16 r2
     push16 r5
     push16 r0
-    ldi16 c0, 0x0608
-    ld16 c1, [c0]
+    ldi16 r4, 0x0608
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x060a
-    ld16 c1, [c0]
+    ldi16 r4, 0x060a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1449,37 +1449,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_012_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x060c
-    ldi8 c1, 0xdc
-    st8 [c0], c1
-    ldi16 c0, 0x060d
-    ldi16 c1, 0x8000
-    st16 [c0], c1
-    ldi16 c0, 0x060f
-    ldi8 c1, 0x47
-    st8 [c0], c1
+    ldi16 r4, 0x060c
+    ldi8 r5, 0xdc
+    st8 [r4], r5
+    ldi16 r4, 0x060d
+    ldi16 r5, 0x8000
+    st16 [r4], r5
+    ldi16 r4, 0x060f
+    ldi8 r5, 0x47
+    st8 [r4], r5
 
-    ; POST pointer c1, data r2, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8b3d
+    ; POST pointer r5, data r2, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8b3d
     push16 r4
     pop16 r2
-    ldi16 c0, 0x68b7
+    ldi16 r4, 0x68b7
     push16 r4
     pop16 r0
-    ldi16 c1, 0x060d
-    ld16 r2, [c1+]
+    ldi16 r5, 0x060d
+    ld16 r2, [r5+]
     push16 r2
     push16 r5
     push16 r0
-    ldi16 c0, 0x060c
-    ld16 c1, [c0]
+    ldi16 r4, 0x060c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x060e
-    ld16 c1, [c0]
+    ldi16 r4, 0x060e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1525,37 +1525,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_013_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0610
-    ldi8 c1, 0xe5
-    st8 [c0], c1
-    ldi16 c0, 0x0611
-    ldi16 c1, 0x8000
-    st16 [c0], c1
-    ldi16 c0, 0x0613
-    ldi8 c1, 0x4f
-    st8 [c0], c1
+    ldi16 r4, 0x0610
+    ldi8 r5, 0xe5
+    st8 [r4], r5
+    ldi16 r4, 0x0611
+    ldi16 r5, 0x8000
+    st16 [r4], r5
+    ldi16 r4, 0x0613
+    ldi8 r5, 0x4f
+    st8 [r4], r5
 
-    ; POST pointer c1, data r3, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8b77
+    ; POST pointer r5, data r3, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8b77
     push16 r4
     pop16 r3
-    ldi16 c0, 0x6904
+    ldi16 r4, 0x6904
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0611
-    ld16 r3, [c1+]
+    ldi16 r5, 0x0611
+    ld16 r3, [r5+]
     push16 r3
     push16 r5
     push16 r0
-    ldi16 c0, 0x0610
-    ld16 c1, [c0]
+    ldi16 r4, 0x0610
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0612
-    ld16 c1, [c0]
+    ldi16 r4, 0x0612
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1601,37 +1601,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_014_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0614
-    ldi8 c1, 0xee
-    st8 [c0], c1
-    ldi16 c0, 0x0615
-    ldi16 c1, 0xa55a
-    st16 [c0], c1
-    ldi16 c0, 0x0617
-    ldi8 c1, 0x56
-    st8 [c0], c1
+    ldi16 r4, 0x0614
+    ldi8 r5, 0xee
+    st8 [r4], r5
+    ldi16 r4, 0x0615
+    ldi16 r5, 0xa55a
+    st16 [r4], r5
+    ldi16 r4, 0x0617
+    ldi8 r5, 0x56
+    st8 [r4], r5
 
-    ; POST pointer c1, data r3, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8bb0
+    ; POST pointer r5, data r3, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8bb0
     push16 r4
     pop16 r3
-    ldi16 c0, 0x6951
+    ldi16 r4, 0x6951
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0615
-    ld16 r3, [c1+]
+    ldi16 r5, 0x0615
+    ld16 r3, [r5+]
     push16 r3
     push16 r5
     push16 r0
-    ldi16 c0, 0x0614
-    ld16 c1, [c0]
+    ldi16 r4, 0x0614
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0616
-    ld16 c1, [c0]
+    ldi16 r4, 0x0616
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1677,37 +1677,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_015_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0618
-    ldi8 c1, 0xf7
-    st8 [c0], c1
-    ldi16 c0, 0x0619
-    ldi16 c1, 0xa55a
-    st16 [c0], c1
-    ldi16 c0, 0x061b
-    ldi8 c1, 0x5e
-    st8 [c0], c1
+    ldi16 r4, 0x0618
+    ldi8 r5, 0xf7
+    st8 [r4], r5
+    ldi16 r4, 0x0619
+    ldi16 r5, 0xa55a
+    st16 [r4], r5
+    ldi16 r4, 0x061b
+    ldi8 r5, 0x5e
+    st8 [r4], r5
 
-    ; POST pointer c1, data r4, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x8bea
+    ; POST pointer r5, data r4, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x8bea
     push16 r6
     pop16 r4
-    ldi16 c2, 0x699e
+    ldi16 r6, 0x699e
     push16 r6
     pop16 r0
-    ldi16 c1, 0x0619
-    ld16 r4, [c1+]
+    ldi16 r5, 0x0619
+    ld16 r4, [r5+]
     push16 r4
     push16 r5
     push16 r0
-    ldi16 c0, 0x0618
-    ld16 c1, [c0]
+    ldi16 r4, 0x0618
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x061a
-    ld16 c1, [c0]
+    ldi16 r4, 0x061a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1753,37 +1753,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_016_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x061c
-    ldi8 c1, 0x00
-    st8 [c0], c1
-    ldi16 c0, 0x061d
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x061f
-    ldi8 c1, 0x65
-    st8 [c0], c1
+    ldi16 r4, 0x061c
+    ldi8 r5, 0x00
+    st8 [r4], r5
+    ldi16 r4, 0x061d
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x061f
+    ldi8 r5, 0x65
+    st8 [r4], r5
 
-    ; POST pointer c1, data r4, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c2, 0x8c23
+    ; POST pointer r5, data r4, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r6, 0x8c23
     push16 r6
     pop16 r4
-    ldi16 c2, 0x69eb
+    ldi16 r6, 0x69eb
     push16 r6
     pop16 r0
-    ldi16 c1, 0x061d
-    ld16 r4, [c1+]
+    ldi16 r5, 0x061d
+    ld16 r4, [r5+]
     push16 r4
     push16 r5
     push16 r0
-    ldi16 c0, 0x061c
-    ld16 c1, [c0]
+    ldi16 r4, 0x061c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x061e
-    ld16 c1, [c0]
+    ldi16 r4, 0x061e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1829,37 +1829,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_017_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0620
-    ldi8 c1, 0x09
-    st8 [c0], c1
-    ldi16 c0, 0x0621
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x0623
-    ldi8 c1, 0x6e
-    st8 [c0], c1
+    ldi16 r4, 0x0620
+    ldi8 r5, 0x09
+    st8 [r4], r5
+    ldi16 r4, 0x0621
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x0623
+    ldi8 r5, 0x6e
+    st8 [r4], r5
 
-    ; POST pointer c1, data r6, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8c5e
+    ; POST pointer r5, data r6, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8c5e
     push16 r4
     pop16 r6
-    ldi16 c0, 0x6a38
+    ldi16 r4, 0x6a38
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0621
-    ld16 r6, [c1+]
+    ldi16 r5, 0x0621
+    ld16 r6, [r5+]
     push16 r6
     push16 r5
     push16 r0
-    ldi16 c0, 0x0620
-    ld16 c1, [c0]
+    ldi16 r4, 0x0620
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0622
-    ld16 c1, [c0]
+    ldi16 r4, 0x0622
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1905,37 +1905,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_018_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0624
-    ldi8 c1, 0x12
-    st8 [c0], c1
-    ldi16 c0, 0x0625
-    ldi16 c1, 0x0100
-    st16 [c0], c1
-    ldi16 c0, 0x0627
-    ldi8 c1, 0x75
-    st8 [c0], c1
+    ldi16 r4, 0x0624
+    ldi8 r5, 0x12
+    st8 [r4], r5
+    ldi16 r4, 0x0625
+    ldi16 r5, 0x0100
+    st16 [r4], r5
+    ldi16 r4, 0x0627
+    ldi8 r5, 0x75
+    st8 [r4], r5
 
-    ; POST pointer c1, data r6, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8c97
+    ; POST pointer r5, data r6, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8c97
     push16 r4
     pop16 r6
-    ldi16 c0, 0x6a85
+    ldi16 r4, 0x6a85
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0625
-    ld16 r6, [c1+]
+    ldi16 r5, 0x0625
+    ld16 r6, [r5+]
     push16 r6
     push16 r5
     push16 r0
-    ldi16 c0, 0x0624
-    ld16 c1, [c0]
+    ldi16 r4, 0x0624
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0626
-    ld16 c1, [c0]
+    ldi16 r4, 0x0626
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -1981,37 +1981,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_019_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0628
-    ldi8 c1, 0x1b
-    st8 [c0], c1
-    ldi16 c0, 0x0629
-    ldi16 c1, 0x0100
-    st16 [c0], c1
-    ldi16 c0, 0x062b
-    ldi8 c1, 0x7d
-    st8 [c0], c1
+    ldi16 r4, 0x0628
+    ldi8 r5, 0x1b
+    st8 [r4], r5
+    ldi16 r4, 0x0629
+    ldi16 r5, 0x0100
+    st16 [r4], r5
+    ldi16 r4, 0x062b
+    ldi8 r5, 0x7d
+    st8 [r4], r5
 
-    ; POST pointer c1, data r7, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8cd1
+    ; POST pointer r5, data r7, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8cd1
     push16 r4
     pop16 r7
-    ldi16 c0, 0x6ad2
+    ldi16 r4, 0x6ad2
     push16 r4
     pop16 r0
-    ldi16 c1, 0x0629
-    ld16 r7, [c1+]
+    ldi16 r5, 0x0629
+    ld16 r7, [r5+]
     push16 r7
     push16 r5
     push16 r0
-    ldi16 c0, 0x0628
-    ld16 c1, [c0]
+    ldi16 r4, 0x0628
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x062a
-    ld16 c1, [c0]
+    ldi16 r4, 0x062a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2057,37 +2057,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_01a_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x062c
-    ldi8 c1, 0x24
-    st8 [c0], c1
-    ldi16 c0, 0x062d
-    ldi16 c1, 0x8000
-    st16 [c0], c1
-    ldi16 c0, 0x062f
-    ldi8 c1, 0x84
-    st8 [c0], c1
+    ldi16 r4, 0x062c
+    ldi8 r5, 0x24
+    st8 [r4], r5
+    ldi16 r4, 0x062d
+    ldi16 r5, 0x8000
+    st16 [r4], r5
+    ldi16 r4, 0x062f
+    ldi8 r5, 0x84
+    st8 [r4], r5
 
-    ; POST pointer c1, data r7, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8d0a
+    ; POST pointer r5, data r7, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8d0a
     push16 r4
     pop16 r7
-    ldi16 c0, 0x6b1f
+    ldi16 r4, 0x6b1f
     push16 r4
     pop16 r0
-    ldi16 c1, 0x062d
-    ld16 r7, [c1+]
+    ldi16 r5, 0x062d
+    ld16 r7, [r5+]
     push16 r7
     push16 r5
     push16 r0
-    ldi16 c0, 0x062c
-    ld16 c1, [c0]
+    ldi16 r4, 0x062c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x062e
-    ld16 c1, [c0]
+    ldi16 r4, 0x062e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2133,37 +2133,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_01b_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0630
-    ldi8 c1, 0x2e
-    st8 [c0], c1
-    ldi16 c0, 0x0631
-    ldi16 c1, 0xffff
-    st16 [c0], c1
-    ldi16 c0, 0x0633
-    ldi8 c1, 0x84
-    st8 [c0], c1
+    ldi16 r4, 0x0630
+    ldi8 r5, 0x2e
+    st8 [r4], r5
+    ldi16 r4, 0x0631
+    ldi16 r5, 0xffff
+    st16 [r4], r5
+    ldi16 r4, 0x0633
+    ldi8 r5, 0x84
+    st8 [r4], r5
 
-    ; POST pointer c2, data r0, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8d3c
+    ; POST pointer r6, data r0, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8d3c
     push16 r4
     pop16 r0
-    ldi16 c0, 0x6c6d
+    ldi16 r4, 0x6c6d
     push16 r4
     pop16 r1
-    ldi16 c2, 0x0631
-    ld16 r0, [c2+]
+    ldi16 r6, 0x0631
+    ld16 r0, [r6+]
     push16 r0
     push16 r6
     push16 r1
-    ldi16 c0, 0x0630
-    ld16 c1, [c0]
+    ldi16 r4, 0x0630
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0632
-    ld16 c1, [c0]
+    ldi16 r4, 0x0632
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2209,37 +2209,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_01c_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0634
-    ldi8 c1, 0x37
-    st8 [c0], c1
-    ldi16 c0, 0x0635
-    ldi16 c1, 0x0000
-    st16 [c0], c1
-    ldi16 c0, 0x0637
-    ldi8 c1, 0x8b
-    st8 [c0], c1
+    ldi16 r4, 0x0634
+    ldi8 r5, 0x37
+    st8 [r4], r5
+    ldi16 r4, 0x0635
+    ldi16 r5, 0x0000
+    st16 [r4], r5
+    ldi16 r4, 0x0637
+    ldi8 r5, 0x8b
+    st8 [r4], r5
 
-    ; POST pointer c2, data r0, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8d75
+    ; POST pointer r6, data r0, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8d75
     push16 r4
     pop16 r0
-    ldi16 c0, 0x6cba
+    ldi16 r4, 0x6cba
     push16 r4
     pop16 r1
-    ldi16 c2, 0x0635
-    ld16 r0, [c2+]
+    ldi16 r6, 0x0635
+    ld16 r0, [r6+]
     push16 r0
     push16 r6
     push16 r1
-    ldi16 c0, 0x0634
-    ld16 c1, [c0]
+    ldi16 r4, 0x0634
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0636
-    ld16 c1, [c0]
+    ldi16 r4, 0x0636
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2285,37 +2285,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_01d_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0638
-    ldi8 c1, 0x40
-    st8 [c0], c1
-    ldi16 c0, 0x0639
-    ldi16 c1, 0x0000
-    st16 [c0], c1
-    ldi16 c0, 0x063b
-    ldi8 c1, 0x93
-    st8 [c0], c1
+    ldi16 r4, 0x0638
+    ldi8 r5, 0x40
+    st8 [r4], r5
+    ldi16 r4, 0x0639
+    ldi16 r5, 0x0000
+    st16 [r4], r5
+    ldi16 r4, 0x063b
+    ldi8 r5, 0x93
+    st8 [r4], r5
 
-    ; POST pointer c2, data r1, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8daf
+    ; POST pointer r6, data r1, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8daf
     push16 r4
     pop16 r1
-    ldi16 c0, 0x6c06
+    ldi16 r4, 0x6c06
     push16 r4
     pop16 r0
-    ldi16 c2, 0x0639
-    ld16 r1, [c2+]
+    ldi16 r6, 0x0639
+    ld16 r1, [r6+]
     push16 r1
     push16 r6
     push16 r0
-    ldi16 c0, 0x0638
-    ld16 c1, [c0]
+    ldi16 r4, 0x0638
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x063a
-    ld16 c1, [c0]
+    ldi16 r4, 0x063a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2361,37 +2361,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_01e_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x063c
-    ldi8 c1, 0x49
-    st8 [c0], c1
-    ldi16 c0, 0x063d
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x063f
-    ldi8 c1, 0x9a
-    st8 [c0], c1
+    ldi16 r4, 0x063c
+    ldi8 r5, 0x49
+    st8 [r4], r5
+    ldi16 r4, 0x063d
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x063f
+    ldi8 r5, 0x9a
+    st8 [r4], r5
 
-    ; POST pointer c2, data r1, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8de8
+    ; POST pointer r6, data r1, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8de8
     push16 r4
     pop16 r1
-    ldi16 c0, 0x6c53
+    ldi16 r4, 0x6c53
     push16 r4
     pop16 r0
-    ldi16 c2, 0x063d
-    ld16 r1, [c2+]
+    ldi16 r6, 0x063d
+    ld16 r1, [r6+]
     push16 r1
     push16 r6
     push16 r0
-    ldi16 c0, 0x063c
-    ld16 c1, [c0]
+    ldi16 r4, 0x063c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x063e
-    ld16 c1, [c0]
+    ldi16 r4, 0x063e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2437,37 +2437,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_01f_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0640
-    ldi8 c1, 0x52
-    st8 [c0], c1
-    ldi16 c0, 0x0641
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x0643
-    ldi8 c1, 0xa2
-    st8 [c0], c1
+    ldi16 r4, 0x0640
+    ldi8 r5, 0x52
+    st8 [r4], r5
+    ldi16 r4, 0x0641
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x0643
+    ldi8 r5, 0xa2
+    st8 [r4], r5
 
-    ; POST pointer c2, data r2, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8e22
+    ; POST pointer r6, data r2, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8e22
     push16 r4
     pop16 r2
-    ldi16 c0, 0x6ca0
+    ldi16 r4, 0x6ca0
     push16 r4
     pop16 r0
-    ldi16 c2, 0x0641
-    ld16 r2, [c2+]
+    ldi16 r6, 0x0641
+    ld16 r2, [r6+]
     push16 r2
     push16 r6
     push16 r0
-    ldi16 c0, 0x0640
-    ld16 c1, [c0]
+    ldi16 r4, 0x0640
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0642
-    ld16 c1, [c0]
+    ldi16 r4, 0x0642
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2513,37 +2513,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_020_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0644
-    ldi8 c1, 0x5b
-    st8 [c0], c1
-    ldi16 c0, 0x0645
-    ldi16 c1, 0x7fff
-    st16 [c0], c1
-    ldi16 c0, 0x0647
-    ldi8 c1, 0xa9
-    st8 [c0], c1
+    ldi16 r4, 0x0644
+    ldi8 r5, 0x5b
+    st8 [r4], r5
+    ldi16 r4, 0x0645
+    ldi16 r5, 0x7fff
+    st16 [r4], r5
+    ldi16 r4, 0x0647
+    ldi8 r5, 0xa9
+    st8 [r4], r5
 
-    ; POST pointer c2, data r2, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8e5b
+    ; POST pointer r6, data r2, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8e5b
     push16 r4
     pop16 r2
-    ldi16 c0, 0x6ced
+    ldi16 r4, 0x6ced
     push16 r4
     pop16 r0
-    ldi16 c2, 0x0645
-    ld16 r2, [c2+]
+    ldi16 r6, 0x0645
+    ld16 r2, [r6+]
     push16 r2
     push16 r6
     push16 r0
-    ldi16 c0, 0x0644
-    ld16 c1, [c0]
+    ldi16 r4, 0x0644
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0646
-    ld16 c1, [c0]
+    ldi16 r4, 0x0646
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2589,37 +2589,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_021_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0648
-    ldi8 c1, 0x64
-    st8 [c0], c1
-    ldi16 c0, 0x0649
-    ldi16 c1, 0x7fff
-    st16 [c0], c1
-    ldi16 c0, 0x064b
-    ldi8 c1, 0xb1
-    st8 [c0], c1
+    ldi16 r4, 0x0648
+    ldi8 r5, 0x64
+    st8 [r4], r5
+    ldi16 r4, 0x0649
+    ldi16 r5, 0x7fff
+    st16 [r4], r5
+    ldi16 r4, 0x064b
+    ldi8 r5, 0xb1
+    st8 [r4], r5
 
-    ; POST pointer c2, data r3, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8e95
+    ; POST pointer r6, data r3, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8e95
     push16 r4
     pop16 r3
-    ldi16 c0, 0x6d3a
+    ldi16 r4, 0x6d3a
     push16 r4
     pop16 r0
-    ldi16 c2, 0x0649
-    ld16 r3, [c2+]
+    ldi16 r6, 0x0649
+    ld16 r3, [r6+]
     push16 r3
     push16 r6
     push16 r0
-    ldi16 c0, 0x0648
-    ld16 c1, [c0]
+    ldi16 r4, 0x0648
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x064a
-    ld16 c1, [c0]
+    ldi16 r4, 0x064a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2665,37 +2665,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_022_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x064c
-    ldi8 c1, 0x6d
-    st8 [c0], c1
-    ldi16 c0, 0x064d
-    ldi16 c1, 0xffff
-    st16 [c0], c1
-    ldi16 c0, 0x064f
-    ldi8 c1, 0xb8
-    st8 [c0], c1
+    ldi16 r4, 0x064c
+    ldi8 r5, 0x6d
+    st8 [r4], r5
+    ldi16 r4, 0x064d
+    ldi16 r5, 0xffff
+    st16 [r4], r5
+    ldi16 r4, 0x064f
+    ldi8 r5, 0xb8
+    st8 [r4], r5
 
-    ; POST pointer c2, data r3, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8ece
+    ; POST pointer r6, data r3, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8ece
     push16 r4
     pop16 r3
-    ldi16 c0, 0x6d87
+    ldi16 r4, 0x6d87
     push16 r4
     pop16 r0
-    ldi16 c2, 0x064d
-    ld16 r3, [c2+]
+    ldi16 r6, 0x064d
+    ld16 r3, [r6+]
     push16 r3
     push16 r6
     push16 r0
-    ldi16 c0, 0x064c
-    ld16 c1, [c0]
+    ldi16 r4, 0x064c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x064e
-    ld16 c1, [c0]
+    ldi16 r4, 0x064e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2741,37 +2741,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_023_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0650
-    ldi8 c1, 0x76
-    st8 [c0], c1
-    ldi16 c0, 0x0651
-    ldi16 c1, 0xffff
-    st16 [c0], c1
-    ldi16 c0, 0x0653
-    ldi8 c1, 0xc0
-    st8 [c0], c1
+    ldi16 r4, 0x0650
+    ldi8 r5, 0x76
+    st8 [r4], r5
+    ldi16 r4, 0x0651
+    ldi16 r5, 0xffff
+    st16 [r4], r5
+    ldi16 r4, 0x0653
+    ldi8 r5, 0xc0
+    st8 [r4], r5
 
-    ; POST pointer c2, data r4, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x8f08
+    ; POST pointer r6, data r4, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x8f08
     push16 r5
     pop16 r4
-    ldi16 c1, 0x6dd4
+    ldi16 r5, 0x6dd4
     push16 r5
     pop16 r0
-    ldi16 c2, 0x0651
-    ld16 r4, [c2+]
+    ldi16 r6, 0x0651
+    ld16 r4, [r6+]
     push16 r4
     push16 r6
     push16 r0
-    ldi16 c0, 0x0650
-    ld16 c1, [c0]
+    ldi16 r4, 0x0650
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0652
-    ld16 c1, [c0]
+    ldi16 r4, 0x0652
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2817,37 +2817,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_024_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0654
-    ldi8 c1, 0x7f
-    st8 [c0], c1
-    ldi16 c0, 0x0655
-    ldi16 c1, 0x0000
-    st16 [c0], c1
-    ldi16 c0, 0x0657
-    ldi8 c1, 0xc7
-    st8 [c0], c1
+    ldi16 r4, 0x0654
+    ldi8 r5, 0x7f
+    st8 [r4], r5
+    ldi16 r4, 0x0655
+    ldi16 r5, 0x0000
+    st16 [r4], r5
+    ldi16 r4, 0x0657
+    ldi8 r5, 0xc7
+    st8 [r4], r5
 
-    ; POST pointer c2, data r4, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x8f41
+    ; POST pointer r6, data r4, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x8f41
     push16 r5
     pop16 r4
-    ldi16 c1, 0x6e21
+    ldi16 r5, 0x6e21
     push16 r5
     pop16 r0
-    ldi16 c2, 0x0655
-    ld16 r4, [c2+]
+    ldi16 r6, 0x0655
+    ld16 r4, [r6+]
     push16 r4
     push16 r6
     push16 r0
-    ldi16 c0, 0x0654
-    ld16 c1, [c0]
+    ldi16 r4, 0x0654
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0656
-    ld16 c1, [c0]
+    ldi16 r4, 0x0656
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2893,37 +2893,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_025_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0658
-    ldi8 c1, 0x88
-    st8 [c0], c1
-    ldi16 c0, 0x0659
-    ldi16 c1, 0x0000
-    st16 [c0], c1
-    ldi16 c0, 0x065b
-    ldi8 c1, 0xcf
-    st8 [c0], c1
+    ldi16 r4, 0x0658
+    ldi8 r5, 0x88
+    st8 [r4], r5
+    ldi16 r4, 0x0659
+    ldi16 r5, 0x0000
+    st16 [r4], r5
+    ldi16 r4, 0x065b
+    ldi8 r5, 0xcf
+    st8 [r4], r5
 
-    ; POST pointer c2, data r5, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8f7b
+    ; POST pointer r6, data r5, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8f7b
     push16 r4
     pop16 r5
-    ldi16 c0, 0x6e6e
+    ldi16 r4, 0x6e6e
     push16 r4
     pop16 r0
-    ldi16 c2, 0x0659
-    ld16 r5, [c2+]
+    ldi16 r6, 0x0659
+    ld16 r5, [r6+]
     push16 r5
     push16 r6
     push16 r0
-    ldi16 c0, 0x0658
-    ld16 c1, [c0]
+    ldi16 r4, 0x0658
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x065a
-    ld16 c1, [c0]
+    ldi16 r4, 0x065a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -2969,37 +2969,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_026_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x065c
-    ldi8 c1, 0x91
-    st8 [c0], c1
-    ldi16 c0, 0x065d
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x065f
-    ldi8 c1, 0xd6
-    st8 [c0], c1
+    ldi16 r4, 0x065c
+    ldi8 r5, 0x91
+    st8 [r4], r5
+    ldi16 r4, 0x065d
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x065f
+    ldi8 r5, 0xd6
+    st8 [r4], r5
 
-    ; POST pointer c2, data r5, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8fb4
+    ; POST pointer r6, data r5, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8fb4
     push16 r4
     pop16 r5
-    ldi16 c0, 0x6ebb
+    ldi16 r4, 0x6ebb
     push16 r4
     pop16 r0
-    ldi16 c2, 0x065d
-    ld16 r5, [c2+]
+    ldi16 r6, 0x065d
+    ld16 r5, [r6+]
     push16 r5
     push16 r6
     push16 r0
-    ldi16 c0, 0x065c
-    ld16 c1, [c0]
+    ldi16 r4, 0x065c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x065e
-    ld16 c1, [c0]
+    ldi16 r4, 0x065e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3045,37 +3045,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_027_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0660
-    ldi8 c1, 0x9a
-    st8 [c0], c1
-    ldi16 c0, 0x0661
-    ldi16 c1, 0x00ff
-    st16 [c0], c1
-    ldi16 c0, 0x0663
-    ldi8 c1, 0xdf
-    st8 [c0], c1
+    ldi16 r4, 0x0660
+    ldi8 r5, 0x9a
+    st8 [r4], r5
+    ldi16 r4, 0x0661
+    ldi16 r5, 0x00ff
+    st16 [r4], r5
+    ldi16 r4, 0x0663
+    ldi8 r5, 0xdf
+    st8 [r4], r5
 
-    ; POST pointer c2, data r7, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8fef
+    ; POST pointer r6, data r7, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8fef
     push16 r4
     pop16 r7
-    ldi16 c0, 0x6f08
+    ldi16 r4, 0x6f08
     push16 r4
     pop16 r0
-    ldi16 c2, 0x0661
-    ld16 r7, [c2+]
+    ldi16 r6, 0x0661
+    ld16 r7, [r6+]
     push16 r7
     push16 r6
     push16 r0
-    ldi16 c0, 0x0660
-    ld16 c1, [c0]
+    ldi16 r4, 0x0660
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0662
-    ld16 c1, [c0]
+    ldi16 r4, 0x0662
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3121,37 +3121,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_028_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0664
-    ldi8 c1, 0xa3
-    st8 [c0], c1
-    ldi16 c0, 0x0665
-    ldi16 c1, 0x7fff
-    st16 [c0], c1
-    ldi16 c0, 0x0667
-    ldi8 c1, 0xe6
-    st8 [c0], c1
+    ldi16 r4, 0x0664
+    ldi8 r5, 0xa3
+    st8 [r4], r5
+    ldi16 r4, 0x0665
+    ldi16 r5, 0x7fff
+    st16 [r4], r5
+    ldi16 r4, 0x0667
+    ldi8 r5, 0xe6
+    st8 [r4], r5
 
-    ; POST pointer c2, data r7, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x9028
+    ; POST pointer r6, data r7, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x9028
     push16 r4
     pop16 r7
-    ldi16 c0, 0x6f55
+    ldi16 r4, 0x6f55
     push16 r4
     pop16 r0
-    ldi16 c2, 0x0665
-    ld16 r7, [c2+]
+    ldi16 r6, 0x0665
+    ld16 r7, [r6+]
     push16 r7
     push16 r6
     push16 r0
-    ldi16 c0, 0x0664
-    ld16 c1, [c0]
+    ldi16 r4, 0x0664
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0666
-    ld16 c1, [c0]
+    ldi16 r4, 0x0666
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3197,37 +3197,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_029_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0668
-    ldi8 c1, 0xad
-    st8 [c0], c1
-    ldi16 c0, 0x0669
-    ldi16 c1, 0x8000
-    st16 [c0], c1
-    ldi16 c0, 0x066b
-    ldi8 c1, 0xe6
-    st8 [c0], c1
+    ldi16 r4, 0x0668
+    ldi8 r5, 0xad
+    st8 [r4], r5
+    ldi16 r4, 0x0669
+    ldi16 r5, 0x8000
+    st16 [r4], r5
+    ldi16 r4, 0x066b
+    ldi8 r5, 0xe6
+    st8 [r4], r5
 
-    ; POST pointer c3, data r0, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x905a
+    ; POST pointer r7, data r0, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x905a
     push16 r4
     pop16 r0
-    ldi16 c0, 0x70a3
+    ldi16 r4, 0x70a3
     push16 r4
     pop16 r1
-    ldi16 c3, 0x0669
-    ld16 r0, [c3+]
+    ldi16 r7, 0x0669
+    ld16 r0, [r7+]
     push16 r0
     push16 r7
     push16 r1
-    ldi16 c0, 0x0668
-    ld16 c1, [c0]
+    ldi16 r4, 0x0668
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x066a
-    ld16 c1, [c0]
+    ldi16 r4, 0x066a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3273,37 +3273,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_02a_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x066c
-    ldi8 c1, 0xb6
-    st8 [c0], c1
-    ldi16 c0, 0x066d
-    ldi16 c1, 0xa55a
-    st16 [c0], c1
-    ldi16 c0, 0x066f
-    ldi8 c1, 0xed
-    st8 [c0], c1
+    ldi16 r4, 0x066c
+    ldi8 r5, 0xb6
+    st8 [r4], r5
+    ldi16 r4, 0x066d
+    ldi16 r5, 0xa55a
+    st16 [r4], r5
+    ldi16 r4, 0x066f
+    ldi8 r5, 0xed
+    st8 [r4], r5
 
-    ; POST pointer c3, data r0, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x9093
+    ; POST pointer r7, data r0, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x9093
     push16 r4
     pop16 r0
-    ldi16 c0, 0x70f0
+    ldi16 r4, 0x70f0
     push16 r4
     pop16 r1
-    ldi16 c3, 0x066d
-    ld16 r0, [c3+]
+    ldi16 r7, 0x066d
+    ld16 r0, [r7+]
     push16 r0
     push16 r7
     push16 r1
-    ldi16 c0, 0x066c
-    ld16 c1, [c0]
+    ldi16 r4, 0x066c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x066e
-    ld16 c1, [c0]
+    ldi16 r4, 0x066e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3349,37 +3349,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_02b_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0670
-    ldi8 c1, 0xbf
-    st8 [c0], c1
-    ldi16 c0, 0x0671
-    ldi16 c1, 0xa55a
-    st16 [c0], c1
-    ldi16 c0, 0x0673
-    ldi8 c1, 0xf5
-    st8 [c0], c1
+    ldi16 r4, 0x0670
+    ldi8 r5, 0xbf
+    st8 [r4], r5
+    ldi16 r4, 0x0671
+    ldi16 r5, 0xa55a
+    st16 [r4], r5
+    ldi16 r4, 0x0673
+    ldi8 r5, 0xf5
+    st8 [r4], r5
 
-    ; POST pointer c3, data r1, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x90cd
+    ; POST pointer r7, data r1, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x90cd
     push16 r4
     pop16 r1
-    ldi16 c0, 0x703c
+    ldi16 r4, 0x703c
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0671
-    ld16 r1, [c3+]
+    ldi16 r7, 0x0671
+    ld16 r1, [r7+]
     push16 r1
     push16 r7
     push16 r0
-    ldi16 c0, 0x0670
-    ld16 c1, [c0]
+    ldi16 r4, 0x0670
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0672
-    ld16 c1, [c0]
+    ldi16 r4, 0x0672
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3425,37 +3425,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_02c_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0674
-    ldi8 c1, 0xc8
-    st8 [c0], c1
-    ldi16 c0, 0x0675
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x0677
-    ldi8 c1, 0xfc
-    st8 [c0], c1
+    ldi16 r4, 0x0674
+    ldi8 r5, 0xc8
+    st8 [r4], r5
+    ldi16 r4, 0x0675
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x0677
+    ldi8 r5, 0xfc
+    st8 [r4], r5
 
-    ; POST pointer c3, data r1, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x9106
+    ; POST pointer r7, data r1, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x9106
     push16 r4
     pop16 r1
-    ldi16 c0, 0x7089
+    ldi16 r4, 0x7089
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0675
-    ld16 r1, [c3+]
+    ldi16 r7, 0x0675
+    ld16 r1, [r7+]
     push16 r1
     push16 r7
     push16 r0
-    ldi16 c0, 0x0674
-    ld16 c1, [c0]
+    ldi16 r4, 0x0674
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0676
-    ld16 c1, [c0]
+    ldi16 r4, 0x0676
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3501,37 +3501,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_02d_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0678
-    ldi8 c1, 0xd1
-    st8 [c0], c1
-    ldi16 c0, 0x0679
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x067b
-    ldi8 c1, 0x04
-    st8 [c0], c1
+    ldi16 r4, 0x0678
+    ldi8 r5, 0xd1
+    st8 [r4], r5
+    ldi16 r4, 0x0679
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x067b
+    ldi8 r5, 0x04
+    st8 [r4], r5
 
-    ; POST pointer c3, data r2, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x9140
+    ; POST pointer r7, data r2, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x9140
     push16 r4
     pop16 r2
-    ldi16 c0, 0x70d6
+    ldi16 r4, 0x70d6
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0679
-    ld16 r2, [c3+]
+    ldi16 r7, 0x0679
+    ld16 r2, [r7+]
     push16 r2
     push16 r7
     push16 r0
-    ldi16 c0, 0x0678
-    ld16 c1, [c0]
+    ldi16 r4, 0x0678
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x067a
-    ld16 c1, [c0]
+    ldi16 r4, 0x067a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3577,37 +3577,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_02e_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x067c
-    ldi8 c1, 0xda
-    st8 [c0], c1
-    ldi16 c0, 0x067d
-    ldi16 c1, 0x0100
-    st16 [c0], c1
-    ldi16 c0, 0x067f
-    ldi8 c1, 0x0b
-    st8 [c0], c1
+    ldi16 r4, 0x067c
+    ldi8 r5, 0xda
+    st8 [r4], r5
+    ldi16 r4, 0x067d
+    ldi16 r5, 0x0100
+    st16 [r4], r5
+    ldi16 r4, 0x067f
+    ldi8 r5, 0x0b
+    st8 [r4], r5
 
-    ; POST pointer c3, data r2, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x9179
+    ; POST pointer r7, data r2, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x9179
     push16 r4
     pop16 r2
-    ldi16 c0, 0x7123
+    ldi16 r4, 0x7123
     push16 r4
     pop16 r0
-    ldi16 c3, 0x067d
-    ld16 r2, [c3+]
+    ldi16 r7, 0x067d
+    ld16 r2, [r7+]
     push16 r2
     push16 r7
     push16 r0
-    ldi16 c0, 0x067c
-    ld16 c1, [c0]
+    ldi16 r4, 0x067c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x067e
-    ld16 c1, [c0]
+    ldi16 r4, 0x067e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3653,37 +3653,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_02f_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0680
-    ldi8 c1, 0xe3
-    st8 [c0], c1
-    ldi16 c0, 0x0681
-    ldi16 c1, 0x0100
-    st16 [c0], c1
-    ldi16 c0, 0x0683
-    ldi8 c1, 0x13
-    st8 [c0], c1
+    ldi16 r4, 0x0680
+    ldi8 r5, 0xe3
+    st8 [r4], r5
+    ldi16 r4, 0x0681
+    ldi16 r5, 0x0100
+    st16 [r4], r5
+    ldi16 r4, 0x0683
+    ldi8 r5, 0x13
+    st8 [r4], r5
 
-    ; POST pointer c3, data r3, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x91b3
+    ; POST pointer r7, data r3, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x91b3
     push16 r4
     pop16 r3
-    ldi16 c0, 0x7170
+    ldi16 r4, 0x7170
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0681
-    ld16 r3, [c3+]
+    ldi16 r7, 0x0681
+    ld16 r3, [r7+]
     push16 r3
     push16 r7
     push16 r0
-    ldi16 c0, 0x0680
-    ld16 c1, [c0]
+    ldi16 r4, 0x0680
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0682
-    ld16 c1, [c0]
+    ldi16 r4, 0x0682
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3729,37 +3729,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_030_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0684
-    ldi8 c1, 0xec
-    st8 [c0], c1
-    ldi16 c0, 0x0685
-    ldi16 c1, 0x8000
-    st16 [c0], c1
-    ldi16 c0, 0x0687
-    ldi8 c1, 0x1a
-    st8 [c0], c1
+    ldi16 r4, 0x0684
+    ldi8 r5, 0xec
+    st8 [r4], r5
+    ldi16 r4, 0x0685
+    ldi16 r5, 0x8000
+    st16 [r4], r5
+    ldi16 r4, 0x0687
+    ldi8 r5, 0x1a
+    st8 [r4], r5
 
-    ; POST pointer c3, data r3, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x91ec
+    ; POST pointer r7, data r3, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x91ec
     push16 r4
     pop16 r3
-    ldi16 c0, 0x71bd
+    ldi16 r4, 0x71bd
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0685
-    ld16 r3, [c3+]
+    ldi16 r7, 0x0685
+    ld16 r3, [r7+]
     push16 r3
     push16 r7
     push16 r0
-    ldi16 c0, 0x0684
-    ld16 c1, [c0]
+    ldi16 r4, 0x0684
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0686
-    ld16 c1, [c0]
+    ldi16 r4, 0x0686
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3805,37 +3805,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_031_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0688
-    ldi8 c1, 0xf5
-    st8 [c0], c1
-    ldi16 c0, 0x0689
-    ldi16 c1, 0x8000
-    st16 [c0], c1
-    ldi16 c0, 0x068b
-    ldi8 c1, 0x22
-    st8 [c0], c1
+    ldi16 r4, 0x0688
+    ldi8 r5, 0xf5
+    st8 [r4], r5
+    ldi16 r4, 0x0689
+    ldi16 r5, 0x8000
+    st16 [r4], r5
+    ldi16 r4, 0x068b
+    ldi8 r5, 0x22
+    st8 [r4], r5
 
-    ; POST pointer c3, data r4, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x9226
+    ; POST pointer r7, data r4, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x9226
     push16 r5
     pop16 r4
-    ldi16 c1, 0x720a
+    ldi16 r5, 0x720a
     push16 r5
     pop16 r0
-    ldi16 c3, 0x0689
-    ld16 r4, [c3+]
+    ldi16 r7, 0x0689
+    ld16 r4, [r7+]
     push16 r4
     push16 r7
     push16 r0
-    ldi16 c0, 0x0688
-    ld16 c1, [c0]
+    ldi16 r4, 0x0688
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x068a
-    ld16 c1, [c0]
+    ldi16 r4, 0x068a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3881,37 +3881,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_032_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x068c
-    ldi8 c1, 0xfe
-    st8 [c0], c1
-    ldi16 c0, 0x068d
-    ldi16 c1, 0xa55a
-    st16 [c0], c1
-    ldi16 c0, 0x068f
-    ldi8 c1, 0x29
-    st8 [c0], c1
+    ldi16 r4, 0x068c
+    ldi8 r5, 0xfe
+    st8 [r4], r5
+    ldi16 r4, 0x068d
+    ldi16 r5, 0xa55a
+    st16 [r4], r5
+    ldi16 r4, 0x068f
+    ldi8 r5, 0x29
+    st8 [r4], r5
 
-    ; POST pointer c3, data r4, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x925f
+    ; POST pointer r7, data r4, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x925f
     push16 r5
     pop16 r4
-    ldi16 c1, 0x7257
+    ldi16 r5, 0x7257
     push16 r5
     pop16 r0
-    ldi16 c3, 0x068d
-    ld16 r4, [c3+]
+    ldi16 r7, 0x068d
+    ld16 r4, [r7+]
     push16 r4
     push16 r7
     push16 r0
-    ldi16 c0, 0x068c
-    ld16 c1, [c0]
+    ldi16 r4, 0x068c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x068e
-    ld16 c1, [c0]
+    ldi16 r4, 0x068e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -3957,37 +3957,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_033_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0690
-    ldi8 c1, 0x07
-    st8 [c0], c1
-    ldi16 c0, 0x0691
-    ldi16 c1, 0xa55a
-    st16 [c0], c1
-    ldi16 c0, 0x0693
-    ldi8 c1, 0x31
-    st8 [c0], c1
+    ldi16 r4, 0x0690
+    ldi8 r5, 0x07
+    st8 [r4], r5
+    ldi16 r4, 0x0691
+    ldi16 r5, 0xa55a
+    st16 [r4], r5
+    ldi16 r4, 0x0693
+    ldi8 r5, 0x31
+    st8 [r4], r5
 
-    ; POST pointer c3, data r5, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x9299
+    ; POST pointer r7, data r5, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x9299
     push16 r4
     pop16 r5
-    ldi16 c0, 0x72a4
+    ldi16 r4, 0x72a4
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0691
-    ld16 r5, [c3+]
+    ldi16 r7, 0x0691
+    ld16 r5, [r7+]
     push16 r5
     push16 r7
     push16 r0
-    ldi16 c0, 0x0690
-    ld16 c1, [c0]
+    ldi16 r4, 0x0690
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0692
-    ld16 c1, [c0]
+    ldi16 r4, 0x0692
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -4033,37 +4033,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_034_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0694
-    ldi8 c1, 0x10
-    st8 [c0], c1
-    ldi16 c0, 0x0695
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x0697
-    ldi8 c1, 0x38
-    st8 [c0], c1
+    ldi16 r4, 0x0694
+    ldi8 r5, 0x10
+    st8 [r4], r5
+    ldi16 r4, 0x0695
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x0697
+    ldi8 r5, 0x38
+    st8 [r4], r5
 
-    ; POST pointer c3, data r5, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x92d2
+    ; POST pointer r7, data r5, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x92d2
     push16 r4
     pop16 r5
-    ldi16 c0, 0x72f1
+    ldi16 r4, 0x72f1
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0695
-    ld16 r5, [c3+]
+    ldi16 r7, 0x0695
+    ld16 r5, [r7+]
     push16 r5
     push16 r7
     push16 r0
-    ldi16 c0, 0x0694
-    ld16 c1, [c0]
+    ldi16 r4, 0x0694
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x0696
-    ld16 c1, [c0]
+    ldi16 r4, 0x0696
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -4109,37 +4109,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_035_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x0698
-    ldi8 c1, 0x19
-    st8 [c0], c1
-    ldi16 c0, 0x0699
-    ldi16 c1, 0x0001
-    st16 [c0], c1
-    ldi16 c0, 0x069b
-    ldi8 c1, 0x40
-    st8 [c0], c1
+    ldi16 r4, 0x0698
+    ldi8 r5, 0x19
+    st8 [r4], r5
+    ldi16 r4, 0x0699
+    ldi16 r5, 0x0001
+    st16 [r4], r5
+    ldi16 r4, 0x069b
+    ldi8 r5, 0x40
+    st8 [r4], r5
 
-    ; POST pointer c3, data r6, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x930c
+    ; POST pointer r7, data r6, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x930c
     push16 r4
     pop16 r6
-    ldi16 c0, 0x733e
+    ldi16 r4, 0x733e
     push16 r4
     pop16 r0
-    ldi16 c3, 0x0699
-    ld16 r6, [c3+]
+    ldi16 r7, 0x0699
+    ld16 r6, [r7+]
     push16 r6
     push16 r7
     push16 r0
-    ldi16 c0, 0x0698
-    ld16 c1, [c0]
+    ldi16 r4, 0x0698
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x069a
-    ld16 c1, [c0]
+    ldi16 r4, 0x069a
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0
@@ -4185,37 +4185,37 @@ _start:
     mem_emit_char 'B'
 .Lld16_postinc_036_SGE_done:
     mem_emit_char '\n'
-    ldi16 c0, 0x069c
-    ldi8 c1, 0x22
-    st8 [c0], c1
-    ldi16 c0, 0x069d
-    ldi16 c1, 0x0100
-    st16 [c0], c1
-    ldi16 c0, 0x069f
-    ldi8 c1, 0x47
-    st8 [c0], c1
+    ldi16 r4, 0x069c
+    ldi8 r5, 0x22
+    st8 [r4], r5
+    ldi16 r4, 0x069d
+    ldi16 r5, 0x0100
+    st16 [r4], r5
+    ldi16 r4, 0x069f
+    ldi8 r5, 0x47
+    st8 [r4], r5
 
-    ; POST pointer c3, data r6, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x9345
+    ; POST pointer r7, data r6, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x9345
     push16 r4
     pop16 r6
-    ldi16 c0, 0x738b
+    ldi16 r4, 0x738b
     push16 r4
     pop16 r0
-    ldi16 c3, 0x069d
-    ld16 r6, [c3+]
+    ldi16 r7, 0x069d
+    ld16 r6, [r7+]
     push16 r6
     push16 r7
     push16 r0
-    ldi16 c0, 0x069c
-    ld16 c1, [c0]
+    ldi16 r4, 0x069c
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
-    ldi16 c0, 0x069e
-    ld16 c1, [c0]
+    ldi16 r4, 0x069e
+    ld16 r5, [r4]
     mov r0, r5
     call mem_print_r0_line
     pop16 r0

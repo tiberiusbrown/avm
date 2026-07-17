@@ -7,13 +7,13 @@
 _start:
 
     ; Register r0, pattern 0: bswap16 r0
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r0
-    ldi16 c0, 0xb101
+    ldi16 r4, 0xb101
     push16 r4
     pop16 r1
     bswap16 r0
@@ -59,13 +59,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r0, pattern 1: bswap16 r0
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0001
     push16 r4
     pop16 r0
-    ldi16 c0, 0xb255
+    ldi16 r4, 0xb255
     push16 r4
     pop16 r2
     bswap16 r0
@@ -111,13 +111,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r0, pattern 2: bswap16 r0
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x007f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x007f
     push16 r4
     pop16 r0
-    ldi16 c0, 0xb3a9
+    ldi16 r4, 0xb3a9
     push16 r4
     pop16 r3
     bswap16 r0
@@ -163,13 +163,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r0, pattern 3: bswap16 r0
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0080
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0080
     push16 r5
     pop16 r0
-    ldi16 c1, 0xb4fd
+    ldi16 r5, 0xb4fd
     push16 r5
     pop16 r4
     bswap16 r0
@@ -215,13 +215,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r0, pattern 4: bswap16 r0
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x00ff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r0
-    ldi16 c0, 0xb651
+    ldi16 r4, 0xb651
     push16 r4
     pop16 r5
     bswap16 r0
@@ -267,13 +267,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r0, pattern 5: bswap16 r0
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0100
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0100
     push16 r4
     pop16 r0
-    ldi16 c0, 0xb7a5
+    ldi16 r4, 0xb7a5
     push16 r4
     pop16 r6
     bswap16 r0
@@ -319,13 +319,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r0, pattern 6: bswap16 r0
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7fff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7fff
     push16 r4
     pop16 r0
-    ldi16 c0, 0xb8f9
+    ldi16 r4, 0xb8f9
     push16 r4
     pop16 r7
     bswap16 r0
@@ -371,13 +371,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r0, pattern 7: bswap16 r0
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8000
     push16 r4
     pop16 r0
-    ldi16 c0, 0xb346
+    ldi16 r4, 0xb346
     push16 r4
     pop16 r1
     bswap16 r0
@@ -423,13 +423,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 0: bswap16 r1
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0080
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0080
     push16 r4
     pop16 r1
-    ldi16 c0, 0xb49a
+    ldi16 r4, 0xb49a
     push16 r4
     pop16 r2
     bswap16 r1
@@ -475,13 +475,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 1: bswap16 r1
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x00ff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r1
-    ldi16 c0, 0xb5ee
+    ldi16 r4, 0xb5ee
     push16 r4
     pop16 r3
     bswap16 r1
@@ -527,13 +527,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 2: bswap16 r1
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0100
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0100
     push16 r5
     pop16 r1
-    ldi16 c1, 0xb742
+    ldi16 r5, 0xb742
     push16 r5
     pop16 r4
     bswap16 r1
@@ -579,13 +579,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 3: bswap16 r1
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x7fff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x7fff
     push16 r4
     pop16 r1
-    ldi16 c0, 0xb896
+    ldi16 r4, 0xb896
     push16 r4
     pop16 r5
     bswap16 r1
@@ -631,13 +631,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 4: bswap16 r1
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8000
     push16 r4
     pop16 r1
-    ldi16 c0, 0xb9ea
+    ldi16 r4, 0xb9ea
     push16 r4
     pop16 r6
     bswap16 r1
@@ -683,13 +683,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 5: bswap16 r1
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r1
-    ldi16 c0, 0xbb3e
+    ldi16 r4, 0xbb3e
     push16 r4
     pop16 r7
     bswap16 r1
@@ -735,13 +735,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 6: bswap16 r1
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r1
-    ldi16 c0, 0xb48a
+    ldi16 r4, 0xb48a
     push16 r4
     pop16 r0
     bswap16 r1
@@ -787,13 +787,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r1, pattern 7: bswap16 r1
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x55aa
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x55aa
     push16 r4
     pop16 r1
-    ldi16 c0, 0xb6df
+    ldi16 r4, 0xb6df
     push16 r4
     pop16 r2
     bswap16 r1
@@ -839,13 +839,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 0: bswap16 r2
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7fff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7fff
     push16 r4
     pop16 r2
-    ldi16 c0, 0xb833
+    ldi16 r4, 0xb833
     push16 r4
     pop16 r3
     bswap16 r2
@@ -891,13 +891,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 1: bswap16 r2
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x8000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x8000
     push16 r5
     pop16 r2
-    ldi16 c1, 0xb987
+    ldi16 r5, 0xb987
     push16 r5
     pop16 r4
     bswap16 r2
@@ -943,13 +943,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 2: bswap16 r2
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r2
-    ldi16 c0, 0xbadb
+    ldi16 r4, 0xbadb
     push16 r4
     pop16 r5
     bswap16 r2
@@ -995,13 +995,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 3: bswap16 r2
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r2
-    ldi16 c0, 0xbc2f
+    ldi16 r4, 0xbc2f
     push16 r4
     pop16 r6
     bswap16 r2
@@ -1047,13 +1047,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 4: bswap16 r2
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x55aa
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x55aa
     push16 r4
     pop16 r2
-    ldi16 c0, 0xbd83
+    ldi16 r4, 0xbd83
     push16 r4
     pop16 r7
     bswap16 r2
@@ -1099,13 +1099,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 5: bswap16 r2
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r2
-    ldi16 c0, 0xb6cf
+    ldi16 r4, 0xb6cf
     push16 r4
     pop16 r0
     bswap16 r2
@@ -1151,13 +1151,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 6: bswap16 r2
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xfedc
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xfedc
     push16 r4
     pop16 r2
-    ldi16 c0, 0xb823
+    ldi16 r4, 0xb823
     push16 r4
     pop16 r1
     bswap16 r2
@@ -1203,13 +1203,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r2, pattern 7: bswap16 r2
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4000
     push16 r4
     pop16 r2
-    ldi16 c0, 0xba78
+    ldi16 r4, 0xba78
     push16 r4
     pop16 r3
     bswap16 r2
@@ -1255,13 +1255,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 0: bswap16 r3
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r3
-    ldi16 c1, 0xbbcc
+    ldi16 r5, 0xbbcc
     push16 r5
     pop16 r4
     bswap16 r3
@@ -1307,13 +1307,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 1: bswap16 r3
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x55aa
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x55aa
     push16 r4
     pop16 r3
-    ldi16 c0, 0xbd20
+    ldi16 r4, 0xbd20
     push16 r4
     pop16 r5
     bswap16 r3
@@ -1359,13 +1359,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 2: bswap16 r3
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r3
-    ldi16 c0, 0xbe74
+    ldi16 r4, 0xbe74
     push16 r4
     pop16 r6
     bswap16 r3
@@ -1411,13 +1411,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 3: bswap16 r3
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xfedc
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xfedc
     push16 r4
     pop16 r3
-    ldi16 c0, 0xbfc8
+    ldi16 r4, 0xbfc8
     push16 r4
     pop16 r7
     bswap16 r3
@@ -1463,13 +1463,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 4: bswap16 r3
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4000
     push16 r4
     pop16 r3
-    ldi16 c0, 0xb914
+    ldi16 r4, 0xb914
     push16 r4
     pop16 r0
     bswap16 r3
@@ -1515,13 +1515,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 5: bswap16 r3
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xc000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xc000
     push16 r4
     pop16 r3
-    ldi16 c0, 0xba68
+    ldi16 r4, 0xba68
     push16 r4
     pop16 r1
     bswap16 r3
@@ -1567,13 +1567,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 6: bswap16 r3
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r3
-    ldi16 c0, 0xbbbc
+    ldi16 r4, 0xbbbc
     push16 r4
     pop16 r2
     bswap16 r3
@@ -1619,13 +1619,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r3, pattern 7: bswap16 r3
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r3
-    ldi16 c1, 0xbe11
+    ldi16 r5, 0xbe11
     push16 r5
     pop16 r4
     bswap16 r3
@@ -1671,13 +1671,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 0: bswap16 r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c2, 0xfedc
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r6, 0xfedc
     push16 r6
     pop16 r4
-    ldi16 c2, 0xbf65
+    ldi16 r6, 0xbf65
     push16 r6
     pop16 r5
     bswap16 r4
@@ -1723,13 +1723,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 1: bswap16 r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x4000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x4000
     push16 r5
     pop16 r4
-    ldi16 c1, 0xc0b9
+    ldi16 r5, 0xc0b9
     push16 r5
     pop16 r6
     bswap16 r4
@@ -1775,13 +1775,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 2: bswap16 r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0xc000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0xc000
     push16 r5
     pop16 r4
-    ldi16 c1, 0xc20d
+    ldi16 r5, 0xc20d
     push16 r5
     pop16 r7
     bswap16 r4
@@ -1827,13 +1827,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 3: bswap16 r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x8001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x8001
     push16 r5
     pop16 r4
-    ldi16 c1, 0xbb59
+    ldi16 r5, 0xbb59
     push16 r5
     pop16 r0
     bswap16 r4
@@ -1879,13 +1879,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 4: bswap16 r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r4
-    ldi16 c1, 0xbcad
+    ldi16 r5, 0xbcad
     push16 r5
     pop16 r1
     bswap16 r4
@@ -1931,13 +1931,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 5: bswap16 r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x0001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x0001
     push16 r5
     pop16 r4
-    ldi16 c1, 0xbe01
+    ldi16 r5, 0xbe01
     push16 r5
     pop16 r2
     bswap16 r4
@@ -1983,13 +1983,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 6: bswap16 r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x007f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x007f
     push16 r5
     pop16 r4
-    ldi16 c1, 0xbf55
+    ldi16 r5, 0xbf55
     push16 r5
     pop16 r3
     bswap16 r4
@@ -2035,13 +2035,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r4, pattern 7: bswap16 r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x0080
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x0080
     push16 r6
     pop16 r4
-    ldi16 c2, 0xc1aa
+    ldi16 r6, 0xc1aa
     push16 r6
     pop16 r5
     bswap16 r4
@@ -2087,13 +2087,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 0: bswap16 r5
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r5
-    ldi16 c0, 0xc2fe
+    ldi16 r4, 0xc2fe
     push16 r4
     pop16 r6
     bswap16 r5
@@ -2139,13 +2139,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 1: bswap16 r5
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r5
-    ldi16 c0, 0xc452
+    ldi16 r4, 0xc452
     push16 r4
     pop16 r7
     bswap16 r5
@@ -2191,13 +2191,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 2: bswap16 r5
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0001
     push16 r4
     pop16 r5
-    ldi16 c0, 0xbd9e
+    ldi16 r4, 0xbd9e
     push16 r4
     pop16 r0
     bswap16 r5
@@ -2243,13 +2243,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 3: bswap16 r5
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x007f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x007f
     push16 r4
     pop16 r5
-    ldi16 c0, 0xbef2
+    ldi16 r4, 0xbef2
     push16 r4
     pop16 r1
     bswap16 r5
@@ -2295,13 +2295,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 4: bswap16 r5
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0080
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0080
     push16 r4
     pop16 r5
-    ldi16 c0, 0xc046
+    ldi16 r4, 0xc046
     push16 r4
     pop16 r2
     bswap16 r5
@@ -2347,13 +2347,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 5: bswap16 r5
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x00ff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r5
-    ldi16 c0, 0xc19a
+    ldi16 r4, 0xc19a
     push16 r4
     pop16 r3
     bswap16 r5
@@ -2399,13 +2399,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 6: bswap16 r5
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x0100
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x0100
     push16 r6
     pop16 r5
-    ldi16 c2, 0xc2ee
+    ldi16 r6, 0xc2ee
     push16 r6
     pop16 r4
     bswap16 r5
@@ -2451,13 +2451,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r5, pattern 7: bswap16 r5
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x7fff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x7fff
     push16 r4
     pop16 r5
-    ldi16 c0, 0xc543
+    ldi16 r4, 0xc543
     push16 r4
     pop16 r6
     bswap16 r5
@@ -2503,13 +2503,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 0: bswap16 r6
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x007f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x007f
     push16 r4
     pop16 r6
-    ldi16 c0, 0xc697
+    ldi16 r4, 0xc697
     push16 r4
     pop16 r7
     bswap16 r6
@@ -2555,13 +2555,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 1: bswap16 r6
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0080
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0080
     push16 r4
     pop16 r6
-    ldi16 c0, 0xbfe3
+    ldi16 r4, 0xbfe3
     push16 r4
     pop16 r0
     bswap16 r6
@@ -2607,13 +2607,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 2: bswap16 r6
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x00ff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r6
-    ldi16 c0, 0xc137
+    ldi16 r4, 0xc137
     push16 r4
     pop16 r1
     bswap16 r6
@@ -2659,13 +2659,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 3: bswap16 r6
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0100
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0100
     push16 r4
     pop16 r6
-    ldi16 c0, 0xc28b
+    ldi16 r4, 0xc28b
     push16 r4
     pop16 r2
     bswap16 r6
@@ -2711,13 +2711,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 4: bswap16 r6
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7fff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7fff
     push16 r4
     pop16 r6
-    ldi16 c0, 0xc3df
+    ldi16 r4, 0xc3df
     push16 r4
     pop16 r3
     bswap16 r6
@@ -2763,13 +2763,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 5: bswap16 r6
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x8000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x8000
     push16 r5
     pop16 r6
-    ldi16 c1, 0xc533
+    ldi16 r5, 0xc533
     push16 r5
     pop16 r4
     bswap16 r6
@@ -2815,13 +2815,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 6: bswap16 r6
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r6
-    ldi16 c0, 0xc687
+    ldi16 r4, 0xc687
     push16 r4
     pop16 r5
     bswap16 r6
@@ -2867,13 +2867,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r6, pattern 7: bswap16 r6
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r6
-    ldi16 c0, 0xc8dc
+    ldi16 r4, 0xc8dc
     push16 r4
     pop16 r7
     bswap16 r6
@@ -2919,13 +2919,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 0: bswap16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0100
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0100
     push16 r4
     pop16 r7
-    ldi16 c0, 0xc228
+    ldi16 r4, 0xc228
     push16 r4
     pop16 r0
     bswap16 r7
@@ -2971,13 +2971,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 1: bswap16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x7fff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x7fff
     push16 r4
     pop16 r7
-    ldi16 c0, 0xc37c
+    ldi16 r4, 0xc37c
     push16 r4
     pop16 r1
     bswap16 r7
@@ -3023,13 +3023,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 2: bswap16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8000
     push16 r4
     pop16 r7
-    ldi16 c0, 0xc4d0
+    ldi16 r4, 0xc4d0
     push16 r4
     pop16 r2
     bswap16 r7
@@ -3075,13 +3075,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 3: bswap16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r7
-    ldi16 c0, 0xc624
+    ldi16 r4, 0xc624
     push16 r4
     pop16 r3
     bswap16 r7
@@ -3127,13 +3127,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 4: bswap16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r7
-    ldi16 c1, 0xc778
+    ldi16 r5, 0xc778
     push16 r5
     pop16 r4
     bswap16 r7
@@ -3179,13 +3179,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 5: bswap16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x55aa
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x55aa
     push16 r4
     pop16 r7
-    ldi16 c0, 0xc8cc
+    ldi16 r4, 0xc8cc
     push16 r4
     pop16 r5
     bswap16 r7
@@ -3231,13 +3231,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 6: bswap16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r7
-    ldi16 c0, 0xca20
+    ldi16 r4, 0xca20
     push16 r4
     pop16 r6
     bswap16 r7
@@ -3283,13 +3283,13 @@ _start:
     unary_emit_char '\n'
 
     ; Register r7, pattern 7: bswap16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xfedc
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xfedc
     push16 r4
     pop16 r7
-    ldi16 c0, 0xc46d
+    ldi16 r4, 0xc46d
     push16 r4
     pop16 r0
     bswap16 r7

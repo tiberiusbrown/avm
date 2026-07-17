@@ -10,97 +10,97 @@ ld8u_test_data:
 .section .text,"ax",@progbits
 
 .macro reset_ld_regs
-    ldi16 c0, 0x1111
-    ldi16 c1, 0x2222
-    ldi16 c2, 0x3333
-    ldi16 c3, 0x4444
+    ldi16 r4, 0x1111
+    ldi16 r5, 0x2222
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
 .endm
 
 .globl _start
 .type _start, @function
 _start:
-    ; Destination c0, every address register.
+    ; Destination r4, every address register.
     reset_ld_regs
-    ldi16 c0, 0x0100
-    ld8u c0, [c0]
+    ldi16 r4, 0x0100
+    ld8u r4, [r4]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c1, 0x0104
-    ld8u c0, [c1]
+    ldi16 r5, 0x0104
+    ld8u r4, [r5]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c2, 0x0108
-    ld8u c0, [c2]
+    ldi16 r6, 0x0108
+    ld8u r4, [r6]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c3, 0x010c
-    ld8u c0, [c3]
+    ldi16 r7, 0x010c
+    ld8u r4, [r7]
     call debug_print_upper_regs
 
-    ; Destination c1, every address register.
+    ; Destination r5, every address register.
     reset_ld_regs
-    ldi16 c0, 0x0100
-    ld8u c1, [c0]
-    call debug_print_upper_regs
-
-    reset_ld_regs
-    ldi16 c1, 0x0104
-    ld8u c1, [c1]
+    ldi16 r4, 0x0100
+    ld8u r5, [r4]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c2, 0x0108
-    ld8u c1, [c2]
+    ldi16 r5, 0x0104
+    ld8u r5, [r5]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c3, 0x010c
-    ld8u c1, [c3]
-    call debug_print_upper_regs
-
-    ; Destination c2, every address register.
-    reset_ld_regs
-    ldi16 c0, 0x0100
-    ld8u c2, [c0]
+    ldi16 r6, 0x0108
+    ld8u r5, [r6]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c1, 0x0104
-    ld8u c2, [c1]
+    ldi16 r7, 0x010c
+    ld8u r5, [r7]
+    call debug_print_upper_regs
+
+    ; Destination r6, every address register.
+    reset_ld_regs
+    ldi16 r4, 0x0100
+    ld8u r6, [r4]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c2, 0x0108
-    ld8u c2, [c2]
+    ldi16 r5, 0x0104
+    ld8u r6, [r5]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c3, 0x010c
-    ld8u c2, [c3]
-    call debug_print_upper_regs
-
-    ; Destination c3, every address register.
-    reset_ld_regs
-    ldi16 c0, 0x0100
-    ld8u c3, [c0]
+    ldi16 r6, 0x0108
+    ld8u r6, [r6]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c1, 0x0104
-    ld8u c3, [c1]
+    ldi16 r7, 0x010c
+    ld8u r6, [r7]
+    call debug_print_upper_regs
+
+    ; Destination r7, every address register.
+    reset_ld_regs
+    ldi16 r4, 0x0100
+    ld8u r7, [r4]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c2, 0x0108
-    ld8u c3, [c2]
+    ldi16 r5, 0x0104
+    ld8u r7, [r5]
     call debug_print_upper_regs
 
     reset_ld_regs
-    ldi16 c3, 0x010c
-    ld8u c3, [c3]
+    ldi16 r6, 0x0108
+    ld8u r7, [r6]
+    call debug_print_upper_regs
+
+    reset_ld_regs
+    ldi16 r7, 0x010c
+    ld8u r7, [r7]
     call debug_print_upper_regs
 
     sys debug_break

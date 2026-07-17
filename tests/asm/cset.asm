@@ -7,24 +7,24 @@
 _start:
 
     ; cset.eq r0; path false; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0xa000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0xa000
     push16 r4
-    ldi16 c0, 0x5b01
+    ldi16 r4, 0x5b01
     push16 r4
-    ldi16 c0, 0x1357
+    ldi16 r4, 0x1357
     push16 r4
-    ldi16 c0, 0x147a
+    ldi16 r4, 0x147a
     push16 r4
-    ldi16 c0, 0x159d
+    ldi16 r4, 0x159d
     push16 r4
-    ldi16 c0, 0x16c0
+    ldi16 r4, 0x16c0
     push16 r4
-    ldi16 c0, 0x17e3
+    ldi16 r4, 0x17e3
     push16 r4
-    ldi16 c0, 0x1906
+    ldi16 r4, 0x1906
     push16 r4
     pop16 r7
     pop16 r6
@@ -80,24 +80,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r0; path true; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa02d
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa02d
     push16 r4
-    ldi16 c0, 0x126b
+    ldi16 r4, 0x126b
     push16 r4
-    ldi16 c0, 0x5c4b
+    ldi16 r4, 0x5c4b
     push16 r4
-    ldi16 c0, 0x14b1
+    ldi16 r4, 0x14b1
     push16 r4
-    ldi16 c0, 0x15d4
+    ldi16 r4, 0x15d4
     push16 r4
-    ldi16 c0, 0x16f7
+    ldi16 r4, 0x16f7
     push16 r4
-    ldi16 c0, 0x181a
+    ldi16 r4, 0x181a
     push16 r4
-    ldi16 c0, 0x193d
+    ldi16 r4, 0x193d
     push16 r4
     pop16 r7
     pop16 r6
@@ -153,24 +153,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r1; path false; guard r3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x117f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x117f
     push16 r4
-    ldi16 c0, 0xa05b
+    ldi16 r4, 0xa05b
     push16 r4
-    ldi16 c0, 0x13c5
+    ldi16 r4, 0x13c5
     push16 r4
-    ldi16 c0, 0x5d95
+    ldi16 r4, 0x5d95
     push16 r4
-    ldi16 c0, 0x160b
+    ldi16 r4, 0x160b
     push16 r4
-    ldi16 c0, 0x172e
+    ldi16 r4, 0x172e
     push16 r4
-    ldi16 c0, 0x1851
+    ldi16 r4, 0x1851
     push16 r4
-    ldi16 c0, 0x1974
+    ldi16 r4, 0x1974
     push16 r4
     pop16 r7
     pop16 r6
@@ -226,24 +226,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r1; path true; guard r4.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x11b6
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x11b6
     push16 r4
-    ldi16 c0, 0xa088
+    ldi16 r4, 0xa088
     push16 r4
-    ldi16 c0, 0x13fc
+    ldi16 r4, 0x13fc
     push16 r4
-    ldi16 c0, 0x151f
+    ldi16 r4, 0x151f
     push16 r4
-    ldi16 c0, 0x5edf
+    ldi16 r4, 0x5edf
     push16 r4
-    ldi16 c0, 0x1765
+    ldi16 r4, 0x1765
     push16 r4
-    ldi16 c0, 0x1888
+    ldi16 r4, 0x1888
     push16 r4
-    ldi16 c0, 0x19ab
+    ldi16 r4, 0x19ab
     push16 r4
     pop16 r7
     pop16 r6
@@ -299,24 +299,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r2; path false; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x11ed
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x11ed
     push16 r4
-    ldi16 c0, 0x1310
+    ldi16 r4, 0x1310
     push16 r4
-    ldi16 c0, 0xa0b6
+    ldi16 r4, 0xa0b6
     push16 r4
-    ldi16 c0, 0x1556
+    ldi16 r4, 0x1556
     push16 r4
-    ldi16 c0, 0x1679
+    ldi16 r4, 0x1679
     push16 r4
-    ldi16 c0, 0x6029
+    ldi16 r4, 0x6029
     push16 r4
-    ldi16 c0, 0x18bf
+    ldi16 r4, 0x18bf
     push16 r4
-    ldi16 c0, 0x19e2
+    ldi16 r4, 0x19e2
     push16 r4
     pop16 r7
     pop16 r6
@@ -372,24 +372,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r2; path true; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1224
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1224
     push16 r4
-    ldi16 c0, 0x1347
+    ldi16 r4, 0x1347
     push16 r4
-    ldi16 c0, 0xa0e3
+    ldi16 r4, 0xa0e3
     push16 r4
-    ldi16 c0, 0x158d
+    ldi16 r4, 0x158d
     push16 r4
-    ldi16 c0, 0x16b0
+    ldi16 r4, 0x16b0
     push16 r4
-    ldi16 c0, 0x17d3
+    ldi16 r4, 0x17d3
     push16 r4
-    ldi16 c0, 0x6173
+    ldi16 r4, 0x6173
     push16 r4
-    ldi16 c0, 0x1a19
+    ldi16 r4, 0x1a19
     push16 r4
     pop16 r7
     pop16 r6
@@ -445,24 +445,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r3; path false; guard r7.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x125b
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x125b
     push16 r4
-    ldi16 c0, 0x137e
+    ldi16 r4, 0x137e
     push16 r4
-    ldi16 c0, 0x14a1
+    ldi16 r4, 0x14a1
     push16 r4
-    ldi16 c0, 0xa111
+    ldi16 r4, 0xa111
     push16 r4
-    ldi16 c0, 0x16e7
+    ldi16 r4, 0x16e7
     push16 r4
-    ldi16 c0, 0x180a
+    ldi16 r4, 0x180a
     push16 r4
-    ldi16 c0, 0x192d
+    ldi16 r4, 0x192d
     push16 r4
-    ldi16 c0, 0x62bd
+    ldi16 r4, 0x62bd
     push16 r4
     pop16 r7
     pop16 r6
@@ -518,24 +518,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r3; path true; guard r0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x5bff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x5bff
     push16 r4
-    ldi16 c0, 0x13b5
+    ldi16 r4, 0x13b5
     push16 r4
-    ldi16 c0, 0x14d8
+    ldi16 r4, 0x14d8
     push16 r4
-    ldi16 c0, 0xa13e
+    ldi16 r4, 0xa13e
     push16 r4
-    ldi16 c0, 0x171e
+    ldi16 r4, 0x171e
     push16 r4
-    ldi16 c0, 0x1841
+    ldi16 r4, 0x1841
     push16 r4
-    ldi16 c0, 0x1964
+    ldi16 r4, 0x1964
     push16 r4
-    ldi16 c0, 0x1a87
+    ldi16 r4, 0x1a87
     push16 r4
     pop16 r7
     pop16 r6
@@ -591,24 +591,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r4; path false; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x12c9
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x12c9
     push16 r4
-    ldi16 c0, 0x5d49
+    ldi16 r4, 0x5d49
     push16 r4
-    ldi16 c0, 0x150f
+    ldi16 r4, 0x150f
     push16 r4
-    ldi16 c0, 0x1632
+    ldi16 r4, 0x1632
     push16 r4
-    ldi16 c0, 0xa16c
+    ldi16 r4, 0xa16c
     push16 r4
-    ldi16 c0, 0x1878
+    ldi16 r4, 0x1878
     push16 r4
-    ldi16 c0, 0x199b
+    ldi16 r4, 0x199b
     push16 r4
-    ldi16 c0, 0x1abe
+    ldi16 r4, 0x1abe
     push16 r4
     pop16 r7
     pop16 r6
@@ -664,24 +664,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r4; path true; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1300
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1300
     push16 r4
-    ldi16 c0, 0x1423
+    ldi16 r4, 0x1423
     push16 r4
-    ldi16 c0, 0x5e93
+    ldi16 r4, 0x5e93
     push16 r4
-    ldi16 c0, 0x1669
+    ldi16 r4, 0x1669
     push16 r4
-    ldi16 c0, 0xa199
+    ldi16 r4, 0xa199
     push16 r4
-    ldi16 c0, 0x18af
+    ldi16 r4, 0x18af
     push16 r4
-    ldi16 c0, 0x19d2
+    ldi16 r4, 0x19d2
     push16 r4
-    ldi16 c0, 0x1af5
+    ldi16 r4, 0x1af5
     push16 r4
     pop16 r7
     pop16 r6
@@ -737,24 +737,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r5; path false; guard r3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x1337
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x1337
     push16 r4
-    ldi16 c0, 0x145a
+    ldi16 r4, 0x145a
     push16 r4
-    ldi16 c0, 0x157d
+    ldi16 r4, 0x157d
     push16 r4
-    ldi16 c0, 0x5fdd
+    ldi16 r4, 0x5fdd
     push16 r4
-    ldi16 c0, 0x17c3
+    ldi16 r4, 0x17c3
     push16 r4
-    ldi16 c0, 0xa1c7
+    ldi16 r4, 0xa1c7
     push16 r4
-    ldi16 c0, 0x1a09
+    ldi16 r4, 0x1a09
     push16 r4
-    ldi16 c0, 0x1b2c
+    ldi16 r4, 0x1b2c
     push16 r4
     pop16 r7
     pop16 r6
@@ -810,24 +810,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r5; path true; guard r4.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x136e
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x136e
     push16 r4
-    ldi16 c0, 0x1491
+    ldi16 r4, 0x1491
     push16 r4
-    ldi16 c0, 0x15b4
+    ldi16 r4, 0x15b4
     push16 r4
-    ldi16 c0, 0x16d7
+    ldi16 r4, 0x16d7
     push16 r4
-    ldi16 c0, 0x6127
+    ldi16 r4, 0x6127
     push16 r4
-    ldi16 c0, 0xa1f4
+    ldi16 r4, 0xa1f4
     push16 r4
-    ldi16 c0, 0x1a40
+    ldi16 r4, 0x1a40
     push16 r4
-    ldi16 c0, 0x1b63
+    ldi16 r4, 0x1b63
     push16 r4
     pop16 r7
     pop16 r6
@@ -883,24 +883,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r6; path false; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x13a5
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x13a5
     push16 r4
-    ldi16 c0, 0x14c8
+    ldi16 r4, 0x14c8
     push16 r4
-    ldi16 c0, 0x15eb
+    ldi16 r4, 0x15eb
     push16 r4
-    ldi16 c0, 0x170e
+    ldi16 r4, 0x170e
     push16 r4
-    ldi16 c0, 0x1831
+    ldi16 r4, 0x1831
     push16 r4
-    ldi16 c0, 0x6271
+    ldi16 r4, 0x6271
     push16 r4
-    ldi16 c0, 0xa222
+    ldi16 r4, 0xa222
     push16 r4
-    ldi16 c0, 0x1b9a
+    ldi16 r4, 0x1b9a
     push16 r4
     pop16 r7
     pop16 r6
@@ -956,24 +956,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r6; path true; guard r7.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x13dc
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x13dc
     push16 r4
-    ldi16 c0, 0x14ff
+    ldi16 r4, 0x14ff
     push16 r4
-    ldi16 c0, 0x1622
+    ldi16 r4, 0x1622
     push16 r4
-    ldi16 c0, 0x1745
+    ldi16 r4, 0x1745
     push16 r4
-    ldi16 c0, 0x1868
+    ldi16 r4, 0x1868
     push16 r4
-    ldi16 c0, 0x198b
+    ldi16 r4, 0x198b
     push16 r4
-    ldi16 c0, 0xa24f
+    ldi16 r4, 0xa24f
     push16 r4
-    ldi16 c0, 0x64bc
+    ldi16 r4, 0x64bc
     push16 r4
     pop16 r7
     pop16 r6
@@ -1029,24 +1029,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r7; path false; guard r0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x5dfe
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x5dfe
     push16 r4
-    ldi16 c0, 0x1536
+    ldi16 r4, 0x1536
     push16 r4
-    ldi16 c0, 0x1659
+    ldi16 r4, 0x1659
     push16 r4
-    ldi16 c0, 0x177c
+    ldi16 r4, 0x177c
     push16 r4
-    ldi16 c0, 0x189f
+    ldi16 r4, 0x189f
     push16 r4
-    ldi16 c0, 0x19c2
+    ldi16 r4, 0x19c2
     push16 r4
-    ldi16 c0, 0x1ae5
+    ldi16 r4, 0x1ae5
     push16 r4
-    ldi16 c0, 0xa27d
+    ldi16 r4, 0xa27d
     push16 r4
     pop16 r7
     pop16 r6
@@ -1102,24 +1102,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.eq r7; path true; guard r0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x5e47
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x5e47
     push16 r4
-    ldi16 c0, 0x156d
+    ldi16 r4, 0x156d
     push16 r4
-    ldi16 c0, 0x1690
+    ldi16 r4, 0x1690
     push16 r4
-    ldi16 c0, 0x17b3
+    ldi16 r4, 0x17b3
     push16 r4
-    ldi16 c0, 0x18d6
+    ldi16 r4, 0x18d6
     push16 r4
-    ldi16 c0, 0x19f9
+    ldi16 r4, 0x19f9
     push16 r4
-    ldi16 c0, 0x1b1c
+    ldi16 r4, 0x1b1c
     push16 r4
-    ldi16 c0, 0xa2aa
+    ldi16 r4, 0xa2aa
     push16 r4
     pop16 r7
     pop16 r6
@@ -1175,24 +1175,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r0; path false; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa2d0
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa2d0
     push16 r4
-    ldi16 c0, 0x5f91
+    ldi16 r4, 0x5f91
     push16 r4
-    ldi16 c0, 0x16c7
+    ldi16 r4, 0x16c7
     push16 r4
-    ldi16 c0, 0x17ea
+    ldi16 r4, 0x17ea
     push16 r4
-    ldi16 c0, 0x190d
+    ldi16 r4, 0x190d
     push16 r4
-    ldi16 c0, 0x1a30
+    ldi16 r4, 0x1a30
     push16 r4
-    ldi16 c0, 0x1b53
+    ldi16 r4, 0x1b53
     push16 r4
-    ldi16 c0, 0x1c76
+    ldi16 r4, 0x1c76
     push16 r4
     pop16 r7
     pop16 r6
@@ -1248,24 +1248,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r0; path true; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0xa2fd
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0xa2fd
     push16 r4
-    ldi16 c0, 0x15db
+    ldi16 r4, 0x15db
     push16 r4
-    ldi16 c0, 0x60db
+    ldi16 r4, 0x60db
     push16 r4
-    ldi16 c0, 0x1821
+    ldi16 r4, 0x1821
     push16 r4
-    ldi16 c0, 0x1944
+    ldi16 r4, 0x1944
     push16 r4
-    ldi16 c0, 0x1a67
+    ldi16 r4, 0x1a67
     push16 r4
-    ldi16 c0, 0x1b8a
+    ldi16 r4, 0x1b8a
     push16 r4
-    ldi16 c0, 0x1cad
+    ldi16 r4, 0x1cad
     push16 r4
     pop16 r7
     pop16 r6
@@ -1321,24 +1321,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r1; path false; guard r3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x14ef
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x14ef
     push16 r4
-    ldi16 c0, 0xa32b
+    ldi16 r4, 0xa32b
     push16 r4
-    ldi16 c0, 0x1735
+    ldi16 r4, 0x1735
     push16 r4
-    ldi16 c0, 0x6225
+    ldi16 r4, 0x6225
     push16 r4
-    ldi16 c0, 0x197b
+    ldi16 r4, 0x197b
     push16 r4
-    ldi16 c0, 0x1a9e
+    ldi16 r4, 0x1a9e
     push16 r4
-    ldi16 c0, 0x1bc1
+    ldi16 r4, 0x1bc1
     push16 r4
-    ldi16 c0, 0x1ce4
+    ldi16 r4, 0x1ce4
     push16 r4
     pop16 r7
     pop16 r6
@@ -1394,24 +1394,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r1; path true; guard r4.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x1526
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x1526
     push16 r4
-    ldi16 c0, 0xa358
+    ldi16 r4, 0xa358
     push16 r4
-    ldi16 c0, 0x176c
+    ldi16 r4, 0x176c
     push16 r4
-    ldi16 c0, 0x188f
+    ldi16 r4, 0x188f
     push16 r4
-    ldi16 c0, 0x636f
+    ldi16 r4, 0x636f
     push16 r4
-    ldi16 c0, 0x1ad5
+    ldi16 r4, 0x1ad5
     push16 r4
-    ldi16 c0, 0x1bf8
+    ldi16 r4, 0x1bf8
     push16 r4
-    ldi16 c0, 0x1d1b
+    ldi16 r4, 0x1d1b
     push16 r4
     pop16 r7
     pop16 r6
@@ -1467,24 +1467,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r2; path false; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x155d
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x155d
     push16 r4
-    ldi16 c0, 0x1680
+    ldi16 r4, 0x1680
     push16 r4
-    ldi16 c0, 0xa386
+    ldi16 r4, 0xa386
     push16 r4
-    ldi16 c0, 0x18c6
+    ldi16 r4, 0x18c6
     push16 r4
-    ldi16 c0, 0x19e9
+    ldi16 r4, 0x19e9
     push16 r4
-    ldi16 c0, 0x64b9
+    ldi16 r4, 0x64b9
     push16 r4
-    ldi16 c0, 0x1c2f
+    ldi16 r4, 0x1c2f
     push16 r4
-    ldi16 c0, 0x1d52
+    ldi16 r4, 0x1d52
     push16 r4
     pop16 r7
     pop16 r6
@@ -1540,24 +1540,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r2; path true; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x1594
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x1594
     push16 r4
-    ldi16 c0, 0x16b7
+    ldi16 r4, 0x16b7
     push16 r4
-    ldi16 c0, 0xa3b3
+    ldi16 r4, 0xa3b3
     push16 r4
-    ldi16 c0, 0x18fd
+    ldi16 r4, 0x18fd
     push16 r4
-    ldi16 c0, 0x1a20
+    ldi16 r4, 0x1a20
     push16 r4
-    ldi16 c0, 0x1b43
+    ldi16 r4, 0x1b43
     push16 r4
-    ldi16 c0, 0x6603
+    ldi16 r4, 0x6603
     push16 r4
-    ldi16 c0, 0x1d89
+    ldi16 r4, 0x1d89
     push16 r4
     pop16 r7
     pop16 r6
@@ -1613,24 +1613,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r3; path false; guard r7.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x15cb
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x15cb
     push16 r4
-    ldi16 c0, 0x16ee
+    ldi16 r4, 0x16ee
     push16 r4
-    ldi16 c0, 0x1811
+    ldi16 r4, 0x1811
     push16 r4
-    ldi16 c0, 0xa3e1
+    ldi16 r4, 0xa3e1
     push16 r4
-    ldi16 c0, 0x1a57
+    ldi16 r4, 0x1a57
     push16 r4
-    ldi16 c0, 0x1b7a
+    ldi16 r4, 0x1b7a
     push16 r4
-    ldi16 c0, 0x1c9d
+    ldi16 r4, 0x1c9d
     push16 r4
-    ldi16 c0, 0x674d
+    ldi16 r4, 0x674d
     push16 r4
     pop16 r7
     pop16 r6
@@ -1686,24 +1686,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r3; path true; guard r0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x608f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x608f
     push16 r4
-    ldi16 c0, 0x1725
+    ldi16 r4, 0x1725
     push16 r4
-    ldi16 c0, 0x1848
+    ldi16 r4, 0x1848
     push16 r4
-    ldi16 c0, 0xa40e
+    ldi16 r4, 0xa40e
     push16 r4
-    ldi16 c0, 0x1a8e
+    ldi16 r4, 0x1a8e
     push16 r4
-    ldi16 c0, 0x1bb1
+    ldi16 r4, 0x1bb1
     push16 r4
-    ldi16 c0, 0x1cd4
+    ldi16 r4, 0x1cd4
     push16 r4
-    ldi16 c0, 0x1df7
+    ldi16 r4, 0x1df7
     push16 r4
     pop16 r7
     pop16 r6
@@ -1759,24 +1759,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r4; path false; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1639
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1639
     push16 r4
-    ldi16 c0, 0x61d9
+    ldi16 r4, 0x61d9
     push16 r4
-    ldi16 c0, 0x187f
+    ldi16 r4, 0x187f
     push16 r4
-    ldi16 c0, 0x19a2
+    ldi16 r4, 0x19a2
     push16 r4
-    ldi16 c0, 0xa43c
+    ldi16 r4, 0xa43c
     push16 r4
-    ldi16 c0, 0x1be8
+    ldi16 r4, 0x1be8
     push16 r4
-    ldi16 c0, 0x1d0b
+    ldi16 r4, 0x1d0b
     push16 r4
-    ldi16 c0, 0x1e2e
+    ldi16 r4, 0x1e2e
     push16 r4
     pop16 r7
     pop16 r6
@@ -1832,24 +1832,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r4; path true; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x1670
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x1670
     push16 r4
-    ldi16 c0, 0x1793
+    ldi16 r4, 0x1793
     push16 r4
-    ldi16 c0, 0x6323
+    ldi16 r4, 0x6323
     push16 r4
-    ldi16 c0, 0x19d9
+    ldi16 r4, 0x19d9
     push16 r4
-    ldi16 c0, 0xa469
+    ldi16 r4, 0xa469
     push16 r4
-    ldi16 c0, 0x1c1f
+    ldi16 r4, 0x1c1f
     push16 r4
-    ldi16 c0, 0x1d42
+    ldi16 r4, 0x1d42
     push16 r4
-    ldi16 c0, 0x1e65
+    ldi16 r4, 0x1e65
     push16 r4
     pop16 r7
     pop16 r6
@@ -1905,24 +1905,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r5; path false; guard r3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x16a7
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x16a7
     push16 r4
-    ldi16 c0, 0x17ca
+    ldi16 r4, 0x17ca
     push16 r4
-    ldi16 c0, 0x18ed
+    ldi16 r4, 0x18ed
     push16 r4
-    ldi16 c0, 0x646d
+    ldi16 r4, 0x646d
     push16 r4
-    ldi16 c0, 0x1b33
+    ldi16 r4, 0x1b33
     push16 r4
-    ldi16 c0, 0xa497
+    ldi16 r4, 0xa497
     push16 r4
-    ldi16 c0, 0x1d79
+    ldi16 r4, 0x1d79
     push16 r4
-    ldi16 c0, 0x1e9c
+    ldi16 r4, 0x1e9c
     push16 r4
     pop16 r7
     pop16 r6
@@ -1978,24 +1978,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r5; path true; guard r4.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x16de
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x16de
     push16 r4
-    ldi16 c0, 0x1801
+    ldi16 r4, 0x1801
     push16 r4
-    ldi16 c0, 0x1924
+    ldi16 r4, 0x1924
     push16 r4
-    ldi16 c0, 0x1a47
+    ldi16 r4, 0x1a47
     push16 r4
-    ldi16 c0, 0x65b7
+    ldi16 r4, 0x65b7
     push16 r4
-    ldi16 c0, 0xa4c4
+    ldi16 r4, 0xa4c4
     push16 r4
-    ldi16 c0, 0x1db0
+    ldi16 r4, 0x1db0
     push16 r4
-    ldi16 c0, 0x1ed3
+    ldi16 r4, 0x1ed3
     push16 r4
     pop16 r7
     pop16 r6
@@ -2051,24 +2051,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r6; path false; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1715
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1715
     push16 r4
-    ldi16 c0, 0x1838
+    ldi16 r4, 0x1838
     push16 r4
-    ldi16 c0, 0x195b
+    ldi16 r4, 0x195b
     push16 r4
-    ldi16 c0, 0x1a7e
+    ldi16 r4, 0x1a7e
     push16 r4
-    ldi16 c0, 0x1ba1
+    ldi16 r4, 0x1ba1
     push16 r4
-    ldi16 c0, 0x6701
+    ldi16 r4, 0x6701
     push16 r4
-    ldi16 c0, 0xa4f2
+    ldi16 r4, 0xa4f2
     push16 r4
-    ldi16 c0, 0x1f0a
+    ldi16 r4, 0x1f0a
     push16 r4
     pop16 r7
     pop16 r6
@@ -2124,24 +2124,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r6; path true; guard r7.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x174c
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x174c
     push16 r4
-    ldi16 c0, 0x186f
+    ldi16 r4, 0x186f
     push16 r4
-    ldi16 c0, 0x1992
+    ldi16 r4, 0x1992
     push16 r4
-    ldi16 c0, 0x1ab5
+    ldi16 r4, 0x1ab5
     push16 r4
-    ldi16 c0, 0x1bd8
+    ldi16 r4, 0x1bd8
     push16 r4
-    ldi16 c0, 0x1cfb
+    ldi16 r4, 0x1cfb
     push16 r4
-    ldi16 c0, 0xa51f
+    ldi16 r4, 0xa51f
     push16 r4
-    ldi16 c0, 0x694c
+    ldi16 r4, 0x694c
     push16 r4
     pop16 r7
     pop16 r6
@@ -2197,24 +2197,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r7; path false; guard r0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x628e
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x628e
     push16 r4
-    ldi16 c0, 0x18a6
+    ldi16 r4, 0x18a6
     push16 r4
-    ldi16 c0, 0x19c9
+    ldi16 r4, 0x19c9
     push16 r4
-    ldi16 c0, 0x1aec
+    ldi16 r4, 0x1aec
     push16 r4
-    ldi16 c0, 0x1c0f
+    ldi16 r4, 0x1c0f
     push16 r4
-    ldi16 c0, 0x1d32
+    ldi16 r4, 0x1d32
     push16 r4
-    ldi16 c0, 0x1e55
+    ldi16 r4, 0x1e55
     push16 r4
-    ldi16 c0, 0xa54d
+    ldi16 r4, 0xa54d
     push16 r4
     pop16 r7
     pop16 r6
@@ -2270,24 +2270,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ne r7; path true; guard r0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x2468
-    cmp c2, c3
-    ldi16 c0, 0x62d7
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x2468
+    cmp r6, r7
+    ldi16 r4, 0x62d7
     push16 r4
-    ldi16 c0, 0x18dd
+    ldi16 r4, 0x18dd
     push16 r4
-    ldi16 c0, 0x1a00
+    ldi16 r4, 0x1a00
     push16 r4
-    ldi16 c0, 0x1b23
+    ldi16 r4, 0x1b23
     push16 r4
-    ldi16 c0, 0x1c46
+    ldi16 r4, 0x1c46
     push16 r4
-    ldi16 c0, 0x1d69
+    ldi16 r4, 0x1d69
     push16 r4
-    ldi16 c0, 0x1e8c
+    ldi16 r4, 0x1e8c
     push16 r4
-    ldi16 c0, 0xa57a
+    ldi16 r4, 0xa57a
     push16 r4
     pop16 r7
     pop16 r6
@@ -2343,24 +2343,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r0; path false; guard r1.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0xa5a0
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0xa5a0
     push16 r4
-    ldi16 c0, 0x6421
+    ldi16 r4, 0x6421
     push16 r4
-    ldi16 c0, 0x1a37
+    ldi16 r4, 0x1a37
     push16 r4
-    ldi16 c0, 0x1b5a
+    ldi16 r4, 0x1b5a
     push16 r4
-    ldi16 c0, 0x1c7d
+    ldi16 r4, 0x1c7d
     push16 r4
-    ldi16 c0, 0x1da0
+    ldi16 r4, 0x1da0
     push16 r4
-    ldi16 c0, 0x1ec3
+    ldi16 r4, 0x1ec3
     push16 r4
-    ldi16 c0, 0x1fe6
+    ldi16 r4, 0x1fe6
     push16 r4
     pop16 r7
     pop16 r6
@@ -2416,24 +2416,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r0; path true; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa5cd
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa5cd
     push16 r4
-    ldi16 c0, 0x194b
+    ldi16 r4, 0x194b
     push16 r4
-    ldi16 c0, 0x656b
+    ldi16 r4, 0x656b
     push16 r4
-    ldi16 c0, 0x1b91
+    ldi16 r4, 0x1b91
     push16 r4
-    ldi16 c0, 0x1cb4
+    ldi16 r4, 0x1cb4
     push16 r4
-    ldi16 c0, 0x1dd7
+    ldi16 r4, 0x1dd7
     push16 r4
-    ldi16 c0, 0x1efa
+    ldi16 r4, 0x1efa
     push16 r4
-    ldi16 c0, 0x201d
+    ldi16 r4, 0x201d
     push16 r4
     pop16 r7
     pop16 r6
@@ -2489,24 +2489,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r1; path false; guard r3.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x185f
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x185f
     push16 r4
-    ldi16 c0, 0xa5fb
+    ldi16 r4, 0xa5fb
     push16 r4
-    ldi16 c0, 0x1aa5
+    ldi16 r4, 0x1aa5
     push16 r4
-    ldi16 c0, 0x66b5
+    ldi16 r4, 0x66b5
     push16 r4
-    ldi16 c0, 0x1ceb
+    ldi16 r4, 0x1ceb
     push16 r4
-    ldi16 c0, 0x1e0e
+    ldi16 r4, 0x1e0e
     push16 r4
-    ldi16 c0, 0x1f31
+    ldi16 r4, 0x1f31
     push16 r4
-    ldi16 c0, 0x2054
+    ldi16 r4, 0x2054
     push16 r4
     pop16 r7
     pop16 r6
@@ -2562,24 +2562,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r1; path true; guard r4.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1896
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1896
     push16 r4
-    ldi16 c0, 0xa628
+    ldi16 r4, 0xa628
     push16 r4
-    ldi16 c0, 0x1adc
+    ldi16 r4, 0x1adc
     push16 r4
-    ldi16 c0, 0x1bff
+    ldi16 r4, 0x1bff
     push16 r4
-    ldi16 c0, 0x67ff
+    ldi16 r4, 0x67ff
     push16 r4
-    ldi16 c0, 0x1e45
+    ldi16 r4, 0x1e45
     push16 r4
-    ldi16 c0, 0x1f68
+    ldi16 r4, 0x1f68
     push16 r4
-    ldi16 c0, 0x208b
+    ldi16 r4, 0x208b
     push16 r4
     pop16 r7
     pop16 r6
@@ -2635,24 +2635,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r2; path false; guard r5.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x18cd
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x18cd
     push16 r4
-    ldi16 c0, 0x19f0
+    ldi16 r4, 0x19f0
     push16 r4
-    ldi16 c0, 0xa656
+    ldi16 r4, 0xa656
     push16 r4
-    ldi16 c0, 0x1c36
+    ldi16 r4, 0x1c36
     push16 r4
-    ldi16 c0, 0x1d59
+    ldi16 r4, 0x1d59
     push16 r4
-    ldi16 c0, 0x6949
+    ldi16 r4, 0x6949
     push16 r4
-    ldi16 c0, 0x1f9f
+    ldi16 r4, 0x1f9f
     push16 r4
-    ldi16 c0, 0x20c2
+    ldi16 r4, 0x20c2
     push16 r4
     pop16 r7
     pop16 r6
@@ -2708,24 +2708,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r2; path true; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1904
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1904
     push16 r4
-    ldi16 c0, 0x1a27
+    ldi16 r4, 0x1a27
     push16 r4
-    ldi16 c0, 0xa683
+    ldi16 r4, 0xa683
     push16 r4
-    ldi16 c0, 0x1c6d
+    ldi16 r4, 0x1c6d
     push16 r4
-    ldi16 c0, 0x1d90
+    ldi16 r4, 0x1d90
     push16 r4
-    ldi16 c0, 0x1eb3
+    ldi16 r4, 0x1eb3
     push16 r4
-    ldi16 c0, 0x6a93
+    ldi16 r4, 0x6a93
     push16 r4
-    ldi16 c0, 0x20f9
+    ldi16 r4, 0x20f9
     push16 r4
     pop16 r7
     pop16 r6
@@ -2781,24 +2781,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r3; path false; guard r7.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x193b
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x193b
     push16 r4
-    ldi16 c0, 0x1a5e
+    ldi16 r4, 0x1a5e
     push16 r4
-    ldi16 c0, 0x1b81
+    ldi16 r4, 0x1b81
     push16 r4
-    ldi16 c0, 0xa6b1
+    ldi16 r4, 0xa6b1
     push16 r4
-    ldi16 c0, 0x1dc7
+    ldi16 r4, 0x1dc7
     push16 r4
-    ldi16 c0, 0x1eea
+    ldi16 r4, 0x1eea
     push16 r4
-    ldi16 c0, 0x200d
+    ldi16 r4, 0x200d
     push16 r4
-    ldi16 c0, 0x6bdd
+    ldi16 r4, 0x6bdd
     push16 r4
     pop16 r7
     pop16 r6
@@ -2854,24 +2854,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r3; path true; guard r0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x651f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x651f
     push16 r4
-    ldi16 c0, 0x1a95
+    ldi16 r4, 0x1a95
     push16 r4
-    ldi16 c0, 0x1bb8
+    ldi16 r4, 0x1bb8
     push16 r4
-    ldi16 c0, 0xa6de
+    ldi16 r4, 0xa6de
     push16 r4
-    ldi16 c0, 0x1dfe
+    ldi16 r4, 0x1dfe
     push16 r4
-    ldi16 c0, 0x1f21
+    ldi16 r4, 0x1f21
     push16 r4
-    ldi16 c0, 0x2044
+    ldi16 r4, 0x2044
     push16 r4
-    ldi16 c0, 0x2167
+    ldi16 r4, 0x2167
     push16 r4
     pop16 r7
     pop16 r6
@@ -2927,24 +2927,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r4; path false; guard r1.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x19a9
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x19a9
     push16 r4
-    ldi16 c0, 0x6669
+    ldi16 r4, 0x6669
     push16 r4
-    ldi16 c0, 0x1bef
+    ldi16 r4, 0x1bef
     push16 r4
-    ldi16 c0, 0x1d12
+    ldi16 r4, 0x1d12
     push16 r4
-    ldi16 c0, 0xa70c
+    ldi16 r4, 0xa70c
     push16 r4
-    ldi16 c0, 0x1f58
+    ldi16 r4, 0x1f58
     push16 r4
-    ldi16 c0, 0x207b
+    ldi16 r4, 0x207b
     push16 r4
-    ldi16 c0, 0x219e
+    ldi16 r4, 0x219e
     push16 r4
     pop16 r7
     pop16 r6
@@ -3000,24 +3000,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r4; path true; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x19e0
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x19e0
     push16 r4
-    ldi16 c0, 0x1b03
+    ldi16 r4, 0x1b03
     push16 r4
-    ldi16 c0, 0x67b3
+    ldi16 r4, 0x67b3
     push16 r4
-    ldi16 c0, 0x1d49
+    ldi16 r4, 0x1d49
     push16 r4
-    ldi16 c0, 0xa739
+    ldi16 r4, 0xa739
     push16 r4
-    ldi16 c0, 0x1f8f
+    ldi16 r4, 0x1f8f
     push16 r4
-    ldi16 c0, 0x20b2
+    ldi16 r4, 0x20b2
     push16 r4
-    ldi16 c0, 0x21d5
+    ldi16 r4, 0x21d5
     push16 r4
     pop16 r7
     pop16 r6
@@ -3073,24 +3073,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r5; path false; guard r3.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x1a17
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x1a17
     push16 r4
-    ldi16 c0, 0x1b3a
+    ldi16 r4, 0x1b3a
     push16 r4
-    ldi16 c0, 0x1c5d
+    ldi16 r4, 0x1c5d
     push16 r4
-    ldi16 c0, 0x68fd
+    ldi16 r4, 0x68fd
     push16 r4
-    ldi16 c0, 0x1ea3
+    ldi16 r4, 0x1ea3
     push16 r4
-    ldi16 c0, 0xa767
+    ldi16 r4, 0xa767
     push16 r4
-    ldi16 c0, 0x20e9
+    ldi16 r4, 0x20e9
     push16 r4
-    ldi16 c0, 0x220c
+    ldi16 r4, 0x220c
     push16 r4
     pop16 r7
     pop16 r6
@@ -3146,24 +3146,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r5; path true; guard r4.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1a4e
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1a4e
     push16 r4
-    ldi16 c0, 0x1b71
+    ldi16 r4, 0x1b71
     push16 r4
-    ldi16 c0, 0x1c94
+    ldi16 r4, 0x1c94
     push16 r4
-    ldi16 c0, 0x1db7
+    ldi16 r4, 0x1db7
     push16 r4
-    ldi16 c0, 0x6a47
+    ldi16 r4, 0x6a47
     push16 r4
-    ldi16 c0, 0xa794
+    ldi16 r4, 0xa794
     push16 r4
-    ldi16 c0, 0x2120
+    ldi16 r4, 0x2120
     push16 r4
-    ldi16 c0, 0x2243
+    ldi16 r4, 0x2243
     push16 r4
     pop16 r7
     pop16 r6
@@ -3219,24 +3219,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r6; path false; guard r5.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x1a85
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x1a85
     push16 r4
-    ldi16 c0, 0x1ba8
+    ldi16 r4, 0x1ba8
     push16 r4
-    ldi16 c0, 0x1ccb
+    ldi16 r4, 0x1ccb
     push16 r4
-    ldi16 c0, 0x1dee
+    ldi16 r4, 0x1dee
     push16 r4
-    ldi16 c0, 0x1f11
+    ldi16 r4, 0x1f11
     push16 r4
-    ldi16 c0, 0x6b91
+    ldi16 r4, 0x6b91
     push16 r4
-    ldi16 c0, 0xa7c2
+    ldi16 r4, 0xa7c2
     push16 r4
-    ldi16 c0, 0x227a
+    ldi16 r4, 0x227a
     push16 r4
     pop16 r7
     pop16 r6
@@ -3292,24 +3292,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r6; path true; guard r7.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1abc
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1abc
     push16 r4
-    ldi16 c0, 0x1bdf
+    ldi16 r4, 0x1bdf
     push16 r4
-    ldi16 c0, 0x1d02
+    ldi16 r4, 0x1d02
     push16 r4
-    ldi16 c0, 0x1e25
+    ldi16 r4, 0x1e25
     push16 r4
-    ldi16 c0, 0x1f48
+    ldi16 r4, 0x1f48
     push16 r4
-    ldi16 c0, 0x206b
+    ldi16 r4, 0x206b
     push16 r4
-    ldi16 c0, 0xa7ef
+    ldi16 r4, 0xa7ef
     push16 r4
-    ldi16 c0, 0x6ddc
+    ldi16 r4, 0x6ddc
     push16 r4
     pop16 r7
     pop16 r6
@@ -3365,24 +3365,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r7; path false; guard r0.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x671e
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x671e
     push16 r4
-    ldi16 c0, 0x1c16
+    ldi16 r4, 0x1c16
     push16 r4
-    ldi16 c0, 0x1d39
+    ldi16 r4, 0x1d39
     push16 r4
-    ldi16 c0, 0x1e5c
+    ldi16 r4, 0x1e5c
     push16 r4
-    ldi16 c0, 0x1f7f
+    ldi16 r4, 0x1f7f
     push16 r4
-    ldi16 c0, 0x20a2
+    ldi16 r4, 0x20a2
     push16 r4
-    ldi16 c0, 0x21c5
+    ldi16 r4, 0x21c5
     push16 r4
-    ldi16 c0, 0xa81d
+    ldi16 r4, 0xa81d
     push16 r4
     pop16 r7
     pop16 r6
@@ -3438,24 +3438,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.ult r7; path true; guard r0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x6767
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x6767
     push16 r4
-    ldi16 c0, 0x1c4d
+    ldi16 r4, 0x1c4d
     push16 r4
-    ldi16 c0, 0x1d70
+    ldi16 r4, 0x1d70
     push16 r4
-    ldi16 c0, 0x1e93
+    ldi16 r4, 0x1e93
     push16 r4
-    ldi16 c0, 0x1fb6
+    ldi16 r4, 0x1fb6
     push16 r4
-    ldi16 c0, 0x20d9
+    ldi16 r4, 0x20d9
     push16 r4
-    ldi16 c0, 0x21fc
+    ldi16 r4, 0x21fc
     push16 r4
-    ldi16 c0, 0xa84a
+    ldi16 r4, 0xa84a
     push16 r4
     pop16 r7
     pop16 r6
@@ -3511,24 +3511,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r0; path false; guard r1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa870
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa870
     push16 r4
-    ldi16 c0, 0x68b1
+    ldi16 r4, 0x68b1
     push16 r4
-    ldi16 c0, 0x1da7
+    ldi16 r4, 0x1da7
     push16 r4
-    ldi16 c0, 0x1eca
+    ldi16 r4, 0x1eca
     push16 r4
-    ldi16 c0, 0x1fed
+    ldi16 r4, 0x1fed
     push16 r4
-    ldi16 c0, 0x2110
+    ldi16 r4, 0x2110
     push16 r4
-    ldi16 c0, 0x2233
+    ldi16 r4, 0x2233
     push16 r4
-    ldi16 c0, 0x2356
+    ldi16 r4, 0x2356
     push16 r4
     pop16 r7
     pop16 r6
@@ -3584,24 +3584,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r0; path true; guard r2.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0xa89d
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0xa89d
     push16 r4
-    ldi16 c0, 0x1cbb
+    ldi16 r4, 0x1cbb
     push16 r4
-    ldi16 c0, 0x69fb
+    ldi16 r4, 0x69fb
     push16 r4
-    ldi16 c0, 0x1f01
+    ldi16 r4, 0x1f01
     push16 r4
-    ldi16 c0, 0x2024
+    ldi16 r4, 0x2024
     push16 r4
-    ldi16 c0, 0x2147
+    ldi16 r4, 0x2147
     push16 r4
-    ldi16 c0, 0x226a
+    ldi16 r4, 0x226a
     push16 r4
-    ldi16 c0, 0x238d
+    ldi16 r4, 0x238d
     push16 r4
     pop16 r7
     pop16 r6
@@ -3657,24 +3657,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r1; path false; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1bcf
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1bcf
     push16 r4
-    ldi16 c0, 0xa8cb
+    ldi16 r4, 0xa8cb
     push16 r4
-    ldi16 c0, 0x1e15
+    ldi16 r4, 0x1e15
     push16 r4
-    ldi16 c0, 0x6b45
+    ldi16 r4, 0x6b45
     push16 r4
-    ldi16 c0, 0x205b
+    ldi16 r4, 0x205b
     push16 r4
-    ldi16 c0, 0x217e
+    ldi16 r4, 0x217e
     push16 r4
-    ldi16 c0, 0x22a1
+    ldi16 r4, 0x22a1
     push16 r4
-    ldi16 c0, 0x23c4
+    ldi16 r4, 0x23c4
     push16 r4
     pop16 r7
     pop16 r6
@@ -3730,24 +3730,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r1; path true; guard r4.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x1c06
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x1c06
     push16 r4
-    ldi16 c0, 0xa8f8
+    ldi16 r4, 0xa8f8
     push16 r4
-    ldi16 c0, 0x1e4c
+    ldi16 r4, 0x1e4c
     push16 r4
-    ldi16 c0, 0x1f6f
+    ldi16 r4, 0x1f6f
     push16 r4
-    ldi16 c0, 0x6c8f
+    ldi16 r4, 0x6c8f
     push16 r4
-    ldi16 c0, 0x21b5
+    ldi16 r4, 0x21b5
     push16 r4
-    ldi16 c0, 0x22d8
+    ldi16 r4, 0x22d8
     push16 r4
-    ldi16 c0, 0x23fb
+    ldi16 r4, 0x23fb
     push16 r4
     pop16 r7
     pop16 r6
@@ -3803,24 +3803,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r2; path false; guard r5.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1c3d
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1c3d
     push16 r4
-    ldi16 c0, 0x1d60
+    ldi16 r4, 0x1d60
     push16 r4
-    ldi16 c0, 0xa926
+    ldi16 r4, 0xa926
     push16 r4
-    ldi16 c0, 0x1fa6
+    ldi16 r4, 0x1fa6
     push16 r4
-    ldi16 c0, 0x20c9
+    ldi16 r4, 0x20c9
     push16 r4
-    ldi16 c0, 0x6dd9
+    ldi16 r4, 0x6dd9
     push16 r4
-    ldi16 c0, 0x230f
+    ldi16 r4, 0x230f
     push16 r4
-    ldi16 c0, 0x2432
+    ldi16 r4, 0x2432
     push16 r4
     pop16 r7
     pop16 r6
@@ -3876,24 +3876,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r2; path true; guard r6.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x1c74
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x1c74
     push16 r4
-    ldi16 c0, 0x1d97
+    ldi16 r4, 0x1d97
     push16 r4
-    ldi16 c0, 0xa953
+    ldi16 r4, 0xa953
     push16 r4
-    ldi16 c0, 0x1fdd
+    ldi16 r4, 0x1fdd
     push16 r4
-    ldi16 c0, 0x2100
+    ldi16 r4, 0x2100
     push16 r4
-    ldi16 c0, 0x2223
+    ldi16 r4, 0x2223
     push16 r4
-    ldi16 c0, 0x6f23
+    ldi16 r4, 0x6f23
     push16 r4
-    ldi16 c0, 0x2469
+    ldi16 r4, 0x2469
     push16 r4
     pop16 r7
     pop16 r6
@@ -3949,24 +3949,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r3; path false; guard r7.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1cab
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1cab
     push16 r4
-    ldi16 c0, 0x1dce
+    ldi16 r4, 0x1dce
     push16 r4
-    ldi16 c0, 0x1ef1
+    ldi16 r4, 0x1ef1
     push16 r4
-    ldi16 c0, 0xa981
+    ldi16 r4, 0xa981
     push16 r4
-    ldi16 c0, 0x2137
+    ldi16 r4, 0x2137
     push16 r4
-    ldi16 c0, 0x225a
+    ldi16 r4, 0x225a
     push16 r4
-    ldi16 c0, 0x237d
+    ldi16 r4, 0x237d
     push16 r4
-    ldi16 c0, 0x706d
+    ldi16 r4, 0x706d
     push16 r4
     pop16 r7
     pop16 r6
@@ -4022,24 +4022,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r3; path true; guard r0.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x69af
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x69af
     push16 r4
-    ldi16 c0, 0x1e05
+    ldi16 r4, 0x1e05
     push16 r4
-    ldi16 c0, 0x1f28
+    ldi16 r4, 0x1f28
     push16 r4
-    ldi16 c0, 0xa9ae
+    ldi16 r4, 0xa9ae
     push16 r4
-    ldi16 c0, 0x216e
+    ldi16 r4, 0x216e
     push16 r4
-    ldi16 c0, 0x2291
+    ldi16 r4, 0x2291
     push16 r4
-    ldi16 c0, 0x23b4
+    ldi16 r4, 0x23b4
     push16 r4
-    ldi16 c0, 0x24d7
+    ldi16 r4, 0x24d7
     push16 r4
     pop16 r7
     pop16 r6
@@ -4095,24 +4095,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r4; path false; guard r1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1d19
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1d19
     push16 r4
-    ldi16 c0, 0x6af9
+    ldi16 r4, 0x6af9
     push16 r4
-    ldi16 c0, 0x1f5f
+    ldi16 r4, 0x1f5f
     push16 r4
-    ldi16 c0, 0x2082
+    ldi16 r4, 0x2082
     push16 r4
-    ldi16 c0, 0xa9dc
+    ldi16 r4, 0xa9dc
     push16 r4
-    ldi16 c0, 0x22c8
+    ldi16 r4, 0x22c8
     push16 r4
-    ldi16 c0, 0x23eb
+    ldi16 r4, 0x23eb
     push16 r4
-    ldi16 c0, 0x250e
+    ldi16 r4, 0x250e
     push16 r4
     pop16 r7
     pop16 r6
@@ -4168,24 +4168,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r4; path true; guard r2.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x1d50
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x1d50
     push16 r4
-    ldi16 c0, 0x1e73
+    ldi16 r4, 0x1e73
     push16 r4
-    ldi16 c0, 0x6c43
+    ldi16 r4, 0x6c43
     push16 r4
-    ldi16 c0, 0x20b9
+    ldi16 r4, 0x20b9
     push16 r4
-    ldi16 c0, 0xaa09
+    ldi16 r4, 0xaa09
     push16 r4
-    ldi16 c0, 0x22ff
+    ldi16 r4, 0x22ff
     push16 r4
-    ldi16 c0, 0x2422
+    ldi16 r4, 0x2422
     push16 r4
-    ldi16 c0, 0x2545
+    ldi16 r4, 0x2545
     push16 r4
     pop16 r7
     pop16 r6
@@ -4241,24 +4241,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r5; path false; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1d87
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1d87
     push16 r4
-    ldi16 c0, 0x1eaa
+    ldi16 r4, 0x1eaa
     push16 r4
-    ldi16 c0, 0x1fcd
+    ldi16 r4, 0x1fcd
     push16 r4
-    ldi16 c0, 0x6d8d
+    ldi16 r4, 0x6d8d
     push16 r4
-    ldi16 c0, 0x2213
+    ldi16 r4, 0x2213
     push16 r4
-    ldi16 c0, 0xaa37
+    ldi16 r4, 0xaa37
     push16 r4
-    ldi16 c0, 0x2459
+    ldi16 r4, 0x2459
     push16 r4
-    ldi16 c0, 0x257c
+    ldi16 r4, 0x257c
     push16 r4
     pop16 r7
     pop16 r6
@@ -4314,24 +4314,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r5; path true; guard r4.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x1dbe
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x1dbe
     push16 r4
-    ldi16 c0, 0x1ee1
+    ldi16 r4, 0x1ee1
     push16 r4
-    ldi16 c0, 0x2004
+    ldi16 r4, 0x2004
     push16 r4
-    ldi16 c0, 0x2127
+    ldi16 r4, 0x2127
     push16 r4
-    ldi16 c0, 0x6ed7
+    ldi16 r4, 0x6ed7
     push16 r4
-    ldi16 c0, 0xaa64
+    ldi16 r4, 0xaa64
     push16 r4
-    ldi16 c0, 0x2490
+    ldi16 r4, 0x2490
     push16 r4
-    ldi16 c0, 0x25b3
+    ldi16 r4, 0x25b3
     push16 r4
     pop16 r7
     pop16 r6
@@ -4387,24 +4387,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r6; path false; guard r5.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1df5
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1df5
     push16 r4
-    ldi16 c0, 0x1f18
+    ldi16 r4, 0x1f18
     push16 r4
-    ldi16 c0, 0x203b
+    ldi16 r4, 0x203b
     push16 r4
-    ldi16 c0, 0x215e
+    ldi16 r4, 0x215e
     push16 r4
-    ldi16 c0, 0x2281
+    ldi16 r4, 0x2281
     push16 r4
-    ldi16 c0, 0x7021
+    ldi16 r4, 0x7021
     push16 r4
-    ldi16 c0, 0xaa92
+    ldi16 r4, 0xaa92
     push16 r4
-    ldi16 c0, 0x25ea
+    ldi16 r4, 0x25ea
     push16 r4
     pop16 r7
     pop16 r6
@@ -4460,24 +4460,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r6; path true; guard r7.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x1e2c
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x1e2c
     push16 r4
-    ldi16 c0, 0x1f4f
+    ldi16 r4, 0x1f4f
     push16 r4
-    ldi16 c0, 0x2072
+    ldi16 r4, 0x2072
     push16 r4
-    ldi16 c0, 0x2195
+    ldi16 r4, 0x2195
     push16 r4
-    ldi16 c0, 0x22b8
+    ldi16 r4, 0x22b8
     push16 r4
-    ldi16 c0, 0x23db
+    ldi16 r4, 0x23db
     push16 r4
-    ldi16 c0, 0xaabf
+    ldi16 r4, 0xaabf
     push16 r4
-    ldi16 c0, 0x726c
+    ldi16 r4, 0x726c
     push16 r4
     pop16 r7
     pop16 r6
@@ -4533,24 +4533,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r7; path false; guard r0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x6bae
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x6bae
     push16 r4
-    ldi16 c0, 0x1f86
+    ldi16 r4, 0x1f86
     push16 r4
-    ldi16 c0, 0x20a9
+    ldi16 r4, 0x20a9
     push16 r4
-    ldi16 c0, 0x21cc
+    ldi16 r4, 0x21cc
     push16 r4
-    ldi16 c0, 0x22ef
+    ldi16 r4, 0x22ef
     push16 r4
-    ldi16 c0, 0x2412
+    ldi16 r4, 0x2412
     push16 r4
-    ldi16 c0, 0x2535
+    ldi16 r4, 0x2535
     push16 r4
-    ldi16 c0, 0xaaed
+    ldi16 r4, 0xaaed
     push16 r4
     pop16 r7
     pop16 r6
@@ -4606,24 +4606,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.uge r7; path true; guard r0.
-    ldi16 c2, 0x0002
-    ldi16 c3, 0x0001
-    cmp c2, c3
-    ldi16 c0, 0x6bf7
+    ldi16 r6, 0x0002
+    ldi16 r7, 0x0001
+    cmp r6, r7
+    ldi16 r4, 0x6bf7
     push16 r4
-    ldi16 c0, 0x1fbd
+    ldi16 r4, 0x1fbd
     push16 r4
-    ldi16 c0, 0x20e0
+    ldi16 r4, 0x20e0
     push16 r4
-    ldi16 c0, 0x2203
+    ldi16 r4, 0x2203
     push16 r4
-    ldi16 c0, 0x2326
+    ldi16 r4, 0x2326
     push16 r4
-    ldi16 c0, 0x2449
+    ldi16 r4, 0x2449
     push16 r4
-    ldi16 c0, 0x256c
+    ldi16 r4, 0x256c
     push16 r4
-    ldi16 c0, 0xab1a
+    ldi16 r4, 0xab1a
     push16 r4
     pop16 r7
     pop16 r6
@@ -4679,24 +4679,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r0; path false; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xab40
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xab40
     push16 r4
-    ldi16 c0, 0x6d41
+    ldi16 r4, 0x6d41
     push16 r4
-    ldi16 c0, 0x2117
+    ldi16 r4, 0x2117
     push16 r4
-    ldi16 c0, 0x223a
+    ldi16 r4, 0x223a
     push16 r4
-    ldi16 c0, 0x235d
+    ldi16 r4, 0x235d
     push16 r4
-    ldi16 c0, 0x2480
+    ldi16 r4, 0x2480
     push16 r4
-    ldi16 c0, 0x25a3
+    ldi16 r4, 0x25a3
     push16 r4
-    ldi16 c0, 0x26c6
+    ldi16 r4, 0x26c6
     push16 r4
     pop16 r7
     pop16 r6
@@ -4752,24 +4752,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r0; path true; guard r2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xab6d
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xab6d
     push16 r4
-    ldi16 c0, 0x202b
+    ldi16 r4, 0x202b
     push16 r4
-    ldi16 c0, 0x6e8b
+    ldi16 r4, 0x6e8b
     push16 r4
-    ldi16 c0, 0x2271
+    ldi16 r4, 0x2271
     push16 r4
-    ldi16 c0, 0x2394
+    ldi16 r4, 0x2394
     push16 r4
-    ldi16 c0, 0x24b7
+    ldi16 r4, 0x24b7
     push16 r4
-    ldi16 c0, 0x25da
+    ldi16 r4, 0x25da
     push16 r4
-    ldi16 c0, 0x26fd
+    ldi16 r4, 0x26fd
     push16 r4
     pop16 r7
     pop16 r6
@@ -4825,24 +4825,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r1; path false; guard r3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1f3f
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1f3f
     push16 r4
-    ldi16 c0, 0xab9b
+    ldi16 r4, 0xab9b
     push16 r4
-    ldi16 c0, 0x2185
+    ldi16 r4, 0x2185
     push16 r4
-    ldi16 c0, 0x6fd5
+    ldi16 r4, 0x6fd5
     push16 r4
-    ldi16 c0, 0x23cb
+    ldi16 r4, 0x23cb
     push16 r4
-    ldi16 c0, 0x24ee
+    ldi16 r4, 0x24ee
     push16 r4
-    ldi16 c0, 0x2611
+    ldi16 r4, 0x2611
     push16 r4
-    ldi16 c0, 0x2734
+    ldi16 r4, 0x2734
     push16 r4
     pop16 r7
     pop16 r6
@@ -4898,24 +4898,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r1; path true; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1f76
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1f76
     push16 r4
-    ldi16 c0, 0xabc8
+    ldi16 r4, 0xabc8
     push16 r4
-    ldi16 c0, 0x21bc
+    ldi16 r4, 0x21bc
     push16 r4
-    ldi16 c0, 0x22df
+    ldi16 r4, 0x22df
     push16 r4
-    ldi16 c0, 0x711f
+    ldi16 r4, 0x711f
     push16 r4
-    ldi16 c0, 0x2525
+    ldi16 r4, 0x2525
     push16 r4
-    ldi16 c0, 0x2648
+    ldi16 r4, 0x2648
     push16 r4
-    ldi16 c0, 0x276b
+    ldi16 r4, 0x276b
     push16 r4
     pop16 r7
     pop16 r6
@@ -4971,24 +4971,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r2; path false; guard r5.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1fad
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1fad
     push16 r4
-    ldi16 c0, 0x20d0
+    ldi16 r4, 0x20d0
     push16 r4
-    ldi16 c0, 0xabf6
+    ldi16 r4, 0xabf6
     push16 r4
-    ldi16 c0, 0x2316
+    ldi16 r4, 0x2316
     push16 r4
-    ldi16 c0, 0x2439
+    ldi16 r4, 0x2439
     push16 r4
-    ldi16 c0, 0x7269
+    ldi16 r4, 0x7269
     push16 r4
-    ldi16 c0, 0x267f
+    ldi16 r4, 0x267f
     push16 r4
-    ldi16 c0, 0x27a2
+    ldi16 r4, 0x27a2
     push16 r4
     pop16 r7
     pop16 r6
@@ -5044,24 +5044,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r2; path true; guard r6.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1fe4
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1fe4
     push16 r4
-    ldi16 c0, 0x2107
+    ldi16 r4, 0x2107
     push16 r4
-    ldi16 c0, 0xac23
+    ldi16 r4, 0xac23
     push16 r4
-    ldi16 c0, 0x234d
+    ldi16 r4, 0x234d
     push16 r4
-    ldi16 c0, 0x2470
+    ldi16 r4, 0x2470
     push16 r4
-    ldi16 c0, 0x2593
+    ldi16 r4, 0x2593
     push16 r4
-    ldi16 c0, 0x73b3
+    ldi16 r4, 0x73b3
     push16 r4
-    ldi16 c0, 0x27d9
+    ldi16 r4, 0x27d9
     push16 r4
     pop16 r7
     pop16 r6
@@ -5117,24 +5117,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r3; path false; guard r7.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x201b
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x201b
     push16 r4
-    ldi16 c0, 0x213e
+    ldi16 r4, 0x213e
     push16 r4
-    ldi16 c0, 0x2261
+    ldi16 r4, 0x2261
     push16 r4
-    ldi16 c0, 0xac51
+    ldi16 r4, 0xac51
     push16 r4
-    ldi16 c0, 0x24a7
+    ldi16 r4, 0x24a7
     push16 r4
-    ldi16 c0, 0x25ca
+    ldi16 r4, 0x25ca
     push16 r4
-    ldi16 c0, 0x26ed
+    ldi16 r4, 0x26ed
     push16 r4
-    ldi16 c0, 0x74fd
+    ldi16 r4, 0x74fd
     push16 r4
     pop16 r7
     pop16 r6
@@ -5190,24 +5190,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r3; path true; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x6e3f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x6e3f
     push16 r4
-    ldi16 c0, 0x2175
+    ldi16 r4, 0x2175
     push16 r4
-    ldi16 c0, 0x2298
+    ldi16 r4, 0x2298
     push16 r4
-    ldi16 c0, 0xac7e
+    ldi16 r4, 0xac7e
     push16 r4
-    ldi16 c0, 0x24de
+    ldi16 r4, 0x24de
     push16 r4
-    ldi16 c0, 0x2601
+    ldi16 r4, 0x2601
     push16 r4
-    ldi16 c0, 0x2724
+    ldi16 r4, 0x2724
     push16 r4
-    ldi16 c0, 0x2847
+    ldi16 r4, 0x2847
     push16 r4
     pop16 r7
     pop16 r6
@@ -5263,24 +5263,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r4; path false; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x2089
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x2089
     push16 r4
-    ldi16 c0, 0x6f89
+    ldi16 r4, 0x6f89
     push16 r4
-    ldi16 c0, 0x22cf
+    ldi16 r4, 0x22cf
     push16 r4
-    ldi16 c0, 0x23f2
+    ldi16 r4, 0x23f2
     push16 r4
-    ldi16 c0, 0xacac
+    ldi16 r4, 0xacac
     push16 r4
-    ldi16 c0, 0x2638
+    ldi16 r4, 0x2638
     push16 r4
-    ldi16 c0, 0x275b
+    ldi16 r4, 0x275b
     push16 r4
-    ldi16 c0, 0x287e
+    ldi16 r4, 0x287e
     push16 r4
     pop16 r7
     pop16 r6
@@ -5336,24 +5336,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r4; path true; guard r2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x20c0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x20c0
     push16 r4
-    ldi16 c0, 0x21e3
+    ldi16 r4, 0x21e3
     push16 r4
-    ldi16 c0, 0x70d3
+    ldi16 r4, 0x70d3
     push16 r4
-    ldi16 c0, 0x2429
+    ldi16 r4, 0x2429
     push16 r4
-    ldi16 c0, 0xacd9
+    ldi16 r4, 0xacd9
     push16 r4
-    ldi16 c0, 0x266f
+    ldi16 r4, 0x266f
     push16 r4
-    ldi16 c0, 0x2792
+    ldi16 r4, 0x2792
     push16 r4
-    ldi16 c0, 0x28b5
+    ldi16 r4, 0x28b5
     push16 r4
     pop16 r7
     pop16 r6
@@ -5409,24 +5409,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r5; path false; guard r3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x20f7
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x20f7
     push16 r4
-    ldi16 c0, 0x221a
+    ldi16 r4, 0x221a
     push16 r4
-    ldi16 c0, 0x233d
+    ldi16 r4, 0x233d
     push16 r4
-    ldi16 c0, 0x721d
+    ldi16 r4, 0x721d
     push16 r4
-    ldi16 c0, 0x2583
+    ldi16 r4, 0x2583
     push16 r4
-    ldi16 c0, 0xad07
+    ldi16 r4, 0xad07
     push16 r4
-    ldi16 c0, 0x27c9
+    ldi16 r4, 0x27c9
     push16 r4
-    ldi16 c0, 0x28ec
+    ldi16 r4, 0x28ec
     push16 r4
     pop16 r7
     pop16 r6
@@ -5482,24 +5482,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r5; path true; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x212e
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x212e
     push16 r4
-    ldi16 c0, 0x2251
+    ldi16 r4, 0x2251
     push16 r4
-    ldi16 c0, 0x2374
+    ldi16 r4, 0x2374
     push16 r4
-    ldi16 c0, 0x2497
+    ldi16 r4, 0x2497
     push16 r4
-    ldi16 c0, 0x7367
+    ldi16 r4, 0x7367
     push16 r4
-    ldi16 c0, 0xad34
+    ldi16 r4, 0xad34
     push16 r4
-    ldi16 c0, 0x2800
+    ldi16 r4, 0x2800
     push16 r4
-    ldi16 c0, 0x2923
+    ldi16 r4, 0x2923
     push16 r4
     pop16 r7
     pop16 r6
@@ -5555,24 +5555,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r6; path false; guard r5.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x2165
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x2165
     push16 r4
-    ldi16 c0, 0x2288
+    ldi16 r4, 0x2288
     push16 r4
-    ldi16 c0, 0x23ab
+    ldi16 r4, 0x23ab
     push16 r4
-    ldi16 c0, 0x24ce
+    ldi16 r4, 0x24ce
     push16 r4
-    ldi16 c0, 0x25f1
+    ldi16 r4, 0x25f1
     push16 r4
-    ldi16 c0, 0x74b1
+    ldi16 r4, 0x74b1
     push16 r4
-    ldi16 c0, 0xad62
+    ldi16 r4, 0xad62
     push16 r4
-    ldi16 c0, 0x295a
+    ldi16 r4, 0x295a
     push16 r4
     pop16 r7
     pop16 r6
@@ -5628,24 +5628,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r6; path true; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x219c
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x219c
     push16 r4
-    ldi16 c0, 0x22bf
+    ldi16 r4, 0x22bf
     push16 r4
-    ldi16 c0, 0x23e2
+    ldi16 r4, 0x23e2
     push16 r4
-    ldi16 c0, 0x2505
+    ldi16 r4, 0x2505
     push16 r4
-    ldi16 c0, 0x2628
+    ldi16 r4, 0x2628
     push16 r4
-    ldi16 c0, 0x274b
+    ldi16 r4, 0x274b
     push16 r4
-    ldi16 c0, 0xad8f
+    ldi16 r4, 0xad8f
     push16 r4
-    ldi16 c0, 0x76fc
+    ldi16 r4, 0x76fc
     push16 r4
     pop16 r7
     pop16 r6
@@ -5701,24 +5701,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r7; path false; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x703e
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x703e
     push16 r4
-    ldi16 c0, 0x22f6
+    ldi16 r4, 0x22f6
     push16 r4
-    ldi16 c0, 0x2419
+    ldi16 r4, 0x2419
     push16 r4
-    ldi16 c0, 0x253c
+    ldi16 r4, 0x253c
     push16 r4
-    ldi16 c0, 0x265f
+    ldi16 r4, 0x265f
     push16 r4
-    ldi16 c0, 0x2782
+    ldi16 r4, 0x2782
     push16 r4
-    ldi16 c0, 0x28a5
+    ldi16 r4, 0x28a5
     push16 r4
-    ldi16 c0, 0xadbd
+    ldi16 r4, 0xadbd
     push16 r4
     pop16 r7
     pop16 r6
@@ -5774,24 +5774,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.slt r7; path true; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7087
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7087
     push16 r4
-    ldi16 c0, 0x232d
+    ldi16 r4, 0x232d
     push16 r4
-    ldi16 c0, 0x2450
+    ldi16 r4, 0x2450
     push16 r4
-    ldi16 c0, 0x2573
+    ldi16 r4, 0x2573
     push16 r4
-    ldi16 c0, 0x2696
+    ldi16 r4, 0x2696
     push16 r4
-    ldi16 c0, 0x27b9
+    ldi16 r4, 0x27b9
     push16 r4
-    ldi16 c0, 0x28dc
+    ldi16 r4, 0x28dc
     push16 r4
-    ldi16 c0, 0xadea
+    ldi16 r4, 0xadea
     push16 r4
     pop16 r7
     pop16 r6
@@ -5847,24 +5847,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r0; path false; guard r1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xae10
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xae10
     push16 r4
-    ldi16 c0, 0x71d1
+    ldi16 r4, 0x71d1
     push16 r4
-    ldi16 c0, 0x2487
+    ldi16 r4, 0x2487
     push16 r4
-    ldi16 c0, 0x25aa
+    ldi16 r4, 0x25aa
     push16 r4
-    ldi16 c0, 0x26cd
+    ldi16 r4, 0x26cd
     push16 r4
-    ldi16 c0, 0x27f0
+    ldi16 r4, 0x27f0
     push16 r4
-    ldi16 c0, 0x2913
+    ldi16 r4, 0x2913
     push16 r4
-    ldi16 c0, 0x2a36
+    ldi16 r4, 0x2a36
     push16 r4
     pop16 r7
     pop16 r6
@@ -5920,24 +5920,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r0; path true; guard r2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xae3d
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xae3d
     push16 r4
-    ldi16 c0, 0x239b
+    ldi16 r4, 0x239b
     push16 r4
-    ldi16 c0, 0x731b
+    ldi16 r4, 0x731b
     push16 r4
-    ldi16 c0, 0x25e1
+    ldi16 r4, 0x25e1
     push16 r4
-    ldi16 c0, 0x2704
+    ldi16 r4, 0x2704
     push16 r4
-    ldi16 c0, 0x2827
+    ldi16 r4, 0x2827
     push16 r4
-    ldi16 c0, 0x294a
+    ldi16 r4, 0x294a
     push16 r4
-    ldi16 c0, 0x2a6d
+    ldi16 r4, 0x2a6d
     push16 r4
     pop16 r7
     pop16 r6
@@ -5993,24 +5993,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r1; path false; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x22af
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x22af
     push16 r4
-    ldi16 c0, 0xae6b
+    ldi16 r4, 0xae6b
     push16 r4
-    ldi16 c0, 0x24f5
+    ldi16 r4, 0x24f5
     push16 r4
-    ldi16 c0, 0x7465
+    ldi16 r4, 0x7465
     push16 r4
-    ldi16 c0, 0x273b
+    ldi16 r4, 0x273b
     push16 r4
-    ldi16 c0, 0x285e
+    ldi16 r4, 0x285e
     push16 r4
-    ldi16 c0, 0x2981
+    ldi16 r4, 0x2981
     push16 r4
-    ldi16 c0, 0x2aa4
+    ldi16 r4, 0x2aa4
     push16 r4
     pop16 r7
     pop16 r6
@@ -6066,24 +6066,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r1; path true; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x22e6
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x22e6
     push16 r4
-    ldi16 c0, 0xae98
+    ldi16 r4, 0xae98
     push16 r4
-    ldi16 c0, 0x252c
+    ldi16 r4, 0x252c
     push16 r4
-    ldi16 c0, 0x264f
+    ldi16 r4, 0x264f
     push16 r4
-    ldi16 c0, 0x75af
+    ldi16 r4, 0x75af
     push16 r4
-    ldi16 c0, 0x2895
+    ldi16 r4, 0x2895
     push16 r4
-    ldi16 c0, 0x29b8
+    ldi16 r4, 0x29b8
     push16 r4
-    ldi16 c0, 0x2adb
+    ldi16 r4, 0x2adb
     push16 r4
     pop16 r7
     pop16 r6
@@ -6139,24 +6139,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r2; path false; guard r5.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x231d
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x231d
     push16 r4
-    ldi16 c0, 0x2440
+    ldi16 r4, 0x2440
     push16 r4
-    ldi16 c0, 0xaec6
+    ldi16 r4, 0xaec6
     push16 r4
-    ldi16 c0, 0x2686
+    ldi16 r4, 0x2686
     push16 r4
-    ldi16 c0, 0x27a9
+    ldi16 r4, 0x27a9
     push16 r4
-    ldi16 c0, 0x76f9
+    ldi16 r4, 0x76f9
     push16 r4
-    ldi16 c0, 0x29ef
+    ldi16 r4, 0x29ef
     push16 r4
-    ldi16 c0, 0x2b12
+    ldi16 r4, 0x2b12
     push16 r4
     pop16 r7
     pop16 r6
@@ -6212,24 +6212,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r2; path true; guard r6.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x2354
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x2354
     push16 r4
-    ldi16 c0, 0x2477
+    ldi16 r4, 0x2477
     push16 r4
-    ldi16 c0, 0xaef3
+    ldi16 r4, 0xaef3
     push16 r4
-    ldi16 c0, 0x26bd
+    ldi16 r4, 0x26bd
     push16 r4
-    ldi16 c0, 0x27e0
+    ldi16 r4, 0x27e0
     push16 r4
-    ldi16 c0, 0x2903
+    ldi16 r4, 0x2903
     push16 r4
-    ldi16 c0, 0x7843
+    ldi16 r4, 0x7843
     push16 r4
-    ldi16 c0, 0x2b49
+    ldi16 r4, 0x2b49
     push16 r4
     pop16 r7
     pop16 r6
@@ -6285,24 +6285,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r3; path false; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x238b
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x238b
     push16 r4
-    ldi16 c0, 0x24ae
+    ldi16 r4, 0x24ae
     push16 r4
-    ldi16 c0, 0x25d1
+    ldi16 r4, 0x25d1
     push16 r4
-    ldi16 c0, 0xaf21
+    ldi16 r4, 0xaf21
     push16 r4
-    ldi16 c0, 0x2817
+    ldi16 r4, 0x2817
     push16 r4
-    ldi16 c0, 0x293a
+    ldi16 r4, 0x293a
     push16 r4
-    ldi16 c0, 0x2a5d
+    ldi16 r4, 0x2a5d
     push16 r4
-    ldi16 c0, 0x798d
+    ldi16 r4, 0x798d
     push16 r4
     pop16 r7
     pop16 r6
@@ -6358,24 +6358,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r3; path true; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x72cf
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x72cf
     push16 r4
-    ldi16 c0, 0x24e5
+    ldi16 r4, 0x24e5
     push16 r4
-    ldi16 c0, 0x2608
+    ldi16 r4, 0x2608
     push16 r4
-    ldi16 c0, 0xaf4e
+    ldi16 r4, 0xaf4e
     push16 r4
-    ldi16 c0, 0x284e
+    ldi16 r4, 0x284e
     push16 r4
-    ldi16 c0, 0x2971
+    ldi16 r4, 0x2971
     push16 r4
-    ldi16 c0, 0x2a94
+    ldi16 r4, 0x2a94
     push16 r4
-    ldi16 c0, 0x2bb7
+    ldi16 r4, 0x2bb7
     push16 r4
     pop16 r7
     pop16 r6
@@ -6431,24 +6431,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r4; path false; guard r1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x23f9
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x23f9
     push16 r4
-    ldi16 c0, 0x7419
+    ldi16 r4, 0x7419
     push16 r4
-    ldi16 c0, 0x263f
+    ldi16 r4, 0x263f
     push16 r4
-    ldi16 c0, 0x2762
+    ldi16 r4, 0x2762
     push16 r4
-    ldi16 c0, 0xaf7c
+    ldi16 r4, 0xaf7c
     push16 r4
-    ldi16 c0, 0x29a8
+    ldi16 r4, 0x29a8
     push16 r4
-    ldi16 c0, 0x2acb
+    ldi16 r4, 0x2acb
     push16 r4
-    ldi16 c0, 0x2bee
+    ldi16 r4, 0x2bee
     push16 r4
     pop16 r7
     pop16 r6
@@ -6504,24 +6504,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r4; path true; guard r2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x2430
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x2430
     push16 r4
-    ldi16 c0, 0x2553
+    ldi16 r4, 0x2553
     push16 r4
-    ldi16 c0, 0x7563
+    ldi16 r4, 0x7563
     push16 r4
-    ldi16 c0, 0x2799
+    ldi16 r4, 0x2799
     push16 r4
-    ldi16 c0, 0xafa9
+    ldi16 r4, 0xafa9
     push16 r4
-    ldi16 c0, 0x29df
+    ldi16 r4, 0x29df
     push16 r4
-    ldi16 c0, 0x2b02
+    ldi16 r4, 0x2b02
     push16 r4
-    ldi16 c0, 0x2c25
+    ldi16 r4, 0x2c25
     push16 r4
     pop16 r7
     pop16 r6
@@ -6577,24 +6577,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r5; path false; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x2467
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x2467
     push16 r4
-    ldi16 c0, 0x258a
+    ldi16 r4, 0x258a
     push16 r4
-    ldi16 c0, 0x26ad
+    ldi16 r4, 0x26ad
     push16 r4
-    ldi16 c0, 0x76ad
+    ldi16 r4, 0x76ad
     push16 r4
-    ldi16 c0, 0x28f3
+    ldi16 r4, 0x28f3
     push16 r4
-    ldi16 c0, 0xafd7
+    ldi16 r4, 0xafd7
     push16 r4
-    ldi16 c0, 0x2b39
+    ldi16 r4, 0x2b39
     push16 r4
-    ldi16 c0, 0x2c5c
+    ldi16 r4, 0x2c5c
     push16 r4
     pop16 r7
     pop16 r6
@@ -6650,24 +6650,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r5; path true; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x249e
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x249e
     push16 r4
-    ldi16 c0, 0x25c1
+    ldi16 r4, 0x25c1
     push16 r4
-    ldi16 c0, 0x26e4
+    ldi16 r4, 0x26e4
     push16 r4
-    ldi16 c0, 0x2807
+    ldi16 r4, 0x2807
     push16 r4
-    ldi16 c0, 0x77f7
+    ldi16 r4, 0x77f7
     push16 r4
-    ldi16 c0, 0xb004
+    ldi16 r4, 0xb004
     push16 r4
-    ldi16 c0, 0x2b70
+    ldi16 r4, 0x2b70
     push16 r4
-    ldi16 c0, 0x2c93
+    ldi16 r4, 0x2c93
     push16 r4
     pop16 r7
     pop16 r6
@@ -6723,24 +6723,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r6; path false; guard r5.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x24d5
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x24d5
     push16 r4
-    ldi16 c0, 0x25f8
+    ldi16 r4, 0x25f8
     push16 r4
-    ldi16 c0, 0x271b
+    ldi16 r4, 0x271b
     push16 r4
-    ldi16 c0, 0x283e
+    ldi16 r4, 0x283e
     push16 r4
-    ldi16 c0, 0x2961
+    ldi16 r4, 0x2961
     push16 r4
-    ldi16 c0, 0x7941
+    ldi16 r4, 0x7941
     push16 r4
-    ldi16 c0, 0xb032
+    ldi16 r4, 0xb032
     push16 r4
-    ldi16 c0, 0x2cca
+    ldi16 r4, 0x2cca
     push16 r4
     pop16 r7
     pop16 r6
@@ -6796,24 +6796,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r6; path true; guard r7.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x250c
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x250c
     push16 r4
-    ldi16 c0, 0x262f
+    ldi16 r4, 0x262f
     push16 r4
-    ldi16 c0, 0x2752
+    ldi16 r4, 0x2752
     push16 r4
-    ldi16 c0, 0x2875
+    ldi16 r4, 0x2875
     push16 r4
-    ldi16 c0, 0x2998
+    ldi16 r4, 0x2998
     push16 r4
-    ldi16 c0, 0x2abb
+    ldi16 r4, 0x2abb
     push16 r4
-    ldi16 c0, 0xb05f
+    ldi16 r4, 0xb05f
     push16 r4
-    ldi16 c0, 0x7b8c
+    ldi16 r4, 0x7b8c
     push16 r4
     pop16 r7
     pop16 r6
@@ -6869,24 +6869,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r7; path false; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x74ce
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x74ce
     push16 r4
-    ldi16 c0, 0x2666
+    ldi16 r4, 0x2666
     push16 r4
-    ldi16 c0, 0x2789
+    ldi16 r4, 0x2789
     push16 r4
-    ldi16 c0, 0x28ac
+    ldi16 r4, 0x28ac
     push16 r4
-    ldi16 c0, 0x29cf
+    ldi16 r4, 0x29cf
     push16 r4
-    ldi16 c0, 0x2af2
+    ldi16 r4, 0x2af2
     push16 r4
-    ldi16 c0, 0x2c15
+    ldi16 r4, 0x2c15
     push16 r4
-    ldi16 c0, 0xb08d
+    ldi16 r4, 0xb08d
     push16 r4
     pop16 r7
     pop16 r6
@@ -6942,24 +6942,24 @@ _start:
     cond_emit_char '\n'
 
     ; cset.sge r7; path true; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x7517
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x7517
     push16 r4
-    ldi16 c0, 0x269d
+    ldi16 r4, 0x269d
     push16 r4
-    ldi16 c0, 0x27c0
+    ldi16 r4, 0x27c0
     push16 r4
-    ldi16 c0, 0x28e3
+    ldi16 r4, 0x28e3
     push16 r4
-    ldi16 c0, 0x2a06
+    ldi16 r4, 0x2a06
     push16 r4
-    ldi16 c0, 0x2b29
+    ldi16 r4, 0x2b29
     push16 r4
-    ldi16 c0, 0x2c4c
+    ldi16 r4, 0x2c4c
     push16 r4
-    ldi16 c0, 0xb0ba
+    ldi16 r4, 0xb0ba
     push16 r4
     pop16 r7
     pop16 r6

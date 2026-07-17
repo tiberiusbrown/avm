@@ -6,72 +6,72 @@
 .globl _start
 .type _start, @function
 _start:
-    ; Destination c0, every source.
+    ; Destination r4, every source.
     reset_upper_regs
-    xor c0, c0
+    xor r4, r4
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c0, c1
+    xor r4, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c0, c2
+    xor r4, r6
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c0, c3
+    xor r4, r7
     call debug_print_upper_regs
 
-    ; Destination c1, every source.
+    ; Destination r5, every source.
     reset_upper_regs
-    xor c1, c0
-    call debug_print_upper_regs
-
-    reset_upper_regs
-    xor c1, c1
+    xor r5, r4
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c1, c2
+    xor r5, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c1, c3
-    call debug_print_upper_regs
-
-    ; Destination c2, every source.
-    reset_upper_regs
-    xor c2, c0
+    xor r5, r6
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c2, c1
+    xor r5, r7
+    call debug_print_upper_regs
+
+    ; Destination r6, every source.
+    reset_upper_regs
+    xor r6, r4
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c2, c2
+    xor r6, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c2, c3
-    call debug_print_upper_regs
-
-    ; Destination c3, every source.
-    reset_upper_regs
-    xor c3, c0
+    xor r6, r6
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c3, c1
+    xor r6, r7
+    call debug_print_upper_regs
+
+    ; Destination r7, every source.
+    reset_upper_regs
+    xor r7, r4
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c3, c2
+    xor r7, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    xor c3, c3
+    xor r7, r6
+    call debug_print_upper_regs
+
+    reset_upper_regs
+    xor r7, r7
     call debug_print_upper_regs
 
     sys debug_break

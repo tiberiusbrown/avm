@@ -7,26 +7,26 @@
 _start:
 
     ; zext8 r0, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x1234
+    ldi16 r4, 0x1234
     push16 r4
-    ldi16 c0, 0x1357
+    ldi16 r4, 0x1357
     push16 r4
-    ldi16 c0, 0x147a
+    ldi16 r4, 0x147a
     push16 r4
-    ldi16 c0, 0x159d
+    ldi16 r4, 0x159d
     push16 r4
-    ldi16 c0, 0x16c0
+    ldi16 r4, 0x16c0
     push16 r4
-    ldi16 c0, 0x17e3
+    ldi16 r4, 0x17e3
     push16 r4
-    ldi16 c0, 0x1906
+    ldi16 r4, 0x1906
     push16 r4
     pop16 r7
     pop16 r6
@@ -100,26 +100,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r0, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x1269
+    ldi16 r4, 0x1269
     push16 r4
-    ldi16 c0, 0x138c
+    ldi16 r4, 0x138c
     push16 r4
-    ldi16 c0, 0x14af
+    ldi16 r4, 0x14af
     push16 r4
-    ldi16 c0, 0x15d2
+    ldi16 r4, 0x15d2
     push16 r4
-    ldi16 c0, 0x16f5
+    ldi16 r4, 0x16f5
     push16 r4
-    ldi16 c0, 0x1818
+    ldi16 r4, 0x1818
     push16 r4
-    ldi16 c0, 0x193b
+    ldi16 r4, 0x193b
     push16 r4
     pop16 r7
     pop16 r6
@@ -193,26 +193,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r0, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x007f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x007f
     push16 r4
-    ldi16 c0, 0x129e
+    ldi16 r4, 0x129e
     push16 r4
-    ldi16 c0, 0x13c1
+    ldi16 r4, 0x13c1
     push16 r4
-    ldi16 c0, 0x14e4
+    ldi16 r4, 0x14e4
     push16 r4
-    ldi16 c0, 0x1607
+    ldi16 r4, 0x1607
     push16 r4
-    ldi16 c0, 0x172a
+    ldi16 r4, 0x172a
     push16 r4
-    ldi16 c0, 0x184d
+    ldi16 r4, 0x184d
     push16 r4
-    ldi16 c0, 0x1970
+    ldi16 r4, 0x1970
     push16 r4
     pop16 r7
     pop16 r6
@@ -286,26 +286,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r0, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0080
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0080
     push16 r4
-    ldi16 c0, 0x12d3
+    ldi16 r4, 0x12d3
     push16 r4
-    ldi16 c0, 0x13f6
+    ldi16 r4, 0x13f6
     push16 r4
-    ldi16 c0, 0x1519
+    ldi16 r4, 0x1519
     push16 r4
-    ldi16 c0, 0x163c
+    ldi16 r4, 0x163c
     push16 r4
-    ldi16 c0, 0x175f
+    ldi16 r4, 0x175f
     push16 r4
-    ldi16 c0, 0x1882
+    ldi16 r4, 0x1882
     push16 r4
-    ldi16 c0, 0x19a5
+    ldi16 r4, 0x19a5
     push16 r4
     pop16 r7
     pop16 r6
@@ -379,26 +379,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r0, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x12ff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x12ff
     push16 r4
-    ldi16 c0, 0x1308
+    ldi16 r4, 0x1308
     push16 r4
-    ldi16 c0, 0x142b
+    ldi16 r4, 0x142b
     push16 r4
-    ldi16 c0, 0x154e
+    ldi16 r4, 0x154e
     push16 r4
-    ldi16 c0, 0x1671
+    ldi16 r4, 0x1671
     push16 r4
-    ldi16 c0, 0x1794
+    ldi16 r4, 0x1794
     push16 r4
-    ldi16 c0, 0x18b7
+    ldi16 r4, 0x18b7
     push16 r4
-    ldi16 c0, 0x19da
+    ldi16 r4, 0x19da
     push16 r4
     pop16 r7
     pop16 r6
@@ -472,26 +472,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r0, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
-    ldi16 c0, 0x133d
+    ldi16 r4, 0x133d
     push16 r4
-    ldi16 c0, 0x1460
+    ldi16 r4, 0x1460
     push16 r4
-    ldi16 c0, 0x1583
+    ldi16 r4, 0x1583
     push16 r4
-    ldi16 c0, 0x16a6
+    ldi16 r4, 0x16a6
     push16 r4
-    ldi16 c0, 0x17c9
+    ldi16 r4, 0x17c9
     push16 r4
-    ldi16 c0, 0x18ec
+    ldi16 r4, 0x18ec
     push16 r4
-    ldi16 c0, 0x1a0f
+    ldi16 r4, 0x1a0f
     push16 r4
     pop16 r7
     pop16 r6
@@ -565,26 +565,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r0, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xff80
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xff80
     push16 r4
-    ldi16 c0, 0x1372
+    ldi16 r4, 0x1372
     push16 r4
-    ldi16 c0, 0x1495
+    ldi16 r4, 0x1495
     push16 r4
-    ldi16 c0, 0x15b8
+    ldi16 r4, 0x15b8
     push16 r4
-    ldi16 c0, 0x16db
+    ldi16 r4, 0x16db
     push16 r4
-    ldi16 c0, 0x17fe
+    ldi16 r4, 0x17fe
     push16 r4
-    ldi16 c0, 0x1921
+    ldi16 r4, 0x1921
     push16 r4
-    ldi16 c0, 0x1a44
+    ldi16 r4, 0x1a44
     push16 r4
     pop16 r7
     pop16 r6
@@ -658,26 +658,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r0, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
-    ldi16 c0, 0x13a7
+    ldi16 r4, 0x13a7
     push16 r4
-    ldi16 c0, 0x14ca
+    ldi16 r4, 0x14ca
     push16 r4
-    ldi16 c0, 0x15ed
+    ldi16 r4, 0x15ed
     push16 r4
-    ldi16 c0, 0x1710
+    ldi16 r4, 0x1710
     push16 r4
-    ldi16 c0, 0x1833
+    ldi16 r4, 0x1833
     push16 r4
-    ldi16 c0, 0x1956
+    ldi16 r4, 0x1956
     push16 r4
-    ldi16 c0, 0x1a79
+    ldi16 r4, 0x1a79
     push16 r4
     pop16 r7
     pop16 r6
@@ -751,26 +751,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x12b9
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x12b9
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x14ff
+    ldi16 r4, 0x14ff
     push16 r4
-    ldi16 c0, 0x1622
+    ldi16 r4, 0x1622
     push16 r4
-    ldi16 c0, 0x1745
+    ldi16 r4, 0x1745
     push16 r4
-    ldi16 c0, 0x1868
+    ldi16 r4, 0x1868
     push16 r4
-    ldi16 c0, 0x198b
+    ldi16 r4, 0x198b
     push16 r4
-    ldi16 c0, 0x1aae
+    ldi16 r4, 0x1aae
     push16 r4
     pop16 r7
     pop16 r6
@@ -844,26 +844,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x12ee
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x12ee
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x1534
+    ldi16 r4, 0x1534
     push16 r4
-    ldi16 c0, 0x1657
+    ldi16 r4, 0x1657
     push16 r4
-    ldi16 c0, 0x177a
+    ldi16 r4, 0x177a
     push16 r4
-    ldi16 c0, 0x189d
+    ldi16 r4, 0x189d
     push16 r4
-    ldi16 c0, 0x19c0
+    ldi16 r4, 0x19c0
     push16 r4
-    ldi16 c0, 0x1ae3
+    ldi16 r4, 0x1ae3
     push16 r4
     pop16 r7
     pop16 r6
@@ -937,26 +937,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1323
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1323
     push16 r4
-    ldi16 c0, 0x007f
+    ldi16 r4, 0x007f
     push16 r4
-    ldi16 c0, 0x1569
+    ldi16 r4, 0x1569
     push16 r4
-    ldi16 c0, 0x168c
+    ldi16 r4, 0x168c
     push16 r4
-    ldi16 c0, 0x17af
+    ldi16 r4, 0x17af
     push16 r4
-    ldi16 c0, 0x18d2
+    ldi16 r4, 0x18d2
     push16 r4
-    ldi16 c0, 0x19f5
+    ldi16 r4, 0x19f5
     push16 r4
-    ldi16 c0, 0x1b18
+    ldi16 r4, 0x1b18
     push16 r4
     pop16 r7
     pop16 r6
@@ -1030,26 +1030,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1358
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1358
     push16 r4
-    ldi16 c0, 0x0080
+    ldi16 r4, 0x0080
     push16 r4
-    ldi16 c0, 0x159e
+    ldi16 r4, 0x159e
     push16 r4
-    ldi16 c0, 0x16c1
+    ldi16 r4, 0x16c1
     push16 r4
-    ldi16 c0, 0x17e4
+    ldi16 r4, 0x17e4
     push16 r4
-    ldi16 c0, 0x1907
+    ldi16 r4, 0x1907
     push16 r4
-    ldi16 c0, 0x1a2a
+    ldi16 r4, 0x1a2a
     push16 r4
-    ldi16 c0, 0x1b4d
+    ldi16 r4, 0x1b4d
     push16 r4
     pop16 r7
     pop16 r6
@@ -1123,26 +1123,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x138d
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x138d
     push16 r4
-    ldi16 c0, 0x12ff
+    ldi16 r4, 0x12ff
     push16 r4
-    ldi16 c0, 0x15d3
+    ldi16 r4, 0x15d3
     push16 r4
-    ldi16 c0, 0x16f6
+    ldi16 r4, 0x16f6
     push16 r4
-    ldi16 c0, 0x1819
+    ldi16 r4, 0x1819
     push16 r4
-    ldi16 c0, 0x193c
+    ldi16 r4, 0x193c
     push16 r4
-    ldi16 c0, 0x1a5f
+    ldi16 r4, 0x1a5f
     push16 r4
-    ldi16 c0, 0x1b82
+    ldi16 r4, 0x1b82
     push16 r4
     pop16 r7
     pop16 r6
@@ -1216,26 +1216,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x13c2
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x13c2
     push16 r4
-    ldi16 c0, 0x8001
+    ldi16 r4, 0x8001
     push16 r4
-    ldi16 c0, 0x1608
+    ldi16 r4, 0x1608
     push16 r4
-    ldi16 c0, 0x172b
+    ldi16 r4, 0x172b
     push16 r4
-    ldi16 c0, 0x184e
+    ldi16 r4, 0x184e
     push16 r4
-    ldi16 c0, 0x1971
+    ldi16 r4, 0x1971
     push16 r4
-    ldi16 c0, 0x1a94
+    ldi16 r4, 0x1a94
     push16 r4
-    ldi16 c0, 0x1bb7
+    ldi16 r4, 0x1bb7
     push16 r4
     pop16 r7
     pop16 r6
@@ -1309,26 +1309,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x13f7
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x13f7
     push16 r4
-    ldi16 c0, 0xff80
+    ldi16 r4, 0xff80
     push16 r4
-    ldi16 c0, 0x163d
+    ldi16 r4, 0x163d
     push16 r4
-    ldi16 c0, 0x1760
+    ldi16 r4, 0x1760
     push16 r4
-    ldi16 c0, 0x1883
+    ldi16 r4, 0x1883
     push16 r4
-    ldi16 c0, 0x19a6
+    ldi16 r4, 0x19a6
     push16 r4
-    ldi16 c0, 0x1ac9
+    ldi16 r4, 0x1ac9
     push16 r4
-    ldi16 c0, 0x1bec
+    ldi16 r4, 0x1bec
     push16 r4
     pop16 r7
     pop16 r6
@@ -1402,26 +1402,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r1, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x142c
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x142c
     push16 r4
-    ldi16 c0, 0xa55a
+    ldi16 r4, 0xa55a
     push16 r4
-    ldi16 c0, 0x1672
+    ldi16 r4, 0x1672
     push16 r4
-    ldi16 c0, 0x1795
+    ldi16 r4, 0x1795
     push16 r4
-    ldi16 c0, 0x18b8
+    ldi16 r4, 0x18b8
     push16 r4
-    ldi16 c0, 0x19db
+    ldi16 r4, 0x19db
     push16 r4
-    ldi16 c0, 0x1afe
+    ldi16 r4, 0x1afe
     push16 r4
-    ldi16 c0, 0x1c21
+    ldi16 r4, 0x1c21
     push16 r4
     pop16 r7
     pop16 r6
@@ -1495,26 +1495,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1461
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1461
     push16 r4
-    ldi16 c0, 0x1584
+    ldi16 r4, 0x1584
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x17ca
+    ldi16 r4, 0x17ca
     push16 r4
-    ldi16 c0, 0x18ed
+    ldi16 r4, 0x18ed
     push16 r4
-    ldi16 c0, 0x1a10
+    ldi16 r4, 0x1a10
     push16 r4
-    ldi16 c0, 0x1b33
+    ldi16 r4, 0x1b33
     push16 r4
-    ldi16 c0, 0x1c56
+    ldi16 r4, 0x1c56
     push16 r4
     pop16 r7
     pop16 r6
@@ -1588,26 +1588,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1496
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1496
     push16 r4
-    ldi16 c0, 0x15b9
+    ldi16 r4, 0x15b9
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x17ff
+    ldi16 r4, 0x17ff
     push16 r4
-    ldi16 c0, 0x1922
+    ldi16 r4, 0x1922
     push16 r4
-    ldi16 c0, 0x1a45
+    ldi16 r4, 0x1a45
     push16 r4
-    ldi16 c0, 0x1b68
+    ldi16 r4, 0x1b68
     push16 r4
-    ldi16 c0, 0x1c8b
+    ldi16 r4, 0x1c8b
     push16 r4
     pop16 r7
     pop16 r6
@@ -1681,26 +1681,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x14cb
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x14cb
     push16 r4
-    ldi16 c0, 0x15ee
+    ldi16 r4, 0x15ee
     push16 r4
-    ldi16 c0, 0x007f
+    ldi16 r4, 0x007f
     push16 r4
-    ldi16 c0, 0x1834
+    ldi16 r4, 0x1834
     push16 r4
-    ldi16 c0, 0x1957
+    ldi16 r4, 0x1957
     push16 r4
-    ldi16 c0, 0x1a7a
+    ldi16 r4, 0x1a7a
     push16 r4
-    ldi16 c0, 0x1b9d
+    ldi16 r4, 0x1b9d
     push16 r4
-    ldi16 c0, 0x1cc0
+    ldi16 r4, 0x1cc0
     push16 r4
     pop16 r7
     pop16 r6
@@ -1774,26 +1774,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1500
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1500
     push16 r4
-    ldi16 c0, 0x1623
+    ldi16 r4, 0x1623
     push16 r4
-    ldi16 c0, 0x0080
+    ldi16 r4, 0x0080
     push16 r4
-    ldi16 c0, 0x1869
+    ldi16 r4, 0x1869
     push16 r4
-    ldi16 c0, 0x198c
+    ldi16 r4, 0x198c
     push16 r4
-    ldi16 c0, 0x1aaf
+    ldi16 r4, 0x1aaf
     push16 r4
-    ldi16 c0, 0x1bd2
+    ldi16 r4, 0x1bd2
     push16 r4
-    ldi16 c0, 0x1cf5
+    ldi16 r4, 0x1cf5
     push16 r4
     pop16 r7
     pop16 r6
@@ -1867,26 +1867,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1535
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1535
     push16 r4
-    ldi16 c0, 0x1658
+    ldi16 r4, 0x1658
     push16 r4
-    ldi16 c0, 0x12ff
+    ldi16 r4, 0x12ff
     push16 r4
-    ldi16 c0, 0x189e
+    ldi16 r4, 0x189e
     push16 r4
-    ldi16 c0, 0x19c1
+    ldi16 r4, 0x19c1
     push16 r4
-    ldi16 c0, 0x1ae4
+    ldi16 r4, 0x1ae4
     push16 r4
-    ldi16 c0, 0x1c07
+    ldi16 r4, 0x1c07
     push16 r4
-    ldi16 c0, 0x1d2a
+    ldi16 r4, 0x1d2a
     push16 r4
     pop16 r7
     pop16 r6
@@ -1960,26 +1960,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x156a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x156a
     push16 r4
-    ldi16 c0, 0x168d
+    ldi16 r4, 0x168d
     push16 r4
-    ldi16 c0, 0x8001
+    ldi16 r4, 0x8001
     push16 r4
-    ldi16 c0, 0x18d3
+    ldi16 r4, 0x18d3
     push16 r4
-    ldi16 c0, 0x19f6
+    ldi16 r4, 0x19f6
     push16 r4
-    ldi16 c0, 0x1b19
+    ldi16 r4, 0x1b19
     push16 r4
-    ldi16 c0, 0x1c3c
+    ldi16 r4, 0x1c3c
     push16 r4
-    ldi16 c0, 0x1d5f
+    ldi16 r4, 0x1d5f
     push16 r4
     pop16 r7
     pop16 r6
@@ -2053,26 +2053,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x159f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x159f
     push16 r4
-    ldi16 c0, 0x16c2
+    ldi16 r4, 0x16c2
     push16 r4
-    ldi16 c0, 0xff80
+    ldi16 r4, 0xff80
     push16 r4
-    ldi16 c0, 0x1908
+    ldi16 r4, 0x1908
     push16 r4
-    ldi16 c0, 0x1a2b
+    ldi16 r4, 0x1a2b
     push16 r4
-    ldi16 c0, 0x1b4e
+    ldi16 r4, 0x1b4e
     push16 r4
-    ldi16 c0, 0x1c71
+    ldi16 r4, 0x1c71
     push16 r4
-    ldi16 c0, 0x1d94
+    ldi16 r4, 0x1d94
     push16 r4
     pop16 r7
     pop16 r6
@@ -2146,26 +2146,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r2, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x15d4
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x15d4
     push16 r4
-    ldi16 c0, 0x16f7
+    ldi16 r4, 0x16f7
     push16 r4
-    ldi16 c0, 0xa55a
+    ldi16 r4, 0xa55a
     push16 r4
-    ldi16 c0, 0x193d
+    ldi16 r4, 0x193d
     push16 r4
-    ldi16 c0, 0x1a60
+    ldi16 r4, 0x1a60
     push16 r4
-    ldi16 c0, 0x1b83
+    ldi16 r4, 0x1b83
     push16 r4
-    ldi16 c0, 0x1ca6
+    ldi16 r4, 0x1ca6
     push16 r4
-    ldi16 c0, 0x1dc9
+    ldi16 r4, 0x1dc9
     push16 r4
     pop16 r7
     pop16 r6
@@ -2239,26 +2239,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1609
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1609
     push16 r4
-    ldi16 c0, 0x172c
+    ldi16 r4, 0x172c
     push16 r4
-    ldi16 c0, 0x184f
+    ldi16 r4, 0x184f
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x1a95
+    ldi16 r4, 0x1a95
     push16 r4
-    ldi16 c0, 0x1bb8
+    ldi16 r4, 0x1bb8
     push16 r4
-    ldi16 c0, 0x1cdb
+    ldi16 r4, 0x1cdb
     push16 r4
-    ldi16 c0, 0x1dfe
+    ldi16 r4, 0x1dfe
     push16 r4
     pop16 r7
     pop16 r6
@@ -2332,26 +2332,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x163e
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x163e
     push16 r4
-    ldi16 c0, 0x1761
+    ldi16 r4, 0x1761
     push16 r4
-    ldi16 c0, 0x1884
+    ldi16 r4, 0x1884
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x1aca
+    ldi16 r4, 0x1aca
     push16 r4
-    ldi16 c0, 0x1bed
+    ldi16 r4, 0x1bed
     push16 r4
-    ldi16 c0, 0x1d10
+    ldi16 r4, 0x1d10
     push16 r4
-    ldi16 c0, 0x1e33
+    ldi16 r4, 0x1e33
     push16 r4
     pop16 r7
     pop16 r6
@@ -2425,26 +2425,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1673
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1673
     push16 r4
-    ldi16 c0, 0x1796
+    ldi16 r4, 0x1796
     push16 r4
-    ldi16 c0, 0x18b9
+    ldi16 r4, 0x18b9
     push16 r4
-    ldi16 c0, 0x007f
+    ldi16 r4, 0x007f
     push16 r4
-    ldi16 c0, 0x1aff
+    ldi16 r4, 0x1aff
     push16 r4
-    ldi16 c0, 0x1c22
+    ldi16 r4, 0x1c22
     push16 r4
-    ldi16 c0, 0x1d45
+    ldi16 r4, 0x1d45
     push16 r4
-    ldi16 c0, 0x1e68
+    ldi16 r4, 0x1e68
     push16 r4
     pop16 r7
     pop16 r6
@@ -2518,26 +2518,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x16a8
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x16a8
     push16 r4
-    ldi16 c0, 0x17cb
+    ldi16 r4, 0x17cb
     push16 r4
-    ldi16 c0, 0x18ee
+    ldi16 r4, 0x18ee
     push16 r4
-    ldi16 c0, 0x0080
+    ldi16 r4, 0x0080
     push16 r4
-    ldi16 c0, 0x1b34
+    ldi16 r4, 0x1b34
     push16 r4
-    ldi16 c0, 0x1c57
+    ldi16 r4, 0x1c57
     push16 r4
-    ldi16 c0, 0x1d7a
+    ldi16 r4, 0x1d7a
     push16 r4
-    ldi16 c0, 0x1e9d
+    ldi16 r4, 0x1e9d
     push16 r4
     pop16 r7
     pop16 r6
@@ -2611,26 +2611,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x16dd
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x16dd
     push16 r4
-    ldi16 c0, 0x1800
+    ldi16 r4, 0x1800
     push16 r4
-    ldi16 c0, 0x1923
+    ldi16 r4, 0x1923
     push16 r4
-    ldi16 c0, 0x12ff
+    ldi16 r4, 0x12ff
     push16 r4
-    ldi16 c0, 0x1b69
+    ldi16 r4, 0x1b69
     push16 r4
-    ldi16 c0, 0x1c8c
+    ldi16 r4, 0x1c8c
     push16 r4
-    ldi16 c0, 0x1daf
+    ldi16 r4, 0x1daf
     push16 r4
-    ldi16 c0, 0x1ed2
+    ldi16 r4, 0x1ed2
     push16 r4
     pop16 r7
     pop16 r6
@@ -2704,26 +2704,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1712
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1712
     push16 r4
-    ldi16 c0, 0x1835
+    ldi16 r4, 0x1835
     push16 r4
-    ldi16 c0, 0x1958
+    ldi16 r4, 0x1958
     push16 r4
-    ldi16 c0, 0x8001
+    ldi16 r4, 0x8001
     push16 r4
-    ldi16 c0, 0x1b9e
+    ldi16 r4, 0x1b9e
     push16 r4
-    ldi16 c0, 0x1cc1
+    ldi16 r4, 0x1cc1
     push16 r4
-    ldi16 c0, 0x1de4
+    ldi16 r4, 0x1de4
     push16 r4
-    ldi16 c0, 0x1f07
+    ldi16 r4, 0x1f07
     push16 r4
     pop16 r7
     pop16 r6
@@ -2797,26 +2797,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1747
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1747
     push16 r4
-    ldi16 c0, 0x186a
+    ldi16 r4, 0x186a
     push16 r4
-    ldi16 c0, 0x198d
+    ldi16 r4, 0x198d
     push16 r4
-    ldi16 c0, 0xff80
+    ldi16 r4, 0xff80
     push16 r4
-    ldi16 c0, 0x1bd3
+    ldi16 r4, 0x1bd3
     push16 r4
-    ldi16 c0, 0x1cf6
+    ldi16 r4, 0x1cf6
     push16 r4
-    ldi16 c0, 0x1e19
+    ldi16 r4, 0x1e19
     push16 r4
-    ldi16 c0, 0x1f3c
+    ldi16 r4, 0x1f3c
     push16 r4
     pop16 r7
     pop16 r6
@@ -2890,26 +2890,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r3, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x177c
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x177c
     push16 r4
-    ldi16 c0, 0x189f
+    ldi16 r4, 0x189f
     push16 r4
-    ldi16 c0, 0x19c2
+    ldi16 r4, 0x19c2
     push16 r4
-    ldi16 c0, 0xa55a
+    ldi16 r4, 0xa55a
     push16 r4
-    ldi16 c0, 0x1c08
+    ldi16 r4, 0x1c08
     push16 r4
-    ldi16 c0, 0x1d2b
+    ldi16 r4, 0x1d2b
     push16 r4
-    ldi16 c0, 0x1e4e
+    ldi16 r4, 0x1e4e
     push16 r4
-    ldi16 c0, 0x1f71
+    ldi16 r4, 0x1f71
     push16 r4
     pop16 r7
     pop16 r6
@@ -2983,26 +2983,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x17b1
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x17b1
     push16 r4
-    ldi16 c0, 0x18d4
+    ldi16 r4, 0x18d4
     push16 r4
-    ldi16 c0, 0x19f7
+    ldi16 r4, 0x19f7
     push16 r4
-    ldi16 c0, 0x1b1a
+    ldi16 r4, 0x1b1a
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x1d60
+    ldi16 r4, 0x1d60
     push16 r4
-    ldi16 c0, 0x1e83
+    ldi16 r4, 0x1e83
     push16 r4
-    ldi16 c0, 0x1fa6
+    ldi16 r4, 0x1fa6
     push16 r4
     pop16 r7
     pop16 r6
@@ -3076,26 +3076,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x17e6
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x17e6
     push16 r4
-    ldi16 c0, 0x1909
+    ldi16 r4, 0x1909
     push16 r4
-    ldi16 c0, 0x1a2c
+    ldi16 r4, 0x1a2c
     push16 r4
-    ldi16 c0, 0x1b4f
+    ldi16 r4, 0x1b4f
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x1d95
+    ldi16 r4, 0x1d95
     push16 r4
-    ldi16 c0, 0x1eb8
+    ldi16 r4, 0x1eb8
     push16 r4
-    ldi16 c0, 0x1fdb
+    ldi16 r4, 0x1fdb
     push16 r4
     pop16 r7
     pop16 r6
@@ -3169,26 +3169,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x181b
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x181b
     push16 r4
-    ldi16 c0, 0x193e
+    ldi16 r4, 0x193e
     push16 r4
-    ldi16 c0, 0x1a61
+    ldi16 r4, 0x1a61
     push16 r4
-    ldi16 c0, 0x1b84
+    ldi16 r4, 0x1b84
     push16 r4
-    ldi16 c0, 0x007f
+    ldi16 r4, 0x007f
     push16 r4
-    ldi16 c0, 0x1dca
+    ldi16 r4, 0x1dca
     push16 r4
-    ldi16 c0, 0x1eed
+    ldi16 r4, 0x1eed
     push16 r4
-    ldi16 c0, 0x2010
+    ldi16 r4, 0x2010
     push16 r4
     pop16 r7
     pop16 r6
@@ -3262,26 +3262,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1850
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1850
     push16 r4
-    ldi16 c0, 0x1973
+    ldi16 r4, 0x1973
     push16 r4
-    ldi16 c0, 0x1a96
+    ldi16 r4, 0x1a96
     push16 r4
-    ldi16 c0, 0x1bb9
+    ldi16 r4, 0x1bb9
     push16 r4
-    ldi16 c0, 0x0080
+    ldi16 r4, 0x0080
     push16 r4
-    ldi16 c0, 0x1dff
+    ldi16 r4, 0x1dff
     push16 r4
-    ldi16 c0, 0x1f22
+    ldi16 r4, 0x1f22
     push16 r4
-    ldi16 c0, 0x2045
+    ldi16 r4, 0x2045
     push16 r4
     pop16 r7
     pop16 r6
@@ -3355,26 +3355,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1885
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1885
     push16 r4
-    ldi16 c0, 0x19a8
+    ldi16 r4, 0x19a8
     push16 r4
-    ldi16 c0, 0x1acb
+    ldi16 r4, 0x1acb
     push16 r4
-    ldi16 c0, 0x1bee
+    ldi16 r4, 0x1bee
     push16 r4
-    ldi16 c0, 0x12ff
+    ldi16 r4, 0x12ff
     push16 r4
-    ldi16 c0, 0x1e34
+    ldi16 r4, 0x1e34
     push16 r4
-    ldi16 c0, 0x1f57
+    ldi16 r4, 0x1f57
     push16 r4
-    ldi16 c0, 0x207a
+    ldi16 r4, 0x207a
     push16 r4
     pop16 r7
     pop16 r6
@@ -3448,26 +3448,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x18ba
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x18ba
     push16 r4
-    ldi16 c0, 0x19dd
+    ldi16 r4, 0x19dd
     push16 r4
-    ldi16 c0, 0x1b00
+    ldi16 r4, 0x1b00
     push16 r4
-    ldi16 c0, 0x1c23
+    ldi16 r4, 0x1c23
     push16 r4
-    ldi16 c0, 0x8001
+    ldi16 r4, 0x8001
     push16 r4
-    ldi16 c0, 0x1e69
+    ldi16 r4, 0x1e69
     push16 r4
-    ldi16 c0, 0x1f8c
+    ldi16 r4, 0x1f8c
     push16 r4
-    ldi16 c0, 0x20af
+    ldi16 r4, 0x20af
     push16 r4
     pop16 r7
     pop16 r6
@@ -3541,26 +3541,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x18ef
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x18ef
     push16 r4
-    ldi16 c0, 0x1a12
+    ldi16 r4, 0x1a12
     push16 r4
-    ldi16 c0, 0x1b35
+    ldi16 r4, 0x1b35
     push16 r4
-    ldi16 c0, 0x1c58
+    ldi16 r4, 0x1c58
     push16 r4
-    ldi16 c0, 0xff80
+    ldi16 r4, 0xff80
     push16 r4
-    ldi16 c0, 0x1e9e
+    ldi16 r4, 0x1e9e
     push16 r4
-    ldi16 c0, 0x1fc1
+    ldi16 r4, 0x1fc1
     push16 r4
-    ldi16 c0, 0x20e4
+    ldi16 r4, 0x20e4
     push16 r4
     pop16 r7
     pop16 r6
@@ -3634,26 +3634,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r4, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1924
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1924
     push16 r4
-    ldi16 c0, 0x1a47
+    ldi16 r4, 0x1a47
     push16 r4
-    ldi16 c0, 0x1b6a
+    ldi16 r4, 0x1b6a
     push16 r4
-    ldi16 c0, 0x1c8d
+    ldi16 r4, 0x1c8d
     push16 r4
-    ldi16 c0, 0xa55a
+    ldi16 r4, 0xa55a
     push16 r4
-    ldi16 c0, 0x1ed3
+    ldi16 r4, 0x1ed3
     push16 r4
-    ldi16 c0, 0x1ff6
+    ldi16 r4, 0x1ff6
     push16 r4
-    ldi16 c0, 0x2119
+    ldi16 r4, 0x2119
     push16 r4
     pop16 r7
     pop16 r6
@@ -3727,26 +3727,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1959
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1959
     push16 r4
-    ldi16 c0, 0x1a7c
+    ldi16 r4, 0x1a7c
     push16 r4
-    ldi16 c0, 0x1b9f
+    ldi16 r4, 0x1b9f
     push16 r4
-    ldi16 c0, 0x1cc2
+    ldi16 r4, 0x1cc2
     push16 r4
-    ldi16 c0, 0x1de5
+    ldi16 r4, 0x1de5
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x202b
+    ldi16 r4, 0x202b
     push16 r4
-    ldi16 c0, 0x214e
+    ldi16 r4, 0x214e
     push16 r4
     pop16 r7
     pop16 r6
@@ -3820,26 +3820,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x198e
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x198e
     push16 r4
-    ldi16 c0, 0x1ab1
+    ldi16 r4, 0x1ab1
     push16 r4
-    ldi16 c0, 0x1bd4
+    ldi16 r4, 0x1bd4
     push16 r4
-    ldi16 c0, 0x1cf7
+    ldi16 r4, 0x1cf7
     push16 r4
-    ldi16 c0, 0x1e1a
+    ldi16 r4, 0x1e1a
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x2060
+    ldi16 r4, 0x2060
     push16 r4
-    ldi16 c0, 0x2183
+    ldi16 r4, 0x2183
     push16 r4
     pop16 r7
     pop16 r6
@@ -3913,26 +3913,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x19c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x19c3
     push16 r4
-    ldi16 c0, 0x1ae6
+    ldi16 r4, 0x1ae6
     push16 r4
-    ldi16 c0, 0x1c09
+    ldi16 r4, 0x1c09
     push16 r4
-    ldi16 c0, 0x1d2c
+    ldi16 r4, 0x1d2c
     push16 r4
-    ldi16 c0, 0x1e4f
+    ldi16 r4, 0x1e4f
     push16 r4
-    ldi16 c0, 0x007f
+    ldi16 r4, 0x007f
     push16 r4
-    ldi16 c0, 0x2095
+    ldi16 r4, 0x2095
     push16 r4
-    ldi16 c0, 0x21b8
+    ldi16 r4, 0x21b8
     push16 r4
     pop16 r7
     pop16 r6
@@ -4006,26 +4006,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x19f8
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x19f8
     push16 r4
-    ldi16 c0, 0x1b1b
+    ldi16 r4, 0x1b1b
     push16 r4
-    ldi16 c0, 0x1c3e
+    ldi16 r4, 0x1c3e
     push16 r4
-    ldi16 c0, 0x1d61
+    ldi16 r4, 0x1d61
     push16 r4
-    ldi16 c0, 0x1e84
+    ldi16 r4, 0x1e84
     push16 r4
-    ldi16 c0, 0x0080
+    ldi16 r4, 0x0080
     push16 r4
-    ldi16 c0, 0x20ca
+    ldi16 r4, 0x20ca
     push16 r4
-    ldi16 c0, 0x21ed
+    ldi16 r4, 0x21ed
     push16 r4
     pop16 r7
     pop16 r6
@@ -4099,26 +4099,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1a2d
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1a2d
     push16 r4
-    ldi16 c0, 0x1b50
+    ldi16 r4, 0x1b50
     push16 r4
-    ldi16 c0, 0x1c73
+    ldi16 r4, 0x1c73
     push16 r4
-    ldi16 c0, 0x1d96
+    ldi16 r4, 0x1d96
     push16 r4
-    ldi16 c0, 0x1eb9
+    ldi16 r4, 0x1eb9
     push16 r4
-    ldi16 c0, 0x12ff
+    ldi16 r4, 0x12ff
     push16 r4
-    ldi16 c0, 0x20ff
+    ldi16 r4, 0x20ff
     push16 r4
-    ldi16 c0, 0x2222
+    ldi16 r4, 0x2222
     push16 r4
     pop16 r7
     pop16 r6
@@ -4192,26 +4192,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1a62
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1a62
     push16 r4
-    ldi16 c0, 0x1b85
+    ldi16 r4, 0x1b85
     push16 r4
-    ldi16 c0, 0x1ca8
+    ldi16 r4, 0x1ca8
     push16 r4
-    ldi16 c0, 0x1dcb
+    ldi16 r4, 0x1dcb
     push16 r4
-    ldi16 c0, 0x1eee
+    ldi16 r4, 0x1eee
     push16 r4
-    ldi16 c0, 0x8001
+    ldi16 r4, 0x8001
     push16 r4
-    ldi16 c0, 0x2134
+    ldi16 r4, 0x2134
     push16 r4
-    ldi16 c0, 0x2257
+    ldi16 r4, 0x2257
     push16 r4
     pop16 r7
     pop16 r6
@@ -4285,26 +4285,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1a97
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1a97
     push16 r4
-    ldi16 c0, 0x1bba
+    ldi16 r4, 0x1bba
     push16 r4
-    ldi16 c0, 0x1cdd
+    ldi16 r4, 0x1cdd
     push16 r4
-    ldi16 c0, 0x1e00
+    ldi16 r4, 0x1e00
     push16 r4
-    ldi16 c0, 0x1f23
+    ldi16 r4, 0x1f23
     push16 r4
-    ldi16 c0, 0xff80
+    ldi16 r4, 0xff80
     push16 r4
-    ldi16 c0, 0x2169
+    ldi16 r4, 0x2169
     push16 r4
-    ldi16 c0, 0x228c
+    ldi16 r4, 0x228c
     push16 r4
     pop16 r7
     pop16 r6
@@ -4378,26 +4378,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r5, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1acc
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1acc
     push16 r4
-    ldi16 c0, 0x1bef
+    ldi16 r4, 0x1bef
     push16 r4
-    ldi16 c0, 0x1d12
+    ldi16 r4, 0x1d12
     push16 r4
-    ldi16 c0, 0x1e35
+    ldi16 r4, 0x1e35
     push16 r4
-    ldi16 c0, 0x1f58
+    ldi16 r4, 0x1f58
     push16 r4
-    ldi16 c0, 0xa55a
+    ldi16 r4, 0xa55a
     push16 r4
-    ldi16 c0, 0x219e
+    ldi16 r4, 0x219e
     push16 r4
-    ldi16 c0, 0x22c1
+    ldi16 r4, 0x22c1
     push16 r4
     pop16 r7
     pop16 r6
@@ -4471,26 +4471,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1b01
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1b01
     push16 r4
-    ldi16 c0, 0x1c24
+    ldi16 r4, 0x1c24
     push16 r4
-    ldi16 c0, 0x1d47
+    ldi16 r4, 0x1d47
     push16 r4
-    ldi16 c0, 0x1e6a
+    ldi16 r4, 0x1e6a
     push16 r4
-    ldi16 c0, 0x1f8d
+    ldi16 r4, 0x1f8d
     push16 r4
-    ldi16 c0, 0x20b0
+    ldi16 r4, 0x20b0
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x22f6
+    ldi16 r4, 0x22f6
     push16 r4
     pop16 r7
     pop16 r6
@@ -4564,26 +4564,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1b36
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1b36
     push16 r4
-    ldi16 c0, 0x1c59
+    ldi16 r4, 0x1c59
     push16 r4
-    ldi16 c0, 0x1d7c
+    ldi16 r4, 0x1d7c
     push16 r4
-    ldi16 c0, 0x1e9f
+    ldi16 r4, 0x1e9f
     push16 r4
-    ldi16 c0, 0x1fc2
+    ldi16 r4, 0x1fc2
     push16 r4
-    ldi16 c0, 0x20e5
+    ldi16 r4, 0x20e5
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x232b
+    ldi16 r4, 0x232b
     push16 r4
     pop16 r7
     pop16 r6
@@ -4657,26 +4657,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1b6b
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1b6b
     push16 r4
-    ldi16 c0, 0x1c8e
+    ldi16 r4, 0x1c8e
     push16 r4
-    ldi16 c0, 0x1db1
+    ldi16 r4, 0x1db1
     push16 r4
-    ldi16 c0, 0x1ed4
+    ldi16 r4, 0x1ed4
     push16 r4
-    ldi16 c0, 0x1ff7
+    ldi16 r4, 0x1ff7
     push16 r4
-    ldi16 c0, 0x211a
+    ldi16 r4, 0x211a
     push16 r4
-    ldi16 c0, 0x007f
+    ldi16 r4, 0x007f
     push16 r4
-    ldi16 c0, 0x2360
+    ldi16 r4, 0x2360
     push16 r4
     pop16 r7
     pop16 r6
@@ -4750,26 +4750,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1ba0
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1ba0
     push16 r4
-    ldi16 c0, 0x1cc3
+    ldi16 r4, 0x1cc3
     push16 r4
-    ldi16 c0, 0x1de6
+    ldi16 r4, 0x1de6
     push16 r4
-    ldi16 c0, 0x1f09
+    ldi16 r4, 0x1f09
     push16 r4
-    ldi16 c0, 0x202c
+    ldi16 r4, 0x202c
     push16 r4
-    ldi16 c0, 0x214f
+    ldi16 r4, 0x214f
     push16 r4
-    ldi16 c0, 0x0080
+    ldi16 r4, 0x0080
     push16 r4
-    ldi16 c0, 0x2395
+    ldi16 r4, 0x2395
     push16 r4
     pop16 r7
     pop16 r6
@@ -4843,26 +4843,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1bd5
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1bd5
     push16 r4
-    ldi16 c0, 0x1cf8
+    ldi16 r4, 0x1cf8
     push16 r4
-    ldi16 c0, 0x1e1b
+    ldi16 r4, 0x1e1b
     push16 r4
-    ldi16 c0, 0x1f3e
+    ldi16 r4, 0x1f3e
     push16 r4
-    ldi16 c0, 0x2061
+    ldi16 r4, 0x2061
     push16 r4
-    ldi16 c0, 0x2184
+    ldi16 r4, 0x2184
     push16 r4
-    ldi16 c0, 0x12ff
+    ldi16 r4, 0x12ff
     push16 r4
-    ldi16 c0, 0x23ca
+    ldi16 r4, 0x23ca
     push16 r4
     pop16 r7
     pop16 r6
@@ -4936,26 +4936,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1c0a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1c0a
     push16 r4
-    ldi16 c0, 0x1d2d
+    ldi16 r4, 0x1d2d
     push16 r4
-    ldi16 c0, 0x1e50
+    ldi16 r4, 0x1e50
     push16 r4
-    ldi16 c0, 0x1f73
+    ldi16 r4, 0x1f73
     push16 r4
-    ldi16 c0, 0x2096
+    ldi16 r4, 0x2096
     push16 r4
-    ldi16 c0, 0x21b9
+    ldi16 r4, 0x21b9
     push16 r4
-    ldi16 c0, 0x8001
+    ldi16 r4, 0x8001
     push16 r4
-    ldi16 c0, 0x23ff
+    ldi16 r4, 0x23ff
     push16 r4
     pop16 r7
     pop16 r6
@@ -5029,26 +5029,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1c3f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1c3f
     push16 r4
-    ldi16 c0, 0x1d62
+    ldi16 r4, 0x1d62
     push16 r4
-    ldi16 c0, 0x1e85
+    ldi16 r4, 0x1e85
     push16 r4
-    ldi16 c0, 0x1fa8
+    ldi16 r4, 0x1fa8
     push16 r4
-    ldi16 c0, 0x20cb
+    ldi16 r4, 0x20cb
     push16 r4
-    ldi16 c0, 0x21ee
+    ldi16 r4, 0x21ee
     push16 r4
-    ldi16 c0, 0xff80
+    ldi16 r4, 0xff80
     push16 r4
-    ldi16 c0, 0x2434
+    ldi16 r4, 0x2434
     push16 r4
     pop16 r7
     pop16 r6
@@ -5122,26 +5122,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r6, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1c74
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1c74
     push16 r4
-    ldi16 c0, 0x1d97
+    ldi16 r4, 0x1d97
     push16 r4
-    ldi16 c0, 0x1eba
+    ldi16 r4, 0x1eba
     push16 r4
-    ldi16 c0, 0x1fdd
+    ldi16 r4, 0x1fdd
     push16 r4
-    ldi16 c0, 0x2100
+    ldi16 r4, 0x2100
     push16 r4
-    ldi16 c0, 0x2223
+    ldi16 r4, 0x2223
     push16 r4
-    ldi16 c0, 0xa55a
+    ldi16 r4, 0xa55a
     push16 r4
-    ldi16 c0, 0x2469
+    ldi16 r4, 0x2469
     push16 r4
     pop16 r7
     pop16 r6
@@ -5215,26 +5215,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1ca9
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1ca9
     push16 r4
-    ldi16 c0, 0x1dcc
+    ldi16 r4, 0x1dcc
     push16 r4
-    ldi16 c0, 0x1eef
+    ldi16 r4, 0x1eef
     push16 r4
-    ldi16 c0, 0x2012
+    ldi16 r4, 0x2012
     push16 r4
-    ldi16 c0, 0x2135
+    ldi16 r4, 0x2135
     push16 r4
-    ldi16 c0, 0x2258
+    ldi16 r4, 0x2258
     push16 r4
-    ldi16 c0, 0x237b
+    ldi16 r4, 0x237b
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r7
     pop16 r6
@@ -5308,26 +5308,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1cde
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1cde
     push16 r4
-    ldi16 c0, 0x1e01
+    ldi16 r4, 0x1e01
     push16 r4
-    ldi16 c0, 0x1f24
+    ldi16 r4, 0x1f24
     push16 r4
-    ldi16 c0, 0x2047
+    ldi16 r4, 0x2047
     push16 r4
-    ldi16 c0, 0x216a
+    ldi16 r4, 0x216a
     push16 r4
-    ldi16 c0, 0x228d
+    ldi16 r4, 0x228d
     push16 r4
-    ldi16 c0, 0x23b0
+    ldi16 r4, 0x23b0
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
     pop16 r7
     pop16 r6
@@ -5401,26 +5401,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1d13
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1d13
     push16 r4
-    ldi16 c0, 0x1e36
+    ldi16 r4, 0x1e36
     push16 r4
-    ldi16 c0, 0x1f59
+    ldi16 r4, 0x1f59
     push16 r4
-    ldi16 c0, 0x207c
+    ldi16 r4, 0x207c
     push16 r4
-    ldi16 c0, 0x219f
+    ldi16 r4, 0x219f
     push16 r4
-    ldi16 c0, 0x22c2
+    ldi16 r4, 0x22c2
     push16 r4
-    ldi16 c0, 0x23e5
+    ldi16 r4, 0x23e5
     push16 r4
-    ldi16 c0, 0x007f
+    ldi16 r4, 0x007f
     push16 r4
     pop16 r7
     pop16 r6
@@ -5494,26 +5494,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1d48
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1d48
     push16 r4
-    ldi16 c0, 0x1e6b
+    ldi16 r4, 0x1e6b
     push16 r4
-    ldi16 c0, 0x1f8e
+    ldi16 r4, 0x1f8e
     push16 r4
-    ldi16 c0, 0x20b1
+    ldi16 r4, 0x20b1
     push16 r4
-    ldi16 c0, 0x21d4
+    ldi16 r4, 0x21d4
     push16 r4
-    ldi16 c0, 0x22f7
+    ldi16 r4, 0x22f7
     push16 r4
-    ldi16 c0, 0x241a
+    ldi16 r4, 0x241a
     push16 r4
-    ldi16 c0, 0x0080
+    ldi16 r4, 0x0080
     push16 r4
     pop16 r7
     pop16 r6
@@ -5587,26 +5587,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1d7d
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1d7d
     push16 r4
-    ldi16 c0, 0x1ea0
+    ldi16 r4, 0x1ea0
     push16 r4
-    ldi16 c0, 0x1fc3
+    ldi16 r4, 0x1fc3
     push16 r4
-    ldi16 c0, 0x20e6
+    ldi16 r4, 0x20e6
     push16 r4
-    ldi16 c0, 0x2209
+    ldi16 r4, 0x2209
     push16 r4
-    ldi16 c0, 0x232c
+    ldi16 r4, 0x232c
     push16 r4
-    ldi16 c0, 0x244f
+    ldi16 r4, 0x244f
     push16 r4
-    ldi16 c0, 0x12ff
+    ldi16 r4, 0x12ff
     push16 r4
     pop16 r7
     pop16 r6
@@ -5680,26 +5680,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1db2
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1db2
     push16 r4
-    ldi16 c0, 0x1ed5
+    ldi16 r4, 0x1ed5
     push16 r4
-    ldi16 c0, 0x1ff8
+    ldi16 r4, 0x1ff8
     push16 r4
-    ldi16 c0, 0x211b
+    ldi16 r4, 0x211b
     push16 r4
-    ldi16 c0, 0x223e
+    ldi16 r4, 0x223e
     push16 r4
-    ldi16 c0, 0x2361
+    ldi16 r4, 0x2361
     push16 r4
-    ldi16 c0, 0x2484
+    ldi16 r4, 0x2484
     push16 r4
-    ldi16 c0, 0x8001
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r7
     pop16 r6
@@ -5773,26 +5773,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1de7
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1de7
     push16 r4
-    ldi16 c0, 0x1f0a
+    ldi16 r4, 0x1f0a
     push16 r4
-    ldi16 c0, 0x202d
+    ldi16 r4, 0x202d
     push16 r4
-    ldi16 c0, 0x2150
+    ldi16 r4, 0x2150
     push16 r4
-    ldi16 c0, 0x2273
+    ldi16 r4, 0x2273
     push16 r4
-    ldi16 c0, 0x2396
+    ldi16 r4, 0x2396
     push16 r4
-    ldi16 c0, 0x24b9
+    ldi16 r4, 0x24b9
     push16 r4
-    ldi16 c0, 0xff80
+    ldi16 r4, 0xff80
     push16 r4
     pop16 r7
     pop16 r6
@@ -5866,26 +5866,26 @@ _start:
     f1u_emit_char '\n'
 
     ; zext8 r7, pattern 7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1e1c
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1e1c
     push16 r4
-    ldi16 c0, 0x1f3f
+    ldi16 r4, 0x1f3f
     push16 r4
-    ldi16 c0, 0x2062
+    ldi16 r4, 0x2062
     push16 r4
-    ldi16 c0, 0x2185
+    ldi16 r4, 0x2185
     push16 r4
-    ldi16 c0, 0x22a8
+    ldi16 r4, 0x22a8
     push16 r4
-    ldi16 c0, 0x23cb
+    ldi16 r4, 0x23cb
     push16 r4
-    ldi16 c0, 0x24ee
+    ldi16 r4, 0x24ee
     push16 r4
-    ldi16 c0, 0xa55a
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r7
     pop16 r6

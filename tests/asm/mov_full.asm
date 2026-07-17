@@ -7,17 +7,17 @@
 _start:
 
     ; Matrix index 0x00: mov r0,r0; guard r3.
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0xa503
+    ldi16 r4, 0xa503
     push16 r4
     pop16 r3
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r0
@@ -66,20 +66,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x01: mov r0,r1; guard r4.
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa535
+    ldi16 r4, 0xa535
     push16 r4
     pop16 r4
     pop16 r1
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r1
@@ -128,20 +128,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x02: mov r0,r2; guard r5.
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa567
+    ldi16 r4, 0xa567
     push16 r4
     pop16 r5
     pop16 r2
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r2
@@ -190,20 +190,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x03: mov r0,r3; guard r6.
-    ldi16 c0, 0x0100
+    ldi16 r4, 0x0100
     push16 r4
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0xa599
+    ldi16 r4, 0xa599
     push16 r4
     pop16 r6
     pop16 r3
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r3
@@ -252,20 +252,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x04: mov r0,r4; guard r7.
-    ldi16 c0, 0x7fff
+    ldi16 r4, 0x7fff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa5cb
+    ldi16 r4, 0xa5cb
     push16 r4
     pop16 r7
     pop16 r4
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r4
@@ -314,20 +314,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x05: mov r0,r5; guard r1.
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0xa5f6
+    ldi16 r4, 0xa5f6
     push16 r4
     pop16 r1
     pop16 r5
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r5
@@ -376,20 +376,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x06: mov r0,r6; guard r1.
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa627
+    ldi16 r4, 0xa627
     push16 r4
     pop16 r1
     pop16 r6
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r6
@@ -438,20 +438,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x07: mov r0,r7; guard r2.
-    ldi16 c0, 0x1234
+    ldi16 r4, 0x1234
     push16 r4
-    ldi16 c0, 0xfedc
+    ldi16 r4, 0xfedc
     push16 r4
-    ldi16 c0, 0xa659
+    ldi16 r4, 0xa659
     push16 r4
     pop16 r2
     pop16 r7
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r0, r7
@@ -500,20 +500,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x08: mov r1,r0; guard r3.
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0xa68b
+    ldi16 r4, 0xa68b
     push16 r4
     pop16 r3
     pop16 r0
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r0
@@ -562,17 +562,17 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x09: mov r1,r1; guard r4.
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa6bd
+    ldi16 r4, 0xa6bd
     push16 r4
     pop16 r4
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r1
@@ -621,20 +621,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x0A: mov r1,r2; guard r5.
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa6ef
+    ldi16 r4, 0xa6ef
     push16 r4
     pop16 r5
     pop16 r2
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r2
@@ -683,20 +683,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x0B: mov r1,r3; guard r6.
-    ldi16 c0, 0x0100
+    ldi16 r4, 0x0100
     push16 r4
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0xa721
+    ldi16 r4, 0xa721
     push16 r4
     pop16 r6
     pop16 r3
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r3
@@ -745,20 +745,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x0C: mov r1,r4; guard r7.
-    ldi16 c0, 0x7fff
+    ldi16 r4, 0x7fff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa753
+    ldi16 r4, 0xa753
     push16 r4
     pop16 r7
     pop16 r4
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r4
@@ -807,20 +807,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x0D: mov r1,r5; guard r0.
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0xa77d
+    ldi16 r4, 0xa77d
     push16 r4
     pop16 r0
     pop16 r5
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r5
@@ -869,20 +869,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x0E: mov r1,r6; guard r2.
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa7b0
+    ldi16 r4, 0xa7b0
     push16 r4
     pop16 r2
     pop16 r6
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r6
@@ -931,20 +931,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x0F: mov r1,r7; guard r2.
-    ldi16 c0, 0x1234
+    ldi16 r4, 0x1234
     push16 r4
-    ldi16 c0, 0xfedc
+    ldi16 r4, 0xfedc
     push16 r4
-    ldi16 c0, 0xa7e1
+    ldi16 r4, 0xa7e1
     push16 r4
     pop16 r2
     pop16 r7
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r1, r7
@@ -993,20 +993,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x10: mov r2,r0; guard r3.
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0xa813
+    ldi16 r4, 0xa813
     push16 r4
     pop16 r3
     pop16 r0
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r0
@@ -1055,20 +1055,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x11: mov r2,r1; guard r4.
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa845
+    ldi16 r4, 0xa845
     push16 r4
     pop16 r4
     pop16 r1
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r1
@@ -1117,17 +1117,17 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x12: mov r2,r2; guard r5.
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0xa877
+    ldi16 r4, 0xa877
     push16 r4
     pop16 r5
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r2
@@ -1176,20 +1176,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x13: mov r2,r3; guard r6.
-    ldi16 c0, 0x0100
+    ldi16 r4, 0x0100
     push16 r4
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0xa8a9
+    ldi16 r4, 0xa8a9
     push16 r4
     pop16 r6
     pop16 r3
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r3
@@ -1238,20 +1238,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x14: mov r2,r4; guard r7.
-    ldi16 c0, 0x7fff
+    ldi16 r4, 0x7fff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa8db
+    ldi16 r4, 0xa8db
     push16 r4
     pop16 r7
     pop16 r4
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r4
@@ -1300,20 +1300,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x15: mov r2,r5; guard r0.
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0xa905
+    ldi16 r4, 0xa905
     push16 r4
     pop16 r0
     pop16 r5
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r5
@@ -1362,20 +1362,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x16: mov r2,r6; guard r1.
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa937
+    ldi16 r4, 0xa937
     push16 r4
     pop16 r1
     pop16 r6
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r6
@@ -1424,20 +1424,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x17: mov r2,r7; guard r3.
-    ldi16 c0, 0x1234
+    ldi16 r4, 0x1234
     push16 r4
-    ldi16 c0, 0xfedc
+    ldi16 r4, 0xfedc
     push16 r4
-    ldi16 c0, 0xa96a
+    ldi16 r4, 0xa96a
     push16 r4
     pop16 r3
     pop16 r7
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r2, r7
@@ -1486,20 +1486,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x18: mov r3,r0; guard r4.
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0xa99c
+    ldi16 r4, 0xa99c
     push16 r4
     pop16 r4
     pop16 r0
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r0
@@ -1548,20 +1548,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x19: mov r3,r1; guard r4.
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa9cd
+    ldi16 r4, 0xa9cd
     push16 r4
     pop16 r4
     pop16 r1
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r1
@@ -1610,20 +1610,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x1A: mov r3,r2; guard r5.
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xa9ff
+    ldi16 r4, 0xa9ff
     push16 r4
     pop16 r5
     pop16 r2
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r2
@@ -1672,17 +1672,17 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x1B: mov r3,r3; guard r6.
-    ldi16 c0, 0x0100
+    ldi16 r4, 0x0100
     push16 r4
-    ldi16 c0, 0xaa31
+    ldi16 r4, 0xaa31
     push16 r4
     pop16 r6
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r3
@@ -1731,20 +1731,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x1C: mov r3,r4; guard r7.
-    ldi16 c0, 0x7fff
+    ldi16 r4, 0x7fff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xaa63
+    ldi16 r4, 0xaa63
     push16 r4
     pop16 r7
     pop16 r4
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r4
@@ -1793,20 +1793,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x1D: mov r3,r5; guard r0.
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0xaa8d
+    ldi16 r4, 0xaa8d
     push16 r4
     pop16 r0
     pop16 r5
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r5
@@ -1855,20 +1855,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x1E: mov r3,r6; guard r1.
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xaabf
+    ldi16 r4, 0xaabf
     push16 r4
     pop16 r1
     pop16 r6
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r6
@@ -1917,20 +1917,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x1F: mov r3,r7; guard r2.
-    ldi16 c0, 0x1234
+    ldi16 r4, 0x1234
     push16 r4
-    ldi16 c0, 0xfedc
+    ldi16 r4, 0xfedc
     push16 r4
-    ldi16 c0, 0xaaf1
+    ldi16 r4, 0xaaf1
     push16 r4
     pop16 r2
     pop16 r7
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r3, r7
@@ -1979,20 +1979,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x20: mov r4,r0; guard r3.
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0xab23
+    ldi16 r4, 0xab23
     push16 r4
     pop16 r3
     pop16 r0
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r4, r0
@@ -2041,20 +2041,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x21: mov r4,r1; guard r5.
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xab56
+    ldi16 r4, 0xab56
     push16 r4
     pop16 r5
     pop16 r1
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r4, r1
@@ -2103,20 +2103,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x22: mov r4,r2; guard r5.
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xab87
+    ldi16 r4, 0xab87
     push16 r4
     pop16 r5
     pop16 r2
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r4, r2
@@ -2165,20 +2165,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x23: mov r4,r3; guard r6.
-    ldi16 c0, 0x0100
+    ldi16 r4, 0x0100
     push16 r4
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0xabb9
+    ldi16 r4, 0xabb9
     push16 r4
     pop16 r6
     pop16 r3
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r4, r3
@@ -2227,20 +2227,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x24: mov r5,r0; guard r7.
-    ldi16 c0, 0x7fff
+    ldi16 r4, 0x7fff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xabeb
+    ldi16 r4, 0xabeb
     push16 r4
     pop16 r7
     pop16 r0
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r5, r0
@@ -2289,20 +2289,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x25: mov r5,r1; guard r0.
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0xac15
+    ldi16 r4, 0xac15
     push16 r4
     pop16 r0
     pop16 r1
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r5, r1
@@ -2351,20 +2351,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x26: mov r5,r2; guard r1.
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xac47
+    ldi16 r4, 0xac47
     push16 r4
     pop16 r1
     pop16 r2
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r5, r2
@@ -2413,20 +2413,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x27: mov r5,r3; guard r2.
-    ldi16 c0, 0x1234
+    ldi16 r4, 0x1234
     push16 r4
-    ldi16 c0, 0xfedc
+    ldi16 r4, 0xfedc
     push16 r4
-    ldi16 c0, 0xac79
+    ldi16 r4, 0xac79
     push16 r4
     pop16 r2
     pop16 r3
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r5, r3
@@ -2475,20 +2475,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x28: mov r6,r0; guard r3.
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
-    ldi16 c0, 0xacab
+    ldi16 r4, 0xacab
     push16 r4
     pop16 r3
     pop16 r0
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r6, r0
@@ -2537,20 +2537,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x29: mov r6,r1; guard r4.
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xacdd
+    ldi16 r4, 0xacdd
     push16 r4
     pop16 r4
     pop16 r1
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r6, r1
@@ -2599,20 +2599,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x2A: mov r6,r2; guard r5.
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xad0f
+    ldi16 r4, 0xad0f
     push16 r4
     pop16 r5
     pop16 r2
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r6, r2
@@ -2661,20 +2661,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x2B: mov r6,r3; guard r7.
-    ldi16 c0, 0x0100
+    ldi16 r4, 0x0100
     push16 r4
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
-    ldi16 c0, 0xad42
+    ldi16 r4, 0xad42
     push16 r4
     pop16 r7
     pop16 r3
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r6, r3
@@ -2723,20 +2723,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x2C: mov r7,r0; guard r1.
-    ldi16 c0, 0x7fff
+    ldi16 r4, 0x7fff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xad6d
+    ldi16 r4, 0xad6d
     push16 r4
     pop16 r1
     pop16 r0
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r7, r0
@@ -2785,20 +2785,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x2D: mov r7,r1; guard r0.
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0x8000
+    ldi16 r4, 0x8000
     push16 r4
-    ldi16 c0, 0xad9d
+    ldi16 r4, 0xad9d
     push16 r4
     pop16 r0
     pop16 r1
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r7, r1
@@ -2847,20 +2847,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x2E: mov r7,r2; guard r1.
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
-    ldi16 c0, 0x0001
+    ldi16 r4, 0x0001
     push16 r4
-    ldi16 c0, 0xadcf
+    ldi16 r4, 0xadcf
     push16 r4
     pop16 r1
     pop16 r2
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r7, r2
@@ -2909,20 +2909,20 @@ _start:
     fm_emit_char '\n'
 
     ; Matrix index 0x2F: mov r7,r3; guard r2.
-    ldi16 c0, 0x1234
+    ldi16 r4, 0x1234
     push16 r4
-    ldi16 c0, 0xfedc
+    ldi16 r4, 0xfedc
     push16 r4
-    ldi16 c0, 0xae01
+    ldi16 r4, 0xae01
     push16 r4
     pop16 r2
     pop16 r3
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     mov r7, r3

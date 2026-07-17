@@ -5,104 +5,104 @@
 .globl _start
 .type _start, @function
 _start:
-    ; c0
-    ldi16 c0, 0x8000
-    cmpi.s8 c0, -128
+    ; r4
+    ldi16 r4, 0x8000
+    cmpi.s8 r4, -128
     debug_print_conditions_inline
 
-    ldi16 c0, 0x8000
-    cmpi.s8 c0, -127
+    ldi16 r4, 0x8000
+    cmpi.s8 r4, -127
     debug_print_conditions_inline
 
-    ldi16 c0, 0x0000
-    cmpi.s8 c0, -1
+    ldi16 r4, 0x0000
+    cmpi.s8 r4, -1
     debug_print_conditions_inline
 
-    ldi16 c0, 0x0000
-    cmpi.s8 c0, 0
+    ldi16 r4, 0x0000
+    cmpi.s8 r4, 0
     debug_print_conditions_inline
 
-    ldi16 c0, 0x0000
-    cmpi.s8 c0, 1
+    ldi16 r4, 0x0000
+    cmpi.s8 r4, 1
     debug_print_conditions_inline
 
-    ldi16 c0, 0x8000
-    cmpi.s8 c0, 127
+    ldi16 r4, 0x8000
+    cmpi.s8 r4, 127
     debug_print_conditions_inline
 
-    ; c1
-    ldi16 c1, 0x8000
-    cmpi.s8 c1, -128
+    ; r5
+    ldi16 r5, 0x8000
+    cmpi.s8 r5, -128
     debug_print_conditions_inline
 
-    ldi16 c1, 0x8000
-    cmpi.s8 c1, -127
+    ldi16 r5, 0x8000
+    cmpi.s8 r5, -127
     debug_print_conditions_inline
 
-    ldi16 c1, 0x0000
-    cmpi.s8 c1, -1
+    ldi16 r5, 0x0000
+    cmpi.s8 r5, -1
     debug_print_conditions_inline
 
-    ldi16 c1, 0x0000
-    cmpi.s8 c1, 0
+    ldi16 r5, 0x0000
+    cmpi.s8 r5, 0
     debug_print_conditions_inline
 
-    ldi16 c1, 0x0000
-    cmpi.s8 c1, 1
+    ldi16 r5, 0x0000
+    cmpi.s8 r5, 1
     debug_print_conditions_inline
 
-    ldi16 c1, 0x8000
-    cmpi.s8 c1, 127
+    ldi16 r5, 0x8000
+    cmpi.s8 r5, 127
     debug_print_conditions_inline
 
-    ; c2
-    ldi16 c2, 0x8000
-    cmpi.s8 c2, -128
+    ; r6
+    ldi16 r6, 0x8000
+    cmpi.s8 r6, -128
     debug_print_conditions_inline
 
-    ldi16 c2, 0x8000
-    cmpi.s8 c2, -127
+    ldi16 r6, 0x8000
+    cmpi.s8 r6, -127
     debug_print_conditions_inline
 
-    ldi16 c2, 0x0000
-    cmpi.s8 c2, -1
+    ldi16 r6, 0x0000
+    cmpi.s8 r6, -1
     debug_print_conditions_inline
 
-    ldi16 c2, 0x0000
-    cmpi.s8 c2, 0
+    ldi16 r6, 0x0000
+    cmpi.s8 r6, 0
     debug_print_conditions_inline
 
-    ldi16 c2, 0x0000
-    cmpi.s8 c2, 1
+    ldi16 r6, 0x0000
+    cmpi.s8 r6, 1
     debug_print_conditions_inline
 
-    ldi16 c2, 0x8000
-    cmpi.s8 c2, 127
+    ldi16 r6, 0x8000
+    cmpi.s8 r6, 127
     debug_print_conditions_inline
 
-    ; c3
-    ldi16 c3, 0x8000
-    cmpi.s8 c3, -128
+    ; r7
+    ldi16 r7, 0x8000
+    cmpi.s8 r7, -128
     debug_print_conditions_inline
 
-    ldi16 c3, 0x8000
-    cmpi.s8 c3, -127
+    ldi16 r7, 0x8000
+    cmpi.s8 r7, -127
     debug_print_conditions_inline
 
-    ldi16 c3, 0x0000
-    cmpi.s8 c3, -1
+    ldi16 r7, 0x0000
+    cmpi.s8 r7, -1
     debug_print_conditions_inline
 
-    ldi16 c3, 0x0000
-    cmpi.s8 c3, 0
+    ldi16 r7, 0x0000
+    cmpi.s8 r7, 0
     debug_print_conditions_inline
 
-    ldi16 c3, 0x0000
-    cmpi.s8 c3, 1
+    ldi16 r7, 0x0000
+    cmpi.s8 r7, 1
     debug_print_conditions_inline
 
-    ldi16 c3, 0x8000
-    cmpi.s8 c3, 127
+    ldi16 r7, 0x8000
+    cmpi.s8 r7, 127
     debug_print_conditions_inline
 
     sys debug_break

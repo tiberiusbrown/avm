@@ -7,13 +7,13 @@
 _start:
 
     ; F9 pair r0,r0; pattern 0; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r0
-    ldi16 c0, 0x4c01
+    ldi16 r4, 0x4c01
     push16 r4
     pop16 r1
     xor r0, r0
@@ -63,13 +63,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r0; pattern 1; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r0
-    ldi16 c0, 0x4d5b
+    ldi16 r4, 0x4d5b
     push16 r4
     pop16 r2
     xor r0, r0
@@ -119,13 +119,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r0; pattern 2; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r0
-    ldi16 c0, 0x4eb5
+    ldi16 r4, 0x4eb5
     push16 r4
     pop16 r3
     xor r0, r0
@@ -175,13 +175,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r0; pattern 3; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x8001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x8001
     push16 r5
     pop16 r0
-    ldi16 c1, 0x500f
+    ldi16 r5, 0x500f
     push16 r5
     pop16 r4
     xor r0, r0
@@ -231,16 +231,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r1; pattern 0; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r0
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x526a
+    ldi16 r4, 0x526a
     push16 r4
     pop16 r6
     xor r0, r1
@@ -290,16 +290,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r1; pattern 1; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r0
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r1
-    ldi16 c0, 0x53c4
+    ldi16 r4, 0x53c4
     push16 r4
     pop16 r7
     xor r0, r1
@@ -349,16 +349,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r1; pattern 2; guard r2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r1
-    ldi16 c0, 0x4f18
+    ldi16 r4, 0x4f18
     push16 r4
     pop16 r2
     xor r0, r1
@@ -408,16 +408,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r1; pattern 3; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r0
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r1
-    ldi16 c0, 0x4f71
+    ldi16 r4, 0x4f71
     push16 r4
     pop16 r2
     xor r0, r1
@@ -467,16 +467,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r2; pattern 0; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r0
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r2
-    ldi16 c0, 0x50cb
+    ldi16 r4, 0x50cb
     push16 r4
     pop16 r3
     xor r0, r2
@@ -526,16 +526,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r2; pattern 1; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xf00f
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xf00f
     push16 r5
     pop16 r0
-    ldi16 c1, 0xcccc
+    ldi16 r5, 0xcccc
     push16 r5
     pop16 r2
-    ldi16 c1, 0x5225
+    ldi16 r5, 0x5225
     push16 r5
     pop16 r4
     xor r0, r2
@@ -585,16 +585,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r2; pattern 2; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r0
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r2
-    ldi16 c0, 0x537f
+    ldi16 r4, 0x537f
     push16 r4
     pop16 r5
     xor r0, r2
@@ -644,16 +644,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r2; pattern 3; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r0
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x54d9
+    ldi16 r4, 0x54d9
     push16 r4
     pop16 r6
     xor r0, r2
@@ -703,16 +703,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r3; pattern 0; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r0
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r3
-    ldi16 c0, 0x502d
+    ldi16 r4, 0x502d
     push16 r4
     pop16 r1
     xor r0, r3
@@ -762,16 +762,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r3; pattern 1; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r3
-    ldi16 c0, 0x5086
+    ldi16 r4, 0x5086
     push16 r4
     pop16 r1
     xor r0, r3
@@ -821,16 +821,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r3; pattern 2; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r0
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r3
-    ldi16 c0, 0x51e0
+    ldi16 r4, 0x51e0
     push16 r4
     pop16 r2
     xor r0, r3
@@ -880,16 +880,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r3; pattern 3; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x1234
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x1234
     push16 r5
     pop16 r0
-    ldi16 c1, 0x00ff
+    ldi16 r5, 0x00ff
     push16 r5
     pop16 r3
-    ldi16 c1, 0x543b
+    ldi16 r5, 0x543b
     push16 r5
     pop16 r4
     xor r0, r3
@@ -939,16 +939,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r4; pattern 0; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c2, 0xf00f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r6, 0xf00f
     push16 r6
     pop16 r0
-    ldi16 c2, 0xcccc
+    ldi16 r6, 0xcccc
     push16 r6
     pop16 r4
-    ldi16 c2, 0x5595
+    ldi16 r6, 0x5595
     push16 r6
     pop16 r5
     xor r0, r4
@@ -998,16 +998,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r4; pattern 1; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x8001
     push16 r5
     pop16 r0
-    ldi16 c1, 0x7ffe
+    ldi16 r5, 0x7ffe
     push16 r5
     pop16 r4
-    ldi16 c1, 0x56ef
+    ldi16 r5, 0x56ef
     push16 r5
     pop16 r6
     xor r0, r4
@@ -1057,16 +1057,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r4; pattern 2; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r0
-    ldi16 c1, 0xffff
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r4
-    ldi16 c1, 0x5849
+    ldi16 r5, 0x5849
     push16 r5
     pop16 r7
     xor r0, r4
@@ -1116,16 +1116,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r4; pattern 3; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r0
-    ldi16 c1, 0x5aa5
+    ldi16 r5, 0x5aa5
     push16 r5
     pop16 r4
-    ldi16 c1, 0x529c
+    ldi16 r5, 0x529c
     push16 r5
     pop16 r1
     xor r0, r4
@@ -1175,16 +1175,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r5; pattern 0; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r5
-    ldi16 c0, 0x53f6
+    ldi16 r4, 0x53f6
     push16 r4
     pop16 r2
     xor r0, r5
@@ -1234,16 +1234,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r5; pattern 1; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r0
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r5
-    ldi16 c0, 0x5550
+    ldi16 r4, 0x5550
     push16 r4
     pop16 r3
     xor r0, r5
@@ -1293,16 +1293,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r5; pattern 2; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x1234
     push16 r6
     pop16 r0
-    ldi16 c2, 0x00ff
+    ldi16 r6, 0x00ff
     push16 r6
     pop16 r5
-    ldi16 c2, 0x56aa
+    ldi16 r6, 0x56aa
     push16 r6
     pop16 r4
     xor r0, r5
@@ -1352,16 +1352,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r5; pattern 3; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r0
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r5
-    ldi16 c0, 0x5905
+    ldi16 r4, 0x5905
     push16 r4
     pop16 r6
     xor r0, r5
@@ -1411,16 +1411,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r6; pattern 0; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r0
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r6
-    ldi16 c0, 0x5a5f
+    ldi16 r4, 0x5a5f
     push16 r4
     pop16 r7
     xor r0, r6
@@ -1470,16 +1470,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r6; pattern 1; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r0
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r6
-    ldi16 c0, 0x54b2
+    ldi16 r4, 0x54b2
     push16 r4
     pop16 r1
     xor r0, r6
@@ -1529,16 +1529,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r6; pattern 2; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r0
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r6
-    ldi16 c0, 0x550b
+    ldi16 r4, 0x550b
     push16 r4
     pop16 r1
     xor r0, r6
@@ -1588,16 +1588,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r6; pattern 3; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r0
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r6
-    ldi16 c0, 0x5665
+    ldi16 r4, 0x5665
     push16 r4
     pop16 r2
     xor r0, r6
@@ -1647,16 +1647,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r7; pattern 0; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0ff0
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0ff0
     push16 r5
     pop16 r0
-    ldi16 c1, 0x3333
+    ldi16 r5, 0x3333
     push16 r5
     pop16 r7
-    ldi16 c1, 0x58c0
+    ldi16 r5, 0x58c0
     push16 r5
     pop16 r4
     xor r0, r7
@@ -1706,16 +1706,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r7; pattern 1; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r0
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r7
-    ldi16 c0, 0x5a1a
+    ldi16 r4, 0x5a1a
     push16 r4
     pop16 r5
     xor r0, r7
@@ -1765,16 +1765,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r7; pattern 2; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r0
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r7
-    ldi16 c0, 0x5b74
+    ldi16 r4, 0x5b74
     push16 r4
     pop16 r6
     xor r0, r7
@@ -1824,16 +1824,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r0,r7; pattern 3; guard r1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r7
-    ldi16 c0, 0x56c8
+    ldi16 r4, 0x56c8
     push16 r4
     pop16 r1
     xor r0, r7
@@ -1883,16 +1883,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r0; pattern 0; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r1
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r0
-    ldi16 c0, 0x5822
+    ldi16 r4, 0x5822
     push16 r4
     pop16 r2
     xor r1, r0
@@ -1942,16 +1942,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r0; pattern 1; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r1
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x597c
+    ldi16 r4, 0x597c
     push16 r4
     pop16 r3
     xor r1, r0
@@ -2001,16 +2001,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r0; pattern 2; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xdead
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xdead
     push16 r5
     pop16 r1
-    ldi16 c1, 0xbeef
+    ldi16 r5, 0xbeef
     push16 r5
     pop16 r0
-    ldi16 c1, 0x5ad6
+    ldi16 r5, 0x5ad6
     push16 r5
     pop16 r4
     xor r1, r0
@@ -2060,16 +2060,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r0; pattern 3; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r0
-    ldi16 c0, 0x5c30
+    ldi16 r4, 0x5c30
     push16 r4
     pop16 r5
     xor r1, r0
@@ -2119,13 +2119,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r1; pattern 0; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r1
-    ldi16 c0, 0x5e8b
+    ldi16 r4, 0x5e8b
     push16 r4
     pop16 r7
     xor r1, r1
@@ -2175,13 +2175,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r1; pattern 1; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r1
-    ldi16 c0, 0x57dd
+    ldi16 r4, 0x57dd
     push16 r4
     pop16 r0
     xor r1, r1
@@ -2231,13 +2231,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r1; pattern 2; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r1
-    ldi16 c0, 0x5a38
+    ldi16 r4, 0x5a38
     push16 r4
     pop16 r2
     xor r1, r1
@@ -2287,13 +2287,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r1; pattern 3; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r1
-    ldi16 c0, 0x5a91
+    ldi16 r4, 0x5a91
     push16 r4
     pop16 r2
     xor r1, r1
@@ -2343,16 +2343,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r2; pattern 0; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x1234
     push16 r5
     pop16 r1
-    ldi16 c1, 0x00ff
+    ldi16 r5, 0x00ff
     push16 r5
     pop16 r2
-    ldi16 c1, 0x5cec
+    ldi16 r5, 0x5cec
     push16 r5
     pop16 r4
     xor r1, r2
@@ -2402,16 +2402,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r2; pattern 1; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r1
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r2
-    ldi16 c0, 0x5e46
+    ldi16 r4, 0x5e46
     push16 r4
     pop16 r5
     xor r1, r2
@@ -2461,16 +2461,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r2; pattern 2; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r2
-    ldi16 c0, 0x5fa0
+    ldi16 r4, 0x5fa0
     push16 r4
     pop16 r6
     xor r1, r2
@@ -2520,16 +2520,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r2; pattern 3; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r1
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r2
-    ldi16 c0, 0x60fa
+    ldi16 r4, 0x60fa
     push16 r4
     pop16 r7
     xor r1, r2
@@ -2579,16 +2579,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r3; pattern 0; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r1
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r3
-    ldi16 c0, 0x5c4e
+    ldi16 r4, 0x5c4e
     push16 r4
     pop16 r2
     xor r1, r3
@@ -2638,16 +2638,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r3; pattern 1; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r1
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r3
-    ldi16 c0, 0x5ca7
+    ldi16 r4, 0x5ca7
     push16 r4
     pop16 r2
     xor r1, r3
@@ -2697,16 +2697,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r3; pattern 2; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x8001
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x8001
     push16 r5
     pop16 r1
-    ldi16 c1, 0x7ffe
+    ldi16 r5, 0x7ffe
     push16 r5
     pop16 r3
-    ldi16 c1, 0x5f02
+    ldi16 r5, 0x5f02
     push16 r5
     pop16 r4
     xor r1, r3
@@ -2756,16 +2756,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r3; pattern 3; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r1
-    ldi16 c1, 0xffff
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r3
-    ldi16 c1, 0x5f5b
+    ldi16 r5, 0x5f5b
     push16 r5
     pop16 r4
     xor r1, r3
@@ -2815,16 +2815,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r4; pattern 0; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0xdead
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0xdead
     push16 r5
     pop16 r1
-    ldi16 c1, 0xbeef
+    ldi16 r5, 0xbeef
     push16 r5
     pop16 r4
-    ldi16 c1, 0x61b6
+    ldi16 r5, 0x61b6
     push16 r5
     pop16 r6
     xor r1, r4
@@ -2874,16 +2874,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r4; pattern 1; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r1
-    ldi16 c1, 0x0000
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r4
-    ldi16 c1, 0x6310
+    ldi16 r5, 0x6310
     push16 r5
     pop16 r7
     xor r1, r4
@@ -2933,16 +2933,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r4; pattern 2; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0ff0
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0ff0
     push16 r5
     pop16 r1
-    ldi16 c1, 0x3333
+    ldi16 r5, 0x3333
     push16 r5
     pop16 r4
-    ldi16 c1, 0x5c62
+    ldi16 r5, 0x5c62
     push16 r5
     pop16 r0
     xor r1, r4
@@ -2992,16 +2992,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r4; pattern 3; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0x1234
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0x1234
     push16 r5
     pop16 r1
-    ldi16 c1, 0x00ff
+    ldi16 r5, 0x00ff
     push16 r5
     pop16 r4
-    ldi16 c1, 0x5ebd
+    ldi16 r5, 0x5ebd
     push16 r5
     pop16 r2
     xor r1, r4
@@ -3051,16 +3051,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r5; pattern 0; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r1
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r5
-    ldi16 c0, 0x6017
+    ldi16 r4, 0x6017
     push16 r4
     pop16 r3
     xor r1, r5
@@ -3110,16 +3110,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r5; pattern 1; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x8001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x8001
     push16 r6
     pop16 r1
-    ldi16 c2, 0x7ffe
+    ldi16 r6, 0x7ffe
     push16 r6
     pop16 r5
-    ldi16 c2, 0x6171
+    ldi16 r6, 0x6171
     push16 r6
     pop16 r4
     xor r1, r5
@@ -3169,16 +3169,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r5; pattern 2; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r1
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r5
-    ldi16 c0, 0x63cc
+    ldi16 r4, 0x63cc
     push16 r4
     pop16 r6
     xor r1, r5
@@ -3228,16 +3228,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r5; pattern 3; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r1
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r5
-    ldi16 c0, 0x6425
+    ldi16 r4, 0x6425
     push16 r4
     pop16 r6
     xor r1, r5
@@ -3287,16 +3287,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r6; pattern 0; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r6
-    ldi16 c0, 0x5e78
+    ldi16 r4, 0x5e78
     push16 r4
     pop16 r0
     xor r1, r6
@@ -3346,16 +3346,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r6; pattern 1; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r1
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r6
-    ldi16 c0, 0x60d3
+    ldi16 r4, 0x60d3
     push16 r4
     pop16 r2
     xor r1, r6
@@ -3405,16 +3405,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r6; pattern 2; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r1
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r6
-    ldi16 c0, 0x612c
+    ldi16 r4, 0x612c
     push16 r4
     pop16 r2
     xor r1, r6
@@ -3464,16 +3464,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r6; pattern 3; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r1
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r6
-    ldi16 c0, 0x6286
+    ldi16 r4, 0x6286
     push16 r4
     pop16 r3
     xor r1, r6
@@ -3523,16 +3523,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r7; pattern 0; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r1
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r7
-    ldi16 c0, 0x64e1
+    ldi16 r4, 0x64e1
     push16 r4
     pop16 r5
     xor r1, r7
@@ -3582,16 +3582,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r7; pattern 1; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r1
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r7
-    ldi16 c0, 0x663b
+    ldi16 r4, 0x663b
     push16 r4
     pop16 r6
     xor r1, r7
@@ -3641,16 +3641,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r7; pattern 2; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r1
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r7
-    ldi16 c0, 0x608e
+    ldi16 r4, 0x608e
     push16 r4
     pop16 r0
     xor r1, r7
@@ -3700,16 +3700,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r1,r7; pattern 3; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r1
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r7
-    ldi16 c0, 0x60e7
+    ldi16 r4, 0x60e7
     push16 r4
     pop16 r0
     xor r1, r7
@@ -3759,16 +3759,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r0; pattern 0; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r2
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r0
-    ldi16 c0, 0x6443
+    ldi16 r4, 0x6443
     push16 r4
     pop16 r3
     xor r2, r0
@@ -3818,16 +3818,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r0; pattern 1; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r2
-    ldi16 c1, 0xffff
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r0
-    ldi16 c1, 0x659d
+    ldi16 r5, 0x659d
     push16 r5
     pop16 r4
     xor r2, r0
@@ -3877,16 +3877,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r0; pattern 2; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r2
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r0
-    ldi16 c0, 0x66f7
+    ldi16 r4, 0x66f7
     push16 r4
     pop16 r5
     xor r2, r0
@@ -3936,16 +3936,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r0; pattern 3; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r2
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r0
-    ldi16 c0, 0x6851
+    ldi16 r4, 0x6851
     push16 r4
     pop16 r6
     xor r2, r0
@@ -3995,16 +3995,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r1; pattern 0; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r2
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r1
-    ldi16 c0, 0x62a4
+    ldi16 r4, 0x62a4
     push16 r4
     pop16 r0
     xor r2, r1
@@ -4054,16 +4054,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r1; pattern 1; guard r3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r2
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x6600
+    ldi16 r4, 0x6600
     push16 r4
     pop16 r3
     xor r2, r1
@@ -4113,16 +4113,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r1; pattern 2; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r2
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r1
-    ldi16 c0, 0x6659
+    ldi16 r4, 0x6659
     push16 r4
     pop16 r3
     xor r2, r1
@@ -4172,16 +4172,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r1; pattern 3; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r1
-    ldi16 c0, 0x66b2
+    ldi16 r4, 0x66b2
     push16 r4
     pop16 r3
     xor r2, r1
@@ -4231,13 +4231,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r2; pattern 0; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r2
-    ldi16 c0, 0x690d
+    ldi16 r4, 0x690d
     push16 r4
     pop16 r5
     xor r2, r2
@@ -4287,13 +4287,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r2; pattern 1; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r2
-    ldi16 c0, 0x6a67
+    ldi16 r4, 0x6a67
     push16 r4
     pop16 r6
     xor r2, r2
@@ -4343,13 +4343,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r2; pattern 2; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r2
-    ldi16 c0, 0x6bc1
+    ldi16 r4, 0x6bc1
     push16 r4
     pop16 r7
     xor r2, r2
@@ -4399,13 +4399,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r2; pattern 3; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r2
-    ldi16 c0, 0x6513
+    ldi16 r4, 0x6513
     push16 r4
     pop16 r0
     xor r2, r2
@@ -4455,16 +4455,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r3; pattern 0; guard r4.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x1234
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x1234
     push16 r5
     pop16 r2
-    ldi16 c1, 0x00ff
+    ldi16 r5, 0x00ff
     push16 r5
     pop16 r3
-    ldi16 c1, 0x6970
+    ldi16 r5, 0x6970
     push16 r5
     pop16 r4
     xor r2, r3
@@ -4514,16 +4514,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r3; pattern 1; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0xdead
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0xdead
     push16 r5
     pop16 r2
-    ldi16 c1, 0xbeef
+    ldi16 r5, 0xbeef
     push16 r5
     pop16 r3
-    ldi16 c1, 0x69c9
+    ldi16 r5, 0x69c9
     push16 r5
     pop16 r4
     xor r2, r3
@@ -4573,16 +4573,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r3; pattern 2; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xffff
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r2
-    ldi16 c1, 0x0000
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r3
-    ldi16 c1, 0x6a22
+    ldi16 r5, 0x6a22
     push16 r5
     pop16 r4
     xor r2, r3
@@ -4632,16 +4632,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r3; pattern 3; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r2
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r3
-    ldi16 c0, 0x6b7c
+    ldi16 r4, 0x6b7c
     push16 r4
     pop16 r5
     xor r2, r3
@@ -4691,16 +4691,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r4; pattern 0; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r2
-    ldi16 c1, 0x5aa5
+    ldi16 r5, 0x5aa5
     push16 r5
     pop16 r4
-    ldi16 c1, 0x6dd7
+    ldi16 r5, 0x6dd7
     push16 r5
     pop16 r7
     xor r2, r4
@@ -4750,16 +4750,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r4; pattern 1; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xf00f
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xf00f
     push16 r5
     pop16 r2
-    ldi16 c1, 0xcccc
+    ldi16 r5, 0xcccc
     push16 r5
     pop16 r4
-    ldi16 c1, 0x6729
+    ldi16 r5, 0x6729
     push16 r5
     pop16 r0
     xor r2, r4
@@ -4809,16 +4809,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r4; pattern 2; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0x8001
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0x8001
     push16 r5
     pop16 r2
-    ldi16 c1, 0x7ffe
+    ldi16 r5, 0x7ffe
     push16 r5
     pop16 r4
-    ldi16 c1, 0x6883
+    ldi16 r5, 0x6883
     push16 r5
     pop16 r1
     xor r2, r4
@@ -4868,16 +4868,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r4; pattern 3; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r2
-    ldi16 c1, 0xffff
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r4
-    ldi16 c1, 0x6ade
+    ldi16 r5, 0x6ade
     push16 r5
     pop16 r3
     xor r2, r4
@@ -4927,16 +4927,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r5; pattern 0; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0xdead
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0xdead
     push16 r6
     pop16 r2
-    ldi16 c2, 0xbeef
+    ldi16 r6, 0xbeef
     push16 r6
     pop16 r5
-    ldi16 c2, 0x6c38
+    ldi16 r6, 0x6c38
     push16 r6
     pop16 r4
     xor r2, r5
@@ -4986,16 +4986,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r5; pattern 1; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r5
-    ldi16 c0, 0x6e93
+    ldi16 r4, 0x6e93
     push16 r4
     pop16 r6
     xor r2, r5
@@ -5045,16 +5045,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r5; pattern 2; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r2
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r5
-    ldi16 c0, 0x6eec
+    ldi16 r4, 0x6eec
     push16 r4
     pop16 r6
     xor r2, r5
@@ -5104,16 +5104,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r5; pattern 3; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r2
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r5
-    ldi16 c0, 0x7046
+    ldi16 r4, 0x7046
     push16 r4
     pop16 r7
     xor r2, r5
@@ -5163,16 +5163,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r6; pattern 0; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r2
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r6
-    ldi16 c0, 0x6a99
+    ldi16 r4, 0x6a99
     push16 r4
     pop16 r1
     xor r2, r6
@@ -5222,16 +5222,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r6; pattern 1; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r2
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r6
-    ldi16 c0, 0x6cf4
+    ldi16 r4, 0x6cf4
     push16 r4
     pop16 r3
     xor r2, r6
@@ -5281,16 +5281,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r6; pattern 2; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r2
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r6
-    ldi16 c0, 0x6d4d
+    ldi16 r4, 0x6d4d
     push16 r4
     pop16 r3
     xor r2, r6
@@ -5340,16 +5340,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r6; pattern 3; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r2
-    ldi16 c1, 0x5aa5
+    ldi16 r5, 0x5aa5
     push16 r5
     pop16 r6
-    ldi16 c1, 0x6ea7
+    ldi16 r5, 0x6ea7
     push16 r5
     pop16 r4
     xor r2, r6
@@ -5399,16 +5399,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r7; pattern 0; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r7
-    ldi16 c0, 0x7102
+    ldi16 r4, 0x7102
     push16 r4
     pop16 r6
     xor r2, r7
@@ -5458,16 +5458,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r7; pattern 1; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r2
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r7
-    ldi16 c0, 0x6b55
+    ldi16 r4, 0x6b55
     push16 r4
     pop16 r0
     xor r2, r7
@@ -5517,16 +5517,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r7; pattern 2; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r2
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r7
-    ldi16 c0, 0x6bae
+    ldi16 r4, 0x6bae
     push16 r4
     pop16 r0
     xor r2, r7
@@ -5576,16 +5576,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r2,r7; pattern 3; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r2
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r7
-    ldi16 c0, 0x6d08
+    ldi16 r4, 0x6d08
     push16 r4
     pop16 r1
     xor r2, r7
@@ -5635,16 +5635,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r0; pattern 0; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xffff
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r3
-    ldi16 c1, 0x0000
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r0
-    ldi16 c1, 0x7064
+    ldi16 r5, 0x7064
     push16 r5
     pop16 r4
     xor r3, r0
@@ -5694,16 +5694,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r0; pattern 1; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r3
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r0
-    ldi16 c0, 0x71be
+    ldi16 r4, 0x71be
     push16 r4
     pop16 r5
     xor r3, r0
@@ -5753,16 +5753,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r0; pattern 2; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r3
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x7318
+    ldi16 r4, 0x7318
     push16 r4
     pop16 r6
     xor r3, r0
@@ -5812,16 +5812,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r0; pattern 3; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r3
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r0
-    ldi16 c0, 0x7472
+    ldi16 r4, 0x7472
     push16 r4
     pop16 r7
     xor r3, r0
@@ -5871,16 +5871,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r1; pattern 0; guard r2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r3
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r1
-    ldi16 c0, 0x6fc6
+    ldi16 r4, 0x6fc6
     push16 r4
     pop16 r2
     xor r3, r1
@@ -5930,16 +5930,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r1; pattern 1; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r3
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x701f
+    ldi16 r4, 0x701f
     push16 r4
     pop16 r2
     xor r3, r1
@@ -5989,16 +5989,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r1; pattern 2; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r3
-    ldi16 c1, 0x5aa5
+    ldi16 r5, 0x5aa5
     push16 r5
     pop16 r1
-    ldi16 c1, 0x727a
+    ldi16 r5, 0x727a
     push16 r5
     pop16 r4
     xor r3, r1
@@ -6048,16 +6048,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r1; pattern 3; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xf00f
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xf00f
     push16 r5
     pop16 r3
-    ldi16 c1, 0xcccc
+    ldi16 r5, 0xcccc
     push16 r5
     pop16 r1
-    ldi16 c1, 0x72d3
+    ldi16 r5, 0x72d3
     push16 r5
     pop16 r4
     xor r3, r1
@@ -6107,16 +6107,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r2; pattern 0; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r3
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r2
-    ldi16 c0, 0x752e
+    ldi16 r4, 0x752e
     push16 r4
     pop16 r6
     xor r3, r2
@@ -6166,16 +6166,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r2; pattern 1; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r3
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x7688
+    ldi16 r4, 0x7688
     push16 r4
     pop16 r7
     xor r3, r2
@@ -6225,16 +6225,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r2; pattern 2; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r3
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r2
-    ldi16 c0, 0x6fda
+    ldi16 r4, 0x6fda
     push16 r4
     pop16 r0
     xor r3, r2
@@ -6284,16 +6284,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r2; pattern 3; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r3
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r2
-    ldi16 c0, 0x7134
+    ldi16 r4, 0x7134
     push16 r4
     pop16 r1
     xor r3, r2
@@ -6343,13 +6343,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r3; pattern 0; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r3
-    ldi16 c1, 0x7490
+    ldi16 r5, 0x7490
     push16 r5
     pop16 r4
     xor r3, r3
@@ -6399,13 +6399,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r3; pattern 1; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r3
-    ldi16 c1, 0x74e9
+    ldi16 r5, 0x74e9
     push16 r5
     pop16 r4
     xor r3, r3
@@ -6455,13 +6455,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r3; pattern 2; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r3
-    ldi16 c0, 0x7643
+    ldi16 r4, 0x7643
     push16 r4
     pop16 r5
     xor r3, r3
@@ -6511,13 +6511,13 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r3; pattern 3; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r3
-    ldi16 c0, 0x779d
+    ldi16 r4, 0x779d
     push16 r4
     pop16 r6
     xor r3, r3
@@ -6567,16 +6567,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r4; pattern 0; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x1234
     push16 r5
     pop16 r3
-    ldi16 c1, 0x00ff
+    ldi16 r5, 0x00ff
     push16 r5
     pop16 r4
-    ldi16 c1, 0x71f0
+    ldi16 r5, 0x71f0
     push16 r5
     pop16 r0
     xor r3, r4
@@ -6626,16 +6626,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r4; pattern 1; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0xdead
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0xdead
     push16 r5
     pop16 r3
-    ldi16 c1, 0xbeef
+    ldi16 r5, 0xbeef
     push16 r5
     pop16 r4
-    ldi16 c1, 0x734a
+    ldi16 r5, 0x734a
     push16 r5
     pop16 r1
     xor r3, r4
@@ -6685,16 +6685,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r4; pattern 2; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0xffff
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r3
-    ldi16 c1, 0x0000
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r4
-    ldi16 c1, 0x74a4
+    ldi16 r5, 0x74a4
     push16 r5
     pop16 r2
     xor r3, r4
@@ -6744,16 +6744,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r4; pattern 3; guard r5.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c2, 0x0ff0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r6, 0x0ff0
     push16 r6
     pop16 r3
-    ldi16 c2, 0x3333
+    ldi16 r6, 0x3333
     push16 r6
     pop16 r4
-    ldi16 c2, 0x7800
+    ldi16 r6, 0x7800
     push16 r6
     pop16 r5
     xor r3, r4
@@ -6803,16 +6803,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r5; pattern 0; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r3
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r5
-    ldi16 c0, 0x795a
+    ldi16 r4, 0x795a
     push16 r4
     pop16 r6
     xor r3, r5
@@ -6862,16 +6862,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r5; pattern 1; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r3
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r5
-    ldi16 c0, 0x79b3
+    ldi16 r4, 0x79b3
     push16 r4
     pop16 r6
     xor r3, r5
@@ -6921,16 +6921,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r5; pattern 2; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r3
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r5
-    ldi16 c0, 0x7b0d
+    ldi16 r4, 0x7b0d
     push16 r4
     pop16 r7
     xor r3, r5
@@ -6980,16 +6980,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r5; pattern 3; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r3
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r5
-    ldi16 c0, 0x745f
+    ldi16 r4, 0x745f
     push16 r4
     pop16 r0
     xor r3, r5
@@ -7039,16 +7039,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r6; pattern 0; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r3
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r6
-    ldi16 c0, 0x76ba
+    ldi16 r4, 0x76ba
     push16 r4
     pop16 r2
     xor r3, r6
@@ -7098,16 +7098,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r6; pattern 1; guard r4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r3
-    ldi16 c1, 0x0000
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r6
-    ldi16 c1, 0x7915
+    ldi16 r5, 0x7915
     push16 r5
     pop16 r4
     xor r3, r6
@@ -7157,16 +7157,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r6; pattern 2; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0ff0
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0ff0
     push16 r5
     pop16 r3
-    ldi16 c1, 0x3333
+    ldi16 r5, 0x3333
     push16 r5
     pop16 r6
-    ldi16 c1, 0x796e
+    ldi16 r5, 0x796e
     push16 r5
     pop16 r4
     xor r3, r6
@@ -7216,16 +7216,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r6; pattern 3; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r3
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r6
-    ldi16 c0, 0x7ac8
+    ldi16 r4, 0x7ac8
     push16 r4
     pop16 r5
     xor r3, r6
@@ -7275,16 +7275,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r7; pattern 0; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r3
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r7
-    ldi16 c0, 0x761c
+    ldi16 r4, 0x761c
     push16 r4
     pop16 r0
     xor r3, r7
@@ -7334,16 +7334,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r7; pattern 1; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r3
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r7
-    ldi16 c0, 0x7675
+    ldi16 r4, 0x7675
     push16 r4
     pop16 r0
     xor r3, r7
@@ -7393,16 +7393,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r7; pattern 2; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r3
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r7
-    ldi16 c0, 0x77cf
+    ldi16 r4, 0x77cf
     push16 r4
     pop16 r1
     xor r3, r7
@@ -7452,16 +7452,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r3,r7; pattern 3; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r3
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r7
-    ldi16 c0, 0x7929
+    ldi16 r4, 0x7929
     push16 r4
     pop16 r2
     xor r3, r7
@@ -7511,16 +7511,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r0; pattern 0; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c2, 0xf00f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r6, 0xf00f
     push16 r6
     pop16 r4
-    ldi16 c2, 0xcccc
+    ldi16 r6, 0xcccc
     push16 r6
     pop16 r0
-    ldi16 c2, 0x7c85
+    ldi16 r6, 0x7c85
     push16 r6
     pop16 r5
     xor r4, r0
@@ -7570,16 +7570,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r0; pattern 1; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0x8001
     push16 r5
     pop16 r4
-    ldi16 c1, 0x7ffe
+    ldi16 r5, 0x7ffe
     push16 r5
     pop16 r0
-    ldi16 c1, 0x7ddf
+    ldi16 r5, 0x7ddf
     push16 r5
     pop16 r6
     xor r4, r0
@@ -7629,16 +7629,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r0; pattern 2; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r4
-    ldi16 c1, 0xffff
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r0
-    ldi16 c1, 0x7f39
+    ldi16 r5, 0x7f39
     push16 r5
     pop16 r7
     xor r4, r0
@@ -7688,16 +7688,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r0; pattern 3; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r4
-    ldi16 c1, 0x5aa5
+    ldi16 r5, 0x5aa5
     push16 r5
     pop16 r0
-    ldi16 c1, 0x798c
+    ldi16 r5, 0x798c
     push16 r5
     pop16 r1
     xor r4, r0
@@ -7747,16 +7747,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r1; pattern 0; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0xffff
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r4
-    ldi16 c1, 0x0000
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r1
-    ldi16 c1, 0x7ae6
+    ldi16 r5, 0x7ae6
     push16 r5
     pop16 r2
     xor r4, r1
@@ -7806,16 +7806,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r1; pattern 1; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x0ff0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x0ff0
     push16 r5
     pop16 r4
-    ldi16 c1, 0x3333
+    ldi16 r5, 0x3333
     push16 r5
     pop16 r1
-    ldi16 c1, 0x7c40
+    ldi16 r5, 0x7c40
     push16 r5
     pop16 r3
     xor r4, r1
@@ -7865,16 +7865,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r1; pattern 2; guard r5.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x1234
     push16 r6
     pop16 r4
-    ldi16 c2, 0x00ff
+    ldi16 r6, 0x00ff
     push16 r6
     pop16 r1
-    ldi16 c2, 0x7e9b
+    ldi16 r6, 0x7e9b
     push16 r6
     pop16 r5
     xor r4, r1
@@ -7924,16 +7924,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r1; pattern 3; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c2, 0xdead
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r6, 0xdead
     push16 r6
     pop16 r4
-    ldi16 c2, 0xbeef
+    ldi16 r6, 0xbeef
     push16 r6
     pop16 r1
-    ldi16 c2, 0x7ef4
+    ldi16 r6, 0x7ef4
     push16 r6
     pop16 r5
     xor r4, r1
@@ -7983,16 +7983,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r2; pattern 0; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0x8001
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0x8001
     push16 r5
     pop16 r4
-    ldi16 c1, 0x7ffe
+    ldi16 r5, 0x7ffe
     push16 r5
     pop16 r2
-    ldi16 c1, 0x814f
+    ldi16 r5, 0x814f
     push16 r5
     pop16 r7
     xor r4, r2
@@ -8042,16 +8042,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r2; pattern 1; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r4
-    ldi16 c1, 0xffff
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r2
-    ldi16 c1, 0x7aa1
+    ldi16 r5, 0x7aa1
     push16 r5
     pop16 r0
     xor r4, r2
@@ -8101,16 +8101,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r2; pattern 2; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r4
-    ldi16 c1, 0x5aa5
+    ldi16 r5, 0x5aa5
     push16 r5
     pop16 r2
-    ldi16 c1, 0x7bfb
+    ldi16 r5, 0x7bfb
     push16 r5
     pop16 r1
     xor r4, r2
@@ -8160,16 +8160,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r2; pattern 3; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0xf00f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0xf00f
     push16 r5
     pop16 r4
-    ldi16 c1, 0xcccc
+    ldi16 r5, 0xcccc
     push16 r5
     pop16 r2
-    ldi16 c1, 0x7e56
+    ldi16 r5, 0x7e56
     push16 r5
     pop16 r3
     xor r4, r2
@@ -8219,16 +8219,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r3; pattern 0; guard r5.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x0ff0
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x0ff0
     push16 r6
     pop16 r4
-    ldi16 c2, 0x3333
+    ldi16 r6, 0x3333
     push16 r6
     pop16 r3
-    ldi16 c2, 0x80b1
+    ldi16 r6, 0x80b1
     push16 r6
     pop16 r5
     xor r4, r3
@@ -8278,16 +8278,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r3; pattern 1; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c2, 0x1234
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r6, 0x1234
     push16 r6
     pop16 r4
-    ldi16 c2, 0x00ff
+    ldi16 r6, 0x00ff
     push16 r6
     pop16 r3
-    ldi16 c2, 0x810a
+    ldi16 r6, 0x810a
     push16 r6
     pop16 r5
     xor r4, r3
@@ -8337,16 +8337,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r3; pattern 2; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c1, 0xdead
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r5, 0xdead
     push16 r5
     pop16 r4
-    ldi16 c1, 0xbeef
+    ldi16 r5, 0xbeef
     push16 r5
     pop16 r3
-    ldi16 c1, 0x8264
+    ldi16 r5, 0x8264
     push16 r5
     pop16 r6
     xor r4, r3
@@ -8396,16 +8396,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r4,r3; pattern 3; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c1, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r5, 0xffff
     push16 r5
     pop16 r4
-    ldi16 c1, 0x0000
+    ldi16 r5, 0x0000
     push16 r5
     pop16 r3
-    ldi16 c1, 0x83be
+    ldi16 r5, 0x83be
     push16 r5
     pop16 r7
     xor r4, r3
@@ -8455,16 +8455,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r0; pattern 0; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r5
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r0
-    ldi16 c0, 0x8316
+    ldi16 r4, 0x8316
     push16 r4
     pop16 r6
     xor r5, r0
@@ -8514,16 +8514,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r0; pattern 1; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r5
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r0
-    ldi16 c0, 0x8470
+    ldi16 r4, 0x8470
     push16 r4
     pop16 r7
     xor r5, r0
@@ -8573,16 +8573,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r0; pattern 2; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r5
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r0
-    ldi16 c0, 0x7ec3
+    ldi16 r4, 0x7ec3
     push16 r4
     pop16 r1
     xor r5, r0
@@ -8632,16 +8632,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r0; pattern 3; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r5
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x7f1c
+    ldi16 r4, 0x7f1c
     push16 r4
     pop16 r1
     xor r5, r0
@@ -8691,16 +8691,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r1; pattern 0; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r5
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8177
+    ldi16 r4, 0x8177
     push16 r4
     pop16 r3
     xor r5, r1
@@ -8750,16 +8750,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r1; pattern 1; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c2, 0x8001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r6, 0x8001
     push16 r6
     pop16 r5
-    ldi16 c2, 0x7ffe
+    ldi16 r6, 0x7ffe
     push16 r6
     pop16 r1
-    ldi16 c2, 0x82d1
+    ldi16 r6, 0x82d1
     push16 r6
     pop16 r4
     xor r5, r1
@@ -8809,16 +8809,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r1; pattern 2; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r5
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x852c
+    ldi16 r4, 0x852c
     push16 r4
     pop16 r6
     xor r5, r1
@@ -8868,16 +8868,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r1; pattern 3; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r5
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8585
+    ldi16 r4, 0x8585
     push16 r4
     pop16 r6
     xor r5, r1
@@ -8927,16 +8927,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r2; pattern 0; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r5
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r2
-    ldi16 c0, 0x7fd8
+    ldi16 r4, 0x7fd8
     push16 r4
     pop16 r0
     xor r5, r2
@@ -8986,16 +8986,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r2; pattern 1; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r5
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r2
-    ldi16 c0, 0x8132
+    ldi16 r4, 0x8132
     push16 r4
     pop16 r1
     xor r5, r2
@@ -9045,16 +9045,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r2; pattern 2; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r5
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x838d
+    ldi16 r4, 0x838d
     push16 r4
     pop16 r3
     xor r5, r2
@@ -9104,16 +9104,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r2; pattern 3; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r5
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r2
-    ldi16 c0, 0x83e6
+    ldi16 r4, 0x83e6
     push16 r4
     pop16 r3
     xor r5, r2
@@ -9163,16 +9163,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r3; pattern 0; guard r6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r5
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8742
+    ldi16 r4, 0x8742
     push16 r4
     pop16 r6
     xor r5, r3
@@ -9222,16 +9222,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r3; pattern 1; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r5
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r3
-    ldi16 c0, 0x879b
+    ldi16 r4, 0x879b
     push16 r4
     pop16 r6
     xor r5, r3
@@ -9281,16 +9281,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r3; pattern 2; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r5
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r3
-    ldi16 c0, 0x88f5
+    ldi16 r4, 0x88f5
     push16 r4
     pop16 r7
     xor r5, r3
@@ -9340,16 +9340,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r5,r3; pattern 3; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r5
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8247
+    ldi16 r4, 0x8247
     push16 r4
     pop16 r0
     xor r5, r3
@@ -9399,16 +9399,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r0; pattern 0; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r6
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r0
-    ldi16 c0, 0x89a7
+    ldi16 r4, 0x89a7
     push16 r4
     pop16 r7
     xor r6, r0
@@ -9458,16 +9458,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r0; pattern 1; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r6
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r0
-    ldi16 c0, 0x83fa
+    ldi16 r4, 0x83fa
     push16 r4
     pop16 r1
     xor r6, r0
@@ -9517,16 +9517,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r0; pattern 2; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r6
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r0
-    ldi16 c0, 0x8453
+    ldi16 r4, 0x8453
     push16 r4
     pop16 r1
     xor r6, r0
@@ -9576,16 +9576,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r0; pattern 3; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r6
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x85ad
+    ldi16 r4, 0x85ad
     push16 r4
     pop16 r2
     xor r6, r0
@@ -9635,16 +9635,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r1; pattern 0; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xdead
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xdead
     push16 r5
     pop16 r6
-    ldi16 c1, 0xbeef
+    ldi16 r5, 0xbeef
     push16 r5
     pop16 r1
-    ldi16 c1, 0x8808
+    ldi16 r5, 0x8808
     push16 r5
     pop16 r4
     xor r6, r1
@@ -9694,16 +9694,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r1; pattern 1; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r6
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8962
+    ldi16 r4, 0x8962
     push16 r4
     pop16 r5
     xor r6, r1
@@ -9753,16 +9753,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r1; pattern 2; guard r7.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r6
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8bbd
+    ldi16 r4, 0x8bbd
     push16 r4
     pop16 r7
     xor r6, r1
@@ -9812,16 +9812,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r1; pattern 3; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r6
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8c16
+    ldi16 r4, 0x8c16
     push16 r4
     pop16 r7
     xor r6, r1
@@ -9871,16 +9871,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r2; pattern 0; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r6
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r2
-    ldi16 c0, 0x8669
+    ldi16 r4, 0x8669
     push16 r4
     pop16 r1
     xor r6, r2
@@ -9930,16 +9930,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r2; pattern 1; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r6
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r2
-    ldi16 c0, 0x88c4
+    ldi16 r4, 0x88c4
     push16 r4
     pop16 r3
     xor r6, r2
@@ -9989,16 +9989,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r2; pattern 2; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r6
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x891d
+    ldi16 r4, 0x891d
     push16 r4
     pop16 r3
     xor r6, r2
@@ -10048,16 +10048,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r2; pattern 3; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0xa55a
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0xa55a
     push16 r5
     pop16 r6
-    ldi16 c1, 0x5aa5
+    ldi16 r5, 0x5aa5
     push16 r5
     pop16 r2
-    ldi16 c1, 0x8a77
+    ldi16 r5, 0x8a77
     push16 r5
     pop16 r4
     xor r6, r2
@@ -10107,16 +10107,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r3; pattern 0; guard r7.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r6
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8dd3
+    ldi16 r4, 0x8dd3
     push16 r4
     pop16 r7
     xor r6, r3
@@ -10166,16 +10166,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r3; pattern 1; guard r7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r6
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8e2c
+    ldi16 r4, 0x8e2c
     push16 r4
     pop16 r7
     xor r6, r3
@@ -10225,16 +10225,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r3; pattern 2; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r6
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r3
-    ldi16 c0, 0x877e
+    ldi16 r4, 0x877e
     push16 r4
     pop16 r0
     xor r6, r3
@@ -10284,16 +10284,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r6,r3; pattern 3; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r6
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r3
-    ldi16 c0, 0x88d8
+    ldi16 r4, 0x88d8
     push16 r4
     pop16 r1
     xor r6, r3
@@ -10343,16 +10343,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r0; pattern 0; guard r1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r7
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r0
-    ldi16 c0, 0x8931
+    ldi16 r4, 0x8931
     push16 r4
     pop16 r1
     xor r7, r0
@@ -10402,16 +10402,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r0; pattern 1; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r7
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r0
-    ldi16 c0, 0x898a
+    ldi16 r4, 0x898a
     push16 r4
     pop16 r1
     xor r7, r0
@@ -10461,16 +10461,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r0; pattern 2; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r7
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r0
-    ldi16 c0, 0x8ae4
+    ldi16 r4, 0x8ae4
     push16 r4
     pop16 r2
     xor r7, r0
@@ -10520,16 +10520,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r0; pattern 3; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0ff0
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0ff0
     push16 r4
     pop16 r7
-    ldi16 c0, 0x3333
+    ldi16 r4, 0x3333
     push16 r4
     pop16 r0
-    ldi16 c0, 0x8c3e
+    ldi16 r4, 0x8c3e
     push16 r4
     pop16 r3
     xor r7, r0
@@ -10579,16 +10579,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r1; pattern 0; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r7
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8e99
+    ldi16 r4, 0x8e99
     push16 r4
     pop16 r5
     xor r7, r1
@@ -10638,16 +10638,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r1; pattern 1; guard r6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r7
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8ff3
+    ldi16 r4, 0x8ff3
     push16 r4
     pop16 r6
     xor r7, r1
@@ -10697,16 +10697,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r1; pattern 2; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r7
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8a46
+    ldi16 r4, 0x8a46
     push16 r4
     pop16 r0
     xor r7, r1
@@ -10756,16 +10756,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r1; pattern 3; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r7
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r1
-    ldi16 c0, 0x8a9f
+    ldi16 r4, 0x8a9f
     push16 r4
     pop16 r0
     xor r7, r1
@@ -10815,16 +10815,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r2; pattern 0; guard r3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xdead
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xdead
     push16 r4
     pop16 r7
-    ldi16 c0, 0xbeef
+    ldi16 r4, 0xbeef
     push16 r4
     pop16 r2
-    ldi16 c0, 0x8dfb
+    ldi16 r4, 0x8dfb
     push16 r4
     pop16 r3
     xor r7, r2
@@ -10874,16 +10874,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r2; pattern 1; guard r3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xffff
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r7
-    ldi16 c0, 0x0000
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r2
-    ldi16 c0, 0x8e54
+    ldi16 r4, 0x8e54
     push16 r4
     pop16 r3
     xor r7, r2
@@ -10933,16 +10933,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r2; pattern 2; guard r4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c1, 0x0ff0
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r5, 0x0ff0
     push16 r5
     pop16 r7
-    ldi16 c1, 0x3333
+    ldi16 r5, 0x3333
     push16 r5
     pop16 r2
-    ldi16 c1, 0x8fae
+    ldi16 r5, 0x8fae
     push16 r5
     pop16 r4
     xor r7, r2
@@ -10992,16 +10992,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r2; pattern 3; guard r5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1234
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1234
     push16 r4
     pop16 r7
-    ldi16 c0, 0x00ff
+    ldi16 r4, 0x00ff
     push16 r4
     pop16 r2
-    ldi16 c0, 0x9108
+    ldi16 r4, 0x9108
     push16 r4
     pop16 r5
     xor r7, r2
@@ -11051,16 +11051,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r3; pattern 0; guard r0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xf00f
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xf00f
     push16 r4
     pop16 r7
-    ldi16 c0, 0xcccc
+    ldi16 r4, 0xcccc
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8c5c
+    ldi16 r4, 0x8c5c
     push16 r4
     pop16 r0
     xor r7, r3
@@ -11110,16 +11110,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r3; pattern 1; guard r0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8001
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8001
     push16 r4
     pop16 r7
-    ldi16 c0, 0x7ffe
+    ldi16 r4, 0x7ffe
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8cb5
+    ldi16 r4, 0x8cb5
     push16 r4
     pop16 r0
     xor r7, r3
@@ -11169,16 +11169,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r3; pattern 2; guard r1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
     push16 r4
     pop16 r7
-    ldi16 c0, 0xffff
+    ldi16 r4, 0xffff
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8e0f
+    ldi16 r4, 0x8e0f
     push16 r4
     pop16 r1
     xor r7, r3
@@ -11228,16 +11228,16 @@ _start:
     bit_emit_char '\n'
 
     ; F9 pair r7,r3; pattern 3; guard r2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa55a
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa55a
     push16 r4
     pop16 r7
-    ldi16 c0, 0x5aa5
+    ldi16 r4, 0x5aa5
     push16 r4
     pop16 r3
-    ldi16 c0, 0x8f69
+    ldi16 r4, 0x8f69
     push16 r4
     pop16 r2
     xor r7, r3

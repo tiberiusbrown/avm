@@ -12,66 +12,66 @@ _start:
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c0, c1
+    sub c0, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c0, c2
+    sub c0, r6
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c0, c3
+    sub c0, r7
     call debug_print_upper_regs
 
-    ; Destination c1, every source.
+    ; Destination r5, every source.
     reset_upper_regs
-    sub c1, c0
-    call debug_print_upper_regs
-
-    reset_upper_regs
-    sub c1, c1
+    sub r5, c0
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c1, c2
+    sub r5, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c1, c3
-    call debug_print_upper_regs
-
-    ; Destination c2, every source.
-    reset_upper_regs
-    sub c2, c0
+    sub r5, r6
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c2, c1
+    sub r5, r7
+    call debug_print_upper_regs
+
+    ; Destination r6, every source.
+    reset_upper_regs
+    sub r6, c0
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c2, c2
+    sub r6, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c2, c3
-    call debug_print_upper_regs
-
-    ; Destination c3, every source.
-    reset_upper_regs
-    sub c3, c0
+    sub r6, r6
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c3, c1
+    sub r6, r7
+    call debug_print_upper_regs
+
+    ; Destination r7, every source.
+    reset_upper_regs
+    sub r7, c0
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c3, c2
+    sub r7, r5
     call debug_print_upper_regs
 
     reset_upper_regs
-    sub c3, c3
+    sub r7, r6
+    call debug_print_upper_regs
+
+    reset_upper_regs
+    sub r7, r7
     call debug_print_upper_regs
 
     sys debug_break

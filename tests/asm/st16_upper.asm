@@ -23,9 +23,9 @@ st16_test_data:
 
 .macro reset_store_regs
     ldi16 c0, 0x1122
-    ldi16 c1, 0x3344
-    ldi16 c2, 0x5566
-    ldi16 c3, 0x7788
+    ldi16 r5, 0x3344
+    ldi16 r6, 0x5566
+    ldi16 r7, 0x7788
 .endm
 
 .globl _start
@@ -44,7 +44,7 @@ _start:
 
     reset_store_regs
     ldi16 c0, 0x0103
-    st16 [c0], c1
+    st16 [c0], r5
     call debug_print_upper_regs
     ld16 r0, [c0]
     call debug_print_r0_line
@@ -54,7 +54,7 @@ _start:
 
     reset_store_regs
     ldi16 c0, 0x0106
-    st16 [c0], c2
+    st16 [c0], r6
     call debug_print_upper_regs
     ld16 r0, [c0]
     call debug_print_r0_line
@@ -64,7 +64,7 @@ _start:
 
     reset_store_regs
     ldi16 c0, 0x0109
-    st16 [c0], c3
+    st16 [c0], r7
     call debug_print_upper_regs
     ld16 r0, [c0]
     call debug_print_r0_line
@@ -72,127 +72,127 @@ _start:
     ld8u r0, [c0]
     call debug_print_r0_line
 
-    ; Address c1, every source register.
+    ; Address r5, every source register.
     reset_store_regs
-    ldi16 c1, 0x010c
-    st16 [c1], c0
+    ldi16 r5, 0x010c
+    st16 [r5], c0
     call debug_print_upper_regs
-    ld16 r0, [c1]
+    ld16 r0, [r5]
     call debug_print_r0_line
-    addi.s8 c1, 2
-    ld8u r0, [c1]
+    addi.s8 r5, 2
+    ld8u r0, [r5]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c1, 0x010f
-    st16 [c1], c1
+    ldi16 r5, 0x010f
+    st16 [r5], r5
     call debug_print_upper_regs
-    ld16 r0, [c1]
+    ld16 r0, [r5]
     call debug_print_r0_line
-    addi.s8 c1, 2
-    ld8u r0, [c1]
+    addi.s8 r5, 2
+    ld8u r0, [r5]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c1, 0x0112
-    st16 [c1], c2
+    ldi16 r5, 0x0112
+    st16 [r5], r6
     call debug_print_upper_regs
-    ld16 r0, [c1]
+    ld16 r0, [r5]
     call debug_print_r0_line
-    addi.s8 c1, 2
-    ld8u r0, [c1]
+    addi.s8 r5, 2
+    ld8u r0, [r5]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c1, 0x0115
-    st16 [c1], c3
+    ldi16 r5, 0x0115
+    st16 [r5], r7
     call debug_print_upper_regs
-    ld16 r0, [c1]
+    ld16 r0, [r5]
     call debug_print_r0_line
-    addi.s8 c1, 2
-    ld8u r0, [c1]
+    addi.s8 r5, 2
+    ld8u r0, [r5]
     call debug_print_r0_line
 
-    ; Address c2, every source register.
+    ; Address r6, every source register.
     reset_store_regs
-    ldi16 c2, 0x0118
-    st16 [c2], c0
+    ldi16 r6, 0x0118
+    st16 [r6], c0
     call debug_print_upper_regs
-    ld16 r0, [c2]
+    ld16 r0, [r6]
     call debug_print_r0_line
-    addi.s8 c2, 2
-    ld8u r0, [c2]
-    call debug_print_r0_line
-
-    reset_store_regs
-    ldi16 c2, 0x011b
-    st16 [c2], c1
-    call debug_print_upper_regs
-    ld16 r0, [c2]
-    call debug_print_r0_line
-    addi.s8 c2, 2
-    ld8u r0, [c2]
+    addi.s8 r6, 2
+    ld8u r0, [r6]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c2, 0x011e
-    st16 [c2], c2
+    ldi16 r6, 0x011b
+    st16 [r6], r5
     call debug_print_upper_regs
-    ld16 r0, [c2]
+    ld16 r0, [r6]
     call debug_print_r0_line
-    addi.s8 c2, 2
-    ld8u r0, [c2]
+    addi.s8 r6, 2
+    ld8u r0, [r6]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c2, 0x0121
-    st16 [c2], c3
+    ldi16 r6, 0x011e
+    st16 [r6], r6
     call debug_print_upper_regs
-    ld16 r0, [c2]
+    ld16 r0, [r6]
     call debug_print_r0_line
-    addi.s8 c2, 2
-    ld8u r0, [c2]
-    call debug_print_r0_line
-
-    ; Address c3, every source register.
-    reset_store_regs
-    ldi16 c3, 0x0124
-    st16 [c3], c0
-    call debug_print_upper_regs
-    ld16 r0, [c3]
-    call debug_print_r0_line
-    addi.s8 c3, 2
-    ld8u r0, [c3]
+    addi.s8 r6, 2
+    ld8u r0, [r6]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c3, 0x0127
-    st16 [c3], c1
+    ldi16 r6, 0x0121
+    st16 [r6], r7
     call debug_print_upper_regs
-    ld16 r0, [c3]
+    ld16 r0, [r6]
     call debug_print_r0_line
-    addi.s8 c3, 2
-    ld8u r0, [c3]
+    addi.s8 r6, 2
+    ld8u r0, [r6]
+    call debug_print_r0_line
+
+    ; Address r7, every source register.
+    reset_store_regs
+    ldi16 r7, 0x0124
+    st16 [r7], c0
+    call debug_print_upper_regs
+    ld16 r0, [r7]
+    call debug_print_r0_line
+    addi.s8 r7, 2
+    ld8u r0, [r7]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c3, 0x012a
-    st16 [c3], c2
+    ldi16 r7, 0x0127
+    st16 [r7], r5
     call debug_print_upper_regs
-    ld16 r0, [c3]
+    ld16 r0, [r7]
     call debug_print_r0_line
-    addi.s8 c3, 2
-    ld8u r0, [c3]
+    addi.s8 r7, 2
+    ld8u r0, [r7]
     call debug_print_r0_line
 
     reset_store_regs
-    ldi16 c3, 0x012d
-    st16 [c3], c3
+    ldi16 r7, 0x012a
+    st16 [r7], r6
     call debug_print_upper_regs
-    ld16 r0, [c3]
+    ld16 r0, [r7]
     call debug_print_r0_line
-    addi.s8 c3, 2
-    ld8u r0, [c3]
+    addi.s8 r7, 2
+    ld8u r0, [r7]
+    call debug_print_r0_line
+
+    reset_store_regs
+    ldi16 r7, 0x012d
+    st16 [r7], r7
+    call debug_print_upper_regs
+    ld16 r0, [r7]
+    call debug_print_r0_line
+    addi.s8 r7, 2
+    ld8u r0, [r7]
     call debug_print_r0_line
 
     sys debug_break

@@ -15,9 +15,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r0
@@ -77,9 +77,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r1
@@ -139,9 +139,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r2
@@ -201,9 +201,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r3
@@ -263,9 +263,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r4
@@ -325,9 +325,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r5
@@ -387,9 +387,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r6
@@ -449,9 +449,9 @@ _start:
     pop16 r0
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r0, r7
@@ -511,9 +511,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r0
@@ -570,9 +570,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r1
@@ -632,9 +632,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r2
@@ -694,9 +694,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r3
@@ -756,9 +756,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r4
@@ -818,9 +818,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r5
@@ -880,9 +880,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r6
@@ -942,9 +942,9 @@ _start:
     pop16 r1
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r1, r7
@@ -1004,9 +1004,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r0
@@ -1066,9 +1066,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r1
@@ -1125,9 +1125,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r2
@@ -1187,9 +1187,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r3
@@ -1249,9 +1249,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r4
@@ -1311,9 +1311,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r5
@@ -1373,9 +1373,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r6
@@ -1435,9 +1435,9 @@ _start:
     pop16 r2
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r2, r7
@@ -1497,9 +1497,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r0
@@ -1559,9 +1559,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r1
@@ -1621,9 +1621,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r2
@@ -1680,9 +1680,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r3
@@ -1742,9 +1742,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r4
@@ -1804,9 +1804,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r5
@@ -1866,9 +1866,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r6
@@ -1928,9 +1928,9 @@ _start:
     pop16 r3
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r3, r7
@@ -1990,9 +1990,9 @@ _start:
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r4, r0
@@ -2052,9 +2052,9 @@ _start:
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r4, r1
@@ -2114,9 +2114,9 @@ _start:
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r4, r2
@@ -2176,9 +2176,9 @@ _start:
     pop16 r4
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r4, r3
@@ -2238,9 +2238,9 @@ _start:
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r5, r0
@@ -2300,9 +2300,9 @@ _start:
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r5, r1
@@ -2362,9 +2362,9 @@ _start:
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r5, r2
@@ -2424,9 +2424,9 @@ _start:
     pop16 r5
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r5, r3
@@ -2486,9 +2486,9 @@ _start:
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r6, r0
@@ -2548,9 +2548,9 @@ _start:
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r6, r1
@@ -2610,9 +2610,9 @@ _start:
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r6, r2
@@ -2672,9 +2672,9 @@ _start:
     pop16 r6
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r6, r3
@@ -2734,9 +2734,9 @@ _start:
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r7, r0
@@ -2796,9 +2796,9 @@ _start:
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r7, r1
@@ -2858,9 +2858,9 @@ _start:
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r7, r2
@@ -2920,9 +2920,9 @@ _start:
     pop16 r7
     push16 r6
     push16 r7
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     pop16 r7
     pop16 r6
     sub r7, r3

@@ -7,9 +7,9 @@
 _start:
 
     ; qD=q0, qS=q0, pattern 0; guard q1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0000
@@ -92,9 +92,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q0, pattern 1; guard q2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0100
@@ -177,9 +177,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q0, pattern 2; guard q3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x8000
@@ -262,9 +262,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q0, pattern 3; guard q1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x5a5a
     push16 r4
     ldi16 c0, 0xa5a5
@@ -347,9 +347,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q1, pattern 0; guard q2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0000
@@ -432,9 +432,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q1, pattern 1; guard q2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x5678
     push16 r4
     ldi16 c0, 0x1234
@@ -517,9 +517,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q1, pattern 2; guard q3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0001
@@ -602,9 +602,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q1, pattern 3; guard q2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0000
@@ -687,9 +687,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q2, pattern 0; guard q1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0100
@@ -772,9 +772,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q2, pattern 1; guard q3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x8000
@@ -857,9 +857,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q2, pattern 2; guard q3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x5a5a
     push16 r4
     ldi16 c0, 0xa5a5
@@ -942,9 +942,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q2, pattern 3; guard q1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0000
@@ -1027,9 +1027,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q3, pattern 0; guard q1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x5678
     push16 r4
     ldi16 c0, 0x1234
@@ -1112,9 +1112,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q3, pattern 1; guard q2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0001
@@ -1197,9 +1197,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q3, pattern 2; guard q1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0000
@@ -1282,9 +1282,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q0, qS=q3, pattern 3; guard q1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0000
@@ -1367,9 +1367,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q0, pattern 0; guard q2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0001
     push16 r4
     ldi16 c0, 0x0000
@@ -1452,9 +1452,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q0, pattern 1; guard q3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x8000
@@ -1537,9 +1537,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q0, pattern 2; guard q2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x4321
     push16 r4
     ldi16 c0, 0x8765
@@ -1622,9 +1622,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q0, pattern 3; guard q2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x0001
     push16 r4
     ldi16 c0, 0x0000
@@ -1707,9 +1707,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q1, pattern 0; guard q2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x13e4
     push16 r4
     ldi16 c0, 0x14f5
@@ -1792,9 +1792,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q1, pattern 1; guard q3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x1415
     push16 r4
     ldi16 c0, 0x1526
@@ -1877,9 +1877,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q1, pattern 2; guard q0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x8752
     push16 r4
     ldi16 c0, 0x4ba9
@@ -1962,9 +1962,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q1, pattern 3; guard q2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x1477
     push16 r4
     ldi16 c0, 0x1588
@@ -2047,9 +2047,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q2, pattern 0; guard q3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x14a8
     push16 r4
     ldi16 c0, 0x15b9
@@ -2132,9 +2132,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q2, pattern 1; guard q3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x14d9
     push16 r4
     ldi16 c0, 0x15ea
@@ -2217,9 +2217,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q2, pattern 2; guard q0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0xe5be
     push16 r4
     ldi16 c0, 0x4bf6
@@ -2302,9 +2302,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q2, pattern 3; guard q3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x153b
     push16 r4
     ldi16 c0, 0x164c
@@ -2387,9 +2387,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q3, pattern 0; guard q2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x156c
     push16 r4
     ldi16 c0, 0x167d
@@ -2472,9 +2472,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q3, pattern 1; guard q0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0xec8f
     push16 r4
     ldi16 c0, 0x4c30
@@ -2557,9 +2557,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q3, pattern 2; guard q0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x442a
     push16 r4
     ldi16 c0, 0x4c44
@@ -2642,9 +2642,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q1, qS=q3, pattern 3; guard q2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x15ff
     push16 r4
     ldi16 c0, 0x1710
@@ -2727,9 +2727,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q0, pattern 0; guard q3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0xa5a5
     push16 r4
     ldi16 c0, 0x5a5a
@@ -2812,9 +2812,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q0, pattern 1; guard q1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x0000
@@ -2897,9 +2897,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q0, pattern 2; guard q1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x0001
     push16 r4
     ldi16 c0, 0x0000
@@ -2982,9 +2982,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q0, pattern 3; guard q3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0001
     push16 r4
     ldi16 c0, 0x0000
@@ -3067,9 +3067,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q1, pattern 0; guard q3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x16f4
     push16 r4
     ldi16 c0, 0x1805
@@ -3152,9 +3152,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q1, pattern 1; guard q0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0xa967
     push16 r4
     ldi16 c0, 0x4ccb
@@ -3237,9 +3237,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q1, pattern 2; guard q3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x1756
     push16 r4
     ldi16 c0, 0x1867
@@ -3322,9 +3322,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q1, pattern 3; guard q3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x1787
     push16 r4
     ldi16 c0, 0x1898
@@ -3407,9 +3407,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q2, pattern 0; guard q3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x17b8
     push16 r4
     ldi16 c0, 0x18c9
@@ -3492,9 +3492,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q2, pattern 1; guard q0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x07d3
     push16 r4
     ldi16 c0, 0x4d19
@@ -3577,9 +3577,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q2, pattern 2; guard q1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x181a
     push16 r4
     ldi16 c0, 0x192b
@@ -3662,9 +3662,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q2, pattern 3; guard q3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x184b
     push16 r4
     ldi16 c0, 0x195c
@@ -3747,9 +3747,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q3, pattern 0; guard q0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0ea4
     push16 r4
     ldi16 c0, 0x4d53
@@ -3832,9 +3832,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q3, pattern 1; guard q0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x663f
     push16 r4
     ldi16 c0, 0x4d66
@@ -3917,9 +3917,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q3, pattern 2; guard q1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x18de
     push16 r4
     ldi16 c0, 0x19ef
@@ -4002,9 +4002,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q2, qS=q3, pattern 3; guard q0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x1575
     push16 r4
     ldi16 c0, 0x4d8d
@@ -4087,9 +4087,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q0, pattern 0; guard q1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x0001
     push16 r4
     ldi16 c0, 0x0000
@@ -4172,9 +4172,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q0, pattern 1; guard q1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x0001
     push16 r4
     ldi16 c0, 0x0000
@@ -4257,9 +4257,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q0, pattern 2; guard q2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x0000
     push16 r4
     ldi16 c0, 0x8000
@@ -4342,9 +4342,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q0, pattern 3; guard q1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x4321
     push16 r4
     ldi16 c0, 0x8765
@@ -4427,9 +4427,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q1, pattern 0; guard q0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0xcb7c
     push16 r4
     ldi16 c0, 0x4ded
@@ -4512,9 +4512,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q1, pattern 1; guard q2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x1a35
     push16 r4
     ldi16 c0, 0x1b46
@@ -4597,9 +4597,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q1, pattern 2; guard q2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x1a66
     push16 r4
     ldi16 c0, 0x1b77
@@ -4682,9 +4682,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q1, pattern 3; guard q0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0xd24d
     push16 r4
     ldi16 c0, 0x4e27
@@ -4767,9 +4767,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q2, pattern 0; guard q0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x29e8
     push16 r4
     ldi16 c0, 0x4e3b
@@ -4852,9 +4852,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q2, pattern 1; guard q1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x1af9
     push16 r4
     ldi16 c0, 0x1c0a
@@ -4937,9 +4937,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q2, pattern 2; guard q0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0xd91e
     push16 r4
     ldi16 c0, 0x4e61
@@ -5022,9 +5022,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q2, pattern 3; guard q0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x30b9
     push16 r4
     ldi16 c0, 0x4e75
@@ -5107,9 +5107,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q3, pattern 0; guard q0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
     ldi16 c0, 0x8854
     push16 r4
     ldi16 c0, 0x4e88
@@ -5192,9 +5192,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q3, pattern 1; guard q1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
     ldi16 c0, 0x1bbd
     push16 r4
     ldi16 c0, 0x1cce
@@ -5277,9 +5277,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q3, pattern 2; guard q2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
     ldi16 c0, 0x1bee
     push16 r4
     ldi16 c0, 0x1cff
@@ -5362,9 +5362,9 @@ _start:
     f7_emit_char '\n'
 
     ; qD=q3, qS=q3, pattern 3; guard q0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
     ldi16 c0, 0x8f25
     push16 r4
     ldi16 c0, 0x4ec2

@@ -6,15 +6,15 @@
 .type _start, @function
 _start:
 
-    ; Secondary encoding destination c0, count 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0000
-    ldi16 c1, 0x3333
-    ldi16 c2, 0x5555
-    ldi16 c3, 0x7777
-    lsr16i c0, 0
+    ; Secondary encoding destination r4, count 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3333
+    ldi16 r6, 0x5555
+    ldi16 r7, 0x7777
+    lsr16i r4, 0
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -58,15 +58,15 @@ _start:
 .Llsr16i_00_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0001
-    ldi16 c1, 0x336a
-    ldi16 c2, 0x5592
-    ldi16 c3, 0x77ba
-    lsr16i c0, 1
+    ; Secondary encoding destination r4, count 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x336a
+    ldi16 r6, 0x5592
+    ldi16 r7, 0x77ba
+    lsr16i r4, 1
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -110,15 +110,15 @@ _start:
 .Llsr16i_01_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8001
-    ldi16 c1, 0x33a1
-    ldi16 c2, 0x55cf
-    ldi16 c3, 0x77fd
-    lsr16i c0, 2
+    ; Secondary encoding destination r4, count 2.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8001
+    ldi16 r5, 0x33a1
+    ldi16 r6, 0x55cf
+    ldi16 r7, 0x77fd
+    lsr16i r4, 2
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -162,15 +162,15 @@ _start:
 .Llsr16i_02_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x7fff
-    ldi16 c1, 0x33d8
-    ldi16 c2, 0x560c
-    ldi16 c3, 0x7840
-    lsr16i c0, 3
+    ; Secondary encoding destination r4, count 3.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x7fff
+    ldi16 r5, 0x33d8
+    ldi16 r6, 0x560c
+    ldi16 r7, 0x7840
+    lsr16i r4, 3
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -214,15 +214,15 @@ _start:
 .Llsr16i_03_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 4.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8000
-    ldi16 c1, 0x340f
-    ldi16 c2, 0x5649
-    ldi16 c3, 0x7883
-    lsr16i c0, 4
+    ; Secondary encoding destination r4, count 4.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8000
+    ldi16 r5, 0x340f
+    ldi16 r6, 0x5649
+    ldi16 r7, 0x7883
+    lsr16i r4, 4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -266,15 +266,15 @@ _start:
 .Llsr16i_04_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 5.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xffff
-    ldi16 c1, 0x3446
-    ldi16 c2, 0x5686
-    ldi16 c3, 0x78c6
-    lsr16i c0, 5
+    ; Secondary encoding destination r4, count 5.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xffff
+    ldi16 r5, 0x3446
+    ldi16 r6, 0x5686
+    ldi16 r7, 0x78c6
+    lsr16i r4, 5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -318,15 +318,15 @@ _start:
 .Llsr16i_05_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 6.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa55a
-    ldi16 c1, 0x347d
-    ldi16 c2, 0x56c3
-    ldi16 c3, 0x7909
-    lsr16i c0, 6
+    ; Secondary encoding destination r4, count 6.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa55a
+    ldi16 r5, 0x347d
+    ldi16 r6, 0x56c3
+    ldi16 r7, 0x7909
+    lsr16i r4, 6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -370,15 +370,15 @@ _start:
 .Llsr16i_06_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 7.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x5aa5
-    ldi16 c1, 0x34b4
-    ldi16 c2, 0x5700
-    ldi16 c3, 0x794c
-    lsr16i c0, 7
+    ; Secondary encoding destination r4, count 7.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x5aa5
+    ldi16 r5, 0x34b4
+    ldi16 r6, 0x5700
+    ldi16 r7, 0x794c
+    lsr16i r4, 7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -422,15 +422,15 @@ _start:
 .Llsr16i_07_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 8.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1234
-    ldi16 c1, 0x34eb
-    ldi16 c2, 0x573d
-    ldi16 c3, 0x798f
-    lsr16i c0, 8
+    ; Secondary encoding destination r4, count 8.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1234
+    ldi16 r5, 0x34eb
+    ldi16 r6, 0x573d
+    ldi16 r7, 0x798f
+    lsr16i r4, 8
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -474,15 +474,15 @@ _start:
 .Llsr16i_08_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 9.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xfedc
-    ldi16 c1, 0x3522
-    ldi16 c2, 0x577a
-    ldi16 c3, 0x79d2
-    lsr16i c0, 9
+    ; Secondary encoding destination r4, count 9.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xfedc
+    ldi16 r5, 0x3522
+    ldi16 r6, 0x577a
+    ldi16 r7, 0x79d2
+    lsr16i r4, 9
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -526,15 +526,15 @@ _start:
 .Llsr16i_09_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 10.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x0100
-    ldi16 c1, 0x3559
-    ldi16 c2, 0x57b7
-    ldi16 c3, 0x7a15
-    lsr16i c0, 10
+    ; Secondary encoding destination r4, count 10.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x0100
+    ldi16 r5, 0x3559
+    ldi16 r6, 0x57b7
+    ldi16 r7, 0x7a15
+    lsr16i r4, 10
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -578,15 +578,15 @@ _start:
 .Llsr16i_0a_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 11.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x00ff
-    ldi16 c1, 0x3590
-    ldi16 c2, 0x57f4
-    ldi16 c3, 0x7a58
-    lsr16i c0, 11
+    ; Secondary encoding destination r4, count 11.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x00ff
+    ldi16 r5, 0x3590
+    ldi16 r6, 0x57f4
+    ldi16 r7, 0x7a58
+    lsr16i r4, 11
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -630,15 +630,15 @@ _start:
 .Llsr16i_0b_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 12.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x4001
-    ldi16 c1, 0x35c7
-    ldi16 c2, 0x5831
-    ldi16 c3, 0x7a9b
-    lsr16i c0, 12
+    ; Secondary encoding destination r4, count 12.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x4001
+    ldi16 r5, 0x35c7
+    ldi16 r6, 0x5831
+    ldi16 r7, 0x7a9b
+    lsr16i r4, 12
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -682,15 +682,15 @@ _start:
 .Llsr16i_0c_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 13.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xc001
-    ldi16 c1, 0x35fe
-    ldi16 c2, 0x586e
-    ldi16 c3, 0x7ade
-    lsr16i c0, 13
+    ; Secondary encoding destination r4, count 13.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xc001
+    ldi16 r5, 0x35fe
+    ldi16 r6, 0x586e
+    ldi16 r7, 0x7ade
+    lsr16i r4, 13
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -734,15 +734,15 @@ _start:
 .Llsr16i_0d_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 14.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8080
-    ldi16 c1, 0x3635
-    ldi16 c2, 0x58ab
-    ldi16 c3, 0x7b21
-    lsr16i c0, 14
+    ; Secondary encoding destination r4, count 14.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8080
+    ldi16 r5, 0x3635
+    ldi16 r6, 0x58ab
+    ldi16 r7, 0x7b21
+    lsr16i r4, 14
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -786,15 +786,15 @@ _start:
 .Llsr16i_0e_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c0, count 15.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x7f01
-    ldi16 c1, 0x366c
-    ldi16 c2, 0x58e8
-    ldi16 c3, 0x7b64
-    lsr16i c0, 15
+    ; Secondary encoding destination r4, count 15.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x7f01
+    ldi16 r5, 0x366c
+    ldi16 r6, 0x58e8
+    ldi16 r7, 0x7b64
+    lsr16i r4, 15
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -838,15 +838,15 @@ _start:
 .Llsr16i_0f_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1421
-    ldi16 c1, 0xffff
-    ldi16 c2, 0x5925
-    ldi16 c3, 0x7ba7
-    lsr16i c1, 0
+    ; Secondary encoding destination r5, count 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1421
+    ldi16 r5, 0xffff
+    ldi16 r6, 0x5925
+    ldi16 r7, 0x7ba7
+    lsr16i r5, 0
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -890,15 +890,15 @@ _start:
 .Llsr16i_10_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1452
-    ldi16 c1, 0xa55a
-    ldi16 c2, 0x5962
-    ldi16 c3, 0x7bea
-    lsr16i c1, 1
+    ; Secondary encoding destination r5, count 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1452
+    ldi16 r5, 0xa55a
+    ldi16 r6, 0x5962
+    ldi16 r7, 0x7bea
+    lsr16i r5, 1
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -942,15 +942,15 @@ _start:
 .Llsr16i_11_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1483
-    ldi16 c1, 0x5aa5
-    ldi16 c2, 0x599f
-    ldi16 c3, 0x7c2d
-    lsr16i c1, 2
+    ; Secondary encoding destination r5, count 2.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1483
+    ldi16 r5, 0x5aa5
+    ldi16 r6, 0x599f
+    ldi16 r7, 0x7c2d
+    lsr16i r5, 2
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -994,15 +994,15 @@ _start:
 .Llsr16i_12_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x14b4
-    ldi16 c1, 0x1234
-    ldi16 c2, 0x59dc
-    ldi16 c3, 0x7c70
-    lsr16i c1, 3
+    ; Secondary encoding destination r5, count 3.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x14b4
+    ldi16 r5, 0x1234
+    ldi16 r6, 0x59dc
+    ldi16 r7, 0x7c70
+    lsr16i r5, 3
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1046,15 +1046,15 @@ _start:
 .Llsr16i_13_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 4.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x14e5
-    ldi16 c1, 0xfedc
-    ldi16 c2, 0x5a19
-    ldi16 c3, 0x7cb3
-    lsr16i c1, 4
+    ; Secondary encoding destination r5, count 4.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x14e5
+    ldi16 r5, 0xfedc
+    ldi16 r6, 0x5a19
+    ldi16 r7, 0x7cb3
+    lsr16i r5, 4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1098,15 +1098,15 @@ _start:
 .Llsr16i_14_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 5.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1516
-    ldi16 c1, 0x0100
-    ldi16 c2, 0x5a56
-    ldi16 c3, 0x7cf6
-    lsr16i c1, 5
+    ; Secondary encoding destination r5, count 5.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1516
+    ldi16 r5, 0x0100
+    ldi16 r6, 0x5a56
+    ldi16 r7, 0x7cf6
+    lsr16i r5, 5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1150,15 +1150,15 @@ _start:
 .Llsr16i_15_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 6.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1547
-    ldi16 c1, 0x00ff
-    ldi16 c2, 0x5a93
-    ldi16 c3, 0x7d39
-    lsr16i c1, 6
+    ; Secondary encoding destination r5, count 6.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1547
+    ldi16 r5, 0x00ff
+    ldi16 r6, 0x5a93
+    ldi16 r7, 0x7d39
+    lsr16i r5, 6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1202,15 +1202,15 @@ _start:
 .Llsr16i_16_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 7.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1578
-    ldi16 c1, 0x4001
-    ldi16 c2, 0x5ad0
-    ldi16 c3, 0x7d7c
-    lsr16i c1, 7
+    ; Secondary encoding destination r5, count 7.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1578
+    ldi16 r5, 0x4001
+    ldi16 r6, 0x5ad0
+    ldi16 r7, 0x7d7c
+    lsr16i r5, 7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1254,15 +1254,15 @@ _start:
 .Llsr16i_17_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 8.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x15a9
-    ldi16 c1, 0xc001
-    ldi16 c2, 0x5b0d
-    ldi16 c3, 0x7dbf
-    lsr16i c1, 8
+    ; Secondary encoding destination r5, count 8.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x15a9
+    ldi16 r5, 0xc001
+    ldi16 r6, 0x5b0d
+    ldi16 r7, 0x7dbf
+    lsr16i r5, 8
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1306,15 +1306,15 @@ _start:
 .Llsr16i_18_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 9.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x15da
-    ldi16 c1, 0x8080
-    ldi16 c2, 0x5b4a
-    ldi16 c3, 0x7e02
-    lsr16i c1, 9
+    ; Secondary encoding destination r5, count 9.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x15da
+    ldi16 r5, 0x8080
+    ldi16 r6, 0x5b4a
+    ldi16 r7, 0x7e02
+    lsr16i r5, 9
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1358,15 +1358,15 @@ _start:
 .Llsr16i_19_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 10.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x160b
-    ldi16 c1, 0x7f01
-    ldi16 c2, 0x5b87
-    ldi16 c3, 0x7e45
-    lsr16i c1, 10
+    ; Secondary encoding destination r5, count 10.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x160b
+    ldi16 r5, 0x7f01
+    ldi16 r6, 0x5b87
+    ldi16 r7, 0x7e45
+    lsr16i r5, 10
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1410,15 +1410,15 @@ _start:
 .Llsr16i_1a_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 11.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x163c
-    ldi16 c1, 0x0000
-    ldi16 c2, 0x5bc4
-    ldi16 c3, 0x7e88
-    lsr16i c1, 11
+    ; Secondary encoding destination r5, count 11.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x163c
+    ldi16 r5, 0x0000
+    ldi16 r6, 0x5bc4
+    ldi16 r7, 0x7e88
+    lsr16i r5, 11
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1462,15 +1462,15 @@ _start:
 .Llsr16i_1b_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 12.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x166d
-    ldi16 c1, 0x0001
-    ldi16 c2, 0x5c01
-    ldi16 c3, 0x7ecb
-    lsr16i c1, 12
+    ; Secondary encoding destination r5, count 12.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x166d
+    ldi16 r5, 0x0001
+    ldi16 r6, 0x5c01
+    ldi16 r7, 0x7ecb
+    lsr16i r5, 12
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1514,15 +1514,15 @@ _start:
 .Llsr16i_1c_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 13.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x169e
-    ldi16 c1, 0x8001
-    ldi16 c2, 0x5c3e
-    ldi16 c3, 0x7f0e
-    lsr16i c1, 13
+    ; Secondary encoding destination r5, count 13.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x169e
+    ldi16 r5, 0x8001
+    ldi16 r6, 0x5c3e
+    ldi16 r7, 0x7f0e
+    lsr16i r5, 13
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1566,15 +1566,15 @@ _start:
 .Llsr16i_1d_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 14.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x16cf
-    ldi16 c1, 0x7fff
-    ldi16 c2, 0x5c7b
-    ldi16 c3, 0x7f51
-    lsr16i c1, 14
+    ; Secondary encoding destination r5, count 14.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x16cf
+    ldi16 r5, 0x7fff
+    ldi16 r6, 0x5c7b
+    ldi16 r7, 0x7f51
+    lsr16i r5, 14
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1618,15 +1618,15 @@ _start:
 .Llsr16i_1e_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c1, count 15.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1700
-    ldi16 c1, 0x8000
-    ldi16 c2, 0x5cb8
-    ldi16 c3, 0x7f94
-    lsr16i c1, 15
+    ; Secondary encoding destination r5, count 15.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1700
+    ldi16 r5, 0x8000
+    ldi16 r6, 0x5cb8
+    ldi16 r7, 0x7f94
+    lsr16i r5, 15
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1670,15 +1670,15 @@ _start:
 .Llsr16i_1f_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1731
-    ldi16 c1, 0x3a13
-    ldi16 c2, 0x0100
-    ldi16 c3, 0x7fd7
-    lsr16i c2, 0
+    ; Secondary encoding destination r6, count 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1731
+    ldi16 r5, 0x3a13
+    ldi16 r6, 0x0100
+    ldi16 r7, 0x7fd7
+    lsr16i r6, 0
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1722,15 +1722,15 @@ _start:
 .Llsr16i_20_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1762
-    ldi16 c1, 0x3a4a
-    ldi16 c2, 0x00ff
-    ldi16 c3, 0x801a
-    lsr16i c2, 1
+    ; Secondary encoding destination r6, count 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1762
+    ldi16 r5, 0x3a4a
+    ldi16 r6, 0x00ff
+    ldi16 r7, 0x801a
+    lsr16i r6, 1
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1774,15 +1774,15 @@ _start:
 .Llsr16i_21_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1793
-    ldi16 c1, 0x3a81
-    ldi16 c2, 0x4001
-    ldi16 c3, 0x805d
-    lsr16i c2, 2
+    ; Secondary encoding destination r6, count 2.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1793
+    ldi16 r5, 0x3a81
+    ldi16 r6, 0x4001
+    ldi16 r7, 0x805d
+    lsr16i r6, 2
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1826,15 +1826,15 @@ _start:
 .Llsr16i_22_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x17c4
-    ldi16 c1, 0x3ab8
-    ldi16 c2, 0xc001
-    ldi16 c3, 0x80a0
-    lsr16i c2, 3
+    ; Secondary encoding destination r6, count 3.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x17c4
+    ldi16 r5, 0x3ab8
+    ldi16 r6, 0xc001
+    ldi16 r7, 0x80a0
+    lsr16i r6, 3
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1878,15 +1878,15 @@ _start:
 .Llsr16i_23_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 4.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x17f5
-    ldi16 c1, 0x3aef
-    ldi16 c2, 0x8080
-    ldi16 c3, 0x80e3
-    lsr16i c2, 4
+    ; Secondary encoding destination r6, count 4.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x17f5
+    ldi16 r5, 0x3aef
+    ldi16 r6, 0x8080
+    ldi16 r7, 0x80e3
+    lsr16i r6, 4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1930,15 +1930,15 @@ _start:
 .Llsr16i_24_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 5.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1826
-    ldi16 c1, 0x3b26
-    ldi16 c2, 0x7f01
-    ldi16 c3, 0x8126
-    lsr16i c2, 5
+    ; Secondary encoding destination r6, count 5.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1826
+    ldi16 r5, 0x3b26
+    ldi16 r6, 0x7f01
+    ldi16 r7, 0x8126
+    lsr16i r6, 5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1982,15 +1982,15 @@ _start:
 .Llsr16i_25_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 6.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1857
-    ldi16 c1, 0x3b5d
-    ldi16 c2, 0x0000
-    ldi16 c3, 0x8169
-    lsr16i c2, 6
+    ; Secondary encoding destination r6, count 6.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1857
+    ldi16 r5, 0x3b5d
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x8169
+    lsr16i r6, 6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2034,15 +2034,15 @@ _start:
 .Llsr16i_26_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 7.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1888
-    ldi16 c1, 0x3b94
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x81ac
-    lsr16i c2, 7
+    ; Secondary encoding destination r6, count 7.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1888
+    ldi16 r5, 0x3b94
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x81ac
+    lsr16i r6, 7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2086,15 +2086,15 @@ _start:
 .Llsr16i_27_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 8.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x18b9
-    ldi16 c1, 0x3bcb
-    ldi16 c2, 0x8001
-    ldi16 c3, 0x81ef
-    lsr16i c2, 8
+    ; Secondary encoding destination r6, count 8.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x18b9
+    ldi16 r5, 0x3bcb
+    ldi16 r6, 0x8001
+    ldi16 r7, 0x81ef
+    lsr16i r6, 8
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2138,15 +2138,15 @@ _start:
 .Llsr16i_28_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 9.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x18ea
-    ldi16 c1, 0x3c02
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8232
-    lsr16i c2, 9
+    ; Secondary encoding destination r6, count 9.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x18ea
+    ldi16 r5, 0x3c02
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8232
+    lsr16i r6, 9
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2190,15 +2190,15 @@ _start:
 .Llsr16i_29_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 10.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x191b
-    ldi16 c1, 0x3c39
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x8275
-    lsr16i c2, 10
+    ; Secondary encoding destination r6, count 10.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x191b
+    ldi16 r5, 0x3c39
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x8275
+    lsr16i r6, 10
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2242,15 +2242,15 @@ _start:
 .Llsr16i_2a_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 11.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x194c
-    ldi16 c1, 0x3c70
-    ldi16 c2, 0xffff
-    ldi16 c3, 0x82b8
-    lsr16i c2, 11
+    ; Secondary encoding destination r6, count 11.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x194c
+    ldi16 r5, 0x3c70
+    ldi16 r6, 0xffff
+    ldi16 r7, 0x82b8
+    lsr16i r6, 11
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2294,15 +2294,15 @@ _start:
 .Llsr16i_2b_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 12.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x197d
-    ldi16 c1, 0x3ca7
-    ldi16 c2, 0xa55a
-    ldi16 c3, 0x82fb
-    lsr16i c2, 12
+    ; Secondary encoding destination r6, count 12.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x197d
+    ldi16 r5, 0x3ca7
+    ldi16 r6, 0xa55a
+    ldi16 r7, 0x82fb
+    lsr16i r6, 12
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2346,15 +2346,15 @@ _start:
 .Llsr16i_2c_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 13.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x19ae
-    ldi16 c1, 0x3cde
-    ldi16 c2, 0x5aa5
-    ldi16 c3, 0x833e
-    lsr16i c2, 13
+    ; Secondary encoding destination r6, count 13.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x19ae
+    ldi16 r5, 0x3cde
+    ldi16 r6, 0x5aa5
+    ldi16 r7, 0x833e
+    lsr16i r6, 13
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2398,15 +2398,15 @@ _start:
 .Llsr16i_2d_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 14.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x19df
-    ldi16 c1, 0x3d15
-    ldi16 c2, 0x1234
-    ldi16 c3, 0x8381
-    lsr16i c2, 14
+    ; Secondary encoding destination r6, count 14.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x19df
+    ldi16 r5, 0x3d15
+    ldi16 r6, 0x1234
+    ldi16 r7, 0x8381
+    lsr16i r6, 14
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2450,15 +2450,15 @@ _start:
 .Llsr16i_2e_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c2, count 15.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1a10
-    ldi16 c1, 0x3d4c
-    ldi16 c2, 0xfedc
-    ldi16 c3, 0x83c4
-    lsr16i c2, 15
+    ; Secondary encoding destination r6, count 15.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1a10
+    ldi16 r5, 0x3d4c
+    ldi16 r6, 0xfedc
+    ldi16 r7, 0x83c4
+    lsr16i r6, 15
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2502,15 +2502,15 @@ _start:
 .Llsr16i_2f_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1a41
-    ldi16 c1, 0x3d83
-    ldi16 c2, 0x60c5
-    ldi16 c3, 0x7f01
-    lsr16i c3, 0
+    ; Secondary encoding destination r7, count 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1a41
+    ldi16 r5, 0x3d83
+    ldi16 r6, 0x60c5
+    ldi16 r7, 0x7f01
+    lsr16i r7, 0
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2554,15 +2554,15 @@ _start:
 .Llsr16i_30_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1a72
-    ldi16 c1, 0x3dba
-    ldi16 c2, 0x6102
-    ldi16 c3, 0x0000
-    lsr16i c3, 1
+    ; Secondary encoding destination r7, count 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1a72
+    ldi16 r5, 0x3dba
+    ldi16 r6, 0x6102
+    ldi16 r7, 0x0000
+    lsr16i r7, 1
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2606,15 +2606,15 @@ _start:
 .Llsr16i_31_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1aa3
-    ldi16 c1, 0x3df1
-    ldi16 c2, 0x613f
-    ldi16 c3, 0x0001
-    lsr16i c3, 2
+    ; Secondary encoding destination r7, count 2.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1aa3
+    ldi16 r5, 0x3df1
+    ldi16 r6, 0x613f
+    ldi16 r7, 0x0001
+    lsr16i r7, 2
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2658,15 +2658,15 @@ _start:
 .Llsr16i_32_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1ad4
-    ldi16 c1, 0x3e28
-    ldi16 c2, 0x617c
-    ldi16 c3, 0x8001
-    lsr16i c3, 3
+    ; Secondary encoding destination r7, count 3.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1ad4
+    ldi16 r5, 0x3e28
+    ldi16 r6, 0x617c
+    ldi16 r7, 0x8001
+    lsr16i r7, 3
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2710,15 +2710,15 @@ _start:
 .Llsr16i_33_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 4.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1b05
-    ldi16 c1, 0x3e5f
-    ldi16 c2, 0x61b9
-    ldi16 c3, 0x7fff
-    lsr16i c3, 4
+    ; Secondary encoding destination r7, count 4.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1b05
+    ldi16 r5, 0x3e5f
+    ldi16 r6, 0x61b9
+    ldi16 r7, 0x7fff
+    lsr16i r7, 4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2762,15 +2762,15 @@ _start:
 .Llsr16i_34_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 5.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1b36
-    ldi16 c1, 0x3e96
-    ldi16 c2, 0x61f6
-    ldi16 c3, 0x8000
-    lsr16i c3, 5
+    ; Secondary encoding destination r7, count 5.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1b36
+    ldi16 r5, 0x3e96
+    ldi16 r6, 0x61f6
+    ldi16 r7, 0x8000
+    lsr16i r7, 5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2814,15 +2814,15 @@ _start:
 .Llsr16i_35_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 6.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1b67
-    ldi16 c1, 0x3ecd
-    ldi16 c2, 0x6233
-    ldi16 c3, 0xffff
-    lsr16i c3, 6
+    ; Secondary encoding destination r7, count 6.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1b67
+    ldi16 r5, 0x3ecd
+    ldi16 r6, 0x6233
+    ldi16 r7, 0xffff
+    lsr16i r7, 6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2866,15 +2866,15 @@ _start:
 .Llsr16i_36_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 7.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1b98
-    ldi16 c1, 0x3f04
-    ldi16 c2, 0x6270
-    ldi16 c3, 0xa55a
-    lsr16i c3, 7
+    ; Secondary encoding destination r7, count 7.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1b98
+    ldi16 r5, 0x3f04
+    ldi16 r6, 0x6270
+    ldi16 r7, 0xa55a
+    lsr16i r7, 7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2918,15 +2918,15 @@ _start:
 .Llsr16i_37_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 8.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1bc9
-    ldi16 c1, 0x3f3b
-    ldi16 c2, 0x62ad
-    ldi16 c3, 0x5aa5
-    lsr16i c3, 8
+    ; Secondary encoding destination r7, count 8.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1bc9
+    ldi16 r5, 0x3f3b
+    ldi16 r6, 0x62ad
+    ldi16 r7, 0x5aa5
+    lsr16i r7, 8
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2970,15 +2970,15 @@ _start:
 .Llsr16i_38_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 9.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1bfa
-    ldi16 c1, 0x3f72
-    ldi16 c2, 0x62ea
-    ldi16 c3, 0x1234
-    lsr16i c3, 9
+    ; Secondary encoding destination r7, count 9.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1bfa
+    ldi16 r5, 0x3f72
+    ldi16 r6, 0x62ea
+    ldi16 r7, 0x1234
+    lsr16i r7, 9
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3022,15 +3022,15 @@ _start:
 .Llsr16i_39_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 10.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1c2b
-    ldi16 c1, 0x3fa9
-    ldi16 c2, 0x6327
-    ldi16 c3, 0xfedc
-    lsr16i c3, 10
+    ; Secondary encoding destination r7, count 10.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1c2b
+    ldi16 r5, 0x3fa9
+    ldi16 r6, 0x6327
+    ldi16 r7, 0xfedc
+    lsr16i r7, 10
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3074,15 +3074,15 @@ _start:
 .Llsr16i_3a_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 11.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1c5c
-    ldi16 c1, 0x3fe0
-    ldi16 c2, 0x6364
-    ldi16 c3, 0x0100
-    lsr16i c3, 11
+    ; Secondary encoding destination r7, count 11.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1c5c
+    ldi16 r5, 0x3fe0
+    ldi16 r6, 0x6364
+    ldi16 r7, 0x0100
+    lsr16i r7, 11
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3126,15 +3126,15 @@ _start:
 .Llsr16i_3b_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 12.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x1c8d
-    ldi16 c1, 0x4017
-    ldi16 c2, 0x63a1
-    ldi16 c3, 0x00ff
-    lsr16i c3, 12
+    ; Secondary encoding destination r7, count 12.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x1c8d
+    ldi16 r5, 0x4017
+    ldi16 r6, 0x63a1
+    ldi16 r7, 0x00ff
+    lsr16i r7, 12
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3178,15 +3178,15 @@ _start:
 .Llsr16i_3c_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 13.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1cbe
-    ldi16 c1, 0x404e
-    ldi16 c2, 0x63de
-    ldi16 c3, 0x4001
-    lsr16i c3, 13
+    ; Secondary encoding destination r7, count 13.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1cbe
+    ldi16 r5, 0x404e
+    ldi16 r6, 0x63de
+    ldi16 r7, 0x4001
+    lsr16i r7, 13
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3230,15 +3230,15 @@ _start:
 .Llsr16i_3d_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 14.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x1cef
-    ldi16 c1, 0x4085
-    ldi16 c2, 0x641b
-    ldi16 c3, 0xc001
-    lsr16i c3, 14
+    ; Secondary encoding destination r7, count 14.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x1cef
+    ldi16 r5, 0x4085
+    ldi16 r6, 0x641b
+    ldi16 r7, 0xc001
+    lsr16i r7, 14
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3282,15 +3282,15 @@ _start:
 .Llsr16i_3e_SGE_done:
     fa_emit_char '\n'
 
-    ; Secondary encoding destination c3, count 15.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x1d20
-    ldi16 c1, 0x40bc
-    ldi16 c2, 0x6458
-    ldi16 c3, 0x8080
-    lsr16i c3, 15
+    ; Secondary encoding destination r7, count 15.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x1d20
+    ldi16 r5, 0x40bc
+    ldi16 r6, 0x6458
+    ldi16 r7, 0x8080
+    lsr16i r7, 15
     mov r0, r4
     mov r1, r5
     mov r2, r6

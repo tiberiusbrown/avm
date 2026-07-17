@@ -10,43 +10,43 @@
 ;    15 -> 'P'
 ;
 ; fm_print_c0_line:
-;   Prints c0/r4 as four most-significant-first nibble characters.
-;   Clobbers c0-c3. Architectural condition state is preserved.
+;   Prints r4/r4 as four most-significant-first nibble characters.
+;   Clobbers r4-r7. Architectural condition state is preserved.
 ;
 ; fm_print_stack_word:
-;   Pops one word into c0 and prints it. This lets a test snapshot all values
+;   Pops one word into r4 and prints it. This lets a test snapshot all values
 ;   before output scratch registers are modified.
 
 .macro fm_emit_char character
-    ldi8 c0, \character
+    ldi8 r4, \character
     sys debug_putc
 .endm
 
 .macro fm_emit_c2_nibble
-    ldi8 c3, 0x0f
-    and c2, c3
-    ldi8 c3, 'A'
-    add c2, c3
-    mov c0, c2
+    ldi8 r7, 0x0f
+    and r6, r7
+    ldi8 r7, 'A'
+    add r6, r7
+    mov r4, r6
     sys debug_putc
 .endm
 
 .macro fm_print_c0_line
-    mov c1, c0
+    mov r5, r4
 
-    mov c2, c1
-    lsr16i c2, 12
+    mov r6, r5
+    lsr16i r6, 12
     fm_emit_c2_nibble
 
-    mov c2, c1
-    lsr16i c2, 8
+    mov r6, r5
+    lsr16i r6, 8
     fm_emit_c2_nibble
 
-    mov c2, c1
-    lsr16i c2, 4
+    mov r6, r5
+    lsr16i r6, 4
     fm_emit_c2_nibble
 
-    mov c2, c1
+    mov r6, r5
     fm_emit_c2_nibble
 
     fm_emit_char '\n'

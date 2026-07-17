@@ -13,32 +13,32 @@
 ; full-register MOV, branches, and SYS debug output.
 
 .macro unary_emit_char character
-    ldi8 c0, \character
+    ldi8 r4, \character
     sys debug_putc
 .endm
 
 .macro unary_emit_c2_nibble
-    ldi8 c3, 0x0f
-    and c2, c3
-    ldi8 c3, 'A'
-    add c2, c3
-    mov c0, c2
+    ldi8 r7, 0x0f
+    and r6, r7
+    ldi8 r7, 'A'
+    add r6, r7
+    mov r4, r6
     sys debug_putc
 .endm
 
 ; Print r0 as four most-significant-first hexadecimal nibbles encoded A-P.
-; Preserves r0-r3 and r5. Clobbers r4/c0, r6/c2, and r7/c3.
+; Preserves r0-r3 and r5. Clobbers r4/r4, r6/r6, and r7/r7.
 .macro unary_print_r0_line
     mov r6, r0
-    lsr16i c2, 12
+    lsr16i r6, 12
     unary_emit_c2_nibble
 
     mov r6, r0
-    lsr16i c2, 8
+    lsr16i r6, 8
     unary_emit_c2_nibble
 
     mov r6, r0
-    lsr16i c2, 4
+    lsr16i r6, 4
     unary_emit_c2_nibble
 
     mov r6, r0

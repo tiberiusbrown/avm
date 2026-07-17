@@ -6,15 +6,15 @@
 .type _start, @function
 _start:
 
-    ; d=c0, count=c0, effective count 0, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8000
-    ldi16 c1, 0x6a33
-    ldi16 c2, 0x9255
-    ldi16 c3, 0xba77
-    shl16v c0, c0
+    ; d=r4, count=r4, effective count 0, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8000
+    ldi16 r5, 0x6a33
+    ldi16 r6, 0x9255
+    ldi16 r7, 0xba77
+    shl16v r4, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -58,15 +58,15 @@ _start:
 .Lshl16v_00_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c0, effective count 4, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4004
-    ldi16 c1, 0x6a6a
-    ldi16 c2, 0x9292
-    ldi16 c3, 0xbaba
-    shl16v c0, c0
+    ; d=r4, count=r4, effective count 4, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4004
+    ldi16 r5, 0x6a6a
+    ldi16 r6, 0x9292
+    ldi16 r7, 0xbaba
+    shl16v r4, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -110,15 +110,15 @@ _start:
 .Lshl16v_01_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c0, effective count 8, pattern 2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa5b8
-    ldi16 c1, 0x6aa1
-    ldi16 c2, 0x92cf
-    ldi16 c3, 0xbafd
-    shl16v c0, c0
+    ; d=r4, count=r4, effective count 8, pattern 2.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa5b8
+    ldi16 r5, 0x6aa1
+    ldi16 r6, 0x92cf
+    ldi16 r7, 0xbafd
+    shl16v r4, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -162,15 +162,15 @@ _start:
 .Lshl16v_02_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c0, effective count 12, pattern 3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x123c
-    ldi16 c1, 0x6ad8
-    ldi16 c2, 0x930c
-    ldi16 c3, 0xbb40
-    shl16v c0, c0
+    ; d=r4, count=r4, effective count 12, pattern 3.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x123c
+    ldi16 r5, 0x6ad8
+    ldi16 r6, 0x930c
+    ldi16 r7, 0xbb40
+    shl16v r4, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -214,15 +214,15 @@ _start:
 .Lshl16v_03_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c1, effective count 1, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0001
-    ldi16 c1, 0xa0d1
-    ldi16 c2, 0x9349
-    ldi16 c3, 0xbb83
-    shl16v c0, c1
+    ; d=r4, count=r5, effective count 1, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0001
+    ldi16 r5, 0xa0d1
+    ldi16 r6, 0x9349
+    ldi16 r7, 0xbb83
+    shl16v r4, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -266,15 +266,15 @@ _start:
 .Lshl16v_04_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c1, effective count 5, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8000
-    ldi16 c1, 0xa0c5
-    ldi16 c2, 0x9386
-    ldi16 c3, 0xbbc6
-    shl16v c0, c1
+    ; d=r4, count=r5, effective count 5, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8000
+    ldi16 r5, 0xa0c5
+    ldi16 r6, 0x9386
+    ldi16 r7, 0xbbc6
+    shl16v r4, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -318,15 +318,15 @@ _start:
 .Lshl16v_05_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c1, effective count 9, pattern 2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x5aa5
-    ldi16 c1, 0xa0b9
-    ldi16 c2, 0x93c3
-    ldi16 c3, 0xbc09
-    shl16v c0, c1
+    ; d=r4, count=r5, effective count 9, pattern 2.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x5aa5
+    ldi16 r5, 0xa0b9
+    ldi16 r6, 0x93c3
+    ldi16 r7, 0xbc09
+    shl16v r4, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -370,15 +370,15 @@ _start:
 .Lshl16v_06_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c1, effective count 13, pattern 3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0100
-    ldi16 c1, 0xa0ad
-    ldi16 c2, 0x9400
-    ldi16 c3, 0xbc4c
-    shl16v c0, c1
+    ; d=r4, count=r5, effective count 13, pattern 3.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0100
+    ldi16 r5, 0xa0ad
+    ldi16 r6, 0x9400
+    ldi16 r7, 0xbc4c
+    shl16v r4, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -422,15 +422,15 @@ _start:
 .Lshl16v_07_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c2, effective count 2, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x8001
-    ldi16 c1, 0x6beb
-    ldi16 c2, 0xa0d2
-    ldi16 c3, 0xbc8f
-    shl16v c0, c2
+    ; d=r4, count=r6, effective count 2, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x8001
+    ldi16 r5, 0x6beb
+    ldi16 r6, 0xa0d2
+    ldi16 r7, 0xbc8f
+    shl16v r4, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -474,15 +474,15 @@ _start:
 .Lshl16v_08_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c2, effective count 6, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xffff
-    ldi16 c1, 0x6c22
-    ldi16 c2, 0xa0c6
-    ldi16 c3, 0xbcd2
-    shl16v c0, c2
+    ; d=r4, count=r6, effective count 6, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xffff
+    ldi16 r5, 0x6c22
+    ldi16 r6, 0xa0c6
+    ldi16 r7, 0xbcd2
+    shl16v r4, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -526,15 +526,15 @@ _start:
 .Lshl16v_09_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c2, effective count 10, pattern 2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x1234
-    ldi16 c1, 0x6c59
-    ldi16 c2, 0xa0ba
-    ldi16 c3, 0xbd15
-    shl16v c0, c2
+    ; d=r4, count=r6, effective count 10, pattern 2.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x1234
+    ldi16 r5, 0x6c59
+    ldi16 r6, 0xa0ba
+    ldi16 r7, 0xbd15
+    shl16v r4, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -578,15 +578,15 @@ _start:
 .Lshl16v_0a_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c2, effective count 14, pattern 3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x00ff
-    ldi16 c1, 0x6c90
-    ldi16 c2, 0xa0ae
-    ldi16 c3, 0xbd58
-    shl16v c0, c2
+    ; d=r4, count=r6, effective count 14, pattern 3.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x00ff
+    ldi16 r5, 0x6c90
+    ldi16 r6, 0xa0ae
+    ldi16 r7, 0xbd58
+    shl16v r4, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -630,15 +630,15 @@ _start:
 .Lshl16v_0b_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c3, effective count 3, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x7fff
-    ldi16 c1, 0x6cc7
-    ldi16 c2, 0x9531
-    ldi16 c3, 0xa0d3
-    shl16v c0, c3
+    ; d=r4, count=r7, effective count 3, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x7fff
+    ldi16 r5, 0x6cc7
+    ldi16 r6, 0x9531
+    ldi16 r7, 0xa0d3
+    shl16v r4, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -682,15 +682,15 @@ _start:
 .Lshl16v_0c_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c3, effective count 7, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa55a
-    ldi16 c1, 0x6cfe
-    ldi16 c2, 0x956e
-    ldi16 c3, 0xa0c7
-    shl16v c0, c3
+    ; d=r4, count=r7, effective count 7, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa55a
+    ldi16 r5, 0x6cfe
+    ldi16 r6, 0x956e
+    ldi16 r7, 0xa0c7
+    shl16v r4, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -734,15 +734,15 @@ _start:
 .Lshl16v_0d_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c3, effective count 11, pattern 2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xfedc
-    ldi16 c1, 0x6d35
-    ldi16 c2, 0x95ab
-    ldi16 c3, 0xa0bb
-    shl16v c0, c3
+    ; d=r4, count=r7, effective count 11, pattern 2.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xfedc
+    ldi16 r5, 0x6d35
+    ldi16 r6, 0x95ab
+    ldi16 r7, 0xa0bb
+    shl16v r4, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -786,15 +786,15 @@ _start:
 .Lshl16v_0e_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c0, count=c3, effective count 15, pattern 3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x4001
-    ldi16 c1, 0x6d6c
-    ldi16 c2, 0x95e8
-    ldi16 c3, 0xa0af
-    shl16v c0, c3
+    ; d=r4, count=r7, effective count 15, pattern 3.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x4001
+    ldi16 r5, 0x6d6c
+    ldi16 r6, 0x95e8
+    ldi16 r7, 0xa0af
+    shl16v r4, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -838,15 +838,15 @@ _start:
 .Lshl16v_0f_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c0, effective count 4, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa0d4
-    ldi16 c1, 0x8000
-    ldi16 c2, 0x9625
-    ldi16 c3, 0xbea7
-    shl16v c1, c0
+    ; d=r5, count=r4, effective count 4, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa0d4
+    ldi16 r5, 0x8000
+    ldi16 r6, 0x9625
+    ldi16 r7, 0xbea7
+    shl16v r5, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -890,15 +890,15 @@ _start:
 .Lshl16v_10_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c0, effective count 8, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa0c8
-    ldi16 c1, 0x5aa5
-    ldi16 c2, 0x9662
-    ldi16 c3, 0xbeea
-    shl16v c1, c0
+    ; d=r5, count=r4, effective count 8, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa0c8
+    ldi16 r5, 0x5aa5
+    ldi16 r6, 0x9662
+    ldi16 r7, 0xbeea
+    shl16v r5, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -942,15 +942,15 @@ _start:
 .Lshl16v_11_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c0, effective count 12, pattern 2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xa0bc
-    ldi16 c1, 0x0100
-    ldi16 c2, 0x969f
-    ldi16 c3, 0xbf2d
-    shl16v c1, c0
+    ; d=r5, count=r4, effective count 12, pattern 2.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xa0bc
+    ldi16 r5, 0x0100
+    ldi16 r6, 0x969f
+    ldi16 r7, 0xbf2d
+    shl16v r5, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -994,15 +994,15 @@ _start:
 .Lshl16v_12_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c0, effective count 0, pattern 3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa0a0
-    ldi16 c1, 0xc001
-    ldi16 c2, 0x96dc
-    ldi16 c3, 0xbf70
-    shl16v c1, c0
+    ; d=r5, count=r4, effective count 0, pattern 3.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa0a0
+    ldi16 r5, 0xc001
+    ldi16 r6, 0x96dc
+    ldi16 r7, 0xbf70
+    shl16v r5, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1046,15 +1046,15 @@ _start:
 .Lshl16v_13_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c1, effective count 5, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x45e5
-    ldi16 c1, 0x4005
-    ldi16 c2, 0x9719
-    ldi16 c3, 0xbfb3
-    shl16v c1, c1
+    ; d=r5, count=r5, effective count 5, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x45e5
+    ldi16 r5, 0x4005
+    ldi16 r6, 0x9719
+    ldi16 r7, 0xbfb3
+    shl16v r5, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1098,15 +1098,15 @@ _start:
 .Lshl16v_14_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c1, effective count 9, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4616
-    ldi16 c1, 0xa5b9
-    ldi16 c2, 0x9756
-    ldi16 c3, 0xbff6
-    shl16v c1, c1
+    ; d=r5, count=r5, effective count 9, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4616
+    ldi16 r5, 0xa5b9
+    ldi16 r6, 0x9756
+    ldi16 r7, 0xbff6
+    shl16v r5, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1150,15 +1150,15 @@ _start:
 .Lshl16v_15_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c1, effective count 13, pattern 2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x4647
-    ldi16 c1, 0x123d
-    ldi16 c2, 0x9793
-    ldi16 c3, 0xc039
-    shl16v c1, c1
+    ; d=r5, count=r5, effective count 13, pattern 2.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x4647
+    ldi16 r5, 0x123d
+    ldi16 r6, 0x9793
+    ldi16 r7, 0xc039
+    shl16v r5, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1202,15 +1202,15 @@ _start:
 .Lshl16v_16_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c1, effective count 1, pattern 3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4678
-    ldi16 c1, 0x8001
-    ldi16 c2, 0x97d0
-    ldi16 c3, 0xc07c
-    shl16v c1, c1
+    ; d=r5, count=r5, effective count 1, pattern 3.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4678
+    ldi16 r5, 0x8001
+    ldi16 r6, 0x97d0
+    ldi16 r7, 0xc07c
+    shl16v r5, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1254,15 +1254,15 @@ _start:
 .Lshl16v_17_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c2, effective count 6, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x46a9
-    ldi16 c1, 0xa55a
-    ldi16 c2, 0xa0d6
-    ldi16 c3, 0xc0bf
-    shl16v c1, c2
+    ; d=r5, count=r6, effective count 6, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x46a9
+    ldi16 r5, 0xa55a
+    ldi16 r6, 0xa0d6
+    ldi16 r7, 0xc0bf
+    shl16v r5, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1306,15 +1306,15 @@ _start:
 .Lshl16v_18_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c2, effective count 10, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x46da
-    ldi16 c1, 0xfedc
-    ldi16 c2, 0xa0ca
-    ldi16 c3, 0xc102
-    shl16v c1, c2
+    ; d=r5, count=r6, effective count 10, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x46da
+    ldi16 r5, 0xfedc
+    ldi16 r6, 0xa0ca
+    ldi16 r7, 0xc102
+    shl16v r5, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1358,15 +1358,15 @@ _start:
 .Lshl16v_19_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c2, effective count 14, pattern 2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x470b
-    ldi16 c1, 0x4001
-    ldi16 c2, 0xa0be
-    ldi16 c3, 0xc145
-    shl16v c1, c2
+    ; d=r5, count=r6, effective count 14, pattern 2.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x470b
+    ldi16 r5, 0x4001
+    ldi16 r6, 0xa0be
+    ldi16 r7, 0xc145
+    shl16v r5, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1410,15 +1410,15 @@ _start:
 .Lshl16v_1a_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c2, effective count 2, pattern 3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x473c
-    ldi16 c1, 0x7f01
-    ldi16 c2, 0xa0a2
-    ldi16 c3, 0xc188
-    shl16v c1, c2
+    ; d=r5, count=r6, effective count 2, pattern 3.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x473c
+    ldi16 r5, 0x7f01
+    ldi16 r6, 0xa0a2
+    ldi16 r7, 0xc188
+    shl16v r5, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1462,15 +1462,15 @@ _start:
 .Lshl16v_1b_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c3, effective count 7, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x476d
-    ldi16 c1, 0x5aa5
-    ldi16 c2, 0x9901
-    ldi16 c3, 0xa0d7
-    shl16v c1, c3
+    ; d=r5, count=r7, effective count 7, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x476d
+    ldi16 r5, 0x5aa5
+    ldi16 r6, 0x9901
+    ldi16 r7, 0xa0d7
+    shl16v r5, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1514,15 +1514,15 @@ _start:
 .Lshl16v_1c_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c3, effective count 11, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x479e
-    ldi16 c1, 0x0100
-    ldi16 c2, 0x993e
-    ldi16 c3, 0xa0cb
-    shl16v c1, c3
+    ; d=r5, count=r7, effective count 11, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x479e
+    ldi16 r5, 0x0100
+    ldi16 r6, 0x993e
+    ldi16 r7, 0xa0cb
+    shl16v r5, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1566,15 +1566,15 @@ _start:
 .Lshl16v_1d_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c3, effective count 15, pattern 2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x47cf
-    ldi16 c1, 0xc001
-    ldi16 c2, 0x997b
-    ldi16 c3, 0xa0bf
-    shl16v c1, c3
+    ; d=r5, count=r7, effective count 15, pattern 2.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x47cf
+    ldi16 r5, 0xc001
+    ldi16 r6, 0x997b
+    ldi16 r7, 0xa0bf
+    shl16v r5, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1618,15 +1618,15 @@ _start:
 .Lshl16v_1e_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c1, count=c3, effective count 3, pattern 3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4800
-    ldi16 c1, 0x0000
-    ldi16 c2, 0x99b8
-    ldi16 c3, 0xa0a3
-    shl16v c1, c3
+    ; d=r5, count=r7, effective count 3, pattern 3.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4800
+    ldi16 r5, 0x0000
+    ldi16 r6, 0x99b8
+    ldi16 r7, 0xa0a3
+    shl16v r5, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1670,15 +1670,15 @@ _start:
 .Lshl16v_1f_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c0, effective count 8, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa0d8
-    ldi16 c1, 0x7113
-    ldi16 c2, 0x1234
-    ldi16 c3, 0xc2d7
-    shl16v c2, c0
+    ; d=r6, count=r4, effective count 8, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa0d8
+    ldi16 r5, 0x7113
+    ldi16 r6, 0x1234
+    ldi16 r7, 0xc2d7
+    shl16v r6, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1722,15 +1722,15 @@ _start:
 .Lshl16v_20_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c0, effective count 12, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xa0cc
-    ldi16 c1, 0x714a
-    ldi16 c2, 0x00ff
-    ldi16 c3, 0xc31a
-    shl16v c2, c0
+    ; d=r6, count=r4, effective count 12, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xa0cc
+    ldi16 r5, 0x714a
+    ldi16 r6, 0x00ff
+    ldi16 r7, 0xc31a
+    shl16v r6, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1774,15 +1774,15 @@ _start:
 .Lshl16v_21_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c0, effective count 0, pattern 2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa0b0
-    ldi16 c1, 0x7181
-    ldi16 c2, 0x8080
-    ldi16 c3, 0xc35d
-    shl16v c2, c0
+    ; d=r6, count=r4, effective count 0, pattern 2.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa0b0
+    ldi16 r5, 0x7181
+    ldi16 r6, 0x8080
+    ldi16 r7, 0xc35d
+    shl16v r6, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1826,15 +1826,15 @@ _start:
 .Lshl16v_22_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c0, effective count 4, pattern 3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa0a4
-    ldi16 c1, 0x71b8
-    ldi16 c2, 0x0001
-    ldi16 c3, 0xc3a0
-    shl16v c2, c0
+    ; d=r6, count=r4, effective count 4, pattern 3.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa0a4
+    ldi16 r5, 0x71b8
+    ldi16 r6, 0x0001
+    ldi16 r7, 0xc3a0
+    shl16v r6, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1878,15 +1878,15 @@ _start:
 .Lshl16v_23_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c1, effective count 9, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x48f5
-    ldi16 c1, 0xa0d9
-    ldi16 c2, 0xfedc
-    ldi16 c3, 0xc3e3
-    shl16v c2, c1
+    ; d=r6, count=r5, effective count 9, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x48f5
+    ldi16 r5, 0xa0d9
+    ldi16 r6, 0xfedc
+    ldi16 r7, 0xc3e3
+    shl16v r6, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1930,15 +1930,15 @@ _start:
 .Lshl16v_24_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c1, effective count 13, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x4926
-    ldi16 c1, 0xa0cd
-    ldi16 c2, 0x4001
-    ldi16 c3, 0xc426
-    shl16v c2, c1
+    ; d=r6, count=r5, effective count 13, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x4926
+    ldi16 r5, 0xa0cd
+    ldi16 r6, 0x4001
+    ldi16 r7, 0xc426
+    shl16v r6, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -1982,15 +1982,15 @@ _start:
 .Lshl16v_25_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c1, effective count 1, pattern 2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4957
-    ldi16 c1, 0xa0b1
-    ldi16 c2, 0x7f01
-    ldi16 c3, 0xc469
-    shl16v c2, c1
+    ; d=r6, count=r5, effective count 1, pattern 2.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4957
+    ldi16 r5, 0xa0b1
+    ldi16 r6, 0x7f01
+    ldi16 r7, 0xc469
+    shl16v r6, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2034,15 +2034,15 @@ _start:
 .Lshl16v_26_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c1, effective count 5, pattern 3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x4988
-    ldi16 c1, 0xa0a5
-    ldi16 c2, 0x8001
-    ldi16 c3, 0xc4ac
-    shl16v c2, c1
+    ; d=r6, count=r5, effective count 5, pattern 3.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x4988
+    ldi16 r5, 0xa0a5
+    ldi16 r6, 0x8001
+    ldi16 r7, 0xc4ac
+    shl16v r6, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2086,15 +2086,15 @@ _start:
 .Lshl16v_27_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c2, effective count 10, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x49b9
-    ldi16 c1, 0x72cb
-    ldi16 c2, 0xa5ba
-    ldi16 c3, 0xc4ef
-    shl16v c2, c2
+    ; d=r6, count=r6, effective count 10, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x49b9
+    ldi16 r5, 0x72cb
+    ldi16 r6, 0xa5ba
+    ldi16 r7, 0xc4ef
+    shl16v r6, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2138,15 +2138,15 @@ _start:
 .Lshl16v_28_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c2, effective count 14, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x49ea
-    ldi16 c1, 0x7302
-    ldi16 c2, 0x123e
-    ldi16 c3, 0xc532
-    shl16v c2, c2
+    ; d=r6, count=r6, effective count 14, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x49ea
+    ldi16 r5, 0x7302
+    ldi16 r6, 0x123e
+    ldi16 r7, 0xc532
+    shl16v r6, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2190,15 +2190,15 @@ _start:
 .Lshl16v_29_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c2, effective count 2, pattern 2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x4a1b
-    ldi16 c1, 0x7339
-    ldi16 c2, 0x8002
-    ldi16 c3, 0xc575
-    shl16v c2, c2
+    ; d=r6, count=r6, effective count 2, pattern 2.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x4a1b
+    ldi16 r5, 0x7339
+    ldi16 r6, 0x8002
+    ldi16 r7, 0xc575
+    shl16v r6, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2242,15 +2242,15 @@ _start:
 .Lshl16v_2a_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c2, effective count 6, pattern 3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4a4c
-    ldi16 c1, 0x7370
-    ldi16 c2, 0x4006
-    ldi16 c3, 0xc5b8
-    shl16v c2, c2
+    ; d=r6, count=r6, effective count 6, pattern 3.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4a4c
+    ldi16 r5, 0x7370
+    ldi16 r6, 0x4006
+    ldi16 r7, 0xc5b8
+    shl16v r6, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2294,15 +2294,15 @@ _start:
 .Lshl16v_2b_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c3, effective count 11, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4a7d
-    ldi16 c1, 0x73a7
-    ldi16 c2, 0x00ff
-    ldi16 c3, 0xa0db
-    shl16v c2, c3
+    ; d=r6, count=r7, effective count 11, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4a7d
+    ldi16 r5, 0x73a7
+    ldi16 r6, 0x00ff
+    ldi16 r7, 0xa0db
+    shl16v r6, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2346,15 +2346,15 @@ _start:
 .Lshl16v_2c_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c3, effective count 15, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x4aae
-    ldi16 c1, 0x73de
-    ldi16 c2, 0x8080
-    ldi16 c3, 0xa0cf
-    shl16v c2, c3
+    ; d=r6, count=r7, effective count 15, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x4aae
+    ldi16 r5, 0x73de
+    ldi16 r6, 0x8080
+    ldi16 r7, 0xa0cf
+    shl16v r6, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2398,15 +2398,15 @@ _start:
 .Lshl16v_2d_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c3, effective count 3, pattern 2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4adf
-    ldi16 c1, 0x7415
-    ldi16 c2, 0x0001
-    ldi16 c3, 0xa0b3
-    shl16v c2, c3
+    ; d=r6, count=r7, effective count 3, pattern 2.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4adf
+    ldi16 r5, 0x7415
+    ldi16 r6, 0x0001
+    ldi16 r7, 0xa0b3
+    shl16v r6, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2450,15 +2450,15 @@ _start:
 .Lshl16v_2e_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c2, count=c3, effective count 7, pattern 3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x4b10
-    ldi16 c1, 0x744c
-    ldi16 c2, 0x8000
-    ldi16 c3, 0xa0a7
-    shl16v c2, c3
+    ; d=r6, count=r7, effective count 7, pattern 3.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x4b10
+    ldi16 r5, 0x744c
+    ldi16 r6, 0x8000
+    ldi16 r7, 0xa0a7
+    shl16v r6, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2502,15 +2502,15 @@ _start:
 .Lshl16v_2f_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c0, effective count 12, pattern 0.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0xa0dc
-    ldi16 c1, 0x7483
-    ldi16 c2, 0x9dc5
-    ldi16 c3, 0x4001
-    shl16v c3, c0
+    ; d=r7, count=r4, effective count 12, pattern 0.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0xa0dc
+    ldi16 r5, 0x7483
+    ldi16 r6, 0x9dc5
+    ldi16 r7, 0x4001
+    shl16v r7, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2554,15 +2554,15 @@ _start:
 .Lshl16v_30_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c0, effective count 0, pattern 1.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xa0c0
-    ldi16 c1, 0x74ba
-    ldi16 c2, 0x9e02
-    ldi16 c3, 0x7f01
-    shl16v c3, c0
+    ; d=r7, count=r4, effective count 0, pattern 1.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xa0c0
+    ldi16 r5, 0x74ba
+    ldi16 r6, 0x9e02
+    ldi16 r7, 0x7f01
+    shl16v r7, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2606,15 +2606,15 @@ _start:
 .Lshl16v_31_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c0, effective count 4, pattern 2.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xa0b4
-    ldi16 c1, 0x74f1
-    ldi16 c2, 0x9e3f
-    ldi16 c3, 0x8001
-    shl16v c3, c0
+    ; d=r7, count=r4, effective count 4, pattern 2.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xa0b4
+    ldi16 r5, 0x74f1
+    ldi16 r6, 0x9e3f
+    ldi16 r7, 0x8001
+    shl16v r7, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2658,15 +2658,15 @@ _start:
 .Lshl16v_32_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c0, effective count 8, pattern 3.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0xa0a8
-    ldi16 c1, 0x7528
-    ldi16 c2, 0x9e7c
-    ldi16 c3, 0xffff
-    shl16v c3, c0
+    ; d=r7, count=r4, effective count 8, pattern 3.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0xa0a8
+    ldi16 r5, 0x7528
+    ldi16 r6, 0x9e7c
+    ldi16 r7, 0xffff
+    shl16v r7, r4
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2710,15 +2710,15 @@ _start:
 .Lshl16v_33_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c1, effective count 13, pattern 0.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x4c05
-    ldi16 c1, 0xa0dd
-    ldi16 c2, 0x9eb9
-    ldi16 c3, 0xc001
-    shl16v c3, c1
+    ; d=r7, count=r5, effective count 13, pattern 0.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x4c05
+    ldi16 r5, 0xa0dd
+    ldi16 r6, 0x9eb9
+    ldi16 r7, 0xc001
+    shl16v r7, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2762,15 +2762,15 @@ _start:
 .Lshl16v_34_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c1, effective count 1, pattern 1.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4c36
-    ldi16 c1, 0xa0c1
-    ldi16 c2, 0x9ef6
-    ldi16 c3, 0x0000
-    shl16v c3, c1
+    ; d=r7, count=r5, effective count 1, pattern 1.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4c36
+    ldi16 r5, 0xa0c1
+    ldi16 r6, 0x9ef6
+    ldi16 r7, 0x0000
+    shl16v r7, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2814,15 +2814,15 @@ _start:
 .Lshl16v_35_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c1, effective count 5, pattern 2.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x4c67
-    ldi16 c1, 0xa0b5
-    ldi16 c2, 0x9f33
-    ldi16 c3, 0x7fff
-    shl16v c3, c1
+    ; d=r7, count=r5, effective count 5, pattern 2.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x4c67
+    ldi16 r5, 0xa0b5
+    ldi16 r6, 0x9f33
+    ldi16 r7, 0x7fff
+    shl16v r7, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2866,15 +2866,15 @@ _start:
 .Lshl16v_36_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c1, effective count 9, pattern 3.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4c98
-    ldi16 c1, 0xa0a9
-    ldi16 c2, 0x9f70
-    ldi16 c3, 0xa55a
-    shl16v c3, c1
+    ; d=r7, count=r5, effective count 9, pattern 3.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4c98
+    ldi16 r5, 0xa0a9
+    ldi16 r6, 0x9f70
+    ldi16 r7, 0xa55a
+    shl16v r7, r5
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2918,15 +2918,15 @@ _start:
 .Lshl16v_37_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c2, effective count 14, pattern 0.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4cc9
-    ldi16 c1, 0x763b
-    ldi16 c2, 0xa0de
-    ldi16 c3, 0x8080
-    shl16v c3, c2
+    ; d=r7, count=r6, effective count 14, pattern 0.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4cc9
+    ldi16 r5, 0x763b
+    ldi16 r6, 0xa0de
+    ldi16 r7, 0x8080
+    shl16v r7, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -2970,15 +2970,15 @@ _start:
 .Lshl16v_38_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c2, effective count 2, pattern 1.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x4cfa
-    ldi16 c1, 0x7672
-    ldi16 c2, 0xa0c2
-    ldi16 c3, 0x0001
-    shl16v c3, c2
+    ; d=r7, count=r6, effective count 2, pattern 1.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x4cfa
+    ldi16 r5, 0x7672
+    ldi16 r6, 0xa0c2
+    ldi16 r7, 0x0001
+    shl16v r7, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3022,15 +3022,15 @@ _start:
 .Lshl16v_39_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c2, effective count 6, pattern 2.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4d2b
-    ldi16 c1, 0x76a9
-    ldi16 c2, 0xa0b6
-    ldi16 c3, 0x8000
-    shl16v c3, c2
+    ; d=r7, count=r6, effective count 6, pattern 2.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4d2b
+    ldi16 r5, 0x76a9
+    ldi16 r6, 0xa0b6
+    ldi16 r7, 0x8000
+    shl16v r7, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3074,15 +3074,15 @@ _start:
 .Lshl16v_3a_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c2, effective count 10, pattern 3.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x4d5c
-    ldi16 c1, 0x76e0
-    ldi16 c2, 0xa0aa
-    ldi16 c3, 0x5aa5
-    shl16v c3, c2
+    ; d=r7, count=r6, effective count 10, pattern 3.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x4d5c
+    ldi16 r5, 0x76e0
+    ldi16 r6, 0xa0aa
+    ldi16 r7, 0x5aa5
+    shl16v r7, r6
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3126,15 +3126,15 @@ _start:
 .Lshl16v_3b_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c3, effective count 15, pattern 0.
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x4d8d
-    ldi16 c1, 0x7717
-    ldi16 c2, 0xa0a1
-    ldi16 c3, 0x123f
-    shl16v c3, c3
+    ; d=r7, count=r7, effective count 15, pattern 0.
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x4d8d
+    ldi16 r5, 0x7717
+    ldi16 r6, 0xa0a1
+    ldi16 r7, 0x123f
+    shl16v r7, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3178,15 +3178,15 @@ _start:
 .Lshl16v_3c_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c3, effective count 3, pattern 1.
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4dbe
-    ldi16 c1, 0x774e
-    ldi16 c2, 0xa0de
-    ldi16 c3, 0x8003
-    shl16v c3, c3
+    ; d=r7, count=r7, effective count 3, pattern 1.
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4dbe
+    ldi16 r5, 0x774e
+    ldi16 r6, 0xa0de
+    ldi16 r7, 0x8003
+    shl16v r7, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3230,15 +3230,15 @@ _start:
 .Lshl16v_3d_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c3, effective count 7, pattern 2.
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x4def
-    ldi16 c1, 0x7785
-    ldi16 c2, 0xa11b
-    ldi16 c3, 0x4007
-    shl16v c3, c3
+    ; d=r7, count=r7, effective count 7, pattern 2.
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x4def
+    ldi16 r5, 0x7785
+    ldi16 r6, 0xa11b
+    ldi16 r7, 0x4007
+    shl16v r7, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6
@@ -3282,15 +3282,15 @@ _start:
 .Lshl16v_3e_SGE_done:
     fa_emit_char '\n'
 
-    ; d=c3, count=c3, effective count 11, pattern 3.
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x4e20
-    ldi16 c1, 0x77bc
-    ldi16 c2, 0xa158
-    ldi16 c3, 0xa5bb
-    shl16v c3, c3
+    ; d=r7, count=r7, effective count 11, pattern 3.
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x4e20
+    ldi16 r5, 0x77bc
+    ldi16 r6, 0xa158
+    ldi16 r7, 0xa5bb
+    shl16v r7, r7
     mov r0, r4
     mov r1, r5
     mov r2, r6

@@ -7,26 +7,26 @@
 _start:
 
     ; getsp r0, pattern 0; expected SP 0x0920; marker r1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0xb000
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0xb000
     push16 r4
-    ldi16 c0, 0x4e01
+    ldi16 r4, 0x4e01
     push16 r4
-    ldi16 c0, 0x7d57
+    ldi16 r4, 0x7d57
     push16 r4
-    ldi16 c0, 0x7e7a
+    ldi16 r4, 0x7e7a
     push16 r4
-    ldi16 c0, 0x7f9d
+    ldi16 r4, 0x7f9d
     push16 r4
-    ldi16 c0, 0x80c0
+    ldi16 r4, 0x80c0
     push16 r4
-    ldi16 c0, 0x81e3
+    ldi16 r4, 0x81e3
     push16 r4
-    ldi16 c0, 0x8306
+    ldi16 r4, 0x8306
     push16 r4
     pop16 r7
     pop16 r6
@@ -47,8 +47,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x091e
-    ld16 c1, [c0]
+    ldi16 r4, 0x091e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -106,26 +106,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r0, pattern 1; expected SP 0x0928; marker r2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0xb02d
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0xb02d
     push16 r4
-    ldi16 c0, 0x7c69
+    ldi16 r4, 0x7c69
     push16 r4
-    ldi16 c0, 0x4f49
+    ldi16 r4, 0x4f49
     push16 r4
-    ldi16 c0, 0x7eaf
+    ldi16 r4, 0x7eaf
     push16 r4
-    ldi16 c0, 0x7fd2
+    ldi16 r4, 0x7fd2
     push16 r4
-    ldi16 c0, 0x80f5
+    ldi16 r4, 0x80f5
     push16 r4
-    ldi16 c0, 0x8218
+    ldi16 r4, 0x8218
     push16 r4
-    ldi16 c0, 0x833b
+    ldi16 r4, 0x833b
     push16 r4
     pop16 r7
     pop16 r6
@@ -146,8 +146,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0926
-    ld16 c1, [c0]
+    ldi16 r4, 0x0926
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -205,26 +205,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r1, pattern 0; expected SP 0x0930; marker r4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x7b7b
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x7b7b
     push16 r4
-    ldi16 c0, 0xb05b
+    ldi16 r4, 0xb05b
     push16 r4
-    ldi16 c0, 0x7dc1
+    ldi16 r4, 0x7dc1
     push16 r4
-    ldi16 c0, 0x7ee4
+    ldi16 r4, 0x7ee4
     push16 r4
-    ldi16 c0, 0x5192
+    ldi16 r4, 0x5192
     push16 r4
-    ldi16 c0, 0x812a
+    ldi16 r4, 0x812a
     push16 r4
-    ldi16 c0, 0x824d
+    ldi16 r4, 0x824d
     push16 r4
-    ldi16 c0, 0x8370
+    ldi16 r4, 0x8370
     push16 r4
     pop16 r7
     pop16 r6
@@ -245,8 +245,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x092e
-    ld16 c1, [c0]
+    ldi16 r4, 0x092e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -304,26 +304,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r1, pattern 1; expected SP 0x0938; marker r5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x7bb0
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x7bb0
     push16 r4
-    ldi16 c0, 0xb088
+    ldi16 r4, 0xb088
     push16 r4
-    ldi16 c0, 0x7df6
+    ldi16 r4, 0x7df6
     push16 r4
-    ldi16 c0, 0x7f19
+    ldi16 r4, 0x7f19
     push16 r4
-    ldi16 c0, 0x803c
+    ldi16 r4, 0x803c
     push16 r4
-    ldi16 c0, 0x52da
+    ldi16 r4, 0x52da
     push16 r4
-    ldi16 c0, 0x8282
+    ldi16 r4, 0x8282
     push16 r4
-    ldi16 c0, 0x83a5
+    ldi16 r4, 0x83a5
     push16 r4
     pop16 r7
     pop16 r6
@@ -344,8 +344,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0936
-    ld16 c1, [c0]
+    ldi16 r4, 0x0936
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -403,26 +403,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r2, pattern 0; expected SP 0x0940; marker r7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7be5
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7be5
     push16 r4
-    ldi16 c0, 0x7d08
+    ldi16 r4, 0x7d08
     push16 r4
-    ldi16 c0, 0xb0b6
+    ldi16 r4, 0xb0b6
     push16 r4
-    ldi16 c0, 0x7f4e
+    ldi16 r4, 0x7f4e
     push16 r4
-    ldi16 c0, 0x8071
+    ldi16 r4, 0x8071
     push16 r4
-    ldi16 c0, 0x8194
+    ldi16 r4, 0x8194
     push16 r4
-    ldi16 c0, 0x82b7
+    ldi16 r4, 0x82b7
     push16 r4
-    ldi16 c0, 0x5523
+    ldi16 r4, 0x5523
     push16 r4
     pop16 r7
     pop16 r6
@@ -443,8 +443,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x093e
-    ld16 c1, [c0]
+    ldi16 r4, 0x093e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -502,26 +502,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r2, pattern 1; expected SP 0x0948; marker r0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4e63
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4e63
     push16 r4
-    ldi16 c0, 0x7d3d
+    ldi16 r4, 0x7d3d
     push16 r4
-    ldi16 c0, 0xb0e3
+    ldi16 r4, 0xb0e3
     push16 r4
-    ldi16 c0, 0x7f83
+    ldi16 r4, 0x7f83
     push16 r4
-    ldi16 c0, 0x80a6
+    ldi16 r4, 0x80a6
     push16 r4
-    ldi16 c0, 0x81c9
+    ldi16 r4, 0x81c9
     push16 r4
-    ldi16 c0, 0x82ec
+    ldi16 r4, 0x82ec
     push16 r4
-    ldi16 c0, 0x840f
+    ldi16 r4, 0x840f
     push16 r4
     pop16 r7
     pop16 r6
@@ -542,8 +542,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0946
-    ld16 c1, [c0]
+    ldi16 r4, 0x0946
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -601,26 +601,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r3, pattern 0; expected SP 0x0950; marker r2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x7c4f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x7c4f
     push16 r4
-    ldi16 c0, 0x7d72
+    ldi16 r4, 0x7d72
     push16 r4
-    ldi16 c0, 0x50ac
+    ldi16 r4, 0x50ac
     push16 r4
-    ldi16 c0, 0xb111
+    ldi16 r4, 0xb111
     push16 r4
-    ldi16 c0, 0x80db
+    ldi16 r4, 0x80db
     push16 r4
-    ldi16 c0, 0x81fe
+    ldi16 r4, 0x81fe
     push16 r4
-    ldi16 c0, 0x8321
+    ldi16 r4, 0x8321
     push16 r4
-    ldi16 c0, 0x8444
+    ldi16 r4, 0x8444
     push16 r4
     pop16 r7
     pop16 r6
@@ -641,8 +641,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x094e
-    ld16 c1, [c0]
+    ldi16 r4, 0x094e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -700,26 +700,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r3, pattern 1; expected SP 0x0958; marker r4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7c84
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7c84
     push16 r4
-    ldi16 c0, 0x7da7
+    ldi16 r4, 0x7da7
     push16 r4
-    ldi16 c0, 0x7eca
+    ldi16 r4, 0x7eca
     push16 r4
-    ldi16 c0, 0xb13e
+    ldi16 r4, 0xb13e
     push16 r4
-    ldi16 c0, 0x52f5
+    ldi16 r4, 0x52f5
     push16 r4
-    ldi16 c0, 0x8233
+    ldi16 r4, 0x8233
     push16 r4
-    ldi16 c0, 0x8356
+    ldi16 r4, 0x8356
     push16 r4
-    ldi16 c0, 0x8479
+    ldi16 r4, 0x8479
     push16 r4
     pop16 r7
     pop16 r6
@@ -740,8 +740,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0956
-    ld16 c1, [c0]
+    ldi16 r4, 0x0956
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -799,26 +799,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r4, pattern 0; expected SP 0x0960; marker r5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x7cb9
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x7cb9
     push16 r4
-    ldi16 c0, 0x7ddc
+    ldi16 r4, 0x7ddc
     push16 r4
-    ldi16 c0, 0x7eff
+    ldi16 r4, 0x7eff
     push16 r4
-    ldi16 c0, 0x8022
+    ldi16 r4, 0x8022
     push16 r4
-    ldi16 c0, 0xb16c
+    ldi16 r4, 0xb16c
     push16 r4
-    ldi16 c0, 0x543d
+    ldi16 r4, 0x543d
     push16 r4
-    ldi16 c0, 0x838b
+    ldi16 r4, 0x838b
     push16 r4
-    ldi16 c0, 0x84ae
+    ldi16 r4, 0x84ae
     push16 r4
     pop16 r7
     pop16 r6
@@ -839,8 +839,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x095e
-    ld16 c1, [c0]
+    ldi16 r4, 0x095e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -898,26 +898,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r4, pattern 1; expected SP 0x0968; marker r6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x7cee
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x7cee
     push16 r4
-    ldi16 c0, 0x7e11
+    ldi16 r4, 0x7e11
     push16 r4
-    ldi16 c0, 0x7f34
+    ldi16 r4, 0x7f34
     push16 r4
-    ldi16 c0, 0x8057
+    ldi16 r4, 0x8057
     push16 r4
-    ldi16 c0, 0xb199
+    ldi16 r4, 0xb199
     push16 r4
-    ldi16 c0, 0x829d
+    ldi16 r4, 0x829d
     push16 r4
-    ldi16 c0, 0x5585
+    ldi16 r4, 0x5585
     push16 r4
-    ldi16 c0, 0x84e3
+    ldi16 r4, 0x84e3
     push16 r4
     pop16 r7
     pop16 r6
@@ -938,8 +938,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0966
-    ld16 c1, [c0]
+    ldi16 r4, 0x0966
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -997,26 +997,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r5, pattern 0; expected SP 0x0970; marker r0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x4fc6
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x4fc6
     push16 r4
-    ldi16 c0, 0x7e46
+    ldi16 r4, 0x7e46
     push16 r4
-    ldi16 c0, 0x7f69
+    ldi16 r4, 0x7f69
     push16 r4
-    ldi16 c0, 0x808c
+    ldi16 r4, 0x808c
     push16 r4
-    ldi16 c0, 0x81af
+    ldi16 r4, 0x81af
     push16 r4
-    ldi16 c0, 0xb1c7
+    ldi16 r4, 0xb1c7
     push16 r4
-    ldi16 c0, 0x83f5
+    ldi16 r4, 0x83f5
     push16 r4
-    ldi16 c0, 0x8518
+    ldi16 r4, 0x8518
     push16 r4
     pop16 r7
     pop16 r6
@@ -1037,8 +1037,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x096e
-    ld16 c1, [c0]
+    ldi16 r4, 0x096e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1096,26 +1096,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r5, pattern 1; expected SP 0x0978; marker r1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x7d58
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x7d58
     push16 r4
-    ldi16 c0, 0x510e
+    ldi16 r4, 0x510e
     push16 r4
-    ldi16 c0, 0x7f9e
+    ldi16 r4, 0x7f9e
     push16 r4
-    ldi16 c0, 0x80c1
+    ldi16 r4, 0x80c1
     push16 r4
-    ldi16 c0, 0x81e4
+    ldi16 r4, 0x81e4
     push16 r4
-    ldi16 c0, 0xb1f4
+    ldi16 r4, 0xb1f4
     push16 r4
-    ldi16 c0, 0x842a
+    ldi16 r4, 0x842a
     push16 r4
-    ldi16 c0, 0x854d
+    ldi16 r4, 0x854d
     push16 r4
     pop16 r7
     pop16 r6
@@ -1136,8 +1136,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0976
-    ld16 c1, [c0]
+    ldi16 r4, 0x0976
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1195,26 +1195,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r6, pattern 0; expected SP 0x0980; marker r3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7d8d
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7d8d
     push16 r4
-    ldi16 c0, 0x7eb0
+    ldi16 r4, 0x7eb0
     push16 r4
-    ldi16 c0, 0x7fd3
+    ldi16 r4, 0x7fd3
     push16 r4
-    ldi16 c0, 0x5357
+    ldi16 r4, 0x5357
     push16 r4
-    ldi16 c0, 0x8219
+    ldi16 r4, 0x8219
     push16 r4
-    ldi16 c0, 0x833c
+    ldi16 r4, 0x833c
     push16 r4
-    ldi16 c0, 0xb222
+    ldi16 r4, 0xb222
     push16 r4
-    ldi16 c0, 0x8582
+    ldi16 r4, 0x8582
     push16 r4
     pop16 r7
     pop16 r6
@@ -1235,8 +1235,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x097e
-    ld16 c1, [c0]
+    ldi16 r4, 0x097e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1294,26 +1294,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r6, pattern 1; expected SP 0x0988; marker r4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x7dc2
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x7dc2
     push16 r4
-    ldi16 c0, 0x7ee5
+    ldi16 r4, 0x7ee5
     push16 r4
-    ldi16 c0, 0x8008
+    ldi16 r4, 0x8008
     push16 r4
-    ldi16 c0, 0x812b
+    ldi16 r4, 0x812b
     push16 r4
-    ldi16 c0, 0x549f
+    ldi16 r4, 0x549f
     push16 r4
-    ldi16 c0, 0x8371
+    ldi16 r4, 0x8371
     push16 r4
-    ldi16 c0, 0xb24f
+    ldi16 r4, 0xb24f
     push16 r4
-    ldi16 c0, 0x85b7
+    ldi16 r4, 0x85b7
     push16 r4
     pop16 r7
     pop16 r6
@@ -1334,8 +1334,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0986
-    ld16 c1, [c0]
+    ldi16 r4, 0x0986
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1393,26 +1393,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r7, pattern 0; expected SP 0x0990; marker r6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x7df7
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x7df7
     push16 r4
-    ldi16 c0, 0x7f1a
+    ldi16 r4, 0x7f1a
     push16 r4
-    ldi16 c0, 0x803d
+    ldi16 r4, 0x803d
     push16 r4
-    ldi16 c0, 0x8160
+    ldi16 r4, 0x8160
     push16 r4
-    ldi16 c0, 0x8283
+    ldi16 r4, 0x8283
     push16 r4
-    ldi16 c0, 0x83a6
+    ldi16 r4, 0x83a6
     push16 r4
-    ldi16 c0, 0x56e8
+    ldi16 r4, 0x56e8
     push16 r4
-    ldi16 c0, 0xb27d
+    ldi16 r4, 0xb27d
     push16 r4
     pop16 r7
     pop16 r6
@@ -1433,8 +1433,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x098e
-    ld16 c1, [c0]
+    ldi16 r4, 0x098e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1492,26 +1492,26 @@ _start:
     f1u_emit_char '\n'
 
     ; getsp r7, pattern 1; expected SP 0x0998; marker r0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x5129
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x5129
     push16 r4
-    ldi16 c0, 0x7f4f
+    ldi16 r4, 0x7f4f
     push16 r4
-    ldi16 c0, 0x8072
+    ldi16 r4, 0x8072
     push16 r4
-    ldi16 c0, 0x8195
+    ldi16 r4, 0x8195
     push16 r4
-    ldi16 c0, 0x82b8
+    ldi16 r4, 0x82b8
     push16 r4
-    ldi16 c0, 0x83db
+    ldi16 r4, 0x83db
     push16 r4
-    ldi16 c0, 0x84fe
+    ldi16 r4, 0x84fe
     push16 r4
-    ldi16 c0, 0xb2aa
+    ldi16 r4, 0xb2aa
     push16 r4
     pop16 r7
     pop16 r6
@@ -1532,8 +1532,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0996
-    ld16 c1, [c0]
+    ldi16 r4, 0x0996
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1591,26 +1591,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r0, pattern 0; expected SP 0x0920; marker r1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x0920
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x0920
     push16 r4
-    ldi16 c0, 0x5271
+    ldi16 r4, 0x5271
     push16 r4
-    ldi16 c0, 0x80a7
+    ldi16 r4, 0x80a7
     push16 r4
-    ldi16 c0, 0x81ca
+    ldi16 r4, 0x81ca
     push16 r4
-    ldi16 c0, 0x82ed
+    ldi16 r4, 0x82ed
     push16 r4
-    ldi16 c0, 0x8410
+    ldi16 r4, 0x8410
     push16 r4
-    ldi16 c0, 0x8533
+    ldi16 r4, 0x8533
     push16 r4
-    ldi16 c0, 0x8656
+    ldi16 r4, 0x8656
     push16 r4
     pop16 r7
     pop16 r6
@@ -1630,8 +1630,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x091e
-    ld16 c1, [c0]
+    ldi16 r4, 0x091e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1689,26 +1689,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r0, pattern 1; expected SP 0x0928; marker r2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x0928
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x0928
     push16 r4
-    ldi16 c0, 0x7fb9
+    ldi16 r4, 0x7fb9
     push16 r4
-    ldi16 c0, 0x53b9
+    ldi16 r4, 0x53b9
     push16 r4
-    ldi16 c0, 0x81ff
+    ldi16 r4, 0x81ff
     push16 r4
-    ldi16 c0, 0x8322
+    ldi16 r4, 0x8322
     push16 r4
-    ldi16 c0, 0x8445
+    ldi16 r4, 0x8445
     push16 r4
-    ldi16 c0, 0x8568
+    ldi16 r4, 0x8568
     push16 r4
-    ldi16 c0, 0x868b
+    ldi16 r4, 0x868b
     push16 r4
     pop16 r7
     pop16 r6
@@ -1728,8 +1728,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0926
-    ld16 c1, [c0]
+    ldi16 r4, 0x0926
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1787,26 +1787,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r1, pattern 0; expected SP 0x0930; marker r4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x7ecb
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x7ecb
     push16 r4
-    ldi16 c0, 0x0930
+    ldi16 r4, 0x0930
     push16 r4
-    ldi16 c0, 0x8111
+    ldi16 r4, 0x8111
     push16 r4
-    ldi16 c0, 0x8234
+    ldi16 r4, 0x8234
     push16 r4
-    ldi16 c0, 0x5602
+    ldi16 r4, 0x5602
     push16 r4
-    ldi16 c0, 0x847a
+    ldi16 r4, 0x847a
     push16 r4
-    ldi16 c0, 0x859d
+    ldi16 r4, 0x859d
     push16 r4
-    ldi16 c0, 0x86c0
+    ldi16 r4, 0x86c0
     push16 r4
     pop16 r7
     pop16 r6
@@ -1826,8 +1826,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x092e
-    ld16 c1, [c0]
+    ldi16 r4, 0x092e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1885,26 +1885,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r1, pattern 1; expected SP 0x0938; marker r5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x7f00
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x7f00
     push16 r4
-    ldi16 c0, 0x0938
+    ldi16 r4, 0x0938
     push16 r4
-    ldi16 c0, 0x8146
+    ldi16 r4, 0x8146
     push16 r4
-    ldi16 c0, 0x8269
+    ldi16 r4, 0x8269
     push16 r4
-    ldi16 c0, 0x838c
+    ldi16 r4, 0x838c
     push16 r4
-    ldi16 c0, 0x574a
+    ldi16 r4, 0x574a
     push16 r4
-    ldi16 c0, 0x85d2
+    ldi16 r4, 0x85d2
     push16 r4
-    ldi16 c0, 0x86f5
+    ldi16 r4, 0x86f5
     push16 r4
     pop16 r7
     pop16 r6
@@ -1924,8 +1924,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0936
-    ld16 c1, [c0]
+    ldi16 r4, 0x0936
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -1983,26 +1983,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r2, pattern 0; expected SP 0x0940; marker r7.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7f35
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7f35
     push16 r4
-    ldi16 c0, 0x8058
+    ldi16 r4, 0x8058
     push16 r4
-    ldi16 c0, 0x0940
+    ldi16 r4, 0x0940
     push16 r4
-    ldi16 c0, 0x829e
+    ldi16 r4, 0x829e
     push16 r4
-    ldi16 c0, 0x83c1
+    ldi16 r4, 0x83c1
     push16 r4
-    ldi16 c0, 0x84e4
+    ldi16 r4, 0x84e4
     push16 r4
-    ldi16 c0, 0x8607
+    ldi16 r4, 0x8607
     push16 r4
-    ldi16 c0, 0x5993
+    ldi16 r4, 0x5993
     push16 r4
     pop16 r7
     pop16 r6
@@ -2022,8 +2022,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x093e
-    ld16 c1, [c0]
+    ldi16 r4, 0x093e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2081,26 +2081,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r2, pattern 1; expected SP 0x0948; marker r0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x52d3
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x52d3
     push16 r4
-    ldi16 c0, 0x808d
+    ldi16 r4, 0x808d
     push16 r4
-    ldi16 c0, 0x0948
+    ldi16 r4, 0x0948
     push16 r4
-    ldi16 c0, 0x82d3
+    ldi16 r4, 0x82d3
     push16 r4
-    ldi16 c0, 0x83f6
+    ldi16 r4, 0x83f6
     push16 r4
-    ldi16 c0, 0x8519
+    ldi16 r4, 0x8519
     push16 r4
-    ldi16 c0, 0x863c
+    ldi16 r4, 0x863c
     push16 r4
-    ldi16 c0, 0x875f
+    ldi16 r4, 0x875f
     push16 r4
     pop16 r7
     pop16 r6
@@ -2120,8 +2120,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0946
-    ld16 c1, [c0]
+    ldi16 r4, 0x0946
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2179,26 +2179,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r3, pattern 0; expected SP 0x0950; marker r2.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x7f9f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x7f9f
     push16 r4
-    ldi16 c0, 0x80c2
+    ldi16 r4, 0x80c2
     push16 r4
-    ldi16 c0, 0x551c
+    ldi16 r4, 0x551c
     push16 r4
-    ldi16 c0, 0x0950
+    ldi16 r4, 0x0950
     push16 r4
-    ldi16 c0, 0x842b
+    ldi16 r4, 0x842b
     push16 r4
-    ldi16 c0, 0x854e
+    ldi16 r4, 0x854e
     push16 r4
-    ldi16 c0, 0x8671
+    ldi16 r4, 0x8671
     push16 r4
-    ldi16 c0, 0x8794
+    ldi16 r4, 0x8794
     push16 r4
     pop16 r7
     pop16 r6
@@ -2218,8 +2218,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x094e
-    ld16 c1, [c0]
+    ldi16 r4, 0x094e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2277,26 +2277,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r3, pattern 1; expected SP 0x0958; marker r4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x7fd4
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x7fd4
     push16 r4
-    ldi16 c0, 0x80f7
+    ldi16 r4, 0x80f7
     push16 r4
-    ldi16 c0, 0x821a
+    ldi16 r4, 0x821a
     push16 r4
-    ldi16 c0, 0x0958
+    ldi16 r4, 0x0958
     push16 r4
-    ldi16 c0, 0x5765
+    ldi16 r4, 0x5765
     push16 r4
-    ldi16 c0, 0x8583
+    ldi16 r4, 0x8583
     push16 r4
-    ldi16 c0, 0x86a6
+    ldi16 r4, 0x86a6
     push16 r4
-    ldi16 c0, 0x87c9
+    ldi16 r4, 0x87c9
     push16 r4
     pop16 r7
     pop16 r6
@@ -2316,8 +2316,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0956
-    ld16 c1, [c0]
+    ldi16 r4, 0x0956
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2375,26 +2375,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r4, pattern 0; expected SP 0x0960; marker r5.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x8009
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x8009
     push16 r4
-    ldi16 c0, 0x812c
+    ldi16 r4, 0x812c
     push16 r4
-    ldi16 c0, 0x824f
+    ldi16 r4, 0x824f
     push16 r4
-    ldi16 c0, 0x8372
+    ldi16 r4, 0x8372
     push16 r4
-    ldi16 c0, 0x0960
+    ldi16 r4, 0x0960
     push16 r4
-    ldi16 c0, 0x58ad
+    ldi16 r4, 0x58ad
     push16 r4
-    ldi16 c0, 0x86db
+    ldi16 r4, 0x86db
     push16 r4
-    ldi16 c0, 0x87fe
+    ldi16 r4, 0x87fe
     push16 r4
     pop16 r7
     pop16 r6
@@ -2414,8 +2414,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x095e
-    ld16 c1, [c0]
+    ldi16 r4, 0x095e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2473,26 +2473,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r4, pattern 1; expected SP 0x0968; marker r6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x803e
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x803e
     push16 r4
-    ldi16 c0, 0x8161
+    ldi16 r4, 0x8161
     push16 r4
-    ldi16 c0, 0x8284
+    ldi16 r4, 0x8284
     push16 r4
-    ldi16 c0, 0x83a7
+    ldi16 r4, 0x83a7
     push16 r4
-    ldi16 c0, 0x0968
+    ldi16 r4, 0x0968
     push16 r4
-    ldi16 c0, 0x85ed
+    ldi16 r4, 0x85ed
     push16 r4
-    ldi16 c0, 0x59f5
+    ldi16 r4, 0x59f5
     push16 r4
-    ldi16 c0, 0x8833
+    ldi16 r4, 0x8833
     push16 r4
     pop16 r7
     pop16 r6
@@ -2512,8 +2512,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0966
-    ld16 c1, [c0]
+    ldi16 r4, 0x0966
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2571,26 +2571,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r5, pattern 0; expected SP 0x0970; marker r0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x5436
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x5436
     push16 r4
-    ldi16 c0, 0x8196
+    ldi16 r4, 0x8196
     push16 r4
-    ldi16 c0, 0x82b9
+    ldi16 r4, 0x82b9
     push16 r4
-    ldi16 c0, 0x83dc
+    ldi16 r4, 0x83dc
     push16 r4
-    ldi16 c0, 0x84ff
+    ldi16 r4, 0x84ff
     push16 r4
-    ldi16 c0, 0x0970
+    ldi16 r4, 0x0970
     push16 r4
-    ldi16 c0, 0x8745
+    ldi16 r4, 0x8745
     push16 r4
-    ldi16 c0, 0x8868
+    ldi16 r4, 0x8868
     push16 r4
     pop16 r7
     pop16 r6
@@ -2610,8 +2610,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x096e
-    ld16 c1, [c0]
+    ldi16 r4, 0x096e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2669,26 +2669,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r5, pattern 1; expected SP 0x0978; marker r1.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x1357
-    ldi16 c3, 0x1357
-    cmp c2, c3
-    ldi16 c0, 0x80a8
+    ldi16 r6, 0x1357
+    ldi16 r7, 0x1357
+    cmp r6, r7
+    ldi16 r4, 0x80a8
     push16 r4
-    ldi16 c0, 0x557e
+    ldi16 r4, 0x557e
     push16 r4
-    ldi16 c0, 0x82ee
+    ldi16 r4, 0x82ee
     push16 r4
-    ldi16 c0, 0x8411
+    ldi16 r4, 0x8411
     push16 r4
-    ldi16 c0, 0x8534
+    ldi16 r4, 0x8534
     push16 r4
-    ldi16 c0, 0x0978
+    ldi16 r4, 0x0978
     push16 r4
-    ldi16 c0, 0x877a
+    ldi16 r4, 0x877a
     push16 r4
-    ldi16 c0, 0x889d
+    ldi16 r4, 0x889d
     push16 r4
     pop16 r7
     pop16 r6
@@ -2708,8 +2708,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0976
-    ld16 c1, [c0]
+    ldi16 r4, 0x0976
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2767,26 +2767,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r6, pattern 0; expected SP 0x0980; marker r3.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x80dd
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x80dd
     push16 r4
-    ldi16 c0, 0x8200
+    ldi16 r4, 0x8200
     push16 r4
-    ldi16 c0, 0x8323
+    ldi16 r4, 0x8323
     push16 r4
-    ldi16 c0, 0x57c7
+    ldi16 r4, 0x57c7
     push16 r4
-    ldi16 c0, 0x8569
+    ldi16 r4, 0x8569
     push16 r4
-    ldi16 c0, 0x868c
+    ldi16 r4, 0x868c
     push16 r4
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     push16 r4
-    ldi16 c0, 0x88d2
+    ldi16 r4, 0x88d2
     push16 r4
     pop16 r7
     pop16 r6
@@ -2806,8 +2806,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x097e
-    ld16 c1, [c0]
+    ldi16 r4, 0x097e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2865,26 +2865,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r6, pattern 1; expected SP 0x0988; marker r4.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x7fff
-    ldi16 c3, 0x8000
-    cmp c2, c3
-    ldi16 c0, 0x8112
+    ldi16 r6, 0x7fff
+    ldi16 r7, 0x8000
+    cmp r6, r7
+    ldi16 r4, 0x8112
     push16 r4
-    ldi16 c0, 0x8235
+    ldi16 r4, 0x8235
     push16 r4
-    ldi16 c0, 0x8358
+    ldi16 r4, 0x8358
     push16 r4
-    ldi16 c0, 0x847b
+    ldi16 r4, 0x847b
     push16 r4
-    ldi16 c0, 0x590f
+    ldi16 r4, 0x590f
     push16 r4
-    ldi16 c0, 0x86c1
+    ldi16 r4, 0x86c1
     push16 r4
-    ldi16 c0, 0x0988
+    ldi16 r4, 0x0988
     push16 r4
-    ldi16 c0, 0x8907
+    ldi16 r4, 0x8907
     push16 r4
     pop16 r7
     pop16 r6
@@ -2904,8 +2904,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0986
-    ld16 c1, [c0]
+    ldi16 r4, 0x0986
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -2963,26 +2963,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r7, pattern 0; expected SP 0x0990; marker r6.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x0001
-    ldi16 c3, 0x0002
-    cmp c2, c3
-    ldi16 c0, 0x8147
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0002
+    cmp r6, r7
+    ldi16 r4, 0x8147
     push16 r4
-    ldi16 c0, 0x826a
+    ldi16 r4, 0x826a
     push16 r4
-    ldi16 c0, 0x838d
+    ldi16 r4, 0x838d
     push16 r4
-    ldi16 c0, 0x84b0
+    ldi16 r4, 0x84b0
     push16 r4
-    ldi16 c0, 0x85d3
+    ldi16 r4, 0x85d3
     push16 r4
-    ldi16 c0, 0x86f6
+    ldi16 r4, 0x86f6
     push16 r4
-    ldi16 c0, 0x5b58
+    ldi16 r4, 0x5b58
     push16 r4
-    ldi16 c0, 0x0990
+    ldi16 r4, 0x0990
     push16 r4
     pop16 r7
     pop16 r6
@@ -3002,8 +3002,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x098e
-    ld16 c1, [c0]
+    ldi16 r4, 0x098e
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0
@@ -3061,26 +3061,26 @@ _start:
     f1u_emit_char '\n'
 
     ; setsp r7, pattern 1; expected SP 0x0998; marker r0.
-    ldi16 c0, 0x0980
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 c2, 0x8000
-    ldi16 c3, 0x7fff
-    cmp c2, c3
-    ldi16 c0, 0x5599
+    ldi16 r6, 0x8000
+    ldi16 r7, 0x7fff
+    cmp r6, r7
+    ldi16 r4, 0x5599
     push16 r4
-    ldi16 c0, 0x829f
+    ldi16 r4, 0x829f
     push16 r4
-    ldi16 c0, 0x83c2
+    ldi16 r4, 0x83c2
     push16 r4
-    ldi16 c0, 0x84e5
+    ldi16 r4, 0x84e5
     push16 r4
-    ldi16 c0, 0x8608
+    ldi16 r4, 0x8608
     push16 r4
-    ldi16 c0, 0x872b
+    ldi16 r4, 0x872b
     push16 r4
-    ldi16 c0, 0x884e
+    ldi16 r4, 0x884e
     push16 r4
-    ldi16 c0, 0x0998
+    ldi16 r4, 0x0998
     push16 r4
     pop16 r7
     pop16 r6
@@ -3100,8 +3100,8 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 c0, 0x0996
-    ld16 c1, [c0]
+    ldi16 r4, 0x0996
+    ld16 r5, [r4]
     mov r0, r5
     call f1u_print_r0_line
     pop16 r0

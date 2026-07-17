@@ -7,8 +7,8 @@
 _start:
     ; POP16 r0: memory contains 0x0123.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x0123
-    st16 [c0], c1
+    ldi16 r5, 0x0123
+    st16 [c0], r5
     setsp r4
     pop16 r0
     debug_print_r0_line_inline
@@ -17,8 +17,8 @@ _start:
 
     ; POP16 r1: memory contains 0x1456.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x1456
-    st16 [c0], c1
+    ldi16 r5, 0x1456
+    st16 [c0], r5
     setsp r4
     pop16 r1
     mov r0, r1
@@ -28,8 +28,8 @@ _start:
 
     ; POP16 r2: memory contains 0x2789.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x2789
-    st16 [c0], c1
+    ldi16 r5, 0x2789
+    st16 [c0], r5
     setsp r4
     pop16 r2
     mov r0, r2
@@ -39,8 +39,8 @@ _start:
 
     ; POP16 r3: memory contains 0x3abc.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x3abc
-    st16 [c0], c1
+    ldi16 r5, 0x3abc
+    st16 [c0], r5
     setsp r4
     pop16 r3
     mov r0, r3
@@ -50,8 +50,8 @@ _start:
 
     ; POP16 r4: memory contains 0x4def.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x4def
-    st16 [c0], c1
+    ldi16 r5, 0x4def
+    st16 [c0], r5
     setsp r4
     pop16 r4
     mov r0, r4
@@ -61,8 +61,8 @@ _start:
 
     ; POP16 r5: memory contains 0x5012.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x5012
-    st16 [c0], c1
+    ldi16 r5, 0x5012
+    st16 [c0], r5
     setsp r4
     pop16 r5
     mov r0, r5
@@ -72,8 +72,8 @@ _start:
 
     ; POP16 r6: memory contains 0x6345.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x6345
-    st16 [c0], c1
+    ldi16 r5, 0x6345
+    st16 [c0], r5
     setsp r4
     pop16 r6
     mov r0, r6
@@ -83,8 +83,8 @@ _start:
 
     ; POP16 r7: memory contains 0x7678.
     ldi16 c0, 0x097e
-    ldi16 c1, 0x7678
-    st16 [c0], c1
+    ldi16 r5, 0x7678
+    st16 [c0], r5
     setsp r4
     pop16 r7
     mov r0, r7

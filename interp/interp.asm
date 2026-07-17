@@ -3207,6 +3207,113 @@ f0_absolute_bodies_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Shared image-relative program-space byte reader
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Inputs:
+;   r24:r25:r26  image-relative source address, low:middle:high
+;   r30:r31      destination SRAM address (native Z)
+;   r0:r1        nonzero byte count, little-endian
+;
+; The physical W25Q128 address is (data_page_data << 8) + source, modulo
+; 24 bits. The routine opens an independent SFC_READ transaction, copies the
+; requested bytes, disables FX chip select, and returns. It deliberately does
+; not handle count == 0.
+;
+; Outputs/clobbers:
+;   r0:r1        zero
+;   r24          final byte read
+;   r25:r26      physical middle/high address bytes
+;   r27          scratch
+;   Z            points at the final destination byte (not one past it)
+;   native SREG  clobbered; architectural VM_FLAGS is untouched
+;
+; Meaningful command/address transmit bytes use an 18-cycle OUT-to-OUT
+; cadence. Dummy transfers use the 17-cycle minimum. For every nonfinal data
+; byte, CLI/OUT/IN/SEI performs the exact reverse-order handoff: the next dummy
+; transfer starts as soon as the previous receive byte is ready.
+; The final byte is read without launching an unnecessary following transfer.
+; All delay entries below avoid LPM/delay_3 because native r0 holds count.
+
+fx_read_program_bytes_start:
+fx_read_program_bytes_func:
+    fx_disable
+    ldi   r27, SFC_READ
+    fx_enable
+    out   SPDR, r27
+
+    ; Convert the image-relative source into a physical flash address while
+    ; the command byte is in flight. The source low byte is unchanged.
+    lds   r27, data_page_data+0
+    add   r25, r27
+    lds   r27, data_page_data+1
+    adc   r26, r27
+
+    ; Meaningful transmitted bytes require seventeen intervening cycles,
+    ; giving an 18-cycle OUT-to-OUT cadence.
+    rcall fx_read_program_delay_11
+    out   SPDR, r26
+    rcall fx_read_program_delay_17
+    out   SPDR, r25
+    rcall fx_read_program_delay_17
+    out   SPDR, r24
+
+    ; The dummy transmit value is irrelevant, so this handoff may use the
+    ; minimum 17-cycle OUT-to-OUT cadence (sixteen intervening cycles).
+    rcall fx_read_program_delay_16
+    out   SPDR, ZERO             ; begin first data-byte transfer
+
+    ; Predecrement the count. The caller guarantees the original count is
+    ; nonzero. Arrange both paths so the first read occurs at minimum cadence.
+    sub   r0, ONE
+    sbc   r1, ZERO
+    delay_2
+    nop
+    breq  .Lfx_read_program_final
+    delay_2
+
+.Lfx_read_program_loop:
+    ; Seven-cycle call plus CLI places OUT at the minimum legal boundary.
+    rcall fx_read_program_delay_7
+    cli
+    out   SPDR, ZERO             ; begin the next data-byte transfer
+    in    r24, SPDR              ; consume the completed previous byte
+    sei
+    st    Z+, r24
+
+    sub   r0, ONE
+    sbc   r1, ZERO
+    brne  .Lfx_read_program_loop
+
+.Lfx_read_program_final:
+    ; Both the initial count==1 path and the loop-exit path reach this delay
+    ; nine cycles before the final byte may be consumed.
+    rcall fx_read_program_delay_9
+    in    r24, SPDR
+    st    Z, r24
+    fx_disable
+    ret
+
+; Local fixed-delay ladder. Each label is the complete cycle count from the
+; calling RCALL through the returning RET. It uses only NOP and RJMP .+0.
+fx_read_program_delay_17:
+    nop
+fx_read_program_delay_16:
+    delay_4
+    nop
+fx_read_program_delay_11:
+    delay_2
+fx_read_program_delay_9:
+    delay_2
+fx_read_program_delay_7:
+    ret
+
+fx_read_program_bytes_end:
+.if (fx_read_program_bytes_end - fx_read_program_bytes_start) != 90
+    .error "shared program-space byte reader must occupy exactly forty-five AVR words"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; F0 69-6B: shared cold 32-bit forms
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;

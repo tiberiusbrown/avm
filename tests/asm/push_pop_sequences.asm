@@ -5,24 +5,24 @@
 .globl _start
 .type _start, @function
 _start:
-    ldi16 c3, 0x0980
+    ldi16 r7, 0x0980
     setsp r7
 
-    ; Initialize r0-r3 through c0/r4 because the F0 page is not required.
-    ldi16 c0, 0x0123
+    ; Initialize r0-r3 through r4/r4 because the F0 page is not required.
+    ldi16 r4, 0x0123
     mov r0, r4
-    ldi16 c0, 0x2345
+    ldi16 r4, 0x2345
     mov r1, r4
-    ldi16 c0, 0x4567
+    ldi16 r4, 0x4567
     mov r2, r4
-    ldi16 c0, 0x6789
+    ldi16 r4, 0x6789
     mov r3, r4
 
     ; Initialize the upper/full aliases r4-r7 directly.
-    ldi16 c0, 0x89ab
-    ldi16 c1, 0xabcd
-    ldi16 c2, 0xcdef
-    ldi16 c3, 0xef01
+    ldi16 r4, 0x89ab
+    ldi16 r5, 0xabcd
+    ldi16 r6, 0xcdef
+    ldi16 r7, 0xef01
 
     push16 r0
     push16 r1

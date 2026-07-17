@@ -12,14 +12,14 @@
 ;   Preserves every general-purpose register and CC.
 ;
 ; debug_print_upper_regs:
-;   Prints c0, c1, c2, and c3 in that order, then a newline.
+;   Prints r4, r5, r6, and r7 in that order, then a newline.
 ;   Preserves every general-purpose register and CC.
 
 .section .text,"ax",@progbits
 
 .type debug_print_r0, @function
 debug_print_r0:
-    ; c0 is the DEBUG_PUTC argument. c2 holds the working value and c3
+    ; r4 is the DEBUG_PUTC argument. r6 holds the working value and r7
     ; alternately holds the nibble mask and character base.
     push16 r4
     push16 r5
@@ -28,41 +28,41 @@ debug_print_r0:
 
     ; Bits 15:12.
     mov r6, r0
-    lsr16i c2, 12
-    ldi8 c3, 0x0f
-    and c2, c3
-    ldi8 c3, 'A'
-    add c2, c3
-    mov c0, c2
+    lsr16i r6, 12
+    ldi8 r7, 0x0f
+    and r6, r7
+    ldi8 r7, 'A'
+    add r6, r7
+    mov r4, r6
     sys debug_putc
 
     ; Bits 11:8.
     mov r6, r0
-    lsr16i c2, 8
-    ldi8 c3, 0x0f
-    and c2, c3
-    ldi8 c3, 'A'
-    add c2, c3
-    mov c0, c2
+    lsr16i r6, 8
+    ldi8 r7, 0x0f
+    and r6, r7
+    ldi8 r7, 'A'
+    add r6, r7
+    mov r4, r6
     sys debug_putc
 
     ; Bits 7:4.
     mov r6, r0
-    lsr16i c2, 4
-    ldi8 c3, 0x0f
-    and c2, c3
-    ldi8 c3, 'A'
-    add c2, c3
-    mov c0, c2
+    lsr16i r6, 4
+    ldi8 r7, 0x0f
+    and r6, r7
+    ldi8 r7, 'A'
+    add r6, r7
+    mov r4, r6
     sys debug_putc
 
     ; Bits 3:0.
     mov r6, r0
-    ldi8 c3, 0x0f
-    and c2, c3
-    ldi8 c3, 'A'
-    add c2, c3
-    mov c0, c2
+    ldi8 r7, 0x0f
+    and r6, r7
+    ldi8 r7, 'A'
+    add r6, r7
+    mov r4, r6
     sys debug_putc
 
     pop16 r7
@@ -84,9 +84,9 @@ debug_print_upper_regs:
     mov r0, r7
     call debug_print_r0
 
-    ; DEBUG_PUTC consumes low8(c0), so preserve c0 around the newline.
+    ; DEBUG_PUTC consumes low8(r4), so preserve r4 around the newline.
     push16 r4
-    ldi8 c0, '\n'
+    ldi8 r4, '\n'
     sys debug_putc
     pop16 r4
 
@@ -98,7 +98,7 @@ debug_print_upper_regs:
 .type debug_print_newline, @function
 debug_print_newline:
     push16 r4
-    ldi8 c0, '\n'
+    ldi8 r4, '\n'
     sys debug_putc
     pop16 r4
     ret
@@ -122,8 +122,8 @@ debug_print_bool_r0:
     push16 r5
 
     mov r4, r0
-    ldi8 c1, 'A'
-    add c0, c1
+    ldi8 r5, 'A'
+    add r4, r5
     sys debug_putc
 
     pop16 r5

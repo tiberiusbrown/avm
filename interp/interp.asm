@@ -1767,9 +1767,8 @@ cmov_gate_end:
 ; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
 ; page are implemented. F0 has shared operand-fetch/register-decode
-; infrastructure, secondaries 00-5F are implemented, 69-6B provide the
-; shared cold 32-bit forms, and 6C-6D provide the shared general-pointer
-; data-space forms. Only the F0 60-68 program-space veneers still trap.
+; infrastructure and all valid secondaries 00-6D are implemented, including
+; program-space loads, cold 32-bit forms, and general-pointer data-space forms.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -2334,7 +2333,9 @@ seek_and_dispatch_func:
     lds  r27, data_page_data+1
     adc  r27, VM_PCH
 
-    rcall interp_delay_10
+    ; SFC_READ and each address byte are meaningful transmitted data, so
+    ; command-to-address-high also requires the 18-cycle OUT-to-OUT cadence.
+    rcall interp_delay_11
     out  SPDR, r27
     rcall interp_delay_17
     out  SPDR, r26
@@ -2377,7 +2378,7 @@ interp_delay_9:
 interp_delay_7:
     ret
 
-; Valid but not-yet-implemented F0 veneer entries ultimately stop here.
+; Development-only unimplemented-instruction trap. No valid F0 veneer uses it.
 unimplemented_instruction_func:
     rjmp unimplemented_instruction_func
 
@@ -2396,10 +2397,9 @@ invalid_syscall_func:
 ; Fixed-width secondary tables and F0 veneer scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; F1-F8 use their exact operand-specialized native sequences. F0 uses one-word
-; veneers that either forward to implemented cold bodies or jump to the nearby
-; unimplemented-instruction trap. FA traps reserved values through its immediate
-; body-jump table.
+; F1-F8 use their exact operand-specialized native sequences. Every valid F0
+; veneer forwards to an implemented cold body. FA traps reserved values through
+; its immediate body-jump table.
 
 .macro emit_secondary_trap_table label, end_label, count, width, trap
 \label:
@@ -3207,6 +3207,225 @@ f0_absolute_bodies_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; F0 60-68: program-space loads
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Each instruction is followed by PSPEC. Scalar forms require an even high
+; nibble; pair forms require a four-byte-aligned high nibble. The low nibble
+; always selects a four-byte-aligned qA pair. Any other PSPEC is invalid.
+;
+; Every operation-specific body uses f0_fetch_spec, which consumes PSPEC at
+; the earliest legal cycle, launches a speculative following-primary fetch,
+; and leaves VM_PC naming PSPEC. f0_program_prepare_func validates and decodes PSPEC,
+; advances VM_PC to the following primary, captures the original canonical
+; 24-bit qA source before any destination write, performs any postincrement,
+; and returns the shared reader ABI:
+;
+;   r24:r25:r26  original image-relative program pointer
+;   Z            destination register-file address
+;   r0:r1        nonzero byte count
+;
+; Native H selects scalar (clear) versus pair (set) destination validation.
+; Native T selects ordinary (clear) versus postincrement (set) semantics.
+; Both bits are set after PSPEC fetch. H is consumed before arithmetic can
+; clobber it; T survives the prepare sequence. Ordinary forms permit complete
+; destination/source overlap. Postincrement scalar forms reject either
+; component register of qA as rD; pair forms reject qD == qA.
+
+f0_program_loads_start:
+
+; F0 60 PSPEC: LDP8U rD,[qA]
+f0_ldp8u_body:
+    rcall f0_fetch_spec
+    mov   r0, ONE
+    clh
+    clt
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    std   Z+1, ZERO
+    rjmp  seek_and_dispatch_func
+
+; F0 61 PSPEC: LDP8S rD,[qA]
+f0_ldp8s_body:
+    rcall f0_fetch_spec
+    mov   r0, ONE
+    clh
+    clt
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    lsl   r27
+    sbc   r27, r27
+    std   Z+1, r27
+    rjmp  seek_and_dispatch_func
+
+; F0 62 PSPEC: LDP16 rD,[qA]
+f0_ldp16_body:
+    rcall f0_fetch_spec
+    mov   r0, ONE
+    lsl   r0
+    clh
+    clt
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    rjmp  seek_and_dispatch_func
+
+; F0 63 PSPEC: LDP24 qD,[qA]
+f0_ldp24_body:
+    rcall f0_fetch_spec
+    mov   r0, FOUR
+    dec   r0
+    seh
+    clt
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    std   Z+1, ZERO
+    rjmp  seek_and_dispatch_func
+
+; F0 64 PSPEC: LDP32 qD,[qA]
+f0_ldp32_body:
+    rcall f0_fetch_spec
+    mov   r0, FOUR
+    seh
+    clt
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    rjmp  seek_and_dispatch_func
+
+; F0 65 PSPEC: LDP8U rD,[qA+]
+f0_ldp8u_post_body:
+    rcall f0_fetch_spec
+    mov   r0, ONE
+    clh
+    set
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    std   Z+1, ZERO
+    rjmp  seek_and_dispatch_func
+
+; F0 66 PSPEC: LDP16 rD,[qA+]
+f0_ldp16_post_body:
+    rcall f0_fetch_spec
+    mov   r0, ONE
+    lsl   r0
+    clh
+    set
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    rjmp  seek_and_dispatch_func
+
+; F0 67 PSPEC: LDP24 qD,[qA+]
+f0_ldp24_post_body:
+    rcall f0_fetch_spec
+    mov   r0, FOUR
+    dec   r0
+    seh
+    set
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    std   Z+1, ZERO
+    rjmp  seek_and_dispatch_func
+
+; F0 68 PSPEC: LDP32 qD,[qA+]
+f0_ldp32_post_body:
+    rcall f0_fetch_spec
+    mov   r0, FOUR
+    seh
+    set
+    rcall f0_program_prepare_func
+    rcall fx_read_program_bytes_func
+    rjmp  seek_and_dispatch_func
+
+; Inputs:
+;   F0_SPEC  trailing PSPEC
+;   r0       byte count 1-4; native r1 is zero on entry
+;   H        0=scalar destination, 1=pair destination
+;   T        0=ordinary, 1=postincrement
+;
+; Output is the fx_read_program_bytes_func ABI described above. The destination
+; register-file byte address temporarily occupies r1 while qA is captured and,
+; for postincrement forms, updated in place.
+f0_program_prepare_func:
+    ; Common validity requires qA alignment and high-code bit zero. Pair
+    ; destinations additionally require high-code bit one to be zero.
+    mov   r25, F0_SPEC
+    brhc  .Lf0_program_scalar_spec
+    andi  r25, 0x33
+    rjmp  .Lf0_program_spec_checked
+.Lf0_program_scalar_spec:
+    andi  r25, 0x13
+.Lf0_program_spec_checked:
+    brne  f0_program_invalid
+
+    ; f0_fetch_spec left VM_PC naming PSPEC. The stream will be restarted at
+    ; the following primary after the independent program-data transaction.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; Save the destination register-file byte address in native r1.
+    mov   r25, F0_SPEC
+    swap  r25
+    andi  r25, 0x0f
+    subi  r25, -8
+    mov   r1, r25
+
+    ; Z = native register-file byte address of qA.
+    mov   r30, F0_SPEC
+    andi  r30, 0x0f
+    subi  r30, -8
+    mov   r31, ZERO
+
+    ; Postincrement destinations may not overlap either 16-bit component of
+    ; qA. For pair destinations the second comparison can never match because
+    ; qD is four-byte aligned, so this uniform check implements both rules.
+    brtc  .Lf0_program_alias_valid
+    cp    r1, r30
+    breq  f0_program_invalid
+    mov   r25, r30
+    subi  r25, -2
+    cp    r1, r25
+    breq  f0_program_invalid
+.Lf0_program_alias_valid:
+
+    ; Capture the complete original qA before the reader writes its destination.
+    ; The fourth byte must be zero for a canonical 24-bit program pointer.
+    ld    r24, Z+
+    ld    r25, Z+
+    ld    r26, Z+
+    ld    r27, Z
+    tst   r27
+    brne  f0_program_invalid
+
+    ; For postincrement, update qA by count while retaining the original source
+    ; in r24:r25:r26. MOV and ST preserve carry between the three byte updates.
+    brtc  .Lf0_program_no_update
+    subi  r30, 3
+    mov   r27, r24
+    add   r27, r0
+    st    Z+, r27
+    mov   r27, r25
+    adc   r27, ZERO
+    st    Z+, r27
+    mov   r27, r26
+    adc   r27, ZERO
+    st    Z,  r27
+.Lf0_program_no_update:
+
+    ; Restore destination Z and the zero high byte of the reader count.
+    mov   r30, r1
+    mov   r31, ZERO
+    mov   r1, ZERO
+    ret
+
+f0_program_invalid:
+    rjmp  invalid_secondary_instruction_func
+
+f0_program_loads_end:
+.if (f0_program_loads_end - f0_program_loads_start) != 242
+    .error "F0 program-space load subsystem must occupy exactly 121 AVR words"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Shared image-relative program-space byte reader
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -3222,9 +3441,9 @@ f0_absolute_bodies_end:
 ;
 ; Outputs/clobbers:
 ;   r0:r1        zero
-;   r24          final byte read
+;   r24          original source low byte, preserved
 ;   r25:r26      physical middle/high address bytes
-;   r27          scratch
+;   r27          scratch and final byte read
 ;   Z            points at the final destination byte (not one past it)
 ;   native SREG  clobbered; architectural VM_FLAGS is untouched
 ;
@@ -3277,9 +3496,9 @@ fx_read_program_bytes_func:
     rcall fx_read_program_delay_7
     cli
     out   SPDR, ZERO             ; begin the next data-byte transfer
-    in    r24, SPDR              ; consume the completed previous byte
+    in    r27, SPDR              ; consume the completed previous byte
     sei
-    st    Z+, r24
+    st    Z+, r27
 
     sub   r0, ONE
     sbc   r1, ZERO
@@ -3289,8 +3508,8 @@ fx_read_program_bytes_func:
     ; Both the initial count==1 path and the loop-exit path reach this delay
     ; nine cycles before the final byte may be consumed.
     rcall fx_read_program_delay_9
-    in    r24, SPDR
-    st    Z, r24
+    in    r27, SPDR
+    st    Z, r27
     fx_disable
     ret
 
@@ -3538,9 +3757,9 @@ f0_coldmem_end:
     .error "F0 general-pointer subsystem must occupy exactly forty-six AVR words"
 .endif
 
-; F0 retains one-word veneers for the remaining cold forms. Secondaries 00-5F
-; and 69-6D are implemented above; the local F0 trap remains before the group
-; for short RJMP reach.
+; F0 retains one-word veneers for every cold form. All valid secondaries
+; 00-6D are implemented above; the local F0 trap remains before the group for
+; short RJMP reach and for any future development-only scaffolding.
 secondary_tables_before_cluster_b:
 secondary_unimplemented_a_func:
     rjmp unimplemented_instruction_func
@@ -3616,10 +3835,16 @@ f0_veneer_table:
         rjmp f0_stm16_r_body
     .endr
 
-    ; 60-68: program-space forms remain unimplemented.
-    .rept (0x69 - 0x60)
-        rjmp secondary_unimplemented_a_func
-    .endr
+    ; 60-68: program-space loads; trailing byte is PSPEC.
+    rjmp  f0_ldp8u_body
+    rjmp  f0_ldp8s_body
+    rjmp  f0_ldp16_body
+    rjmp  f0_ldp24_body
+    rjmp  f0_ldp32_body
+    rjmp  f0_ldp8u_post_body
+    rjmp  f0_ldp16_post_body
+    rjmp  f0_ldp24_post_body
+    rjmp  f0_ldp32_post_body
 
     ; 69-6B: CMP32 / LD32 / ST32; trailing byte is pre-scaled RRSPEC.
     rjmp  f0_cold32_delay_1

@@ -333,6 +333,9 @@
 #define F0_OPERAND_HI              r25
 #define F0_SPEC                    r24
 #define F0_DECODE_SCRATCH          r25
+; F0 6C-6D keep dddWaaaP in native r1 after the reverse-order fetch.
+; Native r1 has no ABI zero-register requirement in this assembly-only runtime.
+#define F0_COLDMEM_SPEC            r1
 
 ; FB-FD shared conditional-move gate scratch allocation.
 #define CMOV_TEST                  r25
@@ -569,23 +572,22 @@ sbi  AVM_FX_PORT, AVM_FX_BIT
 
 ; Decode dddWaaaP used by F0 6C-6D. X receives the data-register pointer from
 ; bits 7:5 and Z receives the address-register pointer from bits 3:1. The
-; original specifier is preserved so W and P remain available to the handler.
-; F0_DECODE_SCRATCH is clobbered.
+; encoded fields are already positioned as doubled native-register indices,
+; so no shift or range validation is required. W and P remain in the preserved
+; specifier. Native flags are clobbered.
 .macro f0_decode_general_pointer_spec spec
-    mov   F0_DECODE_SCRATCH, \spec
-    swap  F0_DECODE_SCRATCH
-    andi  F0_DECODE_SCRATCH, 0x0e
-    subi  F0_DECODE_SCRATCH, -8
-    mov   r26, F0_DECODE_SCRATCH
+    mov   r26, \spec
+    swap  r26
+    andi  r26, 0x0e
+    subi  r26, -8
     mov   r27, ZERO
 
-    mov   F0_DECODE_SCRATCH, \spec
-    lsr   F0_DECODE_SCRATCH
-    andi  F0_DECODE_SCRATCH, 0x0e
-    subi  F0_DECODE_SCRATCH, -8
-    mov   r30, F0_DECODE_SCRATCH
+    mov   r30, \spec
+    andi  r30, 0x0e
+    subi  r30, -8
     mov   r31, ZERO
 .endm
+
 
 ; Decode the pre-scaled nibble offsets used by F0 69-6B. X receives the high
 ; nibble operand and Z the low nibble operand. Alignment validation remains the
@@ -1776,8 +1778,8 @@ cmov_gate_end:
 ; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
 ; page are implemented. F0 has shared operand-fetch/register-decode
-; infrastructure, and secondaries 00-5F are implemented. Remaining F0 veneer
-; bodies still trap as unimplemented.
+; infrastructure, secondaries 00-5F are implemented, and 6C-6D provide the
+; shared general-pointer data-space forms. Remaining F0 veneers still trap.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
 ; pages may add local copies when required by layout or RJMP reach.
@@ -3214,9 +3216,113 @@ f0_absolute_bodies_end:
     .error "F0 absolute data-space bodies must occupy exactly twenty-three AVR words"
 .endif
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; F0 6C-6D: general-pointer data-space forms
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; RRSPEC is dddWaaaP:
+;   bits 7:5  data register rD/rS
+;   bit  4    width: 0=byte, 1=word
+;   bits 3:1  pointer register rA
+;   bit  0    update: 0=ordinary, 1=postincrement
+;
+; Section 9.5 uses an independent reverse-order RRSPEC consume/restart entry.
+; In this interpreter the generic width-one F0 decoder reaches its veneer two
+; cycles later than the guide's original layout, so one NOP supplies the exact
+; remaining delay: the decoder launches RRSPEC at cycle 9 after F0-slot entry,
+; and this entry launches the following primary at cycle 26, exactly 17 cycles
+; later. r0 still contains secondary*1, so bit 0 distinguishes 6C from 6D.
+;
+; Ordinary loads capture the effective address before writing rD. Stores
+; capture the complete selected source before reading rA. These orderings make
+; ordinary load overlap and every store overlap legal. Postincrement load
+; aliases with rD == rA remain architecturally reserved as specified by the
+; ISA; valid encodings follow the reference Section 9.5 paths below.
+
+f0_coldmem_start:
+f0_coldmem_delay_1:
+    nop
+f0_coldmem:
+    add   VM_PCL, ONE
+    cli
+    out   SPDR, ZERO
+    in    F0_COLDMEM_SPEC, SPDR
+    sei
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; X = data-register file pointer; Z = pointer-register file pointer.
+    f0_decode_general_pointer_spec F0_COLDMEM_SPEC
+
+    ; F0 6C is load; F0 6D is store. The bounded width-one decoder leaves
+    ; the secondary value in r0 after its table-index multiplication.
+    sbrc  r0, 0
+    rjmp  f0_coldmem_store
+
+f0_coldmem_load:
+    ; Preserve the architectural pointer's register-file address.
+    mov   r0, r30
+
+    ; Capture the effective data-space address before writing rD.
+    ld    r24, Z+
+    ld    r25, Z
+    movw  Z, r24
+
+    ; Load one byte, zero-extend, and conditionally load the high byte.
+    ld    r24, Z+
+    clr   r25
+    sbrc  F0_COLDMEM_SPEC, 4
+    ld    r25, Z+
+
+    ; Write the selected byte or word result.
+    st    X+, r24
+    st    X,  r25
+
+    ; P=0 discards native Z advancement. P=1 writes it back to rA.
+    sbrs  F0_COLDMEM_SPEC, 0
+    rjmp  cluster_a_tail_18
+    mov   r26, r0
+    ; XH is still zero on the load path; fall through.
+
+f0_coldmem_post_writeback:
+    st    X+, r30
+    st    X,  r31
+    rjmp  cluster_a_tail_18
+
+f0_coldmem_store:
+    ; Capture the complete selected source before reading rA. r27 temporarily
+    ; holds the high source byte so F0_COLDMEM_SPEC remains available in r1.
+    ld    r0, X+
+    sbrc  F0_COLDMEM_SPEC, 4
+    ld    r27, X
+
+    ; Preserve rA's register-file address in XL, then capture its effective
+    ; data-space address in Z.
+    mov   r26, r30
+    ld    r24, Z+
+    ld    r25, Z
+    movw  Z, r24
+
+    ; Store one byte and conditionally store the high byte.
+    st    Z+, r0
+    sbrc  F0_COLDMEM_SPEC, 4
+    st    Z+, r27
+
+    ; P=0 discards native Z advancement. P=1 restores X as a register-file
+    ; pointer and uses the shared writeback helper.
+    sbrs  F0_COLDMEM_SPEC, 0
+    rjmp  cluster_a_tail_18
+    mov   r27, ZERO
+    rjmp  f0_coldmem_post_writeback
+
+f0_coldmem_end:
+.if (f0_coldmem_end - f0_coldmem_start) != 98
+    .error "F0 general-pointer subsystem must occupy exactly forty-nine AVR words"
+.endif
+
 ; F0 retains one-word veneers for the remaining cold forms. Secondaries 00-5F
-; are implemented above; the local F0 trap remains before the group for short
-; RJMP reach.
+; and 6C-6D are implemented above; the local F0 trap remains before the group
+; for short RJMP reach.
 secondary_tables_before_cluster_b:
 secondary_unimplemented_a_func:
     rjmp unimplemented_instruction_func
@@ -3292,9 +3398,14 @@ f0_veneer_table:
         rjmp f0_stm16_r_body
     .endr
 
-    .rept (0x6E - 0x60)
+    ; 60-6B: program-space and cold-32 forms remain unimplemented.
+    .rept (0x6C - 0x60)
         rjmp secondary_unimplemented_a_func
     .endr
+
+    ; 6C-6D: general-pointer load/store; trailing byte is dddWaaaP.
+    rjmp  f0_coldmem_delay_1
+    rjmp  f0_coldmem_delay_1
 f0_veneer_table_end:
 .if (f0_veneer_table_end - f0_veneer_table) != (2 * 0x6E)
     .error "F0 veneer table has incorrect size"

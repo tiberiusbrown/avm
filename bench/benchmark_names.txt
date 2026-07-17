@@ -1,141 +1,258 @@
-001 SYS DEBUG_BREAK
-002 CLR c0
-003 MOV c0,c1
-004 LD8 c0,[c2]
-005 ST8 [c2],c1
-006 LD16 c0,[c2]
-007 ST16 [c2],c1
-008 AND A,r0
-009 PUSH16 r0
-010 POP16 r0
-011 ADD c0,c1
-012 SUB c0,c1
-013 CMP16 c0,c1
-014 TST16 c0
-015 CMP8 c0,c1
-016 TST8 c0
-017 BEQ.S (not taken)
-018 BEQ.S (taken)
-019 BNE.S (not taken)
-020 BNE.S (taken)
-021 NOT16 r0
-022 NEG16 r0
-023 INC16 r0
-024 DEC16 r0
-025 LSL16 r0
-026 LSR16 r0
-027 ASR16 r0
-028 LSR8 r0
-029 ASR8 r0
-030 ZEXT8 r0
-031 SEXT8 r0
-032 SWAP8 r0
-033 GETSP r0
-034 SETSP r0
-035 MTPB r0
-036 MFPB r0
-037 MOV16 r6,r0
-038 MOV8Z r6,b0
-039 MOV8S r6,b0
-040 CSET r6,EQ (true)
-041 CSET r6,EQ (false)
-042 CSET r6,NE (true)
-043 CSET r6,NE (false)
-044 CSET r6,ULT (true)
-045 CSET r6,ULT (false)
-046 CSET r6,UGE (true)
-047 CSET r6,UGE (false)
-048 CSET r6,SLT (true)
-049 CSET r6,SLT (false)
-050 CSET r6,SGE (true)
-051 CSET r6,SGE (false)
-052 CSET r6,ULE (true)
-053 CSET r6,ULE (false)
-054 CSET r6,UGT (true)
-055 CSET r6,UGT (false)
-056 CMPI6 c0,-17
-057 JMP rel8
-058 CALL rel8
-059 ADJSP 0
-060 SYS DEBUG_PUTC
-061 JMP16 addr16
-062 CALL16 addr16
-063 NOP
-064 LDI8 c0,imm8
-065 BREQ (not taken)
-066 BREQ (taken)
-067 BRNE (not taken)
-068 BRNE (taken)
-069 BRULT (not taken)
-070 BRULT (taken)
-071 BRUGE (not taken)
-072 BRUGE (taken)
-073 BRSLT (not taken)
-074 BRSLT (taken)
-075 BRSGE (not taken)
-076 BRSGE (taken)
-077 BRULE (not taken)
-078 BRULE (taken)
-079 BRUGT (not taken)
-080 BRUGT (taken)
-081 LD8 r0,[r6]
-082 ST8 [r6],r0
-083 LD16 r0,[r6]
-084 ST16 [r6],r0
-085 LD8 r0,[r6+]
-086 ST8 [r6+],r0
-087 LD16 r0,[r6+]
-088 ST16 [r6+],r0
-089 LEA r0,[r6+4]
-090 LD8 r0,[r6+4]
-091 ST8 [r6+4],r0
-092 LD16 r0,[r6+4]
-093 ST16 [r6+4],r0
-094 LDSP8 r0,[SP+8]
-095 STSP8 [SP+8],r0
-096 LDSP16 r0,[SP+8]
-097 STSP16 [SP+8],r0
-098 LDM8 r0,0x0100
-099 STM8 0x0100,r0
-100 LDM16 r0,0x0100
-101 STM16 0x0100,r0
-102 JMPF target24
-103 CALLF target24
-104 RET
-105 LDI16 r0,imm16
-106 LDI8 r0,imm8
-107 ADDI16 r0,imm16
-108 SUBI16 r0,imm16
-109 ANDI16 r0,imm16
-110 ORI16 r0,imm16
-111 XORI16 r0,imm16
-112 CMPI16 r0,imm16
-113 CMPI8 r0,imm8
-114 TST16 r0
-115 TST8 r0
-116 OR A,r0
-117 XOR A,r0
-118 BIC A,r0
-119 ADD.NF c2,c3
-120 SUB.NF c2,c3
-121 AND c2,c3
-122 OR c2,c3
-123 XOR c2,c3
-124 BIC c2,c3
-125 LDPBI 0
-126 LDP8 r0,[PB:r6]
-127 LDP16 r0,[PB:r6]
-128 LDP8 r0,[PB:r6+4]
-129 LDP16 r0,[PB:r6+4]
-130 MOV32 q0,q1
-131 ADD32 q0,q1
-132 SUB32 q0,q1
-133 CMP32 q0,q1
-134 JMPP q0
-135 CALLP q0
-136 MULU8 A,r0
-137 MULS8 A,r1
-138 MULSU8 A,r2
-139 MULU8 c1,c2
-140 MULS8 c2,c3
-141 MULSU8 c3,c1
+SYS debug_break (baseline)
+SYS debug_putc
+SYS millis
+SYS millis32
+NOP (MOV r4,r4 alias)
+CLR r4 (XOR r4,r4 alias)
+MOV r4,r5 (upper one-byte)
+MOV r0,r1 (full F1)
+MOV32 q0,q1 (canonical pseudo)
+LDI8 r4,imm8 (upper)
+LDI8 r0,imm8 (cold lower)
+LDI16 r4,imm16 (upper)
+LDI16 r0,imm16 (cold lower)
+ZEXT8 r0
+SEXT8 r0
+SWAP8 r0
+BSWAP16 r0
+BOOL r0 (zero)
+BOOL r0 (nonzero)
+PUSH16 r0
+POP16 r0
+ADJSP simm8
+GETSP r0
+SETSP r0
+LEASP r0,32 (cold)
+ADD r4,r5 (upper one-byte)
+ADD r0,r1 (full F2)
+SUB r4,r5 (upper one-byte)
+SUB r0,r1 (full F2)
+ADDI.S8 r4,simm8 (upper)
+ADDI.S8 r0,simm8 (cold lower)
+INC16 r0
+DEC16 r0
+NEG16 r0
+ADD32 q0,q1
+SUB32 q0,q1
+LSL32.1 q0 (ADD32 q0,q0 alias)
+AND r4,r5 (upper one-byte)
+AND r0,r1 (full F9)
+OR r4,r5 (upper one-byte)
+OR r0,r1 (full F9)
+XOR r4,r5 (upper one-byte)
+XOR r0,r1 (full F9)
+NOT16 r0
+LSL16.1 r0
+LSR16.1 r0
+ASR16.1 r0
+LSR32.1 q0
+ASR32.1 q0
+SHL16V r4,r5 (count 0)
+SHL16V r4,r5 (count 1)
+SHL16V r4,r5 (count 2)
+SHL16V r4,r5 (count 3)
+SHL16V r4,r5 (count 4)
+SHL16V r4,r5 (count 5)
+SHL16V r4,r5 (count 6)
+SHL16V r4,r5 (count 7)
+SHL16V r4,r5 (count 8)
+SHL16V r4,r5 (count 9)
+SHL16V r4,r5 (count 10)
+SHL16V r4,r5 (count 11)
+SHL16V r4,r5 (count 12)
+SHL16V r4,r5 (count 13)
+SHL16V r4,r5 (count 14)
+SHL16V r4,r5 (count 15)
+LSR16V r4,r5 (count 0)
+LSR16V r4,r5 (count 1)
+LSR16V r4,r5 (count 2)
+LSR16V r4,r5 (count 3)
+LSR16V r4,r5 (count 4)
+LSR16V r4,r5 (count 5)
+LSR16V r4,r5 (count 6)
+LSR16V r4,r5 (count 7)
+LSR16V r4,r5 (count 8)
+LSR16V r4,r5 (count 9)
+LSR16V r4,r5 (count 10)
+LSR16V r4,r5 (count 11)
+LSR16V r4,r5 (count 12)
+LSR16V r4,r5 (count 13)
+LSR16V r4,r5 (count 14)
+LSR16V r4,r5 (count 15)
+ASR16V r4,r5 (count 0)
+ASR16V r4,r5 (count 1)
+ASR16V r4,r5 (count 2)
+ASR16V r4,r5 (count 3)
+ASR16V r4,r5 (count 4)
+ASR16V r4,r5 (count 5)
+ASR16V r4,r5 (count 6)
+ASR16V r4,r5 (count 7)
+ASR16V r4,r5 (count 8)
+ASR16V r4,r5 (count 9)
+ASR16V r4,r5 (count 10)
+ASR16V r4,r5 (count 11)
+ASR16V r4,r5 (count 12)
+ASR16V r4,r5 (count 13)
+ASR16V r4,r5 (count 14)
+ASR16V r4,r5 (count 15)
+LSL16I r4,0
+LSL16I r4,1
+LSL16I r4,2
+LSL16I r4,3
+LSL16I r4,4
+LSL16I r4,5
+LSL16I r4,6
+LSL16I r4,7
+LSL16I r4,8
+LSL16I r4,9
+LSL16I r4,10
+LSL16I r4,11
+LSL16I r4,12
+LSL16I r4,13
+LSL16I r4,14
+LSL16I r4,15
+LSR16I r4,0
+LSR16I r4,1
+LSR16I r4,2
+LSR16I r4,3
+LSR16I r4,4
+LSR16I r4,5
+LSR16I r4,6
+LSR16I r4,7
+LSR16I r4,8
+LSR16I r4,9
+LSR16I r4,10
+LSR16I r4,11
+LSR16I r4,12
+LSR16I r4,13
+LSR16I r4,14
+LSR16I r4,15
+ASR16I r4,0
+ASR16I r4,1
+ASR16I r4,2
+ASR16I r4,3
+ASR16I r4,4
+ASR16I r4,5
+ASR16I r4,6
+ASR16I r4,7
+ASR16I r4,8
+ASR16I r4,9
+ASR16I r4,10
+ASR16I r4,11
+ASR16I r4,12
+ASR16I r4,13
+ASR16I r4,14
+ASR16I r4,15
+MUL8 r4,r5
+MULU8.W r4,r5
+MULS8.W r4,r5
+MULSU8.W r4,r5
+MUL16 r0,r1
+CMP r4,r5 (upper one-byte)
+CMP r0,r1 (full F5)
+CMP32 q0,q1 (cold F0)
+CMPI.S8 r4,simm8 (upper)
+CMPI.S8 r0,simm8 (cold lower)
+TST8 r0
+TST16 r0
+CSET.EQ r0 (true)
+CSET.EQ r0 (false)
+CSET.NE r0 (true)
+CSET.NE r0 (false)
+CSET.ULT r0 (true)
+CSET.ULT r0 (false)
+CSET.UGE r0 (true)
+CSET.UGE r0 (false)
+CSET.SLT r0 (true)
+CSET.SLT r0 (false)
+CSET.SGE r0 (true)
+CSET.SGE r0 (false)
+CMOV.EQ r0,r1 (taken)
+CMOV.EQ r0,r1 (not taken)
+CMOV.NE r0,r1 (taken)
+CMOV.NE r0,r1 (not taken)
+CMOV.ULT r0,r1 (taken)
+CMOV.ULT r0,r1 (not taken)
+CMOV.UGE r0,r1 (taken)
+CMOV.UGE r0,r1 (not taken)
+CMOV.SLT r0,r1 (taken)
+CMOV.SLT r0,r1 (not taken)
+CMOV.SGE r0,r1 (taken)
+CMOV.SGE r0,r1 (not taken)
+LD8U r4,[r6] (upper one-byte)
+ST8 [r6],r5 (upper one-byte)
+LD16 r4,[r6] (upper one-byte)
+ST16 [r6],r5 (upper one-byte)
+ST8 [r6],r0 (dense F3)
+LD8U r0,[r6] (dense F5)
+LD16 r0,[r6] (dense F5)
+ST16 [r6],r0 (dense F5)
+LD8U r0,[r6+] (dense F7)
+LD16 r0,[r6+] (dense F7)
+ST8 [r6+],r0 (dense F6)
+ST16 [r6+],r0 (dense F7)
+LD8U r0,[r1] (cold general F0)
+LD16 r0,[r1] (cold general F0)
+ST8 [r1],r0 (cold general F0)
+ST16 [r1],r0 (cold general F0)
+LD8U r0,[r1+] (cold general F0)
+LD16 r0,[r1+] (cold general F0)
+ST8 [r1+],r0 (cold general F0)
+ST16 [r1+],r0 (cold general F0)
+LDSP8U r4,[SP+8] (upper short)
+STSP8 [SP+8],r4 (upper short)
+LDSP16 r4,[SP+8] (upper short)
+STSP16 [SP+8],r4 (upper short)
+LDSP8U r0,[SP+32] (cold)
+LDSP8S r0,[SP+32] (cold)
+STSP8 [SP+32],r0 (cold)
+LDSP16 r0,[SP+32] (cold)
+STSP16 [SP+32],r0 (cold)
+LDM8U r0,0x0600
+STM8 0x0600,r0
+LDM16 r0,0x0600
+STM16 0x0600,r0
+LD32 q0,[r4]
+ST32 [r4],q0
+LDP8U r0,[q3]
+LDP8S r0,[q3]
+LDP16 r0,[q3]
+LDP24 q0,[q3]
+LDP32 q0,[q3]
+LDP8U r0,[q3+]
+LDP16 r0,[q3+]
+LDP24 q0,[q3+]
+LDP32 q0,[q3+]
+BREQ8 (not taken)
+BREQ8 (taken)
+BRNE8 (not taken)
+BRNE8 (taken)
+BRULT8 (not taken)
+BRULT8 (taken)
+BRUGE8 (not taken)
+BRUGE8 (taken)
+BRSLT8 (not taken)
+BRSLT8 (taken)
+BRSGE8 (not taken)
+BRSGE8 (taken)
+BREQ16 (not taken)
+BREQ16 (taken)
+BRNE16 (not taken)
+BRNE16 (taken)
+BRULT16 (not taken)
+BRULT16 (taken)
+BRUGE16 (not taken)
+BRUGE16 (taken)
+BRSLT16 (not taken)
+BRSLT16 (taken)
+BRSGE16 (not taken)
+BRSGE16 (taken)
+JMP8 rel8
+CALL8 rel8
+JMP16 rel16
+CALL16 rel16
+JMPF target24
+CALLF target24
+JMPP q0
+CALLP q0
+RET

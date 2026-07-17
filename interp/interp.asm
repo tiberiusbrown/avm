@@ -1405,7 +1405,7 @@ primary_EF_ret:
 
 ; Each bounded page advertises its architectural upper bound and uses its
 ; final natural slot width. F1-F9, FA, FB-FD, and FE execute implemented
-; entries. F0 uses one-word veneers; secondaries 00-5F and 69-6D are implemented.
+; entries. F0 uses one-word veneers; secondaries 00-6D are implemented.
 ; F0 bound 0x6E, one-word veneer slots.
 emit_primary_bounded_page primary_F0_cold_veneer_page, 0x6E, f0_veneer_table, secondary_width_1_stub
 ; F1 bound 0x90, two-word slots.
@@ -1481,10 +1481,13 @@ primary_table_end:
 ; and rD == rS is legal because both complete operands are captured before
 ; writeback. Architectural VM_FLAGS are preserved.
 ;
-; The loop is a compact restoring divider. r24:r25 is the shifting
-; dividend/quotient, r26:r27 is the unsigned divisor magnitude, and r0:r1 is
-; the partial remainder. r30 retains the destination register-file address;
-; its otherwise-unused high bits carry operation metadata:
+; Two restoring cores compute quotient and remainder together. Magnitudes
+; that fit in eight bits use a dedicated byte core; all others use the word
+; core. Both cores perform two quotient-bit iterations per loop branch.
+; r24:r25 is the shifting dividend/quotient, r26:r27 is the unsigned divisor
+; magnitude, and r0:r1 is the partial remainder. r30 retains the destination
+; register-file address; its otherwise-unused high bits carry operation
+; metadata:
 ;
 ;   bit 7  signed operation
 ;   bit 6  select remainder rather than quotient
@@ -1572,26 +1575,46 @@ ec_divrem16_entry:
 .Lec_divrem16_magnitudes_ready:
     clr   r0
     clr   r1
-    ldi   r31, 16
 
-.Lec_divrem16_loop:
-    ; Shift the next dividend bit into the partial remainder. r24:r25 becomes
-    ; the quotient as one result bit is inserted per iteration.
+    ; Magnitudes with zero high bytes use the dedicated eight-bit core. The
+    ; true 16-bit path pays only this three-cycle not-taken test.
+    mov   r31, r25
+    or    r31, r27
+    breq  .Lec_divrem16_8bit
+
+    ; Eight groups perform the sixteen word-wide quotient-bit iterations.
+    ldi   r31, 8
+
+.Lec_divrem16_loop16:
+    ; First quotient bit in this group.
     lsl   r24
     rol   r25
     rol   r0
     rol   r1
-
     cp    r0, r26
     cpc   r1, r27
-    brlo  .Lec_divrem16_no_subtract
+    brlo  .Lec_divrem16_no_subtract16_a
     sub   r0, r26
     sbc   r1, r27
     ori   r24, 1
-.Lec_divrem16_no_subtract:
-    dec   r31
-    brne  .Lec_divrem16_loop
+.Lec_divrem16_no_subtract16_a:
 
+    ; Second quotient bit in this group.
+    lsl   r24
+    rol   r25
+    rol   r0
+    rol   r1
+    cp    r0, r26
+    cpc   r1, r27
+    brlo  .Lec_divrem16_no_subtract16_b
+    sub   r0, r26
+    sbc   r1, r27
+    ori   r24, 1
+.Lec_divrem16_no_subtract16_b:
+    dec   r31
+    brne  .Lec_divrem16_loop16
+
+.Lec_divrem16_select_result:
     ; Select quotient or remainder in constant time.
     sbrc  r30, 6
     movw  r24, r0
@@ -1619,9 +1642,37 @@ ec_divrem16_entry:
     st    Z,  r25
     rjmp  cluster_a_tail_18
 
+    ; Out-of-line byte-magnitude path. Four groups perform eight quotient-bit
+    ; iterations. r25, r27, and r1 remain zero, so common 16-bit result
+    ; selection and signed correction can be reused unchanged.
+.Lec_divrem16_8bit:
+    ldi   r31, 4
+
+.Lec_divrem16_loop8:
+    ; First quotient bit in this group.
+    lsl   r24
+    rol   r0
+    cp    r0, r26
+    brlo  .Lec_divrem16_no_subtract8_a
+    sub   r0, r26
+    ori   r24, 1
+.Lec_divrem16_no_subtract8_a:
+
+    ; Second quotient bit in this group.
+    lsl   r24
+    rol   r0
+    cp    r0, r26
+    brlo  .Lec_divrem16_no_subtract8_b
+    sub   r0, r26
+    ori   r24, 1
+.Lec_divrem16_no_subtract8_b:
+    dec   r31
+    brne  .Lec_divrem16_loop8
+    rjmp  .Lec_divrem16_select_result
+
 ec_divrem16_end:
-.if (ec_divrem16_end - ec_divrem16_entry) != 156
-    .error "EC 16-bit division/remainder handler must occupy exactly 78 AVR words"
+.if (ec_divrem16_end - ec_divrem16_entry) != 214
+    .error "EC 16-bit division/remainder handler must occupy exactly 107 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

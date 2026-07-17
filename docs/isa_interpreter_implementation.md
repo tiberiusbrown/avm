@@ -257,7 +257,7 @@ SDIV16   signed quotient, truncated toward zero
 SREM16   signed remainder with the dividend's sign
 ```
 
-All four accept every architectural register, preserve the source operand when distinct from the destination, and share one table-free restoring divider under primary opcode `EC`. Eight-bit operands use the 16-bit forms after the language's normal integer promotions. Wider division continues to lower through runtime helpers.
+All four accept every architectural register and preserve the source operand when distinct from the destination. Primary opcode `EC` uses two table-free, two-way-unrolled restoring cores: a dedicated eight-bit-magnitude core and a general sixteen-bit core. Source-language eight-bit operands still use the 16-bit architectural forms after normal integer promotion, but the interpreter recognizes their magnitudes and executes the shorter core. Wider division continues to lower through runtime helpers.
 
 ---
 
@@ -465,7 +465,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `F7 LD16+`, `F7 ST16+` | 40 |
 | Other `F7` forms | 38 |
 | `F8` | 38 |
-| `EC` 16-bit division/remainder | 56-286, data-dependent |
+| `EC` 16-bit division/remainder | 56-265, data-dependent |
 | `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
 | `FB-FD` false / true | 36 / 37 |
 | `FE MUL16` | 46 |
@@ -515,7 +515,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `E3` | `CALLF target24` | 4 | 150 |
 | `E4-E7` | `JMPP qN` | 1 | 110 |
 | `E8-EB` | `CALLP qN` | 1 | 117 |
-| `EC` | `UDIV16` / `UREM16` / `SDIV16` / `SREM16` runtime-decoded page | 2 | 56-286, data-dependent |
+| `EC` | `UDIV16` / `UREM16` / `SDIV16` / `SREM16` runtime-decoded page | 2 | 56-265, data-dependent |
 | `ED-EE` | Reserved | — | trap |
 | `EF` | `RET` | 1 | 110 |
 | `F0` | Bounded 1-word cold-form veneer page | 2-4 | varies |
@@ -2137,7 +2137,7 @@ r24:r25  shifting dividend and quotient
 r26:r27  unsigned divisor magnitude
 r0:r1    partial remainder
 r30      destination register-file address plus operation metadata
-r31      sign scratch, then 16-iteration loop counter
+r31      sign scratch, magnitude-width test, then pair-iteration counter
 ```
 
 The otherwise-unused high bits of `r30` retain the operation state while the divider uses every other scratch byte:
@@ -2150,48 +2150,108 @@ bit 5  negate the selected signed result
 
 This avoids hardware-stack spills and leaves the VM stack pointer untouched.
 
-### 21.1.3. Shared restoring divider
+### 21.1.3. Dedicated two-way-unrolled restoring cores
 
-One unsigned restoring core computes quotient and remainder together. Signed forms first convert both operands to unsigned magnitudes, run the same core, and correct only the selected result.
-
-The loop performs sixteen iterations:
+After signed operands have been converted to unsigned magnitudes, the handler tests the two high bytes:
 
 ```asm
-lsl   quotientL
-rol   quotientH
-rol   remainderL
-rol   remainderH
-cp    remainderL, divisorL
-cpc   remainderH, divisorH
-brlo  no_subtract
-sub   remainderL, divisorL
-sbc   remainderH, divisorH
-ori   quotientL, 1
-no_subtract:
-dec   count
-brne  loop
+mov   count, dividendH
+or    count, divisorH
+breq  divrem8
 ```
 
-Each zero quotient bit costs eleven cycles except the final iteration, which costs ten. Each one quotient bit costs two additional cycles. The implementation therefore has data-dependent timing based on the population count of the unsigned quotient.
+A not-taken test costs three cycles on the general path. When both high bytes are zero, the operands use the dedicated eight-bit-magnitude core. This includes promoted `char` and `unsigned char` values as well as any wider integer values whose magnitudes happen to fit in one byte.
+
+Both cores calculate quotient and remainder together and perform two quotient-bit iterations per loop branch.
+
+The sixteen-bit core uses eight loop groups:
+
+```asm
+ldi   count, 8
+loop16:
+    ; quotient bit A
+    lsl   quotientL
+    rol   quotientH
+    rol   remainderL
+    rol   remainderH
+    cp    remainderL, divisorL
+    cpc   remainderH, divisorH
+    brlo  no_subtract16_a
+    sub   remainderL, divisorL
+    sbc   remainderH, divisorH
+    ori   quotientL, 1
+no_subtract16_a:
+
+    ; quotient bit B: identical sequence
+    ...
+
+    dec   count
+    brne  loop16
+```
+
+The eight-bit core uses four loop groups and omits all high-byte shift, compare, and subtract operations:
+
+```asm
+ldi   count, 4
+loop8:
+    ; quotient bit A
+    lsl   quotientL
+    rol   remainderL
+    cp    remainderL, divisorL
+    brlo  no_subtract8_a
+    sub   remainderL, divisorL
+    ori   quotientL, 1
+no_subtract8_a:
+
+    ; quotient bit B: identical sequence
+    ...
+
+    dec   count
+    brne  loop8
+```
+
+The byte core is emitted after the normal store-and-dispatch path. The magnitude test branches forward to it, and the byte core jumps back to common quotient/remainder selection. Consequently, the common true-16-bit path does not pay an extra jump after its loop.
+
+For the sixteen-bit core, each zero quotient bit costs eight arithmetic cycles and each one bit costs two additional cycles. Two-way unrolling reduces loop-control cost from 47 cycles to 23 cycles, saving 24 cycles before the three-cycle width test.
+
+For the eight-bit core, each zero quotient bit costs five arithmetic cycles and each one bit costs one additional cycle. Its four pair-loop controls cost eleven cycles.
 
 ### 21.1.4. Exact code size and latency
 
 The complete shared handler occupies exactly:
 
 ```text
-78 AVR words
-156 bytes
+107 AVR words
+214 bytes
 ```
 
-No executable operand table is required, and the `EC` primary slot was already part of the fixed 2,048-byte primary table.
-
-For a nonzero divisor, unsigned forms have the exact complete latency:
+This is a 29-word / 58-byte increase over the single rolled sixteen-bit core. The increase consists of:
 
 ```text
-238 + 2*popcount(unsigned quotient) cycles
+three-word magnitude-width test             3 words /  6 bytes
+second sixteen-bit iteration body          10 words / 20 bytes
+dedicated two-way-unrolled eight-bit core  16 words / 32 bytes
+                                            --------------------
+net growth                                 29 words / 58 bytes
 ```
 
-Therefore both `UDIV16` and `UREM16` span **238-270 cycles**.
+No executable operand table is required, and the `EC` primary slot remains part of the fixed 2,048-byte primary table.
+
+For a nonzero divisor whose unsigned magnitudes both fit in eight bits, unsigned forms have the exact complete latency:
+
+```text
+120 + popcount(unsigned 8-bit quotient) cycles
+```
+
+Therefore byte-magnitude `UDIV16` and `UREM16` span **120-128 cycles**.
+
+When either magnitude requires sixteen bits, unsigned forms have the exact complete latency:
+
+```text
+217 + 2*popcount(unsigned 16-bit quotient) cycles
+```
+
+Therefore true-16-bit `UDIV16` and `UREM16` span **217-249 cycles**. Relative to the original rolled core, this is a universal 21-cycle improvement on the general path and a 118-126-cycle improvement for byte-sized magnitudes.
 
 For signed forms, let:
 
@@ -2201,15 +2261,23 @@ neg_result = 1 when the selected quotient/remainder must be negated
 Qmag       = unsigned magnitude quotient
 ```
 
-The exact complete latency is:
+For byte-sized magnitudes, exact complete latency is:
 
 ```text
-248 + 2*Nneg + 2*popcount(Qmag) + 4*neg_result cycles
+130 + 2*Nneg + popcount(Qmag) + 4*neg_result cycles
 ```
 
-`SDIV16` spans **248-284 cycles**, and `SREM16` spans **248-286 cycles**, for nonzero divisors. Division-by-zero exits take **57 cycles** for quotient forms and **56 cycles** for remainder forms.
+Byte-magnitude `SDIV16` spans **130-144 cycles**, and byte-magnitude `SREM16` spans **130-146 cycles**.
 
-The long arithmetic body does not require additional SPI transfers. The earliest zero-divisor path still reads the prefetched following opcode 39 cycles after its transfer began, so every final handoff is a legal late standard handoff.
+For true-16-bit magnitudes, exact complete latency is:
+
+```text
+227 + 2*Nneg + 2*popcount(Qmag) + 4*neg_result cycles
+```
+
+True-16-bit `SDIV16` spans **227-263 cycles**, and true-16-bit `SREM16` spans **227-265 cycles**. Division-by-zero exits are unchanged at **57 cycles** for quotient forms and **56 cycles** for remainder forms.
+
+The long arithmetic bodies do not require additional SPI transfers. The fastest nonzero byte-magnitude path still completes well after the prefetched following opcode is available, and every final handoff remains a legal late standard handoff.
 
 ---
 
@@ -2380,7 +2448,7 @@ The reference interpreter uses the decode, table, forwarding, and shared-body st
 | `D0-D7` branch/`ADJSP`/`SYS` | Exact values in Section 30 |
 | `E0-E3` multi-byte direct control | 135 for near forms; 150 for far forms |
 | `E4-EB` `JMPP`/`CALLP` | 110 / 117 |
-| `EC` 16-bit division/remainder | 56-286 cycles; exact formulas in Section 21.1 |
+| `EC` 16-bit division/remainder | 56-265 cycles; exact formulas in Section 21.1 |
 | `EF` `RET` | 110 |
 | `F0-F8` dense pages | Fast forms use their page cadence; measured cold forms span 53-357 cycles by family |
 | `F9` runtime bitwise page | AND 52, OR 53, XOR 54 cycles |
@@ -2515,35 +2583,35 @@ The following single-section order is a reference layout that keeps the major st
 | Order | Block | Start word | End word, exclusive | Words | Bytes |
 |---:|---|---:|---:|---:|---:|
 | 1 | Four-word primary table | 0 | 1024 | 1024 | 2048 |
-| 2 | Dedicated `EC` 16-bit division/remainder handler | 1024 | 1102 | 78 | 156 |
-| 3 | Dedicated `F9` handler | 1102 | 1141 | 39 | 78 |
-| 4 | Dedicated `FA` shift decoder | 1141 | 1161 | 20 | 40 |
-| 5 | Shared width-two decoder | 1161 | 1175 | 14 | 28 |
-| 6 | Generic decoder and four width stubs | 1175 | 1195 | 20 | 40 |
-| 7 | Shared `FB-FD` condition gate | 1195 | 1214 | 19 | 38 |
-| 8 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1214 | 1858 | 644 | 1288 |
-| 9 | Cluster-A false-path landing and cadence cluster | 1858 | 1884 | 26 | 52 |
-| 10 | Local F0 trap plus `F0` veneer table | 1884 | 1995 | 111 | 222 |
-| 11 | `F0` immediate, stack, absolute, and program-space bodies | 1995 | 2747 | 752 | 1504 |
-| 12 | Shared `F0` cold-32 subsystem | 2747 | 2810 | 63 | 126 |
-| 13 | Shared `F0` cold general-pointer subsystem | 2810 | 2856 | 46 | 92 |
-| 14 | `F1` table | 2856 | 3144 | 288 | 576 |
-| 15 | `F2` table | 3144 | 3432 | 288 | 576 |
-| 16 | `F3` table | 3432 | 3816 | 384 | 768 |
-| 17 | Cluster B and two local trap shims | 3816 | 3843 | 27 | 54 |
-| 18 | `F4` table | 3843 | 4395 | 552 | 1104 |
-| 19 | `F5` table | 4395 | 4779 | 384 | 768 |
-| 20 | `F6` table | 4779 | 5099 | 320 | 640 |
-| 21 | `F7` table | 5099 | 5819 | 720 | 1440 |
-| 22 | Cluster C and local trap shim | 5819 | 5843 | 24 | 48 |
-| 23 | `F8` table | 5843 | 6083 | 240 | 480 |
-| 24 | `FA` immediate body-jump table | 6083 | 6096 | 13 | 26 |
-| 25 | `FA` register forwarding table | 6096 | 6192 | 96 | 192 |
-| 26 | Twelve shared `FA` shift bodies | 6192 | 6340 | 148 | 296 |
-| 27 | Shared `FB-FD` move table | 6340 | 6468 | 128 | 256 |
-| 28 | `FE` forwarding table | 6468 | 6596 | 128 | 256 |
-| 29 | Eight `FE` multiplication bodies | 6596 | 6660 | 64 | 128 |
-|  | **Reference end** |  | **6660** | **6660** | **13,320** |
+| 2 | Dedicated `EC` 16-bit division/remainder handler | 1024 | 1131 | 107 | 214 |
+| 3 | Dedicated `F9` handler | 1131 | 1170 | 39 | 78 |
+| 4 | Dedicated `FA` shift decoder | 1170 | 1190 | 20 | 40 |
+| 5 | Shared width-two decoder | 1190 | 1204 | 14 | 28 |
+| 6 | Generic decoder and four width stubs | 1204 | 1224 | 20 | 40 |
+| 7 | Shared `FB-FD` condition gate | 1224 | 1243 | 19 | 38 |
+| 8 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1243 | 1887 | 644 | 1288 |
+| 9 | Cluster-A false-path landing and cadence cluster | 1887 | 1913 | 26 | 52 |
+| 10 | Local F0 trap plus `F0` veneer table | 1913 | 2024 | 111 | 222 |
+| 11 | `F0` immediate, stack, absolute, and program-space bodies | 2024 | 2776 | 752 | 1504 |
+| 12 | Shared `F0` cold-32 subsystem | 2776 | 2839 | 63 | 126 |
+| 13 | Shared `F0` cold general-pointer subsystem | 2839 | 2885 | 46 | 92 |
+| 14 | `F1` table | 2885 | 3173 | 288 | 576 |
+| 15 | `F2` table | 3173 | 3461 | 288 | 576 |
+| 16 | `F3` table | 3461 | 3845 | 384 | 768 |
+| 17 | Cluster B and two local trap shims | 3845 | 3872 | 27 | 54 |
+| 18 | `F4` table | 3872 | 4424 | 552 | 1104 |
+| 19 | `F5` table | 4424 | 4808 | 384 | 768 |
+| 20 | `F6` table | 4808 | 5128 | 320 | 640 |
+| 21 | `F7` table | 5128 | 5848 | 720 | 1440 |
+| 22 | Cluster C and local trap shim | 5848 | 5872 | 24 | 48 |
+| 23 | `F8` table | 5872 | 6112 | 240 | 480 |
+| 24 | `FA` immediate body-jump table | 6112 | 6125 | 13 | 26 |
+| 25 | `FA` register forwarding table | 6125 | 6221 | 96 | 192 |
+| 26 | Twelve shared `FA` shift bodies | 6221 | 6369 | 148 | 296 |
+| 27 | Shared `FB-FD` move table | 6369 | 6497 | 128 | 256 |
+| 28 | `FE` forwarding table | 6497 | 6625 | 128 | 256 |
+| 29 | Eight `FE` multiplication bodies | 6625 | 6689 | 64 | 128 |
+|  | **Reference end** |  | **6689** | **6689** | **13,378** |
 
 Startup-only helpers and startup code follow this endpoint and are excluded from the core-size accounting region.
 
@@ -3064,7 +3132,7 @@ The secondary executable tables total **7,302 bytes**. `EC` and `F9` have no exe
 
 ### 34.1. Reference baseline and variable components
 
-For the shown layout, the core with the `FA` bodies and all other implemented pages present, but excluding the ordinary `F0` bodies and the two shared `F0` runtime-decoded subsystems, occupies **11,598 bytes**. The remaining components are estimated as follows:
+For the shown layout, the core with the `FA` bodies and all other implemented pages present, but excluding the ordinary `F0` bodies and the two shared `F0` runtime-decoded subsystems, occupies **11,656 bytes**. The remaining components are estimated as follows:
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
@@ -3076,11 +3144,11 @@ For the shown layout, the core with the `FA` bodies and all other implemented pa
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 13,224 | 12.91 |
-| Reference target | **13,320** | **13.01** |
-| Upper bound | 13,480 | 13.16 |
+| Lower bound | 13,282 | 12.97 |
+| Reference target | **13,378** | **13.06** |
+| Upper bound | 13,538 | 13.22 |
 
-The reference design targets about 13,320 bytes, with 13,480 bytes as a practical upper estimate before the physical layout and short-transfer ranges should be revisited.
+The reference design targets about 13,378 bytes, with 13,538 bytes as a practical upper estimate before the physical layout and short-transfer ranges should be revisited.
 
 ## 35. Four-word primary-stride rationale
 

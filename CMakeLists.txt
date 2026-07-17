@@ -103,47 +103,110 @@ add_custom_target(avm_interpreter
     DEPENDS ${AVM_INTERPRETER_OUTPUTS}
 )
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
+# -----------------------------------------------------------------------------
+# AVM assembly test images and in-process test runner
+# -----------------------------------------------------------------------------
 
-set(AVM_TEST_HEADLESS_MS "5000" CACHE STRING "")
-set(AVM_TEST_TIMEOUT_SECONDS "30" CACHE STRING "")
-
-set(AVM_TEST_SCRIPT
-    "${CMAKE_CURRENT_SOURCE_DIR}/tests/avm_tests.py")
 set(AVM_ASM_TEST_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/tests/asm")
-set(AVM_C_TEST_DIR
-    "${CMAKE_CURRENT_SOURCE_DIR}/tests/c")
-set(AVM_TEST_WORK_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}/tests/$<CONFIG>")
+set(AVM_TEST_SOURCE
+    "${CMAKE_CURRENT_SOURCE_DIR}/tests/avm_tests.cpp")
+set(AVM_TEST_BINARY_DIR
+    "${CMAKE_CURRENT_BINARY_DIR}/tests/asm")
+set(AVM_TEST_ADVANCE_LIMIT
+    "10000000000000" CACHE STRING
+    "Maximum emulated CPU cycles allowed for each AVM assembly test")
 
-# Build the assembly-level LLVM tools, Ardens, and the AVR interpreter, then
-# run the unified AVM assembly test driver.
-add_custom_target(avm_tests
-    COMMAND
-        "${Python3_EXECUTABLE}"
-        "${AVM_TEST_SCRIPT}"
-        --llvm-mc "$<TARGET_FILE:llvm-mc>"
-        --lld "${AVM_LD_LLD}"
-        --llvm-objdump "$<TARGET_FILE:llvm-objdump>"
-        --llvm-avm-image "$<TARGET_FILE:llvm-avm-image>"
-        --ardens "$<TARGET_FILE:Ardens>"
-        --interpreter "${AVM_INTERPRETER_HEX}"
-        --asm-dir "${AVM_ASM_TEST_DIR}"
-        --c-dir "${AVM_C_TEST_DIR}"
-        --work-dir "${AVM_TEST_WORK_DIR}"
-        --headless-ms "${AVM_TEST_HEADLESS_MS}"
-        --timeout-seconds "${AVM_TEST_TIMEOUT_SECONDS}"
-    DEPENDS
-        llvm-mc
-        lld
-        llvm-objdump
-        llvm-avm-image
-        Ardens
-        avm_interpreter
-        "${AVM_TEST_SCRIPT}"
+# CONFIGURE_DEPENDS makes CMake regenerate when a top-level assembly test or
+# shared include is added or removed. Each object also depends on every shared
+# include so edits to tests/asm/include immediately rebuild all affected images.
+file(GLOB AVM_ASM_TEST_SOURCES CONFIGURE_DEPENDS
+    "${AVM_ASM_TEST_DIR}/*.asm")
+file(GLOB_RECURSE AVM_ASM_TEST_SUPPORT_SOURCES CONFIGURE_DEPENDS
+    "${AVM_ASM_TEST_DIR}/include/*")
+
+set(AVM_TEST_IMAGE_OUTPUTS)
+foreach(AVM_TEST_ASM IN LISTS AVM_ASM_TEST_SOURCES)
+    get_filename_component(AVM_TEST_NAME "${AVM_TEST_ASM}" NAME_WE)
+
+    set(AVM_TEST_OBJECT
+        "${AVM_TEST_BINARY_DIR}/${AVM_TEST_NAME}.o")
+    set(AVM_TEST_ELF
+        "${AVM_TEST_BINARY_DIR}/${AVM_TEST_NAME}.elf")
+    set(AVM_TEST_IMAGE
+        "${AVM_TEST_BINARY_DIR}/${AVM_TEST_NAME}.bin")
+
+    add_custom_command(
+        OUTPUT "${AVM_TEST_OBJECT}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_TEST_BINARY_DIR}"
+        COMMAND
+            "$<TARGET_FILE:llvm-mc>"
+            -triple=avm-unknown-arduboyfx
+            -filetype=obj
+            -I "${AVM_ASM_TEST_DIR}"
+            "${AVM_TEST_ASM}"
+            -o "${AVM_TEST_OBJECT}"
+        DEPENDS
+            llvm-mc
+            "${AVM_TEST_ASM}"
+            ${AVM_ASM_TEST_SUPPORT_SOURCES}
+        COMMENT "Assembling AVM test ${AVM_TEST_NAME}"
+        VERBATIM
+    )
+
+    add_custom_command(
+        OUTPUT "${AVM_TEST_ELF}" "${AVM_TEST_IMAGE}"
+        COMMAND
+            "${AVM_LD_LLD}"
+            -flavor gnu
+            --entry=_start
+            -o "${AVM_TEST_ELF}"
+            "${AVM_TEST_OBJECT}"
+        COMMAND
+            "$<TARGET_FILE:llvm-avm-image>"
+            "${AVM_TEST_ELF}"
+            -o "${AVM_TEST_IMAGE}"
+        DEPENDS
+            lld
+            llvm-avm-image
+            "${AVM_TEST_OBJECT}"
+        COMMENT "Linking and packaging AVM test ${AVM_TEST_NAME}"
+        VERBATIM
+    )
+
+    list(APPEND AVM_TEST_IMAGE_OUTPUTS "${AVM_TEST_IMAGE}")
+endforeach()
+
+add_custom_target(avm_test_images
+    DEPENDS ${AVM_TEST_IMAGE_OUTPUTS}
+)
+
+# The runner discovers test names from AVM_TEST_ASM_DIR with std::filesystem,
+# maps each name.asm to name_output.txt and AVM_TEST_BIN_DIR/name.bin, loads the
+# interpreter and image directly into arduboy_t, and compares cpu.serial_bytes.
+add_executable(avm_tests
+    "${AVM_TEST_SOURCE}"
+)
+target_compile_features(avm_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_tests PRIVATE ardensdebuggerlib)
+target_compile_definitions(avm_tests PRIVATE
+    AVM_TEST_ASM_DIR="${AVM_ASM_TEST_DIR}"
+    AVM_TEST_BIN_DIR="${AVM_TEST_BINARY_DIR}"
+    AVM_TEST_INTERPRETER_HEX="${AVM_INTERPRETER_HEX}"
+    AVM_TEST_ADVANCE_LIMIT=${AVM_TEST_ADVANCE_LIMIT}ull
+)
+add_dependencies(avm_tests
+    avm_test_images
+    avm_interpreter
+)
+
+# Building avm_tests assembles and packages every current .asm test. This
+# convenience target additionally runs the complete suite in one invocation.
+add_custom_target(avm_tests_run
+    COMMAND "$<TARGET_FILE:avm_tests>"
+    DEPENDS avm_tests
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    COMMENT "Running AVM tests with the Ardens debugger"
+    COMMENT "Running all AVM assembly tests in-process"
     USES_TERMINAL
     VERBATIM
 )
@@ -228,9 +291,9 @@ add_dependencies(avm_bench
 # the compile-time paths above.
 add_custom_target(avm_bench_run
     COMMAND "$<TARGET_FILE:avm_bench>"
-    DEPENDS avm_bench
+    DEPENDS avm_tests_run avm_bench
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    COMMENT "Running AVM instruction-cycle benchmarks"
+    COMMENT "Running AVM tests and instruction-cycle benchmarks"
     USES_TERMINAL
     VERBATIM
 )

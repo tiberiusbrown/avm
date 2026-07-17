@@ -652,7 +652,7 @@ SYMBOL TABLE:
 00000000 g       .text	00000000 __ctors_start
 00000000 g       .text	00000000 __dtors_start
 00000000 g       .text	00000000 __ctors_end
-00800100 g       .text	00000000 _end
+00800a0c g       .text	00000000 _end
 00000200 g       .text	00000000 abvm_interp
 
 
@@ -711,21 +711,21 @@ Disassembly of section .text:
       ae:	0f 92       	push	r0
       b0:	0f b6       	in	r0, 0x3f	; 63
       b2:	0f 92       	push	r0
-      b4:	00 90 07 0a 	lds	r0, 0x0A07	; 0x800a07 <_end+0x907>
+      b4:	00 90 07 0a 	lds	r0, 0x0A07	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
       b8:	03 94       	inc	r0
-      ba:	00 92 07 0a 	sts	0x0A07, r0	; 0x800a07 <_end+0x907>
+      ba:	00 92 07 0a 	sts	0x0A07, r0	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
       be:	89 f4       	brne	.+34     	; 0xe2 <timer0_compa_isr_done>
-      c0:	00 90 08 0a 	lds	r0, 0x0A08	; 0x800a08 <_end+0x908>
+      c0:	00 90 08 0a 	lds	r0, 0x0A08	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
       c4:	03 94       	inc	r0
-      c6:	00 92 08 0a 	sts	0x0A08, r0	; 0x800a08 <_end+0x908>
+      c6:	00 92 08 0a 	sts	0x0A08, r0	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
       ca:	59 f4       	brne	.+22     	; 0xe2 <timer0_compa_isr_done>
-      cc:	00 90 09 0a 	lds	r0, 0x0A09	; 0x800a09 <_end+0x909>
+      cc:	00 90 09 0a 	lds	r0, 0x0A09	; 0x800a09 <__DATA_REGION_ORIGIN__+0x9a9>
       d0:	03 94       	inc	r0
-      d2:	00 92 09 0a 	sts	0x0A09, r0	; 0x800a09 <_end+0x909>
+      d2:	00 92 09 0a 	sts	0x0A09, r0	; 0x800a09 <__DATA_REGION_ORIGIN__+0x9a9>
       d6:	29 f4       	brne	.+10     	; 0xe2 <timer0_compa_isr_done>
-      d8:	00 90 0a 0a 	lds	r0, 0x0A0A	; 0x800a0a <_end+0x90a>
+      d8:	00 90 0a 0a 	lds	r0, 0x0A0A	; 0x800a0a <__DATA_REGION_ORIGIN__+0x9aa>
       dc:	03 94       	inc	r0
-      de:	00 92 0a 0a 	sts	0x0A0A, r0	; 0x800a0a <_end+0x90a>
+      de:	00 92 0a 0a 	sts	0x0A0A, r0	; 0x800a0a <__DATA_REGION_ORIGIN__+0x9aa>
 
 000000e2 <timer0_compa_isr_done>:
       e2:	0f 90       	pop	r0
@@ -3371,17 +3371,17 @@ Disassembly of section .text:
 
 0000102a <sys_millis_func>:
     102a:	f8 94       	cli
-    102c:	00 91 07 0a 	lds	r16, 0x0A07	; 0x800a07 <_end+0x907>
-    1030:	10 91 08 0a 	lds	r17, 0x0A08	; 0x800a08 <_end+0x908>
+    102c:	00 91 07 0a 	lds	r16, 0x0A07	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
+    1030:	10 91 08 0a 	lds	r17, 0x0A08	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
     1034:	78 94       	sei
     1036:	da cd       	rjmp	.-1100   	; 0xbec <cluster_tail_18>
 
 00001038 <sys_millis32_func>:
     1038:	f8 94       	cli
-    103a:	00 91 07 0a 	lds	r16, 0x0A07	; 0x800a07 <_end+0x907>
-    103e:	10 91 08 0a 	lds	r17, 0x0A08	; 0x800a08 <_end+0x908>
-    1042:	20 91 09 0a 	lds	r18, 0x0A09	; 0x800a09 <_end+0x909>
-    1046:	30 91 0a 0a 	lds	r19, 0x0A0A	; 0x800a0a <_end+0x90a>
+    103a:	00 91 07 0a 	lds	r16, 0x0A07	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
+    103e:	10 91 08 0a 	lds	r17, 0x0A08	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
+    1042:	20 91 09 0a 	lds	r18, 0x0A09	; 0x800a09 <__DATA_REGION_ORIGIN__+0x9a9>
+    1046:	30 91 0a 0a 	lds	r19, 0x0A0A	; 0x800a0a <__DATA_REGION_ORIGIN__+0x9aa>
     104a:	78 94       	sei
     104c:	cf cd       	rjmp	.-1122   	; 0xbec <cluster_tail_18>
 
@@ -3402,9 +3402,9 @@ Disassembly of section .text:
     1060:	e3 e0       	ldi	r30, 0x03	; 3
     1062:	59 98       	cbi	0x0b, 1	; 11
     1064:	ee bd       	out	0x2e, r30	; 46
-    1066:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_end+0x900>
+    1066:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
     106a:	a5 0d       	add	r26, r5
-    106c:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_end+0x901>
+    106c:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
     1070:	b6 1d       	adc	r27, r6
     1072:	16 d0       	rcall	.+44     	; 0x10a0 <interp_delay_11>
     1074:	be bd       	out	0x2e, r27	; 46
@@ -3925,9 +3925,9 @@ Disassembly of section .text:
     1366:	b3 e0       	ldi	r27, 0x03	; 3
     1368:	59 98       	cbi	0x0b, 1	; 11
     136a:	be bd       	out	0x2e, r27	; 46
-    136c:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
+    136c:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
     1370:	9b 0f       	add	r25, r27
-    1372:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_end+0x901>
+    1372:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
     1376:	ab 1f       	adc	r26, r27
     1378:	1f d0       	rcall	.+62     	; 0x13b8 <fx_read_program_delay_11>
     137a:	ae bd       	out	0x2e, r26	; 46
@@ -8199,9 +8199,9 @@ Disassembly of section .text:
     332e:	e3 e0       	ldi	r30, 0x03	; 3
     3330:	59 98       	cbi	0x0b, 1	; 11
     3332:	ee bd       	out	0x2e, r30	; 46
-    3334:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <_end+0x900>
+    3334:	a0 91 00 0a 	lds	r26, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
     3338:	a5 0d       	add	r26, r5
-    333a:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <_end+0x901>
+    333a:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
     333e:	b6 1d       	adc	r27, r6
     3340:	10 d0       	rcall	.+32     	; 0x3362 <fx_seek_delay_10>
     3342:	be bd       	out	0x2e, r27	; 46
@@ -8253,11 +8253,11 @@ Disassembly of section .text:
     3376:	3a 2e       	mov	r3, r26
     3378:	a4 e0       	ldi	r26, 0x04	; 4
     337a:	7a 2e       	mov	r7, r26
-    337c:	20 92 06 0a 	sts	0x0A06, r2	; 0x800a06 <_end+0x906>
-    3380:	20 92 07 0a 	sts	0x0A07, r2	; 0x800a07 <_end+0x907>
-    3384:	20 92 08 0a 	sts	0x0A08, r2	; 0x800a08 <_end+0x908>
-    3388:	20 92 09 0a 	sts	0x0A09, r2	; 0x800a09 <_end+0x909>
-    338c:	20 92 0a 0a 	sts	0x0A0A, r2	; 0x800a0a <_end+0x90a>
+    337c:	20 92 06 0a 	sts	0x0A06, r2	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
+    3380:	20 92 07 0a 	sts	0x0A07, r2	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
+    3384:	20 92 08 0a 	sts	0x0A08, r2	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
+    3388:	20 92 09 0a 	sts	0x0A09, r2	; 0x800a09 <__DATA_REGION_ORIGIN__+0x9a9>
+    338c:	20 92 0a 0a 	sts	0x0A0A, r2	; 0x800a0a <__DATA_REGION_ORIGIN__+0x9aa>
     3390:	c0 e0       	ldi	r28, 0x00	; 0
     3392:	da e0       	ldi	r29, 0x0A	; 10
     3394:	2e ba       	out	0x1e, r2	; 30
@@ -8282,8 +8282,8 @@ Disassembly of section .text:
     33ba:	b1 f4       	brne	.+44     	; 0x33e8 <startup_find_development_image>
     33bc:	b5 91       	lpm	r27, Z+
     33be:	a5 91       	lpm	r26, Z+
-    33c0:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
-    33c4:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
+    33c0:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    33c4:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
     33c8:	45 91       	lpm	r20, Z+
     33ca:	55 91       	lpm	r21, Z+
     33cc:	48 31       	cpi	r20, 0x18	; 24
@@ -8292,10 +8292,10 @@ Disassembly of section .text:
     33d2:	11 f5       	brne	.+68     	; 0x3418 <startup_read_header>
     33d4:	b5 91       	lpm	r27, Z+
     33d6:	a5 91       	lpm	r26, Z+
-    33d8:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
-    33dc:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
+    33d8:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <__DATA_REGION_ORIGIN__+0x9a2>
+    33dc:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <__DATA_REGION_ORIGIN__+0x9a3>
     33e0:	a1 e0       	ldi	r26, 0x01	; 1
-    33e2:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
+    33e2:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
     33e6:	18 c0       	rjmp	.+48     	; 0x3418 <startup_read_header>
 
 000033e8 <startup_find_development_image>:
@@ -8318,15 +8318,15 @@ Disassembly of section .text:
 00003406 <.L1^B1>:
     3406:	a0 ef       	ldi	r26, 0xF0	; 240
     3408:	bf ef       	ldi	r27, 0xFF	; 255
-    340a:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <_end+0x902>
-    340e:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <_end+0x903>
+    340a:	a0 93 02 0a 	sts	0x0A02, r26	; 0x800a02 <__DATA_REGION_ORIGIN__+0x9a2>
+    340e:	b0 93 03 0a 	sts	0x0A03, r27	; 0x800a03 <__DATA_REGION_ORIGIN__+0x9a3>
     3412:	a1 e0       	ldi	r26, 0x01	; 1
-    3414:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <_end+0x906>
+    3414:	a0 93 06 0a 	sts	0x0A06, r26	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
 
 00003418 <startup_read_header>:
     3418:	aa 27       	eor	r26, r26
-    341a:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
-    341e:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
+    341a:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    341e:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
     3422:	8c d0       	rcall	.+280    	; 0x353c <fx_startup_begin_read>
     3424:	96 d0       	rcall	.+300    	; 0x3552 <fx_startup_read_byte>
     3426:	e1 34       	cpi	r30, 0x41	; 65
@@ -8370,10 +8370,10 @@ Disassembly of section .text:
     345e:	1e 2f       	mov	r17, r30
     3460:	78 d0       	rcall	.+240    	; 0x3552 <fx_startup_read_byte>
     3462:	4e 2f       	mov	r20, r30
-    3464:	e0 93 04 0a 	sts	0x0A04, r30	; 0x800a04 <_end+0x904>
+    3464:	e0 93 04 0a 	sts	0x0A04, r30	; 0x800a04 <__DATA_REGION_ORIGIN__+0x9a4>
     3468:	74 d0       	rcall	.+232    	; 0x3552 <fx_startup_read_byte>
     346a:	5e 2f       	mov	r21, r30
-    346c:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <_end+0x905>
+    346c:	e0 93 05 0a 	sts	0x0A05, r30	; 0x800a05 <__DATA_REGION_ORIGIN__+0x9a5>
     3470:	59 9a       	sbi	0x0b, 1	; 11
     3472:	04 17       	cp	r16, r20
     3474:	15 07       	cpc	r17, r21
@@ -8395,7 +8395,7 @@ Disassembly of section .text:
     3488:	42 15       	cp	r20, r2
     348a:	52 05       	cpc	r21, r2
     348c:	21 f0       	breq	.+8      	; 0x3496 <startup_copy_data>
-    348e:	a0 91 06 0a 	lds	r26, 0x0A06	; 0x800a06 <_end+0x906>
+    348e:	a0 91 06 0a 	lds	r26, 0x0A06	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
     3492:	a0 ff       	sbrs	r26, 0
     3494:	1e c0       	rjmp	.+60     	; 0x34d2 <startup_invalid_image>
 
@@ -8403,8 +8403,8 @@ Disassembly of section .text:
     3496:	02 15       	cp	r16, r2
     3498:	12 05       	cpc	r17, r2
     349a:	89 f0       	breq	.+34     	; 0x34be <startup_enter_image>
-    349c:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <_end+0x900>
-    34a0:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <_end+0x901>
+    349c:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    34a0:	60 91 01 0a 	lds	r22, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
     34a4:	b3 95       	inc	r27
     34a6:	09 f4       	brne	.+2      	; 0x34aa <.L4^B1>
     34a8:	63 95       	inc	r22
@@ -8484,8 +8484,8 @@ Disassembly of section .text:
     3524:	b5 2f       	mov	r27, r21
     3526:	a0 19       	sub	r26, r0
     3528:	b1 09       	sbc	r27, r1
-    352a:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <_end+0x900>
-    352e:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <_end+0x901>
+    352a:	a0 93 00 0a 	sts	0x0A00, r26	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    352e:	b0 93 01 0a 	sts	0x0A01, r27	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
     3532:	08 94       	sec
     3534:	08 95       	ret
 
@@ -8618,11 +8618,11 @@ Disassembly of section .text:
     35f6:	08 95       	ret
 
 000035f8 <oled_boot_program>:
-    35f8:	d5 f0       	brhs	.+52     	; 0x362e <_etext+0x28>
+    35f8:	d5 f0       	brhs	.+52     	; 0x362e <__data_load_end+0x27>
     35fa:	8d 14       	cp	r8, r13
     35fc:	a1 c8       	rjmp	.-3774   	; 0x2740 <f6_table_end+0x44>
     35fe:	81 cf       	rjmp	.-254    	; 0x3502 <startup_try_tail+0xa>
-    3600:	d9 f1       	breq	.+118    	; 0x3678 <_etext+0x72>
+    3600:	d9 f1       	breq	.+118    	; 0x3678 <__data_load_end+0x71>
     3602:	af 20       	and	r10, r15
     3604:	00        	nop
 

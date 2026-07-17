@@ -6,8 +6,8 @@
 ;    15 -> 'P'
 ;
 ; The output path does not use STSP8, ZEXT8, SWAP8, GETSP, or SETSP.
-; It relies on already-tested compact operations, one-bit shifts, CALL/RET,
-; PUSH16/POP16, ordinary compact memory operations, and SYS.
+; It relies on already-tested upper operations, one-bit shifts, CALL/RET,
+; PUSH16/POP16, ordinary upper memory operations, and SYS.
 ;
 ; f1u_print_r0_line:
 ;   Prints r0 as four most-significant-first hexadecimal nibbles.

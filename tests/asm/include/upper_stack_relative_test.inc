@@ -1,4 +1,4 @@
-; Stackless output helpers for compact stack-relative tests.
+; Stackless output helpers for upper stack-relative tests.
 ;
 ; Nibble encoding:
 ;     0 -> 'A'
@@ -44,7 +44,7 @@
 .endm
 
 ; Print snapshots in r0-r3, one line each. All four values are captured before
-; this macro is entered, so output scratch cannot hide compact-register damage.
+; this macro is entered, so output scratch cannot hide upper-register damage.
 .macro csr_print_r0_r3
     csr_print_r0_line
     mov r0, r1

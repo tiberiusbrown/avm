@@ -1,4 +1,4 @@
-.include "include/compact_stack_relative_test.inc"
+.include "include/upper_stack_relative_test.inc"
 
 .section .text,"ax",@progbits
 

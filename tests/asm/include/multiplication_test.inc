@@ -6,7 +6,7 @@
 ;    15 -> 'P'
 ;
 ; These helpers do not use multiplication instructions. They rely on already
-; tested compact immediates, compact arithmetic/bitwise operations, shifts,
+; tested upper immediates, upper arithmetic/bitwise operations, shifts,
 ; PUSH16/POP16, full-register MOV, branches, and SYS debug output.
 
 .macro mul_emit_char character

@@ -6,7 +6,7 @@
 ;    15 -> 'P'
 ;
 ; The output path does not use CSET or CMOV. It relies on already-tested
-; one-bit shifts, compact arithmetic/bitwise operations, CALL/RET, and SYS.
+; one-bit shifts, upper arithmetic/bitwise operations, CALL/RET, and SYS.
 ;
 ; cond_print_r0_line:
 ;   Prints r0 as four most-significant-first hexadecimal nibbles.

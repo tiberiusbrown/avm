@@ -6,7 +6,7 @@
 ;    15 -> 'P'
 ;
 ; The helpers do not use any mixed-register or postincrement memory operation.
-; Memory setup and inspection use the already-tested one-byte compact ordinary
+; Memory setup and inspection use the already-tested one-byte upper ordinary
 ; load/store forms.
 ;
 ; mem_print_r0_line:

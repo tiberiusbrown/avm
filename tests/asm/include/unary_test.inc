@@ -5,11 +5,11 @@
 ;     ...
 ;    15 -> 'P'
 ;
-; Register setup in the generated tests stages values through a compact
+; Register setup in the generated tests stages values through a upper
 ; register chosen not to alias either the target or guard register.
 ;
 ; These helpers do not use any unary instruction under test. They rely on
-; already-tested compact immediates, primary compact operations, PUSH16/POP16,
+; already-tested upper immediates, primary upper operations, PUSH16/POP16,
 ; full-register MOV, branches, and SYS debug output.
 
 .macro unary_emit_char character

@@ -35,7 +35,7 @@ _start:
     reset_store_regs
     ldi16 c0, 0x0100
     st16 [c0], c0
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c0]
     call debug_print_r0_line
     addi.s8 c0, 2
@@ -45,7 +45,7 @@ _start:
     reset_store_regs
     ldi16 c0, 0x0103
     st16 [c0], c1
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c0]
     call debug_print_r0_line
     addi.s8 c0, 2
@@ -55,7 +55,7 @@ _start:
     reset_store_regs
     ldi16 c0, 0x0106
     st16 [c0], c2
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c0]
     call debug_print_r0_line
     addi.s8 c0, 2
@@ -65,7 +65,7 @@ _start:
     reset_store_regs
     ldi16 c0, 0x0109
     st16 [c0], c3
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c0]
     call debug_print_r0_line
     addi.s8 c0, 2
@@ -76,7 +76,7 @@ _start:
     reset_store_regs
     ldi16 c1, 0x010c
     st16 [c1], c0
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c1]
     call debug_print_r0_line
     addi.s8 c1, 2
@@ -86,7 +86,7 @@ _start:
     reset_store_regs
     ldi16 c1, 0x010f
     st16 [c1], c1
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c1]
     call debug_print_r0_line
     addi.s8 c1, 2
@@ -96,7 +96,7 @@ _start:
     reset_store_regs
     ldi16 c1, 0x0112
     st16 [c1], c2
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c1]
     call debug_print_r0_line
     addi.s8 c1, 2
@@ -106,7 +106,7 @@ _start:
     reset_store_regs
     ldi16 c1, 0x0115
     st16 [c1], c3
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c1]
     call debug_print_r0_line
     addi.s8 c1, 2
@@ -117,7 +117,7 @@ _start:
     reset_store_regs
     ldi16 c2, 0x0118
     st16 [c2], c0
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c2]
     call debug_print_r0_line
     addi.s8 c2, 2
@@ -127,7 +127,7 @@ _start:
     reset_store_regs
     ldi16 c2, 0x011b
     st16 [c2], c1
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c2]
     call debug_print_r0_line
     addi.s8 c2, 2
@@ -137,7 +137,7 @@ _start:
     reset_store_regs
     ldi16 c2, 0x011e
     st16 [c2], c2
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c2]
     call debug_print_r0_line
     addi.s8 c2, 2
@@ -147,7 +147,7 @@ _start:
     reset_store_regs
     ldi16 c2, 0x0121
     st16 [c2], c3
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c2]
     call debug_print_r0_line
     addi.s8 c2, 2
@@ -158,7 +158,7 @@ _start:
     reset_store_regs
     ldi16 c3, 0x0124
     st16 [c3], c0
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c3]
     call debug_print_r0_line
     addi.s8 c3, 2
@@ -168,7 +168,7 @@ _start:
     reset_store_regs
     ldi16 c3, 0x0127
     st16 [c3], c1
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c3]
     call debug_print_r0_line
     addi.s8 c3, 2
@@ -178,7 +178,7 @@ _start:
     reset_store_regs
     ldi16 c3, 0x012a
     st16 [c3], c2
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c3]
     call debug_print_r0_line
     addi.s8 c3, 2
@@ -188,7 +188,7 @@ _start:
     reset_store_regs
     ldi16 c3, 0x012d
     st16 [c3], c3
-    call debug_print_compact_regs
+    call debug_print_upper_regs
     ld16 r0, [c3]
     call debug_print_r0_line
     addi.s8 c3, 2

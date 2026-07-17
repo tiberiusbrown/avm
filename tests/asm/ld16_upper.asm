@@ -23,84 +23,84 @@ _start:
     reset_ld_regs
     ldi16 c0, 0x0101
     ld16 c0, [c0]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c1, 0x0105
     ld16 c0, [c1]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c2, 0x0109
     ld16 c0, [c2]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c3, 0x010d
     ld16 c0, [c3]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     ; Destination c1, every address register.
     reset_ld_regs
     ldi16 c0, 0x0101
     ld16 c1, [c0]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c1, 0x0105
     ld16 c1, [c1]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c2, 0x0109
     ld16 c1, [c2]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c3, 0x010d
     ld16 c1, [c3]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     ; Destination c2, every address register.
     reset_ld_regs
     ldi16 c0, 0x0101
     ld16 c2, [c0]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c1, 0x0105
     ld16 c2, [c1]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c2, 0x0109
     ld16 c2, [c2]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c3, 0x010d
     ld16 c2, [c3]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     ; Destination c3, every address register.
     reset_ld_regs
     ldi16 c0, 0x0101
     ld16 c3, [c0]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c1, 0x0105
     ld16 c3, [c1]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c2, 0x0109
     ld16 c3, [c2]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     reset_ld_regs
     ldi16 c3, 0x010d
     ld16 c3, [c3]
-    call debug_print_compact_regs
+    call debug_print_upper_regs
 
     sys debug_break

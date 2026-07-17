@@ -11,7 +11,7 @@
 ;   Example: r0 = 0x0123 prints "ABCD".
 ;   Preserves every general-purpose register and CC.
 ;
-; debug_print_compact_regs:
+; debug_print_upper_regs:
 ;   Prints c0, c1, c2, and c3 in that order, then a newline.
 ;   Preserves every general-purpose register and CC.
 
@@ -71,8 +71,8 @@ debug_print_r0:
     pop16 r4
     ret
 
-.type debug_print_compact_regs, @function
-debug_print_compact_regs:
+.type debug_print_upper_regs, @function
+debug_print_upper_regs:
     push16 r0
 
     mov r0, r4

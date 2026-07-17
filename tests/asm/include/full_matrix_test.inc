@@ -1,7 +1,7 @@
 ; Output helpers for full-register secondary-matrix tests.
 ;
 ; These helpers deliberately avoid full-register MOV/ADD/SUB/CMP operations.
-; They use only compact primary operations, immediate shifts, stack operations,
+; They use only upper primary operations, immediate shifts, stack operations,
 ; and SYS debug output.
 ;
 ; Nibble encoding:

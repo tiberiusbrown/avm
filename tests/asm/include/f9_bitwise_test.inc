@@ -6,7 +6,7 @@
 ;    15 -> 'P'
 ;
 ; These helpers do not use any full-register AND/OR/XOR instruction. They rely
-; on already-tested compact operations, one-bit shifts, CALL/RET, and SYS.
+; on already-tested upper operations, one-bit shifts, CALL/RET, and SYS.
 ;
 ; bit_print_r0_line:
 ;   Prints r0 as four most-significant-first hexadecimal nibbles.

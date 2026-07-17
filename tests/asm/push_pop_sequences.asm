@@ -18,7 +18,7 @@ _start:
     ldi16 c0, 0x6789
     mov r3, r4
 
-    ; Initialize the compact/full aliases r4-r7 directly.
+    ; Initialize the upper/full aliases r4-r7 directly.
     ldi16 c0, 0x89ab
     ldi16 c1, 0xabcd
     ldi16 c2, 0xcdef

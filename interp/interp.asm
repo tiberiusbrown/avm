@@ -1396,7 +1396,7 @@ primary_EF_ret:
 
 ; Each bounded page advertises its architectural upper bound and uses its
 ; final natural slot width. F1-F9, FA, FB-FD, and FE execute implemented
-; entries; F0 retains one-word veneer placeholders until its bodies are added.
+; entries. F0 uses one-word veneers; secondaries 00-5F are implemented.
 ; F0 bound 0x6E, one-word veneer slots.
 emit_primary_bounded_page primary_F0_cold_veneer_page, 0x6E, f0_veneer_table, secondary_width_1_stub
 ; F1 bound 0x90, two-word slots.
@@ -1776,7 +1776,7 @@ cmov_gate_end:
 ; pages, the dedicated F9 runtime bitwise decoder, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
 ; page are implemented. F0 has shared operand-fetch/register-decode
-; infrastructure, and secondaries 00-3F are implemented. Remaining F0 veneer
+; infrastructure, and secondaries 00-5F are implemented. Remaining F0 veneer
 ; bodies still trap as unimplemented.
 
 ; Direct 00-BF handlers use these exact cadence landings. Later secondary
@@ -2401,13 +2401,13 @@ invalid_syscall_func:
     rjmp invalid_syscall_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Fixed-width secondary tables and F0 trap scaffolding
+; Fixed-width secondary tables and F0 veneer scaffolding
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; F1-F8 use their exact operand-specialized native sequences. F0 retains
-; final-width trap slots: the first word jumps to a nearby local trap and any
-; remaining words are unreachable padding. FA traps reserved values through
-; its immediate body-jump table.
+; F1-F8 use their exact operand-specialized native sequences. F0 uses one-word
+; veneers that either forward to implemented cold bodies or jump to the nearby
+; unimplemented-instruction trap. FA traps reserved values through its immediate
+; body-jump table.
 
 .macro emit_secondary_trap_table label, end_label, count, width, trap
 \label:
@@ -3011,6 +3011,38 @@ f0_fetch_u16_end:
     .error "shared F0 two-byte fetch helper must occupy exactly fifteen AVR words"
 .endif
 
+; Fetch a little-endian absolute data-space address and decode the F0
+; secondary's low three bits into an architectural-register pointer in X.
+; The width-one decoder leaves secondary*1 in r0, so the helper can read the
+; low address byte at the earliest legal cycle without first preserving r24.
+; Register decoding and the remaining delay execute while the high address
+; byte transfers. On return, Z is addr16, X selects rN, VM_PC names addr16[15:8],
+; and the following primary opcode is already in flight.
+f0_fetch_addr16_decode_r_to_xz_start:
+f0_fetch_addr16_decode_r_to_xz:
+    in    r30, SPDR
+    out   SPDR, ZERO
+    ldi   F0_OPERAND_HI, 2
+    add   VM_PCL, F0_OPERAND_HI
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    mov   r26, r0
+    andi  r26, 0x07
+    lsl   r26
+    subi  r26, -8
+    mov   r27, ZERO
+
+    delay_4
+    delay_3
+    in    r31, SPDR
+    out   SPDR, ZERO
+    ret
+f0_fetch_addr16_decode_r_to_xz_end:
+.if (f0_fetch_addr16_decode_r_to_xz_end - f0_fetch_addr16_decode_r_to_xz_start) != 34
+    .error "shared F0 absolute-address fetch/decode helper must occupy exactly seventeen AVR words"
+.endif
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; F0 00-0F: noncompact immediate instructions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3133,7 +3165,56 @@ f0_stsp16_r_body:
     st    Z,  r1
     rjmp  cluster_tail_18
 
-; F0 retains one-word veneers for the remaining cold forms. Secondaries 00-3F
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; F0 40-5F: absolute data-space forms
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; All four families share the absolute-address fetch/decode helper. The helper
+; launches the following primary opcode before returning. The selected tail
+; padding makes the subsequent SPDR read occur exactly seventeen cycles later
+; for every byte and word operation.
+
+; STM8 has the shortest operation body and therefore needs five cycles of
+; landing delay before the standard dispatch body.
+f0_absolute_bodies_start:
+f0_absolute_tail_18_delay_5:
+    delay_2
+    rjmp  cluster_tail_18_delay_1
+
+f0_ldm8u_r_body:
+    rcall f0_fetch_addr16_decode_r_to_xz
+    ld    r0, Z
+    st    X+, r0
+    st    X,  ZERO
+    rjmp  cluster_tail_18_delay_3
+
+f0_stm8_r_body:
+    rcall f0_fetch_addr16_decode_r_to_xz
+    ld    r0, X
+    st    Z, r0
+    rjmp  f0_absolute_tail_18_delay_5
+
+f0_ldm16_r_body:
+    rcall f0_fetch_addr16_decode_r_to_xz
+    ld    r0, Z+
+    ld    r1, Z
+    st    X+, r0
+    st    X,  r1
+    rjmp  cluster_tail_18_delay_1
+
+f0_stm16_r_body:
+    rcall f0_fetch_addr16_decode_r_to_xz
+    ld    r0, X+
+    ld    r1, X
+    st    Z+, r0
+    st    Z,  r1
+    rjmp  cluster_tail_18_delay_1
+f0_absolute_bodies_end:
+.if (f0_absolute_bodies_end - f0_absolute_bodies_start) != 46
+    .error "F0 absolute data-space bodies must occupy exactly twenty-three AVR words"
+.endif
+
+; F0 retains one-word veneers for the remaining cold forms. Secondaries 00-5F
 ; are implemented above; the local F0 trap remains before the group for short
 ; RJMP reach.
 secondary_tables_before_cluster_b:
@@ -3191,7 +3272,27 @@ f0_veneer_table:
         rjmp f0_stsp16_r_body
     .endr
 
-    .rept (0x6E - 0x40)
+    ; 40-47: LDM8U r0-r7,addr16
+    .rept 8
+        rjmp f0_ldm8u_r_body
+    .endr
+
+    ; 48-4F: STM8 addr16,r0-r7
+    .rept 8
+        rjmp f0_stm8_r_body
+    .endr
+
+    ; 50-57: LDM16 r0-r7,addr16
+    .rept 8
+        rjmp f0_ldm16_r_body
+    .endr
+
+    ; 58-5F: STM16 addr16,r0-r7
+    .rept 8
+        rjmp f0_stm16_r_body
+    .endr
+
+    .rept (0x6E - 0x60)
         rjmp secondary_unimplemented_a_func
     .endr
 f0_veneer_table_end:

@@ -7,7 +7,7 @@
 
 ## 1. Scope and authority
 
-The Arduboy Virtual Machine, abbreviated **AVM**, is a compact bytecode architecture with:
+The Arduboy Virtual Machine, abbreviated **AVM**, is a bytecode architecture with:
 
 - Eight 16-bit general-purpose registers.
 - A flat 24-bit program counter and read-only program address space.
@@ -40,7 +40,6 @@ The words **MUST**, **MUST NOT**, **SHOULD**, and **MAY** describe architectural
 rN        One of the eight 16-bit registers r0-r7
 low8(rN)  Bits 7:0 of rN
 high8(rN) Bits 15:8 of rN
-cN        Compact alias c0-c3
 qN        Aligned 32-bit pair q0-q3
 PC        Flat 24-bit logical program counter
 SP        16-bit VM stack pointer
@@ -73,18 +72,12 @@ Each register may hold:
 
 There is no separate architectural byte-register file.
 
-## 4. Compact registers
+## 4. Upper registers
 
-The compact aliases are:
-
-```text
-c0 = r4
-c1 = r5
-c2 = r6
-c3 = r7
-```
-
-Compact aliases name the same storage as their corresponding `rN` registers. They exist only to select shorter instruction encodings and the preferred ABI register class.
+Registers `r4-r7` are called the **upper registers**. They are ordinary
+16-bit architectural registers with no separate aliases or semantics. Several
+instruction encodings are restricted to this subset, and the assembler selects
+those encodings automatically when the operands are in `r4-r7`.
 
 ## 5. Aligned 32-bit register pairs
 
@@ -419,20 +412,22 @@ Except for the five condition-producing families listed in Section 8, every inst
 
 ## 18. Register-field conventions
 
-### 18.1. Compact matrix byte
+### 18.1. Upper-register matrix byte
 
 For primary opcodes `00-AF`:
 
 ```text
-bits 3:2  destination, address, or left compact register
-bits 1:0  source, address, or right compact register
+bits 3:2  destination, address, or left upper-register code
+bits 1:0  source, address, or right upper-register code
 ```
 
-Register code `0-3` selects `c0-c3`.
+Register code `0-3` selects architectural registers `r4-r7`.
+
+For encoding formulas, `U(rN) = N - 4` for an upper register `rN` in `r4-r7`.
 
 ### 18.2. Full-register pair index `PAIR48`
 
-Several dense pages omit compact/compact forms because those have one-byte encodings.
+Several dense pages omit forms where both operands are upper registers because those have one-byte encodings.
 
 For destination/left register `d` and source/right register `s`:
 
@@ -444,31 +439,31 @@ else if d in r4-r7 and s in r0-r3:
     PAIR48(d,s) = 0x20 + 4*(d-4) + s        ; 20-2F
 
 else:
-    use the one-byte compact/compact form
+    use the one-byte upper-register form
 ```
 
-### 18.3. Compact-pointer ordinary-memory index
+### 18.3. Upper-register-pointer ordinary-memory index
 
-For compact pointer `cA` and noncompact data register `rN`, where `N=0-3`:
+For pointer `rA` in `r4-r7` and data register `rN` in `r0-r3`:
 
 ```text
-MEM16(cA,rN) = 4*A + N
+MEM16(rA,rN) = 4*U(rA) + N
 ```
 
-### 18.4. Compact-pointer postincrement-memory index
+### 18.4. Upper-register-pointer postincrement-memory index
 
-For compact pointer `cA` and any data register `rN`, where `N=0-7`:
+For pointer `rA` in `r4-r7` and any data register `rN`, where `N=0-7`:
 
 ```text
-MEM32(cA,rN) = 8*A + N
+MEM32(rA,rN) = 8*U(rA) + N
 ```
 
-### 18.5. Stack-offset compact index
+### 18.5. Stack-offset upper-register index
 
-For unsigned four-bit stack displacement `u4` and compact register `cN`:
+For unsigned four-bit stack displacement `u4` and `rN` in `r4-r7`:
 
 ```text
-STACK64(u4,cN) = 4*u4 + N
+STACK64(u4,rN) = 4*u4 + U(rN)
 ```
 
 ### 18.6. Program-load operand byte `PSPEC`
@@ -543,23 +538,23 @@ Every bit pattern selects valid registers and modifiers.
 
 | Primary | Encoding / instruction | Length | `CC` |
 |---:|---|---:|---|
-| `00-0F` | `MOV cD,cS` | 1 | Preserve |
-| `10-1F` | `ADD cD,cS` | 1 | Preserve |
-| `20-2F` | `SUB cD,cS` | 1 | Preserve |
-| `30-3F` | `CMP cL,cR` | 1 | Replace |
-| `40-4F` | `LD8U cD,[cA]` | 1 | Preserve |
-| `50-5F` | `ST8 [cA],cS` | 1 | Preserve |
-| `60-6F` | `LD16 cD,[cA]` | 1 | Preserve |
-| `70-7F` | `ST16 [cA],cS` | 1 | Preserve |
-| `80-8F` | `AND cD,cS` | 1 | Preserve |
-| `90-9F` | `OR cD,cS` | 1 | Preserve |
-| `A0-AF` | `XOR cD,cS` | 1 | Preserve |
+| `00-0F` | `MOV rD,rS` | 1 | Preserve |
+| `10-1F` | `ADD rD,rS` | 1 | Preserve |
+| `20-2F` | `SUB rD,rS` | 1 | Preserve |
+| `30-3F` | `CMP rL,rR` | 1 | Replace |
+| `40-4F` | `LD8U rD,[rA]` | 1 | Preserve |
+| `50-5F` | `ST8 [rA],rS` | 1 | Preserve |
+| `60-6F` | `LD16 rD,[rA]` | 1 | Preserve |
+| `70-7F` | `ST16 [rA],rS` | 1 | Preserve |
+| `80-8F` | `AND rD,rS` | 1 | Preserve |
+| `90-9F` | `OR rD,rS` | 1 | Preserve |
+| `A0-AF` | `XOR rD,rS` | 1 | Preserve |
 | `B0-B7` | `PUSH16 rN` | 1 | Preserve |
 | `B8-BF` | `POP16 rN` | 1 | Preserve |
-| `C0-C3` | `LDI8 cD,imm8` | 2 | Preserve |
-| `C4-C7` | `LDI16 cD,imm16` | 3 | Preserve |
-| `C8-CB` | `ADDI.S8 cD,simm8` | 2 | Preserve |
-| `CC-CF` | `CMPI.S8 cL,simm8` | 2 | Replace |
+| `C0-C3` | `LDI8 rD,imm8` | 2 | Preserve |
+| `C4-C7` | `LDI16 rD,imm16` | 3 | Preserve |
+| `C8-CB` | `ADDI.S8 rD,simm8` | 2 | Preserve |
+| `CC-CF` | `CMPI.S8 rL,simm8` | 2 | Replace |
 | `D0` | `BREQ8 rel8` | 2 | Preserve |
 | `D1` | `BRNE8 rel8` | 2 | Preserve |
 | `D2` | `BRULT8 rel8` | 2 | Preserve |
@@ -594,36 +589,36 @@ Every bit pattern selects valid registers and modifiers.
 | `F7` | Dense page 7 | 2 | Preserve |
 | `F8` | `CSET` page | 2 | Preserve |
 | `F9` | General bitwise page | 2 | Preserve |
-| `FA` | Compact 16-bit shift page | 2 | Preserve |
+| `FA` | Upper-register 16-bit shift page | 2 | Preserve |
 | `FB-FD` | Conditional-move pages | 2 | Preserve |
 | `FE` | `MUL16` page | 2 | Preserve |
 | `FF` | Reserved | — | — |
 
 ## 20. One-byte instruction semantics
 
-### 20.1. Compact register matrices
+### 20.1. Upper-register matrices
 
-For `00-AF`, the low nibble is the compact matrix from Section 18.1.
+For `00-AF`, the low nibble is the upper-register matrix from Section 18.1. Every `rD`, `rS`, `rL`, `rR`, and `rA` operand in this table is restricted to `r4-r7`.
 
 | Range | Instruction | Semantics |
 |---|---|---|
-| `00-0F` | `MOV cD,cS` | `cD = cS` |
-| `10-1F` | `ADD cD,cS` | `cD = low16(cD + cS)` |
-| `20-2F` | `SUB cD,cS` | `cD = low16(cD - cS)` |
-| `30-3F` | `CMP cL,cR` | Replace `CC` from 16-bit comparison; registers unchanged |
-| `40-4F` | `LD8U cD,[cA]` | `cD = zero_extend8(mem8[cA])` |
-| `50-5F` | `ST8 [cA],cS` | `mem8[cA] = low8(cS)` |
-| `60-6F` | `LD16 cD,[cA]` | `cD = mem16le[cA]` |
-| `70-7F` | `ST16 [cA],cS` | `mem16le[cA] = cS` |
-| `80-8F` | `AND cD,cS` | `cD = cD & cS` |
-| `90-9F` | `OR cD,cS` | `cD = cD | cS` |
-| `A0-AF` | `XOR cD,cS` | `cD = cD ^ cS` |
+| `00-0F` | `MOV rD,rS` | `rD = rS` |
+| `10-1F` | `ADD rD,rS` | `rD = low16(rD + rS)` |
+| `20-2F` | `SUB rD,rS` | `rD = low16(rD - rS)` |
+| `30-3F` | `CMP rL,rR` | Replace `CC` from 16-bit comparison; registers unchanged |
+| `40-4F` | `LD8U rD,[rA]` | `rD = zero_extend8(mem8[rA])` |
+| `50-5F` | `ST8 [rA],rS` | `mem8[rA] = low8(rS)` |
+| `60-6F` | `LD16 rD,[rA]` | `rD = mem16le[rA]` |
+| `70-7F` | `ST16 [rA],rS` | `mem16le[rA] = rS` |
+| `80-8F` | `AND rD,rS` | `rD = rD & rS` |
+| `90-9F` | `OR rD,rS` | `rD = rD | rS` |
+| `A0-AF` | `XOR rD,rS` | `rD = rD ^ rS` |
 
 Canonical aliases:
 
 ```text
-NOP    = MOV c0,c0
-CLR cN = XOR cN,cN
+NOP    = MOV r4,r4
+CLR rN = XOR rN,rN    ; rN must be r4-r7
 ```
 
 ### 20.2. Stack register operations
@@ -650,14 +645,14 @@ SP = SP + 2
 
 ## 21. Immediate instructions
 
-Compact destination is selected by the low two bits of the primary opcode.
+Upper-register destination is selected by the low two bits of the primary opcode.
 
 | Primary | Instruction | Semantics |
 |---:|---|---|
-| `C0-C3` | `LDI8 cD,imm8` | `cD = zero_extend8(imm8)` |
-| `C4-C7` | `LDI16 cD,imm16` | `cD = imm16` |
-| `C8-CB` | `ADDI.S8 cD,simm8` | `cD = low16(cD + sign_extend8(simm8))` |
-| `CC-CF` | `CMPI.S8 cL,simm8` | Compare `cL` with `sign_extend8(simm8)` and replace `CC` |
+| `C0-C3` | `LDI8 rD,imm8` | `rD = zero_extend8(imm8)` |
+| `C4-C7` | `LDI16 rD,imm16` | `rD = imm16` |
+| `C8-CB` | `ADDI.S8 rD,simm8` | `rD = low16(rD + sign_extend8(simm8))` |
+| `CC-CF` | `CMPI.S8 rL,simm8` | Compare `rL` with `sign_extend8(simm8)` and replace `CC` |
 
 ## 22. Control-flow and system instructions
 
@@ -844,12 +839,12 @@ Ordinary loads and all stores permit `rD/rS == rA`. Postincrement loads reserve 
 
 ## 24. `F1` register, stack-byte, and SP page
 
-Valid secondary values are `00-8F`.
+Valid secondary values are `00-8F`. Pointer `rA` in the postincrement memory families is restricted to `r4-r7`.
 
 | Secondary | Encoding | Instruction | Semantics |
 |---:|---|---|---|
 | `00-2F` | `PAIR48(rD,rS)` | `MOV rD,rS` | `rD = rS` |
-| `30-6F` | `30 + STACK64(u4,cS)` | `STSP8 [SP+u4],cS` | Store `low8(cS)` |
+| `30-6F` | `30 + STACK64(u4,rS)` | `STSP8 [SP+u4],rS` | Store `low8(rS)` |
 | `70-77` | `70 + rD` | `ZEXT8 rD` | Clear `high8(rD)` |
 | `78-7F` | `78 + rD` | `SWAP8 rD` | Exchange low-byte nibbles; preserve high byte |
 | `80-87` | `80 + rD` | `GETSP rD` | `rD = SP` |
@@ -864,30 +859,30 @@ Valid secondary values are `00-5F`.
 | `00-2F` | `PAIR48(rD,rS)` | `ADD rD,rS` | `rD = low16(rD + rS)` |
 | `30-5F` | `30 + PAIR48(rD,rS)` | `SUB rD,rS` | `rD = low16(rD - rS)` |
 
-Compact/compact operands use the one-byte forms.
+Operands that are both upper registers use the one-byte forms.
 
-## 26. `F3` compact-pointer byte-store, multiply, and stack-byte page
+## 26. `F3` upper-register-pointer byte-store, multiply, and stack-byte page
 
-Valid secondary values are `00-7F`.
+Valid secondary values are `00-7F`. In this page, `rA`, `rD`, and `rS` in the upper-register-only families are restricted to `r4-r7`.
 
 | Secondary | Encoding | Instruction | Semantics |
 |---:|---|---|---|
-| `00-0F` | `MEM16(cA,rS)` | `ST8 [cA],rS` for `rS=r0-r3` | Store `low8(rS)` |
-| `10-1F` | `10 + 4*cD + cS` | `MULU8.W cD,cS` | `cD = unsigned8(cD) * unsigned8(cS)` |
-| `20-2F` | `20 + 4*cD + cS` | `MULS8.W cD,cS` | `cD = signed8(cD) * signed8(cS)` |
-| `30-3F` | `30 + 4*cD + cS` | `MULSU8.W cD,cS` | `cD = signed8(cD) * unsigned8(cS)` |
-| `40-7F` | `40 + STACK64(u4,cD)` | `LDSP8U cD,[SP+u4]` | Zero-extended byte load |
+| `00-0F` | `MEM16(rA,rS)` | `ST8 [rA],rS` for `rS=r0-r3` | Store `low8(rS)` |
+| `10-1F` | `10 + 4*U(rD) + U(rS)` | `MULU8.W rD,rS` | `rD = unsigned8(rD) * unsigned8(rS)` |
+| `20-2F` | `20 + 4*U(rD) + U(rS)` | `MULS8.W rD,rS` | `rD = signed8(rD) * signed8(rS)` |
+| `30-3F` | `30 + 4*U(rD) + U(rS)` | `MULSU8.W rD,rS` | `rD = signed8(rD) * unsigned8(rS)` |
+| `40-7F` | `40 + STACK64(u4,rD)` | `LDSP8U rD,[SP+u4]` | Zero-extended byte load |
 
 The widening multiply result is the complete 16-bit product.
 
 ## 27. `F4` stack-word, shift, unary, and test page
 
-Valid secondary values are `00-B7`.
+Valid secondary values are `00-B7`. The `LDSP16` and `STSP16` operands in `00-7F` are restricted to `r4-r7`.
 
 | Secondary | Encoding | Instruction | Semantics / `CC` |
 |---:|---|---|---|
-| `00-3F` | `STACK64(u4,cD)` | `LDSP16 cD,[SP+u4]` | Load word; preserve |
-| `40-7F` | `40 + STACK64(u4,cS)` | `STSP16 [SP+u4],cS` | Store word; preserve |
+| `00-3F` | `STACK64(u4,rD)` | `LDSP16 rD,[SP+u4]` | Load word; preserve |
+| `40-7F` | `40 + STACK64(u4,rS)` | `STSP16 [SP+u4],rS` | Store word; preserve |
 | `80-87` | `80 + rD` | `LSL16.1 rD` | Logical left shift by 1; preserve |
 | `88-8F` | `88 + rD` | `LSR16.1 rD` | Logical right shift by 1; preserve |
 | `90-97` | `90 + rD` | `ASR16.1 rD` | Arithmetic right shift by 1; preserve |
@@ -904,29 +899,29 @@ Z = (low8(rD) == 0)
 S = (signed8(low8(rD)) < 0)
 ```
 
-## 28. `F5` compare and ordinary compact-pointer memory page
+## 28. `F5` compare and ordinary upper-register-pointer memory page
 
-Valid secondary values are `00-5F`.
+Valid secondary values are `00-5F`. Memory pointer `rA` in `30-5F` is restricted to `r4-r7`.
 
 | Secondary | Encoding | Instruction | Semantics / `CC` |
 |---:|---|---|---|
 | `00-2F` | `PAIR48(rL,rR)` | `CMP rL,rR` | Compare 16-bit values; replace |
-| `30-3F` | `30 + MEM16(cA,rD)` | `LD8U rD,[cA]`, `rD=r0-r3` | Zero-extended byte load; preserve |
-| `40-4F` | `40 + MEM16(cA,rD)` | `LD16 rD,[cA]`, `rD=r0-r3` | Word load; preserve |
-| `50-5F` | `50 + MEM16(cA,rS)` | `ST16 [cA],rS`, `rS=r0-r3` | Word store; preserve |
+| `30-3F` | `30 + MEM16(rA,rD)` | `LD8U rD,[rA]`, `rD=r0-r3` | Zero-extended byte load; preserve |
+| `40-4F` | `40 + MEM16(rA,rD)` | `LD16 rD,[rA]`, `rD=r0-r3` | Word load; preserve |
+| `50-5F` | `50 + MEM16(rA,rS)` | `ST16 [rA],rS`, `rS=r0-r3` | Word store; preserve |
 
-Compact data registers use the one-byte primary forms.
+Data operands in upper registers use the one-byte primary forms.
 
 ## 29. `F6` postincrement byte-store and unary page
 
-Valid secondary values are `00-4F`.
+Valid secondary values are `00-4F`. The pointer and multiply operands in the upper-register-only families are restricted to `r4-r7`.
 
 | Secondary | Encoding | Instruction | Semantics / `CC` |
 |---:|---|---|---|
-| `00-1F` | `MEM32(cA,rS)` | `ST8 [cA+],rS` | Store byte; `cA += 1`; preserve |
+| `00-1F` | `MEM32(rA,rS)` | `ST8 [rA+],rS` | Store byte; `rA += 1`; preserve |
 | `20-27` | `20 + rD` | `BSWAP16 rD` | Exchange low and high bytes; preserve |
 | `28-2F` | `28 + rD` | `TST16 rD` | Compare 16-bit value with zero; replace |
-| `30-3F` | `30 + 4*cD + cS` | `MUL8 cD,cS` | `cD = zero_extend8(low8(cD)*low8(cS))` |
+| `30-3F` | `30 + 4*U(rD) + U(rS)` | `MUL8 rD,rS` | `rD = zero_extend8(low8(rD)*low8(rS))` |
 | `40-47` | `40 + rD` | `SEXT8 rD` | Sign-extend low byte |
 | `48-4F` | `48 + rD` | `NEG16 rD` | `rD = low16(-rD)` |
 
@@ -938,7 +933,7 @@ Z = (rD == 0)
 S = (signed16(rD) < 0)
 ```
 
-Stores permit `cA == rS`; the stored byte is the original source value.
+Stores permit `rA == rS`; the stored byte is the original source value.
 
 ## 30. `F7` postincrement word-memory and 32-bit page
 
@@ -946,16 +941,16 @@ Valid secondary values are `00-8F`.
 
 | Secondary | Encoding | Instruction | Semantics |
 |---:|---|---|---|
-| `00-1F` | `MEM32(cA,rD)` | `LD8U rD,[cA+]` | Load byte; zero-extend; `cA += 1` |
-| `20-3F` | `20 + MEM32(cA,rD)` | `LD16 rD,[cA+]` | Load word; `cA += 2` |
-| `40-5F` | `40 + MEM32(cA,rS)` | `ST16 [cA+],rS` | Store word; `cA += 2` |
+| `00-1F` | `MEM32(rA,rD)` | `LD8U rD,[rA+]` | Load byte; zero-extend; `rA += 1` |
+| `20-3F` | `20 + MEM32(rA,rD)` | `LD16 rD,[rA+]` | Load word; `rA += 2` |
+| `40-5F` | `40 + MEM32(rA,rS)` | `ST16 [rA+],rS` | Store word; `rA += 2` |
 | `60-6F` | `60 + 4*qD + qS` | `ADD32 qD,qS` | `qD = low32(qD + qS)` |
 | `70-7F` | `70 + 4*qD + qS` | `SUB32 qD,qS` | `qD = low32(qD - qS)` |
 | `80-83` | `80 + qD` | `LSR32.1 qD` | Logical right shift by 1 |
 | `84-87` | `84 + qD` | `ASR32.1 qD` | Arithmetic right shift by 1 |
 | `88-8F` | `88 + rD` | `BOOL rD` | `rD = (rD != 0) ? 1 : 0` |
 
-Postincrement loads reserve `rD == cA`. Stores permit `rS == cA`.
+Postincrement loads reserve `rD == rA`. Stores permit `rS == rA`.
 
 ## 31. `F8` condition materialization page
 
@@ -997,9 +992,9 @@ Operation codes:
 
 Semantics are 16-bit bitwise operations. All aliases, including `rD == rS`, are legal.
 
-Compact/compact combinations are valid but noncanonical; assemblers SHOULD emit the corresponding one-byte form.
+Combinations where both operands are upper registers are valid but noncanonical; assemblers SHOULD emit the corresponding one-byte form.
 
-## 33. `FA` compact 16-bit shift page
+## 33. `FA` upper-register 16-bit shift page
 
 All instructions in this section use primary opcode `FA` and one secondary
 byte. Secondary values `00-EF` are valid. Values `F0-FF` are reserved and
@@ -1007,45 +1002,45 @@ trap as invalid instructions.
 
 | Secondary | Instruction |
 |---:|---|
-| `00-0F` | `SHL16V cD,cCount` |
-| `10-1F` | `LSR16V cD,cCount` |
-| `20-2F` | `ASR16V cD,cCount` |
-| `30-6F` | `LSL16I cD,imm4` |
-| `70-AF` | `LSR16I cD,imm4` |
-| `B0-EF` | `ASR16I cD,imm4` |
+| `00-0F` | `SHL16V rD,rCount` |
+| `10-1F` | `LSR16V rD,rCount` |
+| `20-2F` | `ASR16V rD,rCount` |
+| `30-6F` | `LSL16I rD,imm4` |
+| `70-AF` | `LSR16I rD,imm4` |
+| `B0-EF` | `ASR16I rD,imm4` |
 | `F0-FF` | Reserved / trap |
 
 Variable-count encodings use:
 
 ```text
-SHL16V secondary = 0x00 + (cD << 2) + cCount
-LSR16V secondary = 0x10 + (cD << 2) + cCount
-ASR16V secondary = 0x20 + (cD << 2) + cCount
+SHL16V secondary = 0x00 + (U(rD) << 2) + U(rCount)
+LSR16V secondary = 0x10 + (U(rD) << 2) + U(rCount)
+ASR16V secondary = 0x20 + (U(rD) << 2) + U(rCount)
 ```
 
 For these forms:
 
 ```text
-bits 3:2  destination cD
-bits 1:0  count register cCount
-count     = low8(cCount) & 15
+bits 3:2  destination upper-register code for rD
+bits 1:0  upper-register code for rCount
+count     = low8(rCount) & 15
 ```
 
-The count register is preserved. `cD == cCount` is legal; the original count
+The count register is preserved. `rD == rCount` is legal; the original count
 is used.
 
 Immediate-count encodings use:
 
 ```text
-LSL16I secondary = 0x30 + (cD << 4) + imm4
-LSR16I secondary = 0x70 + (cD << 4) + imm4
-ASR16I secondary = 0xB0 + (cD << 4) + imm4
+LSL16I secondary = 0x30 + (U(rD) << 4) + imm4
+LSR16I secondary = 0x70 + (U(rD) << 4) + imm4
+ASR16I secondary = 0xB0 + (U(rD) << 4) + imm4
 ```
 
 For these forms:
 
 ```text
-bits 5:4  destination cD
+bits 5:4  destination upper-register code for rD
 bits 3:0  immediate shift count imm4
 imm4      = 0-15
 ```
@@ -1054,16 +1049,16 @@ Semantics:
 
 ```text
 SHL16V / LSL16I:
-    cD = low16(cD << count)
+    rD = low16(rD << count)
 
 LSR16V / LSR16I:
-    cD = unsigned16(cD) >> count
+    rD = unsigned16(rD) >> count
 
 ASR16V / ASR16I:
-    cD = signed16(cD) >> count
+    rD = signed16(rD) >> count
 ```
 
-For an immediate form, `count = imm4`. A count of zero leaves `cD`
+For an immediate form, `count = imm4`. A count of zero leaves `rD`
 unchanged. All six shift families preserve `CC`.
 
 ## 34. `FB-FD` conditional-move pages
@@ -1178,8 +1173,8 @@ Logical and shift operations operate on the stated width.
 The following names do not require separate encodings:
 
 ```text
-NOP         MOV c0,c0
-CLR cN      XOR cN,cN
+NOP         MOV r4,r4
+CLR rN      XOR rN,rN    ; rN must be r4-r7
 MOV32 qD,qS two MOV instructions
 LSL32.1 qD  ADD32 qD,qD
 CSET.ULE    swapped compare + CSET.UGE
@@ -1198,24 +1193,24 @@ An assembler MAY expose additional aliases provided they lower to the normative 
 
 | State | ABI role |
 |---|---|
-| `r4-r7` / `c0-c3` | Caller-saved |
+| `r4-r7` | Caller-saved |
 | `r0-r3` | Callee-saved |
 | `r3` | Optional frame pointer |
 | `CC` | Caller-saved across ordinary function calls |
 | `SP` | Restored by the callee |
 | `PC` | Controlled by call, jump, tail-call, and return |
 
-A normal call may replace `c0-c3` and `CC`. The callee MUST restore every used register from `r0-r3` and MUST restore `SP` before returning.
+A normal call may replace `r4-r7` and `CC`. The callee MUST restore every used register from `r0-r3` and MUST restore `SP` before returning.
 
 ## 41. Argument classification and register allocation
 
 Arguments are processed in source order using four 16-bit register units:
 
 ```text
-unit 0 -> c0 = r4
-unit 1 -> c1 = r5
-unit 2 -> c2 = r6
-unit 3 -> c3 = r7
+unit 0 -> r4
+unit 1 -> r5
+unit 2 -> r6
+unit 3 -> r7
 ```
 
 ### 41.1. Register classes by ABI size
@@ -1252,19 +1247,19 @@ Examples:
 
 ```text
 (i16, i32):
-    i16 -> c0
-    skip c1
-    i32 -> q3 = c2:c3
+    i16 -> r4
+    skip r5
+    i32 -> q3 = r6:r7
 
 (i16, i64):
-    i16 -> c0
+    i16 -> r4
     i64 does not fit at aligned unit 2 -> stack
     all later arguments -> stack
 
 (i32, i16, i16):
-    i32 -> q2 = c0:c1
-    i16 -> c2
-    i16 -> c3
+    i32 -> q2 = r4:r5
+    i16 -> r6
+    i16 -> r7
 
 (program pointer, i32):
     pointer -> q2
@@ -1273,7 +1268,7 @@ Examples:
 
 ### 41.3. Hidden arguments
 
-A hidden structure-result pointer is logically inserted before all source-language arguments. It is a one-unit data pointer and normally occupies `c0`.
+A hidden structure-result pointer is logically inserted before all source-language arguments. It is a one-unit data pointer and normally occupies `r4`.
 
 An indirect aggregate argument is represented by a one-unit data pointer to a caller-created private copy. It participates in the allocation algorithm like any other data pointer.
 
@@ -1342,7 +1337,7 @@ LLVM should represent this as a `byval` pointer with one-byte ABI alignment.
 | Aggregate size | Return mechanism |
 |---:|---|
 | 0 | No result storage |
-| 1-2 | Direct in `c0`, with unused high bytes unspecified |
+| 1-2 | Direct in `r4`, with unused high bytes unspecified |
 | 3-4 | Direct in `q2`, with unused high bytes unspecified |
 | Greater than 4 | Hidden structure-result pointer |
 
@@ -1351,7 +1346,7 @@ For an indirect return:
 - The caller allocates result storage.
 - A hidden data pointer to that storage is inserted as the first argument.
 - The callee writes the complete result object.
-- The callee returns the same pointer unchanged in `c0`.
+- The callee returns the same pointer unchanged in `r4`.
 - User-visible arguments are allocated after the hidden pointer.
 
 LLVM should model the hidden pointer with `sret`, `noalias`, and one-byte ABI alignment.
@@ -1402,17 +1397,17 @@ Aggregate variadic arguments follow the ordinary direct-or-indirect aggregate cl
 
 | Return type | Location |
 |---|---|
-| `i8`, `bool` | `low8(c0)` |
-| `i16` | `c0` |
-| Data pointer | `c0` |
+| `i8`, `bool` | `low8(r4)` |
+| `i16` | `r4` |
+| Data pointer | `r4` |
 | `i32`, `float` | `q2 = r4:r5` |
 | Program/function pointer | Canonical pointer in `q2` |
 | `i64` | `r4:r7` |
-| Aggregate size 1-2 | `c0` |
+| Aggregate size 1-2 | `r4` |
 | Aggregate size 3-4 | `q2` |
-| Aggregate size greater than 4 | Hidden result pointer; pointer returned in `c0` |
+| Aggregate size greater than 4 | Hidden result pointer; pointer returned in `r4` |
 
-For `i8` and `bool` returns, only `low8(c0)` is defined. `high8(c0)` is unspecified.
+For `i8` and `bool` returns, only `low8(r4)` is defined. `high8(r4)` is unspecified.
 
 A returned `bool` is zero or one in the low byte.
 
@@ -1550,10 +1545,10 @@ LLVM IR SHOULD NOT expose a generic service-number intrinsic. Each supported ser
 
 | ID | Name | Inputs | Results | Other clobbers |
 |---:|---|---|---|---|
-| `0` | `debug_putc` | `low8(c0)` | None | None |
+| `0` | `debug_putc` | `low8(r4)` | None | None |
 | `1` | `debug_break` | None | None | None |
-| `2` | `millis` | None | `c0` | None |
-| `3` | `millis32` | None | `q2 = c0:c1` | None |
+| `2` | `millis` | None | `r4` | None |
+| `3` | `millis32` | None | `q2 = r4:r5` | None |
 | `4-255` | Reserved | — | — | — |
 
 All four defined services preserve:
@@ -1575,12 +1570,12 @@ D7 00
 Input:
 
 ```text
-low8(c0) = byte to emit
+low8(r4) = byte to emit
 ```
 
 The service emits one byte to the implementation-defined debug output stream.
 
-The service reads only `low8(c0)`. It preserves the complete value of `c0`, including `high8(c0)`, and preserves every other architectural register and state item.
+The service reads only `low8(r4)`. It preserves the complete value of `r4`, including `high8(r4)`, and preserves every other architectural register and state item.
 
 The output operation is externally observable. It MUST NOT be removed, duplicated, speculated, combined with another call, or reordered across another observable system service.
 
@@ -1621,12 +1616,12 @@ none
 Result:
 
 ```text
-c0 = low16(elapsed_milliseconds)
+r4 = low16(elapsed_milliseconds)
 ```
 
 `elapsed_milliseconds` is an implementation-maintained unsigned millisecond counter whose epoch is runtime startup. The result wraps modulo `2^16`.
 
-The service defines the complete 16-bit `c0` register and preserves `c1-c3`, `r0-r3`, `CC`, and `SP`.
+The service defines the complete 16-bit `r4` register and preserves `r5-r7`, `r0-r3`, `CC`, and `SP`.
 
 Each invocation observes the current timer state. Calls MUST NOT be removed, duplicated, speculated, common-subexpression eliminated, or hoisted from their program-order position.
 
@@ -1647,12 +1642,12 @@ none
 Result:
 
 ```text
-q2 = c0:c1 = low32(elapsed_milliseconds)
+q2 = r4:r5 = low32(elapsed_milliseconds)
 ```
 
 The result wraps modulo `2^32`.
 
-The service defines the complete 32-bit pair `q2`, and therefore defines both `c0` and `c1`. It preserves `c2-c3`, `r0-r3`, `CC`, and `SP`.
+The service defines the complete 32-bit pair `q2`, and therefore defines both `r4` and `r5`. It preserves `r6-r7`, `r0-r3`, `CC`, and `SP`.
 
 Each invocation observes the current timer state. Calls MUST NOT be removed, duplicated, speculated, common-subexpression eliminated, or hoisted from their program-order position.
 
@@ -1704,25 +1699,25 @@ Required physical register classes are:
 
 ```text
 GPR16   = r0-r7
-CGPR16  = r4-r7
+UpperGPR16 = r4-r7
 
 GPR8    = low-byte subregisters of r0-r7
-CGPR8   = low-byte subregisters of r4-r7
+UpperGPR8 = low-byte subregisters of r4-r7
 
 PTR16   = r0-r7
-CPTR16  = r4-r7
+UpperPTR16 = r4-r7
 
 GPR32   = q0-q3
-CGPR32  = q2-q3
+UpperGPR32 = q2-q3
 ```
 
 Class relationships:
 
 ```text
-CGPR16  is a subclass of GPR16
-CGPR8   is a subclass of GPR8
-CPTR16  has the same members as CGPR16
-CGPR32  is a subclass of GPR32
+UpperGPR16 is a subclass of GPR16
+UpperGPR8 is a subclass of GPR8
+UpperPTR16 has the same members as UpperGPR16
+UpperGPR32 is a subclass of GPR32
 ```
 
 `PTR16` contains every register that may legally hold a data pointer. Its preferred allocation order is:
@@ -1731,7 +1726,7 @@ CGPR32  is a subclass of GPR32
 r4, r5, r6, r7, r0, r1, r2, r3
 ```
 
-`CPTR16` is used only by final encodings that require a compact pointer.
+`UpperPTR16` is used only by final encodings that require a pointer in `r4-r7`.
 
 The 32-bit pair classes are:
 
@@ -1742,7 +1737,7 @@ q2 = r4:r5
 q3 = r6:r7
 ```
 
-Each `qN` aliases both constituent 16-bit registers. `CGPR32` identifies pairs whose two constituent registers are compact.
+Each `qN` aliases both constituent 16-bit registers. `UpperGPR32` identifies pairs whose two constituent registers are upper registers.
 
 Recommended subregister indices are:
 
@@ -1815,7 +1810,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `BR_JT` / switch | Custom program-space jump table or branch tree | — | — | — |
 | `MEMCPY`, `MEMMOVE`, `MEMSET` | Inline small constants; helper otherwise | — | — | — |
 
-The `FA` page provides compact-register variable and immediate 16-bit shifts.
+The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
 Variable shifts mask the hardware count with `& 15`; selecting them is valid
 when excess-count cases are already undefined or poison under LLVM semantics,
@@ -1834,7 +1829,7 @@ Runtime helpers use the ordinary AVM calling convention.
 Pure arithmetic helpers:
 
 - Preserve `r0-r3` and `SP`.
-- May clobber `c0-c3` and `CC`.
+- May clobber `r4-r7` and `CC`.
 - Have no data-memory side effects.
 - Are nonthrowing and return normally for defined inputs.
 
@@ -1981,17 +1976,17 @@ Volatile does not imply atomicity and does not create a thread-synchronization o
 
 The backend should:
 
-1. Prefer `CGPR16` for arguments and short-lived values when spill cost does not increase.
-2. Allocate pointers from `PTR16` using compact-first order.
+1. Prefer `UpperGPR16` for arguments and short-lived values when spill cost does not increase.
+2. Allocate pointers from `PTR16` using upper-register-first order.
 3. Use a general memory pseudo before physical register assignment.
 4. Expand the pseudo after allocation:
-   - Pointer in `r4-r7`: fast compact-pointer encoding.
+   - Pointer in `r4-r7`: fast encoding requiring an upper-register pointer.
    - Pointer in `r0-r3`: cold `F0 6C/6D` encoding.
-5. Prefer `CGPR32` for values likely to decompose into compact word operations.
+5. Prefer `UpperGPR32` for values likely to decompose into one-byte word operations.
 6. Use `GPR32` for pair instructions accepting every `qN`.
 7. Represent address-space-one values as canonical `PROGPTR`.
 8. Model `CC` definitions and uses explicitly.
-9. Select compact encodings after physical register assignment.
+9. Select one-byte encodings after physical register assignment.
 10. Place frequently accessed stack objects at low offsets.
 11. Diagnose statically provable stack use above 256 bytes.
 12. Emit stack-usage metadata.
@@ -2013,9 +2008,9 @@ A generic service-number intrinsic SHOULD NOT be the public LLVM interface.
 
 | LLVM intrinsic | Machine encoding | Fixed physical uses | Fixed physical definitions |
 |---|---|---|---|
-| `llvm.avm.debug.putc(i8)` | `SYS 0` | `low8(c0)` | None |
+| `llvm.avm.debug.putc(i8)` | `SYS 0` | `low8(r4)` | None |
 | `llvm.avm.debug.break()` | `SYS 1` | None | None |
-| `llvm.avm.millis()` | `SYS 2` | None | `c0` |
+| `llvm.avm.millis()` | `SYS 2` | None | `r4` |
 | `llvm.avm.millis32()` | `SYS 3` | None | `q2` |
 
 These instructions are not ordinary calls and carry no call-preserved register mask. Exact physical uses and definitions are modeled directly.
@@ -2115,16 +2110,15 @@ Canonical names:
 
 ```text
 r0-r7
-c0-c3
 q0-q3
 sp
 pc
 cc
 ```
 
-An instruction requiring a compact register prints `cN`. An instruction using an aligned pair prints `qN`.
+An instruction using a 16-bit register prints `rN`. An instruction using an aligned pair prints `qN`.
 
-`cN` and `qN` are accepted only where their alias class is valid.
+`rN` and `qN` are accepted only where the instruction's register constraints permit them.
 
 ### 61.4. Memory operands
 
@@ -2210,7 +2204,7 @@ It may print:
 nop
 ```
 
-for the canonical encoding `mov c0,c0`.
+for the canonical encoding `mov r4,r4`.
 
 It does not print `MOV32`, `LSL32.1`, or synthetic `ULE`/`UGT` aliases as single instructions.
 
@@ -2272,13 +2266,13 @@ Required target constraints:
 | Constraint | Operand class |
 |---|---|
 | `r` | `GPR16` |
-| `c` | `CGPR16` |
+| `c` | `UpperGPR16` |
 | `b` | `GPR8` low-byte operand |
-| `B` | `CGPR8` low-byte operand |
+| `B` | `UpperGPR8` low-byte operand |
 | `p` | `PTR16` |
-| `P` | `CPTR16` |
+| `P` | `UpperPTR16` |
 | `q` | `GPR32` |
-| `Q` | `CGPR32` |
+| `Q` | `UpperGPR32` |
 | `t` | Canonical `PROGPTR` backed by `GPR32` |
 | `I` | Signed 8-bit immediate |
 | `J` | Unsigned 8-bit immediate |
@@ -2294,7 +2288,6 @@ Fixed-register constraints use braces:
 
 ```text
 {r0} ... {r7}
-{c0} ... {c3}
 {q0} ... {q3}
 ```
 
@@ -2789,7 +2782,6 @@ After stable Version 1 binaries are published, any incompatible change requires 
 ```text
 Registers:
     r0-r7, 16 bits each
-    c0-c3 alias r4-r7
     q0-q3 alias aligned register pairs
 
 Special state:
@@ -2802,7 +2794,7 @@ Address spaces:
     AS1 program, 24-bit pointers, read-only
 
 Calling convention:
-    c0-c3 are four 16-bit argument units
+    r4-r7 are four 16-bit argument units
     two-unit arguments align to even units
     allocation closes after the first stack argument
     narrow register arguments are canonical 16-bit values
@@ -2822,7 +2814,7 @@ LLVM:
     avm-unknown-arduboyfx
     CPU avm1
     ELF32 little-endian
-    PTR16 uses compact-first allocation
+    PTR16 uses upper-register-first allocation
     PROGPTR is canonical p1:24 backed by GPR32
     division, remainder, and float use stable helper ABIs until direct ISA support
     atomics lower to ordinary operations in the single-thread VM model

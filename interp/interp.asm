@@ -384,20 +384,6 @@
 #define VM_R6H                     r21
 #define VM_R7H                     r23
 
-#define VM_C0                      VM_R4
-#define VM_C1                      VM_R5
-#define VM_C2                      VM_R6
-#define VM_C3                      VM_R7
-
-#define VM_C0L                     VM_R4L
-#define VM_C1L                     VM_R5L
-#define VM_C2L                     VM_R6L
-#define VM_C3L                     VM_R7L
-
-#define VM_C0H                     VM_R4H
-#define VM_C1H                     VM_R5H
-#define VM_C2H                     VM_R6H
-#define VM_C3H                     VM_R7H
 #define __SFR_OFFSET 0
 #include <avr/io.h>
 #ifndef SREG_C
@@ -815,7 +801,7 @@ reset_handler:
 .endm
 
 ; Capture the address in X before overwriting the destination. This preserves
-; the specified alias behavior when cD == cA.
+; the specified alias behavior when rD == rA.
 .macro emit_primary_ld8u label, dstl, dsth, addr
 \label:
     movw r26, \addr
@@ -913,235 +899,235 @@ primary_table:
 abvm_interp:
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x00-0x0F: MOV cD,cS
+; 0x00-0x0F: MOV rD,rS (rD,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_mov primary_00, VM_C0, VM_C0
-emit_primary_mov primary_01, VM_C0, VM_C1
-emit_primary_mov primary_02, VM_C0, VM_C2
-emit_primary_mov primary_03, VM_C0, VM_C3
-emit_primary_mov primary_04, VM_C1, VM_C0
-emit_primary_mov primary_05, VM_C1, VM_C1
-emit_primary_mov primary_06, VM_C1, VM_C2
-emit_primary_mov primary_07, VM_C1, VM_C3
-emit_primary_mov primary_08, VM_C2, VM_C0
-emit_primary_mov primary_09, VM_C2, VM_C1
-emit_primary_mov primary_0A, VM_C2, VM_C2
-emit_primary_mov primary_0B, VM_C2, VM_C3
-emit_primary_mov primary_0C, VM_C3, VM_C0
-emit_primary_mov primary_0D, VM_C3, VM_C1
-emit_primary_mov primary_0E, VM_C3, VM_C2
-emit_primary_mov primary_0F, VM_C3, VM_C3
+emit_primary_mov primary_00, VM_R4, VM_R4
+emit_primary_mov primary_01, VM_R4, VM_R5
+emit_primary_mov primary_02, VM_R4, VM_R6
+emit_primary_mov primary_03, VM_R4, VM_R7
+emit_primary_mov primary_04, VM_R5, VM_R4
+emit_primary_mov primary_05, VM_R5, VM_R5
+emit_primary_mov primary_06, VM_R5, VM_R6
+emit_primary_mov primary_07, VM_R5, VM_R7
+emit_primary_mov primary_08, VM_R6, VM_R4
+emit_primary_mov primary_09, VM_R6, VM_R5
+emit_primary_mov primary_0A, VM_R6, VM_R6
+emit_primary_mov primary_0B, VM_R6, VM_R7
+emit_primary_mov primary_0C, VM_R7, VM_R4
+emit_primary_mov primary_0D, VM_R7, VM_R5
+emit_primary_mov primary_0E, VM_R7, VM_R6
+emit_primary_mov primary_0F, VM_R7, VM_R7
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x10-0x1F: ADD cD,cS
+; 0x10-0x1F: ADD rD,rS (rD,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_binary primary_10, add, adc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_primary_binary primary_11, add, adc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_primary_binary primary_12, add, adc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_primary_binary primary_13, add, adc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_primary_binary primary_14, add, adc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_primary_binary primary_15, add, adc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_primary_binary primary_16, add, adc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_primary_binary primary_17, add, adc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_primary_binary primary_18, add, adc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_primary_binary primary_19, add, adc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_primary_binary primary_1A, add, adc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_primary_binary primary_1B, add, adc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_primary_binary primary_1C, add, adc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_primary_binary primary_1D, add, adc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_primary_binary primary_1E, add, adc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_primary_binary primary_1F, add, adc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+emit_primary_binary primary_10, add, adc, VM_R4L, VM_R4H, VM_R4L, VM_R4H
+emit_primary_binary primary_11, add, adc, VM_R4L, VM_R4H, VM_R5L, VM_R5H
+emit_primary_binary primary_12, add, adc, VM_R4L, VM_R4H, VM_R6L, VM_R6H
+emit_primary_binary primary_13, add, adc, VM_R4L, VM_R4H, VM_R7L, VM_R7H
+emit_primary_binary primary_14, add, adc, VM_R5L, VM_R5H, VM_R4L, VM_R4H
+emit_primary_binary primary_15, add, adc, VM_R5L, VM_R5H, VM_R5L, VM_R5H
+emit_primary_binary primary_16, add, adc, VM_R5L, VM_R5H, VM_R6L, VM_R6H
+emit_primary_binary primary_17, add, adc, VM_R5L, VM_R5H, VM_R7L, VM_R7H
+emit_primary_binary primary_18, add, adc, VM_R6L, VM_R6H, VM_R4L, VM_R4H
+emit_primary_binary primary_19, add, adc, VM_R6L, VM_R6H, VM_R5L, VM_R5H
+emit_primary_binary primary_1A, add, adc, VM_R6L, VM_R6H, VM_R6L, VM_R6H
+emit_primary_binary primary_1B, add, adc, VM_R6L, VM_R6H, VM_R7L, VM_R7H
+emit_primary_binary primary_1C, add, adc, VM_R7L, VM_R7H, VM_R4L, VM_R4H
+emit_primary_binary primary_1D, add, adc, VM_R7L, VM_R7H, VM_R5L, VM_R5H
+emit_primary_binary primary_1E, add, adc, VM_R7L, VM_R7H, VM_R6L, VM_R6H
+emit_primary_binary primary_1F, add, adc, VM_R7L, VM_R7H, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x20-0x2F: SUB cD,cS
+; 0x20-0x2F: SUB rD,rS (rD,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_binary primary_20, sub, sbc, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_primary_binary primary_21, sub, sbc, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_primary_binary primary_22, sub, sbc, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_primary_binary primary_23, sub, sbc, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_primary_binary primary_24, sub, sbc, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_primary_binary primary_25, sub, sbc, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_primary_binary primary_26, sub, sbc, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_primary_binary primary_27, sub, sbc, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_primary_binary primary_28, sub, sbc, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_primary_binary primary_29, sub, sbc, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_primary_binary primary_2A, sub, sbc, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_primary_binary primary_2B, sub, sbc, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_primary_binary primary_2C, sub, sbc, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_primary_binary primary_2D, sub, sbc, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_primary_binary primary_2E, sub, sbc, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_primary_binary primary_2F, sub, sbc, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+emit_primary_binary primary_20, sub, sbc, VM_R4L, VM_R4H, VM_R4L, VM_R4H
+emit_primary_binary primary_21, sub, sbc, VM_R4L, VM_R4H, VM_R5L, VM_R5H
+emit_primary_binary primary_22, sub, sbc, VM_R4L, VM_R4H, VM_R6L, VM_R6H
+emit_primary_binary primary_23, sub, sbc, VM_R4L, VM_R4H, VM_R7L, VM_R7H
+emit_primary_binary primary_24, sub, sbc, VM_R5L, VM_R5H, VM_R4L, VM_R4H
+emit_primary_binary primary_25, sub, sbc, VM_R5L, VM_R5H, VM_R5L, VM_R5H
+emit_primary_binary primary_26, sub, sbc, VM_R5L, VM_R5H, VM_R6L, VM_R6H
+emit_primary_binary primary_27, sub, sbc, VM_R5L, VM_R5H, VM_R7L, VM_R7H
+emit_primary_binary primary_28, sub, sbc, VM_R6L, VM_R6H, VM_R4L, VM_R4H
+emit_primary_binary primary_29, sub, sbc, VM_R6L, VM_R6H, VM_R5L, VM_R5H
+emit_primary_binary primary_2A, sub, sbc, VM_R6L, VM_R6H, VM_R6L, VM_R6H
+emit_primary_binary primary_2B, sub, sbc, VM_R6L, VM_R6H, VM_R7L, VM_R7H
+emit_primary_binary primary_2C, sub, sbc, VM_R7L, VM_R7H, VM_R4L, VM_R4H
+emit_primary_binary primary_2D, sub, sbc, VM_R7L, VM_R7H, VM_R5L, VM_R5H
+emit_primary_binary primary_2E, sub, sbc, VM_R7L, VM_R7H, VM_R6L, VM_R6H
+emit_primary_binary primary_2F, sub, sbc, VM_R7L, VM_R7H, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x30-0x3F: CMP cL,cR
+; 0x30-0x3F: CMP rL,rR (rL,rR in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_cmp primary_30, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_primary_cmp primary_31, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_primary_cmp primary_32, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_primary_cmp primary_33, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_primary_cmp primary_34, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_primary_cmp primary_35, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_primary_cmp primary_36, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_primary_cmp primary_37, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_primary_cmp primary_38, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_primary_cmp primary_39, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_primary_cmp primary_3A, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_primary_cmp primary_3B, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_primary_cmp primary_3C, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_primary_cmp primary_3D, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_primary_cmp primary_3E, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_primary_cmp primary_3F, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+emit_primary_cmp primary_30, VM_R4L, VM_R4H, VM_R4L, VM_R4H
+emit_primary_cmp primary_31, VM_R4L, VM_R4H, VM_R5L, VM_R5H
+emit_primary_cmp primary_32, VM_R4L, VM_R4H, VM_R6L, VM_R6H
+emit_primary_cmp primary_33, VM_R4L, VM_R4H, VM_R7L, VM_R7H
+emit_primary_cmp primary_34, VM_R5L, VM_R5H, VM_R4L, VM_R4H
+emit_primary_cmp primary_35, VM_R5L, VM_R5H, VM_R5L, VM_R5H
+emit_primary_cmp primary_36, VM_R5L, VM_R5H, VM_R6L, VM_R6H
+emit_primary_cmp primary_37, VM_R5L, VM_R5H, VM_R7L, VM_R7H
+emit_primary_cmp primary_38, VM_R6L, VM_R6H, VM_R4L, VM_R4H
+emit_primary_cmp primary_39, VM_R6L, VM_R6H, VM_R5L, VM_R5H
+emit_primary_cmp primary_3A, VM_R6L, VM_R6H, VM_R6L, VM_R6H
+emit_primary_cmp primary_3B, VM_R6L, VM_R6H, VM_R7L, VM_R7H
+emit_primary_cmp primary_3C, VM_R7L, VM_R7H, VM_R4L, VM_R4H
+emit_primary_cmp primary_3D, VM_R7L, VM_R7H, VM_R5L, VM_R5H
+emit_primary_cmp primary_3E, VM_R7L, VM_R7H, VM_R6L, VM_R6H
+emit_primary_cmp primary_3F, VM_R7L, VM_R7H, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x40-0x4F: LD8U cD,[cA]
+; 0x40-0x4F: LD8U rD,[rA] (rD,rA in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_ld8u primary_40, VM_C0L, VM_C0H, VM_C0
-emit_primary_ld8u primary_41, VM_C0L, VM_C0H, VM_C1
-emit_primary_ld8u primary_42, VM_C0L, VM_C0H, VM_C2
-emit_primary_ld8u primary_43, VM_C0L, VM_C0H, VM_C3
-emit_primary_ld8u primary_44, VM_C1L, VM_C1H, VM_C0
-emit_primary_ld8u primary_45, VM_C1L, VM_C1H, VM_C1
-emit_primary_ld8u primary_46, VM_C1L, VM_C1H, VM_C2
-emit_primary_ld8u primary_47, VM_C1L, VM_C1H, VM_C3
-emit_primary_ld8u primary_48, VM_C2L, VM_C2H, VM_C0
-emit_primary_ld8u primary_49, VM_C2L, VM_C2H, VM_C1
-emit_primary_ld8u primary_4A, VM_C2L, VM_C2H, VM_C2
-emit_primary_ld8u primary_4B, VM_C2L, VM_C2H, VM_C3
-emit_primary_ld8u primary_4C, VM_C3L, VM_C3H, VM_C0
-emit_primary_ld8u primary_4D, VM_C3L, VM_C3H, VM_C1
-emit_primary_ld8u primary_4E, VM_C3L, VM_C3H, VM_C2
-emit_primary_ld8u primary_4F, VM_C3L, VM_C3H, VM_C3
+emit_primary_ld8u primary_40, VM_R4L, VM_R4H, VM_R4
+emit_primary_ld8u primary_41, VM_R4L, VM_R4H, VM_R5
+emit_primary_ld8u primary_42, VM_R4L, VM_R4H, VM_R6
+emit_primary_ld8u primary_43, VM_R4L, VM_R4H, VM_R7
+emit_primary_ld8u primary_44, VM_R5L, VM_R5H, VM_R4
+emit_primary_ld8u primary_45, VM_R5L, VM_R5H, VM_R5
+emit_primary_ld8u primary_46, VM_R5L, VM_R5H, VM_R6
+emit_primary_ld8u primary_47, VM_R5L, VM_R5H, VM_R7
+emit_primary_ld8u primary_48, VM_R6L, VM_R6H, VM_R4
+emit_primary_ld8u primary_49, VM_R6L, VM_R6H, VM_R5
+emit_primary_ld8u primary_4A, VM_R6L, VM_R6H, VM_R6
+emit_primary_ld8u primary_4B, VM_R6L, VM_R6H, VM_R7
+emit_primary_ld8u primary_4C, VM_R7L, VM_R7H, VM_R4
+emit_primary_ld8u primary_4D, VM_R7L, VM_R7H, VM_R5
+emit_primary_ld8u primary_4E, VM_R7L, VM_R7H, VM_R6
+emit_primary_ld8u primary_4F, VM_R7L, VM_R7H, VM_R7
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x50-0x5F: ST8 [cA],cS
+; 0x50-0x5F: ST8 [rA],rS (rA,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_st8 primary_50, VM_C0, VM_C0L
-emit_primary_st8 primary_51, VM_C0, VM_C1L
-emit_primary_st8 primary_52, VM_C0, VM_C2L
-emit_primary_st8 primary_53, VM_C0, VM_C3L
-emit_primary_st8 primary_54, VM_C1, VM_C0L
-emit_primary_st8 primary_55, VM_C1, VM_C1L
-emit_primary_st8 primary_56, VM_C1, VM_C2L
-emit_primary_st8 primary_57, VM_C1, VM_C3L
-emit_primary_st8 primary_58, VM_C2, VM_C0L
-emit_primary_st8 primary_59, VM_C2, VM_C1L
-emit_primary_st8 primary_5A, VM_C2, VM_C2L
-emit_primary_st8 primary_5B, VM_C2, VM_C3L
-emit_primary_st8 primary_5C, VM_C3, VM_C0L
-emit_primary_st8 primary_5D, VM_C3, VM_C1L
-emit_primary_st8 primary_5E, VM_C3, VM_C2L
-emit_primary_st8 primary_5F, VM_C3, VM_C3L
+emit_primary_st8 primary_50, VM_R4, VM_R4L
+emit_primary_st8 primary_51, VM_R4, VM_R5L
+emit_primary_st8 primary_52, VM_R4, VM_R6L
+emit_primary_st8 primary_53, VM_R4, VM_R7L
+emit_primary_st8 primary_54, VM_R5, VM_R4L
+emit_primary_st8 primary_55, VM_R5, VM_R5L
+emit_primary_st8 primary_56, VM_R5, VM_R6L
+emit_primary_st8 primary_57, VM_R5, VM_R7L
+emit_primary_st8 primary_58, VM_R6, VM_R4L
+emit_primary_st8 primary_59, VM_R6, VM_R5L
+emit_primary_st8 primary_5A, VM_R6, VM_R6L
+emit_primary_st8 primary_5B, VM_R6, VM_R7L
+emit_primary_st8 primary_5C, VM_R7, VM_R4L
+emit_primary_st8 primary_5D, VM_R7, VM_R5L
+emit_primary_st8 primary_5E, VM_R7, VM_R6L
+emit_primary_st8 primary_5F, VM_R7, VM_R7L
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x60-0x6F: LD16 cD,[cA]
+; 0x60-0x6F: LD16 rD,[rA] (rD,rA in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_ld16 primary_60, VM_C0L, VM_C0H, VM_C0
-emit_primary_ld16 primary_61, VM_C0L, VM_C0H, VM_C1
-emit_primary_ld16 primary_62, VM_C0L, VM_C0H, VM_C2
-emit_primary_ld16 primary_63, VM_C0L, VM_C0H, VM_C3
-emit_primary_ld16 primary_64, VM_C1L, VM_C1H, VM_C0
-emit_primary_ld16 primary_65, VM_C1L, VM_C1H, VM_C1
-emit_primary_ld16 primary_66, VM_C1L, VM_C1H, VM_C2
-emit_primary_ld16 primary_67, VM_C1L, VM_C1H, VM_C3
-emit_primary_ld16 primary_68, VM_C2L, VM_C2H, VM_C0
-emit_primary_ld16 primary_69, VM_C2L, VM_C2H, VM_C1
-emit_primary_ld16 primary_6A, VM_C2L, VM_C2H, VM_C2
-emit_primary_ld16 primary_6B, VM_C2L, VM_C2H, VM_C3
-emit_primary_ld16 primary_6C, VM_C3L, VM_C3H, VM_C0
-emit_primary_ld16 primary_6D, VM_C3L, VM_C3H, VM_C1
-emit_primary_ld16 primary_6E, VM_C3L, VM_C3H, VM_C2
-emit_primary_ld16 primary_6F, VM_C3L, VM_C3H, VM_C3
+emit_primary_ld16 primary_60, VM_R4L, VM_R4H, VM_R4
+emit_primary_ld16 primary_61, VM_R4L, VM_R4H, VM_R5
+emit_primary_ld16 primary_62, VM_R4L, VM_R4H, VM_R6
+emit_primary_ld16 primary_63, VM_R4L, VM_R4H, VM_R7
+emit_primary_ld16 primary_64, VM_R5L, VM_R5H, VM_R4
+emit_primary_ld16 primary_65, VM_R5L, VM_R5H, VM_R5
+emit_primary_ld16 primary_66, VM_R5L, VM_R5H, VM_R6
+emit_primary_ld16 primary_67, VM_R5L, VM_R5H, VM_R7
+emit_primary_ld16 primary_68, VM_R6L, VM_R6H, VM_R4
+emit_primary_ld16 primary_69, VM_R6L, VM_R6H, VM_R5
+emit_primary_ld16 primary_6A, VM_R6L, VM_R6H, VM_R6
+emit_primary_ld16 primary_6B, VM_R6L, VM_R6H, VM_R7
+emit_primary_ld16 primary_6C, VM_R7L, VM_R7H, VM_R4
+emit_primary_ld16 primary_6D, VM_R7L, VM_R7H, VM_R5
+emit_primary_ld16 primary_6E, VM_R7L, VM_R7H, VM_R6
+emit_primary_ld16 primary_6F, VM_R7L, VM_R7H, VM_R7
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x70-0x7F: ST16 [cA],cS
+; 0x70-0x7F: ST16 [rA],rS (rA,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_st16 primary_70, VM_C0, VM_C0L, VM_C0H
-emit_primary_st16 primary_71, VM_C0, VM_C1L, VM_C1H
-emit_primary_st16 primary_72, VM_C0, VM_C2L, VM_C2H
-emit_primary_st16 primary_73, VM_C0, VM_C3L, VM_C3H
-emit_primary_st16 primary_74, VM_C1, VM_C0L, VM_C0H
-emit_primary_st16 primary_75, VM_C1, VM_C1L, VM_C1H
-emit_primary_st16 primary_76, VM_C1, VM_C2L, VM_C2H
-emit_primary_st16 primary_77, VM_C1, VM_C3L, VM_C3H
-emit_primary_st16 primary_78, VM_C2, VM_C0L, VM_C0H
-emit_primary_st16 primary_79, VM_C2, VM_C1L, VM_C1H
-emit_primary_st16 primary_7A, VM_C2, VM_C2L, VM_C2H
-emit_primary_st16 primary_7B, VM_C2, VM_C3L, VM_C3H
-emit_primary_st16 primary_7C, VM_C3, VM_C0L, VM_C0H
-emit_primary_st16 primary_7D, VM_C3, VM_C1L, VM_C1H
-emit_primary_st16 primary_7E, VM_C3, VM_C2L, VM_C2H
-emit_primary_st16 primary_7F, VM_C3, VM_C3L, VM_C3H
+emit_primary_st16 primary_70, VM_R4, VM_R4L, VM_R4H
+emit_primary_st16 primary_71, VM_R4, VM_R5L, VM_R5H
+emit_primary_st16 primary_72, VM_R4, VM_R6L, VM_R6H
+emit_primary_st16 primary_73, VM_R4, VM_R7L, VM_R7H
+emit_primary_st16 primary_74, VM_R5, VM_R4L, VM_R4H
+emit_primary_st16 primary_75, VM_R5, VM_R5L, VM_R5H
+emit_primary_st16 primary_76, VM_R5, VM_R6L, VM_R6H
+emit_primary_st16 primary_77, VM_R5, VM_R7L, VM_R7H
+emit_primary_st16 primary_78, VM_R6, VM_R4L, VM_R4H
+emit_primary_st16 primary_79, VM_R6, VM_R5L, VM_R5H
+emit_primary_st16 primary_7A, VM_R6, VM_R6L, VM_R6H
+emit_primary_st16 primary_7B, VM_R6, VM_R7L, VM_R7H
+emit_primary_st16 primary_7C, VM_R7, VM_R4L, VM_R4H
+emit_primary_st16 primary_7D, VM_R7, VM_R5L, VM_R5H
+emit_primary_st16 primary_7E, VM_R7, VM_R6L, VM_R6H
+emit_primary_st16 primary_7F, VM_R7, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x80-0x8F: AND cD,cS
+; 0x80-0x8F: AND rD,rS (rD,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_binary primary_80, and, and, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_primary_binary primary_81, and, and, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_primary_binary primary_82, and, and, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_primary_binary primary_83, and, and, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_primary_binary primary_84, and, and, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_primary_binary primary_85, and, and, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_primary_binary primary_86, and, and, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_primary_binary primary_87, and, and, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_primary_binary primary_88, and, and, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_primary_binary primary_89, and, and, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_primary_binary primary_8A, and, and, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_primary_binary primary_8B, and, and, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_primary_binary primary_8C, and, and, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_primary_binary primary_8D, and, and, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_primary_binary primary_8E, and, and, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_primary_binary primary_8F, and, and, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+emit_primary_binary primary_80, and, and, VM_R4L, VM_R4H, VM_R4L, VM_R4H
+emit_primary_binary primary_81, and, and, VM_R4L, VM_R4H, VM_R5L, VM_R5H
+emit_primary_binary primary_82, and, and, VM_R4L, VM_R4H, VM_R6L, VM_R6H
+emit_primary_binary primary_83, and, and, VM_R4L, VM_R4H, VM_R7L, VM_R7H
+emit_primary_binary primary_84, and, and, VM_R5L, VM_R5H, VM_R4L, VM_R4H
+emit_primary_binary primary_85, and, and, VM_R5L, VM_R5H, VM_R5L, VM_R5H
+emit_primary_binary primary_86, and, and, VM_R5L, VM_R5H, VM_R6L, VM_R6H
+emit_primary_binary primary_87, and, and, VM_R5L, VM_R5H, VM_R7L, VM_R7H
+emit_primary_binary primary_88, and, and, VM_R6L, VM_R6H, VM_R4L, VM_R4H
+emit_primary_binary primary_89, and, and, VM_R6L, VM_R6H, VM_R5L, VM_R5H
+emit_primary_binary primary_8A, and, and, VM_R6L, VM_R6H, VM_R6L, VM_R6H
+emit_primary_binary primary_8B, and, and, VM_R6L, VM_R6H, VM_R7L, VM_R7H
+emit_primary_binary primary_8C, and, and, VM_R7L, VM_R7H, VM_R4L, VM_R4H
+emit_primary_binary primary_8D, and, and, VM_R7L, VM_R7H, VM_R5L, VM_R5H
+emit_primary_binary primary_8E, and, and, VM_R7L, VM_R7H, VM_R6L, VM_R6H
+emit_primary_binary primary_8F, and, and, VM_R7L, VM_R7H, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0x90-0x9F: OR cD,cS
+; 0x90-0x9F: OR rD,rS (rD,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_binary primary_90, or, or, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_primary_binary primary_91, or, or, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_primary_binary primary_92, or, or, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_primary_binary primary_93, or, or, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_primary_binary primary_94, or, or, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_primary_binary primary_95, or, or, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_primary_binary primary_96, or, or, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_primary_binary primary_97, or, or, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_primary_binary primary_98, or, or, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_primary_binary primary_99, or, or, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_primary_binary primary_9A, or, or, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_primary_binary primary_9B, or, or, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_primary_binary primary_9C, or, or, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_primary_binary primary_9D, or, or, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_primary_binary primary_9E, or, or, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_primary_binary primary_9F, or, or, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+emit_primary_binary primary_90, or, or, VM_R4L, VM_R4H, VM_R4L, VM_R4H
+emit_primary_binary primary_91, or, or, VM_R4L, VM_R4H, VM_R5L, VM_R5H
+emit_primary_binary primary_92, or, or, VM_R4L, VM_R4H, VM_R6L, VM_R6H
+emit_primary_binary primary_93, or, or, VM_R4L, VM_R4H, VM_R7L, VM_R7H
+emit_primary_binary primary_94, or, or, VM_R5L, VM_R5H, VM_R4L, VM_R4H
+emit_primary_binary primary_95, or, or, VM_R5L, VM_R5H, VM_R5L, VM_R5H
+emit_primary_binary primary_96, or, or, VM_R5L, VM_R5H, VM_R6L, VM_R6H
+emit_primary_binary primary_97, or, or, VM_R5L, VM_R5H, VM_R7L, VM_R7H
+emit_primary_binary primary_98, or, or, VM_R6L, VM_R6H, VM_R4L, VM_R4H
+emit_primary_binary primary_99, or, or, VM_R6L, VM_R6H, VM_R5L, VM_R5H
+emit_primary_binary primary_9A, or, or, VM_R6L, VM_R6H, VM_R6L, VM_R6H
+emit_primary_binary primary_9B, or, or, VM_R6L, VM_R6H, VM_R7L, VM_R7H
+emit_primary_binary primary_9C, or, or, VM_R7L, VM_R7H, VM_R4L, VM_R4H
+emit_primary_binary primary_9D, or, or, VM_R7L, VM_R7H, VM_R5L, VM_R5H
+emit_primary_binary primary_9E, or, or, VM_R7L, VM_R7H, VM_R6L, VM_R6H
+emit_primary_binary primary_9F, or, or, VM_R7L, VM_R7H, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xA0-0xAF: XOR cD,cS
+; 0xA0-0xAF: XOR rD,rS (rD,rS in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_binary primary_A0, eor, eor, VM_C0L, VM_C0H, VM_C0L, VM_C0H
-emit_primary_binary primary_A1, eor, eor, VM_C0L, VM_C0H, VM_C1L, VM_C1H
-emit_primary_binary primary_A2, eor, eor, VM_C0L, VM_C0H, VM_C2L, VM_C2H
-emit_primary_binary primary_A3, eor, eor, VM_C0L, VM_C0H, VM_C3L, VM_C3H
-emit_primary_binary primary_A4, eor, eor, VM_C1L, VM_C1H, VM_C0L, VM_C0H
-emit_primary_binary primary_A5, eor, eor, VM_C1L, VM_C1H, VM_C1L, VM_C1H
-emit_primary_binary primary_A6, eor, eor, VM_C1L, VM_C1H, VM_C2L, VM_C2H
-emit_primary_binary primary_A7, eor, eor, VM_C1L, VM_C1H, VM_C3L, VM_C3H
-emit_primary_binary primary_A8, eor, eor, VM_C2L, VM_C2H, VM_C0L, VM_C0H
-emit_primary_binary primary_A9, eor, eor, VM_C2L, VM_C2H, VM_C1L, VM_C1H
-emit_primary_binary primary_AA, eor, eor, VM_C2L, VM_C2H, VM_C2L, VM_C2H
-emit_primary_binary primary_AB, eor, eor, VM_C2L, VM_C2H, VM_C3L, VM_C3H
-emit_primary_binary primary_AC, eor, eor, VM_C3L, VM_C3H, VM_C0L, VM_C0H
-emit_primary_binary primary_AD, eor, eor, VM_C3L, VM_C3H, VM_C1L, VM_C1H
-emit_primary_binary primary_AE, eor, eor, VM_C3L, VM_C3H, VM_C2L, VM_C2H
-emit_primary_binary primary_AF, eor, eor, VM_C3L, VM_C3H, VM_C3L, VM_C3H
+emit_primary_binary primary_A0, eor, eor, VM_R4L, VM_R4H, VM_R4L, VM_R4H
+emit_primary_binary primary_A1, eor, eor, VM_R4L, VM_R4H, VM_R5L, VM_R5H
+emit_primary_binary primary_A2, eor, eor, VM_R4L, VM_R4H, VM_R6L, VM_R6H
+emit_primary_binary primary_A3, eor, eor, VM_R4L, VM_R4H, VM_R7L, VM_R7H
+emit_primary_binary primary_A4, eor, eor, VM_R5L, VM_R5H, VM_R4L, VM_R4H
+emit_primary_binary primary_A5, eor, eor, VM_R5L, VM_R5H, VM_R5L, VM_R5H
+emit_primary_binary primary_A6, eor, eor, VM_R5L, VM_R5H, VM_R6L, VM_R6H
+emit_primary_binary primary_A7, eor, eor, VM_R5L, VM_R5H, VM_R7L, VM_R7H
+emit_primary_binary primary_A8, eor, eor, VM_R6L, VM_R6H, VM_R4L, VM_R4H
+emit_primary_binary primary_A9, eor, eor, VM_R6L, VM_R6H, VM_R5L, VM_R5H
+emit_primary_binary primary_AA, eor, eor, VM_R6L, VM_R6H, VM_R6L, VM_R6H
+emit_primary_binary primary_AB, eor, eor, VM_R6L, VM_R6H, VM_R7L, VM_R7H
+emit_primary_binary primary_AC, eor, eor, VM_R7L, VM_R7H, VM_R4L, VM_R4H
+emit_primary_binary primary_AD, eor, eor, VM_R7L, VM_R7H, VM_R5L, VM_R5H
+emit_primary_binary primary_AE, eor, eor, VM_R7L, VM_R7H, VM_R6L, VM_R6H
+emit_primary_binary primary_AF, eor, eor, VM_R7L, VM_R7H, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xB0-0xB7: PUSH16 rN
@@ -1170,40 +1156,40 @@ emit_primary_pop16 primary_BE_pop16_r6, VM_R6L, VM_R6H
 emit_primary_pop16 primary_BF_pop16_r7, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xC0-0xC3: LDI8 cD,imm8
+; 0xC0-0xC3: LDI8 rD,imm8 (rD in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_immediate primary_C0_ldi8_c0, ldi8_c0_apply, fetch_imm8_then_ijmp
-emit_primary_immediate primary_C1_ldi8_c1, ldi8_c1_apply, fetch_imm8_then_ijmp
-emit_primary_immediate primary_C2_ldi8_c2, ldi8_c2_apply, fetch_imm8_then_ijmp
-emit_primary_immediate primary_C3_ldi8_c3, ldi8_c3_apply, fetch_imm8_then_ijmp
+emit_primary_immediate primary_R4_ldi8_r4, ldi8_r4_apply, fetch_imm8_then_ijmp
+emit_primary_immediate primary_R5_ldi8_r5, ldi8_r5_apply, fetch_imm8_then_ijmp
+emit_primary_immediate primary_R6_ldi8_r6, ldi8_r6_apply, fetch_imm8_then_ijmp
+emit_primary_immediate primary_R7_ldi8_r7, ldi8_r7_apply, fetch_imm8_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xC4-0xC7: LDI16 cD,imm16
+; 0xC4-0xC7: LDI16 rD,imm16 (rD in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_immediate primary_C4_ldi16_c0, ldi16_c0_apply, fetch_imm16_then_ijmp
-emit_primary_immediate primary_C5_ldi16_c1, ldi16_c1_apply, fetch_imm16_then_ijmp
-emit_primary_immediate primary_C6_ldi16_c2, ldi16_c2_apply, fetch_imm16_then_ijmp
-emit_primary_immediate primary_C7_ldi16_c3, ldi16_c3_apply, fetch_imm16_then_ijmp
+emit_primary_immediate primary_C4_ldi16_r4, ldi16_r4_apply, fetch_imm16_then_ijmp
+emit_primary_immediate primary_C5_ldi16_r5, ldi16_r5_apply, fetch_imm16_then_ijmp
+emit_primary_immediate primary_C6_ldi16_r6, ldi16_r6_apply, fetch_imm16_then_ijmp
+emit_primary_immediate primary_C7_ldi16_r7, ldi16_r7_apply, fetch_imm16_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xC8-0xCB: ADDI.S8 cD,simm8
+; 0xC8-0xCB: ADDI.S8 rD,simm8 (rD in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_immediate primary_C8_addi_s8_c0, addi_s8_c0_apply, fetch_simm8_then_ijmp
-emit_primary_immediate primary_C9_addi_s8_c1, addi_s8_c1_apply, fetch_simm8_then_ijmp
-emit_primary_immediate primary_CA_addi_s8_c2, addi_s8_c2_apply, fetch_simm8_then_ijmp
-emit_primary_immediate primary_CB_addi_s8_c3, addi_s8_c3_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_C8_addi_s8_r4, addi_s8_r4_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_C9_addi_s8_r5, addi_s8_r5_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CA_addi_s8_r6, addi_s8_r6_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CB_addi_s8_r7, addi_s8_r7_apply, fetch_simm8_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xCC-0xCF: CMPI.S8 cL,simm8
+; 0xCC-0xCF: CMPI.S8 rL,simm8 (rL in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_immediate primary_CC_cmpi_s8_c0, cmpi_s8_c0_apply, fetch_simm8_then_ijmp
-emit_primary_immediate primary_CD_cmpi_s8_c1, cmpi_s8_c1_apply, fetch_simm8_then_ijmp
-emit_primary_immediate primary_CE_cmpi_s8_c2, cmpi_s8_c2_apply, fetch_simm8_then_ijmp
-emit_primary_immediate primary_CF_cmpi_s8_c3, cmpi_s8_c3_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CC_cmpi_s8_r4, cmpi_s8_r4_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CD_cmpi_s8_r5, cmpi_s8_r5_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CE_cmpi_s8_r6, cmpi_s8_r6_apply, fetch_simm8_then_ijmp
+emit_primary_immediate primary_CF_cmpi_s8_r7, cmpi_s8_r7_apply, fetch_simm8_then_ijmp
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xD0-0xD3: conditional branches
@@ -1811,7 +1797,7 @@ cluster_tail_18:
     dispatch
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; C0-CF compact immediate instructions
+; C0-CF upper-register immediate instructions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; At entry to each fetch continuation, the first immediate byte was started by
@@ -1909,25 +1895,25 @@ immediate_result_tail_reverse_delay_3:
     rjmp cmpi_s8_flags_commit_17
 .endm
 
-emit_ldi8_apply ldi8_c0_apply, VM_C0L, VM_C0H
-emit_ldi8_apply ldi8_c1_apply, VM_C1L, VM_C1H
-emit_ldi8_apply ldi8_c2_apply, VM_C2L, VM_C2H
-emit_ldi8_apply ldi8_c3_apply, VM_C3L, VM_C3H
+emit_ldi8_apply ldi8_r4_apply, VM_R4L, VM_R4H
+emit_ldi8_apply ldi8_r5_apply, VM_R5L, VM_R5H
+emit_ldi8_apply ldi8_r6_apply, VM_R6L, VM_R6H
+emit_ldi8_apply ldi8_r7_apply, VM_R7L, VM_R7H
 
-emit_ldi16_apply ldi16_c0_apply, VM_C0L, VM_C0H
-emit_ldi16_apply ldi16_c1_apply, VM_C1L, VM_C1H
-emit_ldi16_apply ldi16_c2_apply, VM_C2L, VM_C2H
-emit_ldi16_apply ldi16_c3_apply, VM_C3L, VM_C3H
+emit_ldi16_apply ldi16_r4_apply, VM_R4L, VM_R4H
+emit_ldi16_apply ldi16_r5_apply, VM_R5L, VM_R5H
+emit_ldi16_apply ldi16_r6_apply, VM_R6L, VM_R6H
+emit_ldi16_apply ldi16_r7_apply, VM_R7L, VM_R7H
 
-emit_addi_s8_apply addi_s8_c0_apply, VM_C0L, VM_C0H
-emit_addi_s8_apply addi_s8_c1_apply, VM_C1L, VM_C1H
-emit_addi_s8_apply addi_s8_c2_apply, VM_C2L, VM_C2H
-emit_addi_s8_apply addi_s8_c3_apply, VM_C3L, VM_C3H
+emit_addi_s8_apply addi_s8_r4_apply, VM_R4L, VM_R4H
+emit_addi_s8_apply addi_s8_r5_apply, VM_R5L, VM_R5H
+emit_addi_s8_apply addi_s8_r6_apply, VM_R6L, VM_R6H
+emit_addi_s8_apply addi_s8_r7_apply, VM_R7L, VM_R7H
 
-emit_cmpi_s8_apply cmpi_s8_c0_apply, VM_C0L, VM_C0H
-emit_cmpi_s8_apply cmpi_s8_c1_apply, VM_C1L, VM_C1H
-emit_cmpi_s8_apply cmpi_s8_c2_apply, VM_C2L, VM_C2H
-emit_cmpi_s8_apply cmpi_s8_c3_apply, VM_C3L, VM_C3H
+emit_cmpi_s8_apply cmpi_s8_r4_apply, VM_R4L, VM_R4H
+emit_cmpi_s8_apply cmpi_s8_r5_apply, VM_R5L, VM_R5H
+emit_cmpi_s8_apply cmpi_s8_r6_apply, VM_R6L, VM_R6H
+emit_cmpi_s8_apply cmpi_s8_r7_apply, VM_R7L, VM_R7H
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; D0-D6 relative control and stack adjustment
@@ -2279,10 +2265,10 @@ sys_dispatch_table_end:
 .endif
 
 sys_debug_putc_func:
-    ; DEBUG_PUTC writes low8(c0) to the emulator/debug USB endpoint register.
+    ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
     ; STS plus the table dispatch leaves the reverse tail ready to launch the
     ; byte after the following opcode exactly 17 cycles after its prior OUT.
-    sts  UEDATX, VM_C0L
+    sts  UEDATX, VM_R4L
     rjmp cluster_tail_17
 
 sys_debug_break_func:
@@ -2291,22 +2277,22 @@ sys_debug_break_func:
     break
     rjmp cluster_tail_17_delay_1
 
-; Return a coherent low 16-bit snapshot of the millisecond counter in c0.
+; Return a coherent low 16-bit snapshot of the millisecond counter in r4.
 sys_millis_func:
     cli
-    lds  VM_C0L, data_millis+0
-    lds  VM_C0H, data_millis+1
+    lds  VM_R4L, data_millis+0
+    lds  VM_R4H, data_millis+1
     sei
     rjmp cluster_tail_18
 
-; Return a coherent 32-bit snapshot with the low half in c0 and high half in
-; c1. Timer0 cannot update the counter during the four-byte snapshot.
+; Return a coherent 32-bit snapshot with the low half in r4 and high half in
+; r5. Timer0 cannot update the counter during the four-byte snapshot.
 sys_millis32_func:
     cli
-    lds  VM_C0L, data_millis+0
-    lds  VM_C0H, data_millis+1
-    lds  VM_C1L, data_millis+2
-    lds  VM_C1H, data_millis+3
+    lds  VM_R4L, data_millis+0
+    lds  VM_R4H, data_millis+1
+    lds  VM_R5L, data_millis+2
+    lds  VM_R5H, data_millis+3
     sei
     rjmp cluster_tail_18
 
@@ -2898,7 +2884,7 @@ invalid_syscall_func:
 ; Secondary-page cadence clusters and table insertion anchors
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; These copies are intentionally separate from the compact-primary tails.
+; These copies are intentionally separate from the one-byte primary tails.
 ; Future secondary tables are inserted at the marked anchors so every slot's
 ; final RJMP remains comfortably within range without changing these sequences.
 
@@ -3046,7 +3032,7 @@ f0_fetch_addr16_decode_r_to_xz_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; F0 00-0F: noncompact immediate instructions
+; F0 00-0F: lower-register immediate instructions
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Each one-word F0 veneer RJMPs directly to a destination-specialized body. The
@@ -3054,7 +3040,7 @@ f0_fetch_addr16_decode_r_to_xz_end:
 ; helpers above. One-byte forms fetch imm8 at cycle 35 and launch the following
 ; primary opcode at cycle 36; two-byte forms read imm16[15:8] at cycle 53 and
 ; launch the following primary opcode at cycle 54. The apply stubs then use the
-; same reverse or standard cadence tails as the compact primary immediates.
+; same reverse or standard cadence tails as the upper-register primary immediates.
 
 .macro emit_f0_ldi8_body label, dstl, dsth
 \label:
@@ -3228,10 +3214,11 @@ f0_absolute_bodies_end:
 ;
 ; Section 9.5 uses an independent reverse-order RRSPEC consume/restart entry.
 ; In this interpreter the generic width-one F0 decoder reaches its veneer two
-; cycles later than the guide's original layout, so one NOP supplies the exact
-; remaining delay: the decoder launches RRSPEC at cycle 9 after F0-slot entry,
-; and this entry launches the following primary at cycle 26, exactly 17 cycles
-; later. r0 still contains secondary*1, so bit 0 distinguishes 6C from 6D.
+; cycles later than the guide's original layout. One cycle is still required
+; before the exact handoff, so BST uses that cadence slot to preserve secondary
+; bit 0 in native T: the decoder launches RRSPEC at cycle 9 after F0-slot
+; entry, and this entry launches the following primary at cycle 26, exactly 17
+; cycles later. r0 still contains secondary*1 at the BST.
 ;
 ; Ordinary loads capture the effective address before writing rD. Stores
 ; capture the complete selected source before reading rA. These orderings make
@@ -3241,7 +3228,7 @@ f0_absolute_bodies_end:
 
 f0_coldmem_start:
 f0_coldmem_delay_1:
-    nop
+    bst   r0, 0                 ; T=0 for F0 6C load, T=1 for F0 6D store
 f0_coldmem:
     add   VM_PCL, ONE
     cli
@@ -3254,10 +3241,9 @@ f0_coldmem:
     ; X = data-register file pointer; Z = pointer-register file pointer.
     f0_decode_general_pointer_spec F0_COLDMEM_SPEC
 
-    ; F0 6C is load; F0 6D is store. The bounded width-one decoder leaves
-    ; the secondary value in r0 after its table-index multiplication.
-    sbrc  r0, 0
-    rjmp  f0_coldmem_store
+    ; The cadence-slot BST preserved secondary bit 0 in native T. Branching
+    ; to the store body now costs one word and saves one cycle on both families.
+    brts  f0_coldmem_store
 
 f0_coldmem_load:
     ; Preserve the architectural pointer's register-file address.
@@ -3290,34 +3276,32 @@ f0_coldmem_post_writeback:
     rjmp  cluster_a_tail_18
 
 f0_coldmem_store:
-    ; Capture the complete selected source before reading rA. r27 temporarily
-    ; holds the high source byte so F0_COLDMEM_SPEC remains available in r1.
+    ; Capture both source bytes before reading rA, preserving every
+    ; source/pointer overlap case. Byte stores simply leave r25 unused.
     ld    r0, X+
+    ld    r25, X
+
+    ; Z still addresses architectural rA. Load its effective data-space address
+    ; directly into X; after the first load, Z points at rA's high byte.
+    ld    r26, Z+
+    ld    r27, Z
+
+    ; Store through X, leaving X advanced by the selected width.
+    st    X+, r0
     sbrc  F0_COLDMEM_SPEC, 4
-    ld    r27, X
+    st    X+, r25
 
-    ; Preserve rA's register-file address in XL, then capture its effective
-    ; data-space address in Z.
-    mov   r26, r30
-    ld    r24, Z+
-    ld    r25, Z
-    movw  Z, r24
-
-    ; Store one byte and conditionally store the high byte.
-    st    Z+, r0
-    sbrc  F0_COLDMEM_SPEC, 4
-    st    Z+, r27
-
-    ; P=0 discards native Z advancement. P=1 restores X as a register-file
-    ; pointer and uses the shared writeback helper.
+    ; P=0 discards the advanced X value. For P=1, Z still points at rA's high
+    ; byte, so write back high then predecrement and write low.
     sbrs  F0_COLDMEM_SPEC, 0
     rjmp  cluster_a_tail_18
-    mov   r27, ZERO
-    rjmp  f0_coldmem_post_writeback
+    st    Z,  r27
+    st    -Z, r26
+    rjmp  cluster_a_tail_18
 
 f0_coldmem_end:
-.if (f0_coldmem_end - f0_coldmem_start) != 98
-    .error "F0 general-pointer subsystem must occupy exactly forty-nine AVR words"
+.if (f0_coldmem_end - f0_coldmem_start) != 92
+    .error "F0 general-pointer subsystem must occupy exactly forty-six AVR words"
 .endif
 
 ; F0 retains one-word veneers for the remaining cold forms. Secondaries 00-5F
@@ -4024,7 +4008,7 @@ f4_table_end:
 .endif
 
 f5_table:
-    ; F5: bounded four-word compare and ordinary compact-pointer memory table
+    ; F5: bounded four-word compare and ordinary upper-register-pointer memory table
     emit_f5_cmp r8, r9, r8, r9
     emit_f5_cmp r8, r9, r10, r11
     emit_f5_cmp r8, r9, r12, r13
@@ -4448,7 +4432,7 @@ f8_table_end:
 ; FA contains a thirteen-entry immediate body-jump table, 48 two-word
 ; register-count forwarding entries, and twelve destination-specialized shared
 ; shift bodies. Register entries copy low4(count) to native r26 before the
-; destination can be overwritten, so cD == cCount remains valid. Immediate
+; destination can be overwritten, so rD == rCount remains valid. Immediate
 ; forms place the encoded count in r26 before entering the same bodies.
 
 .macro emit_fa_shift_forward countl, target
@@ -4532,18 +4516,18 @@ f8_table_end:
 .endm
 
 fa_immediate_jump_table:
-    rjmp  fa_shl_c0
-    rjmp  fa_shl_c1
-    rjmp  fa_shl_c2
-    rjmp  fa_shl_c3
-    rjmp  fa_lsr_c0
-    rjmp  fa_lsr_c1
-    rjmp  fa_lsr_c2
-    rjmp  fa_lsr_c3
-    rjmp  fa_asr_c0
-    rjmp  fa_asr_c1
-    rjmp  fa_asr_c2
-    rjmp  fa_asr_c3
+    rjmp  fa_shl_r4
+    rjmp  fa_shl_r5
+    rjmp  fa_shl_r6
+    rjmp  fa_shl_r7
+    rjmp  fa_lsr_r4
+    rjmp  fa_lsr_r5
+    rjmp  fa_lsr_r6
+    rjmp  fa_lsr_r7
+    rjmp  fa_asr_r4
+    rjmp  fa_asr_r5
+    rjmp  fa_asr_r6
+    rjmp  fa_asr_r7
 fa_immediate_invalid:
     rjmp  fa_immediate_invalid
 fa_immediate_jump_table_end:
@@ -4552,54 +4536,54 @@ fa_immediate_jump_table_end:
 .endif
 
 fa_forward_table:
-    emit_fa_shift_forward r16, fa_shl_c0
-    emit_fa_shift_forward r18, fa_shl_c0
-    emit_fa_shift_forward r20, fa_shl_c0
-    emit_fa_shift_forward r22, fa_shl_c0
-    emit_fa_shift_forward r16, fa_shl_c1
-    emit_fa_shift_forward r18, fa_shl_c1
-    emit_fa_shift_forward r20, fa_shl_c1
-    emit_fa_shift_forward r22, fa_shl_c1
-    emit_fa_shift_forward r16, fa_shl_c2
-    emit_fa_shift_forward r18, fa_shl_c2
-    emit_fa_shift_forward r20, fa_shl_c2
-    emit_fa_shift_forward r22, fa_shl_c2
-    emit_fa_shift_forward r16, fa_shl_c3
-    emit_fa_shift_forward r18, fa_shl_c3
-    emit_fa_shift_forward r20, fa_shl_c3
-    emit_fa_shift_forward r22, fa_shl_c3
-    emit_fa_shift_forward r16, fa_lsr_c0
-    emit_fa_shift_forward r18, fa_lsr_c0
-    emit_fa_shift_forward r20, fa_lsr_c0
-    emit_fa_shift_forward r22, fa_lsr_c0
-    emit_fa_shift_forward r16, fa_lsr_c1
-    emit_fa_shift_forward r18, fa_lsr_c1
-    emit_fa_shift_forward r20, fa_lsr_c1
-    emit_fa_shift_forward r22, fa_lsr_c1
-    emit_fa_shift_forward r16, fa_lsr_c2
-    emit_fa_shift_forward r18, fa_lsr_c2
-    emit_fa_shift_forward r20, fa_lsr_c2
-    emit_fa_shift_forward r22, fa_lsr_c2
-    emit_fa_shift_forward r16, fa_lsr_c3
-    emit_fa_shift_forward r18, fa_lsr_c3
-    emit_fa_shift_forward r20, fa_lsr_c3
-    emit_fa_shift_forward r22, fa_lsr_c3
-    emit_fa_shift_forward r16, fa_asr_c0
-    emit_fa_shift_forward r18, fa_asr_c0
-    emit_fa_shift_forward r20, fa_asr_c0
-    emit_fa_shift_forward r22, fa_asr_c0
-    emit_fa_shift_forward r16, fa_asr_c1
-    emit_fa_shift_forward r18, fa_asr_c1
-    emit_fa_shift_forward r20, fa_asr_c1
-    emit_fa_shift_forward r22, fa_asr_c1
-    emit_fa_shift_forward r16, fa_asr_c2
-    emit_fa_shift_forward r18, fa_asr_c2
-    emit_fa_shift_forward r20, fa_asr_c2
-    emit_fa_shift_forward r22, fa_asr_c2
-    emit_fa_shift_forward r16, fa_asr_c3
-    emit_fa_shift_forward r18, fa_asr_c3
-    emit_fa_shift_forward r20, fa_asr_c3
-    emit_fa_shift_forward r22, fa_asr_c3
+    emit_fa_shift_forward r16, fa_shl_r4
+    emit_fa_shift_forward r18, fa_shl_r4
+    emit_fa_shift_forward r20, fa_shl_r4
+    emit_fa_shift_forward r22, fa_shl_r4
+    emit_fa_shift_forward r16, fa_shl_r5
+    emit_fa_shift_forward r18, fa_shl_r5
+    emit_fa_shift_forward r20, fa_shl_r5
+    emit_fa_shift_forward r22, fa_shl_r5
+    emit_fa_shift_forward r16, fa_shl_r6
+    emit_fa_shift_forward r18, fa_shl_r6
+    emit_fa_shift_forward r20, fa_shl_r6
+    emit_fa_shift_forward r22, fa_shl_r6
+    emit_fa_shift_forward r16, fa_shl_r7
+    emit_fa_shift_forward r18, fa_shl_r7
+    emit_fa_shift_forward r20, fa_shl_r7
+    emit_fa_shift_forward r22, fa_shl_r7
+    emit_fa_shift_forward r16, fa_lsr_r4
+    emit_fa_shift_forward r18, fa_lsr_r4
+    emit_fa_shift_forward r20, fa_lsr_r4
+    emit_fa_shift_forward r22, fa_lsr_r4
+    emit_fa_shift_forward r16, fa_lsr_r5
+    emit_fa_shift_forward r18, fa_lsr_r5
+    emit_fa_shift_forward r20, fa_lsr_r5
+    emit_fa_shift_forward r22, fa_lsr_r5
+    emit_fa_shift_forward r16, fa_lsr_r6
+    emit_fa_shift_forward r18, fa_lsr_r6
+    emit_fa_shift_forward r20, fa_lsr_r6
+    emit_fa_shift_forward r22, fa_lsr_r6
+    emit_fa_shift_forward r16, fa_lsr_r7
+    emit_fa_shift_forward r18, fa_lsr_r7
+    emit_fa_shift_forward r20, fa_lsr_r7
+    emit_fa_shift_forward r22, fa_lsr_r7
+    emit_fa_shift_forward r16, fa_asr_r4
+    emit_fa_shift_forward r18, fa_asr_r4
+    emit_fa_shift_forward r20, fa_asr_r4
+    emit_fa_shift_forward r22, fa_asr_r4
+    emit_fa_shift_forward r16, fa_asr_r5
+    emit_fa_shift_forward r18, fa_asr_r5
+    emit_fa_shift_forward r20, fa_asr_r5
+    emit_fa_shift_forward r22, fa_asr_r5
+    emit_fa_shift_forward r16, fa_asr_r6
+    emit_fa_shift_forward r18, fa_asr_r6
+    emit_fa_shift_forward r20, fa_asr_r6
+    emit_fa_shift_forward r22, fa_asr_r6
+    emit_fa_shift_forward r16, fa_asr_r7
+    emit_fa_shift_forward r18, fa_asr_r7
+    emit_fa_shift_forward r20, fa_asr_r7
+    emit_fa_shift_forward r22, fa_asr_r7
 fa_forward_table_end:
 .if (fa_forward_table_end - fa_forward_table) != (2 * 0x30 * 2)
     .error "fa_forward_table has incorrect size"
@@ -4607,18 +4591,18 @@ fa_forward_table_end:
 
 ; The shift-by-eight path reduces counts 8-15 to a byte transfer followed by
 ; at most seven single-bit iterations. Counts 0-7 use only the loop.
-emit_fa_shl_body fa_shl_c0, r16, r17
-emit_fa_shl_body fa_shl_c1, r18, r19
-emit_fa_shl_body fa_shl_c2, r20, r21
-emit_fa_shl_body fa_shl_c3, r22, r23
-emit_fa_lsr_body fa_lsr_c0, r16, r17
-emit_fa_lsr_body fa_lsr_c1, r18, r19
-emit_fa_lsr_body fa_lsr_c2, r20, r21
-emit_fa_lsr_body fa_lsr_c3, r22, r23
-emit_fa_asr_body fa_asr_c0, r16, r17
-emit_fa_asr_body fa_asr_c1, r18, r19
-emit_fa_asr_body fa_asr_c2, r20, r21
-emit_fa_asr_body fa_asr_c3, r22, r23
+emit_fa_shl_body fa_shl_r4, r16, r17
+emit_fa_shl_body fa_shl_r5, r18, r19
+emit_fa_shl_body fa_shl_r6, r20, r21
+emit_fa_shl_body fa_shl_r7, r22, r23
+emit_fa_lsr_body fa_lsr_r4, r16, r17
+emit_fa_lsr_body fa_lsr_r5, r18, r19
+emit_fa_lsr_body fa_lsr_r6, r20, r21
+emit_fa_lsr_body fa_lsr_r7, r22, r23
+emit_fa_asr_body fa_asr_r4, r16, r17
+emit_fa_asr_body fa_asr_r5, r18, r19
+emit_fa_asr_body fa_asr_r6, r20, r21
+emit_fa_asr_body fa_asr_r7, r22, r23
 
 fa_shift_bodies_end:
 .if (fa_shift_bodies_end - fa_forward_table_end) != ((8 * 12 + 4 * 13) * 2)

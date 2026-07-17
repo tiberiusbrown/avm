@@ -52,16 +52,9 @@ r6 -> AVR r20:r21
 r7 -> AVR r22:r23
 ```
 
-Registers `r4-r7` also form the compact-encoding class:
-
-```text
-c0 = r4
-c1 = r5
-c2 = r6
-c3 = r7
-```
-
-The compact names affect encoding only; all eight registers are semantically interchangeable.
+Registers `r4-r7` are called the **upper registers**. They are ordinary
+architectural registers, but many short instruction encodings are restricted
+to this subset. All eight registers remain semantically interchangeable.
 
 ### 2.2. Aligned pair registers
 
@@ -80,7 +73,7 @@ A canonical 24-bit program pointer uses the low register for bits `15:0`, the lo
 
 ```text
 r0-r3  callee-saved
-r4-r7  caller-saved, arguments, results, preferred compact-encoded values
+r4-r7  caller-saved, arguments, results, preferred values for one-byte encodings
 r3     optional frame pointer
 r4     first scalar result
 q2     first pair/program-pointer result
@@ -188,9 +181,9 @@ in    flag_tmp, SREG
 rjmp  flags_commit_18_delay_1
 ```
 
-The landing pad performs the additional `OUT GPIOR0,flag_tmp` and uses the selected cadence delay. This keeps compact `CMP` inside its four-word primary slot and keeps every fixed-width secondary slot unchanged.
+The landing pad performs the additional `OUT GPIOR0,flag_tmp` and uses the selected cadence delay. This keeps the one-byte `CMP` inside its four-word primary slot and keeps every fixed-width secondary slot unchanged.
 
-Compared with storing flags in a GPR, writers gain one native cycle for the `OUT`. Compact and ordinary 16-bit flag writers fit within an 18-cycle final cadence. Cold `CMP32` commits `GPIOR0` inline after its runtime-decoded comparison and has an approximately 81-cycle complete instruction latency.
+Compared with storing flags in a GPR, writers gain one native cycle for the `OUT`. One-byte and ordinary 16-bit flag writers fit within an 18-cycle final cadence. Cold `CMP32` commits `GPIOR0` inline after its runtime-decoded comparison and has an approximately 81-cycle complete instruction latency.
 
 ### 3.2. Flag consumers
 
@@ -252,7 +245,7 @@ MUL8      low 8 x low 8 -> low 8, zero-extended
 MUL16     low 16 x low 16 -> low 16
 ```
 
-The four 8-bit multiplication forms use compact registers, which map to AVR `r16-r23` and permit direct use of `MUL`, `MULS`, and `MULSU`. `MUL16` accepts all eight registers and returns the product modulo `2^16`; signed and unsigned multiplication have identical low sixteen bits, so no signedness variants are needed. Widening 16-bit multiplication and wider products lower through compiler-runtime helpers or synthesized instruction sequences.
+The four 8-bit multiplication forms require upper registers, which map to AVR `r16-r23` and permit direct use of `MUL`, `MULS`, and `MULSU`. `MUL16` accepts all eight registers and returns the product modulo `2^16`; signed and unsigned multiplication have identical low sixteen bits, so no signedness variants are needed. Widening 16-bit multiplication and wider products lower through compiler-runtime helpers or synthesized instruction sequences.
 
 ---
 
@@ -437,7 +430,7 @@ In the reference schedule, both standard and reverse dispatch begin executing th
 The reference continuations and secondary decoders are scheduled from this cycle-9 entry point:
 
 - direct `00-BF` handlers retain the 17- and 18-cycle cadence limits from Section 5.2;
-- compact-immediate slots execute their cycle-9 padding word before forwarding;
+- one-byte immediate slots execute their cycle-9 padding word before forwarding;
 - two-byte primary continuations place their operand handoff on the earliest legal cycle-17 reverse or cycle-18 standard boundary;
 - the generic bounded decoder uses the standard `IN; OUT` handoff, while the shared width-two decoder uses the exact cycle-17 reverse handoff;
 - `F9` performs useful pointer-high initialization before its reverse handoff;
@@ -470,23 +463,23 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 
 | Primary range | Family | Bytes | Typical cycles |
 |---|---|---:|---:|
-| `00-0F` | `MOV cD,cS` | 1 | 17 |
-| `10-1F` | `ADD cD,cS` | 1 | 17 |
-| `20-2F` | `SUB cD,cS` | 1 | 17 |
-| `30-3F` | `CMP cL,cR` | 1 | 18 |
-| `40-4F` | `LD8U cD,[cA]` | 1 | 18 |
-| `50-5F` | `ST8 [cA],cS` | 1 | 18 |
-| `60-6F` | `LD16 cD,[cA]` | 1 | 18 |
-| `70-7F` | `ST16 [cA],cS` | 1 | 18 |
-| `80-8F` | `AND cD,cS` | 1 | 17 |
-| `90-9F` | `OR cD,cS` | 1 | 17 |
-| `A0-AF` | `XOR cD,cS` | 1 | 17 |
+| `00-0F` | `MOV rD,rS` | 1 | 17 |
+| `10-1F` | `ADD rD,rS` | 1 | 17 |
+| `20-2F` | `SUB rD,rS` | 1 | 17 |
+| `30-3F` | `CMP rL,rR` | 1 | 18 |
+| `40-4F` | `LD8U rD,[rA]` | 1 | 18 |
+| `50-5F` | `ST8 [rA],rS` | 1 | 18 |
+| `60-6F` | `LD16 rD,[rA]` | 1 | 18 |
+| `70-7F` | `ST16 [rA],rS` | 1 | 18 |
+| `80-8F` | `AND rD,rS` | 1 | 17 |
+| `90-9F` | `OR rD,rS` | 1 | 17 |
+| `A0-AF` | `XOR rD,rS` | 1 | 17 |
 | `B0-B7` | `PUSH16 rN` | 1 | 18 |
 | `B8-BF` | `POP16 rN` | 1 | 18 |
-| `C0-C3` | `LDI8 cD,imm8` | 2 | 35 |
-| `C4-C7` | `LDI16 cD,imm16` | 3 | 52 |
-| `C8-CB` | `ADDI.S8 cD,simm8` | 2 | 35 |
-| `CC-CF` | `CMPI.S8 cL,simm8` | 2 | 35 |
+| `C0-C3` | `LDI8 rD,imm8` | 2 | 35 |
+| `C4-C7` | `LDI16 rD,imm16` | 3 | 52 |
+| `C8-CB` | `ADDI.S8 rD,simm8` | 2 | 35 |
+| `CC-CF` | `CMPI.S8 rL,simm8` | 2 | 35 |
 | `D0` | `BREQ8 rel8` | 2 | 35 not taken; 127 taken |
 | `D1` | `BRNE8 rel8` | 2 | 35 not taken; 127 taken |
 | `D2` | `BRULT8 rel8` | 2 | 35 not taken; 127 taken |
@@ -521,7 +514,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `F7` | Bounded dense 5-word page A | 2 | 38-40 |
 | `F8` | Bounded dense 5-word simple-condition page | 2 | 38 |
 | `F9` | Dedicated runtime-decoded full-register bitwise page | 2 | 52-54 |
-| `FA` | Compact immediate/register-count 16-bit shift page | 2 | count-dependent; 42-78 |
+| `FA` | Upper-register immediate/register-count 16-bit shift page | 2 | count-dependent; 42-78 |
 | `FB` | `CMOV.EQ` / `CMOV.NE` condition-family prefix | 2 | 36 false; 37 true |
 | `FC` | `CMOV.ULT` / `CMOV.UGE` condition-family prefix | 2 | 36 false; 37 true |
 | `FD` | `CMOV.SLT` / `CMOV.SGE` condition-family prefix | 2 | 36 false; 37 true |
@@ -532,9 +525,9 @@ All fifteen secondary-page prefixes occupy the contiguous range `F0-FE`. `F0-F8`
 
 The other primary ranges provide push/pop, immediate, branch, control-flow, and reserved encodings while keeping all secondary prefixes contiguous.
 
-## 7. One-byte compact-register matrices
+## 7. One-byte upper-register matrices
 
-For `00-AF`:
+For `00-AF`, every architectural operand is restricted to `r4-r7`:
 
 ```text
 bits 3:2  destination / address / left register
@@ -543,23 +536,23 @@ bits 1:0  source / address / right register
 
 | Range | Instruction | Intended native work |
 |---|---|---|
-| `00-0F` | `MOV cD,cS` | `MOVW dL,srcL` |
-| `10-1F` | `ADD cD,cS` | `ADD dL,srcL`; `ADC dH,srcH` |
-| `20-2F` | `SUB cD,cS` | `SUB dL,srcL`; `SBC dH,srcH` |
-| `30-3F` | `CMP cL,cR` | `CP`; `CPC`; save `SREG` |
-| `40-4F` | `LD8U cD,[cA]` | `MOVW X,aL`; `LD dL,X`; `CLR dH` |
-| `50-5F` | `ST8 [cA],cS` | `MOVW X,aL`; `ST X,srcL` |
-| `60-6F` | `LD16 cD,[cA]` | `MOVW X,aL`; two `LD` |
-| `70-7F` | `ST16 [cA],cS` | `MOVW X,aL`; two `ST` |
-| `80-8F` | `AND cD,cS` | two `AND` |
-| `90-9F` | `OR cD,cS` | two `OR` |
-| `A0-AF` | `XOR cD,cS` | two `EOR` |
+| `00-0F` | `MOV rD,rS` | `MOVW dL,srcL` |
+| `10-1F` | `ADD rD,rS` | `ADD dL,srcL`; `ADC dH,srcH` |
+| `20-2F` | `SUB rD,rS` | `SUB dL,srcL`; `SBC dH,srcH` |
+| `30-3F` | `CMP rL,rR` | `CP`; `CPC`; save `SREG` |
+| `40-4F` | `LD8U rD,[rA]` | `MOVW X,aL`; `LD dL,X`; `CLR dH` |
+| `50-5F` | `ST8 [rA],rS` | `MOVW X,aL`; `ST X,srcL` |
+| `60-6F` | `LD16 rD,[rA]` | `MOVW X,aL`; two `LD` |
+| `70-7F` | `ST16 [rA],rS` | `MOVW X,aL`; two `ST` |
+| `80-8F` | `AND rD,rS` | two `AND` |
+| `90-9F` | `OR rD,rS` | two `OR` |
+| `A0-AF` | `XOR rD,rS` | two `EOR` |
 
 Aliases:
 
 ```text
-CLR cN = XOR cN,cN
-NOP    = MOV c0,c0
+CLR rN = XOR rN,rN
+NOP    = MOV r4,r4
 ```
 
 ---
@@ -573,7 +566,7 @@ Each sequence below is one final operand-specialized slot.
 ```text
 dL,dH       low/high bytes of a 16-bit destination
 srcL,srcH   low/high bytes of a 16-bit source
-aL          low register of a compact 16-bit address pair
+aL          low native AVR register of an upper-register 16-bit address pair
 lhs0-lhs3   bytes of a 32-bit left operand, least significant first
 rhs0-rhs3   bytes of a 32-bit right operand, least significant first
 d0-d3       bytes of a 32-bit destination
@@ -591,9 +584,9 @@ page_tail    local cadence continuation
 
 Every shown `RJMP page_tail` is included in the stated slot width. The `FA` register-count forwarding entries use `MOV` plus `RJMP` to a shared shift body; immediate forms use a one-word body-jump table and enter those same bodies. The `FE` forwarding entries use `MOVW` plus `RJMP` to a shared multiplication body. Each shared body ends at its page-local tail. The `FB-FD` prefixes share one two-word, 64-entry `MOVW` table after a condition gate; those table entries end at `cmov_tail`.
 
-### 8.1. Compact indexing for ordinary full-register binary families
+### 8.1. Upper-register indexing for ordinary full-register binary families
 
-A full-register binary family omits the sixteen combinations in which both architectural operands are compact registers, because those combinations have one-byte primary encodings. The remaining 48 combinations are numbered contiguously:
+A full-register binary family omits the sixteen combinations in which both architectural operands are upper registers, because those combinations have one-byte primary encodings. The remaining 48 combinations are numbered contiguously:
 
 ```text
 00-1F  first operand r0-r3, second operand r0-r7
@@ -602,14 +595,14 @@ A full-register binary family omits the sixteen combinations in which both archi
 
 This indexing applies to `MOV16`, `ADD`, `SUB`, and `CMP`. Full-register bitwise operations use the dedicated runtime-decoded `F9` family.
 
-### 8.2. Fast compact-pointer memory indexing
+### 8.2. Fast upper-register-pointer memory indexing
 
-All operand-specialized data-space memory instructions require a compact pointer `cA`.
+All operand-specialized data-space memory instructions require pointer `rA` to be in `r4-r7`.
 
-For ordinary loads and stores, compact-data combinations already have one-byte primary encodings. The dense secondary family therefore contains only:
+For ordinary loads and stores, combinations with both pointer and data in upper registers already have one-byte primary encodings. The dense secondary family therefore contains only:
 
 ```text
-4 compact pointers × 4 noncompact data registers = 16 entries
+4 upper-register pointers × 4 lower data registers = 16 entries
 ```
 
 The entry index is:
@@ -621,7 +614,7 @@ The entry index is:
 For postincrement forms there is no one-byte equivalent, so every data register is represented:
 
 ```text
-4 compact pointers × 8 data registers = 32 entries
+4 upper-register pointers × 8 data registers = 32 entries
 ```
 
 The entry index is:
@@ -633,18 +626,20 @@ The entry index is:
 The generic assembly syntax is:
 
 ```text
-LD8U rD,[cA]
-LD16 rD,[cA]
-ST8  [cA],rS
-ST16 [cA],rS
+LD8U rD,[rA]
+LD16 rD,[rA]
+ST8  [rA],rS
+ST16 [rA],rS
 
-LD8U rD,[cA+]
-LD16 rD,[cA+]
-ST8  [cA+],rS
-ST16 [cA+],rS
+LD8U rD,[rA+]
+LD16 rD,[rA+]
+ST8  [rA+],rS
+ST16 [rA+],rS
 ```
 
-When the pointer is noncompact, LLVM uses the three-byte `F0` cold fallback forms in Section 9.5 rather than inserting mandatory copy-in/copy-out sequences.
+In these forms, `rA` is restricted to the upper registers `r4-r7`.
+
+When the pointer is in a lower register, LLVM uses the three-byte `F0` cold fallback forms in Section 9.5 rather than inserting mandatory copy-in/copy-out sequences.
 
 ## 9. `F0`: bounded 1-word cold-form veneer table
 
@@ -658,7 +653,7 @@ rjmp  operation_specific_body
 
 The out-of-line bodies fetch remaining immediate, displacement, address, or operand bytes. They are not constrained to the one-word veneer width.
 
-The immediate families contain only `r0-r3`; the equivalent `c0-c3` forms use the primary opcodes at `C0-CF`.
+The immediate families contain only `r0-r3`; the equivalent forms for `r4-r7` use the primary opcodes at `C0-CF`.
 
 ### 9.1. Immediate and stack-relative forms
 
@@ -710,7 +705,7 @@ The 32-bit cold operations are encoded as three-byte `F0` instructions:
 | `6A` | `LD32 qD,[rA]` followed by `RRSPEC` | 3 | ~80 |
 | `6B` | `ST32 [rA],qS` followed by `RRSPEC` | 3 | ~79 |
 
-`BOOL rD` is encoded in `F7`, where its compact fixed-width implementation avoids runtime register decoding.
+`BOOL rD` is encoded in `F7`, where its fixed-width upper-register implementation avoids runtime register decoding.
 
 #### 9.4.1. `RRSPEC` encoding
 
@@ -958,7 +953,7 @@ The primary `F9` slot belongs to the dedicated runtime-decoded bitwise family in
 
 ### 9.5. Shared cold general-pointer data-space forms
 
-Fast dense memory instructions require compact pointers. Two three-byte fallback forms allow any architectural register to serve as the pointer:
+Fast dense memory instructions require pointers in upper registers. Two three-byte fallback forms allow any architectural register to serve as the pointer:
 
 | Secondary | Encoding | Operation | Total bytes | Target cycles |
 |---:|---|---|---:|---:|
@@ -1162,7 +1157,7 @@ The reference execution intervals and complete latencies are:
 | `ST8 [rA+],rS` | 42 | **76** |
 | `ST16 [rA+],rS` | 44 | **78** |
 
-The shared code favors the load path by allowing it to fall through into the postincrement helper. Duplicating the three-word helper could remove two cycles from postincrement paths at a cost of six bytes; the compact shared form is shown here.
+The shared code favors the load path by allowing it to fall through into the postincrement helper. Duplicating the three-word helper could remove two cycles from postincrement paths at a cost of six bytes; the shared form is shown here.
 
 
 ## 10. `F1`: bounded 2-word table
@@ -1171,8 +1166,8 @@ Bounds: `secondary < 0x90`.
 
 | Secondary | Instruction | Entries | Cycles |
 |---|---|---:|---:|
-| `00-2F` | `MOV rD,rS` excluding compact/compact | 48 | 37 |
-| `30-6F` | `STSP8 [SP+u4],cS` | 64 | 37 |
+| `00-2F` | `MOV rD,rS` excluding pairs where both operands are upper registers | 48 | 37 |
+| `30-6F` | `STSP8 [SP+u4],rS` | 64 | 37 |
 | `70-77` | `ZEXT8 rD` | 8 | 37 |
 | `78-7F` | `SWAP8 rD` | 8 | 37 |
 | `80-87` | `GETSP rD` | 8 | 37 |
@@ -1183,7 +1178,7 @@ Bounds: `secondary < 0x90`.
 movw  dL, srcL
 rjmp  cluster_a_tail_17_delay_1
 
-; STSP8 [SP+q],cS
+; STSP8 [SP+q],rS
 std   Y+q, srcL
 rjmp  cluster_a_tail_17
 
@@ -1208,12 +1203,12 @@ rjmp  cluster_a_tail_17_delay_1
 
 ## 11. `F2`: bounded 3-word arithmetic table
 
-Bounds: `secondary < 0x60`.
+Bounds: `secondary < 0x60`. Pointer `rA` in the memory families is restricted to `r4-r7`.
 
 | Secondary | Instruction | Entries | Cycles |
 |---|---|---:|---:|
-| `00-2F` | `ADD rD,rS` excluding compact/compact | 48 | 38 |
-| `30-5F` | `SUB rD,rS` excluding compact/compact | 48 | 38 |
+| `00-2F` | `ADD rD,rS` excluding pairs where both operands are upper registers | 48 | 38 |
+| `30-5F` | `SUB rD,rS` excluding pairs where both operands are upper registers | 48 | 38 |
 
 ```asm
 ; ADD rD,rS
@@ -1227,50 +1222,50 @@ sbc   dH, srcH
 rjmp  cluster_a_tail_17
 ```
 
-Full-register `AND`, `OR`, and `XOR` are encoded by the dedicated runtime-decoded `F9` page. The one-byte compact forms use their direct primary encodings.
+Full-register `AND`, `OR`, and `XOR` are encoded by the dedicated runtime-decoded `F9` page. The one-byte forms for upper-register operands use their direct primary encodings.
 
 ---
 
 ## 12. `F3`: bounded 3-word memory and widening-multiply table
 
-Bounds: `secondary < 0x80`.
+Bounds: `secondary < 0x80`. The multiply and stack-load operands, and pointer `rA`, are restricted to `r4-r7` where those families require upper registers.
 
 | Secondary | Instruction | Entries | Cycles |
 |---|---|---:|---:|
-| `00-0F` | `ST8 [cA],rS`, noncompact `rS` only | 16 | 38 |
-| `10-1F` | `MULU8.W cD,cS` | 16 | 38 |
-| `20-2F` | `MULS8.W cD,cS` | 16 | 38 |
-| `30-3F` | `MULSU8.W cD,cS` | 16 | 38 |
-| `40-7F` | `LDSP8U cD,[SP+u4]` | 64 | 38 |
+| `00-0F` | `ST8 [rA],rS`, `rS` in `r0-r3` only | 16 | 38 |
+| `10-1F` | `MULU8.W rD,rS` | 16 | 38 |
+| `20-2F` | `MULS8.W rD,rS` | 16 | 38 |
+| `30-3F` | `MULSU8.W rD,rS` | 16 | 38 |
+| `40-7F` | `LDSP8U rD,[SP+u4]` | 64 | 38 |
 
 ```asm
-; ST8 [cA],rS
+; ST8 [rA],rS
 movw  X, aL
 st    X, srcL
 rjmp  cluster_a_tail_18_delay_1
 
-; MULU8.W cD,cS
+; MULU8.W rD,rS
 mul   dL, srcL
 movw  dL, r0
 rjmp  cluster_a_tail_18_delay_1
 
-; MULS8.W cD,cS
+; MULS8.W rD,rS
 muls  dL, srcL
 movw  dL, r0
 rjmp  cluster_a_tail_18_delay_1
 
-; MULSU8.W cD,cS
+; MULSU8.W rD,rS
 mulsu dL, srcL
 movw  dL, r0
 rjmp  cluster_a_tail_18_delay_1
 
-; LDSP8U cD,[SP+q]
+; LDSP8U rD,[SP+q]
 ldd   dL, Y+q
 clr   dH
 rjmp  cluster_a_tail_18_delay_1
 ```
 
-Compact-source stores use the one-byte primary family. A noncompact pointer uses `F0 6D dddWaaaP` with `W=0` and `P=0`.
+Stores with an upper-register source use the one-byte primary family. A pointer in a lower register uses `F0 6D dddWaaaP` with `W=0` and `P=0`.
 
 Native `r0:r1` are interpreter scratch, so multiply slots do not restore an ABI zero register. A 32-bit register copy is encoded as two `MOV16` operations.
 
@@ -1280,8 +1275,8 @@ Bounds: `secondary < 0xB8`.
 
 | Secondary | Instruction | Entries | Final cadence |
 |---|---|---:|---:|
-| `00-3F` | `LDSP16 cD,[SP+u4]` | 64 | 18 |
-| `40-7F` | `STSP16 [SP+u4],cS` | 64 | 18 |
+| `00-3F` | `LDSP16 rD,[SP+u4]` | 64 | 18 |
+| `40-7F` | `STSP16 [SP+u4],rS` | 64 | 18 |
 | `80-87` | `LSL16.1 rD` | 8 | 17 |
 | `88-8F` | `LSR16.1 rD` | 8 | 17 |
 | `90-97` | `ASR16.1 rD` | 8 | 17 |
@@ -1291,12 +1286,12 @@ Bounds: `secondary < 0xB8`.
 | `B0-B7` | `DEC16 rD` | 8 | 17 |
 
 ```asm
-; LDSP16 cD,[SP+q]
+; LDSP16 rD,[SP+q]
 ldd   dL, Y+q
 ldd   dH, Y+q+1
 rjmp  cluster_b_tail_18
 
-; STSP16 [SP+q],cS
+; STSP16 [SP+q],rS
 std   Y+q,   srcL
 std   Y+q+1, srcH
 rjmp  cluster_b_tail_18
@@ -1347,10 +1342,10 @@ Bounds: `secondary < 0x60`.
 
 | Secondary | Instruction | Entries | Cycles |
 |---|---|---:|---:|
-| `00-2F` | `CMP rL,rR` excluding compact/compact | 48 | 39 |
-| `30-3F` | `LD8U rD,[cA]`, noncompact `rD` only | 16 | 38 |
-| `40-4F` | `LD16 rD,[cA]`, noncompact `rD` only | 16 | 39 |
-| `50-5F` | `ST16 [cA],rS`, noncompact `rS` only | 16 | 39 |
+| `00-2F` | `CMP rL,rR` excluding pairs where both operands are upper registers | 48 | 39 |
+| `30-3F` | `LD8U rD,[rA]`, `rD` in `r0-r3` only | 16 | 38 |
+| `40-4F` | `LD16 rD,[rA]`, `rD` in `r0-r3` only | 16 | 39 |
+| `50-5F` | `ST16 [rA],rS`, `rS` in `r0-r3` only | 16 | 39 |
 
 ```asm
 ; CMP rL,rR
@@ -1359,44 +1354,44 @@ cpc   lH, rH
 in    flag_tmp, SREG
 rjmp  flags_commit_b_18_delay_1
 
-; LD8U rD,[cA]
+; LD8U rD,[rA]
 movw  X, aL
 ld    dL, X
 clr   dH
 rjmp  cluster_b_tail_18
 
-; LD16 rD,[cA]
+; LD16 rD,[rA]
 movw  X, aL
 ld    dL, X+
 ld    dH, X
 rjmp  cluster_b_tail_18
 
-; ST16 [cA],rS
+; ST16 [rA],rS
 movw  X, aL
 st    X+, srcL
 st    X, srcH
 rjmp  cluster_b_tail_18
 ```
 
-Compact-data forms use the one-byte primary families. Noncompact pointers use `F0 6C` for loads or `F0 6D` for stores, with `W` and `P` supplied by `RRSPEC`.
+Forms with data in upper registers use the one-byte primary families. Pointers in lower registers use `F0 6C` for loads or `F0 6D` for stores, with `W` and `P` supplied by `RRSPEC`.
 
 The address is copied to native `X` before a load overwrites its destination, so ordinary loads permit destination/pointer overlap.
 
 ## 15. `F6`: bounded 4-word table B
 
-Bounds: `secondary < 0x50`.
+Bounds: `secondary < 0x50`. Pointer `rA` and the operands of `MUL8` are restricted to `r4-r7`.
 
 | Secondary | Instruction | Entries | Final cadence |
 |---|---|---:|---:|
-| `00-1F` | `ST8 [cA+],rS` | 32 | 18 |
+| `00-1F` | `ST8 [rA+],rS` | 32 | 18 |
 | `20-27` | `BSWAP16 rD` | 8 | 18 |
 | `28-2F` | `TST16 rD` | 8 | 18 |
-| `30-3F` | `MUL8 cD,cS` | 16 | 18 |
+| `30-3F` | `MUL8 rD,rS` | 16 | 18 |
 | `40-47` | `SEXT8 rD` | 8 | 18 |
 | `48-4F` | `NEG16 rD` | 8 | 18 |
 
 ```asm
-; ST8 [cA+],rS
+; ST8 [rA+],rS
 movw  X, aL
 st    X+, srcL
 movw  aL, X
@@ -1414,7 +1409,7 @@ cpc   dH, r2
 in    flag_tmp, SREG
 rjmp  flags_commit_b_18_delay_1
 
-; MUL8 cD,cS
+; MUL8 rD,rS
 mul   dL, srcL
 mov   dL, r0
 clr   dH
@@ -1433,17 +1428,17 @@ neg   dH
 rjmp  cluster_b_tail_18_delay_1
 ```
 
-A noncompact postincrement pointer uses `F0 6D dddWaaaP` with `W=0` and `P=1`. The three-operation `NEG16` sequence is smaller and faster than a `COM`/add-one formulation.
+A postincrement pointer in a lower register uses `F0 6D dddWaaaP` with `W=0` and `P=1`. The three-operation `NEG16` sequence is smaller and faster than a `COM`/add-one formulation.
 
 ## 16. `F7`: bounded 5-word table A
 
-Bounds: `secondary < 0x90`.
+Bounds: `secondary < 0x90`. Pointer `rA` in the postincrement memory families is restricted to `r4-r7`.
 
 | Secondary | Instruction | Entries | Final cadence |
 |---|---|---:|---:|
-| `00-1F` | `LD8U rD,[cA+]` | 32 | 18 |
-| `20-3F` | `LD16 rD,[cA+]` | 32 | 19 |
-| `40-5F` | `ST16 [cA+],rS` | 32 | 19 |
+| `00-1F` | `LD8U rD,[rA+]` | 32 | 18 |
+| `20-3F` | `LD16 rD,[rA+]` | 32 | 19 |
+| `40-5F` | `ST16 [rA+],rS` | 32 | 19 |
 | `60-6F` | `ADD32 qD,qS` | 16 | 18 |
 | `70-7F` | `SUB32 qD,qS` | 16 | 18 |
 | `80-83` | `LSR32.1 qD` | 4 | 18 |
@@ -1451,21 +1446,21 @@ Bounds: `secondary < 0x90`.
 | `88-8F` | `BOOL rD` | 8 | 18 |
 
 ```asm
-; LD8U rD,[cA+]
+; LD8U rD,[rA+]
 movw  X, aL
 ld    dL, X+
 movw  aL, X
 clr   dH
 rjmp  cluster_c_tail_18
 
-; LD16 rD,[cA+]
+; LD16 rD,[rA+]
 movw  X, aL
 ld    dL, X+
 ld    dH, X+
 movw  aL, X
 rjmp  cluster_c_tail_18
 
-; ST16 [cA+],rS
+; ST16 [rA+],rS
 movw  X, aL
 st    X+, srcL
 st    X+, srcH
@@ -1508,9 +1503,9 @@ mov   dL, r3
 rjmp  cluster_c_tail_18
 ```
 
-Noncompact postincrement pointers use `F0 6C` for loads or `F0 6D` for stores with `P=1`.
+Postincrement pointers in lower registers use `F0 6C` for loads or `F0 6D` for stores with `P=1`.
 
-`CPSE` plus the optional one-word `MOV` takes two cycles on either path. Postincrement loads reserve `rD == cA`. A 32-bit register copy uses two `MOV16` operations, and a one-bit left shift uses `ADD32 qD,qD`.
+`CPSE` plus the optional one-word `MOV` takes two cycles on either path. Postincrement loads reserve `rD == rA`. A 32-bit register copy uses two `MOV16` operations, and a one-bit left shift uses `ADD32 qD,qD`.
 
 ## 17. `F8`: bounded 5-word simple-condition table
 
@@ -1566,7 +1561,7 @@ bits 1:0  operation
 11  invalid
 ```
 
-All 64 register combinations are representable for each valid operation. Compact/compact combinations are legal duplicate encodings, but assemblers and LLVM must canonicalize them to the one-byte `80-AF` compact forms.
+All 64 register combinations are representable for each valid operation. Combinations where both operands are upper registers are legal duplicate encodings, but assemblers and LLVM must canonicalize them to the one-byte `80-AF` upper-register forms.
 
 ### 18.1. Primary-slot entry and 17-cycle secondary cadence
 
@@ -1724,7 +1719,7 @@ The primary slot and pre-handoff work place the speculative following-primary `O
 | `OR rD,rS` | **53 cycles** |
 | `XOR rD,rS` | **54 cycles** |
 
-These totals are measured from entry to the `F9` primary slot through entry to the following primary slot. Compact bitwise operations remain one-byte, 17-cycle instructions.
+These totals are measured from entry to the `F9` primary slot through entry to the following primary slot. Upper-register bitwise operations remain one-byte, 17-cycle instructions.
 
 ### 18.7. Size summary
 
@@ -1732,7 +1727,9 @@ The dedicated `F9` handler occupies 39 AVR words / 78 bytes. It requires no seco
 
 ---
 
-## 19. `FA`: compact immediate and register-count 16-bit shifts
+## 19. `FA`: upper-register immediate and register-count 16-bit shifts
+
+All scalar operands in this page are restricted to `r4-r7`. In the formulas below, `U(rN) = N - 4`.
 
 Valid secondary range: `00-EF`. `F0-FF` is reserved and traps.
 
@@ -1742,23 +1739,23 @@ The original register-count encodings remain unchanged. Moving them to `C0-EF` w
 
 | Secondary | Instruction | Encoding details |
 |---|---|---|
-| `00-0F` | `SHL16V cD,cCount` | bits `3:2` destination, bits `1:0` count register |
-| `10-1F` | `LSR16V cD,cCount` | bits `3:2` destination, bits `1:0` count register |
-| `20-2F` | `ASR16V cD,cCount` | bits `3:2` destination, bits `1:0` count register |
-| `30-6F` | `LSL16I cD,imm4` | `secondary - 0x30`: bits `5:4` destination, bits `3:0` count |
-| `70-AF` | `LSR16I cD,imm4` | `secondary - 0x70`: bits `5:4` destination, bits `3:0` count |
-| `B0-EF` | `ASR16I cD,imm4` | `secondary - 0xB0`: bits `5:4` destination, bits `3:0` count |
+| `00-0F` | `SHL16V rD,rCount` | bits `3:2` destination, bits `1:0` count register |
+| `10-1F` | `LSR16V rD,rCount` | bits `3:2` destination, bits `1:0` count register |
+| `20-2F` | `ASR16V rD,rCount` | bits `3:2` destination, bits `1:0` count register |
+| `30-6F` | `LSL16I rD,imm4` | `secondary - 0x30`: bits `5:4` destination, bits `3:0` count |
+| `70-AF` | `LSR16I rD,imm4` | `secondary - 0x70`: bits `5:4` destination, bits `3:0` count |
+| `B0-EF` | `ASR16I rD,imm4` | `secondary - 0xB0`: bits `5:4` destination, bits `3:0` count |
 | `F0-FF` | Reserved | trap |
 
 The immediate count is encoded directly in four bits and is therefore in `0-15`. Equivalently:
 
 ```text
-LSL16I: secondary = 0x30 + (cD << 4) + imm4
-LSR16I: secondary = 0x70 + (cD << 4) + imm4
-ASR16I: secondary = 0xB0 + (cD << 4) + imm4
+LSL16I: secondary = 0x30 + (U(rD) << 4) + imm4
+LSR16I: secondary = 0x70 + (U(rD) << 4) + imm4
+ASR16I: secondary = 0xB0 + (U(rD) << 4) + imm4
 ```
 
-For register-count forms, the low four bits of `cCount` select a shift count in `0-15`; the count register is preserved. Copying the count before entering the shared body makes `cD == cCount` valid. All six instruction families preserve architectural condition state.
+For register-count forms, the low four bits of `rCount` select a shift count in `0-15`; the count register is preserved. Copying the count before entering the shared body makes `rD == rCount` valid. All six instruction families preserve architectural condition state.
 
 ### 19.2. Decoder and table structure
 
@@ -1789,17 +1786,17 @@ The low-byte-only additions are safe because the pre-biased immediate base, all 
 The immediate jump table contains twelve direct `RJMP`s—one for each operation/destination body—and a thirteenth invalid entry selected by secondary values `F0-FF`. The register table remains 48 two-word entries:
 
 ```asm
-; Example: SHL16V c2,c1
-mov   r26, c1L
-rjmp  fa_shl_c2
+; Example: SHL16V r6,r5
+mov   r26, VM_R5L
+rjmp  fa_shl_r6
 
-; Example: LSR16V c0,c3
-mov   r26, c3L
-rjmp  fa_lsr_c0
+; Example: LSR16V r4,r7
+mov   r26, VM_R7L
+rjmp  fa_lsr_r4
 
-; Example: ASR16V c3,c3
-mov   r26, c3L
-rjmp  fa_asr_c3
+; Example: ASR16V r7,r7
+mov   r26, VM_R7L
+rjmp  fa_asr_r7
 ```
 
 Both paths enter the same twelve destination-specialized bodies on cycle 32. `SHL16V`/`LSL16I` and `LSR16V`/`LSR16I` use twelve-word bodies; `ASR16V`/`ASR16I` use thirteen-word bodies. The shift-by-eight path reduces counts `8-15` to a byte transfer followed by at most seven single-bit iterations.
@@ -2149,7 +2146,7 @@ Every one-byte handler from `00-BF` fits in four words including its final `RJMP
 For example:
 
 ```asm
-; LD8U cD,[cA] -- exact four-word slot
+; LD8U rD,[rA] -- exact four-word slot
 movw  X, aL
 ld    dL, X
 clr   dH
@@ -2160,9 +2157,9 @@ The exact-fit families cannot carry local delay padding. Their final `RJMP` sele
 
 ### 22.2. Immediate and control primaries
 
-The `C0-CF` immediate families do not require sixteen fully duplicated continuation bodies. A compact implementation preloads an operation-stub address or an exact native register-file address in the four-word primary slot, then uses one family-shared operand-fetch continuation. The continuation consumes the immediate byte or bytes, starts the following transfer, and enters a short destination-specialized operation stub.
+The `C0-CF` immediate families do not require sixteen fully duplicated continuation bodies. A size-efficient implementation preloads an operation-stub address or an exact native register-file address in the four-word primary slot, then uses one family-shared operand-fetch continuation. The continuation consumes the immediate byte or bytes, starts the following transfer, and enters a short destination-specialized operation stub.
 
-One compact organization is:
+One size-efficient organization is:
 
 ```asm
 ; Primary slot: one of four destination-specialized entries
@@ -2192,10 +2189,10 @@ In the reference layout, the `C0-CF` continuation and apply-stub block occupies 
 
 | Family | Cycles |
 |---|---:|
-| `LDI8 cD,imm8` | 35 |
-| `LDI16 cD,imm16` | 52 |
-| `ADDI.S8 cD,simm8` | 35 |
-| `CMPI.S8 cL,simm8` | 35 |
+| `LDI8 rD,imm8` | 35 |
+| `LDI16 rD,imm16` | 52 |
+| `ADDI.S8 rD,simm8` | 35 |
+| `CMPI.S8 rL,simm8` | 35 |
 
 The extra `RJMP`/`IJMP` work is hidden inside the operand-transfer windows except where reflected in those exact totals.
 
@@ -2312,7 +2309,7 @@ The comparison and invalid shim are emitted once, not once per page. Each page c
 
 For two- through four-word pages, these two valid-path cycles can replace cadence padding. For larger pages, the check remains worthwhile even if it contributes to a small overrun: omitting the unused table tail saves hundreds or thousands of bytes.
 
-The ten bounded pages perform this upper-bound check in either the generic or shared width-two decoder. `FB-FD` use `secondary < 0x80`; bit 6 selects the inverse condition and bits 5:0 index the shared table. `F9` needs no register-field bounds check because each operand is a three-bit index; operation value `11` traps locally. `FE` uses `secondary < 0x40`. The duplicate compact-register combinations removed from `F1`, `F2`, and `F5` make their valid ranges contiguous, so no internal range test is required.
+The ten bounded pages perform this upper-bound check in either the generic or shared width-two decoder. `FB-FD` use `secondary < 0x80`; bit 6 selects the inverse condition and bits 5:0 index the shared table. `F9` needs no register-field bounds check because each operand is a three-bit index; operation value `11` traps locally. `FE` uses `secondary < 0x40`. The duplicate upper-register combinations removed from `F1`, `F2`, and `F5` make their valid ranges contiguous, so no internal range test is required.
 
 ---
 
@@ -2397,7 +2394,7 @@ The following single-section order is a reference layout that keeps the major st
 | 4 | Shared width-two decoder | 1082 | 1096 | 14 | 28 |
 | 5 | Generic decoder and four width stubs | 1096 | 1116 | 20 | 40 |
 | 6 | Shared `FB-FD` condition gate | 1116 | 1135 | 19 | 38 |
-| 7 | Primary continuations, compact tails, `SYS` table, seek/restart, local delays, and traps | 1135 | 1779 | 644 | 1288 |
+| 7 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1135 | 1779 | 644 | 1288 |
 | 8 | Cluster-A false-path landing and cadence cluster | 1779 | 1805 | 26 | 52 |
 | 9 | Local F0 trap plus `F0` veneer table | 1805 | 1916 | 111 | 222 |
 | 10 | `F0` immediate, stack, absolute, and program-space bodies | 1916 | 2668 | 752 | 1504 |
@@ -2557,13 +2554,13 @@ Compile-time assertions for the reference block boundaries, dense slot widths, a
 
 Pointer class determines instruction selection:
 
-- compact pointer and compact data: one-byte 18-cycle primary form;
-- compact pointer and noncompact data: two-byte ~35-38-cycle dense form;
-- noncompact pointer: three-byte ~69-78-cycle cold fallback.
+- pointer in an upper register and data in an upper register: one-byte 18-cycle primary form;
+- pointer in an upper register and data in a lower register: two-byte ~35-38-cycle dense form;
+- pointer in a lower register: three-byte ~69-78-cycle cold fallback.
 
 No additional cadence tail or dispatch stage is introduced for the fast path.
 
-Two compact array pointers are sufficient for the bubble-sort loop mappings, one compact marking pointer is sufficient for Sieve, and Fibonacci uses no explicit data-space pointer in its recursive body. Performance falls to the cold fallback only when allocator pressure places a hot pointer in a noncompact register.
+Two pointers in upper registers are sufficient for the bubble-sort loop mappings, one marking pointer in an upper register is sufficient for Sieve, and Fibonacci uses no explicit data-space pointer in its recursive body. Performance falls to the cold fallback only when allocator pressure places a hot pointer in a lower register.
 
 ## 27. Native register-allocation rules
 
@@ -2608,7 +2605,7 @@ mov   dL, r3
 rjmp  cluster_c_tail_18
 ```
 
-The zero and nonzero paths are equal-time. These improvements justify moving `INC16`/`DEC16` from `F6` to `F4` and retaining the compact five-word `BOOL` implementation in `F7`.
+The zero and nonzero paths are equal-time. These improvements justify moving `INC16`/`DEC16` from `F6` to `F4` and retaining the five-word `BOOL` implementation in `F7`.
 
 `CSET` also uses `MOV dL,r3`, but this merely replaces `INC dL`; it does not reduce the five-word slot.
 
@@ -2669,7 +2666,7 @@ sbrc  dL, 7
 dec   dH
 ```
 
-The sequences shown in the page definitions illustrate efficient implementations of `BSWAP16`, widening 8-bit multiplies, variable shifts, fast compact-pointer loads/stores, `ADD32`, `SUB32`, and the one-bit 32-bit shifts. Noncompact pointers can use the separately specified `F0` subsystem.
+The sequences shown in the page definitions illustrate efficient implementations of `BSWAP16`, widening 8-bit multiplies, variable shifts, fast loads/stores using upper-register pointers, `ADD32`, `SUB32`, and the one-bit 32-bit shifts. Pointers in lower registers can use the separately specified `F0` subsystem.
 
 ### 27.6. Fixed-width family latencies
 
@@ -2697,9 +2694,9 @@ Sections 9 and 19 give the cycle targets used when sizing and arranging the refe
 
 ## 28. Aliasing rules
 
-- Ordinary fast loads capture compact `cA` in native `X`, so `rD == cA` is valid.
-- Fast postincrement stores capture the original compact pointer before updating it, so `cA == rS` is valid.
-- Fast postincrement loads reserve `rD == cA`, because one register cannot receive both the loaded value and updated pointer.
+- Ordinary fast loads capture upper-register `rA` in native `X`, so `rD == rA` is valid.
+- Fast postincrement stores capture the original upper-register pointer before updating it, so `rA == rS` is valid.
+- Fast postincrement loads reserve `rD == rA`, because one register cannot receive both the loaded value and updated pointer.
 - Cold ordinary loads capture the selected pointer value before writing the destination, so `rD == rA` is valid.
 - Cold stores capture the complete source before reading or updating the pointer, so `rS == rA` is valid.
 - Cold postincrement loads reserve `rD == rA`, matching the fast forms.
@@ -2726,7 +2723,7 @@ Sections 9 and 19 give the cycle targets used when sizing and arranging the refe
 | `FB-FD` shared table | 64 | 2 | 256 | 1024 | 768 |
 | `FE` | 64 | 2 | 256 | 1024 | 768 |
 
-The compact-pointer dense tables contain only fast forms. The two table-free cold-memory secondaries provide complete register coverage through one 49-word shared handler.
+The dense tables for upper-register pointers contain only fast forms. The two table-free cold-memory secondaries provide complete register coverage through one 49-word shared handler.
 
 ## 30. Control-flow primaries
 
@@ -2780,17 +2777,17 @@ For the reference schedule, a not-taken 16-bit branch launches the fallthrough o
 
 ```text
 GPR16          r0-r7
-CompactGPR16   r4-r7
-DataPointer16  preferred c0-c3, fallback r0-r7
+UpperGPR16     r4-r7
+DataPointer16  preferred r4-r7, fallback r0-r7
 PAIR32         q0-q3
-CompactPAIR32  q2-q3
+UpperPAIR32    q2-q3
 ```
 
 `DataPointer16` is a constrained allocation class for fast memory operations, not a semantic restriction on C pointers.
 
-### Compression
+### Encoding selection
 
-One semantic instruction may have a one-byte compact form and a two-byte full-register form:
+One semantic instruction may have a one-byte form for upper-register operands and a two-byte full-register form:
 
 ```text
 ADD r4,r6 -> 1-byte primary
@@ -2803,27 +2800,27 @@ AND r1,r6 -> F9 runtime-decoded secondary
 Memory selection has three tiers:
 
 ```text
-compact pointer + compact data      one-byte primary
-compact pointer + noncompact data   dense F3/F5/F6/F7 form
-noncompact pointer                  cold F0 + RRSPEC form
+pointer in r4-r7 + data in r4-r7      one-byte primary
+pointer in r4-r7 + data in r0-r3   dense F3/F5/F6/F7 form
+pointer in a lower register                  cold F0 + RRSPEC form
 ```
 
 ### Pointer allocation policy
 
-Prioritize compact registers for:
+Prioritize upper registers for:
 
 1. hot data-space pointers;
 2. loop induction pointers;
 3. pointers used by postincrement forms;
 4. byte and word values participating in one-byte operations.
 
-A pointer live across a call may be spilled, recomputed, or retained in a noncompact register. The cold fallback prevents forced copy-in/copy-out around every access.
+A pointer live across a call may be spilled, recomputed, or retained in a lower register. The cold fallback prevents forced copy-in/copy-out around every access.
 
-For a noncompact pointer used once, LLVM should compare:
+For a pointer in a lower register used once, LLVM should compare:
 
 ```text
 cold ordinary access                  69-71 cycles
-MOV to compact + fast access          about 53-70 cycles
+MOV to an upper register + fast access  about 53-70 cycles
 ```
 
 For postincrement, the cold form is usually preferred:
@@ -2833,7 +2830,7 @@ cold postincrement access             75-78 cycles
 MOV in + fast access + MOV back       roughly 105-110 cycles
 ```
 
-Live-range splitting may make the compact form cheaper when several accesses share one copied pointer.
+Live-range splitting may make the upper-register form cheaper when several accesses share one copied pointer.
 
 ### Full-register bitwise lowering
 
@@ -2841,7 +2838,7 @@ Live-range splitting may make the compact form cheaper when several accesses sha
 F9 dddsssoo
 ```
 
-is used only when the result must remain in a noncompact register or when moving through a compact temporary would be slower.
+is used only when the result must remain in a lower register or when moving through an upper-register temporary would be slower.
 
 Canonical costs:
 
@@ -2851,7 +2848,7 @@ OR  rD,rS  53 cycles
 XOR rD,rS  54 cycles
 ```
 
-Compact/compact `F9` encodings are legal but noncanonical.
+`F9` encodings with both operands in upper registers are legal but noncanonical.
 
 ### Stack layout
 
@@ -2870,15 +2867,15 @@ Use pair operations where they reduce several 16-bit instructions. `CMP32`, `LD3
 
 ```text
 MOV32      -> 2x MOV16
-AND32      -> 2x compact or F9 AND16
-OR32       -> 2x compact or F9 OR16
-XOR32      -> 2x compact or F9 XOR16
+AND32      -> 2x one-byte form for upper-register operands or F9 AND16
+OR32       -> 2x one-byte form for upper-register operands or F9 OR16
+XOR32      -> 2x one-byte form for upper-register operands or F9 XOR16
 LSL32.1    -> ADD32 qD,qD
 ```
 
 ### Variable shifts
 
-Use `SHL16V`, `LSR16V`, and `ASR16V` for genuinely variable compact-register shifts. Use `LSL16I`, `LSR16I`, and `ASR16I` for compile-time counts in `0-15`; repeated `.1` forms remain useful when they combine better with nearby operations.
+Use `SHL16V`, `LSR16V`, and `ASR16V` for genuinely variable upper-register shifts. Use `LSL16I`, `LSR16I`, and `ASR16I` for compile-time counts in `0-15`; repeated `.1` forms remain useful when they combine better with nearby operations.
 
 ### Conditional selection
 

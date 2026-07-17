@@ -1,6 +1,6 @@
 # Arduboy Virtual Machine Interface Specification
 
-**Status:** Version 1 design draft  
+**Status:** Version 1 design draft
 **Intended consumers:** LLVM backend, Clang target, assembler, disassembler, linker, image writer, debugger, validator, runtime library, system libraries, and conforming VM implementations
 
 ---
@@ -547,6 +547,34 @@ oo ddd sss
 Every bit pattern is valid. The complete original values of both operands are
 used. `rD == rS` is legal.
 
+### 18.10. `MOV32` pair index `QPAIR12`
+
+The `F2` page omits the four `MOV32` combinations where both operands are
+`q2` or `q3`, because those expand to two one-byte upper-register `MOV`
+instructions.
+
+```text
+if qD < 2:
+    QPAIR12(qD,qS) = 4*qD + qS
+else if qS < 2:
+    QPAIR12(qD,qS) = 8 + 2*(qD - 2) + qS
+else:
+    use two upper-register MOV instructions
+```
+
+### 18.11. Floating-point operand specifiers
+
+The `FF C0-C9` extended forms use one trailing specifier byte. Bits not listed
+below MUST be zero.
+
+```text
+C0-C1 qD,rS:       bits 7:6 qD, bits 2:0 rS
+C2-C3 rD,qS:       bits 7:5 rD, bits 1:0 qS
+C4-C7 qD,qS:       bits 3:2 qD, bits 1:0 qS
+C8    rD,qL,qR:    bits 6:4 rD, bits 3:2 qL, bits 1:0 qR
+C9    rD,qS:       bits 6:4 rD, bits 1:0 qS
+```
+
 ---
 
 # Part IV — Complete Opcode Map
@@ -610,7 +638,7 @@ used. `rD == rS` is legal.
 | `FA` | Upper-register 16-bit shift page | 2 | Preserve |
 | `FB-FD` | Conditional-move pages | 2 | Preserve |
 | `FE` | `MUL16` page | 2 | Preserve |
-| `FF` | Reserved | — | — |
+| `FF` | Floating-point page | 2-3 | Preserve |
 
 ## 20. One-byte instruction semantics
 
@@ -926,16 +954,20 @@ Valid secondary values are `00-8F`. Pointer `rA` in the postincrement memory fam
 | `80-87` | `80 + rD` | `GETSP rD` | `rD = SP` |
 | `88-8F` | `88 + rS` | `SETSP rS` | `SP = rS` |
 
-## 25. `F2` full-register arithmetic page
+## 25. `F2` full-register arithmetic and `MOV32` page
 
-Valid secondary values are `00-5F`.
+Valid secondary values are `00-6B`.
 
 | Secondary | Encoding | Instruction | Semantics |
 |---:|---|---|---|
 | `00-2F` | `PAIR48(rD,rS)` | `ADD rD,rS` | `rD = low16(rD + rS)` |
 | `30-5F` | `30 + PAIR48(rD,rS)` | `SUB rD,rS` | `rD = low16(rD - rS)` |
+| `60-6B` | `60 + QPAIR12(qD,qS)` | `MOV32 qD,qS` | Copy all 32 bits; preserve source |
 
-Operands that are both upper registers use the one-byte forms.
+Upper-register `ADD` and `SUB` operands use their one-byte forms. When both
+`MOV32` operands are `q2` or `q3`, the assembler emits two one-byte `MOV`
+instructions instead of an `F2` encoding. All aliases, including `qD == qS`,
+are legal.
 
 ## 26. `F3` upper-register-pointer byte-store, multiply, and stack-byte page
 
@@ -1192,6 +1224,116 @@ Signed and unsigned multiplication have identical low sixteen bits, so one instr
 
 All aliases, including `rD == rS`, are legal.
 
+## 35.1. `FF` floating-point page
+
+All floating-point operands are IEEE-754 binary32 values held in `q0-q3`.
+Floating-point instructions preserve `CC` and expose no architectural
+floating-point exception state. Arithmetic and conversion results use
+round-to-nearest, ties-to-even unless an instruction specifies another
+rounding direction. NaN result payloads are unspecified except for `FMIN`,
+`FMAX`, `FNEG`, `FABS`, and `FCLASS`, whose bit-level behavior is defined below.
+
+### 35.1.1. Binary matrix
+
+For `FF 00-5F`:
+
+```text
+bits 7:4  operation
+bits 3:2  destination/left qD
+bits 1:0  preserved source/right qS
+```
+
+| Secondary | Instruction | Semantics |
+|---:|---|---|
+| `00-0F` | `FADD qD,qS` | `qD = binary32(qD + qS)` |
+| `10-1F` | `FSUB qD,qS` | `qD = binary32(qD - qS)` |
+| `20-2F` | `FMUL qD,qS` | `qD = binary32(qD * qS)` |
+| `30-3F` | `FDIV qD,qS` | `qD = binary32(qD / qS)` |
+| `40-4F` | `FMIN qD,qS` | Number-preferred minimum |
+| `50-5F` | `FMAX qD,qS` | Number-preferred maximum |
+
+All combinations, including `qD == qS`, are legal.
+
+For `FMIN` and `FMAX`, let `a` be the original `qD` and `b` be `qS`:
+
+1. If `a` is NaN, return `b`.
+2. Otherwise, if `b` is NaN, return `a`.
+3. Otherwise, return the lesser (`FMIN`) or greater (`FMAX`) operand.
+4. Opposite-signed zeros are ordered as `-0.0 < +0.0`.
+
+If both operands are NaNs, the second operand is returned. A selected operand
+is copied unchanged, including its sign, NaN payload, and signaling/quiet bit.
+Thus `FMIN` returns negative zero and `FMAX` returns positive zero for
+opposite-signed zeros.
+
+### 35.1.2. Unary operations
+
+```text
+secondary = operationBase + qD
+```
+
+| Secondary | Instruction | Semantics |
+|---:|---|---|
+| `60-63` | `FNEG qD` | Toggle the binary32 sign bit |
+| `64-67` | `FABS qD` | Clear the binary32 sign bit |
+| `68-6B` | `FSQRT qD` | Binary32 square root |
+| `6C-6F` | `FTRUNC qD` | Integral-valued result, toward zero |
+| `70-73` | `FFLOOR qD` | Integral-valued result, toward negative infinity |
+| `74-77` | `FCEIL qD` | Integral-valued result, toward positive infinity |
+| `78-7B` | `FROUND qD` | Integral-valued result, nearest with ties away from zero |
+| `7C-BF` | Reserved | — |
+
+`FNEG` and `FABS` are bit operations and preserve every non-sign bit,
+including NaN payload and signaling state. The four rounding operations return
+NaNs and infinities unchanged and preserve the sign of zero.
+
+### 35.1.3. Extended operations
+
+| Secondary | Instruction | Specifier | Semantics |
+|---:|---|---|---|
+| `C0` | `S16TOF qD,rS` | Section 18.11 | Signed `i16` to binary32 |
+| `C1` | `U16TOF qD,rS` | Section 18.11 | Unsigned `i16` to binary32 |
+| `C2` | `FTOS16 rD,qS` | Section 18.11 | Binary32 to signed `i16` |
+| `C3` | `FTOU16 rD,qS` | Section 18.11 | Binary32 to unsigned `i16` |
+| `C4` | `S32TOF qD,qS` | Section 18.11 | Signed `i32` to binary32 |
+| `C5` | `U32TOF qD,qS` | Section 18.11 | Unsigned `i32` to binary32 |
+| `C6` | `FTOS32 qD,qS` | Section 18.11 | Binary32 to signed `i32` |
+| `C7` | `FTOU32 qD,qS` | Section 18.11 | Binary32 to unsigned `i32` |
+| `C8` | `FCMP rD,qL,qR` | Section 18.11 | Four-way comparison result |
+| `C9` | `FCLASS rD,qS` | Section 18.11 | One-hot class mask |
+| `CA-FF` | Reserved | — | — |
+
+Integer-to-float conversion rounds to nearest with ties to even. Float-to-
+integer conversion truncates toward zero for finite in-range inputs. For NaN
+or out-of-range float-to-integer inputs, the result is unspecified; the
+instruction still completes and preserves `CC`.
+
+`FCMP` returns:
+
+```text
+0xFFFF  qL < qR
+0x0000  qL == qR
+0x0001  qL > qR
+0x0002  unordered because either operand is NaN
+```
+
+`FCLASS` returns exactly one of:
+
+| Mask | Class |
+|---:|---|
+| `0x0001` | signaling NaN |
+| `0x0002` | quiet NaN |
+| `0x0004` | negative infinity |
+| `0x0008` | negative normal |
+| `0x0010` | negative subnormal |
+| `0x0020` | negative zero |
+| `0x0040` | positive zero |
+| `0x0080` | positive subnormal |
+| `0x0100` | positive normal |
+| `0x0200` | positive infinity |
+
+No fused floating-point operation is assigned.
+
 ---
 
 # Part VI — Instruction Semantic Details
@@ -1247,7 +1389,8 @@ SDIV16 / SREM16      signed 16-bit quotient / remainder, truncating toward zero
 Division and remainder use the deterministic zero-divisor and signed-overflow
 results defined in Section 22.4.
 
-Logical and shift operations operate on the stated width.
+Logical and shift operations operate on the stated width. Floating-point
+semantics are defined in Section 35.1.
 
 ## 39. Canonical assembler pseudos
 
@@ -1256,7 +1399,7 @@ The following names do not require separate encodings:
 ```text
 NOP         MOV r4,r4
 CLR rN      XOR rN,rN    ; rN must be r4-r7
-MOV32 qD,qS two MOV instructions
+MOV32 qD,qS F2 60-6B, except upper-pair copies use two one-byte MOV instructions
 LSL32.1 qD  ADD32 qD,qD
 CSET.ULE    swapped compare + CSET.UGE
 CSET.UGT    swapped compare + CSET.ULT
@@ -1851,7 +1994,7 @@ The backend SHOULD model these values through a semantic operand class or value 
 | `i24` | No general scalar class | Expand; used only as `p1:24` semantics |
 | `i32` | `GPR32` | Legal |
 | `i64` | Four `GPR16` values or stack | Expand/custom libcall |
-| `f32` | `GPR32` | Soft-float/custom libcall until direct ISA support exists |
+| `f32` | `GPR32` | Legal; direct `FF` operations with helper expansion for unsupported operations |
 | `f64` | Not an AVM ABI type | Unsupported; frontend maps `double` and `long double` to `f32` |
 | `p0:16` | `PTR16` | Legal |
 | `p1:24` | Canonical `PROGPTR` backed by `GPR32` | Custom |
@@ -1903,9 +2046,52 @@ Program-pointer arithmetic is lowered as unsigned 24-bit arithmetic in `GPR32`, 
 
 The `EC` family directly implements all four `i16` division and remainder
 operations. Wider integer division and remainder continue to use helpers.
-Future direct wide-integer or floating-point instructions may replace helper
-calls during instruction selection without changing the language ABI or helper
-signatures.
+The `FF` page directly implements the binary32 operations listed in Section
+35.1; unsupported floating operations continue to use helpers.
+
+### 55.1. Floating-point legalization and selection
+
+The backend directly selects `FADD`, `FSUB`, `FMUL`, `FDIV`, `FSQRT`, `FNEG`,
+`FABS`, integer conversions, `FCMP`, and `FCLASS` for `f32` operations with
+matching semantics. The instructions are two-address where the ISA names a
+`qD` input/output; the destination is tied to the left or sole source.
+
+`FMIN` and `FMAX` directly implement the number-preferred operations:
+
+```text
+llvm.minnum / llvm.maxnum
+llvm.minimumnum / llvm.maximumnum
+ISD::FMINNUM / ISD::FMAXNUM
+ISD::FMINIMUMNUM / ISD::FMAXIMUMNUM
+G_FMINNUM / G_FMAXNUM
+G_FMINIMUMNUM / G_FMAXIMUMNUM
+```
+
+They do not directly implement NaN-propagating `llvm.minimum` and
+`llvm.maximum`, `ISD::FMINIMUM` and `ISD::FMAXIMUM`, or `G_FMINIMUM` and
+`G_FMAXIMUM`. Those operations may select `FMIN` or `FMAX` only when `nnan` or
+value analysis proves both operands non-NaN.
+
+The selected machine instructions MUST retain operand order and SHOULD NOT be
+marked unconditionally commutable, because the exact NaN returned when both
+operands are NaNs is the second operand. Target-independent nodes may be
+commuted before selection when LLVM semantics permit it.
+
+An arbitrary floating compare plus `select` MUST NOT be folded to `FMIN` or
+`FMAX` unless its NaN and signed-zero behavior is equivalent or made
+unobservable by fast-math flags.
+
+`FCLASS` returns the LLVM `FPClassTest` one-hot bit. Lower `llvm.is.fpclass` or
+`G_IS_FPCLASS` by applying the requested mask to the `FCLASS` result and testing
+for nonzero. `FCMP` supplies ordered and unordered predicates without modifying
+architectural `CC`.
+
+Strict/constrained floating-point operations remain custom-expanded unless the
+requested exception behavior is compatible with AVM's lack of architectural
+floating-point exception state.
+
+Physical `GPR32` copies select `MOV32`. Upper-pair-to-upper-pair copies expand
+to two compact `MOV` instructions; all other pair copies use `F2 60-6B`.
 
 ## 56. Runtime helper ABI
 
@@ -1973,9 +2159,10 @@ int64_t  __avm_ashrdi3(int64_t, uint16_t);
 
 The backend may use inline instruction sequences instead of these helpers whenever profitable.
 
-### 56.3. Floating-point helpers
+### 56.3. Floating-point compatibility helpers
 
-`float`, `double`, and `long double` all use the 32-bit IEEE-754 binary32 ABI representation.
+The direct `FF` instructions are preferred for supported `f32` operations.
+The following symbols remain stable compatibility and fallback entry points:
 
 ```c
 float __avm_addsf3(float, float);
@@ -1996,18 +2183,9 @@ uint32_t __avm_fixunssfsi(float);
 int16_t __avm_cmpsf2(float, float);
 ```
 
-`__avm_cmpsf2` returns:
-
-```text
--1  left < right
- 0  left == right
- 1  left > right
- 2  unordered because at least one operand is NaN
-```
-
-The backend lowers ordered and unordered LLVM predicates using this result.
-
-Future floating-point ISA instructions may replace these calls without changing their signatures or source-level ABI.
+`__avm_cmpsf2` uses the same four result values as `FCMP`. New instruction
+selection SHOULD use the direct instructions when their semantics match and
+MAY use these helpers for compatibility or unsupported strict operations.
 
 ### 56.4. Memory helpers
 
@@ -2085,13 +2263,15 @@ The backend should:
    `EC` instructions. The destination is both the original dividend use and the
    result definition; the divisor source is preserved.
 6. Prefer `UpperGPR32` for values likely to decompose into one-byte word operations.
-7. Use `GPR32` for pair instructions accepting every `qN`.
-8. Represent address-space-one values as canonical `PROGPTR`.
-9. Model `CC` definitions and uses explicitly.
-10. Select one-byte encodings after physical register assignment.
-11. Place frequently accessed stack objects at low offsets.
-12. Diagnose statically provable stack use above 256 bytes.
-13. Emit stack-usage metadata.
+7. Select `MOV32` after physical assignment: two compact `MOV`s for upper-pair copies, `F2` otherwise.
+8. Use `GPR32` for pair and binary32 instructions accepting every `qN`.
+9. Select direct `FF` operations only when their NaN, signed-zero, rounding, and exception semantics match.
+10. Represent address-space-one values as canonical `PROGPTR`.
+11. Model `CC` definitions and uses explicitly.
+12. Select one-byte encodings after physical register assignment.
+13. Place frequently accessed stack objects at low offsets.
+14. Diagnose statically provable stack use above 256 bytes.
+15. Emit stack-usage metadata.
 
 ## 59. LLVM system-service intrinsics
 
@@ -2320,7 +2500,7 @@ nop
 
 for the canonical encoding `mov r4,r4`.
 
-It does not print `MOV32`, `LSL32.1`, or synthetic `ULE`/`UGT` aliases as single instructions.
+It prints encoded `F2 60-6B` instructions as `mov32`. It does not combine two adjacent compact `mov` instructions into `mov32`, and it does not print `LSL32.1` or synthetic `ULE`/`UGT` aliases as single instructions.
 
 ## 62. Assembly directives and symbol expressions
 
@@ -2930,7 +3110,7 @@ LLVM:
     ELF32 little-endian
     PTR16 uses upper-register-first allocation
     PROGPTR is canonical p1:24 backed by GPR32
-    division, remainder, and float use stable helper ABIs until direct ISA support
+    division, remainder, and binary32 arithmetic use direct instructions with stable helper fallbacks
     atomics lower to ordinary operations in the single-thread VM model
 
 Assembly:

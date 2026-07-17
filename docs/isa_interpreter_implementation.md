@@ -1,8 +1,8 @@
 # AVM ISA Opcode Map and AVR Interpreter Implementation Guide
 
-**Status:** ISA architecture and opcode-map specification with AVR implementation design notes  
-**Target host:** ATmega32U4 Arduboy FX interpreter  
-**Priority:** Performance of LLVM-generated C and C++ code  
+**Status:** ISA architecture and opcode-map specification with AVR implementation design notes
+**Target host:** ATmega32U4 Arduboy FX interpreter
+**Priority:** Performance of generated code
 **Reference timing basis:** Sequential SPI byte fetch using the 17-cycle reverse-order and 18-cycle standard dispatch schedules described in Section 5; slower handlers extend the cadence when their native work exceeds the available slack.
 
 ---
@@ -20,7 +20,7 @@ The reference interpreter is organized around the following design choices:
 5. The decoder computes `tableBase + secondary * slotWords` and performs one `IJMP` directly into the final operand-specialized slot. The `FA` page uses immediate body jumps or register-count forwarding entries to reach shared destination-specific shift bodies; the `FE` multiplication page uses equal-width forwarding entries. The `FB-FD` conditional-move prefixes share one 64-entry operand table after a prefix-specific condition gate.
 6. A truncated table numbers valid entries contiguously from zero, checks one upper bound, and omits the unused tail.
 7. Internal holes that cannot be moved to the tail remain same-width trap slots.
-8. Hot dense instructions do not perform run-time architectural-register decoding; the dedicated `EC` divider, explicitly cold `F0` forms, and the table-free `F9` page may do so.
+8. Hot dense instructions do not perform run-time architectural-register decoding; the dedicated `EC` divider, explicitly cold `F0` forms, and the table-free `F9` and `FF` pages may do so.
 9. Additional encoded bytes normally contain actual immediates, displacements, or addresses.
 10. The reference interpreter uses a fixed four-word, eight-byte primary dispatch stride. A primary slot either executes a complete short handler ending in `RJMP` to a shared cadence tail, or performs up to three words of setup and uses its fourth word to forward to an out-of-line continuation.
 11. For the size comparisons in this guide, the accounting region begins at the primary table. The primary table is aligned to 256 AVR words (512 bytes); no alignment padding before it is included in the accounted size. The reference layout emits the following code in one text section without interior power-of-two alignment gaps.
@@ -28,7 +28,6 @@ The reference interpreter is organized around the following design choices:
 Unless otherwise noted, the cycle figures for the reference interpreter are measured from entry to one primary handler through entry to the next primary handler.
 Where an exact value is listed, it reflects the current interpreter benchmark; approximate values are retained only for designs not yet represented by a measured implementation.
 
-The linked-image format places `dataSize` as a little-endian 16-bit value at header offset `0x08` and `saveSize` as a little-endian 16-bit value at offset `0x0A`. `dataSize` is the combined `.saved` and `.data` size. The complete data image, including zero-initialized objects, begins at image offset `0x0100` and exactly `dataSize` bytes are copied to SRAM address `0x0100`. The format has no separate `.bss` region, so startup does not clear application SRAM before this copy.
 
 ---
 
@@ -70,18 +69,7 @@ The first register contains bits `15:0`; the second contains bits `31:16`.
 
 A canonical 24-bit program pointer uses the low register for bits `15:0`, the low byte of the high register for bits `23:16`, and zero in the remaining byte.
 
-### 2.3. Calling-convention intent
-
-```text
-r0-r3  callee-saved
-r4-r7  caller-saved, arguments, results, preferred values for one-byte encodings
-r3     optional frame pointer
-r4     first scalar result
-q2     first pair/program-pointer result
-```
-
-
-### 2.4. Native AVR register allocation
+### 2.3. Native AVR register allocation
 
 The following names in this subsection are **native AVR registers**, not AVM architectural registers:
 
@@ -116,7 +104,7 @@ This initialization is outside the code-size accounting region unless explicitly
 The allocation is valid subject to these rules:
 
 1. `r2`, `r3`, and `r7` are immutable after startup.
-2. Native `r0:r1` have no ABI meaning and need not satisfy `r1 == 0`; the interpreter and service routines are assembly-only.
+2. Native `r0:r1` are unrestricted scratch; this assembly-only interpreter has no permanent zero-register requirement for `r1`.
 3. Every ordinary one-byte PC advance uses:
 
    ```asm
@@ -226,10 +214,10 @@ LD32
 ST32
 ```
 
-Other 32-bit operations lower to 16-bit instructions:
+Other 32-bit operations use these forms:
 
 ```text
-32-bit copy       2x MOV16
+32-bit copy       MOV32; upper-pair copies expand to 2x one-byte MOV
 32-bit AND        2x AND16
 32-bit OR         2x OR16
 32-bit XOR        2x XOR16
@@ -246,7 +234,7 @@ MUL8      low 8 x low 8 -> low 8, zero-extended
 MUL16     low 16 x low 16 -> low 16
 ```
 
-The four 8-bit multiplication forms require upper registers, which map to AVR `r16-r23` and permit direct use of `MUL`, `MULS`, and `MULSU`. `MUL16` accepts all eight registers and returns the product modulo `2^16`; signed and unsigned multiplication have identical low sixteen bits, so no signedness variants are needed. Widening 16-bit multiplication and wider products lower through compiler-runtime helpers or synthesized instruction sequences.
+The four 8-bit multiplication forms require upper registers, which map to AVR `r16-r23` and permit direct use of `MUL`, `MULS`, and `MULSU`. `MUL16` accepts all eight registers and returns the product modulo `2^16`; signed and unsigned multiplication have identical low sixteen bits, so no signedness variants are needed. Widening 16-bit multiplication and wider products use external helpers or synthesized instruction sequences.
 
 The 16-bit division and remainder forms are:
 
@@ -257,7 +245,7 @@ SDIV16   signed quotient, truncated toward zero
 SREM16   signed remainder with the dividend's sign
 ```
 
-All four accept every architectural register and preserve the source operand when distinct from the destination. Primary opcode `EC` uses two table-free, two-way-unrolled restoring cores: a dedicated eight-bit-magnitude core and a general sixteen-bit core. Source-language eight-bit operands still use the 16-bit architectural forms after normal integer promotion, but the interpreter recognizes their magnitudes and executes the shorter core. Wider division continues to lower through runtime helpers.
+All four accept every architectural register and preserve the source operand when distinct from the destination. Primary opcode `EC` uses two table-free, two-way-unrolled restoring cores: a dedicated eight-bit-magnitude core and a general sixteen-bit core. The interpreter recognizes eight-bit magnitudes and executes the shorter core. Wider division uses external helpers.
 
 ---
 
@@ -469,6 +457,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
 | `FB-FD` false / true | 36 / 37 |
 | `FE MUL16` | 46 |
+| `FF` floating-point page | operation- and helper-dependent |
 
 ---
 
@@ -533,9 +522,9 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `FC` | `CMOV.ULT` / `CMOV.UGE` condition-family prefix | 2 | 36 false; 37 true |
 | `FD` | `CMOV.SLT` / `CMOV.SGE` condition-family prefix | 2 | 36 false; 37 true |
 | `FE` | Bounded 2-word `MUL16` forwarding page | 2 | 46 |
-| `FF` | Reserved | — | trap |
+| `FF` | Dedicated floating-point page | 2-3 | operation- and helper-dependent |
 
-All fifteen secondary-page prefixes occupy the contiguous range `F0-FE`. `F0-F8` and `FE` use bounded-page machinery, `F9` and `FA` use dedicated runtime decoders, and `FB-FD` use the shared condition gate. Their decoder entries and gates are emitted immediately after the primary table, while executable tables and shared bodies are ordered later according to the single-section layout in Section 26.
+All sixteen secondary-page prefixes occupy `F0-FF`. `F0-F8` and `FE` use bounded-page machinery; `F9`, `FA`, and `FF` use dedicated runtime decoders; `FB-FD` use the shared condition gate. Their decoder entries and gates are emitted immediately after the primary table, while executable tables and shared bodies are ordered later according to the single-section layout in Section 26.
 
 The other primary ranges provide push/pop, immediate, branch, control-flow, and reserved encodings while keeping all secondary prefixes contiguous.
 
@@ -653,7 +642,7 @@ ST16 [rA+],rS
 
 In these forms, `rA` is restricted to the upper registers `r4-r7`.
 
-When the pointer is in a lower register, LLVM uses the three-byte `F0` cold fallback forms in Section 9.5 rather than inserting mandatory copy-in/copy-out sequences.
+When the pointer is in a lower register, the three-byte `F0` cold fallback forms avoid mandatory copy-in/copy-out sequences.
 
 ## 9. `F0`: bounded 1-word cold-form veneer table
 
@@ -905,7 +894,7 @@ f0_cmp32:
     rjmp  cluster_a_tail_18
 ```
 
-After all four left bytes are loaded, native `r26` may safely replace `XL` as right-byte scratch. Native `r1` has no zero-register ABI requirement.
+After all four left bytes are loaded, native `r26` may safely replace `XL` as right-byte scratch. Native `r1` has no permanent zero-register requirement.
 
 Measured complete latency:
 
@@ -1169,14 +1158,15 @@ rjmp  cluster_a_tail_17_delay_1
 
 ---
 
-## 11. `F2`: bounded 3-word arithmetic table
+## 11. `F2`: bounded 3-word arithmetic and `MOV32` table
 
-Bounds: `secondary < 0x60`. Pointer `rA` in the memory families is restricted to `r4-r7`.
+Bounds: `secondary < 0x6C`.
 
 | Secondary | Instruction | Entries | Cycles |
 |---|---|---:|---:|
-| `00-2F` | `ADD rD,rS` excluding pairs where both operands are upper registers | 48 | 38 |
-| `30-5F` | `SUB rD,rS` excluding pairs where both operands are upper registers | 48 | 38 |
+| `00-2F` | `ADD rD,rS`, excluding upper/upper pairs | 48 | 38 |
+| `30-5F` | `SUB rD,rS`, excluding upper/upper pairs | 48 | 38 |
+| `60-6B` | `MOV32 qD,qS`, excluding `q2/q3` to `q2/q3` | 12 | 38 |
 
 ```asm
 ; ADD rD,rS
@@ -1188,11 +1178,20 @@ rjmp  cluster_a_tail_17
 sub   dL, srcL
 sbc   dH, srcH
 rjmp  cluster_a_tail_17
+
+; MOV32 qD,qS
+movw  dstLo, srcLo
+movw  dstHi, srcHi
+rjmp  cluster_a_tail_17
 ```
 
-Full-register `AND`, `OR`, and `XOR` are encoded by the dedicated runtime-decoded `F9` page. The one-byte forms for upper-register operands use their direct primary encodings.
+The twelve `MOV32` entries use the contiguous `QPAIR12` order from `arch.md`.
+When both operands are `q2` or `q3`, emit two one-byte upper-register `MOV`
+instructions instead; they take 34 cycles total. The table contains 108 slots,
+occupies 648 bytes, and retains the three-word natural width.
 
----
+Full-register `AND`, `OR`, and `XOR` use the runtime-decoded `F9` page. Upper-
+register operands use their one-byte primary forms.
 
 ## 12. `F3`: bounded 3-word memory and widening-multiply table
 
@@ -1235,7 +1234,7 @@ rjmp  cluster_a_tail_18_delay_1
 
 Stores with an upper-register source use the one-byte primary family. A pointer in a lower register uses `F0 6D dddWaaaP` with `W=0` and `P=0`.
 
-Native `r0:r1` are interpreter scratch, so multiply slots do not restore an ABI zero register. A 32-bit register copy is encoded as two `MOV16` operations.
+Native `r0:r1` are interpreter scratch, so multiply slots do not restore a zero register. A 32-bit register copy uses `MOV32`; upper-pair copies expand to two one-byte `MOV` instructions.
 
 ## 13. `F4`: bounded 3-word table C
 
@@ -1529,7 +1528,7 @@ bits 1:0  operation
 11  invalid
 ```
 
-All 64 register combinations are representable for each valid operation. Combinations where both operands are upper registers are legal duplicate encodings, but assemblers and LLVM must canonicalize them to the one-byte `80-AF` upper-register forms.
+All 64 register combinations are representable for each valid operation. Combinations where both operands are upper registers are legal duplicate encodings, but assemblers should use the one-byte `80-AF` upper-register forms.
 
 ### 18.1. Primary-slot entry and 17-cycle secondary cadence
 
@@ -1804,7 +1803,7 @@ Immediate forms are exactly two cycles slower than the corresponding register-co
 | 14 | 72 | 73 | 74 | 75 |
 | 15 | 77 | 78 | 79 | 80 |
 
-LLVM should select `LSL16I`, `LSR16I`, or `ASR16I` for compile-time counts in `0-15`. The register-count forms remain available for genuinely variable shifts, while the one-byte `.1` forms may still be preferable when a surrounding combine can use them directly.
+Use `LSL16I`, `LSR16I`, or `ASR16I` for constant counts in `0-15`. The register-count forms remain available for variable shifts, while the one-byte `.1` forms may be preferable in short sequences.
 
 ## 20. `FB-FD`: condition-family prefixes with one shared move table
 
@@ -1951,7 +1950,7 @@ The condition-false path performs the bounds check and condition gate but avoids
 The shown implementation does not pad the two paths to equal time; it takes 36 cycles when the condition is false and 37 cycles when it is true.
 The PC update executes during the secondary-byte transfer window. The gate uses the earliest legal standard handoff, so no additional wait padding is required.
 
-For LLVM `select`, the destination should normally be initialized with the false value and the conditional move should name the true value:
+For conditional selection, initialize the destination with the false value and name the true value as the conditional-move source:
 
 ```text
 MOV       result,falseValue       ; omitted when coalesced
@@ -2064,9 +2063,90 @@ Native `r0:r1`, `X`, and `Z` are interpreter scratch and may be clobbered. No ex
 
 ---
 
+## 21.1. `FF`: dedicated floating-point page
+
+`FF` uses a table-free decoder. Floating-point operations are sufficiently
+expensive that runtime decoding of two-bit pair fields is preferable to a large
+operand-specialized executable table.
+
+### Encoding groups
+
+| Secondary | Family | Bytes |
+|---:|---|---:|
+| `00-0F` | `FADD qD,qS` | 2 |
+| `10-1F` | `FSUB qD,qS` | 2 |
+| `20-2F` | `FMUL qD,qS` | 2 |
+| `30-3F` | `FDIV qD,qS` | 2 |
+| `40-4F` | `FMIN qD,qS` | 2 |
+| `50-5F` | `FMAX qD,qS` | 2 |
+| `60-63` | `FNEG qD` | 2 |
+| `64-67` | `FABS qD` | 2 |
+| `68-6B` | `FSQRT qD` | 2 |
+| `6C-7B` | Rounding operations | 2 |
+| `7C-BF` | Reserved | — |
+| `C0-C9` | Conversions, `FCMP`, and `FCLASS` plus specifier | 3 |
+| `CA-FF` | Reserved | — |
+
+Extended specifier layouts are:
+
+```text
+C0-C1 qD,rS:       dd000sss
+C2-C3 rD,qS:       ddd000ss
+C4-C7 qD,qS:       0000ddss
+C8    rD,qL,qR:    0dddllrr
+C9    rD,qS:       0ddd00ss
+```
+
+Unused bits must be zero.
+
+The decoder should:
+
+1. consume the secondary byte and launch the next sequential transfer;
+2. reject `7C-BF` and `CA-FF`;
+3. decode `q` indices by converting `qN` to native byte address `r8 + 4*N`;
+4. fetch the trailing specifier for `C0-C9` using a legal SPI handoff;
+5. dispatch to an inline bit operation or a shared helper bridge.
+
+### Inline operations
+
+`FNEG` and `FABS` require only a sign-bit toggle or clear in the most
+significant byte of `qD` and should be implemented inline. `FCLASS` should also
+be inline: inspect sign, exponent, fraction, and the binary32 quiet-NaN bit and
+return the one-hot mask defined by `arch.md`.
+
+`FMIN` and `FMAX` may be inline because they select an original operand rather
+than producing a new arithmetic result. The implementation must test the first
+operand for NaN before the second, preserve the selected operand bit-for-bit,
+and order `-0.0` below `+0.0`.
+
+### Soft-float bridge
+
+Arithmetic, square root, rounding, conversion, and comparison handlers may call
+AVR soft-float routines through one assembly bridge. The bridge must not expose
+the helper register interface to bytecode handlers.
+
+Before entering a helper, it must preserve every live interpreter register not
+covered by the helper's result, including the 24-bit VM PC, VM stack pointer,
+architectural register file, `VM_FLAGS`, permanent constants, and any pending
+SPI state. It must establish the helper's required zero-register state, marshal
+arguments into the AVR-GCC argument registers, call the helper, copy the result
+back to the selected architectural destination, restore interpreter state, and
+restart or resume the bytecode stream safely.
+
+Because helper calls interrupt the fixed SPI pipeline, they should consume the
+already-fetched bytes, stop relying on speculative stream state, and return
+through the common stream-seek/restart path. Exact cycle counts are therefore
+operation- and helper-dependent and must be measured after the bridge and
+linked soft-float routines are selected.
+
+The first implementation should provide `FADD`, `FSUB`, `FMUL`, `FDIV`, `FMIN`,
+`FMAX`, `FNEG`, `FABS`, `FSQRT`, all eight conversions, `FCMP`, and `FCLASS`.
+The rounding encodings may initially trap during development but are reserved
+for their specified operations. No fused operation is assigned.
+
 # Part I-B — Dispatch and Implementation Strategy
 
-## 21.1. `EC`: dedicated runtime-decoded 16-bit division/remainder
+## 21.2. `EC`: dedicated runtime-decoded 16-bit division/remainder
 
 `EC` is a two-byte, table-free instruction family:
 
@@ -2425,7 +2505,7 @@ Four generic slot widths share two-word stubs:
 slot widths 1, 3, 4, and 5
 ```
 
-`F1` and `FE` bypass those stubs and share a dedicated width-two decoder. `FA` uses its own combined immediate/register-count decoder. The exact secondary-decoder infrastructure is:
+`F1` and `FE` bypass those stubs and share a dedicated width-two decoder. `FA` uses its own combined immediate/register-count decoder. The exact non-floating secondary-decoder infrastructure is:
 
 ```text
 4 generic width stubs and generic decoder   20 words / 40 bytes
@@ -2435,9 +2515,9 @@ dedicated `FA` shift decoder                20 words / 40 bytes
 total                                       54 words / 108 bytes
 ```
 
-The bounded pages are `F0-F8` and `FE`. `F9` and `FA` use dedicated decoders, and `FB-FD` use their separate shared condition gate. The generic multiplier-stub path reaches a standard cycle-17/18 `IN; OUT` handoff. The shared two-word decoder instead uses an exact cycle-17 reverse handoff. In both cases, PC-update work occupies transfer slack rather than extending the post-transfer critical path.
+The `FF` decoder and soft-float bridge are measured separately. The bounded pages are `F0-F8` and `FE`. `F9`, `FA`, and `FF` use dedicated decoders, and `FB-FD` use their separate shared condition gate. The generic multiplier-stub path reaches a standard cycle-17/18 `IN; OUT` handoff. The shared two-word decoder instead uses an exact cycle-17 reverse handoff. In both cases, PC-update work occupies transfer slack rather than extending the post-transfer critical path.
 
-The reference interpreter uses the decode, table, forwarding, and shared-body structures in Sections 9-21 for the fifteen secondary prefixes `F0-FE`, plus the dedicated `EC` division handler in Section 21.1. The generic multiplier decoder serves `F0` and `F2-F8`; the shared width-two decoder serves `F1` and `FE`; dedicated handlers serve `EC`, `F9`, and `FA`; the `F9` bitwise handler is placed near the primary table; and `FB-FD` use their shared condition gate. The example physical layout places executable tables and shared bodies in the `RJMP`-reachable clusters described in Section 26.
+The reference interpreter uses the decode, table, forwarding, and shared-body structures in Sections 9-21 for `F0-FE`, the dedicated `FF` decoder in Section 21.1, and the dedicated `EC` division handler. The generic multiplier decoder serves `F0` and `F2-F8`; the shared width-two decoder serves `F1` and `FE`; dedicated handlers serve `EC`, `F9`, `FA`, and `FF`; the `F9` bitwise handler is placed near the primary table; and `FB-FD` use their shared condition gate. The example physical layout places executable tables and shared bodies in the `RJMP`-reachable clusters described in Section 26.
 
 ### 22.4. Reference latency summary
 
@@ -2448,13 +2528,14 @@ The reference interpreter uses the decode, table, forwarding, and shared-body st
 | `D0-D7` branch/`ADJSP`/`SYS` | Exact values in Section 30 |
 | `E0-E3` multi-byte direct control | 135 for near forms; 150 for far forms |
 | `E4-EB` `JMPP`/`CALLP` | 110 / 117 |
-| `EC` 16-bit division/remainder | 56-265 cycles; exact formulas in Section 21.1 |
+| `EC` 16-bit division/remainder | 56-265 cycles; exact formulas in Section 21.2 |
 | `EF` `RET` | 110 |
 | `F0-F8` dense pages | Fast forms use their page cadence; measured cold forms span 53-357 cycles by family |
 | `F9` runtime bitwise page | AND 52, OR 53, XOR 54 cycles |
 | `FA` immediate and register-count shifts | Count-dependent values in Section 19; 42-80 cycles |
 | `FB-FD` conditional moves | 36 cycles false / 37 cycles true |
 | `FE MUL16` | 46 cycles |
+| `FF` floating point | operation- and helper-dependent |
 
 The primary dispatch multiplier is a two-cycle AVR `MUL`.
 
@@ -2463,14 +2544,14 @@ The primary dispatch multiplier is a two-cycle AVR `MUL`.
 ## 23. Two-byte dense-page pipeline
 
 1. Primary dispatch consumes the prefix opcode and starts fetching the secondary byte.
-2. `EC` enters its dedicated division decoder; `F0` and `F2-F8` enter the generic multiplier decoder; `F1` and `FE` enter the shared width-two decoder; `F9` and `FA` enter dedicated runtime decoders; `FB-FD` enter the shared condition gate.
+2. `EC` enters its division decoder; `F0` and `F2-F8` enter the generic multiplier decoder; `F1` and `FE` enter the shared width-two decoder; `F9`, `FA`, and `FF` enter dedicated runtime decoders; `FB-FD` enter the shared condition gate.
 3. The selected decoder advances `PC`, consumes the secondary byte, and starts speculative fetch of the following primary opcode.
 4. A truncated page performs one upper-bound check.
 5. A direct dense page calculates the fixed-stride word address and executes one `IJMP` into the operand-specialized slot. A condition-false `FB-FD` instruction bypasses its shared table.
-6. `EC` dynamically decodes two architectural registers and runs its shared 16-iteration divider. `F1-F8` slots perform the operation and `RJMP` to their assigned cluster continuation. `F9` dynamically decodes both architectural-register pointers, performs the selected bitwise operation, and returns through Cluster A. `FA` immediate entries jump directly to shared shift bodies while register-count entries forward through `MOV`/`RJMP` pairs. `FB-FD` use the shared conditional-move table, and `FE` slots forward to shared multiplication bodies.
+6. `EC` dynamically decodes two architectural registers and runs its shared 16-iteration divider. `FF` decodes pair operands and enters an inline handler or the soft-float bridge. `F1-F8` slots perform the operation and `RJMP` to their assigned cluster continuation. `F9` dynamically decodes both architectural-register pointers, performs the selected bitwise operation, and returns through Cluster A. `FA` immediate entries jump directly to shared shift bodies while register-count entries forward through `MOV`/`RJMP` pairs. `FB-FD` use the shared conditional-move table, and `FE` slots forward to shared multiplication bodies.
 7. The assigned cluster continuation consumes the speculative following primary byte and resumes primary dispatch.
 
-There is no run-time architectural-register decoding for the dense `F1-F8` fast paths, `FA`, `FB-FD`, or `FE`. `EC`, `F0 69-6D`, and `F9` dynamically decode architectural-register operands from their trailing byte. `FA` uses immediate body jumps plus register-count forwarding entries, `FE` uses forwarding entries, and `FB-FD` share one operand table.
+There is no run-time architectural-register decoding for the dense `F1-F8` fast paths, `FA`, `FB-FD`, or `FE`. `FF` deliberately decodes pair operands at run time. `EC`, `F0 69-6D`, and `F9` dynamically decode architectural-register operands from their trailing byte. `FA` uses immediate body jumps plus register-count forwarding entries, `FE` uses forwarding entries, and `FB-FD` share one operand table.
 
 ---
 
@@ -2503,7 +2584,7 @@ The comparison and invalid shim are emitted once, not once per page. Each page c
 
 For two- through four-word pages, these two valid-path cycles can replace cadence padding. For larger pages, the check remains worthwhile even if it contributes to a small overrun: omitting the unused table tail saves hundreds or thousands of bytes.
 
-The ten bounded pages perform this upper-bound check in either the generic or shared width-two decoder. `FB-FD` use `secondary < 0x80`; bit 6 selects the inverse condition and bits 5:0 index the shared table. `F9` needs no register-field bounds check because each operand is a three-bit index; operation value `11` traps locally. `FE` uses `secondary < 0x40`. The duplicate upper-register combinations removed from `F1`, `F2`, and `F5` make their valid ranges contiguous, so no internal range test is required.
+The ten bounded pages perform this upper-bound check in either the generic or shared width-two decoder. `FB-FD` use `secondary < 0x80`; bit 6 selects the inverse condition and bits 5:0 index the shared table. `F9` needs no register-field bounds check because each operand is a three-bit index; operation value `11` traps locally. `FE` uses `secondary < 0x40`. The duplicate upper-register combinations removed from `F1`, `F2`, and `F5`, together with the contiguous `MOV32` additions in `F2`, leave each valid range contiguous.
 
 ---
 
@@ -2596,24 +2677,24 @@ The following single-section order is a reference layout that keeps the major st
 | 12 | Shared `F0` cold-32 subsystem | 2776 | 2839 | 63 | 126 |
 | 13 | Shared `F0` cold general-pointer subsystem | 2839 | 2885 | 46 | 92 |
 | 14 | `F1` table | 2885 | 3173 | 288 | 576 |
-| 15 | `F2` table | 3173 | 3461 | 288 | 576 |
-| 16 | `F3` table | 3461 | 3845 | 384 | 768 |
-| 17 | Cluster B and two local trap shims | 3845 | 3872 | 27 | 54 |
-| 18 | `F4` table | 3872 | 4424 | 552 | 1104 |
-| 19 | `F5` table | 4424 | 4808 | 384 | 768 |
-| 20 | `F6` table | 4808 | 5128 | 320 | 640 |
-| 21 | `F7` table | 5128 | 5848 | 720 | 1440 |
-| 22 | Cluster C and local trap shim | 5848 | 5872 | 24 | 48 |
-| 23 | `F8` table | 5872 | 6112 | 240 | 480 |
-| 24 | `FA` immediate body-jump table | 6112 | 6125 | 13 | 26 |
-| 25 | `FA` register forwarding table | 6125 | 6221 | 96 | 192 |
-| 26 | Twelve shared `FA` shift bodies | 6221 | 6369 | 148 | 296 |
-| 27 | Shared `FB-FD` move table | 6369 | 6497 | 128 | 256 |
-| 28 | `FE` forwarding table | 6497 | 6625 | 128 | 256 |
-| 29 | Eight `FE` multiplication bodies | 6625 | 6689 | 64 | 128 |
-|  | **Reference end** |  | **6689** | **6689** | **13,378** |
+| 15 | `F2` table | 3173 | 3497 | 324 | 648 |
+| 16 | `F3` table | 3497 | 3881 | 384 | 768 |
+| 17 | Cluster B and two local trap shims | 3881 | 3908 | 27 | 54 |
+| 18 | `F4` table | 3908 | 4460 | 552 | 1104 |
+| 19 | `F5` table | 4460 | 4844 | 384 | 768 |
+| 20 | `F6` table | 4844 | 5164 | 320 | 640 |
+| 21 | `F7` table | 5164 | 5884 | 720 | 1440 |
+| 22 | Cluster C and local trap shim | 5884 | 5908 | 24 | 48 |
+| 23 | `F8` table | 5908 | 6148 | 240 | 480 |
+| 24 | `FA` immediate body-jump table | 6148 | 6161 | 13 | 26 |
+| 25 | `FA` register forwarding table | 6161 | 6257 | 96 | 192 |
+| 26 | Twelve shared `FA` shift bodies | 6257 | 6405 | 148 | 296 |
+| 27 | Shared `FB-FD` move table | 6405 | 6533 | 128 | 256 |
+| 28 | `FE` forwarding table | 6533 | 6661 | 128 | 256 |
+| 29 | Eight `FE` multiplication bodies | 6661 | 6725 | 64 | 128 |
+|  | **Non-floating reference end** |  | **6725** | **6725** | **13,450** |
 
-Startup-only helpers and startup code follow this endpoint and are excluded from the core-size accounting region.
+The `FF` decoder, bridge, inline floating handlers, and linked soft-float routines are not included in this non-floating endpoint until measured. Startup-only helpers and startup code are also excluded.
 
 ### 26.3. Exact shared cadence-tail sequences
 
@@ -2882,6 +2963,7 @@ The sequences shown in the page definitions illustrate efficient implementations
 | `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
 | `FB-FD` condition false / true | 36 / 37 |
 | `FE MUL16` | 46 |
+| `FF` floating point | operation- and helper-dependent |
 
 Sections 9 and 19 give the cycle targets used when sizing and arranging the reference `F0` and `FA` handlers.
 
@@ -2899,6 +2981,8 @@ Sections 9 and 19 give the cycle targets used when sizing and arranging the refe
 - Cold `CMP32` allows `qL == qR`; it captures the entire left operand before reusing native `XL` as comparison scratch.
 - `F9` bitwise operations allow every `rD,rS` combination, including `rD == rS`, because both original operands are loaded before writeback.
 - `MUL16` permits every `rD,rS` combination, including equality.
+- `MOV32` permits every pair alias; upper-pair copies use two compact `MOV` instructions.
+- Binary `FF` operations permit `qD == qS`; the helper bridge captures required inputs before writing the destination.
 - Every cold-memory `RRSPEC` bit pattern selects valid registers and modifiers. Reserved postincrement-load alias combinations are rejected by the assembler and backend.
 
 ## 29. Bounded-table footprint
@@ -2907,7 +2991,7 @@ Sections 9 and 19 give the cycle targets used when sizing and arranging the refe
 |---:|---:|---:|---:|---:|---:|
 | `F0` | 110 | 1 | 220 | 512 | 292 |
 | `F1` | 144 | 2 | 576 | 1024 | 448 |
-| `F2` | 96 | 3 | 576 | 1536 | 960 |
+| `F2` | 108 | 3 | 648 | 1536 | 888 |
 | `F3` | 128 | 3 | 768 | 1536 | 768 |
 | `F4` | 184 | 3 | 1104 | 1536 | 432 |
 | `F5` | 96 | 4 | 768 | 2048 | 1280 |
@@ -2965,122 +3049,34 @@ BRSGE8 / BRSGE16   S == 0
 
 The short forms use six specialized `SBIC`/`SBIS GPIOR0,bit` decode paths. The 16-bit forms share one flag-mask decoder: each primary slot preloads the selected mask, opcode bit 0 selects inversion, and the condition is resolved while the high displacement byte transfers. The shared 16-bit branch subsystem occupies **25 AVR words / 50 bytes** outside the fixed primary table.
 
-For the reference schedule, a not-taken 16-bit branch launches the fallthrough opcode at the second cycle-17 boundary and completes in 51 cycles. A taken branch reuses the `JMP16` signed-displacement suffix and therefore has the same 134-cycle latency as `JMP16`. LLVM should still choose fallthrough layout based on expected path frequency. `CALLF` uses native `r7` to add four to the low-register 24-bit PC when forming its return address.
+For the reference schedule, a not-taken 16-bit branch launches the fallthrough opcode at the second cycle-17 boundary and completes in 51 cycles. A taken branch reuses the `JMP16` signed-displacement suffix and therefore has the same 134-cycle latency as `JMP16`. Code generators should choose fallthrough layout based on expected path frequency. `CALLF` uses native `r7` to add four to the low-register 24-bit PC when forming its return address.
 
 
-## 31. LLVM lowering notes
+## 31. Assembler selection rules
 
-### Register classes
+Use the one-byte primary form whenever all required operands are upper
+registers. Use the dense or runtime-decoded full-register form otherwise.
 
-```text
-GPR16          r0-r7
-UpperGPR16     r4-r7
-DataPointer16  preferred r4-r7, fallback r0-r7
-PAIR32         q0-q3
-UpperPAIR32    q2-q3
-```
-
-`DataPointer16` is a constrained allocation class for fast memory operations, not a semantic restriction on C pointers.
-
-### Encoding selection
-
-One semantic instruction may have a one-byte form for upper-register operands and a two-byte full-register form:
+`MOV32` is a target-selected pseudo:
 
 ```text
-ADD r4,r6 -> 1-byte primary
-ADD r1,r6 -> F2 secondary
+qD and qS both in q2-q3:
+    emit MOV low16(qD),low16(qS)
+    emit MOV high16(qD),high16(qS)
+    2 bytes, 34 cycles
 
-AND r4,r6 -> 1-byte primary
-AND r1,r6 -> F9 runtime-decoded secondary
+all other pairs:
+    emit F2 60-6B
+    2 bytes, 38 cycles
 ```
 
-Memory selection has three tiers:
+The disassembler prints encoded `F2 60-6B` instructions as `MOV32` but does not
+combine adjacent `MOV` instructions.
 
-```text
-pointer in r4-r7 + data in r4-r7      one-byte primary
-pointer in r4-r7 + data in r0-r3   dense F3/F5/F6/F7 form
-pointer in a lower register                  cold F0 + RRSPEC form
-```
-
-### Pointer allocation policy
-
-Prioritize upper registers for:
-
-1. hot data-space pointers;
-2. loop induction pointers;
-3. pointers used by postincrement forms;
-4. byte and word values participating in one-byte operations.
-
-A pointer live across a call may be spilled, recomputed, or retained in a lower register. The cold fallback prevents forced copy-in/copy-out around every access.
-
-For a pointer in a lower register used once, LLVM should compare:
-
-```text
-cold ordinary access                  69-71 cycles
-MOV to an upper register + fast access  about 53-70 cycles
-```
-
-For postincrement, the cold form is usually preferred:
-
-```text
-cold postincrement access             75-78 cycles
-MOV in + fast access + MOV back       roughly 105-110 cycles
-```
-
-Live-range splitting may make the upper-register form cheaper when several accesses share one copied pointer.
-
-### Full-register bitwise lowering
-
-```text
-F9 dddsssoo
-```
-
-is used only when the result must remain in a lower register or when moving through an upper-register temporary would be slower.
-
-Canonical costs:
-
-```text
-AND rD,rS  52 cycles
-OR  rD,rS  53 cycles
-XOR rD,rS  54 cycles
-```
-
-`F9` encodings with both operands in upper registers are legal but noncanonical.
-
-### Stack layout
-
-Place frequently accessed fixed objects first:
-
-```text
-offset 0-15 byte stores       F1 STSP8
-offset 0-15 unsigned loads    F3 LDSP8U
-offset 0-15 word loads/stores F4 LDSP16/STSP16
-larger or signed accesses     F0 long forms
-```
-
-### Thirty-two-bit values
-
-Use pair operations where they reduce several 16-bit instructions. `CMP32`, `LD32`, and `ST32` are three-byte cold `F0` forms with approximate latencies of 81, 80, and 79 cycles. Their timings are independent of the cold pointer subsystem because the general-pointer fallback uses a separate landing and decoder.
-
-```text
-MOV32      -> 2x MOV16
-AND32      -> 2x one-byte form for upper-register operands or F9 AND16
-OR32       -> 2x one-byte form for upper-register operands or F9 OR16
-XOR32      -> 2x one-byte form for upper-register operands or F9 XOR16
-LSL32.1    -> ADD32 qD,qD
-```
-
-### Variable shifts
-
-Use `SHL16V`, `LSR16V`, and `ASR16V` for genuinely variable upper-register shifts. Use `LSL16I`, `LSR16I`, and `ASR16I` for compile-time counts in `0-15`; repeated `.1` forms remain useful when they combine better with nearby operations.
-
-### Conditional selection
-
-Lower register-valued `select` operations to `CMOV` when avoiding a taken branch is profitable. `ULE` and `UGT` use swapped compare operands followed by `UGE` or `ULT`.
-
-### Sixteen-bit multiplication
-
-Use `MUL16 rD,rS` for a general non-widening product and model the destination as tied to the first input. Continue to select shifts and adds for profitable constants and widening 8-bit forms when range analysis permits.
+For memory operations, prefer the one-byte upper/upper form, then the dense
+upper-pointer form, and use the cold `F0` form when the pointer is in a lower
+register. Use immediate `FA` shifts for constant counts in `0-15` and the
+register-count forms for variable counts.
 
 ## 32. Code-size accounting scope
 
@@ -3089,7 +3085,7 @@ Included in the reference interpreter-core size estimate:
 - the 256-entry primary dispatch area;
 - shared sequential dispatch and cadence tails;
 - all primary handlers and continuations;
-- every `F0-FE` decoder, table, forwarding page, shared body, and local trap shim;
+- every non-floating `F0-FE` decoder, table, forwarding page, shared body, and local trap shim;
 - branch, jump, call, return, and stream-restart helpers;
 - reserved-instruction traps;
 - the `SYS` opcode decoder and bridge entry/exit.
@@ -3101,7 +3097,8 @@ Excluded from the reference interpreter-core size estimate:
 - hardware initialization and service bodies;
 - save-flash routines;
 - debugger implementation beyond trap entry;
-- the C runtime and compiler helper functions.
+- the `FF` decoder, bridge, and inline floating handlers until measured;
+- linked runtime-library and soft-float routines.
 
 ---
 
@@ -3111,7 +3108,7 @@ Excluded from the reference interpreter-core size estimate:
 primary table                    2,048 bytes
 F0 veneer table                    220
 F1 table                           576
-F2 table                           576
+F2 table                           648
 F3 table                           768
 F4 table                         1,104
 F5 table                           768
@@ -3123,16 +3120,16 @@ FA register forwarding table         192
 shared FB-FD move table             256
 FE forwarding table                256
                                   ------
-all executable tables            9,350 bytes
+all executable tables            9,422 bytes
 ```
 
-The secondary executable tables total **7,302 bytes**. `EC` and `F9` have no executable tables. Runtime-decoded `F0` subsystems are accounted for separately.
+The secondary executable tables total **7,374 bytes**. `EC`, `F9`, and `FF` have no executable tables. Runtime-decoded `F0` subsystems are accounted for separately.
 
 ## 34. Reference core-size estimate
 
 ### 34.1. Reference baseline and variable components
 
-For the shown layout, the core with the `FA` bodies and all other implemented pages present, but excluding the ordinary `F0` bodies and the two shared `F0` runtime-decoded subsystems, occupies **11,656 bytes**. The remaining components are estimated as follows:
+For the shown layout, the non-floating core with the expanded `F2` table, `FA` bodies, and all other non-floating pages present, but excluding the ordinary `F0` bodies and the two shared `F0` runtime-decoded subsystems, occupies **11,728 bytes**. The remaining components are estimated as follows:
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
@@ -3144,11 +3141,11 @@ For the shown layout, the core with the `FA` bodies and all other implemented pa
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 13,282 | 12.97 |
-| Reference target | **13,378** | **13.06** |
-| Upper bound | 13,538 | 13.22 |
+| Lower bound | 13,354 | 13.04 |
+| Non-floating reference target | **13,450** | **13.13** |
+| Upper bound | 13,610 | 13.29 |
 
-The reference design targets about 13,378 bytes, with 13,538 bytes as a practical upper estimate before the physical layout and short-transfer ranges should be revisited.
+The non-floating reference design targets about 13,450 bytes, with 13,610 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
 
 ## 35. Four-word primary-stride rationale
 
@@ -3183,8 +3180,9 @@ A thorough implementation should:
 5. exhaustively test condition flags, invalid encodings, memory aliasing, postincrement reservations, and call/return stack behavior;
 6. test every jump, call, and return across low-, middle-, and high-byte PC carry and wrap boundaries;
 7. validate `EC` division/remainder exhaustively for source preservation, `rD == rS`, signed truncation, division by zero, `INT_MIN / -1`, and timing bounds;
-8. validate `F9` and `MUL16` for every operand alias class;
-9. compile representative programs and compare observed latency and flash use with the reference figures in this guide.
+8. validate `F9`, `MUL16`, and both `MOV32` expansion paths for every operand alias class;
+9. validate every `FF` classification, NaN, signed-zero, conversion, bridge-preservation, and SPI-restart case;
+10. compile representative programs and compare observed latency and flash use with the reference figures in this guide.
 
 ## 38. Suggested validation sequence
 
@@ -3192,6 +3190,7 @@ A thorough implementation should:
 2. Verify all compile-time size assertions and static-transfer ranges.
 3. Run exhaustive per-encoding tests, including invalid and reserved encodings.
 4. Run targeted 24-bit PC and stack tests for every control-flow form.
-5. Run operand-alias and boundary-value tests for every memory, arithmetic, division/remainder, and multiplication family.
-6. Compile a representative Arduboy corpus and compare code size and instruction timing with the reference design.
+5. Run operand-alias and boundary-value tests for every memory, arithmetic, division/remainder, multiplication, `MOV32`, and floating-point family.
+6. Verify the soft-float bridge preserves interpreter state and restarts the byte stream correctly.
+7. Compile a representative Arduboy corpus and compare code size and instruction timing with the reference design.
 

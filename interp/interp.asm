@@ -325,6 +325,14 @@
 #define SECONDARY_LIMIT            r25
 #define SECONDARY_MULTIPLIER       r26
 
+; FF table-free decoder scratch allocation. The secondary and trailing
+; specifier are consumed in r24. Extended operations are normalized to 0-9 in
+; r25, and r26 is used to validate reserved specifier bits.
+#define FF_SECONDARY               r24
+#define FF_SPEC                    r24
+#define FF_OPERATION               r25
+#define FF_VALIDATE                r26
+
 ; Shared F0 operand-fetch ABI. The one-byte helper returns the consumed byte in
 ; F0_OPERAND_LO. The two-byte helper returns a little-endian operand in
 ; F0_OPERAND_HI:F0_OPERAND_LO. F0_SPEC aliases the one-byte result for RRSPEC
@@ -1410,8 +1418,8 @@ primary_EF_ret:
 emit_primary_bounded_page primary_F0_cold_veneer_page, 0x6E, f0_veneer_table, secondary_width_1_stub
 ; F1 bound 0x90, two-word slots.
 emit_primary_bounded_page primary_F1_dense_2word_page, 0x90, f1_table, bounded_width_2_decode
-; F2 bound 0x60, three-word slots.
-emit_primary_bounded_page primary_F2_dense_3word_page_a, 0x60, f2_table, secondary_width_3_stub
+; F2 bound 0x6C, three-word slots.
+emit_primary_bounded_page primary_F2_dense_3word_page_a, 0x6C, f2_table, secondary_width_3_stub
 ; F3 bound 0x80, three-word slots.
 emit_primary_bounded_page primary_F3_dense_3word_page_b, 0x80, f3_table, secondary_width_3_stub
 ; F4 bound 0xB8, three-word slots.
@@ -1457,15 +1465,115 @@ emit_primary_cmov_page primary_FD_cmov_slt_sge_page, (1 << SREG_S)
 emit_primary_bounded_page primary_FE_mul16_page, 0x40, fe_forward_table, bounded_width_2_decode
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xFF: reserved
+; 0xFF: table-free floating-point page
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; The secondary byte is already in flight. The dedicated decoder consumes it,
+; rejects reserved ranges, and fetches the trailing specifier for C0-C9.
 
-emit_primary_stub primary_FF_reserved, invalid_primary_instruction_func
+primary_FF_floating_page:
+    rjmp  ff_decode
+    nop
+    nop
+    nop
+    assert_primary_slot_width primary_FF_floating_page
 
 primary_table_end:
 .if (primary_table_end - primary_table) != (256 * PRIMARY_STRIDE_BYTES)
     .error "primary dispatch table is not exactly 256 four-word slots"
 .endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FF table-free floating-point decoder scaffolding
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Entry state:
+;   * VM_PC names the FF primary opcode.
+;   * The secondary byte is completing in SPDR.
+;
+; The primary slot reaches ff_decode on cycle 11 after the preceding SPI OUT.
+; Five one-cycle instructions fill cycles 11-15, allowing the exact cycle-17
+; reverse handoff. That handoff starts either the following primary-opcode
+; transfer for a two-byte instruction or the trailing-specifier transfer for
+; C0-C9.
+;
+; Defined operation families currently enter the development-only
+; unimplemented trap. Reserved secondary ranges and malformed operand
+; specifiers enter the architectural invalid-secondary trap.
+
+ff_decode:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    clr   r1
+    clr   r27
+    cli
+    out   SPDR, ZERO
+    in    FF_SECONDARY, SPDR
+    sei
+
+    ; 00-7B are defined two-byte operations. 7C-BF and CA-FF are reserved.
+    ; C0-C9 consume one additional operand-specifier byte.
+    cpi   FF_SECONDARY, 0x7C
+    brlo  ff_defined_short
+    cpi   FF_SECONDARY, 0xC0
+    brlo  ff_invalid
+    cpi   FF_SECONDARY, 0xCA
+    brlo  ff_extended
+    rjmp  ff_invalid
+
+ff_defined_short:
+    rjmp  unimplemented_instruction_func
+
+ff_extended:
+    ; The reverse handoff above started the trailing-specifier transfer on
+    ; cycle 17. This path begins on cycle 27. Advance VM_PC to the specifier,
+    ; retain a normalized operation index, and consume the specifier with the
+    ; earliest legal standard IN/OUT handoff on cycles 34/35.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    mov   FF_OPERATION, FF_SECONDARY
+    subi  FF_OPERATION, 0xC0
+    delay_2
+    in    FF_SPEC, SPDR
+    out   SPDR, ZERO
+
+    ; Validate the zero-reserved bits from the architectural specifier forms:
+    ;   C0-C1 qD,rS:    dd000sss
+    ;   C2-C3 rD,qS:    ddd000ss
+    ;   C4-C7 qD,qS:    0000ddss
+    ;   C8    rD,qL,qR: 0dddllrr
+    ;   C9    rD,qS:    0ddd00ss
+    mov   FF_VALIDATE, FF_SPEC
+    cpi   FF_OPERATION, 2
+    brlo  .Lff_validate_qd_rs
+    cpi   FF_OPERATION, 4
+    brlo  .Lff_validate_rd_qs
+    cpi   FF_OPERATION, 8
+    brlo  .Lff_validate_qd_qs
+    cpi   FF_OPERATION, 9
+    brlo  .Lff_validate_cmp
+
+    andi  FF_VALIDATE, 0x8C
+    rjmp  .Lff_validate_done
+.Lff_validate_cmp:
+    andi  FF_VALIDATE, 0x80
+    rjmp  .Lff_validate_done
+.Lff_validate_qd_qs:
+    andi  FF_VALIDATE, 0xF0
+    rjmp  .Lff_validate_done
+.Lff_validate_rd_qs:
+    andi  FF_VALIDATE, 0x1C
+    rjmp  .Lff_validate_done
+.Lff_validate_qd_rs:
+    andi  FF_VALIDATE, 0x38
+.Lff_validate_done:
+    brne  ff_invalid
+    rjmp  unimplemented_instruction_func
+
+ff_invalid:
+    rjmp  invalid_secondary_instruction_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; EC dedicated runtime-decoded 16-bit division/remainder page
@@ -1992,7 +2100,8 @@ cmov_gate_end:
 ; executable secondary table are present. The fixed-width self-contained F1-F8
 ; pages, the dedicated EC division and F9 runtime bitwise decoders, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
-; page are implemented. F0 has shared operand-fetch/register-decode
+; page are implemented. FF now has secondary/specifier fetch and validation
+; scaffolding; its defined operations still enter the development trap. F0 has shared operand-fetch/register-decode
 ; infrastructure and all valid secondaries 00-6D are implemented, including
 ; program-space loads, cold 32-bit forms, and general-pointer data-space forms.
 
@@ -2726,6 +2835,17 @@ invalid_syscall_func:
 .Lf2_sub_end_\@:
     .if (.Lf2_sub_end_\@ - .Lf2_sub_start_\@) != 6
         .error "F2 SUB slot is not exactly three words"
+    .endif
+.endm
+
+.macro emit_f2_mov32 dst0, dst2, src0, src2
+.Lf2_mov32_start_\@:
+    movw  \dst0, \src0
+    movw  \dst2, \src2
+    rjmp  cluster_a_tail_17
+.Lf2_mov32_end_\@:
+    .if (.Lf2_mov32_end_\@ - .Lf2_mov32_start_\@) != 6
+        .error "F2 MOV32 slot is not exactly three words"
     .endif
 .endm
 
@@ -4237,7 +4357,7 @@ f1_table_end:
 .endif
 
 f2_table:
-    ; F2: bounded three-word ADD/SUB table
+    ; F2: bounded three-word ADD/SUB/MOV32 table
     emit_f2_add r8, r9, r8, r9
     emit_f2_add r8, r9, r10, r11
     emit_f2_add r8, r9, r12, r13
@@ -4334,8 +4454,24 @@ f2_table:
     emit_f2_sub r22, r23, r10, r11
     emit_f2_sub r22, r23, r12, r13
     emit_f2_sub r22, r23, r14, r15
+
+    ; F2 60-6B: MOV32 in contiguous QPAIR12 order. Upper-pair to
+    ; upper-pair copies are omitted because the assembler expands them to two
+    ; one-byte upper-register MOV instructions.
+    emit_f2_mov32 r8,  r10, r8,  r10  ; q0,q0
+    emit_f2_mov32 r8,  r10, r12, r14  ; q0,q1
+    emit_f2_mov32 r8,  r10, r16, r18  ; q0,q2
+    emit_f2_mov32 r8,  r10, r20, r22  ; q0,q3
+    emit_f2_mov32 r12, r14, r8,  r10  ; q1,q0
+    emit_f2_mov32 r12, r14, r12, r14  ; q1,q1
+    emit_f2_mov32 r12, r14, r16, r18  ; q1,q2
+    emit_f2_mov32 r12, r14, r20, r22  ; q1,q3
+    emit_f2_mov32 r16, r18, r8,  r10  ; q2,q0
+    emit_f2_mov32 r16, r18, r12, r14  ; q2,q1
+    emit_f2_mov32 r20, r22, r8,  r10  ; q3,q0
+    emit_f2_mov32 r20, r22, r12, r14  ; q3,q1
 f2_table_end:
-.if (f2_table_end - f2_table) != (2 * 0x60 * 3)
+.if (f2_table_end - f2_table) != (2 * 0x6C * 3)
     .error "f2_table has incorrect size"
 .endif
 
@@ -5491,9 +5627,9 @@ fe_mul16_bodies_end:
     .error "FE MUL16 shared bodies must occupy exactly 128 bytes"
 .endif
 
-; The active secondary executable tables must occupy exactly 7,302 bytes.
-.if ((f0_veneer_table_end - f0_veneer_table) + (f1_table_end - f1_table) + (f2_table_end - f2_table) + (f3_table_end - f3_table) + (f4_table_end - f4_table) + (f5_table_end - f5_table) + (f6_table_end - f6_table) + (f7_table_end - f7_table) + (f8_table_end - f8_table) + (fa_immediate_jump_table_end - fa_immediate_jump_table) + (fa_forward_table_end - fa_forward_table) + (cmov_table_end - cmov_table) + (fe_forward_table_end - fe_forward_table)) != 7302
-    .error "secondary executable tables must occupy exactly 7302 bytes"
+; The active secondary executable tables must occupy exactly 7,374 bytes.
+.if ((f0_veneer_table_end - f0_veneer_table) + (f1_table_end - f1_table) + (f2_table_end - f2_table) + (f3_table_end - f3_table) + (f4_table_end - f4_table) + (f5_table_end - f5_table) + (f6_table_end - f6_table) + (f7_table_end - f7_table) + (f8_table_end - f8_table) + (fa_immediate_jump_table_end - fa_immediate_jump_table) + (fa_forward_table_end - fa_forward_table) + (cmov_table_end - cmov_table) + (fe_forward_table_end - fe_forward_table)) != 7374
+    .error "secondary executable tables must occupy exactly 7374 bytes"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

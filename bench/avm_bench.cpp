@@ -239,7 +239,7 @@ int main(int argc, char** argv)
                       << names[index];
             //if(index != 0)
             //    std::cout << "  (raw " << raw_cycles << ')';
-            std::cout << '\n';
+            std::cout << std::endl;
         };
 
         // Entry 001 is SYS DEBUG_BREAK itself, represented by the measured

@@ -1497,9 +1497,10 @@ primary_table_end:
 ; transfer for a two-byte instruction or the trailing-specifier transfer for
 ; C0-C9.
 ;
-; Defined operation families currently enter the development-only
-; unimplemented trap. Reserved secondary ranges and malformed operand
-; specifiers enter the architectural invalid-secondary trap.
+; FNEG and FABS execute directly against the most-significant byte of the
+; selected q register. Other defined operation families currently enter the
+; development-only unimplemented trap. Reserved secondary ranges and malformed
+; operand specifiers enter the architectural invalid-secondary trap.
 
 ff_decode:
     add   VM_PCL, ONE
@@ -1523,6 +1524,42 @@ ff_decode:
     rjmp  ff_invalid
 
 ff_defined_short:
+    ; 00-5F and 68-7B are defined but not implemented yet. FNEG/FABS occupy
+    ; 60-67; bit 2 selects FABS and bits 1:0 select qD.
+    cpi   FF_SECONDARY, 0x60
+    brlo  ff_unimplemented
+    cpi   FF_SECONDARY, 0x68
+    brsh  ff_unimplemented
+
+    ; Native register addresses for q0-q3 sign bytes are r11, r15, r19, r23.
+    ; r27 was cleared before the reverse SPI handoff, so X addresses the native
+    ; register file directly. Load before modifying to keep every qD legal.
+    mov   r26, FF_SECONDARY
+    andi  r26, 0x03
+    lsl   r26
+    lsl   r26
+    subi  r26, -11
+    ld    r25, X
+
+    ; Subtracting 0x80 toggles only the sign bit. FABS instead clears it.
+    sbrc  FF_SECONDARY, 2
+    rjmp  ff_fabs_apply
+    subi  r25, 0x80
+    rjmp  ff_store_sign_byte
+
+ff_fabs_apply:
+    andi  r25, 0x7F
+
+ff_store_sign_byte:
+    st    X, r25
+
+    ; The following opcode was launched at cycle 17 and is legally readable
+    ; from cycle 34. FABS reaches the standard tail's IN at cycle 43; FNEG
+    ; reaches it at cycle 44. The tail advances VM_PC from the secondary byte
+    ; to that following opcode before entering its primary-table slot.
+    rjmp  cluster_tail_18
+
+ff_unimplemented:
     rjmp  unimplemented_instruction_func
 
 ff_extended:

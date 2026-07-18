@@ -2,6 +2,44 @@
 ; Interpreter
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; avr-libc/libm-derived floating-point snippets
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; The BSD-licensed notice below applies to the portions of this file derived
+; from avr-libc/libm. It is included here because those routines are embedded
+; directly in the interpreter for local optimization and manual relaxation.
+;
+; Copyright (c) 2002  Michael Stumpf  <mistumpf@de.pepperl-fuchs.com>
+; Copyright (c) 2006  Dmitry Xmelkov
+; All rights reserved.
+;
+; Redistribution and use in source and binary forms, with or without
+; modification, are permitted provided that the following conditions are met:
+;
+; * Redistributions of source code must retain the above copyright
+;   notice, this list of conditions and the following disclaimer.
+; * Redistributions in binary form must reproduce the above copyright
+;   notice, this list of conditions and the following disclaimer in
+;   the documentation and/or other materials provided with the
+;   distribution.
+; * Neither the name of the copyright holders nor the names of
+;   contributors may be used to endorse or promote products derived
+;   from this software without specific prior written permission.
+;
+; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+; AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+; IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+; ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+; LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+; CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+; SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+; INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+; CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+; ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+; POSSIBILITY OF SUCH DAMAGE.
+
+
 ;; SRAM:
 ;;     0x0100–0x04FF  static storage (.saved + .data, including zero-initialized bytes)
 ;;     0x0500–0x08FF  framebuffer
@@ -3469,7 +3507,7 @@ cluster_a_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Shared FF avr-libc/libm helper bridge
+; Shared FF embedded avr-libc/libm helper bridge
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Helper target tables contain 16-bit AVR word addresses:
@@ -3494,7 +3532,7 @@ cluster_a_end:
 ;   ff_bridge_r16_to_q_u      descriptor = 0sss00dd, unsigned source
 ;   ff_bridge_cmp_to_r16      descriptor = 0dddllrr
 ;
-; The avr-libc fplib convention is A/result in r22-r25 and B in r18-r21.
+; The embedded avr-libc fplib convention is A/result in r22-r25 and B in r18-r21.
 ; Native r18-r23 overlap architectural AVM registers, so every call saves all
 ; six bytes. r2-r17 and r28-r29 are AVR call-saved and therefore retain the VM
 ; PC, constants, lower architectural registers, and VM stack pointer. r24-r27,
@@ -3507,20 +3545,6 @@ cluster_a_end:
 ; that byte, starts the next transfer, advances VM_PC from the final encoded
 ; byte to the following opcode, and dispatches it.
 
-.extern __addsf3
-.extern __subsf3
-.extern __mulsf3
-.extern __divsf3
-.extern fminf
-.extern sqrtf
-.extern truncf
-.extern floorf
-.extern roundf
-.extern __floatsisf
-.extern __floatunsisf
-.extern __fixsfsi
-.extern __fixunssfsi
-.extern __fp_cmp
 ff_binary_helper_targets:
     .word pm(__addsf3)
     .word pm(__subsf3)
@@ -6722,9 +6746,9 @@ oled_boot_program_end:
 ; FF local libm shims
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; This block is deliberately last in the interpreter source. In the minimal
-; interpreter link, avr-libc/libm's fplib code follows it, allowing short
-; relative calls into the linked helpers.
+; These local AVM-specific wrappers immediately precede the embedded
+; avr-libc/libm-derived routine block, so their calls and all internal helper
+; transfers can use explicit relative forms without enabling linker relaxation.
 ;
 ; max(a,b) = -min(-a,-b). Toggling the sign bit before and after fminf keeps
 ; the proposal's number-preferred NaN behavior, NaN payloads/signaling state,
@@ -6745,3 +6769,943 @@ ff_ceil_via_floor:
     rcall floorf
     subi  r25, 0x80
     ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Embedded avr-libc/libm-derived binary32 routines
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; The instruction bodies below were transcribed from the exact avr-libc/libm
+; and fplib closure present in interp(1).lst. Address-derived local labels keep
+; cross-routine control flow unambiguous. Every original in-range absolute
+; CALL/JMP has been manually relaxed to RCALL/RJMP; linker relaxation remains
+; disabled so the interpreter's fixed-layout dispatch structures are untouched.
+;
+; Public entry labels retain the names used by the FF helper tables. The block
+; includes all shared packing, splitting, normalization, comparison, conversion,
+; arithmetic, rounding, and square-root routines reachable from those entries.
+
+.p2align 1
+__subsf3:
+    subi  r21, 0x80
+__addsf3:
+    eor   r27, r27
+    eor   r26, r26
+    rcall .Lavrlibm_3930
+    rjmp  .Lavrlibm_3cd8
+.Lavrlibm_390e:
+    rcall .Lavrlibm_3cbc
+    brcs  .Lavrlibm_3922
+    rcall .Lavrlibm_3cca
+    brcs  .Lavrlibm_3922
+    brne  .Lavrlibm_392a
+    cpi   r25, 0xFF
+    brne  .Lavrlibm_3926
+    brtc  .Lavrlibm_392a
+.Lavrlibm_3922:
+    rjmp  .Lavrlibm_3cb6
+.Lavrlibm_3926:
+    brtc  .Lavrlibm_392a
+    com   r30
+.Lavrlibm_392a:
+    bst   r30, 7
+    rjmp  .Lavrlibm_3c58
+__addsf3x:
+.Lavrlibm_3930:
+    mov   r30, r25
+    rcall .Lavrlibm_3cfa
+    brcs  .Lavrlibm_390e
+    cp    r27, r26
+    cpc   r22, r18
+    cpc   r23, r19
+    cpc   r24, r20
+    cpc   r25, r21
+    brcs  .Lavrlibm_394c
+    brne  .Lavrlibm_3964
+    brtc  .Lavrlibm_39b0
+    rjmp  .Lavrlibm_3d6e
+.Lavrlibm_394c:
+    brtc  .Lavrlibm_3950
+    com   r30
+.Lavrlibm_3950:
+    mov   r0, r27
+    mov   r27, r26
+    mov   r26, r0
+    movw  r0, r22
+    movw  r22, r18
+    movw  r18, r0
+    movw  r0, r24
+    movw  r24, r20
+    movw  r20, r0
+    eor   r1, r1
+.Lavrlibm_3964:
+    eor   r31, r31
+    sub   r21, r25
+.Lavrlibm_3968:
+    breq  .Lavrlibm_3990
+    cpi   r21, 0xF9
+    brcc  .Lavrlibm_3982
+    cpi   r21, 0xE0
+    brcs  .Lavrlibm_39cc
+    cp    r1, r26
+    sbci  r31, 0x00
+    mov   r26, r18
+    mov   r18, r19
+    mov   r19, r20
+    eor   r20, r20
+    subi  r21, 0xF8
+    rjmp  .Lavrlibm_3968
+.Lavrlibm_3982:
+    lsr   r20
+    ror   r19
+    ror   r18
+    ror   r26
+    sbci  r31, 0x00
+    inc   r21
+    brne  .Lavrlibm_3982
+.Lavrlibm_3990:
+    brtc  .Lavrlibm_39b0
+    cp    r1, r31
+    sbc   r27, r26
+    sbc   r22, r18
+    sbc   r23, r19
+    sbc   r24, r20
+    brmi  .Lavrlibm_39cc
+.Lavrlibm_399e:
+    subi  r25, 0x01
+    breq  .Lavrlibm_39ca
+    add   r31, r31
+    adc   r27, r27
+    adc   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    brpl  .Lavrlibm_399e
+    rjmp  .Lavrlibm_39cc
+.Lavrlibm_39b0:
+    add   r27, r26
+    adc   r22, r18
+    adc   r23, r19
+    adc   r24, r20
+    brcc  .Lavrlibm_39cc
+    ror   r24
+    ror   r23
+    ror   r22
+    ror   r27
+    ror   r31
+    cpi   r25, 0xFE
+    brcs  .Lavrlibm_39ca
+    rjmp  .Lavrlibm_392a
+.Lavrlibm_39ca:
+    inc   r25
+.Lavrlibm_39cc:
+    add   r24, r24
+    brcs  .Lavrlibm_39d2
+    eor   r25, r25
+.Lavrlibm_39d2:
+    add   r30, r30
+    ror   r25
+    ror   r24
+    ret
+__divsf3:
+    rcall .Lavrlibm_3a02
+    rjmp  .Lavrlibm_3cd8
+.Lavrlibm_39e2:
+    rcall .Lavrlibm_3cca
+    brcs  .Lavrlibm_39fe
+    rcall .Lavrlibm_3cbc
+    brcs  .Lavrlibm_39fe
+    brne  .Lavrlibm_39fa
+    cpi   r21, 0xFF
+    breq  .Lavrlibm_39fe
+.Lavrlibm_39f4:
+    rjmp  .Lavrlibm_3c58
+.Lavrlibm_39f8:
+    cpse  r21, r1
+.Lavrlibm_39fa:
+    rjmp  .Lavrlibm_3d70
+.Lavrlibm_39fe:
+    rjmp  .Lavrlibm_3cb6
+__divsf3x:
+.Lavrlibm_3a02:
+    rcall .Lavrlibm_3cfa
+    brcs  .Lavrlibm_39e2
+__divsf3_pse:
+    and   r25, r25
+    breq  .Lavrlibm_39f8
+    and   r21, r21
+    breq  .Lavrlibm_39f4
+    sub   r25, r21
+    sbc   r21, r21
+    eor   r27, r27
+    eor   r26, r26
+.Lavrlibm_3a18:
+    cp    r22, r18
+    cpc   r23, r19
+    cpc   r24, r20
+    brcs  .Lavrlibm_3a2e
+    subi  r25, 0xFF
+    sbci  r21, 0xFF
+    add   r18, r18
+    adc   r19, r19
+    adc   r20, r20
+    adc   r26, r26
+    breq  .Lavrlibm_3a18
+.Lavrlibm_3a2e:
+    rcall .Lavrlibm_3a9a
+    mov   r0, r30
+    brmi  .Lavrlibm_3a42
+.Lavrlibm_3a34:
+    ldi   r30, 0x80
+    rcall .Lavrlibm_3a9c
+    subi  r25, 0x01
+    sbci  r21, 0x00
+    lsr   r30
+    adc   r0, r0
+    brpl  .Lavrlibm_3a34
+.Lavrlibm_3a42:
+    rcall .Lavrlibm_3a9a
+    mov   r31, r30
+    rcall .Lavrlibm_3a9a
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    adc   r27, r27
+    cp    r18, r22
+    cpc   r19, r23
+    cpc   r20, r24
+    cpc   r26, r27
+    ldi   r27, 0x80
+    breq  .Lavrlibm_3a5e
+    sbc   r27, r27
+.Lavrlibm_3a5e:
+    mov   r24, r0
+    movw  r22, r30
+    eor   r31, r31
+    subi  r25, 0x83
+    sbci  r21, 0xFF
+    brmi  .Lavrlibm_3a78
+    cpi   r25, 0xFE
+    cpc   r21, r1
+    brcs  .Lavrlibm_3a8e
+    rjmp  .Lavrlibm_3c58
+.Lavrlibm_3a74:
+    rjmp  .Lavrlibm_3d70
+.Lavrlibm_3a78:
+    cpi   r21, 0xFF
+    brlt  .Lavrlibm_3a74
+    cpi   r25, 0xE8
+    brlt  .Lavrlibm_3a74
+.Lavrlibm_3a80:
+    lsr   r24
+    ror   r23
+    ror   r22
+    ror   r27
+    ror   r31
+    subi  r25, 0xFF
+    brne  .Lavrlibm_3a80
+.Lavrlibm_3a8e:
+    add   r24, r24
+    adc   r25, r1
+    lsr   r25
+    ror   r24
+    bld   r25, 7
+    ret
+.Lavrlibm_3a9a:
+    ldi   r30, 0x01
+.Lavrlibm_3a9c:
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    adc   r27, r27
+    cp    r22, r18
+    cpc   r23, r19
+    cpc   r24, r20
+    cpc   r27, r26
+    brcs  .Lavrlibm_3ab6
+    sub   r22, r18
+    sbc   r23, r19
+    sbc   r24, r20
+    sbc   r27, r26
+.Lavrlibm_3ab6:
+    adc   r30, r30
+    brcc  .Lavrlibm_3a9c
+    com   r30
+    ret
+__fixsfsi:
+    rcall .Lavrlibm_3acc
+    set
+    cpse  r27, r1
+    rjmp  .Lavrlibm_3d70
+    ret
+__fixunssfsi:
+.Lavrlibm_3acc:
+    rcall .Lavrlibm_3d0a
+    brcs  .Lavrlibm_3af4
+    subi  r25, 0x7F
+    brcs  .Lavrlibm_3afc
+    mov   r27, r25
+    eor   r25, r25
+    subi  r27, 0x17
+    brcs  .Lavrlibm_3b0a
+    breq  .Lavrlibm_3b18
+.Lavrlibm_3ae0:
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    adc   r25, r25
+    brmi  .Lavrlibm_3af0
+    dec   r27
+    brne  .Lavrlibm_3ae0
+    rjmp  .Lavrlibm_3b18
+.Lavrlibm_3af0:
+    cpi   r27, 0x01
+    breq  .Lavrlibm_3b18
+.Lavrlibm_3af4:
+    rcall .Lavrlibm_3d6e
+    ldi   r27, 0x01
+    ret
+.Lavrlibm_3afc:
+    rjmp  .Lavrlibm_3d6e
+.Lavrlibm_3b00:
+    mov   r22, r23
+    mov   r23, r24
+    eor   r24, r24
+    subi  r27, 0xF8
+    breq  .Lavrlibm_3b18
+.Lavrlibm_3b0a:
+    cpi   r27, 0xF9
+    brlt  .Lavrlibm_3b00
+.Lavrlibm_3b0e:
+    lsr   r24
+    ror   r23
+    ror   r22
+    inc   r27
+    brne  .Lavrlibm_3b0e
+.Lavrlibm_3b18:
+    brtc  .Lavrlibm_3b28
+    com   r25
+    com   r24
+    com   r23
+    neg   r22
+    sbci  r23, 0xFF
+    sbci  r24, 0xFF
+    sbci  r25, 0xFF
+.Lavrlibm_3b28:
+    ret
+__floatunsisf:
+    clt
+    rjmp  .Lavrlibm_3b40
+__floatsisf:
+    bst   r25, 7
+    brtc  .Lavrlibm_3b40
+    com   r25
+    com   r24
+    com   r23
+    neg   r22
+    sbci  r23, 0xFF
+    sbci  r24, 0xFF
+    sbci  r25, 0xFF
+.Lavrlibm_3b40:
+    and   r25, r25
+    breq  .Lavrlibm_3b6e
+    mov   r31, r25
+    ldi   r25, 0x96
+    eor   r27, r27
+.Lavrlibm_3b4a:
+    inc   r25
+    lsr   r31
+    ror   r24
+    ror   r23
+    ror   r22
+    ror   r27
+    cpse  r31, r1
+    rjmp  .Lavrlibm_3b4a
+    brpl  .Lavrlibm_3b9a
+    add   r27, r27
+    brne  .Lavrlibm_3b64
+    sbrs  r22, 0
+    rjmp  .Lavrlibm_3b9a
+.Lavrlibm_3b64:
+    subi  r22, 0xFF
+    sbci  r23, 0xFF
+    sbci  r24, 0xFF
+    sbci  r25, 0xFF
+    rjmp  .Lavrlibm_3b9a
+.Lavrlibm_3b6e:
+    and   r24, r24
+    breq  .Lavrlibm_3b76
+    ldi   r25, 0x96
+    rjmp  .Lavrlibm_3b98
+.Lavrlibm_3b76:
+    and   r23, r23
+    breq  .Lavrlibm_3b82
+    ldi   r25, 0x8E
+    mov   r24, r23
+    mov   r23, r22
+    rjmp  .Lavrlibm_3b8c
+.Lavrlibm_3b82:
+    and   r22, r22
+    breq  .Lavrlibm_3ba2
+    ldi   r25, 0x86
+    mov   r24, r22
+    ldi   r23, 0x00
+.Lavrlibm_3b8c:
+    ldi   r22, 0x00
+    brmi  .Lavrlibm_3b9a
+.Lavrlibm_3b90:
+    dec   r25
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+.Lavrlibm_3b98:
+    brpl  .Lavrlibm_3b90
+.Lavrlibm_3b9a:
+    add   r24, r24
+    lsr   r25
+    ror   r24
+    bld   r25, 7
+.Lavrlibm_3ba2:
+    ret
+floor:
+floorf:
+    rcall .Lavrlibm_3d3e
+    brcs  .Lavrlibm_3bce
+    cpi   r25, 0x7F
+    brcc  .Lavrlibm_3bc0
+    cpse  r25, r1
+    brts  .Lavrlibm_3bb6
+    rjmp  .Lavrlibm_3d70
+.Lavrlibm_3bb6:
+    ldi   r22, 0x00
+    ldi   r23, 0x00
+    ldi   r24, 0x80
+    ldi   r25, 0xBF
+    ret
+.Lavrlibm_3bc0:
+    brtc  .Lavrlibm_3bca
+    cp    r1, r27
+    adc   r22, r1
+    adc   r23, r1
+    adc   r24, r1
+.Lavrlibm_3bca:
+    rjmp  .Lavrlibm_3c64
+.Lavrlibm_3bce:
+    rjmp  .Lavrlibm_3c9a
+fmin:
+fminf:
+    add   r25, r25
+    sbc   r27, r27
+    add   r21, r21
+    sbc   r26, r26
+    ldi   r30, 0x80
+    ldi   r31, 0xFE
+    cp    r1, r22
+    cpc   r1, r23
+    cpc   r30, r24
+    cpc   r31, r25
+    brcs  .Lavrlibm_3c04
+    cp    r1, r18
+    cpc   r1, r19
+    cpc   r30, r20
+    cpc   r31, r21
+    brcs  .Lavrlibm_3c0a
+    cp    r27, r26
+    brlt  .Lavrlibm_3c0a
+    brne  .Lavrlibm_3c04
+    cp    r18, r22
+    cpc   r19, r23
+    cpc   r20, r24
+    cpc   r21, r25
+    ror   r26
+    brvc  .Lavrlibm_3c0a
+.Lavrlibm_3c04:
+    movw  r22, r18
+    movw  r24, r20
+    mov   r27, r26
+.Lavrlibm_3c0a:
+    lsr   r27
+    ror   r25
+    ret
+__fp_cmp:
+    add   r25, r25
+    sbc   r0, r0
+    add   r21, r21
+    sbc   r26, r26
+    ldi   r30, 0x80
+    ldi   r31, 0xFE
+    cp    r1, r22
+    cpc   r1, r23
+    cpc   r30, r24
+    cpc   r31, r25
+    brcs  .Lavrlibm_3c56
+    cp    r1, r18
+    cpc   r1, r19
+    cpc   r30, r20
+    cpc   r31, r21
+    brcs  .Lavrlibm_3c56
+    sub   r22, r18
+    sbc   r23, r19
+    sbc   r24, r20
+    sbc   r25, r21
+    brne  .Lavrlibm_3c48
+    eor   r0, r26
+    breq  .Lavrlibm_3c56
+    or    r18, r19
+    or    r18, r20
+    or    r18, r21
+    brne  .Lavrlibm_3c4e
+    ret
+.Lavrlibm_3c48:
+    eor   r0, r26
+    brne  .Lavrlibm_3c4e
+    sbci  r26, 0x01
+.Lavrlibm_3c4e:
+    lsr   r26
+    ldi   r24, 0xFF
+    adc   r24, r1
+    adc   r24, r1
+.Lavrlibm_3c56:
+    ret
+__fp_inf:
+.Lavrlibm_3c58:
+    bld   r25, 7
+    ori   r25, 0x7F
+    ldi   r24, 0x80
+    ldi   r23, 0x00
+    ldi   r22, 0x00
+    ret
+__fp_mintl:
+.Lavrlibm_3c64:
+    and   r24, r24
+    brne  .Lavrlibm_3c84
+    and   r23, r23
+    breq  .Lavrlibm_3c74
+    subi  r25, 0x08
+    or    r24, r23
+    mov   r23, r22
+    rjmp  .Lavrlibm_3c82
+.Lavrlibm_3c74:
+    and   r22, r22
+    brne  .Lavrlibm_3c7c
+    eor   r25, r25
+    rjmp  .Lavrlibm_3c96
+.Lavrlibm_3c7c:
+    subi  r25, 0x10
+    or    r24, r22
+    ldi   r23, 0x00
+.Lavrlibm_3c82:
+    ldi   r22, 0x00
+.Lavrlibm_3c84:
+    brmi  .Lavrlibm_3c90
+.Lavrlibm_3c86:
+    dec   r25
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    brpl  .Lavrlibm_3c86
+.Lavrlibm_3c90:
+    add   r24, r24
+    lsr   r25
+    ror   r24
+.Lavrlibm_3c96:
+    bld   r25, 7
+    ret
+__fp_mpack:
+.Lavrlibm_3c9a:
+    cpi   r25, 0xFF
+    breq  .Lavrlibm_3caa
+__fp_mpack_finite:
+    subi  r25, 0x01
+    brcc  .Lavrlibm_3caa
+    ror   r24
+    ror   r23
+    ror   r22
+    ror   r27
+.Lavrlibm_3caa:
+    add   r24, r24
+    adc   r25, r1
+    lsr   r25
+    ror   r24
+    bld   r25, 7
+    ret
+__fp_nan:
+.Lavrlibm_3cb6:
+    ldi   r25, 0xFF
+    ldi   r24, 0xC0
+    ret
+__fp_pscA:
+.Lavrlibm_3cbc:
+    eor   r0, r0
+    dec   r0
+    cp    r1, r22
+    cpc   r1, r23
+    cpc   r1, r24
+    cpc   r0, r25
+    ret
+__fp_pscB:
+.Lavrlibm_3cca:
+    eor   r0, r0
+    dec   r0
+    cp    r1, r18
+    cpc   r1, r19
+    cpc   r1, r20
+    cpc   r0, r21
+    ret
+__fp_round:
+.Lavrlibm_3cd8:
+    mov   r0, r25
+    inc   r0
+    add   r0, r0
+    brne  .Lavrlibm_3ce4
+    and   r24, r24
+    brmi  .Lavrlibm_3cf8
+.Lavrlibm_3ce4:
+    add   r27, r27
+    brcc  .Lavrlibm_3cf8
+    or    r27, r31
+    brne  .Lavrlibm_3cf0
+    sbrs  r22, 0
+    rjmp  .Lavrlibm_3cf8
+.Lavrlibm_3cf0:
+    subi  r22, 0xFF
+    sbci  r23, 0xFF
+    sbci  r24, 0xFF
+    sbci  r25, 0xFF
+.Lavrlibm_3cf8:
+    ret
+__fp_split3:
+.Lavrlibm_3cfa:
+    sbrc  r21, 7
+    subi  r25, 0x80
+    add   r20, r20
+    adc   r21, r21
+    breq  .Lavrlibm_3d1a
+    cpi   r21, 0xFF
+    breq  .Lavrlibm_3d24
+.Lavrlibm_3d08:
+    ror   r20
+__fp_splitA:
+.Lavrlibm_3d0a:
+    add   r24, r24
+    bst   r25, 7
+    adc   r25, r25
+    breq  .Lavrlibm_3d2a
+    cpi   r25, 0xFF
+    breq  .Lavrlibm_3d34
+.Lavrlibm_3d16:
+    ror   r24
+    ret
+.Lavrlibm_3d1a:
+    cp    r1, r18
+    cpc   r1, r19
+    cpc   r1, r20
+    adc   r21, r21
+    rjmp  .Lavrlibm_3d08
+.Lavrlibm_3d24:
+    lsr   r20
+    rcall .Lavrlibm_3d0a
+    rjmp  .Lavrlibm_3d3a
+.Lavrlibm_3d2a:
+    cp    r1, r22
+    cpc   r1, r23
+    cpc   r1, r24
+    adc   r25, r25
+    rjmp  .Lavrlibm_3d16
+.Lavrlibm_3d34:
+    lsr   r24
+    cpc   r23, r1
+    cpc   r22, r1
+.Lavrlibm_3d3a:
+    sec
+    ret
+__fp_trunc:
+.Lavrlibm_3d3e:
+    rcall .Lavrlibm_3d0a
+    brcs  .Lavrlibm_3d6c
+    ldi   r27, 0x7E
+    cp    r27, r25
+    brcc  .Lavrlibm_3d6c
+    eor   r27, r27
+.Lavrlibm_3d4c:
+    cpi   r25, 0x8F
+    brcc  .Lavrlibm_3d68
+    cp    r1, r22
+    adc   r27, r1
+    mov   r22, r23
+    mov   r23, r24
+    eor   r24, r24
+    subi  r25, 0xF8
+    rjmp  .Lavrlibm_3d4c
+.Lavrlibm_3d5e:
+    lsr   r24
+    ror   r23
+    ror   r22
+    adc   r27, r1
+    inc   r25
+.Lavrlibm_3d68:
+    cpi   r25, 0x96
+    brcs  .Lavrlibm_3d5e
+.Lavrlibm_3d6c:
+    ret
+__fp_zero:
+.Lavrlibm_3d6e:
+    clt
+__fp_szero:
+.Lavrlibm_3d70:
+    eor   r27, r27
+    eor   r22, r22
+    eor   r23, r23
+    movw  r24, r22
+    bld   r25, 7
+    ret
+__mulsf3:
+    rcall .Lavrlibm_3da2
+    rjmp  .Lavrlibm_3cd8
+.Lavrlibm_3d84:
+    rcall .Lavrlibm_3cbc
+    brcs  .Lavrlibm_3d98
+    rcall .Lavrlibm_3cca
+    brcs  .Lavrlibm_3d98
+    and   r25, r21
+    breq  .Lavrlibm_3d98
+    rjmp  .Lavrlibm_3c58
+.Lavrlibm_3d98:
+    rjmp  .Lavrlibm_3cb6
+.Lavrlibm_3d9c:
+    eor   r1, r1
+    rjmp  .Lavrlibm_3d70
+__mulsf3x:
+.Lavrlibm_3da2:
+    rcall .Lavrlibm_3cfa
+    brcs  .Lavrlibm_3d84
+__mulsf3_pse:
+    mul   r25, r21
+    breq  .Lavrlibm_3d9c
+    add   r25, r21
+    ldi   r21, 0x00
+    adc   r21, r21
+    mul   r22, r18
+    movw  r30, r0
+    mul   r23, r18
+    eor   r27, r27
+    add   r31, r0
+    adc   r27, r1
+    mul   r22, r19
+    eor   r26, r26
+    add   r31, r0
+    adc   r27, r1
+    adc   r26, r26
+    mul   r22, r20
+    eor   r22, r22
+    add   r27, r0
+    adc   r26, r1
+    adc   r22, r22
+    mul   r24, r18
+    eor   r18, r18
+    add   r27, r0
+    adc   r26, r1
+    adc   r22, r18
+    mul   r23, r19
+    add   r27, r0
+    adc   r26, r1
+    adc   r22, r18
+    mul   r24, r19
+    add   r26, r0
+    adc   r22, r1
+    adc   r18, r18
+    mul   r23, r20
+    eor   r19, r19
+    add   r26, r0
+    adc   r22, r1
+    adc   r18, r19
+    mul   r24, r20
+    add   r22, r0
+    adc   r18, r1
+    mov   r24, r18
+    mov   r23, r22
+    mov   r22, r26
+    eor   r1, r1
+    subi  r25, 0x7F
+    sbci  r21, 0x00
+    brmi  .Lavrlibm_3e30
+    breq  .Lavrlibm_3e48
+.Lavrlibm_3e0c:
+    and   r24, r24
+    brmi  .Lavrlibm_3e22
+    add   r30, r30
+    adc   r31, r31
+    adc   r27, r27
+    adc   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    subi  r25, 0x01
+    sbci  r21, 0x00
+    brne  .Lavrlibm_3e0c
+.Lavrlibm_3e22:
+    cpi   r25, 0xFE
+    cpc   r21, r1
+    brcs  .Lavrlibm_3e48
+    rjmp  .Lavrlibm_3c58
+.Lavrlibm_3e2c:
+    rjmp  .Lavrlibm_3d70
+.Lavrlibm_3e30:
+    cpi   r21, 0xFF
+    brlt  .Lavrlibm_3e2c
+    cpi   r25, 0xE8
+    brlt  .Lavrlibm_3e2c
+.Lavrlibm_3e38:
+    lsr   r24
+    ror   r23
+    ror   r22
+    ror   r27
+    ror   r31
+    ror   r30
+    subi  r25, 0xFF
+    brne  .Lavrlibm_3e38
+.Lavrlibm_3e48:
+    or    r31, r30
+    add   r24, r24
+    adc   r25, r1
+    lsr   r25
+    ror   r24
+    bld   r25, 7
+    ret
+round:
+roundf:
+    rcall .Lavrlibm_3d0a
+    brcs  .Lavrlibm_3e96
+    cpi   r25, 0x7E
+    brcs  .Lavrlibm_3e9a
+    cpi   r25, 0x96
+    brcc  .Lavrlibm_3e92
+.Lavrlibm_3e64:
+    cpi   r25, 0x8E
+    brcc  .Lavrlibm_3e7a
+    mov   r22, r23
+    mov   r23, r24
+    eor   r24, r24
+    subi  r25, 0xF8
+    rjmp  .Lavrlibm_3e64
+.Lavrlibm_3e72:
+    lsr   r24
+    ror   r23
+    ror   r22
+    inc   r25
+.Lavrlibm_3e7a:
+    cpi   r25, 0x95
+    brcs  .Lavrlibm_3e72
+    mov   r27, r22
+    andi  r27, 0x01
+    add   r22, r27
+    adc   r23, r1
+    adc   r24, r1
+    brcc  .Lavrlibm_3e92
+    ror   r24
+    ror   r23
+    ror   r22
+    inc   r25
+.Lavrlibm_3e92:
+    rjmp  .Lavrlibm_3c64
+.Lavrlibm_3e96:
+    rjmp  .Lavrlibm_3c9a
+.Lavrlibm_3e9a:
+    rjmp  .Lavrlibm_3d70
+.Lavrlibm_3e9e:
+    brne  .Lavrlibm_3ea6
+    brtc  .Lavrlibm_3ea6
+.Lavrlibm_3ea2:
+    rjmp  .Lavrlibm_3cb6
+.Lavrlibm_3ea6:
+    rjmp  .Lavrlibm_3c9a
+sqrt:
+sqrtf:
+    rcall .Lavrlibm_3d0a
+    brcs  .Lavrlibm_3e9e
+    and   r25, r25
+    breq  .Lavrlibm_3ea6
+    brts  .Lavrlibm_3ea2
+    subi  r25, 0x7F
+    sbc   r21, r21
+    sbrs  r24, 7
+    rcall .Lavrlibm_3f40
+    eor   r0, r0
+    ldi   r26, 0x60
+    ldi   r20, 0xA0
+    movw  r18, r0
+    subi  r24, 0x80
+    lsr   r21
+    ror   r25
+    brcc  .Lavrlibm_3eda
+    subi  r24, 0xC0
+.Lavrlibm_3ed2:
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    brcs  .Lavrlibm_3ee2
+.Lavrlibm_3eda:
+    cp    r18, r22
+    cpc   r19, r23
+    cpc   r20, r24
+    brcc  .Lavrlibm_3eee
+.Lavrlibm_3ee2:
+    sub   r22, r18
+    sbc   r23, r19
+    sbc   r24, r20
+    or    r18, r0
+    or    r19, r1
+    or    r20, r26
+.Lavrlibm_3eee:
+    lsr   r26
+    ror   r1
+    ror   r0
+    eor   r18, r0
+    eor   r19, r1
+    eor   r20, r26
+    brcc  .Lavrlibm_3ed2
+.Lavrlibm_3efc:
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    brcs  .Lavrlibm_3f0c
+    cp    r18, r22
+    cpc   r19, r23
+    cpc   r20, r24
+    brcc  .Lavrlibm_3f18
+.Lavrlibm_3f0c:
+    sbc   r22, r18
+    sbc   r23, r19
+    sbc   r24, r20
+    add   r18, r0
+    adc   r19, r1
+    adc   r20, r1
+.Lavrlibm_3f18:
+    com   r26
+    brne  .Lavrlibm_3efc
+    movw  r22, r18
+    mov   r24, r20
+    subi  r25, 0x81
+    add   r24, r24
+    lsr   r25
+    ror   r24
+    ret
+truncf:
+trunc:
+    rcall .Lavrlibm_3d3e
+    brcs  .Lavrlibm_3f3c
+    cpi   r25, 0x7F
+    brcc  .Lavrlibm_3f38
+    rjmp  .Lavrlibm_3d70
+.Lavrlibm_3f38:
+    rjmp  .Lavrlibm_3c64
+.Lavrlibm_3f3c:
+    rjmp  .Lavrlibm_3c9a
+__fp_norm2:
+.Lavrlibm_3f40:
+    subi  r25, 0x01
+    sbci  r21, 0x00
+    add   r22, r22
+    adc   r23, r23
+    adc   r24, r24
+    brpl  .Lavrlibm_3f40
+    ret
+
+avrlibm_embedded_end:

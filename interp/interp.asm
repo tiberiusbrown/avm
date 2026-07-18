@@ -6892,43 +6892,42 @@ __subsf3:
 __addsf3:
     eor   r27, r27
     eor   r26, r26
-    rcall .Lavrlibm_3930
-    rjmp  .Lavrlibm_3cd8
-.Lavrlibm_390e:
-    rcall .Lavrlibm_3cbc
-    brcs  .Lavrlibm_3922
-    rcall .Lavrlibm_3cca
-    brcs  .Lavrlibm_3922
-    brne  .Lavrlibm_392a
+    rcall __addsf3x
+    rjmp  __fp_round
+.L__addsf3_special_cases:
+    rcall __fp_pscA
+    brcs  .L__addsf3_nan
+    rcall __fp_pscB
+    brcs  .L__addsf3_nan
+    brne  .L__addsf3_infinity
     cpi   r25, 0xFF
-    brne  .Lavrlibm_3926
-    brtc  .Lavrlibm_392a
-.Lavrlibm_3922:
-    rjmp  .Lavrlibm_3cb6
-.Lavrlibm_3926:
-    brtc  .Lavrlibm_392a
+    brne  .L__addsf3_infinity_b
+    brtc  .L__addsf3_infinity
+.L__addsf3_nan:
+    rjmp  __fp_nan
+.L__addsf3_infinity_b:
+    brtc  .L__addsf3_infinity
     com   r30
-.Lavrlibm_392a:
+.L__addsf3_infinity:
     bst   r30, 7
-    rjmp  .Lavrlibm_3c58
+    rjmp  __fp_inf
 __addsf3x:
-.Lavrlibm_3930:
     mov   r30, r25
-    rcall .Lavrlibm_3cfa
-    brcs  .Lavrlibm_390e
+    rcall __fp_split3
+    brcs  .L__addsf3_special_cases
     cp    r27, r26
     cpc   r22, r18
     cpc   r23, r19
     cpc   r24, r20
     cpc   r25, r21
-    brcs  .Lavrlibm_394c
-    brne  .Lavrlibm_3964
-    brtc  .Lavrlibm_39b0
-    rjmp  .Lavrlibm_3d6e
-.Lavrlibm_394c:
-    brtc  .Lavrlibm_3950
+    brcs  .L__addsf3x_swap_operands
+    brne  .L__addsf3x_align_mantissas
+    brtc  .L__addsf3x_add_mantissas
+    rjmp  __fp_zero
+.L__addsf3x_swap_operands:
+    brtc  .L__addsf3x_swap_values
     com   r30
-.Lavrlibm_3950:
+.L__addsf3x_swap_values:
     mov   r0, r27
     mov   r27, r26
     mov   r26, r0
@@ -6939,15 +6938,15 @@ __addsf3x:
     movw  r24, r20
     movw  r20, r0
     eor   r1, r1
-.Lavrlibm_3964:
+.L__addsf3x_align_mantissas:
     eor   r31, r31
     sub   r21, r25
-.Lavrlibm_3968:
-    breq  .Lavrlibm_3990
+.L__addsf3x_align_bytes:
+    breq  .L__addsf3x_combine_mantissas
     cpi   r21, 0xF9
-    brcc  .Lavrlibm_3982
+    brcc  .L__addsf3x_align_bits
     cpi   r21, 0xE0
-    brcs  .Lavrlibm_39cc
+    brcs  .L__addsf3x_pack_result
     cp    r1, r26
     sbci  r31, 0x00
     mov   r26, r18
@@ -6955,118 +6954,117 @@ __addsf3x:
     mov   r19, r20
     eor   r20, r20
     subi  r21, 0xF8
-    rjmp  .Lavrlibm_3968
-.Lavrlibm_3982:
+    rjmp  .L__addsf3x_align_bytes
+.L__addsf3x_align_bits:
     lsr   r20
     ror   r19
     ror   r18
     ror   r26
     sbci  r31, 0x00
     inc   r21
-    brne  .Lavrlibm_3982
-.Lavrlibm_3990:
-    brtc  .Lavrlibm_39b0
+    brne  .L__addsf3x_align_bits
+.L__addsf3x_combine_mantissas:
+    brtc  .L__addsf3x_add_mantissas
     cp    r1, r31
     sbc   r27, r26
     sbc   r22, r18
     sbc   r23, r19
     sbc   r24, r20
-    brmi  .Lavrlibm_39cc
-.Lavrlibm_399e:
+    brmi  .L__addsf3x_pack_result
+.L__addsf3x_normalize_difference:
     subi  r25, 0x01
-    breq  .Lavrlibm_39ca
+    breq  .L__addsf3x_increment_exponent
     add   r31, r31
     adc   r27, r27
     adc   r22, r22
     adc   r23, r23
     adc   r24, r24
-    brpl  .Lavrlibm_399e
-    rjmp  .Lavrlibm_39cc
-.Lavrlibm_39b0:
+    brpl  .L__addsf3x_normalize_difference
+    rjmp  .L__addsf3x_pack_result
+.L__addsf3x_add_mantissas:
     add   r27, r26
     adc   r22, r18
     adc   r23, r19
     adc   r24, r20
-    brcc  .Lavrlibm_39cc
+    brcc  .L__addsf3x_pack_result
     ror   r24
     ror   r23
     ror   r22
     ror   r27
     ror   r31
     cpi   r25, 0xFE
-    brcs  .Lavrlibm_39ca
-    rjmp  .Lavrlibm_392a
-.Lavrlibm_39ca:
+    brcs  .L__addsf3x_increment_exponent
+    rjmp  .L__addsf3_infinity
+.L__addsf3x_increment_exponent:
     inc   r25
-.Lavrlibm_39cc:
+.L__addsf3x_pack_result:
     add   r24, r24
-    brcs  .Lavrlibm_39d2
+    brcs  .L__addsf3x_apply_sign
     eor   r25, r25
-.Lavrlibm_39d2:
+.L__addsf3x_apply_sign:
     add   r30, r30
     ror   r25
     ror   r24
     ret
 __divsf3:
-    rcall .Lavrlibm_3a02
-    rjmp  .Lavrlibm_3cd8
-.Lavrlibm_39e2:
-    rcall .Lavrlibm_3cca
-    brcs  .Lavrlibm_39fe
-    rcall .Lavrlibm_3cbc
-    brcs  .Lavrlibm_39fe
-    brne  .Lavrlibm_39fa
+    rcall __divsf3x
+    rjmp  __fp_round
+.L__divsf3_special_cases:
+    rcall __fp_pscB
+    brcs  .L__divsf3_nan
+    rcall __fp_pscA
+    brcs  .L__divsf3_nan
+    brne  .L__divsf3_szero
     cpi   r21, 0xFF
-    breq  .Lavrlibm_39fe
-.Lavrlibm_39f4:
-    rjmp  .Lavrlibm_3c58
-.Lavrlibm_39f8:
+    breq  .L__divsf3_nan
+.L__divsf3_infinity:
+    rjmp  __fp_inf
+.L__divsf3_zero_numerator:
     cpse  r21, r1
-.Lavrlibm_39fa:
-    rjmp  .Lavrlibm_3d70
-.Lavrlibm_39fe:
-    rjmp  .Lavrlibm_3cb6
+.L__divsf3_szero:
+    rjmp  __fp_szero
+.L__divsf3_nan:
+    rjmp  __fp_nan
 __divsf3x:
-.Lavrlibm_3a02:
-    rcall .Lavrlibm_3cfa
-    brcs  .Lavrlibm_39e2
+    rcall __fp_split3
+    brcs  .L__divsf3_special_cases
 __divsf3_pse:
     and   r25, r25
-    breq  .Lavrlibm_39f8
+    breq  .L__divsf3_zero_numerator
     and   r21, r21
-    breq  .Lavrlibm_39f4
+    breq  .L__divsf3_infinity
     sub   r25, r21
     sbc   r21, r21
     eor   r27, r27
     eor   r26, r26
-.Lavrlibm_3a18:
+.L__divsf3_normalize_divisor:
     cp    r22, r18
     cpc   r23, r19
     cpc   r24, r20
-    brcs  .Lavrlibm_3a2e
+    brcs  .L__divsf3_begin_quotient
     subi  r25, 0xFF
     sbci  r21, 0xFF
     add   r18, r18
     adc   r19, r19
     adc   r20, r20
     adc   r26, r26
-    breq  .Lavrlibm_3a18
-.Lavrlibm_3a2e:
-    rcall .Lavrlibm_3a9a
+    breq  .L__divsf3_normalize_divisor
+.L__divsf3_begin_quotient:
+    rcall .L__divsf3_divide_byte
     mov   r0, r30
-    brmi  .Lavrlibm_3a42
-.Lavrlibm_3a34:
+    brmi  .L__divsf3_build_remaining_quotient
+.L__divsf3_build_leading_quotient:
     ldi   r30, 0x80
-    rcall .Lavrlibm_3a9c
+    rcall .L__divsf3_divide_bit
     subi  r25, 0x01
     sbci  r21, 0x00
     lsr   r30
     adc   r0, r0
-    brpl  .Lavrlibm_3a34
-.Lavrlibm_3a42:
-    rcall .Lavrlibm_3a9a
+    brpl  .L__divsf3_build_leading_quotient
+.L__divsf3_build_remaining_quotient:
+    rcall .L__divsf3_divide_byte
     mov   r31, r30
-    rcall .Lavrlibm_3a9a
+    rcall .L__divsf3_divide_byte
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
@@ -7076,44 +7074,44 @@ __divsf3_pse:
     cpc   r20, r24
     cpc   r26, r27
     ldi   r27, 0x80
-    breq  .Lavrlibm_3a5e
+    breq  .L__divsf3_finish_quotient
     sbc   r27, r27
-.Lavrlibm_3a5e:
+.L__divsf3_finish_quotient:
     mov   r24, r0
     movw  r22, r30
     eor   r31, r31
     subi  r25, 0x83
     sbci  r21, 0xFF
-    brmi  .Lavrlibm_3a78
+    brmi  .L__divsf3_prepare_denormal
     cpi   r25, 0xFE
     cpc   r21, r1
-    brcs  .Lavrlibm_3a8e
-    rjmp  .Lavrlibm_3c58
-.Lavrlibm_3a74:
-    rjmp  .Lavrlibm_3d70
-.Lavrlibm_3a78:
+    brcs  .L__divsf3_pack_result
+    rjmp  __fp_inf
+.L__divsf3_underflow_zero:
+    rjmp  __fp_szero
+.L__divsf3_prepare_denormal:
     cpi   r21, 0xFF
-    brlt  .Lavrlibm_3a74
+    brlt  .L__divsf3_underflow_zero
     cpi   r25, 0xE8
-    brlt  .Lavrlibm_3a74
-.Lavrlibm_3a80:
+    brlt  .L__divsf3_underflow_zero
+.L__divsf3_denormalize:
     lsr   r24
     ror   r23
     ror   r22
     ror   r27
     ror   r31
     subi  r25, 0xFF
-    brne  .Lavrlibm_3a80
-.Lavrlibm_3a8e:
+    brne  .L__divsf3_denormalize
+.L__divsf3_pack_result:
     add   r24, r24
     adc   r25, r1
     lsr   r25
     ror   r24
     bld   r25, 7
     ret
-.Lavrlibm_3a9a:
+.L__divsf3_divide_byte:
     ldi   r30, 0x01
-.Lavrlibm_3a9c:
+.L__divsf3_divide_bit:
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
@@ -7122,68 +7120,67 @@ __divsf3_pse:
     cpc   r23, r19
     cpc   r24, r20
     cpc   r27, r26
-    brcs  .Lavrlibm_3ab6
+    brcs  .L__divsf3_divide_emit_bit
     sub   r22, r18
     sbc   r23, r19
     sbc   r24, r20
     sbc   r27, r26
-.Lavrlibm_3ab6:
+.L__divsf3_divide_emit_bit:
     adc   r30, r30
-    brcc  .Lavrlibm_3a9c
+    brcc  .L__divsf3_divide_bit
     com   r30
     ret
 __fixsfsi:
-    rcall .Lavrlibm_3acc
+    rcall __fixunssfsi
     set
     cpse  r27, r1
-    rjmp  .Lavrlibm_3d70
+    rjmp  __fp_szero
     ret
 __fixunssfsi:
-.Lavrlibm_3acc:
-    rcall .Lavrlibm_3d0a
-    brcs  .Lavrlibm_3af4
+    rcall __fp_splitA
+    brcs  .L__fixunssfsi_error
     subi  r25, 0x7F
-    brcs  .Lavrlibm_3afc
+    brcs  .L__fixunssfsi_zero
     mov   r27, r25
     eor   r25, r25
     subi  r27, 0x17
-    brcs  .Lavrlibm_3b0a
-    breq  .Lavrlibm_3b18
-.Lavrlibm_3ae0:
+    brcs  .L__fixunssfsi_select_right_shift
+    breq  .L__fixunssfsi_apply_sign
+.L__fixunssfsi_shift_left:
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
     adc   r25, r25
-    brmi  .Lavrlibm_3af0
+    brmi  .L__fixunssfsi_check_signed_overflow
     dec   r27
-    brne  .Lavrlibm_3ae0
-    rjmp  .Lavrlibm_3b18
-.Lavrlibm_3af0:
+    brne  .L__fixunssfsi_shift_left
+    rjmp  .L__fixunssfsi_apply_sign
+.L__fixunssfsi_check_signed_overflow:
     cpi   r27, 0x01
-    breq  .Lavrlibm_3b18
-.Lavrlibm_3af4:
-    rcall .Lavrlibm_3d6e
+    breq  .L__fixunssfsi_apply_sign
+.L__fixunssfsi_error:
+    rcall __fp_zero
     ldi   r27, 0x01
     ret
-.Lavrlibm_3afc:
-    rjmp  .Lavrlibm_3d6e
-.Lavrlibm_3b00:
+.L__fixunssfsi_zero:
+    rjmp  __fp_zero
+.L__fixunssfsi_shift_right_byte:
     mov   r22, r23
     mov   r23, r24
     eor   r24, r24
     subi  r27, 0xF8
-    breq  .Lavrlibm_3b18
-.Lavrlibm_3b0a:
+    breq  .L__fixunssfsi_apply_sign
+.L__fixunssfsi_select_right_shift:
     cpi   r27, 0xF9
-    brlt  .Lavrlibm_3b00
-.Lavrlibm_3b0e:
+    brlt  .L__fixunssfsi_shift_right_byte
+.L__fixunssfsi_shift_right_bit:
     lsr   r24
     ror   r23
     ror   r22
     inc   r27
-    brne  .Lavrlibm_3b0e
-.Lavrlibm_3b18:
-    brtc  .Lavrlibm_3b28
+    brne  .L__fixunssfsi_shift_right_bit
+.L__fixunssfsi_apply_sign:
+    brtc  .L__fixunssfsi_return
     com   r25
     com   r24
     com   r23
@@ -7191,14 +7188,14 @@ __fixunssfsi:
     sbci  r23, 0xFF
     sbci  r24, 0xFF
     sbci  r25, 0xFF
-.Lavrlibm_3b28:
+.L__fixunssfsi_return:
     ret
 __floatunsisf:
     clt
-    rjmp  .Lavrlibm_3b40
+    rjmp  .L__floatsisf_magnitude_ready
 __floatsisf:
     bst   r25, 7
-    brtc  .Lavrlibm_3b40
+    brtc  .L__floatsisf_magnitude_ready
     com   r25
     com   r24
     com   r23
@@ -7206,13 +7203,13 @@ __floatsisf:
     sbci  r23, 0xFF
     sbci  r24, 0xFF
     sbci  r25, 0xFF
-.Lavrlibm_3b40:
+.L__floatsisf_magnitude_ready:
     and   r25, r25
-    breq  .Lavrlibm_3b6e
+    breq  .L__floatsisf_check_middle_byte
     mov   r31, r25
     ldi   r25, 0x96
     eor   r27, r27
-.Lavrlibm_3b4a:
+.L__floatsisf_shift_right:
     inc   r25
     lsr   r31
     ror   r24
@@ -7220,78 +7217,78 @@ __floatsisf:
     ror   r22
     ror   r27
     cpse  r31, r1
-    rjmp  .Lavrlibm_3b4a
-    brpl  .Lavrlibm_3b9a
+    rjmp  .L__floatsisf_shift_right
+    brpl  .L__floatsisf_pack
     add   r27, r27
-    brne  .Lavrlibm_3b64
+    brne  .L__floatsisf_round_up
     sbrs  r22, 0
-    rjmp  .Lavrlibm_3b9a
-.Lavrlibm_3b64:
+    rjmp  .L__floatsisf_pack
+.L__floatsisf_round_up:
     subi  r22, 0xFF
     sbci  r23, 0xFF
     sbci  r24, 0xFF
     sbci  r25, 0xFF
-    rjmp  .Lavrlibm_3b9a
-.Lavrlibm_3b6e:
+    rjmp  .L__floatsisf_pack
+.L__floatsisf_check_middle_byte:
     and   r24, r24
-    breq  .Lavrlibm_3b76
+    breq  .L__floatsisf_check_low_word
     ldi   r25, 0x96
-    rjmp  .Lavrlibm_3b98
-.Lavrlibm_3b76:
+    rjmp  .L__floatsisf_continue_left_shift
+.L__floatsisf_check_low_word:
     and   r23, r23
-    breq  .Lavrlibm_3b82
+    breq  .L__floatsisf_check_low_byte
     ldi   r25, 0x8E
     mov   r24, r23
     mov   r23, r22
-    rjmp  .Lavrlibm_3b8c
-.Lavrlibm_3b82:
+    rjmp  .L__floatsisf_prepare_left_shift
+.L__floatsisf_check_low_byte:
     and   r22, r22
-    breq  .Lavrlibm_3ba2
+    breq  .L__floatsisf_return
     ldi   r25, 0x86
     mov   r24, r22
     ldi   r23, 0x00
-.Lavrlibm_3b8c:
+.L__floatsisf_prepare_left_shift:
     ldi   r22, 0x00
-    brmi  .Lavrlibm_3b9a
-.Lavrlibm_3b90:
+    brmi  .L__floatsisf_pack
+.L__floatsisf_shift_left:
     dec   r25
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
-.Lavrlibm_3b98:
-    brpl  .Lavrlibm_3b90
-.Lavrlibm_3b9a:
+.L__floatsisf_continue_left_shift:
+    brpl  .L__floatsisf_shift_left
+.L__floatsisf_pack:
     add   r24, r24
     lsr   r25
     ror   r24
     bld   r25, 7
-.Lavrlibm_3ba2:
+.L__floatsisf_return:
     ret
 floor:
 floorf:
-    rcall .Lavrlibm_3d3e
-    brcs  .Lavrlibm_3bce
+    rcall __fp_trunc
+    brcs  .L_floorf_nonfinite
     cpi   r25, 0x7F
-    brcc  .Lavrlibm_3bc0
+    brcc  .L_floorf_integral_or_larger
     cpse  r25, r1
-    brts  .Lavrlibm_3bb6
-    rjmp  .Lavrlibm_3d70
-.Lavrlibm_3bb6:
+    brts  .L_floorf_negative_fraction
+    rjmp  __fp_szero
+.L_floorf_negative_fraction:
     ldi   r22, 0x00
     ldi   r23, 0x00
     ldi   r24, 0x80
     ldi   r25, 0xBF
     ret
-.Lavrlibm_3bc0:
-    brtc  .Lavrlibm_3bca
+.L_floorf_integral_or_larger:
+    brtc  .L_floorf_pack_integer
     cp    r1, r27
     adc   r22, r1
     adc   r23, r1
     adc   r24, r1
-.Lavrlibm_3bca:
-    rjmp  .Lavrlibm_3c64
-.Lavrlibm_3bce:
-    rjmp  .Lavrlibm_3c9a
+.L_floorf_pack_integer:
+    rjmp  __fp_mintl
+.L_floorf_nonfinite:
+    rjmp  __fp_mpack
 fmin:
 fminf:
     add   r25, r25
@@ -7304,26 +7301,26 @@ fminf:
     cpc   r1, r23
     cpc   r30, r24
     cpc   r31, r25
-    brcs  .Lavrlibm_3c04
+    brcs  .L_fminf_return_b
     cp    r1, r18
     cpc   r1, r19
     cpc   r30, r20
     cpc   r31, r21
-    brcs  .Lavrlibm_3c0a
+    brcs  .L_fminf_return_a
     cp    r27, r26
-    brlt  .Lavrlibm_3c0a
-    brne  .Lavrlibm_3c04
+    brlt  .L_fminf_return_a
+    brne  .L_fminf_return_b
     cp    r18, r22
     cpc   r19, r23
     cpc   r20, r24
     cpc   r21, r25
     ror   r26
-    brvc  .Lavrlibm_3c0a
-.Lavrlibm_3c04:
+    brvc  .L_fminf_return_a
+.L_fminf_return_b:
     movw  r22, r18
     movw  r24, r20
     mov   r27, r26
-.Lavrlibm_3c0a:
+.L_fminf_return_a:
     lsr   r27
     ror   r25
     ret
@@ -7338,37 +7335,36 @@ __fp_cmp:
     cpc   r1, r23
     cpc   r30, r24
     cpc   r31, r25
-    brcs  .Lavrlibm_3c56
+    brcs  .L__fp_cmp_return
     cp    r1, r18
     cpc   r1, r19
     cpc   r30, r20
     cpc   r31, r21
-    brcs  .Lavrlibm_3c56
+    brcs  .L__fp_cmp_return
     sub   r22, r18
     sbc   r23, r19
     sbc   r24, r20
     sbc   r25, r21
-    brne  .Lavrlibm_3c48
+    brne  .L__fp_cmp_compare_signs
     eor   r0, r26
-    breq  .Lavrlibm_3c56
+    breq  .L__fp_cmp_return
     or    r18, r19
     or    r18, r20
     or    r18, r21
-    brne  .Lavrlibm_3c4e
+    brne  .L__fp_cmp_build_result
     ret
-.Lavrlibm_3c48:
+.L__fp_cmp_compare_signs:
     eor   r0, r26
-    brne  .Lavrlibm_3c4e
+    brne  .L__fp_cmp_build_result
     sbci  r26, 0x01
-.Lavrlibm_3c4e:
+.L__fp_cmp_build_result:
     lsr   r26
     ldi   r24, 0xFF
     adc   r24, r1
     adc   r24, r1
-.Lavrlibm_3c56:
+.L__fp_cmp_return:
     ret
 __fp_inf:
-.Lavrlibm_3c58:
     bld   r25, 7
     ori   r25, 0x7F
     ldi   r24, 0x80
@@ -7376,53 +7372,51 @@ __fp_inf:
     ldi   r22, 0x00
     ret
 __fp_mintl:
-.Lavrlibm_3c64:
     and   r24, r24
-    brne  .Lavrlibm_3c84
+    brne  .L__fp_mintl_mantissa_ready
     and   r23, r23
-    breq  .Lavrlibm_3c74
+    breq  .L__fp_mintl_check_low_byte
     subi  r25, 0x08
     or    r24, r23
     mov   r23, r22
-    rjmp  .Lavrlibm_3c82
-.Lavrlibm_3c74:
+    rjmp  .L__fp_mintl_clear_low_byte
+.L__fp_mintl_check_low_byte:
     and   r22, r22
-    brne  .Lavrlibm_3c7c
+    brne  .L__fp_mintl_use_low_byte
     eor   r25, r25
-    rjmp  .Lavrlibm_3c96
-.Lavrlibm_3c7c:
+    rjmp  .L__fp_mintl_apply_sign
+.L__fp_mintl_use_low_byte:
     subi  r25, 0x10
     or    r24, r22
     ldi   r23, 0x00
-.Lavrlibm_3c82:
+.L__fp_mintl_clear_low_byte:
     ldi   r22, 0x00
-.Lavrlibm_3c84:
-    brmi  .Lavrlibm_3c90
-.Lavrlibm_3c86:
+.L__fp_mintl_mantissa_ready:
+    brmi  .L__fp_mintl_pack
+.L__fp_mintl_normalize:
     dec   r25
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
-    brpl  .Lavrlibm_3c86
-.Lavrlibm_3c90:
+    brpl  .L__fp_mintl_normalize
+.L__fp_mintl_pack:
     add   r24, r24
     lsr   r25
     ror   r24
-.Lavrlibm_3c96:
+.L__fp_mintl_apply_sign:
     bld   r25, 7
     ret
 __fp_mpack:
-.Lavrlibm_3c9a:
     cpi   r25, 0xFF
-    breq  .Lavrlibm_3caa
+    breq  .L__fp_mpack_pack_common
 __fp_mpack_finite:
     subi  r25, 0x01
-    brcc  .Lavrlibm_3caa
+    brcc  .L__fp_mpack_pack_common
     ror   r24
     ror   r23
     ror   r22
     ror   r27
-.Lavrlibm_3caa:
+.L__fp_mpack_pack_common:
     add   r24, r24
     adc   r25, r1
     lsr   r25
@@ -7430,12 +7424,10 @@ __fp_mpack_finite:
     bld   r25, 7
     ret
 __fp_nan:
-.Lavrlibm_3cb6:
     ldi   r25, 0xFF
     ldi   r24, 0xC0
     ret
 __fp_pscA:
-.Lavrlibm_3cbc:
     eor   r0, r0
     dec   r0
     cp    r1, r22
@@ -7444,7 +7436,6 @@ __fp_pscA:
     cpc   r0, r25
     ret
 __fp_pscB:
-.Lavrlibm_3cca:
     eor   r0, r0
     dec   r0
     cp    r1, r18
@@ -7453,106 +7444,100 @@ __fp_pscB:
     cpc   r0, r21
     ret
 __fp_round:
-.Lavrlibm_3cd8:
     mov   r0, r25
     inc   r0
     add   r0, r0
-    brne  .Lavrlibm_3ce4
+    brne  .L__fp_round_check_rounding
     and   r24, r24
-    brmi  .Lavrlibm_3cf8
-.Lavrlibm_3ce4:
+    brmi  .L__fp_round_return
+.L__fp_round_check_rounding:
     add   r27, r27
-    brcc  .Lavrlibm_3cf8
+    brcc  .L__fp_round_return
     or    r27, r31
-    brne  .Lavrlibm_3cf0
+    brne  .L__fp_round_increment
     sbrs  r22, 0
-    rjmp  .Lavrlibm_3cf8
-.Lavrlibm_3cf0:
+    rjmp  .L__fp_round_return
+.L__fp_round_increment:
     subi  r22, 0xFF
     sbci  r23, 0xFF
     sbci  r24, 0xFF
     sbci  r25, 0xFF
-.Lavrlibm_3cf8:
+.L__fp_round_return:
     ret
 __fp_split3:
-.Lavrlibm_3cfa:
     sbrc  r21, 7
     subi  r25, 0x80
     add   r20, r20
     adc   r21, r21
-    breq  .Lavrlibm_3d1a
+    breq  .L__fp_split3_b_zero_or_subnormal
     cpi   r21, 0xFF
-    breq  .Lavrlibm_3d24
-.Lavrlibm_3d08:
+    breq  .L__fp_split3_b_nonfinite
+.L__fp_split3_restore_b_mantissa:
     ror   r20
 __fp_splitA:
-.Lavrlibm_3d0a:
     add   r24, r24
     bst   r25, 7
     adc   r25, r25
-    breq  .Lavrlibm_3d2a
+    breq  .L__fp_splitA_zero_or_subnormal
     cpi   r25, 0xFF
-    breq  .Lavrlibm_3d34
-.Lavrlibm_3d16:
+    breq  .L__fp_splitA_nonfinite
+.L__fp_splitA_restore_mantissa:
     ror   r24
     ret
-.Lavrlibm_3d1a:
+.L__fp_split3_b_zero_or_subnormal:
     cp    r1, r18
     cpc   r1, r19
     cpc   r1, r20
     adc   r21, r21
-    rjmp  .Lavrlibm_3d08
-.Lavrlibm_3d24:
+    rjmp  .L__fp_split3_restore_b_mantissa
+.L__fp_split3_b_nonfinite:
     lsr   r20
-    rcall .Lavrlibm_3d0a
-    rjmp  .Lavrlibm_3d3a
-.Lavrlibm_3d2a:
+    rcall __fp_splitA
+    rjmp  .L__fp_splitA_return_nonfinite
+.L__fp_splitA_zero_or_subnormal:
     cp    r1, r22
     cpc   r1, r23
     cpc   r1, r24
     adc   r25, r25
-    rjmp  .Lavrlibm_3d16
-.Lavrlibm_3d34:
+    rjmp  .L__fp_splitA_restore_mantissa
+.L__fp_splitA_nonfinite:
     lsr   r24
     cpc   r23, r1
     cpc   r22, r1
-.Lavrlibm_3d3a:
+.L__fp_splitA_return_nonfinite:
     sec
     ret
 __fp_trunc:
-.Lavrlibm_3d3e:
-    rcall .Lavrlibm_3d0a
-    brcs  .Lavrlibm_3d6c
+    rcall __fp_splitA
+    brcs  .L__fp_trunc_return
     ldi   r27, 0x7E
     cp    r27, r25
-    brcc  .Lavrlibm_3d6c
+    brcc  .L__fp_trunc_return
     eor   r27, r27
-.Lavrlibm_3d4c:
+.L__fp_trunc_shift_right_byte:
     cpi   r25, 0x8F
-    brcc  .Lavrlibm_3d68
+    brcc  .L__fp_trunc_check_shift
     cp    r1, r22
     adc   r27, r1
     mov   r22, r23
     mov   r23, r24
     eor   r24, r24
     subi  r25, 0xF8
-    rjmp  .Lavrlibm_3d4c
-.Lavrlibm_3d5e:
+    rjmp  .L__fp_trunc_shift_right_byte
+.L__fp_trunc_shift_right_bit:
     lsr   r24
     ror   r23
     ror   r22
     adc   r27, r1
     inc   r25
-.Lavrlibm_3d68:
+.L__fp_trunc_check_shift:
     cpi   r25, 0x96
-    brcs  .Lavrlibm_3d5e
-.Lavrlibm_3d6c:
+    brcs  .L__fp_trunc_shift_right_bit
+.L__fp_trunc_return:
     ret
 __fp_zero:
-.Lavrlibm_3d6e:
     clt
 __fp_szero:
-.Lavrlibm_3d70:
     eor   r27, r27
     eor   r22, r22
     eor   r23, r23
@@ -7560,28 +7545,27 @@ __fp_szero:
     bld   r25, 7
     ret
 __mulsf3:
-    rcall .Lavrlibm_3da2
-    rjmp  .Lavrlibm_3cd8
-.Lavrlibm_3d84:
-    rcall .Lavrlibm_3cbc
-    brcs  .Lavrlibm_3d98
-    rcall .Lavrlibm_3cca
-    brcs  .Lavrlibm_3d98
+    rcall __mulsf3x
+    rjmp  __fp_round
+.L__mulsf3_special_cases:
+    rcall __fp_pscA
+    brcs  .L__mulsf3_nan
+    rcall __fp_pscB
+    brcs  .L__mulsf3_nan
     and   r25, r21
-    breq  .Lavrlibm_3d98
-    rjmp  .Lavrlibm_3c58
-.Lavrlibm_3d98:
-    rjmp  .Lavrlibm_3cb6
-.Lavrlibm_3d9c:
+    breq  .L__mulsf3_nan
+    rjmp  __fp_inf
+.L__mulsf3_nan:
+    rjmp  __fp_nan
+.L__mulsf3_szero:
     eor   r1, r1
-    rjmp  .Lavrlibm_3d70
+    rjmp  __fp_szero
 __mulsf3x:
-.Lavrlibm_3da2:
-    rcall .Lavrlibm_3cfa
-    brcs  .Lavrlibm_3d84
+    rcall __fp_split3
+    brcs  .L__mulsf3_special_cases
 __mulsf3_pse:
     mul   r25, r21
-    breq  .Lavrlibm_3d9c
+    breq  .L__mulsf3_szero
     add   r25, r21
     ldi   r21, 0x00
     adc   r21, r21
@@ -7628,11 +7612,11 @@ __mulsf3_pse:
     eor   r1, r1
     subi  r25, 0x7F
     sbci  r21, 0x00
-    brmi  .Lavrlibm_3e30
-    breq  .Lavrlibm_3e48
-.Lavrlibm_3e0c:
+    brmi  .L__mulsf3_prepare_denormal
+    breq  .L__mulsf3_pack_result
+.L__mulsf3_normalize:
     and   r24, r24
-    brmi  .Lavrlibm_3e22
+    brmi  .L__mulsf3_check_overflow
     add   r30, r30
     adc   r31, r31
     adc   r27, r27
@@ -7641,20 +7625,20 @@ __mulsf3_pse:
     adc   r24, r24
     subi  r25, 0x01
     sbci  r21, 0x00
-    brne  .Lavrlibm_3e0c
-.Lavrlibm_3e22:
+    brne  .L__mulsf3_normalize
+.L__mulsf3_check_overflow:
     cpi   r25, 0xFE
     cpc   r21, r1
-    brcs  .Lavrlibm_3e48
-    rjmp  .Lavrlibm_3c58
-.Lavrlibm_3e2c:
-    rjmp  .Lavrlibm_3d70
-.Lavrlibm_3e30:
+    brcs  .L__mulsf3_pack_result
+    rjmp  __fp_inf
+.L__mulsf3_underflow_zero:
+    rjmp  __fp_szero
+.L__mulsf3_prepare_denormal:
     cpi   r21, 0xFF
-    brlt  .Lavrlibm_3e2c
+    brlt  .L__mulsf3_underflow_zero
     cpi   r25, 0xE8
-    brlt  .Lavrlibm_3e2c
-.Lavrlibm_3e38:
+    brlt  .L__mulsf3_underflow_zero
+.L__mulsf3_denormalize:
     lsr   r24
     ror   r23
     ror   r22
@@ -7662,8 +7646,8 @@ __mulsf3_pse:
     ror   r31
     ror   r30
     subi  r25, 0xFF
-    brne  .Lavrlibm_3e38
-.Lavrlibm_3e48:
+    brne  .L__mulsf3_denormalize
+.L__mulsf3_pack_result:
     or    r31, r30
     add   r24, r24
     adc   r25, r1
@@ -7673,62 +7657,62 @@ __mulsf3_pse:
     ret
 round:
 roundf:
-    rcall .Lavrlibm_3d0a
-    brcs  .Lavrlibm_3e96
+    rcall __fp_splitA
+    brcs  .L_roundf_nonfinite
     cpi   r25, 0x7E
-    brcs  .Lavrlibm_3e9a
+    brcs  .L_roundf_zero
     cpi   r25, 0x96
-    brcc  .Lavrlibm_3e92
-.Lavrlibm_3e64:
+    brcc  .L_roundf_pack_integer
+.L_roundf_shift_right_byte:
     cpi   r25, 0x8E
-    brcc  .Lavrlibm_3e7a
+    brcc  .L_roundf_check_shift
     mov   r22, r23
     mov   r23, r24
     eor   r24, r24
     subi  r25, 0xF8
-    rjmp  .Lavrlibm_3e64
-.Lavrlibm_3e72:
+    rjmp  .L_roundf_shift_right_byte
+.L_roundf_shift_right_bit:
     lsr   r24
     ror   r23
     ror   r22
     inc   r25
-.Lavrlibm_3e7a:
+.L_roundf_check_shift:
     cpi   r25, 0x95
-    brcs  .Lavrlibm_3e72
+    brcs  .L_roundf_shift_right_bit
     mov   r27, r22
     andi  r27, 0x01
     add   r22, r27
     adc   r23, r1
     adc   r24, r1
-    brcc  .Lavrlibm_3e92
+    brcc  .L_roundf_pack_integer
     ror   r24
     ror   r23
     ror   r22
     inc   r25
-.Lavrlibm_3e92:
-    rjmp  .Lavrlibm_3c64
-.Lavrlibm_3e96:
-    rjmp  .Lavrlibm_3c9a
-.Lavrlibm_3e9a:
-    rjmp  .Lavrlibm_3d70
-.Lavrlibm_3e9e:
-    brne  .Lavrlibm_3ea6
-    brtc  .Lavrlibm_3ea6
-.Lavrlibm_3ea2:
-    rjmp  .Lavrlibm_3cb6
-.Lavrlibm_3ea6:
-    rjmp  .Lavrlibm_3c9a
+.L_roundf_pack_integer:
+    rjmp  __fp_mintl
+.L_roundf_nonfinite:
+    rjmp  __fp_mpack
+.L_roundf_zero:
+    rjmp  __fp_szero
+.L_sqrtf_nonfinite:
+    brne  .L_sqrtf_pack
+    brtc  .L_sqrtf_pack
+.L_sqrtf_nan:
+    rjmp  __fp_nan
+.L_sqrtf_pack:
+    rjmp  __fp_mpack
 sqrt:
 sqrtf:
-    rcall .Lavrlibm_3d0a
-    brcs  .Lavrlibm_3e9e
+    rcall __fp_splitA
+    brcs  .L_sqrtf_nonfinite
     and   r25, r25
-    breq  .Lavrlibm_3ea6
-    brts  .Lavrlibm_3ea2
+    breq  .L_sqrtf_pack
+    brts  .L_sqrtf_nan
     subi  r25, 0x7F
     sbc   r21, r21
     sbrs  r24, 7
-    rcall .Lavrlibm_3f40
+    rcall __fp_norm2
     eor   r0, r0
     ldi   r26, 0x60
     ldi   r20, 0xA0
@@ -7736,52 +7720,52 @@ sqrtf:
     subi  r24, 0x80
     lsr   r21
     ror   r25
-    brcc  .Lavrlibm_3eda
+    brcc  .L_sqrtf_compare_trial
     subi  r24, 0xC0
-.Lavrlibm_3ed2:
+.L_sqrtf_digit_loop:
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
-    brcs  .Lavrlibm_3ee2
-.Lavrlibm_3eda:
+    brcs  .L_sqrtf_accept_trial
+.L_sqrtf_compare_trial:
     cp    r18, r22
     cpc   r19, r23
     cpc   r20, r24
-    brcc  .Lavrlibm_3eee
-.Lavrlibm_3ee2:
+    brcc  .L_sqrtf_advance_digit
+.L_sqrtf_accept_trial:
     sub   r22, r18
     sbc   r23, r19
     sbc   r24, r20
     or    r18, r0
     or    r19, r1
     or    r20, r26
-.Lavrlibm_3eee:
+.L_sqrtf_advance_digit:
     lsr   r26
     ror   r1
     ror   r0
     eor   r18, r0
     eor   r19, r1
     eor   r20, r26
-    brcc  .Lavrlibm_3ed2
-.Lavrlibm_3efc:
+    brcc  .L_sqrtf_digit_loop
+.L_sqrtf_rounding_loop:
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
-    brcs  .Lavrlibm_3f0c
+    brcs  .L_sqrtf_accept_rounding_bit
     cp    r18, r22
     cpc   r19, r23
     cpc   r20, r24
-    brcc  .Lavrlibm_3f18
-.Lavrlibm_3f0c:
+    brcc  .L_sqrtf_advance_rounding
+.L_sqrtf_accept_rounding_bit:
     sbc   r22, r18
     sbc   r23, r19
     sbc   r24, r20
     add   r18, r0
     adc   r19, r1
     adc   r20, r1
-.Lavrlibm_3f18:
+.L_sqrtf_advance_rounding:
     com   r26
-    brne  .Lavrlibm_3efc
+    brne  .L_sqrtf_rounding_loop
     movw  r22, r18
     mov   r24, r20
     subi  r25, 0x81
@@ -7791,23 +7775,22 @@ sqrtf:
     ret
 truncf:
 trunc:
-    rcall .Lavrlibm_3d3e
-    brcs  .Lavrlibm_3f3c
+    rcall __fp_trunc
+    brcs  .L_truncf_nonfinite
     cpi   r25, 0x7F
-    brcc  .Lavrlibm_3f38
-    rjmp  .Lavrlibm_3d70
-.Lavrlibm_3f38:
-    rjmp  .Lavrlibm_3c64
-.Lavrlibm_3f3c:
-    rjmp  .Lavrlibm_3c9a
+    brcc  .L_truncf_pack_integer
+    rjmp  __fp_szero
+.L_truncf_pack_integer:
+    rjmp  __fp_mintl
+.L_truncf_nonfinite:
+    rjmp  __fp_mpack
 __fp_norm2:
-.Lavrlibm_3f40:
     subi  r25, 0x01
     sbci  r21, 0x00
     add   r22, r22
     adc   r23, r23
     adc   r24, r24
-    brpl  .Lavrlibm_3f40
+    brpl  __fp_norm2
     ret
 
 avrlibm_embedded_end:

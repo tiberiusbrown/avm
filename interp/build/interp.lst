@@ -620,29 +620,29 @@ SYMBOL TABLE:
 00003996 l       .text	00000000 oled_boot_program
 000039a3 l       .text	00000000 oled_boot_program_end
 000039da l       .text	00000000 __addsf3x
-00003a9a l       .text	00000000 __divsf3x
-00003a9e l       .text	00000000 __divsf3_pse
-00003c2c l       .text	00000000 floor
-00003c52 l       .text	00000000 fmin
-00003cd8 l       .text	00000000 __fp_inf
-00003ce4 l       .text	00000000 __fp_mintl
-00003d1a l       .text	00000000 __fp_mpack
-00003d1e l       .text	00000000 __fp_mpack_finite
-00003d36 l       .text	00000000 __fp_nan
+00003d58 l       .text	00000000 __fp_round
 00003d3c l       .text	00000000 __fp_pscA
 00003d4a l       .text	00000000 __fp_pscB
-00003d58 l       .text	00000000 __fp_round
+00003d36 l       .text	00000000 __fp_nan
+00003cd8 l       .text	00000000 __fp_inf
 00003d7a l       .text	00000000 __fp_split3
-00003d8a l       .text	00000000 __fp_splitA
-00003dbe l       .text	00000000 __fp_trunc
 00003dec l       .text	00000000 __fp_zero
+00003a9a l       .text	00000000 __divsf3x
 00003dee l       .text	00000000 __fp_szero
+00003a9e l       .text	00000000 __divsf3_pse
+00003d8a l       .text	00000000 __fp_splitA
+00003c2c l       .text	00000000 floor
+00003dbe l       .text	00000000 __fp_trunc
+00003ce4 l       .text	00000000 __fp_mintl
+00003d1a l       .text	00000000 __fp_mpack
+00003c52 l       .text	00000000 fmin
+00003d1e l       .text	00000000 __fp_mpack_finite
 00003e12 l       .text	00000000 __mulsf3x
 00003e16 l       .text	00000000 __mulsf3_pse
 00003ec0 l       .text	00000000 round
 00003f08 l       .text	00000000 sqrt
-00003f84 l       .text	00000000 trunc
 00003f92 l       .text	00000000 __fp_norm2
+00003f84 l       .text	00000000 trunc
 00003fa0 l       .text	00000000 avrlibm_embedded_end
 00000a1c l       .text	00000000 .Lff_check_extended
 00000a82 l       .text	00000000 .Lff_validate_rqspec
@@ -742,133 +742,116 @@ SYMBOL TABLE:
 0000395e l       .text	00000000 .L111
 0000396c l       .text	00000000 .L112
 00003986 l       .text	00000000 .L113
-000039da l       .text	00000000 .Lavrlibm_3930
-00003d58 l       .text	00000000 .Lavrlibm_3cd8
-00003d3c l       .text	00000000 .Lavrlibm_3cbc
-000039d0 l       .text	00000000 .Lavrlibm_3922
-00003d4a l       .text	00000000 .Lavrlibm_3cca
-000039d6 l       .text	00000000 .Lavrlibm_392a
-000039d2 l       .text	00000000 .Lavrlibm_3926
-00003d36 l       .text	00000000 .Lavrlibm_3cb6
-00003cd8 l       .text	00000000 .Lavrlibm_3c58
-00003d7a l       .text	00000000 .Lavrlibm_3cfa
-000039c0 l       .text	00000000 .Lavrlibm_390e
-000039f2 l       .text	00000000 .Lavrlibm_394c
-00003a0a l       .text	00000000 .Lavrlibm_3964
-00003a56 l       .text	00000000 .Lavrlibm_39b0
-00003dec l       .text	00000000 .Lavrlibm_3d6e
-000039f6 l       .text	00000000 .Lavrlibm_3950
-00003a36 l       .text	00000000 .Lavrlibm_3990
-00003a28 l       .text	00000000 .Lavrlibm_3982
-00003a72 l       .text	00000000 .Lavrlibm_39cc
-00003a0e l       .text	00000000 .Lavrlibm_3968
-00003a70 l       .text	00000000 .Lavrlibm_39ca
-00003a44 l       .text	00000000 .Lavrlibm_399e
-00003a78 l       .text	00000000 .Lavrlibm_39d2
-00003a9a l       .text	00000000 .Lavrlibm_3a02
-00003a98 l       .text	00000000 .Lavrlibm_39fe
-00003a96 l       .text	00000000 .Lavrlibm_39fa
-00003dee l       .text	00000000 .Lavrlibm_3d70
-00003a84 l       .text	00000000 .Lavrlibm_39e2
-00003a94 l       .text	00000000 .Lavrlibm_39f8
-00003a92 l       .text	00000000 .Lavrlibm_39f4
-00003ac4 l       .text	00000000 .Lavrlibm_3a2e
-00003aae l       .text	00000000 .Lavrlibm_3a18
-00003b2c l       .text	00000000 .Lavrlibm_3a9a
-00003ad8 l       .text	00000000 .Lavrlibm_3a42
-00003b2e l       .text	00000000 .Lavrlibm_3a9c
-00003aca l       .text	00000000 .Lavrlibm_3a34
-00003af4 l       .text	00000000 .Lavrlibm_3a5e
-00003b0a l       .text	00000000 .Lavrlibm_3a78
-00003b20 l       .text	00000000 .Lavrlibm_3a8e
-00003b08 l       .text	00000000 .Lavrlibm_3a74
-00003b12 l       .text	00000000 .Lavrlibm_3a80
-00003b48 l       .text	00000000 .Lavrlibm_3ab6
-00003b5a l       .text	00000000 .Lavrlibm_3acc
-00003d8a l       .text	00000000 .Lavrlibm_3d0a
-00003b80 l       .text	00000000 .Lavrlibm_3af4
-00003b86 l       .text	00000000 .Lavrlibm_3afc
-00003b92 l       .text	00000000 .Lavrlibm_3b0a
-00003ba0 l       .text	00000000 .Lavrlibm_3b18
-00003b7c l       .text	00000000 .Lavrlibm_3af0
-00003b6c l       .text	00000000 .Lavrlibm_3ae0
-00003b88 l       .text	00000000 .Lavrlibm_3b00
-00003b96 l       .text	00000000 .Lavrlibm_3b0e
-00003bb0 l       .text	00000000 .Lavrlibm_3b28
-00003bc8 l       .text	00000000 .Lavrlibm_3b40
-00003bf6 l       .text	00000000 .Lavrlibm_3b6e
-00003bd2 l       .text	00000000 .Lavrlibm_3b4a
-00003c22 l       .text	00000000 .Lavrlibm_3b9a
-00003bec l       .text	00000000 .Lavrlibm_3b64
-00003bfe l       .text	00000000 .Lavrlibm_3b76
-00003c20 l       .text	00000000 .Lavrlibm_3b98
-00003c0a l       .text	00000000 .Lavrlibm_3b82
-00003c14 l       .text	00000000 .Lavrlibm_3b8c
-00003c2a l       .text	00000000 .Lavrlibm_3ba2
-00003c18 l       .text	00000000 .Lavrlibm_3b90
-00003dbe l       .text	00000000 .Lavrlibm_3d3e
-00003c50 l       .text	00000000 .Lavrlibm_3bce
-00003c44 l       .text	00000000 .Lavrlibm_3bc0
-00003c3a l       .text	00000000 .Lavrlibm_3bb6
-00003c4e l       .text	00000000 .Lavrlibm_3bca
-00003ce4 l       .text	00000000 .Lavrlibm_3c64
-00003d1a l       .text	00000000 .Lavrlibm_3c9a
-00003c84 l       .text	00000000 .Lavrlibm_3c04
-00003c8a l       .text	00000000 .Lavrlibm_3c0a
-00003cd6 l       .text	00000000 .Lavrlibm_3c56
-00003cc8 l       .text	00000000 .Lavrlibm_3c48
-00003cce l       .text	00000000 .Lavrlibm_3c4e
-00003d04 l       .text	00000000 .Lavrlibm_3c84
-00003cf4 l       .text	00000000 .Lavrlibm_3c74
-00003d02 l       .text	00000000 .Lavrlibm_3c82
-00003cfc l       .text	00000000 .Lavrlibm_3c7c
-00003d16 l       .text	00000000 .Lavrlibm_3c96
-00003d10 l       .text	00000000 .Lavrlibm_3c90
-00003d06 l       .text	00000000 .Lavrlibm_3c86
-00003d2a l       .text	00000000 .Lavrlibm_3caa
-00003d64 l       .text	00000000 .Lavrlibm_3ce4
-00003d78 l       .text	00000000 .Lavrlibm_3cf8
-00003d70 l       .text	00000000 .Lavrlibm_3cf0
-00003d9a l       .text	00000000 .Lavrlibm_3d1a
-00003da4 l       .text	00000000 .Lavrlibm_3d24
-00003daa l       .text	00000000 .Lavrlibm_3d2a
-00003db4 l       .text	00000000 .Lavrlibm_3d34
-00003d88 l       .text	00000000 .Lavrlibm_3d08
-00003dba l       .text	00000000 .Lavrlibm_3d3a
-00003d96 l       .text	00000000 .Lavrlibm_3d16
-00003dea l       .text	00000000 .Lavrlibm_3d6c
-00003de6 l       .text	00000000 .Lavrlibm_3d68
-00003dca l       .text	00000000 .Lavrlibm_3d4c
-00003ddc l       .text	00000000 .Lavrlibm_3d5e
-00003e12 l       .text	00000000 .Lavrlibm_3da2
-00003e0c l       .text	00000000 .Lavrlibm_3d98
-00003dfe l       .text	00000000 .Lavrlibm_3d84
-00003e0e l       .text	00000000 .Lavrlibm_3d9c
-00003e9a l       .text	00000000 .Lavrlibm_3e30
-00003eb2 l       .text	00000000 .Lavrlibm_3e48
-00003e90 l       .text	00000000 .Lavrlibm_3e22
-00003e7a l       .text	00000000 .Lavrlibm_3e0c
-00003e98 l       .text	00000000 .Lavrlibm_3e2c
-00003ea2 l       .text	00000000 .Lavrlibm_3e38
-00003efc l       .text	00000000 .Lavrlibm_3e96
-00003efe l       .text	00000000 .Lavrlibm_3e9a
-00003efa l       .text	00000000 .Lavrlibm_3e92
-00003ee2 l       .text	00000000 .Lavrlibm_3e7a
-00003ecc l       .text	00000000 .Lavrlibm_3e64
-00003eda l       .text	00000000 .Lavrlibm_3e72
-00003f06 l       .text	00000000 .Lavrlibm_3ea6
-00003f00 l       .text	00000000 .Lavrlibm_3e9e
-00003f04 l       .text	00000000 .Lavrlibm_3ea2
-00003f92 l       .text	00000000 .Lavrlibm_3f40
-00003f34 l       .text	00000000 .Lavrlibm_3eda
-00003f3c l       .text	00000000 .Lavrlibm_3ee2
-00003f48 l       .text	00000000 .Lavrlibm_3eee
-00003f2c l       .text	00000000 .Lavrlibm_3ed2
-00003f66 l       .text	00000000 .Lavrlibm_3f0c
-00003f72 l       .text	00000000 .Lavrlibm_3f18
-00003f56 l       .text	00000000 .Lavrlibm_3efc
-00003f90 l       .text	00000000 .Lavrlibm_3f3c
-00003f8e l       .text	00000000 .Lavrlibm_3f38
+000039d0 l       .text	00000000 .L__addsf3_nan
+000039d6 l       .text	00000000 .L__addsf3_infinity
+000039d2 l       .text	00000000 .L__addsf3_infinity_b
+000039c0 l       .text	00000000 .L__addsf3_special_cases
+000039f2 l       .text	00000000 .L__addsf3x_swap_operands
+00003a0a l       .text	00000000 .L__addsf3x_align_mantissas
+00003a56 l       .text	00000000 .L__addsf3x_add_mantissas
+000039f6 l       .text	00000000 .L__addsf3x_swap_values
+00003a36 l       .text	00000000 .L__addsf3x_combine_mantissas
+00003a28 l       .text	00000000 .L__addsf3x_align_bits
+00003a72 l       .text	00000000 .L__addsf3x_pack_result
+00003a0e l       .text	00000000 .L__addsf3x_align_bytes
+00003a70 l       .text	00000000 .L__addsf3x_increment_exponent
+00003a44 l       .text	00000000 .L__addsf3x_normalize_difference
+00003a78 l       .text	00000000 .L__addsf3x_apply_sign
+00003a98 l       .text	00000000 .L__divsf3_nan
+00003a96 l       .text	00000000 .L__divsf3_szero
+00003a84 l       .text	00000000 .L__divsf3_special_cases
+00003a94 l       .text	00000000 .L__divsf3_zero_numerator
+00003a92 l       .text	00000000 .L__divsf3_infinity
+00003ac4 l       .text	00000000 .L__divsf3_begin_quotient
+00003aae l       .text	00000000 .L__divsf3_normalize_divisor
+00003b2c l       .text	00000000 .L__divsf3_divide_byte
+00003ad8 l       .text	00000000 .L__divsf3_build_remaining_quotient
+00003b2e l       .text	00000000 .L__divsf3_divide_bit
+00003aca l       .text	00000000 .L__divsf3_build_leading_quotient
+00003af4 l       .text	00000000 .L__divsf3_finish_quotient
+00003b0a l       .text	00000000 .L__divsf3_prepare_denormal
+00003b20 l       .text	00000000 .L__divsf3_pack_result
+00003b08 l       .text	00000000 .L__divsf3_underflow_zero
+00003b12 l       .text	00000000 .L__divsf3_denormalize
+00003b48 l       .text	00000000 .L__divsf3_divide_emit_bit
+00003b80 l       .text	00000000 .L__fixunssfsi_error
+00003b86 l       .text	00000000 .L__fixunssfsi_zero
+00003b92 l       .text	00000000 .L__fixunssfsi_select_right_shift
+00003ba0 l       .text	00000000 .L__fixunssfsi_apply_sign
+00003b7c l       .text	00000000 .L__fixunssfsi_check_signed_overflow
+00003b6c l       .text	00000000 .L__fixunssfsi_shift_left
+00003b88 l       .text	00000000 .L__fixunssfsi_shift_right_byte
+00003b96 l       .text	00000000 .L__fixunssfsi_shift_right_bit
+00003bb0 l       .text	00000000 .L__fixunssfsi_return
+00003bc8 l       .text	00000000 .L__floatsisf_magnitude_ready
+00003bf6 l       .text	00000000 .L__floatsisf_check_middle_byte
+00003bd2 l       .text	00000000 .L__floatsisf_shift_right
+00003c22 l       .text	00000000 .L__floatsisf_pack
+00003bec l       .text	00000000 .L__floatsisf_round_up
+00003bfe l       .text	00000000 .L__floatsisf_check_low_word
+00003c20 l       .text	00000000 .L__floatsisf_continue_left_shift
+00003c0a l       .text	00000000 .L__floatsisf_check_low_byte
+00003c14 l       .text	00000000 .L__floatsisf_prepare_left_shift
+00003c2a l       .text	00000000 .L__floatsisf_return
+00003c18 l       .text	00000000 .L__floatsisf_shift_left
+00003c50 l       .text	00000000 .L_floorf_nonfinite
+00003c44 l       .text	00000000 .L_floorf_integral_or_larger
+00003c3a l       .text	00000000 .L_floorf_negative_fraction
+00003c4e l       .text	00000000 .L_floorf_pack_integer
+00003c84 l       .text	00000000 .L_fminf_return_b
+00003c8a l       .text	00000000 .L_fminf_return_a
+00003cd6 l       .text	00000000 .L__fp_cmp_return
+00003cc8 l       .text	00000000 .L__fp_cmp_compare_signs
+00003cce l       .text	00000000 .L__fp_cmp_build_result
+00003d04 l       .text	00000000 .L__fp_mintl_mantissa_ready
+00003cf4 l       .text	00000000 .L__fp_mintl_check_low_byte
+00003d02 l       .text	00000000 .L__fp_mintl_clear_low_byte
+00003cfc l       .text	00000000 .L__fp_mintl_use_low_byte
+00003d16 l       .text	00000000 .L__fp_mintl_apply_sign
+00003d10 l       .text	00000000 .L__fp_mintl_pack
+00003d06 l       .text	00000000 .L__fp_mintl_normalize
+00003d2a l       .text	00000000 .L__fp_mpack_pack_common
+00003d64 l       .text	00000000 .L__fp_round_check_rounding
+00003d78 l       .text	00000000 .L__fp_round_return
+00003d70 l       .text	00000000 .L__fp_round_increment
+00003d9a l       .text	00000000 .L__fp_split3_b_zero_or_subnormal
+00003da4 l       .text	00000000 .L__fp_split3_b_nonfinite
+00003daa l       .text	00000000 .L__fp_splitA_zero_or_subnormal
+00003db4 l       .text	00000000 .L__fp_splitA_nonfinite
+00003d88 l       .text	00000000 .L__fp_split3_restore_b_mantissa
+00003dba l       .text	00000000 .L__fp_splitA_return_nonfinite
+00003d96 l       .text	00000000 .L__fp_splitA_restore_mantissa
+00003dea l       .text	00000000 .L__fp_trunc_return
+00003de6 l       .text	00000000 .L__fp_trunc_check_shift
+00003dca l       .text	00000000 .L__fp_trunc_shift_right_byte
+00003ddc l       .text	00000000 .L__fp_trunc_shift_right_bit
+00003e0c l       .text	00000000 .L__mulsf3_nan
+00003dfe l       .text	00000000 .L__mulsf3_special_cases
+00003e0e l       .text	00000000 .L__mulsf3_szero
+00003e9a l       .text	00000000 .L__mulsf3_prepare_denormal
+00003eb2 l       .text	00000000 .L__mulsf3_pack_result
+00003e90 l       .text	00000000 .L__mulsf3_check_overflow
+00003e7a l       .text	00000000 .L__mulsf3_normalize
+00003e98 l       .text	00000000 .L__mulsf3_underflow_zero
+00003ea2 l       .text	00000000 .L__mulsf3_denormalize
+00003efc l       .text	00000000 .L_roundf_nonfinite
+00003efe l       .text	00000000 .L_roundf_zero
+00003efa l       .text	00000000 .L_roundf_pack_integer
+00003ee2 l       .text	00000000 .L_roundf_check_shift
+00003ecc l       .text	00000000 .L_roundf_shift_right_byte
+00003eda l       .text	00000000 .L_roundf_shift_right_bit
+00003f06 l       .text	00000000 .L_sqrtf_pack
+00003f00 l       .text	00000000 .L_sqrtf_nonfinite
+00003f04 l       .text	00000000 .L_sqrtf_nan
+00003f34 l       .text	00000000 .L_sqrtf_compare_trial
+00003f3c l       .text	00000000 .L_sqrtf_accept_trial
+00003f48 l       .text	00000000 .L_sqrtf_advance_digit
+00003f2c l       .text	00000000 .L_sqrtf_digit_loop
+00003f66 l       .text	00000000 .L_sqrtf_accept_rounding_bit
+00003f72 l       .text	00000000 .L_sqrtf_advance_rounding
+00003f56 l       .text	00000000 .L_sqrtf_rounding_loop
+00003f90 l       .text	00000000 .L_truncf_nonfinite
+00003f8e l       .text	00000000 .L_truncf_pack_integer
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
 00003fa0 g       .text	00000000 _etext
@@ -9422,11 +9405,11 @@ Disassembly of section .text:
     3994:	08 95       	ret
 
 00003996 <oled_boot_program>:
-    3996:	d5 f0       	brhs	.+52     	; 0x39cc <.Lavrlibm_390e+0xc>
+    3996:	d5 f0       	brhs	.+52     	; 0x39cc <.L__addsf3_special_cases+0xc>
     3998:	8d 14       	cp	r8, r13
     399a:	a1 c8       	rjmp	.-3774   	; 0x2ade <f6_table_end+0x44>
     399c:	81 cf       	rjmp	.-254    	; 0x38a0 <startup_try_tail+0xa>
-    399e:	d9 f1       	breq	.+118    	; 0x3a16 <.Lavrlibm_3968+0x8>
+    399e:	d9 f1       	breq	.+118    	; 0x3a16 <.L__addsf3x_align_bytes+0x8>
     39a0:	af 20       	and	r10, r15
     39a2:	00        	nop
 
@@ -9455,46 +9438,46 @@ Disassembly of section .text:
     39bc:	0e d0       	rcall	.+28     	; 0x39da <__addsf3x>
     39be:	cc c1       	rjmp	.+920    	; 0x3d58 <__fp_round>
 
-000039c0 <.Lavrlibm_390e>:
+000039c0 <.L__addsf3_special_cases>:
     39c0:	bd d1       	rcall	.+890    	; 0x3d3c <__fp_pscA>
-    39c2:	30 f0       	brcs	.+12     	; 0x39d0 <.Lavrlibm_3922>
+    39c2:	30 f0       	brcs	.+12     	; 0x39d0 <.L__addsf3_nan>
     39c4:	c2 d1       	rcall	.+900    	; 0x3d4a <__fp_pscB>
-    39c6:	20 f0       	brcs	.+8      	; 0x39d0 <.Lavrlibm_3922>
-    39c8:	31 f4       	brne	.+12     	; 0x39d6 <.Lavrlibm_392a>
+    39c6:	20 f0       	brcs	.+8      	; 0x39d0 <.L__addsf3_nan>
+    39c8:	31 f4       	brne	.+12     	; 0x39d6 <.L__addsf3_infinity>
     39ca:	9f 3f       	cpi	r25, 0xFF	; 255
-    39cc:	11 f4       	brne	.+4      	; 0x39d2 <.Lavrlibm_3926>
-    39ce:	1e f4       	brtc	.+6      	; 0x39d6 <.Lavrlibm_392a>
+    39cc:	11 f4       	brne	.+4      	; 0x39d2 <.L__addsf3_infinity_b>
+    39ce:	1e f4       	brtc	.+6      	; 0x39d6 <.L__addsf3_infinity>
 
-000039d0 <.Lavrlibm_3922>:
+000039d0 <.L__addsf3_nan>:
     39d0:	b2 c1       	rjmp	.+868    	; 0x3d36 <__fp_nan>
 
-000039d2 <.Lavrlibm_3926>:
-    39d2:	0e f4       	brtc	.+2      	; 0x39d6 <.Lavrlibm_392a>
+000039d2 <.L__addsf3_infinity_b>:
+    39d2:	0e f4       	brtc	.+2      	; 0x39d6 <.L__addsf3_infinity>
     39d4:	e0 95       	com	r30
 
-000039d6 <.Lavrlibm_392a>:
+000039d6 <.L__addsf3_infinity>:
     39d6:	e7 fb       	bst	r30, 7
     39d8:	7f c1       	rjmp	.+766    	; 0x3cd8 <__fp_inf>
 
 000039da <__addsf3x>:
     39da:	e9 2f       	mov	r30, r25
     39dc:	ce d1       	rcall	.+924    	; 0x3d7a <__fp_split3>
-    39de:	80 f3       	brcs	.-32     	; 0x39c0 <.Lavrlibm_390e>
+    39de:	80 f3       	brcs	.-32     	; 0x39c0 <.L__addsf3_special_cases>
     39e0:	ba 17       	cp	r27, r26
     39e2:	62 07       	cpc	r22, r18
     39e4:	73 07       	cpc	r23, r19
     39e6:	84 07       	cpc	r24, r20
     39e8:	95 07       	cpc	r25, r21
-    39ea:	18 f0       	brcs	.+6      	; 0x39f2 <.Lavrlibm_394c>
-    39ec:	71 f4       	brne	.+28     	; 0x3a0a <.Lavrlibm_3964>
-    39ee:	9e f5       	brtc	.+102    	; 0x3a56 <.Lavrlibm_39b0>
+    39ea:	18 f0       	brcs	.+6      	; 0x39f2 <.L__addsf3x_swap_operands>
+    39ec:	71 f4       	brne	.+28     	; 0x3a0a <.L__addsf3x_align_mantissas>
+    39ee:	9e f5       	brtc	.+102    	; 0x3a56 <.L__addsf3x_add_mantissas>
     39f0:	fd c1       	rjmp	.+1018   	; 0x3dec <__fp_zero>
 
-000039f2 <.Lavrlibm_394c>:
-    39f2:	0e f4       	brtc	.+2      	; 0x39f6 <.Lavrlibm_3950>
+000039f2 <.L__addsf3x_swap_operands>:
+    39f2:	0e f4       	brtc	.+2      	; 0x39f6 <.L__addsf3x_swap_values>
     39f4:	e0 95       	com	r30
 
-000039f6 <.Lavrlibm_3950>:
+000039f6 <.L__addsf3x_swap_values>:
     39f6:	0b 2e       	mov	r0, r27
     39f8:	ba 2f       	mov	r27, r26
     39fa:	a0 2d       	mov	r26, r0
@@ -9506,16 +9489,16 @@ Disassembly of section .text:
     3a06:	a0 01       	movw	r20, r0
     3a08:	11 24       	eor	r1, r1
 
-00003a0a <.Lavrlibm_3964>:
+00003a0a <.L__addsf3x_align_mantissas>:
     3a0a:	ff 27       	eor	r31, r31
     3a0c:	59 1b       	sub	r21, r25
 
-00003a0e <.Lavrlibm_3968>:
-    3a0e:	99 f0       	breq	.+38     	; 0x3a36 <.Lavrlibm_3990>
+00003a0e <.L__addsf3x_align_bytes>:
+    3a0e:	99 f0       	breq	.+38     	; 0x3a36 <.L__addsf3x_combine_mantissas>
     3a10:	59 3f       	cpi	r21, 0xF9	; 249
-    3a12:	50 f4       	brcc	.+20     	; 0x3a28 <.Lavrlibm_3982>
+    3a12:	50 f4       	brcc	.+20     	; 0x3a28 <.L__addsf3x_align_bits>
     3a14:	50 3e       	cpi	r21, 0xE0	; 224
-    3a16:	68 f1       	brcs	.+90     	; 0x3a72 <.Lavrlibm_39cc>
+    3a16:	68 f1       	brcs	.+90     	; 0x3a72 <.L__addsf3x_pack_result>
     3a18:	1a 16       	cp	r1, r26
     3a1a:	f0 40       	sbci	r31, 0x00	; 0
     3a1c:	a2 2f       	mov	r26, r18
@@ -9523,61 +9506,61 @@ Disassembly of section .text:
     3a20:	34 2f       	mov	r19, r20
     3a22:	44 27       	eor	r20, r20
     3a24:	58 5f       	subi	r21, 0xF8	; 248
-    3a26:	f3 cf       	rjmp	.-26     	; 0x3a0e <.Lavrlibm_3968>
+    3a26:	f3 cf       	rjmp	.-26     	; 0x3a0e <.L__addsf3x_align_bytes>
 
-00003a28 <.Lavrlibm_3982>:
+00003a28 <.L__addsf3x_align_bits>:
     3a28:	46 95       	lsr	r20
     3a2a:	37 95       	ror	r19
     3a2c:	27 95       	ror	r18
     3a2e:	a7 95       	ror	r26
     3a30:	f0 40       	sbci	r31, 0x00	; 0
     3a32:	53 95       	inc	r21
-    3a34:	c9 f7       	brne	.-14     	; 0x3a28 <.Lavrlibm_3982>
+    3a34:	c9 f7       	brne	.-14     	; 0x3a28 <.L__addsf3x_align_bits>
 
-00003a36 <.Lavrlibm_3990>:
-    3a36:	7e f4       	brtc	.+30     	; 0x3a56 <.Lavrlibm_39b0>
+00003a36 <.L__addsf3x_combine_mantissas>:
+    3a36:	7e f4       	brtc	.+30     	; 0x3a56 <.L__addsf3x_add_mantissas>
     3a38:	1f 16       	cp	r1, r31
     3a3a:	ba 0b       	sbc	r27, r26
     3a3c:	62 0b       	sbc	r22, r18
     3a3e:	73 0b       	sbc	r23, r19
     3a40:	84 0b       	sbc	r24, r20
-    3a42:	ba f0       	brmi	.+46     	; 0x3a72 <.Lavrlibm_39cc>
+    3a42:	ba f0       	brmi	.+46     	; 0x3a72 <.L__addsf3x_pack_result>
 
-00003a44 <.Lavrlibm_399e>:
+00003a44 <.L__addsf3x_normalize_difference>:
     3a44:	91 50       	subi	r25, 0x01	; 1
-    3a46:	a1 f0       	breq	.+40     	; 0x3a70 <.Lavrlibm_39ca>
+    3a46:	a1 f0       	breq	.+40     	; 0x3a70 <.L__addsf3x_increment_exponent>
     3a48:	ff 0f       	add	r31, r31
     3a4a:	bb 1f       	adc	r27, r27
     3a4c:	66 1f       	adc	r22, r22
     3a4e:	77 1f       	adc	r23, r23
     3a50:	88 1f       	adc	r24, r24
-    3a52:	c2 f7       	brpl	.-16     	; 0x3a44 <.Lavrlibm_399e>
-    3a54:	0e c0       	rjmp	.+28     	; 0x3a72 <.Lavrlibm_39cc>
+    3a52:	c2 f7       	brpl	.-16     	; 0x3a44 <.L__addsf3x_normalize_difference>
+    3a54:	0e c0       	rjmp	.+28     	; 0x3a72 <.L__addsf3x_pack_result>
 
-00003a56 <.Lavrlibm_39b0>:
+00003a56 <.L__addsf3x_add_mantissas>:
     3a56:	ba 0f       	add	r27, r26
     3a58:	62 1f       	adc	r22, r18
     3a5a:	73 1f       	adc	r23, r19
     3a5c:	84 1f       	adc	r24, r20
-    3a5e:	48 f4       	brcc	.+18     	; 0x3a72 <.Lavrlibm_39cc>
+    3a5e:	48 f4       	brcc	.+18     	; 0x3a72 <.L__addsf3x_pack_result>
     3a60:	87 95       	ror	r24
     3a62:	77 95       	ror	r23
     3a64:	67 95       	ror	r22
     3a66:	b7 95       	ror	r27
     3a68:	f7 95       	ror	r31
     3a6a:	9e 3f       	cpi	r25, 0xFE	; 254
-    3a6c:	08 f0       	brcs	.+2      	; 0x3a70 <.Lavrlibm_39ca>
-    3a6e:	b3 cf       	rjmp	.-154    	; 0x39d6 <.Lavrlibm_392a>
+    3a6c:	08 f0       	brcs	.+2      	; 0x3a70 <.L__addsf3x_increment_exponent>
+    3a6e:	b3 cf       	rjmp	.-154    	; 0x39d6 <.L__addsf3_infinity>
 
-00003a70 <.Lavrlibm_39ca>:
+00003a70 <.L__addsf3x_increment_exponent>:
     3a70:	93 95       	inc	r25
 
-00003a72 <.Lavrlibm_39cc>:
+00003a72 <.L__addsf3x_pack_result>:
     3a72:	88 0f       	add	r24, r24
-    3a74:	08 f0       	brcs	.+2      	; 0x3a78 <.Lavrlibm_39d2>
+    3a74:	08 f0       	brcs	.+2      	; 0x3a78 <.L__addsf3x_apply_sign>
     3a76:	99 27       	eor	r25, r25
 
-00003a78 <.Lavrlibm_39d2>:
+00003a78 <.L__addsf3x_apply_sign>:
     3a78:	ee 0f       	add	r30, r30
     3a7a:	97 95       	ror	r25
     3a7c:	87 95       	ror	r24
@@ -9587,72 +9570,72 @@ Disassembly of section .text:
     3a80:	0c d0       	rcall	.+24     	; 0x3a9a <__divsf3x>
     3a82:	6a c1       	rjmp	.+724    	; 0x3d58 <__fp_round>
 
-00003a84 <.Lavrlibm_39e2>:
+00003a84 <.L__divsf3_special_cases>:
     3a84:	62 d1       	rcall	.+708    	; 0x3d4a <__fp_pscB>
-    3a86:	40 f0       	brcs	.+16     	; 0x3a98 <.Lavrlibm_39fe>
+    3a86:	40 f0       	brcs	.+16     	; 0x3a98 <.L__divsf3_nan>
     3a88:	59 d1       	rcall	.+690    	; 0x3d3c <__fp_pscA>
-    3a8a:	30 f0       	brcs	.+12     	; 0x3a98 <.Lavrlibm_39fe>
-    3a8c:	21 f4       	brne	.+8      	; 0x3a96 <.Lavrlibm_39fa>
+    3a8a:	30 f0       	brcs	.+12     	; 0x3a98 <.L__divsf3_nan>
+    3a8c:	21 f4       	brne	.+8      	; 0x3a96 <.L__divsf3_szero>
     3a8e:	5f 3f       	cpi	r21, 0xFF	; 255
-    3a90:	19 f0       	breq	.+6      	; 0x3a98 <.Lavrlibm_39fe>
+    3a90:	19 f0       	breq	.+6      	; 0x3a98 <.L__divsf3_nan>
 
-00003a92 <.Lavrlibm_39f4>:
+00003a92 <.L__divsf3_infinity>:
     3a92:	22 c1       	rjmp	.+580    	; 0x3cd8 <__fp_inf>
 
-00003a94 <.Lavrlibm_39f8>:
+00003a94 <.L__divsf3_zero_numerator>:
     3a94:	51 11       	cpse	r21, r1
 
-00003a96 <.Lavrlibm_39fa>:
+00003a96 <.L__divsf3_szero>:
     3a96:	ab c1       	rjmp	.+854    	; 0x3dee <__fp_szero>
 
-00003a98 <.Lavrlibm_39fe>:
+00003a98 <.L__divsf3_nan>:
     3a98:	4e c1       	rjmp	.+668    	; 0x3d36 <__fp_nan>
 
 00003a9a <__divsf3x>:
     3a9a:	6f d1       	rcall	.+734    	; 0x3d7a <__fp_split3>
-    3a9c:	98 f3       	brcs	.-26     	; 0x3a84 <.Lavrlibm_39e2>
+    3a9c:	98 f3       	brcs	.-26     	; 0x3a84 <.L__divsf3_special_cases>
 
 00003a9e <__divsf3_pse>:
     3a9e:	99 23       	and	r25, r25
-    3aa0:	c9 f3       	breq	.-14     	; 0x3a94 <.Lavrlibm_39f8>
+    3aa0:	c9 f3       	breq	.-14     	; 0x3a94 <.L__divsf3_zero_numerator>
     3aa2:	55 23       	and	r21, r21
-    3aa4:	b1 f3       	breq	.-20     	; 0x3a92 <.Lavrlibm_39f4>
+    3aa4:	b1 f3       	breq	.-20     	; 0x3a92 <.L__divsf3_infinity>
     3aa6:	95 1b       	sub	r25, r21
     3aa8:	55 0b       	sbc	r21, r21
     3aaa:	bb 27       	eor	r27, r27
     3aac:	aa 27       	eor	r26, r26
 
-00003aae <.Lavrlibm_3a18>:
+00003aae <.L__divsf3_normalize_divisor>:
     3aae:	62 17       	cp	r22, r18
     3ab0:	73 07       	cpc	r23, r19
     3ab2:	84 07       	cpc	r24, r20
-    3ab4:	38 f0       	brcs	.+14     	; 0x3ac4 <.Lavrlibm_3a2e>
+    3ab4:	38 f0       	brcs	.+14     	; 0x3ac4 <.L__divsf3_begin_quotient>
     3ab6:	9f 5f       	subi	r25, 0xFF	; 255
     3ab8:	5f 4f       	sbci	r21, 0xFF	; 255
     3aba:	22 0f       	add	r18, r18
     3abc:	33 1f       	adc	r19, r19
     3abe:	44 1f       	adc	r20, r20
     3ac0:	aa 1f       	adc	r26, r26
-    3ac2:	a9 f3       	breq	.-22     	; 0x3aae <.Lavrlibm_3a18>
+    3ac2:	a9 f3       	breq	.-22     	; 0x3aae <.L__divsf3_normalize_divisor>
 
-00003ac4 <.Lavrlibm_3a2e>:
-    3ac4:	33 d0       	rcall	.+102    	; 0x3b2c <.Lavrlibm_3a9a>
+00003ac4 <.L__divsf3_begin_quotient>:
+    3ac4:	33 d0       	rcall	.+102    	; 0x3b2c <.L__divsf3_divide_byte>
     3ac6:	0e 2e       	mov	r0, r30
-    3ac8:	3a f0       	brmi	.+14     	; 0x3ad8 <.Lavrlibm_3a42>
+    3ac8:	3a f0       	brmi	.+14     	; 0x3ad8 <.L__divsf3_build_remaining_quotient>
 
-00003aca <.Lavrlibm_3a34>:
+00003aca <.L__divsf3_build_leading_quotient>:
     3aca:	e0 e8       	ldi	r30, 0x80	; 128
-    3acc:	30 d0       	rcall	.+96     	; 0x3b2e <.Lavrlibm_3a9c>
+    3acc:	30 d0       	rcall	.+96     	; 0x3b2e <.L__divsf3_divide_bit>
     3ace:	91 50       	subi	r25, 0x01	; 1
     3ad0:	50 40       	sbci	r21, 0x00	; 0
     3ad2:	e6 95       	lsr	r30
     3ad4:	00 1c       	adc	r0, r0
-    3ad6:	ca f7       	brpl	.-14     	; 0x3aca <.Lavrlibm_3a34>
+    3ad6:	ca f7       	brpl	.-14     	; 0x3aca <.L__divsf3_build_leading_quotient>
 
-00003ad8 <.Lavrlibm_3a42>:
-    3ad8:	29 d0       	rcall	.+82     	; 0x3b2c <.Lavrlibm_3a9a>
+00003ad8 <.L__divsf3_build_remaining_quotient>:
+    3ad8:	29 d0       	rcall	.+82     	; 0x3b2c <.L__divsf3_divide_byte>
     3ada:	fe 2f       	mov	r31, r30
-    3adc:	27 d0       	rcall	.+78     	; 0x3b2c <.Lavrlibm_3a9a>
+    3adc:	27 d0       	rcall	.+78     	; 0x3b2c <.L__divsf3_divide_byte>
     3ade:	66 0f       	add	r22, r22
     3ae0:	77 1f       	adc	r23, r23
     3ae2:	88 1f       	adc	r24, r24
@@ -9662,40 +9645,40 @@ Disassembly of section .text:
     3aea:	48 07       	cpc	r20, r24
     3aec:	ab 07       	cpc	r26, r27
     3aee:	b0 e8       	ldi	r27, 0x80	; 128
-    3af0:	09 f0       	breq	.+2      	; 0x3af4 <.Lavrlibm_3a5e>
+    3af0:	09 f0       	breq	.+2      	; 0x3af4 <.L__divsf3_finish_quotient>
     3af2:	bb 0b       	sbc	r27, r27
 
-00003af4 <.Lavrlibm_3a5e>:
+00003af4 <.L__divsf3_finish_quotient>:
     3af4:	80 2d       	mov	r24, r0
     3af6:	bf 01       	movw	r22, r30
     3af8:	ff 27       	eor	r31, r31
     3afa:	93 58       	subi	r25, 0x83	; 131
     3afc:	5f 4f       	sbci	r21, 0xFF	; 255
-    3afe:	2a f0       	brmi	.+10     	; 0x3b0a <.Lavrlibm_3a78>
+    3afe:	2a f0       	brmi	.+10     	; 0x3b0a <.L__divsf3_prepare_denormal>
     3b00:	9e 3f       	cpi	r25, 0xFE	; 254
     3b02:	51 05       	cpc	r21, r1
-    3b04:	68 f0       	brcs	.+26     	; 0x3b20 <.Lavrlibm_3a8e>
+    3b04:	68 f0       	brcs	.+26     	; 0x3b20 <.L__divsf3_pack_result>
     3b06:	e8 c0       	rjmp	.+464    	; 0x3cd8 <__fp_inf>
 
-00003b08 <.Lavrlibm_3a74>:
+00003b08 <.L__divsf3_underflow_zero>:
     3b08:	72 c1       	rjmp	.+740    	; 0x3dee <__fp_szero>
 
-00003b0a <.Lavrlibm_3a78>:
+00003b0a <.L__divsf3_prepare_denormal>:
     3b0a:	5f 3f       	cpi	r21, 0xFF	; 255
-    3b0c:	ec f3       	brlt	.-6      	; 0x3b08 <.Lavrlibm_3a74>
+    3b0c:	ec f3       	brlt	.-6      	; 0x3b08 <.L__divsf3_underflow_zero>
     3b0e:	98 3e       	cpi	r25, 0xE8	; 232
-    3b10:	dc f3       	brlt	.-10     	; 0x3b08 <.Lavrlibm_3a74>
+    3b10:	dc f3       	brlt	.-10     	; 0x3b08 <.L__divsf3_underflow_zero>
 
-00003b12 <.Lavrlibm_3a80>:
+00003b12 <.L__divsf3_denormalize>:
     3b12:	86 95       	lsr	r24
     3b14:	77 95       	ror	r23
     3b16:	67 95       	ror	r22
     3b18:	b7 95       	ror	r27
     3b1a:	f7 95       	ror	r31
     3b1c:	9f 5f       	subi	r25, 0xFF	; 255
-    3b1e:	c9 f7       	brne	.-14     	; 0x3b12 <.Lavrlibm_3a80>
+    3b1e:	c9 f7       	brne	.-14     	; 0x3b12 <.L__divsf3_denormalize>
 
-00003b20 <.Lavrlibm_3a8e>:
+00003b20 <.L__divsf3_pack_result>:
     3b20:	88 0f       	add	r24, r24
     3b22:	91 1d       	adc	r25, r1
     3b24:	96 95       	lsr	r25
@@ -9703,10 +9686,10 @@ Disassembly of section .text:
     3b28:	97 f9       	bld	r25, 7
     3b2a:	08 95       	ret
 
-00003b2c <.Lavrlibm_3a9a>:
+00003b2c <.L__divsf3_divide_byte>:
     3b2c:	e1 e0       	ldi	r30, 0x01	; 1
 
-00003b2e <.Lavrlibm_3a9c>:
+00003b2e <.L__divsf3_divide_bit>:
     3b2e:	66 0f       	add	r22, r22
     3b30:	77 1f       	adc	r23, r23
     3b32:	88 1f       	adc	r24, r24
@@ -9715,15 +9698,15 @@ Disassembly of section .text:
     3b38:	73 07       	cpc	r23, r19
     3b3a:	84 07       	cpc	r24, r20
     3b3c:	ba 07       	cpc	r27, r26
-    3b3e:	20 f0       	brcs	.+8      	; 0x3b48 <.Lavrlibm_3ab6>
+    3b3e:	20 f0       	brcs	.+8      	; 0x3b48 <.L__divsf3_divide_emit_bit>
     3b40:	62 1b       	sub	r22, r18
     3b42:	73 0b       	sbc	r23, r19
     3b44:	84 0b       	sbc	r24, r20
     3b46:	ba 0b       	sbc	r27, r26
 
-00003b48 <.Lavrlibm_3ab6>:
+00003b48 <.L__divsf3_divide_emit_bit>:
     3b48:	ee 1f       	adc	r30, r30
-    3b4a:	88 f7       	brcc	.-30     	; 0x3b2e <.Lavrlibm_3a9c>
+    3b4a:	88 f7       	brcc	.-30     	; 0x3b2e <.L__divsf3_divide_bit>
     3b4c:	e0 95       	com	r30
     3b4e:	08 95       	ret
 
@@ -9736,57 +9719,57 @@ Disassembly of section .text:
 
 00003b5a <__fixunssfsi>:
     3b5a:	17 d1       	rcall	.+558    	; 0x3d8a <__fp_splitA>
-    3b5c:	88 f0       	brcs	.+34     	; 0x3b80 <.Lavrlibm_3af4>
+    3b5c:	88 f0       	brcs	.+34     	; 0x3b80 <.L__fixunssfsi_error>
     3b5e:	9f 57       	subi	r25, 0x7F	; 127
-    3b60:	90 f0       	brcs	.+36     	; 0x3b86 <.Lavrlibm_3afc>
+    3b60:	90 f0       	brcs	.+36     	; 0x3b86 <.L__fixunssfsi_zero>
     3b62:	b9 2f       	mov	r27, r25
     3b64:	99 27       	eor	r25, r25
     3b66:	b7 51       	subi	r27, 0x17	; 23
-    3b68:	a0 f0       	brcs	.+40     	; 0x3b92 <.Lavrlibm_3b0a>
-    3b6a:	d1 f0       	breq	.+52     	; 0x3ba0 <.Lavrlibm_3b18>
+    3b68:	a0 f0       	brcs	.+40     	; 0x3b92 <.L__fixunssfsi_select_right_shift>
+    3b6a:	d1 f0       	breq	.+52     	; 0x3ba0 <.L__fixunssfsi_apply_sign>
 
-00003b6c <.Lavrlibm_3ae0>:
+00003b6c <.L__fixunssfsi_shift_left>:
     3b6c:	66 0f       	add	r22, r22
     3b6e:	77 1f       	adc	r23, r23
     3b70:	88 1f       	adc	r24, r24
     3b72:	99 1f       	adc	r25, r25
-    3b74:	1a f0       	brmi	.+6      	; 0x3b7c <.Lavrlibm_3af0>
+    3b74:	1a f0       	brmi	.+6      	; 0x3b7c <.L__fixunssfsi_check_signed_overflow>
     3b76:	ba 95       	dec	r27
-    3b78:	c9 f7       	brne	.-14     	; 0x3b6c <.Lavrlibm_3ae0>
-    3b7a:	12 c0       	rjmp	.+36     	; 0x3ba0 <.Lavrlibm_3b18>
+    3b78:	c9 f7       	brne	.-14     	; 0x3b6c <.L__fixunssfsi_shift_left>
+    3b7a:	12 c0       	rjmp	.+36     	; 0x3ba0 <.L__fixunssfsi_apply_sign>
 
-00003b7c <.Lavrlibm_3af0>:
+00003b7c <.L__fixunssfsi_check_signed_overflow>:
     3b7c:	b1 30       	cpi	r27, 0x01	; 1
-    3b7e:	81 f0       	breq	.+32     	; 0x3ba0 <.Lavrlibm_3b18>
+    3b7e:	81 f0       	breq	.+32     	; 0x3ba0 <.L__fixunssfsi_apply_sign>
 
-00003b80 <.Lavrlibm_3af4>:
+00003b80 <.L__fixunssfsi_error>:
     3b80:	35 d1       	rcall	.+618    	; 0x3dec <__fp_zero>
     3b82:	b1 e0       	ldi	r27, 0x01	; 1
     3b84:	08 95       	ret
 
-00003b86 <.Lavrlibm_3afc>:
+00003b86 <.L__fixunssfsi_zero>:
     3b86:	32 c1       	rjmp	.+612    	; 0x3dec <__fp_zero>
 
-00003b88 <.Lavrlibm_3b00>:
+00003b88 <.L__fixunssfsi_shift_right_byte>:
     3b88:	67 2f       	mov	r22, r23
     3b8a:	78 2f       	mov	r23, r24
     3b8c:	88 27       	eor	r24, r24
     3b8e:	b8 5f       	subi	r27, 0xF8	; 248
-    3b90:	39 f0       	breq	.+14     	; 0x3ba0 <.Lavrlibm_3b18>
+    3b90:	39 f0       	breq	.+14     	; 0x3ba0 <.L__fixunssfsi_apply_sign>
 
-00003b92 <.Lavrlibm_3b0a>:
+00003b92 <.L__fixunssfsi_select_right_shift>:
     3b92:	b9 3f       	cpi	r27, 0xF9	; 249
-    3b94:	cc f3       	brlt	.-14     	; 0x3b88 <.Lavrlibm_3b00>
+    3b94:	cc f3       	brlt	.-14     	; 0x3b88 <.L__fixunssfsi_shift_right_byte>
 
-00003b96 <.Lavrlibm_3b0e>:
+00003b96 <.L__fixunssfsi_shift_right_bit>:
     3b96:	86 95       	lsr	r24
     3b98:	77 95       	ror	r23
     3b9a:	67 95       	ror	r22
     3b9c:	b3 95       	inc	r27
-    3b9e:	d9 f7       	brne	.-10     	; 0x3b96 <.Lavrlibm_3b0e>
+    3b9e:	d9 f7       	brne	.-10     	; 0x3b96 <.L__fixunssfsi_shift_right_bit>
 
-00003ba0 <.Lavrlibm_3b18>:
-    3ba0:	3e f4       	brtc	.+14     	; 0x3bb0 <.Lavrlibm_3b28>
+00003ba0 <.L__fixunssfsi_apply_sign>:
+    3ba0:	3e f4       	brtc	.+14     	; 0x3bb0 <.L__fixunssfsi_return>
     3ba2:	90 95       	com	r25
     3ba4:	80 95       	com	r24
     3ba6:	70 95       	com	r23
@@ -9795,16 +9778,16 @@ Disassembly of section .text:
     3bac:	8f 4f       	sbci	r24, 0xFF	; 255
     3bae:	9f 4f       	sbci	r25, 0xFF	; 255
 
-00003bb0 <.Lavrlibm_3b28>:
+00003bb0 <.L__fixunssfsi_return>:
     3bb0:	08 95       	ret
 
 00003bb2 <__floatunsisf>:
     3bb2:	e8 94       	clt
-    3bb4:	09 c0       	rjmp	.+18     	; 0x3bc8 <.Lavrlibm_3b40>
+    3bb4:	09 c0       	rjmp	.+18     	; 0x3bc8 <.L__floatsisf_magnitude_ready>
 
 00003bb6 <__floatsisf>:
     3bb6:	97 fb       	bst	r25, 7
-    3bb8:	3e f4       	brtc	.+14     	; 0x3bc8 <.Lavrlibm_3b40>
+    3bb8:	3e f4       	brtc	.+14     	; 0x3bc8 <.L__floatsisf_magnitude_ready>
     3bba:	90 95       	com	r25
     3bbc:	80 95       	com	r24
     3bbe:	70 95       	com	r23
@@ -9813,14 +9796,14 @@ Disassembly of section .text:
     3bc4:	8f 4f       	sbci	r24, 0xFF	; 255
     3bc6:	9f 4f       	sbci	r25, 0xFF	; 255
 
-00003bc8 <.Lavrlibm_3b40>:
+00003bc8 <.L__floatsisf_magnitude_ready>:
     3bc8:	99 23       	and	r25, r25
-    3bca:	a9 f0       	breq	.+42     	; 0x3bf6 <.Lavrlibm_3b6e>
+    3bca:	a9 f0       	breq	.+42     	; 0x3bf6 <.L__floatsisf_check_middle_byte>
     3bcc:	f9 2f       	mov	r31, r25
     3bce:	96 e9       	ldi	r25, 0x96	; 150
     3bd0:	bb 27       	eor	r27, r27
 
-00003bd2 <.Lavrlibm_3b4a>:
+00003bd2 <.L__floatsisf_shift_right>:
     3bd2:	93 95       	inc	r25
     3bd4:	f6 95       	lsr	r31
     3bd6:	87 95       	ror	r24
@@ -9828,90 +9811,90 @@ Disassembly of section .text:
     3bda:	67 95       	ror	r22
     3bdc:	b7 95       	ror	r27
     3bde:	f1 11       	cpse	r31, r1
-    3be0:	f8 cf       	rjmp	.-16     	; 0x3bd2 <.Lavrlibm_3b4a>
-    3be2:	fa f4       	brpl	.+62     	; 0x3c22 <.Lavrlibm_3b9a>
+    3be0:	f8 cf       	rjmp	.-16     	; 0x3bd2 <.L__floatsisf_shift_right>
+    3be2:	fa f4       	brpl	.+62     	; 0x3c22 <.L__floatsisf_pack>
     3be4:	bb 0f       	add	r27, r27
-    3be6:	11 f4       	brne	.+4      	; 0x3bec <.Lavrlibm_3b64>
+    3be6:	11 f4       	brne	.+4      	; 0x3bec <.L__floatsisf_round_up>
     3be8:	60 ff       	sbrs	r22, 0
-    3bea:	1b c0       	rjmp	.+54     	; 0x3c22 <.Lavrlibm_3b9a>
+    3bea:	1b c0       	rjmp	.+54     	; 0x3c22 <.L__floatsisf_pack>
 
-00003bec <.Lavrlibm_3b64>:
+00003bec <.L__floatsisf_round_up>:
     3bec:	6f 5f       	subi	r22, 0xFF	; 255
     3bee:	7f 4f       	sbci	r23, 0xFF	; 255
     3bf0:	8f 4f       	sbci	r24, 0xFF	; 255
     3bf2:	9f 4f       	sbci	r25, 0xFF	; 255
-    3bf4:	16 c0       	rjmp	.+44     	; 0x3c22 <.Lavrlibm_3b9a>
+    3bf4:	16 c0       	rjmp	.+44     	; 0x3c22 <.L__floatsisf_pack>
 
-00003bf6 <.Lavrlibm_3b6e>:
+00003bf6 <.L__floatsisf_check_middle_byte>:
     3bf6:	88 23       	and	r24, r24
-    3bf8:	11 f0       	breq	.+4      	; 0x3bfe <.Lavrlibm_3b76>
+    3bf8:	11 f0       	breq	.+4      	; 0x3bfe <.L__floatsisf_check_low_word>
     3bfa:	96 e9       	ldi	r25, 0x96	; 150
-    3bfc:	11 c0       	rjmp	.+34     	; 0x3c20 <.Lavrlibm_3b98>
+    3bfc:	11 c0       	rjmp	.+34     	; 0x3c20 <.L__floatsisf_continue_left_shift>
 
-00003bfe <.Lavrlibm_3b76>:
+00003bfe <.L__floatsisf_check_low_word>:
     3bfe:	77 23       	and	r23, r23
-    3c00:	21 f0       	breq	.+8      	; 0x3c0a <.Lavrlibm_3b82>
+    3c00:	21 f0       	breq	.+8      	; 0x3c0a <.L__floatsisf_check_low_byte>
     3c02:	9e e8       	ldi	r25, 0x8E	; 142
     3c04:	87 2f       	mov	r24, r23
     3c06:	76 2f       	mov	r23, r22
-    3c08:	05 c0       	rjmp	.+10     	; 0x3c14 <.Lavrlibm_3b8c>
+    3c08:	05 c0       	rjmp	.+10     	; 0x3c14 <.L__floatsisf_prepare_left_shift>
 
-00003c0a <.Lavrlibm_3b82>:
+00003c0a <.L__floatsisf_check_low_byte>:
     3c0a:	66 23       	and	r22, r22
-    3c0c:	71 f0       	breq	.+28     	; 0x3c2a <.Lavrlibm_3ba2>
+    3c0c:	71 f0       	breq	.+28     	; 0x3c2a <.L__floatsisf_return>
     3c0e:	96 e8       	ldi	r25, 0x86	; 134
     3c10:	86 2f       	mov	r24, r22
     3c12:	70 e0       	ldi	r23, 0x00	; 0
 
-00003c14 <.Lavrlibm_3b8c>:
+00003c14 <.L__floatsisf_prepare_left_shift>:
     3c14:	60 e0       	ldi	r22, 0x00	; 0
-    3c16:	2a f0       	brmi	.+10     	; 0x3c22 <.Lavrlibm_3b9a>
+    3c16:	2a f0       	brmi	.+10     	; 0x3c22 <.L__floatsisf_pack>
 
-00003c18 <.Lavrlibm_3b90>:
+00003c18 <.L__floatsisf_shift_left>:
     3c18:	9a 95       	dec	r25
     3c1a:	66 0f       	add	r22, r22
     3c1c:	77 1f       	adc	r23, r23
     3c1e:	88 1f       	adc	r24, r24
 
-00003c20 <.Lavrlibm_3b98>:
-    3c20:	da f7       	brpl	.-10     	; 0x3c18 <.Lavrlibm_3b90>
+00003c20 <.L__floatsisf_continue_left_shift>:
+    3c20:	da f7       	brpl	.-10     	; 0x3c18 <.L__floatsisf_shift_left>
 
-00003c22 <.Lavrlibm_3b9a>:
+00003c22 <.L__floatsisf_pack>:
     3c22:	88 0f       	add	r24, r24
     3c24:	96 95       	lsr	r25
     3c26:	87 95       	ror	r24
     3c28:	97 f9       	bld	r25, 7
 
-00003c2a <.Lavrlibm_3ba2>:
+00003c2a <.L__floatsisf_return>:
     3c2a:	08 95       	ret
 
 00003c2c <floor>:
     3c2c:	c8 d0       	rcall	.+400    	; 0x3dbe <__fp_trunc>
-    3c2e:	80 f0       	brcs	.+32     	; 0x3c50 <.Lavrlibm_3bce>
+    3c2e:	80 f0       	brcs	.+32     	; 0x3c50 <.L_floorf_nonfinite>
     3c30:	9f 37       	cpi	r25, 0x7F	; 127
-    3c32:	40 f4       	brcc	.+16     	; 0x3c44 <.Lavrlibm_3bc0>
+    3c32:	40 f4       	brcc	.+16     	; 0x3c44 <.L_floorf_integral_or_larger>
     3c34:	91 11       	cpse	r25, r1
-    3c36:	0e f0       	brts	.+2      	; 0x3c3a <.Lavrlibm_3bb6>
+    3c36:	0e f0       	brts	.+2      	; 0x3c3a <.L_floorf_negative_fraction>
     3c38:	da c0       	rjmp	.+436    	; 0x3dee <__fp_szero>
 
-00003c3a <.Lavrlibm_3bb6>:
+00003c3a <.L_floorf_negative_fraction>:
     3c3a:	60 e0       	ldi	r22, 0x00	; 0
     3c3c:	70 e0       	ldi	r23, 0x00	; 0
     3c3e:	80 e8       	ldi	r24, 0x80	; 128
     3c40:	9f eb       	ldi	r25, 0xBF	; 191
     3c42:	08 95       	ret
 
-00003c44 <.Lavrlibm_3bc0>:
-    3c44:	26 f4       	brtc	.+8      	; 0x3c4e <.Lavrlibm_3bca>
+00003c44 <.L_floorf_integral_or_larger>:
+    3c44:	26 f4       	brtc	.+8      	; 0x3c4e <.L_floorf_pack_integer>
     3c46:	1b 16       	cp	r1, r27
     3c48:	61 1d       	adc	r22, r1
     3c4a:	71 1d       	adc	r23, r1
     3c4c:	81 1d       	adc	r24, r1
 
-00003c4e <.Lavrlibm_3bca>:
+00003c4e <.L_floorf_pack_integer>:
     3c4e:	4a c0       	rjmp	.+148    	; 0x3ce4 <__fp_mintl>
 
-00003c50 <.Lavrlibm_3bce>:
+00003c50 <.L_floorf_nonfinite>:
     3c50:	64 c0       	rjmp	.+200    	; 0x3d1a <__fp_mpack>
 
 00003c52 <fmin>:
@@ -9925,28 +9908,28 @@ Disassembly of section .text:
     3c60:	17 06       	cpc	r1, r23
     3c62:	e8 07       	cpc	r30, r24
     3c64:	f9 07       	cpc	r31, r25
-    3c66:	70 f0       	brcs	.+28     	; 0x3c84 <.Lavrlibm_3c04>
+    3c66:	70 f0       	brcs	.+28     	; 0x3c84 <.L_fminf_return_b>
     3c68:	12 16       	cp	r1, r18
     3c6a:	13 06       	cpc	r1, r19
     3c6c:	e4 07       	cpc	r30, r20
     3c6e:	f5 07       	cpc	r31, r21
-    3c70:	60 f0       	brcs	.+24     	; 0x3c8a <.Lavrlibm_3c0a>
+    3c70:	60 f0       	brcs	.+24     	; 0x3c8a <.L_fminf_return_a>
     3c72:	ba 17       	cp	r27, r26
-    3c74:	54 f0       	brlt	.+20     	; 0x3c8a <.Lavrlibm_3c0a>
-    3c76:	31 f4       	brne	.+12     	; 0x3c84 <.Lavrlibm_3c04>
+    3c74:	54 f0       	brlt	.+20     	; 0x3c8a <.L_fminf_return_a>
+    3c76:	31 f4       	brne	.+12     	; 0x3c84 <.L_fminf_return_b>
     3c78:	26 17       	cp	r18, r22
     3c7a:	37 07       	cpc	r19, r23
     3c7c:	48 07       	cpc	r20, r24
     3c7e:	59 07       	cpc	r21, r25
     3c80:	a7 95       	ror	r26
-    3c82:	1b f4       	brvc	.+6      	; 0x3c8a <.Lavrlibm_3c0a>
+    3c82:	1b f4       	brvc	.+6      	; 0x3c8a <.L_fminf_return_a>
 
-00003c84 <.Lavrlibm_3c04>:
+00003c84 <.L_fminf_return_b>:
     3c84:	b9 01       	movw	r22, r18
     3c86:	ca 01       	movw	r24, r20
     3c88:	ba 2f       	mov	r27, r26
 
-00003c8a <.Lavrlibm_3c0a>:
+00003c8a <.L_fminf_return_a>:
     3c8a:	b6 95       	lsr	r27
     3c8c:	97 95       	ror	r25
     3c8e:	08 95       	ret
@@ -9962,37 +9945,37 @@ Disassembly of section .text:
     3c9e:	17 06       	cpc	r1, r23
     3ca0:	e8 07       	cpc	r30, r24
     3ca2:	f9 07       	cpc	r31, r25
-    3ca4:	c0 f0       	brcs	.+48     	; 0x3cd6 <.Lavrlibm_3c56>
+    3ca4:	c0 f0       	brcs	.+48     	; 0x3cd6 <.L__fp_cmp_return>
     3ca6:	12 16       	cp	r1, r18
     3ca8:	13 06       	cpc	r1, r19
     3caa:	e4 07       	cpc	r30, r20
     3cac:	f5 07       	cpc	r31, r21
-    3cae:	98 f0       	brcs	.+38     	; 0x3cd6 <.Lavrlibm_3c56>
+    3cae:	98 f0       	brcs	.+38     	; 0x3cd6 <.L__fp_cmp_return>
     3cb0:	62 1b       	sub	r22, r18
     3cb2:	73 0b       	sbc	r23, r19
     3cb4:	84 0b       	sbc	r24, r20
     3cb6:	95 0b       	sbc	r25, r21
-    3cb8:	39 f4       	brne	.+14     	; 0x3cc8 <.Lavrlibm_3c48>
+    3cb8:	39 f4       	brne	.+14     	; 0x3cc8 <.L__fp_cmp_compare_signs>
     3cba:	0a 26       	eor	r0, r26
-    3cbc:	61 f0       	breq	.+24     	; 0x3cd6 <.Lavrlibm_3c56>
+    3cbc:	61 f0       	breq	.+24     	; 0x3cd6 <.L__fp_cmp_return>
     3cbe:	23 2b       	or	r18, r19
     3cc0:	24 2b       	or	r18, r20
     3cc2:	25 2b       	or	r18, r21
-    3cc4:	21 f4       	brne	.+8      	; 0x3cce <.Lavrlibm_3c4e>
+    3cc4:	21 f4       	brne	.+8      	; 0x3cce <.L__fp_cmp_build_result>
     3cc6:	08 95       	ret
 
-00003cc8 <.Lavrlibm_3c48>:
+00003cc8 <.L__fp_cmp_compare_signs>:
     3cc8:	0a 26       	eor	r0, r26
-    3cca:	09 f4       	brne	.+2      	; 0x3cce <.Lavrlibm_3c4e>
+    3cca:	09 f4       	brne	.+2      	; 0x3cce <.L__fp_cmp_build_result>
     3ccc:	a1 40       	sbci	r26, 0x01	; 1
 
-00003cce <.Lavrlibm_3c4e>:
+00003cce <.L__fp_cmp_build_result>:
     3cce:	a6 95       	lsr	r26
     3cd0:	8f ef       	ldi	r24, 0xFF	; 255
     3cd2:	81 1d       	adc	r24, r1
     3cd4:	81 1d       	adc	r24, r1
 
-00003cd6 <.Lavrlibm_3c56>:
+00003cd6 <.L__fp_cmp_return>:
     3cd6:	08 95       	ret
 
 00003cd8 <__fp_inf>:
@@ -10005,60 +9988,60 @@ Disassembly of section .text:
 
 00003ce4 <__fp_mintl>:
     3ce4:	88 23       	and	r24, r24
-    3ce6:	71 f4       	brne	.+28     	; 0x3d04 <.Lavrlibm_3c84>
+    3ce6:	71 f4       	brne	.+28     	; 0x3d04 <.L__fp_mintl_mantissa_ready>
     3ce8:	77 23       	and	r23, r23
-    3cea:	21 f0       	breq	.+8      	; 0x3cf4 <.Lavrlibm_3c74>
+    3cea:	21 f0       	breq	.+8      	; 0x3cf4 <.L__fp_mintl_check_low_byte>
     3cec:	98 50       	subi	r25, 0x08	; 8
     3cee:	87 2b       	or	r24, r23
     3cf0:	76 2f       	mov	r23, r22
-    3cf2:	07 c0       	rjmp	.+14     	; 0x3d02 <.Lavrlibm_3c82>
+    3cf2:	07 c0       	rjmp	.+14     	; 0x3d02 <.L__fp_mintl_clear_low_byte>
 
-00003cf4 <.Lavrlibm_3c74>:
+00003cf4 <.L__fp_mintl_check_low_byte>:
     3cf4:	66 23       	and	r22, r22
-    3cf6:	11 f4       	brne	.+4      	; 0x3cfc <.Lavrlibm_3c7c>
+    3cf6:	11 f4       	brne	.+4      	; 0x3cfc <.L__fp_mintl_use_low_byte>
     3cf8:	99 27       	eor	r25, r25
-    3cfa:	0d c0       	rjmp	.+26     	; 0x3d16 <.Lavrlibm_3c96>
+    3cfa:	0d c0       	rjmp	.+26     	; 0x3d16 <.L__fp_mintl_apply_sign>
 
-00003cfc <.Lavrlibm_3c7c>:
+00003cfc <.L__fp_mintl_use_low_byte>:
     3cfc:	90 51       	subi	r25, 0x10	; 16
     3cfe:	86 2b       	or	r24, r22
     3d00:	70 e0       	ldi	r23, 0x00	; 0
 
-00003d02 <.Lavrlibm_3c82>:
+00003d02 <.L__fp_mintl_clear_low_byte>:
     3d02:	60 e0       	ldi	r22, 0x00	; 0
 
-00003d04 <.Lavrlibm_3c84>:
-    3d04:	2a f0       	brmi	.+10     	; 0x3d10 <.Lavrlibm_3c90>
+00003d04 <.L__fp_mintl_mantissa_ready>:
+    3d04:	2a f0       	brmi	.+10     	; 0x3d10 <.L__fp_mintl_pack>
 
-00003d06 <.Lavrlibm_3c86>:
+00003d06 <.L__fp_mintl_normalize>:
     3d06:	9a 95       	dec	r25
     3d08:	66 0f       	add	r22, r22
     3d0a:	77 1f       	adc	r23, r23
     3d0c:	88 1f       	adc	r24, r24
-    3d0e:	da f7       	brpl	.-10     	; 0x3d06 <.Lavrlibm_3c86>
+    3d0e:	da f7       	brpl	.-10     	; 0x3d06 <.L__fp_mintl_normalize>
 
-00003d10 <.Lavrlibm_3c90>:
+00003d10 <.L__fp_mintl_pack>:
     3d10:	88 0f       	add	r24, r24
     3d12:	96 95       	lsr	r25
     3d14:	87 95       	ror	r24
 
-00003d16 <.Lavrlibm_3c96>:
+00003d16 <.L__fp_mintl_apply_sign>:
     3d16:	97 f9       	bld	r25, 7
     3d18:	08 95       	ret
 
 00003d1a <__fp_mpack>:
     3d1a:	9f 3f       	cpi	r25, 0xFF	; 255
-    3d1c:	31 f0       	breq	.+12     	; 0x3d2a <.Lavrlibm_3caa>
+    3d1c:	31 f0       	breq	.+12     	; 0x3d2a <.L__fp_mpack_pack_common>
 
 00003d1e <__fp_mpack_finite>:
     3d1e:	91 50       	subi	r25, 0x01	; 1
-    3d20:	20 f4       	brcc	.+8      	; 0x3d2a <.Lavrlibm_3caa>
+    3d20:	20 f4       	brcc	.+8      	; 0x3d2a <.L__fp_mpack_pack_common>
     3d22:	87 95       	ror	r24
     3d24:	77 95       	ror	r23
     3d26:	67 95       	ror	r22
     3d28:	b7 95       	ror	r27
 
-00003d2a <.Lavrlibm_3caa>:
+00003d2a <.L__fp_mpack_pack_common>:
     3d2a:	88 0f       	add	r24, r24
     3d2c:	91 1d       	adc	r25, r1
     3d2e:	96 95       	lsr	r25
@@ -10093,25 +10076,25 @@ Disassembly of section .text:
     3d58:	09 2e       	mov	r0, r25
     3d5a:	03 94       	inc	r0
     3d5c:	00 0c       	add	r0, r0
-    3d5e:	11 f4       	brne	.+4      	; 0x3d64 <.Lavrlibm_3ce4>
+    3d5e:	11 f4       	brne	.+4      	; 0x3d64 <.L__fp_round_check_rounding>
     3d60:	88 23       	and	r24, r24
-    3d62:	52 f0       	brmi	.+20     	; 0x3d78 <.Lavrlibm_3cf8>
+    3d62:	52 f0       	brmi	.+20     	; 0x3d78 <.L__fp_round_return>
 
-00003d64 <.Lavrlibm_3ce4>:
+00003d64 <.L__fp_round_check_rounding>:
     3d64:	bb 0f       	add	r27, r27
-    3d66:	40 f4       	brcc	.+16     	; 0x3d78 <.Lavrlibm_3cf8>
+    3d66:	40 f4       	brcc	.+16     	; 0x3d78 <.L__fp_round_return>
     3d68:	bf 2b       	or	r27, r31
-    3d6a:	11 f4       	brne	.+4      	; 0x3d70 <.Lavrlibm_3cf0>
+    3d6a:	11 f4       	brne	.+4      	; 0x3d70 <.L__fp_round_increment>
     3d6c:	60 ff       	sbrs	r22, 0
-    3d6e:	04 c0       	rjmp	.+8      	; 0x3d78 <.Lavrlibm_3cf8>
+    3d6e:	04 c0       	rjmp	.+8      	; 0x3d78 <.L__fp_round_return>
 
-00003d70 <.Lavrlibm_3cf0>:
+00003d70 <.L__fp_round_increment>:
     3d70:	6f 5f       	subi	r22, 0xFF	; 255
     3d72:	7f 4f       	sbci	r23, 0xFF	; 255
     3d74:	8f 4f       	sbci	r24, 0xFF	; 255
     3d76:	9f 4f       	sbci	r25, 0xFF	; 255
 
-00003d78 <.Lavrlibm_3cf8>:
+00003d78 <.L__fp_round_return>:
     3d78:	08 95       	ret
 
 00003d7a <__fp_split3>:
@@ -10119,84 +10102,84 @@ Disassembly of section .text:
     3d7c:	90 58       	subi	r25, 0x80	; 128
     3d7e:	44 0f       	add	r20, r20
     3d80:	55 1f       	adc	r21, r21
-    3d82:	59 f0       	breq	.+22     	; 0x3d9a <.Lavrlibm_3d1a>
+    3d82:	59 f0       	breq	.+22     	; 0x3d9a <.L__fp_split3_b_zero_or_subnormal>
     3d84:	5f 3f       	cpi	r21, 0xFF	; 255
-    3d86:	71 f0       	breq	.+28     	; 0x3da4 <.Lavrlibm_3d24>
+    3d86:	71 f0       	breq	.+28     	; 0x3da4 <.L__fp_split3_b_nonfinite>
 
-00003d88 <.Lavrlibm_3d08>:
+00003d88 <.L__fp_split3_restore_b_mantissa>:
     3d88:	47 95       	ror	r20
 
 00003d8a <__fp_splitA>:
     3d8a:	88 0f       	add	r24, r24
     3d8c:	97 fb       	bst	r25, 7
     3d8e:	99 1f       	adc	r25, r25
-    3d90:	61 f0       	breq	.+24     	; 0x3daa <.Lavrlibm_3d2a>
+    3d90:	61 f0       	breq	.+24     	; 0x3daa <.L__fp_splitA_zero_or_subnormal>
     3d92:	9f 3f       	cpi	r25, 0xFF	; 255
-    3d94:	79 f0       	breq	.+30     	; 0x3db4 <.Lavrlibm_3d34>
+    3d94:	79 f0       	breq	.+30     	; 0x3db4 <.L__fp_splitA_nonfinite>
 
-00003d96 <.Lavrlibm_3d16>:
+00003d96 <.L__fp_splitA_restore_mantissa>:
     3d96:	87 95       	ror	r24
     3d98:	08 95       	ret
 
-00003d9a <.Lavrlibm_3d1a>:
+00003d9a <.L__fp_split3_b_zero_or_subnormal>:
     3d9a:	12 16       	cp	r1, r18
     3d9c:	13 06       	cpc	r1, r19
     3d9e:	14 06       	cpc	r1, r20
     3da0:	55 1f       	adc	r21, r21
-    3da2:	f2 cf       	rjmp	.-28     	; 0x3d88 <.Lavrlibm_3d08>
+    3da2:	f2 cf       	rjmp	.-28     	; 0x3d88 <.L__fp_split3_restore_b_mantissa>
 
-00003da4 <.Lavrlibm_3d24>:
+00003da4 <.L__fp_split3_b_nonfinite>:
     3da4:	46 95       	lsr	r20
     3da6:	f1 df       	rcall	.-30     	; 0x3d8a <__fp_splitA>
-    3da8:	08 c0       	rjmp	.+16     	; 0x3dba <.Lavrlibm_3d3a>
+    3da8:	08 c0       	rjmp	.+16     	; 0x3dba <.L__fp_splitA_return_nonfinite>
 
-00003daa <.Lavrlibm_3d2a>:
+00003daa <.L__fp_splitA_zero_or_subnormal>:
     3daa:	16 16       	cp	r1, r22
     3dac:	17 06       	cpc	r1, r23
     3dae:	18 06       	cpc	r1, r24
     3db0:	99 1f       	adc	r25, r25
-    3db2:	f1 cf       	rjmp	.-30     	; 0x3d96 <.Lavrlibm_3d16>
+    3db2:	f1 cf       	rjmp	.-30     	; 0x3d96 <.L__fp_splitA_restore_mantissa>
 
-00003db4 <.Lavrlibm_3d34>:
+00003db4 <.L__fp_splitA_nonfinite>:
     3db4:	86 95       	lsr	r24
     3db6:	71 05       	cpc	r23, r1
     3db8:	61 05       	cpc	r22, r1
 
-00003dba <.Lavrlibm_3d3a>:
+00003dba <.L__fp_splitA_return_nonfinite>:
     3dba:	08 94       	sec
     3dbc:	08 95       	ret
 
 00003dbe <__fp_trunc>:
     3dbe:	e5 df       	rcall	.-54     	; 0x3d8a <__fp_splitA>
-    3dc0:	a0 f0       	brcs	.+40     	; 0x3dea <.Lavrlibm_3d6c>
+    3dc0:	a0 f0       	brcs	.+40     	; 0x3dea <.L__fp_trunc_return>
     3dc2:	be e7       	ldi	r27, 0x7E	; 126
     3dc4:	b9 17       	cp	r27, r25
-    3dc6:	88 f4       	brcc	.+34     	; 0x3dea <.Lavrlibm_3d6c>
+    3dc6:	88 f4       	brcc	.+34     	; 0x3dea <.L__fp_trunc_return>
     3dc8:	bb 27       	eor	r27, r27
 
-00003dca <.Lavrlibm_3d4c>:
+00003dca <.L__fp_trunc_shift_right_byte>:
     3dca:	9f 38       	cpi	r25, 0x8F	; 143
-    3dcc:	60 f4       	brcc	.+24     	; 0x3de6 <.Lavrlibm_3d68>
+    3dcc:	60 f4       	brcc	.+24     	; 0x3de6 <.L__fp_trunc_check_shift>
     3dce:	16 16       	cp	r1, r22
     3dd0:	b1 1d       	adc	r27, r1
     3dd2:	67 2f       	mov	r22, r23
     3dd4:	78 2f       	mov	r23, r24
     3dd6:	88 27       	eor	r24, r24
     3dd8:	98 5f       	subi	r25, 0xF8	; 248
-    3dda:	f7 cf       	rjmp	.-18     	; 0x3dca <.Lavrlibm_3d4c>
+    3dda:	f7 cf       	rjmp	.-18     	; 0x3dca <.L__fp_trunc_shift_right_byte>
 
-00003ddc <.Lavrlibm_3d5e>:
+00003ddc <.L__fp_trunc_shift_right_bit>:
     3ddc:	86 95       	lsr	r24
     3dde:	77 95       	ror	r23
     3de0:	67 95       	ror	r22
     3de2:	b1 1d       	adc	r27, r1
     3de4:	93 95       	inc	r25
 
-00003de6 <.Lavrlibm_3d68>:
+00003de6 <.L__fp_trunc_check_shift>:
     3de6:	96 39       	cpi	r25, 0x96	; 150
-    3de8:	c8 f3       	brcs	.-14     	; 0x3ddc <.Lavrlibm_3d5e>
+    3de8:	c8 f3       	brcs	.-14     	; 0x3ddc <.L__fp_trunc_shift_right_bit>
 
-00003dea <.Lavrlibm_3d6c>:
+00003dea <.L__fp_trunc_return>:
     3dea:	08 95       	ret
 
 00003dec <__fp_zero>:
@@ -10214,29 +10197,29 @@ Disassembly of section .text:
     3dfa:	0b d0       	rcall	.+22     	; 0x3e12 <__mulsf3x>
     3dfc:	ad cf       	rjmp	.-166    	; 0x3d58 <__fp_round>
 
-00003dfe <.Lavrlibm_3d84>:
+00003dfe <.L__mulsf3_special_cases>:
     3dfe:	9e df       	rcall	.-196    	; 0x3d3c <__fp_pscA>
-    3e00:	28 f0       	brcs	.+10     	; 0x3e0c <.Lavrlibm_3d98>
+    3e00:	28 f0       	brcs	.+10     	; 0x3e0c <.L__mulsf3_nan>
     3e02:	a3 df       	rcall	.-186    	; 0x3d4a <__fp_pscB>
-    3e04:	18 f0       	brcs	.+6      	; 0x3e0c <.Lavrlibm_3d98>
+    3e04:	18 f0       	brcs	.+6      	; 0x3e0c <.L__mulsf3_nan>
     3e06:	95 23       	and	r25, r21
-    3e08:	09 f0       	breq	.+2      	; 0x3e0c <.Lavrlibm_3d98>
+    3e08:	09 f0       	breq	.+2      	; 0x3e0c <.L__mulsf3_nan>
     3e0a:	66 cf       	rjmp	.-308    	; 0x3cd8 <__fp_inf>
 
-00003e0c <.Lavrlibm_3d98>:
+00003e0c <.L__mulsf3_nan>:
     3e0c:	94 cf       	rjmp	.-216    	; 0x3d36 <__fp_nan>
 
-00003e0e <.Lavrlibm_3d9c>:
+00003e0e <.L__mulsf3_szero>:
     3e0e:	11 24       	eor	r1, r1
     3e10:	ee cf       	rjmp	.-36     	; 0x3dee <__fp_szero>
 
 00003e12 <__mulsf3x>:
     3e12:	b3 df       	rcall	.-154    	; 0x3d7a <__fp_split3>
-    3e14:	a0 f3       	brcs	.-24     	; 0x3dfe <.Lavrlibm_3d84>
+    3e14:	a0 f3       	brcs	.-24     	; 0x3dfe <.L__mulsf3_special_cases>
 
 00003e16 <__mulsf3_pse>:
     3e16:	95 9f       	mul	r25, r21
-    3e18:	d1 f3       	breq	.-12     	; 0x3e0e <.Lavrlibm_3d9c>
+    3e18:	d1 f3       	breq	.-12     	; 0x3e0e <.L__mulsf3_szero>
     3e1a:	95 0f       	add	r25, r21
     3e1c:	50 e0       	ldi	r21, 0x00	; 0
     3e1e:	55 1f       	adc	r21, r21
@@ -10283,12 +10266,12 @@ Disassembly of section .text:
     3e70:	11 24       	eor	r1, r1
     3e72:	9f 57       	subi	r25, 0x7F	; 127
     3e74:	50 40       	sbci	r21, 0x00	; 0
-    3e76:	8a f0       	brmi	.+34     	; 0x3e9a <.Lavrlibm_3e30>
-    3e78:	e1 f0       	breq	.+56     	; 0x3eb2 <.Lavrlibm_3e48>
+    3e76:	8a f0       	brmi	.+34     	; 0x3e9a <.L__mulsf3_prepare_denormal>
+    3e78:	e1 f0       	breq	.+56     	; 0x3eb2 <.L__mulsf3_pack_result>
 
-00003e7a <.Lavrlibm_3e0c>:
+00003e7a <.L__mulsf3_normalize>:
     3e7a:	88 23       	and	r24, r24
-    3e7c:	4a f0       	brmi	.+18     	; 0x3e90 <.Lavrlibm_3e22>
+    3e7c:	4a f0       	brmi	.+18     	; 0x3e90 <.L__mulsf3_check_overflow>
     3e7e:	ee 0f       	add	r30, r30
     3e80:	ff 1f       	adc	r31, r31
     3e82:	bb 1f       	adc	r27, r27
@@ -10297,24 +10280,24 @@ Disassembly of section .text:
     3e88:	88 1f       	adc	r24, r24
     3e8a:	91 50       	subi	r25, 0x01	; 1
     3e8c:	50 40       	sbci	r21, 0x00	; 0
-    3e8e:	a9 f7       	brne	.-22     	; 0x3e7a <.Lavrlibm_3e0c>
+    3e8e:	a9 f7       	brne	.-22     	; 0x3e7a <.L__mulsf3_normalize>
 
-00003e90 <.Lavrlibm_3e22>:
+00003e90 <.L__mulsf3_check_overflow>:
     3e90:	9e 3f       	cpi	r25, 0xFE	; 254
     3e92:	51 05       	cpc	r21, r1
-    3e94:	70 f0       	brcs	.+28     	; 0x3eb2 <.Lavrlibm_3e48>
+    3e94:	70 f0       	brcs	.+28     	; 0x3eb2 <.L__mulsf3_pack_result>
     3e96:	20 cf       	rjmp	.-448    	; 0x3cd8 <__fp_inf>
 
-00003e98 <.Lavrlibm_3e2c>:
+00003e98 <.L__mulsf3_underflow_zero>:
     3e98:	aa cf       	rjmp	.-172    	; 0x3dee <__fp_szero>
 
-00003e9a <.Lavrlibm_3e30>:
+00003e9a <.L__mulsf3_prepare_denormal>:
     3e9a:	5f 3f       	cpi	r21, 0xFF	; 255
-    3e9c:	ec f3       	brlt	.-6      	; 0x3e98 <.Lavrlibm_3e2c>
+    3e9c:	ec f3       	brlt	.-6      	; 0x3e98 <.L__mulsf3_underflow_zero>
     3e9e:	98 3e       	cpi	r25, 0xE8	; 232
-    3ea0:	dc f3       	brlt	.-10     	; 0x3e98 <.Lavrlibm_3e2c>
+    3ea0:	dc f3       	brlt	.-10     	; 0x3e98 <.L__mulsf3_underflow_zero>
 
-00003ea2 <.Lavrlibm_3e38>:
+00003ea2 <.L__mulsf3_denormalize>:
     3ea2:	86 95       	lsr	r24
     3ea4:	77 95       	ror	r23
     3ea6:	67 95       	ror	r22
@@ -10322,9 +10305,9 @@ Disassembly of section .text:
     3eaa:	f7 95       	ror	r31
     3eac:	e7 95       	ror	r30
     3eae:	9f 5f       	subi	r25, 0xFF	; 255
-    3eb0:	c1 f7       	brne	.-16     	; 0x3ea2 <.Lavrlibm_3e38>
+    3eb0:	c1 f7       	brne	.-16     	; 0x3ea2 <.L__mulsf3_denormalize>
 
-00003eb2 <.Lavrlibm_3e48>:
+00003eb2 <.L__mulsf3_pack_result>:
     3eb2:	fe 2b       	or	r31, r30
     3eb4:	88 0f       	add	r24, r24
     3eb6:	91 1d       	adc	r25, r1
@@ -10335,66 +10318,66 @@ Disassembly of section .text:
 
 00003ec0 <round>:
     3ec0:	64 df       	rcall	.-312    	; 0x3d8a <__fp_splitA>
-    3ec2:	e0 f0       	brcs	.+56     	; 0x3efc <.Lavrlibm_3e96>
+    3ec2:	e0 f0       	brcs	.+56     	; 0x3efc <.L_roundf_nonfinite>
     3ec4:	9e 37       	cpi	r25, 0x7E	; 126
-    3ec6:	d8 f0       	brcs	.+54     	; 0x3efe <.Lavrlibm_3e9a>
+    3ec6:	d8 f0       	brcs	.+54     	; 0x3efe <.L_roundf_zero>
     3ec8:	96 39       	cpi	r25, 0x96	; 150
-    3eca:	b8 f4       	brcc	.+46     	; 0x3efa <.Lavrlibm_3e92>
+    3eca:	b8 f4       	brcc	.+46     	; 0x3efa <.L_roundf_pack_integer>
 
-00003ecc <.Lavrlibm_3e64>:
+00003ecc <.L_roundf_shift_right_byte>:
     3ecc:	9e 38       	cpi	r25, 0x8E	; 142
-    3ece:	48 f4       	brcc	.+18     	; 0x3ee2 <.Lavrlibm_3e7a>
+    3ece:	48 f4       	brcc	.+18     	; 0x3ee2 <.L_roundf_check_shift>
     3ed0:	67 2f       	mov	r22, r23
     3ed2:	78 2f       	mov	r23, r24
     3ed4:	88 27       	eor	r24, r24
     3ed6:	98 5f       	subi	r25, 0xF8	; 248
-    3ed8:	f9 cf       	rjmp	.-14     	; 0x3ecc <.Lavrlibm_3e64>
+    3ed8:	f9 cf       	rjmp	.-14     	; 0x3ecc <.L_roundf_shift_right_byte>
 
-00003eda <.Lavrlibm_3e72>:
+00003eda <.L_roundf_shift_right_bit>:
     3eda:	86 95       	lsr	r24
     3edc:	77 95       	ror	r23
     3ede:	67 95       	ror	r22
     3ee0:	93 95       	inc	r25
 
-00003ee2 <.Lavrlibm_3e7a>:
+00003ee2 <.L_roundf_check_shift>:
     3ee2:	95 39       	cpi	r25, 0x95	; 149
-    3ee4:	d0 f3       	brcs	.-12     	; 0x3eda <.Lavrlibm_3e72>
+    3ee4:	d0 f3       	brcs	.-12     	; 0x3eda <.L_roundf_shift_right_bit>
     3ee6:	b6 2f       	mov	r27, r22
     3ee8:	b1 70       	andi	r27, 0x01	; 1
     3eea:	6b 0f       	add	r22, r27
     3eec:	71 1d       	adc	r23, r1
     3eee:	81 1d       	adc	r24, r1
-    3ef0:	20 f4       	brcc	.+8      	; 0x3efa <.Lavrlibm_3e92>
+    3ef0:	20 f4       	brcc	.+8      	; 0x3efa <.L_roundf_pack_integer>
     3ef2:	87 95       	ror	r24
     3ef4:	77 95       	ror	r23
     3ef6:	67 95       	ror	r22
     3ef8:	93 95       	inc	r25
 
-00003efa <.Lavrlibm_3e92>:
+00003efa <.L_roundf_pack_integer>:
     3efa:	f4 ce       	rjmp	.-536    	; 0x3ce4 <__fp_mintl>
 
-00003efc <.Lavrlibm_3e96>:
+00003efc <.L_roundf_nonfinite>:
     3efc:	0e cf       	rjmp	.-484    	; 0x3d1a <__fp_mpack>
 
-00003efe <.Lavrlibm_3e9a>:
+00003efe <.L_roundf_zero>:
     3efe:	77 cf       	rjmp	.-274    	; 0x3dee <__fp_szero>
 
-00003f00 <.Lavrlibm_3e9e>:
-    3f00:	11 f4       	brne	.+4      	; 0x3f06 <.Lavrlibm_3ea6>
-    3f02:	0e f4       	brtc	.+2      	; 0x3f06 <.Lavrlibm_3ea6>
+00003f00 <.L_sqrtf_nonfinite>:
+    3f00:	11 f4       	brne	.+4      	; 0x3f06 <.L_sqrtf_pack>
+    3f02:	0e f4       	brtc	.+2      	; 0x3f06 <.L_sqrtf_pack>
 
-00003f04 <.Lavrlibm_3ea2>:
+00003f04 <.L_sqrtf_nan>:
     3f04:	18 cf       	rjmp	.-464    	; 0x3d36 <__fp_nan>
 
-00003f06 <.Lavrlibm_3ea6>:
+00003f06 <.L_sqrtf_pack>:
     3f06:	09 cf       	rjmp	.-494    	; 0x3d1a <__fp_mpack>
 
 00003f08 <sqrt>:
     3f08:	40 df       	rcall	.-384    	; 0x3d8a <__fp_splitA>
-    3f0a:	d0 f3       	brcs	.-12     	; 0x3f00 <.Lavrlibm_3e9e>
+    3f0a:	d0 f3       	brcs	.-12     	; 0x3f00 <.L_sqrtf_nonfinite>
     3f0c:	99 23       	and	r25, r25
-    3f0e:	d9 f3       	breq	.-10     	; 0x3f06 <.Lavrlibm_3ea6>
-    3f10:	ce f3       	brts	.-14     	; 0x3f04 <.Lavrlibm_3ea2>
+    3f0e:	d9 f3       	breq	.-10     	; 0x3f06 <.L_sqrtf_pack>
+    3f10:	ce f3       	brts	.-14     	; 0x3f04 <.L_sqrtf_nan>
     3f12:	9f 57       	subi	r25, 0x7F	; 127
     3f14:	55 0b       	sbc	r21, r21
     3f16:	87 ff       	sbrs	r24, 7
@@ -10406,22 +10389,22 @@ Disassembly of section .text:
     3f22:	80 58       	subi	r24, 0x80	; 128
     3f24:	56 95       	lsr	r21
     3f26:	97 95       	ror	r25
-    3f28:	28 f4       	brcc	.+10     	; 0x3f34 <.Lavrlibm_3eda>
+    3f28:	28 f4       	brcc	.+10     	; 0x3f34 <.L_sqrtf_compare_trial>
     3f2a:	80 5c       	subi	r24, 0xC0	; 192
 
-00003f2c <.Lavrlibm_3ed2>:
+00003f2c <.L_sqrtf_digit_loop>:
     3f2c:	66 0f       	add	r22, r22
     3f2e:	77 1f       	adc	r23, r23
     3f30:	88 1f       	adc	r24, r24
-    3f32:	20 f0       	brcs	.+8      	; 0x3f3c <.Lavrlibm_3ee2>
+    3f32:	20 f0       	brcs	.+8      	; 0x3f3c <.L_sqrtf_accept_trial>
 
-00003f34 <.Lavrlibm_3eda>:
+00003f34 <.L_sqrtf_compare_trial>:
     3f34:	26 17       	cp	r18, r22
     3f36:	37 07       	cpc	r19, r23
     3f38:	48 07       	cpc	r20, r24
-    3f3a:	30 f4       	brcc	.+12     	; 0x3f48 <.Lavrlibm_3eee>
+    3f3a:	30 f4       	brcc	.+12     	; 0x3f48 <.L_sqrtf_advance_digit>
 
-00003f3c <.Lavrlibm_3ee2>:
+00003f3c <.L_sqrtf_accept_trial>:
     3f3c:	62 1b       	sub	r22, r18
     3f3e:	73 0b       	sbc	r23, r19
     3f40:	84 0b       	sbc	r24, r20
@@ -10429,26 +10412,26 @@ Disassembly of section .text:
     3f44:	31 29       	or	r19, r1
     3f46:	4a 2b       	or	r20, r26
 
-00003f48 <.Lavrlibm_3eee>:
+00003f48 <.L_sqrtf_advance_digit>:
     3f48:	a6 95       	lsr	r26
     3f4a:	17 94       	ror	r1
     3f4c:	07 94       	ror	r0
     3f4e:	20 25       	eor	r18, r0
     3f50:	31 25       	eor	r19, r1
     3f52:	4a 27       	eor	r20, r26
-    3f54:	58 f7       	brcc	.-42     	; 0x3f2c <.Lavrlibm_3ed2>
+    3f54:	58 f7       	brcc	.-42     	; 0x3f2c <.L_sqrtf_digit_loop>
 
-00003f56 <.Lavrlibm_3efc>:
+00003f56 <.L_sqrtf_rounding_loop>:
     3f56:	66 0f       	add	r22, r22
     3f58:	77 1f       	adc	r23, r23
     3f5a:	88 1f       	adc	r24, r24
-    3f5c:	20 f0       	brcs	.+8      	; 0x3f66 <.Lavrlibm_3f0c>
+    3f5c:	20 f0       	brcs	.+8      	; 0x3f66 <.L_sqrtf_accept_rounding_bit>
     3f5e:	26 17       	cp	r18, r22
     3f60:	37 07       	cpc	r19, r23
     3f62:	48 07       	cpc	r20, r24
-    3f64:	30 f4       	brcc	.+12     	; 0x3f72 <.Lavrlibm_3f18>
+    3f64:	30 f4       	brcc	.+12     	; 0x3f72 <.L_sqrtf_advance_rounding>
 
-00003f66 <.Lavrlibm_3f0c>:
+00003f66 <.L_sqrtf_accept_rounding_bit>:
     3f66:	62 0b       	sbc	r22, r18
     3f68:	73 0b       	sbc	r23, r19
     3f6a:	84 0b       	sbc	r24, r20
@@ -10456,9 +10439,9 @@ Disassembly of section .text:
     3f6e:	31 1d       	adc	r19, r1
     3f70:	41 1d       	adc	r20, r1
 
-00003f72 <.Lavrlibm_3f18>:
+00003f72 <.L_sqrtf_advance_rounding>:
     3f72:	a0 95       	com	r26
-    3f74:	81 f7       	brne	.-32     	; 0x3f56 <.Lavrlibm_3efc>
+    3f74:	81 f7       	brne	.-32     	; 0x3f56 <.L_sqrtf_rounding_loop>
     3f76:	b9 01       	movw	r22, r18
     3f78:	84 2f       	mov	r24, r20
     3f7a:	91 58       	subi	r25, 0x81	; 129
@@ -10469,15 +10452,15 @@ Disassembly of section .text:
 
 00003f84 <trunc>:
     3f84:	1c df       	rcall	.-456    	; 0x3dbe <__fp_trunc>
-    3f86:	20 f0       	brcs	.+8      	; 0x3f90 <.Lavrlibm_3f3c>
+    3f86:	20 f0       	brcs	.+8      	; 0x3f90 <.L_truncf_nonfinite>
     3f88:	9f 37       	cpi	r25, 0x7F	; 127
-    3f8a:	08 f4       	brcc	.+2      	; 0x3f8e <.Lavrlibm_3f38>
+    3f8a:	08 f4       	brcc	.+2      	; 0x3f8e <.L_truncf_pack_integer>
     3f8c:	30 cf       	rjmp	.-416    	; 0x3dee <__fp_szero>
 
-00003f8e <.Lavrlibm_3f38>:
+00003f8e <.L_truncf_pack_integer>:
     3f8e:	aa ce       	rjmp	.-684    	; 0x3ce4 <__fp_mintl>
 
-00003f90 <.Lavrlibm_3f3c>:
+00003f90 <.L_truncf_nonfinite>:
     3f90:	c4 ce       	rjmp	.-632    	; 0x3d1a <__fp_mpack>
 
 00003f92 <__fp_norm2>:

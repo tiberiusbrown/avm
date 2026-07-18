@@ -1575,8 +1575,8 @@ ff_decode:
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
-    clr   r1
     clr   r27
+    ldi   r30, lo8(ff_binary_helper_targets)
     cli
     out   SPDR, ZERO
     in    FF_SECONDARY, SPDR
@@ -1670,7 +1670,7 @@ ff_binary_arithmetic:
     cpi   FF_BRIDGE_INDEX, 4
     brsh  .Lff_direct_minmax_prepare
 
-    ldi   r30, lo8(ff_binary_helper_targets)
+    ; r30 was preloaded during the cadence-filling decoder setup.
     ldi   r31, hi8(ff_binary_helper_targets)
     rcall ff_load_helper_target
     jmp   ff_bridge_binary_q_to_q
@@ -2960,7 +2960,6 @@ sys_libm_func:
     movw r20, VM_R3       ; q1 high half
     movw r22, VM_R0       ; q0 low half
     movw r24, VM_R1       ; q0 high half
-    clr  r1
     icall
 
     movw VM_R0, r22
@@ -7409,62 +7408,53 @@ ff_bridge_marshal_r16_u:
 ; omitting destination-owned saves for q2 and q3.
 ff_bridge_call_heavy_q0_result:
     movw  r30, r26
-    clr   r1
     icall
-    movw  r26, r22
+    movw  r8, r22
+    movw  r10, r24
     pop   r23
     pop   r22
     pop   r21
     pop   r20
     pop   r19
     pop   r18
-    movw  r8, r26
-    movw  r10, r24
     jmp   cluster_a_tail_18
 
 ff_bridge_call_heavy_q1_result:
     movw  r30, r26
-    clr   r1
     icall
-    movw  r26, r22
+    movw  r12, r22
+    movw  r14, r24
     pop   r23
     pop   r22
     pop   r21
     pop   r20
     pop   r19
     pop   r18
-    movw  r12, r26
-    movw  r14, r24
     jmp   cluster_a_tail_18
 
 ff_bridge_call_heavy_q2_result:
     movw  r30, r26
-    clr   r1
     icall
-    movw  r26, r22
+    movw  r16, r22
+    movw  r18, r24
     pop   r23
     pop   r22
     pop   r21
     pop   r20
-    movw  r16, r26
-    movw  r18, r24
     jmp   cluster_a_tail_18
 
 ff_bridge_call_heavy_q3_result:
     movw  r30, r26
-    clr   r1
     icall
-    movw  r26, r22
+    movw  r20, r22
+    movw  r22, r24
     pop   r19
     pop   r18
-    movw  r20, r26
-    movw  r22, r24
     jmp   cluster_a_tail_18
 
 ; Unary heavy helpers (currently FSQRT) retain the metadata-selected finish.
 ff_bridge_call_heavy_q_result:
     movw  r30, r26
-    clr   r1
     icall
     in    r30, FF_BRIDGE_META_IO
     movw  r26, r22
@@ -7497,7 +7487,6 @@ ff_bridge_call_heavy_q_result:
 ; Light q helper result: only r22-r23 need restoration, except for q3.
 ff_bridge_call_light_q_result:
     movw  r30, r26
-    clr   r1
     icall
     in    r30, FF_BRIDGE_META_IO
     movw  r26, r22
@@ -7540,7 +7529,6 @@ ff_store_q_result:
 ; Light r16 helper result: generic rD address/store is retained.
 ff_bridge_call_light_r16_result:
     movw  r30, r26
-    clr   r1
     icall
     in    r30, FF_BRIDGE_META_IO
     movw  r24, r22
@@ -7572,6 +7560,8 @@ ff_bridge_store_r16:
 ; Public entry labels retain the names used by the FF helper tables. The block
 ; includes all shared packing, splitting, normalization, comparison, conversion,
 ; arithmetic, rounding, and square-root routines reachable from those entries.
+; ZERO supplies constant-zero operands; native r1 is free for MUL results and
+; sqrtf trial-bit state and is not required to be zero at routine boundaries.
 
 .p2align 1
 __subsf3:
@@ -7624,7 +7614,6 @@ __addsf3x:
     movw  r0, r24
     movw  r24, r20
     movw  r20, r0
-    eor   r1, r1
 .L__addsf3x_align_mantissas:
     eor   r31, r31
     sub   r21, r25
@@ -7634,7 +7623,7 @@ __addsf3x:
     brcc  .L__addsf3x_align_bits
     cpi   r21, 0xE0
     brcs  .L__addsf3x_pack_result
-    cp    r1, r26
+    cp    ZERO, r26
     sbci  r31, 0x00
     mov   r26, r18
     mov   r18, r19
@@ -7652,7 +7641,7 @@ __addsf3x:
     brne  .L__addsf3x_align_bits
 .L__addsf3x_combine_mantissas:
     brtc  .L__addsf3x_add_mantissas
-    cp    r1, r31
+    cp    ZERO, r31
     sbc   r27, r26
     sbc   r22, r18
     sbc   r23, r19
@@ -7707,7 +7696,7 @@ __divsf3:
 .L__divsf3_infinity:
     rjmp  __fp_inf
 .L__divsf3_zero_numerator:
-    cpse  r21, r1
+    cpse  r21, ZERO
 .L__divsf3_szero:
     rjmp  __fp_szero
 .L__divsf3_nan:
@@ -7771,7 +7760,7 @@ __divsf3_pse:
     sbci  r21, 0xFF
     brmi  .L__divsf3_prepare_denormal
     cpi   r25, 0xFE
-    cpc   r21, r1
+    cpc   r21, ZERO
     brcs  .L__divsf3_pack_result
     rjmp  __fp_inf
 .L__divsf3_underflow_zero:
@@ -7791,7 +7780,7 @@ __divsf3_pse:
     brne  .L__divsf3_denormalize
 .L__divsf3_pack_result:
     add   r24, r24
-    adc   r25, r1
+    adc   r25, ZERO
     lsr   r25
     ror   r24
     bld   r25, 7
@@ -7820,7 +7809,7 @@ __divsf3_pse:
 __fixsfsi:
     rcall __fixunssfsi
     set
-    cpse  r27, r1
+    cpse  r27, ZERO
     rjmp  __fp_szero
     ret
 __fixunssfsi:
@@ -7903,7 +7892,7 @@ __floatsisf:
     ror   r23
     ror   r22
     ror   r27
-    cpse  r31, r1
+    cpse  r31, ZERO
     rjmp  .L__floatsisf_shift_right
     brpl  .L__floatsisf_pack
     add   r27, r27
@@ -7970,7 +7959,7 @@ __fp_mpack_finite:
     ror   r27
 .L__fp_mpack_pack_common:
     add   r24, r24
-    adc   r25, r1
+    adc   r25, ZERO
     lsr   r25
     ror   r24
     bld   r25, 7
@@ -7982,17 +7971,17 @@ __fp_nan:
 __fp_pscA:
     eor   r0, r0
     dec   r0
-    cp    r1, r22
-    cpc   r1, r23
-    cpc   r1, r24
+    cp    ZERO, r22
+    cpc   ZERO, r23
+    cpc   ZERO, r24
     cpc   r0, r25
     ret
 __fp_pscB:
     eor   r0, r0
     dec   r0
-    cp    r1, r18
-    cpc   r1, r19
-    cpc   r1, r20
+    cp    ZERO, r18
+    cpc   ZERO, r19
+    cpc   ZERO, r20
     cpc   r0, r21
     ret
 __fp_round:
@@ -8037,9 +8026,9 @@ __fp_splitA:
     ror   r24
     ret
 .L__fp_split3_b_zero_or_subnormal:
-    cp    r1, r18
-    cpc   r1, r19
-    cpc   r1, r20
+    cp    ZERO, r18
+    cpc   ZERO, r19
+    cpc   ZERO, r20
     adc   r21, r21
     rjmp  .L__fp_split3_restore_b_mantissa
 .L__fp_split3_b_nonfinite:
@@ -8047,15 +8036,15 @@ __fp_splitA:
     rcall __fp_splitA
     rjmp  .L__fp_splitA_return_nonfinite
 .L__fp_splitA_zero_or_subnormal:
-    cp    r1, r22
-    cpc   r1, r23
-    cpc   r1, r24
+    cp    ZERO, r22
+    cpc   ZERO, r23
+    cpc   ZERO, r24
     adc   r25, r25
     rjmp  .L__fp_splitA_restore_mantissa
 .L__fp_splitA_nonfinite:
     lsr   r24
-    cpc   r23, r1
-    cpc   r22, r1
+    cpc   r23, ZERO
+    cpc   r22, ZERO
 .L__fp_splitA_return_nonfinite:
     sec
     ret
@@ -8082,7 +8071,6 @@ __mulsf3:
 .L__mulsf3_nan:
     rjmp  __fp_nan
 .L__mulsf3_szero:
-    eor   r1, r1
     rjmp  __fp_szero
 __mulsf3x:
     rcall __fp_split3
@@ -8133,7 +8121,6 @@ __mulsf3_pse:
     mov   r24, r18
     mov   r23, r22
     mov   r22, r26
-    eor   r1, r1
     subi  r25, 0x7F
     sbci  r21, 0x00
     brmi  .L__mulsf3_prepare_denormal
@@ -8152,7 +8139,7 @@ __mulsf3_pse:
     brne  .L__mulsf3_normalize
 .L__mulsf3_check_overflow:
     cpi   r25, 0xFE
-    cpc   r21, r1
+    cpc   r21, ZERO
     brcs  .L__mulsf3_pack_result
     rjmp  __fp_inf
 .L__mulsf3_underflow_zero:
@@ -8174,7 +8161,7 @@ __mulsf3_pse:
 .L__mulsf3_pack_result:
     or    r31, r30
     add   r24, r24
-    adc   r25, r1
+    adc   r25, ZERO
     lsr   r25
     ror   r24
     bld   r25, 7
@@ -8198,6 +8185,7 @@ sqrtf:
     sbrs  r24, 7
     rcall __fp_norm2
     eor   r0, r0
+    mov   r1, ZERO
     ldi   r26, 0x60
     ldi   r20, 0xA0
     movw  r18, r0
@@ -8467,8 +8455,8 @@ atanf:
     andi  r27, 0x7f
     ldi   r20, 0x80
     ldi   r21, 0x3f
-    cp    r1, r22
-    cpc   r1, r23
+    cp    ZERO, r22
+    cpc   ZERO, r23
     cpc   r20, r24
     cpc   r21, r27
     brsh  .Latanf_reduced
@@ -8654,7 +8642,7 @@ modff:
     lsr   r20
     ror   r19
     ror   r18
-    adc   r0, r1
+    adc   r0, ZERO
     inc   r26
     brmi  .Lmodff_scan_fraction
     tst   r0
@@ -8671,7 +8659,7 @@ modff:
 
 .Lmodff_large_or_nonfinite:
     cpi   r22, 1
-    cpc   r23, r1
+    cpc   r23, ZERO
     ldi   r26, 0x80
     cpc   r24, r26
     sbci  r27, 105
@@ -8709,7 +8697,7 @@ ldexpf:
 
 .Lldexpf_add_exponent:
     add   r25, r20
-    adc   r21, r1
+    adc   r21, ZERO
     brvc  .Lldexpf_check_low_exponent
     rjmp   __fp_inf
 
@@ -8731,13 +8719,13 @@ ldexpf:
 
 .Lldexpf_check_overflow:
     cpi   r25, 254
-    cpc   r21, r1
+    cpc   r21, ZERO
     brlt  .Lldexpf_pack
     rjmp   __fp_inf
 
 .Lldexpf_pack:
     lsl   r24
-    adc   r25, r1
+    adc   r25, ZERO
     lsr   r25
     ror   r24
     bld   r25, 7
@@ -8943,11 +8931,11 @@ powf:
     lsl   r30
     rol   r31
     adiw  r30, 0
-    cpc   r18, r1
-    cpc   r19, r1
+    cpc   r18, ZERO
+    cpc   r19, ZERO
     breq  .Lpowf_return_one
-    cp    r22, r1
-    cpc   r23, r1
+    cp    r22, ZERO
+    cpc   r23, ZERO
     brne  .Lpowf_check_sign
     cpi   r24, 0x80
     ldi   r27, 0x3f
@@ -8955,7 +8943,7 @@ powf:
     breq  .Lpowf_return
     set
     cpi   r25, 0x80
-    cpc   r24, r1
+    cpc   r24, ZERO
     breq  .Lpowf_integer_exponent_check
     cpi   r24, 0x80
     ldi   r27, 0xff
@@ -8966,9 +8954,9 @@ powf:
     tst   r25
     brpl  .Lpowf_compute
     cpi   r31, 0xff
-    cpc   r30, r1
-    cpc   r19, r1
-    cpc   r18, r1
+    cpc   r30, ZERO
+    cpc   r19, ZERO
+    cpc   r18, ZERO
     breq  .Lpowf_replace_infinite_exponent
     clt
 
@@ -9230,13 +9218,13 @@ fmodf:
     sub   r22, r18
     sbc   r23, r19
     sbc   r24, r20
-    sbc   r27, r1
+    sbc   r27, ZERO
     breq  .Lfmodf_signed_zero
     brpl  .Lfmodf_subtraction_kept
     add   r22, r18
     adc   r23, r19
     adc   r24, r20
-    adc   r27, r1
+    adc   r27, ZERO
 
 .Lfmodf_subtraction_kept:
     sbiw  r30, 1

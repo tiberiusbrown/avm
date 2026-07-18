@@ -338,7 +338,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; AVR r0:r1     MUL result and unrestricted interpreter scratch
-; AVR r2        permanent zero; SPI dummy-transmit byte
+; AVR r2        normally zero; SPI dummy-transmit byte; direct-FP temporary
 ; AVR r3        permanent one
 ; AVR r4:r6     24-bit VM program counter, little-endian
 ; AVR r7        permanent four; primary-table stride in AVR words
@@ -348,8 +348,9 @@
 ; AVR r30:r31   general scratch and dispatch target (Z)
 ; GPIOR0        architectural VM_FLAGS
 ;
-; r2, r3, and r7 are initialized once and are immutable thereafter. Native
-; r0:r1 have no ABI zero-register requirement; this runtime is assembly-only.
+; r3 and r7 are initialized once and remain immutable. Direct FMIN/FMAX/FCMP
+; and rounding temporarily use r2 for control, but clear it before entering any
+; shared interpreter path. Native r0:r1 have no ABI zero-register requirement.
 
 #define PRIMARY_TABLE_ORG          0x0200
 #define PRIMARY_STRIDE_WORDS       4
@@ -373,11 +374,15 @@
 
 ; Shared FF/libm bridge ABI. Callers load a helper target into native Z and
 ; place the encoded operand descriptor in FF_BRIDGE_DESC before jumping to one
-; of the typed bridge entries below. The metadata byte is saved across ICALL.
+; of the typed bridge entries below. GPIOR1 retains the architectural
+; destination across helper calls; GPIOR2 carries direct floating-operation
+; control while the in-register min/max/compare and rounding cores execute.
 #define FF_BRIDGE_DESC             r24
 #define FF_BRIDGE_META             r25
 #define FF_BRIDGE_INDEX            r26
 #define FF_BRIDGE_XH               r27
+#define FF_BRIDGE_META_IO          GPIOR1
+#define FF_DIRECT_CONTROL_IO       GPIOR2
 
 #define FF_BRIDGE_RESULT_Q32       0x00
 #define FF_BRIDGE_RESULT_R16       0x40
@@ -1547,12 +1552,12 @@ primary_table_end:
 ; transfer for a two-byte instruction or the trailing-specifier transfer for
 ; C0-C9.
 ;
-; FADD, FSUB, FMUL, FDIV, FMIN, FMAX, FSQRT, FTRUNC, FFLOOR, FCEIL,
-; FROUND, and C0-C7 conversions use the shared avr-libc bridge. FNEG and FABS
-; execute directly against the most-significant byte of the selected q
-; register. FCMP calls __fp_cmp directly, while FCLASS classifies its binary32
-; source inline. Reserved secondary ranges and malformed operand specifiers
-; enter the architectural invalid-secondary trap.
+; FADD, FSUB, FMUL, FDIV, FSQRT, and C0-C7 conversions use the shared
+; embedded-libm bridge. FMIN, FMAX, FCMP, and the four integral-rounding
+; operations execute in interpreter-native register code. FNEG and FABS modify
+; the selected sign byte directly, while FCLASS classifies its binary32 source
+; inline. Reserved secondary ranges and malformed operand specifiers enter the
+; architectural invalid-secondary trap.
 
 ff_decode:
     add   VM_PCL, ONE
@@ -1620,28 +1625,57 @@ ff_store_sign_byte:
     rjmp  cluster_tail_18
 
 ff_unary_math:
-    ; 68-7B consists of five four-opcode groups. Normalize the group number to
-    ; 0-4, load its compact helper target, and leave bits 1:0 of the original
-    ; secondary untouched as the unary qD descriptor.
+    ; 68-7B consists of five four-opcode groups. Group zero is FSQRT and still
+    ; uses the heavy embedded-libm bridge. Groups one through four are the
+    ; interpreter-native trunc/floor/ceil/round core; normalize them to modes
+    ; 0-3 and retain qD in GPIOR1.
     mov   FF_BRIDGE_INDEX, FF_SECONDARY
     subi  FF_BRIDGE_INDEX, 0x68
     lsr   FF_BRIDGE_INDEX
     lsr   FF_BRIDGE_INDEX
-    ldi   r30, lo8(ff_unary_helper_targets)
-    ldi   r31, hi8(ff_unary_helper_targets)
-    rcall ff_load_helper_target
-    rjmp  ff_bridge_unary_q_to_q
+    tst   FF_BRIDGE_INDEX
+    brne  .Lff_direct_round_prepare
+
+    ldi   r30, lo8(pm(sqrtf))
+    ldi   r31, hi8(pm(sqrtf))
+    jmp   ff_bridge_unary_q_to_q
+
+.Lff_direct_round_prepare:
+    dec   FF_BRIDGE_INDEX
+    out   FF_DIRECT_CONTROL_IO, FF_BRIDGE_INDEX
+    mov   FF_BRIDGE_META, FF_SECONDARY
+    andi  FF_BRIDGE_META, 0x03
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+    jmp   ff_direct_round_load_q
 
 ff_binary_arithmetic:
-    ; FF_SECONDARY remains the ddss bridge descriptor. Its high nibble selects
-    ; __addsf3, __subsf3, __mulsf3, __divsf3, fminf, or the local FMAX shim.
+    ; 00-3F use embedded-libm arithmetic helpers. 40-5F are direct FMIN/FMAX:
+    ; preserve qD separately, encode ddss plus the max/min selector in GPIOR2,
+    ; and load both operands without touching architectural registers.
     mov   FF_BRIDGE_INDEX, FF_SECONDARY
     swap  FF_BRIDGE_INDEX
     andi  FF_BRIDGE_INDEX, 0x07
+    cpi   FF_BRIDGE_INDEX, 4
+    brsh  .Lff_direct_minmax_prepare
+
     ldi   r30, lo8(ff_binary_helper_targets)
     ldi   r31, hi8(ff_binary_helper_targets)
     rcall ff_load_helper_target
-    rjmp  ff_bridge_binary_q_to_q
+    jmp   ff_bridge_binary_q_to_q
+
+.Lff_direct_minmax_prepare:
+    mov   FF_BRIDGE_META, FF_SECONDARY
+    andi  FF_BRIDGE_META, 0x0F
+    sbrc  FF_SECONDARY, 4
+    ori   FF_BRIDGE_META, 0x40     ; bit 6: FMAX rather than FMIN
+    out   FF_DIRECT_CONTROL_IO, FF_BRIDGE_META
+
+    mov   FF_BRIDGE_META, FF_SECONDARY
+    lsr   FF_BRIDGE_META
+    lsr   FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x03
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+    jmp   ff_direct_load_left_q
 
 ff_extended:
     ; The reverse handoff above started the trailing-specifier transfer on
@@ -1685,8 +1719,8 @@ ff_extended:
     ; C0-C7 are conversions. The low two operation bits select one of four
     ; libm helpers shared by the 16-bit and 32-bit forms:
     ;   0 __floatsisf, 1 __floatunsisf, 2 __fixsfsi, 3 __fixunssfsi.
-    ; C8 calls avr-libc's internal __fp_cmp directly. C9 classifies its
-    ; binary32 source inline without entering the libm bridge.
+    ; C8 uses the interpreter-native compare core. C9 classifies its binary32
+    ; source inline without entering the embedded-libm bridge.
     cpi   FF_OPERATION, 8
     breq  ff_compare
     brsh  ff_classify
@@ -1705,24 +1739,29 @@ ff_extended:
     cpi   FF_OPERATION, 2
     brsh  .Lff_conversion_q_to_r16
     sbrc  FF_OPERATION, 0
-    rjmp  ff_bridge_r16_to_q_u
-    rjmp  ff_bridge_r16_to_q_s
+    jmp   ff_bridge_r16_to_q_u
+    jmp   ff_bridge_r16_to_q_s
 .Lff_conversion_q_to_r16:
-    rjmp  ff_bridge_q_to_r16
+    jmp   ff_bridge_q_to_r16
 .Lff_conversion_q_to_q:
-    rjmp  ff_bridge_q_to_q
+    jmp   ff_bridge_q_to_q
 
 ff_invalid:
     rjmp  invalid_secondary_instruction_func
 
 ff_compare:
-    ; RQQSPEC is 0dddllrr. The binary bridge marshaller already interprets
-    ; bits 3:2 as operand A/qL and bits 1:0 as operand B/qR. __fp_cmp returns
-    ; ordered -1/0/+1 in r24 with carry clear, or carry set for unordered; the
-    ; FCMP finish path maps unordered to architectural result 2.
-    ldi   r30, lo8(pm(__fp_cmp))
-    ldi   r31, hi8(pm(__fp_cmp))
-    rjmp  ff_bridge_cmp_to_r16
+    ; RQQSPEC is 0dddllrr. Store rD in GPIOR1 and mark direct-control bit 7;
+    ; bits 3:0 retain qL:qR for the shared two-operand loader.
+    mov   FF_BRIDGE_META, FF_SPEC
+    swap  FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x07
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+
+    mov   FF_BRIDGE_META, FF_SPEC
+    andi  FF_BRIDGE_META, 0x0F
+    ori   FF_BRIDGE_META, 0x80
+    out   FF_DIRECT_CONTROL_IO, FF_BRIDGE_META
+    jmp   ff_direct_load_left_q
 
 ff_classify:
     ; RQSPEC is 0ddd00ss. Retain rD in ZL, then capture all four source bytes
@@ -3507,59 +3546,19 @@ cluster_a_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; Shared FF embedded avr-libc/libm helper bridge
+; Shared FF helper target lookup
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Helper target tables contain 16-bit AVR word addresses:
-;
-;     .word pm(helper_symbol)
-;
-; ff_load_helper_target receives the table's byte address in Z and an unscaled
-; entry index in FF_BRIDGE_INDEX. It returns the selected word address in Z,
-; ready for ICALL. FADD, FSUB, FMUL, FDIV, FMIN, and FMAX use the compact
-; target table, indexed by the secondary opcode's operation nibble.
-;
-; Typed bridge entry ABI:
-;
-;   Z                         helper word address for ICALL
-;   FF_BRIDGE_DESC            encoded operand descriptor
-;
-;   ff_bridge_binary_q_to_q   descriptor low nibble = qD:qS
-;   ff_bridge_unary_q_to_q    descriptor bits 1:0 = qD
-;   ff_bridge_q_to_q          descriptor = 0000ddss
-;   ff_bridge_q_to_r16        descriptor = 0ddd00ss
-;   ff_bridge_r16_to_q_s      descriptor = 0sss00dd, signed source
-;   ff_bridge_r16_to_q_u      descriptor = 0sss00dd, unsigned source
-;   ff_bridge_cmp_to_r16      descriptor = 0dddllrr
-;
-; The embedded avr-libc fplib convention is A/result in r22-r25 and B in r18-r21.
-; Native r18-r23 overlap architectural AVM registers, so every call saves all
-; six bytes. r2-r17 and r28-r29 are AVR call-saved and therefore retain the VM
-; PC, constants, lower architectural registers, and VM stack pointer. r24-r27,
-; r30-r31, r0, and native SREG are call-clobbered. Architectural VM_FLAGS lives
-; in GPIOR0 and is not touched. r1 is cleared immediately before ICALL because
-; avr-libc requires its ABI zero register.
-;
-; The following primary opcode is already complete and unread in SPDR while a
-; helper runs. Every result path returns through cluster_a_tail_18, which reads
-; that byte, starts the next transfer, advances VM_PC from the final encoded
-; byte to the following opcode, and dispatches it.
+; Compact target tables and the nearby LPM loader remain beside Cluster A so
+; FF decoding can use RCALL without disturbing fixed-layout secondary tables.
+; The expanded typed bridges and interpreter-native FP cores are placed near
+; the embedded-libm routines and entered with explicit far JMP instructions.
 
 ff_binary_helper_targets:
     .word pm(__addsf3)
     .word pm(__subsf3)
     .word pm(__mulsf3)
     .word pm(__divsf3)
-    .word pm(fminf)
-    .word pm(ff_fmax_via_fmin)
-
-; FF 68-7B consists of five four-opcode unary groups in this order.
-ff_unary_helper_targets:
-    .word pm(sqrtf)
-    .word pm(truncf)
-    .word pm(floorf)
-    .word pm(ff_ceil_via_floor)
-    .word pm(roundf)
 
 ; C0/C4, C1/C5, C2/C6, and C3/C7 share these helpers respectively.
 ff_conversion_helper_targets:
@@ -3577,334 +3576,6 @@ ff_load_helper_target:
     mov   r30, r0
     mov   r31, FF_BRIDGE_INDEX
     ret
-
-; Binary qD,qS -> qD. The low descriptor nibble has ddss format.
-; r1 selects the typed result path after the shared binary marshaller:
-; zero for a q result and one for FCMP's r16 result.
-ff_bridge_binary_q_to_q:
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    lsr   FF_BRIDGE_META
-    lsr   FF_BRIDGE_META
-    andi  FF_BRIDGE_META, 0x03
-    mov   r1, ZERO
-    rjmp  ff_bridge_save_binary_q
-
-; qL,qR -> rD FCMP result, using the 0dddllrr specifier.
-ff_bridge_cmp_to_r16:
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    swap  FF_BRIDGE_META
-    andi  FF_BRIDGE_META, 0x07
-    mov   r1, ONE
-
-; Save architectural bytes clobbered by the fplib ABI, preserve the helper
-; target in X, and dispatch through the sixteen-way alias-safe qD:qS table.
-; Each table slot is exactly five AVR words, so the descriptor's ddss value is
-; multiplied by five directly in word-address space.
-ff_bridge_save_binary_q:
-    push  r18
-    push  r19
-    push  r20
-    push  r21
-    push  r22
-    push  r23
-    push  FF_BRIDGE_META
-
-    movw  r26, r30
-    ; FF_BRIDGE_META was already pushed, so r25 is now free for the
-    ; table index. Do not reuse r26: X must retain the helper target.
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    andi  FF_BRIDGE_META, 0x0F
-    mov   r0, FF_BRIDGE_META
-    lsl   FF_BRIDGE_META
-    lsl   FF_BRIDGE_META
-    add   FF_BRIDGE_META, r0
-    ldi   r30, lo8(pm(ff_binary_marshal_table))
-    ldi   r31, hi8(pm(ff_binary_marshal_table))
-    add   r30, FF_BRIDGE_META
-    adc   r31, ZERO
-    ijmp
-
-; Emit one alias-safe binary marshalling slot. The four MOVW operations place
-; qS in fplib operand B (r18-r21) and qD in operand A (r22-r25). Move order is
-; specialized for each overlap combination; the helper address remains in X.
-.macro emit_ff_binary_marshal label, d0, s0, d1, s1, d2, s2, d3, s3
-\label:
-    movw  \d0, \s0
-    movw  \d1, \s1
-    movw  \d2, \s2
-    movw  \d3, \s3
-    rjmp  ff_bridge_binary_ready
-.Lff_binary_marshal_end_\@:
-    .if (.Lff_binary_marshal_end_\@ - \label) != 10
-        .error "FF binary marshal slot must occupy exactly five AVR words"
-    .endif
-.endm
-
-ff_binary_marshal_table:
-    ; ddss = 0000: q0,q0
-    emit_ff_binary_marshal .Lff_bin_q0_q0, r18, r8,  r20, r10, r22, r8,  r24, r10
-    ; ddss = 0001: q0,q1
-    emit_ff_binary_marshal .Lff_bin_q0_q1, r18, r12, r20, r14, r22, r8,  r24, r10
-    ; ddss = 0010: q0,q2
-    emit_ff_binary_marshal .Lff_bin_q0_q2, r20, r18, r18, r16, r22, r8,  r24, r10
-    ; ddss = 0011: q0,q3
-    emit_ff_binary_marshal .Lff_bin_q0_q3, r18, r20, r20, r22, r22, r8,  r24, r10
-
-    ; ddss = 0100: q1,q0
-    emit_ff_binary_marshal .Lff_bin_q1_q0, r18, r8,  r20, r10, r22, r12, r24, r14
-    ; ddss = 0101: q1,q1
-    emit_ff_binary_marshal .Lff_bin_q1_q1, r18, r12, r20, r14, r22, r12, r24, r14
-    ; ddss = 0110: q1,q2
-    emit_ff_binary_marshal .Lff_bin_q1_q2, r20, r18, r18, r16, r22, r12, r24, r14
-    ; ddss = 0111: q1,q3
-    emit_ff_binary_marshal .Lff_bin_q1_q3, r18, r20, r20, r22, r22, r12, r24, r14
-
-    ; ddss = 1000: q2,q0
-    emit_ff_binary_marshal .Lff_bin_q2_q0, r20, r10, r22, r16, r24, r18, r18, r8
-    ; ddss = 1001: q2,q1
-    emit_ff_binary_marshal .Lff_bin_q2_q1, r20, r14, r22, r16, r24, r18, r18, r12
-    ; ddss = 1010: q2,q2
-    emit_ff_binary_marshal .Lff_bin_q2_q2, r20, r18, r18, r16, r22, r16, r24, r20
-    ; ddss = 1011: q2,q3
-    emit_ff_binary_marshal .Lff_bin_q2_q3, r24, r18, r18, r20, r20, r22, r22, r16
-
-    ; ddss = 1100: q3,q0
-    emit_ff_binary_marshal .Lff_bin_q3_q0, r18, r8,  r24, r22, r22, r20, r20, r10
-    ; ddss = 1101: q3,q1
-    emit_ff_binary_marshal .Lff_bin_q3_q1, r18, r12, r24, r22, r22, r20, r20, r14
-    ; ddss = 1110: q3,q2
-    emit_ff_binary_marshal .Lff_bin_q3_q2, r24, r22, r22, r20, r20, r18, r18, r16
-    ; ddss = 1111: q3,q3
-    emit_ff_binary_marshal .Lff_bin_q3_q3, r18, r20, r20, r22, r22, r18, r24, r20
-ff_binary_marshal_table_end:
-.if (ff_binary_marshal_table_end - ff_binary_marshal_table) != 160
-    .error "FF binary marshal table must occupy exactly eighty AVR words"
-.endif
-
-; r1 remains zero for q-returning arithmetic and one for FCMP. SBRC executes
-; before r1 is restored to the fplib-required zero value by the typed call.
-ff_bridge_binary_ready:
-    sbrc  r1, 0
-    rjmp  ff_bridge_call_fcmp_result
-    rjmp  ff_bridge_call_q_result
-
-; Unary qD -> qD. Bits 1:0 select both source and destination.
-ff_bridge_unary_q_to_q:
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    andi  FF_BRIDGE_META, 0x03
-    mov   r1, ZERO
-    rjmp  ff_bridge_save_q_source
-
-; qS -> qD, using the 0000ddss extended-operation specifier.
-ff_bridge_q_to_q:
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    lsr   FF_BRIDGE_META
-    lsr   FF_BRIDGE_META
-    andi  FF_BRIDGE_META, 0x03
-    mov   r1, ZERO
-    rjmp  ff_bridge_save_q_source
-
-; qS -> rD, using the 0ddd00ss RQSPEC extended-operation specifier.
-ff_bridge_q_to_r16:
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    swap  FF_BRIDGE_META
-    andi  FF_BRIDGE_META, 0x07
-    mov   r1, ONE
-
-; Save the architectural fplib overlap, preserve the helper in X, and select
-; one of four direct q-to-A move sequences. r1 selects q or r16 result handling.
-ff_bridge_save_q_source:
-    push  r18
-    push  r19
-    push  r20
-    push  r21
-    push  r22
-    push  r23
-    push  FF_BRIDGE_META
-
-    movw  r26, r30
-    andi  FF_BRIDGE_DESC, 0x03
-    sbrc  FF_BRIDGE_DESC, 1
-    rjmp  .Lff_q_source_high
-    sbrc  FF_BRIDGE_DESC, 0
-    rjmp  .Lff_q_source_q1
-
-.Lff_q_source_q0:
-    movw  r22, r8
-    movw  r24, r10
-    rjmp  ff_bridge_q_source_ready
-
-.Lff_q_source_q1:
-    movw  r22, r12
-    movw  r24, r14
-    rjmp  ff_bridge_q_source_ready
-
-.Lff_q_source_high:
-    sbrc  FF_BRIDGE_DESC, 0
-    rjmp  .Lff_q_source_q3
-
-.Lff_q_source_q2:
-    movw  r22, r16
-    movw  r24, r18
-    rjmp  ff_bridge_q_source_ready
-
-; q3 overlaps A's low half, so preserve its high half first.
-.Lff_q_source_q3:
-    movw  r24, r22
-    movw  r22, r20
-
-ff_bridge_q_source_ready:
-    sbrc  r1, 0
-    rjmp  ff_bridge_call_r16_result
-    rjmp  ff_bridge_call_q_result
-
-; Signed rS -> qD, using the 0sss00dd RQSPEC extended-operation specifier.
-; The generic r16 source decoder is intentionally retained at Level 2.
-ff_bridge_r16_to_q_s:
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    andi  FF_BRIDGE_META, 0x03
-    mov   r1, ZERO
-    rjmp  ff_bridge_save_r16_source
-
-; Unsigned rS -> qD, using the 0sss00dd RQSPEC extended-operation specifier.
-ff_bridge_r16_to_q_u:
-    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
-    andi  FF_BRIDGE_META, 0x03
-    mov   r1, ONE
-
-ff_bridge_save_r16_source:
-    push  r18
-    push  r19
-    push  r20
-    push  r21
-    push  r22
-    push  r23
-    push  FF_BRIDGE_META
-
-    sbrc  r1, 0
-    rjmp  ff_bridge_marshal_r16_u
-
-; Load a 16-bit architectural source into the low half of A and sign-extend it.
-ff_bridge_marshal_r16_s:
-    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
-    swap  FF_BRIDGE_INDEX
-    andi  FF_BRIDGE_INDEX, 0x07
-    lsl   FF_BRIDGE_INDEX
-    subi  FF_BRIDGE_INDEX, -9
-    clr   FF_BRIDGE_XH
-    ld    r23, X
-    ld    r22, -X
-    mov   r24, r23
-    lsl   r24
-    sbc   r24, r24
-    mov   r25, r24
-    movw  r26, r30
-    rjmp  ff_bridge_call_q_result
-
-; Load a 16-bit architectural source into the low half of A and zero-extend it.
-ff_bridge_marshal_r16_u:
-    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
-    swap  FF_BRIDGE_INDEX
-    andi  FF_BRIDGE_INDEX, 0x07
-    lsl   FF_BRIDGE_INDEX
-    subi  FF_BRIDGE_INDEX, -9
-    clr   FF_BRIDGE_XH
-    ld    r23, X
-    ld    r22, -X
-    clr   r24
-    clr   r25
-    movw  r26, r30
-
-; Typed q-result call and finish. X holds the helper word address. Preserve the
-; low result half in X after the call, restore architectural registers, then
-; select one of four direct MOVW result writers using the saved qD index.
-ff_bridge_call_q_result:
-    movw  r30, r26
-    clr   r1
-    icall
-    pop   r30
-    movw  r26, r22
-
-ff_bridge_restore_arch_q:
-    pop   r23
-    pop   r22
-    pop   r21
-    pop   r20
-    pop   r19
-    pop   r18
-
-    sbrc  r30, 1
-    rjmp  .Lff_store_q_high
-    sbrc  r30, 0
-    rjmp  .Lff_store_q1
-
-.Lff_store_q0:
-    movw  r8, r26
-    movw  r10, r24
-    rjmp  cluster_a_tail_18
-
-.Lff_store_q1:
-    movw  r12, r26
-    movw  r14, r24
-    rjmp  cluster_a_tail_18
-
-.Lff_store_q_high:
-    sbrc  r30, 0
-    rjmp  .Lff_store_q3
-
-.Lff_store_q2:
-    movw  r16, r26
-    movw  r18, r24
-    rjmp  cluster_a_tail_18
-
-.Lff_store_q3:
-    movw  r20, r26
-    movw  r22, r24
-    rjmp  cluster_a_tail_18
-
-; Typed r16-result call and finish. The generic architectural rD address
-; calculation and two-byte store are retained at Level 2.
-ff_bridge_call_r16_result:
-    movw  r30, r26
-    clr   r1
-    icall
-    pop   r30
-    movw  r24, r22
-    rjmp  ff_bridge_restore_arch_r16
-
-; Typed FCMP result finish. POP preserves the helper carry result, so the first
-; branch after ICALL can still distinguish unordered from ordered comparison.
-ff_bridge_call_fcmp_result:
-    movw  r30, r26
-    clr   r1
-    icall
-    pop   r30
-    brcs  .Lff_bridge_cmp_unordered
-    clr   r25
-    sbrc  r24, 7
-    com   r25
-    rjmp  .Lff_bridge_cmp_ready
-.Lff_bridge_cmp_unordered:
-    ldi   r24, 2
-    clr   r25
-.Lff_bridge_cmp_ready:
-
-ff_bridge_restore_arch_r16:
-    pop   r23
-    pop   r22
-    pop   r21
-    pop   r20
-    pop   r19
-    pop   r18
-
-ff_bridge_store_r16:
-    andi  r30, 0x07
-    lsl   r30
-    subi  r30, -8
-    clr   r31
-    st    Z+, r24
-    st    Z,  r25
-    rjmp  cluster_a_tail_18
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Shared F0 trailing-operand fetch helpers
@@ -6845,32 +6516,971 @@ oled_boot_program_end:
 .p2align 2
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; FF local libm shims
+; Far FF typed bridges and interpreter-native floating-point cores
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; These local AVM-specific wrappers immediately precede the embedded
-; avr-libc/libm-derived routine block, so their calls and all internal helper
-; transfers can use explicit relative forms without enabling linker relaxation.
-;
-; max(a,b) = -min(-a,-b). Toggling the sign bit before and after fminf keeps
-; the proposal's number-preferred NaN behavior, NaN payloads/signaling state,
-; opposite-signed-zero preference, infinities, and both-NaN operand ordering.
-; Input/output follows the fplib ABI: A/result r22-r25, B r18-r21.
-ff_fmax_via_fmin:
-    subi  r25, 0x80
-    subi  r21, 0x80
-    rcall fminf
-    subi  r25, 0x80
-    ret
+; This code is deliberately placed outside the Cluster-A-to-secondary-table
+; window. Entry and dispatch-tail transfers use explicit JMP instructions;
+; internal control flow remains relative.
 
-; ceil(x) = -floor(-x). The sign toggles are exact bit operations, so the shim
-; also preserves NaN payload/signaling bits, infinities, and signed zero.
-; Input/output follows the unary fplib ABI: A/result r22-r25.
-ff_ceil_via_floor:
-    subi  r25, 0x80
-    rcall floorf
-    subi  r25, 0x80
-    ret
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Direct FMIN/FMAX/FCMP operand loading and comparison
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; GPIOR2 bits:
+;   7     FCMP
+;   6     FMAX (clear selects FMIN)
+;   3:2   left q
+;   1:0   right q
+;
+; Scratch representation after loading:
+;   left  low/high = r26:r27 / r24:r25
+;   right low/high = r0:r1   / r30:r31
+;
+; The source selectors use fixed MOVW operations, so no architectural register
+; is modified and every source/destination overlap is naturally safe.
+
+ff_direct_load_left_q:
+    in    r30, FF_DIRECT_CONTROL_IO
+    lsr   r30
+    lsr   r30
+    andi  r30, 0x03
+    sbrc  r30, 1
+    rjmp  .Lff_direct_left_high
+    sbrc  r30, 0
+    rjmp  .Lff_direct_left_q1
+
+.Lff_direct_left_q0:
+    movw  r26, r8
+    movw  r24, r10
+    rjmp  ff_direct_load_right_q
+
+.Lff_direct_left_q1:
+    movw  r26, r12
+    movw  r24, r14
+    rjmp  ff_direct_load_right_q
+
+.Lff_direct_left_high:
+    sbrc  r30, 0
+    rjmp  .Lff_direct_left_q3
+
+.Lff_direct_left_q2:
+    movw  r26, r16
+    movw  r24, r18
+    rjmp  ff_direct_load_right_q
+
+.Lff_direct_left_q3:
+    movw  r26, r20
+    movw  r24, r22
+
+ff_direct_load_right_q:
+    in    r30, FF_DIRECT_CONTROL_IO
+    andi  r30, 0x03
+    sbrc  r30, 1
+    rjmp  .Lff_direct_right_high
+    sbrc  r30, 0
+    rjmp  .Lff_direct_right_q1
+
+.Lff_direct_right_q0:
+    movw  r0, r8
+    movw  r30, r10
+    rjmp  ff_direct_operands_ready
+
+.Lff_direct_right_q1:
+    movw  r0, r12
+    movw  r30, r14
+    rjmp  ff_direct_operands_ready
+
+.Lff_direct_right_high:
+    sbrc  r30, 0
+    rjmp  .Lff_direct_right_q3
+
+.Lff_direct_right_q2:
+    movw  r0, r16
+    movw  r30, r18
+    rjmp  ff_direct_operands_ready
+
+.Lff_direct_right_q3:
+    movw  r0, r20
+    movw  r30, r22
+
+ff_direct_operands_ready:
+    ; Temporarily use permanent ZERO as the operation-control byte. No calls or
+    ; SPI handoffs occur before every exit restores r2 with CLR.
+    in    r2, FF_DIRECT_CONTROL_IO
+
+    ; Detect a NaN left operand while restoring every temporarily masked bit.
+    bst   r25, 7
+    andi  r25, 0x7F
+    cpi   r25, 0x7F
+    brne  .Lff_direct_left_not_nan
+    sbrs  r24, 7
+    rjmp  .Lff_direct_left_not_nan
+    andi  r24, 0x7F
+    clr   r25
+    or    r25, r26
+    or    r25, r27
+    or    r25, r24
+    breq  .Lff_direct_left_nan_fraction_zero
+    ori   r24, 0x80
+    ldi   r25, 0x7F
+    bld   r25, 7
+    rjmp  .Lff_direct_left_nan
+.Lff_direct_left_nan_fraction_zero:
+    ori   r24, 0x80
+    ldi   r25, 0x7F
+    bld   r25, 7
+    rjmp  .Lff_direct_check_right_nan
+.Lff_direct_left_not_nan:
+    bld   r25, 7
+    rjmp  .Lff_direct_check_right_nan
+
+.Lff_direct_left_nan:
+    sbrc  r2, 7
+    rjmp  .Lff_direct_cmp_unordered
+    ; Number-preferred min/max returns the second operand when the left is NaN,
+    ; including the both-NaN case; payload and signaling state remain exact.
+    rjmp  .Lff_direct_select_right
+
+.Lff_direct_check_right_nan:
+    bst   r31, 7
+    andi  r31, 0x7F
+    cpi   r31, 0x7F
+    brne  .Lff_direct_right_not_nan
+    sbrs  r30, 7
+    rjmp  .Lff_direct_right_not_nan
+    andi  r30, 0x7F
+    clr   r31
+    or    r31, r0
+    or    r31, r1
+    or    r31, r30
+    breq  .Lff_direct_right_nan_fraction_zero
+    ori   r30, 0x80
+    ldi   r31, 0x7F
+    bld   r31, 7
+    rjmp  .Lff_direct_right_nan
+.Lff_direct_right_nan_fraction_zero:
+    ori   r30, 0x80
+    ldi   r31, 0x7F
+    bld   r31, 7
+    rjmp  .Lff_direct_compare_numeric
+.Lff_direct_right_not_nan:
+    bld   r31, 7
+    rjmp  .Lff_direct_compare_numeric
+
+.Lff_direct_right_nan:
+    sbrc  r2, 7
+    rjmp  .Lff_direct_cmp_unordered
+    rjmp  .Lff_direct_select_left
+
+.Lff_direct_compare_numeric:
+    ; FCMP treats both signed zeros as equal. FMIN/FMAX deliberately continue
+    ; through sign ordering so -0 wins FMIN and +0 wins FMAX.
+    sbrs  r2, 7
+    rjmp  .Lff_direct_compare_signs
+
+    tst   r26
+    brne  .Lff_direct_compare_signs
+    tst   r27
+    brne  .Lff_direct_compare_signs
+    tst   r24
+    brne  .Lff_direct_compare_signs
+    cpi   r25, 0x00
+    breq  .Lff_direct_left_zero
+    cpi   r25, 0x80
+    brne  .Lff_direct_compare_signs
+.Lff_direct_left_zero:
+    tst   r0
+    brne  .Lff_direct_compare_signs
+    tst   r1
+    brne  .Lff_direct_compare_signs
+    tst   r30
+    brne  .Lff_direct_compare_signs
+    cpi   r31, 0x00
+    breq  .Lff_direct_equal
+    cpi   r31, 0x80
+    breq  .Lff_direct_equal
+
+.Lff_direct_compare_signs:
+    sbrc  r25, 7
+    rjmp  .Lff_direct_left_negative
+    sbrc  r31, 7
+    rjmp  .Lff_direct_greater
+    rjmp  .Lff_direct_compare_positive
+
+.Lff_direct_left_negative:
+    sbrs  r31, 7
+    rjmp  .Lff_direct_less
+
+    ; Both negative: larger raw magnitude is numerically smaller.
+    cp    r25, r31
+    brlo  .Lff_direct_greater
+    brne  .Lff_direct_less
+    cp    r24, r30
+    brlo  .Lff_direct_greater
+    brne  .Lff_direct_less
+    cp    r27, r1
+    brlo  .Lff_direct_greater
+    brne  .Lff_direct_less
+    cp    r26, r0
+    brlo  .Lff_direct_greater
+    brne  .Lff_direct_less
+    rjmp  .Lff_direct_equal
+
+.Lff_direct_compare_positive:
+    cp    r25, r31
+    brlo  .Lff_direct_less
+    brne  .Lff_direct_greater
+    cp    r24, r30
+    brlo  .Lff_direct_less
+    brne  .Lff_direct_greater
+    cp    r27, r1
+    brlo  .Lff_direct_less
+    brne  .Lff_direct_greater
+    cp    r26, r0
+    brlo  .Lff_direct_less
+    brne  .Lff_direct_greater
+
+.Lff_direct_equal:
+    sbrc  r2, 7
+    rjmp  .Lff_direct_cmp_equal
+    rjmp  .Lff_direct_select_left
+
+.Lff_direct_less:
+    sbrc  r2, 7
+    rjmp  .Lff_direct_cmp_less
+    sbrc  r2, 6
+    rjmp  .Lff_direct_select_right
+    rjmp  .Lff_direct_select_left
+
+.Lff_direct_greater:
+    sbrc  r2, 7
+    rjmp  .Lff_direct_cmp_greater
+    sbrc  r2, 6
+    rjmp  .Lff_direct_select_left
+    rjmp  .Lff_direct_select_right
+
+.Lff_direct_select_right:
+    movw  r26, r0
+    movw  r24, r30
+.Lff_direct_select_left:
+    clr   r2
+    in    r30, FF_BRIDGE_META_IO
+    rjmp  ff_store_q_result
+
+.Lff_direct_cmp_less:
+    ldi   r24, 0xFF
+    ldi   r25, 0xFF
+    rjmp  .Lff_direct_cmp_store
+.Lff_direct_cmp_equal:
+    clr   r24
+    clr   r25
+    rjmp  .Lff_direct_cmp_store
+.Lff_direct_cmp_greater:
+    ldi   r24, 1
+    clr   r25
+    rjmp  .Lff_direct_cmp_store
+.Lff_direct_cmp_unordered:
+    ldi   r24, 2
+    clr   r25
+.Lff_direct_cmp_store:
+    clr   r2
+    in    r30, FF_BRIDGE_META_IO
+    rjmp  ff_bridge_store_r16
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Direct FTRUNC/FFLOOR/FCEIL/FROUND
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Mode in GPIOR2:
+;   0 trunc toward zero
+;   1 floor
+;   2 ceil
+;   3 round halfway away from zero
+;
+; The selected q value is loaded into the same canonical result representation
+; used by the q writer: low half r26:r27, high half r24:r25.
+; Partial-byte masks are generated by a loop bounded to seven shifts.
+ff_direct_round_load_q:
+    in    r0, FF_BRIDGE_META_IO
+    sbrc  r0, 1
+    rjmp  .Lff_direct_round_high
+    sbrc  r0, 0
+    rjmp  .Lff_direct_round_q1
+
+.Lff_direct_round_q0:
+    movw  r26, r8
+    movw  r24, r10
+    rjmp  ff_direct_round_ready
+
+.Lff_direct_round_q1:
+    movw  r26, r12
+    movw  r24, r14
+    rjmp  ff_direct_round_ready
+
+.Lff_direct_round_high:
+    sbrc  r0, 0
+    rjmp  .Lff_direct_round_q3
+
+.Lff_direct_round_q2:
+    movw  r26, r16
+    movw  r24, r18
+    rjmp  ff_direct_round_ready
+
+.Lff_direct_round_q3:
+    movw  r26, r20
+    movw  r24, r22
+
+ff_direct_round_ready:
+    in    r2, FF_DIRECT_CONTROL_IO
+
+    ; Assemble the unbiased-field source exponent E in r30. E >= 150 means the
+    ; binary32 value has no fractional bit; this also returns infinities and
+    ; NaNs unchanged.
+    mov   r30, r25
+    lsl   r30
+    sbrc  r24, 7
+    ori   r30, 1
+    cpi   r30, 150
+    brlo  .Lff_direct_round_not_integral
+    rjmp  .Lff_direct_round_finish
+.Lff_direct_round_not_integral:
+    cpi   r30, 127
+    brsh  .Lff_direct_round_fractional_integer
+
+    ; |x| < 1. Preserve exact signed zero. All other small inputs reduce to
+    ; signed zero or signed one according to mode and sign.
+    mov   r31, r25
+    andi  r31, 0x7F
+    or    r31, r24
+    or    r31, r27
+    or    r31, r26
+    brne  .Lff_direct_round_small_nonzero
+    rjmp  .Lff_direct_round_finish
+.Lff_direct_round_small_nonzero:
+    tst   r2
+    breq  .Lff_direct_round_make_zero
+    sbrc  r2, 1
+    rjmp  .Lff_direct_round_small_high_mode
+
+    ; Mode 1: FLOOR.
+    sbrs  r25, 7
+    rjmp  .Lff_direct_round_make_zero
+    rjmp  .Lff_direct_round_make_one
+
+.Lff_direct_round_small_high_mode:
+    sbrc  r2, 0
+    rjmp  .Lff_direct_round_small_round
+
+    ; Mode 2: CEIL.
+    sbrc  r25, 7
+    rjmp  .Lff_direct_round_make_zero
+    rjmp  .Lff_direct_round_make_one
+
+.Lff_direct_round_small_round:
+    ; Mode 3: E == 126 is exactly the [0.5,1) binade.
+    cpi   r30, 126
+    brlo  .Lff_direct_round_make_zero
+
+.Lff_direct_round_make_one:
+    clr   r26
+    clr   r27
+    ldi   r24, 0x80
+    andi  r25, 0x80
+    ori   r25, 0x3F
+    rjmp  .Lff_direct_round_finish
+
+.Lff_direct_round_make_zero:
+    clr   r26
+    clr   r27
+    clr   r24
+    andi  r25, 0x80
+    rjmp  .Lff_direct_round_finish
+
+.Lff_direct_round_fractional_integer:
+    ; n = 150-E is the number of low raw-magnitude bits to discard (1-23).
+    ; Preserve the sign in T and operate on the unsigned magnitude. Split n
+    ; into a byte group and a within-byte shift count. The common path builds
+    ; its mask in at most seven shifts, examines the discarded fraction, and
+    ; clears the low bits without shifting the complete value away and back.
+    ldi   r31, 150
+    sub   r31, r30
+    bst   r25, 7
+    andi  r25, 0x7F
+
+    mov   r30, r31
+    andi  r30, 0x07             ; within-byte bit count
+    cpi   r31, 8
+    brlo  .Lff_direct_round_compact_low
+    cpi   r31, 16
+    brlo  .Lff_direct_round_compact_mid
+
+.Lff_direct_round_compact_high:
+    mov   r2, ONE
+    lsl   r2                    ; ULP is in r24
+    mov   r0, r24               ; partial-byte source
+    mov   r1, r26
+    or    r1, r27               ; all lower discarded bytes
+    tst   r30
+    brne  .Lff_direct_round_compact_partial
+    mov   r0, r27               ; boundary halfway bit is r27.7
+    rjmp  .Lff_direct_round_compact_boundary
+
+.Lff_direct_round_compact_mid:
+    mov   r2, ONE               ; ULP is in r27
+    mov   r0, r27               ; partial-byte source
+    mov   r1, r26               ; lower discarded byte
+    tst   r30
+    brne  .Lff_direct_round_compact_partial
+    mov   r0, r26               ; boundary halfway bit is r26.7
+    rjmp  .Lff_direct_round_compact_boundary
+
+.Lff_direct_round_compact_low:
+    clr   r2                    ; ULP is in r26; n cannot be a boundary
+    mov   r0, r26
+    clr   r1
+
+.Lff_direct_round_compact_partial:
+    ; r31 = 1 << (n & 7), generated by a loop bounded to seven iterations.
+    ldi   r31, 1
+.Lff_direct_round_compact_mask_loop:
+    lsl   r31
+    dec   r30
+    brne  .Lff_direct_round_compact_mask_loop
+
+    ; Result flags in r30: bit 0 means any discarded fraction and bit 1 means
+    ; the halfway bit is set. r1 already contains all fully discarded bytes.
+    mov   r30, r31
+    lsr   r30
+    and   r30, r0
+    breq  .Lff_direct_round_compact_no_half
+    ldi   r30, 0x02
+    rjmp  .Lff_direct_round_compact_half_done
+.Lff_direct_round_compact_no_half:
+    clr   r30
+.Lff_direct_round_compact_half_done:
+    dec   r31                   ; mask below the retained ULP
+    and   r0, r31
+    or    r1, r0
+    breq  .Lff_direct_round_compact_no_discard
+    ori   r30, 0x01
+.Lff_direct_round_compact_no_discard:
+
+    ; Clear the discarded bits. Convert the low mask to a keep mask, apply it
+    ; to the selected byte, and clear all complete lower bytes.
+    com   r31
+    tst   r2
+    breq  .Lff_direct_round_compact_clear_low
+    cp    r2, ONE
+    breq  .Lff_direct_round_compact_clear_mid
+
+.Lff_direct_round_compact_clear_high:
+    and   r24, r31
+    clr   r27
+    clr   r26
+    rjmp  .Lff_direct_round_compact_restore_ulp
+
+.Lff_direct_round_compact_clear_mid:
+    and   r27, r31
+    clr   r26
+    rjmp  .Lff_direct_round_compact_restore_ulp
+
+.Lff_direct_round_compact_clear_low:
+    and   r26, r31
+
+.Lff_direct_round_compact_restore_ulp:
+    com   r31
+    inc   r31                   ; restore 1 << (n & 7)
+    rjmp  .Lff_direct_round_decide_increment
+
+.Lff_direct_round_compact_boundary:
+    ; n is 8 or 16. The ULP is bit zero of the selected byte, and r0 contains
+    ; the preceding byte whose top bit is the halfway bit. r1 is the OR of all
+    ; discarded bytes, including r0.
+    ldi   r31, 1
+    clr   r30
+    sbrc  r0, 7
+    ori   r30, 0x02
+    tst   r1
+    breq  .Lff_direct_round_compact_boundary_no_discard
+    ori   r30, 0x01
+.Lff_direct_round_compact_boundary_no_discard:
+    cp    r2, ONE
+    breq  .Lff_direct_round_compact_boundary_mid
+    clr   r27                   ; n == 16
+.Lff_direct_round_compact_boundary_mid:
+    clr   r26
+
+.Lff_direct_round_decide_increment:
+    ; No discarded fraction means every mode returns the masked value.
+    sbrs  r30, 0
+    rjmp  .Lff_direct_round_restore_sign
+
+    in    r0, FF_DIRECT_CONTROL_IO
+    tst   r0
+    breq  .Lff_direct_round_restore_sign
+    sbrc  r0, 1
+    rjmp  .Lff_direct_round_high_mode_increment
+
+    ; Mode 1: floor.
+    brtc  .Lff_direct_round_restore_sign
+    rjmp  .Lff_direct_round_apply_direct_ulp
+
+.Lff_direct_round_high_mode_increment:
+    sbrc  r0, 0
+    rjmp  .Lff_direct_round_round_increment
+
+    ; Mode 2: ceil.
+    brts  .Lff_direct_round_restore_sign
+    rjmp  .Lff_direct_round_apply_direct_ulp
+
+.Lff_direct_round_round_increment:
+    ; Mode 3: round halfway away from zero.
+    sbrs  r30, 1
+    rjmp  .Lff_direct_round_restore_sign
+
+.Lff_direct_round_apply_direct_ulp:
+    clr   r1
+    tst   r2
+    breq  .Lff_direct_round_add_low
+    cp    r2, ONE
+    breq  .Lff_direct_round_add_mid
+
+.Lff_direct_round_add_high:
+    add   r24, r31
+    adc   r25, r1
+    rjmp  .Lff_direct_round_restore_sign
+
+.Lff_direct_round_add_mid:
+    add   r27, r31
+    adc   r24, r1
+    adc   r25, r1
+    rjmp  .Lff_direct_round_restore_sign
+
+.Lff_direct_round_add_low:
+    add   r26, r31
+    adc   r27, r1
+    adc   r24, r1
+    adc   r25, r1
+
+.Lff_direct_round_restore_sign:
+    bld   r25, 7
+    rjmp  .Lff_direct_round_finish
+
+.Lff_direct_round_finish:
+    clr   r2
+    in    r30, FF_BRIDGE_META_IO
+    rjmp  ff_store_q_result
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Embedded-libm typed bridges
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Binary qD,qS -> qD. The low descriptor nibble has ddss format.
+; The destination bits directly choose the save class; no metadata write or
+; post-helper destination decode is needed because each table row targets a
+; destination-specific call/restore/writeback continuation.
+ff_bridge_binary_q_to_q:
+    sbrc  FF_BRIDGE_DESC, 3
+    rjmp  .Lff_bridge_heavy_binary_high_dest
+
+.Lff_bridge_heavy_binary_save_full:
+    push  r18
+    push  r19
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    rjmp  .Lff_bridge_heavy_binary_saved
+
+.Lff_bridge_heavy_binary_high_dest:
+    sbrc  FF_BRIDGE_DESC, 2
+    rjmp  .Lff_bridge_heavy_binary_save_q3
+
+.Lff_bridge_heavy_binary_save_q2:
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    rjmp  .Lff_bridge_heavy_binary_saved
+
+.Lff_bridge_heavy_binary_save_q3:
+    push  r18
+    push  r19
+
+.Lff_bridge_heavy_binary_saved:
+    movw  r26, r30
+
+    ; Multiply the ddss table index by five in AVR word-address space.
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_META, 0x0F
+    mov   r0, FF_BRIDGE_META
+    lsl   FF_BRIDGE_META
+    lsl   FF_BRIDGE_META
+    add   FF_BRIDGE_META, r0
+    ldi   r30, lo8(pm(ff_binary_marshal_table))
+    ldi   r31, hi8(pm(ff_binary_marshal_table))
+    add   r30, FF_BRIDGE_META
+    adc   r31, ZERO
+    ijmp
+
+; Emit one alias-safe binary marshalling slot. The four MOVW operations place
+; qS in fplib operand B (r18-r21) and qD in operand A (r22-r25).
+.macro emit_ff_binary_marshal label, target, d0, s0, d1, s1, d2, s2, d3, s3
+\label:
+    movw  \d0, \s0
+    movw  \d1, \s1
+    movw  \d2, \s2
+    movw  \d3, \s3
+    rjmp  \target
+.Lff_binary_marshal_end_\@:
+    .if (.Lff_binary_marshal_end_\@ - \label) != 10
+        .error "FF binary marshal slot must occupy exactly five AVR words"
+    .endif
+.endm
+
+ff_binary_marshal_table:
+    emit_ff_binary_marshal .Lff_bin_q0_q0, ff_bridge_call_heavy_q0_result, r18, r8,  r20, r10, r22, r8,  r24, r10
+    emit_ff_binary_marshal .Lff_bin_q0_q1, ff_bridge_call_heavy_q0_result, r18, r12, r20, r14, r22, r8,  r24, r10
+    emit_ff_binary_marshal .Lff_bin_q0_q2, ff_bridge_call_heavy_q0_result, r20, r18, r18, r16, r22, r8,  r24, r10
+    emit_ff_binary_marshal .Lff_bin_q0_q3, ff_bridge_call_heavy_q0_result, r18, r20, r20, r22, r22, r8,  r24, r10
+
+    emit_ff_binary_marshal .Lff_bin_q1_q0, ff_bridge_call_heavy_q1_result, r18, r8,  r20, r10, r22, r12, r24, r14
+    emit_ff_binary_marshal .Lff_bin_q1_q1, ff_bridge_call_heavy_q1_result, r18, r12, r20, r14, r22, r12, r24, r14
+    emit_ff_binary_marshal .Lff_bin_q1_q2, ff_bridge_call_heavy_q1_result, r20, r18, r18, r16, r22, r12, r24, r14
+    emit_ff_binary_marshal .Lff_bin_q1_q3, ff_bridge_call_heavy_q1_result, r18, r20, r20, r22, r22, r12, r24, r14
+
+    emit_ff_binary_marshal .Lff_bin_q2_q0, ff_bridge_call_heavy_q2_result, r20, r10, r22, r16, r24, r18, r18, r8
+    emit_ff_binary_marshal .Lff_bin_q2_q1, ff_bridge_call_heavy_q2_result, r20, r14, r22, r16, r24, r18, r18, r12
+    emit_ff_binary_marshal .Lff_bin_q2_q2, ff_bridge_call_heavy_q2_result, r20, r18, r18, r16, r22, r16, r24, r20
+    emit_ff_binary_marshal .Lff_bin_q2_q3, ff_bridge_call_heavy_q2_result, r24, r18, r18, r20, r20, r22, r22, r16
+
+    emit_ff_binary_marshal .Lff_bin_q3_q0, ff_bridge_call_heavy_q3_result, r18, r8,  r24, r22, r22, r20, r20, r10
+    emit_ff_binary_marshal .Lff_bin_q3_q1, ff_bridge_call_heavy_q3_result, r18, r12, r24, r22, r22, r20, r20, r14
+    emit_ff_binary_marshal .Lff_bin_q3_q2, ff_bridge_call_heavy_q3_result, r24, r22, r22, r20, r20, r18, r18, r16
+    emit_ff_binary_marshal .Lff_bin_q3_q3, ff_bridge_call_heavy_q3_result, r18, r20, r20, r22, r22, r18, r24, r20
+ff_binary_marshal_table_end:
+.if (ff_binary_marshal_table_end - ff_binary_marshal_table) != 160
+    .error "FF binary marshal table must occupy exactly eighty AVR words"
+.endif
+
+; Unary qD -> qD SQRT uses the heavy helper class.
+ff_bridge_unary_q_to_q:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_META, 0x03
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+    clr   r1
+    rjmp  ff_bridge_save_heavy_q_source
+
+; qS -> qD conversions use the light helper class.
+ff_bridge_q_to_q:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    lsr   FF_BRIDGE_META
+    lsr   FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x03
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+    mov   r1, ONE
+    rjmp  ff_bridge_save_light_q_source
+
+; qS -> rD conversions use the light helper class.
+ff_bridge_q_to_r16:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    swap  FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x07
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+    mov   r1, ONE
+    lsl   r1                      ; result-kind 2: light r16
+    rjmp  ff_bridge_save_light_q_source
+
+ff_bridge_save_heavy_q_source:
+    cpi   FF_BRIDGE_META, 2
+    breq  .Lff_bridge_heavy_q_source_save_q2
+    brsh  .Lff_bridge_heavy_q_source_save_q3
+
+.Lff_bridge_heavy_q_source_save_full:
+    push  r18
+    push  r19
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    rjmp  .Lff_bridge_q_source_saved
+
+.Lff_bridge_heavy_q_source_save_q2:
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    rjmp  .Lff_bridge_q_source_saved
+
+.Lff_bridge_heavy_q_source_save_q3:
+    push  r18
+    push  r19
+    rjmp  .Lff_bridge_q_source_saved
+
+ff_bridge_save_light_q_source:
+    ; r1 bit 1 selects r16 result metadata; otherwise metadata is qD.
+    sbrc  r1, 1
+    rjmp  .Lff_bridge_light_q_source_check_r16
+    cpi   FF_BRIDGE_META, 3
+    breq  .Lff_bridge_q_source_saved
+    push  r22
+    push  r23
+    rjmp  .Lff_bridge_q_source_saved
+
+.Lff_bridge_light_q_source_check_r16:
+    cpi   FF_BRIDGE_META, 7
+    breq  .Lff_bridge_q_source_saved
+    push  r22
+    push  r23
+
+.Lff_bridge_q_source_saved:
+    movw  r26, r30
+    andi  FF_BRIDGE_DESC, 0x03
+    sbrc  FF_BRIDGE_DESC, 1
+    rjmp  .Lff_q_source_high
+    sbrc  FF_BRIDGE_DESC, 0
+    rjmp  .Lff_q_source_q1
+
+.Lff_q_source_q0:
+    movw  r22, r8
+    movw  r24, r10
+    rjmp  ff_bridge_q_source_ready
+
+.Lff_q_source_q1:
+    movw  r22, r12
+    movw  r24, r14
+    rjmp  ff_bridge_q_source_ready
+
+.Lff_q_source_high:
+    sbrc  FF_BRIDGE_DESC, 0
+    rjmp  .Lff_q_source_q3
+
+.Lff_q_source_q2:
+    movw  r22, r16
+    movw  r24, r18
+    rjmp  ff_bridge_q_source_ready
+
+.Lff_q_source_q3:
+    movw  r24, r22
+    movw  r22, r20
+
+ff_bridge_q_source_ready:
+    tst   r1
+    brne  .Lff_bridge_q_source_light_result
+    rjmp  ff_bridge_call_heavy_q_result
+.Lff_bridge_q_source_light_result:
+    sbrc  r1, 1
+    rjmp  ff_bridge_call_light_r16_result
+    rjmp  ff_bridge_call_light_q_result
+
+; Signed/unsigned rS -> qD conversions retain the generic source decoder.
+ff_bridge_r16_to_q_s:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_META, 0x03
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+    clr   r1
+    rjmp  ff_bridge_save_light_r16_source
+
+ff_bridge_r16_to_q_u:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_META, 0x03
+    out   FF_BRIDGE_META_IO, FF_BRIDGE_META
+    mov   r1, ONE
+
+ff_bridge_save_light_r16_source:
+    cpi   FF_BRIDGE_META, 3
+    breq  .Lff_bridge_light_r16_source_saved
+    push  r22
+    push  r23
+.Lff_bridge_light_r16_source_saved:
+    sbrc  r1, 0
+    rjmp  ff_bridge_marshal_r16_u
+
+ff_bridge_marshal_r16_s:
+    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
+    swap  FF_BRIDGE_INDEX
+    andi  FF_BRIDGE_INDEX, 0x07
+    lsl   FF_BRIDGE_INDEX
+    subi  FF_BRIDGE_INDEX, -9
+    clr   FF_BRIDGE_XH
+    ld    r23, X
+    ld    r22, -X
+    mov   r24, r23
+    lsl   r24
+    sbc   r24, r24
+    mov   r25, r24
+    movw  r26, r30
+    rjmp  ff_bridge_call_light_q_result
+
+ff_bridge_marshal_r16_u:
+    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
+    swap  FF_BRIDGE_INDEX
+    andi  FF_BRIDGE_INDEX, 0x07
+    lsl   FF_BRIDGE_INDEX
+    subi  FF_BRIDGE_INDEX, -9
+    clr   FF_BRIDGE_XH
+    ld    r23, X
+    ld    r22, -X
+    clr   r24
+    clr   r25
+    movw  r26, r30
+    rjmp  ff_bridge_call_light_q_result
+
+; Binary helpers use destination-specific call/restore/writeback paths.
+; This removes both destination decodes from the binary hot path while still
+; omitting destination-owned saves for q2 and q3.
+ff_bridge_call_heavy_q0_result:
+    movw  r30, r26
+    clr   r1
+    icall
+    movw  r26, r22
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    movw  r8, r26
+    movw  r10, r24
+    jmp   cluster_a_tail_18
+
+ff_bridge_call_heavy_q1_result:
+    movw  r30, r26
+    clr   r1
+    icall
+    movw  r26, r22
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    movw  r12, r26
+    movw  r14, r24
+    jmp   cluster_a_tail_18
+
+ff_bridge_call_heavy_q2_result:
+    movw  r30, r26
+    clr   r1
+    icall
+    movw  r26, r22
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    movw  r16, r26
+    movw  r18, r24
+    jmp   cluster_a_tail_18
+
+ff_bridge_call_heavy_q3_result:
+    movw  r30, r26
+    clr   r1
+    icall
+    movw  r26, r22
+    pop   r19
+    pop   r18
+    movw  r20, r26
+    movw  r22, r24
+    jmp   cluster_a_tail_18
+
+; Unary heavy helpers (currently FSQRT) retain the metadata-selected finish.
+ff_bridge_call_heavy_q_result:
+    movw  r30, r26
+    clr   r1
+    icall
+    in    r30, FF_BRIDGE_META_IO
+    movw  r26, r22
+
+    cpi   r30, 2
+    breq  .Lff_bridge_restore_heavy_q2
+    brsh  .Lff_bridge_restore_heavy_q3
+
+.Lff_bridge_restore_heavy_full:
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    rjmp  ff_store_q_result
+
+.Lff_bridge_restore_heavy_q2:
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    rjmp  ff_store_q_result
+
+.Lff_bridge_restore_heavy_q3:
+    pop   r19
+    pop   r18
+    rjmp  ff_store_q_result
+
+; Light q helper result: only r22-r23 need restoration, except for q3.
+ff_bridge_call_light_q_result:
+    movw  r30, r26
+    clr   r1
+    icall
+    in    r30, FF_BRIDGE_META_IO
+    movw  r26, r22
+    cpi   r30, 3
+    breq  ff_store_q_result
+    pop   r23
+    pop   r22
+
+; Canonical q result is low r26:r27, high r24:r25; r30 is qD.
+ff_store_q_result:
+    sbrc  r30, 1
+    rjmp  .Lff_store_q_high
+    sbrc  r30, 0
+    rjmp  .Lff_store_q1
+
+.Lff_store_q0:
+    movw  r8, r26
+    movw  r10, r24
+    jmp   cluster_a_tail_18
+
+.Lff_store_q1:
+    movw  r12, r26
+    movw  r14, r24
+    jmp   cluster_a_tail_18
+
+.Lff_store_q_high:
+    sbrc  r30, 0
+    rjmp  .Lff_store_q3
+
+.Lff_store_q2:
+    movw  r16, r26
+    movw  r18, r24
+    jmp   cluster_a_tail_18
+
+.Lff_store_q3:
+    movw  r20, r26
+    movw  r22, r24
+    jmp   cluster_a_tail_18
+
+; Light r16 helper result: generic rD address/store is retained.
+ff_bridge_call_light_r16_result:
+    movw  r30, r26
+    clr   r1
+    icall
+    in    r30, FF_BRIDGE_META_IO
+    movw  r24, r22
+    cpi   r30, 7
+    breq  ff_bridge_store_r16
+    pop   r23
+    pop   r22
+
+ff_bridge_store_r16:
+    andi  r30, 0x07
+    lsl   r30
+    subi  r30, -8
+    clr   r31
+    st    Z+, r24
+    st    Z,  r25
+    jmp   cluster_a_tail_18
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Embedded avr-libc/libm-derived binary32 routines
@@ -7264,147 +7874,12 @@ __floatsisf:
     bld   r25, 7
 .L__floatsisf_return:
     ret
-floor:
-floorf:
-    rcall __fp_trunc
-    brcs  .L_floorf_nonfinite
-    cpi   r25, 0x7F
-    brcc  .L_floorf_integral_or_larger
-    cpse  r25, r1
-    brts  .L_floorf_negative_fraction
-    rjmp  __fp_szero
-.L_floorf_negative_fraction:
-    ldi   r22, 0x00
-    ldi   r23, 0x00
-    ldi   r24, 0x80
-    ldi   r25, 0xBF
-    ret
-.L_floorf_integral_or_larger:
-    brtc  .L_floorf_pack_integer
-    cp    r1, r27
-    adc   r22, r1
-    adc   r23, r1
-    adc   r24, r1
-.L_floorf_pack_integer:
-    rjmp  __fp_mintl
-.L_floorf_nonfinite:
-    rjmp  __fp_mpack
-fmin:
-fminf:
-    add   r25, r25
-    sbc   r27, r27
-    add   r21, r21
-    sbc   r26, r26
-    ldi   r30, 0x80
-    ldi   r31, 0xFE
-    cp    r1, r22
-    cpc   r1, r23
-    cpc   r30, r24
-    cpc   r31, r25
-    brcs  .L_fminf_return_b
-    cp    r1, r18
-    cpc   r1, r19
-    cpc   r30, r20
-    cpc   r31, r21
-    brcs  .L_fminf_return_a
-    cp    r27, r26
-    brlt  .L_fminf_return_a
-    brne  .L_fminf_return_b
-    cp    r18, r22
-    cpc   r19, r23
-    cpc   r20, r24
-    cpc   r21, r25
-    ror   r26
-    brvc  .L_fminf_return_a
-.L_fminf_return_b:
-    movw  r22, r18
-    movw  r24, r20
-    mov   r27, r26
-.L_fminf_return_a:
-    lsr   r27
-    ror   r25
-    ret
-__fp_cmp:
-    add   r25, r25
-    sbc   r0, r0
-    add   r21, r21
-    sbc   r26, r26
-    ldi   r30, 0x80
-    ldi   r31, 0xFE
-    cp    r1, r22
-    cpc   r1, r23
-    cpc   r30, r24
-    cpc   r31, r25
-    brcs  .L__fp_cmp_return
-    cp    r1, r18
-    cpc   r1, r19
-    cpc   r30, r20
-    cpc   r31, r21
-    brcs  .L__fp_cmp_return
-    sub   r22, r18
-    sbc   r23, r19
-    sbc   r24, r20
-    sbc   r25, r21
-    brne  .L__fp_cmp_compare_signs
-    eor   r0, r26
-    breq  .L__fp_cmp_return
-    or    r18, r19
-    or    r18, r20
-    or    r18, r21
-    brne  .L__fp_cmp_build_result
-    ret
-.L__fp_cmp_compare_signs:
-    eor   r0, r26
-    brne  .L__fp_cmp_build_result
-    sbci  r26, 0x01
-.L__fp_cmp_build_result:
-    lsr   r26
-    ldi   r24, 0xFF
-    adc   r24, r1
-    adc   r24, r1
-.L__fp_cmp_return:
-    ret
 __fp_inf:
     bld   r25, 7
     ori   r25, 0x7F
     ldi   r24, 0x80
     ldi   r23, 0x00
     ldi   r22, 0x00
-    ret
-__fp_mintl:
-    and   r24, r24
-    brne  .L__fp_mintl_mantissa_ready
-    and   r23, r23
-    breq  .L__fp_mintl_check_low_byte
-    subi  r25, 0x08
-    or    r24, r23
-    mov   r23, r22
-    rjmp  .L__fp_mintl_clear_low_byte
-.L__fp_mintl_check_low_byte:
-    and   r22, r22
-    brne  .L__fp_mintl_use_low_byte
-    eor   r25, r25
-    rjmp  .L__fp_mintl_apply_sign
-.L__fp_mintl_use_low_byte:
-    subi  r25, 0x10
-    or    r24, r22
-    ldi   r23, 0x00
-.L__fp_mintl_clear_low_byte:
-    ldi   r22, 0x00
-.L__fp_mintl_mantissa_ready:
-    brmi  .L__fp_mintl_pack
-.L__fp_mintl_normalize:
-    dec   r25
-    add   r22, r22
-    adc   r23, r23
-    adc   r24, r24
-    brpl  .L__fp_mintl_normalize
-.L__fp_mintl_pack:
-    add   r24, r24
-    lsr   r25
-    ror   r24
-.L__fp_mintl_apply_sign:
-    bld   r25, 7
     ret
 __fp_mpack:
     cpi   r25, 0xFF
@@ -7506,34 +7981,6 @@ __fp_splitA:
     cpc   r22, r1
 .L__fp_splitA_return_nonfinite:
     sec
-    ret
-__fp_trunc:
-    rcall __fp_splitA
-    brcs  .L__fp_trunc_return
-    ldi   r27, 0x7E
-    cp    r27, r25
-    brcc  .L__fp_trunc_return
-    eor   r27, r27
-.L__fp_trunc_shift_right_byte:
-    cpi   r25, 0x8F
-    brcc  .L__fp_trunc_check_shift
-    cp    r1, r22
-    adc   r27, r1
-    mov   r22, r23
-    mov   r23, r24
-    eor   r24, r24
-    subi  r25, 0xF8
-    rjmp  .L__fp_trunc_shift_right_byte
-.L__fp_trunc_shift_right_bit:
-    lsr   r24
-    ror   r23
-    ror   r22
-    adc   r27, r1
-    inc   r25
-.L__fp_trunc_check_shift:
-    cpi   r25, 0x96
-    brcs  .L__fp_trunc_shift_right_bit
-.L__fp_trunc_return:
     ret
 __fp_zero:
     clt
@@ -7655,46 +8102,6 @@ __mulsf3_pse:
     ror   r24
     bld   r25, 7
     ret
-round:
-roundf:
-    rcall __fp_splitA
-    brcs  .L_roundf_nonfinite
-    cpi   r25, 0x7E
-    brcs  .L_roundf_zero
-    cpi   r25, 0x96
-    brcc  .L_roundf_pack_integer
-.L_roundf_shift_right_byte:
-    cpi   r25, 0x8E
-    brcc  .L_roundf_check_shift
-    mov   r22, r23
-    mov   r23, r24
-    eor   r24, r24
-    subi  r25, 0xF8
-    rjmp  .L_roundf_shift_right_byte
-.L_roundf_shift_right_bit:
-    lsr   r24
-    ror   r23
-    ror   r22
-    inc   r25
-.L_roundf_check_shift:
-    cpi   r25, 0x95
-    brcs  .L_roundf_shift_right_bit
-    mov   r27, r22
-    andi  r27, 0x01
-    add   r22, r27
-    adc   r23, r1
-    adc   r24, r1
-    brcc  .L_roundf_pack_integer
-    ror   r24
-    ror   r23
-    ror   r22
-    inc   r25
-.L_roundf_pack_integer:
-    rjmp  __fp_mintl
-.L_roundf_nonfinite:
-    rjmp  __fp_mpack
-.L_roundf_zero:
-    rjmp  __fp_szero
 .L_sqrtf_nonfinite:
     brne  .L_sqrtf_pack
     brtc  .L_sqrtf_pack
@@ -7773,17 +8180,6 @@ sqrtf:
     lsr   r25
     ror   r24
     ret
-truncf:
-trunc:
-    rcall __fp_trunc
-    brcs  .L_truncf_nonfinite
-    cpi   r25, 0x7F
-    brcc  .L_truncf_pack_integer
-    rjmp  __fp_szero
-.L_truncf_pack_integer:
-    rjmp  __fp_mintl
-.L_truncf_nonfinite:
-    rjmp  __fp_mpack
 __fp_norm2:
     subi  r25, 0x01
     sbci  r21, 0x00

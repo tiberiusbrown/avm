@@ -21,6 +21,9 @@
 ;     0 through 15.
 ;   * Division/remainder samples zero-divisor bypass, byte/word magnitude
 ;     cores, sparse/dense quotient bits, signed correction, and operand aliasing.
+;   * Floating-point benchmarks sample normal and exceptional operand classes,
+;     normalization/rounding boundaries, selection branches, conversions,
+;     comparison outcomes, all classification classes, and meaningful aliasing.
 ;   * Operand aliases are otherwise omitted when they execute the same path.
 ;
 ; benchmark_names.txt is intentionally unnumbered.
@@ -1826,6 +1829,1989 @@ _start:
     ldi16 r4, 0xffff
     sys debug_break
     srem16 r4, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q0,q1 (normal same-sign)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3fc0
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4010
+    sys debug_break
+    fadd q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q2,q3 (exact cancellation)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fc0
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbfc0
+    sys debug_break
+    fadd q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q0,q1 (large exponent gap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0001
+    ldi16 r3, 0x0000
+    sys debug_break
+    fadd q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q0,q1 (subnormal result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0001
+    ldi16 r1, 0x0000
+    ldi16 r2, 0x0001
+    ldi16 r3, 0x0000
+    sys debug_break
+    fadd q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q0,q1 (overflow to +infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0xffff
+    ldi16 r1, 0x7f7f
+    ldi16 r2, 0xffff
+    ldi16 r3, 0x7f7f
+    sys debug_break
+    fadd q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q0,q1 (infinity plus finite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x7f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fadd q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q0,q1 (invalid +infinity plus -infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x7f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xff80
+    sys debug_break
+    fadd q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q0,q1 (quiet NaN operand)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fadd q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FADD q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3fc0
+    sys debug_break
+    fadd q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q0,q1 (normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x40b0
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fsub q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q2,q3 (exact cancellation)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fc0
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3fc0
+    sys debug_break
+    fsub q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q0,q1 (large exponent gap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0001
+    ldi16 r3, 0x0000
+    sys debug_break
+    fsub q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q0,q1 (subnormal result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0080
+    ldi16 r2, 0xffff
+    ldi16 r3, 0x007f
+    sys debug_break
+    fsub q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q0,q1 (overflow to +infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0xffff
+    ldi16 r1, 0x7f7f
+    ldi16 r2, 0xffff
+    ldi16 r3, 0xff7f
+    sys debug_break
+    fsub q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q0,q1 (-infinity minus finite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0xff80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fsub q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q0,q1 (invalid infinity minus infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x7f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    fsub q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q0,q1 (quiet NaN operand)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fsub q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSUB q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3fc0
+    sys debug_break
+    fsub q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3fc0
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4010
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q2,q3 (negative result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xbfc0
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4010
+    sys debug_break
+    fmul q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (signed zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x8000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4040
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (subnormal result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0080
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f00
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (underflow halfway to zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0001
+    ldi16 r1, 0x0000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f00
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (overflow to +infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0xffff
+    ldi16 r1, 0x7f7f
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (infinity times finite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x7f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xc000
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (invalid infinity times zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x7f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q0,q1 (quiet NaN operand)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fmul q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMUL q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc000
+    sys debug_break
+    fmul q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (exact normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x40e0
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q2,q3 (recurring normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4040
+    sys debug_break
+    fdiv q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (negative result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0xc0e0
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (signed zero numerator)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x8000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xc000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (zero divisor)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (subnormal result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0080
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (underflow halfway to zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0001
+    ldi16 r1, 0x0000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (overflow)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0xffff
+    ldi16 r1, 0x7f7f
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0080
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (finite divided by infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x4120
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (infinity divided by finite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0xff80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (invalid zero divided by zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (invalid infinity divided by infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x7f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q0,q1 (quiet NaN operand)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fdiv q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FDIV q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc040
+    sys debug_break
+    fdiv q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q0,q1 (left selected)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fmin q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q2,q3 (right selected)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
+    sys debug_break
+    fmin q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q0,q1 (equal finite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fmin q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q0,q1 (opposite zeros +0,-0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    fmin q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q0,q1 (opposite zeros -0,+0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x8000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    fmin q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q0,q1 (first operand NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fmin q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q0,q1 (second operand NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x4321
+    ldi16 r3, 0xffc5
+    sys debug_break
+    fmin q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q0,q1 (both operands NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x4321
+    ldi16 r3, 0xffc5
+    sys debug_break
+    fmin q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMIN q3,q3 (qD == qS NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x2345
+    ldi16 r7, 0x7fc1
+    sys debug_break
+    fmin q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q0,q1 (left selected)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fmax q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q2,q3 (right selected)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
+    sys debug_break
+    fmax q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q0,q1 (equal finite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fmax q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q0,q1 (opposite zeros +0,-0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    fmax q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q0,q1 (opposite zeros -0,+0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x8000
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    fmax q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q0,q1 (first operand NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fmax q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q0,q1 (second operand NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x4321
+    ldi16 r3, 0xffc5
+    sys debug_break
+    fmax q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q0,q1 (both operands NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x4321
+    ldi16 r3, 0xffc5
+    sys debug_break
+    fmax q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FMAX q3,q3 (qD == qS NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x2345
+    ldi16 r7, 0x7fc1
+    sys debug_break
+    fmax q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FNEG q0 (signed zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x8000
+    sys debug_break
+    fneg q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FNEG q3 (NaN payload/sign bit path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x2345
+    ldi16 r7, 0x7fc1
+    sys debug_break
+    fneg q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FABS q0 (signed zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x8000
+    sys debug_break
+    fabs q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FABS q3 (NaN payload/sign bit path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x2345
+    ldi16 r7, 0x7fc1
+    sys debug_break
+    fabs q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q0 (+zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    sys debug_break
+    fsqrt q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q1 (-zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    fsqrt q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q2 (perfect square)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4080
+    sys debug_break
+    fsqrt q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q3 (irrational normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
+    sys debug_break
+    fsqrt q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q0 (minimum subnormal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0001
+    ldi16 r1, 0x0000
+    sys debug_break
+    fsqrt q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q1 (maximum finite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0xffff
+    ldi16 r3, 0x7f7f
+    sys debug_break
+    fsqrt q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q2 (+infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
+    sys debug_break
+    fsqrt q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q3 (negative finite invalid)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbf80
+    sys debug_break
+    fsqrt q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FSQRT q0 (quiet NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    sys debug_break
+    fsqrt q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q0 (+zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    sys debug_break
+    ftrunc q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q1 (-zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    ftrunc q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q2 (positive magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f40
+    sys debug_break
+    ftrunc q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q3 (negative magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbf40
+    sys debug_break
+    ftrunc q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q0 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3fa0
+    sys debug_break
+    ftrunc q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q1 (negative fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xbfa0
+    sys debug_break
+    ftrunc q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q2 (positive halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4020
+    sys debug_break
+    ftrunc q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q3 (negative halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc020
+    sys debug_break
+    ftrunc q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q0 (large integral)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x4b80
+    sys debug_break
+    ftrunc q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q1 (+infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    ftrunc q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTRUNC q2 (quiet NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    sys debug_break
+    ftrunc q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q0 (+zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    sys debug_break
+    ffloor q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q1 (-zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    ffloor q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q2 (positive magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f40
+    sys debug_break
+    ffloor q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q3 (negative magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbf40
+    sys debug_break
+    ffloor q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q0 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3fa0
+    sys debug_break
+    ffloor q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q1 (negative fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xbfa0
+    sys debug_break
+    ffloor q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q2 (positive halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4020
+    sys debug_break
+    ffloor q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q3 (negative halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc020
+    sys debug_break
+    ffloor q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q0 (large integral)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x4b80
+    sys debug_break
+    ffloor q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q1 (+infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    ffloor q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FFLOOR q2 (quiet NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    sys debug_break
+    ffloor q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q0 (+zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    sys debug_break
+    fceil q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q1 (-zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    fceil q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q2 (positive magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f40
+    sys debug_break
+    fceil q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q3 (negative magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbf40
+    sys debug_break
+    fceil q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q0 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3fa0
+    sys debug_break
+    fceil q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q1 (negative fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xbfa0
+    sys debug_break
+    fceil q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q2 (positive halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4020
+    sys debug_break
+    fceil q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q3 (negative halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc020
+    sys debug_break
+    fceil q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q0 (large integral)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x4b80
+    sys debug_break
+    fceil q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q1 (+infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    fceil q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCEIL q2 (quiet NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    sys debug_break
+    fceil q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q0 (+zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    sys debug_break
+    fround q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q1 (-zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    fround q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q2 (positive magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f40
+    sys debug_break
+    fround q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q3 (negative magnitude below one)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbf40
+    sys debug_break
+    fround q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q0 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3fa0
+    sys debug_break
+    fround q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q1 (negative fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xbfa0
+    sys debug_break
+    fround q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q2 (positive halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4020
+    sys debug_break
+    fround q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q3 (negative halfway)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc020
+    sys debug_break
+    fround q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q0 (large integral)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x4b80
+    sys debug_break
+    fround q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q1 (+infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    fround q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q2 (quiet NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    sys debug_break
+    fround q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q0 (positive halfway above odd integer)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x4060
+    sys debug_break
+    fround q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FROUND q1 (negative halfway below odd integer)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xc060
+    sys debug_break
+    fround q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S16TOF q0,r4 (zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    sys debug_break
+    s16tof q0, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S16TOF q1,r5 (small positive)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r5, 0x0001
+    sys debug_break
+    s16tof q1, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S16TOF q2,r6 (small negative)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0xffff
+    sys debug_break
+    s16tof q2, r6
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S16TOF q3,r7 (INT16_MAX)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r7, 0x7fff
+    sys debug_break
+    s16tof q3, r7
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S16TOF q0,r0 (INT16_MIN with source overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x8000
+    sys debug_break
+    s16tof q0, r0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U16TOF q0,r4 (zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    sys debug_break
+    u16tof q0, r4
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U16TOF q1,r5 (small)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r5, 0x0001
+    sys debug_break
+    u16tof q1, r5
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U16TOF q2,r6 (UINT16_MAX)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0xffff
+    sys debug_break
+    u16tof q2, r6
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U16TOF q3,r7 (high-bit value)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r7, 0x8001
+    sys debug_break
+    u16tof q3, r7
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r4,q0 (+zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    sys debug_break
+    ftos16 r4, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r5,q1 (-zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x8000
+    sys debug_break
+    ftos16 r5, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r6,q2 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x8000
+    ldi16 r5, 0x42f7
+    sys debug_break
+    ftos16 r6, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r7,q3 (negative fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x8000
+    ldi16 r7, 0xc2f7
+    sys debug_break
+    ftos16 r7, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r0,q0 (largest in-range positive neighborhood with overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0xfe00
+    ldi16 r1, 0x46ff
+    sys debug_break
+    ftos16 r0, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r1,q1 (INT16_MIN with overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xc700
+    sys debug_break
+    ftos16 r1, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r2,q2 (NaN unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    sys debug_break
+    ftos16 r2, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS16 r3,q3 (infinity unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x7f80
+    sys debug_break
+    ftos16 r3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU16 r4,q0 (zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    sys debug_break
+    ftou16 r4, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU16 r5,q1 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x8000
+    ldi16 r3, 0x42f7
+    sys debug_break
+    ftou16 r5, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU16 r6,q2 (UINT16_MAX neighborhood)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0xff00
+    ldi16 r5, 0x477f
+    sys debug_break
+    ftou16 r6, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU16 r7,q3 (negative unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbf80
+    sys debug_break
+    ftou16 r7, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU16 r0,q0 (NaN unspecified result with overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    sys debug_break
+    ftou16 r0, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU16 r1,q1 (infinity unspecified result with overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x7f80
+    sys debug_break
+    ftou16 r1, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S32TOF q0,q1 (zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    s32tof q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S32TOF q1,q2 (small positive)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x0000
+    sys debug_break
+    s32tof q1, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S32TOF q2,q3 (small negative)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0xffff
+    ldi16 r7, 0xffff
+    sys debug_break
+    s32tof q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S32TOF q3,q0 (rounding above 2^24)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0001
+    ldi16 r1, 0x0100
+    sys debug_break
+    s32tof q3, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S32TOF q0,q1 (INT32_MAX)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0xffff
+    ldi16 r3, 0x7fff
+    sys debug_break
+    s32tof q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S32TOF q1,q2 (INT32_MIN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x8000
+    sys debug_break
+    s32tof q1, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: S32TOF q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0xffff
+    ldi16 r7, 0x00ff
+    sys debug_break
+    s32tof q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U32TOF q0,q1 (zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    u32tof q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U32TOF q1,q2 (small)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x0000
+    sys debug_break
+    u32tof q1, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U32TOF q2,q3 (ties-to-even neighborhood)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0100
+    sys debug_break
+    u32tof q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U32TOF q3,q0 (UINT32_MAX)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0xffff
+    ldi16 r1, 0xffff
+    sys debug_break
+    u32tof q3, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: U32TOF q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x8000
+    sys debug_break
+    u32tof q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q0,q1 (zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    ftos32 q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q1,q2 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x8000
+    ldi16 r5, 0x42f7
+    sys debug_break
+    ftos32 q1, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q2,q3 (negative fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x8000
+    ldi16 r7, 0xc2f7
+    sys debug_break
+    ftos32 q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q3,q0 (large in-range positive)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0xffff
+    ldi16 r1, 0x4eff
+    sys debug_break
+    ftos32 q3, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q0,q1 (INT32_MIN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xcf00
+    sys debug_break
+    ftos32 q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q1,q2 (NaN unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    sys debug_break
+    ftos32 q1, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q2,q3 (infinity unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x7f80
+    sys debug_break
+    ftos32 q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOS32 q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbfa0
+    sys debug_break
+    ftos32 q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU32 q0,q1 (zero)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    ftou32 q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU32 q1,q2 (positive fractional)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x8000
+    ldi16 r5, 0x42f7
+    sys debug_break
+    ftou32 q1, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU32 q2,q3 (large in-range unsigned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0xffff
+    ldi16 r7, 0x4f7f
+    sys debug_break
+    ftou32 q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU32 q3,q0 (negative unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0xbf80
+    sys debug_break
+    ftou32 q3, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU32 q0,q1 (NaN unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x2345
+    ldi16 r3, 0x7fc1
+    sys debug_break
+    ftou32 q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU32 q1,q2 (infinity unspecified result)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
+    sys debug_break
+    ftou32 q1, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FTOU32 q3,q3 (qD == qS)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3fa0
+    sys debug_break
+    ftou32 q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r4,q0,q1 (less)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x4000
+    sys debug_break
+    fcmp r4, q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r5,q2,q3 (greater)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
+    sys debug_break
+    fcmp r5, q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r6,q0,q1 (equal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fcmp r6, q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r7,q2,q3 (signed zeros equal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x8000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
+    sys debug_break
+    fcmp r7, q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r0,q0,q1 (left quiet NaN unordered with destination overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fc1
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x3f80
+    sys debug_break
+    fcmp r0, q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r1,q0,q1 (right quiet NaN unordered with destination overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x3f80
+    ldi16 r2, 0x4321
+    ldi16 r3, 0xffc5
+    sys debug_break
+    fcmp r1, q0, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r4,q2,q3 (left signaling NaN unordered)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fa1
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
+    sys debug_break
+    fcmp r4, q2, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCMP r5,q3,q3 (qL == qR)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
+    sys debug_break
+    fcmp r5, q3, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r4,q0 (signaling NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x2345
+    ldi16 r1, 0x7fa1
+    sys debug_break
+    fclass r4, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r5,q1 (quiet NaN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x2345
+    ldi16 r3, 0x7fc1
+    sys debug_break
+    fclass r5, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r6,q2 (negative infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xff80
+    sys debug_break
+    fclass r6, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r7,q3 (negative normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xbf80
+    sys debug_break
+    fclass r7, q3
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r0,q0 (negative subnormal with destination overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0001
+    ldi16 r1, 0x8000
+    sys debug_break
+    fclass r0, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r1,q0 (negative zero with destination overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x8000
+    sys debug_break
+    fclass r1, q0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r2,q1 (positive zero with destination overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0x0000
+    sys debug_break
+    fclass r2, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r3,q1 (positive subnormal with destination overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0001
+    ldi16 r3, 0x0000
+    sys debug_break
+    fclass r3, q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r4,q2 (positive normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    sys debug_break
+    fclass r4, q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FCLASS r5,q3 (positive infinity)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x7f80
+    sys debug_break
+    fclass r5, q3
     sys debug_break
 
 ; -----------------------------------------------------------------------------

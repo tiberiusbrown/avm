@@ -564,16 +564,61 @@ else:
 
 ### 18.11. Floating-point operand specifiers
 
-The `FF C0-C9` extended forms use one trailing specifier byte. Bits not listed
-below MUST be zero.
+The `FF C0-C9` extended forms use one trailing operand byte in one of three
+formats. Reserved bits MUST be zero.
+
+#### `RQSPEC`: scalar register and pair register
 
 ```text
-C0-C1 qD,rS:       bits 7:6 qD, bits 2:0 rS
-C2-C3 rD,qS:       bits 7:5 rD, bits 1:0 qS
-C4-C7 qD,qS:       bits 3:2 qD, bits 1:0 qS
-C8    rD,qL,qR:    bits 6:4 rD, bits 3:2 qL, bits 1:0 qR
-C9    rD,qS:       bits 6:4 rD, bits 1:0 qS
+0rrr00qq
 ```
+
+`rrr` selects `r0-r7`; `qq` selects `q0-q3`. The secondary opcode determines
+which field is the source and which is the destination.
+
+| Secondary | Instruction | `rrr` | `qq` |
+|---:|---|---|---|
+| `C0` | `S16TOF qD,rS` | `rS` | `qD` |
+| `C1` | `U16TOF qD,rS` | `rS` | `qD` |
+| `C2` | `FTOS16 rD,qS` | `rD` | `qS` |
+| `C3` | `FTOU16 rD,qS` | `rD` | `qS` |
+| `C9` | `FCLASS rD,qS` | `rD` | `qS` |
+
+```text
+RQSPEC(rN,qN) = (rN << 4) | qN
+```
+
+A value is malformed if `(specifier & 0x8C) != 0`.
+
+#### `QQSPEC`: destination pair and source pair
+
+```text
+0000ddss
+```
+
+`dd` selects `qD`; `ss` selects `qS`. This format is used by `C4-C7` and
+matches the low-nibble `ddss` layout of the binary floating-point operations.
+
+```text
+QQSPEC(qD,qS) = (qD << 2) | qS
+```
+
+A value is malformed if `(specifier & 0xF0) != 0`.
+
+#### `RQQSPEC`: scalar destination and two pair sources
+
+```text
+0dddllrr
+```
+
+`ddd` selects `rD`; `ll` selects `qL`; `rr` selects `qR`. This format is used
+by `FCMP` (`C8`).
+
+```text
+RQQSPEC(rD,qL,qR) = (rD << 4) | (qL << 2) | qR
+```
+
+A value is malformed if `(specifier & 0x80) != 0`.
 
 ---
 

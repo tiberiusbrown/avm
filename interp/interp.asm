@@ -333,6 +333,18 @@
 #define FF_OPERATION               r25
 #define FF_VALIDATE                r26
 
+; Shared FF/libm bridge ABI. Callers load a helper target into native Z and
+; place the encoded operand descriptor in FF_BRIDGE_DESC before jumping to one
+; of the typed bridge entries below. The metadata byte is saved across ICALL.
+#define FF_BRIDGE_DESC             r24
+#define FF_BRIDGE_META             r25
+#define FF_BRIDGE_INDEX            r26
+#define FF_BRIDGE_XH               r27
+
+#define FF_BRIDGE_RESULT_Q32       0x00
+#define FF_BRIDGE_RESULT_R16       0x40
+#define FF_BRIDGE_RESULT_FCMP      0x80
+
 ; Shared F0 operand-fetch ABI. The one-byte helper returns the consumed byte in
 ; F0_OPERAND_LO. The two-byte helper returns a little-endian operand in
 ; F0_OPERAND_HI:F0_OPERAND_LO. F0_SPEC aliases the one-byte result for RRSPEC
@@ -1497,10 +1509,12 @@ primary_table_end:
 ; transfer for a two-byte instruction or the trailing-specifier transfer for
 ; C0-C9.
 ;
-; FNEG and FABS execute directly against the most-significant byte of the
-; selected q register. Other defined operation families currently enter the
-; development-only unimplemented trap. Reserved secondary ranges and malformed
-; operand specifiers enter the architectural invalid-secondary trap.
+; FADD, FSUB, FMUL, FDIV, FMIN, FMAX, FSQRT, FTRUNC, FFLOOR, FCEIL,
+; FROUND, and C0-C7 conversions use the shared avr-libc bridge. FNEG and FABS
+; execute directly against the most-significant byte of the selected q
+; register. FCMP calls __fp_cmp directly, while FCLASS classifies its binary32
+; source inline. Reserved secondary ranges and malformed operand specifiers
+; enter the architectural invalid-secondary trap.
 
 ff_decode:
     add   VM_PCL, ONE
@@ -1518,18 +1532,26 @@ ff_decode:
     cpi   FF_SECONDARY, 0x7C
     brlo  ff_defined_short
     cpi   FF_SECONDARY, 0xC0
-    brlo  ff_invalid
+    brsh  .Lff_check_extended
+    rjmp  ff_invalid
+.Lff_check_extended:
     cpi   FF_SECONDARY, 0xCA
     brlo  ff_extended
     rjmp  ff_invalid
 
 ff_defined_short:
-    ; 00-5F and 68-7B are defined but not implemented yet. FNEG/FABS occupy
-    ; 60-67; bit 2 selects FABS and bits 1:0 select qD.
+    ; FADD/FSUB/FMUL/FDIV/FMIN/FMAX occupy 00-5F. The high nibble selects a
+    ; compact helper-target entry and the low nibble remains the ddss bridge
+    ; descriptor. FNEG/FABS occupy 60-67; bit 2 selects FABS and bits 1:0
+    ; select qD. The five unary-helper groups occupy 68-7B in four-opcode
+    ; blocks: FSQRT, FTRUNC, FFLOOR, FCEIL, and FROUND.
     cpi   FF_SECONDARY, 0x60
-    brlo  ff_unimplemented
+    brlo  ff_binary_arithmetic
     cpi   FF_SECONDARY, 0x68
-    brsh  ff_unimplemented
+    brlo  ff_sign_operation
+    rjmp  ff_unary_math
+
+ff_sign_operation:
 
     ; Native register addresses for q0-q3 sign bytes are r11, r15, r19, r23.
     ; r27 was cleared before the reverse SPI handoff, so X addresses the native
@@ -1559,58 +1581,200 @@ ff_store_sign_byte:
     ; to that following opcode before entering its primary-table slot.
     rjmp  cluster_tail_18
 
-ff_unimplemented:
-    rjmp  unimplemented_instruction_func
+ff_unary_math:
+    ; 68-7B consists of five four-opcode groups. Normalize the group number to
+    ; 0-4, load its compact helper target, and leave bits 1:0 of the original
+    ; secondary untouched as the unary qD descriptor.
+    mov   FF_BRIDGE_INDEX, FF_SECONDARY
+    subi  FF_BRIDGE_INDEX, 0x68
+    lsr   FF_BRIDGE_INDEX
+    lsr   FF_BRIDGE_INDEX
+    ldi   r30, lo8(ff_unary_helper_targets)
+    ldi   r31, hi8(ff_unary_helper_targets)
+    rcall ff_load_helper_target
+    rjmp  ff_bridge_unary_q_to_q
+
+ff_binary_arithmetic:
+    ; FF_SECONDARY remains the ddss bridge descriptor. Its high nibble selects
+    ; __addsf3, __subsf3, __mulsf3, __divsf3, fminf, or the local FMAX shim.
+    mov   FF_BRIDGE_INDEX, FF_SECONDARY
+    swap  FF_BRIDGE_INDEX
+    andi  FF_BRIDGE_INDEX, 0x07
+    ldi   r30, lo8(ff_binary_helper_targets)
+    ldi   r31, hi8(ff_binary_helper_targets)
+    rcall ff_load_helper_target
+    rjmp  ff_bridge_binary_q_to_q
 
 ff_extended:
     ; The reverse handoff above started the trailing-specifier transfer on
-    ; cycle 17. This path begins on cycle 27. Advance VM_PC to the specifier,
-    ; retain a normalized operation index, and consume the specifier with the
-    ; earliest legal standard IN/OUT handoff on cycles 34/35.
+    ; cycle 17. The range checks reach this path on cycle 28. Advance VM_PC to
+    ; the specifier, retain a normalized operation index, and consume the
+    ; specifier with the earliest legal standard IN/OUT handoff on cycles
+    ; 34/35.
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
     mov   FF_OPERATION, FF_SECONDARY
     subi  FF_OPERATION, 0xC0
-    delay_2
+    nop
     in    FF_SPEC, SPDR
     out   SPDR, ZERO
 
-    ; Validate the zero-reserved bits from the architectural specifier forms:
-    ;   C0-C1 qD,rS:    dd000sss
-    ;   C2-C3 rD,qS:    ddd000ss
-    ;   C4-C7 qD,qS:    0000ddss
-    ;   C8    rD,qL,qR: 0dddllrr
-    ;   C9    rD,qS:    0ddd00ss
+    ; Validate the finalized architectural specifier forms:
+    ;   C0-C3, C9 RQSPEC:  0rrr00qq
+    ;   C4-C7     QQSPEC:  0000ddss
+    ;   C8       RQQSPEC:  0dddllrr
     mov   FF_VALIDATE, FF_SPEC
-    cpi   FF_OPERATION, 2
-    brlo  .Lff_validate_qd_rs
     cpi   FF_OPERATION, 4
-    brlo  .Lff_validate_rd_qs
+    brlo  .Lff_validate_rqspec
     cpi   FF_OPERATION, 8
-    brlo  .Lff_validate_qd_qs
+    brlo  .Lff_validate_qqspec
     cpi   FF_OPERATION, 9
-    brlo  .Lff_validate_cmp
+    brlo  .Lff_validate_rqqspec
 
+    ; C9 uses RQSPEC like C0-C3.
+.Lff_validate_rqspec:
     andi  FF_VALIDATE, 0x8C
     rjmp  .Lff_validate_done
-.Lff_validate_cmp:
-    andi  FF_VALIDATE, 0x80
-    rjmp  .Lff_validate_done
-.Lff_validate_qd_qs:
+.Lff_validate_qqspec:
     andi  FF_VALIDATE, 0xF0
     rjmp  .Lff_validate_done
-.Lff_validate_rd_qs:
-    andi  FF_VALIDATE, 0x1C
-    rjmp  .Lff_validate_done
-.Lff_validate_qd_rs:
-    andi  FF_VALIDATE, 0x38
+.Lff_validate_rqqspec:
+    andi  FF_VALIDATE, 0x80
 .Lff_validate_done:
     brne  ff_invalid
-    rjmp  unimplemented_instruction_func
+
+    ; C0-C7 are conversions. The low two operation bits select one of four
+    ; libm helpers shared by the 16-bit and 32-bit forms:
+    ;   0 __floatsisf, 1 __floatunsisf, 2 __fixsfsi, 3 __fixunssfsi.
+    ; C8 calls avr-libc's internal __fp_cmp directly. C9 classifies its
+    ; binary32 source inline without entering the libm bridge.
+    cpi   FF_OPERATION, 8
+    breq  ff_compare
+    brsh  ff_classify
+    mov   FF_BRIDGE_INDEX, FF_OPERATION
+    andi  FF_BRIDGE_INDEX, 0x03
+    ldi   r30, lo8(ff_conversion_helper_targets)
+    ldi   r31, hi8(ff_conversion_helper_targets)
+    rcall ff_load_helper_target
+
+    ; C4-C7 use QQSPEC and all marshal qS to A, returning qD.
+    cpi   FF_OPERATION, 4
+    brsh  .Lff_conversion_q_to_q
+
+    ; C0-C3 use RQSPEC. C0-C1 extend rS into A and return qD; C2-C3
+    ; marshal qS into A and retain the low 16 result bits in rD.
+    cpi   FF_OPERATION, 2
+    brsh  .Lff_conversion_q_to_r16
+    sbrc  FF_OPERATION, 0
+    rjmp  ff_bridge_r16_to_q_u
+    rjmp  ff_bridge_r16_to_q_s
+.Lff_conversion_q_to_r16:
+    rjmp  ff_bridge_q_to_r16
+.Lff_conversion_q_to_q:
+    rjmp  ff_bridge_q_to_q
 
 ff_invalid:
     rjmp  invalid_secondary_instruction_func
+
+ff_compare:
+    ; RQQSPEC is 0dddllrr. The binary bridge marshaller already interprets
+    ; bits 3:2 as operand A/qL and bits 1:0 as operand B/qR. __fp_cmp returns
+    ; ordered -1/0/+1 in r24 with carry clear, or carry set for unordered; the
+    ; FCMP finish path maps unordered to architectural result 2.
+    ldi   r30, lo8(pm(__fp_cmp))
+    ldi   r31, hi8(pm(__fp_cmp))
+    rjmp  ff_bridge_cmp_to_r16
+
+ff_classify:
+    ; RQSPEC is 0ddd00ss. Retain rD in ZL, then capture all four source bytes
+    ; before writing the result so every rD/qS overlap is well-defined. q0-q3
+    ; begin at native register addresses r8, r12, r16, and r20.
+    mov   r30, FF_SPEC
+    swap  r30
+    andi  r30, 0x07
+
+    mov   r26, FF_SPEC
+    andi  r26, 0x03
+    lsl   r26
+    lsl   r26
+    subi  r26, -8
+    clr   r27
+    ld    r0, X+
+    ld    r1, X+
+    ld    r25, X+
+    ld    r26, X
+
+    ; r26 is sign/exponent[7:1], r25 is exponent[0]/fraction[22:16], and
+    ; r1:r0 are fraction[15:0]. Reduce the complete fraction to zero/nonzero
+    ; in r0, then assemble the eight-bit exponent in r24.
+    mov   r24, r25
+    andi  r24, 0x7F
+    or    r0, r1
+    or    r0, r24
+
+    mov   r24, r26
+    lsl   r24
+    sbrc  r25, 7
+    ori   r24, 1
+    breq  .Lff_class_exp_zero
+    cpi   r24, 0xFF
+    breq  .Lff_class_exp_max
+
+    ldi   r25, 8                 ; +normal
+    rjmp  .Lff_class_numeric
+
+.Lff_class_exp_zero:
+    ldi   r25, 6                 ; +zero
+    tst   r0
+    breq  .Lff_class_numeric
+    inc   r25                    ; +subnormal
+    rjmp  .Lff_class_numeric
+
+.Lff_class_exp_max:
+    tst   r0
+    brne  .Lff_class_nan
+    ldi   r25, 9                 ; +infinity
+    rjmp  .Lff_class_numeric
+
+.Lff_class_nan:
+    ; NaN classes ignore the sign. Fraction bit 22 distinguishes quiet from
+    ; signaling NaNs and becomes the one-bit class index directly.
+    bst   r25, 6
+    clr   r25                    ; signaling NaN index 0
+    bld   r25, 0                 ; quiet NaN index 1
+    rjmp  .Lff_class_build_mask
+
+.Lff_class_numeric:
+    ; Positive numeric classes are indices 6-9. Their corresponding negative
+    ; classes are 11-index: +Inf 9 -> -Inf 2 through +zero 6 -> -zero 5.
+    sbrs  r26, 7
+    rjmp  .Lff_class_build_mask
+    neg   r25
+    subi  r25, -11
+
+    ; Convert class index 0-9 into the architectural one-hot mask. The loop
+    ; executes at most nine shifts and is smaller than a 20-byte mask table.
+.Lff_class_build_mask:
+    ldi   r24, 1
+    clr   r26
+    inc   r25
+.Lff_class_shift_loop:
+    dec   r25
+    breq  .Lff_class_store
+    lsl   r24
+    rol   r26
+    rjmp  .Lff_class_shift_loop
+
+.Lff_class_store:
+    ; r30 still holds rD. Store only after classification, preserving every
+    ; nondestination architectural register even when rD overlaps qS.
+    lsl   r30
+    subi  r30, -8
+    clr   r31
+    st    Z+, r24
+    st    Z,  r26
+    rjmp  cluster_a_tail_18
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; EC dedicated runtime-decoded 16-bit division/remainder page
@@ -3303,6 +3467,318 @@ cluster_a_end:
 .if (cluster_a_end - cluster_a_start) != 48
     .error "secondary cadence Cluster A must occupy 24 AVR words"
 .endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Shared FF avr-libc/libm helper bridge
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Helper target tables contain 16-bit AVR word addresses:
+;
+;     .word pm(helper_symbol)
+;
+; ff_load_helper_target receives the table's byte address in Z and an unscaled
+; entry index in FF_BRIDGE_INDEX. It returns the selected word address in Z,
+; ready for ICALL. FADD, FSUB, FMUL, FDIV, FMIN, and FMAX use the compact
+; target table, indexed by the secondary opcode's operation nibble.
+;
+; Typed bridge entry ABI:
+;
+;   Z                         helper word address for ICALL
+;   FF_BRIDGE_DESC            encoded operand descriptor
+;
+;   ff_bridge_binary_q_to_q   descriptor low nibble = qD:qS
+;   ff_bridge_unary_q_to_q    descriptor bits 1:0 = qD
+;   ff_bridge_q_to_q          descriptor = 0000ddss
+;   ff_bridge_q_to_r16        descriptor = 0ddd00ss
+;   ff_bridge_r16_to_q_s      descriptor = 0sss00dd, signed source
+;   ff_bridge_r16_to_q_u      descriptor = 0sss00dd, unsigned source
+;   ff_bridge_cmp_to_r16      descriptor = 0dddllrr
+;
+; The avr-libc fplib convention is A/result in r22-r25 and B in r18-r21.
+; Native r18-r23 overlap architectural AVM registers, so every call saves all
+; six bytes. r2-r17 and r28-r29 are AVR call-saved and therefore retain the VM
+; PC, constants, lower architectural registers, and VM stack pointer. r24-r27,
+; r30-r31, r0, and native SREG are call-clobbered. Architectural VM_FLAGS lives
+; in GPIOR0 and is not touched. r1 is cleared immediately before ICALL because
+; avr-libc requires its ABI zero register.
+;
+; The following primary opcode is already complete and unread in SPDR while a
+; helper runs. Every result path returns through cluster_a_tail_18, which reads
+; that byte, starts the next transfer, advances VM_PC from the final encoded
+; byte to the following opcode, and dispatches it.
+
+.extern __addsf3
+.extern __subsf3
+.extern __mulsf3
+.extern __divsf3
+.extern fminf
+.extern sqrtf
+.extern truncf
+.extern floorf
+.extern roundf
+.extern __floatsisf
+.extern __floatunsisf
+.extern __fixsfsi
+.extern __fixunssfsi
+.extern __fp_cmp
+ff_binary_helper_targets:
+    .word pm(__addsf3)
+    .word pm(__subsf3)
+    .word pm(__mulsf3)
+    .word pm(__divsf3)
+    .word pm(fminf)
+    .word pm(ff_fmax_via_fmin)
+
+; FF 68-7B consists of five four-opcode unary groups in this order.
+ff_unary_helper_targets:
+    .word pm(sqrtf)
+    .word pm(truncf)
+    .word pm(floorf)
+    .word pm(ff_ceil_via_floor)
+    .word pm(roundf)
+
+; C0/C4, C1/C5, C2/C6, and C3/C7 share these helpers respectively.
+ff_conversion_helper_targets:
+    .word pm(__floatsisf)
+    .word pm(__floatunsisf)
+    .word pm(__fixsfsi)
+    .word pm(__fixunssfsi)
+
+ff_load_helper_target:
+    lsl   FF_BRIDGE_INDEX
+    add   r30, FF_BRIDGE_INDEX
+    adc   r31, ZERO
+    lpm   r0, Z+
+    lpm   FF_BRIDGE_INDEX, Z
+    mov   r30, r0
+    mov   r31, FF_BRIDGE_INDEX
+    ret
+
+; Binary qD,qS -> qD. The low descriptor nibble has ddss format.
+ff_bridge_binary_q_to_q:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    lsr   FF_BRIDGE_META
+    lsr   FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x03
+    ldi   FF_BRIDGE_INDEX, 0
+    rjmp  ff_bridge_save_common
+
+; Unary qD -> qD. Bits 1:0 select both source and destination.
+ff_bridge_unary_q_to_q:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_META, 0x03
+    ldi   FF_BRIDGE_INDEX, 1
+    rjmp  ff_bridge_save_common
+
+; qS -> qD, using the 0000ddss extended-operation specifier.
+ff_bridge_q_to_q:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    lsr   FF_BRIDGE_META
+    lsr   FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x03
+    ldi   FF_BRIDGE_INDEX, 1
+    rjmp  ff_bridge_save_common
+
+; qS -> rD, using the 0ddd00ss RQSPEC extended-operation specifier.
+ff_bridge_q_to_r16:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    swap  FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x07
+    ori   FF_BRIDGE_META, FF_BRIDGE_RESULT_R16
+    ldi   FF_BRIDGE_INDEX, 1
+    rjmp  ff_bridge_save_common
+
+; qL,qR -> rD FCMP result, using the 0dddllrr specifier.
+ff_bridge_cmp_to_r16:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    swap  FF_BRIDGE_META
+    andi  FF_BRIDGE_META, 0x07
+    ori   FF_BRIDGE_META, FF_BRIDGE_RESULT_FCMP
+    ldi   FF_BRIDGE_INDEX, 0
+    rjmp  ff_bridge_save_common
+
+; Signed rS -> qD, using the 0sss00dd RQSPEC extended-operation specifier.
+ff_bridge_r16_to_q_s:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_META, 0x03
+    ldi   FF_BRIDGE_INDEX, 2
+    rjmp  ff_bridge_save_common
+
+; Unsigned rS -> qD, using the 0sss00dd RQSPEC extended-operation specifier.
+ff_bridge_r16_to_q_u:
+    mov   FF_BRIDGE_META, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_META, 0x03
+    ldi   FF_BRIDGE_INDEX, 3
+
+; Save every architectural byte in the AVR call-clobbered fplib ranges.
+; FF_BRIDGE_META is pushed last so it is the first byte recovered after ICALL.
+; FF_BRIDGE_INDEX selects binary-q, unary-q, signed-r16, or unsigned-r16 input
+; marshalling. Z remains untouched until ICALL.
+ff_bridge_save_common:
+    push  r18
+    push  r19
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    push  FF_BRIDGE_META
+
+    tst   FF_BRIDGE_INDEX
+    breq  ff_bridge_marshal_binary_q
+    cpi   FF_BRIDGE_INDEX, 1
+    breq  ff_bridge_marshal_unary_q
+    cpi   FF_BRIDGE_INDEX, 2
+    breq  ff_bridge_marshal_r16_s
+    rjmp  ff_bridge_marshal_r16_u
+
+; Capture B on the hardware stack before loading A. Loading A from its most-
+; significant byte downward keeps q3 legal even though A overlaps r22:r23.
+ff_bridge_marshal_binary_q:
+    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_INDEX, 0x03
+    lsl   FF_BRIDGE_INDEX
+    lsl   FF_BRIDGE_INDEX
+    subi  FF_BRIDGE_INDEX, -11
+    clr   FF_BRIDGE_XH
+    ld    r0, X
+    push  r0
+    ld    r0, -X
+    push  r0
+    ld    r0, -X
+    push  r0
+    ld    r0, -X
+    push  r0
+
+    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
+    lsr   FF_BRIDGE_INDEX
+    lsr   FF_BRIDGE_INDEX
+    andi  FF_BRIDGE_INDEX, 0x03
+    lsl   FF_BRIDGE_INDEX
+    lsl   FF_BRIDGE_INDEX
+    subi  FF_BRIDGE_INDEX, -11
+    ld    r25, X
+    ld    r24, -X
+    ld    r23, -X
+    ld    r22, -X
+
+    pop   r18
+    pop   r19
+    pop   r20
+    pop   r21
+    rjmp  ff_bridge_call
+
+; Load one q source into A from its most-significant byte downward.
+ff_bridge_marshal_unary_q:
+    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
+    andi  FF_BRIDGE_INDEX, 0x03
+    lsl   FF_BRIDGE_INDEX
+    lsl   FF_BRIDGE_INDEX
+    subi  FF_BRIDGE_INDEX, -11
+    clr   FF_BRIDGE_XH
+    ld    r25, X
+    ld    r24, -X
+    ld    r23, -X
+    ld    r22, -X
+    rjmp  ff_bridge_call
+
+; Load a 16-bit architectural source into the low half of A and sign-extend it.
+ff_bridge_marshal_r16_s:
+    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
+    swap  FF_BRIDGE_INDEX
+    andi  FF_BRIDGE_INDEX, 0x07
+    lsl   FF_BRIDGE_INDEX
+    subi  FF_BRIDGE_INDEX, -9
+    clr   FF_BRIDGE_XH
+    ld    r23, X
+    ld    r22, -X
+    mov   r24, r23
+    lsl   r24
+    sbc   r24, r24
+    mov   r25, r24
+    rjmp  ff_bridge_call
+
+; Load a 16-bit architectural source into the low half of A and zero-extend it.
+ff_bridge_marshal_r16_u:
+    mov   FF_BRIDGE_INDEX, FF_BRIDGE_DESC
+    swap  FF_BRIDGE_INDEX
+    andi  FF_BRIDGE_INDEX, 0x07
+    lsl   FF_BRIDGE_INDEX
+    subi  FF_BRIDGE_INDEX, -9
+    clr   FF_BRIDGE_XH
+    ld    r23, X
+    ld    r22, -X
+    clr   r24
+    clr   r25
+
+ff_bridge_call:
+    clr   r1
+    icall
+
+    ; POP and SBRC preserve the helper's carry result. FCMP must branch on that
+    ; carry before any instruction that changes native SREG.
+    pop   FF_BRIDGE_INDEX
+    sbrc  FF_BRIDGE_INDEX, 7
+    rjmp  ff_bridge_finish_fcmp
+    sbrc  FF_BRIDGE_INDEX, 6
+    rjmp  ff_bridge_finish_r16
+
+    ; q result: retain the high half in r24:r25 and move the low half out of
+    ; r22:r23 before restoring all architectural call-clobbered registers.
+    mov   r30, FF_BRIDGE_INDEX
+    movw  r26, r22
+    clr   r31
+    rjmp  ff_bridge_restore_arch
+
+ff_bridge_finish_r16:
+    mov   r30, FF_BRIDGE_INDEX
+    movw  r24, r22
+    ldi   r31, 1
+    rjmp  ff_bridge_restore_arch
+
+ff_bridge_finish_fcmp:
+    brcs  .Lff_bridge_cmp_unordered
+    clr   r25
+    sbrc  r24, 7
+    com   r25
+    rjmp  .Lff_bridge_cmp_ready
+.Lff_bridge_cmp_unordered:
+    ldi   r24, 2
+    clr   r25
+.Lff_bridge_cmp_ready:
+    mov   r30, FF_BRIDGE_INDEX
+    ldi   r31, 1
+
+ff_bridge_restore_arch:
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+
+    sbrc  r31, 0
+    rjmp  ff_bridge_store_r16
+
+    ; Store the preserved q result from r26:r27:r24:r25 after restoration.
+    andi  r30, 0x03
+    lsl   r30
+    lsl   r30
+    subi  r30, -8
+    clr   r31
+    st    Z+, r26
+    st    Z+, r27
+    st    Z+, r24
+    st    Z,  r25
+    rjmp  cluster_a_tail_18
+
+ff_bridge_store_r16:
+    andi  r30, 0x07
+    lsl   r30
+    subi  r30, -8
+    clr   r31
+    st    Z+, r24
+    st    Z,  r25
+    rjmp  cluster_a_tail_18
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Shared F0 trailing-operand fetch helpers
@@ -6240,3 +6716,32 @@ oled_boot_program:
     .byte 0x20, 0x00                 ; horizontal addressing mode
 #endif
 oled_boot_program_end:
+.p2align 2
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; FF local libm shims
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; This block is deliberately last in the interpreter source. In the minimal
+; interpreter link, avr-libc/libm's fplib code follows it, allowing short
+; relative calls into the linked helpers.
+;
+; max(a,b) = -min(-a,-b). Toggling the sign bit before and after fminf keeps
+; the proposal's number-preferred NaN behavior, NaN payloads/signaling state,
+; opposite-signed-zero preference, infinities, and both-NaN operand ordering.
+; Input/output follows the fplib ABI: A/result r22-r25, B r18-r21.
+ff_fmax_via_fmin:
+    subi  r25, 0x80
+    subi  r21, 0x80
+    rcall fminf
+    subi  r25, 0x80
+    ret
+
+; ceil(x) = -floor(-x). The sign toggles are exact bit operations, so the shim
+; also preserves NaN payload/signaling bits, infinities, and signed zero.
+; Input/output follows the unary fplib ABI: A/result r22-r25.
+ff_ceil_via_floor:
+    subi  r25, 0x80
+    rcall floorf
+    subi  r25, 0x80
+    ret

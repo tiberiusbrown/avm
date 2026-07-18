@@ -2087,17 +2087,43 @@ operand-specialized executable table.
 | `C0-C9` | Conversions, `FCMP`, and `FCLASS` plus specifier | 3 |
 | `CA-FF` | Reserved | — |
 
-Extended specifier layouts are:
+The extended forms use three operand-byte layouts:
 
 ```text
-C0-C1 qD,rS:       dd000sss
-C2-C3 rD,qS:       ddd000ss
-C4-C7 qD,qS:       0000ddss
-C8    rD,qL,qR:    0dddllrr
-C9    rD,qS:       0ddd00ss
+RQSPEC   0rrr00qq   C0-C3 and C9
+QQSPEC   0000ddss   C4-C7
+RQQSPEC  0dddllrr   C8
 ```
 
-Unused bits must be zero.
+For `RQSPEC`, `rrr` selects the scalar register and `qq` selects the pair. The
+secondary opcode determines operand direction:
+
+```text
+C0-C1: rrr=rS, qq=qD
+C2-C3: rrr=rD, qq=qS
+C9:    rrr=rD, qq=qS
+```
+
+For `QQSPEC`, `dd=qD` and `ss=qS`. For `RQQSPEC`, `ddd=rD`, `ll=qL`, and
+`rr=qR`.
+
+The corresponding encodings and validation masks are:
+
+```text
+RQSPEC(rN,qN)       = (rN << 4) | qN
+invalid RQSPEC      = (specifier & 0x8C) != 0
+
+QQSPEC(qD,qS)       = (qD << 2) | qS
+invalid QQSPEC      = (specifier & 0xF0) != 0
+
+RQQSPEC(rD,qL,qR)   = (rD << 4) | (qL << 2) | qR
+invalid RQQSPEC     = (specifier & 0x80) != 0
+```
+
+On AVR, the scalar index is `(specifier >> 4) & 7`, the low pair index is
+`specifier & 3`, and the low nibble of `QQSPEC` or `RQQSPEC` is already a
+`ddss`/`llrr` pair descriptor. Malformed specifiers must branch to the shared
+invalid-instruction trap before register-file access.
 
 The decoder should:
 

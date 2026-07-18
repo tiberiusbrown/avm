@@ -12,6 +12,7 @@
 ;
 ; Copyright (c) 2002  Michael Stumpf  <mistumpf@de.pepperl-fuchs.com>
 ; Copyright (c) 2006  Dmitry Xmelkov
+; Copyright (c) 2025  Georg-Johann Lay
 ; All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without
@@ -557,6 +558,17 @@
 #define SYS_DEBUG_BREAK         0x01
 #define SYS_MILLIS              0x02
 #define SYS_MILLIS32            0x03
+#define SYS_SINF                0x04
+#define SYS_COSF                0x05
+#define SYS_ATAN2F              0x06
+#define SYS_TANF                0x07
+#define SYS_EXPF                0x08
+#define SYS_LOGF                0x09
+#define SYS_LOG2F               0x0A
+#define SYS_LOG10F              0x0B
+#define SYS_POWF                0x0C
+#define SYS_HYPOTF              0x0D
+#define SYS_FMODF               0x0E
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -2865,6 +2877,12 @@ sys_dispatch_func:
 .if (SYS_MILLIS32 != 0x03)
     .error "SYS_MILLIS32 must occupy dispatch-table entry 3"
 .endif
+.if (SYS_SINF != 0x04) || (SYS_COSF != 0x05) || (SYS_ATAN2F != 0x06) || \
+    (SYS_TANF != 0x07) || (SYS_EXPF != 0x08) || (SYS_LOGF != 0x09) || \
+    (SYS_LOG2F != 0x0A) || (SYS_LOG10F != 0x0B) || (SYS_POWF != 0x0C) || \
+    (SYS_HYPOTF != 0x0D) || (SYS_FMODF != 0x0E)
+    .error "libm SYS services must occupy contiguous entries 0x04-0x0E"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -2873,7 +2891,8 @@ sys_dispatch_table:
     sys_entries 1,   sys_debug_break_func
     sys_entries 1,   sys_millis_func
     sys_entries 1,   sys_millis32_func
-    sys_entries 252, invalid_syscall_func
+    sys_entries 11,  sys_libm_func
+    sys_entries 241, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -2911,6 +2930,64 @@ sys_millis32_func:
     lds  VM_R5H, data_millis+3
     sei
     rjmp cluster_tail_18
+
+; Shared avr-libc/libm SYS ABI:
+;   unary argument / result: q0 (native r8-r11)
+;   binary second argument:  q1 (native r12-r15)
+;
+; Every listed service uses the same bridge. Unary routines simply ignore the
+; B argument copied from q1. The standard AVR ABI preserves native r2-r17 and
+; Y; the bridge explicitly preserves the architectural bytes in r18-r23.
+sys_libm_func:
+    subi PRIMARY_OPCODE, SYS_SINF
+    lsl  PRIMARY_OPCODE
+    ldi  r30, lo8(sys_libm_target_table)
+    ldi  r31, hi8(sys_libm_target_table)
+    add  r30, PRIMARY_OPCODE
+    adc  r31, ZERO
+    lpm  r0, Z+
+    lpm  r31, Z
+    mov  r30, r0
+
+    push r18
+    push r19
+    push r20
+    push r21
+    push r22
+    push r23
+
+    movw r18, VM_R2       ; q1 low half
+    movw r20, VM_R3       ; q1 high half
+    movw r22, VM_R0       ; q0 low half
+    movw r24, VM_R1       ; q0 high half
+    clr  r1
+    icall
+
+    movw VM_R0, r22
+    movw VM_R1, r24
+
+    pop  r23
+    pop  r22
+    pop  r21
+    pop  r20
+    pop  r19
+    pop  r18
+    rjmp cluster_tail_18
+
+; Program-memory word addresses consumed by ICALL. Keep this order identical
+; to SYS_SINF through SYS_FMODF above.
+sys_libm_target_table:
+    .word pm(sinf)
+    .word pm(cosf)
+    .word pm(atan2f)
+    .word pm(tanf)
+    .word pm(expf)
+    .word pm(logf)
+    .word pm(log2f)
+    .word pm(log10f)
+    .word pm(powf)
+    .word pm(hypotf)
+    .word pm(fmodf)
 
 ; JMPP reaches this one-word forwarding landing on cycle 15; its RJMP enters
 ; the seek handler on cycle 17, after the discarded speculative byte completes.
@@ -8188,5 +8265,1101 @@ __fp_norm2:
     adc   r24, r24
     brpl  __fp_norm2
     ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Additional avr-libc/libm-derived transcendental and remainder routines
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Calling convention within this block is the avr-libc fplib convention:
+;   A/result = r25:r24:r23:r22, extension r27
+;   B        = r21:r20:r19:r18, extension r26
+;
+; Constant tables remain in .text so ordinary LPM byte addresses are valid on
+; the ATmega32U4. Cross-routine transfers start in absolute form and are
+; manually relaxed after final layout validation.
+
+; float squaref(float A)
+squaref:
+    movw  r18, r22
+    movw  r20, r24
+    rjmp   __mulsf3
+
+; float __inversef(float A) = 1.0f / A
+__inversef:
+    movw  r18, r22
+    movw  r20, r24
+    ldi   r22, 0x00
+    ldi   r23, 0x00
+    ldi   r24, 0x80
+    ldi   r25, 0x3f
+    rjmp   __divsf3
+
+; Evaluate a table-driven polynomial in A. The first table byte is the degree;
+; the leading coefficient is binary32 and each remaining coefficient is the
+; five-byte internal fplib format.
+__fp_powser:
+    push  r29
+    push  r28
+    push  r17
+    push  r16
+    push  r15
+    push  r14
+    push  r13
+    movw  r14, r22
+    movw  r16, r24
+    set
+    rjmp  .L__fp_powser_load_coefficient
+
+.L__fp_powser_capture_degree:
+    mov   r13, r26
+
+.L__fp_powser_multiply_loop:
+    movw  r28, r30
+    rcall  __mulsf3x
+    movw  r30, r28
+    clt
+
+.L__fp_powser_load_coefficient:
+    lpm   r26, Z+
+    lpm   r18, Z+
+    lpm   r19, Z+
+    lpm   r20, Z+
+    lpm   r21, Z+
+    brts  .L__fp_powser_capture_degree
+
+    movw  r28, r30
+    rcall  __addsf3x
+    movw  r30, r28
+    movw  r18, r14
+    movw  r20, r16
+    dec   r13
+    brne  .L__fp_powser_multiply_loop
+
+    pop   r13
+    pop   r14
+    pop   r15
+    pop   r16
+    pop   r17
+    pop   r28
+    pop   r29
+    ret
+
+; Evaluate an odd-power polynomial and return a rounded binary32 result.
+__fp_powsodd:
+    push  r25
+    push  r24
+    push  r23
+    push  r22
+    push  r31
+    push  r30
+    movw  r18, r22
+    movw  r20, r24
+    rcall  __mulsf3
+    pop   r30
+    pop   r31
+    rcall  __fp_powser
+    pop   r18
+    pop   r19
+    pop   r20
+    pop   r21
+    rjmp   __mulsf3
+
+; Reduce |A| modulo pi/2. Returns the five-byte internal remainder and the low
+; quotient byte in r30.
+__fp_rempio2:
+    rcall  __fp_splitA
+    brcc  .L__fp_rempio2_finite
+    rjmp   __fp_nan
+
+.L__fp_rempio2_finite:
+    clt
+    ldi   r30, 0
+    clr   r27
+    subi  r25, 0x7f
+    brlo  .L__fp_rempio2_pack
+    ldi   r18, 0xda
+    ldi   r19, 0x0f
+    ldi   r20, 0xc9
+    rjmp  .L__fp_rempio2_compare
+
+.L__fp_rempio2_loop:
+    lsl   r30
+    lsl   r27
+    rol   r22
+    rol   r23
+    rol   r24
+    brcs  .L__fp_rempio2_subtract
+
+.L__fp_rempio2_compare:
+    cpi   r27, 0xa2
+    cpc   r22, r18
+    cpc   r23, r19
+    cpc   r24, r20
+    brlo  .L__fp_rempio2_advance
+
+.L__fp_rempio2_subtract:
+    subi  r27, 0xa2
+    sbc   r22, r18
+    sbc   r23, r19
+    sbc   r24, r20
+    inc   r30
+
+.L__fp_rempio2_advance:
+    dec   r25
+    brpl  .L__fp_rempio2_loop
+    cpi   r24, 0x80
+    brsh  .L__fp_rempio2_pack
+
+.L__fp_rempio2_normalize:
+    dec   r25
+    lsl   r27
+    rol   r22
+    rol   r23
+    rol   r24
+    brpl  .L__fp_rempio2_normalize
+
+.L__fp_rempio2_pack:
+    sbci  r25, 0x80
+    rjmp   __fp_mpack_finite
+
+; Shared sine/cosine kernel. r30 contains the reduced quadrant number.
+__fp_sinus:
+    push  r30
+    sbrs  r30, 0
+    rjmp  .L__fp_sinus_round_remainder
+    ldi   r26, 0xa2
+    ldi   r18, 0xda
+    ldi   r19, 0x0f
+    ldi   r20, 0xc9
+    ldi   r21, 0xbf
+    rcall  __addsf3x
+
+.L__fp_sinus_round_remainder:
+    rcall  __fp_round
+    pop   r0
+    inc   r0
+    sbrc  r0, 1
+    subi  r25, 0x80
+    ldi   r30, lo8(sinf_coefficients)
+    ldi   r31, hi8(sinf_coefficients)
+    rjmp   __fp_powsodd
+
+; float sinf(float A)
+sinf:
+    push  r25
+    rcall  __fp_rempio2
+    pop   r0
+    sbrc  r0, 7
+    subi  r30, -2
+    rjmp   __fp_sinus
+
+; float cosf(float A)
+cosf:
+    rcall  __fp_rempio2
+    inc   r30
+    rjmp   __fp_sinus
+
+; float atanf(float A)
+atanf:
+    push  r29
+    clr   r29
+    mov   r27, r25
+    andi  r27, 0x7f
+    ldi   r20, 0x80
+    ldi   r21, 0x3f
+    cp    r1, r22
+    cpc   r1, r23
+    cpc   r20, r24
+    cpc   r21, r27
+    brsh  .Latanf_reduced
+    mov   r29, r25
+    rcall  __inversef
+
+.Latanf_reduced:
+    push  r25
+    push  r24
+    push  r23
+    push  r22
+    rcall  squaref
+    ldi   r30, lo8(atanf_coefficients)
+    ldi   r31, hi8(atanf_coefficients)
+    rcall  __fp_powser
+    rcall  __fp_round
+    pop   r18
+    pop   r19
+    pop   r20
+    pop   r21
+    rcall  __mulsf3x
+    tst   r29
+    breq  .Latanf_finish
+    subi  r25, 0x80
+    ldi   r26, 0xa2
+    ldi   r18, 0xda
+    ldi   r19, 0x0f
+    ldi   r20, 0xc9
+    ldi   r21, 0x3f
+    andi  r29, 0x80
+    eor   r21, r29
+    rcall  __addsf3x
+
+.Latanf_finish:
+    pop   r29
+    rjmp   __fp_round
+
+; float atan2f(float y=A, float x=B)
+atan2f:
+    mov   r30, r25
+    andi  r30, 0x80
+    rcall  __fp_split3
+    brcc  .Latan2f_operands_finite
+    rjmp  .Latan2f_nonfinite
+
+.Latan2f_operands_finite:
+    mov   r0, r25
+    or    r0, r21
+    breq  .Latan2f_zero_result
+
+.Latan2f_compare_magnitudes:
+    cp    r18, r22
+    cpc   r19, r23
+    cpc   r20, r24
+    cpc   r21, r25
+    brlo  .Latan2f_swap_operands
+
+    mov   r0, r30
+    bld   r0, 7
+    eor   r30, r0
+    breq  .Latan2f_divide
+    eor   r30, r0
+    ori   r30, 0x40
+    rjmp  .Latan2f_divide
+
+.Latan2f_swap_operands:
+    ori   r30, 0x3f
+    bld   r0, 7
+    com   r0
+    bst   r0, 7
+    movw  r26, r22
+    movw  r22, r18
+    movw  r18, r26
+    movw  r26, r24
+    movw  r24, r20
+    movw  r20, r26
+
+.Latan2f_divide:
+    push  r30
+    rcall  __divsf3_pse
+    rcall  __fp_round
+    rcall  atanf
+    pop   r21
+    tst   r21
+    breq  .Latan2f_return
+    ldi   r18, 0xdb
+    ldi   r19, 0x0f
+    ldi   r20, 0x49
+    sbrc  r21, 0
+    ldi   r20, 0xc9
+    rjmp   __addsf3
+
+.Latan2f_return:
+    ret
+
+.Latan2f_nonfinite:
+    rcall  __fp_pscA
+    brcs  .Latan2f_nan_result
+    ldi   r24, 0x80
+    ldi   r25, 0x01
+    brne  .Latan2f_nonfinite_a_ready
+    ldi   r25, 0xfe
+
+.Latan2f_nonfinite_a_ready:
+    rcall  __fp_pscB
+    brcs  .Latan2f_nan_result
+    ldi   r20, 0x80
+    ldi   r21, 0x01
+    brne  .Latan2f_compare_magnitudes
+    ldi   r21, 0xfe
+    rjmp  .Latan2f_compare_magnitudes
+
+.Latan2f_nan_result:
+    rjmp   __fp_nan
+
+.Latan2f_zero_result:
+    rjmp   __fp_zero
+
+; float tanf(float A)
+tanf:
+    push  r29
+    mov   r29, r25
+    rcall  __fp_rempio2
+    lsr   r30
+    ror   r29
+    ldi   r18, 0xda
+    ldi   r19, 0x0f
+    ldi   r20, 0x49
+    ldi   r21, 0x3f
+    cpi   r27, 0xa3
+    cpc   r22, r18
+    cpc   r23, r19
+    cpc   r24, r20
+    cpc   r25, r21
+    ror   r29
+    brmi  .Ltanf_reduced
+    ldi   r26, 0xa2
+    ldi   r20, 0xc9
+    ori   r25, 0x80
+    rcall  __addsf3x
+    rcall  __fp_round
+
+.Ltanf_reduced:
+    ldi   r30, lo8(tanf_coefficients)
+    ldi   r31, hi8(tanf_coefficients)
+    rcall  __fp_powsodd
+    lsl   r29
+    brvs  .Ltanf_no_inverse
+    rcall  __inversef
+
+.Ltanf_no_inverse:
+    lsl   r29
+    brvc  .Ltanf_restore_saved_register
+    subi  r25, 0x80
+
+.Ltanf_restore_saved_register:
+    pop   r29
+    ret
+
+; float modff(float A, float *iptr in r21:r20)
+modff:
+    movw  r30, r20
+    movw  r26, r24
+    lsl   r26
+    rol   r27
+    movw  r18, r22
+    movw  r20, r24
+    subi  r27, 127
+    brsh  .Lmodff_has_integral_part
+    clr   r18
+    clr   r19
+    clr   r20
+    andi  r21, 0x80
+    rjmp  .Lmodff_write_integral
+
+.Lmodff_has_integral_part:
+    subi  r27, 23
+    brsh  .Lmodff_large_or_nonfinite
+    mov   r26, r27
+    clr   r0
+
+.Lmodff_scan_fraction:
+    lsr   r20
+    ror   r19
+    ror   r18
+    adc   r0, r1
+    inc   r26
+    brmi  .Lmodff_scan_fraction
+    tst   r0
+    breq  .Lmodff_no_fraction
+
+.Lmodff_restore_integral:
+    lsl   r18
+    rol   r19
+    rol   r20
+    inc   r27
+    brmi  .Lmodff_restore_integral
+    rcall .Lmodff_write_integral
+    rjmp   __subsf3
+
+.Lmodff_large_or_nonfinite:
+    cpi   r22, 1
+    cpc   r23, r1
+    ldi   r26, 0x80
+    cpc   r24, r26
+    sbci  r27, 105
+    brsh  .Lmodff_write_integral
+
+.Lmodff_no_fraction:
+    movw  r18, r22
+    movw  r20, r24
+    clr   r22
+    clr   r23
+    clr   r24
+    andi  r25, 0x80
+
+.Lmodff_write_integral:
+    adiw  r30, 0
+    breq  .Lmodff_return
+    st    Z, r18
+    std   Z+1, r19
+    std   Z+2, r20
+    std   Z+3, r21
+
+.Lmodff_return:
+    ret
+
+; float ldexpf(float A, int exponent in r21:r20)
+ldexpf:
+    rcall  __fp_splitA
+    brcc  .Lldexpf_finite
+    rjmp   __fp_mpack
+
+.Lldexpf_finite:
+    tst   r25
+    brne  .Lldexpf_add_exponent
+    rjmp   __fp_mpack
+
+.Lldexpf_add_exponent:
+    add   r25, r20
+    adc   r21, r1
+    brvc  .Lldexpf_check_low_exponent
+    rjmp   __fp_inf
+
+.Lldexpf_check_low_exponent:
+    subi  r25, 1
+    sbci  r21, 0
+    brlt  .Lldexpf_denormalize
+    breq  .Lldexpf_pack
+
+.Lldexpf_normalize:
+    tst   r24
+    brmi  .Lldexpf_check_overflow
+    lsl   r22
+    rol   r23
+    rol   r24
+    subi  r25, 1
+    sbci  r21, 0
+    brne  .Lldexpf_normalize
+
+.Lldexpf_check_overflow:
+    cpi   r25, 254
+    cpc   r21, r1
+    brlt  .Lldexpf_pack
+    rjmp   __fp_inf
+
+.Lldexpf_pack:
+    lsl   r24
+    adc   r25, r1
+    lsr   r25
+    ror   r24
+    bld   r25, 7
+    ret
+
+.Lldexpf_denormalize:
+    cpi   r21, 0xff
+    brne  .Lldexpf_zero
+    cpi   r25, 0xe8
+    brlo  .Lldexpf_zero
+    clr   r27
+
+.Lldexpf_denormalize_loop:
+    lsr   r24
+    ror   r23
+    ror   r22
+    ror   r27
+    brcc  .Lldexpf_denormalize_no_sticky
+    ori   r27, 1
+
+.Lldexpf_denormalize_no_sticky:
+    inc   r25
+    brne  .Lldexpf_denormalize_loop
+    lsl   r27
+    brcc  .Lldexpf_pack
+    brne  .Lldexpf_round_up
+    sbrs  r22, 0
+    rjmp  .Lldexpf_pack
+
+.Lldexpf_round_up:
+    subi  r22, -1
+    sbci  r23, -1
+    sbci  r24, -1
+    sbci  r25, -1
+    rjmp  .Lldexpf_pack
+
+.Lldexpf_zero:
+    rjmp   __fp_szero
+
+; float expf(float A)
+expf:
+    rcall  __fp_splitA
+    brcc  .Lexpf_finite
+    brne  .Lexpf_nan
+    brts  .Lexpf_zero
+    rjmp   __fp_inf
+
+.Lexpf_nan:
+    rjmp   __fp_nan
+
+.Lexpf_zero:
+    rjmp   __fp_zero
+
+.Lexpf_finite:
+    cpi   r25, 0x86
+    brlo  .Lexpf_in_range
+    brts  .Lexpf_zero
+    rjmp   __fp_inf
+
+.Lexpf_in_range:
+    bld   r0, 7
+    push  r0
+    clt
+    ldi   r18, 0x3b
+    ldi   r19, 0xaa
+    ldi   r20, 0xb8
+    ldi   r21, 0x7f
+    rcall  __mulsf3_pse
+    push  r0
+    push  r0
+    push  r0
+    in    r20, SPL
+    in    r21, SPH
+    push  r0
+    rcall  modff
+    ldi   r30, lo8(expf_coefficients)
+    ldi   r31, hi8(expf_coefficients)
+    rcall  __fp_powser
+    pop   r20
+    pop   r21
+    pop   r30
+    pop   r31
+    asr   r30
+    rol   r30
+    rol   r31
+    breq  .Lexpf_scale_ready
+    subi  r31, 0x7e
+    ori   r30, 0x80
+    clr   r20
+
+.Lexpf_extract_integer_loop:
+    lsl   r30
+    rol   r20
+    dec   r31
+    brne  .Lexpf_extract_integer_loop
+    neg   r20
+    sbc   r21, r21
+
+.Lexpf_scale_ready:
+    rcall  ldexpf
+    pop   r0
+    sbrc  r0, 7
+    ret
+    rjmp   __inversef
+
+; float log2f(float A)
+log2f:
+    rcall  __fp_splitA
+    brcc  .Llog2f_finite
+    brts  .Llog2f_nan
+    rjmp   __fp_mpack
+
+.Llog2f_nan:
+    rjmp   __fp_nan
+
+.Llog2f_negative_infinity:
+    set
+    rjmp   __fp_inf
+
+.Llog2f_finite:
+    tst   r25
+    breq  .Llog2f_negative_infinity
+    brts  .Llog2f_nan
+    push  r29
+    push  r28
+    mov   r28, r25
+    clr   r29
+    tst   r24
+    brmi  .Llog2f_mantissa_normalized
+
+.Llog2f_normalize_subnormal:
+    sbiw  r28, 1
+    lsl   r22
+    rol   r23
+    rol   r24
+    brpl  .Llog2f_normalize_subnormal
+
+.Llog2f_mantissa_normalized:
+    ldi   r18, 0x00
+    ldi   r19, 0x00
+    ldi   r20, 0x80
+    ldi   r21, 0xbf
+    ldi   r25, 0x3f
+    cpi   r24, 0xc0
+    brsh  .Llog2f_high_interval
+    rcall  __addsf3
+    ldi   r30, lo8(log2f_low_coefficients)
+    ldi   r31, hi8(log2f_low_coefficients)
+    rjmp  .Llog2f_evaluate_polynomial
+
+.Llog2f_high_interval:
+    andi  r24, 0x7f
+    adiw  r28, 1
+    rcall  __addsf3
+    ldi   r30, lo8(log2f_high_coefficients)
+    ldi   r31, hi8(log2f_high_coefficients)
+
+.Llog2f_evaluate_polynomial:
+    rcall  __fp_powser
+    push  r27
+    push  r23
+    push  r22
+    movw  r22, r28
+    movw  r28, r24
+    subi  r22, 127
+    sbci  r23, 0
+    rol   r23
+    sbc   r24, r24
+    sbc   r25, r25
+    ror   r23
+    rcall  __floatsisf
+    pop   r18
+    pop   r19
+    pop   r26
+    movw  r20, r28
+    pop   r28
+    pop   r29
+    clr   r27
+    rcall  __addsf3x
+    rjmp   __fp_round
+
+; float logf(float A)
+logf:
+    rcall  log2f
+    ldi   r18, 0x18
+    ldi   r19, 0x72
+    ldi   r20, 0x31
+    ldi   r21, 0x3f
+    rjmp   __mulsf3
+
+; float log10f(float A)
+log10f:
+    rcall  log2f
+    ldi   r18, 0x9b
+    ldi   r19, 0x20
+    ldi   r20, 0x9a
+    ldi   r21, 0x3e
+    rjmp   __mulsf3
+
+; float powf(float x=A, float y=B)
+powf:
+    movw  r30, r20
+    lsl   r30
+    rol   r31
+    adiw  r30, 0
+    cpc   r18, r1
+    cpc   r19, r1
+    breq  .Lpowf_return_one
+    cp    r22, r1
+    cpc   r23, r1
+    brne  .Lpowf_check_sign
+    cpi   r24, 0x80
+    ldi   r27, 0x3f
+    cpc   r25, r27
+    breq  .Lpowf_return
+    set
+    cpi   r25, 0x80
+    cpc   r24, r1
+    breq  .Lpowf_integer_exponent_check
+    cpi   r24, 0x80
+    ldi   r27, 0xff
+    cpc   r25, r27
+    breq  .Lpowf_integer_exponent_check
+
+.Lpowf_check_sign:
+    tst   r25
+    brpl  .Lpowf_compute
+    cpi   r31, 0xff
+    cpc   r30, r1
+    cpc   r19, r1
+    cpc   r18, r1
+    breq  .Lpowf_replace_infinite_exponent
+    clt
+
+.Lpowf_integer_exponent_check:
+    sec
+    ror   r30
+    movw  r26, r18
+
+.Lpowf_find_low_nonzero_byte:
+    tst   r26
+    brne  .Lpowf_find_low_nonzero_bit
+    mov   r26, r27
+    mov   r27, r30
+    subi  r31, -8
+    brcs  .Lpowf_find_low_nonzero_byte
+    rjmp  .Lpowf_nonintegral_exponent
+
+.Lpowf_find_low_nonzero_bit:
+    subi  r31, -1
+    brcc  .Lpowf_nonintegral_exponent
+    lsr   r26
+    brcc  .Lpowf_find_low_nonzero_bit
+    cpi   r31, 0x97
+    brlo  .Lpowf_nonintegral_exponent
+    breq  .Lpowf_odd_integer_exponent
+    cpi   r31, 0xaf
+    brsh  .Lpowf_nonintegral_exponent
+    andi  r25, 0x7f
+
+.Lpowf_odd_integer_exponent:
+    push  r25
+    rcall .Lpowf_compute
+    pop   r0
+    sbrc  r0, 7
+    subi  r25, 0x80
+
+.Lpowf_return:
+    ret
+
+.Lpowf_nonintegral_exponent:
+    brts  .Lpowf_compute
+    rjmp   __fp_nan
+
+.Lpowf_return_one:
+    ldi   r22, 0x00
+    ldi   r23, 0x00
+    ldi   r24, 0x80
+    ldi   r25, 0x3f
+    ret
+
+.Lpowf_replace_infinite_exponent:
+    ldi   r20, 0x7f
+
+.Lpowf_compute:
+    andi  r25, 0x7f
+    push  r21
+    push  r20
+    push  r19
+    push  r18
+    rcall  logf
+    pop   r18
+    pop   r19
+    pop   r20
+    pop   r21
+    rcall  __mulsf3
+    rjmp   expf
+
+; float hypotf(float A, float B)
+hypotf:
+    andi  r25, 0x7f
+    andi  r21, 0x7f
+    rcall  __fp_split3
+    brcc  .Lhypotf_finite
+    rjmp  .Lhypotf_nonfinite
+
+.Lhypotf_finite:
+    tst   r25
+    brne  .Lhypotf_a_nonzero
+    rjmp  .Lhypotf_return_b
+.Lhypotf_a_nonzero:
+    tst   r21
+    brne  .Lhypotf_b_nonzero
+    rjmp  .Lhypotf_return_a
+.Lhypotf_b_nonzero:
+    clr   r31
+    cp    r25, r21
+    brsh  .Lhypotf_a_exponent_larger
+    mov   r30, r21
+    sub   r30, r25
+    cpi   r30, 13
+    brlo  .Lhypotf_a_relevant
+    rjmp  .Lhypotf_return_b
+.Lhypotf_a_relevant:
+    cpi   r21, 190
+    brlo  .Lhypotf_a_small_check
+    ldi   r31, 65
+    rjmp  .Lhypotf_scale
+
+.Lhypotf_a_small_check:
+    cpi   r25, 64
+    brsh  .Lhypotf_scale_ready
+    rjmp  .Lhypotf_normalize_subnormals
+
+.Lhypotf_a_exponent_larger:
+    mov   r30, r25
+    sub   r30, r21
+    cpi   r30, 13
+    brlo  .Lhypotf_b_relevant
+    rjmp  .Lhypotf_return_a
+.Lhypotf_b_relevant:
+    cpi   r25, 190
+    brlo  .Lhypotf_b_small_check
+    ldi   r31, 65
+    rjmp  .Lhypotf_scale
+
+.Lhypotf_b_small_check:
+    cpi   r21, 64
+    brsh  .Lhypotf_scale_ready
+
+.Lhypotf_normalize_subnormals:
+    ldi   r31, 0xa9
+    tst   r24
+    brmi  .Lhypotf_normalize_b
+
+.Lhypotf_normalize_a:
+    dec   r25
+    lsl   r22
+    rol   r23
+    rol   r24
+    brpl  .Lhypotf_normalize_a
+
+.Lhypotf_normalize_b:
+    tst   r20
+    brmi  .Lhypotf_scale
+
+.Lhypotf_normalize_b_loop:
+    dec   r21
+    lsl   r18
+    rol   r19
+    rol   r20
+    brpl  .Lhypotf_normalize_b_loop
+
+.Lhypotf_scale:
+    sub   r25, r31
+    sub   r21, r31
+
+.Lhypotf_scale_ready:
+    push  r31
+    push  r17
+    push  r16
+    push  r15
+    push  r14
+    movw  r14, r18
+    movw  r16, r20
+    clr   r27
+    mov   r26, r27
+    movw  r18, r22
+    movw  r20, r24
+    rcall  __mulsf3_pse
+    movw  r18, r14
+    movw  r20, r16
+    push  r27
+    movw  r14, r22
+    movw  r16, r24
+    clr   r26
+    mov   r27, r26
+    movw  r22, r18
+    movw  r24, r20
+    rcall  __mulsf3_pse
+    pop   r26
+    movw  r18, r14
+    movw  r20, r16
+    pop   r14
+    pop   r15
+    pop   r16
+    pop   r17
+    rcall  __addsf3x
+    rcall  __fp_round
+    rcall  sqrtf
+    pop   r20
+    sbrs  r20, 0
+    ret
+    clr   r21
+    sbrc  r20, 7
+    com   r21
+    rjmp   ldexpf
+
+.Lhypotf_return_b:
+    movw  r22, r18
+    movw  r24, r20
+
+.Lhypotf_return_a:
+    rjmp   __fp_mpack
+
+.Lhypotf_nonfinite:
+    rcall  __fp_pscA
+    breq  .Lhypotf_infinity
+    rcall  __fp_pscB
+    breq  .Lhypotf_infinity
+    rjmp   __fp_nan
+
+.Lhypotf_infinity:
+    rjmp   __fp_inf
+
+; float fmodf(float A, float B)
+fmodf:
+    mov   r30, r25
+    rcall  __fp_split3
+    brcc  .Lfmodf_finite
+    rjmp  .Lfmodf_nonfinite
+
+.Lfmodf_finite:
+    tst   r21
+    brne  .Lfmodf_compare_magnitudes
+    rjmp  .Lfmodf_nan
+
+.Lfmodf_compare_magnitudes:
+    bst   r30, 7
+    cp    r22, r18
+    cpc   r23, r19
+    cpc   r24, r20
+    cpc   r25, r21
+    brlo  .Lfmodf_pack
+    brne  .Lfmodf_magnitudes_differ
+    rjmp  .Lfmodf_signed_zero
+.Lfmodf_magnitudes_differ:
+    mov   r30, r25
+    clr   r31
+    tst   r24
+    brmi  .Lfmodf_a_normalized
+
+.Lfmodf_normalize_a:
+    sbiw  r30, 1
+    lsl   r22
+    rol   r23
+    rol   r24
+    brpl  .Lfmodf_normalize_a
+
+.Lfmodf_a_normalized:
+    mov   r25, r21
+    clr   r21
+    tst   r20
+    brmi  .Lfmodf_b_normalized
+
+.Lfmodf_normalize_b:
+    subi  r25, 1
+    sbci  r21, 0
+    lsl   r18
+    rol   r19
+    rol   r20
+    brpl  .Lfmodf_normalize_b
+
+.Lfmodf_b_normalized:
+    clr   r27
+    sub   r30, r25
+    sbc   r31, r21
+
+.Lfmodf_remainder_loop:
+    sub   r22, r18
+    sbc   r23, r19
+    sbc   r24, r20
+    sbc   r27, r1
+    breq  .Lfmodf_signed_zero
+    brpl  .Lfmodf_subtraction_kept
+    add   r22, r18
+    adc   r23, r19
+    adc   r24, r20
+    adc   r27, r1
+
+.Lfmodf_subtraction_kept:
+    sbiw  r30, 1
+    brmi  .Lfmodf_prepare_pack
+    lsl   r22
+    rol   r23
+    rol   r24
+    rol   r27
+    rjmp  .Lfmodf_remainder_loop
+
+.Lfmodf_prepare_pack:
+    subi  r25, 1
+    sbci  r21, 0
+    brmi  .Lfmodf_denormalize
+    breq  .Lfmodf_pack_normal
+
+.Lfmodf_renormalize:
+    tst   r24
+    brmi  .Lfmodf_pack_normal
+    lsl   r22
+    rol   r23
+    rol   r24
+    subi  r25, 1
+    sbci  r21, 0
+    brne  .Lfmodf_renormalize
+
+.Lfmodf_pack_normal:
+    inc   r25
+
+.Lfmodf_pack:
+    rjmp   __fp_mpack
+
+.Lfmodf_denormalize:
+    lsr   r24
+    ror   r23
+    ror   r22
+    subi  r25, -1
+    brne  .Lfmodf_denormalize
+    rjmp  .Lfmodf_pack_normal
+
+.Lfmodf_nonfinite:
+    rcall  __fp_pscA
+    brcs  .Lfmodf_nan
+    breq  .Lfmodf_nan
+    rcall  __fp_pscB
+    brcs  .Lfmodf_nan
+    rjmp  .Lfmodf_compare_magnitudes
+
+.Lfmodf_nan:
+    rjmp   __fp_nan
+
+.Lfmodf_signed_zero:
+    rjmp   __fp_szero
+
+; Polynomial coefficient tables. The first byte is the degree; the next four
+; bytes are the leading binary32 coefficient; remaining entries are five-byte
+; extended coefficients.
+sinf_coefficients:
+    .byte 5
+    .byte 0xa8,0x4c,0xcd,0xb2
+    .byte 0xd4,0x4e,0xb9,0x38,0x36
+    .byte 0xa9,0x02,0x0c,0x50,0xb9
+    .byte 0x91,0x86,0x88,0x08,0x3c
+    .byte 0xa6,0xaa,0xaa,0x2a,0xbe
+    .byte 0x00,0x00,0x00,0x80,0x3f
+
+atanf_coefficients:
+    .byte 8
+    .byte 0x4a,0xd7,0x3b,0x3b
+    .byte 0xce,0x01,0x6e,0x84,0xbc
+    .byte 0xbf,0xfd,0xc1,0x2f,0x3d
+    .byte 0x6c,0x74,0x31,0x9a,0xbd
+    .byte 0x56,0x83,0x3d,0xda,0x3d
+    .byte 0x00,0xc7,0x7f,0x11,0xbe
+    .byte 0xd9,0xe4,0xbb,0x4c,0x3e
+    .byte 0x91,0x6b,0xaa,0xaa,0xbe
+    .byte 0x00,0x00,0x00,0x80,0x3f
+
+tanf_coefficients:
+    .byte 6
+    .byte 0x64,0xec,0x1b,0x3c
+    .byte 0x04,0xbc,0x16,0x3e,0x3b
+    .byte 0xe5,0xb9,0x3c,0xc9,0x3c
+    .byte 0x37,0xc2,0x9e,0x5a,0x3d
+    .byte 0x66,0x04,0x98,0x08,0x3e
+    .byte 0xea,0x69,0xaa,0xaa,0x3e
+    .byte 0x00,0x00,0x00,0x80,0x3f
+
+expf_coefficients:
+    .byte 7
+    .byte 0x63,0x42,0x36,0xb7
+    .byte 0x9b,0xd8,0xa7,0x1a,0x39
+    .byte 0x68,0x56,0x18,0xae,0xba
+    .byte 0xab,0x55,0x8c,0x1d,0x3c
+    .byte 0xb7,0xcc,0x57,0x63,0xbd
+    .byte 0x6d,0xed,0xfd,0x75,0x3e
+    .byte 0xf6,0x17,0x72,0x31,0xbf
+    .byte 0x00,0x00,0x00,0x80,0x3f
+
+log2f_low_coefficients:
+    .byte 8
+    .byte 0x9c,0x1a,0x22,0xbd
+    .byte 0xa0,0x92,0x20,0x00,0x3e
+    .byte 0xbe,0xcc,0xd5,0x58,0xbe
+    .byte 0x94,0xde,0xa0,0x90,0x3e
+    .byte 0xa0,0xa5,0x4b,0xb8,0xbe
+    .byte 0x20,0xa9,0x32,0xf6,0x3e
+    .byte 0x80,0x2a,0xaa,0x38,0xbf
+    .byte 0x22,0x3b,0xaa,0xb8,0x3f
+    .byte 0x00,0x00,0x00,0x00,0x00
+
+log2f_high_coefficients:
+    .byte 8
+    .byte 0x3c,0x5b,0xf7,0xbe
+    .byte 0xda,0xd7,0xaa,0x71,0x3d
+    .byte 0x8c,0x77,0x86,0x8c,0xbe
+    .byte 0x2e,0xee,0x93,0x91,0x3e
+    .byte 0x7a,0x9f,0xce,0xb8,0xbe
+    .byte 0x10,0x24,0x37,0xf6,0x3e
+    .byte 0xfa,0x3c,0xaa,0x38,0xbf
+    .byte 0x28,0x3b,0xaa,0xb8,0x3f
+    .byte 0x00,0x00,0x00,0x00,0x00
+
+.p2align 1
 
 avrlibm_embedded_end:

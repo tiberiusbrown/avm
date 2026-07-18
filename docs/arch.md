@@ -1814,19 +1814,34 @@ LLVM IR SHOULD NOT expose a generic service-number intrinsic. Each supported ser
 
 | ID | Name | Inputs | Results | Other clobbers |
 |---:|---|---|---|---|
-| `0` | `debug_putc` | `low8(r4)` | None | None |
-| `1` | `debug_break` | None | None | None |
-| `2` | `millis` | None | `r4` | None |
-| `3` | `millis32` | None | `q2 = r4:r5` | None |
-| `4-255` | Reserved | — | — | — |
+| `0x00` | `debug_putc` | `low8(r4)` | None | None |
+| `0x01` | `debug_break` | None | None | None |
+| `0x02` | `millis` | None | `r4` | None |
+| `0x03` | `millis32` | None | `q2 = r4:r5` | None |
+| `0x04` | `sinf` | `q0` | `q0` | None |
+| `0x05` | `cosf` | `q0` | `q0` | None |
+| `0x06` | `atan2f` | `q0 = y`, `q1 = x` | `q0` | None |
+| `0x07` | `tanf` | `q0` | `q0` | None |
+| `0x08` | `expf` | `q0` | `q0` | None |
+| `0x09` | `logf` | `q0` | `q0` | None |
+| `0x0A` | `log2f` | `q0` | `q0` | None |
+| `0x0B` | `log10f` | `q0` | `q0` | None |
+| `0x0C` | `powf` | `q0 = x`, `q1 = y` | `q0` | None |
+| `0x0D` | `hypotf` | `q0 = x`, `q1 = y` | `q0` | None |
+| `0x0E` | `fmodf` | `q0 = x`, `q1 = y` | `q0` | None |
+| `0x0F-0xFF` | Reserved | — | — | — |
 
-All four defined services preserve:
+Every defined service preserves:
 
 ```text
 CC
 SP
 every general-purpose register not listed as a result
 ```
+
+An input-only register is preserved. In particular, every floating-point math
+service defines only `q0`; binary services preserve the original value of
+`q1`.
 
 ### 49.1. `debug_putc`
 
@@ -1919,6 +1934,40 @@ The result wraps modulo `2^32`.
 The service defines the complete 32-bit pair `q2`, and therefore defines both `r4` and `r5`. It preserves `r6-r7`, `r0-r3`, `CC`, and `SP`.
 
 Each invocation observes the current timer state. Calls MUST NOT be removed, duplicated, speculated, common-subexpression eliminated, or hoisted from their program-order position.
+
+### 49.5. Floating-point math services
+
+Services `0x04-0x0E` operate on IEEE-754 binary32 values in `q0` and, for
+binary services, `q1`. The result replaces `q0`. They preserve `q1`, `q2`,
+`q3`, `CC`, and `SP`.
+
+Angles are measured in radians. The services expose no floating-point exception
+state and do not set `errno`. NaN result payloads are unspecified. Subject to
+those rules, each service has the semantics of the corresponding single-
+precision C math function.
+
+| ID | Encoding | Operation |
+|---:|---|---|
+| `0x04` | `D7 04` | `q0 = sinf(q0)` |
+| `0x05` | `D7 05` | `q0 = cosf(q0)` |
+| `0x06` | `D7 06` | `q0 = atan2f(q0, q1)` where the original `q0` is `y` and `q1` is `x` |
+| `0x07` | `D7 07` | `q0 = tanf(q0)` |
+| `0x08` | `D7 08` | `q0 = expf(q0)` |
+| `0x09` | `D7 09` | `q0 = logf(q0)` |
+| `0x0A` | `D7 0A` | `q0 = log2f(q0)` |
+| `0x0B` | `D7 0B` | `q0 = log10f(q0)` |
+| `0x0C` | `D7 0C` | `q0 = powf(q0, q1)` where the original `q0` is `x` and `q1` is `y` |
+| `0x0D` | `D7 0D` | `q0 = hypotf(q0, q1)` where the original operands are `x` and `y` |
+| `0x0E` | `D7 0E` | `q0 = fmodf(q0, q1)` where the original `q0` is `x` and `q1` is `y` |
+
+For finite `x` and finite nonzero `y`, `fmodf` computes:
+
+```text
+x - trunc(x / y) * y
+```
+
+A nonzero `fmodf` result has the sign of `x`. `atan2f` returns an angle in the
+closed interval `[-pi, +pi]`.
 
 ---
 
@@ -2320,13 +2369,25 @@ The backend should:
 
 ## 59. LLVM system-service intrinsics
 
-Each defined AVM service has a dedicated target intrinsic:
+Each defined AVM service has a dedicated typed target intrinsic:
 
 ```llvm
-declare void @llvm.avm.debug.putc(i8 %value)
-declare void @llvm.avm.debug.break()
-declare i16  @llvm.avm.millis()
-declare i32  @llvm.avm.millis32()
+declare void  @llvm.avm.debug.putc(i8 %value)
+declare void  @llvm.avm.debug.break()
+declare i16   @llvm.avm.millis()
+declare i32   @llvm.avm.millis32()
+
+declare float @llvm.avm.sinf(float %x)
+declare float @llvm.avm.cosf(float %x)
+declare float @llvm.avm.atan2f(float %y, float %x)
+declare float @llvm.avm.tanf(float %x)
+declare float @llvm.avm.expf(float %x)
+declare float @llvm.avm.logf(float %x)
+declare float @llvm.avm.log2f(float %x)
+declare float @llvm.avm.log10f(float %x)
+declare float @llvm.avm.powf(float %x, float %y)
+declare float @llvm.avm.hypotf(float %x, float %y)
+declare float @llvm.avm.fmodf(float %x, float %y)
 ```
 
 A generic service-number intrinsic SHOULD NOT be the public LLVM interface.
@@ -2335,37 +2396,71 @@ A generic service-number intrinsic SHOULD NOT be the public LLVM interface.
 
 | LLVM intrinsic | Machine encoding | Fixed physical uses | Fixed physical definitions |
 |---|---|---|---|
-| `llvm.avm.debug.putc(i8)` | `SYS 0` | `low8(r4)` | None |
-| `llvm.avm.debug.break()` | `SYS 1` | None | None |
-| `llvm.avm.millis()` | `SYS 2` | None | `r4` |
-| `llvm.avm.millis32()` | `SYS 3` | None | `q2` |
+| `llvm.avm.debug.putc(i8)` | `SYS 0x00` | `low8(r4)` | None |
+| `llvm.avm.debug.break()` | `SYS 0x01` | None | None |
+| `llvm.avm.millis()` | `SYS 0x02` | None | `r4` |
+| `llvm.avm.millis32()` | `SYS 0x03` | None | `q2` |
+| `llvm.avm.sinf(float)` | `SYS 0x04` | `q0` | `q0` |
+| `llvm.avm.cosf(float)` | `SYS 0x05` | `q0` | `q0` |
+| `llvm.avm.atan2f(float,float)` | `SYS 0x06` | `q0 = y`, `q1 = x` | `q0` |
+| `llvm.avm.tanf(float)` | `SYS 0x07` | `q0` | `q0` |
+| `llvm.avm.expf(float)` | `SYS 0x08` | `q0` | `q0` |
+| `llvm.avm.logf(float)` | `SYS 0x09` | `q0` | `q0` |
+| `llvm.avm.log2f(float)` | `SYS 0x0A` | `q0` | `q0` |
+| `llvm.avm.log10f(float)` | `SYS 0x0B` | `q0` | `q0` |
+| `llvm.avm.powf(float,float)` | `SYS 0x0C` | `q0 = x`, `q1 = y` | `q0` |
+| `llvm.avm.hypotf(float,float)` | `SYS 0x0D` | `q0 = x`, `q1 = y` | `q0` |
+| `llvm.avm.fmodf(float,float)` | `SYS 0x0E` | `q0 = x`, `q1 = y` | `q0` |
 
-These instructions are not ordinary calls and carry no call-preserved register mask. Exact physical uses and definitions are modeled directly.
+These instructions are not ordinary calls and carry no call-preserved register
+mask. Exact physical uses and definitions are modeled directly. Input-only
+physical registers remain live across the instruction; in particular, the
+binary math services preserve `q1`.
+
+Generic LLVM math intrinsics and recognized libcalls MAY lower directly to
+these services when their required semantics match the service definitions in
+Section 49.5.
 
 ### 59.2. Optimization and scheduling
 
-All service intrinsics are side-effecting.
+`debug_putc`, `debug_break`, `millis`, and `millis32` retain the observable or
+evolving-state constraints specified in Sections 49.1-49.4. They have no AVM
+memory effects but retain a chain or unmodeled side effect. `debug_break` is a
+scheduling barrier at its source position.
 
-They MUST NOT be removed, duplicated, speculated, commoned, merged, or reordered relative to another observable service.
-
-`millis` and `millis32` observe evolving timer state.
-
-The intrinsics have no AVM memory effects but retain a chain or unmodeled side effect.
-
-`debug_break` is a scheduling barrier at its source position.
+The floating-point math services are deterministic, have no AVM memory effects,
+set neither `errno` nor floating-point exception state, and have no observable
+side effects. They MAY be common-subexpression eliminated, duplicated,
+speculated, or reordered when ordinary data dependencies and the requested
+floating-point semantics permit it.
 
 ### 59.3. Source-language interfaces
 
-Recommended C interfaces:
+Recommended target-specific C interfaces:
 
 ```c
 void     __avm_debug_putc(unsigned char value);
 void     __avm_debug_break(void);
 uint16_t __avm_millis(void);
 uint32_t __avm_millis32(void);
+
+float __avm_sinf(float x);
+float __avm_cosf(float x);
+float __avm_atan2f(float y, float x);
+float __avm_tanf(float x);
+float __avm_expf(float x);
+float __avm_logf(float x);
+float __avm_log2f(float x);
+float __avm_log10f(float x);
+float __avm_powf(float x, float y);
+float __avm_hypotf(float x, float y);
+float __avm_fmodf(float x, float y);
 ```
 
-Clang builtins or runtime wrappers lower these interfaces to the target intrinsics.
+Clang builtins or runtime wrappers lower these interfaces to the target
+intrinsics. The target math library MAY expose the standard C names `sinf`,
+`cosf`, `atan2f`, `tanf`, `expf`, `logf`, `log2f`, `log10f`, `powf`, `hypotf`,
+and `fmodf` as wrappers or aliases for the corresponding services.
 
 ## 60. Code model and C++ policy
 

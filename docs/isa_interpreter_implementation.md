@@ -3041,7 +3041,7 @@ The dense tables for upper-register pointers contain only fast forms. The two ta
 | `D4` | `JMP8 rel8` | 2 | 122 |
 | `D5` | `CALL8 rel8` | 2 | 128 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
-| `D7` | `SYS service8` | 2 | 34 (`DEBUG_PUTC`), 34 (`DEBUG_BREAK`), 36 (`MILLIS`), 40 (`MILLIS32`) |
+| `D7` | `SYS service8` | 2 | varies |
 | `D8` | `BRUGE8 rel8` | 2 | 35 not taken; 128 taken |
 | `D9` | `BRSGE8 rel8` | 2 | 35 not taken; 128 taken |
 | `DA` | `BREQ16 rel16` | 3 | 51 not taken; 135 taken |

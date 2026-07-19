@@ -785,6 +785,20 @@ AVM address space 1 is read-only
 AVM does not support casts between address spaces 0 and 1
 ```
 
+Accept AS1 constant arrays emitted by Clang for flash strings. A global of the
+form
+
+```llvm
+@.avm.flashstr.N = private unnamed_addr addrspace(1) constant [N x i8] ...,
+                   align 1
+```
+
+must be placed in `.rodata`, addressed with the existing AS1 `%lo16`/`%hi8`
+relocations, and loaded only through `LDP*`. It must never be copied into the
+AS0 startup data image. This is ordinary AS1 global lowering, not a new LLVM IR
+intrinsic. Add a positive IR test containing one such global and a function that
+returns its `ptr addrspace(1)` address and loads a byte from it.
+
 Add `llvm/test/CodeGen/AVM/as1-invalid.ll` as a `split-file` test containing
 separate modules and separate `not --crash llc` RUN lines for:
 
@@ -861,6 +875,96 @@ Implement variadic functions:
 
 Implement the target's full inline-assembly constraint set and correct physical
 register names and aliases. Do not leave the current r-only implementation.
+
+Implement the target-specific Clang builtin
+`__builtin_avm_flash_string` during this prompt. It is a Clang source builtin,
+not an `llvm.avm.*` IR intrinsic and not a runtime call.
+
+Use this exact source contract:
+
+```c
+const char __attribute__((address_space(1))) *
+__builtin_avm_flash_string(const char literal[]);
+```
+
+The apparent prototype above documents the type only. Register it as an AVM
+target builtin and perform custom semantic checking:
+
+- add `clang/include/clang/Basic/BuiltinsAVM.def` containing the target builtin;
+- add an `AVM` builtin-ID namespace to
+  `clang/include/clang/Basic/TargetBuiltins.h`;
+- have `AVMTargetInfo::getTargetBuiltins()` expose the table;
+- use builtin type encoding `cC*1cC*0` and attributes `nct`: the result is a
+  pointer in address space 1 to const char, the apparent argument is a pointer
+  in address space 0 to const char, and `t` requests custom checking;
+- add `clang/lib/Sema/SemaAVM.cpp`, its declaration in `Sema.h`, its CMake entry,
+  and the target dispatch needed to call `Sema::CheckAVMBuiltinFunctionCall` for
+  AVM builtin IDs;
+- require exactly one argument;
+- strip parentheses and implicit casts and require the original argument to be
+  a `StringLiteral` of ordinary narrow kind. Concatenated ordinary narrow
+  tokens are accepted because Clang represents them as one `StringLiteral`;
+- reject variables, conditional expressions, compound literals, wide literals,
+  UTF-8 literals, UTF-16 literals, and UTF-32 literals with the stable
+  diagnostic `argument to '__builtin_avm_flash_string' must be an ordinary narrow string literal`;
+- reject use when there is no enclosing function with the stable diagnostic
+  `__builtin_avm_flash_string may only be used within a function`. File-scope
+  pointer initialization is intentionally deferred, matching the expression-
+  only use of Arduino AVR's `F()` macro. Named file-scope flash strings remain
+  available through explicit AS1 array declarations;
+- the result type is exactly
+  `const char __attribute__((address_space(1))) *`, so normal Clang overload
+  resolution and the AS0/AS1 conversion diagnostics apply without helper-class
+  casts.
+
+Implement IR emission directly in Clang:
+
+- add a dedicated `CodeGenModule` helper and per-module cache for AVM flash
+  strings; do not emit a call or an LLVM intrinsic;
+- key the cache by the complete emitted byte sequence including the implicit
+  terminating null and by element width/address space. For this milestone only
+  ordinary one-byte strings are accepted, but keep the key structurally capable
+  of distinguishing element width;
+- always pool identical builtin strings within one translation unit, independent
+  of ordinary string-literal merging flags;
+- do not pool an AS1 flash string with an ordinary AS0 string containing the
+  same bytes;
+- create exactly one LLVM global per cache entry with private linkage,
+  `unnamed_addr`, address space 1, constant initializer, and alignment 1;
+- name globals with the `.avm.flashstr.` prefix followed by a deterministic
+  module-local sequence number;
+- emit the builtin expression as a `ptr addrspace(1)` constant pointing at
+  element zero of that global;
+- add the AVM builtin case to the target-builtin path in
+  `clang/lib/CodeGen/CGBuiltin.cpp`; do not modify generic string-literal
+  semantics;
+- guarantee same-translation-unit pooling as an implementation requirement,
+  but document source-level pointer identity as unspecified. Do not add COMDAT
+  or cross-translation-unit pooling requirements; LTO or a future linker may
+  merge further.
+
+Add `clang/test/Sema/avm-flash-string.c` and
+`clang/test/SemaCXX/avm-flash-string.cpp` covering valid ordinary and
+concatenated literals, rejection of every nonliteral/prefixed-literal category,
+function-scope-only use, the exact AS1 result type, C++ overload selection, and
+AS1-to-AS0 assignment rejection.
+
+Add `clang/test/CodeGen/avm-flash-string.c` and a C++ companion proving:
+
+- two uses of `__builtin_avm_flash_string("Hello")` in one translation unit
+  reference one and only one `.avm.flashstr.*` AS1 global;
+- `__builtin_avm_flash_string("Hell" "o")` reuses that same global;
+- `__builtin_avm_flash_string("Hello\0")` creates a distinct seven-byte
+  global;
+- an ordinary `"Hello"` expression remains a distinct AS0 string object;
+- every flash-string global is `private unnamed_addr addrspace(1) constant`,
+  has alignment 1, includes its terminating null, and is returned as
+  `ptr addrspace(1)`;
+- no runtime call and no `addrspacecast` is emitted.
+
+Document the extension in `clang/docs/LanguageExtensions.rst`, including the
+argument restriction, AS1 result type, same-TU pooling, unspecified pointer
+identity, and function-scope-only limitation.
 
 Enforce the AVM source-language address-space contract in Clang:
 
@@ -952,7 +1056,9 @@ Finish the initial AVM codegen milestone.
 Add the llvm.avm.* target intrinsics from the architecture specification and
 lower them to service-specific machine pseudos with exact fixed physical uses,
 definitions, preservation, and side-effect properties. Do not lower them
-through the generic SYS instruction.
+through the generic SYS instruction. `__builtin_avm_flash_string` is explicitly
+excluded from this intrinsic set: Prompt 8 lowers it directly to an AS1 constant
+global and pointer.
 
 Implement:
 
@@ -961,6 +1067,21 @@ Implement:
   hoisted, duplicated, or speculated;
 - floating math services as pure operations with fixed q0/q1 operands;
 - Clang builtins for the recommended __avm_* source interfaces;
+- install `clang/lib/Headers/avm/pgmspace.h` as the public convenience
+  header for program-space strings, containing exactly these interfaces (plus
+  normal include guards):
+
+  ```c
+  #define AVM_PROGMEM __attribute__((address_space(1)))
+  typedef const char AVM_PROGMEM *avm_flash_string_t;
+  #define AVM_PSTR(s) __builtin_avm_flash_string(s)
+  #define F(s) AVM_PSTR(s)
+  ```
+
+  Do not define a helper class, cast the result, or hide the address space. The
+  macro must preserve the builtin's AS1 pointer type for C++ overload
+  resolution. The header is included explicitly as `<avm/pgmspace.h>`; do not
+  inject `F` into every compilation;
 - recognized standard float libcalls where their semantics match;
 - all specified runtime-helper symbol names for unsupported wide operations
   and memory operations.
@@ -1080,6 +1201,25 @@ Add an end-to-end address-space gate using the Clang driver rather than only
 - run the same invalid files at `-O0` and `-O2` to prove diagnostics occur in
   Sema and do not depend on optimization or backend reachability.
 
+Add an end-to-end flash-string gate using the installed resource header:
+
+- compile C and C++ files that include `<avm/pgmspace.h>` and call an AS1-aware
+  function or C++ overload with `F("Hello")`;
+- verify `F("Hello")` has type `avm_flash_string_t` and cannot initialize a
+  `const char *`;
+- use `F("Hello")` at least three times, including one concatenated spelling,
+  and verify the LLVM IR contains exactly one six-byte AS1 global for those
+  uses;
+- verify an ordinary `"Hello"` in the same file remains AS0 and is not pooled
+  with the AS1 object;
+- verify final assembly places the bytes in `.rodata`, materializes a 24-bit
+  program address, and uses `LDP8U` or its postincrement form while iterating;
+- link the object and use `llvm-readobj`/`llvm-objdump` to prove the flash string
+  is absent from the AS0 `.data` startup image;
+- compile invalid nonliteral, prefixed-literal, file-scope, and AS1-to-AS0 uses
+  through `clang --target=avm` and check the stable Prompt 8 diagnostics;
+- do not require pooling across separately compiled translation units.
+
 Compile the corpus with clang -ffreestanding to assembly and ELF objects, link
 a minimal no-runtime program with the existing AVM ld.lld target, and inspect
 the result with llvm-readobj and llvm-objdump.
@@ -1120,7 +1260,7 @@ This should support useful freestanding programs containing:
 * Direct and indirect calls.
 * Variadic functions.
 * Small aggregate passing and returning.
-* Program-space data and function pointers.
+* Program-space data, pooled `F("...")` strings, and function pointers.
 * System services.
 
-The intentionally deferred work is GlobalISel, debug information, a hosted libc/libc++, helper-library implementations, jump-table policy, a custom frequency-weighted register-allocation-hint pass, worst-case-execution-time tooling, additional interpreter/native/JIT tune CPUs, stack-usage metadata format, source-level convenience syntax beyond generic address-space attributes, and final flat-image packaging.
+The intentionally deferred work is GlobalISel, debug information, a hosted libc/libc++, helper-library implementations, jump-table policy, a custom frequency-weighted register-allocation-hint pass, worst-case-execution-time tooling, additional interpreter/native/JIT tune CPUs, stack-usage metadata format, source-level convenience syntax beyond `<avm/pgmspace.h>` and `F("...")`, and final flat-image packaging.

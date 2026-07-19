@@ -217,7 +217,30 @@ Give this once at the beginning of the agent session:
 
 ```text
 Work on the current AVM branch and patch the current files in place. Preserve
-all unrelated changes and do not restore files from older revisions.
+all unrelated changes and do not restore files from older revisions. The LLVM
+fork lives in `deps/llvm-project/`; make LLVM and Clang source changes there.
+
+Always build and run LLVM targets in the Debug configuration. Build through
+CMake, never by invoking Ninja, MSBuild, or another backend directly:
+
+    cmake --build build --parallel
+
+For a multi-config generator, add `--config Debug`, use Debug-built tools, and
+pass `-C Debug` to CTest. For a single-config generator, verify that
+`CMAKE_BUILD_TYPE=Debug` in `build/CMakeCache.txt` before building. Preserve the
+existing generator and compiler unless explicitly directed otherwise.
+
+On Windows only, when the configured generator is Ninja or Ninja Multi-Config
+and the compiler is MSVC (`cl.exe`), initialize the matching MSVC developer
+environment before building and use that same shell for `cmake --build`. Match
+the Visual Studio/MSVC installation recorded in `build/CMakeCache.txt`; a
+mismatched or missing environment commonly appears as missing standard or
+Windows headers and may also cause ABI or linker failures. Locate Visual Studio
+with `vswhere.exe` and invoke `vcvars64.bat` or `VsDevCmd.bat` as needed. Do not
+hard-code Visual Studio, MSVC, or Windows SDK versions, and do not add toolchain
+header paths to CMake files. Do not perform this setup on non-Windows systems,
+with non-MSVC compilers, or for Visual Studio/MSBuild generators unless the
+configured build actually requires it.
 
 The current AVM architecture specification is normative. Do not invent or
 change an ISA encoding, ABI rule, pointer representation, calling convention,

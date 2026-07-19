@@ -7415,7 +7415,7 @@ ff_bridge_call_heavy_q0_result:
     pop   r20
     pop   r19
     pop   r18
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 ff_bridge_call_heavy_q1_result:
     movw  r30, r26
@@ -7428,7 +7428,7 @@ ff_bridge_call_heavy_q1_result:
     pop   r20
     pop   r19
     pop   r18
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 ff_bridge_call_heavy_q2_result:
     movw  r30, r26
@@ -7439,7 +7439,7 @@ ff_bridge_call_heavy_q2_result:
     pop   r22
     pop   r21
     pop   r20
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 ff_bridge_call_heavy_q3_result:
     movw  r30, r26
@@ -7448,7 +7448,7 @@ ff_bridge_call_heavy_q3_result:
     movw  r22, r24
     pop   r19
     pop   r18
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 ; Unary heavy helpers (currently FSQRT) retain the metadata-selected finish.
 ff_bridge_call_heavy_q_result:
@@ -7503,12 +7503,14 @@ ff_store_q_result:
 .Lff_store_q0:
     movw  r8, r26
     movw  r10, r24
-    jmp   cluster_a_tail_18
+
+ff_cluster_tail_18:
+    dispatch
 
 .Lff_store_q1:
     movw  r12, r26
     movw  r14, r24
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 .Lff_store_q_high:
     sbrc  r30, 0
@@ -7517,12 +7519,12 @@ ff_store_q_result:
 .Lff_store_q2:
     movw  r16, r26
     movw  r18, r24
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 .Lff_store_q3:
     movw  r20, r26
     movw  r22, r24
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 ; Light r16 helper result: generic rD address/store is retained.
 ff_bridge_call_light_r16_result:
@@ -7542,7 +7544,7 @@ ff_bridge_store_r16:
     clr   r31
     st    Z+, r24
     st    Z,  r25
-    jmp   cluster_a_tail_18
+    rjmp  ff_cluster_tail_18
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -9349,3 +9351,4 @@ log2f_high_coefficients:
 .p2align 1
 
 avrlibm_embedded_end:
+

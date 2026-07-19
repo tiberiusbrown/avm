@@ -770,10 +770,35 @@ For address space 1:
 - implement 24-bit pointer arithmetic followed by canonicalization;
 - implement LDP8U, LDP8S, LDP16, LDP24, and LDP32;
 - reject AS1 stores;
-- reject implicit AS0/AS1 address-space casts;
+- reject every LLVM IR `addrspacecast` between AS0 and AS1 in either direction;
+  do not lower one to truncation, extension, masking, or a bitwise copy;
+- accept a null pointer already typed in either address space; creating an AS0
+  or AS1 null value does not require an `addrspacecast`;
 - lower direct function calls to RELAX_CALL;
 - lower indirect function-pointer calls to CALLP;
 - support packed three-byte function pointers in memory.
+
+Use deterministic backend diagnostics for invalid IR:
+
+```text
+AVM address space 1 is read-only
+AVM does not support casts between address spaces 0 and 1
+```
+
+Add `llvm/test/CodeGen/AVM/as1-invalid.ll` as a `split-file` test containing
+separate modules and separate `not --crash llc` RUN lines for:
+
+- an i8 store through `ptr addrspace(1)`;
+- an i16 store through `ptr addrspace(1)`;
+- `addrspacecast ptr %p to ptr addrspace(1)`;
+- `addrspacecast ptr addrspace(1) %p to ptr`;
+- an `addrspacecast` whose result is used only by a comparison, proving that
+  unused-memory behavior does not make the cast legal.
+
+Each RUN line must check the exact diagnostic above. Add a positive companion
+`llvm/test/CodeGen/AVM/as1-valid.ll` proving that typed AS0 and AS1 null values,
+same-address-space pointer copies, same-address-space comparisons, and AS1
+loads of i8/i16/i24/i32 compile without an `addrspacecast`.
 
 Apply these mandatory AS1 cost policies:
 
@@ -796,7 +821,9 @@ result is known.
 
 Test long arithmetic, float arithmetic and comparisons, function pointers,
 indirect calls, LLVM IR AS1 globals and loads, pointer arithmetic across a
-64-KiB boundary, and canonicalization of loaded program pointers.
+64-KiB boundary, canonicalization of loaded program pointers, the complete
+positive and negative address-space IR matrix above, and exact invalid-IR
+diagnostics.
 ```
 
 ## Prompt 8 — Complete C ABI and Clang ABI lowering
@@ -835,6 +862,75 @@ Implement variadic functions:
 Implement the target's full inline-assembly constraint set and correct physical
 register names and aliases. Do not leave the current r-only implementation.
 
+Enforce the AVM source-language address-space contract in Clang:
+
+- AS0 and AS1 are disjoint; neither is a superset of the other;
+- an AS0 pointer is not implicitly convertible to an AS1 pointer;
+- an AS1 pointer is not implicitly convertible to an AS0 pointer;
+- C explicit casts and C++ `static_cast`, `reinterpret_cast`, `const_cast`, and
+  C-style casts may not change a pointer between AS0 and AS1;
+- a null pointer constant may initialize or be assigned to either pointer type;
+- copies, initialization, argument passing, returns, comparisons, and
+  conditional expressions using two pointers in the same address space remain
+  valid;
+- a conditional expression mixing AS0 and AS1 pointers is invalid;
+- pointer subtraction and relational comparison between AS0 and AS1 pointers
+  are invalid;
+- dereferencing an AS1 pointer for a load is valid;
+- every source-level store through an AS1 pointer is diagnosed, regardless of
+  whether the pointee type was written with `const`. AS1 is architecturally
+  read-only, not merely conventionally const.
+
+Do not rely only on Clang's generic address-space tests. Add these target tests:
+
+1. `clang/test/Sema/avm-address-spaces.c`, run with:
+
+   ```text
+   %clang_cc1 -triple avm -fsyntax-only -verify %s
+   ```
+
+2. `clang/test/SemaCXX/avm-address-spaces.cpp`, run with:
+
+   ```text
+   %clang_cc1 -triple avm -std=c++17 -fsyntax-only -verify %s
+   ```
+
+Both files must use AS1 pointees declared with
+`__attribute__((address_space(1)))` and must cover this exact matrix in both
+directions wherever the language construct exists:
+
+- pointer declaration initialization;
+- simple assignment;
+- function argument passing;
+- returning from a function;
+- mixed-address-space conditional operator;
+- explicit cast;
+- subtraction and relational comparison;
+- attempted AS1 store;
+- legal same-address-space initialization, assignment, argument passing,
+  return, equality comparison, and dereference load;
+- legal initialization and assignment from `0`, `NULL` in C, and `nullptr` in
+  C++.
+
+Use `expected-error` checks containing stable diagnostic substrings rather than
+line-number-sensitive full diagnostics. The implicit-conversion checks must
+contain `changes address space of pointer`; explicit-cast checks must contain
+`cast` and `address space`; AS1 store checks must contain `address space 1 is
+read-only`. If generic Clang does not already provide the explicit-cast or
+read-only-store diagnostics, add the smallest target-gated Sema implementation
+needed to produce them; do not permit the constructs and defer failure to the
+LLVM backend.
+
+Add `clang/test/CodeGen/avm-address-spaces.c` proving that:
+
+- a legal AS1 dereference emits `load ..., ptr addrspace(1)`;
+- an ordinary data pointer remains `ptr` in AS0;
+- a typed AS1 null is emitted as `ptr addrspace(1) null`;
+- valid source emits no `addrspacecast`;
+- `const char *p = "Hello"` uses an AS0 string literal;
+- `const char text[] = "Hello"` defines an AS0 array initializer and does not
+  require an AS1 temporary or `addrspacecast`.
+
 Lower atomics according to the single-thread policy. Diagnose dynamic alloca,
 variable-length arrays reaching the backend, unsupported address-space stores,
 and statically known single-function frames larger than 256 bytes.
@@ -842,7 +938,8 @@ and statically known single-function frames larger than 256 bytes.
 Add Clang ABI IR tests and LLVM CodeGen tests for every aggregate size from
 zero through eight bytes, sret, byval, i64, variadic named and unnamed
 arguments, va_arg advancement, narrow arguments, narrow returns, inline
-assembly constraints, and atomic expansion.
+assembly constraints, atomic expansion, and every address-space semantic and
+CodeGen case listed above.
 ```
 
 ## Prompt 9 — Services, TTI, measured optimization quality, and end-to-end gate
@@ -966,6 +1063,22 @@ Create a small freestanding C regression corpus and test -O0, -O2, -Os, and
 - ordinary global byte load: direct absolute load where legal;
 - AS1 pointer iteration: native postincrement LDP;
 - left shifts by 1, 2, 3, and 4 use the exact threshold policy.
+
+Add an end-to-end address-space gate using the Clang driver rather than only
+`clang -cc1` or `llc`:
+
+- compile a valid C file containing an AS1 byte load, an AS1 pointer increment,
+  same-address-space copies, an AS1 null pointer, an ordinary string-literal
+  pointer, and an AS0 character array initialized from a string literal;
+- check the LLVM IR contains AS1 loads but no `addrspacecast`;
+- check final assembly uses `LDP8U` and the postincrement LDP form where the
+  source pattern permits it;
+- compile separate invalid C and C++ files with `not clang --target=avm` and
+  verify failure for implicit AS0-to-AS1 conversion, implicit AS1-to-AS0
+  conversion, explicit conversion in both directions, mixed conditional
+  expressions, and AS1 stores;
+- run the same invalid files at `-O0` and `-O2` to prove diagnostics occur in
+  Sema and do not depend on optimization or backend reachability.
 
 Compile the corpus with clang -ffreestanding to assembly and ELF objects, link
 a minimal no-runtime program with the existing AVM ld.lld target, and inspect

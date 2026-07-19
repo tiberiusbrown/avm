@@ -789,15 +789,45 @@ Accept AS1 constant arrays emitted by Clang for flash strings. A global of the
 form
 
 ```llvm
-@.avm.flashstr.N = private unnamed_addr addrspace(1) constant [N x i8] ...,
-                   align 1
+@.avm.flashstr.N = private addrspace(1) constant [N x i8] ..., align 1
 ```
 
 must be placed in `.rodata`, addressed with the existing AS1 `%lo16`/`%hi8`
 relocations, and loaded only through `LDP*`. It must never be copied into the
-AS0 startup data image. This is ordinary AS1 global lowering, not a new LLVM IR
-intrinsic. Add a positive IR test containing one such global and a function that
-returns its `ptr addrspace(1)` address and loads a byte from it.
+AS0 startup data image. Do not require `unnamed_addr`; same-translation-unit
+pooling is implemented by reusing one global rather than relying on LLVM to
+merge or duplicate address-insignificant constants. This is ordinary AS1 global
+lowering, not a new LLVM IR intrinsic. Add a positive IR test containing one
+such global and a function that returns its `ptr addrspace(1)` address and loads
+a byte from it.
+
+Support static initializers containing AS1 addresses. Audit the existing MC,
+object-writer, and LLD paths for `R_AVM_PROG24` and fix them if necessary so a
+`ptr addrspace(1)` constant can initialize either an AS0 `.data` object or an
+AS1 `.rodata` object. The relocation writes `S + A` as a three-byte
+little-endian program address and must diagnose overflow rather than truncate.
+Add object tests for both section destinations and a linked test proving the
+final three bytes resolve to the flash-string symbol address. This is required
+for file-scope `F()` pointer variables and tables in Prompt 8.
+
+Establish the canonical LLVM IR representation for program-space copies before
+the Clang builtin is added in Prompt 8:
+
+```llvm
+call void @llvm.memcpy.p0.p1.i16(
+    ptr %dst,
+    ptr addrspace(1) %src,
+    i16 %size,
+    i1 false)
+```
+
+This is the ordinary overloaded LLVM `memcpy` intrinsic with an AS0 destination
+and AS1 source. Do not add `llvm.avm.memcpy.p`, do not insert an
+`addrspacecast`, and do not convert the source to an integer merely to bypass
+the address-space type system. At this prompt, add IR verifier/round-trip tests
+showing that the intrinsic retains the two pointer address spaces and the i16
+length. Full machine lowering to `SYS 0x10` belongs to Prompt 9; do not create a
+temporary AS0 libcall lowering that would misrepresent the source memory space.
 
 Add `llvm/test/CodeGen/AVM/as1-invalid.ll` as a `split-file` test containing
 separate modules and separate `not --crash llc` RUN lines for:
@@ -894,9 +924,10 @@ target builtin and perform custom semantic checking:
 - add an `AVM` builtin-ID namespace to
   `clang/include/clang/Basic/TargetBuiltins.h`;
 - have `AVMTargetInfo::getTargetBuiltins()` expose the table;
-- use builtin type encoding `cC*1cC*0` and attributes `nct`: the result is a
+- use builtin type encoding `cC*1cC*0` and attributes `nctE`: the result is a
   pointer in address space 1 to const char, the apparent argument is a pointer
-  in address space 0 to const char, and `t` requests custom checking;
+  in address space 0 to const char, `t` requests custom checking, and `E`
+  identifies the builtin as frontend constant-evaluable;
 - add `clang/lib/Sema/SemaAVM.cpp`, its declaration in `Sema.h`, its CMake entry,
   and the target dispatch needed to call `Sema::CheckAVMBuiltinFunctionCall` for
   AVM builtin IDs;
@@ -907,64 +938,156 @@ target builtin and perform custom semantic checking:
 - reject variables, conditional expressions, compound literals, wide literals,
   UTF-8 literals, UTF-16 literals, and UTF-32 literals with the stable
   diagnostic `argument to '__builtin_avm_flash_string' must be an ordinary narrow string literal`;
-- reject use when there is no enclosing function with the stable diagnostic
-  `__builtin_avm_flash_string may only be used within a function`. File-scope
-  pointer initialization is intentionally deferred, matching the expression-
-  only use of Arduino AVR's `F()` macro. Named file-scope flash strings remain
-  available through explicit AS1 array declarations;
+- permit the builtin both within functions and in static-storage initializers;
+  it must be a constant address expression suitable for C file-scope and static
+  local initialization, aggregate initialization, and C++ `constexpr` and
+  `constinit` pointer initialization;
 - the result type is exactly
   `const char __attribute__((address_space(1))) *`, so normal Clang overload
   resolution and the AS0/AS1 conversion diagnostics apply without helper-class
   casts.
 
-Implement IR emission directly in Clang:
+Implement constant evaluation and IR emission directly in Clang:
 
+- represent the builtin as a true compile-time address of a conceptual
+  static-duration AS1 array, not as a call result. Prefer a narrowly scoped
+  special case for the target builtin; do not add a new AST node unless the
+  existing constant-value representation cannot retain the pooled-object
+  identity correctly;
+- implement the builtin in both Clang constant-evaluation engines so behavior
+  does not depend on whether `-fexperimental-new-constant-interpreter` is used;
+- the required constant-expression scope is pointer formation and propagation:
+  static scalar and aggregate initialization, C++ `constexpr`, and C++
+  `constinit`. Constexpr dereferencing of the flash bytes, use as a non-type
+  template argument, and other deeper constexpr memory operations are outside
+  this milestone and need not be added;
 - add a dedicated `CodeGenModule` helper and per-module cache for AVM flash
-  strings; do not emit a call or an LLVM intrinsic;
+  strings; both function-body builtin emission and constant global-initializer
+  emission must use this same helper and cache. Do not emit a call or an LLVM
+  intrinsic;
 - key the cache by the complete emitted byte sequence including the implicit
   terminating null and by element width/address space. For this milestone only
   ordinary one-byte strings are accepted, but keep the key structurally capable
   of distinguishing element width;
 - always pool identical builtin strings within one translation unit, independent
-  of ordinary string-literal merging flags;
+  of ordinary string-literal merging flags and regardless of whether the uses
+  occur at file scope or within functions;
 - do not pool an AS1 flash string with an ordinary AS0 string containing the
   same bytes;
-- create exactly one LLVM global per cache entry with private linkage,
-  `unnamed_addr`, address space 1, constant initializer, and alignment 1;
+- create exactly one LLVM global per cache entry with private linkage, address
+  space 1, constant initializer, and alignment 1. Do not mark it
+  `unnamed_addr`; pooling comes from reusing the cached global;
 - name globals with the `.avm.flashstr.` prefix followed by a deterministic
   module-local sequence number;
 - emit the builtin expression as a `ptr addrspace(1)` constant pointing at
   element zero of that global;
 - add the AVM builtin case to the target-builtin path in
-  `clang/lib/CodeGen/CGBuiltin.cpp`; do not modify generic string-literal
-  semantics;
+  `clang/lib/CodeGen/CGBuiltin.cpp` and the corresponding constant-emitter path
+  used by static initializers; do not modify generic string-literal semantics;
+- a file-scope AS1 pointer object in AS0 `.data` must use `R_AVM_PROG24` to
+  initialize its three-byte value. An AS1 pointer table explicitly placed in
+  AS1 `.rodata` uses the same relocation for each element;
+- never emit a dynamic initializer, runtime helper, or `llvm.global_ctors` entry
+  for this builtin;
 - guarantee same-translation-unit pooling as an implementation requirement,
-  but document source-level pointer identity as unspecified. Do not add COMDAT
-  or cross-translation-unit pooling requirements; LTO or a future linker may
-  merge further.
+  but document source-level pointer identity between distinct invocations as
+  unspecified. Do not add COMDAT or cross-translation-unit pooling
+  requirements; LTO or a future linker may merge further.
 
 Add `clang/test/Sema/avm-flash-string.c` and
 `clang/test/SemaCXX/avm-flash-string.cpp` covering valid ordinary and
 concatenated literals, rejection of every nonliteral/prefixed-literal category,
-function-scope-only use, the exact AS1 result type, C++ overload selection, and
-AS1-to-AS0 assignment rejection.
+the exact AS1 result type, C++ overload selection, AS1-to-AS0 assignment
+rejection, C file-scope/static-local scalar and aggregate initializers, and C++
+`constexpr`/`constinit` pointer initialization. Run these tests as C++20 and
+run the constant-expression cases both with the default evaluator and with
+`-fexperimental-new-constant-interpreter`.
 
 Add `clang/test/CodeGen/avm-flash-string.c` and a C++ companion proving:
 
-- two uses of `__builtin_avm_flash_string("Hello")` in one translation unit
-  reference one and only one `.avm.flashstr.*` AS1 global;
+- file-scope, static-local, and function-expression uses of
+  `__builtin_avm_flash_string("Hello")` in one translation unit reference one
+  and only one `.avm.flashstr.*` AS1 global;
 - `__builtin_avm_flash_string("Hell" "o")` reuses that same global;
 - `__builtin_avm_flash_string("Hello\0")` creates a distinct seven-byte
   global;
 - an ordinary `"Hello"` expression remains a distinct AS0 string object;
-- every flash-string global is `private unnamed_addr addrspace(1) constant`,
-  has alignment 1, includes its terminating null, and is returned as
+- every flash-string global is `private addrspace(1) constant`, has alignment
+  1, includes its terminating null, is not `unnamed_addr`, and is referenced as
   `ptr addrspace(1)`;
+- an AS0 file-scope pointer variable and an AS0 array of AS1 pointers contain
+  constant `ptr addrspace(1)` initializers rather than runtime code;
+- an explicitly AS1 pointer table is emitted in `.rodata` and contains the same
+  constant AS1 references;
+- C++ `constexpr` and `constinit` pointer globals produce no dynamic
+  initialization and no `llvm.global_ctors` entry;
 - no runtime call and no `addrspacecast` is emitted.
 
 Document the extension in `clang/docs/LanguageExtensions.rst`, including the
-argument restriction, AS1 result type, same-TU pooling, unspecified pointer
-identity, and function-scope-only limitation.
+argument restriction, exact AS1 result type, static-initializer and
+`constexpr`/`constinit` support, same-TU pooling, unspecified pointer identity,
+and the explicitly deferred deeper constexpr operations.
+
+Also add the target-specific Clang builtin
+`__builtin_avm_memcpy_p`. This is a source builtin whose IR representation is
+the generic cross-address-space LLVM `memcpy` intrinsic, not an
+`llvm.avm.memcpy.p` intrinsic and not a runtime call.
+
+Use this exact source contract:
+
+```c
+typedef const void __attribute__((address_space(1))) *avm_progmem_cptr;
+
+void *__builtin_avm_memcpy_p(
+    void *dst,
+    avm_progmem_cptr src,
+    uint16_t size);
+```
+
+Implement it in the existing AVM target-builtin table and target CodeGen path:
+
+- add it to `clang/include/clang/Basic/BuiltinsAVM.def`;
+- use builtin type encoding `v*0v*0vC*1Us` and attribute `n`: the result and
+  destination are AS0 `void *`, the source is AS1 `const void *`, and the size
+  is an unsigned 16-bit value;
+- rely on the builtin type for ordinary pointer and integer conversions; do not
+  permit an AS0 source, insert an address-space cast, or add a helper-class
+  conversion;
+- evaluate every source argument exactly once using Clang's ordinary
+  call-argument evaluation rules. Preserve the language's sequencing rules;
+  do not hand-expand the expression in a way that duplicates or reorders
+  side-effecting arguments beyond what an ordinary call permits;
+- emit the destination, source, and size values with types `ptr`,
+  `ptr addrspace(1)`, and `i16`;
+- emit a nonvolatile generic `llvm.memcpy.p0.p1.i16` with one-byte source and
+  destination alignment;
+- the LLVM intrinsic returns `void`, so return the original evaluated `dst`
+  value as the builtin expression result;
+- emit no runtime call, no `llvm.avm.memcpy.p`, no `addrspacecast`, and no
+  integer round trip;
+- the builtin has ordinary `memcpy` overlap semantics: overlapping source and
+  destination objects are outside its contract. It may read AS1 and write AS0
+  but has no other side effects.
+
+Add `clang/test/Sema/avm-memcpy-p.c` and a C++ companion proving:
+
+- AS1 `char`, byte-array, structure, and `void` pointers convert to
+  `avm_progmem_cptr`;
+- an AS0 source is rejected with the normal address-space diagnostic;
+- the result converts to `void *` and appropriately typed AS0 object pointers;
+- the size argument is converted to 16 bits;
+- C and C++ diagnose the same invalid address-space uses.
+
+Add `clang/test/CodeGen/avm-memcpy-p.c` and a C++ companion proving:
+
+- the emitted IR is exactly an AS0-destination, AS1-source
+  `llvm.memcpy.p0.p1.i16`;
+- the builtin result is the already evaluated destination pointer;
+- side-effecting destination, source, and size expressions are each evaluated
+  once;
+- there is no runtime call, AVM target memcpy-P intrinsic, `addrspacecast`, or
+  pointer/integer conversion;
+- constant and dynamic sizes both retain an i16 length before optimization.
 
 Enforce the AVM source-language address-space contract in Clang:
 
@@ -1042,8 +1165,8 @@ and statically known single-function frames larger than 256 bytes.
 Add Clang ABI IR tests and LLVM CodeGen tests for every aggregate size from
 zero through eight bytes, sret, byval, i64, variadic named and unnamed
 arguments, va_arg advancement, narrow arguments, narrow returns, inline
-assembly constraints, atomic expansion, and every address-space semantic and
-CodeGen case listed above.
+assembly constraints, atomic expansion, both AVM source builtins, and every
+address-space semantic and CodeGen case listed above.
 ```
 
 ## Prompt 9 — Services, TTI, measured optimization quality, and end-to-end gate
@@ -1053,12 +1176,16 @@ CodeGen case listed above.
 ```text
 Finish the initial AVM codegen milestone.
 
-Add the llvm.avm.* target intrinsics from the architecture specification and
+Add the `llvm.avm.*` target intrinsics from the architecture specification and
 lower them to service-specific machine pseudos with exact fixed physical uses,
 definitions, preservation, and side-effect properties. Do not lower them
-through the generic SYS instruction. `__builtin_avm_flash_string` is explicitly
-excluded from this intrinsic set: Prompt 8 lowers it directly to an AS1 constant
-global and pointer.
+through an untyped generic-SYS IR operation.
+
+`__builtin_avm_flash_string` is explicitly excluded from this intrinsic set:
+Prompt 8 lowers it directly to an AS1 constant global and pointer.
+`__builtin_avm_memcpy_p` is also excluded from the AVM target-intrinsic set:
+Prompt 8 lowers it to generic AS0-destination, AS1-source `llvm.memcpy`, which
+this prompt must recognize and lower to inline code or `SYS 0x10`.
 
 Implement:
 
@@ -1066,25 +1193,166 @@ Implement:
 - millis and millis32 as evolving-state operations that cannot be CSE'd,
   hoisted, duplicated, or speculated;
 - floating math services as pure operations with fixed q0/q1 operands;
+- AS0-to-AS0 `memcpy` through the dedicated `llvm.avm.memcpy` intrinsic and
+  `SYS_MEMCPY` machine pseudo;
+- AS1-to-AS0 `memcpy_P` through generic `llvm.memcpy.p0.p1.i16` and the
+  `SYS_MEMCPY_P` machine pseudo;
+- AS0 `memset` through the dedicated `llvm.avm.memset` intrinsic or generic
+  `llvm.memset.p0.i16`, lowered to the `SYS_MEMSET` machine pseudo;
 - Clang builtins for the recommended __avm_* source interfaces;
 - install `clang/lib/Headers/avm/pgmspace.h` as the public convenience
-  header for program-space strings, containing exactly these interfaces (plus
-  normal include guards):
+  header for program-space strings and copies, containing these interfaces
+  plus normal include guards and the required `<stdint.h>` include:
 
   ```c
   #define AVM_PROGMEM __attribute__((address_space(1)))
+
   typedef const char AVM_PROGMEM *avm_flash_string_t;
+  typedef const void AVM_PROGMEM *avm_progmem_cptr;
+
   #define AVM_PSTR(s) __builtin_avm_flash_string(s)
   #define F(s) AVM_PSTR(s)
+
+  void *memcpy_P(void *dst, avm_progmem_cptr src, uint16_t size);
+
+  #define memcpy_P(dst, src, size) \
+      __builtin_avm_memcpy_p((dst), (src), (size))
   ```
 
-  Do not define a helper class, cast the result, or hide the address space. The
-  macro must preserve the builtin's AS1 pointer type for C++ overload
-  resolution. The header is included explicitly as `<avm/pgmspace.h>`; do not
-  inject `F` into every compilation;
+  Declare the out-of-line function before defining the function-like macro.
+  This preserves `&memcpy_P` as address-taking of the ordinary-ABI fallback
+  symbol while normal call syntax selects the builtin. Do not define a helper
+  class, cast away the address space, or hide the AS1 pointer type. The header
+  is included explicitly as `<avm/pgmspace.h>`; do not inject `F` or
+  `memcpy_P` into every compilation;
 - recognized standard float libcalls where their semantics match;
 - all specified runtime-helper symbol names for unsupported wide operations
   and memory operations.
+
+Implement memory intrinsic code generation exactly as follows.
+
+1. Add the dedicated AS0 copy target intrinsic:
+
+   ```llvm
+   declare ptr @llvm.avm.memcpy(ptr %dst, ptr %src, i16 %size)
+   ```
+
+   Define it in `llvm/include/llvm/IR/IntrinsicsAVM.td` with AS0 read/write
+   memory effects matching nonvolatile `memcpy`. Lower it to a semantic
+   `SYS_MEMCPY` machine pseudo. Also recognize ordinary nonvolatile
+   AS0-to-AS0 generic LLVM `memcpy` and route dynamic or non-inline copies
+   through the same pseudo. Retain Prompt 5's profitable small-constant inline
+   expansion.
+
+2. Add the dedicated AS0 fill target intrinsic:
+
+   ```llvm
+   declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %size)
+   ```
+
+   Define it in `llvm/include/llvm/IR/IntrinsicsAVM.td` with AS0 write-only
+   memory effects matching nonvolatile `memset`. The intrinsic returns the
+   original destination pointer and uses only the low eight bits of `%val`.
+   Lower it to a semantic `SYS_MEMSET` machine pseudo.
+
+   Also recognize ordinary nonvolatile generic LLVM memset:
+
+   ```llvm
+   call void @llvm.memset.p0.i16(
+       ptr %dst,
+       i8 %val,
+       i16 %size,
+       i1 false)
+   ```
+
+   Zero-extend the generic intrinsic's `i8` fill value to the 16-bit service
+   operand. Retain Prompt 5's profitable small-constant store expansion and
+   route dynamic or non-inline fills through `SYS_MEMSET`.
+
+3. Recognize generic nonvolatile `llvm.memcpy` with an AS0 destination and AS1
+   source. Never require or create an AVM-specific IR intrinsic for this case.
+   Retain profitable small constant copies as inline `LDP*` loads plus AS0
+   stores. Lower dynamic or larger copies to a semantic `SYS_MEMCPY_P` pseudo.
+
+4. Give the pseudos these exact final physical interfaces:
+
+   ```text
+   SYS_MEMCPY:
+       tied use/def r4 = dst
+       use          r5 = src
+       use          r6 = size
+       encoding        = SYS 0x0F
+
+   SYS_MEMCPY_P:
+       tied use/def r4 = dst
+       use          q3 = src
+       use          r5 = size
+       encoding        = SYS 0x10
+
+   SYS_MEMSET:
+       tied use/def r4 = dst
+       use          r5 = val
+       use          r6 = size
+       encoding        = SYS 0x11
+   ```
+
+   The physical order for `SYS_MEMCPY_P` is intentionally `dst`, `size`,
+   `src`, even though the source signature remains `(dst, src, size)`. Do not
+   insert an unused aligned argument slot. `SYS_MEMSET` naturally matches the
+   ordinary AVM argument assignment for `(dst, val, size)`.
+
+5. Use glued, parallel-copy-safe fixed-register setup and result extraction,
+   analogous to call lowering but without an ordinary call-preserved register
+   mask. Each `r4` destination operand is a tied input/output whose bit pattern
+   is preserved by the service. Input-only `r5`, `r6`, and `q3` operands are
+   uses, not clobbers, and remain valid after the instruction when live.
+
+6. Preserve chain and memory semantics precisely:
+
+   - `SYS_MEMCPY` reads AS0 and writes AS0;
+   - `SYS_MEMCPY_P` reads AS1 and writes AS0;
+   - `SYS_MEMSET` writes AS0 and reads no memory;
+   - copy pseudos carry the original source and destination MachineMemOperands;
+   - the fill pseudo carries the original destination MachineMemOperand;
+   - preserve alias information, unknown or constant size, and one-byte
+     alignment;
+   - mark copy pseudos as loading and storing, and `SYS_MEMSET` as storing but
+     not loading;
+   - none of the pseudos is an ordinary call;
+   - attach no generic side-effect flag broader than the actual memory effects;
+   - do not speculate or move them across potentially aliasing accesses;
+   - never select a service for a volatile generic `llvm.memcpy` or
+     `llvm.memset`. Leave volatile operations to conservative
+     target-independent expansion or an explicitly correct volatile sequence.
+
+7. Preserve source-level return values efficiently. `llvm.avm.memcpy` and
+   `llvm.avm.memset` directly return their tied destination results. Generic
+   LLVM `memcpy` and `memset` return `void`, but source-level builtins and
+   library calls return their original `dst`; arrange the target nodes and tied
+   destination values so common forms such as:
+
+   ```c
+   return memset(dst, val, n);
+   return __builtin_avm_memcpy_p(dst, src, n);
+   ```
+
+   need no redundant save-and-restore or post-service copy when register
+   constraints permit.
+
+8. Keep the ordinary symbols `__avm_memcpy`, `memcpy`,
+   `__avm_memcpy_P`, `memcpy_P`, `__avm_memset`, and `memset` as normal-ABI
+   fallback or address-taken functions. Recognize direct noninterposable calls
+   when legal and convert them to the same intrinsic representations. An
+   out-of-line `memcpy_P` wrapper must shuffle its ordinary ABI arguments into
+   `r4`, `q3`, and `r5` before `SYS 0x10`. An out-of-line memset wrapper needs
+   no nonstandard argument shuffle because its normal ABI assignment is already
+   `r4`, `r5`, and `r6`.
+
+Do not invent size-dependent cycle formulas for the services in this milestone.
+For speed optimization, retain the existing measured small-copy and small-fill
+inline thresholds where available and otherwise prefer the service for dynamic
+or larger operations. For `-Os`/`-Oz`, compare final encoded bytes, including
+fixed-register setup copies.
 
 Add AVMTargetTransformInfo.{h,cpp}, return it from AVMTargetMachine, and use
 AVMCostModel as its only speed-cost source. Implement these exact TTI policies:
@@ -1122,6 +1390,12 @@ AVMCostModel as its only speed-cost source. Implement these exact TTI policies:
    - known lower-pointer AS0 access: use the exact cold opcode cost;
    - AS0 i32 load/store: 82/81 cycles;
    - AS1 operations: use the exact LDP costs from Prompt 7;
+   - cost small constant AS0 and AS1-source copies from the selected inline
+     sequence; cost dynamic or larger copies as their service plus required
+     fixed-register setup copies;
+   - cost small constant fills from the selected inline store sequence; cost
+     dynamic or larger fills as `SYS_MEMSET` plus required setup copies;
+   - do not invent unmeasured per-byte cycle formulas for copy or fill services;
    - volatile and atomic-compatible operations retain the same execution cost
      but carry their required ordering constraints.
 
@@ -1185,6 +1459,35 @@ Create a small freestanding C regression corpus and test -O0, -O2, -Os, and
 - AS1 pointer iteration: native postincrement LDP;
 - left shifts by 1, 2, 3, and 4 use the exact threshold policy.
 
+Add dedicated LLVM CodeGen tests for all three memory services:
+
+- direct `llvm.avm.memcpy` lowers to `SYS 0x0F` with tied `r4`, source in `r5`,
+  size in `r6`, and no call-preserved register mask;
+- generic `llvm.memcpy.p0.p1.i16` lowers to `SYS 0x10` with tied `r4`, source in
+  `q3`, and size in `r5`;
+- direct `llvm.avm.memset` lowers to `SYS 0x11` with tied `r4`, value in `r5`,
+  and size in `r6`;
+- eligible generic `llvm.memset.p0.i16` lowers to the same `SYS 0x11` pseudo,
+  with its `i8` fill value zero-extended for `r5`;
+- final assembly proves there is no skipped `r5` argument slot for
+  `memcpy_P`;
+- input-only source, value, and size registers remain usable after their
+  services;
+- returning the destination immediately after any operation introduces no
+  unnecessary copy;
+- only `low8(r5)` controls memset bytes, while the complete input register is
+  preserved;
+- small constant AS0 copies and fills retain Prompt 5's inline expansion;
+- small constant AS1-source copies use `LDP*` plus AS0 stores;
+- dynamic and representative larger copies and fills select their services;
+- volatile copies and fills do not select a service;
+- surrounding may-alias loads and stores remain correctly ordered;
+- `SYS_MEMSET` is modeled as a store but not a load;
+- AS1-source copies emit no `addrspacecast`, integer pointer conversion, or
+  ordinary AS0 memcpy libcall;
+- test `-O0`, `-O2`, `-Os`, and `-Oz`, including cases where size and speed
+  choose different legal implementations.
+
 Add an end-to-end address-space gate using the Clang driver rather than only
 `clang -cc1` or `llc`:
 
@@ -1207,18 +1510,67 @@ Add an end-to-end flash-string gate using the installed resource header:
   function or C++ overload with `F("Hello")`;
 - verify `F("Hello")` has type `avm_flash_string_t` and cannot initialize a
   `const char *`;
-- use `F("Hello")` at least three times, including one concatenated spelling,
-  and verify the LLVM IR contains exactly one six-byte AS1 global for those
-  uses;
+- use `F("Hello")` at file scope, in a static local initializer, and within a
+  function, including one concatenated spelling, and verify the LLVM IR
+  contains exactly one six-byte AS1 global for all identical uses;
+- include a C file-scope scalar and aggregate of `avm_flash_string_t`, plus C++
+  `constexpr` and `constinit` pointer globals, and prove no dynamic initializer
+  or `llvm.global_ctors` entry is emitted;
+- include both an AS0 table of AS1 pointers and an explicitly `AVM_PROGMEM` AS1
+  table; inspect the object to verify `R_AVM_PROG24` relocations in `.data` and
+  `.rodata`, then inspect the linked image to verify each three-byte
+  little-endian address resolves to the correct flash-string symbol;
 - verify an ordinary `"Hello"` in the same file remains AS0 and is not pooled
   with the AS1 object;
 - verify final assembly places the bytes in `.rodata`, materializes a 24-bit
   program address, and uses `LDP8U` or its postincrement form while iterating;
 - link the object and use `llvm-readobj`/`llvm-objdump` to prove the flash string
   is absent from the AS0 `.data` startup image;
-- compile invalid nonliteral, prefixed-literal, file-scope, and AS1-to-AS0 uses
-  through `clang --target=avm` and check the stable Prompt 8 diagnostics;
-- do not require pooling across separately compiled translation units.
+- run the C++ constant-initializer tests with both constant evaluators;
+- compile invalid nonliteral, prefixed-literal, and AS1-to-AS0 uses through
+  `clang --target=avm` and check the stable Prompt 8 diagnostics;
+- do not require constexpr dereferencing, non-type-template-argument support,
+  or pooling across separately compiled translation units.
+
+Add an end-to-end `memcpy_P` gate using `<avm/pgmspace.h>`:
+
+- compile C and C++ calls using `memcpy_P(dst, F("Hello"), 6)` and dynamic AS1
+  source/size arguments;
+- verify Clang IR contains generic `llvm.memcpy.p0.p1.i16`, not
+  `llvm.avm.memcpy.p`, an `addrspacecast`, or a runtime call;
+- verify the builtin result is usable directly as the returned or assigned
+  destination pointer;
+- inspect final assembly and require `r4 = dst`, `q3 = src`, and `r5 = size`
+  at `sys 0x10`, with no alignment hole or unnecessary shuffle;
+- keep `&memcpy_P` valid and prove it refers to the ordinary-ABI fallback
+  function rather than expanding the function-like macro;
+- link and execute representative zero-length, one-byte, odd-sized, and
+  boundary-crossing copies in the available AVM test harness, checking the
+  exact AS1 bytes copied to AS0 and preservation of every non-result register;
+- add negative C and C++ tests showing that an AS0 source is rejected before
+  backend lowering.
+
+
+Add an end-to-end `memset` gate through ordinary C and C++ source interfaces:
+
+- compile calls to `memset(dst, val, n)`, `__builtin_memset`, and
+  `__avm_memset`, including a form that immediately returns the result;
+- verify Clang emits eligible generic `llvm.memset` or the dedicated
+  `llvm.avm.memset` representation without an unnecessary runtime call;
+- inspect final assembly and require `r4 = dst`, `r5 = val`, and `r6 = size`
+  at `sys 0x11`;
+- verify the generic intrinsic's `i8` fill is represented correctly in the
+  16-bit `r5` service operand and that high input bits never change the filled
+  byte;
+- link and execute representative zero-length, one-byte, odd-sized, and
+  boundary-reaching fills in the AVM test harness;
+- check exact destination bytes, no writes outside the requested range,
+  preservation of every input-only and unrelated register, `CC`, and `SP`;
+- keep address-taking of `memset` and `__avm_memset` valid through their
+  ordinary-ABI fallback symbols;
+- test small constant fills for inline stores and dynamic or larger fills for
+  `SYS 0x11`;
+- prove volatile memset operations do not select `SYS 0x11`.
 
 Compile the corpus with clang -ffreestanding to assembly and ELF objects, link
 a minimal no-runtime program with the existing AVM ld.lld target, and inspect
@@ -1242,10 +1594,13 @@ After prompt 9, the expected supported path is:
 ```text
 C / basic C++
     -> Clang AVM ABI lowering
-    -> LLVM IR with AS0 data and AS1 functions/program data
+    -> LLVM IR with AS0 data, AS1 functions/program data, typed memcpy
+       operations (`llvm.avm.memcpy` or generic AS0<-AS1 `llvm.memcpy`), and
+       `llvm.avm.memset` or generic AS0 `llvm.memset`
     -> AVM TTI using measured interpreter costs
     -> SelectionDAG using avm-interpreter-32u4-v1 scheduling
-    -> AVM semantic machine pseudos
+    -> AVM semantic machine pseudos, including SYS_MEMCPY, SYS_MEMCPY_P,
+       and SYS_MEMSET
     -> register allocation with upper-register preference
     -> post-RA compact/dense/cold instruction selection
     -> existing MC ELF writer
@@ -1261,6 +1616,7 @@ This should support useful freestanding programs containing:
 * Variadic functions.
 * Small aggregate passing and returning.
 * Program-space data, pooled `F("...")` strings, and function pointers.
+* Optimized AS0 copies, AS1-to-AS0 copies, and AS0 fills.
 * System services.
 
 The intentionally deferred work is GlobalISel, debug information, a hosted libc/libc++, helper-library implementations, jump-table policy, a custom frequency-weighted register-allocation-hint pass, worst-case-execution-time tooling, additional interpreter/native/JIT tune CPUs, stack-usage metadata format, source-level convenience syntax beyond `<avm/pgmspace.h>` and `F("...")`, and final flat-image packaging.

@@ -1814,7 +1814,11 @@ The assembler exposes the generic machine instruction:
 SYS service8
 ```
 
-LLVM IR SHOULD NOT expose a generic service-number intrinsic. Each supported service has its own typed target intrinsic as specified in Section 59.
+LLVM IR SHOULD NOT expose a generic service-number intrinsic. Each supported
+service has a typed compiler representation specified in Section 59. Most
+services use dedicated target intrinsics. Memory-copy services MAY instead use
+the corresponding generic LLVM memory intrinsic when that representation
+preserves the service's address spaces and memory semantics.
 
 ## 49. Defined services
 
@@ -1835,7 +1839,10 @@ LLVM IR SHOULD NOT expose a generic service-number intrinsic. Each supported ser
 | `0x0C` | `powf` | `q0 = x`, `q1 = y` | `q0` | None |
 | `0x0D` | `hypotf` | `q0 = x`, `q1 = y` | `q0` | None |
 | `0x0E` | `fmodf` | `q0 = x`, `q1 = y` | `q0` | None |
-| `0x0F-0xFF` | Reserved | — | — | — |
+| `0x0F` | `memcpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space memory |
+| `0x10` | `memcpy_P` | `r4 = dst`, `q3 = src`, `r5 = n` | `r4 = dst` | Data-space memory |
+| `0x11` | `memset` | `r4 = dst`, `r5 = val`, `r6 = n` | `r4 = dst` | Data-space memory |
+| `0x12-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -1974,6 +1981,114 @@ x - trunc(x / y) * y
 
 A nonzero `fmodf` result has the sign of `x`. `atan2f` returns an angle in the
 closed interval `[-pi, +pi]`.
+
+### 49.6. `memcpy`
+
+Encoding:
+
+```text
+D7 0F
+```
+
+C interface and fixed service-register assignment:
+
+```c
+void *memcpy(void *dst, void const *src, uint16_t n);
+```
+
+```text
+r4 = dst
+r5 = src
+r6 = n
+```
+
+The service copies exactly `n` bytes from data-space addresses `src` through
+`src+n-1` to data-space addresses `dst` through `dst+n-1`, in increasing
+address order. If `n` is zero, it performs no memory access. As for the C
+`memcpy` function, behavior is undefined when the source and destination
+objects overlap. The caller must provide valid source and destination ranges;
+otherwise behavior is undefined.
+
+The result is the original `dst` value in `r4`. The service preserves the
+bit patterns of `r4`, `r5`, and `r6`, so `r4` simultaneously serves as the
+first input and the result. It also preserves `r0-r3`, `r7`, `CC`, and `SP`.
+
+### 49.7. `memcpy_P`
+
+Encoding:
+
+```text
+D7 10
+```
+
+C interface and fixed service-register assignment:
+
+```c
+void *memcpy_P(
+    void *dst,
+    void const __attribute__((address_space(1))) *src,
+    uint16_t n);
+```
+
+```text
+r4 = dst
+q3 = src
+r5 = n
+```
+
+`src` is a canonical image-relative 24-bit program pointer; a noncanonical
+`q3` operand is invalid. The service copies exactly `n` bytes from program-space addresses `src` through `src+n-1` to
+data-space addresses `dst` through `dst+n-1`, in increasing address order. If
+`n` is zero, it performs no program- or data-space memory access. The caller
+must provide valid source and destination ranges; otherwise behavior is
+undefined.
+
+The result is the original `dst` value in `r4`. The service preserves the bit
+patterns of `r4`, `q3`, and `r5`, so `r4` simultaneously serves as the first
+input and the result. It also preserves `r0-r3`, `CC`, and `SP`.
+
+The physical service-register order is independent of the source-language
+parameter order. Compilers retain the conventional C signature
+`(dst, src, n)` while assigning `n` to `r5` and `src` to `q3` when selecting
+`SYS 0x10`.
+
+
+### 49.8. `memset`
+
+Encoding:
+
+```text
+D7 11
+```
+
+C interface and fixed service-register assignment:
+
+```c
+void *memset(void *dst, int16_t val, uint16_t n);
+```
+
+```text
+r4 = dst
+r5 = val
+r6 = n
+```
+
+The fill byte is:
+
+```text
+fill = low8(r5)
+```
+
+The service writes `fill` to exactly `n` consecutive data-space bytes at
+addresses `dst` through `dst+n-1`, in increasing address order. Bits `15:8` of
+`val` do not affect the bytes written. If `n` is zero, the service performs no
+memory access. The caller must provide a valid destination range; otherwise
+behavior is undefined.
+
+The result is the original `dst` value in `r4`. The service preserves the bit
+patterns of `r4`, `r5`, and `r6`, so `r4` simultaneously serves as the first
+input and the result and the complete original `val` and `n` remain available
+after the service. It also preserves `r0-r3`, `r7`, `CC`, and `SP`.
 
 ---
 
@@ -2163,7 +2278,10 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | Dynamic `alloca` | Unsupported | — | — | Backend diagnostic |
 | `VAARG` | Custom packed-stack lowering | — | — | — |
 | `BR_JT` / switch | Custom program-space jump table or branch tree | — | — | — |
-| `MEMCPY`, `MEMMOVE`, `MEMSET` | Inline small constants; helper otherwise | — | — | — |
+| AS0-to-AS0 `MEMCPY` | Inline small constants; `SYS 0x0F` or helper otherwise | — | — | — |
+| AS1-to-AS0 `MEMCPY` | Inline small constants with `LDP*` plus AS0 stores; `SYS 0x10` otherwise | — | — | — |
+| `MEMSET` | Inline small constants; `SYS 0x11` or helper otherwise | — | — | — |
+| `MEMMOVE` | Inline small constants; helper otherwise | — | — | — |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -2321,14 +2439,123 @@ MAY use these helpers for compatibility or unsupported strict operations.
 ### 56.4. Memory helpers
 
 ```c
+typedef const void __attribute__((address_space(1))) *avm_progmem_cptr;
+
 void *__avm_memcpy(void *dst, const void *src, uint16_t size);
 void *__avm_memmove(void *dst, const void *src, uint16_t size);
 void *__avm_memset(void *dst, int16_t byte_value, uint16_t size);
+
+void *__avm_memcpy_P(
+    void *dst,
+    avm_progmem_cptr src,
+    uint16_t size);
 ```
 
-The result is `dst`.
+The result is `dst`. Memory helpers have their ordinary C memory effects.
 
-Memory helpers have their ordinary C memory effects and use the normal calling convention.
+Clang SHOULD provide the target builtin:
+
+```c
+void *__builtin_avm_memcpy_p(
+    void *dst,
+    avm_progmem_cptr src,
+    uint16_t size);
+```
+
+The builtin retains the conventional source-language argument order
+`(dst, src, size)`. Clang lowers it to an ordinary cross-address-space LLVM
+memory copy:
+
+```llvm
+call void @llvm.memcpy.p0.p1.i16(
+    ptr %dst,
+    ptr addrspace(1) %src,
+    i16 %size,
+    i1 false)
+```
+
+The LLVM intrinsic returns `void`; the builtin expression's result is the
+original evaluated `dst` value. Each argument is evaluated exactly once using
+the source language's ordinary call-argument rules. No
+`llvm.avm.memcpy.p` target intrinsic is used.
+
+The backend lowers an AS0-destination, AS1-source nonvolatile `llvm.memcpy` to
+one of:
+
+1. An inline sequence of `LDP*` loads and AS0 stores for profitable constant
+   sizes.
+2. A semantic `SYS_MEMCPY_P` machine pseudo for dynamic or larger copies.
+
+After physical-register assignment, `SYS_MEMCPY_P` has:
+
+```text
+use/def r4 = dst
+use     q3 = src
+use     r5 = size
+encoding   = SYS 0x10
+```
+
+The `r4` input and definition are tied. The pseudo carries the AS1-read and
+AS0-write memory effects of the original `llvm.memcpy` and has no ordinary
+call-preserved register mask.
+
+An ordinary function call to `__avm_memcpy_P` or `memcpy_P` uses the normal AVM
+calling convention. It remains available as an out-of-line fallback and for
+address-taking. Such a wrapper performs the required register shuffle before
+issuing `SYS 0x10`. A target header MAY expose ordinary calls through a
+function-like macro:
+
+```c
+#define memcpy_P(dst, src, size)     __builtin_avm_memcpy_p((dst), (src), (size))
+```
+
+Because the macro is function-like, `&memcpy_P` continues to name the
+out-of-line function rather than invoking the builtin macro. The compiler MAY
+also recognize direct calls to the out-of-line symbol and replace them with the
+same generic `llvm.memcpy` representation when interposition and other
+language-level rules permit it.
+
+
+The AS0 `memset` service has the dedicated target intrinsic:
+
+```llvm
+declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %size)
+```
+
+The intrinsic returns the original `dst` pointer. Only `low8(%val)` determines
+the byte written; the high byte is ignored by the memory operation. The backend
+also recognizes an ordinary nonvolatile generic LLVM memset:
+
+```llvm
+call void @llvm.memset.p0.i16(
+    ptr %dst,
+    i8 %val,
+    i16 %size,
+    i1 false)
+```
+
+For generic `llvm.memset`, the backend zero-extends the `i8` fill value to the
+16-bit service operand. It lowers AS0 memset operations to one of:
+
+1. An inline sequence of AS0 stores for profitable constant sizes.
+2. A semantic `SYS_MEMSET` machine pseudo for dynamic or larger fills.
+
+After physical-register assignment, `SYS_MEMSET` has:
+
+```text
+use/def r4 = dst
+use     r5 = val
+use     r6 = size
+encoding   = SYS 0x11
+```
+
+The `r4` input and definition are tied. The pseudo writes AS0 memory, reads no
+memory, and has no ordinary call-preserved register mask. An ordinary function
+call to `__avm_memset` or `memset` uses the normal AVM calling convention, which
+already assigns `dst`, `val`, and `size` to `r4`, `r5`, and `r6`. The compiler
+MAY recognize direct calls to those symbols and replace them with
+`llvm.avm.memset` or generic `llvm.memset` when interposition and other
+language-level rules permit it.
 
 ## 57. Atomic and volatile policy
 
@@ -2425,9 +2652,10 @@ The backend should:
     section name, record layout, or semantics; no backend implementation may
     invent a mandatory object-format contract for it.
 
-## 59. LLVM system-service intrinsics
+## 59. LLVM system-service representations
 
-Each defined AVM service has a dedicated typed target intrinsic:
+The non-memory services and the AS0 `memcpy` and `memset` services have
+dedicated typed target intrinsics:
 
 ```llvm
 declare void  @llvm.avm.debug.putc(i8 %value)
@@ -2446,13 +2674,28 @@ declare float @llvm.avm.log10f(float %x)
 declare float @llvm.avm.powf(float %x, float %y)
 declare float @llvm.avm.hypotf(float %x, float %y)
 declare float @llvm.avm.fmodf(float %x, float %y)
+
+declare ptr @llvm.avm.memcpy(ptr %dst, ptr %src, i16 %n)
+declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %n)
 ```
 
-A generic service-number intrinsic SHOULD NOT be the public LLVM interface.
+AS1-to-AS0 `memcpy_P` is represented by the generic overloaded LLVM memory
+intrinsic with destination address space zero and source address space one:
 
-### 59.1. Intrinsic-to-machine lowering
+```llvm
+call void @llvm.memcpy.p0.p1.i16(
+    ptr %dst,
+    ptr addrspace(1) %src,
+    i16 %n,
+    i1 false)
+```
 
-| LLVM intrinsic | Machine encoding | Fixed physical uses | Fixed physical definitions |
+A generic AVM service-number intrinsic and an
+`llvm.avm.memcpy.p` target intrinsic SHOULD NOT be public LLVM interfaces.
+
+### 59.1. Compiler-representation-to-machine lowering
+
+| LLVM representation | Machine encoding | Fixed physical uses | Fixed physical definitions |
 |---|---|---|---|
 | `llvm.avm.debug.putc(i8)` | `SYS 0x00` | `low8(r4)` | None |
 | `llvm.avm.debug.break()` | `SYS 0x01` | None | None |
@@ -2469,15 +2712,34 @@ A generic service-number intrinsic SHOULD NOT be the public LLVM interface.
 | `llvm.avm.powf(float,float)` | `SYS 0x0C` | `q0 = x`, `q1 = y` | `q0` |
 | `llvm.avm.hypotf(float,float)` | `SYS 0x0D` | `q0 = x`, `q1 = y` | `q0` |
 | `llvm.avm.fmodf(float,float)` | `SYS 0x0E` | `q0 = x`, `q1 = y` | `q0` |
+| `llvm.avm.memcpy(ptr,ptr,i16)` | `SYS 0x0F` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
+| AS0-destination, AS1-source `llvm.memcpy` | `SYS 0x10` through `SYS_MEMCPY_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
+| `llvm.avm.memset(ptr,i16,i16)` or eligible AS0 `llvm.memset` | `SYS 0x11` through `SYS_MEMSET` | `r4 = dst`, `r5 = val`, `r6 = n` | tied `r4 = dst` |
 
-These instructions are not ordinary calls and carry no call-preserved register
-mask. Exact physical uses and definitions are modeled directly. Input-only
-physical registers remain live across the instruction; in particular, the
-binary math services preserve `q1`.
+These instructions and machine pseudos are not ordinary calls and carry no
+call-preserved register mask. Exact physical uses and definitions are modeled
+directly. Input-only physical registers remain live across the instruction; in
+particular, the binary math services preserve `q1`.
+
+For `SYS_MEMCPY_P`, `r4` is a tied input/definition containing `dst`; `q3` and
+`r5` are input-only and are preserved by the service. The pseudo retains the
+AS1-read and AS0-write memory operands, aliasing information, volatility, and
+ordering constraints of the generic `llvm.memcpy`.
+
+For `SYS_MEMSET`, `r4` is a tied input/definition containing `dst`; `r5` and
+`r6` are input-only and are preserved by the service. Only `low8(r5)` affects
+memory. The pseudo retains the AS0 destination memory operand, aliasing
+information, volatility, and ordering constraints of the originating memset
+operation.
 
 Generic LLVM math intrinsics and recognized libcalls MAY lower directly to
 these services when their required semantics match the service definitions in
-Section 49.5.
+Section 49.5. Recognized AS0-to-AS0 `memcpy` operations MAY lower to service
+`0x0F`. AS0-destination, AS1-source nonvolatile `llvm.memcpy` operations MAY
+lower to service `0x10` when their size and legality make the service preferable
+to an inline `LDP*`/store sequence. Recognized nonvolatile AS0 `memset`
+operations MAY lower to service `0x11` when preferable to an inline store
+sequence.
 
 ### 59.2. Optimization and scheduling
 
@@ -2491,6 +2753,17 @@ set neither `errno` nor floating-point exception state, and have no observable
 side effects. They MAY be common-subexpression eliminated, duplicated,
 speculated, or reordered when ordinary data dependencies and the requested
 floating-point semantics permit it.
+
+The memory services have their precise address-space effects:
+
+- `memcpy` reads address space zero and writes address space zero.
+- `memcpy_P` reads address space one and writes address space zero.
+- `memset` writes address space zero and reads no memory.
+
+They MUST NOT be speculated or reordered across accesses that may alias a
+written destination or, for a copy, the source. They MAY be eliminated,
+combined, or otherwise transformed only when the ordinary legality rules for
+the corresponding nonvolatile `memcpy` or `memset` operation permit it.
 
 ### 59.3. Source-language interfaces
 
@@ -2519,6 +2792,19 @@ Clang builtins or runtime wrappers lower these interfaces to the target
 intrinsics. The target math library MAY expose the standard C names `sinf`,
 `cosf`, `atan2f`, `tanf`, `expf`, `logf`, `log2f`, `log10f`, `powf`, `hypotf`,
 and `fmodf` as wrappers or aliases for the corresponding services.
+
+`memcpy_P` and `__builtin_avm_memcpy_p` use the conventional source signature
+specified in Section 56.4. Clang lowers the builtin to generic
+AS0-destination, AS1-source `llvm.memcpy`, returns the original `dst` expression
+value, and leaves selection of inline code versus `SYS 0x10` to the AVM
+backend.
+
+The standard C `memset` interface and `__avm_memset` use the signature from
+Section 56.4. Clang may emit generic `llvm.memset`; the AVM optimizer or backend
+may instead use `llvm.avm.memset` when retaining a pointer result is useful.
+Both representations preserve the ordinary C rule that the low eight bits of
+`val` are repeated and leave selection of inline stores versus `SYS 0x11` to
+the backend.
 
 ## 60. Code model and C++ policy
 
@@ -3326,6 +3612,8 @@ LLVM:
     PROGPTR is canonical p1:24 backed by GPR32
     division, remainder, and binary32 arithmetic use direct instructions with stable helper fallbacks
     atomics lower to ordinary operations in the single-thread VM model
+    memcpy_P lowers through generic AS0<-AS1 llvm.memcpy and SYS_MEMCPY_P
+    memset lowers through llvm.avm.memset or generic llvm.memset and SYS_MEMSET
 
 Assembly:
     GNU-style syntax

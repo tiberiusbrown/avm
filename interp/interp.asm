@@ -569,6 +569,9 @@
 #define SYS_POWF                0x0C
 #define SYS_HYPOTF              0x0D
 #define SYS_FMODF               0x0E
+#define SYS_MEMCPY              0x0F
+#define SYS_MEMCPY_P            0x10
+#define SYS_MEMSET              0x11
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -2883,6 +2886,9 @@ sys_dispatch_func:
     (SYS_HYPOTF != 0x0D) || (SYS_FMODF != 0x0E)
     .error "libm SYS services must occupy contiguous entries 0x04-0x0E"
 .endif
+.if (SYS_MEMCPY != 0x0F) || (SYS_MEMCPY_P != 0x10) || (SYS_MEMSET != 0x11)
+    .error "memory SYS services must occupy entries 0x0F-0x11"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -2892,7 +2898,10 @@ sys_dispatch_table:
     sys_entries 1,   sys_millis_func
     sys_entries 1,   sys_millis32_func
     sys_entries 11,  sys_libm_func
-    sys_entries 241, invalid_syscall_func
+    sys_entries 1,   sys_memcpy_func
+    sys_entries 1,   sys_memcpy_p_func
+    sys_entries 1,   sys_memset_func
+    sys_entries 238, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -2930,6 +2939,18 @@ sys_millis32_func:
     lds  VM_R5H, data_millis+3
     sei
     rjmp cluster_tail_18
+
+; Keep the one-word SYS table within RJMP reach while placing the larger memory
+; implementations after the existing interpreter body. Absolute veneers limit
+; movement of the carefully range-constrained code below to six AVR words.
+sys_memcpy_func:
+    jmp   sys_memcpy_impl
+
+sys_memcpy_p_func:
+    jmp   sys_memcpy_p_impl
+
+sys_memset_func:
+    jmp   sys_memset_impl
 
 ; Shared avr-libc/libm SYS ABI:
 ;   unary argument / result: q0 (native r8-r11)
@@ -9351,4 +9372,95 @@ log2f_high_coefficients:
 .p2align 1
 
 avrlibm_embedded_end:
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SYS memory implementations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; memcpy(void* dst, void const* src, uint16_t n)
+;   r4 = destination and returned void*
+;   r5 = source, preserved
+;   r6 = byte count, preserved
+;
+; The C memcpy overlap rule applies: source and destination objects must not
+; overlap. Bytes are copied in increasing-address order. Architectural VM_FLAGS
+; and every architectural register retain their input values; r4 therefore
+; already contains the required return value when the service completes.
+sys_memcpy_impl:
+    movw r26, VM_R5              ; X = source
+    movw r30, VM_R4              ; Z = destination
+    movw r24, VM_R6              ; r25:r24 = remaining byte count
+    mov   r0, r24
+    or    r0, r25
+    breq  .Lsys_memcpy_done
+
+.Lsys_memcpy_loop:
+    ld    r0, X+
+    st    Z+, r0
+    sbiw  r24, 1
+    brne  .Lsys_memcpy_loop
+
+.Lsys_memcpy_done:
+    jmp   cluster_tail_18
+
+; memcpy_P(void* dst, progptr/uint24_t src, uint16_t n)
+;   r4 = destination and returned void*
+;   q3 = canonical 24-bit image-relative source, preserved
+;   r5 = byte count, preserved
+;
+; The shared program-byte reader owns the FX SPI transaction, so the VM PC is
+; first advanced from the service byte to the following primary opcode. After
+; the copy, seek_and_dispatch_func restarts the instruction stream there.
+; A zero-length copy performs no program-space access and keeps the existing
+; speculative instruction fetch intact.
+sys_memcpy_p_impl:
+    ; q3 must use the canonical register representation of a 24-bit program
+    ; pointer. Reject a nonzero unused top byte before disturbing the stream.
+    tst   VM_R7H
+    breq  .Lsys_memcpy_p_canonical
+    jmp   invalid_syscall_func
+.Lsys_memcpy_p_canonical:
+
+    movw  r0, VM_R5              ; r1:r0 = byte count for shared reader
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_memcpy_p_done
+
+    add   VM_PCL, ONE            ; service byte -> following primary opcode
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    mov   r24, VM_R6L            ; image-relative source low
+    mov   r25, VM_R6H            ; image-relative source middle
+    mov   r26, VM_R7L            ; image-relative source high
+    movw  r30, VM_R4             ; Z = destination
+    call  fx_read_program_bytes_func
+    jmp   seek_and_dispatch_func
+
+.Lsys_memcpy_p_done:
+    jmp   cluster_tail_18
+
+; memset(void* dst, int16_t val, uint16_t n)
+;   r4 = destination and returned void*
+;   r5 = fill value; low8(r5) is stored, preserved
+;   r6 = byte count, preserved
+;
+; Bytes are written in increasing-address order. Architectural VM_FLAGS and
+; every architectural register retain their input values; r4 therefore already
+; contains the required return value when the service completes.
+sys_memset_impl:
+    movw  r30, VM_R4             ; Z = destination
+    movw  r24, VM_R6             ; r25:r24 = remaining byte count
+    mov   r0, VM_R5L             ; C memset converts val to unsigned char
+    mov   r26, r24
+    or    r26, r25
+    breq  .Lsys_memset_done
+
+.Lsys_memset_loop:
+    st    Z+, r0
+    sbiw  r24, 1
+    brne  .Lsys_memset_loop
+
+.Lsys_memset_done:
+    jmp   cluster_tail_18
 

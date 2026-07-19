@@ -26,6 +26,8 @@
 ;     comparison outcomes, all classification classes, meaningful aliasing,
 ;     and libm SYS fast paths, argument-reduction depth, polynomial branches,
 ;     scaling, normalization, and exponent-gap loops.
+;   * Memory SYS services are measured for n=0-8, 16, 32, and 256,
+;     including ordinary-data and program-space source paths.
 ;   * Operand aliases are otherwise omitted when they execute the same path.
 ;
 ; benchmark_names.txt is intentionally unnumbered.
@@ -33,6 +35,12 @@
 .section .text,"ax",@progbits
 
 .equ SAFE_SP, 0x09c0
+
+; Writable framebuffer windows used by the memory-service benchmarks.
+; Each window is exactly 256 bytes and the memcpy source/destination do not overlap.
+.equ BENCH_MEMCPY_SRC, 0x0500
+.equ BENCH_MEMCPY_DST, 0x0600
+.equ BENCH_MEMSET_DST, 0x0700
 
 .macro bench_reset_sp
     ldi16 r7, SAFE_SP
@@ -6129,6 +6137,757 @@ _start:
     sys fmodf
     sys debug_break
 
+; =============================================================================
+; MEMORY SYS SIZE SWEEP
+; =============================================================================
+; All initialization is outside the measured DEBUG_BREAK interval.  The
+; ordinary memcpy source and all destinations use disjoint 256-byte framebuffer
+; windows.  memcpy_P reads from the shared 256-byte program-space fixture.
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 0
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 0
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 0
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 1
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 1
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=2)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 2
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 2
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 2
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 3
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 3
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 3
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=4)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 4
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 4
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 4
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 5
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 5
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 5
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=6)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 6
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 6
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 6
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=7)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 7
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 7
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 7
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 8
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 8
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=16)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 16
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 16
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 16
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=32)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 32
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 32
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy (n=256)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize source and destination to different values before measurement.
+    ldi16 r4, BENCH_MEMCPY_SRC
+    ldi16 r5, 0x005a
+    ldi16 r6, 256
+    sys memset
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 256
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, BENCH_MEMCPY_SRC
+    ldi16 r6, 256
+    sys debug_break
+    sys memcpy
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 0
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 0
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 1
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=2)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 2
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 2
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 3
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 3
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=4)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 4
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 4
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 5
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 5
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=6)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 6
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 6
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=7)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 7
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 7
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 8
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=16)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 16
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 16
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=32)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 32
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcpy_P (n=256)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the destination before loading q3 with the program source.
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r5, 0x00a5
+    ldi16 r6, 256
+    sys memset
+
+    ldi16 r4, BENCH_MEMCPY_DST
+    ldi16 r6, %lo16(.Lbench_program_data)
+    ldi8 r7, %hi8(.Lbench_program_data)
+    ldi16 r5, 256
+    sys debug_break
+    sys memcpy_P
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 0
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 0
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 1
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=2)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 2
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 2
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 3
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 3
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=4)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 4
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 4
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 5
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 5
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=6)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 6
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 6
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=7)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 7
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 7
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 8
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=16)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 16
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 16
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=32)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 32
+    sys debug_break
+    sys memset
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memset (n=256)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Establish a distinct initial value outside the measured interval.
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x0000
+    ldi16 r6, 256
+    sys memset
+
+    ldi16 r4, BENCH_MEMSET_DST
+    ldi16 r5, 0x12a5
+    ldi16 r6, 256
+    sys debug_break
+    sys memset
+    sys debug_break
+
 ; -----------------------------------------------------------------------------
 ; BENCH: RET
 ; -----------------------------------------------------------------------------
@@ -6146,9 +6905,40 @@ _start:
     sys debug_break
     jmp8 .Lbench_done
 
-    ; Shared read-only program-space fixture for LDP benchmarks.
+    ; Shared 256-byte read-only program-space fixture for LDP and memcpy_P.
 .p2align 1
 .Lbench_program_data:
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+    .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
     .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
 
 .size _start, .-_start

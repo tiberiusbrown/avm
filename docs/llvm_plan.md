@@ -66,6 +66,151 @@ otherwise               -> F2 full-register ADD
 
 Use the same technique for moves, compares, immediates, ordinary memory operations, stack operations, and `MOV32`. This avoids dozens of fragile pre-RA patterns and directly implements the policy already specified in the architecture document.
 
+## Timing model and optimization policy
+
+The measured interpreter timings in
+`https://github.com/tiberiusbrown/avm/blob/master/bench/cycles_instruction.txt`
+are the normative tuning source for this implementation plan. Pin the imported
+data to source blob `63cd3602b6d1ce25a1c1372690859f4c3a6714f0`. These timings describe the
+current ATmega32U4 AVM interpreter, not the AVM ISA itself. Keep the identities
+separate:
+
+```text
+-mcpu=avm1
+-mtune=avm-interpreter-32u4-v1
+```
+
+`avm1` selects the Version 1 ISA and ABI.
+`avm-interpreter-32u4-v1` selects the measured cost and scheduling model and is
+the default tune CPU for this backend milestone.
+
+The AVM Clang driver must select this tune CPU even when the user supplies no
+`-mtune` option. A plain `clang --target=avm ...` invocation must pass
+`-tune-cpu avm-interpreter-32u4-v1` to `clang -cc1`. An explicit
+`-mtune=<name>` overrides that default without changing `-mcpu`; unknown tune
+names are diagnosed. The backend must retain the same default as a defensive
+fallback for IR produced without the Clang driver.
+
+The LLVM tree must contain a distilled, checked-in timing snapshot so builds and
+tests never depend on a network connection or another checkout. Use these files:
+
+```text
+llvm/lib/Target/AVM/AVMCycleCosts.def
+llvm/lib/Target/AVM/AVMCostModel.h
+llvm/lib/Target/AVM/AVMCostModel.cpp
+llvm/lib/Target/AVM/AVMSchedule.td
+```
+
+A complete `AVMCycleCosts.def` is supplied alongside this plan. Place that file
+at the path above before running Prompt 2. Its SHA-256 is:
+
+```text
+3c3841618c80dca62874b45cc1c74010121fb68796ff5214ecb6342cd91d10a3
+```
+
+Do not create a generator, parse the benchmark during the LLVM build, or ask an
+agent to reconstruct this file. Prompt 2 consumes the supplied file as immutable
+input. `AVMCycleCosts.def` is the single source of truth inside LLVM and has this
+macro-oriented interface:
+
+```text
+AVM_FIXED_COST(Name, Cycles)
+AVM_RANGE_COST(Name, Typical, Minimum, Maximum)
+AVM_BRANCH_COST(Name, NotTaken, Taken)
+AVM_SHIFT_COST(Name, Count, Cycles)
+```
+
+The supplied file records every fixed timing in the benchmark verbatim. For
+operations with data-dependent timings, it contains the following predetermined
+representative values; agents must not recompute averages or choose different
+cases:
+
+| Cost name | Typical | Minimum | Maximum |
+|---|---:|---:|---:|
+| `UDiv16` | 219 | 59 | 251 |
+| `URem16` | 219 | 58 | 251 |
+| `SDiv16` | 229 | 59 | 265 |
+| `SRem16` | 229 | 58 | 267 |
+| `FAdd` | 190 | 167 | 207 |
+| `FSub` | 190 | 159 | 208 |
+| `FMul` | 225 | 169 | 237 |
+| `FDiv` | 560 | 169 | 1328 |
+| `FMin` | 115 | 104 | 122 |
+| `FMax` | 115 | 104 | 122 |
+| `FSqrt` | 560 | 125 | 757 |
+| `FTrunc` | 115 | 74 | 160 |
+| `FFloor` | 120 | 74 | 173 |
+| `FCeil` | 120 | 74 | 173 |
+| `FRound` | 120 | 74 | 173 |
+| `S16ToF` | 180 | 149 | 207 |
+| `U16ToF` | 175 | 144 | 196 |
+| `FToS16` | 190 | 179 | 196 |
+| `FToU16` | 180 | 169 | 221 |
+| `S32ToF` | 200 | 148 | 231 |
+| `U32ToF` | 200 | 152 | 225 |
+| `FToS32` | 205 | 178 | 248 |
+| `FToU32` | 190 | 168 | 228 |
+| `FCmp` | 140 | 122 | 150 |
+| `FClass` | 135 | 105 | 159 |
+| `SysSinf` | 1800 | 1074 | 3331 |
+| `SysCosf` | 1800 | 1100 | 3265 |
+| `SysAtan2f` | 2900 | 128 | 2942 |
+| `SysTanf` | 2300 | 1211 | 3862 |
+| `SysExpf` | 2400 | 105 | 2852 |
+| `SysLogf` | 2200 | 180 | 2450 |
+| `SysLog2f` | 2100 | 104 | 2325 |
+| `SysLog10f` | 2200 | 180 | 2462 |
+| `SysPowf` | 4600 | 93 | 4633 |
+| `SysHypotf` | 900 | 129 | 1448 |
+| `SysFmodf` | 300 | 118 | 1903 |
+
+Record all immediate shift counts exactly. Record conditional branches as:
+
+```text
+rel8:  not taken 35, taken 128
+rel16: not taken 51, taken 135
+CMOV:  not taken 36, taken 37
+```
+
+Use `Typical` for the scheduling model and normal `-O2`/`-O3` decisions. Retain
+`Minimum` and `Maximum` for diagnostics, tests, and future worst-case analysis.
+For LLVM TTI speed costs, normalize cycles with:
+
+```text
+normalizedCost = max(1, (cycles + 8) / 17)
+```
+
+using integer division. Code-size costs are the final encoded byte count, not
+the normalized cycle cost. At `-Os` and `-Oz`, prefer fewer bytes unless the
+faster choice is the same size or smaller. At `-O0`, perform only correctness-
+required lowering and mandatory pseudo expansion.
+
+# Agent model and reasoning assignments
+
+These assignments target Codex and intentionally use cheaper GPT-5.6 tiers for
+bounded mechanical work while reserving GPT-5.6 Sol for backend phases where an
+incorrect architectural choice is likely to create expensive rework. Use a
+fresh agent task for each prompt and use the exact model and reasoning level
+listed below. Do not enable automatic model selection or `max` reasoning.
+
+| Prompt | Model | Reasoning | Cost rationale |
+|---|---|---|---|
+| 1 | GPT-5.6 Luna | High | Bounded target/driver/MC edits with explicit tests. |
+| 2 | GPT-5.6 Terra | High | Large but mechanical TableGen and cost-table integration. |
+| 3 | GPT-5.6 Sol | High | Foundational TargetMachine and SelectionDAG structure. |
+| 4 | GPT-5.6 Sol | Extra High (`xhigh`) | Calling convention, frame lowering, spills, and scavenging are tightly coupled. |
+| 5 | GPT-5.6 Sol | High | Memory-form lowering and object-section policy cross several subsystems. |
+| 6 | GPT-5.6 Sol | Extra High (`xhigh`) | CC glue, branch polarity, if-conversion, and shift profitability interact. |
+| 7 | GPT-5.6 Sol | Extra High (`xhigh`) | Legal i32/f32, AS1 pointer representation, and program loads are high risk. |
+| 8 | GPT-5.6 Sol | Extra High (`xhigh`) | Clang ABI, aggregates, varargs, and LLVM lowering must agree exactly. |
+| 9 | GPT-5.6 Sol | High | Broad integration and optimization audit, but all policies are already specified. |
+
+If a listed tier is unavailable in the installed Codex version, update Codex
+rather than silently substituting another model. A failed task may be resumed
+with the same model and effort; do not restart it at a more expensive setting
+unless the failure demonstrates a reasoning error rather than a build or test
+issue.
+
 # Common instructions for every agent prompt
 
 Give this once at the beginning of the agent session:
@@ -85,6 +230,17 @@ dynamic alloca, TLS, or hosted-library support.
 Use semantic code-generation pseudos before physical register allocation and
 select compact/dense/cold final encodings after register allocation.
 
+Treat AVMCycleCosts.def as the only LLVM-side timing authority. It is supplied
+input, not generated work; do not modify it, and verify its documented SHA-256
+before Prompt 2. Do not infer latencies from instruction byte length, comments,
+intuition, or host-CPU behavior. Preserve the separation between -mcpu=avm1 and
+-mtune=avm-interpreter-32u4-v1. The Clang driver must provide that tune CPU by
+default when the user omits -mtune.
+
+For speed decisions, use measured cycles and block frequency. For size decisions,
+use final encoded byte counts. Do not add an optimization unless the prompt gives
+its exact profitability rule.
+
 After each prompt:
 1. Build only the affected LLVM targets and tools.
 2. Run all existing AVM MC, object, disassembler, and LLD tests.
@@ -97,6 +253,8 @@ After each prompt:
 # Nine-prompt implementation plan
 
 ## Prompt 1 — Contract preflight
+
+**Agent:** GPT-5.6 Luna, High reasoning.
 
 ```text
 Perform the AVM code-generation preflight, without adding a TargetMachine yet.
@@ -114,21 +272,42 @@ Perform the AVM code-generation preflight, without adding a TargetMachine yet.
    - functions are emitted in LLVM program address space 1;
    - ordinary globals and allocas remain in address space 0.
 
-4. Make avm1 the canonical and default CPU in AVM.td and all MC target setup.
-   The name generic may remain as a compatibility alias with identical features.
+4. Make avm1 the canonical and default ISA CPU in AVM.td and all MC target
+   setup. The name generic may remain as a compatibility alias with identical
+   features.
 
-5. Set AVMMCAsmInfo::MaxInstLength to 6.
+5. Add `avm-interpreter-32u4-v1` as the sole Version 1 tune-CPU spelling in
+   Clang target validation and make it the driver default:
 
-6. Make AVMAsmBackend::writeNopData emit one 0x00 byte per requested byte.
+   - with no `-mcpu` or `-mtune`, `clang --target=avm -###` must show cc1
+     receiving `-target-cpu avm1` and
+     `-tune-cpu avm-interpreter-32u4-v1`;
+   - `-mcpu=avm1` must not suppress or alter the default tune CPU;
+   - `-mtune=avm-interpreter-32u4-v1` must pass through unchanged;
+   - an unknown `-mtune` value must produce a driver or target diagnostic;
+   - the emitted IR function attributes must be
+     `"target-cpu"="avm1"` and
+     `"tune-cpu"="avm-interpreter-32u4-v1"`.
 
-7. Disable source-language _Float16 in AVMTargetInfo. Do not remove f16 from
+   Implement the default in the AVM Clang driver path, not only in
+   `AVMTargetInfo`. Retain the same default in target/backend code as a fallback
+   for direct cc1 or non-Clang IR input. This step only establishes names,
+   driver behavior, and IR attributes; the schedule model is added in Prompt 2.
+
+6. Set AVMMCAsmInfo::MaxInstLength to 6.
+
+7. Make AVMAsmBackend::writeNopData emit one 0x00 byte per requested byte.
+
+8. Disable source-language _Float16 in AVMTargetInfo. Do not remove f16 from
    the LLVM data layout.
 
 Add focused Clang and MC tests for these corrections. Do not make any codegen
 classes, passes, or TargetMachine changes in this step.
 ```
 
-## Prompt 2 — Codegen-correct register and instruction metadata
+## Prompt 2 — Codegen metadata and measured timing model
+
+**Agent:** GPT-5.6 Terra, High reasoning.
 
 ```text
 Convert the existing AVM TableGen descriptions from MC placeholders into
@@ -171,12 +350,75 @@ Correct the remaining instruction records so that:
 - SYS is conservatively side-effecting;
 - calls and returns have their existing branch/call/return flags.
 
-Do not add instruction-selection patterns or C++ codegen files yet. The output
-of every existing llvm-mc and llvm-objdump test must remain byte-for-byte
+Integrate the supplied measured timing snapshot and add the schedule
+description:
+
+1. Before changing code, verify that
+   `llvm/lib/Target/AVM/AVMCycleCosts.def` is byte-for-byte the supplied file and
+   that its SHA-256 is
+   `3c3841618c80dca62874b45cc1c74010121fb68796ff5214ecb6342cd91d10a3`.
+   If it is absent or the checksum differs, stop rather than regenerating or
+   editing it. Do not add a generator or benchmark parser.
+
+2. Treat the names in `AVMCycleCosts.def` as the canonical `AVMCostKind`
+   spellings. Define `enum class AVMCostKind : uint16_t` by including the file
+   once with `AVM_FIXED_COST`, `AVM_RANGE_COST`, and `AVM_BRANCH_COST` expanding
+   to `Name,` and `AVM_SHIFT_COST` expanding to nothing, then append exactly
+   these six shift kinds to the enum:
+
+   `Shl16V`, `Lsr16V`, `Asr16V`, `Lsl16I`, `Lsr16I`, `Asr16I`.
+
+   Do not create duplicate per-count enum values.
+
+3. Create AVMCostModel.h/cpp with these exact APIs:
+
+   - AVMCycleRange { unsigned Typical, Minimum, Maximum; };
+   - getFixedCycles(AVMCostKind);
+   - getCycleRange(AVMCostKind);
+   - getShiftCycles(AVMCostKind, unsigned Count);
+   - getBranchCycles(AVMCostKind, bool Taken);
+   - getExpectedBranchCycles(AVMCostKind, BranchProbability TakenProbability),
+     rounded to the nearest whole cycle;
+   - normalizeCyclesForTTI(unsigned Cycles), implementing
+     max(1, (Cycles + 8) / 17).
+
+   Implement the lookup tables by repeated inclusion of `AVMCycleCosts.def`:
+
+   - fixed-cost switch: `AVM_FIXED_COST` emits a case returning `Cycles`;
+   - range-cost switch: `AVM_RANGE_COST` emits a case returning the three
+     values;
+   - branch-cost switch: `AVM_BRANCH_COST` emits a case selecting `Taken` or
+     `NotTaken`;
+   - six `std::array<unsigned, 16>` tables are initialized by
+     `AVM_SHIFT_COST`; reject counts greater than 15 with `llvm_unreachable` in
+     internal APIs and return invalid cost only at public defensive boundaries;
+   - `getExpectedBranchCycles` computes
+     `(NotTaken * (D - N) + Taken * N + D / 2) / D`, where `N` and `D` are the
+     taken probability numerator and denominator. Use 64-bit intermediates.
+
+4. Create AVMSchedule.td with one processor model named
+   avm-interpreter-32u4-v1, issue width 1, one nonpipelined interpreter
+   execution resource, and complete scheduling coverage for every real
+   instruction. Use exact fixed cycles where available and Typical for range
+   costs. Branch schedule classes use the not-taken cost because they terminate
+   a basic block; branch-probability decisions use getExpectedBranchCycles.
+
+5. Attach schedule classes by actual encoded form. A semantic pseudo has no
+   final schedule class; its post-RA expansion supplies the real instruction's
+   class.
+
+Add unit or lit tests that verify representative constants from each category,
+all shift-array entries, branch expected-cost arithmetic at probabilities 0,
+1/2, and 1, and complete scheduling coverage with no default/unknown class.
+
+Do not add instruction-selection patterns or C++ TargetMachine files yet. The
+output of every existing llvm-mc and llvm-objdump test must remain byte-for-byte
 unchanged.
 ```
 
 ## Prompt 3 — TargetMachine and minimal leaf codegen
+
+**Agent:** GPT-5.6 Sol, High reasoning.
 
 ```text
 Turn AVM into a SelectionDAG code-generation target and compile simple leaf
@@ -203,6 +445,10 @@ tables. Replace the empty LLVMInitializeAVMTarget implementation with
 TargetMachine, instruction-selector, pseudo-expander, and asm-printer
 registration.
 
+Implement per-function subtarget lookup using target-cpu, tune-cpu, and
+target-features attributes. Reject unknown tune CPUs. If tune-cpu is absent,
+use avm-interpreter-32u4-v1.
+
 Use:
 
 - static relocation model;
@@ -210,7 +456,7 @@ Use:
 - one-byte function and stack alignment;
 - SelectionDAG;
 - TargetLoweringObjectFileELF temporarily;
-- no scheduling itinerary.
+- the avm-interpreter-32u4-v1 scheduling model from AVMSchedule.td.
 
 Implement codegen semantic pseudos for:
 
@@ -219,12 +465,18 @@ Implement codegen semantic pseudos for:
 - ADD, SUB, AND, OR, and XOR;
 - function return.
 
-The post-RA pseudo expander must choose:
+The post-RA pseudo expander must choose the lowest measured-cycle legal form
+at -O1/-O2/-O3 and the smallest legal form at -Os/-Oz. For the operations in
+this prompt, this produces these exact choices:
 
 - compact one-byte form when all required operands are upper registers;
 - the full-register form otherwise;
 - compact immediate form for r4-r7;
 - cold immediate form for r0-r3.
+
+Implement AVMInstrInfo::getInstrLatency by delegating real opcodes to
+AVMCostModel. Fixed instructions return the exact value; range-cost instructions
+return Typical; immediate shifts are handled in Prompt 6.
 
 Implement enough lowering for no-argument and register-i16 leaf functions,
 i16 returns in r4, constants, copies, and the five binary operations.
@@ -234,12 +486,18 @@ Required tests:
 - empty function emits RET;
 - uint16_t add(uint16_t a, uint16_t b) emits one compact ADD and RET at -O2;
 - constants select compact or cold LDI according to the final register;
-- MC output and object emission work through the existing emitter.
+- MC output and object emission work through the existing emitter;
+- llc accepts -mcpu=avm1 -mtune=avm-interpreter-32u4-v1 and rejects unknown
+  tune names;
+- scheduling-model tests report 17 cycles for compact ADD and 38 cycles for
+  full ADD.
 ```
 
 Simple C code should begin compiling after this prompt.
 
 ## Prompt 4 — Calls, calling convention, frames, and spills
+
+**Agent:** GPT-5.6 Sol, Extra High (`xhigh`) reasoning.
 
 ```text
 Implement the complete backend machinery for ordinary calls and fixed stack
@@ -291,6 +549,8 @@ Multi-function freestanding C should work after this prompt.
 
 ## Prompt 5 — AS0 memory, globals, bytes, and object sections
 
+**Agent:** GPT-5.6 Sol, High reasoning.
+
 ```text
 Implement address-space-zero data access and byte legalization.
 
@@ -310,6 +570,11 @@ Postincrement:
 Stack-relative:
 - upper data register and offset 0-15: compact stack form;
 - otherwise, offset 0-255: F0 stack form.
+
+These choices are mandatory for both speed and size because the selected form
+is never larger or slower than its fallback. Attach the exact measured cost of
+the emitted real opcode after expansion. Do not assign one generic memory cost
+to all forms.
 
 Implement:
 
@@ -337,7 +602,9 @@ MMIO-style accesses, stack objects, pointer iteration, postincrement, and all
 post-RA memory-encoding cases.
 ```
 
-## Prompt 6 — CC, branches, selects, shifts, multiply, and division
+## Prompt 6 — CC, measured branch policy, shifts, multiply, and division
+
+**Agent:** GPT-5.6 Sol, Extra High (`xhigh`) reasoning.
 
 ```text
 Complete scalar integer instruction selection and control flow.
@@ -361,6 +628,40 @@ Implement:
 - compare-and-branch without first materializing a boolean;
 - analyzeBranch, insertBranch, removeBranch, and reverseBranchCondition.
 
+Implement the measured branch policy exactly:
+
+1. Add a late AVMBranchPolarity MachineFunction pass after machine block
+   placement and before final pseudo expansion.
+
+2. For each two-successor conditional branch, use MachineBranchProbabilityInfo.
+   Make the more probable successor the fallthrough by reversing the AVM
+   condition and swapping successors when necessary. If probabilities are
+   equal, preserve the existing layout. Never duplicate blocks in this pass.
+
+3. Use these expected cycle formulas for profitability:
+
+   rel8  = round(35 * (1-p) + 128 * p)
+   rel16 = round(51 * (1-p) + 135 * p)
+
+   where p is the probability that the encoded branch is taken. Internal
+   conditional branches are costed as rel8 unless the current estimated byte
+   distance from the branch opcode to the target is outside -128..127, in which
+   case use rel16. Linker relaxation remains authoritative for final encoding.
+
+4. At -O1/-O2/-O3, lower a scalar SETCC select whose two candidate values are
+   already available to one CMOV. Lower an i32 select to exactly two CMOVs, one
+   per 16-bit component. Do not generate a branch for these cases.
+
+5. Enable generic machine if-conversion only when the candidate region consists
+   solely of one or two copy-like assignments that become at most two CMOVs.
+   Return unprofitable for every region containing arithmetic, memory,
+   calls, more than two assignments, or side effects. Do not speculate those
+   operations.
+
+6. At -Os/-Oz, use CMOV for the same scalar and i32 select cases because it is
+   no larger than the corresponding branch-plus-copy sequence. Do not otherwise
+   enable block if-conversion for size.
+
 Implement scalar operation selection:
 
 - INC16 and DEC16 combines;
@@ -372,17 +673,44 @@ Implement scalar operation selection:
 - FA variable shifts with upper-register operand classes;
 - normal LLVM legalization for out-of-range constant shifts.
 
+Implement constant 16-bit shift selection using these exact speed rules:
+
+- Count 0: emit no shift instruction.
+- SHL count 1-3: retain a GPR16 pseudo. After allocation, emit count compact
+  ADD instructions if the register is upper; otherwise emit count LSL16.1
+  instructions.
+- SHL count 4-15: constrain the value/result to UpperGPR16 and emit one LSL16I.
+- LSR or ASR count 1: emit one GPR16 LSR16.1 or ASR16.1.
+- LSR or ASR count 2-15: constrain the value/result to UpperGPR16 and emit one
+  LSR16I or ASR16I.
+- At -Os/-Oz, use one immediate instruction whenever it is legal; otherwise use
+  the shortest legal one-bit sequence. Count 0 still emits nothing.
+- A known constant count must never be selected as a variable-count instruction.
+- For a true variable count, use the exact count-indexed table only when value
+  analysis proves one count. Otherwise use 60 cycles as the scheduling and TTI
+  typical cost for SHL16V/LSR16V/ASR16V.
+
+For division and remainder scheduling/TTI, use the predetermined Typical values
+from AVMCycleCosts.def. Continue to let target-independent DAG combines replace
+constant power-of-two division with shifts and masks; do not add AVM-specific
+strength-reduction algorithms.
+
 Disable jump-table generation for now and lower switch statements to branch
 trees. Do not invent a jump-table format.
 
-Add -O0 and -O2 tests for if/else, loops, zero tests, signed and unsigned
-comparisons, boolean results, selects, switches, shifts, multiply, divide, and
-remainder. Add checks that compare-and-branch emits no unnecessary CSET.
+Add -O0, -O2, -Os, and -Oz tests for if/else, loops, branch polarity with and
+without profile metadata, zero tests, signed and unsigned comparisons, boolean
+results, scalar and i32 selects, switches, every constant shift count 0-15,
+variable shifts, multiply, divide, and remainder. Check exact instruction
+sequences for the shift thresholds above and check that compare-and-branch
+emits no unnecessary CSET.
 ```
 
 Ordinary integer C should have reasonable quality after this prompt.
 
 ## Prompt 7 — `i32`, `f32`, program pointers, and AS1 loads
+
+**Agent:** GPT-5.6 Sol, Extra High (`xhigh`) reasoning.
 
 ```text
 Legalize i32 and f32 in GPR32 and implement address-space-one values.
@@ -424,12 +752,33 @@ For address space 1:
 - lower indirect function-pointer calls to CALLP;
 - support packed three-byte function pointers in memory.
 
+Apply these mandatory AS1 cost policies:
+
+- assign exact measured fixed costs: LDP8U 290, LDP8S 292, LDP16 306,
+  LDP24 326, and LDP32 340 cycles; postincrement forms use 307, 323, 343,
+  and 357 cycles respectively;
+- select a native postincrement LDP whenever the IR contains a load followed by
+  an increment of the same AS1 pointer by the access width and the loaded value
+  does not overlap the address pair;
+- do not duplicate or speculate a nonconstant AS1 load during target-specific
+  combines;
+- allow ordinary LICM to hoist a nonvolatile loop-invariant AS1 load when
+  aliasing and safety rules permit;
+- never hoist, merge, widen, narrow, or eliminate a volatile AS1 load.
+
+Use the predetermined Typical/Minimum/Maximum costs for f32 operations and
+conversions. Do not make value-dependent instruction choices for floating
+special cases; LLVM constant folding should remove operations whose complete
+result is known.
+
 Test long arithmetic, float arithmetic and comparisons, function pointers,
 indirect calls, LLVM IR AS1 globals and loads, pointer arithmetic across a
 64-KiB boundary, and canonicalization of loaded program pointers.
 ```
 
 ## Prompt 8 — Complete C ABI and Clang ABI lowering
+
+**Agent:** GPT-5.6 Sol, Extra High (`xhigh`) reasoning.
 
 ```text
 Complete the source-language ABI rather than relying on Clang's generic ABI.
@@ -473,7 +822,9 @@ arguments, va_arg advancement, narrow arguments, narrow returns, inline
 assembly constraints, and atomic expansion.
 ```
 
-## Prompt 9 — Services, optimization quality, and end-to-end gate
+## Prompt 9 — Services, TTI, measured optimization quality, and end-to-end gate
+
+**Agent:** GPT-5.6 Sol, High reasoning.
 
 ```text
 Finish the initial AVM codegen milestone.
@@ -494,9 +845,67 @@ Implement:
 - all specified runtime-helper symbol names for unsupported wide operations
   and memory operations.
 
-Audit and improve post-RA encoding selection:
+Add AVMTargetTransformInfo.{h,cpp}, return it from AVMTargetMachine, and use
+AVMCostModel as its only speed-cost source. Implement these exact TTI policies:
 
-- upper-register-first allocation for GPR16, PTR16, and GPR32;
+1. Speed/latency costs use normalizeCyclesForTTI(TypicalCycles).
+
+2. Code-size costs use final encoded bytes. For a semantic pseudo, use the
+   smallest legal form when physical registers are unknown:
+   compact scalar form where allocation can satisfy it, dense memory form for
+   an upper pointer with an unconstrained data register, and cold form only
+   when the pointer is known to require a lower register.
+
+3. Integer costs:
+   - i16 ADD/SUB/AND/OR/XOR: compact measured cost;
+   - i16 MUL: 46 cycles;
+   - i16 unsigned DIV/REM: 219 cycles;
+   - i16 signed DIV/REM: 229 cycles;
+   - i32 ADD/SUB: 38 cycles;
+   - unsupported i32/i64 operations: the corresponding helper-call cost plus
+     argument/result copy costs, using 150 cycles for a far direct call before
+     helper body cost is known.
+
+4. Compare/select/control-flow costs:
+   - compact i16 compare: 18 cycles;
+   - full i16 compare: 39 cycles only when operands are known non-upper;
+   - CSET: 38 cycles;
+   - scalar CMOV: 37 cycles;
+   - i32 select: 74 cycles;
+   - generic conditional control-flow cost: rel8 not-taken 35 cycles;
+   - probability-aware machine decisions use the branch formulas from Prompt 6.
+
+5. Memory costs:
+   - AS0 indirect i8/i16 load/store with unconstrained allocatable values:
+     use compact 18 cycles for scalar optimization estimates;
+   - known lower-pointer AS0 access: use the exact cold opcode cost;
+   - AS0 i32 load/store: 82/81 cycles;
+   - AS1 operations: use the exact LDP costs from Prompt 7;
+   - volatile and atomic-compatible operations retain the same execution cost
+     but carry their required ordering constraints.
+
+6. Floating costs use the predetermined Typical values in AVMCycleCosts.def.
+   Service intrinsic costs use their predetermined Typical values. Mark the
+   pure math services expensive but speculatable according to their semantics;
+   keep debug and timer services non-speculatable as already required.
+
+7. Constants and casts:
+   - upper LDI8 35, cold LDI8 53;
+   - upper LDI16 52, cold LDI16 71;
+   - ZEXT8 37, SEXT8 38, BSWAP16 38, BOOL 38;
+   - use two component costs for i32 constants.
+
+8. Report vector operations as illegal and prohibit vectorization. Report jump
+   tables as undesirable. Set unrolling preferences conservatively: do not
+   unroll a loop when the duplicated body contains AS1 loads, division,
+   floating division/square root, or system math services; otherwise permit
+   only the target-independent default threshold using the AVM TTI costs.
+
+Audit post-RA selection using the measured model:
+
+- preserve upper-first allocation order for GPR16, PTR16, and GPR32;
+- do not add a custom frequency-weighted register-allocation pass in this
+  milestone;
 - compact encodings whenever all constraints permit;
 - dense encodings before cold encodings;
 - compact MOV32 expansion;
@@ -504,29 +913,50 @@ Audit and improve post-RA encoding selection:
 - no boolean materialization before a branch;
 - no address materialization for direct absolute data loads/stores;
 - frequently accessed stack slots assigned the lowest offsets;
-- register-pressure-oriented SelectionDAG scheduling;
+- serial-interpreter scheduling model enabled;
 - vectorization and jump tables disabled.
 
-Create a small freestanding C regression corpus and test both -O0 and -O2.
-The -O2 checks must include:
+Add tests:
+
+- cost-model tests for every explicit TTI rule above and representative
+  fixed/range/service costs;
+- schedule tests for compact, full, dense, cold, AS1, branch, integer divide,
+  floating, and service classes;
+- straight-line llvm-mca tests proving that the one-resource model sums the
+  measured cycle costs without overlap;
+- codegen tests proving the measured shift and CMOV choices;
+- a check that -Os/-Oz can choose a smaller sequence even when it is slower.
+
+Create a small freestanding C regression corpus and test -O0, -O2, -Os, and
+-Oz. The -O2 checks must include:
 
 - uint16_t add(a,b): one compact ADD plus RET;
 - uint16_t inc(a): INC16 plus RET;
 - uint8_t load(const uint8_t *p): one byte load plus RET;
 - uint32_t add32(a,b): one ADD32 plus RET;
 - float addf(a,b): one FADD plus RET;
-- compare-and-branch: CMP/TST plus one relaxable branch;
+- compare-and-branch: CMP/TST plus one relaxable branch with hot fallthrough;
 - scalar select: CMP/TST plus CMOV;
 - direct call: RELAX_CALL;
 - indirect call: CALLP;
 - upper-pair MOV32: two compact MOV instructions;
-- ordinary global byte load: direct absolute load where legal.
+- ordinary global byte load: direct absolute load where legal;
+- AS1 pointer iteration: native postincrement LDP;
+- left shifts by 1, 2, 3, and 4 use the exact threshold policy.
 
 Compile the corpus with clang -ffreestanding to assembly and ELF objects, link
 a minimal no-runtime program with the existing AVM ld.lld target, and inspect
-the result with llvm-readobj and llvm-objdump. Do not add GlobalISel, debug
-information, a hosted C library, an image packer, or implementations of the
-runtime helper library in this step.
+the result with llvm-readobj and llvm-objdump.
+
+Do not make LLVM lit tests depend on an external AVM checkout. Add a documented
+optional command that, when a local AVM checkout is provided through
+AVM_BENCH_ROOT, builds the generated corpus with that checkout's interpreter
+and compares measured straight-line cycles against the schedule model. A
+mismatch greater than 2 cycles for fixed-cost instructions is a failure; do not
+apply this threshold to data-dependent range-cost instructions.
+
+Do not add GlobalISel, debug information, a hosted C library, an image packer,
+helper-library implementations, or additional tune CPUs in this step.
 ```
 
 # End state
@@ -537,7 +967,8 @@ After prompt 9, the expected supported path is:
 C / basic C++
     -> Clang AVM ABI lowering
     -> LLVM IR with AS0 data and AS1 functions/program data
-    -> SelectionDAG
+    -> AVM TTI using measured interpreter costs
+    -> SelectionDAG using avm-interpreter-32u4-v1 scheduling
     -> AVM semantic machine pseudos
     -> register allocation with upper-register preference
     -> post-RA compact/dense/cold instruction selection
@@ -556,4 +987,4 @@ This should support useful freestanding programs containing:
 * Program-space data and function pointers.
 * System services.
 
-The intentionally deferred work is GlobalISel, debug information, a hosted libc/libc++, helper-library implementations, jump-table policy, stack-usage metadata format, source-level convenience syntax beyond generic address-space attributes, and final flat-image packaging.
+The intentionally deferred work is GlobalISel, debug information, a hosted libc/libc++, helper-library implementations, jump-table policy, a custom frequency-weighted register-allocation-hint pass, worst-case-execution-time tooling, additional interpreter/native/JIT tune CPUs, stack-usage metadata format, source-level convenience syntax beyond generic address-space attributes, and final flat-image packaging.

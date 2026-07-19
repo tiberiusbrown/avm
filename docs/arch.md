@@ -352,6 +352,12 @@ Plain `char` is signed by default.
 
 `bool` is represented canonically as zero or one.
 
+Source-level `_Float16` is not supported by the Version 1 C or C++ target.
+Clang MUST diagnose its use rather than assigning it an ABI. LLVM IR may still
+contain `f16` values for data-layout and IR-compatibility purposes; such values
+are not a source-language ABI type and require expansion or promotion before
+machine instruction selection.
+
 ## 16. Byte and larger values in registers
 
 A byte value occupies `low8(rN)`.
@@ -1976,12 +1982,25 @@ closed interval `[-pi, +pi]`.
 ## 50. Target identity
 
 ```text
-target triple: avm-unknown-arduboyfx
-EM_AVM:        0x4156
-CPU name:      avm1
+target triple:    avm-unknown-arduboyfx
+EM_AVM:          0x4156
+ISA CPU name:    avm1
+default tune CPU: avm-interpreter-32u4-v1
 ```
 
-Version 1 defines no optional subtarget features and no feature-dependent ABI variants.
+Version 1 defines no optional ISA subtarget features and no feature-dependent
+ABI variants. `avm1` identifies the ISA and ABI.
+`avm-interpreter-32u4-v1` identifies the measured optimization and scheduling
+model for the current ATmega32U4 interpreter; it does not change instruction
+semantics, object compatibility, or `runtimeVersion`.
+
+The Clang driver MUST select `avm1` when `-mcpu` is absent and MUST select
+`avm-interpreter-32u4-v1` whenever `-mtune` is absent, including when
+`-mcpu=avm1` is supplied explicitly. An explicit supported `-mtune` overrides
+the tuning model without changing the ISA CPU. Backend entry points that receive
+IR without a tune attribute use the same default. Unknown CPU or tune names are
+diagnosed. Measured instruction costs belong to the tuning model and are not
+architectural timing guarantees.
 
 ## 51. LLVM address spaces
 
@@ -1990,16 +2009,23 @@ address space 0 = 16-bit data space
 address space 1 = 24-bit program space
 ```
 
-Functions reside in address space one.
+Functions reside in address space one. Function pointers therefore use the
+24-bit address-space-one representation.
 
-Unqualified C data pointers use address space zero.
+Unqualified C data pointers, ordinary globals, string literals, and automatic
+objects use address space zero. A `const` qualifier does not by itself move an
+object to program space.
 
-A target extension such as `__flash` should produce an address-space-one pointer.
+Program-resident data must be declared explicitly in address space one, using
+Clang's generic `__attribute__((address_space(1)))` spelling or a target header
+alias such as `__flash`. Dereferencing an address-space-one pointer lowers to
+the corresponding native `LDP*` load. Stores through address-space-one pointers
+are invalid and MUST be diagnosed.
 
 ## 52. LLVM data layout
 
 ```text
-e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-i64:8-f16:8-f32:8-n8:16-S8
+e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-i64:8-f16:8-f32:8-n8:16-S8-P1-G0-A0
 ```
 
 Meaning:
@@ -2007,9 +2033,15 @@ Meaning:
 - Little-endian.
 - Address-space-zero pointers are 16 bits.
 - Address-space-one pointers are 24 bits.
+- LLVM's program address space is address space one (`P1`), so functions and
+  function pointers use the 24-bit representation.
+- LLVM's default global and alloca address spaces are address space zero
+  (`G0` and `A0`).
 - Scalar ABI alignment is one byte.
 - Native integer widths are 8 and 16 bits.
 - Stack alignment is one byte.
+- The `f16` entry defines IR layout only; it does not make `_Float16` a
+  supported source-language ABI type.
 
 ## 53. LLVM register classes
 
@@ -2038,13 +2070,17 @@ UpperPTR16 has the same members as UpperGPR16
 UpperGPR32 is a subclass of GPR32
 ```
 
-`PTR16` contains every register that may legally hold a data pointer. Its preferred allocation order is:
+The required preferred allocation orders are:
 
 ```text
-r4, r5, r6, r7, r0, r1, r2, r3
+GPR16 / GPR8 / PTR16: r4, r5, r6, r7, r0, r1, r2, r3
+GPR32:                 q2, q3, q0, q1
 ```
 
-`UpperPTR16` is used only by final encodings that require a pointer in `r4-r7`.
+These orders prefer registers that admit compact encodings while retaining all
+physical members in the general classes. `PTR16` contains every register that
+may legally hold a data pointer. `UpperPTR16` is used only by final encodings
+that require a pointer in `r4-r7`.
 
 The 32-bit pair classes are:
 
@@ -2088,6 +2124,7 @@ The backend SHOULD model these values through a semantic operand class or value 
 | `i24` | No general scalar class | Expand; used only as `p1:24` semantics |
 | `i32` | `GPR32` | Legal |
 | `i64` | Four `GPR16` values or stack | Expand/custom libcall |
+| `f16` | No source-language ABI class | IR-layout compatibility only; expand or promote before selection |
 | `f32` | `GPR32` | Legal; direct `FF` operations with helper expansion for unsupported operations |
 | `f64` | Not an AVM ABI type | Unsupported; frontend maps `double` and `long double` to `f32` |
 | `p0:16` | `PTR16` | Legal |
@@ -2150,21 +2187,21 @@ The backend directly selects `FADD`, `FSUB`, `FMUL`, `FDIV`, `FSQRT`, `FNEG`,
 matching semantics. The instructions are two-address where the ISA names a
 `qD` input/output; the destination is tied to the left or sole source.
 
-`FMIN` and `FMAX` directly implement the number-preferred operations:
+`FMIN` and `FMAX` directly implement the legacy LLVM number-preferred
+operations whose signaling-NaN behavior permits either a NaN result or treating
+the signaling NaN as a quiet NaN:
 
 ```text
 llvm.minnum / llvm.maxnum
-llvm.minimumnum / llvm.maximumnum
 ISD::FMINNUM / ISD::FMAXNUM
-ISD::FMINIMUMNUM / ISD::FMAXIMUMNUM
 G_FMINNUM / G_FMAXNUM
-G_FMINIMUMNUM / G_FMAXIMUMNUM
 ```
 
-They do not directly implement NaN-propagating `llvm.minimum` and
-`llvm.maximum`, `ISD::FMINIMUM` and `ISD::FMAXIMUM`, or `G_FMINIMUM` and
-`G_FMAXIMUM`. Those operations may select `FMIN` or `FMAX` only when `nnan` or
-value analysis proves both operands non-NaN.
+They do not directly implement `llvm.minimum` / `llvm.maximum`,
+`llvm.minimumnum` / `llvm.maximumnum`, or the corresponding SelectionDAG and
+GlobalISel nodes. Those operations may select `FMIN` or `FMAX` only when `nnan`
+or value analysis proves both operands non-NaN, making the NaN distinction
+unobservable.
 
 The selected machine instructions MUST retain operand order and SHOULD NOT be
 marked unconditionally commutable, because the exact NaN returned when both
@@ -2347,25 +2384,46 @@ Volatile does not imply atomicity and does not create a thread-synchronization o
 
 The backend should:
 
-1. Prefer `UpperGPR16` for arguments and short-lived values when spill cost does not increase.
-2. Allocate pointers from `PTR16` using upper-register-first order.
-3. Use a general memory pseudo before physical register assignment.
-4. Expand the pseudo after allocation:
-   - Pointer in `r4-r7`: fast encoding requiring an upper-register pointer.
-   - Pointer in `r0-r3`: cold `F0 6C/6D` encoding.
-5. Select `i16` `UDIV`, `UREM`, `SDIV`, and `SREM` directly to the two-address
+1. Use semantic machine pseudos before physical register allocation whenever
+   the final opcode depends on the assigned registers. Expand those pseudos
+   after allocation.
+2. Use the exact upper-first allocation orders in Section 53. Prefer upper
+   registers for arguments, pointers, and short-lived values when doing so does
+   not increase spill cost.
+3. Select compact scalar ALU, move, compare, and immediate forms whenever all
+   final operands satisfy the upper-register constraints; otherwise select the
+   applicable full or cold form.
+4. Use a general AS0 memory pseudo before physical register assignment and
+   choose the final ordinary-indirect form mechanically:
+   - upper pointer and upper data register: compact one-byte form;
+   - upper pointer and lower data register: the applicable dense `F3`/`F5` form;
+   - lower pointer: the general `F0` form.
+5. Choose postincrement AS0 forms mechanically:
+   - upper pointer: the applicable `F6`/`F7` form;
+   - lower pointer: the general `F0` postincrement form.
+6. Choose stack-relative forms mechanically:
+   - upper data register and offset `0-15`: compact stack form;
+   - otherwise, for offsets `0-255`: the `F0` stack form.
+7. Select a native postincrement `LDP*` when an AS1 load is followed by adding
+   the access width to the same pointer and the destination obeys the ISA's
+   nonoverlap rule. Other AS1 dereferences select the corresponding ordinary
+   `LDP*` instruction.
+8. Select `i16` `UDIV`, `UREM`, `SDIV`, and `SREM` directly to the two-address
    `EC` instructions. The destination is both the original dividend use and the
    result definition; the divisor source is preserved.
-6. Prefer `UpperGPR32` for values likely to decompose into one-byte word operations.
-7. Select `MOV32` after physical assignment: two compact `MOV`s for upper-pair copies, `F2` otherwise.
-8. Use `GPR32` for pair and binary32 instructions accepting every `qN`.
-9. Select direct `FF` operations only when their NaN, signed-zero, rounding, and exception semantics match.
-10. Represent address-space-one values as canonical `PROGPTR`.
-11. Model `CC` definitions and uses explicitly.
-12. Select one-byte encodings after physical register assignment.
-13. Place frequently accessed stack objects at low offsets.
-14. Diagnose statically provable stack use above 256 bytes.
-15. Emit stack-usage metadata.
+9. Prefer `UpperGPR32` for values likely to decompose into compact word
+   operations. Select `MOV32` after physical assignment: two compact `MOV`s for
+   upper-pair copies and the `F2` form otherwise.
+10. Use `GPR32` for pair and binary32 instructions accepting every `qN`.
+11. Select direct `FF` operations only when their NaN, signed-zero, rounding,
+    and exception semantics match.
+12. Represent address-space-one values as canonical `PROGPTR` and model `CC`
+    definitions and uses explicitly.
+13. Place frequently accessed stack objects at low offsets and diagnose
+    statically provable single-function stack use above 256 bytes.
+14. Stack-usage metadata is optional. Version 1 does not standardize its
+    section name, record layout, or semantics; no backend implementation may
+    invent a mandatory object-format contract for it.
 
 ## 59. LLVM system-service intrinsics
 
@@ -2464,7 +2522,7 @@ and `fmodf` as wrappers or aliases for the corresponding services.
 
 ## 60. Code model and C++ policy
 
-The default code model is large.
+The default code model is large. The supported relocation model is static.
 
 Source-level direct jumps and calls normally use the relaxable pseudos `JMP symbol` and `CALL symbol`, allowing the linker to choose the shortest valid form for the final 24-bit layout. Exact-width forms use the distinct mnemonics `JMP8`, `JMP16`, `JMPF`, `CALL8`, `CALL16`, and `CALLF`.
 
@@ -2479,13 +2537,21 @@ The initial C++ environment supports:
 
 Exceptions, RTTI, general dynamic allocation, and thread-local storage are disabled.
 
-Persistent global variables are placed in `.saved` or `.saved.*`. Ordinary
-global variables are placed in `.data` or `.data.*`. The frontend or runtime
-headers MAY provide a target-specific source attribute or macro for selecting
-persistent storage, but the ELF section contract is authoritative.
+Persistent AS0 global variables are placed in `.saved` or `.saved.*`. Other
+AS0 global objects are placed in `.data` or `.data.*`, including ordinary
+`const` objects and string literals. A source-level `const` qualifier never
+changes the address space because an unqualified C pointer must still be able to
+address the object.
 
-Zero-initialized globals in either class are emitted with explicit zero
-initializer bytes.
+Functions are placed in `.text`. Data objects explicitly declared in AS1 are
+placed in `.rodata` or `.rodata.*` and are accessed through 24-bit program
+pointers and `LDP*`; they are not writable. The frontend or runtime headers MAY
+provide target-specific attributes or macros for selecting persistent AS0
+storage and AS1 program storage, but the LLVM address space and ELF section
+contracts are authoritative.
+
+Zero-initialized AS0 globals in either `.saved` or `.data` are emitted with
+explicit zero initializer bytes.
 
 ---
 
@@ -2628,6 +2694,9 @@ jmp / call / breq / brne / brult / bruge / brslt / brsge
 
 An exact mnemonic without `R_AVM_RELAX` is never widened or shrunk. An overflow in an exact form is an error.
 
+The MC target MUST advertise a maximum instruction length of six bytes, which
+is the size of the maximal relaxable conditional-branch sequence.
+
 ### 61.6. Canonical printing and pseudos
 
 The disassembler prints actual encoded instructions, not multi-instruction pseudos.
@@ -2691,7 +2760,9 @@ Required target expression modifiers:
 
 Instruction operands select `R_AVM_PCREL8`, `R_AVM_PCREL16`, or `R_AVM_FAR24` according to the encoded form. The six short conditional branches use `R_AVM_PCREL8`; the six `*16` conditional branches use `R_AVM_PCREL16`.
 
-Sections default to one-byte alignment unless an explicit directive requires more.
+Sections default to one-byte alignment unless an explicit directive requires
+more. When the assembler inserts padding in an executable program-space
+section, each padding byte is `0x00`, the canonical one-byte `nop` encoding.
 
 ## 63. Inline-assembly constraints
 
@@ -3246,7 +3317,10 @@ Frame:
 
 LLVM:
     avm-unknown-arduboyfx
-    CPU avm1
+    ISA CPU avm1
+    default tune CPU avm-interpreter-32u4-v1
+    data layout uses P1-G0-A0
+    source-level _Float16 unsupported
     ELF32 little-endian
     PTR16 uses upper-register-first allocation
     PROGPTR is canonical p1:24 backed by GPR32

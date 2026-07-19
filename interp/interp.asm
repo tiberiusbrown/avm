@@ -7190,13 +7190,11 @@ ff_bridge_binary_q_to_q:
     ; Multiply the ddss table index by five in AVR word-address space.
     mov   FF_BRIDGE_META, FF_BRIDGE_DESC
     andi  FF_BRIDGE_META, 0x0F
-    mov   r0, FF_BRIDGE_META
-    lsl   FF_BRIDGE_META
-    lsl   FF_BRIDGE_META
-    add   FF_BRIDGE_META, r0
+    ldi   r30, 5
+    mul   FF_BRIDGE_META, r30
     ldi   r30, lo8(pm(ff_binary_marshal_table))
     ldi   r31, hi8(pm(ff_binary_marshal_table))
-    add   r30, FF_BRIDGE_META
+    add   r30, r0
     adc   r31, ZERO
     ijmp
 

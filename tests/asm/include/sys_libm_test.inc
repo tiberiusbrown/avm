@@ -3,8 +3,8 @@
 ; Every case verifies:
 ;   * the symbolic SYS service occupies exactly two bytes;
 ;   * architectural condition flags are preserved;
-;   * q0 contains the exact result, a result within a raw-bit tolerance, or NaN;
-;   * q1-q3 are preserved exactly.
+;   * q2 contains the exact result, a result within a raw-bit tolerance, or NaN;
+;   * q0, q1, and q3 are preserved exactly.
 ;
 ; A passing test prints "P\n". A failed check prints "F\n" and reaches
 ; debug_break immediately, producing an output mismatch instead of a timeout.
@@ -46,25 +46,25 @@
 .endm
 
 .macro syslibm_load_unary input_lo, input_hi
-    ldi16 r0, \input_lo
-    ldi16 r1, \input_hi
-    ldi16 r2, 0xcdef
-    ldi16 r3, 0x89ab
-    ldi16 r4, 0x9bdf
-    ldi16 r5, 0x1357
+    ldi16 r0, 0xcdef
+    ldi16 r1, 0x89ab
+    ldi16 r2, 0x9bdf
+    ldi16 r3, 0x1357
+    ldi16 r4, \input_lo
+    ldi16 r5, \input_hi
     ldi16 r6, 0xace0
     ldi16 r7, 0x2468
 .endm
 
 .macro syslibm_load_binary lhs_lo, lhs_hi, rhs_lo, rhs_hi
-    ldi16 r0, \lhs_lo
-    ldi16 r1, \lhs_hi
-    ldi16 r2, \rhs_lo
-    ldi16 r3, \rhs_hi
-    ldi16 r4, 0x9bdf
-    ldi16 r5, 0x1357
-    ldi16 r6, 0xace0
-    ldi16 r7, 0x2468
+    ldi16 r0, 0xcdef
+    ldi16 r1, 0x89ab
+    ldi16 r2, 0x9bdf
+    ldi16 r3, 0x1357
+    ldi16 r4, \lhs_lo
+    ldi16 r5, \lhs_hi
+    ldi16 r6, \rhs_lo
+    ldi16 r7, \rhs_hi
 .endm
 
 .macro syslibm_invoke service
@@ -96,11 +96,14 @@
 .Lsyslibm_word_ok_\@:
 .endm
 
-.macro syslibm_check_unary_tail
+.macro syslibm_check_preserved_head
     syslibm_check_saved_word 0xcdef
     syslibm_check_saved_word 0x89ab
     syslibm_check_saved_word 0x9bdf
     syslibm_check_saved_word 0x1357
+.endm
+
+.macro syslibm_check_unary_tail
     syslibm_check_saved_word 0xace0
     syslibm_check_saved_word 0x2468
 .endm
@@ -108,14 +111,11 @@
 .macro syslibm_check_binary_tail rhs_lo, rhs_hi
     syslibm_check_saved_word \rhs_lo
     syslibm_check_saved_word \rhs_hi
-    syslibm_check_saved_word 0x9bdf
-    syslibm_check_saved_word 0x1357
-    syslibm_check_saved_word 0xace0
-    syslibm_check_saved_word 0x2468
 .endm
 
 .macro syslibm_check_exact_unary result_lo, result_hi
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_saved_word \result_lo
     syslibm_check_saved_word \result_hi
     syslibm_check_unary_tail
@@ -123,12 +123,13 @@
 
 .macro syslibm_check_exact_binary rhs_lo, rhs_hi, result_lo, result_hi
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_saved_word \result_lo
     syslibm_check_saved_word \result_hi
     syslibm_check_binary_tail \rhs_lo, \rhs_hi
 .endm
 
-; Check q0's raw 32-bit representation against an inclusive raw-bit interval.
+; Check q2's raw 32-bit representation against an inclusive raw-bit interval.
 ; The interval may be centered on either a positive or negative finite result.
 .macro syslibm_check_raw_range lower_lo, lower_hi, upper_lo, upper_hi
     pop16 r0                         ; result low word
@@ -162,12 +163,14 @@
 
 .macro syslibm_check_range_unary lower_lo, lower_hi, upper_lo, upper_hi
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_raw_range \lower_lo, \lower_hi, \upper_lo, \upper_hi
     syslibm_check_unary_tail
 .endm
 
 .macro syslibm_check_range_binary rhs_lo, rhs_hi, lower_lo, lower_hi, upper_lo, upper_hi
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_raw_range \lower_lo, \lower_hi, \upper_lo, \upper_hi
     syslibm_check_binary_tail \rhs_lo, \rhs_hi
 .endm
@@ -197,12 +200,14 @@
 
 .macro syslibm_check_nan_unary
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_nan_head
     syslibm_check_unary_tail
 .endm
 
 .macro syslibm_check_nan_binary rhs_lo, rhs_hi
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_nan_head
     syslibm_check_binary_tail \rhs_lo, \rhs_hi
 .endm

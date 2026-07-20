@@ -2956,12 +2956,13 @@ sys_millis32_func:
     rjmp cluster_tail_18
 
 ; Shared avr-libc/libm SYS ABI:
-;   unary argument / result: q0 (native r8-r11)
-;   binary second argument:  q1 (native r12-r15)
+;   unary argument / result: q2 (native r16-r19)
+;   binary second argument:  q3 (native r20-r23)
 ;
 ; Every listed service uses the same bridge. Unary routines simply ignore the
-; B argument copied from q1. The standard AVR ABI preserves native r2-r17 and
-; Y; the bridge explicitly preserves the architectural bytes in r18-r23.
+; B argument copied from q3. The standard AVR ABI preserves native r2-r17 and
+; Y. q2 is replaced by the result, while the bridge explicitly preserves q3
+; across the helper call.
 sys_libm_func:
     subi PRIMARY_OPCODE, SYS_SINF
     lsl  PRIMARY_OPCODE
@@ -2973,28 +2974,27 @@ sys_libm_func:
     lpm  r31, Z
     mov  r30, r0
 
-    push r18
-    push r19
     push r20
     push r21
     push r22
     push r23
 
-    movw r18, VM_R2       ; q1 low half
-    movw r20, VM_R3       ; q1 high half
-    movw r22, VM_R0       ; q0 low half
-    movw r24, VM_R1       ; q0 high half
+    ; Marshal q2 into avr-libc argument A (r22-r25) and q3 into argument B
+    ; (r18-r21). The order avoids destroying q2 high or q3 high while the
+    ; native register ranges overlap.
+    movw r24, VM_R5       ; q2 high half
+    movw r18, VM_R6       ; q3 low half
+    movw r20, VM_R7       ; q3 high half
+    movw r22, VM_R4       ; q2 low half
     icall
 
-    movw VM_R0, r22
-    movw VM_R1, r24
+    movw VM_R4, r22
+    movw VM_R5, r24
 
     pop  r23
     pop  r22
     pop  r21
     pop  r20
-    pop  r19
-    pop  r18
     rjmp cluster_tail_18
 
 ; Program-memory word addresses consumed by ICALL. Keep this order identical
@@ -9449,9 +9449,12 @@ sys_memcpy_p_impl:
     or    r27, r1
     breq  .Lsys_memcpy_p_done
 
+    add   VM_PCL, ONE            ; service byte -> following primary opcode
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
     movw  r30, VM_R4             ; shared reader destination
-    mov   r24, VM_R6L            ; source bits 7:0
-    mov   r25, VM_R6H            ; source bits 15:8
+    movw  r24, VM_R6             ; source bits 15:0
     mov   r26, VM_R7L            ; source bits 23:16
     call  fx_read_program_bytes_func
     jmp   seek_and_dispatch_func

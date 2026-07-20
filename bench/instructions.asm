@@ -27,7 +27,8 @@
 ;     and libm SYS fast paths, argument-reduction depth, polynomial branches,
 ;     scaling, normalization, and exponent-gap loops.
 ;   * Memory SYS services are measured for n=0-8, 16, 32, and 256,
-;     including ordinary-data and program-space source paths.
+;     including ordinary-data, program-space, and overlapping memmove
+;     paths in both forward and backward directions.
 ;   * Operand aliases are otherwise omitted when they execute the same path.
 ;
 ; benchmark_names.txt is intentionally unnumbered.
@@ -36,11 +37,14 @@
 
 .equ SAFE_SP, 0x09c0
 
-; Writable framebuffer windows used by the memory-service benchmarks.
-; Each window is exactly 256 bytes and the memcpy source/destination do not overlap.
+; Writable framebuffer regions used by the memory-service benchmarks.
+; The memcpy windows are disjoint. Memmove uses a 257-byte region and
+; shifts source and destination by one byte to force overlap direction.
 .equ BENCH_MEMCPY_SRC, 0x0500
 .equ BENCH_MEMCPY_DST, 0x0600
 .equ BENCH_MEMSET_DST, 0x0700
+.equ BENCH_MEMMOVE_BASE, 0x0500
+.equ BENCH_MEMMOVE_NEXT, 0x0501
 
 .macro bench_reset_sp
     ldi16 r7, SAFE_SP
@@ -5186,15 +5190,15 @@ _start:
 ; =============================================================================
 ; AVR-LIBM SYS PERFORMANCE CORNERS
 ; =============================================================================
-; Arguments use the standard q0/q1 floating-point calling convention.
+; Arguments use the standard q2/q3 floating-point calling convention.
 ; Setup remains outside each measured DEBUG_BREAK interval.
 
 ; -----------------------------------------------------------------------------
 ; BENCH: SYS sinf (+zero; smallest argument path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
     sys debug_break
     sys sinf
     sys debug_break
@@ -5203,8 +5207,8 @@ _start:
 ; BENCH: SYS sinf (0.125; no reduction loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3e00
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3e00
     sys debug_break
     sys sinf
     sys debug_break
@@ -5213,8 +5217,8 @@ _start:
 ; BENCH: SYS sinf (pi/4; polynomial endpoint)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0fdb
-    ldi16 r1, 0x3f49
+    ldi16 r4, 0x0fdb
+    ldi16 r5, 0x3f49
     sys debug_break
     sys sinf
     sys debug_break
@@ -5223,8 +5227,8 @@ _start:
 ; BENCH: SYS sinf (pi/2; quadrant correction)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0fdb
-    ldi16 r1, 0x3fc9
+    ldi16 r4, 0x0fdb
+    ldi16 r5, 0x3fc9
     sys debug_break
     sys sinf
     sys debug_break
@@ -5233,8 +5237,8 @@ _start:
 ; BENCH: SYS sinf (100; multi-step argument reduction)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x42c8
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x42c8
     sys debug_break
     sys sinf
     sys debug_break
@@ -5243,8 +5247,8 @@ _start:
 ; BENCH: SYS sinf (2^100; long argument-reduction loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7180
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7180
     sys debug_break
     sys sinf
     sys debug_break
@@ -5253,8 +5257,8 @@ _start:
 ; BENCH: SYS sinf (+infinity; invalid fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
     sys debug_break
     sys sinf
     sys debug_break
@@ -5263,8 +5267,8 @@ _start:
 ; BENCH: SYS cosf (+zero; smallest argument path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
     sys debug_break
     sys cosf
     sys debug_break
@@ -5273,8 +5277,8 @@ _start:
 ; BENCH: SYS cosf (0.125; no reduction loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3e00
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3e00
     sys debug_break
     sys cosf
     sys debug_break
@@ -5283,8 +5287,8 @@ _start:
 ; BENCH: SYS cosf (pi/4; polynomial endpoint)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0fdb
-    ldi16 r1, 0x3f49
+    ldi16 r4, 0x0fdb
+    ldi16 r5, 0x3f49
     sys debug_break
     sys cosf
     sys debug_break
@@ -5293,8 +5297,8 @@ _start:
 ; BENCH: SYS cosf (pi/2; quadrant correction)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0fdb
-    ldi16 r1, 0x3fc9
+    ldi16 r4, 0x0fdb
+    ldi16 r5, 0x3fc9
     sys debug_break
     sys cosf
     sys debug_break
@@ -5303,8 +5307,8 @@ _start:
 ; BENCH: SYS cosf (100; multi-step argument reduction)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x42c8
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x42c8
     sys debug_break
     sys cosf
     sys debug_break
@@ -5313,8 +5317,8 @@ _start:
 ; BENCH: SYS cosf (2^100; long argument-reduction loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7180
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7180
     sys debug_break
     sys cosf
     sys debug_break
@@ -5323,8 +5327,8 @@ _start:
 ; BENCH: SYS cosf (+infinity; invalid fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
     sys debug_break
     sys cosf
     sys debug_break
@@ -5333,10 +5337,10 @@ _start:
 ; BENCH: SYS atan2f (+0,+0; zero fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
     sys debug_break
     sys atan2f
     sys debug_break
@@ -5345,10 +5349,10 @@ _start:
 ; BENCH: SYS atan2f (y=1,x=2; no swap or displacement)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
     sys debug_break
     sys atan2f
     sys debug_break
@@ -5357,10 +5361,10 @@ _start:
 ; BENCH: SYS atan2f (y=2,x=1; swap and pi/2 displacement)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x4000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
     sys debug_break
     sys atan2f
     sys debug_break
@@ -5369,10 +5373,10 @@ _start:
 ; BENCH: SYS atan2f (y=1,x=-2; positive pi displacement)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0xc000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc000
     sys debug_break
     sys atan2f
     sys debug_break
@@ -5381,10 +5385,10 @@ _start:
 ; BENCH: SYS atan2f (y=-1,x=-2; negative pi displacement)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xbf80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0xc000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xbf80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc000
     sys debug_break
     sys atan2f
     sys debug_break
@@ -5393,10 +5397,10 @@ _start:
 ; BENCH: SYS atan2f (y=+infinity,x=1; nonfinite normalization)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
     sys debug_break
     sys atan2f
     sys debug_break
@@ -5405,10 +5409,10 @@ _start:
 ; BENCH: SYS atan2f (y=qNaN,x=1; NaN fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x2345
-    ldi16 r1, 0x7fc1
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f80
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
     sys debug_break
     sys atan2f
     sys debug_break
@@ -5417,8 +5421,8 @@ _start:
 ; BENCH: SYS tanf (+zero; smallest argument path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
     sys debug_break
     sys tanf
     sys debug_break
@@ -5427,8 +5431,8 @@ _start:
 ; BENCH: SYS tanf (0.125; direct odd polynomial)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3e00
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3e00
     sys debug_break
     sys tanf
     sys debug_break
@@ -5437,8 +5441,8 @@ _start:
 ; BENCH: SYS tanf (pi/4; reciprocal boundary)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0fdb
-    ldi16 r1, 0x3f49
+    ldi16 r4, 0x0fdb
+    ldi16 r5, 0x3f49
     sys debug_break
     sys tanf
     sys debug_break
@@ -5447,8 +5451,8 @@ _start:
 ; BENCH: SYS tanf (1.0; reciprocal branch)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
     sys debug_break
     sys tanf
     sys debug_break
@@ -5457,8 +5461,8 @@ _start:
 ; BENCH: SYS tanf (pi/2; pole quadrant path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0fdb
-    ldi16 r1, 0x3fc9
+    ldi16 r4, 0x0fdb
+    ldi16 r5, 0x3fc9
     sys debug_break
     sys tanf
     sys debug_break
@@ -5467,8 +5471,8 @@ _start:
 ; BENCH: SYS tanf (100; multi-step argument reduction)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x42c8
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x42c8
     sys debug_break
     sys tanf
     sys debug_break
@@ -5477,8 +5481,8 @@ _start:
 ; BENCH: SYS tanf (2^100; long argument-reduction loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7180
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7180
     sys debug_break
     sys tanf
     sys debug_break
@@ -5487,8 +5491,8 @@ _start:
 ; BENCH: SYS tanf (+infinity; invalid fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
     sys debug_break
     sys tanf
     sys debug_break
@@ -5497,8 +5501,8 @@ _start:
 ; BENCH: SYS expf (0; polynomial center)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
     sys debug_break
     sys expf
     sys debug_break
@@ -5507,8 +5511,8 @@ _start:
 ; BENCH: SYS expf (+1; positive-argument inverse path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
     sys debug_break
     sys expf
     sys debug_break
@@ -5517,8 +5521,8 @@ _start:
 ; BENCH: SYS expf (-1; negative direct path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xbf80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xbf80
     sys debug_break
     sys expf
     sys debug_break
@@ -5527,8 +5531,8 @@ _start:
 ; BENCH: SYS expf (+10; positive scaling)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x4120
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4120
     sys debug_break
     sys expf
     sys debug_break
@@ -5537,8 +5541,8 @@ _start:
 ; BENCH: SYS expf (-10; negative scaling)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xc120
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc120
     sys debug_break
     sys expf
     sys debug_break
@@ -5547,8 +5551,8 @@ _start:
 ; BENCH: SYS expf (+128; overflow threshold fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x4300
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4300
     sys debug_break
     sys expf
     sys debug_break
@@ -5557,8 +5561,8 @@ _start:
 ; BENCH: SYS expf (-128; underflow threshold fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xc300
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc300
     sys debug_break
     sys expf
     sys debug_break
@@ -5567,8 +5571,8 @@ _start:
 ; BENCH: SYS expf (qNaN; nonfinite fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x2345
-    ldi16 r1, 0x7fc1
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
     sys debug_break
     sys expf
     sys debug_break
@@ -5577,8 +5581,8 @@ _start:
 ; BENCH: SYS logf (1.0; low-table zero result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
     sys debug_break
     sys logf
     sys debug_break
@@ -5587,8 +5591,8 @@ _start:
 ; BENCH: SYS logf (1.25; low polynomial table)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3fa0
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fa0
     sys debug_break
     sys logf
     sys debug_break
@@ -5597,8 +5601,8 @@ _start:
 ; BENCH: SYS logf (1.75; high polynomial table)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3fe0
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fe0
     sys debug_break
     sys logf
     sys debug_break
@@ -5607,8 +5611,8 @@ _start:
 ; BENCH: SYS logf (minimum normal; exponent conversion)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0080
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0080
     sys debug_break
     sys logf
     sys debug_break
@@ -5617,8 +5621,8 @@ _start:
 ; BENCH: SYS logf (minimum subnormal; longest normalization loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0001
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x0000
     sys debug_break
     sys logf
     sys debug_break
@@ -5627,8 +5631,8 @@ _start:
 ; BENCH: SYS logf (+zero; negative-infinity fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
     sys debug_break
     sys logf
     sys debug_break
@@ -5637,8 +5641,8 @@ _start:
 ; BENCH: SYS logf (-1; domain-error NaN fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xbf80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xbf80
     sys debug_break
     sys logf
     sys debug_break
@@ -5647,8 +5651,8 @@ _start:
 ; BENCH: SYS logf (+infinity; pass-through fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
     sys debug_break
     sys logf
     sys debug_break
@@ -5657,8 +5661,8 @@ _start:
 ; BENCH: SYS log2f (1.0; low-table zero result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
     sys debug_break
     sys log2f
     sys debug_break
@@ -5667,8 +5671,8 @@ _start:
 ; BENCH: SYS log2f (1.25; low polynomial table)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3fa0
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fa0
     sys debug_break
     sys log2f
     sys debug_break
@@ -5677,8 +5681,8 @@ _start:
 ; BENCH: SYS log2f (1.75; high polynomial table)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3fe0
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fe0
     sys debug_break
     sys log2f
     sys debug_break
@@ -5687,8 +5691,8 @@ _start:
 ; BENCH: SYS log2f (minimum normal; exponent conversion)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0080
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0080
     sys debug_break
     sys log2f
     sys debug_break
@@ -5697,8 +5701,8 @@ _start:
 ; BENCH: SYS log2f (minimum subnormal; longest normalization loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0001
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x0000
     sys debug_break
     sys log2f
     sys debug_break
@@ -5707,8 +5711,8 @@ _start:
 ; BENCH: SYS log2f (+zero; negative-infinity fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
     sys debug_break
     sys log2f
     sys debug_break
@@ -5717,8 +5721,8 @@ _start:
 ; BENCH: SYS log2f (-1; domain-error NaN fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xbf80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xbf80
     sys debug_break
     sys log2f
     sys debug_break
@@ -5727,8 +5731,8 @@ _start:
 ; BENCH: SYS log2f (+infinity; pass-through fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
     sys debug_break
     sys log2f
     sys debug_break
@@ -5737,8 +5741,8 @@ _start:
 ; BENCH: SYS log10f (1.0; low-table zero result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
     sys debug_break
     sys log10f
     sys debug_break
@@ -5747,8 +5751,8 @@ _start:
 ; BENCH: SYS log10f (1.25; low polynomial table)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3fa0
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fa0
     sys debug_break
     sys log10f
     sys debug_break
@@ -5757,8 +5761,8 @@ _start:
 ; BENCH: SYS log10f (1.75; high polynomial table)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3fe0
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3fe0
     sys debug_break
     sys log10f
     sys debug_break
@@ -5767,8 +5771,8 @@ _start:
 ; BENCH: SYS log10f (minimum normal; exponent conversion)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0080
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0080
     sys debug_break
     sys log10f
     sys debug_break
@@ -5777,8 +5781,8 @@ _start:
 ; BENCH: SYS log10f (minimum subnormal; longest normalization loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0001
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x0000
     sys debug_break
     sys log10f
     sys debug_break
@@ -5787,8 +5791,8 @@ _start:
 ; BENCH: SYS log10f (+zero; negative-infinity fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
     sys debug_break
     sys log10f
     sys debug_break
@@ -5797,8 +5801,8 @@ _start:
 ; BENCH: SYS log10f (-1; domain-error NaN fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xbf80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xbf80
     sys debug_break
     sys log10f
     sys debug_break
@@ -5807,8 +5811,8 @@ _start:
 ; BENCH: SYS log10f (+infinity; pass-through fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
     sys debug_break
     sys log10f
     sys debug_break
@@ -5817,10 +5821,10 @@ _start:
 ; BENCH: SYS powf (2^0; zero-exponent fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x4000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
     sys debug_break
     sys powf
     sys debug_break
@@ -5829,10 +5833,10 @@ _start:
 ; BENCH: SYS powf (1^123; unit-base fast path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x42f6
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x42f6
     sys debug_break
     sys powf
     sys debug_break
@@ -5841,10 +5845,10 @@ _start:
 ; BENCH: SYS powf (2^8; ordinary log-multiply-exp path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x4000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4100
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4100
     sys debug_break
     sys powf
     sys debug_break
@@ -5853,10 +5857,10 @@ _start:
 ; BENCH: SYS powf (0.5^-10; inverse and scaling path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f00
-    ldi16 r2, 0x0000
-    ldi16 r3, 0xc120
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f00
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc120
     sys debug_break
     sys powf
     sys debug_break
@@ -5865,10 +5869,10 @@ _start:
 ; BENCH: SYS powf ((-2)^3; odd-integral sign correction)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xc000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4040
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4040
     sys debug_break
     sys powf
     sys debug_break
@@ -5877,10 +5881,10 @@ _start:
 ; BENCH: SYS powf ((-2)^4; even-integral sign correction)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xc000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4080
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4080
     sys debug_break
     sys powf
     sys debug_break
@@ -5889,10 +5893,10 @@ _start:
 ; BENCH: SYS powf ((-2)^0.5; nonintegral domain error)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xc000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f00
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f00
     sys debug_break
     sys powf
     sys debug_break
@@ -5901,10 +5905,10 @@ _start:
 ; BENCH: SYS powf (0^-3; zero base with negative exponent)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0xc040
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc040
     sys debug_break
     sys powf
     sys debug_break
@@ -5913,10 +5917,10 @@ _start:
 ; BENCH: SYS powf (+infinity^-2; infinite-base path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0xc000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0xc000
     sys debug_break
     sys powf
     sys debug_break
@@ -5925,10 +5929,10 @@ _start:
 ; BENCH: SYS powf (qNaN^0; zero-exponent precedence)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x2345
-    ldi16 r1, 0x7fc1
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x0000
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
     sys debug_break
     sys powf
     sys debug_break
@@ -5937,10 +5941,10 @@ _start:
 ; BENCH: SYS hypotf (0,3; zero-operand fast return)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4040
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4040
     sys debug_break
     sys hypotf
     sys debug_break
@@ -5949,10 +5953,10 @@ _start:
 ; BENCH: SYS hypotf (3,4; ordinary unscaled core)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x4040
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4080
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x4040
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4080
     sys debug_break
     sys hypotf
     sys debug_break
@@ -5961,10 +5965,10 @@ _start:
 ; BENCH: SYS hypotf (1,2^20; exponent-gap fast return)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4980
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4980
     sys debug_break
     sys hypotf
     sys debug_break
@@ -5973,10 +5977,10 @@ _start:
 ; BENCH: SYS hypotf (2^100,2^100; scale-down path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7180
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x7180
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7180
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x7180
     sys debug_break
     sys hypotf
     sys debug_break
@@ -5985,10 +5989,10 @@ _start:
 ; BENCH: SYS hypotf (2^-100,2^-100; scale-up path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x0d80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x0d80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0d80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0d80
     sys debug_break
     sys hypotf
     sys debug_break
@@ -5997,10 +6001,10 @@ _start:
 ; BENCH: SYS hypotf (minimum subnormal pair; normalization loops)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0001
-    ldi16 r1, 0x0000
-    ldi16 r2, 0x0001
-    ldi16 r3, 0x0000
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x0000
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0000
     sys debug_break
     sys hypotf
     sys debug_break
@@ -6009,10 +6013,10 @@ _start:
 ; BENCH: SYS hypotf (+infinity,qNaN; infinity wins)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
-    ldi16 r2, 0x2345
-    ldi16 r3, 0x7fc1
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
+    ldi16 r6, 0x2345
+    ldi16 r7, 0x7fc1
     sys debug_break
     sys hypotf
     sys debug_break
@@ -6021,10 +6025,10 @@ _start:
 ; BENCH: SYS hypotf (qNaN,1; NaN with finite operand)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x2345
-    ldi16 r1, 0x7fc1
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f80
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
     sys debug_break
     sys hypotf
     sys debug_break
@@ -6033,10 +6037,10 @@ _start:
 ; BENCH: SYS fmodf (1,2; magnitude fast return)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6045,10 +6049,10 @@ _start:
 ; BENCH: SYS fmodf (-2,2; equal-magnitude signed-zero path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0xc000
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6057,10 +6061,10 @@ _start:
 ; BENCH: SYS fmodf (5.5,2; ordinary short loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x40b0
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x40b0
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6069,10 +6073,10 @@ _start:
 ; BENCH: SYS fmodf (123456,0.75; medium exponent-gap loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x2000
-    ldi16 r1, 0x47f1
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f40
+    ldi16 r4, 0x2000
+    ldi16 r5, 0x47f1
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f40
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6081,10 +6085,10 @@ _start:
 ; BENCH: SYS fmodf (2^100,3; long exponent-gap loop)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7180
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x4040
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7180
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4040
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6093,10 +6097,10 @@ _start:
 ; BENCH: SYS fmodf (1,+infinity; infinite-divisor fast return)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x7f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x7f80
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6105,10 +6109,10 @@ _start:
 ; BENCH: SYS fmodf (1,0; zero-divisor NaN path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x3f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6117,10 +6121,10 @@ _start:
 ; BENCH: SYS fmodf (+infinity,1; infinite-dividend NaN path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x0000
-    ldi16 r1, 0x7f80
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x7f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6129,10 +6133,10 @@ _start:
 ; BENCH: SYS fmodf (qNaN,1; NaN path)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
-    ldi16 r0, 0x2345
-    ldi16 r1, 0x7fc1
-    ldi16 r2, 0x0000
-    ldi16 r3, 0x3f80
+    ldi16 r4, 0x2345
+    ldi16 r5, 0x7fc1
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x3f80
     sys debug_break
     sys fmodf
     sys debug_break
@@ -6140,9 +6144,10 @@ _start:
 ; =============================================================================
 ; MEMORY SYS SIZE SWEEP
 ; =============================================================================
-; All initialization is outside the measured DEBUG_BREAK interval.  The
-; ordinary memcpy source and all destinations use disjoint 256-byte framebuffer
-; windows.  memcpy_P reads from the shared 256-byte program-space fixture.
+; All initialization is outside the measured DEBUG_BREAK interval. The
+; ordinary memcpy source and destination use disjoint framebuffer windows.
+; Memmove uses one-byte-offset overlapping ranges to select forward or backward
+; copying. memcpy_P reads from the shared 256-byte program-space fixture.
 
 
 ; -----------------------------------------------------------------------------
@@ -6418,6 +6423,425 @@ _start:
     ldi16 r6, 256
     sys debug_break
     sys memcpy
+    sys debug_break
+
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=0; zero-length fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 0
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=1; forward non-overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 2
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 1
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=2; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 3
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 2
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=3; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 4
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 3
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=4; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 5
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 4
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=5; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 6
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 5
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=6; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 7
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 6
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=7; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 7
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=8; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 9
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 8
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=16; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 17
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 16
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=32; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 33
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 32
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=256; forward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 257
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, BENCH_MEMMOVE_NEXT
+    ldi16 r6, 256
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=2; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 3
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 2
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=3; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 4
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 3
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=4; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 5
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 4
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=5; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 6
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 5
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=6; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 7
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 6
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=7; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 7
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=8; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 9
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 8
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=16; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 17
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 16
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=32; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 33
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 32
+    sys debug_break
+    sys memmove
+    sys debug_break
+
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memmove (n=256; backward overlap)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ; Initialize the complete union of the overlapping source/destination ranges.
+    ldi16 r4, BENCH_MEMMOVE_BASE
+    ldi16 r5, 0x005a
+    ldi16 r6, 257
+    sys memset
+
+    ldi16 r4, BENCH_MEMMOVE_NEXT
+    ldi16 r5, BENCH_MEMMOVE_BASE
+    ldi16 r6, 256
+    sys debug_break
+    sys memmove
     sys debug_break
 
 

@@ -1895,17 +1895,17 @@ preserves the service's address spaces and memory semantics.
 | `0x01` | `debug_break` | None | None | None |
 | `0x02` | `millis` | None | `r4` | None |
 | `0x03` | `millis32` | None | `q2 = r4:r5` | None |
-| `0x04` | `sinf` | `q0` | `q0` | None |
-| `0x05` | `cosf` | `q0` | `q0` | None |
-| `0x06` | `atan2f` | `q0 = y`, `q1 = x` | `q0` | None |
-| `0x07` | `tanf` | `q0` | `q0` | None |
-| `0x08` | `expf` | `q0` | `q0` | None |
-| `0x09` | `logf` | `q0` | `q0` | None |
-| `0x0A` | `log2f` | `q0` | `q0` | None |
-| `0x0B` | `log10f` | `q0` | `q0` | None |
-| `0x0C` | `powf` | `q0 = x`, `q1 = y` | `q0` | None |
-| `0x0D` | `hypotf` | `q0 = x`, `q1 = y` | `q0` | None |
-| `0x0E` | `fmodf` | `q0 = x`, `q1 = y` | `q0` | None |
+| `0x04` | `sinf` | `q2` | `q2` | None |
+| `0x05` | `cosf` | `q2` | `q2` | None |
+| `0x06` | `atan2f` | `q2 = y`, `q3 = x` | `q2` | None |
+| `0x07` | `tanf` | `q2` | `q2` | None |
+| `0x08` | `expf` | `q2` | `q2` | None |
+| `0x09` | `logf` | `q2` | `q2` | None |
+| `0x0A` | `log2f` | `q2` | `q2` | None |
+| `0x0B` | `log10f` | `q2` | `q2` | None |
+| `0x0C` | `powf` | `q2 = x`, `q3 = y` | `q2` | None |
+| `0x0D` | `hypotf` | `q2 = x`, `q3 = y` | `q2` | None |
+| `0x0E` | `fmodf` | `q2 = x`, `q3 = y` | `q2` | None |
 | `0x0F` | `memcpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space memory |
 | `0x10` | `memcpy_P` | `r4 = dst`, `q3 = src`, `r5 = n` | `r4 = dst` | Data-space memory |
 | `0x11` | `memset` | `r4 = dst`, `r5 = val`, `r6 = n` | `r4 = dst` | Data-space memory |
@@ -1921,8 +1921,8 @@ every general-purpose register not listed as a result
 ```
 
 An input-only register is preserved. In particular, every floating-point math
-service defines only `q0`; binary services preserve the original value of
-`q1`.
+service defines only `q2`; binary services preserve the original value of
+`q3`. All floating-point math services preserve `q0` and `q1`.
 
 ### 49.1. `debug_putc`
 
@@ -2018,8 +2018,8 @@ Each invocation observes the current timer state. Calls MUST NOT be removed, dup
 
 ### 49.5. Floating-point math services
 
-Services `0x04-0x0E` operate on IEEE-754 binary32 values in `q0` and, for
-binary services, `q1`. The result replaces `q0`. They preserve `q1`, `q2`,
+Services `0x04-0x0E` operate on IEEE-754 binary32 values in `q2` and, for
+binary services, `q3`. The result replaces `q2`. They preserve `q0`, `q1`,
 `q3`, `CC`, and `SP`.
 
 Angles are measured in radians. The services expose no floating-point exception
@@ -2029,17 +2029,17 @@ precision C math function.
 
 | ID | Encoding | Operation |
 |---:|---|---|
-| `0x04` | `D7 04` | `q0 = sinf(q0)` |
-| `0x05` | `D7 05` | `q0 = cosf(q0)` |
-| `0x06` | `D7 06` | `q0 = atan2f(q0, q1)` where the original `q0` is `y` and `q1` is `x` |
-| `0x07` | `D7 07` | `q0 = tanf(q0)` |
-| `0x08` | `D7 08` | `q0 = expf(q0)` |
-| `0x09` | `D7 09` | `q0 = logf(q0)` |
-| `0x0A` | `D7 0A` | `q0 = log2f(q0)` |
-| `0x0B` | `D7 0B` | `q0 = log10f(q0)` |
-| `0x0C` | `D7 0C` | `q0 = powf(q0, q1)` where the original `q0` is `x` and `q1` is `y` |
-| `0x0D` | `D7 0D` | `q0 = hypotf(q0, q1)` where the original operands are `x` and `y` |
-| `0x0E` | `D7 0E` | `q0 = fmodf(q0, q1)` where the original `q0` is `x` and `q1` is `y` |
+| `0x04` | `D7 04` | `q2 = sinf(q2)` |
+| `0x05` | `D7 05` | `q2 = cosf(q2)` |
+| `0x06` | `D7 06` | `q2 = atan2f(q2, q3)` where the original `q2` is `y` and `q3` is `x` |
+| `0x07` | `D7 07` | `q2 = tanf(q2)` |
+| `0x08` | `D7 08` | `q2 = expf(q2)` |
+| `0x09` | `D7 09` | `q2 = logf(q2)` |
+| `0x0A` | `D7 0A` | `q2 = log2f(q2)` |
+| `0x0B` | `D7 0B` | `q2 = log10f(q2)` |
+| `0x0C` | `D7 0C` | `q2 = powf(q2, q3)` where the original `q2` is `x` and `q3` is `y` |
+| `0x0D` | `D7 0D` | `q2 = hypotf(q2, q3)` where the original operands are `x` and `y` |
+| `0x0E` | `D7 0E` | `q2 = fmodf(q2, q3)` where the original `q2` is `x` and `q3` is `y` |
 
 For finite `x` and finite nonzero `y`, `fmodf` computes:
 
@@ -2893,17 +2893,17 @@ A generic AVM service-number intrinsic and an
 | `llvm.avm.debug.break()` | `SYS 0x01` | None | None |
 | `llvm.avm.millis()` | `SYS 0x02` | None | `r4` |
 | `llvm.avm.millis32()` | `SYS 0x03` | None | `q2` |
-| `llvm.avm.sinf(float)` | `SYS 0x04` | `q0` | `q0` |
-| `llvm.avm.cosf(float)` | `SYS 0x05` | `q0` | `q0` |
-| `llvm.avm.atan2f(float,float)` | `SYS 0x06` | `q0 = y`, `q1 = x` | `q0` |
-| `llvm.avm.tanf(float)` | `SYS 0x07` | `q0` | `q0` |
-| `llvm.avm.expf(float)` | `SYS 0x08` | `q0` | `q0` |
-| `llvm.avm.logf(float)` | `SYS 0x09` | `q0` | `q0` |
-| `llvm.avm.log2f(float)` | `SYS 0x0A` | `q0` | `q0` |
-| `llvm.avm.log10f(float)` | `SYS 0x0B` | `q0` | `q0` |
-| `llvm.avm.powf(float,float)` | `SYS 0x0C` | `q0 = x`, `q1 = y` | `q0` |
-| `llvm.avm.hypotf(float,float)` | `SYS 0x0D` | `q0 = x`, `q1 = y` | `q0` |
-| `llvm.avm.fmodf(float,float)` | `SYS 0x0E` | `q0 = x`, `q1 = y` | `q0` |
+| `llvm.avm.sinf(float)` | `SYS 0x04` | `q2` | `q2` |
+| `llvm.avm.cosf(float)` | `SYS 0x05` | `q2` | `q2` |
+| `llvm.avm.atan2f(float,float)` | `SYS 0x06` | `q2 = y`, `q3 = x` | `q2` |
+| `llvm.avm.tanf(float)` | `SYS 0x07` | `q2` | `q2` |
+| `llvm.avm.expf(float)` | `SYS 0x08` | `q2` | `q2` |
+| `llvm.avm.logf(float)` | `SYS 0x09` | `q2` | `q2` |
+| `llvm.avm.log2f(float)` | `SYS 0x0A` | `q2` | `q2` |
+| `llvm.avm.log10f(float)` | `SYS 0x0B` | `q2` | `q2` |
+| `llvm.avm.powf(float,float)` | `SYS 0x0C` | `q2 = x`, `q3 = y` | `q2` |
+| `llvm.avm.hypotf(float,float)` | `SYS 0x0D` | `q2 = x`, `q3 = y` | `q2` |
+| `llvm.avm.fmodf(float,float)` | `SYS 0x0E` | `q2 = x`, `q3 = y` | `q2` |
 | `llvm.avm.memcpy(ptr,ptr,i16)` | `SYS 0x0F` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 | AS0-destination, AS1-source `llvm.memcpy` | `SYS 0x10` through `SYS_MEMCPY_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
 | `llvm.avm.memset(ptr,i16,i16)` or eligible AS0 `llvm.memset` | `SYS 0x11` through `SYS_MEMSET` | `r4 = dst`, `r5 = val`, `r6 = n` | tied `r4 = dst` |
@@ -2912,7 +2912,8 @@ A generic AVM service-number intrinsic and an
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
 directly. Input-only physical registers remain live across the instruction; in
-particular, the binary math services preserve `q1`.
+particular, the binary math services preserve `q3`, and all math services
+preserve `q0` and `q1`.
 
 For `SYS_MEMCPY_P`, `r4` is a tied input/definition containing `dst`; `q3` and
 `r5` are input-only and are preserved by the service. The source address is

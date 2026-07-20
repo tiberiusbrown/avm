@@ -226,6 +226,7 @@
     syslibm_invoke \service
     syslibm_check_cc \eq, \ne, \ult, \uge, \slt, \sge
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_raw_range \lower_lo, \lower_hi, \upper_lo, \upper_hi
     syslibm_check_unary_tail
 .endm
@@ -252,6 +253,7 @@
     syslibm_invoke \service
     syslibm_check_cc \eq, \ne, \ult, \uge, \slt, \sge
     syslibm_push_all_regs
+    syslibm_check_preserved_head
     syslibm_check_raw_range \lower_lo, \lower_hi, \upper_lo, \upper_hi
     syslibm_check_binary_tail \rhs_lo, \rhs_hi
 .endm

@@ -20,8 +20,24 @@
 #error "AVM_TEST_ASM_DIR must be defined by CMake"
 #endif
 
+#ifndef AVM_TEST_C_DIR
+#error "AVM_TEST_C_DIR must be defined by CMake"
+#endif
+
+#ifndef AVM_TEST_CXX_DIR
+#error "AVM_TEST_CXX_DIR must be defined by CMake"
+#endif
+
 #ifndef AVM_TEST_BIN_DIR
 #error "AVM_TEST_BIN_DIR must be defined by CMake"
+#endif
+
+#ifndef AVM_TEST_C_BIN_DIR
+#error "AVM_TEST_C_BIN_DIR must be defined by CMake"
+#endif
+
+#ifndef AVM_TEST_CXX_BIN_DIR
+#error "AVM_TEST_CXX_BIN_DIR must be defined by CMake"
 #endif
 
 #ifndef AVM_TEST_INTERPRETER_HEX
@@ -45,15 +61,26 @@ constexpr std::string_view kFailBanner[] = {
     "#       #   #   #####  #####  ",
 };
 
+enum class test_kind_t {
+    assembly,
+    c,
+    cpp,
+};
+
 struct options_t {
     fs::path interpreter = AVM_TEST_INTERPRETER_HEX;
     fs::path asm_dir = AVM_TEST_ASM_DIR;
-    fs::path bin_dir = AVM_TEST_BIN_DIR;
+    fs::path c_dir = AVM_TEST_C_DIR;
+    fs::path cpp_dir = AVM_TEST_CXX_DIR;
+    fs::path asm_bin_dir = AVM_TEST_BIN_DIR;
+    fs::path c_bin_dir = AVM_TEST_C_BIN_DIR;
+    fs::path cpp_bin_dir = AVM_TEST_CXX_BIN_DIR;
     std::uint64_t advance_limit = kDefaultAdvanceLimit;
     bool verbose = false;
 };
 
 struct test_case_t {
+    test_kind_t kind;
     fs::path source;
     fs::path expected;
     fs::path image;
@@ -65,12 +92,18 @@ struct failure_t {
     std::string message;
 };
 
+std::string usage_text()
+{
+    return
+        "Usage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
+        "[--c-dir DIR] [--cpp-dir DIR] [--bin-dir DIR] "
+        "[--c-bin-dir DIR] [--cpp-bin-dir DIR] "
+        "[--advance-limit CYCLES] [--verbose]";
+}
+
 [[noreturn]] void usage_error(std::string const& message)
 {
-    throw std::runtime_error(
-        message +
-        "\nUsage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
-        "[--bin-dir DIR] [--advance-limit CYCLES] [--verbose]");
+    throw std::runtime_error(message + "\n" + usage_text());
 }
 
 std::uint64_t parse_u64(std::string_view text, std::string_view option)
@@ -106,16 +139,22 @@ options_t parse_options(int argc, char** argv)
             options.interpreter = require_value(arg);
         else if(arg == "--asm-dir")
             options.asm_dir = require_value(arg);
+        else if(arg == "--c-dir")
+            options.c_dir = require_value(arg);
+        else if(arg == "--cpp-dir")
+            options.cpp_dir = require_value(arg);
         else if(arg == "--bin-dir")
-            options.bin_dir = require_value(arg);
+            options.asm_bin_dir = require_value(arg);
+        else if(arg == "--c-bin-dir")
+            options.c_bin_dir = require_value(arg);
+        else if(arg == "--cpp-bin-dir")
+            options.cpp_bin_dir = require_value(arg);
         else if(arg == "--advance-limit")
             options.advance_limit = parse_u64(require_value(arg), arg);
         else if(arg == "--verbose")
             options.verbose = true;
         else if(arg == "-h" || arg == "--help") {
-            std::cout
-                << "Usage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
-                   "[--bin-dir DIR] [--advance-limit CYCLES] [--verbose]\n";
+            std::cout << usage_text() << '\n';
             std::exit(0);
         }
         else
@@ -162,7 +201,8 @@ std::vector<std::uint8_t> read_binary_file(fs::path const& filename)
     input.seekg(0, std::ios::end);
     std::streamoff const length = input.tellg();
     if(length < 0)
-        throw std::runtime_error("Unable to determine file size: " + filename.string());
+        throw std::runtime_error(
+            "Unable to determine file size: " + filename.string());
     input.seekg(0, std::ios::beg);
 
     std::vector<std::uint8_t> data(static_cast<std::size_t>(length));
@@ -170,7 +210,8 @@ std::vector<std::uint8_t> read_binary_file(fs::path const& filename)
         input.read(reinterpret_cast<char*>(data.data()),
                    static_cast<std::streamsize>(data.size()));
         if(!input)
-            throw std::runtime_error("Unable to read file: " + filename.string());
+            throw std::runtime_error(
+                "Unable to read file: " + filename.string());
     }
     return data;
 }
@@ -310,7 +351,8 @@ void load_file(absim::arduboy_t& arduboy,
 {
     std::ifstream input(filename, std::ios::binary);
     if(!input)
-        throw std::runtime_error("Unable to open input file: " + filename.string());
+        throw std::runtime_error(
+            "Unable to open input file: " + filename.string());
 
     std::string error = arduboy.load_file(synthetic_name, input);
     if(!error.empty())
@@ -348,8 +390,6 @@ std::vector<std::uint8_t> run_image(fs::path const& interpreter,
         throw std::runtime_error(message.str());
     }
 
-    // Match Ardens headless mode: flush delayed peripheral state once after
-    // the terminal breakpoint so the final USB serial packet is visible.
     cpu.update_all();
     return cpu.serial_bytes;
 }
@@ -361,16 +401,20 @@ std::string lowercase(std::string value)
     return value;
 }
 
-std::vector<test_case_t> discover_tests(fs::path const& asm_dir,
-                                        fs::path const& bin_dir)
+void append_tests(std::vector<test_case_t>& tests,
+                  test_kind_t kind,
+                  fs::path const& source_dir,
+                  fs::path const& bin_dir,
+                  std::string_view extension)
 {
-    std::vector<test_case_t> tests;
     std::error_code ec;
-    for(fs::directory_iterator it(asm_dir, ec), end; it != end; it.increment(ec)) {
+    for(fs::directory_iterator it(source_dir, ec), end;
+        it != end;
+        it.increment(ec)) {
         if(ec)
             throw std::runtime_error(
-                "Unable to enumerate test source directory " + asm_dir.string() +
-                ": " + ec.message());
+                "Unable to enumerate test source directory " +
+                source_dir.string() + ": " + ec.message());
 
         fs::directory_entry const& entry = *it;
         if(!entry.is_regular_file(ec)) {
@@ -382,11 +426,12 @@ std::vector<test_case_t> discover_tests(fs::path const& asm_dir,
         }
 
         fs::path source = entry.path();
-        if(lowercase(source.extension().string()) != ".asm")
+        if(lowercase(source.extension().string()) != extension)
             continue;
 
         std::string const stem = source.stem().string();
         tests.push_back({
+            kind,
             source,
             source.parent_path() / (stem + "_output.txt"),
             bin_dir / (stem + ".bin"),
@@ -395,11 +440,25 @@ std::vector<test_case_t> discover_tests(fs::path const& asm_dir,
     }
     if(ec)
         throw std::runtime_error(
-            "Unable to enumerate test source directory " + asm_dir.string() +
-            ": " + ec.message());
+            "Unable to enumerate test source directory " +
+            source_dir.string() + ": " + ec.message());
+}
+
+std::vector<test_case_t> discover_tests(options_t const& options)
+{
+    std::vector<test_case_t> tests;
+    append_tests(tests, test_kind_t::assembly, options.asm_dir,
+                 options.asm_bin_dir, ".asm");
+    append_tests(tests, test_kind_t::c, options.c_dir,
+                 options.c_bin_dir, ".c");
+    append_tests(tests, test_kind_t::cpp, options.cpp_dir,
+                 options.cpp_bin_dir, ".cpp");
 
     std::sort(tests.begin(), tests.end(),
         [](test_case_t const& lhs, test_case_t const& rhs) {
+            if(lhs.kind != rhs.kind)
+                return static_cast<unsigned>(lhs.kind) <
+                       static_cast<unsigned>(rhs.kind);
             return lowercase(lhs.source.filename().string()) <
                    lowercase(rhs.source.filename().string());
         });
@@ -408,7 +467,13 @@ std::vector<test_case_t> discover_tests(fs::path const& asm_dir,
 
 std::string test_label(test_case_t const& test)
 {
-    return "[ASM] " + test.source.filename().string();
+    std::string_view prefix;
+    switch(test.kind) {
+    case test_kind_t::assembly: prefix = "[ASM] "; break;
+    case test_kind_t::c:        prefix = "[C  ] "; break;
+    case test_kind_t::cpp:      prefix = "[C++] "; break;
+    }
+    return std::string(prefix) + test.source.filename().string();
 }
 
 void run_test(test_case_t const& test,
@@ -449,14 +514,20 @@ int main(int argc, char** argv)
             options.interpreter, "AVM interpreter HEX image");
         options.asm_dir = require_directory(
             options.asm_dir, "assembly test source directory");
-        options.bin_dir = require_directory(
-            options.bin_dir, "built AVM test binary directory");
+        options.c_dir = require_directory(
+            options.c_dir, "C test source directory");
+        options.cpp_dir = require_directory(
+            options.cpp_dir, "C++ test source directory");
+        options.asm_bin_dir = require_directory(
+            options.asm_bin_dir, "built assembly test image directory");
+        options.c_bin_dir = require_directory(
+            options.c_bin_dir, "built C test image directory");
+        options.cpp_bin_dir = require_directory(
+            options.cpp_bin_dir, "built C++ test image directory");
 
-        std::vector<test_case_t> const tests =
-            discover_tests(options.asm_dir, options.bin_dir);
+        std::vector<test_case_t> const tests = discover_tests(options);
         if(tests.empty())
-            throw std::runtime_error(
-                "No .asm tests found in " + options.asm_dir.string());
+            throw std::runtime_error("No ASM, C, or C++ tests found");
 
         std::size_t result_column = 0;
         for(test_case_t const& test : tests)
@@ -464,11 +535,15 @@ int main(int argc, char** argv)
         result_column += 2;
 
         std::cout << "Running " << tests.size()
-                  << " AVM assembly test(s) in one process\n";
+                  << " AVM test(s) in one process\n";
         if(options.verbose) {
             std::cout << "  interpreter: " << options.interpreter << '\n'
-                      << "  sources:     " << options.asm_dir << '\n'
-                      << "  binaries:    " << options.bin_dir << '\n'
+                      << "  ASM sources: " << options.asm_dir << '\n'
+                      << "  C sources:   " << options.c_dir << '\n'
+                      << "  C++ sources: " << options.cpp_dir << '\n'
+                      << "  ASM images:  " << options.asm_bin_dir << '\n'
+                      << "  C images:    " << options.c_bin_dir << '\n'
+                      << "  C++ images:  " << options.cpp_bin_dir << '\n'
                       << "  cycle limit: " << options.advance_limit << "\n\n";
         }
 
@@ -481,8 +556,8 @@ int main(int argc, char** argv)
             }
             catch(std::exception const& error) {
                 failures.push_back({label, error.what()});
-                std::cout << std::left << std::setw(
-                    static_cast<int>(result_column)) << label
+                std::cout << std::left
+                          << std::setw(static_cast<int>(result_column)) << label
                           << "FAIL\n\n";
                 for(std::string_view line : kFailBanner)
                     std::cout << "    " << line << '\n';
@@ -490,8 +565,8 @@ int main(int argc, char** argv)
                 continue;
             }
 
-            std::cout << std::left << std::setw(
-                static_cast<int>(result_column)) << label
+            std::cout << std::left
+                      << std::setw(static_cast<int>(result_column)) << label
                       << "PASS\n" << std::right << std::flush;
         }
 
@@ -507,8 +582,7 @@ int main(int argc, char** argv)
             return 1;
         }
 
-        std::cout << "\nAll " << tests.size()
-                  << " AVM assembly test(s) passed.\n";
+        std::cout << "\nAll " << tests.size() << " AVM test(s) passed.\n";
         return 0;
     }
     catch(std::exception const& error) {

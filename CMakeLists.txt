@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.20)
 
 project(avm LANGUAGES C CXX ASM)
 
-# AVM is an experimental MC-only target. It stays in LLVM's target list so
-# tools such as LLD can link its MC libraries, but has no code generator.
+# Build the AVM Clang/LLVM/LLD toolchain in-tree. The target includes a
+# SelectionDAG code generator in addition to its MC and linker components.
 set(LLVM_TARGETS_TO_BUILD              ""    CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM" CACHE STRING "" FORCE)
 set(LLVM_ENABLE_PROJECTS               "clang;lld" CACHE STRING "" FORCE)
@@ -12,11 +12,22 @@ set(LLVM_BUILD_TOOLS                   ON    CACHE BOOL   "" FORCE)
 add_subdirectory(deps/llvm-project/llvm llvm-build)
 
 add_custom_target(avm_toolchain
-    DEPENDS llvm-mc llvm-objdump llvm-readobj lld llvm-avm-image)
+    DEPENDS
+        clang
+        llvm-ar
+        llvm-mc
+        llvm-objdump
+        llvm-readobj
+        lld
+        llvm-avm-image
+)
 
 # LLD's CMake target is `lld`; on Windows the GNU driver is emitted as the
 # ld.lld sibling alias.  Keep the invocation explicit and generator-safe.
 set(AVM_LD_LLD "$<TARGET_FILE_DIR:lld>/ld.lld${CMAKE_EXECUTABLE_SUFFIX}")
+
+# Build the target runtime, startup objects, libraries, and staged AVM sysroot.
+add_subdirectory(runtime)
 
 # Build only the Ardens debugger application. Keep Ardens's bundled LLVM
 # integration disabled so it does not download or build its own LLVM tree.

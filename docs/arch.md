@@ -68,7 +68,7 @@ Each register may hold:
 - A 16-bit data pointer.
 - A byte value in bits `7:0`.
 - One word of a larger integer.
-- Part of a canonical program or function pointer.
+- Part of the register container for a program or function pointer.
 
 There is no separate architectural byte-register file.
 
@@ -278,25 +278,72 @@ alignment                = 1
 
 ### 12.2. Register representation
 
-A program or function pointer in registers occupies one `qN`:
+A program or function pointer in registers occupies one `qN` container:
 
 ```text
-low register                  = bits 15:0
-low byte of high register     = bits 23:16
-high byte of high register    = zero
+low register                  = logical pointer bits 15:0
+low byte of high register     = logical pointer bits 23:16
+high byte of high register    = register-container padding
 ```
 
-Canonical register-form pointers therefore satisfy:
+The logical pointer value is always:
+
+```text
+pointerAddress = qN[23:0]
+```
+
+Bits `qN[31:24]` are not part of the program- or function-pointer value.
+Unless a rule explicitly requires normalization, those padding bits are
+unspecified and may contain any value.
+
+A **normalized program pointer** satisfies:
 
 ```text
 qN[31:24] = 0
 ```
 
-### 12.3. Pointer arithmetic
+Every instruction or system service whose operand is specified as a program or
+function pointer uses only bits `23:0` and ignores bits `31:24`. This includes
+program-space load addresses, indirect jump and call targets, and the
+program-space source pointer of `memcpy_P`.
 
-Program-pointer arithmetic is unsigned 24-bit arithmetic.
+Ordinary function-call ABI boundaries retain normalized register
+representation:
 
-Data and program pointers belong to disjoint address spaces. Implicit conversion between them is forbidden. Explicit integer conversion is target-defined.
+- A program- or function-pointer argument passed in a `qN` register is
+  normalized when control enters the callee.
+- A program- or function-pointer return value is normalized.
+- Packed three-byte memory representation contains only the logical 24 bits and
+  has no padding byte.
+
+Temporary register values need not be normalized when all consumers interpret
+them as program or function pointers.
+
+### 12.3. Pointer arithmetic and observation
+
+Program-pointer arithmetic is unsigned arithmetic modulo `2^24`:
+
+```text
+resultAddress = low24(pointerAddress + offset)
+```
+
+The padding bits of a register result are unspecified unless the operation
+explicitly produces a normalized pointer. A full 32-bit addition may therefore
+implement temporary program-pointer arithmetic without subsequently clearing
+bits `31:24`, provided every use consumes the result as a program pointer.
+
+Program-pointer equality and ordering compare only the logical 24-bit values.
+An implementation using a full 32-bit comparison must normalize the operands
+first or otherwise exclude the padding bits.
+
+Conversion of a program pointer to an integer wider than 24 bits zero-extends
+the logical 24-bit value. Conversion from an integer to a program pointer uses
+the low 24 bits; register-container padding is unspecified until normalization
+is required.
+
+Data and program pointers belong to disjoint address spaces. Implicit conversion
+between them is forbidden. Explicit integer conversion is target-defined
+subject to the logical-width rules above.
 
 
 ## 13. Program-space layout constraints
@@ -801,8 +848,8 @@ The target is computed in the full 24-bit program address space.
 |---:|---|---|
 | `E2` | `JMPF target24` | `PC = target24` |
 | `E3` | `CALLF target24` | Push `nextPC`; `PC = target24` |
-| `E4-E7` | `JMPP qN` | Require canonical `qN`; `PC = qN[23:0]` |
-| `E8-EB` | `CALLP qN` | Push `nextPC`; require canonical `qN`; `PC = qN[23:0]` |
+| `E4-E7` | `JMPP qN` | Ignore `qN[31:24]`; `PC = qN[23:0]` |
+| `E8-EB` | `CALLP qN` | Push `nextPC`; ignore `qN[31:24]`; `PC = qN[23:0]` |
 | `EF` | `RET` | Pop a 24-bit return address into `PC` |
 
 A call pushes its three-byte return address as:
@@ -931,14 +978,28 @@ Each instruction is followed by `PSPEC` from Section 18.6.
 | `60` | `LDP8U rD,[qA]` | 3 | Zero-extended program byte load |
 | `61` | `LDP8S rD,[qA]` | 3 | Sign-extended program byte load |
 | `62` | `LDP16 rD,[qA]` | 3 | Little-endian 16-bit program load |
-| `63` | `LDP24 qD,[qA]` | 3 | Load 24 packed bits and clear bits `31:24` |
+| `63` | `LDP24 qD,[qA]` | 3 | Load 24 packed bits and normalize `qD` |
 | `64` | `LDP32 qD,[qA]` | 3 | Little-endian 32-bit program load |
-| `65` | `LDP8U rD,[qA+]` | 3 | Load byte, then add 1 to `qA` |
-| `66` | `LDP16 rD,[qA+]` | 3 | Load word, then add 2 to `qA` |
-| `67` | `LDP24 qD,[qA+]` | 3 | Load canonical pointer, then add 3 to `qA` |
-| `68` | `LDP32 qD,[qA+]` | 3 | Load dword, then add 4 to `qA` |
+| `65` | `LDP8U rD,[qA+]` | 3 | Load byte, then add 1 modulo `2^24` to `qA` |
+| `66` | `LDP16 rD,[qA+]` | 3 | Load word, then add 2 modulo `2^24` to `qA` |
+| `67` | `LDP24 qD,[qA+]` | 3 | Load and normalize a 24-bit value, then add 3 modulo `2^24` to `qA` |
+| `68` | `LDP32 qD,[qA+]` | 3 | Load dword, then add 4 modulo `2^24` to `qA` |
 
-`qA` MUST be canonical before the access.
+Every program-space load uses:
+
+```text
+effectiveAddress = qA[23:0]
+```
+
+and ignores `qA[31:24]`.
+
+For a postincrement load, let `oldA = qA[23:0]`. The memory access uses `oldA`,
+then:
+
+```text
+qA[23:0] = low24(oldA + accessWidth)
+qA[31:24] = unspecified
+```
 
 For postincrement loads, the destination MUST NOT overlap the address pair:
 
@@ -1541,6 +1602,11 @@ Examples:
     i32 -> q3
 ```
 
+A program- or function-pointer argument assigned to `q2` or `q3` is normalized
+before transfer of control to an ordinary callee. This is an ABI-boundary rule,
+not a requirement for temporary program-pointer values within a function.
+Fixed-register system services follow their individual service definitions.
+
 ### 41.3. Hidden arguments
 
 A hidden structure-result pointer is logically inserted before all source-language arguments. It is a one-unit data pointer and normally occupies `r4`.
@@ -1676,7 +1742,7 @@ Aggregate variadic arguments follow the ordinary direct-or-indirect aggregate cl
 | `i16` | `r4` |
 | Data pointer | `r4` |
 | `i32`, `float` | `q2 = r4:r5` |
-| Program/function pointer | Canonical pointer in `q2` |
+| Program/function pointer | Normalized pointer in `q2` |
 | `i64` | `r4:r7` |
 | Aggregate size 1-2 | `r4` |
 | Aggregate size 3-4 | `q2` |
@@ -1686,7 +1752,8 @@ For `i8` and `bool` returns, only `low8(r4)` is defined. `high8(r4)` is unspecif
 
 A returned `bool` is zero or one in the low byte.
 
-A returned program pointer is canonical:
+A returned program or function pointer is normalized at the ordinary ABI
+boundary:
 
 ```text
 q2[31:24] = 0
@@ -1842,7 +1909,8 @@ preserves the service's address spaces and memory semantics.
 | `0x0F` | `memcpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space memory |
 | `0x10` | `memcpy_P` | `r4 = dst`, `q3 = src`, `r5 = n` | `r4 = dst` | Data-space memory |
 | `0x11` | `memset` | `r4 = dst`, `r5 = val`, `r6 = n` | `r4 = dst` | Data-space memory |
-| `0x12-0xFF` | Reserved | — | — | — |
+| `0x12` | `memmove` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space memory |
+| `0x13-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -2036,9 +2104,10 @@ q3 = src
 r5 = n
 ```
 
-`src` is a canonical image-relative 24-bit program pointer; a noncanonical
-`q3` operand is invalid. The service copies exactly `n` bytes from program-space addresses `src` through `src+n-1` to
-data-space addresses `dst` through `dst+n-1`, in increasing address order. If
+The logical source address is `q3[23:0]`; the service ignores `q3[31:24]`.
+The service copies exactly `n` bytes from program-space addresses `src` through
+`src+n-1` to data-space addresses `dst` through `dst+n-1`, in increasing
+address order. If
 `n` is zero, it performs no program- or data-space memory access. The caller
 must provide valid source and destination ranges; otherwise behavior is
 undefined.
@@ -2089,6 +2158,60 @@ The result is the original `dst` value in `r4`. The service preserves the bit
 patterns of `r4`, `r5`, and `r6`, so `r4` simultaneously serves as the first
 input and the result and the complete original `val` and `n` remain available
 after the service. It also preserves `r0-r3`, `r7`, `CC`, and `SP`.
+
+
+### 49.9. `memmove`
+
+Encoding:
+
+```text
+D7 12
+```
+
+C interface and fixed service-register assignment:
+
+```c
+void *memmove(void *dst, void const *src, uint16_t n);
+```
+
+```text
+r4 = dst
+r5 = src
+r6 = n
+```
+
+The service copies exactly `n` bytes from the data-space source range to the
+data-space destination range with the semantics of copying through a temporary
+array, so overlapping ranges are supported.
+
+If `n` is zero or `dst == src`, the service performs no memory access.
+
+Otherwise, copying proceeds as follows:
+
+```text
+if dst < src or dst - src >= n:
+    copy forward:
+        for i = 0 .. n-1:
+            mem8[dst+i] = mem8[src+i]
+else:
+    copy backward:
+        for i = n-1 .. 0:
+            mem8[dst+i] = mem8[src+i]
+```
+
+Equivalently, backward copying is used exactly when:
+
+```text
+dst > src and dst - src < n
+```
+
+The caller must provide valid source and destination ranges of `n` bytes;
+otherwise behavior is undefined. The valid ranges must not wrap around the
+16-bit data address space.
+
+The result is the original `dst` value in `r4`. The service preserves the bit
+patterns of `r4`, `r5`, and `r6`, so `r4` simultaneously serves as the first
+input and the result. It also preserves `r0-r3`, `r7`, `CC`, and `SP`.
 
 ---
 
@@ -2219,13 +2342,19 @@ The byte classes alias only the low-byte subregisters of the corresponding 16-bi
 
 Instructions that define a zero-extended or sign-extended byte result define the complete `GPR16` destination. Instructions that modify only the low byte while preserving the high byte may use a `GPR8` definition.
 
-Program and function pointers use the same physical members as `GPR32` but carry:
+Program and function pointers use the same physical members as `GPR32`.
+Their logical value occupies bits `23:0`; bits `31:24` are machine-level
+container padding and are not part of the LLVM `p1:24` value.
 
-```text
-bits 31:24 = 0
-```
+The backend SHOULD model these values through a semantic operand class or value
+type named `PROGPTR`, backed by `GPR32`. A `PROGPTR` value does not imply that
+the padding byte is zero. The backend SHOULD separately track or produce a
+normalized form only where the ordinary ABI or an observing operation requires
+bits `31:24 = 0`.
 
-The backend SHOULD model these values through a semantic operand class or value type named `PROGPTR`, backed by `GPR32`.
+The unspecified padding exists only in the target register representation. It
+MUST NOT be represented as an undefined, poison, or partially undefined LLVM
+pointer value.
 
 `CC`, `SP`, and `PC` are nonallocatable architectural state.
 
@@ -2243,7 +2372,7 @@ The backend SHOULD model these values through a semantic operand class or value 
 | `f32` | `GPR32` | Legal; direct `FF` operations with helper expansion for unsupported operations |
 | `f64` | Not an AVM ABI type | Unsupported; frontend maps `double` and `long double` to `f32` |
 | `p0:16` | `PTR16` | Legal |
-| `p1:24` | Canonical `PROGPTR` backed by `GPR32` | Custom |
+| `p1:24` | Logical 24-bit `PROGPTR` backed by `GPR32`; padding byte unspecified | Custom |
 
 General `i8` arithmetic is promoted to `i16`, performed at 16-bit width, and truncated when an `i8` result is required.
 
@@ -2273,7 +2402,8 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | AS1 load | Custom `LDP*` | Custom `LDP*` | Custom `LDP*` | Split/helper |
 | AS1 store | Invalid | Invalid | Invalid | Invalid |
 | `PTRTOINT` / `INTTOPTR` AS0 | Legal bit-preserving `i16` conversion | — | — | — |
-| `PTRTOINT` / `INTTOPTR` AS1 | Custom 24-bit canonical conversion | — | — | — |
+| `PTRTOINT` / `INTTOPTR` AS1 | Custom logical 24-bit conversion; wider integer results zero-extend | — | — | — |
+| AS1 pointer comparison | Compare logical bits `23:0`; normalize or use a 24-bit-aware sequence | — | — | — |
 | `ADDRSPACECAST` AS0↔AS1 | Unsupported | Unsupported | Unsupported | Must be explicit through integer conversion |
 | Dynamic `alloca` | Unsupported | — | — | Backend diagnostic |
 | `VAARG` | Custom packed-stack lowering | — | — | — |
@@ -2281,7 +2411,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | AS0-to-AS0 `MEMCPY` | Inline small constants; `SYS 0x0F` or helper otherwise | — | — | — |
 | AS1-to-AS0 `MEMCPY` | Inline small constants with `LDP*` plus AS0 stores; `SYS 0x10` otherwise | — | — | — |
 | `MEMSET` | Inline small constants; `SYS 0x11` or helper otherwise | — | — | — |
-| `MEMMOVE` | Inline small constants; helper otherwise | — | — | — |
+| `MEMMOVE` | Inline small constants; `SYS 0x12` or helper otherwise | — | — | — |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -2291,7 +2421,24 @@ or when the backend has explicitly constrained the count. Constant shifts
 outside `0-15` require normal LLVM legalization rather than truncating the
 constant into the four-bit instruction field.
 
-Program-pointer arithmetic is lowered as unsigned 24-bit arithmetic in `GPR32`, followed by canonicalization of bits `31:24` when required.
+Program-pointer arithmetic is lowered as unsigned 24-bit arithmetic in
+`GPR32`. The backend MUST NOT normalize every arithmetic result
+unconditionally. It may select a full `ADD32` or `SUB32` when the low 24 result
+bits have the required modulo-`2^24` value and leave bits `31:24` unspecified.
+
+Normalization is required only before a use that observes the complete
+container or at an ordinary ABI boundary. Required cases include:
+
+- passing a computed program or function pointer in an ordinary call;
+- returning a computed program or function pointer;
+- `ptrtoint` to an integer wider than 24 bits;
+- a full-width comparison unless a 24-bit-aware comparison is selected;
+- any explicit operation that observes the complete `GPR32` bit pattern.
+
+Normalization is not required before `LDP*`, `JMPP`, `CALLP`,
+`SYS_MEMCPY_P`, another program-pointer arithmetic operation, or a packed
+three-byte pointer store, because those uses consume only the logical low
+24 bits.
 
 The `EC` family directly implements all four `i16` division and remainder
 operations. Wider integer division and remainder continue to use helpers.
@@ -2557,6 +2704,47 @@ MAY recognize direct calls to those symbols and replace them with
 `llvm.avm.memset` or generic `llvm.memset` when interposition and other
 language-level rules permit it.
 
+The AS0 `memmove` service has the dedicated target intrinsic:
+
+```llvm
+declare ptr @llvm.avm.memmove(ptr %dst, ptr %src, i16 %size)
+```
+
+The intrinsic returns the original `dst` pointer and has ordinary overlapping
+AS0 `memmove` effects. The backend also recognizes an ordinary nonvolatile
+generic LLVM memmove:
+
+```llvm
+call void @llvm.memmove.p0.p0.i16(
+    ptr %dst,
+    ptr %src,
+    i16 %size,
+    i1 false)
+```
+
+It lowers an AS0 memmove to one of:
+
+1. An overlap-correct inline sequence for profitable constant sizes.
+2. A semantic `SYS_MEMMOVE` machine pseudo for dynamic or larger moves.
+
+After physical-register assignment, `SYS_MEMMOVE` has:
+
+```text
+use/def r4 = dst
+use     r5 = src
+use     r6 = size
+encoding   = SYS 0x12
+```
+
+The `r4` input and definition are tied. The pseudo reads and writes AS0 memory,
+preserves the overlap semantics of the originating operation, and has no
+ordinary call-preserved register mask. An ordinary function call to
+`__avm_memmove` or `memmove` uses the normal AVM calling convention, which
+already assigns `dst`, `src`, and `size` to `r4`, `r5`, and `r6`. The compiler
+MAY recognize direct calls to those symbols and replace them with
+`llvm.avm.memmove` or generic `llvm.memmove` when interposition and other
+language-level rules permit it.
+
 ## 57. Atomic and volatile policy
 
 AVM Version 1 is single-threaded.
@@ -2634,7 +2822,8 @@ The backend should:
 7. Select a native postincrement `LDP*` when an AS1 load is followed by adding
    the access width to the same pointer and the destination obeys the ISA's
    nonoverlap rule. Other AS1 dereferences select the corresponding ordinary
-   `LDP*` instruction.
+   `LDP*` instruction. All `LDP*` address operands consume only the low 24 bits;
+   do not normalize a temporary pointer solely for an `LDP*` use.
 8. Select `i16` `UDIV`, `UREM`, `SDIV`, and `SREM` directly to the two-address
    `EC` instructions. The destination is both the original dividend use and the
    result definition; the divisor source is preserved.
@@ -2644,8 +2833,10 @@ The backend should:
 10. Use `GPR32` for pair and binary32 instructions accepting every `qN`.
 11. Select direct `FF` operations only when their NaN, signed-zero, rounding,
     and exception semantics match.
-12. Represent address-space-one values as canonical `PROGPTR` and model `CC`
-    definitions and uses explicitly.
+12. Represent address-space-one values as logical 24-bit `PROGPTR` values in
+    `GPR32`. Treat bits `31:24` as nonsemantic padding, insert normalization only
+    at observing uses or ordinary ABI boundaries, and model `CC` definitions
+    and uses explicitly.
 13. Place frequently accessed stack objects at low offsets and diagnose
     statically provable single-function stack use above 256 bytes.
 14. Stack-usage metadata is optional. Version 1 does not standardize its
@@ -2654,8 +2845,8 @@ The backend should:
 
 ## 59. LLVM system-service representations
 
-The non-memory services and the AS0 `memcpy` and `memset` services have
-dedicated typed target intrinsics:
+The non-memory services and the AS0 `memcpy`, `memset`, and `memmove`
+services have dedicated typed target intrinsics:
 
 ```llvm
 declare void  @llvm.avm.debug.putc(i8 %value)
@@ -2677,6 +2868,7 @@ declare float @llvm.avm.fmodf(float %x, float %y)
 
 declare ptr @llvm.avm.memcpy(ptr %dst, ptr %src, i16 %n)
 declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %n)
+declare ptr @llvm.avm.memmove(ptr %dst, ptr %src, i16 %n)
 ```
 
 AS1-to-AS0 `memcpy_P` is represented by the generic overloaded LLVM memory
@@ -2715,6 +2907,7 @@ A generic AVM service-number intrinsic and an
 | `llvm.avm.memcpy(ptr,ptr,i16)` | `SYS 0x0F` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 | AS0-destination, AS1-source `llvm.memcpy` | `SYS 0x10` through `SYS_MEMCPY_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
 | `llvm.avm.memset(ptr,i16,i16)` or eligible AS0 `llvm.memset` | `SYS 0x11` through `SYS_MEMSET` | `r4 = dst`, `r5 = val`, `r6 = n` | tied `r4 = dst` |
+| `llvm.avm.memmove(ptr,ptr,i16)` or eligible AS0 `llvm.memmove` | `SYS 0x12` through `SYS_MEMMOVE` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -2722,15 +2915,23 @@ directly. Input-only physical registers remain live across the instruction; in
 particular, the binary math services preserve `q1`.
 
 For `SYS_MEMCPY_P`, `r4` is a tied input/definition containing `dst`; `q3` and
-`r5` are input-only and are preserved by the service. The pseudo retains the
-AS1-read and AS0-write memory operands, aliasing information, volatility, and
-ordering constraints of the generic `llvm.memcpy`.
+`r5` are input-only and are preserved by the service. The source address is
+`q3[23:0]`; `q3[31:24]` is ignored, so no normalization is required solely for
+this pseudo. The pseudo retains the AS1-read and AS0-write memory operands,
+aliasing information, volatility, and ordering constraints of the generic
+`llvm.memcpy`.
 
 For `SYS_MEMSET`, `r4` is a tied input/definition containing `dst`; `r5` and
 `r6` are input-only and are preserved by the service. Only `low8(r5)` affects
 memory. The pseudo retains the AS0 destination memory operand, aliasing
 information, volatility, and ordering constraints of the originating memset
 operation.
+
+For `SYS_MEMMOVE`, `r4` is a tied input/definition containing `dst`; `r5` and
+`r6` are input-only and are preserved by the service. The pseudo retains both
+AS0 memory operands, their aliasing relationship, the possibility of overlap,
+the transfer size, volatility, and ordering constraints of the originating
+memmove operation.
 
 Generic LLVM math intrinsics and recognized libcalls MAY lower directly to
 these services when their required semantics match the service definitions in
@@ -2739,7 +2940,8 @@ Section 49.5. Recognized AS0-to-AS0 `memcpy` operations MAY lower to service
 lower to service `0x10` when their size and legality make the service preferable
 to an inline `LDP*`/store sequence. Recognized nonvolatile AS0 `memset`
 operations MAY lower to service `0x11` when preferable to an inline store
-sequence.
+sequence. Recognized nonvolatile AS0 `memmove` operations MAY lower to service
+`0x12` when preferable to an overlap-correct inline sequence.
 
 ### 59.2. Optimization and scheduling
 
@@ -2759,11 +2961,15 @@ The memory services have their precise address-space effects:
 - `memcpy` reads address space zero and writes address space zero.
 - `memcpy_P` reads address space one and writes address space zero.
 - `memset` writes address space zero and reads no memory.
+- `memmove` reads address space zero and writes address space zero, and its
+  source and destination may overlap.
 
 They MUST NOT be speculated or reordered across accesses that may alias a
-written destination or, for a copy, the source. They MAY be eliminated,
+written destination or, for a copy or move, the source. They MAY be eliminated,
 combined, or otherwise transformed only when the ordinary legality rules for
-the corresponding nonvolatile `memcpy` or `memset` operation permit it.
+the corresponding nonvolatile `memcpy`, `memset`, or `memmove` operation
+permit it. A `memmove` may be converted to `memcpy` only when overlap is proven
+impossible.
 
 ### 59.3. Source-language interfaces
 
@@ -2805,6 +3011,13 @@ may instead use `llvm.avm.memset` when retaining a pointer result is useful.
 Both representations preserve the ordinary C rule that the low eight bits of
 `val` are repeated and leave selection of inline stores versus `SYS 0x11` to
 the backend.
+
+The standard C `memmove` interface and `__avm_memmove` use the signature from
+Section 56.4. Clang may emit generic `llvm.memmove`; the AVM optimizer or
+backend may instead use `llvm.avm.memmove` when retaining a pointer result is
+useful. Both representations preserve overlapping-range semantics and leave
+selection of an overlap-correct inline sequence versus `SYS 0x12` to the
+backend.
 
 ## 60. Code model and C++ policy
 
@@ -3064,7 +3277,7 @@ Required target constraints:
 | `P` | `UpperPTR16` |
 | `q` | `GPR32` |
 | `Q` | `UpperGPR32` |
-| `t` | Canonical `PROGPTR` backed by `GPR32` |
+| `t` | Logical 24-bit `PROGPTR` backed by `GPR32`; padding byte ignored by pointer consumers |
 | `I` | Signed 8-bit immediate |
 | `J` | Unsigned 8-bit immediate |
 | `K` | Unsigned 4-bit immediate |
@@ -3512,7 +3725,6 @@ A validating tool or VM should detect:
 - Invalid or misaligned control-flow targets.
 - Instruction or object placement beyond the 24-bit program-space limit.
 - Program access outside the image.
-- Noncanonical indirect pointers.
 - Unsupported system-service identifiers.
 - Invalid image header, tail, sizes, CRC, or padding.
 - A flat image larger than `0xFFFF00` bytes or an overflowing 16-bit `imagePageCount`.
@@ -3531,7 +3743,6 @@ Unchecked execution may treat the following as unrestricted undefined behavior:
 - Stack overflow or underflow.
 - Unsupported data-space access.
 - Invalid program-space access.
-- Noncanonical pointer use.
 - Instruction or object placement beyond the 24-bit program-space limit.
 - Corruption of runtime-reserved data.
 
@@ -3583,6 +3794,7 @@ Special state:
 Address spaces:
     AS0 data, 16-bit pointers
     AS1 program, 24-bit pointers, read-only
+    AS1 register containers are 32 bits; only bits 23:0 are the pointer value
 
 Calling convention:
     r4-r7 are four 16-bit argument units
@@ -3609,11 +3821,14 @@ LLVM:
     source-level _Float16 unsupported
     ELF32 little-endian
     PTR16 uses upper-register-first allocation
-    PROGPTR is canonical p1:24 backed by GPR32
+    PROGPTR is logical p1:24 backed by GPR32 with an unspecified padding byte
+    LDP/JMPP/CALLP/SYS memcpy_P ignore PROGPTR bits 31:24
+    ordinary program-pointer arguments and returns are normalized
     division, remainder, and binary32 arithmetic use direct instructions with stable helper fallbacks
     atomics lower to ordinary operations in the single-thread VM model
     memcpy_P lowers through generic AS0<-AS1 llvm.memcpy and SYS_MEMCPY_P
     memset lowers through llvm.avm.memset or generic llvm.memset and SYS_MEMSET
+    memmove lowers through llvm.avm.memmove or generic llvm.memmove and SYS_MEMMOVE
 
 Assembly:
     GNU-style syntax

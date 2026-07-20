@@ -890,9 +890,36 @@ Implement exactly:
 - exact one-byte alignment;
 - canonical signext/zeroext attributes on narrow named arguments;
 - only low8(r4) defined for i8 and bool returns;
-- canonical q2 return for program pointers;
+- normalized q2 return for program and function pointers, with bits 31:24
+  zero at the ordinary ABI boundary;
 - i64 arguments and returns in all four units when available;
 - stack packing without implicit padding.
+
+Apply the revised AS1 register-container contract without changing the LLVM
+data layout or source-level pointer type:
+
+- `ptr addrspace(1)` remains a fully defined 24-bit LLVM pointer and has
+  `sizeof == 3`;
+- the fourth byte of the target `GPR32` container is backend-only padding and
+  must never become visible in Clang IR, AST constant evaluation, debug types,
+  object layout, or C/C++ type behavior;
+- ordinary program- and function-pointer arguments and returns remain
+  normalized ABI values with container bits 31:24 zero;
+- packed stack arguments, globals, fields, arrays, and static initializers
+  remain exactly three bytes with one-byte alignment;
+- source-level equality and relational operations compare the logical 24-bit
+  pointer values, never target padding;
+- a cast from an AS1 pointer to `uint32_t` or another wider integer produces a
+  zero-extended 24-bit value;
+- a cast from an integer to an AS1 pointer uses the low 24 bits;
+- do not introduce an implicit AS0/AS1 conversion or represent the padding byte
+  as source-level `undef`, poison, or storage.
+
+Extend Clang ABI and CodeGen tests to cover a computed AS1 pointer passed to and
+returned from an ordinary function, `sizeof` and alignment of AS1 pointers,
+packed AS1 pointer arrays and structures, pointer equality, and pointer-to-i32
+conversion. The IR must continue to use `ptr addrspace(1)` rather than exposing
+a synthetic i32 container.
 
 Implement variadic functions:
 
@@ -1187,6 +1214,70 @@ Prompt 8 lowers it directly to an AS1 constant global and pointer.
 Prompt 8 lowers it to generic AS0-destination, AS1-source `llvm.memcpy`, which
 this prompt must recognize and lower to inline code or `SYS 0x10`.
 
+Prompt 7 was completed under the earlier rule that every register-form
+program pointer was immediately canonicalized. Apply the revised architecture
+during this prompt and update the affected Prompt 7 CodeGen tests rather than
+adding a separate follow-on milestone. Do not otherwise reopen completed
+Prompt 7 work.
+
+Model an AS1 pointer as a fully defined logical 24-bit `PROGPTR` held in a
+32-bit `GPR32` container:
+
+```text
+meaningful pointer bits = 23:0
+container padding       = 31:24
+```
+
+The padding byte is machine-level storage only. It is not an LLVM value bit and
+must not be modeled as LLVM `undef` or poison.
+
+Implement demand-driven program-pointer normalization:
+
+1. Remove unconditional high-byte clearing from AS1 GEP/pointer arithmetic.
+   A full `ADD32` or `SUB32` is legal when its low 24 bits implement the
+   required modulo-`2^24` result. The resulting padding byte may be arbitrary.
+
+2. Treat these as nonobserving program-pointer consumers that use only bits
+   23:0 and therefore do not require normalization:
+
+   - every ordinary and postincrement `LDP*` address;
+   - `JMPP` and `CALLP`;
+   - `SYS_MEMCPY_P`;
+   - another program-pointer add/subtract;
+   - a packed three-byte program- or function-pointer store.
+
+3. Insert or preserve normalization before observing uses:
+
+   - ordinary function-call arguments and ordinary pointer returns;
+   - `ptrtoint` to an integer wider than 24 bits;
+   - a full `CMP32` pointer comparison, unless a 24-bit-aware comparison is
+     selected;
+   - any conversion or operation that exposes the complete `GPR32` bit pattern;
+   - inline assembly using a general 32-bit value constraint rather than the
+     semantic `t` program-pointer constraint.
+
+4. Add a semantic target node or pseudo such as
+   `AVMISD::NORMALIZE_PROGPTR`. It clears only container bits 31:24 and must be
+   inserted only where required. Track known-normalized values when practical,
+   but correctness must not depend on global dataflow proving normalization.
+
+5. Lower AS1 pointer equality and ordering using logical bits 23:0. The initial
+   implementation may normalize both inputs and use `CMP32`; a direct
+   low16-plus-high8 comparison is an optional later optimization.
+
+6. Lower `ptrtoint ptr addrspace(1) to i32` as zero-extension of the logical
+   24-bit value. Lower `inttoptr` using the low 24 bits and leave padding
+   unspecified until a normalized consumer requires it.
+
+7. Add DAG combines that remove
+   `NORMALIZE_PROGPTR` immediately before `LDP*`, `JMPP`, `CALLP`, and
+   `SYS_MEMCPY_P`. Prefer producing relaxed temporaries directly rather than
+   relying only on cleanup combines.
+
+8. Keep symbols, null pointers, packed three-byte loads, and ABI ingress values
+   normalized when already convenient. Do not add work merely to make a local
+   temporary normalized.
+
 Implement:
 
 - debug.putc and debug.break as ordered side-effecting operations;
@@ -1199,6 +1290,8 @@ Implement:
   `SYS_MEMCPY_P` machine pseudo;
 - AS0 `memset` through the dedicated `llvm.avm.memset` intrinsic or generic
   `llvm.memset.p0.i16`, lowered to the `SYS_MEMSET` machine pseudo;
+- AS0 `memmove` through the dedicated `llvm.avm.memmove` intrinsic or generic
+  `llvm.memmove.p0.p0.i16`, lowered to the `SYS_MEMMOVE` machine pseudo;
 - Clang builtins for the recommended __avm_* source interfaces;
 - install `clang/lib/Headers/avm/pgmspace.h` as the public convenience
   header for program-space strings and copies, containing these interfaces
@@ -1269,12 +1362,37 @@ Implement memory intrinsic code generation exactly as follows.
    operand. Retain Prompt 5's profitable small-constant store expansion and
    route dynamic or non-inline fills through `SYS_MEMSET`.
 
-3. Recognize generic nonvolatile `llvm.memcpy` with an AS0 destination and AS1
+3. Add the dedicated AS0 move target intrinsic:
+
+   ```llvm
+   declare ptr @llvm.avm.memmove(ptr %dst, ptr %src, i16 %size)
+   ```
+
+   Define it in `llvm/include/llvm/IR/IntrinsicsAVM.td` with AS0 read/write
+   memory effects matching nonvolatile, overlap-permitting `memmove`. The
+   intrinsic returns the original destination pointer. Lower it to a semantic
+   `SYS_MEMMOVE` machine pseudo.
+
+   Also recognize ordinary nonvolatile generic LLVM memmove:
+
+   ```llvm
+   call void @llvm.memmove.p0.p0.i16(
+       ptr %dst,
+       ptr %src,
+       i16 %size,
+       i1 false)
+   ```
+
+   Retain Prompt 5's overlap-correct small-constant expansion and route dynamic
+   or non-inline moves through `SYS_MEMMOVE`. Never replace a memmove with a
+   memcpy representation unless analysis proves the ranges cannot overlap.
+
+4. Recognize generic nonvolatile `llvm.memcpy` with an AS0 destination and AS1
    source. Never require or create an AVM-specific IR intrinsic for this case.
    Retain profitable small constant copies as inline `LDP*` loads plus AS0
    stores. Lower dynamic or larger copies to a semantic `SYS_MEMCPY_P` pseudo.
 
-4. Give the pseudos these exact final physical interfaces:
+5. Give the pseudos these exact final physical interfaces:
 
    ```text
    SYS_MEMCPY:
@@ -1294,65 +1412,83 @@ Implement memory intrinsic code generation exactly as follows.
        use          r5 = val
        use          r6 = size
        encoding        = SYS 0x11
+
+   SYS_MEMMOVE:
+       tied use/def r4 = dst
+       use          r5 = src
+       use          r6 = size
+       encoding        = SYS 0x12
    ```
 
    The physical order for `SYS_MEMCPY_P` is intentionally `dst`, `size`,
    `src`, even though the source signature remains `(dst, src, size)`. Do not
-   insert an unused aligned argument slot. `SYS_MEMSET` naturally matches the
-   ordinary AVM argument assignment for `(dst, val, size)`.
+   insert an unused aligned argument slot or normalize `q3` solely for this
+   service: `SYS 0x10` consumes `q3[23:0]` and ignores its padding byte.
+   `SYS_MEMSET` naturally matches the ordinary AVM argument assignment for
+   `(dst, val, size)`. `SYS_MEMMOVE` likewise matches the ordinary assignment
+   for `(dst, src, size)`.
 
-5. Use glued, parallel-copy-safe fixed-register setup and result extraction,
+6. Use glued, parallel-copy-safe fixed-register setup and result extraction,
    analogous to call lowering but without an ordinary call-preserved register
    mask. Each `r4` destination operand is a tied input/output whose bit pattern
    is preserved by the service. Input-only `r5`, `r6`, and `q3` operands are
    uses, not clobbers, and remain valid after the instruction when live.
 
-6. Preserve chain and memory semantics precisely:
+7. Preserve chain and memory semantics precisely:
 
    - `SYS_MEMCPY` reads AS0 and writes AS0;
    - `SYS_MEMCPY_P` reads AS1 and writes AS0;
    - `SYS_MEMSET` writes AS0 and reads no memory;
+   - `SYS_MEMMOVE` reads AS0 and writes AS0, and its source and destination
+     may overlap;
    - copy pseudos carry the original source and destination MachineMemOperands;
    - the fill pseudo carries the original destination MachineMemOperand;
    - preserve alias information, unknown or constant size, and one-byte
      alignment;
-   - mark copy pseudos as loading and storing, and `SYS_MEMSET` as storing but
-     not loading;
+   - mark copy and move pseudos as loading and storing, and `SYS_MEMSET` as
+     storing but not loading;
    - none of the pseudos is an ordinary call;
    - attach no generic side-effect flag broader than the actual memory effects;
    - do not speculate or move them across potentially aliasing accesses;
-   - never select a service for a volatile generic `llvm.memcpy` or
-     `llvm.memset`. Leave volatile operations to conservative
-     target-independent expansion or an explicitly correct volatile sequence.
+   - never select a service for a volatile generic `llvm.memcpy`,
+     `llvm.memset`, or `llvm.memmove`. Leave volatile operations to
+     conservative target-independent expansion or an explicitly correct
+     volatile sequence;
+   - preserve memmove overlap semantics in all transformations. Convert a
+     memmove to memcpy only when nonoverlap is proven.
 
-7. Preserve source-level return values efficiently. `llvm.avm.memcpy` and
-   `llvm.avm.memset` directly return their tied destination results. Generic
-   LLVM `memcpy` and `memset` return `void`, but source-level builtins and
+8. Preserve source-level return values efficiently. `llvm.avm.memcpy`,
+   `llvm.avm.memset`, and `llvm.avm.memmove` directly return their tied
+   destination results. Generic LLVM `memcpy`, `memset`, and `memmove` return
+   `void`, but source-level builtins and
    library calls return their original `dst`; arrange the target nodes and tied
    destination values so common forms such as:
 
    ```c
    return memset(dst, val, n);
+   return memmove(dst, src, n);
    return __builtin_avm_memcpy_p(dst, src, n);
    ```
 
    need no redundant save-and-restore or post-service copy when register
    constraints permit.
 
-8. Keep the ordinary symbols `__avm_memcpy`, `memcpy`,
-   `__avm_memcpy_P`, `memcpy_P`, `__avm_memset`, and `memset` as normal-ABI
+9. Keep the ordinary symbols `__avm_memcpy`, `memcpy`,
+   `__avm_memcpy_P`, `memcpy_P`, `__avm_memset`, `memset`,
+   `__avm_memmove`, and `memmove` as normal-ABI
    fallback or address-taken functions. Recognize direct noninterposable calls
    when legal and convert them to the same intrinsic representations. An
    out-of-line `memcpy_P` wrapper must shuffle its ordinary ABI arguments into
    `r4`, `q3`, and `r5` before `SYS 0x10`. An out-of-line memset wrapper needs
    no nonstandard argument shuffle because its normal ABI assignment is already
-   `r4`, `r5`, and `r6`.
+   `r4`, `r5`, and `r6`. The out-of-line memmove wrapper also needs no
+   nonstandard shuffle.
 
 Do not invent size-dependent cycle formulas for the services in this milestone.
-For speed optimization, retain the existing measured small-copy and small-fill
-inline thresholds where available and otherwise prefer the service for dynamic
-or larger operations. For `-Os`/`-Oz`, compare final encoded bytes, including
-fixed-register setup copies.
+For speed optimization, retain the existing measured small-copy, small-fill,
+and overlap-correct small-move inline thresholds where available and otherwise
+prefer the service for dynamic or larger operations. For `-Os`/`-Oz`, compare
+final encoded bytes, including fixed-register setup copies.
 
 Add AVMTargetTransformInfo.{h,cpp}, return it from AVMTargetMachine, and use
 AVMCostModel as its only speed-cost source. Implement these exact TTI policies:
@@ -1395,7 +1531,10 @@ AVMCostModel as its only speed-cost source. Implement these exact TTI policies:
      fixed-register setup copies;
    - cost small constant fills from the selected inline store sequence; cost
      dynamic or larger fills as `SYS_MEMSET` plus required setup copies;
-   - do not invent unmeasured per-byte cycle formulas for copy or fill services;
+   - cost small constant memmoves from the selected overlap-correct sequence;
+     cost dynamic or larger moves as `SYS_MEMMOVE` plus setup copies;
+   - do not invent unmeasured per-byte cycle formulas for copy, fill, or move
+     services;
    - volatile and atomic-compatible operations retain the same execution cost
      but carry their required ordering constraints.
 
@@ -1404,11 +1543,15 @@ AVMCostModel as its only speed-cost source. Implement these exact TTI policies:
    pure math services expensive but speculatable according to their semantics;
    keep debug and timer services non-speculatable as already required.
 
-7. Constants and casts:
+7. Constants, casts, and program-pointer normalization:
    - upper LDI8 35, cold LDI8 53;
    - upper LDI16 52, cold LDI16 71;
    - ZEXT8 37, SEXT8 38, BSWAP16 38, BOOL 38;
-   - use two component costs for i32 constants.
+   - use two component costs for i32 constants;
+   - charge normalization only when an observing use or ordinary ABI boundary
+     requires it;
+   - assign zero normalization cost before `LDP*`, `JMPP`, `CALLP`,
+     `SYS_MEMCPY_P`, pointer arithmetic, or packed three-byte stores.
 
 8. Report vector operations as illegal and prohibit vectorization. Report jump
    tables as undesirable. Set unrolling preferences conservatively: do not
@@ -1425,6 +1568,9 @@ Audit post-RA selection using the measured model:
 - dense encodings before cold encodings;
 - compact MOV32 expansion;
 - no unnecessary copies around q2/q3 arguments and returns;
+- normalized padding at ordinary program-pointer argument and return boundaries;
+- no high-byte normalization for temporary pointers used only by `LDP*`,
+  `JMPP`, `CALLP`, `SYS_MEMCPY_P`, or packed three-byte stores;
 - no boolean materialization before a branch;
 - no address materialization for direct absolute data loads/stores;
 - frequently accessed stack slots assigned the lowest offsets;
@@ -1457,32 +1603,64 @@ Create a small freestanding C regression corpus and test -O0, -O2, -Os, and
 - upper-pair MOV32: two compact MOV instructions;
 - ordinary global byte load: direct absolute load where legal;
 - AS1 pointer iteration: native postincrement LDP;
+- indexed temporary AS1 load:
+
+  ```c
+  uint8_t read_program_char(program_char *base, int32_t index) {
+    return base[index];
+  }
+  ```
+
+  lowers to pointer arithmetic plus `LDP8U` with no intervening or preceding
+  high-byte `ZEXT8`/normalization whose only purpose is the load;
+- computed indirect calls use `CALLP` without padding normalization when the
+  pointer has no observing use;
+- computed AS1 pointers passed to or returned from ordinary functions are
+  normalized at the ABI boundary;
+- AS1 pointer equality is unaffected by different machine padding bytes;
+- AS1 `ptrtoint` to i32 zero-extends the logical 24-bit value;
+- packed three-byte AS1 pointer stores do not normalize solely for the store;
 - left shifts by 1, 2, 3, and 4 use the exact threshold policy.
 
-Add dedicated LLVM CodeGen tests for all three memory services:
+Update any Prompt 7 checks that required unconditional pointer
+canonicalization. Preserve tests that verify normalized `LDP24` results,
+packed three-byte memory representation, symbol materialization, and ABI
+boundaries; change tests for temporary arithmetic so they require the absence
+of unnecessary normalization.
+
+Add dedicated LLVM CodeGen tests for all four memory services:
 
 - direct `llvm.avm.memcpy` lowers to `SYS 0x0F` with tied `r4`, source in `r5`,
   size in `r6`, and no call-preserved register mask;
 - generic `llvm.memcpy.p0.p1.i16` lowers to `SYS 0x10` with tied `r4`, source in
-  `q3`, and size in `r5`;
+  `q3`, and size in `r5`, without normalizing a temporary source pointer solely
+  for the service;
 - direct `llvm.avm.memset` lowers to `SYS 0x11` with tied `r4`, value in `r5`,
   and size in `r6`;
 - eligible generic `llvm.memset.p0.i16` lowers to the same `SYS 0x11` pseudo,
   with its `i8` fill value zero-extended for `r5`;
+- direct `llvm.avm.memmove` and eligible generic
+  `llvm.memmove.p0.p0.i16` lower to `SYS 0x12` with tied `r4`, source in `r5`,
+  and size in `r6`;
 - final assembly proves there is no skipped `r5` argument slot for
   `memcpy_P`;
 - input-only source, value, and size registers remain usable after their
-  services;
+  services, including all `r5` and `r6` inputs to `SYS_MEMMOVE`;
 - returning the destination immediately after any operation introduces no
   unnecessary copy;
 - only `low8(r5)` controls memset bytes, while the complete input register is
   preserved;
-- small constant AS0 copies and fills retain Prompt 5's inline expansion;
+- small constant AS0 copies, fills, and moves retain Prompt 5's inline
+  expansion, with memmove sequences remaining correct for overlap;
 - small constant AS1-source copies use `LDP*` plus AS0 stores;
-- dynamic and representative larger copies and fills select their services;
-- volatile copies and fills do not select a service;
+- dynamic and representative larger copies, fills, and moves select their
+  services;
+- volatile copies, fills, and moves do not select a service;
 - surrounding may-alias loads and stores remain correctly ordered;
 - `SYS_MEMSET` is modeled as a store but not a load;
+- `SYS_MEMMOVE` is modeled as both a load and a store and does not carry
+  nonoverlap assumptions;
+- memmove is converted to memcpy only in a test where nonoverlap is proven;
 - AS1-source copies emit no `addrspacecast`, integer pointer conversion, or
   ordinary AS0 memcpy libcall;
 - test `-O0`, `-O2`, `-Os`, and `-Oz`, including cases where size and speed
@@ -1497,6 +1675,12 @@ Add an end-to-end address-space gate using the Clang driver rather than only
 - check the LLVM IR contains AS1 loads but no `addrspacecast`;
 - check final assembly uses `LDP8U` and the postincrement LDP form where the
   source pattern permits it;
+- include an indexed AS1 load whose computed pointer dies at the load and check
+  that no padding-byte normalization is emitted;
+- include a computed AS1 pointer crossing an ordinary call/return boundary and
+  check that normalization is emitted there;
+- include AS1 pointer equality and pointer-to-`uint32_t` conversion and verify
+  logical 24-bit semantics;
 - compile separate invalid C and C++ files with `not clang --target=avm` and
   verify failure for implicit AS0-to-AS1 conversion, implicit AS1-to-AS0
   conversion, explicit conversion in both directions, mixed conditional
@@ -1572,6 +1756,31 @@ Add an end-to-end `memset` gate through ordinary C and C++ source interfaces:
   `SYS 0x11`;
 - prove volatile memset operations do not select `SYS 0x11`.
 
+
+Add an end-to-end `memmove` gate through ordinary C and C++ source interfaces:
+
+- compile calls to `memmove(dst, src, n)`, `__builtin_memmove`, and
+  `__avm_memmove`, including a form that immediately returns the result;
+- verify Clang emits eligible generic `llvm.memmove` or the dedicated
+  `llvm.avm.memmove` representation without an unnecessary runtime call;
+- inspect final assembly and require `r4 = dst`, `r5 = src`, and `r6 = size`
+  at `sys 0x12`;
+- keep address-taking of `memmove` and `__avm_memmove` valid through their
+  ordinary-ABI fallback symbols;
+- link and execute zero-length and identical-pointer cases and prove they
+  perform no memory access;
+- execute nonoverlapping moves in both relative address orders;
+- execute overlapping `dst < src` and `dst > src` cases, including
+  `dst - src == n - 1`, `dst - src == n`, and one-byte moves;
+- verify exact temporary-array-equivalent results, no writes outside the
+  destination range, and preservation of `r4`, `r5`, `r6`, every unrelated
+  register, `CC`, and `SP`;
+- test small constant moves for overlap-correct inline expansion and dynamic or
+  larger moves for `SYS 0x12`;
+- prove volatile memmove operations do not select `SYS 0x12`;
+- add an optimization test proving memmove becomes memcpy only when alias
+  analysis proves nonoverlap.
+
 Compile the corpus with clang -ffreestanding to assembly and ELF objects, link
 a minimal no-runtime program with the existing AVM ld.lld target, and inspect
 the result with llvm-readobj and llvm-objdump.
@@ -1596,11 +1805,13 @@ C / basic C++
     -> Clang AVM ABI lowering
     -> LLVM IR with AS0 data, AS1 functions/program data, typed memcpy
        operations (`llvm.avm.memcpy` or generic AS0<-AS1 `llvm.memcpy`), and
-       `llvm.avm.memset` or generic AS0 `llvm.memset`
+       `llvm.avm.memset` or generic AS0 `llvm.memset`, and
+       `llvm.avm.memmove` or generic AS0 `llvm.memmove`
     -> AVM TTI using measured interpreter costs
     -> SelectionDAG using avm-interpreter-32u4-v1 scheduling
+    -> logical 24-bit PROGPTR values in GPR32 with demand-driven normalization
     -> AVM semantic machine pseudos, including SYS_MEMCPY, SYS_MEMCPY_P,
-       and SYS_MEMSET
+       SYS_MEMSET, and SYS_MEMMOVE
     -> register allocation with upper-register preference
     -> post-RA compact/dense/cold instruction selection
     -> existing MC ELF writer
@@ -1615,8 +1826,10 @@ This should support useful freestanding programs containing:
 * Direct and indirect calls.
 * Variadic functions.
 * Small aggregate passing and returning.
-* Program-space data, pooled `F("...")` strings, and function pointers.
-* Optimized AS0 copies, AS1-to-AS0 copies, and AS0 fills.
+* Program-space data, pooled `F("...")` strings, function pointers, and
+  relaxed temporary PROGPTR padding.
+* Optimized AS0 copies, AS1-to-AS0 copies, AS0 fills, and overlap-safe AS0
+  moves.
 * System services.
 
 The intentionally deferred work is GlobalISel, debug information, a hosted libc/libc++, helper-library implementations, jump-table policy, a custom frequency-weighted register-allocation-hint pass, worst-case-execution-time tooling, additional interpreter/native/JIT tune CPUs, stack-usage metadata format, source-level convenience syntax beyond `<avm/pgmspace.h>` and `F("...")`, and final flat-image packaging.

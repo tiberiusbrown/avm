@@ -30,15 +30,14 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- a0                    xor	r4, r4
+ c4 00 01              ldi16	r4, 0x100
  c1 40                 ldi8	r5, 0x40
- c6 00 01              ldi16	r6, 0x100
- 18                    add	r6, r4
- 59                    st8	[r6], r5
+ 09                    mov	r6, r5
+ f6 06                 st8	[r4+], r6
+ f4 b6                 dec16	r6
  f4 b5                 dec16	r5
- f4 ac                 inc16	r4
- cc 40                 cmpi.s8	r4, 0x40
- d1 f3                 brne8	avm_test_main+7
+ f6 2d                 tst16	r5
+ d1 f6                 brne8	avm_test_main+10
  c2 40                 ldi8	r6, 0x40
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

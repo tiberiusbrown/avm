@@ -4,14 +4,14 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/call_args.elf:	file format elf
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 call_args.c
-00000276 l     F .text	00000030 mix_arguments
+00000276 l     F .text	0000002e mix_arguments
 00000100 l     O .data	00000004 call_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	00000060 avm_test_main
-000002a6 g     F .text	00000002 avm_halt
-000002a8 g     F .text	0000002d __avm_ashlsi3
+000002a4 g     F .text	00000002 avm_halt
+000002a6 g     F .text	0000002d __avm_ashlsi3
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 90 00              call16	avm_halt
+ e1 8e 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -93,14 +93,12 @@ Disassembly of section .text:
  14                    add	r5, r4
  f4 2c                 ldsp16	r4, [sp+0xb]
  11                    add	r4, r5
- 00                    nop
  a5                    xor	r5, r5
  f0 30 0f              ldsp16	r0, [sp+0xf]
  f0 31 11              ldsp16	r1, [sp+0x11]
  f7 62                 add32	q0, q2
  f4 34                 ldsp16	r4, [sp+0xd]
  12                    add	r4, r6
- 00                    nop
  a5                    xor	r5, r5
  c2 08                 ldi8	r6, 0x8
  af                    xor	r7, r7

@@ -5,12 +5,12 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 stack_array.c
 00000100 l     O .data	00000002 stack_seed
-00000239 l     F .text	00000053 stack_kernel
+00000239 l     F .text	00000059 stack_kernel
 00000102 l     O .data	00000002 stack_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
 00000215 g     F .text	00000024 avm_test_main
-0000028c g     F .text	00000002 avm_halt
+00000292 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 77                 call8	avm_halt
+ d5 7d                 call8	avm_halt
 
 <avm_test_main>:
  b1                    push16	r1
@@ -48,52 +48,52 @@ Disassembly of section .text:
  ef                    ret
 
 <stack_kernel>:
+ b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 d0                 adjsp	_start+14
- a5                    xor	r5, r5
- f0 16 00              leasp	r6, 0x0
- 19                    add	r6, r5
- 78                    st16	[r6], r4
+ d6 d0                 adjsp	_start+15
+ f0 15 00              leasp	r5, 0x0
+ c2 18                 ldi8	r6, 0x18
+ f7 4c                 st16	[r7+], r4
  c8 25                 addi.s8	r4, 0x25
- c9 02                 addi.s8	r5, 0x2
- cd 30                 cmpi.s8	r5, 0x30
- d1 f3                 brne8	stack_kernel+6
+ f4 b6                 dec16	r6
+ f6 2e                 tst16	r6
+ d1 f6                 brne8	stack_kernel+11
  a0                    xor	r4, r4
- 04                    mov	r5, r4
- f4 03                 ldsp16	r7, [sp+0x0]
- 08                    mov	r6, r4
- f0 10 00              leasp	r0, 0x0
- f2 06                 add	r0, r6
- f1 08                 mov	r1, r0
+ f0 15 02              leasp	r5, 0x2
+ c2 16                 ldi8	r6, 0x16
+ f0 30 00              ldsp16	r0, [sp+0x0]
+ 0e                    mov	r7, r6
+ f1 15                 mov	r2, r5
+ f1 0a                 mov	r1, r2
+ f0 6c 74              ld16	r3, [r2]
+ f9 62                 xor	r3, r0
  f0 09 02              addi.s8	r1, 0x2
- f0 6c 52              ld16	r2, [r1]
- f9 5e                 xor	r2, r7
- f0 08 04              addi.s8	r0, 0x4
- f0 6c f0              ld16	r7, [r0]
- f9 ea                 xor	r7, r2
- ad                    xor	r7, r5
- f0 6d f2              st16	[r1], r7
- ca 02                 addi.s8	r6, 0x2
- ce 2c                 cmpi.s8	r6, 0x2c
- d1 df                 brne8	stack_kernel+24
- f4 ad                 inc16	r5
- cd 04                 cmpi.s8	r5, 0x4
- d1 d6                 brne8	stack_kernel+21
+ f0 6c 12              ld16	r0, [r1]
+ f9 0e                 xor	r0, r3
+ f9 12                 xor	r0, r4
+ f0 6d 14              st16	[r2], r0
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ f1 11                 mov	r2, r1
+ d1 e6                 brne8	stack_kernel+35
+ f4 ac                 inc16	r4
+ cc 04                 cmpi.s8	r4, 0x4
+ d1 d8                 brne8	stack_kernel+27
  a0                    xor	r4, r4
- 04                    mov	r5, r4
- f0 16 00              leasp	r6, 0x0
- 19                    add	r6, r5
- 6a                    ld16	r6, [r6]
- 12                    add	r4, r6
- c9 02                 addi.s8	r5, 0x2
- cd 30                 cmpi.s8	r5, 0x30
- d1 f4                 brne8	stack_kernel+65
- d6 30                 adjsp	avm_halt+44
+ f0 15 00              leasp	r5, 0x0
+ c2 18                 ldi8	r6, 0x18
+ f7 2f                 ld16	r7, [r7+]
+ 13                    add	r4, r7
+ f4 b6                 dec16	r6
+ f6 2e                 tst16	r6
+ d1 f7                 brne8	stack_kernel+73
+ d6 30                 adjsp	avm_halt+43
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
+ bb                    pop16	r3
  ef                    ret
 
 <avm_halt>:

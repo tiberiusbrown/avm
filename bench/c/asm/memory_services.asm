@@ -10,8 +10,8 @@ SYMBOL TABLE:
 000001c2 l     O .data	00000002 memory_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	0000005a avm_test_main
-0000026f g     F .text	00000002 avm_halt
+00000215 g     F .text	0000005b avm_test_main
+00000270 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -26,19 +26,18 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 5a                 call8	avm_halt
+ d5 5b                 call8	avm_halt
 
 <avm_test_main>:
  d6 f8                 adjsp	_start+15
- a0                    xor	r4, r4
+ c4 00 01              ldi16	r4, 0x100
  c1 09                 ldi8	r5, 0x9
- c6 00 01              ldi16	r6, 0x100
- 18                    add	r6, r4
- 59                    st8	[r6], r5
+ c2 60                 ldi8	r6, 0x60
+ f6 05                 st8	[r4+], r5
  c9 0d                 addi.s8	r5, 0xd
- f4 ac                 inc16	r4
- cc 60                 cmpi.s8	r4, 0x60
- d1 f3                 brne8	avm_test_main+5
+ f4 b6                 dec16	r6
+ f6 2e                 tst16	r6
+ d1 f6                 brne8	avm_test_main+9
  d7 01                 sys	debug_break
  c5 00 01              ldi16	r5, 0x100
  c4 62 01              ldi16	r4, 0x162
@@ -59,15 +58,15 @@ Disassembly of section .text:
  d7 12                 sys	memmove
  f4 12                 ldsp16	r6, [sp+0x4]
  f6 2e                 tst16	r6
- d0 0f                 breq8	avm_test_main+79
+ d0 0f                 breq8	avm_test_main+80
  a0                    xor	r4, r4
  c5 62 01              ldi16	r5, 0x162
  f7 0f                 ld8u	r7, [r5+]
  13                    add	r4, r7
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
- d0 03                 breq8	avm_test_main+80
- d4 f5                 jmp8	avm_test_main+68
+ d0 03                 breq8	avm_test_main+81
+ d4 f5                 jmp8	avm_test_main+69
  a0                    xor	r4, r4
  f0 5c c2 01           stm16	[0x1c2], r4
  d7 01                 sys	debug_break

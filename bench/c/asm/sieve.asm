@@ -6,8 +6,8 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sieve.c
 00000000 l    df *ABS*	00000000 runtime.c
 00000500 g     F .text	00000015 _start
-00000515 g     F .text	00000045 avm_test_main
-0000055a g     F .text	00000002 avm_halt
+00000515 g     F .text	00000053 avm_test_main
+00000568 g     F .text	00000002 avm_halt
 00000100 g     O .data	00000384 A
 
 Disassembly of section .text:
@@ -23,42 +23,49 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 45                 call8	avm_halt
+ d5 53                 call8	avm_halt
 
 <avm_test_main>:
+ b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
  c0 02                 ldi8	r4, 0x2
- c1 05                 ldi8	r5, 0x5
- c6 04 01              ldi16	r6, 0x104
+ f0 01 05              ldi8	r1, 0x5
+ c2 04                 ldi8	r6, 0x4
+ c7 04 01              ldi16	r7, 0x104
  d7 01                 sys	debug_break
  f0 04 00 01           ldi16	r0, 0x100
  f2 04                 add	r0, r4
- 0c                    mov	r7, r4
- f3 1f                 mulu8.w	r7, r7
+ 04                    mov	r5, r4
+ f3 15                 mulu8.w	r5, r5
  f0 6c 00              ld8u	r0, [r0]
  f4 a0                 tst8	r0
- d1 1b                 brne8	avm_test_main+54
+ d1 20                 brne8	avm_test_main+63
  f0 04 83 03           ldi16	r0, 0x383
- f5 07                 cmp	r0, r7
- d2 13                 brult8	avm_test_main+54
- f1 06                 mov	r0, r6
- f0 01 01              ldi8	r1, 0x1
- f0 6d 20              st8	[r0], r1
- 1c                    add	r7, r4
+ f5 05                 cmp	r0, r5
+ d2 18                 brult8	avm_test_main+63
+ f0 00 00              ldi8	r0, 0x0
+ 07                    mov	r5, r7
+ f2 24                 add	r5, r0
+ f0 02 01              ldi8	r2, 0x1
+ f3 06                 st8	[r5], r2
  f2 04                 add	r0, r4
- f0 05 84 03           ldi16	r1, 0x384
- f5 2d                 cmp	r7, r1
- d2 ef                 brult8	avm_test_main+37
- 19                    add	r6, r5
- c9 02                 addi.s8	r5, 0x2
+ 06                    mov	r5, r6
+ f2 24                 add	r5, r0
+ f0 06 84 03           ldi16	r2, 0x384
+ f5 26                 cmp	r5, r2
+ d2 eb                 brult8	avm_test_main+42
+ f2 2d                 add	r7, r1
+ f2 29                 add	r6, r1
+ f0 09 02              addi.s8	r1, 0x2
  f4 ac                 inc16	r4
  cc 1e                 cmpi.s8	r4, 0x1e
- d1 cc                 brne8	avm_test_main+11
+ d1 c3                 brne8	avm_test_main+15
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0
  b9                    pop16	r1
+ ba                    pop16	r2
  ef                    ret
 
 <avm_halt>:

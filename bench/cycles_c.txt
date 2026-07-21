@@ -1,5 +1,19 @@
      1598017   bubble1.c
      1473025   bubble2.c
      1764413   bubble4.c
-      256173   fibonacci.c
+      527117   call_args.c
+     4201064   crc16.c
+     6112048   divmod.c
+      253543   fibonacci.c
+      921536   float.c
+       85356   indirect_call.c
+       20484   memory_services.c
+    11799192   mixed_width.c
+      951187   multiply.c
+     1494801   pointer_walk.c
+      776117   select.c
+      562856   shifts.c
       537721   sieve.c
+     1359168   stack_array.c
+      746861   struct_copy.c
+     1075589   switch.c

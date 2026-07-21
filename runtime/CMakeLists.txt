@@ -83,6 +83,10 @@ add_avm_runtime_object(
     "${AVM_RUNTIME_SOURCE_DIR}/lib/runtime.c"
     runtime)
 add_avm_runtime_object(
+    AVM_RUNTIME_INTEGER_OBJECT
+    "${AVM_RUNTIME_SOURCE_DIR}/lib/integer.c"
+    integer)
+add_avm_runtime_object(
     AVM_RUNTIME_MATH_OBJECT
     "${AVM_RUNTIME_SOURCE_DIR}/lib/math.c"
     math)
@@ -97,6 +101,7 @@ add_avm_runtime_object(
 
 set(AVM_RUNTIME_LIBRARY_OBJECTS
     "${AVM_RUNTIME_CORE_OBJECT}"
+    "${AVM_RUNTIME_INTEGER_OBJECT}"
     "${AVM_RUNTIME_MATH_OBJECT}"
     "${AVM_RUNTIME_STRING_OBJECT}"
     "${AVM_RUNTIME_PGMSPACE_OBJECT}"

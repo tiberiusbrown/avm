@@ -404,6 +404,12 @@
 ; Native r1 has no ABI zero-register requirement in this assembly-only runtime.
 #define F0_COLDMEM_SPEC            r1
 
+; ED-EE displaced-memory decoder scratch. The second byte remains in r25 so
+; width bit 4 survives the exact offset-byte handoff; the fetched biased
+; displacement replaces the no-longer-needed primary/secondary scratch in r24.
+#define DISPLACED_SPEC             r25
+#define DISPLACED_OFFSET           r24
+
 ; FB-FD shared conditional-move gate scratch allocation.
 #define CMOV_TEST                  r25
 #define CMOV_SECONDARY             r26
@@ -1455,11 +1461,36 @@ primary_EC_divrem16_page:
     assert_primary_slot_width primary_EC_divrem16_page
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-; 0xED-0xEE: reserved
+; 0xED-0xEE: full-register biased-displacement data-space memory
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Encoding:
+;   ED dddWaaa0 off8    LD8U/LD16 rD,[rA+disp]
+;   EE dddWaaa0 off8    ST8/ST16 [rA+disp],rS
+;
+;   ddd   data register r0-r7
+;   W     0=byte, 1=word
+;   aaa   address register r0-r7
+;   bit 0 reserved and required to be zero
+;   disp  = unsigned(off8) - 32, giving -32..+223
+;
+; Native SREG.T preserves load/store selection through both SPI handoffs.
+; The primary slots advance VM_PC from the primary opcode to the specifier and
+; leave the high-byte carry update to the common entry.
 
-emit_primary_stub primary_ED_reserved, invalid_primary_instruction_func
-emit_primary_stub primary_EE_reserved, invalid_primary_instruction_func
+primary_ED_displaced_load:
+    clt
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    rjmp displaced_memory_entry
+    assert_primary_slot_width primary_ED_displaced_load
+
+primary_EE_displaced_store:
+    set
+    add  VM_PCL, ONE
+    adc  VM_PCM, ZERO
+    rjmp displaced_memory_entry
+    assert_primary_slot_width primary_EE_displaced_store
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0xEF: RET
@@ -1552,6 +1583,99 @@ primary_FF_floating_page:
 primary_table_end:
 .if (primary_table_end - primary_table) != (256 * PRIMARY_STRIDE_BYTES)
     .error "primary dispatch table is not exactly 256 four-word slots"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ED-EE full-register biased-displacement data-space memory
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Entry state:
+;   * VM_PC names the second-byte specifier.
+;   * The specifier byte is completing in SPDR.
+;   * T=0 for ED loads and T=1 for EE stores.
+;
+; The primary slot reaches this entry on cycle 14 after the OUT that started
+; the specifier transfer. The standard IN/OUT handoff consumes the specifier on
+; cycle 17 and starts the biased offset byte on cycle 18. While that byte is in
+; flight, the handler validates bit 0, captures the original base address,
+; decodes the data-register pointer, and applies the constant -32 bias. CLI/OUT
+; then lands exactly on cycle 35, seventeen cycles after the offset transfer
+; began. The final offset add and memory operation execute while the following
+; primary opcode is in flight.
+;
+; Capturing the base before destination writeback makes every ordinary load
+; alias legal, including rD == rA. Stores read the original source only after
+; the base is captured, so rS == rA is also legal. Architectural VM_FLAGS are
+; preserved.
+
+displaced_memory_start:
+displaced_memory_entry:
+    adc   VM_PCH, ZERO
+    clr   r27                    ; XH for register-file addressing
+    clr   r31                    ; ZH until the base address is loaded
+    in    DISPLACED_SPEC, SPDR
+    out   SPDR, ZERO             ; begin biased-offset transfer
+
+    ; Bit zero is reserved. Reject malformed specifiers before any architectural
+    ; destination writeback or data-space memory access.
+    sbrc  DISPLACED_SPEC, 0
+    rjmp  invalid_secondary_instruction_func
+
+    ; Decode aaa into X and load the complete original base directly into Z.
+    ; aaa is already positioned as twice the architectural register index.
+    mov   r26, DISPLACED_SPEC
+    andi  r26, 0x0e
+    subi  r26, -8
+    ld    r30, X+
+    ld    r31, X
+
+    ; Decode ddd into X. Swapping places ddd in bits 3:1, already pre-scaled
+    ; for the native register-file byte address.
+    mov   r26, DISPLACED_SPEC
+    swap  r26
+    andi  r26, 0x0e
+    subi  r26, -8
+
+    ; Apply the fixed bias while the offset byte is still transferring. SBIW's
+    ; immediate range includes 32, so this costs one word and two cycles.
+    sbiw  r30, 32
+
+    cli
+    out   SPDR, ZERO             ; exact cycle 35: following-primary transfer
+    in    DISPLACED_OFFSET, SPDR
+    sei
+
+    ; Complete effectiveAddress = originalBase + unsigned(off8) - 32.
+    add   r30, DISPLACED_OFFSET
+    adc   r31, ZERO
+
+    ; T was set by the primary opcode and survives all intervening work.
+    brts  displaced_memory_store
+
+displaced_memory_load:
+    ; Load through Z before touching the dynamically selected destination in X.
+    ; Byte loads leave r1 cleared; word loads conditionally replace it.
+    ld    r0, Z+
+    clr   r1
+    sbrc  DISPLACED_SPEC, 4
+    ld    r1, Z
+    st    X+, r0
+    st    X,  r1
+    rjmp  cluster_a_tail_18
+
+displaced_memory_store:
+    ; Capture the complete original source before writing memory. A byte store
+    ; still reads the high byte, allowing one compact shared byte/word body.
+    ld    r0, X+
+    ld    r1, X
+    st    Z+, r0
+    sbrc  DISPLACED_SPEC, 4
+    st    Z,  r1
+    rjmp  cluster_a_tail_18
+
+displaced_memory_end:
+.if (displaced_memory_end - displaced_memory_start) != 74
+    .error "ED-EE displaced-memory handler must occupy exactly 37 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

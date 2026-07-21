@@ -583,6 +583,33 @@ dddWaaaP
 
 Every bit pattern selects valid registers and modifiers.
 
+### 18.8.1. Biased-displacement general-memory operand bytes
+
+Primary opcodes `ED` and `EE` are followed by a register/width specifier and a
+biased unsigned offset byte:
+
+```text
+ED dddWaaa0 off8    load
+EE dddWaaa0 off8    store
+```
+
+| Field | Meaning |
+|---|---|
+| `ddd` bits `7:5` | Data register `rD` or `rS` |
+| `W` bit `4` | `0` byte, `1` word |
+| `aaa` bits `3:1` | Pointer register `rA` |
+| bit `0` | Reserved; MUST be zero |
+| `off8` | Biased displacement byte |
+
+The architectural displacement is:
+
+```text
+displacement = unsigned8(off8) - 32
+```
+
+Therefore the representable displacement range is `-32..+223`, and zero
+displacement is encoded as `off8 = 0x20`.
+
 ### 18.9. Division/remainder operand byte
 
 The `EC` instruction family uses:
@@ -721,7 +748,8 @@ A value is malformed if `(specifier & 0x80) != 0`.
 | `E4-E7` | `JMPP qN` | 1 | Preserve |
 | `E8-EB` | `CALLP qN` | 1 | Preserve |
 | `EC` | `UDIV16` / `UREM16` / `SDIV16` / `SREM16` | 2 | Preserve |
-| `ED-EE` | Reserved | — | — |
+| `ED` | `LD8U` / `LD16 rD,[rA+disp]` | 3 | Preserve |
+| `EE` | `ST8` / `ST16 [rA+disp],rS` | 3 | Preserve |
 | `EF` | `RET` | 1 | Preserve |
 | `F0` | Cold-form page | 2-4 | Instruction-defined |
 | `F1` | Dense page 1 | 2 | Instruction-defined |
@@ -921,7 +949,46 @@ SREM16(0x8000,0xFFFF) = 0x0000
 All four instructions preserve every unrelated general-purpose register,
 `CC`, and `SP`. A distinct `rS` is preserved.
 
-### 22.5. Stack adjustment and services
+### 22.5. Biased-displacement data-space memory
+
+The three-byte `ED` and `EE` families use the operand format from Section
+18.8.1. All data and pointer registers may be any of `r0-r7`.
+
+```text
+ED ddd0aaa0 off8    LD8U rD,[rA+disp]
+ED ddd1aaa0 off8    LD16 rD,[rA+disp]
+EE ddd0aaa0 off8    ST8  [rA+disp],rS
+EE ddd1aaa0 off8    ST16 [rA+disp],rS
+```
+
+Let:
+
+```text
+disp = unsigned8(off8) - 32
+effectiveAddress = low16(original(rA) + disp)
+```
+
+Semantics:
+
+```text
+LD8U: rD = zero_extend8(mem8[effectiveAddress])
+LD16: rD = mem16le[effectiveAddress]
+ST8:  mem8[effectiveAddress] = low8(original(rS))
+ST16: mem16le[effectiveAddress] = original(rS)
+```
+
+The pointer register is not modified. Loads and stores use the original pointer
+and source values, so all aliases are legal, including `rD == rA` and
+`rS == rA`. Multi-byte accesses are little-endian. All four instructions
+preserve `CC`.
+
+For an ordinary access through a general register, assemblers SHOULD prefer an
+applicable one-byte or dense upper-pointer encoding first, then use `ED` or
+`EE` with `off8 = 0x20`. The ordinary `P=0` forms in `F0 6C-6D` remain valid
+but are noncanonical when the corresponding `ED` or `EE` encoding is
+available.
+
+### 22.6. Stack adjustment and services
 
 `ADJSP simm8`:
 
@@ -1052,6 +1119,10 @@ W=1, P=1  ST16 [rA+],rS
 Postincrement adds one for byte operations and two for word operations.
 
 Ordinary loads and all stores permit `rD/rS == rA`. Postincrement loads reserve `rD == rA`.
+
+The ordinary `P=0` encodings remain architecturally valid. An assembler SHOULD
+normally use the `ED` or `EE` biased-displacement form with `off8 = 0x20`
+instead, unless a shorter upper-register encoding is available.
 
 ## 24. `F1` register, stack-byte, and SP page
 
@@ -1473,6 +1544,10 @@ S = signed_n(L) < signed_n(R)
 ## 37. Load and store semantics
 
 All multi-byte memory operations use little-endian byte order.
+
+A biased-displacement operation computes its effective address from the
+original pointer, performs no pointer writeback, and interprets its encoded
+offset as `unsigned8(off8) - 32`.
 
 For a postincrement operation:
 

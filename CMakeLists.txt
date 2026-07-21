@@ -169,7 +169,8 @@ execute_process(
     COMMAND
         "${AVM_OBJDUMP}"
         --disassemble
-        --source
+        --syms
+        --symbolize-operands
         --demangle
         --print-imm-hex
         "${AVM_INPUT}"

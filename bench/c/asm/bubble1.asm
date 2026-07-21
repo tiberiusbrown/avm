@@ -1,10 +1,19 @@
 
 C:/Users/Brown/Documents/GitHub/avm/build/bench/c/bubble1.elf:	file format elf32-avm
 
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 crt0_test.c
+00000000 l    df *ABS*	00000000 bubble1.c
+00000000 l    df *ABS*	00000000 runtime.c
+00000200 g     F .text	00000015 _start
+00000215 g     F .text	00000063 avm_test_main
+00000278 g     F .text	00000002 avm_halt
+00000100 g     O .data	00000040 A
+
 Disassembly of section .text:
 
 00000200 <_start>:
-     200: d5 13        call8	0x13
+     200: d5 13        call8	avm_test_main
      202: 04           mov	r5, r4
      203: c0 46        ldi8	r4, 0x46
      205: c2 50        ldi8	r6, 0x50
@@ -14,7 +23,7 @@ Disassembly of section .text:
      20d: c0 0a        ldi8	r4, 0xa
      20f: d7 00        sys	debug_putc
      211: d7 01        sys	debug_break
-     213: d5 63        call8	0x63
+     213: d5 63        call8	avm_halt
 
 00000215 <avm_test_main>:
      215: b3           push16	r3
@@ -29,8 +38,8 @@ Disassembly of section .text:
      222: f4 b5        dec16	r5
      224: f4 ac        inc16	r4
      226: cc 40        cmpi.s8	r4, 0x40
-     228: d0 02        breq8	0x2
-     22a: d4 f1        jmp8	-0xf
+     228: d0 02        breq8	avm_test_main+23
+     22a: d4 f1        jmp8	avm_test_main+8
      22c: c2 40        ldi8	r6, 0x40
      22e: d7 01        sys	debug_break
      230: c0 00        ldi8	r4, 0x0
@@ -48,7 +57,7 @@ Disassembly of section .text:
      248: f0 6c 66     ld8u	r3, [r3]
      24b: f6 43        sext8	r3
      24d: f5 13        cmp	r2, r3
-     24f: d9 09        brsge8	0x9
+     24f: d9 09        brsge8	avm_test_main+69
      251: f3 0f        st8	[r7], r3
      253: 0b           mov	r6, r7
      254: f4 b6        dec16	r6
@@ -58,13 +67,13 @@ Disassembly of section .text:
      25c: f4 af        inc16	r7
      25e: f4 b0        dec16	r0
      260: f6 28        tst16	r0
-     262: d0 02        breq8	0x2
-     264: d4 da        jmp8	-0x26
+     262: d0 02        breq8	avm_test_main+81
+     264: d4 da        jmp8	avm_test_main+43
      266: 0e           mov	r7, r6
      267: f1 77        zext8	r7
      269: cf 02        cmpi.s8	r7, 0x2
-     26b: d2 02        brult8	0x2
-     26d: d4 c5        jmp8	-0x3b
+     26b: d2 02        brult8	avm_test_main+90
+     26d: d4 c5        jmp8	avm_test_main+31
      26f: d7 01        sys	debug_break
      271: c0 00        ldi8	r4, 0x0
      273: b8           pop16	r0
@@ -74,4 +83,4 @@ Disassembly of section .text:
      277: ef           ret
 
 00000278 <avm_halt>:
-     278: d4 fe        jmp8	-0x2
+     278: d4 fe        jmp8	avm_halt

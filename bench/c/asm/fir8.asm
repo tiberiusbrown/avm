@@ -9,8 +9,8 @@ SYMBOL TABLE:
 00000170 l     O .data	00000002 fir_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	0000007d avm_test_main
-00000292 g     F .text	00000002 avm_halt
+00000215 g     F .text	0000007c avm_test_main
+00000291 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 7d                 call8	avm_halt
+ d5 7c                 call8	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -62,7 +62,7 @@ Disassembly of section .text:
  f2 07                 add	r0, r7
  f0 01 10              ldi8	r1, 0x10
  f0 06 60 01           ldi16	r2, 0x160
- f0 03 00              ldi8	r3, 0x0
+ f2 4b                 sub	r3, r3
  f0 6c c5              ld8u	r6, [r2+]
  f0 6c 81              ld8u	r4, [r0+]
  f6 44                 sext8	r4
@@ -71,21 +71,21 @@ Disassembly of section .text:
  f2 1e                 add	r3, r6
  f4 b1                 dec16	r1
  f6 29                 tst16	r1
- d1 ec                 brne8	avm_test_main+72
+ d1 ec                 brne8	avm_test_main+71
  f2 27                 add	r5, r3
  f4 af                 inc16	r7
  cf 40                 cmpi.s8	r7, 0x40
- d1 d4                 brne8	avm_test_main+56
+ d1 d5                 brne8	avm_test_main+56
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 ac                 inc16	r4
  08                    mov	r6, r4
  f1 76                 zext8	r6
  ce 10                 cmpi.s8	r6, 0x10
- d1 c6                 brne8	avm_test_main+53
+ d1 c7                 brne8	avm_test_main+53
  f0 5d 70 01           stm16	[0x170], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 02                 adjsp	avm_test_main+122
+ d6 02                 adjsp	avm_test_main+121
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

@@ -51,34 +51,33 @@ Disassembly of section .text:
  f0 30 00              ldsp16	r0, [sp+0x0]
  f7 1e                 ld8u	r6, [r7+]
  f1 71                 zext8	r1
- f0 03 01              ldi8	r3, 0x1
- f5 19                 cmp	r3, r1
- d3 1b                 brslt8	avm_test_main+79
+ f0 0d 02              cmpi.s8	r1, 0x2
+ d9 1a                 brsge8	avm_test_main+76
  f4 a1                 tst8	r1
- d0 42                 breq8	avm_test_main+122
+ d0 40                 breq8	avm_test_main+118
  f0 0d 01              cmpi.s8	r1, 0x1
- d1 2e                 brne8	avm_test_main+107
+ d1 2c                 brne8	avm_test_main+103
  f0 03 a0              ldi8	r3, 0xa0
- f0 01 00              ldi8	r1, 0x0
+ f2 39                 sub	r1, r1
  f0 02 03              ldi8	r2, 0x3
  f5 1e                 cmp	r3, r6
  fc 0a                 cmov.ult	r1, r2
  fa 53                 lsl16i	r6, 0x3
  a2                    xor	r4, r6
- d4 45                 jmp8	avm_test_main+148
+ d4 48                 jmp8	avm_test_main+148
  f0 0d 02              cmpi.s8	r1, 0x2
- d0 30                 breq8	avm_test_main+132
+ d0 32                 breq8	avm_test_main+131
  f0 0d 03              cmpi.s8	r1, 0x3
- d1 12                 brne8	avm_test_main+107
+ d1 11                 brne8	avm_test_main+103
  f0 01 04              ldi8	r1, 0x4
- f0 02 00              ldi8	r2, 0x0
+ f2 42                 sub	r2, r2
  f4 a6                 tst8	r6
  fb 0a                 cmov.eq	r1, r2
  08                    mov	r6, r4
  fa 9f                 lsr16i	r6, 0xf
  fa 31                 lsl16i	r4, 0x1
  92                    or	r4, r6
- d4 29                 jmp8	avm_test_main+148
+ d4 2d                 jmp8	avm_test_main+148
  06                    mov	r5, r6
  fa 85                 lsr16i	r5, 0x5
  f0 01 03              ldi8	r1, 0x3
@@ -86,19 +85,20 @@ Disassembly of section .text:
  c1 05                 ldi8	r5, 0x5
  f3 19                 mulu8.w	r6, r5
  12                    add	r4, r6
- d4 1a                 jmp8	avm_test_main+148
+ d4 1e                 jmp8	avm_test_main+148
  12                    add	r4, r6
+ f0 03 01              ldi8	r3, 0x1
  f9 78                 and	r3, r6
  f0 01 02              ldi8	r1, 0x2
  f2 3b                 sub	r1, r3
- d4 10                 jmp8	avm_test_main+148
- f0 01 30              ldi8	r1, 0x30
- f9 38                 and	r1, r6
- f0 02 04              ldi8	r2, 0x4
- f0 0d 30              cmpi.s8	r1, 0x30
- fb 1a                 cmov.eq	r3, r2
+ d4 11                 jmp8	avm_test_main+148
+ f0 02 30              ldi8	r2, 0x30
+ f9 58                 and	r2, r6
+ f0 01 01              ldi8	r1, 0x1
+ f0 03 04              ldi8	r3, 0x4
+ f0 0e 30              cmpi.s8	r2, 0x30
+ fb 0b                 cmov.eq	r1, r3
  22                    sub	r4, r6
- f1 0b                 mov	r1, r3
  f4 b0                 dec16	r0
  f6 28                 tst16	r0
  d1 8f                 brne8	avm_test_main+41

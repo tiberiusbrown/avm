@@ -9,8 +9,8 @@ SYMBOL TABLE:
 00000280 l     O .data	00000002 string_scan_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	00000139 avm_test_main
-0000044f g     F .text	00000002 avm_halt
+00000316 g     F .text	00000137 avm_test_main
+0000044d g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 39 01              call16	avm_halt
+ e1 37 01              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -35,7 +35,7 @@ Disassembly of section .text:
  d6 f4                 adjsp	_start+16
  f0 05 00 01           ldi16	r1, 0x100
  c2 61                 ldi8	r6, 0x61
- f0 02 00              ldi8	r2, 0x0
+ f2 42                 sub	r2, r2
  c0 03                 ldi8	r4, 0x3
  f4 48                 stsp16	[sp+0x2], r4
  c0 1f                 ldi8	r4, 0x1f
@@ -66,7 +66,7 @@ Disassembly of section .text:
  f4 ae                 inc16	r6
  f4 b3                 dec16	r3
  f6 2b                 tst16	r3
- d1 e6                 brne8	avm_test_main+52
+ d1 e6                 brne8	avm_test_main+51
  f4 10                 ldsp16	r4, [sp+0x4]
  f2 20                 add	r4, r0
  c8 08                 addi.s8	r4, 0x8
@@ -82,7 +82,7 @@ Disassembly of section .text:
  f4 19                 ldsp16	r5, [sp+0x6]
  f4 ad                 inc16	r5
  cd 08                 cmpi.s8	r5, 0x8
- d1 a8                 brne8	avm_test_main+25
+ d1 a8                 brne8	avm_test_main+24
  c4 00 02              ldi16	r4, 0x200
  c1 07                 ldi8	r5, 0x7
  c2 80                 ldi8	r6, 0x80
@@ -90,7 +90,7 @@ Disassembly of section .text:
  c9 0b                 addi.s8	r5, 0xb
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
- d1 f6                 brne8	avm_test_main+120
+ d1 f6                 brne8	avm_test_main+119
  d7 01                 sys	debug_break
  f1 1f                 mov	r3, r7
  07                    mov	r5, r7
@@ -103,10 +103,10 @@ Disassembly of section .text:
  f7 1c                 ld8u	r4, [r7+]
  f4 ad                 inc16	r5
  f4 a4                 tst8	r4
- d1 f8                 brne8	avm_test_main+145
+ d1 f8                 brne8	avm_test_main+144
  f4 ae                 inc16	r6
  ce 08                 cmpi.s8	r6, 0x8
- d1 e9                 brne8	avm_test_main+136
+ d1 e9                 brne8	avm_test_main+135
  af                    xor	r7, r7
  c0 21                 ldi8	r4, 0x21
  f1 07                 mov	r0, r7
@@ -117,16 +117,16 @@ Disassembly of section .text:
  f1 76                 zext8	r6
  f5 32                 ld8u	r2, [r4]
  f5 16                 cmp	r2, r6
- d0 09                 breq8	avm_test_main+191
+ d0 09                 breq8	avm_test_main+190
  f4 ac                 inc16	r4
  f4 b1                 dec16	r1
  f6 29                 tst16	r1
- d1 ee                 brne8	avm_test_main+172
+ d1 ee                 brne8	avm_test_main+171
  a0                    xor	r4, r4
  c6 00 02              ldi16	r6, 0x200
  f1 0c                 mov	r1, r4
  f2 3e                 sub	r1, r6
- f0 00 00              ldi8	r0, 0x0
+ f2 30                 sub	r0, r0
  f6 2c                 tst16	r4
  fb 08                 cmov.eq	r1, r0
  f9 a6                 xor	r5, r1
@@ -134,7 +134,7 @@ Disassembly of section .text:
  03                    mov	r4, r7
  f1 74                 zext8	r4
  cc 08                 cmpi.s8	r4, 0x8
- d1 c8                 brne8	avm_test_main+160
+ d1 c9                 brne8	avm_test_main+159
  f1 2c                 mov	r7, r0
  03                    mov	r4, r7
  fa 35                 lsl16i	r4, 0x5
@@ -144,24 +144,24 @@ Disassembly of section .text:
  18                    add	r6, r4
  42                    ld8u	r4, [r6]
  f4 a4                 tst8	r4
- d0 1e                 breq8	avm_test_main+266
+ d0 1e                 breq8	avm_test_main+264
  f0 6c c4              ld8u	r6, [r2]
  f1 0c                 mov	r1, r4
  f1 71                 zext8	r1
  f5 0e                 cmp	r1, r6
- d1 19                 brne8	avm_test_main+272
+ d1 19                 brne8	avm_test_main+270
  f1 0a                 mov	r1, r2
  f4 a9                 inc16	r1
  f0 0a e1              addi.s8	r2, -0x1f
  f0 6c 84              ld8u	r4, [r2]
  f4 a4                 tst8	r4
  f1 11                 mov	r2, r1
- d1 e5                 brne8	avm_test_main+236
+ d1 e5                 brne8	avm_test_main+234
  a0                    xor	r4, r4
- d4 08                 jmp8	avm_test_main+274
+ d4 08                 jmp8	avm_test_main+272
  f1 0a                 mov	r1, r2
  f1 20                 mov	r4, r0
- d4 04                 jmp8	avm_test_main+276
+ d4 04                 jmp8	avm_test_main+274
  f1 0a                 mov	r1, r2
  f1 74                 zext8	r4
  14                    add	r5, r4
@@ -169,13 +169,13 @@ Disassembly of section .text:
  24                    sub	r5, r4
  f4 af                 inc16	r7
  cf 07                 cmpi.s8	r7, 0x7
- d1 bb                 brne8	avm_test_main+218
+ d1 bb                 brne8	avm_test_main+216
  f4 ab                 inc16	r3
  f1 23                 mov	r4, r3
  f1 74                 zext8	r4
  cc 40                 cmpi.s8	r4, 0x40
  af                    xor	r7, r7
- db 5c ff              brne16	avm_test_main+135
+ db 5d ff              brne16	avm_test_main+134
  f0 5d 80 02           stm16	[0x280], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

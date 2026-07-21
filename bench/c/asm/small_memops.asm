@@ -9,8 +9,8 @@ SYMBOL TABLE:
 00000140 l     O .data	00000002 small_memops_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	000000cf avm_test_main
-000002e5 g     F .text	00000002 avm_halt
+00000216 g     F .text	000000ce avm_test_main
+000002e4 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 cf 00              call16	avm_halt
+ e1 ce 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -41,7 +41,7 @@ Disassembly of section .text:
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
  d1 f6                 brne8	avm_test_main+13
- f0 00 00              ldi8	r0, 0x0
+ f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
  c4 09 01              ldi16	r4, 0x109
  f0 6a 88              ld32	q2, [r4]
@@ -102,12 +102,12 @@ Disassembly of section .text:
  f4 b6                 dec16	r6
  f4 7a                 stsp16	[sp+0xe], r6
  f6 2e                 tst16	r6
- d1 f2                 brne8	avm_test_main+168
+ d1 f2                 brne8	avm_test_main+167
  f4 a8                 inc16	r0
  f1 20                 mov	r4, r0
  f1 74                 zext8	r4
  cc 40                 cmpi.s8	r4, 0x40
- db 73 ff              brne16	avm_test_main+52
+ db 73 ff              brne16	avm_test_main+51
  f0 59 40 01           stm16	[0x140], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

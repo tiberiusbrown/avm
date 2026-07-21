@@ -5,12 +5,12 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 stack_array.c
 00000100 l     O .data	00000002 stack_seed
-00000239 l     F .text	00000059 stack_kernel
+00000238 l     F .text	00000059 stack_kernel
 00000102 l     O .data	00000002 stack_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000024 avm_test_main
-00000292 g     F .text	00000002 avm_halt
+00000215 g     F .text	00000023 avm_test_main
+00000291 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,12 +25,12 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 7d                 call8	avm_halt
+ d5 7c                 call8	avm_halt
 
 <avm_test_main>:
  b1                    push16	r1
  b0                    push16	r0
- f0 00 00              ldi8	r0, 0x0
+ f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
  f1 08                 mov	r1, r0
  f0 54 00 01           ldm16	r4, [0x100]
@@ -39,7 +39,7 @@ Disassembly of section .text:
  f9 32                 xor	r1, r4
  f4 a8                 inc16	r0
  f0 0c 10              cmpi.s8	r0, 0x10
- d1 ef                 brne8	avm_test_main+9
+ d1 ef                 brne8	avm_test_main+8
  f0 59 02 01           stm16	[0x102], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
@@ -52,7 +52,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 d0                 adjsp	_start+15
+ d6 d0                 adjsp	_start+14
  f0 15 00              leasp	r5, 0x0
  c2 18                 ldi8	r6, 0x18
  f7 4c                 st16	[r7+], r4

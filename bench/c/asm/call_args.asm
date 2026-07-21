@@ -4,14 +4,12 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/call_args.elf:	file format elf
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 call_args.c
-00000274 l     F .text	0000002e mix_arguments
+00000274 l     F .text	00000053 mix_arguments
 00000100 l     O .data	00000004 call_result
 00000000 l    df *ABS*	00000000 runtime.c
-00000000 l    df *ABS*	00000000 integer.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	0000005e avm_test_main
-000002a2 g     F .text	00000002 avm_halt
-000002a4 g     F .text	00000027 __avm_ashlsi3
+000002c7 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -26,7 +24,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 8c 00              call16	avm_halt
+ e1 b1 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -83,56 +81,54 @@ Disassembly of section .text:
  ef                    ret
 
 <mix_arguments>:
+ b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- 12                    add	r4, r6
+ d6 fc                 adjsp	mix_arguments+1
+ f1 04                 mov	r0, r4
  17                    add	r5, r7
- f4 26                 ldsp16	r6, [sp+0x9]
- 19                    add	r6, r5
- f4 1d                 ldsp16	r5, [sp+0x7]
- 14                    add	r5, r4
- f4 2c                 ldsp16	r4, [sp+0xb]
- 11                    add	r4, r5
- a5                    xor	r5, r5
- f0 30 0f              ldsp16	r0, [sp+0xf]
- f0 31 11              ldsp16	r1, [sp+0x11]
- f7 62                 add32	q0, q2
- f4 34                 ldsp16	r4, [sp+0xd]
- 12                    add	r4, r6
- a5                    xor	r5, r5
- c2 08                 ldi8	r6, 0x8
+ f4 3f                 ldsp16	r7, [sp+0xf]
+ 1d                    add	r7, r5
+ f0 34 13              ldsp16	r4, [sp+0x13]
+ 13                    add	r4, r7
+ f2 06                 add	r0, r6
  af                    xor	r7, r7
- d5 11                 call8	__avm_ashlsi3
- f0 36 13              ldsp16	r6, [sp+0x13]
- f0 37 15              ldsp16	r7, [sp+0x15]
- f7 6b                 add32	q2, q3
- f9 82                 xor	r4, r0
- f9 a6                 xor	r5, r1
+ 0b                    mov	r6, r7
+ af                    xor	r7, r7
+ fa 58                 lsl16i	r6, 0x8
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ 04                    mov	r5, r4
+ fa 88                 lsr16i	r5, 0x8
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ 96                    or	r5, r6
+ f4 37                 ldsp16	r7, [sp+0xd]
+ f2 2c                 add	r7, r0
+ f0 32 11              ldsp16	r2, [sp+0x11]
+ f2 17                 add	r2, r7
+ 0d                    mov	r7, r5
+ aa                    xor	r6, r6
+ fa 38                 lsl16i	r4, 0x8
+ f1 04                 mov	r0, r4
+ f2 39                 sub	r1, r1
+ f9 19                 or	r0, r6
+ f9 3d                 or	r1, r7
+ f0 36 19              ldsp16	r6, [sp+0x19]
+ f0 37 1b              ldsp16	r7, [sp+0x1b]
+ f7 6c                 add32	q3, q0
+ f1 02                 mov	r0, r2
+ f2 39                 sub	r1, r1
+ f0 34 15              ldsp16	r4, [sp+0x15]
+ f0 35 17              ldsp16	r5, [sp+0x17]
+ f7 68                 add32	q2, q0
+ a2                    xor	r4, r6
+ a7                    xor	r5, r7
+ d6 04                 adjsp	avm_halt
  b8                    pop16	r0
  b9                    pop16	r1
+ ba                    pop16	r2
  ef                    ret
 
 <avm_halt>:
  d4 fe                 jmp8	avm_halt
-
-<__avm_ashlsi3>:
- b1                    push16	r1
- b0                    push16	r0
- f0 00 1f              ldi8	r0, 0x1f
- f0 01 00              ldi8	r1, 0x0
- f0 69 0c              cmp32	q0, q3
- d8 04                 bruge8	__avm_ashlsi3+17
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- d4 13                 jmp8	__avm_ashlsi3+36
- f0 00 00              ldi8	r0, 0x0
- f0 01 00              ldi8	r1, 0x0
- f0 69 c0              cmp32	q3, q0
- d0 08                 breq8	__avm_ashlsi3+36
- f7 6a                 add32	q2, q2
- f4 b6                 dec16	r6
- f6 2e                 tst16	r6
- d1 f8                 brne8	__avm_ashlsi3+28
- b8                    pop16	r0
- b9                    pop16	r1
- ef                    ret

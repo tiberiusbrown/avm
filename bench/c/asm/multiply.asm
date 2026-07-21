@@ -10,8 +10,8 @@ SYMBOL TABLE:
 00000200 l     O .data	00000002 multiply_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	000000d6 avm_test_main
-000003ec g     F .text	00000002 avm_halt
+00000316 g     F .text	000000d5 avm_test_main
+000003eb g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 d6 00              call16	avm_halt
+ e1 d5 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -76,7 +76,7 @@ Disassembly of section .text:
  04                    mov	r5, r4
  f4 41                 stsp16	[sp+0x0], r5
  c7 80 01              ldi16	r7, 0x180
- f0 00 00              ldi8	r0, 0x0
+ f2 30                 sub	r0, r0
  f1 24                 mov	r5, r0
  f4 4a                 stsp16	[sp+0x2], r6
  f1 20                 mov	r4, r0
@@ -119,18 +119,18 @@ Disassembly of section .text:
  cd 40                 cmpi.s8	r5, 0x40
  f1 05                 mov	r0, r5
  f1 2b                 mov	r6, r3
- d1 a7                 brne8	avm_test_main+98
+ d1 a7                 brne8	avm_test_main+97
  f4 01                 ldsp16	r5, [sp+0x0]
  f4 ad                 inc16	r5
  01                    mov	r4, r5
  f1 74                 zext8	r4
  cc 08                 cmpi.s8	r4, 0x8
  f1 2b                 mov	r6, r3
- d1 90                 brne8	avm_test_main+88
+ d1 91                 brne8	avm_test_main+88
  f0 5b 00 02           stm16	[0x200], r3
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 04                 adjsp	avm_test_main+213
+ d6 04                 adjsp	avm_test_main+212
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

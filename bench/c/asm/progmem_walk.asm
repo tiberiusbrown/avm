@@ -4,12 +4,12 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/progmem_walk.elf:	file format 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 progmem_walk.c
-00000283 l     O .rodata	00000080 program_bytes
+00000282 l     O .rodata	00000080 program_bytes
 00000100 l     O .data	00000002 progmem_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	0000006c avm_test_main
-00000281 g     F .text	00000002 avm_halt
+00000215 g     F .text	0000006b avm_test_main
+00000280 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -24,7 +24,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 6c                 call8	avm_halt
+ d5 6b                 call8	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -38,7 +38,7 @@ Disassembly of section .text:
  f4 41                 stsp16	[sp+0x0], r5
  f1 0c                 mov	r1, r4
  f4 48                 stsp16	[sp+0x2], r4
- c6 83 02              ldi16	r6, 0x283
+ c6 82 02              ldi16	r6, 0x282
  c3 00                 ldi8	r7, 0x0
  f0 30 00              ldsp16	r0, [sp+0x0]
  f0 65 4c              ldp8u	r2, [q3+]
@@ -46,7 +46,7 @@ Disassembly of section .text:
  f4 b0                 dec16	r0
  f6 28                 tst16	r0
  d1 f5                 brne8	avm_test_main+25
- f0 00 00              ldi8	r0, 0x0
+ f2 30                 sub	r0, r0
  f1 18                 mov	r3, r0
  f1 29                 mov	r6, r1
  f2 2b                 add	r6, r3
@@ -54,7 +54,7 @@ Disassembly of section .text:
  f9 58                 and	r2, r6
  f1 2a                 mov	r6, r2
  af                    xor	r7, r7
- c4 83 02              ldi16	r4, 0x283
+ c4 82 02              ldi16	r4, 0x282
  c1 00                 ldi8	r5, 0x0
  f7 6b                 add32	q2, q3
  c3 07                 ldi8	r7, 0x7
@@ -67,17 +67,17 @@ Disassembly of section .text:
  f4 a8                 inc16	r0
  c0 80                 ldi8	r4, 0x80
  f5 04                 cmp	r0, r4
- d1 d8                 brne8	avm_test_main+43
+ d1 d8                 brne8	avm_test_main+42
  f4 08                 ldsp16	r4, [sp+0x2]
  f4 ac                 inc16	r4
  08                    mov	r6, r4
  f1 76                 zext8	r6
  ce 10                 cmpi.s8	r6, 0x10
- d1 b1                 brne8	avm_test_main+15
+ d1 b2                 brne8	avm_test_main+15
  f0 59 00 01           stm16	[0x100], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 04                 adjsp	avm_test_main+107
+ d6 04                 adjsp	avm_test_main+106
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

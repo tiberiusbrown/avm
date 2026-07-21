@@ -21,7 +21,7 @@ int avm_test_main(void)
             int16_t b = A[i];
             if(a > b)
             {
-                int8_t t = a;
+                int16_t t = a;
                 A[i - 1] = b;
                 A[i] = t;
                 n2 = i;

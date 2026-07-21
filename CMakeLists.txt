@@ -173,6 +173,7 @@ execute_process(
         --symbolize-operands
         --demangle
         --print-imm-hex
+        --no-addresses
         "${AVM_INPUT}"
     OUTPUT_FILE "${AVM_OUTPUT}"
     ERROR_VARIABLE AVM_OBJDUMP_ERROR

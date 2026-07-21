@@ -1,5 +1,5 @@
-     1662422   bubble1.c
-     1537430   bubble2.c
-     1828818   bubble4.c
-      272471   fibonacci.c
-      575856   sieve.c
+     1598017   bubble1.c
+     1473025   bubble2.c
+     1764413   bubble4.c
+      256173   fibonacci.c
+      537721   sieve.c

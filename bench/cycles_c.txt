@@ -9,11 +9,11 @@
        85356   indirect_call.c
        20484   memory_services.c
      3525272   mixed_width.c
-     1096997   multiply.c
+      951187   multiply.c
      1000732   pointer_walk.c
       744780   select.c
-      537497   shifts.c
+      533393   shifts.c
       537721   sieve.c
      1180960   stack_array.c
-      746861   struct_copy.c
+      666792   struct_copy.c
      1075589   switch.c

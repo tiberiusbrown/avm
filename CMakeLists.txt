@@ -169,6 +169,7 @@ execute_process(
     COMMAND
         "${AVM_OBJDUMP}"
         --disassemble
+        --source
         --demangle
         --print-imm-hex
         "${AVM_INPUT}"
@@ -317,6 +318,7 @@ function(add_avm_compiled_test_images SOURCE_LIST LANGUAGE BINARY_DIR DISASSEMBL
                 "${AVM_LD_LLD}"
                 -flavor gnu
                 --entry=_start
+                --gc-sections
                 -o "${AVM_TEST_ELF}"
                 "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
                 "${AVM_TEST_OBJECT}"
@@ -406,62 +408,212 @@ add_custom_target(avm_tests_run
 )
 
 # -----------------------------------------------------------------------------
-# AVM instruction-cycle benchmark
+# AVM C benchmark programs
 # -----------------------------------------------------------------------------
 
 set(AVM_BENCH_DIR
     "${CMAKE_CURRENT_SOURCE_DIR}/bench")
 set(AVM_BENCH_SOURCE
     "${AVM_BENCH_DIR}/avm_bench.cpp")
-set(AVM_BENCH_ASM
-    "${AVM_BENCH_DIR}/instructions.asm")
+set(AVM_BENCH_C_DIR
+    "${AVM_BENCH_DIR}/c")
+set(AVM_BENCH_C_DISASSEMBLY_DIR
+    "${AVM_BENCH_C_DIR}/asm")
 set(AVM_BENCH_BUILD_DIR
     "${CMAKE_CURRENT_BINARY_DIR}/bench")
-set(AVM_BENCH_OBJECT
-    "${AVM_BENCH_BUILD_DIR}/instructions.o")
-set(AVM_BENCH_IMAGE
-    "${AVM_BENCH_BUILD_DIR}/instructions.bin")
-set(AVM_BENCH_ELF
-    "${AVM_BENCH_BUILD_DIR}/instructions.elf")
+set(AVM_BENCH_C_BINARY_DIR
+    "${AVM_BENCH_BUILD_DIR}/c")
+set(AVM_BENCH_BASELINE_SOURCE
+    "${AVM_BENCH_BUILD_DIR}/__avm_bench_baseline.c")
+set(AVM_BENCH_BASELINE_OBJECT
+    "${AVM_BENCH_BUILD_DIR}/__avm_bench_baseline.o")
+set(AVM_BENCH_BASELINE_ELF
+    "${AVM_BENCH_BUILD_DIR}/__avm_bench_baseline.elf")
+set(AVM_BENCH_BASELINE_IMAGE
+    "${AVM_BENCH_BUILD_DIR}/__avm_bench_baseline.bin")
+set(AVM_BENCH_BASELINE_DISASSEMBLY
+    "${AVM_BENCH_BUILD_DIR}/__avm_bench_baseline.asm")
 
-# Assemble the benchmark bytecode as one AVM ET_REL object. LLD performs the
-# link step; llvm-avm-image packages the resulting executable ELF.
+# Each source in bench/c is a complete freestanding program with exactly one
+# pair of __avm_debug_break() calls around the code being measured.
+file(GLOB AVM_BENCH_C_SOURCES CONFIGURE_DEPENDS
+    "${AVM_BENCH_C_DIR}/*.c")
+
+# The interval ending at the second DEBUG_BREAK includes that break's own
+# latency. Build an otherwise empty program with adjacent calls so the runner
+# can measure and subtract the same overhead from every benchmark.
+file(MAKE_DIRECTORY "${AVM_BENCH_BUILD_DIR}")
+file(WRITE "${AVM_BENCH_BASELINE_SOURCE}" [=[
+extern void __avm_debug_break(void);
+
+int avm_test_main(void)
+{
+    __avm_debug_break();
+    __avm_debug_break();
+    return 0;
+}
+]=])
+
+set(AVM_BENCH_IMAGE_OUTPUTS "${AVM_BENCH_BASELINE_IMAGE}")
+set(AVM_BENCH_DISASSEMBLY_OUTPUTS "${AVM_BENCH_BASELINE_DISASSEMBLY}")
+
+# Compile the generated baseline using the same options as the real benchmark
+# programs so the second call has identical code generation.
 add_custom_command(
-    OUTPUT "${AVM_BENCH_OBJECT}"
+    OUTPUT "${AVM_BENCH_BASELINE_OBJECT}"
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_BENCH_BUILD_DIR}"
     COMMAND
-        "$<TARGET_FILE:llvm-mc>"
-        -triple=avm-unknown-arduboyfx
-        -filetype=obj
-        -o "${AVM_BENCH_OBJECT}"
-        "${AVM_BENCH_ASM}"
+        "$<TARGET_FILE:clang>"
+        --target=avm-unknown-arduboyfx
+        -ffreestanding
+        -fomit-frame-pointer
+        -fno-stack-protector
+        -fno-unwind-tables
+        -fno-asynchronous-unwind-tables
+        -ffunction-sections
+        -fdata-sections
+        -Os
+        -Wall
+        -Wextra
+        -Werror
+        -std=c11
+        -isystem "${AVM_SYSROOT_DIR}/include"
+        -c "${AVM_BENCH_BASELINE_SOURCE}"
+        -o "${AVM_BENCH_BASELINE_OBJECT}"
     DEPENDS
-        llvm-mc
-        "${AVM_BENCH_ASM}"
-    COMMENT "Assembling AVM instruction benchmarks"
+        clang
+        avm_sysroot
+        "${AVM_BENCH_BASELINE_SOURCE}"
+    COMMENT "Compiling AVM C benchmark baseline"
     VERBATIM
 )
 
 add_custom_command(
-    OUTPUT "${AVM_BENCH_ELF}" "${AVM_BENCH_IMAGE}"
+    OUTPUT
+        "${AVM_BENCH_BASELINE_ELF}"
+        "${AVM_BENCH_BASELINE_IMAGE}"
+        "${AVM_BENCH_BASELINE_DISASSEMBLY}"
     COMMAND
         "${AVM_LD_LLD}"
-        "${AVM_BENCH_OBJECT}"
-        -o "${AVM_BENCH_ELF}"
+        -flavor gnu
+        --entry=_start
+        --gc-sections
+        -o "${AVM_BENCH_BASELINE_ELF}"
+        "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+        "${AVM_BENCH_BASELINE_OBJECT}"
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    COMMAND
+        "${CMAKE_COMMAND}"
+        "-DAVM_OBJDUMP:FILEPATH=$<TARGET_FILE:llvm-objdump>"
+        "-DAVM_INPUT:FILEPATH=${AVM_BENCH_BASELINE_ELF}"
+        "-DAVM_OUTPUT:FILEPATH=${AVM_BENCH_BASELINE_DISASSEMBLY}"
+        -P "${AVM_DISASSEMBLE_SCRIPT}"
     COMMAND
         "$<TARGET_FILE:llvm-avm-image>"
-        "${AVM_BENCH_ELF}"
-        -o "${AVM_BENCH_IMAGE}"
+        "${AVM_BENCH_BASELINE_ELF}"
+        -o "${AVM_BENCH_BASELINE_IMAGE}"
     DEPENDS
         lld
+        llvm-objdump
         llvm-avm-image
-        "${AVM_BENCH_OBJECT}"
-    COMMENT "Building the AVM instruction benchmark image"
+        avm_sysroot
+        "${AVM_BENCH_BASELINE_OBJECT}"
+        "${AVM_DISASSEMBLE_SCRIPT}"
+    COMMENT "Linking, disassembling, and packaging AVM C benchmark baseline"
     VERBATIM
 )
 
-add_custom_target(avm_bench_image
-    DEPENDS "${AVM_BENCH_IMAGE}"
+foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
+    get_filename_component(AVM_BENCH_NAME
+        "${AVM_BENCH_C_SOURCE}" NAME_WE)
+
+    set(AVM_BENCH_OBJECT
+        "${AVM_BENCH_C_BINARY_DIR}/${AVM_BENCH_NAME}.o")
+    set(AVM_BENCH_ELF
+        "${AVM_BENCH_C_BINARY_DIR}/${AVM_BENCH_NAME}.elf")
+    set(AVM_BENCH_IMAGE
+        "${AVM_BENCH_C_BINARY_DIR}/${AVM_BENCH_NAME}.bin")
+    set(AVM_BENCH_DISASSEMBLY
+        "${AVM_BENCH_C_DISASSEMBLY_DIR}/${AVM_BENCH_NAME}.asm")
+
+    add_custom_command(
+        OUTPUT "${AVM_BENCH_OBJECT}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+                "${AVM_BENCH_C_BINARY_DIR}"
+        COMMAND
+            "$<TARGET_FILE:clang>"
+            --target=avm-unknown-arduboyfx
+            -ffreestanding
+            -fomit-frame-pointer
+            -fno-stack-protector
+            -fno-unwind-tables
+            -fno-asynchronous-unwind-tables
+            -ffunction-sections
+            -fdata-sections
+            -Os
+            -Wall
+            -Wextra
+            -Werror
+            -std=c11
+            -isystem "${AVM_SYSROOT_DIR}/include"
+            -c "${AVM_BENCH_C_SOURCE}"
+            -o "${AVM_BENCH_OBJECT}"
+        DEPENDS
+            clang
+            avm_sysroot
+            "${AVM_BENCH_C_SOURCE}"
+        COMMENT "Compiling AVM C benchmark ${AVM_BENCH_NAME}"
+        VERBATIM
+    )
+
+    add_custom_command(
+        OUTPUT
+            "${AVM_BENCH_ELF}"
+            "${AVM_BENCH_IMAGE}"
+            "${AVM_BENCH_DISASSEMBLY}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory
+                "${AVM_BENCH_C_DISASSEMBLY_DIR}"
+        COMMAND
+            "${AVM_LD_LLD}"
+            -flavor gnu
+            --entry=_start
+            --gc-sections
+            -o "${AVM_BENCH_ELF}"
+            "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+            "${AVM_BENCH_OBJECT}"
+            "${AVM_SYSROOT_DIR}/lib/libavm.a"
+            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        COMMAND
+            "${CMAKE_COMMAND}"
+            "-DAVM_OBJDUMP:FILEPATH=$<TARGET_FILE:llvm-objdump>"
+            "-DAVM_INPUT:FILEPATH=${AVM_BENCH_ELF}"
+            "-DAVM_OUTPUT:FILEPATH=${AVM_BENCH_DISASSEMBLY}"
+            -P "${AVM_DISASSEMBLE_SCRIPT}"
+        COMMAND
+            "$<TARGET_FILE:llvm-avm-image>"
+            "${AVM_BENCH_ELF}"
+            -o "${AVM_BENCH_IMAGE}"
+        DEPENDS
+            lld
+            llvm-objdump
+            llvm-avm-image
+            avm_sysroot
+            "${AVM_BENCH_OBJECT}"
+            "${AVM_DISASSEMBLE_SCRIPT}"
+        COMMENT "Linking, disassembling, and packaging AVM C benchmark ${AVM_BENCH_NAME}"
+        VERBATIM
+    )
+
+    list(APPEND AVM_BENCH_IMAGE_OUTPUTS "${AVM_BENCH_IMAGE}")
+    list(APPEND AVM_BENCH_DISASSEMBLY_OUTPUTS
+        "${AVM_BENCH_DISASSEMBLY}")
+endforeach()
+
+add_custom_target(avm_bench_images
+    DEPENDS
+        ${AVM_BENCH_IMAGE_OUTPUTS}
+        ${AVM_BENCH_DISASSEMBLY_OUTPUTS}
 )
 
 add_executable(avm_bench
@@ -470,24 +622,24 @@ add_executable(avm_bench
 target_compile_features(avm_bench PRIVATE cxx_std_17)
 target_link_libraries(avm_bench PRIVATE ardensdebuggerlib)
 target_compile_definitions(avm_bench PRIVATE
-    AVM_BENCH_DIR="${AVM_BENCH_DIR}"
-    AVM_BENCHMARK_DIR="${AVM_BENCH_DIR}"
-    AVM_BENCH_INSTRUCTIONS_BIN="${AVM_BENCH_IMAGE}"
+    AVM_BENCH_C_DIR="${AVM_BENCH_C_DIR}"
+    AVM_BENCH_C_BIN_DIR="${AVM_BENCH_C_BINARY_DIR}"
+    AVM_BENCH_BASELINE_BIN="${AVM_BENCH_BASELINE_IMAGE}"
     AVM_BENCH_INTERPRETER_HEX="${AVM_INTERPRETER_HEX}"
+    AVM_BENCH_OUTPUT="${AVM_BENCH_DIR}/cycles_c.txt"
 )
 add_dependencies(avm_bench
-    avm_bench_image
+    avm_bench_images
     avm_interpreter
 )
 
-# Convenience target.  avm_bench itself is a normal build target; this target
-# additionally runs it with the generated image and interpreter available at
-# the compile-time paths above.
+# Convenience target. avm_bench itself is a normal build target; this target
+# additionally runs all generated C benchmark images.
 add_custom_target(avm_bench_run
     COMMAND "$<TARGET_FILE:avm_bench>"
     DEPENDS avm_tests_run avm_bench
     WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    COMMENT "Running AVM tests and instruction-cycle benchmarks"
+    COMMENT "Running AVM tests and C benchmarks"
     USES_TERMINAL
     VERBATIM
 )

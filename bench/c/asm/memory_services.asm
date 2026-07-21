@@ -65,8 +65,8 @@ Disassembly of section .text:
  13                    add	r4, r7
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
- d0 03                 breq8	avm_test_main+81
- d4 f5                 jmp8	avm_test_main+69
+ d1 f7                 brne8	avm_test_main+69
+ d4 01                 jmp8	avm_test_main+81
  a0                    xor	r4, r4
  f0 5c c2 01           stm16	[0x1c2], r4
  d7 01                 sys	debug_break

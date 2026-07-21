@@ -412,7 +412,7 @@ A byte value occupies `low8(rN)`.
 The instruction definition determines the high byte:
 
 - `LD8U`, `LDM8U`, `LDSP8U`, `LDP8U`, `LDI8`, `ZEXT8`, `MUL8`, `BOOL`, and `CSET` clear it.
-- `LD8S`, `LDSP8S`, `LDP8S`, and `SEXT8` sign-extend it.
+- `LDSP8S`, `LDP8S`, and `SEXT8` sign-extend it.
 - Byte stores use only `low8(rN)`.
 - `SWAP8` modifies only `low8(rN)` and preserves `high8(rN)`.
 
@@ -2397,7 +2397,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `SELECT` | Custom `CMOV` | Custom `CMOV` | Two word `CMOV` operations | Expand |
 | Conditional branch | Custom compare plus branch | Custom | Custom `CMP32` plus branch | Expand/helper |
 | AS0 load/store `i8/i16/i32` | Legal/custom addressing | Legal/custom addressing | Legal/custom addressing | Split/helper |
-| Extending `i8` load to `i16` | Direct `LD8U`/`LD8S` | — | Load plus extension | — |
+| Extending `i8` load to `i16` | Direct `LD8U`; signed loads use `LD8U` plus `SEXT8` | — | Load plus extension | — |
 | Truncating store to `i8` | Direct byte store | Direct byte store | Direct byte store | Split |
 | AS1 load | Custom `LDP*` | Custom `LDP*` | Custom `LDP*` | Split/helper |
 | AS1 store | Invalid | Invalid | Invalid | Invalid |

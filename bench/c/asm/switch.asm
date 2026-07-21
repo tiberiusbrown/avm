@@ -70,14 +70,16 @@ Disassembly of section .text:
  f4 a4                 tst8	r4
  d1 24                 brne8	dense_dispatch+50
  f4 ad                 inc16	r5
- d4 32                 jmp8	dense_dispatch+68
+ 01                    mov	r4, r5
+ ef                    ret
  c2 05                 ldi8	r6, 0x5
  38                    cmp	r6, r4
  d3 11                 brslt8	dense_dispatch+40
  cc 04                 cmpi.s8	r4, 0x4
  d1 1b                 brne8	dense_dispatch+54
  fa 81                 lsr16i	r5, 0x1
- d4 25                 jmp8	dense_dispatch+68
+ 01                    mov	r4, r5
+ ef                    ret
  cc 02                 cmpi.s8	r4, 0x2
  d1 19                 brne8	dense_dispatch+60
  c4 aa 55              ldi16	r4, 0x55aa
@@ -86,14 +88,18 @@ Disassembly of section .text:
  d1 14                 brne8	dense_dispatch+64
  c4 7f 7f              ldi16	r4, 0x7f7f
  84                    and	r5, r4
- d4 12                 jmp8	dense_dispatch+68
+ 01                    mov	r4, r5
+ ef                    ret
  c9 fd                 addi.s8	r5, -0x3
- d4 0e                 jmp8	dense_dispatch+68
+ 01                    mov	r4, r5
+ ef                    ret
  c4 01 01              ldi16	r4, 0x101
  94                    or	r5, r4
- d4 08                 jmp8	dense_dispatch+68
+ 01                    mov	r4, r5
+ ef                    ret
  fa 41                 lsl16i	r5, 0x1
- d4 04                 jmp8	dense_dispatch+68
+ 01                    mov	r4, r5
+ ef                    ret
  c4 ff ff              ldi16	r4, 0xffff
  a4                    xor	r5, r4
  01                    mov	r4, r5
@@ -119,13 +125,16 @@ Disassembly of section .text:
  d1 0d                 brne8	sparse_dispatch+44
  c4 34 12              ldi16	r4, 0x1234
  a4                    xor	r5, r4
- d4 0c                 jmp8	sparse_dispatch+49
+ 01                    mov	r4, r5
+ ef                    ret
  c9 e3                 addi.s8	r5, -0x1d
- d4 08                 jmp8	sparse_dispatch+49
+ 01                    mov	r4, r5
+ ef                    ret
  01                    mov	r4, r5
  fa 73                 lsr16i	r4, 0x3
  14                    add	r5, r4
- d4 02                 jmp8	sparse_dispatch+49
+ 01                    mov	r4, r5
+ ef                    ret
  c9 11                 addi.s8	r5, 0x11
  01                    mov	r4, r5
  ef                    ret

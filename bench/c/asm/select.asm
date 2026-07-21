@@ -101,7 +101,7 @@ Disassembly of section .text:
  fd 2c                 cmov.slt	r5, r4
  c0 01                 ldi8	r4, 0x1
  82                    and	r4, r6
- f6 2c                 tst16	r4
+ f4 a4                 tst8	r4
  fb 3d                 cmov.eq	r7, r5
  02                    mov	r4, r6
  fa 3e                 lsl16i	r4, 0xe

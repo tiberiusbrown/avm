@@ -4,14 +4,14 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/call_args.elf:	file format elf
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 call_args.c
-00000276 l     F .text	0000002e mix_arguments
+00000274 l     F .text	0000002e mix_arguments
 00000100 l     O .data	00000004 call_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	00000060 avm_test_main
-000002a4 g     F .text	00000002 avm_halt
-000002a6 g     F .text	0000002d __avm_ashlsi3
+00000216 g     F .text	0000005e avm_test_main
+000002a2 g     F .text	00000002 avm_halt
+000002a4 g     F .text	00000027 __avm_ashlsi3
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 8e 00              call16	avm_halt
+ e1 8c 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -36,8 +36,10 @@ Disassembly of section .text:
  c7 57 13              ldi16	r7, 0x1357
  a0                    xor	r4, r4
  d7 01                 sys	debug_break
+ f0 06 e0 ac           ldi16	r2, 0xace0
+ f0 07 68 24           ldi16	r3, 0x2468
  f1 04                 mov	r0, r4
- d6 f0                 adjsp	avm_test_main
+ d6 f0                 adjsp	avm_test_main+8
  f4 62                 stsp16	[sp+0x8], r6
  f4 6b                 stsp16	[sp+0xa], r7
  04                    mov	r5, r4
@@ -54,12 +56,10 @@ Disassembly of section .text:
  f4 41                 stsp16	[sp+0x0], r5
  08                    mov	r6, r4
  af                    xor	r7, r7
- f0 06 e0 ac           ldi16	r2, 0xace0
- f0 07 68 24           ldi16	r3, 0x2468
- f9 5a                 xor	r2, r6
- f9 7e                 xor	r3, r7
- f0 3a 0c              stsp16	[sp+0xc], r2
- f0 3b 0e              stsp16	[sp+0xe], r3
+ f9 ca                 xor	r6, r2
+ f9 ee                 xor	r7, r3
+ f4 72                 stsp16	[sp+0xc], r6
+ f4 7b                 stsp16	[sp+0xe], r7
  f4 a8                 inc16	r0
  08                    mov	r6, r4
  ca 02                 addi.s8	r6, 0x2
@@ -67,12 +67,12 @@ Disassembly of section .text:
  cb 03                 addi.s8	r7, 0x3
  f1 24                 mov	r5, r0
  d5 18                 call8	mix_arguments
- d6 10                 adjsp	avm_test_main+90
+ d6 10                 adjsp	avm_test_main+88
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f0 0c 60              cmpi.s8	r0, 0x60
  f1 20                 mov	r4, r0
- d1 bb                 brne8	avm_test_main+14
+ d1 c5                 brne8	avm_test_main+22
  c4 00 01              ldi16	r4, 0x100
  f0 6b c8              st32	[r4], q3
  d7 01                 sys	debug_break
@@ -116,30 +116,23 @@ Disassembly of section .text:
  d4 fe                 jmp8	avm_halt
 
 <__avm_ashlsi3>:
- b3                    push16	r3
- b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f2 62                 mov32	q0, q2
+ f0 00 1f              ldi8	r0, 0x1f
+ f0 01 00              ldi8	r1, 0x0
+ f0 69 0c              cmp32	q0, q3
+ d8 04                 bruge8	__avm_ashlsi3+17
  a0                    xor	r4, r4
  a5                    xor	r5, r5
- f0 02 1f              ldi8	r2, 0x1f
- f0 03 00              ldi8	r3, 0x0
- f0 69 4c              cmp32	q1, q3
- d2 15                 brult8	__avm_ashlsi3+40
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- f0 69 c8              cmp32	q3, q2
- d0 0c                 breq8	__avm_ashlsi3+38
- f2 68                 mov32	q2, q0
+ d4 13                 jmp8	__avm_ashlsi3+36
+ f0 00 00              ldi8	r0, 0x0
+ f0 01 00              ldi8	r1, 0x0
+ f0 69 c0              cmp32	q3, q0
+ d0 08                 breq8	__avm_ashlsi3+36
  f7 6a                 add32	q2, q2
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
- d0 04                 breq8	__avm_ashlsi3+40
- d4 f6                 jmp8	__avm_ashlsi3+28
- f2 68                 mov32	q2, q0
+ d1 f8                 brne8	__avm_ashlsi3+28
  b8                    pop16	r0
  b9                    pop16	r1
- ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret

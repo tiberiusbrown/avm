@@ -14,8 +14,7 @@ volatile u16 f;
 int avm_test_main()
 {
     __avm_debug_break();
-    for(u8 i = 0; i < 10; ++i)
-        f = fib(12);
+    f = fib(12);
     __avm_debug_break();
     
     return 0;

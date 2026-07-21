@@ -1,4 +1,4 @@
-When building or running any target, always use Debug configuration.
+When building or running any target, always use RelWithDebInfo configuration.
 
 ## Building
 

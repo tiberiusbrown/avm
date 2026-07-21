@@ -6,8 +6,8 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 fibonacci.c
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000244 g     F .text	00000016 avm_test_main
-0000025a g     F .text	00000002 avm_halt
+00000244 g     F .text	0000000e avm_test_main
+00000252 g     F .text	00000002 avm_halt
 00000215 g     F .text	0000002f fib
 00000100 g     O .data	00000002 f
 
@@ -24,7 +24,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 45                 call8	avm_halt
+ d5 3d                 call8	avm_halt
 
 <fib>:
  b1                    push16	r1
@@ -56,11 +56,7 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  c0 0c                 ldi8	r4, 0xc
  d5 cb                 call8	fib
- c1 0a                 ldi8	r5, 0xa
  f0 5c 00 01           stm16	[0x100], r4
- f4 b5                 dec16	r5
- f4 a5                 tst8	r5
- d1 f6                 brne8	avm_test_main+8
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  ef                    ret

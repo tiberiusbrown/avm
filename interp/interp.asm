@@ -590,6 +590,20 @@
 #define SYS_STRNCPY             0x1B
 #define SYS_STRNCAT             0x1C
 #define SYS_DISPLAY             0x1D
+#define SYS_DRAW_SPRITE_OVERWRITE   0x1E
+#define SYS_DRAW_SPRITE_PLUS_MASK   0x1F
+#define SYS_DRAW_SPRITE_SELF_MASKED 0x20
+#define SYS_DRAW_SPRITE_ERASE       0x21
+
+#define SPRITE_MODE_OVERWRITE    0
+#define SPRITE_MODE_PLUS_MASK    1
+#define SPRITE_MODE_SELF_MASKED  2
+#define SPRITE_MODE_ERASE        3
+
+#define SPRITE_FLAG_TOP          0
+#define SPRITE_FLAG_BOTTOM       1
+#define SPRITE_FLAG_RESEEK       2
+#define SPRITE_FLAG_PARTIAL      3
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -3036,6 +3050,12 @@ sys_dispatch_func:
 .if (SYS_DISPLAY != 0x1D)
     .error "SYS_DISPLAY must occupy dispatch-table entry 0x1D"
 .endif
+.if (SYS_DRAW_SPRITE_OVERWRITE != 0x1E) || \
+    (SYS_DRAW_SPRITE_PLUS_MASK != 0x1F) || \
+    (SYS_DRAW_SPRITE_SELF_MASKED != 0x20) || \
+    (SYS_DRAW_SPRITE_ERASE != 0x21)
+    .error "sprite SYS services must occupy contiguous entries 0x1E-0x21"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3060,7 +3080,8 @@ sys_dispatch_table:
     sys_entries 1,   sys_strncpy_impl
     sys_entries 1,   sys_strncat_impl
     sys_entries 1,   sys_display_impl
-    sys_entries 226, invalid_syscall_func
+    sys_entries 4,   sys_draw_sprite_func
+    sys_entries 222, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3078,6 +3099,14 @@ sys_memset_func:
     jmp   sys_memset_impl
 sys_memmove_func:
     jmp   sys_memmove_impl
+
+; The four contiguous sprite service IDs normalize directly to mode 0-3. A
+; single four-word absolute veneer keeps movement of the range-constrained code
+; below within the existing eight-word placement allowance.
+sys_draw_sprite_func:
+    subi  PRIMARY_OPCODE, SYS_DRAW_SPRITE_OVERWRITE
+    mov   r27, PRIMARY_OPCODE
+    jmp   sys_draw_sprite_header_impl
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
@@ -10185,3 +10214,879 @@ sys_memset_impl:
     brne  .Lsys_memset_loop
 .Lsys_memset_done:
     jmp   cluster_tail_18
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SYS FX sprite drawing services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Public SYS ABI for all four services:
+;   r4 = int16_t x
+;   r5 = int16_t y
+;   q3 = image-relative program pointer to { width, height, frame bytes... }
+;   r0 = uint16_t frame index
+;
+; The frame data is page-major. OVERWRITE, SELF_MASKED, and ERASE use one
+; source byte per column. PLUS_MASK uses interleaved image,mask byte pairs.
+; The frame stride is width * ceil(height/8), doubled for PLUS_MASK.
+;
+; The header wrapper consumes the speculative bytecode transfer, reads the
+; two-byte header, calculates the selected-frame pointer, and enters the raw
+; renderer through the documented native ABI below. Architectural registers
+; and VM_FLAGS are preserved. The raw renderer returns to its caller; the SYS
+; wrapper alone restarts the bytecode stream.
+
+sys_draw_sprite_header_impl:
+    out   GPIOR1, r27              ; retain mode across header read/MULs
+
+    ; The instruction stream must be restarted after the sprite has owned SPI.
+    ; Advance VM_PC from the service byte to the following primary opcode now.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; SYS decode launched a speculative read of the following primary opcode.
+    ; Drain it before opening an independent header transaction.
+.Lsys_sprite_wait_instruction:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsys_sprite_wait_instruction
+    in    r24, SPDR
+    fx_disable
+
+    ; Read width and height at q3. The shared address-phase helper is suitable
+    ; for this fixed two-byte header read; the selected-frame seek below is a
+    ; separate sprite-specific transaction whose command interval contains the
+    ; clipping and render preparation.
+    movw  r24, VM_R6
+    mov   r26, VM_R7L
+    call  fx_start_program_read_func
+
+    ; The helper returns five cycles after launching the width transfer. Twelve
+    ; more cycles put the standard IN/OUT handoff at cycles 17/18.
+    rcall sprite_delay_11
+    nop
+    in    r0, SPDR                  ; width
+    out   SPDR, ZERO                ; begin height transfer
+
+    ; Establish the unframed data pointer while height is in flight.
+    movw  r24, VM_R6
+    mov   r26, VM_R7L
+    adiw  r24, 2
+    adc   r26, ZERO
+    out   GPIOR2, r0                ; retain width across MULs
+
+.Lsys_sprite_wait_height:
+    in    r27, SPSR
+    sbrs  r27, SPIF
+    rjmp  .Lsys_sprite_wait_height
+    in    r1, SPDR                  ; height
+    fx_disable
+
+    ; Preserve height while r0:r1 are used by the four partial products.
+    push  r1
+
+    ; pages = ceil(height / 8); stride = width * pages.
+    in    r30, GPIOR2
+    mov   r31, r1
+    mov   r27, r31
+    andi  r27, 0x07
+    lsr   r31
+    lsr   r31
+    lsr   r31
+    cpse  r27, ZERO
+    inc   r31
+    mul   r30, r31
+    movw  r30, r0
+
+    in    r27, GPIOR1
+    cpi   r27, SPRITE_MODE_PLUS_MASK
+    brne  .Lsys_sprite_stride_ready
+    lsl   r30
+    rol   r31
+.Lsys_sprite_stride_ready:
+
+    ; Add low24(frame * stride) to sprite+2. q3[31:24] is ignored.
+    mul   VM_R0L, r30
+    add   r24, r0
+    adc   r25, r1
+    adc   r26, ZERO
+
+    mul   VM_R0L, r31
+    add   r25, r0
+    adc   r26, r1
+
+    mul   VM_R0H, r30
+    add   r25, r0
+    adc   r26, r1
+
+    mul   VM_R0H, r31
+    add   r26, r0
+
+    pop   r1                         ; native raw-renderer height
+    in    r0, GPIOR2                 ; native raw-renderer width
+    in    r27, GPIOR1                ; native raw-renderer mode
+    call  draw_bitmap_seek_func
+    jmp   seek_and_dispatch_func
+
+
+; Reusable raw page-bitmap renderer ABI.
+;
+; Entry:
+;   r0              width in pixels
+;   r1              height in pixels
+;   r24:r25:r26     selected frame's image-relative data pointer
+;   r27             SPRITE_MODE_*
+;   AVM r4          int16_t x
+;   AVM r5          int16_t y
+;   FX deselected; no SPI transfer active
+;
+; Return:
+;   RET with FX deselected and no SPI transfer active. The caller owns any
+;   bytecode-stream restart. This makes the routine suitable for repeated calls
+;   from a larger SYS service such as a text renderer.
+;
+; Data layout and semantics match the four sprite SYS services. This entry is
+; deliberately exported so future text/glyph SYS services can prepare their
+; own width, height, and bitmap pointer, then reuse clipping and rendering.
+;
+; Preservation:
+;   Pushes and restores all native r8-r23 (the complete AVM register file).
+;   VM_PC, VM_FLAGS, VM_SP, and the permanent constants are untouched. Native
+;   r0:r1, r24:r27, r30:r31, GPIOR1:GPIOR2, and SREG are call-clobbered.
+;
+; Working allocation after the pushes:
+;   r8              full source width
+;   r9              row valid-bit mask / overwrite low preserve mask
+;   r10:r11         full source-row stride in bytes
+;   r12             visible source rows remaining
+;   r13             drawing mode
+;   r14             framebuffer row advance (128-visibleColumns)
+;   r15             final source-page valid-bit mask
+;   r16             visible column count
+;   r17             inner-loop column counter
+;   r18             vertical shift coefficient
+;   r19             destination page / overwrite high preserve mask
+;   r20:r21:r22     current visible source-row image-relative pointer
+;   r23             top/bottom/reseek/partial flags
+;   X               current framebuffer page pointer
+;   Z               adjacent framebuffer page pointer
+;   r24:r25,r0:r1   stream and framebuffer temporaries
+;   GPIOR1:GPIOR2   initial seek bytes; GPIOR2 then current row mask
+
+.global draw_bitmap_seek_func
+draw_bitmap_seek_func:
+    ; Reject invisible or empty bitmaps before touching architectural state or
+    ; opening the sprite transaction.
+    tst   r0
+    breq  .Lsprite_raw_reject
+    tst   r1
+    breq  .Lsprite_raw_reject
+
+    cpi   VM_R4L, 128
+    cpc   VM_R4H, ZERO
+    brge  .Lsprite_raw_reject
+    cpi   VM_R5L, 64
+    cpc   VM_R5H, ZERO
+    brge  .Lsprite_raw_reject
+
+    movw  r30, VM_R4
+    add   r30, r0
+    adc   r31, ZERO
+    cp    ZERO, r30
+    cpc   ZERO, r31
+    brge  .Lsprite_raw_reject
+
+    movw  r30, VM_R5
+    add   r30, r1
+    adc   r31, ZERO
+    cp    ZERO, r30
+    cpc   ZERO, r31
+    brge  .Lsprite_raw_reject
+    rjmp  .Lsprite_raw_visible
+
+.Lsprite_raw_reject:
+    ret
+
+.Lsprite_raw_visible:
+    ; Start the selected-frame command before preserving architectural inputs.
+    ; Sixteen PUSHes provide 32 useful command-transfer cycles. The remaining
+    ; clipping work deliberately extends that interval until the finalized
+    ; top/left-clipped source address is known.
+    fx_disable
+    ldi   r30, SFC_READ
+    fx_enable
+    out   SPDR, r30
+
+    push  r8
+    push  r9
+    push  r10
+    push  r11
+    push  r12
+    push  r13
+    push  r14
+    push  r15
+    push  r16
+    push  r17
+    push  r18
+    push  r19
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+
+    mov   r8, r0                    ; source width
+    mov   r9, r1                    ; source height
+    movw  r20, r24
+    mov   r22, r26                  ; selected frame pointer
+    mov   r13, r27                  ; drawing mode
+
+    ; Full source-row stride in bytes.
+    mov   r10, r8
+    clr   r11
+    mov   r24, r13
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    brne  .Lsprite_stride_ready
+    lsl   r10
+    rol   r11
+.Lsprite_stride_ready:
+
+    ; Compute source page count and the valid low-bit mask of the final page.
+    ; r23 accumulates clipping/render flags.
+    clr   r23
+    mov   r24, r9
+    andi  r24, 0x07                 ; height remainder
+    mov   r25, r9
+    lsr   r25
+    lsr   r25
+    lsr   r25
+    tst   r24
+    breq  .Lsprite_height_aligned
+
+    inc   r25
+    ori   r23, (1 << SPRITE_FLAG_PARTIAL)
+    ldi   r30, 1
+.Lsprite_final_mask_loop:
+    lsl   r30
+    dec   r24
+    brne  .Lsprite_final_mask_loop
+    dec   r30
+    rjmp  .Lsprite_final_mask_ready
+
+.Lsprite_height_aligned:
+    ldi   r30, 0xFF
+.Lsprite_final_mask_ready:
+    mov   r15, r30                   ; final-page valid-bit mask
+    mov   r12, r25                   ; total source pages
+
+    ; pageStart = arithmetic y / 8. Visibility checks constrain y to the range
+    ; in which the compact low-byte continuation is exact.
+    mov   r24, VM_R5L
+    asr   VM_R5H
+    ror   r24
+    asr   r24
+    asr   r24
+
+    ; Skip complete source pages above the display. With a nonzero bit shift,
+    ; pageStart == -1 remains visible through its high contribution; aligned
+    ; sprites skip that otherwise-empty row as well.
+    mov   r25, VM_R5L
+    andi  r25, 0x07
+    breq  .Lsprite_top_clip_aligned
+
+    cpi   r24, 0xFF
+    brge  .Lsprite_top_clip_done
+    mov   r25, r24
+    com   r25                        ; skip = -pageStart - 1
+    rjmp  .Lsprite_apply_top_skip
+
+.Lsprite_top_clip_aligned:
+    tst   r24
+    brpl  .Lsprite_top_clip_done
+    mov   r25, r24
+    neg   r25                        ; skip = -pageStart
+
+.Lsprite_apply_top_skip:
+    ; source += skip * rowStride; pages -= skip; pageStart += skip.
+    movw  r30, r10
+    mul   r25, r30
+    add   r20, r0
+    adc   r21, r1
+    adc   r22, ZERO
+    mul   r25, r31
+    add   r21, r0
+    adc   r22, r1
+    sub   r12, r25
+    add   r24, r25
+
+.Lsprite_top_clip_done:
+    mov   r19, r24                   ; clipped destination low-page index
+
+    ; Horizontal clipping. r16 becomes visible columns and r17 start X.
+    mov   r25, VM_R4L
+    sbrs  VM_R4H, 7
+    rjmp  .Lsprite_x_nonnegative
+
+    neg   r25                        ; leftSkip = -x, guaranteed < width
+    mov   r16, r8
+    sub   r16, r25
+    clr   r17
+    ori   r23, (1 << SPRITE_FLAG_RESEEK)
+
+    ; source += leftSkip * bytesPerColumn.
+    mov   r30, r25
+    clr   r31
+    mov   r24, r13
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    brne  .Lsprite_left_skip_ready
+    lsl   r30
+    rol   r31
+.Lsprite_left_skip_ready:
+    add   r20, r30
+    adc   r21, r31
+    adc   r22, ZERO
+    rjmp  .Lsprite_clip_right
+
+.Lsprite_x_nonnegative:
+    mov   r17, r25                   ; framebuffer x
+    mov   r16, r8
+
+.Lsprite_clip_right:
+    ldi   r24, 128
+    sub   r24, r17                   ; columns available on screen
+    cp    r16, r24
+    brlo  .Lsprite_right_clip_done
+    breq  .Lsprite_right_clip_done
+    mov   r16, r24
+    ori   r23, (1 << SPRITE_FLAG_RESEEK)
+.Lsprite_right_clip_done:
+
+    ldi   r24, 128
+    sub   r24, r16
+    mov   r14, r24                   ; framebuffer row advance
+
+    ; Clip source rows against the bottom. If the original final source page is
+    ; removed, its partial-page mask is no longer relevant.
+    ldi   r24, 8
+    sub   r24, r19                   ; maximum visible source rows
+    cp    r12, r24
+    brlo  .Lsprite_bottom_count_ready
+    breq  .Lsprite_bottom_count_ready
+    mov   r12, r24
+    andi  r23, 0xF7                  ; clear SPRITE_FLAG_PARTIAL
+.Lsprite_bottom_count_ready:
+
+    cpi   r19, 0xFF
+    brne  .Lsprite_not_top_row
+    ori   r23, (1 << SPRITE_FLAG_TOP)
+.Lsprite_not_top_row:
+
+    mov   r24, r19
+    add   r24, r12
+    dec   r24
+    cpi   r24, 7
+    brne  .Lsprite_not_bottom_row
+    ori   r23, (1 << SPRITE_FLAG_BOTTOM)
+.Lsprite_not_bottom_row:
+
+    ; Convert the finalized visible source-row address to a physical FX address.
+    mov   r24, r20
+    mov   r25, r21
+    mov   r30, r22
+    lds   r0, data_page_data+0
+    add   r25, r0
+    lds   r0, data_page_data+1
+    adc   r30, r0
+    out   GPIOR1, r24                 ; retain address low
+    out   GPIOR2, r25                 ; retain address middle
+    out   SPDR, r30                   ; address high
+
+    ; Build the first visible framebuffer pointer while address-high transfers.
+    mov   r30, r19
+    sbrs  r30, 7
+    rjmp  .Lsprite_buffer_page_ready
+    clr   r30                         ; top-only row writes display page zero
+.Lsprite_buffer_page_ready:
+    ldi   r24, 128
+    mul   r30, r24
+    ldi   r26, lo8(data_display)
+    ldi   r27, hi8(data_display)
+    add   r26, r0
+    adc   r27, r1
+    add   r26, r17
+    adc   r27, ZERO
+    rcall sprite_delay_7
+    in    r24, GPIOR2
+    out   SPDR, r24                   ; address middle
+
+    ; Fixed-time coefficient construction overlaps the middle-address byte.
+    mov   r24, VM_R5L
+    ldi   r18, 1
+    sbrc  r24, 1
+    ldi   r18, 4
+    sbrc  r24, 0
+    lsl   r18
+    sbrc  r24, 2
+    swap  r18                         ; r18 = 1 << (y & 7)
+    rcall sprite_delay_7
+    in    r24, GPIOR1
+    out   SPDR, r24                   ; address low
+
+    ; Address-low to first dummy uses the ordinary 18-cycle handoff. Row setup
+    ; then occupies the first data-byte transfer window.
+    rcall sprite_delay_17
+    out   SPDR, ZERO
+    rjmp  .Lsprite_row_dispatch
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Sprite row dispatch and streaming loops
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.Lsprite_row_dispatch:
+    ; Use the partial mask only on the original final source row, and only when
+    ; that row survived bottom clipping. Full rows use 0xFF.
+    mov   r24, r23
+    ldi   r25, 0xFF
+    mov   r9, r25
+    sbrs  r24, SPRITE_FLAG_PARTIAL
+    rjmp  .Lsprite_row_mask_ready
+    mov   r25, r12
+    cpi   r25, 1
+    brne  .Lsprite_row_mask_ready
+    mov   r9, r15
+.Lsprite_row_mask_ready:
+    out   GPIOR2, r9
+    mov   r17, r16                    ; visible-column counter
+
+    ; A top row has only its high shifted contribution visible. Clear the flag
+    ; before rendering so all later rows use middle/bottom dispatch.
+    sbrs  r24, SPRITE_FLAG_TOP
+    rjmp  .Lsprite_check_bottom
+    andi  r24, 0xFE
+    mov   r23, r24
+    rjmp  .Lsprite_dispatch_top_mode
+
+.Lsprite_check_bottom:
+    mov   r25, r12
+    cpi   r25, 1
+    brne  .Lsprite_dispatch_middle_mode
+    sbrc  r24, SPRITE_FLAG_BOTTOM
+    rjmp  .Lsprite_dispatch_bottom_mode
+
+.Lsprite_dispatch_middle_mode:
+    movw  r30, r26
+    subi  r30, 0x80
+    sbci  r31, 0xFF
+    mov   r24, r13
+    tst   r24
+    brne  .Lsprite_middle_check_plus
+    jmp   .Lsprite_middle_overwrite
+.Lsprite_middle_check_plus:
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    brne  .Lsprite_middle_check_self
+    jmp   .Lsprite_middle_plus_mask
+.Lsprite_middle_check_self:
+    cpi   r24, SPRITE_MODE_SELF_MASKED
+    brne  .Lsprite_middle_use_erase
+    jmp   .Lsprite_middle_self_masked
+.Lsprite_middle_use_erase:
+    jmp   .Lsprite_middle_erase
+
+.Lsprite_dispatch_top_mode:
+    mov   r24, r13
+    tst   r24
+    brne  .Lsprite_top_check_plus
+    jmp   .Lsprite_top_overwrite
+.Lsprite_top_check_plus:
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    brne  .Lsprite_top_check_self
+    jmp   .Lsprite_top_plus_mask
+.Lsprite_top_check_self:
+    cpi   r24, SPRITE_MODE_SELF_MASKED
+    brne  .Lsprite_top_use_erase
+    jmp   .Lsprite_top_self_masked
+.Lsprite_top_use_erase:
+    jmp   .Lsprite_top_erase
+
+.Lsprite_dispatch_bottom_mode:
+    mov   r24, r13
+    tst   r24
+    brne  .Lsprite_bottom_check_plus
+    jmp   .Lsprite_bottom_overwrite
+.Lsprite_bottom_check_plus:
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    brne  .Lsprite_bottom_check_self
+    jmp   .Lsprite_bottom_plus_mask
+.Lsprite_bottom_check_self:
+    cpi   r24, SPRITE_MODE_SELF_MASKED
+    brne  .Lsprite_bottom_use_erase
+    jmp   .Lsprite_bottom_self_masked
+.Lsprite_bottom_use_erase:
+    jmp   .Lsprite_bottom_erase
+
+
+; OVERWRITE: coverage comes from the row-valid mask, not from source zeros.
+; This preserves framebuffer pixels beyond height%8 in the final source page.
+.Lsprite_top_overwrite:
+    mul   r9, r18
+    com   r1
+    mov   r19, r1
+.Lsprite_top_overwrite_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    in    r25, GPIOR2
+    and   r24, r25
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r19
+    or    r25, r1
+    st    X+, r25
+    delay_2
+    nop
+    dec   r17
+    brne  .Lsprite_top_overwrite_loop
+    rjmp  .Lsprite_top_done
+
+.Lsprite_middle_overwrite:
+    mul   r9, r18
+    com   r0
+    com   r1
+    mov   r9, r0
+    mov   r19, r1
+.Lsprite_middle_overwrite_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    in    r25, GPIOR2
+    and   r24, r25
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    ld    r25, Z
+    and   r25, r19
+    or    r25, r1
+    st    Z+, r25
+    dec   r17
+    brne  .Lsprite_middle_overwrite_loop
+    rjmp  .Lsprite_middle_done
+
+.Lsprite_bottom_overwrite:
+    mul   r9, r18
+    com   r0
+    mov   r9, r0
+.Lsprite_bottom_overwrite_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    in    r25, GPIOR2
+    and   r24, r25
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    delay_2
+    nop
+    dec   r17
+    brne  .Lsprite_bottom_overwrite_loop
+    rjmp  .Lsprite_bottom_done
+
+
+; PLUS_MASK: each visible column consumes image then mask. The image and mask
+; are both limited by the final-page valid-bit mask before vertical shifting.
+.Lsprite_top_plus_mask:
+.Lsprite_top_plus_mask_loop:
+    in    r24, SPDR                  ; image
+    out   SPDR, ZERO                 ; begin mask
+    in    r25, GPIOR2
+    and   r24, r25
+    mul   r24, r18
+    movw  r24, r0                    ; shifted image
+    ld    r19, X
+    rcall sprite_delay_9
+    nop
+    in    r0, SPDR                   ; mask
+    out   SPDR, ZERO                 ; begin next image
+    in    r1, GPIOR2
+    and   r0, r1
+    mul   r0, r18
+    com   r1
+    and   r19, r1
+    or    r19, r25
+    st    X+, r19
+    delay_4
+    dec   r17
+    brne  .Lsprite_top_plus_mask_loop
+    rjmp  .Lsprite_top_done
+
+.Lsprite_middle_plus_mask:
+.Lsprite_middle_plus_mask_loop:
+    in    r24, SPDR                  ; image
+    out   SPDR, ZERO                 ; begin mask
+    in    r25, GPIOR2
+    and   r24, r25
+    mul   r24, r18
+    movw  r24, r0                    ; shifted image
+    ld    r9, X
+    ld    r19, Z
+    rcall sprite_delay_7
+    nop
+    in    r0, SPDR                   ; mask
+    out   SPDR, ZERO                 ; begin next image
+    in    r1, GPIOR2
+    and   r0, r1
+    mul   r0, r18
+    com   r0
+    com   r1
+    and   r9, r0
+    or    r9, r24
+    st    X+, r9
+    and   r19, r1
+    or    r19, r25
+    st    Z+, r19
+    dec   r17
+    brne  .Lsprite_middle_plus_mask_loop
+    rjmp  .Lsprite_middle_done
+
+.Lsprite_bottom_plus_mask:
+.Lsprite_bottom_plus_mask_loop:
+    in    r24, SPDR                  ; image
+    out   SPDR, ZERO                 ; begin mask
+    in    r25, GPIOR2
+    and   r24, r25
+    mul   r24, r18
+    movw  r24, r0                    ; shifted image
+    ld    r19, X
+    rcall sprite_delay_9
+    nop
+    in    r0, SPDR                   ; mask
+    out   SPDR, ZERO                 ; begin next image
+    in    r1, GPIOR2
+    and   r0, r1
+    mul   r0, r18
+    com   r0
+    and   r19, r0
+    or    r19, r24
+    st    X+, r19
+    delay_4
+    dec   r17
+    brne  .Lsprite_bottom_plus_mask_loop
+    rjmp  .Lsprite_bottom_done
+
+
+; SELF_MASKED: source one-bits are ORed into the framebuffer.
+.Lsprite_top_self_masked:
+.Lsprite_top_self_masked_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r9
+    mul   r24, r18
+    ld    r25, X
+    or    r25, r1
+    st    X+, r25
+    delay_4
+    nop
+    dec   r17
+    brne  .Lsprite_top_self_masked_loop
+    rjmp  .Lsprite_top_done
+
+.Lsprite_middle_self_masked:
+.Lsprite_middle_self_masked_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r9
+    mul   r24, r18
+    ld    r25, X
+    or    r25, r0
+    st    X+, r25
+    ld    r25, Z
+    or    r25, r1
+    st    Z+, r25
+    dec   r17
+    brne  .Lsprite_middle_self_masked_loop
+    rjmp  .Lsprite_middle_done
+
+.Lsprite_bottom_self_masked:
+.Lsprite_bottom_self_masked_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r9
+    mul   r24, r18
+    ld    r25, X
+    or    r25, r0
+    st    X+, r25
+    delay_4
+    nop
+    dec   r17
+    brne  .Lsprite_bottom_self_masked_loop
+    rjmp  .Lsprite_bottom_done
+
+
+; ERASE: source one-bits clear corresponding framebuffer pixels.
+.Lsprite_top_erase:
+.Lsprite_top_erase_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r9
+    mul   r24, r18
+    com   r1
+    ld    r25, X
+    and   r25, r1
+    st    X+, r25
+    delay_4
+    dec   r17
+    brne  .Lsprite_top_erase_loop
+    rjmp  .Lsprite_top_done
+
+.Lsprite_middle_erase:
+.Lsprite_middle_erase_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r9
+    mul   r24, r18
+    com   r0
+    com   r1
+    ld    r25, X
+    and   r25, r0
+    st    X+, r25
+    ld    r25, Z
+    and   r25, r1
+    st    Z+, r25
+    dec   r17
+    brne  .Lsprite_middle_erase_loop
+    rjmp  .Lsprite_middle_done
+
+.Lsprite_bottom_erase:
+.Lsprite_bottom_erase_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r9
+    mul   r24, r18
+    com   r0
+    ld    r25, X
+    and   r25, r0
+    st    X+, r25
+    delay_4
+    dec   r17
+    brne  .Lsprite_bottom_erase_loop
+    rjmp  .Lsprite_bottom_done
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Sprite row progression, reseek, and restoration
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+.Lsprite_top_done:
+    ; The top source row wrote only the high contribution into page zero. Reset
+    ; X to the same visible page start for the following row's low contribution.
+    sub   r26, r16
+    sbc   r27, ZERO
+    rjmp  .Lsprite_row_complete
+
+.Lsprite_middle_done:
+    ; X advanced across the visible columns of the low page. Advance to the
+    ; same x coordinate on the following framebuffer page.
+    mov   r24, r14
+    add   r26, r24
+    adc   r27, ZERO
+    rjmp  .Lsprite_row_complete
+
+.Lsprite_bottom_done:
+    ; Bottom is necessarily the last visible source row.
+
+.Lsprite_row_complete:
+    ; Advance the retained image-relative visible-row pointer by the full source
+    ; stride. This is used only for reseek when horizontally clipped, but is
+    ; maintained unconditionally for a compact common path.
+    movw  r24, r10
+    add   r20, r24
+    adc   r21, r25
+    adc   r22, ZERO
+
+    dec   r12
+    breq  .Lsprite_finish
+
+    mov   r25, r23
+    sbrs  r25, SPRITE_FLAG_RESEEK
+    rjmp  .Lsprite_row_dispatch
+
+    ; The final visible byte launched one speculative unwanted transfer. Drain
+    ; it before selecting the next visible row with a fresh command/address.
+.Lsprite_wait_reseek_byte:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsprite_wait_reseek_byte
+    in    r24, SPDR
+    fx_disable
+    rcall sprite_start_row_read_func
+    rjmp  .Lsprite_row_dispatch
+
+.Lsprite_finish:
+    ; Every loop deliberately launches one following transfer. Complete and
+    ; drain it before releasing FX and returning to the caller.
+.Lsprite_wait_final_byte:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsprite_wait_final_byte
+    in    r24, SPDR
+    fx_disable
+
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    pop   r17
+    pop   r16
+    pop   r15
+    pop   r14
+    pop   r13
+    pop   r12
+    pop   r11
+    pop   r10
+    pop   r9
+    pop   r8
+    ret
+
+
+; Start streaming at r20:r21:r22 without disturbing native X. This helper is
+; private to the sprite renderer; Z and r24:r25 are scratch, and the first data
+; byte is in flight on return.
+sprite_start_row_read_func:
+    fx_disable
+    ldi   r24, SFC_READ
+    fx_enable
+    out   SPDR, r24
+
+    mov   r24, r20
+    mov   r25, r21
+    mov   r30, r22
+    lds   r31, data_page_data+0
+    add   r25, r31
+    lds   r31, data_page_data+1
+    adc   r30, r31
+
+    rcall sprite_delay_9
+    out   SPDR, r30
+    rcall sprite_delay_17
+    out   SPDR, r25
+    rcall sprite_delay_17
+    out   SPDR, r24
+    rcall sprite_delay_17
+    out   SPDR, ZERO
+    ret
+
+
+; Local complete-cycle delay ladder. Unlike the generic reader delays, these
+; labels remain within RCALL range of every sprite loop and do not use LPM.
+sprite_delay_17:
+    nop
+sprite_delay_16:
+    delay_4
+    nop
+sprite_delay_11:
+    delay_2
+sprite_delay_9:
+    delay_2
+sprite_delay_7:
+    ret

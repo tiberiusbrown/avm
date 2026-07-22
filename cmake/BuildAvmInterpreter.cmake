@@ -1,63 +1,59 @@
 cmake_minimum_required(VERSION 3.20)
 
-foreach(required_var
-    SOURCE
-    OUTPUT_OBJECT
-    OUTPUT_ELF
-    OUTPUT_MAP
-    OUTPUT_LISTING
-    OUTPUT_HEX
-    TEMP_SIZE_BINARY
-    MAX_INTERP_SIZE
-)
-    if(NOT DEFINED ${required_var} OR "${${required_var}}" STREQUAL "")
-        message(FATAL_ERROR "Missing required variable: ${required_var}")
+foreach(REQUIRED_VARIABLE
+        SOURCE
+        OUTPUT_OBJECT
+        OUTPUT_ELF
+        OUTPUT_MAP
+        OUTPUT_LISTING
+        OUTPUT_HEX
+        MAX_INTERP_SIZE)
+    if(NOT DEFINED ${REQUIRED_VARIABLE} OR
+       "${${REQUIRED_VARIABLE}}" STREQUAL "")
+        message(FATAL_ERROR "Missing required variable: ${REQUIRED_VARIABLE}")
     endif()
 endforeach()
 
-function(find_avr_tool variable_name program_name)
-    if(DEFINED ${variable_name}
-       AND NOT "${${variable_name}}" STREQUAL ""
-       AND NOT "${${variable_name}}" MATCHES "-NOTFOUND$")
-        if(NOT EXISTS "${${variable_name}}")
+function(find_avr_tool VARIABLE_NAME PROGRAM_NAME)
+    if(DEFINED ${VARIABLE_NAME}
+       AND NOT "${${VARIABLE_NAME}}" STREQUAL ""
+       AND NOT "${${VARIABLE_NAME}}" MATCHES "-NOTFOUND$")
+        if(NOT EXISTS "${${VARIABLE_NAME}}")
             message(FATAL_ERROR
-                "${variable_name} does not exist: ${${variable_name}}")
+                "${VARIABLE_NAME} does not exist: ${${VARIABLE_NAME}}")
         endif()
-        set(${variable_name} "${${variable_name}}" PARENT_SCOPE)
+        set(${VARIABLE_NAME} "${${VARIABLE_NAME}}" PARENT_SCOPE)
         return()
     endif()
 
-    set(search_hints)
+    set(SEARCH_HINTS)
     if(DEFINED AVR_GCC
        AND NOT "${AVR_GCC}" STREQUAL ""
        AND NOT "${AVR_GCC}" MATCHES "-NOTFOUND$")
-        get_filename_component(avr_bin_dir "${AVR_GCC}" DIRECTORY)
-        list(APPEND search_hints "${avr_bin_dir}")
+        get_filename_component(AVR_BIN_DIR "${AVR_GCC}" DIRECTORY)
+        list(APPEND SEARCH_HINTS "${AVR_BIN_DIR}")
     endif()
 
-    unset(found_program)
-    unset(found_program CACHE)
-    find_program(found_program
-        NAMES "${program_name}"
-        HINTS ${search_hints}
+    unset(FOUND_PROGRAM)
+    unset(FOUND_PROGRAM CACHE)
+    find_program(FOUND_PROGRAM
+        NAMES "${PROGRAM_NAME}"
+        HINTS ${SEARCH_HINTS}
     )
-    if(NOT found_program)
+    if(NOT FOUND_PROGRAM)
         message(FATAL_ERROR
-            "Unable to find ${program_name}. Add the AVR toolchain to PATH "
-            "or set ${variable_name} in the CMake cache.")
+            "Unable to find ${PROGRAM_NAME}. Add the AVR toolchain to PATH "
+            "or set ${VARIABLE_NAME} in the CMake cache.")
     endif()
 
-    set(${variable_name} "${found_program}" PARENT_SCOPE)
+    set(${VARIABLE_NAME} "${FOUND_PROGRAM}" PARENT_SCOPE)
 endfunction()
 
-find_avr_tool(AVR_GCC avr-gcc)
-find_avr_tool(AVR_OBJCOPY avr-objcopy)
-find_avr_tool(AVR_OBJDUMP avr-objdump)
+get_filename_component(OUTPUT_DIR "${OUTPUT_ELF}" DIRECTORY)
+set(TEMP_SIZE_BINARY "${OUTPUT_DIR}/interp.size.bin")
+file(MAKE_DIRECTORY "${OUTPUT_DIR}")
 
-get_filename_component(output_dir "${OUTPUT_ELF}" DIRECTORY)
-file(MAKE_DIRECTORY "${output_dir}")
-
-set(final_outputs
+set(FINAL_OUTPUTS
     "${OUTPUT_OBJECT}"
     "${OUTPUT_ELF}"
     "${OUTPUT_MAP}"
@@ -67,17 +63,45 @@ set(final_outputs
 )
 
 # Prevent a failed or oversized rebuild from leaving stale artifacts behind.
-file(REMOVE ${final_outputs})
+file(REMOVE ${FINAL_OUTPUTS})
 
-function(run_checked description)
-    execute_process(
-        COMMAND ${ARGN}
-        RESULT_VARIABLE result
-        COMMAND_ECHO STDOUT
-    )
-    if(NOT result EQUAL 0)
-        file(REMOVE ${final_outputs})
-        message(FATAL_ERROR "${description} failed with exit code ${result}")
+# Discover tools only after stale products are removed. A missing or invalid
+# tool therefore cannot leave artifacts from an earlier successful build.
+find_avr_tool(AVR_GCC avr-gcc)
+find_avr_tool(AVR_OBJCOPY avr-objcopy)
+find_avr_tool(AVR_OBJDUMP avr-objdump)
+
+function(run_checked DESCRIPTION)
+    set(options OUTPUT_FILE)
+    set(one_value_args FILE)
+    cmake_parse_arguments(ARG "${options}" "${one_value_args}" "" ${ARGN})
+
+    set(COMMAND_ARGUMENTS ${ARG_UNPARSED_ARGUMENTS})
+    if(ARG_OUTPUT_FILE)
+        execute_process(
+            COMMAND ${COMMAND_ARGUMENTS}
+            RESULT_VARIABLE COMMAND_RESULT
+            OUTPUT_FILE "${ARG_FILE}"
+            ERROR_VARIABLE COMMAND_STDERR
+        )
+        set(COMMAND_STDOUT "(written to ${ARG_FILE})")
+    else()
+        execute_process(
+            COMMAND ${COMMAND_ARGUMENTS}
+            RESULT_VARIABLE COMMAND_RESULT
+            OUTPUT_VARIABLE COMMAND_STDOUT
+            ERROR_VARIABLE COMMAND_STDERR
+        )
+    endif()
+
+    if(NOT COMMAND_RESULT EQUAL 0)
+        file(REMOVE ${FINAL_OUTPUTS})
+        string(REPLACE ";" " " COMMAND_TEXT "${COMMAND_ARGUMENTS}")
+        message(FATAL_ERROR
+            "${DESCRIPTION} failed with exit code ${COMMAND_RESULT}\n"
+            "Command: ${COMMAND_TEXT}\n"
+            "stdout:\n${COMMAND_STDOUT}\n"
+            "stderr:\n${COMMAND_STDERR}")
     endif()
 endfunction()
 
@@ -118,46 +142,33 @@ run_checked(
 )
 
 if(NOT EXISTS "${TEMP_SIZE_BINARY}")
-    file(REMOVE ${final_outputs})
+    file(REMOVE ${FINAL_OUTPUTS})
     message(FATAL_ERROR "Unable to determine interpreter binary size")
 endif()
 
-file(SIZE "${TEMP_SIZE_BINARY}" interp_size)
+file(SIZE "${TEMP_SIZE_BINARY}" INTERP_SIZE)
 file(REMOVE "${TEMP_SIZE_BINARY}")
 
 message(STATUS
-    "Interpreter binary size: ${interp_size} bytes "
+    "Interpreter binary size: ${INTERP_SIZE} bytes "
     "(limit: ${MAX_INTERP_SIZE} bytes)")
 
-if(interp_size GREATER MAX_INTERP_SIZE)
-    file(REMOVE
-        "${OUTPUT_OBJECT}"
-        "${OUTPUT_ELF}"
-        "${OUTPUT_MAP}"
-        "${OUTPUT_LISTING}"
-        "${OUTPUT_HEX}"
-    )
+if(INTERP_SIZE GREATER MAX_INTERP_SIZE)
+    file(REMOVE ${FINAL_OUTPUTS})
     message(FATAL_ERROR
-        "Interpreter binary exceeds the 29 KiB limit")
+        "Interpreter binary exceeds the configured ${MAX_INTERP_SIZE}-byte limit")
 endif()
 
-execute_process(
-    COMMAND
-        "${AVR_OBJDUMP}"
-        -D
-        -z
-        -t
-        -j .text
-        "${OUTPUT_ELF}"
-    OUTPUT_FILE "${OUTPUT_LISTING}"
-    RESULT_VARIABLE objdump_result
-    COMMAND_ECHO STDOUT
+run_checked(
+    "AVR listing generation"
+    OUTPUT_FILE FILE "${OUTPUT_LISTING}"
+    "${AVR_OBJDUMP}"
+    -D
+    -z
+    -t
+    -j .text
+    "${OUTPUT_ELF}"
 )
-if(NOT objdump_result EQUAL 0)
-    file(REMOVE "${OUTPUT_LISTING}" "${OUTPUT_HEX}")
-    message(FATAL_ERROR
-        "AVR listing generation failed with exit code ${objdump_result}")
-endif()
 
 run_checked(
     "Intel HEX generation"

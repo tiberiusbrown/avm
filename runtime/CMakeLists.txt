@@ -12,139 +12,68 @@ set(AVM_SYSROOT_LIB_DIR "${AVM_SYSROOT_DIR}/lib")
 file(GLOB_RECURSE AVM_RUNTIME_HEADERS CONFIGURE_DEPENDS
     "${AVM_RUNTIME_INCLUDE_DIR}/*")
 
-set(AVM_RUNTIME_COMMON_FLAGS
-    --target=avm-unknown-arduboyfx
-    -ffreestanding
-    -fomit-frame-pointer
-    -fno-stack-protector
-    -fno-unwind-tables
-    -fno-asynchronous-unwind-tables
-    -ffunction-sections
-    -fdata-sections
-    -Os
-    -Wall
-    -Wextra
-    -Werror
+set(AVM_CRT0_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0.o")
+set(AVM_CRT0_TEST_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0_test.o")
+set(AVM_CRT0_SKETCH_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0_sketch.o")
+
+avm_add_object(
+    OUTPUT "${AVM_CRT0_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+avm_add_object(
+    OUTPUT "${AVM_CRT0_TEST_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_test.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+avm_add_object(
+    OUTPUT "${AVM_CRT0_SKETCH_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_sketch.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 
-function(add_avm_runtime_object OUT_VAR SOURCE OUTPUT_NAME)
-    set(options CXX)
-    cmake_parse_arguments(ARG "${options}" "" "" ${ARGN})
-
-    set(OUTPUT "${AVM_RUNTIME_OBJECT_DIR}/${OUTPUT_NAME}.o")
-    set(LANGUAGE_FLAGS -std=c11)
-    if(ARG_CXX)
-        set(LANGUAGE_FLAGS
-            -std=c++17
-            -fno-exceptions
-            -fno-rtti
-            -fno-threadsafe-statics
-            -fno-use-cxa-atexit
-        )
-    endif()
-
-    add_custom_command(
-        OUTPUT "${OUTPUT}"
-        COMMAND "${CMAKE_COMMAND}" -E make_directory
-                "${AVM_RUNTIME_OBJECT_DIR}"
-        COMMAND
-            "$<TARGET_FILE:clang>"
-            ${AVM_RUNTIME_COMMON_FLAGS}
-            ${LANGUAGE_FLAGS}
-            -isystem "${AVM_RUNTIME_INCLUDE_DIR}"
-            -c "${SOURCE}"
-            -o "${OUTPUT}"
-        DEPENDS
-            clang
-            "${SOURCE}"
-            ${AVM_RUNTIME_HEADERS}
-        COMMENT "Compiling AVM runtime object ${OUTPUT_NAME}"
-        VERBATIM
+set(AVM_RUNTIME_LIBRARY_OBJECTS)
+foreach(RUNTIME_SOURCE runtime integer math string pgmspace)
+    set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
+    avm_add_object(
+        OUTPUT "${RUNTIME_OBJECT}"
+        SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/${RUNTIME_SOURCE}.c"
+        LANGUAGE C
+        INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+        DEPENDS ${AVM_RUNTIME_HEADERS}
     )
-
-    set(${OUT_VAR} "${OUTPUT}" PARENT_SCOPE)
-endfunction()
-
-add_avm_runtime_object(
-    AVM_CRT0_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0.c"
-    crt0)
-add_avm_runtime_object(
-    AVM_CRT0_TEST_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_test.c"
-    crt0_test)
-add_avm_runtime_object(
-    AVM_CRT0_SKETCH_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_sketch.c"
-    crt0_sketch)
-
-add_avm_runtime_object(
-    AVM_RUNTIME_CORE_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/lib/runtime.c"
-    runtime)
-add_avm_runtime_object(
-    AVM_RUNTIME_INTEGER_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/lib/integer.c"
-    integer)
-add_avm_runtime_object(
-    AVM_RUNTIME_MATH_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/lib/math.c"
-    math)
-add_avm_runtime_object(
-    AVM_RUNTIME_STRING_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/lib/string.c"
-    string)
-add_avm_runtime_object(
-    AVM_RUNTIME_PGMSPACE_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/lib/pgmspace.c"
-    pgmspace)
-
-set(AVM_RUNTIME_LIBRARY_OBJECTS
-    "${AVM_RUNTIME_CORE_OBJECT}"
-    "${AVM_RUNTIME_INTEGER_OBJECT}"
-    "${AVM_RUNTIME_MATH_OBJECT}"
-    "${AVM_RUNTIME_STRING_OBJECT}"
-    "${AVM_RUNTIME_PGMSPACE_OBJECT}"
-)
+    list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
+endforeach()
 
 set(AVM_RUNTIME_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm.a")
-add_custom_command(
+avm_add_archive(
     OUTPUT "${AVM_RUNTIME_LIBRARY}"
-    COMMAND "${CMAKE_COMMAND}" -E rm -f "${AVM_RUNTIME_LIBRARY}"
-    COMMAND
-        "$<TARGET_FILE:llvm-ar>"
-        rcs
-        "${AVM_RUNTIME_LIBRARY}"
-        ${AVM_RUNTIME_LIBRARY_OBJECTS}
-    DEPENDS
-        llvm-ar
-        ${AVM_RUNTIME_LIBRARY_OBJECTS}
-    COMMENT "Archiving libavm.a"
-    VERBATIM
+    OBJECTS ${AVM_RUNTIME_LIBRARY_OBJECTS}
 )
 
 # Keep compiler helper routines in a separate archive. The initial object is
 # intentionally empty; future __avm_* arithmetic helpers can be added here
 # without changing application link order.
-add_avm_runtime_object(
-    AVM_BUILTINS_EMPTY_OBJECT
-    "${AVM_RUNTIME_SOURCE_DIR}/builtins/empty.c"
-    builtins_empty)
+set(AVM_BUILTINS_EMPTY_OBJECT
+    "${AVM_RUNTIME_OBJECT_DIR}/builtins_empty.o")
+avm_add_object(
+    OUTPUT "${AVM_BUILTINS_EMPTY_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/empty.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
 
 set(AVM_BUILTINS_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm-builtins.a")
-add_custom_command(
+avm_add_archive(
     OUTPUT "${AVM_BUILTINS_LIBRARY}"
-    COMMAND "${CMAKE_COMMAND}" -E rm -f "${AVM_BUILTINS_LIBRARY}"
-    COMMAND
-        "$<TARGET_FILE:llvm-ar>"
-        rcs
-        "${AVM_BUILTINS_LIBRARY}"
-        "${AVM_BUILTINS_EMPTY_OBJECT}"
-    DEPENDS
-        llvm-ar
-        "${AVM_BUILTINS_EMPTY_OBJECT}"
-    COMMENT "Archiving libavm-builtins.a"
-    VERBATIM
+    OBJECTS "${AVM_BUILTINS_EMPTY_OBJECT}"
 )
 
 add_custom_target(avm_runtime
@@ -158,21 +87,51 @@ add_custom_target(avm_runtime
 
 # Compile-only checks verify that direct call syntax selects the macro path,
 # while address-taking and parenthesized calls still name real functions.
-add_avm_runtime_object(
-    AVM_RUNTIME_C_HEADER_CHECK
-    "${AVM_RUNTIME_SOURCE_DIR}/tests/header_smoke.c"
-    header_smoke_c)
-add_avm_runtime_object(
-    AVM_RUNTIME_CXX_HEADER_CHECK
-    "${AVM_RUNTIME_SOURCE_DIR}/tests/header_smoke.cpp"
-    header_smoke_cpp
-    CXX)
+set(AVM_RUNTIME_C_HEADER_CHECK
+    "${AVM_RUNTIME_OBJECT_DIR}/header_smoke_c.o")
+set(AVM_RUNTIME_CXX_HEADER_CHECK
+    "${AVM_RUNTIME_OBJECT_DIR}/header_smoke_cpp.o")
+avm_add_object(
+    OUTPUT "${AVM_RUNTIME_C_HEADER_CHECK}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/tests/header_smoke.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+avm_add_object(
+    OUTPUT "${AVM_RUNTIME_CXX_HEADER_CHECK}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/tests/header_smoke.cpp"
+    LANGUAGE CXX
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
 
 add_custom_target(avm_runtime_checks
     DEPENDS
         "${AVM_RUNTIME_C_HEADER_CHECK}"
         "${AVM_RUNTIME_CXX_HEADER_CHECK}"
 )
+
+# Describe each staged library artifact as source|destination and expand the
+# data into a single stamp-producing command.
+set(AVM_SYSROOT_STAGE_FILES
+    "${AVM_CRT0_OBJECT}|${AVM_SYSROOT_LIB_DIR}/crt0.o"
+    "${AVM_CRT0_TEST_OBJECT}|${AVM_SYSROOT_LIB_DIR}/crt0_test.o"
+    "${AVM_CRT0_SKETCH_OBJECT}|${AVM_SYSROOT_LIB_DIR}/crt0_sketch.o"
+    "${AVM_RUNTIME_LIBRARY}|${AVM_SYSROOT_LIB_DIR}/libavm.a"
+    "${AVM_BUILTINS_LIBRARY}|${AVM_SYSROOT_LIB_DIR}/libavm-builtins.a"
+)
+set(AVM_SYSROOT_STAGE_COMMANDS)
+set(AVM_SYSROOT_STAGE_DEPENDS)
+foreach(STAGE_FILE IN LISTS AVM_SYSROOT_STAGE_FILES)
+    string(REPLACE "|" ";" STAGE_FIELDS "${STAGE_FILE}")
+    list(GET STAGE_FIELDS 0 STAGE_SOURCE)
+    list(GET STAGE_FIELDS 1 STAGE_DESTINATION)
+    list(APPEND AVM_SYSROOT_STAGE_COMMANDS
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${STAGE_SOURCE}" "${STAGE_DESTINATION}")
+    list(APPEND AVM_SYSROOT_STAGE_DEPENDS "${STAGE_SOURCE}")
+endforeach()
 
 set(AVM_SYSROOT_STAMP "${AVM_SYSROOT_DIR}/.runtime-stamp")
 add_custom_command(
@@ -186,29 +145,11 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${AVM_RUNTIME_INCLUDE_DIR}"
             "${AVM_SYSROOT_INCLUDE_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${AVM_CRT0_OBJECT}"
-            "${AVM_SYSROOT_LIB_DIR}/crt0.o"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${AVM_CRT0_TEST_OBJECT}"
-            "${AVM_SYSROOT_LIB_DIR}/crt0_test.o"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${AVM_CRT0_SKETCH_OBJECT}"
-            "${AVM_SYSROOT_LIB_DIR}/crt0_sketch.o"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${AVM_RUNTIME_LIBRARY}"
-            "${AVM_SYSROOT_LIB_DIR}/libavm.a"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${AVM_BUILTINS_LIBRARY}"
-            "${AVM_SYSROOT_LIB_DIR}/libavm-builtins.a"
+    ${AVM_SYSROOT_STAGE_COMMANDS}
     COMMAND "${CMAKE_COMMAND}" -E touch "${AVM_SYSROOT_STAMP}"
     DEPENDS
         ${AVM_RUNTIME_HEADERS}
-        "${AVM_CRT0_OBJECT}"
-        "${AVM_CRT0_TEST_OBJECT}"
-        "${AVM_CRT0_SKETCH_OBJECT}"
-        "${AVM_RUNTIME_LIBRARY}"
-        "${AVM_BUILTINS_LIBRARY}"
+        ${AVM_SYSROOT_STAGE_DEPENDS}
     COMMENT "Staging the AVM runtime sysroot"
     VERBATIM
 )

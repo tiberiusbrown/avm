@@ -4459,7 +4459,7 @@ fx_read_program_bytes_end:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Common ABI:
-;   q3 = canonical image-relative program pointer
+;   q3[23:0] = image-relative program pointer; q3[31:24] is ignored/preserved
 ;   r4 = RAM operand/destination, except strlen_P where r4 is result only
 ;   r5 = uint16_t bound for memcmp_P, strncpy_P, and strncat_P
 ;
@@ -4476,15 +4476,17 @@ fx_read_program_bytes_end:
 
 sys_progmem_services_start:
 
-; Validate q3, consume the service byte in VM_PC, load its canonical source,
-; and tail-enter the alternate shared transaction start. Called with RCALL;
-; the transaction start's RET returns directly to the service body five cycles
-; after the first data-byte OUT. X, Z, and r0:r1 are preserved.
+; Consume the service byte in VM_PC, copy only q3[23:0] into native source
+; scratch, and tail-enter the alternate shared transaction start. q3[31:24]
+; is neither inspected nor modified. The three NOPs preserve the established
+; transaction-start timing and code layout of the former canonicality check.
+; Called with RCALL; the transaction start's RET returns directly to the service
+; body five cycles after the first data-byte OUT. Z and r0:r1 are preserved;
+; r24:r27 are clobbered.
 sys_progmem_prepare_func:
-    tst   VM_R7H
-    breq  .Lsys_progmem_canonical
-    rjmp  invalid_syscall_func
-.Lsys_progmem_canonical:
+    nop
+    nop
+    nop
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
@@ -4518,12 +4520,12 @@ sys_memcmp_p_impl:
     or    r27, r1
     breq  .Lsys_memcmp_p_zero
 
-    movw  r26, VM_R4             ; X = RAM lhs
+    movw  r30, VM_R4             ; Z = RAM lhs
     rcall sys_progmem_prepare_func
 
     ; The start returns at cycle 5. Preload the first RAM byte, then use the
     ; seven-cycle delay and RJMP to reach the first exact cycle-17 handoff.
-    ld    r24, X+
+    ld    r24, Z+
     rcall fx_read_program_delay_7
     rjmp  .Lsys_memcmp_p_loop
 
@@ -4538,7 +4540,7 @@ sys_memcmp_p_impl:
     sub   r0, ONE
     sbc   r1, ZERO
     breq  .Lsys_progmem_compare_equal
-    ld    r24, X+
+    ld    r24, Z+
     delay_4
     rjmp  .Lsys_memcmp_p_loop
 
@@ -4550,10 +4552,10 @@ sys_memcmp_p_impl:
 ; int strcmp_P(char const *lhs, progptr/uint24_t rhs)
 ;   r4 = RAM lhs/result, q3 = program rhs
 sys_strcmp_p_impl:
-    movw  r26, VM_R4             ; X = RAM lhs
+    movw  r30, VM_R4             ; Z = RAM lhs
     rcall sys_progmem_prepare_func
 
-    ld    r0, X+
+    ld    r0, Z+
     rcall fx_read_program_delay_7
     rjmp  .Lsys_strcmp_p_loop
 
@@ -4567,7 +4569,7 @@ sys_strcmp_p_impl:
     brne  .Lsys_progmem_compare_mismatch
     tst   r27
     breq  .Lsys_progmem_compare_equal
-    ld    r0, X+
+    ld    r0, Z+
     delay_4
     nop
     rjmp  .Lsys_strcmp_p_loop
@@ -4589,11 +4591,17 @@ sys_strlen_p_impl:
     sei
 
     tst   r27
-    breq  .Lsys_progmem_finish
+    breq  .Lsys_strlen_p_finish_wait
     add   VM_R4L, ONE
     adc   VM_R4H, ZERO
     rcall fx_read_program_delay_7
     rjmp  .Lsys_strlen_p_loop
+
+; The NUL path is two cycles shorter than the other program-memory terminal
+; paths. This one-word landing delays the stream restart until the preceding
+; dummy transfer has completed at the required seventeen-cycle SPI boundary.
+.Lsys_strlen_p_finish_wait:
+    rjmp  .Lsys_progmem_finish
 
 ; Shared bounded copy-until-NUL engine for strncpy_P and strncat_P.
 ; Inputs: Z=destination, r0:r1=nonzero maximum count, q3=source.
@@ -4685,8 +4693,8 @@ sys_strncat_p_impl:
     rjmp  cluster_tail_18
 
 sys_progmem_services_end:
-.if (sys_progmem_services_end - sys_progmem_services_start) != 256
-    .error "program-memory SYS subsystem must occupy exactly 128 AVR words"
+.if (sys_progmem_services_end - sys_progmem_services_start) != 258
+    .error "program-memory SYS subsystem must occupy exactly 129 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -9980,12 +9988,16 @@ sys_memcpy_impl:
     jmp   cluster_tail_18
 
 ; void *memcpy_P(void *dst, progptr/uint24_t src, uint16_t n)
-;   r4 = dst/result, q3 = src, r5 = n
+;   r4 = dst/result, q3[23:0] = src, r5 = n
+;   q3[31:24] is ignored and preserved. This three-cycle landing retains the
+;   previous successful-path timing; the skipped NOPs retain the four-word
+;   layout so no later range-constrained code moves.
 sys_memcpy_p_impl:
-    tst   VM_R7H
-    breq  .Lsys_memcpy_p_canonical
-    jmp   invalid_syscall_func
-.Lsys_memcpy_p_canonical:
+    rjmp  .Lsys_memcpy_p_padding_done
+    nop
+    nop
+.Lsys_memcpy_p_padding_done:
+    nop
     movw  r0, VM_R5              ; shared reader count
     mov   r27, r0
     or    r27, r1

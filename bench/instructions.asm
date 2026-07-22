@@ -29,6 +29,10 @@
 ;   * Memory SYS services are measured for n=0-8, 16, 32, and 256,
 ;     including ordinary-data, program-space, and overlapping memmove
 ;     paths in both forward and backward directions.
+;   * Display SYS covers both clear=false and clear=true with a nonzero buffer.
+;   * Every sprite SYS covers zero dimensions, six visible sizes, aligned and
+;     unaligned Y positions, three frame indices, all four clipping edges and
+;     corners, full-screen work, and complete rejection on every side.
 ;   * Comparison and string SYS services cover zero-length, equal, early/late
 ;     mismatch, prefix, NUL-padding, truncation, and long-scan paths. Program
 ;     variants deliberately carry nonzero q3[31:24] padding.
@@ -43,6 +47,7 @@
 ; Writable framebuffer regions used by the memory-service benchmarks.
 ; The memcpy windows are disjoint. Memmove uses a 257-byte region and
 ; shifts source and destination by one byte to force overlap direction.
+.equ BENCH_FRAMEBUFFER, 0x0500
 .equ BENCH_MEMCPY_SRC, 0x0500
 .equ BENCH_MEMCPY_DST, 0x0600
 .equ BENCH_MEMSET_DST, 0x0700
@@ -8660,6 +8665,1688 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: SYS display (clear=false; nonzero framebuffer)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+    ldi8 r4, 0
+    sys debug_break
+    sys display
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS display (clear=true; nonzero framebuffer)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+    ldi8 r4, 1
+    sys debug_break
+    sys display
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (width=0, height=8; zero-width fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_zero_width)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_zero_width)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (width=8, height=0; zero-height fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_zero_height)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_zero_height)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (1x1 at x=0,y=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_1x1)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_1x1)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (8x8 at x=40,y=24; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plain_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (8x8 at x=40,y=27; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x001b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 frame=0 at x=16,y=8; partial final page)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 frame=1 at x=16,y=11; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 1
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 frame=2 at x=16,y=11; later frame)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 2
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x17 at x=16,y=8; three source pages)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x17 at x=16,y=13; unaligned three-page path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000d
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (32x16 at x=48,y=24; medium aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0030
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plain_32x16)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_32x16)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (64x32 at x=32,y=16; large aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0020
+    ldi16 r5, 0x0010
+    ldi16 r6, %lo16(.Lbench_sprite_plain_64x32)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_64x32)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (128x64 at x=0,y=0; full-screen sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_128x64)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_128x64)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=-5,y=11; left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=120,y=11; right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=16,y=-4; top clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=16,y=60; bottom clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=-5,y=-4; top-left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=120,y=60; bottom-right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=128,y=11; fully off right)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0080
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=16,y=64; fully off bottom)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0040
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=-16,y=11; fully off left)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfff0
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_overwrite (16x9 at x=16,y=-9; fully off top)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfff7
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_overwrite
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (width=0, height=8; zero-width fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plus_zero_width)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_zero_width)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (width=8, height=0; zero-height fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plus_zero_height)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_zero_height)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (1x1 at x=0,y=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plus_1x1)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_1x1)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (8x8 at x=40,y=24; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plus_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (8x8 at x=40,y=27; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x001b
+    ldi16 r6, %lo16(.Lbench_sprite_plus_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 frame=0 at x=16,y=8; partial final page)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 frame=1 at x=16,y=11; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 1
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 frame=2 at x=16,y=11; later frame)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 2
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x17 at x=16,y=8; three source pages)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x17 at x=16,y=13; unaligned three-page path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000d
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (32x16 at x=48,y=24; medium aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0030
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plus_32x16)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_32x16)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (64x32 at x=32,y=16; large aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0020
+    ldi16 r5, 0x0010
+    ldi16 r6, %lo16(.Lbench_sprite_plus_64x32)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_64x32)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (128x64 at x=0,y=0; full-screen sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plus_128x64)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_128x64)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=-5,y=11; left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=120,y=11; right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=16,y=-4; top clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=16,y=60; bottom clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=-5,y=-4; top-left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=120,y=60; bottom-right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=128,y=11; fully off right)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0080
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=16,y=64; fully off bottom)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0040
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=-16,y=11; fully off left)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfff0
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_plus_mask (16x9 at x=16,y=-9; fully off top)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfff7
+    ldi16 r6, %lo16(.Lbench_sprite_plus_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plus_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_plus_mask
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (width=0, height=8; zero-width fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_zero_width)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_zero_width)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (width=8, height=0; zero-height fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_zero_height)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_zero_height)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (1x1 at x=0,y=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_1x1)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_1x1)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (8x8 at x=40,y=24; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plain_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (8x8 at x=40,y=27; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x001b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 frame=0 at x=16,y=8; partial final page)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 frame=1 at x=16,y=11; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 1
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 frame=2 at x=16,y=11; later frame)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 2
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x17 at x=16,y=8; three source pages)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x17 at x=16,y=13; unaligned three-page path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000d
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (32x16 at x=48,y=24; medium aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0030
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plain_32x16)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_32x16)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (64x32 at x=32,y=16; large aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0020
+    ldi16 r5, 0x0010
+    ldi16 r6, %lo16(.Lbench_sprite_plain_64x32)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_64x32)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (128x64 at x=0,y=0; full-screen sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_128x64)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_128x64)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=-5,y=11; left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=120,y=11; right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=16,y=-4; top clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=16,y=60; bottom clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=-5,y=-4; top-left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=120,y=60; bottom-right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=128,y=11; fully off right)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0080
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=16,y=64; fully off bottom)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0040
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=-16,y=11; fully off left)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfff0
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_self_masked (16x9 at x=16,y=-9; fully off top)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfff7
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_self_masked
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (width=0, height=8; zero-width fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_zero_width)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_zero_width)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (width=8, height=0; zero-height fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_zero_height)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_zero_height)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (1x1 at x=0,y=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_1x1)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_1x1)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (8x8 at x=40,y=24; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plain_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (8x8 at x=40,y=27; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x001b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_8x8)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_8x8)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 frame=0 at x=16,y=8; partial final page)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 frame=1 at x=16,y=11; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 1
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 frame=2 at x=16,y=11; later frame)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 2
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x17 at x=16,y=8; three source pages)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x17 at x=16,y=13; unaligned three-page path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000d
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x17)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x17)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (32x16 at x=48,y=24; medium aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0030
+    ldi16 r5, 0x0018
+    ldi16 r6, %lo16(.Lbench_sprite_plain_32x16)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_32x16)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (64x32 at x=32,y=16; large aligned sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0020
+    ldi16 r5, 0x0010
+    ldi16 r6, %lo16(.Lbench_sprite_plain_64x32)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_64x32)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (128x64 at x=0,y=0; full-screen sprite)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi16 r6, %lo16(.Lbench_sprite_plain_128x64)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_128x64)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=-5,y=11; left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=120,y=11; right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=16,y=-4; top clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=16,y=60; bottom clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=-5,y=-4; top-left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0xfffc
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=120,y=60; bottom-right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x003c
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=128,y=11; fully off right)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0080
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=16,y=64; fully off bottom)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0040
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=-16,y=11; fully off left)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfff0
+    ldi16 r5, 0x000b
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_sprite_erase (16x9 at x=16,y=-9; fully off top)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xa5
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfff7
+    ldi16 r6, %lo16(.Lbench_sprite_plain_16x9_frames)
+    ldi8 r7, %hi8(.Lbench_sprite_plain_16x9_frames)
+    ldi16 r0, 0
+    sys debug_break
+    sys draw_sprite_erase
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: RET
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -8762,5 +10449,84 @@ _start:
     .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
     .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
     .byte 0x00
+
+
+    ; Sprite SYS benchmark fixtures. The first two bytes are width and height.
+    ; Plain fixtures are used by overwrite, self-masked, and erase. Plus-mask
+    ; fixtures contain interleaved image/mask bytes. The 16x9 fixtures have
+    ; three frames so frame-index setup exercises nonzero frame offsets.
+.p2align 1
+.Lbench_sprite_plain_zero_width:
+    .byte 0, 8
+.Lbench_sprite_plain_zero_height:
+    .byte 8, 0
+.Lbench_sprite_plain_1x1:
+    .byte 1, 1
+    .byte 0x81
+.Lbench_sprite_plain_8x8:
+    .byte 8, 8
+    .fill 8, 1, 0xa5
+.Lbench_sprite_plain_16x9_frames:
+    .byte 16, 9
+    .fill 32, 1, 0x96
+    .fill 32, 1, 0x69
+    .fill 32, 1, 0xc3
+.Lbench_sprite_plain_16x17:
+    .byte 16, 17
+    .fill 48, 1, 0x5a
+.Lbench_sprite_plain_32x16:
+    .byte 32, 16
+    .fill 64, 1, 0x3c
+.Lbench_sprite_plain_64x32:
+    .byte 64, 32
+    .fill 256, 1, 0xa6
+.Lbench_sprite_plain_128x64:
+    .byte 128, 64
+    .fill 1024, 1, 0x6d
+
+.p2align 1
+.Lbench_sprite_plus_zero_width:
+    .byte 0, 8
+.Lbench_sprite_plus_zero_height:
+    .byte 8, 0
+.Lbench_sprite_plus_1x1:
+    .byte 1, 1
+    .byte 0x81, 0xc3
+.Lbench_sprite_plus_8x8:
+    .byte 8, 8
+    .rept 8
+    .byte 0xa5, 0x3c
+    .endr
+.Lbench_sprite_plus_16x9_frames:
+    .byte 16, 9
+    .rept 32
+    .byte 0x96, 0x5a
+    .endr
+    .rept 32
+    .byte 0x69, 0xc3
+    .endr
+    .rept 32
+    .byte 0xc3, 0xa5
+    .endr
+.Lbench_sprite_plus_16x17:
+    .byte 16, 17
+    .rept 48
+    .byte 0x5a, 0xc3
+    .endr
+.Lbench_sprite_plus_32x16:
+    .byte 32, 16
+    .rept 64
+    .byte 0x3c, 0xa5
+    .endr
+.Lbench_sprite_plus_64x32:
+    .byte 64, 32
+    .rept 256
+    .byte 0xa6, 0x69
+    .endr
+.Lbench_sprite_plus_128x64:
+    .byte 128, 64
+    .rept 1024
+    .byte 0x6d, 0xb6
+    .endr
 
 .size _start, .-_start

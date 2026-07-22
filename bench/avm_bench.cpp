@@ -448,7 +448,7 @@ void run_c_benchmarks(options_t const& options)
                << benchmark.source.filename().string() << '\n';
         std::cout << std::setw(3) << (i + 1) << "  "
                   << std::setw(12) << cycles << " cycles   "
-                  << benchmark.source.filename().string() << '\n';
+                  << benchmark.source.filename().string() << std::endl;
     }
 
     output.flush();

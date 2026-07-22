@@ -579,6 +579,16 @@
 #define SYS_MEMCPY_P            0x10
 #define SYS_MEMSET              0x11
 #define SYS_MEMMOVE             0x12
+#define SYS_MEMCMP_P            0x13
+#define SYS_STRCMP_P            0x14
+#define SYS_STRLEN_P            0x15
+#define SYS_STRNCPY_P           0x16
+#define SYS_STRNCAT_P           0x17
+#define SYS_MEMCMP              0x18
+#define SYS_STRCMP              0x19
+#define SYS_STRLEN              0x1A
+#define SYS_STRNCPY             0x1B
+#define SYS_STRNCAT             0x1C
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -3014,8 +3024,13 @@ sys_dispatch_func:
     .error "libm SYS services must occupy contiguous entries 0x04-0x0E"
 .endif
 .if (SYS_MEMCPY != 0x0F) || (SYS_MEMCPY_P != 0x10) || \
-    (SYS_MEMSET != 0x11) || (SYS_MEMMOVE != 0x12)
-    .error "memory SYS services must occupy contiguous entries 0x0F-0x12"
+    (SYS_MEMSET != 0x11) || (SYS_MEMMOVE != 0x12) || \
+    (SYS_MEMCMP_P != 0x13) || (SYS_STRCMP_P != 0x14) || \
+    (SYS_STRLEN_P != 0x15) || (SYS_STRNCPY_P != 0x16) || \
+    (SYS_STRNCAT_P != 0x17) || (SYS_MEMCMP != 0x18) || \
+    (SYS_STRCMP != 0x19) || (SYS_STRLEN != 0x1A) || \
+    (SYS_STRNCPY != 0x1B) || (SYS_STRNCAT != 0x1C)
+    .error "memory SYS services must occupy contiguous entries 0x0F-0x1C"
 .endif
 
 ; One AVR word per service number. The service byte therefore indexes this
@@ -3030,7 +3045,17 @@ sys_dispatch_table:
     sys_entries 1,   sys_memcpy_p_func
     sys_entries 1,   sys_memset_func
     sys_entries 1,   sys_memmove_func
-    sys_entries 237, invalid_syscall_func
+    sys_entries 1,   sys_memcmp_p_impl
+    sys_entries 1,   sys_strcmp_p_impl
+    sys_entries 1,   sys_strlen_p_impl
+    sys_entries 1,   sys_strncpy_p_impl
+    sys_entries 1,   sys_strncat_p_impl
+    sys_entries 1,   sys_memcmp_impl
+    sys_entries 1,   sys_strcmp_impl
+    sys_entries 1,   sys_strlen_impl
+    sys_entries 1,   sys_strncpy_impl
+    sys_entries 1,   sys_strncat_impl
+    sys_entries 227, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -4331,40 +4356,23 @@ f0_program_loads_end:
 
 fx_read_program_bytes_start:
 fx_read_program_bytes_func:
+    ; Keep the fixed-count entry's command launch in-line. The shared address
+    ; phase begins through RCALL while the command is already transferring, so
+    ; factoring it adds no cycles to F0 program loads or SYS memcpy_P.
     fx_disable
     ldi   r27, SFC_READ
     fx_enable
     out   SPDR, r27
+    rcall fx_read_program_start_after_command_func
 
-    ; Convert the image-relative source into a physical flash address while
-    ; the command byte is in flight. The source low byte is unchanged.
-    lds   r27, data_page_data+0
-    add   r25, r27
-    lds   r27, data_page_data+1
-    adc   r26, r27
-
-    ; Meaningful transmitted bytes require seventeen intervening cycles,
-    ; giving an 18-cycle OUT-to-OUT cadence.
-    rcall fx_read_program_delay_11
-    out   SPDR, r26
-    rcall fx_read_program_delay_17
-    out   SPDR, r25
-    rcall fx_read_program_delay_17
-    out   SPDR, r24
-
-    ; The dummy transmit value is irrelevant, so this handoff may use the
-    ; minimum 17-cycle OUT-to-OUT cadence (sixteen intervening cycles).
-    rcall fx_read_program_delay_16
-    out   SPDR, ZERO             ; begin first data-byte transfer
-
-    ; Predecrement the count. The caller guarantees the original count is
-    ; nonzero. Arrange both paths so the first read occurs at minimum cadence.
+    ; The shared start returns five cycles after launching the first data-byte
+    ; transfer. Predecrement the guaranteed-nonzero count. A multi-byte read
+    ; takes the branch into the seven-cycle loop landing; count==1 jumps to the
+    ; short final landing. Both paths consume the first byte on cycle 17.
     sub   r0, ONE
     sbc   r1, ZERO
-    delay_2
-    nop
-    breq  .Lfx_read_program_final
-    delay_2
+    brne  .Lfx_read_program_loop
+    rjmp  .Lfx_read_program_final_short
 
 .Lfx_read_program_loop:
     ; Seven-cycle call plus CLI places OUT at the minimum legal boundary.
@@ -4379,13 +4387,51 @@ fx_read_program_bytes_func:
     sbc   r1, ZERO
     brne  .Lfx_read_program_loop
 
-.Lfx_read_program_final:
-    ; Both the initial count==1 path and the loop-exit path reach this delay
-    ; nine cycles before the final byte may be consumed.
-    rcall fx_read_program_delay_9
+    ; A loop exit occurs one cycle earlier than the count==1 jump reaches the
+    ; short landing. This two-cycle delay aligns both paths at the shared
+    ; seven-cycle final wait without changing existing reader latency.
+    delay_2
+.Lfx_read_program_final_short:
+    rcall fx_read_program_delay_7
     in    r27, SPDR
     st    Z, r27
     fx_disable
+    ret
+
+; Alternate entry used only by the new program-memory SYS services. Their
+; caller has already established a return address, so this path launches the
+; command and tail-jumps into the shared address phase. The one-cycle landing
+; aligns it with the fixed reader's RCALL entry without delaying either path.
+fx_start_program_read_func:
+    fx_disable
+    ldi   r27, SFC_READ
+    fx_enable
+    out   SPDR, r27
+    rjmp  fx_read_program_start_tail_entry
+
+fx_read_program_start_tail_entry:
+    nop
+fx_read_program_start_after_command_func:
+    ; Entry is cycle 4 after the command OUT on both paths. Convert the
+    ; image-relative source into a physical flash address while the command is
+    ; in flight. The source low byte is unchanged.
+    lds   r27, data_page_data+0
+    add   r25, r27
+    lds   r27, data_page_data+1
+    adc   r26, r27
+
+    ; The seven-cycle delay and one NOP put the high-address OUT at cycle 18.
+    ; Remaining meaningful bytes retain the 18-cycle cadence; the first dummy
+    ; transfer uses the minimum 17-cycle cadence.
+    rcall fx_read_program_delay_7
+    nop
+    out   SPDR, r26
+    rcall fx_read_program_delay_17
+    out   SPDR, r25
+    rcall fx_read_program_delay_17
+    out   SPDR, r24
+    rcall fx_read_program_delay_16
+    out   SPDR, ZERO             ; begin first data-byte transfer
     ret
 
 ; Local fixed-delay ladder. Each label is the complete cycle count from the
@@ -4403,8 +4449,385 @@ fx_read_program_delay_7:
     ret
 
 fx_read_program_bytes_end:
-.if (fx_read_program_bytes_end - fx_read_program_bytes_start) != 90
-    .error "shared program-space byte reader must occupy exactly forty-five AVR words"
+.if (fx_read_program_bytes_end - fx_read_program_bytes_start) != 106
+    .error "shared program-space readers must occupy exactly fifty-three AVR words"
+.endif
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Program-memory string and comparison SYS services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Common ABI:
+;   q3 = canonical image-relative program pointer
+;   r4 = RAM operand/destination, except strlen_P where r4 is result only
+;   r5 = uint16_t bound for memcmp_P, strncpy_P, and strncat_P
+;
+; Results:
+;   memcmp_P / strcmp_P return -1, 0, or +1 in r4
+;   strlen_P returns the uint16_t length in r4
+;   strncpy_P / strncat_P preserve the original destination in r4
+;
+; Each service opens one independent SFC_READ transaction and restarts the VM
+; instruction stream afterward. Their streaming loops launch every successive
+; dummy transfer exactly seventeen cycles after the preceding OUT. The current
+; fixed-count reader is not routed through these loops, preserving existing F0
+; and memcpy_P performance.
+
+sys_progmem_services_start:
+
+; Validate q3, consume the service byte in VM_PC, load its canonical source,
+; and tail-enter the alternate shared transaction start. Called with RCALL;
+; the transaction start's RET returns directly to the service body five cycles
+; after the first data-byte OUT. X, Z, and r0:r1 are preserved.
+sys_progmem_prepare_func:
+    tst   VM_R7H
+    breq  .Lsys_progmem_canonical
+    rjmp  invalid_syscall_func
+.Lsys_progmem_canonical:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    movw  r24, VM_R6
+    mov   r26, VM_R7L
+    rjmp  fx_start_program_read_func
+
+; Shared comparison results. CP is always RAM byte minus program byte, so C
+; means the RAM operand is lexicographically smaller.
+.Lsys_progmem_compare_mismatch:
+    brlo  .Lsys_progmem_compare_less
+    mov   VM_R4L, ONE
+    mov   VM_R4H, ZERO
+    rjmp  .Lsys_progmem_finish
+.Lsys_progmem_compare_less:
+    ser   VM_R4L
+    ser   VM_R4H
+    rjmp  .Lsys_progmem_finish
+.Lsys_progmem_compare_equal:
+    clr   VM_R4L
+    clr   VM_R4H
+.Lsys_progmem_finish:
+    fx_disable
+    rjmp  seek_and_dispatch_func
+
+; int memcmp_P(void const *lhs, progptr/uint24_t rhs, uint16_t n)
+;   r4 = RAM lhs/result, q3 = program rhs, r5 = n
+sys_memcmp_p_impl:
+    movw  r0, VM_R5
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_memcmp_p_zero
+
+    movw  r26, VM_R4             ; X = RAM lhs
+    rcall sys_progmem_prepare_func
+
+    ; The start returns at cycle 5. Preload the first RAM byte, then use the
+    ; seven-cycle delay and RJMP to reach the first exact cycle-17 handoff.
+    ld    r24, X+
+    rcall fx_read_program_delay_7
+    rjmp  .Lsys_memcmp_p_loop
+
+.Lsys_memcmp_p_loop:
+    cli
+    out   SPDR, ZERO
+    in    r27, SPDR
+    sei
+
+    cp    r24, r27
+    brne  .Lsys_progmem_compare_mismatch
+    sub   r0, ONE
+    sbc   r1, ZERO
+    breq  .Lsys_progmem_compare_equal
+    ld    r24, X+
+    delay_4
+    rjmp  .Lsys_memcmp_p_loop
+
+.Lsys_memcmp_p_zero:
+    clr   VM_R4L
+    clr   VM_R4H
+    rjmp  cluster_tail_18
+
+; int strcmp_P(char const *lhs, progptr/uint24_t rhs)
+;   r4 = RAM lhs/result, q3 = program rhs
+sys_strcmp_p_impl:
+    movw  r26, VM_R4             ; X = RAM lhs
+    rcall sys_progmem_prepare_func
+
+    ld    r0, X+
+    rcall fx_read_program_delay_7
+    rjmp  .Lsys_strcmp_p_loop
+
+.Lsys_strcmp_p_loop:
+    cli
+    out   SPDR, ZERO
+    in    r27, SPDR
+    sei
+
+    cp    r0, r27
+    brne  .Lsys_progmem_compare_mismatch
+    tst   r27
+    breq  .Lsys_progmem_compare_equal
+    ld    r0, X+
+    delay_4
+    nop
+    rjmp  .Lsys_strcmp_p_loop
+
+; uint16_t strlen_P(progptr/uint24_t src)
+;   q3 = program src, r4 = result
+sys_strlen_p_impl:
+    clr   VM_R4L
+    clr   VM_R4H
+    rcall sys_progmem_prepare_func
+
+    rcall fx_read_program_delay_9
+    rjmp  .Lsys_strlen_p_loop
+
+.Lsys_strlen_p_loop:
+    cli
+    out   SPDR, ZERO
+    in    r27, SPDR
+    sei
+
+    tst   r27
+    breq  .Lsys_progmem_finish
+    add   VM_R4L, ONE
+    adc   VM_R4H, ZERO
+    rcall fx_read_program_delay_7
+    rjmp  .Lsys_strlen_p_loop
+
+; Shared bounded copy-until-NUL engine for strncpy_P and strncat_P.
+; Inputs: Z=destination, r0:r1=nonzero maximum count, q3=source.
+; Output: Z one past copied bytes, r0:r1 remaining count, T=1 iff a NUL was
+; copied. The transaction is disabled before RET. The nonterminal path from
+; one data OUT to the next is exactly seventeen cycles.
+fx_copy_program_string_n_func:
+    clt
+    rcall sys_progmem_prepare_func
+    rcall fx_read_program_delay_9
+    rjmp  .Lfx_copy_program_string_n_loop
+
+.Lfx_copy_program_string_n_loop:
+    cli
+    out   SPDR, ZERO
+    in    r27, SPDR
+    sei
+
+    st    Z+, r27
+    sub   r0, ONE
+    sbc   r1, ZERO
+
+    ; CPSE does not disturb the count's Z flag. For a nonzero byte, the RJMP
+    ; reaches the count test; for NUL, skip it, set T, and finish.
+    cpse  r27, ZERO
+    rjmp  .Lfx_copy_program_string_n_nonzero
+    set
+    rjmp  .Lfx_copy_program_string_n_done
+
+.Lfx_copy_program_string_n_nonzero:
+    breq  .Lfx_copy_program_string_n_done
+    delay_2
+    nop
+    rjmp  .Lfx_copy_program_string_n_loop
+
+.Lfx_copy_program_string_n_done:
+    fx_disable
+    ret
+
+; char *strncpy_P(char *dst, progptr/uint24_t src, uint16_t n)
+;   r4 = dst/result, q3 = src, r5 = n
+sys_strncpy_p_impl:
+    movw  r0, VM_R5
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_strncpy_p_zero
+
+    movw  r30, VM_R4
+    rcall fx_copy_program_string_n_func
+
+    ; A nonzero remainder exists only when the source NUL was copied. Pad all
+    ; remaining destination bytes as required by strncpy.
+    mov   r24, r0
+    or    r24, r1
+    breq  .Lsys_strncpy_p_done
+.Lsys_strncpy_p_pad:
+    st    Z+, ZERO
+    sub   r0, ONE
+    sbc   r1, ZERO
+    brne  .Lsys_strncpy_p_pad
+.Lsys_strncpy_p_done:
+    rjmp  seek_and_dispatch_func
+.Lsys_strncpy_p_zero:
+    rjmp  cluster_tail_18
+
+; char *strncat_P(char *dst, progptr/uint24_t src, uint16_t n)
+;   r4 = dst/result, q3 = src, r5 = n
+sys_strncat_p_impl:
+    movw  r0, VM_R5
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_strncat_p_zero
+
+    ; Find the existing RAM terminator. Z is left one past it, then moved back
+    ; so the program string overwrites that terminator.
+    movw  r30, VM_R4
+.Lsys_strncat_p_scan:
+    ld    r24, Z+
+    tst   r24
+    brne  .Lsys_strncat_p_scan
+    sbiw  r30, 1
+
+    rcall fx_copy_program_string_n_func
+    brts  .Lsys_strncat_p_done
+    st    Z, ZERO                ; count exhausted before source NUL
+.Lsys_strncat_p_done:
+    rjmp  seek_and_dispatch_func
+.Lsys_strncat_p_zero:
+    rjmp  cluster_tail_18
+
+sys_progmem_services_end:
+.if (sys_progmem_services_end - sys_progmem_services_start) != 256
+    .error "program-memory SYS subsystem must occupy exactly 128 AVR words"
+.endif
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Data-memory string and comparison SYS services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Calling conventions:
+;   memcmp:   r4=lhs/result, r5=rhs, r6=n
+;   strcmp:   r4=lhs/result, r5=rhs
+;   strlen:   r4=string/result
+;   strncpy:  r4=dst/result, r5=src, r6=n
+;   strncat:  r4=dst/result, r5=src, r6=n
+;
+; Comparison services return the exact signed unsigned-byte difference.
+; strncpy and strncat retain the original destination in r4. The bounded copy
+; engine is shared by both string-copy services and returns NUL status in T.
+; All services preserve VM_FLAGS and every nondestination architectural input.
+
+sys_ram_string_services_start:
+
+; Shared exact comparison result. The byte loops use SUB lhs,rhs. Its low
+; byte and carry are the complete signed 16-bit difference of two unsigned
+; chars: clear the high byte without disturbing carry, then borrow into it.
+.Lsys_ram_compare_store_difference:
+    mov   VM_R4L, r0
+    clr   VM_R4H
+    sbc   VM_R4H, ZERO
+    rjmp  cluster_tail_18
+.Lsys_ram_compare_zero:
+    sub   r0, r0                 ; zero r0 and clear carry
+    rjmp  .Lsys_ram_compare_store_difference
+
+; int memcmp(void const *lhs, void const *rhs, uint16_t n)
+;   r4 = lhs/result, r5 = rhs, r6 = n
+sys_memcmp_impl:
+    movw  r26, VM_R4             ; X = lhs
+    movw  r30, VM_R5             ; Z = rhs
+    movw  r24, VM_R6             ; remaining count
+    sbiw  r24, 0
+    breq  .Lsys_ram_compare_zero
+.Lsys_memcmp_loop:
+    ld    r0, X+
+    ld    r1, Z+
+    sub   r0, r1
+    brne  .Lsys_ram_compare_store_difference
+    sbiw  r24, 1
+    brne  .Lsys_memcmp_loop
+    rjmp  .Lsys_ram_compare_store_difference
+
+; int strcmp(char const *lhs, char const *rhs)
+;   r4 = lhs/result, r5 = rhs
+sys_strcmp_impl:
+    movw  r26, VM_R4             ; X = lhs
+    movw  r30, VM_R5             ; Z = rhs
+.Lsys_strcmp_loop:
+    ld    r0, X+
+    ld    r1, Z+
+    sub   r0, r1
+    brne  .Lsys_ram_compare_store_difference
+    tst   r1
+    brne  .Lsys_strcmp_loop
+    rjmp  .Lsys_ram_compare_store_difference
+
+; uint16_t strlen(char const *src)
+;   r4 = src/result
+sys_strlen_impl:
+    movw  r26, VM_R4             ; X = source
+    clr   r24
+    clr   r25
+.Lsys_strlen_loop:
+    ld    r0, X+
+    tst   r0
+    breq  .Lsys_strlen_done
+    adiw  r24, 1
+    rjmp  .Lsys_strlen_loop
+.Lsys_strlen_done:
+    movw  VM_R4, r24
+    rjmp  cluster_tail_18
+
+; Shared bounded RAM copy-until-NUL engine for strncpy and strncat.
+; Inputs: X=source, Z=destination, r24:r25=nonzero maximum count.
+; Outputs: X/Z one past copied bytes, r24:r25 unused count, T=1 iff a NUL
+; was copied. CPSE preserves the native Z flag produced by SBIW.
+sys_copy_string_n_func:
+    clt
+.Lsys_copy_string_n_loop:
+    ld    r0, X+
+    st    Z+, r0
+    sbiw  r24, 1
+    cpse  r0, ZERO
+    rjmp  .Lsys_copy_string_n_nonzero
+    set
+    ret
+.Lsys_copy_string_n_nonzero:
+    brne  .Lsys_copy_string_n_loop
+    ret
+
+; char *strncpy(char *dst, char const *src, uint16_t n)
+;   r4 = dst/result, r5 = src, r6 = n
+sys_strncpy_impl:
+    movw  r24, VM_R6
+    sbiw  r24, 0
+    breq  .Lsys_ram_string_done
+    movw  r26, VM_R5
+    movw  r30, VM_R4
+    rcall sys_copy_string_n_func
+
+    ; The helper returns with native Z still reflecting the remaining count.
+    ; A nonzero remainder exists only when a source NUL was copied.
+    breq  .Lsys_ram_string_done
+.Lsys_strncpy_pad:
+    st    Z+, ZERO
+    sbiw  r24, 1
+    brne  .Lsys_strncpy_pad
+    rjmp  .Lsys_ram_string_done
+
+; char *strncat(char *dst, char const *src, uint16_t n)
+;   r4 = dst/result, r5 = src, r6 = n
+sys_strncat_impl:
+    movw  r24, VM_R6
+    sbiw  r24, 0
+    breq  .Lsys_ram_string_done
+
+    ; Find and overwrite the existing destination terminator.
+    movw  r30, VM_R4
+.Lsys_strncat_scan:
+    ld    r0, Z+
+    tst   r0
+    brne  .Lsys_strncat_scan
+    sbiw  r30, 1
+
+    movw  r26, VM_R5
+    rcall sys_copy_string_n_func
+    brts  .Lsys_ram_string_done
+    st    Z, ZERO                ; count exhausted before source NUL
+.Lsys_ram_string_done:
+    rjmp  cluster_tail_18
+
+sys_ram_string_services_end:
+.if (sys_ram_string_services_end - sys_ram_string_services_start) != 142
+    .error "data-memory string SYS subsystem must occupy exactly 71 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

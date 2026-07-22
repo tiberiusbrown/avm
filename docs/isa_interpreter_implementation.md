@@ -702,6 +702,8 @@ The cold stack-relative values include the shared operand fetch, dynamic registe
 
 Each operation-specific body calls `f0_program_prepare_func` once. After validating and decoding `PSPEC`, capturing the original program pointer, and applying any postincrement, that helper uses `RJMP` to enter `fx_read_program_bytes_func` directly. The reader’s final `RET` returns through the original operation-body `RCALL` return address. The bodies do not issue a second `RCALL` to the reader. Relative to a prepare-`RET` followed by a reader-`RCALL`, this tail-call arrangement saves five cycles per instruction and nine AVR words across the nine program-load bodies.
 
+The fixed reader now shares its command/address transmission phase with an alternate entry used by program-memory SYS services. The fixed entry still launches `SFC_READ` inline, then calls the shared phase while the command byte is transferring. The alternate entry launches the same command and tail-jumps through a one-cycle landing. Both paths begin physical-address conversion on cycle 4 after the command `OUT`, transmit the three address bytes with the original 18-cycle cadence, and launch the first dummy transfer at the original cycle. The fixed reader’s count-one, count-greater-than-one, steady-state, and final-byte paths therefore retain their existing cycle counts. Factoring the alternate entry increases the shared reader from 45 to 53 AVR words without slowing any `F0` program load or `SYS memcpy_P`.
+
 `LDP24` loads three packed little-endian bytes into bits `23:0` of `qD` and clears bits `31:24`, producing a canonical 24-bit program pointer. The postincrement form advances `qA` by three bytes after capturing the original address. `LDP24 qD,[qA+]` reserves `qD == qA`, because one pair cannot simultaneously receive the loaded pointer and the updated source address. Each postincrement form measures exactly 17 cycles more than its corresponding ordinary load because validation and pointer writeback add one minimum SPI interval to the complete path.
 
 ### 9.4. Shared cold 32-bit forms
@@ -2859,26 +2861,28 @@ The following single-section order is a reference layout that keeps the major st
 | 9 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1280 | 1924 | 644 | 1288 |
 | 10 | Cluster-A false-path landing and cadence cluster | 1924 | 1950 | 26 | 52 |
 | 11 | Local F0 trap plus `F0` veneer table | 1950 | 2061 | 111 | 222 |
-| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2061 | 2804 | 743 | 1486 |
-| 13 | Shared `F0` cold-32 subsystem | 2804 | 2867 | 63 | 126 |
-| 14 | Shared `F0` cold general-pointer subsystem | 2867 | 2913 | 46 | 92 |
-| 15 | `F1` table | 2913 | 3201 | 288 | 576 |
-| 16 | `F2` table | 3201 | 3525 | 324 | 648 |
-| 17 | `F3` table | 3525 | 3909 | 384 | 768 |
-| 18 | Cluster B and two local trap shims | 3909 | 3936 | 27 | 54 |
-| 19 | `F4` table | 3936 | 4488 | 552 | 1104 |
-| 20 | `F5` table | 4488 | 4872 | 384 | 768 |
-| 21 | `F6` table | 4872 | 5192 | 320 | 640 |
-| 22 | `F7` table | 5192 | 5912 | 720 | 1440 |
-| 23 | Cluster C and local trap shim | 5912 | 5936 | 24 | 48 |
-| 24 | `F8` table | 5936 | 6176 | 240 | 480 |
-| 25 | `FA` immediate body-jump table | 6176 | 6189 | 13 | 26 |
-| 26 | `FA` register forwarding table | 6189 | 6285 | 96 | 192 |
-| 27 | Twelve shared `FA` shift bodies | 6285 | 6433 | 148 | 296 |
-| 28 | Shared `FB-FD` move table | 6433 | 6561 | 128 | 256 |
-| 29 | `FE` forwarding table | 6561 | 6689 | 128 | 256 |
-| 30 | Eight `FE` multiplication bodies | 6689 | 6753 | 64 | 128 |
-|  | **Non-floating reference end** |  | **6753** | **6753** | **13,506** |
+| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2061 | 2812 | 751 | 1502 |
+| 13 | Program-memory string/comparison SYS subsystem | 2812 | 2940 | 128 | 256 |
+| 14 | Data-memory string/comparison SYS subsystem | 2940 | 3011 | 71 | 142 |
+| 15 | Shared `F0` cold-32 subsystem | 3011 | 3074 | 63 | 126 |
+| 16 | Shared `F0` cold general-pointer subsystem | 3074 | 3120 | 46 | 92 |
+| 17 | `F1` table | 3120 | 3408 | 288 | 576 |
+| 18 | `F2` table | 3408 | 3732 | 324 | 648 |
+| 19 | `F3` table | 3732 | 4116 | 384 | 768 |
+| 20 | Cluster B and two local trap shims | 4116 | 4143 | 27 | 54 |
+| 21 | `F4` table | 4143 | 4695 | 552 | 1104 |
+| 22 | `F5` table | 4695 | 5079 | 384 | 768 |
+| 23 | `F6` table | 5079 | 5399 | 320 | 640 |
+| 24 | `F7` table | 5399 | 6119 | 720 | 1440 |
+| 25 | Cluster C and local trap shim | 6119 | 6143 | 24 | 48 |
+| 26 | `F8` table | 6143 | 6383 | 240 | 480 |
+| 27 | `FA` immediate body-jump table | 6383 | 6396 | 13 | 26 |
+| 28 | `FA` register forwarding table | 6396 | 6492 | 96 | 192 |
+| 29 | Twelve shared `FA` shift bodies | 6492 | 6640 | 148 | 296 |
+| 30 | Shared `FB-FD` move table | 6640 | 6768 | 128 | 256 |
+| 31 | `FE` forwarding table | 6768 | 6896 | 128 | 256 |
+| 32 | Eight `FE` multiplication bodies | 6896 | 6960 | 64 | 128 |
+|  | **Non-floating reference end** |  | **6960** | **6960** | **13,920** |
 
 The `FF` decoder, bridge, inline floating handlers, and linked soft-float routines are not included in this non-floating endpoint until measured. Startup-only helpers and startup code are also excluded.
 
@@ -3241,6 +3245,204 @@ The short forms use six specialized `SBIC`/`SBIS GPIOR0,bit` decode paths. The 1
 For the reference schedule, a not-taken 16-bit branch launches the fallthrough opcode at the second cycle-17 boundary and completes in 51 cycles. A taken branch reuses the `JMP16` signed-displacement suffix and therefore has the same 134-cycle latency as `JMP16`. Code generators should choose fallthrough layout based on expected path frequency. `CALLF` uses native `r7` to add four to the low-register 24-bit PC when forming its return address.
 
 
+## 30.1. Program-memory string and comparison SYS services
+
+The reference interpreter assigns five contiguous services after `memmove`:
+
+| Service | ID | Calling convention | Result |
+|---|---:|---|---|
+| `memcmp_P` | `0x13` | `r4=RAM lhs`, `q3=program rhs`, `r5=n` | signed `-1`, `0`, or `+1` in `r4` |
+| `strcmp_P` | `0x14` | `r4=RAM lhs`, `q3=program rhs` | signed `-1`, `0`, or `+1` in `r4` |
+| `strlen_P` | `0x15` | `q3=program string` | `uint16_t` length in `r4` |
+| `strncpy_P` | `0x16` | `r4=dst/result`, `q3=program src`, `r5=n` | original `dst` remains in `r4` |
+| `strncat_P` | `0x17` | `r4=dst/result`, `q3=program src`, `r5=n` | original `dst` remains in `r4` |
+
+`q3` must be a canonical 24-bit program pointer: bits `31:24` must be zero. A malformed pointer enters the invalid-SYS trap before opening a flash transaction. `memcmp_P` with `n=0`, `strncpy_P` with `n=0`, and `strncat_P` with `n=0` avoid the independent program-data transaction and return through the ordinary SYS cadence tail.
+
+### 30.1.1. Shared transaction preparation
+
+All five services call one small preparation helper. It:
+
+1. validates canonical `q3`;
+2. advances `VM_PC` from the service byte to the already-fetched following primary opcode;
+3. copies program-pointer bits `23:0` into native `r24:r25:r26`;
+4. tail-enters the alternate shared program-read startup.
+
+The alternate startup duplicates only the four-word command launch:
+
+```asm
+fx_disable
+ldi   r27, SFC_READ
+fx_enable
+out   SPDR, r27
+```
+
+It then tail-jumps through one `NOP` into the same physical-address and command/address transfer sequence used by `fx_read_program_bytes_func`. The caller’s original `RCALL` return address remains on the hardware stack, so the shared startup’s `RET` returns directly to the service body five cycles after the first data-byte transfer was launched.
+
+The fixed-count reader retains its own four-word command launch and reaches the shared address phase with `RCALL`. That call executes entirely inside the command-transfer window. Its first-byte and steady-state schedules are unchanged, so existing `F0 60-68` instructions and `memcpy_P` have no performance regression.
+
+### 30.1.2. Specialized comparison and scan loops
+
+`memcmp_P` and `strcmp_P` use dedicated comparison loops. The RAM byte is loaded ahead of the next program-byte handoff. Comparison is unsigned, matching the C functions. On mismatch, the handlers return only the required sign as `-1` or `+1`; they do not form a potentially overflowing eight-bit subtraction.
+
+`strlen_P` uses a no-store scan loop and increments a 16-bit result with `ADD`/`ADC`. It does not route through the copy engine and does not create an SRAM temporary buffer.
+
+The equal, nonterminal paths use the following exact schedules, with the current program-data `OUT` designated cycle 0:
+
+```text
+memcmp_P:
+  IN 1, SEI 2, CP 3, BRNE 4, SUB 5, SBC 6, BREQ 7,
+  LD 8-9, delay 10-13, RJMP 14-15, CLI 16, OUT 17
+
+strcmp_P:
+  IN 1, SEI 2, CP 3, BRNE 4, TST 5, BREQ 6,
+  LD 7-8, delay 9-13, RJMP 14-15, CLI 16, OUT 17
+
+strlen_P:
+  IN 1, SEI 2, TST 3, BREQ 4, ADD 5, ADC 6,
+  seven-cycle delay 7-13, RJMP 14-15, CLI 16, OUT 17
+```
+
+Mismatch and NUL paths leave these loops immediately and disable flash chip select; only continuing paths launch another byte.
+
+### 30.1.3. Shared bounded copy-until-NUL engine
+
+`strncpy_P` and `strncat_P` share one bounded streaming engine:
+
+```text
+inputs:
+  Z       destination byte pointer
+  r0:r1   nonzero maximum count
+  q3      canonical program source
+
+outputs:
+  Z       one byte past the copied bytes
+  r0:r1   unused count
+  T       one iff a source NUL was copied
+```
+
+`T` is an output status only; it is not a mode input to the existing fixed-count reader. This keeps the fixed reader’s ABI and loop unchanged.
+
+The continuing nonzero-byte path is exactly:
+
+```text
+IN 1, SEI 2, ST 3-4, SUB 5, SBC 6, CPSE 7,
+RJMP 8-9, BREQ 10, delay 11-13, RJMP 14-15,
+CLI 16, OUT 17
+```
+
+`CPSE` does not modify the count’s native `Z` flag. A zero source byte skips the nonzero-path jump, sets `T`, disables the transaction, and returns. Count exhaustion with a nonzero source byte returns with `T` clear.
+
+`strncpy_P` copies through the source NUL when it occurs within `n`, then pads the remaining destination bytes with zero. If no NUL occurs in the first `n` bytes, it performs no padding.
+
+`strncat_P` first scans RAM for the existing destination NUL, overwrites it with the program string, and uses the shared engine. If the engine returns with `T` clear, it appends one RAM NUL after the `n` copied bytes. If `T` is set, the copied source NUL is already the required terminator.
+
+### 30.1.4. Code size
+
+The fixed 256-word SYS dispatch table does not grow: five formerly invalid entries now branch directly to the nearby program-memory handlers. No additional absolute veneer is needed.
+
+```text
+shared reader alternate entry and refactoring    8 words /  16 bytes
+five-service program-memory SYS subsystem      128 words / 256 bytes
+                                                   -------------------
+total added implementation                    136 words / 272 bytes
+```
+
+The 128-word subsystem includes canonical-pointer preparation, shared comparison results, all four cadence-critical loops, `strncpy_P` padding, and the RAM prefix scan used by `strncat_P`.
+
+## 30.2. Data-memory string and comparison SYS services
+
+Five additional contiguous services follow the program-memory forms:
+
+| Service | ID | Calling convention | Result |
+|---|---:|---|---|
+| `memcmp` | `0x18` | `r4=lhs/result`, `r5=rhs`, `r6=n` | exact signed unsigned-byte difference in `r4` |
+| `strcmp` | `0x19` | `r4=lhs/result`, `r5=rhs` | exact signed unsigned-byte difference in `r4` |
+| `strlen` | `0x1A` | `r4=string/result` | `uint16_t` length in `r4` |
+| `strncpy` | `0x1B` | `r4=dst/result`, `r5=src`, `r6=n` | original `dst` remains in `r4` |
+| `strncat` | `0x1C` | `r4=dst/result`, `r5=src`, `r6=n` | original `dst` remains in `r4` |
+
+The complete memory-service range is therefore `0x0F-0x1C`. The 256-entry SYS table remains unchanged in size: these five entries replace invalid-service entries and jump directly to a nearby 71-word implementation block. No absolute veneers are required.
+
+`memcmp` with `n=0`, `strncpy` with `n=0`, and `strncat` with `n=0` return without accessing either input object. All five services preserve `VM_FLAGS` and every nondestination architectural input. As in C, overlapping source and destination objects for `strncpy` and `strncat` are not supported.
+
+### 30.2.1. Shared comparison-result construction
+
+`memcmp` and `strcmp` load the left operand through native `X` and the right operand through native `Z`. Both use `SUB lhsByte,rhsByte` rather than merely comparing the bytes. On mismatch, the low result byte and carry already encode the exact difference of two unsigned bytes. The common result sequence is:
+
+```asm
+mov   VM_R4L, r0             ; low8(unsigned(lhs) - unsigned(rhs))
+clr   VM_R4H                 ; CLR preserves carry
+sbc   VM_R4H, ZERO           ; 0x00 or 0xFF sign extension
+rjmp  cluster_tail_18
+```
+
+The result is therefore in the full range `-255..+255`, which is stronger than the C requirement to return only a negative, zero, or positive value. Equal terminal paths arrive with `r0=0` and carry clear and use the same result sequence. The `memcmp(n=0)` path establishes that state with `SUB r0,r0`.
+
+The steady equal-byte costs inside the native RAM loops are:
+
+```text
+memcmp: LD + LD + SUB + BRNE + SBIW + BRNE = 10 cycles per continuing byte
+strcmp: LD + LD + SUB + BRNE + TST + BRNE  =  9 cycles per continuing byte
+```
+
+`strcmp` tests the preserved right byte after an equal subtraction, so it can detect the shared NUL without retaining another copy of the left byte.
+
+### 30.2.2. `strlen`
+
+`strlen` copies the source pointer to native `X`, counts nonzero bytes in `r24:r25`, and returns the count in `r4`. The compact loop is:
+
+```asm
+ld    r0, X+
+tst   r0
+breq  done
+adiw  r24, 1
+rjmp  loop
+```
+
+A continuing byte costs eight native cycles. The 16-bit result is sufficient because AVM data-space pointers are sixteen bits.
+
+### 30.2.3. Shared bounded RAM copy engine
+
+`strncpy` and `strncat` share one ten-word helper:
+
+```text
+inputs:
+  X         source pointer
+  Z         destination pointer
+  r24:r25   nonzero maximum count
+
+outputs:
+  X/Z       one byte past the copied bytes
+  r24:r25   unused count
+  T         one iff a NUL byte was copied
+  native Z  one iff the remaining count is zero
+```
+
+The helper copies one byte, decrements the count, and uses `CPSE byte,ZERO` without disturbing the native `Z` flag produced by `SBIW`. A continuing nonzero byte costs eleven cycles. `RET` preserves `SREG`, allowing `strncpy` to test the remaining-count `Z` flag immediately without another count instruction.
+
+`strncpy` copies at most `n` bytes. When the source NUL is copied before count exhaustion, it pads every remaining destination byte with zero. When the count reaches zero first, no padding occurs.
+
+`strncat` first scans the destination for its existing NUL and moves `Z` back to that byte. It then uses the same bounded copy helper. If the helper returns with `T` clear, the source did not supply a NUL within the first `n` bytes, so the handler writes one additional terminator at `Z`. If `T` is set, the copied NUL is already the required terminator.
+
+### 30.2.4. Code size and existing-service impact
+
+The complete data-memory subsystem is exactly:
+
+```text
+shared exact comparison result and zero case   6 words /  12 bytes
+memcmp                                         13 words /  26 bytes
+strcmp                                          9 words /  18 bytes
+strlen                                         10 words /  20 bytes
+shared bounded copy helper                     10 words /  20 bytes
+strncpy                                        11 words /  22 bytes
+strncat                                        12 words /  24 bytes
+                                                ---------------------
+total                                          71 words / 142 bytes
+```
+
+No existing service implementation is changed. Dispatch still performs one table `RJMP` per service ID, and the table remains 256 words, so existing SYS instruction timings are unchanged. The new block only shifts later code addresses; all static transfers remain within their original instruction forms.
+
 ## 31. Assembler selection rules
 
 Use the one-byte primary form whenever all required operands are upper
@@ -3280,13 +3482,15 @@ Included in the reference interpreter-core size estimate:
 - every non-floating `F0-FE` decoder, table, forwarding page, shared body, and local trap shim;
 - branch, jump, call, return, and stream-restart helpers;
 - reserved-instruction traps;
-- the `SYS` opcode decoder and bridge entry/exit.
+- the `SYS` opcode decoder and bridge entry/exit;
+- the cadence-critical program-memory string/comparison SYS subsystem, because it shares the `F0` reader and occupies the core layout before the executable tables;
+- the compact data-memory string/comparison SYS subsystem, which is placed beside it so all five new table entries use direct `RJMP` dispatch.
 
 Excluded from the reference interpreter-core size estimate:
 
 - startup and vectors;
 - interrupt handlers;
-- hardware initialization and service bodies;
+- hardware initialization and other service bodies;
 - save-flash routines;
 - debugger implementation beyond trap entry;
 - the `FF` decoder, bridge, and inline floating handlers until measured;
@@ -3321,11 +3525,13 @@ The secondary executable tables total **7,374 bytes**. `EC`, `ED-EE`, `F9`, and 
 
 ### 34.1. Reference baseline and variable components
 
-For the shown layout, the non-floating core with the expanded `F2` table, `FA` bodies, the exact 74-byte `ED-EE` handler, and all other non-floating pages present, but excluding the ordinary `F0` bodies and the two shared `F0` runtime-decoded subsystems, occupies **11,802 bytes**. The remaining components are estimated as follows:
+For the shown layout, the non-floating core with the expanded `F2` table, `FA` bodies, the exact 74-byte `ED-EE` handler, and all other non-floating pages present, but excluding the ordinary `F0` bodies, both string/comparison SYS subsystems, and the two shared `F0` runtime-decoded subsystems, occupies **11,802 bytes**. The remaining components are estimated as follows:
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
-| `F0` immediate, stack, absolute, and program-space bodies | 1,486 | 1,390-1,646 |
+| `F0` immediate, stack, absolute, and program-space bodies | 1,502 | 1,406-1,662 |
+| Program-memory string/comparison SYS subsystem | 256 | exact |
+| Data-memory string/comparison SYS subsystem | 142 | exact |
 | Shared `F0` cold-32 subsystem | 126 | exact |
 | Shared `F0` cold general-pointer subsystem | 92 | exact |
 
@@ -3333,11 +3539,11 @@ For the shown layout, the non-floating core with the expanded `F2` table, `FA` b
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 13,410 | 13.10 |
-| Non-floating reference target | **13,506** | **13.19** |
-| Upper bound | 13,666 | 13.35 |
+| Lower bound | 13,824 | 13.50 |
+| Non-floating reference target | **13,920** | **13.59** |
+| Upper bound | 14,080 | 13.75 |
 
-The non-floating reference design targets about 13,506 bytes, with 13,666 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
+The non-floating reference design targets about 13,920 bytes, with 14,080 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
 
 ## 35. Four-word primary-stride rationale
 

@@ -302,10 +302,16 @@ A **normalized program pointer** satisfies:
 qN[31:24] = 0
 ```
 
-Every instruction or system service whose operand is specified as a program or
-function pointer uses only bits `23:0` and ignores bits `31:24`. This includes
-program-space load addresses, indirect jump and call targets, and the
-program-space source pointer of `memcpy_P`.
+Unless an instruction or service definition explicitly requires a normalized
+program pointer, an architectural program- or function-pointer consumer uses
+only bits `23:0` and ignores bits `31:24`. This includes program-space load
+addresses, indirect jump and call targets, and the program-space source pointer
+of `memcpy_P`.
+
+The program-memory comparison and string services `memcmp_P`, `strcmp_P`,
+`strlen_P`, `strncpy_P`, and `strncat_P` explicitly require a normalized `q3`
+input. Supplying any of those services with `q3[31:24] != 0` is an invalid
+service invocation.
 
 Ordinary function-call ABI boundaries retain normalized register
 representation:
@@ -1958,9 +1964,12 @@ SYS service8
 
 LLVM IR SHOULD NOT expose a generic service-number intrinsic. Each supported
 service has a typed compiler representation specified in Section 59. Most
-services use dedicated target intrinsics. Memory-copy services MAY instead use
-the corresponding generic LLVM memory intrinsic when that representation
-preserves the service's address spaces and memory semantics.
+services use dedicated target intrinsics. `memcpy`, `memcpy_P`, `memset`, and
+`memmove` MAY instead use corresponding generic LLVM memory intrinsics when
+those representations preserve the required address spaces and memory
+semantics. The comparison and string services use dedicated typed target
+intrinsics because LLVM has no generic intrinsics with their complete
+semantics.
 
 ## 49. Defined services
 
@@ -1985,7 +1994,17 @@ preserves the service's address spaces and memory semantics.
 | `0x10` | `memcpy_P` | `r4 = dst`, `q3 = src`, `r5 = n` | `r4 = dst` | Data-space memory |
 | `0x11` | `memset` | `r4 = dst`, `r5 = val`, `r6 = n` | `r4 = dst` | Data-space memory |
 | `0x12` | `memmove` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space memory |
-| `0x13-0xFF` | Reserved | — | — | — |
+| `0x13` | `memcmp_P` | `r4 = RAM lhs`, `q3 = program rhs`, `r5 = n` | signed `-1`, `0`, or `+1` in `r4` | Data- and program-space reads |
+| `0x14` | `strcmp_P` | `r4 = RAM lhs`, `q3 = program rhs` | signed `-1`, `0`, or `+1` in `r4` | Data- and program-space reads |
+| `0x15` | `strlen_P` | `q3 = program string` | `r4 = length` | Program-space reads |
+| `0x16` | `strncpy_P` | `r4 = dst`, `q3 = program src`, `r5 = n` | `r4 = dst` | Program-space reads; data-space writes |
+| `0x17` | `strncat_P` | `r4 = dst`, `q3 = program src`, `r5 = n` | `r4 = dst` | Data- and program-space reads; data-space writes |
+| `0x18` | `memcmp` | `r4 = lhs`, `r5 = rhs`, `r6 = n` | exact signed byte difference in `r4` | Data-space reads |
+| `0x19` | `strcmp` | `r4 = lhs`, `r5 = rhs` | exact signed byte difference in `r4` | Data-space reads |
+| `0x1A` | `strlen` | `r4 = string` | `r4 = length` | Data-space reads |
+| `0x1B` | `strncpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
+| `0x1C` | `strncat` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
+| `0x1D-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -2288,6 +2307,300 @@ The result is the original `dst` value in `r4`. The service preserves the bit
 patterns of `r4`, `r5`, and `r6`, so `r4` simultaneously serves as the first
 input and the result. It also preserves `r0-r3`, `r7`, `CC`, and `SP`.
 
+
+### 49.10. `memcmp_P`
+
+Encoding:
+
+```text
+D7 13
+```
+
+C interface and fixed service-register assignment:
+
+```c
+int memcmp_P(
+    void const *lhs,
+    void const __attribute__((address_space(1))) *rhs,
+    uint16_t n);
+```
+
+```text
+r4 = lhs
+q3 = rhs
+r5 = n
+```
+
+`q3` MUST be normalized: `q3[31:24] = 0`. A noncanonical input is an invalid
+service invocation. For `i` from zero upward, the service compares
+`unsigned(mem8[lhs+i])` with `unsigned(prog8[rhs+i])`. It stops at the first
+mismatch or after exactly `n` equal bytes. It returns `-1`, `0`, or `+1` in
+`r4` according to whether the first differing RAM byte is less than, equal to,
+or greater than the program byte. The magnitude of a nonzero result is not the
+byte difference.
+
+If `n` is zero, the result is zero and the service performs no memory access.
+The caller must provide valid readable ranges of `n` bytes in the respective
+address spaces; otherwise behavior is undefined. The service preserves `q3`,
+`r5`, `r0-r3`, `r6`, `CC`, and `SP`.
+
+### 49.11. `strcmp_P`
+
+Encoding:
+
+```text
+D7 14
+```
+
+C interface and fixed service-register assignment:
+
+```c
+int strcmp_P(
+    char const *lhs,
+    char const __attribute__((address_space(1))) *rhs);
+```
+
+```text
+r4 = lhs
+q3 = rhs
+```
+
+`q3` MUST be normalized. The service compares corresponding bytes as unsigned
+characters. It stops at the first mismatch or when equal zero bytes are found.
+It returns `-1`, `0`, or `+1` in `r4` according to the ordering of the first
+differing bytes. A nonzero result need not equal their arithmetic difference.
+Both pointers must identify readable NUL-terminated strings; otherwise behavior
+is undefined. The service preserves `q3`, `r0-r3`, `r5`, `CC`, and `SP`.
+
+### 49.12. `strlen_P`
+
+Encoding:
+
+```text
+D7 15
+```
+
+C interface and fixed service-register assignment:
+
+```c
+uint16_t strlen_P(
+    char const __attribute__((address_space(1))) *src);
+```
+
+```text
+q3 = src
+```
+
+`q3` MUST be normalized. The service returns in `r4` the number of consecutive
+nonzero program-space bytes before the first zero byte. The terminating zero is
+not included. The source must identify a readable NUL-terminated string whose
+length is representable in `uint16_t`; otherwise behavior is undefined. The
+service preserves `q3`, `r0-r3`, `r5`, `CC`, and `SP`.
+
+### 49.13. `strncpy_P`
+
+Encoding:
+
+```text
+D7 16
+```
+
+C interface and fixed service-register assignment:
+
+```c
+char *strncpy_P(
+    char *dst,
+    char const __attribute__((address_space(1))) *src,
+    uint16_t n);
+```
+
+```text
+r4 = dst
+q3 = src
+r5 = n
+```
+
+`q3` MUST be normalized. The service copies at most `n` bytes from program
+space to data space. If a source zero byte is encountered before `n` bytes have
+been written, that zero is copied and every remaining destination byte through
+`dst+n-1` is set to zero. If no source zero occurs in the first `n` bytes,
+exactly `n` bytes are copied and no terminating zero is added.
+
+If `n` is zero, no memory is accessed. Source and destination ranges must be
+valid and must not overlap through any implementation-defined aliasing of the
+address spaces. The result is the original `dst` in `r4`. The service preserves
+`q3`, `r5`, `r0-r3`, `r6`, `CC`, and `SP`.
+
+### 49.14. `strncat_P`
+
+Encoding:
+
+```text
+D7 17
+```
+
+C interface and fixed service-register assignment:
+
+```c
+char *strncat_P(
+    char *dst,
+    char const __attribute__((address_space(1))) *src,
+    uint16_t n);
+```
+
+```text
+r4 = dst
+q3 = src
+r5 = n
+```
+
+`q3` MUST be normalized. If `n` is nonzero, the service locates the terminating
+zero of the data-space destination, appends at most `n` nonzero source
+characters, and writes one terminating zero. A source zero encountered within
+the bound is copied as the terminator; otherwise the service writes an
+additional zero after the `n` copied characters. If `n` is zero, the service
+performs no memory access and returns `dst`.
+
+For nonzero `n`, `dst` must identify a writable NUL-terminated string with
+space for the appended bytes and terminator, and `src` must be readable through
+the first zero or the first `n` bytes, whichever comes first. The objects must
+not overlap. The result is the original `dst` in `r4`. The service preserves
+`q3`, `r5`, `r0-r3`, `r6`, `CC`, and `SP`.
+
+### 49.15. `memcmp`
+
+Encoding:
+
+```text
+D7 18
+```
+
+C interface and fixed service-register assignment:
+
+```c
+int memcmp(void const *lhs, void const *rhs, uint16_t n);
+```
+
+```text
+r4 = lhs
+r5 = rhs
+r6 = n
+```
+
+The service compares corresponding bytes as unsigned values until the first
+mismatch or until `n` bytes have compared equal. It returns the exact signed
+16-bit value
+
+```text
+unsigned(mem8[lhs+i]) - unsigned(mem8[rhs+i])
+```
+
+for the first mismatching index `i`, or zero when all `n` bytes compare equal.
+The possible result range is `-255..+255`. If `n` is zero, the result is zero
+and no memory is accessed. The caller must provide valid readable ranges of
+`n` bytes. The service preserves `r5`, `r6`, `r0-r3`, `r7`, `CC`, and `SP`.
+
+### 49.16. `strcmp`
+
+Encoding:
+
+```text
+D7 19
+```
+
+C interface and fixed service-register assignment:
+
+```c
+int strcmp(char const *lhs, char const *rhs);
+```
+
+```text
+r4 = lhs
+r5 = rhs
+```
+
+The service compares corresponding bytes as unsigned characters. It returns
+the exact signed 16-bit difference of the first unequal bytes, in the range
+`-255..+255`, or zero when both strings reach equal zero bytes. Both inputs
+must be readable NUL-terminated strings. The service preserves `r5`, `r0-r3`,
+`r6-r7`, `CC`, and `SP`.
+
+### 49.17. `strlen`
+
+Encoding:
+
+```text
+D7 1A
+```
+
+C interface and fixed service-register assignment:
+
+```c
+uint16_t strlen(char const *src);
+```
+
+```text
+r4 = src
+```
+
+The service returns in `r4` the number of consecutive nonzero data-space bytes
+before the first zero byte. The terminator is not included. The input must be a
+readable NUL-terminated string. The service preserves `r0-r3`, `r5-r7`, `CC`,
+and `SP`.
+
+### 49.18. `strncpy`
+
+Encoding:
+
+```text
+D7 1B
+```
+
+C interface and fixed service-register assignment:
+
+```c
+char *strncpy(char *dst, char const *src, uint16_t n);
+```
+
+```text
+r4 = dst
+r5 = src
+r6 = n
+```
+
+The service has the standard bounded-copy semantics described for `strncpy_P`,
+with both source and destination in data space. If `n` is zero, no memory is
+accessed. Source and destination objects must not overlap. The result is the
+original `dst` in `r4`. The service preserves `r5`, `r6`, `r0-r3`, `r7`, `CC`,
+and `SP`.
+
+### 49.19. `strncat`
+
+Encoding:
+
+```text
+D7 1C
+```
+
+C interface and fixed service-register assignment:
+
+```c
+char *strncat(char *dst, char const *src, uint16_t n);
+```
+
+```text
+r4 = dst
+r5 = src
+r6 = n
+```
+
+The service has the bounded-append semantics described for `strncat_P`, with
+both strings in data space. If `n` is zero, it performs no memory access and
+returns `dst`. For nonzero `n`, the destination must have space for the
+appended characters and one terminator. The source and destination objects must
+not overlap. The result is the original `dst` in `r4`. The service preserves
+`r5`, `r6`, `r0-r3`, `r7`, `CC`, and `SP`.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -2487,6 +2800,10 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | AS1-to-AS0 `MEMCPY` | Inline small constants with `LDP*` plus AS0 stores; `SYS 0x10` otherwise | — | — | — |
 | `MEMSET` | Inline small constants; `SYS 0x11` or helper otherwise | — | — | — |
 | `MEMMOVE` | Inline small constants; `SYS 0x12` or helper otherwise | — | — | — |
+| `memcmp_P`, `strcmp_P`, `strlen_P` | Dedicated typed AVM intrinsic and `SYS 0x13-0x15` | — | — | Read-only AS0/AS1 effects as applicable |
+| `strncpy_P`, `strncat_P` | Dedicated typed AVM intrinsic and `SYS 0x16-0x17` | — | — | AS1 read plus AS0 write; `strncat_P` also reads AS0 destination |
+| `memcmp`, `strcmp`, `strlen` | Recognized libcall or dedicated AVM intrinsic and `SYS 0x18-0x1A` | — | — | Read-only AS0 effects |
+| `strncpy`, `strncat` | Recognized libcall or dedicated AVM intrinsic and `SYS 0x1B-0x1C` | — | — | AS0 read/write effects |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -2513,7 +2830,9 @@ container or at an ordinary ABI boundary. Required cases include:
 Normalization is not required before `LDP*`, `JMPP`, `CALLP`,
 `SYS_MEMCPY_P`, another program-pointer arithmetic operation, or a packed
 three-byte pointer store, because those uses consume only the logical low
-24 bits.
+24 bits. It is required before `SYS_MEMCMP_P`, `SYS_STRCMP_P`,
+`SYS_STRLEN_P`, `SYS_STRNCPY_P`, and `SYS_STRNCAT_P`, whose service contracts
+validate the complete `q3` container.
 
 The `EC` family directly implements all four `i16` division and remainder
 operations. Wider integer division and remainder continue to use helpers.
@@ -2671,9 +2990,24 @@ void *__avm_memcpy_P(
     void *dst,
     avm_progmem_cptr src,
     uint16_t size);
+
+int      __avm_memcmp_P(const void *lhs, avm_progmem_cptr rhs, uint16_t n);
+int      __avm_strcmp_P(const char *lhs, avm_progmem_cptr rhs);
+uint16_t __avm_strlen_P(avm_progmem_cptr src);
+char    *__avm_strncpy_P(char *dst, avm_progmem_cptr src, uint16_t n);
+char    *__avm_strncat_P(char *dst, avm_progmem_cptr src, uint16_t n);
+
+int      __avm_memcmp(const void *lhs, const void *rhs, uint16_t n);
+int      __avm_strcmp(const char *lhs, const char *rhs);
+uint16_t __avm_strlen(const char *src);
+char    *__avm_strncpy(char *dst, const char *src, uint16_t n);
+char    *__avm_strncat(char *dst, const char *src, uint16_t n);
 ```
 
-The result is `dst`. Memory helpers have their ordinary C memory effects.
+Pointer-returning copy and concatenation helpers return the original `dst`.
+The comparison helpers return the values defined in Sections 49.10, 49.11,
+49.15, and 49.16. All helpers have the precise C memory effects of their
+corresponding service definitions.
 
 Clang SHOULD provide the target builtin:
 
@@ -2683,6 +3017,31 @@ void *__builtin_avm_memcpy_p(
     avm_progmem_cptr src,
     uint16_t size);
 ```
+
+
+Clang SHOULD also provide direct target builtins for the comparison and string
+services:
+
+```c
+int      __builtin_avm_memcmp_p(const void *lhs, avm_progmem_cptr rhs, uint16_t n);
+int      __builtin_avm_strcmp_p(const char *lhs, avm_progmem_cptr rhs);
+uint16_t __builtin_avm_strlen_p(avm_progmem_cptr src);
+char    *__builtin_avm_strncpy_p(char *dst, avm_progmem_cptr src, uint16_t n);
+char    *__builtin_avm_strncat_p(char *dst, avm_progmem_cptr src, uint16_t n);
+
+int      __avm_memcmp(const void *lhs, const void *rhs, uint16_t n);
+int      __avm_strcmp(const char *lhs, const char *rhs);
+uint16_t __avm_strlen(const char *src);
+char    *__avm_strncpy(char *dst, const char *src, uint16_t n);
+char    *__avm_strncat(char *dst, const char *src, uint16_t n);
+```
+
+The `_p` builtins retain conventional source-language argument order. Clang
+lowers all ten interfaces to the dedicated typed AVM intrinsics from Section
+59. Direct program-memory builtins produce normalized program-pointer operands
+before machine selection. Runtime headers MAY expose the conventional `_P`
+spellings as function-like macros while retaining addressable out-of-line
+wrappers.
 
 The builtin retains the conventional source-language argument order
 `(dst, src, size)`. Clang lowers it to an ordinary cross-address-space LLVM
@@ -2944,6 +3303,18 @@ declare float @llvm.avm.fmodf(float %x, float %y)
 declare ptr @llvm.avm.memcpy(ptr %dst, ptr %src, i16 %n)
 declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %n)
 declare ptr @llvm.avm.memmove(ptr %dst, ptr %src, i16 %n)
+
+declare i16 @llvm.avm.memcmp.p(ptr %lhs, ptr addrspace(1) %rhs, i16 %n)
+declare i16 @llvm.avm.strcmp.p(ptr %lhs, ptr addrspace(1) %rhs)
+declare i16 @llvm.avm.strlen.p(ptr addrspace(1) %src)
+declare ptr @llvm.avm.strncpy.p(ptr %dst, ptr addrspace(1) %src, i16 %n)
+declare ptr @llvm.avm.strncat.p(ptr %dst, ptr addrspace(1) %src, i16 %n)
+
+declare i16 @llvm.avm.memcmp(ptr %lhs, ptr %rhs, i16 %n)
+declare i16 @llvm.avm.strcmp(ptr %lhs, ptr %rhs)
+declare i16 @llvm.avm.strlen(ptr %src)
+declare ptr @llvm.avm.strncpy(ptr %dst, ptr %src, i16 %n)
+declare ptr @llvm.avm.strncat(ptr %dst, ptr %src, i16 %n)
 ```
 
 AS1-to-AS0 `memcpy_P` is represented by the generic overloaded LLVM memory
@@ -2959,6 +3330,9 @@ call void @llvm.memcpy.p0.p1.i16(
 
 A generic AVM service-number intrinsic and an
 `llvm.avm.memcpy.p` target intrinsic SHOULD NOT be public LLVM interfaces.
+The `.p` suffix on the comparison and string intrinsics is part of their target
+intrinsic name and denotes an address-space-one source; those operations have
+no corresponding generic LLVM intrinsic.
 
 ### 59.1. Compiler-representation-to-machine lowering
 
@@ -2983,6 +3357,16 @@ A generic AVM service-number intrinsic and an
 | AS0-destination, AS1-source `llvm.memcpy` | `SYS 0x10` through `SYS_MEMCPY_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
 | `llvm.avm.memset(ptr,i16,i16)` or eligible AS0 `llvm.memset` | `SYS 0x11` through `SYS_MEMSET` | `r4 = dst`, `r5 = val`, `r6 = n` | tied `r4 = dst` |
 | `llvm.avm.memmove(ptr,ptr,i16)` or eligible AS0 `llvm.memmove` | `SYS 0x12` through `SYS_MEMMOVE` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
+| `llvm.avm.memcmp.p(ptr,p1,i16)` | `SYS 0x13` through `SYS_MEMCMP_P` | `r4 = lhs`, `q3 = normalized rhs`, `r5 = n` | tied `r4 = result` |
+| `llvm.avm.strcmp.p(ptr,p1)` | `SYS 0x14` through `SYS_STRCMP_P` | `r4 = lhs`, `q3 = normalized rhs` | tied `r4 = result` |
+| `llvm.avm.strlen.p(p1)` | `SYS 0x15` through `SYS_STRLEN_P` | `q3 = normalized src` | `r4 = length` |
+| `llvm.avm.strncpy.p(ptr,p1,i16)` | `SYS 0x16` through `SYS_STRNCPY_P` | `r4 = dst`, `q3 = normalized src`, `r5 = n` | tied `r4 = dst` |
+| `llvm.avm.strncat.p(ptr,p1,i16)` | `SYS 0x17` through `SYS_STRNCAT_P` | `r4 = dst`, `q3 = normalized src`, `r5 = n` | tied `r4 = dst` |
+| `llvm.avm.memcmp(ptr,ptr,i16)` | `SYS 0x18` through `SYS_MEMCMP` | `r4 = lhs`, `r5 = rhs`, `r6 = n` | tied `r4 = result` |
+| `llvm.avm.strcmp(ptr,ptr)` | `SYS 0x19` through `SYS_STRCMP` | `r4 = lhs`, `r5 = rhs` | tied `r4 = result` |
+| `llvm.avm.strlen(ptr)` | `SYS 0x1A` through `SYS_STRLEN` | `r4 = src` | tied `r4 = length` |
+| `llvm.avm.strncpy(ptr,ptr,i16)` | `SYS 0x1B` through `SYS_STRNCPY` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
+| `llvm.avm.strncat(ptr,ptr,i16)` | `SYS 0x1C` through `SYS_STRNCAT` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -3009,6 +3393,22 @@ AS0 memory operands, their aliasing relationship, the possibility of overlap,
 the transfer size, volatility, and ordering constraints of the originating
 memmove operation.
 
+
+The five program-string pseudos require a normalized `q3` input. Selection MUST
+insert program-pointer normalization before copying the source into `Q3Only`;
+unlike `SYS_MEMCPY_P`, these services validate `q3[31:24]`. Their machine
+memory operands describe AS1 reads and any AS0 reads or writes listed in
+Section 49. `SYS_STRNCPY_P` writes at most `n` destination bytes;
+`SYS_STRNCAT_P` has an unbounded destination read and writes the append region
+and terminator.
+
+The AS0 comparison and string pseudos use the fixed registers shown in the
+table. Result-producing services define the complete `r4`. `SYS_MEMCMP` and
+`SYS_STRCMP` replace the original left pointer with the comparison result;
+`SYS_STRLEN` replaces the source pointer with the length. `SYS_STRNCPY` and
+`SYS_STRNCAT` preserve the original destination bit pattern through the tied
+`r4` result.
+
 Generic LLVM math intrinsics and recognized libcalls MAY lower directly to
 these services when their required semantics match the service definitions in
 Section 49.5. Recognized AS0-to-AS0 `memcpy` operations MAY lower to service
@@ -3017,7 +3417,11 @@ lower to service `0x10` when their size and legality make the service preferable
 to an inline `LDP*`/store sequence. Recognized nonvolatile AS0 `memset`
 operations MAY lower to service `0x11` when preferable to an inline store
 sequence. Recognized nonvolatile AS0 `memmove` operations MAY lower to service
-`0x12` when preferable to an overlap-correct inline sequence.
+`0x12` when preferable to an overlap-correct inline sequence. Direct calls or
+target builtins for the comparison and string functions lower to services
+`0x13-0x1C`. A compiler MAY recognize ordinary C library calls and replace
+them with the corresponding target intrinsic when interposition, object-size,
+and language rules permit it.
 
 ### 59.2. Optimization and scheduling
 
@@ -3039,13 +3443,26 @@ The memory services have their precise address-space effects:
 - `memset` writes address space zero and reads no memory.
 - `memmove` reads address space zero and writes address space zero, and its
   source and destination may overlap.
+- `memcmp_P` and `strcmp_P` read address spaces zero and one.
+- `strlen_P` reads address space one.
+- `strncpy_P` reads address space one and writes address space zero.
+- `strncat_P` reads address spaces zero and one and writes address space zero.
+- `memcmp`, `strcmp`, and `strlen` read address space zero.
+- `strncpy` reads and writes address space zero through nonoverlapping source
+  and destination objects.
+- `strncat` reads and writes address space zero through nonoverlapping source
+  and destination objects.
 
 They MUST NOT be speculated or reordered across accesses that may alias a
 written destination or, for a copy or move, the source. They MAY be eliminated,
 combined, or otherwise transformed only when the ordinary legality rules for
 the corresponding nonvolatile `memcpy`, `memset`, or `memmove` operation
 permit it. A `memmove` may be converted to `memcpy` only when overlap is proven
-impossible.
+impossible. Read-only comparison and length calls may be eliminated when their
+results are dead, but they may not be moved across stores that can modify any
+byte they inspect. String-copy and concatenation calls may be transformed only
+when their NUL-termination, padding, bound, and aliasing semantics are
+preserved.
 
 ### 59.3. Source-language interfaces
 
@@ -3068,6 +3485,18 @@ float __avm_log10f(float x);
 float __avm_powf(float x, float y);
 float __avm_hypotf(float x, float y);
 float __avm_fmodf(float x, float y);
+
+int      __avm_memcmp_P(const void *lhs, avm_progmem_cptr rhs, uint16_t n);
+int      __avm_strcmp_P(const char *lhs, avm_progmem_cptr rhs);
+uint16_t __avm_strlen_P(avm_progmem_cptr src);
+char    *__avm_strncpy_P(char *dst, avm_progmem_cptr src, uint16_t n);
+char    *__avm_strncat_P(char *dst, avm_progmem_cptr src, uint16_t n);
+
+int      __avm_memcmp(const void *lhs, const void *rhs, uint16_t n);
+int      __avm_strcmp(const char *lhs, const char *rhs);
+uint16_t __avm_strlen(const char *src);
+char    *__avm_strncpy(char *dst, const char *src, uint16_t n);
+char    *__avm_strncat(char *dst, const char *src, uint16_t n);
 ```
 
 Clang builtins or runtime wrappers lower these interfaces to the target
@@ -3094,6 +3523,14 @@ backend may instead use `llvm.avm.memmove` when retaining a pointer result is
 useful. Both representations preserve overlapping-range semantics and leave
 selection of an overlap-correct inline sequence versus `SYS 0x12` to the
 backend.
+
+
+The target comparison and string builtins lower directly to the typed
+intrinsics in Section 59. The conventional `_P` spellings may be exposed as
+function-like macros or recognized direct builtins; address-taking continues
+to use out-of-line runtime wrappers. Standard AS0 names may remain ordinary
+Clang library builtins and be recognized during optimization, while target
+headers use the `__avm_*` forms when direct service selection is required.
 
 ## 60. Code model and C++ policy
 
@@ -3899,12 +4336,14 @@ LLVM:
     PTR16 uses upper-register-first allocation
     PROGPTR is logical p1:24 backed by GPR32 with an unspecified padding byte
     LDP/JMPP/CALLP/SYS memcpy_P ignore PROGPTR bits 31:24
+    program-memory comparison/string SYS services require normalized q3
     ordinary program-pointer arguments and returns are normalized
     division, remainder, and binary32 arithmetic use direct instructions with stable helper fallbacks
     atomics lower to ordinary operations in the single-thread VM model
     memcpy_P lowers through generic AS0<-AS1 llvm.memcpy and SYS_MEMCPY_P
     memset lowers through llvm.avm.memset or generic llvm.memset and SYS_MEMSET
     memmove lowers through llvm.avm.memmove or generic llvm.memmove and SYS_MEMMOVE
+    comparison and string builtins use typed AVM intrinsics and SYS 0x13-0x1C
 
 Assembly:
     GNU-style syntax

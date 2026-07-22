@@ -1,6 +1,10 @@
 #define AVM_MATH_IMPLEMENTATION
 #include <math.h>
 
+float sqrtf(float x) {
+    return __avm_sqrtf(x);
+}
+
 float sinf(float x) {
     return __avm_sinf(x);
 }

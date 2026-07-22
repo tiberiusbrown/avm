@@ -5,6 +5,7 @@
 extern "C" {
 #endif
 
+float sqrtf(float x);
 float sinf(float x);
 float cosf(float x);
 float atan2f(float y, float x);
@@ -33,6 +34,7 @@ float fmodf(float x, float y);
  */
 #if !defined(AVM_MATH_IMPLEMENTATION) && \
     !defined(AVM_MATH_NO_BUILTIN_MACROS)
+#define sqrtf(x)     __avm_sqrtf((x))
 #define sinf(x)      __avm_sinf((x))
 #define cosf(x)      __avm_cosf((x))
 #define atan2f(y, x) __avm_atan2f((y), (x))

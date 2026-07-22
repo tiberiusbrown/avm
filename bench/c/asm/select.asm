@@ -18,11 +18,11 @@ Disassembly of section .text:
 
 <_start>:
  d5 14                 call8	avm_test_main
- 04                    mov	r5, r4
- c0 46                 ldi8	r4, 0x46
+ c1 46                 ldi8	r5, 0x46
  c2 50                 ldi8	r6, 0x50
- f6 2d                 tst16	r5
- fb 26                 cmov.eq	r4, r6
+ f6 2c                 tst16	r4
+ fb 2e                 cmov.eq	r5, r6
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc

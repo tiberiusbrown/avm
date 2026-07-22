@@ -11,7 +11,7 @@
       881658   float.c
        85356   indirect_call.c
     20271868   loop_control.c
-       18686   memory_services.c
+       18512   memory_services.c
      3142866   mixed_width.c
       926365   multiply.c
      1000732   pointer_walk.c
@@ -24,7 +24,7 @@
       744268   select.c
       495825   shifts.c
       519703   sieve.c
-      912903   small_memops.c
+      817203   small_memops.c
      1034336   stack_array.c
      8170126   state_machine.c
     31486506   string_scan.c

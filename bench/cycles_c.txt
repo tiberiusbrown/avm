@@ -30,4 +30,14 @@
     31486506   string_scan.c
       606888   struct_copy.c
       938873   switch.c
+        3062   sys_memcmp.c
+        5303   sys_memcmp_p.c
+        2838   sys_strcmp.c
+        5691   sys_strcmp_p.c
+        3039   sys_strlen.c
+        7230   sys_strlen_p.c
+        2360   sys_strncat.c
+        3580   sys_strncat_p.c
+        2291   sys_strncpy.c
+        3794   sys_strncpy_p.c
       501299   tail_calls.c

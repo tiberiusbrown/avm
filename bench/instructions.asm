@@ -29,6 +29,9 @@
 ;   * Memory SYS services are measured for n=0-8, 16, 32, and 256,
 ;     including ordinary-data, program-space, and overlapping memmove
 ;     paths in both forward and backward directions.
+;   * Comparison and string SYS services cover zero-length, equal, early/late
+;     mismatch, prefix, NUL-padding, truncation, and long-scan paths. Program
+;     variants deliberately carry nonzero q3[31:24] padding.
 ;   * Operand aliases are otherwise omitted when they execute the same path.
 ;
 ; benchmark_names.txt is intentionally unnumbered.
@@ -45,6 +48,9 @@
 .equ BENCH_MEMSET_DST, 0x0700
 .equ BENCH_MEMMOVE_BASE, 0x0500
 .equ BENCH_MEMMOVE_NEXT, 0x0501
+.equ BENCH_STRING_A, 0x0500
+.equ BENCH_STRING_B, 0x0600
+.equ BENCH_STRING_C, 0x0700
 
 .macro bench_reset_sp
     ldi16 r7, SAFE_SP
@@ -7356,6 +7362,1303 @@ _start:
     sys memset
     sys debug_break
 
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp (n=0; zero-length fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 0
+    sys debug_break
+    sys memcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp (n=1; equal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 1
+    sys debug_break
+    sys memcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp (n=32; equal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 32
+    sys debug_break
+    sys memcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp (n=32; first-byte mismatch)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_bytes_first_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_first_diff_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 32
+    sys debug_break
+    sys memcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp (n=32; last-byte mismatch)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_bytes_last_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_last_diff_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 32
+    sys debug_break
+    sys memcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp_P (n=0; zero-length fast path; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 0
+    sys debug_break
+    sys memcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp_P (n=1; equal; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 1
+    sys debug_break
+    sys memcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp_P (n=32; equal; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 32
+    sys debug_break
+    sys memcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp_P (n=32; first-byte mismatch; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_first_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_first_diff_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 32
+    sys debug_break
+    sys memcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS memcmp_P (n=32; last-byte mismatch; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_equal_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_equal_32)
+    ldi16 r5, 32
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_bytes_last_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_bytes_last_diff_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 32
+    sys debug_break
+    sys memcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp (equal empty)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    sys debug_break
+    sys strcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp (equal one byte)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r5, 2
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r5, 2
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    sys debug_break
+    sys strcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp (equal length 32)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    sys debug_break
+    sys strcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp (first-byte mismatch)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_first_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_first_diff_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    sys debug_break
+    sys strcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp (last-byte mismatch)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_last_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_last_diff_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    sys debug_break
+    sys strcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp (lhs is prefix)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    sys debug_break
+    sys strcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp (rhs is prefix)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    sys debug_break
+    sys strcmp
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp_P (equal empty; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp_P (equal one byte; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r5, 2
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp_P (equal length 32; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp_P (first-byte mismatch; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_first_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_first_diff_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp_P (last-byte mismatch; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_last_diff_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_last_diff_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp_P (lhs is prefix; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strcmp_P (rhs is prefix; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strcmp_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen (length 0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    sys debug_break
+    sys strlen
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen (length 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r5, 2
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    sys debug_break
+    sys strlen
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen (length 8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    sys debug_break
+    sys strlen
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen (length 32)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    sys debug_break
+    sys strlen
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen (length 256)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_256)
+    ldi8 r7, %hi8(.Lbench_sys_str_256)
+    ldi16 r5, 257
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    sys debug_break
+    sys strlen
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen_P (length 0; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strlen_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen_P (length 1; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strlen_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen_P (length 8; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strlen_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen_P (length 32; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strlen_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strlen_P (length 256; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r6, %lo16(.Lbench_sys_str_256)
+    ldi8 r7, %hi8(.Lbench_sys_str_256)
+    ldi16 r0, 0xa500
+    or r7, r0
+    sys debug_break
+    sys strlen_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy (n=0; zero-length fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, BENCH_STRING_A
+    ldi16 r6, 0
+    sys debug_break
+    sys strncpy
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy (n=1; truncation)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, BENCH_STRING_A
+    ldi16 r6, 1
+    sys debug_break
+    sys strncpy
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy (n=8; source length 3 with padding)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r5, 4
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, BENCH_STRING_A
+    ldi16 r6, 8
+    sys debug_break
+    sys strncpy
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy (n=8; source length 8 without copied NUL)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, BENCH_STRING_A
+    ldi16 r6, 8
+    sys debug_break
+    sys strncpy
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy (n=8; source length 32 truncation)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, BENCH_STRING_A
+    ldi16 r6, 8
+    sys debug_break
+    sys strncpy
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy (n=32; source length 3 with long padding)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r5, 4
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, BENCH_STRING_A
+    ldi16 r6, 32
+    sys debug_break
+    sys strncpy
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy_P (n=0; zero-length fast path; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 0
+    sys debug_break
+    sys strncpy_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy_P (n=1; truncation; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 1
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 1
+    sys debug_break
+    sys strncpy_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy_P (n=8; source length 3 with padding; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 8
+    sys debug_break
+    sys strncpy_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy_P (n=8; source length 8 without copied NUL; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 8
+    sys debug_break
+    sys strncpy_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy_P (n=8; source length 32 truncation; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 8
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 8
+    sys debug_break
+    sys strncpy_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncpy_P (n=32; source length 3 with long padding; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r5, 0x00a5
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 32
+    sys debug_break
+    sys strncpy_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat (n=0; destination length 8)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r5, 4
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 0
+    sys debug_break
+    sys strncat
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat (empty destination and empty source)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 16
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 8
+    sys debug_break
+    sys strncat
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat (empty destination and source length 3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 16
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r5, 4
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 8
+    sys debug_break
+    sys strncat
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat (destination length 8 and source length 3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r5, 4
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 8
+    sys debug_break
+    sys strncat
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat (destination length 8; source truncated at 4)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 4
+    sys debug_break
+    sys strncat
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat (destination length 32 and source length 3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_B
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r5, 4
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_B
+    ldi16 r6, 8
+    sys debug_break
+    sys strncat
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat (destination length 256 and source length 1)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 258
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_256)
+    ldi8 r7, %hi8(.Lbench_sys_str_256)
+    ldi16 r5, 257
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_C
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r5, 2
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, BENCH_STRING_C
+    ldi16 r6, 1
+    sys debug_break
+    sys strncat
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat_P (n=0; destination length 8; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 0
+    sys debug_break
+    sys strncat_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat_P (empty destination and empty source; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 16
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 8
+    sys debug_break
+    sys strncat_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat_P (empty destination and source length 3; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 16
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_empty)
+    ldi8 r7, %hi8(.Lbench_sys_str_empty)
+    ldi16 r5, 1
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 8
+    sys debug_break
+    sys strncat_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat_P (destination length 8 and source length 3; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 8
+    sys debug_break
+    sys strncat_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat_P (destination length 8; source truncated at 4; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 32
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_eight)
+    ldi8 r7, %hi8(.Lbench_sys_str_eight)
+    ldi16 r5, 9
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 4
+    sys debug_break
+    sys strncat_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat_P (destination length 32 and source length 3; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 64
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_32)
+    ldi8 r7, %hi8(.Lbench_sys_str_32)
+    ldi16 r5, 33
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_three)
+    ldi8 r7, %hi8(.Lbench_sys_str_three)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 8
+    sys debug_break
+    sys strncat_P
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS strncat_P (destination length 256 and source length 1; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r5, 0x0000
+    ldi16 r6, 258
+    sys memset
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_256)
+    ldi8 r7, %hi8(.Lbench_sys_str_256)
+    ldi16 r5, 257
+    sys memcpy_P
+
+    ldi16 r4, BENCH_STRING_A
+    ldi16 r6, %lo16(.Lbench_sys_str_one)
+    ldi8 r7, %hi8(.Lbench_sys_str_one)
+    ldi16 r0, 0xa500
+    or r7, r0
+    ldi16 r5, 1
+    sys debug_break
+    sys strncat_P
+    sys debug_break
+
 ; -----------------------------------------------------------------------------
 ; BENCH: RET
 ; -----------------------------------------------------------------------------
@@ -7408,5 +8711,56 @@ _start:
     .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
     .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
     .byte 0x80, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde
+
+
+    ; Program-space fixtures for comparison and string SYS benchmarks.
+.p2align 1
+.Lbench_sys_bytes_equal_32:
+    .byte 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70
+    .byte 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46
+.Lbench_sys_bytes_first_diff_32:
+    .byte 0x5a, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70
+    .byte 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46
+.Lbench_sys_bytes_last_diff_32:
+    .byte 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70
+    .byte 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x41, 0x42, 0x43, 0x44, 0x45, 0x47
+.Lbench_sys_str_empty:
+    .byte 0x00
+.Lbench_sys_str_one:
+    .byte 0x78, 0x00
+.Lbench_sys_str_three:
+    .byte 0x61, 0x62, 0x63, 0x00
+.Lbench_sys_str_eight:
+    .byte 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x00
+.Lbench_sys_str_32:
+    .byte 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70
+    .byte 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46
+    .byte 0x00
+.Lbench_sys_str_first_diff_32:
+    .byte 0x5a, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70
+    .byte 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46
+    .byte 0x00
+.Lbench_sys_str_last_diff_32:
+    .byte 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f, 0x70
+    .byte 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77, 0x78, 0x79, 0x7a, 0x41, 0x42, 0x43, 0x44, 0x45, 0x47
+    .byte 0x00
+.Lbench_sys_str_256:
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
+    .byte 0x00
 
 .size _start, .-_start

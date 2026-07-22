@@ -4098,10 +4098,10 @@ f0_absolute_bodies_end:
 ;
 ; Every operation-specific body uses f0_fetch_spec, which consumes PSPEC at
 ; the earliest legal cycle, launches a speculative following-primary fetch,
-; and leaves VM_PC naming PSPEC. f0_program_prepare_func validates and decodes PSPEC,
-; advances VM_PC to the following primary, captures the original canonical
-; 24-bit qA source before any destination write, performs any postincrement,
-; and returns the shared reader ABI:
+; and leaves VM_PC naming PSPEC. f0_program_prepare_func validates and decodes
+; PSPEC, advances VM_PC to the following primary, captures the original
+; canonical 24-bit qA source before any destination write, performs any
+; postincrement, and tail-jumps directly to fx_read_program_bytes_func with:
 ;
 ;   r24:r25:r26  original image-relative program pointer
 ;   Z            destination register-file address
@@ -4123,7 +4123,6 @@ f0_ldp8u_body:
     clh
     clt
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     std   Z+1, ZERO
     rjmp  seek_and_dispatch_func
 
@@ -4134,7 +4133,6 @@ f0_ldp8s_body:
     clh
     clt
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     lsl   r27
     sbc   r27, r27
     std   Z+1, r27
@@ -4148,7 +4146,6 @@ f0_ldp16_body:
     clh
     clt
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     rjmp  seek_and_dispatch_func
 
 ; F0 63 PSPEC: LDP24 qD,[qA]
@@ -4159,7 +4156,6 @@ f0_ldp24_body:
     seh
     clt
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     std   Z+1, ZERO
     rjmp  seek_and_dispatch_func
 
@@ -4170,7 +4166,6 @@ f0_ldp32_body:
     seh
     clt
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     rjmp  seek_and_dispatch_func
 
 ; F0 65 PSPEC: LDP8U rD,[qA+]
@@ -4180,7 +4175,6 @@ f0_ldp8u_post_body:
     clh
     set
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     std   Z+1, ZERO
     rjmp  seek_and_dispatch_func
 
@@ -4192,7 +4186,6 @@ f0_ldp16_post_body:
     clh
     set
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     rjmp  seek_and_dispatch_func
 
 ; F0 67 PSPEC: LDP24 qD,[qA+]
@@ -4203,7 +4196,6 @@ f0_ldp24_post_body:
     seh
     set
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     std   Z+1, ZERO
     rjmp  seek_and_dispatch_func
 
@@ -4214,7 +4206,6 @@ f0_ldp32_post_body:
     seh
     set
     rcall f0_program_prepare_func
-    rcall fx_read_program_bytes_func
     rjmp  seek_and_dispatch_func
 
 ; Inputs:
@@ -4223,9 +4214,11 @@ f0_ldp32_post_body:
 ;   H        0=scalar destination, 1=pair destination
 ;   T        0=ordinary, 1=postincrement
 ;
-; Output is the fx_read_program_bytes_func ABI described above. The destination
-; register-file byte address temporarily occupies r1 while qA is captured and,
-; for postincrement forms, updated in place.
+; On success, tail-jumps to fx_read_program_bytes_func using the ABI described
+; above. The reader's RET returns directly to the operation-specific body through
+; the return address established by that body's RCALL to this helper. The
+; destination register-file byte address temporarily occupies r1 while qA is
+; captured and, for postincrement forms, updated in place.
 f0_program_prepare_func:
     ; Common validity requires qA alignment and high-code bit zero. Pair
     ; destinations additionally require high-code bit one to be zero.
@@ -4297,14 +4290,14 @@ f0_program_prepare_func:
     mov   r30, r1
     mov   r31, ZERO
     mov   r1, ZERO
-    ret
+    rjmp  fx_read_program_bytes_func
 
 f0_program_invalid:
     rjmp  invalid_secondary_instruction_func
 
 f0_program_loads_end:
-.if (f0_program_loads_end - f0_program_loads_start) != 242
-    .error "F0 program-space load subsystem must occupy exactly 121 AVR words"
+.if (f0_program_loads_end - f0_program_loads_start) != 224
+    .error "F0 program-space load subsystem must occupy exactly 112 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

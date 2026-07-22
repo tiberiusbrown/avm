@@ -420,7 +420,7 @@ Taken control flow and program-space loads restart the external-flash stream and
 | Far jump/call | 150 / 150 |
 | Indirect jump/call | 110 / 117 |
 | Return | 110 |
-| Program-space load | 290-357 |
+| Program-space load | 285-352 |
 
 
 ### 5.3. Cycle-9 reference dispatch schedule and family latencies
@@ -690,15 +690,17 @@ The cold stack-relative values include the shared operand fetch, dynamic registe
 
 | Secondary | Instruction | Total bytes | Cycles |
 |---:|---|---:|---:|
-| `60` | `LDP8U rD,[qA]` | 3 | 290 |
-| `61` | `LDP8S rD,[qA]` | 3 | 292 |
-| `62` | `LDP16 rD,[qA]` | 3 | 306 |
-| `63` | `LDP24 qD,[qA]` | 3 | 326 |
-| `64` | `LDP32 qD,[qA]` | 3 | 340 |
-| `65` | `LDP8U rD,[qA+]` | 3 | 307 |
-| `66` | `LDP16 rD,[qA+]` | 3 | 323 |
-| `67` | `LDP24 qD,[qA+]` | 3 | 343 |
-| `68` | `LDP32 qD,[qA+]` | 3 | 357 |
+| `60` | `LDP8U rD,[qA]` | 3 | 285 |
+| `61` | `LDP8S rD,[qA]` | 3 | 287 |
+| `62` | `LDP16 rD,[qA]` | 3 | 301 |
+| `63` | `LDP24 qD,[qA]` | 3 | 321 |
+| `64` | `LDP32 qD,[qA]` | 3 | 335 |
+| `65` | `LDP8U rD,[qA+]` | 3 | 302 |
+| `66` | `LDP16 rD,[qA+]` | 3 | 318 |
+| `67` | `LDP24 qD,[qA+]` | 3 | 338 |
+| `68` | `LDP32 qD,[qA+]` | 3 | 352 |
+
+Each operation-specific body calls `f0_program_prepare_func` once. After validating and decoding `PSPEC`, capturing the original program pointer, and applying any postincrement, that helper uses `RJMP` to enter `fx_read_program_bytes_func` directly. The reader’s final `RET` returns through the original operation-body `RCALL` return address. The bodies do not issue a second `RCALL` to the reader. Relative to a prepare-`RET` followed by a reader-`RCALL`, this tail-call arrangement saves five cycles per instruction and nine AVR words across the nine program-load bodies.
 
 `LDP24` loads three packed little-endian bytes into bits `23:0` of `qD` and clears bits `31:24`, producing a canonical 24-bit program pointer. The postincrement form advances `qA` by three bytes after capturing the original address. `LDP24 qD,[qA+]` reserves `qD == qA`, because one pair cannot simultaneously receive the loaded pointer and the updated source address. Each postincrement form measures exactly 17 cycles more than its corresponding ordinary load because validation and pointer writeback add one minimum SPI interval to the complete path.
 
@@ -2713,7 +2715,7 @@ The reference interpreter uses the decode, table, forwarding, and shared-body st
 | `EC` 16-bit division/remainder | 56-265 cycles; exact formulas in Section 21.2 |
 | `ED-EE` displaced memory | 54 cycles byte; 55 cycles word |
 | `EF` `RET` | 110 |
-| `F0-F8` dense pages | Fast forms use their page cadence; measured cold forms span 53-357 cycles by family |
+| `F0-F8` dense pages | Fast forms use their page cadence; measured cold forms span 53-352 cycles by family |
 | `F9` runtime bitwise page | AND 52, OR 53, XOR 54 cycles |
 | `FA` immediate and register-count shifts | Count-dependent values in Section 19; 42-80 cycles |
 | `FB-FD` conditional moves | 36 cycles false / 37 cycles true |
@@ -2857,26 +2859,26 @@ The following single-section order is a reference layout that keeps the major st
 | 9 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1280 | 1924 | 644 | 1288 |
 | 10 | Cluster-A false-path landing and cadence cluster | 1924 | 1950 | 26 | 52 |
 | 11 | Local F0 trap plus `F0` veneer table | 1950 | 2061 | 111 | 222 |
-| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2061 | 2813 | 752 | 1504 |
-| 13 | Shared `F0` cold-32 subsystem | 2813 | 2876 | 63 | 126 |
-| 14 | Shared `F0` cold general-pointer subsystem | 2876 | 2922 | 46 | 92 |
-| 15 | `F1` table | 2922 | 3210 | 288 | 576 |
-| 16 | `F2` table | 3210 | 3534 | 324 | 648 |
-| 17 | `F3` table | 3534 | 3918 | 384 | 768 |
-| 18 | Cluster B and two local trap shims | 3918 | 3945 | 27 | 54 |
-| 19 | `F4` table | 3945 | 4497 | 552 | 1104 |
-| 20 | `F5` table | 4497 | 4881 | 384 | 768 |
-| 21 | `F6` table | 4881 | 5201 | 320 | 640 |
-| 22 | `F7` table | 5201 | 5921 | 720 | 1440 |
-| 23 | Cluster C and local trap shim | 5921 | 5945 | 24 | 48 |
-| 24 | `F8` table | 5945 | 6185 | 240 | 480 |
-| 25 | `FA` immediate body-jump table | 6185 | 6198 | 13 | 26 |
-| 26 | `FA` register forwarding table | 6198 | 6294 | 96 | 192 |
-| 27 | Twelve shared `FA` shift bodies | 6294 | 6442 | 148 | 296 |
-| 28 | Shared `FB-FD` move table | 6442 | 6570 | 128 | 256 |
-| 29 | `FE` forwarding table | 6570 | 6698 | 128 | 256 |
-| 30 | Eight `FE` multiplication bodies | 6698 | 6762 | 64 | 128 |
-|  | **Non-floating reference end** |  | **6762** | **6762** | **13,524** |
+| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2061 | 2804 | 743 | 1486 |
+| 13 | Shared `F0` cold-32 subsystem | 2804 | 2867 | 63 | 126 |
+| 14 | Shared `F0` cold general-pointer subsystem | 2867 | 2913 | 46 | 92 |
+| 15 | `F1` table | 2913 | 3201 | 288 | 576 |
+| 16 | `F2` table | 3201 | 3525 | 324 | 648 |
+| 17 | `F3` table | 3525 | 3909 | 384 | 768 |
+| 18 | Cluster B and two local trap shims | 3909 | 3936 | 27 | 54 |
+| 19 | `F4` table | 3936 | 4488 | 552 | 1104 |
+| 20 | `F5` table | 4488 | 4872 | 384 | 768 |
+| 21 | `F6` table | 4872 | 5192 | 320 | 640 |
+| 22 | `F7` table | 5192 | 5912 | 720 | 1440 |
+| 23 | Cluster C and local trap shim | 5912 | 5936 | 24 | 48 |
+| 24 | `F8` table | 5936 | 6176 | 240 | 480 |
+| 25 | `FA` immediate body-jump table | 6176 | 6189 | 13 | 26 |
+| 26 | `FA` register forwarding table | 6189 | 6285 | 96 | 192 |
+| 27 | Twelve shared `FA` shift bodies | 6285 | 6433 | 148 | 296 |
+| 28 | Shared `FB-FD` move table | 6433 | 6561 | 128 | 256 |
+| 29 | `FE` forwarding table | 6561 | 6689 | 128 | 256 |
+| 30 | Eight `FE` multiplication bodies | 6689 | 6753 | 64 | 128 |
+|  | **Non-floating reference end** |  | **6753** | **6753** | **13,506** |
 
 The `FF` decoder, bridge, inline floating handlers, and linked soft-float routines are not included in this non-floating endpoint until measured. Startup-only helpers and startup code are also excluded.
 
@@ -3323,7 +3325,7 @@ For the shown layout, the non-floating core with the expanded `F2` table, `FA` b
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
-| `F0` immediate, stack, absolute, and program-space bodies | 1,504 | 1,408-1,664 |
+| `F0` immediate, stack, absolute, and program-space bodies | 1,486 | 1,390-1,646 |
 | Shared `F0` cold-32 subsystem | 126 | exact |
 | Shared `F0` cold general-pointer subsystem | 92 | exact |
 
@@ -3331,11 +3333,11 @@ For the shown layout, the non-floating core with the expanded `F2` table, `FA` b
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 13,428 | 13.11 |
-| Non-floating reference target | **13,524** | **13.21** |
-| Upper bound | 13,684 | 13.36 |
+| Lower bound | 13,410 | 13.10 |
+| Non-floating reference target | **13,506** | **13.19** |
+| Upper bound | 13,666 | 13.35 |
 
-The non-floating reference design targets about 13,524 bytes, with 13,684 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
+The non-floating reference design targets about 13,506 bytes, with 13,666 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
 
 ## 35. Four-word primary-stride rationale
 

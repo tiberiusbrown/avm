@@ -9,8 +9,8 @@ SYMBOL TABLE:
 00000280 l     O .data	00000002 string_scan_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	00000131 avm_test_main
-00000447 g     F .text	00000002 avm_halt
+00000316 g     F .text	0000012d avm_test_main
+00000443 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 31 01              call16	avm_halt
+ e1 2d 01              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -59,14 +59,16 @@ Disassembly of section .text:
  fa 8b                 lsr16i	r5, 0xb
  c0 1a                 ldi8	r4, 0x1a
  f3 14                 mulu8.w	r5, r4
- 02                    mov	r4, r6
+ 03                    mov	r4, r7
  21                    sub	r4, r5
+ 23                    sub	r4, r7
+ 12                    add	r4, r6
  f0 6d 83              st8	[r1+], r4
  f4 af                 inc16	r7
  f4 ae                 inc16	r6
  f4 b3                 dec16	r3
  f6 2b                 tst16	r3
- d1 e6                 brne8	avm_test_main+51
+ d1 e4                 brne8	avm_test_main+51
  f4 10                 ldsp16	r4, [sp+0x4]
  f2 20                 add	r4, r0
  af                    xor	r7, r7
@@ -80,7 +82,7 @@ Disassembly of section .text:
  f4 19                 ldsp16	r5, [sp+0x6]
  f4 ad                 inc16	r5
  cd 08                 cmpi.s8	r5, 0x8
- d1 ab                 brne8	avm_test_main+24
+ d1 a9                 brne8	avm_test_main+24
  c4 00 02              ldi16	r4, 0x200
  c1 07                 ldi8	r5, 0x7
  c2 80                 ldi8	r6, 0x80
@@ -88,7 +90,7 @@ Disassembly of section .text:
  c9 0b                 addi.s8	r5, 0xb
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
- d1 f6                 brne8	avm_test_main+116
+ d1 f6                 brne8	avm_test_main+118
  d7 01                 sys	debug_break
  f1 1f                 mov	r3, r7
  07                    mov	r5, r7
@@ -101,10 +103,10 @@ Disassembly of section .text:
  f7 1c                 ld8u	r4, [r7+]
  f4 ad                 inc16	r5
  f4 a4                 tst8	r4
- d1 f8                 brne8	avm_test_main+141
+ d1 f8                 brne8	avm_test_main+143
  f4 ae                 inc16	r6
  ce 08                 cmpi.s8	r6, 0x8
- d1 e9                 brne8	avm_test_main+132
+ d1 e9                 brne8	avm_test_main+134
  af                    xor	r7, r7
  c0 21                 ldi8	r4, 0x21
  f1 07                 mov	r0, r7
@@ -115,11 +117,11 @@ Disassembly of section .text:
  f1 76                 zext8	r6
  f5 32                 ld8u	r2, [r4]
  f5 16                 cmp	r2, r6
- d0 09                 breq8	avm_test_main+187
+ d0 09                 breq8	avm_test_main+189
  f4 ac                 inc16	r4
  f4 b1                 dec16	r1
  f6 29                 tst16	r1
- d1 ee                 brne8	avm_test_main+168
+ d1 ee                 brne8	avm_test_main+170
  a0                    xor	r4, r4
  c6 00 02              ldi16	r6, 0x200
  f1 0c                 mov	r1, r4
@@ -132,47 +134,44 @@ Disassembly of section .text:
  03                    mov	r4, r7
  f1 74                 zext8	r4
  cc 08                 cmpi.s8	r4, 0x8
- d1 c9                 brne8	avm_test_main+156
+ d1 c9                 brne8	avm_test_main+158
  f1 2c                 mov	r7, r0
- 03                    mov	r4, r7
- fa 35                 lsl16i	r4, 0x5
- f0 06 20 01           ldi16	r2, 0x120
- f2 14                 add	r2, r4
- c6 00 01              ldi16	r6, 0x100
- 18                    add	r6, r4
- 42                    ld8u	r4, [r6]
- f4 a4                 tst8	r4
- d0 1b                 breq8	avm_test_main+258
- ed c4 20              ld8u	r6, [r2+0]
- f1 0c                 mov	r1, r4
- f1 71                 zext8	r1
- f5 0e                 cmp	r1, r6
- d1 16                 brne8	avm_test_main+264
- f1 0a                 mov	r1, r2
- f4 a9                 inc16	r1
- ed 84 01              ld8u	r4, [r2-31]
- f4 a4                 tst8	r4
+ 0b                    mov	r6, r7
+ fa 55                 lsl16i	r6, 0x5
+ c4 20 01              ldi16	r4, 0x120
+ 12                    add	r4, r6
+ f0 05 00 01           ldi16	r1, 0x100
+ f2 0e                 add	r1, r6
+ ed 22 20              ld8u	r1, [r1+0]
+ f4 a1                 tst8	r1
+ d0 18                 breq8	avm_test_main+259
+ 48                    ld8u	r6, [r4]
  f1 11                 mov	r2, r1
- d1 e8                 brne8	avm_test_main+231
- a0                    xor	r4, r4
- d4 08                 jmp8	avm_test_main+266
- f1 0a                 mov	r1, r2
- f1 20                 mov	r4, r0
- d4 04                 jmp8	avm_test_main+268
- f1 0a                 mov	r1, r2
- f1 74                 zext8	r4
- 14                    add	r5, r4
- ed 82 20              ld8u	r4, [r1+0]
+ f1 72                 zext8	r2
+ f5 16                 cmp	r2, r6
+ d1 13                 brne8	avm_test_main+263
+ f1 14                 mov	r2, r4
+ f4 aa                 inc16	r2
+ ed 28 01              ld8u	r1, [r4-31]
+ f4 a1                 tst8	r1
+ f1 22                 mov	r4, r2
+ d1 ea                 brne8	avm_test_main+235
+ f1 22                 mov	r4, r2
+ f1 08                 mov	r1, r0
+ d4 02                 jmp8	avm_test_main+265
+ f1 71                 zext8	r1
+ f2 25                 add	r5, r1
+ 40                    ld8u	r4, [r4]
  24                    sub	r5, r4
  f4 af                 inc16	r7
  cf 07                 cmpi.s8	r7, 0x7
- d1 be                 brne8	avm_test_main+213
+ d1 c4                 brne8	avm_test_main+215
  f4 ab                 inc16	r3
  f1 23                 mov	r4, r3
  f1 74                 zext8	r4
  cc 40                 cmpi.s8	r4, 0x40
  af                    xor	r7, r7
- db 60 ff              brne16	avm_test_main+131
+ db 66 ff              brne16	avm_test_main+133
  f0 5d 80 02           stm16	[0x280], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

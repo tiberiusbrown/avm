@@ -9,9 +9,9 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	000000e8 avm_test_main
-000003fe g     F .text	00000002 avm_halt
-00000400 g     F .text	000000ad __avm_mulsi3
+00000316 g     F .text	000000d8 avm_test_main
+000003ee g     F .text	00000002 avm_halt
+000003f0 g     F .text	000000ad __avm_mulsi3
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 e8 00              call16	avm_halt
+ e1 d8 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -34,69 +34,57 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fa                 adjsp	avm_test_main
- f2 42                 sub	r2, r2
+ f2 39                 sub	r1, r1
  c1 80                 ldi8	r5, 0x80
  c6 38 ff              ldi16	r6, 0xff38
  c7 fd ff              ldi16	r7, 0xfffd
- f0 04 00 f0           ldi16	r0, 0xf000
- f0 05 04 01           ldi16	r1, 0x104
+ f0 07 00 f0           ldi16	r3, 0xf000
+ f0 04 04 01           ldi16	r0, 0x104
  c4 00 01              ldi16	r4, 0x100
  f4 50                 stsp16	[sp+0x4], r4
- f1 19                 mov	r3, r1
- f0 0b fc              addi.s8	r3, -0x4
- f0 6d 16              st16	[r3], r0
+ f1 13                 mov	r2, r3
  f4 10                 ldsp16	r4, [sp+0x4]
- f2 04                 add	r0, r4
- f1 19                 mov	r3, r1
- f0 0b 02              addi.s8	r3, 0x2
- f0 6d b6              st16	[r3], r5
- f1 19                 mov	r3, r1
- f0 0b fe              addi.s8	r3, -0x2
- f0 6d d6              st16	[r3], r6
+ f2 14                 add	r2, r4
+ ee 70 1c              st16	[r0-4], r3
  f0 03 07              ldi8	r3, 0x7
- f1 22                 mov	r4, r2
+ f1 21                 mov	r4, r1
  ec 63                 urem16	r4, r3
- f2 52                 sub	r4, r2
+ f2 51                 sub	r4, r1
  13                    add	r4, r7
- f0 6d 92              st16	[r1], r4
- f0 09 08              addi.s8	r1, 0x8
+ ee 90 20              st16	[r0+0], r4
+ ee b0 22              st16	[r0+2], r5
+ ee d0 1e              st16	[r0-2], r6
+ f0 08 08              addi.s8	r0, 0x8
  f4 af                 inc16	r7
  c9 05                 addi.s8	r5, 0x5
- f4 aa                 inc16	r2
+ f4 a9                 inc16	r1
  ca 11                 addi.s8	r6, 0x11
  c4 58 01              ldi16	r4, 0x158
  38                    cmp	r6, r4
- d1 c6                 brne8	avm_test_main+29
+ f1 1a                 mov	r3, r2
+ d1 d3                 brne8	avm_test_main+31
  a5                    xor	r5, r5
  d7 01                 sys	debug_break
  f1 0d                 mov	r1, r5
  f4 41                 stsp16	[sp+0x0], r5
  c0 20                 ldi8	r4, 0x20
- f0 06 04 01           ldi16	r2, 0x104
+ f0 07 04 01           ldi16	r3, 0x104
  f4 50                 stsp16	[sp+0x4], r4
- f0 6c 94              ld16	r4, [r2]
- f1 1a                 mov	r3, r2
- f0 0b fe              addi.s8	r3, -0x2
- f0 6c 16              ld16	r0, [r3]
+ ed 96 1e              ld16	r4, [r3-2]
+ ed 16 20              ld16	r0, [r3+0]
  f2 04                 add	r0, r4
- f1 22                 mov	r4, r2
- c8 fc                 addi.s8	r4, -0x4
- 64                    ld16	r5, [r4]
- f2 24                 add	r5, r0
- 71                    st16	[r4], r5
- 09                    mov	r6, r5
- 0d                    mov	r7, r5
- fa ef                 asr16i	r7, 0xf
- f1 22                 mov	r4, r2
- c8 02                 addi.s8	r4, 0x2
- 60                    ld16	r4, [r4]
+ ed 56 1c              ld16	r2, [r3-4]
+ f2 10                 add	r2, r0
+ ed 96 22              ld16	r4, [r3+2]
  04                    mov	r5, r4
  fa cf                 asr16i	r5, 0xf
- d5 61                 call8	__avm_mulsi3
+ f1 2a                 mov	r6, r2
+ f1 2e                 mov	r7, r2
+ fa ef                 asr16i	r7, 0xf
+ d5 64                 call8	__avm_mulsi3
  c2 80                 ldi8	r6, 0x80
  af                    xor	r7, r7
  f7 6e                 add32	q3, q2
- f0 6d 16              st16	[r3], r0
  02                    mov	r4, r6
  fa 78                 lsr16i	r4, 0x8
  f4 48                 stsp16	[sp+0x2], r4
@@ -106,19 +94,21 @@ Disassembly of section .text:
  fa 58                 lsl16i	r6, 0x8
  f4 0b                 ldsp16	r7, [sp+0x2]
  9b                    or	r6, r7
+ ee 56 1c              st16	[r3-4], r2
  af                    xor	r7, r7
  fa b8                 asr16i	r4, 0x8
  04                    mov	r5, r4
  a0                    xor	r4, r4
  92                    or	r4, r6
  97                    or	r5, r7
- f0 0a 08              addi.s8	r2, 0x8
+ ee 16 1e              st16	[r3-2], r0
+ f0 0b 08              addi.s8	r3, 0x8
  c6 ff 7f              ldi16	r6, 0x7fff
  af                    xor	r7, r7
  f0 69 c8              cmp32	q3, q2
- d9 05                 brsge8	avm_test_main+182
+ d9 05                 brsge8	avm_test_main+166
  c6 ff 7f              ldi16	r6, 0x7fff
- d4 0d                 jmp8	avm_test_main+195
+ d4 0d                 jmp8	avm_test_main+179
  c6 00 80              ldi16	r6, 0x8000
  c7 ff ff              ldi16	r7, 0xffff
  f0 69 c8              cmp32	q3, q2
@@ -129,13 +119,13 @@ Disassembly of section .text:
  f9 22                 xor	r1, r0
  f4 b4                 dec16	r4
  f4 a4                 tst8	r4
- d1 95                 brne8	avm_test_main+100
+ d1 9a                 brne8	avm_test_main+89
  f4 01                 ldsp16	r5, [sp+0x0]
  f4 ad                 inc16	r5
  01                    mov	r4, r5
  f1 74                 zext8	r4
  cc 40                 cmpi.s8	r4, 0x40
- d1 82                 brne8	avm_test_main+92
+ d1 87                 brne8	avm_test_main+81
  f0 59 00 02           stm16	[0x200], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
@@ -152,7 +142,7 @@ Disassembly of section .text:
 <__avm_mulsi3>:
  b1                    push16	r1
  b0                    push16	r0
- d6 ee                 adjsp	avm_test_main+220
+ d6 ee                 adjsp	avm_test_main+204
  f4 7a                 stsp16	[sp+0xe], r6
  f0 3f 10              stsp16	[sp+0x10], r7
  f1 05                 mov	r0, r5

@@ -6,8 +6,8 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 bubble2.c
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000054 avm_test_main
-00000269 g     F .text	00000002 avm_halt
+00000215 g     F .text	0000004d avm_test_main
+00000262 g     F .text	00000002 avm_halt
 00000100 g     O .data	00000080 A
 
 Disassembly of section .text:
@@ -23,7 +23,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 54                 call8	avm_halt
+ d5 4d                 call8	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -47,25 +47,21 @@ Disassembly of section .text:
  f1 0d                 mov	r1, r5
  08                    mov	r6, r4
  f5 4e                 ld16	r2, [r7]
- f1 1f                 mov	r3, r7
- f0 0b fe              addi.s8	r3, -0x2
- f0 6c 76              ld16	r3, [r3]
+ ed 7e 1e              ld16	r3, [r7-2]
  f5 13                 cmp	r2, r3
- d9 09                 brsge8	avm_test_main+59
+ d9 07                 brsge8	avm_test_main+52
  f5 5f                 st16	[r7], r3
- 0b                    mov	r6, r7
- ca fe                 addi.s8	r6, -0x2
- f5 5a                 st16	[r6], r2
+ ee 5e 1e              st16	[r7-2], r2
  f1 29                 mov	r6, r1
  f4 a9                 inc16	r1
  cb 02                 addi.s8	r7, 0x2
  f4 b0                 dec16	r0
  f6 28                 tst16	r0
- d1 df                 brne8	avm_test_main+36
+ d1 e6                 brne8	avm_test_main+36
  0e                    mov	r7, r6
  f1 77                 zext8	r7
  cf 02                 cmpi.s8	r7, 0x2
- d8 cc                 bruge8	avm_test_main+24
+ d8 d3                 bruge8	avm_test_main+24
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

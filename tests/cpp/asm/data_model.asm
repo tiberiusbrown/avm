@@ -198,7 +198,7 @@ Disassembly of section .text:
  d1 35                 brne8	avm_test_main+464
  c4 00 01              ldi16	r4, 0x100
  f0 6c d9              ld16	r6, [r4+]
- f0 6c e8              ld8u	r7, [r4]
+ ed e8 20              ld8u	r7, [r4+0]
  f0 3e 21              stsp16	[sp+0x21], r6
  f0 2f 23              stsp8	[sp+0x23], r7
  f0 14 21              leasp	r4, 0x21
@@ -219,8 +219,7 @@ Disassembly of section .text:
  c0 70                 ldi8	r4, 0x70
  e0 9a fe              jmp16	avm_test_main+111
  f0 34 1f              ldsp16	r4, [sp+0x1f]
- c8 02                 addi.s8	r4, 0x2
- 40                    ld8u	r4, [r4]
+ ed 88 22              ld8u	r4, [r4+2]
  cc 65                 cmpi.s8	r4, 0x65
  d1 17                 brne8	avm_test_main+502
  c4 07 05              ldi16	r4, 0x507

@@ -48,10 +48,10 @@ Disassembly of section .text:
  f0 38 08              stsp16	[sp+0x8], r0
  f0 07 00 01           ldi16	r3, 0x100
  f2 1c                 add	r3, r4
- f0 6d 06              st8	[r3], r0
+ ee 06 20              st8	[r3+0], r0
  f0 07 20 01           ldi16	r3, 0x120
  f2 1c                 add	r3, r4
- f0 6d 46              st8	[r3], r2
+ ee 46 20              st8	[r3+0], r2
  f7 55                 st16	[r7+], r5
  f4 6a                 stsp16	[sp+0xa], r6
  f4 13                 ldsp16	r7, [sp+0x4]
@@ -103,7 +103,7 @@ Disassembly of section .text:
  d5 72                 call8	__avm_mulsi3
  f4 50                 stsp16	[sp+0x4], r4
  f4 59                 stsp16	[sp+0x6], r5
- f0 6c 92              ld16	r4, [r1]
+ ed 92 20              ld16	r4, [r1+0]
  f4 60                 stsp16	[sp+0x8], r4
  f0 6c 53              ld16	r2, [r1+]
  f4 39                 ldsp16	r5, [sp+0xe]

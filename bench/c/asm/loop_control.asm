@@ -53,7 +53,7 @@ Disassembly of section .text:
  f9 1c                 and	r0, r7
  f0 05 00 01           ldi16	r1, 0x100
  f2 08                 add	r1, r0
- f0 6c 02              ld8u	r0, [r1]
+ ed 02 20              ld8u	r0, [r1+0]
  f2 20                 add	r4, r0
  f4 af                 inc16	r7
  f0 04 00 01           ldi16	r0, 0x100

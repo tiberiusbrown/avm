@@ -102,14 +102,14 @@ Disassembly of section .text:
  f2 23                 add	r4, r3
  40                    ld8u	r4, [r4]
  f3 12                 mulu8.w	r4, r6
- f0 6c c2              ld8u	r6, [r1]
+ ed c2 20              ld8u	r6, [r1+0]
  f0 05 00 01           ldi16	r1, 0x100
  f2 19                 add	r3, r1
- f0 6c 66              ld8u	r3, [r3]
+ ed 66 20              ld8u	r3, [r3+0]
  f6 43                 sext8	r3
  f2 1e                 add	r3, r6
  f2 01                 add	r0, r1
- f0 6c c0              ld8u	r6, [r0]
+ ed c0 20              ld8u	r6, [r0+0]
  f6 46                 sext8	r6
  fe 1e                 mul16	r3, r6
  f4 0a                 ldsp16	r6, [sp+0x2]

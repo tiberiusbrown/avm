@@ -129,7 +129,7 @@ Disassembly of section .text:
  65                    ld16	r5, [r5]
  f0 04 60 01           ldi16	r0, 0x160
  f2 04                 add	r0, r4
- f0 6c 50              ld16	r2, [r0]
+ ed 50 20              ld16	r2, [r0+0]
  f1 1d                 mov	r3, r5
  ec 9a                 sdiv16	r3, r2
  f1 03                 mov	r0, r3

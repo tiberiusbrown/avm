@@ -36,7 +36,7 @@ Disassembly of section .text:
  f2 04                 add	r0, r4
  0c                    mov	r7, r4
  f3 1f                 mulu8.w	r7, r7
- f0 6c 00              ld8u	r0, [r0]
+ ed 00 20              ld8u	r0, [r0+0]
  f4 a0                 tst8	r0
  d1 1b                 brne8	avm_test_main+54
  f0 04 83 03           ldi16	r0, 0x383
@@ -44,7 +44,7 @@ Disassembly of section .text:
  d2 13                 brult8	avm_test_main+54
  f1 06                 mov	r0, r6
  f0 01 01              ldi8	r1, 0x1
- f0 6d 20              st8	[r0], r1
+ ee 20 20              st8	[r0+0], r1
  1c                    add	r7, r4
  f2 04                 add	r0, r4
  f0 05 84 03           ldi16	r1, 0x384

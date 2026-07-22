@@ -305,8 +305,8 @@ qN[31:24] = 0
 Unless an instruction or service definition explicitly requires a normalized
 program pointer, an architectural program- or function-pointer consumer uses
 only bits `23:0` and ignores bits `31:24`. This includes program-space load
-addresses, indirect jump and call targets, and the program-space source pointer
-of `memcpy_P`.
+addresses, indirect jump and call targets, and the program-space source pointers
+of `memcpy_P` and the sprite drawing services.
 
 The program-memory comparison and string services `memcmp_P`, `strcmp_P`,
 `strlen_P`, `strncpy_P`, and `strncat_P` explicitly require a normalized `q3`
@@ -1969,7 +1969,9 @@ services use dedicated target intrinsics. `memcpy`, `memcpy_P`, `memset`, and
 those representations preserve the required address spaces and memory
 semantics. The comparison and string services use dedicated typed target
 intrinsics because LLVM has no generic intrinsics with their complete
-semantics.
+semantics. The display and sprite services also use dedicated typed target
+intrinsics because their fixed framebuffer and program-space effects have no
+generic LLVM representation.
 
 ## 49. Defined services
 
@@ -2005,7 +2007,11 @@ semantics.
 | `0x1B` | `strncpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
 | `0x1C` | `strncat` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
 | `0x1D` | `display` | `r4 = clear` | None | Framebuffer reads; optional framebuffer clearing; display output |
-| `0x1E-0xFF` | Reserved | — | — | — |
+| `0x1E` | `draw_sprite_overwrite` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None | Program-space reads; framebuffer reads and writes |
+| `0x1F` | `draw_sprite_plus_mask` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None | Program-space reads; framebuffer reads and writes |
+| `0x20` | `draw_sprite_self_masked` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None | Program-space reads; framebuffer reads and writes |
+| `0x21` | `draw_sprite_erase` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None | Program-space reads; framebuffer reads and writes |
+| `0x22-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -2652,6 +2658,105 @@ duplicated, speculated, commoned, or reordered across another display update or
 across a framebuffer access that could change the image it observes. The
 service preserves every general-purpose register, `CC`, and `SP`.
 
+### 49.21. Sprite drawing services
+
+Encodings:
+
+| ID | Encoding | Service |
+|---:|---|---|
+| `0x1E` | `D7 1E` | `draw_sprite_overwrite` |
+| `0x1F` | `D7 1F` | `draw_sprite_plus_mask` |
+| `0x20` | `D7 20` | `draw_sprite_self_masked` |
+| `0x21` | `D7 21` | `draw_sprite_erase` |
+
+All four services use the same fixed service-register assignment:
+
+```text
+r4 = signed 16-bit x coordinate
+r5 = signed 16-bit y coordinate
+q3 = program-space sprite pointer
+r0 = unsigned 16-bit frame index
+```
+
+The logical sprite address is `q3[23:0]`; bits `q3[31:24]` are ignored. The
+services preserve the complete original bit patterns of `r0`, `r4`, `r5`, and
+`q3`, and preserve every other general-purpose register, `CC`, and `SP`.
+
+The program-space object begins with a two-byte header:
+
+```text
+sprite[0] = width in pixels, as an unsigned byte
+sprite[1] = height in pixels, as an unsigned byte
+sprite[2] = first byte of frame zero
+```
+
+Let:
+
+```text
+pages        = ceil(height / 8)
+bitmapStride = width * pages
+```
+
+For `draw_sprite_overwrite`, `draw_sprite_self_masked`, and
+`draw_sprite_erase`, each frame contains `bitmapStride` bytes. Frame bytes are
+page-major: page zero contains `width` consecutive column bytes, followed by
+page one, and so on. Bit `b` of the byte for source column `sx` and source page
+`sp` represents source pixel `(sx, 8*sp+b)`. Bits at rows greater than or equal
+to `height` in the final source page are padding and do not affect the
+framebuffer.
+
+For `draw_sprite_plus_mask`, each source column has an interleaved image byte
+followed by a mask byte. Its frame stride is:
+
+```text
+plusMaskStride = 2 * bitmapStride
+```
+
+The selected frame begins at:
+
+```text
+frameBase = low24(sprite + 2 + frame * frameStride)
+```
+
+where `frameStride` is `bitmapStride` for the single-plane services and
+`plusMaskStride` for `draw_sprite_plus_mask`. The caller must provide a valid
+two-byte header and a complete selected frame in program space. The selected
+frame range must not wrap the 24-bit program address space.
+
+The sprite rectangle is positioned with its upper-left source pixel at signed
+coordinates `(x,y)` and is clipped to the framebuffer rectangle:
+
+```text
+0 <= destination x < 128
+0 <= destination y < 64
+```
+
+Pixels outside the framebuffer are ignored. A zero-width or zero-height sprite,
+or a sprite whose rectangle does not intersect the framebuffer, leaves the
+framebuffer unchanged. Drawing never modifies framebuffer pixels outside the
+clipped sprite rectangle.
+
+For each visible source pixel, let `d` be the original framebuffer bit, `s` the
+source image bit, and, for the plus-mask format, `m` the source mask bit. The
+new framebuffer bit is:
+
+```text
+draw_sprite_overwrite:   s
+draw_sprite_plus_mask:   (d & !m) | (s & m)
+draw_sprite_self_masked: d | s
+draw_sprite_erase:       d & !s
+```
+
+The services read the program-space header and selected frame and read and
+write the fixed framebuffer at `0x0500-0x08FF`. They do not update the physical
+display; a later `display` service transfers the modified framebuffer.
+
+The framebuffer writes are observable program memory effects. A sprite service
+MUST NOT be removed when its writes may be observed and MUST NOT be speculated
+or reordered across an access that may alias the framebuffer. It may be
+reordered relative to provably disjoint data-space memory only when all
+program-order dependencies and observable-service constraints are preserved.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -2856,6 +2961,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `memcmp`, `strcmp`, `strlen` | Recognized libcall or dedicated AVM intrinsic and `SYS 0x18-0x1A` | — | — | Read-only AS0 effects |
 | `strncpy`, `strncat` | Recognized libcall or dedicated AVM intrinsic and `SYS 0x1B-0x1C` | — | — | AS0 read/write effects |
 | `display` | Dedicated AVM intrinsic and `SYS 0x1D` | — | — | Reads the fixed framebuffer, may clear it, and has externally observable display output |
+| `draw_sprite_overwrite`, `draw_sprite_plus_mask`, `draw_sprite_self_masked`, `draw_sprite_erase` | Dedicated typed AVM intrinsics and `SYS 0x1E-0x21` | — | — | Read an AS1 sprite and read/write the fixed framebuffer |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -2880,9 +2986,9 @@ container or at an ordinary ABI boundary. Required cases include:
 - any explicit operation that observes the complete `GPR32` bit pattern.
 
 Normalization is not required before `LDP*`, `JMPP`, `CALLP`,
-`SYS_MEMCPY_P`, another program-pointer arithmetic operation, or a packed
-three-byte pointer store, because those uses consume only the logical low
-24 bits. It is required before `SYS_MEMCMP_P`, `SYS_STRCMP_P`,
+`SYS_MEMCPY_P`, any `SYS_DRAW_SPRITE_*` service, another program-pointer
+arithmetic operation, or a packed three-byte pointer store, because those uses
+consume only the logical low 24 bits. It is required before `SYS_MEMCMP_P`, `SYS_STRCMP_P`,
 `SYS_STRLEN_P`, `SYS_STRNCPY_P`, and `SYS_STRNCAT_P`, whose service contracts
 validate the complete `q3` container.
 
@@ -3231,7 +3337,7 @@ MAY recognize direct calls to those symbols and replace them with
 `llvm.avm.memmove` or generic `llvm.memmove` when interposition and other
 language-level rules permit it.
 
-### 56.5. Display helper
+### 56.5. Display and sprite helpers
 
 The target runtime provides:
 
@@ -3253,6 +3359,29 @@ The operation reads the fixed framebuffer range `0x0500-0x08FF`, may write
 zeros to that range when `clear` is true, and always has externally observable
 display output. It is not an ordinary function call after lowering and carries
 no call-preserved register mask.
+
+The target runtime and Clang target provide:
+
+```c
+void __avm_draw_sprite_overwrite(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+void __avm_draw_sprite_plus_mask(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+void __avm_draw_sprite_self_masked(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+void __avm_draw_sprite_erase(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+```
+
+Clang lowers these interfaces to the four typed sprite intrinsics from Section
+59. Machine selection assigns `x` to `r4`, `y` to `r5`, `sprite` to `q3`, and
+`frame` to `r0`, then emits the corresponding service in the range
+`SYS 0x1E-0x21`. The sprite pointer's padding byte need not be normalized,
+because the services consume only `q3[23:0]`.
+
+Each sprite operation reads its AS1 sprite object and reads and writes the
+fixed framebuffer range `0x0500-0x08FF`. It is not an ordinary function call
+after lowering and carries no call-preserved register mask.
 
 ## 57. Atomic and volatile policy
 
@@ -3354,8 +3483,8 @@ The backend should:
 
 ## 59. LLVM system-service representations
 
-The scalar, floating-point, display, and AS0 `memcpy`, `memset`, and
-`memmove` services have dedicated typed target intrinsics:
+The scalar, floating-point, display, sprite drawing, and AS0 `memcpy`,
+`memset`, and `memmove` services have dedicated typed target intrinsics:
 
 ```llvm
 declare void  @llvm.avm.debug.putc(i8 %value)
@@ -3376,6 +3505,15 @@ declare float @llvm.avm.hypotf(float %x, float %y)
 declare float @llvm.avm.fmodf(float %x, float %y)
 
 declare void @llvm.avm.display(i1 %clear)
+
+declare void @llvm.avm.draw.sprite.overwrite(
+    i16 %x, i16 %y, ptr addrspace(1) %sprite, i16 %frame)
+declare void @llvm.avm.draw.sprite.plus.mask(
+    i16 %x, i16 %y, ptr addrspace(1) %sprite, i16 %frame)
+declare void @llvm.avm.draw.sprite.self.masked(
+    i16 %x, i16 %y, ptr addrspace(1) %sprite, i16 %frame)
+declare void @llvm.avm.draw.sprite.erase(
+    i16 %x, i16 %y, ptr addrspace(1) %sprite, i16 %frame)
 
 declare ptr @llvm.avm.memcpy(ptr %dst, ptr %src, i16 %n)
 declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %n)
@@ -3445,6 +3583,10 @@ no corresponding generic LLVM intrinsic.
 | `llvm.avm.strncpy(ptr,ptr,i16)` | `SYS 0x1B` through `SYS_STRNCPY` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 | `llvm.avm.strncat(ptr,ptr,i16)` | `SYS 0x1C` through `SYS_STRNCAT` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 | `llvm.avm.display(i1)` | `SYS 0x1D` through `SYS_DISPLAY` | `r4 = zero_extend(clear)` | None |
+| `llvm.avm.draw.sprite.overwrite(i16,i16,p1,i16)` | `SYS 0x1E` through `SYS_DRAW_SPRITE_OVERWRITE` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
+| `llvm.avm.draw.sprite.plus.mask(i16,i16,p1,i16)` | `SYS 0x1F` through `SYS_DRAW_SPRITE_PLUS_MASK` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
+| `llvm.avm.draw.sprite.self.masked(i16,i16,p1,i16)` | `SYS 0x20` through `SYS_DRAW_SPRITE_SELF_MASKED` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
+| `llvm.avm.draw.sprite.erase(i16,i16,p1,i16)` | `SYS 0x21` through `SYS_DRAW_SPRITE_ERASE` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -3471,6 +3613,14 @@ AS0 memory operands, their aliasing relationship, the possibility of overlap,
 the transfer size, volatility, and ordering constraints of the originating
 memmove operation.
 
+
+The four sprite pseudos have input-only fixed uses of `r4`, `r5`, `q3`, and
+`r0`, and no architectural register definitions. Their sprite address is
+`q3[23:0]`; `q3[31:24]` is ignored, so selection MUST NOT normalize the pointer
+solely for a sprite service. Each pseudo carries an address-space-one read for
+the sprite data and conservative address-space-zero read and write effects for
+the complete 1,024-byte framebuffer. More precise framebuffer references MAY
+be used when clipping and dimensions are statically known.
 
 The five program-string pseudos require a normalized `q3` input. Selection MUST
 insert program-pointer normalization before copying the source into `Q3Only`;
@@ -3511,10 +3661,10 @@ operations MAY lower to service `0x11` when preferable to an inline store
 sequence. Recognized nonvolatile AS0 `memmove` operations MAY lower to service
 `0x12` when preferable to an overlap-correct inline sequence. Direct calls or
 target builtins for the comparison and string functions lower to services
-`0x13-0x1C`. The target display builtin lowers to service `0x1D`. A compiler
-MAY recognize ordinary C library calls and replace them with the corresponding
-target intrinsic when interposition, object-size, and language rules permit
-it.
+`0x13-0x1C`. The target display builtin lowers to service `0x1D`. The four
+target sprite builtins lower to services `0x1E-0x21`. A compiler MAY recognize
+ordinary C library calls and replace them with the corresponding target
+intrinsic when interposition, object-size, and language rules permit it.
 
 ### 59.2. Optimization and scheduling
 
@@ -3545,6 +3695,8 @@ The memory services have their precise address-space effects:
   and destination objects.
 - `strncat` reads and writes address space zero through nonoverlapping source
   and destination objects.
+- Each sprite service reads its address-space-one sprite object and reads and
+  writes the fixed address-space-zero framebuffer range `0x0500-0x08FF`.
 
 They MUST NOT be speculated or reordered across accesses that may alias a
 written destination or, for a copy or move, the source. They MAY be eliminated,
@@ -3564,6 +3716,13 @@ reordered across another display operation. It MUST remain ordered relative to
 any access that may alias the framebuffer range `0x0500-0x08FF`. Operations on
 provably disjoint memory may be reordered only when doing so preserves all
 other observable-service ordering constraints.
+
+A sprite service has no physical-display side effect, but its framebuffer
+writes are observable. It MUST NOT be speculated or reordered across an access
+that may alias `0x0500-0x08FF`. It MAY be removed only when all of its
+framebuffer writes are proven dead, and MAY be reordered relative to provably
+disjoint memory only when the AS1 sprite read and all other dependencies remain
+valid.
 
 ### 59.3. Source-language interfaces
 
@@ -3588,6 +3747,15 @@ float __avm_hypotf(float x, float y);
 float __avm_fmodf(float x, float y);
 
 void __avm_display(bool clear);
+
+void __avm_draw_sprite_overwrite(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+void __avm_draw_sprite_plus_mask(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+void __avm_draw_sprite_self_masked(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+void __avm_draw_sprite_erase(
+    int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
 
 int      __avm_memcmp_P(const void *lhs, avm_progmem_cptr rhs, uint16_t n);
 int      __avm_strcmp_P(const char *lhs, avm_progmem_cptr rhs);
@@ -3639,6 +3807,12 @@ headers use the `__avm_*` forms when direct service selection is required.
 `llvm.avm.display(i1)`. The backend materializes the canonical boolean in `r4`
 and selects `SYS 0x1D`. The operation retains its framebuffer memory effects
 and externally observable display side effect.
+
+The four `__avm_draw_sprite_*` interfaces lower to their corresponding
+`llvm.avm.draw.sprite.*` intrinsics. The backend assigns `x`, `y`, `sprite`, and
+`frame` to `r4`, `r5`, `q3`, and `r0`, respectively, and selects
+`SYS 0x1E-0x21`. These operations retain the AS1 sprite read and fixed
+framebuffer read/write effects described in Sections 49.21 and 59.2.
 
 ## 60. Code model and C++ policy
 
@@ -4457,6 +4631,8 @@ LLVM:
     memmove lowers through llvm.avm.memmove or generic llvm.memmove and SYS_MEMMOVE
     comparison and string builtins use typed AVM intrinsics and SYS 0x13-0x1C
     display uses llvm.avm.display and SYS 0x1D with fixed framebuffer effects
+    sprite drawing uses typed llvm.avm.draw.sprite.* intrinsics and SYS 0x1E-0x21
+    sprite services use r4=x, r5=y, q3=sprite, r0=frame and ignore q3 padding
 
 Assembly:
     GNU-style syntax

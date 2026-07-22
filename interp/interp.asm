@@ -101,9 +101,9 @@
 ; The hardware SPI pins are fixed by the ATmega32U4: PB1=SCK, PB2=MOSI, and
 ; PB3=MISO. Set AVM_INIT_RGB_LED or AVM_INIT_TX_RX_LEDS to 0 to omit those
 ; outputs. Set AVM_INIT_BUTTONS or AVM_INIT_RANDOM_SEED_ADC to 0 to omit those
-; inputs. Startup resets and configures the OLED controller, but deliberately
-; does not clear the framebuffer or OLED display RAM; the future display SYS
-; service will own the first screen update.
+; inputs. Startup resets and configures the OLED controller, clears the
+; framebuffer, and performs one display update so controller RAM starts blank.
+; Later framebuffer transfers are performed by SYS display.
 
 #if !defined(AVM_DEVICE_ARDUBOY_FX) && \
     !defined(AVM_DEVICE_ARDUBOY_MINI) && \
@@ -589,6 +589,7 @@
 #define SYS_STRLEN              0x1A
 #define SYS_STRNCPY             0x1B
 #define SYS_STRNCAT             0x1C
+#define SYS_DISPLAY             0x1D
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -3032,6 +3033,9 @@ sys_dispatch_func:
     (SYS_STRNCPY != 0x1B) || (SYS_STRNCAT != 0x1C)
     .error "memory SYS services must occupy contiguous entries 0x0F-0x1C"
 .endif
+.if (SYS_DISPLAY != 0x1D)
+    .error "SYS_DISPLAY must occupy dispatch-table entry 0x1D"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3055,7 +3059,8 @@ sys_dispatch_table:
     sys_entries 1,   sys_strlen_impl
     sys_entries 1,   sys_strncpy_impl
     sys_entries 1,   sys_strncat_impl
-    sys_entries 227, invalid_syscall_func
+    sys_entries 1,   sys_display_impl
+    sys_entries 226, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -4837,6 +4842,141 @@ sys_ram_string_services_end:
 .if (sys_ram_string_services_end - sys_ram_string_services_start) != 142
     .error "data-memory string SYS subsystem must occupy exactly 71 AVR words"
 .endif
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; OLED framebuffer display function and SYS service
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Shared native function:
+;   display_update_func
+;   input:  r16 / VM_R4L = clear (zero leaves framebuffer bytes unchanged;
+;                                nonzero clears each byte after transfer)
+;   precondition: FX flash is deselected and no SPI transfer is active
+;   output: OLED and FX flash deselected; transfer fully complete
+;   clobbers: r0, r24:r26, Z, native SREG
+;   preserves: r16 and all other architectural registers
+;
+; SYS ABI:
+;   void display(bool clear)
+;   r4 low byte / native r16 = clear
+;
+; The SYS wrapper advances VM_PC, drains the speculative FX transfer, calls the
+; shared function, and restarts the instruction stream. Startup calls the same
+; function directly after zeroing the framebuffer.
+
+sys_display_service_start:
+sys_display_impl:
+    ; VM_PC names the service byte. Advance to the following primary now so the
+    ; common seek path can restart the instruction stream after the OLED owns
+    ; the shared SPI bus.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; SYS decode already launched a speculative read of the following primary.
+    ; Wait for that transfer to complete before deselecting the FX flash, then
+    ; read SPDR to complete the hardware SPIF-clear sequence.
+.Lsys_display_wait_fx:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsys_display_wait_fx
+    in    r24, SPDR
+    fx_disable
+
+    rcall display_update_func
+    rjmp  seek_and_dispatch_func
+
+; Transfer the complete framebuffer to the configured OLED controller. This is
+; a normal native AVR function so startup and SYS display share one body.
+display_update_func:
+    ldi   r30, lo8(data_display)
+    ldi   r31, hi8(data_display)
+
+#if defined(AVM_DISPLAY_SH1106)
+    ; Arduboy2-derived SH1106 page-mode transfer. Every command and data OUT is
+    ; separated by at least the 18 cycles required at f_CPU/2. The visible
+    ; 128-column window begins at column two; startup set the low column command
+    ; to 0x02, and each page resets only page and high-column state here.
+    display_command_mode
+    display_enable
+    ldi   r25, 0xB0               ; page 0 command
+
+.Ldisplay_sh1106_page:
+    ldi   r24, 0x10               ; high column address = 0
+    ldi   r26, 6
+    display_command_mode
+
+    out   SPDR, r25
+.Ldisplay_sh1106_command_wait:
+    dec   r26
+    brne  .Ldisplay_sh1106_command_wait
+    out   SPDR, r24
+
+    ldi   r24, 128
+    inc   r24                     ; 129: predecrement loop entry
+    rjmp  .Ldisplay_sh1106_data_entry
+
+.Ldisplay_sh1106_data_loop:
+    lpm   r26, Z                  ; timing-only internal-flash read
+    ld    r26, Z
+    display_data_mode
+    out   SPDR, r26
+    cpse  VM_R4L, ZERO
+    mov   r26, ZERO
+    st    Z+, r26
+
+.Ldisplay_sh1106_data_entry:
+    lpm   r26, Z                  ; timing-only internal-flash read
+    dec   r24
+    brne  .Ldisplay_sh1106_data_loop
+
+    inc   r25
+    cpi   r25, 0xB8              ; eight 128-byte pages
+    brne  .Ldisplay_sh1106_page
+
+    ; Match the reference final-transfer delay before releasing chip select.
+    lpm   r26, Z
+#else
+    ; Arduboy2-derived SSD1306/SSD1309 data-only transfer. A doubled count makes
+    ; the SBIW/parity delay loop execute twice per framebuffer byte, yielding
+    ; an exact 18-cycle OUT-to-OUT cadence while also providing constant-time
+    ; optional clearing.
+    display_data_mode
+    display_enable
+    ldi   r24, lo8(2048)
+    ldi   r25, hi8(2048)
+
+.Ldisplay_ssd_loop:
+    ld    r0, Z
+    out   SPDR, r0
+    cpse  VM_R4L, ZERO
+    mov   r0, ZERO
+.Ldisplay_ssd_delay:
+    sbiw  r24, 1
+    sbrc  r24, 0
+    rjmp  .Ldisplay_ssd_delay
+    st    Z+, r0
+    brne  .Ldisplay_ssd_loop
+#endif
+
+    ; Complete and acknowledge the final transfer before releasing chip select.
+    in    r24, SPSR
+    in    r24, SPDR
+    display_disable
+    fx_disable
+    ret
+
+sys_display_service_end:
+#if defined(AVM_DISPLAY_SH1106)
+.if (sys_display_service_end - sys_display_service_start) != 88
+    .error "SH1106 display SYS wrapper/function must occupy exactly 44 AVR words"
+.endif
+#else
+.if (sys_display_service_end - sys_display_service_start) != 60
+    .error "SSD1306/SSD1309 display SYS wrapper/function must occupy exactly 30 AVR words"
+.endif
+#endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; F0 69-6B: shared cold 32-bit forms
@@ -6707,8 +6847,8 @@ startup_func:
     ldi  r26, _BV(SPI2X)
     out  SPSR, r26
 
-    ; Reset and configure the selected SPI OLED controller. This intentionally
-    ; does not write pixel data or clear either display RAM or data_display.
+    ; Reset and configure the selected SPI OLED controller. Pixel data is sent
+    ; only after the application data image has been initialized below.
     rcall oled_startup_init_func
 
     ; Release the W25Q128 from power-down.
@@ -6898,8 +7038,23 @@ startup_copy_data_loop:
     fx_disable
 
 startup_enter_image:
-    ; Timer0 is initialized only after the data image copy. Its compare
-    ; interrupt becomes globally active at the SEI below.
+    ; The framebuffer is outside the application data image. Clear all 1024
+    ; bytes, then invoke the same native display-update function used by SYS
+    ; display.
+    ldi   r30, lo8(data_display)
+    ldi   r31, hi8(data_display)
+    ldi   r24, lo8(1024)
+    ldi   r25, hi8(1024)
+startup_clear_framebuffer_loop:
+    st    Z+, ZERO
+    sbiw  r24, 1
+    brne  startup_clear_framebuffer_loop
+
+    mov   VM_R4L, ZERO
+    call  display_update_func
+
+    ; Timer0 is initialized only after the data image copy and initial display
+    ; blanking. Its compare interrupt becomes globally active at the SEI below.
     rcall timer0_init_func
 
     ; VM_PCH:VM_PCM:VM_PCL already contains the image entry point. Seek to

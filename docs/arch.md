@@ -2004,7 +2004,8 @@ semantics.
 | `0x1A` | `strlen` | `r4 = string` | `r4 = length` | Data-space reads |
 | `0x1B` | `strncpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
 | `0x1C` | `strncat` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
-| `0x1D-0xFF` | Reserved | — | — | — |
+| `0x1D` | `display` | `r4 = clear` | None | Framebuffer reads; optional framebuffer clearing; display output |
+| `0x1E-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -2601,6 +2602,56 @@ appended characters and one terminator. The source and destination objects must
 not overlap. The result is the original `dst` in `r4`. The service preserves
 `r5`, `r6`, `r0-r3`, `r7`, `CC`, and `SP`.
 
+### 49.20. `display`
+
+Encoding:
+
+```text
+D7 1D
+```
+
+C interface and fixed service-register assignment:
+
+```c
+void display(bool clear);
+```
+
+```text
+r4 = clear
+```
+
+The service updates the configured physical display from the complete
+1,024-byte framebuffer at data-space addresses `0x0500-0x08FF`. The bytes are
+interpreted using the conventional framebuffer mapping from Section 10.
+
+The logical clear value is:
+
+```text
+clear = (low8(r4) != 0)
+```
+
+Bits `15:8` of `r4` do not affect the operation. The complete original bit
+pattern of `r4` is preserved.
+
+For every framebuffer byte, the value present when the service reads that byte
+is transferred to the display. If `clear` is false, the framebuffer is not
+modified. If `clear` is true, each framebuffer byte is set to zero after its
+display value has been captured. Therefore, when the service returns:
+
+- the physical display shows the framebuffer image that existed when the
+  service processed it; and
+- the complete framebuffer contains zero when `clear` is true.
+
+The configured display controller may be SSD1306, SSD1309, or SH1106. Controller
+commands, transfer ordering, and physical bus timing are implementation details;
+all supported controllers provide the same architectural framebuffer and clear
+semantics.
+
+Display output is externally observable. The service MUST NOT be removed,
+duplicated, speculated, commoned, or reordered across another display update or
+across a framebuffer access that could change the image it observes. The
+service preserves every general-purpose register, `CC`, and `SP`.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -2804,6 +2855,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `strncpy_P`, `strncat_P` | Dedicated typed AVM intrinsic and `SYS 0x16-0x17` | — | — | AS1 read plus AS0 write; `strncat_P` also reads AS0 destination |
 | `memcmp`, `strcmp`, `strlen` | Recognized libcall or dedicated AVM intrinsic and `SYS 0x18-0x1A` | — | — | Read-only AS0 effects |
 | `strncpy`, `strncat` | Recognized libcall or dedicated AVM intrinsic and `SYS 0x1B-0x1C` | — | — | AS0 read/write effects |
+| `display` | Dedicated AVM intrinsic and `SYS 0x1D` | — | — | Reads the fixed framebuffer, may clear it, and has externally observable display output |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -3179,6 +3231,29 @@ MAY recognize direct calls to those symbols and replace them with
 `llvm.avm.memmove` or generic `llvm.memmove` when interposition and other
 language-level rules permit it.
 
+### 56.5. Display helper
+
+The target runtime provides:
+
+```c
+void __avm_display(bool clear);
+```
+
+Clang SHOULD provide the corresponding target builtin:
+
+```c
+void __builtin_avm_display(bool clear);
+```
+
+The helper and builtin lower to the typed display intrinsic from Section 59.
+The source-language `bool` argument is represented canonically as zero or one.
+Machine selection assigns it to `r4` and emits `SYS 0x1D`.
+
+The operation reads the fixed framebuffer range `0x0500-0x08FF`, may write
+zeros to that range when `clear` is true, and always has externally observable
+display output. It is not an ordinary function call after lowering and carries
+no call-preserved register mask.
+
 ## 57. Atomic and volatile policy
 
 AVM Version 1 is single-threaded.
@@ -3279,8 +3354,8 @@ The backend should:
 
 ## 59. LLVM system-service representations
 
-The non-memory services and the AS0 `memcpy`, `memset`, and `memmove`
-services have dedicated typed target intrinsics:
+The scalar, floating-point, display, and AS0 `memcpy`, `memset`, and
+`memmove` services have dedicated typed target intrinsics:
 
 ```llvm
 declare void  @llvm.avm.debug.putc(i8 %value)
@@ -3299,6 +3374,8 @@ declare float @llvm.avm.log10f(float %x)
 declare float @llvm.avm.powf(float %x, float %y)
 declare float @llvm.avm.hypotf(float %x, float %y)
 declare float @llvm.avm.fmodf(float %x, float %y)
+
+declare void @llvm.avm.display(i1 %clear)
 
 declare ptr @llvm.avm.memcpy(ptr %dst, ptr %src, i16 %n)
 declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %n)
@@ -3367,6 +3444,7 @@ no corresponding generic LLVM intrinsic.
 | `llvm.avm.strlen(ptr)` | `SYS 0x1A` through `SYS_STRLEN` | `r4 = src` | tied `r4 = length` |
 | `llvm.avm.strncpy(ptr,ptr,i16)` | `SYS 0x1B` through `SYS_STRNCPY` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 | `llvm.avm.strncat(ptr,ptr,i16)` | `SYS 0x1C` through `SYS_STRNCAT` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
+| `llvm.avm.display(i1)` | `SYS 0x1D` through `SYS_DISPLAY` | `r4 = zero_extend(clear)` | None |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -3409,6 +3487,20 @@ table. Result-producing services define the complete `r4`. `SYS_MEMCMP` and
 `SYS_STRNCAT` preserve the original destination bit pattern through the tied
 `r4` result.
 
+`SYS_DISPLAY` is not an ordinary call. It has an input-only `r4` use and no
+architectural register definition. The backend zero-extends the `i1` clear
+operand into `r4`. The machine pseudo carries:
+
+- an address-space-zero read of exactly 1,024 bytes beginning at `0x0500`;
+- a conservative address-space-zero write of the same range, because a
+  nonconstant true `clear` operand clears the framebuffer; and
+- an unmodeled externally observable display side effect.
+
+When `clear` is a compile-time false constant, the backend MAY omit the
+framebuffer write effect, but it MUST retain the read and the externally
+observable side effect. The pseudo has no call-preserved register mask and
+preserves every architectural register.
+
 Generic LLVM math intrinsics and recognized libcalls MAY lower directly to
 these services when their required semantics match the service definitions in
 Section 49.5. Recognized AS0-to-AS0 `memcpy` operations MAY lower to service
@@ -3419,9 +3511,10 @@ operations MAY lower to service `0x11` when preferable to an inline store
 sequence. Recognized nonvolatile AS0 `memmove` operations MAY lower to service
 `0x12` when preferable to an overlap-correct inline sequence. Direct calls or
 target builtins for the comparison and string functions lower to services
-`0x13-0x1C`. A compiler MAY recognize ordinary C library calls and replace
-them with the corresponding target intrinsic when interposition, object-size,
-and language rules permit it.
+`0x13-0x1C`. The target display builtin lowers to service `0x1D`. A compiler
+MAY recognize ordinary C library calls and replace them with the corresponding
+target intrinsic when interposition, object-size, and language rules permit
+it.
 
 ### 59.2. Optimization and scheduling
 
@@ -3464,6 +3557,14 @@ byte they inspect. String-copy and concatenation calls may be transformed only
 when their NUL-termination, padding, bound, and aliasing semantics are
 preserved.
 
+`display` reads the complete framebuffer and may clear it. It also performs an
+externally observable hardware update regardless of the `clear` value. It MUST
+NOT be removed, duplicated, speculated, common-subexpression eliminated, or
+reordered across another display operation. It MUST remain ordered relative to
+any access that may alias the framebuffer range `0x0500-0x08FF`. Operations on
+provably disjoint memory may be reordered only when doing so preserves all
+other observable-service ordering constraints.
+
 ### 59.3. Source-language interfaces
 
 Recommended target-specific C interfaces:
@@ -3485,6 +3586,8 @@ float __avm_log10f(float x);
 float __avm_powf(float x, float y);
 float __avm_hypotf(float x, float y);
 float __avm_fmodf(float x, float y);
+
+void __avm_display(bool clear);
 
 int      __avm_memcmp_P(const void *lhs, avm_progmem_cptr rhs, uint16_t n);
 int      __avm_strcmp_P(const char *lhs, avm_progmem_cptr rhs);
@@ -3531,6 +3634,11 @@ function-like macros or recognized direct builtins; address-taking continues
 to use out-of-line runtime wrappers. Standard AS0 names may remain ordinary
 Clang library builtins and be recognized during optimization, while target
 headers use the `__avm_*` forms when direct service selection is required.
+
+`__avm_display` and `__builtin_avm_display` lower to
+`llvm.avm.display(i1)`. The backend materializes the canonical boolean in `r4`
+and selects `SYS 0x1D`. The operation retains its framebuffer memory effects
+and externally observable display side effect.
 
 ## 60. Code model and C++ policy
 
@@ -4194,9 +4302,13 @@ Static initialization is:
 3. Always copy the remaining `dataSize - saveSize` ordinary initializer bytes
    from program address `0x000100 + saveSize` to data address
    `0x0100 + saveSize`.
+4. Clear the complete framebuffer at data addresses `0x0500-0x08FF` to zero.
+5. Update the configured physical display from the cleared framebuffer before
+   beginning guest execution.
 
-No static clearing pass is performed because all static bytes have explicit
-initializer bytes.
+No static-storage clearing pass is performed because all static bytes have
+explicit initializer bytes. The framebuffer clear is a separate platform
+initialization step and does not alter `.saved` or `.data`.
 
 General-purpose registers are unspecified at raw image entry unless a higher-level runtime ABI states otherwise.
 
@@ -4344,6 +4456,7 @@ LLVM:
     memset lowers through llvm.avm.memset or generic llvm.memset and SYS_MEMSET
     memmove lowers through llvm.avm.memmove or generic llvm.memmove and SYS_MEMMOVE
     comparison and string builtins use typed AVM intrinsics and SYS 0x13-0x1C
+    display uses llvm.avm.display and SYS 0x1D with fixed framebuffer effects
 
 Assembly:
     GNU-style syntax
@@ -4358,6 +4471,9 @@ ELF:
     R_AVM_PCREL8 and R_AVM_PCREL16
     24-bit absolute relocation and iterative relaxation
     explicit program/data section flags
+
+Startup:
+    framebuffer 0x0500-0x08FF is cleared and transferred to the display
 
 Image:
     256-byte header

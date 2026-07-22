@@ -1474,20 +1474,22 @@ primary_EC_divrem16_page:
 ;   bit 0 reserved and required to be zero
 ;   disp  = unsigned(off8) - 32, giving -32..+223
 ;
-; Native SREG.T preserves load/store selection through both SPI handoffs.
-; The primary slots advance VM_PC from the primary opcode to the specifier and
-; leave the high-byte carry update to the common entry.
+; The primary opcode remains in r24 on entry to the out-of-line handler. Its
+; bit 1 distinguishes ED (load, zero) from EE (store, one), and is copied to
+; native SREG.T before r24 is reused. The primary slots advance VM_PC by two
+; bytes from the primary opcode to the biased-offset byte and leave the
+; high-byte carry update to the common entry.
 
 primary_ED_displaced_load:
-    clt
-    add  VM_PCL, ONE
+    ldi  DISPLACED_SPEC, 2
+    add  VM_PCL, DISPLACED_SPEC
     adc  VM_PCM, ZERO
     rjmp displaced_memory_entry
     assert_primary_slot_width primary_ED_displaced_load
 
 primary_EE_displaced_store:
-    set
-    add  VM_PCL, ONE
+    ldi  DISPLACED_SPEC, 2
+    add  VM_PCL, DISPLACED_SPEC
     adc  VM_PCM, ZERO
     rjmp displaced_memory_entry
     assert_primary_slot_width primary_EE_displaced_store
@@ -1590,9 +1592,9 @@ primary_table_end:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
 ; Entry state:
-;   * VM_PC names the second-byte specifier.
+;   * VM_PC names the third-byte biased offset.
 ;   * The specifier byte is completing in SPDR.
-;   * T=0 for ED loads and T=1 for EE stores.
+;   * PRIMARY_OPCODE still contains ED or EE; bit 1 selects load/store.
 ;
 ; The primary slot reaches this entry on cycle 14 after the OUT that started
 ; the specifier transfer. The standard IN/OUT handoff consumes the specifier on
@@ -1611,8 +1613,8 @@ primary_table_end:
 displaced_memory_start:
 displaced_memory_entry:
     adc   VM_PCH, ZERO
+    bst   PRIMARY_OPCODE, 1      ; ED=load (0), EE=store (1)
     clr   r27                    ; XH for register-file addressing
-    clr   r31                    ; ZH until the base address is loaded
     in    DISPLACED_SPEC, SPDR
     out   SPDR, ZERO             ; begin biased-offset transfer
 

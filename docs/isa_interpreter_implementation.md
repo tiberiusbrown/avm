@@ -2414,35 +2414,42 @@ writeback and captures store data before memory writeback, so `rD == rA` and
 
 ### 21.3.1. Primary slots and first handoff
 
-Native `SREG.T` carries load/store selection through both SPI handoffs:
+The primary slot must advance `VM_PC` by **two** bytes, from the primary opcode
+to the third-byte biased offset. The final cadence tail later advances once
+more from the offset to the following primary opcode. Advancing by only one
+byte leaves `VM_PC` one byte behind the sequential SPI stream and breaks any
+following PC-relative instruction or call.
+
+Native `r25` temporarily supplies the constant two. The original primary opcode
+remains in native `r24`, so bit 1 can classify `ED` versus `EE` after the
+out-of-line jump:
 
 ```asm
-; ED load
-clt
-add   VM_PCL, ONE
-adc   VM_PCM, ZERO
-rjmp  displaced_memory_entry
-
-; EE store
-set
-add   VM_PCL, ONE
+; ED load and EE store use the same four-word slot shape.
+ldi   spec, 2
+add   VM_PCL, spec
 adc   VM_PCM, ZERO
 rjmp  displaced_memory_entry
 ```
 
 Each slot fills the fixed four-word primary width exactly. The common entry
-finishes the 24-bit PC increment, pre-clears the register-file pointer high
-bytes, consumes the specifier on cycle 17, and starts the offset byte with the
-standard cycle-18 handoff:
+finishes the 24-bit `+2` carry chain, copies opcode bit 1 to native `SREG.T`
+(`ED` load = 0, `EE` store = 1), clears native `XH`, consumes the specifier on
+cycle 17, and starts the offset byte with the standard cycle-18 handoff:
 
 ```asm
 displaced_memory_entry:
     adc   VM_PCH, ZERO
+    bst   PRIMARY_OPCODE, 1
     clr   XH
-    clr   ZH
     in    spec, SPDR
     out   SPDR, ZERO
 ```
+
+No `CLR ZH` is needed because both bytes of native `Z` are overwritten while
+capturing the architectural base address. Replacing that unnecessary clear
+with `BST` preserves the original cadence, handler size, and 54/55-cycle
+latencies.
 
 ### 21.3.2. Decode and bias during the offset transfer
 

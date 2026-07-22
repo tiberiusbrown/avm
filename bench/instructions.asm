@@ -14,8 +14,8 @@
 ;   * The program-space fixture is the only shared read-only object.
 ;
 ; Coverage policy:
-;   * Distinct upper, dense/full, cold, absolute, postincrement, program-space,
-;     and 32-bit implementation paths are benchmarked separately.
+;   * Distinct upper, dense/full, displaced, cold, absolute, postincrement,
+;     program-space, and 32-bit implementation paths are benchmarked separately.
 ;   * Conditional instructions are measured both taken/true and not-taken/false.
 ;   * Every variable and immediate 16-bit shift family is measured at counts
 ;     0 through 15.
@@ -4502,6 +4502,50 @@ _start:
     ldi16 r0, 0xa55a
     sys debug_break
     .byte 0xf0, 0x6d, 0x12
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD8U r0,[r1+7] (displaced ED)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0607
+    ldi8 r5, 0xa5
+    st8 [r6], r5
+    ldi16 r1, 0x0600
+    sys debug_break
+    ld8u r0, [r1+7]
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD16 r0,[r1-5] (displaced ED)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, 0x0603
+    ldi16 r5, 0xa55a
+    st16 [r6], r5
+    ldi16 r1, 0x0608
+    sys debug_break
+    ld16 r0, [r1-5]
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: ST8 [r1+7],r0 (displaced EE)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, 0x0600
+    ldi16 r0, 0x81a5
+    sys debug_break
+    st8 [r1+7], r0
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: ST16 [r1-5],r0 (displaced EE)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, 0x0608
+    ldi16 r0, 0xa55a
+    sys debug_break
+    st16 [r1-5], r0
     sys debug_break
 
 ; -----------------------------------------------------------------------------

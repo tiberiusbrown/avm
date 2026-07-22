@@ -2690,14 +2690,14 @@ Disassembly of section .text:
      966:	00 00       	nop
 
 00000968 <primary_ED_displaced_load>:
-     968:	e8 94       	clt
-     96a:	43 0c       	add	r4, r3
+     968:	92 e0       	ldi	r25, 0x02	; 2
+     96a:	49 0e       	add	r4, r25
      96c:	52 1c       	adc	r5, r2
      96e:	48 c0       	rjmp	.+144    	; 0xa00 <displaced_memory_entry>
 
 00000970 <primary_EE_displaced_store>:
-     970:	68 94       	set
-     972:	43 0c       	add	r4, r3
+     970:	92 e0       	ldi	r25, 0x02	; 2
+     972:	49 0e       	add	r4, r25
      974:	52 1c       	adc	r5, r2
      976:	44 c0       	rjmp	.+136    	; 0xa00 <displaced_memory_entry>
 
@@ -2805,8 +2805,8 @@ Disassembly of section .text:
 
 00000a00 <displaced_memory_entry>:
      a00:	62 1c       	adc	r6, r2
-     a02:	bb 27       	eor	r27, r27
-     a04:	ff 27       	eor	r31, r31
+     a02:	81 fb       	bst	r24, 1
+     a04:	bb 27       	eor	r27, r27
      a06:	9e b5       	in	r25, 0x2e	; 46
      a08:	2e bc       	out	0x2e, r2	; 46
      a0a:	90 fd       	sbrc	r25, 0

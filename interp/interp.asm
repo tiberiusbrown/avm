@@ -10282,13 +10282,10 @@ sys_draw_sprite_header_impl:
     ; pages = ceil(height / 8); stride = width * pages.
     in    r30, GPIOR2
     mov   r31, r1
-    mov   r27, r31
-    andi  r27, 0x07
+    subi  r31, -7
     lsr   r31
     lsr   r31
     lsr   r31
-    cpse  r27, ZERO
-    inc   r31
     mul   r30, r31
     movw  r30, r0
 

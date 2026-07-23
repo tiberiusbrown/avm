@@ -3,6 +3,8 @@ include_guard(GLOBAL)
 include(CMakeParseArguments)
 
 set(AVM_TARGET_TRIPLE "avm-unknown-arduboyfx")
+set(AVM_OPT_LEVEL "-O2" CACHE STRING
+    "Optimization level used for AVM runtime, tests, and benchmarks")
 set(AVM_COMMON_COMPILE_OPTIONS
     -ffreestanding
     -fomit-frame-pointer
@@ -11,7 +13,7 @@ set(AVM_COMMON_COMPILE_OPTIONS
     -fno-asynchronous-unwind-tables
     -ffunction-sections
     -fdata-sections
-    -Os
+    "${AVM_OPT_LEVEL}"
     -Wall
     -Wextra
     -Werror

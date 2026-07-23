@@ -10271,10 +10271,8 @@ sys_draw_sprite_header_impl:
     adc   r26, ZERO
     out   GPIOR2, r0                ; retain width across MULs
 
-.Lsys_sprite_wait_height:
-    in    r27, SPSR
-    sbrs  r27, SPIF
-    rjmp  .Lsys_sprite_wait_height
+    rcall sprite_delay_10
+
     in    r1, SPDR                  ; height
     fx_disable
 

@@ -10870,20 +10870,8 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     lsr   r17                        ; pair count
     brcc  .Lsprite_middle_overwrite_pair_loop
     brne  .Lsprite_middle_overwrite_odd_prefix
-
-    ; Width one: render the sole column and finish without another handoff.
-    in    r24, SPDR
-    out   SPDR, ZERO
-    mul   r24, r18
-    ld    r25, X
-    and   r25, r9
-    or    r25, r0
-    st    X+, r25
-    ld    r25, Z
-    and   r25, r19
-    or    r25, r1
-    st    Z+, r25
-    rjmp  .Lsprite_middle_done
+    inc   r17
+    rjmp  .Lsprite_middle_overwrite_one
 
 .Lsprite_middle_overwrite_odd_prefix:
     ; Odd prefix for widths above one. Fourteen pixel cycles plus DELAY_2
@@ -10916,6 +10904,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     st    Z+, r25
     ld    r25, X                    ; preload second low-page byte
 
+.Lsprite_middle_overwrite_one:
     ; Second column: twelve pixel cycles plus NOP/DEC/BRNE = sixteen.
     in    r24, SPDR
     out   SPDR, ZERO

@@ -10577,18 +10577,6 @@ draw_bitmap_seek_func:
     mov   r16, r24
 .Lsprite_right_clip_done:
 
-    ; The retained source pointer is needed only when horizontal clipping means
-    ; the visible bytes do not end at the next source row. Store that condition
-    ; in native T, which survives all renderer arithmetic and protected SPI
-    ; handoffs while architectural flags remain in GPIOR0.
-    clt
-    cpse  r16, r8
-    set
-
-    ldi   r24, 128
-    sub   r24, r16
-    mov   r14, r24                  ; framebuffer row advance
-
     cpi   r19, 0xFF
     brne  .Lsprite_not_top_row
     ori   r23, (1 << SPRITE_FLAG_TOP)
@@ -10643,6 +10631,18 @@ draw_bitmap_seek_func:
     ori   r23, (1 << SPRITE_FLAG_BOTTOM)
 .Lsprite_not_bottom_row:
 
+    ; The retained source pointer is needed only when horizontal clipping means
+    ; the visible bytes do not end at the next source row. Store that condition
+    ; in native T, which survives all renderer arithmetic and protected SPI
+    ; handoffs while architectural flags remain in GPIOR0.
+    clt
+    cpse  r16, r8
+    set
+
+    ldi   r24, 128
+    sub   r24, r16
+    mov   r14, r24                  ; framebuffer row advance
+
     ; Fixed-time coefficient construction overlaps the middle-address byte.
     mov   r24, r9
     ldi   r18, 1
@@ -10653,15 +10653,13 @@ draw_bitmap_seek_func:
     sbrc  r24, 2
     swap  r18                        ; r18 = 1 << (y & 7)
 
+    out   SPDR, r20                  ; physical address low
+
     ; Select one mode-specific row dispatcher once. GPIOR1:GPIOR2 are free
     ; after address-low is launched and retain its AVR word address for every
     ; source row. Invalid raw-entry modes retain the historical erase fallback.
     mov   r24, r13
     tst   r24
-
-    delay_4
-
-    out   SPDR, r20                  ; physical address low
     breq  .Lsprite_select_overwrite_dispatch
     cpi   r24, SPRITE_MODE_PLUS_MASK
     breq  .Lsprite_select_plus_dispatch

@@ -1,0 +1,4 @@
+"configuration","benchmark","pre_greedy_stack_ops","post_greedy_spill_loads","post_greedy_spill_stores","post_greedy_spill_slots","final_ldsp_stsp_count","final_stack_frame_size","final_function_size","final_short_branches","final_long_branches"
+"cost0-regs8-avgfalse","bubble4","0","2","2","2","4","4","107","7","0"
+"cost0-regs8-avgfalse","float","0","5","4","4","16","8","226","3","0"
+"cost0-regs8-avgfalse","struct_copy","0","5","5","5","14","8","198","3","0"

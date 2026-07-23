@@ -1,0 +1,4 @@
+"configuration","benchmark","pre_greedy_stack_ops","post_greedy_spill_loads","post_greedy_spill_stores","post_greedy_spill_slots","final_ldsp_stsp_count","final_stack_frame_size","final_function_size","final_short_branches","final_long_branches"
+"memory-current-thresholds-cost1-regs12-avgfalse","bubble4","0","3","4","3","7","6","108","7","0"
+"memory-current-thresholds-cost1-regs12-avgfalse","float","0","5","4","4","16","8","218","3","0"
+"memory-current-thresholds-cost1-regs12-avgfalse","struct_copy","0","8","6","6","18","12","195","3","0"

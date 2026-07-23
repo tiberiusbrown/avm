@@ -1,0 +1,7 @@
+configuration=cost1-regs8-avgfalse
+cost_per_use=1
+scalar_registers=8
+average_register_costs=false
+tail_duplication=false
+avm_opt_level=-O2;-mllvm;-avm-tail-duplication=false;-mllvm;-avm-tti-scalar-registers=8;-mllvm;-avm-tti-average-register-costs=false
+llvm_head=bfb537da7b0898514c500f193b67bbeaec224903

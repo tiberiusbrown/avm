@@ -1,0 +1,270 @@
+--- |
+  ; ModuleID = 'C:\Users\Brown\Documents\GitHub\avm\bench\c\bubble4.c'
+  source_filename = "C:\\Users\\Brown\\Documents\\GitHub\\avm\\bench\\c\\bubble4.c"
+  target datalayout = "e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-i64:8-f16:8-f32:8-n8:16-S8-P1-G0-A0"
+  target triple = "avm-unknown-arduboyfx"
+  
+  @A = dso_local local_unnamed_addr global [64 x i32] zeroinitializer, align 1
+  
+  ; Function Attrs: nofree norecurse nounwind
+  define dso_local noundef i16 @avm_test_main() local_unnamed_addr addrspace(1) #0 {
+    br label %2
+  
+  1:                                                ; preds = %2
+    tail call addrspace(1) void @llvm.avm.debug.break()
+    br label %11
+  
+  2:                                                ; preds = %0, %2
+    %3 = phi ptr [ @A, %0 ], [ %7, %2 ]
+    %4 = phi i16 [ 64, %0 ], [ %6, %2 ]
+    %5 = zext nneg i16 %4 to i32
+    store i32 %5, ptr %3, align 1, !tbaa !6
+    %6 = add nsw i16 %4, -1
+    %7 = getelementptr i8, ptr %3, i16 4
+    %8 = icmp eq i16 %6, 0
+    br i1 %8, label %1, label %2, !llvm.loop !8
+  
+  9:                                                ; preds = %26
+    %10 = icmp ugt i8 %27, 1
+    br i1 %10, label %11, label %32, !llvm.loop !10
+  
+  11:                                               ; preds = %1, %9
+    %12 = phi i8 [ 64, %1 ], [ %27, %9 ]
+    %13 = zext i8 %12 to i16
+    %14 = add nsw i16 %13, -1
+    br label %15
+  
+  15:                                               ; preds = %11, %26
+    %16 = phi i16 [ %14, %11 ], [ %30, %26 ]
+    %17 = phi i8 [ 1, %11 ], [ %29, %26 ]
+    %18 = phi ptr [ getelementptr inbounds nuw (i8, ptr @A, i16 4), %11 ], [ %28, %26 ]
+    %19 = phi i8 [ 0, %11 ], [ %27, %26 ]
+    %20 = getelementptr i8, ptr %18, i16 -4
+    %21 = load i32, ptr %20, align 1, !tbaa !6
+    %22 = load i32, ptr %18, align 1, !tbaa !6
+    %23 = icmp sgt i32 %21, %22
+    br i1 %23, label %24, label %26
+  
+  24:                                               ; preds = %15
+    %25 = getelementptr i8, ptr %18, i16 -4
+    store i32 %22, ptr %25, align 1, !tbaa !6
+    store i32 %21, ptr %18, align 1, !tbaa !6
+    br label %26
+  
+  26:                                               ; preds = %24, %15
+    %27 = phi i8 [ %17, %24 ], [ %19, %15 ]
+    %28 = getelementptr i8, ptr %18, i16 4
+    %29 = add i8 %17, 1
+    %30 = add i16 %16, -1
+    %31 = icmp eq i16 %30, 0
+    br i1 %31, label %9, label %15, !llvm.loop !11
+  
+  32:                                               ; preds = %9
+    tail call addrspace(1) void @llvm.avm.debug.break()
+    ret i16 0
+  }
+  
+  ; Function Attrs: mustprogress nocallback nofree nounwind willreturn
+  declare void @llvm.avm.debug.break() addrspace(1) #1
+  
+  attributes #0 = { nofree norecurse nounwind "no-builtins" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="avm1" "tune-cpu"="avm-interpreter-32u4-v1" }
+  attributes #1 = { mustprogress nocallback nofree nounwind willreturn }
+  
+  !llvm.module.flags = !{!0}
+  !llvm.ident = !{!1}
+  !llvm.errno.tbaa = !{!2}
+  
+  !0 = !{i32 1, !"wchar_size", i32 2}
+  !1 = !{!"clang version 22.1.8 (https://github.com/tiberiusbrown/llvm-project.git bfb537da7b0898514c500f193b67bbeaec224903)"}
+  !2 = !{!3, !3, i64 0}
+  !3 = !{!"int", !4, i64 0}
+  !4 = !{!"omnipotent char", !5, i64 0}
+  !5 = !{!"Simple C/C++ TBAA"}
+  !6 = !{!7, !7, i64 0}
+  !7 = !{!"long", !4, i64 0}
+  !8 = distinct !{!8, !9}
+  !9 = !{!"llvm.loop.mustprogress"}
+  !10 = distinct !{!10, !9}
+  !11 = distinct !{!11, !9}
+...
+---
+name:            avm_test_main
+alignment:       1
+exposesReturnsTwice: false
+legalized:       false
+regBankSelected: false
+selected:        false
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         false
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:
+  - { id: 0, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 1, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 2, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 3, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 4, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 5, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 6, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 7, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 8, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 9, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 10, class: gpr32, preferred-register: '', flags: [  ] }
+  - { id: 11, class: gpr32, preferred-register: '', flags: [  ] }
+  - { id: 12, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 13, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 14, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 15, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 16, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 17, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 18, class: gpr32, preferred-register: '', flags: [  ] }
+  - { id: 19, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 20, class: gpr16, preferred-register: '%32', flags: [  ] }
+  - { id: 21, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 22, class: gpr16, preferred-register: '%35', flags: [  ] }
+  - { id: 23, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 24, class: gpr16, preferred-register: '%33', flags: [  ] }
+  - { id: 25, class: gpr16, preferred-register: '%33', flags: [  ] }
+  - { id: 26, class: gpr16, preferred-register: '%35', flags: [  ] }
+  - { id: 27, class: gpr16, preferred-register: '$r4', flags: [  ] }
+  - { id: 28, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 29, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 30, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 31, class: gpr16, preferred-register: '%35', flags: [  ] }
+  - { id: 32, class: gpr16, preferred-register: '%35', flags: [  ] }
+  - { id: 33, class: gpr16, preferred-register: '%24', flags: [  ] }
+  - { id: 34, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 35, class: gpr16, preferred-register: '%32', flags: [  ] }
+  - { id: 36, class: gpr16, preferred-register: '', flags: [  ] }
+  - { id: 37, class: gpr16, preferred-register: '', flags: [  ] }
+liveins:         []
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    1
+  adjustsStack:    false
+  hasCalls:        false
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 4294967295
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: false
+  localFrameSize:  0
+fixedStack:      []
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 2, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 2, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo: {}
+body:             |
+  bb.0 (%ir-block.0):
+    successors: %bb.2(0x80000000)
+  
+    %29:gpr16 = LDI8_PSEUDO 64
+    %28:gpr16 = DATA_ADDR_PSEUDO @A
+    JMP_PSEUDO %bb.2
+  
+  bb.1 (%ir-block.1):
+    successors: %bb.4(0x80000000)
+  
+    %35:gpr16 = LDI8_PSEUDO 64
+    SYS_DEBUG_BREAK_PSEUDO
+    %36:gpr16 = LDI8_PSEUDO 0
+    STACK_STORE16_PSEUDO %stack.0, 0, %36 :: (store (s16) into %stack.0, align 1)
+    %37:gpr16 = LDI8_PSEUDO 1
+    STACK_STORE16_PSEUDO %stack.1, 0, %37 :: (store (s16) into %stack.1, align 1)
+    JMP_PSEUDO %bb.4
+  
+  bb.2 (%ir-block.2):
+    successors: %bb.1(0x04000000), %bb.2(0x7c000000)
+  
+    %18:gpr32 = ZEXT16_32_PSEUDO %29
+    STORE32_PSEUDO %28, %18 :: (store (s32) into %ir.3, align 1, !tbaa !6)
+    %28:gpr16 = ADDIS8_PSEUDO %28, 4
+    %29:gpr16 = nsw DEC16_PSEUDO %29
+    TST16_PSEUDO %29, implicit-def $cc
+    BR_CC_PSEUDO %bb.1, 0, implicit $cc
+    JMP_PSEUDO %bb.2
+  
+  bb.3 (%ir-block.9):
+    successors: %bb.4(0x783e0f0f), %bb.8(0x07c1f0f1)
+  
+    %26:gpr16 = COPY %35
+    %26:gpr16 = ZEXT8_PSEUDO %26
+    CMPIS8_PSEUDO %26, 2, implicit-def $cc
+    BR_CC_PSEUDO %bb.8, 2, implicit $cc
+    JMP_PSEUDO %bb.4
+  
+  bb.4 (%ir-block.11):
+    successors: %bb.5(0x80000000)
+  
+    %33:gpr16 = DATA_ADDR_PSEUDO @A + 4
+    %35:gpr16 = ZEXT8_PSEUDO %35
+    %35:gpr16 = nsw DEC16_PSEUDO %35
+    %31:gpr16 = COPY %35
+    %32:gpr16 = STACK_LOAD16_PSEUDO %stack.1, 0 :: (load (s16) from %stack.1, align 1)
+    %35:gpr16 = STACK_LOAD16_PSEUDO %stack.0, 0 :: (load (s16) from %stack.0, align 1)
+  
+  bb.5 (%ir-block.15):
+    successors: %bb.6(0x40000000), %bb.7(0x40000000)
+  
+    %11:gpr32 = LOAD32_PSEUDO %33 :: (load (s32) from %ir.18, align 1, !tbaa !6)
+    %24:gpr16 = COPY %33
+    %24:gpr16 = ADDIS8_PSEUDO %24, -4
+    %10:gpr32 = LOAD32_PSEUDO %24 :: (load (s32) from %ir.20, align 1, !tbaa !6)
+    CMP32_PSEUDO %11, %10, implicit-def $cc
+    BR_CC_PSEUDO %bb.7, 5, implicit $cc
+    JMP_PSEUDO %bb.6
+  
+  bb.6 (%ir-block.24):
+    successors: %bb.7(0x80000000)
+  
+    STORE32_PSEUDO %33, %10 :: (store (s32) into %ir.18, align 1, !tbaa !6)
+    %25:gpr16 = COPY %33
+    %25:gpr16 = ADDIS8_PSEUDO %25, -4
+    STORE32_PSEUDO %25, %11 :: (store (s32) into %ir.25, align 1, !tbaa !6)
+    %35:gpr16 = COPY %32
+  
+  bb.7 (%ir-block.26):
+    successors: %bb.3(0x04000000), %bb.5(0x7c000000)
+  
+    %32:gpr16 = INC16_PSEUDO %32
+    %33:gpr16 = ADDIS8_PSEUDO %33, 4
+    %31:gpr16 = DEC16_PSEUDO %31
+    TST16_PSEUDO %31, implicit-def $cc
+    BR_CC_PSEUDO %bb.3, 0, implicit $cc
+    JMP_PSEUDO %bb.5
+  
+  bb.8 (%ir-block.32):
+    SYS_DEBUG_BREAK_PSEUDO
+    %27:gpr16 = LDI8_PSEUDO 0
+    $r4 = COPY %27
+    RET_PSEUDO implicit-def dead $sp, implicit $sp, implicit $r4
+...

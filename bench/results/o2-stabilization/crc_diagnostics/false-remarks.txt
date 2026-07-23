@@ -1,0 +1,102 @@
+bench/c/crc16.c:16:30: remark: load of type i8 not eliminated [-Rpass-missed=gvn]
+   16 |             crc ^= (uint16_t)data[i] << 8;
+      |                              ^
+bench/c/crc16.c:16:30: remark: load of type i8 not eliminated [-Rpass-missed=gvn]
+bench/c/crc16.c:6:5: remark: Loop-Closed SSA Form Pass: IR instruction count changed from 36 to 38; Delta: 2 [-Rpass-analysis=size-info]
+    6 | int avm_test_main(void)
+      |     ^
+bench/c/crc16.c:6:5: remark: Loop-Closed SSA Form Pass: Function: avm_test_main: IR instruction count changed from 36 to 38; Delta: 2 [-Rpass-analysis=size-info]
+bench/c/crc16.c:6:5: remark: Combine redundant instructions: IR instruction count changed from 38 to 36; Delta: -2 [-Rpass-analysis=size-info]
+bench/c/crc16.c:6:5: remark: Combine redundant instructions: Function: avm_test_main: IR instruction count changed from 38 to 36; Delta: -2 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: AVM DAG->DAG Pattern Instruction Selection: Function: avm_test_main: MI Instruction count changed from 0 to 49; Delta: 49 [-Rpass-analysis=size-info]
+    7 | {
+      | ^
+bench/c/crc16.c:7:1: remark: Early Machine Loop Invariant Code Motion: Function: avm_test_main: MI Instruction count changed from 49 to 48; Delta: -1 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: Eliminate PHI nodes for register allocation: Function: avm_test_main: MI Instruction count changed from 48 to 62; Delta: 14 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: Two-Address instruction pass: Function: avm_test_main: MI Instruction count changed from 62 to 75; Delta: 13 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: Register Coalescer: Function: avm_test_main: MI Instruction count changed from 75 to 45; Delta: -30 [-Rpass-analysis=size-info]
+bench/c/crc16.c:15:9: remark: 1 virtual registers copies 1.024000e+03 total copies cost generated in loop [-Rpass-missed=regalloc]
+   15 |         for (uint16_t i = 0; i < 128; ++i) {
+      |         ^
+bench/c/crc16.c:14:5: remark: 3 virtual registers copies 1.088000e+03 total copies cost generated in loop [-Rpass-missed=regalloc]
+   14 |     for (uint8_t repeat = 0; repeat < 8; ++repeat) {
+      |     ^
+bench/c/crc16.c:6:1: remark: 4 virtual registers copies 1.089000e+03 total copies cost generated in function [-Rpass-missed=regalloc]
+    6 | int avm_test_main(void)
+      | ^
+bench/c/crc16.c:7:1: remark: Virtual Register Rewriter: Function: avm_test_main: MI Instruction count changed from 45 to 44; Delta: -1 [-Rpass-analysis=size-info]
+    7 | {
+      | ^
+bench/c/crc16.c:7:1: remark: 4 stack bytes in function 'avm_test_main' [-Rpass-analysis=prologepilog]
+bench/c/crc16.c:7:1: remark: Prologue/Epilogue Insertion & Frame Finalization: Function: avm_test_main: MI Instruction count changed from 44 to 48; Delta: 4 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: Control Flow Optimizer: Function: avm_test_main: MI Instruction count changed from 48 to 42; Delta: -6 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: 
+Function: avm_test_main
+Offset: [SP-2], Type: Spill, Align: 1, Size: 2
+Offset: [SP-4], Type: Spill, Align: 1, Size: 2 [-Rpass-analysis=stack-frame-layout]
+bench/c/crc16.c:6:5: remark: BasicBlock: 
+LDI8: 2
+PUSH16: 2
+LDI16: 1
+ [-Rpass-analysis=asm-printer]
+    6 | int avm_test_main(void)
+      |     ^
+bench/c/crc16.c:9:17: remark: BasicBlock: 
+ADDIS8: 1
+DEC16: 1
+F6ST8_POST: 1
+RELAX_BR_NE: 1
+TST16: 1
+ [-Rpass-analysis=asm-printer]
+    9 |         data[i] = (uint8_t)(i * 29u + 17u);
+      |                 ^
+bench/c/crc16.c:6:5: remark: BasicBlock: 
+LDI16: 1
+MOV_RR: 1
+SUB_RR: 1
+SYS_DEBUG_BREAK_PSEUDO: 1
+ [-Rpass-analysis=asm-printer]
+    6 | int avm_test_main(void)
+      |     ^
+bench/c/crc16.c:6:5: remark: BasicBlock: 
+MOV_RR: 1
+ [-Rpass-analysis=asm-printer]
+bench/c/crc16.c:16:30: remark: BasicBlock: 
+ADD_RR: 2
+COLDLDI16: 2
+ADD: 1
+CMP: 1
+DPLD16: 1
+DPLD8U: 1
+INC16: 1
+LDI8: 1
+LSL16I: 1
+LSR16I: 1
+MOV: 1
+RELAX_BR_NE: 1
+XOR: 1
+XOR_RR: 1
+ [-Rpass-analysis=asm-printer]
+   16 |             crc ^= (uint16_t)data[i] << 8;
+      |                              ^
+bench/c/crc16.c:14:42: remark: BasicBlock: 
+CMPIS8: 1
+INC16: 1
+MOV: 1
+RELAX_BR_NE: 1
+ZEXT8: 1
+ [-Rpass-analysis=asm-printer]
+   14 |     for (uint8_t repeat = 0; repeat < 8; ++repeat) {
+      |                                          ^
+bench/c/crc16.c:23:16: remark: BasicBlock: 
+POP16: 2
+RET: 1
+STM16: 1
+SYS_DEBUG_BREAK_PSEUDO: 1
+XOR: 1
+ [-Rpass-analysis=asm-printer]
+   23 |     crc_result = crc;
+      |                ^
+bench/c/crc16.c:7:1: remark: 42 instructions in function [-Rpass-analysis=asm-printer]
+    7 | {
+      | ^

@@ -4,14 +4,14 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/codegen_control.elf:	file form
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_control.c
-0000042d l     F .text	0000003a loop_control
-00000467 l     F .text	00000073 run_state_machine
+0000042d l     F .text	00000032 loop_control
+0000045f l     F .text	00000069 run_state_machine
 000003e4 l     F .text	00000012 dense_switch
 000003f6 l     F .text	00000037 sparse_switch
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
 00000116 g     F .text	000002ce avm_test_main
-000004da g     F .text	00000002 avm_halt
+000004c8 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 c4 03              call16	avm_halt
+ e1 b2 03              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -49,7 +49,7 @@ Disassembly of section .text:
  f1 04                 mov	r0, r4
  fc 35                 cmov.ult	r6, r5
  f0 3e 12              stsp16	[sp+0x12], r6
- e1 2a 03              call16	run_state_machine
+ e1 22 03              call16	run_state_machine
  f0 3c 1a              stsp16	[sp+0x1a], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -433,87 +433,80 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  c4 2b 6d              ldi16	r4, 0x6d2b
- f0 01 55              ldi8	r1, 0x55
- a5                    xor	r5, r5
- c3 40                 ldi8	r7, 0x40
- f0 00 03              ldi8	r0, 0x3
- 09                    mov	r6, r5
- f9 c0                 and	r6, r0
- ce 01                 cmpi.s8	r6, 0x1
- d1 14                 brne8	loop_control+41
- c6 23 01              ldi16	r6, 0x123
- f2 0e                 add	r1, r6
- f4 ad                 inc16	r5
- f4 b7                 dec16	r7
- f4 a7                 tst8	r7
- d0 15                 breq8	loop_control+55
- 09                    mov	r6, r5
- f9 c0                 and	r6, r0
- ce 01                 cmpi.s8	r6, 0x1
- d0 ec                 breq8	loop_control+21
- 08                    mov	r6, r4
- fa 9f                 lsr16i	r6, 0xf
+ af                    xor	r7, r7
+ c2 55                 ldi8	r6, 0x55
+ f0 01 03              ldi8	r1, 0x3
+ f0 04 23 01           ldi16	r0, 0x123
+ 07                    mov	r5, r7
+ f9 a4                 and	r5, r1
+ cd 01                 cmpi.s8	r5, 0x1
+ d1 0f                 brne8	loop_control+37
+ f2 28                 add	r6, r0
+ f4 af                 inc16	r7
+ cf 40                 cmpi.s8	r7, 0x40
+ d0 11                 breq8	loop_control+47
+ 07                    mov	r5, r7
+ f9 a4                 and	r5, r1
+ cd 01                 cmpi.s8	r5, 0x1
+ d0 f1                 breq8	loop_control+22
+ 04                    mov	r5, r4
+ fa 8f                 lsr16i	r5, 0xf
  10                    add	r4, r4
- 92                    or	r4, r6
- f9 86                 xor	r4, r1
- 0b                    mov	r6, r7
- f1 76                 zext8	r6
- ce 1b                 cmpi.s8	r6, 0x1b
- d1 de                 brne8	loop_control+21
+ 91                    or	r4, r5
+ a2                    xor	r4, r6
+ cf 25                 cmpi.s8	r7, 0x25
+ d1 e7                 brne8	loop_control+22
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
 
 <run_state_machine>:
+ b0                    push16	r0
  c3 02                 ldi8	r7, 0x2
  c4 34 12              ldi16	r4, 0x1234
  a5                    xor	r5, r5
- c2 17                 ldi8	r6, 0x17
+ f0 04 11 01           ldi16	r0, 0x111
+ c6 87 01              ldi16	r6, 0x187
  f1 77                 zext8	r7
  cf 02                 cmpi.s8	r7, 0x2
- d9 2b                 brsge8	run_state_machine+57
- d4 11                 jmp8	run_state_machine+33
+ d9 25                 brsge8	run_state_machine+57
+ d4 0e                 jmp8	run_state_machine+36
  11                    add	r4, r5
  c3 02                 ldi8	r7, 0x2
  c9 11                 addi.s8	r5, 0x11
- f4 b6                 dec16	r6
- f4 a6                 tst8	r6
- d0 56                 breq8	run_state_machine+113
+ 36                    cmp	r5, r6
+ d0 48                 breq8	run_state_machine+102
  f1 77                 zext8	r7
  cf 02                 cmpi.s8	r7, 0x2
- d9 18                 brsge8	run_state_machine+57
+ d9 15                 brsge8	run_state_machine+57
  f4 a7                 tst8	r7
- d0 2c                 breq8	run_state_machine+81
+ d0 26                 breq8	run_state_machine+78
  cf 01                 cmpi.s8	r7, 0x1
- d1 e7                 brne8	run_state_machine+16
+ d1 ea                 brne8	run_state_machine+22
  c7 22 22              ldi16	r7, 0x2222
  a3                    xor	r4, r7
  c3 04                 ldi8	r7, 0x4
  c9 11                 addi.s8	r5, 0x11
- f4 b6                 dec16	r6
- f4 a6                 tst8	r6
- d1 e4                 brne8	run_state_machine+27
- d4 38                 jmp8	run_state_machine+113
+ 36                    cmp	r5, r6
+ d1 e7                 brne8	run_state_machine+30
+ d4 2d                 jmp8	run_state_machine+102
  cf 02                 cmpi.s8	r7, 0x2
- d0 24                 breq8	run_state_machine+97
+ d0 1c                 breq8	run_state_machine+89
  cf 03                 cmpi.s8	r7, 0x3
- d1 cf                 brne8	run_state_machine+16
+ d1 d5                 brne8	run_state_machine+22
  c7 cd fc              ldi16	r7, 0xfccd
  13                    add	r4, r7
  c3 01                 ldi8	r7, 0x1
  c9 11                 addi.s8	r5, 0x11
- f4 b6                 dec16	r6
- f4 a6                 tst8	r6
- d1 cc                 brne8	run_state_machine+27
- d4 20                 jmp8	run_state_machine+113
- c7 11 01              ldi16	r7, 0x111
- 13                    add	r4, r7
+ 36                    cmp	r5, r6
+ d1 d2                 brne8	run_state_machine+30
+ d4 18                 jmp8	run_state_machine+102
+ f2 20                 add	r4, r0
  c3 03                 ldi8	r7, 0x3
  c9 11                 addi.s8	r5, 0x11
- f4 b6                 dec16	r6
- f4 a6                 tst8	r6
- d1 bc                 brne8	run_state_machine+27
- d4 10                 jmp8	run_state_machine+113
+ 36                    cmp	r5, r6
+ d1 c7                 brne8	run_state_machine+30
+ d4 0d                 jmp8	run_state_machine+102
  0c                    mov	r7, r4
  fa ad                 lsr16i	r7, 0xd
  10                    add	r4, r4
@@ -522,10 +515,10 @@ Disassembly of section .text:
  93                    or	r4, r7
  af                    xor	r7, r7
  c9 11                 addi.s8	r5, 0x11
- f4 b6                 dec16	r6
- f4 a6                 tst8	r6
- d1 aa                 brne8	run_state_machine+27
+ 36                    cmp	r5, r6
+ d1 b8                 brne8	run_state_machine+30
  a3                    xor	r4, r7
+ b8                    pop16	r0
  ef                    ret
 
 <avm_halt>:

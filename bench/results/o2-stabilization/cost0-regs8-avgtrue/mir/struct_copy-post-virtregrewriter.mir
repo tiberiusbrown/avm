@@ -1,0 +1,309 @@
+--- |
+  ; ModuleID = 'C:\Users\Brown\Documents\GitHub\avm\bench\c\struct_copy.c'
+  source_filename = "C:\\Users\\Brown\\Documents\\GitHub\\avm\\bench\\c\\struct_copy.c"
+  target datalayout = "e-m:e-p:16:8-p1:24:8-i8:8-i16:8-i32:8-i64:8-f16:8-f32:8-n8:16-S8-P1-G0-A0"
+  target triple = "avm-unknown-arduboyfx"
+  
+  %struct.particle = type { i32, i16, i8, i8 }
+  
+  @input_particles = internal unnamed_addr global [24 x %struct.particle] zeroinitializer, align 1
+  @struct_result = internal global i32 0, align 1
+  
+  ; Function Attrs: nofree norecurse nounwind
+  define dso_local noundef i16 @avm_test_main() local_unnamed_addr addrspace(1) #0 {
+    br label %2
+  
+  1:                                                ; preds = %2
+    tail call addrspace(1) void @llvm.avm.debug.break()
+    br label %18
+  
+  2:                                                ; preds = %0, %2
+    %3 = phi i16 [ 5, %0 ], [ %15, %2 ]
+    %4 = phi ptr [ getelementptr inbounds nuw (i8, ptr @input_particles, i16 7), %0 ], [ %14, %2 ]
+    %5 = phi i8 [ 0, %0 ], [ %16, %2 ]
+    %6 = zext nneg i8 %5 to i32
+    %7 = mul nuw nsw i32 %6, 66051
+    %8 = add nuw nsw i32 %7, 65536
+    %9 = getelementptr i8, ptr %4, i16 -7
+    store i32 %8, ptr %9, align 1, !tbaa !6
+    %10 = getelementptr i8, ptr %4, i16 -3
+    store i16 %3, ptr %10, align 1, !tbaa !9
+    %11 = xor i8 %5, 90
+    %12 = getelementptr i8, ptr %4, i16 -1
+    store i8 %11, ptr %12, align 1, !tbaa !10
+    %13 = add i8 %5, -12
+    store i8 %13, ptr %4, align 1, !tbaa !11
+    %14 = getelementptr i8, ptr %4, i16 8
+    %15 = add nuw nsw i16 %3, 73
+    %16 = add i8 %5, 1
+    %17 = icmp eq i8 %16, 24
+    br i1 %17, label %1, label %2, !llvm.loop !12
+  
+  18:                                               ; preds = %1, %22
+    %19 = phi i32 [ 0, %1 ], [ %46, %22 ]
+    %20 = phi i8 [ 0, %1 ], [ %23, %22 ]
+    br label %25
+  
+  21:                                               ; preds = %22
+    store volatile i32 %46, ptr @struct_result, align 1, !tbaa !14
+    tail call addrspace(1) void @llvm.avm.debug.break()
+    ret i16 0
+  
+  22:                                               ; preds = %25
+    %23 = add nuw nsw i8 %20, 1
+    %24 = icmp eq i8 %23, 16
+    br i1 %24, label %21, label %18, !llvm.loop !15
+  
+  25:                                               ; preds = %18, %25
+    %26 = phi i8 [ 24, %18 ], [ %48, %25 ]
+    %27 = phi ptr [ getelementptr inbounds nuw (i8, ptr @input_particles, i16 7), %18 ], [ %47, %25 ]
+    %28 = phi i32 [ %19, %18 ], [ %46, %25 ]
+    %29 = getelementptr i8, ptr %27, i16 -7
+    %30 = load i32, ptr %29, align 1, !tbaa !14
+    %31 = getelementptr i8, ptr %27, i16 -3
+    %32 = load i16, ptr %31, align 1, !tbaa !2
+    %33 = getelementptr i8, ptr %27, i16 -1
+    %34 = load i8, ptr %33, align 1, !tbaa !16
+    %35 = load i8, ptr %27, align 1, !tbaa !16
+    %36 = zext i16 %32 to i32
+    %37 = add i32 %30, %36
+    %38 = sext i8 %35 to i16
+    %39 = add i16 %32, %38
+    %40 = trunc i32 %37 to i8
+    %41 = xor i8 %34, %40
+    %42 = add i32 %37, %28
+    %43 = zext i16 %39 to i32
+    %44 = xor i32 %42, %43
+    %45 = zext i8 %41 to i32
+    %46 = add i32 %44, %45
+    %47 = getelementptr i8, ptr %27, i16 8
+    %48 = add nsw i8 %26, -1
+    %49 = icmp eq i8 %48, 0
+    br i1 %49, label %22, label %25, !llvm.loop !17
+  }
+  
+  ; Function Attrs: mustprogress nocallback nofree nounwind willreturn
+  declare void @llvm.avm.debug.break() addrspace(1) #1
+  
+  attributes #0 = { nofree norecurse nounwind "no-builtins" "no-trapping-math"="true" "stack-protector-buffer-size"="8" "target-cpu"="avm1" "tune-cpu"="avm-interpreter-32u4-v1" }
+  attributes #1 = { mustprogress nocallback nofree nounwind willreturn }
+  
+  !llvm.module.flags = !{!0}
+  !llvm.ident = !{!1}
+  !llvm.errno.tbaa = !{!2}
+  
+  !0 = !{i32 1, !"wchar_size", i32 2}
+  !1 = !{!"clang version 22.1.8 (https://github.com/tiberiusbrown/llvm-project.git bfb537da7b0898514c500f193b67bbeaec224903)"}
+  !2 = !{!3, !3, i64 0}
+  !3 = !{!"int", !4, i64 0}
+  !4 = !{!"omnipotent char", !5, i64 0}
+  !5 = !{!"Simple C/C++ TBAA"}
+  !6 = !{!7, !8, i64 0}
+  !7 = !{!"", !8, i64 0, !3, i64 4, !4, i64 6, !4, i64 7}
+  !8 = !{!"long", !4, i64 0}
+  !9 = !{!7, !3, i64 4}
+  !10 = !{!7, !4, i64 6}
+  !11 = !{!7, !4, i64 7}
+  !12 = distinct !{!12, !13}
+  !13 = !{!"llvm.loop.mustprogress"}
+  !14 = !{!8, !8, i64 0}
+  !15 = distinct !{!15, !13}
+  !16 = !{!4, !4, i64 0}
+  !17 = distinct !{!17, !13}
+...
+---
+name:            avm_test_main
+alignment:       1
+exposesReturnsTwice: false
+legalized:       false
+regBankSelected: false
+selected:        false
+failedISel:      false
+tracksRegLiveness: true
+hasWinCFI:       false
+noPhis:          true
+isSSA:           false
+noVRegs:         true
+hasFakeUses:     false
+callsEHReturn:   false
+callsUnwindInit: false
+hasEHContTarget: false
+hasEHScopes:     false
+hasEHFunclets:   false
+isOutlined:      false
+debugInstrRef:   false
+failsVerification: false
+tracksDebugUserValues: true
+registers:       []
+liveins:         []
+frameInfo:
+  isFrameAddressTaken: false
+  isReturnAddressTaken: false
+  hasStackMap:     false
+  hasPatchPoint:   false
+  stackSize:       0
+  offsetAdjustment: 0
+  maxAlignment:    1
+  adjustsStack:    true
+  hasCalls:        true
+  stackProtector:  ''
+  functionContext: ''
+  maxCallFrameSize: 4294967295
+  cvBytesOfCalleeSavedRegisters: 0
+  hasOpaqueSPAdjustment: false
+  hasVAStart:      false
+  hasMustTailInVarArgFunc: false
+  hasTailCall:     false
+  isCalleeSavedInfoValid: false
+  localFrameSize:  0
+fixedStack:      []
+stack:
+  - { id: 0, name: '', type: spill-slot, offset: 0, size: 2, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 1, name: '', type: spill-slot, offset: 0, size: 2, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 2, name: '', type: spill-slot, offset: 0, size: 4, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 3, name: '', type: spill-slot, offset: 0, size: 4, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 4, name: '', type: spill-slot, offset: 0, size: 4, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 5, name: '', type: spill-slot, offset: 0, size: 2, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+  - { id: 6, name: '', type: spill-slot, offset: 0, size: 2, alignment: 1, 
+      stack-id: default, callee-saved-register: '', callee-saved-restored: true, 
+      debug-info-variable: '', debug-info-expression: '', debug-info-location: '' }
+entry_values:    []
+callSites:       []
+debugValueSubstitutions: []
+constants:       []
+machineFunctionInfo: {}
+body:             |
+  bb.0 (%ir-block.0):
+    successors: %bb.2(0x80000000)
+  
+    $r0 = LDI8_PSEUDO 0
+    $r1 = DATA_ADDR_PSEUDO @input_particles + 7
+    $r5 = LDI8_PSEUDO 5
+    $r2r3 = nomerge LDI32_PSEUDO 255, 0
+    $r6r7 = LDI32_PSEUDO 515, 1
+    STACK_STORE32_PSEUDO %stack.2, 0, killed $r6r7 :: (store (s32) into %stack.2, align 1)
+    JMP_PSEUDO %bb.2
+  
+  bb.1 (%ir-block.1):
+    successors: %bb.3(0x80000000)
+  
+    $r5 = LDI8_PSEUDO 0
+    $r6r7 = LDI32_PSEUDO 0, 0
+    SYS_DEBUG_BREAK_PSEUDO
+    JMP_PSEUDO %bb.3
+  
+  bb.2 (%ir-block.2):
+    successors: %bb.1(0x04000000), %bb.2(0x7c000000)
+    liveins: $r0, $r1, $r5, $r2r3
+  
+    STACK_STORE16_PSEUDO %stack.1, 0, killed $r5 :: (store (s16) into %stack.1, align 1)
+    $r4r5 = ZEXT16_32_PSEUDO $r0
+    $r4r5 = AND32_PSEUDO killed $r4r5, $r2r3
+    ADJCALLSTACKDOWN 0, 0, implicit-def dead $sp, implicit $sp
+    $r6r7 = STACK_LOAD32_PSEUDO %stack.2, 0 :: (load (s32) from %stack.2, align 1)
+    CALL_DIRECT_PSEUDO &__avm_mulsi3, $r4r5, $r6r7, csr_avm_call, implicit-def $sp, implicit-def dead $cc, implicit $sp, implicit-def $r4r5
+    ADJCALLSTACKUP 0, 0, implicit-def dead $sp, implicit $sp
+    $r6r7 = LDI32_PSEUDO 0, 1
+    $r6r7 = nuw nsw ADD32_PSEUDO killed $r6r7, killed $r4r5
+    $r5 = STACK_LOAD16_PSEUDO %stack.1, 0 :: (load (s16) from %stack.1, align 1)
+    $r4 = COPY $r1
+    $r4 = ADDIS8_PSEUDO killed $r4, -7
+    STORE32_PSEUDO killed $r4, killed $r6r7 :: (store (s32) into %ir.9, align 1, !tbaa !6)
+    $r4 = COPY $r0
+    $r4 = ADDIS8_PSEUDO killed $r4, -12
+    STORE8_PSEUDO $r1, killed $r4 :: (store (s8) into %ir.4, !tbaa !11)
+    $r4 = LDI8_PSEUDO 90
+    $r4 = XOR16_PSEUDO killed $r4, $r0
+    STORE8_DISP_PSEUDO $r1, -1, killed $r4 :: (store (s8) into %ir.12, !tbaa !10)
+    STORE16_DISP_PSEUDO $r1, -3, $r5 :: (store (s16) into %ir.10, align 1, !tbaa !9)
+    $r5 = nuw nsw ADDIS8_PSEUDO killed $r5, 73
+    $r1 = ADDIS8_PSEUDO killed $r1, 8
+    $r0 = INC16_PSEUDO killed $r0
+    $r4 = COPY $r0
+    $r4 = ZEXT8_PSEUDO killed $r4
+    CMPIS8_PSEUDO killed $r4, 24, implicit-def $cc
+    BR_CC_PSEUDO %bb.1, 0, implicit $cc
+    JMP_PSEUDO %bb.2
+  
+  bb.3 (%ir-block.18):
+    successors: %bb.6(0x80000000)
+    liveins: $r5, $r6r7
+  
+    STACK_STORE16_PSEUDO %stack.0, 0, killed $r5 :: (store (s16) into %stack.0, align 1)
+    $r4 = DATA_ADDR_PSEUDO @input_particles + 7
+    $r5 = LDI8_PSEUDO 24
+    JMP_PSEUDO %bb.6
+  
+  bb.4 (%ir-block.21):
+    liveins: $r6r7
+  
+    $r4 = DATA_ADDR_PSEUDO @struct_result
+    STORE32_PSEUDO killed $r4, killed $r6r7 :: (volatile store (s32) into @struct_result, align 1, !tbaa !14)
+    SYS_DEBUG_BREAK_PSEUDO
+    $r4 = LDI8_PSEUDO 0
+    RET_PSEUDO implicit-def dead $sp, implicit $sp, implicit $r4
+  
+  bb.5 (%ir-block.22):
+    successors: %bb.4(0x04000000), %bb.3(0x7c000000)
+    liveins: $r6r7
+  
+    $r5 = STACK_LOAD16_PSEUDO %stack.0, 0 :: (load (s16) from %stack.0, align 1)
+    $r5 = INC16_PSEUDO killed $r5
+    $r4 = COPY $r5
+    $r4 = ZEXT8_PSEUDO killed $r4
+    CMPIS8_PSEUDO killed $r4, 16, implicit-def $cc
+    BR_CC_PSEUDO %bb.4, 0, implicit $cc
+    JMP_PSEUDO %bb.3
+  
+  bb.6 (%ir-block.25):
+    successors: %bb.5(0x04000000), %bb.6(0x7c000000)
+    liveins: $r4, $r5, $r6r7
+  
+    STACK_STORE16_PSEUDO %stack.6, 0, killed $r5 :: (store (s16) into %stack.6, align 1)
+    STACK_STORE16_PSEUDO %stack.5, 0, $r4 :: (store (s16) into %stack.5, align 1)
+    $r0 = LOAD8U_PSEUDO killed $r4 :: (load (s8) from %ir.27, !tbaa !16)
+    $r0 = SEXT8_PSEUDO killed $r0
+    $r4 = STACK_LOAD16_PSEUDO %stack.5, 0 :: (load (s16) from %stack.5, align 1)
+    $r1 = LOAD16_DISP_PSEUDO killed $r4, -3 :: (load (s16) from %ir.31, align 1, !tbaa !2)
+    $r0 = ADD16_PSEUDO killed $r0, $r1
+    $r2r3 = ZEXT16_32_PSEUDO killed $r1
+    STACK_STORE32_PSEUDO %stack.3, 0, killed $r2r3 :: (store (s32) into %stack.3, align 1)
+    $r1 = STACK_LOAD16_PSEUDO %stack.5, 0 :: (load (s16) from %stack.5, align 1)
+    $r1 = ADDIS8_PSEUDO killed $r1, -7
+    $r4r5 = LOAD32_PSEUDO killed $r1 :: (load (s32) from %ir.29, align 1, !tbaa !14)
+    STACK_STORE32_PSEUDO %stack.4, 0, killed $r4r5 :: (store (s32) into %stack.4, align 1)
+    $r2r3 = STACK_LOAD32_PSEUDO %stack.3, 0 :: (load (s32) from %stack.3, align 1)
+    $r4r5 = STACK_LOAD32_PSEUDO %stack.4, 0 :: (load (s32) from %stack.4, align 1)
+    $r4r5 = ADD32_PSEUDO killed $r4r5, killed $r2r3
+    STACK_STORE32_PSEUDO %stack.4, 0, killed $r4r5 :: (store (s32) into %stack.4, align 1)
+    $r5 = STACK_LOAD16_PSEUDO %stack.6, 0 :: (load (s16) from %stack.6, align 1)
+    $r2r3 = STACK_LOAD32_PSEUDO %stack.4, 0 :: (load (s32) from %stack.4, align 1)
+    $r6r7 = ADD32_PSEUDO killed $r6r7, $r2r3
+    $r0r1 = ZEXT16_32_PSEUDO killed $r0
+    $r0r1 = XOR32_PSEUDO killed $r0r1, killed $r6r7
+    $r4 = STACK_LOAD16_PSEUDO %stack.5, 0 :: (load (s16) from %stack.5, align 1)
+    $r6 = LOAD8U_DISP_PSEUDO killed $r4, -1 :: (load (s8) from %ir.33, !tbaa !16)
+    $r6 = XOR16_PSEUDO killed $r6, $r2, implicit killed $r2r3
+    $r2r3 = nomerge LDI32_PSEUDO 255, 0
+    $r6r7 = ZEXT16_32_PSEUDO killed $r6
+    $r6r7 = AND32_PSEUDO killed $r6r7, killed $r2r3
+    $r6r7 = ADD32_PSEUDO killed $r6r7, killed $r0r1
+    $r4 = STACK_LOAD16_PSEUDO %stack.5, 0 :: (load (s16) from %stack.5, align 1)
+    $r4 = ADDIS8_PSEUDO killed $r4, 8
+    $r5 = DEC16_PSEUDO killed $r5
+    TST8_PSEUDO $r5, implicit-def $cc
+    BR_CC_PSEUDO %bb.5, 0, implicit $cc
+    JMP_PSEUDO %bb.6
+...

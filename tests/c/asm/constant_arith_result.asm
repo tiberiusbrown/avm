@@ -7,8 +7,8 @@ SYMBOL TABLE:
 00000100 l     O .data	00000080 values
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	00000131 avm_test_main
-00000347 g     F .text	00000002 avm_halt
+00000216 g     F .text	0000012f avm_test_main
+00000345 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -23,7 +23,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 31 01              call16	avm_halt
+ e1 2f 01              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -31,17 +31,16 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 f8                 adjsp	_start+20
- c4 00 01              ldi16	r4, 0x100
  c2 7b                 ldi8	r6, 0x7b
- c1 40                 ldi8	r5, 0x40
+ c4 00 01              ldi16	r4, 0x100
  f0 04 01 01           ldi16	r0, 0x101
+ c5 bb 40              ldi16	r5, 0x40bb
  0e                    mov	r7, r6
  f2 2c                 add	r7, r0
  f7 46                 st16	[r4+], r6
- f4 b5                 dec16	r5
- f4 a5                 tst8	r5
+ 3d                    cmp	r7, r5
  0b                    mov	r6, r7
- d1 f5                 brne8	avm_test_main+18
+ d1 f8                 brne8	avm_test_main+19
  aa                    xor	r6, r6
  c0 40                 ldi8	r4, 0x40
  f4 40                 stsp16	[sp+0x0], r4
@@ -119,14 +118,14 @@ Disassembly of section .text:
  1b                    add	r6, r7
  f9 ca                 xor	r6, r2
  f4 b5                 dec16	r5
- f4 a5                 tst8	r5
- db 72 ff              brne16	avm_test_main+42
+ f6 2d                 tst16	r5
+ db 72 ff              brne16	avm_test_main+40
  f4 09                 ldsp16	r5, [sp+0x2]
  f4 ad                 inc16	r5
  01                    mov	r4, r5
  f1 74                 zext8	r4
  cc 20                 cmpi.s8	r4, 0x20
- db 5f ff              brne16	avm_test_main+35
+ db 5f ff              brne16	avm_test_main+33
  02                    mov	r4, r6
  f1 74                 zext8	r4
  04                    mov	r5, r4

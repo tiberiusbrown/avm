@@ -1,0 +1,106 @@
+bench/c/crc16.c:17:13: remark: completely unrolled loop with 8 iterations [-Rpass=loop-unroll]
+   17 |             for (uint8_t bit = 0; bit < 8; ++bit)
+      |             ^
+bench/c/crc16.c:16:30: remark: load of type i8 not eliminated [-Rpass-missed=gvn]
+   16 |             crc ^= (uint16_t)data[i] << 8;
+      |                              ^
+bench/c/crc16.c:16:30: remark: load of type i8 not eliminated [-Rpass-missed=gvn]
+bench/c/crc16.c:6:5: remark: Loop Strength Reduction: IR instruction count changed from 63 to 64; Delta: 1 [-Rpass-analysis=size-info]
+    6 | int avm_test_main(void)
+      |     ^
+bench/c/crc16.c:6:5: remark: Loop Strength Reduction: Function: avm_test_main: IR instruction count changed from 63 to 64; Delta: 1 [-Rpass-analysis=size-info]
+bench/c/crc16.c:6:5: remark: Loop-Closed SSA Form Pass: IR instruction count changed from 64 to 66; Delta: 2 [-Rpass-analysis=size-info]
+bench/c/crc16.c:6:5: remark: Loop-Closed SSA Form Pass: Function: avm_test_main: IR instruction count changed from 63 to 66; Delta: 3 [-Rpass-analysis=size-info]
+bench/c/crc16.c:6:5: remark: Combine redundant instructions: IR instruction count changed from 66 to 64; Delta: -2 [-Rpass-analysis=size-info]
+bench/c/crc16.c:6:5: remark: Combine redundant instructions: Function: avm_test_main: IR instruction count changed from 66 to 64; Delta: -2 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: AVM DAG->DAG Pattern Instruction Selection: Function: avm_test_main: MI Instruction count changed from 0 to 75; Delta: 75 [-Rpass-analysis=size-info]
+    7 | {
+      | ^
+bench/c/crc16.c:7:1: remark: Eliminate PHI nodes for register allocation: Function: avm_test_main: MI Instruction count changed from 75 to 91; Delta: 16 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: Two-Address instruction pass: Function: avm_test_main: MI Instruction count changed from 91 to 124; Delta: 33 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: Register Coalescer: Function: avm_test_main: MI Instruction count changed from 124 to 84; Delta: -40 [-Rpass-analysis=size-info]
+bench/c/crc16.c:15:9: remark: 15 virtual registers copies 1.536000e+04 total copies cost generated in loop [-Rpass-missed=regalloc]
+   15 |         for (uint16_t i = 0; i < 128; ++i) {
+      |         ^
+bench/c/crc16.c:14:5: remark: 17 virtual registers copies 1.542400e+04 total copies cost generated in loop [-Rpass-missed=regalloc]
+   14 |     for (uint8_t repeat = 0; repeat < 8; ++repeat) {
+      |     ^
+bench/c/crc16.c:6:1: remark: 17 virtual registers copies 1.542400e+04 total copies cost generated in function [-Rpass-missed=regalloc]
+    6 | int avm_test_main(void)
+      | ^
+bench/c/crc16.c:7:1: remark: Virtual Register Rewriter: Function: avm_test_main: MI Instruction count changed from 84 to 83; Delta: -1 [-Rpass-analysis=size-info]
+    7 | {
+      | ^
+bench/c/crc16.c:7:1: remark: 8 stack bytes in function 'avm_test_main' [-Rpass-analysis=prologepilog]
+bench/c/crc16.c:7:1: remark: Prologue/Epilogue Insertion & Frame Finalization: Function: avm_test_main: MI Instruction count changed from 83 to 91; Delta: 8 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: Control Flow Optimizer: Function: avm_test_main: MI Instruction count changed from 91 to 85; Delta: -6 [-Rpass-analysis=size-info]
+bench/c/crc16.c:7:1: remark: 
+Function: avm_test_main
+Offset: [SP-2], Type: Spill, Align: 1, Size: 2
+Offset: [SP-4], Type: Spill, Align: 1, Size: 2
+Offset: [SP-6], Type: Spill, Align: 1, Size: 2
+Offset: [SP-8], Type: Spill, Align: 1, Size: 2 [-Rpass-analysis=stack-frame-layout]
+bench/c/crc16.c:6:5: remark: BasicBlock: 
+PUSH16: 4
+LDI8: 2
+LDI16: 1
+ [-Rpass-analysis=asm-printer]
+    6 | int avm_test_main(void)
+      |     ^
+bench/c/crc16.c:9:17: remark: BasicBlock: 
+ADDIS8: 1
+DEC16: 1
+F6ST8_POST: 1
+RELAX_BR_NE: 1
+TST16: 1
+ [-Rpass-analysis=asm-printer]
+    9 |         data[i] = (uint8_t)(i * 29u + 17u);
+      |                 ^
+bench/c/crc16.c:6:5: remark: BasicBlock: 
+COLDLDI8: 1
+LDI16: 1
+SUB_RR: 1
+SYS_DEBUG_BREAK_PSEUDO: 1
+ [-Rpass-analysis=asm-printer]
+    6 | int avm_test_main(void)
+      |     ^
+bench/c/crc16.c:6:5: remark: BasicBlock: 
+COLDLDI16: 1
+MOV_RR: 1
+ [-Rpass-analysis=asm-printer]
+bench/c/crc16.c:16:20: remark: BasicBlock: 
+MOV: 15
+TST16: 9
+ADD: 8
+CMOV_SLT: 8
+XOR_RR: 8
+COLDLDI16: 1
+DEC16: 1
+GPLD8U_POST: 1
+LSL16I: 1
+RELAX_BR_NE: 1
+XOR: 1
+ [-Rpass-analysis=asm-printer]
+   16 |             crc ^= (uint16_t)data[i] << 8;
+      |                    ^
+bench/c/crc16.c:14:42: remark: BasicBlock: 
+CMPIS8: 1
+INC16: 1
+MOV_RR: 1
+RELAX_BR_NE: 1
+ZEXT8: 1
+ [-Rpass-analysis=asm-printer]
+   14 |     for (uint8_t repeat = 0; repeat < 8; ++repeat) {
+      |                                          ^
+bench/c/crc16.c:23:16: remark: BasicBlock: 
+POP16: 4
+RET: 1
+STM16: 1
+SYS_DEBUG_BREAK_PSEUDO: 1
+XOR: 1
+ [-Rpass-analysis=asm-printer]
+   23 |     crc_result = crc;
+      |                ^
+bench/c/crc16.c:7:1: remark: 85 instructions in function [-Rpass-analysis=asm-printer]
+    7 | {
+      | ^

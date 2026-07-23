@@ -2693,7 +2693,8 @@ sprite[2] = first byte of frame zero
 Let:
 
 ```text
-pages        = ceil(height / 8)
+pages        = (height + 7) >> 3
+             = ceil(height / 8)
 bitmapStride = width * pages
 ```
 
@@ -2701,12 +2702,28 @@ For `draw_sprite_overwrite`, `draw_sprite_self_masked`, and
 `draw_sprite_erase`, each frame contains `bitmapStride` bytes. Frame bytes are
 page-major: page zero contains `width` consecutive column bytes, followed by
 page one, and so on. Bit `b` of the byte for source column `sx` and source page
-`sp` represents source pixel `(sx, 8*sp+b)`. Bits at rows greater than or equal
-to `height` in the final source page are padding and do not affect the
-framebuffer.
+`sp` represents source pixel `(sx, 8*sp+b)`.
+
+When `height` is not divisible by eight, bits in the final source page whose
+source row is greater than or equal to `height` are padding. Their requirements
+depend on the service:
+
+| Service | Final-page padding requirement |
+|---|---|
+| `draw_sprite_overwrite` | Padding bits may have any value; the service ignores them. |
+| `draw_sprite_self_masked` | Every padding bit MUST be zero. |
+| `draw_sprite_erase` | Every padding bit MUST be zero. |
 
 For `draw_sprite_plus_mask`, each source column has an interleaved image byte
-followed by a mask byte. Its frame stride is:
+followed by a mask byte. For every image/mask pair in the selected frame:
+
+```text
+imageByte & ~maskByte = 0
+```
+
+Thus an image bit may be set only where the corresponding mask bit is set. When
+`height` is not divisible by eight, every padding bit in both the final-page
+image byte and its corresponding mask byte MUST be zero. Its frame stride is:
 
 ```text
 plusMaskStride = 2 * bitmapStride
@@ -2721,7 +2738,9 @@ frameBase = low24(sprite + 2 + frame * frameStride)
 where `frameStride` is `bitmapStride` for the single-plane services and
 `plusMaskStride` for `draw_sprite_plus_mask`. The caller must provide a valid
 two-byte header and a complete selected frame in program space. The selected
-frame range must not wrap the 24-bit program address space.
+frame must satisfy the service-specific padding and plus-mask restrictions
+above. Violating those restrictions is an invalid service invocation. The
+selected frame range must not wrap the 24-bit program address space.
 
 The sprite rectangle is positioned with its upper-left source pixel at signed
 coordinates `(x,y)` and is clipped to the framebuffer rectangle:
@@ -4633,6 +4652,7 @@ LLVM:
     display uses llvm.avm.display and SYS 0x1D with fixed framebuffer effects
     sprite drawing uses typed llvm.avm.draw.sprite.* intrinsics and SYS 0x1E-0x21
     sprite services use r4=x, r5=y, q3=sprite, r0=frame and ignore q3 padding
+    overwrite ignores final-page padding; other sprite modes require canonical padding
 
 Assembly:
     GNU-style syntax

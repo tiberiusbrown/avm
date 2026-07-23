@@ -10227,7 +10227,10 @@ sys_memset_impl:
 ;
 ; The frame data is page-major. OVERWRITE, SELF_MASKED, and ERASE use one
 ; source byte per column. PLUS_MASK uses interleaved image,mask byte pairs.
-; The frame stride is width * ceil(height/8), doubled for PLUS_MASK.
+; The frame stride is width * ceil(height/8), doubled for PLUS_MASK. For a
+; height not divisible by eight, OVERWRITE masks the final source page in the
+; renderer. The other modes require unused high bits in that page to be zero
+; (both image and mask bytes for PLUS_MASK).
 ;
 ; The header wrapper consumes the speculative bytecode transfer, reads the
 ; two-byte header, calculates the selected-frame pointer, and enters the raw
@@ -10305,7 +10308,13 @@ sys_draw_sprite_header_impl:
     rol   r31
 .Lsys_sprite_stride_ready:
 
-    ; Add low24(frame * stride) to sprite+2. q3[31:24] is ignored.
+    ; Add low24(frame * stride) to sprite+2. Frame zero is overwhelmingly
+    ; common and skips all partial products. Frames below 256 skip the two
+    ; high-frame-byte products. q3[31:24] is ignored.
+    mov   r27, VM_R0L
+    or    r27, VM_R0H
+    breq  .Lsys_sprite_frame_offset_done
+
     mul   VM_R0L, r30
     add   r24, r0
     adc   r25, r1
@@ -10315,6 +10324,9 @@ sys_draw_sprite_header_impl:
     add   r25, r0
     adc   r26, r1
 
+    tst   VM_R0H
+    breq  .Lsys_sprite_frame_offset_done
+
     mul   VM_R0H, r30
     add   r25, r0
     adc   r26, r1
@@ -10322,6 +10334,7 @@ sys_draw_sprite_header_impl:
     mul   VM_R0H, r31
     add   r26, r0
 
+.Lsys_sprite_frame_offset_done:
     pop   r1                         ; native raw-renderer height
     in    r0, GPIOR2                 ; native raw-renderer width
     in    r27, GPIOR1                ; native raw-renderer mode
@@ -10354,25 +10367,26 @@ sys_draw_sprite_header_impl:
 ;   VM_PC, VM_FLAGS, VM_SP, and the permanent constants are untouched. Native
 ;   r0:r1, r24:r27, r30:r31, GPIOR1:GPIOR2, and SREG are call-clobbered.
 ;
-; Working allocation after the pushes:
-;   r8              full source width
-;   r9              row valid-bit mask / overwrite low preserve mask
+; Persistent working allocation after the pushes:
+;   r8              source width during setup; overwrite row-valid mask
+;   r9              source height during setup; overwrite low preserve mask
 ;   r10:r11         full source-row stride in bytes
 ;   r12             visible source rows remaining
-;   r13             drawing mode
+;   r13             drawing mode during one-time setup
 ;   r14             framebuffer row advance (128-visibleColumns)
-;   r15             final source-page valid-bit mask
+;   r15             overwrite final-source-page valid-bit mask
 ;   r16             visible column count
-;   r17             inner-loop column counter
+;   r17             framebuffer x during setup; loop counter while rendering
 ;   r18             vertical shift coefficient
-;   r19             destination page / overwrite high preserve mask
+;   r19             signed destination page during setup; high mask/temporary
 ;   r20:r21:r22     current visible source-row image-relative pointer
-;   r23             top/bottom/reseek/partial flags
+;   r23             top/bottom/surviving-partial flags
+;   SREG.T          horizontal clipping requires a source-row reseek
+;   GPIOR1:GPIOR2   selected mode-specific row-dispatch word address
 ;   X               current framebuffer page pointer
-;   Z               adjacent framebuffer page pointer
+;   Z               adjacent framebuffer page pointer or dispatch target
 ;   r24:r25,r0:r1   stream and framebuffer temporaries
-;   GPIOR1:GPIOR2   initial seek bytes; GPIOR2 then current row mask
-
+;
 .global draw_bitmap_seek_func
 draw_bitmap_seek_func:
     ; Reject invisible or empty bitmaps before touching architectural state or
@@ -10409,9 +10423,9 @@ draw_bitmap_seek_func:
 
 .Lsprite_raw_visible:
     ; Start the selected-frame command before preserving architectural inputs.
-    ; Sixteen PUSHes provide 32 useful command-transfer cycles. The remaining
-    ; clipping work deliberately extends that interval until the finalized
-    ; top/left-clipped source address is known.
+    ; The sixteen pushes and the clipping work occupy the command-transfer
+    ; interval. Because the exact cycle-17 boundary is intentionally missed,
+    ; the eventual address-high handoff drains SPDR before transmitting.
     fx_disable
     ldi   r30, SFC_READ
     fx_enable
@@ -10434,11 +10448,11 @@ draw_bitmap_seek_func:
     push  r22
     push  r23
 
-    mov   r8, r0                    ; source width
-    mov   r9, r1                    ; source height
+    mov   r8, r0                    ; source width, later current row mask
+    mov   r9, r1                    ; source height, later overwrite low mask
     movw  r20, r24
     mov   r22, r26                  ; selected frame pointer
-    mov   r13, r27                  ; drawing mode
+    mov   r13, r27                  ; drawing mode (setup only)
 
     ; Full source-row stride in bytes.
     mov   r10, r8
@@ -10450,8 +10464,11 @@ draw_bitmap_seek_func:
     rol   r11
 .Lsprite_stride_ready:
 
-    ; Compute source page count and the valid low-bit mask of the final page.
-    ; r23 accumulates clipping/render flags.
+    ; Compute pages = ceil(height/8) for every mode. Only OVERWRITE needs a
+    ; valid-bit mask for the final source page; PLUS_MASK, SELF_MASKED, and
+    ; ERASE require unused high bits in their source data to be zero.
+    ; r23 retains top, bottom, and overwrite-partial-row flags. Horizontal
+    ; reseek state is kept in native SREG.T instead of this byte.
     clr   r23
     mov   r24, r9
     andi  r24, 0x07                 ; height remainder
@@ -10463,6 +10480,8 @@ draw_bitmap_seek_func:
     breq  .Lsprite_height_aligned
 
     inc   r25
+    tst   r13                       ; only mode 0 (OVERWRITE) masks padding
+    brne  .Lsprite_nonoverwrite_unaligned
     ori   r23, (1 << SPRITE_FLAG_PARTIAL)
     ldi   r30, 1
 .Lsprite_final_mask_loop:
@@ -10472,11 +10491,12 @@ draw_bitmap_seek_func:
     dec   r30
     rjmp  .Lsprite_final_mask_ready
 
+.Lsprite_nonoverwrite_unaligned:
 .Lsprite_height_aligned:
     ldi   r30, 0xFF
 .Lsprite_final_mask_ready:
-    mov   r15, r30                   ; final-page valid-bit mask
-    mov   r12, r25                   ; total source pages
+    mov   r15, r30                  ; overwrite final-page valid-bit mask
+    mov   r12, r25                  ; total source pages
 
     ; pageStart = arithmetic y / 8. Visibility checks constrain y to the range
     ; in which the compact low-byte continuation is exact.
@@ -10496,14 +10516,14 @@ draw_bitmap_seek_func:
     cpi   r24, 0xFF
     brge  .Lsprite_top_clip_done
     mov   r25, r24
-    com   r25                        ; skip = -pageStart - 1
+    com   r25                       ; skip = -pageStart - 1
     rjmp  .Lsprite_apply_top_skip
 
 .Lsprite_top_clip_aligned:
     tst   r24
     brpl  .Lsprite_top_clip_done
     mov   r25, r24
-    neg   r25                        ; skip = -pageStart
+    neg   r25                       ; skip = -pageStart
 
 .Lsprite_apply_top_skip:
     ; source += skip * rowStride; pages -= skip; pageStart += skip.
@@ -10519,18 +10539,17 @@ draw_bitmap_seek_func:
     add   r24, r25
 
 .Lsprite_top_clip_done:
-    mov   r19, r24                   ; clipped destination low-page index
+    mov   r19, r24                  ; clipped signed destination page index
 
     ; Horizontal clipping. r16 becomes visible columns and r17 start X.
     mov   r25, VM_R4L
     sbrs  VM_R4H, 7
     rjmp  .Lsprite_x_nonnegative
 
-    neg   r25                        ; leftSkip = -x, guaranteed < width
+    neg   r25                       ; leftSkip = -x, guaranteed < width
     mov   r16, r8
     sub   r16, r25
     clr   r17
-    ori   r23, (1 << SPRITE_FLAG_RESEEK)
 
     ; source += leftSkip * bytesPerColumn.
     mov   r30, r25
@@ -10547,32 +10566,39 @@ draw_bitmap_seek_func:
     rjmp  .Lsprite_clip_right
 
 .Lsprite_x_nonnegative:
-    mov   r17, r25                   ; framebuffer x
+    mov   r17, r25                  ; framebuffer x
     mov   r16, r8
 
 .Lsprite_clip_right:
     ldi   r24, 128
-    sub   r24, r17                   ; columns available on screen
+    sub   r24, r17                  ; columns available on screen
     cp    r16, r24
     brlo  .Lsprite_right_clip_done
     breq  .Lsprite_right_clip_done
     mov   r16, r24
-    ori   r23, (1 << SPRITE_FLAG_RESEEK)
 .Lsprite_right_clip_done:
+
+    ; The retained source pointer is needed only when horizontal clipping means
+    ; the visible bytes do not end at the next source row. Store that condition
+    ; in native T, which survives all renderer arithmetic and protected SPI
+    ; handoffs while architectural flags remain in GPIOR0.
+    clt
+    cpse  r16, r8
+    set
 
     ldi   r24, 128
     sub   r24, r16
-    mov   r14, r24                   ; framebuffer row advance
+    mov   r14, r24                  ; framebuffer row advance
 
     ; Clip source rows against the bottom. If the original final source page is
     ; removed, its partial-page mask is no longer relevant.
     ldi   r24, 8
-    sub   r24, r19                   ; maximum visible source rows
+    sub   r24, r19                  ; maximum visible source rows
     cp    r12, r24
     brlo  .Lsprite_bottom_count_ready
     breq  .Lsprite_bottom_count_ready
     mov   r12, r24
-    andi  r23, 0xF7                  ; clear SPRITE_FLAG_PARTIAL
+    andi  r23, 0xF7                 ; clear SPRITE_FLAG_PARTIAL
 .Lsprite_bottom_count_ready:
 
     cpi   r19, 0xFF
@@ -10588,52 +10614,108 @@ draw_bitmap_seek_func:
     ori   r23, (1 << SPRITE_FLAG_BOTTOM)
 .Lsprite_not_bottom_row:
 
+    ; Preserve y low while r18 is reused as the unsigned 128 operand for the
+    ; signed page-index multiply below.
+    mov   r9, VM_R5L
+
     ; Convert the finalized visible source-row address to a physical FX address.
-    mov   r24, r20
+    ; The command transfer has long since completed, so use the legal late
+    ; standard handoff: drain the command response, then transmit address high.
     mov   r25, r21
     mov   r30, r22
     lds   r0, data_page_data+0
     add   r25, r0
     lds   r0, data_page_data+1
     adc   r30, r0
-    out   GPIOR1, r24                 ; retain address low
-    out   GPIOR2, r25                 ; retain address middle
-    out   SPDR, r30                   ; address high
+.Lsprite_wait_initial_command:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsprite_wait_initial_command
+    in    r24, SPDR
+    out   SPDR, r30                  ; physical address high
 
-    ; Build the first visible framebuffer pointer while address-high transfers.
-    mov   r30, r19
-    sbrs  r30, 7
-    rjmp  .Lsprite_buffer_page_ready
-    clr   r30                         ; top-only row writes display page zero
-.Lsprite_buffer_page_ready:
-    ldi   r24, 128
-    mul   r30, r24
+    ; Compute X = framebuffer + pageStart*128 + x with signed MULSU. A top
+    ; source row therefore begins one page before the framebuffer and is moved
+    ; forward by 128 in the common row dispatcher before its high contribution.
+    ldi   r18, 128
+    mulsu r19, r18
     ldi   r26, lo8(data_display)
     ldi   r27, hi8(data_display)
     add   r26, r0
     adc   r27, r1
     add   r26, r17
     adc   r27, ZERO
-    rcall sprite_delay_7
-    in    r24, GPIOR2
-    out   SPDR, r24                   ; address middle
+
+.Lsprite_wait_initial_high:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsprite_wait_initial_high
+    in    r24, SPDR
+    out   SPDR, r25                  ; physical address middle
 
     ; Fixed-time coefficient construction overlaps the middle-address byte.
-    mov   r24, VM_R5L
+    mov   r24, r9
     ldi   r18, 1
     sbrc  r24, 1
     ldi   r18, 4
     sbrc  r24, 0
     lsl   r18
     sbrc  r24, 2
-    swap  r18                         ; r18 = 1 << (y & 7)
-    rcall sprite_delay_7
-    in    r24, GPIOR1
-    out   SPDR, r24                   ; address low
+    swap  r18                        ; r18 = 1 << (y & 7)
 
-    ; Address-low to first dummy uses the ordinary 18-cycle handoff. Row setup
-    ; then occupies the first data-byte transfer window.
-    rcall sprite_delay_17
+.Lsprite_wait_initial_middle:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsprite_wait_initial_middle
+    in    r24, SPDR
+    out   SPDR, r20                  ; physical address low
+
+    ; Select one mode-specific row dispatcher once. GPIOR1:GPIOR2 are free
+    ; after address-low is launched and retain its AVR word address for every
+    ; source row. Invalid raw-entry modes retain the historical erase fallback.
+    mov   r24, r13
+    tst   r24
+    breq  .Lsprite_select_overwrite_dispatch
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    breq  .Lsprite_select_plus_dispatch
+    cpi   r24, SPRITE_MODE_SELF_MASKED
+    breq  .Lsprite_select_self_dispatch
+    ldi   r30, lo8(pm(sprite_erase_row_dispatch))
+    ldi   r31, hi8(pm(sprite_erase_row_dispatch))
+    rjmp  .Lsprite_store_mode_dispatch
+.Lsprite_select_overwrite_dispatch:
+    ldi   r30, lo8(pm(sprite_overwrite_row_dispatch))
+    ldi   r31, hi8(pm(sprite_overwrite_row_dispatch))
+    rjmp  .Lsprite_store_mode_dispatch
+.Lsprite_select_plus_dispatch:
+    ldi   r30, lo8(pm(sprite_plus_row_dispatch))
+    ldi   r31, hi8(pm(sprite_plus_row_dispatch))
+    rjmp  .Lsprite_store_mode_dispatch
+.Lsprite_select_self_dispatch:
+    ldi   r30, lo8(pm(sprite_self_row_dispatch))
+    ldi   r31, hi8(pm(sprite_self_row_dispatch))
+.Lsprite_store_mode_dispatch:
+    out   GPIOR1, r30
+    out   GPIOR2, r31
+
+    ; Precompute overwrite preservation masks for every full source row:
+    ;   r9  = preserve bits below the shifted source contribution
+    ;   r19 = preserve bits above the shifted source contribution
+    ; Other modes reuse these registers as rendering temporaries.
+    ldi   r24, 0xFF
+    mul   r24, r18
+    com   r0
+    com   r1
+    mov   r9, r0
+    mov   r19, r1
+
+    ; The setup above occupies the address-low transfer window. Start the first
+    ; data-byte transfer with a legal late standard handoff.
+.Lsprite_wait_initial_low:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsprite_wait_initial_low
+    in    r24, SPDR
     out   SPDR, ZERO
     rjmp  .Lsprite_row_dispatch
 
@@ -10641,122 +10723,232 @@ draw_bitmap_seek_func:
 ; Sprite row dispatch and streaming loops
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-.Lsprite_row_dispatch:
-    ; Use the partial mask only on the original final source row, and only when
-    ; that row survived bottom clipping. Full rows use 0xFF.
-    mov   r24, r23
-    ldi   r25, 0xFF
-    mov   r9, r25
+; Each selected mode has a compact row-kind dispatcher. OVERWRITE alone
+; distinguishes the one possible partial final source row. The other modes
+; always use their full-row loops and rely on canonical zero padding.
+.macro emit_sprite_overwrite_dispatch label, top_full, top_partial, middle_full, middle_partial, bottom_full, bottom_partial
+\label:
     sbrs  r24, SPRITE_FLAG_PARTIAL
-    rjmp  .Lsprite_row_mask_ready
-    mov   r25, r12
-    cpi   r25, 1
-    brne  .Lsprite_row_mask_ready
-    mov   r9, r15
-.Lsprite_row_mask_ready:
-    out   GPIOR2, r9
-    mov   r17, r16                    ; visible-column counter
-
-    ; A top row has only its high shifted contribution visible. Clear the flag
-    ; before rendering so all later rows use middle/bottom dispatch.
-    sbrs  r24, SPRITE_FLAG_TOP
-    rjmp  .Lsprite_check_bottom
-    andi  r24, 0xFE
-    mov   r23, r24
-    rjmp  .Lsprite_dispatch_top_mode
-
-.Lsprite_check_bottom:
-    mov   r25, r12
-    cpi   r25, 1
-    brne  .Lsprite_dispatch_middle_mode
+    rjmp  .Lsprite_overwrite_kind_\@
+    cp    r12, ONE
+    brne  .Lsprite_overwrite_kind_\@
+    mov   r8, r15
+    ori   r24, 0x80
+.Lsprite_overwrite_kind_\@:
+    sbrc  r24, SPRITE_FLAG_TOP
+    rjmp  .Lsprite_overwrite_top_\@
+    cp    r12, ONE
+    brne  .Lsprite_overwrite_middle_\@
     sbrc  r24, SPRITE_FLAG_BOTTOM
-    rjmp  .Lsprite_dispatch_bottom_mode
-
-.Lsprite_dispatch_middle_mode:
+    rjmp  .Lsprite_overwrite_bottom_\@
+.Lsprite_overwrite_middle_\@:
     movw  r30, r26
     subi  r30, 0x80
     sbci  r31, 0xFF
-    mov   r24, r13
-    tst   r24
-    brne  .Lsprite_middle_check_plus
-    jmp   .Lsprite_middle_overwrite
-.Lsprite_middle_check_plus:
-    cpi   r24, SPRITE_MODE_PLUS_MASK
-    brne  .Lsprite_middle_check_self
-    jmp   .Lsprite_middle_plus_mask
-.Lsprite_middle_check_self:
-    cpi   r24, SPRITE_MODE_SELF_MASKED
-    brne  .Lsprite_middle_use_erase
-    jmp   .Lsprite_middle_self_masked
-.Lsprite_middle_use_erase:
-    jmp   .Lsprite_middle_erase
+    sbrc  r24, 7
+    rjmp  \middle_partial
+    rjmp  \middle_full
+.Lsprite_overwrite_top_\@:
+    sbrc  r24, 7
+    rjmp  \top_partial
+    rjmp  \top_full
+.Lsprite_overwrite_bottom_\@:
+    sbrc  r24, 7
+    rjmp  \bottom_partial
+    rjmp  \bottom_full
+.endm
 
-.Lsprite_dispatch_top_mode:
-    mov   r24, r13
-    tst   r24
-    brne  .Lsprite_top_check_plus
-    jmp   .Lsprite_top_overwrite
-.Lsprite_top_check_plus:
-    cpi   r24, SPRITE_MODE_PLUS_MASK
-    brne  .Lsprite_top_check_self
-    jmp   .Lsprite_top_plus_mask
-.Lsprite_top_check_self:
-    cpi   r24, SPRITE_MODE_SELF_MASKED
-    brne  .Lsprite_top_use_erase
-    jmp   .Lsprite_top_self_masked
-.Lsprite_top_use_erase:
-    jmp   .Lsprite_top_erase
+.macro emit_sprite_full_dispatch label, top_full, middle_full, bottom_full
+\label:
+    sbrc  r24, SPRITE_FLAG_TOP
+    rjmp  \top_full
+    cp    r12, ONE
+    brne  .Lsprite_full_middle_\@
+    sbrc  r24, SPRITE_FLAG_BOTTOM
+    rjmp  \bottom_full
+.Lsprite_full_middle_\@:
+    movw  r30, r26
+    subi  r30, 0x80
+    sbci  r31, 0xFF
+    rjmp  \middle_full
+.endm
 
-.Lsprite_dispatch_bottom_mode:
-    mov   r24, r13
-    tst   r24
-    brne  .Lsprite_bottom_check_plus
-    jmp   .Lsprite_bottom_overwrite
-.Lsprite_bottom_check_plus:
-    cpi   r24, SPRITE_MODE_PLUS_MASK
-    brne  .Lsprite_bottom_check_self
-    jmp   .Lsprite_bottom_plus_mask
-.Lsprite_bottom_check_self:
-    cpi   r24, SPRITE_MODE_SELF_MASKED
-    brne  .Lsprite_bottom_use_erase
-    jmp   .Lsprite_bottom_self_masked
-.Lsprite_bottom_use_erase:
-    jmp   .Lsprite_bottom_erase
+emit_sprite_overwrite_dispatch sprite_overwrite_row_dispatch, \
+    .Lsprite_top_overwrite_full, .Lsprite_top_overwrite_partial, \
+    .Lsprite_middle_overwrite_full, .Lsprite_middle_overwrite_partial, \
+    .Lsprite_bottom_overwrite_full, .Lsprite_bottom_overwrite_partial
 
+emit_sprite_full_dispatch sprite_plus_row_dispatch, \
+    .Lsprite_top_plus_full, .Lsprite_middle_plus_full, .Lsprite_bottom_plus_full
 
-; OVERWRITE: coverage comes from the row-valid mask, not from source zeros.
-; This preserves framebuffer pixels beyond height%8 in the final source page.
-.Lsprite_top_overwrite:
-    mul   r9, r18
-    com   r1
-    mov   r19, r1
-.Lsprite_top_overwrite_loop:
+emit_sprite_full_dispatch sprite_self_row_dispatch, \
+    .Lsprite_top_self_full, .Lsprite_middle_self_full, .Lsprite_bottom_self_full
+
+emit_sprite_full_dispatch sprite_erase_row_dispatch, \
+    .Lsprite_top_erase_full, .Lsprite_middle_erase_full, .Lsprite_bottom_erase_full
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; OVERWRITE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Full top and bottom rows use exact 18-cycle standard handoffs.  The
+; previous reverse-order versions were cycle-tight but regressed top-clipped
+; rendering in the system tests; the standard schedule remains within the
+; renderer's 18-cycle target and is robust at row boundaries.
+.Lsprite_top_overwrite_full:
+.Lsprite_top_overwrite_full_loop:
     in    r24, SPDR
     out   SPDR, ZERO
-    in    r25, GPIOR2
-    and   r24, r25
     mul   r24, r18
     ld    r25, X
     and   r25, r19
     or    r25, r1
     st    X+, r25
-    delay_2
+    delay_4
     nop
     dec   r17
-    brne  .Lsprite_top_overwrite_loop
+    brne  .Lsprite_top_overwrite_full_loop
     rjmp  .Lsprite_top_done
 
-.Lsprite_middle_overwrite:
-    mul   r9, r18
+.Lsprite_bottom_overwrite_full:
+.Lsprite_bottom_overwrite_full_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    delay_4
+    nop
+    dec   r17
+    brne  .Lsprite_bottom_overwrite_full_loop
+    rjmp  .Lsprite_bottom_done
+
+; Partial top/bottom rows derive their preserve mask once.  The extra source
+; mask consumes the cycle otherwise used by the full-row NOP, retaining the
+; same exact 18-cycle standard cadence.
+.Lsprite_top_overwrite_partial:
+    mul   r8, r18
+    com   r1
+    mov   r19, r1
+.Lsprite_top_overwrite_partial_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r8
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r19
+    or    r25, r1
+    st    X+, r25
+    delay_4
+    dec   r17
+    brne  .Lsprite_top_overwrite_partial_loop
+    rjmp  .Lsprite_top_done
+
+.Lsprite_bottom_overwrite_partial:
+    mul   r8, r18
+    com   r0
+    mov   r9, r0
+.Lsprite_bottom_overwrite_partial_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
+    and   r24, r8
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    delay_4
+    dec   r17
+    brne  .Lsprite_bottom_overwrite_partial_loop
+    rjmp  .Lsprite_bottom_done
+
+; Full middle rows are two-column unrolled. The first byte of each pair loads
+; both framebuffer pages and preloads the next low-page byte; the second byte
+; consumes that preload. Each source-byte OUT-to-OUT interval is exactly 18
+; cycles, and odd widths use one correctly aligned prefix column.
+.Lsprite_middle_overwrite_full:
+    mov   r17, r16
+    lsr   r17                        ; pair count
+    sbrs  r16, 0
+    rjmp  .Lsprite_middle_overwrite_pair_loop
+    tst   r17
+    brne  .Lsprite_middle_overwrite_odd_prefix
+
+    ; Width one: render the sole column and finish without another handoff.
+    in    r24, SPDR
+    out   SPDR, ZERO
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    ld    r25, Z
+    and   r25, r19
+    or    r25, r1
+    st    Z+, r25
+    rjmp  .Lsprite_middle_done
+
+.Lsprite_middle_overwrite_odd_prefix:
+    ; Odd prefix for widths above one. Fourteen pixel cycles plus DELAY_2
+    ; place the following pair's IN exactly at cycle 17.
+    in    r24, SPDR
+    out   SPDR, ZERO
+    mul   r24, r18
+    ld    r25, X
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    ld    r25, Z
+    and   r25, r19
+    or    r25, r1
+    st    Z+, r25
+    delay_2
+
+.Lsprite_middle_overwrite_pair_loop:
+    ; First column of the pair: sixteen cycles after OUT.
+    in    r24, SPDR
+    out   SPDR, ZERO
+    ld    r25, X
+    mul   r24, r18
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    ld    r25, Z
+    and   r25, r19
+    or    r25, r1
+    st    Z+, r25
+    ld    r25, X                    ; preload second low-page byte
+
+    ; Second column: twelve pixel cycles plus NOP/DEC/BRNE = sixteen.
+    in    r24, SPDR
+    out   SPDR, ZERO
+    mul   r24, r18
+    and   r25, r9
+    or    r25, r0
+    st    X+, r25
+    ld    r25, Z
+    and   r25, r19
+    or    r25, r1
+    st    Z+, r25
+    nop
+    dec   r17
+    brne  .Lsprite_middle_overwrite_pair_loop
+    rjmp  .Lsprite_middle_done
+
+; The single possible partial middle row keeps the compact generic body. With
+; the row mask resident in r8 it is 20 cycles/byte rather than the old 21.
+.Lsprite_middle_overwrite_partial:
+    mul   r8, r18
     com   r0
     com   r1
     mov   r9, r0
     mov   r19, r1
-.Lsprite_middle_overwrite_loop:
+.Lsprite_middle_overwrite_partial_loop:
     in    r24, SPDR
     out   SPDR, ZERO
-    in    r25, GPIOR2
-    and   r24, r25
+    and   r24, r8
     mul   r24, r18
     ld    r25, X
     and   r25, r9
@@ -10767,73 +10959,111 @@ draw_bitmap_seek_func:
     or    r25, r1
     st    Z+, r25
     dec   r17
-    brne  .Lsprite_middle_overwrite_loop
+    brne  .Lsprite_middle_overwrite_partial_loop
     rjmp  .Lsprite_middle_done
 
-.Lsprite_bottom_overwrite:
-    mul   r9, r18
-    com   r0
-    mov   r9, r0
-.Lsprite_bottom_overwrite_loop:
-    in    r24, SPDR
-    out   SPDR, ZERO
-    in    r25, GPIOR2
-    and   r24, r25
-    mul   r24, r18
-    ld    r25, X
-    and   r25, r9
-    or    r25, r0
-    st    X+, r25
-    delay_2
-    nop
-    dec   r17
-    brne  .Lsprite_bottom_overwrite_loop
-    rjmp  .Lsprite_bottom_done
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; PLUS_MASK
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-
-; PLUS_MASK: each visible column consumes image then mask. The image and mask
-; are both limited by the final-page valid-bit mask before vertical shifting.
-.Lsprite_top_plus_mask:
-.Lsprite_top_plus_mask_loop:
-    in    r24, SPDR                  ; image
+; Full top and bottom rows use a standard first image->mask handoff, then the
+; proven 17/17 reverse schedule. Each column consumes image then mask.
+.Lsprite_top_plus_full:
+    in    r0, SPDR                   ; image
     out   SPDR, ZERO                 ; begin mask
-    in    r25, GPIOR2
-    and   r24, r25
-    mul   r24, r18
-    movw  r24, r0                    ; shifted image
-    ld    r19, X
-    rcall sprite_delay_9
-    nop
+    mul   r0, r18
+    mov   r24, r1                    ; shifted image high
+    rcall sprite_delay_13
     in    r0, SPDR                   ; mask
     out   SPDR, ZERO                 ; begin next image
-    in    r1, GPIOR2
-    and   r0, r1
     mul   r0, r18
-    com   r1
-    and   r19, r1
-    or    r19, r25
+    mov   r25, r1
+    ld    r19, X
+    com   r25
+    and   r19, r25
+    or    r19, r24
     st    X+, r19
-    delay_4
+    delay_2
     dec   r17
-    brne  .Lsprite_top_plus_mask_loop
+    brne  .Lsprite_top_plus_full_loop
+    rjmp  .Lsprite_top_done
+.Lsprite_top_plus_full_loop:
+    cli
+    out   SPDR, ZERO                 ; begin mask
+    in    r0, SPDR                   ; image
+    sei
+    mul   r0, r18
+    mov   r24, r1
+    rcall sprite_delay_10
+    cli
+    out   SPDR, ZERO                 ; begin next image
+    in    r0, SPDR                   ; mask
+    sei
+    mul   r0, r18
+    mov   r25, r1
+    ld    r19, X
+    com   r25
+    and   r19, r25
+    or    r19, r24
+    st    X+, r19
+    dec   r17
+    brne  .Lsprite_top_plus_full_loop
     rjmp  .Lsprite_top_done
 
-.Lsprite_middle_plus_mask:
-.Lsprite_middle_plus_mask_loop:
-    in    r24, SPDR                  ; image
+.Lsprite_bottom_plus_full:
+    in    r0, SPDR                   ; image
     out   SPDR, ZERO                 ; begin mask
-    in    r25, GPIOR2
-    and   r24, r25
-    mul   r24, r18
+    mul   r0, r18
+    mov   r24, r0                    ; shifted image low
+    rcall sprite_delay_13
+    in    r0, SPDR                   ; mask
+    out   SPDR, ZERO                 ; begin next image
+    mul   r0, r18
+    mov   r25, r0
+    ld    r19, X
+    com   r25
+    and   r19, r25
+    or    r19, r24
+    st    X+, r19
+    delay_2
+    dec   r17
+    brne  .Lsprite_bottom_plus_full_loop
+    rjmp  .Lsprite_bottom_done
+.Lsprite_bottom_plus_full_loop:
+    cli
+    out   SPDR, ZERO                 ; begin mask
+    in    r0, SPDR                   ; image
+    sei
+    mul   r0, r18
+    mov   r24, r0
+    rcall sprite_delay_10
+    cli
+    out   SPDR, ZERO                 ; begin next image
+    in    r0, SPDR                   ; mask
+    sei
+    mul   r0, r18
+    mov   r25, r0
+    ld    r19, X
+    com   r25
+    and   r19, r25
+    or    r19, r24
+    st    X+, r19
+    dec   r17
+    brne  .Lsprite_bottom_plus_full_loop
+    rjmp  .Lsprite_bottom_done
+
+; Full middle rows use 17 cycles from image OUT to mask OUT and 18 cycles from
+; mask OUT to the next image OUT after the first standard priming handoff.
+.Lsprite_middle_plus_full:
+    in    r0, SPDR                   ; image
+    out   SPDR, ZERO                 ; begin mask
+    mul   r0, r18
     movw  r24, r0                    ; shifted image
     ld    r9, X
     ld    r19, Z
-    rcall sprite_delay_7
-    nop
+    rcall sprite_delay_9
     in    r0, SPDR                   ; mask
     out   SPDR, ZERO                 ; begin next image
-    in    r1, GPIOR2
-    and   r0, r1
     mul   r0, r18
     com   r0
     com   r1
@@ -10844,56 +11074,72 @@ draw_bitmap_seek_func:
     or    r19, r25
     st    Z+, r19
     dec   r17
-    brne  .Lsprite_middle_plus_mask_loop
+    brne  .Lsprite_middle_plus_full_loop
     rjmp  .Lsprite_middle_done
-
-.Lsprite_bottom_plus_mask:
-.Lsprite_bottom_plus_mask_loop:
-    in    r24, SPDR                  ; image
+.Lsprite_middle_plus_full_loop:
+    cli
     out   SPDR, ZERO                 ; begin mask
-    in    r25, GPIOR2
-    and   r24, r25
-    mul   r24, r18
-    movw  r24, r0                    ; shifted image
-    ld    r19, X
-    rcall sprite_delay_9
-    nop
+    in    r0, SPDR                   ; image
+    sei
+    mul   r0, r18
+    movw  r24, r0
+    ld    r9, X
+    ld    r19, Z
+    rcall sprite_delay_7
     in    r0, SPDR                   ; mask
     out   SPDR, ZERO                 ; begin next image
-    in    r1, GPIOR2
-    and   r0, r1
     mul   r0, r18
     com   r0
-    and   r19, r0
-    or    r19, r24
-    st    X+, r19
-    delay_4
+    com   r1
+    and   r9, r0
+    or    r9, r24
+    st    X+, r9
+    and   r19, r1
+    or    r19, r25
+    st    Z+, r19
     dec   r17
-    brne  .Lsprite_bottom_plus_mask_loop
-    rjmp  .Lsprite_bottom_done
+    brne  .Lsprite_middle_plus_full_loop
+    rjmp  .Lsprite_middle_done
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SELF_MASKED
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; SELF_MASKED: source one-bits are ORed into the framebuffer.
-.Lsprite_top_self_masked:
-.Lsprite_top_self_masked_loop:
+; Top/bottom rows use exact 18-cycle standard handoffs.
+; Middle rows retain their existing 18-cycle streaming bodies.
+.Lsprite_top_self_full:
+.Lsprite_top_self_full_loop:
     in    r24, SPDR
     out   SPDR, ZERO
-    and   r24, r9
     mul   r24, r18
     ld    r25, X
     or    r25, r1
     st    X+, r25
     delay_4
-    nop
+    delay_2
     dec   r17
-    brne  .Lsprite_top_self_masked_loop
+    brne  .Lsprite_top_self_full_loop
     rjmp  .Lsprite_top_done
 
-.Lsprite_middle_self_masked:
-.Lsprite_middle_self_masked_loop:
+.Lsprite_bottom_self_full:
+.Lsprite_bottom_self_full_loop:
     in    r24, SPDR
     out   SPDR, ZERO
-    and   r24, r9
+    mul   r24, r18
+    ld    r25, X
+    or    r25, r0
+    st    X+, r25
+    delay_4
+    delay_2
+    dec   r17
+    brne  .Lsprite_bottom_self_full_loop
+    rjmp  .Lsprite_bottom_done
+
+; Full middle rows remain 18 cycles/byte with one balancing NOP.
+.Lsprite_middle_self_full:
+.Lsprite_middle_self_full_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
     mul   r24, r18
     ld    r25, X
     or    r25, r0
@@ -10901,47 +11147,52 @@ draw_bitmap_seek_func:
     ld    r25, Z
     or    r25, r1
     st    Z+, r25
-    dec   r17
-    brne  .Lsprite_middle_self_masked_loop
-    rjmp  .Lsprite_middle_done
-
-.Lsprite_bottom_self_masked:
-.Lsprite_bottom_self_masked_loop:
-    in    r24, SPDR
-    out   SPDR, ZERO
-    and   r24, r9
-    mul   r24, r18
-    ld    r25, X
-    or    r25, r0
-    st    X+, r25
-    delay_4
     nop
     dec   r17
-    brne  .Lsprite_bottom_self_masked_loop
-    rjmp  .Lsprite_bottom_done
+    brne  .Lsprite_middle_self_full_loop
+    rjmp  .Lsprite_middle_done
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; ERASE
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; ERASE: source one-bits clear corresponding framebuffer pixels.
-.Lsprite_top_erase:
-.Lsprite_top_erase_loop:
+; Top/bottom rows use exact 18-cycle standard handoffs.
+; The middle path remains the 19-cycle drawBasicFX schedule.
+.Lsprite_top_erase_full:
+.Lsprite_top_erase_full_loop:
     in    r24, SPDR
     out   SPDR, ZERO
-    and   r24, r9
     mul   r24, r18
     com   r1
     ld    r25, X
     and   r25, r1
     st    X+, r25
     delay_4
+    nop
     dec   r17
-    brne  .Lsprite_top_erase_loop
+    brne  .Lsprite_top_erase_full_loop
     rjmp  .Lsprite_top_done
 
-.Lsprite_middle_erase:
-.Lsprite_middle_erase_loop:
+.Lsprite_bottom_erase_full:
+.Lsprite_bottom_erase_full_loop:
     in    r24, SPDR
     out   SPDR, ZERO
-    and   r24, r9
+    mul   r24, r18
+    com   r0
+    ld    r25, X
+    and   r25, r0
+    st    X+, r25
+    delay_4
+    nop
+    dec   r17
+    brne  .Lsprite_bottom_erase_full_loop
+    rjmp  .Lsprite_bottom_done
+
+; The full middle path is the 19-cycle drawBasicFX schedule.
+.Lsprite_middle_erase_full:
+.Lsprite_middle_erase_full_loop:
+    in    r24, SPDR
+    out   SPDR, ZERO
     mul   r24, r18
     com   r0
     com   r1
@@ -10952,23 +11203,29 @@ draw_bitmap_seek_func:
     and   r25, r1
     st    Z+, r25
     dec   r17
-    brne  .Lsprite_middle_erase_loop
+    brne  .Lsprite_middle_erase_full_loop
     rjmp  .Lsprite_middle_done
 
-.Lsprite_bottom_erase:
-.Lsprite_bottom_erase_loop:
-    in    r24, SPDR
-    out   SPDR, ZERO
-    and   r24, r9
-    mul   r24, r18
-    com   r0
-    ld    r25, X
-    and   r25, r0
-    st    X+, r25
-    delay_4
-    dec   r17
-    brne  .Lsprite_bottom_erase_loop
-    rjmp  .Lsprite_bottom_done
+.Lsprite_row_dispatch:
+    ; Preserve this row's top/bottom/overwrite-partial metadata before the
+    ; persistent top flag is cleared. Only the overwrite dispatcher interprets
+    ; SPRITE_FLAG_PARTIAL or uses r8/r15.
+    mov   r24, r23
+    mov   r17, r16                    ; visible-column counter
+
+    ; For pageStart==-1, X names one page before the framebuffer. Move it to
+    ; page zero for the single top-row high-contribution loop, then clear the
+    ; persistent top flag so subsequent rows use the normal page pointer.
+    sbrs  r24, SPRITE_FLAG_TOP
+    rjmp  .Lsprite_row_pointer_ready
+    andi  r23, 0xFE
+    subi  r26, 0x80
+    sbci  r27, 0xFF
+.Lsprite_row_pointer_ready:
+
+    in    r30, GPIOR1
+    in    r31, GPIOR2
+    ijmp
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -10976,8 +11233,8 @@ draw_bitmap_seek_func:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 .Lsprite_top_done:
-    ; The top source row wrote only the high contribution into page zero. Reset
-    ; X to the same visible page start for the following row's low contribution.
+    ; X advanced across page zero. Reset it to the same visible page start for
+    ; the following row's low contribution.
     sub   r26, r16
     sbc   r27, ZERO
     rjmp  .Lsprite_row_complete
@@ -10994,20 +11251,12 @@ draw_bitmap_seek_func:
     ; Bottom is necessarily the last visible source row.
 
 .Lsprite_row_complete:
-    ; Advance the retained image-relative visible-row pointer by the full source
-    ; stride. This is used only for reseek when horizontally clipped, but is
-    ; maintained unconditionally for a compact common path.
-    movw  r24, r10
-    add   r20, r24
-    adc   r21, r25
-    adc   r22, ZERO
-
     dec   r12
     breq  .Lsprite_finish
 
-    mov   r25, r23
-    sbrs  r25, SPRITE_FLAG_RESEEK
-    rjmp  .Lsprite_row_dispatch
+    ; Contiguous full-width rows continue directly in the existing transaction.
+    ; Only clipped rows retain and advance r20:r21:r22 for a fresh seek.
+    brtc  .Lsprite_row_dispatch
 
     ; The final visible byte launched one speculative unwanted transfer. Drain
     ; it before selecting the next visible row with a fresh command/address.
@@ -11049,16 +11298,23 @@ draw_bitmap_seek_func:
     ret
 
 
-; Start streaming at r20:r21:r22 without disturbing native X. This helper is
-; private to the sprite renderer; Z and r24:r25 are scratch, and the first data
-; byte is in flight on return.
+; Start streaming at the following visible source row without disturbing X.
+; This helper is used only when native T indicates horizontal clipping. It
+; advances the retained row pointer after launching SFC_READ, hiding the four
+; pointer-update cycles in the command interval. Z and r24:r25 are scratch; the
+; first data byte is in flight on return.
 sprite_start_row_read_func:
     fx_disable
     ldi   r24, SFC_READ
     fx_enable
     out   SPDR, r24
 
-    mov   r24, r20
+    ; Advance to the same visible x position in the following source row.
+    movw  r24, r10
+    add   r20, r24
+    adc   r21, r25
+    adc   r22, ZERO
+
     mov   r25, r21
     mov   r30, r22
     lds   r31, data_page_data+0
@@ -11066,27 +11322,47 @@ sprite_start_row_read_func:
     lds   r31, data_page_data+1
     adc   r30, r31
 
-    rcall sprite_delay_9
+    ; The twelve useful setup cycles after command launch leave exactly four
+    ; cycles before the legal cycle-17 IN / cycle-18 OUT address-high handoff.
+    delay_4
+    in    r24, SPDR
     out   SPDR, r30
-    rcall sprite_delay_17
+
+    ; Remaining meaningful bytes use exact 18-cycle standard handoffs.
+    rcall sprite_delay_16
+    in    r24, SPDR
     out   SPDR, r25
-    rcall sprite_delay_17
-    out   SPDR, r24
-    rcall sprite_delay_17
+    rcall sprite_delay_16
+    in    r24, SPDR
+    out   SPDR, r20
+    rcall sprite_delay_16
+    in    r24, SPDR
     out   SPDR, ZERO
     ret
 
 
-; Local complete-cycle delay ladder. Unlike the generic reader delays, these
-; labels remain within RCALL range of every sprite loop and do not use LPM.
+; Local complete-cycle delay ladder. Each entry is the total cycle count from
+; the calling RCALL through the returning RET. NOP-only fallthrough entries do
+; not clobber MUL results or renderer state.
 sprite_delay_17:
     nop
 sprite_delay_16:
-    delay_4
+    nop
+sprite_delay_15:
+    nop
+sprite_delay_14:
+    nop
+sprite_delay_13:
+    nop
+sprite_delay_12:
     nop
 sprite_delay_11:
-    delay_2
+    nop
+sprite_delay_10:
+    nop
 sprite_delay_9:
-    delay_2
+    nop
+sprite_delay_8:
+    nop
 sprite_delay_7:
     ret

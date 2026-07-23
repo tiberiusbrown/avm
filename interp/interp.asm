@@ -10660,30 +10660,10 @@ draw_bitmap_seek_func:
     ; source row. Invalid raw-entry modes retain the historical erase fallback.
     mov   r24, r13
     tst   r24
-    breq  .Lsprite_select_overwrite_dispatch
-    cpi   r24, SPRITE_MODE_PLUS_MASK
-    breq  .Lsprite_select_plus_dispatch
-    cpi   r24, SPRITE_MODE_SELF_MASKED
-    breq  .Lsprite_select_self_dispatch
-    ldi   r30, lo8(pm(sprite_erase_row_dispatch))
-    ldi   r31, hi8(pm(sprite_erase_row_dispatch))
-    rjmp  .Lsprite_store_mode_dispatch
-.Lsprite_select_overwrite_dispatch:
-    nop
+    brne  .Lsprite_select_not_overwrite
+
     ldi   r30, lo8(pm(sprite_overwrite_row_dispatch))
     ldi   r31, hi8(pm(sprite_overwrite_row_dispatch))
-    rjmp  .Lsprite_store_mode_dispatch
-.Lsprite_select_plus_dispatch:
-    ldi   r30, lo8(pm(sprite_plus_row_dispatch))
-    ldi   r31, hi8(pm(sprite_plus_row_dispatch))
-    rjmp  .Lsprite_store_mode_dispatch
-.Lsprite_select_self_dispatch:
-    ldi   r30, lo8(pm(sprite_self_row_dispatch))
-    ldi   r31, hi8(pm(sprite_self_row_dispatch))
-.Lsprite_store_mode_dispatch:
-    out   GPIOR1, r30
-    out   GPIOR2, r31
-
     ; Precompute overwrite preservation masks for every full source row:
     ;   r9  = preserve bits below the shifted source contribution
     ;   r19 = preserve bits above the shifted source contribution
@@ -10694,6 +10674,30 @@ draw_bitmap_seek_func:
     com   r1
     mov   r9, r0
     mov   r19, r1
+    rjmp  .Lsprite_store_mode_dispatch
+
+.Lsprite_select_not_overwrite:
+    cpi   r24, SPRITE_MODE_PLUS_MASK
+    breq  .Lsprite_select_plus_dispatch
+    cpi   r24, SPRITE_MODE_SELF_MASKED
+    breq  .Lsprite_select_self_dispatch
+    ldi   r30, lo8(pm(sprite_erase_row_dispatch))
+    ldi   r31, hi8(pm(sprite_erase_row_dispatch))
+    delay_2
+    rjmp  .Lsprite_store_mode_dispatch
+.Lsprite_select_plus_dispatch:
+    ldi   r30, lo8(pm(sprite_plus_row_dispatch))
+    ldi   r31, hi8(pm(sprite_plus_row_dispatch))
+    delay_2
+    delay_2
+    rjmp  .Lsprite_store_mode_dispatch
+.Lsprite_select_self_dispatch:
+    ldi   r30, lo8(pm(sprite_self_row_dispatch))
+    ldi   r31, hi8(pm(sprite_self_row_dispatch))
+    delay_3
+.Lsprite_store_mode_dispatch:
+    out   GPIOR1, r30
+    out   GPIOR2, r31
 
     ; The setup above occupies the address-low transfer window. Start the first
     ; data-byte transfer with a legal late standard handoff.

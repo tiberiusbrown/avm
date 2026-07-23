@@ -32,12 +32,12 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 fe                 adjsp	avm_test_main+1
  c4 00 01              ldi16	r4, 0x100
- c1 09                 ldi8	r5, 0x9
- c2 60                 ldi8	r6, 0x60
- f6 05                 st8	[r4+], r5
- c9 0d                 addi.s8	r5, 0xd
- f4 b6                 dec16	r6
- f6 2e                 tst16	r6
+ c1 60                 ldi8	r5, 0x60
+ c2 09                 ldi8	r6, 0x9
+ f6 06                 st8	[r4+], r6
+ ca 0d                 addi.s8	r6, 0xd
+ f4 b5                 dec16	r5
+ f4 a5                 tst8	r5
  d1 f6                 brne8	avm_test_main+10
  d7 01                 sys	debug_break
  c5 00 01              ldi16	r5, 0x100

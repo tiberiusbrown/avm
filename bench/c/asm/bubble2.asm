@@ -6,8 +6,8 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 bubble2.c
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	0000004d avm_test_main
-00000262 g     F .text	00000002 avm_halt
+00000215 g     F .text	00000063 avm_test_main
+00000278 g     F .text	00000002 avm_halt
 00000100 g     O .data	00000080 A
 
 Disassembly of section .text:
@@ -23,7 +23,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 4d                 call8	avm_halt
+ d5 63                 call8	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -32,36 +32,48 @@ Disassembly of section .text:
  b0                    push16	r0
  c0 40                 ldi8	r4, 0x40
  c5 00 01              ldi16	r5, 0x100
- f7 4c                 st16	[r7+], r4
+ f7 4c                 st16	[r5+], r4
  f4 b4                 dec16	r4
  f6 2c                 tst16	r4
  d1 f8                 brne8	avm_test_main+9
- c2 40                 ldi8	r6, 0x40
+ f0 02 40              ldi8	r2, 0x40
  d7 01                 sys	debug_break
- a0                    xor	r4, r4
- c1 01                 ldi8	r5, 0x1
- c7 02 01              ldi16	r7, 0x102
- f1 76                 zext8	r6
- f4 b6                 dec16	r6
- f1 06                 mov	r0, r6
- f1 0d                 mov	r1, r5
- 08                    mov	r6, r4
- f5 4e                 ld16	r2, [r7]
- ed 7e 1e              ld16	r3, [r7-2]
- f5 13                 cmp	r2, r3
- d9 07                 brsge8	avm_test_main+52
- f5 5f                 st16	[r7], r3
- ee 5e 1e              st16	[r7-2], r2
- f1 29                 mov	r6, r1
- f4 a9                 inc16	r1
- cb 02                 addi.s8	r7, 0x2
- f4 b0                 dec16	r0
- f6 28                 tst16	r0
- d1 e6                 brne8	avm_test_main+36
+ f0 00 01              ldi8	r0, 0x1
+ f2 39                 sub	r1, r1
+ d4 08                 jmp8	avm_test_main+37
+ f1 22                 mov	r4, r2
+ f1 74                 zext8	r4
+ cc 02                 cmpi.s8	r4, 0x2
+ d2 36                 brult8	avm_test_main+91
+ f1 1a                 mov	r3, r2
+ c4 02 01              ldi16	r4, 0x102
+ f1 11                 mov	r2, r1
+ f1 28                 mov	r6, r0
+ d4 0e                 jmp8	avm_test_main+62
+ c8 02                 addi.s8	r4, 0x2
+ f1 27                 mov	r5, r3
+ f1 75                 zext8	r5
+ f4 ae                 inc16	r6
  0e                    mov	r7, r6
  f1 77                 zext8	r7
- cf 02                 cmpi.s8	r7, 0x2
- d8 d3                 bruge8	avm_test_main+24
+ 37                    cmp	r5, r7
+ d0 df                 breq8	avm_test_main+29
+ 64                    ld16	r5, [r4]
+ ed f8 1e              ld16	r7, [r4-2]
+ 37                    cmp	r5, r7
+ d9 eb                 brsge8	avm_test_main+48
+ 73                    st16	[r4], r7
+ ee b8 1e              st16	[r4-2], r5
+ f1 16                 mov	r2, r6
+ c8 02                 addi.s8	r4, 0x2
+ f1 27                 mov	r5, r3
+ f1 75                 zext8	r5
+ f4 ae                 inc16	r6
+ 0e                    mov	r7, r6
+ f1 77                 zext8	r7
+ 37                    cmp	r5, r7
+ d1 e5                 brne8	avm_test_main+62
+ d4 c2                 jmp8	avm_test_main+29
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

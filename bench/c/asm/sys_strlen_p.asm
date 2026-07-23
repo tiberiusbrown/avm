@@ -4,16 +4,16 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/sys_strlen_p.elf:	file format 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 sys_strlen_p.c
-00000260 l     O .rodata	00000001 length0
-00000261 l     O .rodata	00000002 length1
-00000263 l     O .rodata	00000009 length8
-0000026c l     O .rodata	00000021 length32
-0000028d l     O .rodata	00000101 length256
+0000025f l     O .rodata	00000001 length0
+00000260 l     O .rodata	00000002 length1
+00000262 l     O .rodata	00000009 length8
+0000026b l     O .rodata	00000021 length32
+0000028c l     O .rodata	00000101 length256
 00000100 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000049 avm_test_main
-0000025e g     F .text	00000002 avm_halt
+00000215 g     F .text	00000048 avm_test_main
+0000025d g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -28,41 +28,41 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 49                 call8	avm_halt
+ d5 48                 call8	avm_halt
 
 <avm_test_main>:
  b0                    push16	r0
  d7 01                 sys	debug_break
- c4 60 02              ldi16	r4, 0x260
+ c4 5f 02              ldi16	r4, 0x25f
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
  08                    mov	r6, r4
  0d                    mov	r7, r5
  d7 15                 sys	strlen_p
- 04                    mov	r5, r4
- c6 61 02              ldi16	r6, 0x261
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- d7 15                 sys	strlen_p
  f1 04                 mov	r0, r4
- f2 05                 add	r0, r5
- c6 63 02              ldi16	r6, 0x263
+ c6 60 02              ldi16	r6, 0x260
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d7 15                 sys	strlen_p
  04                    mov	r5, r4
  f2 24                 add	r5, r0
- c6 6c 02              ldi16	r6, 0x26c
+ c6 62 02              ldi16	r6, 0x262
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d7 15                 sys	strlen_p
  f1 04                 mov	r0, r4
  f2 05                 add	r0, r5
- c6 8d 02              ldi16	r6, 0x28d
+ c6 6b 02              ldi16	r6, 0x26b
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d7 15                 sys	strlen_p
- f2 20                 add	r4, r0
+ 04                    mov	r5, r4
+ f2 24                 add	r5, r0
+ c6 8c 02              ldi16	r6, 0x28c
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ d7 15                 sys	strlen_p
+ 11                    add	r4, r5
  f0 5c 00 01           stm16	[0x100], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

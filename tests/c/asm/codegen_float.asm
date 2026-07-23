@@ -7,16 +7,16 @@ SYMBOL TABLE:
 00000ae2 l     F .text	00000009 arithmetic
 00000aeb l     F .text	00000003 divide_exact
 00000aee l     F .text	00000002 sqrt_exact
-00000af0 l     F .text	0000000f select_min
-00000aff l     F .text	0000000f select_max
-00000b0e l     F .text	00000004 convert_signed
-00000b12 l     F .text	00000004 convert_unsigned
+00000af0 l     F .text	00000012 select_min
+00000b02 l     F .text	00000012 select_max
+00000b14 l     F .text	00000004 convert_signed
+00000b18 l     F .text	00000004 convert_unsigned
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 math.c
 00000100 g     F .text	00000016 _start
 00000116 g     F .text	000009cc avm_test_main
-00000b16 g     F .text	00000002 avm_halt
-00000b18 g     F .text	00000003 sqrtf
+00000b1c g     F .text	00000002 avm_halt
+00000b1e g     F .text	00000003 sqrtf
 
 Disassembly of section .text:
 
@@ -31,7 +31,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 00 0a              call16	avm_halt
+ e1 06 0a              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -149,7 +149,7 @@ Disassembly of section .text:
  f0 35 98              ldsp16	r5, [sp+0x98]
  f0 36 92              ldsp16	r6, [sp+0x92]
  f0 37 94              ldsp16	r7, [sp+0x94]
- e1 b0 08              call16	select_max
+ e1 b3 08              call16	select_max
  f0 3c b6              stsp16	[sp+0xb6], r4
  f0 3d b8              stsp16	[sp+0xb8], r5
  f0 15 b6              leasp	r5, 0xb6
@@ -903,11 +903,11 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f0 34 48              ldsp16	r4, [sp+0x48]
  f0 35 4a              ldsp16	r5, [sp+0x4a]
- e1 5f 02              call16	convert_signed
+ e1 65 02              call16	convert_signed
  f0 3c 62              stsp16	[sp+0x62], r4
  f0 34 4c              ldsp16	r4, [sp+0x4c]
  f0 35 4e              ldsp16	r5, [sp+0x4e]
- e1 57 02              call16	convert_unsigned
+ e1 5d 02              call16	convert_unsigned
  f0 3c 5e              stsp16	[sp+0x5e], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -1153,8 +1153,8 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  f8 08                 cset.ne	r0
  f1 20                 mov	r4, r0
- d6 7f                 adjsp	sqrtf+56
- d6 3b                 adjsp	convert_signed
+ d6 7f                 adjsp	sqrtf+50
+ d6 3b                 adjsp	select_max+12
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -1177,28 +1177,32 @@ Disassembly of section .text:
  ef                    ret
 
 <sqrt_exact>:
- d4 28                 jmp8	sqrtf
+ d4 2e                 jmp8	sqrtf
 
 <select_min>:
+ b1                    push16	r1
  b0                    push16	r0
- ff c8 0b              fcmp	r0, q2, q3
- f0 0c ff              cmpi.s8	r0, -0x1
- fb 34                 cmov.eq	r6, r4
- fb 3d                 cmov.eq	r7, r5
- 02                    mov	r4, r6
- 07                    mov	r5, r7
+ f2 63                 mov32	q0, q3
+ ff c8 68              fcmp	r6, q2, q0
+ ce ff                 cmpi.s8	r6, -0x1
+ fb 04                 cmov.eq	r0, r4
+ fb 0d                 cmov.eq	r1, r5
+ f2 68                 mov32	q2, q0
  b8                    pop16	r0
+ b9                    pop16	r1
  ef                    ret
 
 <select_max>:
+ b1                    push16	r1
  b0                    push16	r0
- ff c8 0b              fcmp	r0, q2, q3
- f0 0c 01              cmpi.s8	r0, 0x1
- fb 34                 cmov.eq	r6, r4
- fb 3d                 cmov.eq	r7, r5
- 02                    mov	r4, r6
- 07                    mov	r5, r7
+ f2 63                 mov32	q0, q3
+ ff c8 68              fcmp	r6, q2, q0
+ ce 01                 cmpi.s8	r6, 0x1
+ fb 04                 cmov.eq	r0, r4
+ fb 0d                 cmov.eq	r1, r5
+ f2 68                 mov32	q2, q0
  b8                    pop16	r0
+ b9                    pop16	r1
  ef                    ret
 
 <convert_signed>:

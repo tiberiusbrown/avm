@@ -10247,27 +10247,20 @@ sys_draw_sprite_header_impl:
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
 
-    ; SYS decode launched a speculative read of the following primary opcode.
-    ; Drain it before opening an independent header transaction.
-.Lsys_sprite_wait_instruction:
-    in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsys_sprite_wait_instruction
-    in    r24, SPDR
+    movw  r24, VM_R6
+    mov   r26, VM_R7L
+
     fx_disable
 
     ; Read width and height at q3. The shared address-phase helper is suitable
     ; for this fixed two-byte header read; the selected-frame seek below is a
     ; separate sprite-specific transaction whose command interval contains the
     ; clipping and render preparation.
-    movw  r24, VM_R6
-    mov   r26, VM_R7L
     call  fx_start_program_read_func
 
     ; The helper returns five cycles after launching the width transfer. Twelve
     ; more cycles put the standard IN/OUT handoff at cycles 17/18.
-    rcall sprite_delay_11
-    nop
+    rcall sprite_delay_12
     in    r0, SPDR                  ; width
     out   SPDR, ZERO                ; begin height transfer
 
@@ -10338,7 +10331,7 @@ sys_draw_sprite_header_impl:
     pop   r1                         ; native raw-renderer height
     in    r0, GPIOR2                 ; native raw-renderer width
     in    r27, GPIOR1                ; native raw-renderer mode
-    call  draw_bitmap_seek_func
+    rcall draw_bitmap_seek_func
     jmp   seek_and_dispatch_func
 
 

@@ -9,8 +9,8 @@ SYMBOL TABLE:
 00000280 l     O .data	00000002 string_scan_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	0000012d avm_test_main
-00000443 g     F .text	00000002 avm_halt
+00000316 g     F .text	00000231 avm_test_main
+00000547 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 2d 01              call16	avm_halt
+ e1 31 02              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -33,56 +33,58 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 f4                 adjsp	_start+16
- f0 05 00 01           ldi16	r1, 0x100
- c2 61                 ldi8	r6, 0x61
+ c5 00 01              ldi16	r5, 0x100
+ f0 01 61              ldi8	r1, 0x61
  f2 42                 sub	r2, r2
  c0 03                 ldi8	r4, 0x3
  f4 48                 stsp16	[sp+0x2], r4
  c0 1f                 ldi8	r4, 0x1f
  f4 40                 stsp16	[sp+0x0], r4
- f1 26                 mov	r5, r2
- 0d                    mov	r7, r5
+ f1 2a                 mov	r6, r2
+ 0e                    mov	r7, r6
  f4 08                 ldsp16	r4, [sp+0x2]
  fe 3c                 mul16	r7, r4
  f4 53                 stsp16	[sp+0x4], r7
- f4 59                 stsp16	[sp+0x6], r5
- fa 45                 lsl16i	r5, 0x5
+ f4 5a                 stsp16	[sp+0x6], r6
+ 02                    mov	r4, r6
+ fa 35                 lsl16i	r4, 0x5
  f0 04 00 01           ldi16	r0, 0x100
- f2 05                 add	r0, r5
- f0 33 00              ldsp16	r3, [sp+0x0]
+ f2 04                 add	r0, r4
+ f4 02                 ldsp16	r6, [sp+0x0]
  f1 2e                 mov	r7, r2
- f4 62                 stsp16	[sp+0x8], r6
- f0 39 0a              stsp16	[sp+0xa], r1
- c0 4f                 ldi8	r4, 0x4f
- 07                    mov	r5, r7
- f3 14                 mulu8.w	r5, r4
- fa 8b                 lsr16i	r5, 0xb
- c0 1a                 ldi8	r4, 0x1a
- f3 14                 mulu8.w	r5, r4
+ f0 39 08              stsp16	[sp+0x8], r1
+ f4 69                 stsp16	[sp+0xa], r5
+ f1 1d                 mov	r3, r5
+ c1 4f                 ldi8	r5, 0x4f
  03                    mov	r4, r7
- 21                    sub	r4, r5
- 23                    sub	r4, r7
- 12                    add	r4, r6
- f0 6d 83              st8	[r1+], r4
+ f3 11                 mulu8.w	r4, r5
+ fa 7b                 lsr16i	r4, 0xb
+ c1 1a                 ldi8	r5, 0x1a
+ f3 11                 mulu8.w	r4, r5
+ 07                    mov	r5, r7
+ 24                    sub	r5, r4
+ 27                    sub	r5, r7
+ f2 25                 add	r5, r1
+ f0 6d a7              st8	[r3+], r5
  f4 af                 inc16	r7
- f4 ae                 inc16	r6
- f4 b3                 dec16	r3
- f6 2b                 tst16	r3
- d1 e4                 brne8	avm_test_main+51
+ f4 a9                 inc16	r1
+ f4 b6                 dec16	r6
+ f6 2e                 tst16	r6
+ d1 e3                 brne8	avm_test_main+53
  f4 10                 ldsp16	r4, [sp+0x4]
  f2 20                 add	r4, r0
- af                    xor	r7, r7
- ee e8 28              st8	[r4+8], r7
- ee e0 3f              st8	[r0+31], r7
+ f2 4b                 sub	r3, r3
+ ee 68 28              st8	[r4+8], r3
+ ee 60 3f              st8	[r0+31], r3
  f0 0a 03              addi.s8	r2, 0x3
- f4 22                 ldsp16	r6, [sp+0x8]
- ca 03                 addi.s8	r6, 0x3
- f0 31 0a              ldsp16	r1, [sp+0xa]
- f0 09 20              addi.s8	r1, 0x20
- f4 19                 ldsp16	r5, [sp+0x6]
- f4 ad                 inc16	r5
- cd 08                 cmpi.s8	r5, 0x8
- d1 a9                 brne8	avm_test_main+24
+ f0 31 08              ldsp16	r1, [sp+0x8]
+ f0 09 03              addi.s8	r1, 0x3
+ f4 29                 ldsp16	r5, [sp+0xa]
+ c9 20                 addi.s8	r5, 0x20
+ f4 1a                 ldsp16	r6, [sp+0x6]
+ f4 ae                 inc16	r6
+ ce 08                 cmpi.s8	r6, 0x8
+ d1 a5                 brne8	avm_test_main+24
  c4 00 02              ldi16	r4, 0x200
  c1 07                 ldi8	r5, 0x7
  c2 80                 ldi8	r6, 0x80
@@ -90,89 +92,227 @@ Disassembly of section .text:
  c9 0b                 addi.s8	r5, 0xb
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
- d1 f6                 brne8	avm_test_main+118
+ d1 f6                 brne8	avm_test_main+122
  d7 01                 sys	debug_break
- f1 1f                 mov	r3, r7
- 07                    mov	r5, r7
- 0b                    mov	r6, r7
- 02                    mov	r4, r6
- fa 35                 lsl16i	r4, 0x5
- c7 00 01              ldi16	r7, 0x100
- 1c                    add	r7, r4
- f4 b5                 dec16	r5
- f7 1c                 ld8u	r4, [r7+]
- f4 ad                 inc16	r5
- f4 a4                 tst8	r4
- d1 f8                 brne8	avm_test_main+143
- f4 ae                 inc16	r6
- ce 08                 cmpi.s8	r6, 0x8
- d1 e9                 brne8	avm_test_main+134
- af                    xor	r7, r7
- c0 21                 ldi8	r4, 0x21
- f1 07                 mov	r0, r7
- fe 04                 mul16	r0, r4
- c4 00 02              ldi16	r4, 0x200
- f0 01 80              ldi8	r1, 0x80
- f1 28                 mov	r6, r0
- f1 76                 zext8	r6
- f5 32                 ld8u	r2, [r4]
- f5 16                 cmp	r2, r6
- d0 09                 breq8	avm_test_main+189
- f4 ac                 inc16	r4
- f4 b1                 dec16	r1
- f6 29                 tst16	r1
- d1 ee                 brne8	avm_test_main+170
- a0                    xor	r4, r4
- c6 00 02              ldi16	r6, 0x200
- f1 0c                 mov	r1, r4
- f2 3e                 sub	r1, r6
- f2 30                 sub	r0, r0
- f6 2c                 tst16	r4
- fb 08                 cmov.eq	r1, r0
- f9 a6                 xor	r5, r1
- f4 af                 inc16	r7
- 03                    mov	r4, r7
- f1 74                 zext8	r4
- cc 08                 cmpi.s8	r4, 0x8
- d1 c9                 brne8	avm_test_main+158
- f1 2c                 mov	r7, r0
- 0b                    mov	r6, r7
- fa 55                 lsl16i	r6, 0x5
- c4 20 01              ldi16	r4, 0x120
- 12                    add	r4, r6
- f0 05 00 01           ldi16	r1, 0x100
- f2 0e                 add	r1, r6
- ed 22 20              ld8u	r1, [r1+0]
- f4 a1                 tst8	r1
- d0 18                 breq8	avm_test_main+259
- 48                    ld8u	r6, [r4]
- f1 11                 mov	r2, r1
- f1 72                 zext8	r2
- f5 16                 cmp	r2, r6
- d1 13                 brne8	avm_test_main+263
- f1 14                 mov	r2, r4
- f4 aa                 inc16	r2
- ed 28 01              ld8u	r1, [r4-31]
- f4 a1                 tst8	r1
- f1 22                 mov	r4, r2
- d1 ea                 brne8	avm_test_main+235
- f1 22                 mov	r4, r2
- f1 08                 mov	r1, r0
- d4 02                 jmp8	avm_test_main+265
- f1 71                 zext8	r1
- f2 25                 add	r5, r1
- 40                    ld8u	r4, [r4]
- 24                    sub	r5, r4
- f4 af                 inc16	r7
- cf 07                 cmpi.s8	r7, 0x7
- d1 c4                 brne8	avm_test_main+215
+ f1 0b                 mov	r1, r3
+ d4 0b                 jmp8	avm_test_main+149
  f4 ab                 inc16	r3
  f1 23                 mov	r4, r3
  f1 74                 zext8	r4
  cc 40                 cmpi.s8	r4, 0x40
- af                    xor	r7, r7
- db 66 ff              brne16	avm_test_main+133
- f0 5d 80 02           stm16	[0x280], r5
+ da 8e 01              breq16	avm_test_main+547
+ c6 00 01              ldi16	r6, 0x100
+ f4 b1                 dec16	r1
+ f1 21                 mov	r4, r1
+ f7 15                 ld8u	r5, [r6+]
+ f4 a9                 inc16	r1
+ f4 a5                 tst8	r5
+ d1 f6                 brne8	avm_test_main+154
+ c6 20 01              ldi16	r6, 0x120
+ 04                    mov	r5, r4
+ f7 17                 ld8u	r7, [r6+]
+ f4 ac                 inc16	r4
+ f4 a7                 tst8	r7
+ d1 f7                 brne8	avm_test_main+167
+ c6 40 01              ldi16	r6, 0x140
+ 01                    mov	r4, r5
+ f7 17                 ld8u	r7, [r6+]
+ f4 ad                 inc16	r5
+ f4 a7                 tst8	r7
+ d1 f7                 brne8	avm_test_main+179
+ c6 60 01              ldi16	r6, 0x160
+ 04                    mov	r5, r4
+ f7 17                 ld8u	r7, [r6+]
+ f4 ac                 inc16	r4
+ f4 a7                 tst8	r7
+ d1 f7                 brne8	avm_test_main+191
+ c6 80 01              ldi16	r6, 0x180
+ 01                    mov	r4, r5
+ f7 17                 ld8u	r7, [r6+]
+ f4 ad                 inc16	r5
+ f4 a7                 tst8	r7
+ d1 f7                 brne8	avm_test_main+203
+ c6 a0 01              ldi16	r6, 0x1a0
+ 04                    mov	r5, r4
+ f7 17                 ld8u	r7, [r6+]
+ f4 ac                 inc16	r4
+ f4 a7                 tst8	r7
+ d1 f7                 brne8	avm_test_main+215
+ c4 c0 01              ldi16	r4, 0x1c0
+ f1 15                 mov	r2, r5
+ f7 07                 ld8u	r7, [r4+]
+ f4 ad                 inc16	r5
+ f4 a7                 tst8	r7
+ d1 f6                 brne8	avm_test_main+227
+ c4 e0 01              ldi16	r4, 0x1e0
+ f7 05                 ld8u	r5, [r4+]
+ f4 aa                 inc16	r2
+ f4 a5                 tst8	r5
+ d1 f8                 brne8	avm_test_main+240
+ c4 00 02              ldi16	r4, 0x200
+ c1 80                 ldi8	r5, 0x80
+ 4c                    ld8u	r7, [r4]
+ f4 a7                 tst8	r7
+ d0 09                 breq8	avm_test_main+267
+ f4 ac                 inc16	r4
+ f4 b5                 dec16	r5
+ f6 2d                 tst16	r5
+ d1 f3                 brne8	avm_test_main+253
+ a0                    xor	r4, r4
+ c7 00 02              ldi16	r7, 0x200
+ f1 0c                 mov	r1, r4
+ f2 3f                 sub	r1, r7
+ f2 30                 sub	r0, r0
+ f6 2c                 tst16	r4
+ fb 08                 cmov.eq	r1, r0
+ c0 80                 ldi8	r4, 0x80
+ 47                    ld8u	r5, [r7]
+ cd 21                 cmpi.s8	r5, 0x21
+ d0 0a                 breq8	avm_test_main+297
+ f4 af                 inc16	r7
+ f4 b4                 dec16	r4
+ f6 2c                 tst16	r4
+ d1 f3                 brne8	avm_test_main+282
+ f1 2c                 mov	r7, r0
+ c4 00 02              ldi16	r4, 0x200
+ 07                    mov	r5, r7
+ 24                    sub	r5, r4
+ f6 2f                 tst16	r7
+ fb 28                 cmov.eq	r5, r0
+ f9 36                 xor	r1, r5
+ c3 80                 ldi8	r7, 0x80
+ 44                    ld8u	r5, [r4]
+ cd 42                 cmpi.s8	r5, 0x42
+ d0 09                 breq8	avm_test_main+324
+ f4 ac                 inc16	r4
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ d1 f3                 brne8	avm_test_main+310
+ a0                    xor	r4, r4
+ c7 00 02              ldi16	r7, 0x200
+ 04                    mov	r5, r4
+ 27                    sub	r5, r7
+ f2 30                 sub	r0, r0
+ f6 2c                 tst16	r4
+ fb 28                 cmov.eq	r5, r0
+ f9 36                 xor	r1, r5
+ c0 80                 ldi8	r4, 0x80
+ 47                    ld8u	r5, [r7]
+ cd 63                 cmpi.s8	r5, 0x63
+ d0 0a                 breq8	avm_test_main+354
+ f4 af                 inc16	r7
+ f4 b4                 dec16	r4
+ f6 2c                 tst16	r4
+ d1 f3                 brne8	avm_test_main+339
+ f1 2c                 mov	r7, r0
+ c4 00 02              ldi16	r4, 0x200
+ 07                    mov	r5, r7
+ 24                    sub	r5, r4
+ f6 2f                 tst16	r7
+ fb 28                 cmov.eq	r5, r0
+ f9 36                 xor	r1, r5
+ c3 80                 ldi8	r7, 0x80
+ 44                    ld8u	r5, [r4]
+ c2 84                 ldi8	r6, 0x84
+ 36                    cmp	r5, r6
+ d0 09                 breq8	avm_test_main+382
+ f4 ac                 inc16	r4
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ d1 f2                 brne8	avm_test_main+367
+ a0                    xor	r4, r4
+ c7 00 02              ldi16	r7, 0x200
+ 04                    mov	r5, r4
+ 27                    sub	r5, r7
+ f2 30                 sub	r0, r0
+ f6 2c                 tst16	r4
+ fb 28                 cmov.eq	r5, r0
+ f9 36                 xor	r1, r5
+ c0 80                 ldi8	r4, 0x80
+ 47                    ld8u	r5, [r7]
+ c2 a5                 ldi8	r6, 0xa5
+ 36                    cmp	r5, r6
+ d0 0a                 breq8	avm_test_main+413
+ f4 af                 inc16	r7
+ f4 b4                 dec16	r4
+ f6 2c                 tst16	r4
+ d1 f2                 brne8	avm_test_main+397
+ f1 2c                 mov	r7, r0
+ c4 00 02              ldi16	r4, 0x200
+ 07                    mov	r5, r7
+ 24                    sub	r5, r4
+ f6 2f                 tst16	r7
+ fb 28                 cmov.eq	r5, r0
+ f9 36                 xor	r1, r5
+ c3 80                 ldi8	r7, 0x80
+ 44                    ld8u	r5, [r4]
+ c2 c6                 ldi8	r6, 0xc6
+ 36                    cmp	r5, r6
+ d0 09                 breq8	avm_test_main+441
+ f4 ac                 inc16	r4
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ d1 f2                 brne8	avm_test_main+426
+ a0                    xor	r4, r4
+ c7 00 02              ldi16	r7, 0x200
+ 04                    mov	r5, r4
+ 27                    sub	r5, r7
+ f2 30                 sub	r0, r0
+ f6 2c                 tst16	r4
+ fb 28                 cmov.eq	r5, r0
+ f9 36                 xor	r1, r5
+ c0 80                 ldi8	r4, 0x80
+ 47                    ld8u	r5, [r7]
+ c2 e7                 ldi8	r6, 0xe7
+ 36                    cmp	r5, r6
+ d0 0a                 breq8	avm_test_main+472
+ f4 af                 inc16	r7
+ f4 b4                 dec16	r4
+ f6 2c                 tst16	r4
+ d1 f2                 brne8	avm_test_main+456
+ f1 2c                 mov	r7, r0
+ c4 00 02              ldi16	r4, 0x200
+ 07                    mov	r5, r7
+ 24                    sub	r5, r4
+ f6 2f                 tst16	r7
+ fb 28                 cmov.eq	r5, r0
+ f9 36                 xor	r1, r5
+ f9 2a                 xor	r1, r2
+ f1 28                 mov	r6, r0
+ d4 11                 jmp8	avm_test_main+506
+ 06                    mov	r5, r6
+ f1 20                 mov	r4, r0
+ f2 0c                 add	r1, r4
+ 41                    ld8u	r4, [r5]
+ f2 3c                 sub	r1, r4
+ f4 2a                 ldsp16	r6, [sp+0xa]
+ f4 ae                 inc16	r6
+ ce 07                 cmpi.s8	r6, 0x7
+ da 90 fe              breq16	avm_test_main+138
+ f4 6a                 stsp16	[sp+0xa], r6
+ fa 55                 lsl16i	r6, 0x5
+ c5 20 01              ldi16	r5, 0x120
+ 16                    add	r5, r6
+ c7 00 01              ldi16	r7, 0x100
+ 1e                    add	r7, r6
+ 43                    ld8u	r4, [r7]
+ f4 a4                 tst8	r4
+ d0 df                 breq8	avm_test_main+490
+ 49                    ld8u	r6, [r5]
+ 0c                    mov	r7, r4
+ f1 77                 zext8	r7
+ 3e                    cmp	r7, r6
+ d1 0d                 brne8	avm_test_main+543
+ 09                    mov	r6, r5
+ f4 ae                 inc16	r6
+ ed 8a 01              ld8u	r4, [r5-31]
+ f4 a4                 tst8	r4
+ 06                    mov	r5, r6
+ d1 ee                 brne8	avm_test_main+523
+ d4 ca                 jmp8	avm_test_main+489
+ f1 74                 zext8	r4
+ d4 c9                 jmp8	avm_test_main+492
+ f0 59 80 02           stm16	[0x280], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 0c                 adjsp	avm_halt+7

@@ -8,8 +8,8 @@ SYMBOL TABLE:
 00000120 l     O .data	00000002 loop_control_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000054 avm_test_main
-00000269 g     F .text	00000002 avm_halt
+00000215 g     F .text	0000004d avm_test_main
+00000262 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -24,7 +24,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 54                 call8	avm_halt
+ d5 4d                 call8	avm_halt
 
 <avm_test_main>:
  b1                    push16	r1
@@ -38,31 +38,31 @@ Disassembly of section .text:
  f6 2e                 tst16	r6
  d1 f6                 brne8	avm_test_main+9
  c4 34 12              ldi16	r4, 0x1234
- a5                    xor	r5, r5
+ f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- 09                    mov	r6, r5
+ f1 08                 mov	r1, r0
  c8 18                 addi.s8	r4, 0x18
- 0d                    mov	r7, r5
+ f1 2c                 mov	r7, r0
  a3                    xor	r4, r7
  cb 11                 addi.s8	r7, 0x11
- f0 04 20 02           ldi16	r0, 0x220
- f5 2c                 cmp	r7, r0
- d1 f5                 brne8	avm_test_main+29
+ c5 20 02              ldi16	r5, 0x220
+ 3d                    cmp	r7, r5
+ d1 f7                 brne8	avm_test_main+32
  af                    xor	r7, r7
- f0 00 1f              ldi8	r0, 0x1f
- f9 1c                 and	r0, r7
- f0 05 00 01           ldi16	r1, 0x100
- f2 08                 add	r1, r0
- ed 02 20              ld8u	r0, [r1+0]
- f2 20                 add	r4, r0
+ c1 1f                 ldi8	r5, 0x1f
+ 87                    and	r5, r7
+ c6 00 01              ldi16	r6, 0x100
+ 19                    add	r6, r5
+ 46                    ld8u	r5, [r6]
+ 11                    add	r4, r5
  f4 af                 inc16	r7
- f0 04 00 01           ldi16	r0, 0x100
- f5 2c                 cmp	r7, r0
- d1 e6                 brne8	avm_test_main+41
- f4 ae                 inc16	r6
- c3 80                 ldi8	r7, 0x80
- 3b                    cmp	r6, r7
- d1 d0                 brne8	avm_test_main+26
+ c5 00 01              ldi16	r5, 0x100
+ 3d                    cmp	r7, r5
+ d1 ef                 brne8	avm_test_main+42
+ f4 a9                 inc16	r1
+ c1 80                 ldi8	r5, 0x80
+ f5 0d                 cmp	r1, r5
+ d1 d9                 brne8	avm_test_main+28
  f0 5c 20 01           stm16	[0x120], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

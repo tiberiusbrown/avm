@@ -4,13 +4,13 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/switch.elf:	file format elf32-
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 switch.c
-0000024f l     F .text	00000043 dense_dispatch
-00000292 l     F .text	00000032 sparse_dispatch
+0000024f l     F .text	00000042 dense_dispatch
+00000291 l     F .text	00000032 sparse_dispatch
 00000100 l     O .data	00000002 switch_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	00000039 avm_test_main
-000002c4 g     F .text	00000002 avm_halt
+000002c3 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 ae 00              call16	avm_halt
+ e1 ad 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -44,7 +44,7 @@ Disassembly of section .text:
  04                    mov	r5, r4
  f1 23                 mov	r4, r3
  f1 74                 zext8	r4
- d5 5b                 call8	sparse_dispatch
+ d5 5a                 call8	sparse_dispatch
  04                    mov	r5, r4
  f4 a9                 inc16	r1
  f0 0b 25              addi.s8	r3, 0x25
@@ -74,15 +74,15 @@ Disassembly of section .text:
  d9 11                 brsge8	dense_dispatch+37
  cc 04                 cmpi.s8	r4, 0x4
  d1 1b                 brne8	dense_dispatch+51
- fa 81                 lsr16i	r5, 0x1
+ f4 8d                 lsr16.1	r5
  01                    mov	r4, r5
  ef                    ret
  cc 02                 cmpi.s8	r4, 0x2
  d1 19                 brne8	dense_dispatch+57
  c4 aa 55              ldi16	r4, 0x55aa
- d4 1b                 jmp8	dense_dispatch+64
+ d4 1a                 jmp8	dense_dispatch+63
  cc 06                 cmpi.s8	r4, 0x6
- d1 14                 brne8	dense_dispatch+61
+ d1 13                 brne8	dense_dispatch+60
  c4 7f 7f              ldi16	r4, 0x7f7f
  84                    and	r5, r4
  01                    mov	r4, r5
@@ -94,7 +94,7 @@ Disassembly of section .text:
  94                    or	r5, r4
  01                    mov	r4, r5
  ef                    ret
- fa 41                 lsl16i	r5, 0x1
+ 15                    add	r5, r5
  01                    mov	r4, r5
  ef                    ret
  c4 ff ff              ldi16	r4, 0xffff

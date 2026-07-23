@@ -73,7 +73,8 @@ Disassembly of section .text:
  a8                    xor	r6, r4
  fa 73                 lsr16i	r4, 0x3
  12                    add	r4, r6
- fa 42                 lsl16i	r5, 0x2
+ 15                    add	r5, r5
+ 15                    add	r5, r5
  11                    add	r4, r5
  ef                    ret
 

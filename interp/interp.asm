@@ -11270,15 +11270,6 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     rjmp  .Lsprite_row_dispatch
 
 .Lsprite_finish:
-    ; Every loop deliberately launches one following transfer. Complete and
-    ; drain it before releasing FX and returning to the caller.
-.Lsprite_wait_final_byte:
-    in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsprite_wait_final_byte
-    in    r24, SPDR
-    fx_disable
-
     pop   r23
     pop   r22
     pop   r21
@@ -11295,6 +11286,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     pop   r10
     pop   r9
     pop   r8
+    fx_disable
     ret
 
 
@@ -11324,19 +11316,16 @@ sprite_start_row_read_func:
 
     ; The twelve useful setup cycles after command launch leave exactly four
     ; cycles before the legal cycle-17 IN / cycle-18 OUT address-high handoff.
-    delay_4
-    in    r24, SPDR
+    delay_3
+    delay_2
     out   SPDR, r30
 
     ; Remaining meaningful bytes use exact 18-cycle standard handoffs.
-    rcall sprite_delay_16
-    in    r24, SPDR
+    rcall sprite_delay_17
     out   SPDR, r25
-    rcall sprite_delay_16
-    in    r24, SPDR
+    rcall sprite_delay_17
     out   SPDR, r20
-    rcall sprite_delay_16
-    in    r24, SPDR
+    rcall sprite_delay_17
     out   SPDR, ZERO
     ret
 

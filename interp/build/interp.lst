@@ -705,22 +705,22 @@ SYMBOL TABLE:
 00004aa6 l       .text	00000000 log2f_low_coefficients
 00004ad3 l       .text	00000000 log2f_high_coefficients
 00004b00 l       .text	00000000 avrlibm_embedded_end
-00005184 l       .text	00000000 sprite_delay_11
+00005174 l       .text	00000000 sprite_delay_11
 00004e2c l       .text	00000000 sprite_erase_row_dispatch
 00004dd4 l       .text	00000000 sprite_overwrite_row_dispatch
 00004e04 l       .text	00000000 sprite_plus_row_dispatch
 00004e18 l       .text	00000000 sprite_self_row_dispatch
-00005180 l       .text	00000000 sprite_delay_13
-00005186 l       .text	00000000 sprite_delay_10
-00005188 l       .text	00000000 sprite_delay_9
-0000518c l       .text	00000000 sprite_delay_7
-0000513c l       .text	00000000 sprite_start_row_read_func
-0000517a l       .text	00000000 sprite_delay_16
-00005178 l       .text	00000000 sprite_delay_17
-0000517c l       .text	00000000 sprite_delay_15
-0000517e l       .text	00000000 sprite_delay_14
-00005182 l       .text	00000000 sprite_delay_12
-0000518a l       .text	00000000 sprite_delay_8
+00005170 l       .text	00000000 sprite_delay_13
+00005176 l       .text	00000000 sprite_delay_10
+00005178 l       .text	00000000 sprite_delay_9
+0000517c l       .text	00000000 sprite_delay_7
+00005134 l       .text	00000000 sprite_start_row_read_func
+00005168 l       .text	00000000 sprite_delay_17
+0000516a l       .text	00000000 sprite_delay_16
+0000516c l       .text	00000000 sprite_delay_15
+0000516e l       .text	00000000 sprite_delay_14
+00005172 l       .text	00000000 sprite_delay_12
+0000517a l       .text	00000000 sprite_delay_8
 00000a66 l       .text	00000000 .Lff_check_extended
 00000aa4 l       .text	00000000 .Lff_direct_round_prepare
 00000ac4 l       .text	00000000 .Lff_direct_minmax_prepare
@@ -1186,10 +1186,9 @@ SYMBOL TABLE:
 000050fc l       .text	00000000 .Lsprite_row_complete
 00005110 l       .text	00000000 .Lsprite_finish
 00005102 l       .text	00000000 .Lsprite_wait_reseek_byte
-00005110 l       .text	00000000 .Lsprite_wait_final_byte
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
-00005190 g       .text	00000000 _etext
+00005180 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00004c10 g       .text	00000000 draw_bitmap_seek_func
@@ -12576,7 +12575,7 @@ Disassembly of section .text:
 00004a10 <sinf_coefficients>:
     4a10:	05 a8       	ldd	r0, Z+53	; 0x35
     4a12:	4c cd       	rjmp	.-1384   	; 0x44ac <__fp_powsodd+0x1a>
-    4a14:	b2 d4       	rcall	.+2404   	; 0x537a <__data_load_end+0x1e9>
+    4a14:	b2 d4       	rcall	.+2404   	; 0x537a <__data_load_end+0x1f9>
     4a16:	4e b9       	out	0x0e, r20	; 14
     4a18:	38 36       	cpi	r19, 0x68	; 104
     4a1a:	a9 02       	muls	r26, r25
@@ -12806,7 +12805,7 @@ Disassembly of section .text:
     4b9a:	ca 01       	movw	r24, r20
     4b9c:	a6 2f       	mov	r26, r22
     4b9e:	0e 94 dd 0a 	call	0x15ba	; 0x15ba <fx_start_program_read_func>
-    4ba2:	f0 d2       	rcall	.+1504   	; 0x5184 <sprite_delay_11>
+    4ba2:	e8 d2       	rcall	.+1488   	; 0x5174 <sprite_delay_11>
     4ba4:	00 00       	nop
     4ba6:	0e b4       	in	r0, 0x2e	; 46
     4ba8:	2e bc       	out	0x2e, r2	; 46
@@ -13377,7 +13376,7 @@ Disassembly of section .text:
     4f4e:	2e bc       	out	0x2e, r2	; 46
     4f50:	02 9e       	mul	r0, r18
     4f52:	81 2d       	mov	r24, r1
-    4f54:	15 d1       	rcall	.+554    	; 0x5180 <sprite_delay_13>
+    4f54:	0d d1       	rcall	.+538    	; 0x5170 <sprite_delay_13>
     4f56:	0e b4       	in	r0, 0x2e	; 46
     4f58:	2e bc       	out	0x2e, r2	; 46
     4f5a:	02 9e       	mul	r0, r18
@@ -13399,7 +13398,7 @@ Disassembly of section .text:
     4f76:	78 94       	sei
     4f78:	02 9e       	mul	r0, r18
     4f7a:	81 2d       	mov	r24, r1
-    4f7c:	04 d1       	rcall	.+520    	; 0x5186 <sprite_delay_10>
+    4f7c:	fc d0       	rcall	.+504    	; 0x5176 <sprite_delay_10>
     4f7e:	f8 94       	cli
     4f80:	2e bc       	out	0x2e, r2	; 46
     4f82:	0e b4       	in	r0, 0x2e	; 46
@@ -13420,7 +13419,7 @@ Disassembly of section .text:
     4f9c:	2e bc       	out	0x2e, r2	; 46
     4f9e:	02 9e       	mul	r0, r18
     4fa0:	80 2d       	mov	r24, r0
-    4fa2:	ee d0       	rcall	.+476    	; 0x5180 <sprite_delay_13>
+    4fa2:	e6 d0       	rcall	.+460    	; 0x5170 <sprite_delay_13>
     4fa4:	0e b4       	in	r0, 0x2e	; 46
     4fa6:	2e bc       	out	0x2e, r2	; 46
     4fa8:	02 9e       	mul	r0, r18
@@ -13442,7 +13441,7 @@ Disassembly of section .text:
     4fc4:	78 94       	sei
     4fc6:	02 9e       	mul	r0, r18
     4fc8:	80 2d       	mov	r24, r0
-    4fca:	dd d0       	rcall	.+442    	; 0x5186 <sprite_delay_10>
+    4fca:	d5 d0       	rcall	.+426    	; 0x5176 <sprite_delay_10>
     4fcc:	f8 94       	cli
     4fce:	2e bc       	out	0x2e, r2	; 46
     4fd0:	0e b4       	in	r0, 0x2e	; 46
@@ -13465,7 +13464,7 @@ Disassembly of section .text:
     4fee:	c0 01       	movw	r24, r0
     4ff0:	9c 90       	ld	r9, X
     4ff2:	30 81       	ld	r19, Z
-    4ff4:	c9 d0       	rcall	.+402    	; 0x5188 <sprite_delay_9>
+    4ff4:	c1 d0       	rcall	.+386    	; 0x5178 <sprite_delay_9>
     4ff6:	0e b4       	in	r0, 0x2e	; 46
     4ff8:	2e bc       	out	0x2e, r2	; 46
     4ffa:	02 9e       	mul	r0, r18
@@ -13490,7 +13489,7 @@ Disassembly of section .text:
     501c:	c0 01       	movw	r24, r0
     501e:	9c 90       	ld	r9, X
     5020:	30 81       	ld	r19, Z
-    5022:	b4 d0       	rcall	.+360    	; 0x518c <sprite_delay_7>
+    5022:	ac d0       	rcall	.+344    	; 0x517c <sprite_delay_7>
     5024:	0e b4       	in	r0, 0x2e	; 46
     5026:	2e bc       	out	0x2e, r2	; 46
     5028:	02 9e       	mul	r0, r18
@@ -13631,93 +13630,85 @@ Disassembly of section .text:
     5106:	fd cf       	rjmp	.-6      	; 0x5102 <.Lsprite_wait_reseek_byte>
     5108:	8e b5       	in	r24, 0x2e	; 46
     510a:	59 9a       	sbi	0x0b, 1	; 11
-    510c:	17 d0       	rcall	.+46     	; 0x513c <sprite_start_row_read_func>
+    510c:	13 d0       	rcall	.+38     	; 0x5134 <sprite_start_row_read_func>
     510e:	e5 cf       	rjmp	.-54     	; 0x50da <.Lsprite_row_dispatch>
 
 00005110 <.Lsprite_finish>:
-    5110:	8d b5       	in	r24, 0x2d	; 45
-    5112:	87 ff       	sbrs	r24, 7
-    5114:	fd cf       	rjmp	.-6      	; 0x5110 <.Lsprite_finish>
-    5116:	8e b5       	in	r24, 0x2e	; 46
-    5118:	59 9a       	sbi	0x0b, 1	; 11
-    511a:	7f 91       	pop	r23
-    511c:	6f 91       	pop	r22
-    511e:	5f 91       	pop	r21
-    5120:	4f 91       	pop	r20
-    5122:	3f 91       	pop	r19
-    5124:	2f 91       	pop	r18
-    5126:	1f 91       	pop	r17
-    5128:	0f 91       	pop	r16
-    512a:	ff 90       	pop	r15
-    512c:	ef 90       	pop	r14
-    512e:	df 90       	pop	r13
-    5130:	cf 90       	pop	r12
-    5132:	bf 90       	pop	r11
-    5134:	af 90       	pop	r10
-    5136:	9f 90       	pop	r9
-    5138:	8f 90       	pop	r8
-    513a:	08 95       	ret
+    5110:	7f 91       	pop	r23
+    5112:	6f 91       	pop	r22
+    5114:	5f 91       	pop	r21
+    5116:	4f 91       	pop	r20
+    5118:	3f 91       	pop	r19
+    511a:	2f 91       	pop	r18
+    511c:	1f 91       	pop	r17
+    511e:	0f 91       	pop	r16
+    5120:	ff 90       	pop	r15
+    5122:	ef 90       	pop	r14
+    5124:	df 90       	pop	r13
+    5126:	cf 90       	pop	r12
+    5128:	bf 90       	pop	r11
+    512a:	af 90       	pop	r10
+    512c:	9f 90       	pop	r9
+    512e:	8f 90       	pop	r8
+    5130:	59 9a       	sbi	0x0b, 1	; 11
+    5132:	08 95       	ret
 
-0000513c <sprite_start_row_read_func>:
-    513c:	59 9a       	sbi	0x0b, 1	; 11
-    513e:	83 e0       	ldi	r24, 0x03	; 3
-    5140:	59 98       	cbi	0x0b, 1	; 11
-    5142:	8e bd       	out	0x2e, r24	; 46
-    5144:	c5 01       	movw	r24, r10
-    5146:	48 0f       	add	r20, r24
-    5148:	59 1f       	adc	r21, r25
-    514a:	62 1d       	adc	r22, r2
-    514c:	95 2f       	mov	r25, r21
-    514e:	e6 2f       	mov	r30, r22
-    5150:	f0 91 00 0a 	lds	r31, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
-    5154:	9f 0f       	add	r25, r31
-    5156:	f0 91 01 0a 	lds	r31, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
-    515a:	ef 1f       	adc	r30, r31
-    515c:	00 c0       	rjmp	.+0      	; 0x515e <sprite_start_row_read_func+0x22>
-    515e:	00 c0       	rjmp	.+0      	; 0x5160 <sprite_start_row_read_func+0x24>
-    5160:	8e b5       	in	r24, 0x2e	; 46
-    5162:	ee bd       	out	0x2e, r30	; 46
-    5164:	0a d0       	rcall	.+20     	; 0x517a <sprite_delay_16>
-    5166:	8e b5       	in	r24, 0x2e	; 46
-    5168:	9e bd       	out	0x2e, r25	; 46
-    516a:	07 d0       	rcall	.+14     	; 0x517a <sprite_delay_16>
-    516c:	8e b5       	in	r24, 0x2e	; 46
-    516e:	4e bd       	out	0x2e, r20	; 46
-    5170:	04 d0       	rcall	.+8      	; 0x517a <sprite_delay_16>
-    5172:	8e b5       	in	r24, 0x2e	; 46
-    5174:	2e bc       	out	0x2e, r2	; 46
-    5176:	08 95       	ret
+00005134 <sprite_start_row_read_func>:
+    5134:	59 9a       	sbi	0x0b, 1	; 11
+    5136:	83 e0       	ldi	r24, 0x03	; 3
+    5138:	59 98       	cbi	0x0b, 1	; 11
+    513a:	8e bd       	out	0x2e, r24	; 46
+    513c:	c5 01       	movw	r24, r10
+    513e:	48 0f       	add	r20, r24
+    5140:	59 1f       	adc	r21, r25
+    5142:	62 1d       	adc	r22, r2
+    5144:	95 2f       	mov	r25, r21
+    5146:	e6 2f       	mov	r30, r22
+    5148:	f0 91 00 0a 	lds	r31, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    514c:	9f 0f       	add	r25, r31
+    514e:	f0 91 01 0a 	lds	r31, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
+    5152:	ef 1f       	adc	r30, r31
+    5154:	c8 95       	lpm
+    5156:	00 c0       	rjmp	.+0      	; 0x5158 <sprite_start_row_read_func+0x24>
+    5158:	ee bd       	out	0x2e, r30	; 46
+    515a:	06 d0       	rcall	.+12     	; 0x5168 <sprite_delay_17>
+    515c:	9e bd       	out	0x2e, r25	; 46
+    515e:	04 d0       	rcall	.+8      	; 0x5168 <sprite_delay_17>
+    5160:	4e bd       	out	0x2e, r20	; 46
+    5162:	02 d0       	rcall	.+4      	; 0x5168 <sprite_delay_17>
+    5164:	2e bc       	out	0x2e, r2	; 46
+    5166:	08 95       	ret
 
-00005178 <sprite_delay_17>:
+00005168 <sprite_delay_17>:
+    5168:	00 00       	nop
+
+0000516a <sprite_delay_16>:
+    516a:	00 00       	nop
+
+0000516c <sprite_delay_15>:
+    516c:	00 00       	nop
+
+0000516e <sprite_delay_14>:
+    516e:	00 00       	nop
+
+00005170 <sprite_delay_13>:
+    5170:	00 00       	nop
+
+00005172 <sprite_delay_12>:
+    5172:	00 00       	nop
+
+00005174 <sprite_delay_11>:
+    5174:	00 00       	nop
+
+00005176 <sprite_delay_10>:
+    5176:	00 00       	nop
+
+00005178 <sprite_delay_9>:
     5178:	00 00       	nop
 
-0000517a <sprite_delay_16>:
+0000517a <sprite_delay_8>:
     517a:	00 00       	nop
 
-0000517c <sprite_delay_15>:
-    517c:	00 00       	nop
-
-0000517e <sprite_delay_14>:
+0000517c <sprite_delay_7>:
+    517c:	08 95       	ret
     517e:	00 00       	nop
-
-00005180 <sprite_delay_13>:
-    5180:	00 00       	nop
-
-00005182 <sprite_delay_12>:
-    5182:	00 00       	nop
-
-00005184 <sprite_delay_11>:
-    5184:	00 00       	nop
-
-00005186 <sprite_delay_10>:
-    5186:	00 00       	nop
-
-00005188 <sprite_delay_9>:
-    5188:	00 00       	nop
-
-0000518a <sprite_delay_8>:
-    518a:	00 00       	nop
-
-0000518c <sprite_delay_7>:
-    518c:	08 95       	ret
-    518e:	00 00       	nop

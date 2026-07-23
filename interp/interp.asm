@@ -10470,13 +10470,12 @@ draw_bitmap_seek_func:
     ; r23 retains top, bottom, and overwrite-partial-row flags. Horizontal
     ; reseek state is kept in native SREG.T instead of this byte.
     clr   r23
-    mov   r24, r9
-    andi  r24, 0x07                 ; height remainder
     mov   r25, r9
     lsr   r25
     lsr   r25
     lsr   r25
-    tst   r24
+    mov   r24, r9
+    andi  r24, 0x07                 ; height remainder
     breq  .Lsprite_height_aligned
 
     inc   r25
@@ -10614,10 +10613,6 @@ draw_bitmap_seek_func:
     ori   r23, (1 << SPRITE_FLAG_BOTTOM)
 .Lsprite_not_bottom_row:
 
-    ; Preserve y low while r18 is reused as the unsigned 128 operand for the
-    ; signed page-index multiply below.
-    mov   r9, VM_R5L
-
     ; Convert the finalized visible source-row address to a physical FX address.
     ; The command transfer has long since completed, so use the legal late
     ; standard handoff: drain the command response, then transmit address high.
@@ -10627,12 +10622,12 @@ draw_bitmap_seek_func:
     add   r25, r0
     lds   r0, data_page_data+1
     adc   r30, r0
-.Lsprite_wait_initial_command:
-    in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsprite_wait_initial_command
-    in    r24, SPDR
+
     out   SPDR, r30                  ; physical address high
+
+    ; Preserve y low while r18 is reused as the unsigned 128 operand for the
+    ; signed page-index multiply below.
+    mov   r9, VM_R5L
 
     ; Compute X = framebuffer + pageStart*128 + x with signed MULSU. A top
     ; source row therefore begins one page before the framebuffer and is moved
@@ -10646,11 +10641,8 @@ draw_bitmap_seek_func:
     add   r26, r17
     adc   r27, ZERO
 
-.Lsprite_wait_initial_high:
-    in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsprite_wait_initial_high
-    in    r24, SPDR
+    rcall sprite_delay_7
+
     out   SPDR, r25                  ; physical address middle
 
     ; Fixed-time coefficient construction overlaps the middle-address byte.
@@ -10663,18 +10655,15 @@ draw_bitmap_seek_func:
     sbrc  r24, 2
     swap  r18                        ; r18 = 1 << (y & 7)
 
-.Lsprite_wait_initial_middle:
-    in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsprite_wait_initial_middle
-    in    r24, SPDR
-    out   SPDR, r20                  ; physical address low
+    rcall sprite_delay_7
 
     ; Select one mode-specific row dispatcher once. GPIOR1:GPIOR2 are free
     ; after address-low is launched and retain its AVR word address for every
     ; source row. Invalid raw-entry modes retain the historical erase fallback.
     mov   r24, r13
     tst   r24
+
+    out   SPDR, r20                  ; physical address low
     breq  .Lsprite_select_overwrite_dispatch
     cpi   r24, SPRITE_MODE_PLUS_MASK
     breq  .Lsprite_select_plus_dispatch
@@ -10684,6 +10673,7 @@ draw_bitmap_seek_func:
     ldi   r31, hi8(pm(sprite_erase_row_dispatch))
     rjmp  .Lsprite_store_mode_dispatch
 .Lsprite_select_overwrite_dispatch:
+    nop
     ldi   r30, lo8(pm(sprite_overwrite_row_dispatch))
     ldi   r31, hi8(pm(sprite_overwrite_row_dispatch))
     rjmp  .Lsprite_store_mode_dispatch
@@ -10711,11 +10701,6 @@ draw_bitmap_seek_func:
 
     ; The setup above occupies the address-low transfer window. Start the first
     ; data-byte transfer with a legal late standard handoff.
-.Lsprite_wait_initial_low:
-    in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsprite_wait_initial_low
-    in    r24, SPDR
     out   SPDR, ZERO
     rjmp  .Lsprite_row_dispatch
 

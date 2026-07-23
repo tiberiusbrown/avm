@@ -10869,25 +10869,8 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     mov   r17, r16
     lsr   r17                        ; pair count
     brcc  .Lsprite_middle_overwrite_pair_loop
-    brne  .Lsprite_middle_overwrite_odd_prefix
     inc   r17
     rjmp  .Lsprite_middle_overwrite_one
-
-.Lsprite_middle_overwrite_odd_prefix:
-    ; Odd prefix for widths above one. Fourteen pixel cycles plus DELAY_2
-    ; place the following pair's IN exactly at cycle 17.
-    in    r24, SPDR
-    out   SPDR, ZERO
-    mul   r24, r18
-    ld    r25, X
-    and   r25, r9
-    or    r25, r0
-    st    X+, r25
-    ld    r25, Z
-    and   r25, r19
-    or    r25, r1
-    st    Z+, r25
-    delay_2
 
 .Lsprite_middle_overwrite_pair_loop:
     ; First column of the pair: sixteen cycles after OUT.
@@ -10902,9 +10885,9 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r25, r19
     or    r25, r1
     st    Z+, r25
+.Lsprite_middle_overwrite_one:
     ld    r25, X                    ; preload second low-page byte
 
-.Lsprite_middle_overwrite_one:
     ; Second column: twelve pixel cycles plus NOP/DEC/BRNE = sixteen.
     in    r24, SPDR
     out   SPDR, ZERO
@@ -10953,24 +10936,6 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 ; Full top and bottom rows use a standard first image->mask handoff, then the
 ; proven 17/17 reverse schedule. Each column consumes image then mask.
 .Lsprite_top_plus_full:
-    in    r0, SPDR                   ; image
-    out   SPDR, ZERO                 ; begin mask
-    mul   r0, r18
-    mov   r24, r1                    ; shifted image high
-    rcall sprite_delay_13
-    in    r0, SPDR                   ; mask
-    out   SPDR, ZERO                 ; begin next image
-    mul   r0, r18
-    mov   r25, r1
-    ld    r19, X
-    com   r25
-    and   r19, r25
-    or    r19, r24
-    st    X+, r19
-    delay_2
-    dec   r17
-    brne  .Lsprite_top_plus_full_loop
-    rjmp  .Lsprite_top_done
 .Lsprite_top_plus_full_loop:
     cli
     out   SPDR, ZERO                 ; begin mask
@@ -10995,24 +10960,6 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     rjmp  .Lsprite_top_done
 
 .Lsprite_bottom_plus_full:
-    in    r0, SPDR                   ; image
-    out   SPDR, ZERO                 ; begin mask
-    mul   r0, r18
-    mov   r24, r0                    ; shifted image low
-    rcall sprite_delay_13
-    in    r0, SPDR                   ; mask
-    out   SPDR, ZERO                 ; begin next image
-    mul   r0, r18
-    mov   r25, r0
-    ld    r19, X
-    com   r25
-    and   r19, r25
-    or    r19, r24
-    st    X+, r19
-    delay_2
-    dec   r17
-    brne  .Lsprite_bottom_plus_full_loop
-    rjmp  .Lsprite_bottom_done
 .Lsprite_bottom_plus_full_loop:
     cli
     out   SPDR, ZERO                 ; begin mask
@@ -11033,33 +10980,12 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     or    r19, r24
     st    X+, r19
     dec   r17
-    brne  .Lsprite_bottom_plus_full_loop
+    brne  .Lsprite_bottom_plus_full
     rjmp  .Lsprite_bottom_done
 
 ; Full middle rows use 17 cycles from image OUT to mask OUT and 18 cycles from
 ; mask OUT to the next image OUT after the first standard priming handoff.
 .Lsprite_middle_plus_full:
-    in    r0, SPDR                   ; image
-    out   SPDR, ZERO                 ; begin mask
-    mul   r0, r18
-    movw  r24, r0                    ; shifted image
-    ld    r9, X
-    ld    r19, Z
-    rcall sprite_delay_9
-    in    r0, SPDR                   ; mask
-    out   SPDR, ZERO                 ; begin next image
-    mul   r0, r18
-    com   r0
-    com   r1
-    and   r9, r0
-    or    r9, r24
-    st    X+, r9
-    and   r19, r1
-    or    r19, r25
-    st    Z+, r19
-    dec   r17
-    brne  .Lsprite_middle_plus_full_loop
-    rjmp  .Lsprite_middle_done
 .Lsprite_middle_plus_full_loop:
     cli
     out   SPDR, ZERO                 ; begin mask
@@ -11099,8 +11025,8 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ld    r25, X
     or    r25, r1
     st    X+, r25
-    delay_4
-    delay_2
+    delay_3
+    delay_3
     dec   r17
     brne  .Lsprite_top_self_full_loop
     rjmp  .Lsprite_top_done
@@ -11113,8 +11039,8 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ld    r25, X
     or    r25, r0
     st    X+, r25
-    delay_4
-    delay_2
+    delay_3
+    delay_3
     dec   r17
     brne  .Lsprite_bottom_self_full_loop
     rjmp  .Lsprite_bottom_done

@@ -10589,29 +10589,10 @@ draw_bitmap_seek_func:
     sub   r24, r16
     mov   r14, r24                  ; framebuffer row advance
 
-    ; Clip source rows against the bottom. If the original final source page is
-    ; removed, its partial-page mask is no longer relevant.
-    ldi   r24, 8
-    sub   r24, r19                  ; maximum visible source rows
-    cp    r12, r24
-    brlo  .Lsprite_bottom_count_ready
-    breq  .Lsprite_bottom_count_ready
-    mov   r12, r24
-    andi  r23, 0xF7                 ; clear SPRITE_FLAG_PARTIAL
-.Lsprite_bottom_count_ready:
-
     cpi   r19, 0xFF
     brne  .Lsprite_not_top_row
     ori   r23, (1 << SPRITE_FLAG_TOP)
 .Lsprite_not_top_row:
-
-    mov   r24, r19
-    add   r24, r12
-    dec   r24
-    cpi   r24, 7
-    brne  .Lsprite_not_bottom_row
-    ori   r23, (1 << SPRITE_FLAG_BOTTOM)
-.Lsprite_not_bottom_row:
 
     ; Convert the finalized visible source-row address to a physical FX address.
     ; The command transfer has long since completed, so use the legal late
@@ -10641,9 +10622,26 @@ draw_bitmap_seek_func:
     add   r26, r17
     adc   r27, ZERO
 
-    rcall sprite_delay_7
+    ; Clip source rows against the bottom. If the original final source page is
+    ; removed, its partial-page mask is no longer relevant.
+    ldi   r24, 8
+    sub   r24, r19                  ; maximum visible source rows
+    cp    r12, r24
+    brlo  .Lsprite_bottom_count_ready
+    breq  .Lsprite_bottom_count_ready
+    mov   r12, r24
+    andi  r23, 0xF7                 ; clear SPRITE_FLAG_PARTIAL
+.Lsprite_bottom_count_ready:
+
+    mov   r24, r19
+    add   r24, r12
 
     out   SPDR, r25                  ; physical address middle
+
+    cpi   r24, 8
+    brne  .Lsprite_not_bottom_row
+    ori   r23, (1 << SPRITE_FLAG_BOTTOM)
+.Lsprite_not_bottom_row:
 
     ; Fixed-time coefficient construction overlaps the middle-address byte.
     mov   r24, r9
@@ -10655,13 +10653,13 @@ draw_bitmap_seek_func:
     sbrc  r24, 2
     swap  r18                        ; r18 = 1 << (y & 7)
 
-    rcall sprite_delay_7
-
     ; Select one mode-specific row dispatcher once. GPIOR1:GPIOR2 are free
     ; after address-low is launched and retain its AVR word address for every
     ; source row. Invalid raw-entry modes retain the historical erase fallback.
     mov   r24, r13
     tst   r24
+
+    delay_4
 
     out   SPDR, r20                  ; physical address low
     breq  .Lsprite_select_overwrite_dispatch

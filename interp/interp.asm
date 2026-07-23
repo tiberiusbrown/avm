@@ -10791,10 +10791,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 ; OVERWRITE
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; Full top and bottom rows use exact 18-cycle standard handoffs.  The
-; previous reverse-order versions were cycle-tight but regressed top-clipped
-; rendering in the system tests; the standard schedule remains within the
-; renderer's 18-cycle target and is robust at row boundaries.
+; Full top and bottom rows use exact 18-cycle standard handoffs.
 .Lsprite_top_overwrite_full:
 .Lsprite_top_overwrite_full_loop:
     in    r24, SPDR
@@ -10871,9 +10868,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 .Lsprite_middle_overwrite_full:
     mov   r17, r16
     lsr   r17                        ; pair count
-    sbrs  r16, 0
-    rjmp  .Lsprite_middle_overwrite_pair_loop
-    tst   r17
+    brcc  .Lsprite_middle_overwrite_pair_loop
     brne  .Lsprite_middle_overwrite_odd_prefix
 
     ; Width one: render the sole column and finish without another handoff.

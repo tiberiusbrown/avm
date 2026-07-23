@@ -11070,35 +11070,36 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 ; The middle path remains the 19-cycle drawBasicFX schedule.
 .Lsprite_top_erase_full:
 .Lsprite_top_erase_full_loop:
-    in    r24, SPDR
+    cli
     out   SPDR, ZERO
+    in    r24, SPDR
+    sei
     mul   r24, r18
     com   r1
     ld    r25, X
     and   r25, r1
     st    X+, r25
-    delay_4
-    nop
+    delay_2
     dec   r17
     brne  .Lsprite_top_erase_full_loop
     rjmp  .Lsprite_top_done
 
 .Lsprite_bottom_erase_full:
 .Lsprite_bottom_erase_full_loop:
-    in    r24, SPDR
+    cli
     out   SPDR, ZERO
+    in    r24, SPDR
+    sei
     mul   r24, r18
     com   r0
     ld    r25, X
     and   r25, r0
     st    X+, r25
-    delay_4
-    nop
+    delay_2
     dec   r17
     brne  .Lsprite_bottom_erase_full_loop
     rjmp  .Lsprite_bottom_done
 
-; The full middle path is the 19-cycle drawBasicFX schedule.
 .Lsprite_middle_erase_full:
 .Lsprite_middle_erase_full_loop:
     in    r24, SPDR
@@ -11156,9 +11157,6 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     add   r26, r24
     adc   r27, ZERO
 
-.Lsprite_bottom_done:
-    ; Bottom is necessarily the last visible source row.
-
 .Lsprite_row_complete:
     dec   r12
     breq  .Lsprite_finish
@@ -11170,6 +11168,9 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     fx_disable
     rcall sprite_start_row_read_func
     rjmp  .Lsprite_row_dispatch
+
+.Lsprite_bottom_done:
+    ; Bottom is necessarily the last visible source row.
 
 .Lsprite_finish:
     pop   r23

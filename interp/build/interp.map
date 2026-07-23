@@ -172,7 +172,7 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
                 0x00000000                __vectors
                 0x00000200                abvm_interp
                 0x00000200                primary_table
-                0x00004c10                draw_bitmap_seek_func
+                0x00004c12                draw_bitmap_seek_func
                 0x000050b0                        . = ALIGN (0x2)
  *(.text.*)
                 0x000050b0                        . = ALIGN (0x2)

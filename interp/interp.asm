@@ -10387,6 +10387,8 @@ sys_draw_sprite_header_impl:
 ;   Z               adjacent framebuffer page pointer or dispatch target
 ;   r24:r25,r0:r1   stream and framebuffer temporaries
 ;
+.Lsprite_raw_reject:
+    ret
 .global draw_bitmap_seek_func
 draw_bitmap_seek_func:
     ; Reject invisible or empty bitmaps before touching architectural state or
@@ -10416,10 +10418,6 @@ draw_bitmap_seek_func:
     cp    ZERO, r30
     cpc   ZERO, r31
     brge  .Lsprite_raw_reject
-    rjmp  .Lsprite_raw_visible
-
-.Lsprite_raw_reject:
-    ret
 
 .Lsprite_raw_visible:
     ; Start the selected-frame command before preserving architectural inputs.

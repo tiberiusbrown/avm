@@ -11245,7 +11245,6 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     mov   r24, r14
     add   r26, r24
     adc   r27, ZERO
-    rjmp  .Lsprite_row_complete
 
 .Lsprite_bottom_done:
     ; Bottom is necessarily the last visible source row.
@@ -11258,13 +11257,6 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ; Only clipped rows retain and advance r20:r21:r22 for a fresh seek.
     brtc  .Lsprite_row_dispatch
 
-    ; The final visible byte launched one speculative unwanted transfer. Drain
-    ; it before selecting the next visible row with a fresh command/address.
-.Lsprite_wait_reseek_byte:
-    in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsprite_wait_reseek_byte
-    in    r24, SPDR
     fx_disable
     rcall sprite_start_row_read_func
     rjmp  .Lsprite_row_dispatch

@@ -437,6 +437,7 @@ SYMBOL TABLE:
 00004808 l       .text	00000000 powf
 000048a0 l       .text	00000000 hypotf
 0000496c l       .text	00000000 fmodf
+00001278 l       .text	00000000 seek_and_dispatch_func_disabled
 000012b8 l       .text	00000000 interp_delay_11
 000012ac l       .text	00000000 interp_delay_17
 000012ae l       .text	00000000 interp_delay_16
@@ -4263,6 +4264,8 @@ Disassembly of section .text:
 
 00001276 <seek_and_dispatch_func>:
     1276:	59 9a       	sbi	0x0b, 1	; 11
+
+00001278 <seek_and_dispatch_func_disabled>:
     1278:	e3 e0       	ldi	r30, 0x03	; 3
     127a:	59 98       	cbi	0x0b, 1	; 11
     127c:	ee bd       	out	0x2e, r30	; 46
@@ -12840,7 +12843,7 @@ Disassembly of section .text:
     4bf0:	0b b4       	in	r0, 0x2b	; 43
     4bf2:	ba b5       	in	r27, 0x2a	; 42
     4bf4:	03 d0       	rcall	.+6      	; 0x4bfc <draw_bitmap_seek_func>
-    4bf6:	0c 94 3b 09 	jmp	0x1276	; 0x1276 <seek_and_dispatch_func>
+    4bf6:	0c 94 3c 09 	jmp	0x1278	; 0x1278 <seek_and_dispatch_func_disabled>
 
 00004bfa <.Lsprite_raw_reject>:
     4bfa:	08 95       	ret

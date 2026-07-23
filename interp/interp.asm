@@ -3222,6 +3222,7 @@ push_pc_seek_and_dispatch_func:
 ; start its following-byte fetch, and dispatch directly to that primary slot.
 seek_and_dispatch_func:
     fx_disable
+seek_and_dispatch_func_disabled:
     ldi  r30, SFC_READ
     fx_enable
     out  SPDR, r30
@@ -10327,7 +10328,7 @@ sys_draw_sprite_header_impl:
     in    r0, GPIOR2                 ; native raw-renderer width
     in    r27, GPIOR1                ; native raw-renderer mode
     rcall draw_bitmap_seek_func
-    jmp   seek_and_dispatch_func
+    jmp   seek_and_dispatch_func_disabled
 
 
 ; Reusable raw page-bitmap renderer ABI.

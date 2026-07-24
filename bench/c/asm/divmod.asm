@@ -16,9 +16,9 @@ SYMBOL TABLE:
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	00000152 avm_test_main
 00000368 g     F .text	00000002 avm_halt
-0000049e g     F .text	00000014 __avm_udivsi3
-0000036a g     F .text	000000b1 __avm_mulsi3
-0000041b g     F .text	00000083 __avm_udivmodsi4
+0000049a g     F .text	00000014 __avm_udivsi3
+0000036a g     F .text	000000ad __avm_mulsi3
+00000417 g     F .text	00000083 __avm_udivmodsi4
 
 Disassembly of section .text:
 
@@ -165,7 +165,7 @@ Disassembly of section .text:
  f4 63                 stsp16	[sp+0x8], r7
  f4 1a                 ldsp16	r6, [sp+0x6]
  f4 23                 ldsp16	r7, [sp+0x8]
- e1 6c 01              call16	__avm_udivsi3
+ e1 68 01              call16	__avm_udivsi3
  f7 66                 add32	q1, q2
  f4 1a                 ldsp16	r6, [sp+0x6]
  f4 23                 ldsp16	r7, [sp+0x8]
@@ -212,7 +212,6 @@ Disassembly of section .text:
  fa 9f                 lsr16i	r6, 0xf
  f2 28                 add	r6, r0
  f4 72                 stsp16	[sp+0xc], r6
- f4 3a                 ldsp16	r6, [sp+0xe]
  f0 37 10              ldsp16	r7, [sp+0x10]
  f1 07                 mov	r0, r7
  f2 39                 sub	r1, r1
@@ -234,7 +233,6 @@ Disassembly of section .text:
  f4 78                 stsp16	[sp+0xe], r4
  f0 3d 10              stsp16	[sp+0x10], r5
  f4 10                 ldsp16	r4, [sp+0x4]
- f4 19                 ldsp16	r5, [sp+0x6]
  04                    mov	r5, r4
  f1 75                 zext8	r5
  01                    mov	r4, r5

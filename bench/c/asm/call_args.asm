@@ -4,12 +4,12 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/call_args.elf:	file format elf
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 call_args.c
-00000274 l     F .text	00000054 mix_arguments
+00000274 l     F .text	0000003f mix_arguments
 00000100 l     O .data	00000004 call_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	0000005e avm_test_main
-000002c8 g     F .text	00000002 avm_halt
+000002b3 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -24,7 +24,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 b2 00              call16	avm_halt
+ e1 9d 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -81,54 +81,43 @@ Disassembly of section .text:
  ef                    ret
 
 <mix_arguments>:
+ b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	-0x4
- f1 04                 mov	r0, r4
  17                    add	r5, r7
- f4 3f                 ldsp16	r7, [sp+0xf]
+ f4 37                 ldsp16	r7, [sp+0xd]
  1d                    add	r7, r5
- f0 34 13              ldsp16	r4, [sp+0x13]
- 13                    add	r4, r7
- f2 06                 add	r0, r6
+ f0 35 11              ldsp16	r5, [sp+0x11]
+ 17                    add	r5, r7
+ 0d                    mov	r7, r5
+ fa a8                 lsr16i	r7, 0x8
+ f1 0f                 mov	r1, r7
+ f2 30                 sub	r0, r0
+ fa 48                 lsl16i	r5, 0x8
+ f1 15                 mov	r2, r5
+ f2 4b                 sub	r3, r3
+ f9 41                 or	r2, r0
+ f9 65                 or	r3, r1
+ f0 30 17              ldsp16	r0, [sp+0x17]
+ f0 31 19              ldsp16	r1, [sp+0x19]
+ f7 61                 add32	q0, q1
+ 12                    add	r4, r6
+ f4 2d                 ldsp16	r5, [sp+0xb]
+ 14                    add	r5, r4
+ f4 3c                 ldsp16	r4, [sp+0xf]
+ 11                    add	r4, r5
  08                    mov	r6, r4
  af                    xor	r7, r7
- 0b                    mov	r6, r7
- af                    xor	r7, r7
- fa 58                 lsl16i	r6, 0x8
- f4 42                 stsp16	[sp+0x0], r6
- f4 4b                 stsp16	[sp+0x2], r7
- 04                    mov	r5, r4
- fa 88                 lsr16i	r5, 0x8
- f4 02                 ldsp16	r6, [sp+0x0]
- f4 0b                 ldsp16	r7, [sp+0x2]
- 96                    or	r5, r6
- f4 37                 ldsp16	r7, [sp+0xd]
- f2 2c                 add	r7, r0
- f0 32 11              ldsp16	r2, [sp+0x11]
- f2 17                 add	r2, r7
- 0d                    mov	r7, r5
- aa                    xor	r6, r6
- fa 38                 lsl16i	r4, 0x8
- f1 04                 mov	r0, r4
- f2 39                 sub	r1, r1
- f9 19                 or	r0, r6
- f9 3d                 or	r1, r7
- f0 36 19              ldsp16	r6, [sp+0x19]
- f0 37 1b              ldsp16	r7, [sp+0x1b]
- f7 6c                 add32	q3, q0
- f1 02                 mov	r0, r2
- f2 39                 sub	r1, r1
- f0 34 15              ldsp16	r4, [sp+0x15]
- f0 35 17              ldsp16	r5, [sp+0x17]
- f7 68                 add32	q2, q0
- a2                    xor	r4, r6
- a7                    xor	r5, r7
- d6 04                 adjsp	0x4
+ f0 34 13              ldsp16	r4, [sp+0x13]
+ f0 35 15              ldsp16	r5, [sp+0x15]
+ f7 6b                 add32	q2, q3
+ f9 82                 xor	r4, r0
+ f9 a6                 xor	r5, r1
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
+ bb                    pop16	r3
  ef                    ret
 
 <avm_halt>:

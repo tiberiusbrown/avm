@@ -11,6 +11,10 @@
 #define AVM_PSTR(s) __builtin_avm_flash_string(s)
 #define F(s) AVM_PSTR(s)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void* memcpy_P(void* dst, void const AVM_PROGMEM* src, size_t size);
 int memcmp_P(void const* lhs, void const AVM_PROGMEM* rhs, size_t size);
 int strcmp_P(char const* lhs, char const AVM_PROGMEM* rhs);
@@ -19,6 +23,10 @@ char* strncpy_P(char* dst, char const AVM_PROGMEM* src, size_t size);
 char* strncat_P(char* dst, char const AVM_PROGMEM* src, size_t size);
 char* strcpy_P(char* dst, char const AVM_PROGMEM* src);
 char* strcat_P(char* dst, char const AVM_PROGMEM* src);
+
+#ifdef __cplusplus
+}
+#endif
 
 #define memcpy_P(dst, src, size) __builtin_avm_memcpy_p((dst), (src), (size))
 #define memcmp_P(lhs, rhs, size) __builtin_avm_memcmp_p((lhs), (rhs), (size))

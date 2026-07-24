@@ -12788,15 +12788,15 @@ Disassembly of section .text:
     4b8a:	43 0c       	add	r4, r3
     4b8c:	52 1c       	adc	r5, r2
     4b8e:	62 1c       	adc	r6, r2
-    4b90:	ca 01       	movw	r24, r20
-    4b92:	a6 2f       	mov	r26, r22
+    4b90:	c6 01       	movw	r24, r12
+    4b92:	ae 2d       	mov	r26, r14
     4b94:	59 9a       	sbi	0x0b, 1	; 11
     4b96:	0e 94 dd 0a 	call	0x15ba	; 0x15ba <fx_start_program_read_func>
     4b9a:	74 d2       	rcall	.+1256   	; 0x5084 <sprite_delay_12>
     4b9c:	0e b4       	in	r0, 0x2e	; 46
     4b9e:	2e bc       	out	0x2e, r2	; 46
-    4ba0:	ca 01       	movw	r24, r20
-    4ba2:	a6 2f       	mov	r26, r22
+    4ba0:	c6 01       	movw	r24, r12
+    4ba2:	ae 2d       	mov	r26, r14
     4ba4:	02 96       	adiw	r24, 0x02	; 2
     4ba6:	a2 1d       	adc	r26, r2
     4ba8:	0b bc       	out	0x2b, r0	; 43
@@ -12820,22 +12820,22 @@ Disassembly of section .text:
     4bcc:	ff 1f       	adc	r31, r31
 
 00004bce <.Lsys_sprite_stride_ready>:
-    4bce:	b8 2d       	mov	r27, r8
-    4bd0:	b9 29       	or	r27, r9
+    4bce:	b4 2f       	mov	r27, r20
+    4bd0:	b5 2b       	or	r27, r21
     4bd2:	71 f0       	breq	.+28     	; 0x4bf0 <.Lsys_sprite_frame_offset_done>
-    4bd4:	8e 9e       	mul	r8, r30
+    4bd4:	4e 9f       	mul	r20, r30
     4bd6:	80 0d       	add	r24, r0
     4bd8:	91 1d       	adc	r25, r1
     4bda:	a2 1d       	adc	r26, r2
-    4bdc:	8f 9e       	mul	r8, r31
+    4bdc:	4f 9f       	mul	r20, r31
     4bde:	90 0d       	add	r25, r0
     4be0:	a1 1d       	adc	r26, r1
-    4be2:	99 20       	and	r9, r9
+    4be2:	55 23       	and	r21, r21
     4be4:	29 f0       	breq	.+10     	; 0x4bf0 <.Lsys_sprite_frame_offset_done>
-    4be6:	9e 9e       	mul	r9, r30
+    4be6:	5e 9f       	mul	r21, r30
     4be8:	90 0d       	add	r25, r0
     4bea:	a1 1d       	adc	r26, r1
-    4bec:	9f 9e       	mul	r9, r31
+    4bec:	5f 9f       	mul	r21, r31
     4bee:	a0 0d       	add	r26, r0
 
 00004bf0 <.Lsys_sprite_frame_offset_done>:

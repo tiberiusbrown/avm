@@ -10222,8 +10222,8 @@ sys_memset_impl:
 ; Public SYS ABI for all four services:
 ;   r4 = int16_t x
 ;   r5 = int16_t y
-;   q3 = image-relative program pointer to { width, height, frame bytes... }
-;   r0 = uint16_t frame index
+;   q1 = image-relative program pointer to { width, height, frame bytes... }
+;   r6 = uint16_t frame index
 ;
 ; The frame data is page-major. OVERWRITE, SELF_MASKED, and ERASE use one
 ; source byte per column. PLUS_MASK uses interleaved image,mask byte pairs.
@@ -10247,12 +10247,12 @@ sys_draw_sprite_header_impl:
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
 
-    movw  r24, VM_R6
-    mov   r26, VM_R7L
+    movw  r24, VM_R2
+    mov   r26, VM_R3L
 
     fx_disable
 
-    ; Read width and height at q3. The shared address-phase helper is suitable
+    ; Read width and height at q1. The shared address-phase helper is suitable
     ; for this fixed two-byte header read; the selected-frame seek below is a
     ; separate sprite-specific transaction whose command interval contains the
     ; clipping and render preparation.
@@ -10265,8 +10265,8 @@ sys_draw_sprite_header_impl:
     out   SPDR, ZERO                ; begin height transfer
 
     ; Establish the unframed data pointer while height is in flight.
-    movw  r24, VM_R6
-    mov   r26, VM_R7L
+    movw  r24, VM_R2
+    mov   r26, VM_R3L
     adiw  r24, 2
     adc   r26, ZERO
     out   GPIOR2, r0                ; retain width across MULs
@@ -10299,28 +10299,28 @@ sys_draw_sprite_header_impl:
 
     ; Add low24(frame * stride) to sprite+2. Frame zero is overwhelmingly
     ; common and skips all partial products. Frames below 256 skip the two
-    ; high-frame-byte products. q3[31:24] is ignored.
-    mov   r27, VM_R0L
-    or    r27, VM_R0H
+    ; high-frame-byte products. q1[31:24] is ignored.
+    mov   r27, VM_R6L
+    or    r27, VM_R6H
     breq  .Lsys_sprite_frame_offset_done
 
-    mul   VM_R0L, r30
+    mul   VM_R6L, r30
     add   r24, r0
     adc   r25, r1
     adc   r26, ZERO
 
-    mul   VM_R0L, r31
+    mul   VM_R6L, r31
     add   r25, r0
     adc   r26, r1
 
-    tst   VM_R0H
+    tst   VM_R6H
     breq  .Lsys_sprite_frame_offset_done
 
-    mul   VM_R0H, r30
+    mul   VM_R6H, r30
     add   r25, r0
     adc   r26, r1
 
-    mul   VM_R0H, r31
+    mul   VM_R6H, r31
     add   r26, r0
 
 .Lsys_sprite_frame_offset_done:

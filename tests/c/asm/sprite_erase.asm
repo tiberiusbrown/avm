@@ -4,42 +4,43 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/sprite_erase.elf:	file format 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 sprite_erase.c
-00000908 l     O .rodata	00000020 sprite_5x13
-00000928 l     O .rodata	00000400 expected_00
-00000d28 l     O .rodata	00000400 expected_01
-00001128 l     O .rodata	00000400 expected_02
-00001528 l     O .rodata	00000400 expected_03
-00001928 l     O .rodata	00000400 expected_04
-00001d28 l     O .rodata	00000400 expected_05
-00002128 l     O .rodata	00000400 expected_06
-00002528 l     O .rodata	00000104 sprite_1x1_many_frames
-0000262c l     O .rodata	00000400 expected_07
-00002a2c l     O .rodata	0000000b sprite_9x8
-00002a37 l     O .rodata	00000400 expected_08
-00002e37 l     O .rodata	00000400 expected_09
-00003237 l     O .rodata	0000001a sprite_4x17
-00003251 l     O .rodata	00000400 expected_10
-00003651 l     O .rodata	00000400 expected_11
-00003a51 l     O .rodata	0000020a sprite_130x9
-00003c5b l     O .rodata	00000400 expected_12
-0000405b l     O .rodata	00000041 sprite_7x65
-0000409c l     O .rodata	00000400 expected_13
-0000449c l     O .rodata	00000400 expected_14
-0000489c l     O .rodata	00000400 expected_15
-00004c9c l     O .rodata	00000400 expected_16
-0000509c l     O .rodata	00000400 expected_17
-0000549c l     O .rodata	00000002 sprite_zero_width
-0000549e l     O .rodata	00000400 expected_18
-0000589e l     O .rodata	00000002 sprite_zero_height
-000058a0 l     O .rodata	00000400 expected_19
-00005ca0 l     O .rodata	00000400 expected_20
-000060a0 l     O .rodata	00000400 expected_21
-000064a0 l     O .rodata	00000400 expected_22
-000068a0 l     O .rodata	00000400 expected_23
+00000a0d l     O .rodata	00000020 sprite_5x13
+00000a2d l     O .rodata	00000400 expected_00
+00000e2d l     O .rodata	00000400 expected_01
+0000122d l     O .rodata	00000400 expected_02
+0000162d l     O .rodata	00000400 expected_03
+00001a2d l     O .rodata	00000400 expected_04
+00001e2d l     O .rodata	00000400 expected_05
+0000222d l     O .rodata	00000400 expected_06
+0000262d l     O .rodata	00000104 sprite_1x1_many_frames
+00002731 l     O .rodata	00000400 expected_07
+00002b31 l     O .rodata	0000000b sprite_9x8
+00002b3c l     O .rodata	00000400 expected_08
+00002f3c l     O .rodata	00000400 expected_09
+0000333c l     O .rodata	0000001a sprite_4x17
+00003356 l     O .rodata	00000400 expected_10
+00003756 l     O .rodata	00000400 expected_11
+00003b56 l     O .rodata	0000020a sprite_130x9
+00003d60 l     O .rodata	00000400 expected_12
+00004160 l     O .rodata	00000041 sprite_7x65
+000041a1 l     O .rodata	00000400 expected_13
+000045a1 l     O .rodata	00000400 expected_14
+000049a1 l     O .rodata	00000400 expected_15
+00004da1 l     O .rodata	00000400 expected_16
+000051a1 l     O .rodata	00000400 expected_17
+000055a1 l     O .rodata	00000002 sprite_zero_width
+000055a3 l     O .rodata	00000400 expected_18
+000059a3 l     O .rodata	00000002 sprite_zero_height
+000059a5 l     O .rodata	00000400 expected_19
+00005da5 l     O .rodata	00000400 expected_20
+000061a5 l     O .rodata	00000400 expected_21
+000065a5 l     O .rodata	00000400 expected_22
+000069a5 l     O .rodata	00000400 expected_23
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
-00000116 g     F .text	000007f0 avm_test_main
-00000906 g     F .text	00000002 avm_halt
+00000116 g     F .text	000008f5 avm_test_main
+00000a0b g     F .text	00000002 avm_halt
+00000500 g       *ABS*	00000000 __avm_framebuffer
 
 Disassembly of section .text:
 
@@ -54,7 +55,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 f0 07              call16	avm_halt
+ e1 f5 08              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -62,32 +63,38 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fa                 adjsp	avm_test_main
- f0 05 00 04           ldi16	r1, 0x400
+ c7 00 04              ldi16	r7, 0x400
  f2 30                 sub	r0, r0
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
  f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 ff                 ldi8	r4, 0xff
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 08                 ldi8	r5, 0x8
- c0 0a                 ldi8	r4, 0xa
+ c4 0d 0a              ldi16	r4, 0xa0d
+ c1 00                 ldi8	r5, 0x0
+ f0 02 08              ldi8	r2, 0x8
+ f0 03 0a              ldi8	r3, 0xa
+ b7                    push16	r7
+ 08                    mov	r6, r4
+ f1 23                 mov	r4, r3
+ 0d                    mov	r7, r5
+ f1 26                 mov	r5, r2
  d7 21                 sys	draw_sprite_erase
- c6 28 09              ldi16	r6, 0x928
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 2d 0a           ldi16	r0, 0xa2d
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 1f                 breq8	avm_test_main+93
+ d0 1f                 breq8	avm_test_main+102
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -102,32 +109,38 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
- e0 a6 03              jmp16	avm_test_main+1027
+ e0 33 04              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  a5                    xor	r5, r5
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 a5                 ldi8	r4, 0xa5
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
  f0 00 01              ldi8	r0, 0x1
- c1 08                 ldi8	r5, 0x8
- c0 0a                 ldi8	r4, 0xa
+ c4 0d 0a              ldi16	r4, 0xa0d
+ c1 00                 ldi8	r5, 0x0
+ b7                    push16	r7
+ 08                    mov	r6, r4
+ f1 23                 mov	r4, r3
+ 0d                    mov	r7, r5
+ f1 26                 mov	r5, r2
  d7 21                 sys	draw_sprite_erase
- c6 28 0d              ldi16	r6, 0xd28
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f1 10                 mov	r2, r0
+ f0 04 2d 0e           ldi16	r0, 0xe2d
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+178
+ d0 21                 breq8	avm_test_main+196
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -143,32 +156,40 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
- e0 51 03              jmp16	avm_test_main+1027
+ e0 d5 03              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  a5                    xor	r5, r5
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 3c                 ldi8	r4, 0x3c
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f0 00 02              ldi8	r0, 0x2
- c1 03                 ldi8	r5, 0x3
+ c1 02                 ldi8	r5, 0x2
+ f0 04 0d 0a           ldi16	r0, 0xa0d
+ f0 01 00              ldi8	r1, 0x0
+ c2 03                 ldi8	r6, 0x3
  c0 1b                 ldi8	r4, 0x1b
+ b7                    push16	r7
+ f1 2d                 mov	r7, r1
+ b5                    push16	r5
+ 06                    mov	r5, r6
+ f1 28                 mov	r6, r0
+ b8                    pop16	r0
  d7 21                 sys	draw_sprite_erase
- c6 28 11              ldi16	r6, 0x1128
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 2d 12           ldi16	r0, 0x122d
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+263
+ d0 21                 breq8	avm_test_main+294
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -184,32 +205,38 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 32                 ldi8	r4, 0x32
- e0 fc 02              jmp16	avm_test_main+1027
+ e0 73 03              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  a5                    xor	r5, r5
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 96                 ldi8	r4, 0x96
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f0 00 01              ldi8	r0, 0x1
- c1 13                 ldi8	r5, 0x13
+ f0 04 0d 0a           ldi16	r0, 0xa0d
+ f0 01 00              ldi8	r1, 0x0
+ c2 13                 ldi8	r6, 0x13
  c4 fe ff              ldi16	r4, 0xfffe
+ b7                    push16	r7
+ 06                    mov	r5, r6
+ f1 28                 mov	r6, r0
+ f1 2d                 mov	r7, r1
+ f1 02                 mov	r0, r2
  d7 21                 sys	draw_sprite_erase
- c6 28 15              ldi16	r6, 0x1528
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 2d 16           ldi16	r0, 0x162d
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+349
+ d0 21                 breq8	avm_test_main+391
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -225,32 +252,41 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 33                 ldi8	r4, 0x33
- e0 a6 02              jmp16	avm_test_main+1027
- a5                    xor	r5, r5
+ e0 12 03              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
+ f2 42                 sub	r2, r2
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 69                 ldi8	r4, 0x69
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f0 00 02              ldi8	r0, 0x2
- c1 11                 ldi8	r5, 0x11
+ f0 04 0d 0a           ldi16	r0, 0xa0d
+ f0 01 00              ldi8	r1, 0x0
+ c2 11                 ldi8	r6, 0x11
  c0 7e                 ldi8	r4, 0x7e
+ c1 02                 ldi8	r5, 0x2
+ b7                    push16	r7
+ f1 2d                 mov	r7, r1
+ b5                    push16	r5
+ 06                    mov	r5, r6
+ f1 28                 mov	r6, r0
+ b8                    pop16	r0
  d7 21                 sys	draw_sprite_erase
- c6 28 19              ldi16	r6, 0x1928
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 2d 1a           ldi16	r0, 0x1a2d
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+434
+ d0 21                 breq8	avm_test_main+492
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -266,32 +302,40 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 34                 ldi8	r4, 0x34
- e0 51 02              jmp16	avm_test_main+1027
- f2 30                 sub	r0, r0
+ e0 ad 02              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 c3                 ldi8	r4, 0xc3
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c5 fb ff              ldi16	r5, 0xfffb
- c0 28                 ldi8	r4, 0x28
+ c4 0d 0a              ldi16	r4, 0xa0d
+ c1 00                 ldi8	r5, 0x0
+ f0 04 fb ff           ldi16	r0, 0xfffb
+ c2 28                 ldi8	r6, 0x28
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ f1 24                 mov	r5, r0
+ f1 02                 mov	r0, r2
+ f1 0c                 mov	r1, r4
+ 02                    mov	r4, r6
+ f1 29                 mov	r6, r1
  d7 21                 sys	draw_sprite_erase
- c6 28 1d              ldi16	r6, 0x1d28
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 2d 1e           ldi16	r0, 0x1e2d
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+520
+ d0 21                 breq8	avm_test_main+592
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -307,32 +351,40 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 35                 ldi8	r4, 0x35
- e0 fb 01              jmp16	avm_test_main+1027
+ e0 49 02              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  a5                    xor	r5, r5
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 5a                 ldi8	r4, 0x5a
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f0 00 01              ldi8	r0, 0x1
- c1 3a                 ldi8	r5, 0x3a
+ f0 04 0d 0a           ldi16	r0, 0xa0d
+ f0 01 00              ldi8	r1, 0x0
+ c2 3a                 ldi8	r6, 0x3a
  c0 46                 ldi8	r4, 0x46
+ c1 01                 ldi8	r5, 0x1
+ b7                    push16	r7
+ f1 2d                 mov	r7, r1
+ b5                    push16	r5
+ 06                    mov	r5, r6
+ f1 28                 mov	r6, r0
+ b8                    pop16	r0
  d7 21                 sys	draw_sprite_erase
- c6 28 21              ldi16	r6, 0x2128
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 2d 22           ldi16	r0, 0x222d
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+605
+ d0 21                 breq8	avm_test_main+690
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -348,32 +400,40 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 36                 ldi8	r4, 0x36
- e0 a6 01              jmp16	avm_test_main+1027
- a5                    xor	r5, r5
+ e0 e7 01              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 ff                 ldi8	r4, 0xff
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 28 25              ldi16	r6, 0x2528
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
  f0 04 01 01           ldi16	r0, 0x101
- c1 3f                 ldi8	r5, 0x3f
- c0 7f                 ldi8	r4, 0x7f
- d7 21                 sys	draw_sprite_erase
- c6 2c 26              ldi16	r6, 0x262c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
+ c4 2d 26              ldi16	r4, 0x262d
+ c1 00                 ldi8	r5, 0x0
+ f0 01 3f              ldi8	r1, 0x3f
+ c2 7f                 ldi8	r6, 0x7f
+ b7                    push16	r7
+ 0d                    mov	r7, r5
  f1 25                 mov	r5, r1
+ b4                    push16	r4
+ 02                    mov	r4, r6
+ be                    pop16	r6
+ d7 21                 sys	draw_sprite_erase
+ bf                    pop16	r7
+ f0 04 31 27           ldi16	r0, 0x2731
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+691
+ d0 21                 breq8	avm_test_main+789
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -389,32 +449,37 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 37                 ldi8	r4, 0x37
- e0 50 01              jmp16	avm_test_main+1027
- f2 30                 sub	r0, r0
+ e0 84 01              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c0 3c                 ldi8	r4, 0x3c
- 04                    mov	r5, r4
+ c1 3c                 ldi8	r5, 0x3c
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 2c 2a              ldi16	r6, 0x2a2c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 07                 ldi8	r5, 0x7
+ f0 04 31 2b           ldi16	r0, 0x2b31
+ f0 01 00              ldi8	r1, 0x0
+ c2 07                 ldi8	r6, 0x7
  c4 fc ff              ldi16	r4, 0xfffc
+ b7                    push16	r7
+ 06                    mov	r5, r6
+ f1 28                 mov	r6, r0
+ f1 2d                 mov	r7, r1
+ f1 02                 mov	r0, r2
  d7 21                 sys	draw_sprite_erase
- c6 37 2a              ldi16	r6, 0x2a37
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 3c 2b           ldi16	r0, 0x2b3c
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+777
+ d0 21                 breq8	avm_test_main+886
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -430,31 +495,38 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 38                 ldi8	r4, 0x38
- e0 fa 00              jmp16	avm_test_main+1027
+ e0 23 01              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 c3                 ldi8	r4, 0xc3
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 2c 2a              ldi16	r6, 0x2a2c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 3b                 ldi8	r5, 0x3b
+ f0 04 31 2b           ldi16	r0, 0x2b31
+ f0 01 00              ldi8	r1, 0x0
+ c2 3b                 ldi8	r6, 0x3b
  c0 7d                 ldi8	r4, 0x7d
+ b7                    push16	r7
+ 06                    mov	r5, r6
+ f1 28                 mov	r6, r0
+ f1 2d                 mov	r7, r1
+ f1 02                 mov	r0, r2
  d7 21                 sys	draw_sprite_erase
- c6 37 2e              ldi16	r6, 0x2e37
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 3c 2f           ldi16	r0, 0x2f3c
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+860
+ d0 21                 breq8	avm_test_main+983
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -470,31 +542,39 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 39                 ldi8	r4, 0x39
- e0 a7 00              jmp16	avm_test_main+1027
+ e0 c2 00              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 69                 ldi8	r4, 0x69
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 37 32              ldi16	r6, 0x3237
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c5 f7 ff              ldi16	r5, 0xfff7
- c0 14                 ldi8	r4, 0x14
+ c4 3c 33              ldi16	r4, 0x333c
+ c1 00                 ldi8	r5, 0x0
+ c6 f7 ff              ldi16	r6, 0xfff7
+ f0 00 14              ldi8	r0, 0x14
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ 06                    mov	r5, r6
+ 08                    mov	r6, r4
+ f1 20                 mov	r4, r0
+ f1 02                 mov	r0, r2
  d7 21                 sys	draw_sprite_erase
- c6 51 32              ldi16	r6, 0x3251
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 56 33           ldi16	r0, 0x3356
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 22                 breq8	avm_test_main+945
+ d0 22                 breq8	avm_test_main+1081
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -511,32 +591,37 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  f4 10                 ldsp16	r4, [sp+0x4]
- d4 52                 jmp8	avm_test_main+1027
+ d4 60                 jmp8	avm_test_main+1177
+ f0 06 00 04           ldi16	r2, 0x400
  a5                    xor	r5, r5
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ f1 2a                 mov	r6, r2
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 96                 ldi8	r4, 0x96
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 37 32              ldi16	r6, 0x3237
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f0 00 01              ldi8	r0, 0x1
+ c4 3c 33              ldi16	r4, 0x333c
+ c1 00                 ldi8	r5, 0x0
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
  c1 37                 ldi8	r5, 0x37
+ f0 00 01              ldi8	r0, 0x1
  c0 14                 ldi8	r4, 0x14
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
  d7 21                 sys	draw_sprite_erase
- c6 51 36              ldi16	r6, 0x3651
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ f0 04 56 37           ldi16	r0, 0x3756
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ f1 26                 mov	r5, r2
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 30                 breq8	avm_test_main+1045
+ d0 30                 breq8	avm_test_main+1195
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -553,70 +638,85 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  c0 42                 ldi8	r4, 0x42
  d7 00                 sys	debug_putc
+ f0 02 01              ldi8	r2, 0x1
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
- f0 00 01              ldi8	r0, 0x1
- f1 20                 mov	r4, r0
- d6 06                 adjsp	avm_test_main+1046
+ f1 22                 mov	r4, r2
+ d6 06                 adjsp	avm_test_main+1196
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
- a5                    xor	r5, r5
+ c7 00 04              ldi16	r7, 0x400
+ f2 42                 sub	r2, r2
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 5a                 ldi8	r4, 0x5a
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 51 3a              ldi16	r6, 0x3a51
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 1f                 ldi8	r5, 0x1f
- c4 ff ff              ldi16	r4, 0xffff
+ c4 56 3b              ldi16	r4, 0x3b56
+ c1 00                 ldi8	r5, 0x0
+ c2 1f                 ldi8	r6, 0x1f
+ f0 05 ff ff           ldi16	r1, 0xffff
+ f0 00 01              ldi8	r0, 0x1
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ 06                    mov	r5, r6
+ 08                    mov	r6, r4
+ f1 21                 mov	r4, r1
  d7 21                 sys	draw_sprite_erase
- c6 5b 3c              ldi16	r6, 0x3c5b
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 60 3d           ldi16	r0, 0x3d60
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 0b                 breq8	avm_test_main+1106
+ d0 0b                 breq8	avm_test_main+1273
  c0 43                 ldi8	r4, 0x43
  f4 50                 stsp16	[sp+0x4], r4
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
- e0 45 ff              jmp16	avm_test_main+919
- f2 30                 sub	r0, r0
+ e0 26 ff              jmp16	avm_test_main+1055
+ c6 00 04              ldi16	r6, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 a5                 ldi8	r4, 0xa5
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 5b 40              ldi16	r6, 0x405b
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c5 ff ff              ldi16	r5, 0xffff
- c0 3c                 ldi8	r4, 0x3c
+ c4 60 41              ldi16	r4, 0x4160
+ c1 00                 ldi8	r5, 0x0
+ c2 3c                 ldi8	r6, 0x3c
+ c7 ff ff              ldi16	r7, 0xffff
+ f1 02                 mov	r0, r2
+ f1 0c                 mov	r1, r4
+ 02                    mov	r4, r6
+ f1 29                 mov	r6, r1
+ f1 0d                 mov	r1, r5
+ 07                    mov	r5, r7
+ f1 2d                 mov	r7, r1
  d7 21                 sys	draw_sprite_erase
- c6 9c 40              ldi16	r6, 0x409c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ f0 04 a1 41           ldi16	r0, 0x41a1
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ c5 00 04              ldi16	r5, 0x400
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+1192
+ d0 21                 breq8	avm_test_main+1373
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -632,31 +732,39 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 44                 ldi8	r4, 0x44
- e0 5b ff              jmp16	avm_test_main+1027
+ e0 3c ff              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 3c                 ldi8	r4, 0x3c
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 0a                 ldi8	r5, 0xa
- c0 80                 ldi8	r4, 0x80
+ c4 0d 0a              ldi16	r4, 0xa0d
+ c1 00                 ldi8	r5, 0x0
+ c2 80                 ldi8	r6, 0x80
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ f1 27                 mov	r5, r3
+ f1 02                 mov	r0, r2
+ f1 0c                 mov	r1, r4
+ 02                    mov	r4, r6
+ f1 29                 mov	r6, r1
  d7 21                 sys	draw_sprite_erase
- c6 9c 44              ldi16	r6, 0x449c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 a1 45           ldi16	r0, 0x45a1
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 13                 breq8	avm_test_main+1261
+ d0 13                 breq8	avm_test_main+1455
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -665,32 +773,39 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  c0 45                 ldi8	r4, 0x45
  f4 50                 stsp16	[sp+0x4], r4
- e0 b2 fe              jmp16	avm_test_main+927
+ e0 78 fe              jmp16	avm_test_main+1063
+ c7 00 04              ldi16	r7, 0x400
  a5                    xor	r5, r5
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 c3                 ldi8	r4, 0xc3
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
+ c4 0d 0a              ldi16	r4, 0xa0d
+ c1 00                 ldi8	r5, 0x0
  f0 00 01              ldi8	r0, 0x1
- c1 0a                 ldi8	r5, 0xa
- c4 fb ff              ldi16	r4, 0xfffb
+ c6 fb ff              ldi16	r6, 0xfffb
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ f1 27                 mov	r5, r3
+ f1 0c                 mov	r1, r4
+ 02                    mov	r4, r6
+ f1 29                 mov	r6, r1
  d7 21                 sys	draw_sprite_erase
- c6 9c 48              ldi16	r6, 0x489c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 a1 49           ldi16	r0, 0x49a1
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+1347
+ d0 21                 breq8	avm_test_main+1552
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -706,32 +821,40 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 46                 ldi8	r4, 0x46
- e0 c0 fe              jmp16	avm_test_main+1027
- a5                    xor	r5, r5
+ e0 89 fe              jmp16	avm_test_main+1177
+ c7 00 04              ldi16	r7, 0x400
+ aa                    xor	r6, r6
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 29                 mov	r6, r1
+ f1 16                 mov	r2, r6
+ 06                    mov	r5, r6
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 69                 ldi8	r4, 0x69
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
+ c4 0d 0a              ldi16	r4, 0xa0d
+ c1 00                 ldi8	r5, 0x0
+ c6 f3 ff              ldi16	r6, 0xfff3
  f0 00 02              ldi8	r0, 0x2
- c5 f3 ff              ldi16	r5, 0xfff3
- c0 0a                 ldi8	r4, 0xa
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ 06                    mov	r5, r6
+ 08                    mov	r6, r4
+ f1 23                 mov	r4, r3
  d7 21                 sys	draw_sprite_erase
- c6 9c 4c              ldi16	r6, 0x4c9c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 a1 4d           ldi16	r0, 0x4da1
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+1433
+ d0 21                 breq8	avm_test_main+1649
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -747,77 +870,38 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
- e0 12 fe              jmp16	avm_test_main+939
- f2 30                 sub	r0, r0
+ e0 c2 fd              jmp16	avm_test_main+1075
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
+ f1 02                 mov	r0, r2
  f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 96                 ldi8	r4, 0x96
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 08 09              ldi16	r6, 0x908
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 40                 ldi8	r5, 0x40
- c0 0a                 ldi8	r4, 0xa
+ c4 0d 0a              ldi16	r4, 0xa0d
+ c1 00                 ldi8	r5, 0x0
+ c2 40                 ldi8	r6, 0x40
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ 06                    mov	r5, r6
+ 08                    mov	r6, r4
+ f1 23                 mov	r4, r3
  d7 21                 sys	draw_sprite_erase
- c6 9c 50              ldi16	r6, 0x509c
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
- f4 10                 ldsp16	r4, [sp+0x4]
- d7 13                 sys	memcmp_p
- f6 2c                 tst16	r4
- d0 21                 breq8	avm_test_main+1518
- c0 43                 ldi8	r4, 0x43
- d7 00                 sys	debug_putc
- c0 41                 ldi8	r4, 0x41
- d7 00                 sys	debug_putc
- c0 53                 ldi8	r4, 0x53
- d7 00                 sys	debug_putc
- c0 45                 ldi8	r4, 0x45
- d7 00                 sys	debug_putc
- c0 3d                 ldi8	r4, 0x3d
- d7 00                 sys	debug_putc
- c0 30                 ldi8	r4, 0x30
- d7 00                 sys	debug_putc
- d7 00                 sys	debug_putc
- c0 31                 ldi8	r4, 0x31
- d7 00                 sys	debug_putc
- e0 15 fe              jmp16	avm_test_main+1027
- af                    xor	r7, r7
- c4 00 05              ldi16	r4, 0x500
- f4 50                 stsp16	[sp+0x4], r4
+ bf                    pop16	r7
+ f0 04 a1 51           ldi16	r0, 0x51a1
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
  07                    mov	r5, r7
- f4 41                 stsp16	[sp+0x0], r5
- f1 29                 mov	r6, r1
- f4 10                 ldsp16	r4, [sp+0x4]
- d7 11                 sys	memset
- c1 5a                 ldi8	r5, 0x5a
- f4 49                 stsp16	[sp+0x2], r5
- f4 10                 ldsp16	r4, [sp+0x4]
- f4 09                 ldsp16	r5, [sp+0x2]
- d7 11                 sys	memset
- f0 06 9c 54           ldi16	r2, 0x549c
- f0 03 00              ldi8	r3, 0x0
- f1 73                 zext8	r3
- f0 00 7b              ldi8	r0, 0x7b
- 03                    mov	r4, r7
- f2 6b                 mov32	q3, q1
- f4 01                 ldsp16	r5, [sp+0x0]
- d7 21                 sys	draw_sprite_erase
- c6 9e 54              ldi16	r6, 0x549e
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 1f                 breq8	avm_test_main+1610
+ d0 21                 breq8	avm_test_main+1742
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -832,76 +916,124 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
- e0 b6 fa              jmp16	avm_test_main+256
- af                    xor	r7, r7
+ d7 00                 sys	debug_putc
+ e0 cb fd              jmp16	avm_test_main+1177
+ f0 04 00 04           ldi16	r0, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- 07                    mov	r5, r7
- f4 41                 stsp16	[sp+0x0], r5
- f1 29                 mov	r6, r1
+ f1 0a                 mov	r1, r2
+ f1 25                 mov	r5, r1
+ f1 28                 mov	r6, r0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c1 a5                 ldi8	r5, 0xa5
- f4 49                 stsp16	[sp+0x2], r5
+ c0 5a                 ldi8	r4, 0x5a
+ 04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
- f4 09                 ldsp16	r5, [sp+0x2]
  d7 11                 sys	memset
- f0 06 9e 58           ldi16	r2, 0x589e
- f0 03 00              ldi8	r3, 0x0
- f1 73                 zext8	r3
- f0 04 c8 01           ldi16	r0, 0x1c8
- 03                    mov	r4, r7
- f2 6b                 mov32	q3, q1
- f4 01                 ldsp16	r5, [sp+0x0]
+ c0 7b                 ldi8	r4, 0x7b
+ c6 a1 55              ldi16	r6, 0x55a1
+ c3 00                 ldi8	r7, 0x0
+ b0                    push16	r0
+ f1 25                 mov	r5, r1
+ f1 04                 mov	r0, r4
+ f1 21                 mov	r4, r1
  d7 21                 sys	draw_sprite_erase
- c6 a0 58              ldi16	r6, 0x58a0
+ b8                    pop16	r0
+ c6 a3 55              ldi16	r6, 0x55a3
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
- f1 25                 mov	r5, r1
- f4 10                 ldsp16	r4, [sp+0x4]
- d7 13                 sys	memcmp_p
- f6 2c                 tst16	r4
- d0 1f                 breq8	avm_test_main+1703
- c0 43                 ldi8	r4, 0x43
- d7 00                 sys	debug_putc
- c0 41                 ldi8	r4, 0x41
- d7 00                 sys	debug_putc
- c0 53                 ldi8	r4, 0x53
- d7 00                 sys	debug_putc
- c0 45                 ldi8	r4, 0x45
- d7 00                 sys	debug_putc
- c0 3d                 ldi8	r4, 0x3d
- d7 00                 sys	debug_putc
- c0 30                 ldi8	r4, 0x30
- d7 00                 sys	debug_putc
- d7 00                 sys	debug_putc
- c0 31                 ldi8	r4, 0x31
- e0 af fa              jmp16	avm_test_main+342
- f2 30                 sub	r0, r0
- c4 00 05              ldi16	r4, 0x500
- f4 50                 stsp16	[sp+0x4], r4
  f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f4 10                 ldsp16	r4, [sp+0x4]
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 1f                 breq8	avm_test_main+1833
+ c0 43                 ldi8	r4, 0x43
+ d7 00                 sys	debug_putc
+ c0 41                 ldi8	r4, 0x41
+ d7 00                 sys	debug_putc
+ c0 53                 ldi8	r4, 0x53
+ d7 00                 sys	debug_putc
+ c0 45                 ldi8	r4, 0x45
+ d7 00                 sys	debug_putc
+ c0 3d                 ldi8	r4, 0x3d
+ d7 00                 sys	debug_putc
+ c0 30                 ldi8	r4, 0x30
+ d7 00                 sys	debug_putc
+ d7 00                 sys	debug_putc
+ c0 31                 ldi8	r4, 0x31
+ e0 f6 f9              jmp16	avm_test_main+287
+ c4 00 05              ldi16	r4, 0x500
+ f4 50                 stsp16	[sp+0x4], r4
+ f1 0a                 mov	r1, r2
+ f1 25                 mov	r5, r1
+ f1 28                 mov	r6, r0
+ f4 10                 ldsp16	r4, [sp+0x4]
+ d7 11                 sys	memset
+ c0 a5                 ldi8	r4, 0xa5
+ 04                    mov	r5, r4
+ f4 10                 ldsp16	r4, [sp+0x4]
+ d7 11                 sys	memset
+ c4 c8 01              ldi16	r4, 0x1c8
+ c6 a3 59              ldi16	r6, 0x59a3
+ c3 00                 ldi8	r7, 0x0
+ b0                    push16	r0
+ f1 25                 mov	r5, r1
+ f1 04                 mov	r0, r4
+ f1 21                 mov	r4, r1
+ d7 21                 sys	draw_sprite_erase
+ b8                    pop16	r0
+ c6 a5 59              ldi16	r6, 0x59a5
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ f1 24                 mov	r5, r0
+ f4 10                 ldsp16	r4, [sp+0x4]
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 1f                 breq8	avm_test_main+1921
+ c0 43                 ldi8	r4, 0x43
+ d7 00                 sys	debug_putc
+ c0 41                 ldi8	r4, 0x41
+ d7 00                 sys	debug_putc
+ c0 53                 ldi8	r4, 0x53
+ d7 00                 sys	debug_putc
+ c0 45                 ldi8	r4, 0x45
+ d7 00                 sys	debug_putc
+ c0 3d                 ldi8	r4, 0x3d
+ d7 00                 sys	debug_putc
+ c0 30                 ldi8	r4, 0x30
+ d7 00                 sys	debug_putc
+ d7 00                 sys	debug_putc
+ c0 31                 ldi8	r4, 0x31
+ e0 ff f9              jmp16	avm_test_main+384
+ f0 07 00 04           ldi16	r3, 0x400
+ c4 00 05              ldi16	r4, 0x500
+ f4 50                 stsp16	[sp+0x4], r4
+ f1 2e                 mov	r7, r2
+ 07                    mov	r5, r7
+ f1 2b                 mov	r6, r3
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 ff                 ldi8	r4, 0xff
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 51 3a              ldi16	r6, 0x3a51
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 18                 ldi8	r5, 0x18
+ f0 04 56 3b           ldi16	r0, 0x3b56
+ f0 01 00              ldi8	r1, 0x0
+ c2 18                 ldi8	r6, 0x18
  c4 7f ff              ldi16	r4, 0xff7f
+ 06                    mov	r5, r6
+ f1 28                 mov	r6, r0
+ f1 07                 mov	r0, r7
+ f1 2d                 mov	r7, r1
  d7 21                 sys	draw_sprite_erase
- c6 a0 5c              ldi16	r6, 0x5ca0
+ c6 a5 5d              ldi16	r6, 0x5da5
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ f1 27                 mov	r5, r3
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 1f                 breq8	avm_test_main+1787
+ d0 1f                 breq8	avm_test_main+2015
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -916,10 +1048,12 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
- e0 b0 fa              jmp16	avm_test_main+427
+ e0 06 fa              jmp16	avm_test_main+485
+ f0 05 00 04           ldi16	r1, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
+ f1 2e                 mov	r7, r2
+ 07                    mov	r5, r7
  f1 29                 mov	r6, r1
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
@@ -927,20 +1061,27 @@ Disassembly of section .text:
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 5b 40              ldi16	r6, 0x405b
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c5 c0 ff              ldi16	r5, 0xffc0
- c0 49                 ldi8	r4, 0x49
+ c4 60 41              ldi16	r4, 0x4160
+ c1 00                 ldi8	r5, 0x0
+ c6 c0 ff              ldi16	r6, 0xffc0
+ f0 00 49              ldi8	r0, 0x49
+ b0                    push16	r0
+ f1 1c                 mov	r3, r4
+ f1 20                 mov	r4, r0
+ f1 07                 mov	r0, r7
+ 0d                    mov	r7, r5
+ 06                    mov	r5, r6
+ f1 2b                 mov	r6, r3
  d7 21                 sys	draw_sprite_erase
- c6 a0 60              ldi16	r6, 0x60a0
+ b8                    pop16	r0
+ c6 a5 61              ldi16	r6, 0x61a5
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f1 25                 mov	r5, r1
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 1f                 breq8	avm_test_main+1869
+ d0 1f                 breq8	avm_test_main+2113
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -955,10 +1096,11 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
- e0 b4 fa              jmp16	avm_test_main+513
+ e0 08 fa              jmp16	avm_test_main+585
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
+ f1 2e                 mov	r7, r2
+ 07                    mov	r5, r7
  f1 29                 mov	r6, r1
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
@@ -966,20 +1108,24 @@ Disassembly of section .text:
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 5b 40              ldi16	r6, 0x405b
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 3f                 ldi8	r5, 0x3f
- c0 49                 ldi8	r4, 0x49
+ c4 60 41              ldi16	r4, 0x4160
+ c1 00                 ldi8	r5, 0x0
+ c2 3f                 ldi8	r6, 0x3f
+ f1 1c                 mov	r3, r4
+ f1 20                 mov	r4, r0
+ f1 07                 mov	r0, r7
+ 0d                    mov	r7, r5
+ 06                    mov	r5, r6
+ f1 2b                 mov	r6, r3
  d7 21                 sys	draw_sprite_erase
- c6 a0 64              ldi16	r6, 0x64a0
+ c6 a5 65              ldi16	r6, 0x65a5
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f1 25                 mov	r5, r1
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- d0 1f                 breq8	avm_test_main+1950
+ d0 1f                 breq8	avm_test_main+2201
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -994,31 +1140,38 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
- e0 b8 fa              jmp16	avm_test_main+598
+ e0 12 fa              jmp16	avm_test_main+683
+ c7 00 04              ldi16	r7, 0x400
  c4 00 05              ldi16	r4, 0x500
  f4 50                 stsp16	[sp+0x4], r4
- f1 24                 mov	r5, r0
- f1 29                 mov	r6, r1
+ f1 26                 mov	r5, r2
+ 0b                    mov	r6, r7
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
  c0 aa                 ldi8	r4, 0xaa
  04                    mov	r5, r4
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 11                 sys	memset
- c6 51 3a              ldi16	r6, 0x3a51
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- c1 04                 ldi8	r5, 0x4
- f1 20                 mov	r4, r0
+ c4 56 3b              ldi16	r4, 0x3b56
+ c1 00                 ldi8	r5, 0x0
+ c2 04                 ldi8	r6, 0x4
+ b7                    push16	r7
+ 0d                    mov	r7, r5
+ 06                    mov	r5, r6
+ 08                    mov	r6, r4
+ f1 22                 mov	r4, r2
+ f1 02                 mov	r0, r2
  d7 21                 sys	draw_sprite_erase
- c6 a0 68              ldi16	r6, 0x68a0
- c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
- f1 25                 mov	r5, r1
+ bf                    pop16	r7
+ f0 04 a5 69           ldi16	r0, 0x69a5
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 13                 sys	memcmp_p
  f6 2c                 tst16	r4
- da 3b fc              breq16	avm_test_main+1036
+ da cc fb              breq16	avm_test_main+1186
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
@@ -1033,7 +1186,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
- e0 bc fa              jmp16	avm_test_main+684
+ e0 19 fa              jmp16	avm_test_main+782
 
 <avm_halt>:
  d4 fe                 jmp8	avm_halt

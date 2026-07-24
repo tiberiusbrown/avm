@@ -51,6 +51,16 @@ foreach(RUNTIME_SOURCE runtime integer math string pgmspace)
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 endforeach()
 
+set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/framebuffer.o")
+avm_add_object(
+    OUTPUT "${RUNTIME_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/framebuffer.asm"
+    LANGUAGE ASM
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
+
 set(AVM_RUNTIME_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm.a")
 avm_add_archive(
     OUTPUT "${AVM_RUNTIME_LIBRARY}"

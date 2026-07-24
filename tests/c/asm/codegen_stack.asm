@@ -21,11 +21,11 @@ Disassembly of section .text:
 
 <_start>:
  d5 14                 call8	avm_test_main
- c1 46                 ldi8	r5, 0x46
+ 04                    mov	r5, r4
+ c0 46                 ldi8	r4, 0x46
  c2 50                 ldi8	r6, 0x50
- f6 2c                 tst16	r4
- fb 2e                 cmov.eq	r5, r6
- 01                    mov	r4, r5
+ f6 2d                 tst16	r5
+ fb 26                 cmov.eq	r4, r6
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
@@ -80,7 +80,7 @@ Disassembly of section .text:
  32                    cmp	r4, r6
  f1 06                 mov	r0, r6
  fc 3d                 cmov.ult	r7, r5
- f4 53                 stsp16	[sp+0x4], r7
+ f4 5b                 stsp16	[sp+0x6], r7
  f0 34 18              ldsp16	r4, [sp+0x18]
  e1 ca 01              call16	stack_arrays
  f0 3c 14              stsp16	[sp+0x14], r4
@@ -114,7 +114,7 @@ Disassembly of section .text:
  fc 35                 cmov.ult	r6, r5
  f4 42                 stsp16	[sp+0x0], r6
  f0 34 16              ldsp16	r4, [sp+0x16]
- f4 58                 stsp16	[sp+0x6], r4
+ f4 50                 stsp16	[sp+0x4], r4
  e1 6c 03              call16	program_pointer_stack
  f0 3c 12              stsp16	[sp+0x12], r4
  0c                    mov	r7, r4
@@ -136,20 +136,19 @@ Disassembly of section .text:
  f0 05 00 a0           ldi16	r1, 0xa000
  f5 21                 cmp	r4, r1
  fc 35                 cmov.ult	r6, r5
- c1 53                 ldi8	r5, 0x53
- 01                    mov	r4, r5
- 0d                    mov	r7, r5
+ f0 00 53              ldi8	r0, 0x53
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
- f0 00 3d              ldi8	r0, 0x3d
- f1 20                 mov	r4, r0
+ c3 3d                 ldi8	r7, 0x3d
+ 03                    mov	r4, r7
  d7 00                 sys	debug_putc
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
  f4 20                 ldsp16	r4, [sp+0x8]
  d7 00                 sys	debug_putc
- f4 10                 ldsp16	r4, [sp+0x4]
+ f4 18                 ldsp16	r4, [sp+0x6]
  d7 00                 sys	debug_putc
  f0 34 14              ldsp16	r4, [sp+0x14]
  08                    mov	r6, r4
@@ -164,11 +163,11 @@ Disassembly of section .text:
  c1 0a                 ldi8	r5, 0xa
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- 03                    mov	r4, r7
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
  d7 00                 sys	debug_putc
- f1 20                 mov	r4, r0
+ 03                    mov	r4, r7
  d7 00                 sys	debug_putc
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
@@ -180,11 +179,11 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- 03                    mov	r4, r7
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  c0 32                 ldi8	r4, 0x32
  d7 00                 sys	debug_putc
- f4 18                 ldsp16	r4, [sp+0x6]
+ f4 10                 ldsp16	r4, [sp+0x4]
  e1 95 02              call16	register_pressure
  f4 78                 stsp16	[sp+0xe], r4
  f1 74                 zext8	r4

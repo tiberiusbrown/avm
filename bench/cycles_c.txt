@@ -11,7 +11,7 @@
       878698   float.c
        83052   indirect_call.c
     13887376   loop_control.c
-       18533   memory_services.c
+       18436   memory_services.c
      3142866   mixed_width.c
       764053   multiply.c
       924704   pointer_walk.c
@@ -24,22 +24,22 @@
       744268   select.c
       520129   shifts.c
       372418   sieve.c
-      690851   small_memops.c
+      775582   small_memops.c
       820167   stack_array.c
      7193047   state_machine.c
     25469691   string_scan.c
       593528   struct_copy.c
       936377   switch.c
-        3435   sys_memcmp.c
-        5723   sys_memcmp_p.c
-        2692   sys_strcmp.c
-        5889   sys_strcmp_p.c
+        3358   sys_memcmp.c
+        5756   sys_memcmp_p.c
+        2689   sys_strcmp.c
+        5942   sys_strcmp_p.c
         3039   sys_strlen.c
-        7144   sys_strlen_p.c
-        2512   sys_strncat.c
-        3974   sys_strncat_p.c
-        2661   sys_strncpy.c
-        3997   sys_strncpy_p.c
+        7209   sys_strlen_p.c
+        2111   sys_strncat.c
+        3579   sys_strncat_p.c
+        2198   sys_strncpy.c
+        3641   sys_strncpy_p.c
       501299   tail_calls.c
        92203   tilessprite.c
        38747   tilessprite16.c

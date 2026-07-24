@@ -6,17 +6,17 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sys_strcmp_p.c
 00000100 l     O .data	00000041 .L.str
 00000141 l     O .data	00000041 lhs
-000002ae l     O .rodata	00000001 p_empty
+000002b0 l     O .rodata	00000001 p_empty
 00000182 l     O .data	00000001 .L.str.1
-00000331 l     O .rodata	00000041 p_last_diff
-000002f0 l     O .rodata	00000041 p_first_diff
-000002af l     O .rodata	00000041 p_equal
-00000372 l     O .rodata	00000011 p_prefix
+00000333 l     O .rodata	00000041 p_last_diff
+000002f2 l     O .rodata	00000041 p_first_diff
+000002b1 l     O .rodata	00000041 p_equal
+00000374 l     O .rodata	00000011 p_prefix
 00000183 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	00000096 avm_test_main
-000002ac g     F .text	00000002 avm_halt
+00000216 g     F .text	00000098 avm_test_main
+000002ae g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -31,14 +31,14 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 96 00              call16	avm_halt
+ e1 98 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fe                 adjsp	avm_test_main+4
+ d6 fa                 adjsp	avm_test_main
  c4 00 01              ldi16	r4, 0x100
  c5 41 01              ldi16	r5, 0x141
  c2 40                 ldi8	r6, 0x40
@@ -50,62 +50,61 @@ Disassembly of section .text:
  a0                    xor	r4, r4
  f0 4c 81 01           stm8	[0x181], r4
  d7 01                 sys	debug_break
- c6 ae 02              ldi16	r6, 0x2ae
+ c6 b0 02              ldi16	r6, 0x2b0
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 82 01              ldi16	r4, 0x182
  d7 14                 sys	strcmp_p
- f4 40                 stsp16	[sp+0x0], r4
- c6 31 03              ldi16	r6, 0x331
+ f4 48                 stsp16	[sp+0x2], r4
+ c6 33 03              ldi16	r6, 0x333
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c5 41 01              ldi16	r5, 0x141
  01                    mov	r4, r5
  d7 14                 sys	strcmp_p
- f1 0c                 mov	r1, r4
- c6 f0 02              ldi16	r6, 0x2f0
+ f4 40                 stsp16	[sp+0x0], r4
+ c6 f2 02              ldi16	r6, 0x2f2
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  01                    mov	r4, r5
  d7 14                 sys	strcmp_p
- f1 04                 mov	r0, r4
- f0 06 af 02           ldi16	r2, 0x2af
+ f1 0c                 mov	r1, r4
+ f0 06 b1 02           ldi16	r2, 0x2b1
  f0 03 00              ldi8	r3, 0x0
  f1 73                 zext8	r3
  01                    mov	r4, r5
- f1 2a                 mov	r6, r2
- f1 2f                 mov	r7, r3
+ f2 6b                 mov32	q3, q1
  d7 14                 sys	strcmp_p
+ f1 04                 mov	r0, r4
+ aa                    xor	r6, r6
+ f0 4e 51 01           stm8	[0x151], r6
+ 01                    mov	r4, r5
+ f4 50                 stsp16	[sp+0x4], r4
+ f2 6b                 mov32	q3, q1
+ f4 10                 ldsp16	r4, [sp+0x4]
+ d7 14                 sys	strcmp_p
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 10                 ldsp16	r4, [sp+0x4]
  08                    mov	r6, r4
- a0                    xor	r4, r4
- f0 4c 51 01           stm8	[0x151], r4
- 01                    mov	r4, r5
- b6                    push16	r6
- f1 2a                 mov	r6, r2
- f1 2f                 mov	r7, r3
- d7 14                 sys	strcmp_p
  c3 61                 ldi8	r7, 0x61
- be                    pop16	r6
  f0 4f 51 01           stm8	[0x151], r7
- f4 03                 ldsp16	r7, [sp+0x0]
- 1b                    add	r6, r7
- f2 28                 add	r6, r0
- f2 29                 add	r6, r1
- 18                    add	r6, r4
- f0 04 72 03           ldi16	r0, 0x372
- f0 01 00              ldi8	r1, 0x0
- f1 71                 zext8	r1
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f2 07                 add	r0, r7
+ f2 01                 add	r0, r1
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f2 04                 add	r0, r4
+ f2 06                 add	r0, r6
+ c6 74 03              ldi16	r6, 0x374
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
  01                    mov	r4, r5
- b6                    push16	r6
- f1 28                 mov	r6, r0
- f1 2d                 mov	r7, r1
  d7 14                 sys	strcmp_p
- be                    pop16	r6
- 12                    add	r4, r6
- f0 5c 83 01           stm16	[0x183], r4
+ 04                    mov	r5, r4
+ f2 24                 add	r5, r0
+ f0 5d 83 01           stm16	[0x183], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 02                 adjsp	avm_test_main+147
+ d6 06                 adjsp	avm_halt+1
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

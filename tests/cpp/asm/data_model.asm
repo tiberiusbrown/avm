@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 data_model.cpp
 00000100 l     O .data	00000003 .L__const.avm_test_main.data_bytes
-00000501 l     O .rodata	00000003 program_bytes
+000004ff l     O .rodata	00000003 program_bytes
 00000103 l     O .data	00000012 .L__const.avm_test_main.records
 00000115 l     O .data	00000002 .L__const.avm_test_main.bits
 00000000 l    df *ABS*	00000000 runtime.c
@@ -13,7 +13,7 @@ SYMBOL TABLE:
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	000002e2 avm_test_main
 000004f8 g     F .text	00000002 avm_halt
-000004fa g     F .text	00000007 memcpy
+000004fa g     F .text	00000005 memcpy
 
 Disassembly of section .text:
 
@@ -203,7 +203,7 @@ Disassembly of section .text:
  f0 2f 23              stsp8	[sp+0x23], r7
  f0 14 21              leasp	r4, 0x21
  f0 3c 1f              stsp16	[sp+0x1f], r4
- c6 01 05              ldi16	r6, 0x501
+ c6 ff 04              ldi16	r6, 0x4ff
  c3 00                 ldi8	r7, 0x0
  f0 3e 1c              stsp16	[sp+0x1c], r6
  f0 2f 1e              stsp8	[sp+0x1e], r7
@@ -222,7 +222,7 @@ Disassembly of section .text:
  ed 88 22              ld8u	r4, [r4+2]
  cc 65                 cmpi.s8	r4, 0x65
  d1 17                 brne8	avm_test_main+492
- c4 01 05              ldi16	r4, 0x501
+ c4 ff 04              ldi16	r4, 0x4ff
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
  f0 36 1c              ldsp16	r6, [sp+0x1c]
@@ -336,8 +336,6 @@ Disassembly of section .text:
 
 <memcpy>:
  0c                    mov	r7, r4
- b4                    push16	r4
- 03                    mov	r4, r7
  d7 0f                 sys	memcpy
- bc                    pop16	r4
+ 03                    mov	r4, r7
  ef                    ret

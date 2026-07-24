@@ -10283,10 +10283,11 @@ sys_draw_sprite_header_impl:
     ; pages = ceil(height / 8); stride = width * pages.
     in    r30, GPIOR2
     mov   r31, r1
-    subi  r31, -7
+    dec   r31
     lsr   r31
     lsr   r31
     lsr   r31
+    inc   r31
     mul   r30, r31
     movw  r30, r0
 
@@ -11135,40 +11136,11 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ; Only clipped rows retain and advance r20:r21:r22 for a fresh seek.
     brtc  .Lsprite_row_dispatch
 
-    fx_disable
-    rcall sprite_start_row_read_func
-    rjmp  .Lsprite_row_dispatch
-
-.Lsprite_bottom_done:
-    ; Bottom is necessarily the last visible source row.
-
-.Lsprite_finish:
-    pop   r23
-    pop   r22
-    pop   r21
-    pop   r20
-    pop   r19
-    pop   r18
-    pop   r17
-    pop   r16
-    pop   r15
-    pop   r14
-    pop   r13
-    pop   r12
-    pop   r11
-    pop   r10
-    pop   r9
-    pop   r8
-    fx_disable
-    ret
-
-
 ; Start streaming at the following visible source row without disturbing X.
 ; This helper is used only when native T indicates horizontal clipping. It
 ; advances the retained row pointer after launching SFC_READ, hiding the four
 ; pointer-update cycles in the command interval. Z and r24:r25 are scratch; the
 ; first data byte is in flight on return.
-sprite_start_row_read_func:
     fx_disable
     ldi   r24, SFC_READ
     fx_enable
@@ -11200,6 +11172,29 @@ sprite_start_row_read_func:
     out   SPDR, r20
     rcall sprite_delay_17
     out   SPDR, ZERO
+    rjmp  .Lsprite_row_dispatch
+
+.Lsprite_bottom_done:
+    ; Bottom is necessarily the last visible source row.
+
+.Lsprite_finish:
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    pop   r17
+    pop   r16
+    pop   r15
+    pop   r14
+    pop   r13
+    pop   r12
+    pop   r11
+    pop   r10
+    pop   r9
+    pop   r8
+    fx_disable
     ret
 
 

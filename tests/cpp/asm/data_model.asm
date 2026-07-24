@@ -71,7 +71,7 @@ Disassembly of section .text:
  c0 5d                 ldi8	r4, 0x5d
  d4 02                 jmp8	avm_test_main+105
  c0 5c                 ldi8	r4, 0x5c
- d6 48                 adjsp	avm_test_main+179
+ d6 48                 adjsp	0x48
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

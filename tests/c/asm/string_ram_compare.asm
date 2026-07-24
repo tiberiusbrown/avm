@@ -62,7 +62,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 80                 adjsp	-0x80
- d6 ec                 adjsp	_start+19
+ d6 ec                 adjsp	-0x14
  c4 04 01              ldi16	r4, 0x104
  c5 44 01              ldi16	r5, 0x144
  c2 78                 ldi8	r6, 0x78
@@ -1043,8 +1043,8 @@ Disassembly of section .text:
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
- d6 7f                 adjsp	avm_halt+120
- d6 15                 adjsp	avm_halt+16
+ d6 7f                 adjsp	0x7f
+ d6 15                 adjsp	0x15
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

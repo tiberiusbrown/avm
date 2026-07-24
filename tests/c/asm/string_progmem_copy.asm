@@ -103,7 +103,7 @@ Disassembly of section .text:
  c5 3c 3c              ldi16	r5, 0x3c3c
  f0 3c b0              stsp16	[sp+0xb0], r4
  f0 3d b2              stsp16	[sp+0xb2], r5
- d6 fe                 adjsp	avm_test_main+90
+ d6 fe                 adjsp	-0x2
  c0 08                 ldi8	r4, 0x8
  f4 40                 stsp16	[sp+0x0], r4
  c6 28 11              ldi16	r6, 0x1128
@@ -111,34 +111,34 @@ Disassembly of section .text:
  f1 77                 zext8	r7
  f0 14 c4              leasp	r4, 0xc4
  e1 79 ff              call16	test_call_strncpy_P
- d6 02                 adjsp	avm_test_main+113
+ d6 02                 adjsp	0x2
  c6 2c 11              ldi16	r6, 0x112c
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
- d6 fe                 adjsp	avm_test_main+118
+ d6 fe                 adjsp	-0x2
  c0 03                 ldi8	r4, 0x3
  f4 40                 stsp16	[sp+0x0], r4
  f0 14 bd              leasp	r4, 0xbd
  e1 64 ff              call16	test_call_strncpy_P
- d6 02                 adjsp	avm_test_main+134
+ d6 02                 adjsp	0x2
  c6 33 11              ldi16	r6, 0x1133
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
- d6 fe                 adjsp	avm_test_main+139
+ d6 fe                 adjsp	-0x2
  f0 02 04              ldi8	r2, 0x4
  f0 3a 00              stsp16	[sp+0x0], r2
  f0 14 b7              leasp	r4, 0xb7
  e1 4d ff              call16	test_call_strncpy_P
- d6 02                 adjsp	avm_test_main+157
+ d6 02                 adjsp	0x2
  c6 37 11              ldi16	r6, 0x1137
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
- d6 fe                 adjsp	avm_test_main+162
+ d6 fe                 adjsp	-0x2
  f2 39                 sub	r1, r1
  f0 39 00              stsp16	[sp+0x0], r1
  f0 14 b2              leasp	r4, 0xb2
  e1 37 ff              call16	test_call_strncpy_P
- d6 02                 adjsp	avm_test_main+179
+ d6 02                 adjsp	0x2
  c3 0c                 ldi8	r7, 0xc
  c5 00 01              ldi16	r5, 0x100
  f0 13 a4              leasp	r3, 0xa4
@@ -167,7 +167,7 @@ Disassembly of section .text:
  f0 3d 86              stsp16	[sp+0x86], r5
  f0 3c 80              stsp16	[sp+0x80], r4
  f0 3d 82              stsp16	[sp+0x82], r5
- d6 fe                 adjsp	avm_test_main+248
+ d6 fe                 adjsp	-0x2
  c0 08                 ldi8	r4, 0x8
  f4 40                 stsp16	[sp+0x0], r4
  c6 3f 11              ldi16	r6, 0x113f
@@ -175,8 +175,8 @@ Disassembly of section .text:
  f1 77                 zext8	r7
  f1 23                 mov	r4, r3
  e1 e9 fe              call16	test_call_strncat_P
- d6 02                 adjsp	avm_test_main+270
- d6 fe                 adjsp	avm_test_main+268
+ d6 02                 adjsp	0x2
+ d6 fe                 adjsp	-0x2
  c0 03                 ldi8	r4, 0x3
  f4 40                 stsp16	[sp+0x0], r4
  c6 44 11              ldi16	r6, 0x1144
@@ -184,24 +184,24 @@ Disassembly of section .text:
  f1 77                 zext8	r7
  f1 20                 mov	r4, r0
  e1 d5 fe              call16	test_call_strncat_P
- d6 02                 adjsp	avm_test_main+290
- d6 fe                 adjsp	avm_test_main+288
+ d6 02                 adjsp	0x2
+ d6 fe                 adjsp	-0x2
  f0 39 00              stsp16	[sp+0x0], r1
  c6 4b 11              ldi16	r6, 0x114b
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 92              leasp	r4, 0x92
  e1 c1 fe              call16	test_call_strncat_P
- d6 02                 adjsp	avm_test_main+310
- d6 fe                 adjsp	avm_test_main+308
+ d6 02                 adjsp	0x2
+ d6 fe                 adjsp	-0x2
  f0 3a 00              stsp16	[sp+0x0], r2
  c6 50 11              ldi16	r6, 0x1150
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 8a              leasp	r4, 0x8a
  e1 ad fe              call16	test_call_strncat_P
- d6 02                 adjsp	avm_test_main+330
- d6 fe                 adjsp	avm_test_main+328
+ d6 02                 adjsp	0x2
+ d6 fe                 adjsp	-0x2
  f0 00 02              ldi8	r0, 0x2
  f0 38 00              stsp16	[sp+0x0], r0
  c6 51 11              ldi16	r6, 0x1151
@@ -209,7 +209,7 @@ Disassembly of section .text:
  f1 77                 zext8	r7
  f0 14 82              leasp	r4, 0x82
  e1 96 fe              call16	test_call_strncat_P
- d6 02                 adjsp	avm_test_main+353
+ d6 02                 adjsp	0x2
  c4 07 01              ldi16	r4, 0x107
  c5 18 01              ldi16	r5, 0x118
  c2 a5                 ldi8	r6, 0xa5
@@ -217,7 +217,7 @@ Disassembly of section .text:
  f4 b4                 dec16	r4
  f6 2c                 tst16	r4
  d1 f8                 brne8	avm_test_main+359
- d6 fe                 adjsp	avm_test_main+367
+ d6 fe                 adjsp	-0x2
  c4 04 01              ldi16	r4, 0x104
  f4 40                 stsp16	[sp+0x0], r4
  c6 54 11              ldi16	r6, 0x1154
@@ -225,7 +225,7 @@ Disassembly of section .text:
  f1 77                 zext8	r7
  c4 18 01              ldi16	r4, 0x118
  e1 63 fe              call16	test_call_strncpy_P
- d6 02                 adjsp	avm_test_main+391
+ d6 02                 adjsp	0x2
  c4 01 01              ldi16	r4, 0x101
  c5 1f 02              ldi16	r5, 0x21f
  c2 64                 ldi8	r6, 0x64
@@ -245,14 +245,14 @@ Disassembly of section .text:
  f0 6b 8c              st32	[r6], q2
  c0 b6                 ldi8	r4, 0xb6
  f0 4c 2c 03           stm8	[0x32c], r4
- d6 fe                 adjsp	avm_test_main+441
+ d6 fe                 adjsp	-0x2
  f0 38 00              stsp16	[sp+0x0], r0
  c6 51 11              ldi16	r6, 0x1151
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 1f 02              ldi16	r4, 0x21f
  e1 28 fe              call16	test_call_strncat_P
- d6 02                 adjsp	avm_test_main+463
+ d6 02                 adjsp	0x2
  c6 2b 6d              ldi16	r6, 0x6d2b
  c7 f2 ff              ldi16	r7, 0xfff2
  f0 01 0e              ldi8	r1, 0xe
@@ -1622,8 +1622,8 @@ Disassembly of section .text:
  92                    or	r4, r6
  91                    or	r4, r5
  f9 88                 and	r4, r2
- d6 7f                 adjsp	avm_halt+120
- d6 4d                 adjsp	avm_halt+72
+ d6 7f                 adjsp	0x7f
+ d6 4d                 adjsp	0x4d
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

@@ -86,11 +86,11 @@ Disassembly of section .text:
  f0 37 a8              ldsp16	r7, [sp+0xa8]
  f0 30 a2              ldsp16	r0, [sp+0xa2]
  f0 31 a4              ldsp16	r1, [sp+0xa4]
- d6 fc                 adjsp	avm_test_main+126
+ d6 fc                 adjsp	-0x4
  f0 38 00              stsp16	[sp+0x0], r0
  f0 39 02              stsp16	[sp+0x2], r1
  e1 32 09              call16	arithmetic
- d6 04                 adjsp	avm_test_main+145
+ d6 04                 adjsp	0x4
  f0 3c b2              stsp16	[sp+0xb2], r4
  f0 3d b4              stsp16	[sp+0xb4], r5
  f0 00 04              ldi8	r0, 0x4
@@ -1159,8 +1159,8 @@ Disassembly of section .text:
  f0 69 c8              cmp32	q3, q2
  f8 08                 cset.ne	r0
  f1 20                 mov	r4, r0
- d6 7f                 adjsp	sqrtf+50
- d6 37                 adjsp	select_max+8
+ d6 7f                 adjsp	0x7f
+ d6 37                 adjsp	0x37
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

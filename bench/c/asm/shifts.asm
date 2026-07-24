@@ -37,7 +37,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f0                 adjsp	_start+12
+ d6 f0                 adjsp	-0x10
  c4 d0 8a              ldi16	r4, 0x8ad0
  c6 34 12              ldi16	r6, 0x1234
  f0 04 00 01           ldi16	r0, 0x100
@@ -183,7 +183,7 @@ Disassembly of section .text:
  f0 6b 08              st32	[r4], q0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 10                 adjsp	__avm_ashlsi3+9
+ d6 10                 adjsp	0x10
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

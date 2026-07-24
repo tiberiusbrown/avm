@@ -513,7 +513,7 @@ Disassembly of section .text:
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1
- d6 54                 adjsp	sum_bytes+79
+ d6 54                 adjsp	0x54
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -525,7 +525,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f8                 adjsp	avm_test_main+979
+ d6 f8                 adjsp	-0x8
  f2 62                 mov32	q0, q2
  f6 2e                 tst16	r6
  d0 07                 breq8	sum_bytes+19
@@ -583,7 +583,7 @@ Disassembly of section .text:
  f0 60 c0              ldp8u	r6, [q0]
  18                    add	r6, r4
  02                    mov	r4, r6
- d6 08                 adjsp	sum_bytes+116
+ d6 08                 adjsp	0x8
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -607,7 +607,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f6                 adjsp	sum_bytes+131
+ d6 f6                 adjsp	-0xa
  f6 2c                 tst16	r4
  d0 10                 breq8	sum_signed_bytes+26
  f0 06 10 07           ldi16	r2, 0x710
@@ -692,7 +692,7 @@ Disassembly of section .text:
  f0 61 04              ldp8s	r0, [q1]
  f2 06                 add	r0, r6
  f1 20                 mov	r4, r0
- d6 0a                 adjsp	mix_bytes+5
+ d6 0a                 adjsp	0xa
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -745,7 +745,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	sum_byte_pairs+2
+ d6 fc                 adjsp	-0x4
  f6 2c                 tst16	r4
  d0 0e                 breq8	sum_byte_pairs+24
  f0 06 0e 07           ldi16	r2, 0x70e
@@ -782,7 +782,7 @@ Disassembly of section .text:
  08                    mov	r6, r4
  f0 62 84              ldp16	r4, [q1]
  12                    add	r4, r6
- d6 04                 adjsp	sum_byte_pairs+81
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -794,7 +794,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	sum_words+2
+ d6 fc                 adjsp	-0x4
  f2 62                 mov32	q0, q2
  f6 2e                 tst16	r6
  d0 07                 breq8	sum_words+19
@@ -828,7 +828,7 @@ Disassembly of section .text:
  08                    mov	r6, r4
  f0 62 80              ldp16	r4, [q0]
  12                    add	r4, r6
- d6 04                 adjsp	sum_words+73
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

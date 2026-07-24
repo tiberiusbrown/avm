@@ -62,7 +62,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 80                 adjsp	-0x80
- d6 ee                 adjsp	test_call_strncpy
+ d6 ee                 adjsp	-0x12
  c4 a5 a5              ldi16	r4, 0xa5a5
  f0 3c 90              stsp16	[sp+0x90], r4
  c4 a5 a5              ldi16	r4, 0xa5a5
@@ -1232,8 +1232,8 @@ Disassembly of section .text:
  d0 ed                 breq8	avm_test_main+2381
  d4 01                 jmp8	avm_test_main+2403
  a0                    xor	r4, r4
- d6 7f                 adjsp	avm_halt+120
- d6 13                 adjsp	avm_halt+14
+ d6 7f                 adjsp	0x7f
+ d6 13                 adjsp	0x13
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

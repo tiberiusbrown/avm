@@ -404,7 +404,7 @@ Disassembly of section .text:
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
  f1 20                 mov	r4, r0
- d6 69                 adjsp	walk_both_directions+12
+ d6 69                 adjsp	0x69
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -471,7 +471,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 dc                 adjsp	update_record+19
+ d6 dc                 adjsp	-0x24
  04                    mov	r5, r4
  ed 8a 36              ld8u	r4, [r5+22]
  f0 3c 20              stsp16	[sp+0x20], r4
@@ -586,7 +586,7 @@ Disassembly of section .text:
  f0 35 22              ldsp16	r5, [sp+0x22]
  11                    add	r4, r5
  a2                    xor	r4, r6
- d6 24                 adjsp	avm_halt+31
+ d6 24                 adjsp	0x24
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

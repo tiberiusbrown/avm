@@ -133,7 +133,7 @@ Disassembly of section .text:
  f0 5f 40 01           stm16	[0x140], r7
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 24                 adjsp	avm_halt+31
+ d6 24                 adjsp	0x24
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

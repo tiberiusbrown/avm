@@ -32,7 +32,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fe                 adjsp	avm_test_main+3
+ d6 fe                 adjsp	-0x2
  f2 42                 sub	r2, r2
  d7 01                 sys	debug_break
  f0 51 02 01           ldm16	r1, [0x102]
@@ -64,7 +64,7 @@ Disassembly of section .text:
  d1 d4                 brne8	avm_test_main+26
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 02                 adjsp	avm_test_main+77
+ d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

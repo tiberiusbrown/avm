@@ -117,7 +117,7 @@ Disassembly of section .text:
 
 <stack_kernel>:
  b0                    push16	r0
- d6 d0                 adjsp	avm_test_main+161
+ d6 d0                 adjsp	-0x30
  f0 15 00              leasp	r5, 0x0
  c2 18                 ldi8	r6, 0x18
  f7 4c                 st16	[r5+], r4
@@ -226,7 +226,7 @@ Disassembly of section .text:
  19                    add	r6, r5
  f0 34 2e              ldsp16	r4, [sp+0x2e]
  12                    add	r4, r6
- d6 30                 adjsp	avm_halt+46
+ d6 30                 adjsp	0x30
  b8                    pop16	r0
  ef                    ret
 

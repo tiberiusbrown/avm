@@ -33,7 +33,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f4                 adjsp	_start+16
+ d6 f4                 adjsp	-0xc
  f2 42                 sub	r2, r2
  f0 03 f4              ldi8	r3, 0xf4
  f0 00 05              ldi8	r0, 0x5
@@ -120,7 +120,7 @@ Disassembly of section .text:
  f0 6b c8              st32	[r4], q3
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 0c                 adjsp	__avm_mulsi3+5
+ d6 0c                 adjsp	0xc
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -133,7 +133,7 @@ Disassembly of section .text:
 <__avm_mulsi3>:
  b1                    push16	r1
  b0                    push16	r0
- d6 ee                 adjsp	avm_test_main+183
+ d6 ee                 adjsp	-0x12
  f4 7a                 stsp16	[sp+0xe], r6
  f0 3f 10              stsp16	[sp+0x10], r7
  f1 05                 mov	r0, r5
@@ -224,7 +224,7 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  92                    or	r4, r6
  97                    or	r5, r7
- d6 12                 adjsp	__avm_mulsi3+188
+ d6 12                 adjsp	0x12
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret

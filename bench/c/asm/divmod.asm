@@ -40,7 +40,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f6                 adjsp	_start+18
+ d6 f6                 adjsp	-0xa
  a0                    xor	r4, r4
  f0 06 50 fb           ldi16	r2, 0xfb50
  c6 e8 03              ldi16	r6, 0x3e8
@@ -188,7 +188,7 @@ Disassembly of section .text:
  f0 6b 48              st32	[r4], q1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 0a                 adjsp	__avm_mulsi3+3
+ d6 0a                 adjsp	0xa
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -201,7 +201,7 @@ Disassembly of section .text:
 <__avm_mulsi3>:
  b1                    push16	r1
  b0                    push16	r0
- d6 ee                 adjsp	avm_test_main+326
+ d6 ee                 adjsp	-0x12
  f4 7a                 stsp16	[sp+0xe], r6
  f0 3f 10              stsp16	[sp+0x10], r7
  f1 05                 mov	r0, r5
@@ -292,7 +292,7 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  92                    or	r4, r6
  97                    or	r5, r7
- d6 12                 adjsp	__avm_udivmodsi4+15
+ d6 12                 adjsp	0x12
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
@@ -302,7 +302,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f4                 adjsp	__avm_mulsi3+167
+ d6 f4                 adjsp	-0xc
  f2 66                 mov32	q1, q2
  f0 34 17              ldsp16	r4, [sp+0x17]
  f4 40                 stsp16	[sp+0x0], r4
@@ -359,7 +359,7 @@ Disassembly of section .text:
  f4 02                 ldsp16	r6, [sp+0x0]
  f0 6b 8c              st32	[r6], q2
  f2 68                 mov32	q2, q0
- d6 0c                 adjsp	__avm_udivsi3+7
+ d6 0c                 adjsp	0xc
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -368,12 +368,12 @@ Disassembly of section .text:
 
 <__avm_udivsi3>:
  b0                    push16	r0
- d6 fc                 adjsp	__avm_udivmodsi4+130
- d6 fe                 adjsp	__avm_udivsi3+3
+ d6 fc                 adjsp	-0x4
+ d6 fe                 adjsp	-0x2
  f0 10 02              leasp	r0, 0x2
  f0 38 00              stsp16	[sp+0x0], r0
  e1 6f ff              call16	__avm_udivmodsi4
- d6 02                 adjsp	__avm_udivsi3+18
- d6 04                 adjsp	__avm_udivsi3+22
+ d6 02                 adjsp	0x2
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  ef                    ret

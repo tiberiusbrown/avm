@@ -37,7 +37,7 @@ Disassembly of section .text:
  f0 06 e0 ac           ldi16	r2, 0xace0
  f0 07 68 24           ldi16	r3, 0x2468
  f1 04                 mov	r0, r4
- d6 f0                 adjsp	avm_test_main+8
+ d6 f0                 adjsp	-0x10
  f4 62                 stsp16	[sp+0x8], r6
  f4 6b                 stsp16	[sp+0xa], r7
  04                    mov	r5, r4
@@ -65,7 +65,7 @@ Disassembly of section .text:
  cb 03                 addi.s8	r7, 0x3
  f1 24                 mov	r5, r0
  d5 18                 call8	mix_arguments
- d6 10                 adjsp	avm_test_main+88
+ d6 10                 adjsp	0x10
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f0 0c 60              cmpi.s8	r0, 0x60
@@ -84,7 +84,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	mix_arguments+1
+ d6 fc                 adjsp	-0x4
  f1 04                 mov	r0, r4
  17                    add	r5, r7
  f4 3f                 ldsp16	r7, [sp+0xf]
@@ -124,7 +124,7 @@ Disassembly of section .text:
  f7 68                 add32	q2, q0
  a2                    xor	r4, r6
  a7                    xor	r5, r7
- d6 04                 adjsp	avm_halt
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

@@ -33,7 +33,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 e4                 adjsp	_start
+ d6 e4                 adjsp	-0x1c
  e1 f8 02              call16	loop_control
  f0 3c 18              stsp16	[sp+0x18], r4
  0c                    mov	r7, r4
@@ -380,7 +380,7 @@ Disassembly of section .text:
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
  02                    mov	r4, r6
- d6 1c                 adjsp	sparse_switch+5
+ d6 1c                 adjsp	0x1c
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

@@ -59,7 +59,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f6                 adjsp	avm_test_main+50
+ d6 f6                 adjsp	-0xa
  f4 48                 stsp16	[sp+0x2], r4
  f4 51                 stsp16	[sp+0x4], r5
  a0                    xor	r4, r4
@@ -101,7 +101,7 @@ Disassembly of section .text:
  f4 ae                 inc16	r6
  ce 08                 cmpi.s8	r6, 0x8
  d1 bf                 brne8	sum_words+19
- d6 0a                 adjsp	avm_halt+5
+ d6 0a                 adjsp	0xa
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

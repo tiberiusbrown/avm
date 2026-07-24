@@ -37,7 +37,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 e5                 adjsp	_start+1
+ d6 e5                 adjsp	-0x1b
  c0 0a                 ldi8	r4, 0xa
  f0 2c 1a              stsp8	[sp+0x1a], r4
  c4 41 31              ldi16	r4, 0x3141
@@ -300,7 +300,7 @@ Disassembly of section .text:
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
- d6 1b                 adjsp	fibonacci+22
+ d6 1b                 adjsp	0x1b
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -338,7 +338,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 b9                 adjsp	avm_test_main+490
+ d6 b9                 adjsp	-0x47
  f2 42                 sub	r2, r2
  f0 11 2f              leasp	r1, 0x2f
  f1 04                 mov	r0, r4
@@ -543,7 +543,7 @@ Disassembly of section .text:
  11                    add	r4, r5
  f0 35 1c              ldsp16	r5, [sp+0x1c]
  11                    add	r4, r5
- d6 47                 adjsp	register_pressure+66
+ d6 47                 adjsp	0x47
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -553,7 +553,7 @@ Disassembly of section .text:
 <register_pressure>:
  b1                    push16	r1
  b0                    push16	r0
- d6 f6                 adjsp	stack_arrays+391
+ d6 f6                 adjsp	-0xa
  04                    mov	r5, r4
  fa 8d                 lsr16i	r5, 0xd
  0c                    mov	r7, r4
@@ -598,7 +598,7 @@ Disassembly of section .text:
  f9 86                 xor	r4, r1
  f4 21                 ldsp16	r5, [sp+0x8]
  a1                    xor	r4, r5
- d6 0a                 adjsp	program_pointer_stack+7
+ d6 0a                 adjsp	0xa
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
@@ -608,7 +608,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fe                 adjsp	program_pointer_stack+4
+ d6 fe                 adjsp	-0x2
  a5                    xor	r5, r5
  c0 01                 ldi8	r4, 0x1
  f4 40                 stsp16	[sp+0x0], r4
@@ -638,7 +638,7 @@ Disassembly of section .text:
  f4 ad                 inc16	r5
  cd 03                 cmpi.s8	r5, 0x3
  d1 d1                 brne8	program_pointer_stack+15
- d6 02                 adjsp	program_pointer_stack+66
+ d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

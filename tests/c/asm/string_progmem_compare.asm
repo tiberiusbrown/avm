@@ -72,8 +72,8 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 80                 adjsp	-0x80
- d6 f6                 adjsp	test_call_strlen_P+5
- d6 fe                 adjsp	avm_test_main+8
+ d6 f6                 adjsp	-0xa
+ d6 fe                 adjsp	-0x2
  c0 05                 ldi8	r4, 0x5
  f4 40                 stsp16	[sp+0x0], r4
  f1 04                 mov	r0, r4
@@ -82,7 +82,7 @@ Disassembly of section .text:
  f1 77                 zext8	r7
  c4 00 01              ldi16	r4, 0x100
  d5 d1                 call8	test_call_memcmp_P
- d6 02                 adjsp	avm_test_main+32
+ d6 02                 adjsp	0x2
  f0 3c 82              stsp16	[sp+0x82], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -96,7 +96,7 @@ Disassembly of section .text:
  3c                    cmp	r7, r4
  fc 35                 cmov.ult	r6, r5
  f0 3e 68              stsp16	[sp+0x68], r6
- d6 fe                 adjsp	avm_test_main+55
+ d6 fe                 adjsp	-0x2
  f0 38 00              stsp16	[sp+0x0], r0
  f1 10                 mov	r2, r0
  f0 04 bd 09           ldi16	r0, 0x9bd
@@ -106,7 +106,7 @@ Disassembly of section .text:
  f0 3c 8a              stsp16	[sp+0x8a], r4
  f2 6a                 mov32	q3, q0
  d5 9c                 call8	test_call_memcmp_P
- d6 02                 adjsp	avm_test_main+85
+ d6 02                 adjsp	0x2
  f0 3c 80              stsp16	[sp+0x80], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -119,14 +119,14 @@ Disassembly of section .text:
  3c                    cmp	r7, r4
  fc 35                 cmov.ult	r6, r5
  f0 3e 6c              stsp16	[sp+0x6c], r6
- d6 fe                 adjsp	avm_test_main+105
+ d6 fe                 adjsp	-0x2
  f0 3a 00              stsp16	[sp+0x0], r2
  c6 c2 09              ldi16	r6, 0x9c2
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 0a 01              ldi16	r4, 0x10a
  e1 72 ff              call16	test_call_memcmp_P
- d6 02                 adjsp	avm_test_main+127
+ d6 02                 adjsp	0x2
  f0 3c 7e              stsp16	[sp+0x7e], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -139,14 +139,14 @@ Disassembly of section .text:
  3c                    cmp	r7, r4
  fc 35                 cmov.ult	r6, r5
  f0 3e 6a              stsp16	[sp+0x6a], r6
- d6 fe                 adjsp	avm_test_main+147
+ d6 fe                 adjsp	-0x2
  f0 3a 00              stsp16	[sp+0x0], r2
  c6 c7 09              ldi16	r6, 0x9c7
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 0f 01              ldi16	r4, 0x10f
  e1 48 ff              call16	test_call_memcmp_P
- d6 02                 adjsp	avm_test_main+169
+ d6 02                 adjsp	0x2
  f0 3c 78              stsp16	[sp+0x78], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -159,13 +159,13 @@ Disassembly of section .text:
  f5 2e                 cmp	r7, r2
  fc 35                 cmov.ult	r6, r5
  f0 3e 66              stsp16	[sp+0x66], r6
- d6 fe                 adjsp	avm_test_main+191
+ d6 fe                 adjsp	-0x2
  a0                    xor	r4, r4
  f4 40                 stsp16	[sp+0x0], r4
  f0 34 8a              ldsp16	r4, [sp+0x8a]
  f2 6a                 mov32	q3, q0
  e1 21 ff              call16	test_call_memcmp_P
- d6 02                 adjsp	avm_test_main+208
+ d6 02                 adjsp	0x2
  f0 3c 7c              stsp16	[sp+0x7c], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -1015,8 +1015,8 @@ Disassembly of section .text:
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
  f0 34 88              ldsp16	r4, [sp+0x88]
- d6 7f                 adjsp	avm_halt+120
- d6 0b                 adjsp	avm_halt+6
+ d6 7f                 adjsp	0x7f
+ d6 0b                 adjsp	0xb
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

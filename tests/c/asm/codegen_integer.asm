@@ -356,7 +356,7 @@ Disassembly of section .text:
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
- d6 30                 adjsp	mix_u16+43
+ d6 30                 adjsp	0x30
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -368,7 +368,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f6                 adjsp	avm_test_main+681
+ d6 f6                 adjsp	-0xa
  f2 30                 sub	r0, r0
  c2 0f                 ldi8	r6, 0xf
  f4 4a                 stsp16	[sp+0x2], r6
@@ -429,7 +429,7 @@ Disassembly of section .text:
  cf 0b                 cmpi.s8	r7, 0xb
  d1 a2                 brne8	mix_u16+22
  02                    mov	r4, r6
- d6 0a                 adjsp	mix_s16+5
+ d6 0a                 adjsp	0xa
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -460,7 +460,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f2                 adjsp	mix_s16+18
+ d6 f2                 adjsp	-0xe
  f2 67                 mov32	q1, q3
  c2 07                 ldi8	r6, 0x7
  f0 04 b9 79           ldi16	r0, 0x79b9
@@ -574,7 +574,7 @@ Disassembly of section .text:
  f9 52                 xor	r2, r4
  f9 76                 xor	r3, r5
  f2 69                 mov32	q2, q1
- d6 0e                 adjsp	avm_halt+9
+ d6 0e                 adjsp	0xe
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

@@ -42,3 +42,4 @@
         3794   sys_strncpy_p.c
       501299   tail_calls.c
        92203   tilessprite.c
+       41357   tilessprite16.c

@@ -602,7 +602,6 @@
 
 #define SPRITE_FLAG_TOP          0
 #define SPRITE_FLAG_BOTTOM       1
-#define SPRITE_FLAG_RESEEK       2
 #define SPRITE_FLAG_PARTIAL      3
 
 ; Development/emulator images either end at the end of the 16 MiB flash or

@@ -11170,7 +11170,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     out   SPDR, r25
     rcall sprite_delay_17
     out   SPDR, r20
-    rcall sprite_delay_17
+    rcall sprite_delay_16
     out   SPDR, ZERO
     rjmp  .Lsprite_row_dispatch
 

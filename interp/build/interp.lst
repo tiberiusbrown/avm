@@ -13506,7 +13506,7 @@ Disassembly of section .text:
     504a:	9e bd       	out	0x2e, r25	; 46
     504c:	16 d0       	rcall	.+44     	; 0x507a <sprite_delay_17>
     504e:	4e bd       	out	0x2e, r20	; 46
-    5050:	14 d0       	rcall	.+40     	; 0x507a <sprite_delay_17>
+    5050:	15 d0       	rcall	.+42     	; 0x507c <sprite_delay_16>
     5052:	2e bc       	out	0x2e, r2	; 46
     5054:	d3 cf       	rjmp	.-90     	; 0x4ffc <.Lsprite_row_dispatch>
 

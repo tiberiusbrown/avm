@@ -15,30 +15,30 @@ SYMBOL TABLE:
 00000208 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	000000aa avm_test_main
-000003c0 g     F .text	00000002 avm_halt
+00000316 g     F .text	000000a8 avm_test_main
+000003be g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
 <_start>:
  d5 14                 call8	avm_test_main
- 04                    mov	r5, r4
- c0 46                 ldi8	r4, 0x46
+ c1 46                 ldi8	r5, 0x46
  c2 50                 ldi8	r6, 0x50
- f6 2d                 tst16	r5
+ f6 2c                 tst16	r4
+ 01                    mov	r4, r5
  fb 26                 cmov.eq	r4, r6
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 aa 00              call16	avm_halt
+ e1 a8 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
+ d6 fc                 adjsp	-0x4
  a0                    xor	r4, r4
  c1 07                 ldi8	r5, 0x7
  c6 00 01              ldi16	r6, 0x100
@@ -67,49 +67,50 @@ Disassembly of section .text:
  f0 4d ff 01           stm8	[0x1ff], r5
  d7 01                 sys	debug_break
  f0 05 40 01           ldi16	r1, 0x140
- f0 07 00 01           ldi16	r3, 0x100
+ c7 00 01              ldi16	r7, 0x100
  f0 56 00 02           ldm16	r6, [0x200]
- f1 23                 mov	r4, r3
+ 03                    mov	r4, r7
  f1 25                 mov	r5, r1
  d7 18                 sys	memcmp
- f4 50                 stsp16	[sp+0x4], r4
- f0 56 02 02           ldm16	r6, [0x202]
- f1 23                 mov	r4, r3
- d7 18                 sys	memcmp
- 0c                    mov	r7, r4
- f0 56 04 02           ldm16	r6, [0x204]
- f1 23                 mov	r4, r3
- d7 18                 sys	memcmp
  f4 40                 stsp16	[sp+0x0], r4
- c5 80 01              ldi16	r5, 0x180
- f0 56 04 02           ldm16	r6, [0x204]
- f1 23                 mov	r4, r3
+ f0 56 02 02           ldm16	r6, [0x202]
+ 03                    mov	r4, r7
  d7 18                 sys	memcmp
  f1 14                 mov	r2, r4
- f0 04 c0 01           ldi16	r0, 0x1c0
  f0 56 04 02           ldm16	r6, [0x204]
- f4 4a                 stsp16	[sp+0x2], r6
- f1 23                 mov	r4, r3
- f1 24                 mov	r5, r0
- f4 0a                 ldsp16	r6, [sp+0x2]
+ 03                    mov	r4, r7
+ f4 48                 stsp16	[sp+0x2], r4
+ f4 08                 ldsp16	r4, [sp+0x2]
+ d7 18                 sys	memcmp
+ f4 48                 stsp16	[sp+0x2], r4
+ f4 08                 ldsp16	r4, [sp+0x2]
+ f4 48                 stsp16	[sp+0x2], r4
+ c5 80 01              ldi16	r5, 0x180
+ f0 56 04 02           ldm16	r6, [0x204]
+ 03                    mov	r4, r7
  d7 18                 sys	memcmp
  f1 0c                 mov	r1, r4
- f0 56 06 02           ldm16	r6, [0x206]
- f4 4a                 stsp16	[sp+0x2], r6
- f1 23                 mov	r4, r3
- f4 0a                 ldsp16	r6, [sp+0x2]
+ f0 07 c0 01           ldi16	r3, 0x1c0
+ f0 56 04 02           ldm16	r6, [0x204]
+ 03                    mov	r4, r7
+ f1 27                 mov	r5, r3
  d7 18                 sys	memcmp
- f4 11                 ldsp16	r5, [sp+0x4]
- 1d                    add	r7, r5
- f4 01                 ldsp16	r5, [sp+0x0]
- 1d                    add	r7, r5
- f2 2e                 add	r7, r2
- f2 2d                 add	r7, r1
- 1c                    add	r7, r4
- f0 5f 08 02           stm16	[0x208], r7
+ f1 04                 mov	r0, r4
+ f0 56 06 02           ldm16	r6, [0x206]
+ 03                    mov	r4, r7
+ d7 18                 sys	memcmp
+ 04                    mov	r5, r4
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f2 16                 add	r2, r6
+ f4 08                 ldsp16	r4, [sp+0x2]
+ f2 14                 add	r2, r4
+ f2 11                 add	r2, r1
+ f2 10                 add	r2, r0
+ f2 15                 add	r2, r5
+ f0 5a 08 02           stm16	[0x208], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 06                 adjsp	0x6
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

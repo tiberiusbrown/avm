@@ -24,22 +24,24 @@
       744268   select.c
       520129   shifts.c
       372418   sieve.c
-      722485   small_memops.c
+      780286   small_memops.c
       820167   stack_array.c
      7193047   state_machine.c
     25469691   string_scan.c
       593528   struct_copy.c
       936377   switch.c
-        3282   sys_memcmp.c
+        3243   sys_memcmp.c
         5756   sys_memcmp_p.c
         2730   sys_strcmp.c
         5733   sys_strcmp_p.c
         3039   sys_strlen.c
-        7175   sys_strlen_p.c
+        7209   sys_strlen_p.c
         2111   sys_strncat.c
-        3579   sys_strncat_p.c
+        3503   sys_strncat_p.c
         2198   sys_strncpy.c
         3641   sys_strncpy_p.c
       501299   tail_calls.c
-       91786   tilessprite.c
-       38566   tilessprite16.c
+       91740   tilessprite.c
+       38524   tilessprite16.c
+       39588   tilessprite16_cached.c
+      106460   tilessprite_cached.c

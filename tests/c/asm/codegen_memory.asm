@@ -5,29 +5,29 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_memory.c
 00000100 l     O .data	00000007 .L__const.avm_test_main.value
-00000510 l     F .text	00000027 hash_bytes
-00000537 l     F .text	00000027 update_record
-0000055e l     F .text	0000000a read_neighbors
-00000568 l     F .text	000000ee walk_both_directions
+00000511 l     F .text	00000027 hash_bytes
+00000538 l     F .text	00000027 update_record
+0000055f l     F .text	0000000a read_neighbors
+00000569 l     F .text	000000ee walk_both_directions
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	000002fa avm_test_main
-00000656 g     F .text	00000002 avm_halt
+00000216 g     F .text	000002fb avm_test_main
+00000657 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
 <_start>:
  d5 14                 call8	avm_test_main
- 04                    mov	r5, r4
- c0 46                 ldi8	r4, 0x46
+ c1 46                 ldi8	r5, 0x46
  c2 50                 ldi8	r6, 0x50
- f6 2d                 tst16	r5
+ f6 2c                 tst16	r4
+ 01                    mov	r4, r5
  fb 26                 cmov.eq	r4, r6
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 40 04              call16	avm_halt
+ e1 41 04              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -36,10 +36,11 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 97                 adjsp	-0x69
  f0 02 18              ldi8	r2, 0x18
- c1 a5                 ldi8	r5, 0xa5
+ c2 a5                 ldi8	r6, 0xa5
  f0 11 51              leasp	r1, 0x51
  f1 21                 mov	r4, r1
  f0 3c 30              stsp16	[sp+0x30], r4
+ 06                    mov	r5, r6
  f1 2a                 mov	r6, r2
  f0 34 30              ldsp16	r4, [sp+0x30]
  d7 11                 sys	memset
@@ -55,7 +56,7 @@ Disassembly of section .text:
  f4 ad                 inc16	r5
  f4 b2                 dec16	r2
  f6 2a                 tst16	r2
- d1 ed                 brne8	avm_test_main+32
+ d1 ed                 brne8	avm_test_main+33
  c2 18                 ldi8	r6, 0x18
  f0 10 51              leasp	r0, 0x51
  f0 11 39              leasp	r1, 0x39

@@ -49,7 +49,9 @@
 ;;     0x0A04-0x0A05  requested save size
 ;;     0x0A06         startup flags
 ;;     0x0A07–0x0A0A  millisecond counter (little-endian uint32)
-;;     0x0A0B–0x0AFF  interpreter-private
+;;     0x0A0B–0x0A0D  selected raw sprite pointer (little-endian uint24)
+;;     0x0A0E–0x0A0F  selected sprite width and height
+;;     0x0A10–0x0AFF  remaining interpreter-private
 
 #define data_globals    0x0100
 #define data_display    0x0500
@@ -59,6 +61,9 @@
 #define data_save_size      (data_page_save+2)
 #define data_startup_flags  (data_save_size+2)
 #define data_millis         (data_startup_flags+1)
+#define data_sprite_ptr         (data_millis+4)
+#define data_sprite_width       (data_sprite_ptr+3)
+#define data_sprite_height      (data_sprite_width+1)
 
 #define STARTUP_SAVE_PAGE_VALID  0
 
@@ -594,6 +599,11 @@
 #define SYS_DRAW_SPRITE_PLUS_MASK   0x1F
 #define SYS_DRAW_SPRITE_SELF_MASKED 0x20
 #define SYS_DRAW_SPRITE_ERASE       0x21
+#define SYS_SET_SPRITE               0x22
+#define SYS_DRAW_OVERWRITE           0x23
+#define SYS_DRAW_PLUS_MASK           0x24
+#define SYS_DRAW_SELF_MASKED         0x25
+#define SYS_DRAW_ERASE               0x26
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3053,7 +3063,16 @@ sys_dispatch_func:
     (SYS_DRAW_SPRITE_PLUS_MASK != 0x1F) || \
     (SYS_DRAW_SPRITE_SELF_MASKED != 0x20) || \
     (SYS_DRAW_SPRITE_ERASE != 0x21)
-    .error "sprite SYS services must occupy contiguous entries 0x1E-0x21"
+    .error "explicit-pointer sprite SYS services must occupy contiguous entries 0x1E-0x21"
+.endif
+.if (SYS_SET_SPRITE != 0x22)
+    .error "SYS_SET_SPRITE must occupy dispatch-table entry 0x22"
+.endif
+.if (SYS_DRAW_OVERWRITE != 0x23) || \
+    (SYS_DRAW_PLUS_MASK != 0x24) || \
+    (SYS_DRAW_SELF_MASKED != 0x25) || \
+    (SYS_DRAW_ERASE != 0x26)
+    .error "cached-pointer sprite SYS services must occupy contiguous entries 0x23-0x26"
 .endif
 
 ; One AVR word per service number. The service byte therefore indexes this
@@ -3080,7 +3099,9 @@ sys_dispatch_table:
     sys_entries 1,   sys_strncat_impl
     sys_entries 1,   sys_display_impl
     sys_entries 4,   sys_draw_sprite_func
-    sys_entries 222, invalid_syscall_func
+    sys_entries 1,   sys_set_sprite_func
+    sys_entries 4,   sys_draw_func
+    sys_entries 217, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3106,6 +3127,17 @@ sys_draw_sprite_func:
     subi  PRIMARY_OPCODE, SYS_DRAW_SPRITE_OVERWRITE
     mov   r27, PRIMARY_OPCODE
     jmp   sys_draw_sprite_header_impl
+
+; SET_SPRITE and the four cached-pointer draw services live beside the sprite
+; implementation. Absolute veneers keep the one-word SYS table within RJMP
+; reach while limiting movement of the range-constrained code below.
+sys_set_sprite_func:
+    jmp   sys_set_sprite_impl
+
+sys_draw_func:
+    subi  PRIMARY_OPCODE, SYS_DRAW_OVERWRITE
+    mov   r27, PRIMARY_OPCODE
+    jmp   sys_draw_cached_impl
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
@@ -6857,6 +6889,7 @@ startup_func:
     sts  data_millis+1, ZERO
     sts  data_millis+2, ZERO
     sts  data_millis+3, ZERO
+    sts  data_sprite_width, ZERO
 
     ; Initialize persistent architectural state. VM_FLAGS lives in low-I/O
     ; GPIOR0; VM PC is loaded from the image header below.
@@ -10219,11 +10252,25 @@ sys_memset_impl:
 ; SYS FX sprite drawing services
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Public SYS ABI for all four services:
+; Explicit-pointer draw_sprite_* SYS ABI:
 ;   r4 = int16_t x
 ;   r5 = int16_t y
 ;   q1 = image-relative program pointer to { width, height, frame bytes... }
 ;   r6 = uint16_t frame index
+;
+; SET_SPRITE ABI:
+;   q2 = image-relative program pointer to { width, height, frame bytes... }
+;
+; Cached-pointer draw_* SYS ABI:
+;   r4 = int16_t x
+;   r5 = int16_t y
+;   r6 = uint16_t frame index
+;
+; SET_SPRITE stores the raw q2 pointer and its two-byte header in
+; interpreter-private SRAM. The cached-pointer draw services reuse that state.
+; No sprite is selected at startup; cached draws are then no-ops because the
+; cached width is initialized to zero. Explicit-pointer draws do not alter the
+; selected sprite.
 ;
 ; The frame data is page-major. OVERWRITE, SELF_MASKED, and ERASE use one
 ; source byte per column. PLUS_MASK uses interleaved image,mask byte pairs.
@@ -10237,6 +10284,53 @@ sys_memset_impl:
 ; renderer through the documented native ABI below. Architectural registers
 ; and VM_FLAGS are preserved. The raw renderer returns to its caller; the SYS
 ; wrapper alone restarts the bytecode stream.
+
+sys_set_sprite_impl:
+    ; The sprite transaction replaces the speculative bytecode transfer. Make
+    ; VM_PC name the primary opcode following this SYS service before doing so.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; Cache the raw q2 program pointer. Z then naturally points at the width
+    ; and height fields, which the shared fixed-count reader fills directly.
+    ldi   r30, lo8(data_sprite_ptr)
+    ldi   r31, hi8(data_sprite_ptr)
+    movw  r24, VM_R4
+    adiw  r24, 2
+    st    Z+, r24
+    st    Z+, r25
+    mov   r24, VM_R5L
+    adc   r24, ZERO
+    st    Z+, r24
+
+    movw  r24, VM_R4
+    mov   r26, VM_R5L
+    mov   r0, ONE
+    lsl   r0                         ; two-byte width/height header
+    mov   r1, ZERO
+    call  fx_read_program_bytes_func
+    jmp   seek_and_dispatch_func_disabled
+
+sys_draw_cached_impl:
+    out   GPIOR1, r27                ; retain mode across cached setup/MULs
+
+    ; The renderer takes ownership of SPI. Advance from the service byte to the
+    ; following primary opcode before terminating the speculative transaction.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; Recreate the state produced by the explicit header-read path: raw pointer
+    ; plus two, width in r0/GPIOR2, height in r1, mode in GPIOR1, and FX idle.
+    lds   r24, data_sprite_ptr+0
+    lds   r25, data_sprite_ptr+1
+    lds   r26, data_sprite_ptr+2
+    lds   r0,  data_sprite_ptr+3
+    lds   r1,  data_sprite_ptr+4
+    out   GPIOR2, r0
+    fx_disable
+    rjmp  .Lsys_sprite_header_ready
 
 sys_draw_sprite_header_impl:
     out   GPIOR1, r27              ; retain mode across header read/MULs
@@ -10276,6 +10370,7 @@ sys_draw_sprite_header_impl:
     in    r1, SPDR                  ; height
     fx_disable
 
+.Lsys_sprite_header_ready:
     ; Preserve height while r0:r1 are used by the four partial products.
     push  r1
 

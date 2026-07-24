@@ -12,6 +12,7 @@ execute_process(
     COMMAND
         "${AVM_OBJDUMP}"
         --disassemble
+        --source
         --syms
         --symbolize-operands
         --demangle

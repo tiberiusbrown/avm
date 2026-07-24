@@ -4,12 +4,12 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/call_args.elf:	file format elf
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 call_args.c
-00000274 l     F .text	00000053 mix_arguments
+00000274 l     F .text	00000054 mix_arguments
 00000100 l     O .data	00000004 call_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	0000005e avm_test_main
-000002c7 g     F .text	00000002 avm_halt
+000002c8 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -24,7 +24,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 b1 00              call16	avm_halt
+ e1 b2 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -92,6 +92,7 @@ Disassembly of section .text:
  f0 34 13              ldsp16	r4, [sp+0x13]
  13                    add	r4, r7
  f2 06                 add	r0, r6
+ 08                    mov	r6, r4
  af                    xor	r7, r7
  0b                    mov	r6, r7
  af                    xor	r7, r7

@@ -4,13 +4,13 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/codegen_integer.elf:	file form
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_integer.c
-000003c3 l     F .text	0000007c mix_u16
-00000459 l     F .text	000000dd mix_u32
-0000043f l     F .text	0000001a mix_s16
+000003c6 l     F .text	0000007c mix_u16
+0000045c l     F .text	000000dd mix_u32
+00000442 l     F .text	0000001a mix_s16
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
-00000116 g     F .text	000002ad avm_test_main
-00000536 g     F .text	00000002 avm_halt
+00000116 g     F .text	000002b0 avm_test_main
+00000539 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 20 04              call16	avm_halt
+ e1 23 04              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -51,7 +51,7 @@ Disassembly of section .text:
  f0 3d 22              stsp16	[sp+0x22], r5
  f0 34 2e              ldsp16	r4, [sp+0x2e]
  f0 35 2c              ldsp16	r5, [sp+0x2c]
- e1 6e 02              call16	mix_u16
+ e1 71 02              call16	mix_u16
  f0 3c 14              stsp16	[sp+0x14], r4
  f0 34 2a              ldsp16	r4, [sp+0x2a]
  f0 3c 12              stsp16	[sp+0x12], r4
@@ -61,7 +61,7 @@ Disassembly of section .text:
  f0 35 26              ldsp16	r5, [sp+0x26]
  f0 36 20              ldsp16	r6, [sp+0x20]
  f0 37 22              ldsp16	r7, [sp+0x22]
- e1 e7 02              call16	mix_u32
+ e1 ea 02              call16	mix_u32
  f0 3c 1c              stsp16	[sp+0x1c], r4
  f0 3d 1e              stsp16	[sp+0x1e], r5
  f0 02 30              ldi8	r2, 0x30
@@ -174,7 +174,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f0 34 12              ldsp16	r4, [sp+0x12]
  f4 31                 ldsp16	r5, [sp+0xc]
- e1 ea 01              call16	mix_s16
+ e1 ed 01              call16	mix_s16
  f0 3c 12              stsp16	[sp+0x12], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -187,6 +187,7 @@ Disassembly of section .text:
  fc 35                 cmov.ult	r6, r5
  f4 6a                 stsp16	[sp+0xa], r6
  f0 34 1c              ldsp16	r4, [sp+0x1c]
+ f0 35 1e              ldsp16	r5, [sp+0x1e]
  04                    mov	r5, r4
  f9 ac                 and	r5, r3
  09                    mov	r6, r5

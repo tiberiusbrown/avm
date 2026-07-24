@@ -33,13 +33,13 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f2 30                 sub	r0, r0
+ f2 4b                 sub	r3, r3
  d7 01                 sys	debug_break
  f0 51 02 01           ldm16	r1, [0x102]
  f0 52 00 01           ldm16	r2, [0x100]
  c6 82 02              ldi16	r6, 0x282
  c3 00                 ldi8	r7, 0x0
- f1 18                 mov	r3, r0
+ f1 03                 mov	r0, r3
  f1 25                 mov	r5, r1
  f2 27                 add	r5, r3
  f1 22                 mov	r4, r2

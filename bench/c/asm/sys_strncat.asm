@@ -19,8 +19,8 @@ SYMBOL TABLE:
 000001b4 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000072 avm_test_main
-00000287 g     F .text	00000002 avm_halt
+00000215 g     F .text	00000078 avm_test_main
+0000028d g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -35,40 +35,56 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 72                 call8	avm_halt
+ d5 78                 call8	avm_halt
 
 <avm_test_main>:
- d6 fc                 adjsp	_start+19
  d7 01                 sys	debug_break
- c5 10 01              ldi16	r5, 0x110
- c4 00 01              ldi16	r4, 0x100
+ c4 10 01              ldi16	r4, 0x110
+ c5 00 01              ldi16	r5, 0x100
  f0 56 14 01           ldm16	r6, [0x114]
- f4 49                 stsp16	[sp+0x2], r5
+ b4                    push16	r4
+ 0c                    mov	r7, r4
+ 01                    mov	r4, r5
+ 07                    mov	r5, r7
  d7 1c                 sys	strncat
+ bc                    pop16	r4
  c5 1e 01              ldi16	r5, 0x11e
- c4 16 01              ldi16	r4, 0x116
+ c6 16 01              ldi16	r6, 0x116
  f0 57 1f 01           ldm16	r7, [0x11f]
- f4 41                 stsp16	[sp+0x0], r5
+ b4                    push16	r4
+ 02                    mov	r4, r6
  0b                    mov	r6, r7
- f4 01                 ldsp16	r5, [sp+0x0]
  d7 1c                 sys	strncat
- c4 21 01              ldi16	r4, 0x121
+ bc                    pop16	r4
+ c5 21 01              ldi16	r5, 0x121
  f0 56 1f 01           ldm16	r6, [0x11f]
- f4 09                 ldsp16	r5, [sp+0x2]
+ b4                    push16	r4
+ 0c                    mov	r7, r4
+ 01                    mov	r4, r5
+ 07                    mov	r5, r7
  d7 1c                 sys	strncat
- c4 31 01              ldi16	r4, 0x131
+ bc                    pop16	r4
+ c5 31 01              ldi16	r5, 0x131
  f0 56 1f 01           ldm16	r6, [0x11f]
+ b4                    push16	r4
+ 0c                    mov	r7, r4
+ 01                    mov	r4, r5
+ 07                    mov	r5, r7
  d7 1c                 sys	strncat
+ bc                    pop16	r4
  c5 61 01              ldi16	r5, 0x161
- c4 49 01              ldi16	r4, 0x149
+ c6 49 01              ldi16	r6, 0x149
  f0 57 82 01           ldm16	r7, [0x182]
- f4 41                 stsp16	[sp+0x0], r5
+ b4                    push16	r4
+ 02                    mov	r4, r6
  0b                    mov	r6, r7
- f4 01                 ldsp16	r5, [sp+0x0]
  d7 1c                 sys	strncat
- c4 84 01              ldi16	r4, 0x184
+ bc                    pop16	r4
+ c5 84 01              ldi16	r5, 0x184
  f0 56 1f 01           ldm16	r6, [0x11f]
- f4 09                 ldsp16	r5, [sp+0x2]
+ 0c                    mov	r7, r4
+ 01                    mov	r4, r5
+ 07                    mov	r5, r7
  d7 1c                 sys	strncat
  f0 44 3b 01           ldm8u	r4, [0x13b]
  f0 45 23 01           ldm8u	r5, [0x123]
@@ -81,7 +97,6 @@ Disassembly of section .text:
  f0 5d b4 01           stm16	[0x1b4], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 04                 adjsp	avm_halt+3
  ef                    ret
 
 <avm_halt>:

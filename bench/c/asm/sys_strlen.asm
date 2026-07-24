@@ -12,8 +12,8 @@ SYMBOL TABLE:
 0000022e l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	0000009a avm_test_main
-000003b0 g     F .text	00000002 avm_halt
+00000316 g     F .text	000000a9 avm_test_main
+000003bf g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -28,7 +28,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 9a 00              call16	avm_halt
+ e1 a9 00              call16	avm_halt
 
 <avm_test_main>:
  c4 63 63              ldi16	r4, 0x6363
@@ -57,40 +57,55 @@ Disassembly of section .text:
  f0 6b 8c              st32	[r6], q2
  c0 62                 ldi8	r4, 0x62
  f0 5c 01 01           stm16	[0x101], r4
- af                    xor	r7, r7
- f0 4f 00 01           stm8	[0x100], r7
- f0 4f 0b 01           stm8	[0x10b], r7
- f0 4f 2c 01           stm8	[0x12c], r7
+ a0                    xor	r4, r4
+ f0 4c 00 01           stm8	[0x100], r4
+ f0 4c 0b 01           stm8	[0x10b], r4
+ f0 4c 2c 01           stm8	[0x12c], r4
  c5 00 01              ldi16	r5, 0x100
  c6 2d 01              ldi16	r6, 0x12d
- c0 65                 ldi8	r4, 0x65
- f6 14                 st8	[r6+], r4
+ c3 65                 ldi8	r7, 0x65
+ f6 17                 st8	[r6+], r7
  f4 b5                 dec16	r5
  f6 2d                 tst16	r5
  d1 f8                 brne8	avm_test_main+99
- f0 4f 2d 02           stm8	[0x22d], r7
+ f0 4c 2d 02           stm8	[0x22d], r4
  d7 01                 sys	debug_break
- c4 00 01              ldi16	r4, 0x100
+ c5 00 01              ldi16	r5, 0x100
+ b4                    push16	r4
+ 01                    mov	r4, r5
  d7 1a                 sys	strlen
  04                    mov	r5, r4
- c4 01 01              ldi16	r4, 0x101
+ bc                    pop16	r4
+ c6 01 01              ldi16	r6, 0x101
+ b4                    push16	r4
+ 02                    mov	r4, r6
  d7 1a                 sys	strlen
  08                    mov	r6, r4
  19                    add	r6, r5
- c4 03 01              ldi16	r4, 0x103
+ bc                    pop16	r4
+ c5 03 01              ldi16	r5, 0x103
+ b4                    push16	r4
+ 01                    mov	r4, r5
  d7 1a                 sys	strlen
  04                    mov	r5, r4
  16                    add	r5, r6
- c4 0c 01              ldi16	r4, 0x10c
+ bc                    pop16	r4
+ c6 0c 01              ldi16	r6, 0x10c
+ b4                    push16	r4
+ 02                    mov	r4, r6
  d7 1a                 sys	strlen
  08                    mov	r6, r4
  19                    add	r6, r5
- c4 2d 01              ldi16	r4, 0x12d
+ bc                    pop16	r4
+ c5 2d 01              ldi16	r5, 0x12d
+ b4                    push16	r4
+ 01                    mov	r4, r5
  d7 1a                 sys	strlen
- 12                    add	r4, r6
- f0 5c 2e 02           stm16	[0x22e], r4
+ 04                    mov	r5, r4
+ 16                    add	r5, r6
+ bc                    pop16	r4
+ f0 5d 2e 02           stm16	[0x22e], r5
  d7 01                 sys	debug_break
- 03                    mov	r4, r7
  ef                    ret
 
 <avm_halt>:

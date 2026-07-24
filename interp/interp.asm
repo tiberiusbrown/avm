@@ -10558,9 +10558,8 @@ draw_bitmap_seek_func:
 .Lsprite_clip_right:
     ldi   r24, 128
     sub   r24, r17                  ; columns available on screen
-    cp    r16, r24
-    brlo  .Lsprite_right_clip_done
-    breq  .Lsprite_right_clip_done
+    cp    r24, r16
+    brsh  .Lsprite_right_clip_done
     mov   r16, r24
 .Lsprite_right_clip_done:
 
@@ -10601,9 +10600,8 @@ draw_bitmap_seek_func:
     ; removed, its partial-page mask is no longer relevant.
     ldi   r24, 8
     sub   r24, r19                  ; maximum visible source rows
-    cp    r12, r24
-    brlo  .Lsprite_bottom_count_ready
-    breq  .Lsprite_bottom_count_ready
+    cp    r24, r12
+    brsh  .Lsprite_bottom_count_ready
     mov   r12, r24
     andi  r23, 0xF7                 ; clear SPRITE_FLAG_PARTIAL
 .Lsprite_bottom_count_ready:

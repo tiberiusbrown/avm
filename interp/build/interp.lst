@@ -706,22 +706,22 @@ SYMBOL TABLE:
 00004aa6 l       .text	00000000 log2f_low_coefficients
 00004ad3 l       .text	00000000 log2f_high_coefficients
 00004b00 l       .text	00000000 avrlibm_embedded_end
-0000508c l       .text	00000000 sprite_delay_12
-00005090 l       .text	00000000 sprite_delay_10
-00004da0 l       .text	00000000 sprite_overwrite_row_dispatch
-00004df8 l       .text	00000000 sprite_erase_row_dispatch
-00004dd0 l       .text	00000000 sprite_plus_row_dispatch
-00004de4 l       .text	00000000 sprite_self_row_dispatch
-00005096 l       .text	00000000 sprite_delay_7
-0000504e l       .text	00000000 sprite_start_row_read_func
-00005082 l       .text	00000000 sprite_delay_17
-00005084 l       .text	00000000 sprite_delay_16
-00005086 l       .text	00000000 sprite_delay_15
-00005088 l       .text	00000000 sprite_delay_14
-0000508a l       .text	00000000 sprite_delay_13
-0000508e l       .text	00000000 sprite_delay_11
-00005092 l       .text	00000000 sprite_delay_9
-00005094 l       .text	00000000 sprite_delay_8
+00005088 l       .text	00000000 sprite_delay_12
+0000508c l       .text	00000000 sprite_delay_10
+00004d9c l       .text	00000000 sprite_overwrite_row_dispatch
+00004df4 l       .text	00000000 sprite_erase_row_dispatch
+00004dcc l       .text	00000000 sprite_plus_row_dispatch
+00004de0 l       .text	00000000 sprite_self_row_dispatch
+00005092 l       .text	00000000 sprite_delay_7
+0000504a l       .text	00000000 sprite_start_row_read_func
+0000507e l       .text	00000000 sprite_delay_17
+00005080 l       .text	00000000 sprite_delay_16
+00005082 l       .text	00000000 sprite_delay_15
+00005084 l       .text	00000000 sprite_delay_14
+00005086 l       .text	00000000 sprite_delay_13
+0000508a l       .text	00000000 sprite_delay_11
+0000508e l       .text	00000000 sprite_delay_9
+00005090 l       .text	00000000 sprite_delay_8
 00000a66 l       .text	00000000 .Lff_check_extended
 00000aa4 l       .text	00000000 .Lff_direct_round_prepare
 00000ac4 l       .text	00000000 .Lff_direct_minmax_prepare
@@ -1126,61 +1126,61 @@ SYMBOL TABLE:
 00004cee l       .text	00000000 .Lsprite_x_nonnegative
 00004ce6 l       .text	00000000 .Lsprite_left_skip_ready
 00004cf2 l       .text	00000000 .Lsprite_clip_right
-00004cfe l       .text	00000000 .Lsprite_right_clip_done
-00004d04 l       .text	00000000 .Lsprite_not_top_row
-00004d36 l       .text	00000000 .Lsprite_bottom_count_ready
-00004d42 l       .text	00000000 .Lsprite_not_bottom_row
-00004d78 l       .text	00000000 .Lsprite_select_not_overwrite
-00004d98 l       .text	00000000 .Lsprite_store_mode_dispatch
-00004d88 l       .text	00000000 .Lsprite_select_plus_dispatch
-00004d92 l       .text	00000000 .Lsprite_select_self_dispatch
-00004ffe l       .text	00000000 .Lsprite_row_dispatch
-00004dac l       .text	00000000 .Lsprite_overwrite_kind_1834
-00004dc4 l       .text	00000000 .Lsprite_overwrite_top_1834
-00004db8 l       .text	00000000 .Lsprite_overwrite_middle_1834
-00004dca l       .text	00000000 .Lsprite_overwrite_bottom_1834
-00004ebe l       .text	00000000 .Lsprite_middle_overwrite_partial
-00004e80 l       .text	00000000 .Lsprite_middle_overwrite_full
-00004e40 l       .text	00000000 .Lsprite_top_overwrite_partial
-00004e0c l       .text	00000000 .Lsprite_top_overwrite_full
-00004e60 l       .text	00000000 .Lsprite_bottom_overwrite_partial
-00004e26 l       .text	00000000 .Lsprite_bottom_overwrite_full
-00004ee6 l       .text	00000000 .Lsprite_top_plus_full
-00004ddc l       .text	00000000 .Lsprite_full_middle_1835
-00004f10 l       .text	00000000 .Lsprite_bottom_plus_full
-00004f3a l       .text	00000000 .Lsprite_middle_plus_full
-00004f68 l       .text	00000000 .Lsprite_top_self_full
-00004df0 l       .text	00000000 .Lsprite_full_middle_1836
-00004f7e l       .text	00000000 .Lsprite_bottom_self_full
-00004f94 l       .text	00000000 .Lsprite_middle_self_full
-00004fae l       .text	00000000 .Lsprite_top_erase_full
-00004e04 l       .text	00000000 .Lsprite_full_middle_1837
-00004fc8 l       .text	00000000 .Lsprite_bottom_erase_full
-00004fe2 l       .text	00000000 .Lsprite_middle_erase_full
-00004e0c l       .text	00000000 .Lsprite_top_overwrite_full_loop
-00005012 l       .text	00000000 .Lsprite_top_done
-00004e26 l       .text	00000000 .Lsprite_bottom_overwrite_full_loop
-0000502a l       .text	00000000 .Lsprite_bottom_done
-00004e46 l       .text	00000000 .Lsprite_top_overwrite_partial_loop
-00004e66 l       .text	00000000 .Lsprite_bottom_overwrite_partial_loop
-00004e8a l       .text	00000000 .Lsprite_middle_overwrite_pair_loop
-00004ea0 l       .text	00000000 .Lsprite_middle_overwrite_one
-00005018 l       .text	00000000 .Lsprite_middle_done
-00004ec8 l       .text	00000000 .Lsprite_middle_overwrite_partial_loop
-00004ee6 l       .text	00000000 .Lsprite_top_plus_full_loop
-00004f3a l       .text	00000000 .Lsprite_middle_plus_full_loop
-00004f68 l       .text	00000000 .Lsprite_top_self_full_loop
-00004f7e l       .text	00000000 .Lsprite_bottom_self_full_loop
-00004f94 l       .text	00000000 .Lsprite_middle_self_full_loop
-00004fae l       .text	00000000 .Lsprite_top_erase_full_loop
-00004fc8 l       .text	00000000 .Lsprite_bottom_erase_full_loop
-00004fe2 l       .text	00000000 .Lsprite_middle_erase_full_loop
-0000500c l       .text	00000000 .Lsprite_row_pointer_ready
-0000501e l       .text	00000000 .Lsprite_row_complete
-0000502a l       .text	00000000 .Lsprite_finish
+00004cfc l       .text	00000000 .Lsprite_right_clip_done
+00004d02 l       .text	00000000 .Lsprite_not_top_row
+00004d32 l       .text	00000000 .Lsprite_bottom_count_ready
+00004d3e l       .text	00000000 .Lsprite_not_bottom_row
+00004d74 l       .text	00000000 .Lsprite_select_not_overwrite
+00004d94 l       .text	00000000 .Lsprite_store_mode_dispatch
+00004d84 l       .text	00000000 .Lsprite_select_plus_dispatch
+00004d8e l       .text	00000000 .Lsprite_select_self_dispatch
+00004ffa l       .text	00000000 .Lsprite_row_dispatch
+00004da8 l       .text	00000000 .Lsprite_overwrite_kind_1834
+00004dc0 l       .text	00000000 .Lsprite_overwrite_top_1834
+00004db4 l       .text	00000000 .Lsprite_overwrite_middle_1834
+00004dc6 l       .text	00000000 .Lsprite_overwrite_bottom_1834
+00004eba l       .text	00000000 .Lsprite_middle_overwrite_partial
+00004e7c l       .text	00000000 .Lsprite_middle_overwrite_full
+00004e3c l       .text	00000000 .Lsprite_top_overwrite_partial
+00004e08 l       .text	00000000 .Lsprite_top_overwrite_full
+00004e5c l       .text	00000000 .Lsprite_bottom_overwrite_partial
+00004e22 l       .text	00000000 .Lsprite_bottom_overwrite_full
+00004ee2 l       .text	00000000 .Lsprite_top_plus_full
+00004dd8 l       .text	00000000 .Lsprite_full_middle_1835
+00004f0c l       .text	00000000 .Lsprite_bottom_plus_full
+00004f36 l       .text	00000000 .Lsprite_middle_plus_full
+00004f64 l       .text	00000000 .Lsprite_top_self_full
+00004dec l       .text	00000000 .Lsprite_full_middle_1836
+00004f7a l       .text	00000000 .Lsprite_bottom_self_full
+00004f90 l       .text	00000000 .Lsprite_middle_self_full
+00004faa l       .text	00000000 .Lsprite_top_erase_full
+00004e00 l       .text	00000000 .Lsprite_full_middle_1837
+00004fc4 l       .text	00000000 .Lsprite_bottom_erase_full
+00004fde l       .text	00000000 .Lsprite_middle_erase_full
+00004e08 l       .text	00000000 .Lsprite_top_overwrite_full_loop
+0000500e l       .text	00000000 .Lsprite_top_done
+00004e22 l       .text	00000000 .Lsprite_bottom_overwrite_full_loop
+00005026 l       .text	00000000 .Lsprite_bottom_done
+00004e42 l       .text	00000000 .Lsprite_top_overwrite_partial_loop
+00004e62 l       .text	00000000 .Lsprite_bottom_overwrite_partial_loop
+00004e86 l       .text	00000000 .Lsprite_middle_overwrite_pair_loop
+00004e9c l       .text	00000000 .Lsprite_middle_overwrite_one
+00005014 l       .text	00000000 .Lsprite_middle_done
+00004ec4 l       .text	00000000 .Lsprite_middle_overwrite_partial_loop
+00004ee2 l       .text	00000000 .Lsprite_top_plus_full_loop
+00004f36 l       .text	00000000 .Lsprite_middle_plus_full_loop
+00004f64 l       .text	00000000 .Lsprite_top_self_full_loop
+00004f7a l       .text	00000000 .Lsprite_bottom_self_full_loop
+00004f90 l       .text	00000000 .Lsprite_middle_self_full_loop
+00004faa l       .text	00000000 .Lsprite_top_erase_full_loop
+00004fc4 l       .text	00000000 .Lsprite_bottom_erase_full_loop
+00004fde l       .text	00000000 .Lsprite_middle_erase_full_loop
+00005008 l       .text	00000000 .Lsprite_row_pointer_ready
+0000501a l       .text	00000000 .Lsprite_row_complete
+00005026 l       .text	00000000 .Lsprite_finish
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
-00005098 g       .text	00000000 _etext
+00005094 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00004bfc g       .text	00000000 draw_bitmap_seek_func
@@ -12569,7 +12569,7 @@ Disassembly of section .text:
 00004a10 <sinf_coefficients>:
     4a10:	05 a8       	ldd	r0, Z+53	; 0x35
     4a12:	4c cd       	rjmp	.-1384   	; 0x44ac <__fp_powsodd+0x1a>
-    4a14:	b2 d4       	rcall	.+2404   	; 0x537a <__data_load_end+0x2e1>
+    4a14:	b2 d4       	rcall	.+2404   	; 0x537a <__data_load_end+0x2e5>
     4a16:	4e b9       	out	0x0e, r20	; 14
     4a18:	38 36       	cpi	r19, 0x68	; 104
     4a1a:	a9 02       	muls	r26, r25
@@ -12793,7 +12793,7 @@ Disassembly of section .text:
     4b92:	a6 2f       	mov	r26, r22
     4b94:	59 9a       	sbi	0x0b, 1	; 11
     4b96:	0e 94 dd 0a 	call	0x15ba	; 0x15ba <fx_start_program_read_func>
-    4b9a:	78 d2       	rcall	.+1264   	; 0x508c <sprite_delay_12>
+    4b9a:	76 d2       	rcall	.+1260   	; 0x5088 <sprite_delay_12>
     4b9c:	0e b4       	in	r0, 0x2e	; 46
     4b9e:	2e bc       	out	0x2e, r2	; 46
     4ba0:	ca 01       	movw	r24, r20
@@ -12801,7 +12801,7 @@ Disassembly of section .text:
     4ba4:	02 96       	adiw	r24, 0x02	; 2
     4ba6:	a2 1d       	adc	r26, r2
     4ba8:	0b bc       	out	0x2b, r0	; 43
-    4baa:	72 d2       	rcall	.+1252   	; 0x5090 <sprite_delay_10>
+    4baa:	70 d2       	rcall	.+1248   	; 0x508c <sprite_delay_10>
     4bac:	1e b4       	in	r1, 0x2e	; 46
     4bae:	59 9a       	sbi	0x0b, 1	; 11
     4bb0:	1f 92       	push	r1
@@ -12994,578 +12994,576 @@ Disassembly of section .text:
 00004cf2 <.Lsprite_clip_right>:
     4cf2:	80 e8       	ldi	r24, 0x80	; 128
     4cf4:	81 1b       	sub	r24, r17
-    4cf6:	08 17       	cp	r16, r24
-    4cf8:	10 f0       	brcs	.+4      	; 0x4cfe <.Lsprite_right_clip_done>
-    4cfa:	09 f0       	breq	.+2      	; 0x4cfe <.Lsprite_right_clip_done>
-    4cfc:	08 2f       	mov	r16, r24
+    4cf6:	80 17       	cp	r24, r16
+    4cf8:	08 f4       	brcc	.+2      	; 0x4cfc <.Lsprite_right_clip_done>
+    4cfa:	08 2f       	mov	r16, r24
 
-00004cfe <.Lsprite_right_clip_done>:
-    4cfe:	3f 3f       	cpi	r19, 0xFF	; 255
-    4d00:	09 f4       	brne	.+2      	; 0x4d04 <.Lsprite_not_top_row>
-    4d02:	71 60       	ori	r23, 0x01	; 1
+00004cfc <.Lsprite_right_clip_done>:
+    4cfc:	3f 3f       	cpi	r19, 0xFF	; 255
+    4cfe:	09 f4       	brne	.+2      	; 0x4d02 <.Lsprite_not_top_row>
+    4d00:	71 60       	ori	r23, 0x01	; 1
 
-00004d04 <.Lsprite_not_top_row>:
-    4d04:	95 2f       	mov	r25, r21
-    4d06:	e6 2f       	mov	r30, r22
-    4d08:	00 90 00 0a 	lds	r0, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
-    4d0c:	90 0d       	add	r25, r0
-    4d0e:	00 90 01 0a 	lds	r0, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
-    4d12:	e0 1d       	adc	r30, r0
-    4d14:	ee bd       	out	0x2e, r30	; 46
-    4d16:	92 2e       	mov	r9, r18
-    4d18:	20 e8       	ldi	r18, 0x80	; 128
-    4d1a:	32 03       	mulsu	r19, r18
-    4d1c:	a0 e0       	ldi	r26, 0x00	; 0
-    4d1e:	b5 e0       	ldi	r27, 0x05	; 5
-    4d20:	a0 0d       	add	r26, r0
-    4d22:	b1 1d       	adc	r27, r1
-    4d24:	a1 0f       	add	r26, r17
-    4d26:	b2 1d       	adc	r27, r2
-    4d28:	88 e0       	ldi	r24, 0x08	; 8
-    4d2a:	83 1b       	sub	r24, r19
-    4d2c:	c8 16       	cp	r12, r24
-    4d2e:	18 f0       	brcs	.+6      	; 0x4d36 <.Lsprite_bottom_count_ready>
-    4d30:	11 f0       	breq	.+4      	; 0x4d36 <.Lsprite_bottom_count_ready>
-    4d32:	c8 2e       	mov	r12, r24
-    4d34:	77 7f       	andi	r23, 0xF7	; 247
+00004d02 <.Lsprite_not_top_row>:
+    4d02:	95 2f       	mov	r25, r21
+    4d04:	e6 2f       	mov	r30, r22
+    4d06:	00 90 00 0a 	lds	r0, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    4d0a:	90 0d       	add	r25, r0
+    4d0c:	00 90 01 0a 	lds	r0, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
+    4d10:	e0 1d       	adc	r30, r0
+    4d12:	ee bd       	out	0x2e, r30	; 46
+    4d14:	92 2e       	mov	r9, r18
+    4d16:	20 e8       	ldi	r18, 0x80	; 128
+    4d18:	32 03       	mulsu	r19, r18
+    4d1a:	a0 e0       	ldi	r26, 0x00	; 0
+    4d1c:	b5 e0       	ldi	r27, 0x05	; 5
+    4d1e:	a0 0d       	add	r26, r0
+    4d20:	b1 1d       	adc	r27, r1
+    4d22:	a1 0f       	add	r26, r17
+    4d24:	b2 1d       	adc	r27, r2
+    4d26:	88 e0       	ldi	r24, 0x08	; 8
+    4d28:	83 1b       	sub	r24, r19
+    4d2a:	8c 15       	cp	r24, r12
+    4d2c:	10 f4       	brcc	.+4      	; 0x4d32 <.Lsprite_bottom_count_ready>
+    4d2e:	c8 2e       	mov	r12, r24
+    4d30:	77 7f       	andi	r23, 0xF7	; 247
 
-00004d36 <.Lsprite_bottom_count_ready>:
-    4d36:	83 2f       	mov	r24, r19
-    4d38:	8c 0d       	add	r24, r12
-    4d3a:	9e bd       	out	0x2e, r25	; 46
-    4d3c:	88 30       	cpi	r24, 0x08	; 8
-    4d3e:	09 f4       	brne	.+2      	; 0x4d42 <.Lsprite_not_bottom_row>
-    4d40:	72 60       	ori	r23, 0x02	; 2
+00004d32 <.Lsprite_bottom_count_ready>:
+    4d32:	83 2f       	mov	r24, r19
+    4d34:	8c 0d       	add	r24, r12
+    4d36:	9e bd       	out	0x2e, r25	; 46
+    4d38:	88 30       	cpi	r24, 0x08	; 8
+    4d3a:	09 f4       	brne	.+2      	; 0x4d3e <.Lsprite_not_bottom_row>
+    4d3c:	72 60       	ori	r23, 0x02	; 2
 
-00004d42 <.Lsprite_not_bottom_row>:
-    4d42:	e8 94       	clt
-    4d44:	08 11       	cpse	r16, r8
-    4d46:	68 94       	set
-    4d48:	80 e8       	ldi	r24, 0x80	; 128
-    4d4a:	80 1b       	sub	r24, r16
-    4d4c:	e8 2e       	mov	r14, r24
-    4d4e:	89 2d       	mov	r24, r9
-    4d50:	21 e0       	ldi	r18, 0x01	; 1
-    4d52:	81 fd       	sbrc	r24, 1
-    4d54:	24 e0       	ldi	r18, 0x04	; 4
-    4d56:	80 fd       	sbrc	r24, 0
-    4d58:	22 0f       	add	r18, r18
-    4d5a:	82 fd       	sbrc	r24, 2
-    4d5c:	22 95       	swap	r18
-    4d5e:	4e bd       	out	0x2e, r20	; 46
-    4d60:	8d 2d       	mov	r24, r13
-    4d62:	88 23       	and	r24, r24
-    4d64:	49 f4       	brne	.+18     	; 0x4d78 <.Lsprite_select_not_overwrite>
-    4d66:	e0 ed       	ldi	r30, 0xD0	; 208
-    4d68:	f6 e2       	ldi	r31, 0x26	; 38
-    4d6a:	8f ef       	ldi	r24, 0xFF	; 255
-    4d6c:	82 9f       	mul	r24, r18
-    4d6e:	00 94       	com	r0
-    4d70:	10 94       	com	r1
-    4d72:	90 2c       	mov	r9, r0
-    4d74:	31 2d       	mov	r19, r1
-    4d76:	10 c0       	rjmp	.+32     	; 0x4d98 <.Lsprite_store_mode_dispatch>
+00004d3e <.Lsprite_not_bottom_row>:
+    4d3e:	e8 94       	clt
+    4d40:	08 11       	cpse	r16, r8
+    4d42:	68 94       	set
+    4d44:	80 e8       	ldi	r24, 0x80	; 128
+    4d46:	80 1b       	sub	r24, r16
+    4d48:	e8 2e       	mov	r14, r24
+    4d4a:	89 2d       	mov	r24, r9
+    4d4c:	21 e0       	ldi	r18, 0x01	; 1
+    4d4e:	81 fd       	sbrc	r24, 1
+    4d50:	24 e0       	ldi	r18, 0x04	; 4
+    4d52:	80 fd       	sbrc	r24, 0
+    4d54:	22 0f       	add	r18, r18
+    4d56:	82 fd       	sbrc	r24, 2
+    4d58:	22 95       	swap	r18
+    4d5a:	4e bd       	out	0x2e, r20	; 46
+    4d5c:	8d 2d       	mov	r24, r13
+    4d5e:	88 23       	and	r24, r24
+    4d60:	49 f4       	brne	.+18     	; 0x4d74 <.Lsprite_select_not_overwrite>
+    4d62:	ee ec       	ldi	r30, 0xCE	; 206
+    4d64:	f6 e2       	ldi	r31, 0x26	; 38
+    4d66:	8f ef       	ldi	r24, 0xFF	; 255
+    4d68:	82 9f       	mul	r24, r18
+    4d6a:	00 94       	com	r0
+    4d6c:	10 94       	com	r1
+    4d6e:	90 2c       	mov	r9, r0
+    4d70:	31 2d       	mov	r19, r1
+    4d72:	10 c0       	rjmp	.+32     	; 0x4d94 <.Lsprite_store_mode_dispatch>
 
-00004d78 <.Lsprite_select_not_overwrite>:
-    4d78:	81 30       	cpi	r24, 0x01	; 1
-    4d7a:	31 f0       	breq	.+12     	; 0x4d88 <.Lsprite_select_plus_dispatch>
-    4d7c:	82 30       	cpi	r24, 0x02	; 2
-    4d7e:	49 f0       	breq	.+18     	; 0x4d92 <.Lsprite_select_self_dispatch>
-    4d80:	ec ef       	ldi	r30, 0xFC	; 252
-    4d82:	f6 e2       	ldi	r31, 0x26	; 38
-    4d84:	00 c0       	rjmp	.+0      	; 0x4d86 <.Lsprite_select_not_overwrite+0xe>
-    4d86:	08 c0       	rjmp	.+16     	; 0x4d98 <.Lsprite_store_mode_dispatch>
+00004d74 <.Lsprite_select_not_overwrite>:
+    4d74:	81 30       	cpi	r24, 0x01	; 1
+    4d76:	31 f0       	breq	.+12     	; 0x4d84 <.Lsprite_select_plus_dispatch>
+    4d78:	82 30       	cpi	r24, 0x02	; 2
+    4d7a:	49 f0       	breq	.+18     	; 0x4d8e <.Lsprite_select_self_dispatch>
+    4d7c:	ea ef       	ldi	r30, 0xFA	; 250
+    4d7e:	f6 e2       	ldi	r31, 0x26	; 38
+    4d80:	00 c0       	rjmp	.+0      	; 0x4d82 <.Lsprite_select_not_overwrite+0xe>
+    4d82:	08 c0       	rjmp	.+16     	; 0x4d94 <.Lsprite_store_mode_dispatch>
 
-00004d88 <.Lsprite_select_plus_dispatch>:
-    4d88:	e8 ee       	ldi	r30, 0xE8	; 232
-    4d8a:	f6 e2       	ldi	r31, 0x26	; 38
-    4d8c:	00 c0       	rjmp	.+0      	; 0x4d8e <.Lsprite_select_plus_dispatch+0x6>
-    4d8e:	00 c0       	rjmp	.+0      	; 0x4d90 <.Lsprite_select_plus_dispatch+0x8>
-    4d90:	03 c0       	rjmp	.+6      	; 0x4d98 <.Lsprite_store_mode_dispatch>
+00004d84 <.Lsprite_select_plus_dispatch>:
+    4d84:	e6 ee       	ldi	r30, 0xE6	; 230
+    4d86:	f6 e2       	ldi	r31, 0x26	; 38
+    4d88:	00 c0       	rjmp	.+0      	; 0x4d8a <.Lsprite_select_plus_dispatch+0x6>
+    4d8a:	00 c0       	rjmp	.+0      	; 0x4d8c <.Lsprite_select_plus_dispatch+0x8>
+    4d8c:	03 c0       	rjmp	.+6      	; 0x4d94 <.Lsprite_store_mode_dispatch>
 
-00004d92 <.Lsprite_select_self_dispatch>:
-    4d92:	e2 ef       	ldi	r30, 0xF2	; 242
-    4d94:	f6 e2       	ldi	r31, 0x26	; 38
-    4d96:	c8 95       	lpm
+00004d8e <.Lsprite_select_self_dispatch>:
+    4d8e:	e0 ef       	ldi	r30, 0xF0	; 240
+    4d90:	f6 e2       	ldi	r31, 0x26	; 38
+    4d92:	c8 95       	lpm
 
-00004d98 <.Lsprite_store_mode_dispatch>:
-    4d98:	ea bd       	out	0x2a, r30	; 42
-    4d9a:	fb bd       	out	0x2b, r31	; 43
-    4d9c:	2e bc       	out	0x2e, r2	; 46
-    4d9e:	2f c1       	rjmp	.+606    	; 0x4ffe <.Lsprite_row_dispatch>
+00004d94 <.Lsprite_store_mode_dispatch>:
+    4d94:	ea bd       	out	0x2a, r30	; 42
+    4d96:	fb bd       	out	0x2b, r31	; 43
+    4d98:	2e bc       	out	0x2e, r2	; 46
+    4d9a:	2f c1       	rjmp	.+606    	; 0x4ffa <.Lsprite_row_dispatch>
 
-00004da0 <sprite_overwrite_row_dispatch>:
-    4da0:	83 ff       	sbrs	r24, 3
-    4da2:	04 c0       	rjmp	.+8      	; 0x4dac <.Lsprite_overwrite_kind_1834>
-    4da4:	c3 14       	cp	r12, r3
-    4da6:	11 f4       	brne	.+4      	; 0x4dac <.Lsprite_overwrite_kind_1834>
-    4da8:	8f 2c       	mov	r8, r15
-    4daa:	80 68       	ori	r24, 0x80	; 128
+00004d9c <sprite_overwrite_row_dispatch>:
+    4d9c:	83 ff       	sbrs	r24, 3
+    4d9e:	04 c0       	rjmp	.+8      	; 0x4da8 <.Lsprite_overwrite_kind_1834>
+    4da0:	c3 14       	cp	r12, r3
+    4da2:	11 f4       	brne	.+4      	; 0x4da8 <.Lsprite_overwrite_kind_1834>
+    4da4:	8f 2c       	mov	r8, r15
+    4da6:	80 68       	ori	r24, 0x80	; 128
 
-00004dac <.Lsprite_overwrite_kind_1834>:
-    4dac:	80 fd       	sbrc	r24, 0
-    4dae:	0a c0       	rjmp	.+20     	; 0x4dc4 <.Lsprite_overwrite_top_1834>
-    4db0:	c3 14       	cp	r12, r3
-    4db2:	11 f4       	brne	.+4      	; 0x4db8 <.Lsprite_overwrite_middle_1834>
-    4db4:	81 fd       	sbrc	r24, 1
-    4db6:	09 c0       	rjmp	.+18     	; 0x4dca <.Lsprite_overwrite_bottom_1834>
+00004da8 <.Lsprite_overwrite_kind_1834>:
+    4da8:	80 fd       	sbrc	r24, 0
+    4daa:	0a c0       	rjmp	.+20     	; 0x4dc0 <.Lsprite_overwrite_top_1834>
+    4dac:	c3 14       	cp	r12, r3
+    4dae:	11 f4       	brne	.+4      	; 0x4db4 <.Lsprite_overwrite_middle_1834>
+    4db0:	81 fd       	sbrc	r24, 1
+    4db2:	09 c0       	rjmp	.+18     	; 0x4dc6 <.Lsprite_overwrite_bottom_1834>
 
-00004db8 <.Lsprite_overwrite_middle_1834>:
-    4db8:	fd 01       	movw	r30, r26
-    4dba:	e0 58       	subi	r30, 0x80	; 128
-    4dbc:	ff 4f       	sbci	r31, 0xFF	; 255
-    4dbe:	87 fd       	sbrc	r24, 7
-    4dc0:	7e c0       	rjmp	.+252    	; 0x4ebe <.Lsprite_middle_overwrite_partial>
-    4dc2:	5e c0       	rjmp	.+188    	; 0x4e80 <.Lsprite_middle_overwrite_full>
+00004db4 <.Lsprite_overwrite_middle_1834>:
+    4db4:	fd 01       	movw	r30, r26
+    4db6:	e0 58       	subi	r30, 0x80	; 128
+    4db8:	ff 4f       	sbci	r31, 0xFF	; 255
+    4dba:	87 fd       	sbrc	r24, 7
+    4dbc:	7e c0       	rjmp	.+252    	; 0x4eba <.Lsprite_middle_overwrite_partial>
+    4dbe:	5e c0       	rjmp	.+188    	; 0x4e7c <.Lsprite_middle_overwrite_full>
 
-00004dc4 <.Lsprite_overwrite_top_1834>:
-    4dc4:	87 fd       	sbrc	r24, 7
-    4dc6:	3c c0       	rjmp	.+120    	; 0x4e40 <.Lsprite_top_overwrite_partial>
-    4dc8:	21 c0       	rjmp	.+66     	; 0x4e0c <.Lsprite_top_overwrite_full>
+00004dc0 <.Lsprite_overwrite_top_1834>:
+    4dc0:	87 fd       	sbrc	r24, 7
+    4dc2:	3c c0       	rjmp	.+120    	; 0x4e3c <.Lsprite_top_overwrite_partial>
+    4dc4:	21 c0       	rjmp	.+66     	; 0x4e08 <.Lsprite_top_overwrite_full>
 
-00004dca <.Lsprite_overwrite_bottom_1834>:
-    4dca:	87 fd       	sbrc	r24, 7
-    4dcc:	49 c0       	rjmp	.+146    	; 0x4e60 <.Lsprite_bottom_overwrite_partial>
-    4dce:	2b c0       	rjmp	.+86     	; 0x4e26 <.Lsprite_bottom_overwrite_full>
+00004dc6 <.Lsprite_overwrite_bottom_1834>:
+    4dc6:	87 fd       	sbrc	r24, 7
+    4dc8:	49 c0       	rjmp	.+146    	; 0x4e5c <.Lsprite_bottom_overwrite_partial>
+    4dca:	2b c0       	rjmp	.+86     	; 0x4e22 <.Lsprite_bottom_overwrite_full>
 
-00004dd0 <sprite_plus_row_dispatch>:
-    4dd0:	80 fd       	sbrc	r24, 0
-    4dd2:	89 c0       	rjmp	.+274    	; 0x4ee6 <.Lsprite_top_plus_full>
-    4dd4:	c3 14       	cp	r12, r3
-    4dd6:	11 f4       	brne	.+4      	; 0x4ddc <.Lsprite_full_middle_1835>
-    4dd8:	81 fd       	sbrc	r24, 1
-    4dda:	9a c0       	rjmp	.+308    	; 0x4f10 <.Lsprite_bottom_plus_full>
+00004dcc <sprite_plus_row_dispatch>:
+    4dcc:	80 fd       	sbrc	r24, 0
+    4dce:	89 c0       	rjmp	.+274    	; 0x4ee2 <.Lsprite_top_plus_full>
+    4dd0:	c3 14       	cp	r12, r3
+    4dd2:	11 f4       	brne	.+4      	; 0x4dd8 <.Lsprite_full_middle_1835>
+    4dd4:	81 fd       	sbrc	r24, 1
+    4dd6:	9a c0       	rjmp	.+308    	; 0x4f0c <.Lsprite_bottom_plus_full>
 
-00004ddc <.Lsprite_full_middle_1835>:
-    4ddc:	fd 01       	movw	r30, r26
-    4dde:	e0 58       	subi	r30, 0x80	; 128
-    4de0:	ff 4f       	sbci	r31, 0xFF	; 255
-    4de2:	ab c0       	rjmp	.+342    	; 0x4f3a <.Lsprite_middle_plus_full>
+00004dd8 <.Lsprite_full_middle_1835>:
+    4dd8:	fd 01       	movw	r30, r26
+    4dda:	e0 58       	subi	r30, 0x80	; 128
+    4ddc:	ff 4f       	sbci	r31, 0xFF	; 255
+    4dde:	ab c0       	rjmp	.+342    	; 0x4f36 <.Lsprite_middle_plus_full>
 
-00004de4 <sprite_self_row_dispatch>:
-    4de4:	80 fd       	sbrc	r24, 0
-    4de6:	c0 c0       	rjmp	.+384    	; 0x4f68 <.Lsprite_top_self_full>
-    4de8:	c3 14       	cp	r12, r3
-    4dea:	11 f4       	brne	.+4      	; 0x4df0 <.Lsprite_full_middle_1836>
-    4dec:	81 fd       	sbrc	r24, 1
-    4dee:	c7 c0       	rjmp	.+398    	; 0x4f7e <.Lsprite_bottom_self_full>
+00004de0 <sprite_self_row_dispatch>:
+    4de0:	80 fd       	sbrc	r24, 0
+    4de2:	c0 c0       	rjmp	.+384    	; 0x4f64 <.Lsprite_top_self_full>
+    4de4:	c3 14       	cp	r12, r3
+    4de6:	11 f4       	brne	.+4      	; 0x4dec <.Lsprite_full_middle_1836>
+    4de8:	81 fd       	sbrc	r24, 1
+    4dea:	c7 c0       	rjmp	.+398    	; 0x4f7a <.Lsprite_bottom_self_full>
 
-00004df0 <.Lsprite_full_middle_1836>:
-    4df0:	fd 01       	movw	r30, r26
-    4df2:	e0 58       	subi	r30, 0x80	; 128
-    4df4:	ff 4f       	sbci	r31, 0xFF	; 255
-    4df6:	ce c0       	rjmp	.+412    	; 0x4f94 <.Lsprite_middle_self_full>
+00004dec <.Lsprite_full_middle_1836>:
+    4dec:	fd 01       	movw	r30, r26
+    4dee:	e0 58       	subi	r30, 0x80	; 128
+    4df0:	ff 4f       	sbci	r31, 0xFF	; 255
+    4df2:	ce c0       	rjmp	.+412    	; 0x4f90 <.Lsprite_middle_self_full>
 
-00004df8 <sprite_erase_row_dispatch>:
-    4df8:	80 fd       	sbrc	r24, 0
-    4dfa:	d9 c0       	rjmp	.+434    	; 0x4fae <.Lsprite_top_erase_full>
-    4dfc:	c3 14       	cp	r12, r3
-    4dfe:	11 f4       	brne	.+4      	; 0x4e04 <.Lsprite_full_middle_1837>
-    4e00:	81 fd       	sbrc	r24, 1
-    4e02:	e2 c0       	rjmp	.+452    	; 0x4fc8 <.Lsprite_bottom_erase_full>
+00004df4 <sprite_erase_row_dispatch>:
+    4df4:	80 fd       	sbrc	r24, 0
+    4df6:	d9 c0       	rjmp	.+434    	; 0x4faa <.Lsprite_top_erase_full>
+    4df8:	c3 14       	cp	r12, r3
+    4dfa:	11 f4       	brne	.+4      	; 0x4e00 <.Lsprite_full_middle_1837>
+    4dfc:	81 fd       	sbrc	r24, 1
+    4dfe:	e2 c0       	rjmp	.+452    	; 0x4fc4 <.Lsprite_bottom_erase_full>
 
-00004e04 <.Lsprite_full_middle_1837>:
-    4e04:	fd 01       	movw	r30, r26
-    4e06:	e0 58       	subi	r30, 0x80	; 128
-    4e08:	ff 4f       	sbci	r31, 0xFF	; 255
-    4e0a:	eb c0       	rjmp	.+470    	; 0x4fe2 <.Lsprite_middle_erase_full>
+00004e00 <.Lsprite_full_middle_1837>:
+    4e00:	fd 01       	movw	r30, r26
+    4e02:	e0 58       	subi	r30, 0x80	; 128
+    4e04:	ff 4f       	sbci	r31, 0xFF	; 255
+    4e06:	eb c0       	rjmp	.+470    	; 0x4fde <.Lsprite_middle_erase_full>
 
-00004e0c <.Lsprite_top_overwrite_full>:
-    4e0c:	8e b5       	in	r24, 0x2e	; 46
-    4e0e:	2e bc       	out	0x2e, r2	; 46
-    4e10:	82 9f       	mul	r24, r18
-    4e12:	9c 91       	ld	r25, X
-    4e14:	93 23       	and	r25, r19
-    4e16:	91 29       	or	r25, r1
-    4e18:	9d 93       	st	X+, r25
-    4e1a:	00 c0       	rjmp	.+0      	; 0x4e1c <.Lsprite_top_overwrite_full+0x10>
-    4e1c:	00 c0       	rjmp	.+0      	; 0x4e1e <.Lsprite_top_overwrite_full+0x12>
-    4e1e:	00 00       	nop
-    4e20:	1a 95       	dec	r17
-    4e22:	a1 f7       	brne	.-24     	; 0x4e0c <.Lsprite_top_overwrite_full>
-    4e24:	f6 c0       	rjmp	.+492    	; 0x5012 <.Lsprite_top_done>
+00004e08 <.Lsprite_top_overwrite_full>:
+    4e08:	8e b5       	in	r24, 0x2e	; 46
+    4e0a:	2e bc       	out	0x2e, r2	; 46
+    4e0c:	82 9f       	mul	r24, r18
+    4e0e:	9c 91       	ld	r25, X
+    4e10:	93 23       	and	r25, r19
+    4e12:	91 29       	or	r25, r1
+    4e14:	9d 93       	st	X+, r25
+    4e16:	00 c0       	rjmp	.+0      	; 0x4e18 <.Lsprite_top_overwrite_full+0x10>
+    4e18:	00 c0       	rjmp	.+0      	; 0x4e1a <.Lsprite_top_overwrite_full+0x12>
+    4e1a:	00 00       	nop
+    4e1c:	1a 95       	dec	r17
+    4e1e:	a1 f7       	brne	.-24     	; 0x4e08 <.Lsprite_top_overwrite_full>
+    4e20:	f6 c0       	rjmp	.+492    	; 0x500e <.Lsprite_top_done>
 
-00004e26 <.Lsprite_bottom_overwrite_full>:
-    4e26:	8e b5       	in	r24, 0x2e	; 46
-    4e28:	2e bc       	out	0x2e, r2	; 46
-    4e2a:	82 9f       	mul	r24, r18
-    4e2c:	9c 91       	ld	r25, X
-    4e2e:	99 21       	and	r25, r9
-    4e30:	90 29       	or	r25, r0
-    4e32:	9d 93       	st	X+, r25
-    4e34:	00 c0       	rjmp	.+0      	; 0x4e36 <.Lsprite_bottom_overwrite_full+0x10>
-    4e36:	00 c0       	rjmp	.+0      	; 0x4e38 <.Lsprite_bottom_overwrite_full+0x12>
-    4e38:	00 00       	nop
-    4e3a:	1a 95       	dec	r17
-    4e3c:	a1 f7       	brne	.-24     	; 0x4e26 <.Lsprite_bottom_overwrite_full>
-    4e3e:	f5 c0       	rjmp	.+490    	; 0x502a <.Lsprite_bottom_done>
+00004e22 <.Lsprite_bottom_overwrite_full>:
+    4e22:	8e b5       	in	r24, 0x2e	; 46
+    4e24:	2e bc       	out	0x2e, r2	; 46
+    4e26:	82 9f       	mul	r24, r18
+    4e28:	9c 91       	ld	r25, X
+    4e2a:	99 21       	and	r25, r9
+    4e2c:	90 29       	or	r25, r0
+    4e2e:	9d 93       	st	X+, r25
+    4e30:	00 c0       	rjmp	.+0      	; 0x4e32 <.Lsprite_bottom_overwrite_full+0x10>
+    4e32:	00 c0       	rjmp	.+0      	; 0x4e34 <.Lsprite_bottom_overwrite_full+0x12>
+    4e34:	00 00       	nop
+    4e36:	1a 95       	dec	r17
+    4e38:	a1 f7       	brne	.-24     	; 0x4e22 <.Lsprite_bottom_overwrite_full>
+    4e3a:	f5 c0       	rjmp	.+490    	; 0x5026 <.Lsprite_bottom_done>
 
-00004e40 <.Lsprite_top_overwrite_partial>:
-    4e40:	82 9e       	mul	r8, r18
-    4e42:	10 94       	com	r1
-    4e44:	31 2d       	mov	r19, r1
+00004e3c <.Lsprite_top_overwrite_partial>:
+    4e3c:	82 9e       	mul	r8, r18
+    4e3e:	10 94       	com	r1
+    4e40:	31 2d       	mov	r19, r1
 
-00004e46 <.Lsprite_top_overwrite_partial_loop>:
-    4e46:	8e b5       	in	r24, 0x2e	; 46
-    4e48:	2e bc       	out	0x2e, r2	; 46
-    4e4a:	88 21       	and	r24, r8
-    4e4c:	82 9f       	mul	r24, r18
-    4e4e:	9c 91       	ld	r25, X
-    4e50:	93 23       	and	r25, r19
-    4e52:	91 29       	or	r25, r1
-    4e54:	9d 93       	st	X+, r25
-    4e56:	00 c0       	rjmp	.+0      	; 0x4e58 <.Lsprite_top_overwrite_partial_loop+0x12>
-    4e58:	00 c0       	rjmp	.+0      	; 0x4e5a <.Lsprite_top_overwrite_partial_loop+0x14>
-    4e5a:	1a 95       	dec	r17
-    4e5c:	a1 f7       	brne	.-24     	; 0x4e46 <.Lsprite_top_overwrite_partial_loop>
-    4e5e:	d9 c0       	rjmp	.+434    	; 0x5012 <.Lsprite_top_done>
+00004e42 <.Lsprite_top_overwrite_partial_loop>:
+    4e42:	8e b5       	in	r24, 0x2e	; 46
+    4e44:	2e bc       	out	0x2e, r2	; 46
+    4e46:	88 21       	and	r24, r8
+    4e48:	82 9f       	mul	r24, r18
+    4e4a:	9c 91       	ld	r25, X
+    4e4c:	93 23       	and	r25, r19
+    4e4e:	91 29       	or	r25, r1
+    4e50:	9d 93       	st	X+, r25
+    4e52:	00 c0       	rjmp	.+0      	; 0x4e54 <.Lsprite_top_overwrite_partial_loop+0x12>
+    4e54:	00 c0       	rjmp	.+0      	; 0x4e56 <.Lsprite_top_overwrite_partial_loop+0x14>
+    4e56:	1a 95       	dec	r17
+    4e58:	a1 f7       	brne	.-24     	; 0x4e42 <.Lsprite_top_overwrite_partial_loop>
+    4e5a:	d9 c0       	rjmp	.+434    	; 0x500e <.Lsprite_top_done>
 
-00004e60 <.Lsprite_bottom_overwrite_partial>:
-    4e60:	82 9e       	mul	r8, r18
-    4e62:	00 94       	com	r0
-    4e64:	90 2c       	mov	r9, r0
+00004e5c <.Lsprite_bottom_overwrite_partial>:
+    4e5c:	82 9e       	mul	r8, r18
+    4e5e:	00 94       	com	r0
+    4e60:	90 2c       	mov	r9, r0
 
-00004e66 <.Lsprite_bottom_overwrite_partial_loop>:
-    4e66:	8e b5       	in	r24, 0x2e	; 46
-    4e68:	2e bc       	out	0x2e, r2	; 46
-    4e6a:	88 21       	and	r24, r8
-    4e6c:	82 9f       	mul	r24, r18
-    4e6e:	9c 91       	ld	r25, X
-    4e70:	99 21       	and	r25, r9
-    4e72:	90 29       	or	r25, r0
-    4e74:	9d 93       	st	X+, r25
-    4e76:	00 c0       	rjmp	.+0      	; 0x4e78 <.Lsprite_bottom_overwrite_partial_loop+0x12>
-    4e78:	00 c0       	rjmp	.+0      	; 0x4e7a <.Lsprite_bottom_overwrite_partial_loop+0x14>
-    4e7a:	1a 95       	dec	r17
-    4e7c:	a1 f7       	brne	.-24     	; 0x4e66 <.Lsprite_bottom_overwrite_partial_loop>
-    4e7e:	d5 c0       	rjmp	.+426    	; 0x502a <.Lsprite_bottom_done>
+00004e62 <.Lsprite_bottom_overwrite_partial_loop>:
+    4e62:	8e b5       	in	r24, 0x2e	; 46
+    4e64:	2e bc       	out	0x2e, r2	; 46
+    4e66:	88 21       	and	r24, r8
+    4e68:	82 9f       	mul	r24, r18
+    4e6a:	9c 91       	ld	r25, X
+    4e6c:	99 21       	and	r25, r9
+    4e6e:	90 29       	or	r25, r0
+    4e70:	9d 93       	st	X+, r25
+    4e72:	00 c0       	rjmp	.+0      	; 0x4e74 <.Lsprite_bottom_overwrite_partial_loop+0x12>
+    4e74:	00 c0       	rjmp	.+0      	; 0x4e76 <.Lsprite_bottom_overwrite_partial_loop+0x14>
+    4e76:	1a 95       	dec	r17
+    4e78:	a1 f7       	brne	.-24     	; 0x4e62 <.Lsprite_bottom_overwrite_partial_loop>
+    4e7a:	d5 c0       	rjmp	.+426    	; 0x5026 <.Lsprite_bottom_done>
 
-00004e80 <.Lsprite_middle_overwrite_full>:
-    4e80:	10 2f       	mov	r17, r16
-    4e82:	16 95       	lsr	r17
-    4e84:	10 f4       	brcc	.+4      	; 0x4e8a <.Lsprite_middle_overwrite_pair_loop>
-    4e86:	13 95       	inc	r17
-    4e88:	0b c0       	rjmp	.+22     	; 0x4ea0 <.Lsprite_middle_overwrite_one>
+00004e7c <.Lsprite_middle_overwrite_full>:
+    4e7c:	10 2f       	mov	r17, r16
+    4e7e:	16 95       	lsr	r17
+    4e80:	10 f4       	brcc	.+4      	; 0x4e86 <.Lsprite_middle_overwrite_pair_loop>
+    4e82:	13 95       	inc	r17
+    4e84:	0b c0       	rjmp	.+22     	; 0x4e9c <.Lsprite_middle_overwrite_one>
 
-00004e8a <.Lsprite_middle_overwrite_pair_loop>:
-    4e8a:	8e b5       	in	r24, 0x2e	; 46
-    4e8c:	2e bc       	out	0x2e, r2	; 46
-    4e8e:	9c 91       	ld	r25, X
-    4e90:	82 9f       	mul	r24, r18
-    4e92:	99 21       	and	r25, r9
-    4e94:	90 29       	or	r25, r0
-    4e96:	9d 93       	st	X+, r25
-    4e98:	90 81       	ld	r25, Z
-    4e9a:	93 23       	and	r25, r19
-    4e9c:	91 29       	or	r25, r1
-    4e9e:	91 93       	st	Z+, r25
+00004e86 <.Lsprite_middle_overwrite_pair_loop>:
+    4e86:	8e b5       	in	r24, 0x2e	; 46
+    4e88:	2e bc       	out	0x2e, r2	; 46
+    4e8a:	9c 91       	ld	r25, X
+    4e8c:	82 9f       	mul	r24, r18
+    4e8e:	99 21       	and	r25, r9
+    4e90:	90 29       	or	r25, r0
+    4e92:	9d 93       	st	X+, r25
+    4e94:	90 81       	ld	r25, Z
+    4e96:	93 23       	and	r25, r19
+    4e98:	91 29       	or	r25, r1
+    4e9a:	91 93       	st	Z+, r25
 
-00004ea0 <.Lsprite_middle_overwrite_one>:
-    4ea0:	9c 91       	ld	r25, X
-    4ea2:	8e b5       	in	r24, 0x2e	; 46
-    4ea4:	2e bc       	out	0x2e, r2	; 46
-    4ea6:	82 9f       	mul	r24, r18
-    4ea8:	99 21       	and	r25, r9
-    4eaa:	90 29       	or	r25, r0
-    4eac:	9d 93       	st	X+, r25
-    4eae:	90 81       	ld	r25, Z
-    4eb0:	93 23       	and	r25, r19
-    4eb2:	91 29       	or	r25, r1
-    4eb4:	91 93       	st	Z+, r25
-    4eb6:	00 00       	nop
-    4eb8:	1a 95       	dec	r17
-    4eba:	39 f7       	brne	.-50     	; 0x4e8a <.Lsprite_middle_overwrite_pair_loop>
-    4ebc:	ad c0       	rjmp	.+346    	; 0x5018 <.Lsprite_middle_done>
+00004e9c <.Lsprite_middle_overwrite_one>:
+    4e9c:	9c 91       	ld	r25, X
+    4e9e:	8e b5       	in	r24, 0x2e	; 46
+    4ea0:	2e bc       	out	0x2e, r2	; 46
+    4ea2:	82 9f       	mul	r24, r18
+    4ea4:	99 21       	and	r25, r9
+    4ea6:	90 29       	or	r25, r0
+    4ea8:	9d 93       	st	X+, r25
+    4eaa:	90 81       	ld	r25, Z
+    4eac:	93 23       	and	r25, r19
+    4eae:	91 29       	or	r25, r1
+    4eb0:	91 93       	st	Z+, r25
+    4eb2:	00 00       	nop
+    4eb4:	1a 95       	dec	r17
+    4eb6:	39 f7       	brne	.-50     	; 0x4e86 <.Lsprite_middle_overwrite_pair_loop>
+    4eb8:	ad c0       	rjmp	.+346    	; 0x5014 <.Lsprite_middle_done>
 
-00004ebe <.Lsprite_middle_overwrite_partial>:
-    4ebe:	82 9e       	mul	r8, r18
-    4ec0:	00 94       	com	r0
-    4ec2:	10 94       	com	r1
-    4ec4:	90 2c       	mov	r9, r0
-    4ec6:	31 2d       	mov	r19, r1
+00004eba <.Lsprite_middle_overwrite_partial>:
+    4eba:	82 9e       	mul	r8, r18
+    4ebc:	00 94       	com	r0
+    4ebe:	10 94       	com	r1
+    4ec0:	90 2c       	mov	r9, r0
+    4ec2:	31 2d       	mov	r19, r1
 
-00004ec8 <.Lsprite_middle_overwrite_partial_loop>:
-    4ec8:	8e b5       	in	r24, 0x2e	; 46
-    4eca:	2e bc       	out	0x2e, r2	; 46
-    4ecc:	88 21       	and	r24, r8
-    4ece:	82 9f       	mul	r24, r18
-    4ed0:	9c 91       	ld	r25, X
-    4ed2:	99 21       	and	r25, r9
-    4ed4:	90 29       	or	r25, r0
-    4ed6:	9d 93       	st	X+, r25
-    4ed8:	90 81       	ld	r25, Z
-    4eda:	93 23       	and	r25, r19
-    4edc:	91 29       	or	r25, r1
-    4ede:	91 93       	st	Z+, r25
-    4ee0:	1a 95       	dec	r17
-    4ee2:	91 f7       	brne	.-28     	; 0x4ec8 <.Lsprite_middle_overwrite_partial_loop>
-    4ee4:	99 c0       	rjmp	.+306    	; 0x5018 <.Lsprite_middle_done>
+00004ec4 <.Lsprite_middle_overwrite_partial_loop>:
+    4ec4:	8e b5       	in	r24, 0x2e	; 46
+    4ec6:	2e bc       	out	0x2e, r2	; 46
+    4ec8:	88 21       	and	r24, r8
+    4eca:	82 9f       	mul	r24, r18
+    4ecc:	9c 91       	ld	r25, X
+    4ece:	99 21       	and	r25, r9
+    4ed0:	90 29       	or	r25, r0
+    4ed2:	9d 93       	st	X+, r25
+    4ed4:	90 81       	ld	r25, Z
+    4ed6:	93 23       	and	r25, r19
+    4ed8:	91 29       	or	r25, r1
+    4eda:	91 93       	st	Z+, r25
+    4edc:	1a 95       	dec	r17
+    4ede:	91 f7       	brne	.-28     	; 0x4ec4 <.Lsprite_middle_overwrite_partial_loop>
+    4ee0:	99 c0       	rjmp	.+306    	; 0x5014 <.Lsprite_middle_done>
 
-00004ee6 <.Lsprite_top_plus_full>:
-    4ee6:	f8 94       	cli
-    4ee8:	2e bc       	out	0x2e, r2	; 46
-    4eea:	0e b4       	in	r0, 0x2e	; 46
-    4eec:	78 94       	sei
-    4eee:	02 9e       	mul	r0, r18
-    4ef0:	81 2d       	mov	r24, r1
-    4ef2:	ce d0       	rcall	.+412    	; 0x5090 <sprite_delay_10>
-    4ef4:	f8 94       	cli
-    4ef6:	2e bc       	out	0x2e, r2	; 46
-    4ef8:	0e b4       	in	r0, 0x2e	; 46
-    4efa:	78 94       	sei
-    4efc:	02 9e       	mul	r0, r18
-    4efe:	91 2d       	mov	r25, r1
-    4f00:	3c 91       	ld	r19, X
-    4f02:	90 95       	com	r25
-    4f04:	39 23       	and	r19, r25
-    4f06:	38 2b       	or	r19, r24
-    4f08:	3d 93       	st	X+, r19
-    4f0a:	1a 95       	dec	r17
-    4f0c:	61 f7       	brne	.-40     	; 0x4ee6 <.Lsprite_top_plus_full>
-    4f0e:	81 c0       	rjmp	.+258    	; 0x5012 <.Lsprite_top_done>
+00004ee2 <.Lsprite_top_plus_full>:
+    4ee2:	f8 94       	cli
+    4ee4:	2e bc       	out	0x2e, r2	; 46
+    4ee6:	0e b4       	in	r0, 0x2e	; 46
+    4ee8:	78 94       	sei
+    4eea:	02 9e       	mul	r0, r18
+    4eec:	81 2d       	mov	r24, r1
+    4eee:	ce d0       	rcall	.+412    	; 0x508c <sprite_delay_10>
+    4ef0:	f8 94       	cli
+    4ef2:	2e bc       	out	0x2e, r2	; 46
+    4ef4:	0e b4       	in	r0, 0x2e	; 46
+    4ef6:	78 94       	sei
+    4ef8:	02 9e       	mul	r0, r18
+    4efa:	91 2d       	mov	r25, r1
+    4efc:	3c 91       	ld	r19, X
+    4efe:	90 95       	com	r25
+    4f00:	39 23       	and	r19, r25
+    4f02:	38 2b       	or	r19, r24
+    4f04:	3d 93       	st	X+, r19
+    4f06:	1a 95       	dec	r17
+    4f08:	61 f7       	brne	.-40     	; 0x4ee2 <.Lsprite_top_plus_full>
+    4f0a:	81 c0       	rjmp	.+258    	; 0x500e <.Lsprite_top_done>
 
-00004f10 <.Lsprite_bottom_plus_full>:
-    4f10:	f8 94       	cli
-    4f12:	2e bc       	out	0x2e, r2	; 46
-    4f14:	0e b4       	in	r0, 0x2e	; 46
-    4f16:	78 94       	sei
-    4f18:	02 9e       	mul	r0, r18
-    4f1a:	80 2d       	mov	r24, r0
-    4f1c:	b9 d0       	rcall	.+370    	; 0x5090 <sprite_delay_10>
-    4f1e:	f8 94       	cli
-    4f20:	2e bc       	out	0x2e, r2	; 46
-    4f22:	0e b4       	in	r0, 0x2e	; 46
-    4f24:	78 94       	sei
-    4f26:	02 9e       	mul	r0, r18
-    4f28:	90 2d       	mov	r25, r0
-    4f2a:	3c 91       	ld	r19, X
-    4f2c:	90 95       	com	r25
-    4f2e:	39 23       	and	r19, r25
-    4f30:	38 2b       	or	r19, r24
-    4f32:	3d 93       	st	X+, r19
-    4f34:	1a 95       	dec	r17
-    4f36:	61 f7       	brne	.-40     	; 0x4f10 <.Lsprite_bottom_plus_full>
-    4f38:	78 c0       	rjmp	.+240    	; 0x502a <.Lsprite_bottom_done>
+00004f0c <.Lsprite_bottom_plus_full>:
+    4f0c:	f8 94       	cli
+    4f0e:	2e bc       	out	0x2e, r2	; 46
+    4f10:	0e b4       	in	r0, 0x2e	; 46
+    4f12:	78 94       	sei
+    4f14:	02 9e       	mul	r0, r18
+    4f16:	80 2d       	mov	r24, r0
+    4f18:	b9 d0       	rcall	.+370    	; 0x508c <sprite_delay_10>
+    4f1a:	f8 94       	cli
+    4f1c:	2e bc       	out	0x2e, r2	; 46
+    4f1e:	0e b4       	in	r0, 0x2e	; 46
+    4f20:	78 94       	sei
+    4f22:	02 9e       	mul	r0, r18
+    4f24:	90 2d       	mov	r25, r0
+    4f26:	3c 91       	ld	r19, X
+    4f28:	90 95       	com	r25
+    4f2a:	39 23       	and	r19, r25
+    4f2c:	38 2b       	or	r19, r24
+    4f2e:	3d 93       	st	X+, r19
+    4f30:	1a 95       	dec	r17
+    4f32:	61 f7       	brne	.-40     	; 0x4f0c <.Lsprite_bottom_plus_full>
+    4f34:	78 c0       	rjmp	.+240    	; 0x5026 <.Lsprite_bottom_done>
 
-00004f3a <.Lsprite_middle_plus_full>:
-    4f3a:	f8 94       	cli
-    4f3c:	2e bc       	out	0x2e, r2	; 46
-    4f3e:	0e b4       	in	r0, 0x2e	; 46
-    4f40:	78 94       	sei
-    4f42:	02 9e       	mul	r0, r18
-    4f44:	c0 01       	movw	r24, r0
-    4f46:	9c 90       	ld	r9, X
-    4f48:	30 81       	ld	r19, Z
-    4f4a:	a5 d0       	rcall	.+330    	; 0x5096 <sprite_delay_7>
-    4f4c:	0e b4       	in	r0, 0x2e	; 46
-    4f4e:	2e bc       	out	0x2e, r2	; 46
-    4f50:	02 9e       	mul	r0, r18
-    4f52:	00 94       	com	r0
-    4f54:	10 94       	com	r1
-    4f56:	90 20       	and	r9, r0
-    4f58:	98 2a       	or	r9, r24
-    4f5a:	9d 92       	st	X+, r9
-    4f5c:	31 21       	and	r19, r1
-    4f5e:	39 2b       	or	r19, r25
-    4f60:	31 93       	st	Z+, r19
-    4f62:	1a 95       	dec	r17
-    4f64:	51 f7       	brne	.-44     	; 0x4f3a <.Lsprite_middle_plus_full>
-    4f66:	58 c0       	rjmp	.+176    	; 0x5018 <.Lsprite_middle_done>
+00004f36 <.Lsprite_middle_plus_full>:
+    4f36:	f8 94       	cli
+    4f38:	2e bc       	out	0x2e, r2	; 46
+    4f3a:	0e b4       	in	r0, 0x2e	; 46
+    4f3c:	78 94       	sei
+    4f3e:	02 9e       	mul	r0, r18
+    4f40:	c0 01       	movw	r24, r0
+    4f42:	9c 90       	ld	r9, X
+    4f44:	30 81       	ld	r19, Z
+    4f46:	a5 d0       	rcall	.+330    	; 0x5092 <sprite_delay_7>
+    4f48:	0e b4       	in	r0, 0x2e	; 46
+    4f4a:	2e bc       	out	0x2e, r2	; 46
+    4f4c:	02 9e       	mul	r0, r18
+    4f4e:	00 94       	com	r0
+    4f50:	10 94       	com	r1
+    4f52:	90 20       	and	r9, r0
+    4f54:	98 2a       	or	r9, r24
+    4f56:	9d 92       	st	X+, r9
+    4f58:	31 21       	and	r19, r1
+    4f5a:	39 2b       	or	r19, r25
+    4f5c:	31 93       	st	Z+, r19
+    4f5e:	1a 95       	dec	r17
+    4f60:	51 f7       	brne	.-44     	; 0x4f36 <.Lsprite_middle_plus_full>
+    4f62:	58 c0       	rjmp	.+176    	; 0x5014 <.Lsprite_middle_done>
 
-00004f68 <.Lsprite_top_self_full>:
-    4f68:	8e b5       	in	r24, 0x2e	; 46
-    4f6a:	2e bc       	out	0x2e, r2	; 46
-    4f6c:	82 9f       	mul	r24, r18
-    4f6e:	9c 91       	ld	r25, X
-    4f70:	91 29       	or	r25, r1
-    4f72:	9d 93       	st	X+, r25
-    4f74:	c8 95       	lpm
-    4f76:	c8 95       	lpm
-    4f78:	1a 95       	dec	r17
-    4f7a:	b1 f7       	brne	.-20     	; 0x4f68 <.Lsprite_top_self_full>
-    4f7c:	4a c0       	rjmp	.+148    	; 0x5012 <.Lsprite_top_done>
+00004f64 <.Lsprite_top_self_full>:
+    4f64:	8e b5       	in	r24, 0x2e	; 46
+    4f66:	2e bc       	out	0x2e, r2	; 46
+    4f68:	82 9f       	mul	r24, r18
+    4f6a:	9c 91       	ld	r25, X
+    4f6c:	91 29       	or	r25, r1
+    4f6e:	9d 93       	st	X+, r25
+    4f70:	c8 95       	lpm
+    4f72:	c8 95       	lpm
+    4f74:	1a 95       	dec	r17
+    4f76:	b1 f7       	brne	.-20     	; 0x4f64 <.Lsprite_top_self_full>
+    4f78:	4a c0       	rjmp	.+148    	; 0x500e <.Lsprite_top_done>
 
-00004f7e <.Lsprite_bottom_self_full>:
-    4f7e:	8e b5       	in	r24, 0x2e	; 46
-    4f80:	2e bc       	out	0x2e, r2	; 46
-    4f82:	82 9f       	mul	r24, r18
-    4f84:	9c 91       	ld	r25, X
-    4f86:	90 29       	or	r25, r0
-    4f88:	9d 93       	st	X+, r25
-    4f8a:	c8 95       	lpm
-    4f8c:	c8 95       	lpm
-    4f8e:	1a 95       	dec	r17
-    4f90:	b1 f7       	brne	.-20     	; 0x4f7e <.Lsprite_bottom_self_full>
-    4f92:	4b c0       	rjmp	.+150    	; 0x502a <.Lsprite_bottom_done>
+00004f7a <.Lsprite_bottom_self_full>:
+    4f7a:	8e b5       	in	r24, 0x2e	; 46
+    4f7c:	2e bc       	out	0x2e, r2	; 46
+    4f7e:	82 9f       	mul	r24, r18
+    4f80:	9c 91       	ld	r25, X
+    4f82:	90 29       	or	r25, r0
+    4f84:	9d 93       	st	X+, r25
+    4f86:	c8 95       	lpm
+    4f88:	c8 95       	lpm
+    4f8a:	1a 95       	dec	r17
+    4f8c:	b1 f7       	brne	.-20     	; 0x4f7a <.Lsprite_bottom_self_full>
+    4f8e:	4b c0       	rjmp	.+150    	; 0x5026 <.Lsprite_bottom_done>
 
-00004f94 <.Lsprite_middle_self_full>:
-    4f94:	8e b5       	in	r24, 0x2e	; 46
-    4f96:	2e bc       	out	0x2e, r2	; 46
-    4f98:	82 9f       	mul	r24, r18
-    4f9a:	9c 91       	ld	r25, X
-    4f9c:	90 29       	or	r25, r0
-    4f9e:	9d 93       	st	X+, r25
-    4fa0:	90 81       	ld	r25, Z
-    4fa2:	91 29       	or	r25, r1
-    4fa4:	91 93       	st	Z+, r25
-    4fa6:	00 00       	nop
-    4fa8:	1a 95       	dec	r17
-    4faa:	a1 f7       	brne	.-24     	; 0x4f94 <.Lsprite_middle_self_full>
-    4fac:	35 c0       	rjmp	.+106    	; 0x5018 <.Lsprite_middle_done>
+00004f90 <.Lsprite_middle_self_full>:
+    4f90:	8e b5       	in	r24, 0x2e	; 46
+    4f92:	2e bc       	out	0x2e, r2	; 46
+    4f94:	82 9f       	mul	r24, r18
+    4f96:	9c 91       	ld	r25, X
+    4f98:	90 29       	or	r25, r0
+    4f9a:	9d 93       	st	X+, r25
+    4f9c:	90 81       	ld	r25, Z
+    4f9e:	91 29       	or	r25, r1
+    4fa0:	91 93       	st	Z+, r25
+    4fa2:	00 00       	nop
+    4fa4:	1a 95       	dec	r17
+    4fa6:	a1 f7       	brne	.-24     	; 0x4f90 <.Lsprite_middle_self_full>
+    4fa8:	35 c0       	rjmp	.+106    	; 0x5014 <.Lsprite_middle_done>
 
-00004fae <.Lsprite_top_erase_full>:
-    4fae:	f8 94       	cli
-    4fb0:	2e bc       	out	0x2e, r2	; 46
-    4fb2:	8e b5       	in	r24, 0x2e	; 46
-    4fb4:	78 94       	sei
-    4fb6:	82 9f       	mul	r24, r18
-    4fb8:	10 94       	com	r1
-    4fba:	9c 91       	ld	r25, X
-    4fbc:	91 21       	and	r25, r1
-    4fbe:	9d 93       	st	X+, r25
-    4fc0:	00 c0       	rjmp	.+0      	; 0x4fc2 <.Lsprite_top_erase_full+0x14>
-    4fc2:	1a 95       	dec	r17
-    4fc4:	a1 f7       	brne	.-24     	; 0x4fae <.Lsprite_top_erase_full>
-    4fc6:	25 c0       	rjmp	.+74     	; 0x5012 <.Lsprite_top_done>
+00004faa <.Lsprite_top_erase_full>:
+    4faa:	f8 94       	cli
+    4fac:	2e bc       	out	0x2e, r2	; 46
+    4fae:	8e b5       	in	r24, 0x2e	; 46
+    4fb0:	78 94       	sei
+    4fb2:	82 9f       	mul	r24, r18
+    4fb4:	10 94       	com	r1
+    4fb6:	9c 91       	ld	r25, X
+    4fb8:	91 21       	and	r25, r1
+    4fba:	9d 93       	st	X+, r25
+    4fbc:	00 c0       	rjmp	.+0      	; 0x4fbe <.Lsprite_top_erase_full+0x14>
+    4fbe:	1a 95       	dec	r17
+    4fc0:	a1 f7       	brne	.-24     	; 0x4faa <.Lsprite_top_erase_full>
+    4fc2:	25 c0       	rjmp	.+74     	; 0x500e <.Lsprite_top_done>
 
-00004fc8 <.Lsprite_bottom_erase_full>:
-    4fc8:	f8 94       	cli
-    4fca:	2e bc       	out	0x2e, r2	; 46
-    4fcc:	8e b5       	in	r24, 0x2e	; 46
-    4fce:	78 94       	sei
-    4fd0:	82 9f       	mul	r24, r18
-    4fd2:	00 94       	com	r0
-    4fd4:	9c 91       	ld	r25, X
-    4fd6:	90 21       	and	r25, r0
-    4fd8:	9d 93       	st	X+, r25
-    4fda:	00 c0       	rjmp	.+0      	; 0x4fdc <.Lsprite_bottom_erase_full+0x14>
-    4fdc:	1a 95       	dec	r17
-    4fde:	a1 f7       	brne	.-24     	; 0x4fc8 <.Lsprite_bottom_erase_full>
-    4fe0:	24 c0       	rjmp	.+72     	; 0x502a <.Lsprite_bottom_done>
+00004fc4 <.Lsprite_bottom_erase_full>:
+    4fc4:	f8 94       	cli
+    4fc6:	2e bc       	out	0x2e, r2	; 46
+    4fc8:	8e b5       	in	r24, 0x2e	; 46
+    4fca:	78 94       	sei
+    4fcc:	82 9f       	mul	r24, r18
+    4fce:	00 94       	com	r0
+    4fd0:	9c 91       	ld	r25, X
+    4fd2:	90 21       	and	r25, r0
+    4fd4:	9d 93       	st	X+, r25
+    4fd6:	00 c0       	rjmp	.+0      	; 0x4fd8 <.Lsprite_bottom_erase_full+0x14>
+    4fd8:	1a 95       	dec	r17
+    4fda:	a1 f7       	brne	.-24     	; 0x4fc4 <.Lsprite_bottom_erase_full>
+    4fdc:	24 c0       	rjmp	.+72     	; 0x5026 <.Lsprite_bottom_done>
 
-00004fe2 <.Lsprite_middle_erase_full>:
-    4fe2:	8e b5       	in	r24, 0x2e	; 46
-    4fe4:	2e bc       	out	0x2e, r2	; 46
-    4fe6:	82 9f       	mul	r24, r18
-    4fe8:	00 94       	com	r0
-    4fea:	10 94       	com	r1
-    4fec:	9c 91       	ld	r25, X
-    4fee:	90 21       	and	r25, r0
-    4ff0:	9d 93       	st	X+, r25
-    4ff2:	90 81       	ld	r25, Z
-    4ff4:	91 21       	and	r25, r1
-    4ff6:	91 93       	st	Z+, r25
-    4ff8:	1a 95       	dec	r17
-    4ffa:	99 f7       	brne	.-26     	; 0x4fe2 <.Lsprite_middle_erase_full>
-    4ffc:	0d c0       	rjmp	.+26     	; 0x5018 <.Lsprite_middle_done>
+00004fde <.Lsprite_middle_erase_full>:
+    4fde:	8e b5       	in	r24, 0x2e	; 46
+    4fe0:	2e bc       	out	0x2e, r2	; 46
+    4fe2:	82 9f       	mul	r24, r18
+    4fe4:	00 94       	com	r0
+    4fe6:	10 94       	com	r1
+    4fe8:	9c 91       	ld	r25, X
+    4fea:	90 21       	and	r25, r0
+    4fec:	9d 93       	st	X+, r25
+    4fee:	90 81       	ld	r25, Z
+    4ff0:	91 21       	and	r25, r1
+    4ff2:	91 93       	st	Z+, r25
+    4ff4:	1a 95       	dec	r17
+    4ff6:	99 f7       	brne	.-26     	; 0x4fde <.Lsprite_middle_erase_full>
+    4ff8:	0d c0       	rjmp	.+26     	; 0x5014 <.Lsprite_middle_done>
 
-00004ffe <.Lsprite_row_dispatch>:
-    4ffe:	87 2f       	mov	r24, r23
-    5000:	10 2f       	mov	r17, r16
-    5002:	80 ff       	sbrs	r24, 0
-    5004:	03 c0       	rjmp	.+6      	; 0x500c <.Lsprite_row_pointer_ready>
-    5006:	7e 7f       	andi	r23, 0xFE	; 254
-    5008:	a0 58       	subi	r26, 0x80	; 128
-    500a:	bf 4f       	sbci	r27, 0xFF	; 255
+00004ffa <.Lsprite_row_dispatch>:
+    4ffa:	87 2f       	mov	r24, r23
+    4ffc:	10 2f       	mov	r17, r16
+    4ffe:	80 ff       	sbrs	r24, 0
+    5000:	03 c0       	rjmp	.+6      	; 0x5008 <.Lsprite_row_pointer_ready>
+    5002:	7e 7f       	andi	r23, 0xFE	; 254
+    5004:	a0 58       	subi	r26, 0x80	; 128
+    5006:	bf 4f       	sbci	r27, 0xFF	; 255
 
-0000500c <.Lsprite_row_pointer_ready>:
-    500c:	ea b5       	in	r30, 0x2a	; 42
-    500e:	fb b5       	in	r31, 0x2b	; 43
-    5010:	09 94       	ijmp
+00005008 <.Lsprite_row_pointer_ready>:
+    5008:	ea b5       	in	r30, 0x2a	; 42
+    500a:	fb b5       	in	r31, 0x2b	; 43
+    500c:	09 94       	ijmp
 
-00005012 <.Lsprite_top_done>:
-    5012:	a0 1b       	sub	r26, r16
-    5014:	b2 09       	sbc	r27, r2
-    5016:	03 c0       	rjmp	.+6      	; 0x501e <.Lsprite_row_complete>
+0000500e <.Lsprite_top_done>:
+    500e:	a0 1b       	sub	r26, r16
+    5010:	b2 09       	sbc	r27, r2
+    5012:	03 c0       	rjmp	.+6      	; 0x501a <.Lsprite_row_complete>
 
-00005018 <.Lsprite_middle_done>:
-    5018:	8e 2d       	mov	r24, r14
-    501a:	a8 0f       	add	r26, r24
-    501c:	b2 1d       	adc	r27, r2
+00005014 <.Lsprite_middle_done>:
+    5014:	8e 2d       	mov	r24, r14
+    5016:	a8 0f       	add	r26, r24
+    5018:	b2 1d       	adc	r27, r2
 
-0000501e <.Lsprite_row_complete>:
-    501e:	ca 94       	dec	r12
-    5020:	21 f0       	breq	.+8      	; 0x502a <.Lsprite_bottom_done>
-    5022:	6e f7       	brtc	.-38     	; 0x4ffe <.Lsprite_row_dispatch>
-    5024:	59 9a       	sbi	0x0b, 1	; 11
-    5026:	13 d0       	rcall	.+38     	; 0x504e <sprite_start_row_read_func>
-    5028:	ea cf       	rjmp	.-44     	; 0x4ffe <.Lsprite_row_dispatch>
+0000501a <.Lsprite_row_complete>:
+    501a:	ca 94       	dec	r12
+    501c:	21 f0       	breq	.+8      	; 0x5026 <.Lsprite_bottom_done>
+    501e:	6e f7       	brtc	.-38     	; 0x4ffa <.Lsprite_row_dispatch>
+    5020:	59 9a       	sbi	0x0b, 1	; 11
+    5022:	13 d0       	rcall	.+38     	; 0x504a <sprite_start_row_read_func>
+    5024:	ea cf       	rjmp	.-44     	; 0x4ffa <.Lsprite_row_dispatch>
 
-0000502a <.Lsprite_bottom_done>:
-    502a:	7f 91       	pop	r23
-    502c:	6f 91       	pop	r22
-    502e:	5f 91       	pop	r21
-    5030:	4f 91       	pop	r20
-    5032:	3f 91       	pop	r19
-    5034:	2f 91       	pop	r18
-    5036:	1f 91       	pop	r17
-    5038:	0f 91       	pop	r16
-    503a:	ff 90       	pop	r15
-    503c:	ef 90       	pop	r14
-    503e:	df 90       	pop	r13
-    5040:	cf 90       	pop	r12
-    5042:	bf 90       	pop	r11
-    5044:	af 90       	pop	r10
-    5046:	9f 90       	pop	r9
-    5048:	8f 90       	pop	r8
+00005026 <.Lsprite_bottom_done>:
+    5026:	7f 91       	pop	r23
+    5028:	6f 91       	pop	r22
+    502a:	5f 91       	pop	r21
+    502c:	4f 91       	pop	r20
+    502e:	3f 91       	pop	r19
+    5030:	2f 91       	pop	r18
+    5032:	1f 91       	pop	r17
+    5034:	0f 91       	pop	r16
+    5036:	ff 90       	pop	r15
+    5038:	ef 90       	pop	r14
+    503a:	df 90       	pop	r13
+    503c:	cf 90       	pop	r12
+    503e:	bf 90       	pop	r11
+    5040:	af 90       	pop	r10
+    5042:	9f 90       	pop	r9
+    5044:	8f 90       	pop	r8
+    5046:	59 9a       	sbi	0x0b, 1	; 11
+    5048:	08 95       	ret
+
+0000504a <sprite_start_row_read_func>:
     504a:	59 9a       	sbi	0x0b, 1	; 11
-    504c:	08 95       	ret
+    504c:	83 e0       	ldi	r24, 0x03	; 3
+    504e:	59 98       	cbi	0x0b, 1	; 11
+    5050:	8e bd       	out	0x2e, r24	; 46
+    5052:	c5 01       	movw	r24, r10
+    5054:	48 0f       	add	r20, r24
+    5056:	59 1f       	adc	r21, r25
+    5058:	62 1d       	adc	r22, r2
+    505a:	95 2f       	mov	r25, r21
+    505c:	e6 2f       	mov	r30, r22
+    505e:	f0 91 00 0a 	lds	r31, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    5062:	9f 0f       	add	r25, r31
+    5064:	f0 91 01 0a 	lds	r31, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
+    5068:	ef 1f       	adc	r30, r31
+    506a:	c8 95       	lpm
+    506c:	00 c0       	rjmp	.+0      	; 0x506e <sprite_start_row_read_func+0x24>
+    506e:	ee bd       	out	0x2e, r30	; 46
+    5070:	06 d0       	rcall	.+12     	; 0x507e <sprite_delay_17>
+    5072:	9e bd       	out	0x2e, r25	; 46
+    5074:	04 d0       	rcall	.+8      	; 0x507e <sprite_delay_17>
+    5076:	4e bd       	out	0x2e, r20	; 46
+    5078:	02 d0       	rcall	.+4      	; 0x507e <sprite_delay_17>
+    507a:	2e bc       	out	0x2e, r2	; 46
+    507c:	08 95       	ret
 
-0000504e <sprite_start_row_read_func>:
-    504e:	59 9a       	sbi	0x0b, 1	; 11
-    5050:	83 e0       	ldi	r24, 0x03	; 3
-    5052:	59 98       	cbi	0x0b, 1	; 11
-    5054:	8e bd       	out	0x2e, r24	; 46
-    5056:	c5 01       	movw	r24, r10
-    5058:	48 0f       	add	r20, r24
-    505a:	59 1f       	adc	r21, r25
-    505c:	62 1d       	adc	r22, r2
-    505e:	95 2f       	mov	r25, r21
-    5060:	e6 2f       	mov	r30, r22
-    5062:	f0 91 00 0a 	lds	r31, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
-    5066:	9f 0f       	add	r25, r31
-    5068:	f0 91 01 0a 	lds	r31, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
-    506c:	ef 1f       	adc	r30, r31
-    506e:	c8 95       	lpm
-    5070:	00 c0       	rjmp	.+0      	; 0x5072 <sprite_start_row_read_func+0x24>
-    5072:	ee bd       	out	0x2e, r30	; 46
-    5074:	06 d0       	rcall	.+12     	; 0x5082 <sprite_delay_17>
-    5076:	9e bd       	out	0x2e, r25	; 46
-    5078:	04 d0       	rcall	.+8      	; 0x5082 <sprite_delay_17>
-    507a:	4e bd       	out	0x2e, r20	; 46
-    507c:	02 d0       	rcall	.+4      	; 0x5082 <sprite_delay_17>
-    507e:	2e bc       	out	0x2e, r2	; 46
-    5080:	08 95       	ret
+0000507e <sprite_delay_17>:
+    507e:	00 00       	nop
 
-00005082 <sprite_delay_17>:
+00005080 <sprite_delay_16>:
+    5080:	00 00       	nop
+
+00005082 <sprite_delay_15>:
     5082:	00 00       	nop
 
-00005084 <sprite_delay_16>:
+00005084 <sprite_delay_14>:
     5084:	00 00       	nop
 
-00005086 <sprite_delay_15>:
+00005086 <sprite_delay_13>:
     5086:	00 00       	nop
 
-00005088 <sprite_delay_14>:
+00005088 <sprite_delay_12>:
     5088:	00 00       	nop
 
-0000508a <sprite_delay_13>:
+0000508a <sprite_delay_11>:
     508a:	00 00       	nop
 
-0000508c <sprite_delay_12>:
+0000508c <sprite_delay_10>:
     508c:	00 00       	nop
 
-0000508e <sprite_delay_11>:
+0000508e <sprite_delay_9>:
     508e:	00 00       	nop
 
-00005090 <sprite_delay_10>:
+00005090 <sprite_delay_8>:
     5090:	00 00       	nop
 
-00005092 <sprite_delay_9>:
-    5092:	00 00       	nop
-
-00005094 <sprite_delay_8>:
-    5094:	00 00       	nop
-
-00005096 <sprite_delay_7>:
-    5096:	08 95       	ret
+00005092 <sprite_delay_7>:
+    5092:	08 95       	ret

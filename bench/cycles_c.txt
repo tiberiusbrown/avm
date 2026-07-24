@@ -24,17 +24,17 @@
       744268   select.c
       520129   shifts.c
       372418   sieve.c
-      708565   small_memops.c
+      690851   small_memops.c
       820167   stack_array.c
      7193047   state_machine.c
     25469691   string_scan.c
       593528   struct_copy.c
       936377   switch.c
-        3675   sys_memcmp.c
-        6182   sys_memcmp_p.c
-        3088   sys_strcmp.c
-        6492   sys_strcmp_p.c
-        3321   sys_strlen.c
+        3435   sys_memcmp.c
+        5723   sys_memcmp_p.c
+        2692   sys_strcmp.c
+        5889   sys_strcmp_p.c
+        3039   sys_strlen.c
         7144   sys_strlen_p.c
         2512   sys_strncat.c
         3974   sys_strncat_p.c

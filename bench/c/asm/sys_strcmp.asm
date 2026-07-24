@@ -13,8 +13,8 @@ SYMBOL TABLE:
 00000216 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	000000d7 avm_test_main
-000003ed g     F .text	00000002 avm_halt
+00000316 g     F .text	000000c6 avm_test_main
+000003dc g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -29,12 +29,13 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 d7 00              call16	avm_halt
+ e1 c6 00              call16	avm_halt
 
 <avm_test_main>:
+ b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	avm_test_main
+ d6 fc                 adjsp	avm_test_main+1
  f0 00 61              ldi8	r0, 0x61
  a0                    xor	r4, r4
  c1 4f                 ldi8	r5, 0x4f
@@ -42,12 +43,12 @@ Disassembly of section .text:
  c1 1a                 ldi8	r5, 0x1a
  f4 41                 stsp16	[sp+0x0], r5
  04                    mov	r5, r4
- d4 0a                 jmp8	avm_test_main+29
+ d4 0a                 jmp8	avm_test_main+30
  f4 ac                 inc16	r4
  f4 a8                 inc16	r0
  f4 ad                 inc16	r5
  cd 40                 cmpi.s8	r5, 0x40
- d0 37                 breq8	avm_test_main+84
+ d0 37                 breq8	avm_test_main+85
  0c                    mov	r7, r4
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 1e                 mulu8.w	r7, r6
@@ -71,7 +72,7 @@ Disassembly of section .text:
  1d                    add	r7, r5
  5e                    st8	[r7], r6
  cd 10                 cmpi.s8	r5, 0x10
- d8 ce                 bruge8	avm_test_main+19
+ d8 ce                 bruge8	avm_test_main+20
  c7 04 02              ldi16	r7, 0x204
  1d                    add	r7, r5
  5e                    st8	[r7], r6
@@ -79,81 +80,65 @@ Disassembly of section .text:
  f4 a8                 inc16	r0
  f4 ad                 inc16	r5
  cd 40                 cmpi.s8	r5, 0x40
- d1 c9                 brne8	avm_test_main+29
+ d1 c9                 brne8	avm_test_main+30
  c0 7a                 ldi8	r4, 0x7a
  f0 4c 82 01           stm8	[0x182], r4
  f0 5c 02 02           stm16	[0x202], r4
- a0                    xor	r4, r4
- f0 4c 81 01           stm8	[0x181], r4
- f0 4c 40 01           stm8	[0x140], r4
- f0 4c c2 01           stm8	[0x1c2], r4
- f0 4c 14 02           stm8	[0x214], r4
- f0 4c 15 02           stm8	[0x215], r4
+ f2 30                 sub	r0, r0
+ f0 48 81 01           stm8	[0x181], r0
+ f0 48 40 01           stm8	[0x140], r0
+ f0 48 c2 01           stm8	[0x1c2], r0
+ f0 48 14 02           stm8	[0x214], r0
+ f0 48 15 02           stm8	[0x215], r0
  d7 01                 sys	debug_break
- c7 15 02              ldi16	r7, 0x215
- b4                    push16	r4
- 03                    mov	r4, r7
+ c5 15 02              ldi16	r5, 0x215
+ 01                    mov	r4, r5
+ d7 19                 sys	strcmp
+ 0c                    mov	r7, r4
+ f0 05 41 01           ldi16	r1, 0x141
+ c5 00 01              ldi16	r5, 0x100
+ 01                    mov	r4, r5
+ b5                    push16	r5
+ f1 25                 mov	r5, r1
+ d7 19                 sys	strcmp
+ bd                    pop16	r5
+ 08                    mov	r6, r4
+ 1b                    add	r6, r7
+ c7 82 01              ldi16	r7, 0x182
+ 01                    mov	r4, r5
+ b5                    push16	r5
  07                    mov	r5, r7
  d7 19                 sys	strcmp
- 0c                    mov	r7, r4
- bc                    pop16	r4
- f0 04 41 01           ldi16	r0, 0x141
- c5 00 01              ldi16	r5, 0x100
- 09                    mov	r6, r5
- b4                    push16	r4
- b5                    push16	r5
- 02                    mov	r4, r6
- f1 24                 mov	r5, r0
- d7 19                 sys	strcmp
- 08                    mov	r6, r4
- 1b                    add	r6, r7
  bd                    pop16	r5
- bc                    pop16	r4
- f0 05 82 01           ldi16	r1, 0x182
- 0d                    mov	r7, r5
- b4                    push16	r4
- b5                    push16	r5
- 03                    mov	r4, r7
- f1 25                 mov	r5, r1
- d7 19                 sys	strcmp
  0c                    mov	r7, r4
  1e                    add	r7, r6
- bd                    pop16	r5
- bc                    pop16	r4
- f0 05 c3 01           ldi16	r1, 0x1c3
- 09                    mov	r6, r5
- b4                    push16	r4
- b5                    push16	r5
- 02                    mov	r4, r6
- f1 25                 mov	r5, r1
- d7 19                 sys	strcmp
- 08                    mov	r6, r4
- 1b                    add	r6, r7
- bd                    pop16	r5
- bc                    pop16	r4
- f0 05 04 02           ldi16	r1, 0x204
- f1 2d                 mov	r7, r1
- b4                    push16	r4
- b5                    push16	r5
- 03                    mov	r4, r7
- f1 24                 mov	r5, r0
- d7 19                 sys	strcmp
- 0c                    mov	r7, r4
- 1e                    add	r7, r6
- bd                    pop16	r5
- bc                    pop16	r4
- b4                    push16	r4
+ c6 c3 01              ldi16	r6, 0x1c3
  01                    mov	r4, r5
+ b5                    push16	r5
+ 06                    mov	r5, r6
+ d7 19                 sys	strcmp
+ bd                    pop16	r5
+ 08                    mov	r6, r4
+ 1b                    add	r6, r7
+ f0 06 04 02           ldi16	r2, 0x204
+ f1 22                 mov	r4, r2
+ b5                    push16	r5
  f1 25                 mov	r5, r1
  d7 19                 sys	strcmp
- 04                    mov	r5, r4
- 17                    add	r5, r7
- bc                    pop16	r4
- f0 5d 16 02           stm16	[0x216], r5
+ bd                    pop16	r5
+ 0c                    mov	r7, r4
+ 1e                    add	r7, r6
+ 01                    mov	r4, r5
+ f1 26                 mov	r5, r2
+ d7 19                 sys	strcmp
+ 13                    add	r4, r7
+ f0 5c 16 02           stm16	[0x216], r4
  d7 01                 sys	debug_break
- d6 04                 adjsp	avm_halt+1
+ f1 20                 mov	r4, r0
+ d6 04                 adjsp	avm_halt
  b8                    pop16	r0
  b9                    pop16	r1
+ ba                    pop16	r2
  ef                    ret
 
 <avm_halt>:

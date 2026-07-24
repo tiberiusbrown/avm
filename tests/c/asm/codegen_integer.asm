@@ -4,13 +4,13 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/codegen_integer.elf:	file form
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_integer.c
-000003e1 l     F .text	0000007c mix_u16
-00000477 l     F .text	000000dd mix_u32
-0000045d l     F .text	0000001a mix_s16
+000003e5 l     F .text	0000007c mix_u16
+0000047b l     F .text	000000dd mix_u32
+00000461 l     F .text	0000001a mix_s16
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
-00000116 g     F .text	000002cb avm_test_main
-00000554 g     F .text	00000002 avm_halt
+00000116 g     F .text	000002cf avm_test_main
+00000558 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 3e 04              call16	avm_halt
+ e1 42 04              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -51,7 +51,7 @@ Disassembly of section .text:
  f0 3d 22              stsp16	[sp+0x22], r5
  f0 34 2e              ldsp16	r4, [sp+0x2e]
  f0 35 2c              ldsp16	r5, [sp+0x2c]
- e1 8c 02              call16	mix_u16
+ e1 90 02              call16	mix_u16
  f0 3c 14              stsp16	[sp+0x14], r4
  f0 34 2a              ldsp16	r4, [sp+0x2a]
  f4 70                 stsp16	[sp+0xc], r4
@@ -61,7 +61,7 @@ Disassembly of section .text:
  f0 35 26              ldsp16	r5, [sp+0x26]
  f0 36 20              ldsp16	r6, [sp+0x20]
  f0 37 22              ldsp16	r7, [sp+0x22]
- e1 05 03              call16	mix_u32
+ e1 09 03              call16	mix_u32
  f0 3c 1c              stsp16	[sp+0x1c], r4
  f0 3d 1e              stsp16	[sp+0x1e], r5
  f0 02 30              ldi8	r2, 0x30
@@ -162,10 +162,14 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f4 19                 ldsp16	r5, [sp+0x6]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f4 29                 ldsp16	r5, [sp+0xa]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c1 0a                 ldi8	r5, 0xa
@@ -386,7 +390,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f6                 adjsp	avm_test_main+711
+ d6 f6                 adjsp	avm_test_main+715
  f2 30                 sub	r0, r0
  c2 0f                 ldi8	r6, 0xf
  f4 4a                 stsp16	[sp+0x2], r6

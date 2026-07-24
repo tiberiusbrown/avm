@@ -58,8 +58,8 @@ Disassembly of section .text:
  01                    mov	r4, r5
  d7 14                 sys	strcmp_p
  04                    mov	r5, r4
- f4 41                 stsp16	[sp+0x0], r5
  bc                    pop16	r4
+ f4 41                 stsp16	[sp+0x0], r5
  f0 06 52 03           ldi16	r2, 0x352
  f0 03 00              ldi8	r3, 0x0
  f1 73                 zext8	r3

@@ -57,8 +57,8 @@ Disassembly of section .text:
  01                    mov	r4, r5
  f1 24                 mov	r5, r0
  d7 16                 sys	strncpy_p
- b8                    pop16	r0
  bc                    pop16	r4
+ b8                    pop16	r0
  ef                    ret
 
 <test_call_strncat_P>:
@@ -70,8 +70,8 @@ Disassembly of section .text:
  01                    mov	r4, r5
  f1 24                 mov	r5, r0
  d7 17                 sys	strncat_p
- b8                    pop16	r0
  bc                    pop16	r4
+ b8                    pop16	r0
  ef                    ret
 
 <avm_test_main>:
@@ -169,6 +169,7 @@ Disassembly of section .text:
  d7 0f                 sys	memcpy
  c6 69 63              ldi16	r6, 0x6369
  c3 65                 ldi8	r7, 0x65
+ bc                    pop16	r4
  f0 3e 92              stsp16	[sp+0x92], r6
  f0 3f 94              stsp16	[sp+0x94], r7
  aa                    xor	r6, r6
@@ -185,9 +186,8 @@ Disassembly of section .text:
  f0 3f 88              stsp16	[sp+0x88], r7
  f0 3e 82              stsp16	[sp+0x82], r6
  f0 3f 84              stsp16	[sp+0x84], r7
- d6 fe                 adjsp	avm_test_main+263
+ d6 fe                 adjsp	avm_test_main+264
  c1 08                 ldi8	r5, 0x8
- bc                    pop16	r4
  f4 41                 stsp16	[sp+0x0], r5
  c6 a1 11              ldi16	r6, 0x11a1
  c3 00                 ldi8	r7, 0x0

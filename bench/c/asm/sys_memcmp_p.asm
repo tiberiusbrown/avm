@@ -60,8 +60,8 @@ Disassembly of section .text:
  f1 2d                 mov	r7, r1
  d7 13                 sys	memcmp_p
  08                    mov	r6, r4
- f4 4a                 stsp16	[sp+0x2], r6
  bc                    pop16	r4
+ f4 4a                 stsp16	[sp+0x2], r6
  f0 57 42 01           ldm16	r7, [0x142]
  04                    mov	r5, r4
  b4                    push16	r4
@@ -82,9 +82,9 @@ Disassembly of section .text:
  f1 28                 mov	r6, r0
  d7 13                 sys	memcmp_p
  0c                    mov	r7, r4
- f4 43                 stsp16	[sp+0x0], r7
  bd                    pop16	r5
  bc                    pop16	r4
+ f4 43                 stsp16	[sp+0x0], r7
  f0 04 13 03           ldi16	r0, 0x313
  f0 01 00              ldi8	r1, 0x0
  f1 71                 zext8	r1
@@ -122,9 +122,9 @@ Disassembly of section .text:
  f1 2d                 mov	r7, r1
  f1 27                 mov	r5, r3
  d7 13                 sys	memcmp_p
- f4 0b                 ldsp16	r7, [sp+0x2]
  be                    pop16	r6
  bd                    pop16	r5
+ f4 0b                 ldsp16	r7, [sp+0x2]
  17                    add	r5, r7
  f4 03                 ldsp16	r7, [sp+0x0]
  17                    add	r5, r7

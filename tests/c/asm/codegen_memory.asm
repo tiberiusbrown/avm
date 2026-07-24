@@ -348,8 +348,8 @@ Disassembly of section .text:
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c5 1c 5d              ldi16	r5, 0x5d1c
- f0 37 2e              ldsp16	r7, [sp+0x2e]
  bc                    pop16	r4
+ f0 37 2e              ldsp16	r7, [sp+0x2e]
  3d                    cmp	r7, r5
  f8 08                 cset.ne	r0
  f9 11                 or	r0, r4

@@ -28,12 +28,12 @@ char* strcat_P(char* dst, char const AVM_PROGMEM* src);
 }
 #endif
 
-#define memcpy_P(dst, src, size) __builtin_avm_memcpy_p((dst), (src), (size))
-#define memcmp_P(lhs, rhs, size) __builtin_avm_memcmp_p((lhs), (rhs), (size))
-#define strcmp_P(lhs, rhs) __builtin_avm_strcmp_p((lhs), (rhs))
-#define strlen_P(str) __builtin_avm_strlen_p((str))
-#define strncpy_P(dst, src, size) __builtin_avm_strncpy_p((dst), (src), (size))
-#define strncat_P(dst, src, size) __builtin_avm_strncat_p((dst), (src), (size))
+#define memcpy_P(dst, src, size) __avm_memcpy_P((dst), (src), (size))
+#define memcmp_P(lhs, rhs, size) __avm_memcmp_P((lhs), (rhs), (size))
+#define strcmp_P(lhs, rhs) __avm_strcmp_P((lhs), (rhs))
+#define strlen_P(str) __avm_strlen_P((str))
+#define strncpy_P(dst, src, size) __avm_strncpy_P((dst), (src), (size))
+#define strncat_P(dst, src, size) __avm_strncat_P((dst), (src), (size))
 #define strcpy_P(dst, src) strncpy_P((dst), (src), SIZE_MAX)
 #define strcat_P(dst, src) strncat_P((dst), (src), SIZE_MAX)
 

@@ -139,8 +139,8 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
- f0 36 14              ldsp16	r6, [sp+0x14]
  bc                    pop16	r4
+ f0 36 14              ldsp16	r6, [sp+0x14]
  fa 98                 lsr16i	r6, 0x8
  f9 c9                 or	r6, r2
  b4                    push16	r4

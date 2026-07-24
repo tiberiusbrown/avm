@@ -4,19 +4,19 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/codegen_float.elf:	file format
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_float.c
-00000afc l     F .text	00000009 arithmetic
-00000b05 l     F .text	00000003 divide_exact
-00000b08 l     F .text	00000002 sqrt_exact
-00000b0a l     F .text	00000012 select_min
-00000b1c l     F .text	00000012 select_max
-00000b2e l     F .text	00000004 convert_signed
-00000b32 l     F .text	00000004 convert_unsigned
+00000b0e l     F .text	00000009 arithmetic
+00000b17 l     F .text	00000003 divide_exact
+00000b1a l     F .text	00000002 sqrt_exact
+00000b1c l     F .text	00000012 select_min
+00000b2e l     F .text	00000012 select_max
+00000b40 l     F .text	00000004 convert_signed
+00000b44 l     F .text	00000004 convert_unsigned
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 math.c
 00000100 g     F .text	00000016 _start
-00000116 g     F .text	000009e6 avm_test_main
-00000b36 g     F .text	00000002 avm_halt
-00000b38 g     F .text	00000003 sqrtf
+00000116 g     F .text	000009f8 avm_test_main
+00000b48 g     F .text	00000002 avm_halt
+00000b4a g     F .text	00000003 sqrtf
 
 Disassembly of section .text:
 
@@ -31,7 +31,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 20 0a              call16	avm_halt
+ e1 32 0a              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -89,7 +89,7 @@ Disassembly of section .text:
  d6 fc                 adjsp	avm_test_main+126
  f0 38 00              stsp16	[sp+0x0], r0
  f0 39 02              stsp16	[sp+0x2], r1
- e1 5b 09              call16	arithmetic
+ e1 6d 09              call16	arithmetic
  d6 04                 adjsp	avm_test_main+145
  f0 3c b4              stsp16	[sp+0xb4], r4
  f0 3d b6              stsp16	[sp+0xb6], r5
@@ -109,7 +109,7 @@ Disassembly of section .text:
  f0 35 a2              ldsp16	r5, [sp+0xa2]
  f0 36 9c              ldsp16	r6, [sp+0x9c]
  f0 37 9e              ldsp16	r7, [sp+0x9e]
- e1 2f 09              call16	divide_exact
+ e1 41 09              call16	divide_exact
  f0 3c b4              stsp16	[sp+0xb4], r4
  f0 3d b6              stsp16	[sp+0xb6], r5
  f0 14 b4              leasp	r4, 0xb4
@@ -125,7 +125,7 @@ Disassembly of section .text:
  f0 3d 82              stsp16	[sp+0x82], r5
  f0 34 98              ldsp16	r4, [sp+0x98]
  f0 35 9a              ldsp16	r5, [sp+0x9a]
- e1 08 09              call16	sqrt_exact
+ e1 1a 09              call16	sqrt_exact
  f0 3c b4              stsp16	[sp+0xb4], r4
  f0 3d b6              stsp16	[sp+0xb6], r5
  f0 14 b4              leasp	r4, 0xb4
@@ -143,7 +143,7 @@ Disassembly of section .text:
  f0 35 96              ldsp16	r5, [sp+0x96]
  f0 36 90              ldsp16	r6, [sp+0x90]
  f0 37 92              ldsp16	r7, [sp+0x92]
- e1 da 08              call16	select_min
+ e1 ec 08              call16	select_min
  f0 3c b4              stsp16	[sp+0xb4], r4
  f0 3d b6              stsp16	[sp+0xb6], r5
  f0 14 b4              leasp	r4, 0xb4
@@ -161,7 +161,7 @@ Disassembly of section .text:
  f0 35 96              ldsp16	r5, [sp+0x96]
  f0 36 90              ldsp16	r6, [sp+0x90]
  f0 37 92              ldsp16	r7, [sp+0x92]
- e1 bc 08              call16	select_max
+ e1 ce 08              call16	select_max
  f0 3c b4              stsp16	[sp+0xb4], r4
  f0 3d b6              stsp16	[sp+0xb6], r5
  f0 14 b4              leasp	r4, 0xb4
@@ -919,11 +919,11 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f0 34 46              ldsp16	r4, [sp+0x46]
  f0 35 48              ldsp16	r5, [sp+0x48]
- e1 6c 02              call16	convert_signed
+ e1 7e 02              call16	convert_signed
  f0 3c 6c              stsp16	[sp+0x6c], r4
  f0 34 4a              ldsp16	r4, [sp+0x4a]
  f0 35 4c              ldsp16	r5, [sp+0x4c]
- e1 64 02              call16	convert_unsigned
+ e1 76 02              call16	convert_unsigned
  f0 3c 68              stsp16	[sp+0x68], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -1081,10 +1081,14 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 58              ldsp16	r5, [sp+0x58]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 44              ldsp16	r5, [sp+0x44]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
  bc                    pop16	r4
@@ -1114,27 +1118,41 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 4e              ldsp16	r5, [sp+0x4e]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 50              ldsp16	r5, [sp+0x50]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 18              ldsp16	r5, [sp+0x18]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 54              ldsp16	r5, [sp+0x54]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 36 70              ldsp16	r6, [sp+0x70]
+ b4                    push16	r4
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
  f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 1c              ldsp16	r5, [sp+0x1c]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 60              ldsp16	r5, [sp+0x60]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
  bc                    pop16	r4
@@ -1145,36 +1163,36 @@ Disassembly of section .text:
  f0 34 84              ldsp16	r4, [sp+0x84]
  f0 35 86              ldsp16	r5, [sp+0x86]
  f0 69 8c              cmp32	q2, q3
- d1 5c                 brne8	avm_test_main+2513
+ d1 5c                 brne8	avm_test_main+2531
  f2 30                 sub	r0, r0
  f0 05 40 40           ldi16	r1, 0x4040
  f0 36 80              ldsp16	r6, [sp+0x80]
  f0 37 82              ldsp16	r7, [sp+0x82]
  f0 69 c0              cmp32	q3, q0
- d1 5b                 brne8	avm_test_main+2529
+ d1 5b                 brne8	avm_test_main+2547
  f2 30                 sub	r0, r0
  f0 05 10 41           ldi16	r1, 0x4110
  f0 36 7c              ldsp16	r6, [sp+0x7c]
  f0 37 7e              ldsp16	r7, [sp+0x7e]
  f0 69 c0              cmp32	q3, q0
- d1 45                 brne8	avm_test_main+2524
+ d1 45                 brne8	avm_test_main+2542
  aa                    xor	r6, r6
  c7 60 c0              ldi16	r7, 0xc060
  f0 34 78              ldsp16	r4, [sp+0x78]
  f0 35 7a              ldsp16	r5, [sp+0x7a]
  f0 69 8c              cmp32	q2, q3
  f0 00 01              ldi8	r0, 0x1
- d1 28                 brne8	avm_test_main+2513
+ d1 28                 brne8	avm_test_main+2531
  aa                    xor	r6, r6
  c7 10 40              ldi16	r7, 0x4010
  f0 34 74              ldsp16	r4, [sp+0x74]
  f0 35 76              ldsp16	r5, [sp+0x76]
  f0 69 8c              cmp32	q2, q3
- d1 19                 brne8	avm_test_main+2513
+ d1 19                 brne8	avm_test_main+2531
  c2 fa                 ldi8	r6, 0xfa
  c7 f4 ff              ldi16	r7, 0xfff4
  f0 69 4c              cmp32	q1, q3
- d1 0f                 brne8	avm_test_main+2513
+ d1 0f                 brne8	avm_test_main+2531
  a0                    xor	r4, r4
  c5 50 41              ldi16	r5, 0x4150
  f0 36 5c              ldsp16	r6, [sp+0x5c]
@@ -1190,9 +1208,9 @@ Disassembly of section .text:
  bb                    pop16	r3
  ef                    ret
  f0 00 01              ldi8	r0, 0x1
- d4 f0                 jmp8	avm_test_main+2513
+ d4 f0                 jmp8	avm_test_main+2531
  f0 00 01              ldi8	r0, 0x1
- d4 eb                 jmp8	avm_test_main+2513
+ d4 eb                 jmp8	avm_test_main+2531
 
 <arithmetic>:
  ff 2b                 fmul	q2, q3

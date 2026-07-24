@@ -23,8 +23,8 @@ SYMBOL TABLE:
 0000024a l     O .data	00000005 .L.str.1
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-0000031f g     F .text	0000084f avm_test_main
-00000b6e g     F .text	00000002 avm_halt
+0000031f g     F .text	00000851 avm_test_main
+00000b70 g     F .text	00000002 avm_halt
 00000316 g     F .text	00000003 test_call_memcmp
 00000319 g     F .text	00000003 test_call_strcmp
 0000031c g     F .text	00000003 test_call_strlen
@@ -42,7 +42,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 58 08              call16	avm_halt
+ e1 5a 08              call16	avm_halt
 
 <test_call_memcmp>:
  d7 18                 sys	memcmp
@@ -801,11 +801,13 @@ Disassembly of section .text:
  b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
+ bc                    pop16	r4
  f0 35 74              ldsp16	r5, [sp+0x74]
+ b4                    push16	r4
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- f0 35 92              ldsp16	r5, [sp+0x92]
  bc                    pop16	r4
+ f0 35 92              ldsp16	r5, [sp+0x92]
  cd 04                 cmpi.s8	r5, 0x4
  f8 0d                 cset.ne	r5
  94                    or	r5, r4

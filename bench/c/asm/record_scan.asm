@@ -8,8 +8,8 @@ SYMBOL TABLE:
 00000220 l     O .data	00000002 record_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	000000db avm_test_main
-000003f1 g     F .text	00000002 avm_halt
+00000316 g     F .text	000000cf avm_test_main
+000003e5 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -24,14 +24,14 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 db 00              call16	avm_halt
+ e1 cf 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
+ d6 fc                 adjsp	-0x4
  f0 07 e8 03           ldi16	r3, 0x3e8
  f0 04 02 01           ldi16	r0, 0x102
  c3 fa                 ldi8	r7, 0xfa
@@ -39,10 +39,10 @@ Disassembly of section .text:
  f0 01 fb              ldi8	r1, 0xfb
  f0 02 03              ldi8	r2, 0x3
  c0 75                 ldi8	r4, 0x75
- f4 48                 stsp16	[sp+0x2], r4
- f4 53                 stsp16	[sp+0x4], r7
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 4b                 stsp16	[sp+0x2], r7
  0d                    mov	r7, r5
- f4 08                 ldsp16	r4, [sp+0x2]
+ f4 00                 ldsp16	r4, [sp+0x0]
  f3 1c                 mulu8.w	r7, r4
  fa a8                 lsr16i	r7, 0x8
  01                    mov	r4, r5
@@ -65,7 +65,7 @@ Disassembly of section .text:
  ee 80 20              st8	[r0+0], r4
  01                    mov	r4, r5
  23                    sub	r4, r7
- f4 13                 ldsp16	r7, [sp+0x4]
+ f4 0b                 ldsp16	r7, [sp+0x2]
  21                    sub	r4, r5
  13                    add	r4, r7
  ee 80 1e              st8	[r0-2], r4
@@ -85,56 +85,49 @@ Disassembly of section .text:
  c4 58 09              ldi16	r4, 0x958
  f5 1c                 cmp	r3, r4
  d1 ab                 brne8	avm_test_main+27
- a5                    xor	r5, r5
+ f2 39                 sub	r1, r1
  d7 01                 sys	debug_break
- 0d                    mov	r7, r5
- f4 51                 stsp16	[sp+0x4], r5
- 09                    mov	r6, r5
- d4 0b                 jmp8	avm_test_main+132
- f4 01                 ldsp16	r5, [sp+0x0]
- f4 ad                 inc16	r5
- 01                    mov	r4, r5
- f1 74                 zext8	r4
- cc 20                 cmpi.s8	r4, 0x20
- d0 45                 breq8	avm_test_main+201
- f4 41                 stsp16	[sp+0x0], r5
+ f1 21                 mov	r4, r1
+ f1 11                 mov	r2, r1
+ f1 19                 mov	r3, r1
+ d4 0a                 jmp8	avm_test_main+134
+ f4 a9                 inc16	r1
+ f1 25                 mov	r5, r1
+ f1 75                 zext8	r5
+ cd 20                 cmpi.s8	r5, 0x20
+ d0 37                 breq8	avm_test_main+189
+ c2 30                 ldi8	r6, 0x30
  c5 00 01              ldi16	r5, 0x100
- f0 02 30              ldi8	r2, 0x30
- d4 20                 jmp8	avm_test_main+174
- f1 0f                 mov	r1, r7
- f6 40                 sext8	r0
- f4 10                 ldsp16	r4, [sp+0x4]
- f2 20                 add	r4, r0
- f4 50                 stsp16	[sp+0x4], r4
- f6 43                 sext8	r3
- f2 2b                 add	r6, r3
- ed fa 24              ld16	r7, [r5+4]
- f4 b7                 dec16	r7
- ee fa 24              st16	[r5+4], r7
- f9 e6                 xor	r7, r1
- c9 06                 addi.s8	r5, 0x6
- f4 b2                 dec16	r2
- f4 a2                 tst8	r2
- d0 cb                 breq8	avm_test_main+121
- ed 0a 21              ld8u	r0, [r5+1]
- f5 37                 ld8u	r3, [r5]
- ed 8a 22              ld8u	r4, [r5+2]
- f4 48                 stsp16	[sp+0x2], r4
- f0 01 01              ldi8	r1, 0x1
- f4 08                 ldsp16	r4, [sp+0x2]
- f9 30                 and	r1, r4
- f4 a1                 tst8	r1
- d0 cb                 breq8	avm_test_main+142
- ed 8a 23              ld8u	r4, [r5+3]
- 1c                    add	r7, r4
- d4 c5                 jmp8	avm_test_main+142
- f4 10                 ldsp16	r4, [sp+0x4]
- a2                    xor	r4, r6
+ d4 12                 jmp8	avm_test_main+159
+ 0c                    mov	r7, r4
+ ed 9a 24              ld16	r4, [r5+4]
+ f4 b4                 dec16	r4
+ ee 9a 24              st16	[r5+4], r4
  a3                    xor	r4, r7
- f0 5c 20 02           stm16	[0x220], r4
+ c9 06                 addi.s8	r5, 0x6
+ f4 b6                 dec16	r6
+ f4 a6                 tst8	r6
+ d0 dd                 breq8	avm_test_main+124
+ ed ea 21              ld8u	r7, [r5+1]
+ f6 47                 sext8	r7
+ f2 17                 add	r2, r7
+ 4d                    ld8u	r7, [r5]
+ f6 47                 sext8	r7
+ f2 1f                 add	r3, r7
+ ed ea 22              ld8u	r7, [r5+2]
+ f0 00 01              ldi8	r0, 0x1
+ f9 1c                 and	r0, r7
+ f4 a0                 tst8	r0
+ d0 d6                 breq8	avm_test_main+141
+ ed ea 23              ld8u	r7, [r5+3]
+ 13                    add	r4, r7
+ d4 d0                 jmp8	avm_test_main+141
+ f9 4e                 xor	r2, r3
+ f9 52                 xor	r2, r4
+ f0 5a 20 02           stm16	[0x220], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 06                 adjsp	0x6
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

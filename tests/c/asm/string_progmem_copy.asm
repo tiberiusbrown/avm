@@ -4,19 +4,19 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/string_progmem_copy.elf:	file 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 string_progmem_copy.c
-000010ca l     O .rodata	00000004 p_cat
-000010ce l     O .rodata	00000007 p_abcdef
-000010d5 l     O .rodata	00000004 p_dog
-000010d9 l     O .rodata	00000008 p_ignored
+000010c4 l     O .rodata	00000004 p_cat
+000010c8 l     O .rodata	00000007 p_abcdef
+000010cf l     O .rodata	00000004 p_dog
+000010d3 l     O .rodata	00000008 p_ignored
 00000100 l     O .data	0000000c .L__const.avm_test_main.full
 0000010c l     O .data	0000000c .L__const.avm_test_main.cut
-000010e1 l     O .rodata	00000005 p_wood
-000010e6 l     O .rodata	00000007 p_flower
-000010ed l     O .rodata	00000005 p_berg
-000010f2 l     O .rodata	00000001 p_empty
-000010f3 l     O .rodata	00000003 p_go
+000010db l     O .rodata	00000005 p_wood
+000010e0 l     O .rodata	00000007 p_flower
+000010e7 l     O .rodata	00000005 p_berg
+000010ec l     O .rodata	00000001 p_empty
+000010ed l     O .rodata	00000003 p_go
 00000118 l     O .data	00000107 avm_test_main.long_pad
-000010f6 l     O .rodata	00000002 p_z
+000010f0 l     O .rodata	00000002 p_z
 0000021f l     O .data	0000010e avm_test_main.long_cat
 0000032d l     O .data	0000000a avm_test_main.expect_pad
 00000337 l     O .data	00000007 avm_test_main.expect_trunc
@@ -28,8 +28,8 @@ SYMBOL TABLE:
 0000035b l     O .data	00000003 .L.str.16
 00000000 l    df *ABS*	00000000 runtime.c
 00000400 g     F .text	00000016 _start
-00000430 g     F .text	00000c98 avm_test_main
-000010c8 g     F .text	00000002 avm_halt
+00000430 g     F .text	00000c92 avm_test_main
+000010c2 g     F .text	00000002 avm_halt
 00000416 g     F .text	0000000d test_call_strncpy_P
 00000423 g     F .text	0000000d test_call_strncat_P
 
@@ -46,7 +46,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 b2 0c              call16	avm_halt
+ e1 ac 0c              call16	avm_halt
 
 <test_call_strncpy_P>:
  b0                    push16	r0
@@ -106,13 +106,13 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 08                 ldi8	r4, 0x8
  f4 40                 stsp16	[sp+0x0], r4
- c6 ca 10              ldi16	r6, 0x10ca
+ c6 c4 10              ldi16	r6, 0x10c4
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 c4              leasp	r4, 0xc4
  e1 79 ff              call16	test_call_strncpy_P
  d6 02                 adjsp	0x2
- c6 ce 10              ldi16	r6, 0x10ce
+ c6 c8 10              ldi16	r6, 0x10c8
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d6 fe                 adjsp	-0x2
@@ -121,7 +121,7 @@ Disassembly of section .text:
  f0 14 bd              leasp	r4, 0xbd
  e1 64 ff              call16	test_call_strncpy_P
  d6 02                 adjsp	0x2
- c6 d5 10              ldi16	r6, 0x10d5
+ c6 cf 10              ldi16	r6, 0x10cf
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d6 fe                 adjsp	-0x2
@@ -130,7 +130,7 @@ Disassembly of section .text:
  f0 14 b7              leasp	r4, 0xb7
  e1 4d ff              call16	test_call_strncpy_P
  d6 02                 adjsp	0x2
- c6 d9 10              ldi16	r6, 0x10d9
+ c6 d3 10              ldi16	r6, 0x10d3
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d6 fe                 adjsp	-0x2
@@ -169,7 +169,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 08                 ldi8	r4, 0x8
  f4 40                 stsp16	[sp+0x0], r4
- c6 e1 10              ldi16	r6, 0x10e1
+ c6 db 10              ldi16	r6, 0x10db
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f1 23                 mov	r4, r3
@@ -178,7 +178,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 03                 ldi8	r4, 0x3
  f4 40                 stsp16	[sp+0x0], r4
- c6 e6 10              ldi16	r6, 0x10e6
+ c6 e0 10              ldi16	r6, 0x10e0
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f1 20                 mov	r4, r0
@@ -186,7 +186,7 @@ Disassembly of section .text:
  d6 02                 adjsp	0x2
  d6 fe                 adjsp	-0x2
  f0 39 00              stsp16	[sp+0x0], r1
- c6 ed 10              ldi16	r6, 0x10ed
+ c6 e7 10              ldi16	r6, 0x10e7
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 92              leasp	r4, 0x92
@@ -194,7 +194,7 @@ Disassembly of section .text:
  d6 02                 adjsp	0x2
  d6 fe                 adjsp	-0x2
  f0 3a 00              stsp16	[sp+0x0], r2
- c6 f2 10              ldi16	r6, 0x10f2
+ c6 ec 10              ldi16	r6, 0x10ec
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 8a              leasp	r4, 0x8a
@@ -203,7 +203,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  f0 00 02              ldi8	r0, 0x2
  f0 38 00              stsp16	[sp+0x0], r0
- f0 06 f3 10           ldi16	r2, 0x10f3
+ f0 06 ed 10           ldi16	r2, 0x10ed
  f0 03 00              ldi8	r3, 0x0
  f1 73                 zext8	r3
  f0 14 82              leasp	r4, 0x82
@@ -220,7 +220,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c4 04 01              ldi16	r4, 0x104
  f4 40                 stsp16	[sp+0x0], r4
- c6 f6 10              ldi16	r6, 0x10f6
+ c6 f0 10              ldi16	r6, 0x10f0
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 05 18 01           ldi16	r1, 0x118
@@ -249,9 +249,8 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  f0 38 00              stsp16	[sp+0x0], r0
  c4 1f 02              ldi16	r4, 0x21f
- f0 3c 6a              stsp16	[sp+0x6a], r4
  f2 6b                 mov32	q3, q1
- e1 24 fe              call16	test_call_strncat_P
+ e1 27 fe              call16	test_call_strncat_P
  d6 02                 adjsp	0x2
  c5 2b 6d              ldi16	r5, 0x6d2b
  c7 f2 ff              ldi16	r7, 0xfff2
@@ -325,8 +324,8 @@ Disassembly of section .text:
  07                    mov	r5, r7
  16                    add	r5, r6
  f5 2c                 cmp	r7, r0
- d1 ec                 brne8	avm_test_main+642
- f0 3a 66              stsp16	[sp+0x66], r2
+ d1 ec                 brne8	avm_test_main+639
+ f0 3a 68              stsp16	[sp+0x68], r2
  f0 3e 7a              stsp16	[sp+0x7a], r6
  1e                    add	r7, r6
  f0 3f 5c              stsp16	[sp+0x5c], r7
@@ -345,7 +344,7 @@ Disassembly of section .text:
  07                    mov	r5, r7
  16                    add	r5, r6
  f5 2c                 cmp	r7, r0
- d1 ec                 brne8	avm_test_main+684
+ d1 ec                 brne8	avm_test_main+681
  f0 3e 72              stsp16	[sp+0x72], r6
  1e                    add	r7, r6
  f0 3f 58              stsp16	[sp+0x58], r7
@@ -412,7 +411,7 @@ Disassembly of section .text:
  f2 24                 add	r5, r0
  c6 69 11              ldi16	r6, 0x1169
  3e                    cmp	r7, r6
- d1 e7                 brne8	avm_test_main+862
+ d1 e7                 brne8	avm_test_main+859
  f0 38 74              stsp16	[sp+0x74], r0
  f2 2c                 add	r7, r0
  f0 3f 6a              stsp16	[sp+0x6a], r7
@@ -420,7 +419,7 @@ Disassembly of section .text:
  c5 f2 ff              ldi16	r5, 0xfff2
  f0 3d 7e              stsp16	[sp+0x7e], r5
  f0 00 0e              ldi8	r0, 0xe
- f0 35 68              ldsp16	r5, [sp+0x68]
+ c5 1f 02              ldi16	r5, 0x21f
  0b                    mov	r6, r7
  fa 9b                 lsr16i	r6, 0xb
  fa 65                 lsl16i	r7, 0x5
@@ -435,9 +434,9 @@ Disassembly of section .text:
  c6 e0 11              ldi16	r6, 0x11e0
  f0 3c 7e              stsp16	[sp+0x7e], r4
  32                    cmp	r4, r6
- d1 e2                 brne8	avm_test_main+910
+ d1 e2                 brne8	avm_test_main+907
  f0 37 7a              ldsp16	r7, [sp+0x7a]
- f0 34 66              ldsp16	r4, [sp+0x66]
+ f0 34 68              ldsp16	r4, [sp+0x68]
  2c                    sub	r7, r4
  f0 3f 7a              stsp16	[sp+0x7a], r7
  f1 77                 zext8	r7
@@ -1360,214 +1359,214 @@ Disassembly of section .text:
  c5 19 01              ldi16	r5, 0x119
  f0 46 18 01           ldm8u	r6, [0x118]
  ce 5a                 cmpi.s8	r6, 0x5a
- f8 06                 cset.eq	r6
+ f8 07                 cset.eq	r7
  f2 30                 sub	r0, r0
- f1 0e                 mov	r1, r6
+ 0b                    mov	r6, r7
  f7 0f                 ld8u	r7, [r5+]
  f4 a7                 tst8	r7
- f1 28                 mov	r6, r0
- fb 31                 cmov.eq	r6, r1
+ f1 2c                 mov	r7, r0
+ fb 3e                 cmov.eq	r7, r6
  f4 b4                 dec16	r4
  f6 2c                 tst16	r4
- d1 f0                 brne8	avm_test_main+2736
- c0 09                 ldi8	r4, 0x9
- f0 05 2d 03           ldi16	r1, 0x32d
- f0 17 c2              leasp	r7, 0xc2
- f0 45 23 03           ldm8u	r5, [0x323]
- f0 3d 76              stsp16	[sp+0x76], r5
- f0 45 22 03           ldm8u	r5, [0x322]
- f0 3d 7c              stsp16	[sp+0x7c], r5
- f0 45 21 03           ldm8u	r5, [0x321]
- f0 3d 7a              stsp16	[sp+0x7a], r5
- f0 45 20 03           ldm8u	r5, [0x320]
- f0 3d 78              stsp16	[sp+0x78], r5
- f0 45 1e 02           ldm8u	r5, [0x21e]
- f0 3d 7e              stsp16	[sp+0x7e], r5
- f0 45 1d 02           ldm8u	r5, [0x21d]
- f0 3d 72              stsp16	[sp+0x72], r5
- f0 45 1c 02           ldm8u	r5, [0x21c]
- f0 3d 74              stsp16	[sp+0x74], r5
- f0 00 01              ldi8	r0, 0x1
- f0 6c 63              ld8u	r3, [r1+]
- f7 1a                 ld8u	r2, [r7+]
- f6 2c                 tst16	r4
- f8 0d                 cset.ne	r5
- f5 13                 cmp	r2, r3
- d1 08                 brne8	avm_test_main+2834
- f4 b4                 dec16	r4
- f9 a0                 and	r5, r0
- f4 a5                 tst8	r5
- d1 eb                 brne8	avm_test_main+2813
+ d1 f1                 brne8	avm_test_main+2733
+ f0 3f 7c              stsp16	[sp+0x7c], r7
+ c2 09                 ldi8	r6, 0x9
+ c7 2d 03              ldi16	r7, 0x32d
+ f0 15 c2              leasp	r5, 0xc2
+ f0 44 23 03           ldm8u	r4, [0x323]
+ f0 3c 74              stsp16	[sp+0x74], r4
+ f0 44 22 03           ldm8u	r4, [0x322]
+ f0 3c 7a              stsp16	[sp+0x7a], r4
+ f0 44 21 03           ldm8u	r4, [0x321]
+ f0 3c 78              stsp16	[sp+0x78], r4
+ f0 44 20 03           ldm8u	r4, [0x320]
+ f0 3c 76              stsp16	[sp+0x76], r4
+ f0 44 1e 02           ldm8u	r4, [0x21e]
+ f0 3c 7e              stsp16	[sp+0x7e], r4
+ f0 44 1d 02           ldm8u	r4, [0x21d]
+ f0 3c 70              stsp16	[sp+0x70], r4
+ f0 44 1c 02           ldm8u	r4, [0x21c]
+ f0 3c 72              stsp16	[sp+0x72], r4
  c0 01                 ldi8	r4, 0x1
- f0 37 7e              ldsp16	r7, [sp+0x7e]
- f1 77                 zext8	r7
- c1 a5                 ldi8	r5, 0xa5
- 3d                    cmp	r7, r5
- f8 05                 cset.eq	r5
- f5 13                 cmp	r2, r3
- db 6c 01              brne16	avm_test_main+3215
- f0 3d 70              stsp16	[sp+0x70], r5
- f0 3e 7e              stsp16	[sp+0x7e], r6
- c2 06                 ldi8	r6, 0x6
- c7 37 03              ldi16	r7, 0x337
- f0 13 bb              leasp	r3, 0xbb
- f0 01 01              ldi8	r1, 0x1
- f7 1d                 ld8u	r5, [r7+]
- f0 6c 47              ld8u	r2, [r3+]
+ f0 03 01              ldi8	r3, 0x1
+ f7 19                 ld8u	r1, [r7+]
+ f7 0a                 ld8u	r2, [r5+]
  f6 2e                 tst16	r6
  f8 08                 cset.ne	r0
- f5 15                 cmp	r2, r5
- d1 08                 brne8	avm_test_main+2889
  f4 b6                 dec16	r6
- f9 04                 and	r0, r1
+ f5 11                 cmp	r2, r1
+ d1 06                 brne8	avm_test_main+2833
+ f9 0c                 and	r0, r3
  f4 a0                 tst8	r0
- d1 eb                 brne8	avm_test_main+2868
- f5 15                 cmp	r2, r5
- db 41 01              brne16	avm_test_main+3215
- c2 05                 ldi8	r6, 0x5
- f0 07 3e 03           ldi16	r3, 0x33e
- f0 11 b5              leasp	r1, 0xb5
+ d1 ec                 brne8	avm_test_main+2813
+ f0 36 7e              ldsp16	r6, [sp+0x7e]
+ f1 76                 zext8	r6
+ c1 a5                 ldi8	r5, 0xa5
+ 39                    cmp	r6, r5
+ f8 05                 cset.eq	r5
+ f5 11                 cmp	r2, r1
+ db 69 01              brne16	avm_test_main+3209
+ f0 3d 7e              stsp16	[sp+0x7e], r5
+ c1 06                 ldi8	r5, 0x6
+ f0 07 37 03           ldi16	r3, 0x337
+ f0 17 bb              leasp	r7, 0xbb
+ c2 01                 ldi8	r6, 0x1
+ f0 6c 27              ld8u	r1, [r3+]
+ f7 1a                 ld8u	r2, [r7+]
+ f6 2d                 tst16	r5
+ f8 08                 cset.ne	r0
+ f4 b5                 dec16	r5
+ f5 11                 cmp	r2, r1
+ d1 06                 brne8	avm_test_main+2883
+ f9 18                 and	r0, r6
+ f4 a0                 tst8	r0
+ d1 eb                 brne8	avm_test_main+2862
+ f5 11                 cmp	r2, r1
+ db 41 01              brne16	avm_test_main+3209
+ c1 05                 ldi8	r5, 0x5
+ f0 04 3e 03           ldi16	r0, 0x33e
+ f0 13 b5              leasp	r3, 0xb5
  c3 01                 ldi8	r7, 0x1
+ f0 6c 21              ld8u	r1, [r0+]
  f0 6c 47              ld8u	r2, [r3+]
- f0 6c 03              ld8u	r0, [r1+]
- f6 2e                 tst16	r6
- f8 0d                 cset.ne	r5
- f5 02                 cmp	r0, r2
- d1 07                 brne8	avm_test_main+2926
- f4 b6                 dec16	r6
- 87                    and	r5, r7
- f4 a5                 tst8	r5
- d1 eb                 brne8	avm_test_main+2905
- f5 02                 cmp	r0, r2
- db 1c 01              brne16	avm_test_main+3215
+ f6 2d                 tst16	r5
+ f8 0e                 cset.ne	r6
+ f4 b5                 dec16	r5
+ f5 11                 cmp	r2, r1
+ d1 05                 brne8	avm_test_main+2920
+ 8b                    and	r6, r7
+ f4 a6                 tst8	r6
+ d1 eb                 brne8	avm_test_main+2899
+ f5 11                 cmp	r2, r1
+ db 1c 01              brne16	avm_test_main+3209
  f0 11 b0              leasp	r1, 0xb0
  c1 04                 ldi8	r5, 0x4
  c2 01                 ldi8	r6, 0x1
  f0 6c 03              ld8u	r0, [r1+]
  f6 2d                 tst16	r5
  f8 0f                 cset.ne	r7
- f0 0c 3c              cmpi.s8	r0, 0x3c
- d1 07                 brne8	avm_test_main+2957
  f4 b5                 dec16	r5
+ f0 0c 3c              cmpi.s8	r0, 0x3c
+ d1 05                 brne8	avm_test_main+2951
  8e                    and	r7, r6
  f4 a7                 tst8	r7
- d1 ed                 brne8	avm_test_main+2938
+ d1 ed                 brne8	avm_test_main+2932
  f0 1d a4              ldsp8u	r5, [sp+0xa4]
  f0 0c 3c              cmpi.s8	r0, 0x3c
- db f9 00              brne16	avm_test_main+3215
+ db f9 00              brne16	avm_test_main+3209
  f1 75                 zext8	r5
  cd 72                 cmpi.s8	r5, 0x72
- db f2 00              brne16	avm_test_main+3215
+ db f2 00              brne16	avm_test_main+3209
  c3 72                 ldi8	r7, 0x72
  c5 45 03              ldi16	r5, 0x345
  f0 16 a4              leasp	r6, 0xa4
- f0 31 7e              ldsp16	r1, [sp+0x7e]
  f4 a7                 tst8	r7
- d0 0e                 breq8	avm_test_main+3002
+ d0 0e                 breq8	avm_test_main+2993
  f7 08                 ld8u	r0, [r5+]
  ed ec 21              ld8u	r7, [r6+1]
  f4 ae                 inc16	r6
  f5 2c                 cmp	r7, r0
- d0 f1                 breq8	avm_test_main+2984
- e0 d5 00              jmp16	avm_test_main+3215
+ d0 f1                 breq8	avm_test_main+2975
+ e0 d8 00              jmp16	avm_test_main+3209
  f0 1d 98              ldsp8u	r5, [sp+0x98]
  cd 73                 cmpi.s8	r5, 0x73
- db cd 00              brne16	avm_test_main+3215
+ db d0 00              brne16	avm_test_main+3209
  c3 73                 ldi8	r7, 0x73
  c5 4d 03              ldi16	r5, 0x34d
  f0 16 98              leasp	r6, 0x98
  f4 a7                 tst8	r7
- d0 0e                 breq8	avm_test_main+3036
+ d0 0e                 breq8	avm_test_main+3027
  f7 08                 ld8u	r0, [r5+]
  ed ec 21              ld8u	r7, [r6+1]
  f4 ae                 inc16	r6
  f5 2c                 cmp	r7, r0
- d0 f1                 breq8	avm_test_main+3018
- e0 b3 00              jmp16	avm_test_main+3215
+ d0 f1                 breq8	avm_test_main+3009
+ e0 b6 00              jmp16	avm_test_main+3209
  f0 1d 90              ldsp8u	r5, [sp+0x90]
  cd 69                 cmpi.s8	r5, 0x69
- db ab 00              brne16	avm_test_main+3215
+ db ae 00              brne16	avm_test_main+3209
  c3 69                 ldi8	r7, 0x69
  c5 54 03              ldi16	r5, 0x354
  f0 16 90              leasp	r6, 0x90
  f4 a7                 tst8	r7
- d0 0e                 breq8	avm_test_main+3070
+ d0 0e                 breq8	avm_test_main+3061
  f7 08                 ld8u	r0, [r5+]
  ed ec 21              ld8u	r7, [r6+1]
  f4 ae                 inc16	r6
  f5 2c                 cmp	r7, r0
- d0 f1                 breq8	avm_test_main+3052
- e0 91 00              jmp16	avm_test_main+3215
+ d0 f1                 breq8	avm_test_main+3043
+ e0 94 00              jmp16	avm_test_main+3209
  f0 1d 88              ldsp8u	r5, [sp+0x88]
  cd 6f                 cmpi.s8	r5, 0x6f
- db 89 00              brne16	avm_test_main+3215
+ db 8c 00              brne16	avm_test_main+3209
  c3 6f                 ldi8	r7, 0x6f
  c5 58 03              ldi16	r5, 0x358
  f0 16 88              leasp	r6, 0x88
  f4 a7                 tst8	r7
- d0 0d                 breq8	avm_test_main+3103
+ d0 0d                 breq8	avm_test_main+3094
  f7 08                 ld8u	r0, [r5+]
  ed ec 21              ld8u	r7, [r6+1]
  f4 ae                 inc16	r6
  f5 2c                 cmp	r7, r0
- d0 f1                 breq8	avm_test_main+3086
- d4 70                 jmp8	avm_test_main+3215
- f0 02 01              ldi8	r2, 0x1
+ d0 f1                 breq8	avm_test_main+3077
+ d4 73                 jmp8	avm_test_main+3209
+ f0 01 01              ldi8	r1, 0x1
  f0 1c 80              ldsp8u	r4, [sp+0x80]
  cc 67                 cmpi.s8	r4, 0x67
- f1 22                 mov	r4, r2
- d1 36                 brne8	avm_test_main+3169
+ f1 21                 mov	r4, r1
+ d1 36                 brne8	avm_test_main+3160
  c2 67                 ldi8	r6, 0x67
  c4 5c 03              ldi16	r4, 0x35c
  f0 15 80              leasp	r5, 0x80
  f2 30                 sub	r0, r0
  f4 a6                 tst8	r6
- d0 0c                 breq8	avm_test_main+3141
+ d0 0c                 breq8	avm_test_main+3132
  f7 07                 ld8u	r7, [r4+]
  ed ca 21              ld8u	r6, [r5+1]
  f4 ad                 inc16	r5
  3b                    cmp	r6, r7
- d0 f2                 breq8	avm_test_main+3125
- d4 03                 jmp8	avm_test_main+3144
- f0 30 70              ldsp16	r0, [sp+0x70]
+ d0 f2                 breq8	avm_test_main+3116
+ d4 03                 jmp8	avm_test_main+3135
+ f0 30 7e              ldsp16	r0, [sp+0x7e]
  c0 01                 ldi8	r4, 0x1
  f9 82                 xor	r4, r0
- f0 37 72              ldsp16	r7, [sp+0x72]
+ f0 37 70              ldsp16	r7, [sp+0x70]
  f1 77                 zext8	r7
  c1 a5                 ldi8	r5, 0xa5
  09                    mov	r6, r5
  3e                    cmp	r7, r6
  f8 0d                 cset.ne	r5
  94                    or	r5, r4
- f0 34 74              ldsp16	r4, [sp+0x74]
+ f0 34 72              ldsp16	r4, [sp+0x72]
  f1 74                 zext8	r4
  32                    cmp	r4, r6
  f8 0c                 cset.ne	r4
  91                    or	r4, r5
- f6 29                 tst16	r1
+ f0 35 7c              ldsp16	r5, [sp+0x7c]
+ f6 2d                 tst16	r5
  f8 06                 cset.eq	r6
  98                    or	r6, r4
- f0 35 76              ldsp16	r5, [sp+0x76]
+ f0 35 74              ldsp16	r5, [sp+0x74]
  f1 75                 zext8	r5
  c0 b6                 ldi8	r4, 0xb6
  34                    cmp	r5, r4
  f8 0d                 cset.ne	r5
- f0 34 78              ldsp16	r4, [sp+0x78]
+ f0 34 76              ldsp16	r4, [sp+0x76]
  f1 74                 zext8	r4
  cc 67                 cmpi.s8	r4, 0x67
  f8 0c                 cset.ne	r4
  92                    or	r4, r6
- f0 36 7a              ldsp16	r6, [sp+0x7a]
+ f0 36 78              ldsp16	r6, [sp+0x78]
  f1 76                 zext8	r6
  ce 6f                 cmpi.s8	r6, 0x6f
  f8 0e                 cset.ne	r6
  98                    or	r6, r4
- f0 34 7c              ldsp16	r4, [sp+0x7c]
+ f0 34 7a              ldsp16	r4, [sp+0x7a]
  f4 a4                 tst8	r4
  f8 0c                 cset.ne	r4
  92                    or	r4, r6
  91                    or	r4, r5
- f9 88                 and	r4, r2
+ f9 84                 and	r4, r1
  d6 7f                 adjsp	0x7f
  d6 4d                 adjsp	0x4d
  b8                    pop16	r0

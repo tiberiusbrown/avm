@@ -2,6 +2,9 @@ include_guard(GLOBAL)
 
 include(CMakeParseArguments)
 
+set(AVM_CAPTURE_STDERR_SCRIPT
+    "${CMAKE_CURRENT_LIST_DIR}/RunAndCaptureStderr.cmake")
+
 set(AVM_TARGET_TRIPLE "avm-unknown-arduboyfx")
 set(AVM_OPT_LEVEL "-O2" CACHE STRING
     "Optimization level used for AVM runtime, tests, and benchmarks")
@@ -17,10 +20,11 @@ set(AVM_COMMON_COMPILE_OPTIONS
     -Wall
     -Wextra
     -Werror
+    -mllvm -disable-machine-sink
 )
 
 function(avm_add_object)
-    set(one_value_args OUTPUT SOURCE LANGUAGE)
+    set(one_value_args OUTPUT SOURCE LANGUAGE STDERR_OUTPUT)
     set(multi_value_args INCLUDE_DIRS DEPENDS COMPILE_OPTIONS)
     cmake_parse_arguments(ARG "" "${one_value_args}" "${multi_value_args}" ${ARGN})
 
@@ -37,6 +41,10 @@ function(avm_add_object)
     get_filename_component(output_dir "${ARG_OUTPUT}" DIRECTORY)
 
     if(ARG_LANGUAGE STREQUAL "ASM")
+        if(ARG_STDERR_OUTPUT)
+            message(FATAL_ERROR
+                "avm_add_object STDERR_OUTPUT is only supported for C/CXX")
+        endif()
         set(include_options)
         foreach(include_dir IN LISTS ARG_INCLUDE_DIRS)
             list(APPEND include_options -I "${include_dir}")
@@ -83,22 +91,48 @@ function(avm_add_object)
         list(APPEND include_options -isystem "${include_dir}")
     endforeach()
 
+    set(compile_command
+        "$<TARGET_FILE:clang>"
+        "--target=${AVM_TARGET_TRIPLE}"
+        ${AVM_COMMON_COMPILE_OPTIONS}
+        ${language_options}
+        ${include_options}
+        ${ARG_COMPILE_OPTIONS}
+        -c "${ARG_SOURCE}"
+        -o "${ARG_OUTPUT}"
+    )
+
+    set(outputs "${ARG_OUTPUT}")
+    set(commands
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${output_dir}")
+    set(extra_dependencies)
+
+    if(ARG_STDERR_OUTPUT)
+        get_filename_component(diagnostic_dir
+            "${ARG_STDERR_OUTPUT}" DIRECTORY)
+        list(APPEND outputs "${ARG_STDERR_OUTPUT}")
+        list(APPEND commands
+            COMMAND "${CMAKE_COMMAND}" -E make_directory "${diagnostic_dir}"
+            COMMAND
+                "${CMAKE_COMMAND}"
+                "-DAVM_STDERR_OUTPUT:FILEPATH=${ARG_STDERR_OUTPUT}"
+                -P "${AVM_CAPTURE_STDERR_SCRIPT}"
+                --
+                ${compile_command}
+        )
+        list(APPEND extra_dependencies "${AVM_CAPTURE_STDERR_SCRIPT}")
+    else()
+        list(APPEND commands COMMAND ${compile_command})
+    endif()
+
     add_custom_command(
-        OUTPUT "${ARG_OUTPUT}"
-        COMMAND "${CMAKE_COMMAND}" -E make_directory "${output_dir}"
-        COMMAND
-            "$<TARGET_FILE:clang>"
-            "--target=${AVM_TARGET_TRIPLE}"
-            ${AVM_COMMON_COMPILE_OPTIONS}
-            ${language_options}
-            ${include_options}
-            ${ARG_COMPILE_OPTIONS}
-            -c "${ARG_SOURCE}"
-            -o "${ARG_OUTPUT}"
+        OUTPUT ${outputs}
+        ${commands}
         DEPENDS
             clang
             "${ARG_SOURCE}"
             ${ARG_DEPENDS}
+            ${extra_dependencies}
         COMMENT "Compiling AVM ${ARG_LANGUAGE} object ${ARG_OUTPUT}"
         VERBATIM
     )

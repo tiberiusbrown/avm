@@ -40,13 +40,13 @@ Disassembly of section .text:
  f4 af                 inc16	r7
  cf 1e                 cmpi.s8	r7, 0x1e
  d0 29                 breq8	avm_test_main+72
- 03                    mov	r4, r7
- f2 20                 add	r4, r0
- 40                    ld8u	r4, [r4]
- f4 a4                 tst8	r4
- d1 ed                 brne8	avm_test_main+20
+ 0b                    mov	r6, r7
+ f2 28                 add	r6, r0
  03                    mov	r4, r7
  f3 10                 mulu8.w	r4, r4
+ 4a                    ld8u	r6, [r6]
+ f4 a6                 tst8	r6
+ d1 ea                 brne8	avm_test_main+20
  c6 83 03              ldi16	r6, 0x383
  38                    cmp	r6, r4
  d2 e4                 brult8	avm_test_main+20

@@ -32,7 +32,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	-0x4
+ d6 fe                 adjsp	-0x2
  c4 00 01              ldi16	r4, 0x100
  c3 07                 ldi8	r7, 0x7
  c2 60                 ldi8	r6, 0x60
@@ -60,41 +60,41 @@ Disassembly of section .text:
  c4 bd c6              ldi16	r4, 0xc6bd
  c5 cf d8              ldi16	r5, 0xd8cf
  c6 60 01              ldi16	r6, 0x160
- f4 4a                 stsp16	[sp+0x2], r6
  f0 6b 8c              st32	[r6], q2
- f2 4b                 sub	r3, r3
- d7 01                 sys	debug_break
- f1 27                 mov	r5, r3
- f4 41                 stsp16	[sp+0x0], r5
  f2 30                 sub	r0, r0
- f0 06 00 01           ldi16	r2, 0x100
- f2 10                 add	r2, r0
- c0 10                 ldi8	r4, 0x10
- f4 0a                 ldsp16	r6, [sp+0x2]
- f2 39                 sub	r1, r1
- f7 15                 ld8u	r5, [r6+]
- f0 6c e5              ld8u	r7, [r2+]
+ d7 01                 sys	debug_break
+ f1 24                 mov	r5, r0
+ f4 41                 stsp16	[sp+0x0], r5
+ f2 42                 sub	r2, r2
+ f1 26                 mov	r5, r2
+ c4 00 01              ldi16	r4, 0x100
+ 14                    add	r5, r4
+ c2 10                 ldi8	r6, 0x10
+ f0 05 60 01           ldi16	r1, 0x160
+ f2 4b                 sub	r3, r3
+ f0 6c e3              ld8u	r7, [r1+]
+ f7 0c                 ld8u	r4, [r5+]
+ f6 44                 sext8	r4
  f6 47                 sext8	r7
- f6 45                 sext8	r5
- f3 27                 muls8.w	r5, r7
- f2 0d                 add	r1, r5
- f4 b4                 dec16	r4
- f6 2c                 tst16	r4
+ f3 2c                 muls8.w	r7, r4
+ f2 1f                 add	r3, r7
+ f4 b6                 dec16	r6
+ f6 2e                 tst16	r6
  d1 ed                 brne8	avm_test_main+103
- f2 19                 add	r3, r1
- f4 a8                 inc16	r0
- f0 0c 40              cmpi.s8	r0, 0x40
- d1 d8                 brne8	avm_test_main+91
+ f2 03                 add	r0, r3
+ f4 aa                 inc16	r2
+ f0 0e 40              cmpi.s8	r2, 0x40
+ d1 d6                 brne8	avm_test_main+89
  f4 01                 ldsp16	r5, [sp+0x0]
  f4 ad                 inc16	r5
  01                    mov	r4, r5
  f1 74                 zext8	r4
  cc 10                 cmpi.s8	r4, 0x10
- d1 c9                 brne8	avm_test_main+87
- f0 5b 70 01           stm16	[0x170], r3
+ d1 c7                 brne8	avm_test_main+85
+ f0 58 70 01           stm16	[0x170], r0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 04                 adjsp	0x4
+ d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

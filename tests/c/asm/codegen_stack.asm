@@ -6,16 +6,16 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 codegen_stack.c
 0000040c l     F .text	00000029 fibonacci
 00000435 l     F .text	0000019b stack_arrays
-00000623 l     F .text	0000004a program_pointer_stack
+00000623 l     F .text	00000049 program_pointer_stack
 000005d0 l     F .text	00000053 register_pressure
-0000066d l     F .text	00000014 helper4
-00000109 l     O .data	00000003 .L__const.program_pointer_stack.counts
+0000066c l     F .text	00000014 helper4
 00000100 l     O .data	00000009 .L__const.program_pointer_stack.pointers
-00000683 l     O .rodata	00000020 flash_data
+00000109 l     O .data	00000003 .L__const.program_pointer_stack.counts
+00000682 l     O .rodata	00000020 flash_data
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	000001f6 avm_test_main
-00000681 g     F .text	00000002 avm_halt
+00000680 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -30,7 +30,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 6b 04              call16	avm_halt
+ e1 6a 04              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -583,13 +583,13 @@ Disassembly of section .text:
  f4 41                 stsp16	[sp+0x0], r5
  1d                    add	r7, r5
  f4 11                 ldsp16	r5, [sp+0x4]
- d5 65                 call8	helper4
+ d5 64                 call8	helper4
  f1 0c                 mov	r1, r4
  f1 20                 mov	r4, r0
  f4 19                 ldsp16	r5, [sp+0x6]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 03                 ldsp16	r7, [sp+0x0]
- d5 59                 call8	helper4
+ d5 58                 call8	helper4
  04                    mov	r5, r4
  fa 8f                 lsr16i	r5, 0xf
  10                    add	r4, r4
@@ -607,40 +607,38 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	-0x4
- a5                    xor	r5, r5
- c4 09 01              ldi16	r4, 0x109
- f4 48                 stsp16	[sp+0x2], r4
+ d6 fe                 adjsp	-0x2
+ f2 42                 sub	r2, r2
  c0 01                 ldi8	r4, 0x1
  f4 40                 stsp16	[sp+0x0], r4
- f0 02 03              ldi8	r2, 0x3
- f0 07 00 01           ldi16	r3, 0x100
- 01                    mov	r4, r5
- 09                    mov	r6, r5
- f4 0b                 ldsp16	r7, [sp+0x2]
- 1b                    add	r6, r7
- 4e                    ld8u	r7, [r6]
- cf 02                 cmpi.s8	r7, 0x2
- f4 02                 ldsp16	r6, [sp+0x0]
- fc 77                 cmov.uge	r6, r7
- 0d                    mov	r7, r5
- fe 3a                 mul16	r7, r2
- f2 2f                 add	r7, r3
- f0 6c 1f              ld16	r0, [r7+]
- ed 2e 20              ld8u	r1, [r7+0]
- 0c                    mov	r7, r4
- fa af                 lsr16i	r7, 0xf
+ f0 03 03              ldi8	r3, 0x3
+ f1 22                 mov	r4, r2
+ c5 00 01              ldi16	r5, 0x100
+ f1 2e                 mov	r7, r2
+ c6 09 01              ldi16	r6, 0x109
+ 1e                    add	r7, r6
+ 4b                    ld8u	r6, [r7]
+ ce 02                 cmpi.s8	r6, 0x2
+ f4 03                 ldsp16	r7, [sp+0x0]
+ fc 7e                 cmov.uge	r7, r6
+ f1 2a                 mov	r6, r2
+ fe 33                 mul16	r6, r3
+ 19                    add	r6, r5
+ f0 6c 1d              ld16	r0, [r6+]
+ ed 2c 20              ld8u	r1, [r6+0]
+ 08                    mov	r6, r4
+ fa 9f                 lsr16i	r6, 0xf
  10                    add	r4, r4
- 93                    or	r4, r7
- f0 65 e0              ldp8u	r7, [q0+]
- 13                    add	r4, r7
- f4 b6                 dec16	r6
- f4 a6                 tst8	r6
- d1 f1                 brne8	program_pointer_stack+46
- f4 ad                 inc16	r5
- cd 03                 cmpi.s8	r5, 0x3
- d1 d5                 brne8	program_pointer_stack+24
- d6 04                 adjsp	0x4
+ 92                    or	r4, r6
+ f0 65 c0              ldp8u	r6, [q0+]
+ 12                    add	r4, r6
+ f4 b7                 dec16	r7
+ f4 a7                 tst8	r7
+ d1 f1                 brne8	program_pointer_stack+44
+ f4 aa                 inc16	r2
+ f0 0e 03              cmpi.s8	r2, 0x3
+ d1 d2                 brne8	program_pointer_stack+20
+ d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

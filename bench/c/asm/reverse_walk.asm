@@ -9,8 +9,8 @@ SYMBOL TABLE:
 00000200 l     O .data	00000002 reverse_walk_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000015 _start
-00000315 g     F .text	0000004e avm_test_main
-00000363 g     F .text	00000002 avm_halt
+00000315 g     F .text	00000052 avm_test_main
+00000367 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,9 +25,10 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 4e                 call8	avm_halt
+ d5 52                 call8	avm_halt
 
 <avm_test_main>:
+ b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
@@ -38,37 +39,38 @@ Disassembly of section .text:
  c9 17                 addi.s8	r5, 0x17
  f4 b4                 dec16	r4
  f6 2c                 tst16	r4
- d1 f6                 brne8	avm_test_main+10
- f2 39                 sub	r1, r1
+ d1 f6                 brne8	avm_test_main+11
+ f2 42                 sub	r2, r2
  d7 01                 sys	debug_break
- f0 04 80 01           ldi16	r0, 0x180
+ f0 05 00 02           ldi16	r1, 0x200
+ f0 07 00 01           ldi16	r3, 0x100
+ f1 22                 mov	r4, r2
  f1 29                 mov	r6, r1
- f0 06 00 02           ldi16	r2, 0x200
- f1 24                 mov	r5, r0
+ c5 80 01              ldi16	r5, 0x180
  f4 b5                 dec16	r5
- 41                    ld8u	r4, [r5]
- 0e                    mov	r7, r6
- 1c                    add	r7, r4
- a2                    xor	r4, r6
- 08                    mov	r6, r4
- f1 76                 zext8	r6
- 1b                    add	r6, r7
- f4 b2                 dec16	r2
- ee 84 20              st8	[r2+0], r4
- c4 00 01              ldi16	r4, 0x100
- 34                    cmp	r5, r4
- d1 eb                 brne8	avm_test_main+36
- f4 a9                 inc16	r1
- f1 21                 mov	r4, r1
+ 4d                    ld8u	r7, [r5]
+ f1 04                 mov	r0, r4
+ f2 07                 add	r0, r7
+ ac                    xor	r7, r4
+ 03                    mov	r4, r7
  f1 74                 zext8	r4
- cc 20                 cmpi.s8	r4, 0x20
- d1 db                 brne8	avm_test_main+30
- f0 5e 00 02           stm16	[0x200], r6
+ f2 20                 add	r4, r0
+ f4 b6                 dec16	r6
+ 5b                    st8	[r6], r7
+ f5 27                 cmp	r5, r3
+ d1 ec                 brne8	avm_test_main+40
+ f4 aa                 inc16	r2
+ f1 26                 mov	r5, r2
+ f1 75                 zext8	r5
+ cd 20                 cmpi.s8	r5, 0x20
+ d1 dd                 brne8	avm_test_main+35
+ f0 5c 00 02           stm16	[0x200], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
+ bb                    pop16	r3
  ef                    ret
 
 <avm_halt>:

@@ -4,6 +4,7 @@ set(AVM_BENCH_INSTRUCTION_SOURCE "${AVM_BENCH_DIR}/instructions.asm")
 set(AVM_BENCH_INSTRUCTION_NAMES "${AVM_BENCH_DIR}/benchmark_names.txt")
 set(AVM_BENCH_C_DIR "${AVM_BENCH_DIR}/c")
 set(AVM_BENCH_C_DISASSEMBLY_DIR "${AVM_BENCH_C_DIR}/asm")
+set(AVM_BENCH_C_MIR_SOURCE_DIR "${AVM_BENCH_C_DIR}")
 set(AVM_BENCH_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(AVM_BENCH_INSTRUCTION_OBJECT
     "${AVM_BENCH_BUILD_DIR}/instructions.o")
@@ -12,6 +13,7 @@ set(AVM_BENCH_INSTRUCTION_ELF
 set(AVM_BENCH_INSTRUCTION_IMAGE
     "${AVM_BENCH_BUILD_DIR}/instructions.bin")
 set(AVM_BENCH_C_BINARY_DIR "${AVM_BENCH_BUILD_DIR}/c")
+set(AVM_BENCH_C_MIR_BINARY_DIR "${AVM_BENCH_C_BINARY_DIR}/mir")
 set(AVM_BENCH_BASELINE_SOURCE "${AVM_BENCH_DIR}/baseline.c")
 set(AVM_BENCH_BASELINE_OBJECT
     "${AVM_BENCH_BUILD_DIR}/__avm_bench_baseline.o")
@@ -41,6 +43,8 @@ avm_add_image(
 # pair of __avm_debug_break() calls around the code being measured.
 file(GLOB AVM_BENCH_C_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_C_DIR}/*.c")
+file(GLOB AVM_BENCH_C_MIR_SOURCES CONFIGURE_DEPENDS
+    "${AVM_BENCH_C_MIR_SOURCE_DIR}/*.c")
 
 set(AVM_BENCH_IMAGE_OUTPUTS
     "${AVM_BENCH_INSTRUCTION_IMAGE}"
@@ -108,6 +112,38 @@ foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
         "${AVM_BENCH_DISASSEMBLY}")
 endforeach()
 
+# Sources under bench/c/mir are diagnostic-only. Compile them with the regular
+# AVM C pipeline while capturing LLVM's pass-by-pass MIR dump in the build tree.
+set(AVM_BENCH_MIR_OUTPUTS)
+foreach(AVM_BENCH_C_MIR_SOURCE IN LISTS AVM_BENCH_C_MIR_SOURCES)
+    get_filename_component(AVM_BENCH_MIR_NAME
+        "${AVM_BENCH_C_MIR_SOURCE}" NAME_WE)
+    set(AVM_BENCH_MIR_OBJECT
+        "${AVM_BENCH_C_MIR_BINARY_DIR}/${AVM_BENCH_MIR_NAME}.o")
+    set(AVM_BENCH_MIR_OUTPUT
+        "${AVM_BENCH_C_MIR_BINARY_DIR}/${AVM_BENCH_MIR_NAME}.mir")
+
+    avm_add_object(
+        OUTPUT "${AVM_BENCH_MIR_OBJECT}"
+        SOURCE "${AVM_BENCH_C_MIR_SOURCE}"
+        LANGUAGE C
+        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+        COMPILE_OPTIONS
+            -fno-color-diagnostics
+            -mllvm -filter-print-funcs=avm_test_main
+            -mllvm -print-before-all
+            -mllvm -print-after-all
+        STDERR_OUTPUT "${AVM_BENCH_MIR_OUTPUT}"
+        DEPENDS avm_sysroot
+    )
+    list(APPEND AVM_BENCH_MIR_OUTPUTS
+        "${AVM_BENCH_MIR_OBJECT}"
+        "${AVM_BENCH_MIR_OUTPUT}")
+endforeach()
+
+add_custom_target(avm_bench_mir
+    DEPENDS ${AVM_BENCH_MIR_OUTPUTS})
+
 add_custom_target(avm_bench_images
     DEPENDS
         "${AVM_BENCH_INSTRUCTION_NAMES}"
@@ -132,6 +168,7 @@ target_compile_definitions(avm_bench PRIVATE
 )
 add_dependencies(avm_bench
     avm_bench_images
+    avm_bench_mir
     avm_interpreter
 )
 

@@ -4,31 +4,31 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/string_progmem_compare.elf:	fi
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 string_progmem_compare.c
-00000993 l     O .rodata	00000005 p_equal
+00000981 l     O .rodata	00000005 p_equal
 00000100 l     O .data	00000005 avm_test_main.equal
-00000998 l     O .rodata	00000005 p_high
+00000986 l     O .rodata	00000005 p_high
 00000105 l     O .data	00000005 avm_test_main.low
-0000099d l     O .rodata	00000005 p_low
+0000098b l     O .rodata	00000005 p_low
 0000010a l     O .data	00000005 avm_test_main.high
-000009a2 l     O .rodata	00000005 p_late
+00000990 l     O .rodata	00000005 p_late
 0000010f l     O .data	00000005 avm_test_main.late
-000009a7 l     O .rodata	00000006 p_alpha
+00000995 l     O .rodata	00000006 p_alpha
 00000114 l     O .data	00000006 avm_test_main.alpha
-000009ad l     O .rodata	00000006 p_alphz
+0000099b l     O .rodata	00000006 p_alphz
 0000011a l     O .data	00000006 avm_test_main.alphz
-000009b3 l     O .rodata	00000008 p_catalog
+000009a1 l     O .rodata	00000008 p_catalog
 00000120 l     O .data	00000004 avm_test_main.cat
-000009bb l     O .rodata	00000004 p_cat
+000009a9 l     O .rodata	00000004 p_cat
 00000124 l     O .data	00000008 avm_test_main.catalog
-000009bf l     O .rodata	00000002 p_unsigned_lo
+000009ad l     O .rodata	00000002 p_unsigned_lo
 0000012c l     O .data	00000002 avm_test_main.unsigned_hi
-000009c1 l     O .rodata	00000001 p_empty
-000009c2 l     O .rodata	00000008 p_short
-000009ca l     O .rodata	00000105 p_long
+000009af l     O .rodata	00000001 p_empty
+000009b0 l     O .rodata	00000008 p_short
+000009b8 l     O .rodata	00000105 p_long
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000229 g     F .text	00000768 avm_test_main
-00000991 g     F .text	00000002 avm_halt
+00000229 g     F .text	00000756 avm_test_main
+0000097f g     F .text	00000002 avm_halt
 00000216 g     F .text	00000007 test_call_memcmp_P
 0000021d g     F .text	00000005 test_call_strcmp_P
 00000222 g     F .text	00000007 test_call_strlen_P
@@ -46,7 +46,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 7b 07              call16	avm_halt
+ e1 69 07              call16	avm_halt
 
 <test_call_memcmp_P>:
  f1 77                 zext8	r7
@@ -77,7 +77,7 @@ Disassembly of section .text:
  c0 05                 ldi8	r4, 0x5
  f4 40                 stsp16	[sp+0x0], r4
  f1 04                 mov	r0, r4
- c6 93 09              ldi16	r6, 0x993
+ c6 81 09              ldi16	r6, 0x981
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 00 01              ldi16	r4, 0x100
@@ -88,9 +88,9 @@ Disassembly of section .text:
  f1 77                 zext8	r7
  0b                    mov	r6, r7
  fa 94                 lsr16i	r6, 0x4
- c0 30                 ldi8	r4, 0x30
+ f0 03 30              ldi8	r3, 0x30
  06                    mov	r5, r6
- 94                    or	r5, r4
+ f9 ad                 or	r5, r3
  ca 37                 addi.s8	r6, 0x37
  f0 02 a0              ldi8	r2, 0xa0
  f5 2e                 cmp	r7, r2
@@ -98,14 +98,12 @@ Disassembly of section .text:
  f0 3e 68              stsp16	[sp+0x68], r6
  d6 fe                 adjsp	-0x2
  f0 38 00              stsp16	[sp+0x0], r0
- f1 18                 mov	r3, r0
- f0 04 98 09           ldi16	r0, 0x998
+ f0 04 86 09           ldi16	r0, 0x986
  f0 01 00              ldi8	r1, 0x0
  f1 71                 zext8	r1
  c4 05 01              ldi16	r4, 0x105
- f0 3c 8a              stsp16	[sp+0x8a], r4
  f2 6a                 mov32	q3, q0
- d5 9c                 call8	test_call_memcmp_P
+ d5 9f                 call8	test_call_memcmp_P
  d6 02                 adjsp	0x2
  f0 3c 82              stsp16	[sp+0x82], r4
  0c                    mov	r7, r4
@@ -113,19 +111,19 @@ Disassembly of section .text:
  0b                    mov	r6, r7
  fa 94                 lsr16i	r6, 0x4
  06                    mov	r5, r6
- c0 30                 ldi8	r4, 0x30
- 94                    or	r5, r4
+ f9 ad                 or	r5, r3
  ca 37                 addi.s8	r6, 0x37
  f5 2e                 cmp	r7, r2
  fc 35                 cmov.ult	r6, r5
  f0 3e 6c              stsp16	[sp+0x6c], r6
  d6 fe                 adjsp	-0x2
- f0 3b 00              stsp16	[sp+0x0], r3
- c6 9d 09              ldi16	r6, 0x99d
+ c0 05                 ldi8	r4, 0x5
+ f4 40                 stsp16	[sp+0x0], r4
+ c6 8b 09              ldi16	r6, 0x98b
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 0a 01              ldi16	r4, 0x10a
- e1 72 ff              call16	test_call_memcmp_P
+ e1 75 ff              call16	test_call_memcmp_P
  d6 02                 adjsp	0x2
  f0 3c 80              stsp16	[sp+0x80], r4
  0c                    mov	r7, r4
@@ -133,77 +131,71 @@ Disassembly of section .text:
  0b                    mov	r6, r7
  fa 94                 lsr16i	r6, 0x4
  06                    mov	r5, r6
- c0 30                 ldi8	r4, 0x30
- 94                    or	r5, r4
+ f9 ad                 or	r5, r3
  ca 37                 addi.s8	r6, 0x37
  f5 2e                 cmp	r7, r2
  fc 35                 cmov.ult	r6, r5
  f0 3e 6a              stsp16	[sp+0x6a], r6
  d6 fe                 adjsp	-0x2
- f0 3b 00              stsp16	[sp+0x0], r3
- c6 a2 09              ldi16	r6, 0x9a2
+ c0 05                 ldi8	r4, 0x5
+ f4 40                 stsp16	[sp+0x0], r4
+ c6 90 09              ldi16	r6, 0x990
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 0f 01              ldi16	r4, 0x10f
- e1 48 ff              call16	test_call_memcmp_P
+ e1 4b ff              call16	test_call_memcmp_P
  d6 02                 adjsp	0x2
  f0 3c 7a              stsp16	[sp+0x7a], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
  f5 26                 cmp	r5, r2
- f1 1a                 mov	r3, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
- f0 02 30              ldi8	r2, 0x30
- f9 89                 or	r4, r2
+ f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 66              stsp16	[sp+0x66], r5
  d6 fe                 adjsp	-0x2
  a0                    xor	r4, r4
  f4 40                 stsp16	[sp+0x0], r4
- f0 34 8a              ldsp16	r4, [sp+0x8a]
+ c4 05 01              ldi16	r4, 0x105
  f2 6a                 mov32	q3, q0
- e1 20 ff              call16	test_call_memcmp_P
+ e1 28 ff              call16	test_call_memcmp_P
  d6 02                 adjsp	0x2
  f0 3c 7e              stsp16	[sp+0x7e], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f5 27                 cmp	r5, r3
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
- f9 89                 or	r4, r2
- f1 1a                 mov	r3, r2
+ f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 64              stsp16	[sp+0x64], r5
- f0 04 a7 09           ldi16	r0, 0x9a7
+ f0 04 95 09           ldi16	r0, 0x995
  f0 01 00              ldi8	r1, 0x0
  f1 71                 zext8	r1
- f0 06 14 01           ldi16	r2, 0x114
- f1 22                 mov	r4, r2
+ c4 14 01              ldi16	r4, 0x114
  f2 6a                 mov32	q3, q0
- e1 fb fe              call16	test_call_strcmp_P
+ e1 08 ff              call16	test_call_strcmp_P
  f0 3c 78              stsp16	[sp+0x78], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- c0 a0                 ldi8	r4, 0xa0
- 34                    cmp	r5, r4
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 62              stsp16	[sp+0x62], r5
- c6 ad 09              ldi16	r6, 0x9ad
+ c6 9b 09              ldi16	r6, 0x99b
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
- f1 22                 mov	r4, r2
- e1 da fe              call16	test_call_strcmp_P
+ c4 14 01              ldi16	r4, 0x114
+ e1 e7 fe              call16	test_call_strcmp_P
  f0 3c 74              stsp16	[sp+0x74], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f0 02 a0              ldi8	r2, 0xa0
  f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
@@ -213,99 +205,98 @@ Disassembly of section .text:
  f0 3d 60              stsp16	[sp+0x60], r5
  c4 1a 01              ldi16	r4, 0x11a
  f2 6a                 mov32	q3, q0
- e1 bb fe              call16	test_call_strcmp_P
+ e1 cb fe              call16	test_call_strcmp_P
  f0 3c 72              stsp16	[sp+0x72], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f1 02                 mov	r0, r2
- f5 24                 cmp	r5, r0
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 5e              stsp16	[sp+0x5e], r5
- c6 b3 09              ldi16	r6, 0x9b3
+ c6 a1 09              ldi16	r6, 0x9a1
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 20 01              ldi16	r4, 0x120
- e1 98 fe              call16	test_call_strcmp_P
+ e1 aa fe              call16	test_call_strcmp_P
  f0 3c 7c              stsp16	[sp+0x7c], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f5 24                 cmp	r5, r0
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 5c              stsp16	[sp+0x5c], r5
- c6 bb 09              ldi16	r6, 0x9bb
+ c6 a9 09              ldi16	r6, 0x9a9
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 24 01              ldi16	r4, 0x124
- e1 77 fe              call16	test_call_strcmp_P
+ e1 89 fe              call16	test_call_strcmp_P
  f0 3c 76              stsp16	[sp+0x76], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f5 24                 cmp	r5, r0
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 5a              stsp16	[sp+0x5a], r5
- c6 bf 09              ldi16	r6, 0x9bf
+ c6 ad 09              ldi16	r6, 0x9ad
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 2c 01              ldi16	r4, 0x12c
- e1 56 fe              call16	test_call_strcmp_P
+ e1 68 fe              call16	test_call_strcmp_P
  f0 3c 86              stsp16	[sp+0x86], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f5 24                 cmp	r5, r0
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 58              stsp16	[sp+0x58], r5
- c4 c1 09              ldi16	r4, 0x9c1
+ c4 af 09              ldi16	r4, 0x9af
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
- e1 3d fe              call16	test_call_strlen_P
+ e1 4f fe              call16	test_call_strlen_P
  f0 3c 70              stsp16	[sp+0x70], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f5 24                 cmp	r5, r0
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 56              stsp16	[sp+0x56], r5
- c4 c2 09              ldi16	r4, 0x9c2
+ c4 b0 09              ldi16	r4, 0x9b0
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
- e1 1f fe              call16	test_call_strlen_P
+ e1 31 fe              call16	test_call_strlen_P
  f0 3c 88              stsp16	[sp+0x88], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f5 24                 cmp	r5, r0
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 54              stsp16	[sp+0x54], r5
- c4 ca 09              ldi16	r4, 0x9ca
+ c4 b8 09              ldi16	r4, 0x9b8
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
- e1 01 fe              call16	test_call_strlen_P
+ e1 13 fe              call16	test_call_strlen_P
  f0 3c 6e              stsp16	[sp+0x6e], r4
  04                    mov	r5, r4
  f1 75                 zext8	r5
- f5 24                 cmp	r5, r0
+ f5 26                 cmp	r5, r2
  fa 84                 lsr16i	r5, 0x4
  01                    mov	r4, r5
  f9 8d                 or	r4, r3

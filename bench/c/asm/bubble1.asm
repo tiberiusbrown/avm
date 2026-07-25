@@ -40,14 +40,14 @@ Disassembly of section .text:
  d1 f6                 brne8	avm_test_main+10
  f0 02 40              ldi8	r2, 0x40
  d7 01                 sys	debug_break
- f2 30                 sub	r0, r0
- f0 05 01 01           ldi16	r1, 0x101
+ f2 39                 sub	r1, r1
+ f0 04 01 01           ldi16	r0, 0x101
  f0 03 01              ldi8	r3, 0x1
  f1 72                 zext8	r2
  f4 b2                 dec16	r2
  f1 2a                 mov	r6, r2
- f1 25                 mov	r5, r1
- f1 10                 mov	r2, r0
+ f1 24                 mov	r5, r0
+ f1 11                 mov	r2, r1
  d4 21                 jmp8	avm_test_main+79
  f1 22                 mov	r4, r2
  f1 74                 zext8	r4
@@ -57,8 +57,8 @@ Disassembly of section .text:
  f1 72                 zext8	r2
  f4 b2                 dec16	r2
  f1 2a                 mov	r6, r2
- f1 25                 mov	r5, r1
- f1 10                 mov	r2, r0
+ f1 24                 mov	r5, r0
+ f1 11                 mov	r2, r1
  d4 0a                 jmp8	avm_test_main+79
  f4 ab                 inc16	r3
  f4 ad                 inc16	r5

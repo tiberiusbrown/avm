@@ -40,29 +40,29 @@ Disassembly of section .text:
  c4 34 12              ldi16	r4, 0x1234
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
+ c6 00 01              ldi16	r6, 0x100
  f1 08                 mov	r1, r0
  c8 18                 addi.s8	r4, 0x18
- f1 2c                 mov	r7, r0
- a3                    xor	r4, r7
- cb 11                 addi.s8	r7, 0x11
- c5 20 02              ldi16	r5, 0x220
- 3d                    cmp	r7, r5
- d1 f7                 brne8	avm_test_main+32
- af                    xor	r7, r7
- c1 1f                 ldi8	r5, 0x1f
- 87                    and	r5, r7
- c6 00 01              ldi16	r6, 0x100
- 19                    add	r6, r5
- 46                    ld8u	r5, [r6]
- 11                    add	r4, r5
- f4 af                 inc16	r7
- c5 00 01              ldi16	r5, 0x100
- 3d                    cmp	r7, r5
- d1 ef                 brne8	avm_test_main+42
+ f1 24                 mov	r5, r0
+ a1                    xor	r4, r5
+ c9 11                 addi.s8	r5, 0x11
+ c7 20 02              ldi16	r7, 0x220
+ 37                    cmp	r5, r7
+ d1 f7                 brne8	avm_test_main+35
+ a5                    xor	r5, r5
+ c3 1f                 ldi8	r7, 0x1f
+ 8d                    and	r7, r5
+ 1e                    add	r7, r6
+ 4f                    ld8u	r7, [r7]
+ 13                    add	r4, r7
+ f4 ad                 inc16	r5
+ c7 00 01              ldi16	r7, 0x100
+ 37                    cmp	r5, r7
+ d1 f2                 brne8	avm_test_main+45
  f4 a9                 inc16	r1
  c1 80                 ldi8	r5, 0x80
  f5 0d                 cmp	r1, r5
- d1 d9                 brne8	avm_test_main+28
+ d1 dc                 brne8	avm_test_main+31
  f0 5c 20 01           stm16	[0x120], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

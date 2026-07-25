@@ -12,8 +12,8 @@ SYMBOL TABLE:
 0000022e l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	000000a2 avm_test_main
-000003b8 g     F .text	00000002 avm_halt
+00000316 g     F .text	000000a4 avm_test_main
+000003ba g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -28,9 +28,10 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 a2 00              call16	avm_halt
+ e1 a4 00              call16	avm_halt
 
 <avm_test_main>:
+ b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
@@ -56,22 +57,22 @@ Disassembly of section .text:
  f0 6b 08              st32	[r4], q0
  c4 10 01              ldi16	r4, 0x110
  f0 6b 08              st32	[r4], q0
- c6 0c 01              ldi16	r6, 0x10c
- f0 6b 0c              st32	[r6], q0
+ f0 07 0c 01           ldi16	r3, 0x10c
+ f0 6b 06              st32	[r3], q0
  c0 62                 ldi8	r4, 0x62
  f0 5c 01 01           stm16	[0x101], r4
- f2 30                 sub	r0, r0
- f0 48 00 01           stm8	[0x100], r0
- f0 48 0b 01           stm8	[0x10b], r0
- f0 48 2c 01           stm8	[0x12c], r0
+ aa                    xor	r6, r6
+ f0 4e 00 01           stm8	[0x100], r6
+ f0 4e 0b 01           stm8	[0x10b], r6
+ f0 4e 2c 01           stm8	[0x12c], r6
  c7 00 01              ldi16	r7, 0x100
  c5 2d 01              ldi16	r5, 0x12d
  c0 65                 ldi8	r4, 0x65
  f6 0c                 st8	[r5+], r4
  f4 b7                 dec16	r7
  f6 2f                 tst16	r7
- d1 f8                 brne8	avm_test_main+106
- f0 48 2d 02           stm8	[0x22d], r0
+ d1 f8                 brne8	avm_test_main+107
+ f0 4e 2d 02           stm8	[0x22d], r6
  d7 01                 sys	debug_break
  c4 00 01              ldi16	r4, 0x100
  d7 1a                 sys	strlen
@@ -84,19 +85,20 @@ Disassembly of section .text:
  d7 1a                 sys	strlen
  04                    mov	r5, r4
  17                    add	r5, r7
- 02                    mov	r4, r6
+ f1 23                 mov	r4, r3
  d7 1a                 sys	strlen
- 08                    mov	r6, r4
- 19                    add	r6, r5
+ 0c                    mov	r7, r4
+ 1d                    add	r7, r5
  c4 2d 01              ldi16	r4, 0x12d
  d7 1a                 sys	strlen
- 12                    add	r4, r6
+ 13                    add	r4, r7
  f0 5c 2e 02           stm16	[0x22e], r4
  d7 01                 sys	debug_break
- f1 20                 mov	r4, r0
+ 02                    mov	r4, r6
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
+ bb                    pop16	r3
  ef                    ret
 
 <avm_halt>:

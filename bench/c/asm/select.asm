@@ -59,19 +59,19 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  09                    mov	r6, r5
  f4 41                 stsp16	[sp+0x0], r5
- f0 06 00 01           ldi16	r2, 0x100
- f0 07 40 01           ldi16	r3, 0x140
- f0 04 80 01           ldi16	r0, 0x180
- f0 01 20              ldi8	r1, 0x20
+ f0 02 20              ldi8	r2, 0x20
+ f0 07 80 01           ldi16	r3, 0x180
+ f0 05 40 01           ldi16	r1, 0x140
+ f0 04 00 01           ldi16	r0, 0x100
  f4 4a                 stsp16	[sp+0x2], r6
- f0 6c 95              ld16	r4, [r2+]
- f0 6c b7              ld16	r5, [r3+]
- f0 6c d1              ld16	r6, [r0+]
+ f0 6c 91              ld16	r4, [r0+]
+ f0 6c b3              ld16	r5, [r1+]
+ f0 6c d7              ld16	r6, [r3+]
  d5 22                 call8	select_kernel
  f4 0a                 ldsp16	r6, [sp+0x2]
  18                    add	r6, r4
- f4 b1                 dec16	r1
- f6 29                 tst16	r1
+ f4 b2                 dec16	r2
+ f6 2a                 tst16	r2
  d1 ea                 brne8	avm_test_main+78
  f4 01                 ldsp16	r5, [sp+0x0]
  f4 ad                 inc16	r5

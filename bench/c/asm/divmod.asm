@@ -329,25 +329,22 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 f4                 adjsp	-0xc
- f2 67                 mov32	q1, q3
  f2 62                 mov32	q0, q2
- c4 ff ff              ldi16	r4, 0xffff
- c5 ff ff              ldi16	r5, 0xffff
- f0 36 17              ldsp16	r6, [sp+0x17]
- f4 42                 stsp16	[sp+0x0], r6
- aa                    xor	r6, r6
- af                    xor	r7, r7
- f0 69 4c              cmp32	q1, q3
- d0 5a                 breq8	__avm_udivmodsi4+118
- c2 20                 ldi8	r6, 0x20
- f0 38 08              stsp16	[sp+0x8], r0
- f0 39 0a              stsp16	[sp+0xa], r1
- f0 3a 02              stsp16	[sp+0x2], r2
- f0 3b 04              stsp16	[sp+0x4], r3
+ f0 34 17              ldsp16	r4, [sp+0x17]
+ f4 40                 stsp16	[sp+0x0], r4
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f0 69 c8              cmp32	q3, q2
+ d0 5c                 breq8	__avm_udivmodsi4+112
+ c0 20                 ldi8	r4, 0x20
+ f4 58                 stsp16	[sp+0x6], r4
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  f2 66                 mov32	q1, q2
- f4 5a                 stsp16	[sp+0x6], r6
+ f0 38 08              stsp16	[sp+0x8], r0
+ f0 39 0a              stsp16	[sp+0xa], r1
+ f4 4a                 stsp16	[sp+0x2], r6
+ f4 53                 stsp16	[sp+0x4], r7
  f7 65                 add32	q1, q1
  f4 22                 ldsp16	r6, [sp+0x8]
  f4 2b                 ldsp16	r7, [sp+0xa]
@@ -380,9 +377,13 @@ Disassembly of section .text:
  97                    or	r5, r7
  f4 1a                 ldsp16	r6, [sp+0x6]
  f4 b6                 dec16	r6
+ f4 5a                 stsp16	[sp+0x6], r6
  f6 2e                 tst16	r6
  f2 64                 mov32	q1, q0
- d1 b8                 brne8	__avm_udivmodsi4+46
+ d1 b8                 brne8	__avm_udivmodsi4+38
+ d4 06                 jmp8	__avm_udivmodsi4+118
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
  f4 02                 ldsp16	r6, [sp+0x0]
  f0 6b 0c              st32	[r6], q0
  d6 0c                 adjsp	0xc

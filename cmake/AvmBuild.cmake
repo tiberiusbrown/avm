@@ -20,7 +20,6 @@ set(AVM_COMMON_COMPILE_OPTIONS
     -Wall
     -Wextra
     -Werror
-    -mllvm -disable-machine-sink
 )
 
 function(avm_add_object)

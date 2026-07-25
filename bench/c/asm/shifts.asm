@@ -14,8 +14,8 @@ SYMBOL TABLE:
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	00000168 avm_test_main
 0000037e g     F .text	00000002 avm_halt
-00000380 g     F .text	0000002a __avm_ashlsi3
-000003aa g     F .text	0000002a __avm_lshrsi3
+00000380 g     F .text	00000024 __avm_ashlsi3
+000003a4 g     F .text	00000024 __avm_lshrsi3
 
 Disassembly of section .text:
 
@@ -168,7 +168,7 @@ Disassembly of section .text:
  f4 21                 ldsp16	r5, [sp+0x8]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
- d5 5c                 call8	__avm_lshrsi3
+ d5 56                 call8	__avm_lshrsi3
  f4 32                 ldsp16	r6, [sp+0xc]
  f2 62                 mov32	q0, q2
  f4 28                 ldsp16	r4, [sp+0xa]
@@ -200,55 +200,45 @@ Disassembly of section .text:
  d4 fe                 jmp8	avm_halt
 
 <__avm_ashlsi3>:
- b3                    push16	r3
- b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f2 62                 mov32	q0, q2
+ f0 00 1f              ldi8	r0, 0x1f
+ f2 39                 sub	r1, r1
+ f0 69 0c              cmp32	q0, q3
+ d8 04                 bruge8	__avm_ashlsi3+16
  a0                    xor	r4, r4
  a5                    xor	r5, r5
- f0 02 1f              ldi8	r2, 0x1f
- f2 4b                 sub	r3, r3
- f0 69 4c              cmp32	q1, q3
- d2 13                 brult8	__avm_ashlsi3+37
- f0 69 c8              cmp32	q3, q2
- d0 0c                 breq8	__avm_ashlsi3+35
- f2 68                 mov32	q2, q0
+ d4 11                 jmp8	__avm_ashlsi3+33
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 c0              cmp32	q3, q0
+ d0 08                 breq8	__avm_ashlsi3+33
  f7 6a                 add32	q2, q2
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
  d1 f8                 brne8	__avm_ashlsi3+25
- d4 02                 jmp8	__avm_ashlsi3+37
- f2 68                 mov32	q2, q0
  b8                    pop16	r0
  b9                    pop16	r1
- ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret
 
 <__avm_lshrsi3>:
- b3                    push16	r3
- b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f2 62                 mov32	q0, q2
+ f0 00 1f              ldi8	r0, 0x1f
+ f2 39                 sub	r1, r1
+ f0 69 0c              cmp32	q0, q3
+ d8 04                 bruge8	__avm_lshrsi3+16
  a0                    xor	r4, r4
  a5                    xor	r5, r5
- f0 02 1f              ldi8	r2, 0x1f
- f2 4b                 sub	r3, r3
- f0 69 4c              cmp32	q1, q3
- d2 13                 brult8	__avm_lshrsi3+37
- f0 69 c8              cmp32	q3, q2
- d0 0c                 breq8	__avm_lshrsi3+35
- f2 68                 mov32	q2, q0
+ d4 11                 jmp8	__avm_lshrsi3+33
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 c0              cmp32	q3, q0
+ d0 08                 breq8	__avm_lshrsi3+33
  f7 82                 lsr32.1	q2
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
  d1 f8                 brne8	__avm_lshrsi3+25
- d4 02                 jmp8	__avm_lshrsi3+37
- f2 68                 mov32	q2, q0
  b8                    pop16	r0
  b9                    pop16	r1
- ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret

@@ -4,14 +4,14 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/codegen_control.elf:	file form
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_control.c
-00000406 l     F .text	00000032 loop_control
-00000438 l     F .text	00000069 run_state_machine
+00000401 l     F .text	00000032 loop_control
+00000433 l     F .text	00000069 run_state_machine
 000003b9 l     F .text	00000011 dense_switch
-000003ca l     F .text	0000003c sparse_switch
+000003ca l     F .text	00000037 sparse_switch
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
 00000116 g     F .text	000002a3 avm_test_main
-000004a1 g     F .text	00000002 avm_halt
+0000049c g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 8b 03              call16	avm_halt
+ e1 86 03              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -34,7 +34,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 e4                 adjsp	-0x1c
- e1 e7 02              call16	loop_control
+ e1 e2 02              call16	loop_control
  f0 3c 18              stsp16	[sp+0x18], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -49,7 +49,7 @@ Disassembly of section .text:
  f1 04                 mov	r0, r4
  fc 35                 cmov.ult	r6, r5
  f0 3e 10              stsp16	[sp+0x10], r6
- e1 fb 02              call16	run_state_machine
+ e1 f6 02              call16	run_state_machine
  f0 3c 1a              stsp16	[sp+0x1a], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -387,35 +387,30 @@ Disassembly of section .text:
  ef                    ret
 
 <sparse_switch>:
- c5 11 11              ldi16	r5, 0x1111
  cc 11                 cmpi.s8	r4, 0x11
- d3 15                 brslt8	sparse_switch+28
+ d3 14                 brslt8	sparse_switch+24
  c5 00 10              ldi16	r5, 0x1000
  31                    cmp	r4, r5
- d0 1b                 breq8	sparse_switch+40
+ d0 1c                 breq8	sparse_switch+38
  c5 01 01              ldi16	r5, 0x101
  31                    cmp	r4, r5
- d0 1a                 breq8	sparse_switch+45
+ d0 1a                 breq8	sparse_switch+42
  cc 11                 cmpi.s8	r4, 0x11
- d1 20                 brne8	sparse_switch+55
- c5 22 22              ldi16	r5, 0x2222
- 01                    mov	r4, r5
+ d1 1e                 brne8	sparse_switch+50
+ c4 22 22              ldi16	r4, 0x2222
  ef                    ret
- c6 00 80              ldi16	r6, 0x8000
- 32                    cmp	r4, r6
- d0 10                 breq8	sparse_switch+50
+ c5 00 80              ldi16	r5, 0x8000
+ 31                    cmp	r4, r5
+ d0 10                 breq8	sparse_switch+46
  cc 01                 cmpi.s8	r4, 0x1
- d1 11                 brne8	sparse_switch+55
- 01                    mov	r4, r5
+ d1 10                 brne8	sparse_switch+50
+ c4 11 11              ldi16	r4, 0x1111
  ef                    ret
- c5 44 44              ldi16	r5, 0x4444
- 01                    mov	r4, r5
+ c4 44 44              ldi16	r4, 0x4444
  ef                    ret
- c5 33 33              ldi16	r5, 0x3333
- 01                    mov	r4, r5
+ c4 33 33              ldi16	r4, 0x3333
  ef                    ret
- c5 55 55              ldi16	r5, 0x5555
- 01                    mov	r4, r5
+ c4 55 55              ldi16	r4, 0x5555
  ef                    ret
  c5 5a a5              ldi16	r5, 0xa55a
  a1                    xor	r4, r5

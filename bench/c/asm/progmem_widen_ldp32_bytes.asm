@@ -4,13 +4,13 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/progmem_widen_ldp32_bytes.elf:
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 progmem_widen_ldp32_bytes.c
-000002e2 l     O .rodata	000000a0 program_bytes
-0000024c l     F .text	00000094 sum_bytes
+000002e6 l     O .rodata	000000a0 program_bytes
+0000024c l     F .text	00000098 sum_bytes
 00000100 l     O .data	00000006 results
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	00000036 avm_test_main
-000002e0 g     F .text	00000002 avm_halt
+000002e4 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,13 +25,13 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 ca 00              call16	avm_halt
+ e1 ce 00              call16	avm_halt
 
 <avm_test_main>:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 04 e2 02           ldi16	r0, 0x2e2
+ f0 04 e6 02           ldi16	r0, 0x2e6
  f0 01 00              ldi8	r1, 0x0
  f1 71                 zext8	r1
  c2 80                 ldi8	r6, 0x80
@@ -42,7 +42,7 @@ Disassembly of section .text:
  f2 68                 mov32	q2, q0
  d5 19                 call8	sum_bytes
  f0 5c 02 01           stm16	[0x102], r4
- c4 e3 02              ldi16	r4, 0x2e3
+ c4 e7 02              ldi16	r4, 0x2e7
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
  c2 7f                 ldi8	r6, 0x7f
@@ -59,7 +59,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f4                 adjsp	-0xc
+ d6 f2                 adjsp	-0xe
  f4 50                 stsp16	[sp+0x4], r4
  f4 59                 stsp16	[sp+0x6], r5
  a0                    xor	r4, r4
@@ -71,7 +71,7 @@ Disassembly of section .text:
  f4 42                 stsp16	[sp+0x0], r6
  08                    mov	r6, r4
  d4 00                 jmp8	sum_bytes+25
- f4 6a                 stsp16	[sp+0xa], r6
+ f4 72                 stsp16	[sp+0xc], r6
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 a6                 tst8	r6
  d1 0b                 brne8	sum_bytes+44
@@ -85,27 +85,29 @@ Disassembly of section .text:
  12                    add	r4, r6
  f0 33 08              ldsp16	r3, [sp+0x8]
  f4 b3                 dec16	r3
- f1 13                 mov	r2, r3
- f0 0a fe              addi.s8	r2, -0x2
- f1 2e                 mov	r7, r2
- f4 02                 ldsp16	r6, [sp+0x0]
- 8e                    and	r7, r6
+ f1 2b                 mov	r6, r3
+ ca fe                 addi.s8	r6, -0x2
+ 0e                    mov	r7, r6
+ f0 32 00              ldsp16	r2, [sp+0x0]
+ f9 e8                 and	r7, r2
  f4 a7                 tst8	r7
- d1 14                 brne8	sum_bytes+93
+ d1 19                 brne8	sum_bytes+98
  f0 66 e0              ldp16	r7, [q0+]
- 0b                    mov	r6, r7
- f1 76                 zext8	r6
- 12                    add	r4, r6
+ f4 6b                 stsp16	[sp+0xa], r7
+ f4 2b                 ldsp16	r7, [sp+0xa]
+ f1 77                 zext8	r7
+ 13                    add	r4, r7
+ f4 2b                 ldsp16	r7, [sp+0xa]
  fa a8                 lsr16i	r7, 0x8
  1c                    add	r7, r4
+ f0 0b fe              addi.s8	r3, -0x2
  03                    mov	r4, r7
- f1 1a                 mov	r3, r2
- f0 0e 02              cmpi.s8	r2, 0x2
- d8 08                 bruge8	sum_bytes+99
- d4 22                 jmp8	sum_bytes+127
+ ce 02                 cmpi.s8	r6, 0x2
+ d8 07                 bruge8	sum_bytes+103
+ d4 21                 jmp8	sum_bytes+131
  0c                    mov	r7, r4
- f0 0e 02              cmpi.s8	r2, 0x2
- d2 1c                 brult8	sum_bytes+127
+ ce 02                 cmpi.s8	r6, 0x2
+ d2 1c                 brult8	sum_bytes+131
  f0 68 80              ldp32	q2, [q0+]
  08                    mov	r6, r4
  f1 76                 zext8	r6
@@ -123,17 +125,17 @@ Disassembly of section .text:
  f0 0b fc              addi.s8	r3, -0x4
  f6 2b                 tst16	r3
  0c                    mov	r7, r4
- d1 e4                 brne8	sum_bytes+99
+ d1 e4                 brne8	sum_bytes+103
  08                    mov	r6, r4
  fa 9f                 lsr16i	r6, 0xf
  10                    add	r4, r4
  92                    or	r4, r6
- f4 2a                 ldsp16	r6, [sp+0xa]
+ f4 32                 ldsp16	r6, [sp+0xc]
  a2                    xor	r4, r6
  f4 ae                 inc16	r6
  ce 08                 cmpi.s8	r6, 0x8
- d1 8c                 brne8	sum_bytes+25
- d6 0c                 adjsp	0xc
+ d1 88                 brne8	sum_bytes+25
+ d6 0e                 adjsp	0xe
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

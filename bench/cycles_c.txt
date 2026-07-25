@@ -1,33 +1,33 @@
      1225300   bubble1.c
      1154781   bubble2.c
-     2164761   bubble4.c
+     1776807   bubble4.c
       255387   call_args.c
      7755150   constant_arith.c
       522102   crc16.c
-     1069306   divmod.c
+     1068762   divmod.c
       234075   fibonacci.c
      8163664   fir8.c
-    13364484   fixed_point.c
+    12596484   fixed_point.c
       929828   float.c
-       83052   indirect_call.c
+       83174   indirect_call.c
     12183492   loop_control.c
-       20669   memory_services.c
+       18314   memory_services.c
      3415944   mixed_width.c
       921548   multiply.c
       924535   pointer_walk.c
      3118536   progmem_walk.c
       542476   progmem_widen_ldp16.c
-      733434   progmem_widen_ldp32_bytes.c
+      735306   progmem_widen_ldp32_bytes.c
       542465   progmem_widen_ldp32_words.c
      1439866   record_scan.c
      1905278   reverse_walk.c
       744268   select.c
-      532273   shifts.c
+      514993   shifts.c
       372097   sieve.c
       776311   small_memops.c
       820167   stack_array.c
      7082644   state_machine.c
-    27396169   string_scan.c
+    25638281   string_scan.c
       853416   struct_copy.c
       936377   switch.c
         2864   sys_memcmp.c

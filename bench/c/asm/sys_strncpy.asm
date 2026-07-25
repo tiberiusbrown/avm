@@ -20,8 +20,8 @@ SYMBOL TABLE:
 00000171 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	000000b3 avm_test_main
-000002c9 g     F .text	00000002 avm_halt
+00000216 g     F .text	000000b4 avm_test_main
+000002ca g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -36,9 +36,11 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 b3 00              call16	avm_halt
+ e1 b4 00              call16	avm_halt
 
 <avm_test_main>:
+ b3                    push16	r3
+ b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
  c4 65 66              ldi16	r4, 0x6665
@@ -47,29 +49,29 @@ Disassembly of section .text:
  f0 6b 8c              st32	[r6], q2
  c4 61 62              ldi16	r4, 0x6261
  c5 63 64              ldi16	r5, 0x6463
- c6 04 01              ldi16	r6, 0x104
- f0 6b 8c              st32	[r6], q2
+ f0 04 04 01           ldi16	r0, 0x104
+ f0 6b 80              st32	[r0], q2
  c4 61 62              ldi16	r4, 0x6261
  c1 63                 ldi8	r5, 0x63
- c6 00 01              ldi16	r6, 0x100
- f0 6b 8c              st32	[r6], q2
+ f0 05 00 01           ldi16	r1, 0x100
+ f0 6b 82              st32	[r1], q2
  c4 0d 01              ldi16	r4, 0x10d
- a5                    xor	r5, r5
- f0 4d 0c 01           stm8	[0x10c], r5
- f0 00 27              ldi8	r0, 0x27
- f0 01 41              ldi8	r1, 0x41
- 09                    mov	r6, r5
- cd 1a                 cmpi.s8	r5, 0x1a
- f1 2c                 mov	r7, r0
- fc 39                 cmov.ult	r7, r1
- 1e                    add	r7, r6
- f6 07                 st8	[r4+], r7
+ af                    xor	r7, r7
+ f0 4f 0c 01           stm8	[0x10c], r7
+ f0 02 27              ldi8	r2, 0x27
+ f0 03 41              ldi8	r3, 0x41
+ 0b                    mov	r6, r7
+ cf 1a                 cmpi.s8	r7, 0x1a
+ f1 26                 mov	r5, r2
+ fc 2b                 cmov.ult	r5, r3
+ 16                    add	r5, r6
+ f6 05                 st8	[r4+], r5
  f4 ae                 inc16	r6
- f4 ad                 inc16	r5
- cd 20                 cmpi.s8	r5, 0x20
- d1 ef                 brne8	avm_test_main+52
- f2 30                 sub	r0, r0
- f0 48 2d 01           stm8	[0x12d], r0
+ f4 af                 inc16	r7
+ cf 20                 cmpi.s8	r7, 0x20
+ d1 ef                 brne8	avm_test_main+56
+ f2 42                 sub	r2, r2
+ f0 4a 2d 01           stm8	[0x12d], r2
  d7 01                 sys	debug_break
  c7 0d 01              ldi16	r7, 0x10d
  c4 2e 01              ldi16	r4, 0x12e
@@ -79,17 +81,16 @@ Disassembly of section .text:
  c4 31 01              ldi16	r4, 0x131
  f0 56 33 01           ldm16	r6, [0x133]
  d7 1b                 sys	strncpy
- f0 05 00 01           ldi16	r1, 0x100
  c4 35 01              ldi16	r4, 0x135
  f0 56 3d 01           ldm16	r6, [0x13d]
  f1 25                 mov	r5, r1
  d7 1b                 sys	strncpy
- c5 04 01              ldi16	r5, 0x104
  c4 3f 01              ldi16	r4, 0x13f
- f0 56 3d 01           ldm16	r6, [0x13d]
+ f0 55 3d 01           ldm16	r5, [0x13d]
+ f1 24                 mov	r5, r0
  d7 1b                 sys	strncpy
  c4 47 01              ldi16	r4, 0x147
- f0 56 3d 01           ldm16	r6, [0x13d]
+ f0 55 3d 01           ldm16	r5, [0x13d]
  07                    mov	r5, r7
  d7 1b                 sys	strncpy
  c4 4f 01              ldi16	r4, 0x14f
@@ -106,9 +107,11 @@ Disassembly of section .text:
  c9 06                 addi.s8	r5, 0x6
  f0 5d 71 01           stm16	[0x171], r5
  d7 01                 sys	debug_break
- f1 20                 mov	r4, r0
+ f1 22                 mov	r4, r2
  b8                    pop16	r0
  b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
  ef                    ret
 
 <avm_halt>:

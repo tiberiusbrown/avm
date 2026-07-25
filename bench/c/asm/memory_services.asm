@@ -10,8 +10,8 @@ SYMBOL TABLE:
 000001c2 l     O .data	00000002 memory_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000050 avm_test_main
-00000265 g     F .text	00000002 avm_halt
+00000215 g     F .text	0000004d avm_test_main
+00000262 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 50                 call8	avm_halt
+ d5 4d                 call8	avm_halt
 
 <avm_test_main>:
  b0                    push16	r0
@@ -41,29 +41,26 @@ Disassembly of section .text:
  d1 f6                 brne8	avm_test_main+10
  d7 01                 sys	debug_break
  c5 00 01              ldi16	r5, 0x100
- c7 62 01              ldi16	r7, 0x162
- f0 50 60 01           ldm16	r0, [0x160]
- 03                    mov	r4, r7
- f4 40                 stsp16	[sp+0x0], r4
- f1 28                 mov	r6, r0
- f4 00                 ldsp16	r4, [sp+0x0]
+ f0 04 62 01           ldi16	r0, 0x162
+ f0 57 60 01           ldm16	r7, [0x160]
+ f1 20                 mov	r4, r0
+ 0b                    mov	r6, r7
  d7 0f                 sys	memcpy
- ca fb                 addi.s8	r6, -0x5
  c4 67 01              ldi16	r4, 0x167
- 07                    mov	r5, r7
+ f4 40                 stsp16	[sp+0x0], r4
+ ca fb                 addi.s8	r6, -0x5
+ f1 24                 mov	r5, r0
+ f4 00                 ldsp16	r4, [sp+0x0]
  d7 12                 sys	memmove
- f6 28                 tst16	r0
- d0 0f                 breq8	avm_test_main+68
- a5                    xor	r5, r5
- c6 62 01              ldi16	r6, 0x162
- f7 17                 ld8u	r7, [r6+]
- 17                    add	r5, r7
- f4 b0                 dec16	r0
- f6 28                 tst16	r0
- d1 f7                 brne8	avm_test_main+57
- d4 01                 jmp8	avm_test_main+69
- a5                    xor	r5, r5
- f0 5d c2 01           stm16	[0x1c2], r5
+ aa                    xor	r6, r6
+ f6 2f                 tst16	r7
+ d0 0a                 breq8	avm_test_main+66
+ f0 6c a1              ld8u	r5, [r0+]
+ 19                    add	r6, r5
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ d1 f6                 brne8	avm_test_main+56
+ f0 5e c2 01           stm16	[0x1c2], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

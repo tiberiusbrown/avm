@@ -1,47 +1,47 @@
-     1225341   bubble1.c
-     1154781   bubble2.c
-     1777069   bubble4.c
+     1225300   bubble1.c
+     1155625   bubble2.c
+     2163969   bubble4.c
       255387   call_args.c
-     7755150   constant_arith.c
+     7754792   constant_arith.c
       568040   crc16.c
-     1029370   divmod.c
-      250048   fibonacci.c
-     8407376   fir8.c
-    11609348   fixed_point.c
-      878698   float.c
-       83052   indirect_call.c
+     1034922   divmod.c
+      234075   fibonacci.c
+     8132944   fir8.c
+    12907780   fixed_point.c
+      927332   float.c
+       83174   indirect_call.c
     13887376   loop_control.c
-       18436   memory_services.c
-     3142866   mixed_width.c
-      764053   multiply.c
+       20669   memory_services.c
+     3552738   mixed_width.c
+      820717   multiply.c
       924704   pointer_walk.c
-     3175020   progmem_walk.c
+     3175264   progmem_walk.c
       542476   progmem_widen_ldp16.c
-      735306   progmem_widen_ldp32_bytes.c
+      733434   progmem_widen_ldp32_bytes.c
       542465   progmem_widen_ldp32_words.c
      1793903   record_scan.c
-     1926704   reverse_walk.c
+     1926295   reverse_walk.c
       744268   select.c
-      520129   shifts.c
-      372418   sieve.c
+      530001   shifts.c
+      371107   sieve.c
       780286   small_memops.c
       820167   stack_array.c
      7193047   state_machine.c
-    25469691   string_scan.c
+    26981781   string_scan.c
       593528   struct_copy.c
       936377   switch.c
-        3243   sys_memcmp.c
-        5756   sys_memcmp_p.c
-        2730   sys_strcmp.c
-        5733   sys_strcmp_p.c
-        3039   sys_strlen.c
+        2864   sys_memcmp.c
+        5435   sys_memcmp_p.c
+        2542   sys_strcmp.c
+        5927   sys_strcmp_p.c
+        2989   sys_strlen.c
         7209   sys_strlen_p.c
-        2111   sys_strncat.c
-        3503   sys_strncat_p.c
-        2198   sys_strncpy.c
-        3641   sys_strncpy_p.c
+        2190   sys_strncat.c
+        3559   sys_strncat_p.c
+        2112   sys_strncpy.c
+        3680   sys_strncpy_p.c
       501299   tail_calls.c
        91740   tilessprite.c
        38524   tilessprite16.c
-       36044   tilessprite16_cached.c
-       81228   tilessprite_cached.c
+       34494   tilessprite16_cached.c
+       76562   tilessprite_cached.c

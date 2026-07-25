@@ -19,8 +19,8 @@ SYMBOL TABLE:
 000001b4 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000061 avm_test_main
-00000276 g     F .text	00000002 avm_halt
+00000215 g     F .text	00000067 avm_test_main
+0000027c g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -35,25 +35,26 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 61                 call8	avm_halt
+ d5 67                 call8	avm_halt
 
 <avm_test_main>:
+ b0                    push16	r0
  d7 01                 sys	debug_break
- c7 10 01              ldi16	r7, 0x110
+ f0 04 10 01           ldi16	r0, 0x110
  c4 00 01              ldi16	r4, 0x100
  f0 56 14 01           ldm16	r6, [0x114]
- 07                    mov	r5, r7
+ f1 24                 mov	r5, r0
  d7 1c                 sys	strncat
  c5 1e 01              ldi16	r5, 0x11e
  c4 16 01              ldi16	r4, 0x116
  f0 56 1f 01           ldm16	r6, [0x11f]
  d7 1c                 sys	strncat
  c4 21 01              ldi16	r4, 0x121
- f0 56 1f 01           ldm16	r6, [0x11f]
- 07                    mov	r5, r7
+ f0 55 1f 01           ldm16	r5, [0x11f]
+ f1 24                 mov	r5, r0
  d7 1c                 sys	strncat
  c4 31 01              ldi16	r4, 0x131
- f0 56 1f 01           ldm16	r6, [0x11f]
+ f0 57 1f 01           ldm16	r7, [0x11f]
  d7 1c                 sys	strncat
  c5 61 01              ldi16	r5, 0x161
  c4 49 01              ldi16	r4, 0x149
@@ -61,7 +62,7 @@ Disassembly of section .text:
  d7 1c                 sys	strncat
  c4 84 01              ldi16	r4, 0x184
  f0 56 1f 01           ldm16	r6, [0x11f]
- 07                    mov	r5, r7
+ f1 24                 mov	r5, r0
  d7 1c                 sys	strncat
  f0 44 3b 01           ldm8u	r4, [0x13b]
  f0 45 23 01           ldm8u	r5, [0x123]
@@ -74,6 +75,7 @@ Disassembly of section .text:
  f0 5d b4 01           stm16	[0x1b4], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
+ b8                    pop16	r0
  ef                    ret
 
 <avm_halt>:

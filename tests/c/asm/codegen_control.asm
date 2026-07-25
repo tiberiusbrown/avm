@@ -4,14 +4,14 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/codegen_control.elf:	file form
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_control.c
-00000417 l     F .text	00000032 loop_control
-00000449 l     F .text	00000069 run_state_machine
-000003ce l     F .text	00000012 dense_switch
-000003e0 l     F .text	00000037 sparse_switch
+00000401 l     F .text	00000032 loop_control
+00000433 l     F .text	00000069 run_state_machine
+000003b9 l     F .text	00000011 dense_switch
+000003ca l     F .text	00000037 sparse_switch
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
-00000116 g     F .text	000002b8 avm_test_main
-000004b2 g     F .text	00000002 avm_halt
+00000116 g     F .text	000002a3 avm_test_main
+0000049c g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 9c 03              call16	avm_halt
+ e1 86 03              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -34,7 +34,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 e4                 adjsp	-0x1c
- e1 f8 02              call16	loop_control
+ e1 e2 02              call16	loop_control
  f0 3c 18              stsp16	[sp+0x18], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -49,7 +49,7 @@ Disassembly of section .text:
  f1 04                 mov	r0, r4
  fc 35                 cmov.ult	r6, r5
  f0 3e 10              stsp16	[sp+0x10], r6
- e1 0c 03              call16	run_state_machine
+ e1 f6 02              call16	run_state_machine
  f0 3c 1a              stsp16	[sp+0x1a], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
@@ -66,84 +66,81 @@ Disassembly of section .text:
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
  a0                    xor	r4, r4
- e1 70 02              call16	dense_switch
+ e1 5b 02              call16	dense_switch
  f1 04                 mov	r0, r4
  c0 01                 ldi8	r4, 0x1
- e1 69 02              call16	dense_switch
+ e1 54 02              call16	dense_switch
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  c0 02                 ldi8	r4, 0x2
- e1 60 02              call16	dense_switch
+ e1 4b 02              call16	dense_switch
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  c0 03                 ldi8	r4, 0x3
- e1 57 02              call16	dense_switch
+ e1 42 02              call16	dense_switch
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  c0 04                 ldi8	r4, 0x4
- e1 4e 02              call16	dense_switch
+ e1 39 02              call16	dense_switch
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  c0 05                 ldi8	r4, 0x5
- e1 45 02              call16	dense_switch
+ e1 30 02              call16	dense_switch
  f1 0c                 mov	r1, r4
  f2 08                 add	r1, r0
  c0 06                 ldi8	r4, 0x6
- e1 3c 02              call16	dense_switch
+ e1 27 02              call16	dense_switch
  f1 04                 mov	r0, r4
  f2 01                 add	r0, r1
  c0 07                 ldi8	r4, 0x7
- e1 33 02              call16	dense_switch
+ e1 1e 02              call16	dense_switch
  f1 1c                 mov	r3, r4
  f2 18                 add	r3, r0
  c0 08                 ldi8	r4, 0x8
- e1 2a 02              call16	dense_switch
+ e1 15 02              call16	dense_switch
  f1 04                 mov	r0, r4
  f2 03                 add	r0, r3
  c0 09                 ldi8	r4, 0x9
- e1 21 02              call16	dense_switch
+ e1 0c 02              call16	dense_switch
  f1 1c                 mov	r3, r4
  f2 18                 add	r3, r0
- c0 0a                 ldi8	r4, 0xa
- f1 04                 mov	r0, r4
- e1 16 02              call16	dense_switch
+ f0 00 0a              ldi8	r0, 0xa
+ f1 20                 mov	r4, r0
+ e1 00 02              call16	dense_switch
  f1 0c                 mov	r1, r4
  f2 0b                 add	r1, r3
  c0 0b                 ldi8	r4, 0xb
- e1 0d 02              call16	dense_switch
+ e1 f7 01              call16	dense_switch
  f2 21                 add	r4, r1
  f0 03 0f              ldi8	r3, 0xf
+ 0c                    mov	r7, r4
+ f0 3c 16              stsp16	[sp+0x16], r4
+ f9 ec                 and	r7, r3
+ 07                    mov	r5, r7
+ f9 a9                 or	r5, r2
+ cf 0a                 cmpi.s8	r7, 0xa
+ cb 37                 addi.s8	r7, 0x37
+ fc 3d                 cmov.ult	r7, r5
  04                    mov	r5, r4
- f0 3c 14              stsp16	[sp+0x14], r4
- f9 ac                 and	r5, r3
+ f1 75                 zext8	r5
+ f0 01 a0              ldi8	r1, 0xa0
+ f5 25                 cmp	r5, r1
+ fa 84                 lsr16i	r5, 0x4
  09                    mov	r6, r5
  f9 c9                 or	r6, r2
- 0d                    mov	r7, r5
- cb 37                 addi.s8	r7, 0x37
- cd 0a                 cmpi.s8	r5, 0xa
- fc 3e                 cmov.ult	r7, r6
- f0 3f 16              stsp16	[sp+0x16], r7
- 08                    mov	r6, r4
- f1 76                 zext8	r6
- 06                    mov	r5, r6
- fa 84                 lsr16i	r5, 0x4
- 0d                    mov	r7, r5
- f9 e9                 or	r7, r2
  c9 37                 addi.s8	r5, 0x37
- f0 01 a0              ldi8	r1, 0xa0
- f5 29                 cmp	r6, r1
- fc 2f                 cmov.ult	r5, r7
+ fc 2e                 cmov.ult	r5, r6
  c0 3d                 ldi8	r4, 0x3d
  d7 00                 sys	debug_putc
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
- f0 34 14              ldsp16	r4, [sp+0x14]
+ f0 34 16              ldsp16	r4, [sp+0x16]
  fa 78                 lsr16i	r4, 0x8
  f9 89                 or	r4, r2
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- f0 34 16              ldsp16	r4, [sp+0x16]
+ 03                    mov	r4, r7
  d7 00                 sys	debug_putc
  f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
@@ -152,191 +149,183 @@ Disassembly of section .text:
  c0 31                 ldi8	r4, 0x31
  d7 00                 sys	debug_putc
  c0 01                 ldi8	r4, 0x1
- e1 cb 01              call16	sparse_switch
+ e1 bb 01              call16	sparse_switch
  c5 1e 1e              ldi16	r5, 0x1e1e
  a4                    xor	r5, r4
  15                    add	r5, r5
  fa 7f                 lsr16i	r4, 0xf
  91                    or	r4, r5
- f0 3c 16              stsp16	[sp+0x16], r4
+ f0 3c 14              stsp16	[sp+0x14], r4
  c0 11                 ldi8	r4, 0x11
- e1 bb 01              call16	sparse_switch
- f0 35 16              ldsp16	r5, [sp+0x16]
+ e1 ab 01              call16	sparse_switch
+ f0 35 14              ldsp16	r5, [sp+0x14]
  a1                    xor	r4, r5
  04                    mov	r5, r4
  fa 8f                 lsr16i	r5, 0xf
  10                    add	r4, r4
  91                    or	r4, r5
- f0 3c 16              stsp16	[sp+0x16], r4
+ f0 3c 14              stsp16	[sp+0x14], r4
  c4 01 01              ldi16	r4, 0x101
- e1 a9 01              call16	sparse_switch
- f0 35 16              ldsp16	r5, [sp+0x16]
+ e1 99 01              call16	sparse_switch
+ f0 35 14              ldsp16	r5, [sp+0x14]
  a1                    xor	r4, r5
  04                    mov	r5, r4
  fa 8f                 lsr16i	r5, 0xf
  10                    add	r4, r4
  91                    or	r4, r5
- f0 3c 16              stsp16	[sp+0x16], r4
+ f0 3c 14              stsp16	[sp+0x14], r4
  c4 00 10              ldi16	r4, 0x1000
- e1 97 01              call16	sparse_switch
- f0 35 16              ldsp16	r5, [sp+0x16]
+ e1 87 01              call16	sparse_switch
+ f0 35 14              ldsp16	r5, [sp+0x14]
  a1                    xor	r4, r5
  04                    mov	r5, r4
  fa 8f                 lsr16i	r5, 0xf
  10                    add	r4, r4
  91                    or	r4, r5
- f0 3c 16              stsp16	[sp+0x16], r4
+ f0 3c 14              stsp16	[sp+0x14], r4
  c4 00 80              ldi16	r4, 0x8000
- e1 85 01              call16	sparse_switch
- f0 35 16              ldsp16	r5, [sp+0x16]
+ e1 75 01              call16	sparse_switch
+ f0 35 14              ldsp16	r5, [sp+0x14]
  a1                    xor	r4, r5
  04                    mov	r5, r4
  fa 8f                 lsr16i	r5, 0xf
  10                    add	r4, r4
  91                    or	r4, r5
- f0 3c 16              stsp16	[sp+0x16], r4
+ f0 3c 14              stsp16	[sp+0x14], r4
  c0 07                 ldi8	r4, 0x7
- e1 74 01              call16	sparse_switch
- f0 35 16              ldsp16	r5, [sp+0x16]
+ e1 64 01              call16	sparse_switch
+ f0 35 14              ldsp16	r5, [sp+0x14]
  a1                    xor	r4, r5
- f0 3c 16              stsp16	[sp+0x16], r4
- 08                    mov	r6, r4
- f1 76                 zext8	r6
- 02                    mov	r4, r6
- fa 74                 lsr16i	r4, 0x4
  04                    mov	r5, r4
- f9 a9                 or	r5, r2
- c8 37                 addi.s8	r4, 0x37
- f5 29                 cmp	r6, r1
- fc 25                 cmov.ult	r4, r5
- f4 60                 stsp16	[sp+0x8], r4
- f0 36 18              ldsp16	r6, [sp+0x18]
- 02                    mov	r4, r6
- f9 8c                 and	r4, r3
- 04                    mov	r5, r4
- f9 a9                 or	r5, r2
  0c                    mov	r7, r4
- cb 37                 addi.s8	r7, 0x37
- cc 0a                 cmpi.s8	r4, 0xa
- fc 3d                 cmov.ult	r7, r5
- f4 7b                 stsp16	[sp+0xe], r7
+ f0 3f 14              stsp16	[sp+0x14], r7
+ f1 75                 zext8	r5
+ f5 25                 cmp	r5, r1
+ fa 84                 lsr16i	r5, 0x4
+ 01                    mov	r4, r5
+ f9 89                 or	r4, r2
+ c9 37                 addi.s8	r5, 0x37
+ fc 2c                 cmov.ult	r5, r4
+ f4 61                 stsp16	[sp+0x8], r5
+ f0 35 18              ldsp16	r5, [sp+0x18]
+ 09                    mov	r6, r5
+ f9 cc                 and	r6, r3
  02                    mov	r4, r6
- fa 78                 lsr16i	r4, 0x8
- f9 8c                 and	r4, r3
- 04                    mov	r5, r4
- f9 a9                 or	r5, r2
- 08                    mov	r6, r4
+ f9 89                 or	r4, r2
+ ce 0a                 cmpi.s8	r6, 0xa
  ca 37                 addi.s8	r6, 0x37
- cc 0a                 cmpi.s8	r4, 0xa
- fc 35                 cmov.ult	r6, r5
+ fc 34                 cmov.ult	r6, r4
+ f4 7a                 stsp16	[sp+0xe], r6
+ 09                    mov	r6, r5
+ fa 98                 lsr16i	r6, 0x8
+ f9 cc                 and	r6, r3
+ 02                    mov	r4, r6
+ f9 89                 or	r4, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 34                 cmov.ult	r6, r4
  f4 6a                 stsp16	[sp+0xa], r6
- f0 37 1a              ldsp16	r7, [sp+0x1a]
+ f0 35 1a              ldsp16	r5, [sp+0x1a]
+ 09                    mov	r6, r5
+ f9 cc                 and	r6, r3
+ 02                    mov	r4, r6
+ f9 89                 or	r4, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 34                 cmov.ult	r6, r4
+ f4 72                 stsp16	[sp+0xc], r6
+ 09                    mov	r6, r5
+ fa 98                 lsr16i	r6, 0x8
+ f9 cc                 and	r6, r3
+ 02                    mov	r4, r6
+ f9 89                 or	r4, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 34                 cmov.ult	r6, r4
+ f4 5a                 stsp16	[sp+0x6], r6
  07                    mov	r5, r7
  f9 ac                 and	r5, r3
- 09                    mov	r6, r5
- f9 c9                 or	r6, r2
  01                    mov	r4, r5
- c8 37                 addi.s8	r4, 0x37
- cd 0a                 cmpi.s8	r5, 0xa
- fc 26                 cmov.ult	r4, r6
- f4 70                 stsp16	[sp+0xc], r4
- 03                    mov	r4, r7
- fa 78                 lsr16i	r4, 0x8
- f9 8c                 and	r4, r3
- 04                    mov	r5, r4
- f9 a9                 or	r5, r2
- 0c                    mov	r7, r4
- cb 37                 addi.s8	r7, 0x37
- cc 0a                 cmpi.s8	r4, 0xa
- fc 3d                 cmov.ult	r7, r5
- f4 5b                 stsp16	[sp+0x6], r7
- f0 36 16              ldsp16	r6, [sp+0x16]
- 02                    mov	r4, r6
- f9 8c                 and	r4, r3
- 04                    mov	r5, r4
- f9 a9                 or	r5, r2
- 0c                    mov	r7, r4
- cb 37                 addi.s8	r7, 0x37
- cc 0a                 cmpi.s8	r4, 0xa
- fc 3d                 cmov.ult	r7, r5
- f4 4b                 stsp16	[sp+0x2], r7
- 02                    mov	r4, r6
- fa 78                 lsr16i	r4, 0x8
- f9 8c                 and	r4, r3
- 04                    mov	r5, r4
- f9 a9                 or	r5, r2
- 08                    mov	r6, r4
- ca 37                 addi.s8	r6, 0x37
- cc 0a                 cmpi.s8	r4, 0xa
- fc 35                 cmov.ult	r6, r5
- f4 42                 stsp16	[sp+0x0], r6
- f0 35 18              ldsp16	r5, [sp+0x18]
- 0d                    mov	r7, r5
- fa ac                 lsr16i	r7, 0xc
- 03                    mov	r4, r7
  f9 89                 or	r4, r2
- cb 37                 addi.s8	r7, 0x37
- f0 07 00 a0           ldi16	r3, 0xa000
- f5 27                 cmp	r5, r3
- fc 3c                 cmov.ult	r7, r4
- f0 36 1a              ldsp16	r6, [sp+0x1a]
+ cd 0a                 cmpi.s8	r5, 0xa
+ c9 37                 addi.s8	r5, 0x37
+ fc 2c                 cmov.ult	r5, r4
+ f4 49                 stsp16	[sp+0x2], r5
+ 0b                    mov	r6, r7
+ fa 98                 lsr16i	r6, 0x8
+ f9 cc                 and	r6, r3
  02                    mov	r4, r6
+ f9 89                 or	r4, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 34                 cmov.ult	r6, r4
+ f0 37 18              ldsp16	r7, [sp+0x18]
+ 03                    mov	r4, r7
  fa 7c                 lsr16i	r4, 0xc
  04                    mov	r5, r4
  f9 a9                 or	r5, r2
  c8 37                 addi.s8	r4, 0x37
- f5 2b                 cmp	r6, r3
+ f0 07 00 a0           ldi16	r3, 0xa000
+ f5 2f                 cmp	r7, r3
  fc 25                 cmov.ult	r4, r5
- f4 50                 stsp16	[sp+0x4], r4
- f0 34 16              ldsp16	r4, [sp+0x16]
+ f4 40                 stsp16	[sp+0x0], r4
+ f0 37 1a              ldsp16	r7, [sp+0x1a]
+ 07                    mov	r5, r7
+ fa 8c                 lsr16i	r5, 0xc
+ 01                    mov	r4, r5
+ f9 89                 or	r4, r2
+ c9 37                 addi.s8	r5, 0x37
+ f5 2f                 cmp	r7, r3
+ fc 2c                 cmov.ult	r5, r4
+ f4 51                 stsp16	[sp+0x4], r5
+ f0 34 14              ldsp16	r4, [sp+0x14]
  04                    mov	r5, r4
  fa 8c                 lsr16i	r5, 0xc
  f9 55                 or	r2, r5
  c9 37                 addi.s8	r5, 0x37
  f5 23                 cmp	r4, r3
  fc 2a                 cmov.ult	r5, r2
- c6 10 e6              ldi16	r6, 0xe610
+ c7 10 e6              ldi16	r7, 0xe610
  f0 34 1a              ldsp16	r4, [sp+0x1a]
- 32                    cmp	r4, r6
+ 33                    cmp	r4, r7
  f8 0a                 cset.ne	r2
- c6 e4 41              ldi16	r6, 0x41e4
+ c7 e4 41              ldi16	r7, 0x41e4
  f0 34 18              ldsp16	r4, [sp+0x18]
- 32                    cmp	r4, r6
+ 33                    cmp	r4, r7
  f8 0b                 cset.ne	r3
- c6 c0 04              ldi16	r6, 0x4c0
- f0 34 14              ldsp16	r4, [sp+0x14]
- 32                    cmp	r4, r6
- f8 08                 cset.ne	r0
- c0 3d                 ldi8	r4, 0x3d
+ c7 c0 04              ldi16	r7, 0x4c0
+ f0 34 16              ldsp16	r4, [sp+0x16]
+ 33                    cmp	r4, r7
+ f8 0f                 cset.ne	r7
+ f0 00 3d              ldi8	r0, 0x3d
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- f4 00                 ldsp16	r4, [sp+0x0]
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  f4 20                 ldsp16	r4, [sp+0x8]
  d7 00                 sys	debug_putc
  f4 08                 ldsp16	r4, [sp+0x2]
  d7 00                 sys	debug_putc
  c4 bc 44              ldi16	r4, 0x44bc
- f0 35 16              ldsp16	r5, [sp+0x16]
+ f0 35 14              ldsp16	r5, [sp+0x14]
  34                    cmp	r5, r4
- f8 0e                 cset.ne	r6
- f9 c1                 or	r6, r0
- f9 cd                 or	r6, r3
- f0 00 0a              ldi8	r0, 0xa
- f1 20                 mov	r4, r0
+ f8 0d                 cset.ne	r5
+ 97                    or	r5, r7
+ f9 ad                 or	r5, r3
+ c3 0a                 ldi8	r7, 0xa
+ 03                    mov	r4, r7
  d7 00                 sys	debug_putc
- c1 43                 ldi8	r5, 0x43
- f1 0d                 mov	r1, r5
- f1 21                 mov	r4, r1
+ c2 43                 ldi8	r6, 0x43
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  c0 32                 ldi8	r4, 0x32
  d7 00                 sys	debug_putc
- f9 c9                 or	r6, r2
- c1 3d                 ldi8	r5, 0x3d
- 01                    mov	r4, r5
+ f9 a9                 or	r5, r2
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
- 03                    mov	r4, r7
+ f4 00                 ldsp16	r4, [sp+0x0]
  d7 00                 sys	debug_putc
  f4 28                 ldsp16	r4, [sp+0xa]
  d7 00                 sys	debug_putc
@@ -344,14 +333,13 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f4 38                 ldsp16	r4, [sp+0xe]
  d7 00                 sys	debug_putc
- f1 2c                 mov	r7, r0
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
- f1 21                 mov	r4, r1
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  c0 33                 ldi8	r4, 0x33
  d7 00                 sys	debug_putc
- 01                    mov	r4, r5
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 00                 sys	debug_putc
@@ -363,11 +351,11 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
- f1 21                 mov	r4, r1
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  c0 34                 ldi8	r4, 0x34
  d7 00                 sys	debug_putc
- 01                    mov	r4, r5
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  c0 41                 ldi8	r4, 0x41
  d7 00                 sys	debug_putc
@@ -379,7 +367,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ 01                    mov	r4, r5
  d6 1c                 adjsp	0x1c
  b8                    pop16	r0
  b9                    pop16	r1
@@ -389,12 +377,11 @@ Disassembly of section .text:
 
 <dense_switch>:
  c1 11                 ldi8	r5, 0x11
- 08                    mov	r6, r4
- f3 19                 mulu8.w	r6, r5
- ca 10                 addi.s8	r6, 0x10
- c5 99 ff              ldi16	r5, 0xff99
  cc 08                 cmpi.s8	r4, 0x8
- fc 2e                 cmov.ult	r5, r6
+ f3 11                 mulu8.w	r4, r5
+ c8 10                 addi.s8	r4, 0x10
+ c5 99 ff              ldi16	r5, 0xff99
+ fc 2c                 cmov.ult	r5, r4
  f1 75                 zext8	r5
  01                    mov	r4, r5
  ef                    ret

@@ -4,15 +4,15 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/indirect_call.elf:	file format
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 indirect_call.c
-0000025c l     F .text	00000002 operation_add
 00000100 l     O .data	00000001 operation_selector
-00000267 l     F .text	00000002 operation_sub
-0000025e l     F .text	00000009 operation_mix
+00000269 l     F .text	00000002 operation_sub
+00000260 l     F .text	00000009 operation_mix
+0000025e l     F .text	00000002 operation_add
 00000101 l     O .data	00000002 indirect_call_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	00000047 avm_test_main
-00000269 g     F .text	00000002 avm_halt
+00000215 g     F .text	00000049 avm_test_main
+0000026b g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -27,26 +27,27 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 54                 call8	avm_halt
+ d5 56                 call8	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f0 06 5c 02           ldi16	r2, 0x25c
- f0 03 00              ldi8	r3, 0x0
  d7 01                 sys	debug_break
  f0 44 00 01           ldm8u	r4, [0x100]
  f4 a4                 tst8	r4
- d0 12                 breq8	avm_test_main+39
- f0 06 67 02           ldi16	r2, 0x267
+ d0 14                 breq8	avm_test_main+34
+ f0 06 69 02           ldi16	r2, 0x269
  f0 03 00              ldi8	r3, 0x0
- c6 5e 02              ldi16	r6, 0x25e
+ c6 60 02              ldi16	r6, 0x260
  c3 00                 ldi8	r7, 0x0
  cc 01                 cmpi.s8	r4, 0x1
  fb 16                 cmov.eq	r2, r6
  fb 1f                 cmov.eq	r3, r7
+ d4 07                 jmp8	avm_test_main+41
+ f0 06 5e 02           ldi16	r2, 0x25e
+ f0 03 00              ldi8	r3, 0x0
  c4 34 12              ldi16	r4, 0x1234
  f0 00 03              ldi8	r0, 0x3
  f0 05 83 08           ldi16	r1, 0x883
@@ -54,7 +55,7 @@ Disassembly of section .text:
  e9                    callp	q1
  f0 08 11              addi.s8	r0, 0x11
  f5 01                 cmp	r0, r1
- d1 f6                 brne8	avm_test_main+49
+ d1 f6                 brne8	avm_test_main+51
  f0 5c 01 01           stm16	[0x101], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

@@ -15,8 +15,8 @@ SYMBOL TABLE:
 00000208 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-00000316 g     F .text	000000a8 avm_test_main
-000003be g     F .text	00000002 avm_halt
+00000316 g     F .text	0000009d avm_test_main
+000003b3 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -31,32 +31,36 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 a8 00              call16	avm_halt
+ e1 9d 00              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	-0x4
- a0                    xor	r4, r4
- c1 07                 ldi8	r5, 0x7
- c6 00 01              ldi16	r6, 0x100
- 18                    add	r6, r4
- 59                    st8	[r6], r5
- c6 40 01              ldi16	r6, 0x140
- 18                    add	r6, r4
- 59                    st8	[r6], r5
- c6 80 01              ldi16	r6, 0x180
- 18                    add	r6, r4
- 59                    st8	[r6], r5
- c6 c0 01              ldi16	r6, 0x1c0
- 18                    add	r6, r4
- 59                    st8	[r6], r5
- c9 0d                 addi.s8	r5, 0xd
- f4 ac                 inc16	r4
- cc 40                 cmpi.s8	r4, 0x40
- d1 e4                 brne8	avm_test_main+9
+ d6 fe                 adjsp	-0x2
+ aa                    xor	r6, r6
+ c0 07                 ldi8	r4, 0x7
+ f0 05 00 01           ldi16	r1, 0x100
+ c7 40 01              ldi16	r7, 0x140
+ f0 06 80 01           ldi16	r2, 0x180
+ f0 04 c0 01           ldi16	r0, 0x1c0
+ 06                    mov	r5, r6
+ f2 25                 add	r5, r1
+ 54                    st8	[r5], r4
+ 06                    mov	r5, r6
+ 17                    add	r5, r7
+ 54                    st8	[r5], r4
+ 06                    mov	r5, r6
+ f2 26                 add	r5, r2
+ 54                    st8	[r5], r4
+ 06                    mov	r5, r6
+ f2 24                 add	r5, r0
+ 54                    st8	[r5], r4
+ c8 0d                 addi.s8	r4, 0xd
+ f4 ae                 inc16	r6
+ ce 40                 cmpi.s8	r6, 0x40
+ d1 e9                 brne8	avm_test_main+24
  c0 80                 ldi8	r4, 0x80
  f0 45 80 01           ldm8u	r5, [0x180]
  a4                    xor	r5, r4
@@ -66,51 +70,42 @@ Disassembly of section .text:
  a4                    xor	r5, r4
  f0 4d ff 01           stm8	[0x1ff], r5
  d7 01                 sys	debug_break
- f0 05 40 01           ldi16	r1, 0x140
- c7 00 01              ldi16	r7, 0x100
  f0 56 00 02           ldm16	r6, [0x200]
- 03                    mov	r4, r7
- f1 25                 mov	r5, r1
+ f1 21                 mov	r4, r1
+ 07                    mov	r5, r7
  d7 18                 sys	memcmp
  f4 40                 stsp16	[sp+0x0], r4
  f0 56 02 02           ldm16	r6, [0x202]
- 03                    mov	r4, r7
+ f1 21                 mov	r4, r1
+ d7 18                 sys	memcmp
+ 0c                    mov	r7, r4
+ f0 56 04 02           ldm16	r6, [0x204]
+ f1 21                 mov	r4, r1
+ d7 18                 sys	memcmp
+ f1 1c                 mov	r3, r4
+ f0 54 04 02           ldm16	r4, [0x204]
+ f1 21                 mov	r4, r1
+ f1 26                 mov	r5, r2
  d7 18                 sys	memcmp
  f1 14                 mov	r2, r4
- f0 56 04 02           ldm16	r6, [0x204]
- 03                    mov	r4, r7
- f4 48                 stsp16	[sp+0x2], r4
- f4 08                 ldsp16	r4, [sp+0x2]
- d7 18                 sys	memcmp
- f4 48                 stsp16	[sp+0x2], r4
- f4 08                 ldsp16	r4, [sp+0x2]
- f4 48                 stsp16	[sp+0x2], r4
- c5 80 01              ldi16	r5, 0x180
- f0 56 04 02           ldm16	r6, [0x204]
- 03                    mov	r4, r7
- d7 18                 sys	memcmp
- f1 0c                 mov	r1, r4
- f0 07 c0 01           ldi16	r3, 0x1c0
- f0 56 04 02           ldm16	r6, [0x204]
- 03                    mov	r4, r7
- f1 27                 mov	r5, r3
+ f0 54 04 02           ldm16	r4, [0x204]
+ f1 21                 mov	r4, r1
+ f1 24                 mov	r5, r0
  d7 18                 sys	memcmp
  f1 04                 mov	r0, r4
  f0 56 06 02           ldm16	r6, [0x206]
- 03                    mov	r4, r7
+ f1 21                 mov	r4, r1
  d7 18                 sys	memcmp
- 04                    mov	r5, r4
- f4 02                 ldsp16	r6, [sp+0x0]
- f2 16                 add	r2, r6
- f4 08                 ldsp16	r4, [sp+0x2]
- f2 14                 add	r2, r4
- f2 11                 add	r2, r1
- f2 10                 add	r2, r0
- f2 15                 add	r2, r5
- f0 5a 08 02           stm16	[0x208], r2
+ f4 01                 ldsp16	r5, [sp+0x0]
+ 1d                    add	r7, r5
+ f2 2f                 add	r7, r3
+ f2 2e                 add	r7, r2
+ f2 2c                 add	r7, r0
+ 1c                    add	r7, r4
+ f0 5f 08 02           stm16	[0x208], r7
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 04                 adjsp	0x4
+ d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

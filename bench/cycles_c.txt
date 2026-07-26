@@ -4,15 +4,15 @@
       255387   call_args.c
      7755150   constant_arith.c
       522102   crc16.c
-     1068762   divmod.c
+     1062266   divmod.c
       234075   fibonacci.c
      8163664   fir8.c
-    12596484   fixed_point.c
+    11764996   fixed_point.c
       929828   float.c
        83174   indirect_call.c
     12183492   loop_control.c
        18314   memory_services.c
-     3415944   mixed_width.c
+     3208072   mixed_width.c
       921548   multiply.c
       924535   pointer_walk.c
      3118536   progmem_walk.c

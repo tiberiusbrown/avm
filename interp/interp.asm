@@ -604,6 +604,8 @@
 #define SYS_DRAW_PLUS_MASK           0x24
 #define SYS_DRAW_SELF_MASKED         0x25
 #define SYS_DRAW_ERASE               0x26
+#define SYS_DRAW_FILLED_RECT_WHITE   0x27
+#define SYS_DRAW_FILLED_RECT_BLACK   0x28
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3074,6 +3076,10 @@ sys_dispatch_func:
     (SYS_DRAW_ERASE != 0x26)
     .error "cached-pointer sprite SYS services must occupy contiguous entries 0x23-0x26"
 .endif
+.if (SYS_DRAW_FILLED_RECT_WHITE != 0x27) || \
+    (SYS_DRAW_FILLED_RECT_BLACK != 0x28)
+    .error "filled-rectangle SYS services must occupy contiguous entries 0x27-0x28"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3101,7 +3107,8 @@ sys_dispatch_table:
     sys_entries 4,   sys_draw_sprite_func
     sys_entries 1,   sys_set_sprite_func
     sys_entries 4,   sys_draw_func
-    sys_entries 217, invalid_syscall_func
+    sys_entries 2,   sys_draw_filled_rect_func
+    sys_entries 215, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3138,6 +3145,11 @@ sys_draw_func:
     subi  PRIMARY_OPCODE, SYS_DRAW_OVERWRITE
     mov   r27, PRIMARY_OPCODE
     jmp   sys_draw_cached_impl
+
+; The two fixed-color rectangle entries share a far implementation. The raw
+; service number remains in PRIMARY_OPCODE so bit zero can select white/black.
+sys_draw_filled_rect_func:
+    jmp   sys_draw_filled_rect_impl
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
@@ -11317,3 +11329,287 @@ sprite_delay_8:
     nop
 sprite_delay_7:
     ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; SYS filled-rectangle drawing services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; ABI (architectural registers):
+;   draw_filled_rect_white(x=r4, y=r5, w=r6, h=r7)
+;   draw_filled_rect_black(x=r4, y=r5, w=r6, h=r7)
+;
+; x and y are signed 16-bit coordinates. Width and height are unsigned bytes
+; carried in low8(r6) and low8(r7); their high bytes are ignored. Both services
+; preserve all architectural registers, VM_FLAGS, VM_PC, and VM_SP. The SYS
+; decoder has already launched the following primary-opcode transfer, so this
+; SRAM-only service leaves that byte buffered and returns through the late
+; standard dispatch tail. It never touches SPDR or either SPI chip select.
+;
+; After the visibility tests, native r16-r23 (architectural r4-r7) are saved on
+; the AVR hardware stack and reused as follows:
+;   r16  clipped x
+;   r17  first-page fill mask
+;   r18  first framebuffer page
+;   r19  last-page fill mask
+;   r20  clipped visible width
+;   r21  framebuffer page count / middle-page count
+;   r22  last framebuffer page
+;   r23  row advance (128-width)
+;   r0   complete-page fill byte (0xFF white, 0x00 black)
+;   r1   framebuffer byte scratch
+;   r24  current edge mask
+;   r25  column/block counter
+;   X    current framebuffer pointer
+;   Z    visibility-test scratch
+;   T    color: one=white, zero=black
+;
+; Complete pages use eight-byte unrolled stores. Partial first/last pages use
+; read-modify-write loops specialized by T: white ORs the fill mask, while
+; black ANDs its complement.
+
+sys_draw_filled_rect_start:
+sys_draw_filled_rect_impl:
+    ; Service 0x27 is odd (white); service 0x28 is even (black). Native T is
+    ; preserved by the timer ISR and by all arithmetic below.
+    bst   PRIMARY_OPCODE, 0
+
+    ; Empty rectangles are no-ops. Width/height high bytes are intentionally
+    ; ignored under the uint8_t service ABI.
+    tst   VM_R6L
+    breq  .Lsys_rect_reject_unpushed
+    tst   VM_R7L
+    breq  .Lsys_rect_reject_unpushed
+
+    ; Reject origins already beyond the right or bottom edge. These are signed
+    ; comparisons because x and y are int16_t.
+    cpi   VM_R4L, 128
+    cpc   VM_R4H, ZERO
+    brge  .Lsys_rect_reject_unpushed
+    cpi   VM_R5L, 64
+    cpc   VM_R5H, ZERO
+    brge  .Lsys_rect_reject_unpushed
+
+    ; Reject rectangles whose right/bottom exclusive edge is nonpositive.
+    ; The preceding upper-bound checks make both additions overflow-safe.
+    movw  r30, VM_R4
+    add   r30, VM_R6L
+    adc   r31, ZERO
+    cp    ZERO, r30
+    cpc   ZERO, r31
+    brge  .Lsys_rect_reject_unpushed
+
+    movw  r30, VM_R5
+    add   r30, VM_R7L
+    adc   r31, ZERO
+    cp    ZERO, r30
+    cpc   ZERO, r31
+    brlt  .Lsys_rect_visible
+
+.Lsys_rect_reject_unpushed:
+    jmp   cluster_tail_18
+
+.Lsys_rect_visible:
+    ; Preserve exactly the architectural inputs that will become workspace.
+    push  r16
+    push  r17
+    push  r18
+    push  r19
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+
+    ; Clip a negative left edge. The visibility test guarantees that the
+    ; modulo-eight-bit addition computes a nonzero visible width correctly.
+    sbrs  r17, 7
+    rjmp  .Lsys_rect_x_nonnegative
+    add   r20, r16
+    clr   r16
+.Lsys_rect_x_nonnegative:
+
+    ; Clip a negative top edge in the same way.
+    sbrs  r19, 7
+    rjmp  .Lsys_rect_y_nonnegative
+    add   r22, r18
+    clr   r18
+.Lsys_rect_y_nonnegative:
+
+    ; Clamp the right edge to x=128.
+    ldi   r24, 128
+    sub   r24, r16
+    cp    r20, r24
+    brlo  .Lsys_rect_width_clipped
+    mov   r20, r24
+.Lsys_rect_width_clipped:
+
+    ; Clamp the bottom edge to y=64.
+    ldi   r24, 64
+    sub   r24, r18
+    cp    r22, r24
+    brlo  .Lsys_rect_height_clipped
+    mov   r22, r24
+.Lsys_rect_height_clipped:
+
+    ; Form the exclusive bottom coordinate before reusing r22 as lastPage.
+    add   r22, r18
+
+    ; r17 = 0xFF << (clippedY & 7), the bits changed in the first page.
+    ldi   r17, 1
+    sbrc  r18, 1
+    ldi   r17, 4
+    sbrc  r18, 0
+    lsl   r17
+    sbrc  r18, 2
+    swap  r17
+    neg   r17
+
+    ; Initially form 0xFF << (endExclusive & 7). For an unaligned end, its
+    ; complement is the fill mask below the edge. For an aligned end, the last
+    ; included page is complete and therefore uses 0xFF rather than zero.
+    ldi   r19, 1
+    sbrc  r22, 1
+    ldi   r19, 4
+    sbrc  r22, 0
+    lsl   r19
+    sbrc  r22, 2
+    swap  r19
+    neg   r19
+    sbrc  r19, 0
+    rjmp  .Lsys_rect_last_mask_ready
+    com   r19
+.Lsys_rect_last_mask_ready:
+
+    ; Convert y and endExclusive-1 to inclusive framebuffer page indices.
+    dec   r22
+    lsr   r18
+    lsr   r18
+    lsr   r18
+    lsr   r22
+    lsr   r22
+    lsr   r22
+
+    ; Inclusive page count, in the range 1..8.
+    mov   r21, r22
+    sub   r21, r18
+    inc   r21
+
+    ; X = data_display + firstPage*128 + clippedX.
+    ; r23 is then retained as the page-to-page correction after width stores.
+    ldi   r23, 128
+    mul   r18, r23
+    movw  r26, r0
+    subi  r26, lo8(-data_display)
+    sbci  r27, hi8(-data_display)
+    add   r26, r16
+    adc   r27, ZERO
+    sub   r23, r20
+
+    ; Construct the complete-page byte without a color branch.
+    clr   r0
+    bld   r0, 0
+    neg   r0
+
+    ; A one-page rectangle needs the intersection of its two edge masks.
+    cpi   r21, 1
+    brne  .Lsys_rect_multiple_pages
+    mov   r24, r17
+    and   r24, r19
+    rcall .Lsys_rect_apply_mask_row
+    rjmp  .Lsys_rect_finish
+
+.Lsys_rect_multiple_pages:
+    ; First page: use its edge mask, or the full-row fast path when aligned.
+    mov   r24, r17
+    rcall .Lsys_rect_apply_mask_row
+    add   r26, r23
+    adc   r27, ZERO
+
+    ; Exclude the already-rendered first page and the separately-rendered last
+    ; page. Any remaining pages are complete and use unrolled stores.
+    subi  r21, 2
+    breq  .Lsys_rect_last_page
+
+.Lsys_rect_middle_page:
+    rcall .Lsys_rect_fill_row
+    add   r26, r23
+    adc   r27, ZERO
+    dec   r21
+    brne  .Lsys_rect_middle_page
+
+.Lsys_rect_last_page:
+    mov   r24, r19
+    rcall .Lsys_rect_apply_mask_row
+
+.Lsys_rect_finish:
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    pop   r17
+    pop   r16
+    jmp   cluster_tail_18
+
+; Apply the fill mask in r24 across one framebuffer row. A full mask bypasses
+; read-modify-write and enters the unrolled complete-row store directly.
+.Lsys_rect_apply_mask_row:
+    cpi   r24, 0xFF
+    breq  .Lsys_rect_fill_row
+    brts  .Lsys_rect_or_row
+
+    ; Black: preserve bits outside the rectangle and clear bits inside it.
+    com   r24
+    mov   r25, r20
+.Lsys_rect_and_loop:
+    ld    r1, X
+    and   r1, r24
+    st    X+, r1
+    dec   r25
+    brne  .Lsys_rect_and_loop
+    ret
+
+    ; White: preserve bits outside the rectangle and set bits inside it.
+.Lsys_rect_or_row:
+    mov   r25, r20
+.Lsys_rect_or_loop:
+    ld    r1, X
+    or    r1, r24
+    st    X+, r1
+    dec   r25
+    brne  .Lsys_rect_or_loop
+    ret
+
+; Store r0 across one complete framebuffer page row. Handle the 0..7-byte
+; remainder once, then emit eight bytes per loop iteration.
+.Lsys_rect_fill_row:
+    mov   r25, r20
+    andi  r25, 7
+    breq  .Lsys_rect_fill_blocks_setup
+.Lsys_rect_fill_remainder:
+    st    X+, r0
+    dec   r25
+    brne  .Lsys_rect_fill_remainder
+
+.Lsys_rect_fill_blocks_setup:
+    mov   r25, r20
+    andi  r25, 0xF8
+    breq  .Lsys_rect_fill_done
+.Lsys_rect_fill_block:
+    st    X+, r0
+    st    X+, r0
+    st    X+, r0
+    st    X+, r0
+    st    X+, r0
+    st    X+, r0
+    st    X+, r0
+    st    X+, r0
+    subi  r25, 8
+    brne  .Lsys_rect_fill_block
+.Lsys_rect_fill_done:
+    ret
+
+sys_draw_filled_rect_end:
+.if (sys_draw_filled_rect_end - sys_draw_filled_rect_start) != 318
+    .error "filled-rectangle SYS implementation must occupy exactly 159 AVR words"
+.endif

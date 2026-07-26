@@ -1969,9 +1969,9 @@ services use dedicated target intrinsics. `memcpy`, `memcpy_P`, `memset`, and
 those representations preserve the required address spaces and memory
 semantics. The comparison and string services use dedicated typed target
 intrinsics because LLVM has no generic intrinsics with their complete
-semantics. The display and sprite services also use dedicated typed target
-intrinsics because their fixed framebuffer and program-space effects have no
-generic LLVM representation.
+semantics. The display and drawing services also use dedicated typed target
+intrinsics because their fixed framebuffer effects, program-space effects, or
+externally observable display output have no generic LLVM representation.
 
 ## 49. Defined services
 
@@ -2011,7 +2011,10 @@ generic LLVM representation.
 | `0x1F` | `draw_sprite_plus_mask` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None | Program-space reads; framebuffer reads and writes |
 | `0x20` | `draw_sprite_self_masked` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None | Program-space reads; framebuffer reads and writes |
 | `0x21` | `draw_sprite_erase` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None | Program-space reads; framebuffer reads and writes |
-| `0x22-0xFF` | Reserved | — | — | — |
+| `0x22-0x26` | Reserved | — | — | — |
+| `0x27` | `draw_filled_rect_white` | `r4 = x`, `r5 = y`, `low8(r6) = w`, `low8(r7) = h` | None | Framebuffer reads and writes |
+| `0x28` | `draw_filled_rect_black` | `r4 = x`, `r5 = y`, `low8(r6) = w`, `low8(r7) = h` | None | Framebuffer reads and writes |
+| `0x29-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -2776,6 +2779,69 @@ or reordered across an access that may alias the framebuffer. It may be
 reordered relative to provably disjoint data-space memory only when all
 program-order dependencies and observable-service constraints are preserved.
 
+
+### 49.22. Filled rectangle drawing services
+
+Encodings:
+
+| ID | Encoding | Service |
+|---:|---|---|
+| `0x27` | `D7 27` | `draw_filled_rect_white` |
+| `0x28` | `D7 28` | `draw_filled_rect_black` |
+
+Both services use the same fixed service-register assignment:
+
+```text
+r4       = signed 16-bit x coordinate
+r5       = signed 16-bit y coordinate
+low8(r6) = unsigned 8-bit width
+low8(r7) = unsigned 8-bit height
+```
+
+Bits `15:8` of `r6` and `r7` do not affect the operation. Both services
+preserve the complete original bit patterns of `r4-r7`, including those ignored
+high bytes, and preserve `r0-r3`, `CC`, and `SP`.
+
+Let `x`, `y`, `w`, and `h` denote the input values above. The logical rectangle
+uses half-open mathematical-integer bounds:
+
+```text
+x <= px < x + w
+y <= py < y + h
+```
+
+The additions in those bounds are mathematical additions for clipping
+purposes; they do not wrap at 8 or 16 bits. The rectangle is clipped to the
+framebuffer pixel range:
+
+```text
+0 <= px < 128
+0 <= py < 64
+```
+
+If `w` or `h` is zero, or if the logical rectangle does not intersect the
+framebuffer, the framebuffer is unchanged.
+
+For every pixel within the clipped rectangle:
+
+```text
+draw_filled_rect_white: framebuffer pixel = 1
+draw_filled_rect_black: framebuffer pixel = 0
+```
+
+Every framebuffer pixel outside the clipped rectangle is unchanged. The
+services read and write the fixed framebuffer at data-space addresses
+`0x0500-0x08FF`, using the pixel mapping from Section 10. They do not read
+program space, modify selected-sprite state, or update the physical display. A
+later `display` service transfers the modified framebuffer to the display.
+
+The framebuffer writes are observable program memory effects. A filled-
+rectangle service MUST NOT be speculated or reordered across an access that may
+alias the framebuffer. It MAY be removed only when all affected framebuffer
+writes are proven dead. It MAY be reordered relative to provably disjoint
+memory when all program-order dependencies and observable-service constraints
+remain satisfied.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -2981,6 +3047,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `strncpy`, `strncat` | Recognized libcall or dedicated AVM intrinsic and `SYS 0x1B-0x1C` | — | — | AS0 read/write effects |
 | `display` | Dedicated AVM intrinsic and `SYS 0x1D` | — | — | Reads the fixed framebuffer, may clear it, and has externally observable display output |
 | `draw_sprite_overwrite`, `draw_sprite_plus_mask`, `draw_sprite_self_masked`, `draw_sprite_erase` | Dedicated typed AVM intrinsics and `SYS 0x1E-0x21` | — | — | Read an AS1 sprite and read/write the fixed framebuffer |
+| `draw_filled_rect_white`, `draw_filled_rect_black` | Dedicated typed AVM intrinsics and `SYS 0x27-0x28` | — | — | Read/write the fixed framebuffer |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -3356,7 +3423,7 @@ MAY recognize direct calls to those symbols and replace them with
 `llvm.avm.memmove` or generic `llvm.memmove` when interposition and other
 language-level rules permit it.
 
-### 56.5. Display and sprite helpers
+### 56.5. Display and drawing helpers
 
 The target runtime provides:
 
@@ -3401,6 +3468,29 @@ because the services consume only `q3[23:0]`.
 Each sprite operation reads its AS1 sprite object and reads and writes the
 fixed framebuffer range `0x0500-0x08FF`. It is not an ordinary function call
 after lowering and carries no call-preserved register mask.
+
+The target runtime and Clang target also provide:
+
+```c
+void __avm_draw_filled_rect_white(
+    int16_t x, int16_t y, uint8_t width, uint8_t height);
+void __avm_draw_filled_rect_black(
+    int16_t x, int16_t y, uint8_t width, uint8_t height);
+
+void __builtin_avm_draw_filled_rect_white(
+    int16_t x, int16_t y, uint8_t width, uint8_t height);
+void __builtin_avm_draw_filled_rect_black(
+    int16_t x, int16_t y, uint8_t width, uint8_t height);
+```
+
+Clang lowers these interfaces to the two typed filled-rectangle intrinsics from
+Section 59. Machine selection assigns `x` to `r4`, `y` to `r5`, `width` to
+`low8(r6)`, and `height` to `low8(r7)`, then emits `SYS 0x27` or `SYS 0x28`.
+The services ignore the high bytes of `r6` and `r7`.
+
+Each operation reads and writes the fixed framebuffer range
+`0x0500-0x08FF`. It is not an ordinary function call after lowering and carries
+no call-preserved register mask.
 
 ## 57. Atomic and volatile policy
 
@@ -3502,8 +3592,8 @@ The backend should:
 
 ## 59. LLVM system-service representations
 
-The scalar, floating-point, display, sprite drawing, and AS0 `memcpy`,
-`memset`, and `memmove` services have dedicated typed target intrinsics:
+The scalar, floating-point, display, drawing, and AS0 `memcpy`, `memset`,
+and `memmove` services have dedicated typed target intrinsics:
 
 ```llvm
 declare void  @llvm.avm.debug.putc(i8 %value)
@@ -3533,6 +3623,11 @@ declare void @llvm.avm.draw.sprite.self.masked(
     i16 %x, i16 %y, ptr addrspace(1) %sprite, i16 %frame)
 declare void @llvm.avm.draw.sprite.erase(
     i16 %x, i16 %y, ptr addrspace(1) %sprite, i16 %frame)
+
+declare void @llvm.avm.draw.filled.rect.white(
+    i16 %x, i16 %y, i8 %width, i8 %height)
+declare void @llvm.avm.draw.filled.rect.black(
+    i16 %x, i16 %y, i8 %width, i8 %height)
 
 declare ptr @llvm.avm.memcpy(ptr %dst, ptr %src, i16 %n)
 declare ptr @llvm.avm.memset(ptr %dst, i16 %val, i16 %n)
@@ -3606,6 +3701,8 @@ no corresponding generic LLVM intrinsic.
 | `llvm.avm.draw.sprite.plus.mask(i16,i16,p1,i16)` | `SYS 0x1F` through `SYS_DRAW_SPRITE_PLUS_MASK` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
 | `llvm.avm.draw.sprite.self.masked(i16,i16,p1,i16)` | `SYS 0x20` through `SYS_DRAW_SPRITE_SELF_MASKED` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
 | `llvm.avm.draw.sprite.erase(i16,i16,p1,i16)` | `SYS 0x21` through `SYS_DRAW_SPRITE_ERASE` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
+| `llvm.avm.draw.filled.rect.white(i16,i16,i8,i8)` | `SYS 0x27` through `SYS_DRAW_FILLED_RECT_WHITE` | `r4 = x`, `r5 = y`, `low8(r6) = width`, `low8(r7) = height` | None |
+| `llvm.avm.draw.filled.rect.black(i16,i16,i8,i8)` | `SYS 0x28` through `SYS_DRAW_FILLED_RECT_BLACK` | `r4 = x`, `r5 = y`, `low8(r6) = width`, `low8(r7) = height` | None |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -3640,6 +3737,14 @@ solely for a sprite service. Each pseudo carries an address-space-one read for
 the sprite data and conservative address-space-zero read and write effects for
 the complete 1,024-byte framebuffer. More precise framebuffer references MAY
 be used when clipping and dimensions are statically known.
+
+The two filled-rectangle pseudos have input-only fixed uses of `r4-r7` and no
+architectural register definitions. Only `low8(r6)` and `low8(r7)` determine
+the width and height, but the complete physical registers are preserved across
+the service and therefore remain live. Each pseudo carries conservative
+address-space-zero read and write effects for the complete 1,024-byte
+framebuffer. More precise framebuffer references MAY be used when the clipped
+rectangle is statically known.
 
 The five program-string pseudos require a normalized `q3` input. Selection MUST
 insert program-pointer normalization before copying the source into `Q3Only`;
@@ -3681,7 +3786,8 @@ sequence. Recognized nonvolatile AS0 `memmove` operations MAY lower to service
 `0x12` when preferable to an overlap-correct inline sequence. Direct calls or
 target builtins for the comparison and string functions lower to services
 `0x13-0x1C`. The target display builtin lowers to service `0x1D`. The four
-target sprite builtins lower to services `0x1E-0x21`. A compiler MAY recognize
+target sprite builtins lower to services `0x1E-0x21`. The two filled-rectangle
+builtins lower to services `0x27-0x28`. A compiler MAY recognize
 ordinary C library calls and replace them with the corresponding target
 intrinsic when interposition, object-size, and language rules permit it.
 
@@ -3716,6 +3822,8 @@ The memory services have their precise address-space effects:
   and destination objects.
 - Each sprite service reads its address-space-one sprite object and reads and
   writes the fixed address-space-zero framebuffer range `0x0500-0x08FF`.
+- Each filled-rectangle service reads and writes the fixed address-space-zero
+  framebuffer range `0x0500-0x08FF`.
 
 They MUST NOT be speculated or reordered across accesses that may alias a
 written destination or, for a copy or move, the source. They MAY be eliminated,
@@ -3742,6 +3850,12 @@ that may alias `0x0500-0x08FF`. It MAY be removed only when all of its
 framebuffer writes are proven dead, and MAY be reordered relative to provably
 disjoint memory only when the AS1 sprite read and all other dependencies remain
 valid.
+
+A filled-rectangle service likewise has no physical-display side effect, but
+its framebuffer writes are observable. It MUST NOT be speculated or reordered
+across an access that may alias `0x0500-0x08FF`. It MAY be removed only when
+all affected framebuffer writes are proven dead, and MAY be reordered relative
+to provably disjoint memory when all other dependencies remain valid.
 
 ### 59.3. Source-language interfaces
 
@@ -3775,6 +3889,11 @@ void __avm_draw_sprite_self_masked(
     int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
 void __avm_draw_sprite_erase(
     int16_t x, int16_t y, avm_progmem_cptr sprite, uint16_t frame);
+
+void __avm_draw_filled_rect_white(
+    int16_t x, int16_t y, uint8_t width, uint8_t height);
+void __avm_draw_filled_rect_black(
+    int16_t x, int16_t y, uint8_t width, uint8_t height);
 
 int      __avm_memcmp_P(const void *lhs, avm_progmem_cptr rhs, uint16_t n);
 int      __avm_strcmp_P(const char *lhs, avm_progmem_cptr rhs);
@@ -3832,6 +3951,12 @@ The four `__avm_draw_sprite_*` interfaces lower to their corresponding
 `frame` to `r4`, `r5`, `q3`, and `r0`, respectively, and selects
 `SYS 0x1E-0x21`. These operations retain the AS1 sprite read and fixed
 framebuffer read/write effects described in Sections 49.21 and 59.2.
+
+The two `__avm_draw_filled_rect_*` interfaces lower to their corresponding
+`llvm.avm.draw.filled.rect.*` intrinsics. The backend assigns `x`, `y`,
+`width`, and `height` to `r4`, `r5`, `low8(r6)`, and `low8(r7)`,
+respectively, and selects `SYS 0x27-0x28`. These operations retain the fixed
+framebuffer read/write effects described in Sections 49.22 and 59.2.
 
 ## 60. Code model and C++ policy
 
@@ -4653,6 +4778,8 @@ LLVM:
     sprite drawing uses typed llvm.avm.draw.sprite.* intrinsics and SYS 0x1E-0x21
     sprite services use r4=x, r5=y, q3=sprite, r0=frame and ignore q3 padding
     overwrite ignores final-page padding; other sprite modes require canonical padding
+    filled rectangles use typed llvm.avm.draw.filled.rect.* intrinsics and SYS 0x27-0x28
+    filled rectangles use r4=x, r5=y, low8(r6)=width, low8(r7)=height
 
 Assembly:
     GNU-style syntax

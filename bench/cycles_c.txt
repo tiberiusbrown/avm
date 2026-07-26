@@ -24,7 +24,7 @@
       744268   select.c
       514993   shifts.c
       372097   sieve.c
-      770445   small_memops.c
+      776311   small_memops.c
       820167   stack_array.c
      7082644   state_machine.c
     25638281   string_scan.c

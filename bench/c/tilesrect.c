@@ -17,10 +17,8 @@ int avm_test_main()
     debug_break();
     
     uint8_t color = 0;
-    //#pragma clang loop unroll(full)
     for(uint8_t y = 0; y < 8; y += 1)
     {
-        //#pragma clang loop unroll(full)
         for(uint8_t x = 0; x < 16; x += 1)
         {
             draw_filled_rect(x, y, 8, 8, color);

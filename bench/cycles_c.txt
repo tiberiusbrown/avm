@@ -1,16 +1,16 @@
-     1225300   bubble1.c
+     1307997   bubble1.c
      1154781   bubble2.c
      1776807   bubble4.c
       255387   call_args.c
-     7755150   constant_arith.c
+     7745018   constant_arith.c
       522102   crc16.c
      1062266   divmod.c
       234075   fibonacci.c
-     8163664   fir8.c
+     5944733   fir8.c
     11764996   fixed_point.c
       929828   float.c
        83174   indirect_call.c
-    12183492   loop_control.c
+    10914185   loop_control.c
        18314   memory_services.c
      3208072   mixed_width.c
       921548   multiply.c
@@ -21,27 +21,27 @@
       542465   progmem_widen_ldp32_words.c
      1439866   record_scan.c
      1905278   reverse_walk.c
-      744268   select.c
-      514993   shifts.c
+      744517   select.c
+      515129   shifts.c
       372097   sieve.c
-      776311   small_memops.c
-      820167   stack_array.c
+      326786   small_memops.c
+      267959   stack_array.c
      7082644   state_machine.c
     25638281   string_scan.c
-      853416   struct_copy.c
+      485361   struct_copy.c
       936377   switch.c
         2864   sys_memcmp.c
-        5283   sys_memcmp_p.c
+        5364   sys_memcmp_p.c
         2512   sys_strcmp.c
-        5927   sys_strcmp_p.c
+        5897   sys_strcmp_p.c
         3009   sys_strlen.c
         7209   sys_strlen_p.c
         2190   sys_strncat.c
         3559   sys_strncat_p.c
-        2112   sys_strncpy.c
+        2060   sys_strncpy.c
         3680   sys_strncpy_p.c
       501299   tail_calls.c
-      104001   tilesrect.c
+       43635   tilesrect.c
        90028   tilessprite.c
        37688   tilessprite16.c
        34494   tilessprite16_cached.c

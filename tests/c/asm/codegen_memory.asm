@@ -5,14 +5,14 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_memory.c
 00000100 l     O .data	00000007 .L__const.avm_test_main.value
-00000504 l     F .text	00000027 hash_bytes
-0000052b l     F .text	00000027 update_record
-00000552 l     F .text	0000000a read_neighbors
-0000055c l     F .text	000000ee walk_both_directions
+00000524 l     F .text	00000027 hash_bytes
+0000054b l     F .text	00000027 update_record
+00000572 l     F .text	0000000a read_neighbors
+0000057c l     F .text	000000ee walk_both_directions
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	000002ee avm_test_main
-0000064a g     F .text	00000002 avm_halt
+00000216 g     F .text	0000030e avm_test_main
+0000066a g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -27,7 +27,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 34 04              call16	avm_halt
+ e1 54 04              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -35,30 +35,35 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 97                 adjsp	-0x69
- f0 02 18              ldi8	r2, 0x18
- c2 a5                 ldi8	r6, 0xa5
- f0 11 51              leasp	r1, 0x51
- f1 21                 mov	r4, r1
- f0 3c 30              stsp16	[sp+0x30], r4
- 06                    mov	r5, r6
- f1 2a                 mov	r6, r2
- f0 34 30              ldsp16	r4, [sp+0x30]
- d7 11                 sys	memset
- a5                    xor	r5, r5
- c3 07                 ldi8	r7, 0x7
- f0 00 fe              ldi8	r0, 0xfe
- 09                    mov	r6, r5
- f9 c0                 and	r6, r0
- f4 8e                 lsr16.1	r6
- ab                    xor	r6, r7
- f0 6d c3              st8	[r1+], r6
- cb 1d                 addi.s8	r7, 0x1d
- f4 ad                 inc16	r5
- f4 b2                 dec16	r2
- f6 2a                 tst16	r2
- d1 ed                 brne8	avm_test_main+33
  c2 18                 ldi8	r6, 0x18
+ c1 a5                 ldi8	r5, 0xa5
  f0 10 51              leasp	r0, 0x51
+ f1 20                 mov	r4, r0
+ d7 11                 sys	memset
+ c4 41 62              ldi16	r4, 0x6241
+ c5 8e a9              ldi16	r5, 0xa98e
+ f0 3c 65              stsp16	[sp+0x65], r4
+ f0 3d 67              stsp16	[sp+0x67], r5
+ c4 df fc              ldi16	r4, 0xfcdf
+ c5 18 27              ldi16	r5, 0x2718
+ f0 3c 61              stsp16	[sp+0x61], r4
+ f0 3d 63              stsp16	[sp+0x63], r5
+ c4 65 86              ldi16	r4, 0x8665
+ c5 9a bd              ldi16	r5, 0xbd9a
+ f0 3c 5d              stsp16	[sp+0x5d], r4
+ f0 3d 5f              stsp16	[sp+0x5f], r5
+ c4 eb 08              ldi16	r4, 0x8eb
+ c5 2c 43              ldi16	r5, 0x432c
+ f0 3c 59              stsp16	[sp+0x59], r4
+ f0 3d 5b              stsp16	[sp+0x5b], r5
+ c4 79 9a              ldi16	r4, 0x9a79
+ c5 b6 d1              ldi16	r5, 0xd1b6
+ f0 3c 55              stsp16	[sp+0x55], r4
+ f0 3d 57              stsp16	[sp+0x57], r5
+ c4 07 24              ldi16	r4, 0x2407
+ c5 40 5f              ldi16	r5, 0x5f40
+ f0 3c 51              stsp16	[sp+0x51], r4
+ f0 3d 53              stsp16	[sp+0x53], r5
  f0 11 39              leasp	r1, 0x39
  f1 21                 mov	r4, r1
  f1 24                 mov	r5, r0

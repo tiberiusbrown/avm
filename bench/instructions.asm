@@ -30,6 +30,9 @@
 ;     including ordinary-data, program-space, and overlapping memmove
 ;     paths in both forward and backward directions.
 ;   * Display SYS covers both clear=false and clear=true with a nonzero buffer.
+;   * Both filled-rectangle SYS services cover zero dimensions, aligned and
+;     unaligned spans, multi-page paths, representative sizes, all clipping
+;     edges and corners, full-screen work, and complete rejection on every side.
 ;   * Every explicit and cached sprite draw SYS covers zero dimensions, six
 ;     visible sizes, aligned and unaligned Y positions, three frame indices,
 ;     all four clipping edges and corners, full-screen work, and complete
@@ -8690,6 +8693,754 @@ _start:
     ldi8 r4, 1
     sys debug_break
     sys display
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (width=0, height=8; zero-width fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 0
+    ldi8 r7, 8
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (width=8, height=0; zero-height fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 8
+    ldi8 r7, 0
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (1x1 at x=0,y=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 1
+    ldi8 r7, 1
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (8x8 at x=40,y=24; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x0018
+    ldi8 r6, 8
+    ldi8 r7, 8
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (8x8 at x=40,y=27; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x001b
+    ldi8 r6, 8
+    ldi8 r7, 8
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=16,y=8; partial final page)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=16,y=11; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x17 at x=16,y=8; three destination pages)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi8 r6, 16
+    ldi8 r7, 17
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x17 at x=16,y=13; unaligned three-page path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000d
+    ldi8 r6, 16
+    ldi8 r7, 17
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (32x16 at x=48,y=24; medium aligned rectangle)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0030
+    ldi16 r5, 0x0018
+    ldi8 r6, 32
+    ldi8 r7, 16
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (64x32 at x=32,y=16; large aligned rectangle)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0020
+    ldi16 r5, 0x0010
+    ldi8 r6, 64
+    ldi8 r7, 32
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (128x64 at x=0,y=0; full-screen rectangle)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 128
+    ldi8 r7, 64
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=-5,y=11; left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=120,y=11; right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=16,y=-4; top clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfffc
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=16,y=60; bottom clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x003c
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=-5,y=-4; top-left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0xfffc
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=120,y=60; bottom-right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x003c
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=128,y=11; fully off right)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0080
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=16,y=64; fully off bottom)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0040
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=-16,y=11; fully off left)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfff0
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_white (16x9 at x=16,y=-9; fully off top)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0x00
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfff7
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_white
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (width=0, height=8; zero-width fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 0
+    ldi8 r7, 8
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (width=8, height=0; zero-height fast path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 8
+    ldi8 r7, 0
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (1x1 at x=0,y=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 1
+    ldi8 r7, 1
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (8x8 at x=40,y=24; aligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x0018
+    ldi8 r6, 8
+    ldi8 r7, 8
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (8x8 at x=40,y=27; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0028
+    ldi16 r5, 0x001b
+    ldi8 r6, 8
+    ldi8 r7, 8
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=16,y=8; partial final page)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=16,y=11; unaligned)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x17 at x=16,y=8; three destination pages)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0008
+    ldi8 r6, 16
+    ldi8 r7, 17
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x17 at x=16,y=13; unaligned three-page path)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x000d
+    ldi8 r6, 16
+    ldi8 r7, 17
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (32x16 at x=48,y=24; medium aligned rectangle)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0030
+    ldi16 r5, 0x0018
+    ldi8 r6, 32
+    ldi8 r7, 16
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (64x32 at x=32,y=16; large aligned rectangle)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0020
+    ldi16 r5, 0x0010
+    ldi8 r6, 64
+    ldi8 r7, 32
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (128x64 at x=0,y=0; full-screen rectangle)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x0000
+    ldi8 r6, 128
+    ldi8 r7, 64
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=-5,y=11; left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=120,y=11; right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=16,y=-4; top clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfffc
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=16,y=60; bottom clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x003c
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=-5,y=-4; top-left clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfffb
+    ldi16 r5, 0xfffc
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=120,y=60; bottom-right clipping)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0078
+    ldi16 r5, 0x003c
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=128,y=11; fully off right)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0080
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=16,y=64; fully off bottom)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0x0040
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=-16,y=11; fully off left)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0xfff0
+    ldi16 r5, 0x000b
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS draw_filled_rect_black (16x9 at x=16,y=-9; fully off top)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, BENCH_FRAMEBUFFER
+    ldi8 r5, 0xff
+    ldi16 r6, 1024
+    sys memset
+
+    ldi16 r4, 0x0010
+    ldi16 r5, 0xfff7
+    ldi8 r6, 16
+    ldi8 r7, 9
+    sys debug_break
+    sys draw_filled_rect_black
     sys debug_break
 
 ; -----------------------------------------------------------------------------

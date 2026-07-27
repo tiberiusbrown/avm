@@ -154,7 +154,7 @@ Disassembly of section .text:
  f0 3d b6              stsp16	[sp+0xb6], r5
  f0 15 b4              leasp	r5, 0xb4
  f0 14 b0              leasp	r4, 0xb0
- f1 28                 mov	r6, r0
+ c2 04                 ldi8	r6, 0x4
  d7 0f                 sys	memcpy
  f0 34 b0              ldsp16	r4, [sp+0xb0]
  f0 35 b2              ldsp16	r5, [sp+0xb2]

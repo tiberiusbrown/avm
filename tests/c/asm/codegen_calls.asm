@@ -192,7 +192,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  c0 37                 ldi8	r4, 0x37
  d7 00                 sys	debug_putc
- f1 21                 mov	r4, r1
+ c0 31                 ldi8	r4, 0x31
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  02                    mov	r4, r6

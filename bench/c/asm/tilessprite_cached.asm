@@ -36,7 +36,7 @@ Disassembly of section .text:
  f0 55 02 01           ldm16	r5, [0x102]
  f0 54 00 01           ldm16	r4, [0x100]
  af                    xor	r7, r7
- 0b                    mov	r6, r7
+ aa                    xor	r6, r6
  d7 23                 sys	draw_overwrite
  c8 08                 addi.s8	r4, 0x8
  d7 23                 sys	draw_overwrite

@@ -4,31 +4,31 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/string_progmem_compare.elf:	fi
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 string_progmem_compare.c
-00000981 l     O .rodata	00000005 p_equal
+00000982 l     O .rodata	00000005 p_equal
 00000100 l     O .data	00000005 avm_test_main.equal
-00000986 l     O .rodata	00000005 p_high
+00000987 l     O .rodata	00000005 p_high
 00000105 l     O .data	00000005 avm_test_main.low
-0000098b l     O .rodata	00000005 p_low
+0000098c l     O .rodata	00000005 p_low
 0000010a l     O .data	00000005 avm_test_main.high
-00000990 l     O .rodata	00000005 p_late
+00000991 l     O .rodata	00000005 p_late
 0000010f l     O .data	00000005 avm_test_main.late
-00000995 l     O .rodata	00000006 p_alpha
+00000996 l     O .rodata	00000006 p_alpha
 00000114 l     O .data	00000006 avm_test_main.alpha
-0000099b l     O .rodata	00000006 p_alphz
+0000099c l     O .rodata	00000006 p_alphz
 0000011a l     O .data	00000006 avm_test_main.alphz
-000009a1 l     O .rodata	00000008 p_catalog
+000009a2 l     O .rodata	00000008 p_catalog
 00000120 l     O .data	00000004 avm_test_main.cat
-000009a9 l     O .rodata	00000004 p_cat
+000009aa l     O .rodata	00000004 p_cat
 00000124 l     O .data	00000008 avm_test_main.catalog
-000009ad l     O .rodata	00000002 p_unsigned_lo
+000009ae l     O .rodata	00000002 p_unsigned_lo
 0000012c l     O .data	00000002 avm_test_main.unsigned_hi
-000009af l     O .rodata	00000001 p_empty
-000009b0 l     O .rodata	00000008 p_short
-000009b8 l     O .rodata	00000105 p_long
+000009b0 l     O .rodata	00000001 p_empty
+000009b1 l     O .rodata	00000008 p_short
+000009b9 l     O .rodata	00000105 p_long
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000229 g     F .text	00000756 avm_test_main
-0000097f g     F .text	00000002 avm_halt
+00000229 g     F .text	00000757 avm_test_main
+00000980 g     F .text	00000002 avm_halt
 00000216 g     F .text	00000007 test_call_memcmp_P
 0000021d g     F .text	00000005 test_call_strcmp_P
 00000222 g     F .text	00000007 test_call_strlen_P
@@ -46,7 +46,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 69 07              call16	avm_halt
+ e1 6a 07              call16	avm_halt
 
 <test_call_memcmp_P>:
  f1 77                 zext8	r7
@@ -77,7 +77,7 @@ Disassembly of section .text:
  c0 05                 ldi8	r4, 0x5
  f4 40                 stsp16	[sp+0x0], r4
  f1 04                 mov	r0, r4
- c6 81 09              ldi16	r6, 0x981
+ c6 82 09              ldi16	r6, 0x982
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 00 01              ldi16	r4, 0x100
@@ -98,7 +98,7 @@ Disassembly of section .text:
  f0 3e 68              stsp16	[sp+0x68], r6
  d6 fe                 adjsp	-0x2
  f0 38 00              stsp16	[sp+0x0], r0
- f0 04 86 09           ldi16	r0, 0x986
+ f0 04 87 09           ldi16	r0, 0x987
  f0 01 00              ldi8	r1, 0x0
  f1 71                 zext8	r1
  c4 05 01              ldi16	r4, 0x105
@@ -119,7 +119,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 05                 ldi8	r4, 0x5
  f4 40                 stsp16	[sp+0x0], r4
- c6 8b 09              ldi16	r6, 0x98b
+ c6 8c 09              ldi16	r6, 0x98c
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 0a 01              ldi16	r4, 0x10a
@@ -139,7 +139,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 05                 ldi8	r4, 0x5
  f4 40                 stsp16	[sp+0x0], r4
- c6 90 09              ldi16	r6, 0x990
+ c6 91 09              ldi16	r6, 0x991
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 0f 01              ldi16	r4, 0x10f
@@ -172,7 +172,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 64              stsp16	[sp+0x64], r5
- f0 04 95 09           ldi16	r0, 0x995
+ f0 04 96 09           ldi16	r0, 0x996
  f0 01 00              ldi8	r1, 0x0
  f1 71                 zext8	r1
  c4 14 01              ldi16	r4, 0x114
@@ -188,7 +188,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 62              stsp16	[sp+0x62], r5
- c6 9b 09              ldi16	r6, 0x99b
+ c6 9c 09              ldi16	r6, 0x99c
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 14 01              ldi16	r4, 0x114
@@ -216,7 +216,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 5e              stsp16	[sp+0x5e], r5
- c6 a1 09              ldi16	r6, 0x9a1
+ c6 a2 09              ldi16	r6, 0x9a2
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 20 01              ldi16	r4, 0x120
@@ -231,7 +231,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 5c              stsp16	[sp+0x5c], r5
- c6 a9 09              ldi16	r6, 0x9a9
+ c6 aa 09              ldi16	r6, 0x9aa
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 24 01              ldi16	r4, 0x124
@@ -246,7 +246,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 5a              stsp16	[sp+0x5a], r5
- c6 ad 09              ldi16	r6, 0x9ad
+ c6 ae 09              ldi16	r6, 0x9ae
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  c4 2c 01              ldi16	r4, 0x12c
@@ -261,7 +261,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 58              stsp16	[sp+0x58], r5
- c4 af 09              ldi16	r4, 0x9af
+ c4 b0 09              ldi16	r4, 0x9b0
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
  e1 4f fe              call16	test_call_strlen_P
@@ -275,7 +275,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 56              stsp16	[sp+0x56], r5
- c4 b0 09              ldi16	r4, 0x9b0
+ c4 b1 09              ldi16	r4, 0x9b1
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
  e1 31 fe              call16	test_call_strlen_P
@@ -289,7 +289,7 @@ Disassembly of section .text:
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
  f0 3d 54              stsp16	[sp+0x54], r5
- c4 b8 09              ldi16	r4, 0x9b8
+ c4 b9 09              ldi16	r4, 0x9b9
  c1 00                 ldi8	r5, 0x0
  f1 75                 zext8	r5
  e1 13 fe              call16	test_call_strlen_P
@@ -953,7 +953,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
- 03                    mov	r4, r7
+ c0 4c                 ldi8	r4, 0x4c
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1

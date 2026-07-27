@@ -37,7 +37,7 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f0 06 3f 04           ldi16	r2, 0x43f
  f0 03 00              ldi8	r3, 0x0
- 0b                    mov	r6, r7
+ aa                    xor	r6, r6
  d7 1e                 sys	draw_sprite_overwrite
  c8 08                 addi.s8	r4, 0x8
  d7 1e                 sys	draw_sprite_overwrite

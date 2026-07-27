@@ -6,11 +6,11 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 filled_rect.c
 00000375 l     F .text	0000028c check_case
 00000601 l     F .text	00000194 check_round_trip
-00000795 l     F .text	00000174 fail_case
+00000795 l     F .text	00000171 fail_case
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
 00000116 g     F .text	0000025f avm_test_main
-00000909 g     F .text	00000002 avm_halt
+00000906 g     F .text	00000002 avm_halt
 00000500 g       *ABS*	00000000 __avm_framebuffer
 
 Disassembly of section .text:
@@ -26,7 +26,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 f3 07              call16	avm_halt
+ e1 f0 07              call16	avm_halt
 
 <avm_test_main>:
  b0                    push16	r0
@@ -672,10 +672,10 @@ Disassembly of section .text:
  f4 ae                 inc16	r6
  f5 2b                 cmp	r6, r3
  d1 f0                 brne8	check_round_trip+70
- c3 1b                 ldi8	r7, 0x1b
- c2 2b                 ldi8	r6, 0x2b
- c1 06                 ldi8	r5, 0x6
  c0 25                 ldi8	r4, 0x25
+ c1 06                 ldi8	r5, 0x6
+ c2 2b                 ldi8	r6, 0x2b
+ c3 1b                 ldi8	r7, 0x1b
  d7 27                 sys	draw_filled_rect_white
  d7 28                 sys	draw_filled_rect_black
  ed e0 20              ld8u	r7, [r0+0]
@@ -823,7 +823,6 @@ Disassembly of section .text:
  d4 ed                 jmp8	check_round_trip+385
 
 <fail_case>:
- b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
@@ -905,48 +904,47 @@ Disassembly of section .text:
  f5 2e                 cmp	r7, r2
  fc 34                 cmov.ult	r6, r4
  f4 42                 stsp16	[sp+0x0], r6
- f4 21                 ldsp16	r5, [sp+0x8]
- 01                    mov	r4, r5
- f9 84                 and	r4, r1
- 08                    mov	r6, r4
- f9 c1                 or	r6, r0
- cc 0a                 cmpi.s8	r4, 0xa
- c8 37                 addi.s8	r4, 0x37
- fc 26                 cmov.ult	r4, r6
- f4 58                 stsp16	[sp+0x6], r4
- f5 26                 cmp	r5, r2
- fa 84                 lsr16i	r5, 0x4
- 01                    mov	r4, r5
- f9 81                 or	r4, r0
- c9 37                 addi.s8	r5, 0x37
- fc 2c                 cmov.ult	r5, r4
- 0d                    mov	r7, r5
- f0 34 14              ldsp16	r4, [sp+0x14]
- 08                    mov	r6, r4
- fa 94                 lsr16i	r6, 0x4
- 06                    mov	r5, r6
- f9 a1                 or	r5, r0
- ca 37                 addi.s8	r6, 0x37
- f5 22                 cmp	r4, r2
- fc 35                 cmov.ult	r6, r5
+ f4 22                 ldsp16	r6, [sp+0x8]
+ 02                    mov	r4, r6
  f9 84                 and	r4, r1
  04                    mov	r5, r4
  f9 a1                 or	r5, r0
  cc 0a                 cmpi.s8	r4, 0xa
  c8 37                 addi.s8	r4, 0x37
  fc 25                 cmov.ult	r4, r5
- f0 3c 14              stsp16	[sp+0x14], r4
+ f4 58                 stsp16	[sp+0x6], r4
+ f5 2a                 cmp	r6, r2
+ fa 94                 lsr16i	r6, 0x4
+ 02                    mov	r4, r6
+ f9 81                 or	r4, r0
+ ca 37                 addi.s8	r6, 0x37
+ fc 34                 cmov.ult	r6, r4
+ 0e                    mov	r7, r6
+ f0 35 14              ldsp16	r5, [sp+0x14]
+ 09                    mov	r6, r5
+ fa 94                 lsr16i	r6, 0x4
+ 02                    mov	r4, r6
+ f9 81                 or	r4, r0
+ ca 37                 addi.s8	r6, 0x37
+ f5 26                 cmp	r5, r2
+ fc 34                 cmov.ult	r6, r4
+ f9 a4                 and	r5, r1
+ f9 15                 or	r0, r5
+ cd 0a                 cmpi.s8	r5, 0xa
+ c9 37                 addi.s8	r5, 0x37
+ fc 28                 cmov.ult	r5, r0
+ f0 3d 14              stsp16	[sp+0x14], r5
  c0 43                 ldi8	r4, 0x43
  d7 00                 sys	debug_putc
- f0 03 41              ldi8	r3, 0x41
- f1 23                 mov	r4, r3
+ f0 02 41              ldi8	r2, 0x41
+ f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
  c0 53                 ldi8	r4, 0x53
  d7 00                 sys	debug_putc
  c0 45                 ldi8	r4, 0x45
  d7 00                 sys	debug_putc
- f0 01 3d              ldi8	r1, 0x3d
- f1 21                 mov	r4, r1
+ f0 00 3d              ldi8	r0, 0x3d
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  f4 28                 ldsp16	r4, [sp+0xa]
  d7 00                 sys	debug_putc
@@ -956,17 +954,17 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f0 34 12              ldsp16	r4, [sp+0x12]
  d7 00                 sys	debug_putc
- f0 02 0a              ldi8	r2, 0xa
- f1 22                 mov	r4, r2
+ f0 01 0a              ldi8	r1, 0xa
+ f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
- f1 23                 mov	r4, r3
+ f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
  c0 44                 ldi8	r4, 0x44
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  c0 52                 ldi8	r4, 0x52
  d7 00                 sys	debug_putc
- f1 21                 mov	r4, r1
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  f4 10                 ldsp16	r4, [sp+0x4]
  d7 00                 sys	debug_putc
@@ -976,27 +974,27 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f4 38                 ldsp16	r4, [sp+0xe]
  d7 00                 sys	debug_putc
- f1 22                 mov	r4, r2
+ f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
  c0 57                 ldi8	r4, 0x57
  d7 00                 sys	debug_putc
- f1 23                 mov	r4, r3
+ f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
  c0 4e                 ldi8	r4, 0x4e
  d7 00                 sys	debug_putc
  c1 54                 ldi8	r5, 0x54
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- f1 21                 mov	r4, r1
- d7 00                 sys	debug_putc
  f1 20                 mov	r4, r0
+ d7 00                 sys	debug_putc
+ c0 30                 ldi8	r4, 0x30
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
  f4 18                 ldsp16	r4, [sp+0x6]
  d7 00                 sys	debug_putc
- f1 22                 mov	r4, r2
+ f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
  c0 47                 ldi8	r4, 0x47
  d7 00                 sys	debug_putc
@@ -1004,22 +1002,21 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- f1 21                 mov	r4, r1
- d7 00                 sys	debug_putc
  f1 20                 mov	r4, r0
+ d7 00                 sys	debug_putc
+ c0 30                 ldi8	r4, 0x30
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
  f0 34 14              ldsp16	r4, [sp+0x14]
  d7 00                 sys	debug_putc
- f1 22                 mov	r4, r2
+ f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
  d6 16                 adjsp	0x16
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret
 
 <avm_halt>:

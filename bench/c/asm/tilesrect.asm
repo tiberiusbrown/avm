@@ -6,8 +6,8 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 tilesrect.c
 00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
-00000116 g     F .text	00000264 avm_test_main
-0000037a g     F .text	00000002 avm_halt
+00000116 g     F .text	0000025e avm_test_main
+00000374 g     F .text	00000002 avm_halt
 00000500 g       *ABS*	00000000 __avm_framebuffer
 
 Disassembly of section .text:
@@ -23,7 +23,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 64 02              call16	avm_halt
+ e1 5e 02              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -31,17 +31,18 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 02 08              ldi8	r2, 0x8
- f2 4b                 sub	r3, r3
- f1 27                 mov	r5, r3
- f1 2a                 mov	r6, r2
- f1 2e                 mov	r7, r2
- f1 23                 mov	r4, r3
+ f0 01 08              ldi8	r1, 0x8
+ f2 30                 sub	r0, r0
+ a5                    xor	r5, r5
+ c2 08                 ldi8	r6, 0x8
+ c3 08                 ldi8	r7, 0x8
+ f1 20                 mov	r4, r0
  d7 28                 sys	draw_filled_rect_black
- c0 01                 ldi8	r4, 0x1
+ f0 02 01              ldi8	r2, 0x1
+ f1 22                 mov	r4, r2
+ f1 1a                 mov	r3, r2
  d7 27                 sys	draw_filled_rect_white
- f0 01 02              ldi8	r1, 0x2
- f1 21                 mov	r4, r1
+ c0 02                 ldi8	r4, 0x2
  d7 28                 sys	draw_filled_rect_black
  c0 03                 ldi8	r4, 0x3
  d7 27                 sys	draw_filled_rect_white
@@ -53,7 +54,7 @@ Disassembly of section .text:
  d7 28                 sys	draw_filled_rect_black
  c0 07                 ldi8	r4, 0x7
  d7 27                 sys	draw_filled_rect_white
- f1 22                 mov	r4, r2
+ f1 21                 mov	r4, r1
  d7 28                 sys	draw_filled_rect_black
  c0 09                 ldi8	r4, 0x9
  d7 27                 sys	draw_filled_rect_white
@@ -69,23 +70,21 @@ Disassembly of section .text:
  d7 28                 sys	draw_filled_rect_black
  c0 0f                 ldi8	r4, 0xf
  d7 27                 sys	draw_filled_rect_white
- f0 00 01              ldi8	r0, 0x1
- f1 24                 mov	r5, r0
+ c1 01                 ldi8	r5, 0x1
+ f1 20                 mov	r4, r0
+ d7 27                 sys	draw_filled_rect_white
  f1 23                 mov	r4, r3
- d7 27                 sys	draw_filled_rect_white
- f1 20                 mov	r4, r0
  d7 28                 sys	draw_filled_rect_black
- f1 11                 mov	r2, r1
- f1 22                 mov	r4, r2
- d7 27                 sys	draw_filled_rect_white
- f0 00 03              ldi8	r0, 0x3
- f1 20                 mov	r4, r0
- d7 28                 sys	draw_filled_rect_black
- f0 01 04              ldi8	r1, 0x4
+ f0 01 02              ldi8	r1, 0x2
  f1 21                 mov	r4, r1
  d7 27                 sys	draw_filled_rect_white
- f0 03 05              ldi8	r3, 0x5
+ f0 02 03              ldi8	r2, 0x3
+ f1 22                 mov	r4, r2
+ d7 28                 sys	draw_filled_rect_black
+ f0 03 04              ldi8	r3, 0x4
  f1 23                 mov	r4, r3
+ d7 27                 sys	draw_filled_rect_white
+ c0 05                 ldi8	r4, 0x5
  d7 28                 sys	draw_filled_rect_black
  c0 06                 ldi8	r4, 0x6
  d7 27                 sys	draw_filled_rect_white
@@ -109,19 +108,19 @@ Disassembly of section .text:
  f0 00 0f              ldi8	r0, 0xf
  f1 20                 mov	r4, r0
  d7 28                 sys	draw_filled_rect_black
- f1 26                 mov	r5, r2
+ c1 02                 ldi8	r5, 0x2
  a0                    xor	r4, r4
  d7 28                 sys	draw_filled_rect_black
  c0 01                 ldi8	r4, 0x1
  d7 27                 sys	draw_filled_rect_white
- f1 22                 mov	r4, r2
- d7 28                 sys	draw_filled_rect_black
- f0 00 03              ldi8	r0, 0x3
- f1 20                 mov	r4, r0
- d7 27                 sys	draw_filled_rect_white
  f1 21                 mov	r4, r1
  d7 28                 sys	draw_filled_rect_black
+ f1 22                 mov	r4, r2
+ d7 27                 sys	draw_filled_rect_white
  f1 23                 mov	r4, r3
+ d7 28                 sys	draw_filled_rect_black
+ f0 01 05              ldi8	r1, 0x5
+ f1 21                 mov	r4, r1
  d7 27                 sys	draw_filled_rect_white
  c0 06                 ldi8	r4, 0x6
  d7 28                 sys	draw_filled_rect_black
@@ -143,22 +142,24 @@ Disassembly of section .text:
  d7 28                 sys	draw_filled_rect_black
  c0 0f                 ldi8	r4, 0xf
  d7 27                 sys	draw_filled_rect_white
- f1 24                 mov	r5, r0
- f1 08                 mov	r1, r0
+ c1 03                 ldi8	r5, 0x3
  a0                    xor	r4, r4
  d7 27                 sys	draw_filled_rect_white
- c0 01                 ldi8	r4, 0x1
+ c1 01                 ldi8	r5, 0x1
+ 01                    mov	r4, r5
+ c1 03                 ldi8	r5, 0x3
  d7 28                 sys	draw_filled_rect_black
+ f0 00 02              ldi8	r0, 0x2
+ f1 20                 mov	r4, r0
+ d7 27                 sys	draw_filled_rect_white
  f1 22                 mov	r4, r2
- d7 27                 sys	draw_filled_rect_white
- f1 21                 mov	r4, r1
  d7 28                 sys	draw_filled_rect_black
- f0 01 04              ldi8	r1, 0x4
- f1 21                 mov	r4, r1
- d7 27                 sys	draw_filled_rect_white
  f1 23                 mov	r4, r3
+ d7 27                 sys	draw_filled_rect_white
+ f1 21                 mov	r4, r1
  d7 28                 sys	draw_filled_rect_black
- c0 06                 ldi8	r4, 0x6
+ f0 00 06              ldi8	r0, 0x6
+ f1 20                 mov	r4, r0
  d7 27                 sys	draw_filled_rect_white
  f0 00 07              ldi8	r0, 0x7
  f1 20                 mov	r4, r0
@@ -184,28 +185,27 @@ Disassembly of section .text:
  f0 00 0e              ldi8	r0, 0xe
  f1 20                 mov	r4, r0
  d7 27                 sys	draw_filled_rect_white
- f0 00 0f              ldi8	r0, 0xf
- f1 20                 mov	r4, r0
+ c1 0f                 ldi8	r5, 0xf
+ 01                    mov	r4, r5
+ c1 03                 ldi8	r5, 0x3
  d7 28                 sys	draw_filled_rect_black
- f1 25                 mov	r5, r1
- f2 30                 sub	r0, r0
- f1 20                 mov	r4, r0
+ c1 04                 ldi8	r5, 0x4
+ a0                    xor	r4, r4
  d7 28                 sys	draw_filled_rect_black
  c0 01                 ldi8	r4, 0x1
  d7 27                 sys	draw_filled_rect_white
- f1 22                 mov	r4, r2
- d7 28                 sys	draw_filled_rect_black
- c0 03                 ldi8	r4, 0x3
- d7 27                 sys	draw_filled_rect_white
- f1 21                 mov	r4, r1
- d7 28                 sys	draw_filled_rect_black
- f1 23                 mov	r4, r3
- d7 27                 sys	draw_filled_rect_white
- f0 01 06              ldi8	r1, 0x6
- f1 21                 mov	r4, r1
- d7 28                 sys	draw_filled_rect_black
- f0 00 07              ldi8	r0, 0x7
+ f0 00 02              ldi8	r0, 0x2
  f1 20                 mov	r4, r0
+ d7 28                 sys	draw_filled_rect_black
+ f1 22                 mov	r4, r2
+ d7 27                 sys	draw_filled_rect_white
+ f1 23                 mov	r4, r3
+ d7 28                 sys	draw_filled_rect_black
+ f1 21                 mov	r4, r1
+ d7 27                 sys	draw_filled_rect_white
+ c0 06                 ldi8	r4, 0x6
+ d7 28                 sys	draw_filled_rect_black
+ c0 07                 ldi8	r4, 0x7
  d7 27                 sys	draw_filled_rect_white
  c0 08                 ldi8	r4, 0x8
  d7 28                 sys	draw_filled_rect_black
@@ -223,22 +223,22 @@ Disassembly of section .text:
  d7 28                 sys	draw_filled_rect_black
  c0 0f                 ldi8	r4, 0xf
  d7 27                 sys	draw_filled_rect_white
- f1 27                 mov	r5, r3
+ c1 05                 ldi8	r5, 0x5
  a0                    xor	r4, r4
  d7 27                 sys	draw_filled_rect_white
  c0 01                 ldi8	r4, 0x1
  d7 28                 sys	draw_filled_rect_black
- f1 22                 mov	r4, r2
- d7 27                 sys	draw_filled_rect_white
- c0 03                 ldi8	r4, 0x3
- d7 28                 sys	draw_filled_rect_black
- c0 04                 ldi8	r4, 0x4
- d7 27                 sys	draw_filled_rect_white
- f1 23                 mov	r4, r3
- d7 28                 sys	draw_filled_rect_black
- f1 21                 mov	r4, r1
- d7 27                 sys	draw_filled_rect_white
  f1 20                 mov	r4, r0
+ d7 27                 sys	draw_filled_rect_white
+ f1 22                 mov	r4, r2
+ d7 28                 sys	draw_filled_rect_black
+ f1 23                 mov	r4, r3
+ d7 27                 sys	draw_filled_rect_white
+ f1 21                 mov	r4, r1
+ d7 28                 sys	draw_filled_rect_black
+ c0 06                 ldi8	r4, 0x6
+ d7 27                 sys	draw_filled_rect_white
+ c0 07                 ldi8	r4, 0x7
  d7 28                 sys	draw_filled_rect_black
  c0 08                 ldi8	r4, 0x8
  d7 27                 sys	draw_filled_rect_white
@@ -256,22 +256,22 @@ Disassembly of section .text:
  d7 27                 sys	draw_filled_rect_white
  c0 0f                 ldi8	r4, 0xf
  d7 28                 sys	draw_filled_rect_black
- f1 25                 mov	r5, r1
+ c1 06                 ldi8	r5, 0x6
  a0                    xor	r4, r4
  d7 28                 sys	draw_filled_rect_black
  c0 01                 ldi8	r4, 0x1
  d7 27                 sys	draw_filled_rect_white
- f1 22                 mov	r4, r2
- d7 28                 sys	draw_filled_rect_black
- c0 03                 ldi8	r4, 0x3
- d7 27                 sys	draw_filled_rect_white
- c0 04                 ldi8	r4, 0x4
- d7 28                 sys	draw_filled_rect_black
- f1 23                 mov	r4, r3
- d7 27                 sys	draw_filled_rect_white
- f1 21                 mov	r4, r1
- d7 28                 sys	draw_filled_rect_black
  f1 20                 mov	r4, r0
+ d7 28                 sys	draw_filled_rect_black
+ f1 22                 mov	r4, r2
+ d7 27                 sys	draw_filled_rect_white
+ f1 23                 mov	r4, r3
+ d7 28                 sys	draw_filled_rect_black
+ f1 21                 mov	r4, r1
+ d7 27                 sys	draw_filled_rect_white
+ c0 06                 ldi8	r4, 0x6
+ d7 28                 sys	draw_filled_rect_black
+ c0 07                 ldi8	r4, 0x7
  d7 27                 sys	draw_filled_rect_white
  c0 08                 ldi8	r4, 0x8
  d7 28                 sys	draw_filled_rect_black
@@ -289,22 +289,22 @@ Disassembly of section .text:
  d7 28                 sys	draw_filled_rect_black
  c0 0f                 ldi8	r4, 0xf
  d7 27                 sys	draw_filled_rect_white
- f1 24                 mov	r5, r0
+ c1 07                 ldi8	r5, 0x7
  a0                    xor	r4, r4
  d7 27                 sys	draw_filled_rect_white
  c0 01                 ldi8	r4, 0x1
  d7 28                 sys	draw_filled_rect_black
- f1 22                 mov	r4, r2
- d7 27                 sys	draw_filled_rect_white
- c0 03                 ldi8	r4, 0x3
- d7 28                 sys	draw_filled_rect_black
- c0 04                 ldi8	r4, 0x4
- d7 27                 sys	draw_filled_rect_white
- f1 23                 mov	r4, r3
- d7 28                 sys	draw_filled_rect_black
- f1 21                 mov	r4, r1
- d7 27                 sys	draw_filled_rect_white
  f1 20                 mov	r4, r0
+ d7 27                 sys	draw_filled_rect_white
+ f1 22                 mov	r4, r2
+ d7 28                 sys	draw_filled_rect_black
+ f1 23                 mov	r4, r3
+ d7 27                 sys	draw_filled_rect_white
+ f1 21                 mov	r4, r1
+ d7 28                 sys	draw_filled_rect_black
+ c0 06                 ldi8	r4, 0x6
+ d7 27                 sys	draw_filled_rect_white
+ c0 07                 ldi8	r4, 0x7
  d7 28                 sys	draw_filled_rect_black
  c0 08                 ldi8	r4, 0x8
  d7 27                 sys	draw_filled_rect_white

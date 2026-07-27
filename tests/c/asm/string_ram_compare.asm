@@ -23,8 +23,8 @@ SYMBOL TABLE:
 0000024a l     O .data	00000005 .L.str.1
 00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
-0000031f g     F .text	0000079e avm_test_main
-00000abd g     F .text	00000002 avm_halt
+0000031f g     F .text	0000079d avm_test_main
+00000abc g     F .text	00000002 avm_halt
 00000316 g     F .text	00000003 test_call_memcmp
 00000319 g     F .text	00000003 test_call_strcmp
 0000031c g     F .text	00000003 test_call_strlen
@@ -42,7 +42,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 a7 07              call16	avm_halt
+ e1 a6 07              call16	avm_halt
 
 <test_call_memcmp>:
  d7 18                 sys	memcmp
@@ -766,16 +766,17 @@ Disassembly of section .text:
  c4 04 01              ldi16	r4, 0x104
  f0 36 7e              ldsp16	r6, [sp+0x7e]
  38                    cmp	r6, r4
- f8 0c                 cset.ne	r4
- 93                    or	r4, r7
+ f8 0e                 cset.ne	r6
+ 9b                    or	r6, r7
  c3 01                 ldi8	r7, 0x1
- 8c                    and	r7, r4
+ 8e                    and	r7, r6
  f0 03 0a              ldi8	r3, 0xa
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
  f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
- c0 4c                 ldi8	r4, 0x4c
+ c2 4c                 ldi8	r6, 0x4c
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
@@ -791,8 +792,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
- c1 47                 ldi8	r5, 0x47
- 01                    mov	r4, r5
+ c0 47                 ldi8	r4, 0x47
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
@@ -838,8 +838,8 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- c2 53                 ldi8	r6, 0x53
- 02                    mov	r4, r6
+ c1 53                 ldi8	r5, 0x53
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c0 45                 ldi8	r4, 0x45
  d7 00                 sys	debug_putc
@@ -855,9 +855,9 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
- c0 4c                 ldi8	r4, 0x4c
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
@@ -871,9 +871,9 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
- d7 00                 sys	debug_putc
  01                    mov	r4, r5
+ d7 00                 sys	debug_putc
+ c0 47                 ldi8	r4, 0x47
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1
  d7 00                 sys	debug_putc
@@ -887,7 +887,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c0 50                 ldi8	r4, 0x50
  d7 00                 sys	debug_putc
@@ -903,7 +903,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c0 52                 ldi8	r4, 0x52
  d7 00                 sys	debug_putc
@@ -919,7 +919,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c0 55                 ldi8	r4, 0x55
  d7 00                 sys	debug_putc
@@ -935,7 +935,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
  c0 56                 ldi8	r4, 0x56
  d7 00                 sys	debug_putc
@@ -951,8 +951,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- c1 4c                 ldi8	r5, 0x4c
- 01                    mov	r4, r5
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  f1 22                 mov	r4, r2
  d7 00                 sys	debug_putc
@@ -968,7 +967,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 01                    mov	r4, r5
+ 02                    mov	r4, r6
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
  d7 00                 sys	debug_putc
@@ -984,7 +983,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  f1 23                 mov	r4, r3
  d7 00                 sys	debug_putc
- 01                    mov	r4, r5
+ c0 4c                 ldi8	r4, 0x4c
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1

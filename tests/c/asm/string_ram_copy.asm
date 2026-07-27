@@ -108,10 +108,10 @@ Disassembly of section .text:
  c5 0f 01              ldi16	r5, 0x10f
  aa                    xor	r6, r6
  e1 71 ff              call16	test_call_strncpy
- c2 0c                 ldi8	r6, 0xc
  c5 17 01              ldi16	r5, 0x117
  f0 17 6a              leasp	r7, 0x6a
  03                    mov	r4, r7
+ c2 0c                 ldi8	r6, 0xc
  d7 0f                 sys	memcpy
  c5 23 01              ldi16	r5, 0x123
  f0 13 5e              leasp	r3, 0x5e
@@ -958,8 +958,7 @@ Disassembly of section .text:
  f0 3c 3c              stsp16	[sp+0x3c], r4
  c0 52                 ldi8	r4, 0x52
  d7 00                 sys	debug_putc
- c1 46                 ldi8	r5, 0x46
- 01                    mov	r4, r5
+ c0 46                 ldi8	r4, 0x46
  d7 00                 sys	debug_putc
  f0 00 3d              ldi8	r0, 0x3d
  f1 20                 mov	r4, r0
@@ -968,7 +967,7 @@ Disassembly of section .text:
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
  d7 00                 sys	debug_putc
- 01                    mov	r4, r5
+ c0 46                 ldi8	r4, 0x46
  d7 00                 sys	debug_putc
  d7 00                 sys	debug_putc
  f0 03 0a              ldi8	r3, 0xa

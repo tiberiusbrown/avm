@@ -1,0 +1,17 @@
+avm_add_project(ardurogue2
+    SOURCES
+        src/main.cpp
+    INCLUDE_DIRS
+        include
+        "${AVM_SYSROOT_DIR}/include"
+    STARTUP
+        "${AVM_SYSROOT_DIR}/lib/crt0.o"
+    LIBRARIES
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    DISASSEMBLY
+        "${CMAKE_CURRENT_SOURCE_DIR}/out/ardurogue2.asm"
+    IMAGE
+        "${CMAKE_CURRENT_SOURCE_DIR}/out/fxdata.bin"
+    GC_SECTIONS
+)

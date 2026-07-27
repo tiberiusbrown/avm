@@ -9,8 +9,8 @@ SYMBOL TABLE:
 00000140 l     O .data	00000002 small_memops_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	0000017d avm_test_main
-00000393 g     F .text	00000002 avm_halt
+00000216 g     F .text	0000017c avm_test_main
+00000392 g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -25,7 +25,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 7d 01              call16	avm_halt
+ e1 7c 01              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -64,14 +64,14 @@ Disassembly of section .text:
  c5 25 36              ldi16	r5, 0x3625
  c6 00 01              ldi16	r6, 0x100
  f0 6b 8c              st32	[r6], q2
- f2 42                 sub	r2, r2
- c3 40                 ldi8	r7, 0x40
+ f2 30                 sub	r0, r0
+ f0 03 40              ldi8	r3, 0x40
  d7 01                 sys	debug_break
- f0 04 24 01           ldi16	r0, 0x124
- f0 07 32 01           ldi16	r3, 0x132
- f1 0a                 mov	r1, r2
+ f0 05 24 01           ldi16	r1, 0x124
+ f0 06 32 01           ldi16	r2, 0x132
+ c7 34 01              ldi16	r7, 0x134
  c4 20 01              ldi16	r4, 0x120
- f1 25                 mov	r5, r1
+ a5                    xor	r5, r5
  c2 20                 ldi8	r6, 0x20
  d7 11                 sys	memset
  c4 21 01              ldi16	r4, 0x121
@@ -82,7 +82,7 @@ Disassembly of section .text:
  c5 05 01              ldi16	r5, 0x105
  c2 02                 ldi8	r6, 0x2
  d7 0f                 sys	memcpy
- f1 20                 mov	r4, r0
+ f1 21                 mov	r4, r1
  c5 07 01              ldi16	r5, 0x107
  c2 03                 ldi8	r6, 0x3
  d7 0f                 sys	memcpy
@@ -94,20 +94,20 @@ Disassembly of section .text:
  c5 0b 01              ldi16	r5, 0x10b
  c2 05                 ldi8	r6, 0x5
  d7 0f                 sys	memcpy
- f1 23                 mov	r4, r3
+ f1 22                 mov	r4, r2
  c1 5a                 ldi8	r5, 0x5a
  c2 08                 ldi8	r6, 0x8
  d7 11                 sys	memset
  c4 27 01              ldi16	r4, 0x127
- f1 24                 mov	r5, r0
+ f1 25                 mov	r5, r1
  c2 07                 ldi8	r6, 0x7
  d7 12                 sys	memmove
- c4 34 01              ldi16	r4, 0x134
- f1 27                 mov	r5, r3
+ 03                    mov	r4, r7
+ f1 26                 mov	r5, r2
  c2 0c                 ldi8	r6, 0xc
  d7 12                 sys	memmove
  f0 44 20 01           ldm8u	r4, [0x120]
- f2 22                 add	r4, r2
+ f2 20                 add	r4, r0
  f0 45 21 01           ldm8u	r5, [0x121]
  14                    add	r5, r4
  f0 44 22 01           ldm8u	r4, [0x122]
@@ -168,12 +168,12 @@ Disassembly of section .text:
  14                    add	r5, r4
  f0 44 3e 01           ldm8u	r4, [0x13e]
  11                    add	r4, r5
- f0 42 3f 01           ldm8u	r2, [0x13f]
- f2 14                 add	r2, r4
- f4 b7                 dec16	r7
- f4 a7                 tst8	r7
- db 03 ff              brne16	avm_test_main+116
- f0 5a 40 01           stm16	[0x140], r2
+ f0 40 3f 01           ldm8u	r0, [0x13f]
+ f2 04                 add	r0, r4
+ f4 b3                 dec16	r3
+ f4 a3                 tst8	r3
+ db 06 ff              brne16	avm_test_main+118
+ f0 58 40 01           stm16	[0x140], r0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

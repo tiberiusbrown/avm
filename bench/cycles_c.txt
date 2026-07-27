@@ -24,7 +24,7 @@
       744517   select.c
       515129   shifts.c
       372097   sieve.c
-      330087   small_memops.c
+      326582   small_memops.c
       267959   stack_array.c
      7082644   state_machine.c
     25638281   string_scan.c
@@ -41,7 +41,7 @@
         2060   sys_strncpy.c
         3680   sys_strncpy_p.c
       501299   tail_calls.c
-       43496   tilesrect.c
+       42226   tilesrect.c
        90028   tilessprite.c
        37688   tilessprite16.c
        34494   tilessprite16_cached.c

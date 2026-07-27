@@ -176,7 +176,10 @@ add_dependencies(avm_bench
 # test suite, instruction benchmark image, and every C benchmark.
 add_custom_target(avm_bench_run
     COMMAND "$<TARGET_FILE:avm_bench>"
-    DEPENDS avm_tests_run avm_bench
+    DEPENDS
+        avm_tests_run
+        avm_bench
+        ardurogue2
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running AVM tests, instruction benchmarks, and C benchmarks"
     USES_TERMINAL

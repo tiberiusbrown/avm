@@ -66,6 +66,6 @@ add_subdirectory(deps/Ardens ardens-build EXCLUDE_FROM_ALL)
 add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
 
 add_subdirectory(interp)
+add_subdirectory(projects)
 add_subdirectory(tests)
 add_subdirectory(bench)
-add_subdirectory(projects)

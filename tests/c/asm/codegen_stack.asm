@@ -4,18 +4,18 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/codegen_stack.elf:	file format
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 codegen_stack.c
-00000410 l     F .text	00000029 fibonacci
-000006dc l     F .text	00000049 program_pointer_stack
-00000439 l     F .text	00000250 stack_arrays
-00000689 l     F .text	00000053 register_pressure
-00000725 l     F .text	00000014 helper4
+00000402 l     F .text	00000029 fibonacci
+000006ce l     F .text	00000049 program_pointer_stack
+0000042b l     F .text	00000250 stack_arrays
+0000067b l     F .text	00000053 register_pressure
+00000717 l     F .text	00000014 helper4
 00000100 l     O .data	00000009 .L__const.program_pointer_stack.pointers
 00000109 l     O .data	00000003 .L__const.program_pointer_stack.counts
-0000073b l     O .rodata	00000020 flash_data
+0000072d l     O .rodata	00000020 flash_data
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	000001fa avm_test_main
-00000739 g     F .text	00000002 avm_halt
+00000216 g     F .text	000001ec avm_test_main
+0000072b g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -30,7 +30,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 23 05              call16	avm_halt
+ e1 15 05              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -45,257 +45,244 @@ Disassembly of section .text:
  c4 3c 5a              ldi16	r4, 0x5a3c
  f0 3c 14              stsp16	[sp+0x14], r4
  f0 1c 18              ldsp8u	r4, [sp+0x18]
- e1 dd 01              call16	fibonacci
- f0 03 30              ldi8	r3, 0x30
- f0 02 0f              ldi8	r2, 0xf
+ e1 cf 01              call16	fibonacci
+ f0 02 30              ldi8	r2, 0x30
+ f0 03 0f              ldi8	r3, 0xf
  04                    mov	r5, r4
- f9 a8                 and	r5, r2
+ f9 ac                 and	r5, r3
  09                    mov	r6, r5
- f9 cd                 or	r6, r3
+ f9 c9                 or	r6, r2
  cd 0a                 cmpi.s8	r5, 0xa
  c9 37                 addi.s8	r5, 0x37
  fc 2e                 cmov.ult	r5, r6
- f4 71                 stsp16	[sp+0xc], r5
+ f0 3d 12              stsp16	[sp+0x12], r5
  04                    mov	r5, r4
  08                    mov	r6, r4
- f4 7a                 stsp16	[sp+0xe], r6
+ f0 3e 10              stsp16	[sp+0x10], r6
  fa 88                 lsr16i	r5, 0x8
- f9 a8                 and	r5, r2
+ f9 ac                 and	r5, r3
  01                    mov	r4, r5
- f9 8d                 or	r4, r3
+ f9 89                 or	r4, r2
  cd 0a                 cmpi.s8	r5, 0xa
  c9 37                 addi.s8	r5, 0x37
  fc 2c                 cmov.ult	r5, r4
- f4 69                 stsp16	[sp+0xa], r5
+ f4 61                 stsp16	[sp+0x8], r5
  02                    mov	r4, r6
  f1 74                 zext8	r4
- 0c                    mov	r7, r4
- fa a4                 lsr16i	r7, 0x4
- 07                    mov	r5, r7
- f9 ad                 or	r5, r3
- cb 37                 addi.s8	r7, 0x37
- c2 a0                 ldi8	r6, 0xa0
- 32                    cmp	r4, r6
- f1 06                 mov	r0, r6
- fc 3d                 cmov.ult	r7, r5
- f4 5b                 stsp16	[sp+0x6], r7
+ 08                    mov	r6, r4
+ fa 94                 lsr16i	r6, 0x4
+ 06                    mov	r5, r6
+ f9 a9                 or	r5, r2
+ ca 37                 addi.s8	r6, 0x37
+ f0 00 a0              ldi8	r0, 0xa0
+ f5 20                 cmp	r4, r0
+ fc 35                 cmov.ult	r6, r5
+ f4 5a                 stsp16	[sp+0x6], r6
  f0 31 16              ldsp16	r1, [sp+0x16]
  f0 34 14              ldsp16	r4, [sp+0x14]
- f0 3c 10              stsp16	[sp+0x10], r4
- e1 62 04              call16	program_pointer_stack
- f0 3c 12              stsp16	[sp+0x12], r4
+ f4 70                 stsp16	[sp+0xc], r4
+ e1 53 04              call16	program_pointer_stack
+ f4 78                 stsp16	[sp+0xe], r4
  0c                    mov	r7, r4
  f1 77                 zext8	r7
  0b                    mov	r6, r7
  fa 94                 lsr16i	r6, 0x4
  06                    mov	r5, r6
- f9 ad                 or	r5, r3
+ f9 a9                 or	r5, r2
  ca 37                 addi.s8	r6, 0x37
  f5 2c                 cmp	r7, r0
  fc 35                 cmov.ult	r6, r5
- f4 62                 stsp16	[sp+0x8], r6
- f4 38                 ldsp16	r4, [sp+0xe]
- 08                    mov	r6, r4
- fa 9c                 lsr16i	r6, 0xc
+ f4 6a                 stsp16	[sp+0xa], r6
+ f0 36 10              ldsp16	r6, [sp+0x10]
  06                    mov	r5, r6
- f9 ad                 or	r5, r3
- ca 37                 addi.s8	r6, 0x37
- c7 00 a0              ldi16	r7, 0xa000
- 33                    cmp	r4, r7
- fc 35                 cmov.ult	r6, r5
- c1 53                 ldi8	r5, 0x53
+ fa 8c                 lsr16i	r5, 0xc
  01                    mov	r4, r5
- 0d                    mov	r7, r5
+ f9 89                 or	r4, r2
+ c9 37                 addi.s8	r5, 0x37
+ c7 00 a0              ldi16	r7, 0xa000
+ 3b                    cmp	r6, r7
+ fc 2c                 cmov.ult	r5, r4
+ c0 53                 ldi8	r4, 0x53
  d7 00                 sys	debug_putc
- f1 23                 mov	r4, r3
+ c0 30                 ldi8	r4, 0x30
  d7 00                 sys	debug_putc
  c0 3d                 ldi8	r4, 0x3d
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
- f4 28                 ldsp16	r4, [sp+0xa]
+ f4 20                 ldsp16	r4, [sp+0x8]
  d7 00                 sys	debug_putc
  f4 18                 ldsp16	r4, [sp+0x6]
  d7 00                 sys	debug_putc
- f4 30                 ldsp16	r4, [sp+0xc]
+ f0 34 12              ldsp16	r4, [sp+0x12]
  d7 00                 sys	debug_putc
- f0 00 0a              ldi8	r0, 0xa
- f1 20                 mov	r4, r0
+ c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
- 03                    mov	r4, r7
+ c0 53                 ldi8	r4, 0x53
  d7 00                 sys	debug_putc
  c0 31                 ldi8	r4, 0x31
  d7 00                 sys	debug_putc
  f1 21                 mov	r4, r1
- e1 6b 01              call16	stack_arrays
+ e1 5f 01              call16	stack_arrays
  08                    mov	r6, r4
- f9 c8                 and	r6, r2
+ f9 cc                 and	r6, r3
  06                    mov	r5, r6
- f9 ad                 or	r5, r3
+ f9 a9                 or	r5, r2
  ce 0a                 cmpi.s8	r6, 0xa
  ca 37                 addi.s8	r6, 0x37
  fc 35                 cmov.ult	r6, r5
- f4 6a                 stsp16	[sp+0xa], r6
- 04                    mov	r5, r4
- f4 70                 stsp16	[sp+0xc], r4
- fa 88                 lsr16i	r5, 0x8
- f9 a8                 and	r5, r2
- 09                    mov	r6, r5
- f9 cd                 or	r6, r3
- cd 0a                 cmpi.s8	r5, 0xa
- c9 37                 addi.s8	r5, 0x37
- fc 2e                 cmov.ult	r5, r6
- f4 59                 stsp16	[sp+0x6], r5
+ f4 62                 stsp16	[sp+0x8], r6
  08                    mov	r6, r4
- f1 76                 zext8	r6
- c1 a0                 ldi8	r5, 0xa0
- 39                    cmp	r6, r5
- fa 94                 lsr16i	r6, 0x4
- 0e                    mov	r7, r6
- f9 ed                 or	r7, r3
- ca 37                 addi.s8	r6, 0x37
- fc 37                 cmov.ult	r6, r7
  0c                    mov	r7, r4
- fa ac                 lsr16i	r7, 0xc
+ f0 3f 12              stsp16	[sp+0x12], r7
+ fa 98                 lsr16i	r6, 0x8
+ f9 cc                 and	r6, r3
+ 02                    mov	r4, r6
+ f9 89                 or	r4, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 34                 cmov.ult	r6, r4
+ f1 77                 zext8	r7
+ f5 2c                 cmp	r7, r0
+ fa a4                 lsr16i	r7, 0x4
  03                    mov	r4, r7
- f9 8d                 or	r4, r3
- f4 50                 stsp16	[sp+0x4], r4
+ f9 89                 or	r4, r2
  cb 37                 addi.s8	r7, 0x37
- c4 00 a0              ldi16	r4, 0xa000
- f4 31                 ldsp16	r5, [sp+0xc]
- 34                    cmp	r5, r4
- f4 10                 ldsp16	r4, [sp+0x4]
  fc 3c                 cmov.ult	r7, r4
+ f0 35 12              ldsp16	r5, [sp+0x12]
+ fa 8c                 lsr16i	r5, 0xc
+ 01                    mov	r4, r5
+ f9 89                 or	r4, r2
+ f4 58                 stsp16	[sp+0x6], r4
+ c9 37                 addi.s8	r5, 0x37
+ f0 05 00 a0           ldi16	r1, 0xa000
+ f0 34 12              ldsp16	r4, [sp+0x12]
+ f5 21                 cmp	r4, r1
+ f4 18                 ldsp16	r4, [sp+0x6]
+ fc 2c                 cmov.ult	r5, r4
  c0 3d                 ldi8	r4, 0x3d
  d7 00                 sys	debug_putc
- 03                    mov	r4, r7
- d7 00                 sys	debug_putc
- f4 18                 ldsp16	r4, [sp+0x6]
+ 01                    mov	r4, r5
  d7 00                 sys	debug_putc
  02                    mov	r4, r6
  d7 00                 sys	debug_putc
- f4 28                 ldsp16	r4, [sp+0xa]
+ 03                    mov	r4, r7
  d7 00                 sys	debug_putc
- f1 20                 mov	r4, r0
+ f4 20                 ldsp16	r4, [sp+0x8]
+ d7 00                 sys	debug_putc
+ c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  c0 53                 ldi8	r4, 0x53
  d7 00                 sys	debug_putc
  c0 32                 ldi8	r4, 0x32
  d7 00                 sys	debug_putc
- f0 34 10              ldsp16	r4, [sp+0x10]
- e1 54 03              call16	register_pressure
- 04                    mov	r5, r4
- 0c                    mov	r7, r4
- f1 75                 zext8	r5
- c0 a0                 ldi8	r4, 0xa0
- 34                    cmp	r5, r4
- fa 84                 lsr16i	r5, 0x4
- 01                    mov	r4, r5
- f9 8d                 or	r4, r3
- c9 37                 addi.s8	r5, 0x37
- fc 2c                 cmov.ult	r5, r4
- f4 49                 stsp16	[sp+0x2], r5
- f0 35 12              ldsp16	r5, [sp+0x12]
- 09                    mov	r6, r5
- f9 c8                 and	r6, r2
- 02                    mov	r4, r6
- f9 8d                 or	r4, r3
- ce 0a                 cmpi.s8	r6, 0xa
- ca 37                 addi.s8	r6, 0x37
- fc 34                 cmov.ult	r6, r4
- f4 5a                 stsp16	[sp+0x6], r6
- 09                    mov	r6, r5
- fa 98                 lsr16i	r6, 0x8
- f9 c8                 and	r6, r2
- 02                    mov	r4, r6
- f9 8d                 or	r4, r3
- ce 0a                 cmpi.s8	r6, 0xa
- ca 37                 addi.s8	r6, 0x37
- fc 34                 cmov.ult	r6, r4
- f4 52                 stsp16	[sp+0x4], r6
- 0b                    mov	r6, r7
- f4 6a                 stsp16	[sp+0xa], r6
+ f4 30                 ldsp16	r4, [sp+0xc]
+ e1 47 03              call16	register_pressure
+ 08                    mov	r6, r4
+ f1 76                 zext8	r6
+ f5 28                 cmp	r6, r0
+ fa 94                 lsr16i	r6, 0x4
  06                    mov	r5, r6
- f9 a8                 and	r5, r2
- 01                    mov	r4, r5
- f9 8d                 or	r4, r3
+ f9 a9                 or	r5, r2
+ ca 37                 addi.s8	r6, 0x37
+ fc 35                 cmov.ult	r6, r5
+ f4 52                 stsp16	[sp+0x4], r6
+ f4 39                 ldsp16	r5, [sp+0xe]
+ 09                    mov	r6, r5
+ f9 cc                 and	r6, r3
+ 0e                    mov	r7, r6
+ f9 e9                 or	r7, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 37                 cmov.ult	r6, r7
+ f4 62                 stsp16	[sp+0x8], r6
+ 09                    mov	r6, r5
+ 0d                    mov	r7, r5
+ fa 98                 lsr16i	r6, 0x8
+ f9 cc                 and	r6, r3
+ 06                    mov	r5, r6
+ f9 a9                 or	r5, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 35                 cmov.ult	r6, r5
+ f4 5a                 stsp16	[sp+0x6], r6
+ f4 70                 stsp16	[sp+0xc], r4
+ 08                    mov	r6, r4
+ f9 cc                 and	r6, r3
+ 06                    mov	r5, r6
+ f9 a9                 or	r5, r2
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 35                 cmov.ult	r6, r5
+ f4 4a                 stsp16	[sp+0x2], r6
+ 04                    mov	r5, r4
+ fa 88                 lsr16i	r5, 0x8
+ f9 ac                 and	r5, r3
+ 09                    mov	r6, r5
+ f9 c9                 or	r6, r2
  cd 0a                 cmpi.s8	r5, 0xa
  c9 37                 addi.s8	r5, 0x37
- fc 2c                 cmov.ult	r5, r4
- f4 41                 stsp16	[sp+0x0], r5
- fa 98                 lsr16i	r6, 0x8
- f9 c8                 and	r6, r2
- 02                    mov	r4, r6
- f9 8d                 or	r4, r3
- ce 0a                 cmpi.s8	r6, 0xa
- ca 37                 addi.s8	r6, 0x37
- fc 34                 cmov.ult	r6, r4
- f0 35 12              ldsp16	r5, [sp+0x12]
- 0d                    mov	r7, r5
- fa ac                 lsr16i	r7, 0xc
+ fc 2e                 cmov.ult	r5, r6
  03                    mov	r4, r7
- f9 8d                 or	r4, r3
+ fa ac                 lsr16i	r7, 0xc
+ 0b                    mov	r6, r7
+ f9 c9                 or	r6, r2
  cb 37                 addi.s8	r7, 0x37
- f0 3f 10              stsp16	[sp+0x10], r7
- c7 00 a0              ldi16	r7, 0xa000
- 37                    cmp	r5, r7
- f0 35 10              ldsp16	r5, [sp+0x10]
- fc 2c                 cmov.ult	r5, r4
- f0 3d 10              stsp16	[sp+0x10], r5
- f4 28                 ldsp16	r4, [sp+0xa]
- 04                    mov	r5, r4
- fa 8c                 lsr16i	r5, 0xc
- f9 75                 or	r3, r5
- c9 37                 addi.s8	r5, 0x37
- 33                    cmp	r4, r7
- fc 2b                 cmov.ult	r5, r3
- c7 e8 d3              ldi16	r7, 0xd3e8
- f0 34 12              ldsp16	r4, [sp+0x12]
- 33                    cmp	r4, r7
- f8 08                 cset.ne	r0
- c7 f0 9e              ldi16	r7, 0x9ef0
+ f5 21                 cmp	r4, r1
+ fc 3e                 cmov.ult	r7, r6
+ f4 43                 stsp16	[sp+0x0], r7
  f4 30                 ldsp16	r4, [sp+0xc]
- 33                    cmp	r4, r7
- f8 0f                 cset.ne	r7
- f4 38                 ldsp16	r4, [sp+0xe]
+ 0c                    mov	r7, r4
+ fa ac                 lsr16i	r7, 0xc
+ f9 5d                 or	r2, r7
+ cb 37                 addi.s8	r7, 0x37
+ f5 21                 cmp	r4, r1
+ fc 3a                 cmov.ult	r7, r2
+ c4 e8 d3              ldi16	r4, 0xd3e8
+ f4 3a                 ldsp16	r6, [sp+0xe]
+ 38                    cmp	r6, r4
+ f8 08                 cset.ne	r0
+ c4 f0 9e              ldi16	r4, 0x9ef0
+ f0 36 12              ldsp16	r6, [sp+0x12]
+ 38                    cmp	r6, r4
+ f8 0a                 cset.ne	r2
+ f0 34 10              ldsp16	r4, [sp+0x10]
  cc 37                 cmpi.s8	r4, 0x37
  f8 09                 cset.ne	r1
- f9 3d                 or	r1, r7
- c3 3d                 ldi8	r7, 0x3d
+ f9 29                 or	r1, r2
+ c0 3d                 ldi8	r4, 0x3d
+ d7 00                 sys	debug_putc
  03                    mov	r4, r7
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ f4 10                 ldsp16	r4, [sp+0x4]
  d7 00                 sys	debug_putc
  f4 08                 ldsp16	r4, [sp+0x2]
  d7 00                 sys	debug_putc
- f4 00                 ldsp16	r4, [sp+0x0]
- d7 00                 sys	debug_putc
  c4 a8 e4              ldi16	r4, 0xe4a8
- f4 29                 ldsp16	r5, [sp+0xa]
+ f4 31                 ldsp16	r5, [sp+0xc]
  34                    cmp	r5, r4
  f8 0d                 cset.ne	r5
  f9 a5                 or	r5, r1
- c2 0a                 ldi8	r6, 0xa
- 02                    mov	r4, r6
+ c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  c0 53                 ldi8	r4, 0x53
  d7 00                 sys	debug_putc
  f9 a1                 or	r5, r0
  c0 33                 ldi8	r4, 0x33
  d7 00                 sys	debug_putc
- 03                    mov	r4, r7
+ c0 3d                 ldi8	r4, 0x3d
  d7 00                 sys	debug_putc
- f0 34 10              ldsp16	r4, [sp+0x10]
- d7 00                 sys	debug_putc
- f4 10                 ldsp16	r4, [sp+0x4]
- d7 00                 sys	debug_putc
- f4 20                 ldsp16	r4, [sp+0x8]
+ f4 00                 ldsp16	r4, [sp+0x0]
  d7 00                 sys	debug_putc
  f4 18                 ldsp16	r4, [sp+0x6]
  d7 00                 sys	debug_putc
- 02                    mov	r4, r6
+ f4 28                 ldsp16	r4, [sp+0xa]
+ d7 00                 sys	debug_putc
+ f4 20                 ldsp16	r4, [sp+0x8]
+ d7 00                 sys	debug_putc
+ c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  01                    mov	r4, r5
  d6 19                 adjsp	0x19

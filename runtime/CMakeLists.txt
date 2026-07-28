@@ -53,7 +53,7 @@ avm_add_object(
 )
 
 set(AVM_RUNTIME_LIBRARY_OBJECTS)
-foreach(RUNTIME_SOURCE runtime integer math string pgmspace)
+foreach(RUNTIME_SOURCE avm runtime integer math string pgmspace)
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
     avm_add_object(
         OUTPUT "${RUNTIME_OBJECT}"

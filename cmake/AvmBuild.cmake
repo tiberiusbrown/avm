@@ -429,4 +429,6 @@ function(avm_add_project name)
 
     set_property(TARGET "${name}" PROPERTY AVM_ELF "${output_elf}")
     set_property(TARGET "${name}" PROPERTY AVM_IMAGE "${output_image}")
+
+    add_dependencies("${name}" avm_sdk)
 endfunction()

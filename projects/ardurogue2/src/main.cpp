@@ -1,11 +1,21 @@
+#include <avm.h>
+
+int x = 10;
+
+void loop()
+{
+    if(!avm_next_frame())
+        return;
+
+    avm_draw_filled_rect_white(x++, 10, 20, 20);
+
+    avm_display(AVM_CLEAR_BUFFER);
+}
+
 extern "C" int main()
 {
-    int x = 10;
+    avm_set_frame_rate(20);
     while(true)
-    {
-        __avm_draw_filled_rect_white(x++, 10, 20, 20);
-
-        __avm_display(1);
-    }
+        loop();
     return 0;
 }

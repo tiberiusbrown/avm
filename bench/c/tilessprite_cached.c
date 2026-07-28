@@ -1,7 +1,7 @@
 #include <stdint.h>
 #include <avm/pgmspace.h>
 
-inline void debug_break() { __avm_debug_break(); }
+static inline void debug_break() { __avm_debug_break(); }
 
 static const uint8_t SPRITE[] AVM_PROGMEM = {
     8, 8,

@@ -237,6 +237,7 @@ function(avm_add_image)
     list(APPEND commands
         COMMAND
             "$<TARGET_FILE:llvm-avm-image>"
+            --development
             "${ARG_OUTPUT_ELF}"
             -o "${ARG_OUTPUT_IMAGE}"
     )

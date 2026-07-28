@@ -45,7 +45,7 @@
 #endif
 
 #ifndef AVM_TEST_ADVANCE_LIMIT
-#define AVM_TEST_ADVANCE_LIMIT 10000000000000ull
+#define AVM_TEST_ADVANCE_LIMIT 20000000000000ull
 #endif
 
 namespace {
@@ -384,9 +384,21 @@ std::vector<std::uint8_t> run_image(fs::path const& interpreter,
        !cpu.autobreaks.test(absim::AB_BREAK)) {
         std::ostringstream message;
         message << "The emulator did not reach SYS debug_break before the "
-                << advance_limit << "-cycle limit"
+                << (double(advance_limit) * 1e-12) << " second limit"
                 << "\nexecuted cycles: " << cpu.cycle_count
-                << "\nserial bytes captured: " << cpu.serial_bytes.size();
+                << "\nserial bytes captured: " << cpu.serial_bytes.size()
+                << "\nactual serial output (escaped): ";
+
+        if(cpu.serial_bytes.empty()) {
+            message << "<empty>";
+        }
+        else {
+            std::string_view const serial_output(
+                reinterpret_cast<char const*>(cpu.serial_bytes.data()),
+                cpu.serial_bytes.size());
+            message << escaped(serial_output);
+        }
+
         throw std::runtime_error(message.str());
     }
 

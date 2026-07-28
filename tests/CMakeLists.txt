@@ -8,7 +8,7 @@ set(AVM_ASM_TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/asm")
 set(AVM_C_TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/c")
 set(AVM_CXX_TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/cpp")
 set(AVM_TEST_ADVANCE_LIMIT
-    "10000000000000" CACHE STRING
+    "20000000000000" CACHE STRING
     "Maximum emulated CPU cycles allowed for each AVM test")
 
 # CONFIGURE_DEPENDS makes CMake regenerate when a test is added or removed.

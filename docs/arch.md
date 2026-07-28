@@ -2014,7 +2014,13 @@ externally observable display output have no generic LLVM representation.
 | `0x22-0x26` | Reserved | — | — | — |
 | `0x27` | `draw_filled_rect_white` | `r4 = x`, `r5 = y`, `low8(r6) = w`, `low8(r7) = h` | None | Framebuffer reads and writes |
 | `0x28` | `draw_filled_rect_black` | `r4 = x`, `r5 = y`, `low8(r6) = w`, `low8(r7) = h` | None | Framebuffer reads and writes |
-| `0x29-0xFF` | Reserved | — | — | — |
+| `0x29` | `buttons` | None | zero-extended button mask in `r4` | Button input |
+| `0x2A` | `idle` | None | None | Processor sleep until interrupt |
+| `0x2B` | `generate_random_seed` | None | `r4` | ADC and Timer0 reads |
+| `0x2C` | `save` | None | None | Image-header read; persistent-storage read, erase, and write; saved-prefix read |
+| `0x2D` | `load` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads; saved-prefix write on success |
+| `0x2E` | `save_exists` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads |
+| `0x2F-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -2842,6 +2848,182 @@ writes are proven dead. It MAY be reordered relative to provably disjoint
 memory when all program-order dependencies and observable-service constraints
 remain satisfied.
 
+### 49.23. `buttons`
+
+Encoding:
+
+```text
+D7 29
+```
+
+Inputs:
+
+```text
+none
+```
+
+Result:
+
+```text
+r4 = zero_extend16(buttonMask)
+```
+
+The returned active-button mask uses the canonical Arduboy bit assignments:
+
+| Button | Mask |
+|---|---:|
+| Up | `0x80` |
+| Right | `0x40` |
+| Left | `0x20` |
+| Down | `0x10` |
+| A | `0x08` |
+| B | `0x04` |
+
+A set bit denotes a currently pressed button. Simultaneous presses are combined
+with bitwise OR. Bits `1:0` are zero. The complete high byte of `r4` is zero,
+regardless of the ordinary ABI rule for an `uint8_t` function result.
+
+The service observes evolving external input state. It MUST NOT be treated as a
+constant, speculated, or common-subexpression eliminated across an operation
+that may allow button state to change.
+
+### 49.24. `idle`
+
+Encoding:
+
+```text
+D7 2A
+```
+
+Inputs and results:
+
+```text
+none
+```
+
+The service places the processor in idle sleep mode until an enabled interrupt
+wakes it, then resumes execution at the following AVM instruction. Timer0 and
+other clocks available in idle mode continue to operate according to the
+platform configuration.
+
+The service is an observable scheduling and power-management point. It MUST NOT
+be removed, duplicated, speculated, or reordered across another observable
+system service.
+
+### 49.25. `generate_random_seed`
+
+Encoding:
+
+```text
+D7 2B
+```
+
+Inputs:
+
+```text
+none
+```
+
+Result:
+
+```text
+r4 = low16(adcReading + timer0Counter)
+```
+
+`adcReading` is one conversion from the platform random-seed ADC input.
+`timer0Counter` is the unsigned eight-bit Timer0 counter sampled after that
+conversion. The addition is unsigned modulo `2^16`.
+
+The service reads evolving hardware state and MUST NOT be constant-folded,
+common-subexpression eliminated, speculated, or duplicated.
+
+### 49.26. Persistent save services
+
+Encodings:
+
+| ID | Encoding | Service |
+|---:|---|---|
+| `0x2C` | `D7 2C` | `save` |
+| `0x2D` | `D7 2D` | `load` |
+| `0x2E` | `D7 2E` | `save_exists` |
+
+The services take no arguments. `save` has no result. `load` and `save_exists`
+return a canonical Boolean:
+
+```text
+r4 = 0x0000  false
+r4 = 0x0001  true
+```
+
+In particular, both services clear `high8(r4)`.
+
+Each invocation rereads the little-endian `saveSize` field from image-header
+offset `0x0A`. Implementations MUST NOT require a cached SRAM copy of this
+field. The program-visible save source and destination range is:
+
+```text
+[0x0100, 0x0100 + saveSize)
+```
+
+When `saveSize == 0`, `save` is a no-op and the two Boolean services return
+false.
+
+#### Persistent record format
+
+The selected persistent-storage erase sector contains an append-only sequence
+of records:
+
+```text
+record offset + 0: saveSize low byte
+record offset + 1: saveSize high byte
+record offset + 2: saveSize payload bytes
+```
+
+The record size is therefore an unsigned little-endian 16-bit value. A record
+belongs to the current image exactly when its stored size equals the image
+header's current `saveSize`.
+
+The Version 1 Arduboy runtime uses one 4,096-byte erase sector and leaves its
+final two bytes erased. A record is eligible for storage only when:
+
+```text
+recordOffset + 2 + saveSize <= 4094
+```
+
+#### `save`
+
+`save` appends a new record containing the current saved-prefix bytes. It scans
+matching records from sector offset zero. At the first nonmatching header:
+
+- an erased `0xFFFF` header with sufficient remaining space is the append
+  position;
+- any other header, or insufficient remaining space, causes the sector to be
+  erased and the new record to be written at offset zero.
+
+Programming is split at physical 256-byte flash-page boundaries. The service
+does not return until all erase or program operations have completed.
+
+#### `load`
+
+`load` scans matching records from sector offset zero and copies each matching
+payload to the saved-prefix range. Consequently, after at least one matching
+record, the newest matching record remains loaded and the service returns true.
+If the first record does not match, the service returns false and does not
+modify the saved-prefix range.
+
+`load` never modifies bytes at or above `0x0100 + saveSize`.
+
+#### `save_exists`
+
+`save_exists` returns true exactly when the first record header equals the
+current image's `saveSize`. It does not copy payload data and does not scan later
+records.
+
+The persistence services access externally retained state. They MUST NOT be
+removed, duplicated, speculated, common-subexpression eliminated, or reordered
+relative to one another. `save` reads the saved-prefix range; `load` may write
+that range; `save_exists` does not access AVM data memory.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -3600,6 +3782,12 @@ declare void  @llvm.avm.debug.putc(i8 %value)
 declare void  @llvm.avm.debug.break()
 declare i16   @llvm.avm.millis()
 declare i32   @llvm.avm.millis32()
+declare i8    @llvm.avm.buttons()
+declare void  @llvm.avm.idle()
+declare i16   @llvm.avm.generate.random.seed()
+declare void  @llvm.avm.save()
+declare i1    @llvm.avm.load()
+declare i1    @llvm.avm.save.exists()
 
 declare float @llvm.avm.sinf(float %x)
 declare float @llvm.avm.cosf(float %x)
@@ -3703,6 +3891,12 @@ no corresponding generic LLVM intrinsic.
 | `llvm.avm.draw.sprite.erase(i16,i16,p1,i16)` | `SYS 0x21` through `SYS_DRAW_SPRITE_ERASE` | `r4 = x`, `r5 = y`, `q3 = sprite`, `r0 = frame` | None |
 | `llvm.avm.draw.filled.rect.white(i16,i16,i8,i8)` | `SYS 0x27` through `SYS_DRAW_FILLED_RECT_WHITE` | `r4 = x`, `r5 = y`, `low8(r6) = width`, `low8(r7) = height` | None |
 | `llvm.avm.draw.filled.rect.black(i16,i16,i8,i8)` | `SYS 0x28` through `SYS_DRAW_FILLED_RECT_BLACK` | `r4 = x`, `r5 = y`, `low8(r6) = width`, `low8(r7) = height` | None |
+| `llvm.avm.buttons()` | `SYS 0x29` through `SYS_BUTTONS` | None | `r4 = zero-extended mask` |
+| `llvm.avm.idle()` | `SYS 0x2A` through `SYS_IDLE` | None | None |
+| `llvm.avm.generate.random.seed()` | `SYS 0x2B` through `SYS_GENERATE_RANDOM_SEED` | None | `r4` |
+| `llvm.avm.save()` | `SYS 0x2C` through `SYS_SAVE` | None | None |
+| `llvm.avm.load()` | `SYS 0x2D` through `SYS_LOAD` | None | `r4 = canonical Boolean` |
+| `llvm.avm.save.exists()` | `SYS 0x2E` through `SYS_SAVE_EXISTS` | None | `r4 = canonical Boolean` |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -3787,7 +3981,8 @@ sequence. Recognized nonvolatile AS0 `memmove` operations MAY lower to service
 target builtins for the comparison and string functions lower to services
 `0x13-0x1C`. The target display builtin lowers to service `0x1D`. The four
 target sprite builtins lower to services `0x1E-0x21`. The two filled-rectangle
-builtins lower to services `0x27-0x28`. A compiler MAY recognize
+builtins lower to services `0x27-0x28`. Platform and persistence builtins lower
+to services `0x29-0x2E`. A compiler MAY recognize
 ordinary C library calls and replace them with the corresponding target
 intrinsic when interposition, object-size, and language rules permit it.
 
@@ -3797,6 +3992,18 @@ intrinsic when interposition, object-size, and language rules permit it.
 evolving-state constraints specified in Sections 49.1-49.4. They have no AVM
 memory effects but retain a chain or unmodeled side effect. `debug_break` is a
 scheduling barrier at its source position.
+
+`buttons` and `generate_random_seed` read evolving hardware state and retain a
+chain or unmodeled side effect. `idle` is an observable scheduling and power-
+management point. None of these services may be speculated, duplicated, or
+common-subexpression eliminated.
+
+`save`, `load`, and `save_exists` are mutually ordered externally observable
+persistent-storage operations. `save` reads the saved-prefix range, `load` may
+write it, and `save_exists` has no AVM-memory effect. None may be removed,
+duplicated, speculated, or reordered relative to another persistence service.
+They also remain ordered relative to AVM memory operations that may alias the
+saved-prefix range when applicable.
 
 The floating-point math services are deterministic, have no AVM memory effects,
 set neither `errno` nor floating-point exception state, and have no observable
@@ -3866,6 +4073,12 @@ void     __avm_debug_putc(unsigned char value);
 void     __avm_debug_break(void);
 uint16_t __avm_millis(void);
 uint32_t __avm_millis32(void);
+uint8_t  __avm_buttons(void);
+void     __avm_idle(void);
+uint16_t __avm_generate_random_seed(void);
+void     __avm_save(void);
+bool     __avm_load(void);
+bool     __avm_save_exists(void);
 
 float __avm_sinf(float x);
 float __avm_cosf(float x);
@@ -4613,16 +4826,15 @@ PC = entryPoint
 
 Static initialization is:
 
-1. If a valid persistent save object is available, copy exactly `saveSize`
-   bytes from that object to data address `0x0100`.
-2. Otherwise, copy the default `.saved` initializer from program address
-   `0x000100` to data address `0x0100`.
-3. Always copy the remaining `dataSize - saveSize` ordinary initializer bytes
-   from program address `0x000100 + saveSize` to data address
-   `0x0100 + saveSize`.
-4. Clear the complete framebuffer at data addresses `0x0500-0x08FF` to zero.
-5. Update the configured physical display from the cleared framebuffer before
+1. Copy all `dataSize` initializer bytes, including the `.saved` prefix, from
+   program address `0x000100` to data address `0x0100`.
+2. Clear the complete framebuffer at data addresses `0x0500-0x08FF` to zero.
+3. Update the configured physical display from the cleared framebuffer before
    beginning guest execution.
+
+Startup does not automatically restore persistent storage. A program invokes
+`load` explicitly when it wants to replace the default `.saved` initializer
+with the newest compatible persistent record.
 
 No static-storage clearing pass is performed because all static bytes have
 explicit initializer bytes. The framebuffer clear is a separate platform
@@ -4641,16 +4853,16 @@ data address 0x0100 through 0x0100 + saveSize - 1
 It corresponds to the linked `.saved` section and is always a contiguous prefix
 of static storage.
 
-A save operation persists exactly those `saveSize` bytes. A load operation
-restores exactly those bytes and does not modify the following ordinary
-`.data` range.
+The `save` service persists exactly those `saveSize` bytes. The `load`
+service restores exactly those bytes and does not modify the following ordinary
+`.data` range. Until `load` succeeds, the image's `.saved` initializer remains
+the program-visible value. This permits both explicitly initialized and zero-
+initialized saved global variables.
 
-When no valid persistent object exists, the image’s `.saved` initializer
-provides the initial value. This permits both explicitly initialized and
-zero-initialized saved global variables.
-
-A packer or storage backend MAY reserve a larger physical erase unit, but bytes
-beyond `saveSize` are not part of the program-visible save object.
+The persistent record stores `saveSize` as an unsigned little-endian 16-bit
+value followed immediately by the payload. A packer or storage backend MAY
+reserve a larger physical erase unit, but bytes beyond `saveSize` are not part
+of the program-visible save object.
 
 ---
 

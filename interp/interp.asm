@@ -46,20 +46,18 @@
 ;;     0x0500–0x08FF  framebuffer
 ;;     0x0900–0x09FF  VM stack
 ;;     0x0A00-0x0A03  FX image/save page
-;;     0x0A04-0x0A05  requested save size
-;;     0x0A06         startup flags
-;;     0x0A07–0x0A0A  millisecond counter (little-endian uint32)
-;;     0x0A0B–0x0A0D  selected raw sprite pointer (little-endian uint24)
-;;     0x0A0E–0x0A0F  selected sprite width and height
-;;     0x0A10–0x0AFF  remaining interpreter-private
+;;     0x0A04         startup flags
+;;     0x0A05–0x0A08  millisecond counter (little-endian uint32)
+;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
+;;     0x0A0C–0x0A0D  selected sprite width and height
+;;     0x0A0E–0x0AFF  remaining interpreter-private
 
 #define data_globals    0x0100
 #define data_display    0x0500
 #define data_stack      0x0900
 #define data_page_data      0x0A00
 #define data_page_save      (data_page_data+2)
-#define data_save_size      (data_page_save+2)
-#define data_startup_flags  (data_save_size+2)
+#define data_startup_flags  (data_page_save+2)
 #define data_millis         (data_startup_flags+1)
 #define data_sprite_ptr         (data_millis+4)
 #define data_sprite_width       (data_sprite_ptr+3)
@@ -99,7 +97,7 @@
 ;   AVM_OLED_DC_PORT / AVM_OLED_DC_DDR / AVM_OLED_DC_BIT
 ;   AVM_OLED_RST_PORT / AVM_OLED_RST_DDR / AVM_OLED_RST_BIT
 ;   AVM_FX_PORT / AVM_FX_DDR / AVM_FX_BIT
-;   AVM_BUTTON_{LEFT,RIGHT,UP,DOWN,A,B}_{PORT,DDR,BIT}
+;   AVM_BUTTON_{LEFT,RIGHT,UP,DOWN,A,B}_{PIN,PORT,DDR,BIT}
 ;   AVM_LED_{RED,GREEN,BLUE,TX,RX}_{PORT,DDR,BIT}
 ;   AVM_RANDOM_SEED_PORT / AVM_RANDOM_SEED_DDR / AVM_RANDOM_SEED_BIT
 ;
@@ -226,6 +224,9 @@
 #endif
 
 ; Common button wiring for the supported device presets.
+#ifndef AVM_BUTTON_LEFT_PIN
+#  define AVM_BUTTON_LEFT_PIN PINF
+#endif
 #ifndef AVM_BUTTON_LEFT_PORT
 #  define AVM_BUTTON_LEFT_PORT PORTF
 #endif
@@ -234,6 +235,9 @@
 #endif
 #ifndef AVM_BUTTON_LEFT_BIT
 #  define AVM_BUTTON_LEFT_BIT PORTF5
+#endif
+#ifndef AVM_BUTTON_RIGHT_PIN
+#  define AVM_BUTTON_RIGHT_PIN PINF
 #endif
 #ifndef AVM_BUTTON_RIGHT_PORT
 #  define AVM_BUTTON_RIGHT_PORT PORTF
@@ -244,6 +248,9 @@
 #ifndef AVM_BUTTON_RIGHT_BIT
 #  define AVM_BUTTON_RIGHT_BIT PORTF6
 #endif
+#ifndef AVM_BUTTON_UP_PIN
+#  define AVM_BUTTON_UP_PIN PINF
+#endif
 #ifndef AVM_BUTTON_UP_PORT
 #  define AVM_BUTTON_UP_PORT PORTF
 #endif
@@ -252,6 +259,9 @@
 #endif
 #ifndef AVM_BUTTON_UP_BIT
 #  define AVM_BUTTON_UP_BIT PORTF7
+#endif
+#ifndef AVM_BUTTON_DOWN_PIN
+#  define AVM_BUTTON_DOWN_PIN PINF
 #endif
 #ifndef AVM_BUTTON_DOWN_PORT
 #  define AVM_BUTTON_DOWN_PORT PORTF
@@ -262,6 +272,9 @@
 #ifndef AVM_BUTTON_DOWN_BIT
 #  define AVM_BUTTON_DOWN_BIT PORTF4
 #endif
+#ifndef AVM_BUTTON_A_PIN
+#  define AVM_BUTTON_A_PIN PINE
+#endif
 #ifndef AVM_BUTTON_A_PORT
 #  define AVM_BUTTON_A_PORT PORTE
 #endif
@@ -270,6 +283,9 @@
 #endif
 #ifndef AVM_BUTTON_A_BIT
 #  define AVM_BUTTON_A_BIT PORTE6
+#endif
+#ifndef AVM_BUTTON_B_PIN
+#  define AVM_BUTTON_B_PIN PINB
 #endif
 #ifndef AVM_BUTTON_B_PORT
 #  define AVM_BUTTON_B_PORT PORTB
@@ -534,6 +550,7 @@
 
 ; Serial Flash Commands (W25Q128)
 #define SFC_READ               0x03
+#define SFC_READSTATUS1        0x05
 #define SFC_WRITE_ENABLE       0x06
 #define SFC_WRITE              0x02
 #define SFC_ERASE              0x20
@@ -606,6 +623,12 @@
 #define SYS_DRAW_ERASE               0x26
 #define SYS_DRAW_FILLED_RECT_WHITE   0x27
 #define SYS_DRAW_FILLED_RECT_BLACK   0x28
+#define SYS_BUTTONS                  0x29
+#define SYS_IDLE                     0x2A
+#define SYS_GENERATE_RANDOM_SEED     0x2B
+#define SYS_SAVE                     0x2C
+#define SYS_LOAD                     0x2D
+#define SYS_SAVE_EXISTS              0x2E
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3080,6 +3103,11 @@ sys_dispatch_func:
     (SYS_DRAW_FILLED_RECT_BLACK != 0x28)
     .error "filled-rectangle SYS services must occupy contiguous entries 0x27-0x28"
 .endif
+.if (SYS_BUTTONS != 0x29) || (SYS_IDLE != 0x2A) || \
+    (SYS_GENERATE_RANDOM_SEED != 0x2B) || (SYS_SAVE != 0x2C) || \
+    (SYS_LOAD != 0x2D) || (SYS_SAVE_EXISTS != 0x2E)
+    .error "platform/persistence SYS services must occupy contiguous entries 0x29-0x2E"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3108,7 +3136,8 @@ sys_dispatch_table:
     sys_entries 1,   sys_set_sprite_func
     sys_entries 4,   sys_draw_func
     sys_entries 2,   sys_draw_filled_rect_func
-    sys_entries 215, invalid_syscall_func
+    sys_entries 6,   sys_platform_func
+    sys_entries 209, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3150,6 +3179,11 @@ sys_draw_func:
 ; service number remains in PRIMARY_OPCODE so bit zero can select white/black.
 sys_draw_filled_rect_func:
     jmp   sys_draw_filled_rect_impl
+
+; The six contiguous platform/persistence services share one far dispatcher,
+; minimizing movement of the range-constrained interpreter core.
+sys_platform_func:
+    jmp   sys_platform_dispatch_impl
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
@@ -7044,13 +7078,12 @@ startup_read_header:
     rcall fx_startup_read_byte
     mov  r17, r30
 
-    ; saveSize at header offset 0x0A, retained for the system ABI.
+    ; saveSize at header offset 0x0A. Startup uses it only for validation;
+    ; persistence services reread it from the image header on every call.
     rcall fx_startup_read_byte
     mov  r20, r30
-    sts  data_save_size+0, r30
     rcall fx_startup_read_byte
     mov  r21, r30
-    sts  data_save_size+1, r30
     fx_disable
 
     ; saveSize <= dataSize because the saved region is part of the data image
@@ -7244,7 +7277,6 @@ fx_startup_begin_read:
 ; Result is returned in r30.
 fx_startup_read_byte:
     mov  r30, ZERO
-    rjmp fx_spi_transfer_blocking
 
 ; Blocking SPI byte transfer. Input/output: r30. Clobbers r31.
 fx_spi_transfer_blocking:
@@ -11613,3 +11645,488 @@ sys_draw_filled_rect_end:
 .if (sys_draw_filled_rect_end - sys_draw_filled_rect_start) != 318
     .error "filled-rectangle SYS implementation must occupy exactly 159 AVR words"
 .endif
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Platform and persistent-storage SYS services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Save records occupy the selected 4 KiB save sector as an append-only log:
+;
+;   uint16_t saveSize, little-endian
+;   uint8_t  data[saveSize]
+;
+; Records are valid only when their size equals the current image header's
+; saveSize. The final two sector bytes remain erased. SAVE appends a record,
+; erasing the sector first when the next record does not fit or the first
+; nonmatching header is not erased. LOAD walks all matching records and leaves
+; the newest one in data_globals. SAVE_EXISTS tests only the first header.
+;
+; The long services terminate the speculative bytecode SPI transfer, perform
+; blocking flash transactions, then restart the bytecode stream at VM_PC.
+
+sys_platform_dispatch_impl:
+    subi  PRIMARY_OPCODE, SYS_BUTTONS
+    ldi   r30, lo8(pm(sys_platform_dispatch_table))
+    ldi   r31, hi8(pm(sys_platform_dispatch_table))
+    add   r30, PRIMARY_OPCODE
+    adc   r31, ZERO
+    ijmp
+
+sys_platform_dispatch_table:
+    rjmp  sys_buttons_impl
+    rjmp  sys_idle_impl
+    rjmp  sys_generate_random_seed_impl
+    rjmp  sys_persistence_begin_func
+    rjmp  sys_persistence_begin_func
+    rjmp  sys_persistence_begin_func
+sys_platform_dispatch_table_end:
+.if (sys_platform_dispatch_table_end - sys_platform_dispatch_table) != 12
+    .error "platform SYS dispatch table must contain six one-word entries"
+.endif
+
+; uint8_t buttons(void), returned as a zero-extended value in r4.
+; Canonical Arduboy mask: U=0x80, R=0x40, L=0x20, D=0x10, A=0x08, B=0x04.
+sys_buttons_impl:
+    clr   VM_R4L
+    clr   VM_R4H
+    sbis  AVM_BUTTON_UP_PIN, AVM_BUTTON_UP_BIT
+    ori   VM_R4L, 0x80
+    sbis  AVM_BUTTON_RIGHT_PIN, AVM_BUTTON_RIGHT_BIT
+    ori   VM_R4L, 0x40
+    sbis  AVM_BUTTON_LEFT_PIN, AVM_BUTTON_LEFT_BIT
+    ori   VM_R4L, 0x20
+    sbis  AVM_BUTTON_DOWN_PIN, AVM_BUTTON_DOWN_BIT
+    ori   VM_R4L, 0x10
+    sbis  AVM_BUTTON_A_PIN, AVM_BUTTON_A_BIT
+    ori   VM_R4L, 0x08
+    sbis  AVM_BUTTON_B_PIN, AVM_BUTTON_B_BIT
+    ori   VM_R4L, 0x04
+    jmp   cluster_tail_18
+
+; Enter AVR idle sleep until an enabled interrupt, normally Timer0 compare A,
+; wakes the CPU. The completed speculative opcode remains pending in SPDR and
+; is consumed by the standard tail after wakeup.
+sys_idle_impl:
+    ldi   r24, _BV(SE)
+    out   SMCR, r24
+    sleep
+    out   SMCR, ZERO
+    jmp   cluster_tail_18
+
+; uint16_t generate_random_seed(void): one ADC1 conversion plus TCNT0.
+; Restore the prior ADC mux and power-reduction state after the conversion.
+sys_generate_random_seed_impl:
+    lds   r25, PRR0
+    mov   r24, r25
+    andi  r24, (0xFF ^ _BV(PRADC))
+    sts   PRR0, r24
+
+    lds   r26, ADMUX
+    ldi   r27, (_BV(REFS0) | _BV(REFS1) | _BV(MUX0))
+    sts   ADMUX, r27
+
+    ldi   r27, (_BV(ADEN) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0))
+    sts   ADCSRA, r27
+    ori   r27, _BV(ADSC)
+    sts   ADCSRA, r27
+1:
+    lds   r27, ADCSRA
+    sbrc  r27, ADSC
+    rjmp  1b
+
+    ; ADCL must be read before ADCH.
+    lds   VM_R4L, ADCL
+    lds   VM_R4H, ADCH
+    in    r27, TCNT0
+    add   VM_R4L, r27
+    adc   VM_R4H, ZERO
+
+    sts   ADCSRA, ZERO
+    sts   ADMUX, r26
+    sts   PRR0, r25
+    jmp   cluster_tail_18
+
+; Terminate the speculative following-primary transfer launched by SYS decode,
+; advance VM_PC from the service byte to that primary opcode, and dispatch the
+; selected persistence implementation.
+;
+; Relative to the SYS decoder's final OUT SPDR,ZERO:
+;   cycles  0-18  SYS and platform dispatch
+;   cycles 19-20  platform-table RJMP to this common entry
+;   cycle      21  CBI begins; FX is deselected when it completes on cycle 22
+;
+; An SPI byte is available to read on cycle 17, so this fixed deselection is
+; safely after completion. No SPSR/SPIF polling is needed. The completed
+; speculative byte is deliberately discarded; the bytecode stream is restarted
+; from VM_PC after the persistence operation.
+sys_persistence_begin_func:
+    fx_disable
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; PRIMARY_OPCODE was normalized by sys_platform_dispatch_impl to 3=save,
+    ; 4=load, or 5=save_exists. Convert it to a zero-based table index.
+    subi  PRIMARY_OPCODE, 3
+    ldi   r30, lo8(pm(sys_persistence_dispatch_table))
+    ldi   r31, hi8(pm(sys_persistence_dispatch_table))
+    add   r30, PRIMARY_OPCODE
+    adc   r31, ZERO
+    ijmp
+
+sys_persistence_dispatch_table:
+    rjmp  sys_save_impl
+    rjmp  sys_load_impl
+    rjmp  sys_save_exists_impl
+sys_persistence_dispatch_table_end:
+.if (sys_persistence_dispatch_table_end - sys_persistence_dispatch_table) != 6
+    .error "persistence SYS dispatch table must contain three one-word entries"
+.endif
+
+; Persistence services use only native scratch registers r0:r1 and r24-r31.
+; They therefore do not need to save any architectural registers. load() and
+; save_exists() use VM_R4 only for their specified return value.
+
+save_fx_transfer:
+    out   SPDR, r30
+    rcall sprite_delay_16
+    in    r30, SPDR
+    ret
+
+; Read the image header's little-endian saveSize at image-relative offset 0x0A.
+; Output: r1:r0. Clobbers r24, r26, r27, r30, r31.
+fx_read_image_save_size_func:
+    ldi   r26, AVM_HEADER_SAVE_SIZE_OFFSET
+    lds   r27, data_page_data+0
+    lds   r24, data_page_data+1
+
+    fx_disable
+    fx_enable
+    ldi   r30, SFC_READ
+    rcall save_fx_transfer
+    mov   r30, r24
+    rcall save_fx_transfer
+    mov   r30, r27
+    rcall save_fx_transfer
+    mov   r30, r26
+    rcall save_fx_transfer
+
+    rcall save_fx_transfer
+    mov   r0, r30
+    rcall save_fx_transfer
+    mov   r1, r30
+    fx_disable
+    ret
+
+; Begin a blocking command at save-sector byte offset r25:r24.
+; Input command: r30. Preserves r0:r1 and r24:r27.
+; Clobbers only r30 and r31.
+fx_save_begin_command_func:
+    fx_disable
+    fx_enable
+    rcall save_fx_transfer
+
+    ; Compute the high byte and carry before sending it. The middle byte
+    ; is then recomputed, avoiding any need to preserve it across SPI.
+    lds   r31, data_page_save+0
+    add   r31, r25
+    lds   r30, data_page_save+1
+    adc   r30, ZERO
+    rcall save_fx_transfer
+
+    lds   r30, data_page_save+0
+    add   r30, r25
+    rcall save_fx_transfer
+    mov   r30, r24
+    rcall save_fx_transfer
+    ret
+
+fx_save_write_enable_func:
+    fx_disable
+    fx_enable
+    ldi   r30, SFC_WRITE_ENABLE
+    rcall save_fx_transfer
+    fx_disable
+    ret
+
+fx_save_wait_busy_func:
+    fx_disable
+    fx_enable
+    ldi   r30, SFC_READSTATUS1
+    rcall save_fx_transfer
+1:
+    mov   r30, ZERO
+    rcall save_fx_transfer
+    sbrc  r30, 0
+    rjmp  1b
+    fx_disable
+    ret
+
+; Erase the selected 4 KiB save sector and wait for completion.
+; Returns r25:r24 = 0.
+fx_save_erase_sector_func:
+    rcall fx_save_write_enable_func
+    clr   r24
+    clr   r25
+    ldi   r30, SFC_ERASE
+    rcall fx_save_begin_command_func
+    fx_disable
+    rjmp  fx_save_wait_busy_func
+
+; Open a page-program command at save-sector offset r25:r24.
+fx_save_begin_program_page_func:
+    rcall fx_save_write_enable_func
+    ldi   r30, SFC_WRITE
+    rcall fx_save_begin_command_func
+    ret
+
+; Compute end-exclusive record offset: r27:r26 = offset + 2 + saveSize.
+; Inputs: offset r25:r24, saveSize r1:r0.
+fx_save_record_end_func:
+    movw  r26, r24
+    add   r26, r0
+    adc   r27, r1
+    adiw  r26, 2
+    ret
+
+; C=1 when r27:r26 exceeds 4094; C=0 when the record fits.
+fx_save_record_fits_func:
+    ldi   r30, lo8(4094)
+    ldi   r31, hi8(4094)
+    cp    r30, r26
+    cpc   r31, r27
+    ret
+
+; void save(void)
+;
+; Register allocation:
+;   r1:r0    saveSize, then remaining payload bytes
+;   r25:r24  current save-sector offset
+;   r27:r26  header/end/count, then SRAM source pointer X
+;   r30:r31  blocking SPI scratch
+sys_save_impl:
+
+    lds   r24, data_startup_flags
+    sbrs  r24, STARTUP_SAVE_PAGE_VALID
+    jmp   .Lsys_save_done
+
+    rcall fx_read_image_save_size_func
+    mov   r24, r0
+    or    r24, r1
+    brne  .Lsys_save_have_size
+    jmp   .Lsys_save_done
+.Lsys_save_have_size:
+
+    ; Scan the append log sequentially from sector offset zero.
+    clr   r24
+    clr   r25
+    ldi   r30, SFC_READ
+    rcall fx_save_begin_command_func
+
+.Lsys_save_scan_header:
+    rcall save_fx_transfer
+    mov   r26, r30                 ; little-endian size low byte
+    rcall save_fx_transfer
+    mov   r27, r30                 ; little-endian size high byte
+
+    cp    r26, r0
+    cpc   r27, r1
+    brne  .Lsys_save_scan_mismatch
+
+    rcall fx_save_record_end_func
+    rcall fx_save_record_fits_func
+    brcs  .Lsys_save_erase
+    movw  r24, r26
+
+    ; Skip the existing payload; the read stream then names the next header.
+    movw  r26, r0
+.Lsys_save_skip_payload:
+    rcall save_fx_transfer
+    sbiw  r26, 1
+    brne  .Lsys_save_skip_payload
+
+    ; A new two-byte header must begin no later than offset 4092.
+    ldi   r26, lo8(4092)
+    ldi   r27, hi8(4092)
+    cp    r26, r24
+    cpc   r27, r25
+    brsh  .Lsys_save_scan_header
+    rjmp  .Lsys_save_erase
+
+.Lsys_save_scan_mismatch:
+    ; Only an erased 0xFFFF header marks appendable free space.
+    cpi   r26, 0xFF
+    brne  .Lsys_save_erase
+    cpi   r27, 0xFF
+    brne  .Lsys_save_erase
+
+    rcall fx_save_record_end_func
+    rcall fx_save_record_fits_func
+    brcc  .Lsys_save_append
+
+.Lsys_save_erase:
+    fx_disable
+    rcall fx_save_erase_sector_func
+
+.Lsys_save_append:
+    fx_disable
+
+    ; Write the two-byte little-endian size header before repurposing r1:r0 as
+    ; the payload counter. Reopen the page if either header byte lands at 0xFF.
+    ldi   r26, lo8(data_globals)
+    ldi   r27, hi8(data_globals)
+    rcall fx_save_begin_program_page_func
+
+    mov   r30, r0
+    rcall save_fx_transfer
+    inc   r24
+    brne  .Lsys_save_write_size_high
+    inc   r25
+    fx_disable
+    rcall fx_save_wait_busy_func
+    rcall fx_save_begin_program_page_func
+
+.Lsys_save_write_size_high:
+    mov   r30, r1
+    rcall save_fx_transfer
+    inc   r24
+    brne  .Lsys_save_write_payload
+    inc   r25
+    fx_disable
+    rcall fx_save_wait_busy_func
+    rcall fx_save_begin_program_page_func
+
+.Lsys_save_write_payload:
+    ld    r30, X+
+    rcall save_fx_transfer
+    sub   r0, ONE
+    sbc   r1, ZERO
+    inc   r24
+    brne  1f
+    inc   r25
+1:
+    mov   r30, r0
+    or    r30, r1
+    breq  .Lsys_save_finish_page
+    tst   r24
+    brne  .Lsys_save_write_payload
+
+    ; The next payload byte begins a new flash page.
+    fx_disable
+    rcall fx_save_wait_busy_func
+    rcall fx_save_begin_program_page_func
+    rjmp  .Lsys_save_write_payload
+
+.Lsys_save_finish_page:
+    fx_disable
+    rcall fx_save_wait_busy_func
+
+.Lsys_save_done:
+    fx_disable
+    jmp   seek_and_dispatch_func_disabled
+
+; bool load(void), returned canonically as 0 or 1 in r4.
+;
+; Register allocation:
+;   r1:r0    saveSize
+;   r25:r24  current save-sector offset
+;   r27:r26  header/end, then SRAM destination pointer X
+;   r17:r16  payload count and final result register
+;   SREG.T   whether at least one complete record was loaded
+sys_load_impl:
+    clt
+
+    lds   r24, data_startup_flags
+    sbrs  r24, STARTUP_SAVE_PAGE_VALID
+    rjmp  .Lsys_load_done
+
+    rcall fx_read_image_save_size_func
+    mov   r24, r0
+    or    r24, r1
+    breq  .Lsys_load_done
+
+    clr   r24
+    clr   r25
+    ldi   r30, SFC_READ
+    rcall fx_save_begin_command_func
+
+.Lsys_load_header:
+    rcall save_fx_transfer
+    mov   r26, r30
+    rcall save_fx_transfer
+    mov   r27, r30
+    cp    r26, r0
+    cpc   r27, r1
+    brne  .Lsys_load_done
+
+    rcall fx_save_record_end_func
+    rcall fx_save_record_fits_func
+    brcs  .Lsys_load_done
+    movw  r24, r26
+
+    ; Every matching record overwrites the saved prefix, leaving the newest.
+    ldi   r26, lo8(data_globals)
+    ldi   r27, hi8(data_globals)
+    movw  r16, r0
+.Lsys_load_payload:
+    rcall save_fx_transfer
+    st    X+, r30
+    sub   r16, ONE
+    sbc   r17, ZERO
+    brne  .Lsys_load_payload
+    set
+
+    ; Stop if there is no room for another complete two-byte header.
+    ldi   r26, lo8(4092)
+    ldi   r27, hi8(4092)
+    cp    r26, r24
+    cpc   r27, r25
+    brsh  .Lsys_load_header
+
+.Lsys_load_done:
+    fx_disable
+    clr   VM_R4L
+    bld   VM_R4L, 0
+    clr   VM_R4H
+    jmp   seek_and_dispatch_func_disabled
+
+; bool save_exists(void), returned canonically as 0 or 1 in r4.
+;
+; Register allocation:
+;   r1:r0    saveSize
+;   r25:r24  save-sector offset zero
+;   r17:r16  first record header and final result register
+;   SREG.T   comparison result
+sys_save_exists_impl:
+    clt
+
+    lds   r24, data_startup_flags
+    sbrs  r24, STARTUP_SAVE_PAGE_VALID
+    rjmp  .Lsys_save_exists_done
+
+    rcall fx_read_image_save_size_func
+    mov   r24, r0
+    or    r24, r1
+    breq  .Lsys_save_exists_done
+
+    clr   r24
+    clr   r25
+    ldi   r30, SFC_READ
+    rcall fx_save_begin_command_func
+    rcall save_fx_transfer
+    mov   VM_R4L, r30
+    rcall save_fx_transfer
+    mov   VM_R4H, r30
+
+    cp    VM_R4L, r0
+    cpc   VM_R4H, r1
+    brne  .Lsys_save_exists_done
+    set
+
+.Lsys_save_exists_done:
+    fx_disable
+    clr   VM_R4L
+    bld   VM_R4L, 0
+    clr   VM_R4H
+    jmp   seek_and_dispatch_func_disabled

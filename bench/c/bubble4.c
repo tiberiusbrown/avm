@@ -1,6 +1,6 @@
 #include <stdint.h>
 
-inline void debug_break() { __avm_debug_break(); }
+static inline void debug_break() { __avm_debug_break(); }
 
 int32_t A[64];
 

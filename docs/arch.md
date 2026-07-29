@@ -306,13 +306,19 @@ Unless an instruction or service definition explicitly requires a normalized
 program pointer, an architectural program- or function-pointer consumer uses
 only bits `23:0` and ignores bits `31:24`. This includes program-space load
 addresses, indirect jump and call targets, and the program-space pointers
-consumed by `memcpy_P`, `set_sprite`, and the explicit-pointer sprite drawing
-services.
+consumed by `memcpy_P`, `vsnprintf_P`, `set_sprite`, and the explicit-pointer
+sprite drawing services.
 
 The program-memory comparison and string services `memcmp_P`, `strcmp_P`,
 `strlen_P`, `strncpy_P`, and `strncat_P` explicitly require a normalized `q3`
 input. Supplying any of those services with `q3[31:24] != 0` is an invalid
-service invocation.
+service invocation. In contrast, `vsnprintf_P` consumes only `q3[23:0]` and
+ignores `q3[31:24]`.
+
+Program pointers passed through a variadic argument area use the packed
+three-byte memory representation from Section 12.1. They have no register-
+container padding byte. In particular, the `%S` and `%P` conversions defined
+in Section 49.27 each consume exactly three consecutive variadic bytes.
 
 Ordinary function-call ABI boundaries retain normalized register
 representation:
@@ -1968,11 +1974,12 @@ service has a typed compiler representation specified in Section 59. Most
 services use dedicated target intrinsics. `memcpy`, `memcpy_P`, `memset`, and
 `memmove` MAY instead use corresponding generic LLVM memory intrinsics when
 those representations preserve the required address spaces and memory
-semantics. The comparison and string services use dedicated typed target
-intrinsics because LLVM has no generic intrinsics with their complete
-semantics. The display and drawing services also use dedicated typed target
-intrinsics because their fixed framebuffer effects, program-space effects, or
-externally observable display output have no generic LLVM representation.
+semantics. The comparison, string, and formatted-output services use
+dedicated typed target intrinsics because LLVM has no generic intrinsics with
+their complete semantics. The display and drawing services also use dedicated
+typed target intrinsics because their fixed framebuffer effects, program-space
+effects, or externally observable display output have no generic LLVM
+representation.
 
 ## 49. Defined services
 
@@ -2025,7 +2032,9 @@ externally observable display output have no generic LLVM representation.
 | `0x2C` | `save` | None | None | Image-header read; persistent-storage read, erase, and write; saved-prefix read |
 | `0x2D` | `load` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads; saved-prefix write on success |
 | `0x2E` | `save_exists` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads |
-| `0x2F-0xFF` | Reserved | — | — | — |
+| `0x2F` | `vsnprintf` | `r4 = dst`, `r5 = size`, `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Data-space reads and writes; possible program-space reads |
+| `0x30` | `vsnprintf_P` | `r4 = dst`, `r5 = size`, `q3 = program format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Data-space reads and writes; program-space reads |
+| `0x31-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -3077,6 +3086,262 @@ removed, duplicated, speculated, common-subexpression eliminated, or reordered
 relative to one another. `save` reads the saved-prefix range; `load` may write
 that range; `save_exists` does not access AVM data memory.
 
+### 49.27. Formatted-output services
+
+Encodings:
+
+| ID | Encoding | Service |
+|---:|---|---|
+| `0x2F` | `D7 2F` | `vsnprintf` |
+| `0x30` | `D7 30` | `vsnprintf_P` |
+
+C interfaces:
+
+```c
+int vsnprintf(
+    char *restrict dst,
+    size_t size,
+    char const *restrict format,
+    va_list ap);
+
+int vsnprintf_P(
+    char *restrict dst,
+    size_t size,
+    char const __attribute__((address_space(1))) *restrict format,
+    va_list ap);
+```
+
+The fixed service-register assignments are:
+
+```text
+vsnprintf:
+    r4 = destination data pointer
+    r5 = destination size
+    r6 = data-space format pointer
+    r2 = va_list cursor
+
+vsnprintf_P:
+    r4 = destination data pointer
+    r5 = destination size
+    q3 = program-space format pointer
+    r2 = va_list cursor
+```
+
+For `vsnprintf_P`, the logical format address is `q3[23:0]` and
+`q3[31:24]` is ignored. Format-address advancement is modulo `2^24`.
+
+`r2` is the 16-bit data-space address of the next unread variadic argument
+byte. The service advances only an internal copy of this cursor. It preserves
+the architectural value of `r2` and does not write an updated cursor back to
+caller memory.
+
+#### 49.27.1. Destination and return semantics
+
+The services have standard bounded-buffer counting semantics for the supported
+format language:
+
+```text
+size == 0:
+    do not access dst
+    produce no stored bytes or terminator
+
+size > 0:
+    store at most size-1 formatted bytes
+    store one terminating zero byte
+```
+
+Truncation does not stop parsing or argument consumption. The successful result
+is the number of bytes that would have been written, excluding the terminating
+zero, if the destination had been sufficiently large.
+
+AVM `int` is signed 16-bit. A service returns `-1` in `r4` when:
+
+- the required output count exceeds `INT_MAX` (`32767`); or
+- the format string contains a byte not accepted by the grammar below.
+
+When `size` is nonzero, the service writes a terminating zero even on either
+error. On a format error, bytes emitted before the invalid construct remain in
+the destination, subject to the size bound. Count overflow does not change the
+bounded writes or termination behavior.
+
+The original `dst` input in `r4` is replaced by the signed result. The services
+preserve `r0-r3`, `r5-r7`, `CC`, and `SP`. They also preserve the complete
+input bit patterns of `r2`, `r5`, and the applicable format register (`r6` or
+`q3`).
+
+Both services read the variadic argument area in data space and may read
+additional data-space objects through `%s`. Both may read program-space objects
+through `%S`. `vsnprintf_P` additionally reads its format from program space.
+They write only the bounded destination region described above. `%P` formats a
+program address value and performs no program-space read.
+
+#### 49.27.2. Accepted format grammar
+
+A conversion begins with `%` and, except for `%%`, has this form:
+
+```text
+% [flags] [width] [.precision] [length] conversion
+```
+
+Accepted components are:
+
+```text
+flags:       -  +  space  #  0
+width:       decimal digits or *
+precision:   . followed by decimal digits, *, or no characters
+length:      hh  h  l  z  t
+conversion:  c  s  S  d  i  u  o  x  X  p  P
+```
+
+`%%` emits one literal `%` and consumes no argument. It accepts no flags,
+width, precision, or length modifier.
+
+A decimal width or precision is nonnegative. A `*` width or precision consumes
+a promoted signed 16-bit `int`:
+
+- a negative width sets the `-` flag and uses the unsigned magnitude of the
+  value as the width;
+- a negative precision is treated as though precision were omitted;
+- `.` with no digits or `*` specifies precision zero.
+
+The `INT16_MIN` dynamic-width case has width `32768`; it is not subject to
+signed negation overflow. Repeated flags are permitted and have the same effect
+as one occurrence.
+
+Only the integer conversions `d`, `i`, `u`, `o`, `x`, and `X` accept a length
+modifier. Every other conversion requires the default length. The complete
+length/conversion pair is validated before its conversion value is consumed.
+Arguments already consumed for `*` width or precision remain consumed if a
+later byte makes the conversion invalid.
+
+Any format byte not accepted in the current parser state causes the deterministic
+`-1` result described above. This includes a terminating zero before a
+conversion is complete, an unsupported conversion, or an unsupported length
+such as `ll` or `j`. The parser does not assign implementation-specific
+semantics to an unrecognized form.
+
+#### 49.27.3. Variadic argument representation
+
+All values are read consecutively from the packed variadic area with one-byte
+alignment and no implicit gaps:
+
+| Format use | Bytes consumed |
+|---|---:|
+| `*` width or precision | 2 |
+| `%c` | 2 |
+| Integer conversion with `hh`, `h`, default, `z`, or `t` | 2 |
+| Integer conversion with `l` | 4 |
+| `%s` data pointer | 2 |
+| `%S` program-string pointer | 3 |
+| `%p` data pointer | 2 |
+| `%P` program pointer | 3 |
+
+Default argument promotions apply. In particular, `char`, `signed char`,
+`unsigned char`, `bool`, `short`, and `unsigned short` arrive as 16-bit
+promoted integers. `%S` and `%P` consume packed little-endian program pointers:
+
+```text
+byte 0 = address bits 7:0
+byte 1 = address bits 15:8
+byte 2 = address bits 23:16
+```
+
+There is no fourth padding byte. A following variadic argument begins
+immediately after byte 2.
+
+No 64-bit integer length is supported. The services do not accept `ll`, `j`,
+or any other path that would consume an eight-byte integer argument.
+
+#### 49.27.4. Conversion semantics
+
+| Conversion | Argument and result |
+|---|---|
+| `%%` | Emit one `%`; consume no argument. |
+| `%c` | Consume a promoted 16-bit integer and emit its low byte. |
+| `%s` | Consume a 16-bit data pointer and emit its NUL-terminated data-space string. |
+| `%S` | Consume a packed 24-bit program pointer and emit its NUL-terminated program-space string. |
+| `%d`, `%i` | Format a signed decimal integer. |
+| `%u` | Format an unsigned decimal integer. |
+| `%o` | Format an unsigned octal integer. |
+| `%x` | Format an unsigned hexadecimal integer using lowercase digits. |
+| `%X` | Format an unsigned hexadecimal integer using uppercase digits. |
+| `%p` | Emit `0x` followed by exactly four lowercase hexadecimal digits for a 16-bit data pointer. |
+| `%P` | Emit `0x` followed by exactly six lowercase hexadecimal digits for a packed 24-bit program pointer. |
+
+`%p` and `%P` always include the prefix and complete fixed-width digit field,
+including for a null pointer. `%P` does not dereference the pointer.
+
+Integer lengths select these effective widths:
+
+| Length | Effective integer width |
+|---|---:|
+| `hh` | Low 8 bits of a promoted 16-bit argument |
+| `h` | 16 bits |
+| default | 16 bits |
+| `l` | 32 bits |
+| `z` | 16 bits |
+| `t` | 16 bits |
+
+For signed `hh` conversions, the selected low byte is interpreted as signed
+8-bit. For unsigned `hh` conversions, it is interpreted as unsigned 8-bit.
+Signed magnitude formation correctly handles `INT16_MIN` and `INT32_MIN`.
+
+#### 49.27.5. Flags, width, and precision
+
+Field width counts the complete conversion result, including any sign or base
+prefix. When the result is shorter than the width, padding is added; a field is
+never truncated to its width.
+
+For integer conversions:
+
+- `-` left-adjusts the field and disables `0` width padding.
+- `+` emits a plus sign for a nonnegative signed decimal result.
+- space emits a leading space for a nonnegative signed decimal result when `+`
+  is absent.
+- `#` prefixes a nonzero hexadecimal value with `0x` or `0X` and requests an
+  octal leading zero.
+- `0` pads between any sign/prefix and the digits when `-` is absent and no
+  precision was specified.
+- an explicit precision gives the minimum number of digits and disables `0`
+  width padding.
+- precision zero suppresses the digits for numeric zero, except that alternate
+  octal form still emits one zero.
+
+For `%c`, `%s`, `%S`, `%p`, and `%P`, padding is always spaces. `-` selects
+trailing rather than leading padding. The other parsed flags do not alter these
+conversions. Precision is invalid for `%c`; for `%s` and `%S`, it limits the
+maximum number of emitted string bytes; for `%p` and `%P`, it does not change
+the fixed digit count.
+
+For `%s` and `%S`, the effective string length is the number of bytes before
+the first zero, capped by precision when specified. The service determines that
+length before right-aligned output so leading padding is correct. Precision
+zero emits an empty string without dereferencing the string pointer. Program-
+string pointer advancement for `%S` is modulo `2^24`.
+
+Formatting is byte-oriented and locale-independent. The supported language has
+no wide-character, floating-point, `%n`, positional-argument, or locale-specific
+conversion.
+
+#### 49.27.6. Caller requirements and ordering
+
+The caller must provide:
+
+- a valid writable destination of at least `size` bytes when `size != 0`;
+- a readable NUL-terminated format string in the required address space;
+- variadic arguments whose promoted types and packed sizes match the accepted
+  conversion sequence; and
+- readable NUL-terminated `%s` and `%S` strings, except that a zero precision
+  permits the corresponding pointer not to be dereferenced.
+
+Violating these requirements is undefined behavior. Source and destination
+objects must also satisfy the C `restrict` contract of the interface.
+
+The services have no externally observable effect other than their specified
+memory accesses. A compiler must preserve ordering relative to data-space or
+program-space accesses that may affect bytes read by the service or observe its
+destination writes.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -3284,6 +3549,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `draw_sprite_overwrite`, `draw_sprite_plus_mask`, `draw_sprite_self_masked`, `draw_sprite_erase` | Dedicated typed AVM intrinsics and `SYS 0x1E-0x21` | — | — | Read an explicit AS1 sprite and read/write the fixed framebuffer |
 | `set_sprite`, `draw_overwrite`, `draw_plus_mask`, `draw_self_masked`, `draw_erase` | Dedicated typed AVM intrinsics and `SYS 0x22-0x26` | — | — | Select an AS1 sprite or draw from selected-sprite state into the fixed framebuffer |
 | `draw_filled_rect_white`, `draw_filled_rect_black` | Dedicated typed AVM intrinsics and `SYS 0x27-0x28` | — | — | Read/write the fixed framebuffer |
+| `vsnprintf`, `vsnprintf_P` | Dedicated typed AVM intrinsics and `SYS 0x2F-0x30` | — | — | Bounded AS0 write; AS0 and AS1 reads selected by the format |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -3308,10 +3574,10 @@ container or at an ordinary ABI boundary. Required cases include:
 - any explicit operation that observes the complete `GPR32` bit pattern.
 
 Normalization is not required before `LDP*`, `JMPP`, `CALLP`,
-`SYS_MEMCPY_P`, `SYS_SET_SPRITE`, any explicit-pointer
-`SYS_DRAW_SPRITE_*` service, another program-pointer
-arithmetic operation, or a packed three-byte pointer store, because those uses
-consume only the logical low 24 bits. It is required before `SYS_MEMCMP_P`, `SYS_STRCMP_P`,
+`SYS_MEMCPY_P`, `SYS_VSNPRINTF_P`, `SYS_SET_SPRITE`, any explicit-pointer
+`SYS_DRAW_SPRITE_*` service, another program-pointer arithmetic operation, or a
+packed three-byte pointer store, because those uses consume only the logical
+low 24 bits. It is required before `SYS_MEMCMP_P`, `SYS_STRCMP_P`,
 `SYS_STRLEN_P`, `SYS_STRNCPY_P`, and `SYS_STRNCAT_P`, whose service contracts
 validate the complete `q3` container.
 
@@ -3660,6 +3926,54 @@ MAY recognize direct calls to those symbols and replace them with
 `llvm.avm.memmove` or generic `llvm.memmove` when interposition and other
 language-level rules permit it.
 
+### 56.4.1. Formatted-output helpers
+
+The target runtime provides:
+
+```c
+int __avm_vsnprintf(
+    char *restrict dst,
+    size_t size,
+    char const *restrict format,
+    va_list ap);
+
+int __avm_vsnprintf_P(
+    char *restrict dst,
+    size_t size,
+    char const __attribute__((address_space(1))) *restrict format,
+    va_list ap);
+```
+
+Clang SHOULD provide corresponding target builtins:
+
+```c
+int __builtin_avm_vsnprintf(
+    char *dst, size_t size, char const *format, va_list ap);
+int __builtin_avm_vsnprintf_p(
+    char *dst, size_t size,
+    char const __attribute__((address_space(1))) *format,
+    va_list ap);
+```
+
+The source-language argument order is `(dst, size, format, ap)`. Direct builtin
+lowering uses the typed intrinsics from Section 59. Runtime headers MAY expose
+`vsnprintf` and `vsnprintf_P` as function-like macros that call the target
+builtins while retaining addressable out-of-line wrappers.
+
+Under the ordinary calling convention, `__avm_vsnprintf` receives `dst`,
+`size`, `format`, and `ap` in `r4`, `r5`, `r6`, and `r7`; its wrapper copies
+`ap` to the service's fixed `r2` input. `__avm_vsnprintf_P` receives `dst` and
+`size` in `r4` and `r5`, the normalized ordinary-ABI program format in `q3`,
+and `ap` as the first stack argument at callee entry. Its wrapper loads that
+16-bit stack argument into `r2`. These wrapper-entry rules do not change the
+fixed SYS interfaces in Section 49.27.
+
+The builtin format checker, when enabled, MUST implement the exact grammar from
+Section 49.27. It must interpret `%S` as a packed address-space-one character
+pointer and `%P` as a packed address-space-one pointer value. A generic host
+`printf` checker that treats `%S` as a wide-string conversion or does not know
+`%P` MUST NOT be applied without target-specific adjustment.
+
 ### 56.5. Display and drawing helpers
 
 The target runtime provides:
@@ -3847,8 +4161,8 @@ The backend should:
 
 ## 59. LLVM system-service representations
 
-The scalar, floating-point, display, drawing, and AS0 `memcpy`, `memset`,
-and `memmove` services have dedicated typed target intrinsics:
+The scalar, floating-point, memory, comparison, string, formatted-output,
+display, and drawing services have dedicated typed target intrinsics:
 
 ```llvm
 declare void  @llvm.avm.debug.putc(i8 %value)
@@ -3911,6 +4225,11 @@ declare i16 @llvm.avm.strcmp(ptr %lhs, ptr %rhs)
 declare i16 @llvm.avm.strlen(ptr %src)
 declare ptr @llvm.avm.strncpy(ptr %dst, ptr %src, i16 %n)
 declare ptr @llvm.avm.strncat(ptr %dst, ptr %src, i16 %n)
+
+declare i16 @llvm.avm.vsnprintf(
+    ptr %dst, i16 %size, ptr %format, ptr %ap)
+declare i16 @llvm.avm.vsnprintf.p(
+    ptr %dst, i16 %size, ptr addrspace(1) %format, ptr %ap)
 ```
 
 AS1-to-AS0 `memcpy_P` is represented by the generic overloaded LLVM memory
@@ -3926,9 +4245,9 @@ call void @llvm.memcpy.p0.p1.i16(
 
 A generic AVM service-number intrinsic and an
 `llvm.avm.memcpy.p` target intrinsic SHOULD NOT be public LLVM interfaces.
-The `.p` suffix on the comparison and string intrinsics is part of their target
-intrinsic name and denotes an address-space-one source; those operations have
-no corresponding generic LLVM intrinsic.
+The `.p` suffix on the comparison, string, and formatted-output intrinsics is
+part of the target intrinsic name and denotes an address-space-one format or
+source. Those operations have no corresponding generic LLVM intrinsic.
 
 ### 59.1. Compiler-representation-to-machine lowering
 
@@ -3981,6 +4300,8 @@ no corresponding generic LLVM intrinsic.
 | `llvm.avm.save()` | `SYS 0x2C` through `SYS_SAVE` | None | None |
 | `llvm.avm.load()` | `SYS 0x2D` through `SYS_LOAD` | None | `r4 = canonical Boolean` |
 | `llvm.avm.save.exists()` | `SYS 0x2E` through `SYS_SAVE_EXISTS` | None | `r4 = canonical Boolean` |
+| `llvm.avm.vsnprintf(ptr,i16,ptr,ptr)` | `SYS 0x2F` through `SYS_VSNPRINTF` | `r4 = dst`, `r5 = size`, `r6 = format`, `r2 = ap` | tied `r4 = signed result` |
+| `llvm.avm.vsnprintf.p(ptr,i16,p1,ptr)` | `SYS 0x30` through `SYS_VSNPRINTF_P` | `r4 = dst`, `r5 = size`, `q3 = format`, `r2 = ap` | tied `r4 = signed result` |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -4007,6 +4328,21 @@ AS0 memory operands, their aliasing relationship, the possibility of overlap,
 the transfer size, volatility, and ordering constraints of the originating
 memmove operation.
 
+
+`SYS_VSNPRINTF` and `SYS_VSNPRINTF_P` have a tied `r4` input and result.
+Their `r5` size and `r2` variadic cursor inputs are preserved. `SYS_VSNPRINTF`
+uses an input-only `r6` data-space format pointer; `SYS_VSNPRINTF_P` uses an
+input-only `q3` program-space format pointer and consumes only `q3[23:0]`, so
+selection MUST NOT normalize the pointer solely for this service.
+
+Both pseudos carry a bounded address-space-zero write through `dst`, an
+address-space-zero read through `ap`, and conservative indirect reads from both
+address spaces because `%s` and `%S` obtain their pointers from the variadic
+area. `SYS_VSNPRINTF` also carries its explicit address-space-zero format read;
+`SYS_VSNPRINTF_P` carries an explicit address-space-one format read. They MUST
+NOT be marked `argmemonly`, because the indirectly obtained string pointers are
+not intrinsic pointer operands. They have no ordinary call-preserved register
+mask.
 
 The four explicit-pointer sprite pseudos have input-only fixed uses of `r4`,
 `r5`, `q1`, and `r6`, and no architectural register definitions. Their sprite
@@ -4079,7 +4415,8 @@ target builtins for the comparison and string functions lower to services
 `0x1E-0x21`; `set_sprite` and the four cached-pointer draw builtins lower to
 services `0x22-0x26`. The two filled-rectangle
 builtins lower to services `0x27-0x28`. Platform and persistence builtins lower
-to services `0x29-0x2E`. A compiler MAY recognize
+to services `0x29-0x2E`. The formatted-output builtins lower to services
+`0x2F-0x30`. A compiler MAY recognize
 ordinary C library calls and replace them with the corresponding target
 intrinsic when interposition, object-size, and language rules permit it.
 
@@ -4134,6 +4471,10 @@ The memory services have their precise address-space effects:
   range `0x0500-0x08FF`.
 - Each filled-rectangle service reads and writes the fixed address-space-zero
   framebuffer range `0x0500-0x08FF`.
+- `vsnprintf` reads its AS0 format, the AS0 variadic area, and any AS0 or AS1
+  strings selected by the format, and writes its bounded AS0 destination.
+- `vsnprintf_P` has the same indirect effects and additionally reads its AS1
+  format.
 
 They MUST NOT be speculated or reordered across accesses that may alias a
 written destination or, for a copy or move, the source. They MAY be eliminated,
@@ -4144,7 +4485,11 @@ impossible. Read-only comparison and length calls may be eliminated when their
 results are dead, but they may not be moved across stores that can modify any
 byte they inspect. String-copy and concatenation calls may be transformed only
 when their NUL-termination, padding, bound, and aliasing semantics are
-preserved.
+preserved. Formatted-output calls must remain ordered relative to stores that
+may change their format, variadic arguments, or referenced strings and relative
+to accesses that may observe their destination writes. Their result and writes
+may be eliminated only when ordinary nonvolatile memory-effect and undefined-
+behavior rules permit it.
 
 `display` reads the complete framebuffer and may clear it. It also performs an
 externally observable hardware update regardless of the `clear` value. It MUST
@@ -4187,6 +4532,14 @@ uint16_t __avm_generate_random_seed(void);
 void     __avm_save(void);
 bool     __avm_load(void);
 bool     __avm_save_exists(void);
+
+int __avm_vsnprintf(
+    char *restrict dst, size_t size,
+    char const *restrict format, va_list ap);
+int __avm_vsnprintf_P(
+    char *restrict dst, size_t size,
+    char const __attribute__((address_space(1))) *restrict format,
+    va_list ap);
 
 float __avm_sinf(float x);
 float __avm_cosf(float x);
@@ -4267,6 +4620,22 @@ function-like macros or recognized direct builtins; address-taking continues
 to use out-of-line runtime wrappers. Standard AS0 names may remain ordinary
 Clang library builtins and be recognized during optimization, while target
 headers use the `__avm_*` forms when direct service selection is required.
+
+The target builtin spellings `__builtin_avm_vsnprintf` and
+`__builtin_avm_vsnprintf_p`, together with the target aliases
+`__avm_vsnprintf` and `__avm_vsnprintf_P`, lower to `llvm.avm.vsnprintf` and
+`llvm.avm.vsnprintf.p`, respectively. The backend assigns `dst`, `size`,
+`format`, and `ap` to the fixed registers listed in Section 59.1 and selects
+`SYS 0x2F` or `SYS 0x30`. The program-format operand is not normalized solely
+for `SYS 0x30`. Address-taking uses the out-of-line runtime functions. Inline
+`snprintf` and `snprintf_P` wrappers may construct a `va_list` and call the
+corresponding `vsnprintf` interface; they inherit the format language in
+Section 49.27.
+
+Target format diagnostics must understand the AVM `%S` and `%P` extensions and
+the absence of 64-bit and floating conversions. Applying an unmodified host
+`printf` format attribute is not conforming when it diagnoses `%S` as a wide
+string or fails to recognize `%P`.
 
 `__avm_display` and `__builtin_avm_display` lower to
 `llvm.avm.display(i1)`. The backend materializes the canonical boolean in `r4`

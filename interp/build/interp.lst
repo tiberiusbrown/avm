@@ -774,19 +774,20 @@ SYMBOL TABLE:
 000056ee l       .text	00000000 format_arg_u16
 00005704 l       .text	00000000 format_arg_u32
 0000571e l       .text	00000000 format_arg_program_pointer
-000058c2 l       .text	00000000 format_conversion_percent
-000058dc l       .text	00000000 format_conversion_char
-000058fe l       .text	00000000 format_conversion_string
-0000596a l       .text	00000000 format_conversion_program_string
-00005a96 l       .text	00000000 format_conversion_pointer
-00005af0 l       .text	00000000 format_conversion_integer
-000058be l       .text	00000000 format_validate_default_length
-00005ae4 l       .text	00000000 format_hex_nibble_to_char
-00005ba2 l       .text	00000000 format_generate_integer_digits
-00005c98 l       .text	00000000 format_prepare_integer_field
-00005d5c l       .text	00000000 format_emit_integer_field
-00005c62 l       .text	00000000 format_divide_u32_by_10
-00005c7e l       .text	00000000 format_divide_byte_by_10
+000058c8 l       .text	00000000 format_conversion_percent
+000058e2 l       .text	00000000 format_conversion_char
+00005904 l       .text	00000000 format_conversion_string
+00005970 l       .text	00000000 format_conversion_program_string
+00005aac l       .text	00000000 format_conversion_program_pointer
+00005a9c l       .text	00000000 format_conversion_pointer
+00005b1e l       .text	00000000 format_conversion_integer
+000058c4 l       .text	00000000 format_validate_default_length
+00005b12 l       .text	00000000 format_hex_nibble_to_char
+00005bd0 l       .text	00000000 format_generate_integer_digits
+00005cc6 l       .text	00000000 format_prepare_integer_field
+00005d8a l       .text	00000000 format_emit_integer_field
+00005c90 l       .text	00000000 format_divide_u32_by_10
+00005cac l       .text	00000000 format_divide_byte_by_10
 00000a66 l       .text	00000000 .Lff_check_extended
 00000aa4 l       .text	00000000 .Lff_direct_round_prepare
 00000ac4 l       .text	00000000 .Lff_direct_minmax_prepare
@@ -1332,79 +1333,82 @@ SYMBOL TABLE:
 00005896 l       .text	00000000 .L33
 0000589c l       .text	00000000 .L43
 000058a2 l       .text	00000000 .L51
-000058bc l       .text	00000000 .Lformat_integer_dispatch
-000058c8 l       .text	00000000 .L121
-000058ce l       .text	00000000 .L122
-000058d6 l       .text	00000000 .L26
-000058e2 l       .text	00000000 .L123
-00005904 l       .text	00000000 .L124
-00005936 l       .text	00000000 .Lformat_string_measure_unbounded
-00005946 l       .text	00000000 .Lformat_string_measured
-0000591c l       .text	00000000 .Lformat_string_measure_bounded
-00005938 l       .text	00000000 .Lformat_string_measure_unbounded_loop
-00005970 l       .text	00000000 .L125
-0000599e l       .text	00000000 .Lformat_program_string_measure_loop
-0000599e l       .text	00000000 .L126
-00005a22 l       .text	00000000 .Lformat_program_string_measured
-000059b0 l       .text	00000000 .Lformat_program_string_measure_choose
-000059ce l       .text	00000000 .Lformat_program_string_measure_read
-000059f8 l       .text	00000000 .Lformat_program_string_measure_add
-00005a14 l       .text	00000000 .Lformat_program_string_measure_store
-00005a22 l       .text	00000000 .L127
-00005a92 l       .text	00000000 .Lformat_program_string_emit_done
-00005a62 l       .text	00000000 .Lformat_program_string_emit_read
-00005a4e l       .text	00000000 .Lformat_program_string_emit_loop
-00005a9c l       .text	00000000 .L128
-00005aec l       .text	00000000 .L129
-00005b06 l       .text	00000000 .Lformat_integer_load_long
-00005b08 l       .text	00000000 .Lformat_integer_loaded
-00005b16 l       .text	00000000 .Lformat_integer_signed
-00005b18 l       .text	00000000 .Lformat_integer_unsigned
-00005b20 l       .text	00000000 .L130
-00005b34 l       .text	00000000 .Lformat_integer_mode_ready
-00005b28 l       .text	00000000 .L27
-00005b32 l       .text	00000000 .Lformat_integer_decimal_mode
-00005b8e l       .text	00000000 .Lformat_integer_magnitude_ready
-00005b5c l       .text	00000000 .Lformat_integer_test_sign
-00005b54 l       .text	00000000 .Lformat_integer_sign_extend_16
-00005b78 l       .text	00000000 .Lformat_integer_positive_sign
-00005b88 l       .text	00000000 .Lformat_integer_plus_sign
-00005bca l       .text	00000000 .Lformat_generate_digits_loop
-00005bba l       .text	00000000 .Lformat_generate_zero_digit
-00005bba l       .text	00000000 .L131
-00005c60 l       .text	00000000 .Lformat_generate_digits_done
-00005be2 l       .text	00000000 .Lformat_generate_hex_digit
-00005c22 l       .text	00000000 .Lformat_generate_octal_digit
-00005c40 l       .text	00000000 .Lformat_store_generated_digit
-00005bf6 l       .text	00000000 .Lformat_hex_lower_digit
-00005bfe l       .text	00000000 .Lformat_hex_numeric_digit
-00005c00 l       .text	00000000 .Lformat_hex_digit_ready
-00005c60 l       .text	00000000 .L132
-00005c8c l       .text	00000000 .Lformat_divide_byte_subtract
-00005c94 l       .text	00000000 .Lformat_divide_byte_done
-00005c84 l       .text	00000000 .Lformat_divide_byte_loop
-00005cc2 l       .text	00000000 .Lformat_integer_precision_ready
-00005d14 l       .text	00000000 .Lformat_integer_prefix_ready
-00005cee l       .text	00000000 .Lformat_integer_check_octal_prefix
-00005ce6 l       .text	00000000 .Lformat_integer_hex_lower_prefix
-00005d0e l       .text	00000000 .Lformat_integer_set_octal_prefix
-00005d4a l       .text	00000000 .Lformat_integer_content_saturate
-00005d34 l       .text	00000000 .L133
-00005d58 l       .text	00000000 .Lformat_integer_content_ready
-00005d46 l       .text	00000000 .L28
-00005d6e l       .text	00000000 .Lformat_integer_emit_spaces
-00005d70 l       .text	00000000 .Lformat_integer_emit_sign
-00005d7a l       .text	00000000 .Lformat_integer_emit_prefix
-00005d9a l       .text	00000000 .Lformat_integer_emit_width_zeroes
-00005d96 l       .text	00000000 .L134
-00005d98 l       .text	00000000 .L29
-00005dac l       .text	00000000 .Lformat_integer_emit_precision_zeroes
-00005dd8 l       .text	00000000 .Lformat_integer_emit_post
-00005dc6 l       .text	00000000 .Lformat_integer_emit_digits_loop
-00005de2 l       .text	00000000 .Lformat_integer_emit_done
+000058a8 l       .text	00000000 .L61
+000058c2 l       .text	00000000 .Lformat_integer_dispatch
+000058ce l       .text	00000000 .L121
+000058d4 l       .text	00000000 .L122
+000058dc l       .text	00000000 .L26
+000058e8 l       .text	00000000 .L123
+0000590a l       .text	00000000 .L124
+0000593c l       .text	00000000 .Lformat_string_measure_unbounded
+0000594c l       .text	00000000 .Lformat_string_measured
+00005922 l       .text	00000000 .Lformat_string_measure_bounded
+0000593e l       .text	00000000 .Lformat_string_measure_unbounded_loop
+00005976 l       .text	00000000 .L125
+000059a4 l       .text	00000000 .Lformat_program_string_measure_loop
+000059a4 l       .text	00000000 .L126
+00005a28 l       .text	00000000 .Lformat_program_string_measured
+000059b6 l       .text	00000000 .Lformat_program_string_measure_choose
+000059d4 l       .text	00000000 .Lformat_program_string_measure_read
+000059fe l       .text	00000000 .Lformat_program_string_measure_add
+00005a1a l       .text	00000000 .Lformat_program_string_measure_store
+00005a28 l       .text	00000000 .L127
+00005a98 l       .text	00000000 .Lformat_program_string_emit_done
+00005a68 l       .text	00000000 .Lformat_program_string_emit_read
+00005a54 l       .text	00000000 .Lformat_program_string_emit_loop
+00005aa2 l       .text	00000000 .L128
+00005ace l       .text	00000000 .Lformat_pointer_store_low16
+00005ab2 l       .text	00000000 .L129
+00005b1a l       .text	00000000 .L130
+00005b34 l       .text	00000000 .Lformat_integer_load_long
+00005b36 l       .text	00000000 .Lformat_integer_loaded
+00005b44 l       .text	00000000 .Lformat_integer_signed
+00005b46 l       .text	00000000 .Lformat_integer_unsigned
+00005b4e l       .text	00000000 .L131
+00005b62 l       .text	00000000 .Lformat_integer_mode_ready
+00005b56 l       .text	00000000 .L27
+00005b60 l       .text	00000000 .Lformat_integer_decimal_mode
+00005bbc l       .text	00000000 .Lformat_integer_magnitude_ready
+00005b8a l       .text	00000000 .Lformat_integer_test_sign
+00005b82 l       .text	00000000 .Lformat_integer_sign_extend_16
+00005ba6 l       .text	00000000 .Lformat_integer_positive_sign
+00005bb6 l       .text	00000000 .Lformat_integer_plus_sign
+00005bf8 l       .text	00000000 .Lformat_generate_digits_loop
+00005be8 l       .text	00000000 .Lformat_generate_zero_digit
+00005be8 l       .text	00000000 .L132
+00005c8e l       .text	00000000 .Lformat_generate_digits_done
+00005c10 l       .text	00000000 .Lformat_generate_hex_digit
+00005c50 l       .text	00000000 .Lformat_generate_octal_digit
+00005c6e l       .text	00000000 .Lformat_store_generated_digit
+00005c24 l       .text	00000000 .Lformat_hex_lower_digit
+00005c2c l       .text	00000000 .Lformat_hex_numeric_digit
+00005c2e l       .text	00000000 .Lformat_hex_digit_ready
+00005c8e l       .text	00000000 .L133
+00005cba l       .text	00000000 .Lformat_divide_byte_subtract
+00005cc2 l       .text	00000000 .Lformat_divide_byte_done
+00005cb2 l       .text	00000000 .Lformat_divide_byte_loop
+00005cf0 l       .text	00000000 .Lformat_integer_precision_ready
+00005d42 l       .text	00000000 .Lformat_integer_prefix_ready
+00005d1c l       .text	00000000 .Lformat_integer_check_octal_prefix
+00005d14 l       .text	00000000 .Lformat_integer_hex_lower_prefix
+00005d3c l       .text	00000000 .Lformat_integer_set_octal_prefix
+00005d78 l       .text	00000000 .Lformat_integer_content_saturate
+00005d62 l       .text	00000000 .L134
+00005d86 l       .text	00000000 .Lformat_integer_content_ready
+00005d74 l       .text	00000000 .L28
+00005d9c l       .text	00000000 .Lformat_integer_emit_spaces
+00005d9e l       .text	00000000 .Lformat_integer_emit_sign
+00005da8 l       .text	00000000 .Lformat_integer_emit_prefix
+00005dc8 l       .text	00000000 .Lformat_integer_emit_width_zeroes
+00005dc4 l       .text	00000000 .L135
+00005dc6 l       .text	00000000 .L29
+00005dda l       .text	00000000 .Lformat_integer_emit_precision_zeroes
+00005e06 l       .text	00000000 .Lformat_integer_emit_post
+00005df4 l       .text	00000000 .Lformat_integer_emit_digits_loop
+00005e10 l       .text	00000000 .Lformat_integer_emit_done
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
-00005de4 g       .text	00000000 _etext
+00005e14 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00004c5e g       .text	00000000 draw_bitmap_seek_func
@@ -14971,761 +14975,793 @@ Disassembly of section .text:
     5880:	80 93 42 0a 	sts	0x0A42, r24	; 0x800a42 <_end+0x36>
     5884:	85 32       	cpi	r24, 0x25	; 37
     5886:	09 f4       	brne	.+2      	; 0x588a <.L1^B20>
-    5888:	1c c0       	rjmp	.+56     	; 0x58c2 <format_conversion_percent>
+    5888:	1f c0       	rjmp	.+62     	; 0x58c8 <format_conversion_percent>
 
 0000588a <.L1^B20>:
     588a:	83 36       	cpi	r24, 0x63	; 99
     588c:	09 f4       	brne	.+2      	; 0x5890 <.L2^B5>
-    588e:	26 c0       	rjmp	.+76     	; 0x58dc <format_conversion_char>
+    588e:	29 c0       	rjmp	.+82     	; 0x58e2 <format_conversion_char>
 
 00005890 <.L2^B5>:
     5890:	83 37       	cpi	r24, 0x73	; 115
     5892:	09 f4       	brne	.+2      	; 0x5896 <.L3^B3>
-    5894:	34 c0       	rjmp	.+104    	; 0x58fe <format_conversion_string>
+    5894:	37 c0       	rjmp	.+110    	; 0x5904 <format_conversion_string>
 
 00005896 <.L3^B3>:
     5896:	83 35       	cpi	r24, 0x53	; 83
     5898:	09 f4       	brne	.+2      	; 0x589c <.L4^B3>
-    589a:	67 c0       	rjmp	.+206    	; 0x596a <format_conversion_program_string>
+    589a:	6a c0       	rjmp	.+212    	; 0x5970 <format_conversion_program_string>
 
 0000589c <.L4^B3>:
-    589c:	80 37       	cpi	r24, 0x70	; 112
+    589c:	80 35       	cpi	r24, 0x50	; 80
     589e:	09 f4       	brne	.+2      	; 0x58a2 <.L5^B1>
-    58a0:	fa c0       	rjmp	.+500    	; 0x5a96 <format_conversion_pointer>
+    58a0:	05 c1       	rjmp	.+522    	; 0x5aac <format_conversion_program_pointer>
 
 000058a2 <.L5^B1>:
-    58a2:	84 36       	cpi	r24, 0x64	; 100
-    58a4:	59 f0       	breq	.+22     	; 0x58bc <.Lformat_integer_dispatch>
-    58a6:	89 36       	cpi	r24, 0x69	; 105
-    58a8:	49 f0       	breq	.+18     	; 0x58bc <.Lformat_integer_dispatch>
-    58aa:	85 37       	cpi	r24, 0x75	; 117
-    58ac:	39 f0       	breq	.+14     	; 0x58bc <.Lformat_integer_dispatch>
-    58ae:	8f 36       	cpi	r24, 0x6F	; 111
-    58b0:	29 f0       	breq	.+10     	; 0x58bc <.Lformat_integer_dispatch>
-    58b2:	88 37       	cpi	r24, 0x78	; 120
-    58b4:	19 f0       	breq	.+6      	; 0x58bc <.Lformat_integer_dispatch>
-    58b6:	88 35       	cpi	r24, 0x58	; 88
-    58b8:	09 f0       	breq	.+2      	; 0x58bc <.Lformat_integer_dispatch>
-    58ba:	54 ce       	rjmp	.-856    	; 0x5564 <format_unexpected_character>
+    58a2:	80 37       	cpi	r24, 0x70	; 112
+    58a4:	09 f4       	brne	.+2      	; 0x58a8 <.L6^B1>
+    58a6:	fa c0       	rjmp	.+500    	; 0x5a9c <format_conversion_pointer>
 
-000058bc <.Lformat_integer_dispatch>:
-    58bc:	19 c1       	rjmp	.+562    	; 0x5af0 <format_conversion_integer>
+000058a8 <.L6^B1>:
+    58a8:	84 36       	cpi	r24, 0x64	; 100
+    58aa:	59 f0       	breq	.+22     	; 0x58c2 <.Lformat_integer_dispatch>
+    58ac:	89 36       	cpi	r24, 0x69	; 105
+    58ae:	49 f0       	breq	.+18     	; 0x58c2 <.Lformat_integer_dispatch>
+    58b0:	85 37       	cpi	r24, 0x75	; 117
+    58b2:	39 f0       	breq	.+14     	; 0x58c2 <.Lformat_integer_dispatch>
+    58b4:	8f 36       	cpi	r24, 0x6F	; 111
+    58b6:	29 f0       	breq	.+10     	; 0x58c2 <.Lformat_integer_dispatch>
+    58b8:	88 37       	cpi	r24, 0x78	; 120
+    58ba:	19 f0       	breq	.+6      	; 0x58c2 <.Lformat_integer_dispatch>
+    58bc:	88 35       	cpi	r24, 0x58	; 88
+    58be:	09 f0       	breq	.+2      	; 0x58c2 <.Lformat_integer_dispatch>
+    58c0:	51 ce       	rjmp	.-862    	; 0x5564 <format_unexpected_character>
 
-000058be <format_validate_default_length>:
-    58be:	33 23       	and	r19, r19
-    58c0:	08 95       	ret
+000058c2 <.Lformat_integer_dispatch>:
+    58c2:	2d c1       	rjmp	.+602    	; 0x5b1e <format_conversion_integer>
 
-000058c2 <format_conversion_percent>:
-    58c2:	fd df       	rcall	.-6      	; 0x58be <format_validate_default_length>
-    58c4:	09 f0       	breq	.+2      	; 0x58c8 <.L1^B21>
-    58c6:	4e ce       	rjmp	.-868    	; 0x5564 <format_unexpected_character>
+000058c4 <format_validate_default_length>:
+    58c4:	33 23       	and	r19, r19
+    58c6:	08 95       	ret
 
-000058c8 <.L1^B21>:
-    58c8:	22 23       	and	r18, r18
-    58ca:	09 f0       	breq	.+2      	; 0x58ce <.L1^B22>
+000058c8 <format_conversion_percent>:
+    58c8:	fd df       	rcall	.-6      	; 0x58c4 <format_validate_default_length>
+    58ca:	09 f0       	breq	.+2      	; 0x58ce <.L1^B21>
     58cc:	4b ce       	rjmp	.-874    	; 0x5564 <format_unexpected_character>
 
-000058ce <.L1^B22>:
-    58ce:	8c 2d       	mov	r24, r12
-    58d0:	8d 29       	or	r24, r13
-    58d2:	09 f0       	breq	.+2      	; 0x58d6 <.L2^B6>
-    58d4:	47 ce       	rjmp	.-882    	; 0x5564 <format_unexpected_character>
-
-000058d6 <.L2^B6>:
-    58d6:	85 e2       	ldi	r24, 0x25	; 37
-    58d8:	57 de       	rcall	.-850    	; 0x5588 <format_emit_char>
-    58da:	2d cf       	rjmp	.-422    	; 0x5736 <format_core>
-
-000058dc <format_conversion_char>:
-    58dc:	f0 df       	rcall	.-32     	; 0x58be <format_validate_default_length>
-    58de:	09 f0       	breq	.+2      	; 0x58e2 <.L1^B23>
-    58e0:	41 ce       	rjmp	.-894    	; 0x5564 <format_unexpected_character>
-
-000058e2 <.L1^B23>:
-    58e2:	25 fd       	sbrc	r18, 5
-    58e4:	3f ce       	rjmp	.-898    	; 0x5564 <format_unexpected_character>
-    58e6:	03 df       	rcall	.-506    	; 0x56ee <format_arg_u16>
-    58e8:	80 93 42 0a 	sts	0x0A42, r24	; 0x800a42 <_end+0x36>
-    58ec:	81 e0       	ldi	r24, 0x01	; 1
-    58ee:	99 27       	eor	r25, r25
-    58f0:	72 de       	rcall	.-796    	; 0x55d6 <format_compute_padding>
-    58f2:	83 de       	rcall	.-762    	; 0x55fa <format_emit_pre_padding>
-    58f4:	80 91 42 0a 	lds	r24, 0x0A42	; 0x800a42 <_end+0x36>
-    58f8:	47 de       	rcall	.-882    	; 0x5588 <format_emit_char>
-    58fa:	82 de       	rcall	.-764    	; 0x5600 <format_emit_post_padding>
-    58fc:	1c cf       	rjmp	.-456    	; 0x5736 <format_core>
-
-000058fe <format_conversion_string>:
-    58fe:	df df       	rcall	.-66     	; 0x58be <format_validate_default_length>
-    5900:	09 f0       	breq	.+2      	; 0x5904 <.L1^B24>
-    5902:	30 ce       	rjmp	.-928    	; 0x5564 <format_unexpected_character>
-
-00005904 <.L1^B24>:
-    5904:	f4 de       	rcall	.-536    	; 0x56ee <format_arg_u16>
-    5906:	80 93 30 0a 	sts	0x0A30, r24	; 0x800a30 <_end+0x24>
-    590a:	90 93 31 0a 	sts	0x0A31, r25	; 0x800a31 <_end+0x25>
-    590e:	44 27       	eor	r20, r20
-    5910:	55 27       	eor	r21, r21
-    5912:	25 ff       	sbrs	r18, 5
-    5914:	10 c0       	rjmp	.+32     	; 0x5936 <.Lformat_string_measure_unbounded>
-    5916:	ae 2d       	mov	r26, r14
-    5918:	af 29       	or	r26, r15
-    591a:	a9 f0       	breq	.+42     	; 0x5946 <.Lformat_string_measured>
-
-0000591c <.Lformat_string_measure_bounded>:
-    591c:	4e 15       	cp	r20, r14
-    591e:	5f 05       	cpc	r21, r15
-    5920:	90 f4       	brcc	.+36     	; 0x5946 <.Lformat_string_measured>
-    5922:	fc 01       	movw	r30, r24
-    5924:	e4 0f       	add	r30, r20
-    5926:	f5 1f       	adc	r31, r21
-    5928:	a0 81       	ld	r26, Z
-    592a:	aa 23       	and	r26, r26
-    592c:	61 f0       	breq	.+24     	; 0x5946 <.Lformat_string_measured>
-    592e:	43 95       	inc	r20
-    5930:	a9 f7       	brne	.-22     	; 0x591c <.Lformat_string_measure_bounded>
-    5932:	53 95       	inc	r21
-    5934:	f3 cf       	rjmp	.-26     	; 0x591c <.Lformat_string_measure_bounded>
-
-00005936 <.Lformat_string_measure_unbounded>:
-    5936:	fc 01       	movw	r30, r24
-
-00005938 <.Lformat_string_measure_unbounded_loop>:
-    5938:	a1 91       	ld	r26, Z+
-    593a:	aa 23       	and	r26, r26
-    593c:	21 f0       	breq	.+8      	; 0x5946 <.Lformat_string_measured>
-    593e:	43 95       	inc	r20
-    5940:	d9 f7       	brne	.-10     	; 0x5938 <.Lformat_string_measure_unbounded_loop>
-    5942:	53 95       	inc	r21
-    5944:	f9 cf       	rjmp	.-14     	; 0x5938 <.Lformat_string_measure_unbounded_loop>
-
-00005946 <.Lformat_string_measured>:
-    5946:	40 93 36 0a 	sts	0x0A36, r20	; 0x800a36 <_end+0x2a>
-    594a:	50 93 37 0a 	sts	0x0A37, r21	; 0x800a37 <_end+0x2b>
-    594e:	ca 01       	movw	r24, r20
-    5950:	42 de       	rcall	.-892    	; 0x55d6 <format_compute_padding>
-    5952:	53 de       	rcall	.-858    	; 0x55fa <format_emit_pre_padding>
-    5954:	e0 91 30 0a 	lds	r30, 0x0A30	; 0x800a30 <_end+0x24>
-    5958:	f0 91 31 0a 	lds	r31, 0x0A31	; 0x800a31 <_end+0x25>
-    595c:	80 91 36 0a 	lds	r24, 0x0A36	; 0x800a36 <_end+0x2a>
-    5960:	90 91 37 0a 	lds	r25, 0x0A37	; 0x800a37 <_end+0x2b>
-    5964:	26 de       	rcall	.-948    	; 0x55b2 <format_emit_ram_span>
-    5966:	4c de       	rcall	.-872    	; 0x5600 <format_emit_post_padding>
-    5968:	e6 ce       	rjmp	.-564    	; 0x5736 <format_core>
-
-0000596a <format_conversion_program_string>:
-    596a:	a9 df       	rcall	.-174    	; 0x58be <format_validate_default_length>
-    596c:	09 f0       	breq	.+2      	; 0x5970 <.L1^B25>
-    596e:	fa cd       	rjmp	.-1036   	; 0x5564 <format_unexpected_character>
-
-00005970 <.L1^B25>:
-    5970:	d6 de       	rcall	.-596    	; 0x571e <format_arg_program_pointer>
-    5972:	80 93 30 0a 	sts	0x0A30, r24	; 0x800a30 <_end+0x24>
-    5976:	90 93 31 0a 	sts	0x0A31, r25	; 0x800a31 <_end+0x25>
-    597a:	a0 93 32 0a 	sts	0x0A32, r26	; 0x800a32 <_end+0x26>
-    597e:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
-    5982:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
-    5986:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
-    598a:	20 92 36 0a 	sts	0x0A36, r2	; 0x800a36 <_end+0x2a>
-    598e:	20 92 37 0a 	sts	0x0A37, r2	; 0x800a37 <_end+0x2b>
-    5992:	25 ff       	sbrs	r18, 5
-    5994:	04 c0       	rjmp	.+8      	; 0x599e <.L1^B26>
-    5996:	8e 2d       	mov	r24, r14
-    5998:	8f 29       	or	r24, r15
-    599a:	09 f4       	brne	.+2      	; 0x599e <.L1^B26>
-    599c:	42 c0       	rjmp	.+132    	; 0x5a22 <.L1^B27>
-
-0000599e <.L1^B26>:
-    599e:	25 ff       	sbrs	r18, 5
-    59a0:	07 c0       	rjmp	.+14     	; 0x59b0 <.Lformat_program_string_measure_choose>
-    59a2:	80 91 36 0a 	lds	r24, 0x0A36	; 0x800a36 <_end+0x2a>
-    59a6:	90 91 37 0a 	lds	r25, 0x0A37	; 0x800a37 <_end+0x2b>
-    59aa:	8e 15       	cp	r24, r14
-    59ac:	9f 05       	cpc	r25, r15
-    59ae:	c8 f5       	brcc	.+114    	; 0x5a22 <.L1^B27>
-
-000059b0 <.Lformat_program_string_measure_choose>:
-    59b0:	4c e0       	ldi	r20, 0x0C	; 12
-    59b2:	25 ff       	sbrs	r18, 5
-    59b4:	0c c0       	rjmp	.+24     	; 0x59ce <.Lformat_program_string_measure_read>
-    59b6:	c7 01       	movw	r24, r14
-    59b8:	a0 91 36 0a 	lds	r26, 0x0A36	; 0x800a36 <_end+0x2a>
-    59bc:	b0 91 37 0a 	lds	r27, 0x0A37	; 0x800a37 <_end+0x2b>
-    59c0:	8a 1b       	sub	r24, r26
-    59c2:	9b 0b       	sbc	r25, r27
-    59c4:	99 23       	and	r25, r25
-    59c6:	19 f4       	brne	.+6      	; 0x59ce <.Lformat_program_string_measure_read>
-    59c8:	8c 30       	cpi	r24, 0x0C	; 12
-    59ca:	08 f4       	brcc	.+2      	; 0x59ce <.Lformat_program_string_measure_read>
-    59cc:	48 2f       	mov	r20, r24
-
-000059ce <.Lformat_program_string_measure_read>:
-    59ce:	80 91 33 0a 	lds	r24, 0x0A33	; 0x800a33 <_end+0x27>
-    59d2:	90 91 34 0a 	lds	r25, 0x0A34	; 0x800a34 <_end+0x28>
-    59d6:	a0 91 35 0a 	lds	r26, 0x0A35	; 0x800a35 <_end+0x29>
-    59da:	e4 e2       	ldi	r30, 0x24	; 36
-    59dc:	fa e0       	ldi	r31, 0x0A	; 10
-    59de:	51 e0       	ldi	r21, 0x01	; 1
-    59e0:	2f de       	rcall	.-930    	; 0x5640 <format_read_program_chunk>
-    59e2:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
-    59e6:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
-    59ea:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
-    59ee:	86 2f       	mov	r24, r22
-    59f0:	99 27       	eor	r25, r25
-    59f2:	77 23       	and	r23, r23
-    59f4:	09 f0       	breq	.+2      	; 0x59f8 <.Lformat_program_string_measure_add>
-    59f6:	8a 95       	dec	r24
-
-000059f8 <.Lformat_program_string_measure_add>:
-    59f8:	a0 91 36 0a 	lds	r26, 0x0A36	; 0x800a36 <_end+0x2a>
-    59fc:	b0 91 37 0a 	lds	r27, 0x0A37	; 0x800a37 <_end+0x2b>
-    5a00:	a8 0f       	add	r26, r24
-    5a02:	b9 1f       	adc	r27, r25
-    5a04:	38 f4       	brcc	.+14     	; 0x5a14 <.Lformat_program_string_measure_store>
-    5a06:	af ef       	ldi	r26, 0xFF	; 255
-    5a08:	bf ef       	ldi	r27, 0xFF	; 255
-    5a0a:	80 91 23 0a 	lds	r24, 0x0A23	; 0x800a23 <_end+0x17>
-    5a0e:	84 60       	ori	r24, 0x04	; 4
-    5a10:	80 93 23 0a 	sts	0x0A23, r24	; 0x800a23 <_end+0x17>
-
-00005a14 <.Lformat_program_string_measure_store>:
-    5a14:	a0 93 36 0a 	sts	0x0A36, r26	; 0x800a36 <_end+0x2a>
-    5a18:	b0 93 37 0a 	sts	0x0A37, r27	; 0x800a37 <_end+0x2b>
-    5a1c:	77 23       	and	r23, r23
-    5a1e:	09 f4       	brne	.+2      	; 0x5a22 <.L1^B27>
-    5a20:	be cf       	rjmp	.-132    	; 0x599e <.L1^B26>
-
-00005a22 <.L1^B27>:
-    5a22:	80 91 36 0a 	lds	r24, 0x0A36	; 0x800a36 <_end+0x2a>
-    5a26:	90 91 37 0a 	lds	r25, 0x0A37	; 0x800a37 <_end+0x2b>
-    5a2a:	d5 dd       	rcall	.-1110   	; 0x55d6 <format_compute_padding>
-    5a2c:	e6 dd       	rcall	.-1076   	; 0x55fa <format_emit_pre_padding>
-    5a2e:	80 91 30 0a 	lds	r24, 0x0A30	; 0x800a30 <_end+0x24>
-    5a32:	90 91 31 0a 	lds	r25, 0x0A31	; 0x800a31 <_end+0x25>
-    5a36:	a0 91 32 0a 	lds	r26, 0x0A32	; 0x800a32 <_end+0x26>
-    5a3a:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
-    5a3e:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
-    5a42:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
-    5a46:	c0 90 36 0a 	lds	r12, 0x0A36	; 0x800a36 <_end+0x2a>
-    5a4a:	d0 90 37 0a 	lds	r13, 0x0A37	; 0x800a37 <_end+0x2b>
-
-00005a4e <.Lformat_program_string_emit_loop>:
-    5a4e:	8c 2d       	mov	r24, r12
-    5a50:	8d 29       	or	r24, r13
-    5a52:	f9 f0       	breq	.+62     	; 0x5a92 <.Lformat_program_string_emit_done>
-    5a54:	4c e0       	ldi	r20, 0x0C	; 12
-    5a56:	dd 20       	and	r13, r13
-    5a58:	21 f4       	brne	.+8      	; 0x5a62 <.Lformat_program_string_emit_read>
-    5a5a:	8c 2d       	mov	r24, r12
-    5a5c:	8c 30       	cpi	r24, 0x0C	; 12
-    5a5e:	08 f4       	brcc	.+2      	; 0x5a62 <.Lformat_program_string_emit_read>
-    5a60:	4c 2d       	mov	r20, r12
-
-00005a62 <.Lformat_program_string_emit_read>:
-    5a62:	80 91 33 0a 	lds	r24, 0x0A33	; 0x800a33 <_end+0x27>
-    5a66:	90 91 34 0a 	lds	r25, 0x0A34	; 0x800a34 <_end+0x28>
-    5a6a:	a0 91 35 0a 	lds	r26, 0x0A35	; 0x800a35 <_end+0x29>
-    5a6e:	e4 e2       	ldi	r30, 0x24	; 36
-    5a70:	fa e0       	ldi	r31, 0x0A	; 10
-    5a72:	55 27       	eor	r21, r21
-    5a74:	e5 dd       	rcall	.-1078   	; 0x5640 <format_read_program_chunk>
-    5a76:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
-    5a7a:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
-    5a7e:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
-    5a82:	c6 1a       	sub	r12, r22
-    5a84:	d2 08       	sbc	r13, r2
-    5a86:	e4 e2       	ldi	r30, 0x24	; 36
-    5a88:	fa e0       	ldi	r31, 0x0A	; 10
-    5a8a:	86 2f       	mov	r24, r22
-    5a8c:	99 27       	eor	r25, r25
-    5a8e:	91 dd       	rcall	.-1246   	; 0x55b2 <format_emit_ram_span>
-    5a90:	de cf       	rjmp	.-68     	; 0x5a4e <.Lformat_program_string_emit_loop>
-
-00005a92 <.Lformat_program_string_emit_done>:
-    5a92:	b6 dd       	rcall	.-1172   	; 0x5600 <format_emit_post_padding>
-    5a94:	50 ce       	rjmp	.-864    	; 0x5736 <format_core>
-
-00005a96 <format_conversion_pointer>:
-    5a96:	13 df       	rcall	.-474    	; 0x58be <format_validate_default_length>
-    5a98:	09 f0       	breq	.+2      	; 0x5a9c <.L1^B28>
-    5a9a:	64 cd       	rjmp	.-1336   	; 0x5564 <format_unexpected_character>
-
-00005a9c <.L1^B28>:
-    5a9c:	28 de       	rcall	.-944    	; 0x56ee <format_arg_u16>
-    5a9e:	e4 e2       	ldi	r30, 0x24	; 36
-    5aa0:	fa e0       	ldi	r31, 0x0A	; 10
-    5aa2:	a9 2f       	mov	r26, r25
-    5aa4:	a2 95       	swap	r26
-    5aa6:	af 70       	andi	r26, 0x0F	; 15
-    5aa8:	1d d0       	rcall	.+58     	; 0x5ae4 <format_hex_nibble_to_char>
-    5aaa:	a1 93       	st	Z+, r26
-    5aac:	a9 2f       	mov	r26, r25
-    5aae:	af 70       	andi	r26, 0x0F	; 15
-    5ab0:	19 d0       	rcall	.+50     	; 0x5ae4 <format_hex_nibble_to_char>
-    5ab2:	a1 93       	st	Z+, r26
-    5ab4:	a8 2f       	mov	r26, r24
-    5ab6:	a2 95       	swap	r26
-    5ab8:	af 70       	andi	r26, 0x0F	; 15
-    5aba:	14 d0       	rcall	.+40     	; 0x5ae4 <format_hex_nibble_to_char>
-    5abc:	a1 93       	st	Z+, r26
-    5abe:	a8 2f       	mov	r26, r24
-    5ac0:	af 70       	andi	r26, 0x0F	; 15
-    5ac2:	10 d0       	rcall	.+32     	; 0x5ae4 <format_hex_nibble_to_char>
-    5ac4:	a0 83       	st	Z, r26
-    5ac6:	86 e0       	ldi	r24, 0x06	; 6
-    5ac8:	99 27       	eor	r25, r25
-    5aca:	85 dd       	rcall	.-1270   	; 0x55d6 <format_compute_padding>
-    5acc:	96 dd       	rcall	.-1236   	; 0x55fa <format_emit_pre_padding>
-    5ace:	80 e3       	ldi	r24, 0x30	; 48
-    5ad0:	5b dd       	rcall	.-1354   	; 0x5588 <format_emit_char>
-    5ad2:	88 e7       	ldi	r24, 0x78	; 120
-    5ad4:	59 dd       	rcall	.-1358   	; 0x5588 <format_emit_char>
-    5ad6:	e4 e2       	ldi	r30, 0x24	; 36
-    5ad8:	fa e0       	ldi	r31, 0x0A	; 10
-    5ada:	84 e0       	ldi	r24, 0x04	; 4
-    5adc:	99 27       	eor	r25, r25
-    5ade:	69 dd       	rcall	.-1326   	; 0x55b2 <format_emit_ram_span>
-    5ae0:	8f dd       	rcall	.-1250   	; 0x5600 <format_emit_post_padding>
-    5ae2:	29 ce       	rjmp	.-942    	; 0x5736 <format_core>
-
-00005ae4 <format_hex_nibble_to_char>:
-    5ae4:	aa 30       	cpi	r26, 0x0A	; 10
-    5ae6:	10 f0       	brcs	.+4      	; 0x5aec <.L1^B29>
-    5ae8:	a9 5a       	subi	r26, 0xA9	; 169
-    5aea:	08 95       	ret
-
-00005aec <.L1^B29>:
-    5aec:	a0 5d       	subi	r26, 0xD0	; 208
-    5aee:	08 95       	ret
-
-00005af0 <format_conversion_integer>:
-    5af0:	33 30       	cpi	r19, 0x03	; 3
-    5af2:	49 f0       	breq	.+18     	; 0x5b06 <.Lformat_integer_load_long>
-    5af4:	fc dd       	rcall	.-1032   	; 0x56ee <format_arg_u16>
-    5af6:	48 2f       	mov	r20, r24
-    5af8:	59 2f       	mov	r21, r25
-    5afa:	66 27       	eor	r22, r22
-    5afc:	77 27       	eor	r23, r23
-    5afe:	31 30       	cpi	r19, 0x01	; 1
-    5b00:	19 f4       	brne	.+6      	; 0x5b08 <.Lformat_integer_loaded>
-    5b02:	55 27       	eor	r21, r21
-    5b04:	01 c0       	rjmp	.+2      	; 0x5b08 <.Lformat_integer_loaded>
-
-00005b06 <.Lformat_integer_load_long>:
-    5b06:	fe dd       	rcall	.-1028   	; 0x5704 <format_arg_u32>
-
-00005b08 <.Lformat_integer_loaded>:
-    5b08:	80 91 42 0a 	lds	r24, 0x0A42	; 0x800a42 <_end+0x36>
-    5b0c:	aa 27       	eor	r26, r26
-    5b0e:	84 36       	cpi	r24, 0x64	; 100
-    5b10:	11 f0       	breq	.+4      	; 0x5b16 <.Lformat_integer_signed>
-    5b12:	89 36       	cpi	r24, 0x69	; 105
-    5b14:	09 f4       	brne	.+2      	; 0x5b18 <.Lformat_integer_unsigned>
-
-00005b16 <.Lformat_integer_signed>:
-    5b16:	a4 60       	ori	r26, 0x04	; 4
-
-00005b18 <.Lformat_integer_unsigned>:
-    5b18:	8f 36       	cpi	r24, 0x6F	; 111
-    5b1a:	11 f4       	brne	.+4      	; 0x5b20 <.L1^B30>
-    5b1c:	a1 60       	ori	r26, 0x01	; 1
-    5b1e:	0a c0       	rjmp	.+20     	; 0x5b34 <.Lformat_integer_mode_ready>
-
-00005b20 <.L1^B30>:
-    5b20:	88 37       	cpi	r24, 0x78	; 120
-    5b22:	11 f0       	breq	.+4      	; 0x5b28 <.L2^B7>
-    5b24:	88 35       	cpi	r24, 0x58	; 88
-    5b26:	29 f4       	brne	.+10     	; 0x5b32 <.Lformat_integer_decimal_mode>
-
-00005b28 <.L2^B7>:
-    5b28:	a2 60       	ori	r26, 0x02	; 2
-    5b2a:	88 35       	cpi	r24, 0x58	; 88
-    5b2c:	19 f4       	brne	.+6      	; 0x5b34 <.Lformat_integer_mode_ready>
-    5b2e:	a8 60       	ori	r26, 0x08	; 8
-    5b30:	01 c0       	rjmp	.+2      	; 0x5b34 <.Lformat_integer_mode_ready>
-
-00005b32 <.Lformat_integer_decimal_mode>:
-    5b32:	a0 60       	ori	r26, 0x00	; 0
-
-00005b34 <.Lformat_integer_mode_ready>:
-    5b34:	a0 93 44 0a 	sts	0x0A44, r26	; 0x800a44 <_end+0x38>
-    5b38:	20 92 41 0a 	sts	0x0A41, r2	; 0x800a41 <_end+0x35>
-    5b3c:	a2 ff       	sbrs	r26, 2
-    5b3e:	27 c0       	rjmp	.+78     	; 0x5b8e <.Lformat_integer_magnitude_ready>
-    5b40:	33 30       	cpi	r19, 0x03	; 3
-    5b42:	61 f0       	breq	.+24     	; 0x5b5c <.Lformat_integer_test_sign>
-    5b44:	31 30       	cpi	r19, 0x01	; 1
-    5b46:	31 f4       	brne	.+12     	; 0x5b54 <.Lformat_integer_sign_extend_16>
-    5b48:	47 ff       	sbrs	r20, 7
-    5b4a:	08 c0       	rjmp	.+16     	; 0x5b5c <.Lformat_integer_test_sign>
-    5b4c:	5f ef       	ldi	r21, 0xFF	; 255
-    5b4e:	6f ef       	ldi	r22, 0xFF	; 255
-    5b50:	7f ef       	ldi	r23, 0xFF	; 255
-    5b52:	04 c0       	rjmp	.+8      	; 0x5b5c <.Lformat_integer_test_sign>
-
-00005b54 <.Lformat_integer_sign_extend_16>:
-    5b54:	57 ff       	sbrs	r21, 7
-    5b56:	02 c0       	rjmp	.+4      	; 0x5b5c <.Lformat_integer_test_sign>
-    5b58:	6f ef       	ldi	r22, 0xFF	; 255
-    5b5a:	7f ef       	ldi	r23, 0xFF	; 255
-
-00005b5c <.Lformat_integer_test_sign>:
-    5b5c:	77 ff       	sbrs	r23, 7
-    5b5e:	0c c0       	rjmp	.+24     	; 0x5b78 <.Lformat_integer_positive_sign>
-    5b60:	8d e2       	ldi	r24, 0x2D	; 45
-    5b62:	80 93 41 0a 	sts	0x0A41, r24	; 0x800a41 <_end+0x35>
-    5b66:	40 95       	com	r20
-    5b68:	50 95       	com	r21
-    5b6a:	60 95       	com	r22
-    5b6c:	70 95       	com	r23
-    5b6e:	43 0d       	add	r20, r3
-    5b70:	52 1d       	adc	r21, r2
-    5b72:	62 1d       	adc	r22, r2
-    5b74:	72 1d       	adc	r23, r2
-    5b76:	0b c0       	rjmp	.+22     	; 0x5b8e <.Lformat_integer_magnitude_ready>
-
-00005b78 <.Lformat_integer_positive_sign>:
-    5b78:	21 fd       	sbrc	r18, 1
-    5b7a:	06 c0       	rjmp	.+12     	; 0x5b88 <.Lformat_integer_plus_sign>
-    5b7c:	22 ff       	sbrs	r18, 2
-    5b7e:	07 c0       	rjmp	.+14     	; 0x5b8e <.Lformat_integer_magnitude_ready>
-    5b80:	80 e2       	ldi	r24, 0x20	; 32
-    5b82:	80 93 41 0a 	sts	0x0A41, r24	; 0x800a41 <_end+0x35>
-    5b86:	03 c0       	rjmp	.+6      	; 0x5b8e <.Lformat_integer_magnitude_ready>
-
-00005b88 <.Lformat_integer_plus_sign>:
-    5b88:	8b e2       	ldi	r24, 0x2B	; 43
-    5b8a:	80 93 41 0a 	sts	0x0A41, r24	; 0x800a41 <_end+0x35>
-
-00005b8e <.Lformat_integer_magnitude_ready>:
-    5b8e:	84 2f       	mov	r24, r20
-    5b90:	85 2b       	or	r24, r21
-    5b92:	86 2b       	or	r24, r22
-    5b94:	87 2b       	or	r24, r23
-    5b96:	80 93 43 0a 	sts	0x0A43, r24	; 0x800a43 <_end+0x37>
-    5b9a:	03 d0       	rcall	.+6      	; 0x5ba2 <format_generate_integer_digits>
-    5b9c:	7d d0       	rcall	.+250    	; 0x5c98 <format_prepare_integer_field>
-    5b9e:	de d0       	rcall	.+444    	; 0x5d5c <format_emit_integer_field>
-    5ba0:	ca cd       	rjmp	.-1132   	; 0x5736 <format_core>
-
-00005ba2 <format_generate_integer_digits>:
-    5ba2:	20 92 40 0a 	sts	0x0A40, r2	; 0x800a40 <_end+0x34>
-    5ba6:	80 91 43 0a 	lds	r24, 0x0A43	; 0x800a43 <_end+0x37>
-    5baa:	88 23       	and	r24, r24
-    5bac:	71 f4       	brne	.+28     	; 0x5bca <.Lformat_generate_digits_loop>
-    5bae:	25 ff       	sbrs	r18, 5
-    5bb0:	04 c0       	rjmp	.+8      	; 0x5bba <.L1^B31>
-    5bb2:	8e 2d       	mov	r24, r14
-    5bb4:	8f 29       	or	r24, r15
-    5bb6:	09 f4       	brne	.+2      	; 0x5bba <.L1^B31>
-    5bb8:	53 c0       	rjmp	.+166    	; 0x5c60 <.L1^B32>
-
-00005bba <.L1^B31>:
-    5bba:	e4 e2       	ldi	r30, 0x24	; 36
-    5bbc:	fa e0       	ldi	r31, 0x0A	; 10
-    5bbe:	80 e3       	ldi	r24, 0x30	; 48
-    5bc0:	80 83       	st	Z, r24
-    5bc2:	81 e0       	ldi	r24, 0x01	; 1
-    5bc4:	80 93 40 0a 	sts	0x0A40, r24	; 0x800a40 <_end+0x34>
-    5bc8:	4b c0       	rjmp	.+150    	; 0x5c60 <.L1^B32>
-
-00005bca <.Lformat_generate_digits_loop>:
-    5bca:	a0 91 44 0a 	lds	r26, 0x0A44	; 0x800a44 <_end+0x38>
-    5bce:	ba 2f       	mov	r27, r26
-    5bd0:	b3 70       	andi	r27, 0x03	; 3
-    5bd2:	b2 30       	cpi	r27, 0x02	; 2
-    5bd4:	31 f0       	breq	.+12     	; 0x5be2 <.Lformat_generate_hex_digit>
-    5bd6:	b1 30       	cpi	r27, 0x01	; 1
-    5bd8:	21 f1       	breq	.+72     	; 0x5c22 <.Lformat_generate_octal_digit>
-    5bda:	43 d0       	rcall	.+134    	; 0x5c62 <format_divide_u32_by_10>
-    5bdc:	a8 2f       	mov	r26, r24
-    5bde:	a0 5d       	subi	r26, 0xD0	; 208
-    5be0:	2f c0       	rjmp	.+94     	; 0x5c40 <.Lformat_store_generated_digit>
-
-00005be2 <.Lformat_generate_hex_digit>:
-    5be2:	a4 2f       	mov	r26, r20
-    5be4:	af 70       	andi	r26, 0x0F	; 15
-    5be6:	b0 91 44 0a 	lds	r27, 0x0A44	; 0x800a44 <_end+0x38>
-    5bea:	b3 ff       	sbrs	r27, 3
-    5bec:	04 c0       	rjmp	.+8      	; 0x5bf6 <.Lformat_hex_lower_digit>
-    5bee:	aa 30       	cpi	r26, 0x0A	; 10
-    5bf0:	30 f0       	brcs	.+12     	; 0x5bfe <.Lformat_hex_numeric_digit>
-    5bf2:	a9 5c       	subi	r26, 0xC9	; 201
-    5bf4:	05 c0       	rjmp	.+10     	; 0x5c00 <.Lformat_hex_digit_ready>
-
-00005bf6 <.Lformat_hex_lower_digit>:
-    5bf6:	aa 30       	cpi	r26, 0x0A	; 10
-    5bf8:	10 f0       	brcs	.+4      	; 0x5bfe <.Lformat_hex_numeric_digit>
-    5bfa:	a9 5a       	subi	r26, 0xA9	; 169
-    5bfc:	01 c0       	rjmp	.+2      	; 0x5c00 <.Lformat_hex_digit_ready>
-
-00005bfe <.Lformat_hex_numeric_digit>:
-    5bfe:	a0 5d       	subi	r26, 0xD0	; 208
-
-00005c00 <.Lformat_hex_digit_ready>:
-    5c00:	76 95       	lsr	r23
-    5c02:	67 95       	ror	r22
-    5c04:	57 95       	ror	r21
-    5c06:	47 95       	ror	r20
-    5c08:	76 95       	lsr	r23
-    5c0a:	67 95       	ror	r22
-    5c0c:	57 95       	ror	r21
-    5c0e:	47 95       	ror	r20
-    5c10:	76 95       	lsr	r23
-    5c12:	67 95       	ror	r22
-    5c14:	57 95       	ror	r21
-    5c16:	47 95       	ror	r20
-    5c18:	76 95       	lsr	r23
-    5c1a:	67 95       	ror	r22
-    5c1c:	57 95       	ror	r21
-    5c1e:	47 95       	ror	r20
-    5c20:	0f c0       	rjmp	.+30     	; 0x5c40 <.Lformat_store_generated_digit>
-
-00005c22 <.Lformat_generate_octal_digit>:
-    5c22:	a4 2f       	mov	r26, r20
-    5c24:	a7 70       	andi	r26, 0x07	; 7
-    5c26:	a0 5d       	subi	r26, 0xD0	; 208
-    5c28:	76 95       	lsr	r23
-    5c2a:	67 95       	ror	r22
-    5c2c:	57 95       	ror	r21
-    5c2e:	47 95       	ror	r20
-    5c30:	76 95       	lsr	r23
-    5c32:	67 95       	ror	r22
-    5c34:	57 95       	ror	r21
-    5c36:	47 95       	ror	r20
-    5c38:	76 95       	lsr	r23
-    5c3a:	67 95       	ror	r22
-    5c3c:	57 95       	ror	r21
-    5c3e:	47 95       	ror	r20
-
-00005c40 <.Lformat_store_generated_digit>:
-    5c40:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
-    5c44:	e4 e2       	ldi	r30, 0x24	; 36
-    5c46:	fa e0       	ldi	r31, 0x0A	; 10
-    5c48:	e8 0f       	add	r30, r24
-    5c4a:	f2 1d       	adc	r31, r2
-    5c4c:	a0 83       	st	Z, r26
-    5c4e:	83 95       	inc	r24
-    5c50:	80 93 40 0a 	sts	0x0A40, r24	; 0x800a40 <_end+0x34>
-    5c54:	94 2f       	mov	r25, r20
-    5c56:	95 2b       	or	r25, r21
-    5c58:	96 2b       	or	r25, r22
-    5c5a:	97 2b       	or	r25, r23
-    5c5c:	09 f0       	breq	.+2      	; 0x5c60 <.L1^B32>
-    5c5e:	b5 cf       	rjmp	.-150    	; 0x5bca <.Lformat_generate_digits_loop>
-
-00005c60 <.L1^B32>:
-    5c60:	08 95       	ret
-
-00005c62 <format_divide_u32_by_10>:
-    5c62:	88 27       	eor	r24, r24
-    5c64:	97 2f       	mov	r25, r23
-    5c66:	0b d0       	rcall	.+22     	; 0x5c7e <format_divide_byte_by_10>
-    5c68:	79 2f       	mov	r23, r25
-    5c6a:	96 2f       	mov	r25, r22
-    5c6c:	08 d0       	rcall	.+16     	; 0x5c7e <format_divide_byte_by_10>
-    5c6e:	69 2f       	mov	r22, r25
-    5c70:	95 2f       	mov	r25, r21
-    5c72:	05 d0       	rcall	.+10     	; 0x5c7e <format_divide_byte_by_10>
-    5c74:	59 2f       	mov	r21, r25
-    5c76:	94 2f       	mov	r25, r20
-    5c78:	02 d0       	rcall	.+4      	; 0x5c7e <format_divide_byte_by_10>
-    5c7a:	49 2f       	mov	r20, r25
-    5c7c:	08 95       	ret
-
-00005c7e <format_divide_byte_by_10>:
-    5c7e:	a8 2f       	mov	r26, r24
-    5c80:	89 2f       	mov	r24, r25
-    5c82:	bb 27       	eor	r27, r27
-
-00005c84 <.Lformat_divide_byte_loop>:
-    5c84:	aa 23       	and	r26, r26
-    5c86:	11 f4       	brne	.+4      	; 0x5c8c <.Lformat_divide_byte_subtract>
-    5c88:	8a 30       	cpi	r24, 0x0A	; 10
-    5c8a:	20 f0       	brcs	.+8      	; 0x5c94 <.Lformat_divide_byte_done>
-
-00005c8c <.Lformat_divide_byte_subtract>:
-    5c8c:	8a 50       	subi	r24, 0x0A	; 10
-    5c8e:	a0 40       	sbci	r26, 0x00	; 0
-    5c90:	b3 95       	inc	r27
-    5c92:	f8 cf       	rjmp	.-16     	; 0x5c84 <.Lformat_divide_byte_loop>
-
-00005c94 <.Lformat_divide_byte_done>:
-    5c94:	9b 2f       	mov	r25, r27
-    5c96:	08 95       	ret
-
-00005c98 <format_prepare_integer_field>:
-    5c98:	20 92 3e 0a 	sts	0x0A3E, r2	; 0x800a3e <_end+0x32>
-    5c9c:	20 92 3f 0a 	sts	0x0A3F, r2	; 0x800a3f <_end+0x33>
-    5ca0:	20 92 45 0a 	sts	0x0A45, r2	; 0x800a45 <_end+0x39>
-    5ca4:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
-    5ca8:	99 27       	eor	r25, r25
-    5caa:	25 ff       	sbrs	r18, 5
-    5cac:	0a c0       	rjmp	.+20     	; 0x5cc2 <.Lformat_integer_precision_ready>
-    5cae:	e8 16       	cp	r14, r24
-    5cb0:	f9 06       	cpc	r15, r25
-    5cb2:	38 f0       	brcs	.+14     	; 0x5cc2 <.Lformat_integer_precision_ready>
-    5cb4:	d7 01       	movw	r26, r14
-    5cb6:	a8 1b       	sub	r26, r24
-    5cb8:	b9 0b       	sbc	r27, r25
-    5cba:	a0 93 3e 0a 	sts	0x0A3E, r26	; 0x800a3e <_end+0x32>
-    5cbe:	b0 93 3f 0a 	sts	0x0A3F, r27	; 0x800a3f <_end+0x33>
-
-00005cc2 <.Lformat_integer_precision_ready>:
-    5cc2:	a0 91 44 0a 	lds	r26, 0x0A44	; 0x800a44 <_end+0x38>
-    5cc6:	ba 2f       	mov	r27, r26
-    5cc8:	b3 70       	andi	r27, 0x03	; 3
-    5cca:	23 ff       	sbrs	r18, 3
-    5ccc:	23 c0       	rjmp	.+70     	; 0x5d14 <.Lformat_integer_prefix_ready>
-    5cce:	b2 30       	cpi	r27, 0x02	; 2
-    5cd0:	71 f4       	brne	.+28     	; 0x5cee <.Lformat_integer_check_octal_prefix>
-    5cd2:	80 91 43 0a 	lds	r24, 0x0A43	; 0x800a43 <_end+0x37>
-    5cd6:	88 23       	and	r24, r24
-    5cd8:	e9 f0       	breq	.+58     	; 0x5d14 <.Lformat_integer_prefix_ready>
-    5cda:	a3 ff       	sbrs	r26, 3
-    5cdc:	04 c0       	rjmp	.+8      	; 0x5ce6 <.Lformat_integer_hex_lower_prefix>
-    5cde:	83 e0       	ldi	r24, 0x03	; 3
-    5ce0:	80 93 45 0a 	sts	0x0A45, r24	; 0x800a45 <_end+0x39>
-    5ce4:	17 c0       	rjmp	.+46     	; 0x5d14 <.Lformat_integer_prefix_ready>
-
-00005ce6 <.Lformat_integer_hex_lower_prefix>:
-    5ce6:	82 e0       	ldi	r24, 0x02	; 2
-    5ce8:	80 93 45 0a 	sts	0x0A45, r24	; 0x800a45 <_end+0x39>
-    5cec:	13 c0       	rjmp	.+38     	; 0x5d14 <.Lformat_integer_prefix_ready>
-
-00005cee <.Lformat_integer_check_octal_prefix>:
-    5cee:	b1 30       	cpi	r27, 0x01	; 1
-    5cf0:	89 f4       	brne	.+34     	; 0x5d14 <.Lformat_integer_prefix_ready>
-    5cf2:	80 91 3e 0a 	lds	r24, 0x0A3E	; 0x800a3e <_end+0x32>
-    5cf6:	90 91 3f 0a 	lds	r25, 0x0A3F	; 0x800a3f <_end+0x33>
-    5cfa:	89 2b       	or	r24, r25
-    5cfc:	59 f4       	brne	.+22     	; 0x5d14 <.Lformat_integer_prefix_ready>
-    5cfe:	80 91 43 0a 	lds	r24, 0x0A43	; 0x800a43 <_end+0x37>
-    5d02:	88 23       	and	r24, r24
-    5d04:	21 f4       	brne	.+8      	; 0x5d0e <.Lformat_integer_set_octal_prefix>
-    5d06:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
-    5d0a:	88 23       	and	r24, r24
-    5d0c:	19 f4       	brne	.+6      	; 0x5d14 <.Lformat_integer_prefix_ready>
-
-00005d0e <.Lformat_integer_set_octal_prefix>:
-    5d0e:	81 e0       	ldi	r24, 0x01	; 1
-    5d10:	80 93 45 0a 	sts	0x0A45, r24	; 0x800a45 <_end+0x39>
-
-00005d14 <.Lformat_integer_prefix_ready>:
-    5d14:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
-    5d18:	99 27       	eor	r25, r25
-    5d1a:	a0 91 3e 0a 	lds	r26, 0x0A3E	; 0x800a3e <_end+0x32>
-    5d1e:	b0 91 3f 0a 	lds	r27, 0x0A3F	; 0x800a3f <_end+0x33>
-    5d22:	8a 0f       	add	r24, r26
-    5d24:	9b 1f       	adc	r25, r27
-    5d26:	88 f0       	brcs	.+34     	; 0x5d4a <.Lformat_integer_content_saturate>
-    5d28:	a0 91 41 0a 	lds	r26, 0x0A41	; 0x800a41 <_end+0x35>
-    5d2c:	aa 23       	and	r26, r26
-    5d2e:	11 f0       	breq	.+4      	; 0x5d34 <.L1^B33>
-    5d30:	01 96       	adiw	r24, 0x01	; 1
-    5d32:	59 f0       	breq	.+22     	; 0x5d4a <.Lformat_integer_content_saturate>
-
-00005d34 <.L1^B33>:
-    5d34:	a0 91 45 0a 	lds	r26, 0x0A45	; 0x800a45 <_end+0x39>
-    5d38:	aa 23       	and	r26, r26
-    5d3a:	71 f0       	breq	.+28     	; 0x5d58 <.Lformat_integer_content_ready>
-    5d3c:	a1 30       	cpi	r26, 0x01	; 1
-    5d3e:	19 f0       	breq	.+6      	; 0x5d46 <.L2^B8>
-    5d40:	02 96       	adiw	r24, 0x02	; 2
-    5d42:	18 f0       	brcs	.+6      	; 0x5d4a <.Lformat_integer_content_saturate>
-    5d44:	09 c0       	rjmp	.+18     	; 0x5d58 <.Lformat_integer_content_ready>
-
-00005d46 <.L2^B8>:
-    5d46:	01 96       	adiw	r24, 0x01	; 1
-    5d48:	39 f4       	brne	.+14     	; 0x5d58 <.Lformat_integer_content_ready>
-
-00005d4a <.Lformat_integer_content_saturate>:
-    5d4a:	8f ef       	ldi	r24, 0xFF	; 255
-    5d4c:	9f ef       	ldi	r25, 0xFF	; 255
-    5d4e:	a0 91 23 0a 	lds	r26, 0x0A23	; 0x800a23 <_end+0x17>
-    5d52:	a4 60       	ori	r26, 0x04	; 4
-    5d54:	a0 93 23 0a 	sts	0x0A23, r26	; 0x800a23 <_end+0x17>
-
-00005d58 <.Lformat_integer_content_ready>:
-    5d58:	3e dc       	rcall	.-1924   	; 0x55d6 <format_compute_padding>
-    5d5a:	08 95       	ret
-
-00005d5c <format_emit_integer_field>:
-    5d5c:	33 27       	eor	r19, r19
-    5d5e:	20 fd       	sbrc	r18, 0
-    5d60:	06 c0       	rjmp	.+12     	; 0x5d6e <.Lformat_integer_emit_spaces>
-    5d62:	25 fd       	sbrc	r18, 5
-    5d64:	04 c0       	rjmp	.+8      	; 0x5d6e <.Lformat_integer_emit_spaces>
-    5d66:	24 ff       	sbrs	r18, 4
-    5d68:	02 c0       	rjmp	.+4      	; 0x5d6e <.Lformat_integer_emit_spaces>
-    5d6a:	31 e0       	ldi	r19, 0x01	; 1
-    5d6c:	01 c0       	rjmp	.+2      	; 0x5d70 <.Lformat_integer_emit_sign>
-
-00005d6e <.Lformat_integer_emit_spaces>:
-    5d6e:	45 dc       	rcall	.-1910   	; 0x55fa <format_emit_pre_padding>
-
-00005d70 <.Lformat_integer_emit_sign>:
-    5d70:	80 91 41 0a 	lds	r24, 0x0A41	; 0x800a41 <_end+0x35>
-    5d74:	88 23       	and	r24, r24
-    5d76:	09 f0       	breq	.+2      	; 0x5d7a <.Lformat_integer_emit_prefix>
-    5d78:	07 dc       	rcall	.-2034   	; 0x5588 <format_emit_char>
-
-00005d7a <.Lformat_integer_emit_prefix>:
-    5d7a:	a0 91 45 0a 	lds	r26, 0x0A45	; 0x800a45 <_end+0x39>
-    5d7e:	aa 23       	and	r26, r26
-    5d80:	61 f0       	breq	.+24     	; 0x5d9a <.Lformat_integer_emit_width_zeroes>
-    5d82:	80 e3       	ldi	r24, 0x30	; 48
-    5d84:	01 dc       	rcall	.-2046   	; 0x5588 <format_emit_char>
-    5d86:	a0 91 45 0a 	lds	r26, 0x0A45	; 0x800a45 <_end+0x39>
-    5d8a:	a1 30       	cpi	r26, 0x01	; 1
-    5d8c:	31 f0       	breq	.+12     	; 0x5d9a <.Lformat_integer_emit_width_zeroes>
-    5d8e:	a3 30       	cpi	r26, 0x03	; 3
-    5d90:	11 f0       	breq	.+4      	; 0x5d96 <.L1^B34>
-    5d92:	88 e7       	ldi	r24, 0x78	; 120
-    5d94:	01 c0       	rjmp	.+2      	; 0x5d98 <.L2^B9>
-
-00005d96 <.L1^B34>:
-    5d96:	88 e5       	ldi	r24, 0x58	; 88
-
-00005d98 <.L2^B9>:
-    5d98:	f7 db       	rcall	.-2066   	; 0x5588 <format_emit_char>
-
-00005d9a <.Lformat_integer_emit_width_zeroes>:
-    5d9a:	33 23       	and	r19, r19
-    5d9c:	39 f0       	breq	.+14     	; 0x5dac <.Lformat_integer_emit_precision_zeroes>
-    5d9e:	80 91 3c 0a 	lds	r24, 0x0A3C	; 0x800a3c <_end+0x30>
-    5da2:	90 91 3d 0a 	lds	r25, 0x0A3D	; 0x800a3d <_end+0x31>
-    5da6:	00 e3       	ldi	r16, 0x30	; 48
-    5da8:	00 2e       	mov	r0, r16
-    5daa:	f2 db       	rcall	.-2076   	; 0x5590 <format_emit_repeat>
-
-00005dac <.Lformat_integer_emit_precision_zeroes>:
-    5dac:	80 91 3e 0a 	lds	r24, 0x0A3E	; 0x800a3e <_end+0x32>
-    5db0:	90 91 3f 0a 	lds	r25, 0x0A3F	; 0x800a3f <_end+0x33>
-    5db4:	00 e3       	ldi	r16, 0x30	; 48
-    5db6:	00 2e       	mov	r0, r16
-    5db8:	eb db       	rcall	.-2090   	; 0x5590 <format_emit_repeat>
-    5dba:	30 93 42 0a 	sts	0x0A42, r19	; 0x800a42 <_end+0x36>
-    5dbe:	30 91 40 0a 	lds	r19, 0x0A40	; 0x800a40 <_end+0x34>
-    5dc2:	33 23       	and	r19, r19
-    5dc4:	49 f0       	breq	.+18     	; 0x5dd8 <.Lformat_integer_emit_post>
-
-00005dc6 <.Lformat_integer_emit_digits_loop>:
-    5dc6:	3a 95       	dec	r19
-    5dc8:	e4 e2       	ldi	r30, 0x24	; 36
-    5dca:	fa e0       	ldi	r31, 0x0A	; 10
-    5dcc:	e3 0f       	add	r30, r19
-    5dce:	f2 1d       	adc	r31, r2
-    5dd0:	80 81       	ld	r24, Z
-    5dd2:	da db       	rcall	.-2124   	; 0x5588 <format_emit_char>
-    5dd4:	33 23       	and	r19, r19
-    5dd6:	b9 f7       	brne	.-18     	; 0x5dc6 <.Lformat_integer_emit_digits_loop>
-
-00005dd8 <.Lformat_integer_emit_post>:
-    5dd8:	30 91 42 0a 	lds	r19, 0x0A42	; 0x800a42 <_end+0x36>
-    5ddc:	33 23       	and	r19, r19
-    5dde:	09 f4       	brne	.+2      	; 0x5de2 <.Lformat_integer_emit_done>
-    5de0:	0f dc       	rcall	.-2018   	; 0x5600 <format_emit_post_padding>
-
-00005de2 <.Lformat_integer_emit_done>:
-    5de2:	08 95       	ret
+000058ce <.L1^B21>:
+    58ce:	22 23       	and	r18, r18
+    58d0:	09 f0       	breq	.+2      	; 0x58d4 <.L1^B22>
+    58d2:	48 ce       	rjmp	.-880    	; 0x5564 <format_unexpected_character>
+
+000058d4 <.L1^B22>:
+    58d4:	8c 2d       	mov	r24, r12
+    58d6:	8d 29       	or	r24, r13
+    58d8:	09 f0       	breq	.+2      	; 0x58dc <.L2^B6>
+    58da:	44 ce       	rjmp	.-888    	; 0x5564 <format_unexpected_character>
+
+000058dc <.L2^B6>:
+    58dc:	85 e2       	ldi	r24, 0x25	; 37
+    58de:	54 de       	rcall	.-856    	; 0x5588 <format_emit_char>
+    58e0:	2a cf       	rjmp	.-428    	; 0x5736 <format_core>
+
+000058e2 <format_conversion_char>:
+    58e2:	f0 df       	rcall	.-32     	; 0x58c4 <format_validate_default_length>
+    58e4:	09 f0       	breq	.+2      	; 0x58e8 <.L1^B23>
+    58e6:	3e ce       	rjmp	.-900    	; 0x5564 <format_unexpected_character>
+
+000058e8 <.L1^B23>:
+    58e8:	25 fd       	sbrc	r18, 5
+    58ea:	3c ce       	rjmp	.-904    	; 0x5564 <format_unexpected_character>
+    58ec:	00 df       	rcall	.-512    	; 0x56ee <format_arg_u16>
+    58ee:	80 93 42 0a 	sts	0x0A42, r24	; 0x800a42 <_end+0x36>
+    58f2:	81 e0       	ldi	r24, 0x01	; 1
+    58f4:	99 27       	eor	r25, r25
+    58f6:	6f de       	rcall	.-802    	; 0x55d6 <format_compute_padding>
+    58f8:	80 de       	rcall	.-768    	; 0x55fa <format_emit_pre_padding>
+    58fa:	80 91 42 0a 	lds	r24, 0x0A42	; 0x800a42 <_end+0x36>
+    58fe:	44 de       	rcall	.-888    	; 0x5588 <format_emit_char>
+    5900:	7f de       	rcall	.-770    	; 0x5600 <format_emit_post_padding>
+    5902:	19 cf       	rjmp	.-462    	; 0x5736 <format_core>
+
+00005904 <format_conversion_string>:
+    5904:	df df       	rcall	.-66     	; 0x58c4 <format_validate_default_length>
+    5906:	09 f0       	breq	.+2      	; 0x590a <.L1^B24>
+    5908:	2d ce       	rjmp	.-934    	; 0x5564 <format_unexpected_character>
+
+0000590a <.L1^B24>:
+    590a:	f1 de       	rcall	.-542    	; 0x56ee <format_arg_u16>
+    590c:	80 93 30 0a 	sts	0x0A30, r24	; 0x800a30 <_end+0x24>
+    5910:	90 93 31 0a 	sts	0x0A31, r25	; 0x800a31 <_end+0x25>
+    5914:	44 27       	eor	r20, r20
+    5916:	55 27       	eor	r21, r21
+    5918:	25 ff       	sbrs	r18, 5
+    591a:	10 c0       	rjmp	.+32     	; 0x593c <.Lformat_string_measure_unbounded>
+    591c:	ae 2d       	mov	r26, r14
+    591e:	af 29       	or	r26, r15
+    5920:	a9 f0       	breq	.+42     	; 0x594c <.Lformat_string_measured>
+
+00005922 <.Lformat_string_measure_bounded>:
+    5922:	4e 15       	cp	r20, r14
+    5924:	5f 05       	cpc	r21, r15
+    5926:	90 f4       	brcc	.+36     	; 0x594c <.Lformat_string_measured>
+    5928:	fc 01       	movw	r30, r24
+    592a:	e4 0f       	add	r30, r20
+    592c:	f5 1f       	adc	r31, r21
+    592e:	a0 81       	ld	r26, Z
+    5930:	aa 23       	and	r26, r26
+    5932:	61 f0       	breq	.+24     	; 0x594c <.Lformat_string_measured>
+    5934:	43 95       	inc	r20
+    5936:	a9 f7       	brne	.-22     	; 0x5922 <.Lformat_string_measure_bounded>
+    5938:	53 95       	inc	r21
+    593a:	f3 cf       	rjmp	.-26     	; 0x5922 <.Lformat_string_measure_bounded>
+
+0000593c <.Lformat_string_measure_unbounded>:
+    593c:	fc 01       	movw	r30, r24
+
+0000593e <.Lformat_string_measure_unbounded_loop>:
+    593e:	a1 91       	ld	r26, Z+
+    5940:	aa 23       	and	r26, r26
+    5942:	21 f0       	breq	.+8      	; 0x594c <.Lformat_string_measured>
+    5944:	43 95       	inc	r20
+    5946:	d9 f7       	brne	.-10     	; 0x593e <.Lformat_string_measure_unbounded_loop>
+    5948:	53 95       	inc	r21
+    594a:	f9 cf       	rjmp	.-14     	; 0x593e <.Lformat_string_measure_unbounded_loop>
+
+0000594c <.Lformat_string_measured>:
+    594c:	40 93 36 0a 	sts	0x0A36, r20	; 0x800a36 <_end+0x2a>
+    5950:	50 93 37 0a 	sts	0x0A37, r21	; 0x800a37 <_end+0x2b>
+    5954:	ca 01       	movw	r24, r20
+    5956:	3f de       	rcall	.-898    	; 0x55d6 <format_compute_padding>
+    5958:	50 de       	rcall	.-864    	; 0x55fa <format_emit_pre_padding>
+    595a:	e0 91 30 0a 	lds	r30, 0x0A30	; 0x800a30 <_end+0x24>
+    595e:	f0 91 31 0a 	lds	r31, 0x0A31	; 0x800a31 <_end+0x25>
+    5962:	80 91 36 0a 	lds	r24, 0x0A36	; 0x800a36 <_end+0x2a>
+    5966:	90 91 37 0a 	lds	r25, 0x0A37	; 0x800a37 <_end+0x2b>
+    596a:	23 de       	rcall	.-954    	; 0x55b2 <format_emit_ram_span>
+    596c:	49 de       	rcall	.-878    	; 0x5600 <format_emit_post_padding>
+    596e:	e3 ce       	rjmp	.-570    	; 0x5736 <format_core>
+
+00005970 <format_conversion_program_string>:
+    5970:	a9 df       	rcall	.-174    	; 0x58c4 <format_validate_default_length>
+    5972:	09 f0       	breq	.+2      	; 0x5976 <.L1^B25>
+    5974:	f7 cd       	rjmp	.-1042   	; 0x5564 <format_unexpected_character>
+
+00005976 <.L1^B25>:
+    5976:	d3 de       	rcall	.-602    	; 0x571e <format_arg_program_pointer>
+    5978:	80 93 30 0a 	sts	0x0A30, r24	; 0x800a30 <_end+0x24>
+    597c:	90 93 31 0a 	sts	0x0A31, r25	; 0x800a31 <_end+0x25>
+    5980:	a0 93 32 0a 	sts	0x0A32, r26	; 0x800a32 <_end+0x26>
+    5984:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
+    5988:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
+    598c:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
+    5990:	20 92 36 0a 	sts	0x0A36, r2	; 0x800a36 <_end+0x2a>
+    5994:	20 92 37 0a 	sts	0x0A37, r2	; 0x800a37 <_end+0x2b>
+    5998:	25 ff       	sbrs	r18, 5
+    599a:	04 c0       	rjmp	.+8      	; 0x59a4 <.L1^B26>
+    599c:	8e 2d       	mov	r24, r14
+    599e:	8f 29       	or	r24, r15
+    59a0:	09 f4       	brne	.+2      	; 0x59a4 <.L1^B26>
+    59a2:	42 c0       	rjmp	.+132    	; 0x5a28 <.L1^B27>
+
+000059a4 <.L1^B26>:
+    59a4:	25 ff       	sbrs	r18, 5
+    59a6:	07 c0       	rjmp	.+14     	; 0x59b6 <.Lformat_program_string_measure_choose>
+    59a8:	80 91 36 0a 	lds	r24, 0x0A36	; 0x800a36 <_end+0x2a>
+    59ac:	90 91 37 0a 	lds	r25, 0x0A37	; 0x800a37 <_end+0x2b>
+    59b0:	8e 15       	cp	r24, r14
+    59b2:	9f 05       	cpc	r25, r15
+    59b4:	c8 f5       	brcc	.+114    	; 0x5a28 <.L1^B27>
+
+000059b6 <.Lformat_program_string_measure_choose>:
+    59b6:	4c e0       	ldi	r20, 0x0C	; 12
+    59b8:	25 ff       	sbrs	r18, 5
+    59ba:	0c c0       	rjmp	.+24     	; 0x59d4 <.Lformat_program_string_measure_read>
+    59bc:	c7 01       	movw	r24, r14
+    59be:	a0 91 36 0a 	lds	r26, 0x0A36	; 0x800a36 <_end+0x2a>
+    59c2:	b0 91 37 0a 	lds	r27, 0x0A37	; 0x800a37 <_end+0x2b>
+    59c6:	8a 1b       	sub	r24, r26
+    59c8:	9b 0b       	sbc	r25, r27
+    59ca:	99 23       	and	r25, r25
+    59cc:	19 f4       	brne	.+6      	; 0x59d4 <.Lformat_program_string_measure_read>
+    59ce:	8c 30       	cpi	r24, 0x0C	; 12
+    59d0:	08 f4       	brcc	.+2      	; 0x59d4 <.Lformat_program_string_measure_read>
+    59d2:	48 2f       	mov	r20, r24
+
+000059d4 <.Lformat_program_string_measure_read>:
+    59d4:	80 91 33 0a 	lds	r24, 0x0A33	; 0x800a33 <_end+0x27>
+    59d8:	90 91 34 0a 	lds	r25, 0x0A34	; 0x800a34 <_end+0x28>
+    59dc:	a0 91 35 0a 	lds	r26, 0x0A35	; 0x800a35 <_end+0x29>
+    59e0:	e4 e2       	ldi	r30, 0x24	; 36
+    59e2:	fa e0       	ldi	r31, 0x0A	; 10
+    59e4:	51 e0       	ldi	r21, 0x01	; 1
+    59e6:	2c de       	rcall	.-936    	; 0x5640 <format_read_program_chunk>
+    59e8:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
+    59ec:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
+    59f0:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
+    59f4:	86 2f       	mov	r24, r22
+    59f6:	99 27       	eor	r25, r25
+    59f8:	77 23       	and	r23, r23
+    59fa:	09 f0       	breq	.+2      	; 0x59fe <.Lformat_program_string_measure_add>
+    59fc:	8a 95       	dec	r24
+
+000059fe <.Lformat_program_string_measure_add>:
+    59fe:	a0 91 36 0a 	lds	r26, 0x0A36	; 0x800a36 <_end+0x2a>
+    5a02:	b0 91 37 0a 	lds	r27, 0x0A37	; 0x800a37 <_end+0x2b>
+    5a06:	a8 0f       	add	r26, r24
+    5a08:	b9 1f       	adc	r27, r25
+    5a0a:	38 f4       	brcc	.+14     	; 0x5a1a <.Lformat_program_string_measure_store>
+    5a0c:	af ef       	ldi	r26, 0xFF	; 255
+    5a0e:	bf ef       	ldi	r27, 0xFF	; 255
+    5a10:	80 91 23 0a 	lds	r24, 0x0A23	; 0x800a23 <_end+0x17>
+    5a14:	84 60       	ori	r24, 0x04	; 4
+    5a16:	80 93 23 0a 	sts	0x0A23, r24	; 0x800a23 <_end+0x17>
+
+00005a1a <.Lformat_program_string_measure_store>:
+    5a1a:	a0 93 36 0a 	sts	0x0A36, r26	; 0x800a36 <_end+0x2a>
+    5a1e:	b0 93 37 0a 	sts	0x0A37, r27	; 0x800a37 <_end+0x2b>
+    5a22:	77 23       	and	r23, r23
+    5a24:	09 f4       	brne	.+2      	; 0x5a28 <.L1^B27>
+    5a26:	be cf       	rjmp	.-132    	; 0x59a4 <.L1^B26>
+
+00005a28 <.L1^B27>:
+    5a28:	80 91 36 0a 	lds	r24, 0x0A36	; 0x800a36 <_end+0x2a>
+    5a2c:	90 91 37 0a 	lds	r25, 0x0A37	; 0x800a37 <_end+0x2b>
+    5a30:	d2 dd       	rcall	.-1116   	; 0x55d6 <format_compute_padding>
+    5a32:	e3 dd       	rcall	.-1082   	; 0x55fa <format_emit_pre_padding>
+    5a34:	80 91 30 0a 	lds	r24, 0x0A30	; 0x800a30 <_end+0x24>
+    5a38:	90 91 31 0a 	lds	r25, 0x0A31	; 0x800a31 <_end+0x25>
+    5a3c:	a0 91 32 0a 	lds	r26, 0x0A32	; 0x800a32 <_end+0x26>
+    5a40:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
+    5a44:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
+    5a48:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
+    5a4c:	c0 90 36 0a 	lds	r12, 0x0A36	; 0x800a36 <_end+0x2a>
+    5a50:	d0 90 37 0a 	lds	r13, 0x0A37	; 0x800a37 <_end+0x2b>
+
+00005a54 <.Lformat_program_string_emit_loop>:
+    5a54:	8c 2d       	mov	r24, r12
+    5a56:	8d 29       	or	r24, r13
+    5a58:	f9 f0       	breq	.+62     	; 0x5a98 <.Lformat_program_string_emit_done>
+    5a5a:	4c e0       	ldi	r20, 0x0C	; 12
+    5a5c:	dd 20       	and	r13, r13
+    5a5e:	21 f4       	brne	.+8      	; 0x5a68 <.Lformat_program_string_emit_read>
+    5a60:	8c 2d       	mov	r24, r12
+    5a62:	8c 30       	cpi	r24, 0x0C	; 12
+    5a64:	08 f4       	brcc	.+2      	; 0x5a68 <.Lformat_program_string_emit_read>
+    5a66:	4c 2d       	mov	r20, r12
+
+00005a68 <.Lformat_program_string_emit_read>:
+    5a68:	80 91 33 0a 	lds	r24, 0x0A33	; 0x800a33 <_end+0x27>
+    5a6c:	90 91 34 0a 	lds	r25, 0x0A34	; 0x800a34 <_end+0x28>
+    5a70:	a0 91 35 0a 	lds	r26, 0x0A35	; 0x800a35 <_end+0x29>
+    5a74:	e4 e2       	ldi	r30, 0x24	; 36
+    5a76:	fa e0       	ldi	r31, 0x0A	; 10
+    5a78:	55 27       	eor	r21, r21
+    5a7a:	e2 dd       	rcall	.-1084   	; 0x5640 <format_read_program_chunk>
+    5a7c:	80 93 33 0a 	sts	0x0A33, r24	; 0x800a33 <_end+0x27>
+    5a80:	90 93 34 0a 	sts	0x0A34, r25	; 0x800a34 <_end+0x28>
+    5a84:	a0 93 35 0a 	sts	0x0A35, r26	; 0x800a35 <_end+0x29>
+    5a88:	c6 1a       	sub	r12, r22
+    5a8a:	d2 08       	sbc	r13, r2
+    5a8c:	e4 e2       	ldi	r30, 0x24	; 36
+    5a8e:	fa e0       	ldi	r31, 0x0A	; 10
+    5a90:	86 2f       	mov	r24, r22
+    5a92:	99 27       	eor	r25, r25
+    5a94:	8e dd       	rcall	.-1252   	; 0x55b2 <format_emit_ram_span>
+    5a96:	de cf       	rjmp	.-68     	; 0x5a54 <.Lformat_program_string_emit_loop>
+
+00005a98 <.Lformat_program_string_emit_done>:
+    5a98:	b3 dd       	rcall	.-1178   	; 0x5600 <format_emit_post_padding>
+    5a9a:	4d ce       	rjmp	.-870    	; 0x5736 <format_core>
+
+00005a9c <format_conversion_pointer>:
+    5a9c:	13 df       	rcall	.-474    	; 0x58c4 <format_validate_default_length>
+    5a9e:	09 f0       	breq	.+2      	; 0x5aa2 <.L1^B28>
+    5aa0:	61 cd       	rjmp	.-1342   	; 0x5564 <format_unexpected_character>
+
+00005aa2 <.L1^B28>:
+    5aa2:	25 de       	rcall	.-950    	; 0x56ee <format_arg_u16>
+    5aa4:	e4 e2       	ldi	r30, 0x24	; 36
+    5aa6:	fa e0       	ldi	r31, 0x0A	; 10
+    5aa8:	64 e0       	ldi	r22, 0x04	; 4
+    5aaa:	11 c0       	rjmp	.+34     	; 0x5ace <.Lformat_pointer_store_low16>
+
+00005aac <format_conversion_program_pointer>:
+    5aac:	0b df       	rcall	.-490    	; 0x58c4 <format_validate_default_length>
+    5aae:	09 f0       	breq	.+2      	; 0x5ab2 <.L1^B29>
+    5ab0:	59 cd       	rjmp	.-1358   	; 0x5564 <format_unexpected_character>
+
+00005ab2 <.L1^B29>:
+    5ab2:	35 de       	rcall	.-918    	; 0x571e <format_arg_program_pointer>
+    5ab4:	e4 e2       	ldi	r30, 0x24	; 36
+    5ab6:	fa e0       	ldi	r31, 0x0A	; 10
+    5ab8:	0a 2e       	mov	r0, r26
+    5aba:	a0 2d       	mov	r26, r0
+    5abc:	a2 95       	swap	r26
+    5abe:	af 70       	andi	r26, 0x0F	; 15
+    5ac0:	28 d0       	rcall	.+80     	; 0x5b12 <format_hex_nibble_to_char>
+    5ac2:	a1 93       	st	Z+, r26
+    5ac4:	a0 2d       	mov	r26, r0
+    5ac6:	af 70       	andi	r26, 0x0F	; 15
+    5ac8:	24 d0       	rcall	.+72     	; 0x5b12 <format_hex_nibble_to_char>
+    5aca:	a1 93       	st	Z+, r26
+    5acc:	66 e0       	ldi	r22, 0x06	; 6
+
+00005ace <.Lformat_pointer_store_low16>:
+    5ace:	a9 2f       	mov	r26, r25
+    5ad0:	a2 95       	swap	r26
+    5ad2:	af 70       	andi	r26, 0x0F	; 15
+    5ad4:	1e d0       	rcall	.+60     	; 0x5b12 <format_hex_nibble_to_char>
+    5ad6:	a1 93       	st	Z+, r26
+    5ad8:	a9 2f       	mov	r26, r25
+    5ada:	af 70       	andi	r26, 0x0F	; 15
+    5adc:	1a d0       	rcall	.+52     	; 0x5b12 <format_hex_nibble_to_char>
+    5ade:	a1 93       	st	Z+, r26
+    5ae0:	a8 2f       	mov	r26, r24
+    5ae2:	a2 95       	swap	r26
+    5ae4:	af 70       	andi	r26, 0x0F	; 15
+    5ae6:	15 d0       	rcall	.+42     	; 0x5b12 <format_hex_nibble_to_char>
+    5ae8:	a1 93       	st	Z+, r26
+    5aea:	a8 2f       	mov	r26, r24
+    5aec:	af 70       	andi	r26, 0x0F	; 15
+    5aee:	11 d0       	rcall	.+34     	; 0x5b12 <format_hex_nibble_to_char>
+    5af0:	a0 83       	st	Z, r26
+    5af2:	86 2f       	mov	r24, r22
+    5af4:	8e 5f       	subi	r24, 0xFE	; 254
+    5af6:	99 27       	eor	r25, r25
+    5af8:	6e dd       	rcall	.-1316   	; 0x55d6 <format_compute_padding>
+    5afa:	7f dd       	rcall	.-1282   	; 0x55fa <format_emit_pre_padding>
+    5afc:	80 e3       	ldi	r24, 0x30	; 48
+    5afe:	44 dd       	rcall	.-1400   	; 0x5588 <format_emit_char>
+    5b00:	88 e7       	ldi	r24, 0x78	; 120
+    5b02:	42 dd       	rcall	.-1404   	; 0x5588 <format_emit_char>
+    5b04:	e4 e2       	ldi	r30, 0x24	; 36
+    5b06:	fa e0       	ldi	r31, 0x0A	; 10
+    5b08:	86 2f       	mov	r24, r22
+    5b0a:	99 27       	eor	r25, r25
+    5b0c:	52 dd       	rcall	.-1372   	; 0x55b2 <format_emit_ram_span>
+    5b0e:	78 dd       	rcall	.-1296   	; 0x5600 <format_emit_post_padding>
+    5b10:	12 ce       	rjmp	.-988    	; 0x5736 <format_core>
+
+00005b12 <format_hex_nibble_to_char>:
+    5b12:	aa 30       	cpi	r26, 0x0A	; 10
+    5b14:	10 f0       	brcs	.+4      	; 0x5b1a <.L1^B30>
+    5b16:	a9 5a       	subi	r26, 0xA9	; 169
+    5b18:	08 95       	ret
+
+00005b1a <.L1^B30>:
+    5b1a:	a0 5d       	subi	r26, 0xD0	; 208
+    5b1c:	08 95       	ret
+
+00005b1e <format_conversion_integer>:
+    5b1e:	33 30       	cpi	r19, 0x03	; 3
+    5b20:	49 f0       	breq	.+18     	; 0x5b34 <.Lformat_integer_load_long>
+    5b22:	e5 dd       	rcall	.-1078   	; 0x56ee <format_arg_u16>
+    5b24:	48 2f       	mov	r20, r24
+    5b26:	59 2f       	mov	r21, r25
+    5b28:	66 27       	eor	r22, r22
+    5b2a:	77 27       	eor	r23, r23
+    5b2c:	31 30       	cpi	r19, 0x01	; 1
+    5b2e:	19 f4       	brne	.+6      	; 0x5b36 <.Lformat_integer_loaded>
+    5b30:	55 27       	eor	r21, r21
+    5b32:	01 c0       	rjmp	.+2      	; 0x5b36 <.Lformat_integer_loaded>
+
+00005b34 <.Lformat_integer_load_long>:
+    5b34:	e7 dd       	rcall	.-1074   	; 0x5704 <format_arg_u32>
+
+00005b36 <.Lformat_integer_loaded>:
+    5b36:	80 91 42 0a 	lds	r24, 0x0A42	; 0x800a42 <_end+0x36>
+    5b3a:	aa 27       	eor	r26, r26
+    5b3c:	84 36       	cpi	r24, 0x64	; 100
+    5b3e:	11 f0       	breq	.+4      	; 0x5b44 <.Lformat_integer_signed>
+    5b40:	89 36       	cpi	r24, 0x69	; 105
+    5b42:	09 f4       	brne	.+2      	; 0x5b46 <.Lformat_integer_unsigned>
+
+00005b44 <.Lformat_integer_signed>:
+    5b44:	a4 60       	ori	r26, 0x04	; 4
+
+00005b46 <.Lformat_integer_unsigned>:
+    5b46:	8f 36       	cpi	r24, 0x6F	; 111
+    5b48:	11 f4       	brne	.+4      	; 0x5b4e <.L1^B31>
+    5b4a:	a1 60       	ori	r26, 0x01	; 1
+    5b4c:	0a c0       	rjmp	.+20     	; 0x5b62 <.Lformat_integer_mode_ready>
+
+00005b4e <.L1^B31>:
+    5b4e:	88 37       	cpi	r24, 0x78	; 120
+    5b50:	11 f0       	breq	.+4      	; 0x5b56 <.L2^B7>
+    5b52:	88 35       	cpi	r24, 0x58	; 88
+    5b54:	29 f4       	brne	.+10     	; 0x5b60 <.Lformat_integer_decimal_mode>
+
+00005b56 <.L2^B7>:
+    5b56:	a2 60       	ori	r26, 0x02	; 2
+    5b58:	88 35       	cpi	r24, 0x58	; 88
+    5b5a:	19 f4       	brne	.+6      	; 0x5b62 <.Lformat_integer_mode_ready>
+    5b5c:	a8 60       	ori	r26, 0x08	; 8
+    5b5e:	01 c0       	rjmp	.+2      	; 0x5b62 <.Lformat_integer_mode_ready>
+
+00005b60 <.Lformat_integer_decimal_mode>:
+    5b60:	a0 60       	ori	r26, 0x00	; 0
+
+00005b62 <.Lformat_integer_mode_ready>:
+    5b62:	a0 93 44 0a 	sts	0x0A44, r26	; 0x800a44 <_end+0x38>
+    5b66:	20 92 41 0a 	sts	0x0A41, r2	; 0x800a41 <_end+0x35>
+    5b6a:	a2 ff       	sbrs	r26, 2
+    5b6c:	27 c0       	rjmp	.+78     	; 0x5bbc <.Lformat_integer_magnitude_ready>
+    5b6e:	33 30       	cpi	r19, 0x03	; 3
+    5b70:	61 f0       	breq	.+24     	; 0x5b8a <.Lformat_integer_test_sign>
+    5b72:	31 30       	cpi	r19, 0x01	; 1
+    5b74:	31 f4       	brne	.+12     	; 0x5b82 <.Lformat_integer_sign_extend_16>
+    5b76:	47 ff       	sbrs	r20, 7
+    5b78:	08 c0       	rjmp	.+16     	; 0x5b8a <.Lformat_integer_test_sign>
+    5b7a:	5f ef       	ldi	r21, 0xFF	; 255
+    5b7c:	6f ef       	ldi	r22, 0xFF	; 255
+    5b7e:	7f ef       	ldi	r23, 0xFF	; 255
+    5b80:	04 c0       	rjmp	.+8      	; 0x5b8a <.Lformat_integer_test_sign>
+
+00005b82 <.Lformat_integer_sign_extend_16>:
+    5b82:	57 ff       	sbrs	r21, 7
+    5b84:	02 c0       	rjmp	.+4      	; 0x5b8a <.Lformat_integer_test_sign>
+    5b86:	6f ef       	ldi	r22, 0xFF	; 255
+    5b88:	7f ef       	ldi	r23, 0xFF	; 255
+
+00005b8a <.Lformat_integer_test_sign>:
+    5b8a:	77 ff       	sbrs	r23, 7
+    5b8c:	0c c0       	rjmp	.+24     	; 0x5ba6 <.Lformat_integer_positive_sign>
+    5b8e:	8d e2       	ldi	r24, 0x2D	; 45
+    5b90:	80 93 41 0a 	sts	0x0A41, r24	; 0x800a41 <_end+0x35>
+    5b94:	40 95       	com	r20
+    5b96:	50 95       	com	r21
+    5b98:	60 95       	com	r22
+    5b9a:	70 95       	com	r23
+    5b9c:	43 0d       	add	r20, r3
+    5b9e:	52 1d       	adc	r21, r2
+    5ba0:	62 1d       	adc	r22, r2
+    5ba2:	72 1d       	adc	r23, r2
+    5ba4:	0b c0       	rjmp	.+22     	; 0x5bbc <.Lformat_integer_magnitude_ready>
+
+00005ba6 <.Lformat_integer_positive_sign>:
+    5ba6:	21 fd       	sbrc	r18, 1
+    5ba8:	06 c0       	rjmp	.+12     	; 0x5bb6 <.Lformat_integer_plus_sign>
+    5baa:	22 ff       	sbrs	r18, 2
+    5bac:	07 c0       	rjmp	.+14     	; 0x5bbc <.Lformat_integer_magnitude_ready>
+    5bae:	80 e2       	ldi	r24, 0x20	; 32
+    5bb0:	80 93 41 0a 	sts	0x0A41, r24	; 0x800a41 <_end+0x35>
+    5bb4:	03 c0       	rjmp	.+6      	; 0x5bbc <.Lformat_integer_magnitude_ready>
+
+00005bb6 <.Lformat_integer_plus_sign>:
+    5bb6:	8b e2       	ldi	r24, 0x2B	; 43
+    5bb8:	80 93 41 0a 	sts	0x0A41, r24	; 0x800a41 <_end+0x35>
+
+00005bbc <.Lformat_integer_magnitude_ready>:
+    5bbc:	84 2f       	mov	r24, r20
+    5bbe:	85 2b       	or	r24, r21
+    5bc0:	86 2b       	or	r24, r22
+    5bc2:	87 2b       	or	r24, r23
+    5bc4:	80 93 43 0a 	sts	0x0A43, r24	; 0x800a43 <_end+0x37>
+    5bc8:	03 d0       	rcall	.+6      	; 0x5bd0 <format_generate_integer_digits>
+    5bca:	7d d0       	rcall	.+250    	; 0x5cc6 <format_prepare_integer_field>
+    5bcc:	de d0       	rcall	.+444    	; 0x5d8a <format_emit_integer_field>
+    5bce:	b3 cd       	rjmp	.-1178   	; 0x5736 <format_core>
+
+00005bd0 <format_generate_integer_digits>:
+    5bd0:	20 92 40 0a 	sts	0x0A40, r2	; 0x800a40 <_end+0x34>
+    5bd4:	80 91 43 0a 	lds	r24, 0x0A43	; 0x800a43 <_end+0x37>
+    5bd8:	88 23       	and	r24, r24
+    5bda:	71 f4       	brne	.+28     	; 0x5bf8 <.Lformat_generate_digits_loop>
+    5bdc:	25 ff       	sbrs	r18, 5
+    5bde:	04 c0       	rjmp	.+8      	; 0x5be8 <.L1^B32>
+    5be0:	8e 2d       	mov	r24, r14
+    5be2:	8f 29       	or	r24, r15
+    5be4:	09 f4       	brne	.+2      	; 0x5be8 <.L1^B32>
+    5be6:	53 c0       	rjmp	.+166    	; 0x5c8e <.L1^B33>
+
+00005be8 <.L1^B32>:
+    5be8:	e4 e2       	ldi	r30, 0x24	; 36
+    5bea:	fa e0       	ldi	r31, 0x0A	; 10
+    5bec:	80 e3       	ldi	r24, 0x30	; 48
+    5bee:	80 83       	st	Z, r24
+    5bf0:	81 e0       	ldi	r24, 0x01	; 1
+    5bf2:	80 93 40 0a 	sts	0x0A40, r24	; 0x800a40 <_end+0x34>
+    5bf6:	4b c0       	rjmp	.+150    	; 0x5c8e <.L1^B33>
+
+00005bf8 <.Lformat_generate_digits_loop>:
+    5bf8:	a0 91 44 0a 	lds	r26, 0x0A44	; 0x800a44 <_end+0x38>
+    5bfc:	ba 2f       	mov	r27, r26
+    5bfe:	b3 70       	andi	r27, 0x03	; 3
+    5c00:	b2 30       	cpi	r27, 0x02	; 2
+    5c02:	31 f0       	breq	.+12     	; 0x5c10 <.Lformat_generate_hex_digit>
+    5c04:	b1 30       	cpi	r27, 0x01	; 1
+    5c06:	21 f1       	breq	.+72     	; 0x5c50 <.Lformat_generate_octal_digit>
+    5c08:	43 d0       	rcall	.+134    	; 0x5c90 <format_divide_u32_by_10>
+    5c0a:	a8 2f       	mov	r26, r24
+    5c0c:	a0 5d       	subi	r26, 0xD0	; 208
+    5c0e:	2f c0       	rjmp	.+94     	; 0x5c6e <.Lformat_store_generated_digit>
+
+00005c10 <.Lformat_generate_hex_digit>:
+    5c10:	a4 2f       	mov	r26, r20
+    5c12:	af 70       	andi	r26, 0x0F	; 15
+    5c14:	b0 91 44 0a 	lds	r27, 0x0A44	; 0x800a44 <_end+0x38>
+    5c18:	b3 ff       	sbrs	r27, 3
+    5c1a:	04 c0       	rjmp	.+8      	; 0x5c24 <.Lformat_hex_lower_digit>
+    5c1c:	aa 30       	cpi	r26, 0x0A	; 10
+    5c1e:	30 f0       	brcs	.+12     	; 0x5c2c <.Lformat_hex_numeric_digit>
+    5c20:	a9 5c       	subi	r26, 0xC9	; 201
+    5c22:	05 c0       	rjmp	.+10     	; 0x5c2e <.Lformat_hex_digit_ready>
+
+00005c24 <.Lformat_hex_lower_digit>:
+    5c24:	aa 30       	cpi	r26, 0x0A	; 10
+    5c26:	10 f0       	brcs	.+4      	; 0x5c2c <.Lformat_hex_numeric_digit>
+    5c28:	a9 5a       	subi	r26, 0xA9	; 169
+    5c2a:	01 c0       	rjmp	.+2      	; 0x5c2e <.Lformat_hex_digit_ready>
+
+00005c2c <.Lformat_hex_numeric_digit>:
+    5c2c:	a0 5d       	subi	r26, 0xD0	; 208
+
+00005c2e <.Lformat_hex_digit_ready>:
+    5c2e:	76 95       	lsr	r23
+    5c30:	67 95       	ror	r22
+    5c32:	57 95       	ror	r21
+    5c34:	47 95       	ror	r20
+    5c36:	76 95       	lsr	r23
+    5c38:	67 95       	ror	r22
+    5c3a:	57 95       	ror	r21
+    5c3c:	47 95       	ror	r20
+    5c3e:	76 95       	lsr	r23
+    5c40:	67 95       	ror	r22
+    5c42:	57 95       	ror	r21
+    5c44:	47 95       	ror	r20
+    5c46:	76 95       	lsr	r23
+    5c48:	67 95       	ror	r22
+    5c4a:	57 95       	ror	r21
+    5c4c:	47 95       	ror	r20
+    5c4e:	0f c0       	rjmp	.+30     	; 0x5c6e <.Lformat_store_generated_digit>
+
+00005c50 <.Lformat_generate_octal_digit>:
+    5c50:	a4 2f       	mov	r26, r20
+    5c52:	a7 70       	andi	r26, 0x07	; 7
+    5c54:	a0 5d       	subi	r26, 0xD0	; 208
+    5c56:	76 95       	lsr	r23
+    5c58:	67 95       	ror	r22
+    5c5a:	57 95       	ror	r21
+    5c5c:	47 95       	ror	r20
+    5c5e:	76 95       	lsr	r23
+    5c60:	67 95       	ror	r22
+    5c62:	57 95       	ror	r21
+    5c64:	47 95       	ror	r20
+    5c66:	76 95       	lsr	r23
+    5c68:	67 95       	ror	r22
+    5c6a:	57 95       	ror	r21
+    5c6c:	47 95       	ror	r20
+
+00005c6e <.Lformat_store_generated_digit>:
+    5c6e:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
+    5c72:	e4 e2       	ldi	r30, 0x24	; 36
+    5c74:	fa e0       	ldi	r31, 0x0A	; 10
+    5c76:	e8 0f       	add	r30, r24
+    5c78:	f2 1d       	adc	r31, r2
+    5c7a:	a0 83       	st	Z, r26
+    5c7c:	83 95       	inc	r24
+    5c7e:	80 93 40 0a 	sts	0x0A40, r24	; 0x800a40 <_end+0x34>
+    5c82:	94 2f       	mov	r25, r20
+    5c84:	95 2b       	or	r25, r21
+    5c86:	96 2b       	or	r25, r22
+    5c88:	97 2b       	or	r25, r23
+    5c8a:	09 f0       	breq	.+2      	; 0x5c8e <.L1^B33>
+    5c8c:	b5 cf       	rjmp	.-150    	; 0x5bf8 <.Lformat_generate_digits_loop>
+
+00005c8e <.L1^B33>:
+    5c8e:	08 95       	ret
+
+00005c90 <format_divide_u32_by_10>:
+    5c90:	88 27       	eor	r24, r24
+    5c92:	97 2f       	mov	r25, r23
+    5c94:	0b d0       	rcall	.+22     	; 0x5cac <format_divide_byte_by_10>
+    5c96:	79 2f       	mov	r23, r25
+    5c98:	96 2f       	mov	r25, r22
+    5c9a:	08 d0       	rcall	.+16     	; 0x5cac <format_divide_byte_by_10>
+    5c9c:	69 2f       	mov	r22, r25
+    5c9e:	95 2f       	mov	r25, r21
+    5ca0:	05 d0       	rcall	.+10     	; 0x5cac <format_divide_byte_by_10>
+    5ca2:	59 2f       	mov	r21, r25
+    5ca4:	94 2f       	mov	r25, r20
+    5ca6:	02 d0       	rcall	.+4      	; 0x5cac <format_divide_byte_by_10>
+    5ca8:	49 2f       	mov	r20, r25
+    5caa:	08 95       	ret
+
+00005cac <format_divide_byte_by_10>:
+    5cac:	a8 2f       	mov	r26, r24
+    5cae:	89 2f       	mov	r24, r25
+    5cb0:	bb 27       	eor	r27, r27
+
+00005cb2 <.Lformat_divide_byte_loop>:
+    5cb2:	aa 23       	and	r26, r26
+    5cb4:	11 f4       	brne	.+4      	; 0x5cba <.Lformat_divide_byte_subtract>
+    5cb6:	8a 30       	cpi	r24, 0x0A	; 10
+    5cb8:	20 f0       	brcs	.+8      	; 0x5cc2 <.Lformat_divide_byte_done>
+
+00005cba <.Lformat_divide_byte_subtract>:
+    5cba:	8a 50       	subi	r24, 0x0A	; 10
+    5cbc:	a0 40       	sbci	r26, 0x00	; 0
+    5cbe:	b3 95       	inc	r27
+    5cc0:	f8 cf       	rjmp	.-16     	; 0x5cb2 <.Lformat_divide_byte_loop>
+
+00005cc2 <.Lformat_divide_byte_done>:
+    5cc2:	9b 2f       	mov	r25, r27
+    5cc4:	08 95       	ret
+
+00005cc6 <format_prepare_integer_field>:
+    5cc6:	20 92 3e 0a 	sts	0x0A3E, r2	; 0x800a3e <_end+0x32>
+    5cca:	20 92 3f 0a 	sts	0x0A3F, r2	; 0x800a3f <_end+0x33>
+    5cce:	20 92 45 0a 	sts	0x0A45, r2	; 0x800a45 <_end+0x39>
+    5cd2:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
+    5cd6:	99 27       	eor	r25, r25
+    5cd8:	25 ff       	sbrs	r18, 5
+    5cda:	0a c0       	rjmp	.+20     	; 0x5cf0 <.Lformat_integer_precision_ready>
+    5cdc:	e8 16       	cp	r14, r24
+    5cde:	f9 06       	cpc	r15, r25
+    5ce0:	38 f0       	brcs	.+14     	; 0x5cf0 <.Lformat_integer_precision_ready>
+    5ce2:	d7 01       	movw	r26, r14
+    5ce4:	a8 1b       	sub	r26, r24
+    5ce6:	b9 0b       	sbc	r27, r25
+    5ce8:	a0 93 3e 0a 	sts	0x0A3E, r26	; 0x800a3e <_end+0x32>
+    5cec:	b0 93 3f 0a 	sts	0x0A3F, r27	; 0x800a3f <_end+0x33>
+
+00005cf0 <.Lformat_integer_precision_ready>:
+    5cf0:	a0 91 44 0a 	lds	r26, 0x0A44	; 0x800a44 <_end+0x38>
+    5cf4:	ba 2f       	mov	r27, r26
+    5cf6:	b3 70       	andi	r27, 0x03	; 3
+    5cf8:	23 ff       	sbrs	r18, 3
+    5cfa:	23 c0       	rjmp	.+70     	; 0x5d42 <.Lformat_integer_prefix_ready>
+    5cfc:	b2 30       	cpi	r27, 0x02	; 2
+    5cfe:	71 f4       	brne	.+28     	; 0x5d1c <.Lformat_integer_check_octal_prefix>
+    5d00:	80 91 43 0a 	lds	r24, 0x0A43	; 0x800a43 <_end+0x37>
+    5d04:	88 23       	and	r24, r24
+    5d06:	e9 f0       	breq	.+58     	; 0x5d42 <.Lformat_integer_prefix_ready>
+    5d08:	a3 ff       	sbrs	r26, 3
+    5d0a:	04 c0       	rjmp	.+8      	; 0x5d14 <.Lformat_integer_hex_lower_prefix>
+    5d0c:	83 e0       	ldi	r24, 0x03	; 3
+    5d0e:	80 93 45 0a 	sts	0x0A45, r24	; 0x800a45 <_end+0x39>
+    5d12:	17 c0       	rjmp	.+46     	; 0x5d42 <.Lformat_integer_prefix_ready>
+
+00005d14 <.Lformat_integer_hex_lower_prefix>:
+    5d14:	82 e0       	ldi	r24, 0x02	; 2
+    5d16:	80 93 45 0a 	sts	0x0A45, r24	; 0x800a45 <_end+0x39>
+    5d1a:	13 c0       	rjmp	.+38     	; 0x5d42 <.Lformat_integer_prefix_ready>
+
+00005d1c <.Lformat_integer_check_octal_prefix>:
+    5d1c:	b1 30       	cpi	r27, 0x01	; 1
+    5d1e:	89 f4       	brne	.+34     	; 0x5d42 <.Lformat_integer_prefix_ready>
+    5d20:	80 91 3e 0a 	lds	r24, 0x0A3E	; 0x800a3e <_end+0x32>
+    5d24:	90 91 3f 0a 	lds	r25, 0x0A3F	; 0x800a3f <_end+0x33>
+    5d28:	89 2b       	or	r24, r25
+    5d2a:	59 f4       	brne	.+22     	; 0x5d42 <.Lformat_integer_prefix_ready>
+    5d2c:	80 91 43 0a 	lds	r24, 0x0A43	; 0x800a43 <_end+0x37>
+    5d30:	88 23       	and	r24, r24
+    5d32:	21 f4       	brne	.+8      	; 0x5d3c <.Lformat_integer_set_octal_prefix>
+    5d34:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
+    5d38:	88 23       	and	r24, r24
+    5d3a:	19 f4       	brne	.+6      	; 0x5d42 <.Lformat_integer_prefix_ready>
+
+00005d3c <.Lformat_integer_set_octal_prefix>:
+    5d3c:	81 e0       	ldi	r24, 0x01	; 1
+    5d3e:	80 93 45 0a 	sts	0x0A45, r24	; 0x800a45 <_end+0x39>
+
+00005d42 <.Lformat_integer_prefix_ready>:
+    5d42:	80 91 40 0a 	lds	r24, 0x0A40	; 0x800a40 <_end+0x34>
+    5d46:	99 27       	eor	r25, r25
+    5d48:	a0 91 3e 0a 	lds	r26, 0x0A3E	; 0x800a3e <_end+0x32>
+    5d4c:	b0 91 3f 0a 	lds	r27, 0x0A3F	; 0x800a3f <_end+0x33>
+    5d50:	8a 0f       	add	r24, r26
+    5d52:	9b 1f       	adc	r25, r27
+    5d54:	88 f0       	brcs	.+34     	; 0x5d78 <.Lformat_integer_content_saturate>
+    5d56:	a0 91 41 0a 	lds	r26, 0x0A41	; 0x800a41 <_end+0x35>
+    5d5a:	aa 23       	and	r26, r26
+    5d5c:	11 f0       	breq	.+4      	; 0x5d62 <.L1^B34>
+    5d5e:	01 96       	adiw	r24, 0x01	; 1
+    5d60:	59 f0       	breq	.+22     	; 0x5d78 <.Lformat_integer_content_saturate>
+
+00005d62 <.L1^B34>:
+    5d62:	a0 91 45 0a 	lds	r26, 0x0A45	; 0x800a45 <_end+0x39>
+    5d66:	aa 23       	and	r26, r26
+    5d68:	71 f0       	breq	.+28     	; 0x5d86 <.Lformat_integer_content_ready>
+    5d6a:	a1 30       	cpi	r26, 0x01	; 1
+    5d6c:	19 f0       	breq	.+6      	; 0x5d74 <.L2^B8>
+    5d6e:	02 96       	adiw	r24, 0x02	; 2
+    5d70:	18 f0       	brcs	.+6      	; 0x5d78 <.Lformat_integer_content_saturate>
+    5d72:	09 c0       	rjmp	.+18     	; 0x5d86 <.Lformat_integer_content_ready>
+
+00005d74 <.L2^B8>:
+    5d74:	01 96       	adiw	r24, 0x01	; 1
+    5d76:	39 f4       	brne	.+14     	; 0x5d86 <.Lformat_integer_content_ready>
+
+00005d78 <.Lformat_integer_content_saturate>:
+    5d78:	8f ef       	ldi	r24, 0xFF	; 255
+    5d7a:	9f ef       	ldi	r25, 0xFF	; 255
+    5d7c:	a0 91 23 0a 	lds	r26, 0x0A23	; 0x800a23 <_end+0x17>
+    5d80:	a4 60       	ori	r26, 0x04	; 4
+    5d82:	a0 93 23 0a 	sts	0x0A23, r26	; 0x800a23 <_end+0x17>
+
+00005d86 <.Lformat_integer_content_ready>:
+    5d86:	27 dc       	rcall	.-1970   	; 0x55d6 <format_compute_padding>
+    5d88:	08 95       	ret
+
+00005d8a <format_emit_integer_field>:
+    5d8a:	33 27       	eor	r19, r19
+    5d8c:	20 fd       	sbrc	r18, 0
+    5d8e:	06 c0       	rjmp	.+12     	; 0x5d9c <.Lformat_integer_emit_spaces>
+    5d90:	25 fd       	sbrc	r18, 5
+    5d92:	04 c0       	rjmp	.+8      	; 0x5d9c <.Lformat_integer_emit_spaces>
+    5d94:	24 ff       	sbrs	r18, 4
+    5d96:	02 c0       	rjmp	.+4      	; 0x5d9c <.Lformat_integer_emit_spaces>
+    5d98:	31 e0       	ldi	r19, 0x01	; 1
+    5d9a:	01 c0       	rjmp	.+2      	; 0x5d9e <.Lformat_integer_emit_sign>
+
+00005d9c <.Lformat_integer_emit_spaces>:
+    5d9c:	2e dc       	rcall	.-1956   	; 0x55fa <format_emit_pre_padding>
+
+00005d9e <.Lformat_integer_emit_sign>:
+    5d9e:	80 91 41 0a 	lds	r24, 0x0A41	; 0x800a41 <_end+0x35>
+    5da2:	88 23       	and	r24, r24
+    5da4:	09 f0       	breq	.+2      	; 0x5da8 <.Lformat_integer_emit_prefix>
+    5da6:	f0 db       	rcall	.-2080   	; 0x5588 <format_emit_char>
+
+00005da8 <.Lformat_integer_emit_prefix>:
+    5da8:	a0 91 45 0a 	lds	r26, 0x0A45	; 0x800a45 <_end+0x39>
+    5dac:	aa 23       	and	r26, r26
+    5dae:	61 f0       	breq	.+24     	; 0x5dc8 <.Lformat_integer_emit_width_zeroes>
+    5db0:	80 e3       	ldi	r24, 0x30	; 48
+    5db2:	ea db       	rcall	.-2092   	; 0x5588 <format_emit_char>
+    5db4:	a0 91 45 0a 	lds	r26, 0x0A45	; 0x800a45 <_end+0x39>
+    5db8:	a1 30       	cpi	r26, 0x01	; 1
+    5dba:	31 f0       	breq	.+12     	; 0x5dc8 <.Lformat_integer_emit_width_zeroes>
+    5dbc:	a3 30       	cpi	r26, 0x03	; 3
+    5dbe:	11 f0       	breq	.+4      	; 0x5dc4 <.L1^B35>
+    5dc0:	88 e7       	ldi	r24, 0x78	; 120
+    5dc2:	01 c0       	rjmp	.+2      	; 0x5dc6 <.L2^B9>
+
+00005dc4 <.L1^B35>:
+    5dc4:	88 e5       	ldi	r24, 0x58	; 88
+
+00005dc6 <.L2^B9>:
+    5dc6:	e0 db       	rcall	.-2112   	; 0x5588 <format_emit_char>
+
+00005dc8 <.Lformat_integer_emit_width_zeroes>:
+    5dc8:	33 23       	and	r19, r19
+    5dca:	39 f0       	breq	.+14     	; 0x5dda <.Lformat_integer_emit_precision_zeroes>
+    5dcc:	80 91 3c 0a 	lds	r24, 0x0A3C	; 0x800a3c <_end+0x30>
+    5dd0:	90 91 3d 0a 	lds	r25, 0x0A3D	; 0x800a3d <_end+0x31>
+    5dd4:	00 e3       	ldi	r16, 0x30	; 48
+    5dd6:	00 2e       	mov	r0, r16
+    5dd8:	db db       	rcall	.-2122   	; 0x5590 <format_emit_repeat>
+
+00005dda <.Lformat_integer_emit_precision_zeroes>:
+    5dda:	80 91 3e 0a 	lds	r24, 0x0A3E	; 0x800a3e <_end+0x32>
+    5dde:	90 91 3f 0a 	lds	r25, 0x0A3F	; 0x800a3f <_end+0x33>
+    5de2:	00 e3       	ldi	r16, 0x30	; 48
+    5de4:	00 2e       	mov	r0, r16
+    5de6:	d4 db       	rcall	.-2136   	; 0x5590 <format_emit_repeat>
+    5de8:	30 93 42 0a 	sts	0x0A42, r19	; 0x800a42 <_end+0x36>
+    5dec:	30 91 40 0a 	lds	r19, 0x0A40	; 0x800a40 <_end+0x34>
+    5df0:	33 23       	and	r19, r19
+    5df2:	49 f0       	breq	.+18     	; 0x5e06 <.Lformat_integer_emit_post>
+
+00005df4 <.Lformat_integer_emit_digits_loop>:
+    5df4:	3a 95       	dec	r19
+    5df6:	e4 e2       	ldi	r30, 0x24	; 36
+    5df8:	fa e0       	ldi	r31, 0x0A	; 10
+    5dfa:	e3 0f       	add	r30, r19
+    5dfc:	f2 1d       	adc	r31, r2
+    5dfe:	80 81       	ld	r24, Z
+    5e00:	c3 db       	rcall	.-2170   	; 0x5588 <format_emit_char>
+    5e02:	33 23       	and	r19, r19
+    5e04:	b9 f7       	brne	.-18     	; 0x5df4 <.Lformat_integer_emit_digits_loop>
+
+00005e06 <.Lformat_integer_emit_post>:
+    5e06:	30 91 42 0a 	lds	r19, 0x0A42	; 0x800a42 <_end+0x36>
+    5e0a:	33 23       	and	r19, r19
+    5e0c:	09 f4       	brne	.+2      	; 0x5e10 <.Lformat_integer_emit_done>
+    5e0e:	f8 db       	rcall	.-2064   	; 0x5600 <format_emit_post_padding>
+
+00005e10 <.Lformat_integer_emit_done>:
+    5e10:	08 95       	ret
+    5e12:	00 00       	nop

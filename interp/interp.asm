@@ -12870,10 +12870,14 @@ format_core:
     brne  4f
     rjmp  format_conversion_program_string
 4:
-    cpi   r24, 'p'
+    cpi   r24, 'P'
     brne  5f
-    rjmp  format_conversion_pointer
+    rjmp  format_conversion_program_pointer
 5:
+    cpi   r24, 'p'
+    brne  6f
+    rjmp  format_conversion_pointer
+6:
     cpi   r24, 'd'
     breq  .Lformat_integer_dispatch
     cpi   r24, 'i'
@@ -13134,9 +13138,35 @@ format_conversion_pointer:
     rjmp  format_unexpected_character
 1:
     rcall format_arg_u16
-    ; Produce four hexadecimal digits in forward order in the shared buffer.
     ldi   r30, lo8(data_format_digit_buffer)
     ldi   r31, hi8(data_format_digit_buffer)
+    ldi   r22, 4
+    rjmp  .Lformat_pointer_store_low16
+
+format_conversion_program_pointer:
+    rcall format_validate_default_length
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    ; Program pointers occupy exactly three packed little-endian bytes in the
+    ; variadic area. No fourth register-container padding byte is consumed.
+    rcall format_arg_program_pointer
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    mov   r0, r26
+    mov   r26, r0
+    swap  r26
+    andi  r26, 0x0f
+    rcall format_hex_nibble_to_char
+    st    Z+, r26
+    mov   r26, r0
+    andi  r26, 0x0f
+    rcall format_hex_nibble_to_char
+    st    Z+, r26
+    ldi   r22, 6
+
+.Lformat_pointer_store_low16:
+    ; Append the low 16 bits in forward hexadecimal order.
     mov   r26, r25
     swap  r26
     andi  r26, 0x0f
@@ -13156,7 +13186,9 @@ format_conversion_pointer:
     rcall format_hex_nibble_to_char
     st    Z, r26
 
-    ldi   r24, 6
+    ; Both forms include the two-byte lower-case 0x prefix.
+    mov   r24, r22
+    subi  r24, -2
     clr   r25
     rcall format_compute_padding
     rcall format_emit_pre_padding
@@ -13166,7 +13198,7 @@ format_conversion_pointer:
     rcall format_emit_char
     ldi   r30, lo8(data_format_digit_buffer)
     ldi   r31, hi8(data_format_digit_buffer)
-    ldi   r24, 4
+    mov   r24, r22
     clr   r25
     rcall format_emit_ram_span
     rcall format_emit_post_padding

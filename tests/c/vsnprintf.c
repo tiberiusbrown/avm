@@ -85,15 +85,32 @@ static int pointer_text_matches(const char *text, const void *pointer)
            text[6] == '\0';
 }
 
+static int program_pointer_prefix_matches(
+    const char *text, const void AVM_PROGMEM *pointer)
+{
+    const uint8_t *bytes = (const uint8_t *)&pointer;
+
+    return text[0] == '0' && text[1] == 'x' &&
+           text[2] == lower_hex_digit((uint8_t)(bytes[2] >> 4)) &&
+           text[3] == lower_hex_digit(bytes[2]) &&
+           text[4] == lower_hex_digit((uint8_t)(bytes[1] >> 4)) &&
+           text[5] == lower_hex_digit(bytes[1]) &&
+           text[6] == lower_hex_digit((uint8_t)(bytes[0] >> 4)) &&
+           text[7] == lower_hex_digit(bytes[0]);
+}
+
 int avm_test_main(void)
 {
     static const char ram_text[] = "ram";
+    const char AVM_PROGMEM *program_pointer = F("pointer");
     char buffer[80];
     char trunc_storage[10];
     char one_byte[2];
     uint16_t failures = 0;
     int result;
     int pointer_valid;
+    int program_pointer_valid;
+    int program_pointer_width_valid;
     size_t i;
 
     result = call_vsnprintf(
@@ -176,6 +193,35 @@ int avm_test_main(void)
         failures |= (uint16_t)(1u << 9);
     if(!pointer_valid)
         failures |= (uint16_t)(1u << 10);
+
+    /* %P consumes a packed three-byte program pointer. Following it with a
+       16-bit argument proves that the va_list cursor advances by exactly three
+       bytes rather than by a four-byte register-container width. */
+    result = call_vsnprintf(
+        buffer, sizeof(buffer), "%P|%u", program_pointer, 4660u);
+    program_pointer_valid =
+        program_pointer_prefix_matches(buffer, program_pointer) &&
+        text_equal(&buffer[8], "|4660");
+    test_line16("PP", (uint16_t)result);
+    test_line16("PX", (uint16_t)program_pointer_valid);
+    if(result != 13)
+        failures |= (uint16_t)(1u << 11);
+    if(!program_pointer_valid)
+        failures |= (uint16_t)(1u << 12);
+
+    /* Exercise %P through a program-resident format and verify ordinary
+       string-style field padding around its fixed eight-character result. */
+    result = call_vsnprintf_P(
+        buffer, sizeof(buffer), F("%-10P"), program_pointer);
+    program_pointer_width_valid =
+        program_pointer_prefix_matches(buffer, program_pointer) &&
+        buffer[8] == ' ' && buffer[9] == ' ' && buffer[10] == '\0';
+    test_line16("PW", (uint16_t)result);
+    test_line16("PY", (uint16_t)program_pointer_width_valid);
+    if(result != 10)
+        failures |= (uint16_t)(1u << 13);
+    if(!program_pointer_width_valid)
+        failures |= (uint16_t)(1u << 14);
 
     test_line16("FM", failures);
     return failures != 0;

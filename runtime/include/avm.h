@@ -1,5 +1,5 @@
-#ifndef __AVM_H
-#define __AVM_H
+#ifndef _AVM_RUNTIME_AVM_H
+#define _AVM_RUNTIME_AVM_H
 
 #include <stdbool.h>
 #include <stddef.h>

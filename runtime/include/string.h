@@ -1,5 +1,5 @@
-#ifndef AVM_RUNTIME_STRING_H
-#define AVM_RUNTIME_STRING_H
+#ifndef _AVM_RUNTIME_STRING_H
+#define _AVM_RUNTIME_STRING_H
 
 #include <stddef.h>
 #include <stdint.h>

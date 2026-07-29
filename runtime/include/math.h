@@ -1,5 +1,5 @@
-#ifndef AVM_RUNTIME_MATH_H
-#define AVM_RUNTIME_MATH_H
+#ifndef _AVM_RUNTIME_MATH_H
+#define _AVM_RUNTIME_MATH_H
 
 #ifdef __cplusplus
 extern "C" {

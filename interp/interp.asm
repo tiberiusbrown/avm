@@ -50,7 +50,8 @@
 ;;     0x0A05–0x0A08  millisecond counter (little-endian uint32)
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
-;;     0x0A0E–0x0AFF  remaining interpreter-private
+;;     0x0A0E–...     call-lifetime SYS workspace beginning at data_end_private
+;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
 #define data_display    0x0500
@@ -62,6 +63,72 @@
 #define data_sprite_ptr         (data_millis+4)
 #define data_sprite_width       (data_sprite_ptr+3)
 #define data_sprite_height      (data_sprite_width+1)
+
+; First byte after persistent interpreter-private state. Temporary, nonnested
+; SYS services may define aliasing call-lifetime workspaces beginning here.
+#define data_end_private             (data_sprite_height+1)
+
+; Native formatter workspace. This storage is valid only while VS(N)PRINTF is
+; executing; future nonreentrant SYS services may alias the same range.
+#define data_format_program_cache       (data_end_private+0)
+#define data_format_program_next        (data_end_private+16)
+#define data_format_cache_index         (data_end_private+19)
+#define data_format_cache_length        (data_end_private+20)
+#define data_format_status              (data_end_private+21)
+#define data_format_digit_buffer        (data_end_private+22)
+#define data_format_progstr_original    (data_end_private+34)
+#define data_format_string_original     data_format_progstr_original
+#define data_format_progstr_cursor      (data_end_private+37)
+#define data_format_string_length       (data_end_private+40)
+#define data_format_ram_ptr             (data_end_private+42)
+#define data_format_arg_ptr             (data_end_private+44)
+#define data_format_padding             (data_end_private+46)
+#define data_format_precision_zeroes    (data_end_private+48)
+#define data_format_digit_count         (data_end_private+50)
+#define data_format_sign                (data_end_private+51)
+#define data_format_conversion          (data_end_private+52)
+#define data_format_value_nonzero       (data_end_private+53)
+#define data_format_integer_mode        (data_end_private+54)
+#define data_format_prefix              (data_end_private+55)
+#define data_format_read_source         (data_end_private+56)
+#define data_format_scratch_end         (data_end_private+59)
+
+.if data_format_scratch_end > 0x0B00
+    .error "Formatter workspace overlaps memory above interpreter-private SRAM"
+.endif
+
+#define FORMAT_STATUS_SOURCE_PROGRAM 0
+#define FORMAT_STATUS_SIZE_NONZERO   1
+#define FORMAT_STATUS_COUNT_OVERFLOW 2
+#define FORMAT_STATUS_FATAL_ERROR    3
+
+#define FORMAT_FLAG_LEFT             0
+#define FORMAT_FLAG_PLUS             1
+#define FORMAT_FLAG_SPACE            2
+#define FORMAT_FLAG_ALT              3
+#define FORMAT_FLAG_ZERO             4
+#define FORMAT_FLAG_PRECISION        5
+#define FORMAT_FLAG_WIDTH_STAR       6
+#define FORMAT_FLAG_PRECISION_STAR   7
+
+#define FORMAT_LENGTH_DEFAULT        0
+#define FORMAT_LENGTH_HH             1
+#define FORMAT_LENGTH_H              2
+#define FORMAT_LENGTH_L              3
+#define FORMAT_LENGTH_Z              4
+#define FORMAT_LENGTH_T              5
+
+#define FORMAT_INT_BASE_MASK         0x03
+#define FORMAT_INT_BASE_DEC          0
+#define FORMAT_INT_BASE_OCT          1
+#define FORMAT_INT_BASE_HEX          2
+#define FORMAT_INT_SIGNED_BIT        2
+#define FORMAT_INT_UPPER_BIT         3
+
+#define FORMAT_PREFIX_NONE           0
+#define FORMAT_PREFIX_OCTAL          1
+#define FORMAT_PREFIX_HEX_LOWER      2
+#define FORMAT_PREFIX_HEX_UPPER      3
 
 #define STARTUP_SAVE_PAGE_VALID  0
 
@@ -629,6 +696,8 @@
 #define SYS_SAVE                     0x2C
 #define SYS_LOAD                     0x2D
 #define SYS_SAVE_EXISTS              0x2E
+#define SYS_VSNPRINTF                 0x2F
+#define SYS_VSNPRINTF_P               0x30
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3108,6 +3177,9 @@ sys_dispatch_func:
     (SYS_LOAD != 0x2D) || (SYS_SAVE_EXISTS != 0x2E)
     .error "platform/persistence SYS services must occupy contiguous entries 0x29-0x2E"
 .endif
+.if (SYS_VSNPRINTF != 0x2F) || (SYS_VSNPRINTF_P != 0x30)
+    .error "formatting SYS services must occupy contiguous entries 0x2F-0x30"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3137,7 +3209,8 @@ sys_dispatch_table:
     sys_entries 4,   sys_draw_func
     sys_entries 2,   sys_draw_filled_rect_func
     sys_entries 6,   sys_platform_func
-    sys_entries 209, invalid_syscall_func
+    sys_entries 2,   sys_format_func
+    sys_entries 207, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3184,6 +3257,12 @@ sys_draw_filled_rect_func:
 ; minimizing movement of the range-constrained interpreter core.
 sys_platform_func:
     jmp   sys_platform_dispatch_impl
+
+; The two contiguous formatting services normalize to source mode 0=RAM or
+; 1=program memory before entering their shared implementation.
+sys_format_func:
+    subi  PRIMARY_OPCODE, SYS_VSNPRINTF
+    jmp   sys_format_impl
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
@@ -12130,3 +12209,1397 @@ sys_save_exists_impl:
     bld   VM_R4L, 0
     clr   VM_R4H
     jmp   seek_and_dispatch_func_disabled
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Native formatting SYS services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Fixed service ABI:
+;   r4 = destination data pointer / signed result
+;   r5 = destination size (preserved)
+;   r2 = va_list data pointer (preserved)
+;   q3 = format pointer container (preserved)
+;
+; SYS_VSNPRINTF uses r6 as a data-space format pointer. SYS_VSNPRINTF_P uses
+; q3[23:0] as a program-space format pointer and ignores q3[31:24]. Both
+; services abandon the speculative following-opcode fetch, own the FX stream
+; for the complete call, and restart bytecode dispatch unconditionally.
+;
+; Working register allocation while formatting:
+;   r8:r9    produced byte count (modulo 2^16; overflow status is sticky)
+;   r10:r11  remaining writable bytes, excluding the final NUL
+;   r12:r13  field width
+;   r14:r15  precision
+;   r18      per-conversion flags
+;   r19      length state, then digit-loop scratch
+;   r20:r23  integer magnitude and conversion scratch
+;   Y        current destination pointer
+;
+; The local va_list cursor and all format/program pointers are held in the
+; temporary workspace beginning at data_end_private. The dedicated formatter
+; FX reader may therefore use X, Z, and r24-r27 freely.
+
+sys_format_impl:
+    ; The fixed SYS path reaches this entry after the speculative following-
+    ; opcode byte is complete. Consume it, deselect FX, and take ownership of
+    ; the bytecode stream. Formatter-launched transfers use open-loop delays.
+    sts   data_format_status, PRIMARY_OPCODE
+    in    r24, SPDR
+    fx_disable
+
+    ; VM_PC currently identifies the service byte. The stream restart at exit
+    ; must begin at the following primary opcode.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    ; Preserve every architectural register except result r4. Native Y is the
+    ; architectural VM stack pointer and is reused as the output cursor.
+    push  r8
+    push  r9
+    push  r10
+    push  r11
+    push  r12
+    push  r13
+    push  r14
+    push  r15
+    push  r18
+    push  r19
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    push  r28
+    push  r29
+
+    movw  r28, VM_R4
+
+    ; Preserve the explicit va_list cursor in call-lifetime workspace.
+    sts   data_format_arg_ptr+0, VM_R2L
+    sts   data_format_arg_ptr+1, VM_R2H
+
+    ; Initialize both possible format sources. format_get_char alone selects
+    ; and advances the active source.
+    sts   data_format_ram_ptr+0, VM_R6L
+    sts   data_format_ram_ptr+1, VM_R6H
+    sts   data_format_program_next+0, VM_R6L
+    sts   data_format_program_next+1, VM_R6H
+    sts   data_format_program_next+2, VM_R7L
+    sts   data_format_cache_index, ZERO
+    sts   data_format_cache_length, ZERO
+
+    clr   r8
+    clr   r9
+    movw  r10, VM_R5
+
+    ; Retain only source mode, then reserve one byte for the final NUL when the
+    ; original destination size is nonzero.
+    lds   r24, data_format_status
+    andi  r24, (1 << FORMAT_STATUS_SOURCE_PROGRAM)
+    mov   r25, r10
+    or    r25, r11
+    breq  .Lformat_size_zero
+    ori   r24, (1 << FORMAT_STATUS_SIZE_NONZERO)
+    sub   r10, ONE
+    sbc   r11, ZERO
+.Lformat_size_zero:
+    sts   data_format_status, r24
+    rjmp  format_core
+
+; Common normal/error finish. Preserve generated output and always terminate a
+; nonzero-size destination. FX is unconditionally closed and bytecode fetch is
+; restarted from the already-advanced VM_PC.
+format_finish:
+    lds   r26, data_format_status
+    sbrs  r26, FORMAT_STATUS_SIZE_NONZERO
+    rjmp  .Lformat_finish_result
+    st    Y, ZERO
+
+.Lformat_finish_result:
+    sbrc  r26, FORMAT_STATUS_FATAL_ERROR
+    rjmp  .Lformat_finish_error
+    sbrc  r26, FORMAT_STATUS_COUNT_OVERFLOW
+    rjmp  .Lformat_finish_error
+    sbrc  r9, 7
+    rjmp  .Lformat_finish_error
+    movw  r24, r8
+    rjmp  .Lformat_finish_restore
+
+.Lformat_finish_error:
+    ser   r24
+    ser   r25
+
+.Lformat_finish_restore:
+    fx_disable
+    pop   r29
+    pop   r28
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    pop   r15
+    pop   r14
+    pop   r13
+    pop   r12
+    pop   r11
+    pop   r10
+    pop   r9
+    pop   r8
+    movw  VM_R4, r24
+    jmp   seek_and_dispatch_func_disabled
+
+format_unexpected_character:
+    lds   r25, data_format_status
+    ori   r25, (1 << FORMAT_STATUS_FATAL_ERROR)
+    sts   data_format_status, r25
+    rjmp  format_finish
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Output sink
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Add logical output count r25:r24 to produced. Overflow is sticky once the
+; true count is not representable as a nonnegative AVM int.
+format_add_count:
+    add   r8, r24
+    adc   r9, r25
+    brcs  .Lformat_add_count_overflow
+    sbrc  r9, 7
+    rjmp  .Lformat_add_count_overflow
+    ret
+.Lformat_add_count_overflow:
+    lds   r26, data_format_status
+    ori   r26, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
+    sts   data_format_status, r26
+    ret
+
+; Input r24=byte.
+format_emit_char:
+    mov   r0, r24
+    ldi   r24, 1
+    clr   r25
+    rjmp  format_emit_repeat
+
+; Inputs r25:r24=count, r0=byte. Add complete logical count, then store only
+; min(count,write_remaining) bytes.
+format_emit_repeat:
+    rcall format_add_count
+
+    cp    r10, r24
+    cpc   r11, r25
+    brsh  .Lformat_emit_repeat_fits
+    movw  r24, r10
+    clr   r10
+    clr   r11
+    rjmp  .Lformat_emit_repeat_copy
+.Lformat_emit_repeat_fits:
+    sub   r10, r24
+    sbc   r11, r25
+.Lformat_emit_repeat_copy:
+    mov   r26, r24
+    or    r26, r25
+    breq  .Lformat_emit_repeat_done
+.Lformat_emit_repeat_loop:
+    st    Y+, r0
+    sbiw  r24, 1
+    brne  .Lformat_emit_repeat_loop
+.Lformat_emit_repeat_done:
+    ret
+
+; Inputs Z=RAM source and r25:r24=count. Logical count is always added; source
+; bytes are loaded only for the portion that fits in the destination.
+format_emit_ram_span:
+    rcall format_add_count
+
+    cp    r10, r24
+    cpc   r11, r25
+    brsh  .Lformat_emit_span_fits
+    movw  r24, r10
+    clr   r10
+    clr   r11
+    rjmp  .Lformat_emit_span_copy
+.Lformat_emit_span_fits:
+    sub   r10, r24
+    sbc   r11, r25
+.Lformat_emit_span_copy:
+    mov   r26, r24
+    or    r26, r25
+    breq  .Lformat_emit_span_done
+.Lformat_emit_span_loop:
+    ld    r0, Z+
+    st    Y+, r0
+    sbiw  r24, 1
+    brne  .Lformat_emit_span_loop
+.Lformat_emit_span_done:
+    ret
+
+; Input r25:r24=content length. Store max(width-content,0).
+format_compute_padding:
+    movw  r20, r12
+    sub   r20, r24
+    sbc   r21, r25
+    brcc  .Lformat_compute_padding_store
+    clr   r20
+    clr   r21
+.Lformat_compute_padding_store:
+    sts   data_format_padding+0, r20
+    sts   data_format_padding+1, r21
+    ret
+
+format_emit_padding_spaces:
+    lds   r24, data_format_padding+0
+    lds   r25, data_format_padding+1
+    ldi   r16, ' '
+    mov   r0, r16
+    rjmp  format_emit_repeat
+
+format_emit_pre_padding:
+    sbrs  r18, FORMAT_FLAG_LEFT
+    rjmp  format_emit_padding_spaces
+    ret
+
+format_emit_post_padding:
+    sbrc  r18, FORMAT_FLAG_LEFT
+    rjmp  format_emit_padding_spaces
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Dedicated formatter program-memory reader
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Open-loop delay ladder. The named delay includes the calling RCALL and RET.
+; Calling format_spi_delay_16 immediately after OUT SPDR places the following
+; IN SPDR on cycle 17. Interrupts can extend but cannot shorten the interval.
+format_spi_delay_16:
+    delay_4
+    nop
+format_spi_delay_11:
+    delay_4
+format_spi_delay_7:
+    ret
+
+; Input r26:r25:r24=image-relative logical address. Start the first data-byte
+; transfer. X, Y, and Z are untouched; r24-r27 are clobbered.
+format_fx_begin_read:
+    lds   r27, data_page_data+0
+    add   r25, r27
+    lds   r27, data_page_data+1
+    adc   r26, r27
+
+    fx_disable
+    fx_enable
+    ldi   r27, SFC_READ
+    out   SPDR, r27
+    rcall format_spi_delay_16
+    in    r27, SPDR
+
+    out   SPDR, r26
+    rcall format_spi_delay_16
+    in    r27, SPDR
+
+    out   SPDR, r25
+    rcall format_spi_delay_16
+    in    r27, SPDR
+
+    out   SPDR, r24
+    rcall format_spi_delay_16
+    in    r27, SPDR
+
+    out   SPDR, ZERO
+    ret
+
+; Copy a short program-space chunk through the formatter-owned reader.
+;
+; Inputs:
+;   r26:r25:r24 = logical source
+;   Z           = destination
+;   r20         = nonzero maximum byte count (<=16)
+;   r21         = zero for fixed count, nonzero to stop after NUL
+; Outputs:
+;   r26:r25:r24 = source advanced by copied count modulo 2^24
+;   r22         = copied count (includes copied NUL)
+;   r23         = 1 iff a NUL stopped the copy
+format_read_program_chunk:
+    sts   data_format_read_source+0, r24
+    sts   data_format_read_source+1, r25
+    sts   data_format_read_source+2, r26
+
+    rcall format_fx_begin_read
+    clr   r22
+    clr   r23
+
+.Lformat_read_program_chunk_loop:
+    rcall format_spi_delay_16
+    in    r27, SPDR
+    st    Z+, r27
+    inc   r22
+
+    tst   r21
+    breq  .Lformat_read_program_chunk_count
+    tst   r27
+    brne  .Lformat_read_program_chunk_count
+    ldi   r23, 1
+    rjmp  .Lformat_read_program_chunk_done
+
+.Lformat_read_program_chunk_count:
+    cp    r22, r20
+    brsh  .Lformat_read_program_chunk_done
+    out   SPDR, ZERO
+    rjmp  .Lformat_read_program_chunk_loop
+
+.Lformat_read_program_chunk_done:
+    fx_disable
+    lds   r24, data_format_read_source+0
+    lds   r25, data_format_read_source+1
+    lds   r26, data_format_read_source+2
+    add   r24, r22
+    adc   r25, ZERO
+    adc   r26, ZERO
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Unified format source
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; The parser obtains every format byte through this routine.
+; Output r24=next byte.
+format_get_char:
+    lds   r25, data_format_status
+    sbrc  r25, FORMAT_STATUS_SOURCE_PROGRAM
+    rjmp  .Lformat_get_char_program
+
+    lds   r30, data_format_ram_ptr+0
+    lds   r31, data_format_ram_ptr+1
+    ld    r24, Z+
+    sts   data_format_ram_ptr+0, r30
+    sts   data_format_ram_ptr+1, r31
+    ret
+
+.Lformat_get_char_program:
+    lds   r25, data_format_cache_index
+    lds   r26, data_format_cache_length
+    cp    r25, r26
+    brlo  .Lformat_get_char_cached
+    rcall format_refill_program_cache
+    clr   r25
+.Lformat_get_char_cached:
+    ldi   r30, lo8(data_format_program_cache)
+    ldi   r31, hi8(data_format_program_cache)
+    add   r30, r25
+    adc   r31, ZERO
+    ld    r24, Z
+    inc   r25
+    sts   data_format_cache_index, r25
+    ret
+
+format_refill_program_cache:
+    lds   r24, data_format_program_next+0
+    lds   r25, data_format_program_next+1
+    lds   r26, data_format_program_next+2
+    ldi   r30, lo8(data_format_program_cache)
+    ldi   r31, hi8(data_format_program_cache)
+    ldi   r20, 16
+    ldi   r21, 1
+    rcall format_read_program_chunk
+    sts   data_format_program_next+0, r24
+    sts   data_format_program_next+1, r25
+    sts   data_format_program_next+2, r26
+    sts   data_format_cache_length, r22
+    sts   data_format_cache_index, ZERO
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Variadic argument readers
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+format_arg_u16:
+    lds   r30, data_format_arg_ptr+0
+    lds   r31, data_format_arg_ptr+1
+    ld    r24, Z+
+    ld    r25, Z+
+    sts   data_format_arg_ptr+0, r30
+    sts   data_format_arg_ptr+1, r31
+    ret
+
+format_arg_u32:
+    lds   r30, data_format_arg_ptr+0
+    lds   r31, data_format_arg_ptr+1
+    ld    r20, Z+
+    ld    r21, Z+
+    ld    r22, Z+
+    ld    r23, Z+
+    sts   data_format_arg_ptr+0, r30
+    sts   data_format_arg_ptr+1, r31
+    ret
+
+format_arg_program_pointer:
+    lds   r30, data_format_arg_ptr+0
+    lds   r31, data_format_arg_ptr+1
+    ld    r24, Z+
+    ld    r25, Z+
+    ld    r26, Z+
+    sts   data_format_arg_ptr+0, r30
+    sts   data_format_arg_ptr+1, r31
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Parser
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+format_core:
+.Lformat_main_loop:
+    rcall format_get_char
+    tst   r24
+    brne  1f
+    rjmp  format_finish
+1:
+    cpi   r24, '%'
+    breq  .Lformat_conversion_begin
+    rcall format_emit_char
+    rjmp  .Lformat_main_loop
+
+.Lformat_conversion_begin:
+    clr   r18
+    clr   r12
+    clr   r13
+    clr   r14
+    clr   r15
+    ldi   r19, FORMAT_LENGTH_DEFAULT
+    rcall format_get_char
+
+.Lformat_parse_flags:
+    cpi   r24, '-'
+    brne  1f
+    ori   r18, (1 << FORMAT_FLAG_LEFT)
+    rcall format_get_char
+    rjmp  .Lformat_parse_flags
+1:
+    cpi   r24, '+'
+    brne  2f
+    ori   r18, (1 << FORMAT_FLAG_PLUS)
+    rcall format_get_char
+    rjmp  .Lformat_parse_flags
+2:
+    cpi   r24, ' '
+    brne  3f
+    ori   r18, (1 << FORMAT_FLAG_SPACE)
+    rcall format_get_char
+    rjmp  .Lformat_parse_flags
+3:
+    cpi   r24, '#'
+    brne  4f
+    ori   r18, (1 << FORMAT_FLAG_ALT)
+    rcall format_get_char
+    rjmp  .Lformat_parse_flags
+4:
+    cpi   r24, '0'
+    brne  .Lformat_parse_width
+    ori   r18, (1 << FORMAT_FLAG_ZERO)
+    rcall format_get_char
+    rjmp  .Lformat_parse_flags
+
+.Lformat_parse_width:
+    cpi   r24, '*'
+    brne  .Lformat_parse_width_digits_entry
+    ori   r18, (1 << FORMAT_FLAG_WIDTH_STAR)
+    rcall format_arg_u16
+    movw  r12, r24
+    sbrs  r13, 7
+    rjmp  .Lformat_width_star_ready
+    com   r12
+    com   r13
+    add   r12, ONE
+    adc   r13, ZERO
+    ori   r18, (1 << FORMAT_FLAG_LEFT)
+.Lformat_width_star_ready:
+    rcall format_get_char
+    rjmp  .Lformat_parse_precision
+
+.Lformat_parse_width_digits_entry:
+    cpi   r24, '1'
+    brlo  .Lformat_parse_precision
+    cpi   r24, '9'+1
+    brsh  .Lformat_parse_precision
+.Lformat_parse_width_digits:
+    subi  r24, '0'
+    mov   r26, r12
+    mov   r27, r13
+    ; Saturate before multiplying when oldWidth*10+digit exceeds 0xFFFF.
+    cpi   r27, 0x19
+    brlo  .Lformat_width_multiply
+    brne  .Lformat_width_saturate
+    cpi   r26, 0x99
+    brlo  .Lformat_width_multiply
+    brne  .Lformat_width_saturate
+    cpi   r24, 6
+    brsh  .Lformat_width_saturate
+.Lformat_width_multiply:
+    ; width = width*8 + width*2 + digit.
+    lsl   r12
+    rol   r13
+    movw  r20, r12
+    lsl   r12
+    rol   r13
+    lsl   r12
+    rol   r13
+    add   r12, r20
+    adc   r13, r21
+    add   r12, r24
+    adc   r13, ZERO
+    rjmp  .Lformat_width_digit_done
+.Lformat_width_saturate:
+    ldi   r24, 0xFF
+    mov   r12, r24
+    mov   r13, r24
+.Lformat_width_digit_done:
+    rcall format_get_char
+    cpi   r24, '0'
+    brlo  .Lformat_parse_precision
+    cpi   r24, '9'+1
+    brlo  .Lformat_parse_width_digits
+
+.Lformat_parse_precision:
+    cpi   r24, '.'
+    brne  .Lformat_parse_length
+    ori   r18, (1 << FORMAT_FLAG_PRECISION)
+    clr   r14
+    clr   r15
+    rcall format_get_char
+    cpi   r24, '*'
+    brne  .Lformat_parse_precision_digits_entry
+    ori   r18, (1 << FORMAT_FLAG_PRECISION_STAR)
+    rcall format_arg_u16
+    sbrc  r25, 7
+    rjmp  .Lformat_precision_star_negative
+    movw  r14, r24
+    rcall format_get_char
+    rjmp  .Lformat_parse_length
+.Lformat_precision_star_negative:
+    andi  r18, 0xDF
+    rcall format_get_char
+    rjmp  .Lformat_parse_length
+
+.Lformat_parse_precision_digits_entry:
+    cpi   r24, '0'
+    brlo  .Lformat_parse_length
+    cpi   r24, '9'+1
+    brsh  .Lformat_parse_length
+.Lformat_parse_precision_digits:
+    subi  r24, '0'
+    mov   r26, r14
+    mov   r27, r15
+    ; Saturate before multiplying when oldPrecision*10+digit exceeds 0xFFFF.
+    cpi   r27, 0x19
+    brlo  .Lformat_precision_multiply
+    brne  .Lformat_precision_saturate
+    cpi   r26, 0x99
+    brlo  .Lformat_precision_multiply
+    brne  .Lformat_precision_saturate
+    cpi   r24, 6
+    brsh  .Lformat_precision_saturate
+.Lformat_precision_multiply:
+    lsl   r14
+    rol   r15
+    movw  r20, r14
+    lsl   r14
+    rol   r15
+    lsl   r14
+    rol   r15
+    add   r14, r20
+    adc   r15, r21
+    add   r14, r24
+    adc   r15, ZERO
+    rjmp  .Lformat_precision_digit_done
+.Lformat_precision_saturate:
+    ldi   r24, 0xFF
+    mov   r14, r24
+    mov   r15, r24
+.Lformat_precision_digit_done:
+    rcall format_get_char
+    cpi   r24, '0'
+    brlo  .Lformat_parse_length
+    cpi   r24, '9'+1
+    brlo  .Lformat_parse_precision_digits
+
+.Lformat_parse_length:
+    cpi   r24, 'h'
+    brne  .Lformat_length_not_h
+    ldi   r19, FORMAT_LENGTH_H
+    rcall format_get_char
+    cpi   r24, 'h'
+    brne  .Lformat_dispatch_conversion
+    ldi   r19, FORMAT_LENGTH_HH
+    rcall format_get_char
+    rjmp  .Lformat_dispatch_conversion
+.Lformat_length_not_h:
+    cpi   r24, 'l'
+    brne  1f
+    ldi   r19, FORMAT_LENGTH_L
+    rcall format_get_char
+    rjmp  .Lformat_dispatch_conversion
+1:
+    cpi   r24, 'z'
+    brne  2f
+    ldi   r19, FORMAT_LENGTH_Z
+    rcall format_get_char
+    rjmp  .Lformat_dispatch_conversion
+2:
+    cpi   r24, 't'
+    brne  .Lformat_dispatch_conversion
+    ldi   r19, FORMAT_LENGTH_T
+    rcall format_get_char
+
+.Lformat_dispatch_conversion:
+    sts   data_format_conversion, r24
+    cpi   r24, '%'
+    brne  1f
+    rjmp  format_conversion_percent
+1:
+    cpi   r24, 'c'
+    brne  2f
+    rjmp  format_conversion_char
+2:
+    cpi   r24, 's'
+    brne  3f
+    rjmp  format_conversion_string
+3:
+    cpi   r24, 'S'
+    brne  4f
+    rjmp  format_conversion_program_string
+4:
+    cpi   r24, 'p'
+    brne  5f
+    rjmp  format_conversion_pointer
+5:
+    cpi   r24, 'd'
+    breq  .Lformat_integer_dispatch
+    cpi   r24, 'i'
+    breq  .Lformat_integer_dispatch
+    cpi   r24, 'u'
+    breq  .Lformat_integer_dispatch
+    cpi   r24, 'o'
+    breq  .Lformat_integer_dispatch
+    cpi   r24, 'x'
+    breq  .Lformat_integer_dispatch
+    cpi   r24, 'X'
+    breq  .Lformat_integer_dispatch
+    rjmp  format_unexpected_character
+.Lformat_integer_dispatch:
+    rjmp  format_conversion_integer
+
+; Require no length modifier for noninteger conversions.
+format_validate_default_length:
+    ; Return Z=1 for the accepted default length and Z=0 otherwise. RCALL/RET
+    ; preserve SREG, so callers can branch immediately without leaking the
+    ; helper's return address on an error path.
+    tst   r19
+    ret
+
+format_conversion_percent:
+    rcall format_validate_default_length
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    tst   r18
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    mov   r24, r12
+    or    r24, r13
+    breq  2f
+    rjmp  format_unexpected_character
+2:
+    ldi   r24, '%'
+    rcall format_emit_char
+    rjmp  .Lformat_main_loop
+
+format_conversion_char:
+    rcall format_validate_default_length
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    sbrc  r18, FORMAT_FLAG_PRECISION
+    rjmp  format_unexpected_character
+    rcall format_arg_u16
+    sts   data_format_conversion, r24
+    ldi   r24, 1
+    clr   r25
+    rcall format_compute_padding
+    rcall format_emit_pre_padding
+    lds   r24, data_format_conversion
+    rcall format_emit_char
+    rcall format_emit_post_padding
+    rjmp  .Lformat_main_loop
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; String conversions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+format_conversion_string:
+    rcall format_validate_default_length
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    rcall format_arg_u16
+    sts   data_format_string_original+0, r24
+    sts   data_format_string_original+1, r25
+
+    clr   r20
+    clr   r21
+    sbrs  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_string_measure_unbounded
+    mov   r26, r14
+    or    r26, r15
+    breq  .Lformat_string_measured
+.Lformat_string_measure_bounded:
+    cp    r20, r14
+    cpc   r21, r15
+    brsh  .Lformat_string_measured
+    movw  r30, r24
+    add   r30, r20
+    adc   r31, r21
+    ld    r26, Z
+    tst   r26
+    breq  .Lformat_string_measured
+    inc   r20
+    brne  .Lformat_string_measure_bounded
+    inc   r21
+    rjmp  .Lformat_string_measure_bounded
+.Lformat_string_measure_unbounded:
+    movw  r30, r24
+.Lformat_string_measure_unbounded_loop:
+    ld    r26, Z+
+    tst   r26
+    breq  .Lformat_string_measured
+    inc   r20
+    brne  .Lformat_string_measure_unbounded_loop
+    inc   r21
+    rjmp  .Lformat_string_measure_unbounded_loop
+.Lformat_string_measured:
+    sts   data_format_string_length+0, r20
+    sts   data_format_string_length+1, r21
+    movw  r24, r20
+    rcall format_compute_padding
+    rcall format_emit_pre_padding
+    lds   r30, data_format_string_original+0
+    lds   r31, data_format_string_original+1
+    lds   r24, data_format_string_length+0
+    lds   r25, data_format_string_length+1
+    rcall format_emit_ram_span
+    rcall format_emit_post_padding
+    rjmp  .Lformat_main_loop
+
+format_conversion_program_string:
+    rcall format_validate_default_length
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    rcall format_arg_program_pointer
+    sts   data_format_progstr_original+0, r24
+    sts   data_format_progstr_original+1, r25
+    sts   data_format_progstr_original+2, r26
+    sts   data_format_progstr_cursor+0, r24
+    sts   data_format_progstr_cursor+1, r25
+    sts   data_format_progstr_cursor+2, r26
+    sts   data_format_string_length+0, ZERO
+    sts   data_format_string_length+1, ZERO
+
+    ; Precision zero reads no program byte.
+    sbrs  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_program_string_measure_loop
+    mov   r24, r14
+    or    r24, r15
+    brne  1f
+    rjmp  .Lformat_program_string_measured
+1:
+
+.Lformat_program_string_measure_loop:
+    ; Stop when bounded precision has already been reached.
+    sbrs  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_program_string_measure_choose
+    lds   r24, data_format_string_length+0
+    lds   r25, data_format_string_length+1
+    cp    r24, r14
+    cpc   r25, r15
+    brsh  .Lformat_program_string_measured
+.Lformat_program_string_measure_choose:
+    ldi   r20, 12
+    sbrs  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_program_string_measure_read
+    movw  r24, r14
+    lds   r26, data_format_string_length+0
+    lds   r27, data_format_string_length+1
+    sub   r24, r26
+    sbc   r25, r27
+    tst   r25
+    brne  .Lformat_program_string_measure_read
+    cpi   r24, 12
+    brsh  .Lformat_program_string_measure_read
+    mov   r20, r24
+.Lformat_program_string_measure_read:
+    lds   r24, data_format_progstr_cursor+0
+    lds   r25, data_format_progstr_cursor+1
+    lds   r26, data_format_progstr_cursor+2
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    ldi   r21, 1
+    rcall format_read_program_chunk
+    sts   data_format_progstr_cursor+0, r24
+    sts   data_format_progstr_cursor+1, r25
+    sts   data_format_progstr_cursor+2, r26
+
+    mov   r24, r22
+    clr   r25
+    tst   r23
+    breq  .Lformat_program_string_measure_add
+    dec   r24
+.Lformat_program_string_measure_add:
+    lds   r26, data_format_string_length+0
+    lds   r27, data_format_string_length+1
+    add   r26, r24
+    adc   r27, r25
+    brcc  .Lformat_program_string_measure_store
+    ser   r26
+    ser   r27
+    lds   r24, data_format_status
+    ori   r24, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
+    sts   data_format_status, r24
+.Lformat_program_string_measure_store:
+    sts   data_format_string_length+0, r26
+    sts   data_format_string_length+1, r27
+    tst   r23
+    brne  1f
+    rjmp  .Lformat_program_string_measure_loop
+1:
+
+.Lformat_program_string_measured:
+    lds   r24, data_format_string_length+0
+    lds   r25, data_format_string_length+1
+    rcall format_compute_padding
+    rcall format_emit_pre_padding
+
+    lds   r24, data_format_progstr_original+0
+    lds   r25, data_format_progstr_original+1
+    lds   r26, data_format_progstr_original+2
+    sts   data_format_progstr_cursor+0, r24
+    sts   data_format_progstr_cursor+1, r25
+    sts   data_format_progstr_cursor+2, r26
+    lds   r12, data_format_string_length+0
+    lds   r13, data_format_string_length+1
+
+.Lformat_program_string_emit_loop:
+    mov   r24, r12
+    or    r24, r13
+    breq  .Lformat_program_string_emit_done
+    ldi   r20, 12
+    tst   r13
+    brne  .Lformat_program_string_emit_read
+    mov   r24, r12
+    cpi   r24, 12
+    brsh  .Lformat_program_string_emit_read
+    mov   r20, r12
+.Lformat_program_string_emit_read:
+    lds   r24, data_format_progstr_cursor+0
+    lds   r25, data_format_progstr_cursor+1
+    lds   r26, data_format_progstr_cursor+2
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    clr   r21
+    rcall format_read_program_chunk
+    sts   data_format_progstr_cursor+0, r24
+    sts   data_format_progstr_cursor+1, r25
+    sts   data_format_progstr_cursor+2, r26
+    sub   r12, r22
+    sbc   r13, ZERO
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    mov   r24, r22
+    clr   r25
+    rcall format_emit_ram_span
+    rjmp  .Lformat_program_string_emit_loop
+.Lformat_program_string_emit_done:
+    rcall format_emit_post_padding
+    rjmp  .Lformat_main_loop
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Pointer conversion
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+format_conversion_pointer:
+    rcall format_validate_default_length
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    rcall format_arg_u16
+    ; Produce four hexadecimal digits in forward order in the shared buffer.
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    mov   r26, r25
+    swap  r26
+    andi  r26, 0x0f
+    rcall format_hex_nibble_to_char
+    st    Z+, r26
+    mov   r26, r25
+    andi  r26, 0x0f
+    rcall format_hex_nibble_to_char
+    st    Z+, r26
+    mov   r26, r24
+    swap  r26
+    andi  r26, 0x0f
+    rcall format_hex_nibble_to_char
+    st    Z+, r26
+    mov   r26, r24
+    andi  r26, 0x0f
+    rcall format_hex_nibble_to_char
+    st    Z, r26
+
+    ldi   r24, 6
+    clr   r25
+    rcall format_compute_padding
+    rcall format_emit_pre_padding
+    ldi   r24, '0'
+    rcall format_emit_char
+    ldi   r24, 'x'
+    rcall format_emit_char
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    ldi   r24, 4
+    clr   r25
+    rcall format_emit_ram_span
+    rcall format_emit_post_padding
+    rjmp  .Lformat_main_loop
+
+format_hex_nibble_to_char:
+    cpi   r26, 10
+    brlo  1f
+    subi  r26, -87
+    ret
+1:
+    subi  r26, -'0'
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Integer conversion
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+format_conversion_integer:
+    ; All recognized integer lengths fit the implemented 8/16/32-bit paths.
+    cpi   r19, FORMAT_LENGTH_L
+    breq  .Lformat_integer_load_long
+    rcall format_arg_u16
+    mov   r20, r24
+    mov   r21, r25
+    clr   r22
+    clr   r23
+    cpi   r19, FORMAT_LENGTH_HH
+    brne  .Lformat_integer_loaded
+    clr   r21
+    rjmp  .Lformat_integer_loaded
+.Lformat_integer_load_long:
+    rcall format_arg_u32
+.Lformat_integer_loaded:
+    lds   r24, data_format_conversion
+
+    clr   r26
+    cpi   r24, 'd'
+    breq  .Lformat_integer_signed
+    cpi   r24, 'i'
+    brne  .Lformat_integer_unsigned
+.Lformat_integer_signed:
+    ori   r26, (1 << FORMAT_INT_SIGNED_BIT)
+.Lformat_integer_unsigned:
+    cpi   r24, 'o'
+    brne  1f
+    ori   r26, FORMAT_INT_BASE_OCT
+    rjmp  .Lformat_integer_mode_ready
+1:
+    cpi   r24, 'x'
+    breq  2f
+    cpi   r24, 'X'
+    brne  .Lformat_integer_decimal_mode
+2:
+    ori   r26, FORMAT_INT_BASE_HEX
+    cpi   r24, 'X'
+    brne  .Lformat_integer_mode_ready
+    ori   r26, (1 << FORMAT_INT_UPPER_BIT)
+    rjmp  .Lformat_integer_mode_ready
+.Lformat_integer_decimal_mode:
+    ori   r26, FORMAT_INT_BASE_DEC
+.Lformat_integer_mode_ready:
+    sts   data_format_integer_mode, r26
+    sts   data_format_sign, ZERO
+
+    ; Sign-extend signed 8- and 16-bit values into the common 32-bit
+    ; magnitude container. A long value already occupies all four bytes.
+    sbrs  r26, FORMAT_INT_SIGNED_BIT
+    rjmp  .Lformat_integer_magnitude_ready
+    cpi   r19, FORMAT_LENGTH_L
+    breq  .Lformat_integer_test_sign
+    cpi   r19, FORMAT_LENGTH_HH
+    brne  .Lformat_integer_sign_extend_16
+    sbrs  r20, 7
+    rjmp  .Lformat_integer_test_sign
+    ser   r21
+    ser   r22
+    ser   r23
+    rjmp  .Lformat_integer_test_sign
+.Lformat_integer_sign_extend_16:
+    sbrs  r21, 7
+    rjmp  .Lformat_integer_test_sign
+    ser   r22
+    ser   r23
+.Lformat_integer_test_sign:
+    sbrs  r23, 7
+    rjmp  .Lformat_integer_positive_sign
+    ldi   r24, '-'
+    sts   data_format_sign, r24
+    com   r20
+    com   r21
+    com   r22
+    com   r23
+    add   r20, ONE
+    adc   r21, ZERO
+    adc   r22, ZERO
+    adc   r23, ZERO
+    rjmp  .Lformat_integer_magnitude_ready
+.Lformat_integer_positive_sign:
+    sbrc  r18, FORMAT_FLAG_PLUS
+    rjmp  .Lformat_integer_plus_sign
+    sbrs  r18, FORMAT_FLAG_SPACE
+    rjmp  .Lformat_integer_magnitude_ready
+    ldi   r24, ' '
+    sts   data_format_sign, r24
+    rjmp  .Lformat_integer_magnitude_ready
+.Lformat_integer_plus_sign:
+    ldi   r24, '+'
+    sts   data_format_sign, r24
+
+.Lformat_integer_magnitude_ready:
+    mov   r24, r20
+    or    r24, r21
+    or    r24, r22
+    or    r24, r23
+    sts   data_format_value_nonzero, r24
+    rcall format_generate_integer_digits
+    rcall format_prepare_integer_field
+    rcall format_emit_integer_field
+    rjmp  .Lformat_main_loop
+
+; Generate reverse-order digits in data_format_digit_buffer and store count.
+format_generate_integer_digits:
+    sts   data_format_digit_count, ZERO
+    lds   r24, data_format_value_nonzero
+    tst   r24
+    brne  .Lformat_generate_digits_loop
+
+    ; Integer precision zero suppresses the ordinary zero digit.
+    sbrs  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_generate_zero_digit
+    mov   r24, r14
+    or    r24, r15
+    brne  1f
+    rjmp  .Lformat_generate_digits_done
+1:
+.Lformat_generate_zero_digit:
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    ldi   r24, '0'
+    st    Z, r24
+    ldi   r24, 1
+    sts   data_format_digit_count, r24
+    rjmp  .Lformat_generate_digits_done
+
+.Lformat_generate_digits_loop:
+    lds   r26, data_format_integer_mode
+    mov   r27, r26
+    andi  r27, FORMAT_INT_BASE_MASK
+    cpi   r27, FORMAT_INT_BASE_HEX
+    breq  .Lformat_generate_hex_digit
+    cpi   r27, FORMAT_INT_BASE_OCT
+    breq  .Lformat_generate_octal_digit
+
+    rcall format_divide_u32_by_10
+    mov   r26, r24
+    subi  r26, -'0'
+    rjmp  .Lformat_store_generated_digit
+
+.Lformat_generate_hex_digit:
+    mov   r26, r20
+    andi  r26, 0x0f
+    lds   r27, data_format_integer_mode
+    sbrs  r27, FORMAT_INT_UPPER_BIT
+    rjmp  .Lformat_hex_lower_digit
+    cpi   r26, 10
+    brlo  .Lformat_hex_numeric_digit
+    subi  r26, -55
+    rjmp  .Lformat_hex_digit_ready
+.Lformat_hex_lower_digit:
+    cpi   r26, 10
+    brlo  .Lformat_hex_numeric_digit
+    subi  r26, -87
+    rjmp  .Lformat_hex_digit_ready
+.Lformat_hex_numeric_digit:
+    subi  r26, -'0'
+.Lformat_hex_digit_ready:
+    lsr   r23
+    ror   r22
+    ror   r21
+    ror   r20
+    lsr   r23
+    ror   r22
+    ror   r21
+    ror   r20
+    lsr   r23
+    ror   r22
+    ror   r21
+    ror   r20
+    lsr   r23
+    ror   r22
+    ror   r21
+    ror   r20
+    rjmp  .Lformat_store_generated_digit
+
+.Lformat_generate_octal_digit:
+    mov   r26, r20
+    andi  r26, 0x07
+    subi  r26, -'0'
+    lsr   r23
+    ror   r22
+    ror   r21
+    ror   r20
+    lsr   r23
+    ror   r22
+    ror   r21
+    ror   r20
+    lsr   r23
+    ror   r22
+    ror   r21
+    ror   r20
+
+.Lformat_store_generated_digit:
+    lds   r24, data_format_digit_count
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    add   r30, r24
+    adc   r31, ZERO
+    st    Z, r26
+    inc   r24
+    sts   data_format_digit_count, r24
+    mov   r25, r20
+    or    r25, r21
+    or    r25, r22
+    or    r25, r23
+    breq  1f
+    rjmp  .Lformat_generate_digits_loop
+1:
+.Lformat_generate_digits_done:
+    ret
+
+; Divide r23:r20 by 10 in place; return remainder in r24.
+format_divide_u32_by_10:
+    clr   r24
+    mov   r25, r23
+    rcall format_divide_byte_by_10
+    mov   r23, r25
+    mov   r25, r22
+    rcall format_divide_byte_by_10
+    mov   r22, r25
+    mov   r25, r21
+    rcall format_divide_byte_by_10
+    mov   r21, r25
+    mov   r25, r20
+    rcall format_divide_byte_by_10
+    mov   r20, r25
+    ret
+
+; Input r24=remainder 0..9, r25=next dividend byte. Output r24=new remainder,
+; r25=quotient byte. Compact repeated subtraction is intentionally used here.
+format_divide_byte_by_10:
+    mov   r26, r24
+    mov   r24, r25
+    clr   r27
+.Lformat_divide_byte_loop:
+    tst   r26
+    brne  .Lformat_divide_byte_subtract
+    cpi   r24, 10
+    brlo  .Lformat_divide_byte_done
+.Lformat_divide_byte_subtract:
+    subi  r24, 10
+    sbci  r26, 0
+    inc   r27
+    rjmp  .Lformat_divide_byte_loop
+.Lformat_divide_byte_done:
+    mov   r25, r27
+    ret
+
+; Compute precision zeroes, prefix, content length, and width padding.
+format_prepare_integer_field:
+    sts   data_format_precision_zeroes+0, ZERO
+    sts   data_format_precision_zeroes+1, ZERO
+    sts   data_format_prefix, ZERO
+
+    lds   r24, data_format_digit_count
+    clr   r25
+    sbrs  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_integer_precision_ready
+    cp    r14, r24
+    cpc   r15, r25
+    brlo  .Lformat_integer_precision_ready
+    movw  r26, r14
+    sub   r26, r24
+    sbc   r27, r25
+    sts   data_format_precision_zeroes+0, r26
+    sts   data_format_precision_zeroes+1, r27
+.Lformat_integer_precision_ready:
+
+    lds   r26, data_format_integer_mode
+    mov   r27, r26
+    andi  r27, FORMAT_INT_BASE_MASK
+    sbrs  r18, FORMAT_FLAG_ALT
+    rjmp  .Lformat_integer_prefix_ready
+    cpi   r27, FORMAT_INT_BASE_HEX
+    brne  .Lformat_integer_check_octal_prefix
+    lds   r24, data_format_value_nonzero
+    tst   r24
+    breq  .Lformat_integer_prefix_ready
+    sbrs  r26, FORMAT_INT_UPPER_BIT
+    rjmp  .Lformat_integer_hex_lower_prefix
+    ldi   r24, FORMAT_PREFIX_HEX_UPPER
+    sts   data_format_prefix, r24
+    rjmp  .Lformat_integer_prefix_ready
+.Lformat_integer_hex_lower_prefix:
+    ldi   r24, FORMAT_PREFIX_HEX_LOWER
+    sts   data_format_prefix, r24
+    rjmp  .Lformat_integer_prefix_ready
+.Lformat_integer_check_octal_prefix:
+    cpi   r27, FORMAT_INT_BASE_OCT
+    brne  .Lformat_integer_prefix_ready
+    lds   r24, data_format_precision_zeroes+0
+    lds   r25, data_format_precision_zeroes+1
+    or    r24, r25
+    brne  .Lformat_integer_prefix_ready
+    lds   r24, data_format_value_nonzero
+    tst   r24
+    brne  .Lformat_integer_set_octal_prefix
+    lds   r24, data_format_digit_count
+    tst   r24
+    brne  .Lformat_integer_prefix_ready
+.Lformat_integer_set_octal_prefix:
+    ldi   r24, FORMAT_PREFIX_OCTAL
+    sts   data_format_prefix, r24
+.Lformat_integer_prefix_ready:
+
+    ; content = digit count + precision zeroes + sign + prefix, saturating.
+    lds   r24, data_format_digit_count
+    clr   r25
+    lds   r26, data_format_precision_zeroes+0
+    lds   r27, data_format_precision_zeroes+1
+    add   r24, r26
+    adc   r25, r27
+    brcs  .Lformat_integer_content_saturate
+    lds   r26, data_format_sign
+    tst   r26
+    breq  1f
+    adiw  r24, 1
+    breq  .Lformat_integer_content_saturate
+1:
+    lds   r26, data_format_prefix
+    tst   r26
+    breq  .Lformat_integer_content_ready
+    cpi   r26, FORMAT_PREFIX_OCTAL
+    breq  2f
+    adiw  r24, 2
+    brcs  .Lformat_integer_content_saturate
+    rjmp  .Lformat_integer_content_ready
+2:
+    adiw  r24, 1
+    brne  .Lformat_integer_content_ready
+.Lformat_integer_content_saturate:
+    ser   r24
+    ser   r25
+    lds   r26, data_format_status
+    ori   r26, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
+    sts   data_format_status, r26
+.Lformat_integer_content_ready:
+    rcall format_compute_padding
+    ret
+
+format_emit_integer_field:
+    ; Width zero padding is active only when not left-adjusted and no explicit
+    ; integer precision was supplied. r19 remains stable across sink calls.
+    clr   r19
+    sbrc  r18, FORMAT_FLAG_LEFT
+    rjmp  .Lformat_integer_emit_spaces
+    sbrc  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_integer_emit_spaces
+    sbrs  r18, FORMAT_FLAG_ZERO
+    rjmp  .Lformat_integer_emit_spaces
+    ldi   r19, 1
+    rjmp  .Lformat_integer_emit_sign
+.Lformat_integer_emit_spaces:
+    rcall format_emit_pre_padding
+
+.Lformat_integer_emit_sign:
+    lds   r24, data_format_sign
+    tst   r24
+    breq  .Lformat_integer_emit_prefix
+    rcall format_emit_char
+
+.Lformat_integer_emit_prefix:
+    lds   r26, data_format_prefix
+    tst   r26
+    breq  .Lformat_integer_emit_width_zeroes
+    ldi   r24, '0'
+    rcall format_emit_char
+    lds   r26, data_format_prefix
+    cpi   r26, FORMAT_PREFIX_OCTAL
+    breq  .Lformat_integer_emit_width_zeroes
+    cpi   r26, FORMAT_PREFIX_HEX_UPPER
+    breq  1f
+    ldi   r24, 'x'
+    rjmp  2f
+1:
+    ldi   r24, 'X'
+2:
+    rcall format_emit_char
+
+.Lformat_integer_emit_width_zeroes:
+    tst   r19
+    breq  .Lformat_integer_emit_precision_zeroes
+    lds   r24, data_format_padding+0
+    lds   r25, data_format_padding+1
+    ldi   r16, '0'
+    mov   r0, r16
+    rcall format_emit_repeat
+
+.Lformat_integer_emit_precision_zeroes:
+    lds   r24, data_format_precision_zeroes+0
+    lds   r25, data_format_precision_zeroes+1
+    ldi   r16, '0'
+    mov   r0, r16
+    rcall format_emit_repeat
+
+    sts   data_format_conversion, r19
+    lds   r19, data_format_digit_count
+    tst   r19
+    breq  .Lformat_integer_emit_post
+.Lformat_integer_emit_digits_loop:
+    dec   r19
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    add   r30, r19
+    adc   r31, ZERO
+    ld    r24, Z
+    rcall format_emit_char
+    tst   r19
+    brne  .Lformat_integer_emit_digits_loop
+.Lformat_integer_emit_post:
+    lds   r19, data_format_conversion
+    tst   r19
+    brne  .Lformat_integer_emit_done
+    rcall format_emit_post_padding
+.Lformat_integer_emit_done:
+    ret

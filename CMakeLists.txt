@@ -20,6 +20,7 @@ set(LLVM_BUILD_TESTS                   OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_EXAMPLES                OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_BENCHMARKS              OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_DOCS                    OFF         CACHE BOOL   "" FORCE)
+set(BUG_REPORT_URL "https://github.com/tiberiusbrown/llvm-project/issues/" CACHE STRING "" FORCE)
 
 add_subdirectory(deps/llvm-project/llvm llvm-build)
 

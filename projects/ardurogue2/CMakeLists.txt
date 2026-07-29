@@ -2,7 +2,6 @@ avm_add_project(ardurogue2
     SOURCES
         src/main.cpp
     INCLUDE_DIRS
-        include
         "${AVM_SYSROOT_DIR}/include"
     STARTUP
         "${AVM_SYSROOT_DIR}/lib/crt0.o"

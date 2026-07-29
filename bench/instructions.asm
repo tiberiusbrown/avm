@@ -11,7 +11,7 @@
 ;   * Every BENCH block initializes its own SP, operands, memory, and flags.
 ;   * Cleanup needed after the trailing break is part of the same block.
 ;   * Labels are block-local by naming convention and do not cross blocks.
-;   * The program-space fixture is the only shared read-only object.
+;   * Program-space fixtures are the only shared read-only objects.
 ;
 ; Coverage policy:
 ;   * Distinct upper, dense/full, displaced, cold, absolute, postincrement,
@@ -41,6 +41,11 @@
 ;   * Comparison and string SYS services cover zero-length, equal, early/late
 ;     mismatch, prefix, NUL-padding, truncation, and long-scan paths. Program
 ;     variants deliberately carry nonzero q3[31:24] padding.
+;   * Formatting SYS services cover empty, short, and multi-cache-line formats;
+;     truncation; character, pointer, 16-bit, and 32-bit conversions; RAM and
+;     program strings; width and precision; packed mixed arguments; malformed
+;     formats; and a conversion split across the program-format cache boundary.
+;     Program-format variants deliberately carry nonzero q3[31:24] padding.
 ;   * Operand aliases are otherwise omitted when they execute the same path.
 ;
 ; benchmark_names.txt is intentionally unnumbered.
@@ -62,9 +67,66 @@
 .equ BENCH_STRING_B, 0x0600
 .equ BENCH_STRING_C, 0x0700
 
+; Writable regions used by formatting SYS benchmarks. The argument area is
+; byte-packed exactly as the variadic ABI specifies.
+.equ BENCH_FORMAT_DST,    0x0500
+.equ BENCH_FORMAT_RAM,    0x0600
+.equ BENCH_FORMAT_ARGS,   0x0700
+.equ BENCH_FORMAT_STRING, 0x0780
+
 .macro bench_reset_sp
     ldi16 r7, SAFE_SP
     setsp r7
+.endm
+
+; Copy a program-space fixture into RAM outside the measured interval.
+.macro bench_format_copy_ram dst, src, count
+    ldi16 r4, \dst
+    ldi16 r6, %lo16(\src)
+    ldi8 r7, %hi8(\src)
+    ldi16 r5, \count
+    sys memcpy_P
+.endm
+
+; Build the packed variadic argument stream at BENCH_FORMAT_ARGS.
+.macro bench_format_args_begin
+    ldi16 r0, BENCH_FORMAT_ARGS
+.endm
+
+.macro bench_format_arg16 value
+    ldi16 r1, \value
+    st16 [r0+], r1
+.endm
+
+.macro bench_format_arg32 low16, high16
+    ldi16 r1, \low16
+    st16 [r0+], r1
+    ldi16 r1, \high16
+    st16 [r0+], r1
+.endm
+
+.macro bench_format_arg_program label
+    ldi16 r1, %lo16(\label)
+    st16 [r0+], r1
+    ldi8 r1, %hi8(\label)
+    st8 [r0+], r1
+.endm
+
+.macro bench_format_setup_ram size
+    ldi16 r4, BENCH_FORMAT_DST
+    ldi16 r5, \size
+    ldi16 r2, BENCH_FORMAT_ARGS
+    ldi16 r6, BENCH_FORMAT_RAM
+.endm
+
+.macro bench_format_setup_program label, size
+    ldi16 r4, BENCH_FORMAT_DST
+    ldi16 r5, \size
+    ldi16 r2, BENCH_FORMAT_ARGS
+    ldi16 r6, %lo16(\label)
+    ldi8 r7, %hi8(\label)
+    ldi16 r0, 0xa500
+    or r7, r0
 .endm
 
 .globl _start
@@ -8669,6 +8731,425 @@ _start:
     sys strncat_P
     sys debug_break
 
+; =============================================================================
+; FORMATTING SYS BENCHMARKS
+; =============================================================================
+; Every block constructs its packed va_list and any RAM fixtures before the
+; leading DEBUG_BREAK. Program-format cases set q3[31:24] to 0xa5 to verify that
+; ignored container padding does not change the measured path.
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (empty format; size=0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_sys_str_empty, 1
+    bench_format_setup_ram 0
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (one-byte literal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_sys_str_one, 2
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (32-byte literal; complete output)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_sys_str_32, 33
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (32-byte literal; destination size=8 truncation)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_sys_str_32, 33
+    bench_format_setup_ram 8
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%c)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 'Z'
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_char, 3
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%s; RAM string length 3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_STRING, .Lbench_sys_str_three, 4
+    bench_format_args_begin
+    bench_format_arg16 BENCH_FORMAT_STRING
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_ram_string, 3
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%.8s; RAM string length 32)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_STRING, .Lbench_sys_str_32, 33
+    bench_format_args_begin
+    bench_format_arg16 BENCH_FORMAT_STRING
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_ram_string_precision, 5
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%S; program string length 3)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg_program .Lbench_sys_str_three
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_program_string, 3
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%40S; program string length 32 with padding)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg_program .Lbench_sys_str_32
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_program_string_width, 5
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%d; INT16_MIN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0x8000
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_signed16, 3
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%ld; INT32_MIN)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x8000
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_signed32, 4
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%lu; UINT32_MAX)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xffff, 0xffff
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_unsigned32, 4
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%#08x; 16-bit alternate zero padding)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0xa5f0
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_hex16, 6
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%*.*u; dynamic width=12 precision=5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 12
+    bench_format_arg16 5
+    bench_format_arg16 123
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_dynamic, 6
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (conversion split at format-cache boundary)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 1234
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_cache_split, 18
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (mixed %c %s %S %ld %#x)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_STRING, .Lbench_sys_str_three, 4
+    bench_format_args_begin
+    bench_format_arg16 'Q'
+    bench_format_arg16 BENCH_FORMAT_STRING
+    bench_format_arg_program .Lbench_sys_str_eight
+    bench_format_arg32 0xcfc7, 0xffff
+    bench_format_arg16 0xbeef
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_mixed, 27
+    bench_format_setup_ram 128
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (%p; data pointer)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0x1234
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_pointer, 3
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf (malformed %q error exit)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_RAM, .Lbench_format_error, 3
+    bench_format_setup_ram 64
+    sys debug_break
+    sys vsnprintf
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (empty format; size=0; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_setup_program .Lbench_sys_str_empty, 0
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (one-byte literal; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_setup_program .Lbench_sys_str_one, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (32-byte literal; complete output; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_setup_program .Lbench_sys_str_32, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (32-byte literal; destination size=8 truncation; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_setup_program .Lbench_sys_str_32, 8
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%c; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 'Z'
+    bench_format_setup_program .Lbench_format_char, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%s; RAM string length 3; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_STRING, .Lbench_sys_str_three, 4
+    bench_format_args_begin
+    bench_format_arg16 BENCH_FORMAT_STRING
+    bench_format_setup_program .Lbench_format_ram_string, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%.8s; RAM string length 32; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_STRING, .Lbench_sys_str_32, 33
+    bench_format_args_begin
+    bench_format_arg16 BENCH_FORMAT_STRING
+    bench_format_setup_program .Lbench_format_ram_string_precision, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%S; program string length 3; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg_program .Lbench_sys_str_three
+    bench_format_setup_program .Lbench_format_program_string, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%40S; program string length 32 with padding; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg_program .Lbench_sys_str_32
+    bench_format_setup_program .Lbench_format_program_string_width, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%d; INT16_MIN; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0x8000
+    bench_format_setup_program .Lbench_format_signed16, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%ld; INT32_MIN; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x8000
+    bench_format_setup_program .Lbench_format_signed32, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%lu; UINT32_MAX; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xffff, 0xffff
+    bench_format_setup_program .Lbench_format_unsigned32, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%#08x; 16-bit alternate zero padding; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0xa5f0
+    bench_format_setup_program .Lbench_format_hex16, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%*.*u; dynamic width=12 precision=5; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 12
+    bench_format_arg16 5
+    bench_format_arg16 123
+    bench_format_setup_program .Lbench_format_dynamic, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (conversion split at 16-byte program-format cache boundary; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 1234
+    bench_format_setup_program .Lbench_format_cache_split, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (mixed %c %s %S %ld %#x; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_copy_ram BENCH_FORMAT_STRING, .Lbench_sys_str_three, 4
+    bench_format_args_begin
+    bench_format_arg16 'Q'
+    bench_format_arg16 BENCH_FORMAT_STRING
+    bench_format_arg_program .Lbench_sys_str_eight
+    bench_format_arg32 0xcfc7, 0xffff
+    bench_format_arg16 0xbeef
+    bench_format_setup_program .Lbench_format_mixed, 128
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (%p; data pointer; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0x1234
+    bench_format_setup_program .Lbench_format_pointer, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS vsnprintf_P (malformed %q error exit; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_setup_program .Lbench_format_error, 64
+    sys debug_break
+    sys vsnprintf_p
+    sys debug_break
+
 ; -----------------------------------------------------------------------------
 ; BENCH: SYS display (clear=false; nonzero framebuffer)
 ; -----------------------------------------------------------------------------
@@ -13052,6 +13533,42 @@ _start:
     .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
     .byte 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71, 0x71
     .byte 0x00
+
+
+    ; Program-space format fixtures for vsnprintf and vsnprintf_P benchmarks.
+    ; The cache-split fixture places '%' at byte 15 and its conversion at byte
+    ; 16, forcing vsnprintf_P to refill between the two parser characters.
+.p2align 1
+.Lbench_format_char:
+    .byte 0x25, 0x63, 0x00
+.Lbench_format_ram_string:
+    .byte 0x25, 0x73, 0x00
+.Lbench_format_ram_string_precision:
+    .byte 0x25, 0x2e, 0x38, 0x73, 0x00
+.Lbench_format_program_string:
+    .byte 0x25, 0x53, 0x00
+.Lbench_format_program_string_width:
+    .byte 0x25, 0x34, 0x30, 0x53, 0x00
+.Lbench_format_signed16:
+    .byte 0x25, 0x64, 0x00
+.Lbench_format_signed32:
+    .byte 0x25, 0x6c, 0x64, 0x00
+.Lbench_format_unsigned32:
+    .byte 0x25, 0x6c, 0x75, 0x00
+.Lbench_format_hex16:
+    .byte 0x25, 0x23, 0x30, 0x38, 0x78, 0x00
+.Lbench_format_dynamic:
+    .byte 0x25, 0x2a, 0x2e, 0x2a, 0x75, 0x00
+.Lbench_format_cache_split:
+    .byte 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x25
+    .byte 0x64, 0x00
+.Lbench_format_mixed:
+    .byte 0x63, 0x3d, 0x25, 0x63, 0x20, 0x73, 0x3d, 0x25, 0x73, 0x20, 0x53, 0x3d, 0x25, 0x53, 0x20, 0x64
+    .byte 0x3d, 0x25, 0x6c, 0x64, 0x20, 0x78, 0x3d, 0x25, 0x23, 0x78, 0x00
+.Lbench_format_pointer:
+    .byte 0x25, 0x70, 0x00
+.Lbench_format_error:
+    .byte 0x25, 0x71, 0x00
 
 
     ; Sprite SYS benchmark fixtures. The first two bytes are width and height.

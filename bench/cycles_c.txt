@@ -15,10 +15,10 @@
      3208072   mixed_width.c
       921548   multiply.c
       924535   pointer_walk.c
-     3118536   progmem_walk.c
-      542476   progmem_widen_ldp16.c
-      735306   progmem_widen_ldp32_bytes.c
-      542465   progmem_widen_ldp32_words.c
+     3108296   progmem_walk.c
+      539372   progmem_widen_ldp16.c
+      732170   progmem_widen_ldp32_bytes.c
+      539361   progmem_widen_ldp32_words.c
      1439866   record_scan.c
      1905278   reverse_walk.c
       744517   select.c

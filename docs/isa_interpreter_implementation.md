@@ -67,7 +67,9 @@ q3 = r6:r7
 
 The first register contains bits `15:0`; the second contains bits `31:16`.
 
-A canonical 24-bit program pointer uses the low register for bits `15:0`, the low byte of the high register for bits `23:16`, and zero in the remaining byte.
+A 24-bit program pointer uses the low register for bits `15:0` and the low
+byte of the high register for bits `23:16`. The remaining byte is nonsemantic
+container padding. Every instruction and SYS service ignores it.
 
 ### 2.3. Native AVR register allocation
 
@@ -420,7 +422,7 @@ Taken control flow and program-space loads restart the external-flash stream and
 | Far jump/call | 150 / 150 |
 | Indirect jump/call | 110 / 117 |
 | Return | 110 |
-| Program-space load | 285-352 |
+| Program-space load | 281-348 |
 
 
 ### 5.3. Cycle-9 reference dispatch schedule and family latencies
@@ -690,21 +692,37 @@ The cold stack-relative values include the shared operand fetch, dynamic registe
 
 | Secondary | Instruction | Total bytes | Cycles |
 |---:|---|---:|---:|
-| `60` | `LDP8U rD,[qA]` | 3 | 285 |
-| `61` | `LDP8S rD,[qA]` | 3 | 287 |
-| `62` | `LDP16 rD,[qA]` | 3 | 301 |
-| `63` | `LDP24 qD,[qA]` | 3 | 321 |
-| `64` | `LDP32 qD,[qA]` | 3 | 335 |
-| `65` | `LDP8U rD,[qA+]` | 3 | 302 |
-| `66` | `LDP16 rD,[qA+]` | 3 | 318 |
-| `67` | `LDP24 qD,[qA+]` | 3 | 338 |
-| `68` | `LDP32 qD,[qA+]` | 3 | 352 |
+| `60` | `LDP8U rD,[qA]` | 3 | 281 |
+| `61` | `LDP8S rD,[qA]` | 3 | 283 |
+| `62` | `LDP16 rD,[qA]` | 3 | 297 |
+| `63` | `LDP24 qD,[qA]` | 3 | 317 |
+| `64` | `LDP32 qD,[qA]` | 3 | 331 |
+| `65` | `LDP8U rD,[qA+]` | 3 | 298 |
+| `66` | `LDP16 rD,[qA+]` | 3 | 314 |
+| `67` | `LDP24 qD,[qA+]` | 3 | 334 |
+| `68` | `LDP32 qD,[qA+]` | 3 | 348 |
 
-Each operation-specific body calls `f0_program_prepare_func` once. After validating and decoding `PSPEC`, capturing the original program pointer, and applying any postincrement, that helper uses `RJMP` to enter `fx_read_program_bytes_func` directly. The reader’s final `RET` returns through the original operation-body `RCALL` return address. The bodies do not issue a second `RCALL` to the reader. Relative to a prepare-`RET` followed by a reader-`RCALL`, this tail-call arrangement saves five cycles per instruction and nine AVR words across the nine program-load bodies.
+Each operation-specific body calls `f0_program_prepare_func` once. After
+validating and decoding `PSPEC`, capturing the low 24 bits of the original
+program pointer, and applying any postincrement, that helper uses `RJMP` to
+enter `fx_read_program_bytes_func` directly. The reader’s final `RET` returns
+through the original operation-body `RCALL` return address. The bodies do not
+issue a second `RCALL` to the reader. Relative to a prepare-`RET` followed by a
+reader-`RCALL`, this tail-call arrangement saves five cycles per instruction
+and nine AVR words across the nine program-load bodies.
+
+The former register-padding validation consumed three AVR words and four successful-path cycles. It is omitted rather than replaced with delay instructions. On the shortest ordinary scalar path, `fx_disable` begins approximately 47 cycles after `f0_fetch_spec` launches the speculative following-primary transfer, well after that byte becomes complete on cycle 17. Advancing the independent program-data transaction by four cycles therefore does not affect SPI cadence.
 
 The fixed reader now shares its command/address transmission phase with an alternate entry used by program-memory SYS services. The fixed entry still launches `SFC_READ` inline, then calls the shared phase while the command byte is transferring. The alternate entry launches the same command and tail-jumps through a one-cycle landing. Both paths begin physical-address conversion on cycle 4 after the command `OUT`, transmit the three address bytes with the original 18-cycle cadence, and launch the first dummy transfer at the original cycle. The fixed reader’s count-one, count-greater-than-one, steady-state, and final-byte paths therefore retain their existing cycle counts. Factoring the alternate entry increases the shared reader from 45 to 53 AVR words without slowing any `F0` program load or `SYS memcpy_P`.
 
-`LDP24` loads three packed little-endian bytes into bits `23:0` of `qD` and clears bits `31:24`, producing a canonical 24-bit program pointer. The postincrement form advances `qA` by three bytes after capturing the original address. `LDP24 qD,[qA+]` reserves `qD == qA`, because one pair cannot simultaneously receive the loaded pointer and the updated source address. Each postincrement form measures exactly 17 cycles more than its corresponding ordinary load because validation and pointer writeback add one minimum SPI interval to the complete path.
+`LDP24` loads three packed little-endian bytes into bits `23:0` of `qD` and
+clears bits `31:24`, producing a canonical 24-bit program pointer. The
+postincrement form advances `qA` by three bytes after capturing the original
+address. `LDP24 qD,[qA+]` reserves `qD == qA`, because one pair cannot
+simultaneously receive the loaded pointer and the updated source address. Each
+postincrement form measures exactly 17 cycles more than its corresponding
+ordinary load because alias validation and pointer writeback add one minimum
+SPI interval to the complete path.
 
 ### 9.4. Shared cold 32-bit forms
 
@@ -3257,16 +3275,20 @@ The reference interpreter assigns five contiguous services after `memmove`:
 | `strncpy_P` | `0x16` | `r4=dst/result`, `q3=program src`, `r5=n` | original `dst` remains in `r4` |
 | `strncat_P` | `0x17` | `r4=dst/result`, `q3=program src`, `r5=n` | original `dst` remains in `r4` |
 
-`q3` must be a canonical 24-bit program pointer: bits `31:24` must be zero. A malformed pointer enters the invalid-SYS trap before opening a flash transaction. `memcmp_P` with `n=0`, `strncpy_P` with `n=0`, and `strncat_P` with `n=0` avoid the independent program-data transaction and return through the ordinary SYS cadence tail.
+All five services consume only `q3[23:0]` and ignore `q3[31:24]`.
+`memcmp_P` with `n=0`, `strncpy_P` with `n=0`, and `strncat_P` with `n=0`
+avoid the independent program-data transaction and return through the ordinary
+SYS cadence tail.
 
 ### 30.1.1. Shared transaction preparation
 
 All five services call one small preparation helper. It:
 
-1. validates canonical `q3`;
-2. advances `VM_PC` from the service byte to the already-fetched following primary opcode;
-3. copies program-pointer bits `23:0` into native `r24:r25:r26`;
-4. tail-enters the alternate shared program-read startup.
+1. advances `VM_PC` from the service byte to the already-fetched following
+   primary opcode;
+2. copies program-pointer bits `23:0` into native `r24:r25:r26` without
+   inspecting bits `31:24`;
+3. tail-enters the alternate shared program-read startup.
 
 The alternate startup duplicates only the four-word command launch:
 
@@ -3313,7 +3335,7 @@ Mismatch and NUL paths leave these loops immediately and disable flash chip sele
 inputs:
   Z       destination byte pointer
   r0:r1   nonzero maximum count
-  q3      canonical program source
+  q3      program source; bits 31:24 ignored
 
 outputs:
   Z       one byte past the copied bytes
@@ -3348,7 +3370,9 @@ five-service program-memory SYS subsystem      128 words / 256 bytes
 total added implementation                    136 words / 272 bytes
 ```
 
-The 128-word subsystem includes canonical-pointer preparation, shared comparison results, all four cadence-critical loops, `strncpy_P` padding, and the RAM prefix scan used by `strncat_P`.
+The 128-word subsystem includes shared pointer preparation and comparison
+results, all four cadence-critical loops, `strncpy_P` padding, and the RAM
+prefix scan used by `strncat_P`.
 
 ## 30.2. Data-memory string and comparison SYS services
 
@@ -3529,7 +3553,7 @@ For the shown layout, the non-floating core with the expanded `F2` table, `FA` b
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
-| `F0` immediate, stack, absolute, and program-space bodies | 1,502 | 1,406-1,662 |
+| `F0` immediate, stack, absolute, and program-space bodies | 1,496 | 1,400-1,656 |
 | Program-memory string/comparison SYS subsystem | 256 | exact |
 | Data-memory string/comparison SYS subsystem | 142 | exact |
 | Shared `F0` cold-32 subsystem | 126 | exact |
@@ -3539,11 +3563,11 @@ For the shown layout, the non-floating core with the expanded `F2` table, `FA` b
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 13,824 | 13.50 |
-| Non-floating reference target | **13,920** | **13.59** |
-| Upper bound | 14,080 | 13.75 |
+| Lower bound | 13,818 | 13.49 |
+| Non-floating reference target | **13,914** | **13.59** |
+| Upper bound | 14,074 | 13.74 |
 
-The non-floating reference design targets about 13,920 bytes, with 14,080 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
+The non-floating reference design targets about 13,914 bytes, with 14,074 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
 
 ## 35. Four-word primary-stride rationale
 

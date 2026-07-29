@@ -293,8 +293,8 @@ pointerAddress = qN[23:0]
 ```
 
 Bits `qN[31:24]` are not part of the program- or function-pointer value.
-Unless a rule explicitly requires normalization, those padding bits are
-unspecified and may contain any value.
+Those register-container padding bits are unspecified and may contain any
+value.
 
 A **normalized program pointer** satisfies:
 
@@ -302,18 +302,11 @@ A **normalized program pointer** satisfies:
 qN[31:24] = 0
 ```
 
-Unless an instruction or service definition explicitly requires a normalized
-program pointer, an architectural program- or function-pointer consumer uses
-only bits `23:0` and ignores bits `31:24`. This includes program-space load
-addresses, indirect jump and call targets, and the program-space pointers
-consumed by `memcpy_P`, `vsnprintf_P`, `set_sprite`, and the explicit-pointer
-sprite drawing services.
-
-The program-memory comparison and string services `memcmp_P`, `strcmp_P`,
-`strlen_P`, `strncpy_P`, and `strncat_P` explicitly require a normalized `q3`
-input. Supplying any of those services with `q3[31:24] != 0` is an invalid
-service invocation. In contrast, `vsnprintf_P` consumes only `q3[23:0]` and
-ignores `q3[31:24]`.
+Every architectural instruction and system service that consumes a program or
+function pointer uses only bits `23:0` and ignores bits `31:24`. No instruction
+or system service requires a normalized register input. This rule includes all
+program-space loads, indirect jump and call targets, and every program-space
+pointer accepted by `SYS`.
 
 Program pointers passed through a variadic argument area use the packed
 three-byte memory representation from Section 12.1. They have no register-
@@ -1693,7 +1686,8 @@ Examples:
 A program- or function-pointer argument assigned to `q2` or `q3` is normalized
 before transfer of control to an ordinary callee. This is an ABI-boundary rule,
 not a requirement for temporary program-pointer values within a function.
-Fixed-register system services follow their individual service definitions.
+Fixed-register system services ignore program-pointer padding as required by
+Section 12.2.
 
 ### 41.3. Hidden arguments
 
@@ -2361,8 +2355,8 @@ q3 = rhs
 r5 = n
 ```
 
-`q3` MUST be normalized: `q3[31:24] = 0`. A noncanonical input is an invalid
-service invocation. For `i` from zero upward, the service compares
+The logical program address is `q3[23:0]`; the service ignores
+`q3[31:24]`. For `i` from zero upward, the service compares
 `unsigned(mem8[lhs+i])` with `unsigned(prog8[rhs+i])`. It stops at the first
 mismatch or after exactly `n` equal bytes. It returns `-1`, `0`, or `+1` in
 `r4` according to whether the first differing RAM byte is less than, equal to,
@@ -2395,7 +2389,8 @@ r4 = lhs
 q3 = rhs
 ```
 
-`q3` MUST be normalized. The service compares corresponding bytes as unsigned
+The logical program address is `q3[23:0]`; the service ignores
+`q3[31:24]`. The service compares corresponding bytes as unsigned
 characters. It stops at the first mismatch or when equal zero bytes are found.
 It returns `-1`, `0`, or `+1` in `r4` according to the ordering of the first
 differing bytes. A nonzero result need not equal their arithmetic difference.
@@ -2421,8 +2416,9 @@ uint16_t strlen_P(
 q3 = src
 ```
 
-`q3` MUST be normalized. The service returns in `r4` the number of consecutive
-nonzero program-space bytes before the first zero byte. The terminating zero is
+The logical program address is `q3[23:0]`; the service ignores
+`q3[31:24]`. The service returns in `r4` the number of consecutive nonzero
+program-space bytes before the first zero byte. The terminating zero is
 not included. The source must identify a readable NUL-terminated string whose
 length is representable in `uint16_t`; otherwise behavior is undefined. The
 service preserves `q3`, `r0-r3`, `r5`, `CC`, and `SP`.
@@ -2450,8 +2446,9 @@ q3 = src
 r5 = n
 ```
 
-`q3` MUST be normalized. The service copies at most `n` bytes from program
-space to data space. If a source zero byte is encountered before `n` bytes have
+The logical program address is `q3[23:0]`; the service ignores
+`q3[31:24]`. The service copies at most `n` bytes from program space to data
+space. If a source zero byte is encountered before `n` bytes have
 been written, that zero is copied and every remaining destination byte through
 `dst+n-1` is set to zero. If no source zero occurs in the first `n` bytes,
 exactly `n` bytes are copied and no terminating zero is added.
@@ -2484,8 +2481,9 @@ q3 = src
 r5 = n
 ```
 
-`q3` MUST be normalized. If `n` is nonzero, the service locates the terminating
-zero of the data-space destination, appends at most `n` nonzero source
+The logical program address is `q3[23:0]`; the service ignores
+`q3[31:24]`. If `n` is nonzero, the service locates the terminating zero of the
+data-space destination, appends at most `n` nonzero source
 characters, and writes one terminating zero. A source zero encountered within
 the bound is copied as the terminator; otherwise the service writes an
 additional zero after the `n` copied characters. If `n` is zero, the service
@@ -3573,13 +3571,12 @@ container or at an ordinary ABI boundary. Required cases include:
 - a full-width comparison unless a 24-bit-aware comparison is selected;
 - any explicit operation that observes the complete `GPR32` bit pattern.
 
-Normalization is not required before `LDP*`, `JMPP`, `CALLP`,
-`SYS_MEMCPY_P`, `SYS_VSNPRINTF_P`, `SYS_SET_SPRITE`, any explicit-pointer
-`SYS_DRAW_SPRITE_*` service, another program-pointer arithmetic operation, or a
-packed three-byte pointer store, because those uses consume only the logical
-low 24 bits. It is required before `SYS_MEMCMP_P`, `SYS_STRCMP_P`,
-`SYS_STRLEN_P`, `SYS_STRNCPY_P`, and `SYS_STRNCAT_P`, whose service contracts
-validate the complete `q3` container.
+Normalization is not required before any instruction or system service,
+because every architectural program-pointer consumer uses only the logical low
+24 bits. It is also unnecessary before another program-pointer arithmetic
+operation or a packed three-byte pointer store. Ordinary ABI boundaries and
+operations that explicitly observe a complete `GPR32` value retain the
+normalization requirements listed above.
 
 The `EC` family directly implements all four `i16` division and remainder
 operations. Wider integer division and remainder continue to use helpers.
@@ -3785,7 +3782,7 @@ char    *__avm_strncat(char *dst, const char *src, uint16_t n);
 
 The `_p` builtins retain conventional source-language argument order. Clang
 lowers all ten interfaces to the dedicated typed AVM intrinsics from Section
-59. Direct program-memory builtins produce normalized program-pointer operands
+59. Direct program-memory builtins need not normalize program-pointer operands
 before machine selection. Runtime headers MAY expose the conventional `_P`
 spellings as function-like macros while retaining addressable out-of-line
 wrappers.
@@ -4272,11 +4269,11 @@ source. Those operations have no corresponding generic LLVM intrinsic.
 | AS0-destination, AS1-source `llvm.memcpy` | `SYS 0x10` through `SYS_MEMCPY_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
 | `llvm.avm.memset(ptr,i16,i16)` or eligible AS0 `llvm.memset` | `SYS 0x11` through `SYS_MEMSET` | `r4 = dst`, `r5 = val`, `r6 = n` | tied `r4 = dst` |
 | `llvm.avm.memmove(ptr,ptr,i16)` or eligible AS0 `llvm.memmove` | `SYS 0x12` through `SYS_MEMMOVE` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
-| `llvm.avm.memcmp.p(ptr,p1,i16)` | `SYS 0x13` through `SYS_MEMCMP_P` | `r4 = lhs`, `q3 = normalized rhs`, `r5 = n` | tied `r4 = result` |
-| `llvm.avm.strcmp.p(ptr,p1)` | `SYS 0x14` through `SYS_STRCMP_P` | `r4 = lhs`, `q3 = normalized rhs` | tied `r4 = result` |
-| `llvm.avm.strlen.p(p1)` | `SYS 0x15` through `SYS_STRLEN_P` | `q3 = normalized src` | `r4 = length` |
-| `llvm.avm.strncpy.p(ptr,p1,i16)` | `SYS 0x16` through `SYS_STRNCPY_P` | `r4 = dst`, `q3 = normalized src`, `r5 = n` | tied `r4 = dst` |
-| `llvm.avm.strncat.p(ptr,p1,i16)` | `SYS 0x17` through `SYS_STRNCAT_P` | `r4 = dst`, `q3 = normalized src`, `r5 = n` | tied `r4 = dst` |
+| `llvm.avm.memcmp.p(ptr,p1,i16)` | `SYS 0x13` through `SYS_MEMCMP_P` | `r4 = lhs`, `q3 = rhs`, `r5 = n` | tied `r4 = result` |
+| `llvm.avm.strcmp.p(ptr,p1)` | `SYS 0x14` through `SYS_STRCMP_P` | `r4 = lhs`, `q3 = rhs` | tied `r4 = result` |
+| `llvm.avm.strlen.p(p1)` | `SYS 0x15` through `SYS_STRLEN_P` | `q3 = src` | `r4 = length` |
+| `llvm.avm.strncpy.p(ptr,p1,i16)` | `SYS 0x16` through `SYS_STRNCPY_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
+| `llvm.avm.strncat.p(ptr,p1,i16)` | `SYS 0x17` through `SYS_STRNCAT_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
 | `llvm.avm.memcmp(ptr,ptr,i16)` | `SYS 0x18` through `SYS_MEMCMP` | `r4 = lhs`, `r5 = rhs`, `r6 = n` | tied `r4 = result` |
 | `llvm.avm.strcmp(ptr,ptr)` | `SYS 0x19` through `SYS_STRCMP` | `r4 = lhs`, `r5 = rhs` | tied `r4 = result` |
 | `llvm.avm.strlen(ptr)` | `SYS 0x1A` through `SYS_STRLEN` | `r4 = src` | tied `r4 = length` |
@@ -4372,11 +4369,10 @@ address-space-zero read and write effects for the complete 1,024-byte
 framebuffer. More precise framebuffer references MAY be used when the clipped
 rectangle is statically known.
 
-The five program-string pseudos require a normalized `q3` input. Selection MUST
-insert program-pointer normalization before copying the source into `Q3Only`;
-unlike `SYS_MEMCPY_P`, these services validate `q3[31:24]`. Their machine
-memory operands describe AS1 reads and any AS0 reads or writes listed in
-Section 49. `SYS_STRNCPY_P` writes at most `n` destination bytes;
+The five program-string pseudos consume only `q3[23:0]`; `q3[31:24]` is ignored.
+Selection MUST NOT normalize the pointer solely for these services. Their
+machine memory operands describe AS1 reads and any AS0 reads or writes listed
+in Section 49. `SYS_STRNCPY_P` writes at most `n` destination bytes;
 `SYS_STRNCAT_P` has an unbounded destination read and writes the append region
 and terminator.
 
@@ -5468,8 +5464,7 @@ LLVM:
     ELF32 little-endian
     PTR16 uses upper-register-first allocation
     PROGPTR is logical p1:24 backed by GPR32 with an unspecified padding byte
-    LDP/JMPP/CALLP/SYS memcpy_P/SYS set_sprite/explicit sprite draws ignore PROGPTR bits 31:24
-    program-memory comparison/string SYS services require normalized q3
+    every instruction and SYS program-pointer consumer ignores PROGPTR bits 31:24
     ordinary program-pointer arguments and returns are normalized
     division, remainder, and binary32 arithmetic use direct instructions with stable helper fallbacks
     atomics lower to ordinary operations in the single-thread VM model

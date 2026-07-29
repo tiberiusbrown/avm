@@ -4315,8 +4315,8 @@ f0_absolute_bodies_end:
 ; Every operation-specific body uses f0_fetch_spec, which consumes PSPEC at
 ; the earliest legal cycle, launches a speculative following-primary fetch,
 ; and leaves VM_PC naming PSPEC. f0_program_prepare_func validates and decodes
-; PSPEC, advances VM_PC to the following primary, captures the original
-; canonical 24-bit qA source before any destination write, performs any
+; PSPEC, advances VM_PC to the following primary, captures the logical
+; low 24 bits of qA before any destination write, performs any
 ; postincrement, and tail-jumps directly to fx_read_program_bytes_func with:
 ;
 ;   r24:r25:r26  original image-relative program pointer
@@ -4478,14 +4478,11 @@ f0_program_prepare_func:
     breq  f0_program_invalid
 .Lf0_program_alias_valid:
 
-    ; Capture the complete original qA before the reader writes its destination.
-    ; The fourth byte must be zero for a canonical 24-bit program pointer.
+    ; Capture the logical low 24 bits of qA before the reader writes its
+    ; destination. qA[31:24] is nonsemantic padding and is not inspected.
     ld    r24, Z+
     ld    r25, Z+
     ld    r26, Z+
-    ld    r27, Z
-    tst   r27
-    brne  f0_program_invalid
 
     ; For postincrement, update qA by count while retaining the original source
     ; in r24:r25:r26. MOV and ST preserve carry between the three byte updates.
@@ -4512,8 +4509,8 @@ f0_program_invalid:
     rjmp  invalid_secondary_instruction_func
 
 f0_program_loads_end:
-.if (f0_program_loads_end - f0_program_loads_start) != 224
-    .error "F0 program-space load subsystem must occupy exactly 112 AVR words"
+.if (f0_program_loads_end - f0_program_loads_start) != 218
+    .error "F0 program-space load subsystem must occupy exactly 109 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

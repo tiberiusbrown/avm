@@ -451,15 +451,15 @@
    72   STM16 0x0600,r0
    82   LD32 q0,[r4]
    81   ST32 [r4],q0
-  285   LDP8U r0,[q3]
-  287   LDP8S r0,[q3]
-  301   LDP16 r0,[q3]
-  321   LDP24 q0,[q3]
-  335   LDP32 q0,[q3]
-  302   LDP8U r0,[q3+]
-  318   LDP16 r0,[q3+]
-  338   LDP24 q0,[q3+]
-  352   LDP32 q0,[q3+]
+  281   LDP8U r0,[q3]
+  283   LDP8S r0,[q3]
+  297   LDP16 r0,[q3]
+  317   LDP24 q0,[q3]
+  331   LDP32 q0,[q3]
+  298   LDP8U r0,[q3+]
+  314   LDP16 r0,[q3+]
+  334   LDP24 q0,[q3+]
+  348   LDP32 q0,[q3+]
    35   BREQ8 (not taken)
   128   BREQ8 (taken)
    35   BRNE8 (not taken)

@@ -1,0 +1,13 @@
+R0=000F:[A:Z:ram:flash:%]
+P0=0035:[123456789ABCDEF-42|ram|abcdefghijklmnopqrst|123456789]
+I0=0037:[+00012|7    |0x002a|011||-2|-1234|-123456789|65530|-321]
+D0=0014:[abc     |-00042|abcd]
+T0=000C:[abcdef:]
+N1=0005:[]
+N0=0009
+E0=FFFF:[before:]
+O0=FFFF:[]
+PR=0006
+PV=0001
+FM=0000
+P

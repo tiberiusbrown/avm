@@ -14022,6 +14022,13 @@ text_emit_char_raw:
 .Ltext_emit_char_lookup_out_of_range:
     ret
 
+.Ltext_emit_char_advance:
+    lds   r26, data_text_glyph_record+4
+    add   r28, r26
+    adc   r29, ZERO
+.Ltext_emit_char_done:
+    ret
+
 .Ltext_emit_char_lookup:
     lds   r25, data_text_glyph_first
     sub   r24, r25
@@ -14049,14 +14056,10 @@ text_emit_char_raw:
     ; Empty glyphs still apply xadv but do not read image bytes.
     lds   r0, data_text_glyph_record+0
     tst   r0
-    brne  3f
-    rjmp  .Ltext_emit_char_advance
-3:
+    breq  .Ltext_emit_char_advance
     lds   r1, data_text_glyph_record+1
     tst   r1
-    brne  4f
-    rjmp  .Ltext_emit_char_advance
-4:
+    breq  .Ltext_emit_char_advance
 
     ; Select the exact live set only after proving this glyph will invoke the
     ; renderer. The no-preservation renderer may otherwise clobber all r8-r23.
@@ -14137,11 +14140,4 @@ text_emit_char_raw:
     lds   r0, data_text_glyph_record+0
     lds   r1, data_text_glyph_record+1
     call  draw_bitmap_seek_nonempty_text_func
-    ret
-
-.Ltext_emit_char_advance:
-    lds   r26, data_text_glyph_record+4
-    add   r28, r26
-    adc   r29, ZERO
-.Ltext_emit_char_done:
     ret

@@ -5,6 +5,8 @@
      7745018   constant_arith.c
       522102   crc16.c
      1062266   divmod.c
+       27532   draw_text.c
+       29644   draw_text_P.c
       234075   fibonacci.c
      5944733   fir8.c
     11764996   fixed_point.c

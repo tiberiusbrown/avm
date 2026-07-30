@@ -728,6 +728,7 @@
 #define SPRITE_FLAG_BOTTOM       1
 #define SPRITE_FLAG_RESEEK       2
 #define SPRITE_FLAG_PARTIAL      3
+#define TEXT_GLYPH_FLAG_REJECT   7
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
 ; end immediately before a final 4 KiB save sector.
@@ -3236,7 +3237,12 @@ sys_dispatch_table:
     sys_entries 2,   sys_draw_filled_rect_func
     sys_entries 6,   sys_platform_func
     sys_entries 2,   sys_format_func
-    sys_entries 6,   sys_text_func
+    sys_entries 1,   sys_set_text_font_func
+    sys_entries 1,   sys_set_text_mode_func
+    sys_entries 1,   sys_draw_text_func
+    sys_entries 1,   sys_draw_text_p_func
+    sys_entries 1,   sys_draw_textfv_func
+    sys_entries 1,   sys_draw_textfv_p_func
     sys_entries 201, invalid_syscall_func
 sys_dispatch_table_end:
 
@@ -3291,10 +3297,27 @@ sys_format_func:
     subi  PRIMARY_OPCODE, SYS_VSNPRINTF
     jmp   sys_format_impl
 
-; The six text services share one far dispatcher. PRIMARY_OPCODE retains the
-; service number until that dispatcher normalizes raw/formatted source mode.
-sys_text_func:
-    jmp   sys_text_dispatch_impl
+; Text services use dedicated near veneers. This avoids the former far
+; six-way compare dispatcher and installs the source/sink status before the
+; speculative following-opcode byte replaces PRIMARY_OPCODE.
+sys_set_text_font_func:
+    jmp   sys_set_text_font_impl
+sys_set_text_mode_func:
+    jmp   sys_set_text_mode_impl
+sys_draw_text_func:
+    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
+    jmp   sys_text_raw_impl
+sys_draw_text_p_func:
+    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
+                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
+    jmp   sys_text_raw_impl
+sys_draw_textfv_func:
+    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
+    jmp   sys_format_impl
+sys_draw_textfv_p_func:
+    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
+                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
+    jmp   sys_format_impl
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
@@ -10725,8 +10748,8 @@ draw_bitmap_seek_visible_text_func:
     ; Compute pages = ceil(height/8) for every mode. Only OVERWRITE needs a
     ; valid-bit mask for the final source page; PLUS_MASK, SELF_MASKED, and
     ; ERASE require unused high bits in their source data to be zero.
-    ; r23 retains top, bottom, and overwrite-partial-row flags. Horizontal
-    ; reseek state is kept in native SREG.T instead of this byte.
+    ; r23 retains top, bottom, horizontal-reseek, and overwrite-partial flags.
+    ; Native SREG.T remains solely the renderer preservation contract.
     clr   r23
     mov   r25, r9
     lsr   r25
@@ -10740,11 +10763,17 @@ draw_bitmap_seek_visible_text_func:
     tst   r13                       ; only mode 0 (OVERWRITE) masks padding
     brne  .Lsprite_nonoverwrite_unaligned
     ori   r23, (1 << SPRITE_FLAG_PARTIAL)
+
+    ; Fixed-time mask = (1 << remainder) - 1. Each SBRC and its one-word
+    ; instruction consume two cycles whether the instruction executes or is
+    ; skipped, so remainders 1-7 all take the same eight cycles.
     ldi   r30, 1
-.Lsprite_final_mask_loop:
+    sbrc  r24, 1
+    ldi   r30, 4
+    sbrc  r24, 0
     lsl   r30
-    dec   r24
-    brne  .Lsprite_final_mask_loop
+    sbrc  r24, 2
+    swap  r30
     dec   r30
     rjmp  .Lsprite_final_mask_ready
 
@@ -10957,6 +10986,151 @@ draw_bitmap_seek_visible_text_func:
     ; The setup above occupies the address-low transfer window. Start the first
     ; data-byte transfer with a legal late standard handoff.
     out   SPDR, ZERO
+    rjmp  .Lsprite_row_dispatch
+
+; Text-only prepared renderer entry. The fixed glyph-record transaction has
+; already produced the complete clipping/setup state listed below and the
+; enclosing text SYS owns architectural-register preservation (SREG.T is set):
+;   r8          source width
+;   r10:r11     source row stride (text modes are never PLUS_MASK)
+;   r12         source pages remaining after top clipping
+;   r13         text drawing mode (OVERWRITE, SELF_MASKED, or ERASE)
+;   r14         framebuffer row advance
+;   r15         original final-page height remainder, or zero after bottom clip
+;   r16         visible columns
+;   r17         framebuffer x
+;   r18         1 << (renderedY & 7)
+;   r19         clipped signed destination page
+;   r20:r22     image-relative pointer adjusted for top/left clipping
+;   r23         TOP and RESEEK flags; bit 7 is clear
+;
+; Bottom clipping, framebuffer address formation, the overwrite final-page
+; mask, and overwrite preserve masks are scheduled inside the image command and
+; address transfers. Every meaningful address byte retains an exact 18-cycle
+; OUT-to-OUT cadence; address-low to first dummy uses the exact 17-cycle dummy
+; cadence.
+draw_bitmap_seek_prepared_text_func:
+    fx_disable
+    ldi   r30, SFC_READ
+    fx_enable
+    out   SPDR, r30                 ; image command
+
+    ; Bottom clip and form the physical address high/middle bytes. The clipped
+    ; and unclipped paths are balanced to five cycles after CP, making address
+    ; high land exactly eighteen cycles after the command.
+    ldi   r24, 8
+    sub   r24, r19                  ; maximum visible source rows
+    cp    r24, r12
+    brsh  .Ltext_prepared_bottom_unclipped
+    mov   r12, r24
+    clr   r15                       ; original partial final page was removed
+    rjmp  .Ltext_prepared_bottom_clip_done
+.Ltext_prepared_bottom_unclipped:
+    delay_3
+.Ltext_prepared_bottom_clip_done:
+    mov   r25, r21
+    mov   r30, r22
+    lds   r0, data_page_data+0
+    add   r25, r0
+    lds   r0, data_page_data+1
+    adc   r30, r0
+    nop
+    out   SPDR, r30                 ; physical address high, +18
+
+    ; X = framebuffer + pageStart*128 + x. Also mark the one possible bottom
+    ; row. The useful work exactly fills the address-high transfer interval.
+    mov   r9, r18
+    ldi   r24, 128
+    mov   r18, r24
+    mulsu r19, r18
+    mov   r18, r9
+    ldi   r26, lo8(data_display)
+    ldi   r27, hi8(data_display)
+    add   r26, r0
+    adc   r27, r1
+    add   r26, r17
+    adc   r27, ZERO
+
+    mov   r24, r19
+    add   r24, r12
+    cpi   r24, 8
+    brne  .Ltext_prepared_not_bottom
+    ori   r23, (1 << SPRITE_FLAG_BOTTOM)
+.Ltext_prepared_not_bottom:
+    out   SPDR, r25                 ; physical address middle, +18
+
+    ; OVERWRITE alone consumes r15. For a retained partial final page, construct
+    ; (1 << remainder) - 1 in fixed time and set PARTIAL. Aligned overwrite,
+    ; self-masked, and erase paths use path-specific delay entries so address
+    ; low is transmitted exactly eighteen cycles after address middle.
+    tst   r13
+    brne  .Ltext_prepared_nonoverwrite_mask
+    tst   r15
+    breq  .Ltext_prepared_aligned_overwrite_mask
+
+    mov   r24, r15
+    ldi   r25, 1
+    sbrc  r24, 1
+    ldi   r25, 4
+    sbrc  r24, 0
+    lsl   r25
+    sbrc  r24, 2
+    swap  r25
+    dec   r25
+    mov   r15, r25
+    ori   r23, (1 << SPRITE_FLAG_PARTIAL)
+    delay_2
+    out   SPDR, r20                 ; physical address low, +18
+    rjmp  .Ltext_prepared_low_overwrite
+
+.Ltext_prepared_aligned_overwrite_mask:
+    ser   r25
+    mov   r15, r25
+    rcall sprite_delay_10
+    out   SPDR, r20                 ; physical address low, +18
+    rjmp  .Ltext_prepared_low_overwrite
+
+.Ltext_prepared_nonoverwrite_mask:
+    rcall sprite_delay_14
+    out   SPDR, r20                 ; physical address low, +18
+    rjmp  .Ltext_prepared_low_nonoverwrite
+
+.Ltext_prepared_low_overwrite:
+    ; Precompute full-row overwrite preserve masks and select the overwrite row
+    ; dispatcher while address low transfers.
+    ldi   r24, 0xFF
+    mul   r24, r18
+    com   r0
+    com   r1
+    mov   r9, r0
+    mov   r19, r1
+    ldi   r30, lo8(pm(sprite_overwrite_row_dispatch))
+    ldi   r31, hi8(pm(sprite_overwrite_row_dispatch))
+    out   GPIOR1, r30
+    out   GPIOR2, r31
+    delay_3
+    out   SPDR, ZERO                ; first image byte, +17
+    rjmp  .Lsprite_row_dispatch
+
+.Ltext_prepared_low_nonoverwrite:
+    ; Valid nonoverwrite text modes differ in bit zero: SELF_MASKED=2 and
+    ; ERASE=3. Balance both selections to eight cycles, then fill the remaining
+    ; low-address interval before launching the first image byte.
+    sbrs  r13, 0
+    rjmp  .Ltext_prepared_select_self
+    ldi   r30, lo8(pm(sprite_erase_row_dispatch))
+    ldi   r31, hi8(pm(sprite_erase_row_dispatch))
+    rjmp  .Ltext_prepared_store_nonoverwrite_dispatch
+.Ltext_prepared_select_self:
+    ldi   r30, lo8(pm(sprite_self_row_dispatch))
+    ldi   r31, hi8(pm(sprite_self_row_dispatch))
+    nop
+.Ltext_prepared_store_nonoverwrite_dispatch:
+    out   GPIOR1, r30
+    out   GPIOR2, r31
+    delay_4
+    delay_2
+    out   SPDR, ZERO                ; first image byte, +17
     rjmp  .Lsprite_row_dispatch
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -12303,10 +12477,27 @@ sys_save_exists_impl:
 ; FX reader may therefore use X, Z, and r24-r27 freely.
 
 sys_format_impl:
+    ; Preserve the source/sink status before SPDR replaces PRIMARY_OPCODE.
+    ; Initialize only the selected source while all architectural argument
+    ; registers still contain their incoming values.
+    mov   r27, PRIMARY_OPCODE
+    sts   data_format_status, r27
+    sbrc  r27, FORMAT_STATUS_SOURCE_PROGRAM
+    rjmp  .Lformat_init_program_source
+    sts   data_format_ram_ptr+0, VM_R6L
+    sts   data_format_ram_ptr+1, VM_R6H
+    rjmp  .Lformat_source_initialized
+.Lformat_init_program_source:
+    sts   data_format_program_next+0, VM_R6L
+    sts   data_format_program_next+1, VM_R6H
+    sts   data_format_program_next+2, VM_R7L
+    sts   data_format_cache_index, ZERO
+    sts   data_format_cache_length, ZERO
+.Lformat_source_initialized:
+
     ; The fixed SYS path reaches this entry after the speculative following-
     ; opcode byte is complete. Consume it, deselect FX, and take ownership of
     ; the bytecode stream. Formatter-launched transfers use open-loop delays.
-    sts   data_format_status, PRIMARY_OPCODE
     in    r24, SPDR
     fx_disable
 
@@ -12316,9 +12507,10 @@ sys_format_impl:
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
 
-    ; Preserve every architectural register outside the selected result. Native
-    ; Y is the architectural VM stack pointer; after saving it, the bounded sink
-    ; uses it as its destination and the text sink uses it as current cursor x.
+    ; Preserve architectural registers outside the selected result. Text output
+    ; returns q2 and therefore need not preserve incoming r5 (native r18:r19).
+    ; Buffer formatting still preserves it exactly as before. Native Y becomes
+    ; either the bounded destination or the current text cursor x.
     push  r8
     push  r9
     push  r10
@@ -12327,8 +12519,11 @@ sys_format_impl:
     push  r13
     push  r14
     push  r15
+    sbrc  r27, FORMAT_STATUS_SINK_TEXT
+    rjmp  .Lformat_r5_save_done
     push  r18
     push  r19
+.Lformat_r5_save_done:
     push  r20
     push  r21
     push  r22
@@ -12341,18 +12536,7 @@ sys_format_impl:
     sts   data_format_arg_ptr+0, VM_R2L
     sts   data_format_arg_ptr+1, VM_R2H
 
-    ; Initialize both possible format sources. RAM formats use r6; program
-    ; formats use q3, matching vsnprintf/vsnprintf_P exactly.
-    sts   data_format_ram_ptr+0, VM_R6L
-    sts   data_format_ram_ptr+1, VM_R6H
-    sts   data_format_program_next+0, VM_R6L
-    sts   data_format_program_next+1, VM_R6H
-    sts   data_format_program_next+2, VM_R7L
-    sts   data_format_cache_index, ZERO
-    sts   data_format_cache_length, ZERO
-
-    lds   r24, data_format_status
-    sbrc  r24, FORMAT_STATUS_SINK_TEXT
+    sbrc  r27, FORMAT_STATUS_SINK_TEXT
     rjmp  .Lformat_text_setup
 
     ; Bounded-buffer sink setup.
@@ -12363,6 +12547,7 @@ sys_format_impl:
 
     ; Retain only source mode, then reserve one byte for the final NUL when the
     ; original destination size is nonzero.
+    mov   r24, r27
     andi  r24, (1 << FORMAT_STATUS_SOURCE_PROGRAM)
     mov   r25, r10
     or    r25, r11
@@ -12383,10 +12568,7 @@ sys_format_impl:
     movw  r28, VM_R4
     sts   data_text_current_y+0, VM_R5L
     sts   data_text_current_y+1, VM_R5H
-    clr   r8
-    clr   r9
-    clr   r10
-    clr   r11
+    ; r8:r11 are buffer-only count/capacity state and are not read by text sinks.
     lds   r24, data_text_line_height
     tst   r24
     brne  1f
@@ -13763,46 +13945,6 @@ format_emit_integer_field:
 ; the shared bitmap renderer through its text-only no-preservation contract. No
 ; path polls SPSR/SPIF.
 
-sys_text_dispatch_impl:
-    cpi   PRIMARY_OPCODE, SYS_SET_TEXT_FONT
-    brne  1f
-    jmp   sys_set_text_font_impl
-1:
-    cpi   PRIMARY_OPCODE, SYS_SET_TEXT_MODE
-    brne  2f
-    jmp   sys_set_text_mode_impl
-2:
-    cpi   PRIMARY_OPCODE, SYS_DRAW_TEXT
-    brne  3f
-    jmp   .Lsys_text_raw_ram
-3:
-    cpi   PRIMARY_OPCODE, SYS_DRAW_TEXT_P
-    brne  4f
-    jmp   .Lsys_text_raw_program
-4:
-    cpi   PRIMARY_OPCODE, SYS_DRAW_TEXTFV
-    brne  5f
-    jmp   .Lsys_text_format_ram
-5:
-    ; The six-entry SYS dispatch range guarantees the final case is
-    ; SYS_DRAW_TEXTFV_P. No defensive validation is reachable here.
-    jmp   .Lsys_text_format_program
-
-.Lsys_text_raw_ram:
-    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
-    jmp   sys_text_raw_impl
-.Lsys_text_raw_program:
-    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
-                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
-    jmp   sys_text_raw_impl
-.Lsys_text_format_ram:
-    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
-    jmp   sys_format_impl
-.Lsys_text_format_program:
-    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
-                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
-    jmp   sys_format_impl
-
 ; q2 contains the image-relative font address. A null logical pointer merely
 ; clears line_height and preserves the speculative bytecode transaction. For a
 ; nonnull font, cache font+3 and read the three-byte header directly into
@@ -13854,18 +13996,34 @@ sys_set_text_mode_impl:
 .Lsys_set_text_mode_done:
     jmp   cluster_tail_18
 
-; Raw RAM/program string entry. The save set exactly matches sys_format_impl so
-; both raw and formatted paths can share text_finish. VM_PC is advanced once,
+; Raw RAM/program string entry. Raw and formatted text share the reduced
+; text-only save contract and text_finish. VM_PC is advanced once,
 ; and the speculative following byte is discarded before any independent FX
 ; transaction begins.
 sys_text_raw_impl:
+    ; Install only the selected source before SPDR replaces PRIMARY_OPCODE.
     sts   data_format_status, PRIMARY_OPCODE
+    sbrc  PRIMARY_OPCODE, FORMAT_STATUS_SOURCE_PROGRAM
+    rjmp  .Ltext_raw_init_program_source
+    sts   data_format_ram_ptr+0, VM_R6L
+    sts   data_format_ram_ptr+1, VM_R6H
+    rjmp  .Ltext_raw_source_initialized
+.Ltext_raw_init_program_source:
+    sts   data_format_program_next+0, VM_R6L
+    sts   data_format_program_next+1, VM_R6H
+    sts   data_format_program_next+2, VM_R7L
+    sts   data_format_cache_index, ZERO
+    sts   data_format_cache_length, ZERO
+.Ltext_raw_source_initialized:
+
     in    r24, SPDR
     fx_disable
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
 
+    ; Text returns q2, so incoming r5 is not part of the preservation contract.
+    ; This stack layout matches the formatted-text path and text_finish.
     push  r8
     push  r9
     push  r10
@@ -13874,8 +14032,6 @@ sys_text_raw_impl:
     push  r13
     push  r14
     push  r15
-    push  r18
-    push  r19
     push  r20
     push  r21
     push  r22
@@ -13888,14 +14044,6 @@ sys_text_raw_impl:
     movw  r28, VM_R4
     sts   data_text_current_y+0, VM_R5L
     sts   data_text_current_y+1, VM_R5H
-
-    sts   data_format_ram_ptr+0, VM_R6L
-    sts   data_format_ram_ptr+1, VM_R6H
-    sts   data_format_program_next+0, VM_R6L
-    sts   data_format_program_next+1, VM_R6H
-    sts   data_format_program_next+2, VM_R7L
-    sts   data_format_cache_index, ZERO
-    sts   data_format_cache_length, ZERO
 
     lds   r24, data_text_line_height
     tst   r24
@@ -13910,7 +14058,8 @@ sys_text_raw_impl:
 
 ; Shared completion for raw and formatted text. The current cursor is captured
 ; before restoring the architectural register file, then installed as q2 after
-; restoration. r6/r7, r2, CC, and SP therefore retain their input values.
+; restoration. r6/r7, r2, CC, and SP therefore retain their input values;
+; incoming r5 is intentionally replaced as the high half of the q2 result.
 text_finish:
     ; Every text helper returns with FX deselected; avoid a redundant CS write.
     movw  r24, r28
@@ -13922,8 +14071,6 @@ text_finish:
     pop   r22
     pop   r21
     pop   r20
-    pop   r19
-    pop   r18
     pop   r15
     pop   r14
     pop   r13
@@ -13983,17 +14130,24 @@ text_emit_ram_span:
     ret
 
 ; Emit one logical text byte. Only newline is special. Missing glyphs have no
-; framebuffer effect and zero advance. Available records are eight bytes:
-;   w, h, xoff, yoff, xadv, imageOffset[23:0].
+; framebuffer effect and zero advance. Available records are eight bytes in an
+; order chosen to expose renderer dependencies as early as possible:
+;   h, yoff, w, xoff, imageOffset[23:0], xadv.
 ; xoff/yoff are signed. y is the baseline, so glyph top is baseline+yoff.
 ;
-; All four entries now share one preservation contract. Once range checking has
-; proved that a record exists, the fixed eight-byte transaction unconditionally
-; saves the union of registers live at any direct/repeat/span emission point:
+; All four entries share one preservation contract. Once range checking proves
+; that a record exists, the fixed transaction unconditionally saves the union
+; of registers live at any direct/repeat/span emission point:
 ;   r12:r15, r18:r19, r22.
 ; Newline and missing glyphs return before opening a transaction or pushing.
 ; Empty and clipped valid glyphs consume the record, apply xadv, restore the
 ; union, and return without opening the image transaction.
+;
+; The reordered fields pipeline renderer setup through the eight record bytes:
+; height/page count, rendered y and visibility, width/stride/vertical shift,
+; rendered x and visibility, top clipping, horizontal clipping, and source-row
+; adjustment. A visible glyph then enters draw_bitmap_seek_prepared_text_func,
+; which schedules the remaining setup inside the image command/address phase.
 text_emit_char:
 text_emit_char_repeat:
 text_emit_char_span:
@@ -14025,8 +14179,8 @@ text_emit_char_raw:
     ; zero-based glyph index. The command-to-address-high interval exactly hides
     ; record = glyphTableBase + 8*index and image-page translation.
     ldi   r27, 8
-    ldi   r30, SFC_READ
     fx_disable
+    ldi   r30, SFC_READ
     fx_enable
     out   SPDR, r30                 ; command OUT, cycle 0
 
@@ -14043,9 +14197,9 @@ text_emit_char_raw:
     adc   r26, r27                  ; cycle 17
     out   SPDR, r26                 ; physical address high, cycle 18
 
-    ; Preserve the union while address high transfers. r18:r19 are then free
-    ; to become the rendered baseline coordinate. Exactly seventeen cycles of
-    ; work retain the standard meaningful-byte cadence.
+    ; Preserve the complete union while address high transfers. r18:r19 are then
+    ; free for renderer setup. Exactly seventeen cycles retain the meaningful
+    ; address-byte cadence.
     push  r12
     push  r13
     push  r14
@@ -14057,68 +14211,54 @@ text_emit_char_raw:
     lds   VM_R5L, data_text_current_y+0
     out   SPDR, r25                 ; physical address middle, +18
 
-    ; Finish baseline setup. The remaining fifteen cycles are deliberate
-    ; flag-preserving delay before transmitting the still-live low address.
+    ; Load the remaining call state and clear text-local setup temporaries.
+    ; Ten flag-preserving cycles complete the +18 address-low handoff.
     lds   VM_R5H, data_text_current_y+1
-    rcall .Ltext_record_delay_15
+    lds   r13, data_text_mode
+    clr   r23
+    clr   r9                        ; top source-page skip
+    clr   r27                       ; horizontal source-column skip
+    rcall .Ltext_record_delay_10
     out   SPDR, r24                 ; physical address low, +18
 
-    ; The record address is now dead. Install the logical image base, mode, and
-    ; fixed-time rejection accumulator before beginning the first dummy transfer.
-    lds   r24, data_text_glyph_table+0
-    lds   r25, data_text_glyph_table+1
-    lds   r26, data_text_glyph_table+2
-    lds   r27, data_text_mode
-    clr   r23
-    rcall .Ltext_record_delay_7
-    out   SPDR, ZERO                ; begin width byte, +17
-
-    ; Width. The reverse handoff launches height at the exact +17 boundary.
-    rcall .Ltext_record_delay_15
-    cli
-    out   SPDR, ZERO
-    in    r0, SPDR
-    sei
-    tst   r0
-    brne  .Ltext_width_nonzero
-    ori   r23, 1
-.Ltext_width_nonzero:
+    ; The record address is now dead. Install the logical image base; mode
+    ; dispatch selection is deferred to the image address-low interval. Ten
+    ; additional cycles launch the first dummy at the exact +17 boundary.
+    lds   r20, data_text_glyph_table+0
+    lds   r21, data_text_glyph_table+1
+    lds   r22, data_text_glyph_table+2
     rcall .Ltext_record_delay_10
-    cli
-    out   SPDR, ZERO
-    in    r1, SPDR
-    sei
+    out   SPDR, ZERO                ; begin h byte, +17
 
-    ; Height. Zero dimensions are accumulated without changing cadence.
+    ; No record field is available yet. Clear the stride high byte and consume
+    ; the remaining transfer interval before reading h and launching yoff.
+    clr   r11
+    rcall .Ltext_record_delay_15
+    in    r1, SPDR                  ; unsigned h
+    out   SPDR, ZERO                ; begin signed yoff
+
+    ; Height: reject zero, compute ceil(h/8), and retain h&7 in r15. Four
+    ; additional delay cycles place the yoff read at the first legal boundary.
     tst   r1
     brne  .Ltext_height_nonzero
-    ori   r23, 1
+    ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_height_nonzero:
-    rcall .Ltext_record_delay_10
-    cli
-    out   SPDR, ZERO
-    in    r30, SPDR                 ; signed xoff
-    sei
-
-    ; renderedX = cursorX + sign_extend(xoff), followed by x < 128. Both
-    ; outcomes of the predicate take exactly four cycles.
-    clr   r31
-    sbrc  r30, 7
-    com   r31
-    add   VM_R4L, r30
-    adc   VM_R4H, r31
-    cpi   VM_R4L, 128
-    cpc   VM_R4H, ZERO
-    brlt  .Ltext_x_below_right_edge
-    ori   r23, 1
-.Ltext_x_below_right_edge:
+    mov   r12, r1
+    lsr   r12
+    lsr   r12
+    lsr   r12
+    mov   r30, r1
+    andi  r30, 0x07
+    mov   r15, r30
+    cpse  r15, ZERO
+    inc   r12
     delay_4
-    cli
-    out   SPDR, ZERO
     in    r30, SPDR                 ; signed yoff
-    sei
+    out   SPDR, ZERO                ; begin w
 
-    ; renderedY = baselineY + sign_extend(yoff), followed by y < 64.
+    ; renderedY = baselineY + sign_extend(yoff). Accumulate y < 64 and
+    ; renderedY+h > 0 in fixed-time predicate paths. This exactly fills the
+    ; sixteen-cycle transfer interval.
     clr   r31
     sbrc  r30, 7
     com   r31
@@ -14127,69 +14267,157 @@ text_emit_char_raw:
     cpi   VM_R5L, 64
     cpc   VM_R5H, ZERO
     brlt  .Ltext_y_below_bottom_edge
-    ori   r23, 1
+    ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_y_below_bottom_edge:
-    delay_4
-    cli
-    out   SPDR, ZERO
-    in    r30, SPDR                 ; unsigned xadv
-    sei
-
-    ; Apply xadv for every available glyph, including empty and fully clipped
-    ; glyphs. Then prove renderedX + width > 0 in fixed time.
-    add   r28, r30
-    adc   r29, ZERO
-    movw  r30, VM_R4
-    add   r30, r0
-    adc   r31, ZERO
-    cp    ZERO, r30
-    cpc   ZERO, r31
-    brlt  .Ltext_x_extent_visible
-    ori   r23, 1
-.Ltext_x_extent_visible:
-    delay_4
-    cli
-    out   SPDR, ZERO
-    in    r10, SPDR                 ; image offset low
-    sei
-
-    ; Prove renderedY + height > 0. The low image-offset ADD is the final
-    ; flag-changing instruction before the middle-byte ADC; interrupt handlers
-    ; and the protected SPI handoff preserve native carry.
     movw  r30, VM_R5
     add   r30, r1
     adc   r31, ZERO
     cp    ZERO, r30
     cpc   ZERO, r31
     brlt  .Ltext_y_extent_visible
-    ori   r23, 1
+    ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_y_extent_visible:
+    in    r0, SPDR                  ; unsigned w
+    out   SPDR, ZERO                ; begin signed xoff
+
+    ; Width/stride, vertical shift coefficient, and arithmetic pageStart. This
+    ; path intentionally exceeds the minimum byte interval by three cycles but
+    ; replaces work that formerly occurred after the metadata transaction.
+    mov   r8, r0
+    tst   r8
+    brne  .Ltext_width_nonzero
+    ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
+.Ltext_width_nonzero:
+    mov   r10, r8                   ; text source rows contain width bytes
+
+    mov   r24, VM_R5L
+    ldi   r18, 1
+    sbrc  r24, 1
+    ldi   r18, 4
+    sbrc  r24, 0
+    lsl   r18
+    sbrc  r24, 2
+    swap  r18                       ; r18 = 1 << (renderedY & 7)
+
+    mov   r19, VM_R5L
+    asr   VM_R5H
+    ror   r19
+    asr   r19
+    asr   r19                       ; arithmetic renderedY / 8
+    in    r30, SPDR                 ; signed xoff
+    out   SPDR, ZERO                ; begin image offset low
+
+    ; renderedX = cursorX + sign_extend(xoff), then accumulate x < 128 and
+    ; renderedX+width > 0. Both predicates use balanced branch/ORI pairs.
+    clr   r31
+    sbrc  r30, 7
+    com   r31
+    add   VM_R4L, r30
+    adc   VM_R4H, r31
+    cpi   VM_R4L, 128
+    cpc   VM_R4H, ZERO
+    brlt  .Ltext_x_below_right_edge
+    ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
+.Ltext_x_below_right_edge:
+    movw  r30, VM_R4
+    add   r30, r8
+    adc   r31, ZERO
+    cp    ZERO, r30
+    cpc   ZERO, r31
+    brlt  .Ltext_x_extent_visible
+    ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
+.Ltext_x_extent_visible:
+    in    r24, SPDR                 ; image offset low
+    out   SPDR, ZERO                ; begin image offset middle
+
+    ; Top clipping. The branchless clamp computes:
+    ;   aligned:   topSkip = max(0, -pageStart)
+    ;   unaligned: topSkip = max(0, -pageStart - 1)
+    ; Visibility bounds pageStart so the signed-byte clamp is exact. Retain the
+    ; skip in r9 until the complete image pointer is available.
+    mov   r9, r19
+    neg   r9
+    cpi   r18, 1
+    breq  .Ltext_top_skip_aligned
+    sub   r9, ONE
+.Ltext_top_skip_aligned:
+    clr   r30
+    sbrs  r9, 7
+    mov   r30, r9
+    mov   r9, r30
+    sub   r12, r9
+    add   r19, r9
+    cpi   r19, 0xFF
+    brne  .Ltext_not_top_row
+    ori   r23, (1 << SPRITE_FLAG_TOP)
+.Ltext_not_top_row:
+    delay_2
+    in    r25, SPDR                 ; image offset middle
+    out   SPDR, ZERO                ; begin image offset high
+
+    ; Horizontal clipping. r27 retains leftSkip until the source pointer is
+    ; complete; r16/r17 become visible columns/framebuffer x, and r14 is the
+    ; framebuffer row advance. Nonnegative x is one cycle beyond the minimum
+    ; interval; negative x performs four additional useful cycles.
+    clr   r27
+    mov   r30, VM_R4L
+    sbrs  VM_R4H, 7
+    rjmp  .Ltext_x_nonnegative
+
+    neg   r30
+    mov   r27, r30                  ; leftSkip = -x
+    mov   r16, r8
+    sub   r16, r30
+    clr   r17
+    rjmp  .Ltext_clip_right
+
+.Ltext_x_nonnegative:
+    mov   r17, r30
+    mov   r16, r8
+
+.Ltext_clip_right:
+    ldi   r30, 128
+    sub   r30, r17
+    cp    r30, r16
+    brsh  .Ltext_right_clip_done
+    mov   r16, r30
+.Ltext_right_clip_done:
+    cpse  r16, r8
+    ori   r23, (1 << SPRITE_FLAG_RESEEK)
+    ldi   r30, 128
+    mov   r14, r30
+    sub   r14, r16
+    in    r26, SPDR                 ; image offset high
+    out   SPDR, ZERO                ; begin unsigned xadv
+
+    ; Form the image-relative pointer and apply top-row and left-column source
+    ; skips. Text modes all use one image byte per source column.
+    add   r20, r24
+    adc   r21, r25
+    adc   r22, r26
+
+    mul   r9, r10
+    add   r20, r0
+    adc   r21, r1
+    adc   r22, ZERO
+
+    add   r20, r27
+    adc   r21, ZERO
+    adc   r22, ZERO
     delay_4
     nop
-    add   r24, r10
-    cli
-    out   SPDR, ZERO
-    in    r10, SPDR                 ; image offset middle
-    sei
+    in    r0, SPDR                  ; unsigned xadv; final record byte
 
-    ; Consume low-byte carry immediately, then preserve middle-byte carry while
-    ; the final record byte transfers.
-    adc   r25, r10
-    rcall .Ltext_record_delay_13
-    in    r10, SPDR                 ; image offset high; no further transfer
-    adc   r26, r10
+    ; Every available glyph advances, including empty and fully clipped glyphs.
+    add   r28, r0
+    adc   r29, ZERO
 
-    ; A visible record enters after the renderer's empty and intersection tests.
-    ; T selects the renderer's no-preservation text contract. Rejected records
+    ; A visible record enters the prepared renderer contract. Rejected records
     ; close the metadata transaction locally. Both paths restore the same union.
-    tst   r23
-    brne  .Ltext_emit_char_rejected
-    set
-    call  draw_bitmap_seek_visible_text_func
-    rjmp  .Ltext_emit_char_restore
-
-.Ltext_emit_char_rejected:
+    sbrs  r23, TEXT_GLYPH_FLAG_REJECT
+    rjmp  .Ltext_emit_char_visible
     fx_disable
+
 .Ltext_emit_char_restore:
     pop   r22
     pop   r19
@@ -14199,6 +14427,11 @@ text_emit_char_raw:
     pop   r13
     pop   r12
     ret
+
+.Ltext_emit_char_visible:
+    set
+    call  draw_bitmap_seek_prepared_text_func
+    rjmp  .Ltext_emit_char_restore
 
 ; Local fixed-delay ladder for the inlined record transaction. Each name is the
 ; complete cycle count from RCALL through RET. Only flag-preserving NOP/RJMP

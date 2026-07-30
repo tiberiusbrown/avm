@@ -34,10 +34,10 @@ enum {
     (AVM_FONT_5X7_IMAGE_BASE + ((index) - AVM_FONT_5X7_FIRST) * AVM_FONT_5X7_IMAGE_BYTES)
 
 #define AVM_FONT_5X7_GLYPH(code)                                             \
-    5, 7, 0, -7, 6, AVM_U24_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code)))
+    7, -7, 5, 0, AVM_U24_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code))), 6
 
 #define AVM_FONT_5X7_SPACE(code)                                             \
-    0, 0, 0, 0, 6, AVM_U24_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code)))
+    0, 0, 0, 0, AVM_U24_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code))), 6
 
 uint8_t const AVM_PROGMEM _avm_font_5x7_storage[] = {
     8,

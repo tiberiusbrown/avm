@@ -216,13 +216,12 @@ AVM_SYS_INLINE bool avm_save_exists(void)
 /* Text drawing */
 
 typedef struct __attribute__((packed)) {
-  uint8_t w;
   uint8_t h;
-  int8_t xoff;
-  int8_t yoff;
+  int8_t  yoff;
+  uint8_t w;
+  int8_t  xoff;
+  uint8_t image_offset[3]; /* Relative to the glyph-table base: font + 3. */
   uint8_t xadv;
-  /* Relative to the glyph-table base: font + 3. */
-  uint8_t image_offset[3];
 } avm_font_glyph_t;
 
 /* The packed program-space object contains this three-byte header, followed by

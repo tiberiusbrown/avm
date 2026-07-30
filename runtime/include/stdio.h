@@ -37,6 +37,9 @@ static inline int snprintf_P(
     return result;
 }
 
+#define snprintf   __avm_snprintf
+#define snprintf_P __avm_snprintf_P
+
 #if !defined(AVM_STDIO_IMPLEMENTATION) && \
     !defined(AVM_STDIO_NO_BUILTIN_MACROS)
 #define vsnprintf(s, n, fmt, args) __avm_vsnprintf((s), (n), (fmt), (args));

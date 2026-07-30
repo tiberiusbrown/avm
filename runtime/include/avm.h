@@ -290,23 +290,12 @@ avm_draw_textfv_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* fmt,
       __avm_draw_textfv_P(x, baseline_y, fmt, args));
 }
 
-AVM_SYS_INLINE avm_text_cursor_t
-avm_draw_textf(int16_t x, int16_t baseline_y, char const *fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  uint32_t packed = __avm_draw_textfv(x, baseline_y, fmt, args);
-  va_end(args);
-  return __avm_text_cursor_from_u32(packed);
-}
-
-AVM_SYS_INLINE avm_text_cursor_t
-avm_draw_textf_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* fmt, ...) {
-  va_list args;
-  va_start(args, fmt);
-  uint32_t packed = __avm_draw_textfv_P(x, baseline_y, fmt, args);
-  va_end(args);
-  return __avm_text_cursor_from_u32(packed);
-}
+/* A C function cannot forward unnamed arguments without constructing a
+   va_list. Expand the true-variadic compiler builtin directly at the caller. */
+#define avm_draw_textf(...)                                                   \
+  __avm_text_cursor_from_u32(__avm_draw_textf(__VA_ARGS__))
+#define avm_draw_textf_P(...)                                                 \
+  __avm_text_cursor_from_u32(__avm_draw_textf_P(__VA_ARGS__))
 
 #ifdef __cplusplus
 }

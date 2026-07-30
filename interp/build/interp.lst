@@ -16193,5 +16193,5 @@ Disassembly of section .text:
     60f6:	b0 91 14 0a 	lds	r27, 0x0A14	; 0x800a14 <_end+0x8>
     60fa:	00 90 54 0a 	lds	r0, 0x0A54	; 0x800a54 <_end+0x48>
     60fe:	10 90 55 0a 	lds	r1, 0x0A55	; 0x800a55 <_end+0x49>
-    6102:	0e 94 32 26 	call	0x4c64	; 0x4c64 <draw_bitmap_seek_nonempty_text_func>
-    6106:	08 95       	ret
+    6102:	0c 94 32 26 	jmp	0x4c64	; 0x4c64 <draw_bitmap_seek_nonempty_text_func>
+    6106:	00 00       	nop

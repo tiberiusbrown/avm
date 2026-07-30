@@ -14139,5 +14139,4 @@ text_emit_char_raw:
     lds   r27, data_text_mode
     lds   r0, data_text_glyph_record+0
     lds   r1, data_text_glyph_record+1
-    call  draw_bitmap_seek_nonempty_text_func
-    ret
+    jmp   draw_bitmap_seek_nonempty_text_func

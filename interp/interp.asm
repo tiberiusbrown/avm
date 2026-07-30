@@ -727,6 +727,7 @@
 
 #define SPRITE_FLAG_TOP          0
 #define SPRITE_FLAG_BOTTOM       1
+#define SPRITE_FLAG_RESEEK       2
 #define SPRITE_FLAG_PARTIAL      3
 
 ; Development/emulator images either end at the end of the 16 MiB flash or
@@ -10601,12 +10602,16 @@ sys_draw_sprite_header_impl:
 ; deliberately exported so future text/glyph SYS services can prepare their
 ; own width, height, and bitmap pointer, then reuse clipping and rendering.
 ;
-; Preservation:
-;   Pushes and restores all native r8-r23 (the complete AVM register file).
+; Preservation contracts:
+;   draw_bitmap_seek_func / draw_bitmap_seek_nonempty_func push and restore
+;   all native r8-r23 (the complete AVM register file).
+;   draw_bitmap_seek_nonempty_text_func is an internal text-only contract: the
+;   caller has already preserved architectural state for the whole text SYS, so
+;   the renderer may clobber r8-r23 and skips the per-glyph register frame.
 ;   VM_PC, VM_FLAGS, VM_SP, and the permanent constants are untouched. Native
 ;   r0:r1, r24:r27, r30:r31, GPIOR1:GPIOR2, and SREG are call-clobbered.
 ;
-; Persistent working allocation after the pushes:
+; Persistent working allocation after the optional pushes:
 ;   r8              source width during setup; overwrite row-valid mask
 ;   r9              source height during setup; overwrite low preserve mask
 ;   r10:r11         full source-row stride in bytes
@@ -10619,13 +10624,19 @@ sys_draw_sprite_header_impl:
 ;   r18             vertical shift coefficient
 ;   r19             signed destination page during setup; high mask/temporary
 ;   r20:r21:r22     current visible source-row image-relative pointer
-;   r23             top/bottom/surviving-partial flags
-;   SREG.T          horizontal clipping requires a source-row reseek
+;   r23             top/bottom/reseek/surviving-partial flags
+;   SREG.T          0=renderer preserves r8-r23, 1=text caller preserves them
 ;   GPIOR1:GPIOR2   selected mode-specific row-dispatch word address
 ;   X               current framebuffer page pointer
 ;   Z               adjacent framebuffer page pointer or dispatch target
 ;   r24:r25,r0:r1   stream and framebuffer temporaries
 ;
+; Text-only nonempty entry. The enclosing text SYS has already saved the AVM
+; register file once, so repeated glyphs bypass all sixteen renderer pushes.
+draw_bitmap_seek_nonempty_text_func:
+    set                              ; enclosing text SYS owns preservation
+    rjmp  .Lsprite_raw_check_visible
+
 .Lsprite_raw_reject:
     ret
 .global draw_bitmap_seek_func
@@ -10637,9 +10648,11 @@ draw_bitmap_seek_func:
     tst   r1
     breq  .Lsprite_raw_reject
 
-; Internal entry for callers that have already proven r0 != 0 and r1 != 0.
-; It retains all clipping checks and the complete renderer preservation ABI.
+; Internal preserved entry for callers that already proved r0 != 0 and r1 != 0.
 draw_bitmap_seek_nonempty_func:
+    clt                              ; generic renderer owns preservation
+
+.Lsprite_raw_check_visible:
     cpi   VM_R4L, 128
     cpc   VM_R4H, ZERO
     brge  .Lsprite_raw_reject
@@ -10671,6 +10684,7 @@ draw_bitmap_seek_nonempty_func:
     fx_enable
     out   SPDR, r30
 
+    brts  .Lsprite_raw_registers_ready
     push  r8
     push  r9
     push  r10
@@ -10688,6 +10702,7 @@ draw_bitmap_seek_nonempty_func:
     push  r22
     push  r23
 
+.Lsprite_raw_registers_ready:
     mov   r8, r0                    ; source width, later current row mask
     mov   r9, r1                    ; source height, later overwrite low mask
     movw  r20, r24
@@ -10870,12 +10885,11 @@ draw_bitmap_seek_nonempty_func:
 .Lsprite_not_bottom_row:
 
     ; The retained source pointer is needed only when horizontal clipping means
-    ; the visible bytes do not end at the next source row. Store that condition
-    ; in native T, which survives all renderer arithmetic and protected SPI
-    ; handoffs while architectural flags remain in GPIOR0.
-    clt
+    ; the visible bytes do not end at the next source row. Keep that condition
+    ; in the spare renderer metadata bit so native T remains the preservation
+    ; contract through every arithmetic instruction and protected SPI handoff.
     cpse  r16, r8
-    set
+    ori   r23, (1 << SPRITE_FLAG_RESEEK)
 
     ldi   r24, 128
     sub   r24, r16
@@ -11386,10 +11400,12 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 
     ; Contiguous full-width rows continue directly in the existing transaction.
     ; Only clipped rows retain and advance r20:r21:r22 for a fresh seek.
-    brtc  .Lsprite_row_dispatch
+    sbrs  r23, SPRITE_FLAG_RESEEK
+    rjmp  .Lsprite_row_dispatch
 
 ; Start streaming at the following visible source row without disturbing X.
-; This helper is used only when native T indicates horizontal clipping. It
+; This helper is used only when SPRITE_FLAG_RESEEK indicates horizontal
+; clipping. It
 ; advances the retained row pointer after launching SFC_READ, hiding the four
 ; pointer-update cycles in the command interval. Z and r24:r25 are scratch; the
 ; first data byte is in flight on return.
@@ -11430,6 +11446,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ; Bottom is necessarily the last visible source row.
 
 .Lsprite_finish:
+    brts  .Lsprite_finish_unpreserved
     pop   r23
     pop   r22
     pop   r21
@@ -11446,6 +11463,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     pop   r10
     pop   r9
     pop   r8
+.Lsprite_finish_unpreserved:
     fx_disable
     ret
 
@@ -13736,8 +13754,8 @@ format_emit_integer_field:
 ;
 ; All FX access remains open-loop. Header and glyph-record reads use the shared
 ; fixed-count reader; program strings/formats use the formatter's 16-byte
-; cache; nonempty glyph images enter the shared bitmap renderer after its
-; duplicate empty checks. No path polls SPSR/SPIF.
+; cache; nonempty glyph images enter the shared bitmap renderer through its
+; text-only no-preservation contract. No path polls SPSR/SPIF.
 
 sys_text_dispatch_impl:
     cpi   PRIMARY_OPCODE, SYS_SET_TEXT_FONT
@@ -13881,7 +13899,7 @@ sys_text_raw_impl:
     rcall format_get_char
     tst   r24
     breq  text_finish
-    rcall text_emit_char
+    rcall text_emit_char_raw
     rjmp  .Lsys_text_raw_loop
 
 ; Shared completion for raw and formatted text. The current cursor is captured
@@ -13912,12 +13930,16 @@ text_finish:
     movw  VM_R5, r26
     jmp   seek_and_dispatch_func_disabled
 
-; Text repeated-byte sink. Save formatter-owned registers once, then retain
-; the count and byte across glyph emissions in renderer-preserved registers.
+; Text repeated-byte sink. Save caller-visible formatter state once, then
+; preserve only the count/byte loop state around each renderer invocation.
 text_emit_repeat:
-    push  r12
-    push  r13
-    push  r14
+    ; Exact caller liveness across every repeat site is r18 (flags), r19
+    ; (integer emission state), and r22 (program-pointer digit count). Original
+    ; r12:r15 values are dead once padding/zero emission begins, so r12:r14 may
+    ; become loop state without an outer save.
+    push  r18
+    push  r19
+    push  r22
     movw  r12, r24
     mov   r14, r0
 .Ltext_emit_repeat_loop:
@@ -13927,21 +13949,23 @@ text_emit_repeat:
     sub   r12, ONE
     sbc   r13, ZERO
     mov   r24, r14
-    rcall text_emit_char
+    rcall text_emit_char_repeat
     rjmp  .Ltext_emit_repeat_loop
 .Ltext_emit_repeat_done:
-    pop   r14
-    pop   r13
-    pop   r12
+    pop   r22
+    pop   r19
+    pop   r18
     ret
 
-; Text RAM-span sink. Save formatter-owned registers once, then retain the
-; source pointer and count across glyph emissions in renderer-preserved registers.
+; Text RAM-span sink. Save caller-visible formatter state once, then preserve
+; only the source-pointer/count loop state around each renderer invocation.
 text_emit_ram_span:
+    ; Program-string chunking keeps its outer remaining count in r12:r13, and
+    ; every span caller keeps r18 flags live for post-padding. No span caller
+    ; observes the incoming r14:r15, r19, or r22 values.
     push  r12
     push  r13
-    push  r14
-    push  r15
+    push  r18
     movw  r12, r24
     movw  r14, r30
 .Ltext_emit_ram_span_loop:
@@ -13953,11 +13977,10 @@ text_emit_ram_span:
     movw  r30, r14
     ld    r24, Z+
     movw  r14, r30
-    rcall text_emit_char
+    rcall text_emit_char_span
     rjmp  .Ltext_emit_ram_span_loop
 .Ltext_emit_ram_span_done:
-    pop   r15
-    pop   r14
+    pop   r18
     pop   r13
     pop   r12
     ret
@@ -13966,7 +13989,24 @@ text_emit_ram_span:
 ; framebuffer effect and zero advance. Available records are eight bytes:
 ;   w, h, xoff, yoff, xadv, imageOffset[23:0].
 ; xoff/yoff are signed. y is the baseline, so glyph top is baseline+yoff.
+;
+; The four entries encode the caller liveness contract in r16. Preservation is
+; deferred until a nonempty glyph is actually rendered, so newline, missing,
+; and zero-size glyphs pay no register-save cost. Direct formatter calls keep
+; r18:r19 and r22 live; repeat/span calls keep only their loop state live after
+; saving the surrounding formatter state once at sink entry.
 text_emit_char:
+    ldi   r16, 1                   ; direct: r18:r19, r22
+    rjmp  .Ltext_emit_char_common
+text_emit_char_repeat:
+    ldi   r16, 2                   ; repeat loop: r12:r14
+    rjmp  .Ltext_emit_char_common
+text_emit_char_span:
+    ldi   r16, 3                   ; RAM-span loop: r12:r15
+    rjmp  .Ltext_emit_char_common
+text_emit_char_raw:
+    clr   r16                      ; raw string: no live renderer registers
+.Ltext_emit_char_common:
     cpi   r24, '\n'
     brne  .Ltext_emit_char_lookup
 
@@ -13979,19 +14019,16 @@ text_emit_char:
     adc   r25, ZERO
     sts   data_text_current_y+0, r24
     sts   data_text_current_y+1, r25
+.Ltext_emit_char_lookup_out_of_range:
     ret
 
 .Ltext_emit_char_lookup:
     lds   r25, data_text_glyph_first
     sub   r24, r25
-    brcc  1f
-    ret
-1:
+    brcs  .Ltext_emit_char_lookup_out_of_range
     lds   r25, data_text_num_glyphs
     cp    r24, r25
-    brlo  2f
-    ret
-2:
+    brsh  .Ltext_emit_char_lookup_out_of_range
 
     ; record = glyphTableBase + 8*index, modulo 2^24. Reuse the
     ; fixed reader count as the multiplier.
@@ -14012,16 +14049,61 @@ text_emit_char:
     ; Empty glyphs still apply xadv but do not read image bytes.
     lds   r0, data_text_glyph_record+0
     tst   r0
-    breq  .Ltext_emit_char_advance
+    brne  3f
+    rjmp  .Ltext_emit_char_advance
+3:
     lds   r1, data_text_glyph_record+1
     tst   r1
-    breq  .Ltext_emit_char_advance
+    brne  4f
+    rjmp  .Ltext_emit_char_advance
+4:
 
-    ; r16:r17 are the drawing result registers and have no parser state that
-    ; must survive a glyph. Preserve only formatter-live r18:r19.
+    ; Select the exact live set only after proving this glyph will invoke the
+    ; renderer. The no-preservation renderer may otherwise clobber all r8-r23.
+    tst   r16
+    breq  .Ltext_emit_char_render_raw
+    cpi   r16, 1
+    breq  .Ltext_emit_char_render_direct
+    cpi   r16, 2
+    breq  .Ltext_emit_char_render_repeat
+
+    ; RAM-span loop state: remaining count and next RAM pointer.
+    push  r12
+    push  r13
+    push  r14
+    push  r15
+    rcall .Ltext_render_glyph
+    pop   r15
+    pop   r14
+    pop   r13
+    pop   r12
+    rjmp  .Ltext_emit_char_advance
+
+.Ltext_emit_char_render_repeat:
+    push  r12
+    push  r13
+    push  r14
+    rcall .Ltext_render_glyph
+    pop   r14
+    pop   r13
+    pop   r12
+    rjmp  .Ltext_emit_char_advance
+
+.Ltext_emit_char_render_direct:
     push  r18
     push  r19
+    push  r22
+    rcall .Ltext_render_glyph
+    pop   r22
+    pop   r19
+    pop   r18
+    rjmp  .Ltext_emit_char_advance
 
+.Ltext_emit_char_render_raw:
+    rcall .Ltext_render_glyph
+    rjmp  .Ltext_emit_char_advance
+
+.Ltext_render_glyph:
     movw  r24, r28
     lds   r26, data_text_glyph_record+2
     clr   r27
@@ -14054,10 +14136,8 @@ text_emit_char:
     lds   r27, data_text_mode
     lds   r0, data_text_glyph_record+0
     lds   r1, data_text_glyph_record+1
-    call  draw_bitmap_seek_nonempty_func
-
-    pop   r19
-    pop   r18
+    call  draw_bitmap_seek_nonempty_text_func
+    ret
 
 .Ltext_emit_char_advance:
     lds   r26, data_text_glyph_record+4

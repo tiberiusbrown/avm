@@ -5,8 +5,8 @@
      7745018   constant_arith.c
       522102   crc16.c
      1062266   divmod.c
-       27532   draw_text.c
-       29644   draw_text_P.c
+       26405   draw_text.c
+       28517   draw_text_P.c
       234075   fibonacci.c
      5944733   fir8.c
     11764996   fixed_point.c
@@ -43,7 +43,7 @@
         2060   sys_strncpy.c
         3504   sys_strncpy_p.c
       501299   tail_calls.c
-       73993   text.c
+       71257   text.c
        42226   tilesrect.c
        90028   tilessprite.c
        37688   tilessprite16.c

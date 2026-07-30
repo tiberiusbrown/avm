@@ -11,12 +11,12 @@ SYMBOL TABLE:
 00000ab4 l     F .text	00000012 select_max
 00000ac6 l     F .text	00000004 convert_signed
 00000aca l     F .text	00000004 convert_unsigned
-00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 math.c
+00000000 l    df *ABS*	00000000 runtime.c
 00000100 g     F .text	00000016 _start
 00000116 g     F .text	0000097e avm_test_main
-00000ace g     F .text	00000002 avm_halt
-00000ad0 g     F .text	00000003 sqrtf
+00000ad1 g     F .text	00000002 avm_halt
+00000ace g     F .text	00000003 sqrtf
 
 Disassembly of section .text:
 
@@ -31,7 +31,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 b8 09              call16	avm_halt
+ e1 bb 09              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -1146,7 +1146,7 @@ Disassembly of section .text:
  ef                    ret
 
 <sqrt_exact>:
- d4 2e                 jmp8	sqrtf
+ d4 2c                 jmp8	sqrtf
 
 <select_min>:
  b1                    push16	r1
@@ -1182,9 +1182,9 @@ Disassembly of section .text:
  ff c3 42              ftou16	r4, q2
  ef                    ret
 
-<avm_halt>:
- d4 fe                 jmp8	avm_halt
-
 <sqrtf>:
  ff 6a                 fsqrt	q2
  ef                    ret
+
+<avm_halt>:
+ d4 fe                 jmp8	avm_halt

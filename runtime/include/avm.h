@@ -1,6 +1,7 @@
 #ifndef _AVM_RUNTIME_AVM_H
 #define _AVM_RUNTIME_AVM_H
 
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -8,7 +9,7 @@
 #include <avm/framebuffer.h>
 #include <avm/pgmspace.h>
 
-#define AVM_SYS_INLINE static inline
+#define AVM_SYS_INLINE static __inline__
 
 #ifdef __cplusplus
 #define AVM_CONSTANT constexpr
@@ -210,6 +211,102 @@ AVM_SYS_INLINE bool avm_load(void)
 AVM_SYS_INLINE bool avm_save_exists(void)
 {
     return __avm_save_exists();
+}
+
+/* Text drawing */
+
+typedef struct __attribute__((packed)) {
+  uint8_t w;
+  uint8_t h;
+  int8_t xoff;
+  int8_t yoff;
+  uint8_t xadv;
+  /* Relative to the glyph-table base: font + 3. */
+  uint8_t image_offset[3];
+} avm_font_glyph_t;
+
+/* The packed program-space object contains this three-byte header, followed by
+   num_glyphs avm_font_glyph_t records and then the page-major glyph images. */
+typedef struct __attribute__((packed)) {
+  uint8_t line_height;
+  uint8_t glyph_first;
+  uint8_t num_glyphs;
+  uint8_t data[]; /* glyph table and image data */
+} avm_font_t;
+
+extern uint8_t const AVM_PROGMEM _avm_font_5x7_storage[];
+
+#define AVM_FONT_5X7 ((avm_font_t const AVM_PROGMEM*)_avm_font_5x7_storage)
+
+typedef enum {
+  AVM_TEXT_OVERWRITE = 0,
+  AVM_TEXT_WHITE_TRANSPARENT = 2,
+  AVM_TEXT_BLACK_TRANSPARENT = 3,
+} avm_text_mode_t;
+
+typedef struct {
+  int16_t x;
+  int16_t baseline_y;
+} avm_text_cursor_t;
+
+AVM_SYS_INLINE avm_text_cursor_t
+__avm_text_cursor_from_u32(uint32_t packed) {
+  avm_text_cursor_t result;
+  result.x = (int16_t)(uint16_t)packed;
+  result.baseline_y = (int16_t)(uint16_t)(packed >> 16);
+  return result;
+}
+
+AVM_SYS_INLINE void
+avm_set_text_font(avm_font_t const AVM_PROGMEM *font) {
+  __avm_set_text_font(font);
+}
+
+AVM_SYS_INLINE void avm_set_text_mode(avm_text_mode_t mode) {
+  __avm_set_text_mode((uint8_t)mode);
+}
+
+AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_text(int16_t x, int16_t baseline_y, char const *str) {
+  return __avm_text_cursor_from_u32(
+      __avm_draw_text(x, baseline_y, str));
+}
+
+AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_text_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* str) {
+  return __avm_text_cursor_from_u32(
+      __avm_draw_text_P(x, baseline_y, str));
+}
+
+AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_textfv(int16_t x, int16_t baseline_y, char const *fmt, va_list args) {
+  return __avm_text_cursor_from_u32(
+      __avm_draw_textfv(x, baseline_y, fmt, args));
+}
+
+AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_textfv_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* fmt,
+              va_list args) {
+  return __avm_text_cursor_from_u32(
+      __avm_draw_textfv_P(x, baseline_y, fmt, args));
+}
+
+AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_textf(int16_t x, int16_t baseline_y, char const *fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  uint32_t packed = __avm_draw_textfv(x, baseline_y, fmt, args);
+  va_end(args);
+  return __avm_text_cursor_from_u32(packed);
+}
+
+AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_textf_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* fmt, ...) {
+  va_list args;
+  va_start(args, fmt);
+  uint32_t packed = __avm_draw_textfv_P(x, baseline_y, fmt, args);
+  va_end(args);
+  return __avm_text_cursor_from_u32(packed);
 }
 
 #ifdef __cplusplus

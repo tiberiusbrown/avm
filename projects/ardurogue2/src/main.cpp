@@ -16,12 +16,15 @@ void loop()
 
     avm_draw_filled_rect_white(x, y, 20, 20);
 
+    avm_draw_textf_P(10, 50, F("millis: %u"), avm_millis());
+
     avm_display(AVM_CLEAR_BUFFER);
 }
 
 extern "C" int main()
 {
     avm_set_frame_rate(50);
+    avm_set_text_font(AVM_FONT_5X7);
     while(true)
         loop();
     return 0;

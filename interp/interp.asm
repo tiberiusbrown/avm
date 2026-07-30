@@ -50,7 +50,8 @@
 ;;     0x0A05–0x0A08  millisecond counter (little-endian uint32)
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
-;;     0x0A0E–...     call-lifetime SYS workspace beginning at data_end_private
+;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
+;;     0x0A15–...     call-lifetime SYS workspace beginning at data_end_private
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -63,10 +64,15 @@
 #define data_sprite_ptr         (data_millis+4)
 #define data_sprite_width       (data_sprite_ptr+3)
 #define data_sprite_height      (data_sprite_width+1)
+#define data_text_glyph_table   (data_sprite_height+1)
+#define data_text_line_height   (data_text_glyph_table+3)
+#define data_text_glyph_first   (data_text_line_height+1)
+#define data_text_num_glyphs    (data_text_glyph_first+1)
+#define data_text_mode          (data_text_num_glyphs+1)
 
 ; First byte after persistent interpreter-private state. Temporary, nonnested
 ; SYS services may define aliasing call-lifetime workspaces beginning here.
-#define data_end_private             (data_sprite_height+1)
+#define data_end_private             (data_text_mode+1)
 
 ; Native formatter workspace. This storage is valid only while VS(N)PRINTF is
 ; executing; future nonreentrant SYS services may alias the same range.
@@ -93,14 +99,27 @@
 #define data_format_read_source         (data_end_private+56)
 #define data_format_scratch_end         (data_end_private+59)
 
-.if data_format_scratch_end > 0x0B00
-    .error "Formatter workspace overlaps memory above interpreter-private SRAM"
+; Text drawing aliases the formatter workspace and extends it with cursor,
+; glyph-record, and text-sink iteration state. Formatted text needs both areas
+; simultaneously, so this suffix must not overlap the formatter fields above.
+#define data_text_initial_x              (data_format_scratch_end+0)
+#define data_text_current_x              (data_format_scratch_end+2)
+#define data_text_current_y              (data_format_scratch_end+4)
+#define data_text_glyph_record           (data_format_scratch_end+6)
+#define data_text_work_ptr               (data_format_scratch_end+14)
+#define data_text_work_count             (data_format_scratch_end+16)
+#define data_text_work_byte              (data_format_scratch_end+18)
+#define data_text_scratch_end            (data_format_scratch_end+19)
+
+.if data_text_scratch_end > 0x0B00
+    .error "Formatter/text workspace overlaps memory above interpreter-private SRAM"
 .endif
 
 #define FORMAT_STATUS_SOURCE_PROGRAM 0
 #define FORMAT_STATUS_SIZE_NONZERO   1
 #define FORMAT_STATUS_COUNT_OVERFLOW 2
 #define FORMAT_STATUS_FATAL_ERROR    3
+#define FORMAT_STATUS_SINK_TEXT      4
 
 #define FORMAT_FLAG_LEFT             0
 #define FORMAT_FLAG_PLUS             1
@@ -698,6 +717,12 @@
 #define SYS_SAVE_EXISTS              0x2E
 #define SYS_VSNPRINTF                 0x2F
 #define SYS_VSNPRINTF_P               0x30
+#define SYS_SET_TEXT_FONT              0x31
+#define SYS_SET_TEXT_MODE              0x32
+#define SYS_DRAW_TEXT                  0x33
+#define SYS_DRAW_TEXT_P                0x34
+#define SYS_DRAW_TEXTFV                0x35
+#define SYS_DRAW_TEXTFV_P              0x36
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3180,6 +3205,11 @@ sys_dispatch_func:
 .if (SYS_VSNPRINTF != 0x2F) || (SYS_VSNPRINTF_P != 0x30)
     .error "formatting SYS services must occupy contiguous entries 0x2F-0x30"
 .endif
+.if (SYS_SET_TEXT_FONT != 0x31) || (SYS_SET_TEXT_MODE != 0x32) || \
+    (SYS_DRAW_TEXT != 0x33) || (SYS_DRAW_TEXT_P != 0x34) || \
+    (SYS_DRAW_TEXTFV != 0x35) || (SYS_DRAW_TEXTFV_P != 0x36)
+    .error "text SYS services must occupy contiguous entries 0x31-0x36"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3210,7 +3240,8 @@ sys_dispatch_table:
     sys_entries 2,   sys_draw_filled_rect_func
     sys_entries 6,   sys_platform_func
     sys_entries 2,   sys_format_func
-    sys_entries 207, invalid_syscall_func
+    sys_entries 6,   sys_text_func
+    sys_entries 201, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3263,6 +3294,11 @@ sys_platform_func:
 sys_format_func:
     subi  PRIMARY_OPCODE, SYS_VSNPRINTF
     jmp   sys_format_impl
+
+; The six text services share one far dispatcher. PRIMARY_OPCODE retains the
+; service number until that dispatcher normalizes raw/formatted source mode.
+sys_text_func:
+    jmp   sys_text_dispatch_impl
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
@@ -7012,6 +7048,9 @@ startup_func:
     sts  data_millis+2, ZERO
     sts  data_millis+3, ZERO
     sts  data_sprite_width, ZERO
+    sts  data_text_line_height, ZERO
+    ldi  r26, SPRITE_MODE_SELF_MASKED
+    sts  data_text_mode, r26
 
     ; Initialize persistent architectural state. VM_FLAGS lives in low-I/O
     ; GPIOR0; VM PC is loaded from the image header below.
@@ -12212,16 +12251,22 @@ sys_save_exists_impl:
 ; Native formatting SYS services
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
-; Fixed service ABI:
+; Buffer service ABI:
 ;   r4 = destination data pointer / signed result
 ;   r5 = destination size (preserved)
 ;   r2 = va_list data pointer (preserved)
 ;   q3 = format pointer container (preserved)
 ;
-; SYS_VSNPRINTF uses r6 as a data-space format pointer. SYS_VSNPRINTF_P uses
-; q3[23:0] as a program-space format pointer and ignores q3[31:24]. Both
-; services abandon the speculative following-opcode fetch, own the FX stream
-; for the complete call, and restart bytecode dispatch unconditionally.
+; Text-formatted entry ABI:
+;   r4 = initial x / final x
+;   r5 = initial baseline y / final baseline y
+;   r2 = va_list data pointer (preserved)
+;   r6 or q3 = RAM or program-space format pointer (preserved)
+;
+; SYS_VSNPRINTF and draw_textfv use r6 as a data-space format pointer.
+; SYS_VSNPRINTF_P and draw_textfv_P use q3[23:0] and ignore q3[31:24]. All
+; formatted services abandon the speculative following-opcode fetch, own the FX
+; stream for the complete call, and restart bytecode dispatch unconditionally.
 ;
 ; Working register allocation while formatting:
 ;   r8:r9    produced byte count (modulo 2^16; overflow status is sticky)
@@ -12251,8 +12296,9 @@ sys_format_impl:
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
 
-    ; Preserve every architectural register except result r4. Native Y is the
-    ; architectural VM stack pointer and is reused as the output cursor.
+    ; Preserve every architectural register outside the selected result. Native
+    ; Y is the architectural VM stack pointer and is reused only by the bounded
+    ; buffer sink; text cursors reside in private SRAM.
     push  r8
     push  r9
     push  r10
@@ -12270,14 +12316,13 @@ sys_format_impl:
     push  r28
     push  r29
 
-    movw  r28, VM_R4
-
-    ; Preserve the explicit va_list cursor in call-lifetime workspace.
+    ; Preserve the explicit va_list cursor in call-lifetime workspace. Text
+    ; formatting deliberately uses the same r2 ABI as vsnprintf.
     sts   data_format_arg_ptr+0, VM_R2L
     sts   data_format_arg_ptr+1, VM_R2H
 
-    ; Initialize both possible format sources. format_get_char alone selects
-    ; and advances the active source.
+    ; Initialize both possible format sources. RAM formats use r6; program
+    ; formats use q3, matching vsnprintf/vsnprintf_P exactly.
     sts   data_format_ram_ptr+0, VM_R6L
     sts   data_format_ram_ptr+1, VM_R6H
     sts   data_format_program_next+0, VM_R6L
@@ -12286,13 +12331,18 @@ sys_format_impl:
     sts   data_format_cache_index, ZERO
     sts   data_format_cache_length, ZERO
 
+    lds   r24, data_format_status
+    sbrc  r24, FORMAT_STATUS_SINK_TEXT
+    rjmp  .Lformat_text_setup
+
+    ; Bounded-buffer sink setup.
+    movw  r28, VM_R4
     clr   r8
     clr   r9
     movw  r10, VM_R5
 
     ; Retain only source mode, then reserve one byte for the final NUL when the
     ; original destination size is nonzero.
-    lds   r24, data_format_status
     andi  r24, (1 << FORMAT_STATUS_SOURCE_PROGRAM)
     mov   r25, r10
     or    r25, r11
@@ -12304,11 +12354,34 @@ sys_format_impl:
     sts   data_format_status, r24
     rjmp  format_core
 
+.Lformat_text_setup:
+    ; Text output retains its cursor in private SRAM because the parser uses
+    ; r4/r5's native backing registers as conversion scratch. line_height==0
+    ; is the sole no-font sentinel and avoids parsing or consuming arguments.
+    sts   data_text_initial_x+0, VM_R4L
+    sts   data_text_initial_x+1, VM_R4H
+    sts   data_text_current_x+0, VM_R4L
+    sts   data_text_current_x+1, VM_R4H
+    sts   data_text_current_y+0, VM_R5L
+    sts   data_text_current_y+1, VM_R5H
+    clr   r8
+    clr   r9
+    clr   r10
+    clr   r11
+    lds   r24, data_text_line_height
+    tst   r24
+    brne  1f
+    jmp   text_finish
+1:
+    rjmp  format_core
+
 ; Common normal/error finish. Preserve generated output and always terminate a
 ; nonzero-size destination. FX is unconditionally closed and bytecode fetch is
 ; restarted from the already-advanced VM_PC.
 format_finish:
     lds   r26, data_format_status
+    sbrc  r26, FORMAT_STATUS_SINK_TEXT
+    rjmp  text_finish
     sbrs  r26, FORMAT_STATUS_SIZE_NONZERO
     rjmp  .Lformat_finish_result
     st    Y, ZERO
@@ -12375,6 +12448,9 @@ format_add_count:
 
 ; Input r24=byte.
 format_emit_char:
+    lds   r25, data_format_status
+    sbrc  r25, FORMAT_STATUS_SINK_TEXT
+    rjmp  text_emit_char
     mov   r0, r24
     ldi   r24, 1
     clr   r25
@@ -12383,6 +12459,9 @@ format_emit_char:
 ; Inputs r25:r24=count, r0=byte. Add complete logical count, then store only
 ; min(count,write_remaining) bytes.
 format_emit_repeat:
+    lds   r26, data_format_status
+    sbrc  r26, FORMAT_STATUS_SINK_TEXT
+    rjmp  text_emit_repeat
     rcall format_add_count
 
     cp    r10, r24
@@ -12409,6 +12488,9 @@ format_emit_repeat:
 ; Inputs Z=RAM source and r25:r24=count. Logical count is always added; source
 ; bytes are loaded only for the portion that fits in the destination.
 format_emit_ram_span:
+    lds   r26, data_format_status
+    sbrc  r26, FORMAT_STATUS_SINK_TEXT
+    rjmp  text_emit_ram_span
     rcall format_add_count
 
     cp    r10, r24
@@ -13631,4 +13713,386 @@ format_emit_integer_field:
     brne  .Lformat_integer_emit_done
     rcall format_emit_post_padding
 .Lformat_integer_emit_done:
+    ret
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Native font and text drawing SYS services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Persistent state stores only the selected glyph-table base, three header
+; bytes, and renderer mode. Glyph image offsets are relative to the cached
+; glyph-table base, so image addresses require only a 24-bit addition. A zero
+; line_height is the sole no-font sentinel.
+;
+; Drawing ABIs:
+;   draw_text:       r4=x, r5=baseline y, r6=RAM string
+;   draw_text_P:     r4=x, r5=baseline y, q3=program string
+;   draw_textfv:     r4=x, r5=baseline y, r6=RAM format, r2=va_list
+;   draw_textfv_P:   r4=x, r5=baseline y, q3=program format, r2=va_list
+;
+; All four return final x in r4 and final baseline y in r5. Only '\n' has
+; special treatment. Every other emitted byte, including '\r' and formatted
+; NUL from %c, undergoes ordinary glyph lookup. Raw source terminators are
+; consumed by their source loops and never delivered to the glyph sink.
+;
+; All FX access remains open-loop. Header and glyph-record reads use the shared
+; fixed-count reader; program strings/formats use the formatter's 16-byte
+; cache; glyph images use draw_bitmap_seek_func. No path polls SPSR/SPIF.
+
+sys_text_dispatch_impl:
+    cpi   PRIMARY_OPCODE, SYS_SET_TEXT_FONT
+    brne  1f
+    jmp   sys_set_text_font_impl
+1:
+    cpi   PRIMARY_OPCODE, SYS_SET_TEXT_MODE
+    brne  2f
+    jmp   sys_set_text_mode_impl
+2:
+    cpi   PRIMARY_OPCODE, SYS_DRAW_TEXT
+    brne  3f
+    jmp   .Lsys_text_raw_ram
+3:
+    cpi   PRIMARY_OPCODE, SYS_DRAW_TEXT_P
+    brne  4f
+    jmp   .Lsys_text_raw_program
+4:
+    cpi   PRIMARY_OPCODE, SYS_DRAW_TEXTFV
+    brne  5f
+    jmp   .Lsys_text_format_ram
+5:
+    cpi   PRIMARY_OPCODE, SYS_DRAW_TEXTFV_P
+    brne  6f
+    jmp   .Lsys_text_format_program
+6:
+    jmp   invalid_syscall_func
+
+.Lsys_text_raw_ram:
+    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
+    jmp   sys_text_raw_impl
+.Lsys_text_raw_program:
+    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
+                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
+    jmp   sys_text_raw_impl
+.Lsys_text_format_ram:
+    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_TEXT)
+    jmp   sys_format_impl
+.Lsys_text_format_program:
+    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
+                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
+    jmp   sys_format_impl
+
+; q2 contains the image-relative font address. A null logical pointer merely
+; clears line_height and preserves the speculative bytecode transaction. For a
+; nonnull font, cache font+3 and read the three-byte header. line_height is
+; committed last so drawing code never observes new availability with stale
+; table metadata. q2[31:24] is ignored and the complete q2 is preserved.
+sys_set_text_font_impl:
+    movw  r24, VM_R4
+    mov   r26, VM_R5L
+    mov   r27, r24
+    or    r27, r25
+    or    r27, r26
+    brne  .Lsys_set_text_font_nonnull
+    sts   data_text_line_height, ZERO
+    jmp   cluster_tail_18
+
+.Lsys_set_text_font_nonnull:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    adiw  r24, 3
+    adc   r26, ZERO
+    sts   data_text_glyph_table+0, r24
+    sts   data_text_glyph_table+1, r25
+    sts   data_text_glyph_table+2, r26
+
+    movw  r24, VM_R4
+    mov   r26, VM_R5L
+    ldi   r30, lo8(data_text_glyph_record)
+    ldi   r31, hi8(data_text_glyph_record)
+    ldi   r27, 3
+    mov   r0, r27
+    mov   r1, ZERO
+    call  fx_read_program_bytes_func
+
+    lds   r24, data_text_glyph_record+1
+    sts   data_text_glyph_first, r24
+    lds   r24, data_text_glyph_record+2
+    sts   data_text_num_glyphs, r24
+    lds   r24, data_text_glyph_record+0
+    sts   data_text_line_height, r24
+    jmp   seek_and_dispatch_func_disabled
+
+; Values 0, 2, and 3 map directly to the raw sprite renderer's overwrite,
+; self-masked (transparent white), and erase (transparent black) modes.
+; Invalid values are deliberately ignored and leave the prior mode unchanged.
+sys_set_text_mode_impl:
+    mov   r24, VM_R4L
+    tst   r24
+    breq  .Lsys_set_text_mode_store
+    cpi   r24, SPRITE_MODE_SELF_MASKED
+    breq  .Lsys_set_text_mode_store
+    cpi   r24, SPRITE_MODE_ERASE
+    brne  .Lsys_set_text_mode_done
+.Lsys_set_text_mode_store:
+    sts   data_text_mode, r24
+.Lsys_set_text_mode_done:
+    jmp   cluster_tail_18
+
+; Raw RAM/program string entry. The save set exactly matches sys_format_impl so
+; both raw and formatted paths can share text_finish. VM_PC is advanced once,
+; and the speculative following byte is discarded before any independent FX
+; transaction begins.
+sys_text_raw_impl:
+    sts   data_format_status, PRIMARY_OPCODE
+    in    r24, SPDR
+    fx_disable
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+    push  r8
+    push  r9
+    push  r10
+    push  r11
+    push  r12
+    push  r13
+    push  r14
+    push  r15
+    push  r18
+    push  r19
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    push  r28
+    push  r29
+
+    sts   data_text_initial_x+0, VM_R4L
+    sts   data_text_initial_x+1, VM_R4H
+    sts   data_text_current_x+0, VM_R4L
+    sts   data_text_current_x+1, VM_R4H
+    sts   data_text_current_y+0, VM_R5L
+    sts   data_text_current_y+1, VM_R5H
+
+    sts   data_format_ram_ptr+0, VM_R6L
+    sts   data_format_ram_ptr+1, VM_R6H
+    sts   data_format_program_next+0, VM_R6L
+    sts   data_format_program_next+1, VM_R6H
+    sts   data_format_program_next+2, VM_R7L
+    sts   data_format_cache_index, ZERO
+    sts   data_format_cache_length, ZERO
+
+    lds   r24, data_text_line_height
+    tst   r24
+    breq  text_finish
+
+.Lsys_text_raw_loop:
+    rcall format_get_char
+    tst   r24
+    breq  text_finish
+    rcall text_emit_char
+    rjmp  .Lsys_text_raw_loop
+
+; Shared completion for raw and formatted text. The current cursor is captured
+; before restoring the architectural register file, then installed as q2 after
+; restoration. r6/r7, r2, CC, and SP therefore retain their input values.
+text_finish:
+    fx_disable
+    lds   r24, data_text_current_x+0
+    lds   r25, data_text_current_x+1
+    lds   r26, data_text_current_y+0
+    lds   r27, data_text_current_y+1
+    pop   r29
+    pop   r28
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r19
+    pop   r18
+    pop   r15
+    pop   r14
+    pop   r13
+    pop   r12
+    pop   r11
+    pop   r10
+    pop   r9
+    pop   r8
+    movw  VM_R4, r24
+    movw  VM_R5, r26
+    jmp   seek_and_dispatch_func_disabled
+
+; Text version of the repeated-byte formatter sink. The count and byte live in
+; SRAM because one glyph emission owns r0:r1 and r24-r31.
+text_emit_repeat:
+    sts   data_text_work_count+0, r24
+    sts   data_text_work_count+1, r25
+    sts   data_text_work_byte, r0
+.Ltext_emit_repeat_loop:
+    lds   r24, data_text_work_count+0
+    lds   r25, data_text_work_count+1
+    mov   r26, r24
+    or    r26, r25
+    breq  .Ltext_emit_repeat_done
+    subi  r24, 1
+    sbci  r25, 0
+    sts   data_text_work_count+0, r24
+    sts   data_text_work_count+1, r25
+    lds   r24, data_text_work_byte
+    rcall text_emit_char
+    rjmp  .Ltext_emit_repeat_loop
+.Ltext_emit_repeat_done:
+    ret
+
+; Text version of the RAM-span formatter sink. This covers literal digit
+; buffers, RAM strings, and chunks read for %S. It intentionally emits every
+; counted byte; raw NUL termination is handled only by raw source loops.
+text_emit_ram_span:
+    sts   data_text_work_ptr+0, r30
+    sts   data_text_work_ptr+1, r31
+    sts   data_text_work_count+0, r24
+    sts   data_text_work_count+1, r25
+.Ltext_emit_ram_span_loop:
+    lds   r24, data_text_work_count+0
+    lds   r25, data_text_work_count+1
+    mov   r26, r24
+    or    r26, r25
+    breq  .Ltext_emit_ram_span_done
+    subi  r24, 1
+    sbci  r25, 0
+    sts   data_text_work_count+0, r24
+    sts   data_text_work_count+1, r25
+    lds   r30, data_text_work_ptr+0
+    lds   r31, data_text_work_ptr+1
+    ld    r24, Z+
+    sts   data_text_work_ptr+0, r30
+    sts   data_text_work_ptr+1, r31
+    rcall text_emit_char
+    rjmp  .Ltext_emit_ram_span_loop
+.Ltext_emit_ram_span_done:
+    ret
+
+; Emit one logical text byte. Only newline is special. Missing glyphs have no
+; framebuffer effect and zero advance. Available records are eight bytes:
+;   w, h, xoff, yoff, xadv, imageOffset[23:0].
+; xoff/yoff are signed. y is the baseline, so glyph top is baseline+yoff.
+text_emit_char:
+    cpi   r24, '\n'
+    brne  .Ltext_emit_char_lookup
+
+    lds   r24, data_text_initial_x+0
+    lds   r25, data_text_initial_x+1
+    sts   data_text_current_x+0, r24
+    sts   data_text_current_x+1, r25
+    lds   r24, data_text_current_y+0
+    lds   r25, data_text_current_y+1
+    lds   r26, data_text_line_height
+    add   r24, r26
+    adc   r25, ZERO
+    sts   data_text_current_y+0, r24
+    sts   data_text_current_y+1, r25
+    ret
+
+.Ltext_emit_char_lookup:
+    lds   r25, data_text_glyph_first
+    sub   r24, r25
+    brcc  1f
+    ret
+1:
+    lds   r25, data_text_num_glyphs
+    cp    r24, r25
+    brlo  2f
+    ret
+2:
+
+    ; record = glyphTableBase + 8*index, modulo 2^24.
+    mov   r0, r24
+    clr   r1
+    lsl   r0
+    rol   r1
+    lsl   r0
+    rol   r1
+    lsl   r0
+    rol   r1
+    lds   r24, data_text_glyph_table+0
+    lds   r25, data_text_glyph_table+1
+    lds   r26, data_text_glyph_table+2
+    add   r24, r0
+    adc   r25, r1
+    adc   r26, ZERO
+    ldi   r30, lo8(data_text_glyph_record)
+    ldi   r31, hi8(data_text_glyph_record)
+    ldi   r27, 8
+    mov   r0, r27
+    mov   r1, ZERO
+    call  fx_read_program_bytes_func
+
+    ; Empty glyphs still apply xadv but do not read image bytes.
+    lds   r0, data_text_glyph_record+0
+    tst   r0
+    breq  .Ltext_emit_char_advance
+    lds   r1, data_text_glyph_record+1
+    tst   r1
+    breq  .Ltext_emit_char_advance
+
+    ; Save the parser's live r4/r5 backing bytes before installing draw
+    ; coordinates. The raw renderer preserves the glyph coordinates it sees;
+    ; these four outer saves restore the formatter/raw-loop state afterward.
+    push  r16
+    push  r17
+    push  r18
+    push  r19
+
+    lds   r24, data_text_current_x+0
+    lds   r25, data_text_current_x+1
+    lds   r26, data_text_glyph_record+2
+    clr   r27
+    sbrc  r26, 7
+    com   r27
+    add   r24, r26
+    adc   r25, r27
+    movw  VM_R4, r24
+
+    lds   r24, data_text_current_y+0
+    lds   r25, data_text_current_y+1
+    lds   r26, data_text_glyph_record+3
+    clr   r27
+    sbrc  r26, 7
+    com   r27
+    add   r24, r26
+    adc   r25, r27
+    movw  VM_R5, r24
+
+    ; image = glyphTableBase + image_offset, modulo 2^24.
+    lds   r24, data_text_glyph_table+0
+    lds   r25, data_text_glyph_table+1
+    lds   r26, data_text_glyph_table+2
+    lds   r30, data_text_glyph_record+5
+    add   r24, r30
+    lds   r30, data_text_glyph_record+6
+    adc   r25, r30
+    lds   r30, data_text_glyph_record+7
+    adc   r26, r30
+    lds   r27, data_text_mode
+    lds   r0, data_text_glyph_record+0
+    lds   r1, data_text_glyph_record+1
+    call  draw_bitmap_seek_func
+
+    pop   r19
+    pop   r18
+    pop   r17
+    pop   r16
+
+.Ltext_emit_char_advance:
+    lds   r24, data_text_current_x+0
+    lds   r25, data_text_current_x+1
+    lds   r26, data_text_glyph_record+4
+    add   r24, r26
+    adc   r25, ZERO
+    sts   data_text_current_x+0, r24
+    sts   data_text_current_x+1, r25
+.Ltext_emit_char_done:
     ret

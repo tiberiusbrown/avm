@@ -5,18 +5,18 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 sys_memcmp_p.c
 00000100 l     O .data	00000040 lhs
-00000354 l     O .rodata	00000040 equal
+0000034e l     O .rodata	00000040 equal
 00000140 l     O .data	00000002 n0
 00000142 l     O .data	00000002 n1
 00000144 l     O .data	00000002 n64
-00000394 l     O .rodata	00000040 first_diff
-000003d4 l     O .rodata	00000040 last_diff
+0000038e l     O .rodata	00000040 first_diff
+000003ce l     O .rodata	00000040 last_diff
 00000146 l     O .data	00000002 n16
 00000148 l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
-00000216 g     F .text	0000013c avm_test_main
-00000352 g     F .text	00000002 avm_halt
+00000216 g     F .text	00000136 avm_test_main
+0000034c g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -31,7 +31,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 3c 01              call16	avm_halt
+ e1 36 01              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -104,9 +104,8 @@ Disassembly of section .text:
  f0 07 00 01           ldi16	r3, 0x100
  f0 6b 86              st32	[r3], q2
  d7 01                 sys	debug_break
- c6 54 03              ldi16	r6, 0x354
+ c6 4e 03              ldi16	r6, 0x34e
  c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
  f0 55 40 01           ldm16	r5, [0x140]
  f1 23                 mov	r4, r3
  d7 13                 sys	memcmp_p
@@ -121,17 +120,15 @@ Disassembly of section .text:
  f4 11                 ldsp16	r5, [sp+0x4]
  d7 13                 sys	memcmp_p
  f4 40                 stsp16	[sp+0x0], r4
- c6 94 03              ldi16	r6, 0x394
+ c6 8e 03              ldi16	r6, 0x38e
  c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
  f0 54 44 01           ldm16	r4, [0x144]
  f1 23                 mov	r4, r3
  f4 11                 ldsp16	r5, [sp+0x4]
  d7 13                 sys	memcmp_p
  f1 14                 mov	r2, r4
- c6 d4 03              ldi16	r6, 0x3d4
+ c6 ce 03              ldi16	r6, 0x3ce
  c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
  f0 54 44 01           ldm16	r4, [0x144]
  f1 23                 mov	r4, r3
  f4 11                 ldsp16	r5, [sp+0x4]

@@ -9,12 +9,12 @@ SYMBOL TABLE:
 00000100 l     O .data	00000020 signed_bytes
 00000120 l     O .data	00000020 unsigned_bytes
 00000200 l     O .data	00000004 mixed_width_result
-00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
+00000000 l    df *ABS*	00000000 runtime.c
 00000300 g     F .text	00000016 _start
 00000316 g     F .text	0000011e avm_test_main
-00000434 g     F .text	00000002 avm_halt
-00000436 g     F .text	000000b1 __avm_mulsi3
+000004e5 g     F .text	00000002 avm_halt
+00000434 g     F .text	000000b1 __avm_mulsi3
 
 Disassembly of section .text:
 
@@ -29,7 +29,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 1e 01              call16	avm_halt
+ e1 cf 01              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -104,7 +104,7 @@ Disassembly of section .text:
  fa cf                 asr16i	r5, 0xf
  c6 01 01              ldi16	r6, 0x101
  af                    xor	r7, r7
- d5 7e                 call8	__avm_mulsi3
+ d5 7c                 call8	__avm_mulsi3
  f4 50                 stsp16	[sp+0x4], r4
  f4 59                 stsp16	[sp+0x6], r5
  ed 96 20              ld16	r4, [r3+0]
@@ -166,9 +166,6 @@ Disassembly of section .text:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
-
-<avm_halt>:
- d4 fe                 jmp8	avm_halt
 
 <__avm_mulsi3>:
  b1                    push16	r1
@@ -270,3 +267,6 @@ Disassembly of section .text:
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
+
+<avm_halt>:
+ d4 fe                 jmp8	avm_halt

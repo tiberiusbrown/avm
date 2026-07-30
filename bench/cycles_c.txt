@@ -31,16 +31,17 @@
       485361   struct_copy.c
       936377   switch.c
         2864   sys_memcmp.c
-        5364   sys_memcmp_p.c
+        5253   sys_memcmp_p.c
         2512   sys_strcmp.c
-        5897   sys_strcmp_p.c
+        5366   sys_strcmp_p.c
         3009   sys_strlen.c
-        7209   sys_strlen_p.c
+        6990   sys_strlen_p.c
         2190   sys_strncat.c
-        3559   sys_strncat_p.c
+        3448   sys_strncat_p.c
         2060   sys_strncpy.c
-        3680   sys_strncpy_p.c
+        3504   sys_strncpy_p.c
       501299   tail_calls.c
+       73993   text.c
        42226   tilesrect.c
        90028   tilessprite.c
        37688   tilessprite16.c

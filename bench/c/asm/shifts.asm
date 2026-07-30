@@ -9,13 +9,13 @@ SYMBOL TABLE:
 00000140 l     O .data	00000010 counts
 00000150 l     O .data	00000020 values32
 00000170 l     O .data	00000004 shift_result
-00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
+00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000016 _start
 00000216 g     F .text	00000264 avm_test_main
-0000047a g     F .text	00000002 avm_halt
-0000047c g     F .text	00000024 __avm_ashlsi3
-000004a0 g     F .text	00000024 __avm_lshrsi3
+000004c2 g     F .text	00000002 avm_halt
+0000047a g     F .text	00000024 __avm_ashlsi3
+0000049e g     F .text	00000024 __avm_lshrsi3
 
 Disassembly of section .text:
 
@@ -30,7 +30,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 64 02              call16	avm_halt
+ e1 ac 02              call16	avm_halt
 
 <avm_test_main>:
  b3                    push16	r3
@@ -234,14 +234,14 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f4 4a                 stsp16	[sp+0x2], r6
  f4 53                 stsp16	[sp+0x4], r7
- d5 40                 call8	__avm_ashlsi3
+ d5 3e                 call8	__avm_ashlsi3
  f2 66                 mov32	q1, q2
  f7 64                 add32	q1, q0
  f4 18                 ldsp16	r4, [sp+0x6]
  f4 21                 ldsp16	r5, [sp+0x8]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
- d5 56                 call8	__avm_lshrsi3
+ d5 54                 call8	__avm_lshrsi3
  f4 32                 ldsp16	r6, [sp+0xc]
  f2 62                 mov32	q0, q2
  f4 28                 ldsp16	r4, [sp+0xa]
@@ -268,9 +268,6 @@ Disassembly of section .text:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
-
-<avm_halt>:
- d4 fe                 jmp8	avm_halt
 
 <__avm_ashlsi3>:
  b1                    push16	r1
@@ -315,3 +312,6 @@ Disassembly of section .text:
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
+
+<avm_halt>:
+ d4 fe                 jmp8	avm_halt

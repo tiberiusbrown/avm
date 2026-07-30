@@ -4,6 +4,17 @@ set(AVM_RUNTIME_OBJECT_DIR "${AVM_RUNTIME_BUILD_DIR}/objects")
 set(AVM_RUNTIME_INCLUDE_DIR "${AVM_RUNTIME_SOURCE_DIR}/include")
 set(AVM_RUNTIME_MIR_BUILD_DIR "${AVM_RUNTIME_BUILD_DIR}/mir")
 
+set(RUNTIME_SOURCES
+    avm
+    font_5x7
+    integer
+    math
+    pgmspace
+    runtime
+    stdio
+    string
+)
+
 set(AVM_SYSROOT_DIR
     "${CMAKE_BINARY_DIR}/avm-sysroot"
     CACHE PATH "Staged AVM target sysroot")
@@ -53,7 +64,7 @@ avm_add_object(
 )
 
 set(AVM_RUNTIME_LIBRARY_OBJECTS)
-foreach(RUNTIME_SOURCE avm runtime integer math pgmspace stdio string)
+foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
     avm_add_object(
         OUTPUT "${RUNTIME_OBJECT}"

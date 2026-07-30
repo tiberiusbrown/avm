@@ -4,23 +4,23 @@ C:/Users/Brown/Documents/GitHub/avm/build/bench/c/sys_strncat_p.elf:	file format
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    df *ABS*	00000000 sys_strncat_p.c
-00000292 l     O .rodata	00000004 source_short
+0000028c l     O .rodata	00000004 source_short
 00000100 l     O .data	00000010 destination_n0
 00000110 l     O .data	00000002 n0
-00000296 l     O .rodata	00000001 source_empty
+00000290 l     O .rodata	00000001 source_empty
 00000112 l     O .data	00000008 destination_empty_empty
 0000011a l     O .data	00000002 n8
 0000011c l     O .data	00000010 destination_empty_short
 0000012c l     O .data	00000018 destination_short_short
-00000297 l     O .rodata	00000021 source_long
+00000291 l     O .rodata	00000021 source_long
 00000144 l     O .data	00000018 destination_truncate
 0000015c l     O .data	00000002 n4
 0000015e l     O .data	00000030 destination_long_scan
 0000018e l     O .data	00000002 benchmark_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000200 g     F .text	00000015 _start
-00000215 g     F .text	0000007b avm_test_main
-00000290 g     F .text	00000002 avm_halt
+00000215 g     F .text	00000075 avm_test_main
+0000028a g     F .text	00000002 avm_halt
 
 Disassembly of section .text:
 
@@ -35,23 +35,21 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- d5 7b                 call8	avm_halt
+ d5 75                 call8	avm_halt
 
 <avm_test_main>:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
  d7 01                 sys	debug_break
- f0 04 92 02           ldi16	r0, 0x292
+ f0 04 8c 02           ldi16	r0, 0x28c
  f0 01 00              ldi8	r1, 0x0
- f1 71                 zext8	r1
  c4 00 01              ldi16	r4, 0x100
  f0 55 10 01           ldm16	r5, [0x110]
  f2 6a                 mov32	q3, q0
  d7 17                 sys	strncat_p
- c6 96 02              ldi16	r6, 0x296
+ c6 90 02              ldi16	r6, 0x290
  c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
  c4 12 01              ldi16	r4, 0x112
  f0 55 1a 01           ldm16	r5, [0x11a]
  d7 17                 sys	strncat_p
@@ -63,9 +61,8 @@ Disassembly of section .text:
  f0 54 1a 01           ldm16	r4, [0x11a]
  f1 22                 mov	r4, r2
  d7 17                 sys	strncat_p
- c6 97 02              ldi16	r6, 0x297
+ c6 91 02              ldi16	r6, 0x291
  c3 00                 ldi8	r7, 0x0
- f1 77                 zext8	r7
  c4 44 01              ldi16	r4, 0x144
  f0 55 5c 01           ldm16	r5, [0x15c]
  d7 17                 sys	strncat_p

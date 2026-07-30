@@ -104,8 +104,7 @@
 ; suffix must not overlap the formatter fields above.
 #define data_text_initial_x              (data_format_scratch_end+0)
 #define data_text_current_y              (data_format_scratch_end+2)
-#define data_text_glyph_record           (data_format_scratch_end+4)
-#define data_text_scratch_end            (data_format_scratch_end+12)
+#define data_text_scratch_end            (data_format_scratch_end+4)
 
 .if data_text_scratch_end > 0x0B00
     .error "Formatter/text workspace overlaps memory above interpreter-private SRAM"
@@ -10674,6 +10673,10 @@ draw_bitmap_seek_nonempty_func:
     cpc   ZERO, r31
     brge  .Lsprite_raw_reject
 
+; Internal renderer entry for text callers that have already proved nonempty
+; dimensions and complete screen intersection. The caller must set SREG.T to
+; select the no-preservation contract before entering.
+draw_bitmap_seek_visible_text_func:
 .Lsprite_raw_visible:
     ; Start the selected-frame command before preserving architectural inputs.
     ; The sixteen pushes and the clipping work occupy the command-transfer
@@ -13752,10 +13755,13 @@ format_emit_integer_field:
 ; NUL from %c, undergoes ordinary glyph lookup. Raw source terminators are
 ; consumed by their source loops and never delivered to the glyph sink.
 ;
-; All FX access remains open-loop. Header and glyph-record reads use the shared
-; fixed-count reader; program strings/formats use the formatter's 16-byte
-; cache; nonempty glyph images enter the shared bitmap renderer through its
-; text-only no-preservation contract. No path polls SPSR/SPIF.
+; All FX access remains open-loop. Font headers use the shared fixed-count
+; reader; glyph records use a dedicated inline eight-byte transaction whose
+; transfer slack performs record addressing, register preservation, coordinate
+; setup, cursor advance, image addressing, and visibility rejection. Program
+; strings/formats use the formatter's 16-byte cache; visible glyph images enter
+; the shared bitmap renderer through its text-only no-preservation contract. No
+; path polls SPSR/SPIF.
 
 sys_text_dispatch_impl:
     cpi   PRIMARY_OPCODE, SYS_SET_TEXT_FONT
@@ -13930,16 +13936,12 @@ text_finish:
     movw  VM_R5, r26
     jmp   seek_and_dispatch_func_disabled
 
-; Text repeated-byte sink. Save caller-visible formatter state once, then
-; preserve only the count/byte loop state around each renderer invocation.
+; Text repeated-byte sink. The per-glyph fixed-reader union preserves both the
+; formatter and the count/byte loop state, so no outer save frame is required.
 text_emit_repeat:
-    ; Exact caller liveness across every repeat site is r18 (flags), r19
-    ; (integer emission state), and r22 (program-pointer digit count). Original
-    ; r12:r15 values are dead once padding/zero emission begins, so r12:r14 may
-    ; become loop state without an outer save.
-    push  r18
-    push  r19
-    push  r22
+    ; The fixed glyph reader preserves the complete union of direct/repeat/span
+    ; live registers around every valid glyph. Original r12:r15 values are dead
+    ; once padding/zero emission begins, so no sink-level save frame is needed.
     movw  r12, r24
     mov   r14, r0
 .Ltext_emit_repeat_loop:
@@ -13952,20 +13954,16 @@ text_emit_repeat:
     rcall text_emit_char_repeat
     rjmp  .Ltext_emit_repeat_loop
 .Ltext_emit_repeat_done:
-    pop   r22
-    pop   r19
-    pop   r18
     ret
 
-; Text RAM-span sink. Save caller-visible formatter state once, then preserve
-; only the source-pointer/count loop state around each renderer invocation.
+; Text RAM-span sink. Preserve the caller's outer r12:r13 once; the per-glyph
+; fixed-reader union preserves the evolving source-pointer/count loop state.
 text_emit_ram_span:
-    ; Program-string chunking keeps its outer remaining count in r12:r13, and
-    ; every span caller keeps r18 flags live for post-padding. No span caller
-    ; observes the incoming r14:r15, r19, or r22 values.
+    ; Program-string chunking keeps an outer remaining count in r12:r13, so
+    ; restore that pair after the complete span. The fixed glyph reader preserves
+    ; the evolving r12:r15 loop state and formatter-live r18 around every glyph.
     push  r12
     push  r13
-    push  r18
     movw  r12, r24
     movw  r14, r30
 .Ltext_emit_ram_span_loop:
@@ -13980,7 +13978,6 @@ text_emit_ram_span:
     rcall text_emit_char_span
     rjmp  .Ltext_emit_ram_span_loop
 .Ltext_emit_ram_span_done:
-    pop   r18
     pop   r13
     pop   r12
     ret
@@ -13990,23 +13987,17 @@ text_emit_ram_span:
 ;   w, h, xoff, yoff, xadv, imageOffset[23:0].
 ; xoff/yoff are signed. y is the baseline, so glyph top is baseline+yoff.
 ;
-; The four entries encode the caller liveness contract in r16. Preservation is
-; deferred until a nonempty glyph is actually rendered, so newline, missing,
-; and zero-size glyphs pay no register-save cost. Direct formatter calls keep
-; r18:r19 and r22 live; repeat/span calls keep only their loop state live after
-; saving the surrounding formatter state once at sink entry.
+; All four entries now share one preservation contract. Once range checking has
+; proved that a record exists, the fixed eight-byte transaction unconditionally
+; saves the union of registers live at any direct/repeat/span emission point:
+;   r12:r15, r18:r19, r22.
+; Newline and missing glyphs return before opening a transaction or pushing.
+; Empty and clipped valid glyphs consume the record, apply xadv, restore the
+; union, and return without opening the image transaction.
 text_emit_char:
-    ldi   r16, 1                   ; direct: r18:r19, r22
-    rjmp  .Ltext_emit_char_common
 text_emit_char_repeat:
-    ldi   r16, 2                   ; repeat loop: r12:r14
-    rjmp  .Ltext_emit_char_common
 text_emit_char_span:
-    ldi   r16, 3                   ; RAM-span loop: r12:r15
-    rjmp  .Ltext_emit_char_common
 text_emit_char_raw:
-    clr   r16                      ; raw string: no live renderer registers
-.Ltext_emit_char_common:
     cpi   r24, '\n'
     brne  .Ltext_emit_char_lookup
 
@@ -14022,13 +14013,6 @@ text_emit_char_raw:
 .Ltext_emit_char_lookup_out_of_range:
     ret
 
-.Ltext_emit_char_advance:
-    lds   r26, data_text_glyph_record+4
-    add   r28, r26
-    adc   r29, ZERO
-.Ltext_emit_char_done:
-    ret
-
 .Ltext_emit_char_lookup:
     lds   r25, data_text_glyph_first
     sub   r24, r25
@@ -14037,106 +14021,195 @@ text_emit_char_raw:
     cp    r24, r25
     brsh  .Ltext_emit_char_lookup_out_of_range
 
-    ; record = glyphTableBase + 8*index, modulo 2^24. Reuse the
-    ; fixed reader count as the multiplier.
+    ; Dedicated fixed record transaction. Before command launch r24 is the
+    ; zero-based glyph index. The command-to-address-high interval exactly hides
+    ; record = glyphTableBase + 8*index and image-page translation.
     ldi   r27, 8
-    mul   r24, r27
+    ldi   r30, SFC_READ
+    fx_disable
+    fx_enable
+    out   SPDR, r30                 ; command OUT, cycle 0
+
+    mul   r24, r27                  ; cycles 1-2
     lds   r24, data_text_glyph_table+0
     lds   r25, data_text_glyph_table+1
     lds   r26, data_text_glyph_table+2
     add   r24, r0
     adc   r25, r1
     adc   r26, ZERO
-    ldi   r30, lo8(data_text_glyph_record)
-    ldi   r31, hi8(data_text_glyph_record)
-    mov   r0, r27
-    mov   r1, ZERO
-    call  fx_read_program_bytes_func
+    lds   r27, data_page_data+0
+    add   r25, r27
+    lds   r27, data_page_data+1
+    adc   r26, r27                  ; cycle 17
+    out   SPDR, r26                 ; physical address high, cycle 18
 
-    ; Empty glyphs still apply xadv but do not read image bytes.
-    lds   r0, data_text_glyph_record+0
-    tst   r0
-    breq  .Ltext_emit_char_advance
-    lds   r1, data_text_glyph_record+1
-    tst   r1
-    breq  .Ltext_emit_char_advance
-
-    ; Select the exact live set only after proving this glyph will invoke the
-    ; renderer. The no-preservation renderer may otherwise clobber all r8-r23.
-    tst   r16
-    breq  .Ltext_emit_char_render_raw
-    cpi   r16, 1
-    breq  .Ltext_emit_char_render_direct
-    cpi   r16, 2
-    breq  .Ltext_emit_char_render_repeat
-
-    ; RAM-span loop state: remaining count and next RAM pointer.
+    ; Preserve the union while address high transfers. r18:r19 are then free
+    ; to become the rendered baseline coordinate. Exactly seventeen cycles of
+    ; work retain the standard meaningful-byte cadence.
     push  r12
     push  r13
     push  r14
     push  r15
-    rcall .Ltext_render_glyph
+    push  r18
+    push  r19
+    push  r22
+    movw  VM_R4, r28
+    lds   VM_R5L, data_text_current_y+0
+    out   SPDR, r25                 ; physical address middle, +18
+
+    ; Finish baseline setup. The remaining fifteen cycles are deliberate
+    ; flag-preserving delay before transmitting the still-live low address.
+    lds   VM_R5H, data_text_current_y+1
+    rcall .Ltext_record_delay_15
+    out   SPDR, r24                 ; physical address low, +18
+
+    ; The record address is now dead. Install the logical image base, mode, and
+    ; fixed-time rejection accumulator before beginning the first dummy transfer.
+    lds   r24, data_text_glyph_table+0
+    lds   r25, data_text_glyph_table+1
+    lds   r26, data_text_glyph_table+2
+    lds   r27, data_text_mode
+    clr   r23
+    rcall .Ltext_record_delay_7
+    out   SPDR, ZERO                ; begin width byte, +17
+
+    ; Width. The reverse handoff launches height at the exact +17 boundary.
+    rcall .Ltext_record_delay_15
+    cli
+    out   SPDR, ZERO
+    in    r0, SPDR
+    sei
+    tst   r0
+    brne  .Ltext_width_nonzero
+    ori   r23, 1
+.Ltext_width_nonzero:
+    rcall .Ltext_record_delay_10
+    cli
+    out   SPDR, ZERO
+    in    r1, SPDR
+    sei
+
+    ; Height. Zero dimensions are accumulated without changing cadence.
+    tst   r1
+    brne  .Ltext_height_nonzero
+    ori   r23, 1
+.Ltext_height_nonzero:
+    rcall .Ltext_record_delay_10
+    cli
+    out   SPDR, ZERO
+    in    r30, SPDR                 ; signed xoff
+    sei
+
+    ; renderedX = cursorX + sign_extend(xoff), followed by x < 128. Both
+    ; outcomes of the predicate take exactly four cycles.
+    clr   r31
+    sbrc  r30, 7
+    com   r31
+    add   VM_R4L, r30
+    adc   VM_R4H, r31
+    cpi   VM_R4L, 128
+    cpc   VM_R4H, ZERO
+    brlt  .Ltext_x_below_right_edge
+    ori   r23, 1
+.Ltext_x_below_right_edge:
+    delay_4
+    cli
+    out   SPDR, ZERO
+    in    r30, SPDR                 ; signed yoff
+    sei
+
+    ; renderedY = baselineY + sign_extend(yoff), followed by y < 64.
+    clr   r31
+    sbrc  r30, 7
+    com   r31
+    add   VM_R5L, r30
+    adc   VM_R5H, r31
+    cpi   VM_R5L, 64
+    cpc   VM_R5H, ZERO
+    brlt  .Ltext_y_below_bottom_edge
+    ori   r23, 1
+.Ltext_y_below_bottom_edge:
+    delay_4
+    cli
+    out   SPDR, ZERO
+    in    r30, SPDR                 ; unsigned xadv
+    sei
+
+    ; Apply xadv for every available glyph, including empty and fully clipped
+    ; glyphs. Then prove renderedX + width > 0 in fixed time.
+    add   r28, r30
+    adc   r29, ZERO
+    movw  r30, VM_R4
+    add   r30, r0
+    adc   r31, ZERO
+    cp    ZERO, r30
+    cpc   ZERO, r31
+    brlt  .Ltext_x_extent_visible
+    ori   r23, 1
+.Ltext_x_extent_visible:
+    delay_4
+    cli
+    out   SPDR, ZERO
+    in    r10, SPDR                 ; image offset low
+    sei
+
+    ; Prove renderedY + height > 0. The low image-offset ADD is the final
+    ; flag-changing instruction before the middle-byte ADC; interrupt handlers
+    ; and the protected SPI handoff preserve native carry.
+    movw  r30, VM_R5
+    add   r30, r1
+    adc   r31, ZERO
+    cp    ZERO, r30
+    cpc   ZERO, r31
+    brlt  .Ltext_y_extent_visible
+    ori   r23, 1
+.Ltext_y_extent_visible:
+    delay_4
+    nop
+    add   r24, r10
+    cli
+    out   SPDR, ZERO
+    in    r10, SPDR                 ; image offset middle
+    sei
+
+    ; Consume low-byte carry immediately, then preserve middle-byte carry while
+    ; the final record byte transfers.
+    adc   r25, r10
+    rcall .Ltext_record_delay_13
+    in    r10, SPDR                 ; image offset high; no further transfer
+    adc   r26, r10
+
+    ; A visible record enters after the renderer's empty and intersection tests.
+    ; T selects the renderer's no-preservation text contract. Rejected records
+    ; close the metadata transaction locally. Both paths restore the same union.
+    tst   r23
+    brne  .Ltext_emit_char_rejected
+    set
+    call  draw_bitmap_seek_visible_text_func
+    rjmp  .Ltext_emit_char_restore
+
+.Ltext_emit_char_rejected:
+    fx_disable
+.Ltext_emit_char_restore:
+    pop   r22
+    pop   r19
+    pop   r18
     pop   r15
     pop   r14
     pop   r13
     pop   r12
-    rjmp  .Ltext_emit_char_advance
+    ret
 
-.Ltext_emit_char_render_repeat:
-    push  r12
-    push  r13
-    push  r14
-    rcall .Ltext_render_glyph
-    pop   r14
-    pop   r13
-    pop   r12
-    rjmp  .Ltext_emit_char_advance
-
-.Ltext_emit_char_render_direct:
-    push  r18
-    push  r19
-    push  r22
-    rcall .Ltext_render_glyph
-    pop   r22
-    pop   r19
-    pop   r18
-    rjmp  .Ltext_emit_char_advance
-
-.Ltext_emit_char_render_raw:
-    rcall .Ltext_render_glyph
-    rjmp  .Ltext_emit_char_advance
-
-.Ltext_render_glyph:
-    movw  r24, r28
-    lds   r26, data_text_glyph_record+2
-    clr   r27
-    sbrc  r26, 7
-    com   r27
-    add   r24, r26
-    adc   r25, r27
-    movw  VM_R4, r24
-
-    lds   r24, data_text_current_y+0
-    lds   r25, data_text_current_y+1
-    lds   r26, data_text_glyph_record+3
-    clr   r27
-    sbrc  r26, 7
-    com   r27
-    add   r24, r26
-    adc   r25, r27
-    movw  VM_R5, r24
-
-    ; image = glyphTableBase + image_offset, modulo 2^24.
-    lds   r24, data_text_glyph_table+0
-    lds   r25, data_text_glyph_table+1
-    lds   r26, data_text_glyph_table+2
-    lds   r30, data_text_glyph_record+5
-    add   r24, r30
-    lds   r30, data_text_glyph_record+6
-    adc   r25, r30
-    lds   r30, data_text_glyph_record+7
-    adc   r26, r30
-    lds   r27, data_text_mode
-    lds   r0, data_text_glyph_record+0
-    lds   r1, data_text_glyph_record+1
-    jmp   draw_bitmap_seek_nonempty_text_func
+; Local fixed-delay ladder for the inlined record transaction. Each name is the
+; complete cycle count from RCALL through RET. Only flag-preserving NOP/RJMP
+; instructions are used so image-offset carry survives the final data bytes.
+.Ltext_record_delay_15:
+    delay_2
+.Ltext_record_delay_13:
+    nop
+    delay_2
+.Ltext_record_delay_10:
+    nop
+    delay_2
+.Ltext_record_delay_7:
+    ret

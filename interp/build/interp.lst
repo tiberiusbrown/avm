@@ -722,6 +722,7 @@ SYMBOL TABLE:
 000050fa l       .text	00000000 sprite_delay_10
 00004c64 l       .text	00000000 draw_bitmap_seek_nonempty_text_func
 00004c72 l       .text	00000000 draw_bitmap_seek_nonempty_func
+00004c98 l       .text	00000000 draw_bitmap_seek_visible_text_func
 00004e0c l       .text	00000000 sprite_overwrite_row_dispatch
 00004e64 l       .text	00000000 sprite_erase_row_dispatch
 00004e3c l       .text	00000000 sprite_plus_row_dispatch
@@ -763,11 +764,11 @@ SYMBOL TABLE:
 000055a6 l       .text	00000000 format_unexpected_character
 000055b2 l       .text	00000000 format_add_count
 000055ca l       .text	00000000 format_emit_char
-00005fea l       .text	00000000 text_emit_char
+00005fda l       .text	00000000 text_emit_char
 000055da l       .text	00000000 format_emit_repeat
 00005fa2 l       .text	00000000 text_emit_repeat
 00005604 l       .text	00000000 format_emit_ram_span
-00005fc4 l       .text	00000000 text_emit_ram_span
+00005fb8 l       .text	00000000 text_emit_ram_span
 00005630 l       .text	00000000 format_compute_padding
 00005646 l       .text	00000000 format_emit_padding_spaces
 00005654 l       .text	00000000 format_emit_pre_padding
@@ -799,9 +800,9 @@ SYMBOL TABLE:
 00005eb0 l       .text	00000000 sys_set_text_font_impl
 00005ef0 l       .text	00000000 sys_set_text_mode_impl
 00005f02 l       .text	00000000 sys_text_raw_impl
-00005ff6 l       .text	00000000 text_emit_char_raw
-00005fee l       .text	00000000 text_emit_char_repeat
-00005ff2 l       .text	00000000 text_emit_char_span
+00005fda l       .text	00000000 text_emit_char_raw
+00005fda l       .text	00000000 text_emit_char_repeat
+00005fda l       .text	00000000 text_emit_char_span
 00000a66 l       .text	00000000 .Lff_check_extended
 00000aa4 l       .text	00000000 .Lff_direct_round_prepare
 00000ac4 l       .text	00000000 .Lff_direct_minmax_prepare
@@ -1437,21 +1438,27 @@ SYMBOL TABLE:
 00005ec4 l       .text	00000000 .Lsys_set_text_font_nonnull
 00005efe l       .text	00000000 .Lsys_set_text_mode_done
 00005f66 l       .text	00000000 .Lsys_text_raw_loop
-00005fbc l       .text	00000000 .Ltext_emit_repeat_done
-00005fac l       .text	00000000 .Ltext_emit_repeat_loop
-00005fe2 l       .text	00000000 .Ltext_emit_ram_span_done
-00005fce l       .text	00000000 .Ltext_emit_ram_span_loop
-00005ff8 l       .text	00000000 .Ltext_emit_char_common
-00006028 l       .text	00000000 .Ltext_emit_char_lookup
-0000601c l       .text	00000000 .Ltext_emit_char_lookup_out_of_range
-0000601e l       .text	00000000 .Ltext_emit_char_advance
-000060aa l       .text	00000000 .Ltext_emit_char_render_raw
-0000609a l       .text	00000000 .Ltext_emit_char_render_direct
-0000608a l       .text	00000000 .Ltext_emit_char_render_repeat
-000060ae l       .text	00000000 .Ltext_render_glyph
+00005fb6 l       .text	00000000 .Ltext_emit_repeat_done
+00005fa6 l       .text	00000000 .Ltext_emit_repeat_loop
+00005fd4 l       .text	00000000 .Ltext_emit_ram_span_done
+00005fc0 l       .text	00000000 .Ltext_emit_ram_span_loop
+00006000 l       .text	00000000 .Ltext_emit_char_lookup
+00005ffe l       .text	00000000 .Ltext_emit_char_lookup_out_of_range
+00006138 l       .text	00000000 .Ltext_record_delay_15
+00006142 l       .text	00000000 .Ltext_record_delay_7
+00006080 l       .text	00000000 .Ltext_width_nonzero
+0000613e l       .text	00000000 .Ltext_record_delay_10
+00006090 l       .text	00000000 .Ltext_height_nonzero
+000060ac l       .text	00000000 .Ltext_x_below_right_edge
+000060ca l       .text	00000000 .Ltext_y_below_bottom_edge
+000060e8 l       .text	00000000 .Ltext_x_extent_visible
+00006102 l       .text	00000000 .Ltext_y_extent_visible
+0000613a l       .text	00000000 .Ltext_record_delay_13
+00006126 l       .text	00000000 .Ltext_emit_char_rejected
+00006128 l       .text	00000000 .Ltext_emit_char_restore
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
-00006108 g       .text	00000000 _etext
+00006144 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00004c6a g       .text	00000000 draw_bitmap_seek_func
@@ -13208,6 +13215,8 @@ Disassembly of section .text:
     4c92:	2e 16       	cp	r2, r30
     4c94:	2f 06       	cpc	r2, r31
     4c96:	44 f7       	brge	.-48     	; 0x4c68 <.Lsprite_raw_reject>
+
+00004c98 <draw_bitmap_seek_visible_text_func>:
     4c98:	59 9a       	sbi	0x0b, 1	; 11
     4c9a:	e3 e0       	ldi	r30, 0x03	; 3
     4c9c:	59 98       	cbi	0x0b, 1	; 11
@@ -14603,7 +14612,7 @@ Disassembly of section .text:
 000055ca <format_emit_char>:
     55ca:	90 91 2a 0a 	lds	r25, 0x0A2A	; 0x800a2a <_end+0x1e>
     55ce:	94 fd       	sbrc	r25, 4
-    55d0:	0c c5       	rjmp	.+2584   	; 0x5fea <text_emit_char>
+    55d0:	04 c5       	rjmp	.+2568   	; 0x5fda <text_emit_char>
     55d2:	08 2e       	mov	r0, r24
     55d4:	81 e0       	ldi	r24, 0x01	; 1
     55d6:	99 27       	eor	r25, r25
@@ -14642,7 +14651,7 @@ Disassembly of section .text:
 00005604 <format_emit_ram_span>:
     5604:	a0 91 2a 0a 	lds	r26, 0x0A2A	; 0x800a2a <_end+0x1e>
     5608:	a4 fd       	sbrc	r26, 4
-    560a:	dc c4       	rjmp	.+2488   	; 0x5fc4 <text_emit_ram_span>
+    560a:	d6 c4       	rjmp	.+2476   	; 0x5fb8 <text_emit_ram_span>
     560c:	d2 df       	rcall	.-92     	; 0x55b2 <format_add_count>
     560e:	a8 16       	cp	r10, r24
     5610:	b9 06       	cpc	r11, r25
@@ -15984,7 +15993,7 @@ Disassembly of section .text:
     5f66:	bb db       	rcall	.-2186   	; 0x56de <format_get_char>
     5f68:	88 23       	and	r24, r24
     5f6a:	11 f0       	breq	.+4      	; 0x5f70 <text_finish>
-    5f6c:	44 d0       	rcall	.+136    	; 0x5ff6 <text_emit_char_raw>
+    5f6c:	36 d0       	rcall	.+108    	; 0x5fda <text_emit_char>
     5f6e:	fb cf       	rjmp	.-10     	; 0x5f66 <.Lsys_text_raw_loop>
 
 00005f70 <text_finish>:
@@ -16012,186 +16021,231 @@ Disassembly of section .text:
     5f9e:	0c 94 4b 09 	jmp	0x1296	; 0x1296 <seek_and_dispatch_func_disabled>
 
 00005fa2 <text_emit_repeat>:
-    5fa2:	2f 93       	push	r18
-    5fa4:	3f 93       	push	r19
-    5fa6:	6f 93       	push	r22
-    5fa8:	6c 01       	movw	r12, r24
-    5faa:	e0 2c       	mov	r14, r0
+    5fa2:	6c 01       	movw	r12, r24
+    5fa4:	e0 2c       	mov	r14, r0
 
-00005fac <.Ltext_emit_repeat_loop>:
-    5fac:	8c 2d       	mov	r24, r12
-    5fae:	8d 29       	or	r24, r13
-    5fb0:	29 f0       	breq	.+10     	; 0x5fbc <.Ltext_emit_repeat_done>
-    5fb2:	c3 18       	sub	r12, r3
-    5fb4:	d2 08       	sbc	r13, r2
-    5fb6:	8e 2d       	mov	r24, r14
-    5fb8:	1a d0       	rcall	.+52     	; 0x5fee <text_emit_char_repeat>
-    5fba:	f8 cf       	rjmp	.-16     	; 0x5fac <.Ltext_emit_repeat_loop>
+00005fa6 <.Ltext_emit_repeat_loop>:
+    5fa6:	8c 2d       	mov	r24, r12
+    5fa8:	8d 29       	or	r24, r13
+    5faa:	29 f0       	breq	.+10     	; 0x5fb6 <.Ltext_emit_repeat_done>
+    5fac:	c3 18       	sub	r12, r3
+    5fae:	d2 08       	sbc	r13, r2
+    5fb0:	8e 2d       	mov	r24, r14
+    5fb2:	13 d0       	rcall	.+38     	; 0x5fda <text_emit_char>
+    5fb4:	f8 cf       	rjmp	.-16     	; 0x5fa6 <.Ltext_emit_repeat_loop>
 
-00005fbc <.Ltext_emit_repeat_done>:
-    5fbc:	6f 91       	pop	r22
-    5fbe:	3f 91       	pop	r19
-    5fc0:	2f 91       	pop	r18
-    5fc2:	08 95       	ret
+00005fb6 <.Ltext_emit_repeat_done>:
+    5fb6:	08 95       	ret
 
-00005fc4 <text_emit_ram_span>:
-    5fc4:	cf 92       	push	r12
-    5fc6:	df 92       	push	r13
-    5fc8:	2f 93       	push	r18
-    5fca:	6c 01       	movw	r12, r24
-    5fcc:	7f 01       	movw	r14, r30
+00005fb8 <text_emit_ram_span>:
+    5fb8:	cf 92       	push	r12
+    5fba:	df 92       	push	r13
+    5fbc:	6c 01       	movw	r12, r24
+    5fbe:	7f 01       	movw	r14, r30
 
-00005fce <.Ltext_emit_ram_span_loop>:
-    5fce:	8c 2d       	mov	r24, r12
-    5fd0:	8d 29       	or	r24, r13
-    5fd2:	39 f0       	breq	.+14     	; 0x5fe2 <.Ltext_emit_ram_span_done>
-    5fd4:	c3 18       	sub	r12, r3
-    5fd6:	d2 08       	sbc	r13, r2
-    5fd8:	f7 01       	movw	r30, r14
-    5fda:	81 91       	ld	r24, Z+
-    5fdc:	7f 01       	movw	r14, r30
-    5fde:	09 d0       	rcall	.+18     	; 0x5ff2 <text_emit_char_span>
-    5fe0:	f6 cf       	rjmp	.-20     	; 0x5fce <.Ltext_emit_ram_span_loop>
+00005fc0 <.Ltext_emit_ram_span_loop>:
+    5fc0:	8c 2d       	mov	r24, r12
+    5fc2:	8d 29       	or	r24, r13
+    5fc4:	39 f0       	breq	.+14     	; 0x5fd4 <.Ltext_emit_ram_span_done>
+    5fc6:	c3 18       	sub	r12, r3
+    5fc8:	d2 08       	sbc	r13, r2
+    5fca:	f7 01       	movw	r30, r14
+    5fcc:	81 91       	ld	r24, Z+
+    5fce:	7f 01       	movw	r14, r30
+    5fd0:	04 d0       	rcall	.+8      	; 0x5fda <text_emit_char>
+    5fd2:	f6 cf       	rjmp	.-20     	; 0x5fc0 <.Ltext_emit_ram_span_loop>
 
-00005fe2 <.Ltext_emit_ram_span_done>:
-    5fe2:	2f 91       	pop	r18
-    5fe4:	df 90       	pop	r13
-    5fe6:	cf 90       	pop	r12
-    5fe8:	08 95       	ret
+00005fd4 <.Ltext_emit_ram_span_done>:
+    5fd4:	df 90       	pop	r13
+    5fd6:	cf 90       	pop	r12
+    5fd8:	08 95       	ret
 
-00005fea <text_emit_char>:
-    5fea:	01 e0       	ldi	r16, 0x01	; 1
-    5fec:	05 c0       	rjmp	.+10     	; 0x5ff8 <.Ltext_emit_char_common>
+00005fda <text_emit_char>:
+    5fda:	8a 30       	cpi	r24, 0x0A	; 10
+    5fdc:	89 f4       	brne	.+34     	; 0x6000 <.Ltext_emit_char_lookup>
+    5fde:	c0 91 50 0a 	lds	r28, 0x0A50	; 0x800a50 <_end+0x44>
+    5fe2:	d0 91 51 0a 	lds	r29, 0x0A51	; 0x800a51 <_end+0x45>
+    5fe6:	80 91 52 0a 	lds	r24, 0x0A52	; 0x800a52 <_end+0x46>
+    5fea:	90 91 53 0a 	lds	r25, 0x0A53	; 0x800a53 <_end+0x47>
+    5fee:	a0 91 11 0a 	lds	r26, 0x0A11	; 0x800a11 <_end+0x5>
+    5ff2:	8a 0f       	add	r24, r26
+    5ff4:	92 1d       	adc	r25, r2
+    5ff6:	80 93 52 0a 	sts	0x0A52, r24	; 0x800a52 <_end+0x46>
+    5ffa:	90 93 53 0a 	sts	0x0A53, r25	; 0x800a53 <_end+0x47>
 
-00005fee <text_emit_char_repeat>:
-    5fee:	02 e0       	ldi	r16, 0x02	; 2
-    5ff0:	03 c0       	rjmp	.+6      	; 0x5ff8 <.Ltext_emit_char_common>
+00005ffe <.Ltext_emit_char_lookup_out_of_range>:
+    5ffe:	08 95       	ret
 
-00005ff2 <text_emit_char_span>:
-    5ff2:	03 e0       	ldi	r16, 0x03	; 3
-    5ff4:	01 c0       	rjmp	.+2      	; 0x5ff8 <.Ltext_emit_char_common>
+00006000 <.Ltext_emit_char_lookup>:
+    6000:	90 91 12 0a 	lds	r25, 0x0A12	; 0x800a12 <_end+0x6>
+    6004:	89 1b       	sub	r24, r25
+    6006:	d8 f3       	brcs	.-10     	; 0x5ffe <.Ltext_emit_char_lookup_out_of_range>
+    6008:	90 91 13 0a 	lds	r25, 0x0A13	; 0x800a13 <_end+0x7>
+    600c:	89 17       	cp	r24, r25
+    600e:	b8 f7       	brcc	.-18     	; 0x5ffe <.Ltext_emit_char_lookup_out_of_range>
+    6010:	b8 e0       	ldi	r27, 0x08	; 8
+    6012:	e3 e0       	ldi	r30, 0x03	; 3
+    6014:	59 9a       	sbi	0x0b, 1	; 11
+    6016:	59 98       	cbi	0x0b, 1	; 11
+    6018:	ee bd       	out	0x2e, r30	; 46
+    601a:	8b 9f       	mul	r24, r27
+    601c:	80 91 0e 0a 	lds	r24, 0x0A0E	; 0x800a0e <_end+0x2>
+    6020:	90 91 0f 0a 	lds	r25, 0x0A0F	; 0x800a0f <_end+0x3>
+    6024:	a0 91 10 0a 	lds	r26, 0x0A10	; 0x800a10 <_end+0x4>
+    6028:	80 0d       	add	r24, r0
+    602a:	91 1d       	adc	r25, r1
+    602c:	a2 1d       	adc	r26, r2
+    602e:	b0 91 00 0a 	lds	r27, 0x0A00	; 0x800a00 <__DATA_REGION_ORIGIN__+0x9a0>
+    6032:	9b 0f       	add	r25, r27
+    6034:	b0 91 01 0a 	lds	r27, 0x0A01	; 0x800a01 <__DATA_REGION_ORIGIN__+0x9a1>
+    6038:	ab 1f       	adc	r26, r27
+    603a:	ae bd       	out	0x2e, r26	; 46
+    603c:	cf 92       	push	r12
+    603e:	df 92       	push	r13
+    6040:	ef 92       	push	r14
+    6042:	ff 92       	push	r15
+    6044:	2f 93       	push	r18
+    6046:	3f 93       	push	r19
+    6048:	6f 93       	push	r22
+    604a:	8e 01       	movw	r16, r28
+    604c:	20 91 52 0a 	lds	r18, 0x0A52	; 0x800a52 <_end+0x46>
+    6050:	9e bd       	out	0x2e, r25	; 46
+    6052:	30 91 53 0a 	lds	r19, 0x0A53	; 0x800a53 <_end+0x47>
+    6056:	70 d0       	rcall	.+224    	; 0x6138 <.Ltext_record_delay_15>
+    6058:	8e bd       	out	0x2e, r24	; 46
+    605a:	80 91 0e 0a 	lds	r24, 0x0A0E	; 0x800a0e <_end+0x2>
+    605e:	90 91 0f 0a 	lds	r25, 0x0A0F	; 0x800a0f <_end+0x3>
+    6062:	a0 91 10 0a 	lds	r26, 0x0A10	; 0x800a10 <_end+0x4>
+    6066:	b0 91 14 0a 	lds	r27, 0x0A14	; 0x800a14 <_end+0x8>
+    606a:	77 27       	eor	r23, r23
+    606c:	6a d0       	rcall	.+212    	; 0x6142 <.Ltext_record_delay_7>
+    606e:	2e bc       	out	0x2e, r2	; 46
+    6070:	63 d0       	rcall	.+198    	; 0x6138 <.Ltext_record_delay_15>
+    6072:	f8 94       	cli
+    6074:	2e bc       	out	0x2e, r2	; 46
+    6076:	0e b4       	in	r0, 0x2e	; 46
+    6078:	78 94       	sei
+    607a:	00 20       	and	r0, r0
+    607c:	09 f4       	brne	.+2      	; 0x6080 <.Ltext_width_nonzero>
+    607e:	71 60       	ori	r23, 0x01	; 1
 
-00005ff6 <text_emit_char_raw>:
-    5ff6:	00 27       	eor	r16, r16
+00006080 <.Ltext_width_nonzero>:
+    6080:	5e d0       	rcall	.+188    	; 0x613e <.Ltext_record_delay_10>
+    6082:	f8 94       	cli
+    6084:	2e bc       	out	0x2e, r2	; 46
+    6086:	1e b4       	in	r1, 0x2e	; 46
+    6088:	78 94       	sei
+    608a:	11 20       	and	r1, r1
+    608c:	09 f4       	brne	.+2      	; 0x6090 <.Ltext_height_nonzero>
+    608e:	71 60       	ori	r23, 0x01	; 1
 
-00005ff8 <.Ltext_emit_char_common>:
-    5ff8:	8a 30       	cpi	r24, 0x0A	; 10
-    5ffa:	b1 f4       	brne	.+44     	; 0x6028 <.Ltext_emit_char_lookup>
-    5ffc:	c0 91 50 0a 	lds	r28, 0x0A50	; 0x800a50 <_end+0x44>
-    6000:	d0 91 51 0a 	lds	r29, 0x0A51	; 0x800a51 <_end+0x45>
-    6004:	80 91 52 0a 	lds	r24, 0x0A52	; 0x800a52 <_end+0x46>
-    6008:	90 91 53 0a 	lds	r25, 0x0A53	; 0x800a53 <_end+0x47>
-    600c:	a0 91 11 0a 	lds	r26, 0x0A11	; 0x800a11 <_end+0x5>
-    6010:	8a 0f       	add	r24, r26
-    6012:	92 1d       	adc	r25, r2
-    6014:	80 93 52 0a 	sts	0x0A52, r24	; 0x800a52 <_end+0x46>
-    6018:	90 93 53 0a 	sts	0x0A53, r25	; 0x800a53 <_end+0x47>
+00006090 <.Ltext_height_nonzero>:
+    6090:	56 d0       	rcall	.+172    	; 0x613e <.Ltext_record_delay_10>
+    6092:	f8 94       	cli
+    6094:	2e bc       	out	0x2e, r2	; 46
+    6096:	ee b5       	in	r30, 0x2e	; 46
+    6098:	78 94       	sei
+    609a:	ff 27       	eor	r31, r31
+    609c:	e7 fd       	sbrc	r30, 7
+    609e:	f0 95       	com	r31
+    60a0:	0e 0f       	add	r16, r30
+    60a2:	1f 1f       	adc	r17, r31
+    60a4:	00 38       	cpi	r16, 0x80	; 128
+    60a6:	12 05       	cpc	r17, r2
+    60a8:	0c f0       	brlt	.+2      	; 0x60ac <.Ltext_x_below_right_edge>
+    60aa:	71 60       	ori	r23, 0x01	; 1
 
-0000601c <.Ltext_emit_char_lookup_out_of_range>:
-    601c:	08 95       	ret
+000060ac <.Ltext_x_below_right_edge>:
+    60ac:	00 c0       	rjmp	.+0      	; 0x60ae <.Ltext_x_below_right_edge+0x2>
+    60ae:	00 c0       	rjmp	.+0      	; 0x60b0 <.Ltext_x_below_right_edge+0x4>
+    60b0:	f8 94       	cli
+    60b2:	2e bc       	out	0x2e, r2	; 46
+    60b4:	ee b5       	in	r30, 0x2e	; 46
+    60b6:	78 94       	sei
+    60b8:	ff 27       	eor	r31, r31
+    60ba:	e7 fd       	sbrc	r30, 7
+    60bc:	f0 95       	com	r31
+    60be:	2e 0f       	add	r18, r30
+    60c0:	3f 1f       	adc	r19, r31
+    60c2:	20 34       	cpi	r18, 0x40	; 64
+    60c4:	32 05       	cpc	r19, r2
+    60c6:	0c f0       	brlt	.+2      	; 0x60ca <.Ltext_y_below_bottom_edge>
+    60c8:	71 60       	ori	r23, 0x01	; 1
 
-0000601e <.Ltext_emit_char_advance>:
-    601e:	a0 91 58 0a 	lds	r26, 0x0A58	; 0x800a58 <_end+0x4c>
-    6022:	ca 0f       	add	r28, r26
-    6024:	d2 1d       	adc	r29, r2
-    6026:	08 95       	ret
+000060ca <.Ltext_y_below_bottom_edge>:
+    60ca:	00 c0       	rjmp	.+0      	; 0x60cc <.Ltext_y_below_bottom_edge+0x2>
+    60cc:	00 c0       	rjmp	.+0      	; 0x60ce <.Ltext_y_below_bottom_edge+0x4>
+    60ce:	f8 94       	cli
+    60d0:	2e bc       	out	0x2e, r2	; 46
+    60d2:	ee b5       	in	r30, 0x2e	; 46
+    60d4:	78 94       	sei
+    60d6:	ce 0f       	add	r28, r30
+    60d8:	d2 1d       	adc	r29, r2
+    60da:	f8 01       	movw	r30, r16
+    60dc:	e0 0d       	add	r30, r0
+    60de:	f2 1d       	adc	r31, r2
+    60e0:	2e 16       	cp	r2, r30
+    60e2:	2f 06       	cpc	r2, r31
+    60e4:	0c f0       	brlt	.+2      	; 0x60e8 <.Ltext_x_extent_visible>
+    60e6:	71 60       	ori	r23, 0x01	; 1
 
-00006028 <.Ltext_emit_char_lookup>:
-    6028:	90 91 12 0a 	lds	r25, 0x0A12	; 0x800a12 <_end+0x6>
-    602c:	89 1b       	sub	r24, r25
-    602e:	b0 f3       	brcs	.-20     	; 0x601c <.Ltext_emit_char_lookup_out_of_range>
-    6030:	90 91 13 0a 	lds	r25, 0x0A13	; 0x800a13 <_end+0x7>
-    6034:	89 17       	cp	r24, r25
-    6036:	90 f7       	brcc	.-28     	; 0x601c <.Ltext_emit_char_lookup_out_of_range>
-    6038:	b8 e0       	ldi	r27, 0x08	; 8
-    603a:	8b 9f       	mul	r24, r27
-    603c:	80 91 0e 0a 	lds	r24, 0x0A0E	; 0x800a0e <_end+0x2>
-    6040:	90 91 0f 0a 	lds	r25, 0x0A0F	; 0x800a0f <_end+0x3>
-    6044:	a0 91 10 0a 	lds	r26, 0x0A10	; 0x800a10 <_end+0x4>
-    6048:	80 0d       	add	r24, r0
-    604a:	91 1d       	adc	r25, r1
-    604c:	a2 1d       	adc	r26, r2
-    604e:	e4 e5       	ldi	r30, 0x54	; 84
-    6050:	fa e0       	ldi	r31, 0x0A	; 10
-    6052:	0b 2e       	mov	r0, r27
-    6054:	12 2c       	mov	r1, r2
-    6056:	0e 94 d1 0a 	call	0x15a2	; 0x15a2 <f0_program_loads_end>
-    605a:	00 90 54 0a 	lds	r0, 0x0A54	; 0x800a54 <_end+0x48>
-    605e:	00 20       	and	r0, r0
-    6060:	f1 f2       	breq	.-68     	; 0x601e <.Ltext_emit_char_advance>
-    6062:	10 90 55 0a 	lds	r1, 0x0A55	; 0x800a55 <_end+0x49>
-    6066:	11 20       	and	r1, r1
-    6068:	d1 f2       	breq	.-76     	; 0x601e <.Ltext_emit_char_advance>
-    606a:	00 23       	and	r16, r16
-    606c:	f1 f0       	breq	.+60     	; 0x60aa <.Ltext_emit_char_render_raw>
-    606e:	01 30       	cpi	r16, 0x01	; 1
-    6070:	a1 f0       	breq	.+40     	; 0x609a <.Ltext_emit_char_render_direct>
-    6072:	02 30       	cpi	r16, 0x02	; 2
-    6074:	51 f0       	breq	.+20     	; 0x608a <.Ltext_emit_char_render_repeat>
-    6076:	cf 92       	push	r12
-    6078:	df 92       	push	r13
-    607a:	ef 92       	push	r14
-    607c:	ff 92       	push	r15
-    607e:	17 d0       	rcall	.+46     	; 0x60ae <.Ltext_render_glyph>
-    6080:	ff 90       	pop	r15
-    6082:	ef 90       	pop	r14
-    6084:	df 90       	pop	r13
-    6086:	cf 90       	pop	r12
-    6088:	ca cf       	rjmp	.-108    	; 0x601e <.Ltext_emit_char_advance>
+000060e8 <.Ltext_x_extent_visible>:
+    60e8:	00 c0       	rjmp	.+0      	; 0x60ea <.Ltext_x_extent_visible+0x2>
+    60ea:	00 c0       	rjmp	.+0      	; 0x60ec <.Ltext_x_extent_visible+0x4>
+    60ec:	f8 94       	cli
+    60ee:	2e bc       	out	0x2e, r2	; 46
+    60f0:	ae b4       	in	r10, 0x2e	; 46
+    60f2:	78 94       	sei
+    60f4:	f9 01       	movw	r30, r18
+    60f6:	e1 0d       	add	r30, r1
+    60f8:	f2 1d       	adc	r31, r2
+    60fa:	2e 16       	cp	r2, r30
+    60fc:	2f 06       	cpc	r2, r31
+    60fe:	0c f0       	brlt	.+2      	; 0x6102 <.Ltext_y_extent_visible>
+    6100:	71 60       	ori	r23, 0x01	; 1
 
-0000608a <.Ltext_emit_char_render_repeat>:
-    608a:	cf 92       	push	r12
-    608c:	df 92       	push	r13
-    608e:	ef 92       	push	r14
-    6090:	0e d0       	rcall	.+28     	; 0x60ae <.Ltext_render_glyph>
-    6092:	ef 90       	pop	r14
-    6094:	df 90       	pop	r13
-    6096:	cf 90       	pop	r12
-    6098:	c2 cf       	rjmp	.-124    	; 0x601e <.Ltext_emit_char_advance>
-
-0000609a <.Ltext_emit_char_render_direct>:
-    609a:	2f 93       	push	r18
-    609c:	3f 93       	push	r19
-    609e:	6f 93       	push	r22
-    60a0:	06 d0       	rcall	.+12     	; 0x60ae <.Ltext_render_glyph>
-    60a2:	6f 91       	pop	r22
-    60a4:	3f 91       	pop	r19
-    60a6:	2f 91       	pop	r18
-    60a8:	ba cf       	rjmp	.-140    	; 0x601e <.Ltext_emit_char_advance>
-
-000060aa <.Ltext_emit_char_render_raw>:
-    60aa:	01 d0       	rcall	.+2      	; 0x60ae <.Ltext_render_glyph>
-    60ac:	b8 cf       	rjmp	.-144    	; 0x601e <.Ltext_emit_char_advance>
-
-000060ae <.Ltext_render_glyph>:
-    60ae:	ce 01       	movw	r24, r28
-    60b0:	a0 91 56 0a 	lds	r26, 0x0A56	; 0x800a56 <_end+0x4a>
-    60b4:	bb 27       	eor	r27, r27
-    60b6:	a7 fd       	sbrc	r26, 7
-    60b8:	b0 95       	com	r27
-    60ba:	8a 0f       	add	r24, r26
-    60bc:	9b 1f       	adc	r25, r27
-    60be:	8c 01       	movw	r16, r24
-    60c0:	80 91 52 0a 	lds	r24, 0x0A52	; 0x800a52 <_end+0x46>
-    60c4:	90 91 53 0a 	lds	r25, 0x0A53	; 0x800a53 <_end+0x47>
-    60c8:	a0 91 57 0a 	lds	r26, 0x0A57	; 0x800a57 <_end+0x4b>
-    60cc:	bb 27       	eor	r27, r27
-    60ce:	a7 fd       	sbrc	r26, 7
-    60d0:	b0 95       	com	r27
-    60d2:	8a 0f       	add	r24, r26
-    60d4:	9b 1f       	adc	r25, r27
-    60d6:	9c 01       	movw	r18, r24
-    60d8:	80 91 0e 0a 	lds	r24, 0x0A0E	; 0x800a0e <_end+0x2>
-    60dc:	90 91 0f 0a 	lds	r25, 0x0A0F	; 0x800a0f <_end+0x3>
-    60e0:	a0 91 10 0a 	lds	r26, 0x0A10	; 0x800a10 <_end+0x4>
-    60e4:	e0 91 59 0a 	lds	r30, 0x0A59	; 0x800a59 <_end+0x4d>
-    60e8:	8e 0f       	add	r24, r30
-    60ea:	e0 91 5a 0a 	lds	r30, 0x0A5A	; 0x800a5a <_end+0x4e>
-    60ee:	9e 1f       	adc	r25, r30
-    60f0:	e0 91 5b 0a 	lds	r30, 0x0A5B	; 0x800a5b <_end+0x4f>
-    60f4:	ae 1f       	adc	r26, r30
-    60f6:	b0 91 14 0a 	lds	r27, 0x0A14	; 0x800a14 <_end+0x8>
-    60fa:	00 90 54 0a 	lds	r0, 0x0A54	; 0x800a54 <_end+0x48>
-    60fe:	10 90 55 0a 	lds	r1, 0x0A55	; 0x800a55 <_end+0x49>
-    6102:	0c 94 32 26 	jmp	0x4c64	; 0x4c64 <draw_bitmap_seek_nonempty_text_func>
+00006102 <.Ltext_y_extent_visible>:
+    6102:	00 c0       	rjmp	.+0      	; 0x6104 <.Ltext_y_extent_visible+0x2>
+    6104:	00 c0       	rjmp	.+0      	; 0x6106 <.Ltext_y_extent_visible+0x4>
     6106:	00 00       	nop
+    6108:	8a 0d       	add	r24, r10
+    610a:	f8 94       	cli
+    610c:	2e bc       	out	0x2e, r2	; 46
+    610e:	ae b4       	in	r10, 0x2e	; 46
+    6110:	78 94       	sei
+    6112:	9a 1d       	adc	r25, r10
+    6114:	12 d0       	rcall	.+36     	; 0x613a <.Ltext_record_delay_13>
+    6116:	ae b4       	in	r10, 0x2e	; 46
+    6118:	aa 1d       	adc	r26, r10
+    611a:	77 23       	and	r23, r23
+    611c:	21 f4       	brne	.+8      	; 0x6126 <.Ltext_emit_char_rejected>
+    611e:	68 94       	set
+    6120:	0e 94 4c 26 	call	0x4c98	; 0x4c98 <draw_bitmap_seek_visible_text_func>
+    6124:	01 c0       	rjmp	.+2      	; 0x6128 <.Ltext_emit_char_restore>
+
+00006126 <.Ltext_emit_char_rejected>:
+    6126:	59 9a       	sbi	0x0b, 1	; 11
+
+00006128 <.Ltext_emit_char_restore>:
+    6128:	6f 91       	pop	r22
+    612a:	3f 91       	pop	r19
+    612c:	2f 91       	pop	r18
+    612e:	ff 90       	pop	r15
+    6130:	ef 90       	pop	r14
+    6132:	df 90       	pop	r13
+    6134:	cf 90       	pop	r12
+    6136:	08 95       	ret
+
+00006138 <.Ltext_record_delay_15>:
+    6138:	00 c0       	rjmp	.+0      	; 0x613a <.Ltext_record_delay_13>
+
+0000613a <.Ltext_record_delay_13>:
+    613a:	00 00       	nop
+    613c:	00 c0       	rjmp	.+0      	; 0x613e <.Ltext_record_delay_10>
+
+0000613e <.Ltext_record_delay_10>:
+    613e:	00 00       	nop
+    6140:	00 c0       	rjmp	.+0      	; 0x6142 <.Ltext_record_delay_7>
+
+00006142 <.Ltext_record_delay_7>:
+    6142:	08 95       	ret

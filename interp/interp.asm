@@ -80,24 +80,24 @@
 #define data_format_program_next        (data_end_private+16)
 #define data_format_cache_index         (data_end_private+19)
 #define data_format_cache_length        (data_end_private+20)
-#define data_format_status              (data_end_private+21)
-#define data_format_digit_buffer        (data_end_private+22)
-#define data_format_progstr_original    (data_end_private+34)
+; Formatter status remains in native r17 for the complete call.
+#define data_format_digit_buffer        (data_end_private+21)
+#define data_format_progstr_original    (data_end_private+33)
 #define data_format_string_original     data_format_progstr_original
-#define data_format_progstr_cursor      (data_end_private+37)
-#define data_format_string_length       (data_end_private+40)
-#define data_format_ram_ptr             (data_end_private+42)
-#define data_format_arg_ptr             (data_end_private+44)
-#define data_format_padding             (data_end_private+46)
-#define data_format_precision_zeroes    (data_end_private+48)
-#define data_format_digit_count         (data_end_private+50)
-#define data_format_sign                (data_end_private+51)
-#define data_format_conversion          (data_end_private+52)
-#define data_format_value_nonzero       (data_end_private+53)
-#define data_format_integer_mode        (data_end_private+54)
-#define data_format_prefix              (data_end_private+55)
-#define data_format_read_source         (data_end_private+56)
-#define data_format_scratch_end         (data_end_private+59)
+#define data_format_progstr_cursor      (data_end_private+36)
+#define data_format_string_length       (data_end_private+39)
+#define data_format_ram_ptr             (data_end_private+41)
+#define data_format_arg_ptr             (data_end_private+43)
+#define data_format_padding             (data_end_private+45)
+#define data_format_precision_zeroes    (data_end_private+47)
+#define data_format_digit_count         (data_end_private+49)
+#define data_format_sign                (data_end_private+50)
+#define data_format_conversion          (data_end_private+51)
+#define data_format_value_nonzero       (data_end_private+52)
+#define data_format_integer_mode        (data_end_private+53)
+#define data_format_prefix              (data_end_private+54)
+#define data_format_read_source         (data_end_private+55)
+#define data_format_scratch_end         (data_end_private+58)
 
 ; Text drawing aliases the formatter workspace and extends it with cursor and
 ; glyph-record state. Formatted text needs both areas simultaneously, so this
@@ -10639,11 +10639,11 @@ sys_draw_sprite_header_impl:
 ;   r9              source height during setup; overwrite low preserve mask
 ;   r10:r11         full source-row stride in bytes
 ;   r12             visible source rows remaining
-;   r13             drawing mode during one-time setup
+;   r13             drawing mode during setup; loop counter while rendering
 ;   r14             framebuffer row advance (128-visibleColumns)
 ;   r15             overwrite final-source-page valid-bit mask
 ;   r16             visible column count
-;   r17             framebuffer x during setup; loop counter while rendering
+;   r17             preserved call-lifetime text status; unused by renderer
 ;   r18             vertical shift coefficient
 ;   r19             signed destination page during setup; high mask/temporary
 ;   r20:r21:r22     current visible source-row physical FX pointer
@@ -10832,7 +10832,8 @@ draw_bitmap_seek_visible_text_func:
 .Lsprite_top_clip_done:
     mov   r19, r24                  ; clipped signed destination page index
 
-    ; Horizontal clipping. r16 becomes visible columns and r17 start X.
+    ; Horizontal clipping. r16 becomes visible columns and r31 start X.
+    ; r17 remains untouched so prepared text retains call-lifetime status.
     mov   r25, VM_R4L
     sbrs  VM_R4H, 7
     rjmp  .Lsprite_x_nonnegative
@@ -10840,7 +10841,6 @@ draw_bitmap_seek_visible_text_func:
     neg   r25                       ; leftSkip = -x, guaranteed < width
     mov   r16, r8
     sub   r16, r25
-    clr   r17
 
     ; source += leftSkip * bytesPerColumn.
     mov   r30, r25
@@ -10854,15 +10854,16 @@ draw_bitmap_seek_visible_text_func:
     add   r20, r30
     adc   r21, r31
     adc   r22, ZERO
+    clr   r31                       ; framebuffer x = 0
     rjmp  .Lsprite_clip_right
 
 .Lsprite_x_nonnegative:
-    mov   r17, r25                  ; framebuffer x
+    mov   r31, r25                  ; framebuffer x
     mov   r16, r8
 
 .Lsprite_clip_right:
     ldi   r24, 128
-    sub   r24, r17                  ; columns available on screen
+    sub   r24, r31                  ; columns available on screen
     cp    r24, r16
     brsh  .Lsprite_right_clip_done
     mov   r16, r24
@@ -10891,7 +10892,7 @@ draw_bitmap_seek_visible_text_func:
     ldi   r27, hi8(data_display)
     add   r26, r0
     adc   r27, r1
-    add   r26, r17
+    add   r26, r31
     adc   r27, ZERO
 
     ; Clip source rows against the bottom. If the original final source page is
@@ -10986,41 +10987,26 @@ draw_bitmap_seek_visible_text_func:
     out   SPDR, ZERO
     rjmp  .Lsprite_row_dispatch
 
-; Text-only prepared renderer entry. The fixed glyph-record transaction has
-; already produced the complete clipping/setup state listed below and the
-; enclosing text SYS owns architectural-register preservation (SREG.T is set):
+; Prepared text-only renderer entry. The glyph reader has already launched the
+; image command and reaches this label five cycles later. It also supplies the
+; complete clipping/setup state below while the enclosing text call keeps T set:
 ;   r8          source width
-;   r10:r11     source row stride (text modes are never PLUS_MASK)
+;   r10:r11     source row stride (r11 is zero)
 ;   r12         source pages remaining after top clipping
-;   r13         text drawing mode (OVERWRITE, SELF_MASKED, or ERASE)
+;   r13         text drawing mode; dead after first-row dispatch selection
 ;   r14         framebuffer row advance
 ;   r15         original final-page height remainder, or zero after bottom clip
 ;   r16         visible columns
-;   r17         framebuffer x
+;   r17         call-lifetime text/formatter status, preserved
 ;   r18         1 << (renderedY & 7)
 ;   r19         clipped signed destination page
-;   r20:r22     physical image pointer adjusted for top/left clipping
-;   r23         TOP and RESEEK flags; bit 7 is clear
+;   r20:r22     complete physical image pointer after top/left clipping
+;   r23         TOP and RESEEK flags; reject bit clear
+;   r31         framebuffer x during this final setup only
 ;
-; Bottom clipping, framebuffer address formation, the overwrite final-page
-; mask, and overwrite preserve masks are scheduled inside the image command and
-; address transfers. The ordinary entry retains exact 18-cycle meaningful-address cadence. The
-; text after-command entry may transmit address high later because physical
-; pointer construction and clipping intentionally overlap the command transfer;
-; subsequent meaningful bytes retain legal standard handoffs.
+; Bottom clipping occupies the rest of the command interval. Address high,
+; middle, low, and the first dummy then use exact 18/18/18/17-cycle cadence.
 draw_bitmap_seek_prepared_text_func:
-    fx_disable
-    ldi   r30, SFC_READ
-    fx_enable
-    out   SPDR, r30                 ; image command
-
-; Alternate text entry: the glyph reader has already closed the record
-; transaction and launched the image command. Pointer/cursor work was overlapped
-; with the command transfer; this entry continues with the ordinary setup.
-draw_bitmap_seek_prepared_text_after_command_func:
-    ; Bottom clip and form the physical address high/middle bytes. The clipped
-    ; and unclipped paths are balanced to five cycles after CP, making address
-    ; high land exactly eighteen cycles after the command.
     ldi   r24, 8
     sub   r24, r19                  ; maximum visible source rows
     cp    r24, r12
@@ -11031,17 +11017,11 @@ draw_bitmap_seek_prepared_text_after_command_func:
 .Ltext_prepared_bottom_unclipped:
     delay_3
 .Ltext_prepared_bottom_clip_done:
-    mov   r25, r21
-    mov   r30, r22
-    ; r20:r22 is already physical because SET_TEXT_FONT cached a physical
-    ; glyph-table base. Preserve the exact command/address cadence.
     delay_4
-    delay_2
-    nop
-    out   SPDR, r30                 ; physical address high, +18
+    out   SPDR, r22                 ; physical address high, command +18
 
-    ; X = framebuffer + pageStart*128 + x. Also mark the one possible bottom
-    ; row. The useful work exactly fills the address-high transfer interval.
+    ; X = framebuffer + pageStart*128 + x. Preserve the vertical shift in r9
+    ; while MULSU uses r18 as the signed-page multiplier. r31 is dead afterward.
     mov   r9, r18
     ldi   r24, 128
     mov   r18, r24
@@ -11051,7 +11031,7 @@ draw_bitmap_seek_prepared_text_after_command_func:
     ldi   r27, hi8(data_display)
     add   r26, r0
     adc   r27, r1
-    add   r26, r17
+    add   r26, r31
     adc   r27, ZERO
 
     mov   r24, r19
@@ -11060,12 +11040,10 @@ draw_bitmap_seek_prepared_text_after_command_func:
     brne  .Ltext_prepared_not_bottom
     ori   r23, (1 << SPRITE_FLAG_BOTTOM)
 .Ltext_prepared_not_bottom:
-    out   SPDR, r25                 ; physical address middle, +18
+    out   SPDR, r21                 ; physical address middle, +18
 
     ; OVERWRITE alone consumes r15. For a retained partial final page, construct
-    ; (1 << remainder) - 1 in fixed time and set PARTIAL. Aligned overwrite,
-    ; self-masked, and erase paths use path-specific delay entries so address
-    ; low is transmitted exactly eighteen cycles after address middle.
+    ; (1 << remainder) - 1 in fixed time and set PARTIAL.
     tst   r13
     brne  .Ltext_prepared_nonoverwrite_mask
     tst   r15
@@ -11099,8 +11077,7 @@ draw_bitmap_seek_prepared_text_after_command_func:
     rjmp  .Ltext_prepared_low_nonoverwrite
 
 .Ltext_prepared_low_overwrite:
-    ; Precompute full-row overwrite preserve masks and select the overwrite row
-    ; dispatcher while address low transfers.
+    ; Precompute full-row overwrite preserve masks and select its dispatcher.
     ldi   r24, 0xFF
     mul   r24, r18
     com   r0
@@ -11116,9 +11093,7 @@ draw_bitmap_seek_prepared_text_after_command_func:
     rjmp  .Lsprite_row_dispatch
 
 .Ltext_prepared_low_nonoverwrite:
-    ; Valid nonoverwrite text modes differ in bit zero: SELF_MASKED=2 and
-    ; ERASE=3. Balance both selections to eight cycles, then fill the remaining
-    ; low-address interval before launching the first image byte.
+    ; Valid nonoverwrite text modes differ in bit zero: SELF_MASKED=2, ERASE=3.
     sbrs  r13, 0
     rjmp  .Ltext_prepared_select_self
     ldi   r30, lo8(pm(sprite_erase_row_dispatch))
@@ -11220,7 +11195,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     st    X+, r25
     delay_4
     nop
-    dec   r17
+    dec   r13
     brne  .Lsprite_top_overwrite_full_loop
     rjmp  .Lsprite_top_done
 
@@ -11235,7 +11210,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     st    X+, r25
     delay_4
     nop
-    dec   r17
+    dec   r13
     brne  .Lsprite_bottom_overwrite_full_loop
     rjmp  .Lsprite_bottom_done
 
@@ -11256,7 +11231,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     or    r25, r1
     st    X+, r25
     delay_4
-    dec   r17
+    dec   r13
     brne  .Lsprite_top_overwrite_partial_loop
     rjmp  .Lsprite_top_done
 
@@ -11274,7 +11249,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     or    r25, r0
     st    X+, r25
     delay_4
-    dec   r17
+    dec   r13
     brne  .Lsprite_bottom_overwrite_partial_loop
     rjmp  .Lsprite_bottom_done
 
@@ -11283,10 +11258,10 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 ; consumes that preload. Each source-byte OUT-to-OUT interval is exactly 18
 ; cycles, and odd widths use one correctly aligned prefix column.
 .Lsprite_middle_overwrite_full:
-    mov   r17, r16
-    lsr   r17                        ; pair count
+    mov   r13, r16
+    lsr   r13                        ; pair count
     brcc  .Lsprite_middle_overwrite_pair_loop
-    inc   r17
+    inc   r13
     rjmp  .Lsprite_middle_overwrite_one
 
 .Lsprite_middle_overwrite_pair_loop:
@@ -11317,7 +11292,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     or    r25, r1
     st    Z+, r25
     nop
-    dec   r17
+    dec   r13
     brne  .Lsprite_middle_overwrite_pair_loop
     rjmp  .Lsprite_middle_done
 
@@ -11342,7 +11317,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r25, r19
     or    r25, r1
     st    Z+, r25
-    dec   r17
+    dec   r13
     brne  .Lsprite_middle_overwrite_partial_loop
     rjmp  .Lsprite_middle_done
 
@@ -11372,7 +11347,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r19, r25
     or    r19, r24
     st    X+, r19
-    dec   r17
+    dec   r13
     brne  .Lsprite_top_plus_full_loop
     rjmp  .Lsprite_top_done
 
@@ -11396,7 +11371,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r19, r25
     or    r19, r24
     st    X+, r19
-    dec   r17
+    dec   r13
     brne  .Lsprite_bottom_plus_full
     rjmp  .Lsprite_bottom_done
 
@@ -11424,7 +11399,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r19, r1
     or    r19, r25
     st    Z+, r19
-    dec   r17
+    dec   r13
     brne  .Lsprite_middle_plus_full_loop
     rjmp  .Lsprite_middle_done
 
@@ -11444,7 +11419,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     st    X+, r25
     delay_3
     delay_3
-    dec   r17
+    dec   r13
     brne  .Lsprite_top_self_full_loop
     rjmp  .Lsprite_top_done
 
@@ -11458,7 +11433,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     st    X+, r25
     delay_3
     delay_3
-    dec   r17
+    dec   r13
     brne  .Lsprite_bottom_self_full_loop
     rjmp  .Lsprite_bottom_done
 
@@ -11475,7 +11450,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     or    r25, r1
     st    Z+, r25
     nop
-    dec   r17
+    dec   r13
     brne  .Lsprite_middle_self_full_loop
     rjmp  .Lsprite_middle_done
 
@@ -11497,7 +11472,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r25, r1
     st    X+, r25
     delay_2
-    dec   r17
+    dec   r13
     brne  .Lsprite_top_erase_full_loop
     rjmp  .Lsprite_top_done
 
@@ -11513,7 +11488,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     and   r25, r0
     st    X+, r25
     delay_2
-    dec   r17
+    dec   r13
     brne  .Lsprite_bottom_erase_full_loop
     rjmp  .Lsprite_bottom_done
 
@@ -11530,7 +11505,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ld    r25, Z
     and   r25, r1
     st    Z+, r25
-    dec   r17
+    dec   r13
     brne  .Lsprite_middle_erase_full_loop
     rjmp  .Lsprite_middle_done
 
@@ -11539,7 +11514,7 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
     ; persistent top flag is cleared. Only the overwrite dispatcher interprets
     ; SPRITE_FLAG_PARTIAL or uses r8/r15.
     mov   r24, r23
-    mov   r17, r16                    ; visible-column counter
+    mov   r13, r16                    ; visible-column counter
 
     ; For pageStart==-1, X names one page before the framebuffer. Move it to
     ; page zero for the single top-row high-contribution loop, then clear the
@@ -12539,8 +12514,10 @@ sys_format_impl:
     sbrc  r27, FORMAT_STATUS_SINK_TEXT
     rjmp  .Lformat_text_setup
 
-    ; Bounded-buffer sink setup.
+    ; Bounded-buffer sink setup. Consume the incoming r4 pointer before r17
+    ; becomes the call-lifetime status register. T remains clear for buffers.
     movw  r28, VM_R4
+    clt
     clr   r8
     clr   r9
     movw  r10, VM_R5
@@ -12567,6 +12544,7 @@ sys_format_impl:
     sts   data_text_initial_x+1, VM_R4H
     movw  r28, VM_R4
     mov   r17, r27                  ; status may now replace incoming r4 high
+    set                              ; text sink/renderer contract for full call
     sts   data_text_current_y+0, VM_R5L
     sts   data_text_current_y+1, VM_R5H
     ; r8:r11 are buffer-only count/capacity state and are not read by text sinks.
@@ -12581,17 +12559,17 @@ sys_format_impl:
 ; nonzero-size destination. FX is unconditionally closed and bytecode fetch is
 ; restarted from the already-advanced VM_PC.
 format_finish:
-    mov   r26, r17
-    sbrc  r26, FORMAT_STATUS_SINK_TEXT
+    brtc  .Lformat_finish_buffer
     rjmp  text_finish
-    sbrs  r26, FORMAT_STATUS_SIZE_NONZERO
+.Lformat_finish_buffer:
+    sbrs  r17, FORMAT_STATUS_SIZE_NONZERO
     rjmp  .Lformat_finish_result
     st    Y, ZERO
 
 .Lformat_finish_result:
-    sbrc  r26, FORMAT_STATUS_FATAL_ERROR
+    sbrc  r17, FORMAT_STATUS_FATAL_ERROR
     rjmp  .Lformat_finish_error
-    sbrc  r26, FORMAT_STATUS_COUNT_OVERFLOW
+    sbrc  r17, FORMAT_STATUS_COUNT_OVERFLOW
     rjmp  .Lformat_finish_error
     sbrc  r9, 7
     rjmp  .Lformat_finish_error
@@ -12624,9 +12602,7 @@ format_finish:
     jmp   seek_and_dispatch_func_disabled
 
 format_unexpected_character:
-    mov   r25, r17
-    ori   r25, (1 << FORMAT_STATUS_FATAL_ERROR)
-    mov   r17, r25
+    ori   r17, (1 << FORMAT_STATUS_FATAL_ERROR)
     rjmp  format_finish
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -12643,16 +12619,14 @@ format_add_count:
     rjmp  .Lformat_add_count_overflow
     ret
 .Lformat_add_count_overflow:
-    mov   r26, r17
-    ori   r26, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
-    mov   r17, r26
+    ori   r17, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
     ret
 
 ; Input r24=byte.
 format_emit_char:
-    mov   r25, r17
-    sbrc  r25, FORMAT_STATUS_SINK_TEXT
+    brtc  .Lformat_emit_char_buffer
     rjmp  text_emit_char
+.Lformat_emit_char_buffer:
     mov   r0, r24
     ldi   r24, 1
     clr   r25
@@ -12661,9 +12635,9 @@ format_emit_char:
 ; Inputs r25:r24=count, r0=byte. Add complete logical count, then store only
 ; min(count,write_remaining) bytes.
 format_emit_repeat:
-    mov   r26, r17
-    sbrc  r26, FORMAT_STATUS_SINK_TEXT
+    brtc  .Lformat_emit_repeat_buffer
     rjmp  text_emit_repeat
+.Lformat_emit_repeat_buffer:
     rcall format_add_count
 
     cp    r10, r24
@@ -12690,9 +12664,9 @@ format_emit_repeat:
 ; Inputs Z=RAM source and r25:r24=count. Logical count is always added; source
 ; bytes are loaded only for the portion that fits in the destination.
 format_emit_ram_span:
-    mov   r26, r17
-    sbrc  r26, FORMAT_STATUS_SINK_TEXT
+    brtc  .Lformat_emit_ram_span_buffer
     rjmp  text_emit_ram_span
+.Lformat_emit_ram_span_buffer:
     rcall format_add_count
 
     cp    r10, r24
@@ -12770,7 +12744,6 @@ format_fx_begin_read:
     lds   r27, data_page_data+1
     adc   r26, r27
 
-    fx_disable
     fx_enable
     ldi   r27, SFC_READ
     out   SPDR, r27
@@ -12848,8 +12821,7 @@ format_read_program_chunk:
 ; The parser obtains every format byte through this routine.
 ; Output r24=next byte.
 format_get_char:
-    mov   r25, r17
-    sbrc  r25, FORMAT_STATUS_SOURCE_PROGRAM
+    sbrc  r17, FORMAT_STATUS_SOURCE_PROGRAM
     rjmp  .Lformat_get_char_program
 
     lds   r30, data_format_ram_ptr+0
@@ -13349,9 +13321,7 @@ format_conversion_program_string:
     brcc  .Lformat_program_string_measure_store
     ser   r26
     ser   r27
-    mov   r24, r17
-    ori   r24, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
-    mov   r17, r24
+    ori   r17, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
 .Lformat_program_string_measure_store:
     sts   data_format_string_length+0, r26
     sts   data_format_string_length+1, r27
@@ -13833,9 +13803,7 @@ format_prepare_integer_field:
 .Lformat_integer_content_saturate:
     ser   r24
     ser   r25
-    mov   r26, r17
-    ori   r26, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
-    mov   r17, r26
+    ori   r17, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
 .Lformat_integer_content_ready:
     rcall format_compute_padding
     ret
@@ -14052,6 +14020,7 @@ sys_text_raw_impl:
     sts   data_text_initial_x+1, VM_R4H
     movw  r28, VM_R4
     mov   r17, r27                  ; register-resident source/text status
+    set                              ; text sink/renderer contract for full call
     sts   data_text_current_y+0, VM_R5L
     sts   data_text_current_y+1, VM_R5H
 
@@ -14124,26 +14093,14 @@ text_finish:
     subi  r31, hi8(-(pm(primary_table)))
     ijmp
 
-; Local complete-cycle delay ladder for the text bytecode restart.
+; Compact complete-cycle delay ladder for the only restart delays used.
 .Ltext_restart_delay_17:
     nop
 .Ltext_restart_delay_16:
     nop
 .Ltext_restart_delay_15:
-    nop
-.Ltext_restart_delay_14:
-    nop
-.Ltext_restart_delay_13:
-    nop
-.Ltext_restart_delay_12:
-    nop
-.Ltext_restart_delay_11:
-    nop
-.Ltext_restart_delay_10:
-    nop
-.Ltext_restart_delay_9:
-    delay_2
-.Ltext_restart_delay_7:
+    delay_4
+    delay_4
     ret
 
 ; Text repeated-byte sink. The per-glyph fixed-reader union preserves both the
@@ -14238,60 +14195,55 @@ text_emit_char_raw:
     cp    r24, r25
     brsh  .Ltext_emit_char_lookup_out_of_range
 
-    ; Dedicated fixed seven-byte record transaction. r24 is the zero-based
-    ; glyph index. Records are 7 bytes and image offsets are 16-bit relative
-    ; to a physical glyph-table base constrained to one 64-KiB window.
+    ; Fixed seven-byte record transaction. The physical record address and all
+    ; seven live-register pushes are hidden in the command/address phase.
     ldi   r30, SFC_READ
     fx_enable
     out   SPDR, r30                 ; command OUT, cycle 0
 
-    ; record = physicalGlyphBase + 7*index = base + 8*index - index.
-    mov   r27, r24
-    ldi   r31, 8
-    mul   r24, r31
-    sub   r0, r27
-    sbc   r1, ZERO
+    ldi   r27, 7
+    mul   r24, r27
     lds   r24, data_text_glyph_table+0
     lds   r25, data_text_glyph_table+1
     lds   r26, data_text_glyph_table+2
     add   r24, r0
     adc   r25, r1
     adc   r26, ZERO
-    delay_2
-    out   SPDR, r26                 ; physical address high
+    delay_4
+    nop
+    out   SPDR, r26                 ; physical record address high, +18
 
-    ; Preserve formatter/sink live state while address high transfers. r17
-    ; carries formatter status and is included in the hidden save contract.
+    ; Preserve the union live at direct/repeat/span emission points. r17 is the
+    ; call-lifetime status register and is never touched by the renderer.
     push  r12
     push  r13
     push  r14
     push  r15
-    push  r17
     push  r18
     push  r19
     push  r22
-    movw  VM_R4, r28
-    out   SPDR, r25                 ; physical address middle
-
-    lds   VM_R5L, data_text_current_y+0
-    lds   VM_R5H, data_text_current_y+1
-    lds   r13, data_text_mode
-    clr   r23
-    clr   r9
-    clr   r27
+    delay_2
     nop
-    rcall .Ltext_record_delay_7
-    out   SPDR, r24                 ; physical address low
+    out   SPDR, r25                 ; physical record address middle, +18
 
-    ; Install the physical image base while address low transfers.
+    ; Install mode, baseline, and physical image base while middle transfers.
+    lds   r13, data_text_mode
+    lds   r18, data_text_current_y+0
+    lds   r19, data_text_current_y+1
+    clr   r26                       ; top source-page skip
+    clr   r27                       ; horizontal source-column skip
+    clr   r11
+    clr   r23                       ; renderer flags/reject accumulator
     lds   r20, data_text_glyph_table+0
     lds   r21, data_text_glyph_table+1
     lds   r22, data_text_glyph_table+2
-    rcall .Ltext_record_delay_10
-    out   SPDR, ZERO                ; begin h
+    nop
+    out   SPDR, r24                 ; physical record address low, +18
 
-    clr   r11
-    rcall .Ltext_record_delay_15
+    rcall .Ltext_record_delay_16
+    out   SPDR, ZERO                ; begin h, +17
+
+    rcall .Ltext_record_delay_16
     in    r1, SPDR                  ; unsigned h
     out   SPDR, ZERO                ; begin signed yoff
 
@@ -14312,17 +14264,18 @@ text_emit_char_raw:
     in    r30, SPDR                 ; signed yoff
     out   SPDR, ZERO                ; begin w
 
+    ; renderedY = baseline + sign_extend(yoff), plus complete vertical reject.
     clr   r31
     sbrc  r30, 7
     com   r31
-    add   VM_R5L, r30
-    adc   VM_R5H, r31
-    cpi   VM_R5L, 64
-    cpc   VM_R5H, ZERO
+    add   r18, r30
+    adc   r19, r31
+    cpi   r18, 64
+    cpc   r19, ZERO
     brlt  .Ltext_y_below_bottom_edge
     ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_y_below_bottom_edge:
-    movw  r30, VM_R5
+    movw  r30, r18
     add   r30, r1
     adc   r31, ZERO
     cp    ZERO, r30
@@ -14333,39 +14286,47 @@ text_emit_char_raw:
     in    r0, SPDR                  ; unsigned w
     out   SPDR, ZERO                ; begin signed xoff
 
+    ; Width/stride, vertical shift, and arithmetic destination page.
     mov   r8, r0
     tst   r8
     brne  .Ltext_width_nonzero
     ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_width_nonzero:
     mov   r10, r8
-    mov   r24, VM_R5L
-    ldi   r18, 1
+
+    mov   r24, r18
+    ldi   r30, 1
     sbrc  r24, 1
-    ldi   r18, 4
+    ldi   r30, 4
     sbrc  r24, 0
-    lsl   r18
+    lsl   r30
     sbrc  r24, 2
-    swap  r18
-    mov   r19, VM_R5L
-    asr   VM_R5H
-    ror   r19
+    swap  r30
+    mov   r11, r30
+
+    mov   r30, r18
     asr   r19
-    asr   r19
+    ror   r30
+    asr   r30
+    asr   r30
+    mov   r19, r30
+    mov   r18, r11
     in    r30, SPDR                 ; signed xoff
     out   SPDR, ZERO                ; begin image offset low
 
+    ; renderedX = cursor + sign_extend(xoff), plus horizontal reject.
+    movw  r24, r28
     clr   r31
     sbrc  r30, 7
     com   r31
-    add   VM_R4L, r30
-    adc   VM_R4H, r31
-    cpi   VM_R4L, 128
-    cpc   VM_R4H, ZERO
+    add   r24, r30
+    adc   r25, r31
+    cpi   r24, 128
+    cpc   r25, ZERO
     brlt  .Ltext_x_below_right_edge
     ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_x_below_right_edge:
-    movw  r30, VM_R4
+    movw  r30, r24
     add   r30, r8
     adc   r31, ZERO
     cp    ZERO, r30
@@ -14373,47 +14334,49 @@ text_emit_char_raw:
     brlt  .Ltext_x_extent_visible
     ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_x_extent_visible:
-    in    r24, SPDR                 ; image offset low
+    mov   r27, r25                  ; preserve rendered-x high across offsets
+    in    r11, SPDR                 ; image offset low
     out   SPDR, ZERO                ; begin image offset high
 
-    ; Top clipping while offset high transfers.
-    mov   r9, r19
-    neg   r9
+    ; Top clipping. r26 retains the source-page skip for pointer adjustment.
+    mov   r26, r19
+    neg   r26
     cpi   r18, 1
     breq  .Ltext_top_skip_aligned
-    sub   r9, ONE
+    sub   r26, ONE
 .Ltext_top_skip_aligned:
     clr   r30
-    sbrs  r9, 7
-    mov   r30, r9
-    mov   r9, r30
-    sub   r12, r9
-    add   r19, r9
+    sbrs  r26, 7
+    mov   r30, r26
+    mov   r26, r30
+    sub   r12, r26
+    add   r19, r26
     cpi   r19, 0xFF
     brne  .Ltext_not_top_row
     ori   r23, (1 << SPRITE_FLAG_TOP)
 .Ltext_not_top_row:
     delay_2
     in    r25, SPDR                 ; image offset high
-    out   SPDR, ZERO                ; begin unsigned xadv
+    out   SPDR, ZERO                ; begin xadv
 
-    ; Horizontal clipping and row geometry while xadv transfers.
-    clr   r27
-    mov   r30, VM_R4L
-    sbrs  VM_R4H, 7
+    ; Horizontal clipping. r27 initially carries rendered-x high, then
+    ; becomes leftSkip; r31 becomes framebuffer x.
+    mov   r30, r24
+    sbrs  r27, 7
     rjmp  .Ltext_x_nonnegative
     neg   r30
     mov   r27, r30
     mov   r16, r8
     sub   r16, r30
-    clr   r17
+    clr   r31
     rjmp  .Ltext_clip_right
 .Ltext_x_nonnegative:
-    mov   r17, r30
+    mov   r31, r30
+    clr   r27                       ; leftSkip = 0
     mov   r16, r8
 .Ltext_clip_right:
     ldi   r30, 128
-    sub   r30, r17
+    sub   r30, r31
     cp    r30, r16
     brsh  .Ltext_right_clip_done
     mov   r16, r30
@@ -14423,59 +14386,63 @@ text_emit_char_raw:
     ldi   r30, 128
     mov   r14, r30
     sub   r14, r16
-    in    r0, SPDR                  ; unsigned xadv; final record byte
 
-    ; Every available glyph advances, including empty and fully clipped glyphs.
-    add   r28, r0
-    adc   r29, ZERO
+    ; The horizontal setup above exactly fills the final 17-cycle record-byte
+    ; interval. Read xadv before doing image-only pointer work so empty or fully
+    ; clipped glyphs do not pay for an image address they will never use.
+    in    r24, SPDR                 ; unsigned xadv, final record byte
 
-    ; Rejected records close the metadata transaction without opening an image
-    ; read. A visible record immediately launches the image command, then uses
-    ; that command-transfer interval to form the physical image pointer.
-    sbrs  r23, TEXT_GLYPH_FLAG_REJECT
-    rjmp  .Ltext_emit_char_visible
-    fx_disable
-    rjmp  .Ltext_emit_char_restore
+    sbrc  r23, TEXT_GLYPH_FLAG_REJECT
+    rjmp  .Ltext_emit_char_rejected
 
-.Ltext_emit_char_visible:
-    fx_disable
-    ldi   r30, SFC_READ
-    fx_enable
-    out   SPDR, r30
-
-    ; physicalImage = physicalGlyphBase + offset16 + topSkip*stride + leftSkip.
-    add   r20, r24
+    ; physicalImage = physicalGlyphBase + imageOffset16
+    ;               + topSkip*stride + leftSkip.
+    ; Compute this after the record byte is available but before launching the
+    ; image command. The command transfer then again overlaps cursor advance and
+    ; the tail jump, preserving the exact command+18 address-high handoff.
+    add   r20, r11
     adc   r21, r25
     adc   r22, ZERO
-    mul   r9, r10
+    mul   r26, r10
     add   r20, r0
     adc   r21, r1
     adc   r22, ZERO
     add   r20, r27
     adc   r21, ZERO
     adc   r22, ZERO
-    set
-    jmp   draw_bitmap_seek_prepared_text_after_command_func
+    clr   r11                       ; restore 16-bit row stride high byte
+
+    fx_disable
+    ldi   r30, SFC_READ
+    fx_enable
+    out   SPDR, r30
+    add   r28, r24
+    adc   r29, ZERO
+    jmp   draw_bitmap_seek_prepared_text_func
+
+.Ltext_emit_char_rejected:
+    add   r28, r24
+    adc   r29, ZERO
+    fx_disable
+    rjmp  .Ltext_emit_char_restore
 
 .Ltext_emit_char_restore:
     pop   r22
     pop   r19
     pop   r18
-    pop   r17
     pop   r15
     pop   r14
     pop   r13
     pop   r12
     ret
 
-; Local fixed-delay ladder for the inlined record transaction. Each name is the
-; complete cycle count from RCALL through RET. Only flag-preserving NOP/RJMP
-; instructions are used so image-offset carry survives the final data bytes.
-.Ltext_record_delay_15:
-    delay_2
-.Ltext_record_delay_13:
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Local complete-cycle delays for the inlined record transaction.
+.Ltext_record_delay_16:
     nop
-    delay_2
+.Ltext_record_delay_15:
+    delay_4
+    nop
 .Ltext_record_delay_10:
     nop
     delay_2

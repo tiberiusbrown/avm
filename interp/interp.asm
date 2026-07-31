@@ -14294,13 +14294,12 @@ text_emit_char_raw:
 .Ltext_width_nonzero:
     mov   r10, r8
 
-    mov   r24, r18
     ldi   r30, 1
-    sbrc  r24, 1
+    sbrc  r18, 1
     ldi   r30, 4
-    sbrc  r24, 0
+    sbrc  r18, 0
     lsl   r30
-    sbrc  r24, 2
+    sbrc  r18, 2
     swap  r30
     mov   r11, r30
 

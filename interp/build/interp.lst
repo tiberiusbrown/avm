@@ -1274,7 +1274,7 @@ SYMBOL TABLE:
 00005148 l       .text	00000000 .Lsprite_row_complete
 00005174 l       .text	00000000 .Lsprite_finish
 0000519a l       .text	00000000 .Lsprite_finish_text
-00006212 l       .text	00000000 .Ltext_emit_char_restore
+00006210 l       .text	00000000 .Ltext_emit_char_restore
 000051e4 l       .text	00000000 .Lsys_rect_reject_unpushed
 000051e8 l       .text	00000000 .Lsys_rect_visible
 00005200 l       .text	00000000 .Lsys_rect_x_nonnegative
@@ -1459,19 +1459,19 @@ SYMBOL TABLE:
 00006042 l       .text	00000000 .Ltext_emit_ram_span_loop
 0000605c l       .text	00000000 .Ltext_newline_char
 0000607c l       .text	00000000 .Ltext_emit_char_lookup_out_of_range
-00006222 l       .text	00000000 .Ltext_record_delay_16
+00006220 l       .text	00000000 .Ltext_record_delay_16
 000060fc l       .text	00000000 .Ltext_height_nonzero
 00006128 l       .text	00000000 .Ltext_y_below_bottom_edge
 00006136 l       .text	00000000 .Ltext_y_extent_visible
 00006142 l       .text	00000000 .Ltext_width_nonzero
-0000617c l       .text	00000000 .Ltext_x_below_right_edge
-0000618a l       .text	00000000 .Ltext_x_extent_visible
-0000619a l       .text	00000000 .Ltext_top_skip_aligned
-000061ac l       .text	00000000 .Ltext_not_top_row
-000061c4 l       .text	00000000 .Ltext_x_nonnegative
-000061ca l       .text	00000000 .Ltext_clip_right
-000061d4 l       .text	00000000 .Ltext_right_clip_done
-0000620a l       .text	00000000 .Ltext_emit_char_rejected
+0000617a l       .text	00000000 .Ltext_x_below_right_edge
+00006188 l       .text	00000000 .Ltext_x_extent_visible
+00006198 l       .text	00000000 .Ltext_top_skip_aligned
+000061aa l       .text	00000000 .Ltext_not_top_row
+000061c2 l       .text	00000000 .Ltext_x_nonnegative
+000061c8 l       .text	00000000 .Ltext_clip_right
+000061d2 l       .text	00000000 .Ltext_right_clip_done
+00006208 l       .text	00000000 .Ltext_emit_char_rejected
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
 00006230 g       .text	00000000 _etext
@@ -14006,7 +14006,7 @@ Disassembly of section .text:
 
 0000519a <.Lsprite_finish_text>:
     519a:	59 9a       	sbi	0x0b, 1	; 11
-    519c:	0c 94 09 31 	jmp	0x6212	; 0x6212 <.Ltext_emit_char_restore>
+    519c:	0c 94 08 31 	jmp	0x6210	; 0x6210 <.Ltext_emit_char_restore>
 
 000051a0 <sprite_delay_17>:
     51a0:	00 00       	nop
@@ -16248,9 +16248,9 @@ Disassembly of section .text:
     60e4:	60 91 10 0a 	lds	r22, 0x0A10	; 0x800a10 <_end+0x4>
     60e8:	00 00       	nop
     60ea:	8e bd       	out	0x2e, r24	; 46
-    60ec:	9a d0       	rcall	.+308    	; 0x6222 <.Ltext_record_delay_16>
+    60ec:	99 d0       	rcall	.+306    	; 0x6220 <.Ltext_record_delay_16>
     60ee:	2e bc       	out	0x2e, r2	; 46
-    60f0:	98 d0       	rcall	.+304    	; 0x6222 <.Ltext_record_delay_16>
+    60f0:	97 d0       	rcall	.+302    	; 0x6220 <.Ltext_record_delay_16>
     60f2:	1e b4       	in	r1, 0x2e	; 46
     60f4:	2e bc       	out	0x2e, r2	; 46
     60f6:	11 20       	and	r1, r1
@@ -16300,140 +16300,140 @@ Disassembly of section .text:
 
 00006142 <.Ltext_width_nonzero>:
     6142:	a8 2c       	mov	r10, r8
-    6144:	82 2f       	mov	r24, r18
-    6146:	e1 e0       	ldi	r30, 0x01	; 1
-    6148:	81 fd       	sbrc	r24, 1
-    614a:	e4 e0       	ldi	r30, 0x04	; 4
-    614c:	80 fd       	sbrc	r24, 0
-    614e:	ee 0f       	add	r30, r30
-    6150:	82 fd       	sbrc	r24, 2
-    6152:	e2 95       	swap	r30
-    6154:	be 2e       	mov	r11, r30
-    6156:	e2 2f       	mov	r30, r18
-    6158:	35 95       	asr	r19
-    615a:	e7 95       	ror	r30
+    6144:	e1 e0       	ldi	r30, 0x01	; 1
+    6146:	21 fd       	sbrc	r18, 1
+    6148:	e4 e0       	ldi	r30, 0x04	; 4
+    614a:	20 fd       	sbrc	r18, 0
+    614c:	ee 0f       	add	r30, r30
+    614e:	22 fd       	sbrc	r18, 2
+    6150:	e2 95       	swap	r30
+    6152:	be 2e       	mov	r11, r30
+    6154:	e2 2f       	mov	r30, r18
+    6156:	35 95       	asr	r19
+    6158:	e7 95       	ror	r30
+    615a:	e5 95       	asr	r30
     615c:	e5 95       	asr	r30
-    615e:	e5 95       	asr	r30
-    6160:	3e 2f       	mov	r19, r30
-    6162:	2b 2d       	mov	r18, r11
-    6164:	ee b5       	in	r30, 0x2e	; 46
-    6166:	2e bc       	out	0x2e, r2	; 46
-    6168:	ce 01       	movw	r24, r28
-    616a:	ff 27       	eor	r31, r31
-    616c:	e7 fd       	sbrc	r30, 7
-    616e:	f0 95       	com	r31
-    6170:	8e 0f       	add	r24, r30
-    6172:	9f 1f       	adc	r25, r31
-    6174:	80 38       	cpi	r24, 0x80	; 128
-    6176:	92 05       	cpc	r25, r2
-    6178:	0c f0       	brlt	.+2      	; 0x617c <.Ltext_x_below_right_edge>
-    617a:	70 68       	ori	r23, 0x80	; 128
+    615e:	3e 2f       	mov	r19, r30
+    6160:	2b 2d       	mov	r18, r11
+    6162:	ee b5       	in	r30, 0x2e	; 46
+    6164:	2e bc       	out	0x2e, r2	; 46
+    6166:	ce 01       	movw	r24, r28
+    6168:	ff 27       	eor	r31, r31
+    616a:	e7 fd       	sbrc	r30, 7
+    616c:	f0 95       	com	r31
+    616e:	8e 0f       	add	r24, r30
+    6170:	9f 1f       	adc	r25, r31
+    6172:	80 38       	cpi	r24, 0x80	; 128
+    6174:	92 05       	cpc	r25, r2
+    6176:	0c f0       	brlt	.+2      	; 0x617a <.Ltext_x_below_right_edge>
+    6178:	70 68       	ori	r23, 0x80	; 128
 
-0000617c <.Ltext_x_below_right_edge>:
-    617c:	fc 01       	movw	r30, r24
-    617e:	e8 0d       	add	r30, r8
-    6180:	f2 1d       	adc	r31, r2
-    6182:	2e 16       	cp	r2, r30
-    6184:	2f 06       	cpc	r2, r31
-    6186:	0c f0       	brlt	.+2      	; 0x618a <.Ltext_x_extent_visible>
-    6188:	70 68       	ori	r23, 0x80	; 128
+0000617a <.Ltext_x_below_right_edge>:
+    617a:	fc 01       	movw	r30, r24
+    617c:	e8 0d       	add	r30, r8
+    617e:	f2 1d       	adc	r31, r2
+    6180:	2e 16       	cp	r2, r30
+    6182:	2f 06       	cpc	r2, r31
+    6184:	0c f0       	brlt	.+2      	; 0x6188 <.Ltext_x_extent_visible>
+    6186:	70 68       	ori	r23, 0x80	; 128
 
-0000618a <.Ltext_x_extent_visible>:
-    618a:	b9 2f       	mov	r27, r25
-    618c:	be b4       	in	r11, 0x2e	; 46
-    618e:	2e bc       	out	0x2e, r2	; 46
-    6190:	a3 2f       	mov	r26, r19
-    6192:	a1 95       	neg	r26
-    6194:	21 30       	cpi	r18, 0x01	; 1
-    6196:	09 f0       	breq	.+2      	; 0x619a <.Ltext_top_skip_aligned>
-    6198:	a3 19       	sub	r26, r3
+00006188 <.Ltext_x_extent_visible>:
+    6188:	b9 2f       	mov	r27, r25
+    618a:	be b4       	in	r11, 0x2e	; 46
+    618c:	2e bc       	out	0x2e, r2	; 46
+    618e:	a3 2f       	mov	r26, r19
+    6190:	a1 95       	neg	r26
+    6192:	21 30       	cpi	r18, 0x01	; 1
+    6194:	09 f0       	breq	.+2      	; 0x6198 <.Ltext_top_skip_aligned>
+    6196:	a3 19       	sub	r26, r3
 
-0000619a <.Ltext_top_skip_aligned>:
-    619a:	ee 27       	eor	r30, r30
-    619c:	a7 ff       	sbrs	r26, 7
-    619e:	ea 2f       	mov	r30, r26
-    61a0:	ae 2f       	mov	r26, r30
-    61a2:	ca 1a       	sub	r12, r26
-    61a4:	3a 0f       	add	r19, r26
-    61a6:	3f 3f       	cpi	r19, 0xFF	; 255
-    61a8:	09 f4       	brne	.+2      	; 0x61ac <.Ltext_not_top_row>
-    61aa:	71 60       	ori	r23, 0x01	; 1
+00006198 <.Ltext_top_skip_aligned>:
+    6198:	ee 27       	eor	r30, r30
+    619a:	a7 ff       	sbrs	r26, 7
+    619c:	ea 2f       	mov	r30, r26
+    619e:	ae 2f       	mov	r26, r30
+    61a0:	ca 1a       	sub	r12, r26
+    61a2:	3a 0f       	add	r19, r26
+    61a4:	3f 3f       	cpi	r19, 0xFF	; 255
+    61a6:	09 f4       	brne	.+2      	; 0x61aa <.Ltext_not_top_row>
+    61a8:	71 60       	ori	r23, 0x01	; 1
 
-000061ac <.Ltext_not_top_row>:
-    61ac:	00 c0       	rjmp	.+0      	; 0x61ae <.Ltext_not_top_row+0x2>
-    61ae:	9e b5       	in	r25, 0x2e	; 46
-    61b0:	2e bc       	out	0x2e, r2	; 46
-    61b2:	e8 2f       	mov	r30, r24
-    61b4:	b7 ff       	sbrs	r27, 7
-    61b6:	06 c0       	rjmp	.+12     	; 0x61c4 <.Ltext_x_nonnegative>
-    61b8:	e1 95       	neg	r30
-    61ba:	be 2f       	mov	r27, r30
-    61bc:	08 2d       	mov	r16, r8
-    61be:	0e 1b       	sub	r16, r30
-    61c0:	ff 27       	eor	r31, r31
-    61c2:	03 c0       	rjmp	.+6      	; 0x61ca <.Ltext_clip_right>
+000061aa <.Ltext_not_top_row>:
+    61aa:	00 c0       	rjmp	.+0      	; 0x61ac <.Ltext_not_top_row+0x2>
+    61ac:	9e b5       	in	r25, 0x2e	; 46
+    61ae:	2e bc       	out	0x2e, r2	; 46
+    61b0:	e8 2f       	mov	r30, r24
+    61b2:	b7 ff       	sbrs	r27, 7
+    61b4:	06 c0       	rjmp	.+12     	; 0x61c2 <.Ltext_x_nonnegative>
+    61b6:	e1 95       	neg	r30
+    61b8:	be 2f       	mov	r27, r30
+    61ba:	08 2d       	mov	r16, r8
+    61bc:	0e 1b       	sub	r16, r30
+    61be:	ff 27       	eor	r31, r31
+    61c0:	03 c0       	rjmp	.+6      	; 0x61c8 <.Ltext_clip_right>
 
-000061c4 <.Ltext_x_nonnegative>:
-    61c4:	fe 2f       	mov	r31, r30
-    61c6:	bb 27       	eor	r27, r27
-    61c8:	08 2d       	mov	r16, r8
+000061c2 <.Ltext_x_nonnegative>:
+    61c2:	fe 2f       	mov	r31, r30
+    61c4:	bb 27       	eor	r27, r27
+    61c6:	08 2d       	mov	r16, r8
 
-000061ca <.Ltext_clip_right>:
-    61ca:	e0 e8       	ldi	r30, 0x80	; 128
-    61cc:	ef 1b       	sub	r30, r31
-    61ce:	e0 17       	cp	r30, r16
-    61d0:	08 f4       	brcc	.+2      	; 0x61d4 <.Ltext_right_clip_done>
-    61d2:	0e 2f       	mov	r16, r30
+000061c8 <.Ltext_clip_right>:
+    61c8:	e0 e8       	ldi	r30, 0x80	; 128
+    61ca:	ef 1b       	sub	r30, r31
+    61cc:	e0 17       	cp	r30, r16
+    61ce:	08 f4       	brcc	.+2      	; 0x61d2 <.Ltext_right_clip_done>
+    61d0:	0e 2f       	mov	r16, r30
 
-000061d4 <.Ltext_right_clip_done>:
-    61d4:	08 11       	cpse	r16, r8
-    61d6:	74 60       	ori	r23, 0x04	; 4
-    61d8:	e0 e8       	ldi	r30, 0x80	; 128
-    61da:	ee 2e       	mov	r14, r30
-    61dc:	e0 1a       	sub	r14, r16
-    61de:	8e b5       	in	r24, 0x2e	; 46
-    61e0:	77 fd       	sbrc	r23, 7
-    61e2:	13 c0       	rjmp	.+38     	; 0x620a <.Ltext_emit_char_rejected>
-    61e4:	4b 0d       	add	r20, r11
-    61e6:	59 1f       	adc	r21, r25
-    61e8:	62 1d       	adc	r22, r2
-    61ea:	aa 9d       	mul	r26, r10
-    61ec:	40 0d       	add	r20, r0
-    61ee:	51 1d       	adc	r21, r1
-    61f0:	62 1d       	adc	r22, r2
-    61f2:	4b 0f       	add	r20, r27
-    61f4:	52 1d       	adc	r21, r2
-    61f6:	62 1d       	adc	r22, r2
-    61f8:	bb 24       	eor	r11, r11
-    61fa:	59 9a       	sbi	0x0b, 1	; 11
-    61fc:	e3 e0       	ldi	r30, 0x03	; 3
-    61fe:	59 98       	cbi	0x0b, 1	; 11
-    6200:	ee bd       	out	0x2e, r30	; 46
-    6202:	c8 0f       	add	r28, r24
-    6204:	d2 1d       	adc	r29, r2
-    6206:	0c 94 13 27 	jmp	0x4e26	; 0x4e26 <draw_bitmap_seek_prepared_text_func>
+000061d2 <.Ltext_right_clip_done>:
+    61d2:	08 11       	cpse	r16, r8
+    61d4:	74 60       	ori	r23, 0x04	; 4
+    61d6:	e0 e8       	ldi	r30, 0x80	; 128
+    61d8:	ee 2e       	mov	r14, r30
+    61da:	e0 1a       	sub	r14, r16
+    61dc:	8e b5       	in	r24, 0x2e	; 46
+    61de:	77 fd       	sbrc	r23, 7
+    61e0:	13 c0       	rjmp	.+38     	; 0x6208 <.Ltext_emit_char_rejected>
+    61e2:	4b 0d       	add	r20, r11
+    61e4:	59 1f       	adc	r21, r25
+    61e6:	62 1d       	adc	r22, r2
+    61e8:	aa 9d       	mul	r26, r10
+    61ea:	40 0d       	add	r20, r0
+    61ec:	51 1d       	adc	r21, r1
+    61ee:	62 1d       	adc	r22, r2
+    61f0:	4b 0f       	add	r20, r27
+    61f2:	52 1d       	adc	r21, r2
+    61f4:	62 1d       	adc	r22, r2
+    61f6:	bb 24       	eor	r11, r11
+    61f8:	59 9a       	sbi	0x0b, 1	; 11
+    61fa:	e3 e0       	ldi	r30, 0x03	; 3
+    61fc:	59 98       	cbi	0x0b, 1	; 11
+    61fe:	ee bd       	out	0x2e, r30	; 46
+    6200:	c8 0f       	add	r28, r24
+    6202:	d2 1d       	adc	r29, r2
+    6204:	0c 94 13 27 	jmp	0x4e26	; 0x4e26 <draw_bitmap_seek_prepared_text_func>
 
-0000620a <.Ltext_emit_char_rejected>:
-    620a:	c8 0f       	add	r28, r24
-    620c:	d2 1d       	adc	r29, r2
-    620e:	59 9a       	sbi	0x0b, 1	; 11
-    6210:	00 c0       	rjmp	.+0      	; 0x6212 <.Ltext_emit_char_restore>
+00006208 <.Ltext_emit_char_rejected>:
+    6208:	c8 0f       	add	r28, r24
+    620a:	d2 1d       	adc	r29, r2
+    620c:	59 9a       	sbi	0x0b, 1	; 11
+    620e:	00 c0       	rjmp	.+0      	; 0x6210 <.Ltext_emit_char_restore>
 
-00006212 <.Ltext_emit_char_restore>:
-    6212:	6f 91       	pop	r22
-    6214:	3f 91       	pop	r19
-    6216:	2f 91       	pop	r18
-    6218:	ff 90       	pop	r15
-    621a:	ef 90       	pop	r14
-    621c:	df 90       	pop	r13
-    621e:	cf 90       	pop	r12
-    6220:	08 95       	ret
+00006210 <.Ltext_emit_char_restore>:
+    6210:	6f 91       	pop	r22
+    6212:	3f 91       	pop	r19
+    6214:	2f 91       	pop	r18
+    6216:	ff 90       	pop	r15
+    6218:	ef 90       	pop	r14
+    621a:	df 90       	pop	r13
+    621c:	cf 90       	pop	r12
+    621e:	08 95       	ret
 
-00006222 <.Ltext_record_delay_16>:
-    6222:	00 00       	nop
-    6224:	00 c0       	rjmp	.+0      	; 0x6226 <.Ltext_record_delay_16+0x4>
-    6226:	00 c0       	rjmp	.+0      	; 0x6228 <.Ltext_record_delay_16+0x6>
+00006220 <.Ltext_record_delay_16>:
+    6220:	00 00       	nop
+    6222:	00 c0       	rjmp	.+0      	; 0x6224 <.Ltext_record_delay_16+0x4>
+    6224:	00 c0       	rjmp	.+0      	; 0x6226 <.Ltext_record_delay_16+0x6>
+    6226:	00 00       	nop
     6228:	00 00       	nop
-    622a:	00 00       	nop
-    622c:	00 c0       	rjmp	.+0      	; 0x622e <.Ltext_record_delay_16+0xc>
-    622e:	08 95       	ret
+    622a:	00 c0       	rjmp	.+0      	; 0x622c <.Ltext_record_delay_16+0xc>
+    622c:	08 95       	ret
+    622e:	00 00       	nop

@@ -14345,13 +14345,13 @@ text_emit_char_raw:
     breq  .Ltext_top_skip_aligned
     sub   r26, ONE
 .Ltext_top_skip_aligned:
-    clr   r30
-    sbrs  r26, 7
-    mov   r30, r26
-    mov   r26, r30
+    sbrc  r26, 7
+    clr   r26
     sub   r12, r26
     add   r19, r26
     cpi   r19, 0xFF
+    mov   r30, r24
+    nop
     brne  .Ltext_not_top_row
     ori   r23, (1 << SPRITE_FLAG_TOP)
 .Ltext_not_top_row:
@@ -14360,7 +14360,6 @@ text_emit_char_raw:
 
     ; Horizontal clipping. r27 initially carries rendered-x high, then
     ; becomes leftSkip; r31 becomes framebuffer x.
-    mov   r30, r24
     sbrs  r27, 7
     rjmp  .Ltext_x_nonnegative
     neg   r30

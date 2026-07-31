@@ -2034,7 +2034,8 @@ have no generic LLVM representation.
 | `0x34` | `draw_text_P` | `r4 = x`, `r5 = baseline y`, `q3 = program string` | `r4 = final x`, `r5 = final baseline y` | Selected-text, program-space string/font reads; framebuffer reads and writes |
 | `0x35` | `draw_textfv` | `r4 = x`, `r5 = baseline y`, `r6 = RAM format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
 | `0x36` | `draw_textfv_P` | `r4 = x`, `r5 = baseline y`, `q3 = program format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
-| `0x37-0xFF` | Reserved | — | — | — |
+| `0x37` | `debug_printfv_P` | `q3 = program format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Formatted AS0/AS1 reads; debug output |
+| `0x38-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -3098,6 +3099,7 @@ Encodings:
 |---:|---|---|
 | `0x2F` | `D7 2F` | `vsnprintf` |
 | `0x30` | `D7 30` | `vsnprintf_P` |
+| `0x37` | `D7 37` | `debug_printfv_P` |
 
 C interfaces:
 
@@ -3111,6 +3113,10 @@ int vsnprintf(
 int vsnprintf_P(
     char *restrict dst,
     size_t size,
+    char const __attribute__((address_space(1))) *restrict format,
+    va_list ap);
+
+int debug_printfv_P(
     char const __attribute__((address_space(1))) *restrict format,
     va_list ap);
 ```
@@ -3129,10 +3135,15 @@ vsnprintf_P:
     r5 = destination size
     q3 = program-space format pointer
     r2 = va_list cursor
+
+debug_printfv_P:
+    q3 = program-space format pointer
+    r2 = va_list cursor
 ```
 
-For `vsnprintf_P`, the logical format address is `q3[23:0]` and
-`q3[31:24]` is ignored. Format-address advancement is modulo `2^24`.
+For `vsnprintf_P` and `debug_printfv_P`, the logical format address is
+`q3[23:0]` and `q3[31:24]` is ignored. Format-address advancement is modulo
+`2^24`.
 
 `r2` is the 16-bit data-space address of the next unread variadic argument
 byte. The service advances only an internal copy of this cursor. It preserves
@@ -3141,8 +3152,8 @@ caller memory.
 
 #### 49.27.1. Destination and return semantics
 
-The services have standard bounded-buffer counting semantics for the supported
-format language:
+The two `vsnprintf` services have standard bounded-buffer counting semantics
+for the supported format language:
 
 ```text
 size == 0:
@@ -3168,16 +3179,29 @@ error. On a format error, bytes emitted before the invalid construct remain in
 the destination, subject to the size bound. Count overflow does not change the
 bounded writes or termination behavior.
 
-The original `dst` input in `r4` is replaced by the signed result. The services
-preserve `r0-r3`, `r5-r7`, `CC`, and `SP`. They also preserve the complete
-input bit patterns of `r2`, `r5`, and the applicable format register (`r6` or
-`q3`).
+The original `dst` input in `r4` is replaced by the signed result. The two
+buffer services preserve `r0-r3`, `r5-r7`, `CC`, and `SP`. They also preserve
+the complete input bit patterns of `r2`, `r5`, and the applicable format
+register (`r6` or `q3`).
 
-Both services read the variadic argument area in data space and may read
-additional data-space objects through `%s`. Both may read program-space objects
-through `%S`. `vsnprintf_P` additionally reads its format from program space.
-They write only the bounded destination region described above. `%P` formats a
-program address value and performs no program-space read.
+`debug_printfv_P` emits every formatted byte to the implementation-defined
+debug output stream and emits no terminating zero. On success it returns the
+number of emitted bytes in `r4`. It returns `-1` under the same invalid-format
+and count-overflow conditions as the buffer services. Bytes emitted before an
+invalid construct remain observable, and count overflow does not stop output.
+The service preserves `r0-r3`, `r5-r7`, `CC`, `SP`, and the complete input bit
+patterns of `r2` and `q3`.
+
+All three services read the variadic argument area in data space and may read
+additional data-space objects through `%s` and program-space objects through
+`%S`. `vsnprintf_P` and `debug_printfv_P` additionally read their formats from
+program space. The buffer services write only the bounded destination region
+described above; `debug_printfv_P` performs no AVM data-space write. `%P`
+formats a program address value and performs no program-space read.
+
+Debug output is externally observable. `debug_printfv_P` MUST NOT be removed,
+duplicated, speculated, combined with another call, or reordered across another
+observable debug-output service.
 
 #### 49.27.2. Accepted format grammar
 
@@ -3889,6 +3913,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `set_sprite`, `draw_overwrite`, `draw_plus_mask`, `draw_self_masked`, `draw_erase` | Dedicated typed AVM intrinsics and `SYS 0x22-0x26` | — | — | Select an AS1 sprite or draw from selected-sprite state into the fixed framebuffer |
 | `draw_filled_rect_white`, `draw_filled_rect_black` | Dedicated typed AVM intrinsics and `SYS 0x27-0x28` | — | — | Read/write the fixed framebuffer |
 | `vsnprintf`, `vsnprintf_P` | Dedicated typed AVM intrinsics and `SYS 0x2F-0x30` | — | — | Bounded AS0 write; AS0 and AS1 reads selected by the format |
+| `debug_printfv_P` | Dedicated typed AVM intrinsic and `SYS 0x37` | — | — | AS0/AS1 reads selected by the format; externally observable debug output |
 | `set_text_font`, `set_text_mode`, `draw_text`, `draw_text_P`, `draw_textfv`, `draw_textfv_P` | Dedicated typed AVM intrinsics and `SYS 0x31-0x36` | — | — | Hidden selected-text state; AS0/AS1 source reads; fixed-framebuffer read/write effects |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
@@ -4281,6 +4306,10 @@ int __avm_vsnprintf_P(
     size_t size,
     char const __attribute__((address_space(1))) *restrict format,
     va_list ap);
+
+int __avm_debug_printfv_P(
+    char const __attribute__((address_space(1))) *restrict format,
+    va_list ap);
 ```
 
 Clang SHOULD provide corresponding target builtins:
@@ -4292,20 +4321,27 @@ int __builtin_avm_vsnprintf_p(
     char *dst, size_t size,
     char const __attribute__((address_space(1))) *format,
     va_list ap);
+int __builtin_avm_debug_printfv_p(
+    char const __attribute__((address_space(1))) *format,
+    va_list ap);
 ```
 
-The source-language argument order is `(dst, size, format, ap)`. Direct builtin
-lowering uses the typed intrinsics from Section 59. Runtime headers MAY expose
-`vsnprintf` and `vsnprintf_P` as function-like macros that call the target
-builtins while retaining addressable out-of-line wrappers.
+The source-language argument order is `(dst, size, format, ap)` for the buffer
+services and `(format, ap)` for `debug_printfv_P`. Direct builtin lowering uses
+the typed intrinsics from Section 59. Runtime headers MAY expose `vsnprintf`,
+`vsnprintf_P`, and `debug_printfv_P` as function-like macros that call the
+target builtins while retaining addressable out-of-line wrappers.
 
 Under the ordinary calling convention, `__avm_vsnprintf` receives `dst`,
 `size`, `format`, and `ap` in `r4`, `r5`, `r6`, and `r7`; its wrapper copies
 `ap` to the service's fixed `r2` input. `__avm_vsnprintf_P` receives `dst` and
 `size` in `r4` and `r5`, the normalized ordinary-ABI program format in `q3`,
 and `ap` as the first stack argument at callee entry. Its wrapper loads that
-16-bit stack argument into `r2`. These wrapper-entry rules do not change the
-fixed SYS interfaces in Section 49.27.
+16-bit stack argument into `r2`. Under the ordinary calling convention,
+`__avm_debug_printfv_P` receives its normalized program format in `q2` and
+`ap` in `r6`; its wrapper moves the logical program pointer to `q3` and the
+cursor to `r2`. These wrapper-entry rules do not change the fixed SYS interfaces
+in Section 49.27.
 
 The builtin format checker, when enabled, MUST implement the exact grammar from
 Section 49.27. It must interpret `%S` as a packed address-space-one character
@@ -4642,6 +4678,8 @@ declare i16 @llvm.avm.vsnprintf(
     ptr %dst, i16 %size, ptr %format, ptr %ap)
 declare i16 @llvm.avm.vsnprintf.p(
     ptr %dst, i16 %size, ptr addrspace(1) %format, ptr %ap)
+declare i16 @llvm.avm.debug.printfv.p(
+    ptr addrspace(1) %format, ptr %ap)
 
 declare void @llvm.avm.set.text.font(ptr addrspace(1) %font)
 declare void @llvm.avm.set.text.mode(i8 %mode)
@@ -4732,6 +4770,7 @@ generic LLVM intrinsic.
 | `llvm.avm.draw.text.p(i16,i16,p1)` | `SYS 0x34` through `SYS_DRAW_TEXT_P` | tied `r4 = x`, tied `r5 = baseline y`, `q3 = string` | tied `q2 = final cursor` |
 | `llvm.avm.draw.textfv(i16,i16,ptr,ptr)` | `SYS 0x35` through `SYS_DRAW_TEXTFV` | tied `r4 = x`, tied `r5 = baseline y`, `r6 = format`, `r2 = ap` | tied `q2 = final cursor` |
 | `llvm.avm.draw.textfv.p(i16,i16,p1,ptr)` | `SYS 0x36` through `SYS_DRAW_TEXTFV_P` | tied `r4 = x`, tied `r5 = baseline y`, `q3 = format`, `r2 = ap` | tied `q2 = final cursor` |
+| `llvm.avm.debug.printfv.p(p1,ptr)` | `SYS 0x37` through `SYS_DEBUG_PRINTFV_P` | `q3 = format`, `r2 = ap` | `r4 = signed result` |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -4774,6 +4813,13 @@ NOT be marked `argmemonly`, because the indirectly obtained string pointers are
 not intrinsic pointer operands. They have no ordinary call-preserved register
 mask.
 
+`SYS_DEBUG_PRINTFV_P` defines `r4` and has input-only, preserved uses of `q3`
+and `r2`. The format address is `q3[23:0]`; `q3[31:24]` is ignored, so selection
+MUST NOT normalize the pointer solely for this service. Its pseudo carries an
+explicit address-space-one format read, an address-space-zero read through
+`ap`, conservative indirect reads from both address spaces, and an unmodeled
+externally observable debug-output side effect. It MUST NOT be marked
+`argmemonly` and has no ordinary call-preserved register mask.
 
 `SYS_SET_TEXT_FONT` has an input-only fixed use of `q2`, consumes only
 `q2[23:0]`, and defines hidden selected-font state. A nonnull font operand
@@ -4871,17 +4917,19 @@ target builtins for the comparison and string functions lower to services
 services `0x22-0x26`. The two filled-rectangle
 builtins lower to services `0x27-0x28`. Platform and persistence builtins lower
 to services `0x29-0x2E`. The formatted-output builtins lower to services
-`0x2F-0x30`, and the text-state and text-drawing builtins lower to services
-`0x31-0x36`. A compiler MAY recognize
+`0x2F-0x30`, the text-state and text-drawing builtins lower to services
+`0x31-0x36`, and `debug_printfv_P` lowers to service `0x37`. A compiler MAY
+recognize
 ordinary C library calls and replace them with the corresponding target
 intrinsic when interposition, object-size, and language rules permit it.
 
 ### 59.2. Optimization and scheduling
 
-`debug_putc`, `debug_break`, `millis`, and `millis32` retain the observable or
-evolving-state constraints specified in Sections 49.1-49.4. They have no AVM
-memory effects but retain a chain or unmodeled side effect. `debug_break` is a
-scheduling barrier at its source position.
+`debug_putc`, `debug_printfv_P`, `debug_break`, `millis`, and `millis32`
+retain the observable or evolving-state constraints specified in their service
+definitions. The debug-output services retain an ordering chain or unmodeled
+side effect; `debug_printfv_P` additionally carries its explicit and indirect
+AS0/AS1 reads. `debug_break` is a scheduling barrier at its source position.
 
 `buttons` and `generate_random_seed` read evolving hardware state and retain a
 chain or unmodeled side effect. `idle` is an observable scheduling and power-
@@ -4931,6 +4979,9 @@ The memory services have their precise address-space effects:
   strings selected by the format, and writes its bounded AS0 destination.
 - `vsnprintf_P` has the same indirect effects and additionally reads its AS1
   format.
+- `debug_printfv_P` reads its AS1 format, the AS0 variadic area, and any AS0 or
+  AS1 strings selected by the format, and produces externally observable debug
+  output without writing a destination buffer.
 - `set_text_font` conditionally reads an AS1 font header and defines hidden
   selected-font state.
 - `set_text_mode` defines hidden selected-mode state.
@@ -4951,11 +5002,13 @@ impossible. Read-only comparison and length calls may be eliminated when their
 results are dead, but they may not be moved across stores that can modify any
 byte they inspect. String-copy and concatenation calls may be transformed only
 when their NUL-termination, padding, bound, and aliasing semantics are
-preserved. Formatted-output calls must remain ordered relative to stores that
-may change their format, variadic arguments, or referenced strings and relative
-to accesses that may observe their destination writes. Their result and writes
-may be eliminated only when ordinary nonvolatile memory-effect and undefined-
-behavior rules permit it.
+preserved. Formatted-output calls must remain ordered relative to stores that may change
+their format, variadic arguments, or referenced strings and, for buffer
+services, relative to accesses that may observe destination writes.
+`debug_printfv_P` additionally remains ordered with other observable debug
+output and MUST NOT be removed, duplicated, or speculated. Buffer-service
+results and writes may be eliminated only when ordinary nonvolatile memory-
+effect and undefined-behavior rules permit it.
 
 
 Text-state operations and text draws carry an additional hidden-state ordering
@@ -5014,6 +5067,9 @@ int __avm_vsnprintf(
     char const *restrict format, va_list ap);
 int __avm_vsnprintf_P(
     char *restrict dst, size_t size,
+    char const __attribute__((address_space(1))) *restrict format,
+    va_list ap);
+int __avm_debug_printfv_P(
     char const __attribute__((address_space(1))) *restrict format,
     va_list ap);
 
@@ -5148,6 +5204,12 @@ for `SYS 0x30`. Address-taking uses the out-of-line runtime functions. Inline
 `snprintf` and `snprintf_P` wrappers may construct a `va_list` and call the
 corresponding `vsnprintf` interface; they inherit the format language in
 Section 49.27.
+
+`__builtin_avm_debug_printfv_p` and `__avm_debug_printfv_P` lower to
+`llvm.avm.debug.printfv.p`. The backend assigns the program format to `q3`, the
+cursor to `r2`, selects `SYS 0x37`, and receives the signed result in `r4`.
+The program-format operand is not normalized solely for this service.
+Address-taking uses the out-of-line runtime function.
 
 Target format diagnostics must understand the AVM `%S` and `%P` extensions and
 the absence of 64-bit and floating conversions. Applying an unmodified host

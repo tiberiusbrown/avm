@@ -43,7 +43,7 @@
         2060   sys_strncpy.c
         3504   sys_strncpy_p.c
       501299   tail_calls.c
-       51446   text.c
+       51414   text.c
        42226   tilesrect.c
        90028   tilessprite.c
        37720   tilessprite16.c

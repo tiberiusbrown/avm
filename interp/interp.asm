@@ -115,6 +115,7 @@
 #define FORMAT_STATUS_COUNT_OVERFLOW 2
 #define FORMAT_STATUS_FATAL_ERROR    3
 #define FORMAT_STATUS_SINK_TEXT      4
+#define FORMAT_STATUS_SINK_DEBUG     5
 
 #define FORMAT_FLAG_LEFT             0
 #define FORMAT_FLAG_PLUS             1
@@ -718,6 +719,7 @@
 #define SYS_DRAW_TEXT_P                0x34
 #define SYS_DRAW_TEXTFV                0x35
 #define SYS_DRAW_TEXTFV_P              0x36
+#define SYS_DEBUG_PRINTFV_P             0x37
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3207,6 +3209,9 @@ sys_dispatch_func:
     (SYS_DRAW_TEXTFV != 0x35) || (SYS_DRAW_TEXTFV_P != 0x36)
     .error "text SYS services must occupy contiguous entries 0x31-0x36"
 .endif
+.if (SYS_DEBUG_PRINTFV_P != 0x37)
+    .error "SYS_DEBUG_PRINTFV_P must occupy dispatch-table entry 0x37"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3243,7 +3248,8 @@ sys_dispatch_table:
     sys_entries 1,   sys_draw_text_p_func
     sys_entries 1,   sys_draw_textfv_func
     sys_entries 1,   sys_draw_textfv_p_func
-    sys_entries 201, invalid_syscall_func
+    sys_entries 1,   sys_debug_printfv_p_func
+    sys_entries 200, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3316,6 +3322,10 @@ sys_draw_textfv_func:
     jmp   sys_format_impl
 sys_draw_textfv_p_func:
     ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
+                           (1 << FORMAT_STATUS_SOURCE_PROGRAM))
+    jmp   sys_format_impl
+sys_debug_printfv_p_func:
+    ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_DEBUG) | \
                            (1 << FORMAT_STATUS_SOURCE_PROGRAM))
     jmp   sys_format_impl
 
@@ -12441,10 +12451,16 @@ sys_save_exists_impl:
 ;   r2 = va_list data pointer (preserved)
 ;   r6 or q3 = RAM or program-space format pointer (preserved)
 ;
+; Debug-formatted entry ABI:
+;   q3 = program-space format pointer (preserved)
+;   r2 = va_list data pointer (preserved)
+;   r4 = signed produced-byte count or -1
+;
 ; SYS_VSNPRINTF and draw_textfv use r6 as a data-space format pointer.
-; SYS_VSNPRINTF_P and draw_textfv_P use q3[23:0] and ignore q3[31:24]. All
-; formatted services abandon the speculative following-opcode fetch, own the FX
-; stream for the complete call, and restart bytecode dispatch unconditionally.
+; SYS_VSNPRINTF_P, draw_textfv_P, and debug_printfv_P use q3[23:0] and ignore
+; q3[31:24]. All formatted services abandon the speculative following-opcode
+; fetch, own the FX stream for the complete call, and restart bytecode dispatch
+; unconditionally.
 ;
 ; Working register allocation while formatting:
 ;   r8:r9    produced byte count (modulo 2^16; overflow status is sticky)
@@ -12521,6 +12537,8 @@ sys_format_impl:
 
     sbrc  r27, FORMAT_STATUS_SINK_TEXT
     rjmp  .Lformat_text_setup
+    sbrc  r27, FORMAT_STATUS_SINK_DEBUG
+    rjmp  .Lformat_debug_setup
 
     ; Bounded-buffer sink setup. Consume the incoming r4 pointer before r17
     ; becomes the call-lifetime status register. T remains clear for buffers.
@@ -12542,6 +12560,16 @@ sys_format_impl:
     sbc   r11, ZERO
 .Lformat_size_zero:
     mov   r17, r24
+    rjmp  format_core
+
+.Lformat_debug_setup:
+    ; Debug output has no destination capacity. Keep T clear so text-only
+    ; renderer paths remain unreachable, initialize the produced-byte count,
+    ; and retain source/debug status in the call-lifetime status register.
+    clt
+    clr   r8
+    clr   r9
+    mov   r17, r27
     rjmp  format_core
 
 .Lformat_text_setup:
@@ -12567,9 +12595,12 @@ sys_format_impl:
 ; nonzero-size destination. FX is unconditionally closed and bytecode fetch is
 ; restarted from the already-advanced VM_PC.
 format_finish:
-    brtc  .Lformat_finish_buffer
+    brtc  .Lformat_finish_nontext
     rjmp  text_finish
-.Lformat_finish_buffer:
+.Lformat_finish_nontext:
+    ; Debug output has no bounded destination or terminator.
+    sbrc  r17, FORMAT_STATUS_SINK_DEBUG
+    rjmp  .Lformat_finish_result
     sbrs  r17, FORMAT_STATUS_SIZE_NONZERO
     rjmp  .Lformat_finish_result
     st    Y, ZERO
@@ -12630,21 +12661,23 @@ format_add_count:
     ori   r17, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
     ret
 
-; Input r24=byte.
-format_emit_char:
-    brtc  .Lformat_emit_char_buffer
-    rjmp  text_emit_char
-.Lformat_emit_char_buffer:
-    mov   r0, r24
-    ldi   r24, 1
-    clr   r25
-    rjmp  format_emit_repeat
-
 ; Inputs r25:r24=count, r0=byte. Add complete logical count, then store only
 ; min(count,write_remaining) bytes.
 format_emit_repeat:
+    sbrc  r17, FORMAT_STATUS_SINK_DEBUG
+    rjmp  .Lformat_emit_repeat_debug
     brtc  .Lformat_emit_repeat_buffer
     rjmp  text_emit_repeat
+.Lformat_emit_repeat_debug:
+    rcall format_add_count
+    mov   r26, r24
+    or    r26, r25
+    breq  .Lformat_emit_repeat_done
+.Lformat_emit_repeat_debug_loop:
+    sts   UEDATX, r0
+    sbiw  r24, 1
+    brne  .Lformat_emit_repeat_debug_loop
+    ret
 .Lformat_emit_repeat_buffer:
     rcall format_add_count
 
@@ -12672,8 +12705,21 @@ format_emit_repeat:
 ; Inputs Z=RAM source and r25:r24=count. Logical count is always added; source
 ; bytes are loaded only for the portion that fits in the destination.
 format_emit_ram_span:
+    sbrc  r17, FORMAT_STATUS_SINK_DEBUG
+    rjmp  .Lformat_emit_ram_span_debug
     brtc  .Lformat_emit_ram_span_buffer
     rjmp  text_emit_ram_span
+.Lformat_emit_ram_span_debug:
+    rcall format_add_count
+    mov   r26, r24
+    or    r26, r25
+    breq  .Lformat_emit_span_done
+.Lformat_emit_ram_span_debug_loop:
+    ld    r0, Z+
+    sts   UEDATX, r0
+    sbiw  r24, 1
+    brne  .Lformat_emit_ram_span_debug_loop
+    ret
 .Lformat_emit_ram_span_buffer:
     rcall format_add_count
 
@@ -14169,6 +14215,23 @@ text_emit_ram_span:
     sts   data_text_current_y+1, r25
 .Ltext_emit_char_lookup_out_of_range:
     ret
+
+.Lformat_emit_char_debug:
+    sts   UEDATX, r24
+    ldi   r24, 1
+    clr   r25
+    rjmp  format_add_count
+.Lformat_emit_char_buffer_or_debug:
+    sbrc  r17, FORMAT_STATUS_SINK_DEBUG
+    rjmp  .Lformat_emit_char_debug
+    mov   r0, r24
+    ldi   r24, 1
+    clr   r25
+    rjmp  format_emit_repeat
+
+; Input r24=byte.
+format_emit_char:
+    brtc  .Lformat_emit_char_buffer_or_debug
 
 ; Emit one logical text byte. Only newline is special. Missing glyphs have no
 ; framebuffer effect and zero advance. Available records are seven bytes in an

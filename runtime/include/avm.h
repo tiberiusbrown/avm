@@ -25,6 +25,13 @@ AVM_SYS_INLINE void avm_debug_putc(uint8_t value)
     __avm_debug_putc(value);
 }
 
+AVM_SYS_INLINE int16_t avm_debug_printfv_P(char const AVM_PROGMEM* fmt, va_list args)
+{
+    return __avm_debug_printfv_P(fmt, args);
+}
+
+#define avm_debug_printf_P __avm_debug_printf_P
+
 AVM_SYS_INLINE void avm_debug_break(void)
 {
     __avm_debug_break();

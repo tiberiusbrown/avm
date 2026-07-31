@@ -11,6 +11,7 @@
 ; directly in the interpreter for local optimization and manual relaxation.
 ;
 ; Copyright (c) 2002  Michael Stumpf  <mistumpf@de.pepperl-fuchs.com>
+; Copyright (c) 2005  Dmitry Xmelkov
 ; Copyright (c) 2006  Dmitry Xmelkov
 ; Copyright (c) 2025  Georg-Johann Lay
 ; All rights reserved.
@@ -97,7 +98,12 @@
 #define data_format_integer_mode        (data_end_private+53)
 #define data_format_prefix              (data_end_private+54)
 #define data_format_read_source         (data_end_private+55)
-#define data_format_scratch_end         (data_end_private+58)
+#define data_format_float_value         (data_end_private+58)
+#define data_format_float_exponent      (data_end_private+62)
+#define data_format_float_ndigits       (data_end_private+64)
+#define data_format_float_flags         (data_end_private+65)
+#define data_format_float_precision     (data_end_private+66)
+#define data_format_scratch_end         (data_end_private+68)
 
 ; Text drawing aliases the formatter workspace and extends it with cursor and
 ; glyph-record state. Formatted text needs both areas simultaneously, so this
@@ -144,6 +150,12 @@
 #define FORMAT_PREFIX_OCTAL          1
 #define FORMAT_PREFIX_HEX_LOWER      2
 #define FORMAT_PREFIX_HEX_UPPER      3
+
+#define FORMAT_FTOA_MINUS            1
+#define FORMAT_FTOA_ZERO             2
+#define FORMAT_FTOA_INF              4
+#define FORMAT_FTOA_NAN              8
+#define FORMAT_FTOA_CARRY            16
 
 #define STARTUP_SAVE_PAGE_VALID  0
 
@@ -13197,9 +13209,25 @@ format_core:
     breq  .Lformat_integer_dispatch
     cpi   r24, 'X'
     breq  .Lformat_integer_dispatch
+    cpi   r24, 'f'
+    breq  .Lformat_float_dispatch
+    cpi   r24, 'e'
+    breq  .Lformat_float_dispatch
+    cpi   r24, 'E'
+    breq  .Lformat_float_dispatch
+    cpi   r24, 'g'
+    breq  .Lformat_float_dispatch
+    cpi   r24, 'G'
+    breq  .Lformat_float_dispatch
+    cpi   r24, 'a'
+    breq  .Lformat_float_dispatch
+    cpi   r24, 'A'
+    breq  .Lformat_float_dispatch
     rjmp  format_unexpected_character
 .Lformat_integer_dispatch:
     rjmp  format_conversion_integer
+.Lformat_float_dispatch:
+    jmp   format_conversion_float
 
 ; Require no length modifier for noninteger conversions.
 format_validate_default_length:
@@ -14513,3 +14541,1571 @@ text_emit_char_raw:
     delay_2
 .Ltext_record_delay_7:
     ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Floating-point conversions
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Decimal conversions use a formatter-local adaptation of avr-libc's
+; __ftoa_engine. It produces at most eight rounded significant decimal digits
+; plus a signed decimal exponent. Requested precision beyond those meaningful
+; digits is honored by emitting zero runs through the common sink.
+;
+; Hexadecimal conversion is independent of the decimal engine. It normalizes
+; the binary32 significand, rounds explicit precisions to nearest-even, and
+; emits all six fraction nibbles (or a shorter exact default form) directly.
+
+; Local RCALL veneers keep the large float subsystem independent of the
+; formatter/text layout. Each absolute JMP preserves the caller's return
+; address, so the shared helper RET returns directly to the float routine.
+format_float_veneer_validate_default_length:
+    jmp   format_validate_default_length
+format_float_veneer_arg_u32:
+    jmp   format_arg_u32
+format_float_veneer_compute_padding:
+    jmp   format_compute_padding
+format_float_veneer_emit_pre_padding:
+    jmp   format_emit_pre_padding
+format_float_veneer_emit_post_padding:
+    jmp   format_emit_post_padding
+format_float_veneer_emit_char:
+    jmp   format_emit_char
+format_float_veneer_emit_ram_span:
+    jmp   format_emit_ram_span
+
+format_conversion_float:
+    rcall format_float_veneer_validate_default_length
+    breq  1f
+    rjmp  format_unexpected_character
+1:
+    rcall format_float_veneer_arg_u32
+    sts   data_format_float_value+0, r20
+    sts   data_format_float_value+1, r21
+    sts   data_format_float_value+2, r22
+    sts   data_format_float_value+3, r23
+
+    lds   r24, data_format_conversion
+    cpi   r24, 'a'
+    breq  1f
+    cpi   r24, 'A'
+    brne  2f
+1:
+    jmp   format_conversion_float_hex
+2:
+    rjmp  format_conversion_float_decimal
+
+; Establish the sign character from the shared FTOA classification flags.
+; NaN does not inherit its payload sign; + and space still apply.
+format_float_set_sign:
+    sts   data_format_sign, ZERO
+    lds   r24, data_format_float_flags
+    sbrs  r24, 0                    ; FTOA_MINUS
+    rjmp  .Lformat_float_positive_sign
+    sbrc  r24, 3                    ; FTOA_NAN
+    rjmp  .Lformat_float_positive_sign
+    ldi   r24, '-'
+    sts   data_format_sign, r24
+    ret
+.Lformat_float_positive_sign:
+    sbrc  r18, FORMAT_FLAG_PLUS
+    rjmp  .Lformat_float_plus_sign
+    sbrs  r18, FORMAT_FLAG_SPACE
+    ret
+    ldi   r24, ' '
+    sts   data_format_sign, r24
+    ret
+.Lformat_float_plus_sign:
+    ldi   r24, '+'
+    sts   data_format_sign, r24
+    ret
+
+format_float_emit_sign:
+    lds   r24, data_format_sign
+    tst   r24
+    breq  1f
+    rcall format_float_veneer_emit_char
+1:
+    ret
+
+; Add the unsigned byte in r26 to content length r25:r24. Saturate and mark
+; count overflow if the logical field length no longer fits in 16 bits.
+format_float_content_add_u8:
+    add   r24, r26
+    adc   r25, ZERO
+    brcc  1f
+    ser   r24
+    ser   r25
+    ori   r17, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
+1:
+    ret
+
+; Decimal fields place zero width padding after the sign. Special values use a
+; separate all-space path.
+format_float_begin_decimal_field:
+    rcall format_float_veneer_compute_padding
+    sbrc  r18, FORMAT_FLAG_LEFT
+    rjmp  .Lformat_float_decimal_sign
+    sbrc  r18, FORMAT_FLAG_ZERO
+    rjmp  .Lformat_float_decimal_sign
+    rcall format_float_veneer_emit_pre_padding
+.Lformat_float_decimal_sign:
+    rcall format_float_emit_sign
+    sbrc  r18, FORMAT_FLAG_LEFT
+    ret
+    sbrs  r18, FORMAT_FLAG_ZERO
+    ret
+    lds   r24, data_format_padding+0
+    lds   r25, data_format_padding+1
+    ldi   r16, '0'
+    mov   r0, r16
+    jmp   format_emit_repeat
+
+; Hex fields place zero width padding after the sign and 0x/0X prefix.
+format_float_begin_hex_field:
+    rcall format_float_veneer_compute_padding
+    sbrc  r18, FORMAT_FLAG_LEFT
+    rjmp  .Lformat_float_hex_sign
+    sbrc  r18, FORMAT_FLAG_ZERO
+    rjmp  .Lformat_float_hex_sign
+    rcall format_float_veneer_emit_pre_padding
+.Lformat_float_hex_sign:
+    rcall format_float_emit_sign
+    ldi   r24, '0'
+    rcall format_float_veneer_emit_char
+    lds   r24, data_format_conversion
+    sbrs  r24, 5
+    rjmp  .Lformat_float_hex_prefix_upper
+    ldi   r24, 'x'
+    rjmp  .Lformat_float_hex_prefix_emit
+.Lformat_float_hex_prefix_upper:
+    ldi   r24, 'X'
+.Lformat_float_hex_prefix_emit:
+    rcall format_float_veneer_emit_char
+    sbrc  r18, FORMAT_FLAG_LEFT
+    ret
+    sbrs  r18, FORMAT_FLAG_ZERO
+    ret
+    lds   r24, data_format_padding+0
+    lds   r25, data_format_padding+1
+    ldi   r16, '0'
+    mov   r0, r16
+    jmp   format_emit_repeat
+
+format_float_emit_zeroes:
+    ldi   r16, '0'
+    mov   r0, r16
+    jmp   format_emit_repeat
+
+format_float_store_precision:
+    sts   data_format_float_precision+0, r14
+    sts   data_format_float_precision+1, r15
+    ret
+
+format_float_emit_point_if_needed:
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    or    r24, r25
+    brne  .Lformat_float_emit_point
+    sbrs  r18, FORMAT_FLAG_ALT
+    ret
+.Lformat_float_emit_point:
+    ldi   r24, '.'
+    jmp   format_emit_char
+
+; Emit a finite/special spelling after all-space width padding. The conversion
+; character selects case for E/G/A forms.
+format_float_emit_special:
+    ldi   r24, 3
+    clr   r25
+    lds   r26, data_format_sign
+    tst   r26
+    breq  1f
+    adiw  r24, 1
+1:
+    rcall format_float_veneer_compute_padding
+    rcall format_float_veneer_emit_pre_padding
+    rcall format_float_emit_sign
+
+    lds   r26, data_format_float_flags
+    sbrc  r26, 3                    ; FTOA_NAN
+    rjmp  .Lformat_float_emit_nan
+    ldi   r20, 'i'
+    ldi   r21, 'n'
+    ldi   r22, 'f'
+    rjmp  .Lformat_float_special_case
+.Lformat_float_emit_nan:
+    ldi   r20, 'n'
+    ldi   r21, 'a'
+    ldi   r22, 'n'
+.Lformat_float_special_case:
+    lds   r26, data_format_conversion
+    sbrc  r26, 5
+    rjmp  .Lformat_float_special_store
+    subi  r20, 32
+    subi  r21, 32
+    subi  r22, 32
+.Lformat_float_special_store:
+    sts   data_format_digit_buffer+0, r20
+    sts   data_format_digit_buffer+1, r21
+    sts   data_format_digit_buffer+2, r22
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    ldi   r24, 3
+    clr   r25
+    rcall format_float_veneer_emit_ram_span
+    rcall format_float_veneer_emit_post_padding
+    jmp   .Lformat_main_loop
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Decimal f/e/g conversion
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+format_conversion_float_decimal:
+    ; All decimal forms default to precision six. %g precision zero means one
+    ; significant digit.
+    sbrc  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_float_decimal_precision_ready
+    ldi   r24, 6
+    mov   r14, r24
+    clr   r15
+.Lformat_float_decimal_precision_ready:
+    lds   r24, data_format_conversion
+    cpi   r24, 'g'
+    breq  .Lformat_float_decimal_g_precision
+    cpi   r24, 'G'
+    brne  .Lformat_float_decimal_choose_engine
+.Lformat_float_decimal_g_precision:
+    mov   r24, r14
+    or    r24, r15
+    brne  .Lformat_float_decimal_choose_engine
+    mov   r14, ONE
+    clr   r15
+
+.Lformat_float_decimal_choose_engine:
+    lds   r26, data_format_conversion
+    cpi   r26, 'f'
+    breq  .Lformat_float_decimal_engine_f
+    cpi   r26, 'e'
+    breq  .Lformat_float_decimal_engine_e
+    cpi   r26, 'E'
+    breq  .Lformat_float_decimal_engine_e
+
+    ; %g/%G: engine precision is min(significantPrecision-1, 7).
+    ldi   r24, 7
+    tst   r15
+    brne  .Lformat_float_decimal_engine_g_ready
+    mov   r24, r14
+    dec   r24
+    cpi   r24, 8
+    brlo  .Lformat_float_decimal_engine_g_ready
+    ldi   r24, 7
+.Lformat_float_decimal_engine_g_ready:
+    clr   r25                         ; no fixed max-digits restriction
+    rcall format_float_call_decimal_engine
+    mov   r26, r24
+    inc   r26                         ; generated significant digit count
+    sts   data_format_float_ndigits, r26
+    rjmp  .Lformat_float_decimal_after_engine
+
+.Lformat_float_decimal_engine_e:
+    ldi   r24, 7
+    tst   r15
+    brne  .Lformat_float_decimal_engine_e_ready
+    cp    r14, r24
+    brsh  .Lformat_float_decimal_engine_e_ready
+    mov   r24, r14
+.Lformat_float_decimal_engine_e_ready:
+    clr   r25
+    rcall format_float_call_decimal_engine
+    mov   r26, r24
+    inc   r26
+    sts   data_format_float_ndigits, r26
+    rjmp  .Lformat_float_decimal_after_engine
+
+.Lformat_float_decimal_engine_f:
+    ; Fixed output asks the engine for eight meaningful digits and limits the
+    ; useful digit horizon to min(precision+1, 60), matching avr-libc.
+    ldi   r24, 7
+    ldi   r25, 60
+    tst   r15
+    brne  .Lformat_float_decimal_engine_f_ready
+    mov   r26, r14
+    cpi   r26, 59
+    brsh  .Lformat_float_decimal_engine_f_ready
+    mov   r25, r14
+    inc   r25
+.Lformat_float_decimal_engine_f_ready:
+    rcall format_float_call_decimal_engine
+
+    ; ndigits = clamp(maxdgs + exp10 - carryAdjustment, 1, 8).
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    add   r20, r16
+    adc   r21, ZERO
+    lds   r26, data_format_float_flags
+    sbrs  r26, 4                    ; FTOA_CARRY
+    rjmp  .Lformat_float_f_ndigits_clamp
+    lds   r26, data_format_digit_buffer+1
+    cpi   r26, '1'
+    brne  .Lformat_float_f_ndigits_clamp
+    subi  r20, 1
+    sbci  r21, 0
+.Lformat_float_f_ndigits_clamp:
+    tst   r21
+    brmi  .Lformat_float_f_ndigits_one
+    brne  .Lformat_float_f_ndigits_eight
+    tst   r20
+    breq  .Lformat_float_f_ndigits_one
+    cpi   r20, 9
+    brsh  .Lformat_float_f_ndigits_eight
+    sts   data_format_float_ndigits, r20
+    rjmp  .Lformat_float_decimal_after_engine
+.Lformat_float_f_ndigits_one:
+    sts   data_format_float_ndigits, ONE
+    rjmp  .Lformat_float_decimal_after_engine
+.Lformat_float_f_ndigits_eight:
+    ldi   r26, 8
+    sts   data_format_float_ndigits, r26
+
+.Lformat_float_decimal_after_engine:
+    rcall format_float_set_sign
+    lds   r24, data_format_float_flags
+    andi  r24, (FORMAT_FTOA_INF | FORMAT_FTOA_NAN)
+    breq  1f
+    rjmp  format_float_emit_special
+1:
+    lds   r24, data_format_conversion
+    cpi   r24, 'f'
+    breq  format_float_emit_fixed
+    cpi   r24, 'e'
+    breq  1f
+    cpi   r24, 'E'
+    brne  2f
+1:
+    jmp   format_float_emit_exponential
+2:
+    rjmp  format_float_emit_general
+
+; Inputs r24=engine precision (0-7), r25=fixed maxdgs (0 or 1-60).
+; Return r24 unchanged for callers that need enginePrecision+1. Formatter flags
+; in r18 and SREG.T are restored exactly. The engine itself preserves r14-r17
+; and Y, including the formatter's precision, status, and selected sink state.
+format_float_call_decimal_engine:
+    push  r18
+    in    r0, SREG
+    push  r0
+    mov   r18, r24
+    mov   r16, r25
+    ldi   r20, lo8(data_format_digit_buffer)
+    ldi   r21, hi8(data_format_digit_buffer)
+    lds   r22, data_format_float_value+0
+    lds   r23, data_format_float_value+1
+    lds   r24, data_format_float_value+2
+    lds   r25, data_format_float_value+3
+    clr   r1
+    rcall format_ftoa_engine
+    sts   data_format_float_exponent+0, r24
+    sts   data_format_float_exponent+1, r25
+    lds   r24, data_format_digit_buffer+0
+    sts   data_format_float_flags, r24
+    pop   r0
+    out   SREG, r0
+    pop   r18
+
+    ; Recover the bounded engine precision from the number of generated bytes.
+    ; Decimal dispatch already knows it, but retaining it in r24 avoids another
+    ; branch-specific SRAM field. For fixed mode callers ignore this result.
+    lds   r24, data_format_conversion
+    cpi   r24, 'f'
+    breq  2f
+    ; Reconstruct min(requested e precision,7) or min(g precision-1,7).
+    cpi   r24, 'e'
+    breq  1f
+    cpi   r24, 'E'
+    breq  1f
+    ldi   r24, 7
+    tst   r15
+    brne  2f
+    mov   r24, r14
+    dec   r24
+    cpi   r24, 8
+    brlo  2f
+    ldi   r24, 7
+    ret
+1:
+    ldi   r24, 7
+    tst   r15
+    brne  2f
+    cp    r14, r24
+    brsh  2f
+    mov   r24, r14
+2:
+    ret
+
+; Render finite fixed form with precision r15:r14 and generated decimal digits
+; described by data_format_float_exponent/data_format_float_ndigits.
+format_float_emit_fixed:
+    rcall format_float_store_precision
+    ; content = max(exp10+1,1) + precision + optional point + sign.
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    tst   r21
+    brmi  .Lformat_float_fixed_content_one_integer
+    mov   r26, r20
+    inc   r26
+    rcall format_float_content_add_u8
+    rjmp  .Lformat_float_fixed_content_point
+.Lformat_float_fixed_content_one_integer:
+    mov   r26, ONE
+    rcall format_float_content_add_u8
+.Lformat_float_fixed_content_point:
+    lds   r26, data_format_float_precision+0
+    lds   r27, data_format_float_precision+1
+    or    r26, r27
+    brne  .Lformat_float_fixed_content_has_point
+    sbrs  r18, FORMAT_FLAG_ALT
+    rjmp  .Lformat_float_fixed_content_sign
+.Lformat_float_fixed_content_has_point:
+    mov   r26, ONE
+    rcall format_float_content_add_u8
+.Lformat_float_fixed_content_sign:
+    lds   r26, data_format_sign
+    tst   r26
+    breq  1f
+    mov   r26, ONE
+    rcall format_float_content_add_u8
+1:
+    rcall format_float_begin_decimal_field
+
+    ; Integer portion.
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    tst   r21
+    brpl  .Lformat_float_fixed_integer_nonnegative
+    ldi   r24, '0'
+    rcall format_float_veneer_emit_char
+    rjmp  .Lformat_float_fixed_after_integer
+
+.Lformat_float_fixed_integer_nonnegative:
+    mov   r23, r20
+    inc   r23                         ; total integer digits, <=39
+    lds   r22, data_format_float_ndigits
+    cp    r22, r23
+    brlo  1f
+    mov   r22, r23
+1:
+    mov   r19, r23
+    sub   r19, r22                    ; trailing integer zero count
+    ldi   r30, lo8(data_format_digit_buffer+1)
+    ldi   r31, hi8(data_format_digit_buffer+1)
+    mov   r24, r22
+    clr   r25
+    rcall format_float_veneer_emit_ram_span
+    mov   r24, r19
+    clr   r25
+    rcall format_float_emit_zeroes
+
+.Lformat_float_fixed_after_integer:
+    rcall format_float_emit_point_if_needed
+
+    ; Fractional portion. Precision zero has no bytes after the optional point.
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    or    r24, r25
+    brne  1f
+    jmp   .Lformat_float_fixed_done
+1:
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    tst   r21
+    brmi  .Lformat_float_fixed_fraction_negative_exp
+
+    ; Generated fractional digits begin at significant index exp10+1.
+    mov   r22, r20
+    inc   r22
+    lds   r23, data_format_float_ndigits
+    cp    r22, r23
+    brsh  .Lformat_float_fixed_fraction_all_zero
+    sub   r23, r22                    ; available meaningful fraction digits
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    tst   r25
+    brne  1f
+    cp    r24, r23
+    brlo  2f
+1:
+    mov   r24, r23
+    clr   r25
+2:
+    ldi   r30, lo8(data_format_digit_buffer+1)
+    ldi   r31, hi8(data_format_digit_buffer+1)
+    add   r30, r22
+    adc   r31, ZERO
+    mov   r19, r24                    ; preserved meaningful count, <=8
+    rcall format_float_veneer_emit_ram_span
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    sub   r24, r19
+    sbc   r25, ZERO
+    rcall format_float_emit_zeroes
+    rjmp  .Lformat_float_fixed_done
+
+.Lformat_float_fixed_fraction_all_zero:
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    rcall format_float_emit_zeroes
+    rjmp  .Lformat_float_fixed_done
+
+.Lformat_float_fixed_fraction_negative_exp:
+    ; Leading fractional zeros = -exp10-1, capped by precision.
+    movw  r22, r20
+    com   r22
+    com   r23
+    add   r22, ONE
+    adc   r23, ZERO
+    sub   r22, ONE
+    sbc   r23, ZERO
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    cp    r24, r22
+    cpc   r25, r23
+    brsh  1f
+    movw  r22, r24
+1:
+    ; Sink calls may repurpose r12-r15 and r20-r23. Preserve the leading
+    ; zero count in the formatter workspace before emitting it.
+    sts   data_format_precision_zeroes+0, r22
+    sts   data_format_precision_zeroes+1, r23
+    movw  r24, r22
+    rcall format_float_emit_zeroes
+
+    ; remaining = precision-leading. Compute both the meaningful digit count
+    ; and the trailing synthetic-zero count before the span sink, then retain
+    ; the latter in SRAM across text rendering.
+    lds   r20, data_format_float_precision+0
+    lds   r21, data_format_float_precision+1
+    lds   r26, data_format_precision_zeroes+0
+    lds   r27, data_format_precision_zeroes+1
+    sub   r20, r26
+    sbc   r21, r27
+    mov   r24, r20
+    or    r24, r21
+    breq  .Lformat_float_fixed_done
+    lds   r23, data_format_float_ndigits
+    movw  r24, r20
+    tst   r25
+    brne  2f
+    cp    r24, r23
+    brlo  3f
+2:
+    mov   r24, r23
+    clr   r25
+3:
+    movw  r26, r20
+    sub   r26, r24
+    sbc   r27, r25
+    sts   data_format_precision_zeroes+0, r26
+    sts   data_format_precision_zeroes+1, r27
+    ldi   r30, lo8(data_format_digit_buffer+1)
+    ldi   r31, hi8(data_format_digit_buffer+1)
+    rcall format_float_veneer_emit_ram_span
+    lds   r24, data_format_precision_zeroes+0
+    lds   r25, data_format_precision_zeroes+1
+    rcall format_float_emit_zeroes
+
+.Lformat_float_fixed_done:
+    rcall format_float_veneer_emit_post_padding
+    jmp   .Lformat_main_loop
+
+; Render finite scientific form. r15:r14 is the requested number of digits
+; after the radix point; generated digits beyond the first are followed by
+; synthetic zeros as necessary.
+format_float_emit_exponential:
+    rcall format_float_store_precision
+    ; content = precision + 5 (lead digit, exponent marker/sign/two digits)
+    ; plus optional point and optional value sign.
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    ldi   r26, 5
+    rcall format_float_content_add_u8
+    lds   r26, data_format_float_precision+0
+    lds   r27, data_format_float_precision+1
+    or    r26, r27
+    brne  .Lformat_float_exp_content_point
+    sbrs  r18, FORMAT_FLAG_ALT
+    rjmp  .Lformat_float_exp_content_sign
+.Lformat_float_exp_content_point:
+    mov   r26, ONE
+    rcall format_float_content_add_u8
+.Lformat_float_exp_content_sign:
+    lds   r26, data_format_sign
+    tst   r26
+    breq  1f
+    mov   r26, ONE
+    rcall format_float_content_add_u8
+1:
+    rcall format_float_begin_decimal_field
+
+    lds   r24, data_format_digit_buffer+1
+    rcall format_float_veneer_emit_char
+    rcall format_float_emit_point_if_needed
+
+    lds   r20, data_format_float_precision+0
+    lds   r21, data_format_float_precision+1
+    mov   r24, r20
+    or    r24, r21
+    breq  .Lformat_float_exp_after_fraction
+    lds   r23, data_format_float_ndigits
+    dec   r23
+    movw  r24, r20
+    tst   r25
+    brne  1f
+    cp    r24, r23
+    brlo  2f
+1:
+    mov   r24, r23
+    clr   r25
+2:
+    mov   r19, r24
+    ldi   r30, lo8(data_format_digit_buffer+2)
+    ldi   r31, hi8(data_format_digit_buffer+2)
+    rcall format_float_veneer_emit_ram_span
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    sub   r24, r19
+    sbc   r25, ZERO
+    rcall format_float_emit_zeroes
+
+.Lformat_float_exp_after_fraction:
+    lds   r24, data_format_conversion
+    sbrs  r24, 5
+    rjmp  .Lformat_float_exp_marker_upper
+    ldi   r24, 'e'
+    rjmp  .Lformat_float_exp_marker_emit
+.Lformat_float_exp_marker_upper:
+    ldi   r24, 'E'
+.Lformat_float_exp_marker_emit:
+    rcall format_float_veneer_emit_char
+    rcall format_float_emit_decimal_exponent_two
+    rcall format_float_veneer_emit_post_padding
+    jmp   .Lformat_main_loop
+
+; Choose %g fixed/scientific style after rounding. Style selection uses the
+; original significant precision; trimming only changes the rendered tail.
+format_float_emit_general:
+    ; r23 = effective significant digits after optional trailing-zero trim.
+    lds   r23, data_format_float_ndigits
+    sbrc  r18, FORMAT_FLAG_ALT
+    rjmp  .Lformat_float_general_digits_ready
+    ldi   r30, lo8(data_format_digit_buffer+1)
+    ldi   r31, hi8(data_format_digit_buffer+1)
+    add   r30, r23
+    adc   r31, ZERO
+.Lformat_float_general_trim_loop:
+    cpi   r23, 1
+    breq  .Lformat_float_general_digits_ready
+    ld    r24, -Z
+    cpi   r24, '0'
+    brne  .Lformat_float_general_digits_ready
+    dec   r23
+    rjmp  .Lformat_float_general_trim_loop
+
+.Lformat_float_general_digits_ready:
+    ; Scientific iff exp10 < -4 or exp10 >= significant precision.
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    tst   r21
+    brpl  .Lformat_float_general_nonnegative_exp
+    cpi   r20, 0xfc
+    ldi   r24, 0xff
+    cpc   r21, r24
+    brlt  .Lformat_float_general_scientific
+    rjmp  .Lformat_float_general_fixed
+.Lformat_float_general_nonnegative_exp:
+    tst   r15
+    brne  .Lformat_float_general_fixed
+    cp    r20, r14
+    brsh  .Lformat_float_general_scientific
+
+.Lformat_float_general_fixed:
+    ; Target fractional precision is significantDigits-(exp+1), floored at 0.
+    ; Alternate form uses the full requested significant precision, including
+    ; synthetic zeros beyond the engine's eight meaningful digits.
+    sbrc  r18, FORMAT_FLAG_ALT
+    rjmp  .Lformat_float_general_fixed_alt
+    mov   r24, r23
+    clr   r25
+    rjmp  .Lformat_float_general_fixed_compute
+.Lformat_float_general_fixed_alt:
+    movw  r24, r14
+.Lformat_float_general_fixed_compute:
+    tst   r21
+    brmi  .Lformat_float_general_fixed_negative_exp
+    mov   r26, r20
+    inc   r26
+    sub   r24, r26
+    sbc   r25, ZERO
+    brcc  .Lformat_float_general_fixed_precision_ready
+    clr   r24
+    clr   r25
+    rjmp  .Lformat_float_general_fixed_precision_ready
+.Lformat_float_general_fixed_negative_exp:
+    ; precision = significantDigits + (-exp-1), saturating.
+    movw  r26, r20
+    com   r26
+    com   r27
+    add   r26, ONE
+    adc   r27, ZERO
+    sub   r26, ONE
+    sbc   r27, ZERO
+    add   r24, r26
+    adc   r25, r27
+    brcc  .Lformat_float_general_fixed_precision_ready
+    ser   r24
+    ser   r25
+    ori   r17, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
+.Lformat_float_general_fixed_precision_ready:
+    movw  r14, r24
+    rjmp  format_float_emit_fixed
+
+.Lformat_float_general_scientific:
+    sbrc  r18, FORMAT_FLAG_ALT
+    rjmp  .Lformat_float_general_scientific_alt
+    mov   r14, r23
+    clr   r15
+    rjmp  .Lformat_float_general_scientific_decrement
+.Lformat_float_general_scientific_alt:
+    ; r14:r15 already holds requested significant precision.
+.Lformat_float_general_scientific_decrement:
+    sub   r14, ONE
+    sbc   r15, ZERO
+    rjmp  format_float_emit_exponential
+
+; Emit e/E exponent sign and exactly two digits. avr-libc retains a negative
+; zero exponent when rounding carried a value from below one to 1.x.
+format_float_emit_decimal_exponent_two:
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    tst   r21
+    brmi  .Lformat_float_exp_two_negative
+    mov   r24, r20
+    or    r24, r21
+    brne  .Lformat_float_exp_two_positive
+    lds   r24, data_format_float_flags
+    sbrs  r24, 4                    ; FTOA_CARRY
+    rjmp  .Lformat_float_exp_two_positive
+    lds   r24, data_format_digit_buffer+1
+    cpi   r24, '1'
+    brne  .Lformat_float_exp_two_positive
+.Lformat_float_exp_two_negative:
+    com   r20
+    com   r21
+    add   r20, ONE
+    adc   r21, ZERO
+    ldi   r26, '-'
+    rjmp  .Lformat_float_exp_two_prepare
+.Lformat_float_exp_two_positive:
+    ldi   r26, '+'
+.Lformat_float_exp_two_prepare:
+    sts   data_format_prefix, r26
+    ldi   r22, '0'
+.Lformat_float_exp_two_tens_loop:
+    cpi   r20, 10
+    brlo  .Lformat_float_exp_two_digits_ready
+    subi  r20, 10
+    inc   r22
+    rjmp  .Lformat_float_exp_two_tens_loop
+.Lformat_float_exp_two_digits_ready:
+    sts   data_format_digit_buffer+0, r22
+    subi  r20, -'0'
+    sts   data_format_digit_buffer+1, r20
+
+    ; Compute the complete exponent spelling before the first sink call: text
+    ; output is permitted to clobber all ordinary formatter scratch registers.
+    lds   r24, data_format_prefix
+    rcall format_float_veneer_emit_char
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    ldi   r24, 2
+    clr   r25
+    jmp   format_float_veneer_emit_ram_span
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Exact hexadecimal a/A conversion
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+format_conversion_float_hex:
+    ; Decode sign, exponent, and fraction directly from the binary32 bits.
+    lds   r20, data_format_float_value+0
+    lds   r21, data_format_float_value+1
+    lds   r22, data_format_float_value+2
+    lds   r23, data_format_float_value+3
+    clr   r24
+    sbrc  r23, 7
+    ori   r24, FORMAT_FTOA_MINUS
+
+    mov   r25, r23
+    lsl   r25
+    sbrc  r22, 7
+    ori   r25, 1                    ; complete exponent field
+    mov   r26, r22
+    andi  r26, 0x7f
+    or    r26, r21
+    or    r26, r20                  ; complete fraction nonzero test
+
+    cpi   r25, 0xff
+    brne  .Lformat_float_hex_not_special
+    tst   r26
+    breq  .Lformat_float_hex_inf
+    ori   r24, FORMAT_FTOA_NAN
+    rjmp  .Lformat_float_hex_special_store
+.Lformat_float_hex_inf:
+    ori   r24, FORMAT_FTOA_INF
+.Lformat_float_hex_special_store:
+    sts   data_format_float_flags, r24
+    rcall format_float_set_sign
+    rjmp  format_float_emit_special
+
+.Lformat_float_hex_not_special:
+    tst   r25
+    brne  .Lformat_float_hex_normal
+    tst   r26
+    brne  .Lformat_float_hex_subnormal
+
+    ; Signed zero uses leading digit zero and exponent +0.
+    ori   r24, FORMAT_FTOA_ZERO
+    sts   data_format_float_flags, r24
+    sts   data_format_value_nonzero, ZERO
+    sts   data_format_float_exponent+0, ZERO
+    sts   data_format_float_exponent+1, ZERO
+    sts   data_format_float_value+0, ZERO
+    sts   data_format_float_value+1, ZERO
+    sts   data_format_float_value+2, ZERO
+    rjmp  .Lformat_float_hex_normalized
+
+.Lformat_float_hex_normal:
+    ; M = 1.fraction as a 24-bit integer; exponent = field-127.
+    andi  r22, 0x7f
+    ori   r22, 0x80
+    mov   r26, r25
+    subi  r26, 127
+    clr   r27
+    sbrc  r26, 7
+    com   r27
+    sts   data_format_value_nonzero, ONE
+    rjmp  .Lformat_float_hex_store_normalized
+
+.Lformat_float_hex_subnormal:
+    ; Normalize the nonzero 23-bit fraction and decrement exponent from -126
+    ; for each left shift needed to place the leading one in bit 23.
+    andi  r22, 0x7f
+    ldi   r26, 0x82
+    ldi   r27, 0xff
+.Lformat_float_hex_subnormal_loop:
+    sbrc  r22, 7
+    rjmp  .Lformat_float_hex_subnormal_ready
+    lsl   r20
+    rol   r21
+    rol   r22
+    subi  r26, 1
+    sbci  r27, 0
+    rjmp  .Lformat_float_hex_subnormal_loop
+.Lformat_float_hex_subnormal_ready:
+    sts   data_format_value_nonzero, ONE
+
+.Lformat_float_hex_store_normalized:
+    sts   data_format_float_value+0, r20
+    sts   data_format_float_value+1, r21
+    sts   data_format_float_value+2, r22
+    sts   data_format_float_exponent+0, r26
+    sts   data_format_float_exponent+1, r27
+    sts   data_format_float_flags, r24
+
+.Lformat_float_hex_normalized:
+    rcall format_float_set_sign
+
+    ; Explicit precisions below six round the normalized significand to a
+    ; hexadecimal digit boundary. Six or more fraction digits are exact.
+    sbrs  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_float_hex_generate_digits
+    tst   r15
+    brne  .Lformat_float_hex_generate_digits
+    mov   r24, r14
+    cpi   r24, 6
+    brsh  .Lformat_float_hex_generate_digits
+    lds   r24, data_format_value_nonzero
+    tst   r24
+    breq  .Lformat_float_hex_generate_digits
+    rcall format_float_hex_round
+
+.Lformat_float_hex_generate_digits:
+    rcall format_float_hex_generate_six
+
+    ; Omitted precision uses the shortest fraction-nibble suffix that still
+    ; represents the rounded binary32 value exactly.
+    sbrc  r18, FORMAT_FLAG_PRECISION
+    rjmp  .Lformat_float_hex_precision_ready
+    ldi   r24, 6
+    mov   r14, r24
+    clr   r15
+    ldi   r30, lo8(data_format_digit_buffer+6)
+    ldi   r31, hi8(data_format_digit_buffer+6)
+.Lformat_float_hex_trim_loop:
+    tst   r14
+    breq  .Lformat_float_hex_precision_ready
+    ld    r24, -Z
+    cpi   r24, '0'
+    brne  .Lformat_float_hex_precision_ready
+    dec   r14
+    rjmp  .Lformat_float_hex_trim_loop
+
+.Lformat_float_hex_precision_ready:
+    rcall format_float_store_precision
+    ; Exponent digit count is one to three for binary32 (-149..+127).
+    rcall format_float_hex_exponent_digit_count
+    mov   r23, r24
+
+    ; content = precision + 5 (0x, leading digit, p, exponent sign)
+    ; + exponent digits + optional point + optional value sign.
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    ldi   r26, 5
+    rcall format_float_content_add_u8
+    mov   r26, r23
+    rcall format_float_content_add_u8
+    lds   r26, data_format_float_precision+0
+    lds   r27, data_format_float_precision+1
+    or    r26, r27
+    brne  .Lformat_float_hex_content_point
+    sbrs  r18, FORMAT_FLAG_ALT
+    rjmp  .Lformat_float_hex_content_sign
+.Lformat_float_hex_content_point:
+    mov   r26, ONE
+    rcall format_float_content_add_u8
+.Lformat_float_hex_content_sign:
+    lds   r26, data_format_sign
+    tst   r26
+    breq  1f
+    mov   r26, ONE
+    rcall format_float_content_add_u8
+1:
+    rcall format_float_begin_hex_field
+
+    lds   r24, data_format_value_nonzero
+    tst   r24
+    breq  .Lformat_float_hex_emit_zero_lead
+    ldi   r24, '1'
+    rjmp  .Lformat_float_hex_emit_lead
+.Lformat_float_hex_emit_zero_lead:
+    ldi   r24, '0'
+.Lformat_float_hex_emit_lead:
+    rcall format_float_veneer_emit_char
+    rcall format_float_emit_point_if_needed
+
+    ; Emit up to the six exact fraction nibbles, then synthesize any explicit
+    ; precision beyond the binary32 significand.
+    lds   r20, data_format_float_precision+0
+    lds   r21, data_format_float_precision+1
+    mov   r24, r20
+    or    r24, r21
+    breq  .Lformat_float_hex_after_fraction
+    ldi   r22, 6
+    movw  r24, r20
+    tst   r25
+    brne  1f
+    cp    r24, r22
+    brlo  2f
+1:
+    mov   r24, r22
+    clr   r25
+2:
+    mov   r19, r24
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    rcall format_float_veneer_emit_ram_span
+    lds   r24, data_format_float_precision+0
+    lds   r25, data_format_float_precision+1
+    sub   r24, r19
+    sbc   r25, ZERO
+    rcall format_float_emit_zeroes
+
+.Lformat_float_hex_after_fraction:
+    lds   r24, data_format_conversion
+    sbrs  r24, 5
+    rjmp  .Lformat_float_hex_marker_upper
+    ldi   r24, 'p'
+    rjmp  .Lformat_float_hex_marker_emit
+.Lformat_float_hex_marker_upper:
+    ldi   r24, 'P'
+.Lformat_float_hex_marker_emit:
+    rcall format_float_veneer_emit_char
+    rcall format_float_emit_hex_exponent
+    rcall format_float_veneer_emit_post_padding
+    jmp   .Lformat_main_loop
+
+; Round normalized 24-bit significand at data_format_float_value to explicit
+; hexadecimal precision r14 (0-5), ties to even. A carry renormalizes to 1.0
+; and increments the stored binary exponent.
+format_float_hex_round:
+    lds   r20, data_format_float_value+0
+    lds   r21, data_format_float_value+1
+    lds   r22, data_format_float_value+2
+    mov   r24, r14
+    lsl   r24
+    lsl   r24
+    ldi   r25, 23
+    sub   r25, r24                    ; discarded low-bit count
+    mov   r23, r25                    ; retain for realignment
+    clr   r26                         ; sticky
+.Lformat_float_hex_round_shift_right:
+    lsr   r22
+    ror   r21
+    ror   r20
+    dec   r25
+    breq  .Lformat_float_hex_round_guard
+    brcc  .Lformat_float_hex_round_shift_right
+    mov   r26, ONE
+    rjmp  .Lformat_float_hex_round_shift_right
+.Lformat_float_hex_round_guard:
+    clr   r27
+    brcc  .Lformat_float_hex_round_decide
+    mov   r27, ONE                    ; guard
+.Lformat_float_hex_round_decide:
+    tst   r27
+    breq  .Lformat_float_hex_round_realign
+    tst   r26
+    brne  .Lformat_float_hex_round_up
+    sbrs  r20, 0                      ; ties to even
+    rjmp  .Lformat_float_hex_round_realign
+.Lformat_float_hex_round_up:
+    add   r20, ONE
+    adc   r21, ZERO
+    adc   r22, ZERO
+
+.Lformat_float_hex_round_realign:
+    clr   r27                         ; overflow beyond bit 23
+    mov   r25, r23
+.Lformat_float_hex_round_shift_left:
+    lsl   r20
+    rol   r21
+    rol   r22
+    brcc  1f
+    mov   r27, ONE
+1:
+    dec   r25
+    brne  .Lformat_float_hex_round_shift_left
+    tst   r27
+    breq  .Lformat_float_hex_round_store
+    clr   r20
+    clr   r21
+    ldi   r22, 0x80
+    lds   r24, data_format_float_exponent+0
+    lds   r25, data_format_float_exponent+1
+    add   r24, ONE
+    adc   r25, ZERO
+    sts   data_format_float_exponent+0, r24
+    sts   data_format_float_exponent+1, r25
+.Lformat_float_hex_round_store:
+    sts   data_format_float_value+0, r20
+    sts   data_format_float_value+1, r21
+    sts   data_format_float_value+2, r22
+    ret
+
+; Convert the 23 fraction bits, padded with one low zero, into six forward hex
+; digits in data_format_digit_buffer.
+format_float_hex_generate_six:
+    lds   r20, data_format_float_value+0
+    lds   r21, data_format_float_value+1
+    lds   r22, data_format_float_value+2
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+
+    mov   r26, r22
+    lsr   r26
+    lsr   r26
+    lsr   r26
+    andi  r26, 0x0f
+    rcall format_float_hex_nibble_to_char
+    st    Z+, r26
+
+    mov   r26, r22
+    andi  r26, 0x07
+    lsl   r26
+    sbrc  r21, 7
+    ori   r26, 1
+    rcall format_float_hex_nibble_to_char
+    st    Z+, r26
+
+    mov   r26, r21
+    lsr   r26
+    lsr   r26
+    lsr   r26
+    andi  r26, 0x0f
+    rcall format_float_hex_nibble_to_char
+    st    Z+, r26
+
+    mov   r26, r21
+    andi  r26, 0x07
+    lsl   r26
+    sbrc  r20, 7
+    ori   r26, 1
+    rcall format_float_hex_nibble_to_char
+    st    Z+, r26
+
+    mov   r26, r20
+    lsr   r26
+    lsr   r26
+    lsr   r26
+    andi  r26, 0x0f
+    rcall format_float_hex_nibble_to_char
+    st    Z+, r26
+
+    mov   r26, r20
+    andi  r26, 0x07
+    lsl   r26
+    rcall format_float_hex_nibble_to_char
+    st    Z, r26
+    ret
+
+format_float_hex_nibble_to_char:
+    cpi   r26, 10
+    brlo  .Lformat_float_hex_numeric_nibble
+    lds   r24, data_format_conversion
+    sbrs  r24, 5
+    rjmp  .Lformat_float_hex_upper_nibble
+    subi  r26, -87
+    ret
+.Lformat_float_hex_upper_nibble:
+    subi  r26, -55
+    ret
+.Lformat_float_hex_numeric_nibble:
+    subi  r26, -'0'
+    ret
+
+; Return exponent decimal digit count (1-3) in r24.
+format_float_hex_exponent_digit_count:
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    tst   r21
+    brpl  1f
+    com   r20
+    com   r21
+    add   r20, ONE
+    adc   r21, ZERO
+1:
+    ldi   r24, 1
+    cpi   r20, 10
+    brlo  2f
+    inc   r24
+    cpi   r20, 100
+    brlo  2f
+    inc   r24
+2:
+    ret
+
+; Emit p/P exponent sign and the minimal one-to-three decimal digits.
+format_float_emit_hex_exponent:
+    lds   r20, data_format_float_exponent+0
+    lds   r21, data_format_float_exponent+1
+    tst   r21
+    brpl  .Lformat_float_hex_exp_positive
+    com   r20
+    com   r21
+    add   r20, ONE
+    adc   r21, ZERO
+    ldi   r26, '-'
+    rjmp  .Lformat_float_hex_exp_prepare
+.Lformat_float_hex_exp_positive:
+    ldi   r26, '+'
+.Lformat_float_hex_exp_prepare:
+    sts   data_format_prefix, r26
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    clr   r23                         ; generated exponent digit count
+
+    clr   r22                         ; hundreds digit
+.Lformat_float_hex_exp_hundreds_loop:
+    cpi   r20, 100
+    brlo  .Lformat_float_hex_exp_hundreds_done
+    subi  r20, 100
+    inc   r22
+    rjmp  .Lformat_float_hex_exp_hundreds_loop
+.Lformat_float_hex_exp_hundreds_done:
+    tst   r22
+    breq  .Lformat_float_hex_exp_tens_prepare
+    subi  r22, -'0'
+    st    Z+, r22
+    inc   r23
+    ldi   r22, 1                      ; force a tens digit after hundreds
+    rjmp  .Lformat_float_hex_exp_tens_init
+.Lformat_float_hex_exp_tens_prepare:
+    clr   r22                         ; no higher digit yet
+.Lformat_float_hex_exp_tens_init:
+    clr   r26                         ; numeric tens digit
+.Lformat_float_hex_exp_tens_loop:
+    cpi   r20, 10
+    brlo  .Lformat_float_hex_exp_tens_done
+    subi  r20, 10
+    inc   r26
+    rjmp  .Lformat_float_hex_exp_tens_loop
+.Lformat_float_hex_exp_tens_done:
+    tst   r22
+    brne  .Lformat_float_hex_exp_store_tens
+    tst   r26
+    breq  .Lformat_float_hex_exp_store_ones
+.Lformat_float_hex_exp_store_tens:
+    subi  r26, -'0'
+    st    Z+, r26
+    inc   r23
+.Lformat_float_hex_exp_store_ones:
+    subi  r20, -'0'
+    st    Z, r20
+    inc   r23
+    sts   data_format_float_ndigits, r23
+
+    ; The exponent bytes are fully materialized before entering the sink. The
+    ; digit count is retained in SRAM because a text glyph may clobber r20-r23.
+    lds   r24, data_format_prefix
+    rcall format_float_veneer_emit_char
+    ldi   r30, lo8(data_format_digit_buffer)
+    ldi   r31, hi8(data_format_digit_buffer)
+    lds   r24, data_format_float_ndigits
+    clr   r25
+    jmp   format_float_veneer_emit_ram_span
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Formatter-local avr-libc decimal digit engine
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Adapted from avr-libc libc/stdlib/ftoa_engine.S (Dmitry Xmelkov, 2005).
+; Input ABI is unchanged:
+;   r22-r25 binary32, r20:r21 output buffer, r18 precision-1, r16 maxdgs.
+; The routine returns signed decimal exponent in r25:r24 and writes a flags byte
+; followed by up to eight digits. Native r1 is zero on entry and exit.
+
+.macro format_ftoa_lpm_zplus reg
+    lpm   \reg, Z+
+.endm
+
+.macro format_ftoa_lpm_z reg
+    lpm   \reg, Z
+.endm
+
+format_ftoa_engine:
+    cpi   r18, 8
+    brlo  .Lformat_ftoa_precision_ready
+    ldi   r18, 7
+.Lformat_ftoa_precision_ready:
+    clr   r19
+    movw  r26, r20
+    lsl   r25
+    adc   r19, r1
+    sbrc  r24, 7
+    ori   r25, 1
+    adiw  r24, 0
+    cpc   r22, r1
+    cpc   r23, r1
+    brne  .Lformat_ftoa_nonzero
+
+    ori   r19, FORMAT_FTOA_ZERO
+    subi  r18, -2
+.Lformat_ftoa_zero_loop:
+    st    X+, r19
+    ldi   r19, '0'
+    dec   r18
+    brne  .Lformat_ftoa_zero_loop
+    ret
+
+.Lformat_ftoa_nonzero:
+    cpi   r25, 0xff
+    brlo  .Lformat_ftoa_class_ready
+    cpi   r24, 0x80
+    cpc   r23, r1
+    cpc   r22, r1
+    breq  .Lformat_ftoa_inf
+    subi  r19, -FORMAT_FTOA_INF       ; NAN = 2*INF
+.Lformat_ftoa_inf:
+    subi  r19, -FORMAT_FTOA_INF
+.Lformat_ftoa_class_ready:
+    st    X+, r19
+    cpi   r25, 1
+    brlo  1f
+    ori   r24, 0x80
+1:
+    adc   r25, r1
+    push  r29
+    push  r28
+    push  r17
+    push  r16
+    push  r15
+    push  r14
+
+    mov   r17, r25
+    andi  r25, 0xf8
+    lsr   r25
+    mov   r30, r25
+    lsr   r25
+    lsr   r25
+    add   r30, r25
+    clr   r31
+    subi  r30, lo8(-(format_ftoa_base10))
+    sbci  r31, hi8(-(format_ftoa_base10))
+    clr   r25
+    clr   r19
+    clr   r14
+    clr   r15
+    movw  r20, r14
+    movw  r28, r14
+
+    format_ftoa_lpm_zplus r0
+    sec
+    ror   r0
+.Lformat_ftoa_mul_byte0:
+    brcc  1f
+    add   r19, r22
+    adc   r14, r23
+    adc   r15, r24
+    adc   r20, r25
+    adc   r21, r1
+1:
+    lsl   r22
+    rol   r23
+    rol   r24
+    rol   r25
+    lsr   r0
+    brne  .Lformat_ftoa_mul_byte0
+
+    format_ftoa_lpm_zplus r0
+    sec
+    ror   r0
+.Lformat_ftoa_mul_byte1:
+    brcc  1f
+    add   r14, r23
+    adc   r15, r24
+    adc   r20, r25
+    adc   r21, r22
+    adc   r28, r1
+1:
+    lsl   r23
+    rol   r24
+    rol   r25
+    rol   r22
+    lsr   r0
+    brne  .Lformat_ftoa_mul_byte1
+
+    format_ftoa_lpm_zplus r0
+    sec
+    ror   r0
+.Lformat_ftoa_mul_byte2:
+    brcc  1f
+    add   r15, r24
+    adc   r20, r25
+    adc   r21, r22
+    adc   r28, r23
+    adc   r29, r1
+1:
+    lsl   r24
+    rol   r25
+    rol   r22
+    rol   r23
+    lsr   r0
+    brne  .Lformat_ftoa_mul_byte2
+
+    format_ftoa_lpm_zplus r0
+    sec
+    ror   r0
+.Lformat_ftoa_mul_byte3:
+    brcc  1f
+    add   r20, r25
+    adc   r21, r22
+    adc   r28, r23
+    adc   r29, r24
+1:
+    lsl   r25
+    rol   r22
+    rol   r23
+    rol   r24
+    lsr   r0
+    brne  .Lformat_ftoa_mul_byte3
+
+    format_ftoa_lpm_z r24
+    com   r17
+    andi  r17, 7
+    breq  .Lformat_ftoa_scaled
+.Lformat_ftoa_scale_loop:
+    lsr   r29
+    ror   r28
+    ror   r21
+    ror   r20
+    ror   r15
+    ror   r14
+    dec   r17
+    brne  .Lformat_ftoa_scale_loop
+.Lformat_ftoa_scaled:
+
+    ldi   r30, lo8(format_ftoa_powr10)
+    ldi   r31, hi8(format_ftoa_powr10)
+    set
+.Lformat_ftoa_digit:
+    format_ftoa_lpm_zplus r1
+    format_ftoa_lpm_zplus r17
+    format_ftoa_lpm_zplus r19
+    format_ftoa_lpm_zplus r22
+    format_ftoa_lpm_zplus r25
+    format_ftoa_lpm_zplus r0
+    ldi   r23, '0'-1
+.Lformat_ftoa_subtract_digit:
+    inc   r23
+    sub   r14, r1
+    sbc   r15, r17
+    sbc   r20, r19
+    sbc   r21, r22
+    sbc   r28, r25
+    sbc   r29, r0
+    brsh  .Lformat_ftoa_subtract_digit
+    add   r14, r1
+    adc   r15, r17
+    adc   r20, r19
+    adc   r21, r22
+    adc   r28, r25
+    adc   r29, r0
+    brtc  .Lformat_ftoa_store_digit
+    cpi   r23, '0'
+    brne  .Lformat_ftoa_first_digit
+    dec   r24
+    rjmp  .Lformat_ftoa_digit
+.Lformat_ftoa_first_digit:
+    clt
+    subi  r16, 1
+    brlo  .Lformat_ftoa_digit_count_ready
+    add   r16, r24
+    brpl  1f
+    clr   r16
+1:
+    cp    r16, r18
+    brsh  .Lformat_ftoa_digit_count_ready
+    mov   r18, r16
+.Lformat_ftoa_digit_count_ready:
+    inc   r18
+    mov   r16, r18
+
+.Lformat_ftoa_store_digit:
+    cpi   r23, '0'+10
+    brlo  .Lformat_ftoa_write_digit
+    ldi   r23, '9'
+.Lformat_ftoa_fill_nines:
+    st    X+, r23
+    dec   r18
+    brne  .Lformat_ftoa_fill_nines
+    rjmp  .Lformat_ftoa_round_up
+.Lformat_ftoa_write_digit:
+    st    X+, r23
+    dec   r18
+    brne  .Lformat_ftoa_digit
+
+    ; Round against half the final power-of-ten element.
+    lsr   r0
+    ror   r25
+    ror   r22
+    ror   r19
+    ror   r17
+    ror   r1
+    sub   r14, r1
+    sbc   r15, r17
+    sbc   r20, r19
+    sbc   r21, r22
+    sbc   r28, r25
+    sbc   r29, r0
+    brlo  .Lformat_ftoa_restore
+
+.Lformat_ftoa_round_up:
+    inc   r18
+.Lformat_ftoa_round_loop:
+    ld    r23, -X
+    inc   r23
+    cpi   r23, '9'+1
+    brlo  1f
+    ldi   r23, '0'
+1:
+    st    X, r23
+    cpse  r18, r16
+    brsh  .Lformat_ftoa_round_up
+    ld    r23, -X
+    ori   r23, FORMAT_FTOA_CARRY
+    st    X+, r23
+    brlo  .Lformat_ftoa_restore
+    inc   r24
+    ldi   r23, '1'
+.Lformat_ftoa_round_overflow_fill:
+    st    X+, r23
+    ldi   r23, '0'
+    dec   r18
+    brne  .Lformat_ftoa_round_overflow_fill
+
+.Lformat_ftoa_restore:
+    clr   r1
+    pop   r14
+    pop   r15
+    pop   r16
+    pop   r17
+    pop   r28
+    pop   r29
+    clr   r25
+    sbrc  r24, 7
+    com   r25
+    ret
+
+; Powers used by the decimal digit extractor. Keep powr10 first for subnormal
+; rounding stability, as in avr-libc.
+format_ftoa_powr10:
+    .byte 0, 64, 122, 16, 243, 90
+    .byte 0, 160, 114, 78, 24, 9
+    .byte 0, 16, 165, 212, 232, 0
+    .byte 0, 232, 118, 72, 23, 0
+    .byte 0, 228, 11, 84, 2, 0
+    .byte 0, 202, 154, 59, 0, 0
+    .byte 0, 225, 245, 5, 0, 0
+    .byte 128, 150, 152, 0, 0, 0
+    .byte 64, 66, 15, 0, 0, 0
+    .byte 160, 134, 1, 0, 0, 0
+    .byte 16, 39, 0, 0, 0, 0
+    .byte 232, 3, 0, 0, 0, 0
+    .byte 100, 0, 0, 0, 0, 0
+    .byte 10, 0, 0, 0, 0, 0
+    .byte 1, 0, 0, 0, 0, 0
+
+format_ftoa_base10:
+    .byte 44, 118, 216, 136, -36
+    .byte 103, 79, 8, 35, -33
+    .byte 193, 223, 174, 89, -31
+    .byte 177, 183, 150, 229, -29
+    .byte 228, 83, 198, 58, -26
+    .byte 81, 153, 118, 150, -24
+    .byte 230, 194, 132, 38, -21
+    .byte 137, 140, 155, 98, -19
+    .byte 64, 124, 111, 252, -17
+    .byte 188, 156, 159, 64, -14
+    .byte 186, 165, 111, 165, -12
+    .byte 144, 5, 90, 42, -9
+    .byte 92, 147, 107, 108, -7
+    .byte 103, 109, 193, 27, -4
+    .byte 224, 228, 13, 71, -2
+    .byte 245, 32, 230, 181, 0
+    .byte 208, 237, 144, 46, 3
+    .byte 0, 148, 53, 119, 5
+    .byte 0, 128, 132, 30, 8
+    .byte 0, 0, 32, 78, 10
+    .byte 0, 0, 0, 200, 12
+    .byte 51, 51, 51, 51, 15
+    .byte 152, 110, 18, 131, 17
+    .byte 65, 239, 141, 33, 20
+    .byte 137, 59, 230, 85, 22
+    .byte 207, 254, 230, 219, 24
+    .byte 209, 132, 75, 56, 27
+    .byte 247, 124, 29, 144, 29
+    .byte 164, 187, 228, 36, 32
+    .byte 50, 132, 114, 94, 34
+    .byte 129, 0, 201, 241, 36
+    .byte 236, 161, 229, 61, 39

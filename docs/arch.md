@@ -1970,10 +1970,10 @@ services use dedicated target intrinsics. `memcpy`, `memcpy_P`, `memset`, and
 those representations preserve the required address spaces and memory
 semantics. The comparison, string, and formatted-output services use
 dedicated typed target intrinsics because LLVM has no generic intrinsics with
-their complete semantics. The display and drawing services also use dedicated
-typed target intrinsics because their fixed framebuffer effects, program-space
-effects, or externally observable display output have no generic LLVM
-representation.
+their complete semantics. The display, drawing, and text services also use dedicated typed target
+intrinsics because their fixed framebuffer effects, program-space effects,
+hidden selected-state dependencies, or externally observable display output
+have no generic LLVM representation.
 
 ## 49. Defined services
 
@@ -2028,7 +2028,13 @@ representation.
 | `0x2E` | `save_exists` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads |
 | `0x2F` | `vsnprintf` | `r4 = dst`, `r5 = size`, `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Data-space reads and writes; possible program-space reads |
 | `0x30` | `vsnprintf_P` | `r4 = dst`, `r5 = size`, `q3 = program format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Data-space reads and writes; program-space reads |
-| `0x31-0xFF` | Reserved | — | — | — |
+| `0x31` | `set_text_font` | `q2 = program font` | None | Program-space header read; selected-font state update |
+| `0x32` | `set_text_mode` | `low8(r4) = mode` | None | Selected-mode state update |
+| `0x33` | `draw_text` | `r4 = x`, `r5 = baseline y`, `r6 = RAM string` | `r4 = final x`, `r5 = final baseline y` | Data-space string read; selected-text and program-space font reads; framebuffer reads and writes |
+| `0x34` | `draw_text_P` | `r4 = x`, `r5 = baseline y`, `q3 = program string` | `r4 = final x`, `r5 = final baseline y` | Selected-text, program-space string/font reads; framebuffer reads and writes |
+| `0x35` | `draw_textfv` | `r4 = x`, `r5 = baseline y`, `r6 = RAM format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
+| `0x36` | `draw_textfv_P` | `r4 = x`, `r5 = baseline y`, `q3 = program format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
+| `0x37-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -3340,6 +3346,341 @@ memory accesses. A compiler must preserve ordering relative to data-space or
 program-space accesses that may affect bytes read by the service or observe its
 destination writes.
 
+### 49.28. Text-state and text-drawing services
+
+Encodings:
+
+| ID | Encoding | Service |
+|---:|---|---|
+| `0x31` | `D7 31` | `set_text_font` |
+| `0x32` | `D7 32` | `set_text_mode` |
+| `0x33` | `D7 33` | `draw_text` |
+| `0x34` | `D7 34` | `draw_text_P` |
+| `0x35` | `D7 35` | `draw_textfv` |
+| `0x36` | `D7 36` | `draw_textfv_P` |
+
+The services use target-private selected-font and selected-mode state. This
+state is not addressable through ordinary AVM data memory.
+
+#### 49.28.1. Font object format
+
+A font is a packed program-space object beginning with this three-byte header:
+
+```text
+font + 0  line_height
+font + 1  glyph_first
+font + 2  num_glyphs
+font + 3  first glyph record; also the glyph-table base
+```
+
+All three header fields are unsigned bytes. The glyph table contains exactly
+`num_glyphs` consecutive seven-byte records. Record `i` begins at:
+
+```text
+glyphTable + 7 * i
+```
+
+Each record has this byte layout:
+
+| Byte | Field | Type |
+|---:|---|---|
+| `0` | `h` | unsigned 8-bit glyph height |
+| `1` | `yoff` | signed 8-bit vertical bearing |
+| `2` | `w` | unsigned 8-bit glyph width |
+| `3` | `xoff` | signed 8-bit horizontal bearing |
+| `4` | `image_offset` bits `7:0` | unsigned little-endian 16-bit offset |
+| `5` | `image_offset` bits `15:8` | unsigned little-endian 16-bit offset |
+| `6` | `xadv` | unsigned 8-bit cursor advance |
+
+The image offset is relative to `glyphTable`, not to the beginning of the
+font object or to the glyph record:
+
+```text
+glyphImage = low24(glyphTable + image_offset)
+```
+
+All bytes of every referenced glyph image MUST lie within the unsigned 64-KiB
+relative window beginning at `glyphTable`. Equivalently, for an image of
+`imageSize` bytes:
+
+```text
+image_offset + imageSize <= 65536
+```
+
+This relative-window restriction does not prohibit the corresponding logical
+program-space range from crossing a physical or logical 64-KiB address
+boundary. Addition of the glyph-table base is performed modulo `2^24`.
+
+The represented character range does not wrap:
+
+```text
+glyph_first + num_glyphs <= 256
+```
+
+For an input byte `c`, interpreted as unsigned:
+
+```text
+if c < glyph_first:
+    missing glyph
+else:
+    index = c - glyph_first
+    if index >= num_glyphs:
+        missing glyph
+    else:
+        use glyph[index]
+```
+
+A missing glyph has no framebuffer effect and advances the cursor by zero.
+There is no implicit replacement glyph.
+
+A nonempty glyph image uses the single-plane page-major format:
+
+```text
+pages     = (h + 7) >> 3
+imageSize = w * pages
+```
+
+For source page `sp`, the image stores `w` consecutive column bytes. Bit `b`
+of the byte for source column `sx` represents source pixel:
+
+```text
+(sx, 8 * sp + b)
+```
+
+When `h` is not divisible by eight, every unused bit in the final source page
+MUST be zero. For `w == 0` or `h == 0`, the service reads no image byte and
+ignores `image_offset`, but still applies `xadv`.
+
+A corresponding source-language representation may use:
+
+```c
+typedef struct __attribute__((packed)) {
+    uint8_t h;
+    int8_t  yoff;
+    uint8_t w;
+    int8_t  xoff;
+    uint8_t image_offset[2];
+    uint8_t xadv;
+} avm_font_glyph_t;
+
+typedef struct __attribute__((packed)) {
+    uint8_t line_height;
+    uint8_t glyph_first;
+    uint8_t num_glyphs;
+    uint8_t data[]; /* records followed by page-major images */
+} avm_font_t;
+```
+
+#### 49.28.2. Selected text state
+
+Runtime startup has no selected font and uses white-transparent mode:
+
+```text
+selected font: none
+selected mode: 2
+```
+
+A zero selected `line_height` is the architectural no-font state. While no
+font is selected, all four drawing services leave the framebuffer unchanged,
+do not read or parse their string, format, or variadic arguments, and return
+the input cursor unchanged.
+
+`set_text_font` uses:
+
+```text
+q2[23:0] = program-space font pointer
+q2[31:24] ignored
+```
+
+A null logical pointer deselects the font without reading program space. For a
+nonnull pointer, the service reads the three-byte font header and replaces the
+selected-font state. A header whose `line_height` is zero also selects the
+no-font state. The caller must keep the complete selected font object readable
+for every later draw that uses it. `set_text_font` preserves the complete
+original `q2` container and every other general-purpose register, `CC`, and
+`SP`.
+
+`set_text_mode` uses:
+
+```text
+low8(r4) = mode
+```
+
+Bits `15:8` of `r4` are ignored. Accepted values are:
+
+| Value | Name | Per-pixel effect for glyph bit `s` and original framebuffer bit `d` |
+|---:|---|---|
+| `0` | `AVM_TEXT_OVERWRITE` | result `s` |
+| `2` | `AVM_TEXT_WHITE_TRANSPARENT` | result `d | s` |
+| `3` | `AVM_TEXT_BLACK_TRANSPARENT` | result `d & !s` |
+
+Any other low-byte value is ignored and leaves the selected mode unchanged.
+The complete original `r4` bit pattern and all other architectural state are
+preserved.
+
+#### 49.28.3. Cursor and glyph rendering
+
+All four drawing services take a signed 16-bit initial cursor:
+
+```text
+r4 = initial cursor x
+r5 = initial baseline y
+```
+
+They return the final cursor in the same registers:
+
+```text
+r4 = final cursor x
+r5 = final baseline y
+```
+
+The result therefore occupies `q2`, with x in bits `15:0` and baseline y in
+bits `31:16`. Both result registers are complete definitions. All other
+input-only registers and every unlisted general-purpose register are
+preserved, as are `CC` and `SP`.
+
+For an available ordinary glyph:
+
+```text
+glyphLeft = cursorX  + sign_extend(glyph.xoff)
+glyphTop  = baselineY + sign_extend(glyph.yoff)
+```
+
+The bitmap occupies the half-open mathematical rectangle:
+
+```text
+glyphLeft <= px < glyphLeft + glyph.w
+glyphTop  <= py < glyphTop  + glyph.h
+```
+
+It is clipped to the framebuffer rectangle:
+
+```text
+0 <= px < 128
+0 <= py < 64
+```
+
+Pixels outside the framebuffer are ignored. Rendering never changes a pixel
+outside the clipped glyph bitmap rectangle. Overwrite mode does not implicitly
+clear the glyph's advance cell or the font's line-height cell.
+
+After every available non-newline glyph, whether visible, empty, or completely
+clipped:
+
+```text
+cursorX = low16(cursorX + glyph.xadv)
+```
+
+Only byte `0x0A` (`'\n'`) has control meaning:
+
+```text
+cursorX   = initialX
+baselineY = low16(baselineY + line_height)
+```
+
+Every other emitted byte, including carriage return and a zero byte produced
+by `%c`, undergoes ordinary glyph lookup. Raw-string terminating zero bytes
+end their source and are not emitted. Cursor arithmetic is modulo `2^16`; the
+resulting bit patterns are interpreted as signed coordinates for clipping.
+
+#### 49.28.4. Raw text services
+
+`draw_text` uses:
+
+```text
+r4 = initial x
+r5 = initial baseline y
+r6 = data-space NUL-terminated string
+```
+
+`draw_text_P` uses:
+
+```text
+r4 = initial x
+r5 = initial baseline y
+q3 = program-space NUL-terminated string
+```
+
+For `draw_text_P`, the logical string address is `q3[23:0]`, bits
+`q3[31:24]` are ignored, and address advancement is modulo `2^24`.
+
+The service consumes consecutive nonzero source bytes and renders them in
+order. The terminating zero is read as the terminator but is not passed to
+glyph lookup. The caller must supply a readable NUL-terminated string in the
+specified address space. `draw_text` preserves `r6`; `draw_text_P` preserves
+the complete original `q3` container.
+
+#### 49.28.5. Formatted text services
+
+`draw_textfv` uses:
+
+```text
+r4 = initial x
+r5 = initial baseline y
+r6 = data-space format pointer
+r2 = va_list cursor
+```
+
+`draw_textfv_P` uses:
+
+```text
+r4 = initial x
+r5 = initial baseline y
+q3 = program-space format pointer
+r2 = va_list cursor
+```
+
+For `draw_textfv_P`, the logical format address is `q3[23:0]`, bits
+`q3[31:24]` are ignored, and format-address advancement is modulo `2^24`.
+The architectural `r2` value is preserved; parsing advances only an internal
+copy of the packed variadic cursor.
+
+These services use exactly the accepted grammar, argument representation,
+conversion semantics, and source/argument requirements from Sections 49.27.2
+through 49.27.6. The destination-buffer, size, termination, and `restrict`
+requirements that are specific to `vsnprintf` do not apply. Instead of writing
+a bounded character buffer or returning an output count, each formatted byte is
+passed directly to the glyph processor and the service returns the final
+cursor. Consequently:
+
+- there is no destination size, terminating output byte, or truncation;
+- no 16-bit formatted-output count limit applies;
+- formatter-generated spaces, string bytes, and conversion bytes are rendered
+  in order;
+- a `%c` argument whose low byte is zero is delivered to ordinary glyph lookup;
+- source terminators for `%s` and `%S` are not emitted; and
+- malformed format syntax stops processing at the malformed conversion and
+  returns the cursor reached after all earlier emitted bytes. There is no
+  separate error result, and earlier framebuffer writes remain in place.
+
+`draw_textfv` preserves `r6` and `r2`. `draw_textfv_P` preserves `q3` and
+`r2`.
+
+#### 49.28.6. Memory effects and ordering
+
+`set_text_font` conditionally reads the program-space header and defines hidden
+selected-font state. `set_text_mode` defines hidden selected-mode state. These
+state definitions MUST remain ordered relative to draws that may observe them.
+A state-setting service MUST NOT be speculated, duplicated, or commoned in a
+way that changes the selected state observed by a draw.
+
+Every drawing service reads the hidden selected text state, glyph records and
+images in program space, and its explicit source. The formatted services also
+read the variadic area in data space and may indirectly read `%s` and `%S`
+objects in either address space. Drawing reads and writes the fixed framebuffer
+range `0x0500-0x08FF`; it does not update the physical display.
+
+A drawing service MUST NOT be speculated or reordered across a selected-state
+update that may affect it, or across an access that may alias the framebuffer.
+It must remain ordered relative to writes that may change any explicit or
+indirect string, format, variadic, font-record, or glyph-image byte it reads.
+An implementation may eliminate or reorder a draw only when its cursor result,
+framebuffer effects, source reads, and selected-state dependencies are all
+proven unobservable under the ordinary nonvolatile memory rules.
+
+The text services use nonreentrant call-lifetime runtime workspace. Recursive
+or concurrent execution of a text or formatted-output service is unsupported.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -3548,6 +3889,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `set_sprite`, `draw_overwrite`, `draw_plus_mask`, `draw_self_masked`, `draw_erase` | Dedicated typed AVM intrinsics and `SYS 0x22-0x26` | — | — | Select an AS1 sprite or draw from selected-sprite state into the fixed framebuffer |
 | `draw_filled_rect_white`, `draw_filled_rect_black` | Dedicated typed AVM intrinsics and `SYS 0x27-0x28` | — | — | Read/write the fixed framebuffer |
 | `vsnprintf`, `vsnprintf_P` | Dedicated typed AVM intrinsics and `SYS 0x2F-0x30` | — | — | Bounded AS0 write; AS0 and AS1 reads selected by the format |
+| `set_text_font`, `set_text_mode`, `draw_text`, `draw_text_P`, `draw_textfv`, `draw_textfv_P` | Dedicated typed AVM intrinsics and `SYS 0x31-0x36` | — | — | Hidden selected-text state; AS0/AS1 source reads; fixed-framebuffer read/write effects |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
 Immediate counts in the range `0-15` select `LSL16I`, `LSR16I`, or `ASR16I`.
@@ -4058,6 +4400,78 @@ Each operation reads and writes the fixed framebuffer range
 `0x0500-0x08FF`. It is not an ordinary function call after lowering and carries
 no call-preserved register mask.
 
+
+The target runtime and Clang target also provide text-state and text-drawing
+interfaces:
+
+```c
+typedef struct __attribute__((packed)) {
+    uint8_t h;
+    int8_t  yoff;
+    uint8_t w;
+    int8_t  xoff;
+    uint8_t image_offset[2];
+    uint8_t xadv;
+} avm_font_glyph_t;
+
+typedef struct __attribute__((packed)) {
+    uint8_t line_height;
+    uint8_t glyph_first;
+    uint8_t num_glyphs;
+    uint8_t data[];
+} avm_font_t;
+
+typedef enum {
+    AVM_TEXT_OVERWRITE = 0,
+    AVM_TEXT_WHITE_TRANSPARENT = 2,
+    AVM_TEXT_BLACK_TRANSPARENT = 3,
+} avm_text_mode_t;
+
+typedef struct {
+    int16_t x;
+    int16_t baseline_y;
+} avm_text_cursor_t;
+
+void __avm_set_text_font(
+    avm_font_t const __attribute__((address_space(1))) *font);
+void __avm_set_text_mode(uint8_t mode);
+
+uint32_t __avm_draw_text(
+    int16_t x, int16_t baseline_y, char const *string);
+uint32_t __avm_draw_text_P(
+    int16_t x, int16_t baseline_y,
+    char const __attribute__((address_space(1))) *string);
+uint32_t __avm_draw_textfv(
+    int16_t x, int16_t baseline_y, char const *format, va_list ap);
+uint32_t __avm_draw_textfv_P(
+    int16_t x, int16_t baseline_y,
+    char const __attribute__((address_space(1))) *format, va_list ap);
+```
+
+The four drawing helpers return the packed machine result:
+
+```text
+bits 15:0  final x
+bits 31:16 final baseline y
+```
+
+Runtime headers SHOULD expose wrappers returning `avm_text_cursor_t`. Variadic
+`avm_draw_textf` and `avm_draw_textf_P` wrappers construct a `va_list` and use
+the corresponding `draw_textfv` interface.
+
+Clang SHOULD provide corresponding `__builtin_avm_*` interfaces for all six
+operations. They lower to the typed text intrinsics in Section 59 rather than
+to ordinary calls. Machine selection assigns the fixed registers from Section
+49.28 and emits `SYS 0x31-0x36`. The `i8` text-mode operand is zero-extended
+into `r4`; the service observes only its low byte. Program-pointer padding is
+not normalized solely for a text service because each program-space input
+consumes only its logical low 24 bits.
+
+The compiler representation must retain hidden selected-font and selected-mode
+dependencies. Drawing operations also retain their explicit and indirect
+source reads, program-space font reads, and fixed framebuffer effects. They
+carry no ordinary call-preserved register mask after lowering.
+
 ## 57. Atomic and volatile policy
 
 AVM Version 1 is single-threaded.
@@ -4159,7 +4573,8 @@ The backend should:
 ## 59. LLVM system-service representations
 
 The scalar, floating-point, memory, comparison, string, formatted-output,
-display, and drawing services have dedicated typed target intrinsics:
+display, sprite, rectangle, and text services have dedicated typed target
+intrinsics:
 
 ```llvm
 declare void  @llvm.avm.debug.putc(i8 %value)
@@ -4227,6 +4642,17 @@ declare i16 @llvm.avm.vsnprintf(
     ptr %dst, i16 %size, ptr %format, ptr %ap)
 declare i16 @llvm.avm.vsnprintf.p(
     ptr %dst, i16 %size, ptr addrspace(1) %format, ptr %ap)
+
+declare void @llvm.avm.set.text.font(ptr addrspace(1) %font)
+declare void @llvm.avm.set.text.mode(i8 %mode)
+declare i32 @llvm.avm.draw.text(
+    i16 %x, i16 %baseline_y, ptr %string)
+declare i32 @llvm.avm.draw.text.p(
+    i16 %x, i16 %baseline_y, ptr addrspace(1) %string)
+declare i32 @llvm.avm.draw.textfv(
+    i16 %x, i16 %baseline_y, ptr %format, ptr %ap)
+declare i32 @llvm.avm.draw.textfv.p(
+    i16 %x, i16 %baseline_y, ptr addrspace(1) %format, ptr %ap)
 ```
 
 AS1-to-AS0 `memcpy_P` is represented by the generic overloaded LLVM memory
@@ -4242,9 +4668,10 @@ call void @llvm.memcpy.p0.p1.i16(
 
 A generic AVM service-number intrinsic and an
 `llvm.avm.memcpy.p` target intrinsic SHOULD NOT be public LLVM interfaces.
-The `.p` suffix on the comparison, string, and formatted-output intrinsics is
-part of the target intrinsic name and denotes an address-space-one format or
-source. Those operations have no corresponding generic LLVM intrinsic.
+The `.p` suffix on the comparison, string, formatted-output, and text
+intrinsics is part of the target intrinsic name and denotes an
+address-space-one format or source. Those operations have no corresponding
+generic LLVM intrinsic.
 
 ### 59.1. Compiler-representation-to-machine lowering
 
@@ -4299,6 +4726,12 @@ source. Those operations have no corresponding generic LLVM intrinsic.
 | `llvm.avm.save.exists()` | `SYS 0x2E` through `SYS_SAVE_EXISTS` | None | `r4 = canonical Boolean` |
 | `llvm.avm.vsnprintf(ptr,i16,ptr,ptr)` | `SYS 0x2F` through `SYS_VSNPRINTF` | `r4 = dst`, `r5 = size`, `r6 = format`, `r2 = ap` | tied `r4 = signed result` |
 | `llvm.avm.vsnprintf.p(ptr,i16,p1,ptr)` | `SYS 0x30` through `SYS_VSNPRINTF_P` | `r4 = dst`, `r5 = size`, `q3 = format`, `r2 = ap` | tied `r4 = signed result` |
+| `llvm.avm.set.text.font(p1)` | `SYS 0x31` through `SYS_SET_TEXT_FONT` | `q2 = font` | None |
+| `llvm.avm.set.text.mode(i8)` | `SYS 0x32` through `SYS_SET_TEXT_MODE` | `low8(r4) = mode` | None |
+| `llvm.avm.draw.text(i16,i16,ptr)` | `SYS 0x33` through `SYS_DRAW_TEXT` | tied `r4 = x`, tied `r5 = baseline y`, `r6 = string` | tied `q2 = final cursor` |
+| `llvm.avm.draw.text.p(i16,i16,p1)` | `SYS 0x34` through `SYS_DRAW_TEXT_P` | tied `r4 = x`, tied `r5 = baseline y`, `q3 = string` | tied `q2 = final cursor` |
+| `llvm.avm.draw.textfv(i16,i16,ptr,ptr)` | `SYS 0x35` through `SYS_DRAW_TEXTFV` | tied `r4 = x`, tied `r5 = baseline y`, `r6 = format`, `r2 = ap` | tied `q2 = final cursor` |
+| `llvm.avm.draw.textfv.p(i16,i16,p1,ptr)` | `SYS 0x36` through `SYS_DRAW_TEXTFV_P` | tied `r4 = x`, tied `r5 = baseline y`, `q3 = format`, `r2 = ap` | tied `q2 = final cursor` |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled
@@ -4340,6 +4773,32 @@ area. `SYS_VSNPRINTF` also carries its explicit address-space-zero format read;
 NOT be marked `argmemonly`, because the indirectly obtained string pointers are
 not intrinsic pointer operands. They have no ordinary call-preserved register
 mask.
+
+
+`SYS_SET_TEXT_FONT` has an input-only fixed use of `q2`, consumes only
+`q2[23:0]`, and defines hidden selected-font state. A nonnull font operand
+carries an address-space-one header read. `SYS_SET_TEXT_MODE` has an input-only
+fixed use of `r4`, observes only `low8(r4)`, and defines hidden selected-mode
+state. The backend zero-extends the intrinsic's `i8` mode into the complete
+physical `r4` use. Both pseudos have no architectural register definitions and
+preserve their input registers.
+
+Each text-drawing pseudo has a tied `q2` coordinate input and final-cursor
+result. In the tied input, `r4` is initial x and `r5` is initial baseline y; in
+the result they contain final x and final baseline y. `SYS_DRAW_TEXT` has an
+input-only `r6` data-space string pointer. `SYS_DRAW_TEXT_P` has an input-only
+`q3` program-space string pointer. `SYS_DRAW_TEXTFV` has input-only `r6` format
+and `r2` variadic-cursor uses. `SYS_DRAW_TEXTFV_P` has input-only `q3` format
+and `r2` variadic-cursor uses. Program pointers consume only their logical low
+24 bits, so selection MUST NOT normalize them solely for these services.
+
+The draw pseudos have hidden uses of both selected-font and selected-mode state.
+They carry a conservative address-space-one read for the selected font records
+and images and conservative address-space-zero read/write effects for the
+complete framebuffer. Raw draws additionally carry the explicit string read.
+Formatted draws carry the same direct and indirect reads as the corresponding
+formatted-output service but no destination-buffer write. None is an ordinary
+call or carries a call-preserved register mask.
 
 The four explicit-pointer sprite pseudos have input-only fixed uses of `r4`,
 `r5`, `q1`, and `r6`, and no architectural register definitions. Their sprite
@@ -4412,7 +4871,8 @@ target builtins for the comparison and string functions lower to services
 services `0x22-0x26`. The two filled-rectangle
 builtins lower to services `0x27-0x28`. Platform and persistence builtins lower
 to services `0x29-0x2E`. The formatted-output builtins lower to services
-`0x2F-0x30`. A compiler MAY recognize
+`0x2F-0x30`, and the text-state and text-drawing builtins lower to services
+`0x31-0x36`. A compiler MAY recognize
 ordinary C library calls and replace them with the corresponding target
 intrinsic when interposition, object-size, and language rules permit it.
 
@@ -4471,6 +4931,16 @@ The memory services have their precise address-space effects:
   strings selected by the format, and writes its bounded AS0 destination.
 - `vsnprintf_P` has the same indirect effects and additionally reads its AS1
   format.
+- `set_text_font` conditionally reads an AS1 font header and defines hidden
+  selected-font state.
+- `set_text_mode` defines hidden selected-mode state.
+- `draw_text` reads an AS0 string, hidden text state, and selected AS1 font data,
+  then reads and writes the fixed framebuffer.
+- `draw_text_P` reads an AS1 string, hidden text state, and selected AS1 font
+  data, then reads and writes the fixed framebuffer.
+- `draw_textfv` and `draw_textfv_P` have the formatter's explicit and indirect
+  AS0/AS1 reads, read hidden text state and selected AS1 font data, and read and
+  write the fixed framebuffer; they perform no destination-buffer write.
 
 They MUST NOT be speculated or reordered across accesses that may alias a
 written destination or, for a copy or move, the source. They MAY be eliminated,
@@ -4486,6 +4956,16 @@ may change their format, variadic arguments, or referenced strings and relative
 to accesses that may observe their destination writes. Their result and writes
 may be eliminated only when ordinary nonvolatile memory-effect and undefined-
 behavior rules permit it.
+
+
+Text-state operations and text draws carry an additional hidden-state ordering
+chain. `set_text_font` and `set_text_mode` MUST NOT move across a draw that may
+observe the changed selection. A draw MUST remain ordered relative to stores
+that may change its explicit or indirect strings, format, variadic area, font
+records, or glyph images, and relative to accesses that may alias the
+framebuffer. A text draw may be removed only when both its cursor result and all
+framebuffer writes are dead and its remaining reads and hidden-state uses are
+unobservable under the ordinary nonvolatile rules.
 
 `display` reads the complete framebuffer and may clear it. It also performs an
 externally observable hardware update regardless of the `clear` value. It MUST
@@ -4536,6 +5016,47 @@ int __avm_vsnprintf_P(
     char *restrict dst, size_t size,
     char const __attribute__((address_space(1))) *restrict format,
     va_list ap);
+
+typedef struct __attribute__((packed)) {
+    uint8_t h;
+    int8_t  yoff;
+    uint8_t w;
+    int8_t  xoff;
+    uint8_t image_offset[2];
+    uint8_t xadv;
+} avm_font_glyph_t;
+
+typedef struct __attribute__((packed)) {
+    uint8_t line_height;
+    uint8_t glyph_first;
+    uint8_t num_glyphs;
+    uint8_t data[];
+} avm_font_t;
+
+typedef enum {
+    AVM_TEXT_OVERWRITE = 0,
+    AVM_TEXT_WHITE_TRANSPARENT = 2,
+    AVM_TEXT_BLACK_TRANSPARENT = 3,
+} avm_text_mode_t;
+
+typedef struct {
+    int16_t x;
+    int16_t baseline_y;
+} avm_text_cursor_t;
+
+void __avm_set_text_font(
+    avm_font_t const __attribute__((address_space(1))) *font);
+void __avm_set_text_mode(uint8_t mode);
+uint32_t __avm_draw_text(
+    int16_t x, int16_t baseline_y, char const *string);
+uint32_t __avm_draw_text_P(
+    int16_t x, int16_t baseline_y,
+    char const __attribute__((address_space(1))) *string);
+uint32_t __avm_draw_textfv(
+    int16_t x, int16_t baseline_y, char const *format, va_list ap);
+uint32_t __avm_draw_textfv_P(
+    int16_t x, int16_t baseline_y,
+    char const __attribute__((address_space(1))) *format, va_list ap);
 
 float __avm_sinf(float x);
 float __avm_cosf(float x);
@@ -4657,6 +5178,29 @@ The two `__avm_draw_filled_rect_*` interfaces lower to their corresponding
 `width`, and `height` to `r4`, `r5`, `low8(r6)`, and `low8(r7)`,
 respectively, and selects `SYS 0x27-0x28`. These operations retain the fixed
 framebuffer read/write effects described in Sections 49.22 and 59.2.
+
+
+The text-state and text-drawing interfaces lower to the corresponding
+`llvm.avm.set.text.*`, `llvm.avm.draw.text*`, and
+`llvm.avm.draw.textfv*` intrinsics. The backend selects `SYS 0x31-0x36` with
+the fixed registers from Section 59.1. `set_text_font` and `set_text_mode`
+retain hidden selected-state definitions; drawing operations retain hidden uses
+of that state, selected-font AS1 reads, their explicit and indirect source
+reads, and fixed-framebuffer effects.
+
+The four low-level drawing interfaces return a packed `uint32_t` whose low and
+high halves are final x and final baseline y. Runtime headers SHOULD convert
+that representation to `avm_text_cursor_t`. They MAY expose inline
+`avm_draw_text`, `avm_draw_text_P`, `avm_draw_textfv`, and
+`avm_draw_textfv_P` wrappers and variadic `avm_draw_textf` and
+`avm_draw_textf_P` conveniences. A variadic convenience must construct a
+`va_list` and use the corresponding `fv` interface; it does not receive a
+separate SYS identifier.
+
+Target format diagnostics for formatted text use the same grammar and AVM `%S`
+and `%P` extensions as Section 49.27. Unlike `vsnprintf`, formatted text has no
+bounded destination or output-count result, and diagnostics or lowering MUST
+not impose a 32767-byte output-count limit on the text sink.
 
 ## 60. Code model and C++ policy
 

@@ -220,7 +220,7 @@ typedef struct __attribute__((packed)) {
   int8_t  yoff;
   uint8_t w;
   int8_t  xoff;
-  uint8_t image_offset[3]; /* Relative to the glyph-table base: font + 3. */
+  uint8_t image_offset[2]; /* Relative to the glyph-table base: font + 3. */
   uint8_t xadv;
 } avm_font_glyph_t;
 

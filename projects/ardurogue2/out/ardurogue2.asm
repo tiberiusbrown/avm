@@ -19,7 +19,7 @@ SYMBOL TABLE:
 00000102 g     O .data	00000002 y
 00000100 g     O .data	00000002 x
 00000295 g     F .text	00000016 avm_set_frame_rate
-000002eb g     O .rodata	000004d6 _avm_font_5x7_storage
+000002eb g     O .rodata	00000477 _avm_font_5x7_storage
 
 Disassembly of section .text:
 

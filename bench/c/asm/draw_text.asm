@@ -11,7 +11,7 @@ SYMBOL TABLE:
 00000215 g     F .text	00000016 avm_test_main
 0000022b g     F .text	00000002 avm_halt
 00000500 g       *ABS*	00000000 __avm_framebuffer
-0000022d g     O .rodata	000004d6 _avm_font_5x7_storage
+0000022d g     O .rodata	00000477 _avm_font_5x7_storage
 
 Disassembly of section .text:
 

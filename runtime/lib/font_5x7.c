@@ -19,25 +19,24 @@
 enum {
     AVM_FONT_5X7_FIRST = 0x20,
     AVM_FONT_5X7_COUNT = 0x7f - AVM_FONT_5X7_FIRST,
-    AVM_FONT_5X7_GLYPH_BYTES = 8,
+    AVM_FONT_5X7_GLYPH_BYTES = 7,
     AVM_FONT_5X7_IMAGE_BYTES = 5,
     AVM_FONT_5X7_IMAGE_BASE =
         AVM_FONT_5X7_COUNT * AVM_FONT_5X7_GLYPH_BYTES,
 };
 
-#define AVM_U24_LE(value)                                                     \
+#define AVM_U16_LE(value)                                                     \
         (uint8_t)((value) & 0xffu),                                           \
-        (uint8_t)(((value) >> 8) & 0xffu),                                    \
-        (uint8_t)(((value) >> 16) & 0xffu)
+        (uint8_t)(((value) >> 8) & 0xffu)
 
 #define AVM_FONT_5X7_OFFSET(index)                                            \
     (AVM_FONT_5X7_IMAGE_BASE + ((index) - AVM_FONT_5X7_FIRST) * AVM_FONT_5X7_IMAGE_BYTES)
 
 #define AVM_FONT_5X7_GLYPH(code)                                             \
-    7, -7, 5, 0, AVM_U24_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code))), 6
+    7, -7, 5, 0, AVM_U16_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code))), 6
 
 #define AVM_FONT_5X7_SPACE(code)                                             \
-    0, 0, 0, 0, AVM_U24_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code))), 6
+    0, 0, 0, 0, AVM_U16_LE(AVM_FONT_5X7_OFFSET((uint32_t)(code))), 6
 
 uint8_t const AVM_PROGMEM _avm_font_5x7_storage[] = {
     8,

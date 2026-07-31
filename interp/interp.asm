@@ -14332,9 +14332,10 @@ text_emit_char_raw:
     brlt  .Ltext_x_extent_visible
     ori   r23, (1 << TEXT_GLYPH_FLAG_REJECT)
 .Ltext_x_extent_visible:
-    mov   r27, r25                  ; preserve rendered-x high across offsets
     in    r11, SPDR                 ; image offset low
     out   SPDR, ZERO                ; begin image offset high
+
+    mov   r27, r25                  ; preserve rendered-x high across offsets
 
     ; Top clipping. r26 retains the source-page skip for pointer adjustment.
     mov   r26, r19
@@ -14353,7 +14354,7 @@ text_emit_char_raw:
     brne  .Ltext_not_top_row
     ori   r23, (1 << SPRITE_FLAG_TOP)
 .Ltext_not_top_row:
-    delay_2
+    nop
     in    r25, SPDR                 ; image offset high
     out   SPDR, ZERO                ; begin xadv
 

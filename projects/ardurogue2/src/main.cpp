@@ -17,6 +17,7 @@ void loop()
     avm_draw_filled_rect_white(x, y, 20, 20);
 
     avm_draw_textf_P(10, 50, F("millis: %u"), avm_millis());
+    avm_draw_textf(10, 60, "millis: %u", avm_millis());
 
     avm_display(AVM_CLEAR_BUFFER);
 }

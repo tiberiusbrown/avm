@@ -16337,9 +16337,9 @@ Disassembly of section .text:
     6184:	70 68       	ori	r23, 0x80	; 128
 
 00006186 <.Ltext_x_extent_visible>:
-    6186:	b9 2f       	mov	r27, r25
-    6188:	be b4       	in	r11, 0x2e	; 46
-    618a:	2e bc       	out	0x2e, r2	; 46
+    6186:	be b4       	in	r11, 0x2e	; 46
+    6188:	2e bc       	out	0x2e, r2	; 46
+    618a:	b9 2f       	mov	r27, r25
     618c:	a3 2f       	mov	r26, r19
     618e:	a1 95       	neg	r26
     6190:	21 30       	cpi	r18, 0x01	; 1
@@ -16358,7 +16358,7 @@ Disassembly of section .text:
     61a6:	71 60       	ori	r23, 0x01	; 1
 
 000061a8 <.Ltext_not_top_row>:
-    61a8:	00 c0       	rjmp	.+0      	; 0x61aa <.Ltext_not_top_row+0x2>
+    61a8:	00 00       	nop
     61aa:	9e b5       	in	r25, 0x2e	; 46
     61ac:	2e bc       	out	0x2e, r2	; 46
     61ae:	e8 2f       	mov	r30, r24

@@ -11013,11 +11013,19 @@ draw_bitmap_seek_prepared_text_func:
     brsh  .Ltext_prepared_bottom_unclipped
     mov   r12, r24
     clr   r15                       ; original partial final page was removed
-    rjmp  .Ltext_prepared_bottom_clip_done
 .Ltext_prepared_bottom_unclipped:
-    delay_3
-.Ltext_prepared_bottom_clip_done:
-    delay_4
+
+    ; Complete computation of physical image address.
+
+    add   r20, r11
+    adc   r21, r25
+    adc   r22, ZERO
+    clr   r11                       ; restore 16-bit row stride high byte
+    
+    add   r20, r27
+    adc   r21, ZERO
+    adc   r22, ZERO
+
     out   SPDR, r22                 ; physical address high, command +18
 
     ; X = framebuffer + pageStart*128 + x. Preserve the vertical shift in r9
@@ -14398,17 +14406,13 @@ text_emit_char_raw:
     ; Compute this after the record byte is available but before launching the
     ; image command. The command transfer then again overlaps cursor advance and
     ; the tail jump, preserving the exact command+18 address-high handoff.
-    add   r20, r11
-    adc   r21, r25
-    adc   r22, ZERO
+    
     mul   r26, r10
     add   r20, r0
     adc   r21, r1
     adc   r22, ZERO
-    add   r20, r27
-    adc   r21, ZERO
-    adc   r22, ZERO
-    clr   r11                       ; restore 16-bit row stride high byte
+
+    ; The computation is completed inside draw_bitmap_seek_prepared_text_func.
 
     fx_disable
     ldi   r30, SFC_READ

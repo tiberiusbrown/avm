@@ -14191,7 +14191,6 @@ text_emit_char_raw:
 .Ltext_emit_char_lookup:
     lds   r25, data_text_glyph_first
     sub   r24, r25
-    brcs  .Ltext_emit_char_lookup_out_of_range
     lds   r25, data_text_num_glyphs
     cp    r24, r25
     brsh  .Ltext_emit_char_lookup_out_of_range

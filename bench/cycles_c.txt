@@ -45,7 +45,7 @@
       501299   tail_calls.c
        53088   text.c
        42226   tilesrect.c
-       90284   tilessprite.c
-       37784   tilessprite16.c
-       34590   tilessprite16_cached.c
-       76818   tilessprite_cached.c
+       90028   tilessprite.c
+       37720   tilessprite16.c
+       34526   tilessprite16_cached.c
+       76562   tilessprite_cached.c

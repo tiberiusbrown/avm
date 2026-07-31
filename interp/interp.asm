@@ -10609,7 +10609,8 @@ sys_draw_sprite_header_impl:
 ; Entry:
 ;   r0              width in pixels
 ;   r1              height in pixels
-;   r24:r25:r26     selected frame's image-relative data pointer
+;   r24:r25:r26     selected frame's image-relative data pointer; generic
+;                     setup converts it once to the shared physical-pointer contract
 ;   r27             SPRITE_MODE_*
 ;   AVM r4          int16_t x
 ;   AVM r5          int16_t y
@@ -10645,7 +10646,7 @@ sys_draw_sprite_header_impl:
 ;   r17             framebuffer x during setup; loop counter while rendering
 ;   r18             vertical shift coefficient
 ;   r19             signed destination page during setup; high mask/temporary
-;   r20:r21:r22     current visible source-row image-relative pointer
+;   r20:r21:r22     current visible source-row physical FX pointer
 ;   r23             top/bottom/reseek/surviving-partial flags
 ;   SREG.T          0=renderer preserves r8-r23, 1=text caller preserves them
 ;   GPIOR1:GPIOR2   selected mode-specific row-dispatch word address
@@ -10726,7 +10727,17 @@ draw_bitmap_seek_visible_text_func:
     mov   r8, r0                    ; source width, later current row mask
     mov   r9, r1                    ; source height, later overwrite low mask
     movw  r20, r24
-    mov   r22, r26                  ; selected frame pointer
+    mov   r22, r26                  ; selected frame image-relative pointer
+
+    ; Establish the shared renderer pointer contract immediately: r20:r22 is
+    ; physical from this point onward for both generic sprites and prepared
+    ; text. Top/left clipping and later row-stride advances therefore operate
+    ; identically, and clipped-row reseeks never translate the pointer again.
+    lds   r24, data_page_data+0
+    add   r21, r24
+    lds   r24, data_page_data+1
+    adc   r22, r24
+
     mov   r13, r27                  ; drawing mode (setup only)
 
     ; Full source-row stride in bytes.
@@ -10862,17 +10873,10 @@ draw_bitmap_seek_visible_text_func:
     ori   r23, (1 << SPRITE_FLAG_TOP)
 .Lsprite_not_top_row:
 
-    ; Convert the finalized visible source-row address to a physical FX address.
+    ; r20:r22 already holds the finalized physical visible-row pointer.
     ; The command transfer has long since completed, so use the legal late
     ; standard handoff: drain the command response, then transmit address high.
-    mov   r25, r21
-    mov   r30, r22
-    lds   r0, data_page_data+0
-    add   r25, r0
-    lds   r0, data_page_data+1
-    adc   r30, r0
-
-    out   SPDR, r30                  ; physical address high
+    out   SPDR, r22                  ; physical address high
 
     ; Preserve y low while r18 is reused as the unsigned 128 operand for the
     ; signed page-index multiply below.
@@ -10903,7 +10907,7 @@ draw_bitmap_seek_visible_text_func:
     mov   r24, r19
     add   r24, r12
 
-    out   SPDR, r25                  ; physical address middle
+    out   SPDR, r21                  ; physical address middle
 
     cpi   r24, 8
     brne  .Lsprite_not_bottom_row
@@ -11581,33 +11585,28 @@ emit_sprite_full_dispatch sprite_erase_row_dispatch, \
 
 ; Start streaming at the following visible source row without disturbing X.
 ; This helper is used only when SPRITE_FLAG_RESEEK indicates horizontal
-; clipping. It
-; advances the retained row pointer after launching SFC_READ, hiding the four
-; pointer-update cycles in the command interval. Z and r24:r25 are scratch; the
-; first data byte is in flight on return.
+; clipping. It advances the retained physical row pointer after launching
+; SFC_READ, hiding the four pointer-update cycles in the command interval.
+; r24:r25 are scratch; the first data byte is in flight on return.
     fx_disable
     ldi   r24, SFC_READ
     fx_enable
     out   SPDR, r24
 
     ; Advance to the same visible x position in the following source row.
+    ; The retained pointer is already physical for both generic sprites and
+    ; prepared text, so no data-page translation is performed here.
     movw  r24, r10
     add   r20, r24
     adc   r21, r25
     adc   r22, ZERO
 
     mov   r25, r21
-    mov   r30, r22
-    lds   r31, data_page_data+0
-    add   r25, r31
-    lds   r31, data_page_data+1
-    adc   r30, r31
 
-    ; The twelve useful setup cycles after command launch leave exactly four
-    ; cycles before the legal cycle-17 IN / cycle-18 OUT address-high handoff.
-    delay_3
-    delay_2
-    out   SPDR, r30
+    ; Five useful setup cycles after command launch plus this complete
+    ; twelve-cycle delay place address high at the exact cycle-18 handoff.
+    rcall sprite_delay_12
+    out   SPDR, r22
 
     ; Remaining meaningful bytes use exact 18-cycle standard handoffs.
     rcall sprite_delay_17

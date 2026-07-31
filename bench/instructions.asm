@@ -42,9 +42,13 @@
 ;     mismatch, prefix, NUL-padding, truncation, and long-scan paths. Program
 ;     variants deliberately carry nonzero q3[31:24] padding.
 ;   * Formatting SYS services cover empty, short, and multi-cache-line formats;
-;     truncation; character, pointer, 16-bit, and 32-bit conversions; RAM and
-;     program strings; width and precision; packed mixed arguments; malformed
+;     truncation; character, pointer, integer, RAM-string, and program-string
+;     conversions; width and precision; packed mixed arguments; malformed
 ;     formats; and a conversion split across the program-format cache boundary.
+;     debug_printfv_P floating-point cases cover f/e/E/g/G/a/A, zero and signed
+;     zero, normal and subnormal values, finite range endpoints, infinities and
+;     NaNs, rounding carries, notation thresholds, exact hexadecimal rounding,
+;     flags, padding, dynamic width/precision, and packed mixed floats.
 ;     Program-format variants deliberately carry nonzero q3[31:24] padding.
 ;   * Operand aliases are otherwise omitted when they execute the same path.
 ;
@@ -122,6 +126,15 @@
 .macro bench_format_setup_program label, size
     ldi16 r4, BENCH_FORMAT_DST
     ldi16 r5, \size
+    ldi16 r2, BENCH_FORMAT_ARGS
+    ldi16 r6, %lo16(\label)
+    ldi8 r7, %hi8(\label)
+    ldi16 r0, 0xa500
+    or r7, r0
+.endm
+
+; Set up the program-space format and packed va_list for debug_printfv_P.
+.macro bench_format_setup_debug_program label
     ldi16 r2, BENCH_FORMAT_ARGS
     ldi16 r6, %lo16(\label)
     ldi8 r7, %hi8(\label)
@@ -9151,6 +9164,564 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%f; +zero default; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x0000
+    bench_format_setup_debug_program .Lbench_format_float_f_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%f; -zero default; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x8000
+    bench_format_setup_debug_program .Lbench_format_float_f_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%f; 1.5 normal default; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_f_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.0f; 2.5 half-up rounding; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x4020
+    bench_format_setup_debug_program .Lbench_format_float_f_precision_0
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.2f; 9.99609375 carry to 10.00; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xf000, 0x411f
+    bench_format_setup_debug_program .Lbench_format_float_f_precision_2
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.6f; small fixed with leading fractional zeros; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x725b, 0x3901
+    bench_format_setup_debug_program .Lbench_format_float_f_precision_6
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.10f; precision beyond digit engine; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3fa0
+    bench_format_setup_debug_program .Lbench_format_float_f_precision_10
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%+016.3f; positive zero padding; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_f_plus_zero_width_16_precision_3
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%-16.3f; negative left alignment; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0xc020
+    bench_format_setup_debug_program .Lbench_format_float_f_left_width_16_precision_3
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%#.0f; forced decimal point; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3f80
+    bench_format_setup_debug_program .Lbench_format_float_f_alt_precision_0
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%e; 1.5 normal default; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_e_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%E; -0.125 uppercase; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0xbe00
+    bench_format_setup_debug_program .Lbench_format_float_E_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.0e; rounding below one to exponent zero; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xe000, 0x3f7f
+    bench_format_setup_debug_program .Lbench_format_float_e_precision_0
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.2e; carry to next decimal exponent; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xf000, 0x411f
+    bench_format_setup_debug_program .Lbench_format_float_e_precision_2
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.7e; maximum finite; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xffff, 0x7f7f
+    bench_format_setup_debug_program .Lbench_format_float_e_precision_7
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.7e; minimum normal; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x0080
+    bench_format_setup_debug_program .Lbench_format_float_e_precision_7
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.5e; minimum subnormal supported precision; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0001, 0x0000
+    bench_format_setup_debug_program .Lbench_format_float_e_precision_5
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%+016.3e; positive zero padding; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x42f7
+    bench_format_setup_debug_program .Lbench_format_float_e_plus_zero_width_16_precision_3
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%g; fixed-notation branch; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xe666, 0x42f6
+    bench_format_setup_debug_program .Lbench_format_float_g_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%g; small scientific-notation branch; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x1d5f, 0x374f
+    bench_format_setup_debug_program .Lbench_format_float_g_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.4g; rounding crosses negative notation threshold; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xb469, 0x38d1
+    bench_format_setup_debug_program .Lbench_format_float_g_precision_4
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.4g; all-digit carry selects scientific notation; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x3e00, 0x461c
+    bench_format_setup_debug_program .Lbench_format_float_g_precision_4
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%#g; alternate form retains trailing zeros; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xcccd, 0x4144
+    bench_format_setup_debug_program .Lbench_format_float_g_alt
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%#.10G; uppercase with synthetic trailing zeros; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x02f9, 0x5015
+    bench_format_setup_debug_program .Lbench_format_float_G_alt_precision_10
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%g; +zero; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x0000
+    bench_format_setup_debug_program .Lbench_format_float_g_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%g; -zero; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x8000
+    bench_format_setup_debug_program .Lbench_format_float_g_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%-16.5G; uppercase scientific left alignment; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x2000, 0x47f1
+    bench_format_setup_debug_program .Lbench_format_float_G_left_width_16_precision_5
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%a; +zero; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x0000
+    bench_format_setup_debug_program .Lbench_format_float_a_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%a; -zero; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x8000
+    bench_format_setup_debug_program .Lbench_format_float_a_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%a; 1.5 exact trimmed; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_a_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%A; 0.1 uppercase exact; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xcccd, 0x3dcc
+    bench_format_setup_debug_program .Lbench_format_float_A_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.6a; 0.1 full binary32 fraction; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xcccd, 0x3dcc
+    bench_format_setup_debug_program .Lbench_format_float_a_precision_6
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%a; minimum normal; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x0080
+    bench_format_setup_debug_program .Lbench_format_float_a_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%a; minimum subnormal; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0001, 0x0000
+    bench_format_setup_debug_program .Lbench_format_float_a_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%a; largest subnormal normalized; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xffff, 0x007f
+    bench_format_setup_debug_program .Lbench_format_float_a_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.0a; largest subnormal rounds into normal range; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xffff, 0x007f
+    bench_format_setup_debug_program .Lbench_format_float_a_precision_0
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.0a; maximum finite rounds to exponent +128; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xffff, 0x7f7f
+    bench_format_setup_debug_program .Lbench_format_float_a_precision_0
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.1a; maximum finite rounded with explicit fraction; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0xffff, 0x7f7f
+    bench_format_setup_debug_program .Lbench_format_float_a_precision_1
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%+018.3a; positive zero padding after prefix; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_a_plus_zero_width_18_precision_3
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%-18.2A; negative uppercase left alignment; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0xc020
+    bench_format_setup_debug_program .Lbench_format_float_A_left_width_18_precision_2
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%#.0a; forced radix point; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3f80
+    bench_format_setup_debug_program .Lbench_format_float_a_alt_precision_0
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.8a; precision beyond exact fraction; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_a_precision_8
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%f; +infinity fast path; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x7f80
+    bench_format_setup_debug_program .Lbench_format_float_f_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%E; -infinity uppercase fast path; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0xff80
+    bench_format_setup_debug_program .Lbench_format_float_E_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%G; quiet NaN uppercase fast path; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x2345, 0x7fc1
+    bench_format_setup_debug_program .Lbench_format_float_G_default
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%+12A; signed quiet NaN with width; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x4321, 0xffc5
+    bench_format_setup_debug_program .Lbench_format_float_A_plus_width_12
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%*.*f; dynamic width=12 precision=4; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0x000c
+    bench_format_arg16 0x0004
+    bench_format_arg32 0x0000, 0x4050
+    bench_format_setup_debug_program .Lbench_format_float_f_dynamic
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%*.*g; negative precision means omitted; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0x000c
+    bench_format_arg16 0xffff
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_g_dynamic
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (%.*a; dynamic precision=3; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg16 0x0003
+    bench_format_arg32 0x0000, 0x3fc0
+    bench_format_setup_debug_program .Lbench_format_float_a_dynamic_precision
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: SYS debug_printfv_P (mixed %f %e %g %a; packed float arguments; q3 padding=0xa5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    bench_format_args_begin
+    bench_format_arg32 0x0000, 0x4050
+    bench_format_arg32 0x0000, 0x3e00
+    bench_format_arg32 0xe400, 0x4640
+    bench_format_arg32 0x0000, 0x40c0
+    bench_format_setup_debug_program .Lbench_format_float_mixed
+    sys debug_break
+    sys debug_printfv_p
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: SYS display (clear=false; nonzero framebuffer)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -13569,6 +14140,81 @@ _start:
     .byte 0x25, 0x70, 0x00
 .Lbench_format_error:
     .byte 0x25, 0x71, 0x00
+
+
+    ; Program-space floating-point format fixtures for debug_printfv_P.
+    ; Every benchmark supplies q3[31:24] = 0xa5 outside the measured interval.
+.p2align 1
+.Lbench_format_float_f_default:
+    .byte 0x25, 0x66, 0x00
+.Lbench_format_float_f_precision_0:
+    .byte 0x25, 0x2e, 0x30, 0x66, 0x00
+.Lbench_format_float_f_precision_2:
+    .byte 0x25, 0x2e, 0x32, 0x66, 0x00
+.Lbench_format_float_f_precision_6:
+    .byte 0x25, 0x2e, 0x36, 0x66, 0x00
+.Lbench_format_float_f_precision_10:
+    .byte 0x25, 0x2e, 0x31, 0x30, 0x66, 0x00
+.Lbench_format_float_f_plus_zero_width_16_precision_3:
+    .byte 0x25, 0x2b, 0x30, 0x31, 0x36, 0x2e, 0x33, 0x66, 0x00
+.Lbench_format_float_f_left_width_16_precision_3:
+    .byte 0x25, 0x2d, 0x31, 0x36, 0x2e, 0x33, 0x66, 0x00
+.Lbench_format_float_f_alt_precision_0:
+    .byte 0x25, 0x23, 0x2e, 0x30, 0x66, 0x00
+.Lbench_format_float_e_default:
+    .byte 0x25, 0x65, 0x00
+.Lbench_format_float_E_default:
+    .byte 0x25, 0x45, 0x00
+.Lbench_format_float_e_precision_0:
+    .byte 0x25, 0x2e, 0x30, 0x65, 0x00
+.Lbench_format_float_e_precision_2:
+    .byte 0x25, 0x2e, 0x32, 0x65, 0x00
+.Lbench_format_float_e_precision_7:
+    .byte 0x25, 0x2e, 0x37, 0x65, 0x00
+.Lbench_format_float_e_precision_5:
+    .byte 0x25, 0x2e, 0x35, 0x65, 0x00
+.Lbench_format_float_e_plus_zero_width_16_precision_3:
+    .byte 0x25, 0x2b, 0x30, 0x31, 0x36, 0x2e, 0x33, 0x65, 0x00
+.Lbench_format_float_g_default:
+    .byte 0x25, 0x67, 0x00
+.Lbench_format_float_g_precision_4:
+    .byte 0x25, 0x2e, 0x34, 0x67, 0x00
+.Lbench_format_float_g_alt:
+    .byte 0x25, 0x23, 0x67, 0x00
+.Lbench_format_float_G_alt_precision_10:
+    .byte 0x25, 0x23, 0x2e, 0x31, 0x30, 0x47, 0x00
+.Lbench_format_float_G_left_width_16_precision_5:
+    .byte 0x25, 0x2d, 0x31, 0x36, 0x2e, 0x35, 0x47, 0x00
+.Lbench_format_float_a_default:
+    .byte 0x25, 0x61, 0x00
+.Lbench_format_float_A_default:
+    .byte 0x25, 0x41, 0x00
+.Lbench_format_float_a_precision_6:
+    .byte 0x25, 0x2e, 0x36, 0x61, 0x00
+.Lbench_format_float_a_precision_0:
+    .byte 0x25, 0x2e, 0x30, 0x61, 0x00
+.Lbench_format_float_a_precision_1:
+    .byte 0x25, 0x2e, 0x31, 0x61, 0x00
+.Lbench_format_float_a_plus_zero_width_18_precision_3:
+    .byte 0x25, 0x2b, 0x30, 0x31, 0x38, 0x2e, 0x33, 0x61, 0x00
+.Lbench_format_float_A_left_width_18_precision_2:
+    .byte 0x25, 0x2d, 0x31, 0x38, 0x2e, 0x32, 0x41, 0x00
+.Lbench_format_float_a_alt_precision_0:
+    .byte 0x25, 0x23, 0x2e, 0x30, 0x61, 0x00
+.Lbench_format_float_a_precision_8:
+    .byte 0x25, 0x2e, 0x38, 0x61, 0x00
+.Lbench_format_float_G_default:
+    .byte 0x25, 0x47, 0x00
+.Lbench_format_float_A_plus_width_12:
+    .byte 0x25, 0x2b, 0x31, 0x32, 0x41, 0x00
+.Lbench_format_float_f_dynamic:
+    .byte 0x25, 0x2a, 0x2e, 0x2a, 0x66, 0x00
+.Lbench_format_float_g_dynamic:
+    .byte 0x25, 0x2a, 0x2e, 0x2a, 0x67, 0x00
+.Lbench_format_float_a_dynamic_precision:
+    .byte 0x25, 0x2e, 0x2a, 0x61, 0x00
+.Lbench_format_float_mixed:
+    .byte 0x25, 0x66, 0x7c, 0x25, 0x65, 0x7c, 0x25, 0x67, 0x7c, 0x25, 0x61, 0x00
 
 
     ; Sprite SYS benchmark fixtures. The first two bytes are width and height.

@@ -14149,6 +14149,19 @@ text_emit_ram_span:
     pop   r12
     ret
 
+.Ltext_newline_char:
+    lds   r28, data_text_initial_x+0
+    lds   r29, data_text_initial_x+1
+    lds   r24, data_text_current_y+0
+    lds   r25, data_text_current_y+1
+    lds   r26, data_text_line_height
+    add   r24, r26
+    adc   r25, ZERO
+    sts   data_text_current_y+0, r24
+    sts   data_text_current_y+1, r25
+.Ltext_emit_char_lookup_out_of_range:
+    ret
+
 ; Emit one logical text byte. Only newline is special. Missing glyphs have no
 ; framebuffer effect and zero advance. Available records are seven bytes in an
 ; order chosen to expose renderer dependencies as early as possible:
@@ -14173,19 +14186,7 @@ text_emit_char_repeat:
 text_emit_char_span:
 text_emit_char_raw:
     cpi   r24, '\n'
-    brne  .Ltext_emit_char_lookup
-
-    lds   r28, data_text_initial_x+0
-    lds   r29, data_text_initial_x+1
-    lds   r24, data_text_current_y+0
-    lds   r25, data_text_current_y+1
-    lds   r26, data_text_line_height
-    add   r24, r26
-    adc   r25, ZERO
-    sts   data_text_current_y+0, r24
-    sts   data_text_current_y+1, r25
-.Ltext_emit_char_lookup_out_of_range:
-    ret
+    breq  .Ltext_newline_char
 
 .Ltext_emit_char_lookup:
     lds   r25, data_text_glyph_first
@@ -14197,8 +14198,8 @@ text_emit_char_raw:
 
     ; Fixed seven-byte record transaction. The physical record address and all
     ; seven live-register pushes are hidden in the command/address phase.
-    ldi   r30, SFC_READ
     fx_enable
+    ldi   r30, SFC_READ
     out   SPDR, r30                 ; command OUT, cycle 0
 
     ldi   r27, 7

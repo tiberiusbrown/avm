@@ -9,10 +9,15 @@ jobs:
   avm-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    env:
+      SCCACHE_GHA_ENABLED: "true"
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - name: Set up sccache
+        uses: mozilla-actions/sccache-action@v0.0.11
 
       - name: Install native build dependencies
         run: |
@@ -27,6 +32,8 @@ jobs:
         run: >-
           cmake -S . -B build/ci -G Ninja
           -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          -DCMAKE_C_COMPILER_LAUNCHER=sccache
+          -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
 
       # The lit invocations below select AVM tests only. Build their tools
       # explicitly so the full LLVM, Clang, and LLD test suites stay out of CI.

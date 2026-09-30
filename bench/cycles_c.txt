@@ -9,11 +9,14 @@
      1287179   byte_comparisons.c
       255387   call_args.c
      7304088   constant_arith.c
+      724160   count_leading_zeros.c
+      582140   count_trailing_zeros.c
       522102   crc16.c
      1739502   div_pow2.c
      1062266   divmod.c
        18709   draw_text.c
        20817   draw_text_P.c
+      732440   dynamic_stack.c
       234075   fibonacci.c
      5944733   fir8.c
     11764996   fixed_point.c
@@ -30,6 +33,7 @@
       961113   packed_fields.c
       285651   pointer_table.c
       924535   pointer_walk.c
+      390010   popcount.c
      2952648   progmem_walk.c
       539261   progmem_widen_ldp16.c
       732096   progmem_widen_ldp32_bytes.c

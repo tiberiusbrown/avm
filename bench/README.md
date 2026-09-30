@@ -19,9 +19,9 @@ The newer compiled benchmarks fill these code generation gaps:
 | Area | Benchmarks |
 | --- | --- |
 | Aggregate layout and ABI | `aggregate_args`, `aggregate_return`, `bitfields`, `packed_fields` |
-| Memory and stack | `aliasing`, `pointer_table`, `stack_frames`, `volatile_rmw` |
+| Memory and stack | `aliasing`, `dynamic_stack`, `pointer_table`, `stack_frames`, `volatile_rmw` |
 | Branches and loop shapes | `byte_comparisons`, `loop_shapes`, `short_circuit`, `saturating_math` |
-| Integer lowering | `bit_count`, `div_pow2`, `narrow_arithmetic`, `rotate32`, `wide_add_sub`, `wide_compare` |
+| Integer lowering | `bit_count`, `count_leading_zeros`, `count_trailing_zeros`, `div_pow2`, `narrow_arithmetic`, `popcount`, `rotate32`, `wide_add_sub`, `wide_compare` |
 | Floating point lowering | `float_comparisons`, `float_conversions` |
 | C++ lowering | `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
 
@@ -29,5 +29,5 @@ Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;
 each source should contain exactly one pair of debug breaks.
 
-Sources in [`unsupported`](unsupported/README.md) record benchmark cases that
-currently fail in AVM code generation and are excluded from normal builds.
+Sources in [`unsupported`](unsupported/README.md), if any, record benchmark
+cases that fail in AVM code generation and are excluded from normal builds.

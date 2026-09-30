@@ -3,20 +3,22 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/string_progmem_copy.elf:	file 
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
+0000041e l     F .text	0000004a avm_run_constructors
+00000468 l     F .text	0000006f avm_run_destructors
 00000000 l    df *ABS*	00000000 string_progmem_copy.c
-0000120f l     O .rodata	00000004 p_cat
-00001213 l     O .rodata	00000007 p_abcdef
-0000121a l     O .rodata	00000004 p_dog
-0000121e l     O .rodata	00000008 p_ignored
+000012d0 l     O .rodata	00000004 p_cat
+000012d4 l     O .rodata	00000007 p_abcdef
+000012db l     O .rodata	00000004 p_dog
+000012df l     O .rodata	00000008 p_ignored
 00000100 l     O .data	0000000c .L__const.avm_test_main.full
 0000010c l     O .data	0000000c .L__const.avm_test_main.cut
-00001226 l     O .rodata	00000005 p_wood
-0000122b l     O .rodata	00000007 p_flower
-00001232 l     O .rodata	00000005 p_berg
-00001237 l     O .rodata	00000001 p_empty
-00001238 l     O .rodata	00000003 p_go
+000012e7 l     O .rodata	00000005 p_wood
+000012ec l     O .rodata	00000007 p_flower
+000012f3 l     O .rodata	00000005 p_berg
+000012f8 l     O .rodata	00000001 p_empty
+000012f9 l     O .rodata	00000003 p_go
 00000118 l     O .data	00000107 avm_test_main.long_pad
-0000123b l     O .rodata	00000002 p_z
+000012fc l     O .rodata	00000002 p_z
 0000021f l     O .data	0000010e avm_test_main.long_cat
 0000032d l     O .data	0000000a avm_test_main.expect_pad
 00000337 l     O .data	00000007 avm_test_main.expect_trunc
@@ -27,26 +29,128 @@ SYMBOL TABLE:
 00000357 l     O .data	00000004 .L.str.15
 0000035b l     O .data	00000003 .L.str.16
 00000000 l    df *ABS*	00000000 runtime.c
-00000400 g     F .text	00000016 _start
-0000042c g     F .text	00000de1 avm_test_main
-0000120d g     F .text	00000002 avm_halt
-00000416 g     F .text	0000000b test_call_strncpy_P
-00000421 g     F .text	0000000b test_call_strncat_P
+000012fe l       .init_array	00000000 .hidden __init_array_end
+000012fe l       .init_array	00000000 .hidden __init_array_start
+000012fe l       .fini_array	00000000 .hidden __fini_array_start
+000012fe l       .fini_array	00000000 .hidden __fini_array_end
+00000400 g     F .text	0000001e _start
+000004ed g     F .text	00000de1 avm_test_main
+000012ce g     F .text	00000002 avm_halt
+00000000  w      *UND*	00000000 __avm_run_local_dtors
+000004d7 g     F .text	0000000b test_call_strncpy_P
+000004e2 g     F .text	0000000b test_call_strncat_P
 
 Disassembly of section .text:
 
 <_start>:
- d5 2a                 call8	avm_test_main
- c1 46                 ldi8	r5, 0x46
- c2 50                 ldi8	r6, 0x50
+ b0                    push16	r0
+ d5 1b                 call8	avm_run_constructors
+ e1 e7 00              call16	avm_test_main
+ f0 00 46              ldi8	r0, 0x46
+ c1 50                 ldi8	r5, 0x50
  f6 2c                 tst16	r4
- 01                    mov	r4, r5
- fb 26                 cmov.eq	r4, r6
+ fb 05                 cmov.eq	r0, r5
+ d5 57                 call8	avm_run_destructors
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 f7 0d              call16	avm_halt
+ e1 b0 0e              call16	avm_halt
+
+<avm_run_constructors>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 fc                 adjsp	-0x4
+ c4 fe 12              ldi16	r4, 0x12fe
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ c6 fe 12              ldi16	r6, 0x12fe
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ f0 69 c8              cmp32	q3, q2
+ d0 2a                 breq8	avm_run_constructors+67
+ f0 04 fe 12           ldi16	r0, 0x12fe
+ f0 01 00              ldi8	r1, 0x0
+ c0 03                 ldi8	r4, 0x3
+ a5                    xor	r5, r5
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 06 fe 12           ldi16	r2, 0x12fe
+ f0 03 00              ldi8	r3, 0x0
+ f1 73                 zext8	r3
+ f0 63 80              ldp24	q2, [q0]
+ ea                    callp	q2
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 62                 add32	q0, q2
+ f2 68                 mov32	q2, q0
+ f1 75                 zext8	r5
+ f0 69 84              cmp32	q2, q1
+ d1 ed                 brne8	avm_run_constructors+48
+ d6 04                 adjsp	0x4
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+
+<avm_run_destructors>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 fc                 adjsp	-0x4
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	avm_run_destructors+23
+ e1 81 fb              call16	-1151
+ c4 fe 12              ldi16	r4, 0x12fe
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ c6 fe 12              ldi16	r6, 0x12fe
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ f0 69 c8              cmp32	q3, q2
+ d0 2d                 breq8	avm_run_destructors+87
+ f0 06 fe 12           ldi16	r2, 0x12fe
+ f0 03 00              ldi8	r3, 0x0
+ c4 fd ff              ldi16	r4, 0xfffd
+ c5 ff ff              ldi16	r5, 0xffff
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 04 fe 12           ldi16	r0, 0x12fe
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 66                 add32	q1, q2
+ f0 63 84              ldp24	q2, [q1]
+ ea                    callp	q2
+ f2 69                 mov32	q2, q1
+ f1 75                 zext8	r5
+ f0 69 80              cmp32	q2, q0
+ d1 ed                 brne8	avm_run_destructors+68
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	avm_run_destructors+104
+ e1 30 fb              call16	-1232
+ d6 04                 adjsp	0x4
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
 
 <test_call_strncpy_P>:
  b0                    push16	r0
@@ -104,13 +208,13 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 08                 ldi8	r4, 0x8
  f4 40                 stsp16	[sp+0x0], r4
- c6 0f 12              ldi16	r6, 0x120f
+ c6 d0 12              ldi16	r6, 0x12d0
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 e6              leasp	r4, 0xe6
  e1 7d ff              call16	test_call_strncpy_P
  d6 02                 adjsp	0x2
- c6 13 12              ldi16	r6, 0x1213
+ c6 d4 12              ldi16	r6, 0x12d4
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d6 fe                 adjsp	-0x2
@@ -119,7 +223,7 @@ Disassembly of section .text:
  f0 14 df              leasp	r4, 0xdf
  e1 68 ff              call16	test_call_strncpy_P
  d6 02                 adjsp	0x2
- c6 1a 12              ldi16	r6, 0x121a
+ c6 db 12              ldi16	r6, 0x12db
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d6 fe                 adjsp	-0x2
@@ -128,7 +232,7 @@ Disassembly of section .text:
  f0 14 d9              leasp	r4, 0xd9
  e1 51 ff              call16	test_call_strncpy_P
  d6 02                 adjsp	0x2
- c6 1e 12              ldi16	r6, 0x121e
+ c6 df 12              ldi16	r6, 0x12df
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  d6 fe                 adjsp	-0x2
@@ -167,7 +271,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 08                 ldi8	r4, 0x8
  f4 40                 stsp16	[sp+0x0], r4
- c6 26 12              ldi16	r6, 0x1226
+ c6 e7 12              ldi16	r6, 0x12e7
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f1 23                 mov	r4, r3
@@ -176,7 +280,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c0 03                 ldi8	r4, 0x3
  f4 40                 stsp16	[sp+0x0], r4
- c6 2b 12              ldi16	r6, 0x122b
+ c6 ec 12              ldi16	r6, 0x12ec
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f1 20                 mov	r4, r0
@@ -184,7 +288,7 @@ Disassembly of section .text:
  d6 02                 adjsp	0x2
  d6 fe                 adjsp	-0x2
  f0 39 00              stsp16	[sp+0x0], r1
- c6 32 12              ldi16	r6, 0x1232
+ c6 f3 12              ldi16	r6, 0x12f3
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 b4              leasp	r4, 0xb4
@@ -192,7 +296,7 @@ Disassembly of section .text:
  d6 02                 adjsp	0x2
  d6 fe                 adjsp	-0x2
  f0 3a 00              stsp16	[sp+0x0], r2
- c6 37 12              ldi16	r6, 0x1237
+ c6 f8 12              ldi16	r6, 0x12f8
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 14 ac              leasp	r4, 0xac
@@ -201,7 +305,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  f0 00 02              ldi8	r0, 0x2
  f0 38 00              stsp16	[sp+0x0], r0
- f0 06 38 12           ldi16	r2, 0x1238
+ f0 06 f9 12           ldi16	r2, 0x12f9
  f0 03 00              ldi8	r3, 0x0
  f1 73                 zext8	r3
  f0 14 a4              leasp	r4, 0xa4
@@ -218,7 +322,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  c4 04 01              ldi16	r4, 0x104
  f4 40                 stsp16	[sp+0x0], r4
- c6 3b 12              ldi16	r6, 0x123b
+ c6 fc 12              ldi16	r6, 0x12fc
  c3 00                 ldi8	r7, 0x0
  f1 77                 zext8	r7
  f0 05 18 01           ldi16	r1, 0x118

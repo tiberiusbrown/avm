@@ -5282,6 +5282,15 @@ The initial C++ environment supports:
 
 Exceptions, RTTI, general dynamic allocation, and thread-local storage are disabled.
 
+AVM vtables and construction vtables reside in AS1 program memory. An object's
+vptr is a 24-bit AS1 pointer to the vtable address point. Every vtable
+component occupies three little-endian bytes: function entries hold a 24-bit
+program address, signed offsets use 24-bit two's-complement form, and data
+addresses (including an RTTI address if one is emitted) occupy the low two
+bytes with a zero high byte. Virtual calls load function entries with `LDP24`.
+Virtual member-function pointers encode a byte offset in this three-byte
+layout. VTTs also reside in AS1 and contain 24-bit vtable address points.
+
 Startup runs `.init_array` entries before `main()` or sketch `setup()`.
 Clang emits nonlocal global object destructors into `.fini_array` at compile
 time, without a RAM callback table. When `main()` returns, `.fini_array`

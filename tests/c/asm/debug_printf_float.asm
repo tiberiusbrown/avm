@@ -3,49 +3,153 @@ C:/Users/Brown/Documents/GitHub/avm/build/tests/c/debug_printf_float.elf:	file f
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
+0000021e l     F .text	0000004a avm_run_constructors
+00000268 l     F .text	0000006f avm_run_destructors
 00000000 l    df *ABS*	00000000 debug_printf_float.c
-00000779 l     O .rodata	00000022 .L.avm.flashstr.0
-0000079b l     O .rodata	0000002f .L.avm.flashstr.1
-000007ca l     O .rodata	0000001c .L.avm.flashstr.2
-000007e6 l     O .rodata	0000001b .L.avm.flashstr.3
-00000801 l     O .rodata	00000018 .L.avm.flashstr.4
-00000819 l     O .rodata	00000022 .L.avm.flashstr.5
-0000083b l     O .rodata	00000030 .L.avm.flashstr.6
-0000086b l     O .rodata	00000011 .L.avm.flashstr.7
-0000087c l     O .rodata	00000023 .L.avm.flashstr.8
-0000089f l     O .rodata	0000001a .L.avm.flashstr.9
-000008b9 l     O .rodata	00000033 .L.avm.flashstr.10
-000008ec l     O .rodata	00000018 .L.avm.flashstr.11
-00000904 l     O .rodata	00000018 .L.avm.flashstr.12
-0000091c l     O .rodata	0000001f .L.avm.flashstr.13
-0000093b l     O .rodata	0000002d .L.avm.flashstr.14
-00000968 l     O .rodata	00000018 .L.avm.flashstr.15
-00000980 l     O .rodata	00000018 .L.avm.flashstr.16
-00000998 l     O .rodata	0000002c .L.avm.flashstr.17
-000009c4 l     O .rodata	0000002f .L.avm.flashstr.18
-000009f3 l     O .rodata	00000028 .L.avm.flashstr.19
-00000a1b l     O .rodata	00000023 .L.avm.flashstr.20
+0000083a l     O .rodata	00000022 .L.avm.flashstr.0
+0000085c l     O .rodata	0000002f .L.avm.flashstr.1
+0000088b l     O .rodata	0000001c .L.avm.flashstr.2
+000008a7 l     O .rodata	0000001b .L.avm.flashstr.3
+000008c2 l     O .rodata	00000018 .L.avm.flashstr.4
+000008da l     O .rodata	00000022 .L.avm.flashstr.5
+000008fc l     O .rodata	00000030 .L.avm.flashstr.6
+0000092c l     O .rodata	00000011 .L.avm.flashstr.7
+0000093d l     O .rodata	00000023 .L.avm.flashstr.8
+00000960 l     O .rodata	0000001a .L.avm.flashstr.9
+0000097a l     O .rodata	00000033 .L.avm.flashstr.10
+000009ad l     O .rodata	00000018 .L.avm.flashstr.11
+000009c5 l     O .rodata	00000018 .L.avm.flashstr.12
+000009dd l     O .rodata	0000001f .L.avm.flashstr.13
+000009fc l     O .rodata	0000002d .L.avm.flashstr.14
+00000a29 l     O .rodata	00000018 .L.avm.flashstr.15
+00000a41 l     O .rodata	00000018 .L.avm.flashstr.16
+00000a59 l     O .rodata	0000002c .L.avm.flashstr.17
+00000a85 l     O .rodata	0000002f .L.avm.flashstr.18
+00000ab4 l     O .rodata	00000028 .L.avm.flashstr.19
+00000adc l     O .rodata	00000023 .L.avm.flashstr.20
 00000100 l     O .data	00000003 .L.str
-00000a3e l     O .rodata	00000018 .L.avm.flashstr.21
+00000aff l     O .rodata	00000018 .L.avm.flashstr.21
 00000000 l    df *ABS*	00000000 runtime.c
-00000200 g     F .text	00000016 _start
-00000216 g     F .text	00000561 avm_test_main
-00000777 g     F .text	00000002 avm_halt
+00000b17 l       .init_array	00000000 .hidden __init_array_end
+00000b17 l       .init_array	00000000 .hidden __init_array_start
+00000b17 l       .fini_array	00000000 .hidden __fini_array_start
+00000b17 l       .fini_array	00000000 .hidden __fini_array_end
+00000200 g     F .text	0000001e _start
+000002d7 g     F .text	00000561 avm_test_main
+00000838 g     F .text	00000002 avm_halt
+00000000  w      *UND*	00000000 __avm_run_local_dtors
 
 Disassembly of section .text:
 
 <_start>:
- d5 14                 call8	avm_test_main
- c1 46                 ldi8	r5, 0x46
- c2 50                 ldi8	r6, 0x50
+ b0                    push16	r0
+ d5 1b                 call8	avm_run_constructors
+ e1 d1 00              call16	avm_test_main
+ f0 00 46              ldi8	r0, 0x46
+ c1 50                 ldi8	r5, 0x50
  f6 2c                 tst16	r4
- 01                    mov	r4, r5
- fb 26                 cmov.eq	r4, r6
+ fb 05                 cmov.eq	r0, r5
+ d5 57                 call8	avm_run_destructors
+ f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 61 05              call16	avm_halt
+ e1 1a 06              call16	avm_halt
+
+<avm_run_constructors>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 fc                 adjsp	-0x4
+ c4 17 0b              ldi16	r4, 0xb17
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ c6 17 0b              ldi16	r6, 0xb17
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ f0 69 c8              cmp32	q3, q2
+ d0 2a                 breq8	avm_run_constructors+67
+ f0 04 17 0b           ldi16	r0, 0xb17
+ f0 01 00              ldi8	r1, 0x0
+ c0 03                 ldi8	r4, 0x3
+ a5                    xor	r5, r5
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 06 17 0b           ldi16	r2, 0xb17
+ f0 03 00              ldi8	r3, 0x0
+ f1 73                 zext8	r3
+ f0 63 80              ldp24	q2, [q0]
+ ea                    callp	q2
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 62                 add32	q0, q2
+ f2 68                 mov32	q2, q0
+ f1 75                 zext8	r5
+ f0 69 84              cmp32	q2, q1
+ d1 ed                 brne8	avm_run_constructors+48
+ d6 04                 adjsp	0x4
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+
+<avm_run_destructors>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 fc                 adjsp	-0x4
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	avm_run_destructors+23
+ e1 81 fd              call16	-639
+ c4 17 0b              ldi16	r4, 0xb17
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ c6 17 0b              ldi16	r6, 0xb17
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ f0 69 c8              cmp32	q3, q2
+ d0 2d                 breq8	avm_run_destructors+87
+ f0 06 17 0b           ldi16	r2, 0xb17
+ f0 03 00              ldi8	r3, 0x0
+ c4 fd ff              ldi16	r4, 0xfffd
+ c5 ff ff              ldi16	r5, 0xffff
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 04 17 0b           ldi16	r0, 0xb17
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 66                 add32	q1, q2
+ f0 63 84              ldp24	q2, [q1]
+ ea                    callp	q2
+ f2 69                 mov32	q2, q1
+ f1 75                 zext8	r5
+ f0 69 80              cmp32	q2, q0
+ d1 ed                 brne8	avm_run_destructors+68
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	avm_run_destructors+104
+ e1 30 fd              call16	-720
+ d6 04                 adjsp	0x4
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
 
 <avm_test_main>:
  b3                    push16	r3
@@ -70,7 +174,7 @@ Disassembly of section .text:
  f4 58                 stsp16	[sp+0x6], r4
  f4 61                 stsp16	[sp+0x8], r5
  f0 14 06              leasp	r4, 0x6
- c6 79 07              ldi16	r6, 0x779
+ c6 3a 08              ldi16	r6, 0x83a
  c3 00                 ldi8	r7, 0x0
  f1 14                 mov	r2, r4
  d7 37                 sys	debug_printfv_p
@@ -96,7 +200,7 @@ Disassembly of section .text:
  f4 78                 stsp16	[sp+0xe], r4
  f0 3d 10              stsp16	[sp+0x10], r5
  f0 15 06              leasp	r5, 0x6
- c6 9b 07              ldi16	r6, 0x79b
+ c6 5c 08              ldi16	r6, 0x85c
  c3 00                 ldi8	r7, 0x0
  f1 15                 mov	r2, r5
  d7 37                 sys	debug_printfv_p
@@ -119,7 +223,7 @@ Disassembly of section .text:
  f0 3d 14              stsp16	[sp+0x14], r5
  f0 14 06              leasp	r4, 0x6
  f1 14                 mov	r2, r4
- c6 ca 07              ldi16	r6, 0x7ca
+ c6 8b 08              ldi16	r6, 0x88b
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f1 1c                 mov	r3, r4
@@ -138,7 +242,7 @@ Disassembly of section .text:
  f4 78                 stsp16	[sp+0xe], r4
  f0 3d 10              stsp16	[sp+0x10], r5
  f0 12 06              leasp	r2, 0x6
- c6 e6 07              ldi16	r6, 0x7e6
+ c6 a7 08              ldi16	r6, 0x8a7
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 48                 stsp16	[sp+0x2], r4
@@ -157,7 +261,7 @@ Disassembly of section .text:
  f0 39 0c              stsp16	[sp+0xc], r1
  f0 14 06              leasp	r4, 0x6
  f1 14                 mov	r2, r4
- c6 01 08              ldi16	r6, 0x801
+ c6 c2 08              ldi16	r6, 0x8c2
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 50                 stsp16	[sp+0x4], r4
@@ -182,7 +286,7 @@ Disassembly of section .text:
  f0 39 18              stsp16	[sp+0x18], r1
  f0 16 06              leasp	r6, 0x6
  f1 16                 mov	r2, r6
- c6 19 08              ldi16	r6, 0x819
+ c6 da 08              ldi16	r6, 0x8da
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 40                 stsp16	[sp+0x0], r4
@@ -212,7 +316,7 @@ Disassembly of section .text:
  f0 39 08              stsp16	[sp+0x8], r1
  f0 14 06              leasp	r4, 0x6
  f1 14                 mov	r2, r4
- c6 3b 08              ldi16	r6, 0x83b
+ c6 fc 08              ldi16	r6, 0x8fc
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f1 04                 mov	r0, r4
@@ -226,7 +330,7 @@ Disassembly of section .text:
  f4 61                 stsp16	[sp+0x8], r5
  f0 15 06              leasp	r5, 0x6
  f1 15                 mov	r2, r5
- c6 6b 08              ldi16	r6, 0x86b
+ c6 2c 09              ldi16	r6, 0x92c
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 48                 stsp16	[sp+0x2], r4
@@ -252,7 +356,7 @@ Disassembly of section .text:
  f0 3b 08              stsp16	[sp+0x8], r3
  f0 14 06              leasp	r4, 0x6
  f1 14                 mov	r2, r4
- c6 7c 08              ldi16	r6, 0x87c
+ c6 3d 09              ldi16	r6, 0x93d
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 50                 stsp16	[sp+0x4], r4
@@ -281,7 +385,7 @@ Disassembly of section .text:
  f0 39 08              stsp16	[sp+0x8], r1
  f0 16 06              leasp	r6, 0x6
  f1 16                 mov	r2, r6
- c6 9f 08              ldi16	r6, 0x89f
+ c6 60 09              ldi16	r6, 0x960
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 40                 stsp16	[sp+0x0], r4
@@ -313,7 +417,7 @@ Disassembly of section .text:
  f0 38 06              stsp16	[sp+0x6], r0
  f0 39 08              stsp16	[sp+0x8], r1
  f0 12 06              leasp	r2, 0x6
- c6 b9 08              ldi16	r6, 0x8b9
+ c6 7a 09              ldi16	r6, 0x97a
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 48                 stsp16	[sp+0x2], r4
@@ -325,7 +429,7 @@ Disassembly of section .text:
  f0 05 d1 38           ldi16	r1, 0x38d1
  f0 38 06              stsp16	[sp+0x6], r0
  f0 39 08              stsp16	[sp+0x8], r1
- c6 ec 08              ldi16	r6, 0x8ec
+ c6 ad 09              ldi16	r6, 0x9ad
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f1 0c                 mov	r1, r4
@@ -347,7 +451,7 @@ Disassembly of section .text:
  f4 61                 stsp16	[sp+0x8], r5
  f0 16 06              leasp	r6, 0x6
  f1 16                 mov	r2, r6
- c6 04 09              ldi16	r6, 0x904
+ c6 c5 09              ldi16	r6, 0x9c5
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f1 04                 mov	r0, r4
@@ -362,7 +466,7 @@ Disassembly of section .text:
  f4 5a                 stsp16	[sp+0x6], r6
  f4 63                 stsp16	[sp+0x8], r7
  f0 12 06              leasp	r2, 0x6
- c6 1c 09              ldi16	r6, 0x91c
+ c6 dd 09              ldi16	r6, 0x9dd
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f1 1c                 mov	r3, r4
@@ -389,7 +493,7 @@ Disassembly of section .text:
  f0 3f 10              stsp16	[sp+0x10], r7
  f4 5a                 stsp16	[sp+0x6], r6
  f4 63                 stsp16	[sp+0x8], r7
- c6 3b 09              ldi16	r6, 0x93b
+ c6 fc 09              ldi16	r6, 0x9fc
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 40                 stsp16	[sp+0x0], r4
@@ -416,7 +520,7 @@ Disassembly of section .text:
  f4 71                 stsp16	[sp+0xc], r5
  f0 14 06              leasp	r4, 0x6
  f1 14                 mov	r2, r4
- c6 68 09              ldi16	r6, 0x968
+ c6 29 0a              ldi16	r6, 0xa29
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 50                 stsp16	[sp+0x4], r4
@@ -445,7 +549,7 @@ Disassembly of section .text:
  f0 3b 08              stsp16	[sp+0x8], r3
  f0 17 06              leasp	r7, 0x6
  f1 17                 mov	r2, r7
- c6 80 09              ldi16	r6, 0x980
+ c6 41 0a              ldi16	r6, 0xa41
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 48                 stsp16	[sp+0x2], r4
@@ -476,7 +580,7 @@ Disassembly of section .text:
  f4 58                 stsp16	[sp+0x6], r4
  f4 61                 stsp16	[sp+0x8], r5
  f0 12 06              leasp	r2, 0x6
- c6 98 09              ldi16	r6, 0x998
+ c6 59 0a              ldi16	r6, 0xa59
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f4 40                 stsp16	[sp+0x0], r4
@@ -502,7 +606,7 @@ Disassembly of section .text:
  c7 c0 3f              ldi16	r7, 0x3fc0
  f4 5a                 stsp16	[sp+0x6], r6
  f4 63                 stsp16	[sp+0x8], r7
- c6 c4 09              ldi16	r6, 0x9c4
+ c6 85 0a              ldi16	r6, 0xa85
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f1 0c                 mov	r1, r4
@@ -532,7 +636,7 @@ Disassembly of section .text:
  f4 61                 stsp16	[sp+0x8], r5
  f0 14 06              leasp	r4, 0x6
  f1 14                 mov	r2, r4
- c6 f3 09              ldi16	r6, 0x9f3
+ c6 b4 0a              ldi16	r6, 0xab4
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  f1 04                 mov	r0, r4
@@ -554,7 +658,7 @@ Disassembly of section .text:
  f4 5a                 stsp16	[sp+0x6], r6
  f0 16 06              leasp	r6, 0x6
  f1 16                 mov	r2, r6
- c6 1b 0a              ldi16	r6, 0xa1b
+ c6 dc 0a              ldi16	r6, 0xadc
  c3 00                 ldi8	r7, 0x0
  d7 37                 sys	debug_printfv_p
  08                    mov	r6, r4
@@ -584,7 +688,7 @@ Disassembly of section .text:
  f8 08                 cset.ne	r0
  f9 15                 or	r0, r5
  f0 15 06              leasp	r5, 0x6
- c6 3e 0a              ldi16	r6, 0xa3e
+ c6 ff 0a              ldi16	r6, 0xaff
  c3 00                 ldi8	r7, 0x0
  f1 15                 mov	r2, r5
  d7 37                 sys	debug_printfv_p

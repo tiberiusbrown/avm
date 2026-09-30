@@ -5,6 +5,8 @@ set(AVM_BENCH_INSTRUCTION_NAMES "${AVM_BENCH_DIR}/benchmark_names.txt")
 set(AVM_BENCH_C_DIR "${AVM_BENCH_DIR}/c")
 set(AVM_BENCH_C_DISASSEMBLY_DIR "${AVM_BENCH_C_DIR}/asm")
 set(AVM_BENCH_C_MIR_SOURCE_DIR "${AVM_BENCH_C_DIR}")
+set(AVM_BENCH_CXX_DIR "${AVM_BENCH_DIR}/cpp")
+set(AVM_BENCH_CXX_DISASSEMBLY_DIR "${AVM_BENCH_CXX_DIR}/asm")
 set(AVM_BENCH_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(AVM_BENCH_INSTRUCTION_OBJECT
     "${AVM_BENCH_BUILD_DIR}/instructions.o")
@@ -14,6 +16,7 @@ set(AVM_BENCH_INSTRUCTION_IMAGE
     "${AVM_BENCH_BUILD_DIR}/instructions.bin")
 set(AVM_BENCH_C_BINARY_DIR "${AVM_BENCH_BUILD_DIR}/c")
 set(AVM_BENCH_C_MIR_BINARY_DIR "${AVM_BENCH_C_BINARY_DIR}/mir")
+set(AVM_BENCH_CXX_BINARY_DIR "${AVM_BENCH_BUILD_DIR}/cpp")
 set(AVM_BENCH_BASELINE_SOURCE "${AVM_BENCH_DIR}/baseline.c")
 set(AVM_BENCH_BASELINE_OBJECT
     "${AVM_BENCH_BUILD_DIR}/__avm_bench_baseline.o")
@@ -45,6 +48,8 @@ file(GLOB AVM_BENCH_C_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_C_DIR}/*.c")
 file(GLOB AVM_BENCH_C_MIR_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_C_MIR_SOURCE_DIR}/*.c")
+file(GLOB AVM_BENCH_CXX_SOURCES CONFIGURE_DEPENDS
+    "${AVM_BENCH_CXX_DIR}/*.cpp")
 
 set(AVM_BENCH_IMAGE_OUTPUTS
     "${AVM_BENCH_INSTRUCTION_IMAGE}"
@@ -91,6 +96,45 @@ foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
         OUTPUT "${AVM_BENCH_OBJECT}"
         SOURCE "${AVM_BENCH_C_SOURCE}"
         LANGUAGE C
+        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+        DEPENDS avm_sysroot
+    )
+    avm_add_image(
+        OBJECTS "${AVM_BENCH_OBJECT}"
+        OUTPUT_ELF "${AVM_BENCH_ELF}"
+        OUTPUT_IMAGE "${AVM_BENCH_IMAGE}"
+        ENTRY _start
+        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+        LIBRARIES
+            "${AVM_SYSROOT_DIR}/lib/libavm.a"
+            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        DISASSEMBLY "${AVM_BENCH_DISASSEMBLY}"
+        GC_SECTIONS
+        DEPENDS avm_sysroot
+    )
+    list(APPEND AVM_BENCH_IMAGE_OUTPUTS "${AVM_BENCH_IMAGE}")
+    list(APPEND AVM_BENCH_DISASSEMBLY_OUTPUTS
+        "${AVM_BENCH_DISASSEMBLY}")
+endforeach()
+
+# C++ benchmarks use the same startup and baseline as C, but exercise C++
+# calls, object layout, and lifetime code generation.
+foreach(AVM_BENCH_CXX_SOURCE IN LISTS AVM_BENCH_CXX_SOURCES)
+    get_filename_component(AVM_BENCH_NAME
+        "${AVM_BENCH_CXX_SOURCE}" NAME_WE)
+    set(AVM_BENCH_OBJECT
+        "${AVM_BENCH_CXX_BINARY_DIR}/${AVM_BENCH_NAME}.o")
+    set(AVM_BENCH_ELF
+        "${AVM_BENCH_CXX_BINARY_DIR}/${AVM_BENCH_NAME}.elf")
+    set(AVM_BENCH_IMAGE
+        "${AVM_BENCH_CXX_BINARY_DIR}/${AVM_BENCH_NAME}.bin")
+    set(AVM_BENCH_DISASSEMBLY
+        "${AVM_BENCH_CXX_DISASSEMBLY_DIR}/${AVM_BENCH_NAME}.asm")
+
+    avm_add_object(
+        OUTPUT "${AVM_BENCH_OBJECT}"
+        SOURCE "${AVM_BENCH_CXX_SOURCE}"
+        LANGUAGE CXX
         INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
         DEPENDS avm_sysroot
     )
@@ -162,9 +206,12 @@ target_compile_definitions(avm_bench PRIVATE
     AVM_BENCH_INSTRUCTION_OUTPUT="${AVM_BENCH_DIR}/cycles_instruction.txt"
     AVM_BENCH_C_DIR="${AVM_BENCH_C_DIR}"
     AVM_BENCH_C_BIN_DIR="${AVM_BENCH_C_BINARY_DIR}"
+    AVM_BENCH_CXX_DIR="${AVM_BENCH_CXX_DIR}"
+    AVM_BENCH_CXX_BIN_DIR="${AVM_BENCH_CXX_BINARY_DIR}"
     AVM_BENCH_BASELINE_BIN="${AVM_BENCH_BASELINE_IMAGE}"
     AVM_BENCH_INTERPRETER_HEX="${AVM_INTERPRETER_HEX}"
     AVM_BENCH_C_OUTPUT="${AVM_BENCH_DIR}/cycles_c.txt"
+    AVM_BENCH_CXX_OUTPUT="${AVM_BENCH_DIR}/cycles_cpp.txt"
 )
 add_dependencies(avm_bench
     avm_bench_images
@@ -173,7 +220,7 @@ add_dependencies(avm_bench
 )
 
 # avm_bench itself is a normal build target; this target additionally runs the
-# test suite, instruction benchmark image, and every C benchmark.
+# test suite, instruction benchmark image, and every C and C++ benchmark.
 add_custom_target(avm_bench_run
     COMMAND "$<TARGET_FILE:avm_bench>"
     DEPENDS
@@ -181,7 +228,7 @@ add_custom_target(avm_bench_run
         avm_bench
         ardurogue2
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    COMMENT "Running AVM tests, instruction benchmarks, and C benchmarks"
+    COMMENT "Running AVM tests, instruction benchmarks, and compiled benchmarks"
     USES_TERMINAL
     VERBATIM
 )

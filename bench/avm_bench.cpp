@@ -31,6 +31,14 @@
 #error "AVM_BENCH_C_DIR must be defined by CMake"
 #endif
 
+#ifndef AVM_BENCH_CXX_DIR
+#error "AVM_BENCH_CXX_DIR must be defined by CMake"
+#endif
+
+#ifndef AVM_BENCH_CXX_BIN_DIR
+#error "AVM_BENCH_CXX_BIN_DIR must be defined by CMake"
+#endif
+
 #ifndef AVM_BENCH_C_BIN_DIR
 #error "AVM_BENCH_C_BIN_DIR must be defined by CMake"
 #endif
@@ -51,6 +59,10 @@
 #endif
 #endif
 
+#ifndef AVM_BENCH_CXX_OUTPUT
+#error "AVM_BENCH_CXX_OUTPUT must be defined by CMake"
+#endif
+
 namespace {
 
 namespace fs = std::filesystem;
@@ -68,9 +80,13 @@ struct options_t {
     fs::path c_image_dir = AVM_BENCH_C_BIN_DIR;
     fs::path c_baseline = AVM_BENCH_BASELINE_BIN;
     fs::path c_output = AVM_BENCH_C_OUTPUT;
+    fs::path cxx_source_dir = AVM_BENCH_CXX_DIR;
+    fs::path cxx_image_dir = AVM_BENCH_CXX_BIN_DIR;
+    fs::path cxx_output = AVM_BENCH_CXX_OUTPUT;
 
     bool run_instructions = true;
     bool run_c = true;
+    bool run_cxx = true;
 };
 
 struct c_benchmark_t {
@@ -86,7 +102,8 @@ std::string usage_text()
         "[--instruction-image FILE] [--instruction-names FILE] "
         "[--instruction-output FILE] [--c-source-dir DIR] "
         "[--c-image-dir DIR] [--c-baseline FILE] [--c-output FILE] "
-        "[--instruction-only | --c-only]";
+        "[--cpp-source-dir DIR] [--cpp-image-dir DIR] [--cpp-output FILE] "
+        "[--instruction-only | --c-only | --cpp-only]";
 }
 
 [[noreturn]] void usage_error(std::string const& message)
@@ -123,15 +140,29 @@ options_t parse_options(int argc, char** argv)
             options.c_baseline = require_value(arg);
         else if(arg == "--c-output" || arg == "--output")
             options.c_output = require_value(arg);
+        else if(arg == "--cpp-source-dir")
+            options.cxx_source_dir = require_value(arg);
+        else if(arg == "--cpp-image-dir")
+            options.cxx_image_dir = require_value(arg);
+        else if(arg == "--cpp-output")
+            options.cxx_output = require_value(arg);
         else if(arg == "--instruction-only")
         {
             options.run_instructions = true;
             options.run_c = false;
+            options.run_cxx = false;
         }
         else if(arg == "--c-only")
         {
             options.run_instructions = false;
             options.run_c = true;
+            options.run_cxx = false;
+        }
+        else if(arg == "--cpp-only")
+        {
+            options.run_instructions = false;
+            options.run_c = false;
+            options.run_cxx = true;
         }
         else if(arg == "-h" || arg == "--help")
         {
@@ -234,14 +265,15 @@ std::vector<std::string> read_benchmark_names(fs::path const& filename)
     return names;
 }
 
-std::vector<c_benchmark_t> discover_c_benchmarks(
+std::vector<c_benchmark_t> discover_compiled_benchmarks(
     fs::path const& source_dir,
-    fs::path const& image_dir)
+    fs::path const& image_dir,
+    std::string_view extension)
 {
     std::vector<c_benchmark_t> benchmarks;
     for(auto const& entry : fs::directory_iterator(source_dir))
     {
-        if(!entry.is_regular_file() || entry.path().extension() != ".c")
+        if(!entry.is_regular_file() || entry.path().extension() != extension)
             continue;
 
         fs::path const source = entry.path();
@@ -260,11 +292,11 @@ std::vector<c_benchmark_t> discover_c_benchmarks(
     if(benchmarks.empty())
     {
         throw std::runtime_error(
-            "No C benchmark sources found in " + source_dir.string());
+            "No compiled benchmark sources found in " + source_dir.string());
     }
 
     for(c_benchmark_t& benchmark : benchmarks)
-        benchmark.image = require_file(benchmark.image, "C benchmark image");
+        benchmark.image = require_file(benchmark.image, "compiled benchmark image");
     return benchmarks;
 }
 
@@ -412,18 +444,24 @@ void run_instruction_benchmarks(options_t const& options)
               << options.instruction_output << "\n\n";
 }
 
-void run_c_benchmarks(options_t const& options)
+void run_compiled_benchmarks(
+    options_t const& options,
+    fs::path const& source_dir,
+    fs::path const& image_dir,
+    fs::path const& output_file,
+    std::string_view extension,
+    std::string_view label)
 {
     std::vector<c_benchmark_t> const benchmarks =
-        discover_c_benchmarks(options.c_source_dir, options.c_image_dir);
-    std::ofstream output = open_output(options.c_output);
+        discover_compiled_benchmarks(source_dir, image_dir, extension);
+    std::ofstream output = open_output(output_file);
 
-    std::cout << "Running AVM C benchmarks...\n";
+    std::cout << "Running AVM " << label << " benchmarks...\n";
     std::cout << "  interpreter: " << options.interpreter << '\n';
-    std::cout << "  sources:     " << options.c_source_dir << '\n';
-    std::cout << "  images:      " << options.c_image_dir << '\n';
+    std::cout << "  sources:     " << source_dir << '\n';
+    std::cout << "  images:      " << image_dir << '\n';
     std::cout << "  baseline:    " << options.c_baseline << '\n';
-    std::cout << "  output:      " << options.c_output << "\n\n";
+    std::cout << "  output:      " << output_file << "\n\n";
 
     std::uint64_t const baseline =
         measure_image(options.interpreter, options.c_baseline);
@@ -437,7 +475,7 @@ void run_c_benchmarks(options_t const& options)
         if(raw < baseline)
         {
             std::ostringstream message;
-            message << "Raw interval for C benchmark " << benchmark.name
+            message << "Raw interval for " << label << " benchmark " << benchmark.name
                     << " was " << raw << " cycles, below the " << baseline
                     << "-cycle DEBUG_BREAK baseline";
             throw std::runtime_error(message.str());
@@ -453,11 +491,12 @@ void run_c_benchmarks(options_t const& options)
 
     output.flush();
     if(!output)
-        throw std::runtime_error("Failed while writing " + options.c_output.string());
+        throw std::runtime_error("Failed while writing " + output_file.string());
 
-    std::cout << "\nC DEBUG_BREAK baseline: " << baseline << " cycles\n";
-    std::cout << "Wrote " << benchmarks.size() << " C timings to "
-              << options.c_output << '\n';
+    std::cout << '\n' << label << " DEBUG_BREAK baseline: " << baseline
+              << " cycles\n";
+    std::cout << "Wrote " << benchmarks.size() << ' ' << label << " timings to "
+              << output_file << '\n';
 }
 
 } // namespace
@@ -477,20 +516,35 @@ int main(int argc, char** argv)
                 options.instruction_names, "instruction benchmark-name file");
         }
 
+        if(options.run_c || options.run_cxx)
+            options.c_baseline = require_file(
+                options.c_baseline, "compiled benchmark baseline image");
+
         if(options.run_c)
         {
             options.c_source_dir = require_directory(
                 options.c_source_dir, "C benchmark source directory");
             options.c_image_dir = require_directory(
                 options.c_image_dir, "C benchmark image directory");
-            options.c_baseline = require_file(
-                options.c_baseline, "C benchmark baseline image");
+        }
+        if(options.run_cxx)
+        {
+            options.cxx_source_dir = require_directory(
+                options.cxx_source_dir, "C++ benchmark source directory");
+            options.cxx_image_dir = require_directory(
+                options.cxx_image_dir, "C++ benchmark image directory");
         }
 
         if(options.run_instructions)
             run_instruction_benchmarks(options);
         if(options.run_c)
-            run_c_benchmarks(options);
+            run_compiled_benchmarks(
+                options, options.c_source_dir, options.c_image_dir,
+                options.c_output, ".c", "C");
+        if(options.run_cxx)
+            run_compiled_benchmarks(
+                options, options.cxx_source_dir, options.cxx_image_dir,
+                options.cxx_output, ".cpp", "C++");
         return 0;
     }
     catch(std::exception const& error)

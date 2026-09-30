@@ -1,9 +1,16 @@
+     2487573   aggregate_args.c
+     1955976   aggregate_return.c
+     2086119   aliasing.c
+     1827959   bit_count.c
+     1698989   bitfields.c
      1307997   bubble1.c
      1154781   bubble2.c
      1776807   bubble4.c
+     1287179   byte_comparisons.c
       255387   call_args.c
      7304088   constant_arith.c
       522102   crc16.c
+     1739502   div_pow2.c
      1062266   divmod.c
        18709   draw_text.c
        20817   draw_text_P.c
@@ -11,11 +18,17 @@
      5944733   fir8.c
     11764996   fixed_point.c
       929828   float.c
+     1072462   float_comparisons.c
+      712208   float_conversions.c
        83174   indirect_call.c
     10914185   loop_control.c
+     3394192   loop_shapes.c
        18314   memory_services.c
      3208072   mixed_width.c
       921548   multiply.c
+     1185583   narrow_arithmetic.c
+      961113   packed_fields.c
+      285651   pointer_table.c
       924535   pointer_walk.c
      2952648   progmem_walk.c
       539261   progmem_widen_ldp16.c
@@ -23,11 +36,15 @@
       539287   progmem_widen_ldp32_words.c
      1439866   record_scan.c
      1905278   reverse_walk.c
+     4876945   rotate32.c
+     3865293   saturating_math.c
       712533   select.c
       515129   shifts.c
+     1824500   short_circuit.c
       372097   sieve.c
       326582   small_memops.c
       267959   stack_array.c
+     2526447   stack_frames.c
      7082644   state_machine.c
     25638281   string_scan.c
       485361   struct_copy.c
@@ -49,6 +66,9 @@
        37720   tilessprite16.c
        34526   tilessprite16_cached.c
        76562   tilessprite_cached.c
+      501645   volatile_rmw.c
+      533905   wide_add_sub.c
+     1190146   wide_compare.c
      3221725   wide_divmod.c
       877994   wide_mul.c
       543115   wide_shifts.c

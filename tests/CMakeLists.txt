@@ -81,6 +81,17 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
             DEPENDS avm_sysroot
         )
+        set(test_link_options)
+        if(AVM_TEST_NAME STREQUAL "member_pointer_high_address")
+            # Keep data and ordinary code below 64 KiB while placing the
+            # member-function target at the reported failing address.
+            list(APPEND test_link_options
+                "--image-base=0x100"
+                "--section-start=.data=0x100"
+                "--section-start=.text=0x200"
+                "--section-start=.rodata=0x1000"
+                "--section-start=.high_member_text=0x101F6")
+        endif()
         avm_add_image(
             OBJECTS "${AVM_TEST_OBJECT}"
             OUTPUT_ELF "${AVM_TEST_ELF}"
@@ -92,6 +103,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
             DISASSEMBLY "${AVM_TEST_DISASSEMBLY}"
             GC_SECTIONS
+            LINK_OPTIONS ${test_link_options}
             DEPENDS avm_sysroot
         )
         list(APPEND AVM_TEST_IMAGE_OUTPUTS "${AVM_TEST_IMAGE}")

@@ -173,7 +173,7 @@ function(avm_add_image)
     set(options GC_SECTIONS)
     set(one_value_args
         OUTPUT_ELF OUTPUT_IMAGE ENTRY STARTUP DISASSEMBLY)
-    set(multi_value_args OBJECTS LIBRARIES DEPENDS)
+    set(multi_value_args OBJECTS LIBRARIES DEPENDS LINK_OPTIONS)
     cmake_parse_arguments(ARG "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
 
     foreach(required_arg OUTPUT_ELF OUTPUT_IMAGE ENTRY)
@@ -196,6 +196,7 @@ function(avm_add_image)
     if(ARG_GC_SECTIONS)
         list(APPEND link_options --gc-sections)
     endif()
+    list(APPEND link_options ${ARG_LINK_OPTIONS})
 
     set(outputs "${ARG_OUTPUT_ELF}" "${ARG_OUTPUT_IMAGE}")
     set(commands

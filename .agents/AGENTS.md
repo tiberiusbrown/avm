@@ -3,6 +3,13 @@
 When developing code generation functionality in the LLVM AVM backend, refer to
 `bench/cycles_instruction.txt` to help select the fastest instruction.
 
+AVM code pointers are 24 bits and all types have byte alignment. Preserve
+24-bit code addresses in stored values and ABI layouts whenever possible;
+do not widen them to 32 bits merely for code generation convenience. If
+24-bit operations are difficult to lower, address that limitation in the AVM
+machine backend/ISA instead of changing the pointer representation. Document
+any unavoidable wider representation and track the backend limitation.
+
 ## Building
 
 When building or running any target, always use RelWithDebInfo configuration.

@@ -13,6 +13,8 @@ SOURCE_SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".s", ".S"}
 LINK_SUFFIXES = {".o", ".obj", ".a", ".lib"}
 COMPILE_OPTIONS_WITH_VALUE = {"-I", "-isystem", "-iquote", "-D", "-U", "-include", "-x"}
 LINK_OPTIONS_WITH_VALUE = {"-L", "-l", "-u", "-T", "-e", "--entry", "-Xlinker"}
+CXX_DEFAULTS = ("-fno-exceptions", "-fno-rtti",
+                "-fno-threadsafe-statics", "-fno-use-cxa-atexit")
 
 
 def fail(message):
@@ -150,6 +152,8 @@ def main(argv):
               "-isystem", str(sysroot / "include")]
     if compile_only:
         command = [clang, *common, *compile_args, *inputs]
+        if any(Path(name).suffix.lower() in (".cc", ".cpp", ".cxx") for name in inputs):
+            command.extend(CXX_DEFAULTS)
         if output is not None:
             command.extend(("-o", output))
         return run(command, verbose)
@@ -175,8 +179,7 @@ def main(argv):
             object_name = str(Path(temporary) / f"input-{number}.o")
             command = [clang, *common, *compile_args, "-c", input_name, "-o", object_name]
             if Path(input_name).suffix.lower() in (".cc", ".cpp", ".cxx"):
-                command.extend(("-fno-exceptions", "-fno-rtti",
-                                "-fno-threadsafe-statics", "-fno-use-cxa-atexit"))
+                command.extend(CXX_DEFAULTS)
             status = run(command, verbose)
             if status:
                 return status

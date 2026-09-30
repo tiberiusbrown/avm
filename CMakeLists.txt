@@ -47,6 +47,43 @@ set(AVM_INTERPRETER_HEX
 
 add_subdirectory(runtime)
 
+# Keep the wrapper beside the build-tree Clang binary. It finds the staged
+# sysroot relative to that location and uses the same layout after install.
+set(AVM_SDK_BUILD_BIN "${CMAKE_BINARY_DIR}/llvm-build/bin")
+configure_file(tools/avm-clang.py
+    "${AVM_SDK_BUILD_BIN}/avm-clang.py" COPYONLY)
+if(WIN32)
+    configure_file(tools/avm-clang.cmd
+        "${AVM_SDK_BUILD_BIN}/avm-clang.cmd" COPYONLY)
+else()
+    configure_file(tools/avm-clang
+        "${AVM_SDK_BUILD_BIN}/avm-clang" COPYONLY)
+    file(CHMOD "${AVM_SDK_BUILD_BIN}/avm-clang"
+        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                    GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
+endif()
+
+install(PROGRAMS
+    "$<TARGET_FILE:clang>"
+    "$<TARGET_FILE:lld>"
+    "$<TARGET_FILE:llvm-avm-image>"
+    "$<TARGET_FILE:llvm-ar>"
+    "$<TARGET_FILE:llvm-mc>"
+    "$<TARGET_FILE:llvm-objdump>"
+    "$<TARGET_FILE:llvm-readobj>"
+    DESTINATION bin COMPONENT avm-sdk)
+install(FILES tools/avm-clang.py DESTINATION bin COMPONENT avm-sdk)
+if(WIN32)
+    install(FILES tools/avm-clang.cmd DESTINATION bin COMPONENT avm-sdk)
+else()
+    install(PROGRAMS tools/avm-clang DESTINATION bin COMPONENT avm-sdk)
+endif()
+install(DIRECTORY "${CMAKE_BINARY_DIR}/llvm-build/lib/clang/"
+    DESTINATION lib/clang COMPONENT avm-sdk)
+install(DIRECTORY "${AVM_SYSROOT_DIR}/"
+    DESTINATION sysroot COMPONENT avm-sdk
+    PATTERN ".runtime-stamp" EXCLUDE)
+
 # Build only the Ardens debugger application. Keep Ardens's bundled LLVM
 # integration disabled so it does not download or build its own LLVM tree.
 set(ARDENS_LLVM      OFF CACHE BOOL "" FORCE)

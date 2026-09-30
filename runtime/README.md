@@ -15,6 +15,18 @@ avm_sysroot         Stage headers, CRT objects, and libraries.
 avm_sdk             Build the AVM toolchain and complete staged sysroot.
 ```
 
+Build and install the SDK with:
+
+```sh
+cmake --build build --config RelWithDebInfo --target avm_sdk
+cmake --install build --config RelWithDebInfo --component avm-sdk --prefix <sdk>
+```
+
+The build-tree wrapper is `build/llvm-build/bin/avm-clang.cmd` on Windows and
+`build/llvm-build/bin/avm-clang` elsewhere. The installed SDK is relocatable,
+with the wrapper in `<sdk>/bin` and the runtime in `<sdk>/sysroot`. The wrapper
+requires Python 3 on the host.
+
 The staged tree is:
 
 ```text
@@ -67,6 +79,27 @@ runtime `.bss` clear pass. `_start` must not return because raw image entry has
 no caller return address.
 
 ## Compile, link, and package
+
+For an ordinary C or C++ program, one command produces both the linked ELF
+and a development image:
+
+```sh
+<sdk>/bin/avm-clang hello.c -o hello.elf
+# writes hello.elf and hello.bin
+```
+
+On Windows, use `avm-clang.cmd`. The wrapper fixes the target to
+`avm-unknown-arduboyfx`, uses the SDK headers, `lld -flavor gnu`, `crt0.o`,
+`libavm.a`, `libavm-builtins.a`, and `llvm-avm-image --development`. It accepts
+common Clang compile options, `-c`/`-S`/`-E` for compile-only work, and
+`-L`, `-l`, `-Wl,`, and `-Xlinker` for linking. Use
+`--avm-startup=crt0_sketch.o` for `setup()`/`loop()` programs,
+`--avm-entry=SYMBOL` for a custom entry, `--avm-image=PATH` to choose the
+image path, or `--avm-no-image` to keep only the ELF. `-nostartfiles` and
+`-nodefaultlibs` disable the respective defaults. C++ entry functions such as
+`main`, `setup`, and `loop` must use `extern "C"` linkage.
+
+The equivalent manual commands are:
 
 ```sh
 <build>/llvm-build/bin/clang \

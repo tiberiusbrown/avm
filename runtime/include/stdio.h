@@ -11,12 +11,12 @@ extern "C" {
 #endif
 
 int vsnprintf(
-    char* restrict s, size_t n, const char* restrict fmt, va_list args);
+    char* s, size_t n, const char* fmt, va_list args);
 int vsnprintf_P(
-    char* restrict s, size_t n, const char AVM_PROGMEM* restrict fmt, va_list args);
+    char* s, size_t n, const char AVM_PROGMEM* fmt, va_list args);
 
 static inline int snprintf(
-    char* restrict str, size_t size, const char* restrict format, ...)
+    char* str, size_t size, const char* format, ...)
 {
     va_list args;
     int result;
@@ -27,7 +27,7 @@ static inline int snprintf(
 }
 
 static inline int snprintf_P(
-    char* restrict str, size_t size, const char AVM_PROGMEM* restrict format, ...)
+    char* str, size_t size, const char AVM_PROGMEM* format, ...)
 {
     va_list args;
     int result;
@@ -42,8 +42,8 @@ static inline int snprintf_P(
 
 #if !defined(AVM_STDIO_IMPLEMENTATION) && \
     !defined(AVM_STDIO_NO_BUILTIN_MACROS)
-#define vsnprintf(s, n, fmt, args) __avm_vsnprintf((s), (n), (fmt), (args));
-#define vsnprintf_P(s, n, fmt, args) __avm_vsnprintf_P((s), (n), (fmt), (args));
+#define vsnprintf(s, n, fmt, args) __avm_vsnprintf((s), (n), (fmt), (args))
+#define vsnprintf_P(s, n, fmt, args) __avm_vsnprintf_P((s), (n), (fmt), (args))
 #endif
 
 #ifdef __cplusplus

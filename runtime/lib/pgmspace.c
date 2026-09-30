@@ -34,14 +34,14 @@ int avm_runtime_strlen_P(char const AVM_PROGMEM* str) {
     return __avm_strlen_P(str);
 }
 
-char* avm_runtime_strcpy_P(char* dst, char const AVM_PROGMEM* src, size_t size)
+char* avm_runtime_strncpy_P(char* dst, char const AVM_PROGMEM* src, size_t size)
     __asm__("strncpy_P");
 
 char* avm_runtime_strncpy_P(char* dst, char const AVM_PROGMEM* src, size_t size) {
     return __avm_strncpy_P(dst, src, size);
 }
 
-char* avm_runtime_strcat_P(char* dst, char const AVM_PROGMEM* src, size_t size)
+char* avm_runtime_strncat_P(char* dst, char const AVM_PROGMEM* src, size_t size)
     __asm__("strncat_P");
 
 char* avm_runtime_strncat_P(char* dst, char const AVM_PROGMEM* src, size_t size) {

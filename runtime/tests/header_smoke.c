@@ -39,3 +39,12 @@ int stdio_parenthesized(char *dst, size_t size,
 int (*stdio_address(void))(char *, size_t, const char *, va_list) {
     return &vsnprintf;
 }
+
+int (*snprintf_address(void))(char *, size_t, const char *, ...) {
+    return &snprintf;
+}
+
+int (*snprintf_program_address(void))(
+    char *, size_t, const char AVM_PROGMEM *, ...) {
+    return &snprintf_P;
+}

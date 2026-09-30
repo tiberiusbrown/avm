@@ -11,6 +11,9 @@ static uint16_t random_seed;
 
 void avm_set_frame_rate(uint8_t rate_hz)
 {
+    /* 250 ms is the longest whole-millisecond frame this API can express. */
+    if(rate_hz < 4)
+        rate_hz = 4;
     avm_set_frame_duration((uint8_t)(1000u / rate_hz));
 }
 

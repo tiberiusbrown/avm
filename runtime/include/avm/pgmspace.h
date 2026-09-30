@@ -7,8 +7,10 @@
 #include <stdint.h>
 
 #define AVM_PROGMEM __attribute__((address_space(1)))
+#define PROGMEM AVM_PROGMEM
 
 #define AVM_PSTR(s) __builtin_avm_flash_string(s)
+#define PSTR(s) AVM_PSTR(s)
 #define F(s) AVM_PSTR(s)
 
 #ifdef __cplusplus

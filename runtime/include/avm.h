@@ -49,6 +49,7 @@ AVM_SYS_INLINE uint32_t avm_millis32(void)
     return __avm_millis32();
 }
 
+/* Rates from 4 to 255 Hz are supported; 0 to 3 Hz clamp to 4 Hz. */
 void avm_set_frame_rate(uint8_t rate_hz);
 void avm_set_frame_duration(uint8_t duration_ms);
 bool avm_next_frame();

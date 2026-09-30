@@ -123,6 +123,15 @@ avm_add_object(
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     DEPENDS ${AVM_RUNTIME_HEADERS}
 )
+set(AVM_BUILTINS_ATOMIC_OBJECT
+    "${AVM_RUNTIME_OBJECT_DIR}/builtins_atomic.o")
+avm_add_object(
+    OUTPUT "${AVM_BUILTINS_ATOMIC_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/atomic.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
 
 set(AVM_BUILTINS_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm-builtins.a")
 avm_add_archive(
@@ -130,6 +139,7 @@ avm_add_archive(
     OBJECTS
         "${AVM_BUILTINS_INTEGER_OBJECT}"
         "${AVM_BUILTINS_WIDE_INTEGER_OBJECT}"
+        "${AVM_BUILTINS_ATOMIC_OBJECT}"
 )
 
 # Diagnostic-only duplicate compilations. Preserve each source's relative path

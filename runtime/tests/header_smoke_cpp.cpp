@@ -43,3 +43,13 @@ extern "C" int (*cpp_stdio_address(void))(
     char *, size_t, const char *, va_list) {
     return &vsnprintf;
 }
+
+extern "C" int (*cpp_snprintf_address(void))(
+    char *, size_t, const char *, ...) {
+    return &snprintf;
+}
+
+extern "C" int (*cpp_snprintf_program_address(void))(
+    char *, size_t, const char AVM_PROGMEM *, ...) {
+    return &snprintf_P;
+}

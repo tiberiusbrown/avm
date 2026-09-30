@@ -2417,7 +2417,7 @@ f9_bitop_entry:
     ld    r0,  X+
     ld    r1,  X
     ld    r25, Z+
-    ld    r27, Z
+    ld    r31, Z                   ; Z is dead after this non-updating load
 
     ; SECONDARY_OPCODE bit 0 selects low (AND/OR) versus high
     ; (XOR/invalid) operation groups.
@@ -2427,17 +2427,15 @@ f9_bitop_entry:
     ; Low group: carry selects AND=0 or OR=1.
     brcc  .Lf9_and
     or    r0, r25
-    or    r1, r27
+    or    r1, r31
     rjmp  .Lf9_store
 
 .Lf9_and:
     and   r0, r25
-    and   r1, r27
+    and   r1, r31
 
 .Lf9_store:
-    ; Loading source high into r27 temporarily replaced XH. All architectural
-    ; register-file addresses are below 0x100, so restore XH to zero.
-    mov   r27, ZERO
+    ; Source high lives in the now-dead ZH, leaving XH zero for writeback.
     st    X,  r1
     st    -X, r0
     rjmp  cluster_a_tail_18
@@ -2446,15 +2444,15 @@ f9_bitop_entry:
     ; High group: carry selects XOR=0 or invalid=1.
     brcs  .Lf9_invalid
     eor   r0, r25
-    eor   r1, r27
+    eor   r1, r31
     rjmp  .Lf9_store
 
 .Lf9_invalid:
     rjmp  invalid_secondary_instruction_func
 
 f9_bitop_end:
-.if (f9_bitop_end - f9_bitop_entry) != 78
-    .error "dedicated F9 runtime bitwise handler must occupy exactly 39 AVR words"
+.if (f9_bitop_end - f9_bitop_entry) != 76
+    .error "dedicated F9 runtime bitwise handler must occupy exactly 38 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -5027,15 +5025,17 @@ sys_strcmp_impl:
 ;   r4 = src/result
 sys_strlen_impl:
     movw  r26, VM_R4             ; X = source
-    clr   r24
-    clr   r25
 .Lsys_strlen_loop:
     ld    r0, X+
     tst   r0
-    breq  .Lsys_strlen_done
-    adiw  r24, 1
-    rjmp  .Lsys_strlen_loop
+    brne  .Lsys_strlen_loop
 .Lsys_strlen_done:
+    ; X points one byte past NUL. Subtract the original source address and
+    ; the terminator in modulo-16-bit arithmetic instead of counting per byte.
+    movw  r24, r26
+    sub   r24, VM_R4L
+    sbc   r25, VM_R4H
+    sbiw  r24, 1
     movw  VM_R4, r24
     rjmp  cluster_tail_18
 
@@ -10380,11 +10380,23 @@ sys_memmove_impl:
     adc   r27, r25
     add   r30, r24               ; Z = dst + n
     adc   r31, r25
-.Lsys_memmove_backward_loop:
+    ; Copy pairs from the end; native T retains the odd-byte remainder.
+    bst   r24, 0
+    lsr   r25
+    ror   r24
+    sbiw  r24, 0
+    breq  .Lsys_memmove_backward_remainder
+.Lsys_memmove_backward_pairs:
+    ld    r0, -X
+    st    -Z, r0
     ld    r0, -X
     st    -Z, r0
     sbiw  r24, 1
-    brne  .Lsys_memmove_backward_loop
+    brne  .Lsys_memmove_backward_pairs
+.Lsys_memmove_backward_remainder:
+    brtc  .Lsys_memcpy_done
+    ld    r0, -X
+    st    -Z, r0
     rjmp  .Lsys_memcpy_done
 
 ; void *memcpy(void *dst, void const *src, uint16_t n)
@@ -10397,10 +10409,23 @@ sys_memcpy_impl:
     or    r1, r25
     breq  .Lsys_memcpy_done
 .Lsys_memcpy_loop:
+    ; Native T retains the low count bit while r24:r25 counts byte pairs.
+    bst   r24, 0
+    lsr   r25
+    ror   r24
+    sbiw  r24, 0
+    breq  .Lsys_memcpy_remainder
+.Lsys_memcpy_pairs:
+    ld    r0, X+
+    st    Z+, r0
     ld    r0, X+
     st    Z+, r0
     sbiw  r24, 1
-    brne  .Lsys_memcpy_loop
+    brne  .Lsys_memcpy_pairs
+.Lsys_memcpy_remainder:
+    brtc  .Lsys_memcpy_done
+    ld    r0, X+
+    st    Z+, r0
 .Lsys_memcpy_done:
     jmp   cluster_tail_18
 
@@ -10442,9 +10467,20 @@ sys_memset_impl:
     or    r1, r25
     breq  .Lsys_memset_done
 .Lsys_memset_loop:
+    ; Handle two bytes per count update, then the optional odd byte.
+    bst   r24, 0
+    lsr   r25
+    ror   r24
+    sbiw  r24, 0
+    breq  .Lsys_memset_remainder
+.Lsys_memset_pairs:
+    st    Z+, r0
     st    Z+, r0
     sbiw  r24, 1
-    brne  .Lsys_memset_loop
+    brne  .Lsys_memset_pairs
+.Lsys_memset_remainder:
+    brtc  .Lsys_memset_done
+    st    Z+, r0
 .Lsys_memset_done:
     jmp   cluster_tail_18
 

@@ -7,16 +7,19 @@ include(AvmBuild)
 
 # Build the AVM Clang/LLVM/LLD toolchain in-tree. The target includes a
 # SelectionDAG code generator in addition to its MC and linker components.
-set(LLVM_TARGETS_TO_BUILD              "host"      CACHE STRING "" FORCE)
+set(LLVM_TARGETS_TO_BUILD              ""          CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM"       CACHE STRING "" FORCE)
 set(LLVM_ENABLE_PROJECTS               "clang;lld" CACHE STRING "" FORCE)
+set(LLD_BUILD_ELF_ONLY                  ON          CACHE BOOL   "" FORCE)
 
 # Do not place every LLVM command-line tool in the default build. Explicitly
 # requested tools remain available as CMake targets.
 set(LLVM_BUILD_TOOLS                   OFF         CACHE BOOL   "" FORCE)
+set(CLANG_BUILD_TOOLS                  OFF         CACHE BOOL   "" FORCE)
+set(LLD_BUILD_TOOLS                    OFF         CACHE BOOL   "" FORCE)
 set(CLANG_ENABLE_STATIC_ANALYZER       OFF         CACHE BOOL   "" FORCE)
 set(CLANG_ENABLE_ARCMT                 OFF         CACHE BOOL   "" FORCE)
-set(LLVM_BUILD_TESTS                   ON          CACHE BOOL   "" FORCE)
+set(LLVM_BUILD_TESTS                   OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_EXAMPLES                OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_BENCHMARKS              OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_DOCS                    OFF         CACHE BOOL   "" FORCE)
@@ -48,7 +51,7 @@ set(AVM_INTERPRETER_HEX
 add_subdirectory(runtime)
 
 # Each SDK command is a native executable. Keep the AVM names beside the LLVM
-# tools in the build tree, and install both names for direct LLVM access.
+# tools in the build tree, but install only the AVM names.
 set(AVM_SDK_BUILD_BIN "${CMAKE_BINARY_DIR}/llvm-build/bin")
 file(REMOVE "${AVM_SDK_BUILD_BIN}/avm-clang.py"
             "${AVM_SDK_BUILD_BIN}/avm-clang.cmd")
@@ -74,15 +77,6 @@ endforeach()
 add_custom_target(avm_sdk_tools DEPENDS ${AVM_SDK_ALIAS_OUTPUTS})
 add_dependencies(avm_toolchain avm_sdk_tools)
 
-install(PROGRAMS
-    "$<TARGET_FILE:clang>"
-    "$<TARGET_FILE:lld>"
-    "$<TARGET_FILE:llvm-avm-image>"
-    "$<TARGET_FILE:llvm-ar>"
-    "$<TARGET_FILE:llvm-mc>"
-    "$<TARGET_FILE:llvm-objdump>"
-    "$<TARGET_FILE:llvm-readobj>"
-    DESTINATION bin COMPONENT avm-sdk)
 install(PROGRAMS ${AVM_SDK_ALIAS_OUTPUTS}
     DESTINATION bin COMPONENT avm-sdk)
 install(DIRECTORY "${CMAKE_BINARY_DIR}/llvm-build/lib/clang/"

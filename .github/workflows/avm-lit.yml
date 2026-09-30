@@ -28,10 +28,13 @@ jobs:
           cmake -S . -B build/ci -G Ninja
           -DCMAKE_BUILD_TYPE=RelWithDebInfo
 
-      - name: Build lit dependencies
+      # The lit invocations below select AVM tests only. Build their tools
+      # explicitly so the full LLVM, Clang, and LLD test suites stay out of CI.
+      - name: Build AVM toolchain and lit dependencies
         run: >-
           cmake --build build/ci --parallel 4 --target
-          llvm-test-depends clang-test-depends lld-test-depends
+          avm_toolchain FileCheck not split-file
+          llc llvm-as llvm-dis llvm-mca opt yaml2obj
 
       - name: Run avm_tests
         id: avm

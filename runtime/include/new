@@ -1,0 +1,13 @@
+#ifndef AVM_RUNTIME_NEW
+#define AVM_RUNTIME_NEW
+
+#include <cstddef>
+
+// AVM has no general-purpose heap. These placement forms use caller-owned
+// storage and require no allocator or runtime library support.
+inline void* operator new(std::size_t, void* place) noexcept { return place; }
+inline void* operator new[](std::size_t, void* place) noexcept { return place; }
+inline void operator delete(void*, void*) noexcept {}
+inline void operator delete[](void*, void*) noexcept {}
+
+#endif // AVM_RUNTIME_NEW

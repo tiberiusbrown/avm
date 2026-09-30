@@ -20,7 +20,9 @@ The staged tree is:
 ```text
 <build>/avm-sysroot/
   include/
+    cstddef
     math.h
+    new
     string.h
     avm/runtime.h
   lib/
@@ -33,6 +35,12 @@ The staged tree is:
 
 Clang's AVM resource headers continue to provide `<avm/pgmspace.h>`.
 `libavm.a` supplies the addressable `memcpy_P` wrapper declared there.
+`<new>` provides placement `new` and `new[]` for caller-owned storage, with
+their matching placement `delete` overloads. The runtime provides no heap
+allocator or ordinary `new` operator.
+`libavm.a` contains weak traps for compiler-generated pure or deleted virtual
+calls and deleting destructors. Applications can replace the delete traps if
+they provide their own fixed-capacity allocator.
 
 ## Startup variants
 

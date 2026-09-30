@@ -1,6 +1,15 @@
 #include <math.h>
+#include <new>
 #include <stdio.h>
 #include <string.h>
+
+struct cpp_smoke_object {
+    int value;
+};
+
+extern "C" cpp_smoke_object* cpp_place_object(void* storage) {
+    return ::new (storage) cpp_smoke_object{7};
+}
 
 extern "C" float cpp_direct_math(float x) {
     return cosf(x);

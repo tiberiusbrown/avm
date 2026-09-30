@@ -1,0 +1,13 @@
+#ifndef AVM_RUNTIME_CSTDDEF
+#define AVM_RUNTIME_CSTDDEF
+
+#include <stddef.h>
+
+namespace std {
+using ::ptrdiff_t;
+using ::size_t;
+using ::max_align_t;
+using nullptr_t = decltype(nullptr);
+}
+
+#endif // AVM_RUNTIME_CSTDDEF

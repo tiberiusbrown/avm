@@ -75,7 +75,7 @@ _Static_assert(sizeof(enum small_enum) == 2, "enum uses 16-bit int layout");
 _Static_assert(sizeof(struct bitfield_record) == 2,
                "bit-fields share one 16-bit allocation unit");
 
-static int is_binary32_one(const void* object) {
+__attribute__((noinline)) static int is_binary32_one(const void* object) {
     const uint8_t* bytes = (const uint8_t*)object;
     return bytes[0] == 0x00 && bytes[1] == 0x00 &&
            bytes[2] == 0x80 && bytes[3] == 0x3f;

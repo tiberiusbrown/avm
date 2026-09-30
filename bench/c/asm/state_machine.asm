@@ -1,5 +1,5 @@
 
-C:/Users/Brown/Documents/GitHub/avm/build/bench/c/state_machine.elf:	file format elf32-avm
+state_machine.elf:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c

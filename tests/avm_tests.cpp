@@ -40,6 +40,10 @@
 #error "AVM_TEST_CXX_BIN_DIR must be defined by CMake"
 #endif
 
+#ifndef AVM_TEST_OPT_LEVELS
+#error "AVM_TEST_OPT_LEVELS must be defined by CMake"
+#endif
+
 #ifndef AVM_TEST_INTERPRETER_HEX
 #error "AVM_TEST_INTERPRETER_HEX must be defined by CMake"
 #endif
@@ -81,6 +85,7 @@ struct options_t {
 
 struct test_case_t {
     test_kind_t kind;
+    std::string optimization;
     fs::path source;
     fs::path expected;
     fs::path image;
@@ -417,7 +422,8 @@ void append_tests(std::vector<test_case_t>& tests,
                   test_kind_t kind,
                   fs::path const& source_dir,
                   fs::path const& bin_dir,
-                  std::string_view extension)
+                  std::string_view extension,
+                  std::vector<std::string> const& optimization_levels)
 {
     std::error_code ec;
     for(fs::directory_iterator it(source_dir, ec), end;
@@ -442,13 +448,23 @@ void append_tests(std::vector<test_case_t>& tests,
             continue;
 
         std::string const stem = source.stem().string();
-        tests.push_back({
-            kind,
-            source,
-            source.parent_path() / (stem + "_output.txt"),
-            bin_dir / (stem + ".bin"),
-            bin_dir / (stem + "_actual.txt"),
-        });
+        auto add_test = [&](std::string const& optimization) {
+            fs::path image_dir = optimization.empty()
+                ? bin_dir : bin_dir / optimization;
+            tests.push_back({
+                kind,
+                optimization,
+                source,
+                source.parent_path() / (stem + "_output.txt"),
+                image_dir / (stem + ".bin"),
+                image_dir / (stem + "_actual.txt"),
+            });
+        };
+        if(kind == test_kind_t::assembly)
+            add_test("");
+        else
+            for(std::string const& optimization : optimization_levels)
+                add_test(optimization);
     }
     if(ec)
         throw std::runtime_error(
@@ -459,20 +475,31 @@ void append_tests(std::vector<test_case_t>& tests,
 std::vector<test_case_t> discover_tests(options_t const& options)
 {
     std::vector<test_case_t> tests;
+    std::vector<std::string> optimization_levels;
+    std::string_view levels = AVM_TEST_OPT_LEVELS;
+    while(!levels.empty()) {
+        std::size_t comma = levels.find(',');
+        optimization_levels.emplace_back(levels.substr(0, comma));
+        if(comma == std::string_view::npos)
+            break;
+        levels.remove_prefix(comma + 1);
+    }
     append_tests(tests, test_kind_t::assembly, options.asm_dir,
-                 options.asm_bin_dir, ".asm");
+                 options.asm_bin_dir, ".asm", optimization_levels);
     append_tests(tests, test_kind_t::c, options.c_dir,
-                 options.c_bin_dir, ".c");
+                 options.c_bin_dir, ".c", optimization_levels);
     append_tests(tests, test_kind_t::cpp, options.cpp_dir,
-                 options.cpp_bin_dir, ".cpp");
+                 options.cpp_bin_dir, ".cpp", optimization_levels);
 
     std::sort(tests.begin(), tests.end(),
         [](test_case_t const& lhs, test_case_t const& rhs) {
             if(lhs.kind != rhs.kind)
                 return static_cast<unsigned>(lhs.kind) <
                        static_cast<unsigned>(rhs.kind);
-            return lowercase(lhs.source.filename().string()) <
-                   lowercase(rhs.source.filename().string());
+            if(lhs.source.filename() != rhs.source.filename())
+                return lowercase(lhs.source.filename().string()) <
+                       lowercase(rhs.source.filename().string());
+            return lhs.optimization < rhs.optimization;
         });
     return tests;
 }
@@ -485,7 +512,10 @@ std::string test_label(test_case_t const& test)
     case test_kind_t::c:        prefix = "[C  ] "; break;
     case test_kind_t::cpp:      prefix = "[C++] "; break;
     }
-    return std::string(prefix) + test.source.filename().string();
+    std::string label(prefix);
+    if(!test.optimization.empty())
+        label.insert(label.find(']'), " " + test.optimization);
+    return label + test.source.filename().string();
 }
 
 void run_test(test_case_t const& test,

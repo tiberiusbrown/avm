@@ -1,0 +1,773 @@
+
+sprite_self_masked.elf:	file format elf32-avm
+
+SYMBOL TABLE:
+00000000 l    df *ABS*	00000000 crt0_test.c
+0000021e l     F .text	0000004a avm_run_constructors
+00000268 l     F .text	0000006f avm_run_destructors
+00000000 l    df *ABS*	00000000 sprite_self_masked.c
+000007e8 l     O .rodata	00000020 sprite_5x13
+00005f80 l     O .rodata	00000400 expected_00
+00000808 l     O .rodata	00000400 expected_01
+00000c08 l     O .rodata	00000400 expected_02
+00001008 l     O .rodata	00000400 expected_03
+00001408 l     O .rodata	00000400 expected_04
+00001808 l     O .rodata	00000400 expected_05
+00001c08 l     O .rodata	00000400 expected_06
+00002008 l     O .rodata	00000104 sprite_1x1_many_frames
+0000210c l     O .rodata	00000400 expected_07
+0000250c l     O .rodata	0000000b sprite_9x8
+00002517 l     O .rodata	00000400 expected_08
+00002917 l     O .rodata	00000400 expected_09
+00002d17 l     O .rodata	0000001a sprite_4x17
+00002d31 l     O .rodata	00000400 expected_10
+00003131 l     O .rodata	00000400 expected_11
+00003531 l     O .rodata	0000020a sprite_130x9
+0000373b l     O .rodata	00000400 expected_12
+00003b3b l     O .rodata	00000041 sprite_7x65
+00003b7c l     O .rodata	00000400 expected_13
+00003f7c l     O .rodata	00000400 expected_14
+0000437c l     O .rodata	00000400 expected_15
+0000477c l     O .rodata	00000400 expected_16
+00004b7c l     O .rodata	00000400 expected_17
+00004f7c l     O .rodata	00000002 sprite_zero_width
+00004f7e l     O .rodata	00000400 expected_18
+0000537e l     O .rodata	00000002 sprite_zero_height
+00005380 l     O .rodata	00000400 expected_19
+00006380 l     O .rodata	00000400 expected_20
+00006780 l     O .rodata	00000400 expected_21
+00005780 l     O .rodata	00000400 expected_22
+00005b80 l     O .rodata	00000400 expected_23
+00000799 l     F .text	00000029 fail_case
+00000100 l     O .data	00000005 .L.str
+000007c2 l     F .text	00000024 test_hex8
+00000000 l    df *ABS*	00000000 runtime.c
+00006b80 l       .init_array	00000000 .hidden __init_array_end
+00006b80 l       .init_array	00000000 .hidden __init_array_start
+00006b80 l       .fini_array	00000000 .hidden __fini_array_start
+00006b80 l       .fini_array	00000000 .hidden __fini_array_end
+00000200 g     F .text	0000001e _start
+000002d7 g     F .text	000004c2 avm_test_main
+000007e6 g     F .text	00000002 avm_halt
+00000000  w      *UND*	00000000 __avm_run_local_dtors
+00000500 g       *ABS*	00000000 __avm_framebuffer
+
+Disassembly of section .text:
+
+<_start>:
+ b0                    push16	r0
+ d5 1b                 call8	avm_run_constructors
+ e1 d1 00              call16	avm_test_main
+ f0 00 46              ldi8	r0, 0x46
+ c1 50                 ldi8	r5, 0x50
+ f6 2c                 tst16	r4
+ fb 05                 cmov.eq	r0, r5
+ d5 57                 call8	avm_run_destructors
+ f1 20                 mov	r4, r0
+ d7 00                 sys	debug_putc
+ c0 0a                 ldi8	r4, 0xa
+ d7 00                 sys	debug_putc
+ d7 01                 sys	debug_break
+ e1 c8 05              call16	avm_halt
+
+<avm_run_constructors>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 fc                 adjsp	-0x4
+ c4 80 6b              ldi16	r4, 0x6b80
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ c6 80 6b              ldi16	r6, 0x6b80
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ f0 69 c8              cmp32	q3, q2
+ d0 2a                 breq8	avm_run_constructors+67
+ f0 04 80 6b           ldi16	r0, 0x6b80
+ f0 01 00              ldi8	r1, 0x0
+ c0 03                 ldi8	r4, 0x3
+ a5                    xor	r5, r5
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 06 80 6b           ldi16	r2, 0x6b80
+ f0 03 00              ldi8	r3, 0x0
+ f1 73                 zext8	r3
+ f0 63 80              ldp24	q2, [q0]
+ ea                    callp	q2
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 62                 add32	q0, q2
+ f2 68                 mov32	q2, q0
+ f1 75                 zext8	r5
+ f0 69 84              cmp32	q2, q1
+ d1 ed                 brne8	avm_run_constructors+48
+ d6 04                 adjsp	0x4
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+
+<avm_run_destructors>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 fc                 adjsp	-0x4
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	avm_run_destructors+23
+ e1 81 fd              call16	-639
+ c4 80 6b              ldi16	r4, 0x6b80
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ c6 80 6b              ldi16	r6, 0x6b80
+ c3 00                 ldi8	r7, 0x0
+ f1 77                 zext8	r7
+ f0 69 c8              cmp32	q3, q2
+ d0 2d                 breq8	avm_run_destructors+87
+ f0 06 80 6b           ldi16	r2, 0x6b80
+ f0 03 00              ldi8	r3, 0x0
+ c4 fd ff              ldi16	r4, 0xfffd
+ c5 ff ff              ldi16	r5, 0xffff
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 04 80 6b           ldi16	r0, 0x6b80
+ f0 01 00              ldi8	r1, 0x0
+ f1 71                 zext8	r1
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 66                 add32	q1, q2
+ f0 63 84              ldp24	q2, [q1]
+ ea                    callp	q2
+ f2 69                 mov32	q2, q1
+ f1 75                 zext8	r5
+ f0 69 80              cmp32	q2, q0
+ d1 ed                 brne8	avm_run_destructors+68
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ f1 75                 zext8	r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	avm_run_destructors+104
+ e1 30 fd              call16	-720
+ d6 04                 adjsp	0x4
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+
+<avm_test_main>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 f6                 adjsp	-0xa
+ f2 39                 sub	r1, r1
+ f0 04 00 05           ldi16	r0, 0x500
+ f1 20                 mov	r4, r0
+ a5                    xor	r5, r5
+ c6 00 04              ldi16	r6, 0x400
+ d7 11                 sys	memset
+ f0 06 e8 07           ldi16	r2, 0x7e8
+ f0 03 00              ldi8	r3, 0x0
+ c0 08                 ldi8	r4, 0x8
+ f4 60                 stsp16	[sp+0x8], r4
+ c0 0a                 ldi8	r4, 0xa
+ f4 58                 stsp16	[sp+0x6], r4
+ c1 08                 ldi8	r5, 0x8
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 80 5f              ldi16	r6, 0x5f80
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ db 79 04              brne16	avm_test_main+1202
+ a0                    xor	r4, r4
+ f4 50                 stsp16	[sp+0x4], r4
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 a5                 ldi8	r5, 0xa5
+ d7 11                 sys	memset
+ f0 01 01              ldi8	r1, 0x1
+ c0 0a                 ldi8	r4, 0xa
+ c1 08                 ldi8	r5, 0x8
+ c2 01                 ldi8	r6, 0x1
+ d7 20                 sys	draw_sprite_self_masked
+ c6 08 08              ldi16	r6, 0x808
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ db 4c 04              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 3c                 ldi8	r5, 0x3c
+ d7 11                 sys	memset
+ f0 01 02              ldi8	r1, 0x2
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c0 03                 ldi8	r4, 0x3
+ f4 48                 stsp16	[sp+0x2], r4
+ c0 1b                 ldi8	r4, 0x1b
+ c1 03                 ldi8	r5, 0x3
+ f2 67                 mov32	q1, q3
+ c2 02                 ldi8	r6, 0x2
+ d7 20                 sys	draw_sprite_self_masked
+ c6 08 0c              ldi16	r6, 0xc08
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ db 17 04              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 96                 ldi8	r5, 0x96
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c0 13                 ldi8	r4, 0x13
+ f4 40                 stsp16	[sp+0x0], r4
+ c4 fe ff              ldi16	r4, 0xfffe
+ c1 13                 ldi8	r5, 0x13
+ f2 67                 mov32	q1, q3
+ c2 01                 ldi8	r6, 0x1
+ d7 20                 sys	draw_sprite_self_masked
+ c6 08 10              ldi16	r6, 0x1008
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ f0 31 02              ldsp16	r1, [sp+0x2]
+ db e1 03              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 69                 ldi8	r5, 0x69
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ f0 01 11              ldi8	r1, 0x11
+ c0 7e                 ldi8	r4, 0x7e
+ c1 11                 ldi8	r5, 0x11
+ f2 67                 mov32	q1, q3
+ c2 02                 ldi8	r6, 0x2
+ d7 20                 sys	draw_sprite_self_masked
+ c6 08 14              ldi16	r6, 0x1408
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+263
+ f0 01 04              ldi8	r1, 0x4
+ e0 ab 03              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 c3                 ldi8	r5, 0xc3
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c0 28                 ldi8	r4, 0x28
+ c5 fb ff              ldi16	r5, 0xfffb
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 08 18              ldi16	r6, 0x1808
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+314
+ f0 01 05              ldi8	r1, 0x5
+ e0 78 03              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 5a                 ldi8	r5, 0x5a
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c0 46                 ldi8	r4, 0x46
+ c1 3a                 ldi8	r5, 0x3a
+ f2 67                 mov32	q1, q3
+ c2 01                 ldi8	r6, 0x1
+ d7 20                 sys	draw_sprite_self_masked
+ c6 08 1c              ldi16	r6, 0x1c08
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+365
+ f0 01 06              ldi8	r1, 0x6
+ e0 45 03              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ a5                    xor	r5, r5
+ c6 00 04              ldi16	r6, 0x400
+ d7 11                 sys	memset
+ c6 08 20              ldi16	r6, 0x2008
+ c3 00                 ldi8	r7, 0x0
+ c0 7f                 ldi8	r4, 0x7f
+ c1 3f                 ldi8	r5, 0x3f
+ f2 67                 mov32	q1, q3
+ c6 01 01              ldi16	r6, 0x101
+ d7 20                 sys	draw_sprite_self_masked
+ c6 0c 21              ldi16	r6, 0x210c
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+411
+ f0 01 07              ldi8	r1, 0x7
+ e0 17 03              jmp16	avm_test_main+1202
+ f0 39 02              stsp16	[sp+0x2], r1
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 3c                 ldi8	r5, 0x3c
+ d7 11                 sys	memset
+ c6 0c 25              ldi16	r6, 0x250c
+ c3 00                 ldi8	r7, 0x0
+ c4 fc ff              ldi16	r4, 0xfffc
+ c1 07                 ldi8	r5, 0x7
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 17 25              ldi16	r6, 0x2517
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ f0 31 08              ldsp16	r1, [sp+0x8]
+ db e3 02              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 c3                 ldi8	r5, 0xc3
+ d7 11                 sys	memset
+ c6 0c 25              ldi16	r6, 0x250c
+ c3 00                 ldi8	r7, 0x0
+ c0 7d                 ldi8	r4, 0x7d
+ c1 3b                 ldi8	r5, 0x3b
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 17 29              ldi16	r6, 0x2917
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+513
+ f0 01 09              ldi8	r1, 0x9
+ e0 b1 02              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 69                 ldi8	r5, 0x69
+ d7 11                 sys	memset
+ c6 17 2d              ldi16	r6, 0x2d17
+ c3 00                 ldi8	r7, 0x0
+ c0 14                 ldi8	r4, 0x14
+ f4 60                 stsp16	[sp+0x8], r4
+ c5 f7 ff              ldi16	r5, 0xfff7
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 31 2d              ldi16	r6, 0x2d31
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ f0 31 06              ldsp16	r1, [sp+0x6]
+ db 7e 02              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 96                 ldi8	r5, 0x96
+ d7 11                 sys	memset
+ c6 17 2d              ldi16	r6, 0x2d17
+ c3 00                 ldi8	r7, 0x0
+ c0 14                 ldi8	r4, 0x14
+ c1 37                 ldi8	r5, 0x37
+ f2 67                 mov32	q1, q3
+ c2 01                 ldi8	r6, 0x1
+ d7 20                 sys	draw_sprite_self_masked
+ c6 31 31              ldi16	r6, 0x3131
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+615
+ f0 01 0b              ldi8	r1, 0xb
+ e0 4b 02              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 5a                 ldi8	r5, 0x5a
+ d7 11                 sys	memset
+ c6 31 35              ldi16	r6, 0x3531
+ c3 00                 ldi8	r7, 0x0
+ c4 ff ff              ldi16	r4, 0xffff
+ c1 1f                 ldi8	r5, 0x1f
+ f2 67                 mov32	q1, q3
+ c2 01                 ldi8	r6, 0x1
+ d7 20                 sys	draw_sprite_self_masked
+ c6 3b 37              ldi16	r6, 0x373b
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+667
+ f0 01 0c              ldi8	r1, 0xc
+ e0 17 02              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 a5                 ldi8	r5, 0xa5
+ d7 11                 sys	memset
+ c6 3b 3b              ldi16	r6, 0x3b3b
+ c3 00                 ldi8	r7, 0x0
+ c0 3c                 ldi8	r4, 0x3c
+ c5 ff ff              ldi16	r5, 0xffff
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 7c 3b              ldi16	r6, 0x3b7c
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+718
+ f0 01 0d              ldi8	r1, 0xd
+ e0 e4 01              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 3c                 ldi8	r5, 0x3c
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c0 80                 ldi8	r4, 0x80
+ c1 0a                 ldi8	r5, 0xa
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 7c 3f              ldi16	r6, 0x3f7c
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+768
+ f0 01 0e              ldi8	r1, 0xe
+ e0 b2 01              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 c3                 ldi8	r5, 0xc3
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c4 fb ff              ldi16	r4, 0xfffb
+ c1 0a                 ldi8	r5, 0xa
+ f2 67                 mov32	q1, q3
+ c2 01                 ldi8	r6, 0x1
+ d7 20                 sys	draw_sprite_self_masked
+ c6 7c 43              ldi16	r6, 0x437c
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+820
+ f0 01 0f              ldi8	r1, 0xf
+ e0 7e 01              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 69                 ldi8	r5, 0x69
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c0 0a                 ldi8	r4, 0xa
+ c5 f3 ff              ldi16	r5, 0xfff3
+ f2 67                 mov32	q1, q3
+ c2 02                 ldi8	r6, 0x2
+ d7 20                 sys	draw_sprite_self_masked
+ c6 7c 47              ldi16	r6, 0x477c
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+872
+ f0 01 10              ldi8	r1, 0x10
+ e0 4a 01              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 96                 ldi8	r5, 0x96
+ d7 11                 sys	memset
+ c6 e8 07              ldi16	r6, 0x7e8
+ c3 00                 ldi8	r7, 0x0
+ c0 0a                 ldi8	r4, 0xa
+ c1 40                 ldi8	r5, 0x40
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 7c 4b              ldi16	r6, 0x4b7c
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ f0 31 02              ldsp16	r1, [sp+0x2]
+ db 1a 01              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 5a                 ldi8	r5, 0x5a
+ d7 11                 sys	memset
+ c6 7c 4f              ldi16	r6, 0x4f7c
+ c3 00                 ldi8	r7, 0x0
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f2 67                 mov32	q1, q3
+ c2 7b                 ldi8	r6, 0x7b
+ d7 20                 sys	draw_sprite_self_masked
+ c6 7e 4f              ldi16	r6, 0x4f7e
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 06                 breq8	avm_test_main+969
+ f0 01 12              ldi8	r1, 0x12
+ e0 e9 00              jmp16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 a5                 ldi8	r5, 0xa5
+ d7 11                 sys	memset
+ c6 7e 53              ldi16	r6, 0x537e
+ c3 00                 ldi8	r7, 0x0
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f2 67                 mov32	q1, q3
+ c6 c8 01              ldi16	r6, 0x1c8
+ d7 20                 sys	draw_sprite_self_masked
+ c6 80 53              ldi16	r6, 0x5380
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ f0 31 00              ldsp16	r1, [sp+0x0]
+ db b9 00              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ a5                    xor	r5, r5
+ c6 00 04              ldi16	r6, 0x400
+ d7 11                 sys	memset
+ c6 31 35              ldi16	r6, 0x3531
+ c3 00                 ldi8	r7, 0x0
+ c4 7f ff              ldi16	r4, 0xff7f
+ c1 18                 ldi8	r5, 0x18
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 80 63              ldi16	r6, 0x6380
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ f0 31 08              ldsp16	r1, [sp+0x8]
+ db 8e 00              brne16	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ a5                    xor	r5, r5
+ c6 00 04              ldi16	r6, 0x400
+ d7 11                 sys	memset
+ c6 3b 3b              ldi16	r6, 0x3b3b
+ c3 00                 ldi8	r7, 0x0
+ c0 49                 ldi8	r4, 0x49
+ c5 c0 ff              ldi16	r5, 0xffc0
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 80 67              ldi16	r6, 0x6780
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 05                 breq8	avm_test_main+1104
+ f0 01 15              ldi8	r1, 0x15
+ d4 62                 jmp8	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 55                 ldi8	r5, 0x55
+ d7 11                 sys	memset
+ c6 3b 3b              ldi16	r6, 0x3b3b
+ c3 00                 ldi8	r7, 0x0
+ c0 49                 ldi8	r4, 0x49
+ c1 3f                 ldi8	r5, 0x3f
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 80 57              ldi16	r6, 0x5780
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ d0 05                 breq8	avm_test_main+1153
+ f0 01 16              ldi8	r1, 0x16
+ d4 31                 jmp8	avm_test_main+1202
+ f1 20                 mov	r4, r0
+ c6 00 04              ldi16	r6, 0x400
+ a5                    xor	r5, r5
+ d7 11                 sys	memset
+ f1 20                 mov	r4, r0
+ c1 aa                 ldi8	r5, 0xaa
+ d7 11                 sys	memset
+ c6 31 35              ldi16	r6, 0x3531
+ c3 00                 ldi8	r7, 0x0
+ a0                    xor	r4, r4
+ c1 04                 ldi8	r5, 0x4
+ f2 67                 mov32	q1, q3
+ aa                    xor	r6, r6
+ d7 20                 sys	draw_sprite_self_masked
+ c6 80 5b              ldi16	r6, 0x5b80
+ c3 00                 ldi8	r7, 0x0
+ f1 20                 mov	r4, r0
+ c5 00 04              ldi16	r5, 0x400
+ d7 13                 sys	memcmp_p
+ f6 2c                 tst16	r4
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ d0 0a                 breq8	avm_test_main+1209
+ f0 01 17              ldi8	r1, 0x17
+ f0 00 01              ldi8	r0, 0x1
+ f1 21                 mov	r4, r1
+ d5 09                 call8	fail_case
+ f1 20                 mov	r4, r0
+ d6 0a                 adjsp	0xa
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+
+<fail_case>:
+ d6 fe                 adjsp	-0x2
+ 0c                    mov	r7, r4
+ c6 00 01              ldi16	r6, 0x100
+ 42                    ld8u	r4, [r6]
+ f4 a4                 tst8	r4
+ d0 06                 breq8	fail_case+17
+ d7 00                 sys	debug_putc
+ f4 ae                 inc16	r6
+ d4 f5                 jmp8	fail_case+6
+ c0 3d                 ldi8	r4, 0x3d
+ d7 00                 sys	debug_putc
+ 03                    mov	r4, r7
+ fa 78                 lsr16i	r4, 0x8
+ f4 43                 stsp16	[sp+0x0], r7
+ d5 0d                 call8	test_hex8
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f1 74                 zext8	r4
+ d5 07                 call8	test_hex8
+ c0 0a                 ldi8	r4, 0xa
+ d7 00                 sys	debug_putc
+ d6 02                 adjsp	0x2
+ ef                    ret
+
+<test_hex8>:
+ b0                    push16	r0
+ 04                    mov	r5, r4
+ fa 84                 lsr16i	r5, 0x4
+ f0 00 30              ldi8	r0, 0x30
+ 0d                    mov	r7, r5
+ f9 e1                 or	r7, r0
+ c9 37                 addi.s8	r5, 0x37
+ c2 a0                 ldi8	r6, 0xa0
+ 32                    cmp	r4, r6
+ fc 2f                 cmov.ult	r5, r7
+ c2 0f                 ldi8	r6, 0xf
+ 88                    and	r6, r4
+ f9 19                 or	r0, r6
+ ce 0a                 cmpi.s8	r6, 0xa
+ ca 37                 addi.s8	r6, 0x37
+ fc 30                 cmov.ult	r6, r0
+ 01                    mov	r4, r5
+ d7 00                 sys	debug_putc
+ 02                    mov	r4, r6
+ d7 00                 sys	debug_putc
+ b8                    pop16	r0
+ ef                    ret
+
+<avm_halt>:
+ d4 fe                 jmp8	avm_halt

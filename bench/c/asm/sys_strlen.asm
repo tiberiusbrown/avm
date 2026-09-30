@@ -1,5 +1,5 @@
 
-C:/Users/Brown/Documents/GitHub/avm/build/bench/c/sys_strlen.elf:	file format elf32-avm
+sys_strlen.elf:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c

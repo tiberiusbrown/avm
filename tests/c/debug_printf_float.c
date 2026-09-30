@@ -12,20 +12,20 @@ static float float_from_bits(uint32_t bits)
     return conversion.value;
 }
 
-int avm_test_main(void)
-{
-    const float positive_infinity = float_from_bits(UINT32_C(0x7f800000));
-    const float negative_infinity = float_from_bits(UINT32_C(0xff800000));
-    const float quiet_nan = float_from_bits(UINT32_C(0x7fc00001));
-    const float negative_quiet_nan = float_from_bits(UINT32_C(0xffc00001));
-    const float maximum_finite = float_from_bits(UINT32_C(0x7f7fffff));
-    const float minimum_normal = float_from_bits(UINT32_C(0x00800000));
-    const float largest_subnormal = float_from_bits(UINT32_C(0x007fffff));
-    const float half_minimum_normal = float_from_bits(UINT32_C(0x00400000));
-    const float minimum_subnormal = float_from_bits(UINT32_C(0x00000001));
-    const float negative_zero = float_from_bits(UINT32_C(0x80000000));
-    const float general_rounds_to_negative_four =
-        float_from_bits(UINT32_C(0x38d1b469));
+#define positive_infinity float_from_bits(UINT32_C(0x7f800000))
+#define negative_infinity float_from_bits(UINT32_C(0xff800000))
+#define quiet_nan float_from_bits(UINT32_C(0x7fc00001))
+#define negative_quiet_nan float_from_bits(UINT32_C(0xffc00001))
+#define maximum_finite float_from_bits(UINT32_C(0x7f7fffff))
+#define minimum_normal float_from_bits(UINT32_C(0x00800000))
+#define largest_subnormal float_from_bits(UINT32_C(0x007fffff))
+#define half_minimum_normal float_from_bits(UINT32_C(0x00400000))
+#define minimum_subnormal float_from_bits(UINT32_C(0x00000001))
+#define negative_zero float_from_bits(UINT32_C(0x80000000))
+#define general_rounds_to_negative_four float_from_bits(UINT32_C(0x38d1b469))
+
+/* Keep each O0 frame under the AVM's 256-byte limit. */
+__attribute__((noinline)) static int print_fixed(void) {
     int failures = 0;
     int result;
 
@@ -53,6 +53,13 @@ int avm_test_main(void)
         F("decimal-ties:%.0f|%.0f\n"), 2.5f, -2.5f);
     failures |= result != 18;
 
+    return failures;
+}
+
+__attribute__((noinline)) static int print_exponent(void) {
+    int failures = 0;
+    int result;
+
     result = avm_debug_printf_P(
         F("e-basic:%e|%.0e|%#.0E|%.4E|%.10e\n"),
         123.5f, 123.5f, 123.5f, 65536.0f, 1.23456789f);
@@ -71,6 +78,13 @@ int avm_test_main(void)
         F("decimal-range:%.7e|%.7e|%.7e|%.5e\n"),
         maximum_finite, minimum_normal, largest_subnormal, minimum_subnormal);
     failures |= result != 68;
+
+    return failures;
+}
+
+__attribute__((noinline)) static int print_general(void) {
+    int failures = 0;
+    int result;
 
     result = avm_debug_printf_P(
         F("g-basic:%g|%g|%g|%g|%.4g\n"),
@@ -101,6 +115,13 @@ int avm_test_main(void)
         positive_infinity, negative_quiet_nan, quiet_nan);
     failures |= result != 54;
 
+    return failures;
+}
+
+__attribute__((noinline)) static int print_hex(void) {
+    int failures = 0;
+    int result;
+
     result = avm_debug_printf_P(
         F("a-basic:%a|%a|%a|%A|%a\n"),
         1.0f, 1.5f, 0.1f, 0.1f, maximum_finite);
@@ -128,6 +149,13 @@ int avm_test_main(void)
         largest_subnormal, maximum_finite, maximum_finite, 0.0f);
     failures |= result != 80;
 
+    return failures;
+}
+
+__attribute__((noinline)) static int print_mixed(void) {
+    int failures = 0;
+    int result;
+
     result = avm_debug_printf_P(
         F("negative-precision:%.*f|%.*g|%.*a\n"),
         -1, 1.5f, -1, 1.5f, -1, 1.5f);
@@ -138,5 +166,14 @@ int avm_test_main(void)
         3.25f, -7, 6.0f, "ok", 0.125f);
     failures |= result != 35;
 
+    return failures;
+}
+
+int avm_test_main(void) {
+    int failures = print_fixed();
+    failures |= print_exponent();
+    failures |= print_general();
+    failures |= print_hex();
+    failures |= print_mixed();
     return failures != 0;
 }

@@ -36,10 +36,22 @@ Clang's AVM resource headers continue to provide `<avm/pgmspace.h>`.
 
 ## Startup variants
 
-- `crt0.o` calls `int main(void)` and halts if it returns.
-- `crt0_test.o` calls `main`, writes `P\n` for zero or `F\n` otherwise,
-  requests `debug_break`, and halts.
-- `crt0_sketch.o` calls `setup()` once and `loop()` forever.
+- `crt0.o` runs `.init_array`, calls `int main(void)`, runs `.fini_array` in
+  reverse order, and halts if `main` returns.
+- `crt0_test.o` runs the same constructor and destructor sequence around
+  `avm_test_main`, writes `P\n` for zero or `F\n` otherwise, requests
+  `debug_break`, and halts.
+- `crt0_sketch.o` runs `.init_array`, calls `setup()` once, and calls `loop()`
+  forever. Its loop has no normal shutdown path.
+
+Clang emits nonlocal C++ global object destructors into `.fini_array` at
+compile time, with no RAM callback table. Function-local statics with
+destructors get one five-byte slot in a linker-sized RAM table; a two-byte
+next-slot pointer, a two-byte global construction counter, and their runtime
+code are linked only when such an object exists. On normal return, the CRT
+interleaves local and nonlocal destructors in reverse construction order,
+including locals constructed inside global constructors. Use
+`[[clang::no_destroy]]` when teardown is unnecessary.
 
 The loader, not `_start`, initializes `.saved` and `.data`, sets
 `SP = 0x0A00`, clears `CC`, and selects the linked entry point. AVM has no

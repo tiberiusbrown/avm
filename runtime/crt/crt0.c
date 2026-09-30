@@ -1,5 +1,7 @@
 #include <avm/runtime.h>
 
+#include "init_fini.h"
+
 extern int main(void);
 
 /*
@@ -9,6 +11,8 @@ extern int main(void);
  */
 __attribute__((noreturn, used, section(".text._start")))
 void _start(void) {
+    avm_run_constructors();
     (void)main();
+    avm_run_destructors();
     avm_halt();
 }

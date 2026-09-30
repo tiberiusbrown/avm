@@ -5275,11 +5275,25 @@ The initial C++ environment supports:
 - Classes and member functions.
 - Templates.
 - Virtual dispatch.
-- Static constructors and destructors.
+- Nonlocal static constructors and destructors.
+- Function-local static constructors and destructors.
 - Placement `new`.
 - Function overloading.
 
 Exceptions, RTTI, general dynamic allocation, and thread-local storage are disabled.
+
+Startup runs `.init_array` entries before `main()` or sketch `setup()`.
+Clang emits nonlocal global object destructors into `.fini_array` at compile
+time, without a RAM callback table. When `main()` returns, `.fini_array`
+entries run in reverse order. Function-local static objects with destructors
+register only after construction; the linker reserves a five-byte table slot
+per such object, plus a two-byte next-slot pointer and a two-byte global
+construction counter. These preserve reverse construction order across local
+and nonlocal objects. The registry code and RAM are linked only when needed.
+The sketch loop does not have a normal shutdown path.
+Custom linker scripts using local static destructors must place
+`.data.avm_local_dtor_slot.*` contiguously in `.data` and define
+`__avm_local_dtor_slots_start` and `__avm_local_dtor_slots_end` around them.
 
 Persistent AS0 global variables are placed in `.saved` or `.saved.*`. Other
 AS0 global objects are placed in `.data` or `.data.*`, including ordinary

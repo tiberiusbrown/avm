@@ -36,4 +36,5 @@ Do not perform MSVC environment setup on non-Windows systems, for non-MSVC compi
 
 Run the tests while developing.
 If any modifications were made to code generation, run the benchmarks after everything is finished.
-Retain the test and benchmark disassemblies -- they are intended to be committed as well.
+Retain benchmark disassemblies -- they are intended to be committed as well.
+C and C++ test disassemblies are not generated or checked into the repository.

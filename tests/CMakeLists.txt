@@ -1,8 +1,6 @@
 set(AVM_ASM_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/asm")
 set(AVM_C_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/c")
 set(AVM_CXX_TEST_DIR "${CMAKE_CURRENT_SOURCE_DIR}/cpp")
-set(AVM_C_TEST_DISASSEMBLY_DIR "${AVM_C_TEST_DIR}/asm")
-set(AVM_CXX_TEST_DISASSEMBLY_DIR "${AVM_CXX_TEST_DIR}/asm")
 set(AVM_TEST_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/avm_tests.cpp")
 set(AVM_ASM_TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/asm")
 set(AVM_C_TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/c")
@@ -25,7 +23,6 @@ file(GLOB AVM_CXX_TEST_SOURCES CONFIGURE_DEPENDS
     "${AVM_CXX_TEST_DIR}/*.cpp")
 
 set(AVM_TEST_IMAGE_OUTPUTS)
-set(AVM_TEST_DISASSEMBLY_OUTPUTS)
 
 foreach(AVM_TEST_ASM IN LISTS AVM_ASM_TEST_SOURCES)
     get_filename_component(AVM_TEST_NAME "${AVM_TEST_ASM}" NAME_WE)
@@ -56,20 +53,14 @@ foreach(AVM_TEST_LANGUAGE C CXX)
     if(AVM_TEST_LANGUAGE STREQUAL "C")
         set(AVM_COMPILED_TEST_SOURCES ${AVM_C_TEST_SOURCES})
         set(AVM_COMPILED_TEST_BINARY_DIR "${AVM_C_TEST_BINARY_DIR}")
-        set(AVM_COMPILED_TEST_DISASSEMBLY_DIR
-            "${AVM_C_TEST_DISASSEMBLY_DIR}")
     else()
         set(AVM_COMPILED_TEST_SOURCES ${AVM_CXX_TEST_SOURCES})
         set(AVM_COMPILED_TEST_BINARY_DIR "${AVM_CXX_TEST_BINARY_DIR}")
-        set(AVM_COMPILED_TEST_DISASSEMBLY_DIR
-            "${AVM_CXX_TEST_DISASSEMBLY_DIR}")
     endif()
 
     foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_TEST_OPT_LEVELS)
       set(AVM_OPT_TEST_BINARY_DIR
           "${AVM_COMPILED_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}")
-      set(AVM_OPT_TEST_DISASSEMBLY_DIR
-          "${AVM_COMPILED_TEST_DISASSEMBLY_DIR}/${AVM_TEST_OPT_LEVEL}")
       foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_COMPILED_TEST_SOURCES)
         get_filename_component(AVM_TEST_NAME
             "${AVM_TEST_SOURCE_FILE}" NAME_WE)
@@ -79,8 +70,6 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.elf")
         set(AVM_TEST_IMAGE
             "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.bin")
-        set(AVM_TEST_DISASSEMBLY
-            "${AVM_OPT_TEST_DISASSEMBLY_DIR}/${AVM_TEST_NAME}.asm")
         set(test_objects "${AVM_TEST_OBJECT}")
         set(test_support_sources)
         set(test_source_dependencies)
@@ -143,23 +132,16 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             LIBRARIES
                 "${AVM_SYSROOT_DIR}/lib/libavm.a"
                 "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
-            DISASSEMBLY "${AVM_TEST_DISASSEMBLY}"
             GC_SECTIONS
             LINK_OPTIONS ${test_link_options}
             DEPENDS avm_sysroot
         )
         list(APPEND AVM_TEST_IMAGE_OUTPUTS "${AVM_TEST_IMAGE}")
-        list(APPEND AVM_TEST_DISASSEMBLY_OUTPUTS
-            "${AVM_TEST_DISASSEMBLY}")
       endforeach()
     endforeach()
 endforeach()
 
-add_custom_target(avm_test_images
-    DEPENDS
-        ${AVM_TEST_IMAGE_OUTPUTS}
-        ${AVM_TEST_DISASSEMBLY_OUTPUTS}
-)
+add_custom_target(avm_test_images DEPENDS ${AVM_TEST_IMAGE_OUTPUTS})
 
 # The runner discovers ASM, C, and C++ sources, maps each source to its adjacent
 # name_output.txt file and corresponding generated image, loads the interpreter

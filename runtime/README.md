@@ -22,10 +22,12 @@ cmake --build build --config RelWithDebInfo --target avm_sdk
 cmake --install build --config RelWithDebInfo --component avm-sdk --prefix <sdk>
 ```
 
-The build-tree wrapper is `build/llvm-build/bin/avm-clang.cmd` on Windows and
-`build/llvm-build/bin/avm-clang` elsewhere. The installed SDK is relocatable,
-with the wrapper in `<sdk>/bin` and the runtime in `<sdk>/sysroot`. The wrapper
-requires Python 3 on the host.
+The build-tree driver is `build/llvm-build/bin/avm-clang` (`.exe` on Windows).
+The installed SDK is relocatable, with native tools in `<sdk>/bin` and the
+runtime in `<sdk>/sysroot`; no Python installation is needed. The SDK also
+provides `avm-ld`, `avm-ar`, `avm-mc`, `avm-objdump`, `avm-readobj`, and
+`avm-image` beside the LLVM-named tools. `avm-mc` defaults to the AVM triple;
+an explicit `-triple` takes precedence.
 
 The staged tree is:
 
@@ -88,15 +90,29 @@ and a development image:
 # writes hello.elf and hello.bin
 ```
 
-On Windows, use `avm-clang.cmd`. The wrapper fixes the target to
-`avm-unknown-arduboyfx`, uses the SDK headers, `lld -flavor gnu`, `crt0.o`,
-`libavm.a`, `libavm-builtins.a`, and `llvm-avm-image --development`. It accepts
-common Clang compile options, `-c`/`-S`/`-E` for compile-only work, and
-`-L`, `-l`, `-Wl,`, and `-Xlinker` for linking. Use
+The native driver defaults to `avm-unknown-arduboyfx`, discovers the build or
+installed sysroot relative to its executable, and uses freestanding AVM
+compile defaults. For C++, exceptions, RTTI, thread-safe statics, and
+`__cxa_atexit` are disabled by default. A link adds `crt0.o`, `libavm.a`,
+`libavm-builtins.a`, and `--gc-sections`, then runs `llvm-avm-image
+--development`. Explicit Clang options can override compile defaults.
+`--sysroot=PATH` selects another AVM sysroot. Standard `-c`, `-S`, `-E`,
+`-fsyntax-only`, `-M`, and `-MM` actions produce no image.
+
+The same driver also supports a separate compile and link:
+
+```sh
+<sdk>/bin/avm-clang -c hello.cpp -o hello.o
+<sdk>/bin/avm-clang hello.o -o hello.elf
+<sdk>/bin/avm-objdump -d hello.elf
+```
+
+Use `-L`, `-l`, `-Wl,`, and `-Xlinker` for linking. Use
 `--avm-startup=crt0_sketch.o` for `setup()`/`loop()` programs,
 `--avm-entry=SYMBOL` for a custom entry, `--avm-image=PATH` to choose the
 image path, or `--avm-no-image` to keep only the ELF. `-nostartfiles` and
-`-nodefaultlibs` disable the respective defaults. C++ entry functions such as
+`-nodefaultlibs` disable the respective defaults; `-nostdlib` disables both.
+C++ entry functions such as
 `main`, `setup`, and `loop` must use `extern "C"` linkage.
 
 The equivalent manual commands are:
@@ -110,8 +126,7 @@ The equivalent manual commands are:
   -c main.c \
   -o main.o
 
-<build>/llvm-build/bin/ld.lld \
-  -flavor gnu \
+<build>/llvm-build/bin/avm-ld \
   --entry=_start \
   <build>/avm-sysroot/lib/crt0.o \
   main.o \
@@ -120,7 +135,7 @@ The equivalent manual commands are:
   -lavm-builtins \
   -o app.elf
 
-<build>/llvm-build/bin/llvm-avm-image app.elf -o app.bin
+<build>/llvm-build/bin/avm-image --development app.elf -o app.bin
 ```
 
 Keep application objects before the archives. Static archive resolution uses

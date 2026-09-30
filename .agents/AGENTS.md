@@ -23,5 +23,6 @@ Do not perform MSVC environment setup on non-Windows systems, for non-MSVC compi
 
 ## Tests
 
-Run the tests while developing. Run the benchmarks after everything is finished.
+Run the tests while developing.
+If any modifications were made to code generation, run the benchmarks after everything is finished.
 Retain the test and benchmark disassemblies -- they are intended to be committed as well.

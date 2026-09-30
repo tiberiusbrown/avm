@@ -47,21 +47,32 @@ set(AVM_INTERPRETER_HEX
 
 add_subdirectory(runtime)
 
-# Keep the wrapper beside the build-tree Clang binary. It finds the staged
-# sysroot relative to that location and uses the same layout after install.
+# Each SDK command is a native executable. Keep the AVM names beside the LLVM
+# tools in the build tree, and install both names for direct LLVM access.
 set(AVM_SDK_BUILD_BIN "${CMAKE_BINARY_DIR}/llvm-build/bin")
-configure_file(tools/avm-clang.py
-    "${AVM_SDK_BUILD_BIN}/avm-clang.py" COPYONLY)
-if(WIN32)
-    configure_file(tools/avm-clang.cmd
-        "${AVM_SDK_BUILD_BIN}/avm-clang.cmd" COPYONLY)
-else()
-    configure_file(tools/avm-clang
-        "${AVM_SDK_BUILD_BIN}/avm-clang" COPYONLY)
-    file(CHMOD "${AVM_SDK_BUILD_BIN}/avm-clang"
-        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
-                    GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-endif()
+file(REMOVE "${AVM_SDK_BUILD_BIN}/avm-clang.py"
+            "${AVM_SDK_BUILD_BIN}/avm-clang.cmd")
+set(AVM_SDK_ALIAS_OUTPUTS)
+foreach(AVM_SDK_ALIAS IN ITEMS
+        "clang|clang" "ld|lld" "ar|llvm-ar" "mc|llvm-mc"
+        "objdump|llvm-objdump" "readobj|llvm-readobj"
+        "image|llvm-avm-image")
+    string(REPLACE "|" ";" AVM_SDK_ALIAS_FIELDS "${AVM_SDK_ALIAS}")
+    list(GET AVM_SDK_ALIAS_FIELDS 0 AVM_SDK_ALIAS_NAME)
+    list(GET AVM_SDK_ALIAS_FIELDS 1 AVM_SDK_ALIAS_TARGET)
+    set(AVM_SDK_ALIAS_OUTPUT
+        "${AVM_SDK_BUILD_BIN}/avm-${AVM_SDK_ALIAS_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
+    add_custom_command(
+        OUTPUT "${AVM_SDK_ALIAS_OUTPUT}"
+        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "$<TARGET_FILE:${AVM_SDK_ALIAS_TARGET}>"
+                "${AVM_SDK_ALIAS_OUTPUT}"
+        DEPENDS ${AVM_SDK_ALIAS_TARGET}
+        VERBATIM)
+    list(APPEND AVM_SDK_ALIAS_OUTPUTS "${AVM_SDK_ALIAS_OUTPUT}")
+endforeach()
+add_custom_target(avm_sdk_tools DEPENDS ${AVM_SDK_ALIAS_OUTPUTS})
+add_dependencies(avm_toolchain avm_sdk_tools)
 
 install(PROGRAMS
     "$<TARGET_FILE:clang>"
@@ -72,12 +83,8 @@ install(PROGRAMS
     "$<TARGET_FILE:llvm-objdump>"
     "$<TARGET_FILE:llvm-readobj>"
     DESTINATION bin COMPONENT avm-sdk)
-install(FILES tools/avm-clang.py DESTINATION bin COMPONENT avm-sdk)
-if(WIN32)
-    install(FILES tools/avm-clang.cmd DESTINATION bin COMPONENT avm-sdk)
-else()
-    install(PROGRAMS tools/avm-clang DESTINATION bin COMPONENT avm-sdk)
-endif()
+install(PROGRAMS ${AVM_SDK_ALIAS_OUTPUTS}
+    DESTINATION bin COMPONENT avm-sdk)
 install(DIRECTORY "${CMAKE_BINARY_DIR}/llvm-build/lib/clang/"
     DESTINATION lib/clang COMPONENT avm-sdk)
 install(DIRECTORY "${AVM_SYSROOT_DIR}/"

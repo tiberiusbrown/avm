@@ -7,7 +7,6 @@ set(AVM_RUNTIME_MIR_BUILD_DIR "${AVM_RUNTIME_BUILD_DIR}/mir")
 set(RUNTIME_SOURCES
     avm
     font_5x7
-    integer
     local_dtor
     math
     pgmspace
@@ -94,14 +93,22 @@ avm_add_archive(
     OBJECTS ${AVM_RUNTIME_LIBRARY_OBJECTS}
 )
 
-# Keep compiler helper routines in a separate archive. The initial object is
-# intentionally empty; future __avm_* arithmetic helpers can be added here
-# without changing application link order.
-set(AVM_BUILTINS_EMPTY_OBJECT
-    "${AVM_RUNTIME_OBJECT_DIR}/builtins_empty.o")
+# Keep compiler helper routines together in the final archive so wide helpers
+# can call the 32-bit routines without depending on archive rescanning.
+set(AVM_BUILTINS_INTEGER_OBJECT
+    "${AVM_RUNTIME_OBJECT_DIR}/builtins_integer.o")
 avm_add_object(
-    OUTPUT "${AVM_BUILTINS_EMPTY_OBJECT}"
-    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/empty.c"
+    OUTPUT "${AVM_BUILTINS_INTEGER_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/integer.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+set(AVM_BUILTINS_WIDE_INTEGER_OBJECT
+    "${AVM_RUNTIME_OBJECT_DIR}/builtins_wide_integer.o")
+avm_add_object(
+    OUTPUT "${AVM_BUILTINS_WIDE_INTEGER_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/wide_integer.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     DEPENDS ${AVM_RUNTIME_HEADERS}
@@ -110,7 +117,9 @@ avm_add_object(
 set(AVM_BUILTINS_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm-builtins.a")
 avm_add_archive(
     OUTPUT "${AVM_BUILTINS_LIBRARY}"
-    OBJECTS "${AVM_BUILTINS_EMPTY_OBJECT}"
+    OBJECTS
+        "${AVM_BUILTINS_INTEGER_OBJECT}"
+        "${AVM_BUILTINS_WIDE_INTEGER_OBJECT}"
 )
 
 # Diagnostic-only duplicate compilations. Preserve each source's relative path

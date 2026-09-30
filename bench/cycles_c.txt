@@ -49,3 +49,6 @@
        37720   tilessprite16.c
        34526   tilessprite16_cached.c
        76562   tilessprite_cached.c
+     3221725   wide_divmod.c
+      877994   wide_mul.c
+      543115   wide_shifts.c

@@ -8,17 +8,17 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 fixed_point.c
 00000100 l     O .data	00000100 bodies
 00000200 l     O .data	00000002 fixed_point_result
-00000000 l    df *ABS*	00000000 integer.c
 00000000 l    df *ABS*	00000000 runtime.c
+00000000 l    df *ABS*	00000000 integer.c
 00000560 l       .init_array	00000000 .hidden __init_array_end
 00000560 l       .init_array	00000000 .hidden __init_array_start
 00000560 l       .fini_array	00000000 .hidden __fini_array_start
 00000560 l       .fini_array	00000000 .hidden __fini_array_end
 00000300 g     F .text	0000001e _start
 000003d7 g     F .text	000000d6 avm_test_main
-0000055e g     F .text	00000002 avm_halt
+000004ad g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
-000004ad g     F .text	000000b1 __avm_mulsi3
+000004af g     F .text	000000b1 __avm_mulsi3
 
 Disassembly of section .text:
 
@@ -36,7 +36,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 40 02              call16	avm_halt
+ e1 8f 01              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -202,7 +202,7 @@ Disassembly of section .text:
  f1 2b                 mov	r6, r3
  f1 2f                 mov	r7, r3
  fa ef                 asr16i	r7, 0xf
- d5 3e                 call8	__avm_mulsi3
+ d5 40                 call8	__avm_mulsi3
  c2 80                 ldi8	r6, 0x80
  af                    xor	r7, r7
  f7 6e                 add32	q3, q2
@@ -239,6 +239,9 @@ Disassembly of section .text:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
+
+<avm_halt>:
+ d4 fe                 jmp8	avm_halt
 
 <__avm_mulsi3>:
  b1                    push16	r1
@@ -340,6 +343,3 @@ Disassembly of section .text:
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
-
-<avm_halt>:
- d4 fe                 jmp8	avm_halt

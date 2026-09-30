@@ -100,6 +100,14 @@ Define `AVM_MATH_NO_BUILTIN_MACROS` or
 `AVM_STRING_NO_BUILTIN_MACROS` before the corresponding include to disable the
 call macros for a translation unit.
 
-`libavm-builtins.a` initially contains only an empty placeholder object. Add
-wide integer, atomic, or other LLVM-emitted helper implementations there rather
-than mixing them into the public runtime library.
+`libavm-builtins.a` contains the compiler's 32-bit and 64-bit integer
+multiplication, division, remainder, and shift helpers. Keep this archive after
+application objects and `libavm.a` in the link command so references from both
+are resolved.
+
+The 64-bit division helpers use the same zero-divisor convention as their
+32-bit counterparts: unsigned quotient is `UINT64_MAX`, signed quotient is
+`-1`, and remainder is the numerator. Direct shift-helper calls with counts of
+64 or more return zero for left and logical-right shifts and the sign fill for
+arithmetic-right shifts. Source-language division by zero and out-of-range
+shift counts remain undefined behavior.

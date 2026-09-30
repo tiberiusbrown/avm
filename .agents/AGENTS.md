@@ -1,3 +1,7 @@
+## Git changes
+
+Never create Git commits or push changes in this repository or its submodules. Leave all code and test changes uncommitted. A request to update CI, run CI, or fix tests does not authorize committing or pushing. If remote CI requires a push, report that limitation to the user instead of pushing.
+
 ## Development
 
 When developing code generation functionality in the LLVM AVM backend, refer to

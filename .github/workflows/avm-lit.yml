@@ -1,0 +1,63 @@
+name: AVM tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  avm-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build gcc-avr binutils-avr avr-libc libpulse-dev libgl1-mesa-dev
+
+      - name: Configure AVM
+        run: >-
+          cmake -S . -B build/ci -G Ninja
+          -DCMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: Build lit dependencies
+        run: >-
+          cmake --build build/ci --parallel 4 --target
+          llvm-test-depends clang-test-depends lld-test-depends
+
+      - name: Run avm_tests
+        id: avm
+        continue-on-error: true
+        run: cmake --build build/ci --parallel 4 --target avm_tests_run
+
+      - name: LLVM AVM tests
+        id: llvm
+        continue-on-error: true
+        run: build/ci/llvm-build/bin/llvm-lit -sv --filter=AVM build/ci/llvm-build/test
+
+      - name: Clang AVM tests
+        id: clang
+        continue-on-error: true
+        run: build/ci/llvm-build/bin/llvm-lit -sv --filter=AVM build/ci/llvm-build/tools/clang/test
+
+      - name: LLD AVM tests
+        id: lld
+        continue-on-error: true
+        run: build/ci/llvm-build/bin/llvm-lit -sv --filter=AVM build/ci/llvm-build/tools/lld/test
+
+      - name: Check suite results
+        if: always()
+        env:
+          AVM_RESULT: ${{ steps.avm.outcome }}
+          LLVM_RESULT: ${{ steps.llvm.outcome }}
+          CLANG_RESULT: ${{ steps.clang.outcome }}
+          LLD_RESULT: ${{ steps.lld.outcome }}
+        run: |
+          test "$AVM_RESULT" = success
+          test "$LLVM_RESULT" = success
+          test "$CLANG_RESULT" = success
+          test "$LLD_RESULT" = success

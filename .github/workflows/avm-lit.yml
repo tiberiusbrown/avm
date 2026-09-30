@@ -18,9 +18,10 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            ninja-build gcc-avr binutils-avr avr-libc \
-            libpulse-dev libgl1-mesa-dev \
-            libx11-dev libxext-dev
+            ninja-build pkg-config gcc-avr binutils-avr avr-libc \
+            libasound2-dev libpulse-dev libgl1-mesa-dev \
+            libx11-dev libxext-dev libxcursor-dev libxi-dev libxfixes-dev \
+            libxrandr-dev libxss-dev libxtst-dev libxkbcommon-dev
 
       - name: Configure AVM
         run: >-

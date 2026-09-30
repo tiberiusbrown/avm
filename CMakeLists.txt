@@ -79,8 +79,19 @@ add_dependencies(avm_toolchain avm_sdk_tools)
 
 install(PROGRAMS ${AVM_SDK_ALIAS_OUTPUTS}
     DESTINATION bin COMPONENT avm-sdk)
-install(DIRECTORY "${CMAKE_BINARY_DIR}/llvm-build/lib/clang/"
-    DESTINATION lib/clang COMPONENT avm-sdk)
+# Only Clang's target-independent builtin headers belong in the AVM SDK.
+# Get the list and install destination from the Clang header build so they
+# track LLVM updates without copying every architecture's resource headers.
+get_property(AVM_SDK_CLANG_CORE_HEADERS GLOBAL PROPERTY AVM_SDK_CLANG_CORE_HEADERS)
+get_property(AVM_SDK_CLANG_HEADER_DIR GLOBAL PROPERTY AVM_SDK_CLANG_HEADER_DIR)
+if(NOT AVM_SDK_CLANG_CORE_HEADERS OR NOT AVM_SDK_CLANG_HEADER_DIR)
+    message(FATAL_ERROR "Clang did not provide its core resource headers")
+endif()
+list(REMOVE_ITEM AVM_SDK_CLANG_CORE_HEADERS module.modulemap)
+list(TRANSFORM AVM_SDK_CLANG_CORE_HEADERS PREPEND
+    "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/clang/lib/Headers/")
+install(FILES ${AVM_SDK_CLANG_CORE_HEADERS}
+    DESTINATION "${AVM_SDK_CLANG_HEADER_DIR}" COMPONENT avm-sdk)
 install(DIRECTORY "${AVM_SYSROOT_DIR}/"
     DESTINATION sysroot COMPONENT avm-sdk
     PATTERN ".runtime-stamp" EXCLUDE)

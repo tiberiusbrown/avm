@@ -38,6 +38,7 @@ The staged tree is:
     math.h
     new
     string.h
+    avm/pgmspace.h
     avm/runtime.h
   lib/
     crt0.o
@@ -47,8 +48,9 @@ The staged tree is:
     libavm-builtins.a
 ```
 
-Clang's AVM resource headers continue to provide `<avm/pgmspace.h>`.
-`libavm.a` supplies the addressable `memcpy_P` wrapper declared there.
+The runtime sysroot provides `<avm/pgmspace.h>` and the text API in `<avm.h>`.
+`libavm.a` supplies the addressable `memcpy_P` wrapper declared in
+`<avm/pgmspace.h>`.
 `<new>` provides placement `new` and `new[]` for caller-owned storage, with
 their matching placement `delete` overloads. The runtime provides no heap
 allocator or ordinary `new` operator.

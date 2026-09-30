@@ -23,6 +23,11 @@ set(AVM_SYSROOT_LIB_DIR "${AVM_SYSROOT_DIR}/lib")
 
 file(GLOB_RECURSE AVM_RUNTIME_HEADERS CONFIGURE_DEPENDS
     "${AVM_RUNTIME_INCLUDE_DIR}/*")
+set(AVM_RUNTIME_HEADER_MANIFEST
+    "${CMAKE_CURRENT_BINARY_DIR}/runtime-headers.txt")
+string(JOIN "\n" AVM_RUNTIME_HEADER_PATHS ${AVM_RUNTIME_HEADERS})
+file(GENERATE OUTPUT "${AVM_RUNTIME_HEADER_MANIFEST}"
+    CONTENT "${AVM_RUNTIME_HEADER_PATHS}\n")
 
 # Capture pass-by-pass LLVM IR/MIR for every C and C++ translation unit in the
 # runtime. Assembly sources are excluded because they do not pass through LLVM
@@ -258,6 +263,7 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E touch "${AVM_SYSROOT_STAMP}"
     DEPENDS
         ${AVM_RUNTIME_HEADERS}
+        "${AVM_RUNTIME_HEADER_MANIFEST}"
         ${AVM_SYSROOT_STAGE_DEPENDS}
     COMMENT "Staging the AVM runtime sysroot"
     VERBATIM

@@ -5,11 +5,33 @@ project(avm LANGUAGES C CXX ASM)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(AvmBuild)
 
+# The LLVM toolchain also builds when the optional Ardens submodule is absent.
+# Keep the Ardens-backed LLDB integration, emulator tests, and benchmarks
+# together so a toolchain-only configure has no Ardens dependency.
+set(AVM_ARDENS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps/Ardens")
+if(EXISTS "${AVM_ARDENS_SOURCE_DIR}/CMakeLists.txt")
+    set(AVM_WITH_ARDENS_DEFAULT ON)
+else()
+    set(AVM_WITH_ARDENS_DEFAULT OFF)
+endif()
+option(AVM_WITH_ARDENS
+    "Build the Ardens-backed LLDB debugger, tests, and benchmarks"
+    ${AVM_WITH_ARDENS_DEFAULT})
+if(AVM_WITH_ARDENS AND NOT EXISTS "${AVM_ARDENS_SOURCE_DIR}/CMakeLists.txt")
+    message(FATAL_ERROR
+        "AVM_WITH_ARDENS=ON requires the deps/Ardens submodule. "
+        "Initialize it or configure with -DAVM_WITH_ARDENS=OFF.")
+endif()
+
 # Build the AVM Clang/LLVM/LLD toolchain in-tree. The target includes a
 # SelectionDAG code generator in addition to its MC and linker components.
 set(LLVM_TARGETS_TO_BUILD              ""          CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM"       CACHE STRING "" FORCE)
-set(LLVM_ENABLE_PROJECTS               "clang;lld;lldb" CACHE STRING "" FORCE)
+set(AVM_LLVM_PROJECTS clang lld)
+if(AVM_WITH_ARDENS)
+    list(APPEND AVM_LLVM_PROJECTS lldb)
+endif()
+set(LLVM_ENABLE_PROJECTS "${AVM_LLVM_PROJECTS}" CACHE STRING "" FORCE)
 set(LLD_BUILD_ELF_ONLY                  ON          CACHE BOOL   "" FORCE)
 
 # Do not place every LLVM command-line tool in the default build. Explicitly
@@ -23,16 +45,42 @@ set(LLVM_BUILD_TESTS                   OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_EXAMPLES                OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_BENCHMARKS              OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_DOCS                    OFF         CACHE BOOL   "" FORCE)
-# The SDK debugger uses LLDB's native command interpreter and C++ API.  The
-# optional bindings and terminal UI dependencies are unnecessary for it.
-set(LLDB_ENABLE_PYTHON OFF CACHE STRING "" FORCE)
-set(LLDB_ENABLE_LUA OFF CACHE STRING "" FORCE)
-set(LLDB_ENABLE_SWIG OFF CACHE STRING "" FORCE)
-set(LLDB_ENABLE_CURSES OFF CACHE STRING "" FORCE)
-set(LLDB_ENABLE_LIBEDIT OFF CACHE STRING "" FORCE)
-set(LLDB_ENABLE_LZMA OFF CACHE STRING "" FORCE)
-set(LLDB_ENABLE_LIBXML2 OFF CACHE STRING "" FORCE)
-set(LLDB_ENABLE_PROTOCOL_SERVERS OFF CACHE BOOL "" FORCE)
+if(AVM_WITH_ARDENS)
+    # The SDK debugger uses LLDB's native command interpreter and C++ API.
+    # Optional bindings and terminal UI dependencies are unnecessary for it.
+    set(LLDB_ENABLE_PYTHON OFF CACHE STRING "" FORCE)
+    set(LLDB_ENABLE_LUA OFF CACHE STRING "" FORCE)
+    set(LLDB_ENABLE_SWIG OFF CACHE STRING "" FORCE)
+    set(LLDB_ENABLE_CURSES OFF CACHE STRING "" FORCE)
+    set(LLDB_ENABLE_LIBEDIT OFF CACHE STRING "" FORCE)
+    set(LLDB_ENABLE_LZMA OFF CACHE STRING "" FORCE)
+    set(LLDB_ENABLE_LIBXML2 OFF CACHE STRING "" FORCE)
+    set(LLDB_ENABLE_PROTOCOL_SERVERS OFF CACHE BOOL "" FORCE)
+
+    # Define the adapter before entering LLVM so LLDB can discover it as an
+    # ordinary CMake target. Ardens's own LLVM loader remains disabled.
+    set(ARDENS_LLVM      OFF CACHE BOOL "" FORCE)
+    set(ARDENS_DEBUGGER  ON  CACHE BOOL "" FORCE)
+    set(ARDENS_PLAYER    OFF CACHE BOOL "" FORCE)
+    set(ARDENS_FLASHCART OFF CACHE BOOL "" FORCE)
+    set(ARDENS_LIB       OFF CACHE BOOL "" FORCE)
+    set(ARDENS_LIBRETRO  OFF CACHE BOOL "" FORCE)
+    set(ARDENS_DIST      OFF CACHE BOOL "" FORCE)
+    set(ARDENS_BENCHMARK OFF CACHE BOOL "" FORCE)
+    set(ARDENS_CYCLES    OFF CACHE BOOL "" FORCE)
+    set(ARDENS_SDL       ON  CACHE BOOL "" FORCE)
+    add_subdirectory("${AVM_ARDENS_SOURCE_DIR}" ardens-build EXCLUDE_FROM_ALL)
+    add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
+
+    add_library(avm_debug_emulator STATIC debug/AvmEmulator.cpp)
+    target_compile_features(avm_debug_emulator PUBLIC cxx_std_17)
+    target_include_directories(avm_debug_emulator
+        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/debug"
+        PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/llvm/include"
+                "${CMAKE_BINARY_DIR}/llvm-build/include")
+    target_link_libraries(avm_debug_emulator
+        PUBLIC ardensdebuggerlib LLVMSupport)
+endif()
 set(BUG_REPORT_URL "https://github.com/tiberiusbrown/llvm-project/issues/" CACHE STRING "" FORCE)
 
 add_subdirectory(deps/llvm-project/llvm llvm-build)
@@ -106,27 +154,12 @@ install(DIRECTORY "${AVM_SYSROOT_DIR}/"
     DESTINATION sysroot COMPONENT avm-sdk
     PATTERN ".runtime-stamp" EXCLUDE)
 
-# Build only the Ardens debugger application. Keep Ardens's bundled LLVM
-# integration disabled so it does not download or build its own LLVM tree.
-set(ARDENS_LLVM      OFF CACHE BOOL "" FORCE)
-set(ARDENS_DEBUGGER  ON  CACHE BOOL "" FORCE)
-set(ARDENS_PLAYER    OFF CACHE BOOL "" FORCE)
-set(ARDENS_FLASHCART OFF CACHE BOOL "" FORCE)
-set(ARDENS_LIB       OFF CACHE BOOL "" FORCE)
-set(ARDENS_LIBRETRO  OFF CACHE BOOL "" FORCE)
-set(ARDENS_DIST      OFF CACHE BOOL "" FORCE)
-set(ARDENS_BENCHMARK OFF CACHE BOOL "" FORCE)
-set(ARDENS_CYCLES    OFF CACHE BOOL "" FORCE)
-set(ARDENS_SDL       ON  CACHE BOOL "" FORCE)
-
-# EXCLUDE_FROM_ALL prevents Ardens's unconditional integration_tests and
-# library targets from entering the parent project's default build. The custom
-# ALL target pulls in only the debugger and the libraries it requires.
-add_subdirectory(deps/Ardens ardens-build EXCLUDE_FROM_ALL)
-add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
-
 add_subdirectory(interp)
-add_subdirectory(debug)
+if(AVM_WITH_ARDENS)
+    add_subdirectory(debug)
+endif()
 add_subdirectory(projects)
-add_subdirectory(tests)
-add_subdirectory(bench)
+if(AVM_WITH_ARDENS)
+    add_subdirectory(tests)
+    add_subdirectory(bench)
+endif()

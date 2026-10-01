@@ -10,6 +10,15 @@ ABI and the three-byte DWARF address representation are specified in
 From this checkout, build with `cmake --build build --config RelWithDebInfo
 --target avm_toolchain --parallel`. To install the SDK, use `cmake --install
 build --config RelWithDebInfo --component avm-sdk --prefix <directory>`.
+When configuring the checkout, `AVM_WITH_ARDENS` defaults to ON if the
+`deps/Ardens` submodule is present and OFF otherwise. Use
+`cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo
+-DAVM_WITH_ARDENS=OFF` to build the AVM LLVM, Clang, and LLD toolchain
+without Ardens. This configuration omits LLDB, `avm-lldb`, emulator tests,
+and benchmarks. Set `AVM_WITH_ARDENS=ON` and initialize `deps/Ardens` to
+build the debugger; Ardens's own LLVM integration stays disabled.
+An independent `llvm-project` build can enable LLDB, but it omits the AVM
+process plugin unless the parent build supplies `avm_debug_emulator`.
 The installed `bin/avm-lldb`, `bin/avm-image`, `bin/avm/interp.hex`, and
 `bin/avm/interp-boundary.json` must remain together. `AVM_LLDB_IMAGE_TOOL`,
 `AVM_LLDB_INTERP`, and `AVM_LLDB_BOUNDARY` may override the discovered paths

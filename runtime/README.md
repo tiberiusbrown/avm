@@ -140,6 +140,13 @@ The equivalent manual commands are:
 <build>/llvm-build/bin/avm-image --development app.elf -o app.bin
 ```
 
+To create an Arduboy FX package, use `avm-image app.elf -o app.arduboy`.
+It includes the SDK's `bin/avm/interp.hex`, `fxdata.bin`, and an erased
+`fxsave.bin` when the program has saved bytes. Optional `--title`,
+`--description`, `--author`, `--genre`, and
+`--game-version` flags set the package metadata; `--interpreter` overrides the
+bundled HEX.
+
 Keep application objects before the archives. Static archive resolution uses
 references from objects already seen by the linker.
 

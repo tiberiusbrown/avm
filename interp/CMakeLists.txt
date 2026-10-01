@@ -50,6 +50,20 @@ add_custom_target(avm_interpreter
     DEPENDS ${AVM_INTERPRETER_OUTPUTS}
 )
 
+set(AVM_SDK_INTERPRETER_HEX "${AVM_SDK_BUILD_BIN}/avm/interp.hex")
+add_custom_command(
+    OUTPUT "${AVM_SDK_INTERPRETER_HEX}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_SDK_BUILD_BIN}/avm"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+            "${AVM_INTERPRETER_HEX}" "${AVM_SDK_INTERPRETER_HEX}"
+    DEPENDS avm_interpreter
+    VERBATIM)
+add_custom_target(avm_interpreter_sdk DEPENDS "${AVM_SDK_INTERPRETER_HEX}")
+add_dependencies(avm_toolchain avm_interpreter_sdk)
+add_dependencies(avm_sdk_tools avm_interpreter_sdk)
+install(FILES "${AVM_SDK_INTERPRETER_HEX}"
+    DESTINATION bin/avm COMPONENT avm-sdk)
+
 set(AVM_INTERPRETER_BOUNDARY_METADATA
     "${CMAKE_CURRENT_BINARY_DIR}/interp-boundary.json"
     PARENT_SCOPE)

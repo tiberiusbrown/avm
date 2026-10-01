@@ -6,7 +6,7 @@ For source-level cycle profiles and cross-build comparisons, see
 The SDK's `bin/avm-lldb` opens an AVM ELF file as the symbol and DWARF file,
 packages its executable image with the matching `avm-image`, and runs that
 image through the bundled AVR interpreter inside Ardens. No Ardens GUI or
-Ardens LLVM loader is used. Build the game with `-g -gdwarf-4`; the debugger
+Ardens LLVM loader is used. Build the game with `-g`; the debugger
 ABI and the three-byte DWARF address representation are specified in
 [debugger_abi.md](debugger_abi.md).
 

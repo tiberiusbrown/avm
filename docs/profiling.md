@@ -1,6 +1,6 @@
 # Profiling AVM source
 
-Build the game with `-g -gdwarf-4`, then use the installed SDK tools:
+Build the game with `-g`, then use the installed SDK tools:
 
 ```text
 avm-prof record game.elf --for 5s --replay inputs.json -o run.avmp

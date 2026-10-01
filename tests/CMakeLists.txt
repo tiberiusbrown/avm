@@ -193,7 +193,7 @@ foreach(AVM_DEBUG_OPT IN ITEMS O0 O2)
         SOURCE "${AVM_DEBUG_FIXTURE_SOURCE}"
         LANGUAGE C
         INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
-        COMPILE_OPTIONS -g -gdwarf-4 "-${AVM_DEBUG_OPT}"
+        COMPILE_OPTIONS -g "-${AVM_DEBUG_OPT}"
         DEPENDS avm_sysroot
     )
     avm_add_image(
@@ -265,7 +265,7 @@ avm_add_object(
     SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/fixture.cpp"
     LANGUAGE CXX
     INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
-    COMPILE_OPTIONS -g -gdwarf-4 -O0
+    COMPILE_OPTIONS -g -O0
     DEPENDS avm_sysroot)
 avm_add_image(
     OBJECTS "${AVM_DEBUG_CPP_DIR}/fixture.o"

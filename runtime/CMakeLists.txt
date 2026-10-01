@@ -7,6 +7,10 @@ set(AVM_RUNTIME_MIR_BUILD_DIR "${AVM_RUNTIME_BUILD_DIR}/mir")
 set(RUNTIME_SOURCES
     avm
     font_5x7
+    font_br4
+    font_br5
+    font_br5d_x5
+    font_br5n
     local_dtor
     math
     pgmspace

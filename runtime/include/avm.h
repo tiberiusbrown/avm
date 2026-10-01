@@ -242,8 +242,16 @@ typedef struct __attribute__((packed)) {
 } avm_font_t;
 
 extern uint8_t const AVM_PROGMEM _avm_font_5x7_storage[];
+extern uint8_t const AVM_PROGMEM _avm_font_br4_storage[];
+extern uint8_t const AVM_PROGMEM _avm_font_br5_storage[];
+extern uint8_t const AVM_PROGMEM _avm_font_br5d_storage[];
+extern uint8_t const AVM_PROGMEM _avm_font_br5n_storage[];
 
 #define AVM_FONT_5X7 ((avm_font_t const AVM_PROGMEM*)_avm_font_5x7_storage)
+#define AVM_FONT_BR4 ((avm_font_t const AVM_PROGMEM*)_avm_font_br4_storage)
+#define AVM_FONT_BR5 ((avm_font_t const AVM_PROGMEM*)_avm_font_br5_storage)
+#define AVM_FONT_BR5D ((avm_font_t const AVM_PROGMEM*)_avm_font_br5d_storage)
+#define AVM_FONT_BR5N ((avm_font_t const AVM_PROGMEM*)_avm_font_br5n_storage)
 
 typedef enum {
   AVM_TEXT_OVERWRITE = 0,

@@ -49,6 +49,15 @@ The staged tree is:
 ```
 
 The runtime sysroot provides `<avm/pgmspace.h>` and the text API in `<avm.h>`.
+`AVM_FONT_5X7` selects the fixed-width 5×7 ASCII font.
+`AVM_FONT_BR4` selects a variable-width four-pixel-high font with a five-pixel
+line height. It has no glyph for `#`, `$`, `&`, `*`, `@`, `{`, `|`, `}`, or `~`;
+these characters have zero advance.
+`AVM_FONT_BR5` and `AVM_FONT_BR5N` select variable-width five-pixel-high fonts
+with a six-pixel line height.
+`AVM_FONT_BR5D` selects the variable-width printable-ASCII font with five pixels
+above the baseline, one-pixel descenders, and a seven-pixel line height. Pass
+any font pointer to `avm_set_text_font`.
 `libavm.a` supplies the addressable `memcpy_P` wrapper declared in
 `<avm/pgmspace.h>`.
 `<new>` provides placement `new` and `new[]` for caller-owned storage, with

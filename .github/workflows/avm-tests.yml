@@ -39,14 +39,14 @@ jobs:
       # explicitly so the full LLVM, Clang, and LLD test suites stay out of CI.
       - name: Build AVM toolchain and lit dependencies
         run: >-
-          cmake --build build/ci --parallel 4 --target
+          cmake --build build/ci --parallel 2 --target
           avm_toolchain FileCheck not split-file
           llc llvm-as llvm-dis llvm-mca opt yaml2obj
 
       - name: Run avm_tests
         id: avm
         continue-on-error: true
-        run: cmake --build build/ci --parallel 4 --target avm_tests_run
+        run: cmake --build build/ci --parallel 2 --target avm_tests_run
 
       - name: LLVM AVM tests
         id: llvm

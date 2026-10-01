@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
@@ -45,6 +46,7 @@ struct Stop {
   uint64_t requested_cycle = 0;
   std::optional<WatchAccess> access;
   std::optional<uint64_t> fault_cycle;
+  std::string detail;
 };
 
 struct TimedButtons {
@@ -61,6 +63,32 @@ struct ReplayIdentity {
   uint32_t adc_seed = 0;
   bool adc_nondeterminism = false;
   uint32_t usb_bus_state = 0;
+};
+
+struct ProfileCounter {
+  uint64_t cycles = 0;
+  uint64_t count = 0;
+};
+
+// A copyable, immutable-at-the-call-site view of a measurement window. All
+// guest costs are elapsed AVR cycles between coherent AVM boundaries.
+struct ProfileSnapshot {
+  bool running = false;
+  bool complete = false;
+  bool native = false;
+  uint64_t start_cycle = 0;
+  uint64_t end_cycle = 0;
+  uint32_t start_pc = 0;
+  uint32_t end_pc = 0;
+  uint64_t completed_cycles = 0;
+  uint64_t partial_cycles = 0;
+  uint64_t discontinuities = 0;
+  uint64_t native_active_cycles = 0;
+  uint64_t native_elapsed_cycles = 0;
+  std::string stop_reason;
+  std::map<uint32_t, ProfileCounter> pcs;
+  // Keys are AVR byte addresses, deliberately separate from AVM PCs.
+  std::map<uint32_t, uint64_t> native_pcs;
 };
 
 class Emulator {
@@ -96,7 +124,11 @@ public:
   void set_realtime(bool enabled) { realtime_ = enabled; }
   bool realtime() const { return realtime_; }
   uint64_t entry_cycle() const { return entry_cycle_; }
+  void profile_start(bool native = false);
+  ProfileSnapshot profile_stop(Stop const& stop, bool complete = true);
+  ProfileSnapshot profile_snapshot() const;
   ReplayIdentity const& replay_identity() const { return replay_identity_; }
+  ReplayIdentity const& profile_identity() const { return profile_identity_; }
   std::vector<TimedButtons> const& button_history() const {
     return button_history_;
   }
@@ -116,6 +148,7 @@ private:
   void apply_due_events();
   void inspect_accesses();
   void rebuild_watchpoint_bits();
+  void profile_boundary(Snapshot const& state);
   struct WatchRange {
     uint64_t id;
     uint16_t address;
@@ -139,7 +172,13 @@ private:
   std::vector<TimedButtons> events_;
   std::vector<TimedButtons> button_history_;
   ReplayIdentity replay_identity_;
+  ReplayIdentity profile_identity_;
   size_t next_event_ = 0;
+  ProfileSnapshot profile_;
+  uint64_t profile_anchor_cycle_ = 0;
+  uint32_t profile_anchor_pc_ = 0;
+  uint64_t native_start_active_ = 0;
+  uint64_t native_start_elapsed_ = 0;
 };
 
 } // namespace avm_debug

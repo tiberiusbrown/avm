@@ -1,5 +1,8 @@
 # Debugging AVM programs with LLDB
 
+For source-level cycle profiles and cross-build comparisons, see
+[profiling.md](profiling.md).
+
 The SDK's `bin/avm-lldb` opens an AVM ELF file as the symbol and DWARF file,
 packages its executable image with the matching `avm-image`, and runs that
 image through the bundled AVR interpreter inside Ardens. No Ardens GUI or
@@ -72,6 +75,7 @@ command; LLDB also prints its usual human-readable `error:` line.
 | `avm button press`, `release`, `set`, `status` | Control any combination of `UP RIGHT LEFT DOWN A B`; `set` with no names releases all. |
 | `avm watch read`, `write`, or `readwrite` `<address> [size]` | Create an LLDB software watchpoint using a raw guest data address such as `0x500`. `avm watch delete <id>` removes it. LLDB `watchpoint set variable` also works for DWARF variables. |
 | `avm replay load`, `run`, `resume`, `pause`, `status`, `abort`, `export` | Schedule and record timed button changes; exports include launch identity. |
+| `avm profile start [--native]`, `stop`, `status`, `save <file.avmp>`, `report [--top N]` | Collect elapsed emulated cycles across debugger runs, inspect hotspots, and save a version-1 source profile. |
 | `avm display save` or `capture` `<path.pgm> --mode visible\|logical\|controller` | Save 128×64 gray8 PGM pixels and return mode, size, exact cycle, SHA-256 of pixel bytes, and absolute path. Existing files are rejected. |
 
 At a stopped AVM boundary, hold RIGHT and A for 250 ms of emulated time,

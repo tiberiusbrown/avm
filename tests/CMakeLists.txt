@@ -211,6 +211,19 @@ foreach(AVM_DEBUG_OPT IN ITEMS O0 O2)
     list(APPEND AVM_DEBUG_FIXTURE_OUTPUTS "${AVM_DEBUG_ELF}" "${AVM_DEBUG_IMAGE}")
 endforeach()
 add_custom_target(avm_debug_images DEPENDS ${AVM_DEBUG_FIXTURE_OUTPUTS})
+
+set(AVM_PROF_ASM_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/prof-asm")
+avm_add_object(
+    OUTPUT "${AVM_PROF_ASM_DIR}/fixture.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/prof_fixture.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_PROF_ASM_DIR}/fixture.o"
+    OUTPUT_ELF "${AVM_PROF_ASM_DIR}/fixture.elf"
+    OUTPUT_IMAGE "${AVM_PROF_ASM_DIR}/fixture.bin"
+    ENTRY _start)
+add_custom_target(avm_prof_asm_fixture
+    DEPENDS "${AVM_PROF_ASM_DIR}/fixture.elf")
 add_custom_target(avm_debug_verify
     COMMAND "$<TARGET_FILE:llvm-dwarfdump>" --verify
         "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
@@ -278,6 +291,22 @@ add_custom_target(avm_debug_cpp_verify
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
+    add_custom_target(avm_prof_integration_run
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/debug/prof_integration.py"
+            "${AVM_SDK_BUILD_BIN}/avm-prof${CMAKE_EXECUTABLE_SUFFIX}"
+            "${AVM_SDK_BUILD_BIN}/avm-lldb${CMAKE_EXECUTABLE_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+            "${AVM_DEBUG_CPP_DIR}/fixture.elf"
+            "${AVM_NODEBUG_DIR}/fixture.elf"
+            "${CMAKE_CURRENT_BINARY_DIR}/debug/O2/fixture.elf"
+            "${AVM_PROF_ASM_DIR}/fixture.elf"
+            "${CMAKE_CURRENT_BINARY_DIR}/debug"
+        DEPENDS avm_prof avm_lldb avm_debug_images
+                avm_debug_cpp_verify avm_debug_image_equivalence
+                avm_prof_asm_fixture
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
     add_custom_target(avm_lldb_integration_run
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/debug/integration.py"
@@ -310,5 +339,20 @@ add_custom_target(avm_boundary_probe_run
         "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.bin"
         "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
     DEPENDS avm_boundary_probe
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+
+add_executable(avm_prof_throughput debug/prof_throughput.cpp)
+target_compile_features(avm_prof_throughput PRIVATE cxx_std_17)
+target_link_libraries(avm_prof_throughput PRIVATE avm_debug_emulator)
+add_dependencies(avm_prof_throughput avm_debug_images
+                 avm_interpreter_boundary)
+add_custom_target(avm_prof_throughput_run
+    COMMAND "$<TARGET_FILE:avm_prof_throughput>"
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.bin"
+        "${AVM_INTERPRETER_HEX}"
+        "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+    DEPENDS avm_prof_throughput
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)

@@ -85,6 +85,26 @@ uint32_t guest_pc(absim::atmega32u4_t const& cpu) {
                   uint32_t(cpu.data[6]) << 16;
   return next;
 }
+
+void checked_add(uint64_t& destination, uint64_t increment) {
+  if (increment > UINT64_MAX - destination)
+    throw std::overflow_error("AVM profile counter overflow");
+  destination += increment;
+}
+
+char const* stop_name(StopReason reason) {
+  switch (reason) {
+  case StopReason::Entry: return "entry";
+  case StopReason::Breakpoint: return "breakpoint";
+  case StopReason::Watchpoint: return "watchpoint";
+  case StopReason::DebugBreak: return "debug_break";
+  case StopReason::Step: return "step";
+  case StopReason::Deadline: return "deadline";
+  case StopReason::Fault: return "fault";
+  case StopReason::Interrupt: return "interrupt";
+  }
+  return "unknown";
+}
 } // namespace
 
 Emulator::Emulator() : emulator_(std::make_unique<absim::arduboy_t>()) {}
@@ -93,6 +113,8 @@ Emulator::~Emulator() = default;
 Stop Emulator::load(fs::path const& elf, fs::path const& image,
                     fs::path const& firmware, fs::path const& boundary_metadata) {
   loaded_ = false;
+  profile_ = {};
+  emulator_->profiler_state.enabled = false;
   std::string metadata = read_file(boundary_metadata);
   if (number(metadata, "schema") != 1 ||
       number(metadata, "primary_slot_words") != 4 ||
@@ -122,6 +144,7 @@ Stop Emulator::load(fs::path const& elf, fs::path const& image,
   events_.clear();
   button_history_.clear();
   replay_identity_ = {};
+  profile_identity_ = {};
   next_event_ = 0;
   interrupted_ = false;
   for (uint64_t advances = 0; advances < 20000000; ++advances) {
@@ -196,6 +219,13 @@ void Emulator::write_register(unsigned number, uint64_t value) {
     cpu.data[6] = uint8_t(address >> 16);
     cpu.pc = table_word_ + 4u * opcode;
     active_instruction_pc_ = address;
+    if (profile_.running) {
+      // A debugger PC write changes the next instruction without advancing
+      // emulated time. Keep the discontinuity visible in the profile.
+      checked_add(profile_.discontinuities, 1);
+      profile_anchor_pc_ = address;
+      profile_anchor_cycle_ = cpu.cycle_count;
+    }
     pending_watch_.reset();
   } else if (number == 10) {
     if (value > 7)
@@ -326,11 +356,105 @@ void Emulator::apply_due_events() {
     apply_buttons(events_[next_event_++].pressed);
 }
 
+void Emulator::profile_start(bool native) {
+  if (!loaded_ || !at_boundary())
+    throw std::runtime_error("profiling requires a stopped AVM boundary");
+  if (profile_.running)
+    throw std::runtime_error("AVM profile is already running");
+  Snapshot state = snapshot();
+  profile_ = {};
+  profile_.running = true;
+  profile_.native = native;
+  profile_.start_cycle = profile_.end_cycle = state.cycles;
+  profile_.start_pc = profile_.end_pc = state.pc;
+  profile_anchor_cycle_ = state.cycles;
+  profile_anchor_pc_ = state.pc;
+  profile_identity_ = replay_identity_;
+  auto const& cpu = emulator_->core_state.cpu;
+  profile_identity_.eeprom_sha256 = sha256(llvm::ArrayRef<uint8_t>(cpu.eeprom));
+  profile_identity_.fxsave_sha256 = sha256(llvm::ArrayRef<uint8_t>(
+      emulator_->program_state.fxsave));
+  profile_identity_.adc_seed = cpu.adc_seed;
+  profile_identity_.adc_nondeterminism = cpu.adc_nondeterminism;
+  profile_identity_.usb_bus_state = unsigned(cpu.usb.bus_state);
+  if (native) {
+    auto& native_state = emulator_->profiler_state;
+    native_state.counts.fill(0);
+    native_start_active_ = native_state.total;
+    native_start_elapsed_ = native_state.total_with_sleep;
+    native_state.enabled = true;
+  }
+}
+
+void Emulator::profile_boundary(Snapshot const& state) {
+  if (!profile_.running) return;
+  if (state.cycles < profile_anchor_cycle_)
+    throw std::overflow_error("AVM profile cycle counter moved backwards");
+  uint64_t delta = state.cycles - profile_anchor_cycle_;
+  auto& counter = profile_.pcs[profile_anchor_pc_];
+  checked_add(counter.cycles, delta);
+  checked_add(counter.count, 1);
+  checked_add(profile_.completed_cycles, delta);
+  profile_anchor_cycle_ = state.cycles;
+  profile_anchor_pc_ = state.pc;
+  profile_.end_cycle = state.cycles;
+  profile_.end_pc = state.pc;
+}
+
+ProfileSnapshot Emulator::profile_stop(Stop const& stop, bool complete) {
+  if (!profile_.running)
+    throw std::runtime_error("no AVM profile is running");
+  if (stop.reason != StopReason::Fault && !at_boundary())
+    throw std::runtime_error("profile stop requires an AVM boundary");
+  // The last LLDB stop predates any register edits made while stopped.
+  // Read the current boundary so a PC write is reflected in the end state.
+  Snapshot end_state = stop.reason == StopReason::Fault ? stop.state : snapshot();
+  uint64_t end_cycle = stop.fault_cycle.value_or(end_state.cycles);
+  if (end_cycle < profile_anchor_cycle_)
+    throw std::overflow_error("AVM profile stop precedes its anchor");
+  profile_.partial_cycles = end_cycle - profile_anchor_cycle_;
+  profile_.end_cycle = end_cycle;
+  profile_.end_pc = end_state.pc;
+  profile_.complete = complete && stop.reason != StopReason::Fault;
+  profile_.stop_reason = stop.detail.empty() ? stop_name(stop.reason) : stop.detail;
+  profile_.running = false;
+  if (profile_.native) {
+    auto& native_state = emulator_->profiler_state;
+    native_state.enabled = false;
+    if (native_state.total < native_start_active_ ||
+        native_state.total_with_sleep < native_start_elapsed_)
+      throw std::overflow_error("native profiler totals moved backwards");
+    profile_.native_active_cycles = native_state.total - native_start_active_;
+    profile_.native_elapsed_cycles = native_state.total_with_sleep - native_start_elapsed_;
+    for (size_t i = 0; i < native_state.counts.size(); ++i)
+      if (native_state.counts[i])
+        profile_.native_pcs.emplace(uint32_t(i * 2), native_state.counts[i]);
+  }
+  if (profile_.completed_cycles > end_cycle - profile_.start_cycle ||
+      profile_.partial_cycles != end_cycle - profile_.start_cycle -
+                                 profile_.completed_cycles)
+    throw std::runtime_error("AVM profile cycle reconciliation failed");
+  return profile_;
+}
+
+ProfileSnapshot Emulator::profile_snapshot() const {
+  if (!loaded_)
+    throw std::runtime_error("AVM image is not loaded");
+  ProfileSnapshot result = profile_;
+  if (result.running && at_boundary()) {
+    auto state = snapshot();
+    result.end_cycle = state.cycles;
+    result.end_pc = state.pc;
+  }
+  return result;
+}
+
 Stop Emulator::run(uint64_t deadline, bool single_step) {
   if (!loaded_) throw std::runtime_error("AVM image is not loaded");
   auto& cpu = emulator_->core_state.cpu;
   interrupted_ = false;
   Snapshot last_coherent = snapshot();
+  uint64_t advances_without_boundary = 0;
   auto anchor = std::chrono::steady_clock::now();
   uint64_t anchor_cycle = cpu.cycle_count;
   for (;;) {
@@ -338,6 +462,14 @@ Stop Emulator::run(uint64_t deadline, bool single_step) {
     emulator_->cycle();
     inspect_accesses();
     cpu.update_all();
+    // An invalid dispatch can spin inside the interpreter without another
+    // guest boundary or an Ardens autobreak. Bound that case explicitly.
+    if (++advances_without_boundary > 2000000) {
+      Stop stalled{StopReason::Fault, last_coherent, deadline};
+      stalled.fault_cycle = cpu.cycle_count;
+      stalled.detail = "boundary_timeout";
+      return stalled;
+    }
     if (cpu.autobreaks.test(absim::AB_BREAK)) {
       cpu.autobreaks.reset(absim::AB_BREAK);
       pending_debug_break_ = true;
@@ -348,8 +480,10 @@ Stop Emulator::run(uint64_t deadline, bool single_step) {
       return fault;
     }
     if (!at_boundary()) continue;
+    advances_without_boundary = 0;
     apply_due_events();
     Snapshot state = snapshot();
+    profile_boundary(state);
     last_coherent = state;
     if (pending_watch_) {
       Stop stopped{StopReason::Watchpoint, state, deadline, pending_watch_};

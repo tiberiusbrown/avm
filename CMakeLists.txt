@@ -72,7 +72,7 @@ if(AVM_WITH_ARDENS)
     add_subdirectory("${AVM_ARDENS_SOURCE_DIR}" ardens-build EXCLUDE_FROM_ALL)
     add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
 
-    add_library(avm_debug_emulator STATIC debug/AvmEmulator.cpp)
+    add_library(avm_debug_emulator STATIC debug/AvmEmulator.cpp debug/AvmHost.cpp)
     target_compile_features(avm_debug_emulator PUBLIC cxx_std_17)
     target_include_directories(avm_debug_emulator
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/debug"
@@ -80,6 +80,19 @@ if(AVM_WITH_ARDENS)
                 "${CMAKE_BINARY_DIR}/llvm-build/include")
     target_link_libraries(avm_debug_emulator
         PUBLIC ardensdebuggerlib LLVMSupport)
+
+    add_library(avm_profile STATIC
+        debug/AvmProfileFormat.cpp
+        debug/AvmProfileSymbol.cpp
+        debug/AvmProfileReport.cpp)
+    target_compile_features(avm_profile PUBLIC cxx_std_17)
+    target_include_directories(avm_profile
+        PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/debug"
+        PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/lldb/include"
+                "${CMAKE_BINARY_DIR}/llvm-build/tools/lldb/include"
+                "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/llvm/include"
+                "${CMAKE_BINARY_DIR}/llvm-build/include")
+    target_link_libraries(avm_profile PUBLIC avm_debug_emulator LLVMSupport)
 endif()
 set(BUG_REPORT_URL "https://github.com/tiberiusbrown/llvm-project/issues/" CACHE STRING "" FORCE)
 

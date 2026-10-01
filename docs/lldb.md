@@ -74,6 +74,17 @@ command; LLDB also prints its usual human-readable `error:` line.
 | `avm replay load`, `run`, `resume`, `pause`, `status`, `abort`, `export` | Schedule and record timed button changes; exports include launch identity. |
 | `avm display save` or `capture` `<path.pgm> --mode visible\|logical\|controller` | Save 128×64 gray8 PGM pixels and return mode, size, exact cycle, SHA-256 of pixel bytes, and absolute path. Existing files are rejected. |
 
+At a stopped AVM boundary, hold RIGHT and A for 250 ms of emulated time,
+then RIGHT alone for 100 ms, and finally release all buttons:
+
+```text
+(lldb) avm button press RIGHT A
+(lldb) avm run-for 250ms
+(lldb) avm button release A
+(lldb) avm run-for 100ms
+(lldb) avm button set
+```
+
 The `visible` image uses Ardens's rendered, filtered display pixels.
 `controller` expands the OLED controller RAM to pixels. `logical` expands the
 game's framebuffer at AVM data `0x500`–`0x8ff`. The three can differ while

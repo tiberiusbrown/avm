@@ -9,7 +9,7 @@ include(AvmBuild)
 # SelectionDAG code generator in addition to its MC and linker components.
 set(LLVM_TARGETS_TO_BUILD              ""          CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM"       CACHE STRING "" FORCE)
-set(LLVM_ENABLE_PROJECTS               "clang;lld" CACHE STRING "" FORCE)
+set(LLVM_ENABLE_PROJECTS               "clang;lld;lldb" CACHE STRING "" FORCE)
 set(LLD_BUILD_ELF_ONLY                  ON          CACHE BOOL   "" FORCE)
 
 # Do not place every LLVM command-line tool in the default build. Explicitly
@@ -23,6 +23,16 @@ set(LLVM_BUILD_TESTS                   OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_EXAMPLES                OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_BENCHMARKS              OFF         CACHE BOOL   "" FORCE)
 set(LLVM_BUILD_DOCS                    OFF         CACHE BOOL   "" FORCE)
+# The SDK debugger uses LLDB's native command interpreter and C++ API.  The
+# optional bindings and terminal UI dependencies are unnecessary for it.
+set(LLDB_ENABLE_PYTHON OFF CACHE STRING "" FORCE)
+set(LLDB_ENABLE_LUA OFF CACHE STRING "" FORCE)
+set(LLDB_ENABLE_SWIG OFF CACHE STRING "" FORCE)
+set(LLDB_ENABLE_CURSES OFF CACHE STRING "" FORCE)
+set(LLDB_ENABLE_LIBEDIT OFF CACHE STRING "" FORCE)
+set(LLDB_ENABLE_LZMA OFF CACHE STRING "" FORCE)
+set(LLDB_ENABLE_LIBXML2 OFF CACHE STRING "" FORCE)
+set(LLDB_ENABLE_PROTOCOL_SERVERS OFF CACHE BOOL "" FORCE)
 set(BUG_REPORT_URL "https://github.com/tiberiusbrown/llvm-project/issues/" CACHE STRING "" FORCE)
 
 add_subdirectory(deps/llvm-project/llvm llvm-build)
@@ -116,6 +126,7 @@ add_subdirectory(deps/Ardens ardens-build EXCLUDE_FROM_ALL)
 add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
 
 add_subdirectory(interp)
+add_subdirectory(debug)
 add_subdirectory(projects)
 add_subdirectory(tests)
 add_subdirectory(bench)

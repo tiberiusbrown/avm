@@ -177,3 +177,138 @@ add_custom_target(avm_tests_run
     USES_TERMINAL
     VERBATIM
 )
+
+# A small, independently built debug image exercises nested frames, a live
+# global and local, both pointer spaces, button input, and delayed display
+# transfer. Keep both an unoptimized and an optimized DWARF variant.
+set(AVM_DEBUG_FIXTURE_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/fixture.c")
+set(AVM_DEBUG_FIXTURE_OUTPUTS)
+foreach(AVM_DEBUG_OPT IN ITEMS O0 O2)
+    set(AVM_DEBUG_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/${AVM_DEBUG_OPT}")
+    set(AVM_DEBUG_OBJECT "${AVM_DEBUG_DIR}/fixture.o")
+    set(AVM_DEBUG_ELF "${AVM_DEBUG_DIR}/fixture.elf")
+    set(AVM_DEBUG_IMAGE "${AVM_DEBUG_DIR}/fixture.bin")
+    avm_add_object(
+        OUTPUT "${AVM_DEBUG_OBJECT}"
+        SOURCE "${AVM_DEBUG_FIXTURE_SOURCE}"
+        LANGUAGE C
+        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+        COMPILE_OPTIONS -g -gdwarf-4 "-${AVM_DEBUG_OPT}"
+        DEPENDS avm_sysroot
+    )
+    avm_add_image(
+        OBJECTS "${AVM_DEBUG_OBJECT}"
+        OUTPUT_ELF "${AVM_DEBUG_ELF}"
+        OUTPUT_IMAGE "${AVM_DEBUG_IMAGE}"
+        ENTRY _start
+        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+        LIBRARIES
+            "${AVM_SYSROOT_DIR}/lib/libavm.a"
+            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        GC_SECTIONS
+        DEPENDS avm_sysroot
+    )
+    list(APPEND AVM_DEBUG_FIXTURE_OUTPUTS "${AVM_DEBUG_ELF}" "${AVM_DEBUG_IMAGE}")
+endforeach()
+add_custom_target(avm_debug_images DEPENDS ${AVM_DEBUG_FIXTURE_OUTPUTS})
+add_custom_target(avm_debug_verify
+    COMMAND "$<TARGET_FILE:llvm-dwarfdump>" --verify
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+    COMMAND "$<TARGET_FILE:llvm-dwarfdump>" --verify
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O2/fixture.elf"
+    DEPENDS avm_debug_images llvm-dwarfdump
+    USES_TERMINAL VERBATIM)
+
+# The debug sections must not change the bytes loaded by the interpreter.
+set(AVM_NODEBUG_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/nodebug")
+avm_add_object(
+    OUTPUT "${AVM_NODEBUG_DIR}/fixture.o"
+    SOURCE "${AVM_DEBUG_FIXTURE_SOURCE}"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+    COMPILE_OPTIONS -O0
+    DEPENDS avm_sysroot)
+avm_add_image(
+    OBJECTS "${AVM_NODEBUG_DIR}/fixture.o"
+    OUTPUT_ELF "${AVM_NODEBUG_DIR}/fixture.elf"
+    OUTPUT_IMAGE "${AVM_NODEBUG_DIR}/fixture.bin"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+    LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a"
+              "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS
+    DEPENDS avm_sysroot)
+add_custom_target(avm_debug_image_equivalence
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${AVM_NODEBUG_DIR}/fixture.bin"
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.bin"
+    DEPENDS "${AVM_NODEBUG_DIR}/fixture.bin" avm_debug_images
+    USES_TERMINAL VERBATIM)
+
+# A second image tests C++ types and a live code address beyond 64 KiB.
+set(AVM_DEBUG_CPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/cpp")
+avm_add_object(
+    OUTPUT "${AVM_DEBUG_CPP_DIR}/fixture.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/fixture.cpp"
+    LANGUAGE CXX
+    INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+    COMPILE_OPTIONS -g -gdwarf-4 -O0
+    DEPENDS avm_sysroot)
+avm_add_image(
+    OBJECTS "${AVM_DEBUG_CPP_DIR}/fixture.o"
+    OUTPUT_ELF "${AVM_DEBUG_CPP_DIR}/fixture.elf"
+    OUTPUT_IMAGE "${AVM_DEBUG_CPP_DIR}/fixture.bin"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+    LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a"
+              "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS
+    LINK_OPTIONS "--image-base=0x100"
+                 "--section-start=.data=0x100"
+                 "--section-start=.text=0x200"
+                 "--section-start=.rodata=0x1000"
+                 "--section-start=.high_debug_text=0x10100"
+                 "--section-start=.high_debug_rodata=0x11000"
+    DEPENDS avm_sysroot)
+add_custom_target(avm_debug_cpp_verify
+    COMMAND "$<TARGET_FILE:llvm-dwarfdump>" --verify
+        "${AVM_DEBUG_CPP_DIR}/fixture.elf"
+    DEPENDS "${AVM_DEBUG_CPP_DIR}/fixture.elf" llvm-dwarfdump
+    USES_TERMINAL VERBATIM)
+
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_Interpreter_FOUND)
+    add_custom_target(avm_lldb_integration_run
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/debug/integration.py"
+            "${AVM_SDK_BUILD_BIN}/avm-lldb${CMAKE_EXECUTABLE_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+            "${AVM_DEBUG_CPP_DIR}/fixture.elf"
+            "${CMAKE_CURRENT_BINARY_DIR}/debug"
+        DEPENDS avm_lldb avm_debug_images avm_debug_cpp_verify
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
+    add_custom_target(avm_lldb_long_replay_run
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/debug/long_replay.py"
+            "${AVM_SDK_BUILD_BIN}/avm-lldb${CMAKE_EXECUTABLE_SUFFIX}"
+            "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+            "${CMAKE_CURRENT_BINARY_DIR}/debug"
+        DEPENDS avm_lldb avm_debug_images
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
+endif()
+
+add_executable(avm_boundary_probe debug/boundary_probe.cpp)
+target_compile_features(avm_boundary_probe PRIVATE cxx_std_17)
+target_link_libraries(avm_boundary_probe PRIVATE ardensdebuggerlib)
+add_dependencies(avm_boundary_probe avm_debug_images avm_interpreter_boundary)
+add_custom_target(avm_boundary_probe_run
+    COMMAND "$<TARGET_FILE:avm_boundary_probe>"
+        "${AVM_INTERPRETER_HEX}"
+        "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.bin"
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+    DEPENDS avm_boundary_probe
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)

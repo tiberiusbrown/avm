@@ -48,3 +48,18 @@ add_custom_command(
 add_custom_target(avm_interpreter
     DEPENDS ${AVM_INTERPRETER_OUTPUTS}
 )
+
+set(AVM_INTERPRETER_BOUNDARY_METADATA
+    "${CMAKE_CURRENT_BINARY_DIR}/interp-boundary.json"
+    PARENT_SCOPE)
+add_custom_command(
+    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/interp-boundary.json"
+    COMMAND "${CMAKE_COMMAND}"
+        "-DAVM_INTERP_MAP:FILEPATH=${AVM_INTERPRETER_MAP}"
+        "-DAVM_INTERP_HEX:FILEPATH=${AVM_INTERPRETER_HEX}"
+        "-DAVM_BOUNDARY_OUTPUT:FILEPATH=${CMAKE_CURRENT_BINARY_DIR}/interp-boundary.json"
+        -P "${PROJECT_SOURCE_DIR}/cmake/GenerateAvmBoundaryMetadata.cmake"
+    DEPENDS avm_interpreter "${PROJECT_SOURCE_DIR}/cmake/GenerateAvmBoundaryMetadata.cmake"
+    VERBATIM)
+add_custom_target(avm_interpreter_boundary
+    DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/interp-boundary.json")

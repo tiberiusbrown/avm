@@ -172,21 +172,43 @@ def main():
             "<no location, value may have been optimized out>" in output,
             "optimized AVM variable locations were misreported")
 
-    for commands, diagnostic in (
-            (["breakpoint set --name debug_leaf", "run", "expr 1+2"],
-             "AVM expression execution is unsupported"),
-            (["breakpoint set --name debug_leaf --condition argument==11",
-              "run"],
-             "AVM breakpoint conditions require unsupported expression execution")):
-        argv = [str(executable), "--batch"]
-        for command in commands:
-            argv.extend(("-o", command))
-        argv.append(str(c_image))
-        rejected = subprocess.run(
-            argv, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-            timeout=15)
-        require(rejected.returncode != 0 and diagnostic in rejected.stdout,
-                f"unsupported AVM expression was not rejected: {rejected.stdout}")
+    output, _ = lldb(
+        executable, c_image,
+        "breakpoint set --name debug_leaf",
+        "breakpoint set --file fixture.c --line 27", "run", "expr 1+2",
+        "expr $0+4", "expr argument+2",
+        "expr (unsigned)program_pointer[0]",
+        "expr *((uint16_t*)0x100)", "expr debug_counter=0x4321",
+        "frame variable debug_counter", "continue",
+        "frame variable debug_counter")
+    require("$0 = 3" in output and "$1 = 7" in output and
+            "$2 = 12" in output and "$3 = 165" in output and
+            "$4 = 4660" in output and "$5 = 17185" in output and
+            "debug_counter = 17185" in output and
+            "debug_counter = 17360" in output,
+            f"host-only AVM expressions or guest assignment failed: {output}")
+
+    output, _ = lldb(
+        executable, c_image,
+        "breakpoint set --name debug_leaf --condition argument==10", "run")
+    require("stop reason = breakpoint 1.1" in output,
+            "true AVM breakpoint condition did not stop")
+    output, _ = lldb(
+        executable, c_image,
+        "breakpoint set --name debug_leaf --condition argument==11",
+        "breakpoint set --file fixture.c --line 27", "run")
+    require("stop reason = breakpoint 2.1" in output,
+            "false AVM breakpoint condition did not continue")
+
+    rejected = subprocess.run(
+        [str(executable), "--batch", "-o", "breakpoint set --name debug_leaf",
+         "-o", "run", "-o", "expr debug_leaf(3, program_pointer)",
+         str(c_image)],
+        text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+        timeout=15)
+    require(rejected.returncode != 0 and
+            "Interpreter cannot execute function calls" in rejected.stdout,
+            f"AVM guest function call unexpectedly ran: {rejected.stdout}")
 
     rejected = subprocess.run(
         [str(executable), "--batch", "-o", "breakpoint set --name main",
@@ -277,13 +299,16 @@ def main():
         "frame variable --no-summary -f x program_pointer",
         "frame variable -f x program_pointer[0]",
         "frame variable -f x pair.left", "frame variable -f x pair.right",
+        "expr pair.left + pair.right", "expr (unsigned)program_pointer[0]",
         "continue", on_crash="avm stop")
     require("0x00010108" in output and "DebugPair" in output and
             "`main" in output and "ldp8u" in output,
             "far C++ code, types, or unwind unavailable")
     require("program_pointer = 0x011000" in output and
             "program_pointer[0] = 0x05" in output and
-            "pair.left = 0x0003" in output and "pair.right = 0x04" in output,
+            "pair.left = 0x0003" in output and "pair.right = 0x04" in output and
+            re.search(r"\$\d+ = 7\b", output) and
+            re.search(r"\$\d+ = 5\b", output),
             "16-bit data or far 24-bit program pointer dereference failed")
     require(records[-1]["reason"] == "debug_break",
             "AVM SYS debug_break stop reason missing")

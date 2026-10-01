@@ -26,7 +26,14 @@ avm-lldb --batch -o "breakpoint set --name main" -o run \
 Normal LLDB commands provide AVM source, function, and address breakpoints,
 disassembly, `continue`, `thread step-inst`, `step`, `next`, `finish`,
 `register read`, `register write`, `frame variable`, `target variable`,
-`memory read`, and `memory write`. The guest has one LLDB thread. Data memory
+`memory read`, `memory write`, and interpreted `expr`. For example,
+`expr argument + 2`, `expr program_pointer[0]`, and `expr pair.left` inspect
+stopped-state values; `expr debug_counter = 7` writes an existing guest RAM
+object. Ordinary conditional breakpoints such as
+`breakpoint set --name debug_leaf --condition 'argument == 10'` use this
+interpreter. Expression temporaries and its stack live only in LLDB's host
+memory; no AVM RAM is reserved or guest code injected. The guest has one LLDB
+thread. Data memory
 load addresses are `0x01000000 + guest_address`; program load addresses are
 the raw 24-bit guest addresses. For example, `memory read 0x01000100` reads
 AVM RAM byte `0x100`. Program memory is read-only. When the game was built at
@@ -36,6 +43,12 @@ address`; `memory read --size 1 --count 2 0x02011000` reads program bytes at
 `0x011000`. Typed 24-bit program pointers dereference through this mapping
 automatically, while 16-bit data pointers dereference RAM. The displayed
 pointer values remain raw guest addresses.
+
+These are separate widths: DWARF address fields and AS1 program pointers
+are 3 bytes, AS0 data pointers are 2 bytes, and LLDB's ELF32 process-address
+interface uses 4-byte tagged handles. Expression IR reads and writes pointers
+using their AS0/AS1 widths. Its host-only temporary addresses fit in a
+16-bit virtual range above guest RAM; that range is not backed by the emulator.
 
 The `avm` commands return one JSON object per result:
 Command errors emit `{"ok":false,"error":"..."}` and fail the LLDB
@@ -104,12 +117,16 @@ AVM boundary; `fault_cycle` identifies the later AVR cycle of the fault.
 
 ## Current limits
 
-- `frame variable` and `target variable` read DWARF values. Arbitrary LLDB
-  `expr` execution, especially assignment and guest function calls, has no
-  guest code injection or save/restore path and is rejected. Conditional
-  breakpoints depend on that evaluator and are also rejected before resume.
-  LLDB breakpoint ignore counts and hit counts work. Use LLDB's memory and
-  register commands for stopped-state changes.
+- `expr` interprets expressions that LLDB can lower to its supported IR
+  opcodes. Arithmetic, local/global variables, C++ reference fields,
+  16-bit data and 24-bit program pointer dereferences, and assignments to
+  mapped guest RAM are supported. Guest function calls and target-side code
+  execution are unsupported and fail without running code in the guest.
+  `avm run-for` rejects conditional breakpoints because that synchronous
+  command cannot apply LLDB's condition evaluator; use `run` or `continue`.
+  The host interpreter uses a 16 KiB virtual stack and fails an expression
+  that exhausts its 16-bit virtual scratch range; it never borrows guest RAM.
+  LLDB breakpoint ignore counts and hit counts work.
 - Reverse execution and snapshot restore are not exposed through LLDB.
 - Replay files record button changes and launch identity. They do not restore
   guest RAM, peripheral state, EEPROM, or FX save; start from the same launch

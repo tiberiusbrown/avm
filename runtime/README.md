@@ -118,6 +118,19 @@ The same driver also supports a separate compile and link:
 <sdk>/bin/avm-objdump -d hello.elf
 ```
 
+For full link-time optimization across translation units, compile each source
+with `-flto=full` and link the resulting bitcode objects with `avm-clang`:
+
+```sh
+<sdk>/bin/avm-clang -O2 -flto=full -c main.c -o main.o
+<sdk>/bin/avm-clang -O2 -flto=full -c helper.c -o helper.o
+<sdk>/bin/avm-clang -flto=full main.o helper.o -o app.elf
+```
+
+`avm-ar` can package bitcode objects into static libraries. The linker also
+accepts a mix of bitcode and native AVM objects; only the bitcode objects
+participate in LTO.
+
 Use `-L`, `-l`, `-Wl,`, and `-Xlinker` for linking. Use
 `--avm-startup=crt0_sketch.o` for `setup()`/`loop()` programs,
 `--avm-entry=SYMBOL` for a custom entry, `--avm-image=PATH` to choose the

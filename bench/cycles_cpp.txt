@@ -2,4 +2,4 @@
       383883   member_pointers.cpp
       633880   scoped_lifetime.cpp
      1840409   template_specialization.cpp
-      749159   virtual_dispatch.cpp
+      688231   virtual_dispatch.cpp

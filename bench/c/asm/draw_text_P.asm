@@ -6,7 +6,6 @@ SYMBOL TABLE:
 0000011e l     F .text	00000044 avm_run_constructors
 00000162 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 draw_text_P.c
-000001e5 l     O .rodata	0000002c .L.avm.flashstr.0
 00000000 l    df *ABS*	00000000 font_5x7.c
 00000000 l    df *ABS*	00000000 runtime.c
 00000688 l       .init_array	00000000 .hidden __init_array_end

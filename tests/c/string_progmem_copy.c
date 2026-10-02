@@ -81,7 +81,10 @@ static const char AVM_PROGMEM p_z[] = "Z";
 
 int avm_test_main(void)
 {
-    char pad[10];
+    // The other destinations still exercise stack buffers. Keep this one in
+    // static storage so the finalized frame plus nested calls fits the VM
+    // stack; the combined O2 call path otherwise needs 258 bytes.
+    static char pad[10];
     char trunc[7];
     char exact[6];
     char zero[5];

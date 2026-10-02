@@ -7,7 +7,6 @@ SYMBOL TABLE:
 00000462 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 crc16.c
 00000100 l     O .data	00000080 data
-00000190 l     O .data	00000200 .L.crctable
 00000180 l     O .data	00000002 crc_result
 00000000 l    df *ABS*	00000000 runtime.c
 0000051d l       .init_array	00000000 .hidden __init_array_end

@@ -93,6 +93,13 @@ no caller return address.
 
 ## Compile, link, and package
 
+Executable links automatically analyze finalized VM frames, per-call outgoing
+arguments, and three-byte return records. A provable path above the 256-byte
+stack limit is a linker error; unknown recursion or indirect calls alone do
+not fail the link. Add `-Wl,--avm-print-stack-usage` to print the proven peak
+and whether the bound is complete. See [stack analysis](../docs/stack-analysis.md)
+for the accounting, metadata, and runtime boundaries.
+
 For an ordinary C or C++ program, one command produces both the linked ELF
 and a development image:
 

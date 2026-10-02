@@ -8,7 +8,6 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sys_strcmp_p.c
 00000100 l     O .data	00000041 lhs
 000003a5 l     O .rodata	00000001 p_empty
-00000141 l     O .data	00000001 .L.str.1
 00000428 l     O .rodata	00000041 p_last_diff
 000003e7 l     O .rodata	00000041 p_first_diff
 000003a6 l     O .rodata	00000041 p_equal

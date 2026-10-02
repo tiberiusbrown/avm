@@ -293,6 +293,18 @@ avm_draw_text_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* str) {
       __avm_draw_text_P(x, baseline_y, str));
 }
 
+/* Drawing at the most negative coordinates rejects every glyph while still
+   advancing the text cursor. The unsigned subtraction handles x wraparound. */
+AVM_SYS_INLINE uint16_t avm_text_width(char const *str) {
+  return (uint16_t)avm_draw_text(INT16_MIN, INT16_MIN, str).x -
+         (uint16_t)INT16_MIN;
+}
+
+AVM_SYS_INLINE uint16_t avm_text_width_P(char const AVM_PROGMEM *str) {
+  return (uint16_t)avm_draw_text_P(INT16_MIN, INT16_MIN, str).x -
+         (uint16_t)INT16_MIN;
+}
+
 AVM_SYS_INLINE avm_text_cursor_t
 avm_draw_textfv(int16_t x, int16_t baseline_y, char const *fmt, va_list args) {
   return __avm_text_cursor_from_u32(

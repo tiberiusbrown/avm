@@ -85,6 +85,8 @@ if(AVM_WITH_ARDENS)
         debug/AvmProfileFormat.cpp
         debug/AvmProfileSymbol.cpp
         debug/AvmProfileReport.cpp)
+    set_target_properties(avm_profile PROPERTIES
+        POSITION_INDEPENDENT_CODE ON)
     target_compile_features(avm_profile PUBLIC cxx_std_17)
     target_include_directories(avm_profile
         PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/debug"

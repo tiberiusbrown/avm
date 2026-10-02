@@ -418,10 +418,10 @@ Taken control flow and program-space loads restart the external-flash stream and
 |---|---:|
 | Not-taken conditional branch | 35 |
 | Taken conditional branch | 128 |
-| Relative jump/call | 122 / 128 |
-| Near relative jump/call | 135 / 135 |
+| Relative jump/call | 122 / 127 |
+| Near relative jump/call | 135 / 136 |
 | Far jump/call | 150 / 150 |
-| Indirect jump/call | 110 / 117 |
+| Indirect jump/call | 110 / 119 |
 | Return | 110 |
 | Program-space load | 281-348 |
 
@@ -491,7 +491,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `D2` | `BRULT8 rel8` | 2 | 35 not taken; 128 taken |
 | `D3` | `BRSLT8 rel8` | 2 | 35 not taken; 128 taken |
 | `D4` | `JMP8 rel8` | 2 | 122 |
-| `D5` | `CALL8 rel8` | 2 | 128 |
+| `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | 34 / 34 / 36 / 40 for services `00-03` |
 | `D8` | `BRUGE8 rel8` | 2 | 35 not taken; 128 taken |
@@ -503,11 +503,11 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `DE` | `BRSLT16 rel16` | 3 | 51 not taken; 135 taken |
 | `DF` | `BRSGE16 rel16` | 3 | 51 not taken; 135 taken |
 | `E0` | `JMP16 rel16` | 3 | 135 |
-| `E1` | `CALL16 rel16` | 3 | 135 |
+| `E1` | `CALL16 rel16` | 3 | 136 |
 | `E2` | `JMPF target24` | 4 | 150 |
 | `E3` | `CALLF target24` | 4 | 150 |
 | `E4-E7` | `JMPP qN` | 1 | 110 |
-| `E8-EB` | `CALLP qN` | 1 | 117 |
+| `E8-EB` | `CALLP qN` | 1 | 119 |
 | `EC` | `UDIV16` / `UREM16` / `SDIV16` / `SREM16` runtime-decoded page | 2 | 56-265, data-dependent |
 | `ED` | `LD8U` / `LD16 rD,[rA+disp]` | 3 | 54 / 55 |
 | `EE` | `ST8` / `ST16 [rA+disp],rS` | 3 | 54 / 55 |
@@ -1153,7 +1153,7 @@ Bounds: `secondary < 0x90`.
 | `70-77` | `ZEXT8 rD` | 8 | 37 |
 | `78-7F` | `SWAP8 rD` | 8 | 37 |
 | `80-87` | `GETSP rD` | 8 | 37 |
-| `88-8F` | `SETSP rS` | 8 | 37 |
+| `88-8F` | `SETSP rS` | 8 | 40 |
 
 ```asm
 ; MOV rD,rS
@@ -1176,9 +1176,9 @@ rjmp  cluster_a_tail_17_delay_1
 movw  dL, Y
 rjmp  cluster_a_tail_17_delay_1
 
-; SETSP rS
+; SETSP rS: post-assignment full-range check, no memory access
 movw  Y, srcL
-rjmp  cluster_a_tail_17_delay_1
+rjmp  stack_bounds_check
 ```
 
 ---
@@ -2676,7 +2676,7 @@ The extra `RJMP`/`IJMP` work is hidden inside the operand-transfer windows excep
 
 The reference handlers use the operand-transfer window for the `D0-D7` two-byte branch, `ADJSP`, and `SYS` forms as described in Section 30. The `E0-E3` handlers use their additional transfer slack to reach the listed latencies.
 
-The one-byte indirect-control and return forms can share the seek/restart handler. In the measured implementation they take 110 cycles for `JMPP`, 117 for `CALLP`, and 110 for `RET`. The extra cycle comes from enforcing the 18-cycle command-to-address transmit cadence in the shared stream-restart routine.
+The one-byte indirect-control and return forms can share the seek/restart handler. In the measured implementation they take 110 cycles for `JMPP`, 119 for checked `CALLP`, and 110 for `RET`. CALLP adds two post-push check cycles to its former 117-cycle path. The shared restart cycle comes from enforcing the 18-cycle command-to-address transmit cadence in the shared stream-restart routine.
 
 ### 22.3. Secondary prefixes
 
@@ -2731,8 +2731,8 @@ The reference interpreter uses the decode, table, forwarding, and shared-body st
 | `00-BF` direct one-byte instructions | Selected 17- or 18-cycle cadence; checked `PUSH16` takes 19 cycles (Sections 5 and 27) |
 | `C0-CF` immediate instructions | 35 / 52 / 35 / 35 by family |
 | `D0-D7` branch/`ADJSP`/`SYS` | Exact values in Section 30 |
-| `E0-E3` multi-byte direct control | 135 for near forms; 150 for far forms |
-| `E4-EB` `JMPP`/`CALLP` | 110 / 117 |
+| `E0-E3` multi-byte direct control | 135 for JMP16; 136 for CALL16; 150 for far forms |
+| `E4-EB` `JMPP`/`CALLP` | 110 / 119 |
 | `EC` 16-bit division/remainder | 56-265 cycles; exact formulas in Section 21.2 |
 | `ED-EE` displaced memory | 54 cycles byte; 55 cycles word |
 | `EF` `RET` | 110 |
@@ -2867,6 +2867,21 @@ For the checked `PUSH16` change, the measured core-layout span from `primary_tab
 
 The primary table stays at byte address `0x0200` with 256 four-word slots. The old one-word `NOP` beside `cluster_tail_18` is replaced by the two-word `CPI`/`BRLO` check and the one-word native fatal loop: three words replace one, for a net two words. The delay-one label aliases Cluster A's existing `NOP`; there is no added shim, duplicate dispatch, or RAM allocation. Subsequent physical block boundaries shift by two AVR words; their widths, order, and alignment requirements are unchanged. The measured core endpoint moves from `0x37AE` to `0x37B2`. All assembly width assertions and linker `RJMP`/`RCALL` range checks pass unchanged, including the redirected delay-one callers.
 
+The companion CALL/ADJSP/SETSP checks add **20 bytes**, moving the core span from **13,746 to 13,766 bytes** (`0x0200..0x37C6`) and complete linked `.text` from **28,164 to 28,184 bytes**. Both primary and F1 table widths remain unchanged (2,048 and 576 bytes). Two one-word fatal forwarding landings satisfy local conditional-branch reach; all native branch, RJMP/RCALL, slot-width, and cadence-cluster assertions pass. No RAM is allocated.
+
+| Component | Net bytes added |
+|---|---:|
+| Existing fatal loop and PUSH16 lower check | 0 |
+| Shared full-range upper comparison for SETSP/ADJSP | 8 |
+| ADJSP routing, removing four-cycle padding | -4 |
+| CALL8 check, removing three-cycle padding | 2 |
+| CALL16 check, one-word skip and adjusted JMP wait | 4 |
+| CALLF check, shortening its wait | 2 |
+| CALLP shared check | 4 |
+| Two local fatal forwarding landings | 4 |
+| Eight SETSP forwarding slots | 0 |
+| **Total** | **20** |
+
 ### 26.2. Reference order and estimated word ranges
 
 The following single-section order is a reference layout that keeps the major static transfers in range. The listed fixed-size blocks reflect the shown assembly sequences. The ordinary `F0` body block uses the budgeted allocation from Section 34; implementations may vary within the permitted size range provided all static transfers remain in range and no interior power-of-two alignment gaps are introduced.
@@ -2881,31 +2896,31 @@ The following single-section order is a reference layout that keeps the major st
 | 6 | Shared width-two decoder | 1227 | 1241 | 14 | 28 |
 | 7 | Generic decoder and four width stubs | 1241 | 1261 | 20 | 40 |
 | 8 | Shared `FB-FD` condition gate | 1261 | 1280 | 19 | 38 |
-| 9 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1280 | 1926 | 646 | 1292 |
-| 10 | Cluster-A false-path landing and cadence cluster | 1926 | 1952 | 26 | 52 |
-| 11 | Local F0 trap plus `F0` veneer table | 1952 | 2063 | 111 | 222 |
-| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2063 | 2814 | 751 | 1502 |
-| 13 | Program-memory string/comparison SYS subsystem | 2814 | 2942 | 128 | 256 |
-| 14 | Data-memory string/comparison SYS subsystem | 2942 | 3013 | 71 | 142 |
-| 15 | Shared `F0` cold-32 subsystem | 3013 | 3076 | 63 | 126 |
-| 16 | Shared `F0` cold general-pointer subsystem | 3076 | 3122 | 46 | 92 |
-| 17 | `F1` table | 3122 | 3410 | 288 | 576 |
-| 18 | `F2` table | 3410 | 3734 | 324 | 648 |
-| 19 | `F3` table | 3734 | 4118 | 384 | 768 |
-| 20 | Cluster B and two local trap shims | 4118 | 4145 | 27 | 54 |
-| 21 | `F4` table | 4145 | 4697 | 552 | 1104 |
-| 22 | `F5` table | 4697 | 5081 | 384 | 768 |
-| 23 | `F6` table | 5081 | 5401 | 320 | 640 |
-| 24 | `F7` table | 5401 | 6121 | 720 | 1440 |
-| 25 | Cluster C and local trap shim | 6121 | 6145 | 24 | 48 |
-| 26 | `F8` table | 6145 | 6385 | 240 | 480 |
-| 27 | `FA` immediate body-jump table | 6385 | 6398 | 13 | 26 |
-| 28 | `FA` register forwarding table | 6398 | 6494 | 96 | 192 |
-| 29 | Twelve shared `FA` shift bodies | 6494 | 6642 | 148 | 296 |
-| 30 | Shared `FB-FD` move table | 6642 | 6770 | 128 | 256 |
-| 31 | `FE` forwarding table | 6770 | 6898 | 128 | 256 |
-| 32 | Eight `FE` multiplication bodies | 6898 | 6962 | 64 | 128 |
-|  | **Non-floating reference end** |  | **6962** | **6962** | **13,924** |
+| 9 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1280 | 1936 | 656 | 1312 |
+| 10 | Cluster-A false-path landing and cadence cluster | 1936 | 1962 | 26 | 52 |
+| 11 | Local F0 trap plus `F0` veneer table | 1962 | 2073 | 111 | 222 |
+| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2073 | 2824 | 751 | 1502 |
+| 13 | Program-memory string/comparison SYS subsystem | 2824 | 2952 | 128 | 256 |
+| 14 | Data-memory string/comparison SYS subsystem | 2952 | 3023 | 71 | 142 |
+| 15 | Shared `F0` cold-32 subsystem | 3023 | 3086 | 63 | 126 |
+| 16 | Shared `F0` cold general-pointer subsystem | 3086 | 3132 | 46 | 92 |
+| 17 | `F1` table | 3132 | 3420 | 288 | 576 |
+| 18 | `F2` table | 3420 | 3744 | 324 | 648 |
+| 19 | `F3` table | 3744 | 4128 | 384 | 768 |
+| 20 | Cluster B and two local trap shims | 4128 | 4155 | 27 | 54 |
+| 21 | `F4` table | 4155 | 4707 | 552 | 1104 |
+| 22 | `F5` table | 4707 | 5091 | 384 | 768 |
+| 23 | `F6` table | 5091 | 5411 | 320 | 640 |
+| 24 | `F7` table | 5411 | 6131 | 720 | 1440 |
+| 25 | Cluster C and local trap shim | 6131 | 6155 | 24 | 48 |
+| 26 | `F8` table | 6155 | 6395 | 240 | 480 |
+| 27 | `FA` immediate body-jump table | 6395 | 6408 | 13 | 26 |
+| 28 | `FA` register forwarding table | 6408 | 6504 | 96 | 192 |
+| 29 | Twelve shared `FA` shift bodies | 6504 | 6652 | 148 | 296 |
+| 30 | Shared `FB-FD` move table | 6652 | 6780 | 128 | 256 |
+| 31 | `FE` forwarding table | 6780 | 6908 | 128 | 256 |
+| 32 | Eight `FE` multiplication bodies | 6908 | 6972 | 64 | 128 |
+|  | **Non-floating reference end** |  | **6972** | **6972** | **13,944** |
 
 The `FF` decoder, bridge, inline floating handlers, and linked soft-float routines are not included in this non-floating endpoint until measured. Startup-only helpers and startup code are also excluded.
 
@@ -2941,6 +2956,11 @@ cluster_tail_18_delay_2:
     rjmp  cluster_tail_18
 stack_overflow_func:
     rjmp  stack_overflow_func
+stack_bounds_check:
+    ldi   r25, hi8(VM_SP_INITIAL_VALUE)
+    cpi   VM_SPL, lo8(VM_SP_INITIAL_VALUE+1) ; compare SP with 0x0A01
+    cpc   VM_SPH, r25
+    brsh  stack_overflow_func               ; reject SP > 0x0A00
 push16_stack_check:
     cpi   VM_SPH, hi8(data_stack)  ; YH < 0x09 is fatal after the stores
     brlo  stack_overflow_func
@@ -2988,7 +3008,42 @@ The complete entry-to-entry latency is **28 - 9 = 19 cycles**, versus the measur
 
 This is an interpreter safety policy: `PUSH16` still decrements SP by two and stores the value. After the stores, `YH < 0x09` enters the distinct native self-loop `stack_overflow_func`, before any following guest instruction executes. Starting from a valid SP, the high-byte comparison detects the first downward overflow; it needs no full-width comparison. `SP=0x0902` becomes `0x0900` and continues. `SP=0x0901` writes high to `0x0900`, low to `0x08FF`, then traps with SP `0x08FF`; `SP=0x0900` writes to `0x08FF/0x08FE`, then traps with SP `0x08FE`.
 
-The first overflow may therefore modify the framebuffer. This is intentionally a low-overhead fail-stop check, not memory protection. The trap does not recover, use either stack, allocate RAM, or execute another AVM instruction. The check changes native `SREG` but never writes architectural `VM_FLAGS` in `GPIOR0`; no native flag save/restore is needed. This policy adds no checks to calls, `ADJSP`, or `SETSP`.
+The first overflow may therefore modify the framebuffer. This is intentionally a low-overhead fail-stop check, not memory protection. The trap does not recover, use either stack, allocate RAM, or execute another AVM instruction. The check changes native `SREG` but never writes architectural `VM_FLAGS` in `GPIOR0`; no native flag save/restore is needed. Calls, ADJSP, and SETSP use the same fatal target as described below. POP16 and RET retain their existing behavior; this policy does not add underflow checks.
+
+#### Checked ADJSP, calls, and SETSP policy
+
+The conventional stack occupies `0x0900..0x09FF`, with valid empty SP `0x0A00`. These are reference-interpreter fail-stop policies; opcode encodings, instruction lengths, signed displacement arithmetic, and three-byte return records are unchanged. SETSP must assign within the inclusive interval `0x0900 <= SP <= 0x0A00`. ADJSP validates that same interval after signed arithmetic. Positive ADJSP formerly could create an above-stack SP; the full-range check now rejects it with **zero added cycles**, using the shared SETSP validator.
+
+The full validator compares SP against exclusive upper bound `0x0A01` using `LDI/CPI/CPC/BRSH`, then falls through to PUSH16's existing `CPI YH,0x09` / `BRLO`. It takes six valid-path cycles and preserves all guest registers and GPIOR0. SETSP's eight two-word F1 entries still perform operand-specialized `MOVW Y,src` plus `RJMP`, now to this validator. Assignment precedes validation, but no memory access occurs, and a failure traps before the following guest instruction. SP `0x0900`, `0x0901`, `0x0980`, `0x09FF`, and `0x0A00` succeed; `0x0000`, `0x0800`, `0x08FF`, `0x0A01`, `0x0AFF`, and `0xFFFF` trap.
+
+ADJSP retains its cycle-17 reverse operand handoff. Signed ADD/ADC execute at cycles 23-24, followed by RJMP at 25-26, validation at 27-32, and standard tail ADD/IN/OUT at 33/34/35. The following primary entry is cycle 44: **44 - 9 = 35 cycles**. Replacing four padding cycles and the slower reverse dispatch tail pays for both checks. From `0x0910`, ADJSP -16 reaches `0x0900` and continues; from `0x090F`, it reaches `0x08FF` and traps. Positive adjustment to `0x0A00` succeeds; to `0x0A01` traps. ADJSP performs no memory writes.
+
+Every call stores its complete return record first (`ST -Y,PCH`, `ST -Y,PCM`, `ST -Y,PCL`), then checks `YH < 0x09` before target installation or seek/restart. The checks use native SREG freely and never write architectural VM_FLAGS/GPIOR0. From SP `0x0903`, a call reaches `0x0900`, executes its callee, and RET restores SP and nextPC. From `0x0902`, the last store writes `0x08FF`, then traps before the callee executes. Starting at `0x0900` may write all three bytes below the boundary; this accepted post-write policy provides no restoration or recovery.
+
+- **CALL8:** moves the nextPC increment and three stores into the rel8 transfer window. Entry is cycle 14; nextPC ADD/ADC/ADC run at 14-16, stores at 17-22, and CPI/BRLO at 23-24. The operand IN at 25 safely follows transfer completion. Removing the old three-cycle delay pays for the two-cycle check and saves one cycle overall. Target arithmetic still follows return-record construction.
+- **CALL16:** replaces the call/jump selector's two-word JMP with one-word RJMP, shortening the call skip by one cycle. Stores run at 26-31 and validation at 32-33, before the shared CLR/IN at 34/35. One check cycle remains exposed. The JMP16 wait grows from three to four cycles to compensate its shorter selector and retain its cadence; taken conditional branches enter the unchanged signed-displacement suffix directly.
+- **CALLF:** replaces its post-store four-cycle wait with CPI/BRLO plus a two-cycle delay. The subsequent target-byte handoff and full 150-cycle cadence stay unchanged.
+- **CALLP:** all four one-byte operand-specialized slots share the post-store CPI/BRLO, before copying the preserved 24-bit target into VM_PC. Both check cycles are exposed. JMPP bypasses the nearby fatal shim and retains its original path.
+
+Exact before/after measurements use the repository's 1,018-case instruction benchmark and focused native-emulator boundary tests:
+
+| Instruction | Before | Checked | Delta |
+|---|---:|---:|---:|
+| ADJSP, either sign (valid) | 35 | 35 | 0 |
+| CALL8 | 128 | 127 | -1 |
+| CALL16 | 135 | 136 | +1 |
+| CALLF | 150 | 150 | 0 |
+| CALLP, all q0-q3 | 117 | 119 | +2 |
+| SETSP, all r0-r7 | 37 | 40 | +3 |
+| PUSH16 | 19 | 19 | 0 |
+| POP16 | 18 | 18 | 0 |
+| JMP8 | 122 | 122 | 0 |
+| JMP16 | 135 | 135 | 0 |
+| JMPF | 150 | 150 | 0 |
+| JMPP | 110 | 110 | 0 |
+| RET | 110 | 110 | 0 |
+
+Only SETSP/CALL8/CALL16/CALLP change among the 1,018 benchmark rows. The focused 1,133-case suite repeats all eight C/Z/S combinations, all call encodings, exact floors and first/deeper overflows, return-record canaries and byte order, real callee/RET execution, 8/16/24-bit PC carries, and every SETSP source with all required valid/invalid inputs. It also proves assignment/adjustment leave guest memory unchanged and the fatal loop preserves SP, guest registers, memory, flags, and native SP while executing no following guest instruction.
 
 #### Cluster A commit arrangement
 
@@ -3266,7 +3321,7 @@ The dense tables for upper-register pointers contain only fast forms. The two ta
 | `D2` | `BRULT8 rel8` | 2 | 35 not taken; 128 taken |
 | `D3` | `BRSLT8 rel8` | 2 | 35 not taken; 128 taken |
 | `D4` | `JMP8 rel8` | 2 | 122 |
-| `D5` | `CALL8 rel8` | 2 | 128 |
+| `D5` | `CALL8 rel8` | 2 | 127 |
 | `D6` | `ADJSP simm8` | 2 | 35 |
 | `D7` | `SYS service8` | 2 | varies |
 | `D8` | `BRUGE8 rel8` | 2 | 35 not taken; 128 taken |
@@ -3278,14 +3333,14 @@ The dense tables for upper-register pointers contain only fast forms. The two ta
 | `DE` | `BRSLT16 rel16` | 3 | 51 not taken; 135 taken |
 | `DF` | `BRSGE16 rel16` | 3 | 51 not taken; 135 taken |
 | `E0` | `JMP16 rel16` | 3 | 135 |
-| `E1` | `CALL16 rel16` | 3 | 135 |
+| `E1` | `CALL16 rel16` | 3 | 136 |
 | `E2` | `JMPF target24` | 4 | 150 |
 | `E3` | `CALLF target24` | 4 | 150 |
 | `E4-E7` | `JMPP qN` | 1 | 110 |
-| `E8-EB` | `CALLP qN` | 1 | 117 |
+| `E8-EB` | `CALLP qN` | 1 | 119 |
 | `EF` | `RET` | 1 | 110 |
 
-The measured taken-transfer values are one cycle above the earlier estimates because the shared seek/restart routine now preserves the required 18-cycle `OUT`-to-`OUT` cadence while transmitting the `SFC_READ` command and address bytes. The measured `SYS` values include the complete service-table dispatch overhead.
+The measured jump and taken-branch values are one cycle above the earlier estimates because the shared seek/restart routine now preserves the required 18-cycle `OUT`-to-`OUT` cadence while transmitting the `SFC_READ` command and address bytes. Checked call schedules and their before/after measurements are detailed in Section 26.3. The measured `SYS` values include the complete service-table dispatch overhead.
 
 All relative displacements are signed and relative to the address immediately following the complete instruction. The `rel8` branch forms use a signed 8-bit displacement; the corresponding `*16` forms use a signed 16-bit displacement. `JMP16` and `CALL16` retain the active code bank and use their signed 16-bit displacement to select the target within that bank. `JMPF` and `CALLF` carry an explicit 24-bit target and are separate opcodes.
 
@@ -3302,7 +3357,7 @@ BRSGE8 / BRSGE16   S == 0
 
 The short forms use six specialized `SBIC`/`SBIS GPIOR0,bit` decode paths. The 16-bit forms share one flag-mask decoder: each primary slot preloads the selected mask, opcode bit 0 selects inversion, and the condition is resolved while the high displacement byte transfers. The shared 16-bit branch subsystem occupies **25 AVR words / 50 bytes** outside the fixed primary table.
 
-For the reference schedule, a not-taken 16-bit branch launches the fallthrough opcode at the second cycle-17 boundary and completes in 51 cycles. A taken branch reuses the `JMP16` signed-displacement suffix and therefore has the same 134-cycle latency as `JMP16`. Code generators should choose fallthrough layout based on expected path frequency. `CALLF` uses native `r7` to add four to the low-register 24-bit PC when forming its return address.
+For the reference schedule, a not-taken 16-bit branch launches the fallthrough opcode at the second cycle-17 boundary and completes in 51 cycles. A taken branch reuses the `JMP16` signed-displacement suffix and therefore has the same measured 135-cycle latency as `JMP16`. Code generators should choose fallthrough layout based on expected path frequency. `CALLF` uses native `r7` to add four to the low-register 24-bit PC when forming its return address.
 
 
 ## 30.1. Program-memory string and comparison SYS services
@@ -3591,7 +3646,7 @@ The secondary executable tables total **7,374 bytes**. `EC`, `ED-EE`, `F9`, and 
 
 ### 34.1. Reference baseline and variable components
 
-For the shown layout, the non-floating core with the expanded `F2` table, `FA` bodies, the exact 74-byte `ED-EE` handler, and all other non-floating pages present, but excluding the ordinary `F0` bodies, both string/comparison SYS subsystems, and the two shared `F0` runtime-decoded subsystems, occupies **11,806 bytes**. The remaining components are estimated as follows:
+For the shown layout, the non-floating core with the expanded `F2` table, `FA` bodies, the exact 74-byte `ED-EE` handler, and all other non-floating pages present, but excluding the ordinary `F0` bodies, both string/comparison SYS subsystems, and the two shared `F0` runtime-decoded subsystems, occupies **11,826 bytes**. The remaining components are estimated as follows:
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
@@ -3605,11 +3660,11 @@ For the shown layout, the non-floating core with the expanded `F2` table, `FA` b
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 13,822 | 13.50 |
-| Non-floating reference target | **13,918** | **13.59** |
-| Upper bound | 14,078 | 13.75 |
+| Lower bound | 13,842 | 13.52 |
+| Non-floating reference target | **13,938** | **13.61** |
+| Upper bound | 14,098 | 13.77 |
 
-The non-floating reference design targets about 13,918 bytes, with 14,078 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
+The non-floating reference design targets about 13,938 bytes, with 14,098 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
 
 ## 35. Four-word primary-stride rationale
 

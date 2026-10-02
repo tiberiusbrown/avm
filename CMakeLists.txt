@@ -27,6 +27,7 @@ endif()
 # SelectionDAG code generator in addition to its MC and linker components.
 set(LLVM_TARGETS_TO_BUILD              ""          CACHE STRING "" FORCE)
 set(LLVM_EXPERIMENTAL_TARGETS_TO_BUILD "AVM"       CACHE STRING "" FORCE)
+set(LLVM_ENABLE_PIC                     ON          CACHE BOOL   "" FORCE)
 set(AVM_LLVM_PROJECTS clang lld)
 if(AVM_WITH_ARDENS)
     list(APPEND AVM_LLVM_PROJECTS lldb)
@@ -70,6 +71,9 @@ if(AVM_WITH_ARDENS)
     set(ARDENS_CYCLES    OFF CACHE BOOL "" FORCE)
     set(ARDENS_SDL       ON  CACHE BOOL "" FORCE)
     add_subdirectory("${AVM_ARDENS_SOURCE_DIR}" ardens-build EXCLUDE_FROM_ALL)
+    # liblldb is shared; its static Ardens dependencies must be PIC.
+    set_target_properties(ardensdebuggerlib fmt miniz PROPERTIES
+        POSITION_INDEPENDENT_CODE ON)
     add_custom_target(avm_ardens_debugger ALL DEPENDS Ardens)
 
     add_library(avm_debug_emulator STATIC debug/AvmEmulator.cpp debug/AvmHost.cpp)
@@ -85,7 +89,7 @@ if(AVM_WITH_ARDENS)
         debug/AvmProfileFormat.cpp
         debug/AvmProfileSymbol.cpp
         debug/AvmProfileReport.cpp)
-    set_target_properties(avm_profile PROPERTIES
+    set_target_properties(avm_debug_emulator avm_profile PROPERTIES
         POSITION_INDEPENDENT_CODE ON)
     target_compile_features(avm_profile PUBLIC cxx_std_17)
     target_include_directories(avm_profile

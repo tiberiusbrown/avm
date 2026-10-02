@@ -2717,6 +2717,16 @@ cluster_tail_18_delay_2:
 ; No VM_FLAGS/GPIOR0 write or guest/native stack use is needed here.
 stack_overflow_func:
     rjmp stack_overflow_func
+; Full-range validator for arbitrary SETSP and either sign of ADJSP. Compare
+; against exclusive upper bound 0x0A01, then fall through to PUSH16's existing
+; lower-page check. Six valid-path check cycles plus standard dispatch replace
+; ADJSP's four padding cycles and slower reverse tail, retaining 35 cycles.
+; r25 is interpreter scratch; guest registers and GPIOR0 are untouched.
+stack_bounds_check:
+    ldi  r25, hi8(VM_SP_INITIAL_VALUE)
+    cpi  VM_SPL, lo8(VM_SP_INITIAL_VALUE+1)
+    cpc  VM_SPH, r25
+    brsh stack_overflow_func
 push16_stack_check:
     cpi  VM_SPH, hi8(data_stack)
     brlo stack_overflow_func
@@ -2994,22 +3004,24 @@ jmp8_rel8_func:
     rjmp seek_and_dispatch_func
 
 call8_rel8_func:
-    ; Fetch and sign-extend the displacement exactly as for JMP8 rel8.
-    delay_3
-    in   r26, SPDR
-
-    clr  r25
-    sbrc r26, 7
-    com  r25
-
     ; Advance to nextPC and push that 24-bit return address in the canonical
     ; little-endian stack layout: [SP+0]=PCL, [SP+1]=PCM, [SP+2]=PCH.
+    ; Do this while rel8 transfers, replacing the old three-cycle wait. Entry
+    ; is cycle 14: ADD/ADC/ADC 14-16, stores 17-22, CPI/BRLO 23-24. IN at 25
+    ; is safely after completion; the checked call saves one exposed cycle.
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
     st   -Y, VM_PCH
     st   -Y, VM_PCM
     st   -Y, VM_PCL
+    cpi  VM_SPH, hi8(data_stack)
+    brlo stack_overflow_control
+
+    in   r26, SPDR
+    clr  r25
+    sbrc r26, 7
+    com  r25
 
     ; Form the branch target only after preserving nextPC, then restart the
     ; external-flash stream at that target.
@@ -3020,7 +3032,7 @@ call8_rel8_func:
 
 adjsp_simm8_func:
     ; Read simm8 while starting the following primary opcode. VM_PC remains on
-    ; the operand byte so dispatch_reverse advances it exactly once afterward.
+    ; the operand byte so the final standard dispatch advances it once afterward.
     ; The continuation begins on cycle 14, so the two-cycle landing makes the
     ; reverse OUT occur exactly 17 cycles after the operand-starting OUT.
     delay_2
@@ -3035,10 +3047,16 @@ adjsp_simm8_func:
     add  VM_SPL, PRIMARY_OPCODE
     adc  VM_SPH, r25
 
-    ; Preserve the sequential stream and architectural VM_FLAGS. This delay
-    ; makes the next SPI OUT occur at the reverse-order 17-cycle cadence.
-    delay_4
-    rjmp cluster_tail_17
+    ; Check the complete interval after arithmetic, without memory writes.
+    ; Arithmetic 23-24, RJMP 25-26, six check cycles 27-32, standard ADD/IN/OUT
+    ; 33/34/35, next primary entry 44: exactly 44 - 9 = 35 cycles. Replacing
+    ; four padding cycles and the reverse tail hides both bound checks.
+    rjmp stack_bounds_check
+
+; Nearby fail-stop forwarding landing for CALL8, CALL16, and CALLF. Ordinary
+; execution jumps around it; all checks finish before another guest executes.
+stack_overflow_control:
+    rjmp stack_overflow_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; E0-E3 direct near/far control
@@ -3047,8 +3065,8 @@ adjsp_simm8_func:
 ; The first operand byte was started by the primary dispatch. Each paired
 ; JMP/CALL continuation reaches the exact 17-cycle boundary with useful work,
 ; then uses CLI/OUT/IN/SEI to launch the next operand byte. Opcode bit 0 selects
-; the call path, but its conditional return-address push is completely hidden
-; inside operand-transfer slack, so the paired forms retain equal latency.
+; the call path. CALL16's shorter one-word skip hides one check cycle; the other
+; exposes one cycle. CALLF replaces padding and retains JMPF's latency.
 ; Remaining idle intervals use the shared callable delay ladder.
 
 jmp_call_rel16_func:
@@ -3063,19 +3081,22 @@ jmp_call_rel16_func:
     adc  VM_PCH, ZERO
 
     ; Advance through rel16[15:8] to nextPC. Opcode bit 0 distinguishes CALL16
-    ; from JMP16. Both paths consume the same nine-cycle transfer slack:
-    ; CALL16 uses a three-cycle skip plus three two-cycle stores, while JMP16
-    ; uses a four-cycle test/JMP plus a three-cycle delay and two-cycle RJMP.
+    ; from JMP16. A one-word RJMP makes the call's skip two cycles instead of
+    ; three. CALL16 stores at 26-31 and checks at 32-33, then CLR/IN at 34/35.
+    ; JMP16's wait grows by one cycle to preserve its original CLR/IN at 33/34;
+    ; taken conditional branches still enter rel16_read_high directly.
     add  VM_PCL, ONE
     adc  VM_PCM, ZERO
     adc  VM_PCH, ZERO
     sbrs PRIMARY_OPCODE, 0
-    jmp  jmp_rel16_wait
+    rjmp jmp_rel16_wait
 
     ; CALL16: preserve nextPC before applying the signed displacement.
     st   -Y, VM_PCH
     st   -Y, VM_PCM
     st   -Y, VM_PCL
+    cpi  VM_SPH, hi8(data_stack)
+    brlo stack_overflow_control
 
 rel16_read_high:
     ; CLR is independent of the high displacement byte and fills the final
@@ -3092,7 +3113,7 @@ rel16_read_high:
     rjmp seek_and_dispatch_func
 
 jmp_rel16_wait:
-    delay_3
+    delay_4
     rjmp rel16_read_high
 
 jmp_call_far_func:
@@ -3114,7 +3135,11 @@ jmp_call_far_func:
     st   -Y, VM_PCH
     st   -Y, VM_PCM
     st   -Y, VM_PCL
-    delay_4
+    ; CPI/BRLO plus two delay cycles replace the former four-cycle delay.
+    ; The check follows all stores and precedes the target installation.
+    cpi  VM_SPH, hi8(data_stack)
+    brlo stack_overflow_control
+    delay_2
 
 far_launch_high:
     cli
@@ -3446,6 +3471,9 @@ sys_libm_target_table:
 jmpp_seek_and_dispatch_func:
     rjmp seek_and_dispatch_func
 
+stack_overflow_indirect:
+    rjmp stack_overflow_func
+
 ; CALLP shared prologue. The primary slot preserved the selected target in
 ; r26:r25:r24 and performed the low-byte increment from the CALLP opcode to its
 ; sequential return address. Finish the 24-bit carry chain, push PC+1 in
@@ -3457,6 +3485,10 @@ push_pc_seek_and_dispatch_func:
     st   -Y, VM_PCH
     st   -Y, VM_PCM
     st   -Y, VM_PCL
+    ; Shared by all four specialized CALLP slots. Both useful check cycles
+    ; are exposed (+2); JMPP and the common seek timing are unchanged.
+    cpi  VM_SPH, hi8(data_stack)
+    brlo stack_overflow_indirect
     movw VM_PCL, r24
     mov  VM_PCH, r26
 
@@ -3616,8 +3648,10 @@ invalid_syscall_func:
 
 .macro emit_f1_setsp src
 .Lf1_setsp_start_\@:
+    ; Assign without memory access, then share ADJSP's full-range validator.
+    ; Two-word table geometry and source-register specialization are retained.
     movw  VM_SP, \src
-    rjmp  cluster_a_tail_17_delay_1
+    rjmp  stack_bounds_check
 .Lf1_setsp_end_\@:
     .if (.Lf1_setsp_end_\@ - .Lf1_setsp_start_\@) != 4
         .error "F1 SETSP slot is not exactly two words"

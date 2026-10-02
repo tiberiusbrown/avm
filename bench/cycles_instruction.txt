@@ -21,7 +21,7 @@
    18   POP16 r0
    35   ADJSP simm8
    37   GETSP r0
-   37   SETSP r0
+   40   SETSP r0
    60   LEASP r0,32 (cold)
    17   ADD r4,r5 (upper one-byte)
    38   ADD r0,r1 (full F2)
@@ -485,13 +485,13 @@
    51   BRSGE16 (not taken)
   135   BRSGE16 (taken)
   122   JMP8 rel8
-  128   CALL8 rel8
+  127   CALL8 rel8
   135   JMP16 rel16
-  135   CALL16 rel16
+  136   CALL16 rel16
   150   JMPF target24
   150   CALLF target24
   110   JMPP q0
-  117   CALLP q0
+  119   CALLP q0
  1066   SYS sinf (+zero; smallest argument path)
  1736   SYS sinf (0.125; no reduction loop)
  1717   SYS sinf (pi/4; polynomial endpoint)

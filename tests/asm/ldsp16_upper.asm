@@ -7,15 +7,15 @@
 _start:
 
     ; Entry 0x00: ldsp16 r4, [sp+0]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ldi8 r5, 0xa0
     st8 [r4], r5
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi16 r5, 0x0000
     st16 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0x50
     st8 [r4], r5
     ldi16 r4, 0x1d41
@@ -30,25 +30,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x01: ldsp16 r4, [sp+1]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi8 r5, 0xa4
     st8 [r4], r5
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi16 r5, 0x1110
     st16 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0x55
     st8 [r4], r5
     ldi16 r4, 0x1d72
@@ -63,25 +63,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x02: ldsp16 r4, [sp+2]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi8 r5, 0xa8
     st8 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi16 r5, 0x22dd
     st16 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0x5a
     st8 [r4], r5
     ldi16 r4, 0x1da3
@@ -96,25 +96,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x03: ldsp16 r4, [sp+3]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0xac
     st8 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi16 r5, 0x3233
     st16 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0x5f
     st8 [r4], r5
     ldi16 r4, 0x1dd4
@@ -129,25 +129,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x04: ldsp16 r4, [sp+4]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0xb0
     st8 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi16 r5, 0x3bbb
     st16 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0x64
     st8 [r4], r5
     ldi16 r4, 0x1e05
@@ -162,25 +162,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x05: ldsp16 r4, [sp+5]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0xb4
     st8 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi16 r5, 0xd555
     st16 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0x69
     st8 [r4], r5
     ldi16 r4, 0x1e36
@@ -195,25 +195,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x06: ldsp16 r4, [sp+6]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0xb8
     st8 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi16 r5, 0x9999
     st16 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0x6e
     st8 [r4], r5
     ldi16 r4, 0x1e67
@@ -228,25 +228,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x07: ldsp16 r4, [sp+7]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0xbc
     st8 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi16 r5, 0xd22d
     st16 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0x73
     st8 [r4], r5
     ldi16 r4, 0x1e98
@@ -261,25 +261,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x08: ldsp16 r4, [sp+8]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0xc0
     st8 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi16 r5, 0x8888
     st16 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0x78
     st8 [r4], r5
     ldi16 r4, 0x1ec9
@@ -294,25 +294,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x09: ldsp16 r4, [sp+9]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0xc4
     st8 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi16 r5, 0x9998
     st16 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0x7d
     st8 [r4], r5
     ldi16 r4, 0x1efa
@@ -327,25 +327,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x0A: ldsp16 r4, [sp+10]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0xc8
     st8 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi16 r5, 0xaa55
     st16 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0x82
     st8 [r4], r5
     ldi16 r4, 0x1f2b
@@ -360,25 +360,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x0B: ldsp16 r4, [sp+11]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0xcc
     st8 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi16 r5, 0xbabb
     st16 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0x87
     st8 [r4], r5
     ldi16 r4, 0x1f5c
@@ -393,25 +393,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x0C: ldsp16 r4, [sp+12]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0xd0
     st8 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi16 r5, 0xb333
     st16 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0x8c
     st8 [r4], r5
     ldi16 r4, 0x1f8d
@@ -426,25 +426,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x0D: ldsp16 r4, [sp+13]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0xd4
     st8 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi16 r5, 0x5ddd
     st16 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi8 r5, 0x91
     st8 [r4], r5
     ldi16 r4, 0x1fbe
@@ -459,25 +459,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x0E: ldsp16 r4, [sp+14]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0xd8
     st8 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi16 r5, 0x1111
     st16 [r4], r5
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ldi8 r5, 0x96
     st8 [r4], r5
     ldi16 r4, 0x1fef
@@ -492,25 +492,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x0F: ldsp16 r4, [sp+15]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0xdc
     st8 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi16 r5, 0x5aa5
     st16 [r4], r5
-    ldi16 r4, 0x0711
+    ldi16 r4, 0x0991
     ldi8 r5, 0x9b
     st8 [r4], r5
     ldi16 r4, 0x2020
@@ -525,25 +525,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x10: ldsp16 r5, [sp+0]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ldi8 r5, 0xd0
     st8 [r4], r5
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi16 r5, 0x0001
     st16 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0xa1
     st8 [r4], r5
     ldi16 r4, 0x2051
@@ -558,25 +558,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x11: ldsp16 r5, [sp+1]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi8 r5, 0xd4
     st8 [r4], r5
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi16 r5, 0x11ee
     st16 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0xa6
     st8 [r4], r5
     ldi16 r4, 0x2082
@@ -591,25 +591,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x12: ldsp16 r5, [sp+2]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi8 r5, 0xd8
     st8 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi16 r5, 0x2322
     st16 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0xab
     st8 [r4], r5
     ldi16 r4, 0x20b3
@@ -624,25 +624,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x13: ldsp16 r5, [sp+3]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0xdc
     st8 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi16 r5, 0x4ccc
     st16 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0xb0
     st8 [r4], r5
     ldi16 r4, 0x20e4
@@ -657,25 +657,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x14: ldsp16 r5, [sp+4]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0xe0
     st8 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi16 r5, 0xc444
     st16 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0xb5
     st8 [r4], r5
     ldi16 r4, 0x2115
@@ -690,25 +690,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x15: ldsp16 r5, [sp+5]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0xe4
     st8 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi16 r5, 0xaaaa
     st16 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0xba
     st8 [r4], r5
     ldi16 r4, 0x2146
@@ -723,25 +723,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x16: ldsp16 r5, [sp+6]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0xe8
     st8 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi16 r5, 0xc33c
     st16 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0xbf
     st8 [r4], r5
     ldi16 r4, 0x2177
@@ -756,25 +756,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x17: ldsp16 r5, [sp+7]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0xec
     st8 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi16 r5, 0x7777
     st16 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0xc4
     st8 [r4], r5
     ldi16 r4, 0x21a8
@@ -789,25 +789,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x18: ldsp16 r5, [sp+8]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0xf0
     st8 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi16 r5, 0x8889
     st16 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0xc9
     st8 [r4], r5
     ldi16 r4, 0x21d9
@@ -822,25 +822,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x19: ldsp16 r5, [sp+9]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0xf4
     st8 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi16 r5, 0x9966
     st16 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0xce
     st8 [r4], r5
     ldi16 r4, 0x220a
@@ -855,25 +855,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x1A: ldsp16 r5, [sp+10]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0xf8
     st8 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi16 r5, 0xabaa
     st16 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0xd3
     st8 [r4], r5
     ldi16 r4, 0x223b
@@ -888,25 +888,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x1B: ldsp16 r5, [sp+11]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0xfc
     st8 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi16 r5, 0xc444
     st16 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0xd8
     st8 [r4], r5
     ldi16 r4, 0x226c
@@ -921,25 +921,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x1C: ldsp16 r5, [sp+12]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi16 r5, 0x4ccc
     st16 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0xdd
     st8 [r4], r5
     ldi16 r4, 0x229d
@@ -954,25 +954,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x1D: ldsp16 r5, [sp+13]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0x04
     st8 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi16 r5, 0x2222
     st16 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi8 r5, 0xe2
     st8 [r4], r5
     ldi16 r4, 0x22ce
@@ -987,25 +987,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x1E: ldsp16 r5, [sp+14]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0x08
     st8 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi16 r5, 0x4bb4
     st16 [r4], r5
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ldi8 r5, 0xe7
     st8 [r4], r5
     ldi16 r4, 0x22ff
@@ -1020,25 +1020,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x1F: ldsp16 r5, [sp+15]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0x0c
     st8 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi16 r5, 0xffff
     st16 [r4], r5
-    ldi16 r4, 0x0711
+    ldi16 r4, 0x0991
     ldi8 r5, 0xec
     st8 [r4], r5
     ldi16 r4, 0x2330
@@ -1053,25 +1053,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x20: ldsp16 r6, [sp+0]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi16 r5, 0x00ff
     st16 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0xf2
     st8 [r4], r5
     ldi16 r4, 0x2361
@@ -1086,25 +1086,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x21: ldsp16 r6, [sp+1]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi8 r5, 0x04
     st8 [r4], r5
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi16 r5, 0x1011
     st16 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0xf7
     st8 [r4], r5
     ldi16 r4, 0x2392
@@ -1119,25 +1119,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x22: ldsp16 r6, [sp+2]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi8 r5, 0x08
     st8 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi16 r5, 0x5ddd
     st16 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0xfc
     st8 [r4], r5
     ldi16 r4, 0x23c3
@@ -1152,25 +1152,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x23: ldsp16 r6, [sp+3]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0x0c
     st8 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi16 r5, 0xb333
     st16 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0x01
     st8 [r4], r5
     ldi16 r4, 0x23f4
@@ -1185,25 +1185,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x24: ldsp16 r6, [sp+4]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0x10
     st8 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi16 r5, 0xbbbb
     st16 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0x06
     st8 [r4], r5
     ldi16 r4, 0x2425
@@ -1218,25 +1218,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x25: ldsp16 r6, [sp+5]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0x14
     st8 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi16 r5, 0xf00f
     st16 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0x0b
     st8 [r4], r5
     ldi16 r4, 0x2456
@@ -1251,25 +1251,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x26: ldsp16 r6, [sp+6]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0x18
     st8 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi16 r5, 0x6666
     st16 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0x10
     st8 [r4], r5
     ldi16 r4, 0x2487
@@ -1284,25 +1284,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x27: ldsp16 r6, [sp+7]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0x1c
     st8 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi16 r5, 0x7776
     st16 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0x15
     st8 [r4], r5
     ldi16 r4, 0x24b8
@@ -1317,25 +1317,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x28: ldsp16 r6, [sp+8]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0x20
     st8 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi16 r5, 0x8877
     st16 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0x1a
     st8 [r4], r5
     ldi16 r4, 0x24e9
@@ -1350,25 +1350,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x29: ldsp16 r6, [sp+9]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0x24
     st8 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi16 r5, 0x9899
     st16 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0x1f
     st8 [r4], r5
     ldi16 r4, 0x251a
@@ -1383,25 +1383,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x2A: ldsp16 r6, [sp+10]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0x28
     st8 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi16 r5, 0xd555
     st16 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0x24
     st8 [r4], r5
     ldi16 r4, 0x254b
@@ -1416,25 +1416,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x2B: ldsp16 r6, [sp+11]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0x2c
     st8 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi16 r5, 0x3bbb
     st16 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0x29
     st8 [r4], r5
     ldi16 r4, 0x257c
@@ -1449,25 +1449,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x2C: ldsp16 r6, [sp+12]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0x30
     st8 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi16 r5, 0x3333
     st16 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0x2e
     st8 [r4], r5
     ldi16 r4, 0x25ad
@@ -1482,25 +1482,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x2D: ldsp16 r6, [sp+13]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0x34
     st8 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi16 r5, 0x7887
     st16 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi8 r5, 0x33
     st8 [r4], r5
     ldi16 r4, 0x25de
@@ -1515,25 +1515,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x2E: ldsp16 r6, [sp+14]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0x38
     st8 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi16 r5, 0xeeee
     st16 [r4], r5
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ldi8 r5, 0x38
     st8 [r4], r5
     ldi16 r4, 0x260f
@@ -1548,25 +1548,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x2F: ldsp16 r6, [sp+15]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0x3c
     st8 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi16 r5, 0xfffe
     st16 [r4], r5
-    ldi16 r4, 0x0711
+    ldi16 r4, 0x0991
     ldi8 r5, 0x3d
     st8 [r4], r5
     ldi16 r4, 0x2640
@@ -1581,25 +1581,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x30: ldsp16 r7, [sp+0]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ldi8 r5, 0x30
     st8 [r4], r5
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi16 r5, 0x0100
     st16 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0x43
     st8 [r4], r5
     ldi16 r4, 0x2671
@@ -1614,25 +1614,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x06ff
+    ldi16 r4, 0x097f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x31: ldsp16 r7, [sp+1]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ldi8 r5, 0x34
     st8 [r4], r5
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi16 r5, 0x6eee
     st16 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0x48
     st8 [r4], r5
     ldi16 r4, 0x26a2
@@ -1647,25 +1647,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x32: ldsp16 r7, [sp+2]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ldi8 r5, 0x38
     st8 [r4], r5
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi16 r5, 0xa222
     st16 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0x4d
     st8 [r4], r5
     ldi16 r4, 0x26d3
@@ -1680,25 +1680,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0701
+    ldi16 r4, 0x0981
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x33: ldsp16 r7, [sp+3]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ldi8 r5, 0x3c
     st8 [r4], r5
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi16 r5, 0xcccc
     st16 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0x52
     st8 [r4], r5
     ldi16 r4, 0x2704
@@ -1713,25 +1713,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0702
+    ldi16 r4, 0x0982
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x34: ldsp16 r7, [sp+4]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ldi8 r5, 0x40
     st8 [r4], r5
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi16 r5, 0xe11e
     st16 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0x57
     st8 [r4], r5
     ldi16 r4, 0x2735
@@ -1746,25 +1746,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0703
+    ldi16 r4, 0x0983
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x35: ldsp16 r7, [sp+5]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ldi8 r5, 0x44
     st8 [r4], r5
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi16 r5, 0x5555
     st16 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0x5c
     st8 [r4], r5
     ldi16 r4, 0x2766
@@ -1779,25 +1779,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0704
+    ldi16 r4, 0x0984
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x36: ldsp16 r7, [sp+6]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ldi8 r5, 0x48
     st8 [r4], r5
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi16 r5, 0x6667
     st16 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0x61
     st8 [r4], r5
     ldi16 r4, 0x2797
@@ -1812,25 +1812,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0705
+    ldi16 r4, 0x0985
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x37: ldsp16 r7, [sp+7]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ldi8 r5, 0x4c
     st8 [r4], r5
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi16 r5, 0x7788
     st16 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0x66
     st8 [r4], r5
     ldi16 r4, 0x27c8
@@ -1845,25 +1845,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0706
+    ldi16 r4, 0x0986
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x38: ldsp16 r7, [sp+8]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ldi8 r5, 0x50
     st8 [r4], r5
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi16 r5, 0x8988
     st16 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0x6b
     st8 [r4], r5
     ldi16 r4, 0x27f9
@@ -1878,25 +1878,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0707
+    ldi16 r4, 0x0987
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x39: ldsp16 r7, [sp+9]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ldi8 r5, 0x54
     st8 [r4], r5
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi16 r5, 0xe666
     st16 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0x70
     st8 [r4], r5
     ldi16 r4, 0x282a
@@ -1911,25 +1911,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0708
+    ldi16 r4, 0x0988
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x3A: ldsp16 r7, [sp+10]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ldi8 r5, 0x58
     st8 [r4], r5
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi16 r5, 0x2aaa
     st16 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0x75
     st8 [r4], r5
     ldi16 r4, 0x285b
@@ -1944,25 +1944,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x0709
+    ldi16 r4, 0x0989
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x3B: ldsp16 r7, [sp+11]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ldi8 r5, 0x5c
     st8 [r4], r5
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi16 r5, 0x4444
     st16 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0x7a
     st8 [r4], r5
     ldi16 r4, 0x288c
@@ -1977,25 +1977,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070a
+    ldi16 r4, 0x098a
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x3C: ldsp16 r7, [sp+12]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ldi8 r5, 0x60
     st8 [r4], r5
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi16 r5, 0x6996
     st16 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0x7f
     st8 [r4], r5
     ldi16 r4, 0x28bd
@@ -2010,25 +2010,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070b
+    ldi16 r4, 0x098b
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x3D: ldsp16 r7, [sp+13]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ldi8 r5, 0x64
     st8 [r4], r5
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi16 r5, 0xdddd
     st16 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi8 r5, 0x84
     st8 [r4], r5
     ldi16 r4, 0x28ee
@@ -2043,25 +2043,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070c
+    ldi16 r4, 0x098c
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x3E: ldsp16 r7, [sp+14]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ldi8 r5, 0x68
     st8 [r4], r5
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi16 r5, 0xeeef
     st16 [r4], r5
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ldi8 r5, 0x89
     st8 [r4], r5
     ldi16 r4, 0x291f
@@ -2076,25 +2076,25 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070d
+    ldi16 r4, 0x098d
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
 
     ; Entry 0x3F: ldsp16 r7, [sp+15]
-    ldi16 r4, 0x0700
+    ldi16 r4, 0x0980
     setsp r4
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ldi8 r5, 0x6c
     st8 [r4], r5
-    ldi16 r4, 0x070f
+    ldi16 r4, 0x098f
     ldi16 r5, 0xff00
     st16 [r4], r5
-    ldi16 r4, 0x0711
+    ldi16 r4, 0x0991
     ldi8 r5, 0x8e
     st8 [r4], r5
     ldi16 r4, 0x2950
@@ -2109,11 +2109,11 @@ _start:
     csr_print_r0_r3
     getsp r0
     csr_print_r0_line
-    ldi16 r4, 0x070e
+    ldi16 r4, 0x098e
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line
-    ldi16 r4, 0x0710
+    ldi16 r4, 0x0990
     ld16 r5, [r4]
     mov r0, r5
     csr_print_r0_line

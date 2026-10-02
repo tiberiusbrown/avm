@@ -190,9 +190,30 @@ add_custom_target(avm_push16_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
+avm_add_object(
+    OUTPUT "${AVM_PUSH16_TEST_DIR}/stack_bounds.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/stack_bounds.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_PUSH16_TEST_DIR}/stack_bounds.o"
+    OUTPUT_ELF "${AVM_PUSH16_TEST_DIR}/stack_bounds.elf"
+    OUTPUT_IMAGE "${AVM_PUSH16_TEST_DIR}/stack_bounds.bin"
+    DISASSEMBLY "${AVM_PUSH16_TEST_DIR}/stack_bounds.asm"
+    ENTRY _start)
+add_executable(avm_stack_bounds_tests interp/stack_bounds.cpp)
+target_compile_features(avm_stack_bounds_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_stack_bounds_tests PRIVATE ardensdebuggerlib)
+add_custom_target(avm_stack_bounds_tests_run
+    COMMAND "$<TARGET_FILE:avm_stack_bounds_tests>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+        "${AVM_PUSH16_TEST_DIR}/stack_bounds.bin" "${AVM_PUSH16_TEST_DIR}/stack_bounds.asm"
+    DEPENDS avm_stack_bounds_tests avm_interpreter "${AVM_PUSH16_TEST_DIR}/stack_bounds.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+
 add_custom_target(avm_tests_run
     COMMAND "$<TARGET_FILE:avm_tests>"
-    DEPENDS avm_tests avm_push16_tests_run
+    DEPENDS avm_tests avm_push16_tests_run avm_stack_bounds_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running all AVM tests in-process"
     USES_TERMINAL

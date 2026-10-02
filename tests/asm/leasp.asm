@@ -5494,7 +5494,7 @@ _start:
 .Lleasp_037_SGE_done:
     cold_emit_char '\n'
 
-    ; Explicit wrap: 0xfff0 + 0x20 = 0x0010.
+    ; Explicit upper address: valid SP 0x0a00 + 0xff = 0x0aff.
     ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
@@ -5524,9 +5524,9 @@ _start:
     pop16 r2
     pop16 r1
     pop16 r0
-    ldi16 r4, 0xfff0
+    ldi16 r4, 0x0a00
     setsp r4
-    leasp r0, 32 ; TEST
+    leasp r0, 255 ; TEST
     getsp r2
     ldi16 r4, 0x0980
     setsp r4

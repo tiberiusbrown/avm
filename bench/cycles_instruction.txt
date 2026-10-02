@@ -17,7 +17,7 @@
    38   BSWAP16 r0
    38   BOOL r0 (zero)
    38   BOOL r0 (nonzero)
-   18   PUSH16 r0
+   19   PUSH16 r0
    18   POP16 r0
    35   ADJSP simm8
    37   GETSP r0

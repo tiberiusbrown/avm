@@ -7,7 +7,7 @@
 _start:
 
     ; LEASP r0,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -46,7 +46,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -105,7 +105,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r0,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -144,7 +144,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -203,7 +203,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r0,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -242,7 +242,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -301,7 +301,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r0,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -340,7 +340,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -399,7 +399,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r0,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -438,7 +438,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -497,7 +497,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r0,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -536,7 +536,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -595,7 +595,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r0,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -634,7 +634,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -693,7 +693,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r1,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -732,7 +732,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -791,7 +791,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r1,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -830,7 +830,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -889,7 +889,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r1,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -928,7 +928,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -987,7 +987,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r1,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1026,7 +1026,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1085,7 +1085,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r1,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1124,7 +1124,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1183,7 +1183,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r1,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1222,7 +1222,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1281,7 +1281,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r1,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1320,7 +1320,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1379,7 +1379,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r2,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1418,7 +1418,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1477,7 +1477,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r2,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1516,7 +1516,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1575,7 +1575,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r2,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1614,7 +1614,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1673,7 +1673,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r2,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1712,7 +1712,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1771,7 +1771,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r2,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1810,7 +1810,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1869,7 +1869,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r2,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1908,7 +1908,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1967,7 +1967,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r2,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2006,7 +2006,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2065,7 +2065,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r3,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2104,7 +2104,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2163,7 +2163,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r3,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2202,7 +2202,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2261,7 +2261,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r3,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2300,7 +2300,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2359,7 +2359,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r3,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2398,7 +2398,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2457,7 +2457,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r3,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2496,7 +2496,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2555,7 +2555,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r3,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2594,7 +2594,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2653,7 +2653,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r3,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2692,7 +2692,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2751,7 +2751,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r4,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2790,7 +2790,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2849,7 +2849,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r4,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2888,7 +2888,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2947,7 +2947,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r4,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2986,7 +2986,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3045,7 +3045,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r4,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -3084,7 +3084,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3143,7 +3143,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r4,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -3182,7 +3182,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3241,7 +3241,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r4,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3280,7 +3280,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3339,7 +3339,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r4,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -3378,7 +3378,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3437,7 +3437,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r5,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -3476,7 +3476,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3535,7 +3535,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r5,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3574,7 +3574,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3633,7 +3633,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r5,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -3672,7 +3672,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3731,7 +3731,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r5,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -3770,7 +3770,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3829,7 +3829,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r5,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -3868,7 +3868,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3927,7 +3927,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r5,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3966,7 +3966,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4025,7 +4025,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r5,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -4064,7 +4064,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4123,7 +4123,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r6,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4162,7 +4162,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4221,7 +4221,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r6,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4260,7 +4260,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4319,7 +4319,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r6,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -4358,7 +4358,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4417,7 +4417,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r6,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -4456,7 +4456,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4515,7 +4515,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r6,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4554,7 +4554,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4613,7 +4613,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r6,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4652,7 +4652,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4711,7 +4711,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r6,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -4750,7 +4750,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4809,7 +4809,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r7,0; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4848,7 +4848,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4907,7 +4907,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r7,15; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4946,7 +4946,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5005,7 +5005,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r7,16; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5044,7 +5044,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5103,7 +5103,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r7,127; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -5142,7 +5142,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5201,7 +5201,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r7,128; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -5240,7 +5240,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5299,7 +5299,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r7,254; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -5338,7 +5338,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5397,7 +5397,7 @@ _start:
     cold_emit_char '\n'
 
     ; LEASP r7,255; full register and SP preservation.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5436,7 +5436,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5495,7 +5495,7 @@ _start:
     cold_emit_char '\n'
 
     ; Explicit wrap: 0xfff0 + 0x20 = 0x0010.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5528,7 +5528,7 @@ _start:
     setsp r4
     leasp r0, 32 ; TEST
     getsp r2
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     push16 r2
     push16 r1

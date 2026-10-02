@@ -10,16 +10,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ldi8 r5, 0x40
     st8 [c0], r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x90
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xd0
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1101
     ldi16 r5, 0x3302
@@ -31,10 +31,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -99,16 +99,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ldi8 r5, 0x48
     st8 [c0], r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x95
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xd4
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1132
     ldi16 r5, 0x3337
@@ -120,10 +120,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -188,16 +188,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ldi8 r5, 0x50
     st8 [c0], r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x9a
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xd8
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1163
     ldi16 r5, 0x336c
@@ -209,10 +209,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -277,16 +277,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ldi8 r5, 0x58
     st8 [c0], r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x9f
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xdc
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1194
     ldi16 r5, 0x33a1
@@ -298,10 +298,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -366,16 +366,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x5c
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xa5
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xdc
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x11c5
     ldi16 r5, 0x33d6
@@ -387,10 +387,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -455,16 +455,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x64
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xaa
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xe0
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x11f6
     ldi16 r5, 0x340b
@@ -476,10 +476,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -544,16 +544,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x6c
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xaf
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xe4
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1227
     ldi16 r5, 0x3440
@@ -565,10 +565,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -633,16 +633,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ldi8 r5, 0x74
     st8 [c0], r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0xb4
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xe8
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1258
     ldi16 r5, 0x3475
@@ -654,10 +654,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0701
+    ldi16 c0, 0x0921
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -722,16 +722,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0x78
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xba
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xe8
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1289
     ldi16 r5, 0x34aa
@@ -743,10 +743,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -811,16 +811,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0x80
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xbf
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xec
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x12ba
     ldi16 r5, 0x34df
@@ -832,10 +832,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -900,16 +900,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0x88
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xc4
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xf0
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x12eb
     ldi16 r5, 0x3514
@@ -921,10 +921,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -989,16 +989,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ldi8 r5, 0x90
     st8 [c0], r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xc9
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xf4
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x131c
     ldi16 r5, 0x3549
@@ -1010,10 +1010,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0702
+    ldi16 c0, 0x0922
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1078,16 +1078,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0x94
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xcf
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xf4
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x134d
     ldi16 r5, 0x357e
@@ -1099,10 +1099,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1167,16 +1167,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0x9c
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xd4
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xf8
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x137e
     ldi16 r5, 0x35b3
@@ -1188,10 +1188,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1256,16 +1256,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xa4
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xd9
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xfc
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x13af
     ldi16 r5, 0x35e8
@@ -1277,10 +1277,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1345,16 +1345,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ldi8 r5, 0xac
     st8 [c0], r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xde
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0x00
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x13e0
     ldi16 r5, 0x361d
@@ -1366,10 +1366,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0703
+    ldi16 c0, 0x0923
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1434,16 +1434,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xb0
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xe4
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0x00
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1411
     ldi16 r5, 0x3652
@@ -1455,10 +1455,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1523,16 +1523,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xb8
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xe9
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0x04
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1442
     ldi16 r5, 0x3687
@@ -1544,10 +1544,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1612,16 +1612,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xc0
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xee
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0x08
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1473
     ldi16 r5, 0x36bc
@@ -1633,10 +1633,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1701,16 +1701,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ldi8 r5, 0xc8
     st8 [c0], r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xf3
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0x0c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x14a4
     ldi16 r5, 0x36f1
@@ -1722,10 +1722,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0704
+    ldi16 c0, 0x0924
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1790,16 +1790,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xcc
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0xf9
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x0c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x14d5
     ldi16 r5, 0x3726
@@ -1811,10 +1811,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1879,16 +1879,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xd4
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0xfe
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x10
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1506
     ldi16 r5, 0x375b
@@ -1900,10 +1900,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -1968,16 +1968,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xdc
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0x03
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x14
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1537
     ldi16 r5, 0x3790
@@ -1989,10 +1989,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2057,16 +2057,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ldi8 r5, 0xe4
     st8 [c0], r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0x08
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x18
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1568
     ldi16 r5, 0x37c5
@@ -2078,10 +2078,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0705
+    ldi16 c0, 0x0925
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2146,16 +2146,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0xe8
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x0e
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x18
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1599
     ldi16 r5, 0x37fa
@@ -2167,10 +2167,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2235,16 +2235,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0xf0
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x13
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x1c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x15ca
     ldi16 r5, 0x382f
@@ -2256,10 +2256,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2324,16 +2324,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0xf8
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x18
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x20
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x15fb
     ldi16 r5, 0x3864
@@ -2345,10 +2345,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2413,16 +2413,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ldi8 r5, 0x00
     st8 [c0], r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x1d
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x24
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x162c
     ldi16 r5, 0x3899
@@ -2434,10 +2434,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0706
+    ldi16 c0, 0x0926
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2502,16 +2502,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x04
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x23
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x24
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x165d
     ldi16 r5, 0x38ce
@@ -2523,10 +2523,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2591,16 +2591,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x0c
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x28
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x28
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x168e
     ldi16 r5, 0x3903
@@ -2612,10 +2612,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2680,16 +2680,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x14
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x2d
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x2c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x16bf
     ldi16 r5, 0x3938
@@ -2701,10 +2701,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2769,16 +2769,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ldi8 r5, 0x1c
     st8 [c0], r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x32
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x30
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x16f0
     ldi16 r5, 0x396d
@@ -2790,10 +2790,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0707
+    ldi16 c0, 0x0927
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2858,16 +2858,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x20
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x38
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x30
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1721
     ldi16 r5, 0x39a2
@@ -2879,10 +2879,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -2947,16 +2947,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x28
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x3d
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x34
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1752
     ldi16 r5, 0x39d7
@@ -2968,10 +2968,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3036,16 +3036,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x30
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x42
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x38
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1783
     ldi16 r5, 0x3a0c
@@ -3057,10 +3057,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3125,16 +3125,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ldi8 r5, 0x38
     st8 [c0], r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x47
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x3c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x17b4
     ldi16 r5, 0x3a41
@@ -3146,10 +3146,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0708
+    ldi16 c0, 0x0928
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3214,16 +3214,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x3c
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x4d
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x3c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x17e5
     ldi16 r5, 0x3a76
@@ -3235,10 +3235,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3303,16 +3303,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x44
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x52
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x40
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1816
     ldi16 r5, 0x3aab
@@ -3324,10 +3324,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3392,16 +3392,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x4c
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x57
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x44
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1847
     ldi16 r5, 0x3ae0
@@ -3413,10 +3413,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3481,16 +3481,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ldi8 r5, 0x54
     st8 [c0], r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x5c
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x48
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1878
     ldi16 r5, 0x3b15
@@ -3502,10 +3502,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x0709
+    ldi16 c0, 0x0929
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3570,16 +3570,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x58
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x62
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x48
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x18a9
     ldi16 r5, 0x3b4a
@@ -3591,10 +3591,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3659,16 +3659,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x60
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x67
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x4c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x18da
     ldi16 r5, 0x3b7f
@@ -3680,10 +3680,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3748,16 +3748,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x68
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x6c
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x50
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x190b
     ldi16 r5, 0x3bb4
@@ -3769,10 +3769,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3837,16 +3837,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ldi8 r5, 0x70
     st8 [c0], r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x71
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x54
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x193c
     ldi16 r5, 0x3be9
@@ -3858,10 +3858,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070a
+    ldi16 c0, 0x092a
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -3926,16 +3926,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x74
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x77
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x54
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x196d
     ldi16 r5, 0x3c1e
@@ -3947,10 +3947,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4015,16 +4015,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x7c
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x7c
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x58
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x199e
     ldi16 r5, 0x3c53
@@ -4036,10 +4036,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4104,16 +4104,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x84
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x81
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x5c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x19cf
     ldi16 r5, 0x3c88
@@ -4125,10 +4125,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4193,16 +4193,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ldi8 r5, 0x8c
     st8 [c0], r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x86
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x60
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1a00
     ldi16 r5, 0x3cbd
@@ -4214,10 +4214,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070b
+    ldi16 c0, 0x092b
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4282,16 +4282,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x90
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x8c
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0x60
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1a31
     ldi16 r5, 0x3cf2
@@ -4303,10 +4303,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4371,16 +4371,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0x98
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x91
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0x64
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1a62
     ldi16 r5, 0x3d27
@@ -4392,10 +4392,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4460,16 +4460,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0xa0
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x96
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0x68
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1a93
     ldi16 r5, 0x3d5c
@@ -4481,10 +4481,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4549,16 +4549,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ldi8 r5, 0xa8
     st8 [c0], r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0x9b
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0x6c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1ac4
     ldi16 r5, 0x3d91
@@ -4570,10 +4570,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070c
+    ldi16 c0, 0x092c
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4638,16 +4638,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0xac
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xa1
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0x6c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1af5
     ldi16 r5, 0x3dc6
@@ -4659,10 +4659,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4727,16 +4727,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0xb4
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xa6
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0x70
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1b26
     ldi16 r5, 0x3dfb
@@ -4748,10 +4748,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4816,16 +4816,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0xbc
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xab
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0x74
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1b57
     ldi16 r5, 0x3e30
@@ -4837,10 +4837,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4905,16 +4905,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ldi8 r5, 0xc4
     st8 [c0], r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xb0
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0x78
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1b88
     ldi16 r5, 0x3e65
@@ -4926,10 +4926,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070d
+    ldi16 c0, 0x092d
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -4994,16 +4994,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xc8
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xb6
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0x78
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1bb9
     ldi16 r5, 0x3e9a
@@ -5015,10 +5015,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -5083,16 +5083,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xd0
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xbb
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0x7c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1bea
     ldi16 r5, 0x3ecf
@@ -5104,10 +5104,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -5172,16 +5172,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xd8
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xc0
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0x80
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1c1b
     ldi16 r5, 0x3f04
@@ -5193,10 +5193,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -5261,16 +5261,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ldi8 r5, 0xe0
     st8 [c0], r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xc5
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0x84
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1c4c
     ldi16 r5, 0x3f39
@@ -5282,10 +5282,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070e
+    ldi16 c0, 0x092e
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -5350,16 +5350,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xe4
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0xcb
     st8 [c0], r5
-    ldi16 c0, 0x0711
+    ldi16 c0, 0x0931
     ldi8 r5, 0x84
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1c7d
     ldi16 r5, 0x3f6e
@@ -5371,10 +5371,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -5439,16 +5439,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xec
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0xd0
     st8 [c0], r5
-    ldi16 c0, 0x0711
+    ldi16 c0, 0x0931
     ldi8 r5, 0x88
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1cae
     ldi16 r5, 0x3fa3
@@ -5460,10 +5460,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -5528,16 +5528,16 @@ _start:
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
     cmp r6, r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xf4
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0xd5
     st8 [c0], r5
-    ldi16 c0, 0x0711
+    ldi16 c0, 0x0931
     ldi8 r5, 0x8c
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1cdf
     ldi16 r5, 0x3fd8
@@ -5549,10 +5549,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ld16 r5, [c0]
     push16 r5
     push16 r6
@@ -5617,16 +5617,16 @@ _start:
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
     cmp r6, r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ldi8 r5, 0xfc
     st8 [c0], r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ldi8 r5, 0xda
     st8 [c0], r5
-    ldi16 c0, 0x0711
+    ldi16 c0, 0x0931
     ldi8 r5, 0x90
     st8 [c0], r5
-    ldi16 c0, 0x0700
+    ldi16 c0, 0x0920
     setsp r4
     ldi16 c0, 0x1d10
     ldi16 r5, 0x400d
@@ -5638,10 +5638,10 @@ _start:
     mov r2, r6
     mov r3, r7
     getsp r7
-    ldi16 c0, 0x070f
+    ldi16 c0, 0x092f
     ld16 r5, [c0]
     mov r6, r5
-    ldi16 c0, 0x0710
+    ldi16 c0, 0x0930
     ld16 r5, [c0]
     push16 r5
     push16 r6

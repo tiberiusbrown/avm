@@ -1096,7 +1096,7 @@ reset_handler:
 \label:
     st   -Y, \srch
     st   -Y, \srcl
-    rjmp cluster_tail_18_delay_1
+    rjmp push16_stack_check
     nop
     assert_primary_slot_width \label
 .endm
@@ -2711,8 +2711,21 @@ cluster_tail_18_delay_3:
     nop
 cluster_tail_18_delay_2:
     rjmp cluster_tail_18
-cluster_tail_18_delay_1:
-    nop
+
+; Fatal post-write PUSH16 lower-bound check. The first overflowing push may
+; write into the framebuffer; no following guest instruction may execute.
+; No VM_FLAGS/GPIOR0 write or guest/native stack use is needed here.
+stack_overflow_func:
+    rjmp stack_overflow_func
+push16_stack_check:
+    cpi  VM_SPH, hi8(data_stack)
+    brlo stack_overflow_func
+; Normal schedule relative to the preceding SPI OUT: primary entry at 9,
+; ST high at 9-10, ST low at 11-12, RJMP at 13-14, CPI at 15, BRLO (not
+; taken) at 16. Fall through to standard ADD/IN/OUT at 17/18/19; the next
+; primary entry is at 28. Entry-to-entry latency is exactly 28 - 9 = 19.
+; The old one-cycle landing is aliased to Cluster A below, keeping all other
+; callers' timing unchanged without duplicating a dispatch body.
 cluster_tail_18:
     dispatch
 
@@ -4033,6 +4046,8 @@ invalid_syscall_func:
 ; Future secondary tables are inserted at the marked anchors so every slot's
 ; final RJMP remains comfortably within range without changing these sequences.
 
+; Cluster A also supplies the unchanged one-cycle primary landing for
+; LD8U/POP16 and the cold F0 callers formerly beside cluster_tail_18.
 ; Cluster A serves F0/F1/F2/F3, the dedicated F9 decoder, cold F0 bodies,
 ; and the FB-FD condition gate/table. FA and FE shared bodies use Cluster C.
 ; The CMOV false path reaches this landing twelve cycles after launching the
@@ -4054,6 +4069,7 @@ cluster_a_tail_18_delay_2:
 flags_commit_a_18_delay_1:
     out  VM_FLAGS, SECONDARY_OPCODE
 cluster_a_tail_18_delay_1:
+cluster_tail_18_delay_1:
     nop
 cluster_a_tail_18:
     dispatch

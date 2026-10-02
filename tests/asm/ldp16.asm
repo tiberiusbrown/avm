@@ -19,7 +19,7 @@
 _start:
 
     ; ldp16: ordinary, r0, q0, PSPEC=0x00.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -114,7 +114,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r1, q0, PSPEC=0x20.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -209,7 +209,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r2, q0, PSPEC=0x40.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -304,7 +304,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r3, q0, PSPEC=0x60.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -399,7 +399,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r4, q0, PSPEC=0x80.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -494,7 +494,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r5, q0, PSPEC=0xA0.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -589,7 +589,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r6, q0, PSPEC=0xC0.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -684,7 +684,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r7, q0, PSPEC=0xE0.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -779,7 +779,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r0, q1, PSPEC=0x04.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -874,7 +874,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r1, q1, PSPEC=0x24.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -969,7 +969,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r2, q1, PSPEC=0x44.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1064,7 +1064,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r3, q1, PSPEC=0x64.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1159,7 +1159,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r4, q1, PSPEC=0x84.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1254,7 +1254,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r5, q1, PSPEC=0xA4.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1349,7 +1349,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r6, q1, PSPEC=0xC4.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1444,7 +1444,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r7, q1, PSPEC=0xE4.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1539,7 +1539,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r0, q2, PSPEC=0x08.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1634,7 +1634,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r1, q2, PSPEC=0x28.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1729,7 +1729,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r2, q2, PSPEC=0x48.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1824,7 +1824,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r3, q2, PSPEC=0x68.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1919,7 +1919,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r4, q2, PSPEC=0x88.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2014,7 +2014,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r5, q2, PSPEC=0xA8.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2109,7 +2109,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r6, q2, PSPEC=0xC8.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2204,7 +2204,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r7, q2, PSPEC=0xE8.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2299,7 +2299,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r0, q3, PSPEC=0x0C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2394,7 +2394,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r1, q3, PSPEC=0x2C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2489,7 +2489,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r2, q3, PSPEC=0x4C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2584,7 +2584,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r3, q3, PSPEC=0x6C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2679,7 +2679,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r4, q3, PSPEC=0x8C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2774,7 +2774,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r5, q3, PSPEC=0xAC.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2869,7 +2869,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r6, q3, PSPEC=0xCC.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2964,7 +2964,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary, r7, q3, PSPEC=0xEC.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3059,7 +3059,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r2, q0, PSPEC=0x40.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -3154,7 +3154,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r3, q0, PSPEC=0x60.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3249,7 +3249,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r4, q0, PSPEC=0x80.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -3344,7 +3344,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r5, q0, PSPEC=0xA0.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3439,7 +3439,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r6, q0, PSPEC=0xC0.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -3534,7 +3534,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r7, q0, PSPEC=0xE0.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3629,7 +3629,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r0, q1, PSPEC=0x04.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -3724,7 +3724,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r1, q1, PSPEC=0x24.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -3819,7 +3819,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r4, q1, PSPEC=0x84.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -3914,7 +3914,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r5, q1, PSPEC=0xA4.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4009,7 +4009,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r6, q1, PSPEC=0xC4.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -4104,7 +4104,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r7, q1, PSPEC=0xE4.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4199,7 +4199,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r0, q2, PSPEC=0x08.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -4294,7 +4294,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r1, q2, PSPEC=0x28.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4389,7 +4389,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r2, q2, PSPEC=0x48.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -4484,7 +4484,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r3, q2, PSPEC=0x68.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4579,7 +4579,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r6, q2, PSPEC=0xC8.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4674,7 +4674,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r7, q2, PSPEC=0xE8.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -4769,7 +4769,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r0, q3, PSPEC=0x0C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -4864,7 +4864,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r1, q3, PSPEC=0x2C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4959,7 +4959,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r2, q3, PSPEC=0x4C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5054,7 +5054,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r3, q3, PSPEC=0x6C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -5149,7 +5149,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r4, q3, PSPEC=0x8C.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5244,7 +5244,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement, r5, q3, PSPEC=0xAC.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -5339,7 +5339,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: ordinary boundary load beginning at 0x00FFFF.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5434,7 +5434,7 @@ _start:
     pl_emit_char '\n'
 
     ; ldp16: postincrement boundary load beginning at 0x00FFFF.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000

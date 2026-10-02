@@ -346,9 +346,10 @@ For every primary tail, operand-fetch continuation, secondary-page decoder, and 
 The standard dispatch has an 18-cycle `OUT`-to-`OUT` cadence. Its dispatch body takes eleven cycles, leaving seven cycles for the instruction body, its final `RJMP`, and any selected delay:
 
 ```asm
-cluster_tail_18_delay_1:
+cluster_a_tail_18_delay_1:
+cluster_tail_18_delay_1:        ; alias: the primary one-cycle landing is in Cluster A
     nop
-cluster_tail_18:
+cluster_a_tail_18:
     add   r4, r3
     in    primary, SPDR
     out   SPDR, r2
@@ -404,7 +405,7 @@ The encoded-byte planning targets remain:
 
 | Encoded bytes | Normal target | Complicated target |
 |---:|---:|---:|
-| 1 | 17 cycles | 18 cycles |
+| 1 | 17 cycles | 18 cycles; checked `PUSH16` takes 19 |
 | 2 | 34 cycles | 36 cycles |
 | 3 | 51 cycles | 54 cycles |
 | 4 | 68 cycles | 72 cycles |
@@ -431,7 +432,7 @@ In the reference schedule, both standard and reverse dispatch begin executing th
 
 The reference continuations and secondary decoders are scheduled from this cycle-9 entry point:
 
-- direct `00-BF` handlers retain the 17- and 18-cycle cadence limits from Section 5.2;
+- direct `00-BF` handlers use the 17- and 18-cycle cadences from Section 5.2, except checked `PUSH16`, which takes 19 cycles;
 - one-byte immediate slots execute their cycle-9 padding word before forwarding;
 - two-byte primary continuations place their operand handoff on the earliest legal cycle-17 reverse or cycle-18 standard boundary;
 - the generic bounded decoder uses the standard `IN; OUT` handoff, while the shared width-two decoder uses the exact cycle-17 reverse handoff;
@@ -479,7 +480,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `80-8F` | `AND rD,rS` | 1 | 17 |
 | `90-9F` | `OR rD,rS` | 1 | 17 |
 | `A0-AF` | `XOR rD,rS` | 1 | 17 |
-| `B0-B7` | `PUSH16 rN` | 1 | 18 |
+| `B0-B7` | `PUSH16 rN` | 1 | 19 |
 | `B8-BF` | `POP16 rN` | 1 | 18 |
 | `C0-C3` | `LDI8 rD,imm8` | 2 | 35 |
 | `C4-C7` | `LDI16 rD,imm16` | 3 | 52 |
@@ -2727,7 +2728,7 @@ The reference interpreter uses the decode, table, forwarding, and shared-body st
 
 | Instruction class | Reference complete latency |
 |---|---|
-| `00-BF` direct one-byte instructions | Selected 17- or 18-cycle cadence from Sections 5 and 27 |
+| `00-BF` direct one-byte instructions | Selected 17- or 18-cycle cadence; checked `PUSH16` takes 19 cycles (Sections 5 and 27) |
 | `C0-CF` immediate instructions | 35 / 52 / 35 / 35 by family |
 | `D0-D7` branch/`ADJSP`/`SYS` | Exact values in Section 30 |
 | `E0-E3` multi-byte direct control | 135 for near forms; 150 for far forms |
@@ -2862,6 +2863,10 @@ The two complete 16-bit additions preserve the ninth offset bit for `F1` entries
 
 The code-size accounting region begins at a 256-word-aligned `primary_table`. Alignment padding before that symbol is outside the reported implementation size. No interior block requires alignment greater than one AVR word.
 
+For the checked `PUSH16` change, the measured core-layout span from `primary_table` through `fe_mul16_bodies_end` grows from **13,742 to 13,746 bytes (+4)**. These actual endpoints include the early `FF` handlers placed in that span; the non-floating estimates below use their own stated scope. The complete linked interpreter `.text`, including vectors, startup, services, and floating routines, grows from **28,160 to 28,164 bytes (+4)**.
+
+The primary table stays at byte address `0x0200` with 256 four-word slots. The old one-word `NOP` beside `cluster_tail_18` is replaced by the two-word `CPI`/`BRLO` check and the one-word native fatal loop: three words replace one, for a net two words. The delay-one label aliases Cluster A's existing `NOP`; there is no added shim, duplicate dispatch, or RAM allocation. Subsequent physical block boundaries shift by two AVR words; their widths, order, and alignment requirements are unchanged. The measured core endpoint moves from `0x37AE` to `0x37B2`. All assembly width assertions and linker `RJMP`/`RCALL` range checks pass unchanged, including the redirected delay-one callers.
+
 ### 26.2. Reference order and estimated word ranges
 
 The following single-section order is a reference layout that keeps the major static transfers in range. The listed fixed-size blocks reflect the shown assembly sequences. The ordinary `F0` body block uses the budgeted allocation from Section 34; implementations may vary within the permitted size range provided all static transfers remain in range and no interior power-of-two alignment gaps are introduced.
@@ -2876,37 +2881,37 @@ The following single-section order is a reference layout that keeps the major st
 | 6 | Shared width-two decoder | 1227 | 1241 | 14 | 28 |
 | 7 | Generic decoder and four width stubs | 1241 | 1261 | 20 | 40 |
 | 8 | Shared `FB-FD` condition gate | 1261 | 1280 | 19 | 38 |
-| 9 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1280 | 1924 | 644 | 1288 |
-| 10 | Cluster-A false-path landing and cadence cluster | 1924 | 1950 | 26 | 52 |
-| 11 | Local F0 trap plus `F0` veneer table | 1950 | 2061 | 111 | 222 |
-| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2061 | 2812 | 751 | 1502 |
-| 13 | Program-memory string/comparison SYS subsystem | 2812 | 2940 | 128 | 256 |
-| 14 | Data-memory string/comparison SYS subsystem | 2940 | 3011 | 71 | 142 |
-| 15 | Shared `F0` cold-32 subsystem | 3011 | 3074 | 63 | 126 |
-| 16 | Shared `F0` cold general-pointer subsystem | 3074 | 3120 | 46 | 92 |
-| 17 | `F1` table | 3120 | 3408 | 288 | 576 |
-| 18 | `F2` table | 3408 | 3732 | 324 | 648 |
-| 19 | `F3` table | 3732 | 4116 | 384 | 768 |
-| 20 | Cluster B and two local trap shims | 4116 | 4143 | 27 | 54 |
-| 21 | `F4` table | 4143 | 4695 | 552 | 1104 |
-| 22 | `F5` table | 4695 | 5079 | 384 | 768 |
-| 23 | `F6` table | 5079 | 5399 | 320 | 640 |
-| 24 | `F7` table | 5399 | 6119 | 720 | 1440 |
-| 25 | Cluster C and local trap shim | 6119 | 6143 | 24 | 48 |
-| 26 | `F8` table | 6143 | 6383 | 240 | 480 |
-| 27 | `FA` immediate body-jump table | 6383 | 6396 | 13 | 26 |
-| 28 | `FA` register forwarding table | 6396 | 6492 | 96 | 192 |
-| 29 | Twelve shared `FA` shift bodies | 6492 | 6640 | 148 | 296 |
-| 30 | Shared `FB-FD` move table | 6640 | 6768 | 128 | 256 |
-| 31 | `FE` forwarding table | 6768 | 6896 | 128 | 256 |
-| 32 | Eight `FE` multiplication bodies | 6896 | 6960 | 64 | 128 |
-|  | **Non-floating reference end** |  | **6960** | **6960** | **13,920** |
+| 9 | Primary continuations, primary tails, `SYS` table, seek/restart, local delays, and traps | 1280 | 1926 | 646 | 1292 |
+| 10 | Cluster-A false-path landing and cadence cluster | 1926 | 1952 | 26 | 52 |
+| 11 | Local F0 trap plus `F0` veneer table | 1952 | 2063 | 111 | 222 |
+| 12 | `F0` immediate, stack, absolute, and program-space bodies | 2063 | 2814 | 751 | 1502 |
+| 13 | Program-memory string/comparison SYS subsystem | 2814 | 2942 | 128 | 256 |
+| 14 | Data-memory string/comparison SYS subsystem | 2942 | 3013 | 71 | 142 |
+| 15 | Shared `F0` cold-32 subsystem | 3013 | 3076 | 63 | 126 |
+| 16 | Shared `F0` cold general-pointer subsystem | 3076 | 3122 | 46 | 92 |
+| 17 | `F1` table | 3122 | 3410 | 288 | 576 |
+| 18 | `F2` table | 3410 | 3734 | 324 | 648 |
+| 19 | `F3` table | 3734 | 4118 | 384 | 768 |
+| 20 | Cluster B and two local trap shims | 4118 | 4145 | 27 | 54 |
+| 21 | `F4` table | 4145 | 4697 | 552 | 1104 |
+| 22 | `F5` table | 4697 | 5081 | 384 | 768 |
+| 23 | `F6` table | 5081 | 5401 | 320 | 640 |
+| 24 | `F7` table | 5401 | 6121 | 720 | 1440 |
+| 25 | Cluster C and local trap shim | 6121 | 6145 | 24 | 48 |
+| 26 | `F8` table | 6145 | 6385 | 240 | 480 |
+| 27 | `FA` immediate body-jump table | 6385 | 6398 | 13 | 26 |
+| 28 | `FA` register forwarding table | 6398 | 6494 | 96 | 192 |
+| 29 | Twelve shared `FA` shift bodies | 6494 | 6642 | 148 | 296 |
+| 30 | Shared `FB-FD` move table | 6642 | 6770 | 128 | 256 |
+| 31 | `FE` forwarding table | 6770 | 6898 | 128 | 256 |
+| 32 | Eight `FE` multiplication bodies | 6898 | 6962 | 64 | 128 |
+|  | **Non-floating reference end** |  | **6962** | **6962** | **13,924** |
 
 The `FF` decoder, bridge, inline floating handlers, and linked soft-float routines are not included in this non-floating endpoint until measured. Startup-only helpers and startup code are also excluded.
 
 ### 26.3. Exact shared cadence-tail sequences
 
-The shown cadence tails implement 17- and 18-cycle schedules.
+The shown cadence tails implement 17- and 18-cycle schedules. Checked `PUSH16` falls directly into the standard body for a 19-cycle schedule.
 
 #### Reverse-order 17-cycle tail
 
@@ -2934,8 +2939,11 @@ The tail body remains eleven words; the optional one-cycle delay makes the compl
 ```asm
 cluster_tail_18_delay_2:
     rjmp  cluster_tail_18
-cluster_tail_18_delay_1:
-    nop
+stack_overflow_func:
+    rjmp  stack_overflow_func
+push16_stack_check:
+    cpi   VM_SPH, hi8(data_stack)  ; YH < 0x09 is fatal after the stores
+    brlo  stack_overflow_func
 cluster_tail_18:
     add   r4, r3
     in    primary, SPDR
@@ -2950,6 +2958,38 @@ cluster_tail_18:
 
 The standard tail body remains nine words. A one-word `RJMP` provides a two-cycle delay without two `NOP` words.
 
+The primary `cluster_tail_18_delay_1` label now aliases the existing Cluster A one-cycle landing immediately below. Its callers still execute one `NOP` and the same eleven-cycle standard dispatch body. No unrelated hot path gains cycles, and no dispatch body is duplicated.
+
+#### Checked `PUSH16` schedule and safety policy
+
+All eight `B0-B7` slots retain their one-byte encodings, operand specialization, and four-word stride:
+
+```asm
+    st    -Y, srch
+    st    -Y, srcl
+    rjmp  push16_stack_check
+    nop                         ; unreachable slot padding
+```
+
+On the valid path, measured by the instruction benchmark and native emulator boundary tests:
+
+| Work | Cycles relative to preceding SPI `OUT` |
+|---|---:|
+| Primary-slot entry; `ST -Y, high` | 9-10 |
+| `ST -Y, low` | 11-12 |
+| `RJMP push16_stack_check` | 13-14 |
+| `CPI YH, 0x09` | 15 |
+| `BRLO` not taken | 16 |
+| Standard tail `ADD VM_PCL,ONE`; `IN SPDR`; `OUT SPDR` | 17, 18, 19 |
+| Remaining standard dispatch work | 20-27 |
+| Next primary-slot entry | 28 |
+
+The complete entry-to-entry latency is **28 - 9 = 19 cycles**, versus the measured former 18 cycles. The shared check replaces the old one-cycle landing with two useful cycles. `POP16` still measures 18 cycles.
+
+This is an interpreter safety policy: `PUSH16` still decrements SP by two and stores the value. After the stores, `YH < 0x09` enters the distinct native self-loop `stack_overflow_func`, before any following guest instruction executes. Starting from a valid SP, the high-byte comparison detects the first downward overflow; it needs no full-width comparison. `SP=0x0902` becomes `0x0900` and continues. `SP=0x0901` writes high to `0x0900`, low to `0x08FF`, then traps with SP `0x08FF`; `SP=0x0900` writes to `0x08FF/0x08FE`, then traps with SP `0x08FE`.
+
+The first overflow may therefore modify the framebuffer. This is intentionally a low-overhead fail-stop check, not memory protection. The trap does not recover, use either stack, allocate RAM, or execute another AVM instruction. The check changes native `SREG` but never writes architectural `VM_FLAGS` in `GPIOR0`; no native flag save/restore is needed. This policy adds no checks to calls, `ADJSP`, or `SETSP`.
+
 #### Cluster A commit arrangement
 
 ```asm
@@ -2958,6 +2998,7 @@ cluster_a_tail_18_delay_2:
 flags_commit_a_18_delay_1:
     out   GPIOR0, flag_tmp
 cluster_a_tail_18_delay_1:
+cluster_tail_18_delay_1:
     nop
 cluster_a_tail_18:
     ; nine-word standard body
@@ -3060,7 +3101,8 @@ This section records every family whose native sequence changes or whose cadence
 | `LD8U` | `MOVW X`; `LD`; clear high | 6 | 18 |
 | `ST8` | `MOVW X`; `ST` | 5 | 18 |
 | `LD16`, `ST16` | `MOVW X`; two memory operations | 7 | 18 |
-| `PUSH16`, `POP16` | two Y-based memory operations | 6 | 18 |
+| `PUSH16` | two Y-based stores; shared post-write `CPI`/`BRLO` | 8 including shared check | 19 |
+| `POP16` | two Y-based loads | 6 | 18 |
 
 All fit in the four-word primary slot. The low-register PC changes neither dispatch cadence.
 
@@ -3549,7 +3591,7 @@ The secondary executable tables total **7,374 bytes**. `EC`, `ED-EE`, `F9`, and 
 
 ### 34.1. Reference baseline and variable components
 
-For the shown layout, the non-floating core with the expanded `F2` table, `FA` bodies, the exact 74-byte `ED-EE` handler, and all other non-floating pages present, but excluding the ordinary `F0` bodies, both string/comparison SYS subsystems, and the two shared `F0` runtime-decoded subsystems, occupies **11,802 bytes**. The remaining components are estimated as follows:
+For the shown layout, the non-floating core with the expanded `F2` table, `FA` bodies, the exact 74-byte `ED-EE` handler, and all other non-floating pages present, but excluding the ordinary `F0` bodies, both string/comparison SYS subsystems, and the two shared `F0` runtime-decoded subsystems, occupies **11,806 bytes**. The remaining components are estimated as follows:
 
 | Component | Reference bytes | Estimated range |
 |---|---:|---:|
@@ -3563,11 +3605,11 @@ For the shown layout, the non-floating core with the expanded `F2` table, `FA` b
 
 | Case | Bytes | KiB |
 |---|---:|---:|
-| Lower bound | 13,818 | 13.49 |
-| Non-floating reference target | **13,914** | **13.59** |
-| Upper bound | 14,074 | 13.74 |
+| Lower bound | 13,822 | 13.50 |
+| Non-floating reference target | **13,918** | **13.59** |
+| Upper bound | 14,078 | 13.75 |
 
-The non-floating reference design targets about 13,914 bytes, with 14,074 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
+The non-floating reference design targets about 13,918 bytes, with 14,078 bytes as a practical upper estimate before adding the `FF` decoder, bridge, inline handlers, and linked soft-float routines. Those components require separate measurement.
 
 ## 35. Four-word primary-stride rationale
 

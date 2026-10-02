@@ -7,7 +7,7 @@
 _start:
 
     ; ldi16 r0, 0; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -100,7 +100,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r0, 1; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -193,7 +193,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r0, 255; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -286,7 +286,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r0, 32767; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -379,7 +379,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r0, 32768; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -472,7 +472,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r0, 65535; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -565,7 +565,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r0, 65280; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -658,7 +658,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r0, 23205; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -751,7 +751,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 0; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -844,7 +844,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 1; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -937,7 +937,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 255; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1030,7 +1030,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 32767; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1123,7 +1123,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 32768; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1216,7 +1216,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 65535; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1309,7 +1309,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 65280; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1402,7 +1402,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r1, 23205; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1495,7 +1495,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 0; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1588,7 +1588,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 1; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1681,7 +1681,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 255; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1774,7 +1774,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 32767; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1867,7 +1867,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 32768; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1960,7 +1960,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 65535; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2053,7 +2053,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 65280; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2146,7 +2146,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r2, 23205; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2239,7 +2239,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 0; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2332,7 +2332,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 1; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2425,7 +2425,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 255; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2518,7 +2518,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 32767; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2611,7 +2611,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 32768; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2704,7 +2704,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 65535; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2797,7 +2797,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 65280; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2890,7 +2890,7 @@ _start:
     cold_emit_char '\n'
 
     ; ldi16 r3, 23205; initial=0xA55A.
-    ldi16 r4, 0x0900
+    ldi16 r4, 0x0980
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff

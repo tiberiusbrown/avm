@@ -7,16 +7,16 @@
 _start:
 
     ; STSP8 r0, offset 0; F0 secondary 0x28.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0xa7
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0x6d
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -55,7 +55,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -75,11 +75,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -122,16 +122,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r0, offset 15; F0 secondary 0x28.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0x34
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0xac
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -170,7 +170,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -190,11 +190,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -237,16 +237,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r0, offset 16; F0 secondary 0x28.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x37
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0xb1
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -285,7 +285,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -305,11 +305,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -352,16 +352,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r0, offset 127; F0 secondary 0x28.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0x3a
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0xb6
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -400,7 +400,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -420,11 +420,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -467,16 +467,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r0, offset 128; F0 secondary 0x28.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x3d
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0xbb
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -515,7 +515,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -535,11 +535,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -582,16 +582,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r0, offset 254; F0 secondary 0x28.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0x40
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0xc0
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -630,7 +630,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -650,11 +650,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -697,16 +697,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r0, offset 255; F0 secondary 0x28.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x43
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0xc5
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -745,7 +745,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -765,11 +765,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -812,16 +812,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r1, offset 0; F0 secondary 0x29.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0xca
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0x9e
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -860,7 +860,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -880,11 +880,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -927,16 +927,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r1, offset 15; F0 secondary 0x29.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0x49
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0xcf
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -975,7 +975,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -995,11 +995,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1042,16 +1042,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r1, offset 16; F0 secondary 0x29.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x4c
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0xd4
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1090,7 +1090,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1110,11 +1110,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1157,16 +1157,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r1, offset 127; F0 secondary 0x29.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0x4f
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0xd9
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -1205,7 +1205,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1225,11 +1225,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1272,16 +1272,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r1, offset 128; F0 secondary 0x29.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x52
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0xde
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1320,7 +1320,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1340,11 +1340,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1387,16 +1387,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r1, offset 254; F0 secondary 0x29.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0xe3
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1435,7 +1435,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1455,11 +1455,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1502,16 +1502,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r1, offset 255; F0 secondary 0x29.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x58
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0xe8
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1550,7 +1550,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1570,11 +1570,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1617,16 +1617,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r2, offset 0; F0 secondary 0x2A.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0xed
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0xcf
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -1665,7 +1665,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1685,11 +1685,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1732,16 +1732,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r2, offset 15; F0 secondary 0x2A.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0x5e
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0xf2
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -1780,7 +1780,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1800,11 +1800,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1847,16 +1847,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r2, offset 16; F0 secondary 0x2A.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x61
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0xf7
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -1895,7 +1895,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1915,11 +1915,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -1962,16 +1962,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r2, offset 127; F0 secondary 0x2A.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0x64
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0xfc
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2010,7 +2010,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2030,11 +2030,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2077,16 +2077,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r2, offset 128; F0 secondary 0x2A.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x67
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2125,7 +2125,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2145,11 +2145,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2192,16 +2192,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r2, offset 254; F0 secondary 0x2A.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0x6a
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x06
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2240,7 +2240,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2260,11 +2260,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2307,16 +2307,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r2, offset 255; F0 secondary 0x2A.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x6d
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0x0b
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2355,7 +2355,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2375,11 +2375,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2422,16 +2422,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r3, offset 0; F0 secondary 0x2B.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0x10
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2470,7 +2470,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2490,11 +2490,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2537,16 +2537,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r3, offset 15; F0 secondary 0x2B.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0x73
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x15
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -2585,7 +2585,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2605,11 +2605,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2652,16 +2652,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r3, offset 16; F0 secondary 0x2B.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x76
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0x1a
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -2700,7 +2700,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2720,11 +2720,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2767,16 +2767,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r3, offset 127; F0 secondary 0x2B.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0x79
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x1f
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -2815,7 +2815,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2835,11 +2835,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2882,16 +2882,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r3, offset 128; F0 secondary 0x2B.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x7c
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0x24
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -2930,7 +2930,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2950,11 +2950,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -2997,16 +2997,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r3, offset 254; F0 secondary 0x2B.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x29
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3045,7 +3045,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3065,11 +3065,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3112,16 +3112,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r3, offset 255; F0 secondary 0x2B.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x82
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0x2e
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -3160,7 +3160,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3180,11 +3180,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3227,16 +3227,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r4, offset 0; F0 secondary 0x2C.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0x33
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0x31
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -3275,7 +3275,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3295,11 +3295,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3342,16 +3342,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r4, offset 15; F0 secondary 0x2C.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0x88
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x38
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3390,7 +3390,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3410,11 +3410,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3457,16 +3457,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r4, offset 16; F0 secondary 0x2C.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x8b
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0x3d
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -3505,7 +3505,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3525,11 +3525,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3572,16 +3572,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r4, offset 127; F0 secondary 0x2C.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0x8e
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x42
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -3620,7 +3620,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3640,11 +3640,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3687,16 +3687,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r4, offset 128; F0 secondary 0x2C.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x91
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0x47
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -3735,7 +3735,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3755,11 +3755,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3802,16 +3802,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r4, offset 254; F0 secondary 0x2C.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0x94
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x4c
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -3850,7 +3850,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3870,11 +3870,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3917,16 +3917,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r4, offset 255; F0 secondary 0x2C.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x97
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0x51
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -3965,7 +3965,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -3985,11 +3985,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4032,16 +4032,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r5, offset 0; F0 secondary 0x2D.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0x56
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0x62
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4080,7 +4080,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4100,11 +4100,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4147,16 +4147,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r5, offset 15; F0 secondary 0x2D.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0x9d
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x5b
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4195,7 +4195,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4215,11 +4215,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4262,16 +4262,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r5, offset 16; F0 secondary 0x2D.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0xa0
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0x60
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -4310,7 +4310,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4330,11 +4330,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4377,16 +4377,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r5, offset 127; F0 secondary 0x2D.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0xa3
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x65
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -4425,7 +4425,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4445,11 +4445,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4492,16 +4492,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r5, offset 128; F0 secondary 0x2D.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0xa6
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0x6a
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4540,7 +4540,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4560,11 +4560,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4607,16 +4607,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r5, offset 254; F0 secondary 0x2D.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0xa9
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x6f
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -4655,7 +4655,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4675,11 +4675,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4722,16 +4722,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r5, offset 255; F0 secondary 0x2D.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0xac
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0x74
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -4770,7 +4770,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4790,11 +4790,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4837,16 +4837,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r6, offset 0; F0 secondary 0x2E.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0x79
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0x93
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -4885,7 +4885,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4905,11 +4905,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -4952,16 +4952,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r6, offset 15; F0 secondary 0x2E.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0xb2
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x7e
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -5000,7 +5000,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5020,11 +5020,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5067,16 +5067,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r6, offset 16; F0 secondary 0x2E.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0xb5
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0x83
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5115,7 +5115,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5135,11 +5135,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5182,16 +5182,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r6, offset 127; F0 secondary 0x2E.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0xb8
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x88
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -5230,7 +5230,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5250,11 +5250,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5297,16 +5297,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r6, offset 128; F0 secondary 0x2E.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0xbb
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0x8d
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -5345,7 +5345,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5365,11 +5365,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5412,16 +5412,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r6, offset 254; F0 secondary 0x2E.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0xbe
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x92
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -5460,7 +5460,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5480,11 +5480,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5527,16 +5527,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r6, offset 255; F0 secondary 0x2E.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0xc1
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0x97
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5575,7 +5575,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5595,11 +5595,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5642,16 +5642,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r7, offset 0; F0 secondary 0x2F.
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ldi8 r5, 0x00
     st8 [r4], r5
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ldi8 r5, 0x9c
     st8 [r4], r5
-    ldi16 r4, 0x0302
+    ldi16 r4, 0x0922
     ldi8 r5, 0xc4
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -5690,7 +5690,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5710,11 +5710,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0301
+    ldi16 r4, 0x0921
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5757,16 +5757,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r7, offset 15; F0 secondary 0x2F.
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ldi8 r5, 0xc7
     st8 [r4], r5
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0x7f
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0xa1
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -5805,7 +5805,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5825,11 +5825,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030e
+    ldi16 r4, 0x092e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5872,16 +5872,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r7, offset 16; F0 secondary 0x2F.
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ldi8 r5, 0xca
     st8 [r4], r5
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ldi8 r5, 0x80
     st8 [r4], r5
-    ldi16 r4, 0x0311
+    ldi16 r4, 0x0931
     ldi8 r5, 0xa6
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -5920,7 +5920,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5940,11 +5940,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x030f
+    ldi16 r4, 0x092f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0310
+    ldi16 r4, 0x0930
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -5987,16 +5987,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r7, offset 127; F0 secondary 0x2F.
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ldi8 r5, 0xcd
     st8 [r4], r5
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0xff
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0xab
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x7fff
     ldi16 r7, 0x8000
@@ -6035,7 +6035,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -6055,11 +6055,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037e
+    ldi16 r4, 0x099e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -6102,16 +6102,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r7, offset 128; F0 secondary 0x2F.
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ldi8 r5, 0xd0
     st8 [r4], r5
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ldi8 r5, 0x55
     st8 [r4], r5
-    ldi16 r4, 0x0381
+    ldi16 r4, 0x09a1
     ldi8 r5, 0xb0
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x1357
     ldi16 r7, 0x1357
@@ -6150,7 +6150,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -6170,11 +6170,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x037f
+    ldi16 r4, 0x099f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x0380
+    ldi16 r4, 0x09a0
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -6217,16 +6217,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r7, offset 254; F0 secondary 0x2F.
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ldi8 r5, 0xd3
     st8 [r4], r5
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0xaa
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0xb5
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x0001
     ldi16 r7, 0x0002
@@ -6265,7 +6265,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -6285,11 +6285,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fd
+    ldi16 r4, 0x0a1d
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -6332,16 +6332,16 @@ _start:
     cold_emit_char '\n'
 
     ; STSP8 r7, offset 255; F0 secondary 0x2F.
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ldi8 r5, 0xd6
     st8 [r4], r5
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ldi8 r5, 0x01
     st8 [r4], r5
-    ldi16 r4, 0x0400
+    ldi16 r4, 0x0a20
     ldi8 r5, 0xba
     st8 [r4], r5
-    ldi16 r4, 0x0300
+    ldi16 r4, 0x0920
     setsp r4
     ldi16 r6, 0x8000
     ldi16 r7, 0x7fff
@@ -6380,7 +6380,7 @@ _start:
     push16 r2
     push16 r1
     push16 r0
-    ldi16 r4, 0x02fe
+    ldi16 r4, 0x091e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
@@ -6400,11 +6400,11 @@ _start:
     call cold_print_r0_line
     pop16 r0
     call cold_print_r0_line
-    ldi16 r4, 0x03fe
+    ldi16 r4, 0x0a1e
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line
-    ldi16 r4, 0x03ff
+    ldi16 r4, 0x0a1f
     ld16 r5, [r4]
     mov r0, r5
     call cold_print_r0_line

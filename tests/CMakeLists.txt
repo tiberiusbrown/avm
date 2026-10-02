@@ -169,9 +169,30 @@ add_dependencies(avm_tests
 
 # Building avm_tests packages every current ASM, C, and C++ test. This target
 # additionally runs the complete suite in one invocation.
+set(AVM_PUSH16_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/interp")
+avm_add_object(
+    OUTPUT "${AVM_PUSH16_TEST_DIR}/push16.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/push16.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_PUSH16_TEST_DIR}/push16.o"
+    OUTPUT_ELF "${AVM_PUSH16_TEST_DIR}/push16.elf"
+    OUTPUT_IMAGE "${AVM_PUSH16_TEST_DIR}/push16.bin"
+    ENTRY _start)
+add_executable(avm_push16_tests interp/push16.cpp)
+target_compile_features(avm_push16_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_push16_tests PRIVATE ardensdebuggerlib)
+add_custom_target(avm_push16_tests_run
+    COMMAND "$<TARGET_FILE:avm_push16_tests>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+        "${AVM_PUSH16_TEST_DIR}/push16.bin"
+    DEPENDS avm_push16_tests avm_interpreter "${AVM_PUSH16_TEST_DIR}/push16.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+
 add_custom_target(avm_tests_run
     COMMAND "$<TARGET_FILE:avm_tests>"
-    DEPENDS avm_tests
+    DEPENDS avm_tests avm_push16_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running all AVM tests in-process"
     USES_TERMINAL

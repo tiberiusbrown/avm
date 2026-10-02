@@ -264,7 +264,7 @@ typedef struct {
   int16_t baseline_y;
 } avm_text_cursor_t;
 
-AVM_SYS_INLINE avm_text_cursor_t
+__attribute__((always_inline)) AVM_SYS_INLINE avm_text_cursor_t
 __avm_text_cursor_from_u32(uint32_t packed) {
   avm_text_cursor_t result;
   result.x = (int16_t)(uint16_t)packed;
@@ -281,13 +281,13 @@ AVM_SYS_INLINE void avm_set_text_mode(avm_text_mode_t mode) {
   __avm_set_text_mode((uint8_t)mode);
 }
 
-AVM_SYS_INLINE avm_text_cursor_t
+__attribute__((always_inline)) AVM_SYS_INLINE avm_text_cursor_t
 avm_draw_text(int16_t x, int16_t baseline_y, char const *str) {
   return __avm_text_cursor_from_u32(
       __avm_draw_text(x, baseline_y, str));
 }
 
-AVM_SYS_INLINE avm_text_cursor_t
+__attribute__((always_inline)) AVM_SYS_INLINE avm_text_cursor_t
 avm_draw_text_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* str) {
   return __avm_text_cursor_from_u32(
       __avm_draw_text_P(x, baseline_y, str));
@@ -295,23 +295,25 @@ avm_draw_text_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* str) {
 
 /* Drawing at the most negative coordinates rejects every glyph while still
    advancing the text cursor. The unsigned subtraction handles x wraparound. */
-AVM_SYS_INLINE uint16_t avm_text_width(char const *str) {
+__attribute__((always_inline)) AVM_SYS_INLINE uint16_t
+avm_text_width(char const *str) {
   return (uint16_t)avm_draw_text(INT16_MIN, INT16_MIN, str).x -
          (uint16_t)INT16_MIN;
 }
 
-AVM_SYS_INLINE uint16_t avm_text_width_P(char const AVM_PROGMEM *str) {
+__attribute__((always_inline)) AVM_SYS_INLINE uint16_t
+avm_text_width_P(char const AVM_PROGMEM *str) {
   return (uint16_t)avm_draw_text_P(INT16_MIN, INT16_MIN, str).x -
          (uint16_t)INT16_MIN;
 }
 
-AVM_SYS_INLINE avm_text_cursor_t
+__attribute__((always_inline)) AVM_SYS_INLINE avm_text_cursor_t
 avm_draw_textfv(int16_t x, int16_t baseline_y, char const *fmt, va_list args) {
   return __avm_text_cursor_from_u32(
       __avm_draw_textfv(x, baseline_y, fmt, args));
 }
 
-AVM_SYS_INLINE avm_text_cursor_t
+__attribute__((always_inline)) AVM_SYS_INLINE avm_text_cursor_t
 avm_draw_textfv_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* fmt,
               va_list args) {
   return __avm_text_cursor_from_u32(
@@ -320,12 +322,47 @@ avm_draw_textfv_P(int16_t x, int16_t baseline_y, char const AVM_PROGMEM* fmt,
 
 /* A C function cannot forward unnamed arguments without constructing a
    va_list. Expand the true-variadic compiler builtin directly at the caller. */
+#ifndef __cplusplus
 #define avm_draw_textf(...)                                                   \
   __avm_text_cursor_from_u32(__avm_draw_textf(__VA_ARGS__))
+#endif
 #define avm_draw_textf_P(...)                                                 \
   __avm_text_cursor_from_u32(__avm_draw_textf_P(__VA_ARGS__))
 
 #ifdef __cplusplus
+}
+
+__attribute__((always_inline)) AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_text(int16_t x, int16_t y, char const AVM_PROGMEM* str) {
+  return avm_draw_text_P(x, y, str);
+}
+
+__attribute__((always_inline)) AVM_SYS_INLINE uint16_t
+avm_text_width(char const AVM_PROGMEM* str) {
+  return avm_text_width_P(str);
+}
+
+__attribute__((always_inline)) AVM_SYS_INLINE avm_text_cursor_t
+avm_draw_textfv(int16_t x, int16_t y, char const AVM_PROGMEM* fmt,
+                va_list args) {
+  return avm_draw_textfv_P(x, y, fmt, args);
+}
+
+// The builtin receives the expanded argument pack at the caller. Its
+// ellipsis performs the usual default argument promotions.
+template<class... Args>
+__attribute__((always_inline)) inline avm_text_cursor_t
+avm_draw_textf(int16_t x, int16_t y, char const* fmt, Args... args) {
+  return __avm_text_cursor_from_u32(
+      __avm_draw_textf(x, y, fmt, args...));
+}
+
+template<class... Args>
+__attribute__((always_inline)) inline avm_text_cursor_t
+avm_draw_textf(int16_t x, int16_t y, char const AVM_PROGMEM* fmt,
+               Args... args) {
+  return __avm_text_cursor_from_u32(
+      __avm_draw_textf_P(x, y, fmt, args...));
 }
 #endif
 

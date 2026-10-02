@@ -58,8 +58,8 @@ with a six-pixel line height.
 `AVM_FONT_BR5D` selects the variable-width printable-ASCII font with five pixels
 above the baseline, one-pixel descenders, and a seven-pixel line height. Pass
 any font pointer to `avm_set_text_font`.
-`libavm.a` supplies the addressable `memcpy_P` wrapper declared in
-`<avm/pgmspace.h>`.
+`libavm.a` supplies addressable RAM and program-memory string wrappers,
+including `memcpy` and `memcpy_P`.
 `<new>` provides placement `new` and `new[]` for caller-owned storage, with
 their matching placement `delete` overloads. The runtime provides no heap
 allocator or ordinary `new` operator.
@@ -173,6 +173,36 @@ Keep application objects before the archives. Static archive resolution uses
 references from objects already seen by the linker.
 
 ## Fast calls and addressable functions
+
+AVM program memory is Clang address space 1. C uses explicit names:
+
+~~~c
+memcpy(dst, ram, n);
+memcpy_P(dst, flash, n);
+~~~
+
+C++ normally uses one name. Overload resolution selects from the source
+pointer type:
+
+~~~cpp
+memcpy(dst, ram, n);
+memcpy(dst, flash, n);
+avm_draw_text(0, 10, ram_text);
+avm_draw_text(0, 10, F("flash text"));
+~~~
+
+The source overloads retain distinct C ABI symbols such as memcpy and
+memcpy_P; no runtime pointer inspection is involved. Explicit _P names
+remain supported in C++ for compatibility. The compiler owns only internal
+__avm_* and __builtin_avm_* spellings. Public _P names are ordinary functions
+that the runtime may define directly.
+
+Direct string calls use header dispatch to the AVM system services.
+Parenthesized calls and address-taking select real ABI functions, including
+the program-memory overload. The C++ true-variadic snprintf and
+avm_draw_textf overloads expand typed argument packs into the existing
+compiler builtins. Program-memory-only debug formatting keeps its explicit
+_P name.
 
 `math.h` and `string.h` declare real public symbols and then use function-like
 macros for ordinary call syntax. For example:

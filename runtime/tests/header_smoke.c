@@ -1,4 +1,5 @@
 #include <math.h>
+#include <avm.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -47,4 +48,21 @@ int (*snprintf_address(void))(char *, size_t, const char *, ...) {
 int (*snprintf_program_address(void))(
     char *, size_t, const char AVM_PROGMEM *, ...) {
     return &snprintf_P;
+}
+
+void c_explicit_program_calls(
+    char *dst, const char *ram, const char AVM_PROGMEM *flash,
+    size_t n, va_list args) {
+    memcpy(dst, ram, n);
+    memcpy_P(dst, flash, n);
+    (void)strlen(ram);
+    (void)strlen_P(flash);
+    (void)avm_draw_text(0, 10, ram);
+    (void)avm_draw_text_P(0, 10, flash);
+    (void)avm_text_width(ram);
+    (void)avm_text_width_P(flash);
+    (void)avm_draw_textfv(0, 10, ram, args);
+    (void)avm_draw_textfv_P(0, 10, flash, args);
+    (void)avm_draw_textf(0, 10, ram, 7);
+    (void)avm_draw_textf_P(0, 10, flash, 7);
 }

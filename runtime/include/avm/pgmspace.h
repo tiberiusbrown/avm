@@ -30,6 +30,8 @@ char* strcat_P(char* dst, char const AVM_PROGMEM* src);
 }
 #endif
 
+#if !defined(AVM_PGMSPACE_IMPLEMENTATION) && \
+    !defined(AVM_STRING_NO_BUILTIN_MACROS)
 #define memcpy_P(dst, src, size) __avm_memcpy_P((dst), (src), (size))
 #define memcmp_P(lhs, rhs, size) __avm_memcmp_P((lhs), (rhs), (size))
 #define strcmp_P(lhs, rhs) __avm_strcmp_P((lhs), (rhs))
@@ -38,5 +40,6 @@ char* strcat_P(char* dst, char const AVM_PROGMEM* src);
 #define strncat_P(dst, src, size) __avm_strncat_P((dst), (src), (size))
 #define strcpy_P(dst, src) strncpy_P((dst), (src), SIZE_MAX)
 #define strcat_P(dst, src) strncat_P((dst), (src), SIZE_MAX)
+#endif
 
 #endif // __AVM_PGMSPACE_H

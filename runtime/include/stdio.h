@@ -37,17 +37,53 @@ static inline int snprintf_P(
     return result;
 }
 
+#ifndef __cplusplus
 #define snprintf(...) __avm_snprintf(__VA_ARGS__)
+#endif
 #define snprintf_P(...) __avm_snprintf_P(__VA_ARGS__)
 
 #if !defined(AVM_STDIO_IMPLEMENTATION) && \
     !defined(AVM_STDIO_NO_BUILTIN_MACROS)
+#ifndef __cplusplus
 #define vsnprintf(s, n, fmt, args) __avm_vsnprintf((s), (n), (fmt), (args))
 #define vsnprintf_P(s, n, fmt, args) __avm_vsnprintf_P((s), (n), (fmt), (args))
+#endif
 #endif
 
 #ifdef __cplusplus
 } // extern "C"
+
+int vsnprintf(char*, size_t, const char AVM_PROGMEM*, va_list)
+    __asm__("vsnprintf_P");
+
+static __attribute__((always_inline)) inline int __avm_cpp_vsnprintf(
+    char* s, size_t n, const char* fmt, va_list args) {
+    return __avm_vsnprintf(s, n, fmt, args);
+}
+static __attribute__((always_inline)) inline int __avm_cpp_vsnprintf(
+    char* s, size_t n, const char AVM_PROGMEM* fmt, va_list args) {
+    return __avm_vsnprintf_P(s, n, fmt, args);
+}
+
+template<class... Args>
+__attribute__((always_inline)) inline int __avm_cpp_snprintf(
+    char* s, size_t n, const char* fmt, Args... args) {
+    return __avm_snprintf(s, n, fmt, args...);
+}
+
+template<class... Args>
+__attribute__((always_inline)) inline int __avm_cpp_snprintf(
+    char* s, size_t n, const char AVM_PROGMEM* fmt, Args... args) {
+    return __avm_snprintf_P(s, n, fmt, args...);
+}
+
+#define snprintf(...) __avm_cpp_snprintf(__VA_ARGS__)
+#if !defined(AVM_STDIO_IMPLEMENTATION) && \
+    !defined(AVM_STDIO_NO_BUILTIN_MACROS)
+#define vsnprintf(s, n, fmt, args) \
+    __avm_cpp_vsnprintf((s), (n), (fmt), (args))
+#define vsnprintf_P(s, n, fmt, args) __avm_vsnprintf_P((s), (n), (fmt), (args))
+#endif
 #endif
 
 #endif

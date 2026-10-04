@@ -17,17 +17,15 @@ extern void __avm_run_local_dtors(void) __attribute__((weak));
 static inline void avm_run_constructors(void) {
     for (const avm_init_fini_fn AVM_PROGMEM *entry = __init_array_start;
          entry != __init_array_end; ++entry)
-        (*entry)();
+        __builtin_avm_stack_dispatch(*entry, 0);
 }
 
 static inline void avm_run_destructors(void) {
-    if (__avm_run_local_dtors)
-        __avm_run_local_dtors();
+    __builtin_avm_stack_dispatch(__avm_run_local_dtors, 3);
     for (const avm_init_fini_fn AVM_PROGMEM *entry = __fini_array_end;
          entry != __fini_array_start;)
-        (*--entry)();
-    if (__avm_run_local_dtors)
-        __avm_run_local_dtors();
+        __builtin_avm_stack_dispatch(*--entry, 1);
+    __builtin_avm_stack_dispatch(__avm_run_local_dtors, 3);
 }
 
 #endif

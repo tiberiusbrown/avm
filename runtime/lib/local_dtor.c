@@ -17,6 +17,8 @@ static struct avm_local_dtor_entry *next_slot =
     __avm_local_dtor_slots_start;
 static uint16_t global_phase;
 
+/* Keep the registration boundary visible to stack metadata, including LTO. */
+__attribute__((noinline))
 void __avm_register_local_dtor(void (*destroy)(void), void *slot) {
     /* The reference to slot keeps its storage alive under --gc-sections. */
     (void)slot;
@@ -35,7 +37,7 @@ void __avm_run_local_dtors(void) {
     while (next_slot != __avm_local_dtor_slots_start &&
            (next_slot - 1)->global_phase == global_phase) {
         --next_slot;
-        next_slot->destroy();
+        __builtin_avm_stack_dispatch(next_slot->destroy, 2);
     }
 }
 

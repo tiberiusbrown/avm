@@ -28,12 +28,27 @@ proof. If native objects define vtables, or a combined IR module contains
 unannotated vtable definitions, automatic analysis conservatively leaves the
 virtual calls unknown.
 
-Before machine code generation, LLVM's called-value propagation also proves
-small function-pointer sets through selects, PHIs, internal function arguments
-and returns, and supported scalar globals. Full LTO makes this analysis operate
-on the combined program. Its existing limit is four functions per propagated
-value; larger or unsupported values remain unknown rather than being truncated.
-The virtual-call target sets are not subject to this propagation limit.
+Before machine code generation, LLVM's called-value propagation and AVM's
+field-sensitive memory analysis prove function-pointer sets through selects,
+PHIs, internal function arguments and returns, scalar/aggregate globals, object
+fields, aliases, and constant-size memory copies. Full LTO makes this analysis
+operate on the combined program. Memory analysis tracks an allocation or global
+and a byte offset; writes to another field do not contaminate a pointer field.
+Variable offsets, partial pointer writes, volatile/atomic accesses, unsupported
+pointer representations, and unknown writers remain conservative. Escaping
+objects can be modified by unmodeled calls; their affected loads become unknown.
+
+Memory analysis defaults to 32 functions or locations per proven value and 256
+fixed-point iterations. `-mllvm -avm-stack-target-limit=N` and
+`-mllvm -avm-stack-analysis-iterations=N` configure native Clang compilation;
+use `-Wl,-mllvm=-avm-stack-target-limit=N` and
+`-Wl,-mllvm=-avm-stack-analysis-iterations=N` for LTO links. Exhausting either
+limit leaves the continuation unknown; candidate lists are never truncated
+into a proof, and a partial fixed point is never used as a complete set.
+Gap diagnostics distinguish unsupported/unknown flow, target limits, and
+iteration limits. Existing LLVM proofs (including virtual-call metadata and
+called-value propagation's small sets) remain valid independently of these
+additional analysis limits. These settings do not limit diagnostic path output.
 
 For a proven set, the backend emits one alternative stack edge per candidate
 using the ordinary nine-byte records. LLD follows all candidates and takes the
@@ -46,9 +61,59 @@ and the final image contains no target-set tables or extra dispatch operations.
 Closed-world visibility does not itself prove arbitrary pointer flow. Unknown
 memory loads, integer-derived pointers and opaque assembly remain gaps. ThinLTO
 does not yet export multi-target virtual-call sets between its partitions;
-use full LTO for that analysis. Constructor/destructor table dispatch and the
-local destructor registry still need dedicated table/registry analysis; their
-callbacks continue to be checked independently as described below.
+use full LTO for that analysis.
+
+## Constructor and destructor dispatch
+
+The runtime uses `__builtin_avm_stack_dispatch(fn, kind)` to preserve its
+dispatch contracts through inlining, LTO, and machine tail-call rewrites.
+Kinds 0 and 1 dispatch the standard init/fini arrays; kind 2 dispatches only
+destructors registered through `__avm_register_local_dtor`; kind 3 performs a
+null-guarded weak-hook call. The builtin emits the ordinary call and metadata,
+with a runtime null check for kind 3. It is a runtime contract, not a way to
+assert an arbitrary pointer has known targets.
+
+For the default AVM layout, LLD connects each array dispatch to every live
+relocated entry, including priority subsections and COMDAT/GC selection.
+Callbacks execute sequentially, so analysis takes their maximum with the actual
+caller's frame, outgoing arguments, and return record. Empty arrays add no
+edges. Raw/unresolved entries, explicitly overridden array bounds, and custom
+SECTIONS layouts retain an unknown continuation. Custom layout support needs
+a later analysis of the actual output ranges.
+
+Each local destructor registration emits link-order target metadata. The
+registration routine stays uninlined so its boundary survives full LTO; its
+runtime slots remain five bytes. LLD unions the candidates from live registering
+code and checks all of them at registry dispatches. Unknown or unannotated
+registrations keep dispatch incomplete. Registration phases are conservatively
+merged; recursive destructors remain incomplete. This contract assumes the
+standard registry implementation and exclusive writes through registration.
+
+An absent undefined weak hook is skipped only when metadata proves a non-null
+guard (either kind 3 or a dominating IR control-flow edge). An unguarded weak
+call continues to be reported as unavailable.
+
+## Inline assembly
+
+Inline assembly is automatically certified for stack analysis when its parsed
+AVM instructions neither modify SP nor introduce an untracked control transfer.
+The check runs after operand substitution and uses the target assembler and
+instruction descriptors, including implicit register definitions. Empty assembly,
+arithmetic, reads of SP, stack-relative memory accesses, and defined system
+services can pass. Branches and loops pass only when every destination is an
+exact label within the same assembly block.
+
+Push/pop, stack adjustment, writes to SP, calls, returns, indirect jumps, and
+external or unresolved branch destinations retain the incomplete marker. Even
+balanced push/pop pairs need additional peak accounting and remain unsupported.
+Raw bytes, assembler directives, and macro invocations also remain opaque;
+macros defined earlier cannot disguise a stack operation as an ordinary mnemonic.
+Certification uses an isolated assembler context and does not change emitted code.
+
+Every block in a function must pass. Compiler-generated spills and saved registers
+are already included in its finalized frame; dynamic allocation independently
+keeps the function incomplete. Stack certification does not relax assembly's
+declared memory effects or the separate function-pointer flow analysis.
 
 ## Optional gap diagnostics
 
@@ -96,8 +161,9 @@ scavenger slots; outgoing areas are dynamically allocated and counted once.
 The ELF entry is entered by the loader without a return record. The linker
 also checks callback lower bounds for function addresses in live allocated
 data, including constructors and destructors in init/fini arrays. Their
-invoking indirect calls remain incomplete: the linker does not infer a
-callback's caller or a target set from an arbitrary stored function pointer.
+invoking calls are connected only when compiler pointer analysis or a runtime
+dispatch contract proves the target set. The linker does not infer a callback's
+caller from an arbitrary stored function pointer.
 Only functions reachable from these roots are checked, even without GC.
 
 SCC detection and longest-path evaluation use iterative traversals and linear
@@ -128,9 +194,18 @@ emitted after its body. Each nine-byte record contains:
 | Offset | Field |
 | --- | --- |
 | 0 | Caller ELF text address, three bytes, `R_AVM_DEBUG24` relocation |
-| 3 | Direct callee ELF text address, three bytes, or zero for indirect calls |
+| 3 | Direct callee ELF text address, three bytes, or an indirect gap reason code |
 | 6 | Outgoing argument bytes, two bytes, little endian |
-| 8 | Flags: 1 = indirect, 2 = true tail transfer, 4 = incomplete, 8 = function marker |
+| 8 | Flags: 1 = indirect, 2 = true tail transfer, 4 = incomplete, 8 = function marker, 16 = init array, 32 = fini array, 64 = local registry, 128 = guarded weak hook |
+
+Indirect gap codes are 0 (unspecified/legacy), 1 (unsupported or unknown pointer
+flow), 2 (target limit), and 3 (iteration limit). Dispatch flags are exclusive;
+array/registry flags require an indirect call, while a guarded weak hook can be
+direct or indirect. A separate `.avm.stackdtors` section contains seven-byte
+records: relocated caller (3), relocated registered target or zero (3), and
+kind (1). Each registration starts with kind 2, followed by candidate records
+of kind 0 or an unknown record of kind 1. These sections follow the registering
+text through GC and relocatable links and are consumed by final executable links.
 
 Every generated function has a function marker, including leaves, certifying
 that its machine calls were recorded. A marker has zero callee and argument
@@ -139,12 +214,12 @@ claiming completeness for legacy objects with only `.stack_sizes`.
 `.3byte` emits raw three-byte ELF addresses for analysis and debug
 metadata; `.progptr` continues to emit packed interpreter program pointers.
 
-Both metadata sections use `SHF_LINK_ORDER` and the defining text section's
+All metadata sections use `SHF_LINK_ORDER` and the defining text section's
 COMDAT group, following LLVM's existing `.stack_sizes` convention. Relocations
 are resolved by section and offset before relaxation, so local functions,
 aliases and multiple functions in one text section are supported. Metadata
 does not keep dead text alive. Relocatable (`-r`) links retain the records for
-a later executable link. Executable links consume both sections, including
+a later executable link. Executable links consume these sections, including
 their relocation sections, so the final ELF/image has no metadata or runtime
 cost. The report flag prints a diagnostic; it does not retain metadata.
 

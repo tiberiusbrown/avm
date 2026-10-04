@@ -89,12 +89,21 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             endif()
         endif()
 
+        set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
+        # Exercise whole-program virtual and member-pointer dispatch in the
+        # emulator as well as retaining the ordinary compilation matrix.
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
+           AVM_TEST_OPT_LEVEL STREQUAL "O2" AND
+           AVM_TEST_NAME MATCHES "^(virtual_dispatch|member_pointers)$")
+            list(APPEND test_compile_options -flto=full)
+        endif()
+
         avm_add_object(
             OUTPUT "${AVM_TEST_OBJECT}"
             SOURCE "${AVM_TEST_SOURCE_FILE}"
             LANGUAGE ${AVM_TEST_LANGUAGE}
             INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
-            COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}"
+            COMPILE_OPTIONS ${test_compile_options}
             DEPENDS avm_sysroot ${test_source_dependencies}
         )
         foreach(test_support_source IN LISTS test_support_sources)

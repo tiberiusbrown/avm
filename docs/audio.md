@@ -122,6 +122,16 @@ or an object with `note`, `volume`, and/or `instrument`. Instrument names are
 `square`, `bass`, `lead`, `noise`. `row_ticks` changes tempo offline by changing
 subsequent encoded deltas, with no runtime division or tempo decoder.
 
+The instrument identifiers are gain shortcuts: `square`=24, `bass`=31,
+`lead`=16, and `noise`=28. They neither allocate a channel nor change its
+waveform. For example, `noise` on channel 0 still plays a square wave, while
+`lead` on channel 3 still plays noise. The note selects pitch on channels 0..2
+and the LFSR update rate on channel 3. Instrument changes retain the current
+note and phase; later notes retain the selected amplitude. When a channel
+object contains both `instrument` and `volume`, the explicit volume wins:
+the compiler emits instrument, volume, then note updates. Any attack or decay
+must be written as later volume events; presets do not add envelopes.
+
 ## Timer and register allocation
 
 Timer3: CTC, `TCCR3A=0`, `TCCR3B=WGM32|CS31`, prescaler 8, `OCR3A=255`:

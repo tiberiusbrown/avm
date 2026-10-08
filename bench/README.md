@@ -14,6 +14,11 @@ without rerunning the tests or instruction image, build `avm_bench` and run
 `build/avm_bench --c-only` or `build/avm_bench --cpp-only`. The `--instruction-only`
 mode is available for the assembly image.
 
+The dedicated `avm_audio_tests_run` target measures native audio ISR, seek,
+countdown, chord-commit, and FX burst costs without adding interrupts to the
+instruction benchmark. [Audio results](../docs/audio-benchmarks.md) include
+the before/after instruction comparison and autonomous demo service latency.
+
 The newer compiled benchmarks fill these code generation gaps:
 
 | Area | Benchmarks |

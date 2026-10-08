@@ -156,6 +156,8 @@ add_dependencies(avm_toolchain avm_sdk_tools)
 
 install(PROGRAMS ${AVM_SDK_ALIAS_OUTPUTS}
     DESTINATION bin COMPONENT avm-sdk)
+install(PROGRAMS "${CMAKE_CURRENT_SOURCE_DIR}/tools/avm_music.py"
+    DESTINATION bin COMPONENT avm-sdk)
 # Only Clang's target-independent builtin headers belong in the AVM SDK.
 # Get the list and install destination from the Clang header build so they
 # track LLVM updates without copying every architecture's resource headers.

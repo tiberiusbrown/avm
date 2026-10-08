@@ -1,3 +1,4 @@
 build*/
 tests/c/asm/
 tests/cpp/asm/
+__pycache__/

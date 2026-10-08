@@ -24,7 +24,8 @@ cmake --install build --config RelWithDebInfo --component avm-sdk --prefix <sdk>
 
 The build-tree driver is `build/llvm-build/bin/avm-clang` (`.exe` on Windows).
 The installed SDK is relocatable, with native tools in `<sdk>/bin` and the
-runtime in `<sdk>/sysroot`; no Python installation is needed. The SDK also
+runtime in `<sdk>/sysroot`; its C/C++ tools need no Python installation. The
+optional `avm_music.py` asset compiler in `<sdk>/bin` requires Python 3. The SDK also
 provides `avm-ld`, `avm-ar`, `avm-mc`, `avm-objdump`, `avm-readobj`, and
 `avm-image` beside the LLVM-named tools. `avm-mc` defaults to the AVM triple;
 an explicit `-triple` takes precedence.
@@ -60,6 +61,9 @@ above the baseline, one-pixel descenders, and a seven-pixel line height. Pass
 any font pointer to `avm_set_text_font`.
 `libavm.a` supplies addressable RAM and program-memory string wrappers,
 including `memcpy` and `memcpy_P`.
+`<avm/audio.h>` (also included by `<avm.h>`) supplies autonomous four-channel
+music, SFX, and direct-tone controls through `SYS 0x38`. See
+[the audio documentation](../docs/audio.md) for APIs and asset generation.
 `<new>` provides placement `new` and `new[]` for caller-owned storage, with
 their matching placement `delete` overloads. The runtime provides no heap
 allocator or ordinary `new` operator.

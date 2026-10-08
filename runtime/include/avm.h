@@ -7,6 +7,7 @@
 #include <stdint.h>
 
 #include <avm/framebuffer.h>
+#include <avm/audio.h>
 #include <avm/pgmspace.h>
 
 #define AVM_SYS_INLINE static __inline__

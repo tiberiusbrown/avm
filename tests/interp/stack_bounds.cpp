@@ -74,12 +74,15 @@ struct harness_t {
     uint32_t table, trap, seek;
     bool checked;
     unsigned cases = 0;
+    unsigned seek_overhead = 0;
 
     harness_t(char** args, bool checked_mode) : checked(checked_mode)
     {
         table = symbol(args[2], "primary_table", true);
         trap = symbol(args[2], "stack_overflow_func", true);
         seek = symbol(args[2], "seek_and_dispatch_func", true);
+        try { (void)symbol(args[2], "seek_and_dispatch_no_audio", true); seek_overhead = 4; }
+        catch(std::runtime_error const&) {}
         emulator->reset();
         load(*emulator, args[1], "interpreter.hex");
         load(*emulator, args[3], "fxdata.bin");
@@ -243,10 +246,11 @@ void call(harness_t& h, call_t const& form, uint32_t pc, uint32_t target,
         return;
     }
     require(h.boundary() && guest_pc(h.cpu()) == target, "callee was not reached");
-    require(cycles == (h.checked ? form.after : form.before), "incorrect CALL timing");
+    // Successful calls restart FX through the four-cycle audio tick check.
+    require(cycles == (h.checked ? form.after : form.before) + h.seek_overhead, "incorrect CALL timing");
     h.instruction();
     require(word(h.cpu(), 20) == regs[7], "callee marker did not execute");
-    require(h.instruction() == 110, "RET timing changed");
+    require(h.instruction() == 110+h.seek_overhead, "RET timing changed");
     require(guest_pc(h.cpu()) == next && word(h.cpu(), 28) == sp, "RET did not return to nextPC");
     require(h.cpu().data[absim::reg::addr::GPIOR0] == vm_flags, "callee/RET changed VM flags");
     h.instruction();
@@ -315,10 +319,10 @@ int main(int argc, char** argv)
         }
         std::cout << "Passed " << h.cases << (h.checked ? " checked" : " baseline")
                   << " stack-bound cases: all calls/RET/carries, signed ADJSP, SETSP r0-r7, C/Z/S, memory and fatal paths.\n"
-                  << "Measured ADJSP=35, CALL8=" << (h.checked ? 127 : 128)
-                  << ", CALL16=" << (h.checked ? 136 : 135)
-                  << ", CALLF=150, all CALLP=" << (h.checked ? 119 : 117)
-                  << ", all SETSP=" << (h.checked ? 40 : 37) << ", RET=110 cycles.\n";
+                  << "Measured ADJSP=35, CALL8=" << (h.checked ? 127 : 128)+h.seek_overhead
+                  << ", CALL16=" << (h.checked ? 136 : 135)+h.seek_overhead
+                  << ", CALLF=" << 150+h.seek_overhead << ", all CALLP=" << (h.checked ? 119 : 117)+h.seek_overhead
+                  << ", all SETSP=" << (h.checked ? 40 : 37) << ", RET=" << 110+h.seek_overhead << " cycles.\n";
         return 0;
     } catch(std::exception const& error) {
         std::cerr << error.what() << '\n';

@@ -52,7 +52,8 @@
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
-;;     0x0A15–...     call-lifetime SYS workspace beginning at data_end_private
+;;     0x0A15–0x0A7D  persistent audio state (105 bytes)
+;;     0x0A7E–0x0AC5  aliased formatter/text or audio commit workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -73,7 +74,42 @@
 
 ; First byte after persistent interpreter-private state. Temporary, nonnested
 ; SYS services may define aliasing call-lifetime workspaces beginning here.
-#define data_end_private             (data_text_mode+1)
+; Persistent audio state, separate from all call-lifetime SYS workspaces.
+#define data_audio_begin             (data_text_mode+1)
+#define data_audio_ticks_pending     (data_audio_begin+0)
+#define data_audio_divider           (data_audio_begin+1)
+#define data_audio_volume            (data_audio_begin+2)
+#define data_audio_controls          (data_audio_begin+3)
+#define data_audio_phases            (data_audio_controls+12)
+#define data_audio_noise             (data_audio_phases+8)
+#define data_audio_music_notes       (data_audio_noise+1)
+#define data_audio_sfx_notes         (data_audio_music_notes+8)
+#define data_audio_music             (data_audio_sfx_notes+8)
+#define data_audio_sfx               (data_audio_music+15)
+#define data_audio_cache             (data_audio_sfx+15)
+#define data_audio_cache_index       (data_audio_cache+32)
+#define data_audio_cache_length      (data_audio_cache_index+1)
+#define data_audio_cache_owner       (data_audio_cache_length+1)
+#define data_audio_end               (data_audio_cache_owner+1)
+
+; Stream record offsets. Pointers are image-relative, little-endian uint24.
+#define AUDIO_START   0
+#define AUDIO_CURSOR  3
+#define AUDIO_SIZE    6
+#define AUDIO_LEFT    8
+#define AUDIO_WAIT   10
+#define AUDIO_STATUS 12
+#define AUDIO_MASK   13
+#define AUDIO_TRIGGER 14
+
+.if (data_audio_end - data_audio_begin) != 105
+    .error "audio persistent SRAM must occupy 105 bytes"
+.endif
+.if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
+    .error "audio compact pointers must fit in one SRAM page"
+.endif
+
+#define data_end_private             data_audio_end
 
 ; Native formatter workspace. This storage is valid only while VS(N)PRINTF is
 ; executing; future nonreentrant SYS services may alias the same range.
@@ -112,8 +148,8 @@
 #define data_text_current_y              (data_format_scratch_end+2)
 #define data_text_scratch_end            (data_format_scratch_end+4)
 
-.if data_text_scratch_end > 0x0B00
-    .error "Formatter/text workspace overlaps memory above interpreter-private SRAM"
+.if data_text_scratch_end > (0x0B00-48)
+    .error "Formatter/text workspace must leave at least 48 bytes for native stack"
 .endif
 
 #define FORMAT_STATUS_SOURCE_PROGRAM 0
@@ -732,6 +768,7 @@
 #define SYS_DRAW_TEXTFV                0x35
 #define SYS_DRAW_TEXTFV_P              0x36
 #define SYS_DEBUG_PRINTFV_P             0x37
+#define SYS_AUDIO                       0x38
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -894,7 +931,7 @@ __vectors:
     jmp default_isr         ; 29 ADC
     jmp default_isr         ; 30 EEPROM READY
     jmp default_isr         ; 31 TIMER3 CAPTURE
-    jmp default_isr         ; 32 TIMER3 COMPA
+    jmp timer3_compa_isr    ; 32 TIMER3 COMPA
     jmp default_isr         ; 33 TIMER3 COMPB
     jmp default_isr         ; 34 TIMER3 COMPC
     jmp default_isr         ; 35 TIMER3 OVERFLOW
@@ -938,10 +975,90 @@ timer0_compa_isr:
     sts  data_millis+3, r0
 
 timer0_compa_isr_done:
+    ; Divide milliseconds by four without using another native register.
+    ; INC/DEC implements saturation without needing an upper register.
+    lds  r0, data_audio_divider
+    inc  r0
+    sts  data_audio_divider, r0
+    sbrc r0, 2
+    rjmp timer0_audio_tick
+timer0_audio_done:
     pop  r0
     out  SREG, r0
     pop  r0
     reti
+
+timer0_audio_tick:
+    clr  r0 ; r2 can hold a temporary inside native libm
+    sts  data_audio_divider, r0
+    lds  r0, data_audio_ticks_pending
+    inc  r0
+    breq timer0_audio_done
+    sts  data_audio_ticks_pending, r0
+    rjmp timer0_audio_done
+
+; Synthesis owns phase/LFSR state. Save precisely r0, r24:r26 and SREG.
+; Do not assume r2 is zero inside native libm. No SPI, sequencing, or calls.
+.macro audio_pulse channel
+    lds  r24, data_audio_phases+2*\channel
+    lds  r25, data_audio_phases+2*\channel+1
+    lds  r0, data_audio_controls+3*\channel
+    add  r24, r0
+    lds  r0, data_audio_controls+3*\channel+1
+    adc  r25, r0
+    sts  data_audio_phases+2*\channel, r24
+    sts  data_audio_phases+2*\channel+1, r25
+    lds  r0, data_audio_controls+3*\channel+2
+    sbrc r25, 7
+    neg  r0
+    add  r26, r0
+.endm
+
+timer3_compa_isr:
+    push r0
+    in   r0, SREG
+    push r0
+    push r24
+    push r25
+    push r26
+    ldi  r26, 128
+    audio_pulse 0
+    audio_pulse 1
+    audio_pulse 2
+
+    lds  r24, data_audio_phases+6
+    lds  r25, data_audio_phases+7
+    lds  r0, data_audio_controls+9
+    add  r24, r0
+    lds  r0, data_audio_controls+10
+    adc  r25, r0
+    sts  data_audio_phases+6, r24
+    sts  data_audio_phases+7, r25
+    lds  r25, data_audio_noise
+    brcc .Laudio_noise_hold
+    lsr  r25
+    brcc .Laudio_noise_store
+    ldi  r24, 0xb8
+    eor  r25, r24
+.Laudio_noise_store:
+    sts  data_audio_noise, r25
+.Laudio_noise_hold:
+    lds  r0, data_audio_controls+11
+    sbrc r25, 0
+    neg  r0
+    add  r26, r0
+    ; TC4H is shared by every 10-bit Timer4 register. Write it explicitly.
+    clr  r24
+    sts  TC4H, r24
+    sts  OCR4A, r26
+    pop  r26
+    pop  r25
+    pop  r24
+    pop  r0
+    out  SREG, r0
+    pop  r0
+    reti
+
 
 reset_handler:
     ; Keep the vector area small. The complete startup path is placed after
@@ -3260,6 +3377,9 @@ sys_dispatch_func:
 .if (SYS_DEBUG_PRINTFV_P != 0x37)
     .error "SYS_DEBUG_PRINTFV_P must occupy dispatch-table entry 0x37"
 .endif
+.if (SYS_AUDIO != 0x38)
+    .error "SYS_AUDIO must occupy dispatch-table entry 0x38"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3297,7 +3417,8 @@ sys_dispatch_table:
     sys_entries 1,   sys_draw_textfv_func
     sys_entries 1,   sys_draw_textfv_p_func
     sys_entries 1,   sys_debug_printfv_p_func
-    sys_entries 200, invalid_syscall_func
+    sys_entries 1,   sys_audio_func
+    sys_entries 199, invalid_syscall_func
 sys_dispatch_table_end:
 
 .if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
@@ -3309,6 +3430,8 @@ sys_dispatch_table_end:
 ; movement of the carefully range-constrained code below to eight AVR words.
 sys_memcpy_func:
     jmp   sys_memcpy_impl
+sys_audio_func:
+    jmp   sys_audio_impl
 sys_memcpy_p_func:
     jmp   sys_memcpy_p_impl
 sys_memset_func:
@@ -3499,6 +3622,10 @@ push_pc_seek_and_dispatch_func:
 seek_and_dispatch_func:
     fx_disable
 seek_and_dispatch_func_disabled:
+    lds  r30, data_audio_ticks_pending
+    tst  r30
+    brne audio_service_and_seek
+seek_and_dispatch_no_audio:
     ldi  r30, SFC_READ
     fx_enable
     out  SPDR, r30
@@ -3527,6 +3654,10 @@ seek_and_dispatch_func_disabled:
     movw r30, r0
     subi r31, hi8(-(pm(primary_table)))
     ijmp
+
+audio_service_and_seek:
+    call audio_service_func
+    rjmp seek_and_dispatch_no_audio
 
 ; Local fixed-delay ladder for pre-table interpreter paths. The large dense
 ; secondary tables place the original fx_seek_delay_* ladder outside RCALL's
@@ -7142,6 +7273,13 @@ startup_func:
     sts  data_text_line_height, ZERO
     ldi  r26, SPRITE_MODE_SELF_MASKED
     sts  data_text_mode, r26
+    ldi  r30, lo8(data_audio_begin)
+    ldi  r31, hi8(data_audio_begin)
+    ldi  r26, (data_audio_end-data_audio_begin)
+1:
+    st   Z+, ZERO
+    dec  r26
+    brne 1b
 
     ; Initialize persistent architectural state. VM_FLAGS lives in low-I/O
     ; GPIOR0; VM PC is loaded from the image header below.
@@ -7369,6 +7507,7 @@ startup_clear_framebuffer_loop:
     ; Timer0 is initialized only after the data image copy and initial display
     ; blanking. Its compare interrupt becomes globally active at the SEI below.
     rcall timer0_init_func
+    call  audio_init_func
 
     ; VM_PCH:VM_PCM:VM_PCL already contains the image entry point. Seek to
     ; it, consume the first primary opcode, and start the following transfer.
@@ -12113,7 +12252,12 @@ sys_idle_impl:
     out   SMCR, r24
     sleep
     out   SMCR, ZERO
+    lds   r24, data_audio_ticks_pending
+    tst   r24
+    brne 1f
     jmp   cluster_tail_18
+1:
+    jmp   seek_and_dispatch_func
 
 ; uint16_t generate_random_seed(void): one ADC1 conversion plus TCNT0.
 ; Restore the prior ADC mux and power-reduction state after the conversion.
@@ -16195,3 +16339,653 @@ format_ftoa_base10:
     .byte 50, 132, 114, 94, 34
     .byte 129, 0, 201, 241, 36
     .byte 236, 161, 229, 61, 39
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Audio sequencer (normal context only). r16:r17 = stream, r18 = note bank,
+; r20 = elapsed ticks, r21 = original ticks, r22 = event budget, r23 = mask.
+; The shared FX reader clobbers r0:r1, r24:r27 and Z. r2:r15, PC, Y and
+; GPIOR0 are never modified. The entry saves only the eight borrowed guest
+; bytes, not the entire register file. Call-lifetime staging aliases SYS
+; workspace ONLY after the previous SYS has restored its native state.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+.macro audio_save
+    push r16
+    push r17
+    push r18
+    push r19
+    push r20
+    push r21
+    push r22
+    push r23
+.endm
+.macro audio_restore
+    pop r23
+    pop r22
+    pop r21
+    pop r20
+    pop r19
+    pop r18
+    pop r17
+    pop r16
+.endm
+
+audio_service_func:
+    in   r31, SREG
+    cli
+    lds  r30, data_audio_ticks_pending
+    sts  data_audio_ticks_pending, ZERO
+    out  SREG, r31
+    lds  r24, data_audio_music+AUDIO_STATUS
+    lds  r25, data_audio_sfx+AUDIO_STATUS
+    or   r24, r25
+    breq .Laudio_service_done
+    audio_save
+    mov  r21, r30
+    sts  data_end_private+12, ZERO ; dirty flag
+    ldi  r16, lo8(data_audio_music)
+    ldi  r17, hi8(data_audio_music)
+    ldi  r18, lo8(data_audio_music_notes)
+    rcall audio_advance
+    ldi  r16, lo8(data_audio_sfx)
+    ldi  r18, lo8(data_audio_sfx_notes)
+    rcall audio_advance
+    lds  r24, data_end_private+12
+    tst  r24
+    breq 1f
+    rcall audio_commit
+1:
+    audio_restore
+.Laudio_service_done:
+    ret
+
+; Bounded byte reader. Logical cursor advances only for consumed bytes.
+; C=1 on exhausted/truncated stream. A cache belongs to one stream at a time;
+; switching owners invalidates it, while music-only service retains the cache.
+audio_byte:
+    movw r30, r16
+    ldd  r24, Z+AUDIO_LEFT
+    ldd  r25, Z+AUDIO_LEFT+1
+    or   r24, r25
+    breq .Laudio_byte_bad
+    lds  r24, data_audio_cache_owner
+    cp   r24, r16
+    breq 1f
+    sts  data_audio_cache_owner, r16
+    sts  data_audio_cache_length, ZERO
+1:
+    lds  r24, data_audio_cache_index
+    lds  r25, data_audio_cache_length
+    cp   r24, r25
+    brlo .Laudio_byte_cached
+    ; Refill min(remaining,32), never speculatively read outside the asset.
+    ldd  r24, Z+AUDIO_LEFT
+    ldd  r25, Z+AUDIO_LEFT+1
+    tst  r25
+    brne 2f
+    cpi  r24, 32
+    brlo 3f
+2:
+    ldi  r24, 32
+3:
+    sts  data_audio_cache_length, r24
+    mov  r0, r24
+    mov  r1, ZERO
+    ldd  r24, Z+AUDIO_CURSOR
+    ldd  r25, Z+AUDIO_CURSOR+1
+    ldd  r26, Z+AUDIO_CURSOR+2
+    ldi  r30, lo8(data_audio_cache)
+    ldi  r31, hi8(data_audio_cache)
+    call fx_read_program_bytes_func
+    clr  r24
+.Laudio_byte_cached:
+    ldi  r30, lo8(data_audio_cache)
+    ldi  r31, hi8(data_audio_cache)
+    add  r30, r24
+    ld   r27, Z
+    inc  r24
+    sts  data_audio_cache_index, r24
+    movw r30, r16
+    ldd  r24, Z+AUDIO_CURSOR
+    ldd  r25, Z+AUDIO_CURSOR+1
+    ldd  r26, Z+AUDIO_CURSOR+2
+    subi r24, -1
+    sbci r25, -1
+    sbci r26, -1
+    std  Z+AUDIO_CURSOR, r24
+    std  Z+AUDIO_CURSOR+1, r25
+    std  Z+AUDIO_CURSOR+2, r26
+    ldd  r24, Z+AUDIO_LEFT
+    ldd  r25, Z+AUDIO_LEFT+1
+    sbiw r24, 1
+    std  Z+AUDIO_LEFT, r24
+    std  Z+AUDIO_LEFT+1, r25
+    mov  r24, r27
+    clc
+    ret
+.Laudio_byte_bad:
+    sec
+    ret
+
+; Delta 0..254: one byte. 255 escape followed by little-endian uint16.
+audio_delta:
+    rcall audio_byte
+    brcs .Laudio_delta_done
+    clr  r25
+    cpi  r24, 255
+    breq 1f
+    clc
+    ret
+1:
+    rcall audio_byte
+    brcs .Laudio_delta_done
+    push r24
+    rcall audio_byte
+    mov  r25, r24
+    pop  r24
+.Laudio_delta_done:
+    ret
+
+audio_advance:
+    ldi  r22, 64
+    mov  r20, r21
+.Laudio_advance_again:
+    movw r30, r16
+    ldd  r24, Z+AUDIO_STATUS
+    cpi  r24, 1
+    brne .Laudio_advance_done
+    ldd  r24, Z+AUDIO_WAIT
+    ldd  r25, Z+AUDIO_WAIT+1
+    cp   r20, r24
+    cpc  ZERO, r25
+    brsh .Laudio_event
+    sub  r24, r20
+    sbc  r25, ZERO
+    std  Z+AUDIO_WAIT, r24
+    std  Z+AUDIO_WAIT+1, r25
+.Laudio_advance_done:
+    ret
+.Laudio_event:
+    tst  r24
+    breq 1f
+    ldi  r22, 64 ; only zero-time chains consume the malformed-loop budget
+1:
+    sub  r20, r24
+    dec  r22
+    brne 1f ; bounded catch-up, including zero-time loops
+    rjmp audio_stream_end
+1:
+    sts  data_end_private+12, ONE
+    rcall audio_byte
+    brcc 1f
+    rjmp audio_stream_end
+1:
+    cpi  r24, 0x80
+    breq .Laudio_loop
+    cpi  r24, 16
+    brsh audio_stream_end ; END=0x40, all other reserved masks fail closed
+    mov  r23, r24
+    ; Updates outside the declared ownership mask are malformed.
+    movw r30, r16
+    ldd  r25, Z+AUDIO_MASK
+    com  r25
+    and  r25, r24
+    brne audio_stream_end
+    ldi  r19, 0 ; channel byte offset (note,volume)
+.Laudio_channel:
+    sbrs r23, 0
+    rjmp .Laudio_channel_next
+    rcall audio_byte
+    brcs audio_stream_end
+    ; 0xA0..BF = retained volume, C0..C3 = instrument amplitude presets.
+    cpi  r24, 0xa0
+    brlo .Laudio_note
+    cpi  r24, 0xc0
+    brlo .Laudio_volume
+    cpi  r24, 0xc4
+    brsh audio_stream_end
+    subi r24, 0xc0
+    ldi  r30, lo8(audio_instruments)
+    ldi  r31, hi8(audio_instruments)
+    add  r30, r24
+    adc  r31, ZERO
+    lpm  r24, Z
+    rjmp .Laudio_volume_store
+.Laudio_volume:
+    andi r24, 31
+.Laudio_volume_store:
+    mov  r30, r18
+    ldi  r31, hi8(data_audio_begin)
+    add  r30, r19
+    std  Z+1, r24
+    rjmp .Laudio_channel_next
+.Laudio_note:
+    cpi  r24, 0x80
+    breq 1f
+    subi r24, 24
+    cpi  r24, 72
+    brsh audio_stream_end
+1:
+    mov  r30, r18
+    ldi  r31, hi8(data_audio_begin)
+    add  r30, r19
+    st   Z, r24 ; 0..71 table index, 0x80 off
+    movw r30, r16
+    ldd  r25, Z+AUDIO_TRIGGER
+    ; channel offset/2 -> bit, only sequencer-rate work
+    mov  r26, r19
+    lsr  r26
+    ldi  r24, 1
+2:
+    tst  r26
+    breq 3f
+    lsl  r24
+    dec  r26
+    rjmp 2b
+3:
+    or   r25, r24
+    std  Z+AUDIO_TRIGGER, r25
+.Laudio_channel_next:
+    subi r19, -2
+    lsr  r23
+    brne .Laudio_channel
+.Laudio_next_delta:
+    rcall audio_delta
+    brcs audio_stream_end
+    movw r30, r16
+    std  Z+AUDIO_WAIT, r24
+    std  Z+AUDIO_WAIT+1, r25
+    rjmp .Laudio_advance_again
+.Laudio_loop:
+    rcall audio_rewind
+    rjmp .Laudio_next_delta
+audio_stream_end:
+    movw r30, r16
+    std  Z+AUDIO_STATUS, ZERO
+    std  Z+AUDIO_MASK, ZERO
+    sts  data_end_private+12, ONE
+    ret
+
+; Rewind to the first delta, skipping the two-byte validated header.
+audio_rewind:
+    movw r30, r16
+    ldd  r24, Z+AUDIO_START
+    ldd  r25, Z+AUDIO_START+1
+    ldd  r26, Z+AUDIO_START+2
+    subi r24, -2
+    sbci r25, -1
+    sbci r26, -1
+    std  Z+AUDIO_CURSOR, r24
+    std  Z+AUDIO_CURSOR+1, r25
+    std  Z+AUDIO_CURSOR+2, r26
+    ldd  r24, Z+AUDIO_SIZE
+    ldd  r25, Z+AUDIO_SIZE+1
+    sbiw r24, 2
+    std  Z+AUDIO_LEFT, r24
+    std  Z+AUDIO_LEFT+1, r25
+    sts  data_audio_cache_length, ZERO
+    ret
+
+; Stage all four resulting controls with interrupts enabled, then commit the
+; complete chord atomically. Only the short copy/reset is interrupt-disabled.
+audio_commit:
+    lds  r23, data_audio_sfx+AUDIO_MASK
+    lds  r24, data_audio_music+AUDIO_TRIGGER
+    mov  r25, r23
+    com  r25
+    and  r24, r25
+    lds  r25, data_audio_sfx+AUDIO_TRIGGER
+    and  r25, r23
+    or   r24, r25
+    push r24
+    sts  data_audio_music+AUDIO_TRIGGER, ZERO
+    sts  data_audio_sfx+AUDIO_TRIGGER, ZERO
+    ldi  r18, 0 ; note bank offset
+    ldi  r26, lo8(data_end_private)
+    ldi  r27, hi8(data_end_private)
+.Laudio_stage:
+    ldi  r30, lo8(data_audio_music_notes)
+    lds  r19, data_audio_music+AUDIO_STATUS
+    lds  r20, data_audio_volume
+    sbrs r23, 0
+    rjmp 1f
+    ldi  r30, lo8(data_audio_sfx_notes)
+    ldi  r19, 1
+    ldi  r20, 32
+1:
+    ldi  r31, hi8(data_audio_begin)
+    add  r30, r18
+    ld   r24, Z
+    ldd  r21, Z+1
+    cpi  r19, 1
+    brne .Laudio_stage_silent
+    cpi  r24, 72
+    brsh .Laudio_stage_silent
+    lsl  r24
+    ldi  r30, lo8(audio_notes)
+    ldi  r31, hi8(audio_notes)
+    add  r30, r24
+    adc  r31, ZERO
+    lpm  r24, Z+
+    lpm  r25, Z
+    st   X+, r24
+    st   X+, r25
+    mul  r21, r20
+    ; Product / 32, amplitudes 0..31, master 0..32.
+    .rept 5
+        lsr r1
+        ror r0
+    .endr
+    st   X+, r0
+    rjmp .Laudio_stage_next
+.Laudio_stage_silent:
+    st   X+, ZERO
+    st   X+, ZERO
+    st   X+, ZERO
+.Laudio_stage_next:
+    lsr  r23
+    subi r18, -2
+    cpi  r18, 8
+    brlo .Laudio_stage
+    pop  r23
+    ldi  r30, lo8(data_end_private)
+    ldi  r31, hi8(data_end_private)
+    ldi  r26, lo8(data_audio_controls)
+    ldi  r27, hi8(data_audio_controls)
+    ldi  r24, 12
+    in   r25, SREG
+    cli
+audio_commit_atomic_begin:
+1:
+    ld   r0, Z+
+    st   X+, r0
+    dec  r24
+    brne 1b
+    .macro audio_reset_phase n
+        sbrs r23, \n
+        rjmp 2f
+        sts data_audio_phases+2*\n, ZERO
+        sts data_audio_phases+2*\n+1, ZERO
+2:
+    .endm
+    audio_reset_phase 0
+    audio_reset_phase 1
+    audio_reset_phase 2
+    audio_reset_phase 3
+audio_commit_atomic_end:
+    out  SREG, r25
+    ret
+
+; SYS 0x38: r7 command; arguments in r4-r6. All guest registers and flags
+; preserved except r4 for STATUS. The runtime provides ordinary ABI wrappers.
+sys_audio_impl:
+    fx_disable ; SYS speculative opcode is complete by this far entry
+    call audio_service_func ; apply elapsed time before changing ownership
+    audio_save
+    mov  r24, VM_R7L
+    ldi  r30, lo8(data_audio_music)
+    ldi  r31, hi8(data_audio_music)
+    ldi  r19, lo8(data_audio_music_notes)
+    cpi  r24, 1
+    brne 1f
+    ldi  r30, lo8(data_audio_sfx)
+    ldi  r19, lo8(data_audio_sfx_notes)
+1:
+    cpi  r24, 2
+    brsh .Laudio_command
+    ; PLAY: q2[23:0] pointer, r6 uint16 byte length (at least four bytes).
+    std  Z+AUDIO_START, VM_R4L
+    std  Z+AUDIO_START+1, VM_R4H
+    std  Z+AUDIO_START+2, VM_R5L
+    std  Z+AUDIO_CURSOR, VM_R4L
+    std  Z+AUDIO_CURSOR+1, VM_R4H
+    std  Z+AUDIO_CURSOR+2, VM_R5L
+    std  Z+AUDIO_SIZE, VM_R6L
+    std  Z+AUDIO_SIZE+1, VM_R6H
+    std  Z+AUDIO_LEFT, VM_R6L
+    std  Z+AUDIO_LEFT+1, VM_R6H
+    std  Z+AUDIO_STATUS, ONE
+    std  Z+AUDIO_MASK, ZERO
+    std  Z+AUDIO_TRIGGER, ZERO
+    movw r16, r30
+    mov  r18, r19
+    mov  r30, r19
+    ldi  r24, 0x80
+    ldi  r25, 24
+    .rept 4
+        st Z+, r24
+        st Z+, r25
+    .endr
+    sts  data_audio_cache_length, ZERO
+    sts  data_audio_cache_index, ZERO
+    rcall audio_byte
+    brcs .Laudio_start_bad
+    cpi  r24, 0xa1
+    brne .Laudio_start_bad
+    rcall audio_byte
+    brcs .Laudio_start_bad
+    tst  r24
+    breq .Laudio_start_bad
+    cpi  r24, 16
+    brsh .Laudio_start_bad
+    movw r30, r16
+    std  Z+AUDIO_MASK, r24
+    rcall audio_delta
+    brcs .Laudio_start_bad
+    movw r30, r16
+    std  Z+AUDIO_WAIT, r24
+    std  Z+AUDIO_WAIT+1, r25
+    clr  r21
+    rcall audio_advance
+    rcall audio_enable
+    rjmp .Laudio_command_commit
+.Laudio_start_bad:
+    rcall audio_stream_end
+    rjmp .Laudio_command_commit
+.Laudio_command:
+    cpi  r24, 2 ; stop music
+    breq .Laudio_stop_music
+    cpi  r24, 3 ; pause (freeze logical clock, mute music)
+    breq .Laudio_pause
+    cpi  r24, 4 ; resume
+    breq .Laudio_resume
+    cpi  r24, 5 ; master volume 0..32
+    breq .Laudio_master
+    cpi  r24, 6 ; enable output
+    breq .Laudio_enable_command
+    cpi  r24, 7 ; disable, stop both streams
+    breq .Laudio_disable_command
+    cpi  r24, 8 ; stop SFX
+    breq .Laudio_stop_sfx
+    cpi  r24, 9 ; status
+    breq .Laudio_status
+    cpi  r24, 10 ; direct SFX tone: r4 channel, r5 MIDI, r6 amplitude
+    brne 1f
+    rjmp .Laudio_tone
+1:
+    rjmp .Laudio_command_done ; reserved commands ignored
+.Laudio_stop_music:
+    sts  data_audio_music+AUDIO_STATUS, ZERO
+    rjmp .Laudio_command_commit
+.Laudio_pause:
+    lds  r24, data_audio_music+AUDIO_STATUS
+    cpi  r24, 1
+    breq 1f
+    rjmp .Laudio_command_done
+1:
+    ldi  r24, 2
+    rjmp .Laudio_set_status
+.Laudio_resume:
+    lds  r24, data_audio_music+AUDIO_STATUS
+    cpi  r24, 2
+    brne .Laudio_command_done
+    ldi  r24, 1
+.Laudio_set_status:
+    sts  data_audio_music+AUDIO_STATUS, r24
+    rjmp .Laudio_command_commit
+.Laudio_master:
+    mov  r24, VM_R4L
+    cpi  r24, 33
+    brlo 1f
+    ldi  r24, 32
+1:
+    sts  data_audio_volume, r24
+    rjmp .Laudio_command_commit
+.Laudio_enable_command:
+    rcall audio_enable
+    rjmp .Laudio_command_done
+.Laudio_disable_command:
+    sts  data_audio_music+AUDIO_STATUS, ZERO
+    sts  data_audio_sfx+AUDIO_STATUS, ZERO
+    sts  data_audio_sfx+AUDIO_MASK, ZERO
+    rcall audio_commit
+    in   r25, SREG
+    cli
+    sts  TIMSK3, ZERO
+    sts  TCCR3B, ZERO
+    sts  TCCR4A, ZERO
+    sts  TCCR4B, ZERO
+    cbi  PORTC, 6
+    cbi  PORTC, 7
+    out  SREG, r25
+    rjmp .Laudio_command_done
+.Laudio_stop_sfx:
+    sts  data_audio_sfx+AUDIO_STATUS, ZERO
+    sts  data_audio_sfx+AUDIO_MASK, ZERO
+    rjmp .Laudio_command_commit
+.Laudio_status:
+    lds  r24, data_audio_music+AUDIO_STATUS ; 0 stopped,1 playing,2 paused
+    lds  r25, data_audio_sfx+AUDIO_STATUS
+    tst  r25
+    breq 1f
+    ori  r24, 4
+1:
+    audio_restore
+    mov  VM_R4L, r24
+    mov  VM_R4H, ZERO
+    jmp seek_and_dispatch_func_disabled
+.Laudio_command_commit:
+    rcall audio_commit
+.Laudio_command_done:
+    audio_restore
+    jmp seek_and_dispatch_func_disabled
+
+audio_enable:
+    lds  r24, TIMSK3
+    tst  r24
+    brne 1f
+    in   r25, SREG
+    cli
+    sts  TC4H, ZERO
+    ldi  r24, 128
+    sts  OCR4A, r24
+    sts  TCNT3H, ZERO
+    sts  TCNT3L, ZERO
+    ldi  r24, _BV(OCF3A)
+    out  TIFR3, r24
+    sbi  DDRC, 6
+    sbi  DDRC, 7
+    ldi  r24, (_BV(COM4A0) | _BV(PWM4A))
+    sts  TCCR4A, r24
+    ldi  r24, _BV(CS40)
+    sts  TCCR4B, r24
+    ldi  r24, (_BV(WGM32) | _BV(CS31))
+    sts  TCCR3B, r24
+    ldi  r24, _BV(OCIE3A)
+    sts  TIMSK3, r24
+    out  SREG, r25
+1:
+    ret
+
+.Laudio_tone:
+    mov  r25, VM_R4L
+    andi r25, 3
+    mov  r26, r25
+    lsl  r26
+    ldi  r30, lo8(data_audio_sfx_notes)
+    ldi  r31, hi8(data_audio_sfx_notes)
+    add  r30, r26
+    mov  r24, VM_R5L
+    subi r24, 24
+    cpi  r24, 72
+    brlo 1f
+    ldi  r24, 0x80
+1:
+    st   Z, r24
+    mov  r24, VM_R6L
+    andi r24, 31
+    std  Z+1, r24
+    ldi  r24, 1
+1:
+    tst  r25
+    breq 2f
+    lsl  r24
+    dec  r25
+    rjmp 1b
+2:
+    sts  data_audio_sfx+AUDIO_MASK, r24
+    sts  data_audio_sfx+AUDIO_TRIGGER, r24
+    ldi  r24, 2 ; latched direct tone, no event advancement
+    sts  data_audio_sfx+AUDIO_STATUS, r24
+    rcall audio_enable
+    rjmp .Laudio_command_commit
+
+audio_instruments:
+    .byte 24, 31, 16, 28 ; square melody, bass, soft lead, percussion
+audio_notes:
+    ; round(440 * 2^((MIDI-69)/12) * 65536 / 7812.5), MIDI 24..95.
+    .word 274,291,308,326,346,366,388,411,435,461,489,518
+    .word 549,581,616,652,691,732,776,822,871,923,978,1036
+    .word 1097,1163,1232,1305,1383,1465,1552,1644,1742,1845,1955,2071
+    .word 2195,2325,2463,2610,2765,2930,3104,3288,3484,3691,3910,4143
+    .word 4389,4650,4927,5220,5530,5859,6207,6577,6968,7382,7821,8286
+    .word 8779,9301,9854,10440,11060,11718,12415,13153,13935,14764,15642,16572
+
+; Startup only, interrupts off. 96 MHz VCO / 1.5 = 64 MHz Timer4;
+; USB postcaler remains 48 MHz (96 / 2). Datasheet sections 6.11 and 15.
+audio_init_func:
+    ldi  r24, _BV(PINDIV)
+    out  PLLCSR, r24
+    ldi  r24, 0x6a
+    out  PLLFRQ, r24
+    ldi  r24, (_BV(PINDIV) | _BV(PLLE))
+    out  PLLCSR, r24
+    ; Wait at least 100 us before checking lock, as required by Timer4.
+    ldi  r24, 240 ; 1679 cycles = 104.9 us
+1:
+    delay_4
+    dec  r24
+    brne 1b
+1:
+    in   r24, PLLCSR
+    sbrs r24, PLOCK
+    rjmp 1b
+    lds  r24, PRR1
+    andi r24, (0xff ^ (_BV(PRTIM3) | _BV(PRTIM4)))
+    sts  PRR1, r24
+    sts  TCCR3B, ZERO
+    sts  TIMSK3, ZERO
+    sts  TCCR3A, ZERO
+    sts  TCCR3C, ZERO
+    sts  OCR3AH, ZERO
+    ldi  r24, 255
+    sts  OCR3AL, r24
+    sts  TCCR4B, ZERO
+    sts  TIMSK4, ZERO
+    sts  TCCR4A, ZERO
+    cbi  PORTC, 6
+    cbi  PORTC, 7
+    cbi  DDRC, 6
+    cbi  DDRC, 7
+    sts  TCCR4C, ZERO
+    sts  TCCR4D, ZERO
+    sts  TCCR4E, ZERO
+    sts  DT4, ZERO
+    sts  TC4H, ZERO
+    sts  TCNT4, ZERO
+    sts  OCR4C, r24
+    ldi  r24, 128
+    sts  OCR4A, r24
+    ldi  r24, 1
+    sts  data_audio_noise, r24
+    ldi  r24, 32
+    sts  data_audio_volume, r24
+    ret

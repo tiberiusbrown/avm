@@ -1,0 +1,13 @@
+{
+  "mask": 15, "row_ticks": 25, "loop": true, "end_delta": 2,
+  "events": [
+    {"channels": {"0": {"instrument": "square", "note": "C4"}, "1": {"instrument": "bass", "note": "C2"}, "2": {"instrument": "lead", "note": "E4"}, "3": {"instrument": "noise", "note": "C3"}}},
+    {"delta": 1, "channels": {"3": null}},
+    {"delta": 1, "channels": {"0": "E4", "2": "G4", "3": "C3"}},
+    {"delta": 1, "channels": {"3": null}},
+    {"delta": 1, "channels": {"0": "G4", "1": "G2", "2": "B4", "3": "D3"}},
+    {"delta": 1, "channels": {"3": null}},
+    {"delta": 1, "channels": {"0": "E4", "2": "G4", "3": "C3"}},
+    {"delta": 1, "channels": {"3": null}}
+  ]
+}

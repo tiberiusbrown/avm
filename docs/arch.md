@@ -2035,7 +2035,8 @@ have no generic LLVM representation.
 | `0x35` | `draw_textfv` | `r4 = x`, `r5 = baseline y`, `r6 = RAM format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
 | `0x36` | `draw_textfv_P` | `r4 = x`, `r5 = baseline y`, `q3 = program format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
 | `0x37` | `debug_printfv_P` | `q3 = program format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Formatted AS0/AS1 reads; debug output |
-| `0x38-0xFF` | Reserved | — | — | — |
+| `0x38` | `audio` | `low8(r7) = command`; command-specific `r4-r6` | Status command: zero-extended bit mask in `r4`; otherwise none | Program-space song reads; hidden audio state and speaker output |
+| `0x39-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -3704,6 +3705,34 @@ proven unobservable under the ordinary nonvolatile memory rules.
 
 The text services use nonreentrant call-lifetime runtime workspace. Recursive
 or concurrent execution of a text or formatted-output service is unsupported.
+
+### 49.29. Audio control
+
+`SYS 0x38` (`D7 38`) takes its command in `low8(r7)`:
+
+| Command | Operation | Additional inputs / result |
+| ---: | --- | --- |
+| 0 | Play music | `q2[23:0] = program pointer`, `r6 = uint16 byte length` |
+| 1 | Play SFX | Same as play music |
+| 2 | Stop music | None |
+| 3 | Pause music | None |
+| 4 | Resume music | None |
+| 5 | Set music master volume | `low8(r4) = 0..32`, clamped to 32 |
+| 6 | Enable output | None |
+| 7 | Disable output and stop both streams | None |
+| 8 | Stop SFX | None |
+| 9 | Query status | `r4 = bit 0 playing, bit 1 paused, bit 2 SFX` |
+| 10 | Direct SFX tone | `low8(r4) = channel`, `low8(r5) = MIDI note`, `low8(r6) = amplitude` |
+
+All inputs and architectural flags are preserved except the status result.
+Reserved commands have no command effect, but may service pending elapsed time.
+Pointers retain the existing packed 24-bit program-space representation.
+Playback is autonomous at normal interpreter stream-restart safe points and
+idle wakeups. Timer interrupts synthesize only latched controls; they never
+read program space or advance the event stream. Audio calls define hidden
+playback state and observable speaker output and MUST NOT be removed,
+speculated, duplicated, or reordered. See [audio.md](audio.md) for the bounded
+asset format, channel priority, timer allocations, timing, and runtime API.
 
 ---
 

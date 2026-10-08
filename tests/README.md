@@ -7,6 +7,13 @@ C, and C++ fixture. Each C and C++ source is compiled separately at `-O0`,
 The linked test images remain under `build/tests/`. C and C++ test disassemblies
 are not generated or checked into the repository.
 
+`cmake --build build --config RelWithDebInfo --target avm_audio_tests_run`
+checks native sequencing, sample synthesis, register preservation, SPI reads
+interrupted by Timer3, cycle costs, atomic chords, and the animated demo with
+simulated A/B presses. It also runs the standard-library Python asset tests and
+assembles Mini/FX-C firmware presets. These checks and the C audio fixture run
+within `avm_tests_run`. See [audio measurements](../docs/audio-benchmarks.md).
+
 `cmake --build build --config RelWithDebInfo --target avm_push16_tests_run`
 runs focused native-emulator tests independently. They execute all `B0-B7`
 push and `B8-BF` pop encodings with every C/Z/S combination, assert exact

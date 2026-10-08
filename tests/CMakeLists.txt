@@ -180,6 +180,54 @@ add_dependencies(avm_tests
 # additionally runs the complete suite in one invocation.
 set(AVM_PUSH16_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/interp")
 avm_add_object(
+    OUTPUT "${AVM_PUSH16_TEST_DIR}/audio.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/audio.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_PUSH16_TEST_DIR}/audio.o"
+    OUTPUT_ELF "${AVM_PUSH16_TEST_DIR}/audio.elf"
+    OUTPUT_IMAGE "${AVM_PUSH16_TEST_DIR}/audio.bin"
+    ENTRY _start)
+add_executable(avm_audio_tests interp/audio.cpp)
+target_compile_features(avm_audio_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_audio_tests PRIVATE ardensdebuggerlib)
+set(audio_hardware_hexes)
+foreach(preset MINI FXC)
+    set(hardware_dir "${CMAKE_CURRENT_BINARY_DIR}/audio_hardware/${preset}")
+    file(GENERATE OUTPUT "${hardware_dir}/preset.asm"
+        CONTENT "#define AVM_DEVICE_ARDUBOY_${preset}\n#include \"${PROJECT_SOURCE_DIR}/interp/interp.asm\"\n")
+    add_custom_command(
+        OUTPUT "${hardware_dir}/interp.hex"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE:FILEPATH=${hardware_dir}/preset.asm"
+            "-DOUTPUT_OBJECT:FILEPATH=${hardware_dir}/interp.o"
+            "-DOUTPUT_ELF:FILEPATH=${hardware_dir}/interp.elf"
+            "-DOUTPUT_MAP:FILEPATH=${hardware_dir}/interp.map"
+            "-DOUTPUT_LISTING:FILEPATH=${hardware_dir}/interp.lst"
+            "-DOUTPUT_HEX:FILEPATH=${hardware_dir}/interp.hex"
+            "-DMAX_INTERP_SIZE:STRING=${AVM_INTERPRETER_MAX_SIZE}"
+            "-DAVR_GCC:FILEPATH=${AVM_AVR_GCC}"
+            "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
+            "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
+            -P "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
+        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm"
+            "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
+            "${hardware_dir}/preset.asm"
+        VERBATIM)
+    list(APPEND audio_hardware_hexes "${hardware_dir}/interp.hex")
+endforeach()
+add_custom_target(avm_audio_hardware_checks DEPENDS ${audio_hardware_hexes})
+add_custom_target(avm_audio_tests_run
+    COMMAND "$<TARGET_FILE:avm_audio_tests>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+        "${AVM_PUSH16_TEST_DIR}/audio.bin"
+        "${PROJECT_BINARY_DIR}/projects/audio_demo/audio_demo.bin"
+        "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin"
+    DEPENDS avm_audio_tests avm_interpreter avm_audio_hardware_checks avm_audio_demo
+        "${AVM_PUSH16_TEST_DIR}/audio.bin" "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+avm_add_object(
     OUTPUT "${AVM_PUSH16_TEST_DIR}/push16.o"
     SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/push16.asm"
     LANGUAGE ASM)
@@ -222,7 +270,7 @@ add_custom_target(avm_stack_bounds_tests_run
 
 add_custom_target(avm_tests_run
     COMMAND "$<TARGET_FILE:avm_tests>"
-    DEPENDS avm_tests avm_push16_tests_run avm_stack_bounds_tests_run
+    DEPENDS avm_tests avm_push16_tests_run avm_stack_bounds_tests_run avm_audio_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running all AVM tests in-process"
     USES_TERMINAL
@@ -342,6 +390,10 @@ add_custom_target(avm_debug_cpp_verify
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
+    add_custom_target(avm_music_tests_run
+        COMMAND "${Python3_EXECUTABLE}" -m unittest discover -s tests/audio -v
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" VERBATIM)
+    add_dependencies(avm_audio_tests_run avm_music_tests_run)
     add_custom_target(avm_prof_integration_run
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/debug/prof_integration.py"

@@ -43,10 +43,14 @@ avm_audio_sfx(effect, sizeof(effect));
 ```
 
 Build `avm_audio_demo` with CMake, configuration `RelWithDebInfo`.
-The generated image is `build/projects/audio_demo/audio_demo.bin`. It renders
+The package is `projects/audio_demo/audio_demo.arduboy`; the development image
+is `projects/audio_demo/build/audio_demo.bin`. It renders
 two moving rectangles at 60 Hz. A triggers a two-channel effect; B toggles
-pause. Its JSON assets are compiled as part of the build; there is no update
-call in `setup`/`loop`. Firmware is `interp/build/interp.hex`.
+pause. Its generated audio headers are checked in alongside the JSON sources;
+`audio_demo_assets` regenerates them before a rebuild. The directory also
+supports standalone CMake builds with an installed SDK; see its
+[README](../projects/audio_demo/README.md). There is no update call in
+`setup`/`loop`. Firmware is `interp/build/interp.hex`.
 
 ## Binary format (version A1)
 

@@ -221,7 +221,7 @@ add_custom_target(avm_audio_tests_run
     COMMAND "$<TARGET_FILE:avm_audio_tests>"
         "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
         "${AVM_PUSH16_TEST_DIR}/audio.bin"
-        "${PROJECT_BINARY_DIR}/projects/audio_demo/audio_demo.bin"
+        "${PROJECT_SOURCE_DIR}/projects/audio_demo/build/audio_demo.bin"
         "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin"
     DEPENDS avm_audio_tests avm_interpreter avm_audio_hardware_checks avm_audio_demo
         "${AVM_PUSH16_TEST_DIR}/audio.bin" "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin"

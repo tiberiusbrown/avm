@@ -56,7 +56,7 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_SDK_BUILD_BIN}/avm"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
             "${AVM_INTERPRETER_HEX}" "${AVM_SDK_INTERPRETER_HEX}"
-    DEPENDS avm_interpreter
+    DEPENDS avm_interpreter "${AVM_INTERPRETER_HEX}"
     VERBATIM)
 add_custom_target(avm_interpreter_sdk DEPENDS "${AVM_SDK_INTERPRETER_HEX}")
 add_dependencies(avm_toolchain avm_interpreter_sdk)
@@ -74,7 +74,8 @@ add_custom_command(
         "-DAVM_INTERP_HEX:FILEPATH=${AVM_INTERPRETER_HEX}"
         "-DAVM_BOUNDARY_OUTPUT:FILEPATH=${CMAKE_CURRENT_BINARY_DIR}/interp-boundary.json"
         -P "${PROJECT_SOURCE_DIR}/cmake/GenerateAvmBoundaryMetadata.cmake"
-    DEPENDS avm_interpreter "${PROJECT_SOURCE_DIR}/cmake/GenerateAvmBoundaryMetadata.cmake"
+    DEPENDS avm_interpreter "${AVM_INTERPRETER_MAP}" "${AVM_INTERPRETER_HEX}"
+        "${PROJECT_SOURCE_DIR}/cmake/GenerateAvmBoundaryMetadata.cmake"
     VERBATIM)
 add_custom_target(avm_interpreter_boundary
     DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/interp-boundary.json")

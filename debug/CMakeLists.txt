@@ -17,6 +17,7 @@ add_custom_command(
             "${AVM_INTERPRETER_BOUNDARY_METADATA}"
             "${AVM_DEBUG_RUNTIME_BOUNDARY}"
     DEPENDS lldb avm_interpreter_boundary avm_interpreter_sdk avm_sdk_tools
+        "${AVM_INTERPRETER_ELF}" "${AVM_INTERPRETER_BOUNDARY_METADATA}"
     VERBATIM)
 add_custom_target(avm_lldb DEPENDS
     "${AVM_LLDB_EXE}"

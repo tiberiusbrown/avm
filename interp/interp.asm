@@ -16535,23 +16535,12 @@ audio_advance:
     rjmp .Laudio_channel_next
     rcall audio_byte
     brcs audio_stream_end
-    ; 0xA0..BF = retained volume, C0..C3 = instrument amplitude presets.
+    ; 0xA0..BF = retained volume; all higher update bytes are malformed.
     cpi  r24, 0xa0
     brlo .Laudio_note
     cpi  r24, 0xc0
-    brlo .Laudio_volume
-    cpi  r24, 0xc4
     brsh audio_stream_end
-    subi r24, 0xc0
-    ldi  r30, lo8(audio_instruments)
-    ldi  r31, hi8(audio_instruments)
-    add  r30, r24
-    adc  r31, ZERO
-    lpm  r24, Z
-    rjmp .Laudio_volume_store
-.Laudio_volume:
     andi r24, 31
-.Laudio_volume_store:
     mov  r30, r18
     ldi  r31, hi8(data_audio_begin)
     add  r30, r19
@@ -16928,8 +16917,6 @@ audio_enable:
     rcall audio_enable
     rjmp .Laudio_command_commit
 
-audio_instruments:
-    .byte 24, 31, 16, 28 ; square melody, bass, soft lead, percussion
 audio_notes:
     ; round(440 * 2^((MIDI-69)/12) * 65536 / 7812.5), MIDI 24..95.
     .word 274,291,308,326,346,366,388,411,435,461,489,518

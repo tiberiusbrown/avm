@@ -5,8 +5,6 @@ import json
 import re
 from pathlib import Path
 
-INSTRUMENTS = {"square": 0, "bass": 1, "lead": 2, "noise": 3}
-
 
 def note_number(value):
     if value is None:
@@ -32,7 +30,7 @@ def delta_bytes(ticks):
 def compile_song(song):
     """delta is in rows; row_ticks defaults to one 4 ms tick.
 
-    Instrument, volume, then note changes use zero-delay passes through the
+    Volume, then note changes use zero-delay passes through the
     same channel mask. Retained volume costs no bytes in later note events.
     """
     mask = song.get("mask", 15)
@@ -51,24 +49,22 @@ def compile_song(song):
         ticks = event.get("delta", 0) * period
         delta = delta_bytes(ticks)
         duration += ticks
-        changes = [{}, {}, {}]
+        changes = [{}, {}]
         for channel, update in event.get("channels", {}).items():
             channel = int(channel)
             if not 0 <= channel < 4 or not mask & (1 << channel):
                 raise ValueError("channel outside ownership mask")
             if not isinstance(update, dict):
                 update = {"note": update}
-            if set(update) - {"note", "volume", "instrument"}:
+            if set(update) - {"note", "volume"}:
                 raise ValueError("unknown channel field")
-            if "instrument" in update:
-                changes[0][channel] = 0xC0 + INSTRUMENTS[update["instrument"]]
             if "volume" in update:
                 v = update["volume"]
                 if not isinstance(v, int) or not 0 <= v <= 31:
                     raise ValueError("channel volume must be 0..31")
-                changes[1][channel] = 0xA0 + v
+                changes[0][channel] = 0xA0 + v
             if "note" in update:
-                changes[2][channel] = note_number(update["note"])
+                changes[1][channel] = note_number(update["note"])
         passes = [c for c in changes if c] or [{}]
         for changes in passes:
             if delta == b"\0":

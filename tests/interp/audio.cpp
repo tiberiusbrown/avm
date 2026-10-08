@@ -168,16 +168,18 @@ void sequence(harness& h) {
         h.elapsed(255); require(h.word(controls+6)==3691,"direct tone advanced a stream");
         h.command(8); require(h.c().data[controls+8]==0,"direct tone did not release");
     });
-    h.test("instruments/retained volume/retrigger",[&]{
-        h.play({0xa1,1,0,1,0xc1,0,1,60,4,1,0xa7,4,1,60,10,0x40});
-        require(h.c().data[controls+2]==31,"instrument preset wrong");
+    h.test("retained volume/retrigger",[&]{
+        h.play({0xa1,1,0,1,0xbf,0,1,60,4,1,0xa7,4,1,60,10,0x40});
+        require(h.c().data[controls+2]==31,"note did not retain explicit volume");
         h.word(phases,1234); h.elapsed(4); require(h.c().data[controls+2]==7 && h.word(phases)==1234,"volume retriggered oscillator");
         h.elapsed(4); require(h.word(phases)==0,"same-note retrigger missing");
     });
     h.test("malformed bounds/budget",[&]{
         for(auto const& bytes : std::vector<std::vector<uint8_t>>{
                 {},{0xa1},{0xa1,0},{0xa1,1,255,2},{0xa1,1,0,2,60},
-                {0xa1,1,0,1,10},{0xa1,1,0,1,0xc4},{0xa1,1,0,0x80},
+                {0xa1,1,0,1,10},{0xa1,1,0,1,0xc0,10,0x40},{0xa1,1,0,1,0xc1,10,0x40},
+                {0xa1,1,0,1,0xc2,10,0x40},{0xa1,1,0,1,0xc3,10,0x40},{0xa1,1,0,1,0xc4},
+                {0xa1,1,0,0x80},
                 {0xa1,1,0,1,60}}) {
             h.play(bytes); require(h.c().data[music+12]==0,"malformed stream stayed active");
         }

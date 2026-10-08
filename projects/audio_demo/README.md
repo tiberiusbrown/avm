@@ -18,29 +18,18 @@ In `music.json`, a row lasts `row_ticks * 4 ms`, so `row_ticks: 13` gives
 Each event's `delta` counts rows since the previous event; `end_delta: 1`
 completes the last bar before looping.
 
-### What instrument names mean
+### Notes and volume
 
-`instrument` selects a retained amplitude preset, which later notes reuse:
-
-| JSON identifier | Amplitude (0..31) |
-| --- | ---: |
-| `square` | 24 |
-| `bass` | 31 |
-| `lead` | 16 |
-| `noise` | 28 |
-
-These names are convenient starting gains, not distinct synthesized timbres.
+Channel objects accept `note` and `volume` (amplitude 0..31).
 Channels 0, 1, and 2 always produce the same 50% square waveform; channel 3
 always produces LFSR noise. A low note makes a bass part, and higher notes make
 a lead part. On channel 3, the note controls the noise update rate.
 
-For example, `{"instrument":"bass","note":"C2","volume":9}` on channel 1
-plays a low C square wave at amplitude 9: the explicit `volume` overrides the
-preset in the same event. The compiler applies instrument, volume, then note.
-This song uses explicit quiet volumes and timed fades, so its initial
-instrument names label the intended roles but their preset gains are
-overridden. Instruments do not choose a channel or add an envelope; the
-channel keys and later volume events do that.
+For example, `{"note":"C2","volume":9}` on channel 1 plays a low C square
+wave at amplitude 9. The compiler applies volume before note in the same
+event. Later notes retain that volume; volume-only changes preserve the
+current note and phase. This song uses explicit quiet volumes and timed
+fades. There are no instrument identifiers or binary amplitude presets.
 
 Build from the repository root:
 

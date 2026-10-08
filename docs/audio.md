@@ -73,12 +73,11 @@ channel consumes exactly one update byte. A zero mask is a rest.
 | `18..5F` (decimal 24..95) | MIDI note on, retaining volume; retrigger phase |
 | `80` | Note off |
 | `A0..BF` | Set retained amplitude to low five bits; preserve phase |
-| `C0..C3` | Select amplitude preset: square=24, bass=31, lead=16, percussion=28 |
 
-Instrument presets select gain only. The three tonal waveforms use fixed
-50% duty; noise is restricted to channel 3. Bass and lead register choices
-come from note selection. Envelopes can be compiled into sequencer-rate
-volume events. There is no per-sample envelope/DSP cost.
+All other update bytes, including `C0..FF`, are malformed. The three tonal
+waveforms use fixed 50% duty; noise is restricted to channel 3. Bass and lead
+register choices come from note selection. Envelopes can be compiled into
+sequencer-rate volume events. There is no per-sample envelope/DSP cost.
 
 Event mask `40` ends playback, and mask `80` loops to the first delta after
 the header. Neither has updates. Other masks/updates are malformed. Channel
@@ -118,19 +117,18 @@ JSON fields: `mask` (default 15), `row_ticks` (default 1), `loop` (default
 false), `end_delta` (default 0), and `events`. Each event has `delta` (rows,
 default 0), optional new `row_ticks`, and `channels`, keyed by channel number.
 A channel is a note name (`C4`, `F#3`, `Bb2`), MIDI integer, null for note off,
-or an object with `note`, `volume`, and/or `instrument`. Instrument names are
-`square`, `bass`, `lead`, `noise`. `row_ticks` changes tempo offline by changing
+or an object with `note` and/or `volume` (amplitude 0..31). Unknown channel
+fields are rejected. `row_ticks` changes tempo offline by changing
 subsequent encoded deltas, with no runtime division or tempo decoder.
 
-The instrument identifiers are gain shortcuts: `square`=24, `bass`=31,
-`lead`=16, and `noise`=28. They neither allocate a channel nor change its
-waveform. For example, `noise` on channel 0 still plays a square wave, while
-`lead` on channel 3 still plays noise. The note selects pitch on channels 0..2
-and the LFSR update rate on channel 3. Instrument changes retain the current
-note and phase; later notes retain the selected amplitude. When a channel
-object contains both `instrument` and `volume`, the explicit volume wins:
-the compiler emits instrument, volume, then note updates. Any attack or decay
-must be written as later volume events; presets do not add envelopes.
+The channel number determines the waveform. The note selects pitch on
+channels 0..2 and the LFSR update rate on channel 3. For a channel object
+containing both `volume` and `note`, the compiler emits volume before note
+using zero-delay events. Later notes retain the selected amplitude, while
+volume-only changes preserve the current note and phase. Attacks and decays
+use later volume events. There are no instrument identifiers or amplitude
+preset commands; older JSON assets using `instrument` must replace it with
+an explicit `volume`, and binaries using `C0..C3` must be regenerated.
 
 ## Timer and register allocation
 
@@ -245,7 +243,7 @@ loading/storing four SRAM phases costs 119..124 cycles. Reserving AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
 The 32-byte cache is shared between music/effects; interleaving their streams
 invalidates it, trading extra bursts for a smaller persistent footprint.
-Pulse duty and instruments are intentionally simple; no vibrato/filter/ADSR.
+Pulse duty is fixed; there is no vibrato/filter/ADSR.
 Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary

@@ -1,7 +1,7 @@
 {
   "mask": 15, "row_ticks": 13, "loop": true, "end_delta": 1,
   "events": [
-    {"delta":0,"channels":{"0":{"note":"E4","volume":13,"instrument":"lead"},"1":{"note":"C2","volume":9,"instrument":"bass"},"2":{"note":"C4","volume":6,"instrument":"square"},"3":{"note":"C2","volume":9,"instrument":"noise"}}},
+    {"delta":0,"channels":{"0":{"note":"E4","volume":13},"1":{"note":"C2","volume":9},"2":{"note":"C4","volume":6},"3":{"note":"C2","volume":9}}},
     {"delta":1,"channels":{"3":{"volume":5}}},
     {"delta":2,"channels":{"0":{"volume":9},"2":{"volume":3},"3":{"volume":2}}},
     {"delta":1,"channels":{"3":{"note":null}}},

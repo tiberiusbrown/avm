@@ -42,6 +42,12 @@ class CompilerTests(unittest.TestCase):
             self.assertEqual(actual,n)
         self.assertIn("AVM_PROGMEM song[]", music.c_array(bytes([161,1,0,64]), "song"))
 
+    def test_reject_instrument_fields(self):
+        for name in ["square", "bass", "lead", "noise"]:
+            with self.subTest(name=name), self.assertRaisesRegex(ValueError, "unknown channel field"):
+                music.compile_song({"events": [{"channels": {
+                    "0": {"instrument": name, "volume": 7, "note": "C4"}}}]})
+
     def test_loop_boundary_budget(self):
         zero = {"channels": {"0": 60}}
         # Both halves fit alone; the loop suffix plus prefix must also fit.

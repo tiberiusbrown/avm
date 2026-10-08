@@ -71,8 +71,8 @@ cadences and updated CALL/RET seek costs.
 Autonomous idle playback ran for 100 emulated ms with a maximum service-entry
 gap of **4.00038 ms**. The compiled animated demo ran for one emulated second
 with no guest audio update call: **62 rendered frames, 7810 sample interrupts,
-4.157 ms maximum service-entry gap**, and a measured native stack footprint
-of 22 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
+4.14206 ms maximum service-entry gap**, and a measured native stack footprint
+of 26 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
 rate is 60; the existing frame scheduler uses integer millisecond periods.
 Simulated A/B presses exercised SFX,
 pause, and resume while graphics and song reads shared SPI.

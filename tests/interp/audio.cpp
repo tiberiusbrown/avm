@@ -288,6 +288,34 @@ void sequence(harness& h) {
     });
 }
 void synthesis(harness& h) {
+    h.test("exhaustive amplitude scaling",[&]{
+        h.c().data[music+12]=1; h.c().data[sfx+13]=0;
+        for(unsigned master=0;master<=32;++master) {
+            h.c().data[volume]=uint8_t(master);
+            for(unsigned amplitude=0;amplitude<32;++amplitude) {
+                for(unsigned channel=0;channel<4;++channel) {
+                    h.c().data[notes+2*channel]=0;
+                    h.c().data[notes+2*channel+1]=uint8_t(amplitude);
+                }
+                h.routine("audio_commit");
+                for(unsigned channel=0;channel<4;++channel)
+                    require(h.c().data[controls+3*channel+2]==amplitude*master/32,
+                        "music amplitude scaling wrong");
+            }
+        }
+        h.c().data[sfx+13]=15; h.c().data[volume]=0;
+        for(unsigned amplitude=0;amplitude<32;++amplitude) {
+            for(unsigned channel=0;channel<4;++channel) {
+                h.c().data[sfxnotes+2*channel]=0;
+                h.c().data[sfxnotes+2*channel+1]=uint8_t(amplitude);
+            }
+            h.routine("audio_commit");
+            for(unsigned channel=0;channel<4;++channel)
+                require(h.c().data[controls+3*channel+2]==amplitude,"SFX unity scaling wrong");
+        }
+        h.c().data[volume]=32;
+        std::cout<<"amplitude scaling: 1056 music pairs and 32 SFX levels, all four voices passed\n";
+    });
     h.test("sample reference and register preservation",[&]{
         std::array<uint16_t,4> phase{{65520,0x7fff,1234,65500}},inc{{100,3691,257,8000}};
         std::array<uint8_t,4> amp{{31,31,31,31}};
@@ -464,10 +492,82 @@ void formatter(char** args) {
     require(!h.c().autobreaks.test(AB_SPI_WCOL),"formatter/audio SPI collision");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
 }
+void decimal_division(char** args) {
+    harness h(args);
+    for(unsigned remainder=0;remainder<10;++remainder) {
+        for(unsigned byte=0;byte<256;++byte) {
+            unsigned dividend=256*remainder+byte;
+            h.c().data[24]=uint8_t(remainder); h.c().data[25]=uint8_t(byte);
+            unsigned t=(byte&1)<<6;
+            h.c().data[reg::addr::SREG]=uint8_t(t);
+            h.c().prev_sreg=uint8_t(t);
+            auto sp=h.c().sp();
+            h.routine("format_divide_byte_by_10");
+            require(h.c().data[24]==dividend%10 && h.c().data[25]==dividend/10,
+                "decimal byte division quotient/remainder wrong");
+            require((h.c().data[reg::addr::SREG]&64)==t,"decimal division changed T");
+            require(h.c().sp()==sp,"decimal division leaked native stack");
+        }
+    }
+    for(uint32_t value : {0u,9u,10u,255u,256u,65535u,65536u,0x7fffffffu,0x80000000u,0xffffffffu}) {
+        for(unsigned i=0;i<4;++i) h.c().data[20+i]=uint8_t(value>>(8*i));
+        h.routine("format_divide_u32_by_10");
+        uint32_t quotient=h.word(20)|(uint32_t(h.word(22))<<16);
+        require(quotient==value/10 && h.c().data[24]==value%10,"decimal u32 division wrong");
+    }
+    std::cout<<"decimal division: 2560 byte pairs and 10 u32 boundaries passed\n";
+}
+void sys_bounds(char** args) {
+    harness h(args);
+    auto table=h.sym("sys_dispatch_table"), trap=h.sym("invalid_syscall_func");
+    require(h.sym("sys_dispatch_table_end")-table==57,"SYS table has wrong size");
+    for(unsigned id=0;id<256;++id) {
+        h.c().data[24]=uint8_t(id); h.word(30,uint16_t(table));
+        auto flags=h.c().data[reg::addr::GPIOR0]; auto sp=h.c().sp();
+        auto regs=h.c().data;
+        h.c().pc=uint16_t(h.sym("sys_dispatch_func"));
+        h.until([&]{return h.c().pc==(id<57?table+id:trap);},32);
+        if(id>=57) {
+            for(unsigned i=0;i<10;++i) h.tick();
+            require(h.c().pc==trap,"invalid SYS escaped trap");
+        }
+        for(unsigned r=2;r<24;++r) require(h.c().data[r]==regs[r],"SYS guard changed guest register");
+        require(h.c().data[reg::addr::GPIOR0]==flags,"SYS guard changed guest flags");
+        require(h.c().sp()==sp,"SYS guard changed native stack");
+    }
+    std::cout<<"SYS dispatch: all 57 services and 199 invalid IDs passed\n";
+}
+void float_precision(char** args) {
+    harness h(args);
+    constexpr unsigned value_address=0xab8;
+    unsigned cases=0;
+    for(unsigned precision=0;precision<8;++precision) {
+        for(uint32_t bits : {0u,1u,0x38d1b469u,0x3f800000u,0x3fc00000u,0x7f7fffffu}) {
+            for(unsigned t : {0u,64u}) {
+                for(unsigned i=0;i<4;++i) h.c().data[value_address+i]=uint8_t(bits>>(8*i));
+                h.c().data[24]=uint8_t(precision); h.c().data[25]=uint8_t(t?60:0);
+                h.c().data[18]=0xa5;
+                h.c().data[reg::addr::SREG]=uint8_t(t); h.c().prev_sreg=uint8_t(t);
+                auto regs=h.c().data; auto sp=h.c().sp();
+                h.routine("format_float_call_decimal_engine");
+                require(h.c().data[24]==precision,"float engine lost bounded precision");
+                for(unsigned r : {14u,15u,17u,18u,28u,29u})
+                    require(h.c().data[r]==regs[r],"float engine corrupted formatter state");
+                require((h.c().data[reg::addr::SREG]&64)==t,"float engine changed T");
+                require(h.c().sp()==sp,"float engine leaked native stack");
+                ++cases;
+            }
+        }
+    }
+    std::cout<<"float precision: "<<cases<<" precision/value/flag cases passed\n";
+}
 }
 int main(int argc,char** argv) {
     try {
         require(argc>=4 && argc<=6,"usage: avm_audio_tests interpreter.hex interpreter.lst audio.bin [audio_demo.bin [audio_c_test.bin]]");
+        decimal_division(argv);
+        sys_bounds(argv);
+        float_precision(argv);
         harness h(argv); sequence(h); synthesis(h); automatic(h);
         std::cout<<h.cases<<" native audio cases passed\n"
             <<"Timer3 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "

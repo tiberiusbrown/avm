@@ -1,5 +1,5 @@
-     1069804   lambda_capture.cpp
-      383883   member_pointers.cpp
-      633880   scoped_lifetime.cpp
-     1840409   template_specialization.cpp
-      688231   virtual_dispatch.cpp
+     1085160   lambda_capture.cpp
+      386951   member_pointers.cpp
+      641176   scoped_lifetime.cpp
+     1861909   template_specialization.cpp
+      698467   virtual_dispatch.cpp

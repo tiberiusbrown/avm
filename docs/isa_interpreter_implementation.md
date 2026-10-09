@@ -5,6 +5,10 @@
 **Priority:** Performance of generated code
 **Reference timing basis:** Sequential SPI byte fetch using the 17-cycle reverse-order and 18-cycle standard dispatch schedules described in Section 5; slower handlers extend the cadence when their native work exceeds the available slack.
 
+Current firmware size, bounded 57-entry SYS dispatch, formatter optimizations,
+and corrected MOV32 measurements are recorded in
+[interpreter optimization measurements](interpreter-optimizations.md).
+
 ---
 
 ## 1. Scope

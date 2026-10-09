@@ -73,9 +73,12 @@ def main():
         require(plain["window"]["complete"] and
                 plain["window"]["stop_reason"] == "deadline",
                 "plain record did not complete")
-        require(plain["window"]["start_cycle"] == "8461621" and
-                plain["window"]["end_cycle"] == "8530006" and
-                plain["window"]["requested_end_cycle"] == "8511621",
+        # Current firmware includes checked calls, the audio seek hook, bounded
+        # SYS dispatch, and startup helper tail calls. Keep exact timestamps as
+        # well as the independent interval-accounting and CLI/LLDB checks.
+        require(plain["window"]["start_cycle"] == "8463879" and
+                plain["window"]["end_cycle"] == "8530600" and
+                plain["window"]["requested_end_cycle"] == "8513879",
                 "fixture boundary contract changed")
         require(any(row["function"] == "debug_leaf" and
                     row["file"].endswith("fixture.c") and row["line"]
@@ -89,8 +92,8 @@ def main():
         cli_match = profile(match_file)
         require(cli_match["window"]["start_pc"] == 695 and
                 pc_costs(cli_match)[695] == ("38", "1") and
-                pc_costs(cli_match)[699] == ("128", "1") and
-                pc_costs(cli_match)[822] == ("55854", "3"),
+                pc_costs(cli_match)[699] == ("131", "1") and
+                pc_costs(cli_match)[822] == ("55918", "3"),
                 "known AVM PC/count/cycle fixture changed")
         lldb_file = tmp / "lldb-match.avmp"
         _, records = lldb(debugger, c_elf, "breakpoint set --name main", "run",

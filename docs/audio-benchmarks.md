@@ -12,7 +12,7 @@ measurements and emulated integration results, not oscilloscope measurements.
 | Seek hook, pending tick but no streams | 29 added | 1.813 us |
 | Seek hook, one active stream, no event due | 109 added | 6.813 us |
 | One-stream sparse countdown service, entry through RET | 98 | 6.125 us |
-| Cached note-off event plus next delta and commit, entry through RET | 692 | 43.250 us |
+| Cached note-off event plus next delta and commit, entry through RET | 674 | 42.125 us |
 | Timer3, including 4-cycle interrupt entry and 3-cycle vector JMP | **119..124** | 7.438..7.750 us |
 | Timer0, ordinary millis update, including entry/vector | 35 | 2.188 us |
 | Timer0, ordinary millis update plus produced audio tick | 47 | 2.938 us |
@@ -56,15 +56,23 @@ still commits the latch; A2 Continue preserves it without committing.
 | Note off and next delta | 830 | 692 | 16.6% |
 | Sparse countdown | 104 | 98 | 5.8% |
 
-Interpreter `.text` shrank from **29664 to 29632 bytes** (32 bytes saved).
-Including the one initialized data byte, total flash occupancy is **29633
-bytes**, leaving **63 bytes** below the 29696-byte bootloader boundary.
+At the A2 transition, interpreter `.text` shrank from **29664 to 29632 bytes**
+(32 bytes saved). Programmed flash occupancy was **29632 bytes**, leaving
+**64 bytes** below the bootloader boundary. The ELF's one alignment byte in
+`.data` is excluded from the HEX.
+Subsequent [interpreter optimizations](interpreter-optimizations.md) reduce
+current `.text` and programmed flash occupancy to **29104 bytes**.
 Persistent audio SRAM remains 105 bytes; the wait field stays uint16 so it
 can represent 256 ticks. The demo music shrank from **3285 to 2958 bytes**
 (327 bytes, 10.0%), with the same 39.936-second period and musical states,
 shifted by the required one-tick initial wait.
 
 The sample ISR, PWM configuration, and atomic commit cost are unchanged.
+
+Later amplitude scaling saves six cycles per active voice. Current cached
+one-channel note/volume service is 752 cycles, four-channel note/volume service
+1286 cycles, four-channel volume-only service 929 cycles, and note-off service
+674 cycles. Continue and sparse countdown retain their A2 timings above.
 
 ## FX bursts and cache choice
 
@@ -90,7 +98,7 @@ and verified all returned bytes; no SPI collision was reported.
 
 ## Interpreter and integration results
 
-The A1/A2 instruction benchmark contains **1018 identical measurements**.
+At the A1/A2 transition, the instruction benchmark contained **1018 identical measurements**.
 The 17/18-cycle sequential dispatch cadences and four-cycle idle audio hook
 are unchanged. `bench/cycles_instruction.txt` records the timings. Specialized
 native stack tests also assert the PUSH/POP cadences and CALL/RET seek costs.
@@ -103,7 +111,7 @@ of 23 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
 rate is 60; the existing frame scheduler uses integer millisecond periods.
 Simulated A/B presses exercised SFX,
 pause, and resume while graphics and song reads shared SPI.
-The C libm/formatter stress workload with sample interrupts reached 36 bytes
+The current C libm/formatter stress workload with sample interrupts reaches 37 bytes
 of native stack, within the 58 bytes above the formatter/text workspace.
 
 These workloads do not establish a universal service-latency bound. A long
@@ -127,10 +135,10 @@ See [audio.md](audio.md) for register settings and datasheet references.
 | Persistent audio SRAM | **105 bytes** |
 | Call-lifetime commit staging | 13 bytes, in existing temporary workspace |
 | Remaining native stack above formatter/text workspace | 58 bytes |
-| Native firmware before audio | 28184 bytes |
-| Native firmware with audio | **29688 bytes** |
-| Firmware increase | 1504 bytes |
-| Bootloader ceiling / remaining space | 29696 / **8 bytes** |
+| Current native `.text` | **29104 bytes** |
+| Current total firmware flash | **29104 bytes** |
+| Savings from interpreter optimization baseline | 528 bytes |
+| Bootloader ceiling / remaining space | 29696 / **592 bytes** |
 
 The five bytes beyond the approximate 100-byte SRAM goal retain two complete
 bounded stream records, desired music/SFX banks, and one cache. This supports
@@ -147,7 +155,7 @@ and truncated streams, dense positive-time catch-up, Continue-only loops,
 one/256-tick initial waits, saturation,
 note retriggering, atomic chords, music under SFX, release, and direct tones.
 Validation passed all 459 guest fixtures, 152 native PUSH/POP cases, 1133 native
-stack-bound cases, 18 native audio cases, and nine Python compiler tests, as well
+stack-bound cases, 19 native audio cases, and nine Python compiler tests, as well
 as the animated and formatter integration workloads and both variant builds.
 
 All fixed code-layout assertions and the firmware ceiling still hold. No

@@ -2799,8 +2799,8 @@ cmov_gate_end:
 ; executable secondary table are present. The fixed-width self-contained F1-F8
 ; pages, the dedicated EC division and F9 runtime bitwise decoders, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
-; page are implemented. FF now has secondary/specifier fetch and validation
-; scaffolding; its defined operations still enter the development trap. F0 has shared operand-fetch/register-decode
+; page are implemented. FF has a table-free floating-point decoder with direct
+; operations and typed libm bridges. F0 has shared operand-fetch/register-decode
 ; infrastructure and all valid secondaries 00-6D are implemented, including
 ; program-space loads, cold 32-bit forms, and general-pointer data-space forms.
 
@@ -3277,6 +3277,10 @@ jmp_far_wait:
     rcall interp_delay_7
     rjmp far_launch_high
 
+; Keep the unknown-service trap within conditional-branch reach of the guard.
+invalid_syscall_func:
+    rjmp invalid_syscall_func
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; SYS service dispatch
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3302,6 +3306,8 @@ sys_decode_func:
     sei
 
 sys_dispatch_func:
+    cpi  PRIMARY_OPCODE, SYS_AUDIO+1
+    brsh invalid_syscall_func
     add  r30, PRIMARY_OPCODE
     adc  r31, ZERO
     ijmp
@@ -3418,11 +3424,10 @@ sys_dispatch_table:
     sys_entries 1,   sys_draw_textfv_p_func
     sys_entries 1,   sys_debug_printfv_p_func
     sys_entries 1,   sys_audio_func
-    sys_entries 199, invalid_syscall_func
 sys_dispatch_table_end:
 
-.if (sys_dispatch_table_end - sys_dispatch_table) != (256 * 2)
-    .error "SYS dispatch table must contain exactly 256 one-word entries"
+.if (sys_dispatch_table_end - sys_dispatch_table) != ((SYS_AUDIO+1) * 2)
+    .error "SYS dispatch table must contain exactly the defined service entries"
 .endif
 
 ; Keep the one-word SYS table within RJMP reach while placing the larger memory
@@ -3502,16 +3507,16 @@ sys_debug_printfv_p_func:
 
 sys_debug_putc_func:
     ; DEBUG_PUTC writes low8(r4) to the emulator/debug USB endpoint register.
-    ; STS plus the table dispatch leaves the reverse tail ready to launch the
-    ; byte after the following opcode exactly 17 cycles after its prior OUT.
+    ; The bounds check adds two cycles. A padded standard tail consumes the
+    ; following opcode on cycle 17 and launches its following byte on cycle 18.
     sts  UEDATX, VM_R4L
-    rjmp cluster_tail_17
+    rjmp cluster_tail_18_delay_1
 
 sys_debug_break_func:
     ; BREAK is one cycle shorter than DEBUG_PUTC's STS. Use the existing
-    ; one-cycle reverse landing so its next OUT also occurs at cycle 17.
+    ; extra-cycle standard landing to retain the same cycle-18 OUT as PUTC.
     break
-    rjmp cluster_tail_17_delay_1
+    rjmp cluster_tail_18_delay_2
 
 ; Return a coherent low 16-bit snapshot of the millisecond counter in r4.
 sys_millis_func:
@@ -3684,20 +3689,13 @@ interp_delay_9:
 interp_delay_7:
     ret
 
-; Development-only unimplemented-instruction trap. No valid F0 veneer uses it.
-unimplemented_instruction_func:
-    rjmp unimplemented_instruction_func
-
 ; Reserved primary encodings stop here.
 invalid_primary_instruction_func:
     rjmp invalid_primary_instruction_func
 
-; Reserved secondary encodings and unknown SYS services use these shared traps.
+; Reserved secondary encodings use this shared trap.
 invalid_secondary_instruction_func:
     rjmp invalid_secondary_instruction_func
-
-invalid_syscall_func:
-    rjmp invalid_syscall_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Fixed-width secondary tables and F0 veneer scaffolding
@@ -5645,11 +5643,8 @@ f0_coldmem_end:
 .endif
 
 ; F0 retains one-word veneers for every cold form. All valid secondaries
-; 00-6D are implemented above; the local F0 trap remains before the group for
-; short RJMP reach and for any future development-only scaffolding.
+; 00-6D are implemented above.
 secondary_tables_before_cluster_b:
-secondary_unimplemented_a_func:
-    rjmp unimplemented_instruction_func
 
 f0_veneer_table:
     rjmp  f0_ldi8_r0_body
@@ -6178,8 +6173,6 @@ cluster_b_end:
 ; F4-F7 contain their exact native slots. A nearby invalid-secondary shim is
 ; used only by the reserved postincrement-load alias entries in F7.
 secondary_tables_before_cluster_c:
-secondary_unimplemented_b_func:
-    rjmp secondary_unimplemented_a_func
 secondary_invalid_b_func:
     rjmp invalid_secondary_instruction_func
 
@@ -7434,20 +7427,17 @@ startup_read_header:
     ; copied into SRAM.
     cp   r16, r20
     cpc  r17, r21
-    brsh 1f
-    rjmp startup_invalid_image
+    brlo startup_invalid_image
 1:
 
     ; dataSize <= 1024. Values below 0x0400 are accepted; 0x0400 itself is
     ; accepted only when the low byte is zero.
     cpi  r17, 0x04
     brlo 1f
-    breq 2f
-    rjmp startup_invalid_image
+    brne startup_invalid_image
 2:
     tst  r16
-    breq 1f
-    rjmp startup_invalid_image
+    brne startup_invalid_image
 1:
 
     ; A nonzero save request requires either a keyed flashcart save page or the
@@ -7615,8 +7605,7 @@ fx_startup_begin_read:
     mov  r30, r27
     rcall fx_spi_transfer_blocking
     mov  r30, r26
-    rcall fx_spi_transfer_blocking
-    ret
+    rjmp fx_spi_transfer_blocking
 
 ; Read one byte from an already-open startup read stream.
 ; Result is returned in r30.
@@ -9679,8 +9668,7 @@ atan2f:
     mov   r30, r25
     andi  r30, 0x80
     rcall  __fp_split3
-    brcc  .Latan2f_operands_finite
-    rjmp  .Latan2f_nonfinite
+    brcs  .Latan2f_nonfinite
 
 .Latan2f_operands_finite:
     mov   r0, r25
@@ -12297,9 +12285,9 @@ sys_generate_random_seed_impl:
 ; selected persistence implementation.
 ;
 ; Relative to the SYS decoder's final OUT SPDR,ZERO:
-;   cycles  0-18  SYS and platform dispatch
-;   cycles 19-20  platform-table RJMP to this common entry
-;   cycle      21  CBI begins; FX is deselected when it completes on cycle 22
+;   cycles  0-20  SYS and platform dispatch, including the service bounds check
+;   cycles 21-22  platform-table RJMP to this common entry
+;   cycle      23  CBI begins; FX is deselected when it completes on cycle 24
 ;
 ; An SPI byte is available to read on cycle 17, so this fixed deselection is
 ; safely after completion. No SPSR/SPIF polling is needed. The completed
@@ -12384,8 +12372,7 @@ fx_save_begin_command_func:
     add   r30, r25
     rcall save_fx_transfer
     mov   r30, r24
-    rcall save_fx_transfer
-    ret
+    rjmp  save_fx_transfer
 
 fx_save_write_enable_func:
     fx_disable
@@ -12423,8 +12410,7 @@ fx_save_erase_sector_func:
 fx_save_begin_program_page_func:
     rcall fx_save_write_enable_func
     ldi   r30, SFC_WRITE
-    rcall fx_save_begin_command_func
-    ret
+    rjmp  fx_save_begin_command_func
 
 ; Compute end-exclusive record offset: r27:r26 = offset + 2 + saveSize.
 ; Inputs: offset r25:r24, saveSize r1:r0.
@@ -12454,13 +12440,13 @@ sys_save_impl:
 
     lds   r24, data_startup_flags
     sbrs  r24, STARTUP_SAVE_PAGE_VALID
-    jmp   .Lsys_save_done
+    rjmp   .Lsys_save_done
 
     rcall fx_read_image_save_size_func
     mov   r24, r0
     or    r24, r1
     brne  .Lsys_save_have_size
-    jmp   .Lsys_save_done
+    rjmp   .Lsys_save_done
 .Lsys_save_have_size:
 
     ; Scan the append log sequentially from sector offset zero.
@@ -12829,7 +12815,7 @@ sys_format_impl:
     lds   r24, data_text_line_height
     tst   r24
     brne  1f
-    jmp   text_finish
+    rjmp   text_finish
 1:
     rjmp  format_core
 
@@ -13404,12 +13390,10 @@ format_core:
 .Lformat_dispatch_conversion:
     sts   data_format_conversion, r24
     cpi   r24, '%'
-    brne  1f
-    rjmp  format_conversion_percent
+    breq  format_conversion_percent
 1:
     cpi   r24, 'c'
-    brne  2f
-    rjmp  format_conversion_char
+    breq  format_conversion_char
 2:
     cpi   r24, 's'
     brne  3f
@@ -13457,7 +13441,7 @@ format_core:
 .Lformat_integer_dispatch:
     rjmp  format_conversion_integer
 .Lformat_float_dispatch:
-    jmp   format_conversion_float
+    rjmp   format_conversion_float
 
 ; Require no length modifier for noninteger conversions.
 format_validate_default_length:
@@ -13581,8 +13565,7 @@ format_conversion_program_string:
     rjmp  .Lformat_program_string_measure_loop
     mov   r24, r14
     or    r24, r15
-    brne  1f
-    rjmp  .Lformat_program_string_measured
+    breq  .Lformat_program_string_measured
 1:
 
 .Lformat_program_string_measure_loop:
@@ -13638,8 +13621,7 @@ format_conversion_program_string:
     sts   data_format_string_length+0, r26
     sts   data_format_string_length+1, r27
     tst   r23
-    brne  1f
-    rjmp  .Lformat_program_string_measure_loop
+    breq  .Lformat_program_string_measure_loop
 1:
 
 .Lformat_program_string_measured:
@@ -14011,23 +13993,29 @@ format_divide_u32_by_10:
     ret
 
 ; Input r24=remainder 0..9, r25=next dividend byte. Output r24=new remainder,
-; r25=quotient byte. Compact repeated subtraction is intentionally used here.
+; r25=quotient byte. Shift eight dividend bits through the remainder, setting
+; each quotient bit after at most one subtraction. Small leading bytes skip
+; the loop. The remainder never exceeds 19, and the formatter's T flag survives.
 format_divide_byte_by_10:
-    mov   r26, r24
+    tst   r24
+    brne  .Lformat_divide_byte_bits
+    cpi   r25, 10
+    brsh  .Lformat_divide_byte_bits
     mov   r24, r25
-    clr   r27
+    clr   r25
+    ret
+.Lformat_divide_byte_bits:
+    ldi   r26, 8
 .Lformat_divide_byte_loop:
-    tst   r26
-    brne  .Lformat_divide_byte_subtract
+    lsl   r25
+    rol   r24
     cpi   r24, 10
-    brlo  .Lformat_divide_byte_done
-.Lformat_divide_byte_subtract:
+    brlo  .Lformat_divide_byte_next
     subi  r24, 10
-    sbci  r26, 0
-    inc   r27
-    rjmp  .Lformat_divide_byte_loop
-.Lformat_divide_byte_done:
-    mov   r25, r27
+    ori   r25, 1
+.Lformat_divide_byte_next:
+    dec   r26
+    brne  .Lformat_divide_byte_loop
     ret
 
 ; Compute precision zeroes, prefix, content length, and width padding.
@@ -14117,8 +14105,7 @@ format_prepare_integer_field:
     ser   r25
     ori   r17, (1 << FORMAT_STATUS_COUNT_OVERFLOW)
 .Lformat_integer_content_ready:
-    rcall format_compute_padding
-    ret
+    rjmp  format_compute_padding
 
 format_emit_integer_field:
     ; Width zero padding is active only when not left-adjusted and no explicit
@@ -14785,30 +14772,20 @@ text_emit_char_raw:
 ; the binary32 significand, rounds explicit precisions to nearest-even, and
 ; emits all six fraction nibbles (or a shorter exact default form) directly.
 
-; Local RCALL veneers keep the large float subsystem independent of the
-; formatter/text layout. Each absolute JMP preserves the caller's return
-; address, so the shared helper RET returns directly to the float routine.
-format_float_veneer_validate_default_length:
-    jmp   format_validate_default_length
-format_float_veneer_arg_u32:
-    jmp   format_arg_u32
-format_float_veneer_compute_padding:
-    jmp   format_compute_padding
-format_float_veneer_emit_pre_padding:
-    jmp   format_emit_pre_padding
+; Only the two helpers beyond direct RCALL reach retain local veneers.
+; Their RJMPs preserve the caller's return address, so each helper RET returns
+; directly to the float routine. All other calls target shared helpers directly.
 format_float_veneer_emit_post_padding:
-    jmp   format_emit_post_padding
-format_float_veneer_emit_char:
-    jmp   format_emit_char
+    rjmp   format_emit_post_padding
 format_float_veneer_emit_ram_span:
-    jmp   format_emit_ram_span
+    rjmp   format_emit_ram_span
 
 format_conversion_float:
-    rcall format_float_veneer_validate_default_length
+    rcall format_validate_default_length
     breq  1f
     rjmp  format_unexpected_character
 1:
-    rcall format_float_veneer_arg_u32
+    rcall format_arg_u32
     sts   data_format_float_value+0, r20
     sts   data_format_float_value+1, r21
     sts   data_format_float_value+2, r22
@@ -14820,7 +14797,7 @@ format_conversion_float:
     cpi   r24, 'A'
     brne  2f
 1:
-    jmp   format_conversion_float_hex
+    rjmp   format_conversion_float_hex
 2:
     rjmp  format_conversion_float_decimal
 
@@ -14853,7 +14830,7 @@ format_float_emit_sign:
     lds   r24, data_format_sign
     tst   r24
     breq  1f
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
 1:
     ret
 
@@ -14872,12 +14849,12 @@ format_float_content_add_u8:
 ; Decimal fields place zero width padding after the sign. Special values use a
 ; separate all-space path.
 format_float_begin_decimal_field:
-    rcall format_float_veneer_compute_padding
+    rcall format_compute_padding
     sbrc  r18, FORMAT_FLAG_LEFT
     rjmp  .Lformat_float_decimal_sign
     sbrc  r18, FORMAT_FLAG_ZERO
     rjmp  .Lformat_float_decimal_sign
-    rcall format_float_veneer_emit_pre_padding
+    rcall format_emit_pre_padding
 .Lformat_float_decimal_sign:
     rcall format_float_emit_sign
     sbrc  r18, FORMAT_FLAG_LEFT
@@ -14888,20 +14865,20 @@ format_float_begin_decimal_field:
     lds   r25, data_format_padding+1
     ldi   r16, '0'
     mov   r0, r16
-    jmp   format_emit_repeat
+    rjmp   format_emit_repeat
 
 ; Hex fields place zero width padding after the sign and 0x/0X prefix.
 format_float_begin_hex_field:
-    rcall format_float_veneer_compute_padding
+    rcall format_compute_padding
     sbrc  r18, FORMAT_FLAG_LEFT
     rjmp  .Lformat_float_hex_sign
     sbrc  r18, FORMAT_FLAG_ZERO
     rjmp  .Lformat_float_hex_sign
-    rcall format_float_veneer_emit_pre_padding
+    rcall format_emit_pre_padding
 .Lformat_float_hex_sign:
     rcall format_float_emit_sign
     ldi   r24, '0'
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     lds   r24, data_format_conversion
     sbrs  r24, 5
     rjmp  .Lformat_float_hex_prefix_upper
@@ -14910,7 +14887,7 @@ format_float_begin_hex_field:
 .Lformat_float_hex_prefix_upper:
     ldi   r24, 'X'
 .Lformat_float_hex_prefix_emit:
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     sbrc  r18, FORMAT_FLAG_LEFT
     ret
     sbrs  r18, FORMAT_FLAG_ZERO
@@ -14919,12 +14896,12 @@ format_float_begin_hex_field:
     lds   r25, data_format_padding+1
     ldi   r16, '0'
     mov   r0, r16
-    jmp   format_emit_repeat
+    rjmp   format_emit_repeat
 
 format_float_emit_zeroes:
     ldi   r16, '0'
     mov   r0, r16
-    jmp   format_emit_repeat
+    rjmp   format_emit_repeat
 
 format_float_store_precision:
     sts   data_format_float_precision+0, r14
@@ -14940,7 +14917,7 @@ format_float_emit_point_if_needed:
     ret
 .Lformat_float_emit_point:
     ldi   r24, '.'
-    jmp   format_emit_char
+    rjmp   format_emit_char
 
 ; Emit a finite/special spelling after all-space width padding. The conversion
 ; character selects case for E/G/A forms.
@@ -14952,8 +14929,8 @@ format_float_emit_special:
     breq  1f
     adiw  r24, 1
 1:
-    rcall format_float_veneer_compute_padding
-    rcall format_float_veneer_emit_pre_padding
+    rcall format_compute_padding
+    rcall format_emit_pre_padding
     rcall format_float_emit_sign
 
     lds   r26, data_format_float_flags
@@ -14984,7 +14961,7 @@ format_float_emit_special:
     clr   r25
     rcall format_float_veneer_emit_ram_span
     rcall format_float_veneer_emit_post_padding
-    jmp   .Lformat_main_loop
+    rjmp   .Lformat_main_loop
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Decimal f/e/g conversion
@@ -15112,7 +15089,7 @@ format_conversion_float_decimal:
     cpi   r24, 'E'
     brne  2f
 1:
-    jmp   format_float_emit_exponential
+    rjmp   format_float_emit_exponential
 2:
     rjmp  format_float_emit_general
 
@@ -15121,6 +15098,7 @@ format_conversion_float_decimal:
 ; in r18 and SREG.T are restored exactly. The engine itself preserves r14-r17
 ; and Y, including the formatter's precision, status, and selected sink state.
 format_float_call_decimal_engine:
+    push  r24                         ; retain the already bounded precision
     push  r18
     in    r0, SREG
     push  r0
@@ -15142,34 +15120,7 @@ format_float_call_decimal_engine:
     out   SREG, r0
     pop   r18
 
-    ; Recover the bounded engine precision from the number of generated bytes.
-    ; Decimal dispatch already knows it, but retaining it in r24 avoids another
-    ; branch-specific SRAM field. For fixed mode callers ignore this result.
-    lds   r24, data_format_conversion
-    cpi   r24, 'f'
-    breq  2f
-    ; Reconstruct min(requested e precision,7) or min(g precision-1,7).
-    cpi   r24, 'e'
-    breq  1f
-    cpi   r24, 'E'
-    breq  1f
-    ldi   r24, 7
-    tst   r15
-    brne  2f
-    mov   r24, r14
-    dec   r24
-    cpi   r24, 8
-    brlo  2f
-    ldi   r24, 7
-    ret
-1:
-    ldi   r24, 7
-    tst   r15
-    brne  2f
-    cp    r14, r24
-    brsh  2f
-    mov   r24, r14
-2:
+    pop   r24
     ret
 
 ; Render finite fixed form with precision r15:r14 and generated decimal digits
@@ -15215,7 +15166,7 @@ format_float_emit_fixed:
     tst   r21
     brpl  .Lformat_float_fixed_integer_nonnegative
     ldi   r24, '0'
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     rjmp  .Lformat_float_fixed_after_integer
 
 .Lformat_float_fixed_integer_nonnegative:
@@ -15245,7 +15196,7 @@ format_float_emit_fixed:
     lds   r25, data_format_float_precision+1
     or    r24, r25
     brne  1f
-    jmp   .Lformat_float_fixed_done
+    rjmp   .Lformat_float_fixed_done
 1:
     lds   r20, data_format_float_exponent+0
     lds   r21, data_format_float_exponent+1
@@ -15347,7 +15298,7 @@ format_float_emit_fixed:
 
 .Lformat_float_fixed_done:
     rcall format_float_veneer_emit_post_padding
-    jmp   .Lformat_main_loop
+    rjmp   .Lformat_main_loop
 
 ; Render finite scientific form. r15:r14 is the requested number of digits
 ; after the radix point; generated digits beyond the first are followed by
@@ -15379,7 +15330,7 @@ format_float_emit_exponential:
     rcall format_float_begin_decimal_field
 
     lds   r24, data_format_digit_buffer+1
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     rcall format_float_emit_point_if_needed
 
     lds   r20, data_format_float_precision+0
@@ -15417,10 +15368,10 @@ format_float_emit_exponential:
 .Lformat_float_exp_marker_upper:
     ldi   r24, 'E'
 .Lformat_float_exp_marker_emit:
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     rcall format_float_emit_decimal_exponent_two
     rcall format_float_veneer_emit_post_padding
-    jmp   .Lformat_main_loop
+    rjmp   .Lformat_main_loop
 
 ; Choose %g fixed/scientific style after rounding. Style selection uses the
 ; original significant precision; trimming only changes the rendered tail.
@@ -15555,12 +15506,12 @@ format_float_emit_decimal_exponent_two:
     ; Compute the complete exponent spelling before the first sink call: text
     ; output is permitted to clobber all ordinary formatter scratch registers.
     lds   r24, data_format_prefix
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     ldi   r30, lo8(data_format_digit_buffer)
     ldi   r31, hi8(data_format_digit_buffer)
     ldi   r24, 2
     clr   r25
-    jmp   format_float_veneer_emit_ram_span
+    rjmp   format_float_veneer_emit_ram_span
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Exact hexadecimal a/A conversion
@@ -15731,7 +15682,7 @@ format_conversion_float_hex:
 .Lformat_float_hex_emit_zero_lead:
     ldi   r24, '0'
 .Lformat_float_hex_emit_lead:
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     rcall format_float_emit_point_if_needed
 
     ; Emit up to the six exact fraction nibbles, then synthesize any explicit
@@ -15770,7 +15721,7 @@ format_conversion_float_hex:
 .Lformat_float_hex_marker_upper:
     ldi   r24, 'P'
 .Lformat_float_hex_marker_emit:
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     rcall format_float_emit_hex_exponent
     rcall format_float_veneer_emit_post_padding
     jmp   .Lformat_main_loop
@@ -15998,12 +15949,12 @@ format_float_emit_hex_exponent:
     ; The exponent bytes are fully materialized before entering the sink. The
     ; digit count is retained in SRAM because a text glyph may clobber r20-r23.
     lds   r24, data_format_prefix
-    rcall format_float_veneer_emit_char
+    rcall format_emit_char
     ldi   r30, lo8(data_format_digit_buffer)
     ldi   r31, hi8(data_format_digit_buffer)
     lds   r24, data_format_float_ndigits
     clr   r25
-    jmp   format_float_veneer_emit_ram_span
+    rjmp   format_float_veneer_emit_ram_span
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Formatter-local avr-libc decimal digit engine
@@ -16644,13 +16595,14 @@ audio_commit:
     lpm  r25, Z
     st   X+, r24
     st   X+, r25
-    mul  r21, r20
-    ; Product / 32, amplitudes 0..31, master 0..32.
-    .rept 5
-        lsr r1
-        ror r0
-    .endr
-    st   X+, r0
+    ; FMUL doubles the product; two more shifts leave product/32 in r1.
+    ; Amplitudes 0..31 and master 0..32 keep the shifted product within 16 bits.
+    fmul r21, r20
+    lsl  r0
+    rol  r1
+    lsl  r0
+    rol  r1
+    st   X+, r1
     rjmp .Laudio_stage_next
 .Laudio_stage_silent:
     st   X+, ZERO
@@ -16694,7 +16646,7 @@ audio_commit_atomic_end:
 ; preserved except r4 for STATUS. The runtime provides ordinary ABI wrappers.
 sys_audio_impl:
     fx_disable ; SYS speculative opcode is complete by this far entry
-    call audio_service_func ; apply elapsed time before changing ownership
+    rcall audio_service_func ; apply elapsed time before changing ownership
     audio_save
     mov  r24, VM_R7L
     ldi  r30, lo8(data_audio_music)

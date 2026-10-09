@@ -52,49 +52,57 @@ supports standalone CMake builds with an installed SDK; see its
 [README](../projects/audio_demo/README.md). There is no update call in
 `setup`/`loop`. Firmware is `interp/build/interp.hex`.
 
-## Binary format (version A1)
+## Binary format (version A2)
 
-Assets are at most 65535 bytes. Header byte 0 is `A1`; byte 1 is a nonzero
+Assets are at most 65535 bytes. Header byte 0 is `A2`; byte 1 is a nonzero
 four-bit ownership mask. Channels 0..2 are tonal, 3 is noise. At start, all
 notes are off and each retained channel volume is 24.
 
-Each event is `delta, mask, updates...`. Delta counts **4 ms ticks**:
+Each event starts with `delta, change_mask`. The single delta byte encodes
+**byte value + 1 ticks**, each 4 ms: `00` waits one tick and `FF` waits 256
+ticks. There is no extended form or zero-time event. Playback starts silent
+and waits for the first event, so the earliest note begins after 4 ms.
 
-| Bytes | Meaning |
+| Change-mask bits | Meaning |
 | --- | --- |
-| `00..FE` | 0..254 ticks |
-| `FF lo hi` | little-endian uint16 delta, 0..65535 ticks |
+| 0..3 | Note changes for channels 0..3 |
+| 4..7 | Volume changes for channels 0..3 |
 
-Mask `00..0F` updates the selected channels, in ascending order. Each selected
-channel consumes exactly one update byte. A zero mask is a rest.
+A nonzero change mask is followed by all selected notes in ascending channel
+order, then all selected volumes in ascending channel order. Notes are MIDI
+24..95 (`18..5F`) or `80` for off; other note values are malformed. Volumes
+are raw 0..31 bytes; larger values are malformed. For example, mask `11`
+followed by `3C 07` sets channel 0 to MIDI 60 at amplitude 7 in one event.
+Mask `88` updates both the noise note/rate and volume. All 255 nonzero masks
+are available; there are no update-command opcodes.
 
-| Update byte | Meaning |
+A zero change mask is followed by one control byte:
+
+| Record | Meaning |
 | --- | --- |
-| `18..5F` (decimal 24..95) | MIDI note on, retaining volume; retrigger phase |
-| `80` | Note off |
-| `A0..BF` | Set retained amplitude to low five bits; preserve phase |
+| `delta, 00, 00` | Continue: consume time, preserving channel state and phase |
+| `delta, 00, 01` | End playback |
+| `delta, 00, 02` | Loop to the first delta after the header |
 
-All other update bytes, including `C0..FF`, are malformed. The three tonal
-waveforms use fixed 50% duty; noise is restricted to channel 3. Bass and lead
-register choices come from note selection. Envelopes can be compiled into
-sequencer-rate volume events. There is no per-sample envelope/DSP cost.
+Other control bytes and changes outside the ownership mask are malformed.
+An exhausted asset or malformed record stops that stream and releases its
+effect ownership. Every record consumes at least one tick, including Continue
+and Loop. At most 255 elapsed ticks are handled per snapshot, so each stream
+can process at most 255 records without a separate event or zero-time-loop budget.
 
-Event mask `40` ends playback, and mask `80` loops to the first delta after
-the header. Neither has updates. Other masks/updates are malformed. Channel
-changes outside the header's ownership mask are malformed. An exhausted
-asset, invalid header/update, or 64 consecutive due events without advancing
-time stops that stream and releases its effect ownership. The decoder permits
-63 such events; the compiler includes END/LOOP and the loop boundary in its
-budget validation. A valid timed
-loop may process more than 64 total events during catch-up. At most 255 elapsed
-ticks are handled per snapshot, and each run at one timestamp is bounded.
-
-Multiple changes to one channel use zero-delta events, for example volume
-then note. All due events are applied to desired state before the latch is
-committed; intermediate states produce no buffered waveform output.
+Note changes retrigger phase and retain volume when no volume bit is present.
+Volume-only changes retain the note and preserve phase. All due updates are
+applied to desired state before the complete latch is committed atomically.
 Looping retains note/volume state. Put explicit initial values in a loop if
-it must reset them on every iteration. Large deltas allow sparse songs without
-decoding at the base tick rate; the maximum single delta is 262.140 seconds.
+it must reset them on every iteration. Longer waits use Continue records;
+the maximum wait in one record is 1.024 seconds. A 600-tick wait uses two
+`FF 00 00` Continue records followed by the actual event with delta `57`
+(88 ticks). Continue does not require a latch commit.
+
+The three tonal waveforms use fixed 50% duty; noise is restricted to channel 3.
+Bass and lead register choices come from note selection. Envelopes use
+sequencer-rate volume events with no per-sample envelope/DSP cost.
+A1 assets are rejected and must be regenerated with the current compiler.
 
 The caller supplies a valid FX/image-relative pointer and byte size. The
 decoder bounds reads to that size, including the last partial cache refill.
@@ -114,8 +122,12 @@ python tools/avm_music.py projects/audio_demo/music.json song.h --name music
 SDK installation also places `avm_music.py` in its `bin` directory.
 
 JSON fields: `mask` (default 15), `row_ticks` (default 1), `loop` (default
-false), `end_delta` (default 0), and `events`. Each event has `delta` (rows,
-default 0), optional new `row_ticks`, and `channels`, keyed by channel number.
+false), `end_delta` (default 1), and `events`. Each event has `delta` (rows,
+default 1), optional new `row_ticks`, and `channels`, keyed by channel number.
+`delta`, `end_delta`, and `row_ticks` are positive integers. JSON deltas are
+actual row counts; the compiler multiplies by `row_ticks`, splits waits above
+256 ticks into Continue records, then subtracts one for the binary encoding.
+An event without channel changes emits Continue.
 A channel is a note name (`C4`, `F#3`, `Bb2`), MIDI integer, null for note off,
 or an object with `note` and/or `volume` (amplitude 0..31). Unknown channel
 fields are rejected. `row_ticks` changes tempo offline by changing
@@ -123,12 +135,12 @@ subsequent encoded deltas, with no runtime division or tempo decoder.
 
 The channel number determines the waveform. The note selects pitch on
 channels 0..2 and the LFSR update rate on channel 3. For a channel object
-containing both `volume` and `note`, the compiler emits volume before note
-using zero-delay events. Later notes retain the selected amplitude, while
+containing both `volume` and `note`, the compiler emits one packed-mask event.
+Later notes retain the selected amplitude, while
 volume-only changes preserve the current note and phase. Attacks and decays
 use later volume events. There are no instrument identifiers or amplitude
 preset commands; older JSON assets using `instrument` must replace it with
-an explicit `volume`, and binaries using `C0..C3` must be regenerated.
+an explicit `volume` before compiling to A2.
 
 ## Timer and register allocation
 

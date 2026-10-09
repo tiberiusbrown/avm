@@ -4,10 +4,10 @@
 #include <string.h>
 
 static const uint8_t AVM_PROGMEM song[] = {
-    0xa1,15, 0,15,60,64,67,36, 25,1,62, 25,0x80
+    0xa2,15, 0,15,60,64,67,36, 24,1,62, 24,0,2
 };
 static const uint8_t AVM_PROGMEM effect[] = {
-    0xa1,12, 0,12,84,48, 8,0x40
+    0xa2,12, 0,12,84,48, 7,0,1
 };
 
 int avm_test_main(void) {

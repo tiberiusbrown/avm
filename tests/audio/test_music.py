@@ -19,28 +19,48 @@ class CompilerTests(unittest.TestCase):
         data = music.compile_song({"mask": 3, "events": [
             {"channels": {"1": {"note": "E4", "volume": 7}, "0": "C4"}},
             {"delta": 300, "channels": {"0": None}}]})
-        self.assertEqual(data, bytes([0xa1,3,0,2,0xa7,0,3,60,64,255,44,1,1,128,0,64]))
+        self.assertEqual(data, bytes([0xa2,3,0,0x23,60,64,7,255,0,0,43,1,128,0,0,1]))
 
     def test_sparse_rest_tempo_loop(self):
         data = music.compile_song({"mask": 1, "row_ticks": 25, "loop": True,
             "events": [{"delta": 2}, {"delta": 1, "row_ticks": 50, "channels": {"0": 60}}], "end_delta": 2})
-        self.assertEqual(data, bytes([0xa1,1,50,0,50,1,60,100,128]))
+        self.assertEqual(data, bytes([0xa2,1,49,0,0,49,1,60,99,0,2]))
 
     def test_validation(self):
         for value in [0, 23, 96, "bad", "C0"]:
             with self.assertRaises(ValueError): music.note_number(value)
-        for song in [{"mask": 0}, {"loop": True}, {"events": [{"delta": 65536}]},
+        for song in [{"mask": 0}, {"row_ticks": 0}, {"end_delta": 0},
+                     {"events": [{"delta": 0}]}, {"events": [{"delta": -1}]},
+                     {"events": [{"delta": 1.5}]}, {"events": [{"delta": 10**20}]},
                      {"mask": 1, "events": [{"channels": {"1": 60}}]},
+                     {"mask": 1, "events": [{"channels": {"1": {"volume": 7}}}]},
                      {"events": [{"channels": {"0": {"volume": 32}}}]},
-                     {"events": [{"channels": {"0": 60}}] * 64}]:
+                     {"events": [{"channels": {"0": {"volume": -1}}}]}]:
             with self.assertRaises(ValueError): music.compile_song(song)
 
-    def test_escapes_and_c_array(self):
-        for n in [0,254,255,256,65535]:
-            d = music.delta_bytes(n)
-            actual = d[0] if d[0]<255 else d[1] + (d[2]<<8)
-            self.assertEqual(actual,n)
-        self.assertIn("AVM_PROGMEM song[]", music.c_array(bytes([161,1,0,64]), "song"))
+    def test_one_byte_deltas_and_c_array(self):
+        for n in [1,2,255,256]:
+            self.assertEqual(music.delta_bytes(n), bytes([n-1]))
+        for n in [0,257,65535]:
+            with self.assertRaises(ValueError): music.delta_bytes(n)
+        self.assertIn("AVM_PROGMEM song[]", music.c_array(bytes([162,1,0,0,1]), "song"))
+
+    def test_long_waits_and_continue(self):
+        for ticks in [1,256,257,512,600,65536]:
+            with self.subTest(ticks=ticks):
+                data = music.compile_song({"events": [{"delta": ticks, "channels": {"0": 60}}]})
+                count = (ticks-1)//256
+                self.assertEqual(data, bytes([0xa2,15]) + bytes([255,0,0])*count
+                    + bytes([ticks-256*count-1,1,60,0,0,1]))
+        self.assertEqual(music.compile_song({"events": [{"delta": 600}]}),
+            bytes([0xa2,15,255,0,0,255,0,0,87,0,0,0,0,1]))
+
+    def test_full_mask_and_noise_note_volume(self):
+        self.assertEqual(music.compile_song({"mask": 8, "events": [{"channels": {
+            "3": {"note": "C3", "volume": 16}}}]}), bytes([0xa2,8,0,0x88,48,16,0,0,1]))
+        self.assertEqual(music.compile_song({"events": [{"channels": {
+            str(ch): {"note": 95, "volume": 31} for ch in range(4)}}]}),
+            bytes([0xa2,15,0,255,95,95,95,95,31,31,31,31,0,0,1]))
 
     def test_reject_instrument_fields(self):
         for name in ["square", "bass", "lead", "noise"]:
@@ -48,15 +68,11 @@ class CompilerTests(unittest.TestCase):
                 music.compile_song({"events": [{"channels": {
                     "0": {"instrument": name, "volume": 7, "note": "C4"}}}]})
 
-    def test_loop_boundary_budget(self):
-        zero = {"channels": {"0": 60}}
-        # Both halves fit alone; the loop suffix plus prefix must also fit.
-        with self.assertRaises(ValueError):
-            music.compile_song({"loop": True, "events": [zero]*40 + [{"delta": 1}] + [zero]*40})
-        music.compile_song({"events": [zero]*62})
-        with self.assertRaises(ValueError): music.compile_song({"events": [zero]*63})
-        music.compile_song({"loop": True, "end_delta": 1, "events": [zero]*62})
-        music.compile_song({"loop": True, "events": [{"delta": 1}]*100})
+    def test_positive_time_loops(self):
+        event = {"channels": {"0": 60}}
+        self.assertEqual(music.compile_song({"loop": True}), bytes([0xa2,15,0,0,2]))
+        self.assertEqual(music.compile_song({"loop": True, "events": [event]*100}),
+            bytes([0xa2,15]) + bytes([0,1,60])*100 + bytes([0,0,2]))
 
 
 if __name__ == "__main__":

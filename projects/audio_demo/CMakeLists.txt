@@ -24,6 +24,13 @@ set(AVM_LD "${AVM_SDK_BIN}/avm-ld${AVM_HOST_EXE_SUFFIX}")
 set(AVM_IMAGE "${AVM_SDK_BIN}/avm-image${AVM_HOST_EXE_SUFFIX}")
 set(AVM_SYSROOT "${AVM_SDK_ROOT}/sysroot")
 set(AVM_INTERPRETER "${AVM_SDK_BIN}/avm/interp.hex")
+set(AUDIO_DEMO_FIRMWARE_DEPENDS "${AVM_INTERPRETER}")
+if(TARGET avm_sdk_install)
+    # Ninja checks installed-file timestamps before SDK installation runs.
+    # Track the generated firmware too, so this build packages a fresh HEX.
+    list(APPEND AUDIO_DEMO_FIRMWARE_DEPENDS
+        avm_sdk_install "${AVM_INTERPRETER_HEX}")
+endif()
 
 set(AUDIO_DEMO_DEFAULT_BUILD)
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
@@ -70,7 +77,7 @@ add_custom_command(
         --interpreter "${AVM_INTERPRETER}" --title "AVM Audio Demo"
         --description "Autonomous four-channel music, button sound effects, and animation"
         -o "${AUDIO_DEMO_PACKAGE}"
-    DEPENDS "${AUDIO_DEMO_OBJECT}" "${AVM_LD}" "${AVM_IMAGE}" "${AVM_INTERPRETER}"
+    DEPENDS "${AUDIO_DEMO_OBJECT}" "${AVM_LD}" "${AVM_IMAGE}" ${AUDIO_DEMO_FIRMWARE_DEPENDS}
         "${AVM_SYSROOT}/lib/crt0_sketch.o" "${AVM_SYSROOT}/lib/libavm.a"
         "${AVM_SYSROOT}/lib/libavm-builtins.a"
     COMMENT "Linking and packaging audio_demo"

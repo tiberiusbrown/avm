@@ -10,9 +10,9 @@ measurements and emulated integration results, not oscilloscope measurements.
 | --- | ---: | ---: |
 | Seek hook, no pending tick | **4 added** | 0.250 us |
 | Seek hook, pending tick but no streams | 29 added | 1.813 us |
-| Seek hook, one active stream, no event due | 115 added | 7.188 us |
-| One-stream sparse countdown service, entry through RET | 104 | 6.500 us |
-| Cached note-off event plus next extended delta and commit, entry through RET | 830 | 51.875 us |
+| Seek hook, one active stream, no event due | 109 added | 6.813 us |
+| One-stream sparse countdown service, entry through RET | 98 | 6.125 us |
+| Cached note-off event plus next delta and commit, entry through RET | 692 | 43.250 us |
 | Timer3, including 4-cycle interrupt entry and 3-cycle vector JMP | **119..124** | 7.438..7.750 us |
 | Timer0, ordinary millis update, including entry/vector | 35 | 2.188 us |
 | Timer0, ordinary millis update plus produced audio tick | 47 | 2.938 us |
@@ -37,6 +37,35 @@ no VM registers were reserved for synthesis. Compared with the original
 Timer0 ISR, audio adds 7 cycles on ordinary interrupts, 19 on produced ticks,
 and 16 on saturated ticks (approximately 0.0625% CPU while ticks are draining).
 
+## A1 to A2 format comparison
+
+The A1 baseline is the interpreter after removing amplitude presets. A2 uses
+packed note/volume masks, raw volume bytes, one-byte 1..256 tick waits, and
+Continue/End/Loop controls. Timings below use equivalent cached events with
+sample interrupts stopped; each measures service entry through RET, excluding
+the caller's CALL. The note-off comparison includes reading an extended A1
+delta versus a single-byte A2 delta for the following wait. A1's no-op row
+still commits the latch; A2 Continue preserves it without committing.
+
+| Workload | A1 cycles | A2 cycles | Reduction |
+| --- | ---: | ---: | ---: |
+| One channel, note and volume together | 914 | 758 | 17.1% |
+| Four channels, notes and volumes together | 1556 | 1310 | 15.8% |
+| Four channels, volumes only | 953 | 953 | Unchanged |
+| Continue / no-op row | 564 | 326 | 42.2% |
+| Note off and next delta | 830 | 692 | 16.6% |
+| Sparse countdown | 104 | 98 | 5.8% |
+
+Interpreter `.text` shrank from **29664 to 29632 bytes** (32 bytes saved).
+Including the one initialized data byte, total flash occupancy is **29633
+bytes**, leaving **63 bytes** below the 29696-byte bootloader boundary.
+Persistent audio SRAM remains 105 bytes; the wait field stays uint16 so it
+can represent 256 ticks. The demo music shrank from **3285 to 2958 bytes**
+(327 bytes, 10.0%), with the same 39.936-second period and musical states,
+shifted by the required one-tick initial wait.
+
+The sample ISR, PWM configuration, and atomic commit cost are unchanged.
+
 ## FX bursts and cache choice
 
 These use the existing `fx_read_program_bytes_func`, measuring its entry
@@ -56,23 +85,21 @@ it instead of maintaining two caches. Last refills read only the remaining
 asset bytes. The table measures the FX transfer, not parsing or the cache
 miss bookkeeping around it. A coinciding Timer3 interrupt adds at most
 124 cycles (7.75 us) of wall time per interrupt. Reads remain interruptible.
-Phase-offset stress tests observed 21 sample ISR entries while SPI was active
+Phase-offset stress tests observed 22 sample ISR entries while SPI was active
 and verified all returned bytes; no SPI collision was reported.
 
 ## Interpreter and integration results
 
-The before/after instruction benchmark contains **1018 measurements**:
-677 are unchanged, and the remaining 341 each increased by exactly four
-cycles because they restart the FX stream. The 17/18-cycle sequential dispatch
-cadences are unchanged. `bench/cycles_instruction.txt` records the resulting
-timings. Specialized native stack tests also assert the unchanged PUSH/POP
-cadences and updated CALL/RET seek costs.
+The A1/A2 instruction benchmark contains **1018 identical measurements**.
+The 17/18-cycle sequential dispatch cadences and four-cycle idle audio hook
+are unchanged. `bench/cycles_instruction.txt` records the timings. Specialized
+native stack tests also assert the PUSH/POP cadences and CALL/RET seek costs.
 
 Autonomous idle playback ran for 100 emulated ms with a maximum service-entry
 gap of **4.00038 ms**. The compiled animated demo ran for one emulated second
-with no guest audio update call: **62 rendered frames, 7810 sample interrupts,
+with no guest audio update call: **62 rendered frames, 7811 sample interrupts,
 4.14206 ms maximum service-entry gap**, and a measured native stack footprint
-of 26 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
+of 23 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
 rate is 60; the existing frame scheduler uses integer millisecond periods.
 Simulated A/B presses exercised SFX,
 pause, and resume while graphics and song reads shared SPI.
@@ -116,10 +143,11 @@ for the cycle, synthesis, parser, compiler, autonomous demo, SPI stress, and
 Mini/FX-C assembly checks. `avm_tests_run` additionally runs all existing guest
 fixtures, including the C audio/libm/formatter stress test at six optimization
 levels. Tests cover packed 24-bit pointers, cache/page boundaries, malformed
-and truncated streams, dense valid catch-up, zero-time loop bounds, saturation,
+and truncated streams, dense positive-time catch-up, Continue-only loops,
+one/256-tick initial waits, saturation,
 note retriggering, atomic chords, music under SFX, release, and direct tones.
 Validation passed all 459 guest fixtures, 152 native PUSH/POP cases, 1133 native
-stack-bound cases, 14 native audio cases, and six Python compiler tests, as well
+stack-bound cases, 18 native audio cases, and nine Python compiler tests, as well
 as the animated and formatter integration workloads and both variant builds.
 
 All fixed code-layout assertions and the firmware ceiling still hold. No

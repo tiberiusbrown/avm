@@ -16341,9 +16341,9 @@ format_ftoa_base10:
     .byte 236, 161, 229, 61, 39
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Audio sequencer (normal context only). r16:r17 = stream, r18 = note bank,
-; r20 = elapsed ticks, r21 = original ticks, r22 = event budget, r23 = mask.
+; r20 = elapsed ticks, r21 = original ticks, r23 = change mask.
 ; The shared FX reader clobbers r0:r1, r24:r27 and Z. r2:r15, PC, Y and
-; GPIOR0 are never modified. The entry saves only the eight borrowed guest
+; GPIOR0 are never modified. The entry saves only the seven borrowed guest
 ; bytes, not the entire register file. Call-lifetime staging aliases SYS
 ; workspace ONLY after the previous SYS has restored its native state.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -16354,12 +16354,10 @@ format_ftoa_base10:
     push r19
     push r20
     push r21
-    push r22
     push r23
 .endm
 .macro audio_restore
     pop r23
-    pop r22
     pop r21
     pop r20
     pop r19
@@ -16465,27 +16463,18 @@ audio_byte:
     sec
     ret
 
-; Delta 0..254: one byte. 255 escape followed by little-endian uint16.
+; One byte encodes 1..256 ticks. Carry reports a truncated stream.
 audio_delta:
     rcall audio_byte
     brcs .Laudio_delta_done
     clr  r25
-    cpi  r24, 255
-    breq 1f
+    subi r24, -1
+    sbci r25, -1
     clc
-    ret
-1:
-    rcall audio_byte
-    brcs .Laudio_delta_done
-    push r24
-    rcall audio_byte
-    mov  r25, r24
-    pop  r24
 .Laudio_delta_done:
     ret
 
 audio_advance:
-    ldi  r22, 64
     mov  r20, r21
 .Laudio_advance_again:
     movw r30, r16
@@ -16504,76 +16493,74 @@ audio_advance:
 .Laudio_advance_done:
     ret
 .Laudio_event:
-    tst  r24
-    breq 1f
-    ldi  r22, 64 ; only zero-time chains consume the malformed-loop budget
-1:
+    ; Every record consumes time, bounding catch-up by the elapsed tick count.
     sub  r20, r24
-    dec  r22
-    brne 1f ; bounded catch-up, including zero-time loops
-    rjmp audio_stream_end
-1:
-    sts  data_end_private+12, ONE
     rcall audio_byte
     brcc 1f
     rjmp audio_stream_end
 1:
-    cpi  r24, 0x80
+    tst  r24
+    brne 1f
+    ; Zero change mask: Continue=0, End=1, Loop=2; other commands fail closed.
+    rcall audio_byte
+    brcs audio_stream_end
+    tst  r24
+    breq .Laudio_next_delta
+    cpi  r24, 2
     breq .Laudio_loop
-    cpi  r24, 16
-    brsh audio_stream_end ; END=0x40, all other reserved masks fail closed
+    rjmp audio_stream_end
+1:
     mov  r23, r24
-    ; Updates outside the declared ownership mask are malformed.
+    ; Fold note and volume bits to validate both against ownership.
+    mov  r25, r24
+    swap r25
+    or   r25, r24
+    andi r25, 15
     movw r30, r16
-    ldd  r25, Z+AUDIO_MASK
-    com  r25
+    ldd  r24, Z+AUDIO_MASK
+    com  r24
     and  r25, r24
     brne audio_stream_end
-    ldi  r19, 0 ; channel byte offset (note,volume)
+    sts  data_end_private+12, ONE
+    ; Only note changes retrigger phase. Stage all changes before one commit.
+    mov  r24, r23
+    andi r24, 15
+    breq .Laudio_volumes_only
+    ldd  r25, Z+AUDIO_TRIGGER
+    or   r25, r24
+    std  Z+AUDIO_TRIGGER, r25
+    ldi  r19, 0 ; note offsets 0,2,4,6, then volume offsets 1,3,5,7
+    rjmp .Laudio_channel
+.Laudio_volumes_only:
+    swap r23 ; skip the empty note pass
+    ldi  r19, 1
 .Laudio_channel:
     sbrs r23, 0
     rjmp .Laudio_channel_next
     rcall audio_byte
     brcs audio_stream_end
-    ; 0xA0..BF = retained volume; all higher update bytes are malformed.
-    cpi  r24, 0xa0
-    brlo .Laudio_note
-    cpi  r24, 0xc0
-    brsh audio_stream_end
-    andi r24, 31
-    mov  r30, r18
-    ldi  r31, hi8(data_audio_begin)
-    add  r30, r19
-    std  Z+1, r24
-    rjmp .Laudio_channel_next
+    sbrs r19, 0
+    rjmp .Laudio_note
+    cpi  r24, 32
+    brlo .Laudio_value_store
+    rjmp audio_stream_end
 .Laudio_note:
     cpi  r24, 0x80
-    breq 1f
+    breq .Laudio_value_store
     subi r24, 24
     cpi  r24, 72
     brsh audio_stream_end
-1:
+.Laudio_value_store:
     mov  r30, r18
     ldi  r31, hi8(data_audio_begin)
     add  r30, r19
-    st   Z, r24 ; 0..71 table index, 0x80 off
-    movw r30, r16
-    ldd  r25, Z+AUDIO_TRIGGER
-    ; channel offset/2 -> bit, only sequencer-rate work
-    mov  r26, r19
-    lsr  r26
-    ldi  r24, 1
-2:
-    tst  r26
-    breq 3f
-    lsl  r24
-    dec  r26
-    rjmp 2b
-3:
-    or   r25, r24
-    std  Z+AUDIO_TRIGGER, r25
+    st   Z, r24 ; note index/off or raw volume, selected by offset parity
 .Laudio_channel_next:
     subi r19, -2
+    cpi  r19, 8
+    brne 1f
+    ldi  r19, 1
+1:
     lsr  r23
     brne .Laudio_channel
 .Laudio_next_delta:
@@ -16720,7 +16707,7 @@ sys_audio_impl:
 1:
     cpi  r24, 2
     brsh .Laudio_command
-    ; PLAY: q2[23:0] pointer, r6 uint16 byte length (at least four bytes).
+    ; PLAY: q2[23:0] pointer, r6 uint16 byte length (at least five bytes).
     std  Z+AUDIO_START, VM_R4L
     std  Z+AUDIO_START+1, VM_R4H
     std  Z+AUDIO_START+2, VM_R5L
@@ -16747,7 +16734,7 @@ sys_audio_impl:
     sts  data_audio_cache_index, ZERO
     rcall audio_byte
     brcs .Laudio_start_bad
-    cpi  r24, 0xa1
+    cpi  r24, 0xa2
     brne .Laudio_start_bad
     rcall audio_byte
     brcs .Laudio_start_bad
@@ -16762,8 +16749,6 @@ sys_audio_impl:
     movw r30, r16
     std  Z+AUDIO_WAIT, r24
     std  Z+AUDIO_WAIT+1, r25
-    clr  r21
-    rcall audio_advance
     rcall audio_enable
     rjmp .Laudio_command_commit
 .Laudio_start_bad:

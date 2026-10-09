@@ -22,33 +22,43 @@ def note_number(value):
 
 
 def delta_bytes(ticks):
-    if not isinstance(ticks, int) or not 0 <= ticks <= 65535:
-        raise ValueError("delta must be 0..65535 ticks")
-    return bytes([ticks]) if ticks < 255 else bytes([255, ticks & 255, ticks >> 8])
+    if not isinstance(ticks, int) or not 1 <= ticks <= 256:
+        raise ValueError("encoded delta must be 1..256 ticks")
+    return bytes([ticks - 1])
+
+
+def emit_event(output, ticks, payload):
+    if not isinstance(ticks, int) or ticks < 1:
+        raise ValueError("delta must be a positive integer number of ticks")
+    continues = (ticks - 1) // 256
+    if len(output) + 3 * continues + 1 + len(payload) > 65535:
+        raise ValueError("asset exceeds uint16 byte length")
+    output += bytes([255, 0, 0]) * continues
+    output += delta_bytes(ticks - 256 * continues)
+    output += payload
 
 
 def compile_song(song):
     """delta is in rows; row_ticks defaults to one 4 ms tick.
 
-    Volume, then note changes use zero-delay passes through the
-    same channel mask. Retained volume costs no bytes in later note events.
+    Every event waits at least one tick. Long waits use Continue records;
+    note and volume changes share one packed-mask event.
     """
     mask = song.get("mask", 15)
     if not isinstance(mask, int) or not 1 <= mask <= 15:
         raise ValueError("mask must be 1..15")
-    output = bytearray([0xA1, mask])
+    output = bytearray([0xA2, mask])
     period = song.get("row_ticks", 1)
-    duration = 0
-    zero_run = 0
-    leading_zero = 0
-    seen_time = False
+    if not isinstance(period, int) or period < 1:
+        raise ValueError("row_ticks must be a positive integer")
     for event in song.get("events", []):
         period = event.get("row_ticks", period)
         if not isinstance(period, int) or period < 1:
             raise ValueError("row_ticks must be a positive integer")
-        ticks = event.get("delta", 0) * period
-        delta = delta_bytes(ticks)
-        duration += ticks
+        rows = event.get("delta", 1)
+        if not isinstance(rows, int) or rows < 1:
+            raise ValueError("delta must be a positive integer number of rows")
+        ticks = rows * period
         changes = [{}, {}]
         for channel, update in event.get("channels", {}).items():
             channel = int(channel)
@@ -62,35 +72,16 @@ def compile_song(song):
                 v = update["volume"]
                 if not isinstance(v, int) or not 0 <= v <= 31:
                     raise ValueError("channel volume must be 0..31")
-                changes[0][channel] = 0xA0 + v
+                changes[1][channel] = v
             if "note" in update:
-                changes[1][channel] = note_number(update["note"])
-        passes = [c for c in changes if c] or [{}]
-        for changes in passes:
-            if delta == b"\0":
-                zero_run += 1
-                if not seen_time:
-                    leading_zero += 1
-            else:
-                zero_run = 1
-                seen_time = True
-            if zero_run > 63:
-                raise ValueError("too many simultaneous changes for the native event budget")
-            output += delta
-            output.append(sum(1 << c for c in changes))
-            output += bytes(changes[c] for c in sorted(changes))
-            delta = b"\0"
-    ticks = song.get("end_delta", 0) * period
-    duration += ticks
-    if song.get("loop", False) and duration == 0:
-        raise ValueError("a loop must have positive duration")
-    zero_run = zero_run + 1 if ticks == 0 else 1
-    if zero_run > 63 or (song.get("loop", False) and zero_run + leading_zero > 63):
-        raise ValueError("too many simultaneous changes across the end/loop boundary")
-    output += delta_bytes(ticks)
-    output.append(0x80 if song.get("loop", False) else 0x40)
-    if len(output) > 65535:
-        raise ValueError("asset exceeds uint16 byte length")
+                changes[0][channel] = note_number(update["note"])
+        packed = sum(1 << c for c in changes[0]) | sum(16 << c for c in changes[1])
+        payload = bytes([packed]) + bytes(changes[p][c] for p in range(2) for c in sorted(changes[p]))
+        emit_event(output, ticks, payload if packed else bytes([0, 0]))
+    rows = song.get("end_delta", 1)
+    if not isinstance(rows, int) or rows < 1:
+        raise ValueError("end_delta must be a positive integer number of rows")
+    emit_event(output, rows * period, bytes([0, 2 if song.get("loop", False) else 1]))
     return bytes(output)
 
 

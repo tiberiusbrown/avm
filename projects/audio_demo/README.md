@@ -13,10 +13,12 @@ soft backbeats, and quiet offbeat ticks. Short volume fades soften the notes
 and percussion. A sound effect temporarily takes over channels 2 and 3 while
 the melody and bass continue.
 
-In `music.json`, a row lasts `row_ticks * 4 ms`, so `row_ticks: 13` gives
-52 ms rows. This arrangement uses 12 rows per quarter note and 48 per bar.
-Each event's `delta` counts rows since the previous event; `end_delta: 1`
-completes the last bar before looping.
+In `music.json`, `row_ticks: 1` makes each row one 4 ms tick. This arrangement
+uses 156 ticks per quarter note and 624 per bar. Each event's positive `delta`
+counts rows since the previous event. The first update waits one tick;
+`end_delta: 12` completes the last bar before looping, preserving the
+39.936-second period. The binary stores each wait as ticks minus one and
+splits long waits with Continue records.
 
 ### Notes and volume
 
@@ -26,7 +28,7 @@ always produces LFSR noise. A low note makes a bass part, and higher notes make
 a lead part. On channel 3, the note controls the noise update rate.
 
 For example, `{"note":"C2","volume":9}` on channel 1 plays a low C square
-wave at amplitude 9. The compiler applies volume before note in the same
+wave at amplitude 9. One packed mask selects the note and volume in the same
 event. Later notes retain that volume; volume-only changes preserve the
 current note and phase. This song uses explicit quiet volumes and timed
 fades. There are no instrument identifiers or binary amplitude presets.

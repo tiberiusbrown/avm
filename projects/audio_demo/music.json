@@ -1,7 +1,7 @@
 {
   "mask": 15, "row_ticks": 1, "loop": true, "end_delta": 12,
   "events": [
-    {"delta":1,"channels":{"0":{"note":"E4","volume":13},"1":{"note":"C2","volume":9},"2":{"note":"C4","volume":6},"3":{"note":"C2","volume":9}}},
+    {"delta":1,"channels":{"0":{"note":"E4","volume":13,"waveform":"sine"},"1":{"note":"C2","volume":9,"waveform":"triangle"},"2":{"note":"C4","volume":6,"waveform":"square"},"3":{"note":"C2","volume":9}}},
     {"delta":13,"channels":{"3":{"volume":5}}},
     {"delta":26,"channels":{"0":{"volume":9},"2":{"volume":3},"3":{"volume":2}}},
     {"delta":13,"channels":{"3":{"note":null}}},

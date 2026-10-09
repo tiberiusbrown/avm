@@ -948,122 +948,37 @@ __vectors:
 default_isr:
     rjmp default_isr
 
-; Timer0 compare-A fires once per millisecond. Preserve the interrupted native
-; state; the VM register file may be live in any AVR register when this runs.
-timer0_compa_isr:
-    push r0
-    in   r0, SREG
-    push r0
-
-    lds  r0, data_millis+0
-    inc  r0
-    sts  data_millis+0, r0
-    brne timer0_compa_isr_done
-
-    lds  r0, data_millis+1
-    inc  r0
-    sts  data_millis+1, r0
-    brne timer0_compa_isr_done
-
-    lds  r0, data_millis+2
-    inc  r0
-    sts  data_millis+2, r0
-    brne timer0_compa_isr_done
-
-    lds  r0, data_millis+3
-    inc  r0
-    sts  data_millis+3, r0
-
-timer0_compa_isr_done:
-    ; Divide milliseconds by four without using another native register.
-    ; INC/DEC implements saturation without needing an upper register.
-    lds  r0, data_audio_divider
-    inc  r0
-    sts  data_audio_divider, r0
-    sbrc r0, 2
-    rjmp timer0_audio_tick
-timer0_audio_done:
-    pop  r0
-    out  SREG, r0
-    pop  r0
-    reti
-
-timer0_audio_tick:
-    clr  r0 ; r2 can hold a temporary inside native libm
-    sts  data_audio_divider, r0
-    lds  r0, data_audio_ticks_pending
-    inc  r0
-    breq timer0_audio_done
-    sts  data_audio_ticks_pending, r0
-    rjmp timer0_audio_done
-
-; Synthesis owns phase/LFSR state. Save precisely r0, r24:r26 and SREG.
-; Do not assume r2 is zero inside native libm. No SPI, sequencing, or calls.
-.macro audio_pulse channel
-    lds  r24, data_audio_phases+2*\channel
-    lds  r25, data_audio_phases+2*\channel+1
-    lds  r0, data_audio_controls+3*\channel
-    add  r24, r0
-    lds  r0, data_audio_controls+3*\channel+1
-    adc  r25, r0
-    sts  data_audio_phases+2*\channel, r24
-    sts  data_audio_phases+2*\channel+1, r25
-    lds  r0, data_audio_controls+3*\channel+2
-    sbrc r25, 7
-    neg  r0
-    add  r26, r0
-.endm
-
-timer3_compa_isr:
-    push r0
-    in   r0, SREG
-    push r0
-    push r24
-    push r25
-    push r26
-    ldi  r26, 128
-    audio_pulse 0
-    audio_pulse 1
-    audio_pulse 2
-
-    lds  r24, data_audio_phases+6
-    lds  r25, data_audio_phases+7
-    lds  r0, data_audio_controls+9
-    add  r24, r0
-    lds  r0, data_audio_controls+10
-    adc  r25, r0
-    sts  data_audio_phases+6, r24
-    sts  data_audio_phases+7, r25
-    lds  r25, data_audio_noise
-    brcc .Laudio_noise_hold
-    lsr  r25
-    brcc .Laudio_noise_store
-    ldi  r24, 0xb8
-    eor  r25, r24
-.Laudio_noise_store:
-    sts  data_audio_noise, r25
-.Laudio_noise_hold:
-    lds  r0, data_audio_controls+11
-    sbrc r25, 0
-    neg  r0
-    add  r26, r0
-    ; TC4H is shared by every 10-bit Timer4 register. Write it explicitly.
-    clr  r24
-    sts  TC4H, r24
-    sts  OCR4A, r26
-    pop  r26
-    pop  r25
-    pop  r24
-    pop  r0
-    out  SREG, r0
-    pop  r0
-    reti
-
-
 reset_handler:
-    ; Keep the vector area small. The complete startup path is placed after
-    ; the fixed-stride dispatch table so it cannot collide with .org 0x0200.
     jmp startup_func
+
+; Four 64-sample signed waveforms occupy the page before primary dispatch.
+; Phase high bits select a sample; the prepared control supplies bank bits.
+.org 0x0100
+audio_waveforms:
+audio_waveform_square:
+    .byte 127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127
+    .byte 127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127
+    .byte -127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127
+    .byte -127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127
+audio_waveform_triangle:
+    .byte 0,8,16,24,32,40,48,56,64,71,79,87,95,103,111,119
+    .byte 127,119,111,103,95,87,79,71,64,56,48,40,32,24,16,8
+    .byte 0,-8,-16,-24,-32,-40,-48,-56,-64,-71,-79,-87,-95,-103,-111,-119
+    .byte -127,-119,-111,-103,-95,-87,-79,-71,-64,-56,-48,-40,-32,-24,-16,-8
+audio_waveform_sawtooth:
+    .byte -127,-123,-119,-115,-111,-107,-103,-99,-95,-91,-87,-83,-79,-75,-71,-67
+    .byte -62,-58,-54,-50,-46,-42,-38,-34,-30,-26,-22,-18,-14,-10,-6,-2
+    .byte 2,6,10,14,18,22,26,30,34,38,42,46,50,54,58,62
+    .byte 67,71,75,79,83,87,91,95,99,103,107,111,115,119,123,127
+audio_waveform_sine:
+    .byte 0,12,25,37,49,60,71,81,90,98,106,112,117,122,125,126
+    .byte 127,126,125,122,117,112,106,98,90,81,71,60,49,37,25,12
+    .byte 0,-12,-25,-37,-49,-60,-71,-81,-90,-98,-106,-112,-117,-122,-125,-126
+    .byte -127,-126,-125,-122,-117,-112,-106,-98,-90,-81,-71,-60,-49,-37,-25,-12
+audio_waveforms_end:
+.if (audio_waveforms_end - audio_waveforms) != 256
+    .error "waveforms must occupy exactly one 256-byte page"
+.endif
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -16490,11 +16405,8 @@ audio_advance:
     rjmp .Laudio_channel_next
     rcall audio_byte
     brcs audio_stream_end
-    sbrs r19, 0
-    rjmp .Laudio_note
-    cpi  r24, 32
-    brlo .Laudio_value_store
-    rjmp audio_stream_end
+    sbrc r19, 0
+    rjmp .Laudio_value_store ; packed control; bit 7 is ignored by commit
 .Laudio_note:
     cpi  r24, 0x80
     breq .Laudio_value_store
@@ -16505,7 +16417,7 @@ audio_advance:
     mov  r30, r18
     ldi  r31, hi8(data_audio_begin)
     add  r30, r19
-    st   Z, r24 ; note index/off or raw volume, selected by offset parity
+    st   Z, r24 ; note index/off or packed volume/waveform
 .Laudio_channel_next:
     subi r19, -2
     cpi  r19, 8
@@ -16595,6 +16507,8 @@ audio_commit:
     lpm  r25, Z
     st   X+, r24
     st   X+, r25
+    mov  r24, r21 ; retain packed waveform bits, ignoring bit 7
+    andi r21, 31
     ; FMUL doubles the product; two more shifts leave product/32 in r1.
     ; Amplitudes 0..31 and master 0..32 keep the shifted product within 16 bits.
     fmul r21, r20
@@ -16602,6 +16516,13 @@ audio_commit:
     rol  r1
     lsl  r0
     rol  r1
+    cpi  r18, 6
+    breq .Laudio_stage_amplitude ; noise uses the ordinary amplitude
+    andi r24, 0x60
+    lsl  r24 ; waveform bank in bits 7..6
+    lsl  r1  ; twice amplitude in bits 5..0
+    or   r1, r24
+.Laudio_stage_amplitude:
     st   X+, r1
     rjmp .Laudio_stage_next
 .Laudio_stage_silent:
@@ -16853,6 +16774,133 @@ audio_enable:
     sts  data_audio_sfx+AUDIO_STATUS, r24
     rcall audio_enable
     rjmp .Laudio_command_commit
+
+; Timer0 compare-A fires once per millisecond. Preserve the interrupted native
+; state; the VM register file may be live in any AVR register when this runs.
+timer0_compa_isr:
+    push r0
+    in   r0, SREG
+    push r0
+
+    lds  r0, data_millis+0
+    inc  r0
+    sts  data_millis+0, r0
+    brne timer0_compa_isr_done
+
+    lds  r0, data_millis+1
+    inc  r0
+    sts  data_millis+1, r0
+    brne timer0_compa_isr_done
+
+    lds  r0, data_millis+2
+    inc  r0
+    sts  data_millis+2, r0
+    brne timer0_compa_isr_done
+
+    lds  r0, data_millis+3
+    inc  r0
+    sts  data_millis+3, r0
+
+timer0_compa_isr_done:
+    ; Divide milliseconds by four without using another native register.
+    ; INC/DEC implements saturation without needing an upper register.
+    lds  r0, data_audio_divider
+    inc  r0
+    sts  data_audio_divider, r0
+    sbrc r0, 2
+    rjmp timer0_audio_tick
+timer0_audio_done:
+    pop  r0
+    out  SREG, r0
+    pop  r0
+    reti
+
+timer0_audio_tick:
+    clr  r0 ; r2 can hold a temporary inside native libm
+    sts  data_audio_divider, r0
+    lds  r0, data_audio_ticks_pending
+    inc  r0
+    breq timer0_audio_done
+    sts  data_audio_ticks_pending, r0
+    rjmp timer0_audio_done
+
+; Synthesis saves r0:r1, r24:r26, Z and SREG. r2 may be borrowed by libm.
+; Tonal control: waveform bank in bits 7..6, twice amplitude in bits 5..0.
+; Signed samples are -127..127; round(sample * twice_amplitude / 256).
+; No SPI, sequencing, calls, or waveform-dependent branches.
+.macro audio_wave channel
+    lds  r24, data_audio_phases+2*\channel
+    lds  r25, data_audio_phases+2*\channel+1
+    lds  r0, data_audio_controls+3*\channel
+    add  r24, r0
+    lds  r0, data_audio_controls+3*\channel+1
+    adc  r25, r0
+    sts  data_audio_phases+2*\channel, r24
+    sts  data_audio_phases+2*\channel+1, r25
+    lds  r24, data_audio_controls+3*\channel+2
+    mov  r30, r24
+    andi r30, 0xc0
+    lsr  r25
+    lsr  r25
+    or   r30, r25
+    andi r24, 0x3f
+    lpm  r25, Z
+    muls r25, r24
+    lsl  r0
+    adc  r26, r1
+.endm
+
+timer3_compa_isr:
+    push r0
+    in   r0, SREG
+    push r0
+    push r1
+    push r24
+    push r25
+    push r26
+    push r30
+    push r31
+    ldi  r31, hi8(audio_waveforms)
+    ldi  r26, 128
+    audio_wave 0
+    audio_wave 1
+    audio_wave 2
+
+    lds  r24, data_audio_phases+6
+    lds  r25, data_audio_phases+7
+    lds  r0, data_audio_controls+9
+    add  r24, r0
+    lds  r0, data_audio_controls+10
+    adc  r25, r0
+    sts  data_audio_phases+6, r24
+    sts  data_audio_phases+7, r25
+    lds  r25, data_audio_noise
+    brcc .Laudio_noise_hold
+    lsr  r25
+    brcc .Laudio_noise_store
+    ldi  r24, 0xb8
+    eor  r25, r24
+.Laudio_noise_store:
+    sts  data_audio_noise, r25
+.Laudio_noise_hold:
+    lds  r0, data_audio_controls+11
+    sbrc r25, 0
+    neg  r0
+    add  r26, r0
+    ; TC4H is shared by every 10-bit Timer4 register; write it explicitly.
+    clr  r24
+    sts  TC4H, r24
+    sts  OCR4A, r26
+    pop  r31
+    pop  r30
+    pop  r26
+    pop  r25
+    pop  r24
+    pop  r1
+    pop  r0
+    out  SREG, r0
+    pop  r0
+    reti
 
 audio_notes:
     ; round(440 * 2^((MIDI-69)/12) * 65536 / 7812.5), MIDI 24..95.

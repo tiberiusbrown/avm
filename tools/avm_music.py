@@ -5,6 +5,8 @@ import json
 import re
 from pathlib import Path
 
+WAVEFORMS = {"square": 0, "triangle": 1, "sawtooth": 2, "sine": 3}
+
 
 def note_number(value):
     if value is None:
@@ -42,7 +44,8 @@ def compile_song(song):
     """delta is in rows; row_ticks defaults to one 4 ms tick.
 
     Every event waits at least one tick. Long waits use Continue records;
-    note and volume changes share one packed-mask event.
+    Note and volume/waveform changes share one packed-mask event. The first
+    event initializes every owned channel, including channels starting silent.
     """
     mask = song.get("mask", 15)
     if not isinstance(mask, int) or not 1 <= mask <= 15:
@@ -51,6 +54,10 @@ def compile_song(song):
     period = song.get("row_ticks", 1)
     if not isinstance(period, int) or period < 1:
         raise ValueError("row_ticks must be a positive integer")
+    notes = [0x80] * 4
+    volumes = [24] * 4
+    waveforms = [0] * 4
+    first = True
     for event in song.get("events", []):
         period = event.get("row_ticks", period)
         if not isinstance(period, int) or period < 1:
@@ -66,15 +73,29 @@ def compile_song(song):
                 raise ValueError("channel outside ownership mask")
             if not isinstance(update, dict):
                 update = {"note": update}
-            if set(update) - {"note", "volume"}:
+            if set(update) - {"note", "volume", "waveform"}:
                 raise ValueError("unknown channel field")
             if "volume" in update:
                 v = update["volume"]
                 if not isinstance(v, int) or not 0 <= v <= 31:
                     raise ValueError("channel volume must be 0..31")
-                changes[1][channel] = v
+                volumes[channel] = v
+            if "waveform" in update:
+                wave = update["waveform"]
+                if not isinstance(wave, str) or wave not in WAVEFORMS:
+                    raise ValueError("waveform must be square, triangle, sawtooth, or sine")
+                waveforms[channel] = WAVEFORMS[wave]
+            if "volume" in update or "waveform" in update:
+                changes[1][channel] = (waveforms[channel] << 5) | volumes[channel]
             if "note" in update:
-                changes[0][channel] = note_number(update["note"])
+                notes[channel] = note_number(update["note"])
+                changes[0][channel] = notes[channel]
+        if first:
+            for channel in range(4):
+                if mask & (1 << channel):
+                    changes[0][channel] = notes[channel]
+                    changes[1][channel] = (waveforms[channel] << 5) | volumes[channel]
+            first = False
         packed = sum(1 << c for c in changes[0]) | sum(16 << c for c in changes[1])
         payload = bytes([packed]) + bytes(changes[p][c] for p in range(2) for c in sorted(changes[p]))
         emit_event(output, ticks, payload if packed else bytes([0, 0]))

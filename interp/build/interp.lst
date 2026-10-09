@@ -3,14 +3,17 @@ C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.elf:     file format elf
 
 SYMBOL TABLE:
 00000000 l    d  .text	00000000 .text
-000001dc l       .text	00000000 reset_handler
+000000ae l       .text	00000000 reset_handler
 000000ac l       .text	00000000 default_isr
-000000ae l       .text	00000000 timer0_compa_isr
-0000010c l       .text	00000000 timer3_compa_isr
-000000e2 l       .text	00000000 timer0_compa_isr_done
-000000f8 l       .text	00000000 timer0_audio_tick
-000000f0 l       .text	00000000 timer0_audio_done
+000070a4 l       .text	00000000 timer0_compa_isr
+00007102 l       .text	00000000 timer3_compa_isr
 00003684 l       .text	00000000 startup_func
+00000100 l       .text	00000000 audio_waveforms
+00000100 l       .text	00000000 audio_waveform_square
+00000140 l       .text	00000000 audio_waveform_triangle
+00000180 l       .text	00000000 audio_waveform_sawtooth
+000001c0 l       .text	00000000 audio_waveform_sine
+00000200 l       .text	00000000 audio_waveforms_end
 00000200 l       .text	00000000 primary_00
 00000d84 l       .text	00000000 cluster_tail_17_delay_1
 00000208 l       .text	00000000 primary_01
@@ -441,7 +444,7 @@ SYMBOL TABLE:
 00001064 l       .text	00000000 sys_audio_func
 00001060 l       .text	00000000 sys_dispatch_table_end
 00004a24 l       .text	00000000 sys_memcpy_impl
-00006ec4 l       .text	00000000 sys_audio_impl
+00006ece l       .text	00000000 sys_audio_impl
 00004a50 l       .text	00000000 sys_memcpy_p_impl
 00004a78 l       .text	00000000 sys_memset_impl
 000049de l       .text	00000000 sys_memmove_impl
@@ -674,7 +677,7 @@ SYMBOL TABLE:
 000037da l       .text	00000000 startup_copy_data_loop
 000037ee l       .text	00000000 startup_clear_framebuffer_loop
 00003818 l       .text	00000000 timer0_init_func
-0000712a l       .text	00000000 audio_init_func
+0000729a l       .text	00000000 audio_init_func
 00003816 l       .text	00000000 startup_invalid_image_loop
 00003876 l       .text	00000000 startup_try_tail_fail
 00003878 l       .text	00000000 startup_try_tail_fail_disabled
@@ -847,17 +850,18 @@ SYMBOL TABLE:
 00006ba6 l       .text	00000000 format_ftoa_base10
 00006b4c l       .text	00000000 format_ftoa_powr10
 00006d2c l       .text	00000000 audio_advance
-00006e00 l       .text	00000000 audio_commit
+00006dfa l       .text	00000000 audio_commit
 00006c9c l       .text	00000000 audio_byte
 00006d1e l       .text	00000000 audio_delta
-00006dd0 l       .text	00000000 audio_stream_end
-00006ddc l       .text	00000000 audio_rewind
-0000709a l       .text	00000000 audio_notes
-00006e88 l       .text	00000000 audio_commit_atomic_begin
-00006ec0 l       .text	00000000 audio_commit_atomic_end
-0000701a l       .text	00000000 audio_enable
-000001ba l       .text	00000000 .Laudio_noise_hold
-000001b6 l       .text	00000000 .Laudio_noise_store
+00006dca l       .text	00000000 audio_stream_end
+00006dd6 l       .text	00000000 audio_rewind
+0000720a l       .text	00000000 audio_notes
+00006e92 l       .text	00000000 audio_commit_atomic_begin
+00006eca l       .text	00000000 audio_commit_atomic_end
+00007024 l       .text	00000000 audio_enable
+000070d8 l       .text	00000000 timer0_compa_isr_done
+000070ee l       .text	00000000 timer0_audio_tick
+000070e6 l       .text	00000000 timer0_audio_done
 00000a66 l       .text	00000000 .Lff_check_extended
 00000aa4 l       .text	00000000 .Lff_direct_round_prepare
 00000ac4 l       .text	00000000 .Lff_direct_minmax_prepare
@@ -928,42 +932,42 @@ SYMBOL TABLE:
 00001660 l       .text	00000000 .Lsys_display_wait_fx
 00001682 l       .text	00000000 .Ldisplay_ssd_delay
 0000167a l       .text	00000000 .Ldisplay_ssd_loop
-000032ac l       .text	00000000 .Lfa_shl_no8_1633
-000032b6 l       .text	00000000 .Lfa_shl_done_1633
-000032ae l       .text	00000000 .Lfa_shl_loop_1633
-000032c4 l       .text	00000000 .Lfa_shl_no8_1634
-000032ce l       .text	00000000 .Lfa_shl_done_1634
-000032c6 l       .text	00000000 .Lfa_shl_loop_1634
-000032dc l       .text	00000000 .Lfa_shl_no8_1635
-000032e6 l       .text	00000000 .Lfa_shl_done_1635
-000032de l       .text	00000000 .Lfa_shl_loop_1635
-000032f4 l       .text	00000000 .Lfa_shl_no8_1636
-000032fe l       .text	00000000 .Lfa_shl_done_1636
-000032f6 l       .text	00000000 .Lfa_shl_loop_1636
-0000330c l       .text	00000000 .Lfa_lsr_no8_1637
-00003316 l       .text	00000000 .Lfa_lsr_done_1637
-0000330e l       .text	00000000 .Lfa_lsr_loop_1637
-00003324 l       .text	00000000 .Lfa_lsr_no8_1638
-0000332e l       .text	00000000 .Lfa_lsr_done_1638
-00003326 l       .text	00000000 .Lfa_lsr_loop_1638
-0000333c l       .text	00000000 .Lfa_lsr_no8_1639
-00003346 l       .text	00000000 .Lfa_lsr_done_1639
-0000333e l       .text	00000000 .Lfa_lsr_loop_1639
-00003354 l       .text	00000000 .Lfa_lsr_no8_1640
-0000335e l       .text	00000000 .Lfa_lsr_done_1640
-00003356 l       .text	00000000 .Lfa_lsr_loop_1640
-0000336e l       .text	00000000 .Lfa_asr_no8_1641
-00003378 l       .text	00000000 .Lfa_asr_done_1641
-00003370 l       .text	00000000 .Lfa_asr_loop_1641
-00003388 l       .text	00000000 .Lfa_asr_no8_1642
-00003392 l       .text	00000000 .Lfa_asr_done_1642
-0000338a l       .text	00000000 .Lfa_asr_loop_1642
-000033a2 l       .text	00000000 .Lfa_asr_no8_1643
-000033ac l       .text	00000000 .Lfa_asr_done_1643
-000033a4 l       .text	00000000 .Lfa_asr_loop_1643
-000033bc l       .text	00000000 .Lfa_asr_no8_1644
-000033c6 l       .text	00000000 .Lfa_asr_done_1644
-000033be l       .text	00000000 .Lfa_asr_loop_1644
+000032ac l       .text	00000000 .Lfa_shl_no8_1630
+000032b6 l       .text	00000000 .Lfa_shl_done_1630
+000032ae l       .text	00000000 .Lfa_shl_loop_1630
+000032c4 l       .text	00000000 .Lfa_shl_no8_1631
+000032ce l       .text	00000000 .Lfa_shl_done_1631
+000032c6 l       .text	00000000 .Lfa_shl_loop_1631
+000032dc l       .text	00000000 .Lfa_shl_no8_1632
+000032e6 l       .text	00000000 .Lfa_shl_done_1632
+000032de l       .text	00000000 .Lfa_shl_loop_1632
+000032f4 l       .text	00000000 .Lfa_shl_no8_1633
+000032fe l       .text	00000000 .Lfa_shl_done_1633
+000032f6 l       .text	00000000 .Lfa_shl_loop_1633
+0000330c l       .text	00000000 .Lfa_lsr_no8_1634
+00003316 l       .text	00000000 .Lfa_lsr_done_1634
+0000330e l       .text	00000000 .Lfa_lsr_loop_1634
+00003324 l       .text	00000000 .Lfa_lsr_no8_1635
+0000332e l       .text	00000000 .Lfa_lsr_done_1635
+00003326 l       .text	00000000 .Lfa_lsr_loop_1635
+0000333c l       .text	00000000 .Lfa_lsr_no8_1636
+00003346 l       .text	00000000 .Lfa_lsr_done_1636
+0000333e l       .text	00000000 .Lfa_lsr_loop_1636
+00003354 l       .text	00000000 .Lfa_lsr_no8_1637
+0000335e l       .text	00000000 .Lfa_lsr_done_1637
+00003356 l       .text	00000000 .Lfa_lsr_loop_1637
+0000336e l       .text	00000000 .Lfa_asr_no8_1638
+00003378 l       .text	00000000 .Lfa_asr_done_1638
+00003370 l       .text	00000000 .Lfa_asr_loop_1638
+00003388 l       .text	00000000 .Lfa_asr_no8_1639
+00003392 l       .text	00000000 .Lfa_asr_done_1639
+0000338a l       .text	00000000 .Lfa_asr_loop_1639
+000033a2 l       .text	00000000 .Lfa_asr_no8_1640
+000033ac l       .text	00000000 .Lfa_asr_done_1640
+000033a4 l       .text	00000000 .Lfa_asr_loop_1640
+000033bc l       .text	00000000 .Lfa_asr_no8_1641
+000033c6 l       .text	00000000 .Lfa_asr_done_1641
+000033be l       .text	00000000 .Lfa_asr_loop_1641
 000036c0 l       .text	00000000 .L11
 0000373c l       .text	00000000 .L12
 00003762 l       .text	00000000 .L13
@@ -1281,10 +1285,10 @@ SYMBOL TABLE:
 00004d90 l       .text	00000000 .Ltext_prepared_low_nonoverwrite
 00004d9a l       .text	00000000 .Ltext_prepared_select_self
 00004da0 l       .text	00000000 .Ltext_prepared_store_nonoverwrite_dispatch
-00004dba l       .text	00000000 .Lsprite_overwrite_kind_1852
-00004dd2 l       .text	00000000 .Lsprite_overwrite_top_1852
-00004dc6 l       .text	00000000 .Lsprite_overwrite_middle_1852
-00004dd8 l       .text	00000000 .Lsprite_overwrite_bottom_1852
+00004dba l       .text	00000000 .Lsprite_overwrite_kind_1849
+00004dd2 l       .text	00000000 .Lsprite_overwrite_top_1849
+00004dc6 l       .text	00000000 .Lsprite_overwrite_middle_1849
+00004dd8 l       .text	00000000 .Lsprite_overwrite_bottom_1849
 00004ecc l       .text	00000000 .Lsprite_middle_overwrite_partial
 00004e8e l       .text	00000000 .Lsprite_middle_overwrite_full
 00004e4e l       .text	00000000 .Lsprite_top_overwrite_partial
@@ -1292,15 +1296,15 @@ SYMBOL TABLE:
 00004e6e l       .text	00000000 .Lsprite_bottom_overwrite_partial
 00004e34 l       .text	00000000 .Lsprite_bottom_overwrite_full
 00004ef4 l       .text	00000000 .Lsprite_top_plus_full
-00004dea l       .text	00000000 .Lsprite_full_middle_1853
+00004dea l       .text	00000000 .Lsprite_full_middle_1850
 00004f1e l       .text	00000000 .Lsprite_bottom_plus_full
 00004f48 l       .text	00000000 .Lsprite_middle_plus_full
 00004f76 l       .text	00000000 .Lsprite_top_self_full
-00004dfe l       .text	00000000 .Lsprite_full_middle_1854
+00004dfe l       .text	00000000 .Lsprite_full_middle_1851
 00004f8c l       .text	00000000 .Lsprite_bottom_self_full
 00004fa2 l       .text	00000000 .Lsprite_middle_self_full
 00004fbc l       .text	00000000 .Lsprite_top_erase_full
-00004e12 l       .text	00000000 .Lsprite_full_middle_1855
+00004e12 l       .text	00000000 .Lsprite_full_middle_1852
 00004fd6 l       .text	00000000 .Lsprite_bottom_erase_full
 00004ff0 l       .text	00000000 .Lsprite_middle_erase_full
 00004e1a l       .text	00000000 .Lsprite_top_overwrite_full_loop
@@ -1683,52 +1687,54 @@ SYMBOL TABLE:
 00006d4a l       .text	00000000 .Laudio_event
 00006d52 l       .text	00000000 .L166
 00006d64 l       .text	00000000 .L167
-00006dc0 l       .text	00000000 .Laudio_next_delta
-00006dcc l       .text	00000000 .Laudio_loop
+00006dba l       .text	00000000 .Laudio_next_delta
+00006dc6 l       .text	00000000 .Laudio_loop
 00006d8c l       .text	00000000 .Laudio_volumes_only
 00006d90 l       .text	00000000 .Laudio_channel
-00006db4 l       .text	00000000 .Laudio_channel_next
-00006da2 l       .text	00000000 .Laudio_note
-00006dac l       .text	00000000 .Laudio_value_store
-00006dbc l       .text	00000000 .L168
+00006dae l       .text	00000000 .Laudio_channel_next
+00006da6 l       .text	00000000 .Laudio_value_store
+00006db6 l       .text	00000000 .L168
 00006d2e l       .text	00000000 .Laudio_advance_again
-00006e3a l       .text	00000000 .L169
-00006e6a l       .text	00000000 .Laudio_stage_silent
-00006e70 l       .text	00000000 .Laudio_stage_next
-00006e26 l       .text	00000000 .Laudio_stage
-00006e88 l       .text	00000000 .L170
-00006e9c l       .text	00000000 .L218
-00006ea8 l       .text	00000000 .L219
-00006eb4 l       .text	00000000 .L220
-00006ec0 l       .text	00000000 .L221
-00006ee6 l       .text	00000000 .L171
-00006f50 l       .text	00000000 .Laudio_command
-00006f4c l       .text	00000000 .Laudio_start_bad
-00007006 l       .text	00000000 .Laudio_command_commit
-00006f78 l       .text	00000000 .Laudio_stop_music
-00006f7e l       .text	00000000 .Laudio_pause
-00006f8c l       .text	00000000 .Laudio_resume
-00006f9c l       .text	00000000 .Laudio_master
-00006faa l       .text	00000000 .Laudio_enable_command
-00006fae l       .text	00000000 .Laudio_disable_command
-00006fd8 l       .text	00000000 .Laudio_stop_sfx
-00006fe2 l       .text	00000000 .Laudio_status
-00006f76 l       .text	00000000 .L172
-0000705c l       .text	00000000 .Laudio_tone
-00007008 l       .text	00000000 .Laudio_command_done
-00006f88 l       .text	00000000 .L173
-00006f96 l       .text	00000000 .Laudio_set_status
-00006fa4 l       .text	00000000 .L174
-00006ff0 l       .text	00000000 .L175
-0000705a l       .text	00000000 .L176
-00007074 l       .text	00000000 .L177
-00007088 l       .text	00000000 .L222
-0000707e l       .text	00000000 .L178
-00007138 l       .text	00000000 .L179
-00007140 l       .text	00000000 .L180
+00006e34 l       .text	00000000 .L169
+00006e74 l       .text	00000000 .Laudio_stage_silent
+00006e70 l       .text	00000000 .Laudio_stage_amplitude
+00006e7a l       .text	00000000 .Laudio_stage_next
+00006e20 l       .text	00000000 .Laudio_stage
+00006e92 l       .text	00000000 .L170
+00006ea6 l       .text	00000000 .L218
+00006eb2 l       .text	00000000 .L219
+00006ebe l       .text	00000000 .L220
+00006eca l       .text	00000000 .L221
+00006ef0 l       .text	00000000 .L171
+00006f5a l       .text	00000000 .Laudio_command
+00006f56 l       .text	00000000 .Laudio_start_bad
+00007010 l       .text	00000000 .Laudio_command_commit
+00006f82 l       .text	00000000 .Laudio_stop_music
+00006f88 l       .text	00000000 .Laudio_pause
+00006f96 l       .text	00000000 .Laudio_resume
+00006fa6 l       .text	00000000 .Laudio_master
+00006fb4 l       .text	00000000 .Laudio_enable_command
+00006fb8 l       .text	00000000 .Laudio_disable_command
+00006fe2 l       .text	00000000 .Laudio_stop_sfx
+00006fec l       .text	00000000 .Laudio_status
+00006f80 l       .text	00000000 .L172
+00007066 l       .text	00000000 .Laudio_tone
+00007012 l       .text	00000000 .Laudio_command_done
+00006f92 l       .text	00000000 .L173
+00006fa0 l       .text	00000000 .Laudio_set_status
+00006fae l       .text	00000000 .L174
+00006ffa l       .text	00000000 .L175
+00007064 l       .text	00000000 .L176
+0000707e l       .text	00000000 .L177
+00007092 l       .text	00000000 .L222
+00007088 l       .text	00000000 .L178
+000071e2 l       .text	00000000 .Laudio_noise_hold
+000071de l       .text	00000000 .Laudio_noise_store
+000072a8 l       .text	00000000 .L179
+000072b0 l       .text	00000000 .L180
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
-000071b0 g       .text	00000000 _etext
+00007320 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 00004b60 g       .text	00000000 draw_bitmap_seek_func
@@ -1745,7 +1751,7 @@ SYMBOL TABLE:
 Disassembly of section .text:
 
 00000000 <__vectors>:
-       0:	0c 94 ee 00 	jmp	0x1dc	; 0x1dc <reset_handler>
+       0:	0c 94 57 00 	jmp	0xae	; 0xae <reset_handler>
        4:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
        8:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
        c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
@@ -1766,7 +1772,7 @@ Disassembly of section .text:
       48:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       4c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       50:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
-      54:	0c 94 57 00 	jmp	0xae	; 0xae <timer0_compa_isr>
+      54:	0c 94 52 38 	jmp	0x70a4	; 0x70a4 <timer0_compa_isr>
       58:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       5c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       60:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
@@ -1777,7 +1783,7 @@ Disassembly of section .text:
       74:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       78:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       7c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
-      80:	0c 94 86 00 	jmp	0x10c	; 0x10c <timer3_compa_isr>
+      80:	0c 94 81 38 	jmp	0x7102	; 0x7102 <timer3_compa_isr>
       84:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       88:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
       8c:	0c 94 56 00 	jmp	0xac	; 0xac <default_isr>
@@ -1792,144 +1798,183 @@ Disassembly of section .text:
 000000ac <default_isr>:
       ac:	ff cf       	rjmp	.-2      	; 0xac <default_isr>
 
-000000ae <timer0_compa_isr>:
-      ae:	0f 92       	push	r0
-      b0:	0f b6       	in	r0, 0x3f	; 63
-      b2:	0f 92       	push	r0
-      b4:	00 90 05 0a 	lds	r0, 0x0A05	; 0x800a05 <__DATA_REGION_ORIGIN__+0x9a5>
-      b8:	03 94       	inc	r0
-      ba:	00 92 05 0a 	sts	0x0A05, r0	; 0x800a05 <__DATA_REGION_ORIGIN__+0x9a5>
-      be:	89 f4       	brne	.+34     	; 0xe2 <timer0_compa_isr_done>
-      c0:	00 90 06 0a 	lds	r0, 0x0A06	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
-      c4:	03 94       	inc	r0
-      c6:	00 92 06 0a 	sts	0x0A06, r0	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
-      ca:	59 f4       	brne	.+22     	; 0xe2 <timer0_compa_isr_done>
-      cc:	00 90 07 0a 	lds	r0, 0x0A07	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
-      d0:	03 94       	inc	r0
-      d2:	00 92 07 0a 	sts	0x0A07, r0	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
-      d6:	29 f4       	brne	.+10     	; 0xe2 <timer0_compa_isr_done>
-      d8:	00 90 08 0a 	lds	r0, 0x0A08	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
-      dc:	03 94       	inc	r0
-      de:	00 92 08 0a 	sts	0x0A08, r0	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
+000000ae <reset_handler>:
+      ae:	0c 94 42 1b 	jmp	0x3684	; 0x3684 <startup_func>
+      b2:	00 00       	nop
+      b4:	00 00       	nop
+      b6:	00 00       	nop
+      b8:	00 00       	nop
+      ba:	00 00       	nop
+      bc:	00 00       	nop
+      be:	00 00       	nop
+      c0:	00 00       	nop
+      c2:	00 00       	nop
+      c4:	00 00       	nop
+      c6:	00 00       	nop
+      c8:	00 00       	nop
+      ca:	00 00       	nop
+      cc:	00 00       	nop
+      ce:	00 00       	nop
+      d0:	00 00       	nop
+      d2:	00 00       	nop
+      d4:	00 00       	nop
+      d6:	00 00       	nop
+      d8:	00 00       	nop
+      da:	00 00       	nop
+      dc:	00 00       	nop
+      de:	00 00       	nop
+      e0:	00 00       	nop
+      e2:	00 00       	nop
+      e4:	00 00       	nop
+      e6:	00 00       	nop
+      e8:	00 00       	nop
+      ea:	00 00       	nop
+      ec:	00 00       	nop
+      ee:	00 00       	nop
+      f0:	00 00       	nop
+      f2:	00 00       	nop
+      f4:	00 00       	nop
+      f6:	00 00       	nop
+      f8:	00 00       	nop
+      fa:	00 00       	nop
+      fc:	00 00       	nop
+      fe:	00 00       	nop
 
-000000e2 <timer0_compa_isr_done>:
-      e2:	00 90 16 0a 	lds	r0, 0x0A16	; 0x800a16 <_end+0xa>
-      e6:	03 94       	inc	r0
-      e8:	00 92 16 0a 	sts	0x0A16, r0	; 0x800a16 <_end+0xa>
-      ec:	02 fc       	sbrc	r0, 2
-      ee:	04 c0       	rjmp	.+8      	; 0xf8 <timer0_audio_tick>
+00000100 <audio_waveform_square>:
+     100:	7f 7f       	andi	r23, 0xFF	; 255
+     102:	7f 7f       	andi	r23, 0xFF	; 255
+     104:	7f 7f       	andi	r23, 0xFF	; 255
+     106:	7f 7f       	andi	r23, 0xFF	; 255
+     108:	7f 7f       	andi	r23, 0xFF	; 255
+     10a:	7f 7f       	andi	r23, 0xFF	; 255
+     10c:	7f 7f       	andi	r23, 0xFF	; 255
+     10e:	7f 7f       	andi	r23, 0xFF	; 255
+     110:	7f 7f       	andi	r23, 0xFF	; 255
+     112:	7f 7f       	andi	r23, 0xFF	; 255
+     114:	7f 7f       	andi	r23, 0xFF	; 255
+     116:	7f 7f       	andi	r23, 0xFF	; 255
+     118:	7f 7f       	andi	r23, 0xFF	; 255
+     11a:	7f 7f       	andi	r23, 0xFF	; 255
+     11c:	7f 7f       	andi	r23, 0xFF	; 255
+     11e:	7f 7f       	andi	r23, 0xFF	; 255
+     120:	81 81       	ldd	r24, Z+1	; 0x01
+     122:	81 81       	ldd	r24, Z+1	; 0x01
+     124:	81 81       	ldd	r24, Z+1	; 0x01
+     126:	81 81       	ldd	r24, Z+1	; 0x01
+     128:	81 81       	ldd	r24, Z+1	; 0x01
+     12a:	81 81       	ldd	r24, Z+1	; 0x01
+     12c:	81 81       	ldd	r24, Z+1	; 0x01
+     12e:	81 81       	ldd	r24, Z+1	; 0x01
+     130:	81 81       	ldd	r24, Z+1	; 0x01
+     132:	81 81       	ldd	r24, Z+1	; 0x01
+     134:	81 81       	ldd	r24, Z+1	; 0x01
+     136:	81 81       	ldd	r24, Z+1	; 0x01
+     138:	81 81       	ldd	r24, Z+1	; 0x01
+     13a:	81 81       	ldd	r24, Z+1	; 0x01
+     13c:	81 81       	ldd	r24, Z+1	; 0x01
+     13e:	81 81       	ldd	r24, Z+1	; 0x01
 
-000000f0 <timer0_audio_done>:
-      f0:	0f 90       	pop	r0
-      f2:	0f be       	out	0x3f, r0	; 63
-      f4:	0f 90       	pop	r0
-      f6:	18 95       	reti
+00000140 <audio_waveform_triangle>:
+     140:	00 08       	sbc	r0, r0
+     142:	10 18       	sub	r1, r0
+     144:	20 28       	or	r2, r0
+     146:	30 38       	cpi	r19, 0x80	; 128
+     148:	40 47       	sbci	r20, 0x70	; 112
+     14a:	4f 57       	subi	r20, 0x7F	; 127
+     14c:	5f 67       	ori	r21, 0x7F	; 127
+     14e:	6f 77       	andi	r22, 0x7F	; 127
+     150:	7f 77       	andi	r23, 0x7F	; 127
+     152:	6f 67       	ori	r22, 0x7F	; 127
+     154:	5f 57       	subi	r21, 0x7F	; 127
+     156:	4f 47       	sbci	r20, 0x7F	; 127
+     158:	40 38       	cpi	r20, 0x80	; 128
+     15a:	30 28       	or	r3, r0
+     15c:	20 18       	sub	r2, r0
+     15e:	10 08       	sbc	r1, r0
+     160:	00 f8       	bld	r0, 0
+     162:	f0 e8       	ldi	r31, 0x80	; 128
+     164:	e0 d8       	rcall	.-3648   	; 0xfffff326 <__eeprom_end+0xff7ef326>
+     166:	d0 c8       	rjmp	.-3680   	; 0xfffff308 <__eeprom_end+0xff7ef308>
+     168:	c0 b9       	out	0x00, r28	; 0
+     16a:	b1 a9       	ldd	r27, Z+49	; 0x31
+     16c:	a1 99       	sbic	0x14, 1	; 20
+     16e:	91 89       	ldd	r25, Z+17	; 0x11
+     170:	81 89       	ldd	r24, Z+17	; 0x11
+     172:	91 99       	sbic	0x12, 1	; 18
+     174:	a1 a9       	ldd	r26, Z+49	; 0x31
+     176:	b1 b9       	out	0x01, r27	; 1
+     178:	c0 c8       	rjmp	.-3712   	; 0xfffff2fa <__eeprom_end+0xff7ef2fa>
+     17a:	d0 d8       	rcall	.-3680   	; 0xfffff31c <__eeprom_end+0xff7ef31c>
+     17c:	e0 e8       	ldi	r30, 0x80	; 128
+     17e:	f0 f8       	bld	r15, 0
 
-000000f8 <timer0_audio_tick>:
-      f8:	00 24       	eor	r0, r0
-      fa:	00 92 16 0a 	sts	0x0A16, r0	; 0x800a16 <_end+0xa>
-      fe:	00 90 15 0a 	lds	r0, 0x0A15	; 0x800a15 <_end+0x9>
-     102:	03 94       	inc	r0
-     104:	a9 f3       	breq	.-22     	; 0xf0 <timer0_audio_done>
-     106:	00 92 15 0a 	sts	0x0A15, r0	; 0x800a15 <_end+0x9>
-     10a:	f2 cf       	rjmp	.-28     	; 0xf0 <timer0_audio_done>
+00000180 <audio_waveform_sawtooth>:
+     180:	81 85       	ldd	r24, Z+9	; 0x09
+     182:	89 8d       	ldd	r24, Y+25	; 0x19
+     184:	91 95       	neg	r25
+     186:	99 9d       	mul	r25, r9
+     188:	a1 a5       	ldd	r26, Z+41	; 0x29
+     18a:	a9 ad       	ldd	r26, Y+57	; 0x39
+     18c:	b1 b5       	in	r27, 0x21	; 33
+     18e:	b9 bd       	out	0x29, r27	; 41
+     190:	c2 c6       	rjmp	.+3460   	; 0xf16 <branch_rel16_taken_func+0x6>
+     192:	ca ce       	rjmp	.-620    	; 0xffffff28 <__eeprom_end+0xff7eff28>
+     194:	d2 d6       	rcall	.+3492   	; 0xf3a <call8_rel8_func+0xa>
+     196:	da de       	rcall	.-588    	; 0xffffff4c <__eeprom_end+0xff7eff4c>
+     198:	e2 e6       	ldi	r30, 0x62	; 98
+     19a:	ea ee       	ldi	r30, 0xEA	; 234
+     19c:	f2 f6       	brpl	.-68     	; 0x15a <audio_waveform_triangle+0x1a>
+     19e:	fa fe       	.word	0xfefa	; ????
+     1a0:	02 06       	cpc	r0, r18
+     1a2:	0a 0e       	add	r0, r26
+     1a4:	12 16       	cp	r1, r18
+     1a6:	1a 1e       	adc	r1, r26
+     1a8:	22 26       	eor	r2, r18
+     1aa:	2a 2e       	mov	r2, r26
+     1ac:	32 36       	cpi	r19, 0x62	; 98
+     1ae:	3a 3e       	cpi	r19, 0xEA	; 234
+     1b0:	43 47       	sbci	r20, 0x73	; 115
+     1b2:	4b 4f       	sbci	r20, 0xFB	; 251
+     1b4:	53 57       	subi	r21, 0x73	; 115
+     1b6:	5b 5f       	subi	r21, 0xFB	; 251
+     1b8:	63 67       	ori	r22, 0x73	; 115
+     1ba:	6b 6f       	ori	r22, 0xFB	; 251
+     1bc:	73 77       	andi	r23, 0x73	; 115
+     1be:	7b 7f       	andi	r23, 0xFB	; 251
 
-0000010c <timer3_compa_isr>:
-     10c:	0f 92       	push	r0
-     10e:	0f b6       	in	r0, 0x3f	; 63
-     110:	0f 92       	push	r0
-     112:	8f 93       	push	r24
-     114:	9f 93       	push	r25
-     116:	af 93       	push	r26
-     118:	a0 e8       	ldi	r26, 0x80	; 128
-     11a:	80 91 24 0a 	lds	r24, 0x0A24	; 0x800a24 <_end+0x18>
-     11e:	90 91 25 0a 	lds	r25, 0x0A25	; 0x800a25 <_end+0x19>
-     122:	00 90 18 0a 	lds	r0, 0x0A18	; 0x800a18 <_end+0xc>
-     126:	80 0d       	add	r24, r0
-     128:	00 90 19 0a 	lds	r0, 0x0A19	; 0x800a19 <_end+0xd>
-     12c:	90 1d       	adc	r25, r0
-     12e:	80 93 24 0a 	sts	0x0A24, r24	; 0x800a24 <_end+0x18>
-     132:	90 93 25 0a 	sts	0x0A25, r25	; 0x800a25 <_end+0x19>
-     136:	00 90 1a 0a 	lds	r0, 0x0A1A	; 0x800a1a <_end+0xe>
-     13a:	97 fd       	sbrc	r25, 7
-     13c:	01 94       	neg	r0
-     13e:	a0 0d       	add	r26, r0
-     140:	80 91 26 0a 	lds	r24, 0x0A26	; 0x800a26 <_end+0x1a>
-     144:	90 91 27 0a 	lds	r25, 0x0A27	; 0x800a27 <_end+0x1b>
-     148:	00 90 1b 0a 	lds	r0, 0x0A1B	; 0x800a1b <_end+0xf>
-     14c:	80 0d       	add	r24, r0
-     14e:	00 90 1c 0a 	lds	r0, 0x0A1C	; 0x800a1c <_end+0x10>
-     152:	90 1d       	adc	r25, r0
-     154:	80 93 26 0a 	sts	0x0A26, r24	; 0x800a26 <_end+0x1a>
-     158:	90 93 27 0a 	sts	0x0A27, r25	; 0x800a27 <_end+0x1b>
-     15c:	00 90 1d 0a 	lds	r0, 0x0A1D	; 0x800a1d <_end+0x11>
-     160:	97 fd       	sbrc	r25, 7
-     162:	01 94       	neg	r0
-     164:	a0 0d       	add	r26, r0
-     166:	80 91 28 0a 	lds	r24, 0x0A28	; 0x800a28 <_end+0x1c>
-     16a:	90 91 29 0a 	lds	r25, 0x0A29	; 0x800a29 <_end+0x1d>
-     16e:	00 90 1e 0a 	lds	r0, 0x0A1E	; 0x800a1e <_end+0x12>
-     172:	80 0d       	add	r24, r0
-     174:	00 90 1f 0a 	lds	r0, 0x0A1F	; 0x800a1f <_end+0x13>
-     178:	90 1d       	adc	r25, r0
-     17a:	80 93 28 0a 	sts	0x0A28, r24	; 0x800a28 <_end+0x1c>
-     17e:	90 93 29 0a 	sts	0x0A29, r25	; 0x800a29 <_end+0x1d>
-     182:	00 90 20 0a 	lds	r0, 0x0A20	; 0x800a20 <_end+0x14>
-     186:	97 fd       	sbrc	r25, 7
-     188:	01 94       	neg	r0
-     18a:	a0 0d       	add	r26, r0
-     18c:	80 91 2a 0a 	lds	r24, 0x0A2A	; 0x800a2a <_end+0x1e>
-     190:	90 91 2b 0a 	lds	r25, 0x0A2B	; 0x800a2b <_end+0x1f>
-     194:	00 90 21 0a 	lds	r0, 0x0A21	; 0x800a21 <_end+0x15>
-     198:	80 0d       	add	r24, r0
-     19a:	00 90 22 0a 	lds	r0, 0x0A22	; 0x800a22 <_end+0x16>
-     19e:	90 1d       	adc	r25, r0
-     1a0:	80 93 2a 0a 	sts	0x0A2A, r24	; 0x800a2a <_end+0x1e>
-     1a4:	90 93 2b 0a 	sts	0x0A2B, r25	; 0x800a2b <_end+0x1f>
-     1a8:	90 91 2c 0a 	lds	r25, 0x0A2C	; 0x800a2c <_end+0x20>
-     1ac:	30 f4       	brcc	.+12     	; 0x1ba <.Laudio_noise_hold>
-     1ae:	96 95       	lsr	r25
-     1b0:	10 f4       	brcc	.+4      	; 0x1b6 <.Laudio_noise_store>
-     1b2:	88 eb       	ldi	r24, 0xB8	; 184
-     1b4:	98 27       	eor	r25, r24
-
-000001b6 <.Laudio_noise_store>:
-     1b6:	90 93 2c 0a 	sts	0x0A2C, r25	; 0x800a2c <_end+0x20>
-
-000001ba <.Laudio_noise_hold>:
-     1ba:	00 90 23 0a 	lds	r0, 0x0A23	; 0x800a23 <_end+0x17>
-     1be:	90 fd       	sbrc	r25, 0
-     1c0:	01 94       	neg	r0
-     1c2:	a0 0d       	add	r26, r0
-     1c4:	88 27       	eor	r24, r24
-     1c6:	80 93 bf 00 	sts	0x00BF, r24	; 0x8000bf <__DATA_REGION_ORIGIN__+0x5f>
-     1ca:	a0 93 cf 00 	sts	0x00CF, r26	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
-     1ce:	af 91       	pop	r26
-     1d0:	9f 91       	pop	r25
-     1d2:	8f 91       	pop	r24
-     1d4:	0f 90       	pop	r0
-     1d6:	0f be       	out	0x3f, r0	; 63
-     1d8:	0f 90       	pop	r0
-     1da:	18 95       	reti
-
-000001dc <reset_handler>:
-     1dc:	0c 94 42 1b 	jmp	0x3684	; 0x3684 <startup_func>
-     1e0:	00 00       	nop
-     1e2:	00 00       	nop
-     1e4:	00 00       	nop
-     1e6:	00 00       	nop
-     1e8:	00 00       	nop
-     1ea:	00 00       	nop
-     1ec:	00 00       	nop
-     1ee:	00 00       	nop
-     1f0:	00 00       	nop
-     1f2:	00 00       	nop
-     1f4:	00 00       	nop
-     1f6:	00 00       	nop
-     1f8:	00 00       	nop
-     1fa:	00 00       	nop
-     1fc:	00 00       	nop
-     1fe:	00 00       	nop
+000001c0 <audio_waveform_sine>:
+     1c0:	00 0c       	add	r0, r0
+     1c2:	19 25       	eor	r17, r9
+     1c4:	31 3c       	cpi	r19, 0xC1	; 193
+     1c6:	47 51       	subi	r20, 0x17	; 23
+     1c8:	5a 62       	ori	r21, 0x2A	; 42
+     1ca:	6a 70       	andi	r22, 0x0A	; 10
+     1cc:	75 7a       	andi	r23, 0xA5	; 165
+     1ce:	7d 7e       	andi	r23, 0xED	; 237
+     1d0:	7f 7e       	andi	r23, 0xEF	; 239
+     1d2:	7d 7a       	andi	r23, 0xAD	; 173
+     1d4:	75 70       	andi	r23, 0x05	; 5
+     1d6:	6a 62       	ori	r22, 0x2A	; 42
+     1d8:	5a 51       	subi	r21, 0x1A	; 26
+     1da:	47 3c       	cpi	r20, 0xC7	; 199
+     1dc:	31 25       	eor	r19, r1
+     1de:	19 0c       	add	r1, r9
+     1e0:	00 f4       	brcc	.+0      	; 0x1e2 <audio_waveform_sine+0x22>
+     1e2:	e7 db       	rcall	.-2098   	; 0xfffff9b2 <__eeprom_end+0xff7ef9b2>
+     1e4:	cf c4       	rjmp	.+2462   	; 0xb84 <.Lff_class_exp_max>
+     1e6:	b9 af       	std	Y+57, r27	; 0x39
+     1e8:	a6 9e       	mul	r10, r22
+     1ea:	96 90       	elpm	r9, Z
+     1ec:	8b 86       	std	Y+11, r8	; 0x0b
+     1ee:	83 82       	std	Z+3, r8	; 0x03
+     1f0:	81 82       	std	Z+1, r8	; 0x01
+     1f2:	83 86       	std	Z+11, r8	; 0x0b
+     1f4:	8b 90       	.word	0x908b	; ????
+     1f6:	96 9e       	mul	r9, r22
+     1f8:	a6 af       	std	Z+62, r26	; 0x3e
+     1fa:	b9 c4       	rjmp	.+2418   	; 0xb6e <ff_classify+0x28>
+     1fc:	cf db       	rcall	.-2146   	; 0xfffff99c <__eeprom_end+0xff7ef99c>
+     1fe:	e7 f4       	brid	.+56     	; 0x238 <primary_07>
 
 00000200 <abvm_interp>:
      200:	88 01       	movw	r16, r16
@@ -4515,7 +4560,7 @@ Disassembly of section .text:
     1060:	0c 94 12 25 	jmp	0x4a24	; 0x4a24 <sys_memcpy_impl>
 
 00001064 <sys_audio_func>:
-    1064:	0c 94 62 37 	jmp	0x6ec4	; 0x6ec4 <sys_audio_impl>
+    1064:	0c 94 67 37 	jmp	0x6ece	; 0x6ece <sys_audio_impl>
 
 00001068 <sys_memcpy_p_func>:
     1068:	0c 94 28 25 	jmp	0x4a50	; 0x4a50 <sys_memcpy_p_impl>
@@ -9253,245 +9298,245 @@ Disassembly of section .text:
 000032a0 <fa_forward_table_end>:
     32a0:	af 70       	andi	r26, 0x0F	; 15
     32a2:	a3 ff       	sbrs	r26, 3
-    32a4:	03 c0       	rjmp	.+6      	; 0x32ac <.Lfa_shl_no8_1633>
+    32a4:	03 c0       	rjmp	.+6      	; 0x32ac <.Lfa_shl_no8_1630>
     32a6:	10 2f       	mov	r17, r16
     32a8:	00 27       	eor	r16, r16
     32aa:	a7 70       	andi	r26, 0x07	; 7
 
-000032ac <.Lfa_shl_no8_1633>:
-    32ac:	21 f0       	breq	.+8      	; 0x32b6 <.Lfa_shl_done_1633>
+000032ac <.Lfa_shl_no8_1630>:
+    32ac:	21 f0       	breq	.+8      	; 0x32b6 <.Lfa_shl_done_1630>
 
-000032ae <.Lfa_shl_loop_1633>:
+000032ae <.Lfa_shl_loop_1630>:
     32ae:	00 0f       	add	r16, r16
     32b0:	11 1f       	adc	r17, r17
     32b2:	aa 95       	dec	r26
-    32b4:	e1 f7       	brne	.-8      	; 0x32ae <.Lfa_shl_loop_1633>
+    32b4:	e1 f7       	brne	.-8      	; 0x32ae <.Lfa_shl_loop_1630>
 
-000032b6 <.Lfa_shl_done_1633>:
+000032b6 <.Lfa_shl_done_1630>:
     32b6:	8e ce       	rjmp	.-740    	; 0x2fd4 <cluster_c_tail>
 
 000032b8 <fa_shl_r5>:
     32b8:	af 70       	andi	r26, 0x0F	; 15
     32ba:	a3 ff       	sbrs	r26, 3
-    32bc:	03 c0       	rjmp	.+6      	; 0x32c4 <.Lfa_shl_no8_1634>
+    32bc:	03 c0       	rjmp	.+6      	; 0x32c4 <.Lfa_shl_no8_1631>
     32be:	32 2f       	mov	r19, r18
     32c0:	22 27       	eor	r18, r18
     32c2:	a7 70       	andi	r26, 0x07	; 7
 
-000032c4 <.Lfa_shl_no8_1634>:
-    32c4:	21 f0       	breq	.+8      	; 0x32ce <.Lfa_shl_done_1634>
+000032c4 <.Lfa_shl_no8_1631>:
+    32c4:	21 f0       	breq	.+8      	; 0x32ce <.Lfa_shl_done_1631>
 
-000032c6 <.Lfa_shl_loop_1634>:
+000032c6 <.Lfa_shl_loop_1631>:
     32c6:	22 0f       	add	r18, r18
     32c8:	33 1f       	adc	r19, r19
     32ca:	aa 95       	dec	r26
-    32cc:	e1 f7       	brne	.-8      	; 0x32c6 <.Lfa_shl_loop_1634>
+    32cc:	e1 f7       	brne	.-8      	; 0x32c6 <.Lfa_shl_loop_1631>
 
-000032ce <.Lfa_shl_done_1634>:
+000032ce <.Lfa_shl_done_1631>:
     32ce:	82 ce       	rjmp	.-764    	; 0x2fd4 <cluster_c_tail>
 
 000032d0 <fa_shl_r6>:
     32d0:	af 70       	andi	r26, 0x0F	; 15
     32d2:	a3 ff       	sbrs	r26, 3
-    32d4:	03 c0       	rjmp	.+6      	; 0x32dc <.Lfa_shl_no8_1635>
+    32d4:	03 c0       	rjmp	.+6      	; 0x32dc <.Lfa_shl_no8_1632>
     32d6:	54 2f       	mov	r21, r20
     32d8:	44 27       	eor	r20, r20
     32da:	a7 70       	andi	r26, 0x07	; 7
 
-000032dc <.Lfa_shl_no8_1635>:
-    32dc:	21 f0       	breq	.+8      	; 0x32e6 <.Lfa_shl_done_1635>
+000032dc <.Lfa_shl_no8_1632>:
+    32dc:	21 f0       	breq	.+8      	; 0x32e6 <.Lfa_shl_done_1632>
 
-000032de <.Lfa_shl_loop_1635>:
+000032de <.Lfa_shl_loop_1632>:
     32de:	44 0f       	add	r20, r20
     32e0:	55 1f       	adc	r21, r21
     32e2:	aa 95       	dec	r26
-    32e4:	e1 f7       	brne	.-8      	; 0x32de <.Lfa_shl_loop_1635>
+    32e4:	e1 f7       	brne	.-8      	; 0x32de <.Lfa_shl_loop_1632>
 
-000032e6 <.Lfa_shl_done_1635>:
+000032e6 <.Lfa_shl_done_1632>:
     32e6:	76 ce       	rjmp	.-788    	; 0x2fd4 <cluster_c_tail>
 
 000032e8 <fa_shl_r7>:
     32e8:	af 70       	andi	r26, 0x0F	; 15
     32ea:	a3 ff       	sbrs	r26, 3
-    32ec:	03 c0       	rjmp	.+6      	; 0x32f4 <.Lfa_shl_no8_1636>
+    32ec:	03 c0       	rjmp	.+6      	; 0x32f4 <.Lfa_shl_no8_1633>
     32ee:	76 2f       	mov	r23, r22
     32f0:	66 27       	eor	r22, r22
     32f2:	a7 70       	andi	r26, 0x07	; 7
 
-000032f4 <.Lfa_shl_no8_1636>:
-    32f4:	21 f0       	breq	.+8      	; 0x32fe <.Lfa_shl_done_1636>
+000032f4 <.Lfa_shl_no8_1633>:
+    32f4:	21 f0       	breq	.+8      	; 0x32fe <.Lfa_shl_done_1633>
 
-000032f6 <.Lfa_shl_loop_1636>:
+000032f6 <.Lfa_shl_loop_1633>:
     32f6:	66 0f       	add	r22, r22
     32f8:	77 1f       	adc	r23, r23
     32fa:	aa 95       	dec	r26
-    32fc:	e1 f7       	brne	.-8      	; 0x32f6 <.Lfa_shl_loop_1636>
+    32fc:	e1 f7       	brne	.-8      	; 0x32f6 <.Lfa_shl_loop_1633>
 
-000032fe <.Lfa_shl_done_1636>:
+000032fe <.Lfa_shl_done_1633>:
     32fe:	6a ce       	rjmp	.-812    	; 0x2fd4 <cluster_c_tail>
 
 00003300 <fa_lsr_r4>:
     3300:	af 70       	andi	r26, 0x0F	; 15
     3302:	a3 ff       	sbrs	r26, 3
-    3304:	03 c0       	rjmp	.+6      	; 0x330c <.Lfa_lsr_no8_1637>
+    3304:	03 c0       	rjmp	.+6      	; 0x330c <.Lfa_lsr_no8_1634>
     3306:	01 2f       	mov	r16, r17
     3308:	11 27       	eor	r17, r17
     330a:	a7 70       	andi	r26, 0x07	; 7
 
-0000330c <.Lfa_lsr_no8_1637>:
-    330c:	21 f0       	breq	.+8      	; 0x3316 <.Lfa_lsr_done_1637>
+0000330c <.Lfa_lsr_no8_1634>:
+    330c:	21 f0       	breq	.+8      	; 0x3316 <.Lfa_lsr_done_1634>
 
-0000330e <.Lfa_lsr_loop_1637>:
+0000330e <.Lfa_lsr_loop_1634>:
     330e:	16 95       	lsr	r17
     3310:	07 95       	ror	r16
     3312:	aa 95       	dec	r26
-    3314:	e1 f7       	brne	.-8      	; 0x330e <.Lfa_lsr_loop_1637>
+    3314:	e1 f7       	brne	.-8      	; 0x330e <.Lfa_lsr_loop_1634>
 
-00003316 <.Lfa_lsr_done_1637>:
+00003316 <.Lfa_lsr_done_1634>:
     3316:	5e ce       	rjmp	.-836    	; 0x2fd4 <cluster_c_tail>
 
 00003318 <fa_lsr_r5>:
     3318:	af 70       	andi	r26, 0x0F	; 15
     331a:	a3 ff       	sbrs	r26, 3
-    331c:	03 c0       	rjmp	.+6      	; 0x3324 <.Lfa_lsr_no8_1638>
+    331c:	03 c0       	rjmp	.+6      	; 0x3324 <.Lfa_lsr_no8_1635>
     331e:	23 2f       	mov	r18, r19
     3320:	33 27       	eor	r19, r19
     3322:	a7 70       	andi	r26, 0x07	; 7
 
-00003324 <.Lfa_lsr_no8_1638>:
-    3324:	21 f0       	breq	.+8      	; 0x332e <.Lfa_lsr_done_1638>
+00003324 <.Lfa_lsr_no8_1635>:
+    3324:	21 f0       	breq	.+8      	; 0x332e <.Lfa_lsr_done_1635>
 
-00003326 <.Lfa_lsr_loop_1638>:
+00003326 <.Lfa_lsr_loop_1635>:
     3326:	36 95       	lsr	r19
     3328:	27 95       	ror	r18
     332a:	aa 95       	dec	r26
-    332c:	e1 f7       	brne	.-8      	; 0x3326 <.Lfa_lsr_loop_1638>
+    332c:	e1 f7       	brne	.-8      	; 0x3326 <.Lfa_lsr_loop_1635>
 
-0000332e <.Lfa_lsr_done_1638>:
+0000332e <.Lfa_lsr_done_1635>:
     332e:	52 ce       	rjmp	.-860    	; 0x2fd4 <cluster_c_tail>
 
 00003330 <fa_lsr_r6>:
     3330:	af 70       	andi	r26, 0x0F	; 15
     3332:	a3 ff       	sbrs	r26, 3
-    3334:	03 c0       	rjmp	.+6      	; 0x333c <.Lfa_lsr_no8_1639>
+    3334:	03 c0       	rjmp	.+6      	; 0x333c <.Lfa_lsr_no8_1636>
     3336:	45 2f       	mov	r20, r21
     3338:	55 27       	eor	r21, r21
     333a:	a7 70       	andi	r26, 0x07	; 7
 
-0000333c <.Lfa_lsr_no8_1639>:
-    333c:	21 f0       	breq	.+8      	; 0x3346 <.Lfa_lsr_done_1639>
+0000333c <.Lfa_lsr_no8_1636>:
+    333c:	21 f0       	breq	.+8      	; 0x3346 <.Lfa_lsr_done_1636>
 
-0000333e <.Lfa_lsr_loop_1639>:
+0000333e <.Lfa_lsr_loop_1636>:
     333e:	56 95       	lsr	r21
     3340:	47 95       	ror	r20
     3342:	aa 95       	dec	r26
-    3344:	e1 f7       	brne	.-8      	; 0x333e <.Lfa_lsr_loop_1639>
+    3344:	e1 f7       	brne	.-8      	; 0x333e <.Lfa_lsr_loop_1636>
 
-00003346 <.Lfa_lsr_done_1639>:
+00003346 <.Lfa_lsr_done_1636>:
     3346:	46 ce       	rjmp	.-884    	; 0x2fd4 <cluster_c_tail>
 
 00003348 <fa_lsr_r7>:
     3348:	af 70       	andi	r26, 0x0F	; 15
     334a:	a3 ff       	sbrs	r26, 3
-    334c:	03 c0       	rjmp	.+6      	; 0x3354 <.Lfa_lsr_no8_1640>
+    334c:	03 c0       	rjmp	.+6      	; 0x3354 <.Lfa_lsr_no8_1637>
     334e:	67 2f       	mov	r22, r23
     3350:	77 27       	eor	r23, r23
     3352:	a7 70       	andi	r26, 0x07	; 7
 
-00003354 <.Lfa_lsr_no8_1640>:
-    3354:	21 f0       	breq	.+8      	; 0x335e <.Lfa_lsr_done_1640>
+00003354 <.Lfa_lsr_no8_1637>:
+    3354:	21 f0       	breq	.+8      	; 0x335e <.Lfa_lsr_done_1637>
 
-00003356 <.Lfa_lsr_loop_1640>:
+00003356 <.Lfa_lsr_loop_1637>:
     3356:	76 95       	lsr	r23
     3358:	67 95       	ror	r22
     335a:	aa 95       	dec	r26
-    335c:	e1 f7       	brne	.-8      	; 0x3356 <.Lfa_lsr_loop_1640>
+    335c:	e1 f7       	brne	.-8      	; 0x3356 <.Lfa_lsr_loop_1637>
 
-0000335e <.Lfa_lsr_done_1640>:
+0000335e <.Lfa_lsr_done_1637>:
     335e:	3a ce       	rjmp	.-908    	; 0x2fd4 <cluster_c_tail>
 
 00003360 <fa_asr_r4>:
     3360:	af 70       	andi	r26, 0x0F	; 15
     3362:	a3 ff       	sbrs	r26, 3
-    3364:	04 c0       	rjmp	.+8      	; 0x336e <.Lfa_asr_no8_1641>
+    3364:	04 c0       	rjmp	.+8      	; 0x336e <.Lfa_asr_no8_1638>
     3366:	01 2f       	mov	r16, r17
     3368:	11 0f       	add	r17, r17
     336a:	11 0b       	sbc	r17, r17
     336c:	a7 70       	andi	r26, 0x07	; 7
 
-0000336e <.Lfa_asr_no8_1641>:
-    336e:	21 f0       	breq	.+8      	; 0x3378 <.Lfa_asr_done_1641>
+0000336e <.Lfa_asr_no8_1638>:
+    336e:	21 f0       	breq	.+8      	; 0x3378 <.Lfa_asr_done_1638>
 
-00003370 <.Lfa_asr_loop_1641>:
+00003370 <.Lfa_asr_loop_1638>:
     3370:	15 95       	asr	r17
     3372:	07 95       	ror	r16
     3374:	aa 95       	dec	r26
-    3376:	e1 f7       	brne	.-8      	; 0x3370 <.Lfa_asr_loop_1641>
+    3376:	e1 f7       	brne	.-8      	; 0x3370 <.Lfa_asr_loop_1638>
 
-00003378 <.Lfa_asr_done_1641>:
+00003378 <.Lfa_asr_done_1638>:
     3378:	2d ce       	rjmp	.-934    	; 0x2fd4 <cluster_c_tail>
 
 0000337a <fa_asr_r5>:
     337a:	af 70       	andi	r26, 0x0F	; 15
     337c:	a3 ff       	sbrs	r26, 3
-    337e:	04 c0       	rjmp	.+8      	; 0x3388 <.Lfa_asr_no8_1642>
+    337e:	04 c0       	rjmp	.+8      	; 0x3388 <.Lfa_asr_no8_1639>
     3380:	23 2f       	mov	r18, r19
     3382:	33 0f       	add	r19, r19
     3384:	33 0b       	sbc	r19, r19
     3386:	a7 70       	andi	r26, 0x07	; 7
 
-00003388 <.Lfa_asr_no8_1642>:
-    3388:	21 f0       	breq	.+8      	; 0x3392 <.Lfa_asr_done_1642>
+00003388 <.Lfa_asr_no8_1639>:
+    3388:	21 f0       	breq	.+8      	; 0x3392 <.Lfa_asr_done_1639>
 
-0000338a <.Lfa_asr_loop_1642>:
+0000338a <.Lfa_asr_loop_1639>:
     338a:	35 95       	asr	r19
     338c:	27 95       	ror	r18
     338e:	aa 95       	dec	r26
-    3390:	e1 f7       	brne	.-8      	; 0x338a <.Lfa_asr_loop_1642>
+    3390:	e1 f7       	brne	.-8      	; 0x338a <.Lfa_asr_loop_1639>
 
-00003392 <.Lfa_asr_done_1642>:
+00003392 <.Lfa_asr_done_1639>:
     3392:	20 ce       	rjmp	.-960    	; 0x2fd4 <cluster_c_tail>
 
 00003394 <fa_asr_r6>:
     3394:	af 70       	andi	r26, 0x0F	; 15
     3396:	a3 ff       	sbrs	r26, 3
-    3398:	04 c0       	rjmp	.+8      	; 0x33a2 <.Lfa_asr_no8_1643>
+    3398:	04 c0       	rjmp	.+8      	; 0x33a2 <.Lfa_asr_no8_1640>
     339a:	45 2f       	mov	r20, r21
     339c:	55 0f       	add	r21, r21
     339e:	55 0b       	sbc	r21, r21
     33a0:	a7 70       	andi	r26, 0x07	; 7
 
-000033a2 <.Lfa_asr_no8_1643>:
-    33a2:	21 f0       	breq	.+8      	; 0x33ac <.Lfa_asr_done_1643>
+000033a2 <.Lfa_asr_no8_1640>:
+    33a2:	21 f0       	breq	.+8      	; 0x33ac <.Lfa_asr_done_1640>
 
-000033a4 <.Lfa_asr_loop_1643>:
+000033a4 <.Lfa_asr_loop_1640>:
     33a4:	55 95       	asr	r21
     33a6:	47 95       	ror	r20
     33a8:	aa 95       	dec	r26
-    33aa:	e1 f7       	brne	.-8      	; 0x33a4 <.Lfa_asr_loop_1643>
+    33aa:	e1 f7       	brne	.-8      	; 0x33a4 <.Lfa_asr_loop_1640>
 
-000033ac <.Lfa_asr_done_1643>:
+000033ac <.Lfa_asr_done_1640>:
     33ac:	13 ce       	rjmp	.-986    	; 0x2fd4 <cluster_c_tail>
 
 000033ae <fa_asr_r7>:
     33ae:	af 70       	andi	r26, 0x0F	; 15
     33b0:	a3 ff       	sbrs	r26, 3
-    33b2:	04 c0       	rjmp	.+8      	; 0x33bc <.Lfa_asr_no8_1644>
+    33b2:	04 c0       	rjmp	.+8      	; 0x33bc <.Lfa_asr_no8_1641>
     33b4:	67 2f       	mov	r22, r23
     33b6:	77 0f       	add	r23, r23
     33b8:	77 0b       	sbc	r23, r23
     33ba:	a7 70       	andi	r26, 0x07	; 7
 
-000033bc <.Lfa_asr_no8_1644>:
-    33bc:	21 f0       	breq	.+8      	; 0x33c6 <.Lfa_asr_done_1644>
+000033bc <.Lfa_asr_no8_1641>:
+    33bc:	21 f0       	breq	.+8      	; 0x33c6 <.Lfa_asr_done_1641>
 
-000033be <.Lfa_asr_loop_1644>:
+000033be <.Lfa_asr_loop_1641>:
     33be:	75 95       	asr	r23
     33c0:	67 95       	ror	r22
     33c2:	aa 95       	dec	r26
-    33c4:	e1 f7       	brne	.-8      	; 0x33be <.Lfa_asr_loop_1644>
+    33c4:	e1 f7       	brne	.-8      	; 0x33be <.Lfa_asr_loop_1641>
 
-000033c6 <.Lfa_asr_done_1644>:
+000033c6 <.Lfa_asr_done_1641>:
     33c6:	06 ce       	rjmp	.-1012   	; 0x2fd4 <cluster_c_tail>
 
 000033c8 <cmov_table>:
@@ -10079,7 +10124,7 @@ Disassembly of section .text:
     37f4:	02 2d       	mov	r16, r2
     37f6:	0e 94 37 0b 	call	0x166e	; 0x166e <display_update_func>
     37fa:	0e d0       	rcall	.+28     	; 0x3818 <timer0_init_func>
-    37fc:	0e 94 95 38 	call	0x712a	; 0x712a <audio_init_func>
+    37fc:	0e 94 4d 39 	call	0x729a	; 0x729a <audio_init_func>
     3800:	23 df       	rcall	.-442    	; 0x3648 <fe_mul16_bodies_end>
     3802:	8e b5       	in	r24, 0x2e	; 46
     3804:	2e bc       	out	0x2e, r2	; 46
@@ -13663,21 +13708,21 @@ Disassembly of section .text:
 
 00004dae <sprite_overwrite_row_dispatch>:
     4dae:	83 ff       	sbrs	r24, 3
-    4db0:	04 c0       	rjmp	.+8      	; 0x4dba <.Lsprite_overwrite_kind_1852>
+    4db0:	04 c0       	rjmp	.+8      	; 0x4dba <.Lsprite_overwrite_kind_1849>
     4db2:	c3 14       	cp	r12, r3
-    4db4:	11 f4       	brne	.+4      	; 0x4dba <.Lsprite_overwrite_kind_1852>
+    4db4:	11 f4       	brne	.+4      	; 0x4dba <.Lsprite_overwrite_kind_1849>
     4db6:	8f 2c       	mov	r8, r15
     4db8:	80 68       	ori	r24, 0x80	; 128
 
-00004dba <.Lsprite_overwrite_kind_1852>:
+00004dba <.Lsprite_overwrite_kind_1849>:
     4dba:	80 fd       	sbrc	r24, 0
-    4dbc:	0a c0       	rjmp	.+20     	; 0x4dd2 <.Lsprite_overwrite_top_1852>
+    4dbc:	0a c0       	rjmp	.+20     	; 0x4dd2 <.Lsprite_overwrite_top_1849>
     4dbe:	c3 14       	cp	r12, r3
-    4dc0:	11 f4       	brne	.+4      	; 0x4dc6 <.Lsprite_overwrite_middle_1852>
+    4dc0:	11 f4       	brne	.+4      	; 0x4dc6 <.Lsprite_overwrite_middle_1849>
     4dc2:	81 fd       	sbrc	r24, 1
-    4dc4:	09 c0       	rjmp	.+18     	; 0x4dd8 <.Lsprite_overwrite_bottom_1852>
+    4dc4:	09 c0       	rjmp	.+18     	; 0x4dd8 <.Lsprite_overwrite_bottom_1849>
 
-00004dc6 <.Lsprite_overwrite_middle_1852>:
+00004dc6 <.Lsprite_overwrite_middle_1849>:
     4dc6:	fd 01       	movw	r30, r26
     4dc8:	e0 58       	subi	r30, 0x80	; 128
     4dca:	ff 4f       	sbci	r31, 0xFF	; 255
@@ -13685,12 +13730,12 @@ Disassembly of section .text:
     4dce:	7e c0       	rjmp	.+252    	; 0x4ecc <.Lsprite_middle_overwrite_partial>
     4dd0:	5e c0       	rjmp	.+188    	; 0x4e8e <.Lsprite_middle_overwrite_full>
 
-00004dd2 <.Lsprite_overwrite_top_1852>:
+00004dd2 <.Lsprite_overwrite_top_1849>:
     4dd2:	87 fd       	sbrc	r24, 7
     4dd4:	3c c0       	rjmp	.+120    	; 0x4e4e <.Lsprite_top_overwrite_partial>
     4dd6:	21 c0       	rjmp	.+66     	; 0x4e1a <.Lsprite_top_overwrite_full>
 
-00004dd8 <.Lsprite_overwrite_bottom_1852>:
+00004dd8 <.Lsprite_overwrite_bottom_1849>:
     4dd8:	87 fd       	sbrc	r24, 7
     4dda:	49 c0       	rjmp	.+146    	; 0x4e6e <.Lsprite_bottom_overwrite_partial>
     4ddc:	2b c0       	rjmp	.+86     	; 0x4e34 <.Lsprite_bottom_overwrite_full>
@@ -13699,11 +13744,11 @@ Disassembly of section .text:
     4dde:	80 fd       	sbrc	r24, 0
     4de0:	89 c0       	rjmp	.+274    	; 0x4ef4 <.Lsprite_top_plus_full>
     4de2:	c3 14       	cp	r12, r3
-    4de4:	11 f4       	brne	.+4      	; 0x4dea <.Lsprite_full_middle_1853>
+    4de4:	11 f4       	brne	.+4      	; 0x4dea <.Lsprite_full_middle_1850>
     4de6:	81 fd       	sbrc	r24, 1
     4de8:	9a c0       	rjmp	.+308    	; 0x4f1e <.Lsprite_bottom_plus_full>
 
-00004dea <.Lsprite_full_middle_1853>:
+00004dea <.Lsprite_full_middle_1850>:
     4dea:	fd 01       	movw	r30, r26
     4dec:	e0 58       	subi	r30, 0x80	; 128
     4dee:	ff 4f       	sbci	r31, 0xFF	; 255
@@ -13713,11 +13758,11 @@ Disassembly of section .text:
     4df2:	80 fd       	sbrc	r24, 0
     4df4:	c0 c0       	rjmp	.+384    	; 0x4f76 <.Lsprite_top_self_full>
     4df6:	c3 14       	cp	r12, r3
-    4df8:	11 f4       	brne	.+4      	; 0x4dfe <.Lsprite_full_middle_1854>
+    4df8:	11 f4       	brne	.+4      	; 0x4dfe <.Lsprite_full_middle_1851>
     4dfa:	81 fd       	sbrc	r24, 1
     4dfc:	c7 c0       	rjmp	.+398    	; 0x4f8c <.Lsprite_bottom_self_full>
 
-00004dfe <.Lsprite_full_middle_1854>:
+00004dfe <.Lsprite_full_middle_1851>:
     4dfe:	fd 01       	movw	r30, r26
     4e00:	e0 58       	subi	r30, 0x80	; 128
     4e02:	ff 4f       	sbci	r31, 0xFF	; 255
@@ -13727,11 +13772,11 @@ Disassembly of section .text:
     4e06:	80 fd       	sbrc	r24, 0
     4e08:	d9 c0       	rjmp	.+434    	; 0x4fbc <.Lsprite_top_erase_full>
     4e0a:	c3 14       	cp	r12, r3
-    4e0c:	11 f4       	brne	.+4      	; 0x4e12 <.Lsprite_full_middle_1855>
+    4e0c:	11 f4       	brne	.+4      	; 0x4e12 <.Lsprite_full_middle_1852>
     4e0e:	81 fd       	sbrc	r24, 1
     4e10:	e2 c0       	rjmp	.+452    	; 0x4fd6 <.Lsprite_bottom_erase_full>
 
-00004e12 <.Lsprite_full_middle_1855>:
+00004e12 <.Lsprite_full_middle_1852>:
     4e12:	fd 01       	movw	r30, r26
     4e14:	e0 58       	subi	r30, 0x80	; 128
     4e16:	ff 4f       	sbci	r31, 0xFF	; 255
@@ -18032,7 +18077,7 @@ Disassembly of section .text:
     6b54:	72 4e       	sbci	r23, 0xE2	; 226
     6b56:	18 09       	sbc	r17, r8
     6b58:	00 10       	cpse	r0, r0
-    6b5a:	a5 d4       	rcall	.+2378   	; 0x74a6 <__data_load_end+0x2f5>
+    6b5a:	a5 d4       	rcall	.+2378   	; 0x74a6 <__data_load_end+0x185>
     6b5c:	e8 00       	.word	0x00e8	; ????
     6b5e:	00 e8       	ldi	r16, 0x80	; 128
     6b60:	76 48       	sbci	r23, 0x86	; 134
@@ -18087,7 +18132,7 @@ Disassembly of section .text:
     6bbe:	e6 51       	subi	r30, 0x16	; 22
     6bc0:	99 76       	andi	r25, 0x69	; 105
     6bc2:	96 e8       	ldi	r25, 0x86	; 134
-    6bc4:	e6 c2       	rjmp	.+1484   	; 0x7192 <.L1^B80+0x52>
+    6bc4:	e6 c2       	rjmp	.+1484   	; 0x7192 <timer3_compa_isr+0x90>
     6bc6:	84 26       	eor	r8, r20
     6bc8:	eb 89       	ldd	r30, Y+19	; 0x13
     6bca:	8c 9b       	sbis	0x11, 4	; 17
@@ -18105,7 +18150,7 @@ Disassembly of section .text:
     6be2:	5c 93       	st	X, r21
     6be4:	6b 6c       	ori	r22, 0xCB	; 203
     6be6:	f9 67       	ori	r31, 0x79	; 121
-    6be8:	6d c1       	rjmp	.+730    	; 0x6ec4 <sys_audio_impl>
+    6be8:	6d c1       	rjmp	.+730    	; 0x6ec4 <.L2^B20+0x6>
     6bea:	1b fc       	.word	0xfc1b	; ????
     6bec:	e0 e4       	ldi	r30, 0x40	; 64
     6bee:	0d 47       	sbci	r16, 0x7D	; 125
@@ -18182,7 +18227,7 @@ Disassembly of section .text:
     6c82:	80 91 8a 0a 	lds	r24, 0x0A8A	; 0x800a8a <_end+0x7e>
     6c86:	88 23       	and	r24, r24
     6c88:	09 f0       	breq	.+2      	; 0x6c8c <.L1^B64>
-    6c8a:	ba d0       	rcall	.+372    	; 0x6e00 <audio_commit>
+    6c8a:	b7 d0       	rcall	.+366    	; 0x6dfa <audio_commit>
 
 00006c8c <.L1^B64>:
     6c8c:	7f 91       	pop	r23
@@ -18301,18 +18346,18 @@ Disassembly of section .text:
     6d4a:	48 1b       	sub	r20, r24
     6d4c:	a7 df       	rcall	.-178    	; 0x6c9c <audio_byte>
     6d4e:	08 f4       	brcc	.+2      	; 0x6d52 <.L1^B66>
-    6d50:	3f c0       	rjmp	.+126    	; 0x6dd0 <audio_stream_end>
+    6d50:	3c c0       	rjmp	.+120    	; 0x6dca <audio_stream_end>
 
 00006d52 <.L1^B66>:
     6d52:	88 23       	and	r24, r24
     6d54:	39 f4       	brne	.+14     	; 0x6d64 <.L1^B67>
     6d56:	a2 df       	rcall	.-188    	; 0x6c9c <audio_byte>
-    6d58:	d8 f1       	brcs	.+118    	; 0x6dd0 <audio_stream_end>
+    6d58:	c0 f1       	brcs	.+112    	; 0x6dca <audio_stream_end>
     6d5a:	88 23       	and	r24, r24
-    6d5c:	89 f1       	breq	.+98     	; 0x6dc0 <.Laudio_next_delta>
+    6d5c:	71 f1       	breq	.+92     	; 0x6dba <.Laudio_next_delta>
     6d5e:	82 30       	cpi	r24, 0x02	; 2
-    6d60:	a9 f1       	breq	.+106    	; 0x6dcc <.Laudio_loop>
-    6d62:	36 c0       	rjmp	.+108    	; 0x6dd0 <audio_stream_end>
+    6d60:	91 f1       	breq	.+100    	; 0x6dc6 <.Laudio_loop>
+    6d62:	33 c0       	rjmp	.+102    	; 0x6dca <audio_stream_end>
 
 00006d64 <.L1^B67>:
     6d64:	78 2f       	mov	r23, r24
@@ -18324,7 +18369,7 @@ Disassembly of section .text:
     6d70:	85 85       	ldd	r24, Z+13	; 0x0d
     6d72:	80 95       	com	r24
     6d74:	98 23       	and	r25, r24
-    6d76:	61 f5       	brne	.+88     	; 0x6dd0 <audio_stream_end>
+    6d76:	49 f5       	brne	.+82     	; 0x6dca <audio_stream_end>
     6d78:	30 92 8a 0a 	sts	0x0A8A, r3	; 0x800a8a <_end+0x7e>
     6d7c:	87 2f       	mov	r24, r23
     6d7e:	8f 70       	andi	r24, 0x0F	; 15
@@ -18341,554 +18386,707 @@ Disassembly of section .text:
 
 00006d90 <.Laudio_channel>:
     6d90:	70 ff       	sbrs	r23, 0
-    6d92:	10 c0       	rjmp	.+32     	; 0x6db4 <.Laudio_channel_next>
+    6d92:	0d c0       	rjmp	.+26     	; 0x6dae <.Laudio_channel_next>
     6d94:	83 df       	rcall	.-250    	; 0x6c9c <audio_byte>
-    6d96:	e0 f0       	brcs	.+56     	; 0x6dd0 <audio_stream_end>
-    6d98:	30 ff       	sbrs	r19, 0
-    6d9a:	03 c0       	rjmp	.+6      	; 0x6da2 <.Laudio_note>
-    6d9c:	80 32       	cpi	r24, 0x20	; 32
-    6d9e:	30 f0       	brcs	.+12     	; 0x6dac <.Laudio_value_store>
-    6da0:	17 c0       	rjmp	.+46     	; 0x6dd0 <audio_stream_end>
+    6d96:	c8 f0       	brcs	.+50     	; 0x6dca <audio_stream_end>
+    6d98:	30 fd       	sbrc	r19, 0
+    6d9a:	05 c0       	rjmp	.+10     	; 0x6da6 <.Laudio_value_store>
+    6d9c:	80 38       	cpi	r24, 0x80	; 128
+    6d9e:	19 f0       	breq	.+6      	; 0x6da6 <.Laudio_value_store>
+    6da0:	88 51       	subi	r24, 0x18	; 24
+    6da2:	88 34       	cpi	r24, 0x48	; 72
+    6da4:	90 f4       	brcc	.+36     	; 0x6dca <audio_stream_end>
 
-00006da2 <.Laudio_note>:
-    6da2:	80 38       	cpi	r24, 0x80	; 128
-    6da4:	19 f0       	breq	.+6      	; 0x6dac <.Laudio_value_store>
-    6da6:	88 51       	subi	r24, 0x18	; 24
-    6da8:	88 34       	cpi	r24, 0x48	; 72
-    6daa:	90 f4       	brcc	.+36     	; 0x6dd0 <audio_stream_end>
+00006da6 <.Laudio_value_store>:
+    6da6:	e2 2f       	mov	r30, r18
+    6da8:	fa e0       	ldi	r31, 0x0A	; 10
+    6daa:	e3 0f       	add	r30, r19
+    6dac:	80 83       	st	Z, r24
 
-00006dac <.Laudio_value_store>:
-    6dac:	e2 2f       	mov	r30, r18
-    6dae:	fa e0       	ldi	r31, 0x0A	; 10
-    6db0:	e3 0f       	add	r30, r19
-    6db2:	80 83       	st	Z, r24
+00006dae <.Laudio_channel_next>:
+    6dae:	3e 5f       	subi	r19, 0xFE	; 254
+    6db0:	38 30       	cpi	r19, 0x08	; 8
+    6db2:	09 f4       	brne	.+2      	; 0x6db6 <.L1^B68>
+    6db4:	31 e0       	ldi	r19, 0x01	; 1
 
-00006db4 <.Laudio_channel_next>:
-    6db4:	3e 5f       	subi	r19, 0xFE	; 254
-    6db6:	38 30       	cpi	r19, 0x08	; 8
-    6db8:	09 f4       	brne	.+2      	; 0x6dbc <.L1^B68>
-    6dba:	31 e0       	ldi	r19, 0x01	; 1
+00006db6 <.L1^B68>:
+    6db6:	76 95       	lsr	r23
+    6db8:	59 f7       	brne	.-42     	; 0x6d90 <.Laudio_channel>
 
-00006dbc <.L1^B68>:
-    6dbc:	76 95       	lsr	r23
-    6dbe:	41 f7       	brne	.-48     	; 0x6d90 <.Laudio_channel>
+00006dba <.Laudio_next_delta>:
+    6dba:	b1 df       	rcall	.-158    	; 0x6d1e <audio_delta>
+    6dbc:	30 f0       	brcs	.+12     	; 0x6dca <audio_stream_end>
+    6dbe:	f8 01       	movw	r30, r16
+    6dc0:	82 87       	std	Z+10, r24	; 0x0a
+    6dc2:	93 87       	std	Z+11, r25	; 0x0b
+    6dc4:	b4 cf       	rjmp	.-152    	; 0x6d2e <.Laudio_advance_again>
 
-00006dc0 <.Laudio_next_delta>:
-    6dc0:	ae df       	rcall	.-164    	; 0x6d1e <audio_delta>
-    6dc2:	30 f0       	brcs	.+12     	; 0x6dd0 <audio_stream_end>
-    6dc4:	f8 01       	movw	r30, r16
-    6dc6:	82 87       	std	Z+10, r24	; 0x0a
-    6dc8:	93 87       	std	Z+11, r25	; 0x0b
-    6dca:	b1 cf       	rjmp	.-158    	; 0x6d2e <.Laudio_advance_again>
+00006dc6 <.Laudio_loop>:
+    6dc6:	07 d0       	rcall	.+14     	; 0x6dd6 <audio_rewind>
+    6dc8:	f8 cf       	rjmp	.-16     	; 0x6dba <.Laudio_next_delta>
 
-00006dcc <.Laudio_loop>:
-    6dcc:	07 d0       	rcall	.+14     	; 0x6ddc <audio_rewind>
-    6dce:	f8 cf       	rjmp	.-16     	; 0x6dc0 <.Laudio_next_delta>
+00006dca <audio_stream_end>:
+    6dca:	f8 01       	movw	r30, r16
+    6dcc:	24 86       	std	Z+12, r2	; 0x0c
+    6dce:	25 86       	std	Z+13, r2	; 0x0d
+    6dd0:	30 92 8a 0a 	sts	0x0A8A, r3	; 0x800a8a <_end+0x7e>
+    6dd4:	08 95       	ret
 
-00006dd0 <audio_stream_end>:
-    6dd0:	f8 01       	movw	r30, r16
-    6dd2:	24 86       	std	Z+12, r2	; 0x0c
-    6dd4:	25 86       	std	Z+13, r2	; 0x0d
-    6dd6:	30 92 8a 0a 	sts	0x0A8A, r3	; 0x800a8a <_end+0x7e>
-    6dda:	08 95       	ret
+00006dd6 <audio_rewind>:
+    6dd6:	f8 01       	movw	r30, r16
+    6dd8:	80 81       	ld	r24, Z
+    6dda:	91 81       	ldd	r25, Z+1	; 0x01
+    6ddc:	a2 81       	ldd	r26, Z+2	; 0x02
+    6dde:	8e 5f       	subi	r24, 0xFE	; 254
+    6de0:	9f 4f       	sbci	r25, 0xFF	; 255
+    6de2:	af 4f       	sbci	r26, 0xFF	; 255
+    6de4:	83 83       	std	Z+3, r24	; 0x03
+    6de6:	94 83       	std	Z+4, r25	; 0x04
+    6de8:	a5 83       	std	Z+5, r26	; 0x05
+    6dea:	86 81       	ldd	r24, Z+6	; 0x06
+    6dec:	97 81       	ldd	r25, Z+7	; 0x07
+    6dee:	02 97       	sbiw	r24, 0x02	; 2
+    6df0:	80 87       	std	Z+8, r24	; 0x08
+    6df2:	91 87       	std	Z+9, r25	; 0x09
+    6df4:	20 92 7c 0a 	sts	0x0A7C, r2	; 0x800a7c <_end+0x70>
+    6df8:	08 95       	ret
 
-00006ddc <audio_rewind>:
-    6ddc:	f8 01       	movw	r30, r16
-    6dde:	80 81       	ld	r24, Z
-    6de0:	91 81       	ldd	r25, Z+1	; 0x01
-    6de2:	a2 81       	ldd	r26, Z+2	; 0x02
-    6de4:	8e 5f       	subi	r24, 0xFE	; 254
-    6de6:	9f 4f       	sbci	r25, 0xFF	; 255
-    6de8:	af 4f       	sbci	r26, 0xFF	; 255
-    6dea:	83 83       	std	Z+3, r24	; 0x03
-    6dec:	94 83       	std	Z+4, r25	; 0x04
-    6dee:	a5 83       	std	Z+5, r26	; 0x05
-    6df0:	86 81       	ldd	r24, Z+6	; 0x06
-    6df2:	97 81       	ldd	r25, Z+7	; 0x07
-    6df4:	02 97       	sbiw	r24, 0x02	; 2
-    6df6:	80 87       	std	Z+8, r24	; 0x08
-    6df8:	91 87       	std	Z+9, r25	; 0x09
-    6dfa:	20 92 7c 0a 	sts	0x0A7C, r2	; 0x800a7c <_end+0x70>
-    6dfe:	08 95       	ret
+00006dfa <audio_commit>:
+    6dfa:	70 91 59 0a 	lds	r23, 0x0A59	; 0x800a59 <_end+0x4d>
+    6dfe:	80 91 4b 0a 	lds	r24, 0x0A4B	; 0x800a4b <_end+0x3f>
+    6e02:	97 2f       	mov	r25, r23
+    6e04:	90 95       	com	r25
+    6e06:	89 23       	and	r24, r25
+    6e08:	90 91 5a 0a 	lds	r25, 0x0A5A	; 0x800a5a <_end+0x4e>
+    6e0c:	97 23       	and	r25, r23
+    6e0e:	89 2b       	or	r24, r25
+    6e10:	8f 93       	push	r24
+    6e12:	20 92 4b 0a 	sts	0x0A4B, r2	; 0x800a4b <_end+0x3f>
+    6e16:	20 92 5a 0a 	sts	0x0A5A, r2	; 0x800a5a <_end+0x4e>
+    6e1a:	20 e0       	ldi	r18, 0x00	; 0
+    6e1c:	ae e7       	ldi	r26, 0x7E	; 126
+    6e1e:	ba e0       	ldi	r27, 0x0A	; 10
 
-00006e00 <audio_commit>:
-    6e00:	70 91 59 0a 	lds	r23, 0x0A59	; 0x800a59 <_end+0x4d>
-    6e04:	80 91 4b 0a 	lds	r24, 0x0A4B	; 0x800a4b <_end+0x3f>
-    6e08:	97 2f       	mov	r25, r23
-    6e0a:	90 95       	com	r25
-    6e0c:	89 23       	and	r24, r25
-    6e0e:	90 91 5a 0a 	lds	r25, 0x0A5A	; 0x800a5a <_end+0x4e>
-    6e12:	97 23       	and	r25, r23
-    6e14:	89 2b       	or	r24, r25
-    6e16:	8f 93       	push	r24
-    6e18:	20 92 4b 0a 	sts	0x0A4B, r2	; 0x800a4b <_end+0x3f>
-    6e1c:	20 92 5a 0a 	sts	0x0A5A, r2	; 0x800a5a <_end+0x4e>
-    6e20:	20 e0       	ldi	r18, 0x00	; 0
-    6e22:	ae e7       	ldi	r26, 0x7E	; 126
-    6e24:	ba e0       	ldi	r27, 0x0A	; 10
+00006e20 <.Laudio_stage>:
+    6e20:	ed e2       	ldi	r30, 0x2D	; 45
+    6e22:	30 91 49 0a 	lds	r19, 0x0A49	; 0x800a49 <_end+0x3d>
+    6e26:	40 91 17 0a 	lds	r20, 0x0A17	; 0x800a17 <_end+0xb>
+    6e2a:	70 ff       	sbrs	r23, 0
+    6e2c:	03 c0       	rjmp	.+6      	; 0x6e34 <.L1^B69>
+    6e2e:	e5 e3       	ldi	r30, 0x35	; 53
+    6e30:	31 e0       	ldi	r19, 0x01	; 1
+    6e32:	40 e2       	ldi	r20, 0x20	; 32
 
-00006e26 <.Laudio_stage>:
-    6e26:	ed e2       	ldi	r30, 0x2D	; 45
-    6e28:	30 91 49 0a 	lds	r19, 0x0A49	; 0x800a49 <_end+0x3d>
-    6e2c:	40 91 17 0a 	lds	r20, 0x0A17	; 0x800a17 <_end+0xb>
-    6e30:	70 ff       	sbrs	r23, 0
-    6e32:	03 c0       	rjmp	.+6      	; 0x6e3a <.L1^B69>
-    6e34:	e5 e3       	ldi	r30, 0x35	; 53
-    6e36:	31 e0       	ldi	r19, 0x01	; 1
-    6e38:	40 e2       	ldi	r20, 0x20	; 32
+00006e34 <.L1^B69>:
+    6e34:	fa e0       	ldi	r31, 0x0A	; 10
+    6e36:	e2 0f       	add	r30, r18
+    6e38:	80 81       	ld	r24, Z
+    6e3a:	51 81       	ldd	r21, Z+1	; 0x01
+    6e3c:	31 30       	cpi	r19, 0x01	; 1
+    6e3e:	d1 f4       	brne	.+52     	; 0x6e74 <.Laudio_stage_silent>
+    6e40:	88 34       	cpi	r24, 0x48	; 72
+    6e42:	c0 f4       	brcc	.+48     	; 0x6e74 <.Laudio_stage_silent>
+    6e44:	88 0f       	add	r24, r24
+    6e46:	ea e0       	ldi	r30, 0x0A	; 10
+    6e48:	f2 e7       	ldi	r31, 0x72	; 114
+    6e4a:	e8 0f       	add	r30, r24
+    6e4c:	f2 1d       	adc	r31, r2
+    6e4e:	85 91       	lpm	r24, Z+
+    6e50:	94 91       	lpm	r25, Z
+    6e52:	8d 93       	st	X+, r24
+    6e54:	9d 93       	st	X+, r25
+    6e56:	85 2f       	mov	r24, r21
+    6e58:	5f 71       	andi	r21, 0x1F	; 31
+    6e5a:	5c 03       	fmul	r21, r20
+    6e5c:	00 0c       	add	r0, r0
+    6e5e:	11 1c       	adc	r1, r1
+    6e60:	00 0c       	add	r0, r0
+    6e62:	11 1c       	adc	r1, r1
+    6e64:	26 30       	cpi	r18, 0x06	; 6
+    6e66:	21 f0       	breq	.+8      	; 0x6e70 <.Laudio_stage_amplitude>
+    6e68:	80 76       	andi	r24, 0x60	; 96
+    6e6a:	88 0f       	add	r24, r24
+    6e6c:	11 0c       	add	r1, r1
+    6e6e:	18 2a       	or	r1, r24
 
-00006e3a <.L1^B69>:
-    6e3a:	fa e0       	ldi	r31, 0x0A	; 10
-    6e3c:	e2 0f       	add	r30, r18
-    6e3e:	80 81       	ld	r24, Z
-    6e40:	51 81       	ldd	r21, Z+1	; 0x01
-    6e42:	31 30       	cpi	r19, 0x01	; 1
-    6e44:	91 f4       	brne	.+36     	; 0x6e6a <.Laudio_stage_silent>
-    6e46:	88 34       	cpi	r24, 0x48	; 72
-    6e48:	80 f4       	brcc	.+32     	; 0x6e6a <.Laudio_stage_silent>
-    6e4a:	88 0f       	add	r24, r24
-    6e4c:	ea e9       	ldi	r30, 0x9A	; 154
-    6e4e:	f0 e7       	ldi	r31, 0x70	; 112
-    6e50:	e8 0f       	add	r30, r24
-    6e52:	f2 1d       	adc	r31, r2
-    6e54:	85 91       	lpm	r24, Z+
-    6e56:	94 91       	lpm	r25, Z
-    6e58:	8d 93       	st	X+, r24
-    6e5a:	9d 93       	st	X+, r25
-    6e5c:	5c 03       	fmul	r21, r20
-    6e5e:	00 0c       	add	r0, r0
-    6e60:	11 1c       	adc	r1, r1
-    6e62:	00 0c       	add	r0, r0
-    6e64:	11 1c       	adc	r1, r1
-    6e66:	1d 92       	st	X+, r1
-    6e68:	03 c0       	rjmp	.+6      	; 0x6e70 <.Laudio_stage_next>
+00006e70 <.Laudio_stage_amplitude>:
+    6e70:	1d 92       	st	X+, r1
+    6e72:	03 c0       	rjmp	.+6      	; 0x6e7a <.Laudio_stage_next>
 
-00006e6a <.Laudio_stage_silent>:
-    6e6a:	2d 92       	st	X+, r2
-    6e6c:	2d 92       	st	X+, r2
-    6e6e:	2d 92       	st	X+, r2
+00006e74 <.Laudio_stage_silent>:
+    6e74:	2d 92       	st	X+, r2
+    6e76:	2d 92       	st	X+, r2
+    6e78:	2d 92       	st	X+, r2
 
-00006e70 <.Laudio_stage_next>:
-    6e70:	76 95       	lsr	r23
-    6e72:	2e 5f       	subi	r18, 0xFE	; 254
-    6e74:	28 30       	cpi	r18, 0x08	; 8
-    6e76:	b8 f2       	brcs	.-82     	; 0x6e26 <.Laudio_stage>
-    6e78:	7f 91       	pop	r23
-    6e7a:	ee e7       	ldi	r30, 0x7E	; 126
-    6e7c:	fa e0       	ldi	r31, 0x0A	; 10
-    6e7e:	a8 e1       	ldi	r26, 0x18	; 24
-    6e80:	ba e0       	ldi	r27, 0x0A	; 10
-    6e82:	8c e0       	ldi	r24, 0x0C	; 12
-    6e84:	9f b7       	in	r25, 0x3f	; 63
-    6e86:	f8 94       	cli
+00006e7a <.Laudio_stage_next>:
+    6e7a:	76 95       	lsr	r23
+    6e7c:	2e 5f       	subi	r18, 0xFE	; 254
+    6e7e:	28 30       	cpi	r18, 0x08	; 8
+    6e80:	78 f2       	brcs	.-98     	; 0x6e20 <.Laudio_stage>
+    6e82:	7f 91       	pop	r23
+    6e84:	ee e7       	ldi	r30, 0x7E	; 126
+    6e86:	fa e0       	ldi	r31, 0x0A	; 10
+    6e88:	a8 e1       	ldi	r26, 0x18	; 24
+    6e8a:	ba e0       	ldi	r27, 0x0A	; 10
+    6e8c:	8c e0       	ldi	r24, 0x0C	; 12
+    6e8e:	9f b7       	in	r25, 0x3f	; 63
+    6e90:	f8 94       	cli
 
-00006e88 <audio_commit_atomic_begin>:
-    6e88:	01 90       	ld	r0, Z+
-    6e8a:	0d 92       	st	X+, r0
-    6e8c:	8a 95       	dec	r24
-    6e8e:	e1 f7       	brne	.-8      	; 0x6e88 <audio_commit_atomic_begin>
-    6e90:	70 ff       	sbrs	r23, 0
-    6e92:	04 c0       	rjmp	.+8      	; 0x6e9c <.L2^B18>
-    6e94:	20 92 24 0a 	sts	0x0A24, r2	; 0x800a24 <_end+0x18>
-    6e98:	20 92 25 0a 	sts	0x0A25, r2	; 0x800a25 <_end+0x19>
+00006e92 <audio_commit_atomic_begin>:
+    6e92:	01 90       	ld	r0, Z+
+    6e94:	0d 92       	st	X+, r0
+    6e96:	8a 95       	dec	r24
+    6e98:	e1 f7       	brne	.-8      	; 0x6e92 <audio_commit_atomic_begin>
+    6e9a:	70 ff       	sbrs	r23, 0
+    6e9c:	04 c0       	rjmp	.+8      	; 0x6ea6 <.L2^B18>
+    6e9e:	20 92 24 0a 	sts	0x0A24, r2	; 0x800a24 <_end+0x18>
+    6ea2:	20 92 25 0a 	sts	0x0A25, r2	; 0x800a25 <_end+0x19>
 
-00006e9c <.L2^B18>:
-    6e9c:	71 ff       	sbrs	r23, 1
-    6e9e:	04 c0       	rjmp	.+8      	; 0x6ea8 <.L2^B19>
-    6ea0:	20 92 26 0a 	sts	0x0A26, r2	; 0x800a26 <_end+0x1a>
-    6ea4:	20 92 27 0a 	sts	0x0A27, r2	; 0x800a27 <_end+0x1b>
+00006ea6 <.L2^B18>:
+    6ea6:	71 ff       	sbrs	r23, 1
+    6ea8:	04 c0       	rjmp	.+8      	; 0x6eb2 <.L2^B19>
+    6eaa:	20 92 26 0a 	sts	0x0A26, r2	; 0x800a26 <_end+0x1a>
+    6eae:	20 92 27 0a 	sts	0x0A27, r2	; 0x800a27 <_end+0x1b>
 
-00006ea8 <.L2^B19>:
-    6ea8:	72 ff       	sbrs	r23, 2
-    6eaa:	04 c0       	rjmp	.+8      	; 0x6eb4 <.L2^B20>
-    6eac:	20 92 28 0a 	sts	0x0A28, r2	; 0x800a28 <_end+0x1c>
-    6eb0:	20 92 29 0a 	sts	0x0A29, r2	; 0x800a29 <_end+0x1d>
+00006eb2 <.L2^B19>:
+    6eb2:	72 ff       	sbrs	r23, 2
+    6eb4:	04 c0       	rjmp	.+8      	; 0x6ebe <.L2^B20>
+    6eb6:	20 92 28 0a 	sts	0x0A28, r2	; 0x800a28 <_end+0x1c>
+    6eba:	20 92 29 0a 	sts	0x0A29, r2	; 0x800a29 <_end+0x1d>
 
-00006eb4 <.L2^B20>:
-    6eb4:	73 ff       	sbrs	r23, 3
-    6eb6:	04 c0       	rjmp	.+8      	; 0x6ec0 <audio_commit_atomic_end>
-    6eb8:	20 92 2a 0a 	sts	0x0A2A, r2	; 0x800a2a <_end+0x1e>
-    6ebc:	20 92 2b 0a 	sts	0x0A2B, r2	; 0x800a2b <_end+0x1f>
+00006ebe <.L2^B20>:
+    6ebe:	73 ff       	sbrs	r23, 3
+    6ec0:	04 c0       	rjmp	.+8      	; 0x6eca <audio_commit_atomic_end>
+    6ec2:	20 92 2a 0a 	sts	0x0A2A, r2	; 0x800a2a <_end+0x1e>
+    6ec6:	20 92 2b 0a 	sts	0x0A2B, r2	; 0x800a2b <_end+0x1f>
 
-00006ec0 <audio_commit_atomic_end>:
-    6ec0:	9f bf       	out	0x3f, r25	; 63
-    6ec2:	08 95       	ret
+00006eca <audio_commit_atomic_end>:
+    6eca:	9f bf       	out	0x3f, r25	; 63
+    6ecc:	08 95       	ret
 
-00006ec4 <sys_audio_impl>:
-    6ec4:	59 9a       	sbi	0x0b, 1	; 11
-    6ec6:	bf de       	rcall	.-642    	; 0x6c46 <audio_service_func>
-    6ec8:	0f 93       	push	r16
-    6eca:	1f 93       	push	r17
-    6ecc:	2f 93       	push	r18
-    6ece:	3f 93       	push	r19
-    6ed0:	4f 93       	push	r20
-    6ed2:	5f 93       	push	r21
-    6ed4:	7f 93       	push	r23
-    6ed6:	86 2f       	mov	r24, r22
-    6ed8:	ed e3       	ldi	r30, 0x3D	; 61
-    6eda:	fa e0       	ldi	r31, 0x0A	; 10
-    6edc:	3d e2       	ldi	r19, 0x2D	; 45
-    6ede:	81 30       	cpi	r24, 0x01	; 1
-    6ee0:	11 f4       	brne	.+4      	; 0x6ee6 <.L1^B71>
-    6ee2:	ec e4       	ldi	r30, 0x4C	; 76
-    6ee4:	35 e3       	ldi	r19, 0x35	; 53
+00006ece <sys_audio_impl>:
+    6ece:	59 9a       	sbi	0x0b, 1	; 11
+    6ed0:	ba de       	rcall	.-652    	; 0x6c46 <audio_service_func>
+    6ed2:	0f 93       	push	r16
+    6ed4:	1f 93       	push	r17
+    6ed6:	2f 93       	push	r18
+    6ed8:	3f 93       	push	r19
+    6eda:	4f 93       	push	r20
+    6edc:	5f 93       	push	r21
+    6ede:	7f 93       	push	r23
+    6ee0:	86 2f       	mov	r24, r22
+    6ee2:	ed e3       	ldi	r30, 0x3D	; 61
+    6ee4:	fa e0       	ldi	r31, 0x0A	; 10
+    6ee6:	3d e2       	ldi	r19, 0x2D	; 45
+    6ee8:	81 30       	cpi	r24, 0x01	; 1
+    6eea:	11 f4       	brne	.+4      	; 0x6ef0 <.L1^B71>
+    6eec:	ec e4       	ldi	r30, 0x4C	; 76
+    6eee:	35 e3       	ldi	r19, 0x35	; 53
 
-00006ee6 <.L1^B71>:
-    6ee6:	82 30       	cpi	r24, 0x02	; 2
-    6ee8:	98 f5       	brcc	.+102    	; 0x6f50 <.Laudio_command>
-    6eea:	00 83       	st	Z, r16
-    6eec:	11 83       	std	Z+1, r17	; 0x01
-    6eee:	22 83       	std	Z+2, r18	; 0x02
-    6ef0:	03 83       	std	Z+3, r16	; 0x03
-    6ef2:	14 83       	std	Z+4, r17	; 0x04
-    6ef4:	25 83       	std	Z+5, r18	; 0x05
-    6ef6:	46 83       	std	Z+6, r20	; 0x06
-    6ef8:	57 83       	std	Z+7, r21	; 0x07
-    6efa:	40 87       	std	Z+8, r20	; 0x08
-    6efc:	51 87       	std	Z+9, r21	; 0x09
-    6efe:	34 86       	std	Z+12, r3	; 0x0c
-    6f00:	25 86       	std	Z+13, r2	; 0x0d
-    6f02:	26 86       	std	Z+14, r2	; 0x0e
-    6f04:	8f 01       	movw	r16, r30
-    6f06:	23 2f       	mov	r18, r19
-    6f08:	e3 2f       	mov	r30, r19
-    6f0a:	80 e8       	ldi	r24, 0x80	; 128
-    6f0c:	98 e1       	ldi	r25, 0x18	; 24
-    6f0e:	81 93       	st	Z+, r24
-    6f10:	91 93       	st	Z+, r25
-    6f12:	81 93       	st	Z+, r24
-    6f14:	91 93       	st	Z+, r25
-    6f16:	81 93       	st	Z+, r24
-    6f18:	91 93       	st	Z+, r25
-    6f1a:	81 93       	st	Z+, r24
-    6f1c:	91 93       	st	Z+, r25
-    6f1e:	20 92 7c 0a 	sts	0x0A7C, r2	; 0x800a7c <_end+0x70>
-    6f22:	20 92 7b 0a 	sts	0x0A7B, r2	; 0x800a7b <_end+0x6f>
-    6f26:	ba de       	rcall	.-652    	; 0x6c9c <audio_byte>
-    6f28:	88 f0       	brcs	.+34     	; 0x6f4c <.Laudio_start_bad>
-    6f2a:	82 3a       	cpi	r24, 0xA2	; 162
-    6f2c:	79 f4       	brne	.+30     	; 0x6f4c <.Laudio_start_bad>
-    6f2e:	b6 de       	rcall	.-660    	; 0x6c9c <audio_byte>
-    6f30:	68 f0       	brcs	.+26     	; 0x6f4c <.Laudio_start_bad>
-    6f32:	88 23       	and	r24, r24
-    6f34:	59 f0       	breq	.+22     	; 0x6f4c <.Laudio_start_bad>
-    6f36:	80 31       	cpi	r24, 0x10	; 16
-    6f38:	48 f4       	brcc	.+18     	; 0x6f4c <.Laudio_start_bad>
-    6f3a:	f8 01       	movw	r30, r16
-    6f3c:	85 87       	std	Z+13, r24	; 0x0d
-    6f3e:	ef de       	rcall	.-546    	; 0x6d1e <audio_delta>
-    6f40:	28 f0       	brcs	.+10     	; 0x6f4c <.Laudio_start_bad>
-    6f42:	f8 01       	movw	r30, r16
-    6f44:	82 87       	std	Z+10, r24	; 0x0a
-    6f46:	93 87       	std	Z+11, r25	; 0x0b
-    6f48:	68 d0       	rcall	.+208    	; 0x701a <audio_enable>
-    6f4a:	5d c0       	rjmp	.+186    	; 0x7006 <.Laudio_command_commit>
+00006ef0 <.L1^B71>:
+    6ef0:	82 30       	cpi	r24, 0x02	; 2
+    6ef2:	98 f5       	brcc	.+102    	; 0x6f5a <.Laudio_command>
+    6ef4:	00 83       	st	Z, r16
+    6ef6:	11 83       	std	Z+1, r17	; 0x01
+    6ef8:	22 83       	std	Z+2, r18	; 0x02
+    6efa:	03 83       	std	Z+3, r16	; 0x03
+    6efc:	14 83       	std	Z+4, r17	; 0x04
+    6efe:	25 83       	std	Z+5, r18	; 0x05
+    6f00:	46 83       	std	Z+6, r20	; 0x06
+    6f02:	57 83       	std	Z+7, r21	; 0x07
+    6f04:	40 87       	std	Z+8, r20	; 0x08
+    6f06:	51 87       	std	Z+9, r21	; 0x09
+    6f08:	34 86       	std	Z+12, r3	; 0x0c
+    6f0a:	25 86       	std	Z+13, r2	; 0x0d
+    6f0c:	26 86       	std	Z+14, r2	; 0x0e
+    6f0e:	8f 01       	movw	r16, r30
+    6f10:	23 2f       	mov	r18, r19
+    6f12:	e3 2f       	mov	r30, r19
+    6f14:	80 e8       	ldi	r24, 0x80	; 128
+    6f16:	98 e1       	ldi	r25, 0x18	; 24
+    6f18:	81 93       	st	Z+, r24
+    6f1a:	91 93       	st	Z+, r25
+    6f1c:	81 93       	st	Z+, r24
+    6f1e:	91 93       	st	Z+, r25
+    6f20:	81 93       	st	Z+, r24
+    6f22:	91 93       	st	Z+, r25
+    6f24:	81 93       	st	Z+, r24
+    6f26:	91 93       	st	Z+, r25
+    6f28:	20 92 7c 0a 	sts	0x0A7C, r2	; 0x800a7c <_end+0x70>
+    6f2c:	20 92 7b 0a 	sts	0x0A7B, r2	; 0x800a7b <_end+0x6f>
+    6f30:	b5 de       	rcall	.-662    	; 0x6c9c <audio_byte>
+    6f32:	88 f0       	brcs	.+34     	; 0x6f56 <.Laudio_start_bad>
+    6f34:	82 3a       	cpi	r24, 0xA2	; 162
+    6f36:	79 f4       	brne	.+30     	; 0x6f56 <.Laudio_start_bad>
+    6f38:	b1 de       	rcall	.-670    	; 0x6c9c <audio_byte>
+    6f3a:	68 f0       	brcs	.+26     	; 0x6f56 <.Laudio_start_bad>
+    6f3c:	88 23       	and	r24, r24
+    6f3e:	59 f0       	breq	.+22     	; 0x6f56 <.Laudio_start_bad>
+    6f40:	80 31       	cpi	r24, 0x10	; 16
+    6f42:	48 f4       	brcc	.+18     	; 0x6f56 <.Laudio_start_bad>
+    6f44:	f8 01       	movw	r30, r16
+    6f46:	85 87       	std	Z+13, r24	; 0x0d
+    6f48:	ea de       	rcall	.-556    	; 0x6d1e <audio_delta>
+    6f4a:	28 f0       	brcs	.+10     	; 0x6f56 <.Laudio_start_bad>
+    6f4c:	f8 01       	movw	r30, r16
+    6f4e:	82 87       	std	Z+10, r24	; 0x0a
+    6f50:	93 87       	std	Z+11, r25	; 0x0b
+    6f52:	68 d0       	rcall	.+208    	; 0x7024 <audio_enable>
+    6f54:	5d c0       	rjmp	.+186    	; 0x7010 <.Laudio_command_commit>
 
-00006f4c <.Laudio_start_bad>:
-    6f4c:	41 df       	rcall	.-382    	; 0x6dd0 <audio_stream_end>
-    6f4e:	5b c0       	rjmp	.+182    	; 0x7006 <.Laudio_command_commit>
+00006f56 <.Laudio_start_bad>:
+    6f56:	39 df       	rcall	.-398    	; 0x6dca <audio_stream_end>
+    6f58:	5b c0       	rjmp	.+182    	; 0x7010 <.Laudio_command_commit>
 
-00006f50 <.Laudio_command>:
-    6f50:	82 30       	cpi	r24, 0x02	; 2
-    6f52:	91 f0       	breq	.+36     	; 0x6f78 <.Laudio_stop_music>
-    6f54:	83 30       	cpi	r24, 0x03	; 3
-    6f56:	99 f0       	breq	.+38     	; 0x6f7e <.Laudio_pause>
-    6f58:	84 30       	cpi	r24, 0x04	; 4
-    6f5a:	c1 f0       	breq	.+48     	; 0x6f8c <.Laudio_resume>
-    6f5c:	85 30       	cpi	r24, 0x05	; 5
-    6f5e:	f1 f0       	breq	.+60     	; 0x6f9c <.Laudio_master>
-    6f60:	86 30       	cpi	r24, 0x06	; 6
-    6f62:	19 f1       	breq	.+70     	; 0x6faa <.Laudio_enable_command>
-    6f64:	87 30       	cpi	r24, 0x07	; 7
-    6f66:	19 f1       	breq	.+70     	; 0x6fae <.Laudio_disable_command>
-    6f68:	88 30       	cpi	r24, 0x08	; 8
-    6f6a:	b1 f1       	breq	.+108    	; 0x6fd8 <.Laudio_stop_sfx>
-    6f6c:	89 30       	cpi	r24, 0x09	; 9
-    6f6e:	c9 f1       	breq	.+114    	; 0x6fe2 <.Laudio_status>
-    6f70:	8a 30       	cpi	r24, 0x0A	; 10
-    6f72:	09 f4       	brne	.+2      	; 0x6f76 <.L1^B72>
-    6f74:	73 c0       	rjmp	.+230    	; 0x705c <.Laudio_tone>
+00006f5a <.Laudio_command>:
+    6f5a:	82 30       	cpi	r24, 0x02	; 2
+    6f5c:	91 f0       	breq	.+36     	; 0x6f82 <.Laudio_stop_music>
+    6f5e:	83 30       	cpi	r24, 0x03	; 3
+    6f60:	99 f0       	breq	.+38     	; 0x6f88 <.Laudio_pause>
+    6f62:	84 30       	cpi	r24, 0x04	; 4
+    6f64:	c1 f0       	breq	.+48     	; 0x6f96 <.Laudio_resume>
+    6f66:	85 30       	cpi	r24, 0x05	; 5
+    6f68:	f1 f0       	breq	.+60     	; 0x6fa6 <.Laudio_master>
+    6f6a:	86 30       	cpi	r24, 0x06	; 6
+    6f6c:	19 f1       	breq	.+70     	; 0x6fb4 <.Laudio_enable_command>
+    6f6e:	87 30       	cpi	r24, 0x07	; 7
+    6f70:	19 f1       	breq	.+70     	; 0x6fb8 <.Laudio_disable_command>
+    6f72:	88 30       	cpi	r24, 0x08	; 8
+    6f74:	b1 f1       	breq	.+108    	; 0x6fe2 <.Laudio_stop_sfx>
+    6f76:	89 30       	cpi	r24, 0x09	; 9
+    6f78:	c9 f1       	breq	.+114    	; 0x6fec <.Laudio_status>
+    6f7a:	8a 30       	cpi	r24, 0x0A	; 10
+    6f7c:	09 f4       	brne	.+2      	; 0x6f80 <.L1^B72>
+    6f7e:	73 c0       	rjmp	.+230    	; 0x7066 <.Laudio_tone>
 
-00006f76 <.L1^B72>:
-    6f76:	48 c0       	rjmp	.+144    	; 0x7008 <.Laudio_command_done>
+00006f80 <.L1^B72>:
+    6f80:	48 c0       	rjmp	.+144    	; 0x7012 <.Laudio_command_done>
 
-00006f78 <.Laudio_stop_music>:
-    6f78:	20 92 49 0a 	sts	0x0A49, r2	; 0x800a49 <_end+0x3d>
-    6f7c:	44 c0       	rjmp	.+136    	; 0x7006 <.Laudio_command_commit>
+00006f82 <.Laudio_stop_music>:
+    6f82:	20 92 49 0a 	sts	0x0A49, r2	; 0x800a49 <_end+0x3d>
+    6f86:	44 c0       	rjmp	.+136    	; 0x7010 <.Laudio_command_commit>
 
-00006f7e <.Laudio_pause>:
-    6f7e:	80 91 49 0a 	lds	r24, 0x0A49	; 0x800a49 <_end+0x3d>
-    6f82:	81 30       	cpi	r24, 0x01	; 1
-    6f84:	09 f0       	breq	.+2      	; 0x6f88 <.L1^B73>
-    6f86:	40 c0       	rjmp	.+128    	; 0x7008 <.Laudio_command_done>
+00006f88 <.Laudio_pause>:
+    6f88:	80 91 49 0a 	lds	r24, 0x0A49	; 0x800a49 <_end+0x3d>
+    6f8c:	81 30       	cpi	r24, 0x01	; 1
+    6f8e:	09 f0       	breq	.+2      	; 0x6f92 <.L1^B73>
+    6f90:	40 c0       	rjmp	.+128    	; 0x7012 <.Laudio_command_done>
 
-00006f88 <.L1^B73>:
-    6f88:	82 e0       	ldi	r24, 0x02	; 2
-    6f8a:	05 c0       	rjmp	.+10     	; 0x6f96 <.Laudio_set_status>
+00006f92 <.L1^B73>:
+    6f92:	82 e0       	ldi	r24, 0x02	; 2
+    6f94:	05 c0       	rjmp	.+10     	; 0x6fa0 <.Laudio_set_status>
 
-00006f8c <.Laudio_resume>:
-    6f8c:	80 91 49 0a 	lds	r24, 0x0A49	; 0x800a49 <_end+0x3d>
-    6f90:	82 30       	cpi	r24, 0x02	; 2
-    6f92:	d1 f5       	brne	.+116    	; 0x7008 <.Laudio_command_done>
-    6f94:	81 e0       	ldi	r24, 0x01	; 1
+00006f96 <.Laudio_resume>:
+    6f96:	80 91 49 0a 	lds	r24, 0x0A49	; 0x800a49 <_end+0x3d>
+    6f9a:	82 30       	cpi	r24, 0x02	; 2
+    6f9c:	d1 f5       	brne	.+116    	; 0x7012 <.Laudio_command_done>
+    6f9e:	81 e0       	ldi	r24, 0x01	; 1
 
-00006f96 <.Laudio_set_status>:
-    6f96:	80 93 49 0a 	sts	0x0A49, r24	; 0x800a49 <_end+0x3d>
-    6f9a:	35 c0       	rjmp	.+106    	; 0x7006 <.Laudio_command_commit>
+00006fa0 <.Laudio_set_status>:
+    6fa0:	80 93 49 0a 	sts	0x0A49, r24	; 0x800a49 <_end+0x3d>
+    6fa4:	35 c0       	rjmp	.+106    	; 0x7010 <.Laudio_command_commit>
 
-00006f9c <.Laudio_master>:
-    6f9c:	80 2f       	mov	r24, r16
-    6f9e:	81 32       	cpi	r24, 0x21	; 33
-    6fa0:	08 f0       	brcs	.+2      	; 0x6fa4 <.L1^B74>
-    6fa2:	80 e2       	ldi	r24, 0x20	; 32
+00006fa6 <.Laudio_master>:
+    6fa6:	80 2f       	mov	r24, r16
+    6fa8:	81 32       	cpi	r24, 0x21	; 33
+    6faa:	08 f0       	brcs	.+2      	; 0x6fae <.L1^B74>
+    6fac:	80 e2       	ldi	r24, 0x20	; 32
 
-00006fa4 <.L1^B74>:
-    6fa4:	80 93 17 0a 	sts	0x0A17, r24	; 0x800a17 <_end+0xb>
-    6fa8:	2e c0       	rjmp	.+92     	; 0x7006 <.Laudio_command_commit>
+00006fae <.L1^B74>:
+    6fae:	80 93 17 0a 	sts	0x0A17, r24	; 0x800a17 <_end+0xb>
+    6fb2:	2e c0       	rjmp	.+92     	; 0x7010 <.Laudio_command_commit>
 
-00006faa <.Laudio_enable_command>:
-    6faa:	37 d0       	rcall	.+110    	; 0x701a <audio_enable>
-    6fac:	2d c0       	rjmp	.+90     	; 0x7008 <.Laudio_command_done>
+00006fb4 <.Laudio_enable_command>:
+    6fb4:	37 d0       	rcall	.+110    	; 0x7024 <audio_enable>
+    6fb6:	2d c0       	rjmp	.+90     	; 0x7012 <.Laudio_command_done>
 
-00006fae <.Laudio_disable_command>:
-    6fae:	20 92 49 0a 	sts	0x0A49, r2	; 0x800a49 <_end+0x3d>
-    6fb2:	20 92 58 0a 	sts	0x0A58, r2	; 0x800a58 <_end+0x4c>
-    6fb6:	20 92 59 0a 	sts	0x0A59, r2	; 0x800a59 <_end+0x4d>
-    6fba:	22 df       	rcall	.-444    	; 0x6e00 <audio_commit>
-    6fbc:	9f b7       	in	r25, 0x3f	; 63
-    6fbe:	f8 94       	cli
-    6fc0:	20 92 71 00 	sts	0x0071, r2	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
-    6fc4:	20 92 91 00 	sts	0x0091, r2	; 0x800091 <__DATA_REGION_ORIGIN__+0x31>
-    6fc8:	20 92 c0 00 	sts	0x00C0, r2	; 0x8000c0 <__DATA_REGION_ORIGIN__+0x60>
-    6fcc:	20 92 c1 00 	sts	0x00C1, r2	; 0x8000c1 <__DATA_REGION_ORIGIN__+0x61>
-    6fd0:	46 98       	cbi	0x08, 6	; 8
-    6fd2:	47 98       	cbi	0x08, 7	; 8
-    6fd4:	9f bf       	out	0x3f, r25	; 63
-    6fd6:	18 c0       	rjmp	.+48     	; 0x7008 <.Laudio_command_done>
+00006fb8 <.Laudio_disable_command>:
+    6fb8:	20 92 49 0a 	sts	0x0A49, r2	; 0x800a49 <_end+0x3d>
+    6fbc:	20 92 58 0a 	sts	0x0A58, r2	; 0x800a58 <_end+0x4c>
+    6fc0:	20 92 59 0a 	sts	0x0A59, r2	; 0x800a59 <_end+0x4d>
+    6fc4:	1a df       	rcall	.-460    	; 0x6dfa <audio_commit>
+    6fc6:	9f b7       	in	r25, 0x3f	; 63
+    6fc8:	f8 94       	cli
+    6fca:	20 92 71 00 	sts	0x0071, r2	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
+    6fce:	20 92 91 00 	sts	0x0091, r2	; 0x800091 <__DATA_REGION_ORIGIN__+0x31>
+    6fd2:	20 92 c0 00 	sts	0x00C0, r2	; 0x8000c0 <__DATA_REGION_ORIGIN__+0x60>
+    6fd6:	20 92 c1 00 	sts	0x00C1, r2	; 0x8000c1 <__DATA_REGION_ORIGIN__+0x61>
+    6fda:	46 98       	cbi	0x08, 6	; 8
+    6fdc:	47 98       	cbi	0x08, 7	; 8
+    6fde:	9f bf       	out	0x3f, r25	; 63
+    6fe0:	18 c0       	rjmp	.+48     	; 0x7012 <.Laudio_command_done>
 
-00006fd8 <.Laudio_stop_sfx>:
-    6fd8:	20 92 58 0a 	sts	0x0A58, r2	; 0x800a58 <_end+0x4c>
-    6fdc:	20 92 59 0a 	sts	0x0A59, r2	; 0x800a59 <_end+0x4d>
-    6fe0:	12 c0       	rjmp	.+36     	; 0x7006 <.Laudio_command_commit>
+00006fe2 <.Laudio_stop_sfx>:
+    6fe2:	20 92 58 0a 	sts	0x0A58, r2	; 0x800a58 <_end+0x4c>
+    6fe6:	20 92 59 0a 	sts	0x0A59, r2	; 0x800a59 <_end+0x4d>
+    6fea:	12 c0       	rjmp	.+36     	; 0x7010 <.Laudio_command_commit>
 
-00006fe2 <.Laudio_status>:
-    6fe2:	80 91 49 0a 	lds	r24, 0x0A49	; 0x800a49 <_end+0x3d>
-    6fe6:	90 91 58 0a 	lds	r25, 0x0A58	; 0x800a58 <_end+0x4c>
-    6fea:	99 23       	and	r25, r25
-    6fec:	09 f0       	breq	.+2      	; 0x6ff0 <.L1^B75>
-    6fee:	84 60       	ori	r24, 0x04	; 4
+00006fec <.Laudio_status>:
+    6fec:	80 91 49 0a 	lds	r24, 0x0A49	; 0x800a49 <_end+0x3d>
+    6ff0:	90 91 58 0a 	lds	r25, 0x0A58	; 0x800a58 <_end+0x4c>
+    6ff4:	99 23       	and	r25, r25
+    6ff6:	09 f0       	breq	.+2      	; 0x6ffa <.L1^B75>
+    6ff8:	84 60       	ori	r24, 0x04	; 4
 
-00006ff0 <.L1^B75>:
-    6ff0:	7f 91       	pop	r23
-    6ff2:	5f 91       	pop	r21
-    6ff4:	4f 91       	pop	r20
-    6ff6:	3f 91       	pop	r19
-    6ff8:	2f 91       	pop	r18
-    6ffa:	1f 91       	pop	r17
-    6ffc:	0f 91       	pop	r16
-    6ffe:	08 2f       	mov	r16, r24
-    7000:	12 2d       	mov	r17, r2
-    7002:	0c 94 a5 08 	jmp	0x114a	; 0x114a <seek_and_dispatch_func_disabled>
+00006ffa <.L1^B75>:
+    6ffa:	7f 91       	pop	r23
+    6ffc:	5f 91       	pop	r21
+    6ffe:	4f 91       	pop	r20
+    7000:	3f 91       	pop	r19
+    7002:	2f 91       	pop	r18
+    7004:	1f 91       	pop	r17
+    7006:	0f 91       	pop	r16
+    7008:	08 2f       	mov	r16, r24
+    700a:	12 2d       	mov	r17, r2
+    700c:	0c 94 a5 08 	jmp	0x114a	; 0x114a <seek_and_dispatch_func_disabled>
 
-00007006 <.Laudio_command_commit>:
-    7006:	fc de       	rcall	.-520    	; 0x6e00 <audio_commit>
+00007010 <.Laudio_command_commit>:
+    7010:	f4 de       	rcall	.-536    	; 0x6dfa <audio_commit>
 
-00007008 <.Laudio_command_done>:
-    7008:	7f 91       	pop	r23
-    700a:	5f 91       	pop	r21
-    700c:	4f 91       	pop	r20
-    700e:	3f 91       	pop	r19
-    7010:	2f 91       	pop	r18
-    7012:	1f 91       	pop	r17
-    7014:	0f 91       	pop	r16
-    7016:	0c 94 a5 08 	jmp	0x114a	; 0x114a <seek_and_dispatch_func_disabled>
+00007012 <.Laudio_command_done>:
+    7012:	7f 91       	pop	r23
+    7014:	5f 91       	pop	r21
+    7016:	4f 91       	pop	r20
+    7018:	3f 91       	pop	r19
+    701a:	2f 91       	pop	r18
+    701c:	1f 91       	pop	r17
+    701e:	0f 91       	pop	r16
+    7020:	0c 94 a5 08 	jmp	0x114a	; 0x114a <seek_and_dispatch_func_disabled>
 
-0000701a <audio_enable>:
-    701a:	80 91 71 00 	lds	r24, 0x0071	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
-    701e:	88 23       	and	r24, r24
-    7020:	e1 f4       	brne	.+56     	; 0x705a <.L1^B76>
-    7022:	9f b7       	in	r25, 0x3f	; 63
-    7024:	f8 94       	cli
-    7026:	20 92 bf 00 	sts	0x00BF, r2	; 0x8000bf <__DATA_REGION_ORIGIN__+0x5f>
-    702a:	80 e8       	ldi	r24, 0x80	; 128
-    702c:	80 93 cf 00 	sts	0x00CF, r24	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
-    7030:	20 92 95 00 	sts	0x0095, r2	; 0x800095 <__DATA_REGION_ORIGIN__+0x35>
-    7034:	20 92 94 00 	sts	0x0094, r2	; 0x800094 <__DATA_REGION_ORIGIN__+0x34>
-    7038:	82 e0       	ldi	r24, 0x02	; 2
-    703a:	88 bb       	out	0x18, r24	; 24
-    703c:	3e 9a       	sbi	0x07, 6	; 7
-    703e:	3f 9a       	sbi	0x07, 7	; 7
-    7040:	82 e4       	ldi	r24, 0x42	; 66
-    7042:	80 93 c0 00 	sts	0x00C0, r24	; 0x8000c0 <__DATA_REGION_ORIGIN__+0x60>
-    7046:	81 e0       	ldi	r24, 0x01	; 1
-    7048:	80 93 c1 00 	sts	0x00C1, r24	; 0x8000c1 <__DATA_REGION_ORIGIN__+0x61>
-    704c:	8a e0       	ldi	r24, 0x0A	; 10
-    704e:	80 93 91 00 	sts	0x0091, r24	; 0x800091 <__DATA_REGION_ORIGIN__+0x31>
-    7052:	82 e0       	ldi	r24, 0x02	; 2
-    7054:	80 93 71 00 	sts	0x0071, r24	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
-    7058:	9f bf       	out	0x3f, r25	; 63
+00007024 <audio_enable>:
+    7024:	80 91 71 00 	lds	r24, 0x0071	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
+    7028:	88 23       	and	r24, r24
+    702a:	e1 f4       	brne	.+56     	; 0x7064 <.L1^B76>
+    702c:	9f b7       	in	r25, 0x3f	; 63
+    702e:	f8 94       	cli
+    7030:	20 92 bf 00 	sts	0x00BF, r2	; 0x8000bf <__DATA_REGION_ORIGIN__+0x5f>
+    7034:	80 e8       	ldi	r24, 0x80	; 128
+    7036:	80 93 cf 00 	sts	0x00CF, r24	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
+    703a:	20 92 95 00 	sts	0x0095, r2	; 0x800095 <__DATA_REGION_ORIGIN__+0x35>
+    703e:	20 92 94 00 	sts	0x0094, r2	; 0x800094 <__DATA_REGION_ORIGIN__+0x34>
+    7042:	82 e0       	ldi	r24, 0x02	; 2
+    7044:	88 bb       	out	0x18, r24	; 24
+    7046:	3e 9a       	sbi	0x07, 6	; 7
+    7048:	3f 9a       	sbi	0x07, 7	; 7
+    704a:	82 e4       	ldi	r24, 0x42	; 66
+    704c:	80 93 c0 00 	sts	0x00C0, r24	; 0x8000c0 <__DATA_REGION_ORIGIN__+0x60>
+    7050:	81 e0       	ldi	r24, 0x01	; 1
+    7052:	80 93 c1 00 	sts	0x00C1, r24	; 0x8000c1 <__DATA_REGION_ORIGIN__+0x61>
+    7056:	8a e0       	ldi	r24, 0x0A	; 10
+    7058:	80 93 91 00 	sts	0x0091, r24	; 0x800091 <__DATA_REGION_ORIGIN__+0x31>
+    705c:	82 e0       	ldi	r24, 0x02	; 2
+    705e:	80 93 71 00 	sts	0x0071, r24	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
+    7062:	9f bf       	out	0x3f, r25	; 63
 
-0000705a <.L1^B76>:
-    705a:	08 95       	ret
+00007064 <.L1^B76>:
+    7064:	08 95       	ret
 
-0000705c <.Laudio_tone>:
-    705c:	90 2f       	mov	r25, r16
-    705e:	93 70       	andi	r25, 0x03	; 3
-    7060:	a9 2f       	mov	r26, r25
-    7062:	aa 0f       	add	r26, r26
-    7064:	e5 e3       	ldi	r30, 0x35	; 53
-    7066:	fa e0       	ldi	r31, 0x0A	; 10
-    7068:	ea 0f       	add	r30, r26
-    706a:	82 2f       	mov	r24, r18
-    706c:	88 51       	subi	r24, 0x18	; 24
-    706e:	88 34       	cpi	r24, 0x48	; 72
-    7070:	08 f0       	brcs	.+2      	; 0x7074 <.L1^B77>
-    7072:	80 e8       	ldi	r24, 0x80	; 128
+00007066 <.Laudio_tone>:
+    7066:	90 2f       	mov	r25, r16
+    7068:	93 70       	andi	r25, 0x03	; 3
+    706a:	a9 2f       	mov	r26, r25
+    706c:	aa 0f       	add	r26, r26
+    706e:	e5 e3       	ldi	r30, 0x35	; 53
+    7070:	fa e0       	ldi	r31, 0x0A	; 10
+    7072:	ea 0f       	add	r30, r26
+    7074:	82 2f       	mov	r24, r18
+    7076:	88 51       	subi	r24, 0x18	; 24
+    7078:	88 34       	cpi	r24, 0x48	; 72
+    707a:	08 f0       	brcs	.+2      	; 0x707e <.L1^B77>
+    707c:	80 e8       	ldi	r24, 0x80	; 128
 
-00007074 <.L1^B77>:
-    7074:	80 83       	st	Z, r24
-    7076:	84 2f       	mov	r24, r20
-    7078:	8f 71       	andi	r24, 0x1F	; 31
-    707a:	81 83       	std	Z+1, r24	; 0x01
-    707c:	81 e0       	ldi	r24, 0x01	; 1
+0000707e <.L1^B77>:
+    707e:	80 83       	st	Z, r24
+    7080:	84 2f       	mov	r24, r20
+    7082:	8f 71       	andi	r24, 0x1F	; 31
+    7084:	81 83       	std	Z+1, r24	; 0x01
+    7086:	81 e0       	ldi	r24, 0x01	; 1
 
-0000707e <.L1^B78>:
-    707e:	99 23       	and	r25, r25
-    7080:	19 f0       	breq	.+6      	; 0x7088 <.L2^B22>
-    7082:	88 0f       	add	r24, r24
-    7084:	9a 95       	dec	r25
-    7086:	fb cf       	rjmp	.-10     	; 0x707e <.L1^B78>
+00007088 <.L1^B78>:
+    7088:	99 23       	and	r25, r25
+    708a:	19 f0       	breq	.+6      	; 0x7092 <.L2^B22>
+    708c:	88 0f       	add	r24, r24
+    708e:	9a 95       	dec	r25
+    7090:	fb cf       	rjmp	.-10     	; 0x7088 <.L1^B78>
 
-00007088 <.L2^B22>:
-    7088:	80 93 59 0a 	sts	0x0A59, r24	; 0x800a59 <_end+0x4d>
-    708c:	80 93 5a 0a 	sts	0x0A5A, r24	; 0x800a5a <_end+0x4e>
-    7090:	82 e0       	ldi	r24, 0x02	; 2
-    7092:	80 93 58 0a 	sts	0x0A58, r24	; 0x800a58 <_end+0x4c>
-    7096:	c1 df       	rcall	.-126    	; 0x701a <audio_enable>
-    7098:	b6 cf       	rjmp	.-148    	; 0x7006 <.Laudio_command_commit>
+00007092 <.L2^B22>:
+    7092:	80 93 59 0a 	sts	0x0A59, r24	; 0x800a59 <_end+0x4d>
+    7096:	80 93 5a 0a 	sts	0x0A5A, r24	; 0x800a5a <_end+0x4e>
+    709a:	82 e0       	ldi	r24, 0x02	; 2
+    709c:	80 93 58 0a 	sts	0x0A58, r24	; 0x800a58 <_end+0x4c>
+    70a0:	c1 df       	rcall	.-126    	; 0x7024 <audio_enable>
+    70a2:	b6 cf       	rjmp	.-148    	; 0x7010 <.Laudio_command_commit>
 
-0000709a <audio_notes>:
-    709a:	12 01       	movw	r2, r4
-    709c:	23 01       	movw	r4, r6
-    709e:	34 01       	movw	r6, r8
-    70a0:	46 01       	movw	r8, r12
-    70a2:	5a 01       	movw	r10, r20
-    70a4:	6e 01       	movw	r12, r28
-    70a6:	84 01       	movw	r16, r8
-    70a8:	9b 01       	movw	r18, r22
-    70aa:	b3 01       	movw	r22, r6
-    70ac:	cd 01       	movw	r24, r26
-    70ae:	e9 01       	movw	r28, r18
-    70b0:	06 02       	muls	r16, r22
-    70b2:	25 02       	muls	r18, r21
-    70b4:	45 02       	muls	r20, r21
-    70b6:	68 02       	muls	r22, r24
-    70b8:	8c 02       	muls	r24, r28
-    70ba:	b3 02       	muls	r27, r19
-    70bc:	dc 02       	muls	r29, r28
-    70be:	08 03       	fmul	r16, r16
-    70c0:	36 03       	mulsu	r19, r22
-    70c2:	67 03       	mulsu	r22, r23
-    70c4:	9b 03       	fmulsu	r17, r19
-    70c6:	d2 03       	fmuls	r21, r18
-    70c8:	0c 04       	cpc	r0, r12
-    70ca:	49 04       	cpc	r4, r9
-    70cc:	8b 04       	cpc	r8, r11
-    70ce:	d0 04       	cpc	r13, r0
-    70d0:	19 05       	cpc	r17, r9
-    70d2:	67 05       	cpc	r22, r7
-    70d4:	b9 05       	cpc	r27, r9
-    70d6:	10 06       	cpc	r1, r16
-    70d8:	6c 06       	cpc	r6, r28
-    70da:	ce 06       	cpc	r12, r30
-    70dc:	35 07       	cpc	r19, r21
-    70de:	a3 07       	cpc	r26, r19
-    70e0:	17 08       	sbc	r1, r7
-    70e2:	93 08       	sbc	r9, r3
-    70e4:	15 09       	sbc	r17, r5
-    70e6:	9f 09       	sbc	r25, r15
-    70e8:	32 0a       	sbc	r3, r18
-    70ea:	cd 0a       	sbc	r12, r29
-    70ec:	72 0b       	sbc	r23, r18
-    70ee:	20 0c       	add	r2, r0
-    70f0:	d8 0c       	add	r13, r8
-    70f2:	9c 0d       	add	r25, r12
-    70f4:	6b 0e       	add	r6, r27
-    70f6:	46 0f       	add	r20, r22
-    70f8:	2f 10       	cpse	r2, r15
-    70fa:	25 11       	cpse	r18, r5
-    70fc:	2a 12       	cpse	r2, r26
-    70fe:	3f 13       	cpse	r19, r31
-    7100:	64 14       	cp	r6, r4
-    7102:	9a 15       	cp	r25, r10
-    7104:	e3 16       	cp	r14, r19
-    7106:	3f 18       	sub	r3, r15
-    7108:	b1 19       	sub	r27, r1
-    710a:	38 1b       	sub	r19, r24
-    710c:	d6 1c       	adc	r13, r6
-    710e:	8d 1e       	adc	r8, r29
-    7110:	5e 20       	and	r5, r14
-    7112:	4b 22       	and	r4, r27
-    7114:	55 24       	eor	r5, r5
-    7116:	7e 26       	eor	r7, r30
-    7118:	c8 28       	or	r12, r8
-    711a:	34 2b       	or	r19, r20
-    711c:	c6 2d       	mov	r28, r6
-    711e:	7f 30       	cpi	r23, 0x0F	; 15
-    7120:	61 33       	cpi	r22, 0x31	; 49
-    7122:	6f 36       	cpi	r22, 0x6F	; 111
-    7124:	ac 39       	cpi	r26, 0x9C	; 156
-    7126:	1a 3d       	cpi	r17, 0xDA	; 218
-    7128:	bc 40       	sbci	r27, 0x0C	; 12
+000070a4 <timer0_compa_isr>:
+    70a4:	0f 92       	push	r0
+    70a6:	0f b6       	in	r0, 0x3f	; 63
+    70a8:	0f 92       	push	r0
+    70aa:	00 90 05 0a 	lds	r0, 0x0A05	; 0x800a05 <__DATA_REGION_ORIGIN__+0x9a5>
+    70ae:	03 94       	inc	r0
+    70b0:	00 92 05 0a 	sts	0x0A05, r0	; 0x800a05 <__DATA_REGION_ORIGIN__+0x9a5>
+    70b4:	89 f4       	brne	.+34     	; 0x70d8 <timer0_compa_isr_done>
+    70b6:	00 90 06 0a 	lds	r0, 0x0A06	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
+    70ba:	03 94       	inc	r0
+    70bc:	00 92 06 0a 	sts	0x0A06, r0	; 0x800a06 <__DATA_REGION_ORIGIN__+0x9a6>
+    70c0:	59 f4       	brne	.+22     	; 0x70d8 <timer0_compa_isr_done>
+    70c2:	00 90 07 0a 	lds	r0, 0x0A07	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
+    70c6:	03 94       	inc	r0
+    70c8:	00 92 07 0a 	sts	0x0A07, r0	; 0x800a07 <__DATA_REGION_ORIGIN__+0x9a7>
+    70cc:	29 f4       	brne	.+10     	; 0x70d8 <timer0_compa_isr_done>
+    70ce:	00 90 08 0a 	lds	r0, 0x0A08	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
+    70d2:	03 94       	inc	r0
+    70d4:	00 92 08 0a 	sts	0x0A08, r0	; 0x800a08 <__DATA_REGION_ORIGIN__+0x9a8>
 
-0000712a <audio_init_func>:
-    712a:	80 e1       	ldi	r24, 0x10	; 16
-    712c:	89 bd       	out	0x29, r24	; 41
-    712e:	8a e6       	ldi	r24, 0x6A	; 106
-    7130:	82 bf       	out	0x32, r24	; 50
-    7132:	82 e1       	ldi	r24, 0x12	; 18
-    7134:	89 bd       	out	0x29, r24	; 41
-    7136:	80 ef       	ldi	r24, 0xF0	; 240
+000070d8 <timer0_compa_isr_done>:
+    70d8:	00 90 16 0a 	lds	r0, 0x0A16	; 0x800a16 <_end+0xa>
+    70dc:	03 94       	inc	r0
+    70de:	00 92 16 0a 	sts	0x0A16, r0	; 0x800a16 <_end+0xa>
+    70e2:	02 fc       	sbrc	r0, 2
+    70e4:	04 c0       	rjmp	.+8      	; 0x70ee <timer0_audio_tick>
 
-00007138 <.L1^B79>:
-    7138:	00 c0       	rjmp	.+0      	; 0x713a <.L1^B79+0x2>
-    713a:	00 c0       	rjmp	.+0      	; 0x713c <.L1^B79+0x4>
-    713c:	8a 95       	dec	r24
-    713e:	e1 f7       	brne	.-8      	; 0x7138 <.L1^B79>
+000070e6 <timer0_audio_done>:
+    70e6:	0f 90       	pop	r0
+    70e8:	0f be       	out	0x3f, r0	; 63
+    70ea:	0f 90       	pop	r0
+    70ec:	18 95       	reti
 
-00007140 <.L1^B80>:
-    7140:	89 b5       	in	r24, 0x29	; 41
-    7142:	80 ff       	sbrs	r24, 0
-    7144:	fd cf       	rjmp	.-6      	; 0x7140 <.L1^B80>
-    7146:	80 91 65 00 	lds	r24, 0x0065	; 0x800065 <__DATA_REGION_ORIGIN__+0x5>
-    714a:	87 7e       	andi	r24, 0xE7	; 231
-    714c:	80 93 65 00 	sts	0x0065, r24	; 0x800065 <__DATA_REGION_ORIGIN__+0x5>
-    7150:	20 92 91 00 	sts	0x0091, r2	; 0x800091 <__DATA_REGION_ORIGIN__+0x31>
-    7154:	20 92 71 00 	sts	0x0071, r2	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
-    7158:	20 92 90 00 	sts	0x0090, r2	; 0x800090 <__DATA_REGION_ORIGIN__+0x30>
-    715c:	20 92 92 00 	sts	0x0092, r2	; 0x800092 <__DATA_REGION_ORIGIN__+0x32>
-    7160:	20 92 99 00 	sts	0x0099, r2	; 0x800099 <__DATA_REGION_ORIGIN__+0x39>
-    7164:	8f ef       	ldi	r24, 0xFF	; 255
-    7166:	80 93 98 00 	sts	0x0098, r24	; 0x800098 <__DATA_REGION_ORIGIN__+0x38>
-    716a:	20 92 c1 00 	sts	0x00C1, r2	; 0x8000c1 <__DATA_REGION_ORIGIN__+0x61>
-    716e:	20 92 72 00 	sts	0x0072, r2	; 0x800072 <__DATA_REGION_ORIGIN__+0x12>
-    7172:	20 92 c0 00 	sts	0x00C0, r2	; 0x8000c0 <__DATA_REGION_ORIGIN__+0x60>
-    7176:	46 98       	cbi	0x08, 6	; 8
-    7178:	47 98       	cbi	0x08, 7	; 8
-    717a:	3e 98       	cbi	0x07, 6	; 7
-    717c:	3f 98       	cbi	0x07, 7	; 7
-    717e:	20 92 c2 00 	sts	0x00C2, r2	; 0x8000c2 <__DATA_REGION_ORIGIN__+0x62>
-    7182:	20 92 c3 00 	sts	0x00C3, r2	; 0x8000c3 <__DATA_REGION_ORIGIN__+0x63>
-    7186:	20 92 c4 00 	sts	0x00C4, r2	; 0x8000c4 <__DATA_REGION_ORIGIN__+0x64>
-    718a:	20 92 d4 00 	sts	0x00D4, r2	; 0x8000d4 <__DATA_REGION_ORIGIN__+0x74>
-    718e:	20 92 bf 00 	sts	0x00BF, r2	; 0x8000bf <__DATA_REGION_ORIGIN__+0x5f>
-    7192:	20 92 be 00 	sts	0x00BE, r2	; 0x8000be <__DATA_REGION_ORIGIN__+0x5e>
-    7196:	80 93 d1 00 	sts	0x00D1, r24	; 0x8000d1 <__DATA_REGION_ORIGIN__+0x71>
-    719a:	80 e8       	ldi	r24, 0x80	; 128
-    719c:	80 93 cf 00 	sts	0x00CF, r24	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
-    71a0:	81 e0       	ldi	r24, 0x01	; 1
-    71a2:	80 93 2c 0a 	sts	0x0A2C, r24	; 0x800a2c <_end+0x20>
-    71a6:	80 e2       	ldi	r24, 0x20	; 32
-    71a8:	80 93 17 0a 	sts	0x0A17, r24	; 0x800a17 <_end+0xb>
-    71ac:	08 95       	ret
-    71ae:	00 00       	nop
+000070ee <timer0_audio_tick>:
+    70ee:	00 24       	eor	r0, r0
+    70f0:	00 92 16 0a 	sts	0x0A16, r0	; 0x800a16 <_end+0xa>
+    70f4:	00 90 15 0a 	lds	r0, 0x0A15	; 0x800a15 <_end+0x9>
+    70f8:	03 94       	inc	r0
+    70fa:	a9 f3       	breq	.-22     	; 0x70e6 <timer0_audio_done>
+    70fc:	00 92 15 0a 	sts	0x0A15, r0	; 0x800a15 <_end+0x9>
+    7100:	f2 cf       	rjmp	.-28     	; 0x70e6 <timer0_audio_done>
+
+00007102 <timer3_compa_isr>:
+    7102:	0f 92       	push	r0
+    7104:	0f b6       	in	r0, 0x3f	; 63
+    7106:	0f 92       	push	r0
+    7108:	1f 92       	push	r1
+    710a:	8f 93       	push	r24
+    710c:	9f 93       	push	r25
+    710e:	af 93       	push	r26
+    7110:	ef 93       	push	r30
+    7112:	ff 93       	push	r31
+    7114:	f1 e0       	ldi	r31, 0x01	; 1
+    7116:	a0 e8       	ldi	r26, 0x80	; 128
+    7118:	80 91 24 0a 	lds	r24, 0x0A24	; 0x800a24 <_end+0x18>
+    711c:	90 91 25 0a 	lds	r25, 0x0A25	; 0x800a25 <_end+0x19>
+    7120:	00 90 18 0a 	lds	r0, 0x0A18	; 0x800a18 <_end+0xc>
+    7124:	80 0d       	add	r24, r0
+    7126:	00 90 19 0a 	lds	r0, 0x0A19	; 0x800a19 <_end+0xd>
+    712a:	90 1d       	adc	r25, r0
+    712c:	80 93 24 0a 	sts	0x0A24, r24	; 0x800a24 <_end+0x18>
+    7130:	90 93 25 0a 	sts	0x0A25, r25	; 0x800a25 <_end+0x19>
+    7134:	80 91 1a 0a 	lds	r24, 0x0A1A	; 0x800a1a <_end+0xe>
+    7138:	e8 2f       	mov	r30, r24
+    713a:	e0 7c       	andi	r30, 0xC0	; 192
+    713c:	96 95       	lsr	r25
+    713e:	96 95       	lsr	r25
+    7140:	e9 2b       	or	r30, r25
+    7142:	8f 73       	andi	r24, 0x3F	; 63
+    7144:	94 91       	lpm	r25, Z
+    7146:	98 02       	muls	r25, r24
+    7148:	00 0c       	add	r0, r0
+    714a:	a1 1d       	adc	r26, r1
+    714c:	80 91 26 0a 	lds	r24, 0x0A26	; 0x800a26 <_end+0x1a>
+    7150:	90 91 27 0a 	lds	r25, 0x0A27	; 0x800a27 <_end+0x1b>
+    7154:	00 90 1b 0a 	lds	r0, 0x0A1B	; 0x800a1b <_end+0xf>
+    7158:	80 0d       	add	r24, r0
+    715a:	00 90 1c 0a 	lds	r0, 0x0A1C	; 0x800a1c <_end+0x10>
+    715e:	90 1d       	adc	r25, r0
+    7160:	80 93 26 0a 	sts	0x0A26, r24	; 0x800a26 <_end+0x1a>
+    7164:	90 93 27 0a 	sts	0x0A27, r25	; 0x800a27 <_end+0x1b>
+    7168:	80 91 1d 0a 	lds	r24, 0x0A1D	; 0x800a1d <_end+0x11>
+    716c:	e8 2f       	mov	r30, r24
+    716e:	e0 7c       	andi	r30, 0xC0	; 192
+    7170:	96 95       	lsr	r25
+    7172:	96 95       	lsr	r25
+    7174:	e9 2b       	or	r30, r25
+    7176:	8f 73       	andi	r24, 0x3F	; 63
+    7178:	94 91       	lpm	r25, Z
+    717a:	98 02       	muls	r25, r24
+    717c:	00 0c       	add	r0, r0
+    717e:	a1 1d       	adc	r26, r1
+    7180:	80 91 28 0a 	lds	r24, 0x0A28	; 0x800a28 <_end+0x1c>
+    7184:	90 91 29 0a 	lds	r25, 0x0A29	; 0x800a29 <_end+0x1d>
+    7188:	00 90 1e 0a 	lds	r0, 0x0A1E	; 0x800a1e <_end+0x12>
+    718c:	80 0d       	add	r24, r0
+    718e:	00 90 1f 0a 	lds	r0, 0x0A1F	; 0x800a1f <_end+0x13>
+    7192:	90 1d       	adc	r25, r0
+    7194:	80 93 28 0a 	sts	0x0A28, r24	; 0x800a28 <_end+0x1c>
+    7198:	90 93 29 0a 	sts	0x0A29, r25	; 0x800a29 <_end+0x1d>
+    719c:	80 91 20 0a 	lds	r24, 0x0A20	; 0x800a20 <_end+0x14>
+    71a0:	e8 2f       	mov	r30, r24
+    71a2:	e0 7c       	andi	r30, 0xC0	; 192
+    71a4:	96 95       	lsr	r25
+    71a6:	96 95       	lsr	r25
+    71a8:	e9 2b       	or	r30, r25
+    71aa:	8f 73       	andi	r24, 0x3F	; 63
+    71ac:	94 91       	lpm	r25, Z
+    71ae:	98 02       	muls	r25, r24
+    71b0:	00 0c       	add	r0, r0
+    71b2:	a1 1d       	adc	r26, r1
+    71b4:	80 91 2a 0a 	lds	r24, 0x0A2A	; 0x800a2a <_end+0x1e>
+    71b8:	90 91 2b 0a 	lds	r25, 0x0A2B	; 0x800a2b <_end+0x1f>
+    71bc:	00 90 21 0a 	lds	r0, 0x0A21	; 0x800a21 <_end+0x15>
+    71c0:	80 0d       	add	r24, r0
+    71c2:	00 90 22 0a 	lds	r0, 0x0A22	; 0x800a22 <_end+0x16>
+    71c6:	90 1d       	adc	r25, r0
+    71c8:	80 93 2a 0a 	sts	0x0A2A, r24	; 0x800a2a <_end+0x1e>
+    71cc:	90 93 2b 0a 	sts	0x0A2B, r25	; 0x800a2b <_end+0x1f>
+    71d0:	90 91 2c 0a 	lds	r25, 0x0A2C	; 0x800a2c <_end+0x20>
+    71d4:	30 f4       	brcc	.+12     	; 0x71e2 <.Laudio_noise_hold>
+    71d6:	96 95       	lsr	r25
+    71d8:	10 f4       	brcc	.+4      	; 0x71de <.Laudio_noise_store>
+    71da:	88 eb       	ldi	r24, 0xB8	; 184
+    71dc:	98 27       	eor	r25, r24
+
+000071de <.Laudio_noise_store>:
+    71de:	90 93 2c 0a 	sts	0x0A2C, r25	; 0x800a2c <_end+0x20>
+
+000071e2 <.Laudio_noise_hold>:
+    71e2:	00 90 23 0a 	lds	r0, 0x0A23	; 0x800a23 <_end+0x17>
+    71e6:	90 fd       	sbrc	r25, 0
+    71e8:	01 94       	neg	r0
+    71ea:	a0 0d       	add	r26, r0
+    71ec:	88 27       	eor	r24, r24
+    71ee:	80 93 bf 00 	sts	0x00BF, r24	; 0x8000bf <__DATA_REGION_ORIGIN__+0x5f>
+    71f2:	a0 93 cf 00 	sts	0x00CF, r26	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
+    71f6:	ff 91       	pop	r31
+    71f8:	ef 91       	pop	r30
+    71fa:	af 91       	pop	r26
+    71fc:	9f 91       	pop	r25
+    71fe:	8f 91       	pop	r24
+    7200:	1f 90       	pop	r1
+    7202:	0f 90       	pop	r0
+    7204:	0f be       	out	0x3f, r0	; 63
+    7206:	0f 90       	pop	r0
+    7208:	18 95       	reti
+
+0000720a <audio_notes>:
+    720a:	12 01       	movw	r2, r4
+    720c:	23 01       	movw	r4, r6
+    720e:	34 01       	movw	r6, r8
+    7210:	46 01       	movw	r8, r12
+    7212:	5a 01       	movw	r10, r20
+    7214:	6e 01       	movw	r12, r28
+    7216:	84 01       	movw	r16, r8
+    7218:	9b 01       	movw	r18, r22
+    721a:	b3 01       	movw	r22, r6
+    721c:	cd 01       	movw	r24, r26
+    721e:	e9 01       	movw	r28, r18
+    7220:	06 02       	muls	r16, r22
+    7222:	25 02       	muls	r18, r21
+    7224:	45 02       	muls	r20, r21
+    7226:	68 02       	muls	r22, r24
+    7228:	8c 02       	muls	r24, r28
+    722a:	b3 02       	muls	r27, r19
+    722c:	dc 02       	muls	r29, r28
+    722e:	08 03       	fmul	r16, r16
+    7230:	36 03       	mulsu	r19, r22
+    7232:	67 03       	mulsu	r22, r23
+    7234:	9b 03       	fmulsu	r17, r19
+    7236:	d2 03       	fmuls	r21, r18
+    7238:	0c 04       	cpc	r0, r12
+    723a:	49 04       	cpc	r4, r9
+    723c:	8b 04       	cpc	r8, r11
+    723e:	d0 04       	cpc	r13, r0
+    7240:	19 05       	cpc	r17, r9
+    7242:	67 05       	cpc	r22, r7
+    7244:	b9 05       	cpc	r27, r9
+    7246:	10 06       	cpc	r1, r16
+    7248:	6c 06       	cpc	r6, r28
+    724a:	ce 06       	cpc	r12, r30
+    724c:	35 07       	cpc	r19, r21
+    724e:	a3 07       	cpc	r26, r19
+    7250:	17 08       	sbc	r1, r7
+    7252:	93 08       	sbc	r9, r3
+    7254:	15 09       	sbc	r17, r5
+    7256:	9f 09       	sbc	r25, r15
+    7258:	32 0a       	sbc	r3, r18
+    725a:	cd 0a       	sbc	r12, r29
+    725c:	72 0b       	sbc	r23, r18
+    725e:	20 0c       	add	r2, r0
+    7260:	d8 0c       	add	r13, r8
+    7262:	9c 0d       	add	r25, r12
+    7264:	6b 0e       	add	r6, r27
+    7266:	46 0f       	add	r20, r22
+    7268:	2f 10       	cpse	r2, r15
+    726a:	25 11       	cpse	r18, r5
+    726c:	2a 12       	cpse	r2, r26
+    726e:	3f 13       	cpse	r19, r31
+    7270:	64 14       	cp	r6, r4
+    7272:	9a 15       	cp	r25, r10
+    7274:	e3 16       	cp	r14, r19
+    7276:	3f 18       	sub	r3, r15
+    7278:	b1 19       	sub	r27, r1
+    727a:	38 1b       	sub	r19, r24
+    727c:	d6 1c       	adc	r13, r6
+    727e:	8d 1e       	adc	r8, r29
+    7280:	5e 20       	and	r5, r14
+    7282:	4b 22       	and	r4, r27
+    7284:	55 24       	eor	r5, r5
+    7286:	7e 26       	eor	r7, r30
+    7288:	c8 28       	or	r12, r8
+    728a:	34 2b       	or	r19, r20
+    728c:	c6 2d       	mov	r28, r6
+    728e:	7f 30       	cpi	r23, 0x0F	; 15
+    7290:	61 33       	cpi	r22, 0x31	; 49
+    7292:	6f 36       	cpi	r22, 0x6F	; 111
+    7294:	ac 39       	cpi	r26, 0x9C	; 156
+    7296:	1a 3d       	cpi	r17, 0xDA	; 218
+    7298:	bc 40       	sbci	r27, 0x0C	; 12
+
+0000729a <audio_init_func>:
+    729a:	80 e1       	ldi	r24, 0x10	; 16
+    729c:	89 bd       	out	0x29, r24	; 41
+    729e:	8a e6       	ldi	r24, 0x6A	; 106
+    72a0:	82 bf       	out	0x32, r24	; 50
+    72a2:	82 e1       	ldi	r24, 0x12	; 18
+    72a4:	89 bd       	out	0x29, r24	; 41
+    72a6:	80 ef       	ldi	r24, 0xF0	; 240
+
+000072a8 <.L1^B79>:
+    72a8:	00 c0       	rjmp	.+0      	; 0x72aa <.L1^B79+0x2>
+    72aa:	00 c0       	rjmp	.+0      	; 0x72ac <.L1^B79+0x4>
+    72ac:	8a 95       	dec	r24
+    72ae:	e1 f7       	brne	.-8      	; 0x72a8 <.L1^B79>
+
+000072b0 <.L1^B80>:
+    72b0:	89 b5       	in	r24, 0x29	; 41
+    72b2:	80 ff       	sbrs	r24, 0
+    72b4:	fd cf       	rjmp	.-6      	; 0x72b0 <.L1^B80>
+    72b6:	80 91 65 00 	lds	r24, 0x0065	; 0x800065 <__DATA_REGION_ORIGIN__+0x5>
+    72ba:	87 7e       	andi	r24, 0xE7	; 231
+    72bc:	80 93 65 00 	sts	0x0065, r24	; 0x800065 <__DATA_REGION_ORIGIN__+0x5>
+    72c0:	20 92 91 00 	sts	0x0091, r2	; 0x800091 <__DATA_REGION_ORIGIN__+0x31>
+    72c4:	20 92 71 00 	sts	0x0071, r2	; 0x800071 <__DATA_REGION_ORIGIN__+0x11>
+    72c8:	20 92 90 00 	sts	0x0090, r2	; 0x800090 <__DATA_REGION_ORIGIN__+0x30>
+    72cc:	20 92 92 00 	sts	0x0092, r2	; 0x800092 <__DATA_REGION_ORIGIN__+0x32>
+    72d0:	20 92 99 00 	sts	0x0099, r2	; 0x800099 <__DATA_REGION_ORIGIN__+0x39>
+    72d4:	8f ef       	ldi	r24, 0xFF	; 255
+    72d6:	80 93 98 00 	sts	0x0098, r24	; 0x800098 <__DATA_REGION_ORIGIN__+0x38>
+    72da:	20 92 c1 00 	sts	0x00C1, r2	; 0x8000c1 <__DATA_REGION_ORIGIN__+0x61>
+    72de:	20 92 72 00 	sts	0x0072, r2	; 0x800072 <__DATA_REGION_ORIGIN__+0x12>
+    72e2:	20 92 c0 00 	sts	0x00C0, r2	; 0x8000c0 <__DATA_REGION_ORIGIN__+0x60>
+    72e6:	46 98       	cbi	0x08, 6	; 8
+    72e8:	47 98       	cbi	0x08, 7	; 8
+    72ea:	3e 98       	cbi	0x07, 6	; 7
+    72ec:	3f 98       	cbi	0x07, 7	; 7
+    72ee:	20 92 c2 00 	sts	0x00C2, r2	; 0x8000c2 <__DATA_REGION_ORIGIN__+0x62>
+    72f2:	20 92 c3 00 	sts	0x00C3, r2	; 0x8000c3 <__DATA_REGION_ORIGIN__+0x63>
+    72f6:	20 92 c4 00 	sts	0x00C4, r2	; 0x8000c4 <__DATA_REGION_ORIGIN__+0x64>
+    72fa:	20 92 d4 00 	sts	0x00D4, r2	; 0x8000d4 <__DATA_REGION_ORIGIN__+0x74>
+    72fe:	20 92 bf 00 	sts	0x00BF, r2	; 0x8000bf <__DATA_REGION_ORIGIN__+0x5f>
+    7302:	20 92 be 00 	sts	0x00BE, r2	; 0x8000be <__DATA_REGION_ORIGIN__+0x5e>
+    7306:	80 93 d1 00 	sts	0x00D1, r24	; 0x8000d1 <__DATA_REGION_ORIGIN__+0x71>
+    730a:	80 e8       	ldi	r24, 0x80	; 128
+    730c:	80 93 cf 00 	sts	0x00CF, r24	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
+    7310:	81 e0       	ldi	r24, 0x01	; 1
+    7312:	80 93 2c 0a 	sts	0x0A2C, r24	; 0x800a2c <_end+0x20>
+    7316:	80 e2       	ldi	r24, 0x20	; 32
+    7318:	80 93 17 0a 	sts	0x0A17, r24	; 0x800a17 <_end+0xb>
+    731c:	08 95       	ret
+    731e:	00 00       	nop

@@ -7,11 +7,11 @@ a sound effect; B pauses/resumes music. Playback needs no guest update call.
 The original tune, **Sunlit Garden**, loops through 16 bars in C major at about
 96 BPM (39.936 seconds per loop). Its first eight bars introduce and develop
 the melody; the next four move through Em7, Am7, Dm7, and Gadd9 before a final
-four-bar return. Channel 0 carries the melody, channel 1 plays root/fifth bass,
-channel 2 adds eighth-note arpeggios, and channel 3 supplies low noise kicks,
+four-bar return. Channel 0 carries a sine melody, channel 1 plays triangle
+root/fifth bass, channel 2 adds square eighth-note arpeggios, and channel 3 supplies low noise kicks,
 soft backbeats, and quiet offbeat ticks. Short volume fades soften the notes
 and percussion. A sound effect temporarily takes over channels 2 and 3 while
-the melody and bass continue.
+the melody and bass continue. The effect uses sawtooth on channel 2.
 
 In `music.json`, `row_ticks: 1` makes each row one 4 ms tick. This arrangement
 uses 156 ticks per quarter note and 624 per bar. Each event's positive `delta`
@@ -20,17 +20,21 @@ counts rows since the previous event. The first update waits one tick;
 39.936-second period. The binary stores each wait as ticks minus one and
 splits long waits with Continue records.
 
-### Notes and volume
+### Notes, volume, and waveform
 
-Channel objects accept `note` and `volume` (amplitude 0..31).
-Channels 0, 1, and 2 always produce the same 50% square waveform; channel 3
-always produces LFSR noise. A low note makes a bass part, and higher notes make
-a lead part. On channel 3, the note controls the noise update rate.
+Channel objects accept `note`, `volume` (amplitude 0..31), and `waveform`
+(`square`, `triangle`, `sawtooth`, or `sine`). Channels 0, 1, and 2 select
+independent 64-sample waveforms; channel 3 always produces LFSR noise and
+ignores waveform selection. On channel 3, the note controls the noise update rate.
 
-For example, `{"note":"C2","volume":9}` on channel 1 plays a low C square
-wave at amplitude 9. One packed mask selects the note and volume in the same
-event. Later notes retain that volume; volume-only changes preserve the
-current note and phase. This song uses explicit quiet volumes and timed
+For example, `{"note":"C2","volume":9,"waveform":"triangle"}` on channel 1
+plays a low C triangle wave at amplitude 9. One packed mask selects the note
+and combined volume/waveform byte in the same event. The encoder tracks each
+channel's volume and waveform, repeating the other field when either changes.
+The first event initializes note, volume, and waveform on every owned channel,
+including silent channels, so each loop restores its starting sound. Later
+notes retain volume/waveform; control-only changes preserve note and phase.
+This song uses explicit quiet volumes and timed
 fades. There are no instrument identifiers or binary amplitude presets.
 
 Build from the repository root:

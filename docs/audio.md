@@ -1,6 +1,6 @@
 # Hardware PWM audio
 
-AVM synthesizes three square voices and one noise voice using Timer3 COMPA.
+AVM synthesizes three selectable tonal voices and one noise voice using Timer3 COMPA.
 Timer4 produces differential PWM on PC6/PC7. The ISR only reads the current
 12-byte control latch; song decoding, timing, and FX reads run synchronously
 when the interpreter restarts its instruction stream. No guest update call
@@ -56,7 +56,7 @@ supports standalone CMake builds with an installed SDK; see its
 
 Assets are at most 65535 bytes. Header byte 0 is `A2`; byte 1 is a nonzero
 four-bit ownership mask. Channels 0..2 are tonal, 3 is noise. At start, all
-notes are off and each retained channel volume is 24.
+notes are off and each retained channel volume is 24, with square selected.
 
 Each event starts with `delta, change_mask`. The single delta byte encodes
 **byte value + 1 ticks**, each 4 ms: `00` waits one tick and `FF` waits 256
@@ -66,13 +66,16 @@ and waits for the first event, so the earliest note begins after 4 ms.
 | Change-mask bits | Meaning |
 | --- | --- |
 | 0..3 | Note changes for channels 0..3 |
-| 4..7 | Volume changes for channels 0..3 |
+| 4..7 | Packed volume/waveform changes for channels 0..3 |
 
 A nonzero change mask is followed by all selected notes in ascending channel
-order, then all selected volumes in ascending channel order. Notes are MIDI
-24..95 (`18..5F`) or `80` for off; other note values are malformed. Volumes
-are raw 0..31 bytes; larger values are malformed. For example, mask `11`
-followed by `3C 07` sets channel 0 to MIDI 60 at amplitude 7 in one event.
+order, then all selected controls in ascending channel order. Notes are MIDI
+24..95 (`18..5F`) or `80` for off; other note values are malformed. Each control
+byte has volume 0..31 in bits 4..0 and waveform in bits 6..5: 0=square,
+1=triangle, 2=sawtooth, 3=sine. Bit 7 is ignored, so all 256 byte values are
+accepted. Channel 3 ignores waveform bits and continues to generate noise.
+For example, mask `11` followed by `3C 67` sets channel 0 to MIDI 60 with sine
+at volume 7. Existing control bytes 0..31 select square and sound as before.
 Mask `88` updates both the noise note/rate and volume. All 255 nonzero masks
 are available; there are no update-command opcodes.
 
@@ -90,16 +93,20 @@ effect ownership. Every record consumes at least one tick, including Continue
 and Loop. At most 255 elapsed ticks are handled per snapshot, so each stream
 can process at most 255 records without a separate event or zero-time-loop budget.
 
-Note changes retrigger phase and retain volume when no volume bit is present.
-Volume-only changes retain the note and preserve phase. All due updates are
+Note changes retrigger phase and retain volume/waveform when no control bit is present.
+Control-only changes retain the note and preserve phase. All due updates are
 applied to desired state before the complete latch is committed atomically.
-Looping retains note/volume state. Put explicit initial values in a loop if
-it must reset them on every iteration. Longer waits use Continue records;
+Looping retains channel state until the next update. The JSON encoder makes
+its first event a complete note/volume/waveform update for every owned channel,
+including note-off for channels starting silent. This restores the initial
+sound each iteration without extra records or changed timing. Handwritten
+binary loops should initialize their channels the same way. Longer waits use Continue records;
 the maximum wait in one record is 1.024 seconds. A 600-tick wait uses two
 `FF 00 00` Continue records followed by the actual event with delta `57`
 (88 ticks). Continue does not require a latch commit.
 
-The three tonal waveforms use fixed 50% duty; noise is restricted to channel 3.
+Channels 0..2 independently select square, triangle, sawtooth, or sine from
+four 64-byte signed sample banks; noise is restricted to channel 3.
 Bass and lead register choices come from note selection. Envelopes use
 sequencer-rate volume events with no per-sample envelope/DSP cost.
 A1 assets are rejected and must be regenerated with the current compiler.
@@ -127,17 +134,21 @@ default 1), optional new `row_ticks`, and `channels`, keyed by channel number.
 `delta`, `end_delta`, and `row_ticks` are positive integers. JSON deltas are
 actual row counts; the compiler multiplies by `row_ticks`, splits waits above
 256 ticks into Continue records, then subtracts one for the binary encoding.
-An event without channel changes emits Continue.
+An event without channel changes emits Continue after the initialization event.
 A channel is a note name (`C4`, `F#3`, `Bb2`), MIDI integer, null for note off,
-or an object with `note` and/or `volume` (amplitude 0..31). Unknown channel
+or an object with `note`, `volume` (amplitude 0..31), and/or `waveform`
+(`square`, `triangle`, `sawtooth`, `sine`). Unknown channel
 fields are rejected. `row_ticks` changes tempo offline by changing
 subsequent encoded deltas, with no runtime division or tempo decoder.
 
-The channel number determines the waveform. The note selects pitch on
-channels 0..2 and the LFSR update rate on channel 3. For a channel object
-containing both `volume` and `note`, the compiler emits one packed-mask event.
-Later notes retain the selected amplitude, while
-volume-only changes preserve the current note and phase. Attacks and decays
+The note selects pitch on channels 0..2 and the LFSR update rate on channel 3;
+channel 3 ignores `waveform`. The encoder tracks each channel's volume and
+waveform, initially 24 and square. A volume edit repeats the current waveform;
+a waveform edit repeats the current volume. Its first event initializes every
+owned channel's note and packed control even if the JSON only edits one field
+or leaves that channel out. A song without events has no initialization event.
+Later note-only changes retain both fields. Volume/waveform-only changes
+preserve the current note and phase. Attacks and decays
 use later volume events. There are no instrument identifiers or amplitude
 preset commands; older JSON assets using `instrument` must replace it with
 an explicit `volume` before compiling to A2.
@@ -164,21 +175,29 @@ sections 6.11 and 15. The /1.5 PLL postcaler has documented individual-clock
 jitter despite an exact average frequency. PC6/PC7 speaker wiring is defined
 by [Arduboy2](https://github.com/MLXXXp/Arduboy2/blob/master/src/Arduboy2Core.h).
 
-Timer3 saves native r0, r24:r26, and SREG, using seven native stack bytes
+Timer3 saves native r0:r1, r24:r26, Z, and SREG, using ten native stack bytes
 including the interrupt return PC. It never touches VM registers, Y, PC,
 GPIOR0, SPI or FX. r2 is **not assumed zero**: native floating paths temporarily
 borrow it. The normal-context service borrows/saves r16:r23; scratch is r0:r1,
 r24:r27, Z and native SREG. r2:r15, VM PC r4:r6, Y, and architectural flags
 are preserved. It does not rely on the avr-gcc ABI.
 
-Three 16-bit phases add latched increments and contribute +/-amplitude using
-the phase high bit. Noise has a fourth phase: overflow clocks an 8-bit Galois
+Three 16-bit phases add latched increments. The upper six phase bits select
+one of 64 samples; the upper two prepared control bits select the waveform
+bank. The aligned 256-byte flash table occupies `0100..01FF`, before primary
+dispatch; both timer ISR bodies are placed later in the same assembly file.
+Its samples span -127..127. A tonal latch packs twice the scaled amplitude
+(0..62) into bits 5..0 and the bank selector into bits 7..6, requiring no extra
+SRAM. MULS and the product's high byte compute a signed contribution, rounded
+to nearest (ties toward positive) with `LSL r0; ADC mix,r1`. Square still
+produces exactly +/-amplitude. Noise has a fourth phase: overflow clocks an 8-bit Galois
 LFSR with feedback B8, nonzero seed 1, period 255. Its low bit selects polarity.
 The sum is `128 + four signed contributions`, range 4..252 at maximum
-amplitudes. There is no clipping, multiply, divide, or general loop in the ISR.
+amplitudes. There is no clipping, divide, or general loop in the ISR; each tonal
+voice performs one LPM and one MULS with identical timing for all waveforms.
 The internal table covers MIDI 24..95, with maximum measured rounding error
 2.111 cents. The C1..B6 table bounds flash usage and avoids very short tonal
-periods; higher MIDI notes are rejected. Square-wave harmonics above Nyquist
+periods; higher MIDI notes are rejected. Waveform harmonics above Nyquist
 still alias at this sample rate, so audible quality needs hardware evaluation.
 
 ## Memory allocation
@@ -186,9 +205,9 @@ still alias at this sample rate, so audible quality needs hardware evaluation.
 | Persistent data | Bytes |
 | --- | ---: |
 | Pending ticks, divider, master volume | 3 |
-| Latched increments/amplitudes (four times three) | 12 |
+| Latched increments and amplitude/waveform controls (four times three) | 12 |
 | ISR phases and LFSR | 9 |
-| Desired note/volume banks for music and SFX | 16 |
+| Desired note/volume/waveform banks for music and SFX | 16 |
 | Two stream records | 30 |
 | FX cache and index/length/owner | 35 |
 | **Total** | **105** |
@@ -203,7 +222,9 @@ requires at least 48 bytes beyond text scratch for native stack.
 
 Stream offsets are START=0 (uint24), CURSOR=3 (uint24), SIZE=6 (uint16),
 LEFT=8 (uint16), WAIT=10 (uint16), STATUS=12, MASK=13, TRIGGER=14.
-Desired banks contain four `(table_note_index, amplitude)` pairs, with 80=off.
+Desired banks contain four `(table_note_index, packed_control)` pairs, with 80=off.
+The desired control uses music-byte encoding; commit prepares the different
+tonal latch layout and strips ignored bits. The noise latch is plain amplitude.
 The ISR sees only controls/phases/LFSR; stream fields are never ISR inputs.
 
 ## SPI safety and servicing latency
@@ -251,16 +272,16 @@ looping/truncation/bounded catch-up, chord commits, direct tones and SFX release
 ## Tradeoffs and remaining hardware checks
 
 The ISR exceeds the initial 100-cycle goal: preserving actual registers and
-loading/storing four SRAM phases costs 119..124 cycles. Reserving AVR registers
+loading/storing four SRAM phases and looking up/scaling samples costs 162..167 cycles. Reserving AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
 The 32-byte cache is shared between music/effects; interleaving their streams
 invalidates it, trading extra bursts for a smaller persistent footprint.
-Pulse duty is fixed; there is no vibrato/filter/ADSR.
+Square duty is fixed at 50%; there is no vibrato/filter/ADSR.
 Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
-layout assertions. Native audio uses otherwise-unused space before the primary
-table, keeping the rest of the code below the limit. There is very little flash
+layout assertions. The waveform table uses space before the primary table,
+keeping firmware at 29472 bytes, with 224 bytes remaining. There is very little flash
 headroom remaining; future features need space savings or a different build.
 
 FX, Mini and FX-C presets compile with the same Timer3/4 configuration; existing

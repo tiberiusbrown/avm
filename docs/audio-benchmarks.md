@@ -12,8 +12,8 @@ measurements and emulated integration results, not oscilloscope measurements.
 | Seek hook, pending tick but no streams | 29 added | 1.813 us |
 | Seek hook, one active stream, no event due | 109 added | 6.813 us |
 | One-stream sparse countdown service, entry through RET | 98 | 6.125 us |
-| Cached note-off event plus next delta and commit, entry through RET | 674 | 42.125 us |
-| Timer3, including 4-cycle interrupt entry and 3-cycle vector JMP | **119..124** | 7.438..7.750 us |
+| Cached note-off event plus next delta and commit, entry through RET | 694 | 43.375 us |
+| Timer3, including 4-cycle interrupt entry and 3-cycle vector JMP | **162..167** | 10.125..10.438 us |
 | Timer0, ordinary millis update, including entry/vector | 35 | 2.188 us |
 | Timer0, ordinary millis update plus produced audio tick | 47 | 2.938 us |
 | Timer0, all four millis bytes carry plus produced audio tick | 63 | 3.938 us |
@@ -27,15 +27,52 @@ The pending snapshot disables interrupts for six cycles including CLI.
 All four controls are staged with interrupts enabled and then copied together.
 The sample ISR remains short compared with its 2048-cycle sample interval.
 
-At 7812.5 Hz the maximum measured ISR cost consumes **124 / 2048 = 6.0547%**
-of the CPU; its minimum is 5.8105%. Noise hold costs 119 cycles; advancing
-the LFSR costs 123 or 124, depending on its low bit. Thus execution is bounded
+At 7812.5 Hz the maximum measured ISR cost consumes **167 / 2048 = 8.1543%**
+of the CPU; its minimum is 7.9102%. Noise hold costs 162 cycles; advancing
+the LFSR costs 166 or 167, depending on its low bit. Thus execution is bounded
 with five cycles of data-dependent variation and no dependency on event density.
 This exceeds the proposed 100-cycle starting goal. Four SRAM phases and
 preserving the interpreter's real register allocation account for the cost;
 no VM registers were reserved for synthesis. Compared with the original
 Timer0 ISR, audio adds 7 cycles on ordinary interrupts, 19 on produced ticks,
 and 16 on saturated ticks (approximately 0.0625% CPU while ticks are draining).
+
+## Waveform synthesis
+
+Each tonal channel selects square, triangle, sawtooth, or sine from a 256-byte
+flash page: four contiguous banks of 64 signed samples. Every shape uses the
+same LPM/MULS path, with rounded signed contributions. The live control packs
+the bank into bits 7..6 and twice the scaled amplitude into bits 5..0. This
+keeps the 12-byte latch and 105-byte persistent allocation unchanged.
+
+The music control byte is a separate encoding: volume in bits 4..0, waveform
+in bits 6..5, and ignored bit 7. The encoder repeats the tracked waveform on
+every volume edit and the tracked volume on every waveform edit. Its first
+event initializes every owned channel's note and control for consistent loops.
+Event masks, deltas, record lengths, and the A2 header remain unchanged.
+
+The complete ISR cycle accounting is:
+
+| Instructions / work | Cycles |
+| --- | ---: |
+| Hardware interrupt entry (4), vector JMP (3) | 7 |
+| Eight PUSHes (16), IN SREG (1), two LDIs (2) | 19 |
+| Each tonal phase: four LDS (8), ADD/ADC (2), two STS (4), times three | 42 |
+| Each tonal sample: LDS (2), MOV (1), two ANDIs (2), two LSRs (2), OR (1), LPM (3), MULS (2), LSL (1), ADC (1), times three | 45 |
+| Noise phase: four LDS (8), ADD/ADC (2), two STS (4) | 14 |
+| LFSR: LDS (2) plus BRCC (2) when holding; or BRCC (1), LSR (1), BRCC (2), STS (2); XOR path replaces the second branch with BRCC/LDI/EOR (3) | 4 / 8 / 9 |
+| Noise contribution: LDS (2), SBRC/optional NEG (2), ADD (1) | 5 |
+| CLR (1), STS TC4H (2), STS OCR4A (2) | 5 |
+| Eight POPs (16), OUT SREG (1), RETI (4) | 21 |
+| **Total: hold / advance without XOR / advance with XOR** | **162 / 166 / 167** |
+
+This adds **43 cycles per sample** to the square-only ISR (2.0996 percentage
+points of CPU), including the three additional saved registers r1 and Z.
+The rounded square samples still reproduce the previous exact +/-amplitude
+output. Noise synthesis, phase retrigger behavior, PWM settings, and the
+108-cycle atomic commit are unchanged. Native firmware grows from 29104 to
+29472 bytes (+368); the table uses the space before primary dispatch and the
+timer ISR bodies move later in the same assembly file.
 
 ## A1 to A2 format comparison
 
@@ -61,18 +98,21 @@ At the A2 transition, interpreter `.text` shrank from **29664 to 29632 bytes**
 **64 bytes** below the bootloader boundary. The ELF's one alignment byte in
 `.data` is excluded from the HEX.
 Subsequent [interpreter optimizations](interpreter-optimizations.md) reduce
-current `.text` and programmed flash occupancy to **29104 bytes**.
+the square-only `.text` and programmed flash occupancy to **29104 bytes**;
+the subsequent waveform implementation occupies **29472 bytes**.
 Persistent audio SRAM remains 105 bytes; the wait field stays uint16 so it
 can represent 256 ticks. The demo music shrank from **3285 to 2958 bytes**
 (327 bytes, 10.0%), with the same 39.936-second period and musical states,
 shifted by the required one-tick initial wait.
 
-The sample ISR, PWM configuration, and atomic commit cost are unchanged.
+The sample ISR, PWM configuration, and atomic commit cost were unchanged by A2.
 
-Later amplitude scaling saves six cycles per active voice. Current cached
-one-channel note/volume service is 752 cycles, four-channel note/volume service
-1286 cycles, four-channel volume-only service 929 cycles, and note-off service
-674 cycles. Continue and sparse countdown retain their A2 timings above.
+Later amplitude scaling saves six cycles per active voice. With waveform
+controls, current cached one-channel note/control service is 757 cycles,
+four-channel note/control service 1303 cycles, four-channel control-only
+service 950 cycles, and note-off service 694 cycles. The preceding square-only
+values were 752, 1286, 929, and 674 cycles. Continue and sparse countdown retain
+their A2 timings above.
 
 ## FX bursts and cache choice
 
@@ -92,7 +132,7 @@ including its index, length, and owner. Music/SFX alternation invalidates
 it instead of maintaining two caches. Last refills read only the remaining
 asset bytes. The table measures the FX transfer, not parsing or the cache
 miss bookkeeping around it. A coinciding Timer3 interrupt adds at most
-124 cycles (7.75 us) of wall time per interrupt. Reads remain interruptible.
+167 cycles (10.438 us) of wall time per interrupt. Reads remain interruptible.
 Phase-offset stress tests observed 22 sample ISR entries while SPI was active
 and verified all returned bytes; no SPI collision was reported.
 
@@ -106,12 +146,12 @@ native stack tests also assert the PUSH/POP cadences and CALL/RET seek costs.
 Autonomous idle playback ran for 100 emulated ms with a maximum service-entry
 gap of **4.00038 ms**. The compiled animated demo ran for one emulated second
 with no guest audio update call: **62 rendered frames, 7811 sample interrupts,
-4.14206 ms maximum service-entry gap**, and a measured native stack footprint
-of 23 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
+4.14175 ms maximum service-entry gap**, and a measured native stack footprint
+of 30 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
 rate is 60; the existing frame scheduler uses integer millisecond periods.
 Simulated A/B presses exercised SFX,
 pause, and resume while graphics and song reads shared SPI.
-The current C libm/formatter stress workload with sample interrupts reaches 37 bytes
+The current C libm/formatter stress workload with sample interrupts reaches 40 bytes
 of native stack, within the 58 bytes above the formatter/text workspace.
 
 These workloads do not establish a universal service-latency bound. A long
@@ -135,10 +175,10 @@ See [audio.md](audio.md) for register settings and datasheet references.
 | Persistent audio SRAM | **105 bytes** |
 | Call-lifetime commit staging | 13 bytes, in existing temporary workspace |
 | Remaining native stack above formatter/text workspace | 58 bytes |
-| Current native `.text` | **29104 bytes** |
-| Current total firmware flash | **29104 bytes** |
-| Savings from interpreter optimization baseline | 528 bytes |
-| Bootloader ceiling / remaining space | 29696 / **592 bytes** |
+| Current native `.text` | **29472 bytes** |
+| Current total firmware flash | **29472 bytes** |
+| Waveform support versus square-only firmware | +368 bytes |
+| Bootloader ceiling / remaining space | 29696 / **224 bytes** |
 
 The five bytes beyond the approximate 100-byte SRAM goal retain two complete
 bounded stream records, desired music/SFX banks, and one cache. This supports
@@ -155,8 +195,13 @@ and truncated streams, dense positive-time catch-up, Continue-only loops,
 one/256-tick initial waits, saturation,
 note retriggering, atomic chords, music under SFX, release, and direct tones.
 Validation passed all 459 guest fixtures, 152 native PUSH/POP cases, 1133 native
-stack-bound cases, 19 native audio cases, and nine Python compiler tests, as well
+stack-bound cases, 23 native audio cases, and 12 Python compiler tests, as well
 as the animated and formatter integration workloads and both variant builds.
+Waveform checks compare 24576 samples (all 64 positions and 32 amplitudes on
+all three tonal voices) against independent mathematical shapes; scaling checks
+exercise all 256 packed controls against all 33 master levels and all 256 SFX
+controls. Decoder tests accept all 256 control-byte values, preserve phase,
+restore initial loop state, and restore the current music waveform after SFX.
 
 All fixed code-layout assertions and the firmware ceiling still hold. No
 emulator changes were required: the bundled Ardens already models Timer3,

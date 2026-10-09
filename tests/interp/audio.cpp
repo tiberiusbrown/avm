@@ -26,6 +26,13 @@ struct harness {
     unsigned sym(char const* name) { return symbols.at(name)/2; }
     uint16_t word(unsigned a) { return uint16_t(c().data[a] | c().data[a+1]<<8); }
     void word(unsigned a, uint16_t v) { c().data[a]=uint8_t(v); c().data[a+1]=uint8_t(v>>8); }
+    unsigned amplitude(unsigned channel) {
+        auto control=c().data[controls+3*channel+2];
+        return channel==3 ? control : (control&63)/2;
+    }
+    void control(unsigned channel, unsigned amp, unsigned wave=0) {
+        c().data[controls+3*channel+2]=uint8_t(channel==3 ? amp : (wave<<6)|(amp<<1));
+    }
     bool boundary() { unsigned p=c().pc; return p>=sym("primary_table") && p<sym("primary_table")+1024 && (p-sym("primary_table"))%4==0; }
     void tick(bool terminal_break=false) {
         // Ardens resets spi_done_cycle after delivering the byte to FX. The
@@ -139,7 +146,7 @@ void sequence(harness& h) {
             h.play(bytes);
             auto cycles=h.elapsed(4);
             for(unsigned ch=0;ch<count;++ch)
-                require(h.c().data[controls+3*ch+2]==7+ch && h.c().data[notes+2*ch]==37+ch,
+                require(h.amplitude(ch)==7+ch && h.c().data[notes+2*ch]==37+ch,
                     "combined note/volume update wrong");
             std::cout<<count<<"-channel note+volume service: "<<cycles<<" cycles\n";
         }
@@ -149,13 +156,13 @@ void sequence(harness& h) {
         for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,uint16_t(1234+ch));
         auto cycles=h.elapsed(4);
         for(unsigned ch=0;ch<4;++ch)
-            require(h.word(phases+2*ch)==1234+ch && h.c().data[controls+3*ch+2]==7+ch,
+            require(h.word(phases+2*ch)==1234+ch && h.amplitude(ch)==7+ch,
                 "volume-only update changed phase or lost amplitude");
         std::cout<<"4-channel volume-only service: "<<cycles<<" cycles\n";
         h.play({0xa2,1,0,1,60,3,0,0,9,0,1});
         h.word(phases,1234);
         cycles=h.elapsed(4);
-        require(h.word(phases)==1234 && h.c().data[controls+2]==24,"continue changed oscillator");
+        require(h.word(phases)==1234 && h.amplitude(0)==24,"continue changed oscillator");
         std::cout<<"continue service: "<<cycles<<" cycles\n";
     });
     h.test("progression/rest/long delta",[&]{
@@ -164,7 +171,7 @@ void sequence(harness& h) {
         require(h.word(controls)>0 && h.word(controls+3)>0 && h.word(controls+6)>0 && h.word(controls+9)>0,"four voices missing");
         auto sparse=h.elapsed(3); require(h.word(music+10)==2,"sparse countdown wrong");
         std::cout<<"sparse tick service: "<<sparse<<" cycles\n";
-        auto event=h.elapsed(2); require(h.c().data[controls+2]==0,"note off wrong");
+        auto event=h.elapsed(2); require(h.amplitude(0)==0,"note off wrong");
         std::cout<<"note-off service: "<<event<<" cycles\n";
         require(h.word(music+10)==256,"256-tick delta wrong");
         h.elapsed(255); require(h.word(music+10)==1,"large catch-up wrong");
@@ -174,7 +181,7 @@ void sequence(harness& h) {
     });
     h.test("positive delta loop and dense catch-up",[&]{
         h.play({0xa2,1,0,1,60,0,1,61,0,0,2},0x20000,false,0);
-        require(h.word(music+10)==1 && h.c().data[controls+2]==0,"first note started before its delay");
+        require(h.word(music+10)==1 && h.amplitude(0)==0,"first note started before its delay");
         h.elapsed(1); require(h.c().data[notes]==36,"0x00 did not wait one tick");
         h.elapsed(1); require(h.c().data[notes]==37,"second one-tick update wrong");
         h.elapsed(1); require(h.word(music+10)==1 && h.c().data[notes]==37,"loop should retain state until next update");
@@ -182,11 +189,11 @@ void sequence(harness& h) {
     });
     h.test("256-tick initial delay",[&]{
         h.play({0xa2,1,255,1,60,0,0,1},0x20000,false,0);
-        require(h.word(music+10)==256 && h.c().data[controls+2]==0,"initial 0xff delay wrong");
+        require(h.word(music+10)==256 && h.amplitude(0)==0,"initial 0xff delay wrong");
         h.elapsed(255);
-        require(h.word(music+10)==1 && h.c().data[controls+2]==0,"maximum delay fired early");
+        require(h.word(music+10)==1 && h.amplitude(0)==0,"maximum delay fired early");
         h.elapsed(1);
-        require(h.c().data[controls+2]==24 && h.c().data[notes]==36,"maximum delay did not fire");
+        require(h.amplitude(0)==24 && h.c().data[notes]==36,"maximum delay did not fire");
         h.elapsed(1); require(h.c().data[music+12]==0,"end command did not consume one tick");
     });
     h.test("continue-only timed loop",[&]{
@@ -207,31 +214,68 @@ void sequence(harness& h) {
     });
     h.test("pause/resume/volume/stop/change",[&]{
         h.play({0xa2,1,0,1,60,9,1,61,9,0,2});
-        h.command(3); h.elapsed(25); require(h.word(music+10)==10 && h.c().data[controls+2]==0,"pause wrong");
+        h.command(3); h.elapsed(25); require(h.word(music+10)==10 && h.amplitude(0)==0,"pause wrong");
         h.command(9); require(h.word(16)==2,"paused status wrong");
-        h.command(4); h.elapsed(3); require(h.word(music+10)==7 && h.c().data[controls+2]==24,"resume wrong");
-        h.command(5,16); require(h.c().data[controls+2]==12,"master volume wrong");
-        h.command(2); require(h.c().data[controls+2]==0,"stop wrong");
+        h.command(4); h.elapsed(3); require(h.word(music+10)==7 && h.amplitude(0)==24,"resume wrong");
+        h.command(5,16); require(h.amplitude(0)==12,"master volume wrong");
+        h.command(2); require(h.amplitude(0)==0,"stop wrong");
         h.command(4); require(h.c().data[music+12]==0,"resume resurrected stopped stream");
         h.command(5,32); h.play({0xa2,1,0,1,70,9,0,1}); require(h.c().data[notes]==46,"song change wrong");
         h.command(10, (69u<<16)|2u, 31); // r4 channel, r5 note, r6 amplitude
-        require(h.c().data[sfx+13]==4 && h.c().data[controls+8]==31,"direct tone ownership/amplitude wrong");
+        require(h.c().data[sfx+13]==4 && h.amplitude(2)==31,"direct tone ownership/amplitude wrong");
         require(h.word(controls+6)==3691,"direct tone tuning wrong");
         h.elapsed(255); require(h.word(controls+6)==3691,"direct tone advanced a stream");
-        h.command(8); require(h.c().data[controls+8]==0,"direct tone did not release");
+        h.command(8); require(h.amplitude(2)==0,"direct tone did not release");
     });
     h.test("retained volume/retrigger",[&]{
         h.play({0xa2,1,0,0x11,60,31,3,0x10,7,3,1,60,9,0,1});
-        require(h.c().data[controls+2]==31,"note did not retain explicit volume");
-        h.word(phases,1234); h.elapsed(4); require(h.c().data[controls+2]==7 && h.word(phases)==1234,"volume retriggered oscillator");
+        require(h.amplitude(0)==31,"note did not retain explicit volume");
+        h.word(phases,1234); h.elapsed(4); require(h.amplitude(0)==7 && h.word(phases)==1234,"volume retriggered oscillator");
         h.elapsed(4); require(h.word(phases)==0,"same-note retrigger missing");
+    });
+    h.test("all packed controls and ignored high bit",[&]{
+        h.command(5,32);
+        std::vector<uint8_t> bytes{0xa2,15,0,255,60,64,67,36,0,0,0,0};
+        for(unsigned value=0;value<256;++value)
+            bytes.insert(bytes.end(),{0,0xf0,uint8_t(value),uint8_t(value),uint8_t(value),uint8_t(value)});
+        bytes.insert(bytes.end(),{255,0,1});
+        h.play(bytes);
+        for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,uint16_t(1234+ch));
+        for(unsigned value=0;value<256;++value) {
+            h.elapsed(1);
+            require(h.c().data[music+12]==1,"packed control incorrectly rejected");
+            for(unsigned ch=0;ch<4;++ch) {
+                auto expected=ch==3 ? value&31 : ((value&0x60)<<1)|((value&31)<<1);
+                require(h.c().data[controls+3*ch+2]==expected,"packed control decode/high bit wrong");
+                require(h.word(phases+2*ch)==1234+ch,"waveform/volume update reset phase");
+            }
+        }
+    });
+    h.test("full initial state across loops",[&]{
+        h.play({0xa2,3,0,0x33,60,128,0x6c,24,
+            0,0x33,70,65,0x41,0x23,0,0,2});
+        auto initial=h.c().data[controls+2];
+        require(initial==0xd8 && h.amplitude(1)==0,"first event initialization wrong");
+        h.elapsed(1); require(h.c().data[controls+2]==0x82 && h.amplitude(1)==3,"later state wrong");
+        h.elapsed(1); h.word(phases,1234); h.elapsed(1);
+        require(h.c().data[controls+2]==initial && h.c().data[notes]==36,
+            "loop did not restore starting waveform/volume/note");
+        require(h.amplitude(1)==0 && h.c().data[notes+2]==128 && h.word(phases)==0,
+            "loop did not silence late channel and retrigger first note");
+    });
+    h.test("SFX waveform ownership and restoration",[&]{
+        h.play({0xa2,1,0,0x11,60,0x6c,3,0x10,0x27,99,0,2});
+        h.play({0xa2,1,0,0x11,80,0x5f,7,0,1},0x21000,true);
+        require(h.c().data[controls+2]==0xbe,"SFX waveform did not override music");
+        h.elapsed(3); require(h.c().data[notes+1]==0x27,"hidden music waveform did not advance");
+        h.elapsed(5); require(h.c().data[controls+2]==0x4e,"SFX release lost music waveform");
     });
     h.test("malformed headers/values/control/truncation",[&]{
         for(auto const& bytes : std::vector<std::vector<uint8_t>>{
                 {},{0xa2},{0xa2,0},{0xa2,16},{0xa1,1,0,1,60,9,0x40},
                 {0xa2,1,0},{0xa2,1,0,2,60,9,0,1},{0xa2,1,0,0x20,7,9,0,1},
                 {0xa2,1,0,1,10,9,0,1},{0xa2,1,0,1,96,9,0,1},
-                {0xa2,1,0,1,0xc0,9,0,1},{0xa2,1,0,0x10,32,9,0,1},
+                {0xa2,1,0,1,0xc0,9,0,1},
                 {0xa2,1,0,0},{0xa2,1,0,0,3,9,0,1},
                 {0xa2,1,0,0x11,60},{0xa2,1,0,1,60}}) {
             h.play(bytes); require(h.c().data[music+12]==0,"malformed stream stayed active");
@@ -290,40 +334,80 @@ void sequence(harness& h) {
 void synthesis(harness& h) {
     h.test("exhaustive amplitude scaling",[&]{
         h.c().data[music+12]=1; h.c().data[sfx+13]=0;
-        for(unsigned master=0;master<=32;++master) {
+        for(unsigned packed=0;packed<256;++packed) {
+          for(unsigned master=0;master<=32;++master) {
             h.c().data[volume]=uint8_t(master);
-            for(unsigned amplitude=0;amplitude<32;++amplitude) {
-                for(unsigned channel=0;channel<4;++channel) {
-                    h.c().data[notes+2*channel]=0;
-                    h.c().data[notes+2*channel+1]=uint8_t(amplitude);
-                }
-                h.routine("audio_commit");
-                for(unsigned channel=0;channel<4;++channel)
-                    require(h.c().data[controls+3*channel+2]==amplitude*master/32,
-                        "music amplitude scaling wrong");
+            for(unsigned channel=0;channel<4;++channel) {
+                h.c().data[notes+2*channel]=0;
+                h.c().data[notes+2*channel+1]=uint8_t(packed);
             }
+            h.routine("audio_commit");
+            auto amplitude=(packed&31)*master/32;
+            for(unsigned channel=0;channel<4;++channel)
+                require(h.c().data[controls+3*channel+2]==
+                    (channel==3 ? amplitude : (amplitude<<1)|((packed&0x60)<<1)),
+                    "music amplitude/waveform scaling wrong");
+          }
         }
         h.c().data[sfx+13]=15; h.c().data[volume]=0;
-        for(unsigned amplitude=0;amplitude<32;++amplitude) {
+        for(unsigned packed=0;packed<256;++packed) {
             for(unsigned channel=0;channel<4;++channel) {
                 h.c().data[sfxnotes+2*channel]=0;
-                h.c().data[sfxnotes+2*channel+1]=uint8_t(amplitude);
+                h.c().data[sfxnotes+2*channel+1]=uint8_t(packed);
             }
             h.routine("audio_commit");
             for(unsigned channel=0;channel<4;++channel)
-                require(h.c().data[controls+3*channel+2]==amplitude,"SFX unity scaling wrong");
+                require(h.c().data[controls+3*channel+2]==
+                    (channel==3 ? packed&31 : ((packed&31)<<1)|((packed&0x60)<<1)),
+                    "SFX unity/waveform scaling wrong");
         }
         h.c().data[volume]=32;
-        std::cout<<"amplitude scaling: 1056 music pairs and 32 SFX levels, all four voices passed\n";
+        std::cout<<"amplitude scaling: 8448 music controls and 256 SFX controls, all four voices passed\n";
+    });
+    auto sample=[](unsigned wave, unsigned position) {
+        constexpr double pi=3.14159265358979323846;
+        switch(wave) {
+        case 0: return position<32 ? 127 : -127;
+        case 1: return int(std::lround(127.*(position<=16 ? position/16. :
+            position<=48 ? (32.-position)/16. : (int(position)-64)/16.)));
+        case 2: return int(std::lround(127.*(2.*position/63.-1)));
+        default: return int(std::lround(127.*std::sin(2*pi*position/64.)));
+        }
+    };
+    h.test("every waveform sample and amplitude on every tonal voice",[&]{
+        require(h.symbols.at("audio_waveforms")==0x100 &&
+            h.symbols.at("audio_waveforms_end")==0x200,"waveform page layout wrong");
+        for(unsigned ch=0;ch<4;++ch) { h.word(controls+3*ch,0); h.control(ch,0); }
+        for(unsigned ch=0;ch<3;++ch) {
+          h.word(controls+3*ch,1097);
+          for(unsigned wave=0;wave<4;++wave) {
+            for(unsigned amp=0;amp<32;++amp) {
+              h.control(ch,amp,wave);
+              for(unsigned position=0;position<64;++position) {
+                // Exercise the low-phase bits and carry into the sample index.
+                auto target=uint16_t((position<<10)|((position&1)?1023:0));
+                h.word(phases+2*ch,uint16_t(target-1097));
+                auto contribution=int(std::floor((sample(wave,position)*2*int(amp)+128.)/256.));
+                auto t=h.routine("timer3_compa_isr",true)+7;
+                h.isrmin=std::min(h.isrmin,t); h.isrmax=std::max(h.isrmax,t);
+                require(h.c().timer4.ocrNa_next==128+contribution,"table sample/scaling mismatch");
+                require(h.word(phases+2*ch)==target,"phase/sample indexing mismatch");
+              }
+            }
+          }
+          h.word(controls+3*ch,0); h.control(ch,0);
+        }
+        std::cout<<"waveform reference: 24576 samples across four shapes, 32 levels, three voices passed\n";
     });
     h.test("sample reference and register preservation",[&]{
         std::array<uint16_t,4> phase{{65520,0x7fff,1234,65500}},inc{{100,3691,257,8000}};
         std::array<uint8_t,4> amp{{31,31,31,31}};
         uint8_t lfsr=1;
-        for(int i=0;i<4;++i) { h.word(phases+2*i,phase[i]); h.word(controls+3*i,inc[i]); h.c().data[controls+3*i+2]=amp[i]; }
+        for(int i=0;i<4;++i) { h.word(phases+2*i,phase[i]); h.word(controls+3*i,inc[i]); h.control(i,amp[i]); }
         h.c().data[noise]=lfsr;
         auto zero=h.c().data[2];
         h.c().data[2]=0x5a; // direct floating-point paths borrow r2
+        h.c().data[1]=0xa5; // MULS must preserve the interrupted r1 value too
         auto regs=h.c().data; auto sp=h.c().sp();
         for(unsigned n=0;n<1024;++n) {
             int duty=128;

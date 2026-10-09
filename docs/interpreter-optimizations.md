@@ -5,6 +5,10 @@ instructions and CMake `RelWithDebInfo`. Native implementation remains entirely
 in `interp/interp.asm`. Each of the first four stages passed `avm_tests_run` and
 the instruction, C, and C++ benchmarks before the next stage was applied.
 
+These measurements describe the square-only implementation before selectable
+waveforms. Current firmware size, synthesis timing, and validation results are
+in [audio-benchmarks.md](audio-benchmarks.md).
+
 ## Firmware size
 
 | Stage | `.text` bytes | Change from preceding stage |

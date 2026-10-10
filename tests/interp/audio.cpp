@@ -532,6 +532,32 @@ void automatic(harness& h) {
         h.c().st(reg::addr::TIMSK0,0); h.c().st(reg::addr::TCCR0B,0); h.quiet();
     });
 }
+void idle_continuation(char** args) {
+    for(unsigned pc : {0x7000u,0xfffeu})
+    for(bool active : {false,true}) for(bool service : {false,true}) {
+        harness h(args);
+        if(active) h.play({0xa2,1,0,1,60,128,0,2});
+        h.asset(pc,{0xd7,0x2a,0x00}); // SYS IDLE, then MOV r4,r4.
+        h.word(4,uint16_t(pc)); h.c().data[6]=uint8_t(pc>>16);
+        h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
+        h.until([&]{return h.boundary();});
+        for(unsigned i=8;i<24;++i) h.c().data[i]=uint8_t(0x31+i*7);
+        h.c().data[reg::addr::GPIOR0]=5;
+        auto regs=h.c().data; auto sp=h.c().sp();
+        h.c().data[pending]=0; h.c().data[0xa16]=service?3:0;
+        h.word(0xa05,40000);
+        h.c().st(reg::addr::TCCR0B,3); h.c().st(reg::addr::TIMSK0,2);
+        h.tick(); h.until([&]{return h.boundary();});
+        require((h.word(4)|(uint32_t(h.c().data[6])<<16))==pc+2,
+            "SYS IDLE dispatched its service operand instead of the following opcode");
+        for(unsigned i=8;i<24;++i)
+            require(h.c().data[i]==regs[i],"SYS IDLE corrupted guest registers");
+        require(h.c().data[reg::addr::GPIOR0]==5,"SYS IDLE corrupted guest flags");
+        require(h.c().sp()==sp,"SYS IDLE leaked native stack");
+        require(h.c().data[pending]==0,"SYS IDLE failed to service pending audio ticks");
+    }
+    std::cout<<"SYS IDLE continuation: eight audio/wakeup/PC-carry cases passed\n";
+}
 void demo(char** args) {
     harness h(args,false);
     auto begin=h.c().cycle_count;
@@ -652,6 +678,7 @@ int main(int argc,char** argv) {
         decimal_division(argv);
         sys_bounds(argv);
         float_precision(argv);
+        idle_continuation(argv);
         harness h(argv); sequence(h); synthesis(h); automatic(h);
         std::cout<<h.cases<<" native audio cases passed\n"
             <<"Timer3 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "

@@ -12160,6 +12160,12 @@ sys_idle_impl:
     brne 1f
     jmp   cluster_tail_18
 1:
+    ; The regular tail advances from the SYS service byte to the next opcode.
+    ; Seeking for audio service bypasses that tail, so advance explicitly;
+    ; otherwise SYS_IDLE's 0x2A operand executes as SUB r6,r6 after wakeup.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
     jmp   seek_and_dispatch_func
 
 ; uint16_t generate_random_seed(void): one ADC1 conversion plus TCNT0.

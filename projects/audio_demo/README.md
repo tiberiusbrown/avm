@@ -37,6 +37,15 @@ notes retain volume/waveform; control-only changes preserve note and phase.
 This song uses explicit quiet volumes and timed
 fades. There are no instrument identifiers or binary amplitude presets.
 
+`avm_audio_volume` sets both music and SFX masters: 32 is 100%, 64 is 200%,
+and 255 is 796.875%. `avm_audio_music_volume` and `avm_audio_sfx_volume` set
+them independently; direct tones use the SFX master. For example,
+`avm_audio_music_volume(16)` makes the music quieter while effects keep their
+own gain. Gain 0 mutes its stream while playback and ownership continue.
+The demo uses the default gain 32 for both. The interpreter prepares each
+channel amplitude as `floor(volume * master / 32)`, retaining the song's
+volume and waveform, and saturates the complete mix at the PWM limits.
+
 Build from the repository root:
 
 ```sh

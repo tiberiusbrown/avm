@@ -2,7 +2,7 @@
 
 AVM synthesizes three selectable tonal voices and one noise voice using Timer3 COMPA.
 Timer4 produces differential PWM on PC6/PC7. The ISR only reads the current
-12-byte control latch; song decoding, timing, and FX reads run synchronously
+15-byte control latch; song decoding, gain preparation, timing, and FX reads run synchronously
 when the interpreter restarts its instruction stream. No guest update call
 and no queue of future samples or channel states are required.
 
@@ -16,9 +16,18 @@ starts one effect, replacing the preceding effect. Both pointers are packed
 24-bit AVM program pointers. Use `sizeof(array)` for generated C assets.
 
 `avm_audio_stop`, `avm_audio_pause`, `avm_audio_resume`, `avm_audio_volume`,
-`avm_audio_stop_sfx`, `avm_audio_enable`, and `avm_audio_disable` provide controls.
-Master music volume is 0..32 (32 is unity, larger values clamp); individual
-channel volumes are 0..31. Pause freezes the music countdown and mutes music;
+`avm_audio_music_volume`, `avm_audio_sfx_volume`, `avm_audio_stop_sfx`,
+`avm_audio_enable`, and `avm_audio_disable` provide controls.
+Both masters accept 0..255, with 0=mute, 32=100%, and 255=796.875%.
+`avm_audio_volume` sets both; the music and SFX setters change only their own
+master. Direct tones use SFX gain. Both default to 32 and retain their values
+across play, stop, pause, and disable/enable. The foreground prepares each
+channel amplitude as `floor(volume * owner_master / 32)`; desired channel
+volumes stay 0..31. Gain changes preserve notes, waveforms, phase, and
+sequencing time. The ISR saturates the complete signed mix at PWM duty 0/255.
+Muted SFX still owns its channels, so muting effects does not expose music
+underneath them; stop SFX to release those channels.
+Pause freezes the music countdown and mutes music;
 SFX keeps running. Stop mutes music, leaving SFX intact. Disable stops both
 streams and both timers and leaves the speaker outputs low. PLL stays enabled.
 Stop/end leaves the timers running at neutral duty; disable removes the sample
@@ -38,6 +47,7 @@ atomic commit. There is one effect stream; no allocator or ISR arbitration.
 
 ```c
 avm_audio_play(music, sizeof(music));
+avm_audio_music_volume(16); // 50% music; SFX remains at its default 100%.
 // Draw, run gameplay, or idle. Playback advances automatically.
 avm_audio_sfx(effect, sizeof(effect));
 ```
@@ -175,26 +185,36 @@ sections 6.11 and 15. The /1.5 PLL postcaler has documented individual-clock
 jitter despite an exact average frequency. PC6/PC7 speaker wiring is defined
 by [Arduboy2](https://github.com/MLXXXp/Arduboy2/blob/master/src/Arduboy2Core.h).
 
-Timer3 saves native r0:r1, r24:r26, Z, and SREG, using ten native stack bytes
-including the interrupt return PC. It never touches VM registers, Y, PC,
-GPIOR0, SPI or FX. r2 is **not assumed zero**: native floating paths temporarily
+Timer3 saves native r0:r1, r20:r21, r26:r27, Z, and SREG, using eleven native
+stack bytes including the interrupt return PC. Borrowed VM registers are
+restored; Y, VM PC, GPIOR0, SPI and FX are untouched. r2 is **not assumed zero**: native floating paths temporarily
 borrow it. The normal-context service borrows/saves r16:r23; scratch is r0:r1,
 r24:r27, Z and native SREG. r2:r15, VM PC r4:r6, Y, and architectural flags
 are preserved. It does not rely on the avr-gcc ABI.
 
 Three 16-bit phases add latched increments. The upper six phase bits select
-one of 64 samples; the upper two prepared control bits select the waveform
-bank. The aligned 256-byte flash table occupies `0100..01FF`, before primary
+one of 64 samples; a separate byte for each tone holds its bank in bits 7..6.
+The aligned 256-byte flash table occupies `0100..01FF`, before primary
 dispatch; both timer ISR bodies are placed later in the same assembly file.
-Its samples span -127..127. A tonal latch packs twice the scaled amplitude
-(0..62) into bits 5..0 and the bank selector into bits 7..6, requiring no extra
-SRAM. MULS and the product's high byte compute a signed contribution, rounded
-to nearest (ties toward positive) with `LSL r0; ADC mix,r1`. Square still
-produces exactly +/-amplitude. Noise has a fourth phase: overflow clocks an 8-bit Galois
-LFSR with feedback B8, nonzero seed 1, period 255. Its low bit selects polarity.
-The sum is `128 + four signed contributions`, range 4..252 at maximum
-amplitudes. There is no clipping, divide, or general loop in the ISR; each tonal
-voice performs one LPM and one MULS with identical timing for all waveforms.
+Its samples span -127..127. All four latched amplitudes are full unsigned
+bytes, prepared in the foreground as `A = floor(volume * owner_master / 32)`
+(0..247). Each tonal contribution is `floor(sample * A / 128 + 0.5)`.
+FMULSU supplies the fractional product; its carry records the sign before
+the fractional shift, and SBC sign-extends the rounded contribution into
+the 16-bit mix. This handles boosted contributions outside int8 without
+additional product shifts. The original square samples are unchanged at
+unity. Noise has a fourth phase: overflow clocks an 8-bit Galois LFSR with
+feedback B8, nonzero seed 1, period 255. Its low bit selects +/-A.
+
+Accumulation starts at zero in a signed 16-bit register pair. The complete
+mix is in -982..982 at maximum prepared amplitudes; the ISR then adds 128
+and clamps to duty 0..255. Clipping occurs after all contributions, allowing
+loud opposing voices to cancel. The ISR never reads either master, multiplies
+the completed mix, or performs the old three-pair shift. At unity every sample
+is unchanged. Other gains truncate each channel amplitude before synthesis,
+so quieter gains can silence low-volume channels and differ from scaling
+the completed mix. There is no general loop in the ISR; each tonal voice
+performs one LPM and one FMULSU with identical timing for all waveforms.
 The internal table covers MIDI 24..95, with maximum measured rounding error
 2.111 cents. The C1..B6 table bounds flash usage and avoids very short tonal
 periods; higher MIDI notes are rejected. Waveform harmonics above Nyquist
@@ -204,18 +224,19 @@ still alias at this sample rate, so audible quality needs hardware evaluation.
 
 | Persistent data | Bytes |
 | --- | ---: |
-| Pending ticks, divider, master volume | 3 |
-| Latched increments and amplitude/waveform controls (four times three) | 12 |
+| Pending ticks, divider, music/SFX masters | 4 |
+| Latched increments and prepared amplitudes (four times three) | 12 |
+| Separate tonal waveform selectors | 3 |
 | ISR phases and LFSR | 9 |
 | Desired note/volume/waveform banks for music and SFX | 16 |
 | Two stream records | 30 |
 | FX cache and index/length/owner | 35 |
-| **Total** | **105** |
+| **Total** | **109** |
 
-Audio occupies `0A15..0A7D`; `data_end_private=0A7E`. Formatter/text scratch
-ends at `0AC6` (exclusive), leaving 58 bytes for native stack. The existing
+Audio occupies `0A15..0A81`; `data_end_private=0A82`. Formatter/text scratch
+ends at `0ACA` (exclusive), leaving 54 bytes for native stack. The existing
 framebuffer, guest globals, and guest stack stay at their original addresses.
-Audio commit staging uses 13 call-lifetime bytes beginning at `data_end_private`.
+Audio commit staging uses 16 call-lifetime bytes beginning at `data_end_private`.
 Sequencing happens after other SYS callers restore their saved state, so its
 workspace cannot alias a live formatter/text call. The SRAM assertion now
 requires at least 48 bytes beyond text scratch for native stack.
@@ -223,9 +244,12 @@ requires at least 48 bytes beyond text scratch for native stack.
 Stream offsets are START=0 (uint24), CURSOR=3 (uint24), SIZE=6 (uint16),
 LEFT=8 (uint16), WAIT=10 (uint16), STATUS=12, MASK=13, TRIGGER=14.
 Desired banks contain four `(table_note_index, packed_control)` pairs, with 80=off.
-The desired control uses music-byte encoding; commit prepares the different
-tonal latch layout and strips ignored bits. The noise latch is plain amplitude.
-The ISR sees only controls/phases/LFSR; stream fields are never ISR inputs.
+The desired control uses music-byte encoding; commit strips ignored bit 7,
+separates each tone's waveform, and scales each amplitude using its owner's
+master. The ISR sees controls/banks/phases/LFSR; stream fields and masters
+are never ISR inputs. Master commands recommit all controls without note
+triggers. The 15-byte latch is copied atomically, including waveform selectors,
+so an interrupt cannot observe a mix of old and new gains or waveforms.
 
 ## SPI safety and servicing latency
 
@@ -272,7 +296,8 @@ looping/truncation/bounded catch-up, chord commits, direct tones and SFX release
 ## Tradeoffs and remaining hardware checks
 
 The ISR exceeds the initial 100-cycle goal: preserving actual registers and
-loading/storing four SRAM phases and looking up/scaling samples costs 162..167 cycles. Reserving AVR registers
+loading/storing four SRAM phases, looking up/scaling samples, and clipping
+the signed mix costs 178..185 cycles. Reserving AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
 The 32-byte cache is shared between music/effects; interleaving their streams
 invalidates it, trading extra bursts for a smaller persistent footprint.
@@ -281,7 +306,7 @@ Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
 layout assertions. The waveform table uses space before the primary table,
-keeping firmware at 29472 bytes, with 224 bytes remaining. There is very little flash
+keeping firmware at 29560 bytes, with 136 bytes remaining. There is very little flash
 headroom remaining; future features need space savings or a different build.
 
 FX, Mini and FX-C presets compile with the same Timer3/4 configuration; existing

@@ -3717,19 +3717,26 @@ or concurrent execution of a text or formatted-output service is unsupported.
 | 2 | Stop music | None |
 | 3 | Pause music | None |
 | 4 | Resume music | None |
-| 5 | Set music master volume | `low8(r4) = 0..32`, clamped to 32 |
+| 5 | Set both music and SFX masters | `low8(r4) = 0..255`; 32=100% |
 | 6 | Enable output | None |
 | 7 | Disable output and stop both streams | None |
 | 8 | Stop SFX | None |
 | 9 | Query status | `r4 = bit 0 playing, bit 1 paused, bit 2 SFX` |
 | 10 | Direct SFX tone | `low8(r4) = channel`, `low8(r5) = MIDI note`, `low8(r6) = amplitude` |
+| 11 | Set music master | `low8(r4) = 0..255`; 32=100% |
+| 12 | Set SFX master | `low8(r4) = 0..255`; 32=100%; includes direct tones |
 
 All inputs and architectural flags are preserved except the status result.
 Reserved commands have no command effect, but may service pending elapsed time.
 Pointers retain the existing packed 24-bit program-space representation.
+Each channel's prepared amplitude is `floor(volume * owner_master / 32)`.
+Music and SFX masters are independent; muted SFX retains ownership. Desired
+channel volumes remain 0..31, and gain changes preserve phases and stream
+timing. The signed mix accumulates from zero and saturates at the PWM limits
+after all voices have contributed.
 Playback is autonomous at normal interpreter stream-restart safe points and
 idle wakeups. Timer interrupts synthesize only latched controls; they never
-read program space or advance the event stream. Audio calls define hidden
+read FX assets or advance the event stream. Audio calls define hidden
 playback state and observable speaker output and MUST NOT be removed,
 speculated, duplicated, or reordered. See [audio.md](audio.md) for the bounded
 asset format, channel priority, timer allocations, timing, and runtime API.

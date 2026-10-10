@@ -35,6 +35,9 @@ int avm_test_main(void) {
     avm_audio_resume();
     if(avm_audio_status()!=1) return 8;
     avm_audio_volume(16);
+    avm_audio_music_volume(0);
+    avm_audio_sfx_volume(255);
+    if(avm_audio_status()!=1) return 11;
     avm_audio_tone(2,69,31);
     if(avm_audio_status()!=5) return 10;
     avm_audio_stop_sfx();

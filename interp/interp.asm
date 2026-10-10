@@ -52,8 +52,8 @@
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
-;;     0x0A15–0x0A7D  persistent audio state (105 bytes)
-;;     0x0A7E–0x0AC5  aliased formatter/text or audio commit workspace
+;;     0x0A15–0x0A81  persistent audio state (109 bytes)
+;;     0x0A82–0x0AC9  aliased formatter/text or audio commit workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -78,9 +78,12 @@
 #define data_audio_begin             (data_text_mode+1)
 #define data_audio_ticks_pending     (data_audio_begin+0)
 #define data_audio_divider           (data_audio_begin+1)
+; Music master, 32=unity; three waveform selectors follow the controls.
 #define data_audio_volume            (data_audio_begin+2)
 #define data_audio_controls          (data_audio_begin+3)
-#define data_audio_phases            (data_audio_controls+12)
+#define data_audio_banks             (data_audio_controls+12)
+#define data_audio_sfx_volume        (data_audio_banks+3)
+#define data_audio_phases            (data_audio_sfx_volume+1)
 #define data_audio_noise             (data_audio_phases+8)
 #define data_audio_music_notes       (data_audio_noise+1)
 #define data_audio_sfx_notes         (data_audio_music_notes+8)
@@ -102,8 +105,8 @@
 #define AUDIO_MASK   13
 #define AUDIO_TRIGGER 14
 
-.if (data_audio_end - data_audio_begin) != 105
-    .error "audio persistent SRAM must occupy 105 bytes"
+.if (data_audio_end - data_audio_begin) != 109
+    .error "audio persistent SRAM must occupy 109 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -16250,7 +16253,7 @@ audio_service_func:
     breq .Laudio_service_done
     audio_save
     mov  r21, r30
-    sts  data_end_private+12, ZERO ; dirty flag
+    sts  data_end_private+15, ZERO ; dirty flag
     ldi  r16, lo8(data_audio_music)
     ldi  r17, hi8(data_audio_music)
     ldi  r18, lo8(data_audio_music_notes)
@@ -16258,7 +16261,7 @@ audio_service_func:
     ldi  r16, lo8(data_audio_sfx)
     ldi  r18, lo8(data_audio_sfx_notes)
     rcall audio_advance
-    lds  r24, data_end_private+12
+    lds  r24, data_end_private+15
     tst  r24
     breq 1f
     rcall audio_commit
@@ -16393,7 +16396,7 @@ audio_advance:
     com  r24
     and  r25, r24
     brne audio_stream_end
-    sts  data_end_private+12, ONE
+    sts  data_end_private+15, ONE
     ; Only note changes retrigger phase. Stage all changes before one commit.
     mov  r24, r23
     andi r24, 15
@@ -16446,7 +16449,7 @@ audio_stream_end:
     movw r30, r16
     std  Z+AUDIO_STATUS, ZERO
     std  Z+AUDIO_MASK, ZERO
-    sts  data_end_private+12, ONE
+    sts  data_end_private+15, ONE
     ret
 
 ; Rewind to the first delta, skipping the two-byte validated header.
@@ -16494,12 +16497,23 @@ audio_commit:
     rjmp 1f
     ldi  r30, lo8(data_audio_sfx_notes)
     ldi  r19, 1
-    ldi  r20, 32
+    lds  r20, data_audio_sfx_volume
 1:
     ldi  r31, hi8(data_audio_begin)
     add  r30, r18
     ld   r24, Z
     ldd  r21, Z+1
+    cpi  r18, 6
+    breq .Laudio_stage_bank_done
+    mov  r25, r21
+    andi r25, 0x60
+    lsl  r25
+    mov  r30, r18
+    lsr  r30
+    subi r30, lo8(-(data_end_private+12))
+    ldi  r31, hi8(data_end_private+12)
+    st   Z, r25
+.Laudio_stage_bank_done:
     cpi  r19, 1
     brne .Laudio_stage_silent
     cpi  r24, 72
@@ -16513,21 +16527,14 @@ audio_commit:
     lpm  r25, Z
     st   X+, r24
     st   X+, r25
-    mov  r24, r21 ; retain packed waveform bits, ignoring bit 7
     andi r21, 31
     ; FMUL doubles the product; two more shifts leave product/32 in r1.
-    ; Amplitudes 0..31 and master 0..32 keep the shifted product within 16 bits.
+    ; Volume 0..31 and master 0..255 give floor(volume*master/32), at most 247.
     fmul r21, r20
     lsl  r0
     rol  r1
     lsl  r0
     rol  r1
-    cpi  r18, 6
-    breq .Laudio_stage_amplitude ; noise uses the ordinary amplitude
-    andi r24, 0x60
-    lsl  r24 ; waveform bank in bits 7..6
-    lsl  r1  ; twice amplitude in bits 5..0
-    or   r1, r24
 .Laudio_stage_amplitude:
     st   X+, r1
     rjmp .Laudio_stage_next
@@ -16554,6 +16561,11 @@ audio_commit_atomic_begin:
     st   X+, r0
     dec  r24
     brne 1b
+    ; Copy the three bank bytes without loop overhead in the atomic window.
+    .rept 3
+        ld r0, Z+
+        st X+, r0
+    .endr
     .macro audio_reset_phase n
         sbrs r23, \n
         rjmp 2f
@@ -16640,16 +16652,28 @@ sys_audio_impl:
     breq .Laudio_pause
     cpi  r24, 4 ; resume
     breq .Laudio_resume
-    cpi  r24, 5 ; master volume 0..32
+    cpi  r24, 5 ; set both masters, 0..255 (32=unity)
     breq .Laudio_master
     cpi  r24, 6 ; enable output
     breq .Laudio_enable_command
     cpi  r24, 7 ; disable, stop both streams
     breq .Laudio_disable_command
     cpi  r24, 8 ; stop SFX
-    breq .Laudio_stop_sfx
+    brne 1f
+    rjmp .Laudio_stop_sfx
+1:
     cpi  r24, 9 ; status
-    breq .Laudio_status
+    brne 1f
+    rjmp .Laudio_status
+1:
+    cpi  r24, 11 ; music master
+    brne 1f
+    rjmp .Laudio_music_master
+1:
+    cpi  r24, 12 ; SFX master, including direct tones
+    brne 1f
+    rjmp .Laudio_sfx_master
+1:
     cpi  r24, 10 ; direct SFX tone: r4 channel, r5 MIDI, r6 amplitude
     brne 1f
     rjmp .Laudio_tone
@@ -16676,11 +16700,16 @@ sys_audio_impl:
     rjmp .Laudio_command_commit
 .Laudio_master:
     mov  r24, VM_R4L
-    cpi  r24, 33
-    brlo 1f
-    ldi  r24, 32
-1:
+    sts  data_audio_sfx_volume, r24
+    rjmp .Laudio_music_master_set
+.Laudio_music_master:
+    mov  r24, VM_R4L
+.Laudio_music_master_set:
     sts  data_audio_volume, r24
+    rjmp .Laudio_command_commit
+.Laudio_sfx_master:
+    mov  r24, VM_R4L
+    sts  data_audio_sfx_volume, r24
     rjmp .Laudio_command_commit
 .Laudio_enable_command:
     rcall audio_enable
@@ -16830,30 +16859,30 @@ timer0_audio_tick:
     sts  data_audio_ticks_pending, r0
     rjmp timer0_audio_done
 
-; Synthesis saves r0:r1, r24:r26, Z and SREG. r2 may be borrowed by libm.
-; Tonal control: waveform bank in bits 7..6, twice amplitude in bits 5..0.
-; Signed samples are -127..127; round(sample * twice_amplitude / 256).
+; Synthesis saves r0:r1, r20:r21, r26:r27, Z and SREG (11 bytes including PC).
+; r2 may be borrowed by libm. Banks and full-byte amplitudes are separate.
+; Signed samples are -127..127; round(sample * prepared_amplitude / 128).
 ; No SPI, sequencing, calls, or waveform-dependent branches.
 .macro audio_wave channel
-    lds  r24, data_audio_phases+2*\channel
-    lds  r25, data_audio_phases+2*\channel+1
+    lds  r20, data_audio_phases+2*\channel
+    lds  r21, data_audio_phases+2*\channel+1
     lds  r0, data_audio_controls+3*\channel
-    add  r24, r0
+    add  r20, r0
     lds  r0, data_audio_controls+3*\channel+1
-    adc  r25, r0
-    sts  data_audio_phases+2*\channel, r24
-    sts  data_audio_phases+2*\channel+1, r25
-    lds  r24, data_audio_controls+3*\channel+2
-    mov  r30, r24
-    andi r30, 0xc0
-    lsr  r25
-    lsr  r25
-    or   r30, r25
-    andi r24, 0x3f
-    lpm  r25, Z
-    muls r25, r24
-    lsl  r0
+    adc  r21, r0
+    sts  data_audio_phases+2*\channel, r20
+    sts  data_audio_phases+2*\channel+1, r21
+    lds  r20, data_audio_controls+3*\channel+2
+    lds  r30, data_audio_banks+\channel
+    lsr  r21
+    lsr  r21
+    or   r30, r21
+    lpm  r21, Z
+    fmulsu r21, r20
+    sbc  r21, r21 ; sign before FMULSU's shift; contribution may exceed int8
+    lsl  r0 ; round toward nearest, ties toward positive
     adc  r26, r1
+    adc  r27, r21
 .endm
 
 timer3_compa_isr:
@@ -16861,47 +16890,62 @@ timer3_compa_isr:
     in   r0, SREG
     push r0
     push r1
-    push r24
-    push r25
+    push r20
+    push r21
     push r26
+    push r27
     push r30
     push r31
     ldi  r31, hi8(audio_waveforms)
-    ldi  r26, 128
+    clr  r26 ; signed 16-bit accumulation starts at zero
+    clr  r27
     audio_wave 0
     audio_wave 1
     audio_wave 2
 
-    lds  r24, data_audio_phases+6
-    lds  r25, data_audio_phases+7
+    lds  r20, data_audio_phases+6
+    lds  r21, data_audio_phases+7
     lds  r0, data_audio_controls+9
-    add  r24, r0
+    add  r20, r0
     lds  r0, data_audio_controls+10
-    adc  r25, r0
-    sts  data_audio_phases+6, r24
-    sts  data_audio_phases+7, r25
-    lds  r25, data_audio_noise
+    adc  r21, r0
+    sts  data_audio_phases+6, r20
+    sts  data_audio_phases+7, r21
+    lds  r21, data_audio_noise
     brcc .Laudio_noise_hold
-    lsr  r25
+    lsr  r21
     brcc .Laudio_noise_store
-    ldi  r24, 0xb8
-    eor  r25, r24
+    ldi  r20, 0xb8
+    eor  r21, r20
 .Laudio_noise_store:
-    sts  data_audio_noise, r25
+    sts  data_audio_noise, r21
 .Laudio_noise_hold:
     lds  r0, data_audio_controls+11
-    sbrc r25, 0
+    clc
+    sbrc r21, 0
     neg  r0
+    sbc  r21, r21
     add  r26, r0
+    adc  r27, r21
+    ; Add the PWM bias only after mixing, then saturate the complete sum.
+    subi r26, 128
+    sbci r27, 255
+    tst  r27
+    breq .Laudio_output
+    ldi  r26, 0
+    sbrs r27, 7
+    ldi  r26, 255
+.Laudio_output:
     ; TC4H is shared by every 10-bit Timer4 register; write it explicitly.
-    clr  r24
-    sts  TC4H, r24
+    clr  r20
+    sts  TC4H, r20
     sts  OCR4A, r26
     pop  r31
     pop  r30
+    pop  r27
     pop  r26
-    pop  r25
-    pop  r24
+    pop  r21
+    pop  r20
     pop  r1
     pop  r0
     out  SREG, r0
@@ -16966,4 +17010,5 @@ audio_init_func:
     sts  data_audio_noise, r24
     ldi  r24, 32
     sts  data_audio_volume, r24
+    sts  data_audio_sfx_volume, r24
     ret

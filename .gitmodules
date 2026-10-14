@@ -8,3 +8,6 @@
 [submodule "projects/ardurogue2"]
 	path = projects/ardurogue2
 	url = https://github.com/tiberiusbrown/ardurogue2_avm.git
+[submodule "projects/avm_rpg"]
+	path = projects/avm_rpg
+	url = https://github.com/tiberiusbrown/avm_rpg

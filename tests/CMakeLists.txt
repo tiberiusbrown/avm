@@ -75,7 +75,10 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_source_dependencies)
 
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
-            if(AVM_TEST_NAME STREQUAL "separate_compilation")
+            if(AVM_TEST_NAME STREQUAL "display_system")
+                list(APPEND test_source_dependencies
+                    "${AVM_C_TEST_DIR}/display_system.c")
+            elseif(AVM_TEST_NAME STREQUAL "separate_compilation")
                 set(test_support_sources
                     "${AVM_CXX_TEST_DIR}/support/separate_compilation_impl.cpp")
                 list(APPEND test_source_dependencies
@@ -268,9 +271,67 @@ add_custom_target(avm_stack_bounds_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
+set(AVM_DISPLAY_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/display_system")
+avm_add_object(
+    OUTPUT "${AVM_DISPLAY_TEST_DIR}/display_system.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/display_system.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_DISPLAY_TEST_DIR}/display_system.o"
+    OUTPUT_ELF "${AVM_DISPLAY_TEST_DIR}/display_system.elf"
+    OUTPUT_IMAGE "${AVM_DISPLAY_TEST_DIR}/display_system.bin"
+    DISASSEMBLY "${AVM_DISPLAY_TEST_DIR}/display_system.asm"
+    ENTRY _start)
+add_executable(avm_display_system_tests interp/display_system.cpp)
+target_compile_features(avm_display_system_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_display_system_tests PRIVATE ardensdebuggerlib)
+
+set(display_system_outputs)
+set(display_system_commands)
+set(display_type 0)
+foreach(controller SSD1306 SSD1309 SH1106)
+    math(EXPR display_type "${display_type} + 1")
+    set(controller_dir "${AVM_DISPLAY_TEST_DIR}/${controller}")
+    file(GENERATE OUTPUT "${controller_dir}/preset.asm"
+        CONTENT "#define AVM_DISPLAY_${controller}\n#include \"${PROJECT_SOURCE_DIR}/interp/interp.asm\"\n")
+    add_custom_command(
+        OUTPUT "${controller_dir}/interp.hex" "${controller_dir}/interp.lst"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE:FILEPATH=${controller_dir}/preset.asm"
+            "-DOUTPUT_OBJECT:FILEPATH=${controller_dir}/interp.o"
+            "-DOUTPUT_ELF:FILEPATH=${controller_dir}/interp.elf"
+            "-DOUTPUT_MAP:FILEPATH=${controller_dir}/interp.map"
+            "-DOUTPUT_LISTING:FILEPATH=${controller_dir}/interp.lst"
+            "-DOUTPUT_HEX:FILEPATH=${controller_dir}/interp.hex"
+            "-DMAX_INTERP_SIZE:STRING=${AVM_INTERPRETER_MAX_SIZE}"
+            "-DAVR_GCC:FILEPATH=${AVM_AVR_GCC}"
+            "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
+            "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
+            -P "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
+        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm"
+            "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
+            "${controller_dir}/preset.asm"
+        VERBATIM)
+    list(APPEND display_system_outputs
+        "${controller_dir}/interp.hex" "${controller_dir}/interp.lst")
+    list(APPEND display_system_commands
+        COMMAND "$<TARGET_FILE:avm_display_system_tests>"
+            "${controller_dir}/interp.hex" "${controller_dir}/interp.lst"
+            "${AVM_DISPLAY_TEST_DIR}/display_system.bin"
+            "${AVM_DISPLAY_TEST_DIR}/display_system.asm" "${display_type}")
+endforeach()
+add_custom_target(avm_display_system_tests_run
+    ${display_system_commands}
+    DEPENDS avm_display_system_tests ${display_system_outputs}
+        "${AVM_DISPLAY_TEST_DIR}/display_system.bin"
+        "${AVM_DISPLAY_TEST_DIR}/display_system.asm"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+
 add_custom_target(avm_tests_run
     COMMAND "$<TARGET_FILE:avm_tests>"
     DEPENDS avm_tests avm_push16_tests_run avm_stack_bounds_tests_run avm_audio_tests_run
+        avm_display_system_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running all AVM tests in-process"
     USES_TERMINAL

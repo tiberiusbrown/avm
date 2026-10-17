@@ -3741,6 +3741,74 @@ playback state and observable speaker output and MUST NOT be removed,
 speculated, duplicated, or reordered. See [audio.md](audio.md) for the bounded
 asset format, channel priority, timer allocations, timing, and runtime API.
 
+### 49.30. `send_display_command`
+
+Encoding: `D7 39`.
+
+Public runtime interface and fixed service-register assignment:
+
+```c
+void avm_send_display_command(uint8_t const *cmd, size_t n);
+```
+
+```text
+r4 = data-space command-buffer pointer
+r5 = unsigned 16-bit byte count
+```
+
+The service sends exactly `n` bytes from RAM to the configured display
+controller with D/C low. The count includes command opcodes and all parameter
+bytes, and may exceed 255. Transmission is complete before return; the caller
+can immediately reuse the buffer. The buffer, framebuffer, and all other guest
+RAM remain unmodified. When `n == 0`, no memory is accessed and no display
+commands are sent; `cmd` may be null. Otherwise, `cmd` must name `n` readable
+data-space bytes.
+
+This is a low-level controller interface. Bytes are not validated or translated.
+The caller is responsible for selecting commands appropriate to the configured
+controller and maintaining or restoring settings required by `avm_display()`,
+including addressing mode and column/page state. Display updates do not restore
+arbitrary controller state. There is no program-memory `_P` variant.
+
+The interpreter drains its speculative instruction fetch before borrowing the
+shared SPI bus, waits for every command byte including the final byte, releases
+display CS, restores data mode, and restarts the instruction stream. Every
+general-purpose register (including both input registers), `CC`, and `SP` is
+preserved. The service's externally observable I/O MUST NOT be removed,
+duplicated, speculated, commoned, or reordered across another command stream or
+display update. Conflicting command-buffer accesses must retain their ordering.
+
+### 49.31. System configuration queries
+
+| ID | Encoding | Public runtime interface | Complete `r4` result |
+|---:|---|---|---|
+| `0x3A` | `D7 3A` | `uint16_t avm_get_system_width(void)` | Logical visible width in pixels |
+| `0x3B` | `D7 3B` | `uint16_t avm_get_system_height(void)` | Logical visible height in pixels |
+| `0x3C` | `D7 3C` | `uint8_t avm_get_system_display_type(void)` | Zero-extended controller identifier |
+
+These services have no arguments. They describe immutable interpreter
+configuration, rather than detecting hardware or reading controller registers.
+All current display configurations have logical dimensions `128 x 64` and use
+the existing 1024-byte framebuffer. These dimensions describe visible pixels,
+not the controller's internal RAM geometry, and do not change after raw commands.
+
+The `<avm.h>` controller constants have stable numeric values:
+
+| Constant | Value | Meaning |
+|---|---:|---|
+| `AVM_DISPLAY_UNKNOWN` | `0` | Other or unknown controller |
+| `AVM_DISPLAY_SSD1306` | `1` | SSD1306 |
+| `AVM_DISPLAY_SSD1309` | `2` | SSD1309 |
+| `AVM_DISPLAY_SH1106` | `3` | SH1106 |
+
+The interpreter reports the corresponding `AVM_DISPLAY_*` build selection,
+including accepted `OLED_*` aliases. The default selection is SSD1306. The
+public constants do not select the firmware's build configuration.
+
+Each service defines the complete `r4`, preserves every other general-purpose
+register, `CC`, and `SP`, and has no guest-memory or externally observable
+effects. The compiler may eliminate, common, or speculate these queries.
+
 ---
 
 # Part IX — LLVM and Clang Target Contract
@@ -4408,6 +4476,27 @@ zeros to that range when `clear` is true, and always has externally observable
 display output. It is not an ordinary function call after lowering and carries
 no call-preserved register mask.
 
+The display command and configuration interfaces also have recognized target
+builtins, exposed by inline public wrappers without the leading underscores:
+
+```c
+void __avm_send_display_command(uint8_t const *cmd, size_t n);
+uint16_t __avm_get_system_width(void);
+uint16_t __avm_get_system_height(void);
+uint8_t __avm_get_system_display_type(void);
+```
+
+The command builtin lowers to `llvm.avm.send.display.command(ptr,i16)`, with
+AS0 argument-memory reads and inaccessible-memory read/write effects for
+observable controller I/O. A read-only IR memory effect alone would incorrectly
+permit dead-call removal. Its machine
+descriptor reads `n` bytes through `cmd`, uses preserved inputs `r4` and `r5`,
+and defines no architectural registers. The three queries lower to their
+`llvm.avm.get.system.*()` intrinsics as pure, speculatable `i16` results.
+Clang truncates the display-type result to the public `uint8_t` type. Their
+machine descriptors define only `r4` and have no memory effects. See Sections
+49.30 and 49.31 for the contracts and fixed service IDs.
+
 The target runtime and Clang target provide explicit-pointer sprite interfaces:
 
 ```c
@@ -4807,6 +4896,10 @@ generic LLVM intrinsic.
 | `llvm.avm.draw.textfv(i16,i16,ptr,ptr)` | `SYS 0x35` through `SYS_DRAW_TEXTFV` | tied `r4 = x`, tied `r5 = baseline y`, `r6 = format`, `r2 = ap` | tied `q2 = final cursor` |
 | `llvm.avm.draw.textfv.p(i16,i16,p1,ptr)` | `SYS 0x36` through `SYS_DRAW_TEXTFV_P` | tied `r4 = x`, tied `r5 = baseline y`, `q3 = format`, `r2 = ap` | tied `q2 = final cursor` |
 | `llvm.avm.debug.printfv.p(p1,ptr)` | `SYS 0x37` through `SYS_DEBUG_PRINTFV_P` | `q3 = format`, `r2 = ap` | `r4 = signed result` |
+| `llvm.avm.send.display.command(ptr,i16)` | `SYS 0x39` through `SYS_SEND_DISPLAY_COMMAND_PSEUDO` | `r4 = cmd`, `r5 = n` | None |
+| `llvm.avm.get.system.width()` | `SYS 0x3A` through `SYS_GET_SYSTEM_WIDTH_PSEUDO` | None | `r4 = width` |
+| `llvm.avm.get.system.height()` | `SYS 0x3B` through `SYS_GET_SYSTEM_HEIGHT_PSEUDO` | None | `r4 = height` |
+| `llvm.avm.get.system.display.type()` | `SYS 0x3C` through `SYS_GET_SYSTEM_DISPLAY_TYPE_PSEUDO` | None | `r4 = zero-extended type` |
 
 These instructions and machine pseudos are not ordinary calls and carry no
 call-preserved register mask. Exact physical uses and definitions are modeled

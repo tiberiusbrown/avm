@@ -772,6 +772,10 @@
 #define SYS_DRAW_TEXTFV_P              0x36
 #define SYS_DEBUG_PRINTFV_P             0x37
 #define SYS_AUDIO                       0x38
+#define SYS_SEND_DISPLAY_COMMAND        0x39
+#define SYS_GET_SYSTEM_WIDTH            0x3A
+#define SYS_GET_SYSTEM_HEIGHT           0x3B
+#define SYS_GET_SYSTEM_DISPLAY_TYPE     0x3C
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3224,7 +3228,7 @@ sys_decode_func:
     sei
 
 sys_dispatch_func:
-    cpi  PRIMARY_OPCODE, SYS_AUDIO+1
+    cpi  PRIMARY_OPCODE, SYS_GET_SYSTEM_DISPLAY_TYPE+1
     brsh invalid_syscall_func
     add  r30, PRIMARY_OPCODE
     adc  r31, ZERO
@@ -3304,6 +3308,10 @@ sys_dispatch_func:
 .if (SYS_AUDIO != 0x38)
     .error "SYS_AUDIO must occupy dispatch-table entry 0x38"
 .endif
+.if (SYS_SEND_DISPLAY_COMMAND != 0x39) || (SYS_GET_SYSTEM_WIDTH != 0x3A) || \
+    (SYS_GET_SYSTEM_HEIGHT != 0x3B) || (SYS_GET_SYSTEM_DISPLAY_TYPE != 0x3C)
+    .error "display command and system queries must occupy entries 0x39-0x3C"
+.endif
 
 ; One AVR word per service number. The service byte therefore indexes this
 ; table directly in program-memory word-address space.
@@ -3342,9 +3350,11 @@ sys_dispatch_table:
     sys_entries 1,   sys_draw_textfv_p_func
     sys_entries 1,   sys_debug_printfv_p_func
     sys_entries 1,   sys_audio_func
+    sys_entries 1,   sys_send_display_command_func
+    sys_entries 3,   sys_system_info_func
 sys_dispatch_table_end:
 
-.if (sys_dispatch_table_end - sys_dispatch_table) != ((SYS_AUDIO+1) * 2)
+.if (sys_dispatch_table_end - sys_dispatch_table) != ((SYS_GET_SYSTEM_DISPLAY_TYPE+1) * 2)
     .error "SYS dispatch table must contain exactly the defined service entries"
 .endif
 
@@ -3355,6 +3365,10 @@ sys_memcpy_func:
     jmp   sys_memcpy_impl
 sys_audio_func:
     jmp   sys_audio_impl
+sys_send_display_command_func:
+    jmp   sys_send_display_command_impl
+sys_system_info_func:
+    jmp   sys_system_info_impl
 sys_memcpy_p_func:
     jmp   sys_memcpy_p_impl
 sys_memset_func:
@@ -12094,6 +12108,67 @@ sys_draw_filled_rect_end:
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Display commands and system configuration SYS services
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Raw RAM command stream: r4 = data pointer, r5 = unsigned 16-bit byte count.
+; All guest registers, flags, SP, and RAM are preserved. A zero count does not
+; read the pointer or disturb the OLED. Nonempty streams borrow the shared SPI
+; bus only after draining the speculative instruction fetch.
+sys_send_display_command_impl:
+    movw  r24, VM_R5
+    mov   r26, r24
+    or    r26, r25
+    brne  1f
+    jmp   cluster_tail_18
+1:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+2:
+    in    r26, SPSR
+    sbrs  r26, SPIF
+    rjmp  2b
+    in    r26, SPDR
+    fx_disable
+
+    movw  r30, VM_R4
+    display_command_mode
+    display_enable
+3:
+    ld    r26, Z+
+    call  oled_spi_transfer_blocking_func
+    sbiw  r24, 1
+    brne  3b
+    ; The blocking helper acknowledges the final completed transfer as well.
+    display_disable
+    display_data_mode
+    jmp   seek_and_dispatch_func
+
+; Immutable configuration queries share a dispatcher and the normal fetch
+; tail. Width/height are logical visible pixels, not controller RAM geometry.
+; Return the complete zero-extended result in r4; preserve all other state.
+sys_system_info_impl:
+    ldi   VM_R4H, 0
+    ldi   VM_R4L, 128
+    cpi   PRIMARY_OPCODE, SYS_GET_SYSTEM_WIDTH
+    breq  1f
+    ldi   VM_R4L, 64
+    cpi   PRIMARY_OPCODE, SYS_GET_SYSTEM_HEIGHT
+    breq  1f
+#if defined(AVM_DISPLAY_SSD1306)
+    ldi   VM_R4L, 1
+#elif defined(AVM_DISPLAY_SSD1309)
+    ldi   VM_R4L, 2
+#elif defined(AVM_DISPLAY_SH1106)
+    ldi   VM_R4L, 3
+#else
+    ldi   VM_R4L, 0
+#endif
+1:
+    jmp   cluster_tail_18
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Platform and persistent-storage SYS services
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -12110,7 +12185,6 @@ sys_draw_filled_rect_end:
 ;
 ; The long services terminate the speculative bytecode SPI transfer, perform
 ; blocking flash transactions, then restart the bytecode stream at VM_PC.
-
 sys_platform_dispatch_impl:
     subi  PRIMARY_OPCODE, SYS_BUTTONS
     ldi   r30, lo8(pm(sys_platform_dispatch_table))

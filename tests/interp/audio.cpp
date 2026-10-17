@@ -805,14 +805,15 @@ void decimal_division(char** args) {
 void sys_bounds(char** args) {
     harness h(args);
     auto table=h.sym("sys_dispatch_table"), trap=h.sym("invalid_syscall_func");
-    require(h.sym("sys_dispatch_table_end")-table==57,"SYS table has wrong size");
+    auto services=h.sym("sys_dispatch_table_end")-table;
+    require(services==0x3d,"SYS table has wrong size");
     for(unsigned id=0;id<256;++id) {
         h.c().data[24]=uint8_t(id); h.word(30,uint16_t(table));
         auto flags=h.c().data[reg::addr::GPIOR0]; auto sp=h.c().sp();
         auto regs=h.c().data;
         h.c().pc=uint16_t(h.sym("sys_dispatch_func"));
-        h.until([&]{return h.c().pc==(id<57?table+id:trap);},32);
-        if(id>=57) {
+        h.until([&]{return h.c().pc==(id<services?table+id:trap);},32);
+        if(id>=services) {
             for(unsigned i=0;i<10;++i) h.tick();
             require(h.c().pc==trap,"invalid SYS escaped trap");
         }
@@ -820,7 +821,7 @@ void sys_bounds(char** args) {
         require(h.c().data[reg::addr::GPIOR0]==flags,"SYS guard changed guest flags");
         require(h.c().sp()==sp,"SYS guard changed native stack");
     }
-    std::cout<<"SYS dispatch: all 57 services and 199 invalid IDs passed\n";
+    std::cout<<"SYS dispatch: all "<<services<<" services and "<<256-services<<" invalid IDs passed\n";
 }
 void float_precision(char** args) {
     harness h(args);

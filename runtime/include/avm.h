@@ -58,6 +58,35 @@ bool avm_next_frame();
 /* Display */
 
 AVM_CONSTANT bool AVM_CLEAR_BUFFER = true;
+AVM_CONSTANT uint8_t AVM_DISPLAY_UNKNOWN = 0;
+AVM_CONSTANT uint8_t AVM_DISPLAY_SSD1306 = 1;
+AVM_CONSTANT uint8_t AVM_DISPLAY_SSD1309 = 2;
+AVM_CONSTANT uint8_t AVM_DISPLAY_SH1106 = 3;
+
+/* Logical visible dimensions and the interpreter's configured controller. */
+AVM_SYS_INLINE uint16_t avm_get_system_width(void)
+{
+    return __avm_get_system_width();
+}
+
+AVM_SYS_INLINE uint16_t avm_get_system_height(void)
+{
+    return __avm_get_system_height();
+}
+
+AVM_SYS_INLINE uint8_t avm_get_system_display_type(void)
+{
+    return __avm_get_system_display_type();
+}
+
+/* Send n RAM bytes as controller commands, including parameter bytes.
+ * Blocks until complete; leaves RAM unchanged. Zero length is a no-op.
+ * The caller is responsible for preserving/restoring controller settings
+ * needed by avm_display(). Commands are not validated or translated. */
+AVM_SYS_INLINE void avm_send_display_command(uint8_t const* cmd, size_t n)
+{
+    __avm_send_display_command(cmd, n);
+}
 
 AVM_SYS_INLINE void avm_display(bool clear)
 {

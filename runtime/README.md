@@ -64,6 +64,12 @@ including `memcpy` and `memcpy_P`.
 `<avm/audio.h>` (also included by `<avm.h>`) supplies autonomous four-channel
 music, SFX, and direct-tone controls through `SYS 0x38`. See
 [the audio documentation](../docs/audio.md) for APIs and asset generation.
+`<avm.h>` also supplies `avm_get_system_width()`, `avm_get_system_height()`,
+and `avm_get_system_display_type()` for immutable display configuration.
+`avm_send_display_command(cmd, n)` synchronously sends a RAM byte stream as raw
+controller commands without modifying RAM. Callers own controller-state
+compatibility with subsequent `avm_display()` calls. See the
+[command and query contracts](../docs/arch.md#4930-send_display_command).
 `<new>` provides placement `new` and `new[]` for caller-owned storage, with
 their matching placement `delete` overloads. The runtime provides no heap
 allocator or ordinary `new` operator.

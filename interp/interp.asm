@@ -1785,8 +1785,14 @@ emit_primary_bounded_page primary_F5_dense_4word_page_a, 0x60, f5_table, seconda
 emit_primary_bounded_page primary_F6_dense_4word_page_b, 0x50, f6_table, secondary_width_4_stub
 ; F7 bound 0x90, five-word slots.
 emit_primary_bounded_page primary_F7_dense_5word_page_a, 0x90, f7_table, secondary_width_5_stub
-; F8 bound 0x30, five-word slots.
-emit_primary_bounded_page primary_F8_simple_condition_page, 0x30, f8_table, secondary_width_5_stub
+; F8 uses a shared CSET decoder. Flag selection and the register-file pointer
+; high byte fill the same three setup cycles as the former table preloads.
+primary_F8_simple_condition_page:
+    clr  r27
+    in   r25, VM_FLAGS
+    bst  r25, SREG_Z
+    rjmp f8_cset_decode
+    assert_primary_slot_width primary_F8_simple_condition_page
 
 ; F9 is a dedicated table-free runtime decoder. Primary slots now begin on
 ; cycle 9 after the preceding SPI OUT. The direct RJMP reaches the handler on
@@ -2613,7 +2619,7 @@ fa_shift_decode_end:
 ; above. Bypassing a multiplier-loading stub leaves
 ; enough time to use the exact 17-cycle reverse SPI handoff.
 ;
-; F0 and F2-F8 use the generic multiplier decoder. Their primary prefix slots
+; F0 and F2-F7 use the generic multiplier decoder. Their primary prefix slots
 ; preload the entry limit and word-address table base in Z, then one of the
 ; four remaining width stubs supplies the natural slot width.
 
@@ -2712,6 +2718,46 @@ bounded_page_decoder_end:
     .error "generic bounded decoder and four width stubs must occupy 20 AVR words"
 .endif
 
+; F8 00-2F: CSET.EQ/NE/ULT/UGE/SLT/SGE r0-r7. The primary slot has
+; captured VM_FLAGS in r25, selected Z in native T, and cleared XH.
+; Low/middle PC updates occupy cycles 14/15, then the protected reverse
+; handoff starts the next opcode at cycle 17 and reads the secondary at 18.
+; Each SBRC/BST or SBRC/EOR pair takes two cycles for either bit value.
+; All valid conditions and destinations therefore have the same latency.
+f8_cset_decode:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    cli
+    out   SPDR, ZERO
+    in    SECONDARY_OPCODE, SPDR
+    sei
+    adc   VM_PCH, ZERO
+
+    cpi   SECONDARY_OPCODE, 0x30
+    brsh  invalid_secondary
+    sbrc  SECONDARY_OPCODE, 4
+    bst   r25, SREG_C
+    sbrc  SECONDARY_OPCODE, 5
+    bst   r25, SREG_S
+    clr   r25
+    bld   r25, 0
+    sbrc  SECONDARY_OPCODE, 3
+    eor   r25, ONE
+
+    mov   r26, SECONDARY_OPCODE
+    andi  r26, 0x07
+    lsl   r26
+    subi  r26, -8
+    st    X+, r25
+    st    X, ZERO
+    ; Spending sixteen bytes on a local dispatch removes a two-cycle RJMP
+    ; from every CSET. This retains 416 bytes of savings over the old table.
+    dispatch
+f8_cset_decode_end:
+.if (f8_cset_decode_end - f8_cset_decode) != 64
+    .error "shared F8 decoder/dispatch must occupy exactly thirty-two AVR words"
+.endif
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; FB-FD shared conditional-move gate
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2766,8 +2812,8 @@ cmov_gate_end:
 ;
 ; All defined non-prefix primary opcodes 00-EC and EF are complete. The generic
 ; bounded-page decoder, secondary cadence clusters, and every specified
-; executable secondary table are present. The fixed-width self-contained F1-F8
-; pages, the dedicated EC division and F9 runtime bitwise decoders, the FA immediate/variable
+; executable secondary table are present. The fixed-width self-contained F1-F7
+; pages, the dedicated EC division, F8 CSET and F9 bitwise decoders, the FA immediate/variable
 ; shift page, the FB-FD shared conditional-move gate/table, and the FE MUL16
 ; page are implemented. FF has a table-free floating-point decoder with direct
 ; operations and typed libm bridges. F0 has shared operand-fetch/register-decode
@@ -4155,19 +4201,6 @@ invalid_secondary_instruction_func:
 .Lf7_invalid_end_\@:
     .if (.Lf7_invalid_end_\@ - .Lf7_invalid_start_\@) != 10
         .error "F7 reserved slot is not exactly five words"
-    .endif
-.endm
-
-.macro emit_f8_cset dstl, dsth, flag_bit, skipop
-.Lf8_cset_start_\@:
-    clr   \dstl
-    clr   \dsth
-    \skipop VM_FLAGS, \flag_bit
-    mov   \dstl, ONE
-    rjmp  cluster_c_tail_18
-.Lf8_cset_end_\@:
-    .if (.Lf8_cset_end_\@ - .Lf8_cset_start_\@) != 10
-        .error "F8 CSET slot is not exactly five words"
     .endif
 .endm
 
@@ -6708,67 +6741,12 @@ cluster_c_end:
     .error "secondary cadence Cluster C must occupy 23 AVR words"
 .endif
 
-; F8 contains its exact CSET slots. FA contains immediate body jumps,
+; FA contains immediate body jumps,
 ; register-count forwarding entries, and destination-specialized shift bodies;
 ; FE contains forwarding entries and destination-specialized multiplication
 ; bodies. FB-FD validate secondary < 0x80 in the shared condition gate,
 ; then use bits 5:0 to select one of the 64 two-word MOVW entries below.
 secondary_tables_after_cluster_c:
-f8_table:
-    ; F8: bounded five-word simple-condition materialization table
-    emit_f8_cset r8, r9, SREG_Z, sbic
-    emit_f8_cset r10, r11, SREG_Z, sbic
-    emit_f8_cset r12, r13, SREG_Z, sbic
-    emit_f8_cset r14, r15, SREG_Z, sbic
-    emit_f8_cset r16, r17, SREG_Z, sbic
-    emit_f8_cset r18, r19, SREG_Z, sbic
-    emit_f8_cset r20, r21, SREG_Z, sbic
-    emit_f8_cset r22, r23, SREG_Z, sbic
-    emit_f8_cset r8, r9, SREG_Z, sbis
-    emit_f8_cset r10, r11, SREG_Z, sbis
-    emit_f8_cset r12, r13, SREG_Z, sbis
-    emit_f8_cset r14, r15, SREG_Z, sbis
-    emit_f8_cset r16, r17, SREG_Z, sbis
-    emit_f8_cset r18, r19, SREG_Z, sbis
-    emit_f8_cset r20, r21, SREG_Z, sbis
-    emit_f8_cset r22, r23, SREG_Z, sbis
-    emit_f8_cset r8, r9, SREG_C, sbic
-    emit_f8_cset r10, r11, SREG_C, sbic
-    emit_f8_cset r12, r13, SREG_C, sbic
-    emit_f8_cset r14, r15, SREG_C, sbic
-    emit_f8_cset r16, r17, SREG_C, sbic
-    emit_f8_cset r18, r19, SREG_C, sbic
-    emit_f8_cset r20, r21, SREG_C, sbic
-    emit_f8_cset r22, r23, SREG_C, sbic
-    emit_f8_cset r8, r9, SREG_C, sbis
-    emit_f8_cset r10, r11, SREG_C, sbis
-    emit_f8_cset r12, r13, SREG_C, sbis
-    emit_f8_cset r14, r15, SREG_C, sbis
-    emit_f8_cset r16, r17, SREG_C, sbis
-    emit_f8_cset r18, r19, SREG_C, sbis
-    emit_f8_cset r20, r21, SREG_C, sbis
-    emit_f8_cset r22, r23, SREG_C, sbis
-    emit_f8_cset r8, r9, SREG_S, sbic
-    emit_f8_cset r10, r11, SREG_S, sbic
-    emit_f8_cset r12, r13, SREG_S, sbic
-    emit_f8_cset r14, r15, SREG_S, sbic
-    emit_f8_cset r16, r17, SREG_S, sbic
-    emit_f8_cset r18, r19, SREG_S, sbic
-    emit_f8_cset r20, r21, SREG_S, sbic
-    emit_f8_cset r22, r23, SREG_S, sbic
-    emit_f8_cset r8, r9, SREG_S, sbis
-    emit_f8_cset r10, r11, SREG_S, sbis
-    emit_f8_cset r12, r13, SREG_S, sbis
-    emit_f8_cset r14, r15, SREG_S, sbis
-    emit_f8_cset r16, r17, SREG_S, sbis
-    emit_f8_cset r18, r19, SREG_S, sbis
-    emit_f8_cset r20, r21, SREG_S, sbis
-    emit_f8_cset r22, r23, SREG_S, sbis
-f8_table_end:
-.if (f8_table_end - f8_table) != (2 * 0x30 * 5)
-    .error "f8_table has incorrect size"
-.endif
-
 ; FA contains a thirteen-entry immediate body-jump table, 48 two-word
 ; register-count forwarding entries, and twelve destination-specialized shared
 ; shift bodies. Register entries copy low4(count) to native r26 before the
@@ -7141,9 +7119,9 @@ fe_mul16_bodies_end:
     .error "FE MUL16 shared bodies must occupy exactly 128 bytes"
 .endif
 
-; The active secondary executable tables must occupy exactly 7,374 bytes.
-.if ((f0_veneer_table_end - f0_veneer_table) + (f1_table_end - f1_table) + (f2_table_end - f2_table) + (f3_table_end - f3_table) + (f4_table_end - f4_table) + (f5_table_end - f5_table) + (f6_table_end - f6_table) + (f7_table_end - f7_table) + (f8_table_end - f8_table) + (fa_immediate_jump_table_end - fa_immediate_jump_table) + (fa_forward_table_end - fa_forward_table) + (cmov_table_end - cmov_table) + (fe_forward_table_end - fe_forward_table)) != 7374
-    .error "secondary executable tables must occupy exactly 7374 bytes"
+; The active secondary executable tables must occupy exactly 6,894 bytes.
+.if ((f0_veneer_table_end - f0_veneer_table) + (f1_table_end - f1_table) + (f2_table_end - f2_table) + (f3_table_end - f3_table) + (f4_table_end - f4_table) + (f5_table_end - f5_table) + (f6_table_end - f6_table) + (f7_table_end - f7_table) + (fa_immediate_jump_table_end - fa_immediate_jump_table) + (fa_forward_table_end - fa_forward_table) + (cmov_table_end - cmov_table) + (fe_forward_table_end - fe_forward_table)) != 6894
+    .error "secondary executable tables must occupy exactly 6894 bytes"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -165,3 +165,30 @@ logical counts, register/flag preservation, stack balance, and cycle counts.
 The Timer3 sample ISR remains **178–185 cycles**, and atomic chord commit
 remains **120 cycles**. The animated demo still renders **62 frames** and
 processes **7811 sample interrupts** in one emulated second.
+
+## Shared CSET decoder
+
+The next pass replaces the 480-byte F8 executable table with a 64-byte shared
+decoder and local dispatch. Default firmware falls from **29472 to 29056
+bytes**, saving **416 bytes (1.4115%)** and leaving **640 bytes** below the
+29696-byte ceiling. SH1106 falls from 29500 to 29084 bytes, saving the same
+416 bytes and leaving 612 bytes free.
+
+Every CSET condition, destination, and outcome now takes **41 cycles**, versus
+38 previously: **+3 cycles (+7.8947%)**. The other **1006 instruction/SYS
+timings are unchanged**. The sum of 78 C benchmark timings increases by
+**50667 cycles (+0.036821%)**; 13 cases change, with the largest individual
+increase being **15360 cycles (+1.189526%)** in `byte_comparisons.c`. All five
+C++ timings are unchanged. Guest benchmark images remain byte-identical after
+updating LLVM's CSET scheduling metadata to 41 cycles.
+
+The [complete comparison](cset-benchmarks.md) lists before/after cycles and
+percentage differences for every C/C++ benchmark and changed instruction
+measurement, with a CSV covering all 1101 measurements. It also records the
+16-byte dispatch tradeoff: reusing an existing tail would save 432 bytes but
+cost two more cycles per CSET.
+
+Native checks exercise **49152 valid condition/register/flag/PC combinations**
+at constant 41-cycle latency and **1664 invalid encodings**. These cover all
+eight destinations, every architectural flag byte, byte/word PC carries,
+24-bit PC wraparound, register/flag/SRAM preservation, and balanced stack state.

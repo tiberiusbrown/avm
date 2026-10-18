@@ -5,9 +5,12 @@
 **Priority:** Performance of generated code
 **Reference timing basis:** Sequential SPI byte fetch using the 17-cycle reverse-order and 18-cycle standard dispatch schedules described in Section 5; slower handlers extend the cadence when their native work exceeds the available slack.
 
-Current firmware size, bounded 57-entry SYS dispatch, formatter optimizations,
-and corrected MOV32 measurements are recorded in
-[interpreter optimization measurements](interpreter-optimizations.md).
+Current firmware size and optimization measurements are recorded in
+[interpreter optimization measurements](interpreter-optimizations.md). The
+current F8 shared decoder is described in Section 17 and the
+[CSET benchmark comparison](cset-benchmarks.md). Older physical-layout and
+reference-size examples below retain the former dense F8 table as design
+history; measured current firmware size is 29056 bytes.
 
 ---
 
@@ -194,7 +197,7 @@ sbis  GPIOR0, flag_bit
 rjmp  condition_true
 ```
 
-For `CSET`, the skipped instruction is a one-word `MOV`, so the set and clear paths are equal-time.
+`CSET` reads the saved flags once and uses `BST`/`BLD` to materialize the selected bit. Its `SBRC`/`BST` and `SBRC`/`EOR` pairs take two cycles for either bit value, keeping all conditions and outcomes equal-time (Section 17).
 
 `CMOV` uses one `IN ctest,GPIOR0` in its shared gate because the selected bit is prefix-dependent and secondary bit 6 dynamically requests inversion. Direct `SBIC`/`SBIS` variants would require duplicated prefix-specific gates or extra operand preservation and do not reduce the total code.
 
@@ -459,7 +462,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `F7 LD8U+` | 39 |
 | `F7 LD16+`, `F7 ST16+` | 40 |
 | Other `F7` forms | 38 |
-| `F8` | 38 |
+| `F8` | 41 |
 | `EC` 16-bit division/remainder | 56-265, data-dependent |
 | `ED-EE` displaced byte / word memory | 54 / 55 |
 | `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
@@ -524,7 +527,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `F5` | Bounded dense 4-word page A | 2 | 38-39 |
 | `F6` | Bounded dense 4-word page B | 2 | 38-39 |
 | `F7` | Bounded dense 5-word page A | 2 | 38-40 |
-| `F8` | Bounded dense 5-word simple-condition page | 2 | 38 |
+| `F8` | Shared runtime simple-condition decoder | 2 | 41 |
 | `F9` | Dedicated runtime-decoded full-register bitwise page | 2 | 52-54 |
 | `FA` | Upper-register immediate/register-count 16-bit shift page | 2 | count-dependent; 42-80 |
 | `FB` | `CMOV.EQ` / `CMOV.NE` condition-family prefix | 2 | 36 false; 37 true |
@@ -533,7 +536,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `FE` | Bounded 2-word `MUL16` forwarding page | 2 | 46 |
 | `FF` | Dedicated floating-point page | 2-3 | operation- and helper-dependent |
 
-All sixteen secondary-page prefixes occupy `F0-FF`. `F0-F8` and `FE` use bounded-page machinery; `F9`, `FA`, and `FF` use dedicated runtime decoders; `FB-FD` use the shared condition gate. Their decoder entries and gates are emitted immediately after the primary table, while executable tables and shared bodies are ordered later according to the single-section layout in Section 26.
+All sixteen secondary-page prefixes occupy `F0-FF`. `F0-F7` and `FE` use bounded-page machinery; `F8`, `F9`, `FA`, and `FF` use dedicated runtime decoders; `FB-FD` use the shared condition gate. Their decoder entries and gates are emitted immediately after the primary table, while executable tables and shared bodies are ordered later according to the single-section layout in Section 26.
 
 The other primary ranges provide push/pop, immediate, branch, control-flow, and reserved encodings while keeping all secondary prefixes contiguous. `ED` and `EE` are three-byte, table-free primary families: the second byte selects full-register operands and width, and the third byte carries a bias-32 displacement.
 
@@ -1503,38 +1506,39 @@ Postincrement pointers in lower registers use `F0 6C` for loads or `F0 6D` for s
 
 `CPSE` plus the optional one-word `MOV` takes two cycles on either path. Postincrement loads reserve `rD == rA`. A 32-bit register copy uses two `MOV16` operations, and a one-bit left shift uses `ADD32 qD,qD`.
 
-## 17. `F8`: bounded 5-word simple-condition table
+## 17. `F8`: shared runtime CSET decoder
 
-Bounds: `secondary < 0x30`.
+Bounds: `secondary < 0x30`. All other encodings trap before a destination write.
+There is no F8 executable table. A 64-byte decoder/dispatch replaces its former
+48 five-word entries (480 bytes), saving 416 bytes.
 
-| Secondary | Instruction | Entries | Final cadence |
-|---|---|---:|---:|
-| `00-07` | `CSET.EQ rD` | 8 | 18 |
-| `08-0F` | `CSET.NE rD` | 8 | 18 |
-| `10-17` | `CSET.ULT rD` | 8 | 18 |
-| `18-1F` | `CSET.UGE rD` | 8 | 18 |
-| `20-27` | `CSET.SLT rD` | 8 | 18 |
-| `28-2F` | `CSET.SGE rD` | 8 | 18 |
+| Secondary | Instruction | Complete cycles |
+|---|---|---:|
+| `00-07` | `CSET.EQ rD` | 41 |
+| `08-0F` | `CSET.NE rD` | 41 |
+| `10-17` | `CSET.ULT rD` | 41 |
+| `18-1F` | `CSET.UGE rD` | 41 |
+| `20-27` | `CSET.SLT rD` | 41 |
+| `28-2F` | `CSET.SGE rD` | 41 |
 
-```asm
-; Positive-bit conditions: EQ / ULT / SLT
-clr   dL
-clr   dH
-sbic  GPIOR0, flag_bit
-mov   dL, r3
-rjmp  cluster_c_tail_18
+The fixed four-word primary slot clears XH, reads GPIOR0 into r25, selects Z
+in native T, and jumps to the shared decoder. Low/middle PC updates occupy
+cycles 14/15 before the protected reverse SPI handoff at cycle 17; the
+secondary is read on cycle 18 and the high PC carry is completed afterward.
 
-; Inverted-bit conditions: NE / UGE / SGE
-clr   dL
-clr   dH
-sbis  GPIOR0, flag_bit
-mov   dL, r3
-rjmp  cluster_c_tail_18
-```
+After validation, `SBRC`/`BST` pairs select C for bit 4 or S for bit 5 of the
+secondary. `CLR`/`BLD` materializes the selected bit and an `SBRC`/`EOR` pair
+applies bit-3 inversion. Each conditional pair costs two cycles on either
+path. The low three bits select the register-file address `8 + 2*rD`, and two
+indirect stores write the result and a zero high byte. Architectural GPIOR0
+and all other guest state are preserved.
 
-Skipping the one-word `MOV` costs the same as executing it. `GPIOR0` provides equal-time paths while leaving all four high scratch registers available.
+The decoder ends with a local copy of standard dispatch, spending sixteen
+bytes to avoid a two-cycle jump on every CSET. Complete latency is constant
+for all six conditions, eight registers, and true/false outcomes.
 
-Unsigned `ULE` and `UGT` materialization is canonicalized by swapping compare operands and selecting `UGE` or `ULT`.
+Unsigned `ULE` and `UGT` materialization is canonicalized by swapping comparison
+operands and selecting `UGE` or `ULT`.
 
 ---
 
@@ -2724,9 +2728,9 @@ dedicated `FA` shift decoder                20 words / 40 bytes
 total                                       54 words / 108 bytes
 ```
 
-The `FF` decoder and soft-float bridge are measured separately. The bounded pages are `F0-F8` and `FE`. `F9`, `FA`, and `FF` use dedicated decoders, and `FB-FD` use their separate shared condition gate. The generic multiplier-stub path reaches a standard cycle-17/18 `IN; OUT` handoff. The shared two-word decoder instead uses an exact cycle-17 reverse handoff. In both cases, PC-update work occupies transfer slack rather than extending the post-transfer critical path.
+The `FF` decoder and soft-float bridge are measured separately. The bounded-table pages are `F0-F7` and `FE`. `F8`, `F9`, `FA`, and `FF` use dedicated decoders, and `FB-FD` use their separate shared condition gate. The 64-byte F8 decoder/dispatch is additional to the 108-byte subtotal above. The generic multiplier-stub path reaches a standard cycle-17/18 `IN; OUT` handoff. The shared two-word and F8 decoders instead use an exact cycle-17 reverse handoff. In both cases, PC-update work occupies transfer slack rather than extending the post-transfer critical path.
 
-The reference interpreter uses the decode, table, forwarding, and shared-body structures in Sections 9-21 for `F0-FE`, the dedicated `FF` decoder in Section 21.1, the dedicated `EC` division handler, and the shared `ED-EE` displaced-memory handler in Section 21.3. The generic multiplier decoder serves `F0` and `F2-F8`; the shared width-two decoder serves `F1` and `FE`; dedicated handlers serve `EC`, `ED-EE`, `F9`, `FA`, and `FF`; the `ED-EE` and `F9` handlers are placed near the primary table; and `FB-FD` use their shared condition gate. The example physical layout places executable tables and shared bodies in the `RJMP`-reachable clusters described in Section 26.
+The reference interpreter uses the decode, table, forwarding, and shared-body structures in Sections 9-21 for `F0-FE`, the dedicated `FF` decoder in Section 21.1, the dedicated `EC` division handler, and the shared `ED-EE` displaced-memory handler in Section 21.3. The generic multiplier decoder serves `F0` and `F2-F7`; the shared width-two decoder serves `F1` and `FE`; dedicated handlers serve `EC`, `ED-EE`, `F8`, `F9`, `FA`, and `FF`; the `ED-EE` and `F9` handlers are placed near the primary table; and `FB-FD` use their shared condition gate. The example physical layout places executable tables and shared bodies in the `RJMP`-reachable clusters described in Section 26.
 
 ### 22.4. Reference latency summary
 
@@ -2740,7 +2744,8 @@ The reference interpreter uses the decode, table, forwarding, and shared-body st
 | `EC` 16-bit division/remainder | 56-265 cycles; exact formulas in Section 21.2 |
 | `ED-EE` displaced memory | 54 cycles byte; 55 cycles word |
 | `EF` `RET` | 110 |
-| `F0-F8` dense pages | Fast forms use their page cadence; measured cold forms span 53-352 cycles by family |
+| `F0-F7` dense pages | Fast forms use their page cadence; measured cold forms span 53-352 cycles by family |
+| `F8` shared CSET decoder | 41 cycles |
 | `F9` runtime bitwise page | AND 52, OR 53, XOR 54 cycles |
 | `FA` immediate and register-count shifts | Count-dependent values in Section 19; 42-80 cycles |
 | `FB-FD` conditional moves | 36 cycles false / 37 cycles true |
@@ -2754,14 +2759,14 @@ The primary dispatch multiplier is a two-cycle AVR `MUL`.
 ## 23. Two-byte dense-page pipeline
 
 1. Primary dispatch consumes the prefix opcode and starts fetching the secondary byte.
-2. `EC` enters its division decoder; `F0` and `F2-F8` enter the generic multiplier decoder; `F1` and `FE` enter the shared width-two decoder; `F9`, `FA`, and `FF` enter dedicated runtime decoders; `FB-FD` enter the shared condition gate. The three-byte `ED-EE` families use their own two-handoff decoder rather than this two-byte page pipeline.
+2. `EC` enters its division decoder; `F0` and `F2-F7` enter the generic multiplier decoder; `F1` and `FE` enter the shared width-two decoder; `F8`, `F9`, `FA`, and `FF` enter dedicated runtime decoders; `FB-FD` enter the shared condition gate. The three-byte `ED-EE` families use their own two-handoff decoder rather than this two-byte page pipeline.
 3. The selected decoder advances `PC`, consumes the secondary byte, and starts speculative fetch of the following primary opcode.
 4. A truncated page performs one upper-bound check.
 5. A direct dense page calculates the fixed-stride word address and executes one `IJMP` into the operand-specialized slot. A condition-false `FB-FD` instruction bypasses its shared table.
-6. `EC` dynamically decodes two architectural registers and runs its shared 16-iteration divider. `FF` decodes pair operands and enters an inline handler or the soft-float bridge. `F1-F8` slots perform the operation and `RJMP` to their assigned cluster continuation. `F9` dynamically decodes both architectural-register pointers, performs the selected bitwise operation, and returns through Cluster A. `FA` immediate entries jump directly to shared shift bodies while register-count entries forward through `MOV`/`RJMP` pairs. `FB-FD` use the shared conditional-move table, and `FE` slots forward to shared multiplication bodies.
+6. `EC` dynamically decodes two architectural registers and runs its shared 16-iteration divider. `FF` decodes pair operands and enters an inline handler or the soft-float bridge. `F1-F7` slots perform the operation and `RJMP` to their assigned cluster continuation. `F8` selects the saved flag and destination register at runtime and dispatches locally. `F9` dynamically decodes both architectural-register pointers, performs the selected bitwise operation, and returns through Cluster A. `FA` immediate entries jump directly to shared shift bodies while register-count entries forward through `MOV`/`RJMP` pairs. `FB-FD` use the shared conditional-move table, and `FE` slots forward to shared multiplication bodies.
 7. The assigned cluster continuation consumes the speculative following primary byte and resumes primary dispatch.
 
-There is no run-time architectural-register decoding for the dense `F1-F8` fast paths, `FA`, `FB-FD`, or `FE`. `FF` deliberately decodes pair operands at run time. `EC`, `F0 69-6D`, and `F9` dynamically decode architectural-register operands from their trailing byte. `FA` uses immediate body jumps plus register-count forwarding entries, `FE` uses forwarding entries, and `FB-FD` share one operand table.
+There is no run-time architectural-register decoding for the dense `F1-F7` fast paths, `FA`, `FB-FD`, or `FE`. `FF` deliberately decodes pair operands at run time. `EC`, `F0 69-6D`, `F8`, and `F9` dynamically decode architectural-register operands from their trailing byte. `FA` uses immediate body jumps plus register-count forwarding entries, `FE` uses forwarding entries, and `FB-FD` share one operand table.
 
 ---
 
@@ -2794,7 +2799,7 @@ The comparison and invalid shim are emitted once, not once per page. Each page c
 
 For two- through four-word pages, these two valid-path cycles can replace cadence padding. For larger pages, the check remains worthwhile even if it contributes to a small overrun: omitting the unused table tail saves hundreds or thousands of bytes.
 
-The ten bounded pages perform this upper-bound check in either the generic or shared width-two decoder. `FB-FD` use `secondary < 0x80`; bit 6 selects the inverse condition and bits 5:0 index the shared table. `F9` needs no register-field bounds check because each operand is a three-bit index; operation value `11` traps locally. `FE` uses `secondary < 0x40`. The duplicate upper-register combinations removed from `F1`, `F2`, and `F5`, together with the contiguous `MOV32` additions in `F2`, leave each valid range contiguous.
+The nine bounded-table pages perform this upper-bound check in either the generic or shared width-two decoder. `F8` checks `secondary < 0x30` in its dedicated decoder. `FB-FD` use `secondary < 0x80`; bit 6 selects the inverse condition and bits 5:0 index the shared table. `F9` needs no register-field bounds check because each operand is a three-bit index; operation value `11` traps locally. `FE` uses `secondary < 0x40`. The duplicate upper-register combinations removed from `F1`, `F2`, and `F5`, together with the contiguous `MOV32` additions in `F2`, leave each valid range contiguous.
 
 ---
 
@@ -2806,7 +2811,7 @@ slotAddressWords = tableBaseWords + secondary * slotWords
 
 ### 25.1. Generic multiplier decoder
 
-`F0` and `F2-F8` use four two-word width stubs and one generic multiplier decoder. With cycle-9 primary entry, the setup/stub path reaches the secondary-byte `IN` on cycle 17 and the following-primary `OUT` on cycle 18:
+`F0` and `F2-F7` use four two-word width stubs and one generic multiplier decoder. With cycle-9 primary entry, the setup/stub path reaches the secondary-byte `IN` on cycle 17 and the following-primary `OUT` on cycle 18:
 
 ```asm
 bounded_page_decode:
@@ -3192,7 +3197,7 @@ rjmp  cluster_c_tail_18
 
 The zero and nonzero paths are equal-time. These improvements justify moving `INC16`/`DEC16` from `F6` to `F4` and retaining the five-word `BOOL` implementation in `F7`.
 
-`CSET` also uses `MOV dL,r3`, but this merely replaces `INC dL`; it does not reduce the five-word slot.
+The former five-word `CSET` slots used `MOV dL,r3`. The shared F8 decoder now uses `EOR r25,r3` to invert the materialized bit when secondary bit 3 is set.
 
 ### 27.3. Constant-four uses
 
@@ -3225,12 +3230,11 @@ rjmp  flags_commit_18_delay_1
 ```
 
 ```asm
-; Positive CSET
-clr   dL
-clr   dH
-sbic  GPIOR0, flag_bit
-mov   dL, r3
-rjmp  cluster_c_tail_18
+; CSET materialization after selecting the saved flag in T
+clr   r25
+bld   r25, 0
+sbrc  secondary, 3
+eor   r25, r3
 ```
 
 Conditional branches use `SBIC`/`SBIS` in the structure shown in this guide. `CMOV` performs one `IN` in its shared gate.
@@ -3268,7 +3272,7 @@ The sequences shown in the page definitions illustrate efficient implementations
 | `F7 LD8U+` | 39 |
 | `F7 LD16+`, `ST16+` | 40 |
 | Other `F7` slots | 38 |
-| `F8` all slots | 38 |
+| `F8` all conditions | 41 |
 | `ED-EE` byte / word memory | 54 / 55 |
 | `F9 AND` / `OR` / `XOR` | 52 / 53 / 54 |
 | `FB-FD` condition false / true | 36 / 37 |
@@ -3309,12 +3313,11 @@ Sections 9 and 19 give the cycle targets used when sizing and arranging the refe
 | `F5` | 96 | 4 | 768 | 2048 | 1280 |
 | `F6` | 80 | 4 | 640 | 2048 | 1408 |
 | `F7` | 144 | 5 | 1440 | 2560 | 1120 |
-| `F8` | 48 | 5 | 480 | 2560 | 2080 |
 | `FA` register table | 48 | 2 | 192 | 1024 | 832 |
 | `FB-FD` shared table | 64 | 2 | 256 | 1024 | 768 |
 | `FE` | 64 | 2 | 256 | 1024 | 768 |
 
-The dense tables for upper-register pointers contain only fast forms. The two table-free cold-memory secondaries retain complete ordinary and postincrement register coverage through one 46-word shared handler. `ED-EE` add faster ordinary/displaced full-register coverage through a separate 37-word handler and no executable table.
+`F8` has no executable table; its 64-byte decoder/dispatch replaces the former 480-byte bounded table, saving 416 bytes. The dense tables for upper-register pointers contain only fast forms. The two table-free cold-memory secondaries retain complete ordinary and postincrement register coverage through one 46-word shared handler. `ED-EE` add faster ordinary/displaced full-register coverage through a separate 37-word handler and no executable table.
 
 ## 30. Control-flow primaries
 
@@ -3635,16 +3638,15 @@ F4 table                         1,104
 F5 table                           768
 F6 table                           640
 F7 table                         1,440
-F8 table                           480
 FA immediate jump table              26
 FA register forwarding table         192
 shared FB-FD move table             256
 FE forwarding table                256
                                   ------
-all executable tables            9,422 bytes
+all executable tables            8,942 bytes
 ```
 
-The secondary executable tables total **7,374 bytes**. `EC`, `ED-EE`, `F9`, and `FF` have no executable tables. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
+The secondary executable tables total **6,894 bytes**. `EC`, `ED-EE`, `F8`, `F9`, and `FF` have no executable tables. The 64-byte F8 decoder/dispatch is accounted for separately. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
 
 ## 34. Reference core-size estimate
 

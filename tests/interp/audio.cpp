@@ -803,6 +803,59 @@ void decimal_division(char** args) {
     }
     std::cout<<"decimal division: 2560 byte pairs and 10 u32 boundaries passed\n";
 }
+void cset(char** args) {
+    harness h(args);
+    unsigned valid=0, invalid=0;
+    for(uint32_t pc : {0x7000u,0x70ffu,0xffffu,0xfffffeu}) {
+        for(unsigned secondary=0;secondary<256;++secondary) {
+            unsigned flag_count=secondary<0x30?256:2;
+            for(unsigned f=0;f<flag_count;++f) {
+                unsigned flags=secondary<0x30?f:f*255;
+                h.quiet();
+                h.asset(pc,{0xf8,uint8_t(secondary),0x00});
+                for(unsigned r=0;r<8;++r) h.word(8+2*r,uint16_t(0xa531+r*0x127));
+                h.word(28,0x9f0);
+                h.word(4,uint16_t(pc)); h.c().data[6]=uint8_t(pc>>16);
+                h.c().data[reg::addr::GPIOR0]=uint8_t(flags);
+                h.c().data[reg::addr::SREG]=uint8_t(flags^0x42);
+                h.c().prev_sreg=h.c().data[reg::addr::SREG];
+                h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
+                h.until([&]{return h.boundary();});
+                auto regs=h.c().data; auto sp=h.c().sp();
+                auto begin=h.c().cycle_count;
+                h.tick();
+                bool implemented=secondary<0x30;
+                h.until([&]{return implemented?h.boundary():
+                    h.c().pc==h.sym("invalid_secondary_instruction_func");},200);
+                unsigned destination=secondary&7;
+                unsigned condition=secondary>>3;
+                unsigned bit=condition<2?1:condition<4?0:4;
+                unsigned result=((flags>>bit)&1)^(condition&1);
+                for(unsigned r=0;r<8;++r) {
+                    auto expected=implemented && r==destination?result:
+                        unsigned(regs[8+2*r]|regs[9+2*r]<<8);
+                    require(h.word(8+2*r)==expected,"CSET result or register preservation wrong");
+                }
+                require(h.c().data[2]==regs[2] && h.c().data[3]==regs[3] &&
+                    h.c().data[7]==regs[7],"CSET changed immutable constants");
+                require(h.word(28)==0x9f0 && h.c().sp()==sp,"CSET changed guest/native SP");
+                require(h.c().data[reg::addr::GPIOR0]==flags,"CSET changed architectural flags");
+                require(std::equal(regs.begin()+0x100,regs.end(),h.c().data.begin()+0x100),
+                    "CSET changed SRAM");
+                auto next_pc=(pc+(implemented?2:1))&0xffffff;
+                require((h.word(4)|(uint32_t(h.c().data[6])<<16))==next_pc,
+                    "CSET PC increment/carry wrong");
+                if(implemented) {
+                    require(h.c().pc==h.sym("primary_table"),"CSET fetched wrong following opcode");
+                    require(h.c().cycle_count-begin==41,"CSET latency is not constant 41 cycles");
+                    ++valid;
+                } else ++invalid;
+            }
+        }
+    }
+    std::cout<<"CSET: "<<valid<<" condition/register/flag/PC cases at 41 cycles and "
+        <<invalid<<" invalid-encoding cases passed\n";
+}
 void libm_relocation(char** args) {
     harness h(args);
     // Preserve exact checkpoint results, including the existing tie rounding.
@@ -939,6 +992,7 @@ int main(int argc,char** argv) {
     try {
         require(argc>=4 && argc<=6,"usage: avm_audio_tests interpreter.hex interpreter.lst audio.bin [audio_demo.bin [audio_c_test.bin]]");
         decimal_division(argv);
+        cset(argv);
         libm_relocation(argv);
         format_fields(argv);
         sys_bounds(argv);

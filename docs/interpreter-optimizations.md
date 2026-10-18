@@ -93,3 +93,75 @@ All 284 AVM LLVM code-generation/MC tests, debugger integration, profiler
 integration, and the native instruction-boundary probe pass. The profiler's
 exact timing fixture is refreshed for the current firmware while retaining
 interval reconciliation and CLI/LLDB equivalence checks.
+
+## Cold-path size reductions after display/system queries
+
+The baseline for this pass includes selectable audio waveforms, raw display
+commands, and the three system-configuration query services. Measurements use
+the same 16 MHz Ardens configuration and `RelWithDebInfo` build described above.
+
+| Stage | `.text` bytes | Change from preceding stage |
+| --- | ---: | ---: |
+| Display/system-query baseline | 29648 | — |
+| Pack sine/tangent coefficients and OLED boot commands before waveforms | 29568 | -80 |
+| Clear contiguous interpreter-private state with one startup loop | 29540 | -28 |
+| Share the saturating width/precision decimal parser | 29496 | -44 |
+| Initialize audio control registers from a byte-address table | 29472 | -24 |
+
+The complete reduction is **176 bytes (0.59%)**, leaving **224 bytes** below
+the 29696-byte boundary. Stage deltas include alignment changes. The 78 bytes
+of relocated constants occupy existing padding at `0x00b2`;
+waveforms still begin at `0x0100` and primary dispatch still begins at `0x0200`.
+Coefficient bytes and floating-point semantics are unchanged. Persistent SRAM
+and formatter workspace sizes are unchanged.
+SSD1309, Mini, and FX-C builds also occupy 29472 bytes. SH1106 falls from
+29672 to **29500 bytes**, saving 172 bytes and leaving 196 bytes free.
+Its shorter boot-command sequence leaves three early padding bytes unused.
+
+Arctangent coefficients deliberately remain in the libm region. The existing
+polynomial helper restores Z before returning, and the subsequent atan rounder
+observes Z's high byte as sticky rounding state. Moving that table into page
+zero would change some tie results by one ULP. Four exact checkpoint-result
+checks guard against this; changing the underlying rounding behavior is outside
+this size-only pass. Sine/tangent finish through a fresh multiplication, so
+their table addresses do not affect the rounding state.
+
+The startup loop now clears 126 private bytes, including inactive sprite/font
+cache fields, instead of clearing 109 audio bytes plus seven individual
+stores. The nonzero text-mode default is installed afterward. Audio setup uses
+14 one-byte I/O addresses: timer stop/mask writes precede their other control
+resets, and the Timer4 high-byte latch is cleared before counter/compare writes.
+
+| Measurement | Before, cycles | After, cycles | Difference |
+| --- | ---: | ---: | ---: |
+| Reset to first opcode, native audio fixture | 235529 | 235687 | +158 |
+| Isolated audio initialization, including RET | 1750 | 1837 | +87 |
+| RAM format `%d`, value 7 | 817 | 817 | 0 |
+| RAM format `%12.5d`, value 7 | 1038 | 1053 | +15 |
+| Program format `%12.5d`, value 7 | 1441 | 1456 | +15 |
+| RAM format `%65536d`, value 7 | 1213 | 1239 | +26 |
+| RAM format `%.65536d`, value 7 | 1246 | 1272 | +26 |
+
+Startup costs an additional **9.875 microseconds**: 71 cycles for the broader
+private clear and 87 cycles for the audio register loop. Parsing a literal
+width or precision digit costs five additional cycles when multiplying, or
+six when saturating. Formats without literal fields and `*` fields do not
+enter the new shared helper. Its return address uses two transient native
+stack bytes; the observed formatter/audio stress peak remains **41 bytes**,
+and the dedicated field-formatting checks peak at **27 bytes**.
+
+The full `avm_bench_run` passes all **471 guest fixtures**, **152 PUSH/POP**
+cases, **1133 stack-bound** cases, **27 native audio** cases, and **88 display
+preservation cases per controller**. Mini/FX-C and all three display-controller
+variants build successfully. All **78 C** and **5 C++** benchmark timings are
+unchanged. Of **1018 instruction/SYS measurements**, **986** are unchanged;
+the remaining **32** are formatting cases with literal fields and increase by
+5, 10, or 15 cycles. No arithmetic instruction or libm SYS latency changes.
+
+The native checks cover 46 RAM/program format cases, including zero/leading
+zero fields, combined width/precision, 65534/65535/65536 boundaries, and long
+overflowing digit sequences. They check parsed values, bounded output,
+logical counts, register/flag preservation, stack balance, and cycle counts.
+The Timer3 sample ISR remains **178–185 cycles**, and atomic chord commit
+remains **120 cycles**. The animated demo still renders **62 frames** and
+processes **7811 sample interrupts** in one emulated second.

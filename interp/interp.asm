@@ -958,6 +958,54 @@ default_isr:
 reset_handler:
     jmp startup_func
 
+; Sine/tangent tables and OLED boot commands fill the otherwise unused bytes
+; before the fixed waveform page. The polynomials start with their degree,
+; followed by a binary32 leading coefficient and five-byte extended entries.
+sinf_coefficients:
+    .byte 5
+    .byte 0xa8,0x4c,0xcd,0xb2
+    .byte 0xd4,0x4e,0xb9,0x38,0x36
+    .byte 0xa9,0x02,0x0c,0x50,0xb9
+    .byte 0x91,0x86,0x88,0x08,0x3c
+    .byte 0xa6,0xaa,0xaa,0x2a,0xbe
+    .byte 0x00,0x00,0x00,0x80,0x3f
+
+tanf_coefficients:
+    .byte 6
+    .byte 0x64,0xec,0x1b,0x3c
+    .byte 0x04,0xbc,0x16,0x3e,0x3b
+    .byte 0xe5,0xb9,0x3c,0xc9,0x3c
+    .byte 0x37,0xc2,0x9e,0x5a,0x3d
+    .byte 0x66,0x04,0x98,0x08,0x3e
+    .byte 0xea,0x69,0xaa,0xaa,0x3e
+    .byte 0x00,0x00,0x00,0x80,0x3f
+
+; Commands follow Arduboy2's lcdBootProgram for the corresponding SPI display.
+oled_boot_program:
+#if defined(AVM_DISPLAY_SH1106)
+    .byte 0x8D, 0x14                 ; enable charge pump
+    .byte 0xA1                       ; segment remap
+    .byte 0xC8                       ; COM scan direction
+    .byte 0x81, AVM_OLED_CONTRAST    ; contrast
+    .byte 0xD9, 0xF1                 ; precharge
+    .byte 0x02                       ; SH1106 visible column starts at 2
+    .byte 0xAF                       ; display on
+#else
+    .byte 0xD5, 0xF0                 ; display clock divisor
+#  if defined(AVM_DISPLAY_SSD1309)
+    .byte 0xE3, 0xE3                 ; SSD1309 has no charge-pump command
+#  else
+    .byte 0x8D, 0x14                 ; SSD1306 charge pump on
+#  endif
+    .byte 0xA1                       ; segment remap
+    .byte 0xC8                       ; COM scan direction
+    .byte 0x81, AVM_OLED_CONTRAST    ; contrast
+    .byte 0xD9, 0xF1                 ; precharge
+    .byte 0xAF                       ; display on
+    .byte 0x20, 0x00                 ; horizontal addressing mode
+#endif
+oled_boot_program_end:
+
 ; Four 64-sample signed waveforms occupy the page before primary dispatch.
 ; Phase high bits select a sample; the prepared control supplies bank bits.
 .org 0x0100
@@ -7189,22 +7237,20 @@ startup_func:
     ; Application static storage is initialized by copying the complete data
     ; image below. There is no separate .bss region or SRAM-clear pass. Clear
     ; only interpreter-private state that is not supplied by the image.
-    sts  data_startup_flags, ZERO
-    sts  data_millis+0, ZERO
-    sts  data_millis+1, ZERO
-    sts  data_millis+2, ZERO
-    sts  data_millis+3, ZERO
-    sts  data_sprite_width, ZERO
-    sts  data_text_line_height, ZERO
-    ldi  r26, SPRITE_MODE_SELF_MASKED
-    sts  data_text_mode, r26
-    ldi  r30, lo8(data_audio_begin)
-    ldi  r31, hi8(data_audio_begin)
-    ldi  r26, (data_audio_end-data_audio_begin)
+    ; Include inactive sprite/font caches so one loop initializes the complete
+    ; contiguous region. Data/save page pointers are installed separately.
+    ldi  r30, lo8(data_startup_flags)
+    ldi  r31, hi8(data_startup_flags)
+    ldi  r26, (data_audio_end-data_startup_flags)
+.if (data_audio_end-data_startup_flags) > 255
+    .error "startup private-state clear must fit its byte counter"
+.endif
 1:
     st   Z+, ZERO
     dec  r26
     brne 1b
+    ldi  r26, SPRITE_MODE_SELF_MASKED
+    sts  data_text_mode, r26
 
     ; Initialize persistent architectural state. VM_FLAGS lives in low-I/O
     ; GPIOR0; VM PC is loaded from the image header below.
@@ -7665,31 +7711,6 @@ oled_startup_init_func:
     fx_disable
     ret
 
-; Commands follow Arduboy2's lcdBootProgram for the corresponding SPI display.
-oled_boot_program:
-#if defined(AVM_DISPLAY_SH1106)
-    .byte 0x8D, 0x14                 ; enable charge pump
-    .byte 0xA1                       ; segment remap
-    .byte 0xC8                       ; COM scan direction
-    .byte 0x81, AVM_OLED_CONTRAST    ; contrast
-    .byte 0xD9, 0xF1                 ; precharge
-    .byte 0x02                       ; SH1106 visible column starts at 2
-    .byte 0xAF                       ; display on
-#else
-    .byte 0xD5, 0xF0                 ; display clock divisor
-#  if defined(AVM_DISPLAY_SSD1309)
-    .byte 0xE3, 0xE3                 ; SSD1309 has no charge-pump command
-#  else
-    .byte 0x8D, 0x14                 ; SSD1306 charge pump on
-#  endif
-    .byte 0xA1                       ; segment remap
-    .byte 0xC8                       ; COM scan direction
-    .byte 0x81, AVM_OLED_CONTRAST    ; contrast
-    .byte 0xD9, 0xF1                 ; precharge
-    .byte 0xAF                       ; display on
-    .byte 0x20, 0x00                 ; horizontal addressing mode
-#endif
-oled_boot_program_end:
 .p2align 2
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -10382,15 +10403,9 @@ fmodf:
 ; Polynomial coefficient tables. The first byte is the degree; the next four
 ; bytes are the leading binary32 coefficient; remaining entries are five-byte
 ; extended coefficients.
-sinf_coefficients:
-    .byte 5
-    .byte 0xa8,0x4c,0xcd,0xb2
-    .byte 0xd4,0x4e,0xb9,0x38,0x36
-    .byte 0xa9,0x02,0x0c,0x50,0xb9
-    .byte 0x91,0x86,0x88,0x08,0x3c
-    .byte 0xa6,0xaa,0xaa,0x2a,0xbe
-    .byte 0x00,0x00,0x00,0x80,0x3f
-
+; Keep atan coefficients in the libm region. Its current rounding path also
+; observes the table pointer's high byte; relocating it into page zero would
+; change tie rounding. Sine/tangent finish through a fresh multiplication.
 atanf_coefficients:
     .byte 8
     .byte 0x4a,0xd7,0x3b,0x3b
@@ -10401,16 +10416,6 @@ atanf_coefficients:
     .byte 0x00,0xc7,0x7f,0x11,0xbe
     .byte 0xd9,0xe4,0xbb,0x4c,0x3e
     .byte 0x91,0x6b,0xaa,0xaa,0xbe
-    .byte 0x00,0x00,0x00,0x80,0x3f
-
-tanf_coefficients:
-    .byte 6
-    .byte 0x64,0xec,0x1b,0x3c
-    .byte 0x04,0xbc,0x16,0x3e,0x3b
-    .byte 0xe5,0xb9,0x3c,0xc9,0x3c
-    .byte 0x37,0xc2,0x9e,0x5a,0x3d
-    .byte 0x66,0x04,0x98,0x08,0x3e
-    .byte 0xea,0x69,0xaa,0xaa,0x3e
     .byte 0x00,0x00,0x00,0x80,0x3f
 
 expf_coefficients:
@@ -13182,6 +13187,36 @@ format_arg_program_pointer:
 ; Parser
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+; X = min(65535, X*10+r24), where r24 is a decimal digit (0..9).
+; Width and precision share this cold path. Clobbers r20:r21 and native SREG;
+; the formatter's T bit and architectural flags are preserved.
+format_accumulate_decimal_digit:
+    cpi   r27, 0x19
+    brlo  .Lformat_decimal_multiply
+    brne  .Lformat_decimal_saturate
+    cpi   r26, 0x99
+    brlo  .Lformat_decimal_multiply
+    brne  .Lformat_decimal_saturate
+    cpi   r24, 6
+    brsh  .Lformat_decimal_saturate
+.Lformat_decimal_multiply:
+    lsl   r26
+    rol   r27
+    movw  r20, r26
+    lsl   r26
+    rol   r27
+    lsl   r26
+    rol   r27
+    add   r26, r20
+    adc   r27, r21
+    add   r26, r24
+    adc   r27, ZERO
+    ret
+.Lformat_decimal_saturate:
+    ser   r26
+    ser   r27
+    ret
+
 format_core:
 .Lformat_main_loop:
     rcall format_get_char
@@ -13258,36 +13293,9 @@ format_core:
     brsh  .Lformat_parse_precision
 .Lformat_parse_width_digits:
     subi  r24, '0'
-    mov   r26, r12
-    mov   r27, r13
-    ; Saturate before multiplying when oldWidth*10+digit exceeds 0xFFFF.
-    cpi   r27, 0x19
-    brlo  .Lformat_width_multiply
-    brne  .Lformat_width_saturate
-    cpi   r26, 0x99
-    brlo  .Lformat_width_multiply
-    brne  .Lformat_width_saturate
-    cpi   r24, 6
-    brsh  .Lformat_width_saturate
-.Lformat_width_multiply:
-    ; width = width*8 + width*2 + digit.
-    lsl   r12
-    rol   r13
-    movw  r20, r12
-    lsl   r12
-    rol   r13
-    lsl   r12
-    rol   r13
-    add   r12, r20
-    adc   r13, r21
-    add   r12, r24
-    adc   r13, ZERO
-    rjmp  .Lformat_width_digit_done
-.Lformat_width_saturate:
-    ldi   r24, 0xFF
-    mov   r12, r24
-    mov   r13, r24
-.Lformat_width_digit_done:
+    movw  r26, r12
+    rcall format_accumulate_decimal_digit
+    movw  r12, r26
     rcall format_get_char
     cpi   r24, '0'
     brlo  .Lformat_parse_precision
@@ -13322,35 +13330,9 @@ format_core:
     brsh  .Lformat_parse_length
 .Lformat_parse_precision_digits:
     subi  r24, '0'
-    mov   r26, r14
-    mov   r27, r15
-    ; Saturate before multiplying when oldPrecision*10+digit exceeds 0xFFFF.
-    cpi   r27, 0x19
-    brlo  .Lformat_precision_multiply
-    brne  .Lformat_precision_saturate
-    cpi   r26, 0x99
-    brlo  .Lformat_precision_multiply
-    brne  .Lformat_precision_saturate
-    cpi   r24, 6
-    brsh  .Lformat_precision_saturate
-.Lformat_precision_multiply:
-    lsl   r14
-    rol   r15
-    movw  r20, r14
-    lsl   r14
-    rol   r15
-    lsl   r14
-    rol   r15
-    add   r14, r20
-    adc   r15, r21
-    add   r14, r24
-    adc   r15, ZERO
-    rjmp  .Lformat_precision_digit_done
-.Lformat_precision_saturate:
-    ldi   r24, 0xFF
-    mov   r14, r24
-    mov   r15, r24
-.Lformat_precision_digit_done:
+    movw  r26, r14
+    rcall format_accumulate_decimal_digit
+    movw  r14, r26
     rcall format_get_char
     cpi   r24, '0'
     brlo  .Lformat_parse_length
@@ -17035,6 +17017,15 @@ audio_notes:
     .word 4389,4650,4927,5220,5530,5859,6207,6577,6968,7382,7821,8286
     .word 8779,9301,9854,10440,11060,11718,12415,13153,13935,14764,15642,16572
 
+; Startup-only zero writes, in order. Both timers are stopped and masked
+; before their remaining controls are reset. All addresses fit in data page 0;
+; TC4H is cleared before writing TCNT4 and the Timer4 compare registers.
+audio_init_zero_registers:
+    .byte TCCR3B, TIMSK3, TCCR3A, TCCR3C, OCR3AH
+    .byte TCCR4B, TIMSK4, TCCR4A, TCCR4C, TCCR4D, TCCR4E
+    .byte DT4, TC4H, TCNT4
+audio_init_zero_registers_end:
+
 ; Startup only, interrupts off. 96 MHz VCO / 1.5 = 64 MHz Timer4;
 ; USB postcaler remains 48 MHz (96 / 2). Datasheet sections 6.11 and 15.
 audio_init_func:
@@ -17057,26 +17048,21 @@ audio_init_func:
     lds  r24, PRR1
     andi r24, (0xff ^ (_BV(PRTIM3) | _BV(PRTIM4)))
     sts  PRR1, r24
-    sts  TCCR3B, ZERO
-    sts  TIMSK3, ZERO
-    sts  TCCR3A, ZERO
-    sts  TCCR3C, ZERO
-    sts  OCR3AH, ZERO
+    ldi  r30, lo8(audio_init_zero_registers)
+    ldi  r31, hi8(audio_init_zero_registers)
+    ldi  r27, 0
+    ldi  r24, (audio_init_zero_registers_end-audio_init_zero_registers)
+1:
+    lpm  r26, Z+
+    st   X, ZERO
+    dec  r24
+    brne 1b
     ldi  r24, 255
     sts  OCR3AL, r24
-    sts  TCCR4B, ZERO
-    sts  TIMSK4, ZERO
-    sts  TCCR4A, ZERO
     cbi  PORTC, 6
     cbi  PORTC, 7
     cbi  DDRC, 6
     cbi  DDRC, 7
-    sts  TCCR4C, ZERO
-    sts  TCCR4D, ZERO
-    sts  TCCR4E, ZERO
-    sts  DT4, ZERO
-    sts  TC4H, ZERO
-    sts  TCNT4, ZERO
     sts  OCR4C, r24
     ldi  r24, 128
     sts  OCR4A, r24

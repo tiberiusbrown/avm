@@ -22,6 +22,7 @@ struct harness {
     std::map<std::string,unsigned> symbols;
     unsigned cases=0;
     uint64_t isrmin=10000,isrmax=0,atomicmax=0,latencymax=0;
+    uint64_t boot_cycles=0;
     atmega32u4_t& c() { return e->core_state.cpu; }
     unsigned sym(char const* name) { return symbols.at(name)/2; }
     uint16_t word(unsigned a) { return uint16_t(c().data[a] | c().data[a+1]<<8); }
@@ -69,7 +70,7 @@ struct harness {
         }
         c().no_merged=true; c().autobreaks.reset();
         c().pc=0; // test firmware reset vector, independently of bootloader fuses
-        until([&]{return boundary();},2000000);
+        boot_cycles=until([&]{return boundary();},2000000);
         require(c().data[reg::addr::PLLFRQ]==0x6a,"PLL must clock Timer4 at 64 MHz");
         require(c().pll_num12==48,"emulator PLL frequency wrong");
         require(c().timer3.ocrNa==255,"Timer3 TOP wrong");
@@ -802,6 +803,92 @@ void decimal_division(char** args) {
     }
     std::cout<<"decimal division: 2560 byte pairs and 10 u32 boundaries passed\n";
 }
+void libm_relocation(char** args) {
+    harness h(args);
+    // Preserve exact checkpoint results, including the existing tie rounding.
+    // Approximate libm fixture tolerances would miss a one-ULP relocation change.
+    std::array<uint32_t,4> expected{0x3eed6339u,0x3f8db70du,0x402b6374u,0xc02b6374u};
+    unsigned cases=0;
+    for(auto operands : {std::make_pair(0x3f800000u,0x40000000u),
+                         std::make_pair(0x40000000u,0x3f800000u),
+                         std::make_pair(0x3f800000u,0xc0000000u),
+                         std::make_pair(0xbf800000u,0xc0000000u)}) {
+        for(unsigned i=0;i<4;++i) {
+            h.c().data[22+i]=uint8_t(operands.first>>(8*i));
+            h.c().data[18+i]=uint8_t(operands.second>>(8*i));
+        }
+        auto sp=h.c().sp(); auto y=h.word(28);
+        h.routine("atan2f");
+        auto bits=uint32_t(h.word(22))|(uint32_t(h.word(24))<<16);
+        require(bits==expected[cases++],"atan2 relocation changed tie rounding");
+        require(h.c().sp()==sp && h.word(28)==y,"atan2 changed native stack or callee-saved Y");
+    }
+    std::cout<<"libm relocation: four exact atan2 rounding cases passed\n";
+}
+void format_fields(char** args) {
+    harness h(args);
+    std::cout<<"startup to first opcode: "<<h.boot_cycles<<" cycles; audio init: "
+        <<h.routine("audio_init_func")<<" cycles\n";
+    unsigned cases=0, minsp=0xaff;
+    auto check=[&](std::string const& format, unsigned width, unsigned precision,
+                   bool has_precision, bool program) {
+        h.quiet();
+        h.asset(0x7000,{0xd7,uint8_t(program?0x30:0x2f),0x00});
+        std::vector<uint8_t> bytes(format.begin(),format.end()); bytes.push_back(0);
+        if(program) h.asset(0x20000,bytes);
+        else std::copy(bytes.begin(),bytes.end(),h.c().data.begin()+0x300);
+        h.word(12,0x400); h.word(0x400,7); // va_list contains one int.
+        h.word(16,0x100); h.word(18,32);
+        h.word(20,program?0:0x300); h.word(22,program?2:0);
+        h.word(4,0x7000); h.c().data[6]=0;
+        h.c().data[reg::addr::GPIOR0]=5;
+        h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
+        h.until([&]{return h.boundary();});
+        auto regs=h.c().data; auto sp=h.c().sp(); auto start=h.c().cycle_count;
+        h.tick();
+        h.until([&]{
+            minsp=std::min(minsp,unsigned(h.c().sp()));
+            return h.c().pc==h.sym("format_conversion_integer");
+        });
+        require(h.word(12)==width && h.word(14)==precision,"format field parse/saturation wrong");
+        h.until([&]{
+            minsp=std::min(minsp,unsigned(h.c().sp()));
+            return h.boundary();
+        });
+        auto cycles=h.c().cycle_count-start;
+        auto digits=has_precision?std::max(1u,precision):1u;
+        auto count=std::max(width,digits);
+        require(h.word(16)==(count>32767?0xffff:count),"format field count wrong");
+        for(unsigned i=0;i<std::min(31u,count);++i) {
+            auto expected=i<count-digits?' ':i<count-1?'0':'7';
+            require(h.c().data[0x100+i]==expected,"format field padding/digits wrong");
+        }
+        require(h.c().data[0x100+std::min(31u,count)]==0,"format field missing terminator");
+        for(unsigned i=8;i<24;++i) if(i!=16 && i!=17)
+            require(h.c().data[i]==regs[i],"format field changed guest register");
+        require(h.word(28)==uint16_t(regs[28]|regs[29]<<8),"format field changed guest SP");
+        require(h.c().data[reg::addr::GPIOR0]==5,"format field changed guest flags");
+        require(h.c().sp()==sp,"format field leaked native stack");
+        if(format=="%d" || format=="%12.5d" || format=="%65536d" || format=="%.65536d")
+            std::cout<<"format "<<(program?"program ":"RAM ")<<format<<": "<<cycles<<" cycles\n";
+        ++cases;
+    };
+    for(bool program : {false,true}) {
+        check("%d",0,0,false,program);
+        for(auto digits : {"0","1","9","12","6553","65534","65535","65536",
+                            "655350","99999999999999999999"}) {
+            unsigned value=0;
+            for(auto p=digits;*p;++p) value=std::min(65535u,value*10+unsigned(*p-'0'));
+            check(std::string("%")+digits+"d",value,0,false,program);
+            check(std::string("%.")+digits+"d",0,value,true,program);
+        }
+        check("%12.5d",12,5,true,program);
+        check("%00012.00005d",12,5,true,program);
+    }
+    require(minsp>=0xaca,"format field native stack collided with private workspace");
+    std::cout<<"format fields: "<<cases<<" RAM/program width/precision cases passed; native stack "
+        <<0xb00-minsp<<" bytes\n";
+}
 void sys_bounds(char** args) {
     harness h(args);
     auto table=h.sym("sys_dispatch_table"), trap=h.sym("invalid_syscall_func");
@@ -852,6 +939,8 @@ int main(int argc,char** argv) {
     try {
         require(argc>=4 && argc<=6,"usage: avm_audio_tests interpreter.hex interpreter.lst audio.bin [audio_demo.bin [audio_c_test.bin]]");
         decimal_division(argv);
+        libm_relocation(argv);
+        format_fields(argv);
         sys_bounds(argv);
         float_precision(argv);
         idle_continuation(argv);

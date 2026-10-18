@@ -10,7 +10,8 @@ Current firmware size and optimization measurements are recorded in
 current F8 shared decoder is described in Section 17 and the
 [CSET benchmark comparison](cset-benchmarks.md). Older physical-layout and
 reference-size examples below retain the former dense F8 table as design
-history; measured current firmware size is 29056 bytes.
+history; measured current firmware size is 29008 bytes after the
+[hexadecimal float digit loop](hex-formatter-benchmarks.md).
 
 ---
 

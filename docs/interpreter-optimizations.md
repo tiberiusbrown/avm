@@ -192,3 +192,23 @@ Native checks exercise **49152 valid condition/register/flag/PC combinations**
 at constant 41-cycle latency and **1664 invalid encodings**. These cover all
 eight destinations, every architectural flag byte, byte/word PC carries,
 24-bit PC wraparound, register/flag/SRAM preservation, and balanced stack state.
+
+## Hexadecimal float digit loop
+
+The `%a`/`%A` fraction generator now emits two nibbles per iteration over three
+bytes instead of using six repeated extraction blocks. The routine shrinks
+from **98 to 52 bytes**. Removing the final alignment NOP brings total firmware
+savings to **48 bytes**, taking the default image from **29056 to 29008 bytes**
+and leaving **688 bytes** below the 29696-byte ceiling. CSET plus this change
+save **464 bytes** from the preceding 29472-byte firmware.
+
+Each finite hexadecimal float conversion takes **five additional cycles**
+(0.3125 microseconds at 16 MHz). Seventeen SYS benchmark cases change by
+**+0.0727% to +0.3695%**; the other **1001 instruction/SYS cases**, all **78 C
+benchmarks**, and all **five C++ benchmarks** are unchanged (**0 cycles, 0%**).
+Integer hexadecimal and decimal float formatting are unchanged.
+
+The [hex formatter comparison](hex-formatter-benchmarks.md) records all changed
+timings. The native digit check passes against both versions for **7192
+byte-pattern/random/letter-case/T combinations**, with matching output,
+workspace guards, preserved formatter state, and balanced native stack.

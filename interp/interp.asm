@@ -15753,7 +15753,8 @@ format_float_hex_round:
     ret
 
 ; Convert the 23 fraction bits, padded with one low zero, into six forward hex
-; digits in data_format_digit_buffer.
+; digits in data_format_digit_buffer. Shift out the implicit leading bit once,
+; then emit two nibbles from each of the three bytes. r20-r23 are scratch.
 format_float_hex_generate_six:
     lds   r20, data_format_float_value+0
     lds   r21, data_format_float_value+1
@@ -15761,52 +15762,30 @@ format_float_hex_generate_six:
     ldi   r30, lo8(data_format_digit_buffer)
     ldi   r31, hi8(data_format_digit_buffer)
 
+    lsl   r20
+    rol   r21
+    rol   r22
+    ldi   r23, 3
+.Lformat_float_hex_byte_loop:
     mov   r26, r22
-    lsr   r26
-    lsr   r26
-    lsr   r26
+    swap  r26
     andi  r26, 0x0f
     rcall format_float_hex_nibble_to_char
     st    Z+, r26
 
     mov   r26, r22
-    andi  r26, 0x07
-    lsl   r26
-    sbrc  r21, 7
-    ori   r26, 1
-    rcall format_float_hex_nibble_to_char
-    st    Z+, r26
-
-    mov   r26, r21
-    lsr   r26
-    lsr   r26
-    lsr   r26
     andi  r26, 0x0f
     rcall format_float_hex_nibble_to_char
     st    Z+, r26
-
-    mov   r26, r21
-    andi  r26, 0x07
-    lsl   r26
-    sbrc  r20, 7
-    ori   r26, 1
-    rcall format_float_hex_nibble_to_char
-    st    Z+, r26
-
-    mov   r26, r20
-    lsr   r26
-    lsr   r26
-    lsr   r26
-    andi  r26, 0x0f
-    rcall format_float_hex_nibble_to_char
-    st    Z+, r26
-
-    mov   r26, r20
-    andi  r26, 0x07
-    lsl   r26
-    rcall format_float_hex_nibble_to_char
-    st    Z, r26
+    mov   r22, r21
+    mov   r21, r20
+    dec   r23
+    brne  .Lformat_float_hex_byte_loop
     ret
+format_float_hex_generate_six_end:
+.if (format_float_hex_generate_six_end - format_float_hex_generate_six) != 52
+    .error "hexadecimal fraction digit generator must occupy twenty-six AVR words"
+.endif
 
 format_float_hex_nibble_to_char:
     cpi   r26, 10

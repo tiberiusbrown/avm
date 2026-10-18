@@ -204,19 +204,22 @@ See [audio.md](audio.md) for register settings and datasheet references.
 | Persistent audio SRAM | **109 bytes** |
 | Call-lifetime commit staging | 16 bytes, in existing temporary workspace |
 | Remaining native stack above formatter/text workspace | 54 bytes |
-| Current native `.text` | **29056 bytes** |
-| Current total firmware flash | **29056 bytes** |
+| Current native `.text` | **29008 bytes** |
+| Current total firmware flash | **29008 bytes** |
 | Waveform support versus square-only firmware | +368 bytes |
 | Prepared gains and independent masters versus waveform-only firmware | +88 bytes |
 | Display commands and system queries | +88 bytes |
 | Subsequent cold-path size reductions | -176 bytes |
 | Shared CSET decoder and local dispatch | -416 bytes |
-| Bootloader ceiling / remaining space | 29696 / **640 bytes** |
+| Hexadecimal float digit loop | -48 bytes |
+| Bootloader ceiling / remaining space | 29696 / **688 bytes** |
 
 The [cold-path measurements](interpreter-optimizations.md#cold-path-size-reductions-after-displaysystem-queries)
 record the startup and formatter tradeoffs for the latest size reductions.
 The [CSET comparison](cset-benchmarks.md) records the subsequent decoder's
 instruction and complete C/C++ benchmark changes in cycles and percentages.
+The [hex formatter comparison](hex-formatter-benchmarks.md) records the
+subsequent 48-byte reduction and five-cycle cost per finite `%a`/`%A` conversion.
 
 The nine bytes beyond the approximate 100-byte SRAM goal retain two complete
 bounded stream records, desired music/SFX banks, and one cache. This supports

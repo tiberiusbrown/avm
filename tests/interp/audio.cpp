@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <memory>
@@ -987,6 +988,53 @@ void float_precision(char** args) {
     }
     std::cout<<"float precision: "<<cases<<" precision/value/flag cases passed\n";
 }
+void hex_fraction(char** args) {
+    harness h(args);
+    constexpr unsigned digits=0xa97, conversion=0xab5, value=0xabc;
+    unsigned cases=0;
+    uint64_t minimum=10000, maximum=0;
+    auto check=[&](uint32_t significand) {
+        for(bool upper : {false,true}) for(unsigned t : {0u,64u}) {
+            std::fill_n(h.c().data.begin()+digits-1,8,0xcc);
+            for(unsigned i=0;i<4;++i) h.c().data[value+i]=uint8_t(significand>>(8*i));
+            h.c().data[conversion]=upper?'A':'a';
+            h.c().data[reg::addr::SREG]=uint8_t(t); h.c().prev_sreg=uint8_t(t);
+            auto regs=h.c().data; auto sp=h.c().sp();
+            auto cycles=h.routine("format_float_hex_generate_six");
+            minimum=std::min(minimum,cycles); maximum=std::max(maximum,cycles);
+            std::ostringstream expected;
+            if(upper) expected<<std::uppercase;
+            expected<<std::hex<<std::setw(6)<<std::setfill('0')<<((significand&0x7fffff)<<1);
+            auto text=expected.str();
+            require(std::equal(text.begin(),text.end(),h.c().data.begin()+digits),
+                "hexadecimal fraction digits wrong");
+            require(h.c().data[digits-1]==0xcc && h.c().data[digits+6]==0xcc,
+                "hexadecimal fraction overwrote adjacent workspace");
+            require(std::equal(regs.begin()+value,regs.begin()+value+4,h.c().data.begin()+value),
+                "hexadecimal fraction changed source significand");
+            for(unsigned r=2;r<20;++r)
+                require(h.c().data[r]==regs[r],"hexadecimal fraction corrupted formatter state");
+            for(unsigned r : {27u,28u,29u})
+                require(h.c().data[r]==regs[r],"hexadecimal fraction corrupted preserved pointer");
+            require((h.c().data[reg::addr::SREG]&64)==t,"hexadecimal fraction changed T");
+            require(h.c().sp()==sp,"hexadecimal fraction leaked native stack");
+            ++cases;
+        }
+    };
+    for(unsigned byte=0;byte<3;++byte) for(unsigned pattern=0;pattern<256;++pattern) {
+        unsigned shift=byte*8;
+        check((0x95a56bu&~(0xffu<<shift))|(pattern<<shift));
+    }
+    uint32_t random=0x78a5c123;
+    for(unsigned i=0;i<1024;++i) {
+        random=random*1664525u+1013904223u;
+        check(random&0xffffff);
+    }
+    for(uint32_t significand : {0u,0x7fffffu,0x800000u,0xffffffu,0x800001u,0xc00000u})
+        check(significand);
+    std::cout<<"hexadecimal fraction: "<<cases<<" byte-pattern/random/case/T checks passed; "
+        <<minimum<<".."<<maximum<<" cycles\n";
+}
 }
 int main(int argc,char** argv) {
     try {
@@ -997,6 +1045,7 @@ int main(int argc,char** argv) {
         format_fields(argv);
         sys_bounds(argv);
         float_precision(argv);
+        hex_fraction(argv);
         idle_continuation(argv);
         harness h(argv); sequence(h); synthesis(h); automatic(h);
         std::cout<<h.cases<<" native audio cases passed\n"

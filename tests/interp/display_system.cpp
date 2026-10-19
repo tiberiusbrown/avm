@@ -1,5 +1,6 @@
 #include <absim.hpp>
 #include <absim_regs.hpp>
+#include "avm_spi_observer.hpp"
 
 #include <algorithm>
 #include <array>
@@ -51,6 +52,22 @@ struct harness {
     {
         auto deadline = c().spi_transmit_zero_cycle;
         auto port = c().data[absim::reg::addr::PORTD];
+        if(observe && c().pc * 2 == native.at("sys_display_impl")) {
+            // SPIF can remain set from a previous timed transfer while the
+            // speculative next-opcode transfer is still active. Exercise this
+            // legal status state even if the fixture just acknowledged it.
+            c().data[absim::reg::addr::SPSR] |= absim::reg::bit::SPSR::SPIF;
+        }
+        if(c().pc * 2 == native.at("display_acknowledge") ||
+           c().pc * 2 == native.at("sys_display_acknowledge")) {
+            require(!c().spi_busy || deadline <= c().cycle_count,
+                    "OLED acknowledged final byte before completion");
+            if(c().spi_clock_cycles == 2 &&
+               (deadline == UINT64_MAX || c().cycle_count <= deadline))
+                throw std::runtime_error("OLED status read before cycle-18 SPIF: cycle=" +
+                                         std::to_string(c().cycle_count) + " boundary=" +
+                                         std::to_string(deadline));
+        }
         e->cycle();
         c().update_all();
         require(!c().should_autobreak(), "native emulator fault");
@@ -59,6 +76,9 @@ struct harness {
         if((port & 0x40) == 0 && (next_port & 0x40) != 0)
             require(!c().spi_busy || deadline <= c().cycle_count,
                     "OLED deselected before final byte completed");
+        if((port & 0x02) == 0 && (next_port & 0x02) != 0)
+            require(!c().spi_busy || deadline <= c().cycle_count,
+                    "FX deselected before speculative byte completed");
         if(c().spi_transmit_zero_cycle != deadline && c().spi_busy) {
             require((next_port & 0x42) != 0, "OLED and FX selected simultaneously");
             if((next_port & 0x40) == 0) {
@@ -88,6 +108,7 @@ struct harness {
         }
         c().no_merged = true;
         c().autobreaks.reset();
+        avm_test::observe_spi_writes(c());
         c().pc = 0;
         until([&] { return boundary(); });
         // Isolate register and memory effects from autonomous timer activity.
@@ -105,6 +126,7 @@ struct harness {
     void restore(absim::arduboy_t::tt_state_t const& state, unsigned flags)
     {
         e->load_state_from_vector(state);
+        avm_test::observe_spi_writes(c());
         for(unsigned r = 0; r < 8; ++r)
             word(8 + r * 2, uint16_t(0x1234 + r * 0x1123));
         c().data[absim::reg::addr::GPIOR0] = uint8_t(0xAC | (flags & 3) | ((flags & 4) << 2));

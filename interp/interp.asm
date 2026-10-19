@@ -5326,13 +5326,14 @@ sys_display_impl:
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
 
-    ; SYS decode already launched a speculative read of the following primary.
-    ; Wait for that transfer to complete before deselecting the FX flash, then
-    ; read SPDR to complete the hardware SPIF-clear sequence.
-.Lsys_display_wait_fx:
+    ; SYS decode launched the speculative read nine cycles before this entry.
+    ; PC advancement uses three cycles; six more place status/data reads at
+    ; cycles 18/19. SPIF may still describe an older timed transfer, so it is
+    ; not a reliable indication that this speculative byte has completed.
+    delay_3
+    delay_3
+sys_display_acknowledge:
     in    r24, SPSR
-    sbrs  r24, SPIF
-    rjmp  .Lsys_display_wait_fx
     in    r24, SPDR
     fx_disable
 
@@ -5410,9 +5411,16 @@ display_update_func:
     rjmp  .Ldisplay_ssd_delay
     st    Z+, r0
     brne  .Ldisplay_ssd_loop
+    nop                         ; match SH1106's final cycle-16 exit
 #endif
 
     ; Complete and acknowledge the final transfer before releasing chip select.
+    ; Both final loop exits reach this point at cycle 16. Fresh SPIF is not
+    ; visible until cycle 18, even though received data is ready at 16.
+    ; Wait so SPSR sees the completed final byte's SPIF, then
+    ; access SPDR to clear it; an early read can leave a fresh SPIF afterward.
+    delay_2
+display_acknowledge:
     in    r24, SPSR
     in    r24, SPDR
     display_disable
@@ -5421,12 +5429,12 @@ display_update_func:
 
 sys_display_service_end:
 #if defined(AVM_DISPLAY_SH1106)
-.if (sys_display_service_end - sys_display_service_start) != 88
-    .error "SH1106 display SYS wrapper/function must occupy exactly 44 AVR words"
+.if (sys_display_service_end - sys_display_service_start) != 90
+    .error "SH1106 display SYS wrapper/function must occupy exactly 45 AVR words"
 .endif
 #else
-.if (sys_display_service_end - sys_display_service_start) != 60
-    .error "SSD1306/SSD1309 display SYS wrapper/function must occupy exactly 30 AVR words"
+.if (sys_display_service_end - sys_display_service_start) != 64
+    .error "SSD1306/SSD1309 display SYS wrapper/function must occupy exactly 32 AVR words"
 .endif
 #endif
 
@@ -7141,7 +7149,9 @@ fx_seek_to_pc:
     lds  r27, data_page_data+1
     adc  r27, VM_PCH
 
-    rcall fx_seek_delay_10
+    ; A meaningful transmitted address byte must avoid cycle 17, where the
+    ; AVR transmits zero. Match the common seek path's 18-cycle first gap.
+    rcall fx_seek_delay_11
     out  SPDR, r27
     rcall fx_seek_delay_17
     out  SPDR, r26
@@ -7211,6 +7221,18 @@ startup_func:
     mov  ONE, r26
     ldi  r26, 4
     mov  FOUR, r26
+
+    ; Cathy3K detaches USB when starting a sketch but leaves USB interrupt
+    ; enables/controller state intact. A pending event would enter default_isr
+    ; at our first SEI, before the guest can draw its title. Detach, mask USB
+    ; interrupts, and reset the controller before reconfiguring the shared PLL.
+    sts  UDIEN, ZERO
+    ldi  r26, _BV(DETACH)
+    sts  UDCON, r26
+    ldi  r26, _BV(FRZCLK)
+    sts  USBCON, r26
+    sts  UDINT, ZERO
+    sts  USBINT, ZERO
 
     ; Application static storage is initialized by copying the complete data
     ; image below. There is no separate .bss region or SRAM-clear pass. Clear
@@ -11086,6 +11108,7 @@ draw_bitmap_seek_visible_text_func:
     sbrc  r24, 2
     swap  r18                        ; r18 = 1 << (y & 7)
 
+    nop                              ; address data requires an 18-cycle gap
     out   SPDR, r20                  ; physical address low
 
     ; Select one mode-specific row dispatcher once. GPIOR1:GPIOR2 are free
@@ -14325,7 +14348,7 @@ text_finish:
     adc   r27, VM_PCH
     out   SPDR, r27
 
-    ; The remaining eight pops exactly occupy the high-to-middle interval.
+    ; Eight pops plus one NOP provide the 18-cycle meaningful-byte interval.
     pop   r15
     pop   r14
     pop   r13
@@ -14334,6 +14357,7 @@ text_finish:
     pop   r10
     pop   r9
     pop   r8
+    nop
     out   SPDR, r26
 
     rcall .Ltext_restart_delay_17

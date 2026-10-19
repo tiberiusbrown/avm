@@ -1,4 +1,5 @@
 #include <absim.hpp>
+#include "interp/avm_spi_observer.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -380,6 +381,7 @@ std::vector<std::uint8_t> run_image(fs::path const& interpreter,
     cpu.autobreaks.reset();
     cpu.enabled_autobreaks.reset();
     cpu.enabled_autobreaks.set(absim::AB_BREAK);
+    avm_test::observe_spi_writes(cpu);
 
     arduboy->debugger_state.allow_nonstep_breakpoints = true;
     arduboy->debugger_state.paused = false;

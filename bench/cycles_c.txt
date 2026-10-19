@@ -14,8 +14,8 @@
       526194   crc16.c
      1737578   div_pow2.c
      1065446   divmod.c
-       18717   draw_text.c
-       20825   draw_text_P.c
+       18718   draw_text.c
+       20826   draw_text_P.c
       739468   dynamic_stack.c
       236880   fibonacci.c
      5948825   fir8.c
@@ -64,12 +64,12 @@
         2072   sys_strncpy.c
         3536   sys_strncpy_p.c
       487471   tail_calls.c
-       51421   text.c
+       51424   text.c
        42482   tilesrect.c
-       90796   tilessprite.c
-       37912   tilessprite16.c
-       34724   tilessprite16_cached.c
-       77336   tilessprite_cached.c
+       90924   tilessprite.c
+       37944   tilessprite16.c
+       34756   tilessprite16_cached.c
+       77464   tilessprite_cached.c
       502025   volatile_rmw.c
       535885   wide_add_sub.c
      1193470   wide_compare.c

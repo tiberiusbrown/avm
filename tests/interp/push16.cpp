@@ -1,5 +1,6 @@
 #include <absim.hpp>
 #include <absim_regs.hpp>
+#include "avm_spi_observer.hpp"
 
 #include <array>
 #include <cstdint>
@@ -151,6 +152,7 @@ int main(int argc, char** argv)
         auto& cpu = emulator->core_state.cpu;
         cpu.no_merged = true;
         cpu.autobreaks.reset();
+        avm_test::observe_spi_writes(cpu);
         unsigned cases = 0;
         for(unsigned opcode = 0xb0; opcode <= 0xbf; ++opcode) {
             for(unsigned i = 0; cpu.pc != table + opcode * 4 && i < 20000000; ++i)
@@ -163,6 +165,7 @@ int main(int argc, char** argv)
             require(!state.state.empty(), "could not save instruction boundary");
             auto run = [&](uint16_t sp, unsigned flags) {
                 emulator->load_state_from_vector(state);
+                avm_test::observe_spi_writes(cpu);
                 run_case(*emulator, table, trap, opcode, sp, flags);
                 ++cases;
             };
@@ -175,6 +178,7 @@ int main(int argc, char** argv)
                 }
             }
             emulator->load_state_from_vector(state);
+            avm_test::observe_spi_writes(cpu);
             tick(*emulator);
         }
         std::cout << "Passed " << cases << " PUSH16/POP16 cases; all B0-B7 pushes = 19 cycles, "

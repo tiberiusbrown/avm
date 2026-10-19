@@ -1,5 +1,6 @@
 #include <absim.hpp>
 #include <absim_regs.hpp>
+#include "avm_spi_observer.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -70,6 +71,7 @@ struct harness {
             auto error=e->load_file(pair.second,in); if(!error.empty()) throw std::runtime_error(error);
         }
         c().no_merged=true; c().autobreaks.reset();
+        avm_test::observe_spi_writes(c());
         c().pc=0; // test firmware reset vector, independently of bootloader fuses
         boot_cycles=until([&]{return boundary();},2000000);
         require(c().data[reg::addr::PLLFRQ]==0x6a,"PLL must clock Timer4 at 64 MHz");
@@ -645,7 +647,6 @@ void automatic(harness& h) {
                 h.tick();
             }
             require(std::equal(bytes.begin(),bytes.begin()+64,h.c().data.begin()+0x100),"interrupt corrupted FX burst");
-            require(!h.c().autobreaks.test(AB_SPI_WCOL),"SPI collision during audio interrupt");
         }
         require(interrupted_reads>0,"SPI interruption test did not interrupt an active transfer");
         h.quiet();
@@ -761,7 +762,6 @@ void demo(char** args) {
     require(samples>=7750 && samples<=7820,"demo sample clock lost interrupts");
     require(effect && paused && resumed,"demo button controls failed");
     require(minsp>=0xaca,"demo native stack collided with private workspace");
-    require(!h.c().autobreaks.test(AB_SPI_WCOL),"demo SPI collision");
     require(h.c().data[music+12]==1,"demo music did not continue automatically");
     std::cout<<"animated demo: "<<frames<<" frames, "<<samples<<" samples, service gap "
         <<maxgap/16000.<<" ms, native stack "<<0xb00-minsp<<" bytes; SFX/pause/resume passed\n";
@@ -776,7 +776,6 @@ void formatter(char** args) {
     }
     require(h.c().autobreaks.test(AB_BREAK),"audio formatter workload did not finish");
     require(minsp>=0xaca,"formatter/audio interrupts collided with private workspace");
-    require(!h.c().autobreaks.test(AB_SPI_WCOL),"formatter/audio SPI collision");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
 }
 void decimal_division(char** args) {

@@ -1,5 +1,6 @@
 #include <absim.hpp>
 #include <absim_regs.hpp>
+#include "avm_spi_observer.hpp"
 
 #include <algorithm>
 #include <array>
@@ -88,6 +89,7 @@ struct harness_t {
         load(*emulator, args[3], "fxdata.bin");
         cpu().no_merged = true;
         cpu().autobreaks.reset();
+        avm_test::observe_spi_writes(cpu());
     }
     absim::atmega32u4_t& cpu() { return emulator->core_state.cpu; }
     bool boundary()
@@ -160,6 +162,7 @@ struct harness_t {
                                 std::string const& label, F run)
     {
         emulator->load_state_from_vector(state);
+        avm_test::observe_spi_writes(cpu());
         try { run(); }
         catch(std::exception const& error) { throw std::runtime_error(label + ": " + error.what()); }
         ++cases;
@@ -167,6 +170,7 @@ struct harness_t {
     void resume(absim::arduboy_t::tt_state_t const& state)
     {
         emulator->load_state_from_vector(state);
+        avm_test::observe_spi_writes(cpu());
         tick();
     }
 };

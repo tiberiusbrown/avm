@@ -20,7 +20,7 @@ constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, banks=0xa24,
     sfxvolume=0xa27, phases=0xa28, noise=0xa30, notes=0xa31, sfxnotes=0xa39,
     music=0xa41, sfx=0xa4c, update_controls=0xa57, update=0xa66,
     held_sample=0xa67, midpoint=held_sample+1, output_phase=midpoint+1,
-    private_end=output_phase+1, scratch_end=private_end+72;
+    private_end=output_phase+1, event_buffer=private_end+1, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
 struct harness {
     std::unique_ptr<arduboy_t> e = std::make_unique<arduboy_t>();
@@ -349,7 +349,7 @@ void sequence(harness& h) {
             h.play(bytes); require(h.c().data[music+8]==0,"malformed stream stayed active");
         }
     });
-    h.test("direct reads across address boundaries",[&]{
+    h.test("event reads across address boundaries",[&]{
         std::vector<uint8_t> bytes{0xa2,1};
         for(int i=0;i<60;++i) bytes.insert(bytes.end(),{0,1,uint8_t(36+i%60)});
         bytes.insert(bytes.end(),{255,0,2});
@@ -359,6 +359,34 @@ void sequence(harness& h) {
             require(h.word(music+6)==256,"max delta wrong");
             h.elapsed(255); require(h.word(music+6)==1,"max delta subtraction wrong");
             h.elapsed(1); require(h.word(music+6)==1 && h.c().data[music+8]==1,"max-delay loop wrong");
+        }
+    });
+    h.test("all event masks consume their exact length and ignore read-ahead",[&]{
+        for(unsigned mask=1;mask<256;++mask) {
+            std::vector<uint8_t> bytes{0xa2,15,0,uint8_t(mask)};
+            for(unsigned ch=0;ch<4;++ch) if(mask&(1u<<ch)) bytes.push_back(uint8_t(60+ch));
+            for(unsigned ch=0;ch<4;++ch) if(mask&(16u<<ch)) bytes.push_back(uint8_t(0x60+9+ch));
+            bytes.push_back(1); // End is due two ticks after this update.
+            auto terminal=unsigned(bytes.size());
+            bytes.insert(bytes.end(),{0,1,0xff,96,96,96,96,255,255,255,255});
+            h.c().data[event_buffer+10]=0xa5;
+            h.play(bytes);
+            require(h.word(music+3)==uint16_t(terminal) && h.c().data[music+5]==2,
+                "event read advanced by burst length instead of consumed bytes");
+            require(h.word(music+6)==2,"buffered next delta is wrong");
+            for(unsigned ch=0;ch<4;++ch) {
+                require(h.c().data[notes+2*ch]==(mask&(1u<<ch) ? 36+ch : 128),
+                    "mask lost or invented a note update");
+                require(h.c().data[notes+2*ch+1]==(mask&(16u<<ch) ? 0x60+9+ch : 24),
+                    "mask lost or invented a control update");
+            }
+            h.elapsed(2);
+            require(h.c().data[music+8]==0 && h.word(music+3)==terminal+2,
+                "End consumed its prefetched trailing bytes");
+            auto cursor=h.word(music+3);
+            h.elapsed(255);
+            require(h.word(music+3)==cursor && h.c().data[event_buffer+10]==0xa5,
+                "event reader crossed its temporary buffer or resumed after End");
         }
     });
     h.test("streams beyond 65535 bytes terminate and rewind with 24-bit cursors",[&]{
@@ -883,11 +911,11 @@ void handoff(harness& h) {
     });
 }
 void automatic(harness& h) {
-    h.test("FX bursts and uncached song byte timing",[&]{
+    h.test("FX bursts and buffered event timing",[&]{
         std::vector<uint8_t> bytes(96);
         for(unsigned i=0;i<bytes.size();++i) bytes[i]=uint8_t(i*13);
         h.asset(0x23000,bytes);
-        for(unsigned count : {16,32,64}) {
+        for(unsigned count : {10,16,32,64}) {
             h.c().data[24]=0; h.c().data[25]=0x30; h.c().data[26]=2;
             h.c().data[0]=uint8_t(count); h.c().data[1]=0;
             h.word(30,0x100);
@@ -921,11 +949,17 @@ void automatic(harness& h) {
         h.c().data[music+3]=0;
         h.c().data[music+4]=0x30;
         h.c().data[music+5]=2;
-        auto t=h.routine("audio_byte");
-        require(h.c().data[24]==bytes[0],"direct song byte was corrupted");
-        require(h.word(music+3)==0x3001 && h.c().data[music+5]==2,
-            "direct song byte did not advance the cursor");
-        std::cout<<"uncached song byte: "<<t<<" cycles\n";
+        h.c().data[private_end]=0x5a;
+        h.c().data[event_buffer+10]=0xa5;
+        auto t=h.routine("audio_read_event");
+        require(std::equal(bytes.begin(),bytes.begin()+10,h.c().data.begin()+event_buffer),
+            "event burst was corrupted");
+        require(h.word(music+3)==0x3000 && h.c().data[music+5]==2,
+            "event burst changed the logical cursor before parsing");
+        require(h.word(26)==event_buffer,"event burst did not initialize the postincrement pointer");
+        require(h.c().data[private_end]==0x5a && h.c().data[event_buffer+10]==0xa5,
+            "event burst overwrote its scratch boundaries");
+        std::cout<<"10-byte event fetch: "<<t<<" cycles\n";
     });
     h.test("seek overhead and SPI continuation",[&]{
         auto measure=[&](char const* name){h.quiet();h.c().pc=uint16_t(h.sym(name));auto start=h.c().cycle_count;h.tick();h.until([&]{return h.boundary();});return h.c().cycle_count-start;};
@@ -973,6 +1007,71 @@ void automatic(harness& h) {
         h.until([&]{return h.boundary();});
         h.c().st(reg::addr::TIMSK0,0); h.c().st(reg::addr::TCCR0B,0); h.quiet();
     });
+}
+void phase_alignment(char** args) {
+    harness h(args);
+    auto& c=h.c();
+    auto deadline=[&](auto const& timer,unsigned divider) {
+        auto ticks=timer.ocrNa>timer.tcnt ? timer.ocrNa-timer.tcnt :
+            timer.top+1+timer.ocrNa-timer.tcnt;
+        return c.timer_sync.prev_update_cycle+divider-c.timer_sync.prescaler_cycle%divider+
+            uint64_t(ticks-1)*divider;
+    };
+    unsigned minimum=128,maximum=0;
+    uint64_t max_lateness=0,outputs=0;
+    // Every millisecond-counter value and every sub-tick prescaler phase.
+    for(unsigned counter=0;counter<250;++counter) for(unsigned phase=0;phase<64;++phase) {
+        h.quiet();
+        c.st(reg::addr::TIMSK0,0);
+        c.st(reg::addr::TCCR0B,3);
+        c.update_sync_timers();
+        c.timer_sync.prescaler_cycle=phase;
+        c.st(reg::addr::TCNT0,uint8_t(counter));
+        c.st(reg::addr::TIFR0,2);
+        auto begin=c.timer_sync.prev_update_cycle;
+        auto prescaler=c.timer_sync.prescaler_cycle;
+        h.routine("audio_enable");
+        c.update_sync_timers();
+        auto elapsed=c.cycle_count-begin;
+        require(c.timer0.tcnt==(counter+(prescaler%64+elapsed)/64)%250,
+            "audio phase alignment changed the millisecond counter");
+        require(c.timer_sync.prescaler_cycle==(prescaler+elapsed)%1024,
+            "audio phase alignment reset the shared prescaler");
+        auto due=deadline(c.timer1,8);
+        unsigned gap=unsigned((due-deadline(c.timer0,64))&127);
+        minimum=std::min(minimum,gap); maximum=std::max(maximum,gap);
+        if(gap<64 || gap>120 || gap%8)
+            std::cerr<<"phase diagnostics: counter="<<counter<<" subphase="<<phase
+                <<" gap="<<gap<<" Timer0="<<c.timer0.tcnt<<" Timer1="<<c.timer1.tcnt
+                <<" prescaler="<<c.timer_sync.prescaler_cycle<<" elapsed="<<elapsed<<'\n';
+        require(gap>=64 && gap<=120 && gap%8==0,
+            "audio phase alignment left a Timer0 collision window");
+        if(counter!=0) continue;
+        // Run a complete 8 ms relative-timer pattern for each sub-tick phase.
+        // The host-only NOP loop replaces waveform bytes in this isolated core.
+        c.prog[0x200]=0; c.prog[0x201]=0;
+        c.prog[0x202]=0xfe; c.prog[0x203]=0xcf; // RJMP back to the NOP
+        c.decode(); c.pc=0x100;
+        c.st(reg::addr::TIMSK0,2);
+        auto end=c.cycle_count+128000;
+        unsigned count=0;
+        while(c.cycle_count<end) {
+            if(c.pc==h.sym("timer1_compa_isr")) {
+                require(c.cycle_count>=due+7,"phase sweep interrupt preceded its deadline");
+                max_lateness=std::max(max_lateness,c.cycle_count-due-7);
+                due+=1024; ++count;
+            }
+            h.tick();
+        }
+        require(count>=124,"phase sweep lost synthesis interrupts");
+        outputs+=count;
+        h.until([&]{return c.pc==0x100 || c.pc==0x101;});
+        c.st(reg::addr::TIMSK0,0);
+    }
+    require(max_lateness<10,"Timer0 delayed phase-aligned synthesis by ten cycles");
+    std::cout<<"Timer1 startup phase: 16000 counter/prescaler combinations, "
+        <<minimum<<".."<<maximum<<" cycles modulo 128; "<<outputs
+        <<" real-timer outputs, maximum extra lateness "<<max_lateness<<" cycles\n";
 }
 void idle_continuation(char** args) {
     for(unsigned pc : {0x7000u,0xfffeu})
@@ -1365,6 +1464,10 @@ void hex_fraction(char** args) {
 }
 int main(int argc,char** argv) {
     try {
+        if(argc==5 && std::string(argv[1])=="--phase-alignment") {
+            phase_alignment(argv+1);
+            return 0;
+        }
         if(argc==8 && std::string(argv[1])=="--capture") {
             capture(argv);
             return 0;
@@ -1377,6 +1480,7 @@ int main(int argc,char** argv) {
         sys_bounds(argv);
         float_precision(argv);
         hex_fraction(argv);
+        phase_alignment(argv);
         idle_continuation(argv);
         harness h(argv); sequence(h); synthesis(h); handoff(h); automatic(h);
         std::cout<<h.cases<<" native audio cases passed\n"

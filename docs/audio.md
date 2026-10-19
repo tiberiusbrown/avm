@@ -125,9 +125,12 @@ sequencer-rate volume events with no per-sample envelope/DSP cost.
 A1 assets are rejected and must be regenerated with the current compiler.
 
 The caller supplies a valid FX/image-relative pointer to a terminated asset.
-The decoder follows its full 24-bit cursor until End or Loop. Each consumed
-byte opens an independent flash transaction; there is no cache or read-ahead
-past the terminator. Truncated assets cannot be detected by byte count. Physical
+The decoder follows its full 24-bit cursor until End or Loop. Each due event
+reads ten bytes in one flash transaction into temporary workspace. Parsing
+uses post-increment SRAM loads and advances the logical cursor once by the
+actual bytes consumed. Extra read-ahead, including bytes past End or Loop,
+is ignored; no cache survives a service call. Truncated assets cannot be
+detected by byte count. Physical
 addressing uses the same modulo-24-bit image-page addition as F0 program loads;
 available image/FX capacity remains the practical size limit.
 
@@ -340,8 +343,10 @@ still alias at this sample rate, so audible quality needs hardware evaluation.
 Audio occupies `0A15..0A69`; `data_end_private=0A6A`. Formatter/text scratch
 ends at `0AB2` (exclusive), leaving 78 bytes for native stack. The existing
 framebuffer, guest globals, and guest stack stay at their original addresses.
-Audio service uses one call-lifetime dirty byte at `data_end_private` after
-other SYS callers restore their saved state. The update packet is persistent
+Audio service uses a call-lifetime dirty byte at `data_end_private` and a ten-byte
+event buffer immediately after it, once other SYS callers restore their saved
+state. These eleven bytes alias existing formatter/text scratch and do not
+reduce stack allowance. The update packet is persistent
 and remains valid while formatting or drawing reuses temporary workspace.
 The SRAM assertion
 requires at least 48 bytes beyond text scratch for native stack.
@@ -367,6 +372,14 @@ the output timer before draining pending controls and applying silence, so
 re-enable cannot replay an old packet. No block copy disables interrupts in
 foreground code.
 
+When output starts, Timer1's initial counter is seeded from Timer0's counter
+using their shared prescaler. The timed read/write sequence places audio
+compare deadlines 64..120 CPU cycles after clock deadlines modulo 128. This
+avoids depending on the duration of PLAY/header processing to miss Timer0's
+nonpreemptible ISR. It changes neither the shared prescaler nor Timer0/millis.
+Native tests cover all 250 Timer0 counts and 64 sub-tick phases, plus 8000
+real-timer outputs across complete 8 ms relative-phase patterns.
+
 ## SPI safety and servicing latency
 
 The primary hook adds `LDS/TST/BRNE`, four cycles when no tick is pending.
@@ -378,9 +391,13 @@ already-disabled continuation after a completed data transaction.
 
 ISR entry can extend transfer wall time but does not access SPDR or disturb
 SREG/registers. Existing CLI/OUT/IN/SEI reverse handoffs remain protected.
-The uncached audio reader shares the image-relative address phase with the FX
-burst reader and returns one byte directly in a register. Its transaction is
-interruptible throughout and deselects only after receiving the byte. The seek continuation always reopens
+The event reader calls the shared image-relative FX burst reader for ten bytes
+and returns X at the temporary buffer. Notes, controls and timing are consumed
+with `LD r24, X+`; Z is free for desired state and the stream record. Continue
+uses its buffered next delta. Loop rewinds and fetches the initial delta again,
+discarding read-ahead from the old position. Startup similarly reads the header
+and first delta in one burst. The transaction permits interrupts except for the
+existing short per-byte SPI handoffs. The seek continuation always reopens
 the bytecode stream at the preserved 24-bit PC. Native tests assert that an
 active speculative transfer is complete on entry to the shared seek path.
 
@@ -408,7 +425,8 @@ tests and builds Mini/FX-C preset firmware. `avm_tests_run` includes these
 checks plus the existing interpreter tests. The C audio fixture exercises
 libm and formatting with synthesis interrupts enabled at all six optimization
 levels. Native tests cover register/PC/stack preservation, address boundaries,
-looping/termination beyond 64 KB, bounded catch-up, interrupted packet staging,
+looping/termination beyond 64 KB, all 255 event masks, exact cursor advancement,
+discarded read-ahead after End, bounded catch-up, interrupted packet staging,
 back-to-back commits, exactly-once phase resets, formatter workspace reuse,
 stopped/IRQ-disabled handoffs, direct tones and SFX release.
 
@@ -422,16 +440,17 @@ across an ordinary pair. Pending packet application adds 81..93 cycles on
 the affected synthesis interrupt. Reserving
 AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
-Uncached byte reads cost 124 native cycles, replacing the 32-byte shared cache
-and its ownership/invalidation logic. This trades foreground work for 35 bytes
-of SRAM; the persistent handoff uses 16, leaving a net saving of 19 bytes.
+Event fetches cost 277 native cycles including the shared 255-cycle transfer,
+replacing individual 124-cycle byte reads. There is no persistent cache or
+ownership/invalidation logic. The persistent handoff still uses 16 of the 35
+bytes reclaimed from the old cache, leaving a net SRAM saving of 19 bytes.
 Square duty is fixed at 50%; there is no runtime vibrato, filter, or envelope DSP.
 The score compiler expands custom envelopes and tremolo into control events.
 Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
 layout assertions. The waveform table uses space before the primary table,
-keeping firmware at 29148 bytes, with 548 bytes remaining. There is little flash
+keeping firmware at 29156 bytes, with 540 bytes remaining. There is little flash
 headroom remaining; future features need space savings or a different build.
 
 FX, Mini and FX-C presets compile with the same Timer1/4 configuration; existing

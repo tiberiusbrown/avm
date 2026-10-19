@@ -114,6 +114,9 @@
 
 #define data_end_private             data_audio_end
 #define data_audio_dirty             data_end_private
+; At a due event the cursor points at its mask: mask + eight values + next delta.
+#define AUDIO_EVENT_BYTES            10
+#define data_audio_event             (data_audio_dirty+1)
 
 ; Native formatter workspace. This storage is valid only while VS(N)PRINTF is
 ; executing; future nonreentrant SYS services may alias the same range.
@@ -16261,8 +16264,9 @@ format_ftoa_base10:
 ; r20 = elapsed ticks, r21 = original ticks, r23 = change mask.
 ; The shared FX reader clobbers r0:r1, r24:r27 and Z. r2:r15, PC, Y and
 ; GPIOR0 are never modified. The entry saves only the seven borrowed guest
-; bytes, not the entire register file. The call-lifetime dirty flag aliases SYS
-; workspace ONLY after the previous SYS has restored its native state.
+; bytes, not the entire register file. The call-lifetime dirty flag and event
+; buffer alias SYS workspace ONLY after the previous SYS restored its state.
+; X walks the event buffer; Z addresses stream/desired state during parsing.
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 .macro audio_save
     push r16
@@ -16312,43 +16316,46 @@ audio_service_func:
 .Laudio_service_done:
     ret
 
-; Terminator-driven byte reader. Logical cursor is a full uint24 pointer.
-; Open one independent transaction per byte, returning it directly in r24.
-; The shared address phase preserves Z; all transfers remain interruptible.
-audio_byte:
+; Fetch a complete maximum-size event in one interruptible FX transaction.
+; Also used for the initial header/delta and the first delta after Loop.
+; X returns at the first byte; the logical uint24 cursor is not advanced yet.
+audio_read_event:
     movw r30, r16
+    ldi  r24, AUDIO_EVENT_BYTES
+    mov  r0, r24
+    mov  r1, ZERO
     ldd  r24, Z+AUDIO_CURSOR
     ldd  r25, Z+AUDIO_CURSOR+1
     ldd  r26, Z+AUDIO_CURSOR+2
-    fx_disable
-    ldi  r27, SFC_READ
-    fx_enable
-    out  SPDR, r27
-    call fx_read_program_start_after_command_func
-    ; The address phase returns five cycles after launch; consume at cycle 17.
-    delay_4
-    delay_4
-    delay_4
-    in   r27, SPDR
-    fx_disable
-    ldd  r24, Z+AUDIO_CURSOR
-    ldd  r25, Z+AUDIO_CURSOR+1
-    ldd  r26, Z+AUDIO_CURSOR+2
-    subi r24, -1
-    sbci r25, -1
-    sbci r26, -1
-    std  Z+AUDIO_CURSOR, r24
-    std  Z+AUDIO_CURSOR+1, r25
-    std  Z+AUDIO_CURSOR+2, r26
-    mov  r24, r27
+    ldi  r30, lo8(data_audio_event)
+    ldi  r31, hi8(data_audio_event)
+    call fx_read_program_bytes_func
+    ldi  r26, lo8(data_audio_event)
+    ldi  r27, hi8(data_audio_event)
     ret
 
-; One byte encodes 1..256 ticks.
-audio_delta:
-    rcall audio_byte
+; Consume the buffered next delta, then advance the FX cursor once by the
+; actual bytes used. Unused read-ahead never becomes state for a later call.
+audio_event_finish:
+    ld   r24, X+
     clr  r25
     subi r24, -1
     sbci r25, -1
+    movw r30, r16
+    std  Z+AUDIO_WAIT, r24
+    std  Z+AUDIO_WAIT+1, r25
+audio_event_consumed: ; Z = stream; X = first unconsumed buffer byte
+    mov  r24, r26
+    subi r24, lo8(data_audio_event)
+    ldd  r25, Z+AUDIO_CURSOR
+    add  r25, r24
+    std  Z+AUDIO_CURSOR, r25
+    ldd  r25, Z+AUDIO_CURSOR+1
+    adc  r25, ZERO
+    std  Z+AUDIO_CURSOR+1, r25
+    ldd  r25, Z+AUDIO_CURSOR+2
+    adc  r25, ZERO
+    std  Z+AUDIO_CURSOR+2, r25
     ret
 
 audio_advance:
@@ -16372,11 +16379,12 @@ audio_advance:
 .Laudio_event:
     ; Every record consumes time, bounding catch-up by the elapsed tick count.
     sub  r20, r24
-    rcall audio_byte
+    rcall audio_read_event
+    ld   r24, X+
     tst  r24
     brne 1f
     ; Zero change mask: Continue=0, End=1, Loop=2; other commands fail closed.
-    rcall audio_byte
+    ld   r24, X+
     tst  r24
     breq .Laudio_next_delta
     cpi  r24, 2
@@ -16410,7 +16418,7 @@ audio_advance:
 .Laudio_channel:
     sbrs r23, 0
     rjmp .Laudio_channel_next
-    rcall audio_byte
+    ld   r24, X+
     sbrc r19, 0
     rjmp .Laudio_value_store ; packed control; bit 7 is ignored by commit
 .Laudio_note:
@@ -16433,16 +16441,14 @@ audio_advance:
     lsr  r23
     brne .Laudio_channel
 .Laudio_next_delta:
-    rcall audio_delta
-    movw r30, r16
-    std  Z+AUDIO_WAIT, r24
-    std  Z+AUDIO_WAIT+1, r25
+    rcall audio_event_finish
     rjmp .Laudio_advance_again
 .Laudio_loop:
     rcall audio_rewind
     rjmp .Laudio_next_delta
 audio_stream_end:
     movw r30, r16
+    rcall audio_event_consumed
     std  Z+AUDIO_STATUS, ZERO
     std  Z+AUDIO_MASK, ZERO
     sts  data_audio_dirty, ONE
@@ -16460,7 +16466,7 @@ audio_rewind:
     std  Z+AUDIO_CURSOR, r24
     std  Z+AUDIO_CURSOR+1, r25
     std  Z+AUDIO_CURSOR+2, r26
-    ret
+    rjmp audio_read_event
 
 ; Buffer 0 is owned by synthesis; prepare buffer 1 only after acknowledgment.
 ; Publishing one descriptor byte hands off the complete chord and its resets.
@@ -16624,20 +16630,18 @@ sys_audio_impl:
         st Z+, r24
         st Z+, r25
     .endr
-    rcall audio_byte
+    rcall audio_read_event
+    ld   r24, X+
     cpi  r24, 0xa2
     brne .Laudio_start_bad
-    rcall audio_byte
+    ld   r24, X+
     tst  r24
     breq .Laudio_start_bad
     cpi  r24, 16
     brsh .Laudio_start_bad
     movw r30, r16
     std  Z+AUDIO_MASK, r24
-    rcall audio_delta
-    movw r30, r16
-    std  Z+AUDIO_WAIT, r24
-    std  Z+AUDIO_WAIT+1, r25
+    rcall audio_event_finish
     rcall audio_enable
     rjmp .Laudio_command_commit
 .Laudio_start_bad:
@@ -16761,10 +16765,6 @@ audio_enable:
     sts  data_audio_sample, r24
     sts  data_audio_midpoint, r24
     sts  data_audio_output_phase, ZERO
-    sts  TCNT1H, ZERO
-    sts  TCNT1L, ZERO
-    ldi  r24, _BV(OCF1A)
-    out  TIFR1, r24
     sbi  DDRC, 6
     sbi  DDRC, 7
     ldi  r24, (_BV(COM4A0) | _BV(PWM4A))
@@ -16773,6 +16773,24 @@ audio_enable:
     sts  TCCR4B, r24
     ldi  r24, (_BV(WGM12) | _BV(CS11))
     sts  TCCR1B, r24
+    ; Both clocks share a prescaler: Timer0 ticks every 64 CPU cycles, Timer1
+    ; every 8. Seed Timer1 from Timer0's coarse phase instead of call timing.
+    ; Eight cycles from the TCNT0 read to the TCNT1L latch (STS's second cycle) put
+    ; audio deadlines 64..120 cycles after clock deadlines modulo 128, clear
+    ; of Timer0's ISR. Keep this sequence's instruction timing unchanged.
+    ; Do not reset the shared prescaler or alter the millisecond counter.
+    sts  TCNT1H, ZERO
+audio_enable_phase:
+    in   r24, TCNT0
+    lsl  r24
+    lsl  r24
+    lsl  r24
+    andi r24, 127
+    nop
+    nop
+    sts  TCNT1L, r24
+    ldi  r24, _BV(OCF1A)
+    out  TIFR1, r24
     ldi  r24, _BV(OCIE1A)
     sts  TIMSK1, r24
     out  SREG, r25

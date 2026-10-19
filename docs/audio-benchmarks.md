@@ -12,7 +12,46 @@ for the Timer3, Timer1 and unified Timer0 experiment results. Timer1 was selecte
 because it removes periodic Timer0 collisions with lower CPU cost than the
 unified experiment.
 
-## Uncached reads and ISR handoff (current)
+## Temporary event bursts (current)
+
+Each due event is read into a ten-byte temporary buffer using the existing FX
+burst reader. X walks the buffer with post-increment LD instructions; the
+uint24 flash cursor advances once by the actual consumed length. Continue uses
+its buffered next delta; End ignores trailing read-ahead; Loop rewinds and
+fetches the first delta again. The initial header/delta uses the same reader.
+The dirty byte and ten-byte buffer share formatter/text scratch. Persistent
+audio SRAM remains **85 bytes**, with **78 bytes** available for native stack.
+
+The raw ten-byte transfer takes **255 cycles**; `audio_read_event`, including
+source/count/destination setup and X initialization, takes **277 cycles**.
+No SPI/address bookkeeping runs while parsing individual buffered bytes.
+The event parser alone shrinks firmware **29148 -> 29140 bytes**. The startup
+phase fix brings the final image to **29156 bytes**, leaving 540 below the ceiling.
+
+| Stopped-timer service | Individual byte reads | Event burst | Change |
+|---|---:|---:|---:|
+| One-channel note + control | 1027 | 824 | -19.8% |
+| Four-channel note + control | 1939 | 986 | -49.1% |
+| Four-channel control only | 1330 | 877 | -34.1% |
+| Continue | 515 | 437 | -15.1% |
+| Note-off | 889 | 811 | -8.8% |
+| Sparse countdown | 98 | 98 | unchanged |
+
+All 36 native audio cases pass, including all 255 update masks, exact cursor
+advancement, read-ahead past End, scratch bounds, SPI interrupts, looping and
+termination beyond 64 KB, handoff races, register preservation and formatting.
+The timer phase sweep covers all **16000 counter/prescaler combinations** and
+**8000 real-timer outputs** with at most one extra cycle under its NOP workload.
+Timer0 and the shared prescaler are unchanged by alignment. The final complete
+RPG timing run has **0 updates delayed 10+ cycles** in both normal and FX-C,
+with maximum extra delay **7 cycles**. The faster reader initially exposed
+125 Hz Timer0 collisions; seeding Timer1's phase on enable removes dependence
+on PLAY/header execution time. The ISR handoff and PWM-first ordering are
+unchanged. See the [timing report](../projects/avm_rpg/docs/audio_timing.md) and
+[merged-ISR options](audio-unified-options.md). The measurements
+below retain earlier implementations for comparison.
+
+## Individual byte reads and ISR handoff (previous)
 
 The song reader now opens one transaction per consumed byte and returns it in
 a register, with no cache or read-ahead. An isolated `audio_byte` call measures
@@ -54,7 +93,7 @@ The full RPG run records **0 of 860938 normal / 125000 FX-C updates delayed 10+
 cycles**, versus 149/21 before. Maximum extra lateness is now **7/6 cycles**,
 with p99 unchanged at four. Audio ISR CPU rises from 11.5944% to 11.8067%; total
 measured gameplay frame work rises **0.28..0.30%**. See the
-[current timing report](../projects/avm_rpg/docs/audio_timing.md#uncached-reader-and-isr-handoff-current)
+[timing report](../projects/avm_rpg/docs/audio_timing.md)
 for retained histograms, frame results and limits of the measurement.
 The chronological measurements below describe earlier cached implementations.
 
@@ -325,9 +364,10 @@ See [audio.md](audio.md) for register settings and datasheet references.
 | Persistent audio SRAM | **85 bytes** |
 | Persistent pending control packet | 16 bytes, included above |
 | Call-lifetime audio dirty flag | 1 byte, in existing temporary workspace |
+| Call-lifetime encoded event buffer | 10 bytes, in existing temporary workspace |
 | Remaining native stack above formatter/text workspace | 78 bytes |
-| Current native `.text` | **29148 bytes** |
-| Current total firmware flash | **29148 bytes** |
+| Current native `.text` | **29156 bytes** |
+| Current total firmware flash | **29156 bytes** |
 | Waveform support versus square-only firmware | +368 bytes |
 | Prepared gains and independent masters versus waveform-only firmware | +88 bytes |
 | Display commands and system queries | +88 bytes |

@@ -111,7 +111,7 @@ flash page: four contiguous banks of 64 signed samples. Every shape uses the
 same LPM/FMULSU path, with rounded signed contributions. Each amplitude is a
 full unsigned byte, and each tone has a separate waveform selector in bits
 7..6 of its bank byte. The latch occupies 15 bytes; persistent audio state is
-112 bytes, including independent music/SFX masters and output interpolation.
+104 bytes, including independent music/SFX masters and output interpolation.
 
 The music control byte is a separate encoding: volume in bits 4..0, waveform
 in bits 6..5, and ignored bit 7. The encoder repeats the tracked waveform on
@@ -268,11 +268,11 @@ See [audio.md](audio.md) for register settings and datasheet references.
 
 | Resource | Result |
 | --- | ---: |
-| Persistent audio SRAM | **112 bytes** |
+| Persistent audio SRAM | **104 bytes** |
 | Call-lifetime commit staging | 16 bytes, in existing temporary workspace |
-| Remaining native stack above formatter/text workspace | 51 bytes |
-| Current native `.text` | **29112 bytes** |
-| Current total firmware flash | **29112 bytes** |
+| Remaining native stack above formatter/text workspace | 59 bytes |
+| Current native `.text` | **29036 bytes** |
+| Current total firmware flash | **29036 bytes** |
 | Waveform support versus square-only firmware | +368 bytes |
 | Prepared gains and independent masters versus waveform-only firmware | +88 bytes |
 | Display commands and system queries | +88 bytes |
@@ -280,7 +280,8 @@ See [audio.md](audio.md) for register settings and datasheet references.
 | Shared CSET decoder and local dispatch | -416 bytes |
 | Hexadecimal float digit loop | -48 bytes |
 | Output interpolation versus held output | +104 bytes |
-| Bootloader ceiling / remaining space | 29696 / **584 bytes** |
+| Terminator-driven song reader versus length-bounded reader | -76 bytes |
+| Bootloader ceiling / remaining space | 29696 / **660 bytes** |
 
 The [cold-path measurements](interpreter-optimizations.md#cold-path-size-reductions-after-displaysystem-queries)
 record the startup and formatter tradeoffs for the latest size reductions.
@@ -289,22 +290,30 @@ instruction and complete C/C++ benchmark changes in cycles and percentages.
 The [hex formatter comparison](hex-formatter-benchmarks.md) records the
 subsequent 48-byte reduction and five-cycle cost per finite `%a`/`%A` conversion.
 
-The twelve bytes beyond the approximate 100-byte SRAM goal retain two complete
-bounded stream records, desired music/SFX banks, and one cache. This supports
-effect overrides without losing music progression, pause/resume, and bounded
-asset reads. Phases and the current latch persist independently of aliased
+The four bytes beyond the approximate 100-byte SRAM goal retain two complete
+stream records, desired music/SFX banks, and one cache. This supports
+effect overrides without losing music progression and pause/resume.
+Phases and the current latch persist independently of aliased
 formatter/text workspace. No queue of audio events or samples is stored.
+
+The score compiler now accepts terse note notation, named instruments, custom
+amplitude envelopes and tremolo, expanded offline into unchanged A2 controls.
+Both masters default to 128; volume 31 prepares amplitude 124. Playback accepts
+only a 24-bit pointer and follows End/Loop records. Removing size/remaining
+counters saves eight SRAM bytes; assets larger than 65535 bytes are covered by
+both compiler and native playback/rewind tests. The 32-byte cache may read ahead
+past a terminal record. Asset truncation is no longer detected by byte count.
 
 Run `cmake --build build --config RelWithDebInfo --target avm_audio_tests_run`
 for the cycle, synthesis, parser, compiler, autonomous demo, SPI stress, and
 Mini/FX-C assembly checks. `avm_tests_run` additionally runs all existing guest
 fixtures, including the C audio/libm/formatter stress test at six optimization
 levels. Tests cover packed 24-bit pointers, cache/page boundaries, malformed
-and truncated streams, dense positive-time catch-up, Continue-only loops,
+records, dense positive-time catch-up, Continue-only loops,
 one/256-tick initial waits, saturation,
 note retriggering, atomic chords, music under SFX, release, and direct tones.
 Validation passed all 471 guest fixtures, 152 native PUSH/POP cases, 1133 native
-stack-bound cases, 29 native audio cases, and 12 Python compiler tests, as well
+stack-bound cases, 31 native audio cases, and 21 Python compiler tests, as well
 as the animated and formatter integration workloads and both variant builds.
 Waveform checks compare 24576 samples (all 64 positions and 32 amplitudes on
 all three tonal voices) against independent mathematical shapes; gain staging

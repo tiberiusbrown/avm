@@ -1,5 +1,5 @@
 ; Ordinary AVM ABI wrappers. SYS_AUDIO preserves all registers except the
-; status result in r4. Arguments already occupy q2 and r6, or r4 for volume.
+; status result in r4. Play pointers occupy q2; tone uses r4-r6; gain uses r4.
 .section .text,"ax",@progbits
 .macro audio_api name, command
     .globl \name

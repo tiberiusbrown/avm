@@ -95,9 +95,9 @@ find_package(Python3 QUIET COMPONENTS Interpreter)
 if(Python3_Interpreter_FOUND AND EXISTS "${AUDIO_DEMO_COMPILER}")
     add_custom_target(audio_demo_assets
         COMMAND "${Python3_EXECUTABLE}" "${AUDIO_DEMO_COMPILER}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/music.json" "${CMAKE_CURRENT_SOURCE_DIR}/music.h" --name music
+            "${CMAKE_CURRENT_SOURCE_DIR}/music.avms" "${CMAKE_CURRENT_SOURCE_DIR}/music.h" --name music
         COMMAND "${Python3_EXECUTABLE}" "${AUDIO_DEMO_COMPILER}"
-            "${CMAKE_CURRENT_SOURCE_DIR}/effect.json" "${CMAKE_CURRENT_SOURCE_DIR}/effect.h" --name effect
+            "${CMAKE_CURRENT_SOURCE_DIR}/effect.avms" "${CMAKE_CURRENT_SOURCE_DIR}/effect.h" --name effect
         COMMENT "Regenerating tracked audio headers"
         VERBATIM)
 endif()

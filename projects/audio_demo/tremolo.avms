@@ -1,0 +1,16 @@
+// Standalone score demonstrating automatic envelopes and beat-synchronized tremolo.
+tempo 120
+meter 4/4
+loop
+automation 8ms
+
+envelope soft {
+    points 0ms:0%, 12ms:100%, 80ms:65%
+    sustain
+    release 40ms:0%
+    tremolo { period 1/8 depth 30% wave sine phase song }
+}
+instrument lead { wave sine volume 16 envelope soft gate 85% }
+phrase motif { c8 d e g e4 d }
+
+channel 0 lead octave 4 { motif | c2~ c4 r4 | }

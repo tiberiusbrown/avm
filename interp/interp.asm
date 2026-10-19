@@ -78,7 +78,7 @@
 #define data_audio_begin             (data_text_mode+1)
 #define data_audio_ticks_pending     (data_audio_begin+0)
 #define data_audio_divider           (data_audio_begin+1)
-; Music master, 32=unity; three waveform selectors follow the controls.
+; Music master, default 128 (32=unity); waveform selectors follow the controls.
 #define data_audio_volume            (data_audio_begin+2)
 #define data_audio_controls          (data_audio_begin+3)
 #define data_audio_banks             (data_audio_controls+12)
@@ -88,8 +88,8 @@
 #define data_audio_music_notes       (data_audio_noise+1)
 #define data_audio_sfx_notes         (data_audio_music_notes+8)
 #define data_audio_music             (data_audio_sfx_notes+8)
-#define data_audio_sfx               (data_audio_music+15)
-#define data_audio_cache             (data_audio_sfx+15)
+#define data_audio_sfx               (data_audio_music+11)
+#define data_audio_cache             (data_audio_sfx+11)
 #define data_audio_cache_index       (data_audio_cache+32)
 #define data_audio_cache_length      (data_audio_cache_index+1)
 #define data_audio_cache_owner       (data_audio_cache_length+1)
@@ -101,15 +101,13 @@
 ; Stream record offsets. Pointers are image-relative, little-endian uint24.
 #define AUDIO_START   0
 #define AUDIO_CURSOR  3
-#define AUDIO_SIZE    6
-#define AUDIO_LEFT    8
-#define AUDIO_WAIT   10
-#define AUDIO_STATUS 12
-#define AUDIO_MASK   13
-#define AUDIO_TRIGGER 14
+#define AUDIO_WAIT    6
+#define AUDIO_STATUS  8
+#define AUDIO_MASK    9
+#define AUDIO_TRIGGER 10
 
-.if (data_audio_end - data_audio_begin) != 112
-    .error "audio persistent SRAM must occupy 112 bytes"
+.if (data_audio_end - data_audio_begin) != 104
+    .error "audio persistent SRAM must occupy 104 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -16310,15 +16308,10 @@ audio_service_func:
 .Laudio_service_done:
     ret
 
-; Bounded byte reader. Logical cursor advances only for consumed bytes.
-; C=1 on exhausted/truncated stream. A cache belongs to one stream at a time;
+; Terminator-driven byte reader. Logical cursor is a full uint24 pointer.
+; A cache belongs to one stream at a time;
 ; switching owners invalidates it, while music-only service retains the cache.
 audio_byte:
-    movw r30, r16
-    ldd  r24, Z+AUDIO_LEFT
-    ldd  r25, Z+AUDIO_LEFT+1
-    or   r24, r25
-    breq .Laudio_byte_bad
     lds  r24, data_audio_cache_owner
     cp   r24, r16
     breq 1f
@@ -16329,19 +16322,12 @@ audio_byte:
     lds  r25, data_audio_cache_length
     cp   r24, r25
     brlo .Laudio_byte_cached
-    ; Refill min(remaining,32), never speculatively read outside the asset.
-    ldd  r24, Z+AUDIO_LEFT
-    ldd  r25, Z+AUDIO_LEFT+1
-    tst  r25
-    brne 2f
-    cpi  r24, 32
-    brlo 3f
-2:
+    ; Read ahead by 32 bytes. Only consumed bytes advance the logical cursor.
     ldi  r24, 32
-3:
     sts  data_audio_cache_length, r24
     mov  r0, r24
     mov  r1, ZERO
+    movw r30, r16
     ldd  r24, Z+AUDIO_CURSOR
     ldd  r25, Z+AUDIO_CURSOR+1
     ldd  r26, Z+AUDIO_CURSOR+2
@@ -16366,27 +16352,15 @@ audio_byte:
     std  Z+AUDIO_CURSOR, r24
     std  Z+AUDIO_CURSOR+1, r25
     std  Z+AUDIO_CURSOR+2, r26
-    ldd  r24, Z+AUDIO_LEFT
-    ldd  r25, Z+AUDIO_LEFT+1
-    sbiw r24, 1
-    std  Z+AUDIO_LEFT, r24
-    std  Z+AUDIO_LEFT+1, r25
     mov  r24, r27
-    clc
-    ret
-.Laudio_byte_bad:
-    sec
     ret
 
-; One byte encodes 1..256 ticks. Carry reports a truncated stream.
+; One byte encodes 1..256 ticks.
 audio_delta:
     rcall audio_byte
-    brcs .Laudio_delta_done
     clr  r25
     subi r24, -1
     sbci r25, -1
-    clc
-.Laudio_delta_done:
     ret
 
 audio_advance:
@@ -16411,14 +16385,10 @@ audio_advance:
     ; Every record consumes time, bounding catch-up by the elapsed tick count.
     sub  r20, r24
     rcall audio_byte
-    brcc 1f
-    rjmp audio_stream_end
-1:
     tst  r24
     brne 1f
     ; Zero change mask: Continue=0, End=1, Loop=2; other commands fail closed.
     rcall audio_byte
-    brcs audio_stream_end
     tst  r24
     breq .Laudio_next_delta
     cpi  r24, 2
@@ -16453,7 +16423,6 @@ audio_advance:
     sbrs r23, 0
     rjmp .Laudio_channel_next
     rcall audio_byte
-    brcs audio_stream_end
     sbrc r19, 0
     rjmp .Laudio_value_store ; packed control; bit 7 is ignored by commit
 .Laudio_note:
@@ -16477,7 +16446,6 @@ audio_advance:
     brne .Laudio_channel
 .Laudio_next_delta:
     rcall audio_delta
-    brcs audio_stream_end
     movw r30, r16
     std  Z+AUDIO_WAIT, r24
     std  Z+AUDIO_WAIT+1, r25
@@ -16504,11 +16472,6 @@ audio_rewind:
     std  Z+AUDIO_CURSOR, r24
     std  Z+AUDIO_CURSOR+1, r25
     std  Z+AUDIO_CURSOR+2, r26
-    ldd  r24, Z+AUDIO_SIZE
-    ldd  r25, Z+AUDIO_SIZE+1
-    sbiw r24, 2
-    std  Z+AUDIO_LEFT, r24
-    std  Z+AUDIO_LEFT+1, r25
     sts  data_audio_cache_length, ZERO
     ret
 
@@ -16638,17 +16601,13 @@ sys_audio_impl:
 1:
     cpi  r24, 2
     brsh .Laudio_command
-    ; PLAY: q2[23:0] pointer, r6 uint16 byte length (at least five bytes).
+    ; PLAY: q2[23:0] pointer to a stream ending with End or Loop. r6 is unused.
     std  Z+AUDIO_START, VM_R4L
     std  Z+AUDIO_START+1, VM_R4H
     std  Z+AUDIO_START+2, VM_R5L
     std  Z+AUDIO_CURSOR, VM_R4L
     std  Z+AUDIO_CURSOR+1, VM_R4H
     std  Z+AUDIO_CURSOR+2, VM_R5L
-    std  Z+AUDIO_SIZE, VM_R6L
-    std  Z+AUDIO_SIZE+1, VM_R6H
-    std  Z+AUDIO_LEFT, VM_R6L
-    std  Z+AUDIO_LEFT+1, VM_R6H
     std  Z+AUDIO_STATUS, ONE
     std  Z+AUDIO_MASK, ZERO
     std  Z+AUDIO_TRIGGER, ZERO
@@ -16664,11 +16623,9 @@ sys_audio_impl:
     sts  data_audio_cache_length, ZERO
     sts  data_audio_cache_index, ZERO
     rcall audio_byte
-    brcs .Laudio_start_bad
     cpi  r24, 0xa2
     brne .Laudio_start_bad
     rcall audio_byte
-    brcs .Laudio_start_bad
     tst  r24
     breq .Laudio_start_bad
     cpi  r24, 16
@@ -16676,7 +16633,6 @@ sys_audio_impl:
     movw r30, r16
     std  Z+AUDIO_MASK, r24
     rcall audio_delta
-    brcs .Laudio_start_bad
     movw r30, r16
     std  Z+AUDIO_WAIT, r24
     std  Z+AUDIO_WAIT+1, r25
@@ -17082,7 +17038,7 @@ audio_init_func:
     sts  OCR4A, r24
     ldi  r24, 1
     sts  data_audio_noise, r24
-    ldi  r24, 32
+    ldi  r24, 128 ; default gain: a volume-31 voice reaches amplitude 124
     sts  data_audio_volume, r24
     sts  data_audio_sfx_volume, r24
     ret

@@ -4,13 +4,13 @@
 
 void setup(void) {
     avm_set_frame_rate(60);
-    avm_audio_play(music, sizeof(music));
+    avm_audio_play(music);
 }
 void loop(void) {
     static uint8_t x, y, paused;
     if(!avm_next_frame()) return;
     avm_poll_buttons();
-    if(avm_just_pressed(AVM_BUTTON_A)) avm_audio_sfx(effect, sizeof(effect));
+    if(avm_just_pressed(AVM_BUTTON_A)) avm_audio_sfx(effect);
     if(avm_just_pressed(AVM_BUTTON_B)) {
         paused ^= 1;
         if(paused) avm_audio_pause(); else avm_audio_resume();

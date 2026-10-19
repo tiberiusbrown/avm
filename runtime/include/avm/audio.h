@@ -5,13 +5,14 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Playback advances automatically; byte lengths bound every FX read. */
-void avm_audio_play(void const AVM_PROGMEM *song, uint16_t size);
-void avm_audio_sfx(void const AVM_PROGMEM *effect, uint16_t size);
+/* Playback advances automatically. Assets must contain an End or Loop record;
+   the reader uses 24-bit cursors and may read ahead past the terminator. */
+void avm_audio_play(void const AVM_PROGMEM *song);
+void avm_audio_sfx(void const AVM_PROGMEM *effect);
 void avm_audio_stop(void);
 void avm_audio_pause(void);
 void avm_audio_resume(void);
-/* Set both music and SFX masters: 0=mute, 32=unity, 255=796.875%.
+/* Set both music and SFX masters: default 128, 0=mute, 32=unity, 255=796.875%.
    Channel amplitudes are prepared as floor(volume*master/32); the completed
    mix saturates at the PWM limits. Gain edits preserve phase and timing. */
 void avm_audio_volume(uint8_t volume);

@@ -220,14 +220,49 @@ foreach(preset MINI FXC)
     list(APPEND audio_hardware_hexes "${hardware_dir}/interp.hex")
 endforeach()
 add_custom_target(avm_audio_hardware_checks DEPENDS ${audio_hardware_hexes})
+find_package(Python3 COMPONENTS Interpreter QUIET)
+set(audio_large_inputs)
+if(Python3_Interpreter_FOUND)
+    set(audio_large_dir "${CMAKE_CURRENT_BINARY_DIR}/audio_large")
+    add_custom_command(
+        OUTPUT "${audio_large_dir}/audio_large.h"
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/audio/generate_large_asset.py"
+            "${audio_large_dir}/audio_large.h"
+        DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/audio/generate_large_asset.py"
+            "${PROJECT_SOURCE_DIR}/tools/avm_music.py" VERBATIM)
+    foreach(language C CXX)
+        if(language STREQUAL "C")
+            set(extension c)
+        else()
+            set(extension cpp)
+        endif()
+        avm_add_object(
+            OUTPUT "${audio_large_dir}/${language}.o"
+            SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/audio_large.${extension}"
+            LANGUAGE ${language}
+            INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include" "${audio_large_dir}"
+            COMPILE_OPTIONS -O2
+            DEPENDS avm_sysroot "${audio_large_dir}/audio_large.h"
+                "${CMAKE_CURRENT_SOURCE_DIR}/interp/audio_large.c")
+        avm_add_image(
+            OBJECTS "${audio_large_dir}/${language}.o"
+            OUTPUT_ELF "${audio_large_dir}/${language}.elf"
+            OUTPUT_IMAGE "${audio_large_dir}/${language}.bin"
+            ENTRY _start
+            LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a" "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+            GC_SECTIONS DEPENDS avm_sysroot)
+        list(APPEND audio_large_inputs "${audio_large_dir}/${language}.bin")
+    endforeach()
+endif()
 add_custom_target(avm_audio_tests_run
     COMMAND "$<TARGET_FILE:avm_audio_tests>"
         "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
         "${AVM_PUSH16_TEST_DIR}/audio.bin"
         "${PROJECT_SOURCE_DIR}/projects/audio_demo/build/audio_demo.bin"
         "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin"
+        ${audio_large_inputs}
     DEPENDS avm_audio_tests avm_interpreter avm_audio_hardware_checks avm_audio_demo
-        "${AVM_PUSH16_TEST_DIR}/audio.bin" "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin"
+        "${AVM_PUSH16_TEST_DIR}/audio.bin" "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin" ${audio_large_inputs}
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 avm_add_object(

@@ -3712,7 +3712,7 @@ or concurrent execution of a text or formatted-output service is unsupported.
 
 | Command | Operation | Additional inputs / result |
 | ---: | --- | --- |
-| 0 | Play music | `q2[23:0] = program pointer`, `r6 = uint16 byte length` |
+| 0 | Play music | `q2[23:0] = program pointer` to an End/Loop-terminated asset; `r6` unused |
 | 1 | Play SFX | Same as play music |
 | 2 | Stop music | None |
 | 3 | Pause music | None |
@@ -3730,7 +3730,7 @@ All inputs and architectural flags are preserved except the status result.
 Reserved commands have no command effect, but may service pending elapsed time.
 Pointers retain the existing packed 24-bit program-space representation.
 Each channel's prepared amplitude is `floor(volume * owner_master / 32)`.
-Music and SFX masters are independent; muted SFX retains ownership. Desired
+Music and SFX masters default to 128 and are independent; muted SFX retains ownership. Desired
 channel volumes remain 0..31, and gain changes preserve phases and stream
 timing. The signed mix accumulates from zero and saturates at the PWM limits
 after all voices have contributed.
@@ -3738,7 +3738,7 @@ Playback is autonomous at normal interpreter stream-restart safe points and
 idle wakeups. Timer interrupts synthesize only latched controls; they never
 read FX assets or advance the event stream. Audio calls define hidden
 playback state and observable speaker output and MUST NOT be removed,
-speculated, duplicated, or reordered. See [audio.md](audio.md) for the bounded
+speculated, duplicated, or reordered. See [audio.md](audio.md) for the terminated
 asset format, channel priority, timer allocations, timing, and runtime API.
 
 ### 49.30. `send_display_command`

@@ -12,7 +12,7 @@ static const uint8_t AVM_PROGMEM effect[] = {
 
 int avm_test_main(void) {
     char text[48];
-    avm_audio_play(song, sizeof(song));
+    avm_audio_play(song);
     if(avm_audio_status()!=1) return 1;
     uint16_t start=avm_millis();
     for(unsigned i=0;i<100;++i) {
@@ -26,7 +26,7 @@ int avm_test_main(void) {
         if(length<4 || memcmp(text+length-4,"0.25",4)!=0) return 3;
     }
     if(avm_audio_status()!=1 || avm_millis()==start) return 4;
-    avm_audio_sfx(effect,sizeof(effect));
+    avm_audio_sfx(effect);
     if(avm_audio_status()!=5) return 5;
     avm_audio_pause();
     if(avm_audio_status()!=6) return 6;

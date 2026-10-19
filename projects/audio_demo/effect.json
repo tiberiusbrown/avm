@@ -1,8 +1,0 @@
-{
-  "mask": 12, "end_delta": 12,
-  "events": [
-    {"channels": {"2": {"volume": 31, "note": "C5", "waveform": "sawtooth"}, "3": {"volume": 16, "note": "C3"}}},
-    {"delta": 12, "channels": {"2": "E5", "3": null}},
-    {"delta": 12, "channels": {"2": "G5"}}
-  ]
-}

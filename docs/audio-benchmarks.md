@@ -12,6 +12,52 @@ for the Timer3, Timer1 and unified Timer0 experiment results. Timer1 was selecte
 because it removes periodic Timer0 collisions with lower CPU cost than the
 unified experiment.
 
+## Uncached reads and ISR handoff (current)
+
+The song reader now opens one transaction per consumed byte and returns it in
+a register, with no cache or read-ahead. An isolated `audio_byte` call measures
+**124 cycles (7.750 us)**. Removing the 32-byte cache and three metadata bytes
+reclaims 35 SRAM bytes. The persistent 15-byte update buffer plus ready/retrigger
+descriptor consumes 16, for **85 bytes of persistent audio SRAM** and **78 bytes
+of native-stack allowance** above formatter/text workspace, a net gain of 19.
+
+Foreground commit prepares all controls, then publishes its descriptor with one
+two-cycle STS. It never masks interrupts for a copy. A pending packet remains
+immutable until acknowledgment; back-to-back commits wait with interrupts
+enabled. Stopped output and IRQ-disabled callers apply updates directly. The
+ISR accepts a packet after its fixed PWM write and before advancing phases,
+and clears its phase-reset mask exactly once. Disable drains packets after
+stopping the output reader.
+
+The ordinary synthesis ISR is now **200..207 cycles** including entry/vector,
+and midpoint remains **41**. The ready check adds four cycles to synthesis,
+or **0.1953 percentage points of CPU**. Accepting a packet adds **81..93 cycles**
+on that synthesis interrupt; the measured four-voice handoff is **293 cycles**
+and the instruction-count worst case is **300**, below the 1024-cycle output period.
+The PWM store remains at **26 cycles** including entry/vector. ISR stack is
+11 bytes normally, 13 during the copier call; libm/formatter stress still peaks
+at 41 bytes. The animated demo renders 63 frames in one second, with 15622 PWM
+updates, 7811 synthesized samples, and a 4.091 ms maximum observed service gap.
+
+Stopped-timer sequencer measurements: one/four-channel combined note/control
+updates cost **1027/1939 cycles**, four-channel volume-only **1330**, Continue
+**515**, note-off **889**, and a sparse countdown **98**. The pending seek hook
+and nonaudio interpreter paths are unchanged. These include direct reads and
+immediate application for an unavailable output interrupt; live playback
+publishes asynchronously and charges copying to the next synthesis interrupt.
+
+Native tests cover interrupts throughout staging, persistent packet lifetime
+across formatter scratch reuse, backpressure, exactly-once retriggers with a
+borrowed ZERO register, disable/re-enable, and IRQ-disabled publication. All 35
+native audio cases, 471 guest cases, and Mini/FX-C hardware checks pass.
+The full RPG run records **0 of 860938 normal / 125000 FX-C updates delayed 10+
+cycles**, versus 149/21 before. Maximum extra lateness is now **7/6 cycles**,
+with p99 unchanged at four. Audio ISR CPU rises from 11.5944% to 11.8067%; total
+measured gameplay frame work rises **0.28..0.30%**. See the
+[current timing report](../projects/avm_rpg/docs/audio_timing.md#uncached-reader-and-isr-handoff-current)
+for retained histograms, frame results and limits of the measurement.
+The chronological measurements below describe earlier cached implementations.
+
 ## Native cycle costs
 
 | Operation | AVR cycles | Time at 16 MHz |
@@ -276,11 +322,12 @@ See [audio.md](audio.md) for register settings and datasheet references.
 
 | Resource | Result |
 | --- | ---: |
-| Persistent audio SRAM | **104 bytes** |
-| Call-lifetime commit staging | 16 bytes, in existing temporary workspace |
-| Remaining native stack above formatter/text workspace | 59 bytes |
-| Current native `.text` | **29036 bytes** |
-| Current total firmware flash | **29036 bytes** |
+| Persistent audio SRAM | **85 bytes** |
+| Persistent pending control packet | 16 bytes, included above |
+| Call-lifetime audio dirty flag | 1 byte, in existing temporary workspace |
+| Remaining native stack above formatter/text workspace | 78 bytes |
+| Current native `.text` | **29148 bytes** |
+| Current total firmware flash | **29148 bytes** |
 | Waveform support versus square-only firmware | +368 bytes |
 | Prepared gains and independent masters versus waveform-only firmware | +88 bytes |
 | Display commands and system queries | +88 bytes |

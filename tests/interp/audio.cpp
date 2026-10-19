@@ -18,17 +18,18 @@ using namespace absim;
 namespace {
 constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, banks=0xa24,
     sfxvolume=0xa27, phases=0xa28, noise=0xa30, notes=0xa31, sfxnotes=0xa39,
-    music=0xa41, sfx=0xa4c, cache=0xa57, index=0xa77, length=0xa78,
-    held_sample=0xa7a, midpoint=held_sample+1, output_phase=midpoint+1,
+    music=0xa41, sfx=0xa4c, update_controls=0xa57, update=0xa66,
+    held_sample=0xa67, midpoint=held_sample+1, output_phase=midpoint+1,
     private_end=output_phase+1, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
 struct harness {
     std::unique_ptr<arduboy_t> e = std::make_unique<arduboy_t>();
     std::map<std::string,unsigned> symbols;
     unsigned cases=0;
-    uint64_t isrmin=10000,isrmax=0,atomicmax=0,latencymax=0;
+    uint64_t isrmin=10000,isrmax=0,latencymax=0;
     uint64_t lightmin=10000,lightmax=0;
     uint64_t boot_cycles=0;
+    bool freeze_commits=false;
     atmega32u4_t& c() { return e->core_state.cpu; }
     unsigned sym(char const* name) { return symbols.at(name)/2; }
     uint16_t word(unsigned a) { return uint16_t(c().data[a] | c().data[a+1]<<8); }
@@ -42,6 +43,11 @@ struct harness {
     }
     bool boundary() { unsigned p=c().pc; return p>=sym("primary_table") && p<sym("primary_table")+1024 && (p-sym("primary_table"))%4==0; }
     void tick(bool terminal_break=false) {
+        // Isolated SYS tests inspect phase resets without advancing oscillators.
+        // Exercise their stopped-timer path; handoff tests use live interrupts.
+        if(freeze_commits && c().pc==sym("audio_commit")) {
+            c().st(reg::addr::TIMSK1,0); c().st(reg::addr::TCCR1B,0);
+        }
         // Ardens resets spi_done_cycle after delivering the byte to FX. The
         // CPU completion deadline remains in spi_transmit_zero_cycle until
         // its deferred peripheral update clears spi_busy.
@@ -147,12 +153,14 @@ struct harness {
             (*flash.sectors[s])[a%4096]=data[i];
         }
     }
-    uint64_t command(unsigned command, uint32_t ptr=0, unsigned value=0) {
-        quiet();
+    uint64_t command(unsigned command, uint32_t ptr=0, unsigned value=0, bool synchronous=true) {
+        if(synchronous) quiet();
+        freeze_commits=synchronous;
         word(16,uint16_t(ptr)); word(18,uint16_t(ptr>>16)); word(20,uint16_t(value)); word(22,uint16_t(command));
         auto regs=c().data; auto flags=c().data[reg::addr::GPIOR0]; auto sp=c().sp();
         c().pc=uint16_t(sym("sys_audio_impl")); tick();
         auto t=until([&]{return boundary();});
+        freeze_commits=false;
         for(unsigned i=2;i<24;++i) if(command!=9 || (i!=16 && i!=17))
             require(c().data[i]==regs[i],"audio SYS corrupted VM registers/PC/constants");
         require(c().data[28]==regs[28] && c().data[29]==regs[29],"audio SYS corrupted guest SP");
@@ -341,13 +349,13 @@ void sequence(harness& h) {
             h.play(bytes); require(h.c().data[music+8]==0,"malformed stream stayed active");
         }
     });
-    h.test("cache/address boundaries/multiple transactions",[&]{
+    h.test("direct reads across address boundaries",[&]{
         std::vector<uint8_t> bytes{0xa2,1};
         for(int i=0;i<60;++i) bytes.insert(bytes.end(),{0,1,uint8_t(36+i%60)});
         bytes.insert(bytes.end(),{255,0,2});
         for(auto address : {0xfff0u,0x1fff0u,0x7fff0u}) {
             h.play(bytes,address); h.elapsed(59);
-            require(h.c().data[notes]==uint8_t(12+59%60),"cache boundary byte corruption");
+            require(h.c().data[notes]==uint8_t(12+59%60),"address boundary byte corruption");
             require(h.word(music+6)==256,"max delta wrong");
             h.elapsed(255); require(h.word(music+6)==1,"max delta subtraction wrong");
             h.elapsed(1); require(h.word(music+6)==1 && h.c().data[music+8]==1,"max-delay loop wrong");
@@ -752,8 +760,130 @@ void synthesis(harness& h) {
         std::cout<<"maximum tuning error: "<<maxcents<<" cents\n";
     });
 }
+void handoff(harness& h) {
+    h.test("publish complete chords and consume retriggers exactly once",[&]{
+        h.c().data[music+8]=1;
+        h.c().data[music+10]=15;
+        for(unsigned ch=0;ch<4;++ch) {
+            h.c().data[notes+2*ch]=uint8_t(24+ch);
+            h.c().data[notes+2*ch+1]=uint8_t((ch%4)*32+12+ch);
+        }
+        std::array<uint8_t,15> old_controls;
+        std::copy_n(h.c().data.begin()+controls,15,old_controls.begin());
+        // Keep the timer clock stopped while injecting interrupts into staging.
+        // Its enabled mask makes commit publish asynchronously as in playback.
+        h.c().st(reg::addr::TIMSK1,2);
+        auto dest=h.sym("primary_table");
+        h.c().push(uint8_t(dest)); h.c().push(uint8_t(dest>>8));
+        h.c().pc=uint16_t(h.sym("audio_commit"));
+        unsigned steps=0, injected=0;
+        while(h.c().pc!=h.sym("audio_commit_publish")) {
+            require(h.c().data[reg::addr::SREG]&128,"staging disabled interrupts");
+            require(h.c().data[update]==0,"staging published an incomplete packet");
+            if(++steps%19==0) {
+                auto resume=h.c().pc;
+                h.routine("timer1_compa_isr",true);
+                h.c().pc=resume;
+                ++injected;
+            }
+            require(std::equal(old_controls.begin(),old_controls.end(),h.c().data.begin()+controls),
+                "ISR observed partially staged controls");
+            h.tick();
+        }
+        require(injected>=4,"did not interrupt enough staging operations");
+        std::array<uint8_t,15> packet;
+        std::copy_n(h.c().data.begin()+update_controls,15,packet.begin());
+        auto publication=h.c().cycle_count;
+        h.tick();
+        require(h.c().cycle_count-publication==2 && h.c().data[update]==0x8f,
+            "publication is not a single two-cycle descriptor store");
+        h.until([&]{return h.c().pc==dest;});
+        require(std::equal(old_controls.begin(),old_controls.end(),h.c().data.begin()+controls),
+            "foreground publication modified live controls");
+        // Reusing the complete formatter/text workspace must not corrupt a packet.
+        std::fill_n(h.c().data.begin()+private_end,72,0xa5);
+        h.c().data[output_phase]=0;
+        auto zero=h.c().data[2]; h.c().data[2]=0x5a;
+        auto regs=h.c().data; auto sp=h.c().sp();
+        auto cycles=h.routine("timer1_compa_isr",true)+7;
+        require(cycles<1024,"update ISR overran the next PWM deadline");
+        for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"update ISR corrupted registers");
+        require(h.c().sp()==sp,"update ISR leaked stack");
+        require(h.c().data[update]==0 &&
+            std::equal(packet.begin(),packet.end(),h.c().data.begin()+controls),
+            "ISR failed to accept the complete persistent packet");
+        for(unsigned ch=0;ch<4;++ch)
+            require(h.word(phases+2*ch)==h.word(controls+3*ch),"ISR failed to reset a phase");
+        h.routine("timer1_compa_isr",true); // midpoint
+        h.routine("timer1_compa_isr",true); // next synthesis, no pending packet
+        for(unsigned ch=0;ch<4;++ch)
+            require(h.word(phases+2*ch)==uint16_t(2*h.word(controls+3*ch)),
+                "acknowledged update retriggered twice");
+        h.c().data[2]=zero;
+        h.quiet();
+        std::cout<<"four-voice handoff ISR including entry/vector: "<<cycles<<" cycles\n";
+    });
+    h.test("back-to-back commits acknowledge before reusing the packet",[&]{
+        h.c().data[music+8]=1;
+        h.c().data[music+10]=15;
+        for(unsigned ch=0;ch<4;++ch) {
+            h.c().data[notes+2*ch]=uint8_t(24+ch);
+            h.c().data[notes+2*ch+1]=12;
+        }
+        h.c().st(reg::addr::TIMSK1,2);
+        h.routine("audio_commit");
+        std::array<uint8_t,15> first;
+        std::copy_n(h.c().data.begin()+update_controls,15,first.begin());
+        require(h.c().data[update]==0x8f,"first commit did not publish retriggers");
+        for(unsigned ch=0;ch<4;++ch) h.c().data[notes+2*ch+1]=7;
+        h.c().data[output_phase]=0;
+        h.c().st(reg::addr::TCNT1H,0); h.c().st(reg::addr::TCNT1L,0);
+        h.c().st(reg::addr::TIFR1,2);
+        h.c().st(reg::addr::TCCR1B,10);
+        auto elapsed=h.routine("audio_commit");
+        require(elapsed>=1024,"second commit failed to wait for the pending packet");
+        require(h.c().data[update]==0x80 &&
+            std::equal(first.begin(),first.end(),h.c().data.begin()+controls),
+            "second commit overwrote or lost the first pending update");
+        h.quiet();
+        auto phase=h.word(phases);
+        h.c().data[output_phase]=0;
+        h.routine("timer1_compa_isr",true);
+        require(h.amplitude(0)==7 && h.word(phases)==uint16_t(phase+h.word(controls)),
+            "volume update inherited the previous packet's phase reset");
+        // Disable with another packet outstanding, then re-enable without replay.
+        h.c().st(reg::addr::TIMSK1,2);
+        h.c().data[notes+1]=19;
+        h.routine("audio_commit");
+        require(h.c().data[update]==0x80,"disable fixture lacks a pending packet");
+        h.command(7,0,0,false);
+        require(h.c().data[update]==0 && h.c().data[reg::addr::TIMSK1]==0,
+            "disabled output left an unacknowledged packet");
+        for(unsigned ch=0;ch<4;++ch) require(h.amplitude(ch)==0,"disable left a live voice");
+        h.command(6);
+        h.synth_sample();
+        for(unsigned ch=0;ch<4;++ch) require(h.amplitude(ch)==0,"enable replayed a stale packet");
+        h.quiet();
+    });
+    h.test("disabled interrupts apply pending and new controls without waiting",[&]{
+        h.c().data[music+8]=1;
+        h.c().data[notes]=36; h.c().data[notes+1]=11;
+        h.c().data[music+10]=1;
+        h.c().st(reg::addr::TIMSK1,2);
+        h.routine("audio_commit");
+        require(h.c().data[update]==0x81,"IRQ-disabled fixture lacks a pending packet");
+        h.c().data[notes+1]=9;
+        h.c().data[reg::addr::SREG]&=0x7f; h.c().prev_sreg&=0x7f;
+        h.routine("audio_commit");
+        require(h.c().data[update]==0 && h.amplitude(0)==9 && h.word(phases)==0,
+            "IRQ-disabled commit did not drain and replace controls");
+        require(!(h.c().data[reg::addr::SREG]&128),"commit unexpectedly enabled interrupts");
+        h.quiet();
+        h.c().data[reg::addr::SREG]|=128; h.c().prev_sreg|=128;
+    });
+}
 void automatic(harness& h) {
-    h.test("FX burst and atomic commit timing",[&]{
+    h.test("FX bursts and uncached song byte timing",[&]{
         std::vector<uint8_t> bytes(96);
         for(unsigned i=0;i<bytes.size();++i) bytes[i]=uint8_t(i*13);
         h.asset(0x23000,bytes);
@@ -786,17 +916,16 @@ void automatic(harness& h) {
         require(interrupted_reads>0,"SPI interruption test did not interrupt an active transfer");
         h.quiet();
         std::cout<<"FX reads interrupted with SPI active: "<<interrupted_reads<<"\n";
-        h.play({0xa2,15,0,15,60,64,67,36,0,15,61,65,68,37,9,0,2});
-        h.quiet(); h.c().data[pending]=1;
-        auto dest=h.sym("primary_table");
-        h.c().push(uint8_t(dest)); h.c().push(uint8_t(dest>>8));
-        h.c().pc=uint16_t(h.sym("audio_service_func"));
-        h.until([&]{return h.c().pc==h.sym("audio_commit_atomic_begin");});
-        auto t=h.until([&]{return h.c().pc==h.sym("audio_commit_atomic_end");});
-        require(t<=119,"global commit exceeded cycle bound");
-        h.atomicmax=std::max(h.atomicmax,t+1);
-        h.until([&]{return h.c().pc==dest;});
-        std::cout<<"global chord commit, including SREG restore: "<<t+1<<" cycles\n";
+        h.quiet();
+        h.word(16,music);
+        h.c().data[music+3]=0;
+        h.c().data[music+4]=0x30;
+        h.c().data[music+5]=2;
+        auto t=h.routine("audio_byte");
+        require(h.c().data[24]==bytes[0],"direct song byte was corrupted");
+        require(h.word(music+3)==0x3001 && h.c().data[music+5]==2,
+            "direct song byte did not advance the cursor");
+        std::cout<<"uncached song byte: "<<t<<" cycles\n";
     });
     h.test("seek overhead and SPI continuation",[&]{
         auto measure=[&](char const* name){h.quiet();h.c().pc=uint16_t(h.sym(name));auto start=h.c().cycle_count;h.tick();h.until([&]{return h.boundary();});return h.c().cycle_count-start;};
@@ -1249,7 +1378,7 @@ int main(int argc,char** argv) {
         float_precision(argv);
         hex_fraction(argv);
         idle_continuation(argv);
-        harness h(argv); sequence(h); synthesis(h); automatic(h);
+        harness h(argv); sequence(h); synthesis(h); handoff(h); automatic(h);
         std::cout<<h.cases<<" native audio cases passed\n"
             <<"Timer1 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
             <<100.*(h.isrmax+h.lightmax)/2048<<"%\n"

@@ -1,10 +1,10 @@
 # Hardware PWM audio
 
 AVM synthesizes three selectable tonal voices and one noise voice using Timer1 COMPA.
-Timer4 produces differential PWM on PC6/PC7. The ISR only reads the current
-15-byte control latch; song decoding, gain preparation, timing, and FX reads run synchronously
-when the interpreter restarts its instruction stream. No guest update call
-and no queue of future samples or channel states are required.
+Timer4 produces differential PWM on PC6/PC7. The ISR consumes prepared updates
+and synthesizes from a fixed 15-byte control latch; song decoding, gain
+preparation, sequencing, and FX reads run synchronously when the interpreter
+restarts its instruction stream. No guest update call is required.
 
 All native implementation and SRAM definitions are in `interp/interp.asm`.
 
@@ -125,9 +125,9 @@ sequencer-rate volume events with no per-sample envelope/DSP cost.
 A1 assets are rejected and must be regenerated with the current compiler.
 
 The caller supplies a valid FX/image-relative pointer to a terminated asset.
-The decoder follows its full 24-bit cursor until End or Loop. Its cache reads
-ahead in 32-byte bursts and may fetch bytes past the terminator, without
-interpreting them. Truncated assets cannot be detected by byte count. Physical
+The decoder follows its full 24-bit cursor until End or Loop. Each consumed
+byte opens an independent flash transaction; there is no cache or read-ahead
+past the terminator. Truncated assets cannot be detected by byte count. Physical
 addressing uses the same modulo-24-bit image-page addition as F0 program loads;
 available image/FX capacity remains the practical size limit.
 
@@ -286,7 +286,8 @@ jitter despite an exact average frequency. PC6/PC7 speaker wiring is defined
 by [Arduboy2](https://github.com/MLXXXp/Arduboy2/blob/master/src/Arduboy2Core.h).
 
 The Timer1 synthesis path saves native r0:r1, r20:r21, r26:r27, Z, and SREG,
-using eleven native stack bytes including the interrupt return PC. The light
+using eleven native stack bytes including the interrupt return PC (thirteen
+while calling the pending-update copier). The light
 path saves only r0, r20 and SREG, using five stack bytes including the PC.
 Borrowed VM registers are
 restored; Y, VM PC, GPIOR0, SPI and FX are untouched. r2 is **not assumed zero**: native floating paths temporarily
@@ -332,16 +333,17 @@ still alias at this sample rate, so audible quality needs hardware evaluation.
 | ISR phases and LFSR | 9 |
 | Desired note/volume/waveform banks for music and SFX | 16 |
 | Two stream records | 22 |
-| FX cache and index/length/owner | 35 |
+| Pending controls and ready/retrigger descriptor | 16 |
 | Held endpoint, midpoint and output phase | 3 |
-| **Total** | **104** |
+| **Total** | **85** |
 
-Audio occupies `0A15..0A7C`; `data_end_private=0A7D`. Formatter/text scratch
-ends at `0AC5` (exclusive), leaving 59 bytes for native stack. The existing
+Audio occupies `0A15..0A69`; `data_end_private=0A6A`. Formatter/text scratch
+ends at `0AB2` (exclusive), leaving 78 bytes for native stack. The existing
 framebuffer, guest globals, and guest stack stay at their original addresses.
-Audio commit staging uses 16 call-lifetime bytes beginning at `data_end_private`.
-Sequencing happens after other SYS callers restore their saved state, so its
-workspace cannot alias a live formatter/text call. The SRAM assertion now
+Audio service uses one call-lifetime dirty byte at `data_end_private` after
+other SYS callers restore their saved state. The update packet is persistent
+and remains valid while formatting or drawing reuses temporary workspace.
+The SRAM assertion
 requires at least 48 bytes beyond text scratch for native stack.
 
 Stream offsets are START=0 (uint24), CURSOR=3 (uint24), WAIT=6 (uint16),
@@ -351,8 +353,19 @@ The desired control uses music-byte encoding; commit strips ignored bit 7,
 separates each tone's waveform, and scales each amplitude using its owner's
 master. The ISR sees controls/banks/phases/LFSR; stream fields and masters
 are never ISR inputs. Master commands recommit all controls without note
-triggers. The 15-byte latch is copied atomically, including waveform selectors,
-so an interrupt cannot observe a mix of old and new gains or waveforms.
+triggers. Foreground code waits for acknowledgment before reusing the pending
+buffer, prepares all 15 bytes with interrupts enabled, then publishes a single
+descriptor byte (bit 7 ready, bits 0..3 phase resets). Synthesis checks it after
+the fixed PWM store, copies all controls to the live latch, resets requested
+phases and clears the descriptor before advancing oscillators. The normal
+synthesis path adds four cycles; the midpoint path is unchanged. The ISR uses
+11 native stack bytes normally and 13 while applying a packet, including its
+return PC. A second commit can wait up to a synthesis interval with interrupts
+enabled. If the output interrupt is masked, or global interrupts are already
+disabled, commit applies the packet directly instead of waiting. Disable stops
+the output timer before draining pending controls and applying silence, so
+re-enable cannot replay an old packet. No block copy disables interrupts in
+foreground code.
 
 ## SPI safety and servicing latency
 
@@ -365,8 +378,9 @@ already-disabled continuation after a completed data transaction.
 
 ISR entry can extend transfer wall time but does not access SPDR or disturb
 SREG/registers. Existing CLI/OUT/IN/SEI reverse handoffs remain protected.
-The audio reader uses the shared image-relative FX burst reader, which
-deselects only after the final byte. The seek continuation always reopens
+The uncached audio reader shares the image-relative address phase with the FX
+burst reader and returns one byte directly in a register. Its transaction is
+interruptible throughout and deselects only after receiving the byte. The seek continuation always reopens
 the bytecode stream at the preserved 24-bit PC. Native tests assert that an
 active speculative transfer is complete on entry to the shared seek path.
 
@@ -393,26 +407,31 @@ and sequencer results against independent expected values. It includes compiler
 tests and builds Mini/FX-C preset firmware. `avm_tests_run` includes these
 checks plus the existing interpreter tests. The C audio fixture exercises
 libm and formatting with synthesis interrupts enabled at all six optimization
-levels. Native tests cover register/PC/stack preservation, cache boundaries,
-looping/termination beyond 64 KB, bounded catch-up, chord commits, direct tones and SFX release.
+levels. Native tests cover register/PC/stack preservation, address boundaries,
+looping/termination beyond 64 KB, bounded catch-up, interrupted packet staging,
+back-to-back commits, exactly-once phase resets, formatter workspace reuse,
+stopped/IRQ-disabled handoffs, direct tones and SFX release.
 
 ## Tradeoffs and remaining hardware checks
 
 The synthesis path exceeds the initial 100-cycle goal: preserving actual
 registers and loading/storing four SRAM phases, looking up/scaling samples,
-clipping and preparing interpolation costs 196..203 cycles. Alternate output
-interrupts take 41 cycles, for at most 11.9141% CPU across each pair. Reserving
+clipping and preparing interpolation costs 200..207 cycles without a pending
+packet. Alternate output interrupts take 41 cycles, for at most 12.1094% CPU
+across an ordinary pair. Pending packet application adds 81..93 cycles on
+the affected synthesis interrupt. Reserving
 AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
-The 32-byte cache is shared between music/effects; interleaving their streams
-invalidates it, trading extra bursts for a smaller persistent footprint.
+Uncached byte reads cost 124 native cycles, replacing the 32-byte shared cache
+and its ownership/invalidation logic. This trades foreground work for 35 bytes
+of SRAM; the persistent handoff uses 16, leaving a net saving of 19 bytes.
 Square duty is fixed at 50%; there is no runtime vibrato, filter, or envelope DSP.
 The score compiler expands custom envelopes and tremolo into control events.
 Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
 layout assertions. The waveform table uses space before the primary table,
-keeping firmware at 29036 bytes, with 660 bytes remaining. There is little flash
+keeping firmware at 29148 bytes, with 548 bytes remaining. There is little flash
 headroom remaining; future features need space savings or a different build.
 
 FX, Mini and FX-C presets compile with the same Timer1/4 configuration; existing

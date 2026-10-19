@@ -924,7 +924,7 @@ __vectors:
     jmp default_isr         ; 14 RESERVED
     jmp default_isr         ; 15 RESERVED
     jmp default_isr         ; 16 TIMER1 CAPTURE
-    jmp default_isr         ; 17 TIMER1 COMPA
+    jmp timer1_compa_isr    ; 17 TIMER1 COMPA
     jmp default_isr         ; 18 TIMER1 COMPB
     jmp default_isr         ; 19 TIMER1 COMPC
     jmp default_isr         ; 20 TIMER1 OVERFLOW
@@ -939,7 +939,7 @@ __vectors:
     jmp default_isr         ; 29 ADC
     jmp default_isr         ; 30 EEPROM READY
     jmp default_isr         ; 31 TIMER3 CAPTURE
-    jmp timer3_compa_isr    ; 32 TIMER3 COMPA
+    jmp default_isr         ; 32 TIMER3 COMPA
     jmp default_isr         ; 33 TIMER3 COMPB
     jmp default_isr         ; 34 TIMER3 COMPC
     jmp default_isr         ; 35 TIMER3 OVERFLOW
@@ -7500,6 +7500,10 @@ startup_invalid_image_loop:
 ;   CTC mode, prescaler 64, OCR0A = 249.
 ; Global interrupts remain disabled until startup_enter_image executes SEI.
 timer0_init_func:
+    ; Clear both timer power gates before configuring the clock and audio.
+    lds  r26, PRR0
+    andi r26, (0xff ^ (_BV(PRTIM0) | _BV(PRTIM1)))
+    sts  PRR0, r26
     ; Stop Timer0 and mask its interrupts while replacing any bootloader state.
     out  TCCR0B, ZERO
     sts  TIMSK0, ZERO
@@ -16717,8 +16721,8 @@ sys_audio_impl:
     rcall audio_commit
     in   r25, SREG
     cli
-    sts  TIMSK3, ZERO
-    sts  TCCR3B, ZERO
+    sts  TIMSK1, ZERO
+    sts  TCCR1B, ZERO
     sts  TCCR4A, ZERO
     sts  TCCR4B, ZERO
     cbi  PORTC, 6
@@ -16747,7 +16751,7 @@ sys_audio_impl:
     jmp seek_and_dispatch_func_disabled
 
 audio_enable:
-    lds  r24, TIMSK3
+    lds  r24, TIMSK1
     tst  r24
     brne 1f
     in   r25, SREG
@@ -16758,20 +16762,20 @@ audio_enable:
     sts  data_audio_sample, r24
     sts  data_audio_midpoint, r24
     sts  data_audio_output_phase, ZERO
-    sts  TCNT3H, ZERO
-    sts  TCNT3L, ZERO
-    ldi  r24, _BV(OCF3A)
-    out  TIFR3, r24
+    sts  TCNT1H, ZERO
+    sts  TCNT1L, ZERO
+    ldi  r24, _BV(OCF1A)
+    out  TIFR1, r24
     sbi  DDRC, 6
     sbi  DDRC, 7
     ldi  r24, (_BV(COM4A0) | _BV(PWM4A))
     sts  TCCR4A, r24
     ldi  r24, _BV(CS40)
     sts  TCCR4B, r24
-    ldi  r24, (_BV(WGM32) | _BV(CS31))
-    sts  TCCR3B, r24
-    ldi  r24, _BV(OCIE3A)
-    sts  TIMSK3, r24
+    ldi  r24, (_BV(WGM12) | _BV(CS11))
+    sts  TCCR1B, r24
+    ldi  r24, _BV(OCIE1A)
+    sts  TIMSK1, r24
     out  SREG, r25
 1:
     ret
@@ -16858,6 +16862,7 @@ timer0_audio_tick:
     sts  data_audio_ticks_pending, r0
     rjmp timer0_audio_done
 
+; Timer1 COMPA (vector 17) arbitrates ahead of Timer0 COMPA (vector 21).
 ; Output runs at 15625 Hz; alternate interrupts synthesize at 7812.5 Hz.
 ; Emit the held endpoint, prepare its successor/midpoint, then emit midpoint.
 ; Both output writes have identical latency from entry, before synthesis.
@@ -16888,27 +16893,27 @@ timer0_audio_tick:
     adc  r27, r21
 .endm
 
-timer3_compa_isr:
+timer1_compa_isr:
     push r0
     in   r0, SREG
     push r0
     push r20
     lds  r20, data_audio_output_phase
     tst  r20
-    breq timer3_synthesis
+    breq timer1_synthesis
     lds  r20, data_audio_midpoint
     nop ; match the taken branch on the synthesis path
     clr  r0
     sts  TC4H, r0
-timer3_midpoint_write:
+timer1_midpoint_write:
     sts  OCR4A, r20
     sts  data_audio_output_phase, r0
-    rjmp timer3_output_done
-timer3_synthesis:
+    rjmp timer1_output_done
+timer1_synthesis:
     lds  r20, data_audio_sample
     clr  r0
     sts  TC4H, r0
-timer3_endpoint_write:
+timer1_endpoint_write:
     sts  OCR4A, r20
     ldi  r20, 1
     sts  data_audio_output_phase, r20
@@ -16970,7 +16975,7 @@ timer3_endpoint_write:
     pop  r26
     pop  r21
     pop  r1
-timer3_output_done:
+timer1_output_done:
     pop  r20
     pop  r0
     out  SREG, r0
@@ -16986,11 +16991,12 @@ audio_notes:
     .word 4389,4650,4927,5220,5530,5859,6207,6577,6968,7382,7821,8286
     .word 8779,9301,9854,10440,11060,11718,12415,13153,13935,14764,15642,16572
 
-; Startup-only zero writes, in order. Both timers are stopped and masked
+; Startup-only zero writes, in order. All timers below are stopped and masked
 ; before their remaining controls are reset. All addresses fit in data page 0;
 ; TC4H is cleared before writing TCNT4 and the Timer4 compare registers.
 audio_init_zero_registers:
-    .byte TCCR3B, TIMSK3, TCCR3A, TCCR3C, OCR3AH
+    .byte TCCR3B, TIMSK3, TCCR3A, TCCR3C
+    .byte TCCR1B, TIMSK1, TCCR1A, TCCR1C, OCR1AH
     .byte TCCR4B, TIMSK4, TCCR4A, TCCR4C, TCCR4D, TCCR4E
     .byte DT4, TC4H, TCNT4
 audio_init_zero_registers_end:
@@ -17014,8 +17020,9 @@ audio_init_func:
     in   r24, PLLCSR
     sbrs r24, PLOCK
     rjmp 1b
+    ; Timer0 initialization already cleared Timer1's power gate in PRR0.
     lds  r24, PRR1
-    andi r24, (0xff ^ (_BV(PRTIM3) | _BV(PRTIM4)))
+    andi r24, (0xff ^ _BV(PRTIM4))
     sts  PRR1, r24
     ldi  r30, lo8(audio_init_zero_registers)
     ldi  r31, hi8(audio_init_zero_registers)
@@ -17027,7 +17034,7 @@ audio_init_func:
     dec  r24
     brne 1b
     ldi  r24, 127 ; 16 MHz / 8 / 128 = 15625 output interrupts per second
-    sts  OCR3AL, r24
+    sts  OCR1AL, r24
     cbi  PORTC, 6
     cbi  PORTC, 7
     cbi  DDRC, 6

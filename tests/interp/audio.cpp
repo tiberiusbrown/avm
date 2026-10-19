@@ -76,12 +76,26 @@ struct harness {
         }
         c().no_merged=true; c().autobreaks.reset();
         avm_test::observe_spi_writes(c());
+        // Cover inherited timer clocks, interrupt enables and speaker ownership.
+        c().st(reg::addr::TCCR1B, 10);
+        c().st(reg::addr::TIMSK1, 2);
+        c().st(reg::addr::TCCR3A, 128);
+        c().st(reg::addr::TCCR3B, 10);
+        c().st(reg::addr::TIMSK3, 2);
+        c().data[reg::addr::TIFR1] |= 2;
+        c().data[reg::addr::TIFR3] |= 2;
+        c().st(reg::addr::PRR0, c().data[reg::addr::PRR0] |
+            reg::bit::PRR0::PRTIM0 | reg::bit::PRR0::PRTIM1);
         c().pc=0; // test firmware reset vector, independently of bootloader fuses
         boot_cycles=until([&]{return boundary();},2000000);
         require(c().data[reg::addr::PLLFRQ]==0x6a,"PLL must clock Timer4 at 64 MHz");
         require(c().pll_num12==48,"emulator PLL frequency wrong");
-        require(expected_top ? c().timer3.ocrNa==expected_top :
-            (c().timer3.ocrNa==127 || c().timer3.ocrNa==255),"Timer3 TOP wrong");
+        require(expected_top ? c().timer1.ocrNa==expected_top :
+            (c().timer1.ocrNa==127 || c().timer1.ocrNa==255),"Timer1 TOP wrong");
+        require(c().data[reg::addr::TIMSK3] == 0 && c().data[reg::addr::TCCR3B] == 0 &&
+            c().data[reg::addr::TCCR3A] == 0, "unused Timer3 must release its interrupt and speaker pin");
+        require(!(c().data[reg::addr::PRR0] & (reg::bit::PRR0::PRTIM0 | reg::bit::PRR0::PRTIM1)),
+            "Timer0/Timer1 power gates were not cleared");
         require(c().timer4.ocrNc==255,"Timer4 TOP wrong");
         require(c().data[volume]==128 && c().data[sfxvolume]==128,"default audio masters wrong");
         if(isolated) {
@@ -98,9 +112,9 @@ struct harness {
     }
     uint64_t synth_sample() {
         // A command may have returned between the heavy and light interrupts.
-        if(c().data[output_phase]) routine("timer3_compa_isr",true);
+        if(c().data[output_phase]) routine("timer1_compa_isr",true);
         auto previous=c().data[held_sample];
-        auto heavy=routine("timer3_compa_isr",true)+7;
+        auto heavy=routine("timer1_compa_isr",true)+7;
         auto next=c().data[held_sample];
         require(c().data[output_phase]==1,"synthesis did not select the light path");
         require(c().timer4.ocrNa_next==previous,"synthesis path did not output the held endpoint");
@@ -109,7 +123,7 @@ struct harness {
         std::array<uint8_t,9> state;
         std::copy_n(c().data.begin()+phases,state.size(),state.begin());
         c().data[reg::addr::TC4H]=3;
-        auto light=routine("timer3_compa_isr",true)+7;
+        auto light=routine("timer1_compa_isr",true)+7;
         require(c().data[output_phase]==0 && c().timer4.ocrNa_next==(unsigned(previous)+next)/2,
             "light path did not output the interpolated midpoint");
         require(c().timer4.ocrNa_next<=255,"light path failed to clear TC4H");
@@ -120,7 +134,7 @@ struct harness {
         return heavy;
     }
     void quiet() {
-        c().st(reg::addr::TIMSK3,0); c().st(reg::addr::TCCR3B,0);
+        c().st(reg::addr::TIMSK1,0); c().st(reg::addr::TCCR1B,0);
         routine("interp_delay_17"); // finish the interrupted bytecode transfer
         c().st(reg::addr::PORTD,uint8_t(c().data[reg::addr::PORTD]|2));
     }
@@ -401,23 +415,43 @@ void sequence(harness& h) {
     });
 }
 void synthesis(harness& h) {
+    h.test("Timer1 wins simultaneous pending Timer0 interrupt arbitration", [&] {
+        h.quiet();
+        auto resume = h.c().pc;
+        h.c().data[reg::addr::TIFR0] = 2;
+        h.c().data[reg::addr::TIFR1] = 2;
+        h.c().st(reg::addr::TIMSK0, 2);
+        h.c().st(reg::addr::TIMSK1, 2);
+        h.c().data[reg::addr::SREG] |= 128;
+        h.c().prev_sreg |= 128;
+        h.c().schedule_interrupt_check();
+        h.tick();
+        require(h.c().pc == 0x22 && h.c().just_interrupted,
+            "Timer1 COMPA did not win interrupt arbitration");
+        require((h.c().data[reg::addr::TIFR0] & 2) && !(h.c().data[reg::addr::TIFR1] & 2),
+            "arbitration consumed the wrong compare flag");
+        h.until([&] { return h.c().active && h.c().pc == resume; });
+        h.c().st(reg::addr::TIMSK0, 0);
+        h.c().st(reg::addr::TIFR0, 2);
+        h.quiet();
+    });
     h.test("equal PWM write latency on both interrupt paths",[&]{
         auto dest=h.sym("primary_table");
         std::array<uint64_t,2> latency;
         for(unsigned path=0;path<2;++path) {
             h.c().data[output_phase]=uint8_t(path);
             h.c().push(uint8_t(dest)); h.c().push(uint8_t(dest>>8));
-            h.c().pc=uint16_t(h.sym("timer3_compa_isr"));
+            h.c().pc=uint16_t(h.sym("timer1_compa_isr"));
             h.c().data[reg::addr::SREG]&=0x7f; h.c().prev_sreg&=0x7f;
             auto start=h.c().cycle_count;
-            auto write=h.sym(path ? "timer3_midpoint_write" : "timer3_endpoint_write");
+            auto write=h.sym(path ? "timer1_midpoint_write" : "timer1_endpoint_write");
             h.until([&]{return h.c().pc==write;});
             latency[path]=h.c().cycle_count-start+7+2;
             h.until([&]{return h.c().pc==dest;});
         }
         require(latency[0]==latency[1],"alternating paths skew PWM output intervals");
         h.c().data[output_phase]=0;
-        std::cout<<"Timer3 PWM write including entry/vector: "<<latency[0]<<" cycles on both paths\n";
+        std::cout<<"Timer1 PWM write including entry/vector: "<<latency[0]<<" cycles on both paths\n";
     });
     h.test("all midpoint pairs and output restart",[&]{
         h.command(6); h.quiet();
@@ -438,7 +472,7 @@ void synthesis(harness& h) {
                 require(h.c().data[r]==regs[r],"interpolation ISR corrupted registers");
             require(h.c().sp()==sp,"interpolation ISR leaked native stack");
         }
-        h.routine("timer3_compa_isr",true);
+        h.routine("timer1_compa_isr",true);
         require(h.c().data[output_phase]==1,"restart test did not stop between endpoints");
         h.command(7); h.command(6); h.quiet();
         require(h.c().data[held_sample]==128 && h.c().data[midpoint]==128 && h.c().data[output_phase]==0,
@@ -736,15 +770,15 @@ void automatic(harness& h) {
             h.quiet();
             h.c().data[24]=0; h.c().data[25]=0x30; h.c().data[26]=2;
             h.c().data[0]=64; h.c().data[1]=0; h.word(30,0x100);
-            h.c().st(reg::addr::TCNT3H,0);
-            h.c().st(reg::addr::TCNT3L,uint8_t(127-phase));
-            h.c().st(reg::addr::TIFR3,2);
-            h.c().st(reg::addr::TCCR3B,10); h.c().st(reg::addr::TIMSK3,2);
+            h.c().st(reg::addr::TCNT1H,0);
+            h.c().st(reg::addr::TCNT1L,uint8_t(127-phase));
+            h.c().st(reg::addr::TIFR1,2);
+            h.c().st(reg::addr::TCCR1B,10); h.c().st(reg::addr::TIMSK1,2);
             auto dest=h.sym("primary_table");
             h.c().push(uint8_t(dest)); h.c().push(uint8_t(dest>>8));
             h.c().pc=uint16_t(h.sym("fx_read_program_bytes_func"));
             while(h.c().pc!=dest) {
-                if(h.c().pc==h.sym("timer3_compa_isr") && h.c().spi_busy) ++interrupted_reads;
+                if(h.c().pc==h.sym("timer1_compa_isr") && h.c().spi_busy) ++interrupted_reads;
                 h.tick();
             }
             require(std::equal(bytes.begin(),bytes.begin()+64,h.c().data.begin()+0x100),"interrupt corrupted FX burst");
@@ -852,8 +886,8 @@ void demo(char** args) {
             maxgap=std::max(maxgap,h.c().cycle_count-last); last=h.c().cycle_count;
         }
         if(h.c().pc==h.sym("sys_display_impl")) ++frames;
-        if(h.c().pc==h.sym("timer3_compa_isr")) ++samples;
-        if(h.c().pc==h.sym("timer3_synthesis")) ++synthesized;
+        if(h.c().pc==h.sym("timer1_compa_isr")) ++samples;
+        if(h.c().pc==h.sym("timer1_synthesis")) ++synthesized;
         minsp=std::min(minsp,unsigned(h.c().sp()));
         effect|=h.c().data[sfx+8]==1;
         paused|=h.c().data[music+8]==2;
@@ -905,7 +939,7 @@ void capture(char** args) {
     require(seconds>0 && seconds<=60,"capture duration must be 1..60 seconds");
     unsigned interrupts=0;
     while(h.c().cycle_count-begin<seconds*16000000ull) {
-        if(h.c().pc==h.sym("timer3_compa_isr")) ++interrupts;
+        if(h.c().pc==h.sym("timer1_compa_isr")) ++interrupts;
         h.tick();
     }
     h.c().update_sound();
@@ -1217,9 +1251,9 @@ int main(int argc,char** argv) {
         idle_continuation(argv);
         harness h(argv); sequence(h); synthesis(h); automatic(h);
         std::cout<<h.cases<<" native audio cases passed\n"
-            <<"Timer3 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
+            <<"Timer1 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
             <<100.*(h.isrmax+h.lightmax)/2048<<"%\n"
-            <<"Timer3 light including entry/vector: "<<h.lightmin<<".."<<h.lightmax<<" cycles\n"
+            <<"Timer1 light including entry/vector: "<<h.lightmin<<".."<<h.lightmax<<" cycles\n"
             <<"observed idle service gap: "<<h.latencymax/16000.<<" ms\n";
         if(argc>=5) {
             char* demoargs[]{argv[0],argv[1],argv[2],argv[4]};

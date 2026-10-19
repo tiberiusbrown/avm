@@ -158,6 +158,9 @@ int main(int argc, char** argv)
             for(unsigned i = 0; cpu.pc != table + opcode * 4 && i < 20000000; ++i)
                 tick(*emulator);
             require(cpu.pc == table + opcode * 4, "test primary slot was not reached");
+            // Isolate instruction cadence from the periodic clock ISR.
+            cpu.st(absim::reg::addr::TIMSK0, 0);
+            cpu.st(absim::reg::addr::TCCR0B, 0);
             // Save the real instruction boundary, including the active SPI
             // transfer, so cases are independent without repeating startup.
             absim::arduboy_t::tt_state_t state;

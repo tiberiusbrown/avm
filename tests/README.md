@@ -9,7 +9,7 @@ are not generated or checked into the repository.
 
 `cmake --build build --config RelWithDebInfo --target avm_audio_tests_run`
 checks native sequencing, sample synthesis, register preservation, SPI reads
-interrupted by Timer3, cycle costs, atomic chords, and the animated demo with
+interrupted by Timer1, cycle costs, atomic chords, and the animated demo with
 simulated A/B presses. It also runs the standard-library Python asset tests and
 assembles Mini/FX-C firmware presets. These checks and the C audio fixture run
 within `avm_tests_run`. See [audio measurements](../docs/audio-benchmarks.md).
@@ -46,3 +46,6 @@ tests above.
 Multi-file C++ fixtures keep helper translation units in `tests/cpp/support/`.
 The top-level `.cpp` file supplies `avm_test_main()` and its adjacent
 `_output.txt` file supplies the expected serial output.
+
+Timer1 arbitration is checked with simultaneous Timer0/Timer1 pending flags.
+Startup tests cover inherited timer power gates, enables and Timer3 speaker ownership.

@@ -4,6 +4,14 @@ Measured with the repository's Ardens AVR emulator, unmerged AVR instructions,
 16 MHz CPU, and a CMake `RelWithDebInfo` build. These are instruction-cycle
 measurements and emulated integration results, not oscilloscope measurements.
 
+Audio uses Timer1 COMPA at 15,625 Hz, with 7,812.5 Hz synthesis; Timer0
+retains its separate 1 kHz clock. The Timer3-labelled measurements below are
+historical measurements of the same synthesis/output instruction paths.
+See the [RPG timing investigation](../projects/avm_rpg/docs/audio_timing.md)
+for the Timer3, Timer1 and unified Timer0 experiment results. Timer1 was selected
+because it removes periodic Timer0 collisions with lower CPU cost than the
+unified experiment.
+
 ## Native cycle costs
 
 | Operation | AVR cycles | Time at 16 MHz |

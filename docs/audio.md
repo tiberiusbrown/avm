@@ -1,6 +1,6 @@
 # Hardware PWM audio
 
-AVM synthesizes three selectable tonal voices and one noise voice using Timer3 COMPA.
+AVM synthesizes three selectable tonal voices and one noise voice using Timer1 COMPA.
 Timer4 produces differential PWM on PC6/PC7. The ISR only reads the current
 15-byte control latch; song decoding, gain preparation, timing, and FX reads run synchronously
 when the interpreter restarts its instruction stream. No guest update call
@@ -242,12 +242,21 @@ split into positive-time Continue records in the binary output.
 
 ## Timer and register allocation
 
-Timer3: CTC, `TCCR3A=0`, `TCCR3B=WGM32|CS31`, prescaler 8, `OCR3A=127`:
+Timer1: CTC, `TCCR1A=0`, `TCCR1B=WGM12|CS11`, prescaler 8, `OCR1A=127`:
 16 MHz / 8 / 128 = **15625 Hz output**. Alternate interrupts synthesize at
-**7812.5 Hz**, so note increments, LFSR clock rates and song timing are unchanged.
-It does not drive OC3A, leaving PC6 to Timer4.
-Timer0 keeps its original 1 kHz CTC configuration; its ISR only divides ticks
-by four and saturates an unsigned pending byte.
+**7812.5 Hz**. Note increments and the output interpolation retain their
+original rates. Timer1 COMPA (vector 17) wins pending interrupt arbitration
+over Timer0 COMPA (vector 21); an already running ISR is not preempted.
+Timer3 is stopped and masked, with its speaker-pin output ownership cleared.
+Startup clears the Timer0 and Timer1 power gates before configuring them.
+
+Timer0 keeps its **1 kHz** CTC clock, with prescaler 64 and `OCR0A=249`.
+Its ISR increments the millisecond counter, then divides ticks by four and
+saturates an unsigned pending sequencer byte. Millisecond APIs and the
+millisecond frame scheduler retain their original behavior. The experimental
+16 kHz unified clock and monotonic API are not part of the selected runtime.
+See the [timing investigation](../projects/avm_rpg/docs/audio_timing.md) for
+measured PWM jitter and the performance comparison.
 
 The synthesis interrupt first outputs the preceding endpoint, then computes
 the next endpoint and their unsigned midpoint. The intervening light interrupt
@@ -276,7 +285,7 @@ sections 6.11 and 15. The /1.5 PLL postcaler has documented individual-clock
 jitter despite an exact average frequency. PC6/PC7 speaker wiring is defined
 by [Arduboy2](https://github.com/MLXXXp/Arduboy2/blob/master/src/Arduboy2Core.h).
 
-The Timer3 synthesis path saves native r0:r1, r20:r21, r26:r27, Z, and SREG,
+The Timer1 synthesis path saves native r0:r1, r20:r21, r26:r27, Z, and SREG,
 using eleven native stack bytes including the interrupt return PC. The light
 path saves only r0, r20 and SREG, using five stack bytes including the PC.
 Borrowed VM registers are
@@ -361,9 +370,9 @@ deselects only after the final byte. The seek continuation always reopens
 the bytecode stream at the preserved 24-bit PC. Native tests assert that an
 active speculative transfer is complete on entry to the shared seek path.
 
-Idle sleep leaves both audio timers running. After wakeup, an extra four-cycle
+Idle sleep leaves Timer0, Timer1 and Timer4 running during playback. After wakeup, an extra four-cycle
 pending check routes to the seek hook only when necessary; otherwise idle
-uses its existing dispatch tail. Timer3 wakes idle at the output rate, with no
+uses its existing dispatch tail. Timer1 wakes idle at the output rate, with no
 guest busy wait introduced. Ordinary gameplay loops naturally service at
 taken branches/calls/returns, and long SYS operations service on return.
 
@@ -406,7 +415,7 @@ layout assertions. The waveform table uses space before the primary table,
 keeping firmware at 29036 bytes, with 660 bytes remaining. There is little flash
 headroom remaining; future features need space savings or a different build.
 
-FX, Mini and FX-C presets compile with the same Timer3/4 configuration; existing
+FX, Mini and FX-C presets compile with the same Timer1/4 configuration; existing
 FX chip-select preset differences are retained. The [Mini](https://www.arduboy.com/mini)
 has no built-in speaker and needs an added speaker for audio. Homemade hardware that moves the speaker
 away from PC6/PC7 cannot use these complementary Timer4 outputs.

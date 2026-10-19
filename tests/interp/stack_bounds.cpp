@@ -108,6 +108,9 @@ struct harness_t {
         for(unsigned i = 0; (!boundary() || guest_pc(cpu()) != pc) && i < 20000000; ++i)
             tick();
         require(boundary() && guest_pc(cpu()) == pc, "test site was not reached");
+        // Boundary-cycle and trap checks run with the periodic timer stopped.
+        cpu().st(absim::reg::addr::TIMSK0, 0);
+        cpu().st(absim::reg::addr::TCCR0B, 0);
         absim::arduboy_t::tt_state_t state;
         emulator->save_state_to_vector(state);
         require(!state.state.empty(), "could not save instruction boundary");

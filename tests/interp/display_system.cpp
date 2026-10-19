@@ -113,7 +113,7 @@ struct harness {
         until([&] { return boundary(); });
         // Isolate register and memory effects from autonomous timer activity.
         c().st(absim::reg::addr::TIMSK0, 0);
-        c().st(absim::reg::addr::TIMSK3, 0);
+        c().st(absim::reg::addr::TIMSK1, 0);
     }
     absim::arduboy_t::tt_state_t at(char const* site)
     {

@@ -13,7 +13,9 @@ measurements and emulated integration results, not oscilloscope measurements.
 | Seek hook, one active stream, no event due | 109 added | 6.813 us |
 | One-stream sparse countdown service, entry through RET | 98 | 6.125 us |
 | Cached note-off event plus next delta and commit, entry through RET | 724 | 45.250 us |
-| Timer3, including 4-cycle interrupt entry and 3-cycle vector JMP | **178..185** | 11.125..11.563 us |
+| Timer3 synthesis path, including entry/vector | **196..203** | 12.250..12.688 us |
+| Timer3 midpoint path, including entry/vector | **41** | 2.563 us |
+| Timer3 PWM write, both paths, including entry/vector | **26** | 1.625 us |
 | Timer0, ordinary millis update, including entry/vector | 35 | 2.188 us |
 | Timer0, ordinary millis update plus produced audio tick | 47 | 2.938 us |
 | Timer0, all four millis bytes carry plus produced audio tick | 63 | 3.938 us |
@@ -25,12 +27,15 @@ the caller's CALL. The global commit row starts just after CLI and includes
 the SREG restore; CLI itself adds one cycle to the interrupt exclusion window.
 The pending snapshot disables interrupts for six cycles including CLI.
 All four controls are staged with interrupts enabled and then copied together.
-The sample ISR remains short compared with its 2048-cycle sample interval.
+The longest ISR remains short compared with its 1024-cycle output interval.
 
-At 7812.5 Hz the maximum measured ISR cost consumes **185 / 2048 = 9.0332%**
-of the CPU; its minimum is 8.6914%. Unclipped samples cost 178 cycles when
-holding the LFSR, or 182/183 cycles when advancing it, depending on its low bit.
-Clipped samples cost 180/184/185 cycles respectively.
+At 15625 Hz output and 7812.5 Hz synthesis, the maximum measured pair consumes
+**(203 + 41) / 2048 = 11.9141%** of the CPU; its minimum is 11.5723%.
+The original held-output implementation used 9.0332% maximum. Full synthesis
+at 15625 Hz would instead use approximately 18.0664% with the original ISR.
+Unclipped synthesis costs 196 cycles when holding the LFSR, or 200/201 cycles
+when advancing it. Clipped synthesis costs 198/202/203 cycles respectively.
+The light path always costs 41 cycles and does not advance any oscillator.
 Execution is bounded with seven cycles of data-dependent variation and no
 dependency on event density.
 This exceeds the proposed 100-cycle starting goal. Four SRAM phases and
@@ -39,6 +44,66 @@ no VM registers were reserved for synthesis. Compared with the original
 Timer0 ISR, audio adds 7 cycles on ordinary interrupts, 19 on produced ticks,
 and 16 on saturated ticks (approximately 0.0625% CPU while ticks are draining).
 
+## Output interpolation and listening comparison
+
+Timer3 now outputs at 15625 Hz while synthesis remains at 7812.5 Hz. A heavy
+interrupt outputs the preceding endpoint before computing the next endpoint
+and their midpoint. The next light interrupt outputs that midpoint. Both
+OCR4A writes finish 26 cycles after interrupt entry/vector, preventing the
+heavy/light workload difference from modulating the output spacing.
+
+Real-timer Ardens captures of a sustained MIDI 76 sine at channel volume 31
+and music master 64 measured the following. Both WAVs are mono 16-bit at
+50000 Hz with identical fixed gain; analysis discards the first 100 ms and
+projects the remaining samples through a Hann window onto the DDS fundamental
+and its first image. These are emulator results, without a physical speaker.
+
+| Measurement | Held output | Interpolated output |
+| --- | ---: | ---: |
+| Fundamental | 659.22737 Hz | 659.22737 Hz |
+| Image frequency | 7153.27263 Hz | 7153.27263 Hz |
+| Image relative to fundamental | -20.70 dB | -38.14 dB |
+| Image suppression improvement | — | **17.45 dB** |
+
+Capture mode accepts old or current firmware, so comparisons can use the
+same emulator and song asset:
+
+```sh
+build/tests/avm_audio_tests --capture interp.hex interp.lst audio.bin song.bin output.wav 8
+```
+
+Here `audio.bin` is `build/tests/interp/audio.bin`; `song.bin` is an A2 asset
+from `tools/avm_music.py`. The capture runs actual Timer0/Timer3 interrupts,
+the foreground sequencer and Ardens PWM audio rather than reconstructing
+the proposed filter mathematically. Listening comparisons also use the
+first eight seconds of the RPG score with sine/triangle/sine voices, retaining
+all notes, volumes and event timing. These captures precede the subsequent
+Dewlight Skip recomposition of the shipped RPG score.
+
+Interpolation adds 104 firmware bytes and three persistent SRAM bytes.
+There are 51 native stack bytes above formatter/text workspace; the measured
+libm/formatter interrupt stress still uses 41 bytes. Endpoint values, note
+increments, noise rate, song format and 4 ms sequencing ticks are unchanged.
+All 65536 previous/current duty pairs pass midpoint/output checks, in addition
+to existing gain, waveform, saturation, register/SREG and phase checks. The
+animated demo produces 15622 outputs and 7811 synthesized samples in its
+one-second workload while rendering 62 frames.
+
+This reduces output images; it does not undo aliased waveform harmonics or
+phase truncation in the 64-entry oscillator tables. Audible quality on an
+FX-C remains a listening check.
+
+The rebuilt RPG passes full-device Ardens scenarios on FX and FX-C: title
+silence, active music, dialogue/menu playback, save/restart, movement and
+scrolling. Observed frame rate is 30.302 FPS. The separate eight native RPG
+tests also pass. During this interpolation experiment the `peaceful_music`
+test expected sine/triangle/sine and failed against the experimental square
+score. The subsequent Dewlight Skip recomposition updates the score and its
+tests together, resolving that mismatch. The
+LLDB-based `rpg_integration` path stopped when its child image packer reported
+permission denied opening `rpg.elf`; full-device checks were run directly
+against both rebuilt packages instead.
+
 ## Waveform synthesis
 
 Each tonal channel selects square, triangle, sawtooth, or sine from a 256-byte
@@ -46,7 +111,7 @@ flash page: four contiguous banks of 64 signed samples. Every shape uses the
 same LPM/FMULSU path, with rounded signed contributions. Each amplitude is a
 full unsigned byte, and each tone has a separate waveform selector in bits
 7..6 of its bank byte. The latch occupies 15 bytes; persistent audio state is
-109 bytes, including independent music and SFX master bytes.
+112 bytes, including independent music/SFX masters and output interpolation.
 
 The music control byte is a separate encoding: volume in bits 4..0, waveform
 in bits 6..5, and ignored bit 7. The encoder repeats the tracked waveform on
@@ -60,6 +125,8 @@ The complete ISR cycle accounting is:
 | --- | ---: |
 | Hardware interrupt entry (4), vector JMP (3) | 7 |
 | Nine PUSHes (18), IN SREG (1), LDI waveform page (1), two CLRs for signed mix (2) | 22 |
+| Select synthesis path: LDS, TST, taken BREQ, LDI, STS | 8 |
+| Early endpoint output: LDS, CLR, STS TC4H, STS OCR4A | 7 |
 | Each tonal phase: four LDS (8), ADD/ADC (2), two STS (4), times three | 42 |
 | Each tonal sample: two LDSs (4), two LSRs (2), OR (1), LPM (3), FMULSU (2), SBC sign extension (1), LSL rounding (1), two ADCs (2), times three | 48 |
 | Noise phase: four LDS (8), ADD/ADC (2), two STS (4) | 14 |
@@ -67,12 +134,12 @@ The complete ISR cycle accounting is:
 | Noise contribution: LDS (2), CLC (1), SBRC/optional NEG (2), SBC sign extension (1), ADD/ADC (2) | 8 |
 | Add PWM bias: SUBI/SBCI (2) | 2 |
 | Saturation: TST (1), BREQ (2) when in range; or BREQ (1), LDI (1), SBRS/optional LDI (2) | 3 / 5 |
-| CLR (1), STS TC4H (2), STS OCR4A (2) | 5 |
+| Save endpoint/midpoint: LDS (2), two STS (4), ADD (1), ROR (1) | 8 |
 | Nine POPs (18), OUT SREG (1), RETI (4) | 23 |
-| **Total unclipped: hold / advance without XOR / advance with XOR** | **178 / 182 / 183** |
-| **Total clipped: hold / advance without XOR / advance with XOR** | **180 / 184 / 185** |
+| **Total unclipped: hold / advance without XOR / advance with XOR** | **196 / 200 / 201** |
+| **Total clipped: hold / advance without XOR / advance with XOR** | **198 / 202 / 203** |
 
-The preceding completed-mix gain implementation cost 180/184/185 cycles for
+Before output interpolation, the completed-mix gain implementation cost 180/184/185 cycles for
 unclipped samples and 174/178/179 for clipped samples. Prepared gains save
 two cycles on unclipped samples and add six on clipped ones; the worst case
 stays 185 cycles. Gain preparation removes the ISR's master load, completed-mix
@@ -159,8 +226,8 @@ including its index, length, and owner. Music/SFX alternation invalidates
 it instead of maintaining two caches. Last refills read only the remaining
 asset bytes. The table measures the FX transfer, not parsing or the cache
 miss bookkeeping around it. A coinciding Timer3 interrupt adds at most
-185 cycles (11.563 us) of wall time per interrupt. Reads remain interruptible.
-Phase-offset stress tests observed 23 sample ISR entries while SPI was active
+203 cycles (12.688 us) of wall time per interrupt. Reads remain interruptible.
+Phase-offset stress tests observed 45 output ISR entries while SPI was active
 and verified all returned bytes; no SPI collision was reported.
 
 ## Interpreter and integration results
@@ -173,15 +240,15 @@ After the prepared-gain change, all 1018 instruction measurements match the
 preceding waveform-only firmware exactly with sample interrupts disabled.
 
 Autonomous idle playback ran for 100 emulated ms with a maximum service-entry
-gap of **4.11469 ms**. The compiled animated demo ran for one emulated second
-with no guest audio update call: **62 rendered frames, 7811 sample interrupts,
-4.14194 ms maximum service-entry gap**, and a measured native stack footprint
-of 31 bytes with the 16-bar Sunlit Garden arrangement. Its configured frame
+gap of **4.04563 ms**. The compiled animated demo ran for one emulated second
+with no guest audio update call: **62 rendered frames, 15622 output interrupts,
+7811 synthesized samples, 4.08512 ms maximum service-entry gap**, and a measured
+native stack footprint of 29 bytes. Its configured frame
 rate is 60; the existing frame scheduler uses integer millisecond periods.
 Simulated A/B presses exercised SFX,
 pause, and resume while graphics and song reads shared SPI.
 The current C libm/formatter stress workload with sample interrupts reaches 41 bytes
-of native stack, within the 54 bytes above the formatter/text workspace.
+of native stack, within the 51 bytes above the formatter/text workspace.
 
 These workloads do not establish a universal service-latency bound. A long
 straight-line instruction sequence or blocking native service can delay the
@@ -193,7 +260,7 @@ up to 1020 ms is represented and later ticks are discarded until serviced.
 
 The note table covers MIDI 24..95 with maximum measured rounding error
 **2.11087 cents**. It contains no runtime floating-point conversion.
-Timer3 sample rate is **7812.5 Hz**. Timer4 uses the user-requested **64 MHz PLL
+Timer3 output rate is **15625 Hz**, with **7812.5 Hz** synthesis. Timer4 uses the **64 MHz PLL
 clock**, TOP 255 and no prescaling, yielding a calculated **250 kHz carrier**.
 See [audio.md](audio.md) for register settings and datasheet references.
 
@@ -201,18 +268,19 @@ See [audio.md](audio.md) for register settings and datasheet references.
 
 | Resource | Result |
 | --- | ---: |
-| Persistent audio SRAM | **109 bytes** |
+| Persistent audio SRAM | **112 bytes** |
 | Call-lifetime commit staging | 16 bytes, in existing temporary workspace |
-| Remaining native stack above formatter/text workspace | 54 bytes |
-| Current native `.text` | **29008 bytes** |
-| Current total firmware flash | **29008 bytes** |
+| Remaining native stack above formatter/text workspace | 51 bytes |
+| Current native `.text` | **29112 bytes** |
+| Current total firmware flash | **29112 bytes** |
 | Waveform support versus square-only firmware | +368 bytes |
 | Prepared gains and independent masters versus waveform-only firmware | +88 bytes |
 | Display commands and system queries | +88 bytes |
 | Subsequent cold-path size reductions | -176 bytes |
 | Shared CSET decoder and local dispatch | -416 bytes |
 | Hexadecimal float digit loop | -48 bytes |
-| Bootloader ceiling / remaining space | 29696 / **688 bytes** |
+| Output interpolation versus held output | +104 bytes |
+| Bootloader ceiling / remaining space | 29696 / **584 bytes** |
 
 The [cold-path measurements](interpreter-optimizations.md#cold-path-size-reductions-after-displaysystem-queries)
 record the startup and formatter tradeoffs for the latest size reductions.
@@ -221,7 +289,7 @@ instruction and complete C/C++ benchmark changes in cycles and percentages.
 The [hex formatter comparison](hex-formatter-benchmarks.md) records the
 subsequent 48-byte reduction and five-cycle cost per finite `%a`/`%A` conversion.
 
-The nine bytes beyond the approximate 100-byte SRAM goal retain two complete
+The twelve bytes beyond the approximate 100-byte SRAM goal retain two complete
 bounded stream records, desired music/SFX banks, and one cache. This supports
 effect overrides without losing music progression, pause/resume, and bounded
 asset reads. Phases and the current latch persist independently of aliased
@@ -235,8 +303,8 @@ levels. Tests cover packed 24-bit pointers, cache/page boundaries, malformed
 and truncated streams, dense positive-time catch-up, Continue-only loops,
 one/256-tick initial waits, saturation,
 note retriggering, atomic chords, music under SFX, release, and direct tones.
-Validation passed all 459 guest fixtures, 152 native PUSH/POP cases, 1133 native
-stack-bound cases, 27 native audio cases, and 12 Python compiler tests, as well
+Validation passed all 471 guest fixtures, 152 native PUSH/POP cases, 1133 native
+stack-bound cases, 29 native audio cases, and 12 Python compiler tests, as well
 as the animated and formatter integration workloads and both variant builds.
 Waveform checks compare 24576 samples (all 64 positions and 32 amplitudes on
 all three tonal voices) against independent mathematical shapes; gain staging

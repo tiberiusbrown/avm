@@ -165,10 +165,24 @@ an explicit `volume` before compiling to A2.
 
 ## Timer and register allocation
 
-Timer3: CTC, `TCCR3A=0`, `TCCR3B=WGM32|CS31`, prescaler 8, `OCR3A=255`:
-16 MHz / 8 / 256 = **7812.5 Hz**. It does not drive OC3A, leaving PC6 to Timer4.
+Timer3: CTC, `TCCR3A=0`, `TCCR3B=WGM32|CS31`, prescaler 8, `OCR3A=127`:
+16 MHz / 8 / 128 = **15625 Hz output**. Alternate interrupts synthesize at
+**7812.5 Hz**, so note increments, LFSR clock rates and song timing are unchanged.
+It does not drive OC3A, leaving PC6 to Timer4.
 Timer0 keeps its original 1 kHz CTC configuration; its ISR only divides ticks
 by four and saturates an unsigned pending byte.
+
+The synthesis interrupt first outputs the preceding endpoint, then computes
+the next endpoint and their unsigned midpoint. The intervening light interrupt
+outputs that midpoint without advancing phases or LFSR. Both PWM writes occur
+at the same instruction offset from interrupt entry; synthesis duration does
+not skew alternating output intervals. The midpoint uses the ninth addition
+bit before shifting, so duties spanning 0..255 cannot overflow. Enable resets
+both held duties to neutral 128 and starts with the synthesis path.
+This is twofold linear output interpolation, with 64 us additional latency
+relative to the former held output. It reduces spectral images but does not
+remove harmonics already aliased at the synthesis rate or improve the
+64-entry oscillator lookup. No samples are read from FX in either ISR path.
 
 Timer4: 8-bit fast PWM (`PWM4A=1`, `WGM41:0=0`), `COM4A1:0=01` connects both
 complementary outputs, TOP `OCR4C=255`, `CS43:0=0001`, no timer prescaling.
@@ -185,8 +199,10 @@ sections 6.11 and 15. The /1.5 PLL postcaler has documented individual-clock
 jitter despite an exact average frequency. PC6/PC7 speaker wiring is defined
 by [Arduboy2](https://github.com/MLXXXp/Arduboy2/blob/master/src/Arduboy2Core.h).
 
-Timer3 saves native r0:r1, r20:r21, r26:r27, Z, and SREG, using eleven native
-stack bytes including the interrupt return PC. Borrowed VM registers are
+The Timer3 synthesis path saves native r0:r1, r20:r21, r26:r27, Z, and SREG,
+using eleven native stack bytes including the interrupt return PC. The light
+path saves only r0, r20 and SREG, using five stack bytes including the PC.
+Borrowed VM registers are
 restored; Y, VM PC, GPIOR0, SPI and FX are untouched. r2 is **not assumed zero**: native floating paths temporarily
 borrow it. The normal-context service borrows/saves r16:r23; scratch is r0:r1,
 r24:r27, Z and native SREG. r2:r15, VM PC r4:r6, Y, and architectural flags
@@ -210,8 +226,8 @@ Accumulation starts at zero in a signed 16-bit register pair. The complete
 mix is in -982..982 at maximum prepared amplitudes; the ISR then adds 128
 and clamps to duty 0..255. Clipping occurs after all contributions, allowing
 loud opposing voices to cancel. The ISR never reads either master, multiplies
-the completed mix, or performs the old three-pair shift. At unity every sample
-is unchanged. Other gains truncate each channel amplitude before synthesis,
+the completed mix, or performs the old three-pair shift. At unity synthesized
+endpoints are unchanged. Other gains truncate each channel amplitude before synthesis,
 so quieter gains can silence low-volume channels and differ from scaling
 the completed mix. There is no general loop in the ISR; each tonal voice
 performs one LPM and one FMULSU with identical timing for all waveforms.
@@ -231,10 +247,11 @@ still alias at this sample rate, so audible quality needs hardware evaluation.
 | Desired note/volume/waveform banks for music and SFX | 16 |
 | Two stream records | 30 |
 | FX cache and index/length/owner | 35 |
-| **Total** | **109** |
+| Held endpoint, midpoint and output phase | 3 |
+| **Total** | **112** |
 
-Audio occupies `0A15..0A81`; `data_end_private=0A82`. Formatter/text scratch
-ends at `0ACA` (exclusive), leaving 54 bytes for native stack. The existing
+Audio occupies `0A15..0A84`; `data_end_private=0A85`. Formatter/text scratch
+ends at `0ACD` (exclusive), leaving 51 bytes for native stack. The existing
 framebuffer, guest globals, and guest stack stay at their original addresses.
 Audio commit staging uses 16 call-lifetime bytes beginning at `data_end_private`.
 Sequencing happens after other SYS callers restore their saved state, so its
@@ -269,7 +286,7 @@ active speculative transfer is complete on entry to the shared seek path.
 
 Idle sleep leaves both audio timers running. After wakeup, an extra four-cycle
 pending check routes to the seek hook only when necessary; otherwise idle
-uses its existing dispatch tail. Timer3 wakes idle at sample rate, with no
+uses its existing dispatch tail. Timer3 wakes idle at the output rate, with no
 guest busy wait introduced. Ordinary gameplay loops naturally service at
 taken branches/calls/returns, and long SYS operations service on return.
 
@@ -295,18 +312,20 @@ looping/truncation/bounded catch-up, chord commits, direct tones and SFX release
 
 ## Tradeoffs and remaining hardware checks
 
-The ISR exceeds the initial 100-cycle goal: preserving actual registers and
-loading/storing four SRAM phases, looking up/scaling samples, and clipping
-the signed mix costs 178..185 cycles. Reserving AVR registers
+The synthesis path exceeds the initial 100-cycle goal: preserving actual
+registers and loading/storing four SRAM phases, looking up/scaling samples,
+clipping and preparing interpolation costs 196..203 cycles. Alternate output
+interrupts take 41 cycles, for at most 11.9141% CPU across each pair. Reserving
+AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
 The 32-byte cache is shared between music/effects; interleaving their streams
 invalidates it, trading extra bursts for a smaller persistent footprint.
-Square duty is fixed at 50%; there is no vibrato/filter/ADSR.
+Square duty is fixed at 50%; there is no vibrato or per-voice filter/ADSR.
 Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
 layout assertions. The waveform table uses space before the primary table,
-keeping firmware at 29560 bytes, with 136 bytes remaining. There is very little flash
+keeping firmware at 29112 bytes, with 584 bytes remaining. There is little flash
 headroom remaining; future features need space savings or a different build.
 
 FX, Mini and FX-C presets compile with the same Timer3/4 configuration; existing

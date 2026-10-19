@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <sstream>
@@ -17,13 +18,16 @@ using namespace absim;
 namespace {
 constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, banks=0xa24,
     sfxvolume=0xa27, phases=0xa28, noise=0xa30, notes=0xa31, sfxnotes=0xa39,
-    music=0xa41, sfx=0xa50, cache=0xa5f, index=0xa7f, length=0xa80;
+    music=0xa41, sfx=0xa50, cache=0xa5f, index=0xa7f, length=0xa80,
+    held_sample=0xa82, midpoint=held_sample+1, output_phase=midpoint+1,
+    private_end=output_phase+1, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
 struct harness {
     std::unique_ptr<arduboy_t> e = std::make_unique<arduboy_t>();
     std::map<std::string,unsigned> symbols;
     unsigned cases=0;
     uint64_t isrmin=10000,isrmax=0,atomicmax=0,latencymax=0;
+    uint64_t lightmin=10000,lightmax=0;
     uint64_t boot_cycles=0;
     atmega32u4_t& c() { return e->core_state.cpu; }
     unsigned sym(char const* name) { return symbols.at(name)/2; }
@@ -57,7 +61,7 @@ struct harness {
         }
         return c().cycle_count-start;
     }
-    harness(char** args, bool isolated=true) {
+    harness(char** args, bool isolated=true, unsigned expected_top=127) {
         std::ifstream listing(args[2]); require(bool(listing),"listing unavailable");
         for(std::string line; std::getline(listing,line);) {
             std::istringstream in(line); unsigned a; std::string name,token;
@@ -76,7 +80,8 @@ struct harness {
         boot_cycles=until([&]{return boundary();},2000000);
         require(c().data[reg::addr::PLLFRQ]==0x6a,"PLL must clock Timer4 at 64 MHz");
         require(c().pll_num12==48,"emulator PLL frequency wrong");
-        require(c().timer3.ocrNa==255,"Timer3 TOP wrong");
+        require(expected_top ? c().timer3.ocrNa==expected_top :
+            (c().timer3.ocrNa==127 || c().timer3.ocrNa==255),"Timer3 TOP wrong");
         require(c().timer4.ocrNc==255,"Timer4 TOP wrong");
         require(c().data[volume]==32 && c().data[sfxvolume]==32,"default audio masters wrong");
         if(isolated) {
@@ -90,6 +95,29 @@ struct harness {
         c().pc=uint16_t(sym(name));
         if(isr) { c().data[reg::addr::SREG]&=0x7f; c().prev_sreg&=0x7f; }
         return until([&]{return c().pc==dest;});
+    }
+    uint64_t synth_sample() {
+        // A command may have returned between the heavy and light interrupts.
+        if(c().data[output_phase]) routine("timer3_compa_isr",true);
+        auto previous=c().data[held_sample];
+        auto heavy=routine("timer3_compa_isr",true)+7;
+        auto next=c().data[held_sample];
+        require(c().data[output_phase]==1,"synthesis did not select the light path");
+        require(c().timer4.ocrNa_next==previous,"synthesis path did not output the held endpoint");
+        require(c().data[midpoint]==(unsigned(previous)+next)/2,
+            "interpolated midpoint disagrees with wide unsigned average");
+        std::array<uint8_t,9> state;
+        std::copy_n(c().data.begin()+phases,state.size(),state.begin());
+        c().data[reg::addr::TC4H]=3;
+        auto light=routine("timer3_compa_isr",true)+7;
+        require(c().data[output_phase]==0 && c().timer4.ocrNa_next==(unsigned(previous)+next)/2,
+            "light path did not output the interpolated midpoint");
+        require(c().timer4.ocrNa_next<=255,"light path failed to clear TC4H");
+        require(std::equal(state.begin(),state.end(),c().data.begin()+phases),
+            "light path advanced an oscillator or the LFSR");
+        isrmin=std::min(isrmin,heavy); isrmax=std::max(isrmax,heavy);
+        lightmin=std::min(lightmin,light); lightmax=std::max(lightmax,light);
+        return heavy;
     }
     void quiet() {
         c().st(reg::addr::TIMSK3,0); c().st(reg::addr::TCCR3B,0);
@@ -226,8 +254,8 @@ void sequence(harness& h) {
         require(h.c().data[volume]==16 && h.amplitude(0)==12 && h.c().data[notes+1]==24,
             "master gain did not prepare amplitude or changed desired volume");
         h.word(phases,0); h.word(controls,0);
-        h.routine("timer3_compa_isr",true);
-        require(h.c().timer4.ocrNa_next==140,"master gain output wrong");
+        h.synth_sample();
+        require(h.c().data[held_sample]==140,"master gain output wrong");
         h.command(2); require(h.amplitude(0)==0,"stop wrong");
         h.command(4); require(h.c().data[music+12]==0,"resume resurrected stopped stream");
         h.command(5,32); h.play({0xa2,1,0,1,70,9,0,1}); require(h.c().data[notes]==46,"song change wrong");
@@ -331,7 +359,7 @@ void sequence(harness& h) {
             auto latch=h.word(controls);
             for(unsigned i=0;i<ms;++i) {
                 h.routine("timer0_compa_isr",true);
-                h.routine("timer3_compa_isr",true);
+                h.synth_sample();
                 require(h.word(controls)==latch && h.word(music+10)==5,
                     "interrupts advanced the song instead of holding the current latch");
             }
@@ -344,6 +372,50 @@ void sequence(harness& h) {
     });
 }
 void synthesis(harness& h) {
+    h.test("equal PWM write latency on both interrupt paths",[&]{
+        auto dest=h.sym("primary_table");
+        std::array<uint64_t,2> latency;
+        for(unsigned path=0;path<2;++path) {
+            h.c().data[output_phase]=uint8_t(path);
+            h.c().push(uint8_t(dest)); h.c().push(uint8_t(dest>>8));
+            h.c().pc=uint16_t(h.sym("timer3_compa_isr"));
+            h.c().data[reg::addr::SREG]&=0x7f; h.c().prev_sreg&=0x7f;
+            auto start=h.c().cycle_count;
+            auto write=h.sym(path ? "timer3_midpoint_write" : "timer3_endpoint_write");
+            h.until([&]{return h.c().pc==write;});
+            latency[path]=h.c().cycle_count-start+7+2;
+            h.until([&]{return h.c().pc==dest;});
+        }
+        require(latency[0]==latency[1],"alternating paths skew PWM output intervals");
+        h.c().data[output_phase]=0;
+        std::cout<<"Timer3 PWM write including entry/vector: "<<latency[0]<<" cycles on both paths\n";
+    });
+    h.test("all midpoint pairs and output restart",[&]{
+        h.command(6); h.quiet();
+        require(h.c().data[held_sample]==128 && h.c().data[midpoint]==128 && h.c().data[output_phase]==0,
+            "enable did not prime interpolation from neutral duty");
+        auto regs=h.c().data; auto sp=h.c().sp();
+        for(unsigned previous=0;previous<256;++previous)
+        for(unsigned next=0;next<256;++next) {
+            for(unsigned ch=0;ch<4;++ch) {
+                h.word(controls+3*ch,0); h.control(ch,0);
+            }
+            h.control(3,unsigned(std::abs(int(next)-128)));
+            h.c().data[noise]=next<128 ? 1 : 2;
+            h.c().data[held_sample]=uint8_t(previous);
+            h.synth_sample();
+            require(h.c().data[held_sample]==next,"endpoint construction wrong");
+            for(unsigned r=0;r<32;++r)
+                require(h.c().data[r]==regs[r],"interpolation ISR corrupted registers");
+            require(h.c().sp()==sp,"interpolation ISR leaked native stack");
+        }
+        h.routine("timer3_compa_isr",true);
+        require(h.c().data[output_phase]==1,"restart test did not stop between endpoints");
+        h.command(7); h.command(6); h.quiet();
+        require(h.c().data[held_sample]==128 && h.c().data[midpoint]==128 && h.c().data[output_phase]==0,
+            "disable/enable retained a stale sample or output phase");
+        std::cout<<"interpolation reference: all 65536 previous/current duty pairs passed\n";
+    });
     h.test("global gain command and SFX",[&]{
         h.play({0xa2,15,0,255,60,64,67,36,7,11,15,19,255,0,2});
         h.play({0xa2,4,0,0x44,69,31,255,0,1},0x21000,true);
@@ -373,13 +445,13 @@ void synthesis(harness& h) {
                 require(h.c().data[notes+byte]==latch[notes+byte],"master gain changed desired state");
             require(h.word(music+10)==musicwait && h.word(sfx+10)==effectwait,
                 "master gain changed sequencing time");
-            h.routine("timer3_compa_isr",true);
-            require(h.c().timer4.ocrNa_next==std::clamp(128+mix,0,255),
+            h.synth_sample();
+            require(h.c().data[held_sample]==std::clamp(128+mix,0,255),
                 "gain did not apply to combined music and SFX");
         }
         h.command(5,0); h.command(10,69u<<16,31);
-        h.routine("timer3_compa_isr",true);
-        require(h.amplitude(0)==0 && h.c().data[sfxnotes+1]==31 && h.c().timer4.ocrNa_next==128,
+        h.synth_sample();
+        require(h.amplitude(0)==0 && h.c().data[sfxnotes+1]==31 && h.c().data[held_sample]==128,
             "zero global gain failed to mute direct tone");
         h.command(5,32);
     });
@@ -493,9 +565,9 @@ void synthesis(harness& h) {
             auto duty=std::clamp(128+mix,0,255);
             clippedlow+=mix < -128; clippedhigh+=mix > 127;
             h.c().data[reg::addr::TC4H]=3; // ISR must clear the shared high latch
-            auto t=h.routine("timer3_compa_isr",true)+7;
+            auto t=h.synth_sample();
             h.isrmin=std::min(h.isrmin,t); h.isrmax=std::max(h.isrmax,t);
-            require(h.c().timer4.ocrNa_next==duty,"saturation disagrees with signed reference");
+            require(h.c().data[held_sample]==duty,"saturation disagrees with signed reference");
             for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"gain ISR corrupted registers");
             require(h.c().data[reg::addr::SREG]==0xd5,"gain ISR corrupted SREG");
             require(h.c().sp()==sp,"gain ISR leaked native stack");
@@ -506,8 +578,8 @@ void synthesis(harness& h) {
             h.control(ch,255); h.word(phases+2*ch,ch==2 ? 0x8000 : 0);
         }
         h.c().data[noise]=1;
-        h.routine("timer3_compa_isr",true);
-        require(h.c().timer4.ocrNa_next==126,"mix clipped before contributions cancelled");
+        h.synth_sample();
+        require(h.c().data[held_sample]==126,"mix clipped before contributions cancelled");
         h.c().data[2]=zero;
         std::cout<<"saturation reference: 2029 signed mixes, "<<clippedlow
             <<" low and "<<clippedhigh<<" high saturations passed\n";
@@ -538,9 +610,9 @@ void synthesis(harness& h) {
             if(path) seed=uint8_t((seed>>1)^((seed&1)?0xb8:0));
             mix+=(seed&1) ? -int(noiseamp) : int(noiseamp);
             auto duty=std::clamp(128+mix,0,255);
-            auto t=h.routine("timer3_compa_isr",true)+7;
+            auto t=h.synth_sample();
             h.isrmin=std::min(h.isrmin,t); h.isrmax=std::max(h.isrmax,t);
-            require(h.c().timer4.ocrNa_next==duty,"mixed waveform gain/saturation wrong");
+            require(h.c().data[held_sample]==duty,"mixed waveform gain/saturation wrong");
             require(h.c().data[noise]==seed,"gain changed LFSR update");
             for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"mixed ISR corrupted registers");
             require(h.c().data[reg::addr::SREG]==0xd5,"mixed ISR corrupted SREG");
@@ -564,9 +636,9 @@ void synthesis(harness& h) {
                 auto target=uint16_t((position<<10)|((position&1)?1023:0));
                 h.word(phases+2*ch,uint16_t(target-1097));
                 auto contribution=int(std::floor((sample(wave,position)*2*int(amp)+128.)/256.));
-                auto t=h.routine("timer3_compa_isr",true)+7;
+                auto t=h.synth_sample();
                 h.isrmin=std::min(h.isrmin,t); h.isrmax=std::max(h.isrmax,t);
-                require(h.c().timer4.ocrNa_next==128+contribution,"table sample/scaling mismatch");
+                require(h.c().data[held_sample]==128+contribution,"table sample/scaling mismatch");
                 require(h.word(phases+2*ch)==target,"phase/sample indexing mismatch");
               }
             }
@@ -592,17 +664,17 @@ void synthesis(harness& h) {
                 if(i==3) { if(sum>65535) lfsr=uint8_t((lfsr>>1)^((lfsr&1)?0xb8:0)); duty+=(lfsr&1)?-amp[i]:amp[i]; }
                 else duty+=(phase[i]&0x8000)?-amp[i]:amp[i];
             }
-            auto t=h.routine("timer3_compa_isr",true)+7;
+            auto t=h.synth_sample();
             h.isrmin=std::min(h.isrmin,t); h.isrmax=std::max(h.isrmax,t);
             require(duty>=4 && duty<=252,"mix overflow");
-            require(h.c().timer4.ocrNa_next==duty,"assembly sample disagrees with reference");
+            require(h.c().data[held_sample]==duty,"assembly sample disagrees with reference");
             require(h.c().data[noise]==lfsr,"LFSR mismatch");
             for(unsigned i=0;i<32;++i) require(h.c().data[i]==regs[i],"synth ISR corrupted registers");
             require(h.c().sp()==sp,"synth ISR stack leak");
         }
         for(int i=0;i<4;++i) require(h.word(phases+2*i)==phase[i],"phase wrap mismatch");
         for(int i=0;i<4;++i) h.c().data[controls+3*i+2]=0;
-        h.routine("timer3_compa_isr",true); require(h.c().timer4.ocrNa_next==128,"silence wrong");
+        h.synth_sample(); require(h.c().data[held_sample]==128,"silence wrong");
         h.c().data[2]=zero;
     });
     h.test("note tuning",[&]{
@@ -636,7 +708,7 @@ void automatic(harness& h) {
             h.c().data[24]=0; h.c().data[25]=0x30; h.c().data[26]=2;
             h.c().data[0]=64; h.c().data[1]=0; h.word(30,0x100);
             h.c().st(reg::addr::TCNT3H,0);
-            h.c().st(reg::addr::TCNT3L,uint8_t(255-phase));
+            h.c().st(reg::addr::TCNT3L,uint8_t(127-phase));
             h.c().st(reg::addr::TIFR3,2);
             h.c().st(reg::addr::TCCR3B,10); h.c().st(reg::addr::TIMSK3,2);
             auto dest=h.sym("primary_table");
@@ -740,7 +812,7 @@ void demo(char** args) {
     harness h(args,false);
     auto begin=h.c().cycle_count;
     uint64_t last=begin, maxgap=0;
-    unsigned frames=0, samples=0, minsp=0xaff;
+    unsigned frames=0, samples=0, synthesized=0, minsp=0xaff;
     bool effect=false, paused=false, resumed=false;
     while(h.c().cycle_count-begin<16000000) {
         auto ms=(h.c().cycle_count-begin)/16000;
@@ -752,6 +824,7 @@ void demo(char** args) {
         }
         if(h.c().pc==h.sym("sys_display_impl")) ++frames;
         if(h.c().pc==h.sym("timer3_compa_isr")) ++samples;
+        if(h.c().pc==h.sym("timer3_synthesis")) ++synthesized;
         minsp=std::min(minsp,unsigned(h.c().sp()));
         effect|=h.c().data[sfx+12]==1;
         paused|=h.c().data[music+12]==2;
@@ -759,11 +832,13 @@ void demo(char** args) {
         h.tick();
     }
     require(frames>=55,"demo failed to render at its configured frame rate");
-    require(samples>=7750 && samples<=7820,"demo sample clock lost interrupts");
+    require(samples>=15500 && samples<=15640,"demo sample clock lost interrupts");
+    require(synthesized>=7750 && synthesized<=7820,"demo synthesis clock changed");
     require(effect && paused && resumed,"demo button controls failed");
-    require(minsp>=0xaca,"demo native stack collided with private workspace");
+    require(minsp>=scratch_end,"demo native stack collided with private workspace");
     require(h.c().data[music+12]==1,"demo music did not continue automatically");
-    std::cout<<"animated demo: "<<frames<<" frames, "<<samples<<" samples, service gap "
+    std::cout<<"animated demo: "<<frames<<" frames, "<<samples<<" outputs, "
+        <<synthesized<<" synthesis samples, service gap "
         <<maxgap/16000.<<" ms, native stack "<<0xb00-minsp<<" bytes; SFX/pause/resume passed\n";
 }
 void formatter(char** args) {
@@ -775,8 +850,52 @@ void formatter(char** args) {
         h.tick(true);
     }
     require(h.c().autobreaks.test(AB_BREAK),"audio formatter workload did not finish");
-    require(minsp>=0xaca,"formatter/audio interrupts collided with private workspace");
+    require(minsp>=scratch_end,"formatter/audio interrupts collided with private workspace");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
+}
+// Optional listening/analysis capture uses the actual timers, sequencer and
+// emulator PWM audio path. It also accepts the pre-interpolation firmware.
+void capture(char** args) {
+    char* firmware_args[]{args[0],args[2],args[3],args[4]};
+    harness h(firmware_args,true,0);
+    std::ifstream song_file(args[5],std::ios::binary);
+    require(bool(song_file),"capture song unavailable");
+    std::vector<uint8_t> song((std::istreambuf_iterator<char>(song_file)),{});
+    h.command(11,64);
+    h.play(song,0x20000,false,0);
+    h.command(6);
+    h.c().st(reg::addr::TCCR0B,3); h.c().st(reg::addr::TIMSK0,2);
+    h.c().data[pending]=0; h.c().data[0xa16]=0;
+    h.routine("interp_delay_17");
+    h.c().pc=uint16_t(h.sym("seek_and_dispatch_func"));
+    auto begin=h.c().cycle_count;
+    h.c().sound_buffer.clear();
+    h.c().sound_prev_cycle=begin;
+    h.c().sound_cycle=0;
+    auto seconds=std::stoul(args[7]);
+    require(seconds>0 && seconds<=60,"capture duration must be 1..60 seconds");
+    unsigned interrupts=0;
+    while(h.c().cycle_count-begin<seconds*16000000ull) {
+        if(h.c().pc==h.sym("timer3_compa_isr")) ++interrupts;
+        h.tick();
+    }
+    h.c().update_sound();
+    auto const& samples=h.c().sound_buffer;
+    std::ofstream out(args[6],std::ios::binary);
+    require(bool(out),"cannot create capture WAV");
+    auto u16=[&](unsigned value) {
+        out.put(char(value)); out.put(char(value>>8));
+    };
+    auto u32=[&](unsigned value) { u16(value); u16(value>>16); };
+    unsigned bytes=unsigned(samples.size()*2);
+    out.write("RIFF",4); u32(36+bytes); out.write("WAVEfmt ",8);
+    u32(16); u16(1); u16(1); u32(50000); u32(100000); u16(2); u16(16);
+    out.write("data",4); u32(bytes);
+    // Identical fixed gain for both captures; no per-file normalization.
+    for(auto sample : samples) u16(unsigned(std::clamp(int(sample)*16,-32768,32767)));
+    require(bool(out),"capture WAV write failed");
+    std::cout<<args[6]<<": "<<samples.size()<<" samples at 50000 Hz, "
+        <<interrupts<<" output interrupts\n";
 }
 void decimal_division(char** args) {
     harness h(args);
@@ -938,7 +1057,7 @@ void format_fields(char** args) {
         check("%12.5d",12,5,true,program);
         check("%00012.00005d",12,5,true,program);
     }
-    require(minsp>=0xaca,"format field native stack collided with private workspace");
+    require(minsp>=scratch_end,"format field native stack collided with private workspace");
     std::cout<<"format fields: "<<cases<<" RAM/program width/precision cases passed; native stack "
         <<0xb00-minsp<<" bytes\n";
 }
@@ -965,7 +1084,7 @@ void sys_bounds(char** args) {
 }
 void float_precision(char** args) {
     harness h(args);
-    constexpr unsigned value_address=0xabc;
+    constexpr unsigned value_address=private_end+58;
     unsigned cases=0;
     for(unsigned precision=0;precision<8;++precision) {
         for(uint32_t bits : {0u,1u,0x38d1b469u,0x3f800000u,0x3fc00000u,0x7f7fffffu}) {
@@ -989,7 +1108,7 @@ void float_precision(char** args) {
 }
 void hex_fraction(char** args) {
     harness h(args);
-    constexpr unsigned digits=0xa97, conversion=0xab5, value=0xabc;
+    constexpr unsigned digits=private_end+21, conversion=private_end+51, value=private_end+58;
     unsigned cases=0;
     uint64_t minimum=10000, maximum=0;
     auto check=[&](uint32_t significand) {
@@ -1037,6 +1156,10 @@ void hex_fraction(char** args) {
 }
 int main(int argc,char** argv) {
     try {
+        if(argc==8 && std::string(argv[1])=="--capture") {
+            capture(argv);
+            return 0;
+        }
         require(argc>=4 && argc<=6,"usage: avm_audio_tests interpreter.hex interpreter.lst audio.bin [audio_demo.bin [audio_c_test.bin]]");
         decimal_division(argv);
         cset(argv);
@@ -1049,7 +1172,8 @@ int main(int argc,char** argv) {
         harness h(argv); sequence(h); synthesis(h); automatic(h);
         std::cout<<h.cases<<" native audio cases passed\n"
             <<"Timer3 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
-            <<100.*h.isrmax/2048<<"%\n"
+            <<100.*(h.isrmax+h.lightmax)/2048<<"%\n"
+            <<"Timer3 light including entry/vector: "<<h.lightmin<<".."<<h.lightmax<<" cycles\n"
             <<"observed idle service gap: "<<h.latencymax/16000.<<" ms\n";
         if(argc>=5) {
             char* demoargs[]{argv[0],argv[1],argv[2],argv[4]};

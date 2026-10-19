@@ -52,8 +52,8 @@
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
-;;     0x0A15–0x0A81  persistent audio state (109 bytes)
-;;     0x0A82–0x0AC9  aliased formatter/text or audio commit workspace
+;;     0x0A15–0x0A84  persistent audio state (112 bytes)
+;;     0x0A85–0x0ACC  aliased formatter/text or audio commit workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -93,7 +93,10 @@
 #define data_audio_cache_index       (data_audio_cache+32)
 #define data_audio_cache_length      (data_audio_cache_index+1)
 #define data_audio_cache_owner       (data_audio_cache_length+1)
-#define data_audio_end               (data_audio_cache_owner+1)
+#define data_audio_sample            (data_audio_cache_owner+1)
+#define data_audio_midpoint          (data_audio_sample+1)
+#define data_audio_output_phase      (data_audio_midpoint+1)
+#define data_audio_end               (data_audio_output_phase+1)
 
 ; Stream record offsets. Pointers are image-relative, little-endian uint24.
 #define AUDIO_START   0
@@ -105,8 +108,8 @@
 #define AUDIO_MASK   13
 #define AUDIO_TRIGGER 14
 
-.if (data_audio_end - data_audio_begin) != 109
-    .error "audio persistent SRAM must occupy 109 bytes"
+.if (data_audio_end - data_audio_begin) != 112
+    .error "audio persistent SRAM must occupy 112 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -16796,6 +16799,9 @@ audio_enable:
     sts  TC4H, ZERO
     ldi  r24, 128
     sts  OCR4A, r24
+    sts  data_audio_sample, r24
+    sts  data_audio_midpoint, r24
+    sts  data_audio_output_phase, ZERO
     sts  TCNT3H, ZERO
     sts  TCNT3L, ZERO
     ldi  r24, _BV(OCF3A)
@@ -16896,6 +16902,10 @@ timer0_audio_tick:
     sts  data_audio_ticks_pending, r0
     rjmp timer0_audio_done
 
+; Output runs at 15625 Hz; alternate interrupts synthesize at 7812.5 Hz.
+; Emit the held endpoint, prepare its successor/midpoint, then emit midpoint.
+; Both output writes have identical latency from entry, before synthesis.
+; The light path saves only r0, r20 and SREG (5 bytes including PC).
 ; Synthesis saves r0:r1, r20:r21, r26:r27, Z and SREG (11 bytes including PC).
 ; r2 may be borrowed by libm. Banks and full-byte amplitudes are separate.
 ; Signed samples are -127..127; round(sample * prepared_amplitude / 128).
@@ -16926,8 +16936,27 @@ timer3_compa_isr:
     push r0
     in   r0, SREG
     push r0
-    push r1
     push r20
+    lds  r20, data_audio_output_phase
+    tst  r20
+    breq timer3_synthesis
+    lds  r20, data_audio_midpoint
+    nop ; match the taken branch on the synthesis path
+    clr  r0
+    sts  TC4H, r0
+timer3_midpoint_write:
+    sts  OCR4A, r20
+    sts  data_audio_output_phase, r0
+    rjmp timer3_output_done
+timer3_synthesis:
+    lds  r20, data_audio_sample
+    clr  r0
+    sts  TC4H, r0
+timer3_endpoint_write:
+    sts  OCR4A, r20
+    ldi  r20, 1
+    sts  data_audio_output_phase, r20
+    push r1
     push r21
     push r26
     push r27
@@ -16973,17 +17002,20 @@ timer3_compa_isr:
     sbrs r27, 7
     ldi  r26, 255
 .Laudio_output:
-    ; TC4H is shared by every 10-bit Timer4 register; write it explicitly.
-    clr  r20
-    sts  TC4H, r20
-    sts  OCR4A, r26
+    lds  r20, data_audio_sample
+    sts  data_audio_sample, r26
+    ; Carry is the ninth bit of the unsigned duty sum. ROR divides by two.
+    add  r26, r20
+    ror  r26
+    sts  data_audio_midpoint, r26
     pop  r31
     pop  r30
     pop  r27
     pop  r26
     pop  r21
-    pop  r20
     pop  r1
+timer3_output_done:
+    pop  r20
     pop  r0
     out  SREG, r0
     pop  r0
@@ -17038,12 +17070,13 @@ audio_init_func:
     st   X, ZERO
     dec  r24
     brne 1b
-    ldi  r24, 255
+    ldi  r24, 127 ; 16 MHz / 8 / 128 = 15625 output interrupts per second
     sts  OCR3AL, r24
     cbi  PORTC, 6
     cbi  PORTC, 7
     cbi  DDRC, 6
     cbi  DDRC, 7
+    ldi  r24, 255 ; Timer4 retains its 250 kHz carrier and 8-bit duty range
     sts  OCR4C, r24
     ldi  r24, 128
     sts  OCR4A, r24

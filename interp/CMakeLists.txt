@@ -50,6 +50,35 @@ add_custom_target(avm_interpreter
     DEPENDS ${AVM_INTERPRETER_OUTPUTS}
 )
 
+# FX-C uses HWB/PE2 for serial-flash chip select instead of SDA/PD1.
+set(AVM_INTERPRETER_FXC_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/fxc")
+file(GENERATE OUTPUT "${AVM_INTERPRETER_FXC_BUILD_DIR}/preset.asm"
+    CONTENT "#define AVM_DEVICE_ARDUBOY_FXC\n#include \"${AVM_INTERPRETER_SOURCE}\"\n")
+set(AVM_INTERPRETER_FXC_OUTPUTS)
+foreach(extension o elf map lst hex)
+    list(APPEND AVM_INTERPRETER_FXC_OUTPUTS
+        "${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.${extension}")
+endforeach()
+add_custom_command(
+    OUTPUT ${AVM_INTERPRETER_FXC_OUTPUTS}
+    COMMAND "${CMAKE_COMMAND}"
+        "-DAVR_GCC:FILEPATH=${AVM_AVR_GCC}"
+        "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
+        "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
+        "-DSOURCE:FILEPATH=${AVM_INTERPRETER_FXC_BUILD_DIR}/preset.asm"
+        "-DOUTPUT_OBJECT:FILEPATH=${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.o"
+        "-DOUTPUT_ELF:FILEPATH=${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.elf"
+        "-DOUTPUT_MAP:FILEPATH=${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.map"
+        "-DOUTPUT_LISTING:FILEPATH=${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.lst"
+        "-DOUTPUT_HEX:FILEPATH=${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.hex"
+        "-DMAX_INTERP_SIZE:STRING=${AVM_INTERPRETER_MAX_SIZE}"
+        -P "${AVM_INTERPRETER_BUILD_CMAKE}"
+    DEPENDS "${AVM_INTERPRETER_SOURCE}" "${AVM_INTERPRETER_BUILD_CMAKE}"
+        "${AVM_INTERPRETER_FXC_BUILD_DIR}/preset.asm"
+    COMMENT "Building the AVR AVM interpreter for Arduboy FX-C"
+    VERBATIM)
+add_custom_target(avm_interpreter_fxc DEPENDS ${AVM_INTERPRETER_FXC_OUTPUTS})
+
 set(AVM_SDK_INTERPRETER_HEX "${AVM_SDK_BUILD_BIN}/avm/interp.hex")
 add_custom_command(
     OUTPUT "${AVM_SDK_INTERPRETER_HEX}"
@@ -58,10 +87,19 @@ add_custom_command(
             "${AVM_INTERPRETER_HEX}" "${AVM_SDK_INTERPRETER_HEX}"
     DEPENDS avm_interpreter "${AVM_INTERPRETER_HEX}"
     VERBATIM)
-add_custom_target(avm_interpreter_sdk DEPENDS "${AVM_SDK_INTERPRETER_HEX}")
+set(AVM_SDK_INTERPRETER_FXC_HEX "${AVM_SDK_BUILD_BIN}/avm/interp.fxc.hex")
+add_custom_command(
+    OUTPUT "${AVM_SDK_INTERPRETER_FXC_HEX}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${AVM_SDK_BUILD_BIN}/avm"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.hex" "${AVM_SDK_INTERPRETER_FXC_HEX}"
+    DEPENDS avm_interpreter_fxc "${AVM_INTERPRETER_FXC_BUILD_DIR}/interp.hex"
+    VERBATIM)
+add_custom_target(avm_interpreter_sdk
+    DEPENDS "${AVM_SDK_INTERPRETER_HEX}" "${AVM_SDK_INTERPRETER_FXC_HEX}")
 add_dependencies(avm_toolchain avm_interpreter_sdk)
 add_dependencies(avm_sdk_tools avm_interpreter_sdk)
-install(FILES "${AVM_SDK_INTERPRETER_HEX}"
+install(FILES "${AVM_SDK_INTERPRETER_HEX}" "${AVM_SDK_INTERPRETER_FXC_HEX}"
     DESTINATION bin/avm COMPONENT avm-sdk)
 
 set(AVM_INTERPRETER_BOUNDARY_METADATA

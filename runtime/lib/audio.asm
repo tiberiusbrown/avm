@@ -9,6 +9,17 @@
     sys 0x38
     ret
     .size \name, .-\name
+    ; These SYS wrappers are leaves and allocate no guest stack space.
+    .pushsection .stack_sizes,"o",@progbits,.text
+    .3byte \name
+    .uleb128 0
+    .popsection
+    .pushsection .avm.stackcalls,"o",@progbits,.text
+    .3byte \name
+    .3byte 0
+    .short 0
+    .byte 8
+    .popsection
 .endm
 audio_api avm_audio_play, 0
 audio_api avm_audio_sfx, 1

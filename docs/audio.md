@@ -210,6 +210,12 @@ are relative to note onset and may use ms, s, ticks, or musical whole-note
 fractions such as `1/16`. Times increase strictly and the first point is at zero.
 `curve linear` is the default; `curve step` gives discrete changes.
 
+For best sound quality, prefer envelopes that start and end at 0% amplitude.
+Start with `points 0ms:0%` and include an explicit release to `0%`, as in the
+`soft` envelope above. A short attack and release reduce abrupt amplitude
+changes and audible clicks. Allow the release to finish before the next note
+or loop boundary cuts it off.
+
 Release points are relative to note-off, begin after zero, and must end at
 zero amplitude. Release starts from the contour's current level, including
 when a short note ends during attack. A subsequent note cancels the old tail;

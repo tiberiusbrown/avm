@@ -4,15 +4,61 @@ Measured with the repository's Ardens AVR emulator, unmerged AVR instructions,
 16 MHz CPU, and a CMake `RelWithDebInfo` build. These are instruction-cycle
 measurements and emulated integration results, not oscilloscope measurements.
 
-Audio uses Timer1 COMPA at 15,625 Hz, with 7,812.5 Hz synthesis; Timer0
-retains its separate 1 kHz clock. The Timer3-labelled measurements below are
-historical measurements of the same synthesis/output instruction paths.
-See the [RPG timing investigation](../projects/avm_rpg/docs/audio_timing.md)
-for the Timer3, Timer1 and unified Timer0 experiment results. Timer1 was selected
-because it removes periodic Timer0 collisions with lower CPU cost than the
-unified experiment.
+Audio uses Timer1 COMPA at 7,812.5 Hz by default, with runtime-selectable
+15,625 Hz synthesis. Timer0 retains its separate 1 kHz clock. The smoothed
+Timer1, Timer3 and unified Timer0 measurements below are historical.
 
-## Raw increments and compact SFX (current)
+## Unsmoothed 8/16 kHz experiment (current)
+
+Every Timer1 interrupt writes the held sample before computing its successor.
+There is no midpoint path or rate-dependent synthesis instruction. Foreground
+commit doubles canonical 15,625 Hz increments for the default 7,812.5 Hz mode,
+with saturation at 65535. A4 music and C1/C2/C3 effects replace the preceding
+formats so old-basis assets cannot silently play at the wrong pitch. Encoded
+asset lengths and event-read sizes are unchanged; all headers were regenerated.
+
+| Resource | Smoothed A3 | Unsmoothed A4 |
+| --- | ---: | ---: |
+| Native firmware `.text` | 28972 B | **29008 B (+36)** |
+| Bootloader headroom | 724 B | **688 B** |
+| Persistent audio SRAM | 82 B | **81 B (-1)** |
+| Native stack allowance above formatter/text scratch | 81 B | **82 B** |
+| Persistent pending packet, included above | 16 B | **16 B** |
+| Ordinary synthesis, including entry/vector | 200..207 cycles | **186..193 cycles** |
+| Midpoint output, including entry/vector | 41 cycles | Removed |
+| Worst ordinary ISR CPU at 7,812.5 Hz synthesis | 12.1094% | **9.4238%** |
+| Worst ordinary ISR CPU at 15,625 Hz synthesis | n/a | **18.8477%** |
+| PWM store after compare, excluding acceptance delay | 26 cycles | **21 cycles** |
+| Measured four-voice pending handoff | 269 cycles | **255 cycles** |
+
+The pending copier still adds 69 cycles. The two interpolation bytes were
+replaced by one rate byte; the held sample remains. The guest MIDI table is
+still 144 bytes and is linked only by `avm_audio_tone`. Its maximum rounding
+error is now **4.05126 cents**, reflecting the common 15,625 Hz encoding basis.
+
+Stopped-timer services in the default 8 kHz mode measure 885 cycles for a
+one-channel pitch/control event, 1047 for four channels, 947 for four controls,
+876 for pitch off, 508 for Continue, and 98 for a sparse countdown. The raw
+music event fetch remains **348 cycles**, including the fourteen-byte burst.
+
+Validation includes the existing sample/gain/noise references, rate scaling and
+overflow boundaries, repeated changes without canonical-pitch loss, preserved
+phases/state/ownership, pending-packet races, stopped and IRQ-disabled switches,
+and guest MIDI conversion. Startup and live-switch alignment cover **32000
+rate/counter/prescaler combinations**. The audio demo starts at 8 kHz; Up toggles
+8/16 kHz while music, effects, pause/resume and animation continue. The fixed
+PWM-first write and the sample calculations are identical at both rates.
+
+All 471 interpreter tests, 41 native audio cases, 23 score compiler tests,
+runtime checks, RPG guest integration and all ten RPG CTests pass. The full
+8 kHz RPG timing workload records **430469 normal** and **62500 FX-C** output
+interrupts. Extra delay is **0..7 cycles**, p99 4 cycles, with **zero delays
+of 10 or more cycles** in either package. PWM interval error is -6..+7 cycles.
+See the [recorded timing data](../projects/avm_rpg/docs/audio_timing_data/unsmoothed.json).
+These checks establish timing and synthesis correctness; listening on hardware
+is still needed to judge the removal of smoothing.
+
+## Raw increments and compact SFX (preceding smoothed implementation)
 
 A3 music stores little-endian uint16 phase increments (zero=off). B1/B2/B3
 one-shot effects have a single-byte declaration header and compact two-slot
@@ -64,8 +110,8 @@ rests, replacement/release, non-semitone uint16 pitches and phase continuity,
 all 256 MIDI arguments on all four direct-tone channels, interrupted staging,
 back-to-back acknowledgments, scratch reuse, >64 KB C/C++ assets, and full
 waveform/gain/noise/interpolation references. Earlier sections below retain
-historical A1/A2 measurements; the resource table above is authoritative for
-the current implementation.
+historical A1/A2 measurements; the resource table in this section describes
+the preceding smoothed implementation.
 
 ## Temporary event bursts (preceding A2 implementation)
 

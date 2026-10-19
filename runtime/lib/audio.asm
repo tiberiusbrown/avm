@@ -35,3 +35,4 @@ audio_api avm_audio_status, 9
 audio_api __avm_audio_tone_increment, 10
 audio_api avm_audio_music_volume, 11
 audio_api avm_audio_sfx_volume, 12
+audio_api avm_audio_rate, 13

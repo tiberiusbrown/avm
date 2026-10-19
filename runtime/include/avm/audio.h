@@ -5,11 +5,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Playback advances automatically. A3 music ends with End or Loop. B1..B3
+/* Playback advances automatically. A4 music ends with End or Loop. C1..C3
    one-shot SFX ends with End and overrides only declared tonal (voice 2) / noise
    (voice 3) slots. Arrange melody on 0, primary accompaniment on 1, secondary
    accompaniment on 2. Undeclared SFX slots leave music audible; declared slots
-   retain ownership through rests. Raw uint16 phase increments preserve phase.
+   retain ownership through rests. Raw uint16 phase increments use 15625 Hz
+   regardless of the selected synthesis rate. Pitch updates preserve phase.
    The reader uses 24-bit cursors and may read ahead past the terminator. */
 void avm_audio_play(void const AVM_PROGMEM *song);
 void avm_audio_sfx(void const AVM_PROGMEM *effect);
@@ -26,6 +27,12 @@ void avm_audio_music_volume(uint8_t volume);
 void avm_audio_sfx_volume(uint8_t volume);
 void avm_audio_enable(void);
 void avm_audio_disable(void);
+enum { AVM_AUDIO_RATE_8KHZ = 0, AVM_AUDIO_RATE_16KHZ = 1 };
+/* Default 8 kHz (7812.5 Hz); 16 kHz is 15625 Hz. No output smoothing.
+   Changing rate preserves playback and oscillator phase. At 8 kHz, prepared
+   increments are doubled, saturating at 65535. Other rate values are ignored.
+   The selection persists across stop, pause and disable/enable. */
+void avm_audio_rate(uint8_t rate);
 void avm_audio_stop_sfx(void);
 /* bit 0=music playing, bit 1=music paused, bit 2=SFX playing. */
 uint8_t avm_audio_status(void);

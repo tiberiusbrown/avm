@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile AVM scores (.avms) to A3 music or compact B1..B3 sound effects."""
+"""Compile AVM scores (.avms) to A4 music or compact C1..C3 sound effects."""
 import argparse
 import ast
 import math
@@ -47,16 +47,16 @@ def emit_event(output, ticks, payload):
 
 
 def note_increment(value):
-    """Convert a score/MIDI note to the synthesizer's uint16 phase increment."""
+    """Convert a score/MIDI note to a uint16 increment at canonical 15625 Hz."""
     note = note_number(value)
-    return 0 if note == 0x80 else round(440 * 2 ** ((note - 69) / 12) * 65536 / 7812.5)
+    return 0 if note == 0x80 else round(440 * 2 ** ((note - 69) / 12) * 65536 / 15625)
 
 
 def _encode_events(mask, events, tail_ticks, loop, sfx=False):
     """Encode resolved updates. An explicit increment permits non-semitone pitches."""
     if sfx and (loop or not mask or mask & ~12):
         raise ValueError("SFX must be one-shot and declare only channels 2 and/or 3")
-    output = bytearray([0xB0 | (mask >> 2)]) if sfx else bytearray([0xA3, mask])
+    output = bytearray([0xC0 | (mask >> 2)]) if sfx else bytearray([0xA4, mask])
     notes, volumes, waves = [0] * 4, [24] * 4, [0] * 4
     first = True
     for ticks, updates in events:
@@ -517,7 +517,7 @@ def score_events(score):
 
 
 def compile_source(source, filename="<score>", automation_ms=None):
-    """Compile note notation and automation to A3 music or B1..B3 SFX bytes."""
+    """Compile note notation and automation to A4 music or C1..C3 SFX bytes."""
     score = ScoreParser(source, filename).parse()
     interval = score.automation_ms if automation_ms is None else Fraction(automation_ms)
     if interval < 4 or interval % 4:
@@ -646,7 +646,7 @@ def main():
         else:
             args.output.write_bytes(data)
         if args.stats:
-            print(f"{args.source}: {len(data)} bytes ({'SFX' if data[0] != 0xA3 else 'A3'})", file=sys.stderr)
+            print(f"{args.source}: {len(data)} bytes ({'SFX' if data[0] != 0xA4 else 'A4'})", file=sys.stderr)
     except (ValueError, KeyError, TypeError, OSError) as error:
         parser.error(str(error))
 

@@ -4,10 +4,10 @@
 #include <string.h>
 
 static const uint8_t AVM_PROGMEM song[] = {
-    0xa3,15, 0,15,0x93,0x08,0xcd,0x0a,0xd8,0x0c,0x25,0x02, 24,1,0x9f,0x09, 24,0,2
+    0xa4,15, 0,15,0x49,0x04,0x66,0x05,0x6c,0x06,0x12,0x01, 24,1,0xd0,0x04, 24,0,2
 };
 static const uint8_t AVM_PROGMEM effect[] = {
-    0xb3, 0,3,0x4b,0x22,0x49,0x04, 7,0,1
+    0xc3, 0,3,0x25,0x11,0x25,0x02, 7,0,1
 };
 
 int avm_test_main(void) {
@@ -26,12 +26,14 @@ int avm_test_main(void) {
         if(length<4 || memcmp(text+length-4,"0.25",4)!=0) return 3;
     }
     if(avm_audio_status()!=1 || avm_millis()==start) return 4;
+    avm_audio_rate(AVM_AUDIO_RATE_16KHZ);
     avm_audio_sfx(effect);
     if(avm_audio_status()!=5) return 5;
     avm_audio_pause();
     if(avm_audio_status()!=6) return 6;
     avm_audio_stop_sfx();
     if(avm_audio_status()!=2) return 7;
+    avm_audio_rate(AVM_AUDIO_RATE_8KHZ);
     avm_audio_resume();
     if(avm_audio_status()!=1) return 8;
     avm_audio_volume(16);

@@ -18,7 +18,7 @@ is passed and there is no 65535-byte song limit.
 
 `avm_audio_stop`, `avm_audio_pause`, `avm_audio_resume`, `avm_audio_volume`,
 `avm_audio_music_volume`, `avm_audio_sfx_volume`, `avm_audio_stop_sfx`,
-`avm_audio_enable`, and `avm_audio_disable` provide controls.
+`avm_audio_enable`, `avm_audio_disable`, and `avm_audio_rate` provide controls.
 Both masters accept 0..255, with 0=mute, 32=100%, and 255=796.875%.
 `avm_audio_volume` sets both; the music and SFX setters change only their own
 master. Direct tones use SFX gain. Both default to **128 (400%)** and retain their values
@@ -71,23 +71,28 @@ Build `avm_audio_demo` with CMake, configuration `RelWithDebInfo`.
 The package is `projects/audio_demo/audio_demo.arduboy`; the development image
 is `projects/audio_demo/build/audio_demo.bin`. It renders
 two moving rectangles at 60 Hz. A triggers a two-channel effect; B toggles
-pause. Its generated audio headers are checked in alongside the `.avms` scores;
+pause. Up toggles 8/16 kHz synthesis, with the current rate displayed.
+Its generated audio headers are checked in alongside the `.avms` scores;
 `audio_demo_assets` regenerates them before a rebuild. The directory also
 supports standalone CMake builds with an installed SDK; see its
 [README](../projects/audio_demo/README.md). There is no update call in
 `setup`/`loop`. Firmware is `interp/build/interp.hex`.
 
-## Binary formats: A3 music and compact B1..B3 SFX
+## Binary formats: A4 music and compact C1..C3 SFX
 
 All pitches are **little-endian uint16 phase increments**, with zero meaning
-off. The synthesizer adds each increment to its uint16 phase at 7812.5 Hz:
-`increment = round(frequency_Hz * 65536 / 7812.5)`. Resolution is approximately
-0.119209 Hz. All uint16 values are accepted; tonal frequencies above Nyquist
-alias, so assets should keep tonal increments below 32768. Noise uses phase
+off. Values are encoded for **15625 Hz**, in both output modes:
+`increment = round(frequency_Hz * 65536 / 15625)`. Resolution is approximately
+0.238419 Hz. At 8 kHz the foreground doubles increments, saturating values
+above 32767 to 65535 instead of wrapping. Desired pitches remain unscaled, so
+repeated rate changes do not lose precision. All uint16 values are accepted;
+keep tonal increments below 16384 for the 8 kHz Nyquist limit, or below 32768
+when using only 16 kHz. Harmonics can still alias. Noise uses phase
 overflow to clock its LFSR. The interpreter contains no MIDI table or pitch
 conversion. The score compiler still accepts C1..B6 notation and performs the
 conversion offline; `_encode_events` also accepts explicit `increment` updates
-for arbitrary pitches and future pitch automation.
+for arbitrary pitches and future pitch automation. A3/B1..B3 assets used the
+old 7812.5 Hz basis and are rejected; regenerate them for this experiment.
 
 Pitch and control changes **preserve phase**, including repeated notes and
 loop boundaries. Phase is initialized at interpreter startup. Increment zero
@@ -95,7 +100,7 @@ freezes the oscillator and mutes its output. Volume zero mutes without stopping
 a nonzero increment. Use envelopes that reach zero at note boundaries to
 reduce audible clicks. No retrigger flags or phase-reset packets are stored.
 
-Music begins with `A3, ownership_mask`, where the mask is nonzero and uses
+Music begins with `A4, ownership_mask`, where the mask is nonzero and uses
 bits 0..3. All declared voices start off, at retained volume 24 with square
 selected. Each event starts with `delta, change_mask`:
 
@@ -108,16 +113,16 @@ Selected pitches follow in ascending voice order, then selected controls in
 ascending voice order. A control uses bits 4..0 for volume 0..31 and bits 6..5
 for waveform: 0=square, 1=triangle, 2=sawtooth, 3=sine. Bit 7 is ignored.
 Voice 3 ignores waveform bits and generates noise. For example,
-`00 11 6B 0E 67` waits one tick, then sets voice 0 to increment 3691 (A4)
+`00 11 35 07 67` waits one tick, then sets voice 0 to increment 1845 (A4)
 with sine at volume 7. Mask `88` changes both the noise rate and volume.
 
 SFX begins with **one header byte**:
 
 | Header | Declared slots / ownership |
 | --- | --- |
-| `B1` | Tonal slot -> voice 2 |
-| `B2` | Noise slot -> voice 3 |
-| `B3` | Both slots -> voices 2 and 3 |
+| `C1` | Tonal slot -> voice 2 |
+| `C2` | Noise slot -> voice 3 |
+| `C3` | Both slots -> voices 2 and 3 |
 
 There is no additional channel mask or route table. Each SFX event starts with
 `delta, update_flags`; only four flag bits are valid:
@@ -131,7 +136,7 @@ There is no additional channel mask or route table. Each SFX event starts with
 
 Payload order is tonal pitch, noise pitch, tonal control, noise control,
 omitting fields whose bits are clear. Updates outside declared slots are
-malformed. For example, `B1 00 05 85 0E 6C` declares tonal-only ownership,
+malformed. For example, `C1 00 05 85 0E 6C` declares tonal-only ownership,
 waits one tick, then selects increment 3717 with sine at volume 12. A complete
 two-slot update is eight bytes including delta and flags; a complete music
 update is fourteen bytes. Unchanged controls/pitches need no repeated payload.
@@ -165,7 +170,7 @@ addressing uses the same modulo-24-bit page addition as F0 program loads.
 ## Asset compiler
 
 `tools/avm_music.py` uses Python's standard library only. `.avms` scores compile
-to A3 music or compact B1..B3 SFX, with five-bit channel volumes:
+to A4 music or compact C1..C3 SFX, with five-bit channel volumes:
 
 ```sh
 python tools/avm_music.py projects/audio_demo/music.avms song.bin --stats
@@ -280,11 +285,19 @@ split into positive-time Continue records in the binary output.
 
 ## Timer and register allocation
 
-Timer1: CTC, `TCCR1A=0`, `TCCR1B=WGM12|CS11`, prescaler 8, `OCR1A=127`:
-16 MHz / 8 / 128 = **15625 Hz output**. Alternate interrupts synthesize at
-**7812.5 Hz**. Note increments and the output interpolation retain their
-original rates. Timer1 COMPA (vector 17) wins pending interrupt arbitration
-over Timer0 COMPA (vector 21); an already running ISR is not preempted.
+`avm_audio_rate(AVM_AUDIO_RATE_8KHZ)` selects **7812.5 Hz** output and
+synthesis (the default). `AVM_AUDIO_RATE_16KHZ` selects **15625 Hz**. Other
+values are ignored. The selection persists across stop, pause and disable.
+The wrapper uses SYS `0x38`, command 13 in r7, with the rate in r4 low byte.
+It can be set before output starts or changed during playback. Timing,
+phases, LFSR state, gain and ownership are preserved. A switch can still
+produce a transient because the sampling grid and held-sample duration change.
+
+Timer1: CTC, `TCCR1A=0`, `TCCR1B=WGM12|CS11`, prescaler 8. `OCR1A=255`
+gives 16 MHz / 8 / 256 = **7812.5 Hz**; `OCR1A=127` gives **15625 Hz**.
+Every interrupt synthesizes one sample. Timer1 COMPA (vector 17) wins pending
+interrupt arbitration over Timer0 COMPA (vector 21); an already running ISR
+is not preempted.
 Timer3 is stopped and masked, with its speaker-pin output ownership cleared.
 Startup clears the Timer0 and Timer1 power gates before configuring them.
 
@@ -296,17 +309,12 @@ millisecond frame scheduler retain their original behavior. The experimental
 See the [timing investigation](../projects/avm_rpg/docs/audio_timing.md) for
 measured PWM jitter and the performance comparison.
 
-The synthesis interrupt first outputs the preceding endpoint, then computes
-the next endpoint and their unsigned midpoint. The intervening light interrupt
-outputs that midpoint without advancing phases or LFSR. Both PWM writes occur
-at the same instruction offset from interrupt entry; synthesis duration does
-not skew alternating output intervals. The midpoint uses the ninth addition
-bit before shifting, so duties spanning 0..255 cannot overflow. Enable resets
-both held duties to neutral 128 and starts with the synthesis path.
-This is twofold linear output interpolation, with 64 us additional latency
-relative to the former held output. It reduces spectral images but does not
-remove harmonics already aliased at the synthesis rate or improve the
-64-entry oscillator lookup. No samples are read from FX in either ISR path.
+The synthesis interrupt first outputs the preceding sample, then computes its
+successor. The PWM write completes 21 CPU cycles after the compare deadline
+plus interrupt acceptance delay, before any pending-control copy or synthesis.
+There is no smoothing, midpoint sample, or rate-dependent ISR branch. Enable
+primes the held sample to neutral duty 128. Timer4 holds each sample until the
+next write. No samples are read from FX in the ISR.
 
 Timer4: 8-bit fast PWM (`PWM4A=1`, `WGM41:0=0`), `COM4A1:0=01` connects both
 complementary outputs, TOP `OCR4C=255`, `CS43:0=0001`, no timer prescaling.
@@ -325,8 +333,7 @@ by [Arduboy2](https://github.com/MLXXXp/Arduboy2/blob/master/src/Arduboy2Core.h)
 
 The Timer1 synthesis path saves native r0:r1, r20:r21, r26:r27, Z, and SREG,
 using eleven native stack bytes including the interrupt return PC (thirteen
-while calling the pending-update copier). The light
-path saves only r0, r20 and SREG, using five stack bytes including the PC.
+while calling the pending-update copier).
 Borrowed VM registers are
 restored; Y, VM PC, GPIOR0, SPI and FX are untouched. r2 is **not assumed zero**: native floating paths temporarily
 borrow it. The normal-context service borrows/saves r16:r23; scratch is r0:r1,
@@ -356,7 +363,7 @@ endpoints are unchanged. Other gains truncate each channel amplitude before synt
 so quieter gains can silence low-volume channels and differ from scaling
 the completed mix. There is no general loop in the ISR; each tonal voice
 performs one LPM and one FMULSU with identical timing for all waveforms.
-The guest MIDI table covers 24..95, with maximum rounding error 2.111 cents.
+The guest MIDI table covers 24..95, with maximum rounding error 4.052 cents.
 Raw increments expose the existing oscillator precision between semitones.
 Waveform harmonics above Nyquist still alias at this sample rate, so audible
 quality needs hardware evaluation.
@@ -373,11 +380,11 @@ quality needs hardware evaluation.
 | Desired SFX states (two times three) | 6 |
 | Music stream record / one-shot SFX record | 10 / 7 |
 | Pending controls and ready descriptor | 16 |
-| Held endpoint, midpoint and output phase | 3 |
-| **Total** | **82** |
+| Held sample and synthesis-rate selection | 2 |
+| **Total** | **81** |
 
-Audio occupies `0A15..0A66`; `data_end_private=0A67`. Formatter/text scratch
-ends at `0AAF` (exclusive), leaving 81 bytes for native stack. Guest globals,
+Audio occupies `0A15..0A65`; `data_end_private=0A66`. Formatter/text scratch
+ends at `0AAE` (exclusive), leaving 82 bytes for native stack. Guest globals,
 framebuffer, and guest stack retain their original addresses. The dirty byte
 and fourteen-byte event buffer alias the existing temporary workspace and add
 no persistent allocation. At least 48 bytes above text scratch remain required
@@ -392,7 +399,8 @@ the existing public API.
 
 Desired state preserves unscaled volume and both sources' settings. Foreground
 commit selects each voice's owner, applies pause/off, separates waveform bits,
-and prepares `floor(volume * owner_master / 32)`. The ISR uses only the live
+scales canonical increments for the chosen rate, and prepares
+`floor(volume * owner_master / 32)`. The ISR uses only the live
 controls, phases, waveform selectors, and LFSR.
 
 The persistent pending packet is unchanged: 15 prepared bytes plus a one-byte
@@ -400,20 +408,24 @@ ready descriptor (bit 7). Foreground waits for acknowledgment, prepares the
 whole packet with interrupts enabled, then publishes the descriptor. After its
 fixed PWM write, synthesis copies all controls, clears ready, and advances
 phases without resetting them. The normal synthesis path adds four cycles;
-the midpoint path is unchanged. ISR stack is eleven bytes normally and
+ISR stack is eleven bytes normally and
 thirteen while applying a packet, including its return PC. Back-to-back commits
 wait up to a synthesis interval. When output/global interrupts are unavailable,
 commit applies controls directly without waiting. Disable drains pending
 controls and applies silence before enable can restart playback. No foreground
-block copy disables interrupts.
+block copy disables interrupts during ordinary commits. A rate switch first
+drains an old packet and stages the new controls with interrupts enabled, then
+disables interrupts to apply all 15 bytes, stop Timer1, change TOP, and restart
+it with the same Timer0 phase alignment. A stopped output stays stopped.
 
 When output starts, Timer1's initial counter is seeded from Timer0's counter
 using their shared prescaler. The timed read/write sequence places audio
 compare deadlines 64..120 CPU cycles after clock deadlines modulo 128. This
 avoids depending on the duration of PLAY/header processing to miss Timer0's
 nonpreemptible ISR. It changes neither the shared prescaler nor Timer0/millis.
-Native tests cover all 250 Timer0 counts and 64 sub-tick phases, plus 8000
-real-timer outputs across complete 8 ms relative-phase patterns.
+Native tests cover startup and live switches at both rates across all 250
+Timer0 counts and 64 sub-tick phases, plus 11968 real-timer outputs across
+complete 8 ms relative-phase patterns.
 
 ## SPI safety and servicing latency
 
@@ -463,26 +475,28 @@ levels. Native tests cover register/PC/stack preservation, address boundaries,
 looping/termination beyond 64 KB, all 255 event masks, exact cursor advancement,
 discarded read-ahead after End, bounded catch-up, interrupted packet staging,
 back-to-back commits, phase-preserving pitch updates, formatter workspace reuse,
-stopped/IRQ-disabled handoffs, direct tones and SFX release.
+stopped/IRQ-disabled handoffs, direct tones, SFX release, both synthesis rates,
+scaling overflow, and the demo rate toggle.
 
 ## Tradeoffs and remaining hardware checks
 
 The synthesis path exceeds the initial 100-cycle goal: preserving actual
 registers and loading/storing four SRAM phases, looking up/scaling samples,
-clipping and preparing interpolation costs 200..207 cycles without a pending
-packet. Alternate output interrupts take 41 cycles, for at most 12.1094% CPU
-across an ordinary pair. Pending packet application adds 69 cycles, with no per-voice phase-reset work. Reserving
+clipping and storing the next sample costs 186..193 cycles without a pending
+packet. This is at most **9.424% CPU at 8 kHz**, or **18.848% at 16 kHz**,
+excluding sequencing and pending copies. Pending packet application adds 69
+cycles, with no per-voice phase-reset work. Reserving
 AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
 Event fetches use a fourteen-byte interruptible FX burst rather than individual byte reads. There is no persistent cache or
-ownership/invalidation logic. The persistent handoff still uses 16 bytes; the total allocation is three bytes smaller than the preceding A2 implementation.
+ownership/invalidation logic. The persistent handoff still uses 16 bytes; the total allocation is one byte smaller than A3 (four bytes smaller than A2).
 Square duty is fixed at 50%; there is no runtime vibrato, filter, or envelope DSP.
 The score compiler expands custom envelopes and tremolo into control events.
 Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
 layout assertions. The waveform table uses space before the primary table,
-keeping firmware at 28972 bytes, with 724 bytes remaining. Future features must remain within that ceiling.
+keeping firmware at 29008 bytes, with 688 bytes remaining. Future features must remain within that ceiling.
 
 FX, Mini and FX-C presets compile with the same Timer1/4 configuration; existing
 FX chip-select preset differences are retained. The [Mini](https://www.arduboy.com/mini)

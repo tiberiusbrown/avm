@@ -93,9 +93,8 @@
 ; Bit 7 publishes all 15 control bytes; oscillator phases are preserved.
 #define data_audio_update            (data_audio_update_controls+15)
 #define data_audio_sample            (data_audio_update+1)
-#define data_audio_midpoint          (data_audio_sample+1)
-#define data_audio_output_phase      (data_audio_midpoint+1)
-#define data_audio_end               (data_audio_output_phase+1)
+#define data_audio_rate              (data_audio_sample+1)
+#define data_audio_end               (data_audio_rate+1)
 
 ; Stream records share cursor/wait/status/mask; only music has a loop start.
 ; All program pointers are image-relative, little-endian uint24.
@@ -105,8 +104,8 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
-.if (data_audio_end - data_audio_begin) != 82
-    .error "audio persistent SRAM must occupy 82 bytes"
+.if (data_audio_end - data_audio_begin) != 81
+    .error "audio persistent SRAM must occupy 81 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -16487,10 +16486,22 @@ audio_rewind:
 ; Publishing one descriptor byte hands off the complete chord, preserving phase.
 ; Wait with interrupts enabled; stopped output / disabled IRQs apply directly.
 audio_commit:
+    rcall audio_commit_prepare
+    ldi  r20, 0x80
+audio_commit_publish:
+    sts  data_audio_update, r20
+    in   r24, SREG
+    sbrs r24, 7
+    rjmp audio_apply_update
+    lds  r24, TIMSK1
+    sbrs r24, OCIE1A
+    rjmp audio_apply_update
+    ret
+
 audio_commit_wait:
     lds  r20, data_audio_update
     sbrs r20, 7
-    rjmp .Laudio_commit_stage
+    ret
     in   r24, SREG
     sbrs r24, 7
     rjmp .Laudio_commit_flush
@@ -16498,8 +16509,10 @@ audio_commit_wait:
     sbrc r24, OCIE1A
     rjmp audio_commit_wait
 .Laudio_commit_flush:
-    rcall audio_apply_update
-.Laudio_commit_stage:
+    rjmp audio_apply_update
+
+audio_commit_prepare:
+    rcall audio_commit_wait
     lds  r23, data_audio_sfx+AUDIO_MASK
     ldi  r18, 0 ; physical voice index
     ldi  r26, lo8(data_audio_update_controls)
@@ -16541,6 +16554,17 @@ audio_commit_wait:
     mov  r25, r24
     or   r25, r0
     breq .Laudio_stage_silent ; increment zero is note-off
+    ; Assets and desired state use 15625 Hz increments. Scale only here;
+    ; saturate a doubled increment instead of wrapping (possibly to silence).
+    lds  r25, data_audio_rate
+    sbrc r25, 0
+    rjmp .Laudio_stage_pitch
+    lsl  r24
+    rol  r0
+    brcc .Laudio_stage_pitch
+    ldi  r24, 255
+    mov  r0, r24
+.Laudio_stage_pitch:
     st   X+, r24
     st   X+, r0
     andi r21, 31
@@ -16563,15 +16587,6 @@ audio_commit_wait:
     inc  r18
     cpi  r18, 4
     brlo .Laudio_stage
-    ldi  r20, 0x80
-audio_commit_publish:
-    sts  data_audio_update, r20
-    in   r24, SREG
-    sbrs r24, 7
-    rjmp audio_apply_update
-    lds  r24, TIMSK1
-    sbrs r24, OCIE1A
-    rjmp audio_apply_update
     ret
 
 ; Called after the PWM store by synthesis, or with its interrupt unavailable.
@@ -16635,7 +16650,7 @@ sys_audio_impl:
     ld   r24, X+
     cpi  r16, lo8(data_audio_music)
     breq .Laudio_music_header
-    subi r24, 0xb1
+    subi r24, 0xc1
     cpi  r24, 3
     brsh .Laudio_start_bad
     inc  r24
@@ -16644,7 +16659,7 @@ sys_audio_impl:
     subi r18, 6 ; compact desired slots indexed as physical voices 2/3
     rjmp .Laudio_header_done
 .Laudio_music_header:
-    cpi  r24, 0xa3
+    cpi  r24, 0xa4
     brne .Laudio_start_bad
     ld   r24, X+
     tst  r24
@@ -16689,7 +16704,11 @@ sys_audio_impl:
     brne 1f
     rjmp .Laudio_sfx_master
 1:
-    cpi  r24, 10 ; direct SFX tone: r4 channel, r5 MIDI, r6 amplitude
+    cpi  r24, 13 ; synthesis rate: r4=0 (8 kHz), 1 (16 kHz)
+    brne 1f
+    rjmp .Laudio_rate
+1:
+    cpi  r24, 10 ; direct SFX tone: r4 channel, r5 raw increment, r6 amplitude
     brne 1f
     rjmp .Laudio_tone
 1:
@@ -16766,6 +16785,33 @@ sys_audio_impl:
     audio_restore
     jmp seek_and_dispatch_func_disabled
 
+.Laudio_rate:
+    cpi  VM_R4L, 2
+    brsh .Laudio_command_done
+    lds  r24, data_audio_rate
+    cp   r24, VM_R4L
+    breq .Laudio_command_done
+    ; Drain the old-rate packet, then stage new-rate controls while synthesis
+    ; continues. Publish controls and rephase the timer together under CLI.
+    rcall audio_commit_wait
+    sts  data_audio_rate, VM_R4L
+    rcall audio_commit_prepare
+    in   r25, SREG
+    cli
+    rcall audio_apply_update
+    sts  TCCR1B, ZERO
+    ldi  r24, 255
+    lds  r20, data_audio_rate
+    sbrc r20, 0
+    ldi  r24, 127
+    sts  OCR1AH, ZERO
+    sts  OCR1AL, r24
+    lds  r24, TIMSK1
+    sbrc r24, OCIE1A
+    rcall audio_timer1_start
+    out  SREG, r25
+    rjmp .Laudio_command_done
+
 audio_enable:
     lds  r24, TIMSK1
     tst  r24
@@ -16776,14 +16822,19 @@ audio_enable:
     ldi  r24, 128
     sts  OCR4A, r24
     sts  data_audio_sample, r24
-    sts  data_audio_midpoint, r24
-    sts  data_audio_output_phase, ZERO
     sbi  DDRC, 6
     sbi  DDRC, 7
     ldi  r24, (_BV(COM4A0) | _BV(PWM4A))
     sts  TCCR4A, r24
     ldi  r24, _BV(CS40)
     sts  TCCR4B, r24
+    rcall audio_timer1_start
+    out  SREG, r25
+1:
+    ret
+
+; Called with interrupts disabled; preserves r25 (saved SREG).
+audio_timer1_start:
     ldi  r24, (_BV(WGM12) | _BV(CS11))
     sts  TCCR1B, r24
     ; Both clocks share a prescaler: Timer0 ticks every 64 CPU cycles, Timer1
@@ -16806,8 +16857,6 @@ audio_enable_phase:
     out  TIFR1, r24
     ldi  r24, _BV(OCIE1A)
     sts  TIMSK1, r24
-    out  SREG, r25
-1:
     ret
 
 .Laudio_tone:
@@ -16888,10 +16937,8 @@ timer0_audio_tick:
     rjmp timer0_audio_done
 
 ; Timer1 COMPA (vector 17) arbitrates ahead of Timer0 COMPA (vector 21).
-; Output runs at 15625 Hz; alternate interrupts synthesize at 7812.5 Hz.
-; Emit the held endpoint, prepare its successor/midpoint, then emit midpoint.
-; Both output writes have identical latency from entry, before synthesis.
-; The light path saves only r0, r20 and SREG (5 bytes including PC).
+; Output and synthesis run at 7812.5 Hz or 15625 Hz, selected in foreground.
+; Emit the held sample at fixed latency, then prepare its successor.
 ; Synthesis saves r0:r1, r20:r21, r26:r27, Z and SREG (11 bytes including PC).
 ; r2 may be borrowed by libm. Banks and full-byte amplitudes are separate.
 ; Signed samples are -127..127; round(sample * prepared_amplitude / 128).
@@ -16923,25 +16970,12 @@ timer1_compa_isr:
     in   r0, SREG
     push r0
     push r20
-    lds  r20, data_audio_output_phase
-    tst  r20
-    breq timer1_synthesis
-    lds  r20, data_audio_midpoint
-    nop ; match the taken branch on the synthesis path
-    clr  r0
-    sts  TC4H, r0
-timer1_midpoint_write:
-    sts  OCR4A, r20
-    sts  data_audio_output_phase, r0
-    rjmp timer1_output_done
 timer1_synthesis:
     lds  r20, data_audio_sample
     clr  r0
     sts  TC4H, r0
 timer1_endpoint_write:
     sts  OCR4A, r20
-    ldi  r20, 1
-    sts  data_audio_output_phase, r20
     push r1
     push r21
     push r26
@@ -16993,12 +17027,7 @@ timer1_endpoint_write:
     sbrs r27, 7
     ldi  r26, 255
 .Laudio_output:
-    lds  r20, data_audio_sample
     sts  data_audio_sample, r26
-    ; Carry is the ninth bit of the unsigned duty sum. ROR divides by two.
-    add  r26, r20
-    ror  r26
-    sts  data_audio_midpoint, r26
     pop  r31
     pop  r30
     pop  r27
@@ -17054,7 +17083,7 @@ audio_init_func:
     st   X, ZERO
     dec  r24
     brne 1b
-    ldi  r24, 127 ; 16 MHz / 8 / 128 = 15625 output interrupts per second
+    ldi  r24, 255 ; default: 16 MHz / 8 / 256 = 7812.5 synthesis interrupts/s
     sts  OCR1AL, r24
     cbi  PORTC, 6
     cbi  PORTC, 7

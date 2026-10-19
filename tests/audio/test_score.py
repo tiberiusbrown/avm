@@ -8,9 +8,12 @@ music = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(music)
 
 
-def decode(data):
-    assert data[0] == 0xA2
-    events, offset, time = [], 2, 0
+def decode(data, raw=False):
+    effect = data[0] != 0xA3
+    assert data[0] == 0xA3 or data[0] in (0xB1, 0xB2, 0xB3)
+    events, offset, time = [], 1 if effect else 2, 0
+    midi = {music.note_increment(note): note for note in range(24, 96)}
+    midi[0] = 128
     while True:
         delta, mask = data[offset:offset + 2]
         offset += 2
@@ -22,18 +25,42 @@ def decode(data):
                 assert offset == len(data)
                 return events, time, command
             continue
+        if effect:
+            assert mask < 16
+            mask = ((mask & 3) << 2) | ((mask & 12) << 4)
         update = {}
         for field, shift in (("note", 0), ("control", 4)):
             for channel in range(4):
                 if mask & (1 << (channel + shift)):
-                    update.setdefault(channel, {})[field] = data[offset]
-                    offset += 1
+                    width = 2 if field == "note" else 1
+                    value = int.from_bytes(data[offset:offset + width], "little")
+                    update.setdefault(channel, {})[field] = midi[value] if field == "note" and not raw else value
+                    offset += width
         events.append((time, update))
 
 
 class ScoreTests(unittest.TestCase):
     def compile(self, source):
         return decode(music.compile_source(source))
+
+    def test_raw_increments_and_compact_sfx_ownership(self):
+        for mask, tag in ((4, 0xB1), (8, 0xB2), (12, 0xB3)):
+            channels = " ".join(f"channel {ch} {{ r:4ms c:8ms }}" for ch in (2, 3) if mask & (1 << ch))
+            data = music.compile_source("sfx " + channels)
+            self.assertEqual(data[0], tag)
+            events, _, command = decode(data, raw=True)
+            self.assertEqual(set(events[0][1]), {ch for ch in (2, 3) if mask & (1 << ch)})
+            self.assertEqual(command, 1)
+            self.assertTrue(all(update["note"] == 0 for update in events[0][1].values()))
+        data = music._encode_events(4, [(1, {2: {"increment": 3717, "volume": 12}})], 1, False, True)
+        self.assertEqual(data, bytes([0xB1, 0, 5, 0x85, 0x0e, 12, 0, 0, 1]))
+        self.assertEqual(decode(data, raw=True)[0][0][1][2]["note"], 3717)
+        self.assertEqual(music.note_increment(69), 3691)
+
+    def test_sfx_rejects_loops_and_unavailable_channels(self):
+        for source in ("sfx loop channel 2 { c4 }", "sfx channel 0 { c4 }", "sfx channel 1 { r4 }"):
+            with self.subTest(source=source), self.assertRaises(music.ScoreError):
+                music.compile_source(source)
 
     def test_pitches_durations_and_inheritance(self):
         events, end, command = self.compile("tempo 120 channel 0 octave 4 { c4 d8 e r2 }")

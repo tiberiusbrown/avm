@@ -1,4 +1,5 @@
 title "Arpeggio effect"
+sfx
 
 instrument sparkle { wave sawtooth volume 31 }
 instrument hit { wave noise volume 16 }

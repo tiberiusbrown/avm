@@ -5,8 +5,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Playback advances automatically. Assets must contain an End or Loop record;
-   the reader uses 24-bit cursors and may read ahead past the terminator. */
+/* Playback advances automatically. A3 music ends with End or Loop. B1..B3
+   one-shot SFX ends with End and overrides only declared tonal (voice 2) / noise
+   (voice 3) slots. Arrange melody on 0, primary accompaniment on 1, secondary
+   accompaniment on 2. Undeclared SFX slots leave music audible; declared slots
+   retain ownership through rests. Raw uint16 phase increments preserve phase.
+   The reader uses 24-bit cursors and may read ahead past the terminator. */
 void avm_audio_play(void const AVM_PROGMEM *song);
 void avm_audio_sfx(void const AVM_PROGMEM *effect);
 void avm_audio_stop(void);
@@ -26,7 +30,9 @@ void avm_audio_stop_sfx(void);
 /* bit 0=music playing, bit 1=music paused, bit 2=SFX playing. */
 uint8_t avm_audio_status(void);
 /* Replaces SFX with a latched tone until stop_sfx; channel 0..3 (3=noise),
-   MIDI 24..95, amplitude 0..31. Out-of-range MIDI mutes the selected voice. */
+   MIDI 24..95, amplitude 0..31. Out-of-range MIDI mutes the selected voice.
+   MIDI conversion is in the guest runtime; explicit channel overrides remain
+   available independently of sequenced SFX routing. Phase is preserved. */
 void avm_audio_tone(uint8_t channel, uint8_t note, uint8_t amplitude);
 #ifdef __cplusplus
 }

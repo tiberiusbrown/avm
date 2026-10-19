@@ -12,7 +12,62 @@ for the Timer3, Timer1 and unified Timer0 experiment results. Timer1 was selecte
 because it removes periodic Timer0 collisions with lower CPU cost than the
 unified experiment.
 
-## Temporary event bursts (current)
+## Raw increments and compact SFX (current)
+
+A3 music stores little-endian uint16 phase increments (zero=off). B1/B2/B3
+one-shot effects have a single-byte declaration header and compact two-slot
+flags, routing tonal/noise to voices 2/3. Undeclared slots keep playing music;
+declared slots retain ownership through rests. Pitch updates preserve phase.
+The MIDI table moved to the guest runtime, linked only by `avm_audio_tone`.
+The persistent pending packet and four physical oscillators are retained.
+
+| Resource | Previous A2 | A3 / compact SFX |
+| --- | ---: | ---: |
+| Native firmware `.text` | 29156 B | **28972 B (-184)** |
+| Bootloader headroom | 540 B | **724 B** |
+| Persistent audio SRAM | 85 B | **82 B (-3)** |
+| Native stack allowance above formatter/text scratch | 78 B | **81 B** |
+| Persistent pending packet, included above | 16 B | **16 B** |
+| Temporary event buffer, aliases existing scratch | 10 B | 14 B |
+| Event burst size: music / SFX | 10 / 10 B | 14 / 8 B |
+| Demo music encoded bytes (before C word padding) | 3349 | 4133 |
+| Demo effect encoded bytes | 19 | 23 |
+| Six RPG songs, encoded bytes | 17533 | 19019 |
+
+The larger music events trade FX storage/read bandwidth for arbitrary pitch
+precision. The compact effect header saves one byte; only declared slots are
+initialized, and control-only events omit pitch payloads. Music has a ten-byte
+stream record, SFX seven bytes without a loop-start pointer; their desired
+banks occupy twelve and six bytes. There is no per-sample MIDI conversion or
+phase-retrigger processing.
+
+| Stopped-timer music service | Previous event burst | Current |
+| --- | ---: | ---: |
+| One-channel pitch + control | 824 | 865 cycles |
+| Four-channel pitch + control | 986 | 1003 cycles |
+| Four-channel control only | 877 | 903 cycles |
+| Continue | 437 | 508 cycles |
+| Pitch off | 811 | 840 cycles |
+| Sparse countdown | 98 | 98 cycles |
+
+A fourteen-byte raw FX transfer takes 323 cycles; `audio_read_event` including
+setup takes **348 cycles** for music, **246 cycles** for eight-byte SFX reads.
+Ordinary synthesis remains **200..207 cycles**, midpoint output **41 cycles**,
+with the PWM store at **26 cycles** including response/vector on both paths.
+The pending copy adds a fixed 69 cycles; the interrupted chord-handoff test
+measures **269 cycles**. Foreground never disables interrupts for a block copy.
+The measured libm/formatter workload still reaches **41 native stack bytes**.
+
+Validation covers all 255 music masks, all valid compact SFX flag/ownership
+combinations, wrong formats/ownership/Loop rejection, absent slots and owned
+rests, replacement/release, non-semitone uint16 pitches and phase continuity,
+all 256 MIDI arguments on all four direct-tone channels, interrupted staging,
+back-to-back acknowledgments, scratch reuse, >64 KB C/C++ assets, and full
+waveform/gain/noise/interpolation references. Earlier sections below retain
+historical A1/A2 measurements; the resource table above is authoritative for
+the current implementation.
+
+## Temporary event bursts (preceding A2 implementation)
 
 Each due event is read into a ten-byte temporary buffer using the existing FX
 burst reader. X walks the buffer with post-increment LD instructions; the
@@ -357,7 +412,7 @@ Timer3 output rate is **15625 Hz**, with **7812.5 Hz** synthesis. Timer4 uses th
 clock**, TOP 255 and no prescaling, yielding a calculated **250 kHz carrier**.
 See [audio.md](audio.md) for register settings and datasheet references.
 
-## Size and validation
+## Historical A2 size and validation
 
 | Resource | Result |
 | --- | ---: |

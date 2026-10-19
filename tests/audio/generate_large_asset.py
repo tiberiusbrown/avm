@@ -4,7 +4,7 @@ import runpy
 import sys
 
 compiler = runpy.run_path(str(Path(__file__).resolve().parents[2] / "tools/avm_music.py"))
-# Every note must retrigger, even though all pitches are the same.
+# Keep every explicit onset to exercise raw-pitch records across 64 KB.
 data = compiler["compile_source"]("channel 0 { repeat 22000 { c:4ms } }")
 assert len(data) > 65535
 output = Path(sys.argv[1])

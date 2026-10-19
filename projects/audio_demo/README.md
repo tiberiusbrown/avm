@@ -29,7 +29,7 @@ ignores waveform selection. On channel 3, the note controls the noise update rat
 
 For example, `instrument low { wave triangle volume 9 }` followed by
 `channel 1 low octave 2 { c4 g }` plays two low quarter notes. The compiler
-merges notes, automatic envelopes and tremolo into the existing A2 events;
+merges notes, automatic envelopes and tremolo into the A3 raw-increment events;
 instruments are source definitions and add no runtime state. Every loop
 initializes all owned channels. Control-only changes preserve oscillator phase.
 See `tremolo.avms` for a small score with a smooth custom contour, release,
@@ -77,3 +77,9 @@ cmake --build build --config RelWithDebInfo --target avm_audio_demo
 For a standalone configuration, use `projects/audio_demo/build` in place of
 `build`. Include both regenerated headers and the rebuilt `.arduboy` package
 when updating the demo in Git. CMake clean removes only build artifacts.
+
+Effects use the top-level `sfx` setting and declare channel 2 (tonal), channel 3
+(noise), or both. The compiler emits a compact one-shot B1/B2/B3 stream; an
+omitted slot leaves music audible. Declared slots retain ownership during rests.
+Place melody on voice 0, primary accompaniment on 1, secondary accompaniment
+on 2, and percussion/noise on 3. All pitch updates preserve oscillator phase.

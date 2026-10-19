@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile AVM scores (.avms) to A2 events or a program-memory C asset."""
+"""Compile AVM scores (.avms) to A3 music or compact B1..B3 sound effects."""
 import argparse
 import ast
 import math
@@ -46,16 +46,26 @@ def emit_event(output, ticks, payload):
     output += payload
 
 
-def _encode_events(mask, events, tail_ticks, loop):
-    """Encode resolved channel updates; this is the private A2 backend."""
-    output = bytearray([0xA2, mask])
-    notes, volumes, waves = [128] * 4, [24] * 4, [0] * 4
+def note_increment(value):
+    """Convert a score/MIDI note to the synthesizer's uint16 phase increment."""
+    note = note_number(value)
+    return 0 if note == 0x80 else round(440 * 2 ** ((note - 69) / 12) * 65536 / 7812.5)
+
+
+def _encode_events(mask, events, tail_ticks, loop, sfx=False):
+    """Encode resolved updates. An explicit increment permits non-semitone pitches."""
+    if sfx and (loop or not mask or mask & ~12):
+        raise ValueError("SFX must be one-shot and declare only channels 2 and/or 3")
+    output = bytearray([0xB0 | (mask >> 2)]) if sfx else bytearray([0xA3, mask])
+    notes, volumes, waves = [0] * 4, [24] * 4, [0] * 4
     first = True
     for ticks, updates in events:
         changed_notes, changed_controls = {}, {}
         for channel, update in updates.items():
-            if "note" in update:
-                notes[channel] = note_number(update["note"])
+            if "note" in update or "increment" in update:
+                notes[channel] = update["increment"] if "increment" in update else note_increment(update["note"])
+                if not isinstance(notes[channel], int) or not 0 <= notes[channel] <= 65535:
+                    raise ValueError("phase increments must be uint16 values (0=off)")
                 changed_notes[channel] = notes[channel]
             if "volume" in update:
                 volumes[channel] = update["volume"]
@@ -70,7 +80,9 @@ def _encode_events(mask, events, tail_ticks, loop):
                     changed_controls[channel] = (waves[channel] << 5) | volumes[channel]
             first = False
         packed = sum(1 << c for c in changed_notes) | sum(16 << c for c in changed_controls)
-        payload = (bytes([packed]) + bytes(changed_notes[c] for c in sorted(changed_notes))
+        if sfx:
+            packed = ((packed >> 2) & 3) | ((packed >> 4) & 12)
+        payload = (bytes([packed]) + b"".join(changed_notes[c].to_bytes(2, "little") for c in sorted(changed_notes))
                    + bytes(changed_controls[c] for c in sorted(changed_controls)))
         emit_event(output, ticks, payload if packed else bytes([0, 0]))
     emit_event(output, tail_ticks, bytes([0, 2 if loop else 1]))
@@ -108,6 +120,7 @@ class ScoreParser:
         self.tempo = Fraction(120)
         self.meter = Fraction(4)
         self.loop = False
+        self.sfx = False
         self.automation_ms = Fraction(8)
         self.envelopes, self.instruments, self.phrases, self.channels = {}, {}, {}, {}
 
@@ -342,7 +355,7 @@ class ScoreParser:
                 continue
             token = self.take()
             command = token[0]
-            if command in ("tempo", "meter", "automation", "loop", "title", "description"):
+            if command in ("tempo", "meter", "automation", "loop", "sfx", "title", "description"):
                 if command in seen:
                     self.error(f"duplicate {command}", token)
                 seen.add(command)
@@ -361,6 +374,8 @@ class ScoreParser:
                     self.automation_ms = self.time()
                 elif command == "loop":
                     self.loop = True
+                elif command == "sfx":
+                    self.sfx = True
                 else:
                     text = self.take()
                     if not text[0].startswith('"'):
@@ -391,6 +406,8 @@ class ScoreParser:
                     self.error(f"unknown score command {command!r}", token)
         if not self.channels:
             self.error("score needs at least one channel")
+        if self.sfx and (self.loop or any(channel not in (2, 3) for channel in self.channels)):
+            self.error("SFX must be one-shot and declare only channels 2 and/or 3")
         return self
 
 
@@ -500,7 +517,7 @@ def score_events(score):
 
 
 def compile_source(source, filename="<score>", automation_ms=None):
-    """Compile note notation, instruments, envelopes and tremolo to unchanged A2 bytes."""
+    """Compile note notation and automation to A3 music or B1..B3 SFX bytes."""
     score = ScoreParser(source, filename).parse()
     interval = score.automation_ms if automation_ms is None else Fraction(automation_ms)
     if interval < 4 or interval % 4:
@@ -560,7 +577,7 @@ def compile_source(source, filename="<score>", automation_ms=None):
     terminal = max(2, tick(duration) if score.loop else tick(finish) + 1)
     timeline = {}
     for time, priority, channel, update in sorted(changes, key=lambda item: (item[0], item[1])):
-        position = tick(time) + 1  # A2 always waits one tick before its first event.
+        position = tick(time) + 1  # Every stream waits one tick before its first event.
         if position < terminal:
             timeline.setdefault(position, {}).setdefault(channel, {}).update(update)
     previous, events = 0, []
@@ -580,7 +597,7 @@ def compile_source(source, filename="<score>", automation_ms=None):
         if not events or filtered:
             events.append((position - previous, filtered))
             previous = position
-    return _encode_events(sum(1 << channel for channel in channels), events, terminal - previous, score.loop)
+    return _encode_events(sum(1 << channel for channel in channels), events, terminal - previous, score.loop, score.sfx)
 
 
 def c_array(data, name):
@@ -629,7 +646,7 @@ def main():
         else:
             args.output.write_bytes(data)
         if args.stats:
-            print(f"{args.source}: {len(data)} bytes (A2)", file=sys.stderr)
+            print(f"{args.source}: {len(data)} bytes ({'SFX' if data[0] != 0xA3 else 'A3'})", file=sys.stderr)
     except (ValueError, KeyError, TypeError, OSError) as error:
         parser.error(str(error))
 

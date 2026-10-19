@@ -4,10 +4,10 @@
 #include <string.h>
 
 static const uint8_t AVM_PROGMEM song[] = {
-    0xa2,15, 0,15,60,64,67,36, 24,1,62, 24,0,2
+    0xa3,15, 0,15,0x93,0x08,0xcd,0x0a,0xd8,0x0c,0x25,0x02, 24,1,0x9f,0x09, 24,0,2
 };
 static const uint8_t AVM_PROGMEM effect[] = {
-    0xa2,12, 0,12,84,48, 7,0,1
+    0xb3, 0,3,0x4b,0x22,0x49,0x04, 7,0,1
 };
 
 int avm_test_main(void) {
@@ -40,6 +40,10 @@ int avm_test_main(void) {
     if(avm_audio_status()!=1) return 11;
     avm_audio_tone(2,69,31);
     if(avm_audio_status()!=5) return 10;
+    /* Exercise the guest program-space MIDI table, bounds, and unchanged ABI. */
+    for(unsigned channel=0;channel<4;++channel)
+        for(unsigned note=0;note<256;++note)
+            avm_audio_tone((uint8_t)channel,(uint8_t)note,17);
     avm_audio_stop_sfx();
     avm_audio_stop();
     if(avm_audio_status()!=0) return 9;

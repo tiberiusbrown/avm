@@ -13,7 +13,7 @@ All native implementation and SRAM definitions are in `interp/interp.asm`.
 Include `<avm/audio.h>` or `<avm.h>`. `avm_audio_play(ptr)` starts a
 program-space song and enables output. `avm_audio_sfx(ptr)`
 starts one effect, replacing the preceding effect. Both pointers are packed
-24-bit AVM program pointers. Assets terminate with End or Loop; no byte length
+24-bit AVM program pointers. Music terminates with End or Loop; effects end with End. No byte length
 is passed and there is no 65535-byte song limit.
 
 `avm_audio_stop`, `avm_audio_pause`, `avm_audio_resume`, `avm_audio_volume`,
@@ -40,13 +40,25 @@ ISR overhead when output is no longer needed.
 latched voice until `avm_audio_stop_sfx`. Channels 0..2 are square, 3 is noise.
 Valid channel/amplitude arguments are 0..3/0..31; these fields are masked to
 their respective widths. MIDI outside 24..95 mutes the selected voice.
+The MIDI table and conversion live in the guest runtime's `audio_tone.c`, in
+program storage, and are linked only when this API is used. The internal SYS
+command accepts a full uint16 phase increment in r5. This low-level direct-tone
+API retains its explicit 0..3 channel override; sequenced SFX uses only 2/3.
 `avm_audio_status()` returns bit 0=music playing, bit 1=music paused, bit 2=SFX
 playing (including a direct tone). Play also enables output automatically.
 
-Effects own the channels declared in their header, including during their
-rests. Music continues progressing beneath those channels. End/stop of SFX
-releases ownership and restores the music's **current** state in the same
-atomic commit. There is one effect stream; no allocator or ISR arbitration.
+Sequenced effects have two fixed slots: tonal voice 2 and noise voice 3.
+Use voice 0 for the melody, voice 1 for primary accompaniment, voice 2 for
+secondary accompaniment, and voice 3 for music percussion/noise. An effect
+steals only the slots declared in its source: a tonal-only effect leaves music
+noise audible, and a noise-only effect leaves tonal accompaniment audible.
+A declared channel retains ownership during rests, note-off, and zero volume;
+omit a channel entirely to leave its music voice available. Starting a new
+effect replaces the entire previous effect and releases any omitted slots.
+Music's note/control timeline continues underneath the stolen voices. End/stop
+restores its **current** state atomically. The oscillators are shared: there
+is no separate hidden music phase or fifth voice. There is one one-shot effect
+stream, with no allocator or ISR arbitration.
 
 ```c
 avm_audio_play(music);
@@ -65,79 +77,95 @@ supports standalone CMake builds with an installed SDK; see its
 [README](../projects/audio_demo/README.md). There is no update call in
 `setup`/`loop`. Firmware is `interp/build/interp.hex`.
 
-## Binary format (version A2)
+## Binary formats: A3 music and compact B1..B3 SFX
 
-Assets end with an End or Loop record. Header byte 0 is `A2`; byte 1 is a nonzero
-four-bit ownership mask. Channels 0..2 are tonal, 3 is noise. At start, all
-notes are off and each retained channel volume is 24, with square selected.
+All pitches are **little-endian uint16 phase increments**, with zero meaning
+off. The synthesizer adds each increment to its uint16 phase at 7812.5 Hz:
+`increment = round(frequency_Hz * 65536 / 7812.5)`. Resolution is approximately
+0.119209 Hz. All uint16 values are accepted; tonal frequencies above Nyquist
+alias, so assets should keep tonal increments below 32768. Noise uses phase
+overflow to clock its LFSR. The interpreter contains no MIDI table or pitch
+conversion. The score compiler still accepts C1..B6 notation and performs the
+conversion offline; `_encode_events` also accepts explicit `increment` updates
+for arbitrary pitches and future pitch automation.
 
-Each event starts with `delta, change_mask`. The single delta byte encodes
-**byte value + 1 ticks**, each 4 ms: `00` waits one tick and `FF` waits 256
-ticks. There is no extended form or zero-time event. Playback starts silent
-and waits for the first event, so the earliest note begins after 4 ms.
+Pitch and control changes **preserve phase**, including repeated notes and
+loop boundaries. Phase is initialized at interpreter startup. Increment zero
+freezes the oscillator and mutes its output. Volume zero mutes without stopping
+a nonzero increment. Use envelopes that reach zero at note boundaries to
+reduce audible clicks. No retrigger flags or phase-reset packets are stored.
 
-| Change-mask bits | Meaning |
+Music begins with `A3, ownership_mask`, where the mask is nonzero and uses
+bits 0..3. All declared voices start off, at retained volume 24 with square
+selected. Each event starts with `delta, change_mask`:
+
+| Music change-mask bits | Meaning |
 | --- | --- |
-| 0..3 | Note changes for channels 0..3 |
-| 4..7 | Packed volume/waveform changes for channels 0..3 |
+| 0..3 | uint16 pitch changes for voices 0..3 |
+| 4..7 | Packed volume/waveform changes for voices 0..3 |
 
-A nonzero change mask is followed by all selected notes in ascending channel
-order, then all selected controls in ascending channel order. Notes are MIDI
-24..95 (`18..5F`) or `80` for off; other note values are malformed. Each control
-byte has volume 0..31 in bits 4..0 and waveform in bits 6..5: 0=square,
-1=triangle, 2=sawtooth, 3=sine. Bit 7 is ignored, so all 256 byte values are
-accepted. Channel 3 ignores waveform bits and continues to generate noise.
-For example, mask `11` followed by `3C 67` sets channel 0 to MIDI 60 with sine
-at volume 7. Existing control bytes 0..31 select square and sound as before.
-Mask `88` updates both the noise note/rate and volume. All 255 nonzero masks
-are available; there are no update-command opcodes.
+Selected pitches follow in ascending voice order, then selected controls in
+ascending voice order. A control uses bits 4..0 for volume 0..31 and bits 6..5
+for waveform: 0=square, 1=triangle, 2=sawtooth, 3=sine. Bit 7 is ignored.
+Voice 3 ignores waveform bits and generates noise. For example,
+`00 11 6B 0E 67` waits one tick, then sets voice 0 to increment 3691 (A4)
+with sine at volume 7. Mask `88` changes both the noise rate and volume.
 
-A zero change mask is followed by one control byte:
+SFX begins with **one header byte**:
+
+| Header | Declared slots / ownership |
+| --- | --- |
+| `B1` | Tonal slot -> voice 2 |
+| `B2` | Noise slot -> voice 3 |
+| `B3` | Both slots -> voices 2 and 3 |
+
+There is no additional channel mask or route table. Each SFX event starts with
+`delta, update_flags`; only four flag bits are valid:
+
+| SFX update-flag bit | Payload |
+| --- | --- |
+| 0 | Tonal uint16 increment |
+| 1 | Noise uint16 increment |
+| 2 | Tonal packed volume/waveform |
+| 3 | Noise packed volume (waveform bits ignored) |
+
+Payload order is tonal pitch, noise pitch, tonal control, noise control,
+omitting fields whose bits are clear. Updates outside declared slots are
+malformed. For example, `B1 00 05 85 0E 6C` declares tonal-only ownership,
+waits one tick, then selects increment 3717 with sine at volume 12. A complete
+two-slot update is eight bytes including delta and flags; a complete music
+update is fourteen bytes. Unchanged controls/pitches need no repeated payload.
+
+Both formats use the same **byte value + 1** delta, in 4 ms ticks: `00` waits
+one tick and `FF` waits 256 ticks. Playback starts silent; the first event can
+begin after 4 ms. There are no zero-time records. A zero change mask/flags is
+followed by one command byte:
 
 | Record | Meaning |
 | --- | --- |
-| `delta, 00, 00` | Continue: consume time, preserving channel state and phase |
-| `delta, 00, 01` | End playback |
-| `delta, 00, 02` | Loop to the first delta after the header |
+| `delta, 00, 00` | Continue, preserving state and phase |
+| `delta, 00, 01` | End and release ownership |
+| `delta, 00, 02` | Music only: Loop to the first delta after its header |
 
-Other control bytes and changes outside the ownership mask are malformed.
-A malformed header, note, ownership mask, or command stops that stream and
-releases its effect ownership. Every record consumes at least one tick, including Continue
-and Loop. At most 255 elapsed ticks are handled per snapshot, so each stream
-can process at most 255 records without a separate event or zero-time-loop budget.
+SFX Loop, other commands, invalid headers/masks/flags, and updates outside
+ownership stop that stream and release its ownership. A1/A2 assets are rejected
+and must be regenerated. Every record consumes time; a 255-tick snapshot can
+process at most 255 records per stream without a separate loop budget.
+The compiler initializes every declared voice in the first event, including
+off voices, so music loops restore pitch/control state on their first event.
+Long waits split into Continue records; 600 ticks uses two `FF 00 00` records
+then delta `57` for the remaining 88 ticks.
 
-Note changes retrigger phase and retain volume/waveform when no control bit is present.
-Control-only changes retain the note and preserve phase. All due updates are
-applied to desired state before the complete latch is committed atomically.
-Looping retains channel state until the next update. The compiler makes
-its first event a complete note/volume/waveform update for every owned channel,
-including note-off for channels starting silent. This restores the initial
-sound each iteration without extra records or changed timing. Handwritten
-binary loops should initialize their channels the same way. Longer waits use Continue records;
-the maximum wait in one record is 1.024 seconds. A 600-tick wait uses two
-`FF 00 00` Continue records followed by the actual event with delta `57`
-(88 ticks). Continue does not require a latch commit.
-
-Channels 0..2 independently select square, triangle, sawtooth, or sine from
-four 64-byte signed sample banks; noise is restricted to channel 3.
-Bass and lead register choices come from note selection. Envelopes use
-sequencer-rate volume events with no per-sample envelope/DSP cost.
-A1 assets are rejected and must be regenerated with the current compiler.
-
-The caller supplies a valid FX/image-relative pointer to a terminated asset.
-The decoder follows its full 24-bit cursor until End or Loop. Each due event
-reads ten bytes in one flash transaction into temporary workspace. Parsing
-uses post-increment SRAM loads and advances the logical cursor once by the
-actual bytes consumed. Extra read-ahead, including bytes past End or Loop,
-is ignored; no cache survives a service call. Truncated assets cannot be
-detected by byte count. Physical
-addressing uses the same modulo-24-bit image-page addition as F0 program loads;
-available image/FX capacity remains the practical size limit.
+The decoder follows a full 24-bit cursor until End/Loop, with no length field
+or 65535-byte asset cap. It reads fourteen music bytes or eight SFX bytes into temporary scratch for
+each due event, consumes only the actual record and next delta, and discards
+extra read-ahead. Truncation cannot be detected by byte count. Program/image
+addressing uses the same modulo-24-bit page addition as F0 program loads.
 
 ## Asset compiler
 
 `tools/avm_music.py` uses Python's standard library only. `.avms` scores compile
-to the unchanged A2 note/control encoding, with five-bit channel volumes:
+to A3 music or compact B1..B3 SFX, with five-bit channel volumes:
 
 ```sh
 python tools/avm_music.py projects/audio_demo/music.avms song.bin --stats
@@ -149,7 +177,7 @@ entry point `compile_source(text, filename="<score>", automation_ms=None)`
 returns bytes; `c_array(data, name)` creates a program-memory C declaration.
 Diagnostics identify the source file, line, and column.
 C exports pack eight event bytes into each little-endian `uint64_t` initializer.
-This reduces initializer count without changing the A2 byte stream. At most
+This reduces initializer count without changing the encoded byte stream. At most
 seven trailing zero bytes pad the final word and are ignored after End/Loop.
 If even the word count exceeds Clang's 16-bit inferred-array bound, the header
 uses contiguous, byte-aligned chunks and exposes the same 24-bit program
@@ -176,8 +204,9 @@ channel 0 lead octave 4 { motif | c2~ c4 r4 | }
 
 Score settings precede definitions and channels. Tempo is quarter-note BPM
 (default 120); fractions such as `1250/13` are exact. Meter defaults to 4/4.
-`loop` selects Loop instead of End. The ownership mask is inferred from the
-declared channels, including channels that only rest. Optional quoted `title`
+`loop` selects Loop instead of End for music. Add the top-level `sfx` setting
+for a one-shot effect; `sfx` rejects `loop` and declarations outside channels
+2 and 3. Ownership is inferred from declarations, including all-rest channels. Optional quoted `title`
 and `description` fields are metadata. `//` comments and optional semicolons
 are accepted.
 
@@ -233,10 +262,10 @@ automation samples per cycle.
 
 The compiler resolves exact cumulative timestamps, expands envelopes/tremolo,
 rounds to the 4ms sequencer grid, merges simultaneous channel changes, and
-omits unchanged controls. Notes always retrigger unless tied. Automation samples
+omits unchanged controls. Note onsets remain explicit unless tied; all pitch updates preserve oscillator phase. Automation samples
 default to 8ms; `automation 4ms` or `--automation-ms 4` selects a finer interval.
 The interval must be a multiple of 4ms. Explicit breakpoints and note/gate
-boundaries are retained independently of the sampling interval. A2's first event
+boundaries are retained independently of the sampling interval. The first event
 still waits 4ms. Loop periods use the written duration without accumulating
 that startup delay; the Loop record occupies the final tick. One-shot End
 occurs after the final release. No envelope state or modulation DSP runs in
@@ -327,56 +356,56 @@ endpoints are unchanged. Other gains truncate each channel amplitude before synt
 so quieter gains can silence low-volume channels and differ from scaling
 the completed mix. There is no general loop in the ISR; each tonal voice
 performs one LPM and one FMULSU with identical timing for all waveforms.
-The internal table covers MIDI 24..95, with maximum measured rounding error
-2.111 cents. The C1..B6 table bounds flash usage and avoids very short tonal
-periods; higher MIDI notes are rejected. Waveform harmonics above Nyquist
-still alias at this sample rate, so audible quality needs hardware evaluation.
+The guest MIDI table covers 24..95, with maximum rounding error 2.111 cents.
+Raw increments expose the existing oscillator precision between semitones.
+Waveform harmonics above Nyquist still alias at this sample rate, so audible
+quality needs hardware evaluation.
 
 ## Memory allocation
 
 | Persistent data | Bytes |
 | --- | ---: |
 | Pending ticks, divider, music/SFX masters | 4 |
-| Latched increments and prepared amplitudes (four times three) | 12 |
+| Live increments and prepared amplitudes (four times three) | 12 |
 | Separate tonal waveform selectors | 3 |
 | ISR phases and LFSR | 9 |
-| Desired note/volume/waveform banks for music and SFX | 16 |
-| Two stream records | 22 |
-| Pending controls and ready/retrigger descriptor | 16 |
+| Desired music states (four times three) | 12 |
+| Desired SFX states (two times three) | 6 |
+| Music stream record / one-shot SFX record | 10 / 7 |
+| Pending controls and ready descriptor | 16 |
 | Held endpoint, midpoint and output phase | 3 |
-| **Total** | **85** |
+| **Total** | **82** |
 
-Audio occupies `0A15..0A69`; `data_end_private=0A6A`. Formatter/text scratch
-ends at `0AB2` (exclusive), leaving 78 bytes for native stack. The existing
-framebuffer, guest globals, and guest stack stay at their original addresses.
-Audio service uses a call-lifetime dirty byte at `data_end_private` and a ten-byte
-event buffer immediately after it, once other SYS callers restore their saved
-state. These eleven bytes alias existing formatter/text scratch and do not
-reduce stack allowance. The update packet is persistent
-and remains valid while formatting or drawing reuses temporary workspace.
-The SRAM assertion
-requires at least 48 bytes beyond text scratch for native stack.
+Audio occupies `0A15..0A66`; `data_end_private=0A67`. Formatter/text scratch
+ends at `0AAF` (exclusive), leaving 81 bytes for native stack. Guest globals,
+framebuffer, and guest stack retain their original addresses. The dirty byte
+and fourteen-byte event buffer alias the existing temporary workspace and add
+no persistent allocation. At least 48 bytes above text scratch remain required
+by the assembler assertion.
 
-Stream offsets are START=0 (uint24), CURSOR=3 (uint24), WAIT=6 (uint16),
-STATUS=8, MASK=9, TRIGGER=10. There are no stored sizes or remaining-byte counters.
-Desired banks contain four `(table_note_index, packed_control)` pairs, with 80=off.
-The desired control uses music-byte encoding; commit strips ignored bit 7,
-separates each tone's waveform, and scales each amplitude using its owner's
-master. The ISR sees controls/banks/phases/LFSR; stream fields and masters
-are never ISR inputs. Master commands recommit all controls without note
-triggers. Foreground code waits for acknowledgment before reusing the pending
-buffer, prepares all 15 bytes with interrupts enabled, then publishes a single
-descriptor byte (bit 7 ready, bits 0..3 phase resets). Synthesis checks it after
-the fixed PWM store, copies all controls to the live latch, resets requested
-phases and clears the descriptor before advancing oscillators. The normal
-synthesis path adds four cycles; the midpoint path is unchanged. The ISR uses
-11 native stack bytes normally and 13 while applying a packet, including its
-return PC. A second commit can wait up to a synthesis interval with interrupts
-enabled. If the output interrupt is masked, or global interrupts are already
-disabled, commit applies the packet directly instead of waiting. Disable stops
-the output timer before draining pending controls and applying silence, so
-re-enable cannot replay an old packet. No block copy disables interrupts in
-foreground code.
+Both stream records have CURSOR=0 (uint24), WAIT=3 (uint16), STATUS=5, MASK=6.
+Only music stores START=7 (uint24) for looping. SFX has no loop-start pointer.
+Desired states are `(increment_low, increment_high, packed_control)` triples.
+Music retains four; SFX retains tonal/noise slots. During direct-tone playback,
+the tonal slot can override any explicitly requested tonal voice, preserving
+the existing public API.
+
+Desired state preserves unscaled volume and both sources' settings. Foreground
+commit selects each voice's owner, applies pause/off, separates waveform bits,
+and prepares `floor(volume * owner_master / 32)`. The ISR uses only the live
+controls, phases, waveform selectors, and LFSR.
+
+The persistent pending packet is unchanged: 15 prepared bytes plus a one-byte
+ready descriptor (bit 7). Foreground waits for acknowledgment, prepares the
+whole packet with interrupts enabled, then publishes the descriptor. After its
+fixed PWM write, synthesis copies all controls, clears ready, and advances
+phases without resetting them. The normal synthesis path adds four cycles;
+the midpoint path is unchanged. ISR stack is eleven bytes normally and
+thirteen while applying a packet, including its return PC. Back-to-back commits
+wait up to a synthesis interval. When output/global interrupts are unavailable,
+commit applies controls directly without waiting. Disable drains pending
+controls and applies silence before enable can restart playback. No foreground
+block copy disables interrupts.
 
 When output starts, Timer1's initial counter is seeded from Timer0's counter
 using their shared prescaler. The timed read/write sequence places audio
@@ -397,7 +426,7 @@ already-disabled continuation after a completed data transaction.
 
 ISR entry can extend transfer wall time but does not access SPDR or disturb
 SREG/registers. Existing CLI/OUT/IN/SEI reverse handoffs remain protected.
-The event reader calls the shared image-relative FX burst reader for ten bytes
+The event reader calls the shared image-relative FX burst reader for fourteen music bytes (eight for SFX)
 and returns X at the temporary buffer. Notes, controls and timing are consumed
 with `LD r24, X+`; Z is free for desired state and the stream record. Continue
 uses its buffered next delta. Loop rewinds and fetches the initial delta again,
@@ -433,7 +462,7 @@ libm and formatting with synthesis interrupts enabled at all six optimization
 levels. Native tests cover register/PC/stack preservation, address boundaries,
 looping/termination beyond 64 KB, all 255 event masks, exact cursor advancement,
 discarded read-ahead after End, bounded catch-up, interrupted packet staging,
-back-to-back commits, exactly-once phase resets, formatter workspace reuse,
+back-to-back commits, phase-preserving pitch updates, formatter workspace reuse,
 stopped/IRQ-disabled handoffs, direct tones and SFX release.
 
 ## Tradeoffs and remaining hardware checks
@@ -442,22 +471,18 @@ The synthesis path exceeds the initial 100-cycle goal: preserving actual
 registers and loading/storing four SRAM phases, looking up/scaling samples,
 clipping and preparing interpolation costs 200..207 cycles without a pending
 packet. Alternate output interrupts take 41 cycles, for at most 12.1094% CPU
-across an ordinary pair. Pending packet application adds 81..93 cycles on
-the affected synthesis interrupt. Reserving
+across an ordinary pair. Pending packet application adds 69 cycles, with no per-voice phase-reset work. Reserving
 AVR registers
 would compromise the interpreter allocation contract, so SRAM phases are used.
-Event fetches cost 277 native cycles including the shared 255-cycle transfer,
-replacing individual 124-cycle byte reads. There is no persistent cache or
-ownership/invalidation logic. The persistent handoff still uses 16 of the 35
-bytes reclaimed from the old cache, leaving a net SRAM saving of 19 bytes.
+Event fetches use a fourteen-byte interruptible FX burst rather than individual byte reads. There is no persistent cache or
+ownership/invalidation logic. The persistent handoff still uses 16 bytes; the total allocation is three bytes smaller than the preceding A2 implementation.
 Square duty is fixed at 50%; there is no runtime vibrato, filter, or envelope DSP.
 The score compiler expands custom envelopes and tremolo into control events.
 Asset durations encode tempo rather than adding live tempo state.
 
 Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
 layout assertions. The waveform table uses space before the primary table,
-keeping firmware at 29156 bytes, with 540 bytes remaining. There is little flash
-headroom remaining; future features need space savings or a different build.
+keeping firmware at 28972 bytes, with 724 bytes remaining. Future features must remain within that ceiling.
 
 FX, Mini and FX-C presets compile with the same Timer1/4 configuration; existing
 FX chip-select preset differences are retained. The [Mini](https://www.arduboy.com/mini)

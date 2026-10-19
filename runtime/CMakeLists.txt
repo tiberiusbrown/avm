@@ -5,6 +5,7 @@ set(AVM_RUNTIME_INCLUDE_DIR "${AVM_RUNTIME_SOURCE_DIR}/include")
 set(AVM_RUNTIME_MIR_BUILD_DIR "${AVM_RUNTIME_BUILD_DIR}/mir")
 
 set(RUNTIME_SOURCES
+    audio_tone
     avm
     font_5x7
     font_br4

@@ -49,3 +49,12 @@ The top-level `.cpp` file supplies `avm_test_main()` and its adjacent
 
 Timer1 arbitration is checked with simultaneous Timer0/Timer1 pending flags.
 Startup tests cover inherited timer power gates, enables and Timer3 speaker ownership.
+
+`cmake --build build --config RelWithDebInfo --target avm_timer0_tests_run`
+executes the real Timer0 ISR on FX, Mini, FX-C, and two custom button wirings.
+It checks millisecond carries, register/SREG preservation, 4 ms audio cadence
+and saturation, all 64 button combinations, 32 ms polling, hold cancellation,
+the 48-sample threshold, timed watchdog writes, and watchdog reset to the boot
+fuse entry. A guest that only loops verifies the shortcut while Timer1 runs,
+without guest SYS calls. These checks also run within `avm_tests_run`.
+See [shortcut measurements and emulator limits](../docs/bootloader-shortcut.md).

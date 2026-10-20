@@ -265,6 +265,66 @@ add_custom_target(avm_audio_tests_run
         "${AVM_PUSH16_TEST_DIR}/audio.bin" "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin" ${audio_large_inputs}
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
+
+# Exercise the real Timer0 ISR and watchdog on every device preset and on
+# both compile-time button paths. The guest spins without calling any SYS.
+avm_add_object(
+    OUTPUT "${AVM_PUSH16_TEST_DIR}/timer0.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/timer0.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_PUSH16_TEST_DIR}/timer0.o"
+    OUTPUT_ELF "${AVM_PUSH16_TEST_DIR}/timer0.elf"
+    OUTPUT_IMAGE "${AVM_PUSH16_TEST_DIR}/timer0.bin"
+    ENTRY _start)
+add_executable(avm_timer0_tests interp/timer0.cpp)
+target_compile_features(avm_timer0_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_timer0_tests PRIVATE ardensdebuggerlib)
+set(timer0_commands)
+set(timer0_outputs)
+foreach(wiring FX MINI FXC split shared)
+    set(timer0_dir "${CMAKE_CURRENT_BINARY_DIR}/timer0/${wiring}")
+    set(timer0_defines "")
+    if(wiring STREQUAL "split")
+        # Swap UP and B across ports, including their input initialization.
+        set(timer0_defines "#define AVM_BUTTON_UP_PIN PINB\n#define AVM_BUTTON_UP_PORT PORTB\n#define AVM_BUTTON_UP_DDR DDRB\n#define AVM_BUTTON_UP_BIT 4\n#define AVM_BUTTON_B_PIN PINF\n#define AVM_BUTTON_B_PORT PORTF\n#define AVM_BUTTON_B_DDR DDRF\n#define AVM_BUTTON_B_BIT 7\n")
+    elseif(wiring STREQUAL "shared")
+        # Permute shared-port direction bits and exchange A/B pins.
+        set(timer0_defines "#define AVM_BUTTON_UP_BIT 6\n#define AVM_BUTTON_RIGHT_BIT 7\n#define AVM_BUTTON_A_PIN PINB\n#define AVM_BUTTON_A_PORT PORTB\n#define AVM_BUTTON_A_DDR DDRB\n#define AVM_BUTTON_A_BIT 4\n#define AVM_BUTTON_B_PIN PINE\n#define AVM_BUTTON_B_PORT PORTE\n#define AVM_BUTTON_B_DDR DDRE\n#define AVM_BUTTON_B_BIT 6\n")
+    else()
+        set(timer0_defines "#define AVM_DEVICE_ARDUBOY_${wiring}\n")
+    endif()
+    file(GENERATE OUTPUT "${timer0_dir}/preset.asm"
+        CONTENT "${timer0_defines}#include \"${PROJECT_SOURCE_DIR}/interp/interp.asm\"\n")
+    add_custom_command(
+        OUTPUT "${timer0_dir}/interp.hex" "${timer0_dir}/interp.lst"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DSOURCE:FILEPATH=${timer0_dir}/preset.asm"
+            "-DOUTPUT_OBJECT:FILEPATH=${timer0_dir}/interp.o"
+            "-DOUTPUT_ELF:FILEPATH=${timer0_dir}/interp.elf"
+            "-DOUTPUT_MAP:FILEPATH=${timer0_dir}/interp.map"
+            "-DOUTPUT_LISTING:FILEPATH=${timer0_dir}/interp.lst"
+            "-DOUTPUT_HEX:FILEPATH=${timer0_dir}/interp.hex"
+            "-DMAX_INTERP_SIZE:STRING=${AVM_INTERPRETER_MAX_SIZE}"
+            "-DAVR_GCC:FILEPATH=${AVM_AVR_GCC}"
+            "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
+            "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
+            -P "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
+        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm"
+            "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
+            "${timer0_dir}/preset.asm"
+        VERBATIM)
+    list(APPEND timer0_outputs "${timer0_dir}/interp.hex" "${timer0_dir}/interp.lst")
+    list(APPEND timer0_commands
+        COMMAND "$<TARGET_FILE:avm_timer0_tests>"
+            "${timer0_dir}/interp.hex" "${timer0_dir}/interp.lst"
+            "${AVM_PUSH16_TEST_DIR}/timer0.bin" "${wiring}")
+endforeach()
+add_custom_target(avm_timer0_tests_run
+    ${timer0_commands}
+    DEPENDS avm_timer0_tests ${timer0_outputs} "${AVM_PUSH16_TEST_DIR}/timer0.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
 avm_add_object(
     OUTPUT "${AVM_PUSH16_TEST_DIR}/push16.o"
     SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/push16.asm"
@@ -366,7 +426,7 @@ add_custom_target(avm_display_system_tests_run
 add_custom_target(avm_tests_run
     COMMAND "$<TARGET_FILE:avm_tests>"
     DEPENDS avm_tests avm_push16_tests_run avm_stack_bounds_tests_run avm_audio_tests_run
-        avm_display_system_tests_run
+        avm_display_system_tests_run avm_timer0_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running all AVM tests in-process"
     USES_TERMINAL

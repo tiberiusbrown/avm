@@ -52,8 +52,8 @@
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
-;;     0x0A15–0x0A66  persistent audio state (82 bytes)
-;;     0x0A67–0x0AAE  aliased formatter/text or audio service workspace
+;;     0x0A15–0x0A65  persistent timer/audio state (81 bytes)
+;;     0x0A66–0x0AAD  aliased formatter/text or audio service workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -77,7 +77,7 @@
 ; Persistent audio state, separate from all call-lifetime SYS workspaces.
 #define data_audio_begin             (data_text_mode+1)
 #define data_audio_ticks_pending     (data_audio_begin+0)
-#define data_audio_divider           (data_audio_begin+1)
+#define data_boot_hold               (data_audio_begin+1)
 ; Music master, default 128 (32=unity); waveform selectors follow the controls.
 #define data_audio_volume            (data_audio_begin+2)
 #define data_audio_controls          (data_audio_begin+3)
@@ -7241,7 +7241,8 @@ startup_func:
     ; image below. There is no separate .bss region or SRAM-clear pass. Clear
     ; only interpreter-private state that is not supplied by the image.
     ; Include inactive sprite/font caches so one loop initializes the complete
-    ; contiguous region. Data/save page pointers are installed separately.
+    ; contiguous region, including data_boot_hold. Data/save page pointers are
+    ; installed separately.
     ldi  r30, lo8(data_startup_flags)
     ldi  r31, hi8(data_startup_flags)
     ldi  r26, (data_audio_end-data_startup_flags)
@@ -16890,51 +16891,99 @@ audio_enable_phase:
 ; Timer0 compare-A fires once per millisecond. Preserve the interrupted native
 ; state; the VM register file may be live in any AVR register when this runs.
 timer0_compa_isr:
-    push r0
-    in   r0, SREG
-    push r0
+    push r24
+    in   r24, SREG
+    push r24
 
-    lds  r0, data_millis+0
-    inc  r0
-    sts  data_millis+0, r0
+    lds  r24, data_millis+0
+    inc  r24
+    sts  data_millis+0, r24
     brne timer0_compa_isr_done
 
-    lds  r0, data_millis+1
-    inc  r0
-    sts  data_millis+1, r0
+    lds  r24, data_millis+1
+    inc  r24
+    sts  data_millis+1, r24
     brne timer0_compa_isr_done
 
-    lds  r0, data_millis+2
-    inc  r0
-    sts  data_millis+2, r0
+    lds  r24, data_millis+2
+    inc  r24
+    sts  data_millis+2, r24
     brne timer0_compa_isr_done
 
-    lds  r0, data_millis+3
-    inc  r0
-    sts  data_millis+3, r0
+    lds  r24, data_millis+3
+    inc  r24
+    sts  data_millis+3, r24
 
 timer0_compa_isr_done:
-    ; Divide milliseconds by four without using another native register.
-    ; INC/DEC implements saturation without needing an upper register.
-    lds  r0, data_audio_divider
-    inc  r0
-    sts  data_audio_divider, r0
-    sbrc r0, 2
-    rjmp timer0_audio_tick
+    ; The clock supplies both dividers; no GPIO work on the common 1 ms path.
+    lds  r24, data_millis
+    andi r24, 3
+    brne timer0_done
+
+    lds  r24, data_audio_ticks_pending
+    inc  r24
+    breq timer0_audio_done ; leave 0xFF in SRAM on overflow, but still poll
+    sts  data_audio_ticks_pending, r24
 timer0_audio_done:
-    pop  r0
-    out  SREG, r0
-    pop  r0
+    lds  r24, data_millis
+    andi r24, 0x1F
+    breq timer0_boot_poll
+timer0_done:
+    pop  r24
+    out  SREG, r24
+    pop  r24
     reti
 
-timer0_audio_tick:
-    clr  r0 ; r2 can hold a temporary inside native libm
-    sts  data_audio_divider, r0
-    lds  r0, data_audio_ticks_pending
-    inc  r0
-    breq timer0_audio_done
-    sts  data_audio_ticks_pending, r0
-    rjmp timer0_audio_done
+timer0_boot_poll:
+    ; All presets share a direction port. Fold custom bits into the same mask
+    ; when possible; split-port overrides need only compile-time bit tests.
+.if (AVM_BUTTON_UP_PIN == AVM_BUTTON_DOWN_PIN) && \
+    (AVM_BUTTON_UP_PIN == AVM_BUTTON_LEFT_PIN) && \
+    (AVM_BUTTON_UP_PIN == AVM_BUTTON_RIGHT_PIN)
+    in   r24, AVM_BUTTON_UP_PIN
+    andi r24, (_BV(AVM_BUTTON_UP_BIT) | _BV(AVM_BUTTON_DOWN_BIT) | \
+               _BV(AVM_BUTTON_LEFT_BIT) | _BV(AVM_BUTTON_RIGHT_BIT))
+    cpi  r24, (_BV(AVM_BUTTON_LEFT_BIT) | _BV(AVM_BUTTON_RIGHT_BIT))
+    brne timer0_boot_release
+.else
+    sbic AVM_BUTTON_UP_PIN, AVM_BUTTON_UP_BIT
+    rjmp timer0_boot_release
+    sbic AVM_BUTTON_DOWN_PIN, AVM_BUTTON_DOWN_BIT
+    rjmp timer0_boot_release
+    sbis AVM_BUTTON_LEFT_PIN, AVM_BUTTON_LEFT_BIT
+    rjmp timer0_boot_release
+    sbis AVM_BUTTON_RIGHT_PIN, AVM_BUTTON_RIGHT_BIT
+    rjmp timer0_boot_release
+.endif
+    sbis AVM_BUTTON_A_PIN, AVM_BUTTON_A_BIT
+    rjmp timer0_boot_release
+    sbis AVM_BUTTON_B_PIN, AVM_BUTTON_B_BIT
+    rjmp timer0_boot_release
+
+    ; 48 consecutive 32 ms samples: nominally 1536 ms, phase uncertainty <32 ms.
+    lds  r24, data_boot_hold
+    inc  r24
+    sts  data_boot_hold, r24
+    cpi  r24, 48
+    breq bootloader_reset
+    rjmp timer0_done
+
+timer0_boot_release:
+    clr  r24 ; ZERO may be borrowed by interrupted native libm
+    sts  data_boot_hold, r24
+    rjmp timer0_done
+
+; Nonreturning entry, also callable from foreground; clobbers r24 and SREG.
+; Cathy3K enters its loader after a watchdog reset, without an SRAM magic key.
+bootloader_reset:
+    cli
+    wdr
+    ldi  r24, (_BV(WDCE) | _BV(WDE))
+    sts  WDTCSR, r24
+    ldi  r24, _BV(WDE) ; shortest timeout, system-reset mode; timed write
+    sts  WDTCSR, r24
+bootloader_reset_wait:
+    rjmp bootloader_reset_wait
 
 ; Timer1 COMPA (vector 17) arbitrates ahead of Timer0 COMPA (vector 21).
 ; Output and synthesis run at 7812.5 Hz or 15625 Hz, selected in foreground.

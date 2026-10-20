@@ -504,7 +504,7 @@ void sequence(harness& h) {
         }
     });
     h.test("pending saturation and Timer0 preservation",[&]{
-        h.c().data[pending]=254; h.c().data[0xa16]=0;
+        h.c().data[pending]=254; h.c().data[0xa05]=0;
         auto zero=h.c().data[2]; h.c().data[2]=0x5a;
         auto regs=h.c().data;
         uint64_t min=1000,max=0;
@@ -515,17 +515,19 @@ void sequence(harness& h) {
         h.c().data[2]=zero; // normal-context safe points restore ZERO first
         h.elapsed(255); require(h.c().data[pending]==0,"pending snapshot not cleared");
         for(unsigned i=0;i<4;++i) h.c().data[0xa05+i]=255;
-        h.c().data[0xa16]=3;
+        h.c().data[reg::addr::PINF]=0xf0;
+        h.c().data[reg::addr::PINE]=64;
+        h.c().data[reg::addr::PINB]=16;
         h.c().data[2]=0x5a;
         auto worst=h.routine("timer0_compa_isr",true)+7;
         std::cout<<"Timer0 with full millis carry and audio tick: "<<worst<<" cycles\n";
-        require(worst==63,"Timer0 worst path changed");
+        require(worst==69,"Timer0 full-carry released-button path changed");
         h.c().data[2]=zero;
     });
     h.test("10/50/100 ms delayed servicing",[&]{
         for(unsigned ms : {10,50,100}) {
             h.play_midi({0xa4,1,0,1,60,4,1,61,4,0,2});
-            h.c().data[pending]=0; h.c().data[0xa16]=0;
+            h.c().data[pending]=0; h.c().data[0xa05]=0;
             auto latch=h.word(controls);
             for(unsigned i=0;i<ms;++i) {
                 h.routine("timer0_compa_isr",true);

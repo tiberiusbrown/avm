@@ -1,5 +1,9 @@
 # Hardware PWM audio
 
+For offline A5 rendering, emulator validation, and audio-guided MIDI fitting,
+see [Stage 2](midi_to_avms_stage2.md). Its default previews use 15,625 Hz;
+the hardware default remains 7812.5 Hz.
+
 AVM has three identical programmable-duty pulse oscillators and one noise
 oscillator. Timer1 synthesizes at 7812.5 Hz (default) or 15625 Hz. Timer4 drives
 the differential PC6/PC7 speaker outputs with a 250 kHz hardware PWM carrier.

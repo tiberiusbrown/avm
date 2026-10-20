@@ -82,11 +82,12 @@ IDs; voiced chord notes list sources of the tones actually represented.
 and statistics. It contains the complete source controller/bend curves even
 when playback uses a simpler approximation.
 
-Stage 2 can keep a `Song` and `Arrangement` in memory, change instruments,
+The implemented [Stage 2 audio-guided optimizer](midi_to_avms_stage2.md) keeps a
+`Song` and `Arrangement` in memory, changes instruments,
 effects, volumes, or note choices, and call `generate_score` or
 `compile_arrangement` again. No MIDI reparse is needed. A future transcription
-stage can construct the same `Song`. Audio matching and transcription are
-outside this implementation.
+stage can construct the same `Song`. Audio matching is an optional separate
+pipeline; transcription remains outside these implementations.
 
 ## Musical decisions
 

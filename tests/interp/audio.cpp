@@ -1465,8 +1465,15 @@ void capture(char** args, bool select_rate) {
     auto seconds=std::stoul(args[7]);
     require(seconds>0 && seconds<=60,"capture duration must be 1..60 seconds");
     unsigned interrupts=0;
+    // Independent logical endpoint trace, before PWM reconstruction/gain.
+    // The endpoint written by this ISR is the previous held sample.
+    std::ofstream logical(std::string(args[6])+".logical.csv");
+    require(bool(logical),"cannot create logical capture trace");
+    logical<<"cycle,endpoint\n";
     while(h.c().cycle_count-begin<seconds*16000000ull) {
         if(h.c().pc==h.sym("timer1_compa_isr")) ++interrupts;
+        if(h.c().pc==h.sym("timer1_output_done"))
+            logical<<h.c().cycle_count-begin<<','<<unsigned(h.c().data[held_sample])<<'\n';
         h.tick();
     }
     h.c().update_sound();
@@ -1486,6 +1493,37 @@ void capture(char** args, bool select_rate) {
     require(bool(out),"capture WAV write failed");
     std::cout<<args[6]<<": "<<samples.size()<<" samples at 50000 Hz, "
         <<interrupts<<" output interrupts\n";
+}
+// Deterministic oracle: the real A5 sequencer/foreground preparation and AVR
+// synthesis ISR, with event publication at exact logical 4ms boundaries.
+// Timer0 scheduling/PWM are intentionally isolated; --capture covers those.
+void render_logical(char** args) {
+    char* firmware_args[]{args[0],args[2],args[3],args[4]};
+    harness h(firmware_args,true,0);
+    std::ifstream input(args[5],std::ios::binary);
+    require(bool(input),"logical song unavailable");
+    std::vector<uint8_t> song((std::istreambuf_iterator<char>(input)),{});
+    unsigned selected=std::stoul(args[8]);
+    require(selected<=1,"logical rate must be 0 or 1");
+    unsigned samples=std::stoul(args[7]);
+    require(samples && samples<=1000000,"logical sample count must be 1..1000000");
+    h.command(13,selected);
+    h.command(11,128);
+    h.play(song,0x20000,false,0);
+    for(unsigned ch=0;ch<4;++ch) h.word(phases+2*ch,0);
+    h.c().data[noise]=1;
+    std::ofstream out(args[6],std::ios::binary);
+    require(bool(out),"cannot create logical PCM");
+    unsigned previous=0;
+    for(unsigned n=0;n<samples;++n) {
+        // n / rate / .004, kept rational at both supported rates.
+        unsigned ticks=unsigned(uint64_t(n)* (selected ? 2 : 4)/125);
+        if(ticks>previous) { h.elapsed(ticks-previous); previous=ticks; }
+        h.synth_sample();
+        out.put(char(h.c().data[held_sample]));
+    }
+    require(bool(out),"logical PCM write failed");
+    std::cout<<args[6]<<": "<<samples<<" logical samples\n";
 }
 void decimal_division(char** args) {
     harness h(args);
@@ -1763,6 +1801,10 @@ void hex_fraction(char** args) {
 }
 int main(int argc,char** argv) {
     try {
+        if(argc==9 && std::string(argv[1])=="--render-logical") {
+            render_logical(argv);
+            return 0;
+        }
         if(argc==5 && std::string(argv[1])=="--playlist") {
             playlist(argv+1);
             return 0;

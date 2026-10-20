@@ -142,6 +142,7 @@ class ArrangedNote:
     volume: int = 0
     start_tick: int | None = None
     end_tick: int | None = None
+    gate: float = 1.0  # Sounding fraction; Stage 2 may shorten articulation, never the timeline.
 
 
 @dataclass
@@ -905,10 +906,12 @@ def generate_score(arrangement):
             # lengthens the song. Adjacent attacks cancel a prior release.
             duration = (note.end_tick - note.start_tick) * 4
             release = arrangement.instruments[note.instrument].release_ms
-            gate_ms = max(4, duration - release)
-            if release and gate_ms < duration:
+            if not math.isfinite(note.gate) or not 0 < note.gate <= 1:
+                raise ValueError("Arranged note gate must be in (0, 1]")
+            gate_ms = max(4, tick(duration * note.gate / 1000) * 4 - release)
+            if gate_ms < duration:
                 commands.append(f"gate {gate_ms}/{duration}")
-            elif release:
+            elif release and not any(e.kind == "note_cut" for e in note.effects):
                 commands.append(f"note_cut {{ after {duration}ms }}")
             commands.append(f"{names[note.pitch % 12]}:{duration}ms")
             lines.append("    " + " ".join(commands))

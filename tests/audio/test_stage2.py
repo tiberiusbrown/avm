@@ -1,0 +1,332 @@
+"""Synthetic Stage 2 tests; no copyrighted recordings or SoundFont required."""
+import importlib.util
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from copy import deepcopy
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / "tools"))
+HAS_AUDIO = all(importlib.util.find_spec(name) is not None for name in ("numpy", "scipy"))
+if HAS_AUDIO:
+    import avm_music
+    import midi_to_avms as midi
+    import numpy as np
+    from avm_audio_features import (
+        Reference,
+        activity,
+        aligned_audio,
+        estimate_alignment,
+        extract,
+        load_reference,
+    )
+    from avm_audio_optimize import (
+        Config,
+        optimize,
+        restore,
+        snapshot,
+        structure,
+        valid_candidate,
+    )
+    from avm_audio_render import decode, render, write_wav
+    from midi_to_avms_stage2 import discover_pairs
+    from scipy.io import wavfile
+
+
+def fixture(channels=(0,), duration=1.2):
+    voices, instruments = {ch: [] for ch in range(4)}, {}
+    for ch in channels:
+        name = "i"+str(ch)
+        instruments[name] = midi.Instrument(name, "noise" if ch == 3 else "pulse", 128, 8, ((0, 100),), 0)
+        voices[ch] = [midi.ArrangedNote((60, 67, 48, 60)[ch], 0, duration, 100, (ch,), name, ch, volume=8)]
+    return midi.Arrangement("Synthetic", duration, voices, instruments, False, (4, 4), 16, midi.Analysis([], 1), {"warnings": []})
+
+
+@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
+class RenderTests(unittest.TestCase):
+    def test_pulse_exact_integer_formula_and_initial_delay_both_rates(self):
+        data = avm_music.compile_source("channel 0 { volume 31 duty 64 octave 4 a:200ms }")
+        for rate in (7812.5, 15625):
+            result = render(data, rate=rate)
+            first = int(np.ceil(.004*rate))
+            self.assertTrue(np.all(result.pcm[:first] == 128))
+            inc = avm_music.note_increment(69)*(2 if rate == 7812.5 else 1)
+            phase = np.arange(1, 101)*inc % 65536
+            expected = 128+np.where((phase >> 8) < 64, 123, -123)
+            np.testing.assert_array_equal(result.pcm[first:first+100], expected)
+
+    def test_duty_extremes_and_volume_quantization(self):
+        for duty in (0, 32, 64, 96, 128, 255):
+            data = avm_music.compile_source(f"channel 0 {{ volume 31 duty {duty} c:200ms }}")
+            r = render(data, master=255)
+            amp = 31*255//32
+            self.assertTrue(set(r.mix.tolist()).issubset({0, (127*amp+64)//128, (-127*amp+64)//128}))
+
+    def test_noise_scalar_lfsr_and_reseeding(self):
+        data = avm_music.compile_source("channel 3 { wave noise volume 8 noise_retrigger { every 32ms seed 37 } c:200ms }")
+        actual = render(data, rate=15625)
+        events = decode(data)
+        phase, state, inc, amp, index = 0, 1, 0, 0, 0
+        expected = []
+        for n in range(len(actual.pcm)):
+            if index < len(events) and n >= np.ceil(events[index].tick*15625/250):
+                e = events[index]
+                for _, value in e.pitches:
+                    inc = value
+                for _, volume, seed in e.controls:
+                    amp = volume*4
+                    if seed >= 0:
+                        phase, state = 0, seed
+                if e.command == 1:
+                    inc = 0
+                index += 1
+            total = phase+inc
+            phase = total & 65535
+            if total > 65535:
+                state = (state >> 1) ^ (0xb8 if state & 1 else 0)
+            expected.append(128+((-amp if state & 1 else amp) if inc else 0))
+        np.testing.assert_array_equal(actual.pcm, expected)
+
+    def test_phase_and_noise_state_are_preserved_across_skipped_prefix(self):
+        data = avm_music.compile_source("loop channel 0 { duty 32 c:80ms duty 96 e:120ms } channel 3 { wave noise c:200ms }")
+        full = render(data, duration=1.4)
+        for start in (.137, .4, .801):
+            partial = render(data, start=start, duration=.12)
+            lo, hi = int(np.ceil(start*15625)), int(np.ceil((start+.12)*15625))
+            np.testing.assert_array_equal(full.pcm[lo:hi], partial.pcm)
+
+    def test_signed_mix_clips_only_after_sum(self):
+        a = render(avm_music.compile_source("channel 0 { volume 31 duty 0 c:100ms } channel 1 { volume 31 duty 255 c:100ms }"))
+        self.assertLess(a.metrics()["clipping_fraction"], .05)
+        b = render(avm_music.compile_source("channel 0 { volume 31 duty 0 c:100ms } channel 1 { volume 31 duty 0 c:100ms }"))
+        self.assertGreater(b.metrics()["clipping_fraction"], .9)
+        self.assertEqual(int(b.mix.min()), -246)
+
+    def test_invalid_binary_and_parameters(self):
+        for data in (b"", b"\xa4\x01", b"\xa5\x00", b"\xa5\x01\x00\x10\x60", b"\xa5\x08\x00\x80\x80\x00"):
+            with self.assertRaises(ValueError):
+                render(data)
+        with self.assertRaises(ValueError):
+            render(b"\xa5\x01\x00\x00\x01", rate=16000)
+
+    def test_fractional_rate_wav_uses_exact_resampling(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder)/"out.wav"
+            write_wav(path, np.zeros(7813), 7812.5)
+            rate, raw = wavfile.read(path)
+            self.assertEqual(rate, 15625)
+            self.assertEqual(len(raw), 15626)
+
+
+@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
+class FeatureTests(unittest.TestCase):
+    def test_dc_is_not_treated_as_audible_loudness(self):
+        silence = extract(np.zeros(8000), 15625)
+        dc = extract(np.ones(8000)*.8, 15625)
+        self.assertLess(float(np.max(np.abs(dc.rms-silence.rms))), 1e-10)
+        self.assertLess(float(dc.pitch.max()), 1e-10)
+
+    def test_silence_is_finite_and_zero(self):
+        f = extract(np.zeros(8000), 15625)
+        self.assertTrue(np.all(np.isfinite(f.chroma)))
+        self.assertEqual(float(f.rms.max()), 0)
+        self.assertEqual(float(f.pitch.max()), 0)
+
+    def test_brightness_pitch_and_two_tones(self):
+        t = np.arange(15625)/15625
+        low = extract(np.sin(2*np.pi*220*t), 15625)
+        high = extract(np.sin(2*np.pi*880*t), 15625)
+        self.assertGreater(np.median(high.centroid), np.median(low.centroid)*3)
+        mixture = extract(np.sin(2*np.pi*220*t)+np.sin(2*np.pi*440*t), 15625)
+        self.assertEqual(np.argmax(mixture.chroma.sum(axis=1)), 9)  # A
+        self.assertGreater(mixture.pitch[57-24].sum(), mixture.pitch[58-24].sum())
+
+    def test_ramp_attack_decay_features(self):
+        t = np.arange(15625)/15625
+        ramp = extract(t*np.sin(2*np.pi*440*t), 15625)
+        self.assertGreater(ramp.rms[-20:-5].mean(), ramp.rms[5:20].mean()*3)
+        attack = np.r_[np.zeros(4000), np.ones(4000)*.5, np.zeros(4000)]
+        _, onset = activity(attack, 15625)
+        self.assertLess(abs(np.argmax(onset)/250-4000/15625), .02)
+
+    def test_stereo_pcm_float_resample_and_preserve_silence(self):
+        with tempfile.TemporaryDirectory() as folder:
+            for dtype in (np.int16, np.int32, np.float32, np.uint8):
+                mono = np.r_[np.zeros(4410), np.ones(4410)*.2, np.zeros(4410)]
+                stereo = np.column_stack((mono, mono))
+                if dtype == np.uint8:
+                    raw = np.rint(stereo*128+128).astype(dtype)
+                elif np.issubdtype(dtype, np.integer):
+                    raw = (stereo*(2**(np.dtype(dtype).itemsize*8-1))).astype(dtype)
+                else:
+                    raw = stereo.astype(dtype)
+                path = Path(folder)/f"{np.dtype(dtype)}.wav"
+                wavfile.write(path, 44100, raw)
+                before = path.read_bytes()
+                ref = load_reference(path)
+                self.assertEqual(ref.metadata["channels"], 2)
+                self.assertAlmostEqual(ref.metadata["leading_silence_seconds"], .1, delta=.02)
+                self.assertFalse(ref.metadata["trimmed"])
+                self.assertAlmostEqual(len(ref.audio)/15625, .3, delta=.001)
+                self.assertEqual(path.read_bytes(), before)
+
+    def test_alignment_keeps_midi_rests_and_detects_latency(self):
+        rate, latency = 15625, .12
+        times = (.4, .81, 1.37, 1.92)
+        song = midi.Song("alignment", 2.4, [midi.Note(i, 60, t, t+.1, 100, 0, 0, 0, t*2) for i, t in enumerate(times)], [], [], [])
+        audio = np.zeros(round(2.7*rate))
+        for t in times:
+            lo = round((t+latency)*rate)
+            audio[lo:lo+1000] = np.exp(-np.arange(1000)/300)
+        ref = Reference(audio, rate, {})
+        alignment = estimate_alignment(ref, song)
+        self.assertAlmostEqual(alignment["reference_offset_seconds"], latency, delta=.02)
+        aligned = aligned_audio(ref, 2.4, alignment["reference_offset_seconds"])
+        self.assertTrue(np.all(aligned[:round(.37*rate)] == 0))
+
+
+@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
+class OptimizationTests(unittest.TestCase):
+    def fit(self, initial, target, evaluations=160):
+        audio = render(midi.compile_arrangement(deepcopy(target))[1]).audio
+        original = snapshot(initial)
+        result = optimize(initial, audio, None, Config(max_evaluations=evaluations, excerpt_duration=target.duration+.004))
+        self.assertEqual(snapshot(initial), original)
+        self.assertLess(result.optimized["loss"], result.baseline["loss"])
+        self.assertLessEqual(result.evaluations, evaluations)
+        self.assertTrue(valid_candidate(result.arrangement, initial))
+        return result
+
+    def test_recover_duty(self):
+        a = fixture()
+        b = deepcopy(a)
+        b.instruments["i0"].duty = 64
+        r = self.fit(a, b)
+        self.assertIn(r.arrangement.instruments["i0"].duty, (64, 192))
+        self.assertLess(r.optimized["components"]["spectral"], .01)
+
+    def test_recover_envelope(self):
+        a = fixture()
+        b = deepcopy(a)
+        b.instruments["i0"].points = ((0, 0), (24, 100), (160, 60))
+        r = self.fit(a, b)
+        self.assertLess(r.optimized["components"]["envelope"], r.baseline["components"]["envelope"]*.6)
+
+    def test_recover_vibrato(self):
+        a = fixture(duration=1.6)
+        b = deepcopy(a)
+        b.voices[0][0].effects = [midi.Effect("lfo", {"target": "pitch", "depth": 20, "period_ms": 240})]
+        r = self.fit(a, b, 220)
+        effects = [e for n in r.arrangement.voices[0] for e in n.effects if e.kind == "lfo" and e.parameters["target"] == "pitch"]
+        self.assertTrue(effects)
+        self.assertEqual(effects[0].parameters["period_ms"], 240)
+        self.assertAlmostEqual(effects[0].parameters["depth"], 20, delta=10)
+
+    def test_recover_duty_slide(self):
+        a = fixture(duration=1.6)
+        b = deepcopy(a)
+        b.voices[0][0].effects = [midi.Effect("duty_slide", {"to": 32, "over_ms": 240})]
+        r = self.fit(a, b, 220)
+        self.assertTrue(any(e.kind == "duty_slide" for e in r.arrangement.voices[0][0].effects))
+
+    def test_balance_does_not_silence_parts(self):
+        a = fixture((0, 1, 2))
+        a.instruments["i1"].volume = a.voices[1][0].volume = 12
+        b = deepcopy(a)
+        b.instruments["i1"].volume = b.voices[1][0].volume = 9
+        r = self.fit(a, b, 180)
+        self.assertLess(r.optimized["components"]["balance"], r.baseline["components"]["balance"])
+        self.assertTrue(all(n.volume >= 4 for notes in r.arrangement.voices.values() for n in notes))
+
+    def test_retrigger_rhythm_and_preservation(self):
+        a = fixture((3,), .8)
+        # Distinct attacks retain identity: no continuous-hiss replacement.
+        a.voices[3] = [midi.ArrangedNote(60, t, t+.12, 100, (i,), "i3", 3, volume=8) for i, t in enumerate((0., .2, .4, .6))]
+        b = deepcopy(a)
+        for n in b.voices[3]:
+            n.effects = [midi.Effect("noise_retrigger", {"every_ms": 16, "seed": 37})]
+        r = self.fit(a, b, 160)
+        self.assertTrue(any(e.kind == "noise_retrigger" for n in r.arrangement.voices[3] for e in n.effects))
+        self.assertEqual([(n.start, n.end) for n in a.voices[3]], [(n.start, n.end) for n in r.arrangement.voices[3]])
+
+    def test_simple_reference_does_not_collect_effects(self):
+        a = fixture((0, 2))
+        reference = render(midi.compile_arrangement(deepcopy(a))[1]).audio
+        r = optimize(a, reference, None, Config(max_evaluations=100, excerpt_duration=1.204))
+        self.assertFalse([e for notes in r.arrangement.voices.values() for n in notes for e in n.effects])
+        for ch in (0, 2):
+            self.assertEqual(structure(a, ch), structure(r.arrangement, ch))
+        self.assertEqual(r.baseline["compiled_bytes"], r.optimized["compiled_bytes"])
+
+    def test_invalid_structure_and_duplicate_effects_are_rejected(self):
+        a = fixture((0, 2))
+        b = deepcopy(a)
+        b.duration += .004
+        self.assertFalse(valid_candidate(b, a))
+        b = deepcopy(a)
+        b.voices[0][0].pitch += 1
+        self.assertFalse(valid_candidate(b, a))
+        b = deepcopy(a)
+        effect = midi.Effect("duty_slide", {"to": 32, "over_ms": 240})
+        b.voices[0][0].effects = [effect, effect]
+        self.assertFalse(valid_candidate(b, a))
+        self.assertEqual(snapshot(restore(a, snapshot(a))), snapshot(a))
+
+
+@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
+class CliTests(unittest.TestCase):
+    def test_discovery_casefold_unmatched_and_ambiguity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            for name in ("Theme.MID", "theme.WAV", "alone.mid", "ignore.sf2"):
+                (root/name).touch()
+            pairs, unmatched = discover_pairs(root)
+            self.assertEqual(len(pairs), 1)
+            self.assertEqual(unmatched, ["alone"])
+            (root/"theme.midi").touch()
+            with self.assertRaises(ValueError):
+                discover_pairs(root)
+
+    def test_cli_render_score_defaults_to_15625(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            score = root/"test.avms"
+            score.write_text("channel 0 { volume 8 c:200ms }")
+            completed = subprocess.run([sys.executable, str(ROOT/"tools/midi_to_avms_stage2.py"), str(score), "--render-only", "--excerpt-duration", ".3", "--output-dir", str(root/"out")], capture_output=True, text=True, check=False)
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            rate, audio = wavfile.read(root/"out/preview.wav")
+            self.assertEqual(rate, 15625)
+            self.assertTrue(np.any(audio))
+
+    @unittest.skipUnless(importlib.util.find_spec("mido"), "MIDI CLI needs mido")
+    def test_single_and_batch_cli_resume_and_originals(self):
+        import mido
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            source = root/"corpus"
+            source.mkdir()
+            f = mido.MidiFile()
+            f.tracks.append(mido.MidiTrack([mido.Message("note_on", note=60, velocity=100), mido.Message("note_off", note=60, time=960)]))
+            path = source/"test.MID"
+            f.save(path)
+            a = midi.arrange(midi.read_midi(path))
+            target = render(midi.compile_arrangement(a)[1]).audio
+            write_wav(source/"TEST.wav", target, 15625)
+            original = {p.name: p.read_bytes() for p in source.iterdir()}
+            command = [sys.executable, str(ROOT/"tools/midi_to_avms_stage2.py"), "--input-dir", str(source), "--output-dir", str(root/"out"), "--max-evaluations", "12", "--no-plots"]
+            for extra in ([], ["--resume"]):
+                completed = subprocess.run(command+extra, capture_output=True, text=True, check=False)
+                self.assertEqual(completed.returncode, 0, completed.stderr)
+            report = json.loads((root/"out/test/comparison.json").read_text())
+            self.assertEqual(report["rate"], 15625)
+            self.assertTrue(all(report["protected_pitch_timing_sources_unchanged"].values()))
+            for name in ("baseline.avms", "optimized.bin", "optimized.wav", "reference.wav", "optimization_history.json"):
+                self.assertTrue((root/"out/test"/name).exists())
+            self.assertEqual({p.name: p.read_bytes() for p in source.iterdir()}, original)
+
+
+if __name__ == "__main__":
+    unittest.main()

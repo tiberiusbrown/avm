@@ -1,0 +1,7 @@
+numpy>=1.26
+scipy>=1.11
+matplotlib>=3.8
+soundfile>=0.12
+# Optional in the code, strongly recommended for real recordings:
+numba>=0.59
+pytest>=8

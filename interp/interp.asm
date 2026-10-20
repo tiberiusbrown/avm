@@ -16487,9 +16487,12 @@ audio_advance:
 audio_stream_end:
     movw r30, r16
     rcall audio_event_consumed
+    ldd  r24, Z+AUDIO_MASK
     std  Z+AUDIO_STATUS, ZERO
     std  Z+AUDIO_MASK, ZERO
     ; Never transfer a completed owner's transient reseed to its successor.
+    sbrs r24, 3
+    rjmp 2f ; a tonal-only SFX ending must not discard audible music's seed
     cpi  r16, lo8(data_audio_music)
     brne 1f
     lds  r24, data_audio_sfx+AUDIO_MASK
@@ -16844,6 +16847,7 @@ sys_audio_impl:
     rcall audio_commit_prepare
     in   r25, SREG
     cli
+    clr  r20 ; rate changes preserve noise state; no transient retrigger command
     rcall audio_apply_update
     sts  TCCR1B, ZERO
     ldi  r24, 255

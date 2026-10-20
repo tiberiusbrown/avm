@@ -1,510 +1,359 @@
 # Hardware PWM audio
 
-AVM synthesizes three selectable tonal voices and one noise voice using Timer1 COMPA.
-Timer4 produces differential PWM on PC6/PC7. The ISR consumes prepared updates
-and synthesizes from a fixed 15-byte control latch; song decoding, gain
-preparation, sequencing, and FX reads run synchronously when the interpreter
-restarts its instruction stream. No guest update call is required.
+AVM has three identical programmable-duty pulse oscillators and one noise
+oscillator. Timer1 synthesizes at 7812.5 Hz (default) or 15625 Hz. Timer4 drives
+the differential PC6/PC7 speaker outputs with a 250 kHz hardware PWM carrier.
+Pulse waveform duty and Timer4's output compare duty are different quantities.
 
-All native implementation and SRAM definitions are in `interp/interp.asm`.
+## API, channels, and ownership
 
-## Guest API and demo
+Include `<avm/audio.h>` or `<avm.h>`. Playback advances automatically at interpreter
+safe points; no guest update call is needed. All program pointers are packed
+24-bit AVM program pointers, with no 16-bit asset-length limit.
 
-Include `<avm/audio.h>` or `<avm.h>`. `avm_audio_play(ptr)` starts a
-program-space song and enables output. `avm_audio_sfx(ptr)`
-starts one effect, replacing the preceding effect. Both pointers are packed
-24-bit AVM program pointers. Music terminates with End or Loop; effects end with End. No byte length
-is passed and there is no 65535-byte song limit.
+| Channel | Convention | Oscillator | Sequenced SFX |
+| --- | --- | --- | --- |
+| 0 | Melody | Pulse | Never stolen |
+| 1 | Harmony/countermelody | Pulse | Tonal slot |
+| 2 | Bass | Pulse | Never stolen |
+| 3 | Percussion | Noise | Noise slot |
 
-`avm_audio_stop`, `avm_audio_pause`, `avm_audio_resume`, `avm_audio_volume`,
-`avm_audio_music_volume`, `avm_audio_sfx_volume`, `avm_audio_stop_sfx`,
-`avm_audio_enable`, `avm_audio_disable`, and `avm_audio_rate` provide controls.
-Both masters accept 0..255, with 0=mute, 32=100%, and 255=796.875%.
-`avm_audio_volume` sets both; the music and SFX setters change only their own
-master. Direct tones use SFX gain. Both default to **128 (400%)** and retain their values
-across play, stop, pause, and disable/enable. The foreground prepares each
-channel amplitude as `floor(volume * owner_master / 32)`; desired channel
-volumes stay 0..31. Gain changes preserve notes, waveforms, phase, and
-sequencing time. At the default gain, volume 31 produces amplitude 124,
-close to the full signed PWM range. The ISR saturates the complete signed
-mix at PWM duty 0/255; several loud voices can clip together.
-Muted SFX still owns its channels, so muting effects does not expose music
-underneath them; stop SFX to release those channels.
-Pause freezes the music countdown and mutes music;
-SFX keeps running. Stop mutes music, leaving SFX intact. Disable stops both
-streams and both timers and leaves the speaker outputs low. PLL stays enabled.
-Stop/end leaves the timers running at neutral duty; disable removes the sample
-ISR overhead when output is no longer needed.
+`avm_audio_play(song)` and `avm_audio_sfx(effect)` start streams and enable
+output. There is one one-shot SFX stream, which replaces any previous effect.
+An effect owns only its declared slots, including during rests or volume zero.
+Undeclared slots remain available to music. Music advances underneath SFX;
+End/stop restores its current pitch, volume, and duty atomically. Oscillators
+and phases are shared: there is no hidden fifth oscillator or saved music phase.
 
-`avm_audio_tone(channel, MIDI_note, amplitude)` replaces the effect with one
-latched voice until `avm_audio_stop_sfx`. Channels 0..2 are square, 3 is noise.
-Valid channel/amplitude arguments are 0..3/0..31; these fields are masked to
-their respective widths. MIDI outside 24..95 mutes the selected voice.
-The MIDI table and conversion live in the guest runtime's `audio_tone.c`, in
-program storage, and are linked only when this API is used. The internal SYS
-command accepts a full uint16 phase increment in r5. This low-level direct-tone
-API retains its explicit 0..3 channel override; sequenced SFX uses only 2/3.
-`avm_audio_status()` returns bit 0=music playing, bit 1=music paused, bit 2=SFX
-playing (including a direct tone). Play also enables output automatically.
+`avm_audio_tone(channel, MIDI_note, amplitude)` remains explicitly addressed:
+it can override any physical channel 0..3 until `avm_audio_stop_sfx()`. Tonal
+direct tones use duty 128. Channel/amplitude arguments are masked to 0..3/0..31;
+MIDI outside 24..95 mutes that channel. Its MIDI lookup table lives in guest
+program storage and is linked only if this API is used. The underlying SYS
+command accepts a raw uint16 phase increment; conversion is outside the firmware.
 
-Sequenced effects have two fixed slots: tonal voice 2 and noise voice 3.
-Use voice 0 for the melody, voice 1 for primary accompaniment, voice 2 for
-secondary accompaniment, and voice 3 for music percussion/noise. An effect
-steals only the slots declared in its source: a tonal-only effect leaves music
-noise audible, and a noise-only effect leaves tonal accompaniment audible.
-A declared channel retains ownership during rests, note-off, and zero volume;
-omit a channel entirely to leave its music voice available. Starting a new
-effect replaces the entire previous effect and releases any omitted slots.
-Music's note/control timeline continues underneath the stolen voices. End/stop
-restores its **current** state atomically. The oscillators are shared: there
-is no separate hidden music phase or fifth voice. There is one one-shot effect
-stream, with no allocator or ISR arbitration.
+`avm_audio_stop`, `avm_audio_pause`, `avm_audio_resume`, `avm_audio_stop_sfx`,
+`avm_audio_enable`, `avm_audio_disable`, and `avm_audio_rate` retain their APIs.
+Pause freezes and mutes music while SFX runs; stop mutes only music. Disable
+stops both streams and timers and leaves the speaker pins low; the PLL remains
+enabled. End/stop otherwise leaves timers running at neutral output.
+`avm_audio_status()` returns music-playing bit 0, music-paused bit 1, SFX bit 2.
 
-```c
-avm_audio_play(music);
-avm_audio_music_volume(64); // Half the default music gain; SFX keeps gain 128.
-// Draw, run gameplay, or idle. Playback advances automatically.
-avm_audio_sfx(effect);
-```
+`avm_audio_volume` sets both masters; `avm_audio_music_volume` and
+`avm_audio_sfx_volume` set them independently. Direct tones use SFX gain.
+Masters accept 0..255, default to 128, and persist across stop/pause/disable:
+32 is unity, 128 is 400%, 255 is 796.875%. Foreground preparation computes
+`floor(volume * owner_master / 32)` (0..247). Muting SFX retains ownership.
+The ISR clips the complete signed mix after summation; loud voices can clip.
 
-Build `avm_audio_demo` with CMake, configuration `RelWithDebInfo`.
-The package is `projects/audio_demo/audio_demo.arduboy`; the development image
-is `projects/audio_demo/build/audio_demo.bin`. It renders
-two moving rectangles at 60 Hz. A triggers a two-channel effect; B toggles
-pause. Up toggles 8/16 kHz synthesis, with the current rate displayed.
-Its generated audio headers are checked in alongside the `.avms` scores;
-`audio_demo_assets` regenerates them before a rebuild. The directory also
-supports standalone CMake builds with an installed SDK; see its
-[README](../projects/audio_demo/README.md). There is no update call in
-`setup`/`loop`. Firmware is `interp/build/interp.hex`.
+## Pulse and noise synthesis
 
-## Binary formats: A4 music and compact C1..C3 SFX
+Each tonal oscillator has a uint16 phase, uint16 increment, uint8 duty, and
+prepared uint8 amplitude. It advances phase, then compares its upper byte:
+`phase_high < duty` produces +127; otherwise -127. Duty is 0..255, default
+128 (exact 50%). Percentages use a 256-step cycle: 12.5%=32, 25%=64, 50%=128;
+100% clamps to 255. Duty 0 is always negative; 255 still has one negative phase
+bin. These extremes can introduce DC and are useful chiefly as effect endpoints.
+At duty 128 every sample equals the former square table for the same phase.
 
-All pitches are **little-endian uint16 phase increments**, with zero meaning
-off. Values are encoded for **15625 Hz**, in both output modes:
-`increment = round(frequency_Hz * 65536 / 15625)`. Resolution is approximately
-0.238419 Hz. At 8 kHz the foreground doubles increments, saturating values
-above 32767 to 65535 instead of wrapping. Desired pitches remain unscaled, so
-repeated rate changes do not lose precision. All uint16 values are accepted;
-keep tonal increments below 16384 for the 8 kHz Nyquist limit, or below 32768
-when using only 16 kHz. Harmonics can still alias. Noise uses phase
-overflow to clock its LFSR. The interpreter contains no MIDI table or pitch
-conversion. The score compiler still accepts C1..B6 notation and performs the
-conversion offline; `_encode_events` also accepts explicit `increment` updates
-for arbitrary pitches and future pitch automation. A3/B1..B3 assets used the
-old 7812.5 Hz basis and are rejected; regenerate them for this experiment.
+The branchless `CP/SBC/ANDI/SUBI` comparison has fixed instruction cost for
+every threshold and phase. It uses no table, LPM, or Z register. FMULSU,
+rounding `floor(sample * amplitude / 128 + 0.5)`, sign extension, signed
+16-bit mixing, PWM bias 128, and final 0..255 clipping are retained.
+The unused space before the fixed primary dispatch table remains padding.
 
-Pitch and control changes **preserve phase**, including repeated notes and
-loop boundaries. Phase is initialized at interpreter startup. Increment zero
-freezes the oscillator and mutes its output. Volume zero mutes without stopping
-a nonzero increment. Use envelopes that reach zero at note boundaries to
-reduce audible clicks. No retrigger flags or phase-reset packets are stored.
+Noise uses a fourth phase accumulator; overflow clocks the existing 8-bit
+Galois LFSR (feedback B8, startup seed 1, period 255). Its low bit selects
+positive or negative prepared amplitude. Ordinary pitch/control changes
+preserve phase and LFSR. An explicit retrigger atomically sets seed 1..63
+and resets noise phase before generating the next sample. It does not change
+the pitch. Hidden music retriggers are discarded while SFX owns noise; release
+restores current music controls without replaying an earlier seed.
 
-Music begins with `A4, ownership_mask`, where the mask is nonzero and uses
-bits 0..3. All declared voices start off, at retained volume 24 with square
-selected. Each event starts with `delta, change_mask`:
+## Binary formats: A5 and D1–D3
 
-| Music change-mask bits | Meaning |
+Old A4/C1–C3 and earlier headers are rejected. Regenerate assets. Pitches are
+little-endian uint16 increments with zero meaning off, encoded for 15625 Hz:
+`round(frequency_Hz * 65536 / 15625)`. At 7812.5 Hz foreground preparation
+doubles increments, saturating at 65535; desired state remains canonical.
+All uint16 increments are legal. MIDI source notation covers C1..B6.
+Pitch and duty updates preserve phase, including repeated notes and loops.
+
+Music header: `A5, ownership_mask`; mask is nonzero with only bits 0..3 set.
+Each event is `delta, change_mask, pitches..., controls...`. Change-mask bits
+0..3 select pitches; bits 4..7 select controls. Each selected group is in
+ascending physical channel order. Initial desired volume is 24, duty 128,
+pitch off. Every compiler-generated first event initializes all owned voices,
+including duty, so loop entry cannot inherit stale controls.
+
+| Control bits | Meaning |
 | --- | --- |
-| 0..3 | uint16 pitch changes for voices 0..3 |
-| 4..7 | Packed volume/waveform changes for voices 0..3 |
+| 0..4 | Volume 0..31 |
+| 5..6 | Reserved; must be zero |
+| 7, channels 0..2 | One unsigned duty byte follows |
+| 7, channel 3 | One nonzero seed byte 1..63 follows; retrigger noise |
 
-Selected pitches follow in ascending voice order, then selected controls in
-ascending voice order. A control uses bits 4..0 for volume 0..31 and bits 6..5
-for waveform: 0=square, 1=triangle, 2=sawtooth, 3=sine. Bit 7 is ignored.
-Voice 3 ignores waveform bits and generates noise. For example,
-`00 11 35 07 67` waits one tick, then sets voice 0 to increment 1845 (A4)
-with sine at volume 7. Mask `88` changes both the noise rate and volume.
+A volume-only control is one byte. A duty or seed update is two bytes and
+also carries the currently selected volume. Optional bytes immediately follow
+their own control byte, before the next channel's control. Noise never
+interprets the extension as duty. Seed-only changes still publish a packet.
+For example `00 11 35 07 87 40` waits one tick, sets voice 0 to increment
+1845, volume 7, and duty 64. `00 80 8A 25` reseeds noise with 37 at volume 10.
 
-SFX begins with **one header byte**:
-
-| Header | Declared slots / ownership |
+| SFX header | Ownership |
 | --- | --- |
-| `C1` | Tonal slot -> voice 2 |
-| `C2` | Noise slot -> voice 3 |
-| `C3` | Both slots -> voices 2 and 3 |
+| D1 | Tonal slot, physical voice 1 |
+| D2 | Noise slot, physical voice 3 |
+| D3 | Both slots, physical voices 1 and 3 |
 
-There is no additional channel mask or route table. Each SFX event starts with
-`delta, update_flags`; only four flag bits are valid:
+SFX has no mask byte after the header. Events use four update flags: bit 0
+tonal pitch, bit 1 noise pitch, bit 2 tonal control, bit 3 noise control.
+Payload order is tonal pitch, noise pitch, tonal control/extension, noise
+control/extension. Other flag bits and updates outside declared slots are
+malformed. `D1 00 05 85 0E 8C 20` starts a tonal effect on voice 1 at increment
+3717, volume 12, duty 32. Append `00 00 01` to end it one tick later.
 
-| SFX update-flag bit | Payload |
-| --- | --- |
-| 0 | Tonal uint16 increment |
-| 1 | Noise uint16 increment |
-| 2 | Tonal packed volume/waveform |
-| 3 | Noise packed volume (waveform bits ignored) |
+Every delta byte means value+1 ticks (1..256), each tick 4 ms. There are no
+zero-time records. The first event waits at least 4 ms. A zero mask/flags is
+followed by a command byte: 0 Continue, 1 End, 2 music-only Loop. Each command
+consumes positive time. Loop rewinds to the first delta, skipping the validated
+music header. SFX Loop, unknown commands/headers, reserved control bits, invalid
+seed, ownership violations, and invalid flags stop that stream and release it.
 
-Payload order is tonal pitch, noise pitch, tonal control, noise control,
-omitting fields whose bits are clear. Updates outside declared slots are
-malformed. For example, `C1 00 05 85 0E 6C` declares tonal-only ownership,
-waits one tick, then selects increment 3717 with sine at volume 12. A complete
-two-slot update is eight bytes including delta and flags; a complete music
-update is fourteen bytes. Unchanged controls/pitches need no repeated payload.
+Maximum read-ahead at a due event includes the next delta: music 18 bytes
+(mask 1 + pitches 8 + extended controls 8 + next delta 1); SFX 10 bytes
+(flags 1 + pitches 4 + extended controls 4 + next delta 1). The current delta
+has already been consumed. Only actual bytes consumed advance the 24-bit FX
+cursor; unused read-ahead is discarded. No length is passed, so a truncated
+stream cannot be reliably distinguished from adjacent program data. Supply
+complete assets. End/Loop prevents trailing C-export padding from being used.
 
-Both formats use the same **byte value + 1** delta, in 4 ms ticks: `00` waits
-one tick and `FF` waits 256 ticks. Playback starts silent; the first event can
-begin after 4 ms. There are no zero-time records. A zero change mask/flags is
-followed by one command byte:
+## Asset compiler and notation
 
-| Record | Meaning |
-| --- | --- |
-| `delta, 00, 00` | Continue, preserving state and phase |
-| `delta, 00, 01` | End and release ownership |
-| `delta, 00, 02` | Music only: Loop to the first delta after its header |
-
-SFX Loop, other commands, invalid headers/masks/flags, and updates outside
-ownership stop that stream and release its ownership. A1/A2 assets are rejected
-and must be regenerated. Every record consumes time; a 255-tick snapshot can
-process at most 255 records per stream without a separate loop budget.
-The compiler initializes every declared voice in the first event, including
-off voices, so music loops restore pitch/control state on their first event.
-Long waits split into Continue records; 600 ticks uses two `FF 00 00` records
-then delta `57` for the remaining 88 ticks.
-
-The decoder follows a full 24-bit cursor until End/Loop, with no length field
-or 65535-byte asset cap. It reads fourteen music bytes or eight SFX bytes into temporary scratch for
-each due event, consumes only the actual record and next delta, and discards
-extra read-ahead. Truncation cannot be detected by byte count. Program/image
-addressing uses the same modulo-24-bit page addition as F0 program loads.
-
-## Asset compiler
-
-`tools/avm_music.py` uses Python's standard library only. `.avms` scores compile
-to A4 music or compact C1..C3 SFX, with five-bit channel volumes:
+`tools/avm_music.py` uses only Python's standard library and is installed in
+the SDK's bin directory. Diagnostics include filename, line and column.
 
 ```sh
 python tools/avm_music.py projects/audio_demo/music.avms song.bin --stats
-python tools/avm_music.py projects/audio_demo/music.avms song.h --name music
+python tools/avm_music.py projects/audio_demo/effect.avms effect.h --name effect
 ```
 
-SDK installation also places `avm_music.py` in its `bin` directory. The Python
-entry point `compile_source(text, filename="<score>", automation_ms=None)`
-returns bytes; `c_array(data, name)` creates a program-memory C declaration.
-Diagnostics identify the source file, line, and column.
-C exports pack eight event bytes into each little-endian `uint64_t` initializer.
-This reduces initializer count without changing the encoded byte stream. At most
-seven trailing zero bytes pad the final word and are ignored after End/Loop.
-If even the word count exceeds Clang's 16-bit inferred-array bound, the header
-uses contiguous, byte-aligned chunks and exposes the same 24-bit program
-pointer. Pass the requested name directly to playback; no asset size is needed.
-Both C and C++ exports are exercised beyond the 64 KB boundary.
+`compile_source(text, filename="<score>", automation_ms=None,
+max_updates=2000000, statistics=None)` returns bytes; `c_array(data, name)`
+exports packed little-endian uint64 words with at most seven padding bytes.
+Large C/C++ exports use contiguous chunks when necessary. No 64 KB size cap
+is introduced; streams and program addresses remain 24-bit.
+
+Score settings precede definitions/channels: `tempo 120` is quarter-note BPM,
+`meter 4/4`, `automation 8ms`, and optional `loop` or one-shot `sfx`.
+SFX may declare only channels 1/3 and cannot loop. Optional quoted `title` and
+`description`, `//` comments and semicolons are supported.
+
+`channel 0 [instrument] [octave 4] { ... }` is monophonic. `c4 d8 e r2`
+means quarter C, eighth D/E, half rest; omitted duration inherits the previous
+value. `r` and `s` are rests. Sharps/flats (`c#8 db8`), octave shifts (`c'8 c,8`),
+dots (`c4.`), rational multipliers (`c8*2/3`), and explicit times (`c:48ms`)
+are supported. Notes/rests must last at least 4 ms. Ties (`c4~ c4`) preserve one
+attack and its effect timeline; tied pitch and settings must match. `|` checks
+measure boundaries. `phrase riff { c8 d e g }` and `repeat 4 { riff }` reuse
+notation; recursive phrases are rejected.
+
+Instruments default to `wave pulse volume 24 duty 128 gate 100%` with a flat
+envelope. `wave square` is an alias for pulse. Noise instruments use `wave
+noise` and require channel 3. `use lead`, `volume 12`, `duty 25%`, `envelope soft`,
+`gate 80%`, and `octave 5` affect subsequent notes. `c8@lead` replaces all sound
+settings for that note only. All three tonal channels have identical capability.
+
+Envelope points are time:level pairs, with the first at zero; levels are
+fractions 0..1 or percentages. `curve linear` (default) interpolates; `curve
+step` holds. The last point sustains. `release` starts from the current contour
+at the gate boundary, has strictly positive times, and ends at zero. A new note
+cancels the previous release tail. One-shot scores retain final release tails;
+loops truncate them at the fixed loop boundary. Short attacks/releases reduce
+clicks; no firmware amplitude ramp is implicit.
+
+## Offline musical effects
+
+Effect directives appear inside instruments or channels **before** the note
+they modify. Channel directives persist for subsequent notes and restart at
+each onset. They do not edit the preceding note backward in time. `off`
+disables an effect for subsequent notes. Reusable bundles use
+`effect shimmer { lfo { target pitch depth 25cents period 160ms } }`, then
+`effects shimmer` inside an instrument/channel. Explicit instrument effects
+override bundled effects; bundles are applied in listed order, and channel
+directives override the selected instrument. `use` resets to that instrument;
+per-note `@instrument` replaces channel sound settings for that note.
+
+All effect times accept `ms`, `s`, `ticks` (4 ms each), or unitless whole-note
+fractions such as `1/16`. Rational cumulative timestamps avoid rhythmic drift.
+Smooth automation normally samples every 8 ms (`automation 4ms` or
+`--automation-ms 4` selects finer sampling). The interval must be a positive
+multiple of 4 ms. Onsets, cuts, slide endpoints, envelope breakpoints, arpeggio
+steps, glissando steps and noise retriggers are included independently of that
+interval. Absolute positions round to the nearest 4 ms tick; half ticks round up.
+
+| Effect | Example directive | Behavior |
+| --- | --- | --- |
+| Volume slide | `volume_slide { from 24 to 0 over 200ms }` | Linear volume ramp; endpoint held; final range 0..31 |
+| Relative volume | `volume_slide { delta -12 over 1/8 }` | Starts from instrument volume at each note |
+| Portamento | `frequency_slide { to g4 over 240ms }` | Logarithmic interpolation in musical pitch |
+| Relative pitch | `frequency_slide { delta -600cents over 300ms }` | Cents or semitones relative to starting note |
+| Linear frequency | `frequency_slide { from 800Hz to 100Hz over 200ms curve linear }` | Linear Hz/increment interpolation; optional `from`; default curve is `log` |
+| Duty slide | `duty_slide { from 50% to 12.5% over 180ms }` | Linear 8-bit threshold interpolation; raw values/delta also accepted |
+| Arpeggio | `arpeggio { offsets 0,4,7 step 40ms repeat }` | Rapid monophonic pitch switching; repeat is default |
+| Once arpeggio | `arpeggio { offsets 0,-12 step 32ms once }` | One traversal, then holds last pitch |
+| Glissando | `glissando { direction down step 1semitone every 32ms to c3 }` | Discrete pitch steps; optional target stops the slide; default direction up, step 1 |
+| Hard cut | `note_cut { after 120ms }` | Silences pitch/volume; written timeline continues |
+| Vibrato | `lfo { target pitch wave sine depth 25cents period 160ms phase note }` | Centered modulation around transformed pitch |
+| Duty LFO | `lfo { target duty wave triangle depth 12.5% period 240ms phase song }` | Centered modulation around base/sliding duty |
+| Volume LFO | `lfo { target volume wave square depth 4 period 200ms }` | Additive centered volume modulation, clamped 0..31 |
+| Noise retrigger | `noise_retrigger { every 16ms seed 37 onset yes }` | Channel 3 only; periodically restart LFSR and noise phase |
+
+Slides require exactly one `to` or `delta` and an `over` duration at least
+4 ms. They restart at note onset, stop at their target and hold it. Frequencies
+clamp to nonzero uint16 increments. Arpeggios accept 2..16 signed semitone
+offsets in -71..71; generated notes and glissando clamp to C1..B6. Their steps
+must be at least 4 ms. They never restart the amplitude envelope. Noise
+retrigger intervals must be at least 4 ms; seeds are 1..63, onset defaults to
+yes. `onset no` waits one interval before the first reseed. Retriggering ends
+at cut/note-off (or release completion); rests generate no periodic commands.
+
+LFO waves are sine, triangle and square, with periods at least 8 ms. Use either
+`period` or `rate 6Hz`. Phase defaults to `note`; `song` follows absolute score
+time, independently per channel. Sine starts at zero rising, triangle at -1,
+square at +1. Pitch depth accepts cents or semitones (at most 96 semitones);
+duty depth accepts raw threshold delta or percentage of 256; volume depth
+accepts raw delta or percentage of 31. All are nonnegative. One LFO per target
+can run simultaneously with LFOs on the other targets. `lfo pitch off` disables
+one target; `lfo off` disables all. Duty effects are invalid on noise.
+
+Existing envelope `tremolo { period 1/8 depth 30% wave sine phase song }` remains
+attenuating: it multiplies volume by 70..100%, unlike the centered additive
+volume LFO. It is also accepted as an instrument/channel directive. It preserves
+its historical sine/triangle/square phases and note/song phase semantics.
+
+## Composition and timing rules
+
+Processing order is base note/instrument, one base pitch transform, pitch LFO,
+base duty/duty slide, duty LFO, envelope multiplied by the volume slide,
+attenuating tremolo, additive volume LFO, then hard cut/off, clamping and integer
+quantization. Volume slides specify the pre-envelope base volume. Effects
+continue through release tails until a new note/cut/loop boundary cancels them.
+Ties extend one timeline and never retrigger effects. Rests do not restart
+effects; the next sounded note does. A hard cut cancels the release and all
+remaining modulation for that note, so later samples cannot reactivate it.
+
+Only one of frequency slide, arpeggio, and glissando may be active on a note;
+conflicting combinations produce a location diagnostic. Each can combine with
+vibrato, duty effects, envelopes and amplitude modulation. Coincident channel
+changes merge into one event; unchanged quantized values are omitted. Explicit
+note onsets remain pitch events for articulation/diagnostics, though they do not
+reset phase. Seed commands are never deduplicated. Loop entry restores complete
+initial controls and restarts the precompiled song-relative modulation pattern.
 
 ```text
-tempo 120
-meter 4/4
-loop
 automation 8ms
-
-envelope soft {
-    points 0ms:0%, 12ms:100%, 80ms:65%
-    sustain
-    release 40ms:0%
-    tremolo { period 1/8 depth 30% wave sine phase song }
+envelope soft { points 0ms:0%, 12ms:100%, 80ms:65% release 40ms:0% }
+instrument laser {
+    wave pulse duty 25% volume 24 envelope soft
+    frequency_slide { delta -1200cents over 240ms }
+    volume_slide { to 8 over 240ms }
+    lfo { target pitch depth 12cents period 160ms }
+    lfo { target duty wave triangle depth 6.25% period 240ms }
+    note_cut { after 280ms }
 }
-instrument lead { wave sine volume 16 envelope soft gate 85% }
-phrase motif { c8 d e g e4 d }
-
-channel 0 lead octave 4 { motif | c2~ c4 r4 | }
+channel 1 laser { c:400ms }
 ```
 
-Score settings precede definitions and channels. Tempo is quarter-note BPM
-(default 120); fractions such as `1250/13` are exact. Meter defaults to 4/4.
-`loop` selects Loop instead of End for music. Add the top-level `sfx` setting
-for a one-shot effect; `sfx` rejects `loop` and declarations outside channels
-2 and 3. Ownership is inferred from declarations, including all-rest channels. Optional quoted `title`
-and `description` fields are metadata. `//` comments and optional semicolons
-are accepted.
+`--stats` reports bytes, event count, pitch, volume, duty, and retrigger changes.
+The default budget is two million generated updates; `--max-updates N` raises
+it and `--max-updates 0` disables the guard. The Python API uses `None` for no
+limit. Fast modulation increases asset size and foreground FX/service work;
+four changing extended controls every tick alone require about 2500 bytes/s.
+No musical effect state, interpolation, LFO calculation or counters run on AVR.
+The only added runtime operation is atomic noise reseeding.
 
-Each `channel 0..3 [instrument] [octave 1..6] { ... }` is a monophonic sequence
-starting at score time zero; shorter channels are silent for the remainder.
-Channel 3 uses note pitch as its noise update rate. Noise instruments require
-channel 3; other waveforms are square, triangle, sawtooth, or sine.
+## Timers, atomic publication, and memory
 
-- `c4`, `d8`, `e16` are quarter, eighth, and sixteenth notes. An omitted duration
-  inherits the last explicit note value, initially a quarter. `r` or `s` rests.
-- `c#8`, `db8` use sharps/flats. The channel octave defaults to 4; apostrophes
-  and commas shift an individual note up/down from that octave (`c'8`, `c,8`).
-  Pitch remains restricted to C1..B6.
-- `c4.`, `c4..` add dots; `c8*2/3` multiplies that note's duration, useful for
-  tuplets. `c:48ms` or `r:12ticks` specifies an exact time instead. Every note
-  or rest must occupy at least one 4ms tick.
-- `c4~ c4` is one held note with one attack and envelope. Tied pitches and
-  instrument settings must match. `|` checks that a complete measure has elapsed.
-- `phrase riff { ... }`, `riff`, and `repeat 4 { ... }` reuse notation. Recursive
-  phrases are rejected. Repeats expand before encoding.
-- `use lead`, `octave 5`, `volume 12`, `wave triangle`, `envelope soft`, and
-  `gate 80%` change subsequent notes. `c8@lead` overrides one note's instrument.
+Timer1 uses CTC, prescaler 8, TOP 255/127. Timer0 remains an independent 1 kHz
+clock, prescaler 64, TOP 249, and publishes a saturating pending tick every
+4 ms. Timer3 is stopped/masked and releases its speaker pin. Timer4 uses the
+64 MHz PLL clock, TOP 255, and the existing complementary differential outputs.
+Startup clears inherited power gates/interrupts. Sample generation never uses
+SPI or floating point.
 
-An instrument's default settings are square, volume 24, a flat envelope, and
-gate 100%. Gate starts release at that fraction of the written note duration;
-it does not move subsequent notes. The last breakpoint of an envelope holds
-until release (`sustain` makes that intent explicit). Levels are percentages
-or fractions of the note's volume, never raw packed controls. Breakpoint times
-are relative to note onset and may use ms, s, ticks, or musical whole-note
-fractions such as `1/16`. Times increase strictly and the first point is at zero.
-`curve linear` is the default; `curve step` gives discrete changes.
+Every Timer1 interrupt writes the held PWM sample first, at 21 CPU cycles from
+the compare deadline plus acceptance delay. It then accepts pending controls
+and synthesizes the successor. Neither rate nor duty alters that store timing.
+Timer1 COMPA wins simultaneous pending arbitration over Timer0; an already
+running Timer0 ISR is not preempted. The unchanged startup/rate-switch sequence
+seeds Timer1 from Timer0, placing deadlines 64..120 cycles apart modulo 128.
 
-For best sound quality, prefer envelopes that start and end at 0% amplitude.
-Start with `points 0ms:0%` and include an explicit release to `0%`, as in the
-`soft` envelope above. A short attack and release reduce abrupt amplitude
-changes and audible clicks. Allow the release to finish before the next note
-or loop boundary cuts it off.
+The live latch remains 15 bytes: four `(increment, prepared_amplitude)` triples
+plus three duty bytes. Desired music/SFX voices are four-byte records:
+increment low/high, volume, duty. Foreground waits for acknowledgement before
+reusing the 15-byte staging buffer; one descriptor-byte store publishes it.
+Bit 7 means ready, bits 0..5 contain optional seed 1..63 (zero means no reseed),
+bit 6 is unused. Timer1 copies all controls then reseeds before the next sample.
+Transient commands are not retained with desired state. Foreground never
+writes live noise while Timer1 can run. IRQ-disabled/stopped output applies
+packets directly; rate switching explicitly carries no reseed command.
 
-Release points are relative to note-off, begin after zero, and must end at
-zero amplitude. Release starts from the contour's current level, including
-when a short note ends during attack. A subsequent note cancels the old tail;
-ties continue the original contour. One-shot exports retain final release tails.
-Loops truncate tails at their fixed musical boundary and initialize every owned
-channel on the next iteration.
-
-An envelope may contain `tremolo { ... }`. Use either `rate 6Hz` or `period 1/8`
-(beat-synchronized), with `depth 0..100%`, `wave sine|triangle|square`, and
-`phase note|song`. Defaults are depth 25%, sine, and note phase. Depth 30%
-multiplies the contour by a value between 70% and 100%. Note phase restarts at
-each attack; song phase follows absolute score time. Ties and release preserve
-phase. The period must be at least 8ms; useful smooth modulation needs several
-automation samples per cycle.
-
-The compiler resolves exact cumulative timestamps, expands envelopes/tremolo,
-rounds to the 4ms sequencer grid, merges simultaneous channel changes, and
-omits unchanged controls. Note onsets remain explicit unless tied; all pitch updates preserve oscillator phase. Automation samples
-default to 8ms; `automation 4ms` or `--automation-ms 4` selects a finer interval.
-The interval must be a multiple of 4ms. Explicit breakpoints and note/gate
-boundaries are retained independently of the sampling interval. The first event
-still waits 4ms. Loop periods use the written duration without accumulating
-that startup delay; the Loop record occupies the final tick. One-shot End
-occurs after the final release. No envelope state or modulation DSP runs in
-the firmware.
-
-`--stats` reports the compiled size. Four changing volumes every 4ms cost up
-to 1500 bytes/second before note payloads, so finer automation increases FX
-usage and foreground service work. The compiler has no 16-bit asset-size cap.
-
-Only score notation is accepted; JSON event lists are unsupported. Long waits
-split into positive-time Continue records in the binary output.
-
-## Timer and register allocation
-
-`avm_audio_rate(AVM_AUDIO_RATE_8KHZ)` selects **7812.5 Hz** output and
-synthesis (the default). `AVM_AUDIO_RATE_16KHZ` selects **15625 Hz**. Other
-values are ignored. The selection persists across stop, pause and disable.
-The wrapper uses SYS `0x38`, command 13 in r7, with the rate in r4 low byte.
-It can be set before output starts or changed during playback. Timing,
-phases, LFSR state, gain and ownership are preserved. A switch can still
-produce a transient because the sampling grid and held-sample duration change.
-
-Timer1: CTC, `TCCR1A=0`, `TCCR1B=WGM12|CS11`, prescaler 8. `OCR1A=255`
-gives 16 MHz / 8 / 256 = **7812.5 Hz**; `OCR1A=127` gives **15625 Hz**.
-Every interrupt synthesizes one sample. Timer1 COMPA (vector 17) wins pending
-interrupt arbitration over Timer0 COMPA (vector 21); an already running ISR
-is not preempted.
-Timer3 is stopped and masked, with its speaker-pin output ownership cleared.
-Startup clears the Timer0 and Timer1 power gates before configuring them.
-
-Timer0 keeps its **1 kHz** CTC clock, with prescaler 64 and `OCR0A=249`.
-Its ISR increments the millisecond counter, then divides ticks by four and
-saturates an unsigned pending sequencer byte. Millisecond APIs and the
-millisecond frame scheduler retain their original behavior. The experimental
-16 kHz unified clock and monotonic API are not part of the selected runtime.
-See the [timing investigation](../projects/avm_rpg/docs/audio_timing.md) for
-measured PWM jitter and the performance comparison.
-
-The synthesis interrupt first outputs the preceding sample, then computes its
-successor. The PWM write completes 21 CPU cycles after the compare deadline
-plus interrupt acceptance delay, before any pending-control copy or synthesis.
-There is no smoothing, midpoint sample, or rate-dependent ISR branch. Enable
-primes the held sample to neutral duty 128. Timer4 holds each sample until the
-next write. No samples are read from FX in the ISR.
-
-Timer4: 8-bit fast PWM (`PWM4A=1`, `WGM41:0=0`), `COM4A1:0=01` connects both
-complementary outputs, TOP `OCR4C=255`, `CS43:0=0001`, no timer prescaling.
-`PLLCSR=PINDIV|PLLE`, `PLLFRQ=6A`: 96 MHz VCO / 1.5 = **64 MHz Timer4 clock**,
-USB postcaler /2 preserves a nominal 48 MHz USB clock. The resulting carrier
-is **250 kHz**. Initialization disables PLL before configuring it, waits over
-100 us and then polls PLOCK. Enhanced PWM, dead time, fault protection and all
-Timer4 interrupts are disabled. Each duty write explicitly clears shared
-`TC4H` before `OCR4A`; hardware buffers compare updates. Enable primes neutral
-duty 128; disable disconnects PWM and drives both pins low.
-
-These settings follow the [ATmega32U4 datasheet](https://ww1.microchip.com/downloads/en/DeviceDoc/Atmel-7766-8-bit-AVR-ATmega16U4-32U4_Datasheet.pdf),
-sections 6.11 and 15. The /1.5 PLL postcaler has documented individual-clock
-jitter despite an exact average frequency. PC6/PC7 speaker wiring is defined
-by [Arduboy2](https://github.com/MLXXXp/Arduboy2/blob/master/src/Arduboy2Core.h).
-
-The Timer1 synthesis path saves native r0:r1, r20:r21, r26:r27, Z, and SREG,
-using eleven native stack bytes including the interrupt return PC (thirteen
-while calling the pending-update copier).
-Borrowed VM registers are
-restored; Y, VM PC, GPIOR0, SPI and FX are untouched. r2 is **not assumed zero**: native floating paths temporarily
-borrow it. The normal-context service borrows/saves r16:r23; scratch is r0:r1,
-r24:r27, Z and native SREG. r2:r15, VM PC r4:r6, Y, and architectural flags
-are preserved. It does not rely on the avr-gcc ABI.
-
-Three 16-bit phases add latched increments. The upper six phase bits select
-one of 64 samples; a separate byte for each tone holds its bank in bits 7..6.
-The aligned 256-byte flash table occupies `0100..01FF`, before primary
-dispatch; both timer ISR bodies are placed later in the same assembly file.
-Its samples span -127..127. All four latched amplitudes are full unsigned
-bytes, prepared in the foreground as `A = floor(volume * owner_master / 32)`
-(0..247). Each tonal contribution is `floor(sample * A / 128 + 0.5)`.
-FMULSU supplies the fractional product; its carry records the sign before
-the fractional shift, and SBC sign-extends the rounded contribution into
-the 16-bit mix. This handles boosted contributions outside int8 without
-additional product shifts. The original square samples are unchanged at
-unity. Noise has a fourth phase: overflow clocks an 8-bit Galois LFSR with
-feedback B8, nonzero seed 1, period 255. Its low bit selects +/-A.
-
-Accumulation starts at zero in a signed 16-bit register pair. The complete
-mix is in -982..982 at maximum prepared amplitudes; the ISR then adds 128
-and clamps to duty 0..255. Clipping occurs after all contributions, allowing
-loud opposing voices to cancel. The ISR never reads either master, multiplies
-the completed mix, or performs the old three-pair shift. At unity synthesized
-endpoints are unchanged. Other gains truncate each channel amplitude before synthesis,
-so quieter gains can silence low-volume channels and differ from scaling
-the completed mix. There is no general loop in the ISR; each tonal voice
-performs one LPM and one FMULSU with identical timing for all waveforms.
-The guest MIDI table covers 24..95, with maximum rounding error 4.052 cents.
-Raw increments expose the existing oscillator precision between semitones.
-Waveform harmonics above Nyquist still alias at this sample rate, so audible
-quality needs hardware evaluation.
-
-## Memory allocation
-
-| Persistent data | Bytes |
+| Persistent state | Bytes |
 | --- | ---: |
-| Pending ticks, divider, music/SFX masters | 4 |
-| Live increments and prepared amplitudes (four times three) | 12 |
-| Separate tonal waveform selectors | 3 |
-| ISR phases and LFSR | 9 |
-| Desired music states (four times three) | 12 |
-| Desired SFX states (two times three) | 6 |
-| Music stream record / one-shot SFX record | 10 / 7 |
-| Pending controls and ready descriptor | 16 |
-| Held sample and synthesis-rate selection | 2 |
-| **Total** | **81** |
+| Pending ticks, boot-hold byte, two masters | 4 |
+| Live increments/amplitudes and duty | 15 |
+| Phases and noise LFSR | 9 |
+| Desired music voices / SFX slots | 16 / 8 |
+| Music / SFX stream records | 10 / 7 |
+| Pending latch and descriptor | 16 |
+| Held sample and rate | 2 |
+| Total | 87 |
 
-Audio occupies `0A15..0A65`; `data_end_private=0A66`. Formatter/text scratch
-ends at `0AAE` (exclusive), leaving 82 bytes for native stack. Guest globals,
-framebuffer, and guest stack retain their original addresses. The dirty byte
-and fourteen-byte event buffer alias the existing temporary workspace and add
-no persistent allocation. At least 48 bytes above text scratch remain required
-by the assembler assertion.
+Audio occupies 0A15..0A6B, private end 0A6C. Existing 72-byte formatter/text
+scratch ends at 0AB4, leaving 76 bytes for native stack. Audio aliases 20 scratch
+bytes: dirty, transient reseed and 18-byte event buffer; persistent state and
+the pending packet never alias scratch. Guest memory addresses are unchanged.
+Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
+Timer1 uses 9 stack bytes including interrupt PC, 11 while calling the fixed
+copier. It preserves r0/r1/r20/r21/r26/r27 and SREG; Z is untouched even on the
+pending path. The foreground preserves borrowed VM state and guest flags.
 
-Both stream records have CURSOR=0 (uint24), WAIT=3 (uint16), STATUS=5, MASK=6.
-Only music stores START=7 (uint24) for looping. SFX has no loop-start pointer.
-Desired states are `(increment_low, increment_high, packed_control)` triples.
-Music retains four; SFX retains tonal/noise slots. During direct-tone playback,
-the tonal slot can override any explicitly requested tonal voice, preserving
-the existing public API.
+The compact FX reader performs one interruptible burst per due event with
+24-bit cursors and actual-consumption advancement, preserving speculative
+instruction-fetch transactions. The seek hook costs four cycles without a tick.
+Long native calls/straight-line bytecode can delay service: the old controls
+remain audible, then catch-up commits only the resulting state. Intermediate
+transitions/reseeds cannot be recovered. Pending time saturates at 255 ticks
+(1020 ms). Audio needs frequent safe points for rapid effects.
 
-Desired state preserves unscaled volume and both sources' settings. Foreground
-commit selects each voice's owner, applies pause/off, separates waveform bits,
-scales canonical increments for the chosen rate, and prepares
-`floor(volume * owner_master / 32)`. The ISR uses only the live
-controls, phases, waveform selectors, and LFSR.
+## Demo, validation and limits
 
-The persistent pending packet is unchanged: 15 prepared bytes plus a one-byte
-ready descriptor (bit 7). Foreground waits for acknowledgment, prepares the
-whole packet with interrupts enabled, then publishes the descriptor. After its
-fixed PWM write, synthesis copies all controls, clears ready, and advances
-phases without resetting them. The normal synthesis path adds four cycles;
-ISR stack is eleven bytes normally and
-thirteen while applying a packet, including its return PC. Back-to-back commits
-wait up to a synthesis interval. When output/global interrupts are unavailable,
-commit applies controls directly without waiting. Disable drains pending
-controls and applies silence before enable can restart playback. No foreground
-block copy disables interrupts during ordinary commits. A rate switch first
-drains an old packet and stages the new controls with interrupts enabled, then
-disables interrupts to apply all 15 bytes, stop Timer1, change TOP, and restart
-it with the same Timer0 phase alignment. A stopped output stays stopped.
+`projects/audio_demo/music.avms` retains Sunlit Garden's 39.936-second form,
+with pulse melody/vibrato on 0, harmony on 1, 50% pulse bass on 2 and noise on 3.
+`effect.avms` demonstrates simultaneous pitch/volume/duty slides, cut and
+retrigger. `effects.avms` additionally demonstrates arpeggio and glissando.
+A triggers SFX; B pauses; Up changes rate. Build `audio_demo_assets` then
+`avm_audio_demo`; the checked-in package is `projects/audio_demo/audio_demo.arduboy`.
 
-When output starts, Timer1's initial counter is seeded from Timer0's counter
-using their shared prescaler. The timed read/write sequence places audio
-compare deadlines 64..120 CPU cycles after clock deadlines modulo 128. This
-avoids depending on the duration of PLAY/header processing to miss Timer0's
-nonpreemptible ISR. It changes neither the shared prescaler nor Timer0/millis.
-Native tests cover startup and live switches at both rates across all 250
-Timer0 counts and 64 sub-tick phases, plus 11968 real-timer outputs across
-complete 8 ms relative-phase patterns.
+See [audio-benchmarks.md](audio-benchmarks.md) for measured resource results.
+`avm_audio_tests_run` uses Ardens' AVR instruction emulator for samples,
+sequencing, ownership, publication races, SPI and native-stack checks, plus
+Python compiler tests and Mini/FX-C assembly. `avm_tests_run` adds all interpreter
+and guest C/C++ fixtures. Large exported C/C++ assets are exercised beyond 64 KB.
 
-## SPI safety and servicing latency
+Fast arpeggios/LFOs and narrow pulses can alias at either synthesis rate;
+useful smooth modulation needs several automation samples per period. Keep
+tonal increments below 16384 for the 8 kHz Nyquist limit, or 32768 at 16 kHz;
+pulse harmonics can still alias. Quantization limits small/slow modulation.
+Abrupt duty/cut/ownership changes can click. Four loud voices can clip.
 
-The primary hook adds `LDS/TST/BRNE`, four cycles when no tick is pending.
-Neither `dispatch` nor `dispatch_reverse` changed. Existing taken-branch
-padding finishes speculative transfers before chip select drops. F0 loads
-finish their data reads before entering the hook; native SYS callers either
-finish the speculative opcode before their far entry or arrive at the
-already-disabled continuation after a completed data transaction.
+These checks are simulator verification. Physical Arduboy listening, speaker
+polarity, PLL/carrier timing, analog DC/click behavior, power draw and FX-C/Mini
+pad routing still need hardware validation. Mini needs an added speaker.
 
-ISR entry can extend transfer wall time but does not access SPDR or disturb
-SREG/registers. Existing CLI/OUT/IN/SEI reverse handoffs remain protected.
-The event reader calls the shared image-relative FX burst reader for fourteen music bytes (eight for SFX)
-and returns X at the temporary buffer. Notes, controls and timing are consumed
-with `LD r24, X+`; Z is free for desired state and the stream record. Continue
-uses its buffered next delta. Loop rewinds and fetches the initial delta again,
-discarding read-ahead from the old position. Startup similarly reads the header
-and first delta in one burst. The transaction permits interrupts except for the
-existing short per-byte SPI handoffs. The seek continuation always reopens
-the bytecode stream at the preserved 24-bit PC. Native tests assert that an
-active speculative transfer is complete on entry to the shared seek path.
-
-Idle sleep leaves Timer0, Timer1 and Timer4 running during playback. After wakeup, an extra four-cycle
-pending check routes to the seek hook only when necessary; otherwise idle
-uses its existing dispatch tail. Timer1 wakes idle at the output rate, with no
-guest busy wait introduced. Ordinary gameplay loops naturally service at
-taken branches/calls/returns, and long SYS operations service on return.
-
-There is **no universal latency bound** for arbitrarily long native calls or
-straight-line bytecode between safe points. No check was added to sequential
-dispatch. If service is delayed 10/50/100 ms, approximately 2-3/12-13/25 ticks
-accumulate (depending on divider phase); the old latch keeps sounding, then
-the decoder skips countdown intervals and commits the resulting state.
-Missed intermediate audible transitions cannot be recovered. Pending saturates
-at 255 (1020 ms represented); additional elapsed time is dropped until service.
-This extends notes/time rather than wrapping into an incorrect short interval.
-
-## Measurements and validation
-
-See [audio-benchmarks.md](audio-benchmarks.md) for the measured cycle table.
-`avm_audio_tests_run` executes AVR instructions in Ardens and compares sample
-and sequencer results against independent expected values. It includes compiler
-tests and builds Mini/FX-C preset firmware. `avm_tests_run` includes these
-checks plus the existing interpreter tests. The C audio fixture exercises
-libm and formatting with synthesis interrupts enabled at all six optimization
-levels. Native tests cover register/PC/stack preservation, address boundaries,
-looping/termination beyond 64 KB, all 255 event masks, exact cursor advancement,
-discarded read-ahead after End, bounded catch-up, interrupted packet staging,
-back-to-back commits, phase-preserving pitch updates, formatter workspace reuse,
-stopped/IRQ-disabled handoffs, direct tones, SFX release, both synthesis rates,
-scaling overflow, and the demo rate toggle.
-
-## Tradeoffs and remaining hardware checks
-
-The synthesis path exceeds the initial 100-cycle goal: preserving actual
-registers and loading/storing four SRAM phases, looking up/scaling samples,
-clipping and storing the next sample costs 186..193 cycles without a pending
-packet. This is at most **9.424% CPU at 8 kHz**, or **18.848% at 16 kHz**,
-excluding sequencing and pending copies. Pending packet application adds 69
-cycles, with no per-voice phase-reset work. Reserving
-AVR registers
-would compromise the interpreter allocation contract, so SRAM phases are used.
-Event fetches use a fourteen-byte interruptible FX burst rather than individual byte reads. There is no persistent cache or
-ownership/invalidation logic. The persistent handoff still uses 16 bytes; the total allocation is one byte smaller than A3 (four bytes smaller than A2).
-Square duty is fixed at 50%; there is no runtime vibrato, filter, or envelope DSP.
-The score compiler expands custom envelopes and tremolo into control events.
-Asset durations encode tempo rather than adding live tempo state.
-
-Firmware retains the 29696-byte bootloader ceiling and all primary/secondary
-layout assertions. The waveform table uses space before the primary table,
-keeping firmware at 29008 bytes, with 688 bytes remaining. Future features must remain within that ceiling.
-
-FX, Mini and FX-C presets compile with the same Timer1/4 configuration; existing
-FX chip-select preset differences are retained. The [Mini](https://www.arduboy.com/mini)
-has no built-in speaker and needs an added speaker for audio. Homemade hardware that moves the speaker
-away from PC6/PC7 cannot use these complementary Timer4 outputs.
-
-No physical device or oscilloscope was available. Actual pin polarity, buffered
-update timing at the PLL clock, carrier/DC behavior, audible quality/clicks,
-electrical power draw, Mini/FX-C pad routing, and bootloader-to-firmware timer
-handoff remain hardware acceptance checks. Neutral duty and clean pin disabling
-reduce transients, but there is no amplitude ramp promising click-free playback.
+Conceptual reference: [ATMlib2 documentation](https://github.com/moduscreate/ATMlib2)
+and [its effect implementation](https://github.com/moduscreate/ATMlib2/blob/master/src/atm_synth.c).
+AVM compiles effects offline and uses different timing, amplitude ranges,
+interpolation, ownership slots and noise reseeding semantics; its firmware does
+not port ATMlib2's effect engine.

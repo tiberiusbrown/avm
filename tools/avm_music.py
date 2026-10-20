@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile AVM scores (.avms) to A4 music or compact C1..C3 sound effects."""
+"""Compile AVM scores (.avms) to A5 pulse music or D1..D3 sound effects."""
 import argparse
 import ast
 import math
@@ -8,7 +8,13 @@ import sys
 from fractions import Fraction
 from pathlib import Path
 
-WAVEFORMS = {"square": 0, "triangle": 1, "sawtooth": 2, "sine": 3}
+EFFECTS = ("volume_slide", "frequency_slide", "duty_slide", "arpeggio",
+           "glissando", "note_cut", "lfo", "noise_retrigger", "tremolo")
+
+
+def default_sound():
+    return {"wave": "pulse", "volume": 24, "duty": 128,
+            "envelope": None, "gate": Fraction(1)}
 
 
 def note_number(value):
@@ -54,14 +60,20 @@ def note_increment(value):
 
 def _encode_events(mask, events, tail_ticks, loop, sfx=False):
     """Encode resolved updates. An explicit increment permits non-semitone pitches."""
-    if sfx and (loop or not mask or mask & ~12):
-        raise ValueError("SFX must be one-shot and declare only channels 2 and/or 3")
-    output = bytearray([0xC0 | (mask >> 2)]) if sfx else bytearray([0xA4, mask])
-    notes, volumes, waves = [0] * 4, [24] * 4, [0] * 4
+    if not isinstance(mask, int) or not 1 <= mask <= 15:
+        raise ValueError("ownership mask must be 1..15")
+    if sfx and (loop or mask & ~10):
+        raise ValueError("SFX must be one-shot and declare only channels 1 and/or 3")
+    output = bytearray([0xD0 | ((mask >> 1) & 1) | ((mask >> 2) & 2)]) if sfx else bytearray([0xA5, mask])
+    notes, volumes, duties = [0] * 4, [24] * 4, [128] * 4
     first = True
     for ticks, updates in events:
         changed_notes, changed_controls = {}, {}
         for channel, update in updates.items():
+            if channel not in range(4) or not mask & (1 << channel):
+                raise ValueError("event updates an undeclared channel")
+            if update.keys() - {"note", "increment", "volume", "duty", "seed"}:
+                raise ValueError("event fields must be note/increment, volume, duty or seed")
             if "note" in update or "increment" in update:
                 notes[channel] = update["increment"] if "increment" in update else note_increment(update["note"])
                 if not isinstance(notes[channel], int) or not 0 <= notes[channel] <= 65535:
@@ -69,21 +81,35 @@ def _encode_events(mask, events, tail_ticks, loop, sfx=False):
                 changed_notes[channel] = notes[channel]
             if "volume" in update:
                 volumes[channel] = update["volume"]
-            if "waveform" in update:
-                waves[channel] = WAVEFORMS[update["waveform"]]
-            if "volume" in update or "waveform" in update:
-                changed_controls[channel] = (waves[channel] << 5) | volumes[channel]
+            if not isinstance(volumes[channel], int) or not 0 <= volumes[channel] <= 31:
+                raise ValueError("volume must be 0..31")
+            extension = "seed" if channel == 3 else "duty"
+            if "duty" in update:
+                duties[channel] = update["duty"]
+            if ("duty" in update and channel == 3) or ("seed" in update and channel != 3):
+                raise ValueError("duty requires a tonal voice; noise seeds require channel 3")
+            if "volume" in update or extension in update:
+                control = bytes([volumes[channel] | (128 if extension in update else 0)])
+                if extension in update:
+                    value = update[extension]
+                    if not isinstance(value, int) or not (1 <= value <= 63 if channel == 3 else 0 <= value <= 255):
+                        raise ValueError("noise seed must be 1..63; duty must be 0..255")
+                    control += bytes([value])
+                changed_controls[channel] = control
         if first:
             for channel in range(4):
                 if mask & (1 << channel):
                     changed_notes[channel] = notes[channel]
-                    changed_controls[channel] = (waves[channel] << 5) | volumes[channel]
+                    if channel != 3:
+                        changed_controls[channel] = bytes([128 | volumes[channel], duties[channel]])
+                    else:
+                        changed_controls.setdefault(channel, bytes([volumes[channel]]))
             first = False
         packed = sum(1 << c for c in changed_notes) | sum(16 << c for c in changed_controls)
         if sfx:
-            packed = ((packed >> 2) & 3) | ((packed >> 4) & 12)
+            packed = ((packed >> 1) & 1) | ((packed >> 2) & 2) | ((packed >> 3) & 4) | ((packed >> 4) & 8)
         payload = (bytes([packed]) + b"".join(changed_notes[c].to_bytes(2, "little") for c in sorted(changed_notes))
-                   + bytes(changed_controls[c] for c in sorted(changed_controls)))
+                   + b"".join(changed_controls[c] for c in sorted(changed_controls)))
         emit_event(output, ticks, payload if packed else bytes([0, 0]))
     emit_event(output, tail_ticks, bytes([0, 2 if loop else 1]))
     return bytes(output)
@@ -123,6 +149,7 @@ class ScoreParser:
         self.sfx = False
         self.automation_ms = Fraction(8)
         self.envelopes, self.instruments, self.phrases, self.channels = {}, {}, {}, {}
+        self.effects = {}
 
     def error(self, message, token=None):
         if token is None:
@@ -159,6 +186,8 @@ class ScoreParser:
         return token[0]
 
     def number(self, integer=False):
+        sign = -1 if self.accept("-") else 1
+        self.accept("+")
         token = self.take()
         try:
             value = Fraction(token[0])
@@ -168,6 +197,7 @@ class ScoreParser:
             self.error("expected a number or fraction", token)
         if integer and value.denominator != 1:
             self.error("expected an integer", token)
+        value *= sign
         return int(value) if integer else value
 
     def percent(self):
@@ -268,11 +298,189 @@ class ScoreParser:
                 self.error(f"unknown envelope field {field!r}", token)
         return result
 
+    def duty_value(self):
+        value = self.number()
+        return value * 256 / 100 if self.accept("%") else value
+
+    def pitch_value(self):
+        token = self.tokens[self.position]
+        if re.fullmatch(r"[a-gA-G][#b]?\d+", self.peek()):
+            self.take()
+            try:
+                return 440 * 2 ** ((note_number(token[0]) - 69) / 12)
+            except ValueError as error:
+                self.error(str(error), token)
+        value = self.number()
+        self.expect("Hz")
+        if value <= 0:
+            self.error("frequency must be positive", token)
+        return float(value)
+
+    def pitch_delta(self):
+        value = self.number()
+        unit = self.take()
+        if unit[0] not in ("cents", "semitone", "semitones"):
+            self.error("pitch delta needs cents or semitones", unit)
+        value *= 1 if unit[0] == "cents" else 100
+        if abs(value) > 9600:
+            self.error("pitch delta must be within 96 semitones", unit)
+        return value
+
+    def effect(self, kind):
+        """Return parameter settings; directives persist and restart at each note."""
+        if self.accept("off"):
+            return {key: None for key in ("lfo_pitch", "lfo_volume", "lfo_duty")} if kind == "lfo" else {kind: None}
+        if kind == "tremolo":
+            return {kind: self.tremolo()}
+        if kind == "lfo" and self.peek() in ("pitch", "volume", "duty"):
+            target = self.take()[0]
+            self.expect("off")
+            return {"lfo_" + target: None}
+        result = {}
+        self.expect("{")
+        while not self.accept("}"):
+            if self.accept(";"):
+                continue
+            token = self.take()
+            field = token[0]
+            if field in result or (field == "rate" and "period" in result):
+                self.error(f"duplicate {kind} field {field!r}", token)
+            if kind in ("volume_slide", "duty_slide", "frequency_slide"):
+                if field in ("from", "to", "delta"):
+                    if kind == "duty_slide":
+                        result[field] = self.duty_value()
+                    elif kind == "frequency_slide":
+                        result[field] = self.pitch_delta() if field == "delta" else self.pitch_value()
+                    else:
+                        result[field] = self.number()
+                elif field == "over":
+                    result[field] = self.time()
+                elif field == "curve" and kind == "frequency_slide":
+                    result[field] = self.name()
+                    if result[field] not in ("log", "linear"):
+                        self.error("pitch slide curve must be log or linear", token)
+                else:
+                    self.error(f"unknown {kind} field {field!r}", token)
+            elif kind == "arpeggio":
+                if field == "offsets":
+                    result[field] = [self.number(integer=True)]
+                    while self.accept(","):
+                        result[field].append(self.number(integer=True))
+                    if not 2 <= len(result[field]) <= 16 or any(abs(v) > 71 for v in result[field]):
+                        self.error("arpeggio needs 2..16 offsets within -71..71 semitones", token)
+                elif field == "step":
+                    result[field] = self.time()
+                elif field in ("repeat", "once"):
+                    result[field] = True
+                else:
+                    self.error(f"unknown arpeggio field {field!r}", token)
+            elif kind == "glissando":
+                if field == "direction":
+                    result[field] = self.name()
+                    if result[field] not in ("up", "down"):
+                        self.error("direction must be up or down", token)
+                elif field == "step":
+                    result[field] = self.number()
+                    if self.peek() in ("semitone", "semitones"):
+                        self.take()
+                    if not 0 < result[field] <= 71:
+                        self.error("glissando step must be greater than zero and at most 71 semitones", token)
+                elif field == "every":
+                    result[field] = self.time()
+                elif field == "to":
+                    result[field] = self.pitch_value()
+                else:
+                    self.error(f"unknown glissando field {field!r}", token)
+            elif kind == "note_cut" and field == "after":
+                result[field] = self.time()
+            elif kind == "noise_retrigger":
+                if field == "every":
+                    result[field] = self.time()
+                elif field == "seed":
+                    result[field] = self.number(integer=True)
+                    if not 1 <= result[field] <= 63:
+                        self.error("noise seed must be 1..63", token)
+                elif field == "onset":
+                    result[field] = self.name()
+                    if result[field] not in ("yes", "no"):
+                        self.error("onset must be yes or no", token)
+                else:
+                    self.error(f"unknown noise_retrigger field {field!r}", token)
+            elif kind == "lfo":
+                if field in ("target", "wave", "phase"):
+                    result[field] = self.name()
+                    allowed = {"target": ("pitch", "volume", "duty"), "wave": ("sine", "triangle", "square"), "phase": ("note", "song")}
+                    if result[field] not in allowed[field]:
+                        self.error(f"{field} must be one of {', '.join(allowed[field])}", token)
+                elif field == "depth":
+                    # Keep units until target is known, permitting any field order.
+                    result[field] = self.number()
+                    result["units"] = self.take()[0] if self.peek() in ("%", "cents", "semitone", "semitones") else "raw"
+                elif field == "period":
+                    result[field] = self.time()
+                elif field == "rate":
+                    rate = self.number()
+                    self.expect("Hz")
+                    if rate <= 0:
+                        self.error("LFO rate must be positive", token)
+                    result["period"] = 1000 / rate
+                else:
+                    self.error(f"unknown lfo field {field!r}", token)
+            else:
+                self.error(f"unknown {kind} field {field!r}", token)
+        required = {"volume_slide": ("over",), "frequency_slide": ("over",), "duty_slide": ("over",),
+                    "arpeggio": ("offsets", "step"), "glissando": ("every",), "note_cut": ("after",),
+                    "noise_retrigger": ("seed", "every"), "lfo": ("target", "depth", "period")}[kind]
+        if any(field not in result for field in required):
+            self.error(f"{kind} requires {', '.join(required)}")
+        for field in ("over", "step" if kind == "arpeggio" else "every", "period"):
+            if field in result and result[field] < (8 if field == "period" else 4):
+                self.error(f"{kind} {field} must be at least {8 if field == 'period' else 4}ms")
+        if kind.endswith("_slide") and (("to" in result) == ("delta" in result)):
+            self.error("a slide requires exactly one of to or delta")
+        if kind == "arpeggio" and "repeat" in result and "once" in result:
+            self.error("arpeggio cannot be both repeat and once")
+        if kind == "lfo":
+            target, units, depth = result["target"], result.pop("units"), result["depth"]
+            if target == "pitch":
+                if units not in ("cents", "semitone", "semitones"):
+                    self.error("pitch LFO depth needs cents or semitones")
+                depth *= 1 if units == "cents" else 100
+                maximum = 9600
+            else:
+                if units not in ("%", "raw"):
+                    self.error("volume/duty LFO depth needs a raw delta or percentage")
+                maximum = 31 if target == "volume" else 256
+                if units == "%":
+                    depth *= Fraction(maximum, 100)
+            if not 0 <= depth <= maximum:
+                self.error("LFO depth outside supported range")
+            result.update(depth=depth, wave=result.get("wave", "sine"), phase=result.get("phase", "note"))
+            return {"lfo_" + target: result}
+        return {kind: result}
+
+    def effect_bundle(self):
+        result = {}
+        self.expect("{")
+        while not self.accept("}"):
+            if self.accept(";"):
+                continue
+            token = self.take()
+            if token[0] not in EFFECTS:
+                self.error("expected an effect directive", token)
+            settings = self.effect(token[0])
+            if result.keys() & settings.keys():
+                self.error("duplicate effect in bundle", token)
+            result.update(settings)
+        return result
+
     def setting(self, field, token):
         if field == "volume":
             value = self.number(integer=True)
             if not 0 <= value <= 31:
                 self.error("channel volume must be 0..31", token)
+        elif field == "duty":
+            value = max(0, min(255, math.floor(self.duty_value() + Fraction(1, 2))))
         elif field == "gate":
             value = self.percent()
             if value == 0:
@@ -283,12 +491,12 @@ class ScoreParser:
                 self.error("octave must be 1..6", token)
         else:
             value = self.name()
-            if field == "wave" and value not in (*WAVEFORMS, "noise"):
-                self.error("unknown waveform", token)
+            if field == "wave" and value not in ("pulse", "square", "noise"):
+                self.error("wave must be pulse (square alias) or noise; use duty for timbre", token)
         return value
 
     def instrument(self):
-        result = {"wave": "square", "volume": 24, "envelope": None, "gate": Fraction(1)}
+        result = default_sound()
         self.expect("{")
         seen = set()
         while not self.accept("}"):
@@ -296,6 +504,16 @@ class ScoreParser:
                 continue
             token = self.take()
             field = token[0]
+            if field in EFFECTS:
+                settings = self.effect(field)
+                if seen & settings.keys():
+                    self.error("duplicate instrument effect", token)
+                seen.update(settings)
+                result.update(settings)
+                continue
+            if field == "effects":
+                result.setdefault("bundles", []).append(self.name())
+                continue
             if field not in result or field in seen:
                 self.error(f"unknown or duplicate instrument field {field!r}", token)
             seen.add(field)
@@ -315,7 +533,11 @@ class ScoreParser:
                 if count < 1:
                     self.error("repeat count must be positive", token)
                 result.append(("repeat", (count, self.sequence()), token))
-            elif value in ("use", "octave", "volume", "wave", "envelope", "gate"):
+            elif value in EFFECTS:
+                result.append(("effect", self.effect(value), token))
+            elif value == "effects":
+                result.append(("effects", self.name(), token))
+            elif value in ("use", "octave", "volume", "wave", "duty", "envelope", "gate"):
                 result.append((value, self.setting(value, token), token))
             elif value in ("|", "~"):
                 result.append((value, None, token))
@@ -393,21 +615,22 @@ class ScoreParser:
                     instrument = self.name() if self.peek() not in ("{", "octave") else None
                     octave = self.setting("octave", token) if self.accept("octave") else 4
                     self.channels[channel] = (instrument, octave, self.sequence(), token)
-                elif command in ("envelope", "instrument", "phrase"):
+                elif command in ("envelope", "instrument", "phrase", "effect"):
                     name = self.name()
                     if command == "phrase" and (NOTE.fullmatch(name) or name in
-                            ("repeat", "use", "octave", "volume", "wave", "envelope", "gate")):
+                            ("repeat", "use", "octave", "volume", "wave", "duty", "envelope", "gate", "effects", *EFFECTS)):
                         self.error("phrase name conflicts with note notation or a sequence command", token)
                     table = getattr(self, command + "s")
                     if name in table:
                         self.error(f"duplicate {command} {name!r}", token)
-                    table[name] = getattr(self, command)() if command != "phrase" else self.sequence()
+                    table[name] = (self.effect_bundle() if command == "effect" else
+                                   self.sequence() if command == "phrase" else getattr(self, command)())
                 else:
                     self.error(f"unknown score command {command!r}", token)
         if not self.channels:
             self.error("score needs at least one channel")
-        if self.sfx and (self.loop or any(channel not in (2, 3) for channel in self.channels)):
-            self.error("SFX must be one-shot and declare only channels 2 and/or 3")
+        if self.sfx and (self.loop or any(channel not in (1, 3) for channel in self.channels)):
+            self.error("SFX must be one-shot and declare only channels 1 and/or 3")
         return self
 
 
@@ -440,15 +663,33 @@ def score_events(score):
 
     def instrument(name, token):
         if name is None:
-            return {"wave": "square", "volume": 24, "envelope": None, "gate": Fraction(1)}
+            return default_sound()
         if name not in score.instruments:
             score.error(f"unknown instrument {name!r}", token)
-        return score.instruments[name].copy()
+        sound = score.instruments[name].copy()
+        settings = {}
+        for bundle in sound.pop("bundles", []):
+            settings.update(effect_bundle(bundle, token))
+        settings.update(sound)  # Explicit instrument fields override reusable effects.
+        return settings
+
+    def effect_bundle(name, token):
+        if name not in score.effects:
+            score.error(f"unknown effect {name!r}", token)
+        return score.effects[name]
 
     for channel, (name, octave, sequence, token) in score.channels.items():
         notes = []
         state = {"time": Fraction(0), "duration": Fraction(1), "octave": octave,
                  "sound": instrument(name, token), "tie": False}
+
+        def validate_channel(sound, item):
+            if sound.get("noise_retrigger") and channel != 3:
+                score.error("noise_retrigger requires channel 3", item)
+            if channel == 3 and any(sound.get(k) for k in ("duty_slide", "lfo_duty")):
+                score.error("duty effects require a tonal channel", item)
+
+        validate_channel(state["sound"], token)
 
         def expand(sequence, stack=()):
             for kind, value, item in sequence:
@@ -463,10 +704,14 @@ def score_events(score):
                     expand(score.phrases[value], (*stack, value))
                 elif kind == "use":
                     state["sound"] = instrument(value, item)
+                    validate_channel(state["sound"], item)
                 elif kind == "octave":
                     state[kind] = value
-                elif kind in ("volume", "wave", "envelope", "gate"):
+                elif kind in ("volume", "wave", "duty", "envelope", "gate"):
                     state["sound"][kind] = value
+                elif kind in ("effect", "effects"):
+                    state["sound"].update(value if kind == "effect" else effect_bundle(value, item))
+                    validate_channel(state["sound"], item)
                 elif kind == "|":
                     bar_ms = score.meter * 60000 / score.tempo
                     if state["time"] % bar_ms:
@@ -499,6 +744,10 @@ def score_events(score):
                         score.error(f"unknown envelope {env_name!r}", item)
                     if sound["wave"] == "noise" and channel != 3:
                         score.error("noise instruments require channel 3", item)
+                    validate_channel(sound, item)
+                    pitch_effects = [k for k in ("frequency_slide", "arpeggio", "glissando") if sound.get(k)]
+                    if len(pitch_effects) > 1:
+                        score.error("choose only one base pitch effect: frequency_slide, arpeggio, glissando", item)
                     envelope = score.envelopes[env_name] if env_name else flat
                     if state["tie"]:
                         previous = notes[-1]
@@ -516,8 +765,27 @@ def score_events(score):
     return channels, max(endings)
 
 
-def compile_source(source, filename="<score>", automation_ms=None):
-    """Compile note notation and automation to A4 music or C1..C3 SFX bytes."""
+def lfo_value(effect, elapsed, song_time):
+    phase = float((elapsed if effect["phase"] == "note" else song_time) % effect["period"] / effect["period"])
+    if effect["wave"] == "sine":
+        return math.sin(2 * math.pi * phase)
+    if effect["wave"] == "triangle":
+        return 1 - 4 * abs(phase - 0.5)
+    return 1 if phase < 0.5 else -1
+
+
+def slide_value(effect, base, elapsed, pitch=False):
+    left = effect.get("from", base)
+    right = effect.get("to", left * 2 ** (float(effect["delta"]) / 1200) if pitch and "delta" in effect
+                       else left + effect.get("delta", 0))
+    amount = min(Fraction(1), elapsed / effect["over"])
+    if pitch and effect.get("curve", "log") == "log":
+        return float(left) * (float(right) / float(left)) ** float(amount)
+    return left + (right - left) * amount
+
+
+def compile_source(source, filename="<score>", automation_ms=None, max_updates=2000000, statistics=None):
+    """Resolve effects offline. Only pitch, volume, duty and seed reach firmware."""
     score = ScoreParser(source, filename).parse()
     interval = score.automation_ms if automation_ms is None else Fraction(automation_ms)
     if interval < 4 or interval % 4:
@@ -526,10 +794,19 @@ def compile_source(source, filename="<score>", automation_ms=None):
     if duration < (8 if score.loop else 4):
         score.error("a loop needs at least 8ms; a one-shot score needs at least 4ms")
     changes = []
-    for channel, (name, _, _, _) in score.channels.items():
-        wave = score.instruments[name]["wave"] if name else "square"
-        changes.append((Fraction(0), -1, channel,
-                        {"note": None, "volume": 0, "waveform": "square" if wave == "noise" else wave}))
+    budget = 0
+
+    def account(count):
+        nonlocal budget
+        budget += count
+        if max_updates is not None and budget > max_updates:
+            score.error("automation exceeds update budget; raise --max-updates explicitly")
+
+    for channel in channels:
+        update = {"increment": 0, "volume": 0}
+        if channel != 3:
+            update["duty"] = 128
+        changes.append((Fraction(0), -1, channel, update))
     finish = duration
     for channel, notes in channels.items():
         for index, note in enumerate(notes):
@@ -541,63 +818,134 @@ def compile_source(source, filename="<score>", automation_ms=None):
                 stop = min(stop, notes[index + 1]["start"])
             if score.loop:
                 stop = min(stop, duration)
+            if sound.get("note_cut"):
+                stop = min(stop, start + sound["note_cut"]["after"])
             finish = max(finish, stop)
             step = envelope["curve"] == "step"
             gate_level = curve_level(envelope["points"], gate - start, step)
             times = {start, stop, min(gate, stop)}
             times.update(start + t for t, _ in envelope["points"] if start + t < min(gate, stop))
             times.update(gate + t for t, _ in release if gate + t < stop)
-            # Constant stepped shapes need only their explicit breakpoints.
             ramps = any(a[1] != b[1] for a, b in zip(envelope["points"], envelope["points"][1:]))
-            if "tremolo" in envelope or (not step and (ramps or release)):
+            automated = any(sound.get(k) for k in ("volume_slide", "frequency_slide", "duty_slide",
+                           "lfo_pitch", "lfo_volume", "lfo_duty", "tremolo"))
+            if automated or "tremolo" in envelope or (not step and (ramps or release)):
                 sample = (start // interval + 1) * interval
-                while sample < stop:
-                    times.add(sample)
-                    sample += interval
+                count = max(0, math.ceil((stop - sample) / interval))
+                account(count)
+                times.update(sample + i * interval for i in range(count))
+            # Exact boundaries are independent of the smooth automation interval.
+            for kind in ("volume_slide", "frequency_slide", "duty_slide"):
+                if sound.get(kind) and start + sound[kind]["over"] < stop:
+                    times.add(start + sound[kind]["over"])
+            for kind, field in (("arpeggio", "step"), ("glissando", "every"), ("noise_retrigger", "every")):
+                if not sound.get(kind):
+                    continue
+                effect = sound[kind]
+                count = max(0, math.ceil((stop - start) / effect[field]) - 1)
+                if kind == "arpeggio" and effect.get("once"):
+                    count = min(count, len(effect["offsets"]) - 1)
+                account(count)
+                times.update(start + i * effect[field] for i in range(1, count + 1))
+            account(1)
             for time in sorted(times):
                 if time >= stop:
                     continue
+                elapsed = time - start
+                frequency = 440 * 2 ** ((note["pitch"] - 69) / 12)
+                if sound.get("frequency_slide"):
+                    frequency = slide_value(sound["frequency_slide"], frequency, elapsed, True)
+                elif sound.get("arpeggio"):
+                    arp = sound["arpeggio"]
+                    position = int(elapsed // arp["step"])
+                    position = min(position, len(arp["offsets"]) - 1) if arp.get("once") else position % len(arp["offsets"])
+                    pitch = max(24, min(95, note["pitch"] + arp["offsets"][position]))
+                    frequency = 440 * 2 ** ((pitch - 69) / 12)
+                elif sound.get("glissando"):
+                    gliss = sound["glissando"]
+                    direction = -1 if gliss.get("direction", "up") == "down" else 1
+                    pitch = max(24, min(95, note["pitch"] + direction * gliss.get("step", 1) * (elapsed // gliss["every"])))
+                    frequency = 440 * 2 ** (float(pitch - 69) / 12)
+                    if "to" in gliss:
+                        base = 440 * 2 ** ((note["pitch"] - 69) / 12)
+                        target = max(base, gliss["to"]) if direction > 0 else min(base, gliss["to"])
+                        frequency = min(frequency, target) if direction > 0 else max(frequency, target)
+                if sound.get("lfo_pitch"):
+                    effect = sound["lfo_pitch"]
+                    frequency *= 2 ** (float(effect["depth"]) * lfo_value(effect, elapsed, time) / 1200)
+                duty = sound["duty"]
+                if sound.get("duty_slide"):
+                    duty = slide_value(sound["duty_slide"], duty, elapsed)
+                if sound.get("lfo_duty"):
+                    effect = sound["lfo_duty"]
+                    duty += float(effect["depth"]) * lfo_value(effect, elapsed, time)
                 if time >= gate and release:
                     level = curve_level([(Fraction(0), gate_level), *release], time - gate, step)
                 else:
-                    level = curve_level(envelope["points"], time - start, step)
+                    level = curve_level(envelope["points"], elapsed, step)
+                base_volume = sound["volume"]
+                if sound.get("volume_slide"):
+                    base_volume = max(0, min(31, slide_value(sound["volume_slide"], base_volume, elapsed)))
+                volume = level * base_volume
                 if "tremolo" in envelope:
-                    level *= tremolo_level(envelope["tremolo"], time - start, time)
-                volume = max(0, min(31, math.floor(float(level * sound["volume"]) + 0.5)))
-                update = {"volume": volume}
+                    volume *= tremolo_level(envelope["tremolo"], elapsed, time)
+                if sound.get("tremolo"):
+                    volume *= tremolo_level(sound["tremolo"], elapsed, time)
+                if sound.get("lfo_volume"):
+                    effect = sound["lfo_volume"]
+                    volume += float(effect["depth"]) * lfo_value(effect, elapsed, time)
+                update = {"increment": max(1, min(65535, round(frequency * 65536 / 15625))),
+                          "volume": max(0, min(31, math.floor(float(volume) + 0.5)))}
                 if time == start:
-                    update.update(note=note["pitch"], waveform="square" if sound["wave"] == "noise" else sound["wave"])
+                    update["onset"] = True
+                if channel != 3:
+                    update["duty"] = max(0, min(255, math.floor(float(duty) + 0.5)))
+                retrigger = sound.get("noise_retrigger")
+                if retrigger and elapsed % retrigger["every"] == 0 and (elapsed or retrigger.get("onset", "yes") == "yes"):
+                    update["seed"] = retrigger["seed"]
                 changes.append((time, 1, channel, update))
-            changes.append((stop, 0, channel, {"note": None, "volume": 0}))
+            changes.append((stop, 0, channel, {"increment": 0, "volume": 0}))
 
     def tick(time):
-        # Round cumulative positions, never individual note lengths.
         return math.floor(time / 4 + Fraction(1, 2))
 
     terminal = max(2, tick(duration) if score.loop else tick(finish) + 1)
     timeline = {}
     for time, priority, channel, update in sorted(changes, key=lambda item: (item[0], item[1])):
-        position = tick(time) + 1  # Every stream waits one tick before its first event.
+        position = tick(time) + 1
         if position < terminal:
-            timeline.setdefault(position, {}).setdefault(channel, {}).update(update)
+            merged = timeline.setdefault(position, {}).setdefault(channel, {})
+            # A cut/off cancels every earlier seed/onset quantized to this tick.
+            if update.get("increment") == 0:
+                merged.pop("seed", None)
+                merged.pop("onset", None)
+            merged.update(update)
     previous, events = 0, []
-    volumes, waves, pitches = [24] * 4, ["square"] * 4, [None] * 4
+    retained = [dict(volume=24, duty=128, increment=0) for _ in range(4)]
+    counts = dict(pitch=0, volume=0, duty=0, noise_retrigger=0)
     for position, updates in sorted(timeline.items()):
         filtered = {}
         for channel, update in updates.items():
             result = {}
-            for field, values in (("volume", volumes), ("waveform", waves), ("note", pitches)):
+            for field in ("volume", "duty", "increment"):
                 if field in update:
                     value = update[field]
-                    if value != values[channel] or (field == "note" and value is not None):
+                    if value != retained[channel][field] or (field == "increment" and update.get("onset")):
                         result[field] = value
-                    values[channel] = value
+                        counts["pitch" if field == "increment" else field] += 1
+                    retained[channel][field] = value
+            if "seed" in update:
+                result["seed"] = update["seed"]
+                counts["noise_retrigger"] += 1
             if result:
                 filtered[channel] = result
         if not events or filtered:
             events.append((position - previous, filtered))
             previous = position
-    return _encode_events(sum(1 << channel for channel in channels), events, terminal - previous, score.loop, score.sfx)
+    data = _encode_events(sum(1 << channel for channel in channels), events, terminal - previous, score.loop, score.sfx)
+    if statistics is not None:
+        statistics.update(counts, bytes=len(data), events=len(events))
+    return data
 
 
 def c_array(data, name):
@@ -634,10 +982,14 @@ def main():
     parser.add_argument("--name", help="emit a C array with this identifier")
     parser.add_argument("--automation-ms", type=int, help="sample score automation every N ms (multiple of 4)")
     parser.add_argument("--stats", action="store_true", help="report the compiled byte count")
+    parser.add_argument("--max-updates", type=int, default=2000000, help="automation budget (0 disables the limit)")
     args = parser.parse_args()
     try:
         source = args.source.read_text(encoding="utf-8")
-        data = compile_source(source, args.source, args.automation_ms)
+        if args.max_updates < 0:
+            raise ValueError("--max-updates must be nonnegative")
+        stats = {}
+        data = compile_source(source, args.source, args.automation_ms, args.max_updates or None, stats)
         args.output.parent.mkdir(parents=True, exist_ok=True)
         if args.name:
             header = c_array(data, args.name)
@@ -646,7 +998,7 @@ def main():
         else:
             args.output.write_bytes(data)
         if args.stats:
-            print(f"{args.source}: {len(data)} bytes ({'SFX' if data[0] != 0xA4 else 'A4'})", file=sys.stderr)
+            print(f"{args.source}: " + ", ".join(f"{key}={value}" for key, value in stats.items()), file=sys.stderr)
     except (ValueError, KeyError, TypeError, OSError) as error:
         parser.error(str(error))
 

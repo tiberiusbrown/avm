@@ -1,0 +1,143 @@
+{
+  "date": "2026-10-20",
+  "verification": "Ardens AVR instruction simulation; no physical hardware testing",
+  "cpu_hz": 16000000,
+  "synthesis_hz": [
+    7812.5,
+    15625
+  ],
+  "hardware_pwm_hz": 250000,
+  "baseline_A4_recorded": {
+    "normal_isr_cycles": [
+      186,
+      193
+    ],
+    "pending_copy_overhead_cycles": 69,
+    "persistent_audio_bytes": 81,
+    "native_stack_allowance_bytes": 82,
+    "firmware_text_bytes": 29008
+  },
+  "A5": {
+    "normal_isr_cycles": [
+      171,
+      178
+    ],
+    "pwm_store_cycles": 21,
+    "worst_pending_isr_cycles": 250,
+    "worst_reseed_isr_cycles": 251,
+    "pending_copy_overhead_cycles": 72,
+    "reseed_additional_cycles": 6,
+    "persistent_audio_bytes": 87,
+    "control_latch_bytes": 15,
+    "pending_packet_bytes": 16,
+    "native_stack_allowance_bytes": 76,
+    "isr_stack_bytes": 9,
+    "pending_isr_stack_bytes": 11,
+    "demo_native_high_water_bytes": 35,
+    "formatter_native_high_water_bytes": 39,
+    "firmware_text_bytes": 29208,
+    "bootloader_headroom_bytes": 488,
+    "music_read_ahead_bytes": 18,
+    "sfx_read_ahead_bytes": 10,
+    "foreground_cycles": {
+      "one_voice_pitch_control": 980,
+      "four_voices_pitch_control": 1195,
+      "four_controls": 1087,
+      "pitch_off": 953,
+      "continue": 579,
+      "countdown": 100,
+      "music_burst": 416,
+      "maximum_music_event": 1218,
+      "maximum_sfx_event": 1025
+    }
+  },
+  "tests": {
+    "compiler": 51,
+    "native_audio": 45,
+    "interpreter": 471,
+    "rpg_ctest": 11,
+    "pulse_reference_samples": 387072,
+    "timer_phase_combinations": 32000,
+    "large_asset_attacks_each_C_and_CPP": 22000
+  },
+  "rpg_timing": {
+    "normal/synthesis/entry_lateness": {
+      "count": 430469,
+      "minimum": 0,
+      "maximum": 7,
+      "at_least_10": 0
+    },
+    "normal/synthesis/pwm_interval_error": {
+      "count": 430468,
+      "minimum": -6,
+      "maximum": 7,
+      "at_least_10": 0
+    },
+    "normal/synthesis/pwm_lateness": {
+      "count": 430469,
+      "minimum": 0,
+      "maximum": 7,
+      "at_least_10": 0
+    },
+    "normal/synthesis/synthesis_interval_error": {
+      "count": 430468,
+      "minimum": -6,
+      "maximum": 7,
+      "at_least_10": 0
+    },
+    "fxc/synthesis/entry_lateness": {
+      "count": 62500,
+      "minimum": 0,
+      "maximum": 7,
+      "at_least_10": 0
+    },
+    "fxc/synthesis/pwm_interval_error": {
+      "count": 62499,
+      "minimum": -6,
+      "maximum": 7,
+      "at_least_10": 0
+    },
+    "fxc/synthesis/pwm_lateness": {
+      "count": 62500,
+      "minimum": 0,
+      "maximum": 7,
+      "at_least_10": 0
+    },
+    "fxc/synthesis/synthesis_interval_error": {
+      "count": 62499,
+      "minimum": -6,
+      "maximum": 7,
+      "at_least_10": 0
+    }
+  },
+  "rpg_package_identity": {
+    "normal": {
+      "package_sha256": "c442f2c27ba3b9f72cae763a6273147b94a80dce6c0f629b32cf89289e219a86",
+      "firmware_sha256": "8f94cebf2e399d2dfec49c6ff3dac5926202818540937282b5e341dc996e955f",
+      "guest_image_sha256": "956804b1df1256b8dc4539e750ed2f14bc36f360cc032b8fb295fe4d97658227",
+      "score_sha256": {
+        "dewlight_grove": "d59a6a0ca8a51e1d1ff869769ddfc49e40b1baec9ec7f3d7c21b56e23bd29deb",
+        "lantern_square": "eb4609810142669a0d534480b13e030e6a6a71e8908974dab05f6bc360a68488",
+        "sunward_road": "aaebe15b225ef9dfe1f337391981dcb6c8fb86e9983e67b8cbb0550630e2a463",
+        "clockwork_hollow": "d880e4ef70c56e3af5d515246dad432510646cc1156073646c09a2b208919e57",
+        "moonlit_quay": "0fc57b1c43b49a71c4b7448773adb56c282e52b3249d3943a7e491ccc3927c2d",
+        "homeward_stars": "fd8d8d97fde2ec3120b9aabb9614c1649481b443e79107b20ddbaf1939c97b4b"
+      }
+    },
+    "fxc": {
+      "package_sha256": "b68f46ca61d399794381dec48212c6ebe184536fead81d2f2620c4aa4c83abb1",
+      "firmware_sha256": "0b91c2d4512336db4a6b2502b6ad72c32df5d1479ff094efa8b5d8cb90f226b0",
+      "guest_image_sha256": "956804b1df1256b8dc4539e750ed2f14bc36f360cc032b8fb295fe4d97658227",
+      "score_sha256": {
+        "dewlight_grove": "d59a6a0ca8a51e1d1ff869769ddfc49e40b1baec9ec7f3d7c21b56e23bd29deb",
+        "lantern_square": "eb4609810142669a0d534480b13e030e6a6a71e8908974dab05f6bc360a68488",
+        "sunward_road": "aaebe15b225ef9dfe1f337391981dcb6c8fb86e9983e67b8cbb0550630e2a463",
+        "clockwork_hollow": "d880e4ef70c56e3af5d515246dad432510646cc1156073646c09a2b208919e57",
+        "moonlit_quay": "0fc57b1c43b49a71c4b7448773adb56c282e52b3249d3943a7e491ccc3927c2d",
+        "homeward_stars": "fd8d8d97fde2ec3120b9aabb9614c1649481b443e79107b20ddbaf1939c97b4b"
+      }
+    }
+  },
+  "demo_package_sha256": "abe1d45deac6eaef746ef55376b1525daba7f3d9935060fc456c36a20622232a",
+  "firmware_hex_sha256": "5cb415190ad5af5181d47fe12db24e4b44d519880a22de2c789caa53858f66e3"
+}

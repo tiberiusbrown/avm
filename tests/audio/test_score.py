@@ -9,8 +9,8 @@ spec.loader.exec_module(music)
 
 
 def decode(data, raw=False):
-    effect = data[0] != 0xA4
-    assert data[0] == 0xA4 or data[0] in (0xC1, 0xC2, 0xC3)
+    effect = data[0] != 0xA5
+    assert data[0] == 0xA5 or data[0] in (0xD1, 0xD2, 0xD3)
     events, offset, time = [], 1 if effect else 2, 0
     midi = {music.note_increment(note): note for note in range(24, 96)}
     midi[0] = 128
@@ -27,15 +27,20 @@ def decode(data, raw=False):
             continue
         if effect:
             assert mask < 16
-            mask = ((mask & 3) << 2) | ((mask & 12) << 4)
+            mask = ((mask & 1) << 1) | ((mask & 2) << 2) | ((mask & 4) << 3) | ((mask & 8) << 4)
         update = {}
         for field, shift in (("note", 0), ("control", 4)):
             for channel in range(4):
                 if mask & (1 << (channel + shift)):
                     width = 2 if field == "note" else 1
                     value = int.from_bytes(data[offset:offset + width], "little")
-                    update.setdefault(channel, {})[field] = midi[value] if field == "note" and not raw else value
+                    update.setdefault(channel, {})[field] = midi[value] if field == "note" and not raw else value & 31 if field == "control" else value
                     offset += width
+                    if field == "control":
+                        assert value & 0x60 == 0
+                        if value & 128:
+                            update[channel]["seed" if channel == 3 else "duty"] = data[offset]
+                            offset += 1
         events.append((time, update))
 
 
@@ -44,21 +49,21 @@ class ScoreTests(unittest.TestCase):
         return decode(music.compile_source(source))
 
     def test_raw_increments_and_compact_sfx_ownership(self):
-        for mask, tag in ((4, 0xC1), (8, 0xC2), (12, 0xC3)):
-            channels = " ".join(f"channel {ch} {{ r:4ms c:8ms }}" for ch in (2, 3) if mask & (1 << ch))
+        for mask, tag in ((2, 0xD1), (8, 0xD2), (10, 0xD3)):
+            channels = " ".join(f"channel {ch} {{ r:4ms c:8ms }}" for ch in (1, 3) if mask & (1 << ch))
             data = music.compile_source("sfx " + channels)
             self.assertEqual(data[0], tag)
             events, _, command = decode(data, raw=True)
-            self.assertEqual(set(events[0][1]), {ch for ch in (2, 3) if mask & (1 << ch)})
+            self.assertEqual(set(events[0][1]), {ch for ch in (1, 3) if mask & (1 << ch)})
             self.assertEqual(command, 1)
             self.assertTrue(all(update["note"] == 0 for update in events[0][1].values()))
-        data = music._encode_events(4, [(1, {2: {"increment": 3717, "volume": 12}})], 1, False, True)
-        self.assertEqual(data, bytes([0xC1, 0, 5, 0x85, 0x0e, 12, 0, 0, 1]))
-        self.assertEqual(decode(data, raw=True)[0][0][1][2]["note"], 3717)
+        data = music._encode_events(2, [(1, {1: {"increment": 3717, "volume": 12}})], 1, False, True)
+        self.assertEqual(data, bytes([0xD1, 0, 5, 0x85, 0x0e, 140, 128, 0, 0, 1]))
+        self.assertEqual(decode(data, raw=True)[0][0][1][1]["note"], 3717)
         self.assertEqual(music.note_increment(69), 1845)
 
     def test_sfx_rejects_loops_and_unavailable_channels(self):
-        for source in ("sfx loop channel 2 { c4 }", "sfx channel 0 { c4 }", "sfx channel 1 { r4 }"):
+        for source in ("sfx loop channel 1 { c4 }", "sfx channel 0 { c4 }", "sfx channel 2 { r4 }"):
             with self.subTest(source=source), self.assertRaises(music.ScoreError):
                 music.compile_source(source)
 
@@ -74,7 +79,7 @@ class ScoreTests(unittest.TestCase):
 
     def test_simultaneous_tracks_and_initial_silence(self):
         events, _, _ = self.compile("channel 0 { c4 d } channel 2 { r4 e }")
-        self.assertEqual(events[0][1][2], {"note": 128, "control": 0})
+        self.assertEqual(events[0][1][2], {"note": 128, "control": 0, "duty": 128})
         self.assertEqual(events[1], (126, {0: {"note": 62}, 2: {"note": 64, "control": 24}}))
 
     def test_exact_fractional_timing_and_loop_period(self):
@@ -100,14 +105,15 @@ class ScoreTests(unittest.TestCase):
         self.assertEqual(sum(u[0].get("note", 128) != 128 for _, u in events), 1)
         self.assertIn((251, {0: {"note": 128, "control": 0}}), events)
 
-    def test_linear_envelope_and_packed_waveform(self):
+    def test_linear_envelope_and_pulse_duty(self):
         events, end, _ = self.compile("""
             automation 4ms
             envelope shape { points 0ms:0%, 8ms:100%, 16ms:50% }
-            instrument lead { wave sine volume 20 envelope shape }
+            instrument lead { wave pulse duty 25% volume 20 envelope shape }
             channel 0 lead { c:32ms }
         """)
-        self.assertEqual([u[0]["control"] for _, u in events], [96, 106, 116, 111, 106])
+        self.assertEqual([u[0]["control"] for _, u in events], [0, 10, 20, 15, 10])
+        self.assertEqual(events[0][1][0]["duty"], 64)
         self.assertEqual(end, 9)
 
     def test_stepped_custom_breakpoints(self):
@@ -173,12 +179,13 @@ class ScoreTests(unittest.TestCase):
 
     def test_note_override_and_noise(self):
         events, _, _ = self.compile("""
-            instrument bell { wave triangle volume 12 }
+            instrument bell { wave pulse duty 12.5% volume 12 }
             instrument drum { wave noise volume 8 }
             channel 0 { c8@bell use bell d }
             channel 3 drum { c,4 }
         """)
-        self.assertEqual(events[0][1][0]["control"], 44)
+        self.assertEqual(events[0][1][0]["control"], 12)
+        self.assertEqual(events[0][1][0]["duty"], 32)
         self.assertEqual(events[0][1][3]["control"], 8)
 
     def test_long_wait_and_unlimited_asset_size(self):
@@ -243,6 +250,12 @@ class ScoreTests(unittest.TestCase):
         source = root / "projects/audio_demo/tremolo.avms"
         data = music.compile_source(source.read_text(encoding="utf-8"), source)
         self.assertEqual(decode(data)[1:], (1000, 2))
+        source = root / "projects/audio_demo/effects.avms"
+        data = music.compile_source(source.read_text(encoding="utf-8"), source)
+        events, _, command = decode(data, raw=True)
+        self.assertEqual(command, 1)
+        self.assertTrue(any("duty" in u for _, update in events for u in update.values()))
+        self.assertTrue(any("seed" in u for _, update in events for u in update.values()))
 
 
 if __name__ == "__main__":

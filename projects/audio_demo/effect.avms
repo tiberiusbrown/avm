@@ -1,8 +1,12 @@
-title "Arpeggio effect"
+title "Pulse slide and retrigger"
 sfx
-
-instrument sparkle { wave sawtooth volume 31 }
-instrument hit { wave noise volume 16 }
-
-channel 2 sparkle octave 5 { c:48ms e:48ms g:48ms }
+instrument sparkle {
+    wave pulse duty 25% volume 31
+    frequency_slide { delta -600cents over 120ms }
+    volume_slide { from 31 to 4 over 144ms }
+    duty_slide { from 25% to 12.5% over 120ms }
+    note_cut { after 140ms }
+}
+instrument hit { wave noise volume 16 noise_retrigger { every 16ms seed 37 } }
+channel 1 sparkle octave 5 { c:144ms }
 channel 3 hit octave 3 { c:48ms r:96ms }

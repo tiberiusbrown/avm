@@ -100,4 +100,5 @@ if(Python3_Interpreter_FOUND AND EXISTS "${AUDIO_DEMO_COMPILER}")
             "${CMAKE_CURRENT_SOURCE_DIR}/effect.avms" "${CMAKE_CURRENT_SOURCE_DIR}/effect.h" --name effect
         COMMENT "Regenerating tracked audio headers"
         VERBATIM)
+    add_dependencies(avm_audio_demo audio_demo_assets)
 endif()

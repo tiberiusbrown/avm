@@ -3,7 +3,7 @@ Discarded input sections
 
  .data          0x00000000        0x0 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  .bss           0x00000000        0x0 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
- .avr.prop      0x00000000       0x32 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
+ .avr.prop      0x00000000       0x2d C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
 
 Memory Configuration
 
@@ -123,7 +123,7 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x7184
+.text           0x00000000     0x7210
  *(.vectors)
  *(.vectors)
  *(.progmem.gcc*)
@@ -168,14 +168,14 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  *(.init9)
  *(.init9)
  *(.text)
- .text          0x00000000     0x7184 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
+ .text          0x00000000     0x7210 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
                 0x00000000                __vectors
                 0x00000200                abvm_interp
                 0x00000200                primary_table
                 0x0000498c                draw_bitmap_seek_func
-                0x00007184                        . = ALIGN (0x2)
+                0x00007210                        . = ALIGN (0x2)
  *(.text.*)
-                0x00007184                        . = ALIGN (0x2)
+                0x00007210                        . = ALIGN (0x2)
  *(.fini9)
  *(.fini9)
  *(.fini8)
@@ -199,12 +199,12 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  *(.hightext)
  *(.hightext*)
  *(.progmemx.*)
-                0x00007184                        . = ALIGN (0x2)
+                0x00007210                        . = ALIGN (0x2)
  *(.jumptables)
  *(.jumptables*)
-                0x00007184                        _etext = .
+                0x00007210                        _etext = .
 
-.data           0x00800a0b        0x1 load address 0x00007184
+.data           0x00800a0b        0x1 load address 0x00007210
                 [!provide]                        PROVIDE (__data_start = .)
  *(.data)
  *(.data*)
@@ -223,8 +223,8 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  *(.bss*)
  *(COMMON)
                 [!provide]                        PROVIDE (__bss_end = .)
-                0x00007184                        __data_load_start = LOADADDR (.data)
-                0x00007185                        __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x00007210                        __data_load_start = LOADADDR (.data)
+                0x00007211                        __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x00800a0c        0x0
                 [!provide]                        PROVIDE (__noinit_start = .)

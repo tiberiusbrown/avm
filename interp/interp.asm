@@ -78,19 +78,19 @@
 #define data_audio_begin             (data_text_mode+1)
 #define data_audio_ticks_pending     (data_audio_begin+0)
 #define data_boot_hold               (data_audio_begin+1)
-; Music master, default 128 (32=unity); waveform selectors follow the controls.
+; Music master, default 128 (32=unity); pulse thresholds follow the controls.
 #define data_audio_volume            (data_audio_begin+2)
 #define data_audio_controls          (data_audio_begin+3)
-#define data_audio_banks             (data_audio_controls+12)
-#define data_audio_sfx_volume        (data_audio_banks+3)
+#define data_audio_duty              (data_audio_controls+12)
+#define data_audio_sfx_volume        (data_audio_duty+3)
 #define data_audio_phases            (data_audio_sfx_volume+1)
 #define data_audio_noise             (data_audio_phases+8)
 #define data_audio_music_notes       (data_audio_noise+1)
-#define data_audio_sfx_notes         (data_audio_music_notes+12)
-#define data_audio_music             (data_audio_sfx_notes+6)
+#define data_audio_sfx_notes         (data_audio_music_notes+16)
+#define data_audio_music             (data_audio_sfx_notes+8)
 #define data_audio_sfx               (data_audio_music+10)
 #define data_audio_update_controls   (data_audio_sfx+7)
-; Bit 7 publishes all 15 control bytes; oscillator phases are preserved.
+; Bit 7 publishes all 15 controls; bits 0..5 optionally reseed noise (1..63).
 #define data_audio_update            (data_audio_update_controls+15)
 #define data_audio_sample            (data_audio_update+1)
 #define data_audio_rate              (data_audio_sample+1)
@@ -104,8 +104,8 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
-.if (data_audio_end - data_audio_begin) != 81
-    .error "audio persistent SRAM must occupy 81 bytes"
+.if (data_audio_end - data_audio_begin) != 87
+    .error "audio persistent SRAM must occupy 87 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -113,9 +113,11 @@
 
 #define data_end_private             data_audio_end
 #define data_audio_dirty             data_end_private
-; At a due event: mask + four uint16 pitches + four controls + next delta.
-#define AUDIO_EVENT_BYTES            14
-#define data_audio_event             (data_audio_dirty+1)
+; Reseed commands are transient, never part of retained desired voice state.
+#define data_audio_reseed            (data_audio_dirty+1)
+; mask + four uint16 pitches + four extended controls + next delta.
+#define AUDIO_EVENT_BYTES            18
+#define data_audio_event             (data_audio_reseed+1)
 
 ; Native formatter workspace. This storage is valid only while VS(N)PRINTF is
 ; executing; future nonreentrant SYS services may alias the same range.
@@ -1009,35 +1011,7 @@ oled_boot_program:
 #endif
 oled_boot_program_end:
 
-; Four 64-sample signed waveforms occupy the page before primary dispatch.
-; Phase high bits select a sample; the prepared control supplies bank bits.
-.org 0x0100
-audio_waveforms:
-audio_waveform_square:
-    .byte 127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127
-    .byte 127,127,127,127,127,127,127,127,127,127,127,127,127,127,127,127
-    .byte -127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127
-    .byte -127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127,-127
-audio_waveform_triangle:
-    .byte 0,8,16,24,32,40,48,56,64,71,79,87,95,103,111,119
-    .byte 127,119,111,103,95,87,79,71,64,56,48,40,32,24,16,8
-    .byte 0,-8,-16,-24,-32,-40,-48,-56,-64,-71,-79,-87,-95,-103,-111,-119
-    .byte -127,-119,-111,-103,-95,-87,-79,-71,-64,-56,-48,-40,-32,-24,-16,-8
-audio_waveform_sawtooth:
-    .byte -127,-123,-119,-115,-111,-107,-103,-99,-95,-91,-87,-83,-79,-75,-71,-67
-    .byte -62,-58,-54,-50,-46,-42,-38,-34,-30,-26,-22,-18,-14,-10,-6,-2
-    .byte 2,6,10,14,18,22,26,30,34,38,42,46,50,54,58,62
-    .byte 67,71,75,79,83,87,91,95,99,103,107,111,115,119,123,127
-audio_waveform_sine:
-    .byte 0,12,25,37,49,60,71,81,90,98,106,112,117,122,125,126
-    .byte 127,126,125,122,117,112,106,98,90,81,71,60,49,37,25,12
-    .byte 0,-12,-25,-37,-49,-60,-71,-81,-90,-98,-106,-112,-117,-122,-125,-126
-    .byte -127,-126,-125,-122,-117,-112,-106,-98,-90,-81,-71,-60,-49,-37,-25,-12
-audio_waveforms_end:
-.if (audio_waveforms_end - audio_waveforms) != 256
-    .error "waveforms must occupy exactly one 256-byte page"
-.endif
-
+; The former waveform page is unused; primary dispatch remains page aligned.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Primary dispatch machinery
@@ -16300,12 +16274,13 @@ audio_service_func:
     audio_save
     mov  r21, r30
     sts  data_audio_dirty, ZERO
+    sts  data_audio_reseed, ZERO
     ldi  r16, lo8(data_audio_music)
     ldi  r17, hi8(data_audio_music)
     ldi  r18, lo8(data_audio_music_notes)
     rcall audio_advance
     ldi  r16, lo8(data_audio_sfx)
-    ldi  r18, lo8(data_audio_sfx_notes-6) ; slots map to physical voices 2/3
+    ldi  r18, lo8(data_audio_sfx_notes) ; compact slots map to physical voices 1/3
     rcall audio_advance
     lds  r24, data_audio_dirty
     tst  r24
@@ -16324,7 +16299,7 @@ audio_read_event:
     ldi  r24, AUDIO_EVENT_BYTES
     cpi  r16, lo8(data_audio_music)
     breq 1f
-    ldi  r24, 8 ; compact two-slot SFX needs only eight bytes of read-ahead
+    ldi  r24, 10 ; flags + two pitches + two extended controls + next delta
 1:
     mov  r0, r24
     mov  r1, ZERO
@@ -16390,26 +16365,36 @@ audio_advance:
     ; Zero change mask: Continue=0, End=1, Loop=2; other commands fail closed.
     ld   r24, X+
     tst  r24
-    breq .Laudio_next_delta
+    brne 3f
+    rjmp .Laudio_next_delta
+3:
     cpi  r24, 2
-    brne audio_stream_end
+    breq 3f
+    rjmp audio_stream_end
+3:
     cpi  r16, lo8(data_audio_music)
-    breq .Laudio_loop ; SFX is one-shot: Loop is malformed
+    brne 3f
+    rjmp .Laudio_loop ; SFX is one-shot: Loop is malformed
+3:
     rjmp audio_stream_end
 1:
     cpi  r16, lo8(data_audio_music)
     breq 2f
-    ; Compact SFX: pitch bits 0/1 and control bits 2/3 -> voices 2/3.
+    ; Compact slot bits -> physical pitch 1/3, control 5/7.
     cpi  r24, 16
-    brsh audio_stream_end
-    mov  r23, r24
-    andi r24, 3
-    andi r23, 12
-    lsl  r23
-    lsl  r23
-    or   r24, r23
-    lsl  r24
-    lsl  r24
+    brlo 3f
+    rjmp audio_stream_end
+3:
+    clr  r23
+    bst  r24, 0
+    bld  r23, 1
+    bst  r24, 1
+    bld  r23, 3
+    bst  r24, 2
+    bld  r23, 5
+    bst  r24, 3
+    bld  r23, 7
+    mov  r24, r23
 2:
     mov  r23, r24
     ; Fold note and volume bits to validate both against ownership.
@@ -16421,9 +16406,11 @@ audio_advance:
     ldd  r24, Z+AUDIO_MASK
     com  r24
     and  r25, r24
-    brne audio_stream_end
+    breq 3f
+    rjmp audio_stream_end
+3:
     sts  data_audio_dirty, ONE
-    ; Desired states are (increment low, increment high, packed control).
+    ; Desired states are (increment low, increment high, volume, duty).
     mov  r24, r23
     andi r24, 15
     breq .Laudio_volumes_only
@@ -16438,9 +16425,16 @@ audio_advance:
     ld   r24, X+
     mov  r30, r19
     andi r30, 3
-    mov  r25, r30
+    cpi  r16, lo8(data_audio_music)
+    breq 3f
+    ; SFX has only two desired slots; direct tones also use the first slot.
+    cpi  r30, 3
+    ldi  r30, 0
+    brne 3f
+    ldi  r30, 1
+3:
     lsl  r30
-    add  r30, r25
+    lsl  r30
     add  r30, r18
     ldi  r31, hi8(data_audio_begin)
     sbrc r19, 2
@@ -16450,7 +16444,36 @@ audio_advance:
     st   Z, r25
     rjmp .Laudio_channel_next
 .Laudio_control_store:
-    std  Z+2, r24
+    mov  r25, r24
+    andi r25, 0x60
+    breq 3f
+    rjmp audio_stream_end ; reserved bits must be zero
+3:
+    mov  r25, r24
+    andi r25, 31
+    std  Z+2, r25
+    sbrs r24, 7
+    rjmp .Laudio_channel_next
+    ld   r24, X+ ; duty threshold or noise seed, according to physical channel
+    cpi  r19, 7
+    breq .Laudio_reseed
+    std  Z+3, r24
+    rjmp .Laudio_channel_next
+.Laudio_reseed:
+    tst  r24
+    breq 4f
+    cpi  r24, 64
+    brlo 5f
+4:
+    rjmp audio_stream_end
+5:
+    cpi  r16, lo8(data_audio_music)
+    brne 6f
+    lds  r25, data_audio_sfx+AUDIO_MASK
+    sbrc r25, 3
+    rjmp .Laudio_channel_next ; hidden music command is discarded
+6:
+    sts  data_audio_reseed, r24
 .Laudio_channel_next:
     inc  r19
     lsr  r23
@@ -16466,6 +16489,15 @@ audio_stream_end:
     rcall audio_event_consumed
     std  Z+AUDIO_STATUS, ZERO
     std  Z+AUDIO_MASK, ZERO
+    ; Never transfer a completed owner's transient reseed to its successor.
+    cpi  r16, lo8(data_audio_music)
+    brne 1f
+    lds  r24, data_audio_sfx+AUDIO_MASK
+    sbrc r24, 3
+    rjmp 2f
+1:
+    sts  data_audio_reseed, ZERO
+2:
     sts  data_audio_dirty, ONE
     ret
 
@@ -16488,7 +16520,9 @@ audio_rewind:
 ; Wait with interrupts enabled; stopped output / disabled IRQs apply directly.
 audio_commit:
     rcall audio_commit_prepare
-    ldi  r20, 0x80
+    lds  r20, data_audio_reseed
+    ori  r20, 0x80
+    sts  data_audio_reseed, ZERO
 audio_commit_publish:
     sts  data_audio_update, r20
     in   r24, SREG
@@ -16522,7 +16556,7 @@ audio_commit_prepare:
     ldi  r30, lo8(data_audio_music_notes)
     mov  r25, r18
     lsl  r25
-    add  r25, r18
+    lsl  r25
     add  r30, r25
     lds  r19, data_audio_music+AUDIO_STATUS
     lds  r20, data_audio_volume
@@ -16531,7 +16565,7 @@ audio_commit_prepare:
     ldi  r30, lo8(data_audio_sfx_notes) ; one tonal slot, one noise slot
     cpi  r18, 3
     brne 2f
-    subi r30, -3
+    subi r30, -4
 2:
     ldi  r19, 1
     lds  r20, data_audio_sfx_volume
@@ -16541,15 +16575,13 @@ audio_commit_prepare:
     ldd  r0, Z+1
     ldd  r21, Z+2
     cpi  r18, 3
-    breq .Laudio_stage_bank_done
-    mov  r25, r21
-    andi r25, 0x60
-    lsl  r25
+    breq .Laudio_stage_duty_done
+    ldd  r25, Z+3
     mov  r30, r18
     subi r30, lo8(-(data_audio_update_controls+12))
     ldi  r31, hi8(data_audio_update_controls+12)
     st   Z, r25
-.Laudio_stage_bank_done:
+.Laudio_stage_duty_done:
     cpi  r19, 1
     brne .Laudio_stage_silent
     mov  r25, r24
@@ -16600,6 +16632,13 @@ audio_apply_update:
         sts data_audio_controls+audio_control_offset, r21
         .set audio_control_offset, audio_control_offset+1
     .endr
+    andi r20, 63
+    breq 1f
+    sts  data_audio_noise, r20
+    clr  r0
+    sts  data_audio_phases+6, r0
+    sts  data_audio_phases+7, r0
+1:
     clr  r0
     sts  data_audio_update, r0
     ret
@@ -16610,6 +16649,7 @@ sys_audio_impl:
     fx_disable ; SYS speculative opcode is complete by this far entry
     rcall audio_service_func ; apply elapsed time before changing ownership
     audio_save
+    sts  data_audio_reseed, ZERO
     mov  r0, VM_R5H ; raw tone increment high byte; r19 is borrowed below
     mov  r24, VM_R7L
     ldi  r30, lo8(data_audio_music)
@@ -16645,22 +16685,27 @@ sys_audio_impl:
     st   Z+, ZERO
     st   Z+, ZERO
     st   Z+, r25
+    ldi  r20, 128
+    st   Z+, r20
     dec  r24
     brne 1b
     rcall audio_read_event
     ld   r24, X+
     cpi  r16, lo8(data_audio_music)
     breq .Laudio_music_header
-    subi r24, 0xc1
+    subi r24, 0xd1
     cpi  r24, 3
     brsh .Laudio_start_bad
     inc  r24
-    lsl  r24
-    lsl  r24 ; presence bits -> ownership of voices 2 and/or 3
-    subi r18, 6 ; compact desired slots indexed as physical voices 2/3
+    clr  r25
+    bst  r24, 0
+    bld  r25, 1
+    bst  r24, 1
+    bld  r25, 3
+    mov  r24, r25 ; ownership of voices 1 and/or 3
     rjmp .Laudio_header_done
 .Laudio_music_header:
-    cpi  r24, 0xa4
+    cpi  r24, 0xa5
     brne .Laudio_start_bad
     ld   r24, X+
     tst  r24
@@ -16867,13 +16912,15 @@ audio_enable_phase:
     ldi  r31, hi8(data_audio_sfx_notes)
     cpi  r25, 3
     brne 1f
-    adiw r30, 3
+    adiw r30, 4
 1:
     st   Z, VM_R5L
     std  Z+1, r0
     mov  r24, VM_R6L
     andi r24, 31
     std  Z+2, r24
+    ldi  r24, 128
+    std  Z+3, r24
     ldi  r24, 1
 1:
     tst  r25
@@ -16988,8 +17035,8 @@ bootloader_reset_wait:
 ; Timer1 COMPA (vector 17) arbitrates ahead of Timer0 COMPA (vector 21).
 ; Output and synthesis run at 7812.5 Hz or 15625 Hz, selected in foreground.
 ; Emit the held sample at fixed latency, then prepare its successor.
-; Synthesis saves r0:r1, r20:r21, r26:r27, Z and SREG (11 bytes including PC).
-; r2 may be borrowed by libm. Banks and full-byte amplitudes are separate.
+; Synthesis saves r0:r1, r20:r21, r26:r27 and SREG (9 bytes including PC).
+; r2 may be borrowed by libm. Duty thresholds and amplitudes are separate.
 ; Signed samples are -127..127; round(sample * prepared_amplitude / 128).
 ; No SPI, sequencing, calls, or waveform-dependent branches.
 .macro audio_wave channel
@@ -17002,11 +17049,11 @@ bootloader_reset_wait:
     sts  data_audio_phases+2*\channel, r20
     sts  data_audio_phases+2*\channel+1, r21
     lds  r20, data_audio_controls+3*\channel+2
-    lds  r30, data_audio_banks+\channel
-    lsr  r21
-    lsr  r21
-    or   r30, r21
-    lpm  r21, Z
+    lds  r0, data_audio_duty+\channel
+    cp   r21, r0
+    sbc  r21, r21 ; phase_high < duty -> 0xff, otherwise 0
+    andi r21, 0xfe
+    subi r21, 127 ; 0xfe-127 = +127, 0-127 = -127
     fmulsu r21, r20
     sbc  r21, r21 ; sign before FMULSU's shift; contribution may exceed int8
     lsl  r0 ; round toward nearest, ties toward positive
@@ -17029,14 +17076,11 @@ timer1_endpoint_write:
     push r21
     push r26
     push r27
-    push r30
-    push r31
     ; The PWM endpoint is already written. Fixed addressing keeps the normal
     ; synthesis path unchanged apart from this four-cycle idle packet check.
     lds  r20, data_audio_update
     sbrc r20, 7
     rcall audio_apply_update
-    ldi  r31, hi8(audio_waveforms)
     clr  r26 ; signed 16-bit accumulation starts at zero
     clr  r27
     audio_wave 0
@@ -17077,8 +17121,6 @@ timer1_endpoint_write:
     ldi  r26, 255
 .Laudio_output:
     sts  data_audio_sample, r26
-    pop  r31
-    pop  r30
     pop  r27
     pop  r26
     pop  r21
@@ -17147,4 +17189,7 @@ audio_init_func:
     ldi  r24, 128 ; default gain: a volume-31 voice reaches amplitude 124
     sts  data_audio_volume, r24
     sts  data_audio_sfx_volume, r24
+    sts  data_audio_duty, r24
+    sts  data_audio_duty+1, r24
+    sts  data_audio_duty+2, r24
     ret

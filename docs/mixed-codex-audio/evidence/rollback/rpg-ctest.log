@@ -1,0 +1,288 @@
+[0/2] Re-checking globbed directories...
+-- GLOB mismatch!
+The following files were removed:
+  -C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/assets/music/TownTheme.avax
+  -C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/assets/music/determined_pursuit_loop.avax
+[1/2] Re-running CMake...
+-- Configuring done (0.5s)
+-- Generating done (0.1s)
+-- Build files have been written to: C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build
+[0/4] Re-checking globbed directories...
+[1/66] Building CXX object CMakeFiles\rpg_rules.dir\src\logic\npc_logic.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[2/66] Building CXX object CMakeFiles\rpg_rules.dir\generated\map_assets.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[3/66] Building CXX object CMakeFiles\rpg_rules.dir\src\game.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[4/66] Building CXX object CMakeFiles\rpg_rules.dir\src\save.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[5/66] Building CXX object CMakeFiles\rpg_rules.dir\generated\chunk_dispatch.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[6/66] Building CXX object CMakeFiles\rpg_rules.dir\src\world.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[7/66] Building CXX object CMakeFiles\rpg_rules.dir\src\npc.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[8/66] Building CXX object CMakeFiles\rpg_rules.dir\generated\npc_routes.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[9/66] Building CXX object CMakeFiles\rpg_handler_fixture.dir\handler-fixture\chunk_dispatch.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[10/66] Generating m0_proof/proof.o
+[11/66] Building CXX object CMakeFiles\rpg_tests.dir\tests\test_core.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[12/66] Building CXX object CMakeFiles\rpg_npc_hook_tests.dir\tests\test_npc_hooks.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[13/66] Linking CXX static library rpg_rules.lib
+[14/66] Building CXX object CMakeFiles\rpg_world_tests.dir\tests\test_world.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[15/66] Building CXX object CMakeFiles\rpg_npc_tests.dir\tests\test_npc.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[16/66] Generating m15_probe/chunk_dispatch.o
+[17/66] Generating m15_probe/game.o
+[18/66] Generating m15_probe/map_assets.o
+[19/66] Generating m15_probe/npc_logic.o
+[20/66] Generating m15_probe/npc_routes.o
+[21/66] Generating m15_probe/save.o
+[22/66] Generating m16_probe/chunk_dispatch.o
+[23/66] Generating m16_probe/game.o
+[24/66] Generating m16_probe/map_assets.o
+[25/66] Generating m15_probe/world.o
+[26/66] Generating m15_probe/world_probe.o
+[27/66] Generating m15_probe/npc.o
+[28/66] Generating m16_probe/npc_routes.o
+[29/66] Generating m16_probe/npc_logic.o
+[30/66] Generating m16_probe/save.o
+[31/66] Generating m16_probe/npc.o
+[32/66] Linking CXX executable rpg_tests.exe
+[33/66] Generating m16_probe/world.o
+[34/66] Generating m16_probe/npc_probe.o
+[35/66] Linking CXX executable rpg_npc_tests.exe
+[36/66] Linking CXX executable rpg_npc_hook_tests.exe
+[37/66] Linking CXX executable rpg_world_tests.exe
+[38/66] Generating C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/generated/music.h, C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/generated/music_catalog.h
+[39/66] Generating rpg/chunk_dispatch.o
+[40/66] Generating rpg/game.o
+[41/66] Generating rpg/map_assets.o
+[42/66] Generating rpg/dialogue_overlay.o
+[43/66] Generating rpg/input.o
+[44/66] Generating rpg/npc_routes.o
+[45/66] Generating rpg/npc_logic.o
+[46/66] Generating rpg/platform_avm.o
+[47/66] Generating rpg/render.o
+[48/66] Generating rpg/save.o
+[49/66] Generating rpg/screens.o
+[50/66] Generating rpg/npc.o
+[51/66] Generating rpg/sprites.o
+[52/66] Generating artifacts/m0_proof.elf, artifacts/m0_proof.bin, artifacts/m0_proof.arduboy, artifacts/m0_proof.elf.resources.json, artifacts/m0_proof.elf.lto.json
+AVM maximum provable stack usage is 30 bytes; complete bound: yes
+maximum stack path:
+  _start: frame 12
+    call: return address 3, outgoing arguments 0
+  loop: frame 12
+    call: return address 3, outgoing arguments 0
+  avm_next_frame: frame 0
+
+AVM stack analysis gaps: 0; paths shown: 0; omitted: 0
+{
+  "saved_bytes": 0,
+  "ordinary_data_bytes": 12,
+  "static_bytes": 12,
+  "text_bytes": 489,
+  "rodata_bytes": 1017,
+  "stack_bytes": 30,
+  "stack_bound_complete": true,
+  "sections": {
+    "": 0,
+    ".data": 12,
+    ".text": 489,
+    ".rodata": 1017,
+    ".init_array": 0,
+    ".comment": 134,
+    ".debug_loc": 199,
+    ".debug_abbrev": 492,
+    ".debug_info": 1297,
+    ".debug_ranges": 24,
+    ".debug_str": 1042,
+    ".debug_frame": 172,
+    ".debug_line": 938,
+    ".symtab": 480,
+    ".shstrtab": 155,
+    ".strtab": 399
+  }
+}
+[53/66] Building CXX object CMakeFiles\rpg_device_tests.dir\generated\sprites.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[54/66] Generating rpg/world.o
+[55/66] Building CXX object CMakeFiles\rpg_audio_timing_tests.dir\generated\sprites.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[56/66] Generating artifacts/m15_probe.elf, artifacts/m15_probe.bin, artifacts/m15_probe.arduboy, artifacts/m15_probe.elf.resources.json, artifacts/m15_probe.elf.lto.json
+AVM maximum provable stack usage is 174 bytes; complete bound: yes
+maximum stack path:
+  _start: frame 12
+    call: return address 3, outgoing arguments 0
+  setup: frame 22
+    call: return address 3, outgoing arguments 0
+  save_decode(unsigned char const*, unsigned int): frame 15
+    call: return address 3, outgoing arguments 0
+  world_enter(unsigned char, unsigned int, unsigned int, DIRECTION): frame 8
+    call: return address 3, outgoing arguments 0
+  update_visible_world(unsigned char, bool): frame 38
+    call: return address 3, outgoing arguments 0
+  repair_player_overlap(): frame 10
+    call: return address 3, outgoing arguments 0
+  refresh_tile_cache(): frame 8
+    call: return address 3, outgoing arguments 4
+  reload_tile_window(TileCache&, unsigned char const AS1*, MapDimensions, Camera): frame 36
+
+AVM stack analysis gaps: 0; paths shown: 0; omitted: 0
+{
+  "saved_bytes": 0,
+  "ordinary_data_bytes": 263,
+  "static_bytes": 263,
+  "text_bytes": 7794,
+  "rodata_bytes": 59841,
+  "stack_bytes": 174,
+  "stack_bound_complete": true,
+  "sections": {
+    "": 0,
+    ".data": 263,
+    ".text": 7794,
+    ".rodata": 59841,
+    ".init_array": 0,
+    ".comment": 134,
+    ".debug_loc": 9863,
+    ".debug_abbrev": 1626,
+    ".debug_info": 14396,
+    ".debug_ranges": 1872,
+    ".debug_str": 8075,
+    ".debug_frame": 1568,
+    ".debug_line": 20319,
+    ".symtab": 576,
+    ".shstrtab": 155,
+    ".strtab": 713
+  }
+}
+[57/66] Generating artifacts/m16_probe.elf, artifacts/m16_probe.bin, artifacts/m16_probe.arduboy, artifacts/m16_probe.elf.resources.json, artifacts/m16_probe.elf.lto.json
+AVM maximum provable stack usage is 219 bytes; complete bound: yes
+maximum stack path:
+  _start: frame 12
+    call: return address 3, outgoing arguments 0
+  setup: frame 35
+    call: return address 3, outgoing arguments 0
+  npc_test_corridor(bool): frame 22
+    call: return address 3, outgoing arguments 0
+  actor_move(Actor*, DIRECTION, unsigned char): frame 12
+    call: return address 3, outgoing arguments 0
+  npc_player_clear(unsigned int, unsigned int, DIRECTION): frame 78
+    call: return address 3, outgoing arguments 0
+  player_segment(int&, int&, DIRECTION, unsigned char): frame 22
+    call: return address 3, outgoing arguments 0
+  terrain_clear(unsigned int, unsigned int): frame 20
+
+AVM stack analysis gaps: 0; paths shown: 0; omitted: 0
+{
+  "saved_bytes": 0,
+  "ordinary_data_bytes": 238,
+  "static_bytes": 238,
+  "text_bytes": 23549,
+  "rodata_bytes": 321,
+  "stack_bytes": 219,
+  "stack_bound_complete": true,
+  "sections": {
+    "": 0,
+    ".data": 238,
+    ".text": 23549,
+    ".rodata": 321,
+    ".init_array": 0,
+    ".comment": 134,
+    ".debug_loc": 24346,
+    ".debug_abbrev": 1843,
+    ".debug_info": 33858,
+    ".debug_ranges": 6336,
+    ".debug_str": 8595,
+    ".debug_frame": 1804,
+    ".debug_line": 58977,
+    ".symtab": 544,
+    ".shstrtab": 155,
+    ".strtab": 684
+  }
+}
+[58/66] Generating artifacts/rpg.elf, artifacts/rpg.bin, artifacts/rpg.arduboy, artifacts/rpg.fxc.arduboy, artifacts/rpg.elf.resources.json, artifacts/rpg.elf.lto.json
+AVM maximum provable stack usage is 171 bytes; complete bound: yes
+maximum stack path:
+  _start: frame 12
+    call: return address 3, outgoing arguments 0
+  loop: frame 0
+    call: return address 3, outgoing arguments 0
+  title_screen(): frame 12
+    call: return address 3, outgoing arguments 0
+  game_load(): frame 13
+    call: return address 3, outgoing arguments 0
+  world_enter(unsigned char, unsigned int, unsigned int, DIRECTION): frame 8
+    call: return address 3, outgoing arguments 0
+  update_visible_world(unsigned char, bool): frame 40
+    call: return address 3, outgoing arguments 0
+  void run_chunk<(HandlerStage)2>(ChunkCoord): frame 18
+    call: return address 3, outgoing arguments 0
+  rpg_render_world(): frame 47
+
+AVM stack analysis gaps: 0; paths shown: 0; omitted: 0
+{
+  "saved_bytes": 24,
+  "ordinary_data_bytes": 244,
+  "static_bytes": 268,
+  "text_bytes": 11108,
+  "rodata_bytes": 41223,
+  "stack_bytes": 171,
+  "stack_bound_complete": true,
+  "sections": {
+    "": 0,
+    ".saved": 24,
+    ".data": 244,
+    ".text": 11108,
+    ".rodata": 41223,
+    ".init_array": 0,
+    ".comment": 134,
+    ".debug_loc": 13138,
+    ".debug_abbrev": 2118,
+    ".debug_info": 23697,
+    ".debug_ranges": 1806,
+    ".debug_str": 11784,
+    ".debug_frame": 2264,
+    ".debug_line": 26641,
+    ".symtab": 1408,
+    ".shstrtab": 162,
+    ".strtab": 1702
+  }
+}
+[59/66] C:\WINDOWS\system32\cmd.exe /C "cd /D C:\Users\Brown\Documents\GitHub\avm\projects\avm_rpg\build && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build/artifacts/rpg.arduboy C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/rpg.arduboy && "C:\Program Files\CMake\bin\cmake.exe" -E copy_if_different C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build/artifacts/rpg.fxc.arduboy C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/rpg.fxc.arduboy"
+[60/66] Building CXX object CMakeFiles\rpg_device_tests.dir\tests\device_tests.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[61/66] Building CXX object CMakeFiles\rpg_audio_timing_tests.dir\tests\audio_timing.cpp.obj
+cl : Command line warning D9025 : overriding '/Zi' with '/Z7'
+[62/66] Linking CXX executable rpg_device_tests.exe
+[63/66] Linking CXX executable rpg_audio_timing_tests.exe
+Test project C:/Users/Brown/Documents/GitHub/avm/projects/avm_rpg/build
+      Start  1: core
+ 1/10 Test  #1: core .............................   Passed    0.05 sec
+      Start  2: essential_npcs
+ 2/10 Test  #2: essential_npcs ...................   Passed    0.04 sec
+      Start  3: npc_lifecycle_hooks
+ 3/10 Test  #3: npc_lifecycle_hooks ..............   Passed    0.03 sec
+      Start  4: flags
+ 4/10 Test  #4: flags ............................   Passed    0.01 sec
+      Start  5: chunk_world
+ 5/10 Test  #5: chunk_world ......................   Passed    0.04 sec
+      Start  6: tiled_pipeline
+ 6/10 Test  #6: tiled_pipeline ...................   Passed    2.20 sec
+      Start  7: generated_assets
+ 7/10 Test  #7: generated_assets .................   Passed    0.43 sec
+      Start  8: content
+ 8/10 Test  #8: content ..........................   Passed    0.19 sec
+      Start  9: original_music
+ 9/10 Test  #9: original_music ...................   Passed    1.09 sec
+      Start 10: audio_timing
+10/10 Test #10: audio_timing .....................   Passed    8.07 sec
+
+100% tests passed, 0 tests failed out of 10
+
+Total Test time (real) =  12.34 sec

@@ -1,0 +1,30 @@
+[
+  {
+    "name": "TownTheme",
+    "source_file": "TownTheme.mp3",
+    "source_sha256": "2657861d5107d4a3c01ef81cb6a4d61ddd5e7a054b6da57e658373d79d0c3466",
+    "avax_sha256": "51587391e7a77d6f86f3defcd9c358ebda7766dd5cc5803147558d9d98442019",
+    "target_bits_per_sample": 1.75,
+    "avax_bytes": 333052,
+    "native_bytes": 333030,
+    "samples": 1522719,
+    "rate": 15625,
+    "frame_samples": 256,
+    "measured_avax_bits_per_sample": 1.7497752375848727,
+    "native_bits_per_sample": 1.7496596548673786
+  },
+  {
+    "name": "determined_pursuit_loop",
+    "source_file": "determined_pursuit_loop.wav",
+    "source_sha256": "e4f3be098b50213b56a60aefe60fffae79cd9f7c9008088f93c187ef1bbc856b",
+    "avax_sha256": "c80d74e121a5ef3eb96828009b42b9cf636d16db4c603737c0e780b7583ce961",
+    "target_bits_per_sample": 1.25,
+    "avax_bytes": 263644,
+    "native_bytes": 263622,
+    "samples": 1687500,
+    "rate": 15625,
+    "frame_samples": 256,
+    "measured_avax_bits_per_sample": 1.2498678518518518,
+    "native_bits_per_sample": 1.2497635555555555
+  }
+]

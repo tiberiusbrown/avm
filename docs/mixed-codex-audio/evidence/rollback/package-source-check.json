@@ -1,0 +1,81 @@
+{
+  "date": "2026-10-20",
+  "repositories": {
+    "root": {
+      "head": "0d3ab91d825bc9f324da44d59f8200f8d36de5ee",
+      "tracked_diff_empty": true
+    },
+    "rpg": {
+      "head": "6485990963d692bd28fada60d5b32e6f564a2665",
+      "tracked_diff_empty": true
+    }
+  },
+  "packages": {
+    "rpg.arduboy": {
+      "bytes": 139587,
+      "sha256": "67eaa06cb6cd28da4be435b4b96f702aed26e8685b5b577582f01cd7d8ec1a76",
+      "equals_baseline_package": true,
+      "guest_image_bytes": 53248,
+      "mixed_tracks_absent": true
+    },
+    "projects/avm_rpg/rpg.arduboy": {
+      "bytes": 139587,
+      "sha256": "67eaa06cb6cd28da4be435b4b96f702aed26e8685b5b577582f01cd7d8ec1a76",
+      "equals_baseline_package": true,
+      "guest_image_bytes": 53248,
+      "mixed_tracks_absent": true
+    },
+    "projects/avm_rpg/rpg.fxc.arduboy": {
+      "bytes": 139587,
+      "sha256": "abfbaf669de1e5a6e15ead775c49ad87225fb578ad6563e1bd258041f3a71a9e",
+      "equals_baseline_package": true,
+      "guest_image_bytes": 53248,
+      "mixed_tracks_absent": true
+    }
+  },
+  "cleanup": {
+    "tools/avm_audio_pack.py": "absent from active tree",
+    "tools/tests/test_audio_pack.py": "absent from active tree",
+    "projects/audio_demo/generate_music.py": "absent from active tree",
+    "build/avm-sdk-install/bin/avm_audio_pack.py": "absent from active tree",
+    "projects/avm_rpg/assets/music/TownTheme.avax": "absent from active tree",
+    "projects/avm_rpg/assets/music/determined_pursuit_loop.avax": "absent from active tree",
+    "projects/avm_rpg/docs/audio_timing_data/mixed256.json": "absent from active tree"
+  },
+  "legacy_sdk_apis_restored": true,
+  "resources": {
+    "saved_bytes": 24,
+    "ordinary_data_bytes": 244,
+    "static_bytes": 268,
+    "text_bytes": 11108,
+    "rodata_bytes": 41223,
+    "stack_bytes": 171,
+    "stack_bound_complete": true,
+    "sections": {
+      "": 0,
+      ".saved": 24,
+      ".data": 244,
+      ".text": 11108,
+      ".rodata": 41223,
+      ".init_array": 0,
+      ".comment": 134,
+      ".debug_loc": 13138,
+      ".debug_abbrev": 2118,
+      ".debug_info": 23697,
+      ".debug_ranges": 1806,
+      ".debug_str": 11784,
+      ".debug_frame": 2264,
+      ".debug_line": 26641,
+      ".symtab": 1408,
+      ".shstrtab": 162,
+      ".strtab": 1702
+    }
+  },
+  "lto": {
+    "game_reference_arguments_eliminated": true,
+    "unconditional_global_game": true,
+    "retained_game_rule_functions": [],
+    "map_tile_position_storage_eliminated": true,
+    "optimized_ir": "rpg.optimized.ll"
+  }
+}

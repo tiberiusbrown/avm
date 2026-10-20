@@ -1,0 +1,32 @@
+{
+  "normal": {
+    "archived_package_sha256": "0888c65e01f8d4db33ded3182e8d89ff45cc7f52b9345abb6ee9c2a59352745b",
+    "archived_guest_image_sha256": "b8284c797d18bc28b93b33705e1dff2fbd2c961905eb30698ed9f34159fa99f8",
+    "archived_firmware_sha256": "7d56e95db8f90af11732f8b233f589efd35c6def7e26eb90a40749c42c950f1d",
+    "timing_identity": {
+      "package_sha256": "1444eeb6f3eb3917e53b4f661f05d7c0c58f877f6d1d08840194bb4b9d232f50",
+      "firmware_sha256": "7d56e95db8f90af11732f8b233f589efd35c6def7e26eb90a40749c42c950f1d",
+      "guest_image_sha256": "2dd69b95b59ae01969d43193a6a16163dfb064cdcbb0f52dca537da0421e13ef",
+      "score_sha256": {
+        "TownTheme": "51587391e7a77d6f86f3defcd9c358ebda7766dd5cc5803147558d9d98442019",
+        "determined_pursuit_loop": "c80d74e121a5ef3eb96828009b42b9cf636d16db4c603737c0e780b7583ce961"
+      }
+    },
+    "same_guest_as_timing_window": false
+  },
+  "fxc": {
+    "archived_package_sha256": "787f5d8e1fa2bd1b7de5110a50cfb5b8c94f48c180ff86fd3f0286d4ab96f205",
+    "archived_guest_image_sha256": "b8284c797d18bc28b93b33705e1dff2fbd2c961905eb30698ed9f34159fa99f8",
+    "archived_firmware_sha256": "2876ee7073b462697019709157b9443eed3062dc5b15bed279fc8e298e41de35",
+    "timing_identity": {
+      "package_sha256": "5a424c4d477efdebd5318d9313537d7ec6d9f5959e3eebca8eebca603d4eb668",
+      "firmware_sha256": "2876ee7073b462697019709157b9443eed3062dc5b15bed279fc8e298e41de35",
+      "guest_image_sha256": "2dd69b95b59ae01969d43193a6a16163dfb064cdcbb0f52dca537da0421e13ef",
+      "score_sha256": {
+        "TownTheme": "51587391e7a77d6f86f3defcd9c358ebda7766dd5cc5803147558d9d98442019",
+        "determined_pursuit_loop": "c80d74e121a5ef3eb96828009b42b9cf636d16db4c603737c0e780b7583ce961"
+      }
+    },
+    "same_guest_as_timing_window": false
+  }
+}

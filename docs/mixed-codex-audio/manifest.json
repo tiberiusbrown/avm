@@ -1,0 +1,845 @@
+{
+  "archive_date": "2026-10-20",
+  "decision": "rejected for hardware piezo playback; rollback requested",
+  "repositories": {
+    "root": {
+      "base_commit": "0d3ab91d825bc9f324da44d59f8200f8d36de5ee",
+      "working_tree": ".",
+      "entries": [
+        {
+          "path": "CMakeLists.txt",
+          "status": "modified",
+          "bytes": 8637,
+          "sha256": "0ea885dba4d4b1d285ec4ea7cecf8696fe27818fe6935dd36e5baa9524b8ed82"
+        },
+        {
+          "path": "docs/arch.md",
+          "status": "modified",
+          "bytes": 224641,
+          "sha256": "8534dbf034fd7c935920afc9c631f5816e59cff4030c3c099c3f0793dec439cd"
+        },
+        {
+          "path": "docs/audio-benchmarks.md",
+          "status": "modified",
+          "bytes": 36056,
+          "sha256": "60367348404db5a0b97aa8ed3d79d2367088b487fbde380ea4cd202cfba51971"
+        },
+        {
+          "path": "docs/audio-codec-below2-results.md",
+          "status": "modified",
+          "bytes": 16890,
+          "sha256": "ade9d497425f1b81c1bdc6992466bb38cad991c05a4286d9464396ab726801a7"
+        },
+        {
+          "path": "docs/audio.md",
+          "status": "modified",
+          "bytes": 6551,
+          "sha256": "8585daa4c13137535f3283125f7182af510f5edc3488c25e56ad3b35aed371a5"
+        },
+        {
+          "path": "interp/build/interp.hex",
+          "status": "modified",
+          "bytes": 80968,
+          "sha256": "7d56e95db8f90af11732f8b233f589efd35c6def7e26eb90a40749c42c950f1d"
+        },
+        {
+          "path": "interp/build/interp.lst",
+          "status": "modified",
+          "bytes": 801925,
+          "sha256": "b3e8f89704e798e244a0f9091604d2729343a737874b89df6d8281c51adc8bb4"
+        },
+        {
+          "path": "interp/build/interp.map",
+          "status": "modified",
+          "bytes": 8720,
+          "sha256": "9a60bb709d05c824bf1143b3e586c9cdfeb6a0fae8f0aecbfe8ae6264cf586ef"
+        },
+        {
+          "path": "interp/interp.asm",
+          "status": "modified",
+          "bytes": 505742,
+          "sha256": "d3e734d7812c0cdfd24b179a8ddd0048be04218787bbf27f089b2468619621e9"
+        },
+        {
+          "path": "projects/audio_demo/CMakeLists.txt",
+          "status": "modified",
+          "bytes": 4658,
+          "sha256": "f7a2a65b6f0dacfb803f74830958527561beb50e284c736269fbb8139ae69e47"
+        },
+        {
+          "path": "projects/audio_demo/README.md",
+          "status": "modified",
+          "bytes": 750,
+          "sha256": "1b00993b164fd120c2e2e25703dec139bbcd23d1e4277fb25af688ccd902e767"
+        },
+        {
+          "path": "projects/audio_demo/audio_demo.arduboy",
+          "status": "modified",
+          "bytes": 86880,
+          "sha256": "0ff2dba968c9bac5067cf087876b742b20b74f024eb1166444b54d5f51166b6f"
+        },
+        {
+          "path": "projects/audio_demo/effect.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "projects/audio_demo/effect.h",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "projects/audio_demo/generate_music.py",
+          "status": "untracked",
+          "bytes": 572,
+          "sha256": "fdd8bbc5df09a530976ba956fe98292af398c6d568ea6449e1172b1db71fdef0"
+        },
+        {
+          "path": "projects/audio_demo/main.c",
+          "status": "modified",
+          "bytes": 723,
+          "sha256": "e8dba2a7f3b7031f4417cb0ef5cfd596b7aa38a334489e069253543baae1215c"
+        },
+        {
+          "path": "projects/audio_demo/music.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "projects/audio_demo/music.h",
+          "status": "modified",
+          "bytes": 10442,
+          "sha256": "a4fb6baa654d4d4ea981d0dc349a954448c6b8487a32e2a648194523b29641e7"
+        },
+        {
+          "path": "rpg.arduboy",
+          "status": "untracked",
+          "bytes": 716493,
+          "sha256": "0888c65e01f8d4db33ded3182e8d89ff45cc7f52b9345abb6ee9c2a59352745b"
+        },
+        {
+          "path": "runtime/CMakeLists.txt",
+          "status": "modified",
+          "bytes": 10242,
+          "sha256": "454e1410a7290a778fb051128a6dbbc6e7e0d1e2cedf21f868f178d6ffcce648"
+        },
+        {
+          "path": "runtime/README.md",
+          "status": "modified",
+          "bytes": 10099,
+          "sha256": "c0cd61c1dc10f5b4ae7edf306c7261d33f48b90489ce6b7b9f04d0d0a85607d8"
+        },
+        {
+          "path": "runtime/include/avm/audio.h",
+          "status": "modified",
+          "bytes": 1168,
+          "sha256": "fddaf28d35cc184e700e230f324f0f761d7caafbf4c2b34a1a4310d46ec56fb2"
+        },
+        {
+          "path": "runtime/lib/audio.asm",
+          "status": "modified",
+          "bytes": 888,
+          "sha256": "046ec2c1c9701d4a17d176a9472076a98ceb2a2280a7cdef6b8435f3bbb78d52"
+        },
+        {
+          "path": "runtime/lib/audio_tone.c",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "tests/CMakeLists.txt",
+          "status": "modified",
+          "bytes": 25424,
+          "sha256": "947bd294427823e7eaa1bb1e95fb561feabff9db0c31a9127a71233b5a3e467b"
+        },
+        {
+          "path": "tests/audio/generate_large_asset.py",
+          "status": "modified",
+          "bytes": 459,
+          "sha256": "09ecdea5488590c027fb4ec41bf5b146c249d30291443eb3455e68d4090c0b29"
+        },
+        {
+          "path": "tests/audio/test_score.py",
+          "status": "modified",
+          "bytes": 11958,
+          "sha256": "ff4fb86d0719de38c00d37d04e6c44355e8e4583696c8a5abaf3a638c6715adf"
+        },
+        {
+          "path": "tests/c/audio.c",
+          "status": "modified",
+          "bytes": 1280,
+          "sha256": "3865116647d704e8bd19f8584b22ec63edc583dc5413f0a09eb3ae595f880743"
+        },
+        {
+          "path": "tests/interp/audio.cpp",
+          "status": "modified",
+          "bytes": 33998,
+          "sha256": "091c7cff7c90f239500a8fa76b35545adaadc06c02a6bb16ae54c2e8fdea09a1"
+        },
+        {
+          "path": "tools/avm_audio_pack.py",
+          "status": "untracked",
+          "bytes": 5274,
+          "sha256": "e45c5dc6993ce8ec6a7aa1c3f2a13555ee67f718c1e3da93c10d13e8a0b7af6f"
+        },
+        {
+          "path": "tools/tests/test_audio_pack.py",
+          "status": "untracked",
+          "bytes": 2396,
+          "sha256": "be520ab8b562f410776a3206b9e02c633b86b50835db0f6594ed9a4a97f7f88b"
+        }
+      ],
+      "patch": "root.patch",
+      "patch_sha256": "2f12cfa37a4f130458fc3ac86d4e5e643ab29daf80bb22015c0f0e0516311163"
+    },
+    "rpg": {
+      "base_commit": "6485990963d692bd28fada60d5b32e6f564a2665",
+      "working_tree": "projects\\avm_rpg",
+      "entries": [
+        {
+          "path": "CMakeLists.txt",
+          "status": "modified",
+          "bytes": 13022,
+          "sha256": "0c080d22a60d8e7ad9b5b1f6566024e0484d71026eadeb8c90958b97b25b72cb"
+        },
+        {
+          "path": "README.md",
+          "status": "modified",
+          "bytes": 4443,
+          "sha256": "03655c1f0223386b07d386d1512f5b58ea01bf25eedf15d575456b29472c12af"
+        },
+        {
+          "path": "assets/music/README.md",
+          "status": "untracked",
+          "bytes": 1023,
+          "sha256": "8d58e33b6555f4c854b6793c2f9f19eb6dcb9d9005e14e451279e5f983811636"
+        },
+        {
+          "path": "assets/music/TownTheme.avax",
+          "status": "untracked",
+          "bytes": 333052,
+          "sha256": "51587391e7a77d6f86f3defcd9c358ebda7766dd5cc5803147558d9d98442019"
+        },
+        {
+          "path": "assets/music/clockwork_hollow.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "assets/music/determined_pursuit_loop.avax",
+          "status": "untracked",
+          "bytes": 263644,
+          "sha256": "c80d74e121a5ef3eb96828009b42b9cf636d16db4c603737c0e780b7583ce961"
+        },
+        {
+          "path": "assets/music/dewlight_grove.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "assets/music/homeward_stars.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "assets/music/lantern_square.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "assets/music/manifest.json",
+          "status": "untracked",
+          "bytes": 1053,
+          "sha256": "e7855602d3c882be1cd29892b737140fa4176e28df3c6c7d7a912b2ed312ef4a"
+        },
+        {
+          "path": "assets/music/moonlit_quay.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "assets/music/sunward_road.avms",
+          "status": "deleted",
+          "bytes": null,
+          "sha256": null
+        },
+        {
+          "path": "docs/audio_timing.md",
+          "status": "modified",
+          "bytes": 20171,
+          "sha256": "e57c0f60bdc0e5385075660ef2c4cbf68b71f8a91f9fb3f01df7a5a84a85750e"
+        },
+        {
+          "path": "docs/audio_timing_data/mixed256.json",
+          "status": "untracked",
+          "bytes": 20849,
+          "sha256": "33228d3a53a11f97516e1dfa0334f086a36b1aa28c8f94a1d0e4063f65238da9"
+        },
+        {
+          "path": "generated/music.h",
+          "status": "modified",
+          "bytes": 1866012,
+          "sha256": "536e693400a4bf757f52f8f19729b355a249d0aed4140c065211c851f8974e51"
+        },
+        {
+          "path": "generated/music_catalog.h",
+          "status": "modified",
+          "bytes": 195,
+          "sha256": "cde06fc7f9d82d266e19eb5ecc422b14902ef15890b8903a28348d39a8afac57"
+        },
+        {
+          "path": "rpg.arduboy",
+          "status": "modified",
+          "bytes": 716493,
+          "sha256": "0888c65e01f8d4db33ded3182e8d89ff45cc7f52b9345abb6ee9c2a59352745b"
+        },
+        {
+          "path": "rpg.fxc.arduboy",
+          "status": "modified",
+          "bytes": 716493,
+          "sha256": "787f5d8e1fa2bd1b7de5110a50cfb5b8c94f48c180ff86fd3f0286d4ab96f205"
+        },
+        {
+          "path": "src/platform_avm.cpp",
+          "status": "modified",
+          "bytes": 1849,
+          "sha256": "bb1415a0c64109fb5924f8b4b419b4615c604af848b4234270f7217a08b15d47"
+        },
+        {
+          "path": "src/render.cpp",
+          "status": "modified",
+          "bytes": 2671,
+          "sha256": "bc6d18777e65d8760f36f6b4df218ff4a8a35fe0cf26a3663688ea063b30b35b"
+        },
+        {
+          "path": "src/rpg.h",
+          "status": "modified",
+          "bytes": 4861,
+          "sha256": "d943bf991e2d9210a4eb83b475ea725d0aa84d08fcfa25b9c463982bfaffbde4"
+        },
+        {
+          "path": "src/screens.cpp",
+          "status": "modified",
+          "bytes": 2665,
+          "sha256": "f2829bf14b686628a37ffbcf6383ba82ce87d1d61a22262e5437845c021509ca"
+        },
+        {
+          "path": "tests/audio_timing.cpp",
+          "status": "modified",
+          "bytes": 13321,
+          "sha256": "cd3b091818851db68f0da725731d29e05224bf9db1435d7fcfde444f62a4e6f8"
+        },
+        {
+          "path": "tests/device_tests.cpp",
+          "status": "modified",
+          "bytes": 21801,
+          "sha256": "149284a4de434729ff9f0fdccea63e6284a173a14c5cdb866616b60f4fe98323"
+        },
+        {
+          "path": "tests/test_audio_timing.py",
+          "status": "modified",
+          "bytes": 13566,
+          "sha256": "ad4bd4caf4dcf3c2befd640334b30d17aa58cab5cdf338280c049b03ac00d130"
+        },
+        {
+          "path": "tests/test_music.py",
+          "status": "modified",
+          "bytes": 2111,
+          "sha256": "4c163a01203571557c09504c0400a982ad01816214f808f7abfd04eca502740a"
+        },
+        {
+          "path": "tools/collect_evidence.py",
+          "status": "modified",
+          "bytes": 10075,
+          "sha256": "e600f3d2959079eabf024182c08b47f961b2e335003d2d178180610c7e426e4e"
+        },
+        {
+          "path": "tools/generate_music.py",
+          "status": "modified",
+          "bytes": 2594,
+          "sha256": "867618667ab629eabb68c592f4c0697f088eed4f5611094165ca0228fa61128d"
+        }
+      ],
+      "patch": "rpg.patch",
+      "patch_sha256": "51d5f7ca089108d9ba52a09d7487977db366be4dd02748f4967f7df5345cc0e2"
+    }
+  },
+  "snapshot_entries": {
+    "root/CMakeLists.txt": {
+      "bytes": 8637,
+      "sha256": "0ea885dba4d4b1d285ec4ea7cecf8696fe27818fe6935dd36e5baa9524b8ed82"
+    },
+    "root/docs/arch.md": {
+      "bytes": 224641,
+      "sha256": "8534dbf034fd7c935920afc9c631f5816e59cff4030c3c099c3f0793dec439cd"
+    },
+    "root/docs/audio-benchmarks.md": {
+      "bytes": 36056,
+      "sha256": "60367348404db5a0b97aa8ed3d79d2367088b487fbde380ea4cd202cfba51971"
+    },
+    "root/docs/audio-codec-below2-results.md": {
+      "bytes": 16890,
+      "sha256": "ade9d497425f1b81c1bdc6992466bb38cad991c05a4286d9464396ab726801a7"
+    },
+    "root/docs/audio-codec-results.md": {
+      "bytes": 9069,
+      "sha256": "f06d736ae305938c907f174d1360d2fd0cdde371ddbe7de7b563dd58112cb02e"
+    },
+    "root/docs/audio-codecs-below2.md": {
+      "bytes": 19649,
+      "sha256": "81ae3e96a648375c6f34ed2ce29b9614b752536a42df48eba89d6b603f4d553b"
+    },
+    "root/docs/audio-codecs.md": {
+      "bytes": 19651,
+      "sha256": "bbe8b96eb2cd3d7bae9fd69e2df51b6282cf9710f910d4a70d95666badca0729"
+    },
+    "root/docs/audio.md": {
+      "bytes": 6551,
+      "sha256": "8585daa4c13137535f3283125f7182af510f5edc3488c25e56ad3b35aed371a5"
+    },
+    "root/interp/build/interp.hex": {
+      "bytes": 80968,
+      "sha256": "7d56e95db8f90af11732f8b233f589efd35c6def7e26eb90a40749c42c950f1d"
+    },
+    "root/interp/build/interp.lst": {
+      "bytes": 801925,
+      "sha256": "b3e8f89704e798e244a0f9091604d2729343a737874b89df6d8281c51adc8bb4"
+    },
+    "root/interp/build/interp.map": {
+      "bytes": 8720,
+      "sha256": "9a60bb709d05c824bf1143b3e586c9cdfeb6a0fae8f0aecbfe8ae6264cf586ef"
+    },
+    "root/interp/interp.asm": {
+      "bytes": 505742,
+      "sha256": "d3e734d7812c0cdfd24b179a8ddd0048be04218787bbf27f089b2468619621e9"
+    },
+    "root/projects/audio_demo/CMakeLists.txt": {
+      "bytes": 4658,
+      "sha256": "f7a2a65b6f0dacfb803f74830958527561beb50e284c736269fbb8139ae69e47"
+    },
+    "root/projects/audio_demo/README.md": {
+      "bytes": 750,
+      "sha256": "1b00993b164fd120c2e2e25703dec139bbcd23d1e4277fb25af688ccd902e767"
+    },
+    "root/projects/audio_demo/audio_demo.arduboy": {
+      "bytes": 86880,
+      "sha256": "0ff2dba968c9bac5067cf087876b742b20b74f024eb1166444b54d5f51166b6f"
+    },
+    "root/projects/audio_demo/generate_music.py": {
+      "bytes": 572,
+      "sha256": "fdd8bbc5df09a530976ba956fe98292af398c6d568ea6449e1172b1db71fdef0"
+    },
+    "root/projects/audio_demo/main.c": {
+      "bytes": 723,
+      "sha256": "e8dba2a7f3b7031f4417cb0ef5cfd596b7aa38a334489e069253543baae1215c"
+    },
+    "root/projects/audio_demo/music.h": {
+      "bytes": 10442,
+      "sha256": "a4fb6baa654d4d4ea981d0dc349a954448c6b8487a32e2a648194523b29641e7"
+    },
+    "root/rpg.arduboy": {
+      "bytes": 716493,
+      "sha256": "0888c65e01f8d4db33ded3182e8d89ff45cc7f52b9345abb6ee9c2a59352745b"
+    },
+    "root/runtime/CMakeLists.txt": {
+      "bytes": 10242,
+      "sha256": "454e1410a7290a778fb051128a6dbbc6e7e0d1e2cedf21f868f178d6ffcce648"
+    },
+    "root/runtime/README.md": {
+      "bytes": 10099,
+      "sha256": "c0cd61c1dc10f5b4ae7edf306c7261d33f48b90489ce6b7b9f04d0d0a85607d8"
+    },
+    "root/runtime/include/avm/audio.h": {
+      "bytes": 1168,
+      "sha256": "fddaf28d35cc184e700e230f324f0f761d7caafbf4c2b34a1a4310d46ec56fb2"
+    },
+    "root/runtime/lib/audio.asm": {
+      "bytes": 888,
+      "sha256": "046ec2c1c9701d4a17d176a9472076a98ceb2a2280a7cdef6b8435f3bbb78d52"
+    },
+    "root/tests/CMakeLists.txt": {
+      "bytes": 25424,
+      "sha256": "947bd294427823e7eaa1bb1e95fb561feabff9db0c31a9127a71233b5a3e467b"
+    },
+    "root/tests/audio/generate_large_asset.py": {
+      "bytes": 459,
+      "sha256": "09ecdea5488590c027fb4ec41bf5b146c249d30291443eb3455e68d4090c0b29"
+    },
+    "root/tests/audio/test_score.py": {
+      "bytes": 11958,
+      "sha256": "ff4fb86d0719de38c00d37d04e6c44355e8e4583696c8a5abaf3a638c6715adf"
+    },
+    "root/tests/c/audio.c": {
+      "bytes": 1280,
+      "sha256": "3865116647d704e8bd19f8584b22ec63edc583dc5413f0a09eb3ae595f880743"
+    },
+    "root/tests/interp/audio.cpp": {
+      "bytes": 33998,
+      "sha256": "091c7cff7c90f239500a8fa76b35545adaadc06c02a6bb16ae54c2e8fdea09a1"
+    },
+    "root/tools/avm_audio/__init__.py": {
+      "bytes": 70,
+      "sha256": "ce91a838d59fe5299fc87e0990e955e53febe85b8c413a0f1f61f7686b3acac5"
+    },
+    "root/tools/avm_audio/codecs.py": {
+      "bytes": 21028,
+      "sha256": "6917ea4fdc7a0db7e7f972e53f7493fd0908e5369c1c87a84a8fa02221ebe9f9"
+    },
+    "root/tools/avm_audio/comparison.py": {
+      "bytes": 12715,
+      "sha256": "f089eb53f2f63b837e5903d47544a0e64231bc3d18da1b0ef716375150409014"
+    },
+    "root/tools/avm_audio/entropy.py": {
+      "bytes": 14036,
+      "sha256": "74e71f724f552b531b19da1af497c7200ebbf218742729e788c72f86fc9e0075"
+    },
+    "root/tools/avm_audio/experiment.py": {
+      "bytes": 27629,
+      "sha256": "7dcdbf86bae15dbd9aa7a784e4e0c575625d4e8c88c5070956ebf523d8e1d45b"
+    },
+    "root/tools/avm_audio/extended.py": {
+      "bytes": 4225,
+      "sha256": "445cc97489e73de51524f818cbcac4924456a9b15209b57b124ce2092d5cddd1"
+    },
+    "root/tools/avm_audio/frontier.py": {
+      "bytes": 21042,
+      "sha256": "bdb2b1bd11210d3812abec9e6a134b4fdc34fde969f61e8ffd444249b91abb07"
+    },
+    "root/tools/avm_audio/mixed.py": {
+      "bytes": 12769,
+      "sha256": "d77f9c7c4d2fe40e4cb91ad3a8d88ff7b564b73e8f8f43389618309324c4b478"
+    },
+    "root/tools/avm_audio/transforms.py": {
+      "bytes": 20983,
+      "sha256": "4f1ea10c2be25c06ca417d8bd501279344eddc43de73c77343b86f951007d0a9"
+    },
+    "root/tools/avm_audio_codec_test.py": {
+      "bytes": 179,
+      "sha256": "a454f87ce24b52725e26b63067f767930ea849982e5936729f997460e34b854d"
+    },
+    "root/tools/avm_audio_pack.py": {
+      "bytes": 5274,
+      "sha256": "e45c5dc6993ce8ec6a7aa1c3f2a13555ee67f718c1e3da93c10d13e8a0b7af6f"
+    },
+    "root/tools/requirements-audio-codecs.txt": {
+      "bytes": 144,
+      "sha256": "7bd8e72899ad9332d14e822c470865699afcf1fc6e07d0e9e18636f95d70d576"
+    },
+    "root/tools/tests/test_audio_codecs.py": {
+      "bytes": 11984,
+      "sha256": "2fdd447fdd53830d3b5fdf5cad238182cbddf87dbcee289826d0d4cbcaffd35e"
+    },
+    "root/tools/tests/test_audio_entropy.py": {
+      "bytes": 4339,
+      "sha256": "f3fa158dd1ef59264c57a83c2234b8406e4380128b84535c0cc3e32eb83f8457"
+    },
+    "root/tools/tests/test_audio_extended_cli.py": {
+      "bytes": 2364,
+      "sha256": "57600f91643f7c8edae28a5d09c88d6cd8e00e7fec487614d15f863dc1a55211"
+    },
+    "root/tools/tests/test_audio_frontier.py": {
+      "bytes": 2458,
+      "sha256": "920de355efddf29f862322c1dd68bffdf6294de5ec47c93a8ff9d5610a975f87"
+    },
+    "root/tools/tests/test_audio_mixed.py": {
+      "bytes": 5330,
+      "sha256": "ce9cf21bbda2c8e425dd511f3dc2ea1fcb0f5cdf32390bcec887f6f93d22fdf6"
+    },
+    "root/tools/tests/test_audio_pack.py": {
+      "bytes": 2396,
+      "sha256": "be520ab8b562f410776a3206b9e02c633b86b50835db0f6594ed9a4a97f7f88b"
+    },
+    "root/tools/tests/test_audio_transforms.py": {
+      "bytes": 4221,
+      "sha256": "705be973b4ed9e36984f2db2037cebd1d5c249a98dfc460e4f64064cc237f422"
+    },
+    "rpg/CMakeLists.txt": {
+      "bytes": 13022,
+      "sha256": "0c080d22a60d8e7ad9b5b1f6566024e0484d71026eadeb8c90958b97b25b72cb"
+    },
+    "rpg/README.md": {
+      "bytes": 4443,
+      "sha256": "03655c1f0223386b07d386d1512f5b58ea01bf25eedf15d575456b29472c12af"
+    },
+    "rpg/assets/music/README.md": {
+      "bytes": 1023,
+      "sha256": "8d58e33b6555f4c854b6793c2f9f19eb6dcb9d9005e14e451279e5f983811636"
+    },
+    "rpg/assets/music/TownTheme.avax": {
+      "bytes": 333052,
+      "sha256": "51587391e7a77d6f86f3defcd9c358ebda7766dd5cc5803147558d9d98442019"
+    },
+    "rpg/assets/music/determined_pursuit_loop.avax": {
+      "bytes": 263644,
+      "sha256": "c80d74e121a5ef3eb96828009b42b9cf636d16db4c603737c0e780b7583ce961"
+    },
+    "rpg/assets/music/manifest.json": {
+      "bytes": 1053,
+      "sha256": "e7855602d3c882be1cd29892b737140fa4176e28df3c6c7d7a912b2ed312ef4a"
+    },
+    "rpg/docs/audio_timing.md": {
+      "bytes": 20171,
+      "sha256": "e57c0f60bdc0e5385075660ef2c4cbf68b71f8a91f9fb3f01df7a5a84a85750e"
+    },
+    "rpg/docs/audio_timing_data/mixed256.json": {
+      "bytes": 20849,
+      "sha256": "33228d3a53a11f97516e1dfa0334f086a36b1aa28c8f94a1d0e4063f65238da9"
+    },
+    "rpg/generated/music.h": {
+      "bytes": 1866012,
+      "sha256": "536e693400a4bf757f52f8f19729b355a249d0aed4140c065211c851f8974e51"
+    },
+    "rpg/generated/music_catalog.h": {
+      "bytes": 195,
+      "sha256": "cde06fc7f9d82d266e19eb5ecc422b14902ef15890b8903a28348d39a8afac57"
+    },
+    "rpg/rpg.arduboy": {
+      "bytes": 716493,
+      "sha256": "0888c65e01f8d4db33ded3182e8d89ff45cc7f52b9345abb6ee9c2a59352745b"
+    },
+    "rpg/rpg.fxc.arduboy": {
+      "bytes": 716493,
+      "sha256": "787f5d8e1fa2bd1b7de5110a50cfb5b8c94f48c180ff86fd3f0286d4ab96f205"
+    },
+    "rpg/src/platform_avm.cpp": {
+      "bytes": 1849,
+      "sha256": "bb1415a0c64109fb5924f8b4b419b4615c604af848b4234270f7217a08b15d47"
+    },
+    "rpg/src/render.cpp": {
+      "bytes": 2671,
+      "sha256": "bc6d18777e65d8760f36f6b4df218ff4a8a35fe0cf26a3663688ea063b30b35b"
+    },
+    "rpg/src/rpg.h": {
+      "bytes": 4861,
+      "sha256": "d943bf991e2d9210a4eb83b475ea725d0aa84d08fcfa25b9c463982bfaffbde4"
+    },
+    "rpg/src/screens.cpp": {
+      "bytes": 2665,
+      "sha256": "f2829bf14b686628a37ffbcf6383ba82ce87d1d61a22262e5437845c021509ca"
+    },
+    "rpg/tests/audio_timing.cpp": {
+      "bytes": 13321,
+      "sha256": "cd3b091818851db68f0da725731d29e05224bf9db1435d7fcfde444f62a4e6f8"
+    },
+    "rpg/tests/device_tests.cpp": {
+      "bytes": 21801,
+      "sha256": "149284a4de434729ff9f0fdccea63e6284a173a14c5cdb866616b60f4fe98323"
+    },
+    "rpg/tests/test_audio_timing.py": {
+      "bytes": 13566,
+      "sha256": "ad4bd4caf4dcf3c2befd640334b30d17aa58cab5cdf338280c049b03ac00d130"
+    },
+    "rpg/tests/test_music.py": {
+      "bytes": 2111,
+      "sha256": "4c163a01203571557c09504c0400a982ad01816214f808f7abfd04eca502740a"
+    },
+    "rpg/tools/collect_evidence.py": {
+      "bytes": 10075,
+      "sha256": "e600f3d2959079eabf024182c08b47f961b2e335003d2d178180610c7e426e4e"
+    },
+    "rpg/tools/generate_music.py": {
+      "bytes": 2594,
+      "sha256": "867618667ab629eabb68c592f4c0697f088eed4f5611094165ca0228fa61128d"
+    }
+  },
+  "files": {
+    "assets/determined_pursuit_loop.avax": {
+      "bytes": 263644,
+      "sha256": "c80d74e121a5ef3eb96828009b42b9cf636d16db4c603737c0e780b7583ce961"
+    },
+    "assets/manifest.json": {
+      "bytes": 1053,
+      "sha256": "e7855602d3c882be1cd29892b737140fa4176e28df3c6c7d7a912b2ed312ef4a"
+    },
+    "assets/TownTheme.avax": {
+      "bytes": 333052,
+      "sha256": "51587391e7a77d6f86f3defcd9c358ebda7766dd5cc5803147558d9d98442019"
+    },
+    "ENCODING.md": {
+      "bytes": 6802,
+      "sha256": "ce647391aeead86a3319d5ad5c4c59563849025ec42a50530b65aedca92b93c3"
+    },
+    "evidence/audio-final-pytest.log": {
+      "bytes": 1481,
+      "sha256": "fc5399e3886dede2509f8acf96d5efc94d0bf2a7b682acaad776254f76e01347"
+    },
+    "evidence/audio-mixed-device-final.log": {
+      "bytes": 2376,
+      "sha256": "9f30f668c02208737009827a9534efc4235a5e5f9f1fb070ca731d53aaa42509"
+    },
+    "evidence/audio-native-final.log": {
+      "bytes": 44958,
+      "sha256": "6e3a012a34b695bf4a3df164c00e2f9aece0d5781b43c25d539f388e0f9e5627"
+    },
+    "evidence/audio-rpg-final.log": {
+      "bytes": 2362,
+      "sha256": "7494cdefdc9f07943abc218db9511fdc8764c3c99e9154ee3900d908a0256a40"
+    },
+    "evidence/audio-rpg-integration.log": {
+      "bytes": 5191,
+      "sha256": "d00be021f28b2d59f0388ba2c6591977950eb71a7bf84adfac703f0a760d479c"
+    },
+    "evidence/determined_pursuit_loop/allocation.json": {
+      "bytes": 346270,
+      "sha256": "438a6d94f5eded169f16cdf570ec7eb9f27d5e772c8941d9f0b9db2a5a48ced1"
+    },
+    "evidence/determined_pursuit_loop/bank-config.json": {
+      "bytes": 412,
+      "sha256": "1e8d4cbacf0061053914e387aec12a361145e5762dfa7cb8a5b58c6a0ffbe52d"
+    },
+    "evidence/determined_pursuit_loop/metrics.json": {
+      "bytes": 21167,
+      "sha256": "2db7236396cdc7a57424b972a658dc911af0267184708bf7ff4114bc6724d6bf"
+    },
+    "evidence/installed-avm_audio_pack.py": {
+      "bytes": 4938,
+      "sha256": "75c2191803799848a7fb2da11ad6b4c0133967b2a84e785ef1c89a9b6accff8b"
+    },
+    "evidence/package-identities.json": {
+      "bytes": 1828,
+      "sha256": "968c2cacceb671eb988f1c3049d23913063e6027a049060f074787775adae7bf"
+    },
+    "evidence/rollback/device-fx-fxc.log": {
+      "bytes": 2332,
+      "sha256": "7bf64e7f2756cfd1c78630911cc1788a24b65e7965000b85d05c3b7681d39597"
+    },
+    "evidence/rollback/package-source-check.json": {
+      "bytes": 2607,
+      "sha256": "e0d2e0c4f96673dd55aef1668f1b442723b7fed6ff1bd433bd039c999954b3ea"
+    },
+    "evidence/rollback/python.log": {
+      "bytes": 751,
+      "sha256": "b0d7bccca13008c33842fdb5de6f7a1306e91e55af8b410b855a7bcef205413b"
+    },
+    "evidence/rollback/root.log": {
+      "bytes": 62884,
+      "sha256": "5742a8c64fccc1d4c0ed64cd462765195304a22f9855b32dcfe640470187782b"
+    },
+    "evidence/rollback/rpg-ctest.log": {
+      "bytes": 12285,
+      "sha256": "75004190837ae19f31b819102c22acdecc36dc5ff7acb772bcd4c1b8c4de03c5"
+    },
+    "evidence/rpg.elf.lto.json": {
+      "bytes": 218,
+      "sha256": "24bfc733396a73a0990c5f2e1847e8752eddc5b8173de5c7fe531b52f093e898"
+    },
+    "evidence/rpg.elf.resources.json": {
+      "bytes": 607,
+      "sha256": "ccfd361f7810f4fb995ac6adbdb83b7976f2e0e42d9c357c48f2eb1a5db65663"
+    },
+    "evidence/timing/calibration.log": {
+      "bytes": 97,
+      "sha256": "ad4a581c865ccafb55ad410d4b9afae3f5e184ca17d5207e2d4126838254da22"
+    },
+    "evidence/timing/fxc-blackouts.csv": {
+      "bytes": 536,
+      "sha256": "35dc0b89f94edf7cd26e540976ec0cc2a5ac947826583c060aa9143bbd6be06c"
+    },
+    "evidence/timing/fxc-histogram.csv": {
+      "bytes": 2681,
+      "sha256": "cbf624fdb74bccc0c3da69a405a76c289d8a11cc6b272e30878ec0cbb4bf70f6"
+    },
+    "evidence/timing/fxc.log": {
+      "bytes": 36,
+      "sha256": "8186abdfef45f640ba54b4809323f91603802be193d85c69697b401a206e4ce8"
+    },
+    "evidence/timing/normal-blackouts.csv": {
+      "bytes": 536,
+      "sha256": "729d989aa594b372800a103f4c87a32a66f3a5923e31d6a33ee4ac609c932126"
+    },
+    "evidence/timing/normal-histogram.csv": {
+      "bytes": 2681,
+      "sha256": "1752ed5561ed96d8ebcdbb1fc7802023af8bc55eae1327bb4617e84f4df41b23"
+    },
+    "evidence/timing/normal.log": {
+      "bytes": 39,
+      "sha256": "12c6fa7a16e039e109a8f459c72e12e1fff7396ff6a608b551de7b0c1b0ac941"
+    },
+    "evidence/timing/summary.json": {
+      "bytes": 20849,
+      "sha256": "33228d3a53a11f97516e1dfa0334f086a36b1aa28c8f94a1d0e4063f65238da9"
+    },
+    "evidence/TownTheme/allocation.json": {
+      "bytes": 316404,
+      "sha256": "bf61614d83483ebd39b207114f9922876b33dfcc0277019256bf314b4130d0cd"
+    },
+    "evidence/TownTheme/bank-config.json": {
+      "bytes": 412,
+      "sha256": "914f4f94269152019740486765aad9557cc48c25fc5999ea06f4c637f40e04bc"
+    },
+    "evidence/TownTheme/metrics.json": {
+      "bytes": 21089,
+      "sha256": "250892776c8426d4cc58145d582cda0bc646c621ca1320f8fa495604db1d4f81"
+    },
+    "FORMAT.md": {
+      "bytes": 6032,
+      "sha256": "058143917d692f5f45a3c83d2ea77e4eacca5925f9cc87914fdd8d688b405d59"
+    },
+    "implementation.zip": {
+      "bytes": 3809510,
+      "sha256": "e6f774d466eb6e226000e2a1ac99aa502683a1420b1f0511a7500c12a97a4d40"
+    },
+    "README.md": {
+      "bytes": 5049,
+      "sha256": "af208b979f8d19876a37b890e8ddc81429d7962f4e022680163ff8f54a8174db"
+    },
+    "RECOVERY.md": {
+      "bytes": 6029,
+      "sha256": "98cd36068cd7a29eb2d64b2165b22c9f1419cf96bef243afb7d5a0a9ed2e6050"
+    },
+    "reference/audio.h": {
+      "bytes": 1168,
+      "sha256": "fddaf28d35cc184e700e230f324f0f761d7caafbf4c2b34a1a4310d46ec56fb2"
+    },
+    "reference/audio_api.asm": {
+      "bytes": 888,
+      "sha256": "046ec2c1c9701d4a17d176a9472076a98ceb2a2280a7cdef6b8435f3bbb78d52"
+    },
+    "reference/avm_audio_pack.py": {
+      "bytes": 5274,
+      "sha256": "e45c5dc6993ce8ec6a7aa1c3f2a13555ee67f718c1e3da93c10d13e8a0b7af6f"
+    },
+    "reference/avr_audio.asm": {
+      "bytes": 20798,
+      "sha256": "53ef07d76c26e589c58e3f1cc45fdb0ce0492fa047fb9a842c47b450835bffe6"
+    },
+    "reference/native_tests.cpp": {
+      "bytes": 33998,
+      "sha256": "091c7cff7c90f239500a8fa76b35545adaadc06c02a6bb16ae54c2e8fdea09a1"
+    },
+    "ROLLBACK.md": {
+      "bytes": 3470,
+      "sha256": "dd4fb2bf42f5027244548c51159ae785c424cc09d8d1b4ee28ccdd511c3904b2"
+    },
+    "root.patch": {
+      "bytes": 463116,
+      "sha256": "2f12cfa37a4f130458fc3ac86d4e5e643ab29daf80bb22015c0f0e0516311163"
+    },
+    "rpg.patch": {
+      "bytes": 3569484,
+      "sha256": "51d5f7ca089108d9ba52a09d7487977db366be4dd02748f4967f7df5345cc0e2"
+    },
+    "RUNTIME.md": {
+      "bytes": 8317,
+      "sha256": "27195224a4c525d97b538134f79c2350f1dd0c2eaabab152f4c0512c1601c9a6"
+    },
+    "VALIDATION.md": {
+      "bytes": 7316,
+      "sha256": "b1f5b98b5fb14369749a1676ffd21379d04f4848fbb245a43dd6fa46a20cb9dc"
+    },
+    "verify_archive.py": {
+      "bytes": 5545,
+      "sha256": "b6ba7ca18fa6fc1f892c91f3534d0d13ff62bcc5c057d47ec568e49adf4da084"
+    }
+  },
+  "rollback_record": "ROLLBACK.md"
+}

@@ -1,0 +1,2 @@
+# Optional MIDI importer only; avm_music.py remains standard-library-only.
+mido>=1.3,<2

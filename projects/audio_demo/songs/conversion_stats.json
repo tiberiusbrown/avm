@@ -1,0 +1,470 @@
+{
+  "z1overw": {
+    "title": "The Legend of Zelda - Overworld",
+    "input_filename": "z1overw.mid",
+    "input_sha256": "b5de859e03b715e86e63dcb0ccf71521c95c4928adc2839b4e8d24fa9f47da34",
+    "warnings": [
+      "Retained/ignored unsupported expression: CC0 (4), CC10 (1), CC91 (2)",
+      "Scaled requested volumes by 0.938 to fit a 30-unit music mix budget"
+    ],
+    "original_duration_seconds": 38.914657031249966,
+    "region_start_seconds": 0.0,
+    "region_duration_seconds": 38.914657031249966,
+    "original_note_count": 592,
+    "region_note_count": 592,
+    "track_count": 14,
+    "source_channel_count": 4,
+    "peak_pitched_polyphony": 4,
+    "melody_source": {
+      "track": 1,
+      "channel": 0,
+      "name": "Melody",
+      "program": 71,
+      "count": 128,
+      "median_pitch": 72.0,
+      "polyphony": 1.0,
+      "median_duration": 0.13091203125000028,
+      "melody_score": 5.347578697916667,
+      "bass_score": -2.06908796875
+    },
+    "bass_source": {
+      "track": 3,
+      "channel": 2,
+      "name": "Bass Line",
+      "program": 85,
+      "count": 159,
+      "median_pitch": 46,
+      "polyphony": 1.0,
+      "median_duration": 0.13091203125000028,
+      "melody_score": -3.6190879687499997,
+      "bass_score": 5.530912031250001
+    },
+    "melody_confidence": 1.0,
+    "octave_adjusted_notes": {
+      "melody": 0,
+      "harmony": 0,
+      "bass": 1
+    },
+    "settings": {
+      "preset": "balanced",
+      "loop": true,
+      "melody_track": null,
+      "melody_channel": null,
+      "bass_track": null,
+      "bass_channel": null,
+      "harmony_track": null,
+      "harmony_channel": null,
+      "transpose": 0,
+      "melody_octave": null,
+      "bass_octave": null,
+      "harmony_octave": null,
+      "melody_range": [
+        48,
+        88
+      ],
+      "bass_range": [
+        40,
+        67
+      ],
+      "harmony_range": [
+        48,
+        79
+      ],
+      "melody_density": 1.0,
+      "harmony_density": 0.8,
+      "percussion_density": 0.8,
+      "arpeggios": null,
+      "effects": null,
+      "lead_volume": 12,
+      "harmony_volume": 5,
+      "bass_volume": 8,
+      "drum_volume": 7,
+      "start": 0.0,
+      "end": null
+    },
+    "mix_peak_volume_sum": 28,
+    "mix_peak_amplitude_at_master_128": 112,
+    "sub_tick_notes_omitted": 0,
+    "quantization_max_error_ms": 1.9879687500079513,
+    "quantization_mean_error_ms": 0.9792453013789786,
+    "score_duration_seconds": 38.916000000000004,
+    "selected_notes": {
+      "melody": 128,
+      "harmony": 138,
+      "bass": 159,
+      "percussion": 137
+    },
+    "dropped_source_notes": 30,
+    "retained_source_notes": 562,
+    "percussion_source_events": 137,
+    "percussion_retained_sources": 137,
+    "percussion_dropped_or_merged": 0,
+    "generated_arpeggios": 0,
+    "effects": {
+      "note_cut": 137
+    },
+    "avms_source_bytes": 38622,
+    "compiled_song_bytes": 6459,
+    "compiler": {
+      "pitch": 1123,
+      "volume": 1753,
+      "duty": 2,
+      "noise_retrigger": 0,
+      "bytes": 6459,
+      "events": 1226
+    },
+    "output_duration_seconds": 38.916000000000004,
+    "initial_event_delay_ms": 4,
+    "updates_per_second": 31.504838884111837
+  },
+  "ff1town": {
+    "title": "Final Fantasy I - Town",
+    "input_filename": "ff1town.mid",
+    "input_sha256": "f16f673b2187401a0a03a9fb3234b0ed411038c2f94e3f61469d87c95250483f",
+    "warnings": [
+      "Retained/ignored unsupported expression: CC0 (4), CC10 (4)"
+    ],
+    "original_duration_seconds": 39.18361599999998,
+    "region_start_seconds": 0.0,
+    "region_duration_seconds": 39.18361599999998,
+    "original_note_count": 322,
+    "region_note_count": 322,
+    "track_count": 14,
+    "source_channel_count": 4,
+    "peak_pitched_polyphony": 6,
+    "melody_source": {
+      "track": 1,
+      "channel": 0,
+      "name": "Flute",
+      "program": 73,
+      "count": 64,
+      "median_pitch": 76.0,
+      "polyphony": 1.0,
+      "median_duration": 0.306122000000002,
+      "melody_score": 5.356122000000002,
+      "bass_score": -2.293877999999998
+    },
+    "bass_source": {
+      "track": 4,
+      "channel": 3,
+      "name": "Bass",
+      "program": 32,
+      "count": 52,
+      "median_pitch": 36.0,
+      "polyphony": 1.0,
+      "median_duration": 0.7653049999999997,
+      "melody_score": -5.983333333333334,
+      "bass_score": 10.0
+    },
+    "melody_confidence": 1.0,
+    "octave_adjusted_notes": {
+      "melody": 0,
+      "harmony": 0,
+      "bass": 52
+    },
+    "settings": {
+      "preset": "balanced",
+      "loop": true,
+      "melody_track": null,
+      "melody_channel": null,
+      "bass_track": null,
+      "bass_channel": null,
+      "harmony_track": null,
+      "harmony_channel": null,
+      "transpose": 0,
+      "melody_octave": null,
+      "bass_octave": null,
+      "harmony_octave": null,
+      "melody_range": [
+        48,
+        88
+      ],
+      "bass_range": [
+        40,
+        67
+      ],
+      "harmony_range": [
+        48,
+        79
+      ],
+      "melody_density": 1.0,
+      "harmony_density": 0.8,
+      "percussion_density": 0.8,
+      "arpeggios": null,
+      "effects": null,
+      "lead_volume": 12,
+      "harmony_volume": 5,
+      "bass_volume": 8,
+      "drum_volume": 7,
+      "start": 0.0,
+      "end": null
+    },
+    "mix_peak_volume_sum": 25,
+    "mix_peak_amplitude_at_master_128": 100,
+    "sub_tick_notes_omitted": 0,
+    "quantization_max_error_ms": 1.9960000000338596,
+    "quantization_mean_error_ms": 0.9801465517236126,
+    "score_duration_seconds": 39.184,
+    "selected_notes": {
+      "melody": 64,
+      "harmony": 116,
+      "bass": 52,
+      "percussion": 0
+    },
+    "dropped_source_notes": 0,
+    "retained_source_notes": 322,
+    "percussion_source_events": 0,
+    "percussion_retained_sources": 0,
+    "percussion_dropped_or_merged": 0,
+    "generated_arpeggios": 116,
+    "effects": {
+      "arpeggio": 116
+    },
+    "avms_source_bytes": 18670,
+    "compiled_song_bytes": 3262,
+    "compiler": {
+      "pitch": 630,
+      "volume": 522,
+      "duty": 2,
+      "noise_retrigger": 0,
+      "bytes": 3262,
+      "events": 736
+    },
+    "output_duration_seconds": 39.184,
+    "initial_event_delay_ms": 4,
+    "updates_per_second": 18.783360882262638
+  },
+  "ff1overw": {
+    "title": "Final Fantasy I - Overworld",
+    "input_filename": "ff1overw.mid",
+    "input_sha256": "4ae0106249e018c1fb02492eef1e8b61de33b9ac99bc9619525d9a1458afa74c",
+    "warnings": [],
+    "original_duration_seconds": 73.84608000000006,
+    "region_start_seconds": 0.0,
+    "region_duration_seconds": 73.84608000000006,
+    "original_note_count": 535,
+    "region_note_count": 535,
+    "track_count": 11,
+    "source_channel_count": 3,
+    "peak_pitched_polyphony": 6,
+    "melody_source": {
+      "track": 1,
+      "channel": 1,
+      "name": "",
+      "program": 73,
+      "count": 98,
+      "median_pitch": 72.0,
+      "polyphony": 1.0239251916542644,
+      "median_duration": 0.4778841374999985,
+      "melody_score": 2.6586630166852685,
+      "bass_score": -0.7460410541542659
+    },
+    "bass_source": {
+      "track": 3,
+      "channel": 3,
+      "name": "",
+      "program": 32,
+      "count": 258,
+      "median_pitch": 44.0,
+      "polyphony": 1.0321576763485485,
+      "median_duration": 0.23269207500000277,
+      "melody_score": -2.7322111061894865,
+      "bass_score": 4.800534398651454
+    },
+    "melody_confidence": 0.628369884912686,
+    "octave_adjusted_notes": {
+      "melody": 0,
+      "harmony": 0,
+      "bass": 240
+    },
+    "settings": {
+      "preset": "balanced",
+      "loop": true,
+      "melody_track": null,
+      "melody_channel": null,
+      "bass_track": null,
+      "bass_channel": null,
+      "harmony_track": null,
+      "harmony_channel": null,
+      "transpose": 0,
+      "melody_octave": null,
+      "bass_octave": null,
+      "harmony_octave": null,
+      "melody_range": [
+        48,
+        88
+      ],
+      "bass_range": [
+        40,
+        67
+      ],
+      "harmony_range": [
+        48,
+        79
+      ],
+      "melody_density": 1.0,
+      "harmony_density": 0.8,
+      "percussion_density": 0.8,
+      "arpeggios": null,
+      "effects": null,
+      "lead_volume": 12,
+      "harmony_volume": 5,
+      "bass_volume": 8,
+      "drum_volume": 7,
+      "start": 0.0,
+      "end": null
+    },
+    "mix_peak_volume_sum": 25,
+    "mix_peak_amplitude_at_master_128": 100,
+    "sub_tick_notes_omitted": 0,
+    "quantization_max_error_ms": 1.9955749999525096,
+    "quantization_mean_error_ms": 0.9893464137631881,
+    "score_duration_seconds": 73.848,
+    "selected_notes": {
+      "melody": 98,
+      "harmony": 265,
+      "bass": 240,
+      "percussion": 0
+    },
+    "dropped_source_notes": 18,
+    "retained_source_notes": 517,
+    "percussion_source_events": 0,
+    "percussion_retained_sources": 0,
+    "percussion_dropped_or_merged": 0,
+    "generated_arpeggios": 0,
+    "effects": {},
+    "avms_source_bytes": 36335,
+    "compiled_song_bytes": 5791,
+    "compiler": {
+      "pitch": 884,
+      "volume": 1485,
+      "duty": 2,
+      "noise_retrigger": 0,
+      "bytes": 5791,
+      "events": 1262
+    },
+    "output_duration_seconds": 73.848,
+    "initial_event_delay_ms": 4,
+    "updates_per_second": 17.089600422933742
+  },
+  "ff1matya": {
+    "title": "Final Fantasy I - Matoya's Cave",
+    "input_filename": "ff1matya.mid",
+    "input_sha256": "128327b770aedd8d562c041c2823e354a3df07b7c2a32bb706523b91315d5d94",
+    "warnings": [
+      "Retained/ignored unsupported expression: CC0 (4)",
+      "Scaled requested volumes by 0.938 to fit a 30-unit music mix budget"
+    ],
+    "original_duration_seconds": 99.31031999999963,
+    "region_start_seconds": 0.0,
+    "region_duration_seconds": 99.31031999999963,
+    "original_note_count": 2073,
+    "region_note_count": 2073,
+    "track_count": 17,
+    "source_channel_count": 5,
+    "peak_pitched_polyphony": 6,
+    "melody_source": {
+      "track": 1,
+      "channel": 0,
+      "name": "Flute",
+      "program": 73,
+      "count": 255,
+      "median_pitch": 78,
+      "polyphony": 1.0,
+      "median_duration": 0.20689649999999915,
+      "melody_score": 5.090229833333332,
+      "bass_score": -2.5931035000000007
+    },
+    "bass_source": {
+      "track": 4,
+      "channel": 3,
+      "name": "Bass",
+      "program": 32,
+      "count": 339,
+      "median_pitch": 47,
+      "polyphony": 1.0000000000000002,
+      "median_duration": 0.20689649999999915,
+      "melody_score": -5.459770166666667,
+      "bass_score": 8.5068965
+    },
+    "melody_confidence": 1.0,
+    "octave_adjusted_notes": {
+      "melody": 0,
+      "harmony": 0,
+      "bass": 309
+    },
+    "settings": {
+      "preset": "balanced",
+      "loop": true,
+      "melody_track": null,
+      "melody_channel": null,
+      "bass_track": null,
+      "bass_channel": null,
+      "harmony_track": null,
+      "harmony_channel": null,
+      "transpose": 0,
+      "melody_octave": null,
+      "bass_octave": null,
+      "harmony_octave": null,
+      "melody_range": [
+        48,
+        88
+      ],
+      "bass_range": [
+        40,
+        67
+      ],
+      "harmony_range": [
+        48,
+        79
+      ],
+      "melody_density": 1.0,
+      "harmony_density": 0.8,
+      "percussion_density": 0.8,
+      "arpeggios": null,
+      "effects": null,
+      "lead_volume": 12,
+      "harmony_volume": 5,
+      "bass_volume": 8,
+      "drum_volume": 7,
+      "start": 0.0,
+      "end": null
+    },
+    "mix_peak_volume_sum": 28,
+    "mix_peak_amplitude_at_master_128": 112,
+    "sub_tick_notes_omitted": 0,
+    "quantization_max_error_ms": 1.955500000363486,
+    "quantization_mean_error_ms": 1.0053538011765557,
+    "score_duration_seconds": 99.312,
+    "selected_notes": {
+      "melody": 255,
+      "harmony": 387,
+      "bass": 339,
+      "percussion": 387
+    },
+    "dropped_source_notes": 291,
+    "retained_source_notes": 1782,
+    "percussion_source_events": 429,
+    "percussion_retained_sources": 387,
+    "percussion_dropped_or_merged": 42,
+    "generated_arpeggios": 156,
+    "effects": {
+      "arpeggio": 156,
+      "note_cut": 387,
+      "noise_retrigger": 3
+    },
+    "avms_source_bytes": 91527,
+    "compiled_song_bytes": 14080,
+    "compiler": {
+      "pitch": 2175,
+      "volume": 4010,
+      "duty": 2,
+      "noise_retrigger": 15,
+      "bytes": 14080,
+      "events": 2844
+    },
+    "output_duration_seconds": 99.312,
+    "initial_event_delay_ms": 4,
+    "updates_per_second": 28.637507159376895
+  }
+}

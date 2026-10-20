@@ -52,6 +52,11 @@ set(AUDIO_DEMO_OBJECT "${AUDIO_DEMO_BUILD_DIR}/main.o")
 set(AUDIO_DEMO_ELF "${AUDIO_DEMO_BUILD_DIR}/audio_demo.elf")
 set(AUDIO_DEMO_BIN "${AUDIO_DEMO_BUILD_DIR}/audio_demo.bin")
 set(AUDIO_DEMO_PACKAGE "${AUDIO_DEMO_BUILD_DIR}/audio_demo.arduboy")
+set(AUDIO_DEMO_SONGS z1overw ff1town ff1overw ff1matya)
+set(AUDIO_DEMO_SONG_HEADERS)
+foreach(song IN LISTS AUDIO_DEMO_SONGS)
+    list(APPEND AUDIO_DEMO_SONG_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/songs/${song}.h")
+endforeach()
 
 add_custom_command(
     OUTPUT "${AUDIO_DEMO_OBJECT}"
@@ -63,6 +68,7 @@ add_custom_command(
         -c "${CMAKE_CURRENT_SOURCE_DIR}/main.c" -o "${AUDIO_DEMO_OBJECT}"
     DEPENDS "${AVM_CLANG}" "${CMAKE_CURRENT_SOURCE_DIR}/main.c"
         "${CMAKE_CURRENT_SOURCE_DIR}/music.h" "${CMAKE_CURRENT_SOURCE_DIR}/effect.h"
+        ${AUDIO_DEMO_SONG_HEADERS}
     COMMENT "Compiling audio_demo with the AVM SDK"
     VERBATIM)
 add_custom_command(
@@ -100,5 +106,12 @@ if(Python3_Interpreter_FOUND AND EXISTS "${AUDIO_DEMO_COMPILER}")
             "${CMAKE_CURRENT_SOURCE_DIR}/effect.avms" "${CMAKE_CURRENT_SOURCE_DIR}/effect.h" --name effect
         COMMENT "Regenerating tracked audio headers"
         VERBATIM)
+    foreach(song IN LISTS AUDIO_DEMO_SONGS)
+        add_custom_command(TARGET audio_demo_assets PRE_BUILD
+            COMMAND "${Python3_EXECUTABLE}" "${AUDIO_DEMO_COMPILER}"
+                "${CMAKE_CURRENT_SOURCE_DIR}/songs/${song}.avms"
+                "${CMAKE_CURRENT_SOURCE_DIR}/songs/${song}.h" --name "${song}"
+            VERBATIM)
+    endforeach()
     add_dependencies(avm_audio_demo audio_demo_assets)
 endif()

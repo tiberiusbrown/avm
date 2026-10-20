@@ -333,7 +333,10 @@ transitions/reseeds cannot be recovered. Pending time saturates at 255 ticks
 with pulse melody/vibrato on 0, harmony on 1, 50% pulse bass on 2 and noise on 3.
 `effect.avms` demonstrates simultaneous pitch/volume/duty slides, cut and
 retrigger. `effects.avms` additionally demonstrates arpeggio and glissando.
-A triggers SFX; B pauses; Up changes rate. Build `audio_demo_assets` then
+A triggers SFX; B pauses; Up changes rate. Left/right switch between Sunlit
+Garden and four MIDI imports with wraparound, preserving pause and rate.
+See [MIDI arranger](midi_to_avms.md) for conversion, reports and limitations.
+Build `audio_demo_assets` then
 `avm_audio_demo`; the checked-in package is `projects/audio_demo/audio_demo.arduboy`.
 
 See [audio-benchmarks.md](audio-benchmarks.md) for measured resource results.

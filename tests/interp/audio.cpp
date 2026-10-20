@@ -1397,6 +1397,51 @@ void formatter(char** args) {
     require(minsp>=scratch_end,"formatter/audio interrupts collided with private workspace");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
 }
+void playlist(char** args) {
+    harness h(args,false);
+    auto begin=h.c().cycle_count;
+    unsigned frames=0, minsp=0xaff;
+    bool audio_entry_seen=false, switched_while_paused=false, resumed=false, rate_preserved=true;
+    std::vector<uint32_t> starts;
+    while(h.c().cycle_count-begin<22400000) {
+        auto ms=(h.c().cycle_count-begin)/16000;
+        // Left wraps to the last song. Six right presses visit all four
+        // imports, return to the original, and wrap the other direction.
+        unsigned pins=0xf0;
+        if(ms>=100 && ms<160) pins&=~0x20u;
+        if(ms>=200 && ms<260) pins&=~0x80u;
+        for(unsigned time : {250u,400u,550u,700u,850u,1000u})
+            if(ms>=time && ms<time+60) pins&=~0x40u;
+        h.c().data[reg::addr::PINF]=uint8_t(pins);
+        h.c().data[reg::addr::PINB]=((ms>=500 && ms<560)||(ms>=1150 && ms<1210))?0:16;
+        h.c().data[reg::addr::PINE]=64;
+        if(h.c().pc==h.sym("seek_and_dispatch_func")) audio_entry_seen=false;
+        if(h.c().pc==h.sym("sys_audio_impl") && !audio_entry_seen) {
+            audio_entry_seen=true;
+            if(h.c().data[22]==0)
+                starts.push_back(h.word(16)|(uint32_t(h.c().data[18])<<16));
+        }
+        if(ms>=1100 && ms<1130 && h.c().data[music+5]==2) switched_while_paused=true;
+        if(ms>=1250 && h.c().data[music+5]==1) resumed=true;
+        if(ms>=350 && h.c().data[rate]!=1) rate_preserved=false;
+        if(h.c().pc==h.sym("sys_display_impl")) ++frames;
+        minsp=std::min(minsp,unsigned(h.c().sp()));
+        h.tick();
+    }
+    require(starts.size()==8,"playlist missed or duplicated a button-triggered song start");
+    require(starts[0]==starts[2] && starts[0]==starts[7] && starts[1]==starts[6],
+        "playlist did not wrap left/right to the expected songs");
+    auto unique=starts;
+    std::sort(unique.begin(),unique.end());
+    unique.erase(std::unique(unique.begin(),unique.end()),unique.end());
+    require(unique.size()==5,"playlist did not visit all five independent music assets");
+    require(switched_while_paused && resumed,"playlist did not preserve pause across song switches");
+    require(rate_preserved,"playlist did not preserve the selected synthesis rate");
+    require(frames>=75,"playlist failed to maintain animated frames");
+    require(minsp>=scratch_end,"playlist native stack collided with private workspace");
+    std::cout<<"audio playlist: all five songs, both wraps, pause/switch/resume, rate retained; "
+        <<frames<<" frames, native stack "<<0xb00-minsp<<" bytes\n";
+}
 // Optional listening/analysis capture uses the actual timers, sequencer and
 // emulator PWM audio path. Optional rate selection supports A/B captures.
 void capture(char** args, bool select_rate) {
@@ -1718,6 +1763,10 @@ void hex_fraction(char** args) {
 }
 int main(int argc,char** argv) {
     try {
+        if(argc==5 && std::string(argv[1])=="--playlist") {
+            playlist(argv+1);
+            return 0;
+        }
         if(argc==5 && std::string(argv[1])=="--formatter") {
             formatter(argv+1);
             return 0;
@@ -1749,6 +1798,7 @@ int main(int argc,char** argv) {
             char* demoargs[]{argv[0],argv[1],argv[2],argv[4]};
             demo(demoargs);
             demo(demoargs,true);
+            playlist(demoargs);
         }
         if(argc>=6) {
             char* formatargs[]{argv[0],argv[1],argv[2],argv[5]};

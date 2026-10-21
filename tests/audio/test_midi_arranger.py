@@ -1,4 +1,4 @@
-"""Synthetic musical assertions plus decoding through the existing A5 compiler."""
+"""Synthetic musical assertions plus decoding through the existing AVMS compiler."""
 import importlib.util
 import json
 import subprocess
@@ -33,7 +33,7 @@ class MidiArrangerTests(unittest.TestCase):
         song = self.load(midi)
         arrangement = arranger.arrange(song, arranger.Settings(**options))
         source, data = arranger.compile_arrangement(arrangement)
-        self.assertEqual(data[0], 0xA5)
+        self.assertIn(data[0], range(1, 16))
         events, end, command = decode(data, raw=True)
         self.assertEqual(command, 2 if options.get("loop") else 1)
         for channel, notes in arrangement.voices.items():
@@ -61,7 +61,7 @@ class MidiArrangerTests(unittest.TestCase):
         song, a, source, data, _, _ = self.convert(fixtures.progression(), loop=True)
         self.assertEqual([n.sources[0] for n in a.voices[0]], [n.id for n in song.notes if n.track == 1])
         self.assertTrue(all(song.notes[n.sources[0]].track == 3 for n in a.voices[2]))
-        self.assertEqual(data[1], 15)
+        self.assertEqual(data[0], 15)
         self.assertIn("arpeggio", source)
         self.assertTrue(a.voices[3])
         self.assertLess(a.report["mix_peak_amplitude_at_master_128"], 127)
@@ -74,7 +74,7 @@ class MidiArrangerTests(unittest.TestCase):
     def test_dense_arrangement_keeps_melody_on_zero_bass_on_two(self):
         song, a, _, data, _, _ = self.convert(fixtures.dense())
         self.assertGreaterEqual(a.analysis.peak_polyphony, 9)
-        self.assertEqual(data[1], 15)
+        self.assertEqual(data[0], 15)
         for channel, track in ((0, 1), (2, 3)):
             self.assertTrue(all(song.notes[n.sources[0]].track == track for n in a.voices[channel]))
         self.assertLess(len(data), 15000)
@@ -192,7 +192,7 @@ class MidiArrangerTests(unittest.TestCase):
         midi = mido.MidiFile(type=0, ticks_per_beat=1000)
         midi.tracks.append(fixtures.track([(0, 40, 36, 90), (1, 40, 42, 110)], channel=9))
         _, a, _, data, _, _ = self.convert(midi)
-        self.assertEqual(data[1], 8)
+        self.assertEqual(data[0], 8)
         self.assertEqual(len(a.voices[3]), 1)
         self.assertEqual(a.voices[3][0].instrument, "kick")
 
@@ -319,10 +319,10 @@ class SettingsTests(unittest.TestCase):
             self.assertEqual(b"".join(int(word, 16).to_bytes(8, "little") for word in words)[:len(data)], data)
             self.assertEqual(report["compiled_song_bytes"], len(data))
             self.assertLessEqual(report["quantization_max_error_ms"], 2.001)
-            self.assertEqual(data[0], 0xA5)
+            self.assertIn(data[0], range(1, 16))
         for path in (ROOT / "examples/midi_arranger").glob("*.avms"):
             with self.subTest(path=path.name):
-                self.assertEqual(arranger.avm_music.compile_source(path.read_text())[0], 0xA5)
+                self.assertIn(arranger.avm_music.compile_source(path.read_text())[0], range(1, 16))
 
     def test_invalid_settings(self):
         for values in ({"effects": float("nan")}, {"harmony_density": 2}, {"lead_volume": 32},

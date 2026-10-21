@@ -20,7 +20,7 @@ This page documents both the source language and its playback format:
 - [Diagnostics and troubleshooting](#diagnostics-and-troubleshooting)
 - [API, channels, and ownership](#api-channels-and-ownership)
 - [Pulse, triangle, sawtooth, and noise synthesis](#pulse-triangle-sawtooth-and-noise-synthesis)
-- [Binary formats: A5 and D1–D3](#binary-formats-a5-and-d1d3)
+- [Binary stream format](#binary-stream-format)
 - [Timers, atomic publication, and memory](#timers-atomic-publication-and-memory)
 - [Demo, validation and limits](#demo-validation-and-limits)
 
@@ -28,7 +28,7 @@ For arrangement, mix levels, and composing for the Arduboy speaker, see the
 [music composition guide](music_composition_guide.md). For converting MIDI
 files, see the [MIDI arranger](midi_to_avms.md).
 
-For offline A5 rendering, emulator validation, and audio-guided MIDI fitting,
+For offline audio rendering, emulator validation, and audio-guided MIDI fitting,
 see [Stage 2](midi_to_avms_stage2.md). Its default previews and the hardware
 both use 15,625 Hz.
 
@@ -146,15 +146,16 @@ void play_pickup(void) {
 }
 ```
 
-Near the beginning, each generated header reports `Compiled song size: N bytes.`
-or `Compiled SFX size: N bytes.` The count is exactly `len(data)`: stream
+Near the beginning, each generated header reports `Compiled audio size: N bytes.`
+The count is exactly `len(data)`: stream
 headers, events, and terminal commands, excluding final `uint64_t` padding.
 The same comment appears for large assets stored in chunked structures.
 Raw binary exports and the existing opt-in `--stats` output are unchanged.
 
-`avm_audio_play` expects A5 music; `avm_audio_sfx` expects D1–D3 SFX. The
-compiler chooses the header from the score's `sfx` setting and declared
-channels. The filename does not determine the stream type. Playback enables
+`avm_audio_play` selects music; `avm_audio_sfx` selects one-shot SFX. Both use
+the same compiler-validated ownership-byte stream format. The
+compiler derives the ownership byte from the declared channels and uses the
+score's `sfx` setting to enforce one-shot channels 1/3. The filename does not determine the stream type. Playback enables
 output and advances automatically at interpreter safe points.
 
 The Python entry points are:
@@ -882,7 +883,7 @@ source makes the CLI exit with an error instead of writing a new asset.
 | Automation is inaudible or stepped | Check 4 ms timing and integer volume/duty/pitch quantization; adjust depth or interval |
 | `automation exceeds update budget` | Reduce duration/density or explicitly raise `--max-updates` |
 | Output `.h` contains binary data | Supply `--name IDENTIFIER` to request a C/C++ export |
-| Old asset fails playback | Regenerate A5/D1–D3 assets; earlier A4/C1–C3 headers are rejected |
+| Old asset fails playback | Recompile the AVMS source; older magic-header assets are incompatible and are not detected by the AVR |
 
 Use the checked-in [music](../projects/audio_demo/music.avms),
 [SFX](../projects/audio_demo/effect.avms),
@@ -942,7 +943,7 @@ at most 247. Reserved amplitude `0xFF` means stopped with increment zero:
 the ISR skips the oscillator and preserves phase. Inactive owners and zero
 increments use this sentinel. Volume zero or master zero with a nonzero
 increment prepares amplitude **zero**, so phase continues advancing while
-muted. This internal encoding changes neither the API nor A5/D1-D3 assets.
+muted. This internal amplitude encoding changes neither the API nor stream control payloads.
 For a non-sentinel amplitude it advances phase, then compares its upper byte:
 `phase_high < duty` produces +127; otherwise -127. Duty is 0..255, default
 128 (exact 50%). Percentages use a 256-step cycle: 12.5%=32, 25%=64, 50%=128;
@@ -987,23 +988,27 @@ including while stopped. Active noise takes 28 cycles without overflow,
 32 with a shift and 33 with feedback. See [audio-benchmarks.md](audio-benchmarks.md)
 for instruction accounting and measured before/after results.
 
-## Binary formats: A5 and D1–D3
+## Binary stream format
 
 The source language compiles to a header followed by variable-length timed
 records. All hexadecimal values below denote individual bytes. There is no
-stored tempo, meter, title, instrument table, source phrase, or asset length;
+stored type/version magic, tempo, meter, title, instrument table, source phrase, or asset length;
 all musical decisions have already been resolved to control updates.
 
 ### Stream headers and pitches
 
 | Stream | Header bytes | Owned physical channels |
 | --- | --- | --- |
-| Music | `A5 MASK` | Bits 0..3 of `MASK`; nonzero, with no other bits set |
-| Tonal SFX | `D1` | 1 |
-| Noise SFX | `D2` | 3 |
-| Combined SFX | `D3` | 1 and 3 |
+| Music | `MASK` | Bits 0..3 of `MASK`; nonzero, with no other bits set |
+| Tonal SFX | `02` | 1 |
+| Noise SFX | `08` | 3 |
+| Combined SFX | `0A` | 1 and 3 |
 
-Old A4/C1–C3 and earlier headers are rejected. Regenerate assets. Pitches are
+The PLAY/SFX API selects the stream kind. The compiler validates ownership,
+updates, waveform values and seeds; the AVR trusts its output. Recompile all
+older assets, including A5/D1–D3 assets: their magic bytes are no longer part
+of the format, and the AVR does not detect incompatible or malformed data.
+Pitches are
 little-endian uint16 increments with zero meaning off, encoded for 15625 Hz:
 `round(frequency_Hz * 65536 / 15625)`. At 7812.5 Hz foreground preparation
 doubles increments, saturating at 65535; desired state remains canonical.
@@ -1012,7 +1017,7 @@ Pitch and duty updates preserve phase, including repeated notes and loops.
 
 ### Music events
 
-After `A5 MASK`, an update record is `delta, change_mask, pitches..., controls...`.
+After the ownership byte, an update record is `delta, change_mask, pitches..., controls...`.
 Each selected pitch is two bytes; each selected control is one or two bytes.
 
 | Physical channel | Ownership bit | Pitch-update bit | Control-update bit |
@@ -1053,29 +1058,27 @@ For example `00 11 35 07 87 40` waits one tick, sets voice 0 to increment
 1845, volume 7, and duty 64. `00 80 8A 25` reseeds noise with 37 at volume 10.
 `00 10 27` selects triangle at volume 7 on channel 0; `00 10 67` selects saw;
 `00 10 07` switches back to pulse. All retain duty and phase. Wave encodings
-are pulse `00`, triangle `20`, and saw `60`; `40` is invalid and terminates
-the stream through the existing error path. Older pulse/triangle A5/D1–D3
-streams retain their interpretation. Waveform selection adds no extension byte. A change in
+are pulse `00`, triangle `20`, and saw `60`; the compiler rejects `40`.
+Waveform selection adds no extension byte. A change in
 waveform emits a control update even if volume and duty are unchanged.
 
 ### Sound-effect events
 
-SFX has no ownership-mask byte after the header. An update record is
-`delta, flags, pitches..., controls...`, using compact slot-relative flags:
+SFX uses the same ownership-byte header and physical event masks as music.
+An update record is `delta, change_mask, pitches..., controls...`:
 
 | Flag bit | Hex mask | Payload |
 | --- | --- | --- |
-| 0 | `01` | Tonal pitch for physical channel 1, uint16 little-endian |
-| 1 | `02` | Noise pitch for physical channel 3, uint16 little-endian |
-| 2 | `04` | Tonal control and optional duty extension |
-| 3 | `08` | Noise control and optional seed extension |
-| 4..7 | `F0` | Reserved; must be zero |
+| 1 | `02` | Tonal pitch for physical channel 1, uint16 little-endian |
+| 3 | `08` | Noise pitch for physical channel 3, uint16 little-endian |
+| 5 | `20` | Tonal control and optional duty extension |
+| 7 | `80` | Noise control and optional seed extension |
 
 Emit only selected fields, in the table's order: tonal pitch, noise pitch,
 tonal control/extension, noise control/extension. Control-byte encoding is
-identical to music. Updates outside declared slots are malformed; D1 allows
-only flag bits 0 and 2, D2 only 1 and 3, and D3 all four.
-`D1 00 05 85 0E 8C 20` starts a tonal effect on voice 1 at increment 3717,
+identical to music. The compiler restricts SFX to its declared channels 1
+and/or 3 and emits only their physical field bits.
+`02 00 22 85 0E 8C 20` starts a tonal effect on voice 1 at increment 3717,
 volume 12, duty 32. Append `00 00 01` to end it one tick later.
 
 ### Timing and commands
@@ -1093,13 +1096,15 @@ A zero change mask or zero SFX flags selects a command record
 | --- | --- | --- |
 | Continue | `00` | Keep current state, then read the next record |
 | End | `01` | Stop and release this stream |
-| Loop | `02` | Music only: rewind to the first delta, skipping the validated header |
+| Loop | `02` | Music only: rewind to the first delta, skipping the ownership byte |
 
 Each command consumes positive time. End releases SFX ownership and restores
 the current music controls on those slots; music End silences music. Loop
-replays the first delta as well as the events. SFX Loop, unknown commands or
-headers, reserved control bits, invalid seeds, ownership violations, and
-invalid flags stop that stream and release it.
+replays the first delta as well as the events. The compiler emits only valid
+commands and forbids SFX loops. The AVR does not validate headers, ownership,
+waveform values, seeds or commands; malformed streams have undefined behavior.
+Source phrases and repeats are expanded by the compiler, so the runtime has
+no phrase-call format, call stack or phrase-validity checks.
 
 ### Worked binary example
 
@@ -1112,18 +1117,18 @@ channel 0 { volume 7 duty 25% a4 }
 Its entire compiled stream is:
 
 ```hex
-A5 01 00 11 35 07 87 40 7C 00 01
+01 00 11 35 07 87 40 7C 00 01
 ```
 
 | Byte offsets (zero-based) | Bytes | Interpretation |
 | --- | --- | --- |
-| 0..1 | `A5 01` | Music, owning channel 0 |
-| 2 | `00` | Wait 1 tick (4 ms) |
-| 3 | `11` | Update channel 0 pitch and control |
-| 4..5 | `35 07` | Increment `0x0735` = 1845, approximately 440 Hz |
-| 6..7 | `87 40` | Volume 7 with extension flag; duty 64 = 25% |
-| 8 | `7C` | Wait 125 ticks (500 ms) after the onset |
-| 9..10 | `00 01` | Command record: End, at 504 ms from stream start |
+| 0 | `01` | Own channel 0; the API selects music |
+| 1 | `00` | Wait 1 tick (4 ms) |
+| 2 | `11` | Update channel 0 pitch and control |
+| 3..4 | `35 07` | Increment `0x0735` = 1845, approximately 440 Hz |
+| 5..6 | `87 40` | Volume 7 with extension flag; duty 64 = 25% |
+| 7 | `7C` | Wait 125 ticks (500 ms) after the onset |
+| 8..9 | `00 01` | Command record: End, at 504 ms from stream start |
 
 ### Reader limits
 
@@ -1202,7 +1207,7 @@ before the checks; pending copy/reseed maxima are 280/281 versus 272/273.
 An all-stopped ordinary ISR takes 81 cycles. PWM writes remain at 21 cycles.
 Worst all-active ordinary CPU use is 9.9609% at 7812.5 Hz and 19.9219% at
 15625 Hz; all-stopped use is 3.9551% and 7.9102%. FX, FX-C and Mini firmware
-is 29352 bytes, leaving 344 bytes below the 29696-byte bootloader boundary.
+is 29220 bytes, leaving 476 bytes below the 29696-byte bootloader boundary.
 
 The compact FX reader performs one interruptible burst per due event with
 24-bit cursors and actual-consumption advancement, preserving speculative

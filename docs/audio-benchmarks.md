@@ -1,5 +1,10 @@
 # Stopped-channel amplitude sentinel measurements
 
+The tables below preserve the stopped-channel optimization measurements.
+The subsequent compiler-trusted stream update reduces current firmware to
+**29,220 bytes**, with **476 bytes** of bootloader headroom. It leaves the
+synthesis paths and their cycle counts unchanged; see the update at the end.
+
 Measured 2026-10-21 with the repository's Ardens AVR instruction emulator,
 unmerged instructions, 16 MHz CPU, RelWithDebInfo. Before measurements use the
 saved pre-change firmware and listing; after measurements execute the final
@@ -194,3 +199,33 @@ logs are under `build/audio-sentinel/`; historical evidence stays in the JSON.
 This is instruction-level simulation, with no physical hardware/oscilloscope
 validation. Active checks add two cycles per voice; further active-path savings
 would need a different instruction/register arrangement or a broader redesign.
+
+## Compiler-trusted stream update
+
+The production chronological sequencer now trusts compiler-generated input.
+Header/version, ownership, waveform and seed validation is removed from the
+AVR; the compiler retains those checks. There is no runtime phrase bytecode
+in this implementation. Both stream kinds begin with one ownership byte and
+use physical channel bits for events. Removing magic and SFX slot conversion
+reduces interpreter flash from **29,352 to 29,220 bytes**, saving **132 bytes**
+and leaving **476 bytes** below the 29,696-byte limit. Persistent audio SRAM
+remains **89 bytes**, with **74 bytes** of native stack allowance.
+
+The 396-byte synthesis ISR has identical instructions except for the relocated
+`RCALL audio_apply_update` operand; the call still reaches the same unchanged
+copier and takes the same cycles. Ordinary paths remain 81..204 cycles,
+with the existing 281-cycle maximum pending/reseed path. No synthesis
+algorithm, output timing, waveform/control encoding or memory layout changed.
+
+Validation passed 118 Python tests, 57 native audio cases, FX/FX-C/Mini
+assembly, animated demo and playlist checks, C libm/formatter execution with
+sample interrupts, and C/C++ exported assets exceeding 64 KiB. All 34
+desktop-renderer/AVR logical fixture-and-rate comparisons are sample-exact.
+An independent 12-song compiler comparison confirms unchanged control
+payloads and timing after removing music magic and expanding SFX masks.
+The demo and RPG packages were rebuilt with regenerated assets. Older
+compiled formats require recompilation and are not detected by the AVR.
+
+Current-session logs, instruction comparison and machine-readable results
+are under `build/audio_trusted_format/`; builds use RelWithDebInfo, the same
+MSVC `/Z7` workaround, and workspace-local TEMP/TMP described above.

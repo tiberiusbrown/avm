@@ -966,7 +966,7 @@ def main(argv=None):
     parser.add_argument("--title")
     parser.add_argument("--stats", action="store_true")
     parser.add_argument("--report", type=Path, help="write source IR, arranged IR and diagnostics as JSON")
-    parser.add_argument("--binary", type=Path, help="also write validated A5 music")
+    parser.add_argument("--binary", type=Path, help="also write validated AVM music")
     parser.add_argument("--transpose", type=int, default=0, help="semitones, before octave normalization")
     parser.add_argument("--start", type=float, default=0, help="region start in seconds")
     parser.add_argument("--end", type=float, help="region end in seconds")

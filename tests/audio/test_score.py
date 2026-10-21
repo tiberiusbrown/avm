@@ -9,9 +9,8 @@ spec.loader.exec_module(music)
 
 
 def decode(data, raw=False):
-    effect = data[0] != 0xA5
-    assert data[0] == 0xA5 or data[0] in (0xD1, 0xD2, 0xD3)
-    events, offset, time = [], 1 if effect else 2, 0
+    assert data and 1 <= data[0] <= 15
+    events, offset, time = [], 1, 0
     midi = {music.note_increment(note): note for note in range(24, 96)}
     midi[0] = 128
     while True:
@@ -25,9 +24,6 @@ def decode(data, raw=False):
                 assert offset == len(data)
                 return events, time, command
             continue
-        if effect:
-            assert mask < 16
-            mask = ((mask & 1) << 1) | ((mask & 2) << 2) | ((mask & 4) << 3) | ((mask & 8) << 4)
         update = {}
         for field, shift in (("note", 0), ("control", 4)):
             for channel in range(4):
@@ -51,17 +47,17 @@ class ScoreTests(unittest.TestCase):
     def compile(self, source):
         return decode(music.compile_source(source))
 
-    def test_raw_increments_and_compact_sfx_ownership(self):
-        for mask, tag in ((2, 0xD1), (8, 0xD2), (10, 0xD3)):
+    def test_raw_increments_and_physical_sfx_ownership(self):
+        for mask in (2, 8, 10):
             channels = " ".join(f"channel {ch} {{ r:4ms c:8ms }}" for ch in (1, 3) if mask & (1 << ch))
             data = music.compile_source("sfx " + channels)
-            self.assertEqual(data[0], tag)
+            self.assertEqual(data[0], mask)
             events, _, command = decode(data, raw=True)
             self.assertEqual(set(events[0][1]), {ch for ch in (1, 3) if mask & (1 << ch)})
             self.assertEqual(command, 1)
             self.assertTrue(all(update["note"] == 0 for update in events[0][1].values()))
         data = music._encode_events(2, [(1, {1: {"increment": 3717, "volume": 12}})], 1, False, True)
-        self.assertEqual(data, bytes([0xD1, 0, 5, 0x85, 0x0e, 140, 128, 0, 0, 1]))
+        self.assertEqual(data, bytes([2, 0, 0x22, 0x85, 0x0e, 140, 128, 0, 0, 1]))
         self.assertEqual(decode(data, raw=True)[0][0][1][1]["note"], 3717)
         self.assertEqual(music.note_increment(69), 1845)
 
@@ -69,6 +65,29 @@ class ScoreTests(unittest.TestCase):
         for source in ("sfx loop channel 1 { c4 }", "sfx channel 0 { c4 }", "sfx channel 2 { r4 }"):
             with self.subTest(source=source), self.assertRaises(music.ScoreError):
                 music.compile_source(source)
+
+    def test_compiler_enforces_the_trusted_stream_contract(self):
+        for mask in (0, 16, -1):
+            with self.subTest(mask=mask), self.assertRaises(ValueError):
+                music._encode_events(mask, [(1, {0: {"increment": 1234}})], 1, False)
+        for channel in (1, 2, 3):
+            with self.subTest(channel=channel), self.assertRaises(ValueError):
+                music._encode_events(1, [(1, {channel: {"increment": 1234}})], 1, False)
+        for seed in (0, 64, 127, 255):
+            with self.subTest(seed=seed), self.assertRaises(ValueError):
+                music._encode_events(8, [(1, {3: {"seed": seed}})], 1, False)
+        for channel, wave in ((0, "noise"), (3, "pulse"), (3, "triangle"), (3, "saw")):
+            with self.subTest(channel=channel, wave=wave), self.assertRaises(ValueError):
+                music._encode_events(1 << channel, [(1, {channel: {"wave": wave}})], 1, False)
+
+    def test_music_and_sfx_emit_identical_physical_stream_bytes(self):
+        updates = {1: {"increment": 3717, "volume": 12, "wave": "saw", "duty": 64},
+                   3: {"increment": 549, "volume": 8, "seed": 37}}
+        song = music._encode_events(10, [(1, updates)], 256, False)
+        effect = music._encode_events(10, [(1, updates)], 256, False, sfx=True)
+        self.assertEqual(song, effect)
+        self.assertEqual(song[:3], bytes([10, 0, 0xaa]))
+        self.assertEqual(decode(song, raw=True)[1:], (257, 1))
 
     def test_pitches_durations_and_inheritance(self):
         events, end, command = self.compile("tempo 120 channel 0 octave 4 { c4 d8 e r2 }")
@@ -207,7 +226,7 @@ class ScoreTests(unittest.TestCase):
             self.assertEqual(unpacked[:length], data)
             self.assertLess(len(unpacked) - length, 8)
             self.assertEqual(unpacked[length:], bytes(len(unpacked) - length))
-            self.assertIn(f"/* Compiled song size: {len(data)} bytes. */", header)
+            self.assertIn(f"/* Compiled audio size: {len(data)} bytes. */", header)
 
     def test_header_exact_stream_sizes_and_cli_output(self):
         import re
@@ -219,14 +238,14 @@ class ScoreTests(unittest.TestCase):
             self.assertNotEqual(len(data) % 8, 0)
             header = music.c_array(data, "asset")
             self.assertEqual(int(re.search(r"Compiled .* size: (\d+) bytes", header)[1]), len(data))
-            self.assertIn(f"Compiled {kind} size:", header)
+            self.assertIn(f"Compiled audio size:", header)
             # Force the chunked representation with a real, large encoded stream.
             ch = 1 if kind == "SFX" else 0
             large = music._encode_events(1 << ch, ((1, {ch: {"increment": 1234}}) for _ in range(175000)),
                                          1, False, kind == "SFX")
             exported = music.c_array(large, "large")
             self.assertIn("_avm_storage", exported)
-            self.assertIn(f"Compiled {kind} size: {len(large)} bytes.", exported)
+            self.assertIn(f"Compiled audio size: {len(large)} bytes.", exported)
             with tempfile.TemporaryDirectory() as folder:
                 source, output = Path(folder)/"asset.avms", Path(folder)/"asset.bin"
                 source.write_text(score)
@@ -248,7 +267,7 @@ class ScoreTests(unittest.TestCase):
                 channel {ch} {{ volume 12 duty 32 c:8ms wave triangle c:8ms
                     duty 192 c:8ms wave pulse c:8ms use t c:8ms wave square c:8ms }}""")
             # Inspect packed controls directly; waveform-only updates need no extension.
-            offset, controls = 2, []
+            offset, controls = 1, []
             while data[offset+1]:
                 mask = data[offset+1]
                 offset += 2 + (2 if mask & (1 << ch) else 0)
@@ -287,9 +306,9 @@ class ScoreTests(unittest.TestCase):
                         self.assertEqual(events[2][1][ch]["wave"] if right else "pulse", after)
                         # Exact bytes: waveform-only control, duty extension, rest,
                         # then volume-only update retaining the current waveform.
-                        mask = 4 if sfx else 16 << ch
+                        mask = 16 << ch
                         self.assertIn(bytes([0, mask, 9 | right, 0, mask, 0x80 | 10 | right, 64]), data)
-                        self.assertEqual(data[5 if sfx else 6], 0x80 | 9 | left)
+                        self.assertEqual(data[5], 0x80 | 9 | left)
             data = music.compile_source(f"""automation 4ms loop
                 envelope fade {{ points 0ms:0%, 8ms:100% release 8ms:0% }}
                 instrument bass {{ wave saw volume 9 duty 32 envelope fade
@@ -316,10 +335,10 @@ class ScoreTests(unittest.TestCase):
         self.assertEqual(events[0][1][1]["wave"], "triangle")
         self.assertEqual(events[0][1][2]["wave"], "saw")
 
-    def test_legacy_pulse_and_triangle_bytes_are_unchanged(self):
+    def test_pulse_and_triangle_exact_bytes(self):
         for wave, expected in (
-            ("pulse", "a50100114904894001110000000011490409000002"),
-            ("triangle", "a50100114904a94001110000200011490429000002"),
+            ("pulse", "0100114904894001110000000011490409000002"),
+            ("triangle", "0100114904a94001110000200011490429000002"),
         ):
             source = f"loop channel 0 {{ wave {wave} volume 9 duty 64 c:8ms r:4ms c:8ms }}"
             self.assertEqual(music.compile_source(source), bytes.fromhex(expected))

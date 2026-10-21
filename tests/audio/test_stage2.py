@@ -138,7 +138,7 @@ class RenderTests(unittest.TestCase):
     def test_triangle_control_reserved_bits_and_truncation(self):
         for ch in range(4):
             for control in range(256):
-                data = bytes([0xa5, 1 << ch, 0, 16 << ch, control])
+                data = bytes([1 << ch, 0, 16 << ch, control])
                 if control & 128:
                     data += bytes([37])
                 data += bytes([0, 0, 1])
@@ -148,7 +148,7 @@ class RenderTests(unittest.TestCase):
                         decode(data)
                 else:
                     self.assertEqual(decode(data)[0].controls[0][1], control & 127)
-            for data in (bytes([0xa5,1<<ch,0,16<<ch]), bytes([0xa5,1<<ch,0,16<<ch,0x80])):
+            for data in (bytes([1<<ch,0,16<<ch]), bytes([1<<ch,0,16<<ch,0x80])):
                 with self.assertRaises(ValueError):
                     decode(data)
 
@@ -211,11 +211,11 @@ class RenderTests(unittest.TestCase):
         self.assertEqual(int(b.mix.min()), -246)
 
     def test_invalid_binary_and_parameters(self):
-        for data in (b"", b"\xa4\x01", b"\xa5\x00", b"\xa5\x01\x00\x10\x60", b"\xa5\x08\x00\x80\x80\x00"):
+        for data in (b"", b"\xa4\x01", b"\x00", b"\x01\x00\x10\x60", b"\x08\x00\x80\x80\x00"):
             with self.assertRaises(ValueError):
                 render(data)
         with self.assertRaises(ValueError):
-            render(b"\xa5\x01\x00\x00\x01", rate=16000)
+            render(b"\x01\x00\x00\x01", rate=16000)
 
     def test_fractional_rate_wav_uses_exact_resampling(self):
         with tempfile.TemporaryDirectory() as folder:

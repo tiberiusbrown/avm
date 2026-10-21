@@ -219,7 +219,7 @@ class EffectTests(unittest.TestCase):
         self.assertEqual(stats["bytes"],len(data))
         updates={c:dict(increment=1234,volume=31,**({"seed":63} if c==3 else {"duty":255})) for c in range(4)}
         data=music._encode_events(15,[(1,updates)],1,False)
-        self.assertEqual(len(data),23) # 2 header + 18 max event + 3 terminal
+        self.assertEqual(len(data),22) # 1 ownership byte + 18 max event + 3 terminal
         events,_,_=decode(data,raw=True)
         self.assertEqual(events[0][1][3]["seed"],63)
         for ch in range(3):

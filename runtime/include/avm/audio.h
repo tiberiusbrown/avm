@@ -5,14 +5,17 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Playback advances automatically. A5 music ends with End or Loop. D1..D3
-   one-shot SFX ends with End and overrides only declared tonal (voice 1) / noise
+/* Playback advances automatically. Compiler-validated music ends with End or Loop.
+   One-shot SFX ends with End and overrides only declared tonal (voice 1) / noise
    (voice 3) slots. Arrange melody on 0, harmony on 1, bass on 2. Undeclared SFX slots leave music audible; declared slots
    retain ownership through rests. Raw uint16 phase increments use 15625 Hz
    regardless of the selected synthesis rate. Pitch updates preserve phase.
    Tonal controls select pulse (default, duty 128=50%) or triangle independently.
    Waveform changes preserve phase; triangle retains but ignores duty. Noise retriggers
-   use seeds 1..63. The reader uses 24-bit cursors and may read ahead past the terminator. */
+   use seeds 1..63. Both streams begin with one physical ownership-mask byte,
+   without type/version magic; their events use physical channel masks.
+   The reader trusts compiler output, uses 24-bit cursors, and may read ahead
+   past the terminator. Recompile older assets for this format. */
 void avm_audio_play(void const AVM_PROGMEM *song);
 void avm_audio_sfx(void const AVM_PROGMEM *effect);
 void avm_audio_stop(void);

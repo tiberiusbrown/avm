@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Sample-accurate A5 music rendering at AVM's logical synthesis output.
+"""Sample-accurate AVM audio rendering at AVM's logical synthesis output.
 
 This models the ISR, not Timer4 PWM, acoustic piezo response, or foreground
 service jitter. Events publish immediately before the first sample at/after
@@ -53,16 +53,20 @@ class Render:
 
 
 def decode(data):
-    """Validate and decode one A5 traversal, stopping at End/Loop (padding OK)."""
+    """Validate and decode one traversal, stopping at End/Loop (padding OK).
+
+    Host-side checks aid diagnostics; the AVR trusts compiler-generated data.
+    Music and SFX share this format, with their kind selected by the PLAY API.
+    """
     data = bytes(data)
-    if len(data) < 2 or data[0] != 0xA5 or not 1 <= data[1] <= 15:
-        raise ValueError("Expected A5 music and ownership mask 1..15")
-    owner, position, tick, events = data[1], 2, 0, []
+    if not data or not 1 <= data[0] <= 15:
+        raise ValueError("Expected audio ownership mask 1..15")
+    owner, position, tick, events = data[0], 1, 0, []
 
     def byte():
         nonlocal position
         if position >= len(data):
-            raise ValueError("Truncated A5 stream (missing End/Loop or payload)")
+            raise ValueError("Truncated audio stream (missing End/Loop or payload)")
         value = data[position]
         position += 1
         return value
@@ -73,13 +77,13 @@ def decode(data):
         if not mask:
             command = byte()
             if command not in (0, 1, 2):
-                raise ValueError("Unknown A5 command")
+                raise ValueError("Unknown audio command")
             events.append(Event(tick, (), (), command))
             if command:
                 return events
             continue
         if ((mask & 15) | (mask >> 4)) & ~owner:
-            raise ValueError("A5 event updates an unowned voice")
+            raise ValueError("Audio event updates an unowned voice")
         pitches, controls = [], []
         for channel in range(4):
             if mask & (1 << channel):
@@ -89,14 +93,14 @@ def decode(data):
                 control = byte()
                 wave = control & 0x60
                 if (wave if channel == 3 else wave == 0x40):
-                    raise ValueError("Reserved A5 control bits")
+                    raise ValueError("Reserved audio control bits")
                 extension = byte() if control & 128 else -1
                 if channel == 3 and extension != -1 and not 1 <= extension <= 63:
                     raise ValueError("Noise seed must be 1..63")
                 # Retain both tonal waveform bits, as in AVR desired state.
                 controls.append((channel, control & 127, extension))
         events.append(Event(tick, tuple(pitches), tuple(controls)))
-    raise ValueError("A5 stream has no End/Loop")
+    raise ValueError("Audio stream has no End/Loop")
 
 
 # Every nonzero seed belongs to this single 255-element Galois cycle.

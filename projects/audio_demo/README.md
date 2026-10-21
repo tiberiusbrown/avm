@@ -24,7 +24,7 @@ python projects/audio_demo/import_midi.py /path/to/Downloads
 
 The script expects `z1overw.mid`, `ff1town.mid`, `ff1overw.mid`, and
 `ff1matya.mid`. It writes AVMS, C headers and compact conversion statistics to
-`songs/`, plus full IR reports and A5 binaries under `build/midi-arranger/`.
+`songs/`, plus full IR reports and AVM audio binaries under `build/midi-arranger/`.
 Raw MIDI inputs are not stored in the repository or required for normal
 builds/tests. Source track names and program metadata determine the defaults;
 melody stays on channel 0, bass on 2, harmony on 1 and percussion on 3.
@@ -55,7 +55,7 @@ Channel 3 produces LFSR noise; its note controls the noise update rate.
 
 For example, `instrument low { wave pulse duty 50% volume 9 }` followed by
 `channel 2 low octave 2 { c4 g }` plays two low quarter notes. The compiler
-merges notes and offline effects into A5 raw-increment/control events;
+merges notes and offline effects into AVM audio raw-increment/control events;
 instruments are source definitions and add no runtime state. Every loop
 initializes all owned channels. Control-only changes preserve oscillator phase.
 See `tremolo.avms` for a small score with a smooth custom contour, release,

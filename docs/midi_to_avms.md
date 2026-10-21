@@ -76,7 +76,7 @@ the arrangement's only representation:
    lines, reduce chords/drums, normalize register, orchestrate, and quantize.
 4. `generate_score(arrangement) -> str`: regenerate readable AVMS from the
    structured arrangement and explicit `Instrument`/`Effect` parameters.
-5. `compile_arrangement(arrangement) -> (str, bytes)`: reuse the existing A5
+5. `compile_arrangement(arrangement) -> (str, bytes)`: reuse the existing AVM audio
    compiler and add its event/control/byte statistics to the report.
 
 Times remain real-valued seconds until the final absolute-boundary rounding.
@@ -200,7 +200,7 @@ MIDI-specific tests skip clearly when optional `mido` is absent; existing
 compiler tests and checked-in score/header tests still run. With `mido`,
 tests inspect synthetic melody/bass identities, piano continuity, drum
 priorities, polyphony, sustain, tempo maps, controllers, sub-tick notes,
-initial delay, A5 ownership/durations, deterministic output, CLI/reporting,
+initial delay, AVM audio ownership/durations, deterministic output, CLI/reporting,
 and event/size limits. The native demo test also visits all five songs,
 checks both wrap directions and switches/resumes while paused.
 

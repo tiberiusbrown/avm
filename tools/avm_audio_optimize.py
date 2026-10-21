@@ -1,6 +1,6 @@
 """Deterministic, bounded optimization of Stage 1 Arrangement objects.
 
-Every evaluated candidate is a deep copy, compiled with the production A5
+Every evaluated candidate is a deep copy, compiled with the production AVM audio
 compiler and rendered after quantization. MIDI structure is never reconstructed
 from score text. The evaluator and search are separate from synthesis/import.
 """

@@ -324,7 +324,7 @@ channel 1 zap octave 5 { c:144ms }
 channel 3 hiss octave 3 { c:48ms r:96ms }
 ```
 
-Build and inspect score size with `python tools/avm_music.py song.avms song.bin --stats`. The score format (music `A5`, SFX `D1`–`D3`) has changed, so **regenerate old compiled assets** after upgrading. For precise effect syntax and edge cases, consult `docs/audio.md`; for listenable examples, see `projects/audio_demo/music.avms`, `effect.avms`, and `effects.avms`.
+Build and inspect score size with `python tools/avm_music.py song.avms song.bin --stats`. Music and SFX now share a one-byte physical ownership mask followed by timed events, without header magic, so **regenerate old compiled assets** after upgrading. The compiler validates the data; the AVR decoder trusts it. For precise effect syntax and edge cases, consult `docs/audio.md`; for listenable examples, see `projects/audio_demo/music.avms`, `effect.avms`, and `effects.avms`.
 
 ## Hardware validation checklist
 

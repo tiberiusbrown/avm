@@ -244,7 +244,7 @@ def process_pair(midi_path, wav_path, output, settings, config, *, resume=False,
 
 def summary_reports(output, reports, errors, unmatched):
     write_json(output / "summary.json", {"songs": reports, "errors": errors, "unmatched_basenames": unmatched})
-    lines = ["# Stage 2 audio-guided arrangements", "", "All metrics compare final compiled A5 audio. Improvements are numerical, not subjective listening results.", "",
+    lines = ["# Stage 2 audio-guided arrangements", "", "All metrics compare final compiled AVM audio. Improvements are numerical, not subjective listening results.", "",
              "| Song | Rate | Baseline loss | Optimized loss | Change | Bytes before/after | Events before/after |", "|---|---:|---:|---:|---:|---:|---:|"]
     for r in reports:
         a, b = r["baseline"], r["optimized"]

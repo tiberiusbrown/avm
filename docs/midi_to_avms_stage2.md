@@ -1,7 +1,7 @@
 # Audio-guided MIDI-to-AVMS optimization
 
 Stage 2 fits the existing Stage 1 `Arrangement` to a MIDI-associated WAV. It
-exports a preserved baseline and a validated optimized score, A5 binary,
+exports a preserved baseline and a validated optimized score, AVM audio binary,
 PCM16 listening previews, plots, and JSON reports. **The default evaluation
 and preview rate is 15,625 Hz**, AVM's higher-quality (approximately 16 kHz)
 mode and hardware default. `--rate 7812.5` explicitly evaluates the 8 kHz mode instead.
@@ -64,7 +64,7 @@ A checkpoint is written atomically after each accepted improvement. A resumed
 search uses the same input/setting fingerprint; it is an additional sweep,
 not a serialized continuation of an interrupted coordinate iterator.
 
-Render an existing AVMS or A5 asset independently:
+Render an existing AVMS or AVM audio asset independently:
 
 ```powershell
 py -3.12 tools/midi_to_avms_stage2.py build/stage2/z1overw/optimized.avms `
@@ -73,7 +73,7 @@ py -3.12 tools/midi_to_avms_stage2.py build/stage2/z1overw/optimized.avms `
 
 ## Implementation and numerical model
 
-- `tools/avm_audio_render.py` validates/decodes A5 ownership, variable pitch
+- `tools/avm_audio_render.py` validates/decodes AVM audio ownership, variable pitch
   and control payloads, Continue, End, and Loop. Its event-span renderer uses
   unsigned 16-bit phase, canonical quantized increments (saturating doubling
   at 7812.5 Hz), phase-high duty comparison, the AVR integer triangle fold,
@@ -97,7 +97,7 @@ py -3.12 tools/midi_to_avms_stage2.py build/stage2/z1overw/optimized.avms `
   and weak/ambiguous alignment are reported. There is no time warping.
 - `tools/avm_audio_optimize.py` separates the cached objective from the bounded
   deterministic search. Candidates deep-copy the Stage 1 IR, compile using
-  `compile_arrangement`, and render actual quantized A5 data. Repeated compiled
+  `compile_arrangement`, and render actual quantized AVM audio data. Repeated compiled
   hashes reuse metrics. Reference features, sparse harmonic kernels, and
   MIDI-informed masks are cached. Prefix phase/LFSR state is advanced
   arithmetically, allowing late excerpts without synthesizing the whole prefix.
@@ -183,7 +183,7 @@ least 80%; all notes, source identities, pitches, onsets and offsets remain
 unchanged except bounded noise timbre pitches. Harmony notes are not deleted.
 No candidates invent unrelated chord arpeggios or continuous noise replacing
 the original percussion rhythm. The compiler is the final syntax/range
-authority. A5 decoding independently rejects malformed assets, and the
+authority. AVM audio decoding independently rejects malformed assets, and the
 evaluator caps decoded event density at 250/s.
 
 Final whole-song loss is measured independently of excerpt fitting. If it
@@ -227,7 +227,7 @@ py -3.12 tests/audio/validate_stage2_corpus.py `
   --input-dir "$env:USERPROFILE\Downloads\stage2" --output-dir build/stage2 --rate 15625
 ```
 
-`avm_audio_tests --render-logical` runs the **actual AVR A5 sequencer,
+`avm_audio_tests --render-logical` runs the **actual AVR AVM audio sequencer,
 foreground control preparation, and Timer1 ISR** at deterministic logical
 sample boundaries. It is not a C++ reimplementation of synthesis. The Python
 oracle script compiles synthetic scores and compares every raw uint8 endpoint

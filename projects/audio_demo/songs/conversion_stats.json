@@ -104,7 +104,7 @@
       "note_cut": 137
     },
     "avms_source_bytes": 38622,
-    "compiled_song_bytes": 6459,
+    "compiled_song_bytes": 6458,
     "compiler": {
       "pitch": 1123,
       "volume": 1753,
@@ -221,7 +221,7 @@
       "arpeggio": 116
     },
     "avms_source_bytes": 18670,
-    "compiled_song_bytes": 3262,
+    "compiled_song_bytes": 3261,
     "compiler": {
       "pitch": 630,
       "volume": 522,
@@ -334,7 +334,7 @@
     "generated_arpeggios": 0,
     "effects": {},
     "avms_source_bytes": 36335,
-    "compiled_song_bytes": 5791,
+    "compiled_song_bytes": 5790,
     "compiler": {
       "pitch": 884,
       "volume": 1485,
@@ -454,7 +454,7 @@
       "noise_retrigger": 3
     },
     "avms_source_bytes": 91527,
-    "compiled_song_bytes": 14080,
+    "compiled_song_bytes": 14079,
     "compiler": {
       "pitch": 2175,
       "volume": 4010,

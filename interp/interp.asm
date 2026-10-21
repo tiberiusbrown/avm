@@ -16364,7 +16364,7 @@ audio_advance:
     ld   r24, X+
     tst  r24
     brne 1f
-    ; Zero change mask: Continue=0, End=1, Loop=2; other commands fail closed.
+    ; Compiler-validated commands: Continue=0, End=1, Loop=2 (music only).
     ld   r24, X+
     tst  r24
     brne 3f
@@ -16374,43 +16374,10 @@ audio_advance:
     breq 3f
     rjmp audio_stream_end
 3:
-    cpi  r16, lo8(data_audio_music)
-    brne 3f
-    rjmp .Laudio_loop ; SFX is one-shot: Loop is malformed
-3:
-    rjmp audio_stream_end
+    rjmp .Laudio_loop
 1:
-    cpi  r16, lo8(data_audio_music)
-    breq 2f
-    ; Compact slot bits -> physical pitch 1/3, control 5/7.
-    cpi  r24, 16
-    brlo 3f
-    rjmp audio_stream_end
-3:
-    clr  r23
-    bst  r24, 0
-    bld  r23, 1
-    bst  r24, 1
-    bld  r23, 3
-    bst  r24, 2
-    bld  r23, 5
-    bst  r24, 3
-    bld  r23, 7
-    mov  r24, r23
-2:
     mov  r23, r24
-    ; Fold note and volume bits to validate both against ownership.
-    mov  r25, r24
-    swap r25
-    or   r25, r24
-    andi r25, 15
-    movw r30, r16
-    ldd  r24, Z+AUDIO_MASK
-    com  r24
-    and  r25, r24
-    breq 3f
-    rjmp audio_stream_end
-3:
+    ; Both stream kinds use physical bits; the compiler enforces ownership.
     sts  data_audio_dirty, ONE
     ; Desired states are (increment low, increment high, volume/wave, duty).
     mov  r24, r23
@@ -16447,19 +16414,6 @@ audio_advance:
     rjmp .Laudio_channel_next
 .Laudio_control_store:
     mov  r25, r24
-    andi r25, 0x60
-    cpi  r19, 7
-    brne 2f
-    ; Noise reserves both waveform bits.
-    tst  r25
-    breq 3f
-    rjmp audio_stream_end
-2:
-    cpi  r25, 0x40 ; saw requires the non-pulse bit too
-    brne 3f
-    rjmp audio_stream_end
-3:
-    mov  r25, r24
     andi r25, 127
     std  Z+2, r25
     sbrs r24, 7
@@ -16470,13 +16424,6 @@ audio_advance:
     std  Z+3, r24
     rjmp .Laudio_channel_next
 .Laudio_reseed:
-    tst  r24
-    breq 4f
-    cpi  r24, 64
-    brlo 5f
-4:
-    rjmp audio_stream_end
-5:
     cpi  r16, lo8(data_audio_music)
     brne 6f
     lds  r25, data_audio_sfx+AUDIO_MASK
@@ -16514,13 +16461,13 @@ audio_stream_end:
     sts  data_audio_dirty, ONE
     ret
 
-; Rewind to the first delta, skipping the two-byte validated header.
+; Rewind to the first delta, skipping the compiler-validated ownership byte.
 audio_rewind:
     movw r30, r16
     ldd  r24, Z+AUDIO_START
     ldd  r25, Z+AUDIO_START+1
     ldd  r26, Z+AUDIO_START+2
-    subi r24, -2
+    subi r24, -1
     sbci r25, -1
     sbci r26, -1
     std  Z+AUDIO_CURSOR, r24
@@ -16717,35 +16664,11 @@ sys_audio_impl:
     brne 1b
     rcall audio_read_event
     ld   r24, X+
-    cpi  r16, lo8(data_audio_music)
-    breq .Laudio_music_header
-    subi r24, 0xd1
-    cpi  r24, 3
-    brsh .Laudio_start_bad
-    inc  r24
-    clr  r25
-    bst  r24, 0
-    bld  r25, 1
-    bst  r24, 1
-    bld  r25, 3
-    mov  r24, r25 ; ownership of voices 1 and/or 3
-    rjmp .Laudio_header_done
-.Laudio_music_header:
-    cpi  r24, 0xa5
-    brne .Laudio_start_bad
-    ld   r24, X+
-    tst  r24
-    breq .Laudio_start_bad
-    cpi  r24, 16
-    brsh .Laudio_start_bad
-.Laudio_header_done:
+    ; Music and SFX begin with the same physical ownership mask, no magic.
     movw r30, r16
     std  Z+AUDIO_MASK, r24
     rcall audio_event_finish
     rcall audio_enable
-    rjmp .Laudio_command_commit
-.Laudio_start_bad:
-    rcall audio_stream_end
     rjmp .Laudio_command_commit
 .Laudio_command:
     cpi  r24, 2 ; stop music

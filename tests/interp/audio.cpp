@@ -36,11 +36,12 @@ struct harness {
     unsigned amplitude(unsigned channel) {
         return c().data[controls+3*channel+2];
     }
-    void control(unsigned channel, unsigned amp, unsigned duty=128, bool triangle=false) {
+    void control(unsigned channel, unsigned amp, unsigned duty=128, unsigned wave=0) {
         c().data[controls+3*channel+2]=uint8_t(amp);
         if(channel<3) {
             c().data[duties+channel]=uint8_t(duty);
-            c().data[waveform]=uint8_t((c().data[waveform]&~(1u<<channel)) | (triangle ? 1u<<channel : 0));
+            auto bits=(wave ? 1u<<channel : 0) | (wave==2 ? 8u<<channel : 0);
+            c().data[waveform]=uint8_t((c().data[waveform]&~(9u<<channel)) | bits);
         }
     }
     bool boundary() { unsigned p=c().pc; return p>=sym("primary_table") && p<sym("primary_table")+1024 && (p-sym("primary_table"))%4==0; }
@@ -229,6 +230,76 @@ struct harness {
     }
 };
 void sequence(harness& h) {
+    h.test("all nine waveform transitions on all tonal channels at both rates",[&]{
+        constexpr unsigned encoded[]={0,0x20,0x60};
+        for(unsigned selected=0;selected<2;++selected) {
+            h.command(13,selected);
+            for(unsigned ch=0;ch<3;++ch) for(unsigned from : encoded) for(unsigned to : encoded) {
+                auto p=uint8_t(1u<<ch), c=uint8_t(16u<<ch);
+                h.play({0xa5,p,0,uint8_t(p|c),0x23,1,uint8_t(0x80|from|12),64,
+                    0,c,uint8_t(to|12),0,c,uint8_t(0x80|to|12),192,0,p,0,0,0,p,0x23,1,255,0,1});
+                h.word(phases+2*ch,0xf123);
+                auto check=[&](unsigned wave, unsigned duty) {
+                    auto bits=(wave&32 ? p : 0) | (wave&64 ? p<<3 : 0);
+                    require((h.c().data[waveform]&(9u<<ch))==bits,"transition packed wrong waveform");
+                    require(h.c().data[notes+4*ch+2]==(wave|12),"desired waveform bits lost");
+                    require(h.c().data[duties+ch]==duty,"transition lost duty");
+                    require(h.word(phases+2*ch)==0xf123,"waveform transition reset phase");
+                };
+                check(from,64);
+                h.elapsed(1); check(to,64);
+                require(h.amplitude(ch)==12,"waveform bits leaked into amplitude");
+                h.elapsed(1); check(to,192); // extension still consumes exactly one byte
+                h.elapsed(1); check(to,192);
+                require(h.amplitude(ch)==0,"rest did not silence saw voice");
+                h.elapsed(1); check(to,192);
+                require(h.amplitude(ch)==12,"pitch-only update lost waveform/volume");
+            }
+        }
+    });
+    h.test("all waveform owners restore current music across hidden changes and loops",[&]{
+        constexpr unsigned encoded[]={0,0x20,0x60};
+        for(unsigned music_wave : encoded) for(unsigned effect_wave : encoded) {
+            h.play({0xa5,7,0,0x77,1,1,2,2,3,3,0xec,64,uint8_t(0x80|music_wave|12),32,0xac,192,
+                0,0x20,0x6c,0,0x20,0x2c,0,0,2});
+            auto music_bits=(music_wave&32 ? 2u : 0) | (music_wave&64 ? 16u : 0);
+            require(h.c().data[waveform]==(13|music_bits),"foreground physical packing wrong");
+            h.play({0xd1,0,5,0,0x10,uint8_t(0x80|effect_wave|15),96,4,0,1},0x21000,true);
+            auto sfx_bits=(effect_wave&32 ? 2u : 0) | (effect_wave&64 ? 16u : 0);
+            auto check=[&]{require(h.c().data[waveform]==(13|sfx_bits),"hidden music leaked waveform into SFX");};
+            check();
+            require(h.c().data[notes+6]==0x6c,"hidden music saw update lost");
+            h.elapsed(1); check();
+            require(h.c().data[notes+6]==0x2c,"hidden music triangle update lost");
+            h.elapsed(2); check(); // loop + initial event while overridden
+            require(h.c().data[notes+6]==(music_wave|12),"hidden loop did not restore initial waveform");
+            h.elapsed(2);
+            require(!h.c().data[sfx+6] && h.c().data[waveform]==15 && h.c().data[duties+1]==32,
+                "SFX End failed to restore latest music triangle");
+            h.command(13,1); require(h.c().data[waveform]==15,"rate change lost restored waveform");
+            h.command(3); h.command(4);
+            require(h.c().data[waveform]==15,"pause/resume lost restored waveform");
+            h.tone((69u<<16)|0,12);
+            require(!(h.c().data[waveform]&9),"direct pulse tone inherited saw bits");
+            h.command(8); require(h.c().data[waveform]==15,"direct tone release lost saw music");
+        }
+    });
+    h.test("every tonal control encoding and extension decodes through subsequent events",[&]{
+        for(unsigned ch=0;ch<3;++ch) for(unsigned control=0;control<256;++control) {
+            auto p=uint8_t(1u<<ch), c=uint8_t(16u<<ch);
+            std::vector<uint8_t> data{0xa5,p,0,uint8_t(p|c),1,1,uint8_t(control)};
+            if(control&128) data.push_back(37);
+            data.insert(data.end(),{0,p,2,2,255,0,1});
+            h.play(data);
+            if((control&0x60)==0x40) require(!h.c().data[music+5],"invalid saw-only control accepted");
+            else {
+                require(h.c().data[music+5]==1 && h.c().data[notes+4*ch+2]==(control&127),
+                    "legal tonal control rejected or truncated");
+                h.elapsed(1);
+                require(h.word(notes+4*ch)==0x202,"extended control desynchronized following pitch");
+            }
+        }
+    });
     h.test("waveform changes retain duty and phase on each tonal voice and loops",[&]{
         for(unsigned ch=0;ch<3;++ch) {
             auto pitchbit=uint8_t(1u<<ch), controlbit=uint8_t(16u<<ch);
@@ -370,7 +441,7 @@ void sequence(harness& h) {
             h.play({uint8_t(header),0,0,1},0x21000,true);
             require(h.c().data[sfx+6]==0,"old SFX format accepted");
         }
-        for(unsigned value=0;value<256;++value) if(value&0x40) {
+        for(unsigned value=0;value<256;++value) if((value&0x60)==0x40) {
             h.play({0xa5,15,0,0xf0,uint8_t(value),0,0,0,0,0,1});
             require(h.c().data[music+5]==0,"reserved music control bits accepted");
             h.play({0xd1,0,4,uint8_t(value),0,0,1},0x21000,true);
@@ -882,7 +953,7 @@ void synthesis(harness& h) {
         }
         std::cout<<"pulse reference: "<<cases<<" samples passed\n";
     });
-    h.test("triangle every phase byte, amplitudes, increments, registers and both rates",[&]{
+    for(unsigned wave : {1u,2u}) h.test(wave==1 ? "triangle reference" : "sawtooth reference",[&]{
         unsigned cases=0;
         for(unsigned selected=0;selected<2;++selected) {
             h.command(13,selected);
@@ -893,13 +964,13 @@ void synthesis(harness& h) {
                 for(unsigned position=0;position<256;++position) {
                     auto target=uint16_t((position<<8)|((position&1)?255:0));
                     h.word(phases+2*ch,uint16_t(target-inc));
-                    h.word(controls+3*ch,inc); h.control(ch,amp,(position*71)%256,true);
-                    int triangle=int(2*std::min(position,255-position))-127;
-                    int contribution=int(std::floor(triangle*int(amp)/128.+0.5));
+                    h.word(controls+3*ch,inc); h.control(ch,amp,(position*71)%256,wave);
+                    int value=wave==1 ? int(2*std::min(position,255-position))-127 : int(position)-128;
+                    int contribution=int(std::floor(value*int(amp)/128.+0.5));
                     auto regs=h.c().data; auto sp=h.c().sp();
                     h.synth_sample();
-                    require(h.c().data[held_sample]==std::clamp(128+contribution,0,255),"triangle scaling mismatch");
-                    require(h.word(phases+2*ch)==target,"triangle phase addition mismatch");
+                    require(h.c().data[held_sample]==std::clamp(128+contribution,0,255),"non-pulse scaling mismatch");
+                    require(h.word(phases+2*ch)==target,"non-pulse phase addition mismatch");
                     for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"triangle ISR corrupted registers");
                     require(h.c().sp()==sp && h.c().data[reg::addr::SREG]==regs[reg::addr::SREG],
                         "triangle ISR corrupted stack or SREG");
@@ -908,16 +979,17 @@ void synthesis(harness& h) {
                 h.control(ch,0);
             }
         }
-        std::cout<<"triangle reference: "<<cases<<" samples passed\n";
+        std::cout<<(wave==1 ? "triangle" : "sawtooth")<<" reference: "<<cases<<" samples passed\n";
     });
-    h.test("all pulse/triangle mixtures with noise and clipping",[&]{
-        for(unsigned waves=0;waves<8;++waves) for(unsigned amp : {0u,31u,124u,247u,255u})
+    h.test("all 27 tonal waveform mixtures with noise and clipping",[&]{
+        for(unsigned waves=0;waves<27;++waves) for(unsigned amp : {0u,1u,31u,124u,247u,255u})
         for(unsigned pos=0;pos<256;++pos) for(unsigned path=0;path<3;++path) {
-            int mix=0;
+            int mix=0; auto selection=waves;
             for(unsigned ch=0;ch<3;++ch) {
                 auto p=(pos+71*ch)%256, duty=(29+53*ch)%256;
-                int value=waves&(1u<<ch) ? int(2*std::min(p,255-p))-127 : (p<duty ? 127 : -127);
-                h.control(ch,amp,duty,bool(waves&(1u<<ch)));
+                auto wave=selection%3; selection/=3;
+                int value=wave==2 ? int(p)-128 : wave==1 ? int(2*std::min(p,255-p))-127 : (p<duty ? 127 : -127);
+                h.control(ch,amp,duty,wave);
                 h.word(controls+3*ch,1097); h.word(phases+2*ch,uint16_t((p<<8)-1097));
                 mix+=int(std::floor(value*int(amp)/128.+0.5));
             }
@@ -928,20 +1000,24 @@ void synthesis(harness& h) {
             mix+=(seed&1) ? -int(amp) : int(amp);
             h.synth_sample();
             require(h.c().data[held_sample]==std::clamp(128+mix,0,255),"mixed waveform/noise sample mismatch");
-            require(h.c().data[noise]==seed,"triangle altered noise behavior");
+            require(h.c().data[noise]==seed,"tonal waveform altered noise behavior");
         }
     });
     h.test("tonal instruction cycle counts are phase independent",[&]{
-        for(unsigned ch=0;ch<3;++ch) for(bool triangle : {false,true}) {
+        for(unsigned ch=0;ch<3;++ch) for(unsigned wave=0;wave<3;++wave) {
             auto begin="audio_wave_begin"+std::to_string(ch), end="audio_wave_end"+std::to_string(ch);
-            for(unsigned position=0;position<256;++position) {
-                h.control(ch,247,128,triangle); h.word(controls+3*ch,0); h.word(phases+2*ch,uint16_t(position<<8));
+            for(unsigned amp : {0u,1u,31u,247u,255u}) for(unsigned position=0;position<256;++position) {
+                h.control(ch,amp,128,wave); h.word(controls+3*ch,0); h.word(phases+2*ch,uint16_t(position<<8));
+                h.word(26,0x1234);
                 h.c().pc=uint16_t(h.sym(begin.c_str()));
                 auto cycles=h.until([&]{return h.c().pc==h.sym(end.c_str());});
-                require(cycles==(triangle ? 32 : 33),"tonal synthesis cycle target changed");
+                require(cycles==(wave==2 ? 32 : wave==1 ? 34 : 33),"tonal synthesis cycle target changed");
+                int value=wave==2 ? int(position)-128 : wave==1 ? int(2*std::min(position,255-position))-127 : (position<128 ? 127 : -127);
+                auto contribution=int(std::floor(value*int(amp)/128.+0.5));
+                require(h.word(26)==uint16_t(0x1234+contribution),"signed multiply/rounding/16-bit accumulation mismatch");
             }
         }
-        std::cout<<"tonal synthesis: pulse 33, triangle 32 cycles on all channels and phases\n";
+        std::cout<<"tonal synthesis: pulse 33, triangle 34, sawtooth 32 cycles on all channels and phases\n";
     });
     h.test("sample reference and register preservation",[&]{
         std::array<uint16_t,4> phase{{65520,0x7fff,1234,65500}},inc{{100,3691,257,8000}};
@@ -1075,9 +1151,11 @@ void rates(harness& h) {
 void handoff(harness& h) {
     h.test("worst pending control and reseed ISR costs",[&]{
         uint64_t copymax=0,reseedmax=0;
+        std::array<uint64_t,27> ordinary_min,ordinary_max{};
+        ordinary_min.fill(10000);
         unsigned initial_sp=h.c().sp(), minsp=initial_sp;
-        for(unsigned waves=0;waves<8;++waves)
-        for(unsigned descriptor : {0x80u,0xa4u,0xa5u})
+        for(unsigned waves=0;waves<27;++waves)
+        for(unsigned descriptor : {0u,0x80u,0xa4u,0xa5u})
         for(unsigned amp : {0u,31u,124u,247u,255u})
         for(unsigned signs=0;signs<16;++signs) for(unsigned noise_path=0;noise_path<3;++noise_path) {
             for(unsigned ch=0;ch<4;++ch) {
@@ -1088,7 +1166,13 @@ void handoff(harness& h) {
                 h.word(phases+2*ch,ch==3 && noise_path ? 65535 : phase);
             }
             h.c().data[noise]=noise_path==2 ? 2 : 1;
-            h.c().data[update_waveform]=uint8_t(waves);
+            unsigned packed=0, selection=waves;
+            for(unsigned ch=0;ch<3;++ch) {
+                auto wave=selection%3; selection/=3;
+                packed|=(wave ? 1u<<ch : 0) | (wave==2 ? 8u<<ch : 0);
+            }
+            h.c().data[update_waveform]=uint8_t(packed);
+            if(!descriptor) std::copy_n(h.c().data.begin()+update_controls,16,h.c().data.begin()+controls);
             h.c().data[update]=uint8_t(descriptor);
             auto dest=h.sym("primary_table");
             auto before_sp=h.c().sp();
@@ -1098,15 +1182,25 @@ void handoff(harness& h) {
             auto start=h.c().cycle_count;
             h.until([&]{minsp=std::min(minsp,unsigned(h.c().sp()));return h.c().pc==dest;});
             auto cycles=h.c().cycle_count-start+7;
-            auto& maximum=descriptor==0x80 ? copymax : reseedmax;
-            maximum=std::max(maximum,cycles);
-            require(h.c().data[waveform]==waves,"pending waveform copy lost selection");
+            if(!descriptor) {
+                ordinary_min[waves]=std::min(ordinary_min[waves],cycles);
+                ordinary_max[waves]=std::max(ordinary_max[waves],cycles);
+            } else {
+                auto& maximum=descriptor==0x80 ? copymax : reseedmax;
+                maximum=std::max(maximum,cycles);
+            }
+            require(h.c().data[waveform]==packed,"pending waveform copy lost selection");
             require(before_sp==h.c().sp(),"pending ISR leaked native stack");
         }
-        require(copymax<1024 && reseedmax<1024,"pending ISR exceeded sample deadline");
+        require(copymax==272 && reseedmax==273,"pending ISR cycle target changed");
+        require(ordinary_min[0]==186 && ordinary_max[0]==193,"pulse ISR cycle target changed");
+        require(ordinary_min[13]==189 && ordinary_max[13]==196,"triangle ISR cycle target changed");
+        require(ordinary_min[26]==183 && ordinary_max[26]==190,"saw ISR cycle target changed");
         require(initial_sp-minsp==11,"pending ISR native stack changed");
         std::cout<<"worst pending ISR: copy "<<copymax<<", reseed "<<reseedmax
             <<" cycles; native stack "<<initial_sp-minsp<<" bytes\n";
+        for(unsigned index : {0u,13u,26u})
+            std::cout<<"ordinary ISR waveform "<<index<<": "<<ordinary_min[index]<<".."<<ordinary_max[index]<<" cycles\n";
     });
     h.test("reseed publication is atomic and preserves every ISR register",[&]{
         h.play({0xa5,8,0,0x88,0x00,0x10,0x8a,37,0,0x80,0x8a,37,255,0,1},0x20000,false,0);
@@ -1140,7 +1234,7 @@ void handoff(harness& h) {
 
         for(unsigned ch=0;ch<4;++ch) {
             h.word(notes+4*ch,h.increment(48+ch));
-            h.c().data[notes+4*ch+2]=uint8_t(12+ch+(ch==0 || ch==2 ? 32 : 0));
+            h.c().data[notes+4*ch+2]=uint8_t(12+ch+(ch==0 ? 96 : ch==2 ? 32 : 0));
             h.c().data[notes+4*ch+3]=uint8_t(32+ch*16);
         }
         std::array<uint8_t,16> old_controls;
@@ -1168,7 +1262,7 @@ void handoff(harness& h) {
         require(injected>=4,"did not interrupt enough staging operations");
         std::array<uint8_t,16> packet;
         std::copy_n(h.c().data.begin()+update_controls,16,packet.begin());
-        require(packet[15]==5,"staging did not pack independent waveform bits");
+        require(packet[15]==13,"staging did not pack independent waveform bits");
         auto publication=h.c().cycle_count;
         h.tick();
         require(h.c().cycle_count-publication==2 && h.c().data[update]==0x80,

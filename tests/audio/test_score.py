@@ -37,9 +37,10 @@ def decode(data, raw=False):
                     update.setdefault(channel, {})[field] = midi[value] if field == "note" and not raw else value & 31 if field == "control" else value
                     offset += width
                     if field == "control":
-                        assert value & (0x60 if channel == 3 else 0x40) == 0
+                        wave = value & 0x60
+                        assert not (wave if channel == 3 else wave == 0x40)
                         if value & 32:
-                            update[channel]["wave"] = "triangle"
+                            update[channel]["wave"] = "saw" if value & 64 else "triangle"
                         if value & 128:
                             update[channel]["seed" if channel == 3 else "duty"] = data[offset]
                             offset += 1
@@ -265,9 +266,63 @@ class ScoreTests(unittest.TestCase):
                       "instrument t { wave triangle } channel 3 t { r4 }", "channel 0 { wave noise r4 }"):
             with self.assertRaises(music.ScoreError):
                 music.compile_source(score)
-        for ch, wave in ((0, "noise"), (3, "triangle"), (1, "saw")):
+        for ch, wave in ((0, "noise"), (3, "triangle"), (3, "saw")):
             with self.assertRaises(ValueError):
                 music._encode_events(1 << ch, [(1, {ch: {"wave": wave}})], 1, False)
+
+    def test_saw_controls_instruments_rests_effects_and_all_transitions(self):
+        for ch in range(3):
+            for sfx in (False, True) if ch == 1 else (False,):
+                for before, left in (("pulse", 0), ("triangle", 32), ("saw", 96)):
+                    for after, right in (("pulse", 0), ("triangle", 32), ("saw", 96)):
+                        data = music._encode_events(1 << ch, [
+                            (1, {ch: {"wave": before, "increment": 123, "volume": 9}}),
+                            (1, {ch: {"wave": after}}),
+                            (1, {ch: {"volume": 10, "duty": 64}}),
+                            (1, {ch: {"increment": 0}}),
+                            (1, {ch: {"increment": 456, "volume": 9}}),
+                        ], 1, False, sfx)
+                        events, _, _ = decode(data, raw=True)
+                        self.assertEqual([u[ch]["control"] for _, u in events if "control" in u[ch]], [9, 9, 10, 9])
+                        self.assertEqual(events[2][1][ch]["wave"] if right else "pulse", after)
+                        # Exact bytes: waveform-only control, duty extension, rest,
+                        # then volume-only update retaining the current waveform.
+                        mask = 4 if sfx else 16 << ch
+                        self.assertIn(bytes([0, mask, 9 | right, 0, mask, 0x80 | 10 | right, 64]), data)
+                        self.assertEqual(data[5 if sfx else 6], 0x80 | 9 | left)
+            data = music.compile_source(f"""automation 4ms loop
+                envelope fade {{ points 0ms:0%, 8ms:100% release 8ms:0% }}
+                instrument bass {{ wave saw volume 9 duty 32 envelope fade
+                    frequency_slide {{ delta 100cents over 16ms }}
+                    duty_slide {{ to 192 over 16ms }} }}
+                channel {ch} bass {{ c:32ms r:8ms c:32ms wave triangle c:8ms use bass c:32ms }}""")
+            events, _, terminal = decode(data, raw=True)
+            controls = [(tick, u[ch]) for tick, u in events if "control" in u.get(ch, {})]
+            self.assertEqual(terminal, 2)
+            self.assertTrue(all(u["wave"] == "saw" for tick, u in controls if tick < 19 or tick >= 21))
+            self.assertTrue(any(u["wave"] == "triangle" for _, u in controls))
+            self.assertTrue(any(u["control"] == 0 for _, u in controls))
+            self.assertTrue(any(u.get("duty", 0) > 32 for _, u in controls))
+        for source in ("channel 3 { wave saw c4 }", "channel 3 { wave saw r4 }",
+                       "instrument bass { wave saw } channel 3 bass { r4 }", "channel 0 { wave sawtooth c4 }"):
+            with self.assertRaises(music.ScoreError):
+                music.compile_source(source)
+
+    def test_three_waveform_example(self):
+        source = Path(__file__).resolve().parents[2] / "examples/tonal_waveforms.avms"
+        events, _, terminal = decode(music.compile_source(source.read_text()), raw=True)
+        self.assertEqual(terminal, 2)
+        self.assertNotIn("wave", events[0][1][0])
+        self.assertEqual(events[0][1][1]["wave"], "triangle")
+        self.assertEqual(events[0][1][2]["wave"], "saw")
+
+    def test_legacy_pulse_and_triangle_bytes_are_unchanged(self):
+        for wave, expected in (
+            ("pulse", "a50100114904894001110000000011490409000002"),
+            ("triangle", "a50100114904a94001110000200011490429000002"),
+        ):
+            source = f"loop channel 0 {{ wave {wave} volume 9 duty 64 c:8ms r:4ms c:8ms }}"
+            self.assertEqual(music.compile_source(source), bytes.fromhex(expected))
 
     def test_triangle_oscillator_and_triangle_lfo_are_independent(self):
         data = music.compile_source("automation 4ms channel 2 { wave triangle volume 16 lfo { target volume depth 16 period 16ms wave triangle } c:20ms }")

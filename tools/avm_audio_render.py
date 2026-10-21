@@ -87,13 +87,14 @@ def decode(data):
         for channel in range(4):
             if mask & (16 << channel):
                 control = byte()
-                if control & (0x60 if channel == 3 else 0x40):
+                wave = control & 0x60
+                if (wave if channel == 3 else wave == 0x40):
                     raise ValueError("Reserved A5 control bits")
                 extension = byte() if control & 128 else -1
                 if channel == 3 and extension != -1 and not 1 <= extension <= 63:
                     raise ValueError("Noise seed must be 1..63")
-                # Retain the tonal waveform bit with volume, as in AVR desired state.
-                controls.append((channel, control & 63, extension))
+                # Retain both tonal waveform bits, as in AVR desired state.
+                controls.append((channel, control & 127, extension))
         events.append(Event(tick, tuple(pitches), tuple(controls)))
     raise ValueError("A5 stream has no End/Loop")
 
@@ -145,7 +146,9 @@ def render(data, *, rate=15625., master=128, duration=None, start=0.):
                 position = phases[ch] + k * increments[ch]
                 if ch < 3:
                     high = (position & 65535) >> 8
-                    if volumes[ch] & 32:
+                    if volumes[ch] & 64:
+                        sample = high - 128
+                    elif volumes[ch] & 32:
                         # SBRC/COM, LSL, SUBI: fold high half, then -127..127.
                         sample = 2 * np.where(high & 128, high ^ 255, high) - 127
                     else:

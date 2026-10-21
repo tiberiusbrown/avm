@@ -16447,19 +16447,20 @@ audio_advance:
     rjmp .Laudio_channel_next
 .Laudio_control_store:
     mov  r25, r24
-    andi r25, 0x40
+    andi r25, 0x60
     cpi  r19, 7
     brne 2f
-    ; Noise keeps bit 5 reserved; tonal voices use it for triangle selection.
-    sbrc r24, 5
-    rjmp audio_stream_end
-2:
+    ; Noise reserves both waveform bits.
     tst  r25
     breq 3f
-    rjmp audio_stream_end ; reserved bits must be zero
+    rjmp audio_stream_end
+2:
+    cpi  r25, 0x40 ; saw requires the non-pulse bit too
+    brne 3f
+    rjmp audio_stream_end
 3:
     mov  r25, r24
-    andi r25, 63
+    andi r25, 127
     std  Z+2, r25
     sbrs r24, 7
     rjmp .Laudio_channel_next
@@ -16589,12 +16590,14 @@ audio_commit_prepare:
     ldd  r21, Z+2
     cpi  r18, 3
     breq .Laudio_stage_duty_done
-    ; Fold each owner's retained selection into physical bits 0..2. Noise
+    ; Fold each owner's non-pulse/saw selection into bits 0..2/3..5. Noise
     ; never enters this path. Build only the unpublished staging byte.
     lds  r25, data_audio_update_waveform
     lsr  r25
     bst  r21, 5
     bld  r25, 2
+    bst  r21, 6
+    bld  r25, 5
     sts  data_audio_update_waveform, r25
     ldd  r25, Z+3
     mov  r30, r18
@@ -17060,8 +17063,8 @@ bootloader_reset_wait:
 ; Emit the held sample at fixed latency, then prepare its successor.
 ; Synthesis saves r0:r1, r20:r21, r26:r27 and SREG (9 bytes including PC).
 ; r2 may be borrowed by libm. Duty thresholds and amplitudes are separate.
-; Signed samples are -127..127; round(sample * prepared_amplitude / 128).
-; No SPI or sequencing. Each tonal path costs 33 pulse / 32 triangle cycles.
+; Signed samples are -128..127; round(sample * prepared_amplitude / 128).
+; No SPI or sequencing. Tonal paths: 33 pulse / 34 triangle / 32 saw cycles.
 .macro audio_wave channel
 audio_wave_begin\channel:
     lds  r20, data_audio_phases+2*\channel
@@ -17076,10 +17079,15 @@ audio_wave_begin\channel:
     lds  r0, data_audio_waveform
     sbrs r0, \channel
     rjmp .Laudio_pulse\@
+    sbrc r0, (3+\channel)
+    rjmp .Laudio_saw\@
     sbrc r21, 7
     com  r21
     lsl  r21
     subi r21, 127
+    rjmp .Laudio_mix\@
+.Laudio_saw\@:
+    subi r21, 128 ; signed ramp -128..127
     rjmp .Laudio_mix\@
 .Laudio_pulse\@:
     lds  r0, data_audio_duty+\channel

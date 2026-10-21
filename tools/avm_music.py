@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile AVM scores (.avms) to A5 pulse/triangle music or D1..D3 sound effects."""
+"""Compile AVM scores (.avms) to A5 tonal/noise music or D1..D3 sound effects."""
 import argparse
 import ast
 import math
@@ -10,6 +10,7 @@ from pathlib import Path
 
 EFFECTS = ("volume_slide", "frequency_slide", "duty_slide", "arpeggio",
            "glissando", "note_cut", "lfo", "noise_retrigger", "tremolo")
+WAVE_BITS = {"pulse": 0x00, "triangle": 0x20, "saw": 0x60, "noise": 0x00}
 
 
 def default_sound():
@@ -87,10 +88,10 @@ def _encode_events(mask, events, tail_ticks, loop, sfx=False):
             if "wave" in update:
                 wave = update["wave"]
                 wave = "pulse" if wave == "square" else wave
-                if wave not in (("noise",) if channel == 3 else ("pulse", "triangle")):
-                    raise ValueError("wave must be pulse/triangle on channels 0..2 or noise on channel 3")
+                if wave not in (("noise",) if channel == 3 else ("pulse", "triangle", "saw")):
+                    raise ValueError("wave must be pulse/triangle/saw on channels 0..2 or noise on channel 3")
                 waves[channel] = wave
-            waveform = 32 if waves[channel] == "triangle" else 0
+            waveform = WAVE_BITS[waves[channel]]
             extension = "seed" if channel == 3 else "duty"
             if "duty" in update:
                 duties[channel] = update["duty"]
@@ -109,7 +110,7 @@ def _encode_events(mask, events, tail_ticks, loop, sfx=False):
                 if mask & (1 << channel):
                     changed_notes[channel] = notes[channel]
                     if channel != 3:
-                        changed_controls[channel] = bytes([128 | volumes[channel] | (32 if waves[channel] == "triangle" else 0), duties[channel]])
+                        changed_controls[channel] = bytes([128 | volumes[channel] | WAVE_BITS[waves[channel]], duties[channel]])
                     else:
                         changed_controls.setdefault(channel, bytes([volumes[channel]]))
             first = False
@@ -500,8 +501,8 @@ class ScoreParser:
         else:
             value = self.name()
             if field == "wave":
-                if value not in ("pulse", "square", "triangle", "noise"):
-                    self.error("wave must be pulse (square alias), triangle or noise", token)
+                if value not in ("pulse", "square", "triangle", "saw", "noise"):
+                    self.error("wave must be pulse (square alias), triangle, saw or noise", token)
                 if value == "square":
                     value = "pulse"
         return value
@@ -695,8 +696,8 @@ def score_events(score):
                  "sound": instrument(name, token), "tie": False}
 
         def validate_channel(sound, item):
-            if sound["wave"] == "triangle" and channel == 3:
-                score.error("triangle instruments require a tonal channel (0..2)", item)
+            if sound["wave"] in ("triangle", "saw") and channel == 3:
+                score.error(f"{sound['wave']} instruments require a tonal channel (0..2)", item)
             if sound["wave"] == "noise" and channel != 3:
                 score.error("noise instruments require channel 3", item)
             if sound.get("noise_retrigger") and channel != 3:

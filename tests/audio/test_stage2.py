@@ -6,6 +6,7 @@ import sys
 import tempfile
 import unittest
 from copy import deepcopy
+from itertools import product
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -67,33 +68,31 @@ class RenderTests(unittest.TestCase):
                         self.assertFalse(any(e.kind == "duty_slide" or (e.kind == "lfo" and e.parameters["target"] == "duty")
                                              for e in note.effects))
 
-    def test_triangle_all_phase_values_channels_amplitudes_and_rates(self):
-        for rate in (7812.5, 15625):
+    def test_non_pulse_all_phase_values_channels_amplitudes_and_rates(self):
+        for wave, rate in product(("triangle", "saw"), (7812.5, 15625)):
             for ch in range(3):
                 for volume in (0, 1, 7, 31):
                     for master in (0, 32, 128, 255):
                         inc = 128 if rate == 7812.5 else 256
                         data = avm_music._encode_events(1 << ch, [(1, {ch: {
-                            "increment": inc, "volume": volume, "wave": "triangle", "duty": 0}})], 20, False)
+                            "increment": inc, "volume": volume, "wave": wave, "duty": 0}})], 20, False)
                         actual = render(data, rate=rate, master=master, duration=.05)
                         first = int(np.ceil(rate / 250))
                         amp = volume * master // 32
                         expected = []
                         for step in range(1, 257):
                             high = step & 255
-                            if high & 128:
-                                high ^= 255
-                            sample = (2 * high) - 127
+                            sample = high - 128 if wave == "saw" else 2 * min(high, 255-high) - 127
                             expected.append((sample * amp + 64) // 128)
                         np.testing.assert_array_equal(actual.mix[first:first+256], expected)
                         np.testing.assert_array_equal(actual.pcm[first:first+256], np.clip(np.array(expected)+128, 0, 255))
 
     def test_waveform_switches_duty_retention_loops_mixing_and_phase(self):
         data = avm_music.compile_source("""loop
-            channel 0 { volume 31 duty 32 c:12ms wave triangle c:12ms duty 192 c:12ms wave pulse c:12ms }
-            channel 1 { volume 17 wave triangle e:24ms wave square e:24ms }
-            channel 2 { volume 24 wave triangle g:48ms }
-            channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:48ms }
+            channel 0 { volume 31 duty 32 c:12ms wave triangle c:12ms duty 192 c:12ms wave saw c:12ms wave pulse c:12ms }
+            channel 1 { volume 17 wave triangle e:24ms wave saw e:24ms wave square e:12ms }
+            channel 2 { volume 24 wave saw g:60ms }
+            channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:60ms }
         """)
         events = decode(data)
         for rate in (7812.5, 15625):
@@ -128,7 +127,7 @@ class RenderTests(unittest.TestCase):
                             mix += -amp if state & 1 else amp
                         else:
                             high = phases[ch] >> 8
-                            sample = 2*min(high, 255-high)-127 if controls[ch] & 32 else (127 if high < duties[ch] else -127)
+                            sample = high-128 if controls[ch] & 64 else 2*min(high, 255-high)-127 if controls[ch] & 32 else (127 if high < duties[ch] else -127)
                             mix += (sample*amp+64)//128
                     expected.append(mix)
                 np.testing.assert_array_equal(actual.mix, expected)
@@ -143,11 +142,12 @@ class RenderTests(unittest.TestCase):
                 if control & 128:
                     data += bytes([37])
                 data += bytes([0, 0, 1])
-                if control & (0x60 if ch == 3 else 0x40):
+                wave = control & 0x60
+                if (wave if ch == 3 else wave == 0x40):
                     with self.assertRaises(ValueError):
                         decode(data)
                 else:
-                    self.assertEqual(decode(data)[0].controls[0][1], control & 63)
+                    self.assertEqual(decode(data)[0].controls[0][1], control & 127)
             for data in (bytes([0xa5,1<<ch,0,16<<ch]), bytes([0xa5,1<<ch,0,16<<ch,0x80])):
                 with self.assertRaises(ValueError):
                     decode(data)

@@ -1,0 +1,12 @@
+title "Three tonal waveforms"
+tempo 120
+meter 4/4
+loop
+
+instrument pulse_lead { wave pulse duty 25% volume 10 }
+instrument triangle_harmony { wave triangle volume 10 }
+instrument saw_bass { wave saw volume 10 }
+
+channel 0 pulse_lead octave 4 { c4 e4 g4 c'4 | }
+channel 1 triangle_harmony octave 4 { e4 g4 c'4 g4 | }
+channel 2 saw_bass octave 3 { c2 g2 | }

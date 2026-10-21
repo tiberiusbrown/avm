@@ -76,15 +76,16 @@ py -3.12 tools/midi_to_avms_stage2.py build/stage2/z1overw/optimized.avms `
 - `tools/avm_audio_render.py` validates/decodes A5 ownership, variable pitch
   and control payloads, Continue, End, and Loop. Its event-span renderer uses
   unsigned 16-bit phase, canonical quantized increments (saturating doubling
-  at 7812.5 Hz), phase-high duty comparison or the AVR integer triangle fold,
+  at 7812.5 Hz), phase-high duty comparison, the AVR integer triangle fold,
+  or the signed saw ramp `phase_high - 128`,
   exact FMULSU rounding, prepared
   amplitude `floor(volume * master / 32)`, signed summation, and final clipping.
   The noise voice uses the 255-state B8 LFSR cycle, low-bit polarity, overflow
   clocking, and explicit phase reset/seed commands. Off pitches mute without
   discarding phase. Ordinary notes, waveform/duty changes, and loops preserve phase.
-  Tonal control bit 5 selects triangle, bit 6 stays reserved; noise reserves
-  both bits. Only bits 0..4 contribute to amplitude. Stage 1 instrument export
-  and Stage 2/3 arrangement snapshots retain `wave triangle`; the renderer used
+  Tonal control bits 5..6 select pulse (`00`), triangle (`20`), or saw (`60`);
+  `40` is invalid. Noise reserves both bits. Only bits 0..4 contribute to amplitude.
+  Stage 1 instrument export and Stage 2/3 arrangement snapshots retain tonal waveform selection; the renderer used
   by fitting and validation honors it. Duty fitting applies to pulse instruments.
 - `tools/avm_audio_features.py` loads unsigned/signed PCM and floating WAV,
   checks finite samples, downmixes channels (with a cancellation fallback),

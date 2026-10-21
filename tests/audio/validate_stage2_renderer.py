@@ -29,6 +29,8 @@ SCORES = {
     "phase_loop": "loop channel 0 { volume 12 duty 64 c:80ms duty 128 g:80ms r:40ms c:80ms } channel 3 { wave noise volume 8 noise_retrigger { every 40ms seed 63 } c:280ms }",
     "triangle": "loop channel 0 { wave triangle volume 31 c:80ms } channel 1 { wave triangle volume 17 e:80ms } channel 2 { wave triangle volume 24 g:80ms }",
     "triangle_switch": "loop channel 0 { volume 31 duty 32 c:16ms wave triangle c:16ms duty 192 c:16ms wave pulse c:16ms } channel 1 { wave triangle e:32ms wave square e:32ms } channel 2 { wave triangle g:64ms } channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:64ms }",
+    "saw": "loop channel 0 { wave saw volume 31 octave 1 c:80ms } channel 1 { wave saw volume 1 octave 6 b:80ms } channel 2 { wave saw volume 24 g:80ms }",
+    "saw_switch": "loop channel 0 { volume 31 duty 32 c:16ms wave triangle c:16ms wave saw c:16ms duty 192 c:16ms wave pulse c:16ms } channel 1 { wave saw volume 17 e:80ms } channel 2 { wave triangle volume 24 g:80ms } channel 3 { wave noise volume 31 noise_retrigger { every 16ms seed 37 } c:80ms }",
 }
 
 

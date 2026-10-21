@@ -20,11 +20,11 @@
   "A5": {
     "normal_isr_cycles": [
       183,
-      193
+      196
     ],
     "pwm_store_cycles": 21,
-    "worst_pending_isr_cycles": 269,
-    "worst_reseed_isr_cycles": 270,
+    "worst_pending_isr_cycles": 272,
+    "worst_reseed_isr_cycles": 273,
     "pending_copy_overhead_cycles": 76,
     "reseed_additional_cycles": 6,
     "persistent_audio_bytes": 89,
@@ -35,45 +35,65 @@
     "pending_isr_stack_bytes": 11,
     "demo_native_high_water_bytes": 39,
     "formatter_native_high_water_bytes": 39,
-    "firmware_text_bytes": 29300,
-    "bootloader_headroom_bytes": 396,
+    "firmware_text_bytes": 29328,
+    "bootloader_headroom_bytes": 368,
     "music_read_ahead_bytes": 18,
     "sfx_read_ahead_bytes": 10,
     "foreground_cycles": {
-      "one_voice_pitch_control": 1015,
-      "four_voices_pitch_control": 1243,
-      "four_controls": 1135,
-      "pitch_off": 984,
+      "one_voice_pitch_control": 1021,
+      "four_voices_pitch_control": 1247,
+      "four_controls": 1139,
+      "pitch_off": 990,
       "continue": 579,
       "countdown": 100,
       "music_burst": 416,
-      "maximum_music_event": 1266,
-      "maximum_sfx_event": 1065
+      "maximum_music_event": 1270,
+      "maximum_sfx_event": 1069
     },
     "all_pulse_isr_cycles": [
       186,
       193
     ],
     "all_triangle_isr_cycles": [
+      189,
+      196
+    ],
+    "pulse_channel_cycles": 33,
+    "triangle_channel_cycles": 34,
+    "all_saw_isr_cycles": [
       183,
       190
     ],
-    "pulse_channel_cycles": 33,
-    "triangle_channel_cycles": 32
+    "saw_channel_cycles": 32,
+    "synthesis_isr_text_bytes": 380,
+    "control_copy_text_bytes": 154,
+    "commit_prepare_text_bytes": 158
   },
   "tests": {
     "compiler": 57,
-    "native_audio": 50,
+    "native_audio": 54,
     "interpreter": 471,
     "pulse_reference_samples": 387072,
     "timer_phase_combinations": 32000,
     "large_asset_attacks_each_C_and_CPP": 22000,
-    "python_audio": 113,
+    "python_audio": 116,
     "audio_tools": 565,
-    "triangle_reference_samples": 43008
+    "triangle_reference_samples": 43008,
+    "saw_reference_samples": 43008,
+    "tonal_waveform_mixtures": 27,
+    "ordered_waveform_transitions": 9,
+    "waveform_transition_channels": 3,
+    "waveform_transition_rates": 2,
+    "legacy_assets_identical": 15,
+    "python_audio_by_module": {
+      "test_effects": 28,
+      "test_midi_arranger": 31,
+      "test_score": 29,
+      "test_stage2": 28
+    }
   },
-  "demo_package_sha256": "8751b73ad754142e5b57cc660a6b926b4787d2812af4e3a252edf25ce4cf0222",
-  "firmware_hex_sha256": "7ba19a3b61c9aaf652011b9e684f7a9d166d71053ceb613bcee52dc2797ef613",
+  "demo_package_sha256": "6b63b17f3b61cfafce34a22ac3560312c22b62dd9826e5e50955119cc213a555",
+  "firmware_hex_sha256": "1a16d123c1985d1e3f585e47b8f22dc1f0c716fc30b0fad9735f7ad354d9f7e4",
   "baseline_A5_pulse_recorded": {
     "normal_isr_cycles": [
       171,
@@ -192,8 +212,8 @@
     }
   },
   "renderer_validation": {
-    "fixture_rate_combinations": 30,
-    "samples": 360000,
+    "fixture_rate_combinations": 34,
+    "samples": 408000,
     "mismatched_samples": 0,
     "exact": true,
     "logical": [
@@ -406,9 +426,256 @@
         "samples": 16000,
         "mismatched_samples": 0,
         "max_error": 0
+      },
+      {
+        "fixture": "saw",
+        "rate": 7812.5,
+        "samples": 8000,
+        "mismatched_samples": 0,
+        "max_error": 0
+      },
+      {
+        "fixture": "saw",
+        "rate": 15625,
+        "samples": 16000,
+        "mismatched_samples": 0,
+        "max_error": 0
+      },
+      {
+        "fixture": "saw_switch",
+        "rate": 7812.5,
+        "samples": 8000,
+        "mismatched_samples": 0,
+        "max_error": 0
+      },
+      {
+        "fixture": "saw_switch",
+        "rate": 15625,
+        "samples": 16000,
+        "mismatched_samples": 0,
+        "max_error": 0
       }
     ]
   },
   "demo_guest_sha256": "00795990c92acaceb112cf4fb05f9f98df864d226a131814c8ccf4ae0db1cc4b",
-  "demo_package_matches_firmware_and_guest": true
+  "demo_package_matches_firmware_and_guest": true,
+  "baseline_A5_triangle_recorded": {
+    "normal_isr_cycles": [
+      183,
+      193
+    ],
+    "pwm_store_cycles": 21,
+    "worst_pending_isr_cycles": 269,
+    "worst_reseed_isr_cycles": 270,
+    "pending_copy_overhead_cycles": 76,
+    "reseed_additional_cycles": 6,
+    "persistent_audio_bytes": 89,
+    "control_latch_bytes": 16,
+    "pending_packet_bytes": 17,
+    "native_stack_allowance_bytes": 74,
+    "isr_stack_bytes": 9,
+    "pending_isr_stack_bytes": 11,
+    "demo_native_high_water_bytes": 39,
+    "formatter_native_high_water_bytes": 39,
+    "firmware_text_bytes": 29300,
+    "bootloader_headroom_bytes": 396,
+    "music_read_ahead_bytes": 18,
+    "sfx_read_ahead_bytes": 10,
+    "foreground_cycles": {
+      "one_voice_pitch_control": 1015,
+      "four_voices_pitch_control": 1243,
+      "four_controls": 1135,
+      "pitch_off": 984,
+      "continue": 579,
+      "countdown": 100,
+      "music_burst": 416,
+      "maximum_music_event": 1266,
+      "maximum_sfx_event": 1065
+    },
+    "all_pulse_isr_cycles": [
+      186,
+      193
+    ],
+    "all_triangle_isr_cycles": [
+      183,
+      190
+    ],
+    "pulse_channel_cycles": 33,
+    "triangle_channel_cycles": 32,
+    "synthesis_isr_text_bytes": 356,
+    "control_copy_text_bytes": 154,
+    "commit_prepare_text_bytes": 154
+  },
+  "saw_code_growth_bytes": {
+    "synthesis_macros": 24,
+    "each_synthesis_macro": 8,
+    "foreground_packing": 4,
+    "foreground_validation": 2,
+    "final_alignment_padding": -2,
+    "total_text": 28
+  },
+  "saw_isr_worst_breakdown_cycles": {
+    "columns": [
+      "ordinary",
+      "pending_copy",
+      "pending_reseed"
+    ],
+    "interrupt_entry_and_vector": [
+      7,
+      7,
+      7
+    ],
+    "prologue_through_pwm": [
+      14,
+      14,
+      14
+    ],
+    "remaining_saves": [
+      8,
+      8,
+      8
+    ],
+    "update_check_call_helper": [
+      4,
+      80,
+      86
+    ],
+    "clear_accumulator": [
+      2,
+      2,
+      2
+    ],
+    "three_triangles": [
+      102,
+      102,
+      102
+    ],
+    "noise": [
+      31,
+      31,
+      26
+    ],
+    "bias_saturation_store": [
+      9,
+      9,
+      9
+    ],
+    "epilogue_reti": [
+      19,
+      19,
+      19
+    ],
+    "total": [
+      196,
+      272,
+      273
+    ]
+  },
+  "cpu_utilization_percent": {
+    "7812.5": {
+      "ordinary_before": 9.423828125,
+      "ordinary_after": 9.5703125,
+      "copy_before": 13.134765625,
+      "copy_after": 13.28125,
+      "reseed_before": 13.18359375,
+      "reseed_after": 13.330078125,
+      "global_max_increase_percentage_points": 0.146484375,
+      "all_triangle_increase_percentage_points": 0.29296875,
+      "all_pulse_increase_percentage_points": 0
+    },
+    "15625": {
+      "ordinary_before": 18.84765625,
+      "ordinary_after": 19.140625,
+      "copy_before": 26.26953125,
+      "copy_after": 26.5625,
+      "reseed_before": 26.3671875,
+      "reseed_after": 26.66015625,
+      "global_max_increase_percentage_points": 0.29296875,
+      "all_triangle_increase_percentage_points": 0.5859375,
+      "all_pulse_increase_percentage_points": 0
+    }
+  },
+  "legacy_asset_regression": [
+    {
+      "path": "examples/midi_arranger/tempos.avms",
+      "bytes": 88,
+      "sha256": "a51c514afc6b0c057df79f2a2c48dc7cbbb4fc63c22d79cacd23648d00e8eaba"
+    },
+    {
+      "path": "examples/midi_arranger/repeated.avms",
+      "bytes": 417,
+      "sha256": "b7deb14505d97921db4788697e5462eba7b435530946fa37e10bda5e0dec6dd9"
+    },
+    {
+      "path": "examples/midi_arranger/progression.avms",
+      "bytes": 1875,
+      "sha256": "c47fd72c932d87dd40eaa678bcc12ef0389ce8ff68b8d5b0e9aea5b389a3ec72"
+    },
+    {
+      "path": "examples/midi_arranger/piano.avms",
+      "bytes": 281,
+      "sha256": "ca2dcb9c47ac5d96abd92fadc093655afabb778f88ec949f7924e552e34fb758"
+    },
+    {
+      "path": "examples/midi_arranger/drums.avms",
+      "bytes": 1531,
+      "sha256": "34fecb5cce2d63b5c994d35ba5e47f6fd5b615d99faabfae8e8f7fb3b5009417"
+    },
+    {
+      "path": "examples/midi_arranger/dense.avms",
+      "bytes": 2123,
+      "sha256": "61f849f340e19e0536b245437c28f67220c539f34fc3fef19be359204d20f0c3"
+    },
+    {
+      "path": "projects/audio_demo/waveform_switch.avms",
+      "bytes": 27,
+      "sha256": "a2d406f08857514bb379a8f65b34dd2cfbb9f4d3bbb83c9ca5e80a93effa51f7"
+    },
+    {
+      "path": "projects/audio_demo/tremolo.avms",
+      "bytes": 537,
+      "sha256": "389d54649874494422e935eed91c37e70308fcee6cc8f341dff587211b029d7d"
+    },
+    {
+      "path": "projects/audio_demo/songs/z1overw.avms",
+      "bytes": 6459,
+      "sha256": "ec2794f820820d3e8fdc52ce25308ff8ecba183556bee44fa4bbf870e4e505e9"
+    },
+    {
+      "path": "projects/audio_demo/songs/ff1town.avms",
+      "bytes": 3262,
+      "sha256": "4b9f17d239313aec31d86f8d094caef076d502f8f50d3bd30241d277ab6615f7"
+    },
+    {
+      "path": "projects/audio_demo/songs/ff1overw.avms",
+      "bytes": 5791,
+      "sha256": "b02b652ffd4742aae3ab9b0bd529cc27b0d25d1dec6022e3d0e062f5a53d5ef6"
+    },
+    {
+      "path": "projects/audio_demo/songs/ff1matya.avms",
+      "bytes": 14080,
+      "sha256": "7f646bfd41f199aec18eb8e5729a52a3e9cf477f74e3e9084b1424efae7b8451"
+    },
+    {
+      "path": "projects/audio_demo/music.avms",
+      "bytes": 20741,
+      "sha256": "a603611d2c70251424c65332e402df93d135cb9c7203b681905ea9237f78d816"
+    },
+    {
+      "path": "projects/audio_demo/effects.avms",
+      "bytes": 1431,
+      "sha256": "d8073ca6c4faa277b66e758852df351dd59a2ca84180f3e32933a555d0a300f3"
+    },
+    {
+      "path": "projects/audio_demo/effect.avms",
+      "bytes": 122,
+      "sha256": "19436ab16a32fb039202dd2411e6c7665a889954bf1a65499e6a267680b53d03"
+    }
+  ],
+  "baseline_compiler_sha256": "30c93e3ab862364dfe05f425074bafb92d894b189e1c90860ed971d8c46422ea",
+  "baseline_firmware_hex_sha256": "7ba19a3b61c9aaf652011b9e684f7a9d166d71053ceb613bcee52dc2797ef613",
+  "example": {
+    "path": "examples/tonal_waveforms.avms",
+    "compiled_bytes": 39
+  }
 }

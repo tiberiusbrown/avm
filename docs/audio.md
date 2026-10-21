@@ -19,7 +19,7 @@ This page documents both the source language and its playback format:
 - [Composition and timing rules](#composition-and-timing-rules)
 - [Diagnostics and troubleshooting](#diagnostics-and-troubleshooting)
 - [API, channels, and ownership](#api-channels-and-ownership)
-- [Pulse, triangle, and noise synthesis](#pulse-triangle-and-noise-synthesis)
+- [Pulse, triangle, sawtooth, and noise synthesis](#pulse-triangle-sawtooth-and-noise-synthesis)
 - [Binary formats: A5 and D1–D3](#binary-formats-a5-and-d1d3)
 - [Timers, atomic publication, and memory](#timers-atomic-publication-and-memory)
 - [Demo, validation and limits](#demo-validation-and-limits)
@@ -32,7 +32,7 @@ For offline A5 rendering, emulator validation, and audio-guided MIDI fitting,
 see [Stage 2](midi_to_avms_stage2.md). Its default previews use 15,625 Hz;
 the hardware default remains 7812.5 Hz.
 
-AVM has three identical pulse/triangle oscillators and one noise
+AVM has three identical pulse/triangle/sawtooth oscillators and one noise
 oscillator. Timer1 synthesizes at 7812.5 Hz (default) or 15625 Hz. Timer4 drives
 the differential PC6/PC7 speaker outputs with a 250 kHz hardware PWM carrier.
 Pulse waveform duty and Timer4's output compare duty are different quantities.
@@ -275,7 +275,7 @@ without an instrument uses the default sound settings. Initial octave is 4
 and initial inherited duration is a quarter note, independently per channel.
 
 The declared channels determine binary ownership, even if a channel contains
-only rests. Pulse/triangle hardware is fixed to channels 0..2, noise to channel 3;
+only rests. Pulse/triangle/sawtooth hardware is fixed to channels 0..2, noise to channel 3;
 the `wave` setting does not reroute a voice. Use `wave noise` for noise
 instruments. On channel 3 the note's pitch controls the noise clock rate,
 rather than the fundamental frequency of a pitched pulse.
@@ -429,7 +429,7 @@ channel 0 bell { c4 d e g }
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `wave pulse` | `pulse` | `pulse` (alias `square`) or `triangle` on channels 0..2; `noise` requires channel 3 |
+| `wave pulse` | `pulse` | `pulse` (alias `square`), `triangle`, or `saw` on channels 0..2; `noise` requires channel 3 |
 | `volume 12` | `24` | Integer base amplitude 0..31, before envelope/effects and runtime master gain |
 | `duty 25%` | `128` | Pulse threshold, raw value or percent of 256; rounded and clamped to 0..255 |
 | `gate 80%` | `100%` | Fraction of written note duration before release begins; greater than 0 and at most 100% |
@@ -446,14 +446,14 @@ Pulse duty uses a 256-step cycle: `12.5%` = 32, `25%` = 64, and `50%` = 128.
 `100%` clamps to 255. Duty 0 is always negative; duty 255 retains one negative
 phase bin. Use ordinary intermediate duties for musical tones. Static duty is
 meaningful during pulse synthesis on channels 0..2; noise does not use it.
-Triangle retains the current duty threshold and ignores it during synthesis.
-Changing duty while triangle is selected updates that stored threshold;
+Triangle and sawtooth retain the current duty threshold and ignore it during synthesis.
+Changing duty while either is selected updates that stored threshold;
 switching back to pulse uses it. Each tonal channel selects its own waveform,
 with pulse as the default. Channel 3 always synthesizes noise.
 
 ```text
-instrument bass { wave triangle volume 16 }
-channel 2 bass octave 2 { c4 duty 25% c4 wave pulse c4 wave triangle c4 }
+instrument bass { wave saw volume 9 }
+channel 2 bass octave 2 { c4 duty 25% c4 wave pulse c4 wave triangle c4 wave saw c4 }
 ```
 
 Waveform directives and instrument selections apply to following notes.
@@ -934,7 +934,7 @@ Masters accept 0..255, default to 128, and persist across stop/pause/disable:
 `floor(volume * owner_master / 32)` (0..247). Muting SFX retains ownership.
 The ISR clips the complete signed mix after summation; loud voices can clip.
 
-## Pulse, triangle, and noise synthesis
+## Pulse, triangle, sawtooth, and noise synthesis
 
 Each tonal oscillator has a uint16 phase, uint16 increment, uint8 duty, and
 prepared uint8 amplitude. It advances phase, then compares its upper byte:
@@ -949,9 +949,16 @@ bits, then compute `sample = 2*h - 127`. Equivalently,
 `sample = 2*min(phase_high, 255-phase_high) - 127`. The 256 bins run from
 -127 to +127 and back symmetrically, duplicating the two endpoints. AVR
 `SBRC/COM/LSL/SUBI` generates this in four cycles for either half of the phase.
-`LDS/SBRS/RJMP` selects pulse or triangle. Including phase advancement, prepared
-amplitude load, selection, and multiplication/accumulation, each tonal voice
-costs 33 cycles for pulse or 32 for triangle, independent of phase and duty.
+Sawtooth computes `sample = phase_high - 128`: phase bytes 0, 64, 128, 192,
+and 255 yield -128, -64, 0, 64, and 127. Its downward wrap is instantaneous.
+The existing `LDS/SBRS/RJMP` selects pulse or non-pulse; only the non-pulse
+path checks saw selection with `SBRC/RJMP`. Triangle's original calculation
+and pulse's original instructions are preserved, sharing the same mixer.
+Including phase advancement, amplitude load, selection, and multiplication/
+accumulation, each tonal voice costs **33 pulse / 34 triangle / 32 saw cycles**,
+independent of phase, amplitude, and duty. Three pulses take 99 tonal cycles;
+three triangles take 102; three saws take 96. Wave changes preserve all phase
+bits, including controls during a sustained note, with no new per-sample lookup.
 
 The branchless `CP/SBC/ANDI/SUBI` comparison has fixed instruction cost for
 every threshold and phase. It uses no table, LPM, or Z register. FMULSU,
@@ -1019,9 +1026,9 @@ complete initial controls at loop entry.
 | Control bits | Meaning |
 | --- | --- |
 | 0..4 | Volume 0..31 |
-| 5, channels 0..2 | Triangle selection: 0=pulse, 1=triangle |
-| 5, channel 3 | Reserved; must be zero |
-| 6 | Reserved; must be zero |
+| 5, channels 0..2 | Non-pulse selection |
+| 6, channels 0..2 | Saw selection; valid only with bit 5 set |
+| 5..6, channel 3 | Reserved; both must be zero |
 | 7, channels 0..2 | One unsigned duty byte follows |
 | 7, channel 3 | One nonzero seed byte 1..63 follows; retrigger noise |
 
@@ -1031,9 +1038,11 @@ their own control byte, before the next channel's control. Noise never
 interprets the extension as duty. Seed-only changes still publish a packet.
 For example `00 11 35 07 87 40` waits one tick, sets voice 0 to increment
 1845, volume 7, and duty 64. `00 80 8A 25` reseeds noise with 37 at volume 10.
-`00 10 27` selects triangle at volume 7 on channel 0, retaining its duty and
-phase; `00 10 07` switches back to pulse. Older A5/D1–D3 streams with bit 5
-clear remain pulse. Waveform selection adds no extension byte. A change in
+`00 10 27` selects triangle at volume 7 on channel 0; `00 10 67` selects saw;
+`00 10 07` switches back to pulse. All retain duty and phase. Wave encodings
+are pulse `00`, triangle `20`, and saw `60`; `40` is invalid and terminates
+the stream through the existing error path. Older pulse/triangle A5/D1–D3
+streams retain their interpretation. Waveform selection adds no extension byte. A change in
 waveform emits a control update even if volume and duty are unchanged.
 
 ### Sound-effect events
@@ -1130,9 +1139,19 @@ running Timer0 ISR is not preempted. The unchanged startup/rate-switch sequence
 seeds Timer1 from Timer0, placing deadlines 64..120 cycles apart modulo 128.
 
 The live latch is 16 bytes: four `(increment, prepared_amplitude)` triples,
-three duty bytes, and a waveform byte with triangle flags in bits 0..2.
+three duty bytes, and one packed waveform byte:
+
+| Physical waveform bit | Meaning |
+| --- | --- |
+| 0..2 | Channel 0..2 non-pulse |
+| 3..5 | Channel 0..2 saw selection |
+| 6..7 | Reserved |
+
+For each channel, `(non_pulse, saw)` is `(0,0)` for pulse, `(1,0)` for
+triangle, `(1,1)` for saw, and `(0,1)` reserved. Foreground packs both groups
+from each physical channel's current music/SFX owner using shift-and-insert.
 Desired music/SFX voices remain four-byte records: increment low/high,
-volume/waveform, duty. Bit 5 of desired volume holds triangle; only its lower
+volume/waveform, duty. Bits 5..6 of desired volume retain the waveform; only its lower
 five bits contribute to prepared amplitude. Foreground chooses each current
 music/SFX owner and waits for acknowledgement before reusing the 16-byte
 staging buffer; one descriptor-byte store publishes the whole packet.
@@ -1164,6 +1183,11 @@ Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
 Timer1 uses 9 stack bytes including interrupt PC, 11 while calling the fixed
 copier. It preserves r0/r1/r20/r21/r26/r27 and SREG; Z is untouched even on the
 pending path. The foreground preserves borrowed VM state and guest flags.
+Saw support adds no SRAM or stack use. At 16 MHz the worst ordinary ISR is
+196 cycles (three triangles), versus 193 before saw support; pending copy/
+reseed maxima are 272/273 versus 269/270. PWM writes remain at 21 cycles.
+Worst ordinary CPU use is 9.5703% at 7812.5 Hz and 19.1406% at 15625 Hz,
+increases of 0.1465 and 0.2930 percentage points. All-pulse timing is unchanged.
 
 The compact FX reader performs one interruptible burst per due event with
 24-bit cursors and actual-consumption advancement, preserving speculative
@@ -1191,10 +1215,16 @@ sequencing, ownership, publication races, SPI and native-stack checks, plus
 Python compiler tests and Mini/FX-C assembly. `avm_tests_run` adds all interpreter
 and guest C/C++ fixtures. Large exported C/C++ assets are exercised beyond 64 KB.
 
-Fast arpeggios/LFOs and narrow pulses can alias at either synthesis rate;
+The [three-waveform example](../examples/tonal_waveforms.avms) plays pulse,
+triangle, and saw concurrently and compiles with the normal AVMS command.
+
+Fast arpeggios/LFOs, sawtooth, and narrow pulses can alias at either synthesis rate;
 useful smooth modulation needs several automation samples per period. Keep
 tonal increments below 16384 for the 8 kHz Nyquist limit, or 32768 at 16 kHz;
-pulse harmonics can still alias. Quantization limits small/slow modulation.
+harmonics above 3906.25 Hz at 7812.5 Hz or 7812.5 Hz at 15625 Hz fold back.
+These oscillators are not band-limited: saw has every harmonic, pulse also has
+strong high harmonics, and triangle's odd harmonics decay faster. Higher
+sampling reduces aliasing but does not remove it. Quantization limits small/slow modulation.
 Abrupt duty/cut/ownership changes can click. Four loud voices can clip.
 
 These checks are simulator verification. Physical Arduboy listening, speaker

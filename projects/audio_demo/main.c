@@ -22,7 +22,8 @@ void setup(void) {
     avm_audio_play(music);
 }
 void loop(void) {
-    static uint8_t x, y, paused, rate, song;
+    static uint8_t x, y, paused, song;
+    static uint8_t rate = AVM_AUDIO_RATE_16KHZ;
     if(!avm_next_frame()) return;
     avm_poll_buttons();
     if(avm_just_pressed(AVM_BUTTON_L) || avm_just_pressed(AVM_BUTTON_R)) {

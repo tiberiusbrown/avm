@@ -70,7 +70,7 @@ struct harness {
         }
         return c().cycle_count-start;
     }
-    harness(char** args, bool isolated=true, unsigned expected_top=255) {
+    harness(char** args, bool isolated=true, unsigned expected_top=127) {
         std::ifstream listing(args[2]); require(bool(listing),"listing unavailable");
         for(std::string line; std::getline(listing,line);) {
             std::istringstream in(line); unsigned a; std::string name,token;
@@ -101,6 +101,7 @@ struct harness {
         require(c().pll_num12==48,"emulator PLL frequency wrong");
         require(expected_top ? c().timer1.ocrNa==expected_top :
             (c().timer1.ocrNa==127 || c().timer1.ocrNa==255),"Timer1 TOP wrong");
+        require(c().data[rate]==1,"synthesis must default to 16 kHz");
         require(c().data[reg::addr::TIMSK3] == 0 && c().data[reg::addr::TCCR3B] == 0 &&
             c().data[reg::addr::TCCR3A] == 0, "unused Timer3 must release its interrupt and speaker pin");
         require(!(c().data[reg::addr::PRR0] & (reg::bit::PRR0::PRTIM0 | reg::bit::PRR0::PRTIM1)),
@@ -1554,7 +1555,7 @@ void demo(char** args, bool toggle_rates=false) {
     uint64_t last=begin, maxgap=0;
     unsigned frames=0, samples=0, synthesized=0, minsp=0xaff;
     bool effect=false, paused=false, resumed=false;
-    bool selected_16khz=false, returned_8khz=false;
+    bool selected_8khz=false, returned_16khz=false;
     while(h.c().cycle_count-begin<16000000) {
         auto ms=(h.c().cycle_count-begin)/16000;
         h.c().data[reg::addr::PINB]=((ms>=500 && ms<560)||(ms>=800 && ms<860))?0:16;
@@ -1571,15 +1572,16 @@ void demo(char** args, bool toggle_rates=false) {
         effect|=h.c().data[sfx+5]==1;
         paused|=h.c().data[music+5]==2;
         resumed|=paused && h.c().data[music+5]==1;
-        selected_16khz|=h.c().data[rate]==1;
-        returned_8khz|=selected_16khz && h.c().data[rate]==0;
+        selected_8khz|=h.c().data[rate]==0;
+        returned_16khz|=selected_8khz && h.c().data[rate]==1;
         h.tick();
     }
     require(frames>=55,"demo failed to render at its configured frame rate");
-    require(toggle_rates ? (samples>=10500 && samples<=11300) : (samples>=7750 && samples<=7820),
+    require(toggle_rates ? (samples>=12200 && samples<=13000) : (samples>=15500 && samples<=15625),
         "demo sample clock lost interrupts");
     require(synthesized==samples,"demo output and synthesis clocks differ");
-    require(!toggle_rates || (selected_16khz && returned_8khz),"demo Up button did not toggle both rates");
+    require(toggle_rates ? (selected_8khz && returned_16khz) : !selected_8khz,
+        "demo did not retain 16 kHz by default or toggle both rates");
     require(effect && paused && resumed,"demo button controls failed");
     require(minsp>=scratch_end,"demo native stack collided with private workspace");
     require(h.c().data[music+5]==1,"demo music did not continue automatically");
@@ -1643,7 +1645,7 @@ void playlist(char** args) {
         }
         if(ms>=1100 && ms<1130 && h.c().data[music+5]==2) switched_while_paused=true;
         if(ms>=1250 && h.c().data[music+5]==1) resumed=true;
-        if(ms>=350 && h.c().data[rate]!=1) rate_preserved=false;
+        if(ms>=350 && h.c().data[rate]!=0) rate_preserved=false;
         if(h.c().pc==h.sym("sys_display_impl")) ++frames;
         minsp=std::min(minsp,unsigned(h.c().sp()));
         h.tick();

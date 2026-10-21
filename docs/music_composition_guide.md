@@ -42,8 +42,8 @@ The **AVM song/SFX compiler supports** envelopes and releases, volume slides, fr
 
 - Playback events and note boundaries are quantized to **4 ms ticks**. The first event cannot occur at time zero; it starts after at least one tick. Time is rounded to the nearest 4 ms tick.
 - Smooth curves and LFOs default to **8 ms automation**. `automation 4ms` is available for finer resolution, but can produce substantially more FX reads and larger scores.
-- Audio synthesis runs at **7,812.5 Hz by default** or **15,625 Hz** when selected at runtime. These are sample rates, not the 250 kHz hardware PWM carrier frequency.
-- Notated pitches cover **C1–B6**. At the default rate, keep phase increments below 16,384 for the fundamental to remain below Nyquist; below 32,768 for 15,625 Hz playback. Even when the fundamental is valid, bright pulse-wave harmonics can alias.
+- Audio synthesis runs at **15,625 Hz by default** or **7,812.5 Hz** when selected at runtime. These are sample rates, not the 250 kHz hardware PWM carrier frequency.
+- Notated pitches cover **C1–B6**. At the default rate, keep phase increments below 32,768 for the fundamental to remain below Nyquist; below 16,384 for 7,812.5 Hz playback. Even when the fundamental is valid, bright pulse-wave harmonics can alias.
 - The three tonal channels share the same synthesis capabilities. Pitch, waveform, and duty changes **preserve oscillator phase**, even on repeated notes and at loops; amplitude envelopes rather than phase reset must shape attacks.
 
 ## Core composition principles

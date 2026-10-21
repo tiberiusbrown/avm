@@ -1,8 +1,8 @@
 # AVM audio demo
 
 The demo animates two rectangles while playing four-channel music. A triggers
-a sound effect; B pauses/resumes music. Up toggles between unsmoothed 8 kHz
-(the default) and 16 kHz synthesis, with the selected rate shown on screen.
+a sound effect; B pauses/resumes music. Up toggles between unsmoothed 16 kHz
+(the default) and 8 kHz synthesis, with the selected rate shown on screen.
 The exact rates are 7812.5 and 15625 Hz. Playback needs no guest update call.
 `audio_demo.arduboy` contains the interpreter firmware and FX program data.
 

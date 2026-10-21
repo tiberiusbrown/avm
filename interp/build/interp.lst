@@ -1786,7 +1786,7 @@ SYMBOL TABLE:
 00007250 l       .text	00000000 .L189
 00000200 g       .text	00000000 primary_table
 00000000 g       .text	00000000 __trampolines_start
-00007290 g       .text	00000000 _etext
+00007294 g       .text	00000000 _etext
 00000000 g       .text	00000000 __trampolines_end
 00000000 g       .text	00000000 __dtors_end
 0000498c g       .text	00000000 draw_bitmap_seek_func
@@ -17891,7 +17891,7 @@ Disassembly of section .text:
     697a:	72 4e       	sbci	r23, 0xE2	; 226
     697c:	18 09       	sbc	r17, r8
     697e:	00 10       	cpse	r0, r0
-    6980:	a5 d4       	rcall	.+2378   	; 0x72cc <__data_load_end+0x3b>
+    6980:	a5 d4       	rcall	.+2378   	; 0x72cc <__data_load_end+0x37>
     6982:	e8 00       	.word	0x00e8	; ????
     6984:	00 e8       	ldi	r16, 0x80	; 128
     6986:	76 48       	sbci	r23, 0x86	; 134
@@ -19066,10 +19066,10 @@ Disassembly of section .text:
     7210:	91 71       	andi	r25, 0x11	; 17
     7212:	90 92 81 6f 	sts	0x6F81, r9	; 0x806f81 <_end+0x6575>
     7216:	80 82       	st	Z, r8
-    7218:	89 c1       	rjmp	.+786    	; 0x752c <__data_load_end+0x29b>
-    721a:	72 c0       	rjmp	.+228    	; 0x7300 <__data_load_end+0x6f>
-    721c:	c2 c3       	rjmp	.+1924   	; 0x79a2 <__data_load_end+0x711>
-    721e:	c4 d4       	rcall	.+2440   	; 0x7ba8 <__data_load_end+0x917>
+    7218:	89 c1       	rjmp	.+786    	; 0x752c <__data_load_end+0x297>
+    721a:	72 c0       	rjmp	.+228    	; 0x7300 <__data_load_end+0x6b>
+    721c:	c2 c3       	rjmp	.+1924   	; 0x79a2 <__data_load_end+0x70d>
+    721e:	c4 d4       	rcall	.+2440   	; 0x7ba8 <__data_load_end+0x913>
     7220:	bf be       	out	0x3f, r11	; 63
 
 00007222 <audio_init_func>:
@@ -19104,7 +19104,7 @@ Disassembly of section .text:
     7252:	2c 92       	st	X, r2
     7254:	8a 95       	dec	r24
     7256:	e1 f7       	brne	.-8      	; 0x7250 <.L1^B89>
-    7258:	8f ef       	ldi	r24, 0xFF	; 255
+    7258:	8f e7       	ldi	r24, 0x7F	; 127
     725a:	80 93 88 00 	sts	0x0088, r24	; 0x800088 <__DATA_REGION_ORIGIN__+0x28>
     725e:	46 98       	cbi	0x08, 6	; 8
     7260:	47 98       	cbi	0x08, 7	; 8
@@ -19116,10 +19116,11 @@ Disassembly of section .text:
     726e:	80 93 cf 00 	sts	0x00CF, r24	; 0x8000cf <__DATA_REGION_ORIGIN__+0x6f>
     7272:	81 e0       	ldi	r24, 0x01	; 1
     7274:	80 93 31 0a 	sts	0x0A31, r24	; 0x800a31 <_end+0x25>
-    7278:	80 e8       	ldi	r24, 0x80	; 128
-    727a:	80 93 17 0a 	sts	0x0A17, r24	; 0x800a17 <_end+0xb>
-    727e:	80 93 28 0a 	sts	0x0A28, r24	; 0x800a28 <_end+0x1c>
-    7282:	80 93 24 0a 	sts	0x0A24, r24	; 0x800a24 <_end+0x18>
-    7286:	80 93 25 0a 	sts	0x0A25, r24	; 0x800a25 <_end+0x19>
-    728a:	80 93 26 0a 	sts	0x0A26, r24	; 0x800a26 <_end+0x1a>
-    728e:	08 95       	ret
+    7278:	80 93 6d 0a 	sts	0x0A6D, r24	; 0x800a6d <_end+0x61>
+    727c:	80 e8       	ldi	r24, 0x80	; 128
+    727e:	80 93 17 0a 	sts	0x0A17, r24	; 0x800a17 <_end+0xb>
+    7282:	80 93 28 0a 	sts	0x0A28, r24	; 0x800a28 <_end+0x1c>
+    7286:	80 93 24 0a 	sts	0x0A24, r24	; 0x800a24 <_end+0x18>
+    728a:	80 93 25 0a 	sts	0x0A25, r24	; 0x800a25 <_end+0x19>
+    728e:	80 93 26 0a 	sts	0x0A26, r24	; 0x800a26 <_end+0x1a>
+    7292:	08 95       	ret

@@ -4,9 +4,9 @@ Stage 2 fits the existing Stage 1 `Arrangement` to a MIDI-associated WAV. It
 exports a preserved baseline and a validated optimized score, A5 binary,
 PCM16 listening previews, plots, and JSON reports. **The default evaluation
 and preview rate is 15,625 Hz**, AVM's higher-quality (approximately 16 kHz)
-mode. `--rate 7812.5` explicitly evaluates the default hardware mode instead.
+mode and hardware default. `--rate 7812.5` explicitly evaluates the 8 kHz mode instead.
 The binary retains canonical 15,625 Hz increments, as required by AVM.
-Device players use `avm_audio_rate(1)` to select the matching synthesis rate;
+Device players start at the matching synthesis rate by default;
 the score asset itself does not change the global rate.
 
 The optional numerical dependencies are isolated from the standard-library-only

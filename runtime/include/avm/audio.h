@@ -29,7 +29,7 @@ void avm_audio_sfx_volume(uint8_t volume);
 void avm_audio_enable(void);
 void avm_audio_disable(void);
 enum { AVM_AUDIO_RATE_8KHZ = 0, AVM_AUDIO_RATE_16KHZ = 1 };
-/* Default 8 kHz (7812.5 Hz); 16 kHz is 15625 Hz. No output smoothing.
+/* Default 16 kHz (15625 Hz); 8 kHz is 7812.5 Hz. No output smoothing.
    Changing rate preserves playback and oscillator phase. At 8 kHz, prepared
    increments are doubled, saturating at 65535. Other rate values are ignored.
    The selection persists across stop, pause and disable/enable. */

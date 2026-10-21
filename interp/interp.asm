@@ -17217,7 +17217,7 @@ audio_init_func:
     st   X, ZERO
     dec  r24
     brne 1b
-    ldi  r24, 255 ; default: 16 MHz / 8 / 256 = 7812.5 synthesis interrupts/s
+    ldi  r24, 127 ; default: 16 MHz / 8 / 128 = 15625 synthesis interrupts/s
     sts  OCR1AL, r24
     cbi  PORTC, 6
     cbi  PORTC, 7
@@ -17229,6 +17229,7 @@ audio_init_func:
     sts  OCR4A, r24
     ldi  r24, 1
     sts  data_audio_noise, r24
+    sts  data_audio_rate, r24
     ldi  r24, 128 ; default gain: a volume-31 voice reaches amplitude 124
     sts  data_audio_volume, r24
     sts  data_audio_sfx_volume, r24

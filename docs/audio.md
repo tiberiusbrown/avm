@@ -2,7 +2,7 @@
 
 AVMS (`.avms`) is AVM's text format for music and sequenced sound effects.
 The asset compiler, [`tools/avm_music.py`](../tools/avm_music.py), resolves
-notes, instruments, envelopes, and effects into timed pitch, volume, pulse-duty,
+notes, instruments, envelopes, and effects into timed pitch, volume, waveform, pulse-duty,
 and noise-seed updates. The device plays that binary stream; it does not parse
 AVMS or calculate musical effects during playback.
 
@@ -19,7 +19,7 @@ This page documents both the source language and its playback format:
 - [Composition and timing rules](#composition-and-timing-rules)
 - [Diagnostics and troubleshooting](#diagnostics-and-troubleshooting)
 - [API, channels, and ownership](#api-channels-and-ownership)
-- [Pulse and noise synthesis](#pulse-and-noise-synthesis)
+- [Pulse, triangle, and noise synthesis](#pulse-triangle-and-noise-synthesis)
 - [Binary formats: A5 and D1–D3](#binary-formats-a5-and-d1d3)
 - [Timers, atomic publication, and memory](#timers-atomic-publication-and-memory)
 - [Demo, validation and limits](#demo-validation-and-limits)
@@ -32,7 +32,7 @@ For offline A5 rendering, emulator validation, and audio-guided MIDI fitting,
 see [Stage 2](midi_to_avms_stage2.md). Its default previews use 15,625 Hz;
 the hardware default remains 7812.5 Hz.
 
-AVM has three identical programmable-duty pulse oscillators and one noise
+AVM has three identical pulse/triangle oscillators and one noise
 oscillator. Timer1 synthesizes at 7812.5 Hz (default) or 15625 Hz. Timer4 drives
 the differential PC6/PC7 speaker outputs with a 250 kHz hardware PWM carrier.
 Pulse waveform duty and Timer4's output compare duty are different quantities.
@@ -145,6 +145,12 @@ void play_pickup(void) {
     avm_audio_sfx(pickup);
 }
 ```
+
+Near the beginning, each generated header reports `Compiled song size: N bytes.`
+or `Compiled SFX size: N bytes.` The count is exactly `len(data)`: stream
+headers, events, and terminal commands, excluding final `uint64_t` padding.
+The same comment appears for large assets stored in chunked structures.
+Raw binary exports and the existing opt-in `--stats` output are unchanged.
 
 `avm_audio_play` expects A5 music; `avm_audio_sfx` expects D1–D3 SFX. The
 compiler chooses the header from the score's `sfx` setting and declared
@@ -269,7 +275,7 @@ without an instrument uses the default sound settings. Initial octave is 4
 and initial inherited duration is a quarter note, independently per channel.
 
 The declared channels determine binary ownership, even if a channel contains
-only rests. Pulse hardware is fixed to channels 0..2, noise to channel 3;
+only rests. Pulse/triangle hardware is fixed to channels 0..2, noise to channel 3;
 the `wave` setting does not reroute a voice. Use `wave noise` for noise
 instruments. On channel 3 the note's pitch controls the noise clock rate,
 rather than the fundamental frequency of a pitched pulse.
@@ -423,7 +429,7 @@ channel 0 bell { c4 d e g }
 
 | Setting | Default | Meaning |
 | --- | --- | --- |
-| `wave pulse` | `pulse` | `pulse` or its alias `square`; `noise` requires channel 3 |
+| `wave pulse` | `pulse` | `pulse` (alias `square`) or `triangle` on channels 0..2; `noise` requires channel 3 |
 | `volume 12` | `24` | Integer base amplitude 0..31, before envelope/effects and runtime master gain |
 | `duty 25%` | `128` | Pulse threshold, raw value or percent of 256; rounded and clamped to 0..255 |
 | `gate 80%` | `100%` | Fraction of written note duration before release begins; greater than 0 and at most 100% |
@@ -439,9 +445,21 @@ the channel rather than inside an instrument.
 Pulse duty uses a 256-step cycle: `12.5%` = 32, `25%` = 64, and `50%` = 128.
 `100%` clamps to 255. Duty 0 is always negative; duty 255 retains one negative
 phase bin. Use ordinary intermediate duties for musical tones. Static duty is
-meaningful on channels 0..2; noise does not use it. Available audio waveforms
-are pulse and noise; the sine/triangle/square names used by modulation describe
-the control curve.
+meaningful during pulse synthesis on channels 0..2; noise does not use it.
+Triangle retains the current duty threshold and ignores it during synthesis.
+Changing duty while triangle is selected updates that stored threshold;
+switching back to pulse uses it. Each tonal channel selects its own waveform,
+with pulse as the default. Channel 3 always synthesizes noise.
+
+```text
+instrument bass { wave triangle volume 16 }
+channel 2 bass octave 2 { c4 duty 25% c4 wave pulse c4 wave triangle c4 }
+```
+
+Waveform directives and instrument selections apply to following notes.
+Waveform changes preserve oscillator phase, as pitch and duty changes do.
+An oscillator's `wave triangle` is independent of `lfo { wave triangle ... }`
+or tremolo: those nested `wave` fields select offline modulation curves.
 
 ### Selecting and overriding sounds
 
@@ -824,7 +842,7 @@ a separate off record is unnecessary at that same terminal tick.
 For a loop, Loop is scheduled at the rounded written duration, with a minimum
 of two ticks. A 2000 ms loop reaches Loop at tick 500; its next first event is
 at tick 501, so consecutive pattern onsets are 2000 ms apart. Loop entry
-restores all owned initial pitch/volume/duty controls and restarts precompiled
+restores all owned initial pitch/volume/waveform/duty controls and restarts precompiled
 song-relative modulation. Oscillator phase and ordinary noise state persist;
 only explicit noise retriggers reseed. Releases and updates beyond the fixed
 loop boundary are truncated.
@@ -892,12 +910,12 @@ safe points; no guest update call is needed. All program pointers are packed
 output. There is one one-shot SFX stream, which replaces any previous effect.
 An effect owns only its declared slots, including during rests or volume zero.
 Undeclared slots remain available to music. Music advances underneath SFX;
-End/stop restores its current pitch, volume, and duty atomically. Oscillators
+End/stop restores its current pitch, volume, waveform, and duty atomically. Oscillators
 and phases are shared: there is no hidden fifth oscillator or saved music phase.
 
 `avm_audio_tone(channel, MIDI_note, amplitude)` remains explicitly addressed:
 it can override any physical channel 0..3 until `avm_audio_stop_sfx()`. Tonal
-direct tones use duty 128. Channel/amplitude arguments are masked to 0..3/0..31;
+direct tones use pulse with duty 128. Channel/amplitude arguments are masked to 0..3/0..31;
 MIDI outside 24..95 mutes that channel. Its MIDI lookup table lives in guest
 program storage and is linked only if this API is used. The underlying SYS
 command accepts a raw uint16 phase increment; conversion is outside the firmware.
@@ -916,7 +934,7 @@ Masters accept 0..255, default to 128, and persist across stop/pause/disable:
 `floor(volume * owner_master / 32)` (0..247). Muting SFX retains ownership.
 The ISR clips the complete signed mix after summation; loud voices can clip.
 
-## Pulse and noise synthesis
+## Pulse, triangle, and noise synthesis
 
 Each tonal oscillator has a uint16 phase, uint16 increment, uint8 duty, and
 prepared uint8 amplitude. It advances phase, then compares its upper byte:
@@ -925,6 +943,15 @@ prepared uint8 amplitude. It advances phase, then compares its upper byte:
 100% clamps to 255. Duty 0 is always negative; 255 still has one negative phase
 bin. These extremes can introduce DC and are useful chiefly as effect endpoints.
 At duty 128 every sample equals the former square table for the same phase.
+
+For triangle, let `h = phase >> 8`. If bit 7 is set, complement all eight
+bits, then compute `sample = 2*h - 127`. Equivalently,
+`sample = 2*min(phase_high, 255-phase_high) - 127`. The 256 bins run from
+-127 to +127 and back symmetrically, duplicating the two endpoints. AVR
+`SBRC/COM/LSL/SUBI` generates this in four cycles for either half of the phase.
+`LDS/SBRS/RJMP` selects pulse or triangle. Including phase advancement, prepared
+amplitude load, selection, and multiplication/accumulation, each tonal voice
+costs 33 cycles for pulse or 32 for triangle, independent of phase and duty.
 
 The branchless `CP/SBC/ANDI/SUBI` comparison has fixed instruction cost for
 every threshold and phase. It uses no table, LPM, or Z register. FMULSU,
@@ -980,11 +1007,11 @@ channel order, followed by all selected controls in ascending channel order.
 For example, an event updating both pitch and control for channels 0 and 2
 has change mask `55` and payload order `pitch0, pitch2, control0, control2`.
 An update may mention only owned channels. Unselected controls retain their
-previous values; a pitch-only update does not reset volume or duty.
+previous values; a pitch-only update does not reset volume, waveform, or duty.
 
-Initial desired volume is 24, duty 128, pitch off. Every compiler-generated
+Initial desired volume is 24, duty 128, waveform pulse, pitch off. Every compiler-generated
 first event initializes the pitch and control of every owned voice, including
-tonal duty, even when the voice starts with a rest. This also establishes the
+tonal waveform and duty, even when the voice starts with a rest. This also establishes the
 complete initial controls at loop entry.
 
 ### Control bytes
@@ -992,16 +1019,22 @@ complete initial controls at loop entry.
 | Control bits | Meaning |
 | --- | --- |
 | 0..4 | Volume 0..31 |
-| 5..6 | Reserved; must be zero |
+| 5, channels 0..2 | Triangle selection: 0=pulse, 1=triangle |
+| 5, channel 3 | Reserved; must be zero |
+| 6 | Reserved; must be zero |
 | 7, channels 0..2 | One unsigned duty byte follows |
 | 7, channel 3 | One nonzero seed byte 1..63 follows; retrigger noise |
 
-A volume-only control is one byte. A duty or seed update is two bytes and
-also carries the currently selected volume. Optional bytes immediately follow
+A volume/waveform control is one byte. A duty or seed update is two bytes and
+also carries the currently selected volume and tonal waveform. Optional bytes immediately follow
 their own control byte, before the next channel's control. Noise never
 interprets the extension as duty. Seed-only changes still publish a packet.
 For example `00 11 35 07 87 40` waits one tick, sets voice 0 to increment
 1845, volume 7, and duty 64. `00 80 8A 25` reseeds noise with 37 at volume 10.
+`00 10 27` selects triangle at volume 7 on channel 0, retaining its duty and
+phase; `00 10 07` switches back to pulse. Older A5/D1–D3 streams with bit 5
+clear remain pulse. Waveform selection adds no extension byte. A change in
+waveform emits a control update even if volume and duty are unchanged.
 
 ### Sound-effect events
 
@@ -1096,29 +1129,35 @@ Timer1 COMPA wins simultaneous pending arbitration over Timer0; an already
 running Timer0 ISR is not preempted. The unchanged startup/rate-switch sequence
 seeds Timer1 from Timer0, placing deadlines 64..120 cycles apart modulo 128.
 
-The live latch remains 15 bytes: four `(increment, prepared_amplitude)` triples
-plus three duty bytes. Desired music/SFX voices are four-byte records:
-increment low/high, volume, duty. Foreground waits for acknowledgement before
-reusing the 15-byte staging buffer; one descriptor-byte store publishes it.
+The live latch is 16 bytes: four `(increment, prepared_amplitude)` triples,
+three duty bytes, and a waveform byte with triangle flags in bits 0..2.
+Desired music/SFX voices remain four-byte records: increment low/high,
+volume/waveform, duty. Bit 5 of desired volume holds triangle; only its lower
+five bits contribute to prepared amplitude. Foreground chooses each current
+music/SFX owner and waits for acknowledgement before reusing the 16-byte
+staging buffer; one descriptor-byte store publishes the whole packet.
 Bit 7 means ready, bits 0..5 contain optional seed 1..63 (zero means no reseed),
 bit 6 is unused. Timer1 copies all controls then reseeds before the next sample.
 Transient commands are not retained with desired state. Foreground never
 writes live noise while Timer1 can run. IRQ-disabled/stopped output applies
 packets directly; rate switching explicitly carries no reseed command.
+SFX release restores the current music waveform, including changes made while
+music was hidden. Pause/resume and rate changes retain waveform state and
+phase; stop silences the owner. Direct tones initialize pulse and duty 128.
 
 | Persistent state | Bytes |
 | --- | ---: |
 | Pending ticks, boot-hold byte, two masters | 4 |
-| Live increments/amplitudes and duty | 15 |
+| Live increments/amplitudes, duty and waveform | 16 |
 | Phases and noise LFSR | 9 |
 | Desired music voices / SFX slots | 16 / 8 |
 | Music / SFX stream records | 10 / 7 |
-| Pending latch and descriptor | 16 |
+| Pending latch and descriptor | 17 |
 | Held sample and rate | 2 |
-| Total | 87 |
+| Total | 89 |
 
-Audio occupies 0A15..0A6B, private end 0A6C. Existing 72-byte formatter/text
-scratch ends at 0AB4, leaving 76 bytes for native stack. Audio aliases 20 scratch
+Audio occupies 0A15..0A6D, private end 0A6E. Existing 72-byte formatter/text
+scratch ends at 0AB6, leaving 74 bytes for native stack. Audio aliases 20 scratch
 bytes: dirty, transient reseed and 18-byte event buffer; persistent state and
 the pending packet never alias scratch. Guest memory addresses are unchanged.
 Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
@@ -1137,7 +1176,7 @@ transitions/reseeds cannot be recovered. Pending time saturates at 255 ticks
 ## Demo, validation and limits
 
 `projects/audio_demo/music.avms` retains Sunlit Garden's 39.936-second form,
-with pulse melody/vibrato on 0, harmony on 1, 50% pulse bass on 2 and noise on 3.
+with pulse melody/vibrato on 0, pulse harmony on 1, triangle bass on 2 and noise on 3.
 `effect.avms` demonstrates simultaneous pitch/volume/duty slides, cut and
 retrigger. `effects.avms` additionally demonstrates arpeggio and glissando.
 A triggers SFX; B pauses; Up changes rate. Left/right switch between Sunlit

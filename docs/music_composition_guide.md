@@ -8,12 +8,29 @@ AVM provides **four monophonic channels**:
 
 | Channel | Sound source | Typical role |
 | --- | --- | --- |
-| 0 | Square/pulse wave, programmable duty cycle | Lead melody; never stolen by sequenced SFX |
-| 1 | Square/pulse wave, programmable duty cycle | Harmony, countermelody, or arpeggios; tonal SFX slot |
-| 2 | Square/pulse wave, programmable duty cycle | Bass or rhythmic ostinato; never stolen by sequenced SFX |
+| 0 | Pulse with programmable duty, or triangle | Lead melody; never stolen by sequenced SFX |
+| 1 | Pulse with programmable duty, or triangle | Harmony, countermelody, or arpeggios; tonal SFX slot |
+| 2 | Pulse with programmable duty, or triangle | Bass or rhythmic ostinato; never stolen by sequenced SFX |
 | 3 | Noise generator | Drums and percussion; noise SFX slot |
 
-All three pitched channels use **square/pulse synthesis**. There are **no triangle, sawtooth, or sine oscillators**. Duty-cycle adjustment can vary the tone of a pulse wave, but it does not turn it into one of those other waveforms.
+Each pitched channel independently selects **pulse or triangle synthesis**. Use
+`wave triangle` for a softer bass or accompaniment, and `wave pulse` (alias
+`wave square`) for programmable-duty tones. Pulse is the default. There are
+no sawtooth or sine oscillators. A nested LFO's `wave triangle` selects its
+modulation curve independently of the audible oscillator.
+
+```text
+instrument bass { wave triangle volume 9 }
+channel 2 bass octave 2 {
+    c4 duty 25% c4 wave pulse c4 wave triangle c4
+}
+```
+
+Waveform changes preserve phase. Triangle ignores duty while retaining its
+value, so the pulse note in this example uses 25%. Duty automation can still
+prepare a later pulse sound. Music and SFX retain their own selections; when
+SFX releases a channel, its current music waveform returns. Compare levels
+by ear: equal peak amplitude does not make triangle and pulse equally loud.
 
 The roles are compositional conventions, but **sequenced SFX routing is fixed**. Put the essential melody on physical channel 0, the bass on 2, expendable pitched accompaniment on 1, and percussion on 3. A sequenced SFX can claim channel 1, channel 3, or both; it cannot claim channel 0 or 2. The low-level, manually addressed direct-tone API is a separate exception and can target any channel.
 
@@ -27,7 +44,7 @@ The **AVM song/SFX compiler supports** envelopes and releases, volume slides, fr
 - Smooth curves and LFOs default to **8 ms automation**. `automation 4ms` is available for finer resolution, but can produce substantially more FX reads and larger scores.
 - Audio synthesis runs at **7,812.5 Hz by default** or **15,625 Hz** when selected at runtime. These are sample rates, not the 250 kHz hardware PWM carrier frequency.
 - Notated pitches cover **C1–B6**. At the default rate, keep phase increments below 16,384 for the fundamental to remain below Nyquist; below 32,768 for 15,625 Hz playback. Even when the fundamental is valid, bright pulse-wave harmonics can alias.
-- The three pulse channels share the same synthesis capabilities. Pitch and duty changes **preserve oscillator phase**, even on repeated notes and at loops; amplitude envelopes rather than phase reset must shape attacks.
+- The three tonal channels share the same synthesis capabilities. Pitch, waveform, and duty changes **preserve oscillator phase**, even on repeated notes and at loops; amplitude envelopes rather than phase reset must shape attacks.
 
 ## Core composition principles
 
@@ -66,7 +83,7 @@ Gameplay music may loop for minutes. Favor phrases with:
 - Clear phrase endings and musically satisfying loop points.
 - Space for incidental game sound effects.
 
-Loop transitions should preserve rhythmic continuity and avoid unwanted clicks or abrupt harmonic surprises unless intentional. At loop entry, AVM restores every owned channel's **initial pitch, volume, and duty**, and precompiled song-relative modulation starts over. Oscillator phase is **not reset**, and a release tail is truncated at a looping score's boundary. Test the actual loop rather than assuming a held note or release will bridge it.
+Loop transitions should preserve rhythmic continuity and avoid unwanted clicks or abrupt harmonic surprises unless intentional. At loop entry, AVM restores every owned channel's **initial pitch, volume, waveform, and duty**, and precompiled song-relative modulation starts over. Oscillator phase is **not reset**, and a release tail is truncated at a looping score's boundary. Test the actual loop rather than assuming a held note or release will bridge it.
 
 ## Designing pulse-wave instruments
 

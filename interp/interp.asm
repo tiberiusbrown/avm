@@ -82,7 +82,8 @@
 #define data_audio_volume            (data_audio_begin+2)
 #define data_audio_controls          (data_audio_begin+3)
 #define data_audio_duty              (data_audio_controls+12)
-#define data_audio_sfx_volume        (data_audio_duty+3)
+#define data_audio_waveform          (data_audio_duty+3)
+#define data_audio_sfx_volume        (data_audio_waveform+1)
 #define data_audio_phases            (data_audio_sfx_volume+1)
 #define data_audio_noise             (data_audio_phases+8)
 #define data_audio_music_notes       (data_audio_noise+1)
@@ -90,8 +91,9 @@
 #define data_audio_music             (data_audio_sfx_notes+8)
 #define data_audio_sfx               (data_audio_music+10)
 #define data_audio_update_controls   (data_audio_sfx+7)
-; Bit 7 publishes all 15 controls; bits 0..5 optionally reseed noise (1..63).
-#define data_audio_update            (data_audio_update_controls+15)
+#define data_audio_update_waveform   (data_audio_update_controls+15)
+; Bit 7 publishes all 16 controls; bits 0..5 optionally reseed noise (1..63).
+#define data_audio_update            (data_audio_update_waveform+1)
 #define data_audio_sample            (data_audio_update+1)
 #define data_audio_rate              (data_audio_sample+1)
 #define data_audio_end               (data_audio_rate+1)
@@ -104,8 +106,8 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
-.if (data_audio_end - data_audio_begin) != 87
-    .error "audio persistent SRAM must occupy 87 bytes"
+.if (data_audio_end - data_audio_begin) != 89
+    .error "audio persistent SRAM must occupy 89 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -16410,7 +16412,7 @@ audio_advance:
     rjmp audio_stream_end
 3:
     sts  data_audio_dirty, ONE
-    ; Desired states are (increment low, increment high, volume, duty).
+    ; Desired states are (increment low, increment high, volume/wave, duty).
     mov  r24, r23
     andi r24, 15
     breq .Laudio_volumes_only
@@ -16445,12 +16447,19 @@ audio_advance:
     rjmp .Laudio_channel_next
 .Laudio_control_store:
     mov  r25, r24
-    andi r25, 0x60
+    andi r25, 0x40
+    cpi  r19, 7
+    brne 2f
+    ; Noise keeps bit 5 reserved; tonal voices use it for triangle selection.
+    sbrc r24, 5
+    rjmp audio_stream_end
+2:
+    tst  r25
     breq 3f
     rjmp audio_stream_end ; reserved bits must be zero
 3:
     mov  r25, r24
-    andi r25, 31
+    andi r25, 63
     std  Z+2, r25
     sbrs r24, 7
     rjmp .Laudio_channel_next
@@ -16551,6 +16560,7 @@ audio_commit_wait:
 
 audio_commit_prepare:
     rcall audio_commit_wait
+    sts  data_audio_update_waveform, ZERO
     lds  r23, data_audio_sfx+AUDIO_MASK
     ldi  r18, 0 ; physical voice index
     ldi  r26, lo8(data_audio_update_controls)
@@ -16579,6 +16589,13 @@ audio_commit_prepare:
     ldd  r21, Z+2
     cpi  r18, 3
     breq .Laudio_stage_duty_done
+    ; Fold each owner's retained selection into physical bits 0..2. Noise
+    ; never enters this path. Build only the unpublished staging byte.
+    lds  r25, data_audio_update_waveform
+    lsr  r25
+    bst  r21, 5
+    bld  r25, 2
+    sts  data_audio_update_waveform, r25
     ldd  r25, Z+3
     mov  r30, r18
     subi r30, lo8(-(data_audio_update_controls+12))
@@ -16622,7 +16639,9 @@ audio_commit_prepare:
     lsr  r23
     inc  r18
     cpi  r18, 4
-    brlo .Laudio_stage
+    brsh 1f
+    rjmp .Laudio_stage
+1:
     ret
 
 ; Called after the PWM store by synthesis, or with its interrupt unavailable.
@@ -16630,7 +16649,7 @@ audio_commit_prepare:
 ; native libm may have borrowed r2 when the ISR accepts a pending update.
 audio_apply_update:
     .set audio_control_offset, 0
-    .rept 15
+    .rept 16
         lds r21, data_audio_update_controls+audio_control_offset
         sts data_audio_controls+audio_control_offset, r21
         .set audio_control_offset, audio_control_offset+1
@@ -17042,8 +17061,9 @@ bootloader_reset_wait:
 ; Synthesis saves r0:r1, r20:r21, r26:r27 and SREG (9 bytes including PC).
 ; r2 may be borrowed by libm. Duty thresholds and amplitudes are separate.
 ; Signed samples are -127..127; round(sample * prepared_amplitude / 128).
-; No SPI, sequencing, calls, or waveform-dependent branches.
+; No SPI or sequencing. Each tonal path costs 33 pulse / 32 triangle cycles.
 .macro audio_wave channel
+audio_wave_begin\channel:
     lds  r20, data_audio_phases+2*\channel
     lds  r21, data_audio_phases+2*\channel+1
     lds  r0, data_audio_controls+3*\channel
@@ -17053,16 +17073,27 @@ bootloader_reset_wait:
     sts  data_audio_phases+2*\channel, r20
     sts  data_audio_phases+2*\channel+1, r21
     lds  r20, data_audio_controls+3*\channel+2
+    lds  r0, data_audio_waveform
+    sbrs r0, \channel
+    rjmp .Laudio_pulse\@
+    sbrc r21, 7
+    com  r21
+    lsl  r21
+    subi r21, 127
+    rjmp .Laudio_mix\@
+.Laudio_pulse\@:
     lds  r0, data_audio_duty+\channel
     cp   r21, r0
     sbc  r21, r21 ; phase_high < duty -> 0xff, otherwise 0
     andi r21, 0xfe
     subi r21, 127 ; 0xfe-127 = +127, 0-127 = -127
+.Laudio_mix\@:
     fmulsu r21, r20
     sbc  r21, r21 ; sign before FMULSU's shift; contribution may exceed int8
     lsl  r0 ; round toward nearest, ties toward positive
     adc  r26, r1
     adc  r27, r21
+audio_wave_end\channel:
 .endm
 
 timer1_compa_isr:

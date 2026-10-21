@@ -34,7 +34,7 @@ original synthetic examples, limitations and validation details.
 The original tune, **Sunlit Garden**, loops through 16 bars in C major at about
 96 BPM (39.936 seconds per loop). Its first eight bars introduce and develop
 the melody; the next four move through Em7, Am7, Dm7, and Gadd9 before a final
-four-bar return. Channel 0 carries a 25% pulse melody with vibrato, channel 2 plays 50% pulse
+four-bar return. Channel 0 carries a 25% pulse melody with vibrato, channel 2 plays triangle
 root/fifth bass, channel 1 adds 12.5% pulse eighth-note arpeggios, and channel 3 supplies low noise kicks,
 soft backbeats, and quiet offbeat ticks. Short volume fades soften the notes
 and percussion. A sound effect temporarily takes over channels 1 and 3 while
@@ -110,4 +110,10 @@ Effects use the top-level `sfx` setting and declare channel 1 (tonal), channel 3
 (noise), or both. The compiler emits a compact one-shot D1/D2/D3 stream; an
 omitted slot leaves music audible. Declared slots retain ownership during rests.
 Place melody on voice 0, harmony on 1, bass on 2, and percussion/noise on 3.
-All pitch and duty updates preserve oscillator phase.
+All pitch, waveform and duty updates preserve oscillator phase.
+
+[`waveform_switch.avms`](waveform_switch.avms) is a small additional loop that
+switches one channel from pulse to triangle and back. A duty change during
+triangle is retained for the next pulse note. Compile it with
+`python tools/avm_music.py projects/audio_demo/waveform_switch.avms build/waveform_switch.bin`.
+Generated song/SFX headers include their exact stream size before word padding.

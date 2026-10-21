@@ -87,12 +87,13 @@ def decode(data):
         for channel in range(4):
             if mask & (16 << channel):
                 control = byte()
-                if control & 0x60:
+                if control & (0x60 if channel == 3 else 0x40):
                     raise ValueError("Reserved A5 control bits")
                 extension = byte() if control & 128 else -1
                 if channel == 3 and extension != -1 and not 1 <= extension <= 63:
                     raise ValueError("Noise seed must be 1..63")
-                controls.append((channel, control & 31, extension))
+                # Retain the tonal waveform bit with volume, as in AVR desired state.
+                controls.append((channel, control & 63, extension))
         events.append(Event(tick, tuple(pitches), tuple(controls)))
     raise ValueError("A5 stream has no End/Loop")
 
@@ -138,16 +139,19 @@ def render(data, *, rate=15625., master=128, duration=None, start=0.):
             k = np.arange(lo - cursor + 1, end - cursor + 1, dtype=np.int64)
             out = np.zeros(len(k), dtype=np.int16)
             for ch in range(4):
-                amp = volumes[ch] * master // 32 if increments[ch] else 0
+                amp = (volumes[ch] & 31) * master // 32 if increments[ch] else 0
                 if not amp:
                     continue
                 position = phases[ch] + k * increments[ch]
                 if ch < 3:
-                    positive = ((position & 65535) >> 8) < duties[ch]
-                    # FMULSU rounding: floor(sign * 127 * amp / 128 + .5).
-                    plus = (127 * amp + 64) // 128
-                    minus = (-127 * amp + 64) // 128
-                    out += np.where(positive, plus, minus).astype(np.int16)
+                    high = (position & 65535) >> 8
+                    if volumes[ch] & 32:
+                        # SBRC/COM, LSL, SUBI: fold high half, then -127..127.
+                        sample = 2 * np.where(high & 128, high ^ 255, high) - 127
+                    else:
+                        sample = np.where(high < duties[ch], 127, -127)
+                    # FMULSU rounding: floor(sample * amp / 128 + .5).
+                    out += ((sample * amp + 64) // 128).astype(np.int16)
                 else:
                     lfsr = _cycle[(noise_index + (position >> 16)) % 255]
                     out += np.where(lfsr & 1, -amp, amp).astype(np.int16)

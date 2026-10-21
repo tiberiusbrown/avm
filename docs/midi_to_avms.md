@@ -3,6 +3,12 @@
 `tools/midi_to_avms.py` converts synchronous Standard MIDI Files (types 0 and
 1) to readable AVMS and validates every result with `tools/avm_music.py`.
 It arranges three monophonic pulse parts and one monophonic noise part:
+
+These are the arranger's default timbres. AVM also accepts `wave triangle` on
+any tonal instrument in an edited AVMS score or arrangement IR. The compiler
+stores its selection in tonal control bit 5 without adding event bytes.
+Duty is retained during triangle synthesis and becomes audible again on pulse.
+The Stage 2/3 renderer and saved arrangement instruments preserve this choice.
 melody on 0, interruptible accompaniment on 1, bass on 2, percussion on 3.
 No interpreter, synthesis, guest API, or binary format changes are needed.
 

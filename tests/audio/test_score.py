@@ -37,7 +37,9 @@ def decode(data, raw=False):
                     update.setdefault(channel, {})[field] = midi[value] if field == "note" and not raw else value & 31 if field == "control" else value
                     offset += width
                     if field == "control":
-                        assert value & 0x60 == 0
+                        assert value & (0x60 if channel == 3 else 0x40) == 0
+                        if value & 32:
+                            update[channel]["wave"] = "triangle"
                         if value & 128:
                             update[channel]["seed" if channel == 3 else "duty"] = data[offset]
                             offset += 1
@@ -204,6 +206,74 @@ class ScoreTests(unittest.TestCase):
             self.assertEqual(unpacked[:length], data)
             self.assertLess(len(unpacked) - length, 8)
             self.assertEqual(unpacked[length:], bytes(len(unpacked) - length))
+            self.assertIn(f"/* Compiled song size: {len(data)} bytes. */", header)
+
+    def test_header_exact_stream_sizes_and_cli_output(self):
+        import re
+        import subprocess
+        import sys
+        import tempfile
+        for kind, score in (("song", "channel 0 { c:8ms }"), ("SFX", "sfx channel 1 { wave triangle c:8ms }")):
+            data = music.compile_source(score)
+            self.assertNotEqual(len(data) % 8, 0)
+            header = music.c_array(data, "asset")
+            self.assertEqual(int(re.search(r"Compiled .* size: (\d+) bytes", header)[1]), len(data))
+            self.assertIn(f"Compiled {kind} size:", header)
+            # Force the chunked representation with a real, large encoded stream.
+            ch = 1 if kind == "SFX" else 0
+            large = music._encode_events(1 << ch, ((1, {ch: {"increment": 1234}}) for _ in range(175000)),
+                                         1, False, kind == "SFX")
+            exported = music.c_array(large, "large")
+            self.assertIn("_avm_storage", exported)
+            self.assertIn(f"Compiled {kind} size: {len(large)} bytes.", exported)
+            with tempfile.TemporaryDirectory() as folder:
+                source, output = Path(folder)/"asset.avms", Path(folder)/"asset.bin"
+                source.write_text(score)
+                command = [sys.executable, str(Path(music.__file__)), str(source), str(output)]
+                result = subprocess.run(command, capture_output=True, check=True)
+                self.assertEqual((result.stdout, result.stderr), (b"", b""))
+                self.assertEqual(output.read_bytes(), data)
+                header_output = Path(folder)/"asset.h"
+                result = subprocess.run(command[:3] + [str(header_output), "--name", "asset"], capture_output=True, check=True)
+                self.assertEqual((result.stdout, result.stderr), (b"", b""))
+                self.assertEqual(header_output.read_text(), header)
+                result = subprocess.run(command + ["--stats"], capture_output=True, check=True)
+                self.assertIn(f"bytes={len(data)}".encode(), result.stderr)
+
+    def test_triangle_controls_retention_switches_alias_and_initial_loop_state(self):
+        for ch in range(3):
+            data = music.compile_source(f"""loop
+                instrument t {{ wave triangle duty 64 volume 12 }}
+                channel {ch} {{ volume 12 duty 32 c:8ms wave triangle c:8ms
+                    duty 192 c:8ms wave pulse c:8ms use t c:8ms wave square c:8ms }}""")
+            # Inspect packed controls directly; waveform-only updates need no extension.
+            offset, controls = 2, []
+            while data[offset+1]:
+                mask = data[offset+1]
+                offset += 2 + (2 if mask & (1 << ch) else 0)
+                if mask & (16 << ch):
+                    control = data[offset]
+                    offset += 1
+                    duty = data[offset] if control & 128 else None
+                    offset += int(bool(control & 128))
+                    controls.append((control, duty))
+            self.assertEqual(controls, [(140, 32), (44, None), (172, 192), (12, None), (172, 64), (12, None)])
+            self.assertEqual(data[-1], 2)
+        self.assertEqual(music.compile_source("channel 0 { wave square c4 }"),
+                         music.compile_source("channel 0 { wave pulse c4 }"))
+        for score in ("channel 3 { wave triangle c4 }", "channel 3 { wave triangle r4 }",
+                      "instrument t { wave triangle } channel 3 t { r4 }", "channel 0 { wave noise r4 }"):
+            with self.assertRaises(music.ScoreError):
+                music.compile_source(score)
+        for ch, wave in ((0, "noise"), (3, "triangle"), (1, "saw")):
+            with self.assertRaises(ValueError):
+                music._encode_events(1 << ch, [(1, {ch: {"wave": wave}})], 1, False)
+
+    def test_triangle_oscillator_and_triangle_lfo_are_independent(self):
+        data = music.compile_source("automation 4ms channel 2 { wave triangle volume 16 lfo { target volume depth 16 period 16ms wave triangle } c:20ms }")
+        events, _, _ = decode(data)
+        self.assertEqual([u[2]["control"] for _, u in events], [0, 16, 31, 16, 0])
+        self.assertTrue(all(u[2]["wave"] == "triangle" for _, u in events))
 
     def test_json_input_is_rejected(self):
         with self.assertRaises(music.ScoreError):

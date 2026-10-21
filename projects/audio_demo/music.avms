@@ -16,7 +16,7 @@ envelope melody5_env { points 0ms:1, 156ms:9/13 curve step }
 instrument melody5 { lfo { target pitch depth 12cents period 240ms wave sine phase note } wave pulse duty 25% volume 13 envelope melody5_env gate 5/12 }
 
 envelope bass_env { points 0ms:1, 312ms:7/9, 624ms:5/9 curve step }
-instrument bass { wave pulse duty 50% volume 9 envelope bass_env gate 3/4 }
+instrument bass { wave triangle duty 50% volume 9 envelope bass_env gate 3/4 }
 
 envelope arpeggio_env { points 0ms:1, 156ms:1/2 curve step }
 instrument arpeggio { wave pulse duty 12.5% volume 6 envelope arpeggio_env gate 5/6 }

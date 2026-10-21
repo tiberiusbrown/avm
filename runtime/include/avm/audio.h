@@ -10,7 +10,8 @@ extern "C" {
    (voice 3) slots. Arrange melody on 0, harmony on 1, bass on 2. Undeclared SFX slots leave music audible; declared slots
    retain ownership through rests. Raw uint16 phase increments use 15625 Hz
    regardless of the selected synthesis rate. Pitch updates preserve phase.
-   Tonal voices use 8-bit pulse duty (default 128=50%). Noise retriggers
+   Tonal controls select pulse (default, duty 128=50%) or triangle independently.
+   Waveform changes preserve phase; triangle retains but ignores duty. Noise retriggers
    use seeds 1..63. The reader uses 24-bit cursors and may read ahead past the terminator. */
 void avm_audio_play(void const AVM_PROGMEM *song);
 void avm_audio_sfx(void const AVM_PROGMEM *effect);
@@ -39,7 +40,8 @@ uint8_t avm_audio_status(void);
 /* Replaces SFX with a latched tone until stop_sfx; channel 0..3 (3=noise),
    MIDI 24..95, amplitude 0..31. Out-of-range MIDI mutes the selected voice.
    MIDI conversion is in the guest runtime; explicit channel overrides remain
-   available independently of sequenced SFX routing. Phase is preserved. */
+   available independently of sequenced SFX routing. Tonal direct tones default
+   to pulse with duty 128. Phase is preserved. */
 void avm_audio_tone(uint8_t channel, uint8_t note, uint8_t amplitude);
 #ifdef __cplusplus
 }

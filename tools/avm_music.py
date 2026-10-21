@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile AVM scores (.avms) to A5 pulse music or D1..D3 sound effects."""
+"""Compile AVM scores (.avms) to A5 pulse/triangle music or D1..D3 sound effects."""
 import argparse
 import ast
 import math
@@ -66,14 +66,15 @@ def _encode_events(mask, events, tail_ticks, loop, sfx=False):
         raise ValueError("SFX must be one-shot and declare only channels 1 and/or 3")
     output = bytearray([0xD0 | ((mask >> 1) & 1) | ((mask >> 2) & 2)]) if sfx else bytearray([0xA5, mask])
     notes, volumes, duties = [0] * 4, [24] * 4, [128] * 4
+    waves = ["pulse"] * 3 + ["noise"]
     first = True
     for ticks, updates in events:
         changed_notes, changed_controls = {}, {}
         for channel, update in updates.items():
             if channel not in range(4) or not mask & (1 << channel):
                 raise ValueError("event updates an undeclared channel")
-            if update.keys() - {"note", "increment", "volume", "duty", "seed"}:
-                raise ValueError("event fields must be note/increment, volume, duty or seed")
+            if update.keys() - {"note", "increment", "volume", "wave", "duty", "seed"}:
+                raise ValueError("event fields must be note/increment, volume, wave, duty or seed")
             if "note" in update or "increment" in update:
                 notes[channel] = update["increment"] if "increment" in update else note_increment(update["note"])
                 if not isinstance(notes[channel], int) or not 0 <= notes[channel] <= 65535:
@@ -83,13 +84,20 @@ def _encode_events(mask, events, tail_ticks, loop, sfx=False):
                 volumes[channel] = update["volume"]
             if not isinstance(volumes[channel], int) or not 0 <= volumes[channel] <= 31:
                 raise ValueError("volume must be 0..31")
+            if "wave" in update:
+                wave = update["wave"]
+                wave = "pulse" if wave == "square" else wave
+                if wave not in (("noise",) if channel == 3 else ("pulse", "triangle")):
+                    raise ValueError("wave must be pulse/triangle on channels 0..2 or noise on channel 3")
+                waves[channel] = wave
+            waveform = 32 if waves[channel] == "triangle" else 0
             extension = "seed" if channel == 3 else "duty"
             if "duty" in update:
                 duties[channel] = update["duty"]
             if ("duty" in update and channel == 3) or ("seed" in update and channel != 3):
                 raise ValueError("duty requires a tonal voice; noise seeds require channel 3")
-            if "volume" in update or extension in update:
-                control = bytes([volumes[channel] | (128 if extension in update else 0)])
+            if "volume" in update or "wave" in update or extension in update:
+                control = bytes([volumes[channel] | waveform | (128 if extension in update else 0)])
                 if extension in update:
                     value = update[extension]
                     if not isinstance(value, int) or not (1 <= value <= 63 if channel == 3 else 0 <= value <= 255):
@@ -101,7 +109,7 @@ def _encode_events(mask, events, tail_ticks, loop, sfx=False):
                 if mask & (1 << channel):
                     changed_notes[channel] = notes[channel]
                     if channel != 3:
-                        changed_controls[channel] = bytes([128 | volumes[channel], duties[channel]])
+                        changed_controls[channel] = bytes([128 | volumes[channel] | (32 if waves[channel] == "triangle" else 0), duties[channel]])
                     else:
                         changed_controls.setdefault(channel, bytes([volumes[channel]]))
             first = False
@@ -491,8 +499,11 @@ class ScoreParser:
                 self.error("octave must be 1..6", token)
         else:
             value = self.name()
-            if field == "wave" and value not in ("pulse", "square", "noise"):
-                self.error("wave must be pulse (square alias) or noise; use duty for timbre", token)
+            if field == "wave":
+                if value not in ("pulse", "square", "triangle", "noise"):
+                    self.error("wave must be pulse (square alias), triangle or noise", token)
+                if value == "square":
+                    value = "pulse"
         return value
 
     def instrument(self):
@@ -684,6 +695,10 @@ def score_events(score):
                  "sound": instrument(name, token), "tie": False}
 
         def validate_channel(sound, item):
+            if sound["wave"] == "triangle" and channel == 3:
+                score.error("triangle instruments require a tonal channel (0..2)", item)
+            if sound["wave"] == "noise" and channel != 3:
+                score.error("noise instruments require channel 3", item)
             if sound.get("noise_retrigger") and channel != 3:
                 score.error("noise_retrigger requires channel 3", item)
             if channel == 3 and any(sound.get(k) for k in ("duty_slide", "lfo_duty")):
@@ -709,6 +724,7 @@ def score_events(score):
                     state[kind] = value
                 elif kind in ("volume", "wave", "duty", "envelope", "gate"):
                     state["sound"][kind] = value
+                    validate_channel(state["sound"], item)
                 elif kind in ("effect", "effects"):
                     state["sound"].update(value if kind == "effect" else effect_bundle(value, item))
                     validate_channel(state["sound"], item)
@@ -742,8 +758,6 @@ def score_events(score):
                     env_name = sound["envelope"]
                     if env_name is not None and env_name not in score.envelopes:
                         score.error(f"unknown envelope {env_name!r}", item)
-                    if sound["wave"] == "noise" and channel != 3:
-                        score.error("noise instruments require channel 3", item)
                     validate_channel(sound, item)
                     pitch_effects = [k for k in ("frequency_slide", "arpeggio", "glissando") if sound.get(k)]
                     if len(pitch_effects) > 1:
@@ -785,7 +799,7 @@ def slide_value(effect, base, elapsed, pitch=False):
 
 
 def compile_source(source, filename="<score>", automation_ms=None, max_updates=2000000, statistics=None):
-    """Resolve effects offline. Only pitch, volume, duty and seed reach firmware."""
+    """Resolve effects offline. Only pitch, volume, wave, duty and seed reach firmware."""
     score = ScoreParser(source, filename).parse()
     interval = score.automation_ms if automation_ms is None else Fraction(automation_ms)
     if interval < 4 or interval % 4:
@@ -806,6 +820,7 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
         update = {"increment": 0, "volume": 0}
         if channel != 3:
             update["duty"] = 128
+            update["wave"] = "pulse"
         changes.append((Fraction(0), -1, channel, update))
     finish = duration
     for channel, notes in channels.items():
@@ -900,6 +915,7 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                     update["onset"] = True
                 if channel != 3:
                     update["duty"] = max(0, min(255, math.floor(float(duty) + 0.5)))
+                    update["wave"] = sound["wave"]
                 retrigger = sound.get("noise_retrigger")
                 if retrigger and elapsed % retrigger["every"] == 0 and (elapsed or retrigger.get("onset", "yes") == "yes"):
                     update["seed"] = retrigger["seed"]
@@ -921,18 +937,19 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                 merged.pop("onset", None)
             merged.update(update)
     previous, events = 0, []
-    retained = [dict(volume=24, duty=128, increment=0) for _ in range(4)]
+    retained = [dict(volume=24, duty=128, increment=0, wave="pulse") for _ in range(4)]
     counts = dict(pitch=0, volume=0, duty=0, noise_retrigger=0)
     for position, updates in sorted(timeline.items()):
         filtered = {}
         for channel, update in updates.items():
             result = {}
-            for field in ("volume", "duty", "increment"):
+            for field in ("volume", "duty", "increment", "wave"):
                 if field in update:
                     value = update[field]
                     if value != retained[channel][field] or (field == "increment" and update.get("onset")):
                         result[field] = value
-                        counts["pitch" if field == "increment" else field] += 1
+                        if field != "wave":
+                            counts["pitch" if field == "increment" else field] += 1
                     retained[channel][field] = value
             if "seed" in update:
                 result["seed"] = update["seed"]
@@ -954,8 +971,9 @@ def c_array(data, name):
         raise ValueError("invalid C identifier")
     words = [int.from_bytes(data[i:i + 8].ljust(8, b"\0"), "little")
              for i in range(0, len(data), 8)]
-    prefix = "/* Generated by avm_music.py. */\n#include <avm/audio.h>\n"
-    prefix += f"/* Size: {len(words)} */\n"
+    kind = "SFX" if data and data[0] in (0xD1, 0xD2, 0xD3) else "song"
+    prefix = ("/* Generated by avm_music.py. */\n"
+              f"/* Compiled {kind} size: {len(data)} bytes. */\n\n#include <avm/audio.h>\n")
 
     def rows(values, indent):
         return "\n".join(indent + ", ".join(f"0x{x:016x}ULL" for x in values[i:i + 4]) + ","

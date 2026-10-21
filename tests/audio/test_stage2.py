@@ -25,6 +25,7 @@ if HAS_AUDIO:
     )
     from avm_audio_optimize import (
         Config,
+        candidate_groups,
         optimize,
         restore,
         snapshot,
@@ -47,6 +48,110 @@ def fixture(channels=(0,), duration=1.2):
 
 @unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
 class RenderTests(unittest.TestCase):
+    def test_triangle_arrangement_export_snapshots_and_optimizer_coordinates(self):
+        arrangement = fixture((0, 2))
+        for instrument in arrangement.instruments.values():
+            instrument.wave = "triangle"
+        restored = restore(arrangement, snapshot(arrangement))
+        self.assertEqual(snapshot(restored), snapshot(arrangement))
+        source, data = midi.compile_arrangement(restored)
+        self.assertIn("wave triangle", source)
+        self.assertTrue(all(control & 32 for event in decode(data) for ch, control, _ in event.controls))
+        self.assertEqual(list(candidate_groups("timbre", restored, arrangement, Config())), [])
+        for _, candidates in candidate_groups("effects", restored, arrangement, Config(optimize_effects=True)):
+            for _, mutate in candidates:
+                changed = deepcopy(restored)
+                mutate(changed)
+                for notes in changed.voices.values():
+                    for note in notes:
+                        self.assertFalse(any(e.kind == "duty_slide" or (e.kind == "lfo" and e.parameters["target"] == "duty")
+                                             for e in note.effects))
+
+    def test_triangle_all_phase_values_channels_amplitudes_and_rates(self):
+        for rate in (7812.5, 15625):
+            for ch in range(3):
+                for volume in (0, 1, 7, 31):
+                    for master in (0, 32, 128, 255):
+                        inc = 128 if rate == 7812.5 else 256
+                        data = avm_music._encode_events(1 << ch, [(1, {ch: {
+                            "increment": inc, "volume": volume, "wave": "triangle", "duty": 0}})], 20, False)
+                        actual = render(data, rate=rate, master=master, duration=.05)
+                        first = int(np.ceil(rate / 250))
+                        amp = volume * master // 32
+                        expected = []
+                        for step in range(1, 257):
+                            high = step & 255
+                            if high & 128:
+                                high ^= 255
+                            sample = (2 * high) - 127
+                            expected.append((sample * amp + 64) // 128)
+                        np.testing.assert_array_equal(actual.mix[first:first+256], expected)
+                        np.testing.assert_array_equal(actual.pcm[first:first+256], np.clip(np.array(expected)+128, 0, 255))
+
+    def test_waveform_switches_duty_retention_loops_mixing_and_phase(self):
+        data = avm_music.compile_source("""loop
+            channel 0 { volume 31 duty 32 c:12ms wave triangle c:12ms duty 192 c:12ms wave pulse c:12ms }
+            channel 1 { volume 17 wave triangle e:24ms wave square e:24ms }
+            channel 2 { volume 24 wave triangle g:48ms }
+            channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:48ms }
+        """)
+        events = decode(data)
+        for rate in (7812.5, 15625):
+            for master in (0, 128, 255):
+                actual = render(data, rate=rate, master=master, duration=.31)
+                phases, incs, controls, duties = [0]*4, [0]*4, [0]*4, [128]*4
+                state, index, base, expected = 1, 0, 0, []
+                for n in range(len(actual.pcm)):
+                    while n >= np.ceil((base + events[index].tick)*rate/250):
+                        event = events[index]
+                        for ch, pitch in event.pitches:
+                            incs[ch] = min(65535, pitch*(2 if rate == 7812.5 else 1))
+                        for ch, control, ext in event.controls:
+                            controls[ch] = control
+                            if ext >= 0:
+                                if ch < 3:
+                                    duties[ch] = ext
+                                else:
+                                    state, phases[3] = ext, 0
+                        index += 1
+                        if event.command == 2:
+                            base += event.tick
+                            index = 0
+                    mix = 0
+                    for ch in range(4):
+                        total = phases[ch] + incs[ch]
+                        phases[ch] = total & 65535
+                        amp = (controls[ch] & 31)*master//32 if incs[ch] else 0
+                        if ch == 3:
+                            if total > 65535:
+                                state = (state >> 1) ^ (0xb8 if state & 1 else 0)
+                            mix += -amp if state & 1 else amp
+                        else:
+                            high = phases[ch] >> 8
+                            sample = 2*min(high, 255-high)-127 if controls[ch] & 32 else (127 if high < duties[ch] else -127)
+                            mix += (sample*amp+64)//128
+                    expected.append(mix)
+                np.testing.assert_array_equal(actual.mix, expected)
+                np.testing.assert_array_equal(actual.pcm, np.clip(np.array(expected)+128, 0, 255))
+                partial = render(data, rate=rate, master=master, start=.16, duration=.08)
+                np.testing.assert_array_equal(partial.pcm, actual.pcm[int(np.ceil(.16*rate)):int(np.ceil(.24*rate))])
+
+    def test_triangle_control_reserved_bits_and_truncation(self):
+        for ch in range(4):
+            for control in range(256):
+                data = bytes([0xa5, 1 << ch, 0, 16 << ch, control])
+                if control & 128:
+                    data += bytes([37])
+                data += bytes([0, 0, 1])
+                if control & (0x60 if ch == 3 else 0x40):
+                    with self.assertRaises(ValueError):
+                        decode(data)
+                else:
+                    self.assertEqual(decode(data)[0].controls[0][1], control & 63)
+            for data in (bytes([0xa5,1<<ch,0,16<<ch]), bytes([0xa5,1<<ch,0,16<<ch,0x80])):
+                with self.assertRaises(ValueError):
+                    decode(data)
+
     def test_pulse_exact_integer_formula_and_initial_delay_both_rates(self):
         data = avm_music.compile_source("channel 0 { volume 31 duty 64 octave 4 a:200ms }")
         for rate in (7812.5, 15625):

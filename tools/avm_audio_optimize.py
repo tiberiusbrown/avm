@@ -279,7 +279,7 @@ def candidate_groups(stage, best, baseline, config):
         for name in used:
             if best.instruments[name].wave == "pulse":
                 yield name+" duty", [(str(d), lambda a, n=name, v=d: setattr(a.instruments[n], "duty", v)) for d in (128, 64, 96, 32, 48, 80, 192)]
-            else:
+            elif best.instruments[name].wave == "noise":
                 def pitch(a, shift, name=name):
                     for n, b in zip(_instrument_notes(a, name), _instrument_notes(baseline, name)):
                         n.pitch = min(95, max(24, b.pitch+shift))
@@ -308,10 +308,11 @@ def candidate_groups(stage, best, baseline, config):
                 for depth in (10, 20):
                     for period in (160, 240, 320):
                         proposals.append(midi.Effect("lfo", {"target": "pitch", "depth": depth, "period_ms": period, "wave": "sine"}))
-                for to in (32, 64, 128):
-                    proposals.append(midi.Effect("duty_slide", {"to": to, "over_ms": 240}))
-                proposals += [midi.Effect("lfo", {"target": "duty", "depth": 16, "period_ms": 320, "wave": "triangle"}),
-                              midi.Effect("lfo", {"target": "volume", "depth": 1, "period_ms": 240}),
+                if best.instruments[name].wave == "pulse":
+                    for to in (32, 64, 128):
+                        proposals.append(midi.Effect("duty_slide", {"to": to, "over_ms": 240}))
+                    proposals.append(midi.Effect("lfo", {"target": "duty", "depth": 16, "period_ms": 320, "wave": "triangle"}))
+                proposals += [midi.Effect("lfo", {"target": "volume", "depth": 1, "period_ms": 240}),
                               midi.Effect("volume_slide", {"to": max(1, best.instruments[name].volume-2), "over_ms": 320})]
             if noise:
                 proposals += [midi.Effect("noise_retrigger", {"every_ms": every, "seed": seed})

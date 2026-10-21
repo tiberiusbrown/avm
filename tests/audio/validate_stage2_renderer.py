@@ -27,6 +27,8 @@ SCORES = {
     "glissando": "channel 0 { glissando { direction down step 1semitone every 40ms } c:600ms }",
     "noise": "channel 3 { wave noise volume 12 noise_retrigger { every 32ms seed 37 } c:240ms r:80ms noise_retrigger { every 16ms seed 2 } c:240ms }",
     "phase_loop": "loop channel 0 { volume 12 duty 64 c:80ms duty 128 g:80ms r:40ms c:80ms } channel 3 { wave noise volume 8 noise_retrigger { every 40ms seed 63 } c:280ms }",
+    "triangle": "loop channel 0 { wave triangle volume 31 c:80ms } channel 1 { wave triangle volume 17 e:80ms } channel 2 { wave triangle volume 24 g:80ms }",
+    "triangle_switch": "loop channel 0 { volume 31 duty 32 c:16ms wave triangle c:16ms duty 192 c:16ms wave pulse c:16ms } channel 1 { wave triangle e:32ms wave square e:32ms } channel 2 { wave triangle g:64ms } channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:64ms }",
 }
 
 

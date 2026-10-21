@@ -76,11 +76,16 @@ py -3.12 tools/midi_to_avms_stage2.py build/stage2/z1overw/optimized.avms `
 - `tools/avm_audio_render.py` validates/decodes A5 ownership, variable pitch
   and control payloads, Continue, End, and Loop. Its event-span renderer uses
   unsigned 16-bit phase, canonical quantized increments (saturating doubling
-  at 7812.5 Hz), phase-high duty comparison, exact FMULSU rounding, prepared
+  at 7812.5 Hz), phase-high duty comparison or the AVR integer triangle fold,
+  exact FMULSU rounding, prepared
   amplitude `floor(volume * master / 32)`, signed summation, and final clipping.
   The noise voice uses the 255-state B8 LFSR cycle, low-bit polarity, overflow
   clocking, and explicit phase reset/seed commands. Off pitches mute without
-  discarding phase. Ordinary notes, duty changes, and loops preserve phase.
+  discarding phase. Ordinary notes, waveform/duty changes, and loops preserve phase.
+  Tonal control bit 5 selects triangle, bit 6 stays reserved; noise reserves
+  both bits. Only bits 0..4 contribute to amplitude. Stage 1 instrument export
+  and Stage 2/3 arrangement snapshots retain `wave triangle`; the renderer used
+  by fitting and validation honors it. Duty fitting applies to pulse instruments.
 - `tools/avm_audio_features.py` loads unsigned/signed PCM and floating WAV,
   checks finite samples, downmixes channels (with a cancellation fallback),
   performs rational polyphase resampling, and records original format, peak,
@@ -229,11 +234,12 @@ to this independent execution. `--capture` remains the existing real-timer,
 50 kHz PWM audio capture, now with a `.logical.csv` sidecar observing the
 post-synthesis held endpoint before PWM reconstruction.
 
-On 2026-10-20, all **26 fixtures/rate combinations (312,000 samples)** matched
+On 2026-10-21, all **30 fixtures/rate combinations (360,000 samples)** matched
 exactly: constant and low/high tones, duty extremes, simultaneous voices,
 clipping, envelopes, volume/duty/frequency slides, vibrato, arpeggios,
-glissando, noise and repeated seeds, initial delay, phase continuity and loops.
-Live steady tones also matched exactly after startup offsets of 9 samples
+glissando, noise and repeated seeds, initial delay, phase continuity and loops,
+all-triangle chords, mixed pulse/triangle/noise, waveform switches, and retained
+duty changes. The earlier 2026-10-20 live steady tones also matched exactly after startup offsets of 9 samples
 at 7812.5 Hz and 15 samples at 15,625 Hz in this harness. Output intervals
 were 128 and 64 microseconds. These startup offsets are harness measurements,
 not universal hardware latency corrections.

@@ -19,12 +19,12 @@
   },
   "A5": {
     "normal_isr_cycles": [
-      183,
-      196
+      81,
+      204
     ],
     "pwm_store_cycles": 21,
-    "worst_pending_isr_cycles": 272,
-    "worst_reseed_isr_cycles": 273,
+    "worst_pending_isr_cycles": 280,
+    "worst_reseed_isr_cycles": 281,
     "pending_copy_overhead_cycles": 76,
     "reseed_additional_cycles": 6,
     "persistent_audio_bytes": 89,
@@ -35,15 +35,15 @@
     "pending_isr_stack_bytes": 11,
     "demo_native_high_water_bytes": 39,
     "formatter_native_high_water_bytes": 39,
-    "firmware_text_bytes": 29328,
-    "bootloader_headroom_bytes": 368,
+    "firmware_text_bytes": 29352,
+    "bootloader_headroom_bytes": 344,
     "music_read_ahead_bytes": 18,
     "sfx_read_ahead_bytes": 10,
     "foreground_cycles": {
-      "one_voice_pitch_control": 1021,
+      "one_voice_pitch_control": 1024,
       "four_voices_pitch_control": 1247,
       "four_controls": 1139,
-      "pitch_off": 990,
+      "pitch_off": 991,
       "continue": 579,
       "countdown": 100,
       "music_burst": 416,
@@ -51,35 +51,48 @@
       "maximum_sfx_event": 1069
     },
     "all_pulse_isr_cycles": [
-      186,
-      193
+      194,
+      201
     ],
     "all_triangle_isr_cycles": [
-      189,
-      196
+      197,
+      204
     ],
-    "pulse_channel_cycles": 33,
-    "triangle_channel_cycles": 34,
+    "pulse_channel_cycles": 35,
+    "triangle_channel_cycles": 36,
     "all_saw_isr_cycles": [
-      183,
-      190
+      191,
+      198
     ],
-    "saw_channel_cycles": 32,
-    "synthesis_isr_text_bytes": 380,
+    "saw_channel_cycles": 34,
+    "synthesis_isr_text_bytes": 396,
     "control_copy_text_bytes": 154,
-    "commit_prepare_text_bytes": 158
+    "commit_prepare_text_bytes": 160,
+    "all_active_isr_cycles": [
+      191,
+      204
+    ],
+    "all_stopped_isr_cycles": 81,
+    "noise_channel_cycles": [
+      28,
+      32,
+      33
+    ],
+    "stopped_channel_cycles": 5,
+    "prepared_amplitude_sentinel": 255,
+    "max_reachable_prepared_amplitude": 247
   },
   "tests": {
     "compiler": 57,
-    "native_audio": 54,
+    "native_audio": 59,
     "interpreter": 471,
-    "pulse_reference_samples": 387072,
+    "pulse_reference_samples": 331776,
     "timer_phase_combinations": 32000,
     "large_asset_attacks_each_C_and_CPP": 22000,
     "python_audio": 116,
     "audio_tools": 565,
-    "triangle_reference_samples": 43008,
-    "saw_reference_samples": 43008,
+    "triangle_reference_samples": 36864,
+    "saw_reference_samples": 36864,
     "tonal_waveform_mixtures": 27,
     "ordered_waveform_transitions": 9,
     "waveform_transition_channels": 3,
@@ -90,10 +103,14 @@
       "test_midi_arranger": 31,
       "test_score": 29,
       "test_stage2": 28
-    }
+    },
+    "tonal_instruction_paths": 589824,
+    "noise_instruction_paths": 131072,
+    "isr_timing_paths": 331776,
+    "stopped_masks": 16
   },
-  "demo_package_sha256": "6b63b17f3b61cfafce34a22ac3560312c22b62dd9826e5e50955119cc213a555",
-  "firmware_hex_sha256": "1a16d123c1985d1e3f585e47b8f22dc1f0c716fc30b0fad9735f7ad354d9f7e4",
+  "demo_package_sha256": "4d968259a43518bed3491e163b9fe9eba47943a28f7ca395d33e7592281937ea",
+  "firmware_hex_sha256": "c815f062d2611df7863c4aa3253246ef5bbcb3ab315c2cbaa9e21c41beae4c68",
   "baseline_A5_pulse_recorded": {
     "normal_isr_cycles": [
       171,
@@ -677,5 +694,371 @@
   "example": {
     "path": "examples/tonal_waveforms.avms",
     "compiled_bytes": 39
+  },
+  "baseline_A5_saw_recorded": {
+    "normal_isr_cycles": [
+      183,
+      196
+    ],
+    "pwm_store_cycles": 21,
+    "worst_pending_isr_cycles": 272,
+    "worst_reseed_isr_cycles": 273,
+    "pending_copy_overhead_cycles": 76,
+    "reseed_additional_cycles": 6,
+    "persistent_audio_bytes": 89,
+    "control_latch_bytes": 16,
+    "pending_packet_bytes": 17,
+    "native_stack_allowance_bytes": 74,
+    "isr_stack_bytes": 9,
+    "pending_isr_stack_bytes": 11,
+    "demo_native_high_water_bytes": 39,
+    "formatter_native_high_water_bytes": 39,
+    "firmware_text_bytes": 29328,
+    "bootloader_headroom_bytes": 368,
+    "music_read_ahead_bytes": 18,
+    "sfx_read_ahead_bytes": 10,
+    "foreground_cycles": {
+      "one_voice_pitch_control": 1021,
+      "four_voices_pitch_control": 1247,
+      "four_controls": 1139,
+      "pitch_off": 990,
+      "continue": 579,
+      "countdown": 100,
+      "music_burst": 416,
+      "maximum_music_event": 1270,
+      "maximum_sfx_event": 1069
+    },
+    "all_pulse_isr_cycles": [
+      186,
+      193
+    ],
+    "all_triangle_isr_cycles": [
+      189,
+      196
+    ],
+    "pulse_channel_cycles": 33,
+    "triangle_channel_cycles": 34,
+    "all_saw_isr_cycles": [
+      183,
+      190
+    ],
+    "saw_channel_cycles": 32,
+    "synthesis_isr_text_bytes": 380,
+    "control_copy_text_bytes": 154,
+    "commit_prepare_text_bytes": 158,
+    "note": "Historical saw report, including its 29328-byte flash measurement; saved/reassembled pre-sentinel firmware in this session is 29332 bytes."
+  },
+  "stopped_channel_validation": {
+    "date": "2026-10-21",
+    "baseline": {
+      "firmware_text_bytes": 29332,
+      "bootloader_headroom_bytes": 364,
+      "normal_isr_cycles": [
+        183,
+        196
+      ],
+      "worst_pending_copy_cycles": 272,
+      "worst_pending_reseed_cycles": 273,
+      "all_stopped_pulse_triangle_saw_cycles": [
+        186,
+        189,
+        183
+      ],
+      "source_reassembled_devices": [
+        "FX",
+        "FXC",
+        "MINI"
+      ],
+      "reassembled_fx_matches_saved_firmware": true
+    },
+    "devices_assembled": [
+      "FX",
+      "FXC",
+      "MINI",
+      "split buttons",
+      "shared buttons",
+      "SSD1306",
+      "SSD1309",
+      "SH1106"
+    ],
+    "branch_displacements_words": {
+      "tonal": 38,
+      "noise": 29
+    },
+    "noise_instruction_accounting": {
+      "sentinel_check_active": 4,
+      "phase": 14,
+      "lfsr_hold_shift_feedback": [
+        4,
+        8,
+        9
+      ],
+      "signed_mix": 6,
+      "active_cycles": [
+        28,
+        32,
+        33
+      ],
+      "stopped_cycles": 5,
+      "note": "CPI/BREQ adds two cycles after moving the existing amplitude load. LFSR in r0 and feedback scratch in r21 avoid an extra MOV and invalid LDI r0."
+    },
+    "isr_paths_by_stopped_mask": [
+      {
+        "stopped_mask": 0,
+        "ordinary_cycles": [
+          191,
+          204
+        ],
+        "maximum_pending_cycles": 281
+      },
+      {
+        "stopped_mask": 1,
+        "ordinary_cycles": [
+          162,
+          173
+        ],
+        "maximum_pending_cycles": 250
+      },
+      {
+        "stopped_mask": 2,
+        "ordinary_cycles": [
+          162,
+          173
+        ],
+        "maximum_pending_cycles": 250
+      },
+      {
+        "stopped_mask": 3,
+        "ordinary_cycles": [
+          133,
+          142
+        ],
+        "maximum_pending_cycles": 219
+      },
+      {
+        "stopped_mask": 4,
+        "ordinary_cycles": [
+          162,
+          173
+        ],
+        "maximum_pending_cycles": 250
+      },
+      {
+        "stopped_mask": 5,
+        "ordinary_cycles": [
+          133,
+          142
+        ],
+        "maximum_pending_cycles": 219
+      },
+      {
+        "stopped_mask": 6,
+        "ordinary_cycles": [
+          133,
+          142
+        ],
+        "maximum_pending_cycles": 219
+      },
+      {
+        "stopped_mask": 7,
+        "ordinary_cycles": [
+          104,
+          111
+        ],
+        "maximum_pending_cycles": 188
+      },
+      {
+        "stopped_mask": 8,
+        "ordinary_cycles": [
+          168,
+          176
+        ],
+        "maximum_pending_cycles": 258
+      },
+      {
+        "stopped_mask": 9,
+        "ordinary_cycles": [
+          139,
+          145
+        ],
+        "maximum_pending_cycles": 227
+      },
+      {
+        "stopped_mask": 10,
+        "ordinary_cycles": [
+          139,
+          145
+        ],
+        "maximum_pending_cycles": 227
+      },
+      {
+        "stopped_mask": 11,
+        "ordinary_cycles": [
+          110,
+          114
+        ],
+        "maximum_pending_cycles": 196
+      },
+      {
+        "stopped_mask": 12,
+        "ordinary_cycles": [
+          139,
+          145
+        ],
+        "maximum_pending_cycles": 227
+      },
+      {
+        "stopped_mask": 13,
+        "ordinary_cycles": [
+          110,
+          114
+        ],
+        "maximum_pending_cycles": 196
+      },
+      {
+        "stopped_mask": 14,
+        "ordinary_cycles": [
+          110,
+          114
+        ],
+        "maximum_pending_cycles": 196
+      },
+      {
+        "stopped_mask": 15,
+        "ordinary_cycles": [
+          81,
+          81
+        ],
+        "maximum_pending_cycles": 163
+      }
+    ],
+    "cpu_utilization_percent": {
+      "7812.5": {
+        "all_active_worst_ordinary": 9.9609375,
+        "all_stopped_ordinary": 3.955078125,
+        "worst_pending_copy": 13.671875,
+        "worst_pending_reseed": 13.720703125
+      },
+      "15625": {
+        "all_active_worst_ordinary": 19.921875,
+        "all_stopped_ordinary": 7.91015625,
+        "worst_pending_copy": 27.34375,
+        "worst_pending_reseed": 27.44140625
+      }
+    },
+    "renderer": {
+      "fixtures_at_both_rates": 34,
+      "samples": 408000,
+      "mismatches": 0
+    },
+    "regressions": {
+      "interpreter_passed": 471,
+      "native_audio_passed": 59,
+      "python_audio_passed": 116,
+      "python_audio_tools_passed": 565,
+      "push16_passed": 152,
+      "stack_bounds_passed": 1133,
+      "display_cases_per_controller": 88,
+      "demo_rate_toggle_playlist_formatter": "passed; native high-water 39 bytes",
+      "large_exported_c_and_cpp_assets": "passed; 22000 attacks each"
+    },
+    "rpg": {
+      "ctest_passed": 9,
+      "ctest_total": 10,
+      "timing_smoke": "FX and FXC, 2 seconds each, passed",
+      "timing": {
+        "normal/synthesis/entry_lateness": {
+          "count": 31250,
+          "minimum": 0,
+          "maximum": 5,
+          "at_least_10": 0
+        },
+        "normal/synthesis/isr_body_cycles": {
+          "count": 31250,
+          "minimum": 105,
+          "maximum": 181,
+          "at_least_10": 31250
+        },
+        "normal/synthesis/pwm_interval_error": {
+          "count": 31249,
+          "minimum": -5,
+          "maximum": 5,
+          "at_least_10": 0
+        },
+        "normal/synthesis/pwm_lateness": {
+          "count": 31250,
+          "minimum": 0,
+          "maximum": 5,
+          "at_least_10": 0
+        },
+        "normal/synthesis/synthesis_interval_error": {
+          "count": 31249,
+          "minimum": -5,
+          "maximum": 5,
+          "at_least_10": 0
+        },
+        "fxc/synthesis/entry_lateness": {
+          "count": 31250,
+          "minimum": 0,
+          "maximum": 5,
+          "at_least_10": 0
+        },
+        "fxc/synthesis/isr_body_cycles": {
+          "count": 31250,
+          "minimum": 105,
+          "maximum": 181,
+          "at_least_10": 31250
+        },
+        "fxc/synthesis/pwm_interval_error": {
+          "count": 31249,
+          "minimum": -5,
+          "maximum": 5,
+          "at_least_10": 0
+        },
+        "fxc/synthesis/pwm_lateness": {
+          "count": 31250,
+          "minimum": 0,
+          "maximum": 5,
+          "at_least_10": 0
+        },
+        "fxc/synthesis/synthesis_interval_error": {
+          "count": 31249,
+          "minimum": -5,
+          "maximum": 5,
+          "at_least_10": 0
+        }
+      },
+      "preexisting_failures": [
+        "imported_music: score inventory assertion before firmware execution",
+        "rpg_integration device test: music started before a game was selected; reproduced with saved baseline firmware"
+      ],
+      "note": "Existing RPG working-tree changes preserved; refreshed packages and excluded sentinel from device verifier amplitude sum.",
+      "identity": {
+        "normal": {
+          "package_sha256": "400361601df1b0b4f23113802bc7c0a0beb9cb2b0bbd09a360b35a4e40700dfa",
+          "firmware_sha256": "c815f062d2611df7863c4aa3253246ef5bbcb3ab315c2cbaa9e21c41beae4c68",
+          "guest_image_sha256": "54560154c772b3e50bbc0588c699cf0f323cf60764c0d1aeee70d270327e26eb",
+          "score_sha256": {
+            "boss": "ebda68b1c8808d638324963139c4f270ae657b9c57ec972bfe49c084ea3ac4c6",
+            "good_endings": "413239cd5cfd8b6e0eb7dc288a144c2de75604e5f36661d148a44c2feaabed51",
+            "test": "bba3821ef593388f6e98e5071bf1d380acef399bf2b7b526a74eaa482574c7da",
+            "venus": "4ee32edb8b843a520d694a1aeb2e26e051813c018fffc9f0b6ce9127fbb31761"
+          }
+        },
+        "fxc": {
+          "package_sha256": "2706572db697a700e943d8410521d8c23e1f54ea257d0d9135ac25de09b580db",
+          "firmware_sha256": "1311ba17c2e9843c39eba5a4c0b2e58c86440619f4f0e382903bb73281c92ae2",
+          "guest_image_sha256": "54560154c772b3e50bbc0588c699cf0f323cf60764c0d1aeee70d270327e26eb",
+          "score_sha256": {
+            "boss": "ebda68b1c8808d638324963139c4f270ae657b9c57ec972bfe49c084ea3ac4c6",
+            "good_endings": "413239cd5cfd8b6e0eb7dc288a144c2de75604e5f36661d148a44c2feaabed51",
+            "test": "bba3821ef593388f6e98e5071bf1d380acef399bf2b7b526a74eaa482574c7da",
+            "venus": "4ee32edb8b843a520d694a1aeb2e26e051813c018fffc9f0b6ce9127fbb31761"
+          }
+        }
+      }
+    },
+    "logs_directory": "build/audio-sentinel",
+    "hardware_tested": false
   }
 }

@@ -16637,7 +16637,8 @@ audio_commit_prepare:
 .Laudio_stage_silent:
     st   X+, ZERO
     st   X+, ZERO
-    st   X+, ZERO
+    ldi  r25, 255 ; reserved amplitude: stopped, not merely muted
+    st   X+, r25
 .Laudio_stage_next:
     lsr  r23
     inc  r18
@@ -17064,18 +17065,21 @@ bootloader_reset_wait:
 ; Synthesis saves r0:r1, r20:r21, r26:r27 and SREG (9 bytes including PC).
 ; r2 may be borrowed by libm. Duty thresholds and amplitudes are separate.
 ; Signed samples are -128..127; round(sample * prepared_amplitude / 128).
-; No SPI or sequencing. Tonal paths: 33 pulse / 34 triangle / 32 saw cycles.
+; No SPI or sequencing. Amplitude 255 means stopped (increment zero).
+; Tonal paths: 35 pulse / 36 triangle / 34 saw cycles; stopped: 5 cycles.
 .macro audio_wave channel
 audio_wave_begin\channel:
-    lds  r20, data_audio_phases+2*\channel
-    lds  r21, data_audio_phases+2*\channel+1
-    lds  r0, data_audio_controls+3*\channel
-    add  r20, r0
-    lds  r0, data_audio_controls+3*\channel+1
-    adc  r21, r0
-    sts  data_audio_phases+2*\channel, r20
-    sts  data_audio_phases+2*\channel+1, r21
     lds  r20, data_audio_controls+3*\channel+2
+    cpi  r20, 255
+    breq audio_wave_end\channel
+    lds  r0, data_audio_phases+2*\channel
+    lds  r21, data_audio_phases+2*\channel+1
+    lds  r1, data_audio_controls+3*\channel
+    add  r0, r1
+    lds  r1, data_audio_controls+3*\channel+1
+    adc  r21, r1
+    sts  data_audio_phases+2*\channel, r0
+    sts  data_audio_phases+2*\channel+1, r21
     lds  r0, data_audio_waveform
     sbrs r0, \channel
     rjmp .Laudio_pulse\@
@@ -17130,30 +17134,37 @@ timer1_endpoint_write:
     audio_wave 1
     audio_wave 2
 
-    lds  r20, data_audio_phases+6
+audio_noise_begin:
+    ; Active: 28 hold / 32 shift / 33 feedback cycles; stopped: 5.
+    lds  r20, data_audio_controls+11
+    cpi  r20, 255
+    breq audio_noise_end
+    lds  r0, data_audio_phases+6
     lds  r21, data_audio_phases+7
-    lds  r0, data_audio_controls+9
-    add  r20, r0
-    lds  r0, data_audio_controls+10
-    adc  r21, r0
-    sts  data_audio_phases+6, r20
+    lds  r1, data_audio_controls+9
+    add  r0, r1
+    lds  r1, data_audio_controls+10
+    adc  r21, r1
+    sts  data_audio_phases+6, r0
     sts  data_audio_phases+7, r21
-    lds  r21, data_audio_noise
+    ; LDS/STS preserve phase carry. Reuse r0 for the LFSR and r21 for
+    ; feedback/sign extension, keeping amplitude in r20 without a MOV.
+    lds  r0, data_audio_noise
     brcc .Laudio_noise_hold
-    lsr  r21
+    lsr  r0
     brcc .Laudio_noise_store
-    ldi  r20, 0xb8
-    eor  r21, r20
+    ldi  r21, 0xb8
+    eor  r0, r21
 .Laudio_noise_store:
-    sts  data_audio_noise, r21
+    sts  data_audio_noise, r0
 .Laudio_noise_hold:
-    lds  r0, data_audio_controls+11
     clc
-    sbrc r21, 0
-    neg  r0
+    sbrc r0, 0
+    neg  r20
     sbc  r21, r21
-    add  r26, r0
+    add  r26, r20
     adc  r27, r21
+audio_noise_end:
     ; Add the PWM bias only after mixing, then saturate the complete sum.
     subi r26, 128
     sbci r27, 255

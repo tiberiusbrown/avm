@@ -1,194 +1,196 @@
-# Runtime pulse, triangle, and sawtooth audio measurements
+# Stopped-channel amplitude sentinel measurements
 
 Measured 2026-10-21 with the repository's Ardens AVR instruction emulator,
-unmerged instructions, 16 MHz CPU, RelWithDebInfo. The baseline is the existing
-pulse/triangle implementation, assembled and run before modification.
-Machine-readable results, baseline measurements, legacy asset digests, and
-package identities are in [audio-validation.json](audio-validation.json).
+unmerged instructions, 16 MHz CPU, RelWithDebInfo. Before measurements use the
+saved pre-change firmware and listing; after measurements execute the final
+assembled instructions. Machine-readable measurements and historical evidence
+are in [audio-validation.json](audio-validation.json).
 
-## Resources and worst-case timing
+## Representation and assembly
 
-| Resource / timing | Before (pulse/triangle) | After (pulse/triangle/saw) |
-| --- | ---: | ---: |
-| Ordinary synthesis ISR, including entry/vector | 183..193 cycles | 183..196 cycles |
-| All-pulse ordinary ISR | 186..193 cycles | 186..193 cycles |
-| All-triangle ordinary ISR | 183..190 cycles | 189..196 cycles |
-| All-saw ordinary ISR | — | 183..190 cycles |
-| PWM store, excluding interrupt acceptance delay | 21 cycles | 21 cycles |
-| Pending-control copy overhead | 76 cycles | 76 cycles |
-| Worst pending copy ISR | 269 cycles | 272 cycles |
-| Worst pending noise-reseed ISR | 270 cycles | 273 cycles |
-| Worst ordinary CPU use at 7812.5 Hz | 9.4238% | 9.5703% |
-| Worst ordinary CPU use at 15625 Hz | 18.8477% | 19.1406% |
-| Firmware .text (FX and FX-C) | 29300 bytes | 29328 bytes |
-| Headroom below 29696-byte bootloader ceiling | 396 bytes | 368 bytes |
-| Inline synthesis ISR machine code | 356 bytes | 380 bytes |
-| Fixed control copier helper | 154 bytes | 154 bytes |
-| Foreground audio_commit_prepare machine code | 154 bytes | 158 bytes |
-| Persistent audio SRAM | 89 bytes | 89 bytes |
-| Live latch / complete pending packet | 16 / 17 bytes | 16 / 17 bytes |
-| Native stack space above formatter/text scratch | 74 bytes | 74 bytes |
-| ISR native stack, including interrupt PC | 9 bytes | 9 bytes |
-| Pending ISR native stack, including copier return PC | 11 bytes | 11 bytes |
-| Observed demo / libm+formatter native high-water | 39 / 39 bytes | 39 / 39 bytes |
+Foreground still prepares `floor(volume * master / 32)`, with volume 0..31
+and master 0..255, at most 247. Its existing inactive-owner/zero-increment path
+now writes `(0, 0, 0xFF)` to the pending control triple. No stop conditions,
+normal amplitude arithmetic, packed waveform bits, packet layout, API, AVMS
+syntax or binary asset formats change.
 
-Each macro grows from 72 to 80 bytes: exactly four additional one-word
-instructions (SBRC, RJMP, SUBI, RJMP), eight bytes per channel, 24 total.
-Foreground packing adds BST/BLD (four bytes of code, six executed cycles over
-three channels). Control validation adds two code bytes. Two bytes of final
-.text alignment padding disappear, so total flash grows by **28 bytes**.
-The original phase update, pulse dispatch and generation, triangle calculation,
-shared FMULSU/mixer, register saves, Timer1 schedule, and held PWM output remain.
-No waveform state byte or sample lookup table is added.
+| Channel condition | Prepared amplitude | ISR behavior |
+| --- | ---: | --- |
+| Inactive owner or zero increment | 255 | Skip oscillator and mixing |
+| Nonzero increment, volume or master zero | 0 | Advance phase and noise LFSR normally |
+| Nonzero increment, audible | 1..247 | Existing synthesis and signed mixing |
+
+Tonal synthesis loads amplitude into r20 first and checks `CPI/BREQ`. The
+14-cycle phase update uses r0 for phase low, r21 for phase high, and r1 for
+increment loads. Waveform dispatch reuses r0; the FMULSU/rounding/accumulation
+sequence is unchanged. The BREQ displacement is +38 words, within -64..63.
+
+Noise also retains amplitude in r20 during phase advancement. Afterwards r0
+holds the LFSR and r21 becomes feedback scratch/sign extension. This permits
+`LDI r21, 0xB8` without a move or extra register save. LDS/STS preserve carry
+from phase ADC; BRCC tests that carry before LSR. LSR supplies feedback carry;
+CLC before optional NEG and SBC supplies the original signed extension,
+including amplitude zero. Its sentinel BREQ displacement is +29 words.
+A pending retrigger resets phase and reseeds before this check even if stopped.
+
+The suggested `LDI r0` is not an AVR instruction: LDI requires r16..r31.
+Also, moving the amplitude LDS and adding CPI/BREQ plus MOV would add three
+active cycles, not one. The implemented register arrangement removes MOV and
+adds exactly **two** cycles to active noise. This accounts for the measured
+204/281 maxima versus the proposed 203/280 targets.
 
 ## Assembled per-channel paths
 
-The native tests execute the compiled instructions from audio_wave_beginN to
-audio_wave_endN, on all three channels and all 256 phase bytes. They also check
-the signed 16-bit accumulator before saturation at amplitudes 0, 1, 31, 247,
-and 255, including saw sample -128. avr-objdump shows the requested sequence;
-LSL is displayed as its equivalent ADD register,register. All new jumps are
-one-word RJMPs; there is no assembler expansion or revised cycle accounting.
-
-| Per-channel component | Pulse | Triangle | Saw |
+| Path | Before | Active after | Stopped after |
 | --- | ---: | ---: | ---: |
+| Pulse | 33 | **35** | **5** |
+| Triangle | 34 | **36** | **5** |
+| Sawtooth | 32 | **34** | **5** |
+| Noise, no overflow | 26 | **28** | **5** |
+| Noise, overflow without feedback | 30 | **32** | **5** |
+| Noise, overflow with feedback | 31 | **33** | **5** |
+
+The early `LDS/CPI/BREQ` costs 2+1+1 cycles active or 2+1+2 stopped.
+The LDS replaces the original later load, so every active oscillator adds two
+cycles. A stopped path executes only these three instructions.
+
+| Active tonal component | Pulse | Triangle | Saw |
+| --- | ---: | ---: | ---: |
+| Amplitude load and sentinel check | 4 | 4 | 4 |
 | Phase load, advance, store | 14 | 14 | 14 |
-| Prepared amplitude load | 2 | 2 | 2 |
 | Waveform byte load | 2 | 2 | 2 |
-| Existing pulse/non-pulse dispatch | 3 | 2 | 2 |
-| New saw dispatch (inside non-pulse only) | 0 | 2 | 3 |
+| Pulse/non-pulse dispatch | 3 | 2 | 2 |
+| Saw dispatch | 0 | 2 | 3 |
 | Waveform calculation | 6 | 4 | 1 |
 | Jump to shared mixer | 0 | 2 | 2 |
 | Multiplication and accumulation | 6 | 6 | 6 |
-| Total | **33** | **34** | **32** |
+| Total | **35** | **36** | **34** |
 
-SBRS takes one cycle plus the two-cycle RJMP for pulse, or two cycles skipping
-that one-word jump for non-pulse. Saw's SBRC/RJMP costs three cycles when taken,
-two when skipped. Triangle's SBRC/COM pair always costs two. FMULSU costs two;
-the four following accumulation instructions cost one each.
-
-| Three tonal voices | Cycles (excluding shared ISR/noise) |
-| --- | ---: |
-| Pulse + pulse + pulse | 99 |
-| Pulse + pulse + triangle | 100 |
-| Pulse + triangle + saw | 99 |
-| Pulse + saw + saw | 97 |
-| Triangle + triangle + triangle | 102 |
-| Saw + saw + saw | 96 |
+Noise costs 4 for load/check, 14 for phase, 4/8/9 for LFSR load/branch/update,
+and 6 for signed mixing: **28/32/33** cycles. Muted active paths have exactly
+these costs too; only 255 takes the stopped branch.
 
 ## Complete ISR and CPU cost
 
-The path probe covers all 27 waveform combinations, all oscillator sign
-combinations, full-byte amplitudes, both noise seed parities, noise overflow
-paths, clipping, and pending descriptors. The measured worst paths decompose
-as follows, including the hardware interrupt entry and vector JMP:
-
-| Component | Ordinary | Pending copy | Pending reseed |
-| --- | ---: | ---: | ---: |
-| Interrupt entry + vector | 7 | 7 | 7 |
-| Prologue through PWM endpoint write | 14 | 14 | 14 |
-| Remaining register saves | 8 | 8 | 8 |
-| Update check, call and helper | 4 | 80 | 86 |
-| Clear signed accumulator | 2 | 2 | 2 |
-| Three triangles (worst tonal selection) | 102 | 102 | 102 |
-| Noise phase, LFSR, amplitude and accumulation | 31 | 31 | 26 |
-| Bias, worst saturation and held-sample store | 9 | 9 | 9 |
-| Register/flags restoration + RETI | 19 | 19 | 19 |
-| Total | **196** | **272** | **273** |
-
-Reseeding resets noise phase, preventing overflow on that sample; it adds six
-copy-helper cycles but saves five noise cycles versus the worst copy path.
-Before this change the same shared overhead plus three 33-cycle pulses gave
-193/269/270 cycles. The new global maxima each rise by three cycles. The
-273-cycle pending maximum leaves 751 cycles before the 1024-cycle deadline at
-15625 Hz. PWM stores still occur at cycle 21 at both rates; Timer0/Timer1
-startup and rate-switch tests retain 64..120 cycles of separation modulo 128.
-
-| Worst ISR CPU utilization | Before at 7812.5 Hz | After | Before at 15625 Hz | After |
-| --- | ---: | ---: | ---: | ---: |
-| Ordinary | 9.4238% | 9.5703% | 18.8477% | 19.1406% |
-| Pending copy, if every sample accepted a packet | 13.1348% | 13.2813% | 26.2695% | 26.5625% |
-| Pending reseed, if every sample accepted a packet | 13.1836% | 13.3301% | 26.3672% | 26.6602% |
-
-CPU utilization is cycles * sample_rate / 16000000. Each global maximum
-increases by 0.1465 percentage points at 7812.5 Hz or 0.2930 at 15625 Hz.
-All-pulse use is unchanged. For the same all-triangle workload, six additional
-cycles cost 0.2930/0.5859 percentage points; each individual triangle adds two.
-Pending-row utilization describes an upper bound, not ordinary packet frequency.
-
-## Foreground measurements
-
-Stopped-timer 7812.5 Hz preparation, including decoding, preparation and direct
-application (not wall-clock waiting for ISR acknowledgment):
-
-| Operation | Before cycles | After cycles |
+| Resource / timing | Before | After |
 | --- | ---: | ---: |
-| One voice pitch + control | 1015 | 1021 |
-| Four voices pitch + control | 1243 | 1247 |
-| Four controls | 1135 | 1139 |
-| Pitch off | 984 | 990 |
-| Continue / sparse countdown | 579 / 100 | 579 / 100 |
-| Maximum music / SFX event | 1266 / 1065 | 1270 / 1069 |
-| Raw 18-byte event read | 416 | 416 |
+| All-active ordinary ISR, all 27 tonal selections | 183..196 | 191..204 cycles |
+| All-pulse active ordinary ISR | 186..193 | 194..201 cycles |
+| All-triangle active ordinary ISR | 189..196 | 197..204 cycles |
+| All-saw active ordinary ISR | 183..190 | 191..198 cycles |
+| All-stopped ordinary ISR, pulse / triangle / saw | 186 / 189 / 183 | **81 / 81 / 81 cycles** |
+| PWM endpoint store, including entry/vector | 21 | **21 cycles** |
+| Pending-control copy overhead | 76 | 76 cycles |
+| Maximum pending copy ISR | 272 | **280 cycles** |
+| Maximum pending reseed ISR | 273 | **281 cycles** |
+| Firmware .text, FX / FX-C / Mini | 29332 | **29352 bytes** |
+| Bootloader headroom below 29696 bytes | 364 | **344 bytes** |
+| Inline synthesis ISR machine code | 380 | 396 bytes |
+| Control copier helper | 154 | 154 bytes |
+| Foreground audio_commit_prepare | 158 | 160 bytes |
+| Persistent audio SRAM | 89 | **89 bytes** |
+| Live latch / complete pending packet | 16 / 17 | 16 / 17 bytes |
+| Native stack allowance above formatter/text scratch | 74 | **74 bytes** |
+| Ordinary / pending ISR stack, including return PCs | 9 / 11 | **9 / 11 bytes** |
+| Observed demo / libm+formatter native high-water | 39 / 39 | **39 / 39 bytes** |
 
-Foreground packs bits 5 and 6 from the current owner; only volume bits 0..4
-enter amplitude preparation. Tonal saw controls are 0x60 plus volume and optional
-0x80 duty flag. The existing single-byte publication copies all 16 controls.
-Read-ahead remains 18/10 bytes for music/SFX; desired voices remain four bytes.
+The saved baseline ELF in this checkout measures 29332 bytes, four bytes more
+than the historical saw report's 29328; the table uses the actual saved image.
+Three macros add four bytes each, noise adds four, and foreground adds two:
+18 instruction bytes plus two bytes of final alignment padding, **20 total**.
+No calls, loops, tables, persistent state or register saves are added to synthesis.
+
+| Component, including entry/vector | Ordinary maximum | Pending copy | Pending reseed | All stopped ordinary |
+| --- | ---: | ---: | ---: | ---: |
+| Interrupt entry + vector | 7 | 7 | 7 | 7 |
+| Prologue through PWM endpoint write | 14 | 14 | 14 | 14 |
+| Remaining register saves | 8 | 8 | 8 | 8 |
+| Update check, call and helper | 4 | 80 | 86 | 4 |
+| Clear signed accumulator | 2 | 2 | 2 | 2 |
+| Three tonal voices | 108 | 108 | 108 | 15 |
+| Noise | 33 | 33 | 28 | 5 |
+| Bias, saturation and held-sample store | 9 | 9 | 9 | 7 |
+| Restore registers/flags + RETI | 19 | 19 | 19 | 19 |
+| Total | **204** | **280** | **281** | **81** |
+
+Reseeding prevents noise overflow on that sample, saving five synthesis cycles
+while adding six copier cycles. The 281-cycle maximum leaves **743 cycles**
+before the 1024-cycle deadline at 15625 Hz. Timer/PWM configuration and the
+endpoint store position are unchanged. Phase alignment retains 64..120 cycles
+of Timer0/Timer1 separation modulo 128.
+
+| CPU utilization at 16 MHz | Before, 7812.5 Hz | After, 7812.5 Hz | Before, 15625 Hz | After, 15625 Hz |
+| --- | ---: | ---: | ---: | ---: |
+| All-active worst ordinary | 9.5703% | **9.9609%** | 19.1406% | **19.9219%** |
+| All-stopped, retained triangles | 9.2285% | **3.9551%** | 18.4570% | **7.9102%** |
+| Worst pending copy, if every sample accepts a packet | 13.2813% | 13.6719% | 26.5625% | 27.3438% |
+| Worst pending reseed, if every sample accepts a packet | 13.3301% | 13.7207% | 26.6602% | 27.4414% |
+
+Utilization is `cycles * sample_rate / 16000000`. All-active ordinary overhead
+is eight cycles; all-stopped savings are 102..108 cycles depending on retained
+waveforms. Pending percentages are upper bounds, not typical publication rates.
+
+The path probe covers every stopped mask (bit N means channel N stopped), all
+27 waveform selections, representative reachable gains, all 16 sign choices,
+noise overflow/feedback, clipping and copy/odd-seed/even-seed descriptors:
+
+| Stopped mask | Ordinary cycles | Maximum pending cycles |
+| --- | ---: | ---: |
+| 0 | 191..204 | 281 |
+| 1, 2, 4 | 162..173 | 250 |
+| 3, 5, 6 | 133..142 | 219 |
+| 7 | 104..111 | 188 |
+| 8 | 168..176 | 258 |
+| 9, 10, 12 | 139..145 | 227 |
+| 11, 13, 14 | 110..114 | 196 |
+| 15 | 81 | 163 |
 
 ## Validation and reproduction
 
-- All 471 interpreter tests, 54 native audio cases, 116 Python audio tests
-  (including NumPy/SciPy), and 565 additional audio-tool tests pass. FX, FX-C,
-  Mini and the custom button presets assemble within the flash/SRAM limits.
-- Native tests cover 387072 pulse samples, 43008 triangle samples and 43008 saw
-  samples; all 27 concurrent waveform combinations with noise/clipping; nine
-  ordered transitions on every tonal channel at both rates; every control
-  encoding; SFX ownership/restoration across hidden music changes and loops;
-  interrupted staging, pending publication, retained duty and phase.
-- The desktop renderer matches the actual AVR sequencer/preparation/synthesis
-  exactly over 34 fixture/rate combinations, 408000 samples, including saw
-  extremes, mixed oscillators, duty edits, waveform changes and loops.
-- Fifteen existing demo/example AVMS assets (58765 compiled bytes) compare
-  byte-for-byte with the pre-change compiler. Frozen pulse and triangle binary
-  regression tests also cover rests, subsequent notes, extensions and loops.
-- The three-waveform example compiles to 39 bytes. The full interpreter,
-  audio demo, Mini, FX-C, timer, stack, formatter and large C/C++ asset checks
-  use the existing build targets. See the JSON for final test counts.
+- 59 native audio cases and all 471 interpreter regressions pass. The suite
+  retains sequencer, loop, SFX ownership/restoration, direct-tone, pause/resume,
+  disable, rate-switch, register/SREG, packet and SPI checks.
+- Tonal sample references cover 331776 pulse, 36864 triangle and 36864 saw
+  outputs at both rates with phase wrap, representative low bytes/increments,
+  duty extremes and reachable amplitudes through 247. A separate 589824-path
+  sweep covers every high phase byte and amplitude 0..254 on all three tonal
+  channels/waveforms; 255 explicitly tests the five-cycle zero contribution.
+- 131072 noise paths cover all LFSR bytes, all amplitudes, overflow/hold,
+  feedback carry, signed accumulation and stopped-state preservation.
+- New foreground tests distinguish zero volume/master from zero increment,
+  freeze each stopped oscillator for repeated interrupts, reactivate sample
+  exactly, and accept stopped noise retriggers. Interrupt injection checks
+  both transition directions for all 16 stopped masks. The ISR timing sweep
+  measures 331776 paths and asserts 9/11-byte stack high-water on every path.
+- The unchanged desktop renderer matches all 408000 samples over 34 fixture/
+  rate combinations, including envelopes, rests, loops and noise reseeds.
+- 116 Python audio tests and 565 audio-tool tests pass. Native PUSH16 (152),
+  stack bounds (1133), three display controllers (88 each), and Timer0 tests
+  for FX, FX-C, Mini and split/shared button presets pass. All configurations
+  assemble within existing size, SRAM-page and stack assertions.
+- Animated demo, live rate toggles, five-song playlist, formatter/libm with
+  interrupts, and both 22000-attack C/C++ asset tests pass. The demo package
+  is refreshed with current firmware and its unchanged guest image.
+- RPG FX/FX-C timing smoke tests pass (two seconds each); 9/10 RPG CTests pass.
+  Existing `imported_music` fails its score-inventory assertion before running
+  firmware. The broader RPG device integration fails its title-screen music
+  expectation with both current and saved baseline firmware. These checkout
+  issues remain; no game behavior or score assets were changed for this work.
+  RPG packages were refreshed, and its clipping verifier excludes 0xFF from
+  audible amplitude. Other pre-existing RPG edits are preserved.
 
 ```sh
 python -m unittest discover -s tests/audio -v
-python -m pytest tools/tests -q
-cmake --build build --config RelWithDebInfo --target avm_tests_run avm_interpreter_fxc avm_audio_demo
-python tests/audio/validate_stage2_renderer.py --output build/saw-renderer
-python tools/avm_music.py examples/tonal_waveforms.avms build/tonal_waveforms.bin --stats
+python -m pytest tools/tests -q --basetemp=build/audio-sentinel/pytest-temp
+cmake --build build --config RelWithDebInfo --target avm_tests_run avm_interpreter_fxc
+python tests/audio/validate_stage2_renderer.py --output build/audio-sentinel/renderer
+build/tests/avm_audio_tests.exe --stopped-profile interp/build/interp.hex interp/build/interp.lst build/tests/interp/audio.bin
+ctest --test-dir projects/avm_rpg/build -C RelWithDebInfo --output-on-failure
 ```
 
-On this Windows installation the native build uses the existing `_CL_=/Z7`
-workaround for MSVC's PDB manager mismatch; tests use a workspace-local TEMP.
-The explicit Python run includes NumPy/SciPy; the CMake-selected Python omits
-those optional dependencies. Historical RPG timing in the JSON is retained
-as historical evidence; RPG assets were not modified for saw support.
-
-The refreshed [audio demo package](../projects/audio_demo/audio_demo.arduboy)
-contains the final firmware and unchanged guest image. The new concurrent
-example is [tonal_waveforms.avms](../examples/tonal_waveforms.avms).
-This is simulator verification; no physical hardware or oscilloscope validation
-was performed. Unbandlimited harmonics alias at both sample rates, and loud
-mixed voices can clip; see [audio.md](audio.md) for format and playback details.
-
-## Files changed
-
-- `interp/interp.asm` and regenerated `interp/build/interp.hex`, `.lst`, `.map`:
-  waveform generation, packing and stream validation.
-- `tools/avm_music.py`, `tools/avm_audio_render.py`: source encoding, validation
-  and exact offline saw rendering.
-- `tests/interp/audio.cpp`, `tests/audio/test_score.py`,
-  `tests/audio/test_stage2.py`, `tests/audio/validate_stage2_renderer.py`:
-  extend the existing native/compiler/renderer tests and cycle probes.
-- `docs/audio.md`, this report, `docs/audio-validation.json`,
-  `docs/midi_to_avms_stage2.md`: format, performance and validation evidence.
-- `examples/tonal_waveforms.avms` and refreshed
-  `projects/audio_demo/audio_demo.arduboy`: concurrent waveform example and
-  current firmware package. Existing scores and generated music headers retain
-  their original compiled bytes.
+This Windows build uses `_CL_=/Z7` for the installed MSVC PDB-manager mismatch
+and a workspace-local TEMP/TMP for Python temporary files. Current-session
+logs are under `build/audio-sentinel/`; historical evidence stays in the JSON.
+This is instruction-level simulation, with no physical hardware/oscilloscope
+validation. Active checks add two cycles per voice; further active-path savings
+would need a different instruction/register arrangement or a broader redesign.

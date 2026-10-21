@@ -937,7 +937,13 @@ The ISR clips the complete signed mix after summation; loud voices can clip.
 ## Pulse, triangle, sawtooth, and noise synthesis
 
 Each tonal oscillator has a uint16 phase, uint16 increment, uint8 duty, and
-prepared uint8 amplitude. It advances phase, then compares its upper byte:
+prepared uint8 amplitude. Foreground computes `floor(volume * master / 32)`,
+at most 247. Reserved amplitude `0xFF` means stopped with increment zero:
+the ISR skips the oscillator and preserves phase. Inactive owners and zero
+increments use this sentinel. Volume zero or master zero with a nonzero
+increment prepares amplitude **zero**, so phase continues advancing while
+muted. This internal encoding changes neither the API nor A5/D1-D3 assets.
+For a non-sentinel amplitude it advances phase, then compares its upper byte:
 `phase_high < duty` produces +127; otherwise -127. Duty is 0..255, default
 128 (exact 50%). Percentages use a 256-step cycle: 12.5%=32, 25%=64, 50%=128;
 100% clamps to 255. Duty 0 is always negative; 255 still has one negative phase
@@ -955,9 +961,10 @@ The existing `LDS/SBRS/RJMP` selects pulse or non-pulse; only the non-pulse
 path checks saw selection with `SBRC/RJMP`. Triangle's original calculation
 and pulse's original instructions are preserved, sharing the same mixer.
 Including phase advancement, amplitude load, selection, and multiplication/
-accumulation, each tonal voice costs **33 pulse / 34 triangle / 32 saw cycles**,
-independent of phase, amplitude, and duty. Three pulses take 99 tonal cycles;
-three triangles take 102; three saws take 96. Wave changes preserve all phase
+accumulation, each active tonal voice costs **35 pulse / 36 triangle / 34 saw
+cycles**, independent of phase, non-sentinel amplitude, and duty. Each stopped
+voice takes **5 cycles**. Three active pulses take 105 tonal cycles;
+three triangles take 108; three saws take 102. Wave changes preserve all phase
 bits, including controls during a sustained note, with no new per-sample lookup.
 
 The branchless `CP/SBC/ANDI/SUBI` comparison has fixed instruction cost for
@@ -973,6 +980,12 @@ preserve phase and LFSR. An explicit retrigger atomically sets seed 1..63
 and resets noise phase before generating the next sample. It does not change
 the pitch. Hidden music retriggers are discarded while SFX owns noise; release
 restores current music controls without replaying an earlier seed.
+Noise uses the same stopped sentinel: phase, LFSR and mixing are skipped in
+five cycles. Muted noise with nonzero increment still advances both phase and
+LFSR. Pending retriggers reset phase and reseed before the sentinel check,
+including while stopped. Active noise takes 28 cycles without overflow,
+32 with a shift and 33 with feedback. See [audio-benchmarks.md](audio-benchmarks.md)
+for instruction accounting and measured before/after results.
 
 ## Binary formats: A5 and D1–D3
 
@@ -1183,11 +1196,13 @@ Assembler assertions retain the single-SRAM-page and minimum-stack constraints.
 Timer1 uses 9 stack bytes including interrupt PC, 11 while calling the fixed
 copier. It preserves r0/r1/r20/r21/r26/r27 and SREG; Z is untouched even on the
 pending path. The foreground preserves borrowed VM state and guest flags.
-Saw support adds no SRAM or stack use. At 16 MHz the worst ordinary ISR is
-196 cycles (three triangles), versus 193 before saw support; pending copy/
-reseed maxima are 272/273 versus 269/270. PWM writes remain at 21 cycles.
-Worst ordinary CPU use is 9.5703% at 7812.5 Hz and 19.1406% at 15625 Hz,
-increases of 0.1465 and 0.2930 percentage points. All-pulse timing is unchanged.
+Stopped-channel checks add no SRAM, saved registers or stack use. At 16 MHz
+the worst ordinary ISR is 204 cycles (three active triangles), versus 196
+before the checks; pending copy/reseed maxima are 280/281 versus 272/273.
+An all-stopped ordinary ISR takes 81 cycles. PWM writes remain at 21 cycles.
+Worst all-active ordinary CPU use is 9.9609% at 7812.5 Hz and 19.9219% at
+15625 Hz; all-stopped use is 3.9551% and 7.9102%. FX, FX-C and Mini firmware
+is 29352 bytes, leaving 344 bytes below the 29696-byte bootloader boundary.
 
 The compact FX reader performs one interruptible burst per due event with
 24-bit cursors and actual-consumption advancement, preserving speculative

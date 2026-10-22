@@ -21,11 +21,12 @@ MIDI or need `mido`.
 ```sh
 python -m pip install -r tools/requirements-midi.txt
 python tools/midi_to_avms.py input.mid output.avms
-python tools/midi_to_avms.py input.mid output.avms --loop --preset balanced --stats --report output.json --binary output.bin
+python tools/midi_to_avms.py input.mid output.avms --preset balanced --stats --report output.json --binary output.bin
 python tools/avm_music.py output.avms output.h --name song --stats
 ```
 
-Looping is opt-in and covers the entire selected region. `--start 4.5 --end
+Looping is selected at runtime with `avm_audio_music_loop(1)` and covers
+the entire selected region; it is not stored in AVMS or compiled assets. `--start 4.5 --end
 28.0` selects a region in seconds. Source tempo changes are integrated before
 cropping, including changes between notes. The generated score uses a fixed
 notation tempo with explicit millisecond lengths, preserving the real tempo map.
@@ -139,10 +140,11 @@ boundaries still use the compiler's 4ms grid.
 - Absolute onsets and offsets round to the nearest 4ms, half up. Durations
   subtract rounded boundaries, so errors do not accumulate. Simultaneous
   voices stay aligned. The compiler adds its mandatory 4ms initial event
-  delay; one-shot End adds one tick, and loops use a fixed rounded boundary.
+  delay. Music End uses the fixed rounded written boundary, including terminal
+  rests, whether the runtime plays it once or repeats it.
 - Notes collapsing to zero ticks are omitted with a diagnostic. A 4ms note
   gets a precise cut, preventing its release from extending the score.
-  Loops have the compiler's 8ms minimum length. Repeated-note attacks remain
+  Music has the compiler's 8ms minimum length. Repeated-note attacks remain
   distinct when the source onsets occupy distinct ticks.
 - Sustain holds physically released keys until pedal-up. Same-pitch overlaps
   pair FIFO, preferring the originating track when possible. Channel state
@@ -173,10 +175,10 @@ cmake --build build --config RelWithDebInfo --target avm_audio_demo
 Individual conversions from Downloads, in PowerShell from the repository root:
 
 ```powershell
-python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\z1overw.mid" build/midi-arranger/z1overw.avms --loop --stats
-python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\ff1town.mid" build/midi-arranger/ff1town.avms --loop --stats
-python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\ff1overw.mid" build/midi-arranger/ff1overw.avms --loop --stats
-python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\ff1matya.mid" build/midi-arranger/ff1matya.avms --loop --stats
+python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\z1overw.mid" build/midi-arranger/z1overw.avms --stats
+python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\ff1town.mid" build/midi-arranger/ff1town.avms --stats
+python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\ff1overw.mid" build/midi-arranger/ff1overw.avms --stats
+python tools/midi_to_avms.py "$env:USERPROFILE\Downloads\ff1matya.mid" build/midi-arranger/ff1matya.avms --stats
 ```
 
 | Input | Rounded loop | Compiled bytes | Lead / harmony / bass / drums |
@@ -238,6 +240,6 @@ Automatic selection remains weak with melody handoffs between unrelated
 tracks, dense piano counterpoint, polyrhythms, expressive continuous bends,
 and arrangements relying on sampled timbres or more than three independent
 pitched lines. Track metadata can be misleading. Harmony can be simplified
-aggressively and inferred roots are estimates. File-end looping is manual,
-not automatic seamless-loop discovery. Physical Arduboy listening remains
+aggressively and inferred roots are estimates. The runtime loop setting repeats the full score; the importer does not
+discover seamless loop points. Physical Arduboy listening remains
 necessary to judge the piezo, register, articulation and mix.

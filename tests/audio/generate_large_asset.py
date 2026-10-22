@@ -4,8 +4,8 @@ import runpy
 import sys
 
 compiler = runpy.run_path(str(Path(__file__).resolve().parents[2] / "tools/avm_music.py"))
-# Keep every explicit onset to exercise raw-pitch records across 64 KB.
-data = compiler["compile_source"]("channel 0 { repeat 22000 { c:4ms } }")
+# A terminal rest leaves room for every onset before the fixed music end.
+data = compiler["compile_source"]("channel 0 { repeat 22000 { c:4ms } r:4ms }")
 assert len(data) > 65535
 output = Path(sys.argv[1])
 output.parent.mkdir(parents=True, exist_ok=True)

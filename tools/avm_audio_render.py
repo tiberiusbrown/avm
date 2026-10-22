@@ -53,7 +53,7 @@ class Render:
 
 
 def decode(data):
-    """Validate and decode one traversal, stopping at End/Loop (padding OK).
+    """Validate and decode one traversal, stopping at End (padding OK).
 
     Host-side checks aid diagnostics; the AVR trusts compiler-generated data.
     Music and SFX share this format, with their kind selected by the PLAY API.
@@ -66,7 +66,7 @@ def decode(data):
     def byte():
         nonlocal position
         if position >= len(data):
-            raise ValueError("Truncated audio stream (missing End/Loop or payload)")
+            raise ValueError("Truncated audio stream (missing End or payload)")
         value = data[position]
         position += 1
         return value
@@ -76,7 +76,7 @@ def decode(data):
         mask = byte()
         if not mask:
             command = byte()
-            if command not in (0, 1, 2):
+            if command not in (0, 1):
                 raise ValueError("Unknown audio command")
             events.append(Event(tick, (), (), command))
             if command:
@@ -100,7 +100,7 @@ def decode(data):
                 # Retain both tonal waveform bits, as in AVR desired state.
                 controls.append((channel, control & 127, extension))
         events.append(Event(tick, tuple(pitches), tuple(controls)))
-    raise ValueError("Audio stream has no End/Loop")
+    raise ValueError("Audio stream has no End")
 
 
 # Every nonzero seed belongs to this single 255-element Galois cycle.
@@ -112,12 +112,13 @@ _cycle = np.array(_cycle, dtype=np.int64)
 _indices = {int(v): i for i, v in enumerate(_cycle)}
 
 
-def render(data, *, rate=15625., master=128, duration=None, start=0.):
+def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False):
     """Render compiled data, preserving state across skipped prefix samples.
 
     Skipping a prefix advances phases/LFSR arithmetically without generating
-    samples. This makes fitting late excerpts practical. A looping asset needs
-    an explicit duration to render more than one traversal.
+    samples. This makes fitting late excerpts practical. Looping is a playback
+    setting; pass loop=True and a duration to render more than one traversal.
+    Sequenced SFX callers must leave loop disabled, as on the AVR.
     """
     if rate not in RATES or not isinstance(master, int) or not 0 <= master <= 255:
         raise ValueError("Rate must be 7812.5 or 15625; master must be 0..255")
@@ -185,11 +186,11 @@ def render(data, *, rate=15625., master=128, duration=None, start=0.):
                         duties[ch] = extension
                     else:
                         phases[3], noise_index = 0, _indices[extension]
-            if event.command == 1:
+            if event.command == 1 and not loop:
                 increments = [0]*4
                 span(stop)
                 break
-        if events[-1].command == 2:
+        if loop:
             base_tick += events[-1].tick
         else:
             break

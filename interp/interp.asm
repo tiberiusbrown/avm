@@ -96,7 +96,8 @@
 #define data_audio_update            (data_audio_update_waveform+1)
 #define data_audio_sample            (data_audio_update+1)
 #define data_audio_rate              (data_audio_sample+1)
-#define data_audio_end               (data_audio_rate+1)
+#define data_audio_music_loop        (data_audio_rate+1)
+#define data_audio_end               (data_audio_music_loop+1)
 
 ; Stream records share cursor/wait/status/mask; only music has a loop start.
 ; All program pointers are image-relative, little-endian uint24.
@@ -106,8 +107,8 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
-.if (data_audio_end - data_audio_begin) != 89
-    .error "audio persistent SRAM must occupy 89 bytes"
+.if (data_audio_end - data_audio_begin) != 90
+    .error "audio persistent SRAM must occupy 90 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -16294,7 +16295,7 @@ audio_service_func:
     ret
 
 ; Fetch a complete maximum-size event in one interruptible FX transaction.
-; Also used for the initial header/delta and the first delta after Loop.
+; Also used for the initial header/delta and the first delta after rewind.
 ; X returns at the first byte; the logical uint24 cursor is not advanced yet.
 audio_read_event:
     movw r30, r16
@@ -16364,14 +16365,19 @@ audio_advance:
     ld   r24, X+
     tst  r24
     brne 1f
-    ; Compiler-validated commands: Continue=0, End=1, Loop=2 (music only).
+    ; Compiler-validated commands: Continue=0, End=1.
     ld   r24, X+
     tst  r24
     brne 3f
     rjmp .Laudio_next_delta
 3:
-    cpi  r24, 2
+    cpi  r16, lo8(data_audio_music)
     breq 3f
+    rjmp audio_stream_end
+3:
+    lds  r24, data_audio_music_loop
+    tst  r24
+    brne 3f
     rjmp audio_stream_end
 3:
     rjmp .Laudio_loop
@@ -16635,7 +16641,7 @@ sys_audio_impl:
 1:
     cpi  r24, 2
     brsh .Laudio_command
-    ; PLAY: q2[23:0] pointer to a stream ending with End or Loop. r6 is unused.
+    ; PLAY: q2[23:0] pointer to a stream ending with End. r6 is unused.
     tst  r24
     brne 1f
     std  Z+AUDIO_START, VM_R4L
@@ -16702,6 +16708,11 @@ sys_audio_impl:
     cpi  r24, 13 ; synthesis rate: r4=0 (8 kHz), 1 (16 kHz)
     brne 1f
     rjmp .Laudio_rate
+1:
+    cpi  r24, 14 ; music looping: r4=0 disables, nonzero enables
+    brne 1f
+    sts  data_audio_music_loop, VM_R4L
+    rjmp .Laudio_command_done
 1:
     cpi  r24, 10 ; direct SFX tone: r4 channel, r5 raw increment, r6 amplitude
     brne 1f

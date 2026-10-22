@@ -19,6 +19,7 @@ enum { SONG_COUNT = sizeof(songs) / sizeof(songs[0]) };
 void setup(void) {
     avm_set_frame_rate(60);
     avm_set_text_font(AVM_FONT_5X7);
+    avm_audio_music_loop(1);
     avm_audio_play(music);
 }
 void loop(void) {

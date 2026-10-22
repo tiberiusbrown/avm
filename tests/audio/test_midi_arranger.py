@@ -35,7 +35,7 @@ class MidiArrangerTests(unittest.TestCase):
         source, data = arranger.compile_arrangement(arrangement)
         self.assertIn(data[0], range(1, 16))
         events, end, command = decode(data, raw=True)
-        self.assertEqual(command, 2 if options.get("loop") else 1)
+        self.assertEqual(command, 1)
         for channel, notes in arrangement.voices.items():
             for i, note in enumerate(notes):
                 self.assertEqual(note.channel, channel)
@@ -55,10 +55,10 @@ class MidiArrangerTests(unittest.TestCase):
         self.assertFalse(arrangement.voices[2])
         onsets = [t for t, updates in events if updates.get(0, {}).get("note", 0)]
         self.assertEqual(onsets, [arranger.tick(n.start) + 1 for n in song.notes])
-        self.assertLessEqual(abs(end * .004 - song.duration - .004), .0021)
+        self.assertLessEqual(abs(end * .004 - song.duration), .0021)
 
     def test_type1_named_melody_bass_chords_and_drums(self):
-        song, a, source, data, _, _ = self.convert(fixtures.progression(), loop=True)
+        song, a, source, data, _, _ = self.convert(fixtures.progression())
         self.assertEqual([n.sources[0] for n in a.voices[0]], [n.id for n in song.notes if n.track == 1])
         self.assertTrue(all(song.notes[n.sources[0]].track == 3 for n in a.voices[2]))
         self.assertEqual(data[0], 15)
@@ -96,7 +96,7 @@ class MidiArrangerTests(unittest.TestCase):
         onsets = [t for t, updates in events if updates.get(0, {}).get("note", 0)]
         for actual, note in zip(onsets, song.notes):
             self.assertLessEqual(abs((actual - 1) * .004 - note.start), .00201)
-        self.assertLessEqual(abs(end * .004 - song.duration - .004), .00201)
+        self.assertLessEqual(abs(end * .004 - song.duration), .00201)
         self.assertLessEqual(a.report["quantization_max_error_ms"], 2.001)
 
     def test_sustain_repeated_notes_and_velocity_zero_off(self):
@@ -235,7 +235,7 @@ class MidiArrangerTests(unittest.TestCase):
         self.assertEqual(a.voices[0][0].start_tick, 0)
         self.assertLessEqual(a.voices[0][0].volume, 3)
         self.assertIn("frequency_slide", source)
-        self.assertEqual(end, 251)
+        self.assertEqual(end, 250)
 
     def test_short_notes_policy_and_initial_delay(self):
         midi = mido.MidiFile(type=0, ticks_per_beat=1000)
@@ -297,7 +297,7 @@ class MidiArrangerTests(unittest.TestCase):
         report = self.path.with_suffix(".json")
         binary = self.path.with_suffix(".bin")
         result = subprocess.run([sys.executable, str(ROOT / "tools/midi_to_avms.py"), str(self.path), str(output),
-                                 "--loop", "--stats", "--report", str(report), "--binary", str(binary)], capture_output=True, text=True, check=False)
+                                 "--stats", "--report", str(report), "--binary", str(binary)], capture_output=True, text=True, check=False)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(arranger.avm_music.compile_source(output.read_text()), binary.read_bytes())
         contents = json.loads(report.read_text())

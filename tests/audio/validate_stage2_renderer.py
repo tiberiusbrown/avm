@@ -13,8 +13,10 @@ sys.path.insert(0, str(ROOT / "tools"))
 import avm_music
 from avm_audio_render import render
 
+LOOPED = {"steady", "phase_loop", "triangle", "triangle_switch", "saw", "saw_switch"}
+
 SCORES = {
-    "steady": "loop channel 0 { volume 12 duty 64 c:800ms }",
+    "steady": "channel 0 { volume 12 duty 64 c:800ms }",
     "single": "channel 0 { volume 12 octave 4 c:160ms octave 1 c:160ms octave 6 b:160ms }",
     "duties": "channel 0 { volume 31 duty 0 c:80ms duty 32 c:80ms duty 64 c:80ms duty 96 c:80ms duty 128 c:80ms duty 255 c:80ms }",
     "mix_clip": "channel 0 { volume 31 duty 32 c:600ms } channel 1 { volume 31 e:600ms } channel 2 { volume 31 g:600ms } channel 3 { wave noise volume 31 c:600ms }",
@@ -26,11 +28,11 @@ SCORES = {
     "arpeggio": "channel 1 { arpeggio { offsets 0,3,7 step 40ms } c:600ms }",
     "glissando": "channel 0 { glissando { direction down step 1semitone every 40ms } c:600ms }",
     "noise": "channel 3 { wave noise volume 12 noise_retrigger { every 32ms seed 37 } c:240ms r:80ms noise_retrigger { every 16ms seed 2 } c:240ms }",
-    "phase_loop": "loop channel 0 { volume 12 duty 64 c:80ms duty 128 g:80ms r:40ms c:80ms } channel 3 { wave noise volume 8 noise_retrigger { every 40ms seed 63 } c:280ms }",
-    "triangle": "loop channel 0 { wave triangle volume 31 c:80ms } channel 1 { wave triangle volume 17 e:80ms } channel 2 { wave triangle volume 24 g:80ms }",
-    "triangle_switch": "loop channel 0 { volume 31 duty 32 c:16ms wave triangle c:16ms duty 192 c:16ms wave pulse c:16ms } channel 1 { wave triangle e:32ms wave square e:32ms } channel 2 { wave triangle g:64ms } channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:64ms }",
-    "saw": "loop channel 0 { wave saw volume 31 octave 1 c:80ms } channel 1 { wave saw volume 1 octave 6 b:80ms } channel 2 { wave saw volume 24 g:80ms }",
-    "saw_switch": "loop channel 0 { volume 31 duty 32 c:16ms wave triangle c:16ms wave saw c:16ms duty 192 c:16ms wave pulse c:16ms } channel 1 { wave saw volume 17 e:80ms } channel 2 { wave triangle volume 24 g:80ms } channel 3 { wave noise volume 31 noise_retrigger { every 16ms seed 37 } c:80ms }",
+    "phase_loop": "channel 0 { volume 12 duty 64 c:80ms duty 128 g:80ms r:40ms c:80ms } channel 3 { wave noise volume 8 noise_retrigger { every 40ms seed 63 } c:280ms }",
+    "triangle": "channel 0 { wave triangle volume 31 c:80ms } channel 1 { wave triangle volume 17 e:80ms } channel 2 { wave triangle volume 24 g:80ms }",
+    "triangle_switch": "channel 0 { volume 31 duty 32 c:16ms wave triangle c:16ms duty 192 c:16ms wave pulse c:16ms } channel 1 { wave triangle e:32ms wave square e:32ms } channel 2 { wave triangle g:64ms } channel 3 { wave noise volume 7 noise_retrigger { every 16ms seed 37 } c:64ms }",
+    "saw": "channel 0 { wave saw volume 31 octave 1 c:80ms } channel 1 { wave saw volume 1 octave 6 b:80ms } channel 2 { wave saw volume 24 g:80ms }",
+    "saw_switch": "channel 0 { volume 31 duty 32 c:16ms wave triangle c:16ms wave saw c:16ms duty 192 c:16ms wave pulse c:16ms } channel 1 { wave saw volume 17 e:80ms } channel 2 { wave triangle volume 24 g:80ms } channel 3 { wave noise volume 31 noise_retrigger { every 16ms seed 37 } c:80ms }",
 }
 
 
@@ -42,10 +44,10 @@ def validate(exe, hex_path, listing, guest, output, live=False):
         asset = output / (name + ".bin")
         asset.write_bytes(data)
         for selected, rate in enumerate((7812.5, 15625)):
-            result = render(data, rate=rate, duration=1.024)
+            result = render(data, rate=rate, duration=1.024, loop=name in LOOPED)
             pcm = output / f"{name}-{selected}.u8"
             subprocess.run([str(exe), "--render-logical", str(hex_path), str(listing), str(guest),
-                            str(asset), str(pcm), str(len(result.pcm)), str(selected)], check=True, capture_output=True)
+                            str(asset), str(pcm), str(len(result.pcm)), str(selected), str(int(name in LOOPED))], check=True, capture_output=True)
             actual = np.frombuffer(pcm.read_bytes(), dtype=np.uint8)
             errors = np.abs(actual.astype(int)-result.pcm.astype(int))
             row = {"fixture": name, "rate": rate, "samples": len(actual),
@@ -59,9 +61,9 @@ def validate(exe, hex_path, listing, guest, output, live=False):
         for selected, rate in enumerate((7812.5, 15625)):
             path = output / f"live-{selected}.wav"
             subprocess.run([str(exe), "--capture", str(hex_path), str(listing), str(guest),
-                            str(output / "phase_loop.bin"), str(path), "2", str(selected)], check=True, capture_output=True)
+                            str(output / "phase_loop.bin"), str(path), "2", str(selected), "1"], check=True, capture_output=True)
             trace = np.loadtxt(str(path)+".logical.csv", delimiter=",", skiprows=1)
-            ideal = render((output / "phase_loop.bin").read_bytes(), rate=rate, master=64, duration=2.01)
+            ideal = render((output / "phase_loop.bin").read_bytes(), rate=rate, master=64, duration=2.01, loop=True)
             count = min(len(trace), len(ideal.pcm))
             # A diagnostic, not a claim of equivalence: actual foreground and
             # Timer0 clocks are asynchronous to the ideal deadline convention.
@@ -74,9 +76,9 @@ def validate(exe, hex_path, listing, guest, output, live=False):
             # compare the directly observed logical endpoints before PWM.
             steady_path = output / f"steady-live-{selected}.wav"
             subprocess.run([str(exe), "--capture", str(hex_path), str(listing), str(guest),
-                            str(output / "steady.bin"), str(steady_path), "1", str(selected)], check=True, capture_output=True)
+                            str(output / "steady.bin"), str(steady_path), "1", str(selected), "1"], check=True, capture_output=True)
             steady_trace = np.loadtxt(str(steady_path)+".logical.csv", delimiter=",", skiprows=1)[:, 1]
-            steady = render((output / "steady.bin").read_bytes(), rate=rate, master=64, duration=1.).pcm
+            steady = render((output / "steady.bin").read_bytes(), rate=rate, master=64, duration=1., loop=True).pcm
             lo, hi = round(.03*rate), round(.6*rate)
             shifts = range(-round(.008*rate), round(.008*rate)+1)
             shift = min(shifts, key=lambda d: np.mean(steady_trace[lo:hi] != steady[lo+d:hi+d]))

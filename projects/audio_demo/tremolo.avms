@@ -1,7 +1,6 @@
 // Standalone score demonstrating automatic envelopes and beat-synchronized tremolo.
 tempo 120
 meter 4/4
-loop
 automation 8ms
 
 envelope soft {

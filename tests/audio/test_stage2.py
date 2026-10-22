@@ -44,11 +44,22 @@ def fixture(channels=(0,), duration=1.2):
         name = "i"+str(ch)
         instruments[name] = midi.Instrument(name, "noise" if ch == 3 else "pulse", 128, 8, ((0, 100),), 0)
         voices[ch] = [midi.ArrangedNote((60, 67, 48, 60)[ch], 0, duration, 100, (ch,), name, ch, volume=8)]
-    return midi.Arrangement("Synthetic", duration, voices, instruments, False, (4, 4), 16, midi.Analysis([], 1), {"warnings": []})
+    return midi.Arrangement("Synthetic", duration, voices, instruments, (4, 4), 16, midi.Analysis([], 1), {"warnings": []})
 
 
 @unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
 class RenderTests(unittest.TestCase):
+    def test_end_uses_the_playback_loop_option_and_rejects_old_loop_commands(self):
+        data = avm_music.compile_source("channel 0 { volume 12 c:16ms r:16ms }")
+        self.assertEqual(decode(data)[-1].command, 1)
+        stopped = render(data, duration=.1)
+        repeated = render(data, duration=.1, loop=True)
+        end = int(np.ceil(.032 * 15625))
+        self.assertTrue(np.all(stopped.pcm[end:] == 128))
+        self.assertTrue(np.any(repeated.pcm[end:] != 128))
+        with self.assertRaisesRegex(ValueError, "Unknown audio command"):
+            decode(data[:-1] + b"\x02")
+
     def test_triangle_arrangement_export_snapshots_and_optimizer_coordinates(self):
         arrangement = fixture((0, 2))
         for instrument in arrangement.instruments.values():
@@ -75,7 +86,7 @@ class RenderTests(unittest.TestCase):
                     for master in (0, 32, 128, 255):
                         inc = 128 if rate == 7812.5 else 256
                         data = avm_music._encode_events(1 << ch, [(1, {ch: {
-                            "increment": inc, "volume": volume, "wave": wave, "duty": 0}})], 20, False)
+                            "increment": inc, "volume": volume, "wave": wave, "duty": 0}})], 20)
                         actual = render(data, rate=rate, master=master, duration=.05)
                         first = int(np.ceil(rate / 250))
                         amp = volume * master // 32
@@ -88,7 +99,7 @@ class RenderTests(unittest.TestCase):
                         np.testing.assert_array_equal(actual.pcm[first:first+256], np.clip(np.array(expected)+128, 0, 255))
 
     def test_waveform_switches_duty_retention_loops_mixing_and_phase(self):
-        data = avm_music.compile_source("""loop
+        data = avm_music.compile_source("""
             channel 0 { volume 31 duty 32 c:12ms wave triangle c:12ms duty 192 c:12ms wave saw c:12ms wave pulse c:12ms }
             channel 1 { volume 17 wave triangle e:24ms wave saw e:24ms wave square e:12ms }
             channel 2 { volume 24 wave saw g:60ms }
@@ -97,7 +108,7 @@ class RenderTests(unittest.TestCase):
         events = decode(data)
         for rate in (7812.5, 15625):
             for master in (0, 128, 255):
-                actual = render(data, rate=rate, master=master, duration=.31)
+                actual = render(data, rate=rate, master=master, duration=.31, loop=True)
                 phases, incs, controls, duties = [0]*4, [0]*4, [0]*4, [128]*4
                 state, index, base, expected = 1, 0, 0, []
                 for n in range(len(actual.pcm)):
@@ -113,7 +124,7 @@ class RenderTests(unittest.TestCase):
                                 else:
                                     state, phases[3] = ext, 0
                         index += 1
-                        if event.command == 2:
+                        if event.command == 1:
                             base += event.tick
                             index = 0
                     mix = 0
@@ -132,7 +143,7 @@ class RenderTests(unittest.TestCase):
                     expected.append(mix)
                 np.testing.assert_array_equal(actual.mix, expected)
                 np.testing.assert_array_equal(actual.pcm, np.clip(np.array(expected)+128, 0, 255))
-                partial = render(data, rate=rate, master=master, start=.16, duration=.08)
+                partial = render(data, rate=rate, master=master, start=.16, duration=.08, loop=True)
                 np.testing.assert_array_equal(partial.pcm, actual.pcm[int(np.ceil(.16*rate)):int(np.ceil(.24*rate))])
 
     def test_triangle_control_reserved_bits_and_truncation(self):
@@ -196,10 +207,10 @@ class RenderTests(unittest.TestCase):
         np.testing.assert_array_equal(actual.pcm, expected)
 
     def test_phase_and_noise_state_are_preserved_across_skipped_prefix(self):
-        data = avm_music.compile_source("loop channel 0 { duty 32 c:80ms duty 96 e:120ms } channel 3 { wave noise c:200ms }")
-        full = render(data, duration=1.4)
+        data = avm_music.compile_source("channel 0 { duty 32 c:80ms duty 96 e:120ms } channel 3 { wave noise c:200ms }")
+        full = render(data, duration=1.4, loop=True)
         for start in (.137, .4, .801):
-            partial = render(data, start=start, duration=.12)
+            partial = render(data, start=start, duration=.12, loop=True)
             lo, hi = int(np.ceil(start*15625)), int(np.ceil((start+.12)*15625))
             np.testing.assert_array_equal(full.pcm[lo:hi], partial.pcm)
 
@@ -298,7 +309,7 @@ class OptimizationTests(unittest.TestCase):
     def fit(self, initial, target, evaluations=160):
         audio = render(midi.compile_arrangement(deepcopy(target))[1]).audio
         original = snapshot(initial)
-        result = optimize(initial, audio, None, Config(max_evaluations=evaluations, excerpt_duration=target.duration+.004))
+        result = optimize(initial, audio, None, Config(max_evaluations=evaluations, excerpt_duration=target.duration))
         self.assertEqual(snapshot(initial), original)
         self.assertLess(result.optimized["loss"], result.baseline["loss"])
         self.assertLessEqual(result.evaluations, evaluations)
@@ -360,7 +371,7 @@ class OptimizationTests(unittest.TestCase):
     def test_simple_reference_does_not_collect_effects(self):
         a = fixture((0, 2))
         reference = render(midi.compile_arrangement(deepcopy(a))[1]).audio
-        r = optimize(a, reference, None, Config(max_evaluations=100, excerpt_duration=1.204))
+        r = optimize(a, reference, None, Config(max_evaluations=100, excerpt_duration=a.duration))
         self.assertFalse([e for notes in r.arrangement.voices.values() for n in notes for e in n.effects])
         for ch in (0, 2):
             self.assertEqual(structure(a, ch), structure(r.arrangement, ch))

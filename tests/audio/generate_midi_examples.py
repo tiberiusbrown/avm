@@ -18,7 +18,7 @@ if __name__ == "__main__":
         getattr(midi_fixtures, name)().save(path)
         song = read_midi(path)
         song.title = "Arranger example - " + name
-        source, data = compile_arrangement(arrange(song, Settings(loop=True)))
+        source, data = compile_arrangement(arrange(song, Settings()))
         (output / (name + ".avms")).write_text(source, encoding="utf-8", newline="\n")
         (midi_dir / (name + ".bin")).write_bytes(data)
         print(f"{name}: {len(data)} bytes")

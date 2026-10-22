@@ -4,7 +4,7 @@
 #include <string.h>
 
 static const uint8_t AVM_PROGMEM song[] = {
-    15, 0,15,0x49,0x04,0x66,0x05,0x6c,0x06,0x12,0x01, 24,1,0xd0,0x04, 24,0,2
+    15, 0,15,0x49,0x04,0x66,0x05,0x6c,0x06,0x12,0x01, 24,1,0xd0,0x04, 24,0,1
 };
 static const uint8_t AVM_PROGMEM effect[] = {
     10, 0,10,0x25,0x11,0x25,0x02, 7,0,1
@@ -12,6 +12,7 @@ static const uint8_t AVM_PROGMEM effect[] = {
 
 int avm_test_main(void) {
     char text[48];
+    avm_audio_music_loop(1);
     avm_audio_play(song);
     if(avm_audio_status()!=1) return 1;
     uint16_t start=avm_millis();

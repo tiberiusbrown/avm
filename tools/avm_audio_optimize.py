@@ -68,7 +68,7 @@ def structure(arrangement, channel):
 
 def valid_candidate(candidate, baseline):
     """Hard composition/mix safeguards, beyond the compiler's syntax checks."""
-    if (candidate.duration, candidate.loop, candidate.meter) != (baseline.duration, baseline.loop, baseline.meter):
+    if (candidate.duration, candidate.meter) != (baseline.duration, baseline.meter):
         return False
     if set(candidate.voices) != set(baseline.voices):
         return False
@@ -123,7 +123,7 @@ def valid_candidate(candidate, baseline):
 
 
 def choose_windows(arrangement, config):
-    duration = arrangement.duration+.004
+    duration = arrangement.duration
     if config.excerpt_start is not None:
         if not 0 <= config.excerpt_start < duration:
             raise ValueError("Excerpt start is outside the song")

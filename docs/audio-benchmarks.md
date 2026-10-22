@@ -1,9 +1,10 @@
 # Stopped-channel amplitude sentinel measurements
 
 The tables below preserve the stopped-channel optimization measurements.
-The subsequent compiler-trusted stream update reduces current firmware to
-**29,220 bytes**, with **476 bytes** of bootloader headroom. It leaves the
-synthesis paths and their cycle counts unchanged; see the update at the end.
+The subsequent compiler-trusted stream update reduced firmware to 29,220 bytes.
+The runtime music-loop control now brings current firmware to **29,240 bytes**,
+with **456 bytes** of bootloader headroom. These changes leave the synthesis
+paths and their cycle counts unchanged; see the updates at the end.
 
 Measured 2026-10-21 with the repository's Ardens AVR instruction emulator,
 unmerged instructions, 16 MHz CPU, RelWithDebInfo. Before measurements use the
@@ -209,7 +210,7 @@ in this implementation. Both stream kinds begin with one ownership byte and
 use physical channel bits for events. Removing magic and SFX slot conversion
 reduces interpreter flash from **29,352 to 29,220 bytes**, saving **132 bytes**
 and leaving **476 bytes** below the 29,696-byte limit. Persistent audio SRAM
-remains **89 bytes**, with **74 bytes** of native stack allowance.
+remained **89 bytes**, with **74 bytes** of native stack allowance at that stage.
 
 The 396-byte synthesis ISR has identical instructions except for the relocated
 `RCALL audio_apply_update` operand; the call still reaches the same unchanged
@@ -229,3 +230,23 @@ compiled formats require recompilation and are not detected by the AVR.
 Current-session logs, instruction comparison and machine-readable results
 are under `build/audio_trusted_format/`; builds use RelWithDebInfo, the same
 MSVC `/Z7` workaround, and workspace-local TEMP/TMP described above.
+
+## Runtime music loop control
+
+Music now ends at the longest written channel duration, including terminal
+rests, and every compiled stream terminates with End (`01`). The interpreter
+uses a persistent music-loop setting to stop or rewind there; SFX always stops.
+The former terminal Loop command (`02`) and AVMS `loop` directive are removed.
+
+The assembled firmware is **29,240 bytes**, leaving **456 bytes** below the
+29,696-byte limit. The setting adds one byte of persistent SRAM: **90 bytes**
+total, leaving **73 bytes** of native stack allowance above formatter/text
+scratch. Synthesis instructions and their cycle counts are unchanged.
+
+Validation passed 121 Python audio tests, 59 native audio cases, FX/FX-C/Mini
+assembly, both large C/C++ asset executions, the demo and playlist checks,
+and the RPG audio timing smoke test. All 34 desktop-renderer/AVR comparisons
+remain sample-exact, with repetition supplied as a playback option. The demo
+and both RPG device packages were rebuilt. Current logs are under
+`build/audio-loop-*.log`; renderer results are in
+`build/audio-loop-renderer-validation/validation.json`.

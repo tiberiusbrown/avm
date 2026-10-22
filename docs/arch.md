@@ -3712,7 +3712,7 @@ or concurrent execution of a text or formatted-output service is unsupported.
 
 | Command | Operation | Additional inputs / result |
 | ---: | --- | --- |
-| 0 | Play music | `q2[23:0] = program pointer` to an End/Loop-terminated asset; `r6` unused |
+| 0 | Play music | `q2[23:0] = program pointer` to an End-terminated asset; `r6` unused |
 | 1 | Play SFX | Same as play music |
 | 2 | Stop music | None |
 | 3 | Pause music | None |
@@ -3725,10 +3725,15 @@ or concurrent execution of a text or formatted-output service is unsupported.
 | 10 | Direct SFX tone | `low8(r4) = channel`, `low8(r5) = MIDI note`, `low8(r6) = amplitude` |
 | 11 | Set music master | `low8(r4) = 0..255`; 32=100% |
 | 12 | Set SFX master | `low8(r4) = 0..255`; 32=100%; includes direct tones |
+| 13 | Set synthesis rate | `low8(r4) = 0` (7812.5 Hz) or `1` (15625 Hz); other values ignored |
+| 14 | Set music looping | `low8(r4) = 0` disables, nonzero enables; default disabled; persists across playback controls |
 
 All inputs and architectural flags are preserved except the status result.
 Reserved commands have no command effect, but may service pending elapsed time.
 Pointers retain the existing packed 24-bit program-space representation.
+At End, music stops or rewinds according to command 14; SFX always stops.
+Loop-setting changes preserve position, and enabling stopped music does not
+restart it. Compiled streams contain no terminal Loop command.
 Each channel's prepared amplitude is `floor(volume * owner_master / 32)`.
 Music and SFX masters default to 128 and are independent; muted SFX retains ownership. Desired
 channel volumes remain 0..31, and gain changes preserve phases and stream

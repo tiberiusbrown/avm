@@ -1,7 +1,6 @@
 title "Sunlit Garden"
 tempo 1250/13
 meter 4/4
-loop
 
 // Reusable stepped contours preserve the original note articulation.
 envelope melody_env { points 0ms:1, 156ms:9/14 curve step }

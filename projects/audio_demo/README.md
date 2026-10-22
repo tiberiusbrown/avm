@@ -10,7 +10,7 @@ Left/right select the previous/next song, wrapping through **Sunlit Garden**,
 **Zelda Overworld**, **FF1 Town**, **FF1 Overworld**, and **FF1 Matoya's Cave**.
 The screen shows the title, position, pause state and sample rate. Switching
 restarts the selected song, clears an active SFX, and preserves pause and rate.
-All five songs loop. The four imports use generated scores/headers in `songs/`;
+All five songs loop because setup calls `avm_audio_music_loop(1)`. The four imports use generated scores/headers in `songs/`;
 Sunlit Garden remains `music.avms`. The imported tunes were converted from the
 user's Downloads files with the Stage 1 MIDI arranger; compiler/emulator
 validation does not establish musical quality on the physical piezo.

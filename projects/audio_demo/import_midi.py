@@ -32,7 +32,7 @@ def main():
             path = args.midi_dir / (name + ".mid")
             song = read_midi(path)
             song.title = title
-            arrangement = arrange(song, Settings(loop=True))
+            arrangement = arrange(song, Settings())
             source, data = compile_arrangement(arrangement)
             (output / (name + ".avms")).write_text(source, encoding="utf-8", newline="\n")
             (output / (name + ".h")).write_text(avm_music.c_array(data, name), encoding="utf-8", newline="\n")

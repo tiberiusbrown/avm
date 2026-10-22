@@ -1,7 +1,6 @@
 title "Three tonal waveforms"
 tempo 120
 meter 4/4
-loop
 
 instrument pulse_lead { wave pulse duty 25% volume 10 }
 instrument triangle_harmony { wave triangle volume 10 }

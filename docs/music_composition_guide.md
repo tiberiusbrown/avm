@@ -83,7 +83,7 @@ Gameplay music may loop for minutes. Favor phrases with:
 - Clear phrase endings and musically satisfying loop points.
 - Space for incidental game sound effects.
 
-Loop transitions should preserve rhythmic continuity and avoid unwanted clicks or abrupt harmonic surprises unless intentional. At loop entry, AVM restores every owned channel's **initial pitch, volume, waveform, and duty**, and precompiled song-relative modulation starts over. Oscillator phase is **not reset**, and a release tail is truncated at a looping score's boundary. Test the actual loop rather than assuming a held note or release will bridge it.
+Loop transitions should preserve rhythmic continuity and avoid unwanted clicks or abrupt harmonic surprises unless intentional. Enable repetition with `avm_audio_music_loop(1)` before playback. At loop entry, AVM restores every owned channel's **initial pitch, volume, waveform, and duty**, and precompiled song-relative modulation starts over. Oscillator phase is **not reset**. All music truncates release tails at the longest written channel duration, including terminal rests. Test the actual loop rather than assuming a held note or release will bridge it.
 
 ## Designing pulse-wave instruments
 
@@ -286,7 +286,7 @@ For original music, a chiptune tracker or sequencer that allows strict monophoni
 
 ## Example AVM score patterns
 
-These snippets illustrate **valid `.avms` syntax**; adapt durations and pitches to the arrangement. A complete music score can also include `tempo`, `meter`, `loop`, additional instruments, and channels 0/2/3.
+These snippets illustrate **valid `.avms` syntax**; adapt durations and pitches to the arrangement. A complete music score can also include `tempo`, `meter`, additional instruments, and channels 0/2/3.
 
 ```text
 automation 8ms

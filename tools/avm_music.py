@@ -59,12 +59,12 @@ def note_increment(value):
     return 0 if note == 0x80 else round(440 * 2 ** ((note - 69) / 12) * 65536 / 15625)
 
 
-def _encode_events(mask, events, tail_ticks, loop, sfx=False):
+def _encode_events(mask, events, tail_ticks, sfx=False):
     """Encode resolved updates. An explicit increment permits non-semitone pitches."""
     if not isinstance(mask, int) or not 1 <= mask <= 15:
         raise ValueError("ownership mask must be 1..15")
-    if sfx and (loop or mask & ~10):
-        raise ValueError("SFX must be one-shot and declare only channels 1 and/or 3")
+    if sfx and mask & ~10:
+        raise ValueError("SFX must declare only channels 1 and/or 3")
     # PLAY/SFX selects the stream kind; both formats use physical channel bits.
     # The AVR trusts these compiler checks and needs no type/version magic.
     output = bytearray([mask])
@@ -120,7 +120,7 @@ def _encode_events(mask, events, tail_ticks, loop, sfx=False):
         payload = (bytes([packed]) + b"".join(changed_notes[c].to_bytes(2, "little") for c in sorted(changed_notes))
                    + b"".join(changed_controls[c] for c in sorted(changed_controls)))
         emit_event(output, ticks, payload if packed else bytes([0, 0]))
-    emit_event(output, tail_ticks, bytes([0, 2 if loop else 1]))
+    emit_event(output, tail_ticks, bytes([0, 1]))
     return bytes(output)
 
 
@@ -154,7 +154,6 @@ class ScoreParser:
         self.position = 0
         self.tempo = Fraction(120)
         self.meter = Fraction(4)
-        self.loop = False
         self.sfx = False
         self.automation_ms = Fraction(8)
         self.envelopes, self.instruments, self.phrases, self.channels = {}, {}, {}, {}
@@ -589,7 +588,7 @@ class ScoreParser:
                 continue
             token = self.take()
             command = token[0]
-            if command in ("tempo", "meter", "automation", "loop", "sfx", "title", "description"):
+            if command in ("tempo", "meter", "automation", "sfx", "title", "description"):
                 if command in seen:
                     self.error(f"duplicate {command}", token)
                 seen.add(command)
@@ -606,8 +605,6 @@ class ScoreParser:
                         self.error("meter must be positive", token)
                 elif command == "automation":
                     self.automation_ms = self.time()
-                elif command == "loop":
-                    self.loop = True
                 elif command == "sfx":
                     self.sfx = True
                 else:
@@ -641,7 +638,7 @@ class ScoreParser:
                     self.error(f"unknown score command {command!r}", token)
         if not self.channels:
             self.error("score needs at least one channel")
-        if self.sfx and (self.loop or any(channel not in (1, 3) for channel in self.channels)):
+        if self.sfx and any(channel not in (1, 3) for channel in self.channels):
             self.error("SFX must be one-shot and declare only channels 1 and/or 3")
         return self
 
@@ -806,8 +803,8 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
     if interval < 4 or interval % 4:
         score.error("automation interval must be a positive multiple of 4ms")
     channels, duration = score_events(score)
-    if duration < (8 if score.loop else 4):
-        score.error("a loop needs at least 8ms; a one-shot score needs at least 4ms")
+    if duration < (4 if score.sfx else 8):
+        score.error("music needs at least 8ms; SFX needs at least 4ms")
     changes = []
     budget = 0
 
@@ -832,7 +829,7 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
             stop = gate + (release[-1][0] if release else 0)
             if index + 1 < len(notes):
                 stop = min(stop, notes[index + 1]["start"])
-            if score.loop:
+            if not score.sfx:
                 stop = min(stop, duration)
             if sound.get("note_cut"):
                 stop = min(stop, start + sound["note_cut"]["after"])
@@ -926,7 +923,9 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
     def tick(time):
         return math.floor(time / 4 + Fraction(1, 2))
 
-    terminal = max(2, tick(duration) if score.loop else tick(finish) + 1)
+    # Music has a fixed written boundary, whether the runtime repeats it or not.
+    # SFX retains its final release and its existing one-shot timing.
+    terminal = max(2, tick(finish) + 1 if score.sfx else tick(duration))
     timeline = {}
     for time, priority, channel, update in sorted(changes, key=lambda item: (item[0], item[1])):
         position = tick(time) + 1
@@ -960,14 +959,14 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
         if not events or filtered:
             events.append((position - previous, filtered))
             previous = position
-    data = _encode_events(sum(1 << channel for channel in channels), events, terminal - previous, score.loop, score.sfx)
+    data = _encode_events(sum(1 << channel for channel in channels), events, terminal - previous, score.sfx)
     if statistics is not None:
         statistics.update(counts, bytes=len(data), events=len(events))
     return data
 
 
 def c_array(data, name):
-    """Pack little-endian words; End/Loop makes trailing zero padding inert."""
+    """Pack little-endian words; End makes trailing zero padding inert."""
     if not re.fullmatch(r"[A-Za-z_]\w*", name):
         raise ValueError("invalid C identifier")
     words = [int.from_bytes(data[i:i + 8].ljust(8, b"\0"), "little")

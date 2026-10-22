@@ -3,7 +3,6 @@ title "Final Fantasy I - Town"
 tempo 120
 meter 4/4
 automation 16ms
-loop
 // Explicit absolute-boundary timings preserve the source tempo map.
 
 envelope melody_env { points 0ms:100%, 64ms:88% release 8ms:0% curve linear }

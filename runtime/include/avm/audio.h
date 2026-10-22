@@ -5,7 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/* Playback advances automatically. Compiler-validated music ends with End or Loop.
+/* Playback advances automatically. Compiler-validated streams end with End.
    One-shot SFX ends with End and overrides only declared tonal (voice 1) / noise
    (voice 3) slots. Arrange melody on 0, harmony on 1, bass on 2. Undeclared SFX slots leave music audible; declared slots
    retain ownership through rests. Raw uint16 phase increments use 15625 Hz
@@ -17,6 +17,11 @@ extern "C" {
    The reader trusts compiler output, uses 24-bit cursors, and may read ahead
    past the terminator. Recompile older assets for this format. */
 void avm_audio_play(void const AVM_PROGMEM *song);
+/* Repeat music at End when enabled (any nonzero value). Default disabled.
+   Changes preserve position; disabling finishes the current pass. Enabling
+   stopped music does not restart it. The setting persists across play, stop,
+   pause and disable/enable. SFX always ends, regardless of this setting. */
+void avm_audio_music_loop(uint8_t enabled);
 void avm_audio_sfx(void const AVM_PROGMEM *effect);
 void avm_audio_stop(void);
 void avm_audio_pause(void);

@@ -51,7 +51,7 @@ It plays C4, D4, E4, and G4, then ends. **In a channel sequence, the number in
 `c4` is the duration denominator, not the octave.** Set the octave with
 `octave 4`; use apostrophes and commas for individual octave shifts.
 
-Here is a complete four-channel loop. Save it as `song.avms` and compile it
+Here is a complete four-channel song. Save it as `song.avms` and compile it
 using the commands in the next section. Each channel contains one 4/4 measure.
 
 ```text
@@ -60,7 +60,6 @@ description "Pulse melody, arpeggiated harmony, bass, and noise percussion"
 tempo 120
 meter 4/4
 automation 8ms
-loop
 
 envelope pluck {
     points 0ms:0%, 8ms:100%, 80ms:60%
@@ -138,6 +137,7 @@ directly to the playback API:
 
 void start_music(void) {
     avm_audio_music_volume(128);
+    avm_audio_music_loop(1);
     avm_audio_play(song);
 }
 
@@ -179,12 +179,16 @@ header = c_array(data, "song")
 dictionary populated with counts. Use `max_updates=None` to disable the API
 budget; the CLI maps `--max-updates 0` to this value. The `events` statistic
 counts resolved update records before insertion of long-wait Continue records
-and the terminal End/Loop command.
+and the terminal End command.
 
 `c_array` exports packed little-endian `uint64_t` words with at most seven
 trailing zero bytes. Large C/C++ exports use contiguous chunks when necessary.
 No 64 KB asset-size cap is introduced; streams and program addresses remain
-24-bit. The End/Loop command makes export padding inert.
+24-bit. The End command makes export padding inert.
+
+Migration: remove top-level `loop` directives and recompile existing scores.
+Older binaries containing terminal Loop (`02`) are no longer supported. Call
+`avm_audio_music_loop(1)` before playback wherever music previously looped.
 
 ## AVMS file structure and score settings
 
@@ -226,14 +230,14 @@ Each setting may occur at most once.
 | `tempo 120` | `120` | Positive quarter-note BPM; integers, decimals, and fractions such as `1250/13` are accepted |
 | `meter 4/4` | `4/4` | Positive whole-note fraction defining a measure for `\|` checks; `3/4` is three quarter-note beats |
 | `automation 8ms` | `8ms` | Smooth automation sampling interval; positive multiple of 4 ms |
-| `loop` | One-shot music | Rewind the whole music stream at its fixed end; written duration must be at least 8 ms |
-| `sfx` | Music | Produce one-shot SFX; only channels 1 and/or 3 may be declared; incompatible with `loop` |
+| `sfx` | Music | Produce one-shot SFX; only channels 1 and/or 3 may be declared |
 | `title "Name"` | Absent | Descriptive source text; not stored in the binary |
 | `description "Text"` | Absent | Descriptive source text; not stored in the binary |
 
 Tempo and meter are fixed for the whole score. Meter checks written bar lines;
 it does not insert rests, accents, or bar lines. At least one channel is
-required, and a one-shot score needs at least 4 ms of written duration.
+required. Music needs at least 8 ms of written duration; SFX needs at least 4 ms.
+Looping is selected at playback with `avm_audio_music_loop`, never in AVMS.
 Place `tempo` before settings using musical times, such as `automation 1/64`,
 so those times use the intended tempo when parsed.
 
@@ -283,9 +287,10 @@ rather than the fundamental frequency of a pitched pulse.
 
 The score length is the longest written channel timeline. Shorter parts become
 silent after their sounding notes and release tails finish. Rests at the end
-still contribute to written duration. One-shot playback can extend to retain
-a final release; a loop always uses the longest written timeline as its fixed
-boundary. Write trailing rests to make the intended loop length explicit.
+still contribute to written duration. All music uses that fixed boundary,
+whether played once or repeated; final releases are truncated there. Write
+trailing rests to allow releases to finish. SFX retains final release tails
+beyond its written duration.
 
 ### Note and rest syntax
 
@@ -562,9 +567,9 @@ without jumping to the contour's final sustain level.
 
 With no release, the note is silenced at its gate boundary. With a release,
 the tail may extend beyond the written note and into rests. The next sounded
-note on that channel cancels the tail. One-shot scores retain final tails
-beyond the longest written channel duration; loops truncate tails at the
-fixed loop boundary. A hard `note_cut` cancels the release immediately.
+note on that channel cancels the tail. Music truncates final tails at the
+longest written channel duration, including terminal rests. SFX retains final
+tails beyond its written duration. A hard `note_cut` cancels the release immediately.
 
 Envelope breakpoints always contribute candidate control times. Linear
 segments also use smooth automation samples; `curve step` keeps abrupt changes
@@ -751,7 +756,7 @@ reseed. The command resets the noise LFSR and noise phase, preserving pitch.
 It requires channel 3. `noise_retrigger off` disables it for later notes.
 
 Retriggering runs for the note's sounding lifetime, including release, until
-a cut, a new note, release completion, or the loop boundary. Rests start no
+a cut, a new note, release completion, or the music boundary. Rests start no
 retrigger timeline themselves, but an existing release can keep retriggering
 during a rest. Seed commands are emitted even when the seed and other controls
 are unchanged. A music reseed hidden by SFX ownership is discarded at runtime.
@@ -805,7 +810,7 @@ The compiler evaluates each note in this order:
 7. Silence pitch and volume at the effective stop time.
 
 The effective stop is the gate plus release duration, shortened by the next
-sounded note, a hard cut, or a loop boundary. Effects continue through release
+sounded note, a hard cut, or the fixed music boundary. Effects continue through release
 until that stop. Ties extend one lifetime; rests advance time without starting
 effects. The runtime master gain applies later during foreground preparation.
 
@@ -835,18 +840,22 @@ and duty update.
 
 ### End and loop boundaries
 
-For a one-shot, End occurs one tick after the rounded maximum of written
-duration and final release completion. A 500 ms single note therefore starts
-at 4 ms and reaches End at 504 ms. End itself silences and releases the stream;
-a separate off record is unnecessary at that same terminal tick.
+Every compiled stream terminates with End (`01`). Music schedules End at
+the rounded longest written channel duration, including terminal rests, with
+a minimum of two ticks (8 ms). A 500 ms music note starts at 4 ms and reaches
+End at 500 ms. Releases and updates at or beyond that terminal tick are
+omitted; a separate off record is unnecessary.
 
-For a loop, Loop is scheduled at the rounded written duration, with a minimum
-of two ticks. A 2000 ms loop reaches Loop at tick 500; its next first event is
-at tick 501, so consecutive pattern onsets are 2000 ms apart. Loop entry
-restores all owned initial pitch/volume/waveform/duty controls and restarts precompiled
-song-relative modulation. Oscillator phase and ordinary noise state persist;
-only explicit noise retriggers reseed. Releases and updates beyond the fixed
-loop boundary are truncated.
+At music End, the interpreter either stops or rewinds according to the current
+`avm_audio_music_loop` setting. A 2000 ms song reaches End at tick 500; when
+looping, its next first event is at tick 501, so consecutive pattern onsets
+are 2000 ms apart. Rewind restores all owned initial pitch/volume/waveform/duty
+controls and restarts precompiled song-relative modulation. Oscillator phase
+and ordinary noise state persist; only explicit noise retriggers reseed.
+
+SFX always stops at End, one tick after the rounded maximum of written duration
+and final release completion. A 500 ms SFX note without release starts at 4 ms
+and reaches End at 504 ms. The runtime music-loop setting never affects SFX.
 
 ### Asset size and runtime cost
 
@@ -927,6 +936,13 @@ Pause freezes and mutes music while SFX runs; stop mutes only music. Disable
 stops both streams and timers and leaves the speaker pins low; the PLL remains
 enabled. End/stop otherwise leaves timers running at neutral output.
 `avm_audio_status()` returns music-playing bit 0, music-paused bit 1, SFX bit 2.
+
+`avm_audio_music_loop(enabled)` sets whether music rewinds at End. Zero disables
+looping; any nonzero value enables it. The default is disabled. Changes preserve
+playback position and phase; disabling finishes the current pass. Enabling
+looping after music ends does not restart it. The setting persists across play,
+stop, pause, and disable/enable. SFX always stops at End. Set this option before
+`avm_audio_play` when starting a song with a particular playback policy.
 
 `avm_audio_volume` sets both masters; `avm_audio_music_volume` and
 `avm_audio_sfx_volume` set them independently. Direct tones use SFX gain.
@@ -1095,13 +1111,13 @@ A zero change mask or zero SFX flags selects a command record
 | Command | Byte | Behavior |
 | --- | --- | --- |
 | Continue | `00` | Keep current state, then read the next record |
-| End | `01` | Stop and release this stream |
-| Loop | `02` | Music only: rewind to the first delta, skipping the ownership byte |
+| End | `01` | Music: stop or rewind according to runtime setting; SFX: stop and release |
 
 Each command consumes positive time. End releases SFX ownership and restores
-the current music controls on those slots; music End silences music. Loop
-replays the first delta as well as the events. The compiler emits only valid
-commands and forbids SFX loops. The AVR does not validate headers, ownership,
+the current music controls on those slots. Music End either silences music
+or rewinds to the first delta, skipping the ownership byte. Rewind replays the
+first delta as well as the events. There is no terminal Loop command (`02`).
+The compiler emits only Continue and End commands. The AVR does not validate headers, ownership,
 waveform values, seeds or commands; malformed streams have undefined behavior.
 Source phrases and repeats are expanded by the compiler, so the runtime has
 no phrase-call format, call stack or phrase-validity checks.
@@ -1117,7 +1133,7 @@ channel 0 { volume 7 duty 25% a4 }
 Its entire compiled stream is:
 
 ```hex
-01 00 11 35 07 87 40 7C 00 01
+01 00 11 35 07 87 40 7B 00 01
 ```
 
 | Byte offsets (zero-based) | Bytes | Interpretation |
@@ -1127,8 +1143,8 @@ Its entire compiled stream is:
 | 2 | `11` | Update channel 0 pitch and control |
 | 3..4 | `35 07` | Increment `0x0735` = 1845, approximately 440 Hz |
 | 5..6 | `87 40` | Volume 7 with extension flag; duty 64 = 25% |
-| 7 | `7C` | Wait 125 ticks (500 ms) after the onset |
-| 8..9 | `00 01` | Command record: End, at 504 ms from stream start |
+| 7 | `7B` | Wait 124 ticks (496 ms) after the onset |
+| 8..9 | `00 01` | Command record: End, at 500 ms from stream start |
 
 ### Reader limits
 
@@ -1138,7 +1154,7 @@ Maximum read-ahead at a due event includes the next delta: music 18 bytes
 has already been consumed. Only actual bytes consumed advance the 24-bit FX
 cursor; unused read-ahead is discarded. No length is passed, so a truncated
 stream cannot be reliably distinguished from adjacent program data. Supply
-complete assets. End/Loop prevents trailing C-export padding from being used.
+complete assets. End prevents trailing C-export padding from being used.
 
 ## Timers, atomic publication, and memory
 
@@ -1190,11 +1206,11 @@ phase; stop silences the owner. Direct tones initialize pulse and duty 128.
 | Desired music voices / SFX slots | 16 / 8 |
 | Music / SFX stream records | 10 / 7 |
 | Pending latch and descriptor | 17 |
-| Held sample and rate | 2 |
-| Total | 89 |
+| Held sample, rate and music loop setting | 3 |
+| Total | 90 |
 
-Audio occupies 0A15..0A6D, private end 0A6E. Existing 72-byte formatter/text
-scratch ends at 0AB6, leaving 74 bytes for native stack. Audio aliases 20 scratch
+Audio occupies 0A15..0A6E, private end 0A6F. Existing 72-byte formatter/text
+scratch ends at 0AB7, leaving 73 bytes for native stack. Audio aliases 20 scratch
 bytes: dirty, transient reseed and 18-byte event buffer; persistent state and
 the pending packet never alias scratch. Guest memory addresses are unchanged.
 Assembler assertions retain the single-SRAM-page and minimum-stack constraints.

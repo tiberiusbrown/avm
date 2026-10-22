@@ -57,7 +57,7 @@ Useful options:
 
 All Stage 1 `Settings` options remain available: preset, source track/channel
 overrides, octave/register selection, transpose, densities, channel volumes,
-arpeggios, effect intensity, region `--start`/`--end`, and `--loop`.
+arpeggios, effect intensity, region `--start`/`--end`. Looping is selected at runtime.
 The search has no stochastic operations or random seed. Resume preserves prior
 history and totals, but uses a new in-memory cache and can revisit candidates.
 A checkpoint is written atomically after each accepted improvement. A resumed
@@ -74,7 +74,8 @@ py -3.12 tools/midi_to_avms_stage2.py build/stage2/z1overw/optimized.avms `
 ## Implementation and numerical model
 
 - `tools/avm_audio_render.py` validates/decodes AVM audio ownership, variable pitch
-  and control payloads, Continue, End, and Loop. Its event-span renderer uses
+  and control payloads, Continue, and End. Its `render(..., loop=True)` playback
+  option repeats music independently of the asset. Its event-span renderer uses
   unsigned 16-bit phase, canonical quantized increments (saturating doubling
   at 7812.5 Hz), phase-high duty comparison, the AVR integer triangle fold,
   or the signed saw ramp `phase_high - 128`,

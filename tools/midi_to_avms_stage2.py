@@ -137,7 +137,7 @@ def process_pair(midi_path, wav_path, output, settings, config, *, resume=False,
     source, binary = midi.compile_arrangement(baseline)
     reference = load_reference(wav_path, config.rate)
     alignment = estimate_alignment(reference, song)
-    duration = baseline.duration+.004
+    duration = baseline.duration
     # Cropping is inherited from Stage 1; account for that region in the
     # reference offset without changing MIDI's absolute onset alignment.
     target = aligned_audio(reference, duration, alignment["reference_offset_seconds"]+settings.start)
@@ -286,9 +286,7 @@ def parser():
             continue
         default = getattr(midi.Settings(), name)
         flag = "--"+name.replace("_", "-")
-        if name == "loop":
-            p.add_argument(flag, action="store_true")
-        elif name == "arpeggios":
+        if name == "arpeggios":
             p.add_argument(flag, action=argparse.BooleanOptionalAction, default=None)
         elif name.endswith("_range"):
             p.add_argument(flag, type=int, nargs=2, default=default)

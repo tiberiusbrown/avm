@@ -1,6 +1,5 @@
 title "One Voice, Two Oscillators"
 tempo 120
-loop
 
 // Duty remains stored while triangle is selected. Every change preserves phase.
 instrument lead { wave pulse duty 25% volume 12 }

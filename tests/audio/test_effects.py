@@ -69,7 +69,7 @@ class EffectTests(unittest.TestCase):
         self.assertEqual([at(states, t)["duty"] for t in (0, 4, 16)], [254, 255, 255])
 
     def test_arpeggio_exact_boundaries_under_coarse_automation(self):
-        states, events = resolved("automation 32ms channel 0 { arpeggio { offsets 0,4,7 step 4ms repeat } c:28ms }")
+        states, events = resolved("automation 32ms channel 0 { arpeggio { offsets 0,4,7 step 4ms repeat } c:28ms r:4ms }")
         self.assertEqual([at(states, t)["note"] for t in range(0, 28, 4)], [pitch(n) for n in (60,64,67,60,64,67,60)])
         self.assertTrue(all("control" not in u[0] for _, u in events[1:]))
 
@@ -83,7 +83,7 @@ class EffectTests(unittest.TestCase):
                          [pitch(67),pitch(60),0,pitch(60),pitch(64),pitch(62),pitch(62)])
 
     def test_arpeggio_clamps_note_range(self):
-        states, _ = resolved("channel 0 octave 1 { arpeggio { offsets -12,71 step 4ms } c:8ms }")
+        states, _ = resolved("channel 0 octave 1 { arpeggio { offsets -12,71 step 4ms } c:8ms r:4ms }")
         self.assertEqual([at(states,t)["note"] for t in (0,4)], [pitch(24),pitch(95)])
 
     def test_glissando_up_down_target_and_disable(self):
@@ -218,7 +218,7 @@ class EffectTests(unittest.TestCase):
         data=music.compile_source(source,max_updates=None,statistics=stats)
         self.assertEqual(stats["bytes"],len(data))
         updates={c:dict(increment=1234,volume=31,**({"seed":63} if c==3 else {"duty":255})) for c in range(4)}
-        data=music._encode_events(15,[(1,updates)],1,False)
+        data=music._encode_events(15,[(1,updates)],1)
         self.assertEqual(len(data),22) # 1 ownership byte + 18 max event + 3 terminal
         events,_,_=decode(data,raw=True)
         self.assertEqual(events[0][1][3]["seed"],63)

@@ -76,7 +76,7 @@ command; LLDB also prints its usual human-readable `error:` line.
 | `avm watch read`, `write`, or `readwrite` `<address> [size]` | Create an LLDB software watchpoint using a raw guest data address such as `0x500`. `avm watch delete <id>` removes it. LLDB `watchpoint set variable` also works for DWARF variables. |
 | `avm replay load`, `run`, `resume`, `pause`, `status`, `abort`, `export` | Schedule and record timed button changes; exports include launch identity. |
 | `avm profile start [--native]`, `stop`, `status`, `save <file.avmp>`, `report [--top N]` | Collect elapsed emulated cycles across debugger runs, inspect hotspots, and save a version-1 source profile. |
-| `avm display save` or `capture` `<path.pgm> --mode visible\|logical\|controller` | Save 128×64 gray8 PGM pixels and return mode, size, exact cycle, SHA-256 of pixel bytes, and absolute path. Existing files are rejected. |
+| `avm display save` or `capture` `<path.pgm> [--mode visible\|logical\|controller]` | Save 128×64 gray8 PGM pixels and return mode, size, exact cycle, SHA-256 of pixel bytes, and absolute path. Defaults to `visible`; prefer explicit `--mode logical` for routine screenshots. Existing files are rejected. |
 
 At a stopped AVM boundary, hold RIGHT and A for 250 ms of emulated time,
 then RIGHT alone for 100 ms, and finally release all buttons:
@@ -89,11 +89,27 @@ then RIGHT alone for 100 ms, and finally release all buttons:
 (lldb) avm button set
 ```
 
-The `visible` image uses Ardens's rendered, filtered display pixels.
-`controller` expands the OLED controller RAM to pixels. `logical` expands the
-game's framebuffer at AVM data `0x500`–`0x8ff`. The three can differ while
-SPI transfer or display filtering is in progress. Capture only while stopped;
-it does not advance emulated time.
+For routine screenshots, agents should explicitly use `--mode logical` when
+exporting display captures for visual inspection or review:
+
+```text
+(lldb) avm display save screenshot.pgm --mode logical
+```
+
+`logical` expands the game's framebuffer at AVM data `0x500`–`0x8ff` in the
+game's coordinate orientation, without display filtering. It may include
+changes that have not yet been sent to the OLED.
+
+`controller` expands Ardens's OLED controller RAM directly. The normal AVM
+OLED initialization enables segment remapping (`0xA1`), which Ardens applies
+by storing column `x` at `127 - x`. The export does not undo that mapping,
+so controller captures are horizontally mirrored relative to the logical
+framebuffer. Use this mode when inspecting controller state.
+
+`visible`, the default when `--mode` is omitted, uses Ardens's rendered,
+filtered display pixels through a separate path. The three modes can differ
+while SPI transfer or display filtering is in progress. Capture only while
+stopped; it does not advance emulated time.
 
 For timed input, create a UTF-8 JSON replay file:
 

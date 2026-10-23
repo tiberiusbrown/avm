@@ -38,3 +38,12 @@ Run the tests while developing.
 If any modifications were made to code generation, run the benchmarks after everything is finished.
 Retain benchmark disassemblies -- they are intended to be committed as well.
 C and C++ test disassemblies are not generated or checked into the repository.
+
+## Display captures
+
+When exporting routine `avm-lldb` display captures for visual inspection or
+review, explicitly use `avm display save <path.pgm> --mode logical` (or the
+`capture` alias). This preserves the game framebuffer orientation. With
+normal OLED initialization, `--mode controller` exports horizontally mirrored
+pixels because Ardens applies segment remapping to its controller RAM. See
+[docs/lldb.md](../docs/lldb.md) for capture modes and timing differences.

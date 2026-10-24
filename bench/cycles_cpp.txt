@@ -1,6 +1,6 @@
-     1779084   aggregate_byte_dispatch.cpp
+     1744268   aggregate_byte_dispatch.cpp
      1085160   lambda_capture.cpp
       386951   member_pointers.cpp
-      641176   scoped_lifetime.cpp
+      641050   scoped_lifetime.cpp
      1861909   template_specialization.cpp
       698467   virtual_dispatch.cpp

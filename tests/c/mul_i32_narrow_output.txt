@@ -1,0 +1,2 @@
+narrow-multiply=ok
+P

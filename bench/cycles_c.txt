@@ -34,6 +34,7 @@
       286671   pointer_table.c
       930675   pointer_walk.c
       387686   popcount.c
+     2047376   progmem_record_index.c
      2971012   progmem_walk.c
       545522   progmem_widen_ldp16.c
       737865   progmem_widen_ldp32_bytes.c

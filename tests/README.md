@@ -53,6 +53,11 @@ Multi-file C++ fixtures keep helper translation units in `tests/cpp/support/`.
 The top-level `.cpp` file supplies `avm_test_main()` and its adjacent
 `_output.txt` file supplies the expected serial output.
 
+`loop_record_stride` checks 18-byte record traversal with empty and nonempty
+bounds, conditional fields, reverse traversal and nested stable insertion of
+record slots. It also checks multiplication with indices below and above 255.
+The fixture runs at every standard optimization level.
+
 `aggregate_byte_packing` checks construction, register arguments and returns for
 two-, three-, and four-byte records, plus three-byte stack arguments. It covers
 every byte value and truncation of word inputs with nonzero high bytes, and

@@ -59,6 +59,18 @@ upper bits between basic blocks, together with call spills and register copies.
 load carried through a loop PHI. It covers unsigned promotion around a cycle,
 including values on both sides of 127 and 128.
 
+`record_stride` scans 18-byte records with a runtime bound, conditional byte
+tests, word fields and a live scalar index. `record_stride_nested` surrounds
+an indirect insertion search with the same affine scan, like the RPG actor
+draw order. The existing `record_scan` uses an explicit pointer and does not
+cover this missed outer-loop strength reduction.
+
+`bounded_multiply` keeps an index in 0..7 live across an inner loop and computes
+`18 * index`. It exercises range proofs and allocation of the byte-multiply
+candidate when upper registers are busy. See
+[loop strength reduction](../docs/compiler-loop-strength.md) for the policy,
+regression coverage and measurements.
+
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;
 each source should contain exactly one pair of debug breaks.

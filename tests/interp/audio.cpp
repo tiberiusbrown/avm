@@ -789,7 +789,7 @@ void synthesis(harness& h) {
         h.c().st(reg::addr::TIMSK1, 2);
         h.c().data[reg::addr::SREG] |= 128;
         h.c().prev_sreg |= 128;
-        h.c().schedule_interrupt_check();
+        h.c().peripheral_queue.schedule(h.c().cycle_count, PQ_INTERRUPT);
         h.tick();
         require(h.c().pc == 0x22 && h.c().just_interrupted,
             "Timer1 COMPA did not win interrupt arbitration");
@@ -2106,7 +2106,6 @@ void capture(char** args, bool select_rate, bool loop) {
             logical<<h.c().cycle_count-begin<<','<<unsigned(h.c().data[held_sample])<<'\n';
         h.tick();
     }
-    h.c().update_sound();
     auto const& samples=h.c().sound_buffer;
     std::ofstream out(args[6],std::ios::binary);
     require(bool(out),"cannot create capture WAV");

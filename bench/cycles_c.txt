@@ -4,6 +4,7 @@
      1850355   bit_count.c
      1695785   bitfields.c
       770973   boolean_select.c
+      286067   bounded_multiply.c
      1316321   bubble1.c
      1163105   bubble2.c
      1785131   bubble4.c
@@ -45,6 +46,8 @@
       721763   progmem_widen_ldp32_bytes.c
       531972   progmem_widen_ldp32_words.c
      1444736   record_scan.c
+      144721   record_stride.c
+      393095   record_stride_nested.c
      4056017   register_cleanup.c
      1921658   reverse_walk.c
      4473141   rotate32.c
@@ -57,7 +60,7 @@
       254100   stack_array.c
      2555871   stack_frames.c
      7138844   state_machine.c
-    25921489   string_scan.c
+    25938058   string_scan.c
       444653   struct_copy.c
       950957   switch.c
         2991   sys_memcmp.c

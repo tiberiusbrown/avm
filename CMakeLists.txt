@@ -184,3 +184,21 @@ if(AVM_WITH_ARDENS)
     add_subdirectory(tests)
     add_subdirectory(bench)
 endif()
+
+# Match LLVM's RTTI configuration for custom AVM targets
+# that use LLVM's C++ libraries.
+if(AVM_WITH_ARDENS AND NOT LLVM_ENABLE_RTTI)
+    if(MSVC)
+        set(AVM_NO_RTTI_FLAG /GR-)
+    else()
+        set(AVM_NO_RTTI_FLAG -fno-rtti)
+    endif()
+
+    foreach(target IN ITEMS
+            avm_debug_emulator
+            avm_profile
+            avm_prof)
+        target_compile_options(${target} PRIVATE
+            ${AVM_NO_RTTI_FLAG})
+    endforeach()
+endif()

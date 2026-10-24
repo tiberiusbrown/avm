@@ -58,6 +58,12 @@ bounds, conditional fields, reverse traversal and nested stable insertion of
 record slots. It also checks multiplication with indices below and above 255.
 The fixture runs at every standard optimization level.
 
+`widening_byte_multiply` checks signed, unsigned and mixed byte products against
+an independent shift/add reference at every standard optimization level. It
+covers every left byte with signed/unsigned boundary values on the right,
+program-memory loads, a shared signed full-word use, and hoisted coefficients
+that exceed the register file and require spills.
+
 `aggregate_byte_packing` checks construction, register arguments and returns for
 two-, three-, and four-byte records, plus three-byte stack arguments. It covers
 every byte value and truncation of word inputs with nonzero high bytes, and

@@ -71,6 +71,10 @@ candidate when upper registers are busy. See
 [loop strength reduction](../docs/compiler-loop-strength.md) for the policy,
 regression coverage and measurements.
 
+`fir8` exercises signed byte products with hoisted, spilled coefficients. See
+[widening byte multiplication](../docs/compiler-byte-multiply.md) for instruction
+selection coverage and before/after measurements.
+
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;
 each source should contain exactly one pair of debug breaks.

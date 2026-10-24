@@ -23,7 +23,7 @@
        20826   draw_text_P.c
       739468   dynamic_stack.c
       236880   fibonacci.c
-     5723737   fir8.c
+     4703837   fir8.c
      9182988   fixed_point.c
       940529   float.c
       864928   float_comparisons.c

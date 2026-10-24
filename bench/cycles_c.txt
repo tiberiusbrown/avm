@@ -3,6 +3,7 @@
      2094135   aliasing.c
      1850355   bit_count.c
      1695785   bitfields.c
+      770973   boolean_select.c
      1316321   bubble1.c
      1163105   bubble2.c
      1785131   bubble4.c

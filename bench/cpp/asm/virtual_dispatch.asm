@@ -138,23 +138,23 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 ee                 adjsp	-0x12
  c0 25                 ldi8	r4, 0x25
- f0 3c 10              stsp16	[sp+0x10], r4
+ f4 60                 stsp16	[sp+0x8], r4
  c4 48 03              ldi16	r4, 0x348
  c1 00                 ldi8	r5, 0x0
- f4 74                 stsp16	[sp+0xd], r4
- f1 6d                 stsp8	[sp+0xf], r5
+ f4 54                 stsp16	[sp+0x5], r4
+ f1 4d                 stsp8	[sp+0x7], r5
  c4 aa 55              ldi16	r4, 0x55aa
- f4 6c                 stsp16	[sp+0xb], r4
+ f4 4c                 stsp16	[sp+0x3], r4
  c4 51 03              ldi16	r4, 0x351
  c1 00                 ldi8	r5, 0x0
- f4 60                 stsp16	[sp+0x8], r4
- f1 59                 stsp8	[sp+0xa], r5
- f0 14 08              leasp	r4, 0x8
- f4 58                 stsp16	[sp+0x6], r4
- f4 48                 stsp16	[sp+0x2], r4
- f0 14 0d              leasp	r4, 0xd
- f4 50                 stsp16	[sp+0x4], r4
  f4 40                 stsp16	[sp+0x0], r4
+ f1 39                 stsp8	[sp+0x2], r5
+ f0 14 00              leasp	r4, 0x0
+ f0 3c 10              stsp16	[sp+0x10], r4
+ f4 70                 stsp16	[sp+0xc], r4
+ f0 14 05              leasp	r4, 0x5
+ f4 78                 stsp16	[sp+0xe], r4
+ f4 68                 stsp16	[sp+0xa], r4
  c5 34 12              ldi16	r5, 0x1234
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
@@ -165,7 +165,7 @@ Disassembly of section .text:
  a1                    xor	r4, r5
  f9 84                 and	r4, r1
  10                    add	r4, r4
- f0 16 00              leasp	r6, 0x0
+ f0 16 0a              leasp	r6, 0xa
  18                    add	r6, r4
  62                    ld16	r4, [r6]
  d5 14                 call8	_ZL6invokePK9Operationj

@@ -130,20 +130,20 @@ Disassembly of section .text:
  ef                    ret
 
 <avm_test_main>:
- b2                    push16	r2
+ b0                    push16	r0
  d7 01                 sys	debug_break
  c4 11 02              ldi16	r4, 0x211
  c1 00                 ldi8	r5, 0x0
  d7 31                 sys	set_text_font
  c6 e5 01              ldi16	r6, 0x1e5
  c3 00                 ldi8	r7, 0x0
- f2 42                 sub	r2, r2
+ f2 30                 sub	r0, r0
  a0                    xor	r4, r4
  c1 11                 ldi8	r5, 0x11
  d7 34                 sys	draw_text_p
  d7 01                 sys	debug_break
- f1 22                 mov	r4, r2
- ba                    pop16	r2
+ f1 20                 mov	r4, r0
+ b8                    pop16	r0
  ef                    ret
 
 <avm_halt>:

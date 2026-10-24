@@ -7,16 +7,16 @@ SYMBOL TABLE:
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 aggregate_byte_dispatch.cpp
 00000100 l     O .data	00000060 input
-000004ae l     F .text	0000002e dispatch(ChunkCoord)
+000004ae l     F .text	00000024 dispatch(ChunkCoord)
 00000160 l     O .data	00000002 aggregate_byte_dispatch_result
 00000000 l    df *ABS*	00000000 runtime.c
-000004de l       .init_array	00000000 .hidden __init_array_end
-000004de l       .init_array	00000000 .hidden __init_array_start
-000004de l       .fini_array	00000000 .hidden __fini_array_start
-000004de l       .fini_array	00000000 .hidden __fini_array_end
+000004d4 l       .init_array	00000000 .hidden __init_array_end
+000004d4 l       .init_array	00000000 .hidden __init_array_start
+000004d4 l       .fini_array	00000000 .hidden __fini_array_start
+000004d4 l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	0000001e _start
 000002c7 g     F .text	000001e7 avm_test_main
-000004dc g     F .text	00000002 avm_halt
+000004d2 g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
 
 Disassembly of section .text:
@@ -35,7 +35,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 be 02              call16	avm_halt
+ e1 b4 02              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -43,19 +43,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 de 04              ldi16	r4, 0x4de
+ c4 d4 04              ldi16	r4, 0x4d4
  c1 00                 ldi8	r5, 0x0
- c6 de 04              ldi16	r6, 0x4de
+ c6 d4 04              ldi16	r6, 0x4d4
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 de 04           ldi16	r0, 0x4de
+ f0 04 d4 04           ldi16	r0, 0x4d4
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 de 04           ldi16	r2, 0x4de
+ f0 06 d4 04           ldi16	r2, 0x4d4
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -89,19 +89,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fd              call16	-631 <__avm_run_local_dtors>
 <L0>:
- c4 de 04              ldi16	r4, 0x4de
+ c4 d4 04              ldi16	r4, 0x4d4
  c1 00                 ldi8	r5, 0x0
- c6 de 04              ldi16	r6, 0x4de
+ c6 d4 04              ldi16	r6, 0x4d4
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 de 04           ldi16	r2, 0x4de
+ f0 06 d4 04           ldi16	r2, 0x4d4
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 de 04           ldi16	r0, 0x4de
+ f0 04 d4 04           ldi16	r0, 0x4d4
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -289,35 +289,29 @@ Disassembly of section .text:
  ef                    ret
 
 <dispatch(ChunkCoord)>:
- b1                    push16	r1
- b0                    push16	r0
  08                    mov	r6, r4
  f1 76                 zext8	r6
  ce 01                 cmpi.s8	r6, 0x1
- d1 20                 brne8	0x20 <L0>
+ d1 1a                 brne8	0x1a <L0>
  c3 ff                 ldi8	r7, 0xff
  8d                    and	r7, r5
- f1 07                 mov	r0, r7
- f2 39                 sub	r1, r1
- f1 28                 mov	r6, r0
- 1a                    add	r6, r6
- f2 28                 add	r6, r0
+ 0b                    mov	r6, r7
+ 06                    mov	r5, r6
+ 15                    add	r5, r5
+ 16                    add	r5, r6
  fa 78                 lsr16i	r4, 0x8
- 12                    add	r4, r6
- c2 53                 ldi8	r6, 0x53
- c3 25                 ldi8	r7, 0x25
+ 11                    add	r4, r5
+ c1 53                 ldi8	r5, 0x53
+ c2 25                 ldi8	r6, 0x25
  cc 04                 cmpi.s8	r4, 0x4
- fb 37                 cmov.eq	r6, r7
- c3 0b                 ldi8	r7, 0xb
+ fb 2e                 cmov.eq	r5, r6
+ c2 0b                 ldi8	r6, 0xb
  cc 03                 cmpi.s8	r4, 0x3
- 02                    mov	r4, r6
- fb 27                 cmov.eq	r4, r7
- d4 02                 jmp8	0x2 <L1>
+ 01                    mov	r4, r5
+ fb 26                 cmov.eq	r4, r6
+ ef                    ret
 <L0>:
  c0 95                 ldi8	r4, 0x95
-<L1>:
- b8                    pop16	r0
- b9                    pop16	r1
  ef                    ret
 
 <avm_halt>:

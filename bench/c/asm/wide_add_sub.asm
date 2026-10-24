@@ -133,7 +133,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f2                 adjsp	-0xe
+ d6 f0                 adjsp	-0x10
  a0                    xor	r4, r4
  c5 11 11              ldi16	r5, 0x1111
  c6 04 01              ldi16	r6, 0x104
@@ -222,11 +222,11 @@ Disassembly of section .text:
  c4 00 01              ldi16	r4, 0x100
  04                    mov	r5, r4
 <L1>:
- f4 69                 stsp16	[sp+0xa], r5
+ f4 79                 stsp16	[sp+0xe], r5
  c9 04                 addi.s8	r5, 0x4
  f0 6a 4a              ld32	q1, [r5]
  f7 64                 add32	q1, q0
- f4 28                 ldsp16	r4, [sp+0xa]
+ f4 38                 ldsp16	r4, [sp+0xe]
  f0 6a 08              ld32	q0, [r4]
  f7 6c                 add32	q3, q0
  f0 69 c0              cmp32	q3, q0
@@ -240,14 +240,14 @@ Disassembly of section .text:
  15                    add	r5, r5
  c0 38                 ldi8	r4, 0x38
  81                    and	r4, r5
+ f4 68                 stsp16	[sp+0xa], r4
  04                    mov	r5, r4
- f2 67                 mov32	q1, q3
- c6 04 01              ldi16	r6, 0x104
- 16                    add	r5, r6
- f2 6b                 mov32	q3, q1
+ c4 04 01              ldi16	r4, 0x104
+ 14                    add	r5, r4
  f0 6a 4a              ld32	q1, [r5]
  f7 71                 sub32	q0, q1
  c5 00 01              ldi16	r5, 0x100
+ f4 28                 ldsp16	r4, [sp+0xa]
  11                    add	r4, r5
  f0 6a 48              ld32	q1, [r4]
  f0 69 c4              cmp32	q3, q1
@@ -258,7 +258,7 @@ Disassembly of section .text:
  f4 21                 ldsp16	r5, [sp+0x8]
  f9 12                 xor	r0, r4
  f9 36                 xor	r1, r5
- f4 29                 ldsp16	r5, [sp+0xa]
+ f4 39                 ldsp16	r5, [sp+0xe]
  f7 7d                 sub32	q3, q1
  c9 08                 addi.s8	r5, 0x8
  f4 30                 ldsp16	r4, [sp+0xc]
@@ -278,7 +278,7 @@ Disassembly of section .text:
  f0 6b 08              st32	[r4], q0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
- d6 0e                 adjsp	0xe
+ d6 10                 adjsp	0x10
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

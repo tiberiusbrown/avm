@@ -182,19 +182,19 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f0 56 2f 01           ldm16	r6, [0x12f]
- f0 51 2d 01           ldm16	r1, [0x12d]
+ f0 51 2f 01           ldm16	r1, [0x12f]
+ f0 56 2d 01           ldm16	r6, [0x12d]
  c4 c6 03              ldi16	r4, 0x3c6
  c1 00                 ldi8	r5, 0x0
  d7 22                 sys	set_sprite
- ce c1                 cmpi.s8	r6, -0x3f
- de 8f 00              brslt16	0x8f <L10>
+ f0 0d c1              cmpi.s8	r1, -0x3f
+ de 8e 00              brslt16	0x8e <L10>
  c0 0f                 ldi8	r4, 0xf
- f9 30                 and	r1, r4
+ 88                    and	r6, r4
  f2 42                 sub	r2, r2
  f1 02                 mov	r0, r2
- f2 31                 sub	r0, r1
- f2 46                 sub	r2, r6
+ f2 36                 sub	r0, r6
+ f2 41                 sub	r2, r1
  c7 00 01              ldi16	r7, 0x100
  f0 01 ff              ldi8	r1, 0xff
 <L0>:

@@ -38,6 +38,14 @@ The newer compiled benchmarks fill these code generation gaps:
 switches on their byte area field, like the RPG chunk dispatch. Inputs include
 area 1 and nonmatching values up to 255, with varying neighboring fields.
 
+`byte_load_liveout` keeps RAM and program-memory byte loads live across a
+runtime branch before passing them to byte-argument calls. It exercises known
+upper bits between basic blocks, together with call spills and register copies.
+
+`byte_phi_stream` classifies bytes from RAM and program memory with the previous
+load carried through a loop PHI. It covers unsigned promotion around a cycle,
+including values on both sides of 127 and 128.
+
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;
 each source should contain exactly one pair of debug breaks.

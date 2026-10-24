@@ -157,7 +157,7 @@ Disassembly of section .text:
  f0 55 42 01           ldm16	r5, [0x142]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
- f1 14                 mov	r2, r4
+ f1 0c                 mov	r1, r4
  f0 55 44 01           ldm16	r5, [0x144]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
@@ -173,18 +173,18 @@ Disassembly of section .text:
  f0 54 44 01           ldm16	r4, [0x144]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
- f1 0c                 mov	r1, r4
+ f1 14                 mov	r2, r4
  f0 55 46 01           ldm16	r5, [0x146]
  f1 20                 mov	r4, r0
  d7 13                 sys	memcmp_p
  f4 09                 ldsp16	r5, [sp+0x2]
- f2 15                 add	r2, r5
+ f2 0d                 add	r1, r5
  f4 01                 ldsp16	r5, [sp+0x0]
- f2 15                 add	r2, r5
- f2 13                 add	r2, r3
- f2 11                 add	r2, r1
- f2 14                 add	r2, r4
- f0 5a 48 01           stm16	[0x148], r2
+ f2 0d                 add	r1, r5
+ f2 0b                 add	r1, r3
+ f2 0a                 add	r1, r2
+ f2 0c                 add	r1, r4
+ f0 59 48 01           stm16	[0x148], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

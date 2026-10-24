@@ -7,19 +7,19 @@ SYMBOL TABLE:
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 aggregate_args.c
 00000100 l     O .data	00000080 items
-000004ff l     F .text	0000006c combine
+000004ef l     F .text	0000006c combine
 00000180 l     O .data	00000004 aggregate_args_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
-00000619 l       .init_array	00000000 .hidden __init_array_end
-00000619 l       .init_array	00000000 .hidden __init_array_start
-00000619 l       .fini_array	00000000 .hidden __fini_array_start
-00000619 l       .fini_array	00000000 .hidden __fini_array_end
+00000609 l       .init_array	00000000 .hidden __init_array_end
+00000609 l       .init_array	00000000 .hidden __init_array_start
+00000609 l       .fini_array	00000000 .hidden __fini_array_start
+00000609 l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	0000001e _start
-000002c7 g     F .text	00000238 avm_test_main
-0000056b g     F .text	00000002 avm_halt
+000002c7 g     F .text	00000228 avm_test_main
+0000055b g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
-0000056d g     F .text	000000ac __avm_mulsi3
+0000055d g     F .text	000000ac __avm_mulsi3
 
 Disassembly of section .text:
 
@@ -37,7 +37,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 4d 03              call16	avm_halt
+ e1 3d 03              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -45,19 +45,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 19 06              ldi16	r4, 0x619
+ c4 09 06              ldi16	r4, 0x609
  c1 00                 ldi8	r5, 0x0
- c6 19 06              ldi16	r6, 0x619
+ c6 09 06              ldi16	r6, 0x609
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 19 06           ldi16	r0, 0x619
+ f0 04 09 06           ldi16	r0, 0x609
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 19 06           ldi16	r2, 0x619
+ f0 06 09 06           ldi16	r2, 0x609
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -91,19 +91,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fd              call16	-631 <__avm_run_local_dtors>
 <L0>:
- c4 19 06              ldi16	r4, 0x619
+ c4 09 06              ldi16	r4, 0x609
  c1 00                 ldi8	r5, 0x0
- c6 19 06              ldi16	r6, 0x619
+ c6 09 06              ldi16	r6, 0x609
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 19 06           ldi16	r2, 0x619
+ f0 06 09 06           ldi16	r2, 0x609
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 19 06           ldi16	r0, 0x619
+ f0 04 09 06           ldi16	r0, 0x609
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -299,9 +299,6 @@ Disassembly of section .text:
  f2 28                 add	r6, r0
  f1 1c                 mov	r3, r4
  f2 1a                 add	r3, r2
- f1 14                 mov	r2, r4
- c5 06 01              ldi16	r5, 0x106
- f2 15                 add	r2, r5
  0c                    mov	r7, r4
  c5 07 01              ldi16	r5, 0x107
  1d                    add	r7, r5
@@ -311,12 +308,7 @@ Disassembly of section .text:
  f1 04                 mov	r0, r4
  c5 01 01              ldi16	r5, 0x101
  f2 05                 add	r0, r5
- f1 0c                 mov	r1, r4
- c5 02 01              ldi16	r5, 0x102
- f2 0d                 add	r1, r5
- c5 03 01              ldi16	r5, 0x103
- 11                    add	r4, r5
- ed a4 20              ld8u	r5, [r2+0]
+ ed a0 25              ld8u	r5, [r0+5]
  f0 06 05 01           ldi16	r2, 0x105
  f0 2d 12              stsp8	[sp+0x12], r5
  ed a6 20              ld8u	r5, [r3+0]
@@ -324,9 +316,9 @@ Disassembly of section .text:
  f0 2d 11              stsp8	[sp+0x11], r5
  46                    ld8u	r5, [r6]
  f0 2d 10              stsp8	[sp+0x10], r5
- 40                    ld8u	r4, [r4]
+ ed 80 22              ld8u	r4, [r0+2]
  f1 6c                 stsp8	[sp+0xf], r4
- ed 82 20              ld8u	r4, [r1+0]
+ ed 80 21              ld8u	r4, [r0+1]
  f1 68                 stsp8	[sp+0xe], r4
  ed 80 20              ld8u	r4, [r0+0]
  f1 64                 stsp8	[sp+0xd], r4
@@ -363,13 +355,13 @@ Disassembly of section .text:
  f0 0b 08              addi.s8	r3, 0x8
  f4 ad                 inc16	r5
  cd 15                 cmpi.s8	r5, 0x15
- db 47 ff              brne16	-0xb9 <L1>
+ db 57 ff              brne16	-0xa9 <L1>
  f4 21                 ldsp16	r5, [sp+0x8]
  f4 ad                 inc16	r5
  01                    mov	r4, r5
  f1 74                 zext8	r4
  cc 14                 cmpi.s8	r4, 0x14
- db 35 ff              brne16	-0xcb <L0>
+ db 45 ff              brne16	-0xbb <L0>
  c4 80 01              ldi16	r4, 0x180
  f0 6b c8              st32	[r4], q3
  d7 01                 sys	debug_break

@@ -53,6 +53,11 @@ Multi-file C++ fixtures keep helper translation units in `tests/cpp/support/`.
 The top-level `.cpp` file supplies `avm_test_main()` and its adjacent
 `_output.txt` file supplies the expected serial output.
 
+`aggregate_byte_packing` checks construction, register arguments and returns for
+two-, three-, and four-byte records, plus three-byte stack arguments. It covers
+every byte value and truncation of word inputs with nonzero high bytes, and
+checks general 32-bit bitwise operations against independent word results.
+
 Timer1 arbitration is checked with simultaneous Timer0/Timer1 pending flags.
 Startup tests cover inherited timer power gates, enables and Timer3 speaker ownership.
 

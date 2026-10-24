@@ -28,7 +28,7 @@ The newer compiled benchmarks fill these code generation gaps:
 | Branches and loop shapes | `byte_comparisons`, `loop_shapes`, `short_circuit`, `saturating_math` |
 | Integer lowering | `bit_count`, `count_leading_zeros`, `count_trailing_zeros`, `div_pow2`, `narrow_arithmetic`, `popcount`, `progmem_record_index`, `rotate32`, `wide_add_sub`, `wide_compare` |
 | Floating point lowering | `float_comparisons`, `float_conversions` |
-| C++ lowering | `aggregate_byte_dispatch`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
+| C++ lowering | `aggregate_byte_dispatch`, `aggregate_byte_packing`, `aggregate_byte_packing_hoisted`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
 
 `progmem_record_index` indexes six-byte program-memory records containing two
 24-bit pointers, like the RPG music catalog. Runtime byte indices include 0,
@@ -37,6 +37,19 @@ The newer compiled benchmarks fill these code generation gaps:
 `aggregate_byte_dispatch` passes three-byte coordinate records by value and
 switches on their byte area field, like the RPG chunk dispatch. Inputs include
 area 1 and nonmatching values up to 255, with varying neighboring fields.
+
+`aggregate_byte_packing` constructs two-, three-, and four-byte records from
+runtime word loads and passes them by value. Every byte contributes to the
+checksum, including both bytes of the high register in the four-byte case.
+
+`aggregate_byte_packing_hoisted` constructs coordinates in nested traversal
+loops. The packed `y` field is invariant in the inner loop and crosses a basic
+block boundary, as in the RPG. This covers preservation of its zero low word
+alongside ordinary full-width operations in `wide_compare`, `packed_fields`,
+`struct_copy`, `shifts`, and `progmem_walk`.
+
+See [small aggregate lowering and measurements](../docs/compiler-aggregate-packing.md)
+for the compiler change, runtime coverage, and before/after results.
 
 `byte_load_liveout` keeps RAM and program-memory byte loads live across a
 runtime branch before passing them to byte-argument calls. It exercises known

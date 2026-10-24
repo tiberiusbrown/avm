@@ -1,4 +1,6 @@
-     1553292   aggregate_byte_dispatch.cpp
+     1240204   aggregate_byte_dispatch.cpp
+     1597084   aggregate_byte_packing.cpp
+     2293325   aggregate_byte_packing_hoisted.cpp
      1085160   lambda_capture.cpp
       386951   member_pointers.cpp
       641050   scoped_lifetime.cpp

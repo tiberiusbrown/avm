@@ -11,16 +11,16 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 wide_integer.c
 00000000 l    df *ABS*	00000000 integer.c
-00000576 l       .init_array	00000000 .hidden __init_array_end
-00000576 l       .init_array	00000000 .hidden __init_array_start
-00000576 l       .fini_array	00000000 .hidden __fini_array_start
-00000576 l       .fini_array	00000000 .hidden __fini_array_end
+0000056d l       .init_array	00000000 .hidden __init_array_end
+0000056d l       .init_array	00000000 .hidden __init_array_start
+0000056d l       .fini_array	00000000 .hidden __fini_array_start
+0000056d l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	0000001e _start
 000002c7 g     F .text	0000018c avm_test_main
 00000453 g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
 00000455 g     F .text	000000a2 __avm_muldi3
-000004f7 g     F .text	0000007f __avm_mulsi3
+000004f7 g     F .text	00000076 __avm_mulsi3
 
 Disassembly of section .text:
 
@@ -46,19 +46,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 76 05              ldi16	r4, 0x576
+ c4 6d 05              ldi16	r4, 0x56d
  c1 00                 ldi8	r5, 0x0
- c6 76 05              ldi16	r6, 0x576
+ c6 6d 05              ldi16	r6, 0x56d
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 76 05           ldi16	r0, 0x576
+ f0 04 6d 05           ldi16	r0, 0x56d
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 76 05           ldi16	r2, 0x576
+ f0 06 6d 05           ldi16	r2, 0x56d
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -92,19 +92,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fd              call16	-631 <__avm_run_local_dtors>
 <L0>:
- c4 76 05              ldi16	r4, 0x576
+ c4 6d 05              ldi16	r4, 0x56d
  c1 00                 ldi8	r5, 0x0
- c6 76 05              ldi16	r6, 0x576
+ c6 6d 05              ldi16	r6, 0x56d
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 76 05           ldi16	r2, 0x576
+ f0 06 6d 05           ldi16	r2, 0x56d
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 76 05           ldi16	r0, 0x576
+ f0 04 6d 05           ldi16	r0, 0x56d
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -452,12 +452,7 @@ Disassembly of section .text:
  3d                    cmp	r7, r5
  f8 15                 cset.ult	r5
  14                    add	r5, r4
- f1 0d                 mov	r1, r5
- f2 30                 sub	r0, r0
  03                    mov	r4, r7
- a5                    xor	r5, r5
- f9 81                 or	r4, r0
- f9 a5                 or	r5, r1
  d6 0c                 adjsp	0xc
  b8                    pop16	r0
  b9                    pop16	r1

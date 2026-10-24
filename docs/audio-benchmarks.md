@@ -2,9 +2,9 @@
 
 The tables below preserve the stopped-channel optimization measurements.
 The subsequent compiler-trusted stream update reduced firmware to 29,220 bytes.
-The runtime music-loop control now brings current firmware to **29,240 bytes**,
-with **456 bytes** of bootloader headroom. These changes leave the synthesis
-paths and their cycle counts unchanged; see the updates at the end.
+Runtime music-loop control brought firmware to **29,240 bytes**. The global
+byte mixer and tonal low-pass now bring current firmware to **29,364 bytes**, with **332 bytes**
+of bootloader headroom. See the updates at the end for current filter timings.
 
 Measured 2026-10-21 with the repository's Ardens AVR instruction emulator,
 unmerged instructions, 16 MHz CPU, RelWithDebInfo. Before measurements use the
@@ -250,3 +250,103 @@ remain sample-exact, with repetition supplied as a playback option. The demo
 and both RPG device packages were rebuilt. Current logs are under
 `build/audio-loop-*.log`; renderer results are in
 `build/audio-loop-renderer-validation/validation.json`.
+
+## Byte mixing, shared gain and uint8 low-pass
+
+Measured 2026-10-23 in RelWithDebInfo, using actual AVR instructions in Ardens
+at 16 MHz with instruction merging disabled. The saved before firmware and
+native timing log are in `build/audio-8bit-before/`. No physical hardware
+listening test was run.
+
+Channels now retain their original 0..31 volumes. Music, SFX and direct tones
+share one output gain, default 128 (4x); commands 5/11/12 all set that value.
+The former independent music/SFX functions remain compatibility aliases.
+Gain is applied after tonal filtering and noise addition, preserving quiet
+voices instead of quantizing gain into each voice's 5-bit volume.
+
+The ISR accumulates into one biased byte: 128 means silence. Three tonal voices
+fit 35..221; adding noise stays within 4..252. Removing signed high-byte
+accumulation saves two cycles per active tonal voice, three per active noise
+voice, and removes r27's push/pop and accumulator initialization. Global gain
+uses a temporary hardware multiply product, with fast paths for silence,
+unity (32), and default 4x (128); it never widens the voice accumulator.
+
+The low-pass control is a raw `uint8_t` coefficient: 0=bypass, 128=mild,
+64=medium, 32=strong. All 1..255 values are supported; smaller nonzero values
+smooth more. Startup initializes the setting and cached coefficient to zero
+and history to biased silence (128), verified with dirty initial SRAM.
+
+The assembly update is a byte subtract/multiply/add:
+
+1. `SUB target, history` supplies both the difference and subtraction borrow.
+   A negative difference is converted to its unsigned magnitude with `NEG`,
+   avoiding signed 8-bit overflow for differences larger than 127.
+2. `MUL magnitude, alpha` computes the step. Its high byte is the integer
+   part; `NEG r0` sets carry exactly when the fractional low byte is nonzero.
+3. `ADC history, r1` adds the rounded positive step, or `SBC history, r1`
+   subtracts the rounded negative step. Rounding toward the target ensures
+   decay reaches silence without fractional state or a stuck DC offset.
+4. At half the sample rate, foreground prepares
+   `min(255, 2*alpha - floor(alpha*alpha/256))`. Coefficient publication is atomic
+   with control/rate changes. The ISR always performs at most one multiply;
+   it has no strength-dependent shift loop or repeated half-rate update.
+
+Filter bypass takes five cycles; an enabled update takes 10 cycles at its
+steady target, 17 for a positive difference, and 19 for a negative difference.
+These counts are independent of coefficient and synthesis rate.
+
+The following table compares maximum all-active **ordinary** ISR cycles at the
+**default shared gain 128**. The before mixer used a 16-bit sum and Q4 filter;
+its synthesis gain was prepared per owner. After profiles cover all 27 tonal
+waveform combinations, signs, intermediate phase amplitudes, filter histories,
+and pending descriptor types. This is a timing comparison, not PCM equivalence
+between the two mixing/rounding designs.
+
+| Filter | Before, 15625 Hz | After, 15625 Hz | Before, 7812.5 Hz | After, 7812.5 Hz |
+| --- | ---: | ---: | ---: | ---: |
+| OFF | 209 | 205 | 209 | 205 |
+| MILD | 255 | 219 | 282 | 219 |
+| MEDIUM | 260 | 219 | 292 | 219 |
+| STRONG | 265 | 219 | 302 | 219 |
+
+| Filter | Before pending maximum, 15625 Hz | After | Before pending maximum, 7812.5 Hz | After |
+| --- | ---: | ---: | ---: | ---: |
+| OFF | 286 | 282 | 286 | 282 |
+| MILD | 332 | 296 | 359 | 296 |
+| MEDIUM | 337 | 296 | 369 | 296 |
+| STRONG | 342 | 296 | 379 | 296 |
+
+At 15625 Hz, strong filtering's ordinary maximum falls 46 cycles (17.36%),
+from 25.8789% to 21.3867% CPU. At 7812.5 Hz it falls 83 cycles (27.48%),
+from 14.7461% to 10.6934% CPU. PWM endpoint latency remains **21 cycles**.
+With unity gain the after ordinary maxima are 195 bypass / 209 filtered;
+a general multiplier path can take 219 bypass / 233 filtered, so arbitrary
+non-default gains can make bypass ten cycles slower than before. The maximum
+measured general-gain pending path is 310 cycles, leaving 714 cycles before
+the 1024-cycle deadline. All-stopped output improves from 86 to **79 cycles**.
+
+| Component | Before | After |
+| --- | ---: | ---: |
+| Active pulse / triangle / saw | 35 / 36 / 34 | 33 / 34 / 32 cycles |
+| Active noise hold / shift / feedback | 28 / 32 / 33 | 25 / 29 / 30 cycles |
+| One-channel pitch/control service | 1002 | 988 cycles |
+| Four-channel pitch/control service | 1202 | 1170 cycles |
+| Four-channel volume-only service | 1094 | 1062 cycles |
+| Maximum extended SFX service | 1023 | 987 cycles |
+| Persistent audio state | 93 | 92 bytes |
+| Ordinary / pending ISR stack, including PCs | 9 / 11 | 8 / 10 bytes |
+| Firmware text, FX / FX-C / Mini | 29392 | 29364 bytes |
+| Bootloader headroom | 304 | 332 bytes |
+
+The formatter/text workspace leaves 71 bytes for native stack. The single
+SRAM-page and minimum-stack assembly assertions remain active.
+
+Validation includes 132 Python audio tests, 64 native audio cases, all 63,744
+mix/gain pairs, 7,168 mixed waveform/noise/register/flag cases and 286,110 byte
+coefficient/difference/rate cases. All 136 renderer/AVR comparisons (1,632,000
+samples) are exact for the new design. FX/FX-C/Mini builds, animated demo,
+rate toggles, playlist, libm/formatter interrupts and large C/C++ assets are
+covered by the native audio target. Current evidence is in
+`build/audio-lowpass-build.log`, `build/audio-8bit-mixer.log`,
+`build/audio-8bit-python.log`, and
+`build/audio-8bit-renderer-validation/validation.json`.

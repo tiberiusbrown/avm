@@ -44,16 +44,18 @@ def validate(exe, hex_path, listing, guest, output, live=False):
         asset = output / (name + ".bin")
         asset.write_bytes(data)
         for selected, rate in enumerate((7812.5, 15625)):
-            result = render(data, rate=rate, duration=1.024, loop=name in LOOPED)
-            pcm = output / f"{name}-{selected}.u8"
-            subprocess.run([str(exe), "--render-logical", str(hex_path), str(listing), str(guest),
-                            str(asset), str(pcm), str(len(result.pcm)), str(selected), str(int(name in LOOPED))], check=True, capture_output=True)
-            actual = np.frombuffer(pcm.read_bytes(), dtype=np.uint8)
-            errors = np.abs(actual.astype(int)-result.pcm.astype(int))
-            row = {"fixture": name, "rate": rate, "samples": len(actual),
-                   "mismatched_samples": int(np.count_nonzero(errors)), "max_error": int(max(errors))}
-            rows.append(row)
-            print(row, flush=True)
+            for level in (0, 128, 64, 32):
+                result = render(data, rate=rate, duration=1.024, loop=name in LOOPED, lowpass=level)
+                pcm = output / f"{name}-{selected}-lowpass{level}.u8"
+                subprocess.run([str(exe), "--render-logical", str(hex_path), str(listing), str(guest),
+                                str(asset), str(pcm), str(len(result.pcm)), str(selected), str(int(name in LOOPED)),
+                                str(level)], check=True, capture_output=True)
+                actual = np.frombuffer(pcm.read_bytes(), dtype=np.uint8)
+                errors = np.abs(actual.astype(int)-result.pcm.astype(int))
+                row = {"fixture": name, "rate": rate, "lowpass": level, "samples": len(actual),
+                       "mismatched_samples": int(np.count_nonzero(errors)), "max_error": int(max(errors))}
+                rows.append(row)
+                print(row, flush=True)
     report = {"logical": rows, "exact": all(r["mismatched_samples"] == 0 for r in rows),
               "model": "Real AVR sequencer + synthesis, deterministic logical publication; no PWM or foreground jitter"}
     if live:

@@ -12,6 +12,7 @@ static const uint8_t AVM_PROGMEM effect[] = {
 
 int avm_test_main(void) {
     char text[48];
+    avm_audio_lowpass(AVM_AUDIO_LOWPASS_MILD);
     avm_audio_music_loop(1);
     avm_audio_play(song);
     if(avm_audio_status()!=1) return 1;
@@ -51,5 +52,6 @@ int avm_test_main(void) {
     avm_audio_stop();
     if(avm_audio_status()!=0) return 9;
     avm_audio_disable();
+    avm_audio_lowpass(AVM_AUDIO_LOWPASS_DEFAULT);
     return 0;
 }

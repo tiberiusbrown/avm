@@ -154,6 +154,7 @@ class ScoreParser:
         self.position = 0
         self.tempo = Fraction(120)
         self.meter = Fraction(4)
+        self.volume = Fraction(1)
         self.sfx = False
         self.automation_ms = Fraction(8)
         self.envelopes, self.instruments, self.phrases, self.channels = {}, {}, {}, {}
@@ -588,7 +589,7 @@ class ScoreParser:
                 continue
             token = self.take()
             command = token[0]
-            if command in ("tempo", "meter", "automation", "sfx", "title", "description"):
+            if command in ("tempo", "meter", "volume", "automation", "sfx", "title", "description"):
                 if command in seen:
                     self.error(f"duplicate {command}", token)
                 seen.add(command)
@@ -605,6 +606,11 @@ class ScoreParser:
                         self.error("meter must be positive", token)
                 elif command == "automation":
                     self.automation_ms = self.time()
+                elif command == "volume":
+                    self.volume = self.number() / 100
+                    self.expect("%")
+                    if self.volume < 0:
+                        self.error("score volume must be a nonnegative percentage", token)
                 elif command == "sfx":
                     self.sfx = True
                 else:
@@ -907,6 +913,7 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                 if sound.get("lfo_volume"):
                     effect = sound["lfo_volume"]
                     volume += float(effect["depth"]) * lfo_value(effect, elapsed, time)
+                volume *= score.volume
                 update = {"increment": max(1, min(65535, round(frequency * 65536 / 15625))),
                           "volume": max(0, min(31, math.floor(float(volume) + 0.5)))}
                 if time == start:

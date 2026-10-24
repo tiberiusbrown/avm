@@ -37,3 +37,4 @@ audio_api avm_audio_music_volume, 11
 audio_api avm_audio_sfx_volume, 12
 audio_api avm_audio_rate, 13
 audio_api avm_audio_music_loop, 14
+audio_api avm_audio_lowpass, 15

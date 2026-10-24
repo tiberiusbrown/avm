@@ -191,12 +191,20 @@ When multiple pulse tones occupy similar registers, their harmonics can interfer
 
 ## Mix levels to avoid clipping
 
-AVM **adds four signed oscillator contributions and clips the final result** to the PWM output range. The nominal per-channel score `volume` is **0–31**, but overall gain is controlled separately. The music and SFX master gains both default to **128**, which means **400% of unity** (`32` is 100%). A voice's prepared amplitude is approximately `floor(score_volume × master / 32)`, and many loud simultaneous voices can saturate the mix.
+For gentler tonal playback, game code can call
+`avm_audio_lowpass(AVM_AUDIO_LOWPASS_MILD)` before starting a song. The global
+filter smooths channels 0..2, including tonal SFX, while noise percussion on
+channel 3 remains unfiltered. Medium and strong levels darken the tonal mix
+further. Startup defaults to bypass; select the level in game code for each
+song if desired. Filtering does not replace the mix headroom guidance below.
+
+AVM **adds four signed oscillator contributions and clips the final result** to the PWM output range. The nominal per-channel score `volume` is **0–31**, but overall gain is controlled separately. The shared output gain defaults to **128**, which means **400% of unity** (`32` is 100%). A voice's prepared amplitude is approximately `floor(score_volume × master / 32)`, and many loud simultaneous voices can saturate the mix.
 
 - **Do not set every instrument to 24–31 by default.** The score's default volume 24 is loud at the default 128 master, particularly with simultaneous bass and melody.
-- For a conservative, unclipped starting point when **both master gains are 128**, keep the sum of the simultaneously active score volumes around **30 or less**. For example, melody 13 + bass 9 + harmony 6 + percussion 2 = 30. This is a starting budget, not a mandatory musical balance; envelopes, SFX, phase and pulse duty change the instantaneous mix.
+- For a conservative, unclipped starting point when **shared gain is 128**, keep the sum of the simultaneously active score volumes around **30 or less**. For example, melody 13 + bass 9 + harmony 6 + percussion 2 = 30. This is a starting budget, not a mandatory musical balance; envelopes, SFX, phase and pulse duty change the instantaneous mix.
 - Treat volume slides, envelopes, and additive volume LFOs as sources of **peak** volume; allow headroom for their maximum, not just their steady value. Effects may replace a quiet accompaniment with a much louder sound.
-- Compare the song at its **actual runtime master setting**, not merely at the editor's volume. Set music and SFX masters independently when necessary to maintain headroom.
+- Compare the song at its **actual runtime master setting**, not merely at the editor's volume. Balance music and SFX through their channel/score volumes; the former music/SFX master functions now alias the shared gain.
+- Balance entire songs with score-level `volume 75%` before any definitions or channels. It defaults to `100%` and scales all volume effects before final 0..31 rounding/clamping; keep instrument and channel `volume` values as integer amplitudes.
 - Duty cycles far from 50% can introduce a strong average (DC-like) component in the raw pulse waveform; a different duty at the same nominal score volume is not necessarily equally loud or equally safe from clipping.
 
 Clipping is not a way to make the piezo reproduce bass. If the bass lacks presence, **change the register, articulation, or arrangement first**, rather than raising all channel gains.
@@ -343,7 +351,7 @@ Before finalizing a track, test it through the device's built-in piezo at a real
 - [ ] Noise retriggering is rhythmic rather than an overpowering hiss.
 - [ ] The loop transition is smooth and rhythmically correct; no unwanted effect state carries across it.
 - [ ] Typical sequenced gameplay sound effects on channels 1 and/or 3 do not make the music collapse; current music resumes cleanly.
-- [ ] Total mix is not noticeably clipped at **actual music and SFX master gains**, including simultaneous maximum accents.
+- [ ] Total mix is not noticeably clipped at **actual shared output gain**, including simultaneous maximum accents.
 - [ ] Dense modulation does not inflate asset sizes unreasonably or lose transitions during demanding gameplay at safe points.
 - [ ] Both 7,812.5 Hz and 15,625 Hz sample-rate modes sound acceptable if the game supports switching.
 - [ ] Repeating the loop for several minutes is not fatiguing.

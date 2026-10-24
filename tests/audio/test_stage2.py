@@ -89,12 +89,12 @@ class RenderTests(unittest.TestCase):
                             "increment": inc, "volume": volume, "wave": wave, "duty": 0}})], 20)
                         actual = render(data, rate=rate, master=master, duration=.05)
                         first = int(np.ceil(rate / 250))
-                        amp = volume * master // 32
+                        amp = volume
                         expected = []
                         for step in range(1, 257):
                             high = step & 255
                             sample = high - 128 if wave == "saw" else 2 * min(high, 255-high) - 127
-                            expected.append((sample * amp + 64) // 128)
+                            expected.append((((sample * amp + 64) // 128) * master + 16) // 32)
                         np.testing.assert_array_equal(actual.mix[first:first+256], expected)
                         np.testing.assert_array_equal(actual.pcm[first:first+256], np.clip(np.array(expected)+128, 0, 255))
 
@@ -131,7 +131,7 @@ class RenderTests(unittest.TestCase):
                     for ch in range(4):
                         total = phases[ch] + incs[ch]
                         phases[ch] = total & 65535
-                        amp = (controls[ch] & 31)*master//32 if incs[ch] else 0
+                        amp = (controls[ch] & 31) if incs[ch] else 0
                         if ch == 3:
                             if total > 65535:
                                 state = (state >> 1) ^ (0xb8 if state & 1 else 0)
@@ -140,7 +140,7 @@ class RenderTests(unittest.TestCase):
                             high = phases[ch] >> 8
                             sample = high-128 if controls[ch] & 64 else 2*min(high, 255-high)-127 if controls[ch] & 32 else (127 if high < duties[ch] else -127)
                             mix += (sample*amp+64)//128
-                    expected.append(mix)
+                    expected.append((mix*master+16)//32)
                 np.testing.assert_array_equal(actual.mix, expected)
                 np.testing.assert_array_equal(actual.pcm, np.clip(np.array(expected)+128, 0, 255))
                 partial = render(data, rate=rate, master=master, start=.16, duration=.08, loop=True)
@@ -171,15 +171,14 @@ class RenderTests(unittest.TestCase):
             self.assertTrue(np.all(result.pcm[:first] == 128))
             inc = avm_music.note_increment(69)*(2 if rate == 7812.5 else 1)
             phase = np.arange(1, 101)*inc % 65536
-            expected = 128+np.where((phase >> 8) < 64, 123, -123)
+            expected = 128+np.where((phase >> 8) < 64, 124, -124)
             np.testing.assert_array_equal(result.pcm[first:first+100], expected)
 
     def test_duty_extremes_and_volume_quantization(self):
         for duty in (0, 32, 64, 96, 128, 255):
             data = avm_music.compile_source(f"channel 0 {{ volume 31 duty {duty} c:200ms }}")
             r = render(data, master=255)
-            amp = 31*255//32
-            self.assertTrue(set(r.mix.tolist()).issubset({0, (127*amp+64)//128, (-127*amp+64)//128}))
+            self.assertTrue(set(r.mix.tolist()).issubset({0, (31*255+16)//32, (-31*255+16)//32}))
 
     def test_noise_scalar_lfsr_and_reseeding(self):
         data = avm_music.compile_source("channel 3 { wave noise volume 8 noise_retrigger { every 32ms seed 37 } c:200ms }")
@@ -219,7 +218,7 @@ class RenderTests(unittest.TestCase):
         self.assertLess(a.metrics()["clipping_fraction"], .05)
         b = render(avm_music.compile_source("channel 0 { volume 31 duty 0 c:100ms } channel 1 { volume 31 duty 0 c:100ms }"))
         self.assertGreater(b.metrics()["clipping_fraction"], .9)
-        self.assertEqual(int(b.mix.min()), -246)
+        self.assertEqual(int(b.mix.min()), -248)
 
     def test_invalid_binary_and_parameters(self):
         for data in (b"", b"\xa4\x01", b"\x00", b"\x01\x00\x10\x60", b"\x08\x00\x80\x80\x00"):

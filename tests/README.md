@@ -14,6 +14,12 @@ simulated A/B presses. It also runs the standard-library Python asset tests and
 assembles Mini/FX-C firmware presets. These checks and the C audio fixture run
 within `avm_tests_run`. See [audio measurements](../docs/audio-benchmarks.md).
 
+Audio checks also cover the global tonal low-pass defaults, lifetime, all byte
+coefficients and both rates, byte mixing, noise bypass, decay to silence,
+register/flag preservation and interrupt timing. Optional renderer validation
+(`python tests/audio/validate_stage2_renderer.py`) compares bypass and three presets
+against actual AVR synthesis; it requires NumPy and SciPy.
+
 `cmake --build build --config RelWithDebInfo --target avm_push16_tests_run`
 runs focused native-emulator tests independently. They execute all `B0-B7`
 push and `B8-BF` pop encodings with every C/Z/S combination, assert exact

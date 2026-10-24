@@ -3717,16 +3717,17 @@ or concurrent execution of a text or formatted-output service is unsupported.
 | 2 | Stop music | None |
 | 3 | Pause music | None |
 | 4 | Resume music | None |
-| 5 | Set both music and SFX masters | `low8(r4) = 0..255`; 32=100% |
+| 5 | Set shared output gain | `low8(r4) = 0..255`; 32=100%, default 128 |
 | 6 | Enable output | None |
 | 7 | Disable output and stop both streams | None |
 | 8 | Stop SFX | None |
 | 9 | Query status | `r4 = bit 0 playing, bit 1 paused, bit 2 SFX` |
 | 10 | Direct SFX tone | `low8(r4) = channel`, `low8(r5) = MIDI note`, `low8(r6) = amplitude` |
-| 11 | Set music master | `low8(r4) = 0..255`; 32=100% |
-| 12 | Set SFX master | `low8(r4) = 0..255`; 32=100%; includes direct tones |
+| 11 | Shared gain compatibility alias | Same as command 5; also affects SFX/direct tones |
+| 12 | Shared gain compatibility alias | Same as command 5; also affects music |
 | 13 | Set synthesis rate | `low8(r4) = 0` (7812.5 Hz) or `1` (15625 Hz); other values ignored |
 | 14 | Set music looping | `low8(r4) = 0` disables, nonzero enables; default disabled; persists across playback controls |
+| 15 | Set global tonal low-pass | `low8(r4) = alpha`: 0 bypass (default), 1..255 coefficient; 128 mild, 64 medium, 32 strong |
 
 All inputs and architectural flags are preserved except the status result.
 Reserved commands have no command effect, but may service pending elapsed time.
@@ -3734,11 +3735,20 @@ Pointers retain the existing packed 24-bit program-space representation.
 At End, music stops or rewinds according to command 14; SFX always stops.
 Loop-setting changes preserve position, and enabling stopped music does not
 restart it. Compiled streams contain no terminal Loop command.
-Each channel's prepared amplitude is `floor(volume * owner_master / 32)`.
-Music and SFX masters default to 128 and are independent; muted SFX retains ownership. Desired
-channel volumes remain 0..31, and gain changes preserve phases and stream
-timing. The signed mix accumulates from zero and saturates at the PWM limits
-after all voices have contributed.
+Each channel retains its original 0..31 amplitude, or 255 for a stopped voice.
+There is one shared output gain, default 128; commands 5/11/12 all set it.
+Mixing and tonal filtering use biased bytes (128 means silence); four voices
+fit in 4..252. Gain applies after filtering and noise addition. The hardware
+multiply product is rounded, divided by 32, biased and saturated to PWM limits.
+Gain changes preserve phases, filter history, ownership and stream timing.
+Command 15 filters the unclipped sum of channels 0..2 before adding noise
+channel 3. The level persists across playback controls. Startup, output restart,
+and OFF-to-enabled transitions initialize the biased byte filter history to
+silence; enabled-level and rate changes retain it. No asset-format change is
+required. Stop and pause allow a brief filtered tonal decay while output runs.
+Smaller nonzero alpha smooths more. The ISR updates byte history with one
+subtract/multiply/add operation; half-rate coefficient conversion occurs in
+foreground when alpha or the synthesis rate changes.
 Playback is autonomous at normal interpreter stream-restart safe points and
 idle wakeups. Timer interrupts synthesize only latched controls; they never
 read FX assets or advance the event stream. Audio calls define hidden

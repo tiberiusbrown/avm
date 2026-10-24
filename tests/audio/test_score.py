@@ -48,6 +48,64 @@ class ScoreTests(unittest.TestCase):
     def compile(self, source):
         return decode(music.compile_source(source))
 
+    def test_score_volume_defaults_to_100_percent(self):
+        body = """
+            automation 4ms
+            instrument lead { volume 17 wave saw duty 25% }
+            channel 1 lead { volume_slide { to 3 over 16ms } c:24ms }
+            channel 3 { noise_retrigger { every 8ms seed 37 } c:24ms }
+        """
+        for kind in ("", "sfx "):
+            with self.subTest(kind=kind):
+                self.assertEqual(music.compile_source(kind + body),
+                                 music.compile_source(kind + "volume 100% " + body))
+
+    def test_score_volume_scales_all_channels_and_sound_settings(self):
+        events, end, command = self.compile("""
+            volume 50%
+            instrument lead { volume 20 }
+            instrument bell { volume 10 }
+            phrase riff { c:8ms d:8ms@bell volume 6 e:8ms use lead f:8ms }
+            channel 0 lead { riff }
+            channel 1 lead { riff }
+            channel 2 lead { riff }
+            channel 3 lead { riff }
+        """)
+        self.assertEqual((end, command), (8, 1))
+        for channel in range(4):
+            self.assertEqual([update[channel]["control"] for _, update in events],
+                             [10, 5, 3, 10])
+
+    def test_score_volume_percentages_round_and_saturate(self):
+        for percent, expected in (("0", 0), ("12.5", 3), ("125/3", 10),
+                                  ("50", 12), ("100", 24), ("150", 31)):
+            for kind, channel in (("", 0), ("sfx ", 1)):
+                with self.subTest(percent=percent, kind=kind):
+                    events, end, command = self.compile(
+                        f"{kind}volume {percent}% channel {channel} {{ duty 64 c:16ms r:8ms }}")
+                    self.assertEqual(events[0][1][channel],
+                                     {"note": 60, "control": expected, "duty": 64})
+                    self.assertEqual((end, command), (7 if kind else 6, 1))
+                    self.assertEqual(events[-1][1][channel]["note"], 128)
+        events, _, _ = self.compile("volume 50% channel 0 { volume 1 c:8ms }")
+        self.assertEqual(events[0][1][0]["control"], 1)
+
+    def test_score_volume_validation(self):
+        bad = (
+            ("volume -1% channel 0 { c:8ms }", "nonnegative"),
+            ("volume 50 channel 0 { c:8ms }", "expected '%'"),
+            ("volume 50% volume 100% channel 0 { c:8ms }", "duplicate volume"),
+            ("instrument lead { volume 12 } volume 50% channel 0 { c:8ms }", "must precede"),
+            ("channel 0 { c:8ms } volume 50%", "must precede"),
+            ("channel 0 { volume 50% c:8ms }", "channel volume must be 0..31"),
+        )
+        for source, message in bad:
+            with self.subTest(source=source):
+                with self.assertRaises(music.ScoreError) as error:
+                    music.compile_source("// comment\n" + source, "bad.avms")
+                self.assertRegex(str(error.exception), r"bad\.avms:2:\d+:")
+                self.assertIn(message, str(error.exception))
+
     def test_raw_increments_and_physical_sfx_ownership(self):
         for mask in (2, 8, 10):
             channels = " ".join(f"channel {ch} {{ r:4ms c:8ms }}" for ch in (1, 3) if mask & (1 << ch))

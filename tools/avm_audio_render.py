@@ -112,16 +112,22 @@ _cycle = np.array(_cycle, dtype=np.int64)
 _indices = {int(v): i for i, v in enumerate(_cycle)}
 
 
-def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False):
+def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False, lowpass=0):
     """Render compiled data, preserving state across skipped prefix samples.
 
     Skipping a prefix advances phases/LFSR arithmetically without generating
     samples. This makes fitting late excerpts practical. Looping is a playback
     setting; pass loop=True and a duration to render more than one traversal.
-    Sequenced SFX callers must leave loop disabled, as on the AVR.
+    Sequenced SFX callers must leave loop disabled, as on the AVR. lowpass is
+    a uint8 tonal coefficient: 0=off, 128=mild, 64=medium, 32=strong. Smaller
+    nonzero values smooth more; 255 follows the byte target immediately.
+    Filtering retains byte history from time zero, including a skipped prefix.
+    One shared output gain applies after tonal filtering and noise addition.
     """
     if rate not in RATES or not isinstance(master, int) or not 0 <= master <= 255:
         raise ValueError("Rate must be 7812.5 or 15625; master must be 0..255")
+    if not isinstance(lowpass, int) or not 0 <= lowpass <= 255:
+        raise ValueError("Lowpass coefficient must be 0..255")
     events = decode(data)
     if not math.isfinite(start) or start < 0:
         raise ValueError("Start must be finite and nonnegative")
@@ -131,7 +137,9 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
         raise ValueError("Duration must be finite and positive")
     first = math.ceil(start * rate - 1e-9)
     stop = math.ceil((start + duration) * rate - 1e-9)
-    mix = np.zeros(stop - first, dtype=np.int16)
+    render_first = 0 if lowpass else first
+    mix = np.zeros(stop - render_first, dtype=np.int16)
+    tonal = np.zeros_like(mix) if lowpass else None
     increments, volumes, duties, phases = [0]*4, [24]*4, [128]*3, [0]*4
     noise_index, cursor, base_tick, count = 0, 0, 0, 0
 
@@ -140,12 +148,12 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
         end = min(end, stop)
         if end <= cursor:
             return
-        lo = max(cursor, first)
+        lo = max(cursor, render_first)
         if end > lo:
             k = np.arange(lo - cursor + 1, end - cursor + 1, dtype=np.int64)
             out = np.zeros(len(k), dtype=np.int16)
             for ch in range(4):
-                amp = (volumes[ch] & 31) * master // 32 if increments[ch] else 0
+                amp = (volumes[ch] & 31) if increments[ch] else 0
                 if not amp:
                     continue
                 position = phases[ch] + k * increments[ch]
@@ -159,11 +167,14 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
                     else:
                         sample = np.where(high < duties[ch], 127, -127)
                     # FMULSU rounding: floor(sample * amp / 128 + .5).
-                    out += ((sample * amp + 64) // 128).astype(np.int16)
+                    contribution = ((sample * amp + 64) // 128).astype(np.int16)
+                    out += contribution
+                    if lowpass:
+                        tonal[lo-render_first:end-render_first] += contribution
                 else:
                     lfsr = _cycle[(noise_index + (position >> 16)) % 255]
                     out += np.where(lfsr & 1, -amp, amp).astype(np.int16)
-            mix[lo-first:end-first] = out
+            mix[lo-render_first:end-render_first] = out
         n = end - cursor
         noise_index = (noise_index + (phases[3] + n * increments[3]) // 65536) % 255
         for ch in range(4):
@@ -194,6 +205,18 @@ def render(data, *, rate=15625., master=128, duration=None, start=0., loop=False
             base_tick += events[-1].tick
         else:
             break
+    if lowpass:
+        state = 0
+        coefficient = lowpass if rate == 15625. else min(255, 2*lowpass - (lowpass*lowpass >> 8))
+        for i, target in enumerate(tonal):
+            target = int(target)
+            delta = target - state
+            step = (abs(delta)*coefficient + 255) >> 8
+            state += step if delta >= 0 else -step
+            mix[i] += state - target
+        mix = mix[first:]
+    # Scale once after all cancellation, retaining quiet channels before gain.
+    mix = ((mix.astype(np.int32) * master + 16) // 32).astype(np.int16)
     return Render(np.clip(mix.astype(np.int32)+128, 0, 255).astype(np.uint8), mix, rate, start, count)
 
 

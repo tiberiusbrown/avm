@@ -25,6 +25,41 @@ def pitch(note):
 
 
 class EffectTests(unittest.TestCase):
+    def test_score_volume_follows_all_volume_effects_and_scales_release(self):
+        states, _ = resolved("""
+            volume 25% automation 4ms
+            envelope shape {
+                points 0ms:50% release 16ms:0%
+                tremolo { period 16ms depth 50% wave triangle }
+            }
+            instrument lead {
+                volume 24 envelope shape gate 50%
+                volume_slide { to 8 over 16ms }
+                tremolo { period 16ms depth 50% wave triangle }
+                lfo { target volume depth 4 period 16ms wave square }
+            }
+            channel 0 lead { c:32ms r:16ms }
+        """)
+        self.assertEqual([at(states, t)["control"] for t in range(0, 36, 4)],
+                         [4, 2, 0, 0, 2, 1, 0, 0, 0])
+        self.assertEqual(at(states, 32)["note"], 0)
+
+    def test_score_volume_applies_before_final_clamp_and_mutes_noise_retriggers(self):
+        for percent, expected in ((50, 24), (0, 0)):
+            with self.subTest(percent=percent):
+                states, events = resolved(f"""
+                    volume {percent}% automation 4ms
+                    channel 3 {{
+                        volume 24 lfo {{ target volume depth 24 period 16ms wave square }}
+                        noise_retrigger {{ every 4ms seed 37 }} c:16ms r:4ms
+                    }}
+                """)
+                self.assertEqual(at(states, 0, 3)["control"], expected)
+                self.assertEqual(at(states, 8, 3)["control"], 0)
+                self.assertNotEqual(at(states, 8, 3)["note"], 0)
+                self.assertEqual([(tick, update[3]["seed"]) for tick, update in events
+                                  if "seed" in update[3]], [(1, 37), (2, 37), (3, 37), (4, 37)])
+
     def test_volume_slides_endpoints_and_clamps(self):
         for left, right, expected in ((24, 0, [24, 18, 12, 6, 0]),
                                       (0, 24, [0, 6, 12, 18, 24]),

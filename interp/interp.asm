@@ -52,8 +52,8 @@
 ;;     0x0A09–0x0A0B  selected raw sprite pointer (little-endian uint24)
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
-;;     0x0A15–0x0A65  persistent timer/audio state (81 bytes)
-;;     0x0A66–0x0AAD  aliased formatter/text or audio service workspace
+;;     0x0A15–0x0A70  persistent timer/audio state (92 bytes)
+;;     0x0A71–0x0AB8  aliased formatter/text or audio service workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -78,13 +78,12 @@
 #define data_audio_begin             (data_text_mode+1)
 #define data_audio_ticks_pending     (data_audio_begin+0)
 #define data_boot_hold               (data_audio_begin+1)
-; Music master, default 128 (32=unity); pulse thresholds follow the controls.
+; Shared output master, default 128 (32=unity).
 #define data_audio_volume            (data_audio_begin+2)
 #define data_audio_controls          (data_audio_begin+3)
 #define data_audio_duty              (data_audio_controls+12)
 #define data_audio_waveform          (data_audio_duty+3)
-#define data_audio_sfx_volume        (data_audio_waveform+1)
-#define data_audio_phases            (data_audio_sfx_volume+1)
+#define data_audio_phases            (data_audio_waveform+1)
 #define data_audio_noise             (data_audio_phases+8)
 #define data_audio_music_notes       (data_audio_noise+1)
 #define data_audio_sfx_notes         (data_audio_music_notes+16)
@@ -97,7 +96,11 @@
 #define data_audio_sample            (data_audio_update+1)
 #define data_audio_rate              (data_audio_sample+1)
 #define data_audio_music_loop        (data_audio_rate+1)
-#define data_audio_end               (data_audio_music_loop+1)
+#define data_audio_lowpass           (data_audio_music_loop+1)
+; Biased uint8 tonal history: 128 means silence, matching the accumulator.
+#define data_audio_lowpass_state     (data_audio_lowpass+1)
+#define data_audio_lowpass_coefficient (data_audio_lowpass_state+1)
+#define data_audio_end               (data_audio_lowpass_coefficient+1)
 
 ; Stream records share cursor/wait/status/mask; only music has a loop start.
 ; All program pointers are image-relative, little-endian uint24.
@@ -107,8 +110,8 @@
 #define AUDIO_MASK    6
 #define AUDIO_START   7
 
-.if (data_audio_end - data_audio_begin) != 90
-    .error "audio persistent SRAM must occupy 90 bytes"
+.if (data_audio_end - data_audio_begin) != 92
+    .error "audio persistent SRAM must occupy 92 bytes"
 .endif
 .if (data_audio_begin >> 8) != ((data_audio_end-1) >> 8)
     .error "audio compact pointers must fit in one SRAM page"
@@ -7219,7 +7222,8 @@ startup_func:
     ; only interpreter-private state that is not supplied by the image.
     ; Include inactive sprite/font caches so one loop initializes the complete
     ; contiguous region, including data_boot_hold. Data/save page pointers are
-    ; installed separately.
+    ; installed separately. This also initializes the tonal low-pass to OFF;
+    ; audio_init_func installs its biased neutral history value.
     ldi  r30, lo8(data_startup_flags)
     ldi  r31, hi8(data_startup_flags)
     ldi  r26, (data_audio_end-data_startup_flags)
@@ -16526,7 +16530,6 @@ audio_commit_prepare:
     lsl  r25
     add  r30, r25
     lds  r19, data_audio_music+AUDIO_STATUS
-    lds  r20, data_audio_volume
     sbrs r23, 0
     rjmp 1f
     ldi  r30, lo8(data_audio_sfx_notes) ; one tonal slot, one noise slot
@@ -16535,7 +16538,6 @@ audio_commit_prepare:
     subi r30, -4
 2:
     ldi  r19, 1
-    lds  r20, data_audio_sfx_volume
 1:
     ldi  r31, hi8(data_audio_begin)
     ld   r24, Z
@@ -16577,15 +16579,8 @@ audio_commit_prepare:
     st   X+, r24
     st   X+, r0
     andi r21, 31
-    ; FMUL doubles the product; two more shifts leave product/32 in r1.
-    ; Volume 0..31 and master 0..255 give floor(volume*master/32), at most 247.
-    fmul r21, r20
-    lsl  r0
-    rol  r1
-    lsl  r0
-    rol  r1
 .Laudio_stage_amplitude:
-    st   X+, r1
+    st   X+, r21 ; unscaled 0..31; one shared gain follows the complete mix
     rjmp .Laudio_stage_next
 .Laudio_stage_silent:
     st   X+, ZERO
@@ -16714,6 +16709,10 @@ sys_audio_impl:
     sts  data_audio_music_loop, VM_R4L
     rjmp .Laudio_command_done
 1:
+    cpi  r24, 15 ; tonal low-pass: uint8 coefficient, 0=bypass
+    brne 1f
+    rjmp .Laudio_lowpass
+1:
     cpi  r24, 10 ; direct SFX tone: r4 channel, r5 raw increment, r6 amplitude
     brne 1f
     rjmp .Laudio_tone
@@ -16739,18 +16738,11 @@ sys_audio_impl:
     sts  data_audio_music+AUDIO_STATUS, r24
     rjmp .Laudio_command_commit
 .Laudio_master:
-    mov  r24, VM_R4L
-    sts  data_audio_sfx_volume, r24
-    rjmp .Laudio_music_master_set
 .Laudio_music_master:
-    mov  r24, VM_R4L
-.Laudio_music_master_set:
-    sts  data_audio_volume, r24
-    rjmp .Laudio_command_commit
 .Laudio_sfx_master:
-    mov  r24, VM_R4L
-    sts  data_audio_sfx_volume, r24
-    rjmp .Laudio_command_commit
+    ; Legacy music/SFX controls alias the shared post-mix output gain.
+    sts  data_audio_volume, VM_R4L
+    rjmp .Laudio_command_done
 .Laudio_enable_command:
     rcall audio_enable
     rjmp .Laudio_command_done
@@ -16791,6 +16783,42 @@ sys_audio_impl:
     audio_restore
     jmp seek_and_dispatch_func_disabled
 
+.Laudio_lowpass:
+    in   r25, SREG
+    cli
+    lds  r24, data_audio_lowpass
+    tst  r24
+    brne 1f
+    ; Never resurrect history retained while bypassed. Publish atomically.
+    ldi  r24, 128
+    sts  data_audio_lowpass_state, r24
+1:
+    sts  data_audio_lowpass, VM_R4L
+    rcall audio_lowpass_prepare
+    out  SREG, r25
+    rjmp .Laudio_command_done
+
+; Foreground only, under CLI. Preserve r25 (saved SREG). At half the rate,
+; alpha8 = min(255, 2*alpha16 - floor(alpha16^2/256)) squares the decay pole.
+audio_lowpass_prepare:
+    lds  r24, data_audio_lowpass
+    mov  r21, r24
+    lds  r20, data_audio_rate
+    sbrc r20, 0
+    rjmp 1f
+    mul  r24, r24
+    lsl  r21
+    clr  r20
+    rol  r20
+    sub  r21, r1
+    sbc  r20, ZERO
+    tst  r20 ; SBC's cumulative Z also includes the low byte
+    breq 1f
+    ldi  r21, 255
+1:
+    sts  data_audio_lowpass_coefficient, r21
+    ret
+
 .Laudio_rate:
     cpi  VM_R4L, 2
     brsh .Laudio_command_done
@@ -16806,6 +16834,7 @@ sys_audio_impl:
     cli
     clr  r20 ; rate changes preserve noise state; no transient retrigger command
     rcall audio_apply_update
+    rcall audio_lowpass_prepare
     sts  TCCR1B, ZERO
     ldi  r24, 255
     lds  r20, data_audio_rate
@@ -16829,6 +16858,7 @@ audio_enable:
     ldi  r24, 128
     sts  OCR4A, r24
     sts  data_audio_sample, r24
+    sts  data_audio_lowpass_state, r24
     sbi  DDRC, 6
     sbi  DDRC, 7
     ldi  r24, (_BV(COM4A0) | _BV(PWM4A))
@@ -16996,11 +17026,11 @@ bootloader_reset_wait:
 ; Timer1 COMPA (vector 17) arbitrates ahead of Timer0 COMPA (vector 21).
 ; Output and synthesis run at 7812.5 Hz or 15625 Hz, selected in foreground.
 ; Emit the held sample at fixed latency, then prepare its successor.
-; Synthesis saves r0:r1, r20:r21, r26:r27 and SREG (9 bytes including PC).
+; Synthesis saves r0:r1, r20:r21, r26 and SREG (8 bytes including PC).
 ; r2 may be borrowed by libm. Duty thresholds and amplitudes are separate.
 ; Signed samples are -128..127; round(sample * prepared_amplitude / 128).
 ; No SPI or sequencing. Amplitude 255 means stopped (increment zero).
-; Tonal paths: 35 pulse / 36 triangle / 34 saw cycles; stopped: 5 cycles.
+; Tonal paths: 33 pulse / 34 triangle / 32 saw cycles; stopped: 5 cycles.
 .macro audio_wave channel
 audio_wave_begin\channel:
     lds  r20, data_audio_controls+3*\channel+2
@@ -17035,10 +17065,8 @@ audio_wave_begin\channel:
     subi r21, 127 ; 0xfe-127 = +127, 0-127 = -127
 .Laudio_mix\@:
     fmulsu r21, r20
-    sbc  r21, r21 ; sign before FMULSU's shift; contribution may exceed int8
     lsl  r0 ; round toward nearest, ties toward positive
     adc  r26, r1
-    adc  r27, r21
 audio_wave_end\channel:
 .endm
 
@@ -17056,20 +17084,41 @@ timer1_endpoint_write:
     push r1
     push r21
     push r26
-    push r27
     ; The PWM endpoint is already written. Fixed addressing keeps the normal
     ; synthesis path unchanged apart from this four-cycle idle packet check.
     lds  r20, data_audio_update
     sbrc r20, 7
     rcall audio_apply_update
-    clr  r26 ; signed 16-bit accumulation starts at zero
-    clr  r27
+    ldi  r26, 128 ; 5-bit voices fit one biased byte, including noise
     audio_wave 0
     audio_wave 1
     audio_wave 2
 
+audio_lowpass_begin:
+    lds  r20, data_audio_lowpass_coefficient
+    tst  r20
+    breq audio_lowpass_end
+    lds  r21, data_audio_lowpass_state
+    sub  r26, r21
+    breq .Laudio_lowpass_restore
+    brcc .Laudio_lowpass_positive
+    neg  r26 ; borrow identifies a negative difference; abs fits uint8
+    mul  r26, r20
+    neg  r0 ; C=1 iff the fractional product is nonzero: round toward target
+    sbc  r21, r1
+    rjmp .Laudio_lowpass_store
+.Laudio_lowpass_positive:
+    mul  r26, r20
+    neg  r0
+    adc  r21, r1
+.Laudio_lowpass_store:
+    sts  data_audio_lowpass_state, r21
+.Laudio_lowpass_restore:
+    mov  r26, r21
+audio_lowpass_end:
+
 audio_noise_begin:
-    ; Active: 28 hold / 32 shift / 33 feedback cycles; stopped: 5.
+    ; Active: 25 hold / 29 shift / 30 feedback cycles; stopped: 5.
     lds  r20, data_audio_controls+11
     cpi  r20, 255
     breq audio_noise_end
@@ -17092,24 +17141,55 @@ audio_noise_begin:
 .Laudio_noise_store:
     sts  data_audio_noise, r0
 .Laudio_noise_hold:
-    clc
     sbrc r0, 0
     neg  r20
-    sbc  r21, r21
     add  r26, r20
-    adc  r27, r21
 audio_noise_end:
-    ; Add the PWM bias only after mixing, then saturate the complete sum.
-    subi r26, 128
-    sbci r27, 255
-    tst  r27
+    ; All accumulation stays in a biased byte. Scale only the completed mix;
+    ; MULSU's hardware result is a temporary product, never an accumulator.
+    cpi  r26, 128
     breq .Laudio_output
+    lds  r20, data_audio_volume
+    cpi  r20, 32
+    breq .Laudio_output ; exact unity
+    cpi  r20, 128
+    breq .Laudio_output_four ; common default has a short shift-only path
+    mov  r21, r26
+    subi r21, 128
+    mulsu r21, r20
+    ldi  r20, 16 ; nearest rounding, ties toward positive, before division by 32
+    add  r0, r20
+    clr  r20
+    adc  r1, r20
+    mov  r21, r1
+    cpi  r21, 16
+    brge .Laudio_output_high
+    cpi  r21, 0xf0
+    brlt .Laudio_output_low
+    ; The bounded product fits signed 13 bits. Three LSL/ROL pairs expose
+    ; floor(product/32) in r1 without a wider arithmetic right-shift loop.
+    .rept 3
+        lsl r0
+        rol r1
+    .endr
+    mov  r26, r1
+    subi r26, 128
+    rjmp .Laudio_output
+.Laudio_output_four:
+    subi r26, 96 ; biased 96..159 maps to PWM 0..252 after two shifts
+    brcs .Laudio_output_low
+    cpi  r26, 64
+    brsh .Laudio_output_high
+    lsl  r26
+    lsl  r26
+    rjmp .Laudio_output
+.Laudio_output_low:
     ldi  r26, 0
-    sbrs r27, 7
+    rjmp .Laudio_output
+.Laudio_output_high:
     ldi  r26, 255
 .Laudio_output:
     sts  data_audio_sample, r26
-    pop  r27
     pop  r26
     pop  r21
     pop  r1
@@ -17172,12 +17252,12 @@ audio_init_func:
     sts  OCR4C, r24
     ldi  r24, 128
     sts  OCR4A, r24
+    sts  data_audio_lowpass_state, r24
     ldi  r24, 1
     sts  data_audio_noise, r24
     sts  data_audio_rate, r24
-    ldi  r24, 128 ; default gain: a volume-31 voice reaches amplitude 124
+    ldi  r24, 128 ; default shared post-mix gain is four times unity
     sts  data_audio_volume, r24
-    sts  data_audio_sfx_volume, r24
     sts  data_audio_duty, r24
     sts  data_audio_duty+1, r24
     sts  data_audio_duty+2, r24

@@ -28,11 +28,15 @@ The newer compiled benchmarks fill these code generation gaps:
 | Branches and loop shapes | `byte_comparisons`, `loop_shapes`, `short_circuit`, `saturating_math` |
 | Integer lowering | `bit_count`, `count_leading_zeros`, `count_trailing_zeros`, `div_pow2`, `narrow_arithmetic`, `popcount`, `progmem_record_index`, `rotate32`, `wide_add_sub`, `wide_compare` |
 | Floating point lowering | `float_comparisons`, `float_conversions` |
-| C++ lowering | `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
+| C++ lowering | `aggregate_byte_dispatch`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
 
 `progmem_record_index` indexes six-byte program-memory records containing two
 24-bit pointers, like the RPG music catalog. Runtime byte indices include 0,
 127, 128, and 255, and both fields contribute to the measured checksum.
+
+`aggregate_byte_dispatch` passes three-byte coordinate records by value and
+switches on their byte area field, like the RPG chunk dispatch. Inputs include
+area 1 and nonmatching values up to 255, with varying neighboring fields.
 
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;

@@ -5612,6 +5612,13 @@ is the size of the maximal relaxable conditional-branch sequence.
 
 The disassembler prints actual encoded instructions, not multi-instruction pseudos.
 
+`llvm-objdump --disassemble --symbolize-operands` preserves existing target
+symbols and generates local `L0`, `L1`, ... labels for unnamed direct branch and
+jump destinations at instruction boundaries within a function. The project build
+uses this option when generating disassembly artifacts. Relative branch operands
+are offsets from the end of the instruction; the accompanying `<L...>` annotation
+identifies the destination. Indirect transfers retain their register operands.
+
 It may print:
 
 ```text

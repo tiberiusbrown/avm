@@ -48,7 +48,7 @@ Disassembly of section .text:
  c6 fa 04              ldi16	r6, 0x4fa
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
- d0 28                 breq8	avm_run_constructors+61
+ d0 28                 breq8	0x28 <L1>
  f0 04 fa 04           ldi16	r0, 0x4fa
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
@@ -57,6 +57,7 @@ Disassembly of section .text:
  f4 49                 stsp16	[sp+0x2], r5
  f0 06 fa 04           ldi16	r2, 0x4fa
  f0 03 00              ldi8	r3, 0x0
+<L0>:
  f0 63 80              ldp24	q2, [q0]
  ea                    callp	q2
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -65,7 +66,8 @@ Disassembly of section .text:
  f2 68                 mov32	q2, q0
  f1 75                 zext8	r5
  f0 69 84              cmp32	q2, q1
- d1 ed                 brne8	avm_run_constructors+42
+ d1 ed                 brne8	-0x13 <L0>
+<L1>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
@@ -84,14 +86,15 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
- d0 03                 breq8	avm_run_destructors+21
- e1 89 fd              call16	-631
+ d0 03                 breq8	0x3 <L0>
+ e1 89 fd              call16	-631 <__avm_run_local_dtors>
+<L0>:
  c4 fa 04              ldi16	r4, 0x4fa
  c1 00                 ldi8	r5, 0x0
  c6 fa 04              ldi16	r6, 0x4fa
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
- d0 2b                 breq8	avm_run_destructors+79
+ d0 2b                 breq8	0x2b <L2>
  f0 06 fa 04           ldi16	r2, 0x4fa
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
@@ -100,6 +103,7 @@ Disassembly of section .text:
  f4 49                 stsp16	[sp+0x2], r5
  f0 04 fa 04           ldi16	r0, 0x4fa
  f0 01 00              ldi8	r1, 0x0
+<L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
  f7 66                 add32	q1, q2
@@ -108,14 +112,16 @@ Disassembly of section .text:
  f2 69                 mov32	q2, q1
  f1 75                 zext8	r5
  f0 69 80              cmp32	q2, q0
- d1 ed                 brne8	avm_run_destructors+60
+ d1 ed                 brne8	-0x13 <L1>
+<L2>:
  c4 00 00              ldi16	r4, 0x0
  c1 00                 ldi8	r5, 0x0
  aa                    xor	r6, r6
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
- d0 03                 breq8	avm_run_destructors+94
- e1 40 fd              call16	-704
+ d0 03                 breq8	0x3 <L3>
+ e1 40 fd              call16	-704 <__avm_run_local_dtors>
+<L3>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
@@ -133,6 +139,7 @@ Disassembly of section .text:
  c3 07                 ldi8	r7, 0x7
  c2 60                 ldi8	r6, 0x60
  f0 00 7f              ldi8	r0, 0x7f
+<L0>:
  07                    mov	r5, r7
  f9 a0                 and	r5, r0
  c9 c0                 addi.s8	r5, -0x40
@@ -140,7 +147,7 @@ Disassembly of section .text:
  cb 13                 addi.s8	r7, 0x13
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
- d1 f1                 brne8	avm_test_main+16
+ d1 f1                 brne8	-0xf <L0>
  c4 29 32              ldi16	r4, 0x3229
  c5 3b 44              ldi16	r5, 0x443b
  c6 6c 01              ldi16	r6, 0x16c
@@ -209,9 +216,11 @@ Disassembly of section .text:
  f4 7b                 stsp16	[sp+0xe], r7
  f0 38 0c              stsp16	[sp+0xc], r0
  f4 49                 stsp16	[sp+0x2], r5
+<L1>:
  f0 3a 00              stsp16	[sp+0x0], r2
  f2 42                 sub	r2, r2
  f0 34 2c              ldsp16	r4, [sp+0x2c]
+<L2>:
  f0 3c 2c              stsp16	[sp+0x2c], r4
  0e                    mov	r7, r6
  f0 33 20              ldsp16	r3, [sp+0x20]
@@ -356,14 +365,14 @@ Disassembly of section .text:
  f0 36 1c              ldsp16	r6, [sp+0x1c]
  f4 aa                 inc16	r2
  f0 0e 40              cmpi.s8	r2, 0x40
- db da fe              brne16	avm_test_main+233
+ db da fe              brne16	-0x126 <L2>
  f0 3c 2c              stsp16	[sp+0x2c], r4
  f0 32 00              ldsp16	r2, [sp+0x0]
  f4 aa                 inc16	r2
  f1 22                 mov	r4, r2
  f1 74                 zext8	r4
  cc 10                 cmpi.s8	r4, 0x10
- db c1 fe              brne16	avm_test_main+225
+ db c1 fe              brne16	-0x13f <L1>
  f0 34 2c              ldsp16	r4, [sp+0x2c]
  f0 5c 70 01           stm16	[0x170], r4
  d7 01                 sys	debug_break

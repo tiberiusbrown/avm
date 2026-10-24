@@ -36,7 +36,7 @@
       387686   popcount.c
      2971012   progmem_walk.c
       545522   progmem_widen_ldp16.c
-      738473   progmem_widen_ldp32_bytes.c
+      737865   progmem_widen_ldp32_bytes.c
       545548   progmem_widen_ldp32_words.c
      1444736   record_scan.c
      1921658   reverse_walk.c
@@ -65,15 +65,15 @@
         3536   sys_strncpy_p.c
       487471   tail_calls.c
        51424   text.c
-     3145360   tile_cache_render.c
+     3142928   tile_cache_render.c
        42482   tilesrect.c
        90924   tilessprite.c
        37944   tilessprite16.c
        34756   tilessprite16_cached.c
        77464   tilessprite_cached.c
       502025   volatile_rmw.c
-      535885   wide_add_sub.c
+      526157   wide_add_sub.c
      1193470   wide_compare.c
-     3225118   wide_divmod.c
+     3224862   wide_divmod.c
       881118   wide_mul.c
       550407   wide_shifts.c

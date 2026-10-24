@@ -52,7 +52,7 @@ Disassembly of section .text:
  c6 99 04              ldi16	r6, 0x499
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
- d0 28                 breq8	avm_run_constructors+61
+ d0 28                 breq8	0x28 <L1>
  f0 04 99 04           ldi16	r0, 0x499
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
@@ -61,6 +61,7 @@ Disassembly of section .text:
  f4 49                 stsp16	[sp+0x2], r5
  f0 06 99 04           ldi16	r2, 0x499
  f0 03 00              ldi8	r3, 0x0
+<L0>:
  f0 63 80              ldp24	q2, [q0]
  ea                    callp	q2
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -69,7 +70,8 @@ Disassembly of section .text:
  f2 68                 mov32	q2, q0
  f1 75                 zext8	r5
  f0 69 84              cmp32	q2, q1
- d1 ed                 brne8	avm_run_constructors+42
+ d1 ed                 brne8	-0x13 <L0>
+<L1>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
@@ -88,14 +90,15 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
- d0 03                 breq8	avm_run_destructors+21
- e1 89 fc              call16	-887
+ d0 03                 breq8	0x3 <L0>
+ e1 89 fc              call16	-887 <__avm_run_local_dtors>
+<L0>:
  c4 99 04              ldi16	r4, 0x499
  c1 00                 ldi8	r5, 0x0
  c6 99 04              ldi16	r6, 0x499
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
- d0 2b                 breq8	avm_run_destructors+79
+ d0 2b                 breq8	0x2b <L2>
  f0 06 99 04           ldi16	r2, 0x499
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
@@ -104,6 +107,7 @@ Disassembly of section .text:
  f4 49                 stsp16	[sp+0x2], r5
  f0 04 99 04           ldi16	r0, 0x499
  f0 01 00              ldi8	r1, 0x0
+<L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
  f7 66                 add32	q1, q2
@@ -112,14 +116,16 @@ Disassembly of section .text:
  f2 69                 mov32	q2, q1
  f1 75                 zext8	r5
  f0 69 80              cmp32	q2, q0
- d1 ed                 brne8	avm_run_destructors+60
+ d1 ed                 brne8	-0x13 <L1>
+<L2>:
  c4 00 00              ldi16	r4, 0x0
  c1 00                 ldi8	r5, 0x0
  aa                    xor	r6, r6
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
- d0 03                 breq8	avm_run_destructors+94
- e1 40 fc              call16	-960
+ d0 03                 breq8	0x3 <L3>
+ e1 40 fc              call16	-960 <__avm_run_local_dtors>
+<L3>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
@@ -143,13 +149,15 @@ Disassembly of section .text:
  f0 06 82 01           ldi16	r2, 0x182
  f0 04 c3 01           ldi16	r0, 0x1c3
  0c                    mov	r7, r4
- d4 0c                 jmp8	avm_test_main+45
+ d4 0c                 jmp8	0xc <L1>
+<L0>:
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 ac                 inc16	r4
  f4 a9                 inc16	r1
  f4 af                 inc16	r7
  cf 40                 cmpi.s8	r7, 0x40
- d0 3e                 breq8	avm_test_main+107
+ d0 3e                 breq8	0x3e <L2>
+<L1>:
  04                    mov	r5, r4
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 16                 mulu8.w	r5, r6
@@ -175,7 +183,7 @@ Disassembly of section .text:
  f2 24                 add	r5, r0
  56                    st8	[r5], r6
  cf 10                 cmpi.s8	r7, 0x10
- d8 cc                 bruge8	avm_test_main+33
+ d8 cc                 bruge8	-0x34 <L0>
  07                    mov	r5, r7
  f1 22                 mov	r4, r2
  f1 10                 mov	r2, r0
@@ -186,7 +194,8 @@ Disassembly of section .text:
  f1 02                 mov	r0, r2
  f1 14                 mov	r2, r4
  56                    st8	[r5], r6
- d4 b6                 jmp8	avm_test_main+33
+ d4 b6                 jmp8	-0x4a <L0>
+<L2>:
  c0 7a                 ldi8	r4, 0x7a
  f0 4c 82 01           stm8	[0x182], r4
  f0 5c 02 02           stm16	[0x202], r4

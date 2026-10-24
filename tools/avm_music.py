@@ -6,6 +6,7 @@ import math
 import re
 import sys
 from fractions import Fraction
+from heapq import heapify, heappop, heappush
 from pathlib import Path
 
 EFFECTS = ("volume_slide", "frequency_slide", "duty_slide", "arpeggio",
@@ -607,10 +608,13 @@ class ScoreParser:
                 elif command == "automation":
                     self.automation_ms = self.time()
                 elif command == "volume":
-                    self.volume = self.number() / 100
-                    self.expect("%")
-                    if self.volume < 0:
-                        self.error("score volume must be a nonnegative percentage", token)
+                    if self.accept("max"):
+                        self.volume = "max"
+                    else:
+                        self.volume = self.number() / 100
+                        self.expect("%")
+                        if self.volume < 0:
+                            self.error("score volume must be a nonnegative percentage", token)
                 elif command == "sfx":
                     self.sfx = True
                 else:
@@ -802,6 +806,60 @@ def slide_value(effect, base, elapsed, pitch=False):
     return left + (right - left) * amount
 
 
+def maximize_volume(timeline):
+    """Scale resolved raw volumes uniformly to a phase-independent 31-unit mix.
+
+    At default master 128 (4x), any signed mix in -31..31 fits the PWM output.
+    Find the first gain at which rounded amplitudes would sum to 32, then
+    choose a gain inside the last safe quantization interval. Fractions keep
+    simultaneous rounding steps exact, including volumes computed as floats.
+    """
+    half = Fraction(1, 2)
+    volumes = [0] * 4
+    limit = None
+    for _, updates in timeline:
+        for channel, update in updates.items():
+            volumes[channel] = update["volume"]
+        active = [v for v in volumes if v > 0]
+        if not active or (limit is not None and
+                          sum(math.ceil(v * limit - half) for v in active) <= 31):
+            continue
+        # Just below this gain the rounded sum is between 32-N and 31.
+        # Merge the next rounding thresholds; at most N <= 4 steps reach 32.
+        start = (32 - len(active) * half) / sum(active)
+        rounded = [math.ceil(v * start - half) for v in active]
+        thresholds = [((level + half) / v, channel, level + 1)
+                      for channel, (v, level) in enumerate(zip(active, rounded))]
+        heapify(thresholds)
+        total = sum(rounded)
+        while total < 32:
+            limit, channel, level = heappop(thresholds)
+            total += 1
+            heappush(thresholds, ((level + half) / active[channel], channel, level + 1))
+
+    # Use an actual multiplier below the exclusive limit, after every earlier
+    # rounding threshold in the score. This attains all the last safe levels
+    # without saturating individual channels or rounding across the limit.
+    lower = Fraction(0)
+    if limit is not None:
+        for _, updates in timeline:
+            for update in updates.values():
+                v = update["volume"]
+                if v > 0:
+                    level = math.ceil(v * limit - half)
+                    if level:
+                        lower = max(lower, (level - half) / v)
+    scale = (lower + limit) / 2 if limit is not None else Fraction(1)
+    volumes = [0] * 4
+    peak = 0
+    for _, updates in timeline:
+        for channel, update in updates.items():
+            update["volume"] = math.floor(update["volume"] * scale + half)
+            volumes[channel] = update["volume"]
+        peak = max(peak, sum(volumes))
+    return scale, peak
+
+
 def compile_source(source, filename="<score>", automation_ms=None, max_updates=2000000, statistics=None):
     """Resolve effects offline. Only pitch, volume, wave, duty and seed reach firmware."""
     score = ScoreParser(source, filename).parse()
@@ -913,9 +971,13 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                 if sound.get("lfo_volume"):
                     effect = sound["lfo_volume"]
                     volume += float(effect["depth"]) * lfo_value(effect, elapsed, time)
-                volume *= score.volume
+                if score.volume == "max":
+                    volume = max(Fraction(0), Fraction(volume))
+                else:
+                    volume *= score.volume
+                    volume = max(0, min(31, math.floor(float(volume) + 0.5)))
                 update = {"increment": max(1, min(65535, round(frequency * 65536 / 15625))),
-                          "volume": max(0, min(31, math.floor(float(volume) + 0.5)))}
+                          "volume": volume}
                 if time == start:
                     update["onset"] = True
                 if channel != 3:
@@ -943,10 +1005,15 @@ def compile_source(source, filename="<score>", automation_ms=None, max_updates=2
                 merged.pop("seed", None)
                 merged.pop("onset", None)
             merged.update(update)
+    timeline = sorted(timeline.items())
+    if score.volume == "max":
+        volume_scale, peak_volume = maximize_volume(timeline)
+        if statistics is not None:
+            statistics.update(volume_percent=float(100 * volume_scale), peak_volume=peak_volume)
     previous, events = 0, []
     retained = [dict(volume=24, duty=128, increment=0, wave="pulse") for _ in range(4)]
     counts = dict(pitch=0, volume=0, duty=0, noise_retrigger=0)
-    for position, updates in sorted(timeline.items()):
+    for position, updates in timeline:
         filtered = {}
         for channel, update in updates.items():
             result = {}

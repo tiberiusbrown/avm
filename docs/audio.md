@@ -121,7 +121,7 @@ python tools/avm_music.py pickup.avms pickup.h --name pickup --stats
 | `output` | Output path; missing parent directories are created |
 | `--name IDENTIFIER` | Emit a C/C++ program-memory asset named `IDENTIFIER` |
 | `--automation-ms N` | Override the score's smooth automation interval; integer multiple of 4, at least 4 |
-| `--stats` | Print byte, event, pitch, volume, duty, and noise-retrigger counts to standard error |
+| `--stats` | Print byte, event, pitch, volume, duty, and noise-retrigger counts to standard error; `volume max` also reports its percentage and peak combined amplitude |
 | `--max-updates N` | Set the compiler's generated-update budget; default 2,000,000; 0 disables the guard |
 
 The output is raw binary unless `--name` is supplied, regardless of filename
@@ -230,7 +230,7 @@ Each setting may occur at most once.
 | --- | --- | --- |
 | `tempo 120` | `120` | Positive quarter-note BPM; integers, decimals, and fractions such as `1250/13` are accepted |
 | `meter 4/4` | `4/4` | Positive whole-note fraction defining a measure for `\|` checks; `3/4` is three quarter-note beats |
-| `volume 75%` | `100%` | Nonnegative song-wide volume percentage, applied to every channel after volume effects and before rounding/clamping to 0..31; `%` is required |
+| `volume 75%` or `volume max` | `100%` | Song-wide volume scaling after volume effects and before rounding/clamping to 0..31. Numeric values require `%` and must be nonnegative; `max` selects automatic scaling as described below |
 | `automation 8ms` | `8ms` | Smooth automation sampling interval; positive multiple of 4 ms |
 | `sfx` | Music | Produce one-shot SFX; only channels 1 and/or 3 may be declared |
 | `title "Name"` | Absent | Descriptive source text; not stored in the binary |
@@ -250,6 +250,43 @@ such as `volume 87.5%` or `volume 250/3%`, are accepted. This also applies to SF
 including release tails. Inside instruments, channels, and phrases, `volume`
 still sets the integer base amplitude 0..31. Score volume is compiled into the
 stream; the shared runtime output gain applies afterward.
+
+### Automatic score volume
+
+`volume max` chooses one constant multiplier for the entire score to reach
+the highest safe quantized level under a conservative clipping bound. It can
+boost quiet scores or attenuate loud ones. The multiplier applies after all
+volume effects and before rounding, preserving dynamics and channel balance
+subject to integer amplitude quantization. It works for music and SFX; silent
+scores remain silent. Omit `%` after `max`.
+
+```text
+volume max
+channel 0 { volume 20 c:500ms }
+channel 1 { volume 10 e:500ms }
+```
+
+The compiler evaluates simultaneous channel activity on the final 4 ms event
+timeline, including envelopes, volume slides, tremolo, volume LFOs, gates,
+rests, cuts, and release tails. It selects the highest common scale interval
+whose rounded channel amplitudes sum to at most **31** at every event, without
+saturating individual channels. Channel peaks that occur at different times
+do not consume the budget together. The example produces amplitudes 21 and
+10; four equal simultaneous voices produce 7 each, since rounding them to
+8 each would exceed the budget. Quantization can leave some headroom unused.
+
+This bound guarantees clipping-free playback of the score **in isolation**
+at the default master gain **128 (4x)** with the default tonal filter **OFF**.
+It is independent of oscillator phase, waveform, and synthesis rate, including
+later loop traversals. The combined signed amplitude remains within -31..31,
+or -124..124 after the default gain. Concurrent music, SFX, or direct tones,
+increased master gain, and enabled filtering with retained tonal history
+require their own mix headroom.
+
+With `--stats`, `volume_percent` reports the selected multiplier as a percentage
+and `peak_volume` reports the largest sum of simultaneous rounded amplitudes.
+For a silent score these are 100 and 0. All scaling is compiled into ordinary
+volume controls; playback uses the existing stream format and runtime gain.
 
 ### Time and numeric values
 
@@ -816,7 +853,8 @@ The compiler evaluates each note in this order:
 3. Apply base duty or duty slide, then the duty LFO on tonal channels.
 4. Clamp base volume or volume slide to 0..31 and multiply by the envelope.
 5. Multiply by envelope tremolo and sound-setting tremolo, if present.
-6. Add the volume LFO, then multiply volume by the score-wide `volume` percentage.
+6. Add the volume LFO, then multiply volume by the score-wide `volume` percentage
+   or the constant multiplier selected by `volume max`.
 7. Round and clamp the resulting controls.
 8. Silence pitch and volume at the effective stop time.
 

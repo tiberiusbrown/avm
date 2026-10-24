@@ -1,4 +1,4 @@
-     2368689   aggregate_args.c
+     2368760   aggregate_args.c
      1908506   aggregate_return.c
      2094135   aliasing.c
      1850355   bit_count.c
@@ -10,6 +10,7 @@
      1306631   byte_comparisons.c
       256247   call_args.c
      7306132   constant_arith.c
+      303498   constant_init.c
       724156   count_leading_zeros.c
       582616   count_trailing_zeros.c
       526194   crc16.c
@@ -31,7 +32,7 @@
      3111274   mixed_width.c
       923080   multiply.c
      1193770   narrow_arithmetic.c
-      963413   packed_fields.c
+      916324   packed_fields.c
       286671   pointer_table.c
       930675   pointer_walk.c
       387686   popcount.c
@@ -56,14 +57,14 @@
       485357   struct_copy.c
       950957   switch.c
         2876   sys_memcmp.c
-        5285   sys_memcmp_p.c
+        5133   sys_memcmp_p.c
         2524   sys_strcmp.c
         5402   sys_strcmp_p.c
         2138   sys_strlen.c
         7020   sys_strlen_p.c
         2202   sys_strncat.c
         3480   sys_strncat_p.c
-        2072   sys_strncpy.c
+        2112   sys_strncpy.c
         3536   sys_strncpy_p.c
       487471   tail_calls.c
        51424   text.c

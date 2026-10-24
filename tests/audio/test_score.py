@@ -98,6 +98,12 @@ class ScoreTests(unittest.TestCase):
             ("instrument lead { volume 12 } volume 50% channel 0 { c:8ms }", "must precede"),
             ("channel 0 { c:8ms } volume 50%", "must precede"),
             ("channel 0 { volume 50% c:8ms }", "channel volume must be 0..31"),
+            ("volume max volume 50% channel 0 { c:8ms }", "duplicate volume"),
+            ("volume 50% volume max channel 0 { c:8ms }", "duplicate volume"),
+            ("channel 0 { c:8ms } volume max", "must precede"),
+            ("instrument lead { volume 12 } volume max channel 0 { c:8ms }", "must precede"),
+            ("volume max% channel 0 { c:8ms }", "unknown score command"),
+            ("channel 0 { volume max c:8ms }", "expected a number"),
         )
         for source, message in bad:
             with self.subTest(source=source):
@@ -105,6 +111,73 @@ class ScoreTests(unittest.TestCase):
                     music.compile_source("// comment\n" + source, "bad.avms")
                 self.assertRegex(str(error.exception), r"bad\.avms:2:\d+:")
                 self.assertIn(message, str(error.exception))
+
+    def test_score_volume_max_boosts_and_attenuates_equal_voices(self):
+        for count, expected in ((1, 31), (2, 15), (3, 10), (4, 7)):
+            for base in (1, 24, 31):
+                with self.subTest(count=count, base=base):
+                    source = "volume max " + " ".join(
+                        f"channel {ch} {{ volume {base} c:16ms r:4ms }}"
+                        for ch in range(count))
+                    stats = {}
+                    events, end, command = decode(music.compile_source(source, statistics=stats))
+                    self.assertEqual([events[0][1][ch]["control"] for ch in range(count)],
+                                     [expected] * count)
+                    self.assertEqual((end, command), (5, 1))
+                    self.assertEqual(stats["peak_volume"], count * expected)
+                    self.assertGreater(stats["volume_percent"], 100 if base == 1 else 0)
+                    if base == 24 and count > 1:
+                        self.assertLess(stats["volume_percent"], 100)
+
+    def test_score_volume_max_uses_one_scale_for_the_whole_score(self):
+        events, _, _ = self.compile("""
+            volume max
+            channel 0 { volume 20 c:8ms volume 10 d:8ms r:4ms }
+            channel 1 { volume 10 e:8ms volume 5 f:8ms r:4ms }
+        """)
+        self.assertEqual([events[0][1][ch]["control"] for ch in (0, 1)], [21, 10])
+        self.assertEqual([events[1][1][ch]["control"] for ch in (0, 1)], [10, 5])
+
+    def test_score_volume_max_counts_simultaneous_activity(self):
+        events, end, _ = self.compile("""
+            volume max
+            channel 0 { volume 24 c:6ms r:10ms }
+            channel 1 { volume 24 r:6ms c:10ms }
+        """)
+        self.assertEqual(events[0][1][0]["control"], 31)
+        self.assertEqual(events[0][1][1]["control"], 0)
+        self.assertEqual(events[1][1][0]["control"], 0)
+        self.assertEqual(events[1][1][1]["control"], 31)
+        self.assertEqual((events[1][0], end), (3, 4))
+
+    def test_score_volume_max_ignores_updates_removed_by_tick_quantization(self):
+        events, _, _ = self.compile("""
+            volume max
+            channel 0 { volume 31 gate 25% c:4ms r:28ms }
+            channel 1 { volume 1 c:32ms }
+        """)
+        self.assertEqual(events[0][1][0]["control"], 0)
+        self.assertEqual(events[0][1][1]["control"], 31)
+
+    def test_score_volume_max_boosts_before_rounding_quiet_envelopes(self):
+        events, _, _ = self.compile("""
+            volume max
+            envelope quiet { points 0ms:1% }
+            channel 0 { volume 1 envelope quiet c:16ms }
+        """)
+        self.assertEqual(events[0][1][0]["control"], 31)
+
+    def test_score_volume_max_preserves_silent_scores(self):
+        for kind, channel in (("", 0), ("sfx ", 3)):
+            for body in ("r:16ms", "volume 0 c:16ms r:4ms"):
+                with self.subTest(kind=kind, body=body):
+                    source = f"channel {channel} {{ {body} }}"
+                    stats = {}
+                    self.assertEqual(music.compile_source(kind + "volume max " + source,
+                                                          statistics=stats),
+                                     music.compile_source(kind + source))
+                    self.assertEqual(stats["peak_volume"], 0)
+                    self.assertEqual(stats["volume_percent"], 100)
 
     def test_raw_increments_and_physical_sfx_ownership(self):
         for mask in (2, 8, 10):

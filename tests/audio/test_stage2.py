@@ -49,6 +49,24 @@ def fixture(channels=(0,), duration=1.2):
 
 @unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
 class RenderTests(unittest.TestCase):
+    def test_score_volume_max_has_no_overload_across_loop_phases_and_rates(self):
+        source = """
+            automation 4ms
+            envelope fade { points 0ms:100%, 28ms:25% release 12ms:0% }
+            channel 0 { volume 31 duty 0 c:40ms wave triangle e:40ms }
+            channel 1 { volume 24 wave saw g:80ms }
+            channel 2 { volume 17 envelope fade octave 2 c:40ms e:40ms }
+            channel 3 { volume 31 noise_retrigger { every 12ms seed 37 } c:80ms }
+        """
+        data = avm_music.compile_source("volume max " + source)
+        loud = avm_music.compile_source(source)
+        for rate in (7812.5, 15625):
+            with self.subTest(rate=rate):
+                actual = render(data, rate=rate, duration=2., loop=True)
+                self.assertEqual(actual.metrics()["clipping_fraction"], 0)
+                self.assertLessEqual(int(np.max(np.abs(actual.mix))), 124)
+                self.assertGreater(render(loud, rate=rate).metrics()["clipping_fraction"], 0)
+
     def test_end_uses_the_playback_loop_option_and_rejects_old_loop_commands(self):
         data = avm_music.compile_source("channel 0 { volume 12 c:16ms r:16ms }")
         self.assertEqual(decode(data)[-1].command, 1)

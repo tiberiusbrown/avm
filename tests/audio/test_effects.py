@@ -25,6 +25,54 @@ def pitch(note):
 
 
 class EffectTests(unittest.TestCase):
+    def test_score_volume_max_follows_all_volume_effects(self):
+        states, _ = resolved("""
+            volume max automation 4ms
+            envelope shape {
+                points 0ms:50% release 16ms:0%
+                tremolo { period 16ms depth 50% wave triangle }
+            }
+            instrument lead {
+                volume 24 envelope shape gate 50%
+                volume_slide { to 8 over 16ms }
+                tremolo { period 16ms depth 50% wave triangle }
+                lfo { target volume depth 4 period 16ms wave square }
+            }
+            channel 0 lead { c:32ms r:16ms }
+        """)
+        self.assertEqual([at(states, t)["control"] for t in range(0, 36, 4)],
+                         [31, 19, 0, 0, 16, 11, 0, 0, 0])
+        self.assertEqual(at(states, 32)["note"], 0)
+
+    def test_score_volume_max_scales_before_clamping_and_keeps_noise_retriggers(self):
+        states, events = resolved("""
+            sfx volume max automation 4ms
+            channel 3 {
+                volume 24 lfo { target volume depth 24 period 16ms wave square }
+                noise_retrigger { every 4ms seed 37 } c:16ms
+                lfo volume off c:8ms r:4ms
+            }
+        """)
+        self.assertEqual([at(states, t, 3)["control"] for t in (0, 8, 16, 24)],
+                         [31, 0, 16, 0])
+        self.assertNotEqual(at(states, 8, 3)["note"], 0)
+        self.assertEqual([(tick, update[3]["seed"]) for tick, update in events
+                          if "seed" in update[3]], [(t, 37) for t in range(1, 7)])
+
+    def test_score_volume_max_counts_overlapping_sfx_release_tails(self):
+        source = """
+            sfx volume max automation 4ms
+            envelope tail { points 0ms:100% release 8ms:100%, 16ms:0% }
+            instrument lead { volume 24 envelope tail gate 50% }
+            channel 1 lead { c:16ms r:16ms }
+            channel 3 { volume 24 r:12ms c:20ms }
+        """
+        states, _ = resolved(source)
+        self.assertEqual([at(states, 12, ch)["control"] for ch in (1, 3)], [15, 15])
+        self.assertEqual(at(states, 20, 1)["control"], 8)
+        self.assertEqual(at(states, 24, 1)["note"], 0)
+        self.assertEqual(at(states, 24, 3)["control"], 15)
+
     def test_score_volume_follows_all_volume_effects_and_scales_release(self):
         states, _ = resolved("""
             volume 25% automation 4ms

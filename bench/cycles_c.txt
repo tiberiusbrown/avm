@@ -51,7 +51,7 @@
      3148973   register_cleanup.c
      1921658   reverse_walk.c
      1007916   rotate32.c
-     2514152   saturating_math.c
+     1326952   saturating_math.c
       718161   select.c
       395573   shifts.c
      1830484   short_circuit.c

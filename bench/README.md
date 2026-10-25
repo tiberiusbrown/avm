@@ -182,10 +182,12 @@ each source should contain exactly one pair of debug breaks.
 Measured on 2026-10-25 with RelWithDebInfo, callers at `-O2`, and kernels at
 `-O3 -ffp-contract=off`. Each comparison uses identical inputs, interpreter,
 library member order and benchmark sources, subtracting the 35-cycle baseline.
-The retained implementation uses a **2 KiB** quadratic interpolation table
+The initial comparison below uses a **2 KiB** quadratic interpolation table
 and the unchanged exact midpoint correction. It has no floating-point
 divisions. A 16 KiB linear interpolation table is faster, but the 2 KiB
 choice saves 14 KiB and takes 5.3% more cycles on the 256-input workload.
+The subsequent contiguous-read optimization described below reduces the
+retained table to **1.5 KiB**.
 
 The percentages below are cycle reductions relative to the original
 three-Newton-step implementation. Except for the randomized workload, each
@@ -228,3 +230,29 @@ random bit patterns (NaNs by classification). The generator
 fixtures at every interval's edges and midpoint; `--check` detects stale files.
 All 723 AVM fixtures passed, including the original sqrt vectors and 771
 generated boundary vectors at `-O0`, `-O1`, `-O2`, `-O3`, `-Os` and `-Oz`.
+
+### Contiguous coefficient reads
+
+Copying each record into three local floats initially produced identical
+code: scalar replacement converted the copy back into three `ldp32` loads.
+An empty register dependency on the 12-byte count retains one `sys memcpy_p`
+operation and one uninterrupted program-space read. With the padded 2 KiB
+table, the bulk read was essentially tied (2,937,076 randomized cycles versus
+2,936,877 for direct loads).
+
+The retained version also removes the unused fourth float from each record
+and calculates the byte offset explicitly in a native 16-bit word. This
+avoids the costly wide indexing of the earlier compact-table experiment.
+The table now occupies 1,536 bytes, saving 512 bytes, and the kernel's local
+stack frame grows from 12 to 24 bytes to hold the three copied coefficients.
+The interpolation arithmetic and exact midpoint correction are unchanged.
+
+| Workload | Three direct loads | One 12-byte copy | Cycles saved |
+| --- | ---: | ---: | ---: |
+| `math_sqrt` | 361,712 | 359,542 | 0.60% |
+| `math_sqrt_mantissas` | 370,776 | 368,516 | 0.61% |
+| `math_sqrt_random` (256 calls) | 2,936,877 | 2,918,856 | 0.61% |
+| Original small-input workload | 385,172 | 382,836 | 0.61% |
+| `math_sqrt_special` | 164,004 | 163,209 | 0.48% |
+| `math_hypot` | 506,616 | 504,356 | 0.45% |
+| `math_hypot_scaled` | 447,031 | 444,987 | 0.46% |

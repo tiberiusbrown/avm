@@ -15,6 +15,9 @@
 
 #include "fdlibm.h"
 #include "sqrt_table.h"
+#ifdef __AVM__
+#include <avm/pgmspace.h>
+#endif
 
 /* Table interpolation followed by an exact midpoint test. All arithmetic in
    the test is near one, so neither overflow nor subnormal arithmetic occurs. */
@@ -38,6 +41,20 @@ float __ieee754_sqrtf(float x)
     int exponent = (int)(bits >> 23) - 127 + exponent_adjust;
     uint32_t normalized = (bits & 0x007fffffUL) |
                           (0x3f800000UL + ((uint32_t)(exponent & 1) << 23));
+    uint16_t index = (uint16_t)((normalized - 0x3f800000UL) >> 17);
+    float coefficients[3];
+#ifdef __AVM__
+    /* Keep one uninterrupted program-space read. Without this dependency,
+       scalar replacement turns the copy back into three separate LDP32s. */
+    uint16_t coefficient_bytes = sizeof(coefficients);
+    __asm__("" : "+r"(coefficient_bytes));
+    /* The complete byte offset fits in a native word (at most 1524). */
+    uint16_t offset = index * sizeof(sqrt_table[0]);
+    memcpy_P(coefficients, (const char AVM_PROGMEM *)sqrt_table + offset,
+             coefficient_bytes);
+#else
+    for (unsigned i = 0; i < 3; ++i) coefficients[i] = sqrt_table[index][i];
+#endif
     float a, r;
     SET_FLOAT_WORD(a, normalized);
     /* Quadratic interpolation at the left, middle and right of each of
@@ -45,11 +62,10 @@ float __ieee754_sqrtf(float x)
        entries and arithmetic keep the total below 1.16 ULP, so the
        candidate is within one float of the correctly rounded root.
        a-bucket is exact by Sterbenz's lemma; no product is subnormal. */
-    uint16_t index = (uint16_t)((normalized - 0x3f800000UL) >> 17);
     float bucket;
     SET_FLOAT_WORD(bucket, normalized & 0xfffe0000UL);
     float t = a-bucket;
-    r = sqrt_table[index][0] + t*(sqrt_table[index][1] + t*sqrt_table[index][2]);
+    r = coefficients[0] + t*(coefficients[1] + t*coefficients[2]);
 
     /* Dekker's product error: r*r = product + error exactly. Splitting the
        24-bit significand into 12-bit parts makes the partial products exact. */

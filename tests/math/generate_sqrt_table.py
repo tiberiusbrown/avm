@@ -32,10 +32,10 @@ def table():
         '#endif',
         '',
         '/* Quadratic interpolants through each interval\'s left, middle and',
-        ' * right endpoints. The unused fourth float makes indexing a shift;',
-        ' * compact 12-byte records were substantially slower on AVM.',
-        ' * 128 sixteen-byte records occupy exactly 2 KiB of program space. */',
-        'static const AVM_SQRT_PROGMEM float sqrt_table[128][4] = {'
+        ' * right endpoints. Each 12-byte record is copied in one bulk read;',
+        ' * its byte offset is calculated with native 16-bit arithmetic.',
+        ' * 128 records occupy exactly 1.5 KiB of program space. */',
+        'static const AVM_SQRT_PROGMEM float sqrt_table[128][3] = {'
     ]
     for parity in range(2):
         for index in range(INTERVALS):
@@ -45,7 +45,7 @@ def table():
             quadratic = 2 * (right + root - 2*middle) / (width*width)
             linear = (right - root) / width - quadratic*width
             lines.append(f'    {{{literal(root)}, {literal(linear)}, '
-                         f'{literal(quadratic)}, 0x0p+0f}},')
+                         f'{literal(quadratic)}}},')
     lines.extend(['};', '', '#undef AVM_SQRT_PROGMEM', '#endif', ''])
     return '\n'.join(lines)
 

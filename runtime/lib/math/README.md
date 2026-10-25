@@ -20,10 +20,14 @@ helper to release its frame before allocating product scratch. Coefficient
 selection uses immediate constants, and math builds at -O3 without jump tables
 or floating-point contraction.
 
-Square root normalizes to [1,4), interpolates a 2 KiB program-space table,
+Square root normalizes to [1,4), interpolates a 1.5 KiB program-space table,
 then checks exact rounding midpoints using the original split product. It
 performs no floating-point divisions. Each exponent parity has 64 quadratic
 intervals; the candidate is within one float of the correctly rounded root.
+Each record is copied into three stack floats using one uninterrupted
+12-byte program-space read. A native 16-bit byte offset avoids expensive wide
+record indexing, and a register dependency prevents the compiler from
+replacing the copy with three independent loads.
 `tests/math/generate_sqrt_table.py` reproduces the table and target boundary
 fixtures (`--check` verifies them). A native reference test checks every
 normalized binary32 mantissa/parity, every positive subnormal, exponent

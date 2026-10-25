@@ -1,5 +1,5 @@
      1593426   aggregate_args.c
-     1324082   aggregate_return.c
+     1089150   aggregate_return.c
      2094135   aliasing.c
      1850355   bit_count.c
      1695785   bitfields.c

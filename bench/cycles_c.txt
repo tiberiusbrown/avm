@@ -48,7 +48,7 @@
      1444736   record_scan.c
       144721   record_stride.c
       393095   record_stride_nested.c
-     3148973   register_cleanup.c
+     2277115   register_cleanup.c
      1921658   reverse_walk.c
      1007916   rotate32.c
      1326952   saturating_math.c

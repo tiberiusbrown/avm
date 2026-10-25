@@ -69,6 +69,12 @@ covers every count from 0 through 33, word-boundary patterns, every walking bit
 and its complement, and large 32-bit counts that must not truncate to a valid count.
 The fixture runs at every standard optimization level.
 
+`bounded_shift32` checks widening left shifts of words, masked words and bytes
+with bounded variable counts. An independent single-bit reference covers zero,
+every count through 15, walking bits and their complements, all byte inputs,
+nonzero ranges and wide counts with high bits set before masking. The fixture
+runs at every standard optimization level.
+
 `widening_byte_multiply` checks signed, unsigned and mixed byte products against
 an independent shift/add reference at every standard optimization level. It
 covers every left byte with signed/unsigned boundary values on the right,

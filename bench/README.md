@@ -69,8 +69,9 @@ candidate when upper registers are busy.
 `fir8` exercises signed byte products with hoisted, spilled coefficients.
 Its unrolled sample loads also exercise shared displaced-address bases.
 
-`shifts`, `rotate32`, `register_cleanup`, and `wide_shifts` measure the runtime
-32-bit variable-shift helpers.
+`shifts`, `rotate32`, and `wide_shifts` measure the runtime 32-bit variable-shift
+helpers. `register_cleanup` exercises an inline widening shift of a word by a
+variable count in 0..7 under register pressure.
 
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;

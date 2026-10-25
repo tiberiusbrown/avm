@@ -6,17 +6,17 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 constant_init.c
-00000306 l     F .text	0000000d populate
+00000302 l     F .text	0000000d populate
 00000100 l     O .data	00000002 constant_init_result
 00000102 l     O .data	00000040 values
 00000000 l    df *ABS*	00000000 runtime.c
-00000355 l       .init_array	00000000 .hidden __init_array_end
-00000355 l       .init_array	00000000 .hidden __init_array_start
-00000355 l       .fini_array	00000000 .hidden __fini_array_start
-00000355 l       .fini_array	00000000 .hidden __fini_array_end
+00000351 l       .init_array	00000000 .hidden __init_array_end
+00000351 l       .init_array	00000000 .hidden __init_array_start
+00000351 l       .fini_array	00000000 .hidden __fini_array_start
+00000351 l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	0000001e _start
-000002c7 g     F .text	0000003f avm_test_main
-00000313 g     F .text	00000002 avm_halt
+000002c7 g     F .text	0000003b avm_test_main
+0000030f g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
 
 Disassembly of section .text:
@@ -35,7 +35,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 f5 00              call16	avm_halt
+ e1 f1 00              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -43,19 +43,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 55 03              ldi16	r4, 0x355
+ c4 51 03              ldi16	r4, 0x351
  c1 00                 ldi8	r5, 0x0
- c6 55 03              ldi16	r6, 0x355
+ c6 51 03              ldi16	r6, 0x351
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 55 03           ldi16	r0, 0x355
+ f0 04 51 03           ldi16	r0, 0x351
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 55 03           ldi16	r2, 0x355
+ f0 06 51 03           ldi16	r2, 0x351
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -89,19 +89,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fd              call16	-631 <__avm_run_local_dtors>
 <L0>:
- c4 55 03              ldi16	r4, 0x355
+ c4 51 03              ldi16	r4, 0x351
  c1 00                 ldi8	r5, 0x0
- c6 55 03              ldi16	r6, 0x355
+ c6 51 03              ldi16	r6, 0x351
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 55 03           ldi16	r2, 0x355
+ f0 06 51 03           ldi16	r2, 0x351
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 55 03           ldi16	r0, 0x355
+ f0 04 51 03           ldi16	r0, 0x351
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -148,14 +148,12 @@ Disassembly of section .text:
  f4 80                 lsl16.1	r0
  c4 02 01              ldi16	r4, 0x102
  f2 04                 add	r0, r4
- d5 1d                 call8	populate
+ d5 19                 call8	populate
  ed 90 20              ld16	r4, [r0+0]
  f2 0c                 add	r1, r4
  f4 aa                 inc16	r2
- f1 22                 mov	r4, r2
- f1 74                 zext8	r4
- f5 23                 cmp	r4, r3
- d1 e2                 brne8	-0x1e <L0>
+ f5 13                 cmp	r2, r3
+ d1 e6                 brne8	-0x1a <L0>
  f0 59 00 01           stm16	[0x100], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
@@ -168,7 +166,7 @@ Disassembly of section .text:
 
 <populate>:
  c4 02 01              ldi16	r4, 0x102
- c6 15 03              ldi16	r6, 0x315
+ c6 11 03              ldi16	r6, 0x311
  c3 00                 ldi8	r7, 0x0
  c1 40                 ldi8	r5, 0x40
  d7 10                 sys	memcpy_p

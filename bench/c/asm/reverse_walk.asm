@@ -10,13 +10,13 @@ SYMBOL TABLE:
 00000180 l     O .data	00000002 reverse_walk_result
 00000182 l     O .data	00000080 source
 00000000 l    df *ABS*	00000000 runtime.c
-0000041b l       .init_array	00000000 .hidden __init_array_end
-0000041b l       .init_array	00000000 .hidden __init_array_start
-0000041b l       .fini_array	00000000 .hidden __fini_array_start
-0000041b l       .fini_array	00000000 .hidden __fini_array_end
+00000417 l       .init_array	00000000 .hidden __init_array_end
+00000417 l       .init_array	00000000 .hidden __init_array_start
+00000417 l       .fini_array	00000000 .hidden __fini_array_start
+00000417 l       .fini_array	00000000 .hidden __fini_array_end
 00000300 g     F .text	0000001e _start
-000003c7 g     F .text	00000052 avm_test_main
-00000419 g     F .text	00000002 avm_halt
+000003c7 g     F .text	0000004e avm_test_main
+00000415 g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
 
 Disassembly of section .text:
@@ -35,7 +35,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 fb 00              call16	avm_halt
+ e1 f7 00              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -43,19 +43,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 1b 04              ldi16	r4, 0x41b
+ c4 17 04              ldi16	r4, 0x417
  c1 00                 ldi8	r5, 0x0
- c6 1b 04              ldi16	r6, 0x41b
+ c6 17 04              ldi16	r6, 0x417
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 1b 04           ldi16	r0, 0x41b
+ f0 04 17 04           ldi16	r0, 0x417
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 1b 04           ldi16	r2, 0x41b
+ f0 06 17 04           ldi16	r2, 0x417
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -89,19 +89,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fc              call16	-887 <__avm_run_local_dtors>
 <L0>:
- c4 1b 04              ldi16	r4, 0x41b
+ c4 17 04              ldi16	r4, 0x417
  c1 00                 ldi8	r5, 0x0
- c6 1b 04              ldi16	r6, 0x41b
+ c6 17 04              ldi16	r6, 0x417
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 1b 04           ldi16	r2, 0x41b
+ f0 06 17 04           ldi16	r2, 0x417
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 1b 04           ldi16	r0, 0x41b
+ f0 04 17 04           ldi16	r0, 0x417
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -143,11 +143,11 @@ Disassembly of section .text:
  f4 b4                 dec16	r4
  f6 2c                 tst16	r4
  d1 f6                 brne8	-0xa <L0>
- f2 42                 sub	r2, r2
+ a0                    xor	r4, r4
  d7 01                 sys	debug_break
  f0 05 80 01           ldi16	r1, 0x180
  f0 07 82 01           ldi16	r3, 0x182
- f1 22                 mov	r4, r2
+ f1 14                 mov	r2, r4
 <L1>:
  f1 29                 mov	r6, r1
  c5 02 02              ldi16	r5, 0x202
@@ -165,10 +165,8 @@ Disassembly of section .text:
  f5 27                 cmp	r5, r3
  d1 ec                 brne8	-0x14 <L2>
  f4 aa                 inc16	r2
- f1 26                 mov	r5, r2
- f1 75                 zext8	r5
- cd 20                 cmpi.s8	r5, 0x20
- d1 dd                 brne8	-0x23 <L1>
+ f0 0e 20              cmpi.s8	r2, 0x20
+ d1 e0                 brne8	-0x20 <L1>
  f0 5c 80 01           stm16	[0x180], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

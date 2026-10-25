@@ -10,7 +10,7 @@
      1785131   bubble4.c
      1110360   byte_comparisons.c
       723722   byte_load_liveout.c
-    10476647   byte_phi_stream.c
+     9460839   byte_phi_stream.c
       238967   call_args.c
      7306132   constant_arith.c
       303498   constant_init.c
@@ -35,13 +35,13 @@
      1064821   mixed_width.c
       765877   multiply.c
      1193770   narrow_arithmetic.c
-     1383499   normalized_loads.c
+     1332811   normalized_loads.c
       803965   packed_fields.c
       286671   pointer_table.c
       930675   pointer_walk.c
       297331   popcount.c
-     2050121   progmem_record_index.c
-     2612516   progmem_walk.c
+     1936536   progmem_record_index.c
+     2359172   progmem_walk.c
       531946   progmem_widen_ldp16.c
       721763   progmem_widen_ldp32_bytes.c
       531972   progmem_widen_ldp32_words.c

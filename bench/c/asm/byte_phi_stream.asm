@@ -200,6 +200,8 @@ Disassembly of section .text:
  c3 ff                 ldi8	r7, 0xff
  a5                    xor	r5, r5
  c2 07                 ldi8	r6, 0x7
+ f0 04 67 03           ldi16	r0, 0x367
+ f0 01 00              ldi8	r1, 0x0
  01                    mov	r4, r5
 <L0>:
  cf 20                 cmpi.s8	r7, 0x20
@@ -209,13 +211,11 @@ Disassembly of section .text:
  8e                    and	r7, r6
  f1 17                 mov	r2, r7
  f2 4b                 sub	r3, r3
- f0 04 67 03           ldi16	r0, 0x367
- f0 01 00              ldi8	r1, 0x0
- f7 61                 add32	q0, q1
- f0 60 e0              ldp8u	r7, [q0]
+ f7 64                 add32	q1, q0
+ f0 60 e4              ldp8u	r7, [q1]
  f4 ad                 inc16	r5
  cd 41                 cmpi.s8	r5, 0x41
- d1 e3                 brne8	-0x1d <L0>
+ d1 ea                 brne8	-0x16 <L0>
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

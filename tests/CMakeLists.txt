@@ -136,6 +136,14 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 "--section-start=.text=0x200"
                 "--section-start=.rodata=0x1000"
                 "--section-start=.high_member_text=0x101F6")
+        elseif(AVM_TEST_NAME STREQUAL "progmem_address_hoisting")
+            # Exercise high program bases, low-word carries and wide offsets.
+            list(APPEND test_link_options
+                "--image-base=0x100"
+                "--section-start=.data=0x100"
+                "--section-start=.text=0x200"
+                "--section-start=.rodata=0x10000"
+                "--section-start=.high_program_bytes=0x1FFFC")
         endif()
         avm_add_image(
             OBJECTS ${test_objects}

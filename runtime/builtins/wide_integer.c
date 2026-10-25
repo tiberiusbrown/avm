@@ -104,6 +104,18 @@ static avm_u64 avm_udivmod64(avm_u64 numerator, avm_u64 denominator,
 }
 
 __attribute__((noinline))
+uint64_t __avm_udivmoddi4(uint64_t numerator, uint64_t denominator,
+                         uint64_t *remainder_out)
+{
+    avm_u64 n = {.value = numerator};
+    avm_u64 d = {.value = denominator};
+    avm_u64 remainder;
+    avm_u64 quotient = avm_udivmod64(n, d, &remainder);
+    *remainder_out = remainder.value;
+    return quotient.value;
+}
+
+__attribute__((noinline))
 uint64_t __avm_udivdi3(uint64_t numerator, uint64_t denominator)
 {
     avm_u64 n = {.value = numerator};
@@ -126,6 +138,29 @@ static inline avm_u64 avm_abs64(int64_t value)
 {
     avm_i64 bits = {.value = value};
     return value < 0 ? avm_negate64(bits.bits) : bits.bits;
+}
+
+__attribute__((noinline))
+int64_t __avm_divmoddi4(int64_t numerator, int64_t denominator,
+                       int64_t *remainder_out)
+{
+    if (denominator == 0) {
+        *remainder_out = numerator;
+        return -1;
+    }
+
+    avm_u64 n = avm_abs64(numerator);
+    avm_u64 d = avm_abs64(denominator);
+    avm_u64 remainder;
+    avm_u64 quotient = avm_udivmod64(n, d, &remainder);
+    if ((numerator < 0) != (denominator < 0))
+        quotient = avm_negate64(quotient);
+    if (numerator < 0)
+        remainder = avm_negate64(remainder);
+    avm_i64 q = {.bits = quotient};
+    avm_i64 r = {.bits = remainder};
+    *remainder_out = r.value;
+    return q.value;
 }
 
 __attribute__((noinline))

@@ -307,6 +307,27 @@ AVM_ALWAYS_INLINE uint32_t avm_abs_i32_bits(int32_t value)
 }
 
 AVM_NOINLINE
+int32_t __avm_divmodsi4(int32_t numerator, int32_t denominator,
+                       int32_t *remainder_out)
+{
+    if (denominator == 0) {
+        *remainder_out = numerator;
+        return -1;
+    }
+
+    uint32_t remainder;
+    uint32_t quotient = __avm_udivmodsi4(avm_abs_i32_bits(numerator),
+                                         avm_abs_i32_bits(denominator),
+                                         &remainder);
+    if ((numerator < 0) != (denominator < 0))
+        quotient = 0u - quotient;
+    if (numerator < 0)
+        remainder = 0u - remainder;
+    *remainder_out = (int32_t)remainder;
+    return (int32_t)quotient;
+}
+
+AVM_NOINLINE
 int32_t __avm_divsi3(int32_t numerator, int32_t denominator)
 {
     if (denominator == 0)

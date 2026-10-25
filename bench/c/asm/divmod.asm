@@ -15,17 +15,15 @@ SYMBOL TABLE:
 000001a0 l     O .data	00000004 divmod_result
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
-00000647 l       .init_array	00000000 .hidden __init_array_end
-00000647 l       .init_array	00000000 .hidden __init_array_start
-00000647 l       .fini_array	00000000 .hidden __fini_array_start
-00000647 l       .fini_array	00000000 .hidden __fini_array_end
+000005bd l       .init_array	00000000 .hidden __init_array_end
+000005bd l       .init_array	00000000 .hidden __init_array_start
+000005bd l       .fini_array	00000000 .hidden __fini_array_start
+000005bd l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	0000001e _start
-000002c7 g     F .text	00000283 avm_test_main
-0000054a g     F .text	00000002 avm_halt
+000002c7 g     F .text	00000282 avm_test_main
+00000549 g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
-00000634 g     F .text	00000013 __avm_udivsi3
-0000054c g     F .text	00000076 __avm_mulsi3
-000005c2 g     F .text	00000072 __avm_udivmodsi4
+0000054b g     F .text	00000072 __avm_udivmodsi4
 
 Disassembly of section .text:
 
@@ -43,7 +41,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 2c 03              call16	avm_halt
+ e1 2b 03              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -51,19 +49,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 47 06              ldi16	r4, 0x647
+ c4 bd 05              ldi16	r4, 0x5bd
  c1 00                 ldi8	r5, 0x0
- c6 47 06              ldi16	r6, 0x647
+ c6 bd 05              ldi16	r6, 0x5bd
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 47 06           ldi16	r0, 0x647
+ f0 04 bd 05           ldi16	r0, 0x5bd
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 47 06           ldi16	r2, 0x647
+ f0 06 bd 05           ldi16	r2, 0x5bd
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -97,19 +95,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fd              call16	-631 <__avm_run_local_dtors>
 <L0>:
- c4 47 06              ldi16	r4, 0x647
+ c4 bd 05              ldi16	r4, 0x5bd
  c1 00                 ldi8	r5, 0x0
- c6 47 06              ldi16	r6, 0x647
+ c6 bd 05              ldi16	r6, 0x5bd
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 47 06           ldi16	r2, 0x647
+ f0 06 bd 05           ldi16	r2, 0x5bd
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 47 06           ldi16	r0, 0x647
+ f0 04 bd 05           ldi16	r0, 0x5bd
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -294,11 +292,11 @@ Disassembly of section .text:
  a0                    xor	r4, r4
  04                    mov	r5, r4
 <L1>:
- f4 51                 stsp16	[sp+0x4], r5
+ f4 49                 stsp16	[sp+0x2], r5
  c4 00 01              ldi16	r4, 0x100
  14                    add	r5, r4
  65                    ld16	r5, [r5]
- f4 12                 ldsp16	r6, [sp+0x4]
+ f4 0a                 ldsp16	r6, [sp+0x2]
  c4 20 01              ldi16	r4, 0x120
  18                    add	r6, r4
  6a                    ld16	r6, [r6]
@@ -313,11 +311,11 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f9 c2                 xor	r6, r0
  f9 e6                 xor	r7, r1
- f4 11                 ldsp16	r5, [sp+0x4]
+ f4 09                 ldsp16	r5, [sp+0x2]
  c4 40 01              ldi16	r4, 0x140
  14                    add	r5, r4
  f5 46                 ld16	r2, [r5]
- f4 10                 ldsp16	r4, [sp+0x4]
+ f4 08                 ldsp16	r4, [sp+0x2]
  c5 60 01              ldi16	r5, 0x160
  11                    add	r4, r5
  60                    ld16	r4, [r4]
@@ -328,47 +326,42 @@ Disassembly of section .text:
  f7 63                 add32	q0, q3
  fe 2c                 mul16	r5, r4
  f2 45                 sub	r2, r5
- f4 11                 ldsp16	r5, [sp+0x4]
+ f4 09                 ldsp16	r5, [sp+0x2]
  f2 4b                 sub	r3, r3
  f9 42                 xor	r2, r0
  f9 66                 xor	r3, r1
  c9 02                 addi.s8	r5, 0x2
  cd 20                 cmpi.s8	r5, 0x20
  d1 b5                 brne8	-0x4b <L1>
- a5                    xor	r5, r5
+ f2 30                 sub	r0, r0
+ f0 05 90 01           ldi16	r1, 0x190
 <L2>:
- f4 49                 stsp16	[sp+0x2], r5
- 01                    mov	r4, r5
- c6 80 01              ldi16	r6, 0x180
- 12                    add	r4, r6
- f0 6a 08              ld32	q0, [r4]
- 01                    mov	r4, r5
- c5 90 01              ldi16	r5, 0x190
+ d6 fe                 adjsp	-0x2
+ f0 14 06              leasp	r4, 0x6
+ f4 40                 stsp16	[sp+0x0], r4
+ f1 20                 mov	r4, r0
+ c5 80 01              ldi16	r5, 0x180
  11                    add	r4, r5
  f0 6a 88              ld32	q2, [r4]
- f4 50                 stsp16	[sp+0x4], r4
- f4 59                 stsp16	[sp+0x6], r5
- f2 68                 mov32	q2, q0
- f4 12                 ldsp16	r6, [sp+0x4]
- f4 1b                 ldsp16	r7, [sp+0x6]
- e1 1c 01              call16	__avm_udivsi3
- f7 66                 add32	q1, q2
- f4 12                 ldsp16	r6, [sp+0x4]
- f4 1b                 ldsp16	r7, [sp+0x6]
- d5 2c                 call8	__avm_mulsi3
- f7 72                 sub32	q0, q2
- f4 09                 ldsp16	r5, [sp+0x2]
- f9 42                 xor	r2, r0
- f9 66                 xor	r3, r1
- c9 04                 addi.s8	r5, 0x4
- cd 10                 cmpi.s8	r5, 0x10
- d1 cb                 brne8	-0x35 <L2>
+ f1 28                 mov	r6, r0
+ f2 29                 add	r6, r1
+ f0 6a cc              ld32	q3, [r6]
+ d5 34                 call8	__avm_udivmodsi4
+ d6 02                 adjsp	0x2
+ f7 69                 add32	q2, q1
+ f0 32 04              ldsp16	r2, [sp+0x4]
+ f0 33 06              ldsp16	r3, [sp+0x6]
+ f9 52                 xor	r2, r4
+ f9 76                 xor	r3, r5
+ f0 08 04              addi.s8	r0, 0x4
+ f0 0c 10              cmpi.s8	r0, 0x10
+ d1 d1                 brne8	-0x2f <L2>
  f4 01                 ldsp16	r5, [sp+0x0]
  f4 ad                 inc16	r5
  01                    mov	r4, r5
  f1 74                 zext8	r4
  cc 04                 cmpi.s8	r4, 0x4
- db 6f ff              brne16	-0x91 <L0>
+ db 70 ff              brne16	-0x90 <L0>
  c4 a0 01              ldi16	r4, 0x1a0
  f0 6b 48              st32	[r4], q1
  d7 01                 sys	debug_break
@@ -382,82 +375,6 @@ Disassembly of section .text:
 
 <avm_halt>:
  d4 fe                 jmp8	avm_halt
-
-<__avm_mulsi3>:
- b1                    push16	r1
- b0                    push16	r0
- d6 f4                 adjsp	-0xc
- f1 05                 mov	r0, r5
- 04                    mov	r5, r4
- fa 8f                 lsr16i	r5, 0xf
- f2 24                 add	r5, r0
- f4 69                 stsp16	[sp+0xa], r5
- f1 07                 mov	r0, r7
- 06                    mov	r5, r6
- fa 8f                 lsr16i	r5, 0xf
- f2 24                 add	r5, r0
- fe 2c                 mul16	r5, r4
- f4 49                 stsp16	[sp+0x2], r5
- f4 29                 ldsp16	r5, [sp+0xa]
- fe 2e                 mul16	r5, r6
- f4 69                 stsp16	[sp+0xa], r5
- 06                    mov	r5, r6
- fa 88                 lsr16i	r5, 0x8
- f4 51                 stsp16	[sp+0x4], r5
- f1 76                 zext8	r6
- 04                    mov	r5, r4
- f1 75                 zext8	r5
- 0d                    mov	r7, r5
- f3 1e                 mulu8.w	r7, r6
- f4 5b                 stsp16	[sp+0x6], r7
- f4 13                 ldsp16	r7, [sp+0x4]
- f3 3d                 mulsu8.w	r7, r5
- f4 43                 stsp16	[sp+0x0], r7
- fa 78                 lsr16i	r4, 0x8
- 04                    mov	r5, r4
- f4 61                 stsp16	[sp+0x8], r5
- f4 11                 ldsp16	r5, [sp+0x4]
- 0c                    mov	r7, r4
- f3 2d                 muls8.w	r7, r5
- f4 63                 stsp16	[sp+0x8], r7
- f3 32                 mulsu8.w	r4, r6
- 04                    mov	r5, r4
- fa c8                 asr16i	r5, 0x8
- 0b                    mov	r6, r7
- 16                    add	r5, r6
- f4 03                 ldsp16	r7, [sp+0x0]
- 0b                    mov	r6, r7
- fa d8                 asr16i	r6, 0x8
- 19                    add	r6, r5
- f4 29                 ldsp16	r5, [sp+0xa]
- 19                    add	r6, r5
- f4 62                 stsp16	[sp+0x8], r6
- 1c                    add	r7, r4
- fa 38                 lsl16i	r4, 0x8
- 04                    mov	r5, r4
- f4 69                 stsp16	[sp+0xa], r5
- f4 19                 ldsp16	r5, [sp+0x6]
- 08                    mov	r6, r4
- 19                    add	r6, r5
- f4 6a                 stsp16	[sp+0xa], r6
- 06                    mov	r5, r6
- 34                    cmp	r5, r4
- f8 14                 cset.ult	r4
- f4 22                 ldsp16	r6, [sp+0x8]
- 12                    add	r4, r6
- f4 0a                 ldsp16	r6, [sp+0x2]
- 12                    add	r4, r6
- fa 68                 lsl16i	r7, 0x8
- f4 1a                 ldsp16	r6, [sp+0x6]
- 1e                    add	r7, r6
- 3d                    cmp	r7, r5
- f8 15                 cset.ult	r5
- 14                    add	r5, r4
- 03                    mov	r4, r7
- d6 0c                 adjsp	0xc
- b8                    pop16	r0
- b9                    pop16	r1
- ef                    ret
 
 <__avm_udivmodsi4>:
  b3                    push16	r3
@@ -522,16 +439,4 @@ Disassembly of section .text:
  b9                    pop16	r1
  ba                    pop16	r2
  bb                    pop16	r3
- ef                    ret
-
-<__avm_udivsi3>:
- b0                    push16	r0
- d6 fc                 adjsp	-0x4
- d6 fe                 adjsp	-0x2
- f0 10 02              leasp	r0, 0x2
- f0 38 00              stsp16	[sp+0x0], r0
- d5 81                 call8	__avm_udivmodsi4
- d6 02                 adjsp	0x2
- d6 04                 adjsp	0x4
- b8                    pop16	r0
  ef                    ret

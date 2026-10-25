@@ -18,7 +18,7 @@
       582616   count_trailing_zeros.c
       526194   crc16.c
      1596744   div_pow2.c
-      809302   divmod.c
+      759222   divmod.c
        18718   draw_text.c
        20826   draw_text_P.c
       739468   dynamic_stack.c
@@ -84,6 +84,6 @@
       502025   volatile_rmw.c
       513348   wide_add_sub.c
      1105796   wide_compare.c
-     2694774   wide_divmod.c
+     2452191   wide_divmod.c
       651718   wide_mul.c
       220811   wide_shifts.c

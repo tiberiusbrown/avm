@@ -31,7 +31,13 @@ The newer compiled benchmarks fill these code generation gaps:
 | Runtime float math | `math_sqrt`, `math_sin`, `math_cos`, `math_atan2`, `math_tan`, `math_exp`, `math_log`, `math_log2`, `math_log10`, `math_pow`, `math_hypot`, `math_fmod` |
 | C++ lowering | `aggregate_byte_dispatch`, `aggregate_byte_packing`, `aggregate_byte_packing_hoisted`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
 
-Each `math_*` benchmark measures 32 calls over inputs from 0.25 to 1.21875.
+Each `math_*` benchmark measures 32 calls. `math_sin`, `math_cos`, and `math_tan`
+use the same 16 magnitudes with both signs, from 0.25 through the largest finite
+binary32 value. Half the calls exercise large-angle reduction; the remaining
+inputs cover the direct, special-case, and medium-angle paths. The volatile
+input tables are initialized before timing; the timed loop loads each input,
+calls the function, and accumulates its result. Other math benchmarks use inputs
+from 0.25 to 1.21875.
 The [runtime math study](../docs/math-runtime-tradeoff.md) compares the native
 interpreter implementation, initial runtime port, and optimized runtime.
 

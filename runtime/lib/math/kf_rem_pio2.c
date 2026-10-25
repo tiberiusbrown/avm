@@ -17,6 +17,74 @@ static uint32_t product_word(const uint8_t *p, int bit)
     return word;
 }
 
+static inline void multiply_invpio2(uint32_t mantissa, uint8_t product[35])
+{
+    uint8_t m0 = (uint8_t)mantissa;
+    uint8_t m1 = (uint8_t)(mantissa >> 8);
+    uint8_t m2 = (uint8_t)(mantissa >> 16);
+    uint16_t carry = 0;
+    /* Expanded constant digits avoid program-memory coefficient loads and
+       keep every multiply within 8 by 8 bits. Column i uses digits i, i-1,
+       and i-2 of the little-endian 2/pi expansion. Split the sum to avoid
+       overflowing a 16-bit word: carry <= 767, lo <= 1532, and the next
+       carry <= 3*254 + (1532 >> 8) = 767. */
+#ifdef __AVM__
+    /* Keep each column's products local. Hoisting all 96 multiplies at once
+       otherwise spills enough live words to exceed the guest stack limit.
+       This register dependency emits no instructions. */
+#define REDUCE_BARRIER() __asm__("" : "+r"(m0), "+r"(m1), "+r"(m2), "+r"(carry))
+#else
+#define REDUCE_BARRIER() ((void)0)
+#endif
+#define REDUCE_COLUMN(i, d0, d1, d2) do { \
+        uint16_t a = (uint16_t)m0 * (d0); \
+        uint16_t b = (uint16_t)m1 * (d1); \
+        uint16_t c = (uint16_t)m2 * (d2); \
+        uint16_t lo = carry + (uint16_t)(uint8_t)a + \
+                      (uint16_t)(uint8_t)b + (uint16_t)(uint8_t)c; \
+        product[i] = (uint8_t)lo; \
+        carry = (a >> 8) + (b >> 8) + (c >> 8) + (lo >> 8); \
+        REDUCE_BARRIER(); \
+    } while (0)
+    REDUCE_COLUMN(0,  0x61U, 0,     0);
+    REDUCE_COLUMN(1,  0xc5U, 0x61U, 0);
+    REDUCE_COLUMN(2,  0xbbU, 0xc5U, 0x61U);
+    REDUCE_COLUMN(3,  0xdeU, 0xbbU, 0xc5U);
+    REDUCE_COLUMN(4,  0xabU, 0xdeU, 0xbbU);
+    REDUCE_COLUMN(5,  0x63U, 0xabU, 0xdeU);
+    REDUCE_COLUMN(6,  0x51U, 0x63U, 0xabU);
+    REDUCE_COLUMN(7,  0xfeU, 0x51U, 0x63U);
+    REDUCE_COLUMN(8,  0x41U, 0xfeU, 0x51U);
+    REDUCE_COLUMN(9,  0x90U, 0x41U, 0xfeU);
+    REDUCE_COLUMN(10, 0x43U, 0x90U, 0x41U);
+    REDUCE_COLUMN(11, 0x3cU, 0x43U, 0x90U);
+    REDUCE_COLUMN(12, 0x99U, 0x3cU, 0x43U);
+    REDUCE_COLUMN(13, 0x95U, 0x99U, 0x3cU);
+    REDUCE_COLUMN(14, 0x62U, 0x95U, 0x99U);
+    REDUCE_COLUMN(15, 0xdbU, 0x62U, 0x95U);
+    REDUCE_COLUMN(16, 0xc0U, 0xdbU, 0x62U);
+    REDUCE_COLUMN(17, 0xddU, 0xc0U, 0xdbU);
+    REDUCE_COLUMN(18, 0x34U, 0xddU, 0xc0U);
+    REDUCE_COLUMN(19, 0xf5U, 0x34U, 0xddU);
+    REDUCE_COLUMN(20, 0xd1U, 0xf5U, 0x34U);
+    REDUCE_COLUMN(21, 0x57U, 0xd1U, 0xf5U);
+    REDUCE_COLUMN(22, 0x27U, 0x57U, 0xd1U);
+    REDUCE_COLUMN(23, 0xfcU, 0x27U, 0x57U);
+    REDUCE_COLUMN(24, 0x29U, 0xfcU, 0x27U);
+    REDUCE_COLUMN(25, 0x15U, 0x29U, 0xfcU);
+    REDUCE_COLUMN(26, 0x44U, 0x15U, 0x29U);
+    REDUCE_COLUMN(27, 0x4eU, 0x44U, 0x15U);
+    REDUCE_COLUMN(28, 0x6eU, 0x4eU, 0x44U);
+    REDUCE_COLUMN(29, 0x83U, 0x6eU, 0x4eU);
+    REDUCE_COLUMN(30, 0xf9U, 0x83U, 0x6eU);
+    REDUCE_COLUMN(31, 0xa2U, 0xf9U, 0x83U);
+    REDUCE_COLUMN(32, 0,     0xa2U, 0xf9U);
+    REDUCE_COLUMN(33, 0,     0,     0xa2U);
+#undef REDUCE_COLUMN
+#undef REDUCE_BARRIER
+    product[34] = (uint8_t)carry;
+}
+
 int __kernel_rem_pio2f(float x, float *y)
 {
     uint32_t bits;
@@ -24,49 +92,7 @@ int __kernel_rem_pio2f(float x, float *y)
     uint32_t mantissa = (bits & 0x007fffffUL) | 0x00800000UL;
     int point = 406 - (int)((bits >> 23) & 255);
     uint8_t product[35];
-    uint32_t carry = 0;
-    /* Expanded constant digits avoid program-memory coefficient loads and
-       let constant-multiply lowering specialize each byte product. */
-#define REDUCE_DIGIT(i, digit) do { \
-        uint32_t t = mantissa * (digit) + carry; \
-        product[i] = (uint8_t)t; carry = t >> 8; \
-    } while (0)
-    REDUCE_DIGIT(0, 0x61UL);
-    REDUCE_DIGIT(1, 0xc5UL);
-    REDUCE_DIGIT(2, 0xbbUL);
-    REDUCE_DIGIT(3, 0xdeUL);
-    REDUCE_DIGIT(4, 0xabUL);
-    REDUCE_DIGIT(5, 0x63UL);
-    REDUCE_DIGIT(6, 0x51UL);
-    REDUCE_DIGIT(7, 0xfeUL);
-    REDUCE_DIGIT(8, 0x41UL);
-    REDUCE_DIGIT(9, 0x90UL);
-    REDUCE_DIGIT(10, 0x43UL);
-    REDUCE_DIGIT(11, 0x3cUL);
-    REDUCE_DIGIT(12, 0x99UL);
-    REDUCE_DIGIT(13, 0x95UL);
-    REDUCE_DIGIT(14, 0x62UL);
-    REDUCE_DIGIT(15, 0xdbUL);
-    REDUCE_DIGIT(16, 0xc0UL);
-    REDUCE_DIGIT(17, 0xddUL);
-    REDUCE_DIGIT(18, 0x34UL);
-    REDUCE_DIGIT(19, 0xf5UL);
-    REDUCE_DIGIT(20, 0xd1UL);
-    REDUCE_DIGIT(21, 0x57UL);
-    REDUCE_DIGIT(22, 0x27UL);
-    REDUCE_DIGIT(23, 0xfcUL);
-    REDUCE_DIGIT(24, 0x29UL);
-    REDUCE_DIGIT(25, 0x15UL);
-    REDUCE_DIGIT(26, 0x44UL);
-    REDUCE_DIGIT(27, 0x4eUL);
-    REDUCE_DIGIT(28, 0x6eUL);
-    REDUCE_DIGIT(29, 0x83UL);
-    REDUCE_DIGIT(30, 0xf9UL);
-    REDUCE_DIGIT(31, 0xa2UL);
-#undef REDUCE_DIGIT
-    product[32] = (uint8_t)carry;
-    product[33] = (uint8_t)(carry >> 8);
-    product[34] = (uint8_t)(carry >> 16);
+    multiply_invpio2(mantissa, product);
     int index = point >> 3;
     int quadrant = product[index] >> (point & 7);
     if ((point & 7) == 7) quadrant |= (int)product[index+1] << 1;

@@ -56,6 +56,12 @@ consume the interpreter flash saved above.
 
 ## Runtime performance
 
+The historical comparison below uses the original small-argument inputs. The
+current `math_sin`, `math_cos`, and `math_tan` benchmarks instead cover both signs
+from 0.25 through the largest finite binary32 value, with 16 of 32 calls entering
+large-angle reduction. Their current cycle counts in `bench/cycles_c.txt` measure
+this broader workload and cannot be compared directly with these historical rows.
+
 Each row measures 32 calls, including loop overhead, argument preparation,
 result accumulation, and calls. Inputs are `0.25 + i*0.03125`, for `i=0..31`.
 Binary functions use a second operand of 0.75, except pow, which uses 1.25.

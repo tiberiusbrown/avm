@@ -20,7 +20,9 @@ bit comparisons; transcendental tolerances are explicit in each vector.
 `avm_math_reference_tests_run` checks the production sqrt kernel on every
 normalized binary32 mantissa/exponent-parity combination, plus random finite
 patterns and a subnormal sweep, against double sqrt rounded to float. These
-checks run within `avm_tests_run`. See the
+checks run within `avm_tests_run`. The same target checks all 8,388,608 normalized
+binary32 mantissas of the large-angle reducer's full 280-bit integer product
+against an independent reference using 32-bit limbs and 64-bit arithmetic. See the
 [math study](../docs/math-runtime-tradeoff.md) for scope and measured results.
 
 `cmake --build build --config RelWithDebInfo --target avm_audio_tests_run`

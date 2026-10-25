@@ -36,16 +36,14 @@
 	    x = z+w; y = 0.0;
 	}
 	z	=  x*x;
-	w 	=  z*z;
-    /* Break x^5*((1.3333334029e-01f)+x^2*(5.3968254477e-02f)+...) into
-     *	  x^5((1.3333334029e-01f)+x^4*(2.1869488060e-02f)+...+x^20*(-1.8558637748e-05f)) +
-     *	  x^5(x^2*((5.3968254477e-02f)+x^4*(8.8632395491e-03f)+...+x^22*[T12]))
-     */
-	r = (1.3333334029e-01f)+w*((2.1869488060e-02f)+w*((3.5920790397e-03f)+w*((5.8804126456e-04f)+w*((7.8179444245e-05f)+w*(-1.8558637748e-05f)))));
-	v = z*((5.3968254477e-02f)+w*((8.8632395491e-03f)+w*((1.4562094584e-03f)+w*((2.4646313977e-04f)+w*((7.1407252108e-05f)+w*(2.5907305826e-05f))))));
-	s = z*x;
-	r = y + z*(s*(r+v)+y);
-	r += (3.3333334327e-01f)*s;
+    /* Float-specific Remez correction on |x| < 0.6744. The pi/4
+       transform, reduction tail and compensated reciprocal stay intact.
+       Reproduce with tests/math/generate_minimax.py. */
+    r = 0x1.111216p-3f+z*(0x1.b9b6dep-5f+
+        z*(0x1.6d605ep-6f+z*(0x1.d49c2ap-8f+z*0x1.ad4488p-8f)));
+    s = z*x;
+    r = y + z*(s*r+y);
+    r += 0x1.555554p-2f*s;
 	w = x+r;
 	if(ix>=0x3f2ca140) {
 	    v = (float)iy;

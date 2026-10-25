@@ -12,7 +12,7 @@ about 25 emulated seconds at `-O0`, exceeding the former 20-second limit.
 The linked test images remain under `build/tests/`. C and C++ test disassemblies
 are not generated or checked into the repository.
 
-The `math_*f` fixtures check 2,702 numeric vectors at all six optimization
+The `math_*f` fixtures check numeric vectors at all six optimization
 levels, including signed zero, NaNs, infinities, subnormals, rounding boundaries,
 and large trig arguments across every binary32 exponent. Exact operations use
 bit comparisons; transcendental tolerances are explicit in each vector.
@@ -24,6 +24,23 @@ checks run within `avm_tests_run`. The same target checks all 8,388,608 normaliz
 binary32 mantissas of the large-angle reducer's full 280-bit integer product
 against an independent reference using 32-bit limbs and 64-bit arithmetic. See the
 [math study](../docs/math-runtime-tradeoff.md) for scope and measured results.
+
+`avm_shortcuts_tests_run` compiles the production hypot, atan/atan2, tangent,
+logarithms, power, exponential and remainder kernels under private names and
+compares them with host double libm rounded to float. The four-ULP limit is
+enforced for every result, with exact fmod results and explicit signed-zero,
+infinity and signaling-NaN handling. Coverage includes every reduced log
+mantissa, dense direct atan/tan inputs, exhaustive mantissas for the bounded
+integer and fractional power paths, subnormal and scaling boundaries, pole
+neighbors, and deterministic random patterns. These checks run within
+`avm_tests_run`; interpreter fixtures cover the shortcut endpoints and fallback
+paths at every standard optimization level. `math/generate_minimax.py`
+reproduces the Remez coefficients using mpmath.
+
+On 2026-10-25, all 717 interpreter fixtures passed and the shortcut reference
+target passed 289,288,498 comparisons. Maximum observed errors were one ULP
+for hypot, atan/atan2, log and exp; two for log2/log10; three for tan; and four
+for pow. Every fmod comparison was exact.
 
 `cmake --build build --config RelWithDebInfo --target avm_audio_tests_run`
 checks native sequencing, sample synthesis, register preservation, SPI reads

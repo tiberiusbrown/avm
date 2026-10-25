@@ -32,21 +32,32 @@
        84966   indirect_call.c
     11045125   loop_control.c
      3412152   loop_shapes.c
-      674401   math_atan2.c
+      259463   math_atan.c
+      536247   math_atan2.c
+      420244   math_atan2_ratios.c
        74723   math_ceil.c
      1512075   math_cos.c
       390086   math_exp.c
+      354886   math_exp_scaled.c
        79335   math_floor.c
-      147071   math_fmod.c
-      643250   math_hypot.c
-      461247   math_log.c
-      523028   math_log10.c
-      497999   math_log2.c
-     1494206   math_pow.c
+      142305   math_fmod.c
+      698414   math_fmod_subnormal.c
+      547893   math_hypot.c
+      488153   math_hypot_scaled.c
+      397609   math_log.c
+      424880   math_log10.c
+      298734   math_log10_near_one.c
+      374524   math_log2.c
+      250806   math_log2_near_one.c
+      270862   math_log_near_one.c
+     1057962   math_pow.c
+      808415   math_pow_bounded.c
+      918318   math_pow_integer.c
        74663   math_round.c
      1520611   math_sin.c
       430649   math_sqrt.c
-     1729698   math_tan.c
+     1580198   math_tan.c
+      427542   math_tan_reduced.c
        58827   math_trunc.c
        18300   memory_services.c
      1063957   mixed_width.c

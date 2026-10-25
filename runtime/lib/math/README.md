@@ -25,7 +25,25 @@ rounding midpoints using a split product. A native reference test checks every
 normalized binary32 mantissa/parity, plus random exponents and subnormals;
 target fixtures check exact results through the real interpreter.
 
-`fmodf` uses exact subtraction in the normal y < x < 2*y interval. Bit-level
+`hypotf` keeps magnitude ordering, exceptional values and exponent scaling,
+then takes the square root of the binary32 sum of squares. `atan2f` divides
+the smaller magnitude by the larger and reconstructs the angle with split
+pi/2 constants. The atan and tan corrections use float-specific Remez fits
+with five and six coefficients; `tests/math/generate_minimax.py` reproduces
+them. Tangent retains its reduction tail and compensated reciprocal.
+
+The three logarithms classify and normalize once, then share a mantissa
+kernel. Within 1/16 of one, a degree-six log1p polynomial avoids division.
+`powf` uses multiplication for exponents +/-3, +/-4 and +/-5 when the base
+magnitude is in [2^-15, 2^15]. Larger integer powers retain fdlibm: simple
+repeated squaring at -8 exceeded the four-ULP budget. Positive bases in
+[0.5, 2] with |y| <= 1.25 use the shared logarithm and exponential; all other
+ranges retain the split logarithm/exponential decomposition.
+
+`fmodf` uses exact subtraction in the normal y < x < 2*y interval, native
+word leading-zero counts for subnormal exponents, and 16-bit exponent arithmetic.
+Exponent packing in exp, pow and hypot uses unsigned shifts, including negative
+scale adjustments. Bit-level
 rounding does not perform arithmetic solely to raise unsupported exception
 flags. `floorf`, `ceilf`, `roundf`, and `truncf` split binary32 bits into two
 16-bit words. Exponents below 7 clear fractional bits in both words; exponents
@@ -36,5 +54,12 @@ signs, plus exponent boundaries and random inputs. Target tests cover every
 fractional exponent, signed zeros, subnormals, infinities, and NaNs; a symbol
 check prevents the four kernels from reintroducing shift-helper calls.
 `math.c` supplies log2 and number-preferred min/max with signed-zero handling.
+
+`avm_shortcuts_tests_run` compares the production kernels with host double
+libm rounded to float, with a four-ULP limit (exact for fmod). It exhausts
+reduced logarithm mantissas, dense atan/tan ranges, and mantissas for bounded
+integer and fractional powers, plus random inputs, scaling boundaries,
+subnormals and exceptional values. The same paths have interpreter fixtures
+at all six optimization levels.
 
 See [measurements and validation](../../../docs/math-runtime-tradeoff.md).

@@ -70,7 +70,15 @@
 	k = (iy-ix)>>23;
 	if(k > 60) z=1.5707963705e+00f+(float)0.5*(-8.7422776573e-08f); 	/* |y/x| >  2**60 */
 	else if(hx<0&&k<-60) z=0.0; 	/* |y|/x < -2**60 */
-	else z=avm_atan_kernel(__builtin_fabsf(y/x));	/* safe to do y/x */
+	else {
+	    /* A quotient at most one avoids the atan reciprocal reduction.
+	       Share the polynomial evaluation across both magnitude orderings. */
+	    int invert = iy>ix;
+	    float quotient = invert ? __builtin_fabsf(x/y) : __builtin_fabsf(y/x);
+	    z=avm_atan_kernel(quotient);
+	    /* Subtract from split pi/2 to retain the low constant bits. */
+	    if(invert) z=1.5707962513e+00f-(z-7.5497894159e-08f);
+	}
 	switch (m) {
 	    case 0: return       z  ;	/* atan(+,+) */
 	    case 1: {

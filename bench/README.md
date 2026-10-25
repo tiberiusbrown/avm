@@ -28,7 +28,7 @@ The newer compiled benchmarks fill these code generation gaps:
 | Branches and loop shapes | `byte_comparisons`, `loop_shapes`, `short_circuit`, `saturating_math` |
 | Integer lowering | `bit_count`, `bounded_shifts`, `count_leading_zeros`, `count_trailing_zeros`, `div_pow2`, `narrow_arithmetic`, `popcount`, `progmem_record_index`, `rotate32`, `wide_add_sub`, `wide_compare` |
 | Floating point lowering | `float_comparisons`, `float_conversions` |
-| Runtime float math | `math_sqrt`, `math_sin`, `math_cos`, `math_atan2`, `math_tan`, `math_exp`, `math_log`, `math_log2`, `math_log10`, `math_pow`, `math_hypot`, `math_fmod`, `math_floor`, `math_ceil`, `math_round`, `math_trunc` |
+| Runtime float math | `math_sqrt`, `math_sin`, `math_cos`, `math_atan`, `math_atan2`, `math_tan`, `math_exp`, `math_log`, `math_log2`, `math_log10`, `math_pow`, `math_hypot`, `math_fmod`, `math_floor`, `math_ceil`, `math_round`, `math_trunc`, plus the focused workloads below |
 | C++ lowering | `aggregate_byte_dispatch`, `aggregate_byte_packing`, `aggregate_byte_packing_hoisted`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
 
 Each `math_*` benchmark measures 32 calls. `math_sin`, `math_cos`, and `math_tan`
@@ -40,7 +40,22 @@ including zeros, subnormals, ties, the exponent-7 word boundary, carries into
 the exponent, and integral values. The volatile
 input tables are initialized before timing; the timed loop loads each input,
 calls the function, and accumulates its result. Other math benchmarks use inputs
-from 0.25 to 1.21875.
+from 0.25 to 1.21875. `math_pow` uses exponent 1.25, crossing the bounded
+positive-base shortcut's lower endpoint at 0.5.
+
+Focused 32-call workloads exercise the math shortcuts and their fallbacks:
+
+| Benchmark | Coverage |
+| --- | --- |
+| `math_hypot_scaled` | Ordinary pairs, both scaling directions, subnormals, zeros, exponent gaps |
+| `math_atan2_ratios` | All quadrants, ratios above/below one, subnormals, extreme exponent gaps |
+| `math_atan` | Both signs and adjacent floats at all argument-reduction boundaries |
+| `math_tan_reduced` | Direct polynomial, pi/4 transform, reciprocal, neighbors of the first pole |
+| `math_log_near_one`, `math_log2_near_one`, `math_log10_near_one` | Near-one polynomial endpoints and adjacent floats, powers of two, scaled near-one mantissas |
+| `math_pow_integer` | Signed bases and exponents 3..8, accepted multiplication paths, range fallbacks, special values |
+| `math_pow_bounded` | Bounded log/exp endpoints and adjacent fallbacks, multiplication-path bounds for both base signs |
+| `math_fmod_subnormal` | Both operand normalization paths, native-word boundaries, signed zeros, large exponent gaps |
+| `math_exp_scaled` | Negative exponent packing, gradual underflow, reduction endpoints, large positive exponents |
 The [runtime math study](../docs/math-runtime-tradeoff.md) compares the native
 interpreter implementation, initial runtime port, and optimized runtime.
 
@@ -107,6 +122,48 @@ All four rounding kernels have zero references to 32-bit shift helpers
 compiled symbols and compares all four production kernels with host double
 results for over 51 million inputs. Interpreter fixtures additionally exercise
 every fractional exponent and all 32 bounded shift counts at O0/O1/O2/O3/Os/Oz.
+
+The math shortcuts were measured on 2026-10-25 with identical benchmark sources
+before and after, RelWithDebInfo, `-O2` callers, `-O3` runtime math and the same
+interpreter. The original runtime archive was preserved before editing and
+linked with the new focused workloads; its counts for every existing workload
+matched the initial measurement exactly. Each row measures 32 calls and includes
+loop/accumulation costs, with the adjacent-break baseline subtracted.
+
+| Benchmark | Before cycles | After cycles | Cycles saved |
+| --- | ---: | ---: | ---: |
+| `math_atan` | 369,577 | 259,463 | 29.8% |
+| `math_atan2` | 674,401 | 536,247 | 20.5% |
+| `math_atan2_ratios` | 528,206 | 420,244 | 20.4% |
+| `math_exp` | 390,086 | 390,086 | 0.0% |
+| `math_exp_scaled` | 354,886 | 354,886 | 0.0% |
+| `math_fmod` | 147,071 | 142,305 | 3.2% |
+| `math_fmod_subnormal` | 987,126 | 698,414 | 29.2% |
+| `math_hypot` | 643,250 | 547,893 | 14.8% |
+| `math_hypot_scaled` | 571,573 | 488,153 | 14.6% |
+| `math_log` | 461,247 | 397,609 | 13.8% |
+| `math_log10` | 523,028 | 424,880 | 18.8% |
+| `math_log10_near_one` | 426,844 | 298,734 | 30.0% |
+| `math_log2` | 497,999 | 374,524 | 24.8% |
+| `math_log2_near_one` | 403,180 | 250,806 | 37.8% |
+| `math_log_near_one` | 364,609 | 270,862 | 25.7% |
+| `math_pow` | 1,494,206 | 1,057,962 | 29.2% |
+| `math_pow_bounded` | 1,504,373 | 808,415 | 46.3% |
+| `math_pow_integer` | 1,361,451 | 918,318 | 32.5% |
+| `math_tan` | 1,729,698 | 1,580,198 | 8.6% |
+| `math_tan_reduced` | 570,124 | 427,542 | 25.0% |
+
+The remaining math workloads were unchanged. The exponent-shift fixes in exp
+also preserve its cycle counts. Production hypot has five static `fmul`
+instructions rather than ten, and atan2 has 157 static stack loads/stores rather
+than 191. The smaller atan/tan polynomials reduce their static multiply counts
+from 16 to 9 and from 40 to 24 respectively (the latter includes reduction).
+`avm_shortcuts_tests_run` enforces the four-ULP policy against host double libm;
+interpreter fixtures exercise the same paths at all six optimization levels.
+The power shortcuts trade code space for cycles: the `powf` function grows
+from 2,404 to 3,025 bytes and now links `expf`. The packaged `math_pow` image
+grows from 7,936 to 9,216 bytes; all measured cycle counts still improve or
+remain unchanged.
 
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;

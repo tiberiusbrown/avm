@@ -14,6 +14,7 @@
  */
 
 #include "fdlibm.h"
+#include "log_kernel.h"
 
 	float __ieee754_powf(float x, float y)
 {
@@ -67,10 +68,32 @@
 	    if(hy<0) return 1.0f/x; else return x;
 	}
 	if(hy==0x40000000) return x*x; /* y is  2 */
+	/* Integer powers +/-3, +/-4 and +/-5 need no logarithm or exponential.
+	   Repeated squaring at +/-6..8 can exceed the four-ULP error budget.
+	   Bounds keep every intermediate and its reciprocal normal and finite. Values outside
+	   this interval retain the full overflow/subnormal handling below. */
+	if(iy>=0x40400000 && iy<=0x40a00000 &&
+	   ix>=0x38000000 && ix<=0x47000000 &&
+	   (iy==0x40400000 || iy==0x40800000 || iy==0x40a00000)) {
+	    float square = x*x;
+	    float product;
+	    if(iy==0x40400000) product = square*x;
+	    else {
+	        product = square*square;
+	        if(iy==0x40a00000) product *= x;
+	    }
+	    return hy<0 ? 1.0f/product : product;
+	}
 	if(hy==0x3f000000) {	/* y is  0.5 */
 	    if(hx>=0)	/* x >= +0 */
 	    return __ieee754_sqrtf(x);	
 	}
+	/* In this bounded positive interval, log(x)*y has magnitude below
+	   0.867. Its error is not amplified by a large exponent, and exp cannot
+	   overflow or underflow. Difficult ranges retain the split fdlibm path. */
+	if(iy<=0x3fa00000 && (uint32_t)hx>=0x3f000000UL &&
+	   (uint32_t)hx<=0x40000000UL)
+	    return __ieee754_expf(y*avm_log_kernel(x));
 
 	ax   = __builtin_fabsf(x);
     /* special value of x */
@@ -206,8 +229,9 @@
 	r  = (z*t1)/(t1-2.0f)-(w+z*w);
 	z  = 1.0f-(r-z);
 	GET_FLOAT_WORD(j,z);
-	j += (n<<23);
-	if((j>>23)<=0) z = scalbnf(z,(int)n);	/* subnormal output */
-	else SET_FLOAT_WORD(z,j);
+	uint32_t scaled = (uint32_t)j+((uint32_t)n<<23);
+	if(scaled<0x00800000UL || scaled>=0x80000000UL)
+	    z = scalbnf(z,(int)n);	/* subnormal output */
+	else SET_FLOAT_WORD(z,scaled);
 	return s*z;
 }

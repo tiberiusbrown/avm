@@ -60,12 +60,12 @@
 	if(k >= -125) {
 	    __uint32_t hy;
 	    GET_FLOAT_WORD(hy,y);
-	    SET_FLOAT_WORD(y,hy+((int32_t)k<<23));	/* add k to y's exponent */
+	    SET_FLOAT_WORD(y,hy+((uint32_t)k<<23));	/* add k to y's exponent */
 	    return y;
 	} else {
 	    __uint32_t hy;
 	    GET_FLOAT_WORD(hy,y);
-	    SET_FLOAT_WORD(y,hy+((int32_t)(k+100)<<23));	/* add k to y's exponent */
+	    SET_FLOAT_WORD(y,hy+((uint32_t)(k+100)<<23));	/* add k to y's exponent */
 	    return y*7.8886090522e-31f;
 	}
 }

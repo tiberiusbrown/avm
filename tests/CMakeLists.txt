@@ -687,3 +687,43 @@ add_custom_target(avm_rounding_tests_run
     DEPENDS avm_rounding_reference_tests avm_sysroot llvm-nm
     USES_TERMINAL VERBATIM)
 add_dependencies(avm_tests_run avm_rounding_tests_run)
+
+# Run the production shortcuts, sqrt and angle reducer under private names;
+# the harness uses host double libm as an independent binary32 reference.
+add_library(avm_shortcuts_reference_kernels OBJECT
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_hypot.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_atan2.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_atan.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_tan.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log10.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_pow.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_exp.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_fmod.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_sqrt.c"
+    math/rem_pio2_reference_kernel.c
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/kf_rem_pio2.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_scalbn.c")
+target_include_directories(avm_shortcuts_reference_kernels PRIVATE
+    "${PROJECT_SOURCE_DIR}/runtime/include")
+foreach(function hypotf atan2f atanf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
+    target_compile_definitions(avm_shortcuts_reference_kernels PRIVATE
+        "${function}=avm_reference_${function}")
+endforeach()
+if(MSVC)
+    target_compile_options(avm_shortcuts_reference_kernels PRIVATE /fp:strict
+        "/FI${CMAKE_CURRENT_SOURCE_DIR}/math/host_compat.h")
+else()
+    target_compile_options(avm_shortcuts_reference_kernels PRIVATE
+        -ffp-contract=off -fno-fast-math)
+endif()
+add_executable(avm_shortcuts_reference_tests math/shortcuts_reference.c)
+target_link_libraries(avm_shortcuts_reference_tests PRIVATE avm_shortcuts_reference_kernels)
+if(NOT MSVC)
+    target_link_libraries(avm_shortcuts_reference_tests PRIVATE m)
+endif()
+add_custom_target(avm_shortcuts_tests_run
+    COMMAND "$<TARGET_FILE:avm_shortcuts_reference_tests>"
+    DEPENDS avm_shortcuts_reference_tests USES_TERMINAL)
+add_dependencies(avm_tests_run avm_shortcuts_tests_run)

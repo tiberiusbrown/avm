@@ -21,9 +21,19 @@
 
 #include "fdlibm.h"
 
+static __attribute__((always_inline)) inline int avm_fmod_subnormal_exponent(uint32_t word)
+{
+    /* Count in native words: AVM has a 16-bit clz, with no 32-bit helper.
+       The input is nonzero, so neither builtin receives zero. */
+    unsigned high = (uint16_t)(word >> 16);
+    return high ? (int)(sizeof(unsigned)*8)-134-__builtin_clz(high)
+                : (int)(sizeof(unsigned)*8)-150-__builtin_clz((unsigned)word);
+}
+
 	float __ieee754_fmodf(float x, float y)
 {
-	__int32_t n,hx,hy,hz,ix,iy,sx,i;
+	__int32_t hx,hy,hz,sx;
+	int n,ix,iy;
 
 	GET_FLOAT_WORD(hx,x);
 	GET_FLOAT_WORD(hy,y);
@@ -50,12 +60,12 @@
 
     /* determine ix = ilogb(x) */
 	if(FLT_UWORD_IS_SUBNORMAL(hx)) {	/* subnormal x */
-	    for (ix = -126,i=(hx<<8); i>0; i<<=1) ix -=1;
+	    ix = avm_fmod_subnormal_exponent((uint32_t)hx);
 	} else ix = (hx>>23)-127;
 
     /* determine iy = ilogb(y) */
 	if(FLT_UWORD_IS_SUBNORMAL(hy)) {	/* subnormal y */
-	    for (iy = -126,i=(hy<<8); i>=0; i<<=1) iy -=1;
+	    iy = avm_fmod_subnormal_exponent((uint32_t)hy);
 	} else iy = (hy>>23)-127;
 
     /* set up {hx,lx}, {hy,ly} and align y to x */
@@ -94,7 +104,7 @@
 	    iy -= 1;
 	}
 	if(iy>= -126) {		/* normalize output */
-	    hx = ((hx-0x00800000)|((iy+127)<<23));
+	    hx = ((hx-0x00800000)|((uint32_t)(iy+127)<<23));
 	    SET_FLOAT_WORD(x,hx|sx);
 	} else {		/* subnormal output */
 	    /* If denormals are not supported, this code will generate a

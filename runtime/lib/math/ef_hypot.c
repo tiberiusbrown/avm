@@ -17,7 +17,7 @@
 
 	float __ieee754_hypotf(float x, float y)
 {
-	float a=x,b=y,t1,t2,y1,y2,w;
+	float a=x,b=y,t1,w;
 	__int32_t j,k,ha,hb;
 
 	GET_FLOAT_WORD(ha,x);
@@ -57,22 +57,11 @@
 		SET_FLOAT_WORD(b,hb);
 	    }
 	}
-    /* medium size a and b */
-	w = a-b;
-	if (w>b) {
-	    SET_FLOAT_WORD(t1,ha&0xfffff000L);
-	    t2 = a-t1;
-	    w  = __ieee754_sqrtf(t1*t1-(b*(-b)-t2*(a+t1)));
-	} else {
-	    a  = a+a;
-	    SET_FLOAT_WORD(y1,hb&0xfffff000L);
-	    y2 = b - y1;
-	    SET_FLOAT_WORD(t1,(ha+0x00800000L)&0xfffff000UL);
-	    t2 = a - t1;
-	    w  = __ieee754_sqrtf(t1*y1-(w*(-w)-(t1*y2+t2*b)));
-	}
+    /* Scaling above keeps the sum of squares in the normal finite range.
+       Binary32 products suffice for the runtime's four-ULP contract. */
+	w = __ieee754_sqrtf(a*a+b*b);
 	if(k!=0) {
-	    SET_FLOAT_WORD(t1,0x3f800000L+(k<<23));
+	    SET_FLOAT_WORD(t1,0x3f800000UL+((uint32_t)k<<23));
 	    return t1*w;
 	} else return w;
 }

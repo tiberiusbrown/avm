@@ -212,6 +212,77 @@ int32_t __avm_ashrsi3(int32_t value, uint32_t count)
     return (int32_t)bits;
 }
 
+/*
+ * Rotate counts wrap modulo 32. Exchange the words for counts 16..31, then
+ * combine four native shifts for counts 1..15. Zero (including multiples of
+ * 16 after the exchange) returns before forming the complementary count.
+ * r7 is caller-clobbered; the compiler saves/restores the r0 scratch register.
+ * Keep all control flow in the asm block so stack usage remains certifiable.
+ */
+AVM_NOINLINE
+uint32_t __avm_rotlsi3(uint32_t value, uint16_t count)
+{
+    register uint32_t bits __asm__("q2") = value;
+    register uint16_t shift __asm__("r6") = count;
+    __asm__("ldi8 r7, 31\n\t"
+            "and r6, r7\n\t"
+            "cmpi.s8 r6, 16\n\t"
+            "brult8 1f\n\t"
+            "mov r7, r4\n\t"
+            "mov r4, r5\n\t"
+            "mov r5, r7\n\t"
+            "addi.s8 r6, -16\n"
+            "1:\n\t"
+            "tst16 r6\n\t"
+            "breq8 2f\n\t"
+            "mov r7, r4\n\t"
+            "mov r0, r5\n\t"
+            "shl16v r4, r6\n\t"
+            "shl16v r5, r6\n\t"
+            "neg16 r6\n\t"
+            "addi.s8 r6, 16\n\t"
+            "lsr16v r7, r6\n\t"
+            "or r5, r7\n\t"
+            "mov r7, r0\n\t"
+            "lsr16v r7, r6\n\t"
+            "or r4, r7\n"
+            "2:"
+            : "+q"(bits), "+r"(shift) : : "r0", "r7", "cc");
+    return bits;
+}
+
+AVM_NOINLINE
+uint32_t __avm_rotrsi3(uint32_t value, uint16_t count)
+{
+    register uint32_t bits __asm__("q2") = value;
+    register uint16_t shift __asm__("r6") = count;
+    __asm__("ldi8 r7, 31\n\t"
+            "and r6, r7\n\t"
+            "cmpi.s8 r6, 16\n\t"
+            "brult8 1f\n\t"
+            "mov r7, r4\n\t"
+            "mov r4, r5\n\t"
+            "mov r5, r7\n\t"
+            "addi.s8 r6, -16\n"
+            "1:\n\t"
+            "tst16 r6\n\t"
+            "breq8 2f\n\t"
+            "mov r7, r4\n\t"
+            "mov r0, r5\n\t"
+            "lsr16v r4, r6\n\t"
+            "lsr16v r5, r6\n\t"
+            "neg16 r6\n\t"
+            "addi.s8 r6, 16\n\t"
+            "shl16v r7, r6\n\t"
+            "or r5, r7\n\t"
+            "mov r7, r0\n\t"
+            "shl16v r7, r6\n\t"
+            "or r4, r7\n"
+            "2:"
+            : "+q"(bits), "+r"(shift) : : "r0", "r7", "cc");
+    return bits;
+}
+
 AVM_NOINLINE
 uint32_t __avm_mulsi3(uint32_t left, uint32_t right)
 {

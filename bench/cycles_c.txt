@@ -48,12 +48,12 @@
      1444736   record_scan.c
       144721   record_stride.c
       393095   record_stride_nested.c
-     4056017   register_cleanup.c
+     3148973   register_cleanup.c
      1921658   reverse_walk.c
-     4473141   rotate32.c
+     1536045   rotate32.c
      3101672   saturating_math.c
       718161   select.c
-      518677   shifts.c
+      395573   shifts.c
      1830484   short_circuit.c
       377189   sieve.c
       323653   small_memops.c
@@ -86,4 +86,4 @@
      1105796   wide_compare.c
      2694774   wide_divmod.c
       651718   wide_mul.c
-      542283   wide_shifts.c
+      220811   wide_shifts.c

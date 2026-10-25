@@ -241,7 +241,9 @@ are resolved.
 
 The 64-bit division helpers use the same zero-divisor convention as their
 32-bit counterparts: unsigned quotient is `UINT64_MAX`, signed quotient is
-`-1`, and remainder is the numerator. Direct shift-helper calls with counts of
-64 or more return zero for left and logical-right shifts and the sign fill for
-arithmetic-right shifts. Source-language division by zero and out-of-range
-shift counts remain undefined behavior.
+`-1`, and remainder is the numerator. Direct shift-helper calls with counts at
+or above the value width (32 or 64) return zero for left and logical-right
+shifts and the sign fill for arithmetic-right shifts. The 32-bit helpers
+decompose values into two 16-bit words and use variable 16-bit shift
+instructions, without a loop over the count. Source-language division by zero
+and out-of-range shift counts remain undefined behavior.

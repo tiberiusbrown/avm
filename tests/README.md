@@ -58,6 +58,12 @@ bounds, conditional fields, reverse traversal and nested stable insertion of
 record slots. It also checks multiplication with indices below and above 255.
 The fixture runs at every standard optimization level.
 
+`shift32_helpers` checks all three 32-bit shift helpers and compiler-generated
+variable and constant shifts against an independent single-bit reference. It
+covers every count from 0 through 33, word-boundary patterns, every walking bit
+and its complement, and large 32-bit counts that must not truncate to a valid count.
+The fixture runs at every standard optimization level.
+
 `widening_byte_multiply` checks signed, unsigned and mixed byte products against
 an independent shift/add reference at every standard optimization level. It
 covers every left byte with signed/unsigned boundary values on the right,

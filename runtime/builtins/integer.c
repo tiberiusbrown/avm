@@ -12,25 +12,13 @@ typedef union {
 } avm_u32_words;
 
 /*
- * Keep all 32-bit shifts inside inline assembly. Writing these as C shifts
- * would lower them back to __avm_ashlsi3, __avm_lshrsi3, or __avm_ashrsi3
- * and recurse.
+ * Do not express the shift helpers as C 32-bit shifts: those can lower back
+ * to the same helpers and recurse. Variable shifts operate on 16-bit words;
+ * the single-bit 32-bit shift is also used by restoring division below.
  */
 AVM_ALWAYS_INLINE uint32_t avm_shl32_1(uint32_t value)
 {
     __asm__("add32 %0, %0" : "+q"(value));
-    return value;
-}
-
-AVM_ALWAYS_INLINE uint32_t avm_lshr32_1(uint32_t value)
-{
-    __asm__("lsr32.1 %0" : "+q"(value));
-    return value;
-}
-
-AVM_ALWAYS_INLINE int32_t avm_ashr32_1(int32_t value)
-{
-    __asm__("asr32.1 %0" : "+q"(value));
     return value;
 }
 
@@ -108,37 +96,120 @@ AVM_ALWAYS_INLINE uint32_t avm_mul_signed16_full(uint16_t left,
     return product.value;
 }
 
+/*
+ * Use the four compact registers for the two value words, the low count and
+ * the high count (reused for cross-word bits). Keeping the complete operation
+ * in one block avoids spilling intermediate word values. The fixed q2/q3
+ * operands declare every register used by the assembly. All branch targets
+ * stay within the block, so the compiler can certify its stack usage.
+ *
+ * A nonzero high count or a low count >= 32 produces zero/sign fill. Counts
+ * 1..15 combine three word shifts; counts 16..31 use one word shift by 0..15.
+ * Count zero returns unchanged, before computing the complementary count.
+ */
 AVM_NOINLINE
 uint32_t __avm_ashlsi3(uint32_t value, uint32_t count)
 {
-    if (count >= 32u)
-        return 0;
-
-    for (uint16_t i = 0; i < (uint16_t)count; ++i)
-        value = avm_shl32_1(value);
-    return value;
+    register uint32_t bits __asm__("q2") = value;
+    register uint32_t shift __asm__("q3") = count;
+    __asm__("tst16 r7\n\t"
+            "brne8 3f\n\t"
+            "cmpi.s8 r6, 16\n\t"
+            "bruge8 1f\n\t"
+            "tst16 r6\n\t"
+            "breq8 4f\n\t"
+            "mov r7, r4\n\t"
+            "shl16v r5, r6\n\t"
+            "shl16v r4, r6\n\t"
+            "neg16 r6\n\t"
+            "addi.s8 r6, 16\n\t"
+            "lsr16v r7, r6\n\t"
+            "or r5, r7\n\t"
+            "jmp8 4f\n"
+            "1:\n\t"
+            "cmpi.s8 r6, 32\n\t"
+            "bruge8 3f\n\t"
+            "addi.s8 r6, -16\n\t"
+            "shl16v r4, r6\n\t"
+            "mov r5, r4\n\t"
+            "ldi8 r4, 0\n\t"
+            "jmp8 4f\n"
+            "3:\n\t"
+            "ldi8 r4, 0\n\t"
+            "ldi8 r5, 0\n"
+            "4:"
+            : "+q"(bits), "+q"(shift) : : "cc");
+    return bits;
 }
 
 AVM_NOINLINE
 uint32_t __avm_lshrsi3(uint32_t value, uint32_t count)
 {
-    if (count >= 32u)
-        return 0;
-
-    for (uint16_t i = 0; i < (uint16_t)count; ++i)
-        value = avm_lshr32_1(value);
-    return value;
+    register uint32_t bits __asm__("q2") = value;
+    register uint32_t shift __asm__("q3") = count;
+    __asm__("tst16 r7\n\t"
+            "brne8 3f\n\t"
+            "cmpi.s8 r6, 16\n\t"
+            "bruge8 1f\n\t"
+            "tst16 r6\n\t"
+            "breq8 4f\n\t"
+            "mov r7, r5\n\t"
+            "lsr16v r4, r6\n\t"
+            "lsr16v r5, r6\n\t"
+            "neg16 r6\n\t"
+            "addi.s8 r6, 16\n\t"
+            "shl16v r7, r6\n\t"
+            "or r4, r7\n\t"
+            "jmp8 4f\n"
+            "1:\n\t"
+            "cmpi.s8 r6, 32\n\t"
+            "bruge8 3f\n\t"
+            "addi.s8 r6, -16\n\t"
+            "lsr16v r5, r6\n\t"
+            "mov r4, r5\n\t"
+            "ldi8 r5, 0\n\t"
+            "jmp8 4f\n"
+            "3:\n\t"
+            "ldi8 r4, 0\n\t"
+            "ldi8 r5, 0\n"
+            "4:"
+            : "+q"(bits), "+q"(shift) : : "cc");
+    return bits;
 }
 
 AVM_NOINLINE
 int32_t __avm_ashrsi3(int32_t value, uint32_t count)
 {
-    if (count >= 32u)
-        return value < 0 ? -1 : 0;
-
-    for (uint16_t i = 0; i < (uint16_t)count; ++i)
-        value = avm_ashr32_1(value);
-    return value;
+    register uint32_t bits __asm__("q2") = (uint32_t)value;
+    register uint32_t shift __asm__("q3") = count;
+    __asm__("tst16 r7\n\t"
+            "brne8 3f\n\t"
+            "cmpi.s8 r6, 16\n\t"
+            "bruge8 1f\n\t"
+            "tst16 r6\n\t"
+            "breq8 4f\n\t"
+            "mov r7, r5\n\t"
+            "lsr16v r4, r6\n\t"
+            "asr16v r5, r6\n\t"
+            "neg16 r6\n\t"
+            "addi.s8 r6, 16\n\t"
+            "shl16v r7, r6\n\t"
+            "or r4, r7\n\t"
+            "jmp8 4f\n"
+            "1:\n\t"
+            "cmpi.s8 r6, 32\n\t"
+            "bruge8 3f\n\t"
+            "addi.s8 r6, -16\n\t"
+            "mov r4, r5\n\t"
+            "asr16v r4, r6\n\t"
+            "asr16i r5, 15\n\t"
+            "jmp8 4f\n"
+            "3:\n\t"
+            "asr16i r5, 15\n\t"
+            "mov r4, r5\n"
+            "4:"
+            : "+q"(bits), "+q"(shift) : : "cc");
+    return (int32_t)bits;
 }
 
 AVM_NOINLINE

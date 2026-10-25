@@ -75,6 +75,11 @@ regression coverage and measurements.
 [widening byte multiplication](../docs/compiler-byte-multiply.md) for instruction
 selection coverage and before/after measurements.
 
+`shifts`, `rotate32`, `register_cleanup`, and `wide_shifts` measure the runtime
+32-bit variable-shift helpers. See [32-bit runtime shifts](../docs/runtime-shifts.md)
+for the word decomposition, constant-shift coverage, stack diagnostics, and
+before/after measurements.
+
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;
 each source should contain exactly one pair of debug breaks.

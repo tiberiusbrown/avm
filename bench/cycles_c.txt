@@ -23,7 +23,7 @@
        20826   draw_text_P.c
       739468   dynamic_stack.c
       236880   fibonacci.c
-     3762684   fir8.c
+     2944300   fir8.c
      7098124   fixed_point.c
       940529   float.c
       864928   float_comparisons.c
@@ -39,7 +39,7 @@
       803965   packed_fields.c
       286671   pointer_table.c
       930675   pointer_walk.c
-      387686   popcount.c
+      297331   popcount.c
      2050121   progmem_record_index.c
      2612516   progmem_walk.c
       531946   progmem_widen_ldp16.c
@@ -57,7 +57,7 @@
      1830484   short_circuit.c
       377189   sieve.c
       323653   small_memops.c
-      254100   stack_array.c
+      156996   stack_array.c
      2555871   stack_frames.c
      7138844   state_machine.c
     25938058   string_scan.c

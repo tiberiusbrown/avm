@@ -74,6 +74,9 @@ regression coverage and measurements.
 `fir8` exercises signed byte products with hoisted, spilled coefficients. See
 [widening byte multiplication](../docs/compiler-byte-multiply.md) for instruction
 selection coverage and before/after measurements.
+Its unrolled sample loads also exercise
+[shared displaced-address bases](../docs/compiler-shared-addresses.md), including
+the native-cycle cost and register-pressure policy.
 
 `shifts`, `rotate32`, `register_cleanup`, and `wide_shifts` measure the runtime
 32-bit variable-shift helpers. See [32-bit runtime shifts](../docs/runtime-shifts.md)

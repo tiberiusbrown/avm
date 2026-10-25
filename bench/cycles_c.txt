@@ -1,4 +1,4 @@
-     1858026   aggregate_args.c
+     1593426   aggregate_args.c
      1524274   aggregate_return.c
      2094135   aliasing.c
      1850355   bit_count.c
@@ -23,7 +23,7 @@
        20826   draw_text_P.c
       739468   dynamic_stack.c
       236880   fibonacci.c
-     4703837   fir8.c
+     3762684   fir8.c
      9182988   fixed_point.c
       940529   float.c
       864928   float_comparisons.c

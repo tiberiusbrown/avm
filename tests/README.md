@@ -75,6 +75,11 @@ covers every left byte with signed/unsigned boundary values on the right,
 program-memory loads, a shared signed full-word use, and hoisted coefficients
 that exceed the register file and require spills.
 
+`shared_data_bases` checks byte and word windows with runtime indices, displaced
+reads and writes, negative offsets and signed arithmetic. Separate reference
+accesses check every result at all six optimization levels, including a
+sixteen-tap FIR with hoisted coefficients that require spills.
+
 `aggregate_byte_packing` checks construction, register arguments and returns for
 two-, three-, and four-byte records, plus three-byte stack arguments. It covers
 every byte value and truncation of word inputs with nonzero high bytes, and

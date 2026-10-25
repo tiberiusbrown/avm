@@ -9,16 +9,16 @@ SYMBOL TABLE:
 00000100 l     O .data	00000002 stack_seed
 000003d1 l     F .text	00000052 outer
 00000102 l     O .data	00000002 stack_frames_result
-00000423 l     F .text	000000ad middle
-000004d0 l     F .text	0000000c leaf
+00000423 l     F .text	00000083 middle
+000004a6 l     F .text	0000000c leaf
 00000000 l    df *ABS*	00000000 runtime.c
-000004de l       .init_array	00000000 .hidden __init_array_end
-000004de l       .init_array	00000000 .hidden __init_array_start
-000004de l       .fini_array	00000000 .hidden __fini_array_start
-000004de l       .fini_array	00000000 .hidden __fini_array_end
+000004b4 l       .init_array	00000000 .hidden __init_array_end
+000004b4 l       .init_array	00000000 .hidden __init_array_start
+000004b4 l       .fini_array	00000000 .hidden __fini_array_start
+000004b4 l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	0000001e _start
 000002c7 g     F .text	0000010a avm_test_main
-000004dc g     F .text	00000002 avm_halt
+000004b2 g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
 
 Disassembly of section .text:
@@ -37,7 +37,7 @@ Disassembly of section .text:
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 be 02              call16	avm_halt
+ e1 94 02              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -45,19 +45,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 de 04              ldi16	r4, 0x4de
+ c4 b4 04              ldi16	r4, 0x4b4
  c1 00                 ldi8	r5, 0x0
- c6 de 04              ldi16	r6, 0x4de
+ c6 b4 04              ldi16	r6, 0x4b4
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 de 04           ldi16	r0, 0x4de
+ f0 04 b4 04           ldi16	r0, 0x4b4
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 de 04           ldi16	r2, 0x4de
+ f0 06 b4 04           ldi16	r2, 0x4b4
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -91,19 +91,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fd              call16	-631 <__avm_run_local_dtors>
 <L0>:
- c4 de 04              ldi16	r4, 0x4de
+ c4 b4 04              ldi16	r4, 0x4b4
  c1 00                 ldi8	r5, 0x0
- c6 de 04              ldi16	r6, 0x4de
+ c6 b4 04              ldi16	r6, 0x4b4
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 de 04           ldi16	r2, 0x4de
+ f0 06 b4 04           ldi16	r2, 0x4b4
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 de 04           ldi16	r0, 0x4de
+ f0 04 b4 04           ldi16	r0, 0x4b4
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -317,68 +317,47 @@ Disassembly of section .text:
  f1 04                 mov	r0, r4
  c8 1e                 addi.s8	r4, 0x1e
  f0 2c 16              stsp8	[sp+0x16], r4
- f1 20                 mov	r4, r0
- c8 11                 addi.s8	r4, 0x11
+ c8 f3                 addi.s8	r4, -0xd
  f0 2c 15              stsp8	[sp+0x15], r4
- f1 20                 mov	r4, r0
- c8 04                 addi.s8	r4, 0x4
+ c8 f3                 addi.s8	r4, -0xd
  f0 2c 14              stsp8	[sp+0x14], r4
- f1 20                 mov	r4, r0
- c8 f7                 addi.s8	r4, -0x9
+ c8 f3                 addi.s8	r4, -0xd
  f0 2c 13              stsp8	[sp+0x13], r4
- f1 20                 mov	r4, r0
- c8 ea                 addi.s8	r4, -0x16
+ c8 f3                 addi.s8	r4, -0xd
  f0 2c 12              stsp8	[sp+0x12], r4
- f1 20                 mov	r4, r0
- c8 dd                 addi.s8	r4, -0x23
+ c8 f3                 addi.s8	r4, -0xd
  f0 2c 11              stsp8	[sp+0x11], r4
- f1 20                 mov	r4, r0
- c8 d0                 addi.s8	r4, -0x30
+ c8 f3                 addi.s8	r4, -0xd
  f0 2c 10              stsp8	[sp+0x10], r4
- f1 20                 mov	r4, r0
- c8 c3                 addi.s8	r4, -0x3d
+ c8 f3                 addi.s8	r4, -0xd
  f1 6c                 stsp8	[sp+0xf], r4
- f1 20                 mov	r4, r0
- c8 b6                 addi.s8	r4, -0x4a
+ c8 f3                 addi.s8	r4, -0xd
  f1 68                 stsp8	[sp+0xe], r4
- f1 20                 mov	r4, r0
- c8 a9                 addi.s8	r4, -0x57
+ c8 f3                 addi.s8	r4, -0xd
  f1 64                 stsp8	[sp+0xd], r4
- f1 20                 mov	r4, r0
- c8 9c                 addi.s8	r4, -0x64
+ c8 f3                 addi.s8	r4, -0xd
  f1 60                 stsp8	[sp+0xc], r4
- f1 20                 mov	r4, r0
- c8 8f                 addi.s8	r4, -0x71
+ c8 f3                 addi.s8	r4, -0xd
  f1 5c                 stsp8	[sp+0xb], r4
- f1 20                 mov	r4, r0
- c8 82                 addi.s8	r4, -0x7e
+ c8 f3                 addi.s8	r4, -0xd
  f1 58                 stsp8	[sp+0xa], r4
- f1 20                 mov	r4, r0
- c8 75                 addi.s8	r4, 0x75
+ c8 f3                 addi.s8	r4, -0xd
  f1 54                 stsp8	[sp+0x9], r4
- f1 20                 mov	r4, r0
- c8 68                 addi.s8	r4, 0x68
+ c8 f3                 addi.s8	r4, -0xd
  f1 50                 stsp8	[sp+0x8], r4
- f1 20                 mov	r4, r0
- c8 5b                 addi.s8	r4, 0x5b
+ c8 f3                 addi.s8	r4, -0xd
  f1 4c                 stsp8	[sp+0x7], r4
- f1 20                 mov	r4, r0
- c8 4e                 addi.s8	r4, 0x4e
+ c8 f3                 addi.s8	r4, -0xd
  f1 48                 stsp8	[sp+0x6], r4
- f1 20                 mov	r4, r0
- c8 41                 addi.s8	r4, 0x41
+ c8 f3                 addi.s8	r4, -0xd
  f1 44                 stsp8	[sp+0x5], r4
- f1 20                 mov	r4, r0
- c8 34                 addi.s8	r4, 0x34
+ c8 f3                 addi.s8	r4, -0xd
  f1 40                 stsp8	[sp+0x4], r4
- f1 20                 mov	r4, r0
- c8 27                 addi.s8	r4, 0x27
+ c8 f3                 addi.s8	r4, -0xd
  f1 3c                 stsp8	[sp+0x3], r4
- f1 20                 mov	r4, r0
- c8 1a                 addi.s8	r4, 0x1a
+ c8 f3                 addi.s8	r4, -0xd
  f1 38                 stsp8	[sp+0x2], r4
- f1 20                 mov	r4, r0
- c8 0d                 addi.s8	r4, 0xd
+ c8 f3                 addi.s8	r4, -0xd
  f1 34                 stsp8	[sp+0x1], r4
  f0 28 00              stsp8	[sp+0x0], r0
  f0 14 00              leasp	r4, 0x0

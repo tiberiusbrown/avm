@@ -58,7 +58,7 @@
       377189   sieve.c
       323653   small_memops.c
       156996   stack_array.c
-     2555871   stack_frames.c
+     2425335   stack_frames.c
      7138844   state_machine.c
     25938058   string_scan.c
       444653   struct_copy.c

@@ -2252,27 +2252,29 @@ void cset(char** args) {
     std::cout<<"CSET: "<<valid<<" condition/register/flag/PC cases at 41 cycles and "
         <<invalid<<" invalid-encoding cases passed\n";
 }
-void libm_relocation(char** args) {
+void retired_math(char** args) {
     harness h(args);
-    // Preserve exact checkpoint results, including the existing tie rounding.
-    // Approximate libm fixture tolerances would miss a one-ULP relocation change.
-    std::array<uint32_t,4> expected{0x3eed6339u,0x3f8db70du,0x402b6374u,0xc02b6374u};
-    unsigned cases=0;
-    for(auto operands : {std::make_pair(0x3f800000u,0x40000000u),
-                         std::make_pair(0x40000000u,0x3f800000u),
-                         std::make_pair(0x3f800000u,0xc0000000u),
-                         std::make_pair(0xbf800000u,0xc0000000u)}) {
-        for(unsigned i=0;i<4;++i) {
-            h.c().data[22+i]=uint8_t(operands.first>>(8*i));
-            h.c().data[18+i]=uint8_t(operands.second>>(8*i));
-        }
-        auto sp=h.c().sp(); auto y=h.word(28);
-        h.routine("atan2f");
-        auto bits=uint32_t(h.word(22))|(uint32_t(h.word(24))<<16);
-        require(bits==expected[cases++],"atan2 relocation changed tie rounding");
-        require(h.c().sp()==sp && h.word(28)==y,"atan2 changed native stack or callee-saved Y");
+    for(auto name : {"sqrtf","sinf","cosf","atan2f","tanf","expf","logf",
+                     "log2f","log10f","powf","hypotf","fmodf"})
+        require(!h.symbols.count(name),"native math implementation remains");
+    std::vector<std::array<uint8_t,2>> encodings;
+    for(unsigned id=4;id<=14;++id) encodings.push_back({0xd7,uint8_t(id)});
+    for(unsigned id=0x40;id<=0x5f;++id) encodings.push_back({0xff,uint8_t(id)});
+    for(unsigned id=0x68;id<=0x7b;++id) encodings.push_back({0xff,uint8_t(id)});
+    auto trap=h.sym("invalid_secondary_instruction_func");
+    for(auto bytes : encodings) {
+        h.quiet(); h.asset(0x7000,{bytes[0],bytes[1],0x00});
+        h.word(4,0x7000); h.c().data[6]=0;
+        auto regs=h.c().data; auto sp=h.c().sp();
+        h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
+        h.until([&]{return h.c().pc==trap;},1000);
+        for(unsigned i=0;i<10;++i) h.tick();
+        require(h.c().pc==trap,"retired math encoding escaped trap");
+        for(unsigned r=8;r<24;++r)
+            require(h.c().data[r]==regs[r],"retired math changed guest register");
+        require(h.c().sp()==sp,"retired math changed native stack");
     }
-    std::cout<<"libm relocation: four exact atan2 rounding cases passed\n";
+    std::cout<<"retired math: "<<encodings.size()<<" encodings trapped\n";
 }
 void format_fields(char** args) {
     harness h(args);
@@ -2357,7 +2359,7 @@ void sys_bounds(char** args) {
         require(h.c().data[reg::addr::GPIOR0]==flags,"SYS guard changed guest flags");
         require(h.c().sp()==sp,"SYS guard changed native stack");
     }
-    std::cout<<"SYS dispatch: all "<<services<<" services and "<<256-services<<" invalid IDs passed\n";
+    std::cout<<"SYS dispatch: all "<<services<<" table entries and "<<256-services<<" out-of-range IDs passed\n";
 }
 void float_precision(char** args) {
     harness h(args);
@@ -2478,7 +2480,7 @@ int main(int argc,char** argv) {
         require(argc>=4 && argc<=8,"usage: avm_audio_tests interpreter.hex interpreter.lst audio.bin [audio_demo.bin [audio_c_test.bin [large_c.bin [large_cpp.bin]]]]");
         decimal_division(argv);
         cset(argv);
-        libm_relocation(argv);
+        retired_math(argv);
         format_fields(argv);
         sys_bounds(argv);
         float_precision(argv);

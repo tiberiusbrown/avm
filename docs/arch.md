@@ -1419,12 +1419,13 @@ All floating-point operands are IEEE-754 binary32 values held in `q0-q3`.
 Floating-point instructions preserve `CC` and expose no architectural
 floating-point exception state. Arithmetic and conversion results use
 round-to-nearest, ties-to-even unless an instruction specifies another
-rounding direction. NaN result payloads are unspecified except for `FMIN`,
-`FMAX`, `FNEG`, `FABS`, and `FCLASS`, whose bit-level behavior is defined below.
+rounding direction. NaN result payloads are unspecified except for `FNEG`, `FABS`, and
+`FCLASS`, whose bit-level behavior is defined below. Math functions live in
+the guest runtime; see the [migration measurements](math-runtime-tradeoff.md).
 
 ### 35.1.1. Binary matrix
 
-For `FF 00-5F`:
+For `FF 00-3F`:
 
 ```text
 bits 7:4  operation
@@ -1438,22 +1439,13 @@ bits 1:0  preserved source/right qS
 | `10-1F` | `FSUB qD,qS` | `qD = binary32(qD - qS)` |
 | `20-2F` | `FMUL qD,qS` | `qD = binary32(qD * qS)` |
 | `30-3F` | `FDIV qD,qS` | `qD = binary32(qD / qS)` |
-| `40-4F` | `FMIN qD,qS` | Number-preferred minimum |
-| `50-5F` | `FMAX qD,qS` | Number-preferred maximum |
+| `40-5F` | Reserved (former FMIN/FMAX) | Invalid-secondary trap |
 
 All combinations, including `qD == qS`, are legal.
 
-For `FMIN` and `FMAX`, let `a` be the original `qD` and `b` be `qS`:
-
-1. If `a` is NaN, return `b`.
-2. Otherwise, if `b` is NaN, return `a`.
-3. Otherwise, return the lesser (`FMIN`) or greater (`FMAX`) operand.
-4. Opposite-signed zeros are ordered as `-0.0 < +0.0`.
-
-If both operands are NaNs, the second operand is returned. A selected operand
-is copied unchanged, including its sign, NaN payload, and signaling/quiet bit.
-Thus `FMIN` returns negative zero and `FMAX` returns positive zero for
-opposite-signed zeros.
+Number-preferred minimum and maximum are provided by `fminf` and `fmaxf`
+in `libavm.a`. They prefer the numeric operand when one is NaN and order
+opposite-signed zeros as `-0.0 < +0.0`.
 
 ### 35.1.2. Unary operations
 
@@ -1465,16 +1457,13 @@ secondary = operationBase + qD
 |---:|---|---|
 | `60-63` | `FNEG qD` | Toggle the binary32 sign bit |
 | `64-67` | `FABS qD` | Clear the binary32 sign bit |
-| `68-6B` | `FSQRT qD` | Binary32 square root |
-| `6C-6F` | `FTRUNC qD` | Integral-valued result, toward zero |
-| `70-73` | `FFLOOR qD` | Integral-valued result, toward negative infinity |
-| `74-77` | `FCEIL qD` | Integral-valued result, toward positive infinity |
-| `78-7B` | `FROUND qD` | Integral-valued result, nearest with ties away from zero |
+| `68-7B` | Reserved (former sqrt/rounding) | Invalid-secondary trap |
 | `7C-BF` | Reserved | — |
 
 `FNEG` and `FABS` are bit operations and preserve every non-sign bit,
-including NaN payload and signaling state. The four rounding operations return
-NaNs and infinities unchanged and preserve the sign of zero.
+including NaN payload and signaling state. Square root and integral rounding
+use ordinary runtime calls and preserve the sign of zero; NaN payloads and
+signaling state are unspecified for those functions.
 
 ### 35.1.3. Extended operations
 
@@ -1983,17 +1972,7 @@ have no generic LLVM representation.
 | `0x01` | `debug_break` | None | None | None |
 | `0x02` | `millis` | None | `r4` | None |
 | `0x03` | `millis32` | None | `q2 = r4:r5` | None |
-| `0x04` | `sinf` | `q2` | `q2` | None |
-| `0x05` | `cosf` | `q2` | `q2` | None |
-| `0x06` | `atan2f` | `q2 = y`, `q3 = x` | `q2` | None |
-| `0x07` | `tanf` | `q2` | `q2` | None |
-| `0x08` | `expf` | `q2` | `q2` | None |
-| `0x09` | `logf` | `q2` | `q2` | None |
-| `0x0A` | `log2f` | `q2` | `q2` | None |
-| `0x0B` | `log10f` | `q2` | `q2` | None |
-| `0x0C` | `powf` | `q2 = x`, `q3 = y` | `q2` | None |
-| `0x0D` | `hypotf` | `q2 = x`, `q3 = y` | `q2` | None |
-| `0x0E` | `fmodf` | `q2 = x`, `q3 = y` | `q2` | None |
+| `0x04-0x0E` | Reserved (former math services) | — | Invalid-secondary trap | — |
 | `0x0F` | `memcpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space memory |
 | `0x10` | `memcpy_P` | `r4 = dst`, `q3 = src`, `r5 = n` | `r4 = dst` | Data-space memory |
 | `0x11` | `memset` | `r4 = dst`, `r5 = val`, `r6 = n` | `r4 = dst` | Data-space memory |
@@ -2046,9 +2025,8 @@ SP
 every general-purpose register not listed as a result
 ```
 
-An input-only register is preserved. In particular, every floating-point math
-service defines only `q2`; binary services preserve the original value of
-`q3`. All floating-point math services preserve `q0` and `q1`.
+An input-only service register is preserved. Guest math functions use the
+ordinary C ABI, including its call-clobbered registers and `CC`.
 
 ### 49.1. `debug_putc`
 
@@ -2142,39 +2120,19 @@ The service defines the complete 32-bit pair `q2`, and therefore defines both `r
 
 Each invocation observes the current timer state. Calls MUST NOT be removed, duplicated, speculated, common-subexpression eliminated, or hoisted from their program-order position.
 
-### 49.5. Floating-point math services
+### 49.5. Retired floating-point math services
 
-Services `0x04-0x0E` operate on IEEE-754 binary32 values in `q2` and, for
-binary services, `q3`. The result replaces `q2`. They preserve `q0`, `q1`,
-`q3`, `CC`, and `SP`.
+`SYS 0x04-0x0E` are reserved and enter the invalid-secondary trap. Rebuild
+applications that used them or the former `FF` math instructions with the
+matching compiler and runtime.
 
-Angles are measured in radians. The services expose no floating-point exception
-state and do not set `errno`. NaN result payloads are unspecified. Subject to
-those rules, each service has the semantics of the corresponding single-
-precision C math function.
-
-| ID | Encoding | Operation |
-|---:|---|---|
-| `0x04` | `D7 04` | `q2 = sinf(q2)` |
-| `0x05` | `D7 05` | `q2 = cosf(q2)` |
-| `0x06` | `D7 06` | `q2 = atan2f(q2, q3)` where the original `q2` is `y` and `q3` is `x` |
-| `0x07` | `D7 07` | `q2 = tanf(q2)` |
-| `0x08` | `D7 08` | `q2 = expf(q2)` |
-| `0x09` | `D7 09` | `q2 = logf(q2)` |
-| `0x0A` | `D7 0A` | `q2 = log2f(q2)` |
-| `0x0B` | `D7 0B` | `q2 = log10f(q2)` |
-| `0x0C` | `D7 0C` | `q2 = powf(q2, q3)` where the original `q2` is `x` and `q3` is `y` |
-| `0x0D` | `D7 0D` | `q2 = hypotf(q2, q3)` where the original operands are `x` and `y` |
-| `0x0E` | `D7 0E` | `q2 = fmodf(q2, q3)` where the original `q2` is `x` and `q3` is `y` |
-
-For finite `x` and finite nonzero `y`, `fmodf` computes:
-
-```text
-x - trunc(x / y) * y
-```
-
-A nonzero `fmodf` result has the sign of `x`. `atan2f` returns an angle in the
-closed interval `[-pi, +pi]`.
+The runtime provides `sqrtf`, `sinf`, `cosf`, `atan2f`, `tanf`, `expf`, `logf`,
+`log2f`, `log10f`, `powf`, `hypotf`, `fmodf`, `truncf`, `floorf`, `ceilf`,
+`roundf`, `fminf`, and `fmaxf` as ordinary C ABI functions. Angles are radians;
+`atan2f` returns an angle in `[-pi, +pi]`. Functions expose no floating-point
+exception state or `errno`. NaN result payloads are unspecified. `fmodf` has
+the sign of its first operand and computes the mathematical remainder with
+quotient truncated toward zero, without forming an overflowing float quotient.
 
 ### 49.6. `memcpy`
 
@@ -4071,34 +4029,15 @@ The `FF` page directly implements the binary32 operations listed in Section
 
 ### 55.1. Floating-point legalization and selection
 
-The backend directly selects `FADD`, `FSUB`, `FMUL`, `FDIV`, `FSQRT`, `FNEG`,
-`FABS`, integer conversions, `FCMP`, and `FCLASS` for `f32` operations with
-matching semantics. The instructions are two-address where the ISA names a
-`qD` input/output; the destination is tied to the left or sole source.
+The backend directly selects `FADD`, `FSUB`, `FMUL`, `FDIV`, `FNEG`, `FABS`,
+integer conversions, `FCMP`, and `FCLASS` for matching `f32` operations. Math
+intrinsics, including square root, rounding, number-preferred min/max and
+transcendentals, lower to ordinary calls into `libavm.a`. Legacy
+`llvm.avm.*f` math intrinsics use the same calls. Float/integer bitcasts copy
+the shared 32-bit register pair without numerical conversion.
 
-`FMIN` and `FMAX` directly implement the legacy LLVM number-preferred
-operations whose signaling-NaN behavior permits either a NaN result or treating
-the signaling NaN as a quiet NaN:
-
-```text
-llvm.minnum / llvm.maxnum
-ISD::FMINNUM / ISD::FMAXNUM
-G_FMINNUM / G_FMAXNUM
-```
-
-They do not directly implement `llvm.minimum` / `llvm.maximum`,
-`llvm.minimumnum` / `llvm.maximumnum`, or the corresponding SelectionDAG and
-GlobalISel nodes. Those operations may select `FMIN` or `FMAX` only when `nnan`
-or value analysis proves both operands non-NaN, making the NaN distinction
-unobservable.
-
-The selected machine instructions MUST retain operand order and SHOULD NOT be
-marked unconditionally commutable, because the exact NaN returned when both
-operands are NaNs is the second operand. Target-independent nodes may be
-commuted before selection when LLVM semantics permit it.
-
-An arbitrary floating compare plus `select` MUST NOT be folded to `FMIN` or
-`FMAX` unless its NaN and signed-zero behavior is equivalent or made
+An arbitrary floating compare plus `select` MUST NOT be folded to a min/max
+call unless its NaN and signed-zero behavior is equivalent or made
 unobservable by fast-math flags.
 
 `FCLASS` returns the LLVM `FPClassTest` one-hot bit. Lower `llvm.is.fpclass` or
@@ -4859,17 +4798,17 @@ generic LLVM intrinsic.
 | `llvm.avm.debug.break()` | `SYS 0x01` | None | None |
 | `llvm.avm.millis()` | `SYS 0x02` | None | `r4` |
 | `llvm.avm.millis32()` | `SYS 0x03` | None | `q2` |
-| `llvm.avm.sinf(float)` | `SYS 0x04` | `q2` | `q2` |
-| `llvm.avm.cosf(float)` | `SYS 0x05` | `q2` | `q2` |
-| `llvm.avm.atan2f(float,float)` | `SYS 0x06` | `q2 = y`, `q3 = x` | `q2` |
-| `llvm.avm.tanf(float)` | `SYS 0x07` | `q2` | `q2` |
-| `llvm.avm.expf(float)` | `SYS 0x08` | `q2` | `q2` |
-| `llvm.avm.logf(float)` | `SYS 0x09` | `q2` | `q2` |
-| `llvm.avm.log2f(float)` | `SYS 0x0A` | `q2` | `q2` |
-| `llvm.avm.log10f(float)` | `SYS 0x0B` | `q2` | `q2` |
-| `llvm.avm.powf(float,float)` | `SYS 0x0C` | `q2 = x`, `q3 = y` | `q2` |
-| `llvm.avm.hypotf(float,float)` | `SYS 0x0D` | `q2 = x`, `q3 = y` | `q2` |
-| `llvm.avm.fmodf(float,float)` | `SYS 0x0E` | `q2 = x`, `q3 = y` | `q2` |
+| `llvm.avm.sinf(...)` | `CALL sinf` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.cosf(...)` | `CALL cosf` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.atan2f(...)` | `CALL atan2f` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.tanf(...)` | `CALL tanf` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.expf(...)` | `CALL expf` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.logf(...)` | `CALL logf` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.log2f(...)` | `CALL log2f` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.log10f(...)` | `CALL log10f` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.powf(...)` | `CALL powf` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.hypotf(...)` | `CALL hypotf` | C ABI arguments | C ABI result/clobbers |
+| `llvm.avm.fmodf(...)` | `CALL fmodf` | C ABI arguments | C ABI result/clobbers |
 | `llvm.avm.memcpy(ptr,ptr,i16)` | `SYS 0x0F` | `r4 = dst`, `r5 = src`, `r6 = n` | tied `r4 = dst` |
 | AS0-destination, AS1-source `llvm.memcpy` | `SYS 0x10` through `SYS_MEMCPY_P` | `r4 = dst`, `q3 = src`, `r5 = n` | tied `r4 = dst` |
 | `llvm.avm.memset(ptr,i16,i16)` or eligible AS0 `llvm.memset` | `SYS 0x11` through `SYS_MEMSET` | `r4 = dst`, `r5 = val`, `r6 = n` | tied `r4 = dst` |
@@ -4916,11 +4855,10 @@ generic LLVM intrinsic.
 | `llvm.avm.get.system.height()` | `SYS 0x3B` through `SYS_GET_SYSTEM_HEIGHT_PSEUDO` | None | `r4 = height` |
 | `llvm.avm.get.system.display.type()` | `SYS 0x3C` through `SYS_GET_SYSTEM_DISPLAY_TYPE_PSEUDO` | None | `r4 = zero-extended type` |
 
-These instructions and machine pseudos are not ordinary calls and carry no
-call-preserved register mask. Exact physical uses and definitions are modeled
-directly. Input-only physical registers remain live across the instruction; in
-particular, the binary math services preserve `q3`, and all math services
-preserve `q0` and `q1`.
+The SYS instructions and their machine pseudos carry no call-preserved
+register mask. Exact physical uses and definitions are modeled directly, and
+input-only registers remain live across them. Math calls carry the ordinary
+C ABI call-preserved mask and may clobber `q3` and `CC`.
 
 For `SYS_MEMCPY_P`, `r4` is a tied input/definition containing `dst`; `q3` and
 `r5` are input-only and are preserved by the service. The source address is
@@ -5087,7 +5025,7 @@ duplicated, speculated, or reordered relative to another persistence service.
 They also remain ordered relative to AVM memory operations that may alias the
 saved-prefix range when applicable.
 
-The floating-point math services are deterministic, have no AVM memory effects,
+The floating-point math intrinsics are deterministic, have no observable memory effects,
 set neither `errno` nor floating-point exception state, and have no observable
 side effects. They MAY be common-subexpression eliminated, duplicated,
 speculated, or reordered when ordinary data dependencies and the requested
@@ -5306,9 +5244,9 @@ char    *__avm_strncat(char *dst, const char *src, uint16_t n);
 ```
 
 Clang builtins or runtime wrappers lower these interfaces to the target
-intrinsics. The target math library MAY expose the standard C names `sinf`,
-`cosf`, `atan2f`, `tanf`, `expf`, `logf`, `log2f`, `log10f`, `powf`, `hypotf`,
-and `fmodf` as wrappers or aliases for the corresponding services.
+intrinsics. The target math library supplies the standard C float math names. The
+compatibility math builtins and target intrinsics lower to these ordinary
+functions rather than SYS instructions.
 
 `memcpy_P` and `__builtin_avm_memcpy_p` use the conventional source signature
 specified in Section 56.4. Clang lowers the builtin to generic

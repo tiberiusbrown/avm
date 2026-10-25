@@ -25,12 +25,24 @@
       236880   fibonacci.c
      2943436   fir8.c
      6783372   fixed_point.c
-      934289   float.c
-      863632   float_comparisons.c
-      634998   float_conversions.c
+      932750   float.c
+      860176   float_comparisons.c
+      632118   float_conversions.c
        84966   indirect_call.c
     11045125   loop_control.c
      3412152   loop_shapes.c
+      674401   math_atan2.c
+      363996   math_cos.c
+      390086   math_exp.c
+      147071   math_fmod.c
+      643250   math_hypot.c
+      461247   math_log.c
+      523028   math_log10.c
+      497999   math_log2.c
+     1494206   math_pow.c
+      341025   math_sin.c
+      430649   math_sqrt.c
+      583863   math_tan.c
        18300   memory_services.c
      1063957   mixed_width.c
       765445   multiply.c

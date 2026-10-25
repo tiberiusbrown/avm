@@ -12,6 +12,17 @@ about 25 emulated seconds at `-O0`, exceeding the former 20-second limit.
 The linked test images remain under `build/tests/`. C and C++ test disassemblies
 are not generated or checked into the repository.
 
+The `math_*f` fixtures check 2,702 numeric vectors at all six optimization
+levels, including signed zero, NaNs, infinities, subnormals, rounding boundaries,
+and large trig arguments across every binary32 exponent. Exact operations use
+bit comparisons; transcendental tolerances are explicit in each vector.
+`math_builtins` also checks compatibility builtins against ordinary C ABI calls.
+`avm_math_reference_tests_run` checks the production sqrt kernel on every
+normalized binary32 mantissa/exponent-parity combination, plus random finite
+patterns and a subnormal sweep, against double sqrt rounded to float. These
+checks run within `avm_tests_run`. See the
+[math study](../docs/math-runtime-tradeoff.md) for scope and measured results.
+
 `cmake --build build --config RelWithDebInfo --target avm_audio_tests_run`
 checks native sequencing, sample synthesis, register preservation, SPI reads
 interrupted by Timer1, cycle costs, atomic chords, and the animated demo with

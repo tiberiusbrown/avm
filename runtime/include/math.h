@@ -17,35 +17,19 @@ float log10f(float x);
 float powf(float x, float y);
 float hypotf(float x, float y);
 float fmodf(float x, float y);
+float atanf(float x);
+float fabsf(float x);
+float copysignf(float x, float y);
+float scalbnf(float x, int n);
+float truncf(float x);
+float floorf(float x);
+float ceilf(float x);
+float roundf(float x);
+float fminf(float x, float y);
+float fmaxf(float x, float y);
 
 #ifdef __cplusplus
 } // extern "C"
-#endif
-
-/*
- * Ordinary call syntax lowers directly to the target builtin and therefore
- * does not depend on inlining or LTO. A function-like macro does not expand
- * for &sinf or (sinf)(x), so those forms continue to use the real function
- * definitions in libavm.a.
- *
- * Define AVM_MATH_NO_BUILTIN_MACROS before including this header to request
- * ordinary calls explicitly. AVM_MATH_IMPLEMENTATION is reserved for the
- * runtime source that defines the addressable wrappers.
- */
-#if !defined(AVM_MATH_IMPLEMENTATION) && \
-    !defined(AVM_MATH_NO_BUILTIN_MACROS)
-#define sqrtf(x)     __avm_sqrtf((x))
-#define sinf(x)      __avm_sinf((x))
-#define cosf(x)      __avm_cosf((x))
-#define atan2f(y, x) __avm_atan2f((y), (x))
-#define tanf(x)      __avm_tanf((x))
-#define expf(x)      __avm_expf((x))
-#define logf(x)      __avm_logf((x))
-#define log2f(x)     __avm_log2f((x))
-#define log10f(x)    __avm_log10f((x))
-#define powf(x, y)   __avm_powf((x), (y))
-#define hypotf(x, y) __avm_hypotf((x), (y))
-#define fmodf(x, y)  __avm_fmodf((x), (y))
 #endif
 
 #endif // AVM_RUNTIME_MATH_H

@@ -625,3 +625,28 @@ add_custom_target(avm_prof_throughput_run
     DEPENDS avm_prof_throughput
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
+
+# Verify the production sqrt kernel against host double sqrt for every binary32
+# significand and exponent parity, plus exponent/subnormal packing cases.
+add_library(avm_math_reference_kernel OBJECT
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_sqrt.c")
+target_include_directories(avm_math_reference_kernel PRIVATE
+    "${PROJECT_SOURCE_DIR}/runtime/include")
+target_compile_definitions(avm_math_reference_kernel PRIVATE
+    sqrtf=avm_reference_sqrtf)
+if(MSVC)
+    target_compile_options(avm_math_reference_kernel PRIVATE /fp:strict)
+else()
+    target_compile_options(avm_math_reference_kernel PRIVATE
+        -ffp-contract=off -fno-fast-math)
+endif()
+add_executable(avm_math_reference_tests math/sqrt_reference.c)
+target_link_libraries(avm_math_reference_tests PRIVATE avm_math_reference_kernel)
+if(NOT MSVC)
+    target_link_libraries(avm_math_reference_tests PRIVATE m)
+endif()
+add_custom_target(avm_math_reference_tests_run
+    COMMAND "$<TARGET_FILE:avm_math_reference_tests>"
+    DEPENDS avm_math_reference_tests
+    USES_TERMINAL)
+add_dependencies(avm_tests_run avm_math_reference_tests_run)

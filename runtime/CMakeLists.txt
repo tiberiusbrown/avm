@@ -74,15 +74,22 @@ avm_add_object(
     DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
 )
 
+file(GLOB AVM_RUNTIME_MATH_HEADERS CONFIGURE_DEPENDS
+    "${AVM_RUNTIME_SOURCE_DIR}/lib/math/*.h")
 set(AVM_RUNTIME_LIBRARY_OBJECTS)
 foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
+    set(runtime_math_options)
+    if(RUNTIME_SOURCE STREQUAL "math")
+        set(runtime_math_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
+    endif()
     avm_add_object(
         OUTPUT "${RUNTIME_OBJECT}"
         SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/${RUNTIME_SOURCE}.c"
         LANGUAGE C
+        COMPILE_OPTIONS ${runtime_math_options}
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-        DEPENDS ${AVM_RUNTIME_HEADERS}
+        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
     )
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 endforeach()
@@ -115,6 +122,24 @@ avm_add_object(
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     DEPENDS ${AVM_RUNTIME_HEADERS})
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
+
+# Float-only libm kernels are linked on demand into guest program memory.
+set(AVM_MATH_KERNELS
+    ef_atan2 ef_exp ef_fmod ef_hypot ef_log ef_log10 ef_pow ef_rem_pio2 ef_sqrt
+    kf_cos kf_rem_pio2 kf_sin kf_tan
+    sf_atan sf_ceil sf_copysign sf_cos sf_fabs sf_floor sf_round sf_scalbn
+    sf_sin sf_tan sf_trunc)
+foreach(kernel IN LISTS AVM_MATH_KERNELS)
+    set(math_object "${AVM_RUNTIME_OBJECT_DIR}/math_${kernel}.o")
+    avm_add_object(
+        OUTPUT "${math_object}"
+        SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/math/${kernel}.c"
+        LANGUAGE C
+        INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+        COMPILE_OPTIONS -O3 -ffp-contract=off -fwrapv -fno-jump-tables
+        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS})
+    list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${math_object}")
+endforeach()
 
 set(AVM_RUNTIME_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm.a")
 avm_add_archive(
@@ -183,17 +208,22 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
     set(AVM_RUNTIME_MIR_OUTPUT
         "${AVM_RUNTIME_MIR_BUILD_DIR}/${AVM_RUNTIME_MIR_STEM}.mir")
 
+    set(math_mir_options)
+    if(AVM_RUNTIME_MIR_RELATIVE MATCHES "^lib/math[/.]")
+        set(math_mir_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
+    endif()
     avm_add_object(
         OUTPUT "${AVM_RUNTIME_MIR_OBJECT}"
         SOURCE "${AVM_RUNTIME_MIR_SOURCE}"
         LANGUAGE "${AVM_RUNTIME_MIR_LANGUAGE}"
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
         COMPILE_OPTIONS
+            ${math_mir_options}
             -fno-color-diagnostics
             -mllvm -print-before-all
             -mllvm -print-after-all
         STDERR_OUTPUT "${AVM_RUNTIME_MIR_OUTPUT}"
-        DEPENDS ${AVM_RUNTIME_HEADERS}
+        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
     )
     list(APPEND AVM_RUNTIME_MIR_OUTPUTS
         "${AVM_RUNTIME_MIR_OBJECT}"

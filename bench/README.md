@@ -28,7 +28,12 @@ The newer compiled benchmarks fill these code generation gaps:
 | Branches and loop shapes | `byte_comparisons`, `loop_shapes`, `short_circuit`, `saturating_math` |
 | Integer lowering | `bit_count`, `count_leading_zeros`, `count_trailing_zeros`, `div_pow2`, `narrow_arithmetic`, `popcount`, `progmem_record_index`, `rotate32`, `wide_add_sub`, `wide_compare` |
 | Floating point lowering | `float_comparisons`, `float_conversions` |
+| Runtime float math | `math_sqrt`, `math_sin`, `math_cos`, `math_atan2`, `math_tan`, `math_exp`, `math_log`, `math_log2`, `math_log10`, `math_pow`, `math_hypot`, `math_fmod` |
 | C++ lowering | `aggregate_byte_dispatch`, `aggregate_byte_packing`, `aggregate_byte_packing_hoisted`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
+
+Each `math_*` benchmark measures 32 calls over inputs from 0.25 to 1.21875.
+The [runtime math study](../docs/math-runtime-tradeoff.md) compares the native
+interpreter implementation, initial runtime port, and optimized runtime.
 
 `progmem_record_index` indexes six-byte program-memory records containing two
 24-bit pointers, like the RPG music catalog. Runtime byte indices include 0,

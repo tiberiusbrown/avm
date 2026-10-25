@@ -221,18 +221,18 @@ avm_draw_textf overloads expand typed argument packs into the existing
 compiler builtins. Program-memory-only debug formatting keeps its explicit
 _P name.
 
-`math.h` and `string.h` declare real public symbols and then use function-like
-macros for ordinary call syntax. For example:
+`math.h` declares ordinary C ABI functions. Direct calls, parenthesized calls,
+and function pointers all use the same implementations in `libavm.a`. The
+compiler also lowers standard math intrinsics and compatibility `__avm_*f`
+builtins to these functions. No math SYS services are required.
 
-```c
-float y = sinf(x);          // Direct __avm_sinf builtin / SYS path.
-float (*p)(float) = &sinf;  // Addressable wrapper from libavm.a.
-float z = (sinf)(x);        // Explicit ordinary function call.
-```
+The math kernels use only binary32 arithmetic. Polynomial coefficients and
+range-reduction digits are embedded as instruction immediates; functions are
+linked on demand with `--gc-sections`. They do not provide errno or fenv state. See
+[code size and performance measurements](../docs/math-runtime-tradeoff.md).
 
-Define `AVM_MATH_NO_BUILTIN_MACROS` or
-`AVM_STRING_NO_BUILTIN_MACROS` before the corresponding include to disable the
-call macros for a translation unit.
+`string.h` retains its function-like call macros; define
+`AVM_STRING_NO_BUILTIN_MACROS` before including it to request ordinary calls.
 
 `libavm-builtins.a` contains the compiler's 32-bit and 64-bit integer
 multiplication, division, remainder, and shift helpers. Keep this archive after

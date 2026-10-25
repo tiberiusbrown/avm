@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 aliasing.c
-00000100 l     O .data	00000041 buffer
 00000312 l     F .text	00000033 overlap
-00000141 l     O .data	00000002 aliasing_result
+00000100 l     O .data	00000002 aliasing_result
+00000102 l     O .data	00000041 buffer
 00000000 l    df *ABS*	00000000 runtime.c
 00000347 l       .init_array	00000000 .hidden __init_array_end
 00000347 l       .init_array	00000000 .hidden __init_array_start
@@ -134,7 +134,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- c4 00 01              ldi16	r4, 0x100
+ c4 02 01              ldi16	r4, 0x102
  c1 03                 ldi8	r5, 0x3
  c2 41                 ldi8	r6, 0x41
 <L0>:
@@ -147,22 +147,22 @@ Disassembly of section .text:
  f0 00 14              ldi8	r0, 0x14
  d7 01                 sys	debug_break
 <L1>:
- f0 05 00 01           ldi16	r1, 0x100
+ f0 05 02 01           ldi16	r1, 0x102
  f1 21                 mov	r4, r1
- f0 05 01 01           ldi16	r1, 0x101
+ f0 05 03 01           ldi16	r1, 0x103
  f1 25                 mov	r5, r1
  d5 21                 call8	overlap
  f1 1c                 mov	r3, r4
  f9 6a                 xor	r3, r2
  f1 21                 mov	r4, r1
- c5 00 01              ldi16	r5, 0x100
+ c5 02 01              ldi16	r5, 0x102
  d5 16                 call8	overlap
  f1 14                 mov	r2, r4
  f2 13                 add	r2, r3
  f4 b0                 dec16	r0
  f4 a0                 tst8	r0
  d1 dd                 brne8	-0x23 <L1>
- f0 5a 41 01           stm16	[0x141], r2
+ f0 5a 00 01           stm16	[0x100], r2
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

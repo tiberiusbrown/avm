@@ -6,11 +6,11 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 byte_phi_stream.c
-00000100 l     O .data	00000008 ram_bytes
 0000031c l     F .text	0000001d scan_ram
 00000339 l     F .text	0000002c scan_program
-00000108 l     O .data	00000002 byte_phi_stream_result
 00000367 l     O .rodata	00000008 program_bytes
+00000100 l     O .data	00000002 byte_phi_stream_result
+00000102 l     O .data	00000008 ram_bytes
 00000000 l    df *ABS*	00000000 runtime.c
 0000036f l       .init_array	00000000 .hidden __init_array_end
 0000036f l       .init_array	00000000 .hidden __init_array_start
@@ -136,21 +136,21 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  f2 30                 sub	r0, r0
- f0 48 00 01           stm8	[0x100], r0
+ f0 48 02 01           stm8	[0x102], r0
  c0 25                 ldi8	r4, 0x25
- f0 4c 01 01           stm8	[0x101], r4
- c0 4a                 ldi8	r4, 0x4a
- f0 4c 02 01           stm8	[0x102], r4
- c0 6f                 ldi8	r4, 0x6f
  f0 4c 03 01           stm8	[0x103], r4
- c0 94                 ldi8	r4, 0x94
+ c0 4a                 ldi8	r4, 0x4a
  f0 4c 04 01           stm8	[0x104], r4
- c0 b9                 ldi8	r4, 0xb9
+ c0 6f                 ldi8	r4, 0x6f
  f0 4c 05 01           stm8	[0x105], r4
- c0 de                 ldi8	r4, 0xde
+ c0 94                 ldi8	r4, 0x94
  f0 4c 06 01           stm8	[0x106], r4
- c0 03                 ldi8	r4, 0x3
+ c0 b9                 ldi8	r4, 0xb9
  f0 4c 07 01           stm8	[0x107], r4
+ c0 de                 ldi8	r4, 0xde
+ f0 4c 08 01           stm8	[0x108], r4
+ c0 03                 ldi8	r4, 0x3
+ f0 4c 09 01           stm8	[0x109], r4
  f0 02 80              ldi8	r2, 0x80
  d7 01                 sys	debug_break
 <L0>:
@@ -163,7 +163,7 @@ Disassembly of section .text:
  f4 b2                 dec16	r2
  f6 2a                 tst16	r2
  d1 ee                 brne8	-0x12 <L0>
- f0 58 08 01           stm16	[0x108], r0
+ f0 58 00 01           stm16	[0x100], r0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0
@@ -176,7 +176,7 @@ Disassembly of section .text:
  c3 ff                 ldi8	r7, 0xff
  a5                    xor	r5, r5
  c2 07                 ldi8	r6, 0x7
- f0 04 00 01           ldi16	r0, 0x100
+ f0 04 02 01           ldi16	r0, 0x102
  01                    mov	r4, r5
 <L0>:
  cf 20                 cmpi.s8	r7, 0x20

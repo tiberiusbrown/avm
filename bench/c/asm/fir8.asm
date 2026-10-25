@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 fir8.c
-00000100 l     O .data	00000060 samples
-00000160 l     O .data	00000010 coefficients
-00000170 l     O .data	00000002 fir_result
+00000100 l     O .data	00000002 fir_result
+00000102 l     O .data	00000010 coefficients
+00000112 l     O .data	00000060 samples
 00000000 l    df *ABS*	00000000 runtime.c
 00000445 l       .init_array	00000000 .hidden __init_array_end
 00000445 l       .init_array	00000000 .hidden __init_array_start
@@ -135,7 +135,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 e0                 adjsp	-0x20
- c4 00 01              ldi16	r4, 0x100
+ c4 12 01              ldi16	r4, 0x112
  c3 07                 ldi8	r7, 0x7
  c2 60                 ldi8	r6, 0x60
  f0 00 7f              ldi8	r0, 0x7f
@@ -148,60 +148,60 @@ Disassembly of section .text:
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
  d1 f1                 brne8	-0xf <L0>
- c4 60 01              ldi16	r4, 0x160
+ c4 02 01              ldi16	r4, 0x102
  c6 35 04              ldi16	r6, 0x435
  c3 00                 ldi8	r7, 0x0
  c1 10                 ldi8	r5, 0x10
  d7 10                 sys	memcpy_p
  f2 4b                 sub	r3, r3
  d7 01                 sys	debug_break
- f0 47 6f 01           ldm8u	r7, [0x16f]
+ f0 47 11 01           ldm8u	r7, [0x111]
  f6 47                 sext8	r7
- f0 44 6e 01           ldm8u	r4, [0x16e]
+ f0 44 10 01           ldm8u	r4, [0x110]
  f6 44                 sext8	r4
  f0 3c 1c              stsp16	[sp+0x1c], r4
- f0 44 6d 01           ldm8u	r4, [0x16d]
+ f0 44 0f 01           ldm8u	r4, [0x10f]
  f6 44                 sext8	r4
  f0 3c 1a              stsp16	[sp+0x1a], r4
- f0 44 6c 01           ldm8u	r4, [0x16c]
+ f0 44 0e 01           ldm8u	r4, [0x10e]
  f6 44                 sext8	r4
  f0 3c 18              stsp16	[sp+0x18], r4
- f0 44 6b 01           ldm8u	r4, [0x16b]
+ f0 44 0d 01           ldm8u	r4, [0x10d]
  f6 44                 sext8	r4
  f0 3c 16              stsp16	[sp+0x16], r4
- f0 44 6a 01           ldm8u	r4, [0x16a]
+ f0 44 0c 01           ldm8u	r4, [0x10c]
  f6 44                 sext8	r4
  f0 3c 14              stsp16	[sp+0x14], r4
- f0 44 69 01           ldm8u	r4, [0x169]
+ f0 44 0b 01           ldm8u	r4, [0x10b]
  f6 44                 sext8	r4
  f0 3c 12              stsp16	[sp+0x12], r4
- f0 44 68 01           ldm8u	r4, [0x168]
+ f0 44 0a 01           ldm8u	r4, [0x10a]
  f6 44                 sext8	r4
  f0 3c 10              stsp16	[sp+0x10], r4
- f0 44 67 01           ldm8u	r4, [0x167]
+ f0 44 09 01           ldm8u	r4, [0x109]
  f6 44                 sext8	r4
  f4 78                 stsp16	[sp+0xe], r4
- f0 44 66 01           ldm8u	r4, [0x166]
+ f0 44 08 01           ldm8u	r4, [0x108]
  f6 44                 sext8	r4
  f4 70                 stsp16	[sp+0xc], r4
- f0 44 65 01           ldm8u	r4, [0x165]
+ f0 44 07 01           ldm8u	r4, [0x107]
  f6 44                 sext8	r4
  f4 68                 stsp16	[sp+0xa], r4
- f0 44 64 01           ldm8u	r4, [0x164]
+ f0 44 06 01           ldm8u	r4, [0x106]
  f6 44                 sext8	r4
  f4 60                 stsp16	[sp+0x8], r4
- f0 44 63 01           ldm8u	r4, [0x163]
+ f0 44 05 01           ldm8u	r4, [0x105]
  f6 44                 sext8	r4
  f4 58                 stsp16	[sp+0x6], r4
- f0 44 62 01           ldm8u	r4, [0x162]
+ f0 44 04 01           ldm8u	r4, [0x104]
  f6 44                 sext8	r4
  f4 50                 stsp16	[sp+0x4], r4
- f0 44 61 01           ldm8u	r4, [0x161]
+ f0 44 03 01           ldm8u	r4, [0x103]
  f6 44                 sext8	r4
  f4 48                 stsp16	[sp+0x2], r4
- f0 44 60 01           ldm8u	r4, [0x160]
+ f0 44 02 01           ldm8u	r4, [0x102]
  f6 44                 sext8	r4
- f0 05 00 01           ldi16	r1, 0x100
+ f0 05 12 01           ldi16	r1, 0x112
  f1 13                 mov	r2, r3
  f0 3f 1e              stsp16	[sp+0x1e], r7
  f4 40                 stsp16	[sp+0x0], r4
@@ -283,7 +283,7 @@ Disassembly of section .text:
  f1 76                 zext8	r6
  ce 10                 cmpi.s8	r6, 0x10
  db 5f ff              brne16	-0xa1 <L1>
- f0 5b 70 01           stm16	[0x170], r3
+ f0 5b 00 01           stm16	[0x100], r3
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 20                 adjsp	0x20

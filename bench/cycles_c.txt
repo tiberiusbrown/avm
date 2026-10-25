@@ -8,7 +8,7 @@
      1316321   bubble1.c
      1163105   bubble2.c
      1785131   bubble4.c
-     1306631   byte_comparisons.c
+     1110360   byte_comparisons.c
       723722   byte_load_liveout.c
     10476647   byte_phi_stream.c
       238967   call_args.c
@@ -32,8 +32,8 @@
     11045125   loop_control.c
      3413880   loop_shapes.c
        18300   memory_services.c
-     1081221   mixed_width.c
-      903624   multiply.c
+     1064821   mixed_width.c
+      765877   multiply.c
      1193770   narrow_arithmetic.c
      1383499   normalized_loads.c
       803965   packed_fields.c
@@ -54,7 +54,7 @@
      1326952   saturating_math.c
       718161   select.c
       395573   shifts.c
-     1830484   short_circuit.c
+     1671121   short_circuit.c
       377189   sieve.c
       323653   small_memops.c
       156996   stack_array.c
@@ -63,11 +63,11 @@
     25938058   string_scan.c
       444653   struct_copy.c
       950957   switch.c
-        2991   sys_memcmp.c
+        2868   sys_memcmp.c
         5133   sys_memcmp_p.c
-        2677   sys_strcmp.c
+        2489   sys_strcmp.c
         5402   sys_strcmp_p.c
-        2138   sys_strlen.c
+        2101   sys_strlen.c
         7020   sys_strlen_p.c
         2202   sys_strncat.c
         3500   sys_strncat_p.c

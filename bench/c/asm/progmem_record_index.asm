@@ -6,11 +6,11 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 progmem_record_index.c
-00000100 l     O .data	00000040 selections
 00000435 l     O .rodata	00000600 records
-00000140 l     O .data	00000002 progmem_record_index_result
 00000a35 l     O .rodata	00000004 data
 00000a39 l     O .rodata	00000007 title
+00000100 l     O .data	00000002 progmem_record_index_result
+00000102 l     O .data	00000040 selections
 00000000 l    df *ABS*	00000000 runtime.c
 00000a40 l       .init_array	00000000 .hidden __init_array_end
 00000a40 l       .init_array	00000000 .hidden __init_array_start
@@ -138,75 +138,75 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
  a5                    xor	r5, r5
- f0 4d 00 01           stm8	[0x100], r5
+ f0 4d 02 01           stm8	[0x102], r5
  c0 7f                 ldi8	r4, 0x7f
- f0 4c 01 01           stm8	[0x101], r4
+ f0 4c 03 01           stm8	[0x103], r4
  c2 80                 ldi8	r6, 0x80
- f0 4e 02 01           stm8	[0x102], r6
+ f0 4e 04 01           stm8	[0x104], r6
  c3 ff                 ldi8	r7, 0xff
- f0 4f 03 01           stm8	[0x103], r7
- f0 4d 04 01           stm8	[0x104], r5
- f0 4c 05 01           stm8	[0x105], r4
- f0 4e 06 01           stm8	[0x106], r6
- f0 4f 07 01           stm8	[0x107], r7
- f0 4d 08 01           stm8	[0x108], r5
- f0 4c 09 01           stm8	[0x109], r4
- f0 4e 0a 01           stm8	[0x10a], r6
- f0 4f 0b 01           stm8	[0x10b], r7
- f0 4d 0c 01           stm8	[0x10c], r5
- f0 4c 0d 01           stm8	[0x10d], r4
- f0 4e 0e 01           stm8	[0x10e], r6
- f0 4f 0f 01           stm8	[0x10f], r7
- f0 4d 10 01           stm8	[0x110], r5
- f0 4c 11 01           stm8	[0x111], r4
- f0 4e 12 01           stm8	[0x112], r6
- f0 4f 13 01           stm8	[0x113], r7
- f0 4d 14 01           stm8	[0x114], r5
- f0 4c 15 01           stm8	[0x115], r4
- f0 4e 16 01           stm8	[0x116], r6
- f0 4f 17 01           stm8	[0x117], r7
- f0 4d 18 01           stm8	[0x118], r5
- f0 4c 19 01           stm8	[0x119], r4
- f0 4e 1a 01           stm8	[0x11a], r6
- f0 4f 1b 01           stm8	[0x11b], r7
- f0 4d 1c 01           stm8	[0x11c], r5
- f0 4c 1d 01           stm8	[0x11d], r4
- f0 4e 1e 01           stm8	[0x11e], r6
- f0 4f 1f 01           stm8	[0x11f], r7
- f0 4d 20 01           stm8	[0x120], r5
- f0 4c 21 01           stm8	[0x121], r4
- f0 4e 22 01           stm8	[0x122], r6
- f0 4f 23 01           stm8	[0x123], r7
- f0 4d 24 01           stm8	[0x124], r5
- f0 4c 25 01           stm8	[0x125], r4
- f0 4e 26 01           stm8	[0x126], r6
- f0 4f 27 01           stm8	[0x127], r7
- f0 4d 28 01           stm8	[0x128], r5
- f0 4c 29 01           stm8	[0x129], r4
- f0 4e 2a 01           stm8	[0x12a], r6
- f0 4f 2b 01           stm8	[0x12b], r7
- f0 4d 2c 01           stm8	[0x12c], r5
- f0 4c 2d 01           stm8	[0x12d], r4
- f0 4e 2e 01           stm8	[0x12e], r6
- f0 4f 2f 01           stm8	[0x12f], r7
- f0 4d 30 01           stm8	[0x130], r5
- f0 4c 31 01           stm8	[0x131], r4
- f0 4e 32 01           stm8	[0x132], r6
- f0 4f 33 01           stm8	[0x133], r7
- f0 4d 34 01           stm8	[0x134], r5
- f0 4c 35 01           stm8	[0x135], r4
- f0 4e 36 01           stm8	[0x136], r6
- f0 4f 37 01           stm8	[0x137], r7
- f0 4d 38 01           stm8	[0x138], r5
- f0 4c 39 01           stm8	[0x139], r4
- f0 4e 3a 01           stm8	[0x13a], r6
- f0 4f 3b 01           stm8	[0x13b], r7
- f0 4d 3c 01           stm8	[0x13c], r5
- f0 4c 3d 01           stm8	[0x13d], r4
- f0 4e 3e 01           stm8	[0x13e], r6
- f0 4f 3f 01           stm8	[0x13f], r7
+ f0 4f 05 01           stm8	[0x105], r7
+ f0 4d 06 01           stm8	[0x106], r5
+ f0 4c 07 01           stm8	[0x107], r4
+ f0 4e 08 01           stm8	[0x108], r6
+ f0 4f 09 01           stm8	[0x109], r7
+ f0 4d 0a 01           stm8	[0x10a], r5
+ f0 4c 0b 01           stm8	[0x10b], r4
+ f0 4e 0c 01           stm8	[0x10c], r6
+ f0 4f 0d 01           stm8	[0x10d], r7
+ f0 4d 0e 01           stm8	[0x10e], r5
+ f0 4c 0f 01           stm8	[0x10f], r4
+ f0 4e 10 01           stm8	[0x110], r6
+ f0 4f 11 01           stm8	[0x111], r7
+ f0 4d 12 01           stm8	[0x112], r5
+ f0 4c 13 01           stm8	[0x113], r4
+ f0 4e 14 01           stm8	[0x114], r6
+ f0 4f 15 01           stm8	[0x115], r7
+ f0 4d 16 01           stm8	[0x116], r5
+ f0 4c 17 01           stm8	[0x117], r4
+ f0 4e 18 01           stm8	[0x118], r6
+ f0 4f 19 01           stm8	[0x119], r7
+ f0 4d 1a 01           stm8	[0x11a], r5
+ f0 4c 1b 01           stm8	[0x11b], r4
+ f0 4e 1c 01           stm8	[0x11c], r6
+ f0 4f 1d 01           stm8	[0x11d], r7
+ f0 4d 1e 01           stm8	[0x11e], r5
+ f0 4c 1f 01           stm8	[0x11f], r4
+ f0 4e 20 01           stm8	[0x120], r6
+ f0 4f 21 01           stm8	[0x121], r7
+ f0 4d 22 01           stm8	[0x122], r5
+ f0 4c 23 01           stm8	[0x123], r4
+ f0 4e 24 01           stm8	[0x124], r6
+ f0 4f 25 01           stm8	[0x125], r7
+ f0 4d 26 01           stm8	[0x126], r5
+ f0 4c 27 01           stm8	[0x127], r4
+ f0 4e 28 01           stm8	[0x128], r6
+ f0 4f 29 01           stm8	[0x129], r7
+ f0 4d 2a 01           stm8	[0x12a], r5
+ f0 4c 2b 01           stm8	[0x12b], r4
+ f0 4e 2c 01           stm8	[0x12c], r6
+ f0 4f 2d 01           stm8	[0x12d], r7
+ f0 4d 2e 01           stm8	[0x12e], r5
+ f0 4c 2f 01           stm8	[0x12f], r4
+ f0 4e 30 01           stm8	[0x130], r6
+ f0 4f 31 01           stm8	[0x131], r7
+ f0 4d 32 01           stm8	[0x132], r5
+ f0 4c 33 01           stm8	[0x133], r4
+ f0 4e 34 01           stm8	[0x134], r6
+ f0 4f 35 01           stm8	[0x135], r7
+ f0 4d 36 01           stm8	[0x136], r5
+ f0 4c 37 01           stm8	[0x137], r4
+ f0 4e 38 01           stm8	[0x138], r6
+ f0 4f 39 01           stm8	[0x139], r7
+ f0 4d 3a 01           stm8	[0x13a], r5
+ f0 4c 3b 01           stm8	[0x13b], r4
+ f0 4e 3c 01           stm8	[0x13c], r6
+ f0 4f 3d 01           stm8	[0x13d], r7
+ f0 4d 3e 01           stm8	[0x13e], r5
+ f0 4c 3f 01           stm8	[0x13f], r4
+ f0 4e 40 01           stm8	[0x140], r6
+ f0 4f 41 01           stm8	[0x141], r7
  d7 01                 sys	debug_break
- c6 00 01              ldi16	r6, 0x100
+ c6 02 01              ldi16	r6, 0x102
  f0 04 35 04           ldi16	r0, 0x435
  f0 01 00              ldi8	r1, 0x0
  01                    mov	r4, r5
@@ -234,7 +234,7 @@ Disassembly of section .text:
  f0 63 c0              ldp24	q3, [q0]
  f2 61                 mov32	q0, q1
  f0 60 8c              ldp8u	r4, [q3]
- c6 00 01              ldi16	r6, 0x100
+ c6 02 01              ldi16	r6, 0x102
  11                    add	r4, r5
  f4 09                 ldsp16	r5, [sp+0x2]
  f4 ad                 inc16	r5
@@ -246,7 +246,7 @@ Disassembly of section .text:
  f1 75                 zext8	r5
  cd 10                 cmpi.s8	r5, 0x10
  d1 bd                 brne8	-0x43 <L0>
- f0 5c 40 01           stm16	[0x140], r4
+ f0 5c 00 01           stm16	[0x100], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

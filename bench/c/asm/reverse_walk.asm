@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000031e l     F .text	00000044 avm_run_constructors
 00000362 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 reverse_walk.c
-00000100 l     O .data	00000080 source
-00000180 l     O .data	00000080 destination
-00000200 l     O .data	00000002 reverse_walk_result
+00000100 l     O .data	00000080 destination
+00000180 l     O .data	00000002 reverse_walk_result
+00000182 l     O .data	00000080 source
 00000000 l    df *ABS*	00000000 runtime.c
 0000041b l       .init_array	00000000 .hidden __init_array_end
 0000041b l       .init_array	00000000 .hidden __init_array_start
@@ -136,7 +136,7 @@ Disassembly of section .text:
  b0                    push16	r0
  c0 80                 ldi8	r4, 0x80
  c1 09                 ldi8	r5, 0x9
- c6 00 01              ldi16	r6, 0x100
+ c6 82 01              ldi16	r6, 0x182
 <L0>:
  f6 15                 st8	[r6+], r5
  c9 17                 addi.s8	r5, 0x17
@@ -145,12 +145,12 @@ Disassembly of section .text:
  d1 f6                 brne8	-0xa <L0>
  f2 42                 sub	r2, r2
  d7 01                 sys	debug_break
- f0 05 00 02           ldi16	r1, 0x200
- f0 07 00 01           ldi16	r3, 0x100
+ f0 05 80 01           ldi16	r1, 0x180
+ f0 07 82 01           ldi16	r3, 0x182
  f1 22                 mov	r4, r2
 <L1>:
  f1 29                 mov	r6, r1
- c5 80 01              ldi16	r5, 0x180
+ c5 02 02              ldi16	r5, 0x202
 <L2>:
  f4 b5                 dec16	r5
  4d                    ld8u	r7, [r5]
@@ -169,7 +169,7 @@ Disassembly of section .text:
  f1 75                 zext8	r5
  cd 20                 cmpi.s8	r5, 0x20
  d1 dd                 brne8	-0x23 <L1>
- f0 5c 00 02           stm16	[0x200], r4
+ f0 5c 80 01           stm16	[0x180], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

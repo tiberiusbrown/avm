@@ -6,8 +6,8 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 loop_control.c
-00000100 l     O .data	00000020 source
-00000120 l     O .data	00000002 loop_control_result
+00000100 l     O .data	00000002 loop_control_result
+00000102 l     O .data	00000020 source
 00000000 l    df *ABS*	00000000 runtime.c
 00000333 l       .init_array	00000000 .hidden __init_array_end
 00000333 l       .init_array	00000000 .hidden __init_array_start
@@ -133,7 +133,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f0 04 00 01           ldi16	r0, 0x100
+ f0 04 02 01           ldi16	r0, 0x102
  f1 20                 mov	r4, r0
  c6 13 03              ldi16	r6, 0x313
  c3 00                 ldi8	r7, 0x0
@@ -162,7 +162,7 @@ Disassembly of section .text:
  c2 80                 ldi8	r6, 0x80
  f5 1e                 cmp	r3, r6
  d1 e5                 brne8	-0x1b <L0>
- f0 5c 20 01           stm16	[0x120], r4
+ f0 5c 00 01           stm16	[0x100], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

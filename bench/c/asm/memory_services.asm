@@ -6,10 +6,10 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 memory_services.c
-00000100 l     O .data	00000060 source
-00000162 l     O .data	00000060 destination
-00000160 l     O .data	00000002 memory_length
-000001c2 l     O .data	00000002 memory_result
+00000100 l     O .data	00000002 memory_length
+00000102 l     O .data	00000002 memory_result
+00000104 l     O .data	00000060 source
+00000164 l     O .data	00000060 destination
 00000000 l    df *ABS*	00000000 runtime.c
 00000310 l       .init_array	00000000 .hidden __init_array_end
 00000310 l       .init_array	00000000 .hidden __init_array_start
@@ -132,7 +132,7 @@ Disassembly of section .text:
 
 <avm_test_main>:
  b0                    push16	r0
- c4 00 01              ldi16	r4, 0x100
+ c4 04 01              ldi16	r4, 0x104
  c1 09                 ldi8	r5, 0x9
  c2 60                 ldi8	r6, 0x60
 <L0>:
@@ -142,20 +142,20 @@ Disassembly of section .text:
  f6 2e                 tst16	r6
  d1 f6                 brne8	-0xa <L0>
  d7 01                 sys	debug_break
- c5 00 01              ldi16	r5, 0x100
- f0 04 62 01           ldi16	r0, 0x162
- f0 57 60 01           ldm16	r7, [0x160]
+ c5 04 01              ldi16	r5, 0x104
+ f0 04 64 01           ldi16	r0, 0x164
+ f0 57 00 01           ldm16	r7, [0x100]
  f1 20                 mov	r4, r0
  0b                    mov	r6, r7
  d7 0f                 sys	memcpy
- c4 67 01              ldi16	r4, 0x167
+ c4 69 01              ldi16	r4, 0x169
  ca fb                 addi.s8	r6, -0x5
  f1 24                 mov	r5, r0
  d7 12                 sys	memmove
  a0                    xor	r4, r4
  f6 2f                 tst16	r7
  d0 0c                 breq8	0xc <L2>
- c5 62 01              ldi16	r5, 0x162
+ c5 64 01              ldi16	r5, 0x164
 <L1>:
  f7 0e                 ld8u	r6, [r5+]
  12                    add	r4, r6
@@ -163,7 +163,7 @@ Disassembly of section .text:
  f6 2f                 tst16	r7
  d1 f7                 brne8	-0x9 <L1>
 <L2>:
- f0 5c c2 01           stm16	[0x1c2], r4
+ f0 5c 02 01           stm16	[0x102], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

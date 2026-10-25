@@ -6,10 +6,10 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 lambda_capture.cpp
-00000100 l     O .data	00000040 inputs
 000003f4 l     F .text	00000007 unsigned int apply<avm_test_main::$_0>(avm_test_main::$_0, unsigned int)
 000003fb l     F .text	00000008 unsigned int apply<avm_test_main::$_1>(avm_test_main::$_1, unsigned int)
-00000140 l     O .data	00000002 lambda_capture_result
+00000100 l     O .data	00000002 lambda_capture_result
+00000102 l     O .data	00000040 inputs
 00000000 l    df *ABS*	00000000 runtime.c
 00000405 l       .init_array	00000000 .hidden __init_array_end
 00000405 l       .init_array	00000000 .hidden __init_array_start
@@ -137,69 +137,69 @@ Disassembly of section .text:
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
  c0 0b                 ldi8	r4, 0xb
- f0 5c 00 01           stm16	[0x100], r4
- c0 6c                 ldi8	r4, 0x6c
  f0 5c 02 01           stm16	[0x102], r4
- c0 cd                 ldi8	r4, 0xcd
+ c0 6c                 ldi8	r4, 0x6c
  f0 5c 04 01           stm16	[0x104], r4
- c4 2e 01              ldi16	r4, 0x12e
+ c0 cd                 ldi8	r4, 0xcd
  f0 5c 06 01           stm16	[0x106], r4
- c4 8f 01              ldi16	r4, 0x18f
+ c4 2e 01              ldi16	r4, 0x12e
  f0 5c 08 01           stm16	[0x108], r4
- c4 f0 01              ldi16	r4, 0x1f0
+ c4 8f 01              ldi16	r4, 0x18f
  f0 5c 0a 01           stm16	[0x10a], r4
- c4 51 02              ldi16	r4, 0x251
+ c4 f0 01              ldi16	r4, 0x1f0
  f0 5c 0c 01           stm16	[0x10c], r4
- c4 b2 02              ldi16	r4, 0x2b2
+ c4 51 02              ldi16	r4, 0x251
  f0 5c 0e 01           stm16	[0x10e], r4
- c4 13 03              ldi16	r4, 0x313
+ c4 b2 02              ldi16	r4, 0x2b2
  f0 5c 10 01           stm16	[0x110], r4
- c4 74 03              ldi16	r4, 0x374
+ c4 13 03              ldi16	r4, 0x313
  f0 5c 12 01           stm16	[0x112], r4
- c4 d5 03              ldi16	r4, 0x3d5
+ c4 74 03              ldi16	r4, 0x374
  f0 5c 14 01           stm16	[0x114], r4
- c4 36 04              ldi16	r4, 0x436
+ c4 d5 03              ldi16	r4, 0x3d5
  f0 5c 16 01           stm16	[0x116], r4
- c4 97 04              ldi16	r4, 0x497
+ c4 36 04              ldi16	r4, 0x436
  f0 5c 18 01           stm16	[0x118], r4
- c4 f8 04              ldi16	r4, 0x4f8
+ c4 97 04              ldi16	r4, 0x497
  f0 5c 1a 01           stm16	[0x11a], r4
- c4 59 05              ldi16	r4, 0x559
+ c4 f8 04              ldi16	r4, 0x4f8
  f0 5c 1c 01           stm16	[0x11c], r4
- c4 ba 05              ldi16	r4, 0x5ba
+ c4 59 05              ldi16	r4, 0x559
  f0 5c 1e 01           stm16	[0x11e], r4
- c4 1b 06              ldi16	r4, 0x61b
+ c4 ba 05              ldi16	r4, 0x5ba
  f0 5c 20 01           stm16	[0x120], r4
- c4 7c 06              ldi16	r4, 0x67c
+ c4 1b 06              ldi16	r4, 0x61b
  f0 5c 22 01           stm16	[0x122], r4
- c4 dd 06              ldi16	r4, 0x6dd
+ c4 7c 06              ldi16	r4, 0x67c
  f0 5c 24 01           stm16	[0x124], r4
- c4 3e 07              ldi16	r4, 0x73e
+ c4 dd 06              ldi16	r4, 0x6dd
  f0 5c 26 01           stm16	[0x126], r4
- c4 9f 07              ldi16	r4, 0x79f
+ c4 3e 07              ldi16	r4, 0x73e
  f0 5c 28 01           stm16	[0x128], r4
- c4 00 08              ldi16	r4, 0x800
+ c4 9f 07              ldi16	r4, 0x79f
  f0 5c 2a 01           stm16	[0x12a], r4
- c4 61 08              ldi16	r4, 0x861
+ c4 00 08              ldi16	r4, 0x800
  f0 5c 2c 01           stm16	[0x12c], r4
- c4 c2 08              ldi16	r4, 0x8c2
+ c4 61 08              ldi16	r4, 0x861
  f0 5c 2e 01           stm16	[0x12e], r4
- c4 23 09              ldi16	r4, 0x923
+ c4 c2 08              ldi16	r4, 0x8c2
  f0 5c 30 01           stm16	[0x130], r4
- c4 84 09              ldi16	r4, 0x984
+ c4 23 09              ldi16	r4, 0x923
  f0 5c 32 01           stm16	[0x132], r4
- c4 e5 09              ldi16	r4, 0x9e5
+ c4 84 09              ldi16	r4, 0x984
  f0 5c 34 01           stm16	[0x134], r4
- c4 46 0a              ldi16	r4, 0xa46
+ c4 e5 09              ldi16	r4, 0x9e5
  f0 5c 36 01           stm16	[0x136], r4
- c4 a7 0a              ldi16	r4, 0xaa7
+ c4 46 0a              ldi16	r4, 0xa46
  f0 5c 38 01           stm16	[0x138], r4
- c4 08 0b              ldi16	r4, 0xb08
+ c4 a7 0a              ldi16	r4, 0xaa7
  f0 5c 3a 01           stm16	[0x13a], r4
- c4 69 0b              ldi16	r4, 0xb69
+ c4 08 0b              ldi16	r4, 0xb08
  f0 5c 3c 01           stm16	[0x13c], r4
- c4 ca 0b              ldi16	r4, 0xbca
+ c4 69 0b              ldi16	r4, 0xb69
  f0 5c 3e 01           stm16	[0x13e], r4
+ c4 ca 0b              ldi16	r4, 0xbca
+ f0 5c 40 01           stm16	[0x140], r4
  f2 30                 sub	r0, r0
  f0 07 34 12           ldi16	r3, 0x1234
  d7 01                 sys	debug_break
@@ -207,7 +207,7 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
 <L0>:
  f0 32 00              ldsp16	r2, [sp+0x0]
- f0 05 00 01           ldi16	r1, 0x100
+ f0 05 02 01           ldi16	r1, 0x102
 <L1>:
  ed 92 20              ld16	r4, [r1+0]
  d5 32                 call8	_ZL5applyIZ13avm_test_mainE3$_0EjT_j
@@ -227,7 +227,7 @@ Disassembly of section .text:
  f1 74                 zext8	r4
  cc 18                 cmpi.s8	r4, 0x18
  d1 d0                 brne8	-0x30 <L0>
- f0 5b 40 01           stm16	[0x140], r3
+ f0 5b 00 01           stm16	[0x100], r3
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

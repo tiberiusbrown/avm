@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 float_comparisons.c
-00000100 l     O .data	00000040 first
-00000140 l     O .data	00000040 second
-00000180 l     O .data	00000002 float_comparisons_result
+00000100 l     O .data	00000002 float_comparisons_result
+00000102 l     O .data	00000040 first
+00000142 l     O .data	00000040 second
 00000000 l    df *ABS*	00000000 runtime.c
 000003b5 l       .init_array	00000000 .hidden __init_array_end
 000003b5 l       .init_array	00000000 .hidden __init_array_start
@@ -139,8 +139,8 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  f4 79                 stsp16	[sp+0xe], r5
  c6 f8 ff              ldi16	r6, 0xfff8
- c5 00 01              ldi16	r5, 0x100
- c7 40 01              ldi16	r7, 0x140
+ c5 02 01              ldi16	r5, 0x102
+ c7 42 01              ldi16	r7, 0x142
  f2 30                 sub	r0, r0
  f0 05 c0 3e           ldi16	r1, 0x3ec0
  f0 38 08              stsp16	[sp+0x8], r0
@@ -181,9 +181,9 @@ Disassembly of section .text:
  08                    mov	r6, r4
 <L1>:
  f4 40                 stsp16	[sp+0x0], r4
- c4 40 01              ldi16	r4, 0x140
+ c4 42 01              ldi16	r4, 0x142
  04                    mov	r5, r4
- c4 00 01              ldi16	r4, 0x100
+ c4 02 01              ldi16	r4, 0x102
  0c                    mov	r7, r4
  a0                    xor	r4, r4
  f4 78                 stsp16	[sp+0xe], r4
@@ -242,7 +242,7 @@ Disassembly of section .text:
  f1 75                 zext8	r5
  cd 18                 cmpi.s8	r5, 0x18
  d1 87                 brne8	-0x79 <L1>
- f0 5e 80 01           stm16	[0x180], r6
+ f0 5e 00 01           stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 10                 adjsp	0x10

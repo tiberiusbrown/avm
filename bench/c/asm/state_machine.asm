@@ -6,8 +6,8 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 state_machine.c
-00000100 l     O .data	00000080 input
-00000180 l     O .data	00000002 state_machine_result
+00000100 l     O .data	00000002 state_machine_result
+00000102 l     O .data	00000080 input
 00000000 l    df *ABS*	00000000 runtime.c
 0000039d l       .init_array	00000000 .hidden __init_array_end
 0000039d l       .init_array	00000000 .hidden __init_array_start
@@ -136,7 +136,7 @@ Disassembly of section .text:
  d6 fc                 adjsp	-0x4
  c0 80                 ldi8	r4, 0x80
  c1 0b                 ldi8	r5, 0xb
- c6 00 01              ldi16	r6, 0x100
+ c6 02 01              ldi16	r6, 0x102
 <L0>:
  f6 15                 st8	[r6+], r5
  c9 25                 addi.s8	r5, 0x25
@@ -158,7 +158,7 @@ Disassembly of section .text:
  ce 40                 cmpi.s8	r6, 0x40
  da 90 00              breq16	0x90 <L8>
 <L2>:
- f0 07 00 01           ldi16	r3, 0x100
+ f0 07 02 01           ldi16	r3, 0x102
  f4 02                 ldsp16	r6, [sp+0x0]
  d4 13                 jmp8	0x13 <L4>
 <L3>:
@@ -242,7 +242,7 @@ Disassembly of section .text:
 <L8>:
  f1 74                 zext8	r4
  a4                    xor	r5, r4
- f0 5d 80 01           stm16	[0x180], r5
+ f0 5d 00 01           stm16	[0x100], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

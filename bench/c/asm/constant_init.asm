@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 constant_init.c
-00000100 l     O .data	00000040 values
 00000306 l     F .text	0000000d populate
-00000140 l     O .data	00000002 constant_init_result
+00000100 l     O .data	00000002 constant_init_result
+00000102 l     O .data	00000040 values
 00000000 l    df *ABS*	00000000 runtime.c
 00000355 l       .init_array	00000000 .hidden __init_array_end
 00000355 l       .init_array	00000000 .hidden __init_array_start
@@ -146,7 +146,7 @@ Disassembly of section .text:
  f4 00                 ldsp16	r4, [sp+0x0]
  f9 10                 and	r0, r4
  f4 80                 lsl16.1	r0
- c4 00 01              ldi16	r4, 0x100
+ c4 02 01              ldi16	r4, 0x102
  f2 04                 add	r0, r4
  d5 1d                 call8	populate
  ed 90 20              ld16	r4, [r0+0]
@@ -156,7 +156,7 @@ Disassembly of section .text:
  f1 74                 zext8	r4
  f5 23                 cmp	r4, r3
  d1 e2                 brne8	-0x1e <L0>
- f0 59 40 01           stm16	[0x140], r1
+ f0 59 00 01           stm16	[0x100], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2
@@ -167,7 +167,7 @@ Disassembly of section .text:
  ef                    ret
 
 <populate>:
- c4 00 01              ldi16	r4, 0x100
+ c4 02 01              ldi16	r4, 0x102
  c6 15 03              ldi16	r6, 0x315
  c3 00                 ldi8	r7, 0x0
  c1 40                 ldi8	r5, 0x40

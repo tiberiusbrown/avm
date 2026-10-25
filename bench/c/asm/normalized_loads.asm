@@ -6,12 +6,12 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 normalized_loads.c
-00000100 l     O .data	00000020 values
 00000370 l     O .rodata	0000000c table
 00000358 l     F .text	00000005 mix_byte
 0000035d l     F .text	00000011 read_page
-00000120 l     O .data	00000002 normalized_loads_result
 0000037c l     O .rodata	00000020 pages
+00000100 l     O .data	00000002 normalized_loads_result
+00000102 l     O .data	00000020 values
 00000000 l    df *ABS*	00000000 runtime.c
 000003bc l       .init_array	00000000 .hidden __init_array_end
 000003bc l       .init_array	00000000 .hidden __init_array_start
@@ -138,7 +138,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 f4                 adjsp	-0xc
- f0 05 00 01           ldi16	r1, 0x100
+ f0 05 02 01           ldi16	r1, 0x102
  f1 21                 mov	r4, r1
  c6 9c 03              ldi16	r6, 0x39c
  c3 00                 ldi8	r7, 0x0
@@ -190,7 +190,7 @@ Disassembly of section .text:
  f1 75                 zext8	r5
  f4 18                 ldsp16	r4, [sp+0x6]
  14                    add	r5, r4
- f0 05 00 01           ldi16	r1, 0x100
+ f0 05 02 01           ldi16	r1, 0x102
  f4 a8                 inc16	r0
  f1 20                 mov	r4, r0
  f1 74                 zext8	r4
@@ -202,7 +202,7 @@ Disassembly of section .text:
  f4 a8                 inc16	r0
  f0 0c 10              cmpi.s8	r0, 0x10
  d1 a7                 brne8	-0x59 <L0>
- f0 5d 20 01           stm16	[0x120], r5
+ f0 5d 00 01           stm16	[0x100], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 0c                 adjsp	0xc

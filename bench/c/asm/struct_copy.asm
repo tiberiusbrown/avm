@@ -6,8 +6,8 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 struct_copy.c
-00000100 l     O .data	000000c0 input_particles
-000001c0 l     O .data	00000004 struct_result
+00000100 l     O .data	00000004 struct_result
+00000104 l     O .data	000000c0 input_particles
 00000000 l    df *ABS*	00000000 runtime.c
 000003fd l       .init_array	00000000 .hidden __init_array_end
 000003fd l       .init_array	00000000 .hidden __init_array_start
@@ -134,7 +134,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fa                 adjsp	-0x6
- c4 00 01              ldi16	r4, 0x100
+ c4 04 01              ldi16	r4, 0x104
  c6 3d 03              ldi16	r6, 0x33d
  c3 00                 ldi8	r7, 0x0
  c1 c0                 ldi8	r5, 0xc0
@@ -148,7 +148,7 @@ Disassembly of section .text:
 <L0>:
  f4 49                 stsp16	[sp+0x2], r5
  f4 00                 ldsp16	r4, [sp+0x0]
- c5 07 01              ldi16	r5, 0x107
+ c5 0b 01              ldi16	r5, 0x10b
 <L1>:
  f4 50                 stsp16	[sp+0x4], r4
  41                    ld8u	r4, [r5]
@@ -183,7 +183,7 @@ Disassembly of section .text:
  f1 74                 zext8	r4
  cc 10                 cmpi.s8	r4, 0x10
  d1 b9                 brne8	-0x47 <L0>
- c4 c0 01              ldi16	r4, 0x1c0
+ c4 00 01              ldi16	r4, 0x100
  f0 6b 08              st32	[r4], q0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

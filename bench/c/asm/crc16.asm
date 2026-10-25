@@ -6,8 +6,8 @@ SYMBOL TABLE:
 0000041e l     F .text	00000044 avm_run_constructors
 00000462 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 crc16.c
-00000100 l     O .data	00000080 data
-00000180 l     O .data	00000002 crc_result
+00000300 l     O .data	00000002 crc_result
+00000302 l     O .data	00000080 data
 00000000 l    df *ABS*	00000000 runtime.c
 0000051d l       .init_array	00000000 .hidden __init_array_end
 0000051d l       .init_array	00000000 .hidden __init_array_start
@@ -135,7 +135,7 @@ Disassembly of section .text:
  b0                    push16	r0
  c0 80                 ldi8	r4, 0x80
  c1 11                 ldi8	r5, 0x11
- c6 00 01              ldi16	r6, 0x100
+ c6 02 03              ldi16	r6, 0x302
 <L0>:
  f6 15                 st8	[r6+], r5
  c9 1d                 addi.s8	r5, 0x1d
@@ -145,8 +145,8 @@ Disassembly of section .text:
  c7 ff ff              ldi16	r7, 0xffff
  f2 30                 sub	r0, r0
  d7 01                 sys	debug_break
- f0 06 00 01           ldi16	r2, 0x100
- f0 07 90 01           ldi16	r3, 0x190
+ f0 06 02 03           ldi16	r2, 0x302
+ f0 07 00 01           ldi16	r3, 0x100
  f1 08                 mov	r1, r0
 <L1>:
  f1 28                 mov	r6, r0
@@ -171,7 +171,7 @@ Disassembly of section .text:
  f1 75                 zext8	r5
  cd 08                 cmpi.s8	r5, 0x8
  d1 de                 brne8	-0x22 <L1>
- f0 5f 80 01           stm16	[0x180], r7
+ f0 5f 00 03           stm16	[0x300], r7
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

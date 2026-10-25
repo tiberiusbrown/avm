@@ -7,8 +7,8 @@ SYMBOL TABLE:
 00000362 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 string_scan.c
 00000100 l     O .data	00000100 strings
-00000200 l     O .data	00000080 data
-00000280 l     O .data	00000002 string_scan_result
+00000200 l     O .data	00000002 string_scan_result
+00000202 l     O .data	00000080 data
 00000000 l    df *ABS*	00000000 runtime.c
 000005e9 l       .init_array	00000000 .hidden __init_array_end
 000005e9 l       .init_array	00000000 .hidden __init_array_start
@@ -185,7 +185,7 @@ Disassembly of section .text:
  f4 ac                 inc16	r4
  cc 08                 cmpi.s8	r4, 0x8
  d1 ad                 brne8	-0x53 <L0>
- c4 00 02              ldi16	r4, 0x200
+ c4 02 02              ldi16	r4, 0x202
  c1 07                 ldi8	r5, 0x7
  c2 80                 ldi8	r6, 0x80
 <L2>:
@@ -264,7 +264,7 @@ Disassembly of section .text:
  f4 a5                 tst8	r5
  d1 f8                 brne8	-0x8 <L12>
  c0 80                 ldi8	r4, 0x80
- f0 05 00 02           ldi16	r1, 0x200
+ f0 05 02 02           ldi16	r1, 0x202
 <L13>:
  ed a2 20              ld8u	r5, [r1+0]
  f4 a5                 tst8	r5
@@ -277,7 +277,7 @@ Disassembly of section .text:
 <L14>:
  a0                    xor	r4, r4
  f6 29                 tst16	r1
- c5 00 02              ldi16	r5, 0x200
+ c5 02 02              ldi16	r5, 0x202
  f2 3d                 sub	r1, r5
  fb 0c                 cmov.eq	r1, r4
  c2 80                 ldi8	r6, 0x80
@@ -292,7 +292,7 @@ Disassembly of section .text:
  04                    mov	r5, r4
 <L16>:
  f6 2d                 tst16	r5
- c6 00 02              ldi16	r6, 0x200
+ c6 02 02              ldi16	r6, 0x202
  26                    sub	r5, r6
  fb 2c                 cmov.eq	r5, r4
  f9 36                 xor	r1, r5
@@ -310,7 +310,7 @@ Disassembly of section .text:
 <L18>:
  a0                    xor	r4, r4
  f6 2d                 tst16	r5
- c7 00 02              ldi16	r7, 0x200
+ c7 02 02              ldi16	r7, 0x202
  27                    sub	r5, r7
  fb 2c                 cmov.eq	r5, r4
  f9 36                 xor	r1, r5
@@ -327,7 +327,7 @@ Disassembly of section .text:
  04                    mov	r5, r4
 <L20>:
  f6 2d                 tst16	r5
- c6 00 02              ldi16	r6, 0x200
+ c6 02 02              ldi16	r6, 0x202
  26                    sub	r5, r6
  fb 2c                 cmov.eq	r5, r4
  f9 36                 xor	r1, r5
@@ -346,7 +346,7 @@ Disassembly of section .text:
 <L22>:
  f2 42                 sub	r2, r2
  f6 2d                 tst16	r5
- c4 00 02              ldi16	r4, 0x200
+ c4 02 02              ldi16	r4, 0x202
  24                    sub	r5, r4
  fb 2a                 cmov.eq	r5, r2
  f9 36                 xor	r1, r5
@@ -364,7 +364,7 @@ Disassembly of section .text:
  f1 26                 mov	r5, r2
 <L24>:
  f6 2d                 tst16	r5
- c4 00 02              ldi16	r4, 0x200
+ c4 02 02              ldi16	r4, 0x202
  24                    sub	r5, r4
  fb 2a                 cmov.eq	r5, r2
  f9 36                 xor	r1, r5
@@ -382,7 +382,7 @@ Disassembly of section .text:
 <L26>:
  f2 42                 sub	r2, r2
  f6 2c                 tst16	r4
- c6 00 02              ldi16	r6, 0x200
+ c6 02 02              ldi16	r6, 0x202
  22                    sub	r4, r6
  fb 22                 cmov.eq	r4, r2
  f9 32                 xor	r1, r4
@@ -400,7 +400,7 @@ Disassembly of section .text:
  f1 22                 mov	r4, r2
 <L28>:
  f6 2c                 tst16	r4
- c5 00 02              ldi16	r5, 0x200
+ c5 02 02              ldi16	r5, 0x202
  21                    sub	r4, r5
  fb 22                 cmov.eq	r4, r2
  f9 32                 xor	r1, r4
@@ -435,7 +435,7 @@ Disassembly of section .text:
  d1 f3                 brne8	-0xd <L32>
  d4 d4                 jmp8	-0x2c <L29>
 <L33>:
- f0 59 80 02           stm16	[0x280], r1
+ f0 59 00 02           stm16	[0x200], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 0a                 adjsp	0xa

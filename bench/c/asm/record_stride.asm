@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 record_stride.c
-00000100 l     O .data	00000090 records
-00000190 l     O .data	00000001 length
-00000191 l     O .data	00000002 record_stride_result
+00000100 l     O .data	00000001 length
+00000101 l     O .data	00000002 record_stride_result
+00000103 l     O .data	00000090 records
 00000000 l    df *ABS*	00000000 runtime.c
 000003a7 l       .init_array	00000000 .hidden __init_array_end
 000003a7 l       .init_array	00000000 .hidden __init_array_start
@@ -136,52 +136,52 @@ Disassembly of section .text:
  b0                    push16	r0
  c4 72 02              ldi16	r4, 0x272
  a5                    xor	r5, r5
- c6 7e 01              ldi16	r6, 0x17e
+ c6 81 01              ldi16	r6, 0x181
  f0 6b 8c              st32	[r6], q2
  c4 2b 02              ldi16	r4, 0x22b
  c5 01 01              ldi16	r5, 0x101
- c6 6c 01              ldi16	r6, 0x16c
+ c6 6f 01              ldi16	r6, 0x16f
  f0 6b 8c              st32	[r6], q2
  c4 e4 01              ldi16	r4, 0x1e4
  c5 02 02              ldi16	r5, 0x202
- c6 5a 01              ldi16	r6, 0x15a
+ c6 5d 01              ldi16	r6, 0x15d
  f0 6b 8c              st32	[r6], q2
  c4 9d 01              ldi16	r4, 0x19d
  c5 03 03              ldi16	r5, 0x303
- c6 48 01              ldi16	r6, 0x148
+ c6 4b 01              ldi16	r6, 0x14b
  f0 6b 8c              st32	[r6], q2
  c4 56 01              ldi16	r4, 0x156
  c5 04 04              ldi16	r5, 0x404
- c6 36 01              ldi16	r6, 0x136
+ c6 39 01              ldi16	r6, 0x139
  f0 6b 8c              st32	[r6], q2
  c4 0f 01              ldi16	r4, 0x10f
  c5 05 05              ldi16	r5, 0x505
- c6 24 01              ldi16	r6, 0x124
+ c6 27 01              ldi16	r6, 0x127
  f0 6b 8c              st32	[r6], q2
  c0 c8                 ldi8	r4, 0xc8
  c5 06 06              ldi16	r5, 0x606
- c6 12 01              ldi16	r6, 0x112
+ c6 15 01              ldi16	r6, 0x115
  f0 6b 8c              st32	[r6], q2
  c0 81                 ldi8	r4, 0x81
  c5 07 07              ldi16	r5, 0x707
- f0 04 00 01           ldi16	r0, 0x100
+ f0 04 03 01           ldi16	r0, 0x103
  f0 6b 80              st32	[r0], q2
  c0 79                 ldi8	r4, 0x79
- f0 4c 88 01           stm8	[0x188], r4
+ f0 4c 8b 01           stm8	[0x18b], r4
  c0 fa                 ldi8	r4, 0xfa
- f0 4c 76 01           stm8	[0x176], r4
+ f0 4c 79 01           stm8	[0x179], r4
  c0 7b                 ldi8	r4, 0x7b
- f0 4c 64 01           stm8	[0x164], r4
+ f0 4c 67 01           stm8	[0x167], r4
  c0 fc                 ldi8	r4, 0xfc
- f0 4c 52 01           stm8	[0x152], r4
+ f0 4c 55 01           stm8	[0x155], r4
  c0 7d                 ldi8	r4, 0x7d
- f0 4c 40 01           stm8	[0x140], r4
+ f0 4c 43 01           stm8	[0x143], r4
  c0 fe                 ldi8	r4, 0xfe
- f0 4c 2e 01           stm8	[0x12e], r4
+ f0 4c 31 01           stm8	[0x131], r4
  c0 7f                 ldi8	r4, 0x7f
- f0 4c 1c 01           stm8	[0x11c], r4
+ f0 4c 1f 01           stm8	[0x11f], r4
  f2 39                 sub	r1, r1
- f0 49 0a 01           stm8	[0x10a], r1
+ f0 49 0d 01           stm8	[0x10d], r1
  d7 01                 sys	debug_break
  f1 11                 mov	r2, r1
  f1 2d                 mov	r7, r1
@@ -193,7 +193,7 @@ Disassembly of section .text:
  cc 20                 cmpi.s8	r4, 0x20
  d0 2f                 breq8	0x2f <L4>
 <L1>:
- f0 43 90 01           ldm8u	r3, [0x190]
+ f0 43 00 01           ldm8u	r3, [0x100]
  f4 a3                 tst8	r3
  d0 ee                 breq8	-0x12 <L0>
  f1 24                 mov	r5, r0
@@ -220,7 +220,7 @@ Disassembly of section .text:
  d1 e9                 brne8	-0x17 <L3>
  d4 c7                 jmp8	-0x39 <L0>
 <L4>:
- f0 5f 91 01           stm16	[0x191], r7
+ f0 5f 01 01           stm16	[0x101], r7
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

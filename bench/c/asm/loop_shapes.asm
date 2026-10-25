@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 loop_shapes.c
-00000100 l     O .data	00000020 lengths
-00000120 l     O .data	00000080 values
-000001a0 l     O .data	00000002 loop_shapes_result
+00000100 l     O .data	00000002 loop_shapes_result
+00000102 l     O .data	00000020 lengths
+00000122 l     O .data	00000080 values
 00000000 l    df *ABS*	00000000 runtime.c
 0000037c l       .init_array	00000000 .hidden __init_array_end
 0000037c l       .init_array	00000000 .hidden __init_array_start
@@ -135,7 +135,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- f0 04 00 01           ldi16	r0, 0x100
+ f0 04 02 01           ldi16	r0, 0x102
  f0 01 01              ldi8	r1, 0x1
  a5                    xor	r5, r5
  c3 20                 ldi8	r7, 0x20
@@ -160,7 +160,7 @@ Disassembly of section .text:
  f4 b7                 dec16	r7
  f6 2f                 tst16	r7
  d1 e3                 brne8	-0x1d <L0>
- c4 20 01              ldi16	r4, 0x120
+ c4 22 01              ldi16	r4, 0x122
  c1 05                 ldi8	r5, 0x5
  c2 80                 ldi8	r6, 0x80
 <L1>:
@@ -192,14 +192,14 @@ Disassembly of section .text:
  d0 e5                 breq8	-0x1b <L2>
 <L5>:
  09                    mov	r6, r5
- c4 00 01              ldi16	r4, 0x100
+ c4 02 01              ldi16	r4, 0x102
  18                    add	r6, r4
  f5 3a                 ld8u	r2, [r6]
  f4 a2                 tst8	r2
  d0 ec                 breq8	-0x14 <L4>
  f1 02                 mov	r0, r2
  f2 03                 add	r0, r3
- c4 20 01              ldi16	r4, 0x120
+ c4 22 01              ldi16	r4, 0x122
  d4 06                 jmp8	0x6 <L7>
 <L6>:
  f4 b0                 dec16	r0
@@ -225,7 +225,7 @@ Disassembly of section .text:
  d1 c4                 brne8	-0x3c <L5>
  d4 a7                 jmp8	-0x59 <L2>
 <L8>:
- f0 5f a0 01           stm16	[0x1a0], r7
+ f0 5f 00 01           stm16	[0x100], r7
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

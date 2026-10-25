@@ -6,20 +6,20 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 sys_strncpy.c
-00000104 l     O .data	00000009 source8
-00000100 l     O .data	00000004 source3
-0000010d l     O .data	00000021 source32
-0000012e l     O .data	00000001 destination0
-0000012f l     O .data	00000002 n0
-00000131 l     O .data	00000002 destination1
-00000133 l     O .data	00000002 n1
-00000135 l     O .data	00000008 destination_pad8
-0000013d l     O .data	00000002 n8
-0000013f l     O .data	00000008 destination_exact8
-00000147 l     O .data	00000008 destination_trunc8
-0000014f l     O .data	00000020 destination_pad32
-0000016f l     O .data	00000002 n32
-00000171 l     O .data	00000002 benchmark_result
+00000100 l     O .data	00000002 n1
+00000102 l     O .data	00000002 n8
+00000104 l     O .data	00000002 n32
+00000106 l     O .data	00000001 destination0
+00000107 l     O .data	00000002 n0
+00000109 l     O .data	00000002 destination1
+0000010b l     O .data	00000002 benchmark_result
+0000010d l     O .data	00000004 source3
+00000111 l     O .data	00000008 destination_pad8
+00000119 l     O .data	00000008 destination_exact8
+00000121 l     O .data	00000008 destination_trunc8
+00000129 l     O .data	00000009 source8
+00000132 l     O .data	00000020 destination_pad32
+00000152 l     O .data	00000021 source32
 00000000 l    df *ABS*	00000000 runtime.c
 00000389 l       .init_array	00000000 .hidden __init_array_end
 00000389 l       .init_array	00000000 .hidden __init_array_start
@@ -147,56 +147,56 @@ Disassembly of section .text:
  b0                    push16	r0
  c4 65 66              ldi16	r4, 0x6665
  c5 67 68              ldi16	r5, 0x6867
- c6 08 01              ldi16	r6, 0x108
+ c6 2d 01              ldi16	r6, 0x12d
  f0 6b 8c              st32	[r6], q2
  c4 61 62              ldi16	r4, 0x6261
  c5 63 64              ldi16	r5, 0x6463
- f0 07 04 01           ldi16	r3, 0x104
+ f0 07 29 01           ldi16	r3, 0x129
  f0 6b 86              st32	[r3], q2
  c1 63                 ldi8	r5, 0x63
- f0 06 00 01           ldi16	r2, 0x100
+ f0 06 0d 01           ldi16	r2, 0x10d
  f0 6b 84              st32	[r2], q2
  f2 30                 sub	r0, r0
- f0 48 0c 01           stm8	[0x10c], r0
- f0 05 0d 01           ldi16	r1, 0x10d
+ f0 48 31 01           stm8	[0x131], r0
+ f0 05 52 01           ldi16	r1, 0x152
  f1 21                 mov	r4, r1
  c6 68 03              ldi16	r6, 0x368
  c3 00                 ldi8	r7, 0x0
  c1 21                 ldi8	r5, 0x21
  d7 10                 sys	memcpy_p
  d7 01                 sys	debug_break
- c4 2e 01              ldi16	r4, 0x12e
- f0 56 2f 01           ldm16	r6, [0x12f]
+ c4 06 01              ldi16	r4, 0x106
+ f0 56 07 01           ldm16	r6, [0x107]
  f1 25                 mov	r5, r1
  d7 1b                 sys	strncpy
- c4 31 01              ldi16	r4, 0x131
- f0 56 33 01           ldm16	r6, [0x133]
+ c4 09 01              ldi16	r4, 0x109
+ f0 56 00 01           ldm16	r6, [0x100]
  d7 1b                 sys	strncpy
- c4 35 01              ldi16	r4, 0x135
- f0 56 3d 01           ldm16	r6, [0x13d]
+ c4 11 01              ldi16	r4, 0x111
+ f0 56 02 01           ldm16	r6, [0x102]
  f1 26                 mov	r5, r2
  d7 1b                 sys	strncpy
- c4 3f 01              ldi16	r4, 0x13f
- f0 55 3d 01           ldm16	r5, [0x13d]
+ c4 19 01              ldi16	r4, 0x119
+ f0 55 02 01           ldm16	r5, [0x102]
  f1 27                 mov	r5, r3
  d7 1b                 sys	strncpy
- c4 47 01              ldi16	r4, 0x147
- f0 55 3d 01           ldm16	r5, [0x13d]
+ c4 21 01              ldi16	r4, 0x121
+ f0 55 02 01           ldm16	r5, [0x102]
  f1 25                 mov	r5, r1
  d7 1b                 sys	strncpy
- c4 4f 01              ldi16	r4, 0x14f
- f0 56 6f 01           ldm16	r6, [0x16f]
+ c4 32 01              ldi16	r4, 0x132
+ f0 56 04 01           ldm16	r6, [0x104]
  f1 26                 mov	r5, r2
  d7 1b                 sys	strncpy
- f0 44 3c 01           ldm8u	r4, [0x13c]
- f0 45 31 01           ldm8u	r5, [0x131]
+ f0 44 18 01           ldm8u	r4, [0x118]
+ f0 45 09 01           ldm8u	r5, [0x109]
  14                    add	r5, r4
- f0 44 4e 01           ldm8u	r4, [0x14e]
+ f0 44 28 01           ldm8u	r4, [0x128]
  11                    add	r4, r5
- f0 45 6e 01           ldm8u	r5, [0x16e]
+ f0 45 51 01           ldm8u	r5, [0x151]
  14                    add	r5, r4
  c9 06                 addi.s8	r5, 0x6
- f0 5d 71 01           stm16	[0x171], r5
+ f0 5d 0b 01           stm16	[0x10b], r5
  d7 01                 sys	debug_break
  f1 20                 mov	r4, r0
  b8                    pop16	r0

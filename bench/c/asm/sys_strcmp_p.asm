@@ -6,13 +6,13 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 sys_strcmp_p.c
-00000100 l     O .data	00000041 lhs
 00000336 l     O .rodata	00000001 p_empty
 000003b9 l     O .rodata	00000041 p_last_diff
 00000378 l     O .rodata	00000041 p_first_diff
 00000337 l     O .rodata	00000041 p_equal
 000003fa l     O .rodata	00000011 p_prefix
-00000142 l     O .data	00000002 benchmark_result
+00000101 l     O .data	00000002 benchmark_result
+00000103 l     O .data	00000041 lhs
 00000000 l    df *ABS*	00000000 runtime.c
 0000044c l       .init_array	00000000 .hidden __init_array_end
 0000044c l       .init_array	00000000 .hidden __init_array_start
@@ -138,7 +138,7 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f0 04 00 01           ldi16	r0, 0x100
+ f0 04 03 01           ldi16	r0, 0x103
  f1 20                 mov	r4, r0
  c6 0b 04              ldi16	r6, 0x40b
  c3 00                 ldi8	r7, 0x0
@@ -147,7 +147,7 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  c6 36 03              ldi16	r6, 0x336
  c3 00                 ldi8	r7, 0x0
- c4 41 01              ldi16	r4, 0x141
+ c4 00 01              ldi16	r4, 0x100
  d7 14                 sys	strcmp_p
  f1 14                 mov	r2, r4
  c6 b9 03              ldi16	r6, 0x3b9
@@ -166,11 +166,11 @@ Disassembly of section .text:
  d7 14                 sys	strcmp_p
  04                    mov	r5, r4
  a0                    xor	r4, r4
- f0 4c 10 01           stm8	[0x110], r4
+ f0 4c 13 01           stm8	[0x113], r4
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  c2 61                 ldi8	r6, 0x61
- f0 4e 10 01           stm8	[0x110], r6
+ f0 4e 13 01           stm8	[0x113], r6
  f2 26                 add	r5, r2
  f2 25                 add	r5, r1
  f2 27                 add	r5, r3
@@ -180,7 +180,7 @@ Disassembly of section .text:
  f1 20                 mov	r4, r0
  d7 14                 sys	strcmp_p
  11                    add	r4, r5
- f0 5c 42 01           stm16	[0x142], r4
+ f0 5c 01 01           stm16	[0x101], r4
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

@@ -6,11 +6,11 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 tile_cache_render.c
-00000100 l     O .data	0000002d tile_cache
-0000012f l     O .data	00000002 camera_y
-0000012d l     O .data	00000002 camera_x
 0000031a l     F .text	000000aa render_tile_cache
 000003c6 l     O .rodata	00000042 SPRITES
+00000100 l     O .data	00000002 camera_x
+00000102 l     O .data	00000002 camera_y
+00000104 l     O .data	0000002d tile_cache
 00000000 l    df *ABS*	00000000 runtime.c
 00000408 l       .init_array	00000000 .hidden __init_array_end
 00000408 l       .init_array	00000000 .hidden __init_array_start
@@ -137,7 +137,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fe                 adjsp	-0x2
- f0 06 00 01           ldi16	r2, 0x100
+ f0 06 04 01           ldi16	r2, 0x104
  af                    xor	r7, r7
  c2 2d                 ldi8	r6, 0x2d
  c4 a3 ff              ldi16	r4, 0xffa3
@@ -162,9 +162,9 @@ Disassembly of section .text:
 <L1>:
  f4 40                 stsp16	[sp+0x0], r4
  fa 72                 lsr16i	r4, 0x2
- f0 5c 2f 01           stm16	[0x12f], r4
+ f0 5c 02 01           stm16	[0x102], r4
  f4 00                 ldsp16	r4, [sp+0x0]
- f0 5c 2d 01           stm16	[0x12d], r4
+ f0 5c 00 01           stm16	[0x100], r4
  d5 11                 call8	render_tile_cache
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 ac                 inc16	r4
@@ -182,8 +182,8 @@ Disassembly of section .text:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f0 51 2f 01           ldm16	r1, [0x12f]
- f0 56 2d 01           ldm16	r6, [0x12d]
+ f0 51 02 01           ldm16	r1, [0x102]
+ f0 56 00 01           ldm16	r6, [0x100]
  c4 c6 03              ldi16	r4, 0x3c6
  c1 00                 ldi8	r5, 0x0
  d7 22                 sys	set_sprite
@@ -195,7 +195,7 @@ Disassembly of section .text:
  f1 02                 mov	r0, r2
  f2 36                 sub	r0, r6
  f2 41                 sub	r2, r1
- c7 00 01              ldi16	r7, 0x100
+ c7 04 01              ldi16	r7, 0x104
  f0 01 ff              ldi8	r1, 0xff
 <L0>:
  4b                    ld8u	r6, [r7]

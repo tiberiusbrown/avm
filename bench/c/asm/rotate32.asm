@@ -6,9 +6,9 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 rotate32.c
-00000100 l     O .data	00000040 values
-00000140 l     O .data	00000010 counts
-00000150 l     O .data	00000004 rotate32_result
+00000100 l     O .data	00000004 rotate32_result
+00000104 l     O .data	00000010 counts
+00000114 l     O .data	00000040 values
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 integer.c
 0000044f l       .init_array	00000000 .hidden __init_array_end
@@ -140,8 +140,8 @@ Disassembly of section .text:
  d6 f2                 adjsp	-0xe
  f0 00 01              ldi8	r0, 0x1
  a0                    xor	r4, r4
- f0 05 00 01           ldi16	r1, 0x100
- f0 06 40 01           ldi16	r2, 0x140
+ f0 05 14 01           ldi16	r1, 0x114
+ f0 06 04 01           ldi16	r2, 0x104
  c1 09                 ldi8	r5, 0x9
  f4 51                 stsp16	[sp+0x4], r5
  c1 fe                 ldi8	r5, 0xfe
@@ -193,9 +193,9 @@ Disassembly of section .text:
 <L1>:
  f4 41                 stsp16	[sp+0x0], r5
  f0 00 10              ldi8	r0, 0x10
- c4 40 01              ldi16	r4, 0x140
+ c4 04 01              ldi16	r4, 0x104
  04                    mov	r5, r4
- f0 05 00 01           ldi16	r1, 0x100
+ f0 05 14 01           ldi16	r1, 0x114
 <L2>:
  f0 6a c2              ld32	q3, [r1]
  f4 6a                 stsp16	[sp+0xa], r6
@@ -246,7 +246,7 @@ Disassembly of section .text:
  cc 18                 cmpi.s8	r4, 0x18
  f2 67                 mov32	q1, q3
  d1 97                 brne8	-0x69 <L1>
- c4 50 01              ldi16	r4, 0x150
+ c4 00 01              ldi16	r4, 0x100
  f0 6b c8              st32	[r4], q3
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

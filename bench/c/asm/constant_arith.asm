@@ -6,8 +6,8 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 constant_arith.c
-00000100 l     O .data	00000080 values
-00000180 l     O .data	00000002 constant_arith_result
+00000100 l     O .data	00000002 constant_arith_result
+00000102 l     O .data	00000080 values
 00000000 l    df *ABS*	00000000 runtime.c
 00000412 l       .init_array	00000000 .hidden __init_array_end
 00000412 l       .init_array	00000000 .hidden __init_array_start
@@ -134,7 +134,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 f2                 adjsp	-0xe
- c4 00 01              ldi16	r4, 0x100
+ c4 02 01              ldi16	r4, 0x102
  c6 92 03              ldi16	r6, 0x392
  c3 00                 ldi8	r7, 0x0
  c1 80                 ldi8	r5, 0x80
@@ -150,7 +150,7 @@ Disassembly of section .text:
 <L0>:
  f4 48                 stsp16	[sp+0x2], r4
  f0 32 00              ldsp16	r2, [sp+0x0]
- c4 00 01              ldi16	r4, 0x100
+ c4 02 01              ldi16	r4, 0x102
 <L1>:
  f7 26                 ld16	r6, [r4+]
  f4 70                 stsp16	[sp+0xc], r4
@@ -237,7 +237,7 @@ Disassembly of section .text:
  cd 20                 cmpi.s8	r5, 0x20
  06                    mov	r5, r6
  db 68 ff              brne16	-0x98 <L0>
- f0 5e 80 01           stm16	[0x180], r6
+ f0 5e 00 01           stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 0e                 adjsp	0xe

@@ -7,18 +7,18 @@ SYMBOL TABLE:
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 sys_strncat_p.c
 00000341 l     O .rodata	00000004 source_short
-00000100 l     O .data	00000010 destination_n0
-00000110 l     O .data	00000002 n0
 00000345 l     O .rodata	00000001 source_empty
-00000112 l     O .data	00000008 destination_empty_empty
-0000011a l     O .data	00000002 n8
-0000011c l     O .data	00000010 destination_empty_short
-0000012c l     O .data	00000018 destination_short_short
 00000346 l     O .rodata	00000021 source_long
-00000144 l     O .data	00000018 destination_truncate
-0000015c l     O .data	00000002 n4
-0000015e l     O .data	00000030 destination_long_scan
-0000018e l     O .data	00000002 benchmark_result
+00000100 l     O .data	00000002 n8
+00000102 l     O .data	00000002 n4
+00000104 l     O .data	00000010 destination_n0
+00000114 l     O .data	00000018 destination_short_short
+0000012c l     O .data	00000018 destination_truncate
+00000144 l     O .data	00000030 destination_long_scan
+00000174 l     O .data	00000002 n0
+00000176 l     O .data	00000002 benchmark_result
+00000178 l     O .data	00000008 destination_empty_empty
+00000180 l     O .data	00000010 destination_empty_short
 00000000 l    df *ABS*	00000000 runtime.c
 00000367 l       .init_array	00000000 .hidden __init_array_end
 00000367 l       .init_array	00000000 .hidden __init_array_start
@@ -146,42 +146,42 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  f0 04 41 03           ldi16	r0, 0x341
  f0 01 00              ldi8	r1, 0x0
- c4 00 01              ldi16	r4, 0x100
- f0 55 10 01           ldm16	r5, [0x110]
+ c4 04 01              ldi16	r4, 0x104
+ f0 55 74 01           ldm16	r5, [0x174]
  f2 6a                 mov32	q3, q0
  d7 17                 sys	strncat_p
  c6 45 03              ldi16	r6, 0x345
  c3 00                 ldi8	r7, 0x0
- c4 12 01              ldi16	r4, 0x112
- f0 55 1a 01           ldm16	r5, [0x11a]
+ c4 78 01              ldi16	r4, 0x178
+ f0 55 00 01           ldm16	r5, [0x100]
  f4 41                 stsp16	[sp+0x0], r5
  d7 17                 sys	strncat_p
- c4 1c 01              ldi16	r4, 0x11c
- f0 56 1a 01           ldm16	r6, [0x11a]
+ c4 80 01              ldi16	r4, 0x180
+ f0 56 00 01           ldm16	r6, [0x100]
  f2 6a                 mov32	q3, q0
  d7 17                 sys	strncat_p
- c4 2c 01              ldi16	r4, 0x12c
- f0 55 1a 01           ldm16	r5, [0x11a]
+ c4 14 01              ldi16	r4, 0x114
+ f0 55 00 01           ldm16	r5, [0x100]
  f4 01                 ldsp16	r5, [sp+0x0]
  d7 17                 sys	strncat_p
  c6 46 03              ldi16	r6, 0x346
  c3 00                 ldi8	r7, 0x0
- c4 44 01              ldi16	r4, 0x144
- f0 55 5c 01           ldm16	r5, [0x15c]
+ c4 2c 01              ldi16	r4, 0x12c
+ f0 55 02 01           ldm16	r5, [0x102]
  d7 17                 sys	strncat_p
- c4 5e 01              ldi16	r4, 0x15e
- f0 55 1a 01           ldm16	r5, [0x11a]
+ c4 44 01              ldi16	r4, 0x144
+ f0 55 00 01           ldm16	r5, [0x100]
  f2 6a                 mov32	q3, q0
  d7 17                 sys	strncat_p
- f0 44 36 01           ldm8u	r4, [0x136]
- f0 45 1e 01           ldm8u	r5, [0x11e]
+ f0 44 1e 01           ldm8u	r4, [0x11e]
+ f0 45 82 01           ldm8u	r5, [0x182]
  14                    add	r5, r4
- f0 44 4f 01           ldm8u	r4, [0x14f]
+ f0 44 37 01           ldm8u	r4, [0x137]
  11                    add	r4, r5
- f0 45 80 01           ldm8u	r5, [0x180]
+ f0 45 66 01           ldm8u	r5, [0x166]
  14                    add	r5, r4
  c9 06                 addi.s8	r5, 0x6
- f0 5d 8e 01           stm16	[0x18e], r5
+ f0 5d 76 01           stm16	[0x176], r5
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 02                 adjsp	0x2

@@ -6,8 +6,8 @@ SYMBOL TABLE:
 0000021e l     F .text	00000044 avm_run_constructors
 00000262 l     F .text	00000065 avm_run_destructors
 00000000 l    df *ABS*	00000000 packed_fields.c
-00000100 l     O .data	000000c0 packets
-000001c0 l     O .data	00000004 packed_fields_result
+00000100 l     O .data	00000004 packed_fields_result
+00000104 l     O .data	000000c0 packets
 00000000 l    df *ABS*	00000000 runtime.c
 0000040a l       .init_array	00000000 .hidden __init_array_end
 0000040a l       .init_array	00000000 .hidden __init_array_start
@@ -134,7 +134,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fa                 adjsp	-0x6
- c4 00 01              ldi16	r4, 0x100
+ c4 04 01              ldi16	r4, 0x104
  c6 4a 03              ldi16	r6, 0x34a
  c3 00                 ldi8	r7, 0x0
  c1 c0                 ldi8	r5, 0xc0
@@ -143,8 +143,8 @@ Disassembly of section .text:
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3
  d7 01                 sys	debug_break
- c5 05 01              ldi16	r5, 0x105
- c6 01 01              ldi16	r6, 0x101
+ c5 09 01              ldi16	r5, 0x109
+ c6 05 01              ldi16	r6, 0x105
  0c                    mov	r7, r4
 <L0>:
  f4 43                 stsp16	[sp+0x0], r7
@@ -162,14 +162,14 @@ Disassembly of section .text:
  fa cf                 asr16i	r5, 0xf
  f7 6b                 add32	q2, q3
  f1 29                 mov	r6, r1
- c7 07 01              ldi16	r7, 0x107
+ c7 0b 01              ldi16	r7, 0x10b
  1b                    add	r6, r7
  4a                    ld8u	r6, [r6]
  af                    xor	r7, r7
  a8                    xor	r6, r4
  ad                    xor	r7, r5
  f1 21                 mov	r4, r1
- c5 00 01              ldi16	r5, 0x100
+ c5 04 01              ldi16	r5, 0x104
  11                    add	r4, r5
  40                    ld8u	r4, [r4]
  f4 11                 ldsp16	r5, [sp+0x4]
@@ -180,9 +180,9 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  a2                    xor	r4, r6
  a7                    xor	r5, r7
- c6 01 01              ldi16	r6, 0x101
+ c6 05 01              ldi16	r6, 0x105
  f7 66                 add32	q1, q2
- c5 05 01              ldi16	r5, 0x105
+ c5 09 01              ldi16	r5, 0x109
  f0 09 08              addi.s8	r1, 0x8
  c0 c0                 ldi8	r4, 0xc0
  f5 0c                 cmp	r1, r4
@@ -193,7 +193,7 @@ Disassembly of section .text:
  f1 74                 zext8	r4
  cc 18                 cmpi.s8	r4, 0x18
  d1 af                 brne8	-0x51 <L0>
- c4 c0 01              ldi16	r4, 0x1c0
+ c4 00 01              ldi16	r4, 0x100
  f0 6b 48              st32	[r4], q1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4

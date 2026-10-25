@@ -26,15 +26,18 @@ The newer compiled benchmarks fill these code generation gaps:
 | Aggregate layout and ABI | `aggregate_args`, `aggregate_return`, `bitfields`, `packed_fields` |
 | Memory and stack | `aliasing`, `dynamic_stack`, `pointer_table`, `stack_frames`, `volatile_rmw` |
 | Branches and loop shapes | `byte_comparisons`, `loop_shapes`, `short_circuit`, `saturating_math` |
-| Integer lowering | `bit_count`, `count_leading_zeros`, `count_trailing_zeros`, `div_pow2`, `narrow_arithmetic`, `popcount`, `progmem_record_index`, `rotate32`, `wide_add_sub`, `wide_compare` |
+| Integer lowering | `bit_count`, `bounded_shifts`, `count_leading_zeros`, `count_trailing_zeros`, `div_pow2`, `narrow_arithmetic`, `popcount`, `progmem_record_index`, `rotate32`, `wide_add_sub`, `wide_compare` |
 | Floating point lowering | `float_comparisons`, `float_conversions` |
-| Runtime float math | `math_sqrt`, `math_sin`, `math_cos`, `math_atan2`, `math_tan`, `math_exp`, `math_log`, `math_log2`, `math_log10`, `math_pow`, `math_hypot`, `math_fmod` |
+| Runtime float math | `math_sqrt`, `math_sin`, `math_cos`, `math_atan2`, `math_tan`, `math_exp`, `math_log`, `math_log2`, `math_log10`, `math_pow`, `math_hypot`, `math_fmod`, `math_floor`, `math_ceil`, `math_round`, `math_trunc` |
 | C++ lowering | `aggregate_byte_dispatch`, `aggregate_byte_packing`, `aggregate_byte_packing_hoisted`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
 
 Each `math_*` benchmark measures 32 calls. `math_sin`, `math_cos`, and `math_tan`
 use the same 16 magnitudes with both signs, from 0.25 through the largest finite
 binary32 value. Half the calls exercise large-angle reduction; the remaining
-inputs cover the direct, special-case, and medium-angle paths. The volatile
+inputs cover the direct, special-case, and medium-angle paths. `math_floor`,
+`math_ceil`, `math_round`, and `math_trunc` share 16 magnitudes with both signs,
+including zeros, subnormals, ties, the exponent-7 word boundary, carries into
+the exponent, and integral values. The volatile
 input tables are initialized before timing; the timed loop loads each input,
 calls the function, and accumulates its result. Other math benchmarks use inputs
 from 0.25 to 1.21875.
@@ -80,9 +83,30 @@ candidate when upper registers are busy.
 `fir8` exercises signed byte products with hoisted, spilled coefficients.
 Its unrolled sample loads also exercise shared displaced-address bases.
 
-`shifts`, `rotate32`, and `wide_shifts` measure the runtime 32-bit variable-shift
-helpers. `register_cleanup` exercises an inline widening shift of a word by a
-variable count in 0..7 under register pressure.
+`shifts` measures unbounded 32-bit variable-shift helpers, `rotate32` measures
+32-bit rotations, and `wide_shifts` measures 64-bit shifts. `bounded_shifts`
+measures native lowering of full-width left, logical-right, and arithmetic-right
+shifts with counts in 0..15, 16..31, and 0..31. `register_cleanup` exercises an
+inline widening shift of a word by a variable count in 0..7 under register pressure.
+
+The split-word rounding kernels and bounded-shift lowering were measured on
+2026-10-25 with the same sources before and after the changes, using
+RelWithDebInfo, `-O2` callers, and `-O3` runtime math. Counts include the timed
+loop and result accumulation, with the adjacent-break baseline subtracted.
+
+| Benchmark | Before cycles | After cycles | Cycles saved |
+| --- | ---: | ---: | ---: |
+| `math_floor` | 136,578 | 79,335 | 41.9% |
+| `math_ceil` | 134,440 | 74,723 | 44.4% |
+| `math_round` | 121,903 | 74,663 | 38.8% |
+| `math_trunc` | 81,109 | 58,827 | 27.5% |
+| `bounded_shifts` | 103,789 | 54,961 | 47.1% |
+
+All four rounding kernels have zero references to 32-bit shift helpers
+(previously 3, 3, 3, and 1 respectively). `avm_rounding_tests_run` checks their
+compiled symbols and compares all four production kernels with host double
+results for over 51 million inputs. Interpreter fixtures additionally exercise
+every fractional exponent and all 32 bounded shift counts at O0/O1/O2/O3/Os/Oz.
 
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;

@@ -653,3 +653,37 @@ add_custom_target(avm_math_reference_tests_run
     DEPENDS avm_math_reference_tests avm_math_reduction_tests
     USES_TERMINAL)
 add_dependencies(avm_tests_run avm_math_reference_tests_run)
+
+# Compile the production rounding kernels under distinct names so host libm
+# supplies an independent reference, including signed zero and NaN handling.
+add_library(avm_rounding_reference_kernels OBJECT
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_floor.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_ceil.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_round.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_trunc.c")
+target_include_directories(avm_rounding_reference_kernels PRIVATE
+    "${PROJECT_SOURCE_DIR}/runtime/include")
+target_compile_definitions(avm_rounding_reference_kernels PRIVATE
+    floorf=avm_reference_floorf ceilf=avm_reference_ceilf
+    roundf=avm_reference_roundf truncf=avm_reference_truncf)
+if(MSVC)
+    target_compile_options(avm_rounding_reference_kernels PRIVATE /fp:strict)
+else()
+    target_compile_options(avm_rounding_reference_kernels PRIVATE
+        -ffp-contract=off -fno-fast-math)
+endif()
+add_executable(avm_rounding_reference_tests math/rounding_reference.c)
+target_link_libraries(avm_rounding_reference_tests PRIVATE
+    avm_rounding_reference_kernels)
+if(NOT MSVC)
+    target_link_libraries(avm_rounding_reference_tests PRIVATE m)
+endif()
+add_custom_target(avm_rounding_tests_run
+    COMMAND "$<TARGET_FILE:avm_rounding_reference_tests>"
+    COMMAND "${CMAKE_COMMAND}"
+        "-DAVM_NM=$<TARGET_FILE:llvm-nm>"
+        "-DAVM_OBJECT_DIR=${PROJECT_BINARY_DIR}/runtime/objects"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/math/check_rounding_shifts.cmake"
+    DEPENDS avm_rounding_reference_tests avm_sysroot llvm-nm
+    USES_TERMINAL VERBATIM)
+add_dependencies(avm_tests_run avm_rounding_tests_run)

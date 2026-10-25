@@ -46,6 +46,8 @@ avm_add_image(
 # pair of __avm_debug_break() calls around the code being measured.
 file(GLOB AVM_BENCH_C_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_C_DIR}/*.c")
+file(GLOB AVM_BENCH_C_HEADERS CONFIGURE_DEPENDS
+    "${AVM_BENCH_C_DIR}/*.h")
 file(GLOB AVM_BENCH_C_MIR_SOURCES CONFIGURE_DEPENDS
     "${AVM_BENCH_C_MIR_SOURCE_DIR}/*.c")
 file(GLOB AVM_BENCH_CXX_SOURCES CONFIGURE_DEPENDS
@@ -97,7 +99,7 @@ foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
         SOURCE "${AVM_BENCH_C_SOURCE}"
         LANGUAGE C
         INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
-        DEPENDS avm_sysroot
+        DEPENDS avm_sysroot ${AVM_BENCH_C_HEADERS}
     )
     avm_add_image(
         OBJECTS "${AVM_BENCH_OBJECT}"
@@ -178,7 +180,7 @@ foreach(AVM_BENCH_C_MIR_SOURCE IN LISTS AVM_BENCH_C_MIR_SOURCES)
             -mllvm -print-before-all
             -mllvm -print-after-all
         STDERR_OUTPUT "${AVM_BENCH_MIR_OUTPUT}"
-        DEPENDS avm_sysroot
+        DEPENDS avm_sysroot ${AVM_BENCH_C_HEADERS}
     )
     list(APPEND AVM_BENCH_MIR_OUTPUTS
         "${AVM_BENCH_MIR_OBJECT}"

@@ -11,38 +11,28 @@
 
 #include "fdlibm.h"
 
-	float truncf(float x)
+float truncf(float x)
 {
-  __int32_t signbit, w, exponent_less_127;
+    uint32_t bits;
+    GET_FLOAT_WORD(bits, x);
+    uint16_t hi = (uint16_t)(bits >> 16);
+    uint16_t lo = (uint16_t)bits;
+    int e = (int)((hi & 0x7fffu) >> 7) - 127;
 
-  GET_FLOAT_WORD(w,x);
-
-  /* Extract sign bit. */
-  signbit = w & 0x80000000;
-
-  /* Extract exponent field. */
-  exponent_less_127 = ((w & 0x7f800000) >> 23) - 127;
-
-  if (exponent_less_127 < 23)
-    {
-      if (exponent_less_127 < 0)
-        {
-          /* -1 < x < 1, so result is +0 or -0. */
-          SET_FLOAT_WORD(x, signbit);
-        }
-      else
-        {
-          SET_FLOAT_WORD(x, signbit | (w & ~(0x007fffff >> exponent_less_127)));
-        }
+    if (e < 0) {
+        hi &= 0x8000u;
+        lo = 0;
+    } else if (e < 7) {
+        uint16_t mask = 0x007fu >> e;
+        hi &= (uint16_t)~mask;
+        lo = 0;
+    } else if (e < 23) {
+        uint16_t mask = 0xffffu >> (e - 7);
+        lo &= (uint16_t)~mask;
+    } else {
+        return e == 128 ? x + x : x;
     }
-  else
-    {
-      if (exponent_less_127 == 128)
-        /* x is NaN or infinite. */
-        return x + x;
-
-      /* All bits in the fraction field are relevant. */
-    }
-  return x;
+    SET_FLOAT_WORD(x, ((uint32_t)hi << 16) | lo);
+    return x;
 }
 

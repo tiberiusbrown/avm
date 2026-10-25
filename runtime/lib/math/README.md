@@ -27,7 +27,14 @@ target fixtures check exact results through the real interpreter.
 
 `fmodf` uses exact subtraction in the normal y < x < 2*y interval. Bit-level
 rounding does not perform arithmetic solely to raise unsupported exception
-flags. The roundf mask is explicitly 32 bits because AVM has 16-bit int.
+flags. `floorf`, `ceilf`, `roundf`, and `truncf` split binary32 bits into two
+16-bit words. Exponents below 7 clear fractional bits in both words; exponents
+7 through 22 clear only the low word. Masks, rounding increments, and carries
+use native word operations without general 32-bit variable-shift helpers.
+Host reference tests exhaust every mantissa at exponents 6, 7, and 22 with both
+signs, plus exponent boundaries and random inputs. Target tests cover every
+fractional exponent, signed zeros, subnormals, infinities, and NaNs; a symbol
+check prevents the four kernels from reintroducing shift-helper calls.
 `math.c` supplies log2 and number-preferred min/max with signed-zero handling.
 
 See [measurements and validation](../../../docs/math-runtime-tradeoff.md).

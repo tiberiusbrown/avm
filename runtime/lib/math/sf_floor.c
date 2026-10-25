@@ -24,35 +24,42 @@
 
 #include "fdlibm.h"
 
-
-
-	float floorf(float x)
+float floorf(float x)
 {
-	__int32_t i0,j0;
-	__uint32_t i,ix;
-	GET_FLOAT_WORD(i0,x);
-	ix = (i0&0x7fffffff);
-	j0 = (ix>>23)-0x7f;
-	if(j0<23) {
-	    if(j0<0) { 	/* raise inexact if x != 0 */
-		if (1) {/* return 0*sign(x) if |x|<1 */
-		    if(i0>=0) {i0=0;} 
-		    else if(!FLT_UWORD_IS_ZERO(ix))
-			{ i0=0xbf800000;}
-		}
-	    } else {
-		i = (0x007fffff)>>j0;
-		if((i0&i)==0) return x; /* x is integral */
-		if (1) {	/* raise inexact flag */
-		    if(i0<0) i0 += (0x00800000)>>j0;
-		    i0 &= (~i);
-		}
-	    }
-	} else {
-	    if(!FLT_UWORD_IS_FINITE(ix)) return x+x;	/* inf or NaN */
-	    else return x;		/* x is integral */
-	}
-	SET_FLOAT_WORD(x,i0);
-	return x;
+    uint32_t bits;
+    GET_FLOAT_WORD(bits, x);
+    uint16_t hi = (uint16_t)(bits >> 16);
+    uint16_t lo = (uint16_t)bits;
+    int e = (int)((hi & 0x7fffu) >> 7) - 127;
+
+    if (e < 0) {
+        /* Preserve negative zero; other negative values round to -1. */
+        if ((hi & 0x8000u) && ((hi & 0x7fffu) || lo))
+            hi = 0xbf80u;
+        else
+            hi &= 0x8000u;
+        lo = 0;
+    } else if (e < 7) {
+        uint16_t mask = 0x007fu >> e;
+        if (!((hi & mask) | lo)) return x;
+        if (hi & 0x8000u) hi += mask + 1u;
+        hi &= (uint16_t)~mask;
+        lo = 0;
+    } else if (e < 23) {
+        uint16_t mask = 0xffffu >> (e - 7);
+        if (!(lo & mask)) return x;
+        if (hi & 0x8000u) {
+            /* Set the discarded bits before adding, so e == 7 also carries
+             * correctly without trying to represent 0x10000 in a word. */
+            lo = (uint16_t)((lo | mask) + 1u);
+            hi += lo == 0;
+        } else {
+            lo &= (uint16_t)~mask;
+        }
+    } else {
+        return e == 128 ? x + x : x;
+    }
+    SET_FLOAT_WORD(x, ((uint32_t)hi << 16) | lo);
+    return x;
 }
 

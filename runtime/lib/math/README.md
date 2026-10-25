@@ -8,8 +8,9 @@ Original license notices remain with the kernels, including those moved into
 private headers. The runtime has no errno/fenv state and uses fixed
 round-to-nearest, ties-to-even arithmetic.
 
-The optimized kernels embed coefficients and 2/pi digits in the instruction
-stream. Polynomial helpers inline into their callers; the large-angle
+The optimized kernels use float literals at each coefficient use, with no
+address-spaced constant objects. Coefficients and 2/pi digits embed in the
+instruction stream. Polynomial helpers inline into their callers; the large-angle
 24-by-256-bit integer product is fully unrolled. Internal exponents and
 quadrants use native 16-bit words. The range reducer tail-calls its large-angle
 helper to release its frame before allocating product scratch. Coefficient

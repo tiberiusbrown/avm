@@ -16,11 +16,6 @@
  */
 
 #include "fdlibm.h"
-static const float AVM_MATH_RODATA 
-avm_tan_one   =  1.0000000000e+00, /* 0x3f800000 */
-avm_tan_pio4  =  7.8539812565e-01, /* 0x3f490fda */
-avm_tan_pio4lo=  3.7748947079e-08; /* 0x33222168 */
-
 
 	static __attribute__((always_inline)) inline float avm_tan_kernel(float x, float y, int iy)
 {
@@ -30,14 +25,14 @@ avm_tan_pio4lo=  3.7748947079e-08; /* 0x33222168 */
 	ix = hx&0x7fffffff;	/* high word of |x| */
 	if(ix<0x31800000)			/* x < 2**-28 */
 	    {if((int)x==0) {			/* generate inexact */
-		if((ix|(iy+1))==0) return avm_tan_one/__builtin_fabsf(x);
-		else return (iy==1)? x: -avm_tan_one/x;
+		if((ix|(iy+1))==0) return 1.0000000000e+00f/__builtin_fabsf(x);
+		else return (iy==1)? x: -1.0000000000e+00f/x;
 	    }
 	    }
 	if(ix>=0x3f2ca140) { 			/* |x|>=0.6744 */
 	    if(hx<0) {x = -x; y = -y;}
-	    z = avm_tan_pio4-x;
-	    w = avm_tan_pio4lo-y;
+	    z = 7.8539812565e-01f-x;
+	    w = 3.7748947079e-08f-y;
 	    x = z+w; y = 0.0;
 	}
 	z	=  x*x;

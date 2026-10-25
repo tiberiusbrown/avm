@@ -8,6 +8,11 @@ foreach(REQUIRED_VARIABLE AVM_OBJDUMP AVM_INPUT AVM_OUTPUT)
     endif()
 endforeach()
 
+set(AVM_OBJDUMP_EXTRA_OPTIONS)
+if(AVM_RELOCATIONS)
+    list(APPEND AVM_OBJDUMP_EXTRA_OPTIONS --reloc)
+endif()
+
 execute_process(
     COMMAND
         "${AVM_OBJDUMP}"
@@ -18,6 +23,7 @@ execute_process(
         --demangle
         --print-imm-hex
         --no-addresses
+        ${AVM_OBJDUMP_EXTRA_OPTIONS}
         "${AVM_INPUT}"
     OUTPUT_VARIABLE AVM_DISASSEMBLY
     ERROR_VARIABLE AVM_OBJDUMP_ERROR
@@ -31,7 +37,7 @@ if(NOT AVM_OBJDUMP_RESULT EQUAL 0)
         "${AVM_OBJDUMP_RESULT}:\n${AVM_OBJDUMP_ERROR}")
 endif()
 
-# llvm-objdump starts with the absolute ELF path. Keep checked-in output
+# llvm-objdump starts with the absolute input path. Keep checked-in output
 # independent of the machine and build directory that generated it.
 get_filename_component(AVM_INPUT_NAME "${AVM_INPUT}" NAME)
 string(REPLACE "${AVM_INPUT}" "${AVM_INPUT_NAME}"

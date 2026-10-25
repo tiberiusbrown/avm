@@ -17,36 +17,29 @@
 
 #include "fdlibm.h"
 
-static const float AVM_MATH_RODATA 
-avm_cos_one =  1.0000000000e+00, /* 0x3f800000 */
-avm_cos_C1  =  4.1666667908e-02, /* 0x3d2aaaab */
-avm_cos_C2  = -1.3888889225e-03, /* 0xbab60b61 */
-avm_cos_C3  =  2.4801587642e-05, /* 0x37d00d01 */
-avm_cos_C4  = -2.7557314297e-07, /* 0xb493f27c */
-avm_cos_C5  =  2.0875723372e-09, /* 0x310f74f6 */
-avm_cos_C6  = -1.1359647598e-11; /* 0xad47d74e */
-
 	static __attribute__((always_inline)) inline float avm_cos_kernel(float x, float y)
 {
 	float a,hz,z,r,qx;
 	__int32_t ix;
 	GET_FLOAT_WORD(ix,x);
 	ix &= 0x7fffffff;			/* ix = |x|'s high word*/
-	if(ix<0x32000000) {			/* if x < 2**27 */
-	    return avm_cos_one;		/* generate inexact */
+	if(ix<0x32000000) {			/* if |x| < 2**-27 */
+	    return 1.0f;
 	}
 	z  = x*x;
-	r  = z*(avm_cos_C1+z*(avm_cos_C2+z*(avm_cos_C3+z*(avm_cos_C4+z*(avm_cos_C5+z*avm_cos_C6)))));
+	r  = z*(4.1666667908e-02f + z*(-1.3888889225e-03f +
+	     z*(2.4801587642e-05f + z*(-2.7557314297e-07f +
+	     z*(2.0875723372e-09f + z*(-1.1359647598e-11f))))));
 	if(ix < 0x3e99999a) 			/* if |x| < 0.3 */ 
-	    return avm_cos_one - ((float)0.5*z - (z*r - x*y));
+	    return 1.0f - (0.5f*z - (z*r - x*y));
 	else {
 	    if(ix > 0x3f480000) {		/* x > 0.78125 */
-		qx = (float)0.28125;
+		qx = 0.28125f;
 	    } else {
 	        SET_FLOAT_WORD(qx,ix-0x01000000);	/* x/4 */
 	    }
-	    hz = (float)0.5*z-qx;
-	    a  = avm_cos_one-qx;
+	    hz = 0.5f*z-qx;
+	    a  = 1.0f-qx;
 	    return a - (hz - (z*r-x*y));
 	}
 }

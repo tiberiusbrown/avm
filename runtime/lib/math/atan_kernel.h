@@ -18,15 +18,6 @@
 
 #include "fdlibm.h"
 
-
-
-
-
-
-
-	static const float AVM_MATH_RODATA 
-avm_atan_one = 1.0;
-
 	static __attribute__((always_inline)) inline float avm_atan_kernel(float x)
 {
 	float w,s1,s2,z;
@@ -49,13 +40,13 @@ avm_atan_one = 1.0;
 	x = __builtin_fabsf(x);
 	if (ix < 0x3f980000) {		/* |x| < 1.1875 */
 	    if (ix < 0x3f300000) {	/* 7/16 <=|x|<11/16 */
-		id = 0; x = ((float)2.0*x-avm_atan_one)/((float)2.0+x); 
+                id = 0; x = ((float)2.0*x-1.0f)/((float)2.0+x);
 	    } else {			/* 11/16<=|x|< 19/16 */
-		id = 1; x  = (x-avm_atan_one)/(x+avm_atan_one); 
+                id = 1; x  = (x-1.0f)/(x+1.0f);
 	    }
 	} else {
 	    if (ix < 0x401c0000) {	/* |x| < 2.4375 */
-		id = 2; x  = (x-(float)1.5)/(avm_atan_one+(float)1.5*x);
+		id = 2; x  = (x-(float)1.5)/(1.0f+(float)1.5*x);
 	    } else {			/* 2.4375 <= |x| < 2^66 */
 		id = 3; x  = -(float)1.0/x;
 	    }
@@ -72,6 +63,5 @@ avm_atan_one = 1.0;
 	    return (hx<0)? -z:z;
 	}
 }
-
 
 #endif

@@ -17,15 +17,6 @@
 
 #include "fdlibm.h"
 
-static const float AVM_MATH_RODATA 
-avm_sin_half =  5.0000000000e-01,/* 0x3f000000 */
-avm_sin_S1  = -1.6666667163e-01, /* 0xbe2aaaab */
-avm_sin_S2  =  8.3333337680e-03, /* 0x3c088889 */
-avm_sin_S3  = -1.9841270114e-04, /* 0xb9500d01 */
-avm_sin_S4  =  2.7557314297e-06, /* 0x3638ef1b */
-avm_sin_S5  = -2.5050759689e-08, /* 0xb2d72f34 */
-avm_sin_S6  =  1.5896910177e-10; /* 0x2f2ec9d3 */
-
 	static __attribute__((always_inline)) inline float avm_sin_kernel(float x, float y, int iy)
 {
 	float z,r,v;
@@ -36,9 +27,9 @@ avm_sin_S6  =  1.5896910177e-10; /* 0x2f2ec9d3 */
 	   {return x;}		/* generate inexact */
 	z	=  x*x;
 	v	=  z*x;
-	r	=  avm_sin_S2+z*(avm_sin_S3+z*(avm_sin_S4+z*(avm_sin_S5+z*avm_sin_S6)));
-	if(iy==0) return x+v*(avm_sin_S1+z*r);
-	else      return x-((z*(avm_sin_half*y-v*r)-y)-v*avm_sin_S1);
+	r	=  8.3333337680e-03f+z*((-1.9841270114e-04f)+z*(2.7557314297e-06f+z*((-2.5050759689e-08f)+z*1.5896910177e-10f)));
+	if(iy==0) return x+v*((-1.6666667163e-01f)+z*r);
+	else      return x-((z*(5.0000000000e-01f*y-v*r)-y)-v*(-1.6666667163e-01f));
 }
 
 #endif

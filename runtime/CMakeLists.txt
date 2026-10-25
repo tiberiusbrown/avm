@@ -3,6 +3,16 @@ set(AVM_RUNTIME_BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 set(AVM_RUNTIME_OBJECT_DIR "${AVM_RUNTIME_BUILD_DIR}/objects")
 set(AVM_RUNTIME_INCLUDE_DIR "${AVM_RUNTIME_SOURCE_DIR}/include")
 set(AVM_RUNTIME_MIR_BUILD_DIR "${AVM_RUNTIME_BUILD_DIR}/mir")
+set(AVM_RUNTIME_ASM_DIR "${AVM_RUNTIME_SOURCE_DIR}/asm")
+
+# Record the production objects for checked-in disassembly. Diagnostic MIR
+# compilations and header smoke tests do not describe shipped runtime code.
+function(avm_add_runtime_object)
+    cmake_parse_arguments(DISASM "" "SOURCE;OUTPUT" "" ${ARGN})
+    avm_add_object(${ARGN})
+    set_property(DIRECTORY APPEND PROPERTY AVM_RUNTIME_DISASSEMBLY_OBJECTS
+        "${DISASM_SOURCE}|${DISASM_OUTPUT}")
+endfunction()
 
 set(RUNTIME_SOURCES
     audio_tone
@@ -52,21 +62,21 @@ set(AVM_CRT0_TEST_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0_test.o")
 set(AVM_CRT0_SKETCH_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/crt0_sketch.o")
 set(AVM_CRT_INIT_FINI_HEADER "${AVM_RUNTIME_SOURCE_DIR}/crt/init_fini.h")
 
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${AVM_CRT0_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
 )
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${AVM_CRT0_TEST_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_test.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
 )
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${AVM_CRT0_SKETCH_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/crt/crt0_sketch.c"
     LANGUAGE C
@@ -83,7 +93,7 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     if(RUNTIME_SOURCE STREQUAL "math")
         set(runtime_math_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
     endif()
-    avm_add_object(
+    avm_add_runtime_object(
         OUTPUT "${RUNTIME_OBJECT}"
         SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/${RUNTIME_SOURCE}.c"
         LANGUAGE C
@@ -95,7 +105,7 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
 endforeach()
 
 set(AVM_RUNTIME_CXX_ABI_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/cxxabi.o")
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${AVM_RUNTIME_CXX_ABI_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/cxxabi.cpp"
     LANGUAGE CXX
@@ -105,7 +115,7 @@ avm_add_object(
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_CXX_ABI_OBJECT}")
 
 set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/framebuffer.o")
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${RUNTIME_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/framebuffer.asm"
     LANGUAGE ASM
@@ -115,7 +125,7 @@ avm_add_object(
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
 set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/audio.o")
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${RUNTIME_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/audio.asm"
     LANGUAGE ASM
@@ -131,7 +141,7 @@ set(AVM_MATH_KERNELS
     sf_sin sf_tan sf_trunc)
 foreach(kernel IN LISTS AVM_MATH_KERNELS)
     set(math_object "${AVM_RUNTIME_OBJECT_DIR}/math_${kernel}.o")
-    avm_add_object(
+    avm_add_runtime_object(
         OUTPUT "${math_object}"
         SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/math/${kernel}.c"
         LANGUAGE C
@@ -151,7 +161,7 @@ avm_add_archive(
 # can call the 32-bit routines without depending on archive rescanning.
 set(AVM_BUILTINS_INTEGER_OBJECT
     "${AVM_RUNTIME_OBJECT_DIR}/builtins_integer.o")
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${AVM_BUILTINS_INTEGER_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/integer.c"
     LANGUAGE C
@@ -160,7 +170,7 @@ avm_add_object(
 )
 set(AVM_BUILTINS_WIDE_INTEGER_OBJECT
     "${AVM_RUNTIME_OBJECT_DIR}/builtins_wide_integer.o")
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${AVM_BUILTINS_WIDE_INTEGER_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/wide_integer.c"
     LANGUAGE C
@@ -169,7 +179,7 @@ avm_add_object(
 )
 set(AVM_BUILTINS_ATOMIC_OBJECT
     "${AVM_RUNTIME_OBJECT_DIR}/builtins_atomic.o")
-avm_add_object(
+avm_add_runtime_object(
     OUTPUT "${AVM_BUILTINS_ATOMIC_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/atomic.c"
     LANGUAGE C
@@ -185,6 +195,38 @@ avm_add_archive(
         "${AVM_BUILTINS_WIDE_INTEGER_OBJECT}"
         "${AVM_BUILTINS_ATOMIC_OBJECT}"
 )
+
+# Disassemble production objects, retaining relocations so calls and constant
+# references can be inspected before final-link relaxation. Mirror source paths
+# to avoid collisions and keep the output independent of the build directory.
+get_property(AVM_RUNTIME_DISASSEMBLY_OBJECTS DIRECTORY
+    PROPERTY AVM_RUNTIME_DISASSEMBLY_OBJECTS)
+set(AVM_RUNTIME_ASM_OUTPUTS)
+foreach(runtime_object IN LISTS AVM_RUNTIME_DISASSEMBLY_OBJECTS)
+    string(REPLACE "|" ";" runtime_object_fields "${runtime_object}")
+    list(GET runtime_object_fields 0 runtime_source)
+    list(GET runtime_object_fields 1 runtime_input)
+    file(RELATIVE_PATH runtime_relative
+        "${AVM_RUNTIME_SOURCE_DIR}" "${runtime_source}")
+    string(REGEX REPLACE "\\.[^.]+$" ".asm" runtime_relative
+        "${runtime_relative}")
+    set(runtime_disassembly "${AVM_RUNTIME_ASM_DIR}/${runtime_relative}")
+    get_filename_component(runtime_asm_dir "${runtime_disassembly}" DIRECTORY)
+    add_custom_command(
+        OUTPUT "${runtime_disassembly}"
+        COMMAND "${CMAKE_COMMAND}" -E make_directory "${runtime_asm_dir}"
+        COMMAND "${CMAKE_COMMAND}"
+            "-DAVM_OBJDUMP:FILEPATH=$<TARGET_FILE:llvm-objdump>"
+            "-DAVM_INPUT:FILEPATH=${runtime_input}"
+            "-DAVM_OUTPUT:FILEPATH=${runtime_disassembly}"
+            -DAVM_RELOCATIONS:BOOL=ON
+            -P "${AVM_DISASSEMBLE_SCRIPT}"
+        DEPENDS llvm-objdump "${runtime_input}" "${AVM_DISASSEMBLE_SCRIPT}"
+        COMMENT "Disassembling AVM runtime ${runtime_relative}"
+        VERBATIM)
+    list(APPEND AVM_RUNTIME_ASM_OUTPUTS "${runtime_disassembly}")
+endforeach()
+add_custom_target(avm_runtime_asm ALL DEPENDS ${AVM_RUNTIME_ASM_OUTPUTS})
 
 # Diagnostic-only duplicate compilations. Preserve each source's relative path
 # below mir/ so equal basenames in different runtime directories cannot collide.
@@ -241,7 +283,7 @@ add_custom_target(avm_runtime
         "${AVM_RUNTIME_LIBRARY}"
         "${AVM_BUILTINS_LIBRARY}"
 )
-add_dependencies(avm_runtime avm_runtime_mir)
+add_dependencies(avm_runtime avm_runtime_mir avm_runtime_asm)
 
 # Compile-only checks verify that direct call syntax selects the macro path,
 # while address-taking and parenthesized calls still name real functions.
@@ -326,4 +368,5 @@ add_custom_target(avm_sdk
         avm_sysroot
         avm_runtime_checks
         avm_runtime_mir
+        avm_runtime_asm
 )

@@ -10,10 +10,23 @@ From the main AVM build:
 
 ```text
 avm_runtime         Build CRT objects and target libraries.
+avm_runtime_asm     Regenerate checked-in runtime/asm disassemblies.
 avm_runtime_checks  Compile C and C++ header smoke tests.
 avm_sysroot         Stage headers, CRT objects, and libraries.
 avm_sdk             Build the AVM toolchain and complete staged sysroot.
 ```
+
+`runtime/asm/` contains per-source disassemblies of the production CRT, library,
+and compiler-helper objects, including every function before unused sections
+are removed. Paths mirror the sources, for example
+`lib/math/ef_sqrt.c` produces `asm/lib/math/ef_sqrt.asm`. These files are intended
+to be versioned. The default build, `avm_runtime`, and `avm_sdk` refresh them;
+`avm_runtime_asm` regenerates them without building diagnostic MIR dumps.
+
+Disassemblies include instruction bytes, symbols, and relocation records.
+Relocations identify unresolved call targets and data references; the final
+link may shorten calls and branches. File headers omit machine-specific build
+paths. Generated MIR diagnostics remain under the ignored build directory.
 
 Build and install the SDK with:
 

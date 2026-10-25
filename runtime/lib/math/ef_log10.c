@@ -16,14 +16,6 @@
 #include "fdlibm.h"
 #include "log_kernel.h"
 
-static const float AVM_MATH_RODATA
-two25      =  3.3554432000e+07, /* 0x4c000000 */
-ivln10     =  4.3429449201e-01, /* 0x3ede5bd9 */
-log10_2hi  =  3.0102920532e-01, /* 0x3e9a2080 */
-log10_2lo  =  7.9034151668e-07; /* 0x355427db */
-
-static const float AVM_MATH_RODATA zero   =  0.0;
-
 	float __ieee754_log10f(float x)
 {
 	float y,z;
@@ -34,11 +26,11 @@ static const float AVM_MATH_RODATA zero   =  0.0;
 
         k=0;
         if (FLT_UWORD_IS_ZERO(hx&0x7fffffff))
-            return -two25/zero;             /* log(+-0)=-inf */
-        if (hx<0) return (x-x)/zero;        /* log(-#) = NaN */
+            return -3.3554432000e+07f/0.0f;             /* log(+-0)=-inf */
+        if (hx<0) return (x-x)/0.0f;        /* log(-#) = NaN */
 	if (!FLT_UWORD_IS_FINITE(hx)) return x+x;
         if (FLT_UWORD_IS_SUBNORMAL(hx)) {
-            k -= 25; x *= two25; /* subnormal number, scale up x */
+            k -= 25; x *= 3.3554432000e+07f; /* subnormal number, scale up x */
 	    GET_FLOAT_WORD(hx,x);
         }
 	k += (hx>>23)-127;
@@ -46,6 +38,6 @@ static const float AVM_MATH_RODATA zero   =  0.0;
         hx = (hx&0x007fffff)|((int32_t)(0x7f-i)<<23);
         y  = (float)(k+i);
 	SET_FLOAT_WORD(x,hx);
-	z  = y*log10_2lo + ivln10*avm_log_kernel(x);
-	return  z+y*log10_2hi;
+	z  = y*7.9034151668e-07f + 4.3429449201e-01f*avm_log_kernel(x);
+	return  z+y*3.0102920532e-01f;
 }

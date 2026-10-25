@@ -21,8 +21,6 @@
 
 #include "fdlibm.h"
 
-static const float AVM_MATH_RODATA one = 1.0;
-
 	float __ieee754_fmodf(float x, float y)
 {
 	__int32_t n,hx,hy,hz,ix,iy,sx,i;
@@ -104,7 +102,7 @@ static const float AVM_MATH_RODATA one = 1.0;
 	    n = -126 - iy;
 	    hx >>= n;
 	    SET_FLOAT_WORD(x,hx|sx);
-	    x *= one;		/* create necessary signal */
+	    x *= 1.0f;		/* create necessary signal */
 	}
 	return x;		/* exact output */
 }

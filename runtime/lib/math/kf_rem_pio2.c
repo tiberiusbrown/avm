@@ -6,8 +6,6 @@
  */
 #include "fdlibm.h"
 
-
-
 static uint32_t product_word(const uint8_t *p, int bit)
 {
     int i = bit >> 3;
@@ -98,13 +96,10 @@ int __kernel_rem_pio2f(float x, float *y)
     float fh;
     SET_FLOAT_WORD(fh, fraction_bits & 0xfffff000UL);
     float fl = fraction-fh;
-    const float pi_hi = 0x1.921fb4p0f;
-    const float pi_lo = 0x1.4442d2p-24f;
-    const float pi_a = 0x1.920000p0f;
-    const float pi_b = 0x1.fb4000p-12f;
-    float r = fraction*pi_hi;
-    float tail = ((fh*pi_a-r) + fh*pi_b + fl*pi_a) + fl*pi_b;
-    tail += fraction*pi_lo + correction*pi_hi;
+    float r = fraction*0x1.921fb4p0f;
+    float tail = ((fh*0x1.920000p0f-r) + fh*0x1.fb4000p-12f +
+                  fl*0x1.920000p0f) + fl*0x1.fb4000p-12f;
+    tail += fraction*0x1.4442d2p-24f + correction*0x1.921fb4p0f;
     float head = r+tail;
     float rest = (r-head)+tail;
     if (round_up != (int)(bits >> 31)) { head = -head; rest = -rest; }

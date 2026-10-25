@@ -5,12 +5,6 @@
 #include <stdint.h>
 #include <math.h>
 
-#ifdef __AVM__
-#define AVM_MATH_RODATA __attribute__((address_space(1)))
-#else
-#define AVM_MATH_RODATA
-#endif
-
 typedef int32_t __int32_t;
 typedef uint32_t __uint32_t;
 

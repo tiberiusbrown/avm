@@ -25,7 +25,6 @@
 /* This array is like the one in e_rem_pio2.c, but the numbers are
    single precision and the last 8 bits are forced to 0.  */
 
-
 /*
  * invpio2:  24 bits of 2/pi
  * pio2_1:   first  17 bit of pi/2
@@ -35,16 +34,6 @@
  * pio2_3:   third  17 bit of pi/2
  * pio2_3t:  pi/2 - (pio2_1+pio2_2+pio2_3)
  */
-
-static const float AVM_MATH_RODATA 
-half =  5.0000000000e-01, /* 0x3f000000 */
-invpio2 =  6.3661980629e-01, /* 0x3f22f984 */
-pio2_1  =  1.5707855225e+00, /* 0x3fc90f80 */
-pio2_1t =  1.0804334124e-05, /* 0x37354443 */
-pio2_2  =  1.0804273188e-05, /* 0x37354400 */
-pio2_2t =  6.0770999344e-11, /* 0x2e85a308 */
-pio2_3  =  6.0770943833e-11, /* 0x2e85a300 */
-pio2_3t =  6.1232342629e-17; /* 0x248d3132 */
 
 	int __ieee754_rem_pio2f(float x, float *y)
 {
@@ -58,35 +47,35 @@ pio2_3t =  6.1232342629e-17; /* 0x248d3132 */
 	    {y[0] = x; y[1] = 0; return 0;}
 	if(ix<0x4016cbe4) {  /* |x| < 3pi/4, special case with n=+-1 */
 	    if(hx>0) { 
-		z = x - pio2_1;
+		z = x - 1.5707855225e+00f;
 		if((ix&0xfffffff0)!=0x3fc90fd0) { /* 24+24 bit pi OK */
-		    y[0] = z - pio2_1t;
-		    y[1] = (z-y[0])-pio2_1t;
+		    y[0] = z - 1.0804334124e-05f;
+		    y[1] = (z-y[0])-1.0804334124e-05f;
 		} else {		/* near pi/2, use 24+24+24 bit pi */
-		    z -= pio2_2;
-		    y[0] = z - pio2_2t;
-		    y[1] = (z-y[0])-pio2_2t;
+		    z -= 1.0804273188e-05f;
+		    y[0] = z - 6.0770999344e-11f;
+		    y[1] = (z-y[0])-6.0770999344e-11f;
 		}
 		return 1;
 	    } else {	/* negative x */
-		z = x + pio2_1;
+		z = x + 1.5707855225e+00f;
 		if((ix&0xfffffff0)!=0x3fc90fd0) { /* 24+24 bit pi OK */
-		    y[0] = z + pio2_1t;
-		    y[1] = (z-y[0])+pio2_1t;
+		    y[0] = z + 1.0804334124e-05f;
+		    y[1] = (z-y[0])+1.0804334124e-05f;
 		} else {		/* near pi/2, use 24+24+24 bit pi */
-		    z += pio2_2;
-		    y[0] = z + pio2_2t;
-		    y[1] = (z-y[0])+pio2_2t;
+		    z += 1.0804273188e-05f;
+		    y[0] = z + 6.0770999344e-11f;
+		    y[1] = (z-y[0])+6.0770999344e-11f;
 		}
 		return -1;
 	    }
 	}
 	if(ix<=0x43490f80) { /* |x| ~<= 2^7*(pi/2), medium size */
 	    t  = __builtin_fabsf(x);
-	    n  = (__int32_t) (t*invpio2+half);
+	    n  = (__int32_t) (t*6.3661980629e-01f+5.0000000000e-01f);
 	    fn = (float)n;
-	    r  = t-fn*pio2_1;
-	    w  = fn*pio2_1t;	/* 1st round good to 40 bit */
+	    r  = t-fn*1.5707855225e+00f;
+	    w  = fn*1.0804334124e-05f;	/* 1st round good to 40 bit */
 	    { /* Check actual cancellation without an indexed coefficient table. */
 	        __uint32_t high;
 	        j  = ix>>23;
@@ -95,17 +84,17 @@ pio2_3t =  6.1232342629e-17; /* 0x248d3132 */
 	        i = j-((high>>23)&0xff);
 	        if(i>8) {  /* 2nd iteration needed, good to 57 */
 		    t  = r;
-		    w  = fn*pio2_2;	
+                    w  = fn*1.0804273188e-05f;
 		    r  = t-w;
-		    w  = fn*pio2_2t-((t-r)-w);	
+                    w  = fn*6.0770999344e-11f-((t-r)-w);
 		    y[0] = r-w;
 		    GET_FLOAT_WORD(high,y[0]);
 		    i = j-((high>>23)&0xff);
 		    if(i>25)  {	/* 3rd iteration need, 74 bits acc */
 		    	t  = r;	/* will cover all possible cases */
-		    	w  = fn*pio2_3;	
+                        w  = fn*6.0770943833e-11f;
 		    	r  = t-w;
-		    	w  = fn*pio2_3t-((t-r)-w);	
+                        w  = fn*6.1232342629e-17f-((t-r)-w);
 		    	y[0] = r-w;
 		    }
 		}

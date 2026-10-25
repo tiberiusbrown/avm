@@ -1,5 +1,5 @@
      1593426   aggregate_args.c
-     1524274   aggregate_return.c
+     1324082   aggregate_return.c
      2094135   aliasing.c
      1850355   bit_count.c
      1695785   bitfields.c
@@ -24,7 +24,7 @@
       739468   dynamic_stack.c
       236880   fibonacci.c
      3762684   fir8.c
-     9182988   fixed_point.c
+     7098124   fixed_point.c
       940529   float.c
       864928   float_comparisons.c
       635646   float_conversions.c
@@ -51,7 +51,7 @@
      3148973   register_cleanup.c
      1921658   reverse_walk.c
      1007916   rotate32.c
-     3101672   saturating_math.c
+     2514152   saturating_math.c
       718161   select.c
       395573   shifts.c
      1830484   short_circuit.c
@@ -85,5 +85,5 @@
       513348   wide_add_sub.c
      1105796   wide_compare.c
      2452191   wide_divmod.c
-      651718   wide_mul.c
+      500006   wide_mul.c
       220811   wide_shifts.c

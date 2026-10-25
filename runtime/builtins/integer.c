@@ -283,6 +283,43 @@ uint32_t __avm_rotrsi3(uint32_t value, uint16_t count)
     return bits;
 }
 
+/* Full word products take word arguments; no caller-side i32 extensions. */
+AVM_NOINLINE
+int32_t __avm_mulhisi3(int16_t left, int16_t right)
+{
+    return (int32_t)avm_mul_signed16_full((uint16_t)left, (uint16_t)right);
+}
+
+AVM_NOINLINE
+uint32_t __avm_umulhisi3(uint16_t left, uint16_t right)
+{
+    uint16_t left_low = (uint8_t)left;
+    uint16_t right_low = (uint8_t)right;
+    uint16_t left_high = (uint8_t)(left >> 8);
+    uint16_t right_high = (uint8_t)(right >> 8);
+
+    avm_u32_words product = {
+        .words = {
+            .low = avm_mulu8_w(left_low, right_low),
+            .high = avm_mulu8_w(left_high, right_high),
+        },
+    };
+
+    uint16_t partial = avm_mulu8_w(left_high, right_low);
+    uint16_t old_low = product.words.low;
+    product.words.low = (uint16_t)(product.words.low + (partial << 8));
+    product.words.high = (uint16_t)(product.words.high + (partial >> 8) +
+                                    (product.words.low < old_low));
+
+    partial = avm_mulu8_w(right_high, left_low);
+    old_low = product.words.low;
+    product.words.low = (uint16_t)(product.words.low + (partial << 8));
+    product.words.high = (uint16_t)(product.words.high + (partial >> 8) +
+                                    (product.words.low < old_low));
+
+    return product.value;
+}
+
 AVM_NOINLINE
 uint32_t __avm_mulsi3(uint32_t left, uint32_t right)
 {

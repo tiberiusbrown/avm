@@ -31,7 +31,15 @@ The newer compiled benchmarks fill these code generation gaps:
 | Runtime float math | `math_sqrt`, `math_sin`, `math_cos`, `math_atan`, `math_atan2`, `math_tan`, `math_exp`, `math_log`, `math_log2`, `math_log10`, `math_pow`, `math_hypot`, `math_fmod`, `math_floor`, `math_ceil`, `math_round`, `math_trunc`, plus the focused workloads below |
 | C++ lowering | `aggregate_byte_dispatch`, `aggregate_byte_packing`, `aggregate_byte_packing_hoisted`, `lambda_capture`, `member_pointers`, `scoped_lifetime`, `template_specialization`, `virtual_dispatch` |
 
-Each `math_*` benchmark measures 32 calls. `math_sin`, `math_cos`, and `math_tan`
+Each `math_*` benchmark measures 32 calls, except `math_sqrt_random` (256).
+`math_sqrt` covers positive subnormals, both exponent parities, powers of two
+and adjacent floats, and magnitudes across binary32. `math_sqrt_mantissas`
+samples mantissas throughout [1,4), including lookup boundaries;
+`math_sqrt_random` uses a reproducible random mantissa at every finite exponent
+and the largest finite input. `math_sqrt_special` covers both signs of zero,
+subnormals, ordinary values, infinities and quiet/signaling NaNs, storing each
+result separately. Input generation takes place before timing.
+`math_sin`, `math_cos`, and `math_tan`
 use the same 16 magnitudes with both signs, from 0.25 through the largest finite
 binary32 value. Half the calls exercise large-angle reduction; the remaining
 inputs cover the direct, special-case, and medium-angle paths. `math_floor`,
@@ -168,3 +176,55 @@ remain unchanged.
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;
 each source should contain exactly one pair of debug breaks.
+
+## Square-root table experiments
+
+Measured on 2026-10-25 with RelWithDebInfo, callers at `-O2`, and kernels at
+`-O3 -ffp-contract=off`. Each comparison uses identical inputs, interpreter,
+library member order and benchmark sources, subtracting the 35-cycle baseline.
+The retained implementation uses a **2 KiB** quadratic interpolation table
+and the unchanged exact midpoint correction. It has no floating-point
+divisions. A 16 KiB linear interpolation table is faster, but the 2 KiB
+choice saves 14 KiB and takes 5.3% more cycles on the 256-input workload.
+
+The percentages below are cycle reductions relative to the original
+three-Newton-step implementation. Except for the randomized workload, each
+row measures 32 calls. The small-input row repeats the former benchmark's
+`0.25 + i*0.03125` inputs; it is included for historical comparison and is
+not the broader `math_sqrt` workload now recorded in `cycles_c.txt`.
+
+| Workload | Original cycles | 2 KiB cycles (saved) | 16 KiB cycles (saved) |
+| --- | ---: | ---: | ---: |
+| `math_sqrt` | 380,249 | 361,712 (4.9%) | 346,170 (9.0%) |
+| `math_sqrt_mantissas` | 398,768 | 370,776 (7.0%) | 352,132 (11.7%) |
+| `math_sqrt_random` (256 calls) | 3,236,019 | 2,936,877 (9.2%) | 2,789,283 (13.8%) |
+| Original small-input workload | 430,649 | 385,172 (10.6%) | 369,492 (14.2%) |
+| `math_sqrt_special` | 167,031 | 164,004 (1.8%) | 157,839 (5.5%) |
+| `math_hypot` | 547,893 | 506,616 (7.5%) | 486,609 (11.2%) |
+| `math_hypot_scaled` | 488,153 | 447,031 (8.4%) | 432,467 (11.4%) |
+
+The experiments started with lookup seeds and two ordinary Newton steps.
+A 128-byte seed table passed exhaustive checks and saved 6.2% on the
+256-input workload; larger seed tables did not improve this substantially.
+A 16 KiB seed table allowed one Newton step and saved 12.2%. Interpolation
+was faster: linear interpolation won within 16 KiB, and quadratic
+interpolation won within 2 KiB. The latter pads three coefficients to a
+16-byte record: compacting the table to 1.5 KiB raised the randomized timing
+from 2,936,877 to 3,359,218 cycles because record indexing became more costly.
+
+Two uncorrected reciprocal-square-root Newton steps failed exact rounding
+at input `0x3f8439e4`. A 2 KiB reciprocal table with one Newton step and a
+residual refinement passed, but took 3,360,119 randomized-workload cycles,
+3.8% more than the original implementation. Two steps plus refinement were
+also slower. Coarse one-step lookup, linear and quadratic candidates were
+rejected when exhaustive testing found errors. Their failing inputs are
+included in the generated target fixtures.
+
+The retained kernel and both table-size finalists matched the saved original
+kernel and host double sqrt on all 16,777,216 normalized mantissa/parity
+inputs, all 8,388,607 positive subnormals, exponent boundaries, and one million
+random bit patterns (NaNs by classification). The generator
+`tests/math/generate_sqrt_table.py` reproduces the 2 KiB table and the AVM
+fixtures at every interval's edges and midpoint; `--check` detects stale files.
+All 723 AVM fixtures passed, including the original sqrt vectors and 771
+generated boundary vectors at `-O0`, `-O1`, `-O2`, `-O3`, `-Os` and `-Oz`.

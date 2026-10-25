@@ -18,8 +18,12 @@ and large trig arguments across every binary32 exponent. Exact operations use
 bit comparisons; transcendental tolerances are explicit in each vector.
 `math_builtins` also checks compatibility builtins against ordinary C ABI calls.
 `avm_math_reference_tests_run` checks the production sqrt kernel on every
-normalized binary32 mantissa/exponent-parity combination, plus random finite
-patterns and a subnormal sweep, against double sqrt rounded to float. These
+normalized binary32 mantissa/exponent-parity combination, every positive
+subnormal, all exponent boundaries and random bit patterns, against both the
+saved original implementation and double sqrt rounded to float. NaNs compare
+by classification. `math_sqrtf_lookup` adds exact interpreter fixtures near
+interpolation boundaries; `python tests/math/generate_sqrt_table.py --check`
+verifies that the table and fixtures match their generator. These
 checks run within `avm_tests_run`. The same target checks all 8,388,608 normalized
 binary32 mantissas of the large-angle reducer's full 280-bit integer product
 against an independent reference using 32-bit limbs and 64-bit arithmetic. See the

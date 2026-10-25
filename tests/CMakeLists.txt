@@ -641,7 +641,14 @@ else()
     target_compile_options(avm_math_reference_kernel PRIVATE
         -ffp-contract=off -fno-fast-math)
 endif()
-add_executable(avm_math_reference_tests math/sqrt_reference.c)
+add_executable(avm_math_reference_tests
+    math/sqrt_reference.c math/sqrt_original.c)
+if(MSVC)
+    target_compile_options(avm_math_reference_tests PRIVATE /fp:strict)
+else()
+    target_compile_options(avm_math_reference_tests PRIVATE
+        -ffp-contract=off -fno-fast-math)
+endif()
 target_link_libraries(avm_math_reference_tests PRIVATE avm_math_reference_kernel)
 add_executable(avm_math_reduction_tests math/rem_pio2_product_reference.c)
 if(NOT MSVC)

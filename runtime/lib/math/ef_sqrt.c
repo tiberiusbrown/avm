@@ -14,8 +14,9 @@
  */
 
 #include "fdlibm.h"
+#include "sqrt_table.h"
 
-/* Newton approximation followed by an exact midpoint test. All arithmetic in
+/* Table interpolation followed by an exact midpoint test. All arithmetic in
    the test is near one, so neither overflow nor subnormal arithmetic occurs. */
 float __ieee754_sqrtf(float x)
 {
@@ -39,10 +40,16 @@ float __ieee754_sqrtf(float x)
                           (0x3f800000UL + ((uint32_t)(exponent & 1) << 23));
     float a, r;
     SET_FLOAT_WORD(a, normalized);
-    SET_FLOAT_WORD(r, (normalized >> 1) + 0x1fc00000UL);
-    r = 0.5f * (r+a/r);
-    r = 0.5f * (r+a/r);
-    r = 0.5f * (r+a/r);
+    /* Quadratic interpolation at the left, middle and right of each of
+       64 intervals per exponent has error below 0.137 ULP. Rounded table
+       entries and arithmetic keep the total below 1.16 ULP, so the
+       candidate is within one float of the correctly rounded root.
+       a-bucket is exact by Sterbenz's lemma; no product is subnormal. */
+    uint16_t index = (uint16_t)((normalized - 0x3f800000UL) >> 17);
+    float bucket;
+    SET_FLOAT_WORD(bucket, normalized & 0xfffe0000UL);
+    float t = a-bucket;
+    r = sqrt_table[index][0] + t*(sqrt_table[index][1] + t*sqrt_table[index][2]);
 
     /* Dekker's product error: r*r = product + error exactly. Splitting the
        24-bit significand into 12-bit parts makes the partial products exact. */

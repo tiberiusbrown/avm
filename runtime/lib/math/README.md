@@ -8,8 +8,8 @@ Original license notices remain with the kernels, including those moved into
 private headers. The runtime has no errno/fenv state and uses fixed
 round-to-nearest, ties-to-even arithmetic.
 
-The optimized kernels use float literals at each coefficient use, with no
-address-spaced constant objects. Coefficients and 2/pi digits embed in the
+The polynomial kernels use float literals at each coefficient use.
+Coefficients and 2/pi digits embed in the
 instruction stream. Polynomial helpers inline into their callers; the large-angle
 24-by-256-bit integer product is fully unrolled into 8-by-8-bit products with
 split 16-bit column sums and carries, avoiding general 32-bit multiplication.
@@ -20,10 +20,16 @@ helper to release its frame before allocating product scratch. Coefficient
 selection uses immediate constants, and math builds at -O3 without jump tables
 or floating-point contraction.
 
-Square root normalizes to [1,4), performs three Newton steps, then checks exact
-rounding midpoints using a split product. A native reference test checks every
-normalized binary32 mantissa/parity, plus random exponents and subnormals;
-target fixtures check exact results through the real interpreter.
+Square root normalizes to [1,4), interpolates a 2 KiB program-space table,
+then checks exact rounding midpoints using the original split product. It
+performs no floating-point divisions. Each exponent parity has 64 quadratic
+intervals; the candidate is within one float of the correctly rounded root.
+`tests/math/generate_sqrt_table.py` reproduces the table and target boundary
+fixtures (`--check` verifies them). A native reference test checks every
+normalized binary32 mantissa/parity, every positive subnormal, exponent
+boundaries and random bit patterns against both the saved three-Newton-step
+implementation and double sqrt. Target fixtures check exact results through
+the real interpreter at all six optimization levels.
 
 `hypotf` keeps magnitude ordering, exceptional values and exponent scaling,
 then takes the square root of the binary32 sum of squares. `atan2f` divides

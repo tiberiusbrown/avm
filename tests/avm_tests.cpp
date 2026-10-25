@@ -50,7 +50,7 @@
 #endif
 
 #ifndef AVM_TEST_ADVANCE_LIMIT
-#define AVM_TEST_ADVANCE_LIMIT 20000000000000ull
+#define AVM_TEST_ADVANCE_LIMIT 60000000000000ull
 #endif
 
 namespace {
@@ -104,7 +104,7 @@ std::string usage_text()
         "Usage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
         "[--c-dir DIR] [--cpp-dir DIR] [--bin-dir DIR] "
         "[--c-bin-dir DIR] [--cpp-bin-dir DIR] "
-        "[--advance-limit CYCLES] [--verbose]";
+        "[--advance-limit PICOSECONDS] [--verbose]";
 }
 
 [[noreturn]] void usage_error(std::string const& message)
@@ -588,7 +588,7 @@ int main(int argc, char** argv)
                       << "  ASM images:  " << options.asm_bin_dir << '\n'
                       << "  C images:    " << options.c_bin_dir << '\n'
                       << "  C++ images:  " << options.cpp_bin_dir << '\n'
-                      << "  cycle limit: " << options.advance_limit << "\n\n";
+                      << "  time limit (ps): " << options.advance_limit << "\n\n";
         }
 
         std::vector<failure_t> failures;

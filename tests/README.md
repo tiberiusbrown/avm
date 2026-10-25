@@ -4,6 +4,11 @@
 C, and C++ fixture. Each C and C++ source is compiled separately at `-O0`,
 `-O1`, `-O2`, `-O3`, `-Os`, and `-Oz`; assembly fixtures run once.
 
+Each fixture has a default limit of 60 emulated seconds. The CMake cache setting
+`AVM_TEST_ADVANCE_LIMIT` and the runner's `--advance-limit` option use picoseconds
+(`60000000000000` by default). The `draw_text_clipping` reference renderer needs
+about 25 emulated seconds at `-O0`, exceeding the former 20-second limit.
+
 The linked test images remain under `build/tests/`. C and C++ test disassemblies
 are not generated or checked into the repository.
 

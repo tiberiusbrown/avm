@@ -8,9 +8,11 @@ set(AVM_CXX_TEST_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/cpp")
 # Compile every C and C++ fixture at each supported optimization setting.
 set(AVM_TEST_OPT_LEVELS O0 O1 O2 O3 Os Oz)
 string(JOIN "," AVM_TEST_OPT_LEVELS_CSV ${AVM_TEST_OPT_LEVELS})
+# The O0 draw_text_clipping reference renderer needs about 25 emulated seconds.
+# Ardens advance() takes picoseconds; allow 60 seconds for each fixture.
 set(AVM_TEST_ADVANCE_LIMIT
-    "20000000000000" CACHE STRING
-    "Maximum emulated CPU cycles allowed for each AVM test")
+    "60000000000000" CACHE STRING
+    "Maximum emulated time in picoseconds allowed for each AVM test")
 
 # CONFIGURE_DEPENDS makes CMake regenerate when a test is added or removed.
 file(GLOB AVM_ASM_TEST_SOURCES CONFIGURE_DEPENDS

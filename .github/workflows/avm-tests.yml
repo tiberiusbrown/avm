@@ -40,7 +40,7 @@ jobs:
       - name: Build AVM toolchain and lit dependencies
         run: >-
           cmake --build build/ci --parallel 2 --target
-          avm_toolchain FileCheck not split-file
+          avm_toolchain FileCheck count not split-file
           llc llvm-as llvm-dis llvm-mca opt yaml2obj
 
       - name: Run avm_tests

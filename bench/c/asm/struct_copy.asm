@@ -139,14 +139,14 @@ Disassembly of section .text:
  c3 00                 ldi8	r7, 0x0
  c1 c0                 ldi8	r5, 0xc0
  d7 10                 sys	memcpy_p
- a0                    xor	r4, r4
+ a5                    xor	r5, r5
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  d7 01                 sys	debug_break
- c1 18                 ldi8	r5, 0x18
- f4 41                 stsp16	[sp+0x0], r5
+ c0 18                 ldi8	r4, 0x18
+ f4 40                 stsp16	[sp+0x0], r4
 <L0>:
- f4 48                 stsp16	[sp+0x2], r4
+ f4 49                 stsp16	[sp+0x2], r5
  f4 00                 ldsp16	r4, [sp+0x0]
  c5 0b 01              ldi16	r5, 0x10b
 <L1>:
@@ -177,9 +177,9 @@ Disassembly of section .text:
  f4 b4                 dec16	r4
  f6 2c                 tst16	r4
  d1 cb                 brne8	-0x35 <L1>
- f4 08                 ldsp16	r4, [sp+0x2]
- f4 ac                 inc16	r4
- cc 10                 cmpi.s8	r4, 0x10
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f4 ad                 inc16	r5
+ cd 10                 cmpi.s8	r5, 0x10
  d1 bc                 brne8	-0x44 <L0>
  c4 00 01              ldi16	r4, 0x100
  f0 6b 08              st32	[r4], q0

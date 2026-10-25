@@ -267,12 +267,12 @@ Disassembly of section .text:
  c5 54 f6              ldi16	r5, 0xf654
  c6 70 01              ldi16	r6, 0x170
  f0 6b 8c              st32	[r6], q2
- a0                    xor	r4, r4
+ a5                    xor	r5, r5
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  d7 01                 sys	debug_break
 <L0>:
- f4 40                 stsp16	[sp+0x0], r4
+ f4 41                 stsp16	[sp+0x0], r5
  c0 10                 ldi8	r4, 0x10
  04                    mov	r5, r4
  c4 34 01              ldi16	r4, 0x134
@@ -357,9 +357,9 @@ Disassembly of section .text:
  f4 b5                 dec16	r5
  f6 2d                 tst16	r5
  d1 c7                 brne8	-0x39 <L2>
- f4 00                 ldsp16	r4, [sp+0x0]
- f4 ac                 inc16	r4
- cc 08                 cmpi.s8	r4, 0x8
+ f4 01                 ldsp16	r5, [sp+0x0]
+ f4 ad                 inc16	r5
+ cd 08                 cmpi.s8	r5, 0x8
  db 5a ff              brne16	-0xa6 <L0>
  c4 00 01              ldi16	r4, 0x100
  f0 6b 08              st32	[r4], q0

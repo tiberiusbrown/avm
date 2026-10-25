@@ -286,16 +286,16 @@ Disassembly of section .text:
  f0 4c 41 01           stm8	[0x141], r4
  f2 4b                 sub	r3, r3
  d7 01                 sys	debug_break
- f1 23                 mov	r4, r3
+ f1 27                 mov	r5, r3
  f0 01 80              ldi8	r1, 0x80
  d4 08                 jmp8	0x8 <L1>
 <L0>:
- f4 00                 ldsp16	r4, [sp+0x0]
- f4 ac                 inc16	r4
- cc 18                 cmpi.s8	r4, 0x18
+ f4 01                 ldsp16	r5, [sp+0x0]
+ f4 ad                 inc16	r5
+ cd 18                 cmpi.s8	r5, 0x18
  d0 49                 breq8	0x49 <L5>
 <L1>:
- f4 40                 stsp16	[sp+0x0], r4
+ f4 41                 stsp16	[sp+0x0], r5
  a5                    xor	r5, r5
  d4 09                 jmp8	0x9 <L3>
 <L2>:

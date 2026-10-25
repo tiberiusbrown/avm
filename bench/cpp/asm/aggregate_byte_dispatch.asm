@@ -238,27 +238,27 @@ Disassembly of section .text:
  f0 4e 60 01           stm8	[0x160], r6
  f0 4e 61 01           stm8	[0x161], r6
  d7 01                 sys	debug_break
- f1 10                 mov	r2, r0
+ f1 08                 mov	r1, r0
 <L0>:
  f0 03 20              ldi8	r3, 0x20
- f0 05 04 01           ldi16	r1, 0x104
+ f0 06 04 01           ldi16	r2, 0x104
 <L1>:
- ed 82 1e              ld8u	r4, [r1-2]
+ ed 84 1e              ld8u	r4, [r2-2]
  08                    mov	r6, r4
- ed 82 1f              ld8u	r4, [r1-1]
+ ed 84 1f              ld8u	r4, [r2-1]
  fa 38                 lsl16i	r4, 0x8
  92                    or	r4, r6
- ed a2 20              ld8u	r5, [r1+0]
+ ed a4 20              ld8u	r5, [r2+0]
  d5 1e                 call8	_ZL8dispatch10ChunkCoord
- f2 04                 add	r0, r4
- f0 09 03              addi.s8	r1, 0x3
+ f2 0c                 add	r1, r4
+ f0 0a 03              addi.s8	r2, 0x3
  f4 b3                 dec16	r3
  f6 2b                 tst16	r3
  d1 e6                 brne8	-0x1a <L1>
- f4 aa                 inc16	r2
- f0 0e 20              cmpi.s8	r2, 0x20
+ f4 a8                 inc16	r0
+ f0 0c 20              cmpi.s8	r0, 0x20
  d1 d8                 brne8	-0x28 <L0>
- f0 58 00 01           stm16	[0x100], r0
+ f0 59 00 01           stm16	[0x100], r1
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  b8                    pop16	r0

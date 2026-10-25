@@ -263,33 +263,33 @@ Disassembly of section .text:
  c0 2e                 ldi8	r4, 0x2e
  f0 4c 41 01           stm8	[0x141], r4
  f0 01 5a              ldi8	r1, 0x5a
- f2 4b                 sub	r3, r3
+ f2 42                 sub	r2, r2
  d7 01                 sys	debug_break
  c0 40                 ldi8	r4, 0x40
  f4 40                 stsp16	[sp+0x0], r4
- f1 13                 mov	r2, r3
+ f1 1a                 mov	r3, r2
 <L0>:
- f4 02                 ldsp16	r6, [sp+0x0]
- c7 02 01              ldi16	r7, 0x102
+ f4 03                 ldsp16	r7, [sp+0x0]
+ c4 02 01              ldi16	r4, 0x102
 <L1>:
- f7 1d                 ld8u	r5, [r7+]
- f2 0d                 add	r1, r5
- f1 21                 mov	r4, r1
- 10                    add	r4, r4
- f2 21                 add	r4, r1
+ f7 06                 ld8u	r6, [r4+]
+ f2 0e                 add	r1, r6
+ f1 25                 mov	r5, r1
  15                    add	r5, r5
- 15                    add	r5, r5
- a4                    xor	r5, r4
- f1 05                 mov	r0, r5
+ f2 25                 add	r5, r1
+ 1a                    add	r6, r6
+ 1a                    add	r6, r6
+ a9                    xor	r6, r5
+ f1 06                 mov	r0, r6
  f1 70                 zext8	r0
  f2 18                 add	r3, r0
- f4 b6                 dec16	r6
- f6 2e                 tst16	r6
- f1 0d                 mov	r1, r5
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ f1 0e                 mov	r1, r6
  d1 e6                 brne8	-0x1a <L1>
  f4 aa                 inc16	r2
  f0 0e 20              cmpi.s8	r2, 0x20
- f1 0d                 mov	r1, r5
+ f1 0e                 mov	r1, r6
  d1 d8                 brne8	-0x28 <L0>
  f9 62                 xor	r3, r0
  f0 5b 00 01           stm16	[0x100], r3

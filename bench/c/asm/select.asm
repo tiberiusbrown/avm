@@ -328,33 +328,33 @@ Disassembly of section .text:
  f0 5c 80 01           stm16	[0x180], r4
  c4 22 1f              ldi16	r4, 0x1f22
  f0 5c c0 01           stm16	[0x1c0], r4
- a0                    xor	r4, r4
+ a5                    xor	r5, r5
  d7 01                 sys	debug_break
- c1 20                 ldi8	r5, 0x20
- f4 41                 stsp16	[sp+0x0], r5
- 04                    mov	r5, r4
+ c0 20                 ldi8	r4, 0x20
+ f4 40                 stsp16	[sp+0x0], r4
+ 09                    mov	r6, r5
 <L0>:
- f4 48                 stsp16	[sp+0x2], r4
+ f4 49                 stsp16	[sp+0x2], r5
  f0 31 00              ldsp16	r1, [sp+0x0]
  f0 07 82 01           ldi16	r3, 0x182
  f0 06 42 01           ldi16	r2, 0x142
  f0 04 02 01           ldi16	r0, 0x102
 <L1>:
- f4 51                 stsp16	[sp+0x4], r5
+ f4 52                 stsp16	[sp+0x4], r6
  f0 6c 91              ld16	r4, [r0+]
  f0 6c b5              ld16	r5, [r2+]
  f0 6c d7              ld16	r6, [r3+]
  d5 1f                 call8	select_kernel
- f4 11                 ldsp16	r5, [sp+0x4]
- 14                    add	r5, r4
+ f4 12                 ldsp16	r6, [sp+0x4]
+ 18                    add	r6, r4
  f4 b1                 dec16	r1
  f6 29                 tst16	r1
  d1 ea                 brne8	-0x16 <L1>
- f4 08                 ldsp16	r4, [sp+0x2]
- f4 ac                 inc16	r4
- cc 10                 cmpi.s8	r4, 0x10
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f4 ad                 inc16	r5
+ cd 10                 cmpi.s8	r5, 0x10
  d1 d1                 brne8	-0x2f <L0>
- f0 5d 00 01           stm16	[0x100], r5
+ f0 5e 00 01           stm16	[0x100], r6
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 06                 adjsp	0x6

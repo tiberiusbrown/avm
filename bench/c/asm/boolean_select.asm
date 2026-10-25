@@ -144,9 +144,9 @@ Disassembly of section .text:
  c0 20                 ldi8	r4, 0x20
  f4 40                 stsp16	[sp+0x0], r4
  f1 2b                 mov	r6, r3
- f1 27                 mov	r5, r3
+ f1 2f                 mov	r7, r3
 <L0>:
- f4 49                 stsp16	[sp+0x2], r5
+ f4 4b                 stsp16	[sp+0x2], r7
  f4 03                 ldsp16	r7, [sp+0x0]
  c5 02 01              ldi16	r5, 0x102
 <L1>:
@@ -167,9 +167,9 @@ Disassembly of section .text:
  f6 2f                 tst16	r7
  08                    mov	r6, r4
  d1 de                 brne8	-0x22 <L1>
- f4 09                 ldsp16	r5, [sp+0x2]
- f4 ad                 inc16	r5
- cd 20                 cmpi.s8	r5, 0x20
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f4 af                 inc16	r7
+ cf 20                 cmpi.s8	r7, 0x20
  08                    mov	r6, r4
  d1 ce                 brne8	-0x32 <L0>
  f0 5c 00 01           stm16	[0x100], r4

@@ -7,6 +7,8 @@ float avm_reference_hypotf(float, float);
 float avm_reference_atan2f(float, float);
 float avm_reference_atanf(float);
 float avm_reference_tanf(float);
+float avm_reference_sinf(float);
+float avm_reference_cosf(float);
 float avm_reference_logf(float);
 float avm_reference_log2f(float);
 float avm_reference_log10f(float);
@@ -14,9 +16,9 @@ float avm_reference_powf(float, float);
 float avm_reference_expf(float);
 float avm_reference_fmodf(float, float);
 
-enum { HYPOT, ATAN2, ATAN, TAN, LOG, LOG2, LOG10, POW, EXP, FMOD, FUNCTIONS };
+enum { HYPOT, ATAN2, ATAN, TAN, LOG, LOG2, LOG10, POW, EXP, FMOD, SIN, COS, FUNCTIONS };
 static const char *names[] = {
-    "hypotf", "atan2f", "atanf", "tanf", "logf", "log2f", "log10f", "powf", "expf", "fmodf"
+    "hypotf", "atan2f", "atanf", "tanf", "logf", "log2f", "log10f", "powf", "expf", "fmodf", "sinf", "cosf"
 };
 static uint64_t counts[FUNCTIONS];
 static uint32_t maximum[FUNCTIONS];
@@ -63,7 +65,9 @@ static int logs(float x)
 
 static int unary(float x)
 {
-    return logs(x) || check(ATAN, x, 0, avm_reference_atanf(x), (float)atan((double)x)) ||
+    return check(SIN, x, 0, avm_reference_sinf(x), (float)sin((double)x)) ||
+        check(COS, x, 0, avm_reference_cosf(x), (float)cos((double)x)) ||
+        logs(x) || check(ATAN, x, 0, avm_reference_atanf(x), (float)atan((double)x)) ||
         check(TAN, x, 0, avm_reference_tanf(x), (float)tan((double)x)) ||
         check(EXP, x, 0, avm_reference_expf(x), (float)exp((double)x));
 }
@@ -151,7 +155,9 @@ int main(void)
     /* Every float in the high part of the direct atan/tan polynomial range. */
     for (uint32_t u = 0x3e000000; u <= 0x3f490fdb; ++u) {
         float x = value(u);
-        if (check(TAN, x, 0, avm_reference_tanf(x), (float)tan((double)x)) ||
+        if (check(SIN, x, 0, avm_reference_sinf(x), (float)sin((double)x)) ||
+            check(COS, x, 0, avm_reference_cosf(x), (float)cos((double)x)) ||
+            check(TAN, x, 0, avm_reference_tanf(x), (float)tan((double)x)) ||
             check(ATAN, x, 0, avm_reference_atanf(x), (float)atan((double)x))) return 1;
     }
     for (unsigned n = 1; n < 128; ++n) {

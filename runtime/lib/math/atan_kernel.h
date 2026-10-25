@@ -17,6 +17,7 @@
  */
 
 #include "fdlibm.h"
+#include "fpoly.h"
 
 	static __attribute__((always_inline)) inline float avm_atan_kernel(float x)
 {
@@ -55,8 +56,7 @@
 	z = x*x;
     /* Remez fit of (x-atan(x))/x^3 for |x| <= 7/16, rounded to
        binary32. Reproduce with tests/math/generate_minimax.py. */
-	correction = z*(0x1.555554p-2f+z*(-0x1.99962cp-3f+
-	    z*(0x1.23fdc2p-3f+z*(-0x1.b540dcp-4f+z*0x1.fea3a2p-5f))));
+	correction = z*(AVM_FPOLY5(z, 0x1.fea3a2p-5f, -0x1.b540dcp-4f, 0x1.23fdc2p-3f, -0x1.99962cp-3f, 0x1.555554p-2f));
 	if (id<0) return x - x*correction;
 	else {
 	    z = ((id == 0 ? 4.6364760399e-01f : (id == 1 ? 7.8539812565e-01f : (id == 2 ? 9.8279368877e-01f : 1.5707962513e+00f)))) - ((x*correction - ((id == 0 ? 5.0121582440e-09f : (id == 1 ? 3.7748947079e-08f : (id == 2 ? 3.4473217170e-08f : 7.5497894159e-08f))))) - x);

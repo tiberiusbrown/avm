@@ -1479,7 +1479,8 @@ signaling state are unspecified for those functions.
 | `C7` | `FTOU32 qD,qS` | Section 18.11 | Binary32 to unsigned `i32` |
 | `C8` | `FCMP rD,qL,qR` | Section 18.11 | Four-way comparison result |
 | `C9` | `FCLASS rD,qS` | Section 18.11 | One-hot class mask |
-| `CA-FF` | Reserved | — | — |
+| `CA` | `FPOLY count` | Inline count and coefficients | Extended Horner evaluation in `q2` |
+| `CB-FF` | Reserved | — | — |
 
 Integer-to-float conversion rounds to nearest with ties to even. Float-to-
 integer conversion truncates toward zero for finite in-range inputs. For NaN
@@ -1510,7 +1511,61 @@ instruction still completes and preserves `CC`.
 | `0x0100` | positive normal |
 | `0x0200` | positive infinity |
 
-No fused floating-point operation is assigned.
+### 35.1.4. Inline polynomial evaluation
+
+`FPOLY` has the variable-length encoding `FF CA N C[0] ... C[N-1]`.
+`N` is an unsigned byte in `1..255`; zero enters the invalid-secondary trap.
+Each coefficient occupies four little-endian bytes containing an IEEE-754
+binary32 value, ordered from highest degree to constant. Total size is
+`3 + 4*N` bytes; degree is `N-1`.
+
+`q2` supplies `x` and receives the result:
+
+```text
+y = C[0]
+for i = 1 .. N-1: y = y*x + C[i]
+q2 = roundToBinary32(y)
+```
+
+The multiply and add cores retain a 32-bit significand (including the native
+eight-bit extension), with the native binary32 exponent range and gradual
+underflow. Alignment, packing and sticky bits follow the native helpers;
+**only the final result is rounded to binary32**, using nearest, ties to even. This is finite
+extended precision, not an exact or fused multiply-add. Results can differ
+from a sequence of ordinary `FMUL`/`FADD` instructions. Nonfinite arithmetic
+uses the existing native helpers; NaN payloads are unspecified. `N=1` returns
+the single coefficient without using `x`.
+
+All other registers, `SP`, `CC`, and guest memory are preserved. `PC` resumes at
+the byte immediately following the coefficients, including carries through
+all 24 bits. Coefficients are read directly from the current instruction SPI
+transaction. Neither RAM nor program-pointer coefficient services are defined.
+
+All three assembly forms produce identical bytes:
+
+```asm
+fpoly 3, 2.0, -3.0, 4.0
+; or a count header followed by data:
+fpoly 3
+.float 2.0, -3.0, 4.0
+; alternatively, exact binary32 bits (nonfinite payloads use this form in disassembly):
+fpoly 3, 0x40000000, 0xc0400000, 0x40800000
+```
+
+C/C++ inline assembly can use a fixed register operand, allowing the compiler
+to coalesce surrounding values or supply inexpensive `mov32` copies:
+
+```c
+register float y __asm__("q2") = x;
+__asm__("fpoly 3, 0x40000000, 0xc0400000, 0x40800000" : "+r"(y));
+```
+
+Decimal and hexadecimal float literals, optional signs, and `inf`/`nan` are
+accepted. Integer expressions denote exact coefficient bits. Finite values
+disassemble as round-trippable float literals. Runtime `math/fpoly.h` supplies
+constant-coefficient macros. Odd/even components
+use ordinary `fpoly(x*x, ...)` with their existing outer factors.
+
 
 ---
 

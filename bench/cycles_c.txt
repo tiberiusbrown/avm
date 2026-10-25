@@ -32,35 +32,38 @@
        84966   indirect_call.c
     11045125   loop_control.c
      3412152   loop_shapes.c
-      259463   math_atan.c
-      536247   math_atan2.c
-      420244   math_atan2_ratios.c
+      177957   math_atan.c
+      458964   math_atan2.c
+      375736   math_atan2_ratios.c
        74723   math_ceil.c
-     1512075   math_cos.c
-      390086   math_exp.c
-      354886   math_exp_scaled.c
+     1459329   math_cos.c
+      383478   math_cos_small.c
+      346124   math_exp.c
+      316356   math_exp_scaled.c
        79335   math_floor.c
       142305   math_fmod.c
       698414   math_fmod_subnormal.c
       504356   math_hypot.c
       444987   math_hypot_scaled.c
-      397609   math_log.c
-      424880   math_log10.c
-      298734   math_log10_near_one.c
-      374524   math_log2.c
-      250806   math_log2_near_one.c
-      270862   math_log_near_one.c
-     1057962   math_pow.c
-      808415   math_pow_bounded.c
-      918318   math_pow_integer.c
+      344961   math_log.c
+      369823   math_log10.c
+      257825   math_log10_near_one.c
+      332074   math_log2.c
+      218164   math_log2_near_one.c
+      233022   math_log_near_one.c
+      955533   math_pow.c
+      751474   math_pow_bounded.c
+      871687   math_pow_integer.c
        74663   math_round.c
-     1520611   math_sin.c
+     1464853   math_sin.c
+      376624   math_sin_small.c
       359542   math_sqrt.c
       368516   math_sqrt_mantissas.c
      2918856   math_sqrt_random.c
       163209   math_sqrt_special.c
-     1580198   math_tan.c
-      427542   math_tan_reduced.c
+     1531150   math_tan.c
+      390942   math_tan_reduced.c
+      472802   math_tan_small.c
        58827   math_trunc.c
        18300   memory_services.c
      1063957   mixed_width.c
@@ -70,6 +73,16 @@
       802669   packed_fields.c
       286671   pointer_table.c
       929811   pointer_walk.c
+      209663   poly12_guest.c
+      137272   poly12_native.c
+       40299   poly1_guest.c
+       31453   poly1_native.c
+       58866   poly2_guest.c
+       41434   poly2_native.c
+       89724   poly4_guest.c
+       60707   poly4_native.c
+      151293   poly8_guest.c
+       99080   poly8_native.c
       297331   popcount.c
      1935672   progmem_record_index.c
      2358308   progmem_walk.c

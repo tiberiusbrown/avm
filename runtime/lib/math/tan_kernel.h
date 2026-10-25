@@ -16,6 +16,7 @@
  */
 
 #include "fdlibm.h"
+#include "fpoly.h"
 
 	static __attribute__((always_inline)) inline float avm_tan_kernel(float x, float y, int iy)
 {
@@ -39,8 +40,7 @@
     /* Float-specific Remez correction on |x| < 0.6744. The pi/4
        transform, reduction tail and compensated reciprocal stay intact.
        Reproduce with tests/math/generate_minimax.py. */
-    r = 0x1.111216p-3f+z*(0x1.b9b6dep-5f+
-        z*(0x1.6d605ep-6f+z*(0x1.d49c2ap-8f+z*0x1.ad4488p-8f)));
+    r = AVM_FPOLY5(z, 0x1.ad4488p-8f, 0x1.d49c2ap-8f, 0x1.6d605ep-6f, 0x1.b9b6dep-5f, 0x1.111216p-3f);
     s = z*x;
     r = y + z*(s*r+y);
     r += 0x1.555554p-2f*s;

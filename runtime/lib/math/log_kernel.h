@@ -16,6 +16,7 @@
  */
 
 #include "fdlibm.h"
+#include "fpoly.h"
 
 /* Callers classify once, then share normalization and the mantissa kernel. */
 static __attribute__((always_inline)) inline float avm_log_special(float x, uint32_t ix)
@@ -48,15 +49,14 @@ static __attribute__((always_inline)) inline float avm_log_mantissa(float x)
     if (__builtin_fabsf(f) <= 0x1p-4f) {
         /* Degree-six log1p polynomial. Keeping f outside the correction
            preserves tiny results and exact log(1), including reduced powers. */
-        float correction = f*f*(0.5f+f*(-0x1.555556p-2f+
-            f*(0.25f+f*(-0.2f+f*0x1.555556p-3f))));
+        float correction = f*f*(AVM_FPOLY5(f, 0x1.555556p-3f, -0.2f, 0.25f, -0x1.555556p-2f, 0.5f));
         return f-correction;
     }
     float s = f/(2.0f+f);
     float z = s*s;
     float w = z*z;
-    float t1 = w*(4.0000000596e-01f+w*(2.2222198546e-01f+w*1.5313838422e-01f));
-    float t2 = z*(6.6666668653e-01f+w*(2.8571429849e-01f+w*(1.8183572590e-01f+w*1.4798198640e-01f)));
+    float t1 = w*(AVM_FPOLY3(w, 1.5313838422e-01f, 2.2222198546e-01f, 4.0000000596e-01f));
+    float t2 = z*(AVM_FPOLY4(w, 1.4798198640e-01f, 1.8183572590e-01f, 2.8571429849e-01f, 6.6666668653e-01f));
     float hfsq = 0.5f*f*f;
     return f-(hfsq-s*(hfsq+t1+t2));
 }

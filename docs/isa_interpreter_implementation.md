@@ -3716,3 +3716,26 @@ A thorough implementation should:
 6. Verify the soft-float bridge preserves interpreter state and restarts the byte stream correctly.
 7. Compile a representative Arduboy corpus and compare code size and instruction timing with the reference design.
 
+
+### Native inline Horner evaluation (`FF CA`)
+
+`ff_poly` saves the count register, the two registers retaining the high half
+of `x`, and `q3` on the native stack. The low half of `x` stays in its original
+`r16:r17`, which the floating helpers do not touch. The accumulator remains in the floating helper A registers
+with its low significand byte in `r27`. `ff_poly_coefficient` reads four bytes
+from the active instruction-fetch transaction and immediately launches the next
+byte, preserving the accumulator and its extension. A single 24-bit addition
+advances the VM PC over the count and complete coefficient payload; the normal
+dispatch tail consumes the prefetched following opcode.
+
+The loop follows avr-libm's compact `__fp_powser` structure. Its original
+five-byte coefficient format is not used. The native `__mulsf3x` takes only a
+24-bit input significand, so FPOLY enters a shared core through
+`__mulsf3x_ext`, adding the three partial products of the retained low byte.
+`__addsf3x_ext` shares the native adder and recognizes fractional subnormal
+accumulators. The only `__fp_round` call occurs after the last coefficient.
+
+`avm_fpoly_tests_run` executes the handler with checked SPI writes, verifies
+all preserved architectural state and fetch continuation, checks PC carries,
+and exercises Timer1 interruptions. Performance and flash measurements are in
+[fpoly measurements](fpoly-performance.md).

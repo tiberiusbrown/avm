@@ -141,3 +141,12 @@ and saturation, all 64 button combinations, 32 ms polling, hold cancellation,
 the 48-sample threshold, timed watchdog writes, and watchdog reset to the boot
 fuse entry. A guest that only loops verifies the shortcut while Timer1 runs,
 without guest SYS calls. These checks also run within `avm_tests_run`.
+
+`avm_fpoly_tests_run` checks native extended Horner arithmetic against the host
+model, including cancellation, wide exponents, fractional subnormals,
+nonfinite values, all architectural registers and flags, native stack balance,
+counts 1 and 255, and PC carries through 16 and 24 bits. It verifies continuous
+SPI coefficient reads and resumed opcode fetching with an active audio voice
+at 128 Timer1 phases. These checks run within `avm_tests_run`; C/C++ inline-asm
+fixtures run at all six optimization levels. The mathematical reference target
+now includes dense sin/cos checks as well as the other production kernels.

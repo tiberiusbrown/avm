@@ -14,6 +14,7 @@
  */
 
 #include "fdlibm.h"
+#include "fpoly.h"
 
 	float __ieee754_expf(float x)	/* default IEEE double exp */
 {
@@ -54,7 +55,7 @@
 
     /* x is now in primary range */
 	t  = x*x;
-	c  = x - t*(1.6666667163e-01f+t*((-2.7777778450e-03f)+t*(6.6137559770e-05f+t*((-1.6533901999e-06f)+t*4.1381369442e-08f))));
+	c  = x - t*(AVM_FPOLY5(t, 4.1381369442e-08f, -1.6533901999e-06f, 6.6137559770e-05f, -2.7777778450e-03f, 1.6666667163e-01f));
         if(k==0) 	return 1.0f-((x*c)/(c-(float)2.0)-x);
 	else 		y = 1.0f-((lo-(x*c)/((float)2.0-c))-hi);
 	if(k >= -125) {

@@ -1931,7 +1931,7 @@ ff_decode:
     sei
 
     ; Arithmetic/sign operations are two bytes. Retired math encodings trap.
-    ; 7C-BF and CA-FF are reserved.
+    ; 7C-BF and CB-FF are reserved; CA streams a count and coefficients.
     ; C0-C9 consume one additional operand-specifier byte.
     cpi   FF_SECONDARY, 0x7C
     brlo  ff_defined_short
@@ -1941,7 +1941,10 @@ ff_decode:
 .Lff_check_extended:
     cpi   FF_SECONDARY, 0xCA
     brlo  ff_extended
+    breq  .Lff_poly
     rjmp  ff_invalid
+.Lff_poly:
+    jmp   ff_poly
 
 ff_defined_short:
     ; Arithmetic occupies 00-3F, sign operations 60-67. Former min/max
@@ -8153,6 +8156,95 @@ ff_bridge_store_r16:
     rjmp  ff_cluster_tail_18
 
 
+; FF CA count, followed by count little-endian binary32 coefficients.
+; Fixed q2 input/result, highest degree first. Count zero is invalid.
+; r16:r17 retains x low, r12:r13 retains x high; r8 counts coefficients.
+; A=r22:r25 with extension r27. The float helpers never touch r16:r17.
+; Keep the active instruction read open throughout; the fourth byte handoff
+; prefetches the next coefficient (or the following primary opcode).
+ff_poly:
+    push  r8
+    push  r12
+    push  r13
+    push  r20
+    push  r21
+    push  r22
+    push  r23
+    movw  r12, r18
+    in    r8, SPDR
+    out   SPDR, ZERO
+    tst   r8
+    brne  .Lff_poly_count_valid
+    jmp   invalid_secondary_instruction_func
+.Lff_poly_count_valid:
+    ; Advance once to the final coefficient byte; dispatch adds the last one.
+    mov   r24, r8
+    clr   r25
+    lsl   r24
+    rol   r25
+    lsl   r24
+    rol   r25
+    subi  r24, -1
+    sbci  r25, 0xFF
+    add   VM_PCL, r24
+    adc   VM_PCM, r25
+    adc   VM_PCH, ZERO
+    rcall ff_poly_coefficient
+    movw  r22, r18
+    movw  r24, r20
+    clr   r27
+    clr   r31
+    dec   r8
+    breq  .Lff_poly_done
+    ; The first accumulator is a binary32 coefficient, so its extension is
+    ; zero. Use the smaller/faster existing multiply for this first step.
+    movw  r18, r16
+    movw  r20, r12
+    rcall __mulsf3x
+    rjmp  .Lff_poly_add_coefficient
+.Lff_poly_horner:
+    movw  r18, r16
+    movw  r20, r12
+    rcall __mulsf3x_ext
+.Lff_poly_add_coefficient:
+    rcall ff_poly_coefficient
+    clr   r26
+    rcall __addsf3x_ext
+    dec   r8
+    brne  .Lff_poly_horner
+.Lff_poly_done:
+    rcall __fp_round
+    movw  r16, r22
+    movw  r18, r24
+    pop   r23
+    pop   r22
+    pop   r21
+    pop   r20
+    pop   r13
+    pop   r12
+    pop   r8
+    jmp   ff_cluster_tail_18
+
+ff_poly_coefficient:
+    in    r18, SPDR
+    out   SPDR, ZERO
+    rcall ff_poly_delay_16
+    in    r19, SPDR
+    out   SPDR, ZERO
+    rcall ff_poly_delay_16
+    in    r20, SPDR
+    out   SPDR, ZERO
+    rcall ff_poly_delay_16
+    in    r21, SPDR
+    out   SPDR, ZERO
+    ret
+ff_poly_delay_16:
+    delay_4
+    delay_4
+    nop
+    ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Embedded avr-libc/libm-derived binary32 routines
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -8194,10 +8286,23 @@ __addsf3:
 .L__addsf3_infinity:
     bst   r30, 7
     rjmp  __fp_inf
+; FPOLY also retains fractional subnormal significands in r27.
+__addsf3x_ext:
+    mov   r30, r25
+    rcall __fp_split3
+    tst   r25
+    brne  .L__addsf3x_ext_split
+    tst   r27
+    breq  .L__addsf3x_ext_split
+    ldi   r25, 1
+.L__addsf3x_ext_split:
+    brcs  .L__addsf3_special_cases
+    rjmp  .L__addsf3x_compare
 __addsf3x:
     mov   r30, r25
     rcall __fp_split3
     brcs  .L__addsf3_special_cases
+.L__addsf3x_compare:
     cp    r27, r26
     cpc   r22, r18
     cpc   r23, r19
@@ -8678,6 +8783,45 @@ __mulsf3:
     rjmp  __fp_nan
 .L__mulsf3_szero:
     rjmp  __fp_szero
+; Extended A input: binary32 high word r22:r25 plus low significand r27.
+; B remains binary32. Accumulate the three extra partial products, then share
+; normalization/packing with __mulsf3x. No binary32 rounding occurs here.
+__mulsf3x_ext:
+    rcall __fp_split3
+    tst   r25
+    brne  .L__mulsf3x_ext_split
+    tst   r27
+    breq  .L__mulsf3x_ext_split
+    ldi   r25, 1
+.L__mulsf3x_ext_split:
+    brcs  .L__mulsf3_special_cases
+    mul   r25, r21
+    breq  .L__mulsf3_szero
+    add   r25, r21
+    ldi   r21, 0x00
+    adc   r21, r21
+    mul   r27, r18
+    mov   r30, r1
+    mul   r27, r19
+    clr   r31
+    add   r30, r0
+    adc   r31, r1
+    mul   r27, r20
+    clr   r27
+    add   r31, r0
+    adc   r27, r1
+    clr   r26
+    mul   r22, r18
+    add   r30, r0
+    adc   r31, r1
+    adc   r27, ZERO
+    adc   r26, ZERO
+    mul   r23, r18
+    add   r31, r0
+    adc   r27, r1
+    adc   r26, ZERO
+    mul   r22, r19
+    rjmp  .L__mulsf3_accumulate_b1
 __mulsf3x:
     rcall __fp_split3
     brcs  .L__mulsf3_special_cases
@@ -8695,9 +8839,10 @@ __mulsf3_pse:
     adc   r27, r1
     mul   r22, r19
     eor   r26, r26
+.L__mulsf3_accumulate_b1:
     add   r31, r0
     adc   r27, r1
-    adc   r26, r26
+    adc   r26, ZERO
     mul   r22, r20
     eor   r22, r22
     add   r27, r0
@@ -8753,7 +8898,7 @@ __mulsf3_pse:
 .L__mulsf3_prepare_denormal:
     cpi   r21, 0xFF
     brlt  .L__mulsf3_underflow_zero
-    cpi   r25, 0xE8
+    cpi   r25, 0xE0
     brlt  .L__mulsf3_underflow_zero
 .L__mulsf3_denormalize:
     lsr   r24

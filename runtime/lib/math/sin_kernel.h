@@ -16,6 +16,7 @@
  */
 
 #include "fdlibm.h"
+#include "fpoly.h"
 
 	static __attribute__((always_inline)) inline float avm_sin_kernel(float x, float y, int iy)
 {
@@ -27,7 +28,7 @@
 	   {return x;}		/* generate inexact */
 	z	=  x*x;
 	v	=  z*x;
-	r	=  8.3333337680e-03f+z*((-1.9841270114e-04f)+z*(2.7557314297e-06f+z*((-2.5050759689e-08f)+z*1.5896910177e-10f)));
+	r	=  AVM_FPOLY5(z, 1.5896910177e-10f, -2.5050759689e-08f, 2.7557314297e-06f, -1.9841270114e-04f, 8.3333337680e-03f);
 	if(iy==0) return x+v*((-1.6666667163e-01f)+z*r);
 	else      return x-((z*(5.0000000000e-01f*y-v*r)-y)-v*(-1.6666667163e-01f));
 }

@@ -256,3 +256,15 @@ The interpolation arithmetic and exact midpoint correction are unchanged.
 | `math_sqrt_special` | 164,004 | 163,209 | 0.48% |
 | `math_hypot` | 506,616 | 504,356 | 0.45% |
 | `math_hypot_scaled` | 447,031 | 444,987 | 0.46% |
+
+## Native polynomial workloads
+
+`math_sin_small`, `math_cos_small`, and `math_tan_small` measure 32 calls with
+paired signs at magnitudes 0.125 through 128, avoiding large-angle reduction.
+The existing broad-range trig benchmarks remain. `poly{1,2,4,8,12}_guest` and
+`poly{1,2,4,8,12}_native` compare identical 32-input workloads using ordinary
+compiler-generated Horner arithmetic and inline native `fpoly` respectively.
+All setup precedes timing, and each result contributes to a volatile sink.
+
+See [fpoly measurements](../docs/fpoly-performance.md) for interpreter flash,
+cycles, guest text sizes, numerical accuracy, and full validation results.

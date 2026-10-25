@@ -8,9 +8,14 @@ Original license notices remain with the kernels, including those moved into
 private headers. The runtime has no errno/fenv state and uses fixed
 round-to-nearest, ties-to-even arithmetic.
 
-The polynomial kernels use float literals at each coefficient use.
-Coefficients and 2/pi digits embed in the
-instruction stream. Polynomial helpers inline into their callers; the large-angle
+The polynomial kernels use native `fpoly` through the private `fpoly.h`
+inline-assembly macros. Highest-degree-first binary32 coefficients embed in the
+instruction stream; the compiler manages the fixed `q2` operand without a guest
+helper call. The interpreter retains its eight-bit significand extension across
+Horner steps and rounds to binary32 only at the end. The host reference build
+models this extended precision. Argument reduction, compensated outer arithmetic,
+exceptional handling, and public APIs retain their existing structure.
+The 2/pi digits also embed in the instruction stream. Polynomial helpers inline into their callers; the large-angle
 24-by-256-bit integer product is fully unrolled into 8-by-8-bit products with
 split 16-bit column sums and carries, avoiding general 32-bit multiplication.
 Its complete 280-bit result is checked against a reference using 32-bit limbs

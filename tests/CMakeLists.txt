@@ -703,6 +703,8 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_atan2.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_atan.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_tan.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_sin.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_cos.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log10.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_pow.c"
@@ -714,7 +716,7 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_scalbn.c")
 target_include_directories(avm_shortcuts_reference_kernels PRIVATE
     "${PROJECT_SOURCE_DIR}/runtime/include")
-foreach(function hypotf atan2f atanf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
+foreach(function hypotf atan2f atanf sinf cosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
     target_compile_definitions(avm_shortcuts_reference_kernels PRIVATE
         "${function}=avm_reference_${function}")
 endforeach()
@@ -734,3 +736,16 @@ add_custom_target(avm_shortcuts_tests_run
     COMMAND "$<TARGET_FILE:avm_shortcuts_reference_tests>"
     DEPENDS avm_shortcuts_reference_tests USES_TERMINAL)
 add_dependencies(avm_tests_run avm_shortcuts_tests_run)
+
+# Exercise the real FPOLY handler, active SPI stream and Timer1 interruption.
+add_executable(avm_fpoly_tests interp/fpoly.cpp)
+target_compile_features(avm_fpoly_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_fpoly_tests PRIVATE ardensdebuggerlib)
+add_custom_target(avm_fpoly_tests_run
+    COMMAND "$<TARGET_FILE:avm_fpoly_tests>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+        "${AVM_PUSH16_TEST_DIR}/push16.bin"
+    DEPENDS avm_fpoly_tests avm_interpreter "${AVM_PUSH16_TEST_DIR}/push16.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+add_dependencies(avm_tests_run avm_fpoly_tests_run)

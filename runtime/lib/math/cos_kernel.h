@@ -16,6 +16,7 @@
  */
 
 #include "fdlibm.h"
+#include "fpoly.h"
 
 	static __attribute__((always_inline)) inline float avm_cos_kernel(float x, float y)
 {
@@ -27,9 +28,7 @@
 	    return 1.0f;
 	}
 	z  = x*x;
-	r  = z*(4.1666667908e-02f + z*(-1.3888889225e-03f +
-	     z*(2.4801587642e-05f + z*(-2.7557314297e-07f +
-	     z*(2.0875723372e-09f + z*(-1.1359647598e-11f))))));
+	r  = z*(AVM_FPOLY6(z, -1.1359647598e-11f, 2.0875723372e-09f, -2.7557314297e-07f, 2.4801587642e-05f, -1.3888889225e-03f, 4.1666667908e-02f));
 	if(ix < 0x3e99999a) 			/* if |x| < 0.3 */ 
 	    return 1.0f - (0.5f*z - (z*r - x*y));
 	else {

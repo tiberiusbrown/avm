@@ -152,12 +152,12 @@ Disassembly of section .text:
 <L1>:
  f1 21                 mov	r4, r1
  11                    add	r4, r5
- f4 48                 stsp16	[sp+0x2], r4
+ f4 50                 stsp16	[sp+0x4], r4
  f1 01                 mov	r0, r1
  f2 06                 add	r0, r6
  f0 6a c0              ld32	q3, [r0]
  60                    ld16	r4, [r4]
- f4 50                 stsp16	[sp+0x4], r4
+ f4 48                 stsp16	[sp+0x2], r4
  04                    mov	r5, r4
  fa cf                 asr16i	r5, 0xf
  f7 6b                 add32	q2, q3
@@ -172,9 +172,9 @@ Disassembly of section .text:
  c5 04 01              ldi16	r5, 0x104
  11                    add	r4, r5
  40                    ld8u	r4, [r4]
- f4 11                 ldsp16	r5, [sp+0x4]
- 11                    add	r4, r5
  f4 09                 ldsp16	r5, [sp+0x2]
+ 11                    add	r4, r5
+ f4 11                 ldsp16	r5, [sp+0x4]
  74                    st16	[r5], r4
  f0 6b c0              st32	[r0], q3
  a5                    xor	r5, r5

@@ -1,5 +1,5 @@
-     1189649   aggregate_args.c
-     1089150   aggregate_return.c
+     1159889   aggregate_args.c
+     1059966   aggregate_return.c
      2094135   aliasing.c
      1849275   bit_count.c
      1694705   bitfields.c
@@ -17,15 +17,15 @@
       723076   count_leading_zeros.c
       581536   count_trailing_zeros.c
       525762   crc16.c
-     1595664   div_pow2.c
+     1577424   div_pow2.c
       759222   divmod.c
        18718   draw_text.c
        20826   draw_text_P.c
       736876   dynamic_stack.c
       236880   fibonacci.c
      2943436   fir8.c
-     7094668   fixed_point.c
-      939665   float.c
+     6783372   fixed_point.c
+      934289   float.c
       863632   float_comparisons.c
       634998   float_conversions.c
        84966   indirect_call.c
@@ -85,6 +85,6 @@
       500729   volatile_rmw.c
       511620   wide_add_sub.c
      1104068   wide_compare.c
-     2452191   wide_divmod.c
-      500006   wide_mul.c
-      220811   wide_shifts.c
+     2451935   wide_divmod.c
+      481766   wide_mul.c
+      218903   wide_shifts.c

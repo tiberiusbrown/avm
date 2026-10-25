@@ -75,6 +75,12 @@ covers every left byte with signed/unsigned boundary values on the right,
 program-memory loads, a shared signed full-word use, and hoisted coefficients
 that exceed the register file and require spills.
 
+`mul_i32_narrow` checks unsigned and signed narrow products at all six optimization
+levels. Every signed byte is tested with constants 6, 257, 511, 513 and -257,
+positive variable factors, zero factors and signed byte boundary factors against
+an independent addition reference. Signed-word boundaries ensure wider products
+retain their high words; program-record indexing checks 24-bit pointer layouts.
+
 `shared_data_bases` checks byte and word windows with runtime indices, displaced
 reads and writes, negative offsets and signed arithmetic. Separate reference
 accesses check every result at all six optimization levels, including a
@@ -95,4 +101,3 @@ and saturation, all 64 button combinations, 32 ms polling, hold cancellation,
 the 48-sample threshold, timed watchdog writes, and watchdog reset to the boot
 fuse entry. A guest that only loops verifies the shortcut while Timer1 runs,
 without guest SYS calls. These checks also run within `avm_tests_run`.
-See [shortcut measurements and emulator limits](../docs/bootloader-shortcut.md).

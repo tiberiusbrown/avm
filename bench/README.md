@@ -48,9 +48,6 @@ block boundary, as in the RPG. This covers preservation of its zero low word
 alongside ordinary full-width operations in `wide_compare`, `packed_fields`,
 `struct_copy`, `shifts`, and `progmem_walk`.
 
-See [small aggregate lowering and measurements](../docs/compiler-aggregate-packing.md)
-for the compiler change, runtime coverage, and before/after results.
-
 `byte_load_liveout` keeps RAM and program-memory byte loads live across a
 runtime branch before passing them to byte-argument calls. It exercises known
 upper bits between basic blocks, together with call spills and register copies.
@@ -67,25 +64,14 @@ cover this missed outer-loop strength reduction.
 
 `bounded_multiply` keeps an index in 0..7 live across an inner loop and computes
 `18 * index`. It exercises range proofs and allocation of the byte-multiply
-candidate when upper registers are busy. See
-[loop strength reduction](../docs/compiler-loop-strength.md) for the policy,
-regression coverage and measurements.
+candidate when upper registers are busy.
 
-`fir8` exercises signed byte products with hoisted, spilled coefficients. See
-[widening byte multiplication](../docs/compiler-byte-multiply.md) for instruction
-selection coverage and before/after measurements.
-Its unrolled sample loads also exercise
-[shared displaced-address bases](../docs/compiler-shared-addresses.md), including
-the native-cycle cost and register-pressure policy.
+`fir8` exercises signed byte products with hoisted, spilled coefficients.
+Its unrolled sample loads also exercise shared displaced-address bases.
 
 `shifts`, `rotate32`, `register_cleanup`, and `wide_shifts` measure the runtime
-32-bit variable-shift helpers. See [32-bit runtime shifts](../docs/runtime-shifts.md)
-for the word decomposition, constant-shift coverage, stack diagnostics, and
-before/after measurements.
+32-bit variable-shift helpers.
 
 Keep setup outside the measured interval and make the result depend on
 runtime data. New sources are discovered by CMake and the runner automatically;
 each source should contain exactly one pair of debug breaks.
-
-Sources in [`unsupported`](unsupported/README.md), if any, record benchmark
-cases that fail in AVM code generation and are excluded from normal builds.

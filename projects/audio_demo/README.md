@@ -28,8 +28,6 @@ The script expects `z1overw.mid`, `ff1town.mid`, `ff1overw.mid`, and
 Raw MIDI inputs are not stored in the repository or required for normal
 builds/tests. Source track names and program metadata determine the defaults;
 melody stays on channel 0, bass on 2, harmony on 1 and percussion on 3.
-See [the arranger guide](../../docs/midi_to_avms.md) for usage, algorithms,
-original synthetic examples, limitations and validation details.
 
 The original tune, **Sunlit Garden**, loops through 16 bars in C major at about
 96 BPM (39.936 seconds per loop). Its first eight bars introduce and develop

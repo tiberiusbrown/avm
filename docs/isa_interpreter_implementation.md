@@ -5,13 +5,9 @@
 **Priority:** Performance of generated code
 **Reference timing basis:** Sequential SPI byte fetch using the 17-cycle reverse-order and 18-cycle standard dispatch schedules described in Section 5; slower handlers extend the cadence when their native work exceeds the available slack.
 
-Current firmware size and optimization measurements are recorded in
-[interpreter optimization measurements](interpreter-optimizations.md). The
-current F8 shared decoder is described in Section 17 and the
-[CSET benchmark comparison](cset-benchmarks.md). Older physical-layout and
+The F8 shared decoder is described in Section 17. Older physical-layout and
 reference-size examples below retain the former dense F8 table as design
-history; measured current firmware size is 29008 bytes after the
-[hexadecimal float digit loop](hex-formatter-benchmarks.md).
+history.
 
 ---
 

@@ -25,12 +25,7 @@ This page documents both the source language and its playback format:
 - [Demo, validation and limits](#demo-validation-and-limits)
 
 For arrangement, mix levels, and composing for the Arduboy speaker, see the
-[music composition guide](music_composition_guide.md). For converting MIDI
-files, see the [MIDI arranger](midi_to_avms.md).
-
-For offline audio rendering, emulator validation, and audio-guided MIDI fitting,
-see [Stage 2](midi_to_avms_stage2.md). Its default previews and the hardware
-both use 15,625 Hz.
+[music composition guide](music_composition_guide.md).
 
 AVM has three identical pulse/triangle/sawtooth oscillators and one noise
 oscillator. Timer1 synthesizes at 15625 Hz (default) or 7812.5 Hz. Timer4 drives
@@ -1342,7 +1337,6 @@ with pulse melody/vibrato on 0, pulse harmony on 1, triangle bass on 2 and noise
 retrigger. `effects.avms` additionally demonstrates arpeggio and glissando.
 A triggers SFX; B pauses; Up changes rate. Left/right switch between Sunlit
 Garden and four MIDI imports with wraparound, preserving pause and rate.
-See [MIDI arranger](midi_to_avms.md) for conversion, reports and limitations.
 Build `audio_demo_assets` then
 `avm_audio_demo`; the checked-in package is `projects/audio_demo/audio_demo.arduboy`.
 

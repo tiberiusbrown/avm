@@ -32,7 +32,7 @@
     11045125   loop_control.c
      3413880   loop_shapes.c
        18300   memory_services.c
-     2548282   mixed_width.c
+     1081221   mixed_width.c
       903624   multiply.c
      1193770   narrow_arithmetic.c
      1383499   normalized_loads.c

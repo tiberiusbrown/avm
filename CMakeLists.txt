@@ -104,6 +104,10 @@ set(BUG_REPORT_URL "https://github.com/tiberiusbrown/llvm-project/issues/" CACHE
 
 add_subdirectory(deps/llvm-project/llvm llvm-build)
 
+# This LLVM checkout has no PCH option; configure its native C++ targets here.
+include(AvmLlvmPch)
+avm_enable_llvm_pch("${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/llvm")
+
 add_custom_target(avm_toolchain
     DEPENDS
         clang

@@ -1,0 +1,29 @@
+/* Mathematical references for observed boundary regressions. */
+#include "math_test.h"
+static const AVM_PROGMEM struct math_case cases[] = {
+    {0x7d16c32bUL,0x7f7fd397UL,0x7f7fffffUL,1},
+    {0x7dfab272UL,0x7f7e1323UL,0x7f7fffffUL,1},
+    {0x7e09cf86UL,0x7f7dabcbUL,0x7f7fffffUL,1},
+    {0x7e47c5c1UL,0x7f7b14beUL,0x7f7fffffUL,1},
+    {0x7e541500UL,0x7f7a7301UL,0x7f7fffffUL,1},
+    {0x7ec3ef14UL,0x7f6c835eUL,0x7f7fffffUL,1},
+    {0x7ecf7bc9UL,0x7f6a09a6UL,0x7f7fffffUL,1},
+    {0x7ed53641UL,0x7f68bf3bUL,0x7f7fffffUL,1},
+    {0x7ee0924eUL,0x7f660f87UL,0x7f7fffffUL,1},
+    {0x7ef15ae9UL,0x7f61c597UL,0x7f7fffffUL,1},
+    {0x7efc5d26UL,0x7f5ebe05UL,0x7f7fffffUL,1},
+    {0x7f15f6d9UL,0x7f4f7a1fUL,0x7f800000UL,1},
+    {0x7f4f7a1fUL,0x7f15f6d9UL,0x7f800000UL,1},
+    {0x7f5ebe05UL,0x7efc5d26UL,0x7f7fffffUL,1},
+    {0x7f61c597UL,0x7ef15ae9UL,0x7f7fffffUL,1},
+    {0x7f660f87UL,0x7ee0924eUL,0x7f7fffffUL,1},
+    {0x7f68bf3bUL,0x7ed53641UL,0x7f7fffffUL,1},
+    {0x7f6a09a6UL,0x7ecf7bc9UL,0x7f7fffffUL,1},
+    {0x7f6c835eUL,0x7ec3ef14UL,0x7f7fffffUL,1},
+    {0x7f7a7301UL,0x7e541500UL,0x7f7fffffUL,1},
+    {0x7f7b14beUL,0x7e47c5c1UL,0x7f7fffffUL,1},
+    {0x7f7dabcbUL,0x7e09cf86UL,0x7f7fffffUL,1},
+    {0x7f7e1323UL,0x7dfab272UL,0x7f7fffffUL,1},
+    {0x7f7fd397UL,0x7d16c32bUL,0x7f7fffffUL,1},
+};
+int avm_test_main(void) { return check_binary_accuracy(hypotf,cases,sizeof(cases)/sizeof(cases[0]),AVM_HYPOT); }

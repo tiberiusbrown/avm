@@ -1,5 +1,12 @@
 # AVM benchmarks
 
+The [phase 3–4 math report](../docs/math-runtime/phase34/report.md) compares the
+current pow/hypot/trig replacements with the working-tree baseline. Additional
+workloads cover near-one powers, extreme powers, integer-loop crossover,
+shared sine/cosine, and exact hypot overflow classification. The latter two
+experimental coverage workloads (`math_pow_crossover`, `math_hypot_boundary`)
+were added after the baseline capture and have no before-cycle row.
+
 The current math study has [generated cycle/resource comparisons](../docs/math-runtime/report.md)
 and [generated accuracy measurements](../docs/math-runtime/accuracy.md). Use
 `avm_math_bench_images` for focused iteration. New `math_exp_primary` and

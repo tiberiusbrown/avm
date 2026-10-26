@@ -39,12 +39,24 @@ for 2^r through FPOLY, and exponent packing with a staged subnormal multiply.
 It performs no division. Tiny arguments retain 1+x. The generator and measured
 alternatives are described in the [generated phase 1–2 report](../../../docs/math-runtime/report.md).
 
-`hypotf` keeps magnitude ordering, exceptional values and exponent scaling,
-then takes the square root of the binary32 sum of squares. `atan2f` divides
-the smaller magnitude by the larger and reconstructs the angle with split
-pi/2 constants. The atan and tan corrections use float-specific Remez fits
-with five and six coefficients; `tests/math/generate_minimax.py` reproduces
-them. Tangent retains its reduction tail and compensated reciprocal.
+`hypotf` takes the square root of the sum of squares without sorting or scaling
+for ordinary inputs. Extreme inputs retain scaling and a magnitude-gap shortcut.
+A cold exact squared-norm comparison preserves the finite/infinite rounding
+boundary despite the approximate square root. Only that boundary uses 64-bit
+guest integer helpers.
+
+Sine and cosine use degree-five odd and degree-six even Remez polynomials on
+the existing reduced interval. The low reduction tail is unnecessary for their
+absolute error budget. Tangent uses x+x^3*P2(x^2), adds the reduction tail and
+uses one ordinary reciprocal in odd quadrants. Pole neighbors retain four-ULP
+tests. `atanf` uses a reciprocal above one and a shared four-interval kernel on
+[0,1], with a degree-seven odd first interval and centered degree-four fits in
+the other intervals. Endpoint anchoring prevents backward jumps at the tested
+branch boundaries. Native-word comparisons select intervals. `atan2f` divides
+the smaller magnitude by the larger and shares this kernel. `sincosf` shares
+one reduction and one square without adding work to standalone sin/cos.
+`tests/math/phase34_coefficients.py` reproduces the selected coefficients.
+The unfinished argument-reduction work is left unchanged.
 
 The three logarithms classify and normalize once, then inline one division-free
 base-two mantissa engine: f*P6(f), where f is the normalized mantissa minus one.
@@ -52,11 +64,14 @@ Factoring f preserves log(1), signs and small logarithms. log2 adds the exponent
 log and log10 each use one conversion multiply. One degree-seven polynomial
 was faster than two degree-five pieces and than the retained near-one hybrid.
 A stable natural-log mantissa wrapper is available for later log1pf work.
-`powf` uses multiplication for exponents +/-3, +/-4 and +/-5 when the base
-magnitude is in [2^-15, 2^15]. Larger integer powers retain fdlibm; this phase does not rewrite the general
-power engine or its integer shortcuts. Positive bases in
-[0.5, 2] with |y| <= 1.25 use the shared logarithm and exponential; all other
-ranges retain the split logarithm/exponential decomposition.
+`powf` replaces the fdlibm general engine with direct 2^(y*log2(x)). It reuses
+the phase-two exponential polynomial and logarithm normalization/mantissa core.
+Large exponents use a degree-eight logarithm fit to bound amplified errors.
+Near one, a short log1p series forms y*(x-1) first. Integer powers through
+magnitude 16 use squaring, inverting first for negative powers; bit-level parity
+uses native words. A cold two-component atanh-series refinement distinguishes
+overflow and zero-underflow neighbors that a single float product cannot resolve.
+There are no retained high-precision general implementations or precision modes.
 
 `fmodf` uses exact subtraction in the normal y < x < 2*y interval, native
 word leading-zero counts for subnormal exponents, and 16-bit exponent arithmetic.
@@ -90,4 +105,5 @@ classification and sign checks remain unchanged. The large-angle trig reducer
 and its exhaustive 280-bit product test are unchanged.
 
 See [earlier measurements](../../../docs/math-runtime-tradeoff.md) for historical
-results and [current measurements and validation](../../../docs/math-runtime/report.md).
+results, the [phase 1–2 study](../../../docs/math-runtime/report.md), and
+[current phase 3–4 measurements and validation](../../../docs/math-runtime/phase34/report.md).

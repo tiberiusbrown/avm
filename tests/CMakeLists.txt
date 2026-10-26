@@ -707,6 +707,7 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_tan.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_sin.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_cos.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_sincos.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log10.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_pow.c"
@@ -718,7 +719,7 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_scalbn.c")
 target_include_directories(avm_shortcuts_reference_kernels PRIVATE
     "${PROJECT_SOURCE_DIR}/runtime/include")
-foreach(function hypotf atan2f atanf sinf cosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
+foreach(function hypotf atan2f atanf sinf cosf sincosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
     target_compile_definitions(avm_shortcuts_reference_kernels PRIVATE
         "${function}=avm_reference_${function}")
 endforeach()

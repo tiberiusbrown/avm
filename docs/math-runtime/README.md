@@ -1,5 +1,9 @@
 # Math runtime accuracy and performance study
 
+The [phase 3–4 report](phase34/report.md) records the current power, hypot,
+trig, inverse-trig and shared sine/cosine replacements. The phase 1–2 reports
+below remain the historical record for the unchanged exp/log/sqrt kernels.
+
 The generated [accuracy report](accuracy.md) and its JSON inputs are intended to
 be committed. `report.md` combines the numerical results with actual AVR cycle,
 stack, image-size and algorithm-comparison measurements. Build-only experiments
@@ -37,17 +41,18 @@ Relative-error statistics exclude references smaller than `2^-126`.
 NaNs compare by classification. Infinity signs, zero signs, domain errors,
 and inexpensive identities (sqrt of exact powers of four, log(1), exp(0), exact
 log2 powers of two) have separate exact fixtures. Tests never relax exact
-arithmetic, rounding, remainder or classification checks. Existing unchanged trig/atan vectors retain their stricter ULP checks,
-including pole neighbors. Existing vector entries marked exact remain exact except that non-square square-root inputs now use the
+arithmetic, rounding, remainder or classification checks. Replaced trig/atan
+vectors use the function-specific budgets above; tangent pole neighbors retain
+the four-ULP regression policy. Existing vector entries marked exact remain exact except that non-square square-root inputs now use the
 explicit two-ULP root policy. The trig reducer and interpreter instructions are
 unchanged. Its exhaustive 280-bit product check remains mandatory; the relaxed
 absolute trig budget does not permit a quadrant error. Tangent pole neighbors
 continue to be tested, although the public approximation budget excludes poles.
 
 There is no public `exp2f` in this runtime. The base-two exponential candidate
-uses a reusable direct `2^r` polynomial; the same normal/subnormal accuracy
-budgets would apply to a future public exp2f. No additional public API is needed
-for this study.
+uses a reusable direct `2^r` polynomial, now also used by the private pow exp2
+kernel; the same normal/subnormal accuracy budgets would apply to a future
+public exp2f. The phase 3–4 runtime adds `sincosf` for paired evaluation.
 
 ## Reproduction
 

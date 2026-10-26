@@ -1,0 +1,484 @@
+{
+  "precision_digits": 100,
+  "mpmath_version": "1.3.0",
+  "random_samples": 10000,
+  "seed": "41564d26",
+  "search_rounds": 3,
+  "functions": {
+    "powf": {
+      "count": 38678,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.8992420935407978e+33,
+      "max_relative_normal": 1.9147586014435367e-05,
+      "max_ulp": 161.0,
+      "worst_absolute": [
+        "3f7fffff",
+        "ceb16e8b"
+      ],
+      "worst_relative": [
+        "3f6ffffa",
+        "c4a927e6"
+      ],
+      "worst_ulp": [
+        "3f6ffffa",
+        "c4a927e6"
+      ],
+      "ulp_distribution": [
+        3830,
+        2793,
+        1687,
+        5571,
+        10782
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 14241,
+          "failures": 0,
+          "max_ulp": 86
+        },
+        "near_one": {
+          "count": 2476,
+          "failures": 0,
+          "max_ulp": 161
+        },
+        "extreme": {
+          "count": 7794,
+          "failures": 0,
+          "max_ulp": 109
+        },
+        "subnormal": {
+          "count": 152,
+          "failures": 0,
+          "max_ulp": 79
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "hypotf": {
+      "count": 47533,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 2.5043634461527924e+31,
+      "max_relative_normal": 2.382036797577165e-07,
+      "max_ulp": 3.0,
+      "worst_absolute": [
+        "7dac265a",
+        "ff096b4f"
+      ],
+      "worst_relative": [
+        "3f8c0648",
+        "3fe05eab"
+      ],
+      "worst_ulp": [
+        "3f21ac6b",
+        "c0b7ad38"
+      ],
+      "ulp_distribution": [
+        31821,
+        14368,
+        1144,
+        0,
+        0
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 21138,
+          "failures": 0,
+          "max_ulp": 3
+        },
+        "extreme": {
+          "count": 23827,
+          "failures": 0,
+          "max_ulp": 2
+        },
+        "near_one": {
+          "count": 1953,
+          "failures": 0,
+          "max_ulp": 2
+        },
+        "subnormal": {
+          "count": 415,
+          "failures": 0,
+          "max_ulp": 1
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "sinf": {
+      "count": 38758,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.1903748605202099e-06,
+      "max_relative_normal": 1.6835182318748339e-06,
+      "max_ulp": 24.0,
+      "worst_absolute": [
+        "431602d7",
+        "00000000"
+      ],
+      "worst_relative": [
+        "c31602d7",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "ba800000",
+        "3fa00000"
+      ],
+      "ulp_distribution": [
+        17515,
+        9304,
+        1512,
+        7204,
+        3118
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 17689,
+          "failures": 0,
+          "max_ulp": 24
+        },
+        "extreme": {
+          "count": 19023,
+          "failures": 0,
+          "max_ulp": 24
+        },
+        "near_one": {
+          "count": 1806,
+          "failures": 0,
+          "max_ulp": 2
+        },
+        "subnormal": {
+          "count": 135,
+          "failures": 0,
+          "max_ulp": 0
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "cosf": {
+      "count": 38798,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.1881034434786134e-06,
+      "max_relative_normal": 1.6803551106136686e-06,
+      "max_ulp": 25.0,
+      "worst_absolute": [
+        "4288a8bd",
+        "00000000"
+      ],
+      "worst_relative": [
+        "4288a8bd",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "c2cc345a",
+        "3f04dd0f"
+      ],
+      "ulp_distribution": [
+        15361,
+        5868,
+        2172,
+        10547,
+        4745
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 17689,
+          "failures": 0,
+          "max_ulp": 24
+        },
+        "extreme": {
+          "count": 19063,
+          "failures": 0,
+          "max_ulp": 25
+        },
+        "near_one": {
+          "count": 1806,
+          "failures": 0,
+          "max_ulp": 20
+        },
+        "subnormal": {
+          "count": 135,
+          "failures": 0,
+          "max_ulp": 0
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "tanf": {
+      "count": 38778,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 3.0066840725192887,
+      "max_relative_normal": 0.00013693813435447256,
+      "max_ulp": 2296.0,
+      "worst_absolute": [
+        "c096cbe4",
+        "00000000"
+      ],
+      "worst_relative": [
+        "42caa1f9",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "41235ce0",
+        "00000000"
+      ],
+      "ulp_distribution": [
+        8370,
+        692,
+        804,
+        2312,
+        26495
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 17689,
+          "failures": 0,
+          "max_ulp": 2296
+        },
+        "extreme": {
+          "count": 19043,
+          "failures": 0,
+          "max_ulp": 2295
+        },
+        "near_one": {
+          "count": 1806,
+          "failures": 0,
+          "max_ulp": 1142
+        },
+        "subnormal": {
+          "count": 135,
+          "failures": 0,
+          "max_ulp": 0
+        }
+      },
+      "exceptional_examples": [],
+      "tangent_regions": {
+        "away_from_poles": {
+          "count": 38023,
+          "max_absolute": 0.0004165659857500255,
+          "max_relative_normal": 0.00013693813435447256,
+          "max_ulp": 2296,
+          "max_budget_fraction": 0.6846836646257405
+        },
+        "pole_neighbors": {
+          "count": 650,
+          "max_absolute": 3.0066840725192887,
+          "max_relative_normal": 8.526680258399445e-08,
+          "max_ulp": 1,
+          "max_budget_fraction": 0.25
+        }
+      },
+      "failure_percent": 0.0
+    },
+    "atanf": {
+      "count": 36336,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 6.117345476678936e-07,
+      "max_relative_normal": 9.490442731554569e-07,
+      "max_ulp": 11.0,
+      "worst_absolute": [
+        "3fded42c",
+        "401ef3a0"
+      ],
+      "worst_relative": [
+        "3f125c18",
+        "bf44180d"
+      ],
+      "worst_ulp": [
+        "3f0badca",
+        "c0e07301"
+      ],
+      "ulp_distribution": [
+        22241,
+        6396,
+        4641,
+        2985,
+        0
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 18057,
+          "failures": 0,
+          "max_ulp": 11
+        },
+        "extreme": {
+          "count": 16264,
+          "failures": 0,
+          "max_ulp": 1
+        },
+        "near_one": {
+          "count": 1808,
+          "failures": 0,
+          "max_ulp": 5
+        },
+        "subnormal": {
+          "count": 134,
+          "failures": 0,
+          "max_ulp": 0
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "atan2f": {
+      "count": 37275,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 7.033074924415714e-07,
+      "max_relative_normal": 9.858117003007152e-07,
+      "max_ulp": 10.0,
+      "worst_absolute": [
+        "3fdbf782",
+        "bf92cf56"
+      ],
+      "worst_relative": [
+        "3fbc7e7d",
+        "402491c5"
+      ],
+      "worst_ulp": [
+        "3fdde0d0",
+        "404b62fb"
+      ],
+      "ulp_distribution": [
+        24945,
+        8925,
+        1634,
+        1618,
+        0
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 18313,
+          "failures": 0,
+          "max_ulp": 10
+        },
+        "extreme": {
+          "count": 16629,
+          "failures": 0,
+          "max_ulp": 8
+        },
+        "near_one": {
+          "count": 1905,
+          "failures": 0,
+          "max_ulp": 10
+        },
+        "subnormal": {
+          "count": 275,
+          "failures": 0,
+          "max_ulp": 8
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "sincos_sinf": {
+      "count": 38758,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.1903748605202099e-06,
+      "max_relative_normal": 1.6835182318748339e-06,
+      "max_ulp": 24.0,
+      "worst_absolute": [
+        "431602d7",
+        "00000000"
+      ],
+      "worst_relative": [
+        "c31602d7",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "ba800000",
+        "3fa00000"
+      ],
+      "ulp_distribution": [
+        16868,
+        9304,
+        1512,
+        7540,
+        3429
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 17689,
+          "failures": 0,
+          "max_ulp": 24
+        },
+        "extreme": {
+          "count": 19023,
+          "failures": 0,
+          "max_ulp": 24
+        },
+        "near_one": {
+          "count": 1806,
+          "failures": 0,
+          "max_ulp": 2
+        },
+        "subnormal": {
+          "count": 135,
+          "failures": 0,
+          "max_ulp": 0
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "sincos_cosf": {
+      "count": 38798,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.1881034434786134e-06,
+      "max_relative_normal": 1.6803551106136686e-06,
+      "max_ulp": 25.0,
+      "worst_absolute": [
+        "4288a8bd",
+        "00000000"
+      ],
+      "worst_relative": [
+        "4288a8bd",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "c2cc345a",
+        "3f04dd0f"
+      ],
+      "ulp_distribution": [
+        14705,
+        5867,
+        2172,
+        10867,
+        5082
+      ],
+      "ranges": {
+        "ordinary": {
+          "count": 17689,
+          "failures": 0,
+          "max_ulp": 24
+        },
+        "extreme": {
+          "count": 19063,
+          "failures": 0,
+          "max_ulp": 25
+        },
+        "near_one": {
+          "count": 1806,
+          "failures": 0,
+          "max_ulp": 20
+        },
+        "subnormal": {
+          "count": 135,
+          "failures": 0,
+          "max_ulp": 0
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    }
+  }
+}

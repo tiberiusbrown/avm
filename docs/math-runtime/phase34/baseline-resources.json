@@ -1,0 +1,202 @@
+{
+  "image_bytes": {
+    "math_atan": 5376,
+    "math_atan2": 6400,
+    "math_atan2_ratios": 6656,
+    "math_ceil": 5376,
+    "math_cos": 9728,
+    "math_cos_large": 11008,
+    "math_cos_small": 9728,
+    "math_exp": 5376,
+    "math_exp_primary": 5376,
+    "math_exp_scaled": 5376,
+    "math_floor": 5376,
+    "math_fmod": 5888,
+    "math_fmod_subnormal": 6400,
+    "math_hypot": 13568,
+    "math_hypot_scaled": 13824,
+    "math_log": 5120,
+    "math_log10": 5120,
+    "math_log10_near_one": 5120,
+    "math_log10_scaled": 5120,
+    "math_log2": 5120,
+    "math_log2_near_one": 5120,
+    "math_log2_scaled": 5120,
+    "math_log_near_one": 5120,
+    "math_log_scaled": 5120,
+    "math_pow": 16640,
+    "math_pow_bounded": 16640,
+    "math_pow_extreme": 16384,
+    "math_pow_integer": 16640,
+    "math_pow_near_one": 16896,
+    "math_rem_pio2_fallback": 9472,
+    "math_rem_pio2_large": 9472,
+    "math_round": 5376,
+    "math_sin": 9728,
+    "math_sincos": 11264,
+    "math_sin_large": 11008,
+    "math_sin_small": 9728,
+    "math_sqrt": 13568,
+    "math_sqrt_mantissas": 13824,
+    "math_sqrt_random": 14336,
+    "math_sqrt_special": 13568,
+    "math_tan": 9728,
+    "math_tan_large": 10752,
+    "math_tan_reduced": 9728,
+    "math_tan_small": 9728,
+    "math_trunc": 5120
+  },
+  "symbols": {
+    "math_ef_sqrt": {
+      "defined": "00000000 00002000 r sqrt_table\n00000000 000000d5 T sqrtf\n",
+      "undefined": ""
+    },
+    "math_ef_exp": {
+      "defined": "00000000 00000149 T expf\n",
+      "undefined": ""
+    },
+    "math_ef_log": {
+      "defined": "00000000 000000da T logf\n",
+      "undefined": ""
+    },
+    "math": {
+      "defined": "00000000 0000007b T fmaxf\n00000000 00000085 T fminf\n00000000 000000d2 T log2f\n",
+      "undefined": ""
+    },
+    "math_ef_log10": {
+      "defined": "00000000 000000da T log10f\n",
+      "undefined": ""
+    },
+    "math_ef_hypot": {
+      "defined": "00000000 00000120 T hypotf\n",
+      "undefined": "         U sqrtf\n"
+    },
+    "math_ef_pow": {
+      "defined": "00000000 00000a3f T powf\n",
+      "undefined": "         U __avm_ashlsi3\n         U __avm_ashrsi3\n         U __avm_lshrsi3\n         U expf\n         U scalbnf\n         U sqrtf\n"
+    },
+    "math_sf_sin": {
+      "defined": "00000000 0000038d T sinf\n",
+      "undefined": "         U __ieee754_rem_pio2f\n"
+    },
+    "math_sf_cos": {
+      "defined": "00000000 000003e6 T cosf\n",
+      "undefined": "         U __ieee754_rem_pio2f\n"
+    },
+    "math_sf_tan": {
+      "defined": "00000000 00000319 T tanf\n",
+      "undefined": "         U __ieee754_rem_pio2f\n"
+    },
+    "math_sf_atan": {
+      "defined": "00000000 000001e3 T atanf\n",
+      "undefined": ""
+    },
+    "math_ef_atan2": {
+      "defined": "00000000 0000066d T atan2f\n",
+      "undefined": ""
+    }
+  },
+  "instruction_counts": {
+    "math_ef_sqrt": {
+      "fadd": 2,
+      "fmul": 2,
+      "stsp16": 4,
+      "ldsp16": 7,
+      "fsub": 1
+    },
+    "math_ef_exp": {
+      "stsp16": 2,
+      "ldsp16": 7,
+      "fadd": 3,
+      "fmul": 2,
+      "fsub": 1,
+      "fpoly": 2
+    },
+    "math_ef_log": {
+      "fmul": 3,
+      "stsp16": 3,
+      "ldsp16": 2,
+      "fadd": 3,
+      "fpoly": 1,
+      "fsub": 1,
+      "fdiv": 1
+    },
+    "math": {
+      "fmul": 2,
+      "stsp16": 7,
+      "ldsp16": 12,
+      "fadd": 3,
+      "fpoly": 1,
+      "fsub": 1,
+      "fdiv": 1
+    },
+    "math_ef_log10": {
+      "fmul": 3,
+      "stsp16": 3,
+      "ldsp16": 2,
+      "fadd": 3,
+      "fpoly": 1,
+      "fsub": 1,
+      "fdiv": 1
+    },
+    "math_ef_hypot": {
+      "fadd": 3,
+      "stsp16": 6,
+      "fmul": 5,
+      "ldsp16": 5
+    },
+    "math_ef_pow": {
+      "stsp16": 114,
+      "ldsp16": 173,
+      "fadd": 32,
+      "fdiv": 6,
+      "fmul": 40,
+      "fpoly": 3,
+      "fsub": 26
+    },
+    "math_sf_sin": {
+      "fmul": 32,
+      "fpoly": 5,
+      "fadd": 8,
+      "ldsp16": 56,
+      "stsp16": 40,
+      "fsub": 17
+    },
+    "math_sf_cos": {
+      "ldsp16": 67,
+      "stsp16": 50,
+      "fmul": 35,
+      "fpoly": 5,
+      "fsub": 19,
+      "fadd": 6
+    },
+    "math_sf_tan": {
+      "stsp16": 29,
+      "fsub": 13,
+      "ldsp16": 52,
+      "fadd": 17,
+      "fmul": 16,
+      "fpoly": 2,
+      "fdiv": 5
+    },
+    "math_sf_atan": {
+      "fadd": 9,
+      "fmul": 13,
+      "fpoly": 4,
+      "fsub": 3,
+      "stsp16": 12,
+      "fdiv": 4,
+      "ldsp16": 6
+    },
+    "math_ef_atan2": {
+      "stsp16": 36,
+      "ldsp16": 53,
+      "fadd": 22,
+      "fdiv": 10,
+      "fmul": 25,
+      "fpoly": 8,
+      "fsub": 8
+    }
+  },
+  "interpreter_sha256": "4a849b7a07998622d00df2f8a4da91c34a43f501a2261d4c34331b9a01b601d6"
+}

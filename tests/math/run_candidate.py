@@ -30,6 +30,7 @@ def main():
     p.add_argument('--build',type=Path,default=Path('build'))
     p.add_argument('--label',required=True); p.add_argument('--output',type=Path,default=Path('build/math-policy'))
     p.add_argument('--sqrt-exhaustive',action='store_true'); p.add_argument('--stack',action='store_true')
+    p.add_argument('--functions',nargs='+',default=['sqrtf','expf','logf','log2f','log10f','hypotf','powf'])
     args=p.parse_args()
     build=(ROOT/args.build).resolve(); dest=(ROOT/args.output/args.label).resolve()
     dest.mkdir(parents=True,exist_ok=True)
@@ -39,18 +40,21 @@ def main():
     command=[executable(build/'avm_bench'),'--c-only','--c-source-dir',sources,'--c-output',dest/'cycles.txt']
     if args.stack: command+=['--stack-output',dest/'stack.tsv']
     call(command,dest/'bench.log')
-    functions=['sqrtf','expf','logf','log2f','log10f','hypotf','powf']
+    functions=args.functions
     call([sys.executable,ROOT/'tests/math/accuracy_reference.py','--probe',executable(build/'tests/avm_math_accuracy_probe'),'--output',dest/'accuracy.json','--samples','1000','--functions',*functions],dest/'accuracy.log',allow_rejection=True)
     if args.sqrt_exhaustive: call([executable(build/'tests/avm_math_reference_tests')],dest/'sqrt.txt',allow_rejection=True)
-    for f in ['exp_poly.h','log_poly.h','sqrt_table.h']:
+    for f in ['exp_poly.h','log_poly.h','sqrt_table.h','trig_poly.h','atan_poly.h','pow_log_poly.h','pow_boundary.h','exp2_kernel.h']:
         if (ROOT/'runtime/lib/math'/f).exists(): shutil.copyfile(ROOT/'runtime/lib/math'/f,dest/f)
-    for f in ['ef_exp.c','ef_sqrt.c','log_kernel.h','ef_log.c','ef_log10.c']:
+    for f in ['ef_exp.c','ef_sqrt.c','log_kernel.h','ef_log.c','ef_log10.c','ef_pow.c','ef_hypot.c',
+              'sin_kernel.h','cos_kernel.h','tan_kernel.h','atan_kernel.h','ef_atan2.c','sf_sincos.c']:
         if (ROOT/'runtime/lib/math'/f).exists(): shutil.copyfile(ROOT/'runtime/lib/math'/f,dest/f)
     shutil.copyfile(ROOT/'runtime/lib/math.c',dest/'math.c')
     disasm=dest/'asm'; disasm.mkdir(exist_ok=True)
     for f in (ROOT/'bench/c/asm').glob('math_*.asm'): shutil.copyfile(f,disasm/f.name)
     sizes={f.stem: f.stat().st_size for f in (build/'bench/c').glob('math_*.bin')}
-    objects=['math_ef_sqrt','math_ef_exp','math_ef_log','math','math_ef_log10','math_ef_hypot','math_ef_pow']
+    objects=['math_ef_sqrt','math_ef_exp','math_ef_log','math','math_ef_log10','math_ef_hypot','math_ef_pow',
+             'math_sf_sin','math_sf_cos','math_sf_tan','math_sf_atan','math_ef_atan2']
+    if (build/'runtime/objects/math_sf_sincos.o').exists(): objects.append('math_sf_sincos')
     nm=executable(build/'llvm-build/bin/llvm-nm')
     symbols={}
     instruction_counts={}

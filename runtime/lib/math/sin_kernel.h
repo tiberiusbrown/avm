@@ -16,21 +16,14 @@
  */
 
 #include "fdlibm.h"
-#include "fpoly.h"
+#include "trig_poly.h"
 
-	static __attribute__((always_inline)) inline float avm_sin_kernel(float x, float y, int iy)
+static __attribute__((always_inline)) inline float avm_sin_kernel(float x, float y, int iy)
 {
-	float z,r,v;
-	__int32_t ix;
-	GET_FLOAT_WORD(ix,x);
-	ix &= 0x7fffffff;			/* high word of x */
-	if(ix<0x32000000)			/* |x| < 2**-27 */
-	   {return x;}		/* generate inexact */
-	z	=  x*x;
-	v	=  z*x;
-	r	=  AVM_FPOLY5(z, 1.5896910177e-10f, -2.5050759689e-08f, 2.7557314297e-06f, -1.9841270114e-04f, 8.3333337680e-03f);
-	if(iy==0) return x+v*((-1.6666667163e-01f)+z*r);
-	else      return x-((z*(5.0000000000e-01f*y-v*r)-y)-v*(-1.6666667163e-01f));
+    (void)y; (void)iy;
+    uint32_t ix;
+    GET_FLOAT_WORD(ix,x);
+    if ((ix&0x7fffffffUL)<0x39800000UL) return x;
+    return x*avm_sin_polynomial(x*x);
 }
-
 #endif

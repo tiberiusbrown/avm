@@ -1,0 +1,50 @@
+{
+  "baseline_revision": "b4ce2f611c8c47b86cd8386ab12f330b39f4895d",
+  "baseline_working_tree_clean": true,
+  "configuration": "RelWithDebInfo",
+  "caller_optimization": "O2",
+  "runtime_optimization": "O3 -ffp-contract=off -fwrapv -fno-jump-tables",
+  "unchanged_files": {
+    "ef_rem_pio2.c": {
+      "sha256": "92fcf5787b87b45d029f6a28c8f2c666f74adc1bb2021285a0e52e279771a396",
+      "unchanged": true
+    },
+    "kf_rem_pio2.c": {
+      "sha256": "add08c0b2b55bdd1b2f03472843b278cdd2f90276d09cd0b53cb3812da575cd2",
+      "unchanged": true
+    },
+    "ef_exp.c": {
+      "sha256": "4f944ece2d10c090fbc749aede3e978aed41f8dac3a70c22133b9a09ca4acf2b",
+      "unchanged": true
+    },
+    "log_poly.h": {
+      "sha256": "45441d02b024aeb1179b1be5bc65c52e2adf0148f5941fd94866cce5243c76ef",
+      "unchanged": true
+    },
+    "ef_sqrt.c": {
+      "sha256": "1fd6f03d1ba2cce70a9706df48fee78a1795abb7f27df77a0e0b309e3c2ed83b",
+      "unchanged": true
+    },
+    "sqrt_table.h": {
+      "sha256": "81c94575d35d6c29fa52afb1042d169e43c414788108fe0c68577bb58295a57d",
+      "unchanged": true
+    }
+  },
+  "selected_coefficient_sha256": {
+    "trig_poly.h": "8677eb92f03a6f8aed829705b91c18383f49729c46d0792980885791e32063b2",
+    "atan_poly.h": "3ec7cc1badd9390e1437c174ca3590b44eda7377bd4eafd1f7159bd2aaaeb0e8",
+    "pow_log_poly.h": "318bf1b6b5128f5cb4acb56da5f63979f99e5adf54219d2c7ea68622fe29ab5d"
+  },
+  "selected_source_sha256": {
+    "ef_pow.c": "2e7997af6f6644f3b2ff299a68f772d8e9a610b9fbdffbaf36da539b4248bf1f",
+    "ef_hypot.c": "fb1475735c5a5ec9594c00a27d09239c88fc1633f5472b19f33814658df4ec69",
+    "sin_kernel.h": "89b29aff8770673fc46463f32858389e0b1f7f5aeacb9838806393b0624f5889",
+    "cos_kernel.h": "ad7cf895f8680586fd082a410a398f652a615f50c2a2f3925c3009c3839e36d8",
+    "tan_kernel.h": "6b473ca9217f5e97795378c37a11af748bfc01c5f64764cdad74abb26bfc6dd9",
+    "atan_kernel.h": "62f6a3026bfb8b54b9b85cf2c8932c0bfc8ee2d19b003124db2aed752b3da8b6",
+    "ef_atan2.c": "d9f04f3592060cef5cef7ca32441ef80913126d9244b98514ef51e75fbf9e01c",
+    "sf_sincos.c": "df732a1cc5300b4b0ae597ba4d42a45cbde812901519e5e0348849c8f8f57528",
+    "pow_boundary.h": "3ea42463137f8225f7a701c3772b618b7b6459de203810e088ee480e8eaa8639",
+    "exp2_kernel.h": "7fddf476018255093a95330a86ff743e2605e638b62ee389620697b8692c7310"
+  }
+}

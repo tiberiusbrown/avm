@@ -69,6 +69,8 @@ static int check_accuracy_result(float result, uint32_t expected, uint16_t exact
     if ((actual.u & 0x7fffffffUL) < 0x7f800000UL &&
         !((actual.u ^ expected) & 0x80000000UL)) {
         uint32_t distance = actual.u > expected ? actual.u-expected : expected-actual.u;
+        if (policy==AVM_TAN && avm_abs(from_bits(expected))>=10000.0)
+            return check_result(result,expected,4,index);
         if (avm_accuracy_accept(policy, result, from_bits(expected), distance)) return 0;
     }
     return check_result(result, expected, 0, index);

@@ -23,6 +23,8 @@ static const char *names[] = {
 };
 static uint64_t counts[FUNCTIONS];
 static uint32_t maximum[FUNCTIONS];
+static double tan_away_absolute, tan_away_fraction;
+static uint32_t tan_pole_ulps;
 
 static float value(uint32_t u)
 {
@@ -78,6 +80,15 @@ static int check(int function, float x, float y, float actual, double reference)
            regression requirement in their neighborhood. */
         int accepted = function == TAN && fabs(reference) >= 1e4
             ? distance <= 4 : avm_accuracy_accept(policies[function], actual, reference, distance);
+        if (function==TAN) {
+            if (fabs(reference)>=1e4) {
+                if (distance>tan_pole_ulps) tan_pole_ulps=distance;
+            } else {
+                double fraction=error/(1e-4*(1+fabs(reference)));
+                if (error>tan_away_absolute) tan_away_absolute=error;
+                if (fraction>tan_away_fraction) tan_away_fraction=fraction;
+            }
+        }
         if (accepted) return 0;
     }
     ++failures[function];
@@ -173,6 +184,23 @@ int main(void)
         if (check(POW, x, y, avm_reference_powf(x, y), pow((double)x, (double)y))) return 1;
     }
 
+    /* Large-exponent amplification, both sides of the normal/subnormal and
+       infinity/zero boundaries, and the near-one specialization endpoints.
+       The host double reference supplies the mathematical result, independent
+       of every production polynomial and of the former pow implementation. */
+    static const double power_boundaries[]={-150,-149,-126,126,127,128};
+    for (uint32_t u=0x3f000000; u<=0x40000000; u+=127) {
+        float x=value(u);
+        if (x==1) continue;
+        for (unsigned j=0;j<sizeof(power_boundaries)/sizeof(power_boundaries[0]);++j) {
+            float center=(float)(power_boundaries[j]/log2((double)x));
+            for (int d=-2;d<=2;++d) {
+                float y=value(bits(center)+d);
+                check(POW,x,y,avm_reference_powf(x,y),pow((double)x,(double)y));
+            }
+        }
+    }
+
     /* Every reduced logarithm mantissa, including every near-one float. */
     for (uint32_t u = 0x3f3504e0; u <= 0x3fb504f3; ++u)
         if (logs(value(u))) return 1;
@@ -197,7 +225,7 @@ int main(void)
     }
 
     /* Every float in the high part of the direct atan/tan polynomial range. */
-    for (uint32_t u = 0x3e000000; u <= 0x3f490fdb; ++u) {
+    for (uint32_t u = 0x3e000000; u <= 0x3f800000; ++u) {
         float x = value(u);
         if (check(SIN, x, 0, avm_reference_sinf(x), sin((double)x)) ||
             check(COS, x, 0, avm_reference_cosf(x), cos((double)x)) ||
@@ -232,6 +260,8 @@ int main(void)
         if (unary(x) || binary(x, y)) return 1;
     }
     int failed = 0;
+    printf("tanf_policy: away_max_absolute %.12g, away_max_budget_fraction %.12g, pole_max_ulp %lu\n",
+           tan_away_absolute,tan_away_fraction,(unsigned long)tan_pole_ulps);
     for (unsigned i = 0; i < FUNCTIONS; ++i) {
         printf("%s: %llu cases, max_abs %.12g @ %08lx,%08lx, max_rel %.12g @ %08lx,%08lx, "
                "max_ulp %lu @ %08lx,%08lx, failures %llu (%.8g%%), exceptional %llu, "

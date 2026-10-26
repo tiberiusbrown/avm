@@ -17,7 +17,7 @@ import mpmath as mp
 
 mp.mp.dps = 100
 FUNCTIONS = ['sqrtf', 'expf', 'logf', 'log2f', 'log10f', 'hypotf', 'powf',
-             'sinf', 'cosf', 'tanf', 'atanf', 'atan2f', 'fmodf']
+             'sinf', 'cosf', 'tanf', 'atanf', 'atan2f', 'fmodf', 'sincos_sinf', 'sincos_cosf']
 
 def value(u):
     return struct.unpack('<f', struct.pack('<I', u))[0]
@@ -29,6 +29,7 @@ def bits(x):
         return 0xff800000 if x < 0 else 0x7f800000
 
 def reference(name, a, b):
+    name=name.removeprefix('sincos_')
     x, y = mp.mpf(value(a)), mp.mpf(value(b))
     try:
         if name == 'sqrtf': return mp.sqrt(x) if x >= 0 else mp.nan
@@ -79,6 +80,7 @@ def reference(name, a, b):
     except (ValueError, ZeroDivisionError): return mp.nan
 
 def expected_bits(name,a,b,ref):
+    name=name.removeprefix('sincos_')
     word=bits(ref)
     if word&0x7fffffff==0:
         negative=(name in ['sqrtf','sinf','tanf','atanf','atan2f','fmodf'] and a>>31) or (name=='powf' and a>>31 and value(b)%2==1)
@@ -106,7 +108,63 @@ def corpus(count):
         for d in [-2,-1,0,1,2]: result.add(((u+d)&0xffffffff,bits(1.25)))
     return sorted(result)
 
+
+def phase34_corpus(name):
+    """Algorithm boundaries and cancellation cases, independent of old libm."""
+    name=name.removeprefix('sincos_')
+    pairs=set()
+    def neighbors(x,y=0):
+        a,b=bits(x),bits(y)
+        for d in range(-2,3):
+            if 0 <= a+d <= 0xffffffff: pairs.add((a+d,b))
+    if name=='powf':
+        for a in [0x3f7fffff,0x3f800001,0x3f7fff00,0x3f800100,
+                  0x3f700000,0x3f900000,0x3f000000,0x40000000,
+                  1,0x00800000,0x7f7fffff]:
+            x=value(a)
+            for t in [-150,-149,-126,-1,1,126,127.99,128]:
+                y=bits(mp.mpf(t)/mp.log(x,2))
+                for d in range(-2,3): pairs.add((a,(y+d)&0xffffffff))
+        for n in [-16777216,-16777215,-65,-64,-33,-32,-17,-16,-9,-8,-3,-2,-1,
+                  1,2,3,8,9,16,17,32,33,64,65,16777215,16777216]:
+            for x in [-2,-1.03125,-0.75,-0.0,0.5,0.75,1.03125,2,2.0**-64,2.0**64]:
+                neighbors(x,n)
+        # y near the mathematical overflow boundary, at mantissas across
+        # the entire normalization interval; conversion to float is explicit.
+        for i in range(1,129):
+            x=value(bits(0.5+i/128))
+            if x==1: continue
+            for t in [-150,128]:
+                y=bits(mp.mpf(t)/mp.log(x,2))
+                for d in [-1,0,1]: pairs.add((bits(x),(y+d)&0xffffffff))
+    elif name=='hypotf':
+        for e in range(-149,128):
+            x=bits(math.ldexp(1.0,e))
+            for gap in [0,1,11,12,13,25,26,60,150]:
+                y=bits(math.ldexp(1.234567,e-gap))
+                for d in [-1,0,1]:
+                    if 0<x+d<0x7f800000: pairs.add((x+d,y))
+        for d in range(0,129,4):
+            radius=value(0x7f7fffff-d)
+            for i in range(129):
+                angle=i*math.pi/256
+                pairs.add((bits(radius*math.cos(angle)),bits(radius*math.sin(angle))))
+    elif name in ['sinf','cosf','tanf']:
+        for n in list(range(-128,129))+[1023,1024,65535,65536,1048575]:
+            for f in [0,0.5,1]: neighbors((n+f)*math.pi/2)
+        for x in [math.pi/4,2**-12,2**-27,0.6744]:
+            neighbors(x); neighbors(-x)
+    elif name in ['atanf','atan2f']:
+        for x in [0.25,0.4375,0.5,0.6875,0.75,1,1.1875,2,2.4375,4]:
+            for sign in [-1,1]:
+                neighbors(sign*x,1)
+                if name=='atan2f':
+                    for e in [-148,-126,-60,0,60,126]:
+                        for sy in [-1,1]: neighbors(math.ldexp(sign*x,e), math.ldexp(sy,e))
+    return sorted(pairs)
+
 def acceptance(name,actual,ref,ulp):
+    name=name.removeprefix('sincos_')
     if name == 'sqrtf': return ulp <= 2
     if name == 'hypotf': return ulp <= 4
     if name == 'fmodf': return ulp == 0
@@ -138,7 +196,7 @@ def main():
     seeds={n:[] for n in args.functions}
     retained={n:set() for n in args.functions}
     pairs=corpus(args.samples)
-    requests=[(n,a,b) for n in args.functions for a,b in pairs]
+    requests=[(n,a,b) for n in args.functions for a,b in set(pairs)|set(phase34_corpus(n))]
     seen=set()
     for iteration in range(3):
         requests=[r for r in requests if r not in seen]
@@ -172,6 +230,16 @@ def main():
             bucket=s['ranges'].setdefault(category,dict(count=0,failures=0,max_ulp=0))
             bucket['count']+=1; bucket['max_ulp']=max(bucket['max_ulp'],ulp)
             ok=acceptance(n,mp.mpf(actual),ref,ulp)
+            if n=='tanf':
+                region='pole_neighbors' if abs(ref)>=10000 else 'away_from_poles'
+                record=s.setdefault('tangent_regions',{}).setdefault(region,
+                    dict(count=0,max_absolute=0,max_relative_normal=0,max_ulp=0,max_budget_fraction=0))
+                record['count']+=1
+                record['max_absolute']=max(record['max_absolute'],float(absolute))
+                record['max_relative_normal']=max(record['max_relative_normal'],float(relative))
+                record['max_ulp']=max(record['max_ulp'],ulp)
+                fraction=ulp/4 if region=='pole_neighbors' else float(absolute/(mp.mpf('0.0001')*(1+abs(ref))))
+                record['max_budget_fraction']=max(record['max_budget_fraction'],fraction)
             if not ok: s['failures']+=1; bucket['failures']+=1; retained[n].add((a,b))
             # Rank by scaled error, keeping both absolute and relative hard cases.
             score=float(absolute/(mp.mpf('1e-6')+abs(ref)))
@@ -189,8 +257,11 @@ def main():
     args.output.write_text(json.dumps(dict(precision_digits=100,mpmath_version=mp.__version__,random_samples=args.samples,seed='41564d26',search_rounds=3,functions=stats),indent=2)+'\n', encoding='utf-8')
     if args.fixtures:
         for n,inputs in retained.items():
-            policy={'sqrtf':'AVM_SQRT','expf':'AVM_EXP','hypotf':'AVM_HYPOT','powf':'AVM_POW','sinf':'AVM_SIN','cosf':'AVM_COS','tanf':'AVM_TAN','atanf':'AVM_ATAN','atan2f':'AVM_ATAN2','fmodf':'AVM_EXACT'}.get(n,'AVM_LOG')
-            lines=['/* Generated by tests/math/accuracy_reference.py --fixtures. */','#include "math_test.h"','static const AVM_PROGMEM struct math_case cases[] = {']
+            policy={'sqrtf':'AVM_SQRT','expf':'AVM_EXP','hypotf':'AVM_HYPOT','powf':'AVM_POW','sinf':'AVM_SIN','cosf':'AVM_COS','tanf':'AVM_TAN','atanf':'AVM_ATAN','atan2f':'AVM_ATAN2','fmodf':'AVM_EXACT'}.get(n.removeprefix('sincos_'),'AVM_LOG')
+            lines=['/* Generated by tests/math/accuracy_reference.py --fixtures. */','#include "math_test.h"']
+            if n.startswith('sincos_'):
+                lines += [f'static float {n}(float x) {{ float s,c; sincosf(x,&s,&c); return {"s" if n=="sincos_sinf" else "c"}; }}']
+            lines += ['static const AVM_PROGMEM struct math_case cases[] = {']
             for a,b in sorted(inputs): lines.append(f'    {{0x{a:08x}UL,0x{b:08x}UL,0x{expected_bits(n,a,b,reference(n,a,b)):08x}UL,1}},')
             binary=n in ['hypotf','powf','atan2f','fmodf']
             lines+=['};','int avm_test_main(void) {',f'    return check_{"binary" if binary else "unary"}_accuracy({n}, cases, sizeof(cases)/sizeof(cases[0]), {policy});','}','']

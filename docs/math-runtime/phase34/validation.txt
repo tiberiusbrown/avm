@@ -1,0 +1,31 @@
+Timer0 clock/audio/buttons/watchdog checks passed (FX)
+Timer0 clock/audio/buttons/watchdog checks passed (MINI)
+Timer0 clock/audio/buttons/watchdog checks passed (FXC)
+Timer0 clock/audio/buttons/watchdog checks passed (split)
+Timer0 clock/audio/buttons/watchdog checks passed (shared)
+decimal division: 2560 byte pairs and 10 u32 boundaries passed
+CSET: 49152 condition/register/flag/PC cases at 41 cycles and 1664 invalid-encoding cases passed
+format fields: 46 RAM/program width/precision cases passed; native stack 27 bytes
+SYS dispatch: all 61 table entries and 195 out-of-range IDs passed
+float precision: 96 precision/value/flag cases passed
+hexadecimal fraction: 7192 byte-pattern/random/case/T checks passed; 123..147 cycles
+SYS IDLE continuation: eight audio/wakeup/PC-carry cases passed
+saturation reference: 249 signed byte mixes, 92 low and 93 high saturations passed
+pulse reference: 331776 samples passed
+triangle reference: 36864 samples passed
+sawtooth reference: 36864 samples passed
+shared output gain: 63744 sum/gain pairs passed
+tonal low-pass: 7168 exact waveform/gain/noise/register/flag cases passed
+byte filter: 286110 coefficient/difference/rate cases passed
+64 native audio cases passed
+animated demo: 62 frames, 15622 outputs, 15622 synthesis samples, service gap 5.77769 ms, native stack 38 bytes; SFX/pause/resume passed
+animated demo with rate toggles: 62 frames, 12497 outputs, 12497 synthesis samples, service gap 5.77613 ms, native stack 38 bytes; SFX/pause/resume passed
+large exported C/C++ asset: all 22000 attacks and terminal record beyond 64 KB passed
+large exported C/C++ asset: all 22000 attacks and terminal record beyond 64 KB passed
+Passed 152 PUSH16/POP16 cases; all B0-B7 pushes = 19 cycles, all B8-BF pops = 18 cycles; C/Z/S preserved; post-write boundary/trap verified.
+Display type 1: 88 preservation cases and command/display sequencing passed
+Display type 2: 88 preservation cases and command/display sequencing passed
+Display type 3: 88 preservation cases and command/display sequencing passed
+-- All four rounding kernels are free of 32-bit shift helpers
+3373 fpoly cases passed; 195 audio interrupts; SPI continuation, flags, registers and PC carries verified
+All 850 AVM test(s) passed.

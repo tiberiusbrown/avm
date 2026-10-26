@@ -16,31 +16,14 @@
  */
 
 #include "fdlibm.h"
-#include "fpoly.h"
+#include "trig_poly.h"
 
-	static __attribute__((always_inline)) inline float avm_cos_kernel(float x, float y)
+static __attribute__((always_inline)) inline float avm_cos_kernel(float x, float y)
 {
-	float a,hz,z,r,qx;
-	__int32_t ix;
-	GET_FLOAT_WORD(ix,x);
-	ix &= 0x7fffffff;			/* ix = |x|'s high word*/
-	if(ix<0x32000000) {			/* if |x| < 2**-27 */
-	    return 1.0f;
-	}
-	z  = x*x;
-	r  = z*(AVM_FPOLY6(z, -1.1359647598e-11f, 2.0875723372e-09f, -2.7557314297e-07f, 2.4801587642e-05f, -1.3888889225e-03f, 4.1666667908e-02f));
-	if(ix < 0x3e99999a) 			/* if |x| < 0.3 */ 
-	    return 1.0f - (0.5f*z - (z*r - x*y));
-	else {
-	    if(ix > 0x3f480000) {		/* x > 0.78125 */
-		qx = 0.28125f;
-	    } else {
-	        SET_FLOAT_WORD(qx,ix-0x01000000);	/* x/4 */
-	    }
-	    hz = 0.5f*z-qx;
-	    a  = 1.0f-qx;
-	    return a - (hz - (z*r-x*y));
-	}
+    (void)y;
+    uint32_t ix;
+    GET_FLOAT_WORD(ix,x);
+    if ((ix&0x7fffffffUL)<0x39800000UL) return 1.0f;
+    return avm_cos_polynomial(x*x);
 }
-
 #endif

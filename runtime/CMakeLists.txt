@@ -138,7 +138,7 @@ set(AVM_MATH_KERNELS
     ef_atan2 ef_exp ef_fmod ef_hypot ef_log ef_log10 ef_pow ef_rem_pio2 ef_sqrt
     kf_cos kf_rem_pio2 kf_sin kf_tan
     sf_atan sf_ceil sf_copysign sf_cos sf_fabs sf_floor sf_round sf_scalbn
-    sf_sin sf_tan sf_trunc)
+    sf_sin sf_sincos sf_tan sf_trunc)
 foreach(kernel IN LISTS AVM_MATH_KERNELS)
     set(math_object "${AVM_RUNTIME_OBJECT_DIR}/math_${kernel}.o")
     avm_add_runtime_object(

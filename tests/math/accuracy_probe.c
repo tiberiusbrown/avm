@@ -15,6 +15,7 @@ float avm_reference_tanf(float);
 float avm_reference_atanf(float);
 float avm_reference_atan2f(float, float);
 float avm_reference_fmodf(float, float);
+void avm_reference_sincosf(float, float *, float *);
 
 /* A persistent, line-oriented bridge to the SAME production objects used by
    shortcuts_reference.c. No host libm is used to compute these results. */
@@ -32,6 +33,11 @@ int main(void)
         else if (!strcmp(name, "powf")) z.f = avm_reference_powf(x.f, y.f);
         else if (!strcmp(name, "sinf")) z.f = avm_reference_sinf(x.f);
         else if (!strcmp(name, "cosf")) z.f = avm_reference_cosf(x.f);
+        else if (!strcmp(name, "sincos_sinf") || !strcmp(name, "sincos_cosf")) {
+            float s,c;
+            avm_reference_sincosf(x.f,&s,&c);
+            z.f = !strcmp(name,"sincos_sinf") ? s : c;
+        }
         else if (!strcmp(name, "tanf")) z.f = avm_reference_tanf(x.f);
         else if (!strcmp(name, "atanf")) z.f = avm_reference_atanf(x.f);
         else if (!strcmp(name, "atan2f")) z.f = avm_reference_atan2f(x.f, y.f);

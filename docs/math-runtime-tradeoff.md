@@ -1,11 +1,15 @@
 # Moving float math into the AVM runtime
 
+The current accuracy policy and phase 1–2 optimization results are in the
+[generated math report](math-runtime/report.md). The measurements below describe
+the earlier implementation and its former four-ULP acceptance policy.
+
 Measured on 2026-10-25, starting from repository revision
 `26b00ca37bbffcd2cae134b4544d0974c9ce6808`.
 
 The implementation saves **2,428 bytes of interpreter flash (8.27%)**. The
 optimized runtime is substantially faster than the initial C port, but the
-12 measured math functions still take **2.73–8.27 times** the cycles of their
+12 measured math functions still take **2.73â€“8.27 times** the cycles of their
 former native implementations. This is a useful flash-space tradeoff when
 math calls are infrequent; math-heavy programs pay a significant execution cost.
 
@@ -17,7 +21,7 @@ Square root, rounding, min/max, remainder, and transcendental functions execute
 as guest code linked from `libavm.a`. Ordinary calls, function pointers, generic
 LLVM math intrinsics, and compatibility `__avm_*f` builtins use the C ABI.
 
-The former `FF 40–5F`, `FF 68–7B`, and math `SYS 04–0E` encodings now trap.
+The former `FF 40â€“5F`, `FF 68â€“7B`, and math `SYS 04â€“0E` encodings now trap.
 **Existing programs using those encodings must be rebuilt with this compiler
 and runtime.** This change does not preserve binary compatibility with them.
 
@@ -47,7 +51,7 @@ Performance changes deliberately spend guest code space:
 
 | Measurement | Before | After | Change |
 | --- | ---: | ---: | ---: |
-| Interpreter `.text` | 29,364 B | 26,936 B | −2,428 B |
+| Interpreter `.text` | 29,364 B | 26,936 B | âˆ’2,428 B |
 | Space below the 29,696 B application limit | 332 B | 2,760 B | +2,428 B |
 
 All 54 measured native FADD/FSUB/FMUL/FDIV variants retain exactly their previous
@@ -76,18 +80,18 @@ runtime math at `-O3`. All builds use the RelWithDebInfo CMake configuration.
 
 | Function | Native cycles | First runtime | Optimized runtime | Runtime cycles saved | Optimized/native |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| atan2f | 138,551 | 677,741 | 674,401 | 0.5% | 4.87× |
-| cosf | 104,266 | 419,908 | 363,996 | 13.3% | 3.49× |
-| expf | 132,110 | 406,704 | 390,086 | 4.1% | 2.95× |
-| fmodf | 53,936 | 236,238 | 147,071 | 37.7% | 2.73× |
-| hypotf | 77,794 | 1,131,335 | 643,250 | 43.1% | 8.27× |
-| logf | 121,824 | 505,091 | 461,247 | 8.7% | 3.79× |
-| log10f | 121,877 | 646,943 | 523,028 | 19.2% | 4.29× |
-| log2f | 117,574 | 591,800 | 497,999 | 15.9% | 4.24× |
-| powf | 195,205 | 1,604,699 | 1,494,206 | 6.9% | 7.65× |
-| sinf | 101,229 | 391,747 | 341,025 | 12.9% | 3.37× |
-| sqrtf | 65,514 | 868,472 | 430,649 | 50.4% | 6.57× |
-| tanf | 114,199 | 659,218 | 583,863 | 11.4% | 5.11× |
+| atan2f | 138,551 | 677,741 | 674,401 | 0.5% | 4.87Ã— |
+| cosf | 104,266 | 419,908 | 363,996 | 13.3% | 3.49Ã— |
+| expf | 132,110 | 406,704 | 390,086 | 4.1% | 2.95Ã— |
+| fmodf | 53,936 | 236,238 | 147,071 | 37.7% | 2.73Ã— |
+| hypotf | 77,794 | 1,131,335 | 643,250 | 43.1% | 8.27Ã— |
+| logf | 121,824 | 505,091 | 461,247 | 8.7% | 3.79Ã— |
+| log10f | 121,877 | 646,943 | 523,028 | 19.2% | 4.29Ã— |
+| log2f | 117,574 | 591,800 | 497,999 | 15.9% | 4.24Ã— |
+| powf | 195,205 | 1,604,699 | 1,494,206 | 6.9% | 7.65Ã— |
+| sinf | 101,229 | 391,747 | 341,025 | 12.9% | 3.37Ã— |
+| sqrtf | 65,514 | 868,472 | 430,649 | 50.4% | 6.57Ã— |
+| tanf | 114,199 | 659,218 | 583,863 | 11.4% | 5.11Ã— |
 
 The remaining slowdown includes interpreted integer/float work, register
 spills, and range-reduction algorithms as well as call overhead. The former
@@ -116,7 +120,7 @@ programs using several functions can share helpers.
 | sqrt | 294 B | 623 B | 329 B |
 | tan | 299 B | 3,983 B | 3,684 B |
 
-Packaged development images grow from 5,120 B to 5,376–8,960 B. This includes
+Packaged development images grow from 5,120 B to 5,376â€“8,960 B. This includes
 format/page padding, so the ELF table is the more useful code-size comparison.
 Functions link on demand with `--gc-sections`.
 

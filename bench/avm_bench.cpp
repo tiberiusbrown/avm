@@ -87,6 +87,7 @@ struct options_t {
     bool run_instructions = true;
     bool run_c = true;
     bool run_cxx = true;
+    fs::path stack_output;
 };
 
 struct c_benchmark_t {
@@ -103,7 +104,7 @@ std::string usage_text()
         "[--instruction-output FILE] [--c-source-dir DIR] "
         "[--c-image-dir DIR] [--c-baseline FILE] [--c-output FILE] "
         "[--cpp-source-dir DIR] [--cpp-image-dir DIR] [--cpp-output FILE] "
-        "[--instruction-only | --c-only | --cpp-only]";
+        "[--stack-output FILE] [--instruction-only | --c-only | --cpp-only]";
 }
 
 [[noreturn]] void usage_error(std::string const& message)
@@ -146,6 +147,8 @@ options_t parse_options(int argc, char** argv)
             options.cxx_image_dir = require_value(arg);
         else if(arg == "--cpp-output")
             options.cxx_output = require_value(arg);
+        else if(arg == "--stack-output")
+            options.stack_output = require_value(arg);
         else if(arg == "--instruction-only")
         {
             options.run_instructions = true;
@@ -444,6 +447,34 @@ void run_instruction_benchmarks(options_t const& options)
               << options.instruction_output << "\n\n";
 }
 
+// A separate instruction-stepped pass leaves the normal cycle measurement
+// unchanged. Y is the guest SP; the hardware SP tracks native helper scratch.
+std::pair<unsigned, unsigned> measure_stack(options_t const& options, fs::path const& image)
+{
+    auto e = std::make_unique<absim::arduboy_t>();
+    e->reset();
+    load_file(*e, options.interpreter, "interpreter.hex");
+    load_file(*e, image, "fxdata.bin");
+    run_to_debug_break(*e);
+    auto& c = e->core_state.cpu;
+    c.no_merged = true;
+    c.autobreaks.reset();
+    c.enabled_autobreaks.set(absim::AB_BREAK);
+    unsigned minimum = 0xa00, native_minimum = c.sp(), native_start = c.sp();
+    auto start = c.cycle_count;
+    do {
+        e->cycle(); c.update_all();
+        unsigned sp = unsigned(c.data[28]) | unsigned(c.data[29]) << 8;
+        if(sp >= 0x900 && sp <= 0xa00) minimum = std::min(minimum, sp);
+        native_minimum = std::min(native_minimum, unsigned(c.sp()));
+        if(c.cycle_count-start > 160'000'000)
+            throw std::runtime_error("Stack measurement did not reach DEBUG_BREAK");
+    } while(!c.should_autobreak());
+    if(!c.autobreaks.test(absim::AB_BREAK))
+        throw std::runtime_error("Native fault during stack measurement");
+    return {0xa00-minimum, native_start-native_minimum};
+}
+
 void run_compiled_benchmarks(
     options_t const& options,
     fs::path const& source_dir,
@@ -455,6 +486,14 @@ void run_compiled_benchmarks(
     std::vector<c_benchmark_t> const benchmarks =
         discover_compiled_benchmarks(source_dir, image_dir, extension);
     std::ofstream output = open_output(output_file);
+    std::ofstream stack;
+    if(!options.stack_output.empty()) {
+        stack.open(options.stack_output, std::ios::app);
+        if(!stack) throw std::runtime_error("Cannot open stack measurement output");
+        stack.seekp(0, std::ios::end);
+        if(stack.tellp() == 0)
+            stack << "benchmark\tguest_bytes\tnative_extra_bytes\n";
+    }
 
     std::cout << "Running AVM " << label << " benchmarks...\n";
     std::cout << "  interpreter: " << options.interpreter << '\n';
@@ -487,6 +526,10 @@ void run_compiled_benchmarks(
         std::cout << std::setw(3) << (i + 1) << "  "
                   << std::setw(12) << cycles << " cycles   "
                   << benchmark.source.filename().string() << std::endl;
+        if(stack) {
+            auto usage = measure_stack(options, benchmark.image);
+            stack << benchmark.name << '\t' << usage.first << '\t' << usage.second << '\n';
+        }
     }
 
     output.flush();
@@ -534,6 +577,9 @@ int main(int argc, char** argv)
             options.cxx_image_dir = require_directory(
                 options.cxx_image_dir, "C++ benchmark image directory");
         }
+
+        if(!options.stack_output.empty())
+            (void)open_output(options.stack_output); // Clear once for both languages.
 
         if(options.run_instructions)
             run_instruction_benchmarks(options);

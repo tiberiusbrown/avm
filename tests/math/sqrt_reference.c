@@ -6,12 +6,22 @@
 float avm_reference_sqrtf(float);
 float avm_original_sqrtf(float);
 
+static unsigned maximum;
+static uint32_t worst;
+static unsigned long long histogram[3];
+
 static int compare(const char *reference, uint32_t input, float actual, float expected)
 {
     uint32_t a, b;
     memcpy(&a, &actual, sizeof(a));
     memcpy(&b, &expected, sizeof(b));
-    if (a == b || (isnan(actual) && isnan(expected))) return 0;
+    if (isnan(actual) && isnan(expected)) return 0;
+    uint32_t distance = a>b ? a-b : b-a;
+    if (distance > maximum && isfinite(actual) && isfinite(expected)) { maximum=distance; worst=input; }
+    if (a==b || (isfinite(actual) && isfinite(expected) && !((a^b)&0x80000000U) && distance<=2)) {
+        if (distance<=2) ++histogram[distance];
+        return 0;
+    }
     printf("input %08lx actual %08lx %s %08lx\n", (unsigned long)input,
            (unsigned long)a, reference, (unsigned long)b);
     return 1;
@@ -57,6 +67,8 @@ int main(void)
     }
     puts("All 16,777,216 normalized mantissa/parity inputs, all 8,388,607 positive "
          "subnormals, every exponent boundary, and 1,000,000 random bit patterns "
-         "matched the original kernel and double sqrt (NaNs by classification).");
+         "met the 2 ULP policy against the original and double sqrt (NaNs by classification).");
+    printf("sqrtf: max %u ULP @ %08lx; comparison histogram [0,1,2] %llu,%llu,%llu\n",
+           maximum,(unsigned long)worst,histogram[0],histogram[1],histogram[2]);
     return 0;
 }

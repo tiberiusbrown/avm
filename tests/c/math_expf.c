@@ -99,5 +99,5 @@ static const AVM_PROGMEM struct math_case cases[] = {
 
 int avm_test_main(void)
 {
-    return check_unary(expf, cases, sizeof(cases) / sizeof(cases[0]));
+    return check_unary_accuracy(expf, cases, sizeof(cases) / sizeof(cases[0]), AVM_EXP);
 }

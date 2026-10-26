@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include "accuracy_policy.h"
 
 float avm_reference_hypotf(float, float);
 float avm_reference_atan2f(float, float);
@@ -37,39 +38,70 @@ static uint32_t bits(float x)
     return u;
 }
 
-static int check(int function, float x, float y, float actual, float expected)
+static double max_abs[FUNCTIONS], max_rel[FUNCTIONS];
+static uint32_t worst_abs[FUNCTIONS][2], worst_rel[FUNCTIONS][2], worst_ulp[FUNCTIONS][2];
+static uint64_t failures[FUNCTIONS], exceptional[FUNCTIONS], distribution[FUNCTIONS][5];
+static const enum avm_accuracy policies[] = {
+    AVM_HYPOT, AVM_ATAN2, AVM_ATAN, AVM_TAN, AVM_LOG, AVM_LOG, AVM_LOG,
+    AVM_POW, AVM_EXP, AVM_EXACT, AVM_SIN, AVM_COS
+};
+
+static int check(int function, float x, float y, float actual, double reference)
 {
+    float expected = (float)reference;
     uint32_t a = bits(actual), b = bits(expected);
-    uint32_t distance = a > b ? a - b : b - a;
+    uint32_t distance = a > b ? a-b : b-a;
     ++counts[function];
-    if ((b & 0x7fffffffU) > 0x7f800000U && (a & 0x7fffffffU) > 0x7f800000U)
-        return 0;
-    if (a == b) return 0;
-    if (((a ^ b) & 0x80000000U) || (a & 0x7fffffffU) >= 0x7f800000U ||
-        (b & 0x7fffffffU) >= 0x7f800000U || distance > (function == FMOD ? 0U : 4U)) {
-        printf("%s(%08lx, %08lx): actual %08lx expected %08lx (%lu ULP)\n",
+    if (isnan(expected) && isnan(actual)) return 0;
+    int special = !isfinite(expected) || !isfinite(actual) ||
+                  (expected == 0 && actual == 0 && a != b) ||
+                  ((a^b)&0x80000000U);
+    if (special) {
+        if (a == b) return 0;
+        ++exceptional[function];
+    } else {
+        /* Ordered distance across zero, for diagnostics only. */
+        if ((a ^ b) & 0x80000000U) distance = (a & 0x7fffffffU) + (b & 0x7fffffffU);
+        double error = fabs((double)actual-reference);
+        double relative = fabs(reference) >= 0x1p-126 ? error/fabs(reference) : 0;
+        if (error > max_abs[function]) {
+            max_abs[function] = error; worst_abs[function][0] = bits(x); worst_abs[function][1] = bits(y);
+        }
+        if (relative > max_rel[function]) {
+            max_rel[function] = relative; worst_rel[function][0] = bits(x); worst_rel[function][1] = bits(y);
+        }
+        if (distance > maximum[function]) {
+            maximum[function] = distance; worst_ulp[function][0] = bits(x); worst_ulp[function][1] = bits(y);
+        }
+        ++distribution[function][distance == 0 ? 0 : distance == 1 ? 1 : distance <= 4 ? 2 : distance <= 16 ? 3 : 4];
+        /* The new tangent budget excludes poles: preserve the old four-ULP
+           regression requirement in their neighborhood. */
+        int accepted = function == TAN && fabs(reference) >= 1e4
+            ? distance <= 4 : avm_accuracy_accept(policies[function], actual, reference, distance);
+        if (accepted) return 0;
+    }
+    ++failures[function];
+    if (failures[function] <= 8)
+        printf("FAIL %s(%08lx, %08lx): actual %08lx expected %08lx (%lu ULP)\n",
                names[function], (unsigned long)bits(x), (unsigned long)bits(y),
                (unsigned long)a, (unsigned long)b, (unsigned long)distance);
-        return 1;
-    }
-    if (distance > maximum[function]) maximum[function] = distance;
-    return 0;
+    return 0; /* Accumulate ALL failures and distributions, never stop at the first. */
 }
 
 static int logs(float x)
 {
-    return check(LOG, x, 0, avm_reference_logf(x), (float)log((double)x)) ||
-        check(LOG2, x, 0, avm_reference_log2f(x), (float)log2((double)x)) ||
-        check(LOG10, x, 0, avm_reference_log10f(x), (float)log10((double)x));
+    return check(LOG, x, 0, avm_reference_logf(x), log((double)x)) ||
+        check(LOG2, x, 0, avm_reference_log2f(x), log2((double)x)) ||
+        check(LOG10, x, 0, avm_reference_log10f(x), log10((double)x));
 }
 
 static int unary(float x)
 {
-    return check(SIN, x, 0, avm_reference_sinf(x), (float)sin((double)x)) ||
-        check(COS, x, 0, avm_reference_cosf(x), (float)cos((double)x)) ||
-        logs(x) || check(ATAN, x, 0, avm_reference_atanf(x), (float)atan((double)x)) ||
-        check(TAN, x, 0, avm_reference_tanf(x), (float)tan((double)x)) ||
-        check(EXP, x, 0, avm_reference_expf(x), (float)exp((double)x));
+    return check(SIN, x, 0, avm_reference_sinf(x), sin((double)x)) ||
+        check(COS, x, 0, avm_reference_cosf(x), cos((double)x)) ||
+        logs(x) || check(ATAN, x, 0, avm_reference_atanf(x), atan((double)x)) ||
+        check(TAN, x, 0, avm_reference_tanf(x), tan((double)x)) ||
+        check(EXP, x, 0, avm_reference_expf(x), exp((double)x));
 }
 
 static int binary(float x, float y)
@@ -79,12 +111,12 @@ static int binary(float x, float y)
     int signaling_y = (b & 0x7fffffffU) > 0x7f800000U && !(b & 0x00400000U);
     /* The runtime deliberately propagates signaling NaNs for these powers;
        conversion to host double quiets them before host pow sees the input. */
-    float power = (signaling_x && !(b & 0x7fffffffU)) || (a == 0x3f800000U && signaling_y)
-        ? value(0x7fc00000) : (float)pow((double)x, (double)y);
-    return check(HYPOT, x, y, avm_reference_hypotf(x, y), (float)hypot((double)x, (double)y)) ||
-        check(ATAN2, x, y, avm_reference_atan2f(x, y), (float)atan2((double)x, (double)y)) ||
+    double power = (signaling_x && !(b & 0x7fffffffU)) || (a == 0x3f800000U && signaling_y)
+        ? value(0x7fc00000) : pow((double)x, (double)y);
+    return check(HYPOT, x, y, avm_reference_hypotf(x, y), hypot((double)x, (double)y)) ||
+        check(ATAN2, x, y, avm_reference_atan2f(x, y), atan2((double)x, (double)y)) ||
         check(POW, x, y, avm_reference_powf(x, y), power) ||
-        check(FMOD, x, y, avm_reference_fmodf(x, y), (float)fmod((double)x, (double)y));
+        check(FMOD, x, y, avm_reference_fmodf(x, y), fmod((double)x, (double)y));
 }
 
 static uint32_t random_word(uint32_t *state)
@@ -115,12 +147,12 @@ int main(void)
         for (uint32_t u = 0x3f000000; u <= 0x40000000; u += (n >= -5 && n <= 5 ? 1 : 17)) {
             float x = value(u | ((u & 1) << 31));
             if (check(POW, x, (float)n, avm_reference_powf(x, (float)n),
-                      (float)pow((double)x, (double)n))) return 1;
+                      pow((double)x, (double)n))) return 1;
         }
         for (int e = -149; e <= 127; ++e) {
             float x = (float)ldexp(1.234567, e);
             if (check(POW, x, (float)n, avm_reference_powf(x, (float)n),
-                      (float)pow((double)x, (double)n))) return 1;
+                      pow((double)x, (double)n))) return 1;
         }
     }
 
@@ -131,14 +163,14 @@ int main(void)
         float x = value(u);
         for (unsigned j = 0; j < sizeof(bounded_exponents) / sizeof(bounded_exponents[0]); ++j) {
             float y = bounded_exponents[j];
-            if (check(POW, x, y, avm_reference_powf(x, y), (float)pow((double)x, (double)y))) return 1;
+            if (check(POW, x, y, avm_reference_powf(x, y), pow((double)x, (double)y))) return 1;
         }
     }
     uint32_t bounded_state = 0x1234abcd;
     for (unsigned i = 0; i < 1000000; ++i) {
         float x = value(0x3f000000U + random_word(&bounded_state) % 0x01000001U);
         float y = (float)(int32_t)random_word(&bounded_state) * 0x1.4p-31f;
-        if (check(POW, x, y, avm_reference_powf(x, y), (float)pow((double)x, (double)y))) return 1;
+        if (check(POW, x, y, avm_reference_powf(x, y), pow((double)x, (double)y))) return 1;
     }
 
     /* Every reduced logarithm mantissa, including every near-one float. */
@@ -152,20 +184,32 @@ int main(void)
         if (logs((float)ldexp(0.9375, e)) || logs((float)ldexp(1.0625, e))) return 1;
     }
 
+    /* Dense exponential coverage of the entire scaling range, with both
+       signs, plus a bit-pattern sweep to expose reduction rounding. */
+    for (int i=-1040000; i<=888000; ++i) {
+        float x=(float)i*0.0001f;
+        check(EXP,x,0,avm_reference_expf(x),exp((double)x));
+    }
+    for (uint32_t u=0x3e000000; u<=0x42b17218; u+=31) {
+        float x=value(u);
+        check(EXP,x,0,avm_reference_expf(x),exp((double)x));
+        check(EXP,-x,0,avm_reference_expf(-x),exp(-(double)x));
+    }
+
     /* Every float in the high part of the direct atan/tan polynomial range. */
     for (uint32_t u = 0x3e000000; u <= 0x3f490fdb; ++u) {
         float x = value(u);
-        if (check(SIN, x, 0, avm_reference_sinf(x), (float)sin((double)x)) ||
-            check(COS, x, 0, avm_reference_cosf(x), (float)cos((double)x)) ||
-            check(TAN, x, 0, avm_reference_tanf(x), (float)tan((double)x)) ||
-            check(ATAN, x, 0, avm_reference_atanf(x), (float)atan((double)x))) return 1;
+        if (check(SIN, x, 0, avm_reference_sinf(x), sin((double)x)) ||
+            check(COS, x, 0, avm_reference_cosf(x), cos((double)x)) ||
+            check(TAN, x, 0, avm_reference_tanf(x), tan((double)x)) ||
+            check(ATAN, x, 0, avm_reference_atanf(x), atan((double)x))) return 1;
     }
     for (unsigned n = 1; n < 128; ++n) {
         uint32_t center = bits((float)(n * 1.57079632679489661923));
         for (int delta = -16; delta <= 16; ++delta) {
             float x = value(center + delta);
-            if (check(TAN, x, 0, avm_reference_tanf(x), (float)tan((double)x)) ||
-                check(TAN, -x, 0, avm_reference_tanf(-x), (float)tan(-(double)x))) return 1;
+            if (check(TAN, x, 0, avm_reference_tanf(x), tan((double)x)) ||
+                check(TAN, -x, 0, avm_reference_tanf(-x), tan(-(double)x))) return 1;
         }
     }
 
@@ -187,8 +231,20 @@ int main(void)
         float x = value(random_word(&state)), y = value(random_word(&state));
         if (unary(x) || binary(x, y)) return 1;
     }
-    for (unsigned i = 0; i < FUNCTIONS; ++i)
-        printf("%s: %llu cases, maximum %lu ULP\n", names[i],
-               (unsigned long long)counts[i], (unsigned long)maximum[i]);
-    return 0;
+    int failed = 0;
+    for (unsigned i = 0; i < FUNCTIONS; ++i) {
+        printf("%s: %llu cases, max_abs %.12g @ %08lx,%08lx, max_rel %.12g @ %08lx,%08lx, "
+               "max_ulp %lu @ %08lx,%08lx, failures %llu (%.8g%%), exceptional %llu, "
+               "ULP[0,1,2..4,5..16,17+] %llu,%llu,%llu,%llu,%llu\n", names[i],
+               (unsigned long long)counts[i], max_abs[i], (unsigned long)worst_abs[i][0], (unsigned long)worst_abs[i][1],
+               max_rel[i], (unsigned long)worst_rel[i][0], (unsigned long)worst_rel[i][1],
+               (unsigned long)maximum[i], (unsigned long)worst_ulp[i][0], (unsigned long)worst_ulp[i][1],
+               (unsigned long long)failures[i], 100.0*(double)failures[i]/(double)counts[i],
+               (unsigned long long)exceptional[i],
+               (unsigned long long)distribution[i][0], (unsigned long long)distribution[i][1],
+               (unsigned long long)distribution[i][2], (unsigned long long)distribution[i][3],
+               (unsigned long long)distribution[i][4]);
+        failed |= failures[i] != 0;
+    }
+    return failed;
 }

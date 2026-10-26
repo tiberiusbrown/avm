@@ -38,29 +38,33 @@
        74723   math_ceil.c
      1459329   math_cos.c
       383478   math_cos_small.c
-      346124   math_exp.c
-      316356   math_exp_scaled.c
+      237529   math_exp.c
+      199725   math_exp_primary.c
+      200811   math_exp_scaled.c
        79335   math_floor.c
       142305   math_fmod.c
       698414   math_fmod_subnormal.c
-      504356   math_hypot.c
-      444987   math_hypot_scaled.c
-      344961   math_log.c
-      369823   math_log10.c
-      257825   math_log10_near_one.c
-      332074   math_log2.c
-      218164   math_log2_near_one.c
-      233022   math_log_near_one.c
-      955533   math_pow.c
-      751474   math_pow_bounded.c
-      871687   math_pow_integer.c
+      311799   math_hypot.c
+      282929   math_hypot_scaled.c
+      219209   math_log.c
+      219228   math_log10.c
+      193303   math_log10_near_one.c
+      182883   math_log10_scaled.c
+      208578   math_log2.c
+      182668   math_log2_near_one.c
+      172249   math_log2_scaled.c
+      193334   math_log_near_one.c
+      182866   math_log_scaled.c
+      787851   math_pow.c
+      683210   math_pow_bounded.c
+      857101   math_pow_integer.c
        74663   math_round.c
      1464853   math_sin.c
       376624   math_sin_small.c
-      359542   math_sqrt.c
-      368516   math_sqrt_mantissas.c
-     2918856   math_sqrt_random.c
-      163209   math_sqrt_special.c
+      176802   math_sqrt.c
+      176654   math_sqrt_mantissas.c
+     1402726   math_sqrt_random.c
+       98378   math_sqrt_special.c
      1531150   math_tan.c
       390942   math_tan_reduced.c
       472802   math_tan_small.c

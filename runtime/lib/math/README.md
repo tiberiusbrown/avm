@@ -13,8 +13,8 @@ inline-assembly macros. Highest-degree-first binary32 coefficients embed in the
 instruction stream; the compiler manages the fixed `q2` operand without a guest
 helper call. The interpreter retains its eight-bit significand extension across
 Horner steps and rounds to binary32 only at the end. The host reference build
-models this extended precision. Argument reduction, compensated outer arithmetic,
-exceptional handling, and public APIs retain their existing structure.
+models this extended precision. Exceptional handling and public APIs preserve their semantics. See the
+[function-specific accuracy policy](../../../docs/math-runtime/README.md).
 The 2/pi digits also embed in the instruction stream. Polynomial helpers inline into their callers; the large-angle
 24-by-256-bit integer product is fully unrolled into 8-by-8-bit products with
 split 16-bit column sums and carries, avoiding general 32-bit multiplication.
@@ -25,20 +25,19 @@ helper to release its frame before allocating product scratch. Coefficient
 selection uses immediate constants, and math builds at -O3 without jump tables
 or floating-point contraction.
 
-Square root normalizes to [1,4), interpolates a 1.5 KiB program-space table,
-then checks exact rounding midpoints using the original split product. It
-performs no floating-point divisions. Each exponent parity has 64 quadratic
-intervals; the candidate is within one float of the correctly rounded root.
-Each record is copied into three stack floats using one uninterrupted
-12-byte program-space read. A native 16-bit byte offset avoids expensive wide
-record indexing, and a register dependency prevents the compiler from
-replacing the copy with three independent loads.
-`tests/math/generate_sqrt_table.py` reproduces the table and target boundary
-fixtures (`--check` verifies them). A native reference test checks every
-normalized binary32 mantissa/parity, every positive subnormal, exponent
-boundaries and random bit patterns against both the saved three-Newton-step
-implementation and double sqrt. Target fixtures check exact results through
-the real interpreter at all six optimization levels.
+Square root normalizes to [1,4), then uses 512 linear intervals per exponent
+parity in an 8 KiB program-space table. One uninterrupted 8-byte coefficient
+read, one multiply and one add replace the quadratic and exact-midpoint split
+products. Exponent adjustment is exact. Exhaustive mantissa/parity and positive
+subnormal tests observe at most 2 ULP; a 1024-interval table achieved 1 ULP but
+was slower on the direct root workloads. The table generator also reproduces
+the target boundary fixtures (`--check` verifies both). Exact squares and signed
+zero retain exact tests.
+
+Exponential uses centered base-two reduction, a degree-four Remez polynomial
+for 2^r through FPOLY, and exponent packing with a staged subnormal multiply.
+It performs no division. Tiny arguments retain 1+x. The generator and measured
+alternatives are described in the [generated phase 1–2 report](../../../docs/math-runtime/report.md).
 
 `hypotf` keeps magnitude ordering, exceptional values and exponent scaling,
 then takes the square root of the binary32 sum of squares. `atan2f` divides
@@ -47,11 +46,15 @@ pi/2 constants. The atan and tan corrections use float-specific Remez fits
 with five and six coefficients; `tests/math/generate_minimax.py` reproduces
 them. Tangent retains its reduction tail and compensated reciprocal.
 
-The three logarithms classify and normalize once, then share a mantissa
-kernel. Within 1/16 of one, a degree-six log1p polynomial avoids division.
+The three logarithms classify and normalize once, then inline one division-free
+base-two mantissa engine: f*P6(f), where f is the normalized mantissa minus one.
+Factoring f preserves log(1), signs and small logarithms. log2 adds the exponent;
+log and log10 each use one conversion multiply. One degree-seven polynomial
+was faster than two degree-five pieces and than the retained near-one hybrid.
+A stable natural-log mantissa wrapper is available for later log1pf work.
 `powf` uses multiplication for exponents +/-3, +/-4 and +/-5 when the base
-magnitude is in [2^-15, 2^15]. Larger integer powers retain fdlibm: simple
-repeated squaring at -8 exceeded the four-ULP budget. Positive bases in
+magnitude is in [2^-15, 2^15]. Larger integer powers retain fdlibm; this phase does not rewrite the general
+power engine or its integer shortcuts. Positive bases in
 [0.5, 2] with |y| <= 1.25 use the shared logarithm and exponential; all other
 ranges retain the split logarithm/exponential decomposition.
 
@@ -70,11 +73,21 @@ fractional exponent, signed zeros, subnormals, infinities, and NaNs; a symbol
 check prevents the four kernels from reintroducing shift-helper calls.
 `math.c` supplies log2 and number-preferred min/max with signed-zero handling.
 
-`avm_shortcuts_tests_run` compares the production kernels with host double
-libm rounded to float, with a four-ULP limit (exact for fmod). It exhausts
+`avm_shortcuts_tests_run` compares the production kernels with independent host
+double libm using the function-specific policy (exact for fmod). It exhausts
 reduced logarithm mantissas, dense atan/tan ranges, and mantissas for bounded
 integer and fractional powers, plus random inputs, scaling boundaries,
-subnormals and exceptional values. The same paths have interpreter fixtures
-at all six optimization levels.
+subnormals and exceptional values. Dense exponential sweeps cover both signs
+and the entire scaling range. All failures, maximum absolute/relative/ULP
+errors, worst inputs and ULP distributions are reported.
 
-See [measurements and validation](../../../docs/math-runtime-tradeoff.md).
+`avm_math_accuracy_tests_run` uses mpmath at 100 decimal digits against the same
+production reference objects. Its deterministic corpus and adaptive searches
+export worst inputs to interpreter fixtures at all six optimization levels.
+[Committed generated accuracy results](../../../docs/math-runtime/accuracy.md)
+include the JSON inputs and regeneration commands. Exact remainder, rounding,
+classification and sign checks remain unchanged. The large-angle trig reducer
+and its exhaustive 280-bit product test are unchanged.
+
+See [earlier measurements](../../../docs/math-runtime-tradeoff.md) for historical
+results and [current measurements and validation](../../../docs/math-runtime/report.md).

@@ -1,5 +1,12 @@
 # AVM benchmarks
 
+The current math study has [generated cycle/resource comparisons](../docs/math-runtime/report.md)
+and [generated accuracy measurements](../docs/math-runtime/accuracy.md). Use
+`avm_math_bench_images` for focused iteration. New `math_exp_primary` and
+`math_log{,2,10}_scaled` workloads isolate reduction-free exp evaluation and
+logarithm exponent/subnormal boundaries. `avm_bench --stack-output FILE` adds a
+separate instruction-stepped stack pass without changing cycle measurements.
+
 `avm_bench_run` builds and runs the test suite, the instruction-cycle image,
 and every source in `bench/c` and `bench/cpp`. Each compiled source is a
 freestanding program. It does any input setup before the first

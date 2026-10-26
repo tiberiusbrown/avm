@@ -7,7 +7,8 @@ import struct
 
 
 ROOT = Path(__file__).resolve().parents[2]
-INTERVALS = 64
+INTERVALS = 512
+DEGREE = 1
 
 
 def binary32(value):
@@ -31,11 +32,12 @@ def table():
         '#define AVM_SQRT_PROGMEM',
         '#endif',
         '',
-        '/* Quadratic interpolants through each interval\'s left, middle and',
-        ' * right endpoints. Each 12-byte record is copied in one bulk read;',
-        ' * its byte offset is calculated with native 16-bit arithmetic.',
-        ' * 128 records occupy exactly 1.5 KiB of program space. */',
-        'static const AVM_SQRT_PROGMEM float sqrt_table[128][3] = {'
+        f'#define AVM_SQRT_INTERVAL_BITS {INTERVALS.bit_length()-1}',
+        f'#define AVM_SQRT_DEGREE {DEGREE}',
+        '',
+        f'/* {2*INTERVALS} degree-{DEGREE} interpolants, {2*INTERVALS*(DEGREE+1)*4} bytes.',
+        ' * Each record is copied with one bulk program-space read. */',
+        f'static const AVM_SQRT_PROGMEM float sqrt_table[{2*INTERVALS}][{DEGREE+1}] = {{'
     ]
     for parity in range(2):
         for index in range(INTERVALS):
@@ -44,8 +46,12 @@ def table():
             root, middle, right = [math.sqrt(left + t*width) for t in [0, 0.5, 1]]
             quadratic = 2 * (right + root - 2*middle) / (width*width)
             linear = (right - root) / width - quadratic*width
-            lines.append(f'    {{{literal(root)}, {literal(linear)}, '
-                         f'{literal(quadratic)}}},')
+            if DEGREE == 1:
+                linear = (right-root)/width
+                lines.append(f'    {{{literal(root)}, {literal(linear)}}},')
+            else:
+                lines.append(f'    {{{literal(root)}, {literal(linear)}, '
+                             f'{literal(quadratic)}}},')
     lines.extend(['};', '', '#undef AVM_SQRT_PROGMEM', '#endif', ''])
     return '\n'.join(lines)
 
@@ -62,12 +68,18 @@ def boundary_cases():
     inputs = {0x3f800001, 0x3f809b4e, 0x3f8439e4, 0x400068fb}
     for parity in range(2):
         for index in range(INTERVALS):
-            for offset in [0, 1, 0xffff, 0x10000, 0x10001, 0x1ffff]:
-                inputs.add(0x3f800000 + (parity << 23) + (index << 17) + offset)
+            shift = 23-(INTERVALS.bit_length()-1)
+            half = 1 << (shift-1)
+            for offset in [0, 1, half-1, half, half+1, (1<<shift)-1]:
+                inputs.add(0x3f800000 + (parity << 23) + (index << shift) + offset)
     for bits in sorted(inputs):
         value = struct.unpack('<f', struct.pack('<I', bits))[0]
         expected = struct.unpack('<I', struct.pack('<f', math.sqrt(value)))[0]
-        lines.append(f'    {{0x{bits:08x}UL, 0, 0x{expected:08x}UL, 0}},')
+        # Preserve exact squares on the original 64-interval edge/midpoint
+        # grid. Newly added midpoints use the requested two-ULP budget;
+        # exact rounding at every representable square is not required.
+        exact = binary32(math.sqrt(value))**2 == value and (bits & 0xffff) == 0
+        lines.append(f'    {{0x{bits:08x}UL, 0, 0x{expected:08x}UL, {0 if exact else 2}}},')
     lines.extend([
         '};', '', 'int avm_test_main(void)', '{',
         '    return check_unary(sqrtf, cases, sizeof(cases) / sizeof(cases[0]));',
@@ -77,9 +89,15 @@ def boundary_cases():
 
 
 def main():
+    global INTERVALS, DEGREE
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--intervals', type=int, default=INTERVALS)
+    parser.add_argument('--degree', type=int, choices=[1,2], default=DEGREE)
     parser.add_argument('--check', action='store_true', help='fail if generated files differ')
     args = parser.parse_args()
+    INTERVALS, DEGREE = args.intervals, args.degree
+    if INTERVALS < 2 or INTERVALS & (INTERVALS-1):
+        parser.error("interval count must be a power of two")
     outputs = {
         ROOT / 'runtime/lib/math/sqrt_table.h': table(),
         ROOT / 'tests/c/math_sqrtf_lookup.c': boundary_cases(),
@@ -87,10 +105,10 @@ def main():
     }
     for path, content in outputs.items():
         if args.check:
-            if not path.exists() or path.read_text() != content:
+            if not path.exists() or path.read_text(encoding='utf-8') != content:
                 raise SystemExit(f'Out of date: {path.relative_to(ROOT)}')
         else:
-            path.write_text(content)
+            path.write_text(content, encoding='utf-8')
 
 
 if __name__ == '__main__':

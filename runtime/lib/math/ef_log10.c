@@ -23,7 +23,5 @@
     if (ix-1U >= 0x7f7fffffUL) return avm_log_special(x, ix);
     int k;
     x = avm_log_normalize(x, ix, &k);
-    float exponent = (float)k;
-    float z = exponent*7.9034151668e-07f + 4.3429449201e-01f*avm_log_mantissa(x);
-    return z+exponent*3.0102920532e-01f;
+    return ((float)k+avm_log2_mantissa(x))*0x1.344136p-2f;
 }

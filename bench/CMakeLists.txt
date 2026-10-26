@@ -117,7 +117,14 @@ foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
     list(APPEND AVM_BENCH_IMAGE_OUTPUTS "${AVM_BENCH_IMAGE}")
     list(APPEND AVM_BENCH_DISASSEMBLY_OUTPUTS
         "${AVM_BENCH_DISASSEMBLY}")
+    if(AVM_BENCH_NAME MATCHES "^math_")
+        list(APPEND AVM_MATH_BENCH_OUTPUTS "${AVM_BENCH_IMAGE}" "${AVM_BENCH_DISASSEMBLY}")
+    endif()
 endforeach()
+
+# Fast iteration on runtime math without compiling every diagnostic MIR dump.
+add_custom_target(avm_math_bench_images DEPENDS ${AVM_MATH_BENCH_OUTPUTS}
+    "${AVM_BENCH_BASELINE_IMAGE}")
 
 # C++ benchmarks use the same startup and baseline as C, but exercise C++
 # calls, object layout, and lifetime code generation.

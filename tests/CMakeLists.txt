@@ -21,6 +21,8 @@ file(GLOB_RECURSE AVM_ASM_TEST_SUPPORT_SOURCES CONFIGURE_DEPENDS
     "${AVM_ASM_TEST_DIR}/include/*")
 file(GLOB AVM_C_TEST_SOURCES CONFIGURE_DEPENDS
     "${AVM_C_TEST_DIR}/*.c")
+file(GLOB AVM_C_TEST_HEADERS CONFIGURE_DEPENDS "${AVM_C_TEST_DIR}/*.h")
+list(APPEND AVM_C_TEST_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/math/accuracy_policy.h")
 file(GLOB AVM_CXX_TEST_SOURCES CONFIGURE_DEPENDS
     "${AVM_CXX_TEST_DIR}/*.cpp")
 
@@ -109,7 +111,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             LANGUAGE ${AVM_TEST_LANGUAGE}
             INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
             COMPILE_OPTIONS ${test_compile_options}
-            DEPENDS avm_sysroot ${test_source_dependencies}
+            DEPENDS avm_sysroot ${test_source_dependencies} ${AVM_C_TEST_HEADERS}
         )
         foreach(test_support_source IN LISTS test_support_sources)
             get_filename_component(test_support_name
@@ -729,13 +731,30 @@ else()
 endif()
 add_executable(avm_shortcuts_reference_tests math/shortcuts_reference.c)
 target_link_libraries(avm_shortcuts_reference_tests PRIVATE avm_shortcuts_reference_kernels)
+add_executable(avm_math_accuracy_probe math/accuracy_probe.c)
+target_link_libraries(avm_math_accuracy_probe PRIVATE avm_shortcuts_reference_kernels)
 if(NOT MSVC)
     target_link_libraries(avm_shortcuts_reference_tests PRIVATE m)
+    target_link_libraries(avm_math_accuracy_probe PRIVATE m)
 endif()
 add_custom_target(avm_shortcuts_tests_run
     COMMAND "$<TARGET_FILE:avm_shortcuts_reference_tests>"
     DEPENDS avm_shortcuts_reference_tests USES_TERMINAL)
 add_dependencies(avm_tests_run avm_shortcuts_tests_run)
+
+if(Python3_FOUND)
+    set(AVM_MATH_PYTHON_EXECUTABLE "${Python3_EXECUTABLE}" CACHE FILEPATH
+        "Python interpreter with mpmath for high-precision math validation")
+    add_custom_target(avm_math_accuracy_tests_run
+        COMMAND "${AVM_MATH_PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/math/accuracy_reference.py"
+            --probe "$<TARGET_FILE:avm_math_accuracy_probe>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/math-accuracy.json"
+            --samples 1000
+        DEPENDS avm_math_accuracy_probe
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        COMMENT "Checking production math against 100-digit mpmath references"
+        USES_TERMINAL VERBATIM)
+endif()
 
 # Exercise the real FPOLY handler, active SPI stream and Timer1 interruption.
 add_executable(avm_fpoly_tests interp/fpoly.cpp)

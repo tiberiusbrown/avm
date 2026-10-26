@@ -14,59 +14,38 @@
  */
 
 #include "fdlibm.h"
-#include "fpoly.h"
+#include "exp_poly.h"
 
-	float __ieee754_expf(float x)	/* default IEEE double exp */
+float __ieee754_expf(float x)
 {
-	float y,hi,lo,c,t;
-	__int32_t sx;
-	int k = 0,xsb;
-	__uint32_t hx;
-
-	GET_FLOAT_WORD(sx,x);
-	xsb = (sx>>31)&1;		/* sign bit of x */
-	hx = sx & 0x7fffffff;		/* high word of |x| */
-
-    /* filter out non-finite argument */
-        if(FLT_UWORD_IS_NAN(hx))
-            return x+x;	 	/* NaN */
-        if(FLT_UWORD_IS_INFINITE(hx))
-	    return (xsb==0)? x:0.0;		/* exp(+-inf)={inf,0} */
-	if(sx > FLT_UWORD_LOG_MAX)
-	    return __math_oflowf(0); /* overflow */
-	if(sx < 0 && hx > FLT_UWORD_LOG_MIN)
-	    return __math_uflowf(0); /* underflow */
-	
-    /* argument reduction */
-	if(hx > 0x3eb17218) {		/* if  |x| > 0.5 ln2 */ 
-	    if(hx < 0x3F851592) {	/* and |x| < 1.5 ln2 */
-		hi = x-((xsb == 0 ? 6.9313812256e-01f : -6.9313812256e-01f)); lo=((xsb == 0 ? 9.0580006145e-06f : -9.0580006145e-06f)); k = 1-xsb-xsb;
-	    } else {
-		k  = 1.4426950216e+00f*x+((xsb == 0 ? 0.5f : -0.5f));
-		t  = k;
-		hi = x - t*(6.9313812256e-01f);	/* t*ln2HI is exact here */
-		lo = t*(9.0580006145e-06f);
-	    }
-	    x  = hi - lo;
-	} 
-	else if(hx < 0x34000000)  {	/* when |x|<2**-23 */
-	    return 1.0f+x;/* trigger inexact */
-	}
-
-    /* x is now in primary range */
-	t  = x*x;
-	c  = x - t*(AVM_FPOLY5(t, 4.1381369442e-08f, -1.6533901999e-06f, 6.6137559770e-05f, -2.7777778450e-03f, 1.6666667163e-01f));
-        if(k==0) 	return 1.0f-((x*c)/(c-(float)2.0)-x);
-	else 		y = 1.0f-((lo-(x*c)/((float)2.0-c))-hi);
-	if(k >= -125) {
-	    __uint32_t hy;
-	    GET_FLOAT_WORD(hy,y);
-	    SET_FLOAT_WORD(y,hy+((uint32_t)k<<23));	/* add k to y's exponent */
-	    return y;
-	} else {
-	    __uint32_t hy;
-	    GET_FLOAT_WORD(hy,y);
-	    SET_FLOAT_WORD(y,hy+((uint32_t)(k+100)<<23));	/* add k to y's exponent */
-	    return y*7.8886090522e-31f;
-	}
+    uint32_t bits;
+    GET_FLOAT_WORD(bits, x);
+    uint32_t magnitude=bits & 0x7fffffffUL;
+    if (magnitude >= 0x7f800000UL) {
+        if (magnitude > 0x7f800000UL) return x+x;
+        return bits >> 31 ? 0.0f : x;
+    }
+    if (!(bits >> 31) && magnitude > FLT_UWORD_LOG_MAX) return __math_oflowf(0);
+    if ((bits >> 31) && magnitude > FLT_UWORD_LOG_MIN) return __math_uflowf(0);
+    if (magnitude < 0x34000000UL) return 1.0f+x;
+    /* Centered base-two reduction. Binary32 reduction error is included in
+       the measured 1e-5 relative budget, including both scaling extremes. */
+    float u=x*0x1.715476p0f;
+    int k=0;
+    float r=u;
+    if (magnitude > 0x3eb17218UL) {
+        k=(int)(u+(bits >> 31 ? -0.5f : 0.5f));
+        r=u-(float)k;
+    }
+    float result=avm_exp_polynomial(r);
+    GET_FLOAT_WORD(bits, result);
+    if (k >= -125) {
+        /* k=128 is safe: the finite-input threshold guarantees r<0. */
+        bits += (uint32_t)k << 23;
+        SET_FLOAT_WORD(result, bits);
+        return result;
+    }
+    bits += (uint32_t)(k+100) << 23;
+    SET_FLOAT_WORD(result, bits);
+    return result*0x1p-100f;
 }

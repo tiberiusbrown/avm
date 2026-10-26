@@ -42,23 +42,12 @@ static __attribute__((always_inline)) inline float avm_log_normalize(float x, ui
     return x;
 }
 
-/* x is a positive normalized mantissa near one; no classification or scaling. */
+#include "log_poly.h"
+
+/* A stable log1p-style mantissa core is available for future log1pf work. */
 static __attribute__((always_inline)) inline float avm_log_mantissa(float x)
 {
-    float f = x-1.0f;
-    if (__builtin_fabsf(f) <= 0x1p-4f) {
-        /* Degree-six log1p polynomial. Keeping f outside the correction
-           preserves tiny results and exact log(1), including reduced powers. */
-        float correction = f*f*(AVM_FPOLY5(f, 0x1.555556p-3f, -0.2f, 0.25f, -0x1.555556p-2f, 0.5f));
-        return f-correction;
-    }
-    float s = f/(2.0f+f);
-    float z = s*s;
-    float w = z*z;
-    float t1 = w*(AVM_FPOLY3(w, 1.5313838422e-01f, 2.2222198546e-01f, 4.0000000596e-01f));
-    float t2 = z*(AVM_FPOLY4(w, 1.4798198640e-01f, 1.8183572590e-01f, 2.8571429849e-01f, 6.6666668653e-01f));
-    float hfsq = 0.5f*f*f;
-    return f-(hfsq-s*(hfsq+t1+t2));
+    return avm_log2_mantissa(x)*0x1.62e43p-1f;
 }
 
 static __attribute__((always_inline)) inline float avm_log_kernel(float x)
@@ -68,9 +57,7 @@ static __attribute__((always_inline)) inline float avm_log_kernel(float x)
     if (ix-1U >= 0x7f7fffffUL) return avm_log_special(x, ix);
     int k;
     x = avm_log_normalize(x, ix, &k);
-    float mantissa = avm_log_mantissa(x);
-    float exponent = (float)k;
-    return exponent*6.9313812256e-01f+(mantissa+exponent*9.0580006145e-06f);
+    return ((float)k+avm_log2_mantissa(x))*0x1.62e43p-1f;
 }
 
 #endif

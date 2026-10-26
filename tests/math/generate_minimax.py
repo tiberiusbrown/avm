@@ -11,9 +11,9 @@ import mpmath as mp
 mp.mp.dps = 80
 
 
-def remez(function, end, degree):
+def remez(function, end, degree, start=mp.mpf(0), verbose=True):
     count = degree + 2
-    points = [end * (1 - mp.cos(mp.pi * i / (count - 1))) / 2 for i in range(count)]
+    points = [start + (end-start) * (1 - mp.cos(mp.pi * i / (count - 1))) / 2 for i in range(count)]
     for iteration in range(20):
         matrix = mp.matrix([[x**j for j in range(degree + 1)] + [mp.mpf(-1)**i]
                             for i, x in enumerate(points)])
@@ -24,10 +24,11 @@ def remez(function, end, degree):
             return mp.diff(function, x) - sum(j * coefficients[j] * x**(j - 1)
                                             for j in range(1, degree + 1))
 
-        extrema = [mp.mpf(0)]
-        left, dl = end / 4096, derivative(end / 4096)
+        extrema = [start]
+        left = start + (end-start)/4096
+        dl = derivative(left)
         for i in range(1, 513):
-            right = end * i / 512
+            right = start + (end-start) * i / 512
             dr = derivative(right)
             if dl * dr < 0:
                 extrema.append(mp.findroot(derivative, (left, right), solver='anderson'))
@@ -39,11 +40,13 @@ def remez(function, end, degree):
         points = extrema
         if change < mp.mpf('1e-60'):
             break
-    print('degree', degree, 'iterations', iteration + 1,
-          'correction error', mp.nstr(abs(list(solution)[-1]), 12))
-    for coefficient in coefficients:
-        rounded = struct.unpack('<f', struct.pack('<f', float(coefficient)))[0]
-        print(rounded.hex() + 'f,')
+    if verbose:
+        print('degree', degree, 'iterations', iteration + 1,
+              'correction error', mp.nstr(abs(list(solution)[-1]), 12))
+        for coefficient in coefficients:
+            rounded = struct.unpack('<f', struct.pack('<f', float(coefficient)))[0]
+            print(rounded.hex() + 'f,')
+    return coefficients
 
 
 def atan_correction(z):

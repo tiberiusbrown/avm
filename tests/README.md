@@ -21,8 +21,8 @@ bit comparisons; transcendental tolerances are explicit in each vector.
 normalized binary32 mantissa/exponent-parity combination, every positive
 subnormal, all exponent boundaries and random bit patterns, against both the
 saved original implementation and double sqrt rounded to float. NaNs compare
-by classification. `math_sqrtf_lookup` adds exact interpreter fixtures near
-interpolation boundaries; `python tests/math/generate_sqrt_table.py --check`
+by classification. `math_sqrtf_lookup` adds two-ULP interpreter fixtures near
+interpolation boundaries, preserving exact square identities; `python tests/math/generate_sqrt_table.py --check`
 verifies that the table and fixtures match their generator. These
 checks run within `avm_tests_run`. The same target checks all 8,388,608 normalized
 binary32 mantissas of the large-angle reducer's full 280-bit integer product
@@ -31,20 +31,31 @@ against an independent reference using 32-bit limbs and 64-bit arithmetic. See t
 
 `avm_shortcuts_tests_run` compiles the production hypot, atan/atan2, tangent,
 logarithms, power, exponential and remainder kernels under private names and
-compares them with host double libm rounded to float. The four-ULP limit is
-enforced for every result, with exact fmod results and explicit signed-zero,
-infinity and signaling-NaN handling. Coverage includes every reduced log
-mantissa, dense direct atan/tan inputs, exhaustive mantissas for the bounded
-integer and fractional power paths, subnormal and scaling boundaries, pole
-neighbors, and deterministic random patterns. These checks run within
-`avm_tests_run`; interpreter fixtures cover the shortcut endpoints and fallback
-paths at every standard optimization level. `math/generate_minimax.py`
-reproduces the Remez coefficients using mpmath.
+compares them with independent host double libm under the documented
+[function-specific policy](../docs/math-runtime/README.md). Exact fmod, signed
+zero, infinity and signaling-NaN handling remain separate checks. Coverage
+includes every reduced log mantissa, dense direct atan/tan inputs, exhaustive
+mantissas for bounded integer and fractional powers, dense exponential scaling
+and bit-pattern sweeps, subnormal/scaling boundaries, pole neighbors, and
+random patterns. Every failure is accumulated alongside maximum absolute,
+relative and ULP errors, worst inputs and error distributions.
 
-On 2026-10-25, all 717 interpreter fixtures passed and the shortcut reference
-target passed 289,288,498 comparisons. Maximum observed errors were one ULP
-for hypot, atan/atan2, log and exp; two for log2/log10; three for tan; and four
-for pow. Every fmod comparison was exact.
+`avm_math_accuracy_tests_run` adds 100-digit mpmath comparisons using those same
+production objects. Install mpmath to run this optional explicit target; the
+regular C/C++ suite runs the committed high-precision worst-case fixtures
+without a Python package dependency. Regenerate committed numerical reports:
+
+```sh
+cmake --build build --config RelWithDebInfo --target avm_math_accuracy_probe
+python tests/math/accuracy_reference.py --output docs/math-runtime/accuracy.json --samples 10000 --fixtures
+python tests/math/render_report.py
+```
+
+[Generated accuracy](../docs/math-runtime/accuracy.md) and
+[performance/resource results](../docs/math-runtime/report.md) record the current
+measurements, full numerical criteria and reproducible candidate comparisons.
+`math/generate_minimax.py` and `math/experiment.py` reproduce the Remez fits.
+The trig reducer and all exact arithmetic/rounding tests are retained.
 
 `cmake --build build --config RelWithDebInfo --target avm_audio_tests_run`
 checks native sequencing, sample synthesis, register preservation, SPI reads

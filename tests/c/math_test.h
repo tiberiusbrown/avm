@@ -5,6 +5,7 @@
 #include <math.h>
 #include <stdint.h>
 #include "test_hex_output.h"
+#include "../math/accuracy_policy.h"
 
 struct math_case {
     uint32_t a, b, expected;
@@ -55,6 +56,41 @@ static __attribute__((unused)) int check_binary(
     for (uint16_t i = 0; i < count; ++i)
         if (check_result(function(from_bits(cases[i].a), from_bits(cases[i].b)),
                          cases[i].expected, cases[i].tolerance, i)) return 1;
+    return 0;
+}
+
+static int check_accuracy_result(float result, uint32_t expected, uint16_t exact,
+                                 uint16_t index, enum avm_accuracy policy)
+{
+    union { float f; uint32_t u; } actual = {result};
+    if (!exact || (expected & 0x7fffffffUL) == 0 ||
+        (expected & 0x7fffffffUL) >= 0x7f800000UL)
+        return check_result(result, expected, 0, index);
+    if ((actual.u & 0x7fffffffUL) < 0x7f800000UL &&
+        !((actual.u ^ expected) & 0x80000000UL)) {
+        uint32_t distance = actual.u > expected ? actual.u-expected : expected-actual.u;
+        if (avm_accuracy_accept(policy, result, from_bits(expected), distance)) return 0;
+    }
+    return check_result(result, expected, 0, index);
+}
+
+static __attribute__((unused)) int check_unary_accuracy(
+    float (*function)(float), const AVM_PROGMEM struct math_case *cases,
+    uint16_t count, enum avm_accuracy policy)
+{
+    for (uint16_t i=0; i<count; ++i)
+        if (check_accuracy_result(function(from_bits(cases[i].a)), cases[i].expected,
+                                  cases[i].tolerance, i, policy)) return 1;
+    return 0;
+}
+
+static __attribute__((unused)) int check_binary_accuracy(
+    float (*function)(float, float), const AVM_PROGMEM struct math_case *cases,
+    uint16_t count, enum avm_accuracy policy)
+{
+    for (uint16_t i=0; i<count; ++i)
+        if (check_accuracy_result(function(from_bits(cases[i].a), from_bits(cases[i].b)),
+                                  cases[i].expected, cases[i].tolerance, i, policy)) return 1;
     return 0;
 }
 

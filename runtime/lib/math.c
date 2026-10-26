@@ -8,7 +8,7 @@ float log2f(float x)
     if (u-1U >= 0x7f7fffffUL) return avm_log_special(x, u);
     int exponent;
     x = avm_log_normalize(x, u, &exponent);
-    return (float)exponent + avm_log_mantissa(x) * 0x1.715476p0f;
+    return (float)exponent + avm_log2_mantissa(x);
 }
 
 float fminf(float x, float y)

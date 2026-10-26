@@ -49,9 +49,13 @@ No filter retains the complete sweep and historical output paths. Compiled
 benchmarks use the configured `AVM_OPT_LEVEL` (normally O2). Instruction filters
 consume preceding intervals from their one shared image, then stop after the
 last selected interval. Normal sweeps measure cycles only; stack stepping runs
-only with `--stack-output`. Compiled images run sequentially in a reset emulator
-session, reusing the decoded interpreter; regression tests compare these cycles
-with isolated one-image runs.
+only with `--stack-output`. Compiled images run in parallel by default, using one
+worker per logical processor (up to the number of selected images). Each worker owns a reset emulator session
+and reuses its decoded interpreter. Use `--jobs N` to override the worker count,
+or `--jobs 1` for sequential execution. Instruction intervals remain sequential
+within their shared image. Cycle, stack, trace, and console results retain their
+sorted order; regression tests compare parallel cycles with sequential and isolated
+one-image runs.
 
 The dedicated `avm_audio_tests_run` target measures native audio ISR, seek,
 countdown, chord-commit, and FX burst costs without adding interrupts to the

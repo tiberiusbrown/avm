@@ -1,5 +1,6 @@
 #include <absim.hpp>
 #include "../tests/runner_selection.h"
+#include "../tests/runner_parallel.h"
 
 #include <algorithm>
 #include <cctype>
@@ -86,6 +87,7 @@ struct options_t {
     fs::path cxx_image_dir = AVM_BENCH_CXX_BIN_DIR;
     fs::path cxx_output = AVM_BENCH_CXX_OUTPUT;
 
+    std::size_t jobs = 0;
     bool run_instructions = true;
     bool run_c = true;
     bool run_cxx = true;
@@ -109,9 +111,11 @@ std::string usage_text()
         "[--instruction-output FILE] [--c-source-dir DIR] "
         "[--c-image-dir DIR] [--c-baseline FILE] [--c-output FILE] "
         "[--cpp-source-dir DIR] [--cpp-image-dir DIR] [--cpp-output FILE] "
-        "[--stack-output FILE] [--trace-output FILE] [--instruction-only | --c-only | --cpp-only] [--filter REGEX] [--list]\n"
+        "[--jobs N] [--stack-output FILE] [--trace-output FILE] [--instruction-only | --c-only | --cpp-only] [--filter REGEX] [--list]\n"
         "Filter searches source stems / instruction names. --list needs no built images.\n"
         "Filtered runs default to cycles_*.selected.txt; explicit output paths are used verbatim.\n"
+        "--jobs defaults to logical processor count; --jobs 1 runs sequentially.\n"
+        "Instruction benchmarks always run sequentially.\n"
         "Compiled benchmarks use AVM_OPT_LEVEL; --opt is only for avm_tests.";
 }
 
@@ -159,6 +163,8 @@ options_t parse_options(int argc, char** argv)
             options.stack_output = require_value(arg);
         else if(arg == "--trace-output")
             options.trace_output = require_value(arg);
+        else if(arg == "--jobs")
+            options.jobs = runner_parse_jobs(require_value(arg).string());
         else if(arg == "--filter")
             options.selection.filter(require_value(arg).string());
         else if(arg == "--list")
@@ -378,7 +384,7 @@ std::uint64_t measure_next_interval(absim::arduboy_t& arduboy)
     return end - begin;
 }
 
-// One sequential session per language. BIN loading and reset clear CPU and FX
+// One session per worker. BIN loading and reset clear CPU and FX
 // state; the unchanged interpreter is parsed/decoded only once. Never share this
 // session between concurrent measurements.
 struct compiled_session {
@@ -485,7 +491,7 @@ void run_instruction_benchmarks(options_t const& options, std::vector<std::strin
 // A separate instruction-stepped pass leaves the normal cycle measurement
 // unchanged. Y is the guest SP; the hardware SP tracks native helper scratch.
 std::pair<unsigned, unsigned> measure_stack(options_t const& options, fs::path const& image,
-    std::ofstream* trace, std::string const& name)
+    std::ostream* trace, std::string const& name)
 {
     auto e = std::make_unique<absim::arduboy_t>();
     e->reset();
@@ -554,14 +560,24 @@ void run_compiled_benchmarks(
     std::cout << "  baseline:    " << options.c_baseline << '\n';
     std::cout << "  output:      " << output_file << "\n\n";
 
-    compiled_session session(options.interpreter);
-    std::uint64_t const baseline = session.measure(options.c_baseline);
-
-    for(std::size_t i = 0; i < benchmarks.size(); ++i)
-    {
+    auto const workers = runner_worker_count(options.jobs, benchmarks.size());
+    std::cout << "  workers:     " << workers << "\n" << std::flush;
+    std::vector<std::unique_ptr<compiled_session>> sessions(workers);
+    std::vector<std::uint64_t> baselines(workers);
+    struct result_t {
+        std::uint64_t cycles = 0;
+        std::pair<unsigned, unsigned> stack;
+        std::string trace;
+    };
+    std::vector<result_t> results(benchmarks.size());
+    runner_parallel_for(benchmarks.size(), workers, [&](std::size_t worker, std::size_t i) {
+        if(!sessions[worker]) {
+            sessions[worker] = std::make_unique<compiled_session>(options.interpreter);
+            baselines[worker] = sessions[worker]->measure(options.c_baseline);
+        }
+        auto const baseline = baselines[worker];
         c_benchmark_t const& benchmark = benchmarks[i];
-        std::uint64_t const raw =
-            session.measure(require_file(benchmark.image, "compiled benchmark image"));
+        std::uint64_t const raw = sessions[worker]->measure(benchmark.image);
 
         if(raw < baseline)
         {
@@ -572,16 +588,38 @@ void run_compiled_benchmarks(
             throw std::runtime_error(message.str());
         }
 
-        std::uint64_t const cycles = raw - baseline;
-        output << std::setw(12) << cycles << "   "
+        results[i].cycles = raw - baseline;
+        if(stack.is_open() || trace.is_open()) {
+            std::ostringstream trace_rows;
+            results[i].stack = measure_stack(options, benchmark.image,
+                trace.is_open() ? &trace_rows : nullptr, benchmark.name);
+            results[i].trace = trace_rows.str();
+        }
+    });
+
+    double setup_seconds = 0, execution_seconds = 0;
+    std::uint64_t baseline = 0;
+    bool have_baseline = false;
+    for(std::size_t worker = 0; worker < workers; ++worker) {
+        if(!sessions[worker]) continue;
+        if(have_baseline && baselines[worker] != baseline)
+            throw std::runtime_error("DEBUG_BREAK baseline differs between workers");
+        baseline = baselines[worker];
+        have_baseline = true;
+        setup_seconds += sessions[worker]->setup_seconds;
+        execution_seconds += sessions[worker]->execution_seconds;
+    }
+    for(std::size_t i = 0; i < benchmarks.size(); ++i) {
+        auto const& benchmark = benchmarks[i];
+        auto const& result = results[i];
+        output << std::setw(12) << result.cycles << "   "
                << benchmark.source.filename().string() << '\n';
         std::cout << std::setw(3) << (i + 1) << "  "
-                  << std::setw(12) << cycles << " cycles   "
+                  << std::setw(12) << result.cycles << " cycles   "
                   << benchmark.source.filename().string() << std::endl;
-        if(stack.is_open() || trace.is_open()) {
-            auto usage = measure_stack(options, benchmark.image, trace.is_open() ? &trace : nullptr, benchmark.name);
-            if(stack.is_open()) stack << benchmark.name << '\t' << usage.first << '\t' << usage.second << '\n';
-        }
+        if(stack.is_open())
+            stack << benchmark.name << '\t' << result.stack.first << '\t' << result.stack.second << '\n';
+        if(trace.is_open()) trace << result.trace;
     }
 
     output.flush();
@@ -592,8 +630,8 @@ void run_compiled_benchmarks(
               << " cycles\n";
     std::cout << "Wrote " << benchmarks.size() << ' ' << label << " timings to "
               << output_file << '\n';
-    std::cout << "Emulator setup/image loading: " << session.setup_seconds
-              << " s; execution: " << session.execution_seconds << " s (sequential session)\n";
+    std::cout << "Emulator setup/image loading: " << setup_seconds
+              << " s; execution: " << execution_seconds << " s (summed across workers)\n";
 }
 
 } // namespace

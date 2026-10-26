@@ -1,8 +1,13 @@
 # AVM end-to-end tests
 
-`cmake --build build --target avm_tests_run` builds and runs every assembly,
+`cmake --build build --config RelWithDebInfo --target avm_tests_run` builds and runs every assembly,
 C, and C++ fixture. Each C and C++ source is compiled separately at `-O0`,
 `-O1`, `-O2`, `-O3`, `-Os`, and `-Oz`; assembly fixtures run once.
+
+The `avm_tests` runner runs independent cases in parallel by default, using one
+worker per logical processor (up to the number of selected cases). Each case owns
+its emulator. Use `--jobs N` to override the worker count, or `--jobs 1` for
+sequential execution. Diagnostics and results retain their sorted order.
 
 Each fixture has a default limit of 60 emulated seconds. The CMake cache setting
 `AVM_TEST_ADVANCE_LIMIT` and the runner's `--advance-limit` option use picoseconds

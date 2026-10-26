@@ -1,6 +1,7 @@
 #include <absim.hpp>
 #include "interp/avm_spi_observer.hpp"
 #include "runner_selection.h"
+#include "runner_parallel.h"
 
 #include <algorithm>
 #include <cctype>
@@ -83,6 +84,7 @@ struct options_t {
     fs::path cpp_bin_dir = AVM_TEST_CXX_BIN_DIR;
     std::uint64_t advance_limit = kDefaultAdvanceLimit;
     bool verbose = false;
+    std::size_t jobs = 0;
     runner_selection selection;
     std::vector<std::string> optimizations = runner_optimizations(AVM_TEST_OPT_LEVELS);
 };
@@ -107,8 +109,9 @@ std::string usage_text()
         "Usage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
         "[--c-dir DIR] [--cpp-dir DIR] [--bin-dir DIR] "
         "[--c-bin-dir DIR] [--cpp-bin-dir DIR] "
-        "[--advance-limit PICOSECONDS] [--verbose] [--filter REGEX] [--opt O0,O2] [--list]\n"
+        "[--advance-limit PICOSECONDS] [--jobs N] [--verbose] [--filter REGEX] [--opt O0,O2] [--list]\n"
         "Filter searches source stems; --opt selects compiled tests (ASM runs once).\n"
+        "--jobs defaults to logical processor count; --jobs 1 runs sequentially.\n"
         "--list needs no interpreter or built images. No filters runs the full suite.";
 }
 
@@ -162,6 +165,8 @@ options_t parse_options(int argc, char** argv)
             options.cpp_bin_dir = require_value(arg);
         else if(arg == "--advance-limit")
             options.advance_limit = parse_u64(require_value(arg), arg);
+        else if(arg == "--jobs")
+            options.jobs = runner_parse_jobs(std::string(require_value(arg)));
         else if(arg == "--verbose")
             options.verbose = true;
         else if(arg == "--filter")
@@ -529,13 +534,13 @@ std::string test_label(test_case_t const& test)
 void run_test(test_case_t const& test,
               fs::path const& interpreter,
               std::uint64_t advance_limit,
-              bool verbose)
+              bool verbose, std::ostream& log)
 {
     require_file(test.expected, "expected-output file");
     require_file(test.image, "built AVM test image");
 
     if(verbose) {
-        std::cout << "    source:      " << test.source << '\n'
+        log << "    source:      " << test.source << '\n'
                   << "    image:       " << test.image << '\n'
                   << "    expected:    " << test.expected << '\n';
     }
@@ -581,8 +586,9 @@ int main(int argc, char** argv)
             result_column = std::max(result_column, test_label(test).size());
         result_column += 2;
 
+        auto const workers = runner_worker_count(options.jobs, tests.size());
         std::cout << "Running " << tests.size()
-                  << " AVM test(s) in one process\n";
+                  << " AVM test(s) with " << workers << " worker(s)\n" << std::flush;
         if(options.verbose) {
             std::cout << "  interpreter: " << options.interpreter << '\n'
                       << "  ASM sources: " << options.asm_dir << '\n'
@@ -594,15 +600,31 @@ int main(int argc, char** argv)
                       << "  time limit (ps): " << options.advance_limit << "\n\n";
         }
 
-        std::vector<failure_t> failures;
-        for(test_case_t const& test : tests) {
-            std::string const label = test_label(test);
+        struct result_t {
+            std::string log;
+            std::string error;
+            bool failed = false;
+        };
+        std::vector<result_t> results(tests.size());
+        runner_parallel_for(tests.size(), workers, [&](std::size_t, std::size_t i) {
+            std::ostringstream log;
             try {
-                run_test(test, options.interpreter, options.advance_limit,
-                         options.verbose);
+                run_test(tests[i], options.interpreter, options.advance_limit,
+                         options.verbose, log);
             }
             catch(std::exception const& error) {
-                failures.push_back({label, error.what()});
+                results[i].failed = true;
+                results[i].error = error.what();
+            }
+            results[i].log = log.str();
+        });
+
+        std::vector<failure_t> failures;
+        for(std::size_t i = 0; i < tests.size(); ++i) {
+            std::string const label = test_label(tests[i]);
+            std::cout << results[i].log;
+            if(results[i].failed) {
+                failures.push_back({label, results[i].error});
                 std::cout << std::left
                           << std::setw(static_cast<int>(result_column)) << label
                           << "FAIL\n\n";

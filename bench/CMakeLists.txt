@@ -219,7 +219,8 @@ add_executable(avm_bench "${AVM_BENCH_SOURCE}")
 set_target_properties(avm_bench PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 target_compile_features(avm_bench PRIVATE cxx_std_17)
-target_link_libraries(avm_bench PRIVATE ardensdebuggerlib)
+find_package(Threads REQUIRED)
+target_link_libraries(avm_bench PRIVATE ardensdebuggerlib Threads::Threads)
 string(REGEX REPLACE "^-" "" AVM_BENCH_DISPLAY_OPT "${AVM_OPT_LEVEL}")
 target_compile_definitions(avm_bench PRIVATE
     AVM_BENCH_OPT_LEVEL="${AVM_BENCH_DISPLAY_OPT}"
@@ -263,6 +264,7 @@ if(Python3_FOUND)
         DEPENDS avm_tests avm_bench "${AVM_BENCH_C_BINARY_DIR}/math_sin.bin"
             "${AVM_BENCH_C_BINARY_DIR}/math_cos.bin"
             "${AVM_BENCH_BASELINE_IMAGE}"
+            "${PROJECT_BINARY_DIR}/tests/c/O2/affine_store_values.bin"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" USES_TERMINAL VERBATIM)
     add_dependencies(avm_validation_full avm_runner_cli_tests_run)
 endif()

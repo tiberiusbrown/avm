@@ -180,7 +180,8 @@ add_executable(avm_tests "${AVM_TEST_SOURCE}")
 set_target_properties(avm_tests PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 target_compile_features(avm_tests PRIVATE cxx_std_17)
-target_link_libraries(avm_tests PRIVATE ardensdebuggerlib)
+find_package(Threads REQUIRED)
+target_link_libraries(avm_tests PRIVATE ardensdebuggerlib Threads::Threads)
 target_compile_definitions(avm_tests PRIVATE
     AVM_TEST_ASM_DIR="${AVM_ASM_TEST_DIR}"
     AVM_TEST_C_DIR="${AVM_C_TEST_DIR}"

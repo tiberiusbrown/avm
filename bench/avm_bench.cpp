@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <iostream>
 #include <memory>
+#include <map>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -89,6 +90,7 @@ struct options_t {
     bool run_c = true;
     bool run_cxx = true;
     fs::path stack_output;
+    fs::path trace_output;
     runner_selection selection;
     bool instruction_output_explicit = false, c_output_explicit = false, cxx_output_explicit = false;
 };
@@ -107,7 +109,7 @@ std::string usage_text()
         "[--instruction-output FILE] [--c-source-dir DIR] "
         "[--c-image-dir DIR] [--c-baseline FILE] [--c-output FILE] "
         "[--cpp-source-dir DIR] [--cpp-image-dir DIR] [--cpp-output FILE] "
-        "[--stack-output FILE] [--instruction-only | --c-only | --cpp-only] [--filter REGEX] [--list]\n"
+        "[--stack-output FILE] [--trace-output FILE] [--instruction-only | --c-only | --cpp-only] [--filter REGEX] [--list]\n"
         "Filter searches source stems / instruction names. --list needs no built images.\n"
         "Filtered runs default to cycles_*.selected.txt; explicit output paths are used verbatim.\n"
         "Compiled benchmarks use AVM_OPT_LEVEL; --opt is only for avm_tests.";
@@ -155,6 +157,8 @@ options_t parse_options(int argc, char** argv)
             { options.cxx_output = require_value(arg); options.cxx_output_explicit = true; }
         else if(arg == "--stack-output")
             options.stack_output = require_value(arg);
+        else if(arg == "--trace-output")
+            options.trace_output = require_value(arg);
         else if(arg == "--filter")
             options.selection.filter(require_value(arg).string());
         else if(arg == "--list")
@@ -480,7 +484,8 @@ void run_instruction_benchmarks(options_t const& options, std::vector<std::strin
 
 // A separate instruction-stepped pass leaves the normal cycle measurement
 // unchanged. Y is the guest SP; the hardware SP tracks native helper scratch.
-std::pair<unsigned, unsigned> measure_stack(options_t const& options, fs::path const& image)
+std::pair<unsigned, unsigned> measure_stack(options_t const& options, fs::path const& image,
+    std::ofstream* trace, std::string const& name)
 {
     auto e = std::make_unique<absim::arduboy_t>();
     e->reset();
@@ -493,7 +498,14 @@ std::pair<unsigned, unsigned> measure_stack(options_t const& options, fs::path c
     c.enabled_autobreaks.set(absim::AB_BREAK);
     unsigned minimum = 0xa00, native_minimum = c.sp(), native_start = c.sp();
     auto start = c.cycle_count;
+    std::map<uint32_t, uint64_t> executions;
     do {
+        // Fixed primary-table slots are guest instruction boundaries, matching
+        // the debugger's Emulator::at_boundary()/snapshot() convention.
+        if(trace && c.pc >= 0x100 && c.pc < 0x500 && (c.pc-0x100)%4 == 0) {
+            uint32_t pc=uint32_t(c.data[4]) | uint32_t(c.data[5])<<8 | uint32_t(c.data[6])<<16;
+            ++executions[pc];
+        }
         e->cycle(); c.update_all();
         unsigned sp = unsigned(c.data[28]) | unsigned(c.data[29]) << 8;
         if(sp >= 0x900 && sp <= 0xa00) minimum = std::min(minimum, sp);
@@ -503,6 +515,8 @@ std::pair<unsigned, unsigned> measure_stack(options_t const& options, fs::path c
     } while(!c.should_autobreak());
     if(!c.autobreaks.test(absim::AB_BREAK))
         throw std::runtime_error("Native fault during stack measurement");
+    if(trace) for(auto const& entry : executions)
+        *trace << name << '\t' << entry.first << '\t' << entry.second << '\n';
     return {0xa00-minimum, native_start-native_minimum};
 }
 
@@ -518,6 +532,13 @@ void run_compiled_benchmarks(
         require_file(benchmark.image, "compiled benchmark image");
     std::ofstream output = open_output(output_file);
     std::ofstream stack;
+    std::ofstream trace;
+    if(!options.trace_output.empty()) {
+        trace.open(options.trace_output, std::ios::app);
+        if(!trace) throw std::runtime_error("Cannot open instruction trace output");
+        trace.seekp(0, std::ios::end);
+        if(trace.tellp() == 0) trace << "benchmark\tpc\texecutions\n";
+    }
     if(!options.stack_output.empty()) {
         stack.open(options.stack_output, std::ios::app);
         if(!stack) throw std::runtime_error("Cannot open stack measurement output");
@@ -557,9 +578,9 @@ void run_compiled_benchmarks(
         std::cout << std::setw(3) << (i + 1) << "  "
                   << std::setw(12) << cycles << " cycles   "
                   << benchmark.source.filename().string() << std::endl;
-        if(stack.is_open()) {
-            auto usage = measure_stack(options, benchmark.image);
-            stack << benchmark.name << '\t' << usage.first << '\t' << usage.second << '\n';
+        if(stack.is_open() || trace.is_open()) {
+            auto usage = measure_stack(options, benchmark.image, trace.is_open() ? &trace : nullptr, benchmark.name);
+            if(stack.is_open()) stack << benchmark.name << '\t' << usage.first << '\t' << usage.second << '\n';
         }
     }
 
@@ -629,6 +650,8 @@ int main(int argc, char** argv)
 
         if(!options.stack_output.empty())
             (void)open_output(options.stack_output); // Clear once for both languages.
+        if(!options.trace_output.empty())
+            (void)open_output(options.trace_output);
 
         if(options.run_instructions)
             run_instruction_benchmarks(options, names);

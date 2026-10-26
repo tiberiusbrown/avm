@@ -53,7 +53,14 @@ int main(int argc, char **argv)
     /* Exact uint64 arithmetic checks every normalized mantissa in full mode,
        with coefficients cycled across all exponent windows. */
     for (uint32_t m=0x800000; m<0x1000000; m += quick ? 4093 : 1) {
-        struct avm_reduce_window w=avm_reduce_windows[m&127];
+        struct avm_reduce_window packed=avm_reduce_windows[m&127], w;
+        /* Independently unpack the table's 24-bit normal / 48-bit extended
+           coefficient before checking the full product with uint64 limbs. */
+        uint64_t normal=(uint64_t)packed.low|((uint64_t)(packed.middle&0x3ffffU)<<32);
+        uint32_t tail=(packed.middle>>18)|((uint32_t)packed.high<<14);
+        w.low=(uint32_t)(normal<<24)|tail;
+        w.middle=(uint32_t)(normal>>8);
+        w.high=(uint16_t)(normal>>40);
         uint64_t p0=(uint64_t)m*w.low;
         uint64_t p1=(uint64_t)m*w.middle+(p0>>32);
         uint64_t p2=(uint64_t)m*w.high+(p1>>32);
@@ -65,15 +72,14 @@ int main(int argc, char **argv)
             printf("window product failure @ %06lx\n", (unsigned long)m);
             return 1;
         }
-        struct avm_reduce_window narrow={(w.low>>16)|(w.middle<<16),
-            (w.middle>>16)|((uint32_t)w.high<<16),0};
+        struct avm_reduce_window narrow={packed.low,packed.middle,0};
         p0=(uint64_t)m*narrow.low;
         p1=(uint64_t)m*narrow.middle+(p0>>32);
-        uint8_t expected32[5]={(uint8_t)(p0>>24),(uint8_t)p1,
-            (uint8_t)(p1>>8),(uint8_t)(p1>>16),(uint8_t)(p1>>24)};
+        uint8_t expected24[4]={(uint8_t)(p0>>24),(uint8_t)p1,
+            (uint8_t)(p1>>8),(uint8_t)(p1>>16)};
         avm_reduce_product(m,narrow,actual,0);
-        if (memcmp(actual,expected32,5)) {
-            printf("32-bit window product failure @ %06lx\n", (unsigned long)m);
+        if (memcmp(actual,expected24,4)) {
+            printf("24-bit window product failure @ %06lx\n", (unsigned long)m);
             return 1;
         }
         uint32_t u=(((m%128)+127)<<23)|(m&0x7fffff);

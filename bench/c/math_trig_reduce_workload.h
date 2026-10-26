@@ -24,16 +24,20 @@ static volatile float inputs[32] = {
 };
 #endif
 static volatile float result;
+static volatile uint32_t quadrant_result;
 int avm_test_main(void) {
     float sum=0;
+    uint32_t quadrants=0;
     __avm_debug_break();
     for (uint8_t i=0; i<32; ++i) {
         float x=inputs[i];
         int n;
-        sum += __ieee754_rem_pio2f(x,&n)+(float)(n&3);
+        sum += __ieee754_rem_pio2f(x,&n);
+        quadrants += (unsigned)n & 3u;
 
     }
     result=sum;
+    quadrant_result=quadrants;
     __avm_debug_break();
     return 0;
 }

@@ -23,12 +23,23 @@ def main():
         path=objects/('math_'+name+'.o')
         symbols=subprocess.check_output([str(tools/('llvm-nm'+suffix)),'-S','--defined-only',str(path)],text=True)
         asm=subprocess.check_output([str(tools/('llvm-objdump'+suffix)),'-dr',str(path)],text=True)
-        counts=Counter(re.findall(r'\t([a-z][a-z0-9_.]*)\s',asm))
+        counts=Counter(re.findall(r'^\s*[0-9a-f]+:\s+(?:[0-9a-f]{2}\s+)+([a-z][a-z0-9_.]*)(?=\s|$)',asm,re.M))
         sizes={}
         for row in symbols.splitlines():
             fields=row.split()
             if len(fields)==4: sizes[fields[3]]=dict(bytes=int(fields[1],16),type=fields[2])
-        report[name]=dict(symbols=symbols,sizes=sizes,instructions=dict(counts))
+        functions={n:Counter() for n,v in sizes.items() if v['type'] in ['T','t']}
+        active=None
+        for line in asm.splitlines():
+            if line.startswith('Disassembly of section '): active=None
+            label=re.match(r'^[0-9a-f]+ <([^>]+)>:',line)
+            if label and label[1] in functions: active=label[1]
+            instruction=re.match(r'^\s*[0-9a-f]+:\s+(?:[0-9a-f]{2}\s+)+([a-z][a-z0-9_.]*)(?=\s|$)',line)
+            if instruction and active: functions[active][instruction[1]]+=1
+        if sum(sum(c.values()) for c in functions.values())!=sum(counts.values()):
+            raise RuntimeError(f'Unattributed instructions in {path}')
+        report[name]=dict(symbols=symbols,sizes=sizes,instructions=dict(counts),
+                          function_instructions={n:dict(c) for n,c in functions.items()})
     # Archived objects must not be paired with today's rebuilt images.
     images=args.images or (None if args.objects else args.build/'bench/c')
     report['image_bytes']={} if images is None else {p.stem:p.stat().st_size for p in sorted(images.glob('math_trig*.bin'))}

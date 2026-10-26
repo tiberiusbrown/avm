@@ -242,6 +242,34 @@ int main(int argc, char **argv)
                 check(TAN, -x, 0, avm_reference_tanf(-x), tan(-(double)x))) return 1;
         }
     }
+    /* Every ordinary multiple, not only random mantissas: a split
+       low product can round to exact zero even with a nonzero true residual.
+       check() retains exact signs in addition to the relaxed error budget. */
+    for (unsigned n=1; n<=63662; n+=quick ? 127 : 1) {
+        uint32_t center=bits((float)(n*1.57079632679489661923));
+        for (int d=-2; d<=2; ++d) {
+            float x=value(center+d);
+            for (unsigned sign=0; sign<2; ++sign) {
+                float a=sign ? -x : x;
+                check(SIN,a,0,avm_reference_sinf(a),sin((double)a));
+                check(COS,a,0,avm_reference_cosf(a),cos((double)a));
+                check(TAN,a,0,avm_reference_tanf(a),tan((double)a));
+            }
+        }
+    }
+
+    /* Exercise the complete ordinary reduction region, both signs, rather
+       than relying on direct-polynomial sweeps and isolated pole fixtures.
+       Full mode checks >4 million bit patterns through 1024 radians. */
+    for (uint32_t u=0x4016cbe4; u<=0x44800000; u+=quick ? 4093 : 17) {
+        float x=value(u);
+        if (check(SIN,x,0,avm_reference_sinf(x),sin((double)x)) ||
+            check(COS,x,0,avm_reference_cosf(x),cos((double)x)) ||
+            check(TAN,x,0,avm_reference_tanf(x),tan((double)x)) ||
+            check(SIN,-x,0,avm_reference_sinf(-x),sin(-(double)x)) ||
+            check(COS,-x,0,avm_reference_cosf(-x),cos(-(double)x)) ||
+            check(TAN,-x,0,avm_reference_tanf(-x),tan(-(double)x))) return 1;
+    }
 
     /* Scaling boundaries and cancellation in the presence of subnormals. */
     for (int e = -149; e <= 127; ++e) {

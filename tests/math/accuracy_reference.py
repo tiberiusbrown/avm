@@ -152,10 +152,12 @@ def phase34_corpus(name):
                 angle=i*math.pi/256
                 pairs.add((bits(radius*math.cos(angle)),bits(radius*math.sin(angle))))
     elif name in ['sinf','cosf','tanf']:
-        for n in list(range(-128,129))+[1023,1024,65535,65536,1048575]:
+        for n in list(range(-653,654))+[1023,1024,65535,65536,1048575]:
             for f in [0,0.5,1]: neighbors((n+f)*math.pi/2)
-        for x in [math.pi/4,2**-12,2**-27,0.6744]:
+        for x in [math.pi/4,2**-12,2**-27,0.6744,4,8,16,32,64,128,1024]:
             neighbors(x); neighbors(-x)
+        for u in [0x65f379c6,0x48926054,0x5b86a17b,0x53f00239]:
+            neighbors(value(u)); neighbors(-value(u))
     elif name in ['atanf','atan2f']:
         for x in [0.25,0.4375,0.5,0.6875,0.75,1,1.1875,2,2.4375,4]:
             for sign in [-1,1]:

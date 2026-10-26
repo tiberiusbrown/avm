@@ -1,2 +1,0 @@
-All 16,777,216 normalized mantissa/parity inputs, all 8,388,607 positive subnormals, every exponent boundary, and 1,000,000 random bit patterns met the 2 ULP policy against the original and double sqrt (NaNs by classification).
-sqrtf: max 2 ULP @ 3f809b4e; comparison histogram [0,1,2] 25602032,24636450,1097322

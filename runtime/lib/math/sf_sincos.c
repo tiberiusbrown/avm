@@ -14,7 +14,7 @@ void sincosf(float x, float *sine, float *cosine)
         if (ix<0x39800000UL) { *sine=x; *cosine=1.0f; return; }
     } else {
         if (ix>=0x7f800000UL) { *sine=x-x; *cosine=x-x; return; }
-        x=avm_rem_pio2f(x,&n);
+        x=avm_rem_pio2f_mode(x,&n,0);
     }
     float z=x*x;
     s=x*avm_sin_polynomial(z);

@@ -47,6 +47,12 @@ def main():
             '--filter','^math_sin$','--c-output',tmp/'cycles.txt')
         assert 'math_sin.c' in (tmp/'cycles.txt').read_text()
         assert before==hashlib.sha256(committed.read_bytes()).digest()
+        run('avm_bench','--c-only','--c-source-dir',tmp/'c','--c-image-dir',build/'bench/c',
+            '--filter','^math_sin$','--c-output',tmp/'traced.txt','--trace-output',tmp/'trace.tsv')
+        assert (tmp/'traced.txt').read_text()==(tmp/'cycles.txt').read_text()
+        trace=(tmp/'trace.tsv').read_text().splitlines()
+        assert trace[0]=='benchmark\tpc\texecutions' and len(trace)>1
+        assert all(int(row.split('\t')[2])>0 for row in trace[1:])
         # A reused sequential emulator must give the same cycles as isolated
         # one-image sessions (including different FX image contents).
         run('avm_bench','--c-only','--c-source-dir',tmp/'c','--c-image-dir',build/'bench/c',

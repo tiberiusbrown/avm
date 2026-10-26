@@ -4,7 +4,7 @@ math_sf_tan.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_tan.c
 00000000 l    d  .text.tanf	00000000 .text.tanf
-00000000 g     F .text.tanf	00000258 tanf
+00000000 g     F .text.tanf	00000263 tanf
 00000000         *UND*	00000000 __kernel_rem_pio2f
 
 Disassembly of section .text.tanf:
@@ -32,7 +32,7 @@ Disassembly of section .text.tanf:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanf
-		R_AVM_FAR24	.text.tanf+0x247
+		R_AVM_FAR24	.text.tanf+0x249
 <L1>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
@@ -48,7 +48,7 @@ Disassembly of section .text.tanf:
  ff 09                 fadd	q2, q1
  e2 00 00 00           jmpf	tanf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanf+0x247
+		R_AVM_FAR24	.text.tanf+0x249
  aa                    xor	r6, r6
  f4 42                 stsp16	[sp+0x0], r6
  c7 80 7f              ldi16	r7, 0x7f80
@@ -209,7 +209,7 @@ Disassembly of section .text.tanf:
  d2 04                 brult8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanf
-		R_AVM_FAR24	.text.tanf+0x24e
+		R_AVM_FAR24	.text.tanf+0x250
 <L7>:
  c6 01 01              ldi16	r6, 0x101
  af                    xor	r7, r7
@@ -271,10 +271,13 @@ Disassembly of section .text.tanf:
  f4 1a                 ldsp16	r6, [sp+0x6]
  a0                    xor	r4, r4
  c5 80 bf              ldi16	r5, 0xbf80
- ff 38                 fdiv	q2, q0
  f4 a6                 tst8	r6
- fb 20                 cmov.eq	r4, r0
- fb 29                 cmov.eq	r5, r1
+ d1 04                 brne8	0x4 <L10>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	tanf
+		R_AVM_FAR24	.text.tanf+0x25a
+<L10>:
+ ff 38                 fdiv	q2, q0
  d6 16                 adjsp	0x16
  b8                    pop16	r0
  b9                    pop16	r1
@@ -286,3 +289,10 @@ Disassembly of section .text.tanf:
  e2 00 00 00           jmpf	tanf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.tanf+0x83
+ f2 68                 mov32	q2, q0
+ d6 16                 adjsp	0x16
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret

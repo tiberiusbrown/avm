@@ -1,0 +1,2 @@
+select-expensive-operands=ok
+P

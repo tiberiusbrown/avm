@@ -13,6 +13,11 @@
       723722   byte_load_liveout.c
      9460839   byte_phi_stream.c
       238967   call_args.c
+      652116   conditional_fdiv_likely.c
+      564683   conditional_fdiv_mixed.c
+      528920   conditional_fdiv_skipped.c
+      652116   conditional_fdiv_taken.c
+      475160   conditional_fdiv_unlikely.c
      7304404   constant_arith.c
       294026   constant_init.c
       723076   count_leading_zeros.c
@@ -70,9 +75,12 @@
       176654   math_sqrt_mantissas.c
      1402726   math_sqrt_random.c
        98378   math_sqrt_special.c
-      463351   math_tan.c
-      178124   math_tan_reduced.c
-      246978   math_tan_small.c
+      455405   math_tan.c
+      117289   math_tan_quadrant_direct.c
+      352734   math_tan_quadrant_even.c
+      204254   math_tan_quadrant_odd.c
+      176666   math_tan_reduced.c
+      243584   math_tan_small.c
        56912   math_trig_correction.c
        83907   math_trig_cos_direct.c
       598151   math_trig_cos_edge.c
@@ -100,10 +108,10 @@
       705130   math_trig_sincos_large.c
       315336   math_trig_sincos_poles.c
        98502   math_trig_tan_direct.c
-      611302   math_trig_tan_edge.c
-      314383   math_trig_tan_game.c
-      665538   math_trig_tan_large.c
-      277593   math_trig_tan_poles.c
+      604128   math_trig_tan_edge.c
+      306247   math_trig_tan_game.c
+      653120   math_trig_tan_large.c
+      271694   math_trig_tan_poles.c
        58827   math_trunc.c
        18300   memory_services.c
      1063957   mixed_width.c

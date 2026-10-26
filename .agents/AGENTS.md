@@ -2,6 +2,10 @@
 
 Never create Git commits or push changes in this repository or its submodules. Leave all code and test changes uncommitted. A request to update CI, run CI, or fix tests does not authorize committing or pushing. If remote CI requires a push, report that limitation to the user instead of pushing.
 
+## Documentation
+
+Documentation exists in the `docs/` directory. Do not create new documents or directories inside `docs/` unless explicitly directed. All documentation files should be in Markdown (`.md`) format. Keep existing documentation up to date with new changes as needed.
+
 ## Development
 
 When developing code generation functionality in the LLVM AVM backend, refer to

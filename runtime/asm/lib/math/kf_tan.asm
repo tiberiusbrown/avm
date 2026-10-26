@@ -4,7 +4,7 @@ math_kf_tan.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 kf_tan.c
 00000000 l    d  .text.__kernel_tanf	00000000 .text.__kernel_tanf
-00000000 g     F .text.__kernel_tanf	00000049 __kernel_tanf
+00000000 g     F .text.__kernel_tanf	00000054 __kernel_tanf
 
 Disassembly of section .text.__kernel_tanf:
 
@@ -37,10 +37,20 @@ Disassembly of section .text.__kernel_tanf:
  ff 04                 fadd	q1, q0
  a0                    xor	r4, r4
  c5 80 bf              ldi16	r5, 0xbf80
- ff 39                 fdiv	q2, q1
  f6 2e                 tst16	r6
- fb 22                 cmov.eq	r4, r2
- fb 2b                 cmov.eq	r5, r3
+ d1 04                 brne8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__kernel_tanf
+		R_AVM_FAR24	.text.__kernel_tanf+0x4b
+<L1>:
+ ff 39                 fdiv	q2, q1
+ d6 02                 adjsp	0x2
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+ f2 69                 mov32	q2, q1
  d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1

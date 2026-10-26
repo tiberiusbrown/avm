@@ -21,7 +21,7 @@ budget is `abs_tol + rel_tol * abs(reference)`.
 | Functions | Domain | Acceptance budget |
 |---|---|---|
 | sinf, cosf | Ordinary angles: finite `abs(x) <= 2^20`; the same bound is tested for sampled larger finite angles | Absolute `1e-5` |
-| tanf | Finite inputs away from poles (`abs(cos(x)) >= 1e-4`) | Hybrid `1e-4 + 1e-4*abs(reference)`; existing pole-neighbor regressions are retained |
+| tanf | Finite inputs, including pole neighbors | Hybrid `1e-4 + 1e-4*abs(reference)`; signs/classifications exact; no four-ULP pole promise |
 | atanf, atan2f | All finite inputs, including axes and quadrant boundaries | Absolute `1e-6` radians |
 | expf | Finite inputs whose correctly rounded result is finite and normal | Relative `1e-5` |
 | logf, log2f, log10f | Every positive finite binary32 input, including subnormals and neighbors of one | Hybrid `1e-6 + 1e-6*abs(reference)` |
@@ -42,12 +42,20 @@ NaNs compare by classification. Infinity signs, zero signs, domain errors,
 and inexpensive identities (sqrt of exact powers of four, log(1), exp(0), exact
 log2 powers of two) have separate exact fixtures. Tests never relax exact
 arithmetic, rounding, remainder or classification checks. Replaced trig/atan
-vectors use the function-specific budgets above; tangent pole neighbors retain
-the four-ULP regression policy. Existing vector entries marked exact remain exact except that non-square square-root inputs now use the
-explicit two-ULP root policy. The trig reducer and interpreter instructions are
-unchanged. Its exhaustive 280-bit product check remains mandatory; the relaxed
-absolute trig budget does not permit a quadrant error. Tangent pole neighbors
-continue to be tested, although the public approximation budget excludes poles.
+vectors use the function-specific budgets above. Tangent pole neighbors now use
+that same hybrid budget, explicitly replacing the former four-ULP requirement.
+Existing entries marked exact remain exact. The internal reducer returns one
+float plus quadrant bits. Up to 100,000 radians it uses an exact high product
+and a rounded low product; cancellation goes to a compact split or window path.
+Larger inputs use exponent-indexed 32-bit fractional windows, extended to 48 bits
+near cancellation. The ordinary sine/cosine contract remains absolute 1e-5
+through 2^20. Larger finite inputs are approximate: the same bound is tested on
+stratified samples, without claiming exhaustive correct quadrants over all
+binary32 inputs. Sine/cosine remain bounded (within the approximation budget),
+and infinities/NaNs produce NaNs. Finite binary32 inputs cannot be exact irrational
+pi/2 poles; tangent should retain a finite value and the correct sign at tested
+neighbors. The selected window's independent product/quality tests replace the
+obsolete all-column 280-bit acceptance test; full mode retains dense coverage.
 
 There is no public `exp2f` in this runtime. The base-two exponential candidate
 uses a reusable direct `2^r` polynomial, now also used by the private pow exp2
@@ -55,6 +63,37 @@ kernel; the same normal/subnormal accuracy budgets would apply to a future
 public exp2f. The phase 3–4 runtime adds `sincosf` for paired evaluation.
 
 ## Reproduction
+
+For ordinary development use the fast profile; it builds only 42 math fixtures
+at O0/O2, native quick checks, a deterministic 100-digit corpus, and FPOLY/SPI
+hardware checks. It excludes the full image target and audio/display/timer suites.
+The full profile retains all six optimization levels, all 856 AVM cases, dense
+native sweeps, existing hardware suites, and the larger adaptive reference search.
+`avm_math_full` is a math-only full alternative. Run these from the configured
+compiler developer environment:
+
+```sh
+python tests/math/run_profile.py --profile fast
+python tests/math/run_profile.py --profile math-full
+python tests/math/run_profile.py --profile full
+python tests/math/run_profile.py --profile bench
+cmake --build build --config RelWithDebInfo --target avm_tests --parallel 8
+build/avm_tests --filter 'math_(sinf|cosf|tanf|sincos)' --opt O0,O2 --list
+```
+
+The timing driver includes image build and execution and writes elapsed seconds
+and exit status to `build/math-profile-*.json`. Quick reports stay in `build/`;
+they never overwrite the committed long-run reports. Runners build independently
+of images; the existing `avm_tests_run` and `avm_bench_run` remain full compatible
+build/run commands. Test filters search source stems; optimization selection
+affects C/C++ fixtures, while assembly cases run once. Empty matches and invalid
+regexes/levels fail clearly. `--list` does not need built images.
+
+The reference driver supports `--functions sinf cosf tanf`, `--samples N`,
+`--rounds N` (adaptive rounds after the initial corpus), and `--profile fast`.
+It always retains exponent boundaries, exceptional cases and previous worst
+fixtures. See the [current measurement report](trig-fast/report.md) for timings
+and accuracy details.
 
 Use the existing CMake generator/compiler and RelWithDebInfo. On Windows,
 initialize the MSVC developer environment matching `build/CMakeCache.txt` first.

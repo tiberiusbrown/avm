@@ -1,5 +1,6 @@
 #include <absim.hpp>
 #include "interp/avm_spi_observer.hpp"
+#include "runner_selection.h"
 
 #include <algorithm>
 #include <cctype>
@@ -82,6 +83,8 @@ struct options_t {
     fs::path cpp_bin_dir = AVM_TEST_CXX_BIN_DIR;
     std::uint64_t advance_limit = kDefaultAdvanceLimit;
     bool verbose = false;
+    runner_selection selection;
+    std::vector<std::string> optimizations = runner_optimizations(AVM_TEST_OPT_LEVELS);
 };
 
 struct test_case_t {
@@ -104,7 +107,9 @@ std::string usage_text()
         "Usage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
         "[--c-dir DIR] [--cpp-dir DIR] [--bin-dir DIR] "
         "[--c-bin-dir DIR] [--cpp-bin-dir DIR] "
-        "[--advance-limit PICOSECONDS] [--verbose]";
+        "[--advance-limit PICOSECONDS] [--verbose] [--filter REGEX] [--opt O0,O2] [--list]\n"
+        "Filter searches source stems; --opt selects compiled tests (ASM runs once).\n"
+        "--list needs no interpreter or built images. No filters runs the full suite.";
 }
 
 [[noreturn]] void usage_error(std::string const& message)
@@ -159,6 +164,12 @@ options_t parse_options(int argc, char** argv)
             options.advance_limit = parse_u64(require_value(arg), arg);
         else if(arg == "--verbose")
             options.verbose = true;
+        else if(arg == "--filter")
+            options.selection.filter(std::string(require_value(arg)));
+        else if(arg == "--opt")
+            options.optimizations = runner_optimizations(std::string(require_value(arg)));
+        else if(arg == "--list")
+            options.selection.list = true;
         else if(arg == "-h" || arg == "--help") {
             std::cout << usage_text() << '\n';
             std::exit(0);
@@ -477,21 +488,16 @@ void append_tests(std::vector<test_case_t>& tests,
 std::vector<test_case_t> discover_tests(options_t const& options)
 {
     std::vector<test_case_t> tests;
-    std::vector<std::string> optimization_levels;
-    std::string_view levels = AVM_TEST_OPT_LEVELS;
-    while(!levels.empty()) {
-        std::size_t comma = levels.find(',');
-        optimization_levels.emplace_back(levels.substr(0, comma));
-        if(comma == std::string_view::npos)
-            break;
-        levels.remove_prefix(comma + 1);
-    }
+    auto const& optimization_levels = options.optimizations;
     append_tests(tests, test_kind_t::assembly, options.asm_dir,
                  options.asm_bin_dir, ".asm", optimization_levels);
     append_tests(tests, test_kind_t::c, options.c_dir,
                  options.c_bin_dir, ".c", optimization_levels);
     append_tests(tests, test_kind_t::cpp, options.cpp_dir,
                  options.cpp_bin_dir, ".cpp", optimization_levels);
+    tests.erase(std::remove_if(tests.begin(), tests.end(), [&](test_case_t const& test) {
+        return !options.selection.matches(test.source.stem().string());
+    }), tests.end());
 
     std::sort(tests.begin(), tests.end(),
         [](test_case_t const& lhs, test_case_t const& rhs) {
@@ -554,24 +560,21 @@ int main(int argc, char** argv)
 {
     try {
         options_t options = parse_options(argc, argv);
-        options.interpreter = require_file(
-            options.interpreter, "AVM interpreter HEX image");
         options.asm_dir = require_directory(
             options.asm_dir, "assembly test source directory");
         options.c_dir = require_directory(
             options.c_dir, "C test source directory");
         options.cpp_dir = require_directory(
             options.cpp_dir, "C++ test source directory");
-        options.asm_bin_dir = require_directory(
-            options.asm_bin_dir, "built assembly test image directory");
-        options.c_bin_dir = require_directory(
-            options.c_bin_dir, "built C test image directory");
-        options.cpp_bin_dir = require_directory(
-            options.cpp_bin_dir, "built C++ test image directory");
-
         std::vector<test_case_t> const tests = discover_tests(options);
         if(tests.empty())
-            throw std::runtime_error("No ASM, C, or C++ tests found");
+            throw std::runtime_error("No tests match the requested selection");
+        if(options.selection.list) {
+            for(auto const& test : tests) std::cout << test_label(test) << '\n';
+            return 0;
+        }
+        runner_elapsed elapsed;
+        options.interpreter = require_file(options.interpreter, "AVM interpreter HEX image");
 
         std::size_t result_column = 0;
         for(test_case_t const& test : tests)

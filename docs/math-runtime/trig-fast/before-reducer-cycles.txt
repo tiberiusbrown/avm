@@ -1,0 +1,5 @@
+       88267   math_trig_reduce_direct.c
+     2112156   math_trig_reduce_edge.c
+      752921   math_trig_reduce_game.c
+     2285419   math_trig_reduce_large.c
+      231189   math_trig_reduce_poles.c

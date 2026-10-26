@@ -1,6 +1,6 @@
 #include "tan_kernel.h"
 
-float __kernel_tanf(float x, float y, int iy)
+float __kernel_tanf(float x, int reciprocal)
 {
-    return avm_tan_kernel(x, y, iy);
+    return avm_tan_kernel(x, reciprocal);
 }

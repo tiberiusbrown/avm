@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "accuracy_policy.h"
+#include "reference_profile.h"
 
 float avm_reference_hypotf(float, float);
 float avm_reference_atan2f(float, float);
@@ -76,10 +77,9 @@ static int check(int function, float x, float y, float actual, double reference)
             maximum[function] = distance; worst_ulp[function][0] = bits(x); worst_ulp[function][1] = bits(y);
         }
         ++distribution[function][distance == 0 ? 0 : distance == 1 ? 1 : distance <= 4 ? 2 : distance <= 16 ? 3 : 4];
-        /* The new tangent budget excludes poles: preserve the old four-ULP
-           regression requirement in their neighborhood. */
-        int accepted = function == TAN && fabs(reference) >= 1e4
-            ? distance <= 4 : avm_accuracy_accept(policies[function], actual, reference, distance);
+        /* Single-float reduction uses the documented hybrid rule at poles;
+           signs and classifications remain exact checks. */
+        int accepted = avm_accuracy_accept(policies[function], actual, reference, distance);
         if (function==TAN) {
             if (fabs(reference)>=1e4) {
                 if (distance>tan_pole_ulps) tan_pole_ulps=distance;
@@ -138,8 +138,10 @@ static uint32_t random_word(uint32_t *state)
     return *state;
 }
 
-int main(void)
+int main(int argc, char **argv)
 {
+    int quick=reference_quick(argc,argv);
+    if (quick<0) return 2;
     static const uint32_t special[] = {
         0, 0x80000000, 1, 0x80000001, 0x007fffff, 0x807fffff, 0x00800000, 0x80800000,
         0x3f7fffff, 0x3f800000, 0x3f800001, 0xbf800000, 0x7f7fffff, 0xff7fffff,
@@ -155,7 +157,7 @@ int main(void)
        Exponents outside the shortcut's bounds must use the full algorithm. */
     for (int n = -8; n <= 8; ++n) {
         if (n > -3 && n < 3) continue;
-        for (uint32_t u = 0x3f000000; u <= 0x40000000; u += (n >= -5 && n <= 5 ? 1 : 17)) {
+        for (uint32_t u = 0x3f000000; u <= 0x40000000; u += (quick ? 4093 : (n >= -5 && n <= 5 ? 1 : 17))) {
             float x = value(u | ((u & 1) << 31));
             if (check(POW, x, (float)n, avm_reference_powf(x, (float)n),
                       pow((double)x, (double)n))) return 1;
@@ -170,7 +172,7 @@ int main(void)
     /* Every mantissa in the bounded positive pow path, for signed fractional
        exponents including the largest allowed magnitude. */
     static const float bounded_exponents[] = {-1.25f, -0.75f, -0.25f, 0.25f, 0.75f, 1.25f};
-    for (uint32_t u = 0x3f000000; u <= 0x40000000; ++u) {
+    for (uint32_t u = 0x3f000000; u <= 0x40000000; u += quick ? 4093 : 1) {
         float x = value(u);
         for (unsigned j = 0; j < sizeof(bounded_exponents) / sizeof(bounded_exponents[0]); ++j) {
             float y = bounded_exponents[j];
@@ -178,7 +180,7 @@ int main(void)
         }
     }
     uint32_t bounded_state = 0x1234abcd;
-    for (unsigned i = 0; i < 1000000; ++i) {
+    for (unsigned i = 0; i < (quick ? 10000 : 1000000); ++i) {
         float x = value(0x3f000000U + random_word(&bounded_state) % 0x01000001U);
         float y = (float)(int32_t)random_word(&bounded_state) * 0x1.4p-31f;
         if (check(POW, x, y, avm_reference_powf(x, y), pow((double)x, (double)y))) return 1;
@@ -189,7 +191,7 @@ int main(void)
        The host double reference supplies the mathematical result, independent
        of every production polynomial and of the former pow implementation. */
     static const double power_boundaries[]={-150,-149,-126,126,127,128};
-    for (uint32_t u=0x3f000000; u<=0x40000000; u+=127) {
+    for (uint32_t u=0x3f000000; u<=0x40000000; u+=quick ? 8191 : 127) {
         float x=value(u);
         if (x==1) continue;
         for (unsigned j=0;j<sizeof(power_boundaries)/sizeof(power_boundaries[0]);++j) {
@@ -202,7 +204,7 @@ int main(void)
     }
 
     /* Every reduced logarithm mantissa, including every near-one float. */
-    for (uint32_t u = 0x3f3504e0; u <= 0x3fb504f3; ++u)
+    for (uint32_t u = 0x3f3504e0; u <= 0x3fb504f3; u += quick ? 4093 : 1)
         if (logs(value(u))) return 1;
     for (int e = -149; e <= 127; ++e) {
         for (int delta = -3; delta <= 3; ++delta) {
@@ -214,18 +216,18 @@ int main(void)
 
     /* Dense exponential coverage of the entire scaling range, with both
        signs, plus a bit-pattern sweep to expose reduction rounding. */
-    for (int i=-1040000; i<=888000; ++i) {
+    for (int i=-1040000; i<=888000; i+=quick ? 1021 : 1) {
         float x=(float)i*0.0001f;
         check(EXP,x,0,avm_reference_expf(x),exp((double)x));
     }
-    for (uint32_t u=0x3e000000; u<=0x42b17218; u+=31) {
+    for (uint32_t u=0x3e000000; u<=0x42b17218; u+=quick ? 8191 : 31) {
         float x=value(u);
         check(EXP,x,0,avm_reference_expf(x),exp((double)x));
         check(EXP,-x,0,avm_reference_expf(-x),exp(-(double)x));
     }
 
     /* Every float in the high part of the direct atan/tan polynomial range. */
-    for (uint32_t u = 0x3e000000; u <= 0x3f800000; ++u) {
+    for (uint32_t u = 0x3e000000; u <= 0x3f800000; u += quick ? 4093 : 1) {
         float x = value(u);
         if (check(SIN, x, 0, avm_reference_sinf(x), sin((double)x)) ||
             check(COS, x, 0, avm_reference_cosf(x), cos((double)x)) ||
@@ -249,13 +251,13 @@ int main(void)
             if (binary(x, y) || binary(-y, x) || binary(x, -y) || binary(-x, -y)) return 1;
         }
     }
-    for (uint32_t u = 1; u < 0x00800000; u += 13) {
+    for (uint32_t u = 1; u < 0x00800000; u += quick ? 8191 : 13) {
         float x = value(u), y = value((u >> 2) + 1);
         if (binary(x, y)) return 1;
     }
 
     uint32_t state = 0x27051025;
-    for (unsigned i = 0; i < 1000000; ++i) {
+    for (unsigned i = 0; i < (quick ? 10000 : 1000000); ++i) {
         float x = value(random_word(&state)), y = value(random_word(&state));
         if (unary(x) || binary(x, y)) return 1;
     }

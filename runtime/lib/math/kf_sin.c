@@ -1,6 +1,6 @@
 #include "sin_kernel.h"
 
-float __kernel_sinf(float x, float y, int iy)
+float __kernel_sinf(float x)
 {
-    return avm_sin_kernel(x, y, iy);
+    return avm_sin_kernel(x);
 }

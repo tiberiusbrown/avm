@@ -120,11 +120,20 @@ foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
     if(AVM_BENCH_NAME MATCHES "^math_")
         list(APPEND AVM_MATH_BENCH_OUTPUTS "${AVM_BENCH_IMAGE}" "${AVM_BENCH_DISASSEMBLY}")
     endif()
+    if(AVM_BENCH_NAME MATCHES "^math_(trig_|sin|cos|tan)")
+        list(APPEND AVM_TRIG_BENCH_OUTPUTS "${AVM_BENCH_IMAGE}" "${AVM_BENCH_DISASSEMBLY}")
+    endif()
 endforeach()
 
 # Fast iteration on runtime math without compiling every diagnostic MIR dump.
 add_custom_target(avm_math_bench_images DEPENDS ${AVM_MATH_BENCH_OUTPUTS}
     "${AVM_BENCH_BASELINE_IMAGE}")
+add_custom_target(avm_trig_bench_images DEPENDS ${AVM_TRIG_BENCH_OUTPUTS}
+    "${AVM_BENCH_BASELINE_IMAGE}")
+add_custom_target(avm_trig_bench_run
+    COMMAND "$<TARGET_FILE:avm_bench>" --c-only --filter "^math_(trig_|sin|cos|tan)"
+        --c-output "${CMAKE_CURRENT_BINARY_DIR}/trig-cycles.txt"
+    DEPENDS avm_bench avm_trig_bench_images USES_TERMINAL VERBATIM)
 
 # C++ benchmarks use the same startup and baseline as C, but exercise C++
 # calls, object layout, and lifetime code generation.
@@ -209,7 +218,9 @@ set_target_properties(avm_bench PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 target_compile_features(avm_bench PRIVATE cxx_std_17)
 target_link_libraries(avm_bench PRIVATE ardensdebuggerlib)
+string(REGEX REPLACE "^-" "" AVM_BENCH_DISPLAY_OPT "${AVM_OPT_LEVEL}")
 target_compile_definitions(avm_bench PRIVATE
+    AVM_BENCH_OPT_LEVEL="${AVM_BENCH_DISPLAY_OPT}"
     AVM_BENCH_INSTRUCTIONS_BIN="${AVM_BENCH_INSTRUCTION_IMAGE}"
     AVM_BENCH_INSTRUCTION_NAMES="${AVM_BENCH_INSTRUCTION_NAMES}"
     AVM_BENCH_INSTRUCTION_OUTPUT="${AVM_BENCH_DIR}/cycles_instruction.txt"
@@ -223,8 +234,6 @@ target_compile_definitions(avm_bench PRIVATE
     AVM_BENCH_CXX_OUTPUT="${AVM_BENCH_DIR}/cycles_cpp.txt"
 )
 add_dependencies(avm_bench
-    avm_bench_images
-    avm_bench_mir
     avm_interpreter
 )
 
@@ -235,9 +244,23 @@ add_custom_target(avm_bench_run
     DEPENDS
         avm_tests_run
         avm_bench
+        avm_bench_images
+        avm_bench_mir
         ardurogue2
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running AVM tests, instruction benchmarks, and compiled benchmarks"
     USES_TERMINAL
     VERBATIM
 )
+
+find_package(Python3 COMPONENTS Interpreter QUIET)
+if(Python3_FOUND)
+    add_custom_target(avm_runner_cli_tests_run
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/runner_cli_test.py"
+            --build "${CMAKE_BINARY_DIR}"
+        DEPENDS avm_tests avm_bench "${AVM_BENCH_C_BINARY_DIR}/math_sin.bin"
+            "${AVM_BENCH_C_BINARY_DIR}/math_cos.bin"
+            "${AVM_BENCH_BASELINE_IMAGE}"
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" USES_TERMINAL VERBATIM)
+    add_dependencies(avm_validation_full avm_runner_cli_tests_run)
+endif()

@@ -15,15 +15,18 @@ helper call. The interpreter retains its eight-bit significand extension across
 Horner steps and rounds to binary32 only at the end. The host reference build
 models this extended precision. Exceptional handling and public APIs preserve their semantics. See the
 [function-specific accuracy policy](../../../docs/math-runtime/README.md).
-The 2/pi digits also embed in the instruction stream. Polynomial helpers inline into their callers; the large-angle
-24-by-256-bit integer product is fully unrolled into 8-by-8-bit products with
-split 16-bit column sums and carries, avoiding general 32-bit multiplication.
-Its complete 280-bit result is checked against a reference using 32-bit limbs
-and 64-bit arithmetic for every normalized binary32 mantissa. Internal exponents
-and quadrants use native 16-bit words. The range reducer tail-calls its large-angle
-helper to release its frame before allocating product scratch. Coefficient
-selection uses immediate constants, and math builds at -O3 without jump tables
-or floating-point contraction.
+Polynomial helpers inline into their callers. Internal exponents and quadrants
+use native 16-bit words where safe; quotient estimation uses exact-width uint32_t.
+Ordinary reduction uses one rounded 4/pi multiply, unsigned truncation, integer
+add/shift, and a split pi/2 reconstruction. The high product is exact through
+2^17 radians. Small cancellations use a three-part split; other cancellations
+and large angles use an exponent-indexed 2/pi window. The main window retains
+32 fractional bits and extends to 48 near cancellation; 24 coefficient guard
+bits bound omitted-product error. All integer products use native 8-by-8
+instructions, with bounded 16-bit column sums. There is no full-width product,
+compensation tail, or general 64-bit guest multiplication. The generator uses
+120-digit arithmetic and the full host arithmetic test covers every normalized
+mantissa. Math builds at -O3 without jump tables or floating-point contraction.
 
 Square root normalizes to [1,4), then uses 512 linear intervals per exponent
 parity in an 8 KiB program-space table. One uninterrupted 8-byte coefficient
@@ -47,16 +50,17 @@ guest integer helpers.
 
 Sine and cosine use degree-five odd and degree-six even Remez polynomials on
 the existing reduced interval. The low reduction tail is unnecessary for their
-absolute error budget. Tangent uses x+x^3*P2(x^2), adds the reduction tail and
-uses one ordinary reciprocal in odd quadrants. Pole neighbors retain four-ULP
-tests. `atanf` uses a reciprocal above one and a shared four-interval kernel on
+absolute error budget. Tangent uses x+x^3*P2(x^2) and
+one ordinary reciprocal in odd quadrants. Pole neighbors use the documented
+1e-4 absolute/relative hybrid budget with exact sign/classification checks. `atanf` uses a reciprocal above one and a shared four-interval kernel on
 [0,1], with a degree-seven odd first interval and centered degree-four fits in
 the other intervals. Endpoint anchoring prevents backward jumps at the tested
 branch boundaries. Native-word comparisons select intervals. `atan2f` divides
 the smaller magnitude by the larger and shares this kernel. `sincosf` shares
 one reduction and one square without adding work to standalone sin/cos.
 `tests/math/phase34_coefficients.py` reproduces the selected coefficients.
-The unfinished argument-reduction work is left unchanged.
+The current reducer measurements and workflows are in
+[the fast trig report](../../../docs/math-runtime/trig-fast/report.md).
 
 The three logarithms classify and normalize once, then inline one division-free
 base-two mantissa engine: f*P6(f), where f is the normalized mantissa minus one.
@@ -101,9 +105,11 @@ production reference objects. Its deterministic corpus and adaptive searches
 export worst inputs to interpreter fixtures at all six optimization levels.
 [Committed generated accuracy results](../../../docs/math-runtime/accuracy.md)
 include the JSON inputs and regeneration commands. Exact remainder, rounding,
-classification and sign checks remain unchanged. The large-angle trig reducer
-and its exhaustive 280-bit product test are unchanged.
+classification and sign checks remain unchanged. The window reducer's dense
+32/48-bit arithmetic and independent reconstruction checks replace the former
+280-bit product acceptance test. Quick/full workflows are documented in the
+[fast trig report](../../../docs/math-runtime/trig-fast/report.md).
 
 See [earlier measurements](../../../docs/math-runtime-tradeoff.md) for historical
 results, the [phase 1–2 study](../../../docs/math-runtime/report.md), and
-[current phase 3–4 measurements and validation](../../../docs/math-runtime/phase34/report.md).
+[phase 3–4 measurements and validation](../../../docs/math-runtime/phase34/report.md).

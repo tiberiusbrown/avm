@@ -13,36 +13,17 @@
  * ====================================================
  */
 
-#include "fdlibm.h"
+#include "rem_pio2_inline.h"
 #include "sin_kernel.h"
 #include "cos_kernel.h"
 
-
-	float cosf(float x)
+float cosf(float x)
 {
-	float y[2],z=0.0;
-	__int32_t ix;
-	int n;
-
-	GET_FLOAT_WORD(ix,x);
-
-    /* |x| ~< pi/4 */
-	ix &= 0x7fffffff;
-	if(ix <= 0x3f490fd8) return avm_cos_kernel(x,z);
-
-    /* cos(Inf or NaN) is NaN */
-	else if (!FLT_UWORD_IS_FINITE(ix)) return x-x;
-
-    /* argument reduction needed */
-	else {
-	    n = __ieee754_rem_pio2f(x,y);
-	    switch(n&3) {
-		case 0: return  avm_cos_kernel(y[0],y[1]);
-		case 1: return -avm_sin_kernel(y[0],y[1],1);
-		case 2: return -avm_cos_kernel(y[0],y[1]);
-		default:
-		        return  avm_sin_kernel(y[0],y[1],1);
-	    }
-	}
+    uint32_t bits;
+    GET_FLOAT_WORD(bits, x);
+    if ((bits&0x7fffffffUL) <= 0x3f490fdaUL) return avm_cos_kernel(x);
+    int n;
+    x = avm_rem_pio2f(x, &n);
+    float r = (n&1) ? avm_sin_kernel(x) : avm_cos_kernel(x);
+    return ((n+1)&2) ? -r : r;
 }
-

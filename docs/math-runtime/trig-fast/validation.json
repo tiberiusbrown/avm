@@ -1,0 +1,69 @@
+{
+  "date": "2026-10-26",
+  "baseline_revision": "fe0c0c1d46811a8c9378ccb557dd55ec3bff760b",
+  "configuration": "RelWithDebInfo",
+  "caller_optimization": "O2",
+  "runtime_optimization": "O3 -ffp-contract=off -fwrapv -fno-jump-tables",
+  "profiles": {
+    "fast": {
+      "profile": "fast",
+      "target": "avm_math_fast",
+      "elapsed_seconds": 12.986974600004032,
+      "exit_code": 0
+    },
+    "full": {
+      "profile": "full",
+      "target": "avm_validation_full",
+      "elapsed_seconds": 330.6590191000141,
+      "exit_code": 0
+    },
+    "bench": {
+      "profile": "bench",
+      "target": "avm_trig_bench_run",
+      "elapsed_seconds": 2.2791192000731826,
+      "exit_code": 0
+    },
+    "fast_first": {
+      "profile": "fast",
+      "target": "avm_math_fast",
+      "elapsed_seconds": 82.89004329987802,
+      "exit_code": 0
+    }
+  },
+  "fast_images": 84,
+  "fast_optimizations": [
+    "O0",
+    "O2"
+  ],
+  "full_avm_cases": 856,
+  "math_full_images": 252,
+  "stack": {
+    "before": {
+      "guest_bytes": 135,
+      "native_extra_bytes": 16
+    },
+    "after": {
+      "guest_bytes": 133,
+      "native_extra_bytes": 16
+    }
+  },
+  "native_summaries": [
+    "tanf_policy: away_max_absolute 0.206050916311, away_max_budget_fraction 0.684042750116, pole_max_ulp 512",
+    "tanf: 26174227 cases, max_abs 8.98011186207 @ 4096cbdf,00000000, max_rel 0.000136808547033 @ 3f490fdb,00000000, max_ulp 2295 @ 3f490fc0,00000000, failures 0 (0%), exceptional 0, ULP[0,1,2..4,5..16,17+] 527483,114426,327808,1365026,23835616",
+    "powf: 213895588 cases, max_abs 5.15304005351e+33 @ 3f350226,c37df4aa, max_rel 3.02866381891e-05 @ 3f350226,c37df4aa, max_ulp 460 @ 3fa70dc3,43a3fd8f, failures 0 (0%), exceptional 0, ULP[0,1,2..4,5..16,17+] 46233150,48166180,23751936,29493348,65378533",
+    "sinf: 26165845 cases, max_abs 1.79592421778e-06 @ c7ab64b6,00000000, max_rel 2.99832657027e-05 @ c6cfdc45,00000000, max_ulp 440 @ 46de2515,00000000, failures 0 (0%), exceptional 0, ULP[0,1,2..4,5..16,17+] 2509635,3494017,3844230,12163424,4150671",
+    "cosf: 26165845 cases, max_abs 1.79785675813e-06 @ c78d8094,00000000, max_rel 3.18625767664e-05 @ c76de560,00000000, max_ulp 524 @ c76de560,00000000, failures 0 (0%), exceptional 0, ULP[0,1,2..4,5..16,17+] 9692659,12711995,437333,2995813,324177"
+  ],
+  "reduction_checks": 18450260,
+  "mantissas_checked_per_window_width": 8388608,
+  "reduction_max_error": 1.09721650974e-06,
+  "reduction_worst_bits": "47bd0e90",
+  "nearest_quadrant_differences": 16,
+  "large_nearest_quadrant_differences": 0,
+  "interpreter_unchanged": true,
+  "interpreter_hex_data_bytes": 27176,
+  "high_precision_failures": 0,
+  "cli_regressions": "passed; includes sequential vs isolated emulator cycle comparison",
+  "expanded_final_worst_fixtures_all_six_levels": "passed",
+  "window_products_32_and_48_full": "passed"
+}

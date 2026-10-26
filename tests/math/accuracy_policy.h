@@ -17,6 +17,8 @@ static int avm_accuracy_accept(enum avm_accuracy policy, double actual,
     case AVM_SQRT: return ulps <= 2;
     case AVM_HYPOT: return ulps <= 4;
     case AVM_SIN: case AVM_COS: absolute = 1e-5; break;
+    /* Includes pole neighbors for the single-float reducer. Signs and all
+       exceptional/zero cases are checked exactly by the calling harness. */
     case AVM_TAN: absolute = relative = 1e-4; break;
     case AVM_ATAN: case AVM_ATAN2: absolute = 1e-6; break;
     case AVM_LOG: absolute = relative = 1e-6; break;

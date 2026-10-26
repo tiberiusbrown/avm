@@ -1,4 +1,4 @@
-#include "fdlibm.h"
+#include "rem_pio2_inline.h"
 #include "trig_poly.h"
 
 /* Standalone sin/cos retain their own kernels. A paired request shares both
@@ -10,13 +10,11 @@ void sincosf(float x, float *sine, float *cosine)
     ix&=0x7fffffffUL;
     float s,c;
     int n=0;
-    if (ix<=0x3f490fd8UL) {
+    if (ix<=0x3f490fdaUL) {
         if (ix<0x39800000UL) { *sine=x; *cosine=1.0f; return; }
     } else {
         if (ix>=0x7f800000UL) { *sine=x-x; *cosine=x-x; return; }
-        float y[2];
-        n=__ieee754_rem_pio2f(x,y);
-        x=y[0];
+        x=avm_rem_pio2f(x,&n);
     }
     float z=x*x;
     s=x*avm_sin_polynomial(z);

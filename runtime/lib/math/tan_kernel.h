@@ -18,17 +18,13 @@
 #include "fdlibm.h"
 #include "trig_poly.h"
 
-static __attribute__((always_inline)) inline float avm_tan_kernel(float x, float y, int iy)
+static __attribute__((always_inline)) inline float avm_tan_kernel(float x, int reciprocal)
 {
     uint32_t ix;
     GET_FLOAT_WORD(ix,x);
-    if (!(ix&0x7fffffffUL)) return iy==1 ? x : -1.0f/x;
-    /* Include the low reduction term before the reciprocal. Near poles the
-       tiny remainder makes the polynomial error negligible; pole neighbors
-       retain the existing four-ULP regression budget. */
+    if (!(ix&0x7fffffffUL)) return reciprocal ? -1.0f/x : x;
     float z=x*x;
     float w=x+(x*z)*avm_tan_polynomial(z);
-    w+=y;
-    return iy==1 ? w : -1.0f/w;
+    return reciprocal ? -1.0f/w : w;
 }
 #endif

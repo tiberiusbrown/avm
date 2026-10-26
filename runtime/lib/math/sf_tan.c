@@ -13,30 +13,15 @@
  * ====================================================
  */
 
-#include "fdlibm.h"
+#include "rem_pio2_inline.h"
 #include "tan_kernel.h"
 
-
-	float tanf(float x)
+float tanf(float x)
 {
-	float y[2],z=0.0;
-	__int32_t ix;
-	int n;
-
-	GET_FLOAT_WORD(ix,x);
-
-    /* |x| ~< pi/4 */
-	ix &= 0x7fffffff;
-	if(ix <= 0x3f490fda) return avm_tan_kernel(x,z,1);
-
-    /* tan(Inf or NaN) is NaN */
-	else if (!FLT_UWORD_IS_FINITE(ix)) return x-x;		/* NaN */
-
-    /* argument reduction needed */
-	else {
-	    n = __ieee754_rem_pio2f(x,y);
-	    return avm_tan_kernel(y[0],y[1],1-((n&1)<<1)); /*   1 -- n even
-							      -1 -- n odd */
-	}
+    uint32_t bits;
+    GET_FLOAT_WORD(bits, x);
+    if ((bits&0x7fffffffUL) <= 0x3f490fdaUL) return avm_tan_kernel(x, 0);
+    int n;
+    x = avm_rem_pio2f(x, &n);
+    return avm_tan_kernel(x, n&1);
 }
-

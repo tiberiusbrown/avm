@@ -1,0 +1,120 @@
+{
+  "ef_rem_pio2": {
+    "symbols": "00000000 000002b3 T __ieee754_rem_pio2f\n",
+    "sizes": {
+      "__ieee754_rem_pio2f": {
+        "bytes": 691,
+        "type": "T"
+      }
+    },
+    "instructions": {
+      "file": 1,
+      "r3": 3,
+      "r2": 3,
+      "r1": 3,
+      "r0": 3,
+      "q2": 1,
+      "q3": 1,
+      "q0": 1
+    }
+  },
+  "kf_rem_pio2": {
+    "symbols": "00000000 00000ca0 T __kernel_rem_pio2f\n",
+    "sizes": {
+      "__kernel_rem_pio2f": {
+        "bytes": 3232,
+        "type": "T"
+      }
+    },
+    "instructions": {
+      "file": 1,
+      "r3": 2,
+      "r2": 2,
+      "r1": 2,
+      "r0": 2,
+      "r7": 10,
+      "r4": 36,
+      "r5": 8,
+      "r6": 10,
+      "q0": 1,
+      "q2": 1
+    }
+  },
+  "sf_sin": {
+    "symbols": "00000000 00000152 T sinf\n",
+    "sizes": {
+      "sinf": {
+        "bytes": 338,
+        "type": "T"
+      }
+    },
+    "instructions": {
+      "file": 1,
+      "r3": 2,
+      "r2": 2,
+      "r1": 2,
+      "r0": 2,
+      "r7": 1,
+      "q2": 1
+    }
+  },
+  "sf_cos": {
+    "symbols": "00000000 0000014e T cosf\n",
+    "sizes": {
+      "cosf": {
+        "bytes": 334,
+        "type": "T"
+      }
+    },
+    "instructions": {
+      "file": 1,
+      "r3": 2,
+      "r2": 2,
+      "r1": 2,
+      "r0": 2,
+      "r7": 1,
+      "q2": 3
+    }
+  },
+  "sf_tan": {
+    "symbols": "00000000 000000d1 T tanf\n",
+    "sizes": {
+      "tanf": {
+        "bytes": 209,
+        "type": "T"
+      }
+    },
+    "instructions": {
+      "file": 1,
+      "r3": 2,
+      "r2": 2,
+      "r1": 2,
+      "r0": 3,
+      "r6": 2,
+      "r4": 1
+    }
+  },
+  "sf_sincos": {
+    "symbols": "00000000 000000cd T sincosf\n",
+    "sizes": {
+      "sincosf": {
+        "bytes": 205,
+        "type": "T"
+      }
+    },
+    "instructions": {
+      "file": 1,
+      "r3": 2,
+      "r2": 2,
+      "r1": 2,
+      "r0": 2,
+      "r7": 1,
+      "q0": 2,
+      "r4": 1,
+      "q1": 1
+    }
+  },
+  "image_bytes": {},
+  "interpreter_sha256": "4a849b7a07998622d00df2f8a4da91c34a43f501a2261d4c34331b9a01b601d6",
+  "interpreter_hex_data_bytes": 27176
+}

@@ -1,4 +1,5 @@
 #include <absim.hpp>
+#include "../tests/runner_selection.h"
 
 #include <algorithm>
 #include <cctype>
@@ -88,6 +89,8 @@ struct options_t {
     bool run_c = true;
     bool run_cxx = true;
     fs::path stack_output;
+    runner_selection selection;
+    bool instruction_output_explicit = false, c_output_explicit = false, cxx_output_explicit = false;
 };
 
 struct c_benchmark_t {
@@ -104,7 +107,10 @@ std::string usage_text()
         "[--instruction-output FILE] [--c-source-dir DIR] "
         "[--c-image-dir DIR] [--c-baseline FILE] [--c-output FILE] "
         "[--cpp-source-dir DIR] [--cpp-image-dir DIR] [--cpp-output FILE] "
-        "[--stack-output FILE] [--instruction-only | --c-only | --cpp-only]";
+        "[--stack-output FILE] [--instruction-only | --c-only | --cpp-only] [--filter REGEX] [--list]\n"
+        "Filter searches source stems / instruction names. --list needs no built images.\n"
+        "Filtered runs default to cycles_*.selected.txt; explicit output paths are used verbatim.\n"
+        "Compiled benchmarks use AVM_OPT_LEVEL; --opt is only for avm_tests.";
 }
 
 [[noreturn]] void usage_error(std::string const& message)
@@ -132,7 +138,7 @@ options_t parse_options(int argc, char** argv)
         else if(arg == "--instruction-names" || arg == "--names")
             options.instruction_names = require_value(arg);
         else if(arg == "--instruction-output")
-            options.instruction_output = require_value(arg);
+            { options.instruction_output = require_value(arg); options.instruction_output_explicit = true; }
         else if(arg == "--c-source-dir" || arg == "--source-dir")
             options.c_source_dir = require_value(arg);
         else if(arg == "--c-image-dir" || arg == "--image-dir")
@@ -140,15 +146,19 @@ options_t parse_options(int argc, char** argv)
         else if(arg == "--c-baseline" || arg == "--baseline")
             options.c_baseline = require_value(arg);
         else if(arg == "--c-output" || arg == "--output")
-            options.c_output = require_value(arg);
+            { options.c_output = require_value(arg); options.c_output_explicit = true; }
         else if(arg == "--cpp-source-dir")
             options.cxx_source_dir = require_value(arg);
         else if(arg == "--cpp-image-dir")
             options.cxx_image_dir = require_value(arg);
         else if(arg == "--cpp-output")
-            options.cxx_output = require_value(arg);
+            { options.cxx_output = require_value(arg); options.cxx_output_explicit = true; }
         else if(arg == "--stack-output")
             options.stack_output = require_value(arg);
+        else if(arg == "--filter")
+            options.selection.filter(require_value(arg).string());
+        else if(arg == "--list")
+            options.selection.list = true;
         else if(arg == "--instruction-only")
         {
             options.run_instructions = true;
@@ -176,6 +186,14 @@ options_t parse_options(int argc, char** argv)
             usage_error("Unknown option: " + std::string(arg));
     }
 
+    if(!options.selection.expression.empty()) {
+        auto selected_output = [](fs::path& path, bool explicit_path) {
+            if(!explicit_path) path = path.parent_path() / (path.stem().string()+".selected"+path.extension().string());
+        };
+        selected_output(options.instruction_output, options.instruction_output_explicit);
+        selected_output(options.c_output, options.c_output_explicit);
+        selected_output(options.cxx_output, options.cxx_output_explicit);
+    }
     return options;
 }
 
@@ -271,7 +289,8 @@ std::vector<std::string> read_benchmark_names(fs::path const& filename)
 std::vector<c_benchmark_t> discover_compiled_benchmarks(
     fs::path const& source_dir,
     fs::path const& image_dir,
-    std::string_view extension)
+    std::string_view extension,
+    runner_selection const& selection)
 {
     std::vector<c_benchmark_t> benchmarks;
     for(auto const& entry : fs::directory_iterator(source_dir))
@@ -280,6 +299,7 @@ std::vector<c_benchmark_t> discover_compiled_benchmarks(
             continue;
 
         fs::path const source = entry.path();
+        if(!selection.matches(source.stem().string())) continue;
         benchmarks.push_back({
             source.stem().string(),
             source,
@@ -292,14 +312,6 @@ std::vector<c_benchmark_t> discover_compiled_benchmarks(
             return lhs.source.filename() < rhs.source.filename();
         });
 
-    if(benchmarks.empty())
-    {
-        throw std::runtime_error(
-            "No compiled benchmark sources found in " + source_dir.string());
-    }
-
-    for(c_benchmark_t& benchmark : benchmarks)
-        benchmark.image = require_file(benchmark.image, "compiled benchmark image");
     return benchmarks;
 }
 
@@ -362,15 +374,29 @@ std::uint64_t measure_next_interval(absim::arduboy_t& arduboy)
     return end - begin;
 }
 
-std::uint64_t measure_image(fs::path const& interpreter, fs::path const& image)
-{
-    auto arduboy = std::make_unique<absim::arduboy_t>();
-    arduboy->reset();
+// One sequential session per language. BIN loading and reset clear CPU and FX
+// state; the unchanged interpreter is parsed/decoded only once. Never share this
+// session between concurrent measurements.
+struct compiled_session {
+    std::unique_ptr<absim::arduboy_t> arduboy;
+    double setup_seconds = 0, execution_seconds = 0;
 
-    // The interpreter is the ATmega32U4 program. The AVM image is loaded as FX
-    // data, matching the normal AVM test startup path.
-    load_file(*arduboy, interpreter, "interpreter.hex");
+    explicit compiled_session(fs::path const& interpreter)
+    {
+        auto start = std::chrono::steady_clock::now();
+        arduboy = std::make_unique<absim::arduboy_t>();
+        arduboy->reset();
+        load_file(*arduboy, interpreter, "interpreter.hex");
+        setup_seconds += std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count();
+    }
+
+    std::uint64_t measure(fs::path const& image)
+{
+    auto start = std::chrono::steady_clock::now();
+    arduboy->reset();
     load_file(*arduboy, image, "fxdata.bin");
+    auto loaded = std::chrono::steady_clock::now();
+    setup_seconds += std::chrono::duration<double>(loaded-start).count();
 
     run_to_debug_break(*arduboy);
     std::uint64_t const begin = arduboy->core_state.cpu.cycle_count;
@@ -380,13 +406,13 @@ std::uint64_t measure_image(fs::path const& interpreter, fs::path const& image)
 
     if(end < begin)
         throw std::runtime_error("Ardens cycle counter moved backwards");
+    execution_seconds += std::chrono::duration<double>(std::chrono::steady_clock::now()-loaded).count();
     return end - begin;
 }
+};
 
-void run_instruction_benchmarks(options_t const& options)
+void run_instruction_benchmarks(options_t const& options, std::vector<std::string> const& names)
 {
-    std::vector<std::string> const names =
-        read_benchmark_names(options.instruction_names);
 
     auto arduboy = std::make_unique<absim::arduboy_t>();
     arduboy->reset();
@@ -408,7 +434,10 @@ void run_instruction_benchmarks(options_t const& options)
     (void)measure_next_interval(*arduboy);
     std::uint64_t const baseline = measure_next_interval(*arduboy);
 
+    std::size_t selected_count = 0;
     auto write_result = [&](std::size_t index, std::uint64_t cycles) {
+        if(!options.selection.matches(names[index])) return;
+        ++selected_count;
         output << std::setw(5) << cycles << "   " << names[index] << '\n';
         std::cout << std::setw(3) << (index + 1) << "  "
                   << std::setw(5) << cycles << " cycles   "
@@ -419,7 +448,9 @@ void run_instruction_benchmarks(options_t const& options)
     // baseline rather than baseline minus itself.
     write_result(0, baseline);
 
-    for(std::size_t i = 1; i < names.size(); ++i)
+    auto last = names.size()-1;
+    while(last && !options.selection.matches(names[last])) --last;
+    for(std::size_t i = 1; i <= last; ++i)
     {
         std::uint64_t const raw = measure_next_interval(*arduboy);
         if(raw < baseline)
@@ -443,7 +474,7 @@ void run_instruction_benchmarks(options_t const& options)
 
     std::cout << "\nInstruction DEBUG_BREAK baseline: " << baseline
               << " cycles\n";
-    std::cout << "Wrote " << names.size() << " instruction timings to "
+    std::cout << "Wrote " << selected_count << " instruction timings to "
               << options.instruction_output << "\n\n";
 }
 
@@ -480,11 +511,11 @@ void run_compiled_benchmarks(
     fs::path const& source_dir,
     fs::path const& image_dir,
     fs::path const& output_file,
-    std::string_view extension,
+    std::vector<c_benchmark_t> const& benchmarks,
     std::string_view label)
 {
-    std::vector<c_benchmark_t> const benchmarks =
-        discover_compiled_benchmarks(source_dir, image_dir, extension);
+    for(auto const& benchmark : benchmarks)
+        require_file(benchmark.image, "compiled benchmark image");
     std::ofstream output = open_output(output_file);
     std::ofstream stack;
     if(!options.stack_output.empty()) {
@@ -502,14 +533,14 @@ void run_compiled_benchmarks(
     std::cout << "  baseline:    " << options.c_baseline << '\n';
     std::cout << "  output:      " << output_file << "\n\n";
 
-    std::uint64_t const baseline =
-        measure_image(options.interpreter, options.c_baseline);
+    compiled_session session(options.interpreter);
+    std::uint64_t const baseline = session.measure(options.c_baseline);
 
     for(std::size_t i = 0; i < benchmarks.size(); ++i)
     {
         c_benchmark_t const& benchmark = benchmarks[i];
         std::uint64_t const raw =
-            measure_image(options.interpreter, benchmark.image);
+            session.measure(require_file(benchmark.image, "compiled benchmark image"));
 
         if(raw < baseline)
         {
@@ -526,7 +557,7 @@ void run_compiled_benchmarks(
         std::cout << std::setw(3) << (i + 1) << "  "
                   << std::setw(12) << cycles << " cycles   "
                   << benchmark.source.filename().string() << std::endl;
-        if(stack) {
+        if(stack.is_open()) {
             auto usage = measure_stack(options, benchmark.image);
             stack << benchmark.name << '\t' << usage.first << '\t' << usage.second << '\n';
         }
@@ -540,6 +571,8 @@ void run_compiled_benchmarks(
               << " cycles\n";
     std::cout << "Wrote " << benchmarks.size() << ' ' << label << " timings to "
               << output_file << '\n';
+    std::cout << "Emulator setup/image loading: " << session.setup_seconds
+              << " s; execution: " << session.execution_seconds << " s (sequential session)\n";
 }
 
 } // namespace
@@ -549,6 +582,26 @@ int main(int argc, char** argv)
     try
     {
         options_t options = parse_options(argc, argv);
+        std::vector<std::string> names;
+        std::vector<c_benchmark_t> c, cpp;
+        if(options.run_instructions) names = read_benchmark_names(options.instruction_names);
+        if(options.run_c) c = discover_compiled_benchmarks(options.c_source_dir, options.c_image_dir, ".c", options.selection);
+        if(options.run_cxx) cpp = discover_compiled_benchmarks(options.cxx_source_dir, options.cxx_image_dir, ".cpp", options.selection);
+        auto instruction_count = std::count_if(names.begin(), names.end(), [&](std::string const& name) {
+            return options.selection.matches(name);
+        });
+        if(c.empty() && cpp.empty() && !instruction_count)
+            throw std::runtime_error("No benchmarks match the requested selection");
+        options.run_instructions = instruction_count != 0;
+        options.run_c = !c.empty();
+        options.run_cxx = !cpp.empty();
+        if(options.selection.list) {
+            for(auto const& name : names) if(options.selection.matches(name)) std::cout << "[ASM] " << name << '\n';
+            for(auto const& b : c) std::cout << "[C " AVM_BENCH_OPT_LEVEL "] " << b.name << '\n';
+            for(auto const& b : cpp) std::cout << "[C++ " AVM_BENCH_OPT_LEVEL "] " << b.name << '\n';
+            return 0;
+        }
+        runner_elapsed elapsed;
         options.interpreter = require_file(options.interpreter, "interpreter image");
 
         if(options.run_instructions)
@@ -567,30 +620,26 @@ int main(int argc, char** argv)
         {
             options.c_source_dir = require_directory(
                 options.c_source_dir, "C benchmark source directory");
-            options.c_image_dir = require_directory(
-                options.c_image_dir, "C benchmark image directory");
         }
         if(options.run_cxx)
         {
             options.cxx_source_dir = require_directory(
                 options.cxx_source_dir, "C++ benchmark source directory");
-            options.cxx_image_dir = require_directory(
-                options.cxx_image_dir, "C++ benchmark image directory");
         }
 
         if(!options.stack_output.empty())
             (void)open_output(options.stack_output); // Clear once for both languages.
 
         if(options.run_instructions)
-            run_instruction_benchmarks(options);
+            run_instruction_benchmarks(options, names);
         if(options.run_c)
             run_compiled_benchmarks(
                 options, options.c_source_dir, options.c_image_dir,
-                options.c_output, ".c", "C");
+                options.c_output, c, "C");
         if(options.run_cxx)
             run_compiled_benchmarks(
                 options, options.cxx_source_dir, options.cxx_image_dir,
-                options.cxx_output, ".cpp", "C++");
+                options.cxx_output, cpp, "C++");
         return 0;
     }
     catch(std::exception const& error)

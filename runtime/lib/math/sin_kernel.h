@@ -18,9 +18,8 @@
 #include "fdlibm.h"
 #include "trig_poly.h"
 
-static __attribute__((always_inline)) inline float avm_sin_kernel(float x, float y, int iy)
+static __attribute__((always_inline)) inline float avm_sin_kernel(float x)
 {
-    (void)y; (void)iy;
     uint32_t ix;
     GET_FLOAT_WORD(ix,x);
     if ((ix&0x7fffffffUL)<0x39800000UL) return x;

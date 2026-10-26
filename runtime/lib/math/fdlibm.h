@@ -31,11 +31,11 @@ typedef uint32_t __uint32_t;
 #define __ieee754_hypotf hypotf
 #define __ieee754_fmodf fmodf
 
-int __ieee754_rem_pio2f(float, float *);
-int __kernel_rem_pio2f(float, float *);
-float __kernel_sinf(float, float, int);
-float __kernel_cosf(float, float);
-float __kernel_tanf(float, float, int);
+float __ieee754_rem_pio2f(float, int *);
+float __kernel_rem_pio2f(float, int *);
+float __kernel_sinf(float);
+float __kernel_cosf(float);
+float __kernel_tanf(float, int);
 
 static inline int issignalingf_inline(float x)
 {

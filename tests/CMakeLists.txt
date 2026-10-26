@@ -161,6 +161,12 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             DEPENDS avm_sysroot
         )
         list(APPEND AVM_TEST_IMAGE_OUTPUTS "${AVM_TEST_IMAGE}")
+        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME MATCHES "^math_")
+            list(APPEND AVM_MATH_FULL_IMAGES "${AVM_TEST_IMAGE}")
+            if(AVM_TEST_OPT_LEVEL MATCHES "^(O0|O2)$")
+                list(APPEND AVM_MATH_FAST_IMAGES "${AVM_TEST_IMAGE}")
+            endif()
+        endif()
       endforeach()
     endforeach()
 endforeach()
@@ -187,12 +193,10 @@ target_compile_definitions(avm_tests PRIVATE
     AVM_TEST_ADVANCE_LIMIT=${AVM_TEST_ADVANCE_LIMIT}ull
 )
 add_dependencies(avm_tests
-    avm_test_images
     avm_interpreter
 )
 
-# Building avm_tests packages every current ASM, C, and C++ test. This target
-# additionally runs the complete suite in one invocation.
+# The runner can be built independently; avm_tests_run builds and runs all images.
 set(AVM_PUSH16_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/interp")
 avm_add_object(
     OUTPUT "${AVM_PUSH16_TEST_DIR}/audio.o"
@@ -437,7 +441,7 @@ add_custom_target(avm_display_system_tests_run
 
 add_custom_target(avm_tests_run
     COMMAND "$<TARGET_FILE:avm_tests>"
-    DEPENDS avm_tests avm_push16_tests_run avm_stack_bounds_tests_run avm_audio_tests_run
+    DEPENDS avm_tests avm_test_images avm_push16_tests_run avm_stack_bounds_tests_run avm_audio_tests_run
         avm_display_system_tests_run avm_timer0_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running all AVM tests in-process"
@@ -653,6 +657,13 @@ else()
 endif()
 target_link_libraries(avm_math_reference_tests PRIVATE avm_math_reference_kernel)
 add_executable(avm_math_reduction_tests math/rem_pio2_product_reference.c)
+if(MSVC)
+    target_compile_options(avm_math_reduction_tests PRIVATE /fp:strict
+        "/FI${CMAKE_CURRENT_SOURCE_DIR}/math/host_compat.h")
+else()
+    target_compile_options(avm_math_reduction_tests PRIVATE -ffp-contract=off -fno-fast-math)
+    target_link_libraries(avm_math_reduction_tests PRIVATE m)
+endif()
 if(NOT MSVC)
     target_link_libraries(avm_math_reference_tests PRIVATE m)
 endif()
@@ -750,7 +761,7 @@ if(Python3_FOUND)
         COMMAND "${AVM_MATH_PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/math/accuracy_reference.py"
             --probe "$<TARGET_FILE:avm_math_accuracy_probe>"
             --output "${CMAKE_CURRENT_BINARY_DIR}/math-accuracy.json"
-            --samples 1000
+            --samples 10000 --rounds 2
         DEPENDS avm_math_accuracy_probe
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         COMMENT "Checking production math against 100-digit mpmath references"
@@ -769,3 +780,35 @@ add_custom_target(avm_fpoly_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 add_dependencies(avm_tests_run avm_fpoly_tests_run)
+
+# These image lists never depend on avm_test_images or the unrelated hardware
+# suites. O0 is deliberate: guest optimizer/codegen bugs can be O0-only.
+add_custom_target(avm_math_fast_images DEPENDS ${AVM_MATH_FAST_IMAGES})
+add_custom_target(avm_math_full_images DEPENDS ${AVM_MATH_FULL_IMAGES})
+add_custom_target(avm_math_fast
+    COMMAND "${CMAKE_COMMAND}" -E time "$<TARGET_FILE:avm_tests>" --filter "^math_" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_math_reference_tests>" --quick
+    COMMAND "$<TARGET_FILE:avm_math_reduction_tests>" --quick
+    COMMAND "$<TARGET_FILE:avm_shortcuts_reference_tests>" --quick
+    DEPENDS avm_math_fast_images avm_tests avm_math_reference_tests
+        avm_math_reduction_tests avm_shortcuts_reference_tests avm_fpoly_tests_run
+    USES_TERMINAL VERBATIM)
+add_custom_target(avm_math_full
+    COMMAND "${CMAKE_COMMAND}" -E time "$<TARGET_FILE:avm_tests>" --filter "^math_"
+    DEPENDS avm_math_full_images avm_tests avm_math_reference_tests_run
+        avm_shortcuts_tests_run avm_rounding_tests_run avm_fpoly_tests_run
+    USES_TERMINAL VERBATIM)
+if(Python3_FOUND)
+    add_custom_target(avm_math_accuracy_fast
+        COMMAND "${AVM_MATH_PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/math/accuracy_reference.py"
+            --probe "$<TARGET_FILE:avm_math_accuracy_probe>"
+            --profile fast --samples 64 --rounds 0
+            --output "${CMAKE_CURRENT_BINARY_DIR}/math-accuracy-fast.json"
+        COMMAND "${AVM_MATH_PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/math/generate_reduction_table.py" --check
+        DEPENDS avm_math_accuracy_probe USES_TERMINAL VERBATIM)
+    add_dependencies(avm_math_fast avm_math_accuracy_fast)
+    add_dependencies(avm_math_full avm_math_accuracy_tests_run)
+    add_custom_target(avm_validation_full DEPENDS avm_tests_run avm_math_accuracy_tests_run)
+else()
+    add_custom_target(avm_validation_full DEPENDS avm_tests_run)
+endif()

@@ -1,0 +1,34 @@
+{
+  "cutoff-201": {
+    "wall_seconds": 3.6528185000643134,
+    "cycles": "      736048   math_trig_sin_edge.c\n      421495   math_trig_sin_game.c\n      775001   math_trig_sin_large.c\n      265149   math_trig_sin_poles.c\n      797234   math_trig_sincos_edge.c\n      488608   math_trig_sincos_game.c\n      836554   math_trig_sincos_large.c\n      355957   math_trig_sincos_poles.c\n"
+  },
+  "cutoff-1024": {
+    "wall_seconds": 3.471407499862835,
+    "cycles": "      698095   math_trig_sin_edge.c\n      370699   math_trig_sin_game.c\n      775001   math_trig_sin_large.c\n      265149   math_trig_sin_poles.c\n      759281   math_trig_sincos_edge.c\n      437812   math_trig_sincos_game.c\n      836554   math_trig_sincos_large.c\n      355957   math_trig_sincos_poles.c\n"
+  },
+  "cutoff-10000": {
+    "wall_seconds": 3.83423630008474,
+    "cycles": "      661009   math_trig_sin_edge.c\n      320515   math_trig_sin_game.c\n      776057   math_trig_sin_large.c\n      265512   math_trig_sin_poles.c\n      722190   math_trig_sincos_edge.c\n      387615   math_trig_sincos_game.c\n      837610   math_trig_sincos_large.c\n      356320   math_trig_sincos_poles.c\n"
+  },
+  "cutoff-30000": {
+    "wall_seconds": 4.0190687999129295,
+    "cycles": "      622784   math_trig_sin_edge.c\n      320515   math_trig_sin_game.c\n      776057   math_trig_sin_large.c\n      265512   math_trig_sin_poles.c\n      683949   math_trig_sincos_edge.c\n      387615   math_trig_sincos_game.c\n      837610   math_trig_sincos_large.c\n      356320   math_trig_sincos_poles.c\n"
+  },
+  "cutoff-50000": {
+    "wall_seconds": 3.783361000008881,
+    "cycles": "      637616   math_trig_sin_edge.c\n      320515   math_trig_sin_game.c\n      776057   math_trig_sin_large.c\n      265512   math_trig_sin_poles.c\n      698781   math_trig_sincos_edge.c\n      387615   math_trig_sincos_game.c\n      837610   math_trig_sincos_large.c\n      356320   math_trig_sincos_poles.c\n"
+  },
+  "cutoff-100000": {
+    "wall_seconds": 3.8107381998561323,
+    "cycles": "      614525   math_trig_sin_edge.c\n      320515   math_trig_sin_game.c\n      674522   math_trig_sin_large.c\n      265512   math_trig_sin_poles.c\n      675699   math_trig_sincos_edge.c\n      387615   math_trig_sincos_game.c\n      736074   math_trig_sincos_large.c\n      356320   math_trig_sincos_poles.c\n"
+  },
+  "cutoff-131072": {
+    "wall_seconds": 3.991524599958211,
+    "cycles": "      638464   math_trig_sin_edge.c\n      319855   math_trig_sin_game.c\n      673466   math_trig_sin_large.c\n      265149   math_trig_sin_poles.c\n      699638   math_trig_sincos_edge.c\n      386955   math_trig_sincos_game.c\n      735018   math_trig_sincos_large.c\n      355957   math_trig_sincos_poles.c\n"
+  },
+  "hybrid-u16": {
+    "wall_seconds": 3.594083399977535,
+    "cycles": "      648294   math_trig_sin_edge.c\n      325651   math_trig_sin_game.c\n      675826   math_trig_sin_large.c\n      265083   math_trig_sin_poles.c\n      709468   math_trig_sincos_edge.c\n      392751   math_trig_sincos_game.c\n      737378   math_trig_sincos_large.c\n      355891   math_trig_sincos_poles.c\n"
+  }
+}

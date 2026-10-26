@@ -1,0 +1,1121 @@
+{
+  "precision_digits": 100,
+  "mpmath_version": "1.3.0",
+  "random_samples": 10000,
+  "seed": "41564d26",
+  "search_rounds": 3,
+  "profile": "full",
+  "elapsed_seconds": 25.007285699946806,
+  "functions": {
+    "sqrtf": {
+      "count": 37146,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 2045169065553.1362,
+      "max_relative_normal": 2.2649154708127124e-07,
+      "max_ulp": 2.0,
+      "worst_absolute": [
+        "7f0561f7",
+        "b03dc733"
+      ],
+      "worst_relative": [
+        "41815832",
+        "be4d47bc"
+      ],
+      "worst_ulp": [
+        "00453453",
+        "3982d92a"
+      ],
+      "ulp_distribution": [
+        12655,
+        10750,
+        451,
+        0,
+        0
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 96,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 1.006593910676202e-26,
+          "worst_absolute": [
+            "00453453",
+            "3982d92a"
+          ]
+        },
+        "ordinary": {
+          "count": 13380,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 4.737957275491859e-07,
+          "worst_absolute": [
+            "41051593",
+            "3fa00000"
+          ]
+        },
+        "near_one": {
+          "count": 1808,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 2.2062785352254104e-07,
+          "worst_absolute": [
+            "3f861dc7",
+            "4060c697"
+          ]
+        },
+        "extreme": {
+          "count": 8572,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 2045169065553.1362,
+          "worst_absolute": [
+            "7f0561f7",
+            "b03dc733"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "expf": {
+      "count": 36244,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.3226346365371257e+33,
+      "max_relative_normal": 7.346033138095805e-06,
+      "max_ulp": 97.0,
+      "worst_absolute": [
+        "42b0f552",
+        "3d82624d"
+      ],
+      "worst_relative": [
+        "c2ac97e5",
+        "bf3b83fa"
+      ],
+      "worst_ulp": [
+        "c2aab99c",
+        "bd93517f"
+      ],
+      "ulp_distribution": [
+        10353,
+        1022,
+        2070,
+        6400,
+        12888
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 135,
+          "failures": 0,
+          "max_ulp": 0,
+          "max_absolute": 1.1754942106924411e-38,
+          "worst_absolute": [
+            "007fffff",
+            "ff800000"
+          ]
+        },
+        "ordinary": {
+          "count": 17494,
+          "failures": 0,
+          "max_ulp": 56,
+          "max_absolute": 21.76494808797911,
+          "worst_absolute": [
+            "417ff356",
+            "3f79eb8f"
+          ]
+        },
+        "near_one": {
+          "count": 1806,
+          "failures": 0,
+          "max_ulp": 45,
+          "max_absolute": 1.0803469388141475e-05,
+          "worst_absolute": [
+            "3f8d9fae",
+            "c08f840c"
+          ]
+        },
+        "extreme": {
+          "count": 13298,
+          "failures": 0,
+          "max_ulp": 97,
+          "max_absolute": 1.3226346365371257e+33,
+          "worst_absolute": [
+            "42b0f552",
+            "3d82624d"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "logf": {
+      "count": 36137,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 6.504514215548052e-06,
+      "max_relative_normal": 1.4705669658961398e-06,
+      "max_ulp": 22.0,
+      "worst_absolute": [
+        "7cfd46cb",
+        "1f3e7320"
+      ],
+      "worst_relative": [
+        "3f350499",
+        "c0bdbf16"
+      ],
+      "worst_ulp": [
+        "3fa296de",
+        "40f0f14b"
+      ],
+      "ulp_distribution": [
+        9252,
+        5415,
+        2511,
+        5241,
+        393
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 71,
+          "failures": 0,
+          "max_ulp": 1,
+          "max_absolute": 4.932728351921646e-06,
+          "worst_absolute": [
+            "00280357",
+            "c180be5e"
+          ]
+        },
+        "ordinary": {
+          "count": 13115,
+          "failures": 0,
+          "max_ulp": 22,
+          "max_absolute": 6.453722487339398e-06,
+          "worst_absolute": [
+            "0f900037",
+            "1411a345"
+          ]
+        },
+        "near_one": {
+          "count": 1830,
+          "failures": 0,
+          "max_ulp": 20,
+          "max_absolute": 1.4570288677186076e-07,
+          "worst_absolute": [
+            "3f8fefa4",
+            "c06f1095"
+          ]
+        },
+        "extreme": {
+          "count": 7796,
+          "failures": 0,
+          "max_ulp": 3,
+          "max_absolute": 6.504514215548052e-06,
+          "worst_absolute": [
+            "7cfd46cb",
+            "1f3e7320"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "log2f": {
+      "count": 36143,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 4.324603708898499e-06,
+      "max_relative_normal": 1.4736779122547076e-06,
+      "max_ulp": 23.0,
+      "worst_absolute": [
+        "602ec968",
+        "587dd1bd"
+      ],
+      "worst_relative": [
+        "3f350491",
+        "c0bdbf16"
+      ],
+      "worst_ulp": [
+        "3fb4fc5e",
+        "bf2615c9"
+      ],
+      "ulp_distribution": [
+        10600,
+        3998,
+        2907,
+        5039,
+        274
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 71,
+          "failures": 0,
+          "max_ulp": 0,
+          "max_absolute": 4.251857419114813e-06,
+          "worst_absolute": [
+            "0001ffff",
+            "3f400000"
+          ]
+        },
+        "ordinary": {
+          "count": 13125,
+          "failures": 0,
+          "max_ulp": 23,
+          "max_absolute": 4.240413455363641e-06,
+          "worst_absolute": [
+            "022f633d",
+            "9af8499b"
+          ]
+        },
+        "near_one": {
+          "count": 1831,
+          "failures": 0,
+          "max_ulp": 19,
+          "max_absolute": 2.0703296582692982e-07,
+          "worst_absolute": [
+            "3f8fefa4",
+            "c06f1095"
+          ]
+        },
+        "extreme": {
+          "count": 7791,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 4.324603708898499e-06,
+          "worst_absolute": [
+            "602ec968",
+            "587dd1bd"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "log10f": {
+      "count": 36246,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 4.739213656293908e-06,
+      "max_relative_normal": 1.4631864236639358e-06,
+      "max_ulp": 21.0,
+      "worst_absolute": [
+        "7b6ce51b",
+        "4f74339f"
+      ],
+      "worst_relative": [
+        "3f350491",
+        "c0bdbf16"
+      ],
+      "worst_ulp": [
+        "3f76fd5a",
+        "c0458542"
+      ],
+      "ulp_distribution": [
+        6417,
+        7431,
+        2901,
+        5642,
+        530
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 71,
+          "failures": 0,
+          "max_ulp": 1,
+          "max_absolute": 4.326047413618052e-06,
+          "worst_absolute": [
+            "00604459",
+            "4a64051f"
+          ]
+        },
+        "ordinary": {
+          "count": 13228,
+          "failures": 0,
+          "max_ulp": 20,
+          "max_absolute": 4.615047133619376e-06,
+          "worst_absolute": [
+            "014f19fe",
+            "576affbe"
+          ]
+        },
+        "near_one": {
+          "count": 1830,
+          "failures": 0,
+          "max_ulp": 21,
+          "max_absolute": 6.057289874813674e-08,
+          "worst_absolute": [
+            "3f8feaa9",
+            "3fa34adf"
+          ]
+        },
+        "extreme": {
+          "count": 7792,
+          "failures": 0,
+          "max_ulp": 3,
+          "max_absolute": 4.739213656293908e-06,
+          "worst_absolute": [
+            "7b6ce51b",
+            "4f74339f"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "hypotf": {
+      "count": 47750,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 2.5043634461527924e+31,
+      "max_relative_normal": 2.382036797577165e-07,
+      "max_ulp": 3.0,
+      "worst_absolute": [
+        "7dac265a",
+        "ff096b4f"
+      ],
+      "worst_relative": [
+        "3f8c0648",
+        "3fe05eab"
+      ],
+      "worst_ulp": [
+        "3f21ac6b",
+        "c0b7ad38"
+      ],
+      "ulp_distribution": [
+        32055,
+        14254,
+        1241,
+        0,
+        0
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 438,
+          "failures": 0,
+          "max_ulp": 1,
+          "max_absolute": 4.1301408330877633e-44,
+          "worst_absolute": [
+            "00500af4",
+            "08596013"
+          ]
+        },
+        "ordinary": {
+          "count": 21280,
+          "failures": 0,
+          "max_ulp": 3,
+          "max_absolute": 68719476736.0,
+          "worst_absolute": [
+            "bfd554d9",
+            "5d6aa7f4"
+          ]
+        },
+        "near_one": {
+          "count": 1916,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 0.007819538499116796,
+          "worst_absolute": [
+            "3f7b8ab6",
+            "4785f49b"
+          ]
+        },
+        "extreme": {
+          "count": 23916,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 2.5043634461527924e+31,
+          "worst_absolute": [
+            "7dac265a",
+            "ff096b4f"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "powf": {
+      "count": 39187,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.8992420935407978e+33,
+      "max_relative_normal": 1.9147586014435367e-05,
+      "max_ulp": 161.0,
+      "worst_absolute": [
+        "3f7fffff",
+        "ceb16e8b"
+      ],
+      "worst_relative": [
+        "3f6ffffa",
+        "c4a927e6"
+      ],
+      "worst_ulp": [
+        "3f6ffffa",
+        "c4a927e6"
+      ],
+      "ulp_distribution": [
+        4039,
+        2868,
+        1776,
+        5582,
+        10895
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 186,
+          "failures": 0,
+          "max_ulp": 79,
+          "max_absolute": 1.0042466138700886e+33,
+          "worst_absolute": [
+            "00000001",
+            "bf5be6fd"
+          ]
+        },
+        "ordinary": {
+          "count": 14403,
+          "failures": 0,
+          "max_ulp": 86,
+          "max_absolute": 1.371497495021589e+33,
+          "worst_absolute": [
+            "3f900000",
+            "443c4dbf"
+          ]
+        },
+        "near_one": {
+          "count": 2701,
+          "failures": 0,
+          "max_ulp": 161,
+          "max_absolute": 1.8992420935407978e+33,
+          "worst_absolute": [
+            "3f7fffff",
+            "ceb16e8b"
+          ]
+        },
+        "extreme": {
+          "count": 7870,
+          "failures": 0,
+          "max_ulp": 85,
+          "max_absolute": 1.5371293724870173e+32,
+          "worst_absolute": [
+            "7f7fffff",
+            "3f7ffadf"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "sinf": {
+      "count": 39398,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.7959242178083145e-06,
+      "max_relative_normal": 2.723744692869603e-05,
+      "max_ulp": 373.0,
+      "worst_absolute": [
+        "c7ab64b6",
+        "00000000"
+      ],
+      "worst_relative": [
+        "467abd0e",
+        "ded4a03d"
+      ],
+      "worst_ulp": [
+        "c5d9d986",
+        "109fe4a1"
+      ],
+      "ulp_distribution": [
+        17636,
+        9253,
+        1622,
+        7381,
+        3400
+      ],
+      "ranges": {
+        "direct": {
+          "count": 9206,
+          "failures": 0,
+          "max_ulp": 24,
+          "max_absolute": 1.1470791724999411e-06,
+          "worst_absolute": [
+            "bf490fda",
+            "00000000"
+          ]
+        },
+        "gameplay": {
+          "count": 23065,
+          "failures": 0,
+          "max_ulp": 373,
+          "max_absolute": 1.1903748605202099e-06,
+          "worst_absolute": [
+            "c31602d7",
+            "00000000"
+          ]
+        },
+        "medium": {
+          "count": 574,
+          "failures": 0,
+          "max_ulp": 313,
+          "max_absolute": 1.7959242178083145e-06,
+          "worst_absolute": [
+            "c7ab64b6",
+            "00000000"
+          ]
+        },
+        "fallback_ordinary": {
+          "count": 286,
+          "failures": 0,
+          "max_ulp": 22,
+          "max_absolute": 1.141253998972181e-06,
+          "worst_absolute": [
+            "48159252",
+            "00000000"
+          ]
+        },
+        "huge": {
+          "count": 6161,
+          "failures": 0,
+          "max_ulp": 61,
+          "max_absolute": 1.1501702233687055e-06,
+          "worst_absolute": [
+            "e05f6daf",
+            "00000000"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "cosf": {
+      "count": 39391,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.7978567581512231e-06,
+      "max_relative_normal": 2.36549789039265e-05,
+      "max_ulp": 314.0,
+      "worst_absolute": [
+        "c78d8094",
+        "00000000"
+      ],
+      "worst_relative": [
+        "c7bd0e91",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "47bd0e90",
+        "00000000"
+      ],
+      "ulp_distribution": [
+        15497,
+        5812,
+        2232,
+        10748,
+        4996
+      ],
+      "ranges": {
+        "direct": {
+          "count": 9210,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 9.459857519822681e-08,
+          "worst_absolute": [
+            "3f38237f",
+            "40a4a861"
+          ]
+        },
+        "gameplay": {
+          "count": 23061,
+          "failures": 0,
+          "max_ulp": 181,
+          "max_absolute": 1.1922884277691337e-06,
+          "worst_absolute": [
+            "c2da5737",
+            "00000000"
+          ]
+        },
+        "medium": {
+          "count": 589,
+          "failures": 0,
+          "max_ulp": 314,
+          "max_absolute": 1.7978567581512231e-06,
+          "worst_absolute": [
+            "c78d8094",
+            "00000000"
+          ]
+        },
+        "fallback_ordinary": {
+          "count": 272,
+          "failures": 0,
+          "max_ulp": 21,
+          "max_absolute": 1.1047205967263032e-06,
+          "worst_absolute": [
+            "c8224db9",
+            "dbb47119"
+          ]
+        },
+        "huge": {
+          "count": 6153,
+          "failures": 0,
+          "max_ulp": 23,
+          "max_absolute": 1.1392929147448492e-06,
+          "worst_absolute": [
+            "ee673b0f",
+            "00000000"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "tanf": {
+      "count": 39461,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 8.98011186206396,
+      "max_relative_normal": 0.0001368477979461864,
+      "max_ulp": 2296.0,
+      "worst_absolute": [
+        "c096cbdf",
+        "00000000"
+      ],
+      "worst_relative": [
+        "434b6b0a",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "407b53d0",
+        "00000000"
+      ],
+      "ulp_distribution": [
+        8329,
+        713,
+        896,
+        2369,
+        27048
+      ],
+      "ranges": {
+        "direct": {
+          "count": 9229,
+          "failures": 0,
+          "max_ulp": 2295,
+          "max_absolute": 0.00013677676655401972,
+          "worst_absolute": [
+            "bf490fd8",
+            "00000000"
+          ]
+        },
+        "gameplay": {
+          "count": 23453,
+          "failures": 0,
+          "max_ulp": 2296,
+          "max_absolute": 8.98011186206396,
+          "worst_absolute": [
+            "c096cbdf",
+            "00000000"
+          ]
+        },
+        "medium": {
+          "count": 245,
+          "failures": 0,
+          "max_ulp": 1591,
+          "max_absolute": 0.001237380696459766,
+          "worst_absolute": [
+            "462a295c",
+            "3b34f34f"
+          ]
+        },
+        "fallback_ordinary": {
+          "count": 272,
+          "failures": 0,
+          "max_ulp": 2292,
+          "max_absolute": 0.0001365915473753449,
+          "worst_absolute": [
+            "c8159252",
+            "00000000"
+          ]
+        },
+        "huge": {
+          "count": 6156,
+          "failures": 0,
+          "max_ulp": 2273,
+          "max_absolute": 0.002978732266094053,
+          "worst_absolute": [
+            "e45498f2",
+            "00000000"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "tangent_regions": {
+        "away_from_poles": {
+          "count": 38666,
+          "max_absolute": 0.028887484470098285,
+          "max_relative_normal": 0.0001368477979461864,
+          "max_ulp": 2296,
+          "max_budget_fraction": 0.6842410301647761
+        },
+        "pole_neighbors": {
+          "count": 689,
+          "max_absolute": 8.98011186206396,
+          "max_relative_normal": 2.1303168342877824e-05,
+          "max_ulp": 287,
+          "max_budget_fraction": 0.2130311780632418
+        }
+      },
+      "failure_percent": 0.0
+    },
+    "atanf": {
+      "count": 36497,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 6.117345476678936e-07,
+      "max_relative_normal": 9.490442731554569e-07,
+      "max_ulp": 11.0,
+      "worst_absolute": [
+        "3fded42c",
+        "401ef3a0"
+      ],
+      "worst_relative": [
+        "3f125c18",
+        "bf44180d"
+      ],
+      "worst_ulp": [
+        "3f0badca",
+        "c0e07301"
+      ],
+      "ulp_distribution": [
+        22398,
+        6408,
+        4656,
+        2961,
+        0
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 147,
+          "failures": 0,
+          "max_ulp": 0,
+          "max_absolute": 5.414273983310991e-115,
+          "worst_absolute": [
+            "807fffff",
+            "3fa00000"
+          ]
+        },
+        "ordinary": {
+          "count": 18129,
+          "failures": 0,
+          "max_ulp": 11,
+          "max_absolute": 6.117345476678936e-07,
+          "worst_absolute": [
+            "3fded42c",
+            "401ef3a0"
+          ]
+        },
+        "near_one": {
+          "count": 1809,
+          "failures": 0,
+          "max_ulp": 5,
+          "max_absolute": 3.210900486764282e-07,
+          "worst_absolute": [
+            "3f6c7c06",
+            "40cf6de2"
+          ]
+        },
+        "extreme": {
+          "count": 16338,
+          "failures": 0,
+          "max_ulp": 1,
+          "max_absolute": 1.0671453239228693e-07,
+          "worst_absolute": [
+            "c19bb85d",
+            "bf297607"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "atan2f": {
+      "count": 37336,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 7.033074924415714e-07,
+      "max_relative_normal": 9.858117003007152e-07,
+      "max_ulp": 10.0,
+      "worst_absolute": [
+        "3fdbf782",
+        "bf92cf56"
+      ],
+      "worst_relative": [
+        "3fbc7e7d",
+        "402491c5"
+      ],
+      "worst_ulp": [
+        "3f7bbb94",
+        "3fe6cb17"
+      ],
+      "ulp_distribution": [
+        25020,
+        8928,
+        1638,
+        1597,
+        0
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 281,
+          "failures": 0,
+          "max_ulp": 8,
+          "max_absolute": 5.041311503665803e-07,
+          "worst_absolute": [
+            "0057ffff",
+            "00800000"
+          ]
+        },
+        "ordinary": {
+          "count": 18211,
+          "failures": 0,
+          "max_ulp": 10,
+          "max_absolute": 7.033074924415714e-07,
+          "worst_absolute": [
+            "3fdbf782",
+            "bf92cf56"
+          ]
+        },
+        "near_one": {
+          "count": 2037,
+          "failures": 0,
+          "max_ulp": 10,
+          "max_absolute": 6.70042659887314e-07,
+          "worst_absolute": [
+            "3f88c8f0",
+            "bff1bbfe"
+          ]
+        },
+        "extreme": {
+          "count": 16654,
+          "failures": 0,
+          "max_ulp": 8,
+          "max_absolute": 5.337042214504256e-07,
+          "worst_absolute": [
+            "fe300001",
+            "fe800000"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "fmodf": {
+      "count": 36123,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 0,
+      "max_relative_normal": 0,
+      "max_ulp": 0,
+      "worst_absolute": null,
+      "worst_relative": null,
+      "worst_ulp": null,
+      "ulp_distribution": [
+        35830,
+        0,
+        0,
+        0,
+        0
+      ],
+      "ranges": {
+        "subnormal": {
+          "count": 120,
+          "failures": 0,
+          "max_ulp": 0,
+          "max_absolute": 0,
+          "worst_absolute": null
+        },
+        "ordinary": {
+          "count": 17470,
+          "failures": 0,
+          "max_ulp": 0,
+          "max_absolute": 0,
+          "worst_absolute": null
+        },
+        "near_one": {
+          "count": 1797,
+          "failures": 0,
+          "max_ulp": 0,
+          "max_absolute": 0,
+          "worst_absolute": null
+        },
+        "extreme": {
+          "count": 16443,
+          "failures": 0,
+          "max_ulp": 0,
+          "max_absolute": 0,
+          "worst_absolute": null
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "sincos_sinf": {
+      "count": 39117,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.7959242178083145e-06,
+      "max_relative_normal": 2.723744692869603e-05,
+      "max_ulp": 373.0,
+      "worst_absolute": [
+        "c7ab64b6",
+        "00000000"
+      ],
+      "worst_relative": [
+        "467abd0e",
+        "ded4a03d"
+      ],
+      "worst_ulp": [
+        "c5d9d986",
+        "109fe4a1"
+      ],
+      "ulp_distribution": [
+        16911,
+        9180,
+        1607,
+        7636,
+        3677
+      ],
+      "ranges": {
+        "direct": {
+          "count": 9188,
+          "failures": 0,
+          "max_ulp": 24,
+          "max_absolute": 1.1470791724999411e-06,
+          "worst_absolute": [
+            "bf490fda",
+            "00000000"
+          ]
+        },
+        "gameplay": {
+          "count": 23051,
+          "failures": 0,
+          "max_ulp": 373,
+          "max_absolute": 1.1903748605202099e-06,
+          "worst_absolute": [
+            "c31602d7",
+            "00000000"
+          ]
+        },
+        "medium": {
+          "count": 568,
+          "failures": 0,
+          "max_ulp": 313,
+          "max_absolute": 1.7959242178083145e-06,
+          "worst_absolute": [
+            "c7ab64b6",
+            "00000000"
+          ]
+        },
+        "fallback_ordinary": {
+          "count": 282,
+          "failures": 0,
+          "max_ulp": 22,
+          "max_absolute": 1.141253998972181e-06,
+          "worst_absolute": [
+            "48159252",
+            "00000000"
+          ]
+        },
+        "huge": {
+          "count": 5922,
+          "failures": 0,
+          "max_ulp": 42,
+          "max_absolute": 1.1501702233687055e-06,
+          "worst_absolute": [
+            "e05f6daf",
+            "00000000"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    },
+    "sincos_cosf": {
+      "count": 39110,
+      "failures": 0,
+      "exceptional_changes": 0,
+      "max_absolute": 1.7978567581512231e-06,
+      "max_relative_normal": 2.36549789039265e-05,
+      "max_ulp": 314.0,
+      "worst_absolute": [
+        "c78d8094",
+        "00000000"
+      ],
+      "worst_relative": [
+        "c7bd0e91",
+        "00000000"
+      ],
+      "worst_ulp": [
+        "47bd0e90",
+        "00000000"
+      ],
+      "ulp_distribution": [
+        14760,
+        5746,
+        2217,
+        10980,
+        5301
+      ],
+      "ranges": {
+        "direct": {
+          "count": 9188,
+          "failures": 0,
+          "max_ulp": 2,
+          "max_absolute": 9.459857519822681e-08,
+          "worst_absolute": [
+            "3f38237f",
+            "40a4a861"
+          ]
+        },
+        "gameplay": {
+          "count": 23045,
+          "failures": 0,
+          "max_ulp": 203,
+          "max_absolute": 1.1922884277691337e-06,
+          "worst_absolute": [
+            "c2da5737",
+            "00000000"
+          ]
+        },
+        "medium": {
+          "count": 581,
+          "failures": 0,
+          "max_ulp": 314,
+          "max_absolute": 1.7978567581512231e-06,
+          "worst_absolute": [
+            "c78d8094",
+            "00000000"
+          ]
+        },
+        "fallback_ordinary": {
+          "count": 268,
+          "failures": 0,
+          "max_ulp": 21,
+          "max_absolute": 1.1047205967263032e-06,
+          "worst_absolute": [
+            "c8224db9",
+            "dbb47119"
+          ]
+        },
+        "huge": {
+          "count": 5922,
+          "failures": 0,
+          "max_ulp": 23,
+          "max_absolute": 1.1392929147448492e-06,
+          "worst_absolute": [
+            "ee673b0f",
+            "00000000"
+          ]
+        }
+      },
+      "exceptional_examples": [],
+      "failure_percent": 0.0
+    }
+  }
+}

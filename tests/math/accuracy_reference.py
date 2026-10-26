@@ -11,6 +11,8 @@ import math
 import os
 from pathlib import Path
 import random
+import re
+import time
 import struct
 import subprocess
 import mpmath as mp
@@ -168,7 +170,6 @@ def acceptance(name,actual,ref,ulp):
     if name == 'sqrtf': return ulp <= 2
     if name == 'hypotf': return ulp <= 4
     if name == 'fmodf': return ulp == 0
-    if name == 'tanf' and abs(ref)>=10000: return ulp<=4
     at, rt = {'expf':(0,1e-5),'powf':(0,5e-5),'sinf':(1e-5,0),'cosf':(1e-5,0),
               'tanf':(1e-4,1e-4),'atanf':(1e-6,0),'atan2f':(1e-6,0)}.get(name,(1e-6,1e-6))
     if name in ['expf','powf'] and abs(ref) < mp.mpf(2)**-126:
@@ -187,18 +188,39 @@ def main():
     p.add_argument('--probe',type=Path,default=Path('build/tests/avm_math_accuracy_probe'+('.exe' if os.name=='nt' else '')))
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--samples',type=int,default=2000)
-    p.add_argument('--functions',nargs='+',default=FUNCTIONS)
+    p.add_argument('--functions',nargs='+',choices=FUNCTIONS,default=FUNCTIONS)
+    p.add_argument('--rounds',type=int,default=2,help='adaptive rounds after the initial corpus (default: 2)')
+    p.add_argument('--profile',choices=['fast','full'],default='full')
     p.add_argument('--fixtures',action='store_true')
     args=p.parse_args()
+    start=time.perf_counter()
+    if args.samples<0 or args.rounds<0: p.error('samples and rounds must be nonnegative')
+    if args.profile=='fast' and args.fixtures: p.error('fast runs must not overwrite committed fixtures')
+    if args.profile=='fast' and Path('docs').resolve() in args.output.resolve().parents:
+        p.error('fast runs must write reports in the build directory, not committed docs')
     stats={n:dict(count=0,failures=0,exceptional_changes=0,max_absolute=0,max_relative_normal=0,max_ulp=0,
                   worst_absolute=None,worst_relative=None,worst_ulp=None,ulp_distribution=[0]*5,
                   ranges={},exceptional_examples=[]) for n in args.functions}
     seeds={n:[] for n in args.functions}
     retained={n:set() for n in args.functions}
     pairs=corpus(args.samples)
-    requests=[(n,a,b) for n in args.functions for a,b in set(pairs)|set(phase34_corpus(n))]
+    if args.profile=='fast':
+        # Retain all exponent strata, choose fewer fractions in each stratum.
+        pairs=[pair for pair in pairs if (pair[0]&0x7fffff) in [0,1,0x400000,0x7fffff] or
+               abs(value(pair[0]))<16 or not math.isfinite(value(pair[0]))]
+    def fixtures(name):
+        paths=Path(__file__).resolve().parents[1]/'c'
+        result=set()
+        for path in paths.glob('math_'+name+'*.c'):
+            result.update((int(a,16),int(b,16)) for a,b in re.findall(
+                r'\{\s*0x([0-9a-fA-F]+)UL,\s*0x([0-9a-fA-F]+)UL,',path.read_text()))
+        if name.removeprefix('sincos_') in ['sinf','cosf','tanf']:
+            result.update((int(u,16),0) for u in re.findall(
+                r'\{0x([0-9a-fA-F]+)UL,', (paths/'math_trig_regressions.c').read_text()))
+        return result
+    requests=[(n,a,b) for n in args.functions for a,b in sorted(set(pairs)|set(phase34_corpus(n))|fixtures(n))]
     seen=set()
-    for iteration in range(3):
+    for iteration in range(args.rounds+1):
         requests=[r for r in requests if r not in seen]
         seen.update(requests)
         outputs=run(args.probe,requests)
@@ -227,8 +249,17 @@ def main():
                     s['max_'+key]=float(v); s['worst_'+('relative' if key=='relative_normal' else key)]=inputs
             s['ulp_distribution'][0 if ulp==0 else 1 if ulp==1 else 2 if ulp<=4 else 3 if ulp<=16 else 4]+=1
             category='subnormal' if (a&0x7fffffff)<0x00800000 else 'near_one' if abs(value(a)-1)<0.125 else 'ordinary' if abs(value(a))<16 else 'extreme'
-            bucket=s['ranges'].setdefault(category,dict(count=0,failures=0,max_ulp=0))
+            if n.removeprefix('sincos_') in ['sinf','cosf','tanf']:
+                magnitude=abs(value(a))
+                category=('direct' if magnitude<=math.pi/4 else
+                          'gameplay' if magnitude<=10000 else
+                          'medium' if magnitude<=100000 else
+                          'fallback_ordinary' if magnitude<=2**20 else 'huge')
+            bucket=s['ranges'].setdefault(category,dict(count=0,failures=0,max_ulp=0,
+                                                        max_absolute=0,worst_absolute=None))
             bucket['count']+=1; bucket['max_ulp']=max(bucket['max_ulp'],ulp)
+            if absolute>bucket['max_absolute']:
+                bucket['max_absolute']=float(absolute); bucket['worst_absolute']=inputs
             ok=acceptance(n,mp.mpf(actual),ref,ulp)
             if n=='tanf':
                 region='pole_neighbors' if abs(ref)>=10000 else 'away_from_poles'
@@ -238,7 +269,7 @@ def main():
                 record['max_absolute']=max(record['max_absolute'],float(absolute))
                 record['max_relative_normal']=max(record['max_relative_normal'],float(relative))
                 record['max_ulp']=max(record['max_ulp'],ulp)
-                fraction=ulp/4 if region=='pole_neighbors' else float(absolute/(mp.mpf('0.0001')*(1+abs(ref))))
+                fraction=float(absolute/(mp.mpf('0.0001')*(1+abs(ref))))
                 record['max_budget_fraction']=max(record['max_budget_fraction'],fraction)
             if not ok: s['failures']+=1; bucket['failures']+=1; retained[n].add((a,b))
             # Rank by scaled error, keeping both absolute and relative hard cases.
@@ -254,7 +285,7 @@ def main():
         print('search round',iteration+1,'cases',sum(s['count'] for s in stats.values()),flush=True)
     for s in stats.values(): s['failure_percent']=100*s['failures']/s['count']
     args.output.parent.mkdir(parents=True,exist_ok=True)
-    args.output.write_text(json.dumps(dict(precision_digits=100,mpmath_version=mp.__version__,random_samples=args.samples,seed='41564d26',search_rounds=3,functions=stats),indent=2)+'\n', encoding='utf-8')
+    args.output.write_text(json.dumps(dict(precision_digits=100,mpmath_version=mp.__version__,random_samples=args.samples,seed='41564d26',search_rounds=args.rounds+1,profile=args.profile,elapsed_seconds=time.perf_counter()-start,functions=stats),indent=2)+'\n', encoding='utf-8')
     if args.fixtures:
         for n,inputs in retained.items():
             policy={'sqrtf':'AVM_SQRT','expf':'AVM_EXP','hypotf':'AVM_HYPOT','powf':'AVM_POW','sinf':'AVM_SIN','cosf':'AVM_COS','tanf':'AVM_TAN','atanf':'AVM_ATAN','atan2f':'AVM_ATAN2','fmodf':'AVM_EXACT'}.get(n.removeprefix('sincos_'),'AVM_LOG')

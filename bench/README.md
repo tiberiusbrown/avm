@@ -1,5 +1,9 @@
 # AVM benchmarks
 
+The [fast trig report](../docs/math-runtime/trig-fast/report.md) records the
+current single-float reducer, identical-input before/after measurements, and
+fast/full reproduction commands. Use `avm_trig_bench_run` for the focused set.
+
 The [phase 3–4 math report](../docs/math-runtime/phase34/report.md) compares the
 current pow/hypot/trig replacements with the working-tree baseline. Additional
 workloads cover near-one powers, extreme powers, integer-loop crossover,
@@ -23,10 +27,31 @@ runner subtracts the adjacent-break baseline and writes cycle counts to
 `cycles_c.txt` and `cycles_cpp.txt`. Generated disassembly lives beside each
 source in its `asm` directory.
 
-Build with `cmake --build build --target avm_bench_run`. To time one language
-without rerunning the tests or instruction image, build `avm_bench` and run
+Build with `cmake --build build --config RelWithDebInfo --target avm_bench_run`.
+`avm_bench` builds only the runner; `avm_bench_images` builds all images and
+disassemblies, and `avm_bench_mir` builds optional diagnostic dumps. To time one language
+without rerunning the tests or instruction image, build `avm_bench avm_bench_images` and run
 `build/avm_bench --c-only` or `build/avm_bench --cpp-only`. The `--instruction-only`
 mode is available for the assembly image.
+
+```sh
+cmake --build build --config RelWithDebInfo --target avm_bench avm_trig_bench_images --parallel 8
+build/avm_bench --c-only --filter 'math_(sin|cos|tan|sincos)' --list
+build/avm_bench --c-only --filter '^math_trig_' --c-output build/trig-cycles.txt
+```
+
+Filters are ECMAScript regex searches on source stems or instruction names;
+an empty match fails. `--list` needs no built images or interpreter. Filtering
+happens before validating images. Filtered runs default to
+`cycles_c.selected.txt`, `cycles_cpp.selected.txt`, or
+`cycles_instruction.selected.txt`; an explicit output path takes precedence.
+No filter retains the complete sweep and historical output paths. Compiled
+benchmarks use the configured `AVM_OPT_LEVEL` (normally O2). Instruction filters
+consume preceding intervals from their one shared image, then stop after the
+last selected interval. Normal sweeps measure cycles only; stack stepping runs
+only with `--stack-output`. Compiled images run sequentially in a reset emulator
+session, reusing the decoded interpreter; regression tests compare these cycles
+with isolated one-image runs.
 
 The dedicated `avm_audio_tests_run` target measures native audio ISR, seek,
 countdown, chord-commit, and FX burst costs without adding interrupts to the

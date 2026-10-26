@@ -113,8 +113,24 @@ The 100,000 cutoff minimizes the sum of those three workloads among the tested s
 
 - The uint16 estimate wins in isolation (35,813 vs 39,251 cycles), but the tested <=50,000/uint32 hybrid loses on gameplay (325,651 vs 319,855 cycles) because of selection/spills. Keep one uint32 path.
 - A naive split 24x32/64 arithmetic fallback compiled into __avm_mulsi3/__avm_muldi3; its sine/large workload took 2,006,680 cycles. Native-byte columns reduced that to 777,338 with an always-48-bit result. The 32-bit window plus cancellation extension reduced it to 673,466 before inlining. The extension is necessary to keep useful tangent quality near tiny remainders; no permanent experiment selector or precision mode remains.
-- Shared reduction at cutoff 100,000 gave 320,515 sine/game cycles; inlining gave 283,919. The cold window helper remains shared. A proposed integer-threshold correction was also measured and rejected: spills made sine/game 345,883 rather than 319,855 at the compared 2^17 setting.
+- Shared reduction at cutoff 100,000 gave 320,515 sine/game cycles; inlining gave 283,919. The cold window helper remains shared. A proposed integer-threshold correction took 345,883 rather than 319,855 sine/game cycles at the compared 2^17 setting. That candidate generated more spills, but the float/integer reinterpretation itself does not require another register; see the code-generation investigation below.
 - Reusing a reset, decoded emulator sequentially reduced the 36-workload sweep from 1.94 s to 1.39 s despite the extra final guard. The final 39-workload sweep takes 1.43 s (0.62 s setup/loading, 0.81 s emulation). Cycles match isolated one-image runs. There is no shared-state parallel execution.
+
+### Integer comparison code generation
+
+The AVM backend assigns both `i32` and `f32` to `GPR32`. Reinterpretation probes in both directions compile to just `ret`, and the casts disappear before register allocation in the actual reducer. The earlier spill explanation must not be interpreted as a cost inherent in inspecting a float's bits.
+
+At the final 100,000 cutoff, the magnitude-and-sign variant causes LLVM to merge the positive and negative correction branches into selects of signed floating constants. Before the backend fix, AVM materialized both signs of each constant and selected entire 32-bit register pairs, although each pair of constants differs only in its sign bit. Together with the magnitude mask and changed live ranges, this raised the allocator's added spill slots in `sinf` from 6 to 14. This exposed a missed optimization in selecting the correction constants. Replacing just the two comparisons, using a signed positive-word test and an unsigned negative-word test, retains the separate correction branches and adds only one spill slot. Neither result establishes that integer comparisons intrinsically need more registers.
+
+The isolated comparison used the production wrapper flags and unchanged benchmark caller objects. Gameplay cycles for 32 calls were:
+
+| Correction comparisons | sine | cosine | tangent | sincos |
+|---|---:|---:|---:|---:|
+| Original floating comparisons | 283,919 | 302,723 | 314,383 | 353,115 |
+| Integer magnitude, then sign | 293,855 | 300,219 | 312,839 | 336,963 |
+| Integer words, separate branches | 287,407 | 299,311 | 310,971 | 349,703 |
+
+These are performance experiments; the production reducer remains unchanged. The subsequent general backend fix selects just the differing word of integer or float constants with a shared half. It reduces the magnitude variant's added sine spill slots from 14 to 12 and sine/game cycles from 293,855 to 289,995. The original sine/game workload remains faster at 283,919. See the [backend report](../../codegen-constant-select.md) for complete benchmark validation: 12 C workloads improve, with no increases across all 174 C, 8 C++, and 857 instruction measurements.
 
 ## Code, table and stack resources
 

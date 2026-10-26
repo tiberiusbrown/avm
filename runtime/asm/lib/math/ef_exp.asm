@@ -4,7 +4,7 @@ math_ef_exp.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_exp.c
 00000000 l    d  .text.expf	00000000 .text.expf
-00000000 g     F .text.expf	00000149 expf
+00000000 g     F .text.expf	00000143 expf
 
 Disassembly of section .text.expf:
 
@@ -121,22 +121,19 @@ Disassembly of section .text.expf:
  d2 04                 brult8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	expf
-		R_AVM_FAR24	.text.expf+0x127
+		R_AVM_FAR24	.text.expf+0x121
 <L7>:
  f4 0b                 ldsp16	r7, [sp+0x2]
  0b                    mov	r6, r7
  fa 9f                 lsr16i	r6, 0xf
- f2 30                 sub	r0, r0
- f0 05 00 3f           ldi16	r1, 0x3f00
- f2 42                 sub	r2, r2
- f0 07 00 bf           ldi16	r3, 0xbf00
+ c7 00 3f              ldi16	r7, 0x3f00
+ f0 04 00 bf           ldi16	r0, 0xbf00
  f4 a6                 tst8	r6
- fb 42                 cmov.ne	r0, r2
- fb 4b                 cmov.ne	r1, r3
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
- ff 0c                 fadd	q3, q0
- ff c2 63              ftos16	r6, q3
+ fb 78                 cmov.ne	r7, r0
+ aa                    xor	r6, r6
+ f2 62                 mov32	q0, q2
+ ff 03                 fadd	q0, q3
+ ff c2 60              ftos16	r6, q0
  ff c0 60              s16tof	q0, r6
  ff 18                 fsub	q2, q0
  ff ca 05 d1 b0 1e 3c 7e 0e 65 3d e1 fb 75 3e 61 70 31 3f 01 00 80 3f  fpoly	5, 0.009685711, 0.055922024, 0.240218654, 0.693121016, 1.00000012
@@ -144,7 +141,7 @@ Disassembly of section .text.expf:
  d3 04                 brslt8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	expf
-		R_AVM_FAR24	.text.expf+0x13f
+		R_AVM_FAR24	.text.expf+0x139
 <L8>:
  fa 57                 lsl16i	r6, 0x7
  c7 00 32              ldi16	r7, 0x3200

@@ -10,15 +10,15 @@ SYMBOL TABLE:
 00000180 l     O .data	00000004 result
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 ef_exp.c
-00000418 l       .init_array	00000000 .hidden __init_array_end
-00000418 l       .init_array	00000000 .hidden __init_array_start
-00000418 l       .fini_array	00000000 .hidden __fini_array_start
-00000418 l       .fini_array	00000000 .hidden __fini_array_end
+00000412 l       .init_array	00000000 .hidden __init_array_end
+00000412 l       .init_array	00000000 .hidden __init_array_start
+00000412 l       .fini_array	00000000 .hidden __fini_array_start
+00000412 l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	0000001e _start
 000002c7 g     F .text	00000031 avm_test_main
 000002f8 g     F .text	00000002 avm_halt
 00000000  w      *UND*	00000000 __avm_run_local_dtors
-000002fa g     F .text	0000011e expf
+000002fa g     F .text	00000118 expf
 
 Disassembly of section .text:
 
@@ -44,19 +44,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 18 04              ldi16	r4, 0x418
+ c4 12 04              ldi16	r4, 0x412
  c1 00                 ldi8	r5, 0x0
- c6 18 04              ldi16	r6, 0x418
+ c6 12 04              ldi16	r6, 0x412
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 18 04           ldi16	r0, 0x418
+ f0 04 12 04           ldi16	r0, 0x412
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 18 04           ldi16	r2, 0x418
+ f0 06 12 04           ldi16	r2, 0x412
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -90,19 +90,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 89 fd              call16	-631 <__avm_run_local_dtors>
 <L0>:
- c4 18 04              ldi16	r4, 0x418
+ c4 12 04              ldi16	r4, 0x412
  c1 00                 ldi8	r5, 0x0
- c6 18 04              ldi16	r6, 0x418
+ c6 12 04              ldi16	r6, 0x412
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 18 04           ldi16	r2, 0x418
+ f0 06 12 04           ldi16	r2, 0x412
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 18 04           ldi16	r0, 0x418
+ f0 04 12 04           ldi16	r0, 0x412
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -248,21 +248,18 @@ Disassembly of section .text:
  c6 18 72              ldi16	r6, 0x7218
  c7 b1 3e              ldi16	r7, 0x3eb1
  f0 69 c4              cmp32	q3, q1
- d8 4f                 bruge8	0x4f <L7>
+ d8 49                 bruge8	0x49 <L7>
  f4 0b                 ldsp16	r7, [sp+0x2]
  0b                    mov	r6, r7
  fa 9f                 lsr16i	r6, 0xf
- f2 30                 sub	r0, r0
- f0 05 00 3f           ldi16	r1, 0x3f00
- f2 42                 sub	r2, r2
- f0 07 00 bf           ldi16	r3, 0xbf00
+ c7 00 3f              ldi16	r7, 0x3f00
+ f0 04 00 bf           ldi16	r0, 0xbf00
  f4 a6                 tst8	r6
- fb 42                 cmov.ne	r0, r2
- fb 4b                 cmov.ne	r1, r3
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
- ff 0c                 fadd	q3, q0
- ff c2 63              ftos16	r6, q3
+ fb 78                 cmov.ne	r7, r0
+ aa                    xor	r6, r6
+ f2 62                 mov32	q0, q2
+ ff 03                 fadd	q0, q3
+ ff c2 60              ftos16	r6, q0
  ff c0 60              s16tof	q0, r6
  ff 18                 fsub	q2, q0
  ff ca 05 d1 b0 1e 3c 7e 0e 65 3d e1 fb 75 3e 61 70 31 3f 01 00 80 3f  fpoly	5, 0.009685711, 0.055922024, 0.240218654, 0.693121016, 1.00000012
@@ -276,7 +273,7 @@ Disassembly of section .text:
  a0                    xor	r4, r4
  c5 80 0d              ldi16	r5, 0xd80
  ff 2e                 fmul	q3, q2
- d4 95                 jmp8	-0x6b <L5>
+ d4 9b                 jmp8	-0x65 <L5>
 <L7>:
  ff ca 05 d1 b0 1e 3c 7e 0e 65 3d e1 fb 75 3e 61 70 31 3f 01 00 80 3f  fpoly	5, 0.009685711, 0.055922024, 0.240218654, 0.693121016, 1.00000012
  aa                    xor	r6, r6
@@ -285,4 +282,4 @@ Disassembly of section .text:
  0e                    mov	r7, r6
  aa                    xor	r6, r6
  f7 6e                 add32	q3, q2
- e0 74 ff              jmp16	-140 <L5>
+ e0 7a ff              jmp16	-134 <L5>

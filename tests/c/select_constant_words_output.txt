@@ -1,0 +1,2 @@
+select-constant-words=ok
+P

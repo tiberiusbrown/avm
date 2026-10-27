@@ -1,5 +1,16 @@
 # AVM benchmarks
 
+Each `ctype_<function>` workload benchmarks one of the 14 standard C-locale
+classification or case-conversion functions. It makes eight passes over EOF
+(-1) and all 256 byte values through a volatile function pointer, accumulating
+the results in a volatile sink. Classifier results are normalized to zero or
+one. Timings include loop, indirect-call, checksum, and sink overhead.
+
+After building the standard `avm_bench avm_bench_images` targets in
+RelWithDebInfo, run
+`build/avm_bench --c-only` to update the existing `cycles_c.txt` report.
+All 14 disassemblies are retained under `c/asm/`.
+
 The `string_strchr`, `string_strrchr`, `string_strncmp`, `string_strstr`,
 `string_memchr`, `string_strspn`, `string_strcspn`, `string_strpbrk`,
 `string_strnlen`, `string_strtok`, and `string_strtok_r` workloads exercise the

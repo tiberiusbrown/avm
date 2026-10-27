@@ -17,6 +17,7 @@ endfunction()
 set(RUNTIME_SOURCES
     audio_tone
     avm
+    ctype
     font_5x7
     font_br4
     font_br5

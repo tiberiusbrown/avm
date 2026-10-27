@@ -23,6 +23,20 @@
       723076   count_leading_zeros.c
       581536   count_trailing_zeros.c
       525762   crc16.c
+     2029207   ctype_isalnum.c
+     1766039   ctype_isalpha.c
+     1778375   ctype_isblank.c
+     1778375   ctype_iscntrl.c
+     1659127   ctype_isdigit.c
+     1659127   ctype_isgraph.c
+     1659127   ctype_islower.c
+     1659127   ctype_isprint.c
+     1995687   ctype_ispunct.c
+     1850335   ctype_isspace.c
+     1659127   ctype_isupper.c
+     2029207   ctype_isxdigit.c
+     1663031   ctype_tolower.c
+     1663031   ctype_toupper.c
      1577424   div_pow2.c
       759222   divmod.c
        18718   draw_text.c
@@ -284,7 +298,29 @@
       255931   stack_base_nested.c
      2425335   stack_frames.c
      7135388   state_machine.c
+     2423952   string_memchr.c
+     4710808   string_memchr_p.c
     25934602   string_scan.c
+     1205808   string_strchr.c
+     2405816   string_strchr_p.c
+     3291184   string_strcspn.c
+     5920473   string_strcspn_p.c
+     1461040   string_strncmp.c
+     2284307   string_strncmp_p.c
+      989904   string_strnlen.c
+     1913610   string_strnlen_p.c
+     3335280   string_strpbrk.c
+     5989721   string_strpbrk_p.c
+     1771792   string_strrchr.c
+     3525816   string_strrchr_p.c
+     4266288   string_strspn.c
+     8066905   string_strspn_p.c
+     1837488   string_strstr.c
+     2199193   string_strstr_p.c
+     2491491   string_strtok.c
+     4536578   string_strtok_p.c
+     2620028   string_strtok_r.c
+     4399874   string_strtok_r_p.c
       443789   struct_copy.c
       950957   switch.c
         2868   sys_memcmp.c

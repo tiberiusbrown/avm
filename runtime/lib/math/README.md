@@ -1,5 +1,72 @@
 # AVM single-precision math
 
+The exact utility functions include `nextafterf`, `fdimf`, `remainderf`,
+`remquof`, `nearbyintf`, `rintf`, `lrintf`, `lroundf`, `llrintf`, `llroundf`,
+`nanf`, `ilogbf`, `logbf`, `fmaxmagf`, and `fminmagf`. `nextafterf` reuses the
+existing bit-step implementation and its adjacency tests.
+
+* Remainder uses one native FMOD reduction modulo `2*abs(y)`; remquo reduces
+  modulo `8*abs(y)` and retains the signed low three quotient bits. Exact
+  scaled subtraction and a comparison with `abs(y)-r` implement nearest/even
+  quotient selection without division or a wide quotient. The complement
+  comparison handles odd subnormal divisors without rounding `y/2` to zero.
+  If the scaled divisor overflows, FMOD's infinite-divisor behavior returns
+  the finite input unchanged. Invalid inputs return NaN, infinite divisors
+  return the dividend, and remquo initializes the quotient to zero in both
+  cases. Exact-zero remainders preserve the dividend's sign.
+* Rint and nearbyint use separate binary32 add/subtract operations with 2^23
+  to round to nearest/even, restoring the sign of zero. Larger finite inputs
+  are already integers. AVM has fixed rounding and no exception flags, so
+  nearbyint and rint have identical behavior. The long variants combine this
+  rounding (or native FROUND for ties away from zero) with native signed
+  32-bit conversion. As in [avr-libc](https://avrdudes.github.io/avr-libc/avr-libc-user-manual/group__avr__math.html),
+  nonfinite and out-of-range values return `LONG_MIN`. Long-long variants
+  return `LLONG_MIN` in those cases. Their required 64-bit results are packed
+  as two 32-bit halves; they add no float-to-i64 or 64-bit arithmetic helper.
+* Ilogb/logb extract normal exponents directly and count subnormal leading
+  zeros in native words. `FP_ILOGB0` and `FP_ILOGBNAN` are `INT_MIN`; ilogb
+  returns `INT_MAX` for infinity. Logb returns negative infinity for zero,
+  positive infinity for either infinity, and quiets NaNs.
+* Magnitude extrema compare absolute IEEE words. Equal magnitudes choose
+  the ordinary numeric maximum/minimum, including +0/-0 respectively. One
+  quiet NaN yields the numeric operand; signaling NaNs propagate as quiet
+  NaNs. Fdim propagates NaNs and otherwise returns `x-y` if `x>y`, +0 otherwise.
+* Runtime nanf calls ignore the implementation-defined tag payload and
+  return a canonical quiet NaN. Constant calls may be folded by the compiler.
+
+[`misc_reference.c`](../../../tests/math/misc_reference.c) compares production
+objects with independent host libm over random bits, exponent strata, all
+small integer tie neighbors, extreme divisors, conversion endpoints and NaNs.
+[`generate_misc_tests.py`](../../../tests/math/generate_misc_tests.py) uses
+exact rational arithmetic for remainder/quotient fixtures, tested as C and C++
+at all six optimization levels. No errno/fenv state is added.
+
+Measured ordinary-input workloads (32 calls, with benchmark setup outside the
+timed interval; body bytes exclude shared helpers):
+
+| Function | AVR cycles | Body bytes |
+| --- | ---: | ---: |
+| `fdimf` | 104,149 | 107 |
+| `remainderf` | 194,553 | 232 |
+| `remquof` | 257,037 | 344 |
+| `nearbyintf` | 80,244 | 75 |
+| `rintf` | 80,244 | 75 |
+| `lrintf` | 104,076 | 108 |
+| `lroundf` | 70,704 | 42 |
+| `llrintf` | 123,079 | 288 |
+| `llroundf` | 90,603 | 224 |
+| `nanf` (indirect call) | 23,380 | 5 |
+| `ilogbf` | 67,504 | 217 |
+| `logbf` | 79,348 | 225 |
+| `fmaxmagf` | 106,497 | 214 |
+| `fminmagf` | 107,585 | 216 |
+
+The exact native reference checks 737,295 unary inputs and 590,657 binary
+pairs. Integer comparisons reduced the remquo workload from 287,453 to
+257,037 cycles (10.6%); remainder's smaller parity-only path measured faster
+with native floating comparisons, so it retains them. Inlining the common
+nearbyint kernel avoids 4,032 cycles of tail-call overhead in the same workload.
+
 The six hyperbolic functions use short binary32 paths, inspired by avr-libc's
 [`sinh.S`](https://github.com/avrdudes/avr-libc/blob/main/libm/fplib/sinh.S),
 [`cosh.S`](https://github.com/avrdudes/avr-libc/blob/main/libm/fplib/cosh.S), and

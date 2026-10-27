@@ -1,6 +1,15 @@
 #ifndef _AVM_RUNTIME_MATH_H
 #define _AVM_RUNTIME_MATH_H
 
+#if defined(__INT_MAX__)
+#define FP_ILOGB0 (-__INT_MAX__-1)
+#define FP_ILOGBNAN (-__INT_MAX__-1)
+#else
+#include <limits.h>
+#define FP_ILOGB0 INT_MIN
+#define FP_ILOGBNAN INT_MIN
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,6 +49,20 @@ float ldexpf(float x, int exponent);
 float frexpf(float x, int *exponent);
 float modff(float x, float *integer_part);
 float nextafterf(float x, float y);
+float fdimf(float x, float y);
+float remainderf(float x, float y);
+float remquof(float x, float y, int *quotient);
+float nearbyintf(float x);
+float rintf(float x);
+long lrintf(float x);
+long lroundf(float x);
+long long llrintf(float x);
+long long llroundf(float x);
+float nanf(const char *tag);
+int ilogbf(float x);
+float logbf(float x);
+float fmaxmagf(float x, float y);
+float fminmagf(float x, float y);
 float truncf(float x);
 float floorf(float x);
 float ceilf(float x);

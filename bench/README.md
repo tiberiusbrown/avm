@@ -400,6 +400,14 @@ The interpolation arithmetic and exact midpoint correction are unchanged.
 
 ## Native polynomial workloads
 
+The exact math utility workloads `math_fdim`, `math_remainder`, `math_remquo`,
+`math_rint`, `math_nearbyint`, `math_lrint`, `math_lround`, `math_llrint`,
+`math_llround`, `math_ilogb`, `math_logb`, `math_fmaxmag`, and `math_fminmag`
+each time 32 calls over 16 noninteger inputs. Integer sinks preserve all return
+bits, and remquo also stores its quotient. `math_nan` calls through a volatile
+function pointer to measure the runtime symbol instead of constant folding.
+The existing `math_nextafter` workload remains applicable.
+
 `math_sinh`, `math_cosh`, `math_tanh`, `math_asinh`, `math_acosh`, and
 `math_atanh` each time 32 hyperbolic calls over 16 ordinary noninteger inputs.
 They cover polynomial and exp/log paths; inverse inputs remain in domain.

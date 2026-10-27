@@ -28,6 +28,7 @@ set(RUNTIME_SOURCES
     pgmspace
     runtime
     stdio
+    stdlib
     string
 )
 

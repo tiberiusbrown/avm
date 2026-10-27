@@ -298,6 +298,19 @@
       255931   stack_base_nested.c
      2425335   stack_frames.c
      7135388   state_machine.c
+      155156   stdlib_abs.c
+      801662   stdlib_atoi.c
+     7387604   stdlib_atol.c
+    55433736   stdlib_atoll.c
+      164889   stdlib_div.c
+      186669   stdlib_labs.c
+     5688273   stdlib_ldiv.c
+      762376   stdlib_llabs.c
+    41786236   stdlib_lldiv.c
+     8281332   stdlib_strtol.c
+    67340300   stdlib_strtoll.c
+     8287572   stdlib_strtoul.c
+    68984140   stdlib_strtoull.c
      2423952   string_memchr.c
      4710808   string_memchr_p.c
     25934602   string_scan.c

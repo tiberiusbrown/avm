@@ -1,5 +1,17 @@
 # AVM benchmarks
 
+The 13 `stdlib_*` workloads cover `atoi`, `atol`, `atoll`, `strtol`,
+`strtoul`, `strtoll`, `strtoull`, `abs`, `labs`, `llabs`, `div`,
+`ldiv`, and `lldiv` through volatile function pointers. Absolute-value
+workloads make 32 passes over eight inputs; the others make 16 passes.
+Inputs cover signs, zero, and representable limits. The `strto*` workloads
+also cover mixed bases, no conversion, and overflow, accumulating end offsets
+and errno along with the converted values. Timings include loop, indirect-call,
+checksum, and sink overhead, plus errno reset for `strto*`.
+Build the existing `avm_bench avm_bench_images` targets in RelWithDebInfo and
+run `build/avm_bench --c-only` to update `cycles_c.txt`. Disassemblies are
+retained under `c/asm/`.
+
 Each `ctype_<function>` workload benchmarks one of the 14 standard C-locale
 classification or case-conversion functions. It makes eight passes over EOF
 (-1) and all 256 byte values through a volatile function pointer, accumulating

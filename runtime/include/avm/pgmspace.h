@@ -26,6 +26,20 @@ char* strncat_P(char* dst, char const AVM_PROGMEM* src, size_t size);
 char* strcpy_P(char* dst, char const AVM_PROGMEM* src);
 char* strcat_P(char* dst, char const AVM_PROGMEM* src);
 
+// Unary searches return pointers in program memory. Binary _P functions
+// keep their first input in RAM and read their second input from program memory.
+const void AVM_PROGMEM* memchr_P(const void AVM_PROGMEM* src, int value, size_t size);
+const char AVM_PROGMEM* strchr_P(const char AVM_PROGMEM* str, int value);
+const char AVM_PROGMEM* strrchr_P(const char AVM_PROGMEM* str, int value);
+size_t strnlen_P(const char AVM_PROGMEM* str, size_t size);
+int strncmp_P(const char* lhs, const char AVM_PROGMEM* rhs, size_t size);
+char* strstr_P(const char* str, const char AVM_PROGMEM* needle);
+char* strpbrk_P(const char* str, const char AVM_PROGMEM* accept);
+size_t strspn_P(const char* str, const char AVM_PROGMEM* accept);
+size_t strcspn_P(const char* str, const char AVM_PROGMEM* reject);
+char* strtok_P(char* str, const char AVM_PROGMEM* delimiters);
+char* strtok_rP(char* str, const char AVM_PROGMEM* delimiters, char** saveptr);
+
 #ifdef __cplusplus
 }
 #endif

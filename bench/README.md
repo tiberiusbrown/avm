@@ -16,6 +16,18 @@ then run `build/avm_bench --c-only --filter '^string_(str|memchr)' --c-output bu
 for these 11 workloads. Disassemblies are retained under `c/asm/`. They also
 participate in the complete benchmark sweep.
 
+The matching `string_*_p` workloads exercise all 11 program-memory entry points.
+They use the same inputs, iteration counts, search cases, and tokenization reset
+costs as their RAM counterparts. Unary searches and bounded length read flash
+buffers; comparison, substring, span, and tokenization workloads keep their first
+input in RAM and their second input in flash. Flash search checksums preserve the
+pointer address space. Calls use volatile function pointers.
+
+After the standard benchmark build, run
+`build/avm_bench --c-only --filter '^string_.*_p$' --c-output build/bench/string-progmem-cycles.txt`.
+The disassemblies are retained under `c/asm/`; no additional CMake targets are
+needed.
+
 The C99 math workloads `math_exp2`, `math_expm1`, `math_log1p`, `math_cbrt`,
 `math_asin`, and `math_acos` each measure 32 calls over a fixed mixture of common,
 boundary, and tiny inputs. `math_ldexp`, `math_frexp`, `math_modf`,

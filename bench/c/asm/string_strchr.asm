@@ -11,6 +11,7 @@ SYMBOL TABLE:
 00000105 l     O .data	00000080 string_bench_text
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 string.c
+00000000 l    df *ABS*	00000000 pgmspace.c
 0000042f l       .init_array	00000000 .hidden __init_array_end
 0000042f l       .init_array	00000000 .hidden __init_array_start
 0000042f l       .fini_array	00000000 .hidden __fini_array_start

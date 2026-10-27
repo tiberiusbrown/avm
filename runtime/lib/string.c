@@ -99,9 +99,15 @@ char* strtok_r(char* str, const char* delimiters, char** saveptr) {
     return str;
 }
 
+// Both delimiter address spaces share the ordinary strtok continuation state.
+static char* strtok_next;
+
 char* strtok(char* str, const char* delimiters) {
-    static char* next;
-    return strtok_r(str, delimiters, &next);
+    return strtok_r(str, delimiters, &strtok_next);
+}
+
+char* strtok_P(char* str, const char AVM_PROGMEM* delimiters) {
+    return strtok_rP(str, delimiters, &strtok_next);
 }
 
 void* memcpy(void* dst, const void* src, size_t size) {

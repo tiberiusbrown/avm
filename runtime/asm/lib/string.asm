@@ -14,7 +14,8 @@ SYMBOL TABLE:
 00000000 l    d  .text.strnlen	00000000 .text.strnlen
 00000000 l    d  .text.strtok_r	00000000 .text.strtok_r
 00000000 l    d  .text.strtok	00000000 .text.strtok
-00000000 l     O .data.strtok.next	00000002 strtok.next
+00000000 l     O .data.strtok_next	00000002 strtok_next
+00000000 l    d  .text.strtok_P	00000000 .text.strtok_P
 00000000 l    d  .text.memcpy	00000000 .text.memcpy
 00000000 l    d  .text.memset	00000000 .text.memset
 00000000 l    d  .text.memmove	00000000 .text.memmove
@@ -25,7 +26,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.strncat	00000000 .text.strncat
 00000000 l    d  .text.strcpy	00000000 .text.strcpy
 00000000 l    d  .text.strcat	00000000 .text.strcat
-00000000 l    d  .data.strtok.next	00000000 .data.strtok.next
+00000000 l    d  .data.strtok_next	00000000 .data.strtok_next
 00000000 g     F .text.memchr	0000002a memchr
 00000000 g     F .text.strncmp	0000002e strncmp
 00000000 g     F .text.strchr	00000017 strchr
@@ -37,6 +38,8 @@ SYMBOL TABLE:
 00000000 g     F .text.strnlen	00000020 strnlen
 00000000 g     F .text.strtok_r	00000098 strtok_r
 00000000 g     F .text.strtok	00000099 strtok
+00000000 g     F .text.strtok_P	00000010 strtok_P
+00000000         *UND*	00000000 strtok_rP
 00000000 g     F .text.memcpy	00000005 memcpy
 00000000 g     F .text.memset	00000005 memset
 00000000 g     F .text.memmove	00000005 memmove
@@ -502,7 +505,7 @@ Disassembly of section .text.strtok:
 		R_AVM_FAR24	.text.strtok+0x16
 <L0>:
  f0 54 00 00           ldm16	r4, [0x0]
-		R_AVM_DATA16	.data.strtok.next
+		R_AVM_DATA16	.data.strtok_next
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
@@ -591,7 +594,7 @@ Disassembly of section .text.strtok:
  f1 04                 mov	r0, r4
  01                    mov	r4, r5
  f0 58 00 00           stm16	[0x0], r0
-		R_AVM_DATA16	.data.strtok.next
+		R_AVM_DATA16	.data.strtok_next
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
@@ -599,6 +602,20 @@ Disassembly of section .text.strtok:
  e2 00 00 00           jmpf	strtok
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.strtok+0x91
+
+Disassembly of section .text.strtok_P:
+
+<strtok_P>:
+ d6 fe                 adjsp	-0x2
+ c5 00 00              ldi16	r5, 0x0
+		R_AVM_DATA16	.data.strtok_next
+ f4 41                 stsp16	[sp+0x0], r5
+ f1 77                 zext8	r7
+ e3 00 00 00           callf	strtok_P
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	strtok_rP
+ d6 02                 adjsp	0x2
+ ef                    ret
 
 Disassembly of section .text.memcpy:
 

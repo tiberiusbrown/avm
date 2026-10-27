@@ -81,9 +81,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
             if(AVM_TEST_NAME MATCHES "^math_(native|c99_exact|c99_classify|c99_functions|hyperbolic|misc)$")
                 list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
-            elseif(AVM_TEST_NAME STREQUAL "string_search")
+            elseif(AVM_TEST_NAME MATCHES "^string_(search|progmem_search)$")
                 list(APPEND test_source_dependencies
-                    "${AVM_C_TEST_DIR}/string_search.c")
+                    "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
             elseif(AVM_TEST_NAME STREQUAL "display_system")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/display_system.c")

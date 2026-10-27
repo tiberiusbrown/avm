@@ -47,6 +47,17 @@ char* strncpy(char*, const char AVM_PROGMEM*, size_t) __asm__("strncpy_P");
 char* strncat(char*, const char AVM_PROGMEM*, size_t) __asm__("strncat_P");
 char* strcpy(char*, const char AVM_PROGMEM*) __asm__("strcpy_P");
 char* strcat(char*, const char AVM_PROGMEM*) __asm__("strcat_P");
+const void AVM_PROGMEM* memchr(const void AVM_PROGMEM*, int, size_t) __asm__("memchr_P");
+const char AVM_PROGMEM* strchr(const char AVM_PROGMEM*, int) __asm__("strchr_P");
+const char AVM_PROGMEM* strrchr(const char AVM_PROGMEM*, int) __asm__("strrchr_P");
+size_t strnlen(const char AVM_PROGMEM*, size_t) __asm__("strnlen_P");
+int strncmp(const char*, const char AVM_PROGMEM*, size_t) __asm__("strncmp_P");
+char* strstr(const char*, const char AVM_PROGMEM*) __asm__("strstr_P");
+char* strpbrk(const char*, const char AVM_PROGMEM*) __asm__("strpbrk_P");
+size_t strspn(const char*, const char AVM_PROGMEM*) __asm__("strspn_P");
+size_t strcspn(const char*, const char AVM_PROGMEM*) __asm__("strcspn_P");
+char* strtok(char*, const char AVM_PROGMEM*) __asm__("strtok_P");
+char* strtok_r(char*, const char AVM_PROGMEM*, char**) __asm__("strtok_rP");
 
 // Direct call syntax keeps the system-service path at all optimization levels.
 static __attribute__((always_inline)) inline void* __avm_cpp_memcpy(void* d, const void* s, size_t n) {

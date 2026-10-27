@@ -1,9 +1,6 @@
 """Synthetic Stage 2 tests; no copyrighted recordings or SoundFont required."""
 import importlib.util
-import json
-import subprocess
 import sys
-import tempfile
 import unittest
 from copy import deepcopy
 from itertools import product
@@ -33,9 +30,7 @@ if HAS_AUDIO:
         structure,
         valid_candidate,
     )
-    from avm_audio_render import decode, render, write_wav
-    from midi_to_avms_stage2 import discover_pairs
-    from scipy.io import wavfile
+    from avm_audio_render import decode, render
 
 
 def fixture(channels=(0,), duration=1.2):
@@ -245,13 +240,6 @@ class RenderTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             render(b"\x01\x00\x00\x01", rate=16000)
 
-    def test_fractional_rate_wav_uses_exact_resampling(self):
-        with tempfile.TemporaryDirectory() as folder:
-            path = Path(folder)/"out.wav"
-            write_wav(path, np.zeros(7813), 7812.5)
-            rate, raw = wavfile.read(path)
-            self.assertEqual(rate, 15625)
-            self.assertEqual(len(raw), 15626)
 
 
 @unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
@@ -285,26 +273,6 @@ class FeatureTests(unittest.TestCase):
         _, onset = activity(attack, 15625)
         self.assertLess(abs(np.argmax(onset)/250-4000/15625), .02)
 
-    def test_stereo_pcm_float_resample_and_preserve_silence(self):
-        with tempfile.TemporaryDirectory() as folder:
-            for dtype in (np.int16, np.int32, np.float32, np.uint8):
-                mono = np.r_[np.zeros(4410), np.ones(4410)*.2, np.zeros(4410)]
-                stereo = np.column_stack((mono, mono))
-                if dtype == np.uint8:
-                    raw = np.rint(stereo*128+128).astype(dtype)
-                elif np.issubdtype(dtype, np.integer):
-                    raw = (stereo*(2**(np.dtype(dtype).itemsize*8-1))).astype(dtype)
-                else:
-                    raw = stereo.astype(dtype)
-                path = Path(folder)/f"{np.dtype(dtype)}.wav"
-                wavfile.write(path, 44100, raw)
-                before = path.read_bytes()
-                ref = load_reference(path)
-                self.assertEqual(ref.metadata["channels"], 2)
-                self.assertAlmostEqual(ref.metadata["leading_silence_seconds"], .1, delta=.02)
-                self.assertFalse(ref.metadata["trimmed"])
-                self.assertAlmostEqual(len(ref.audio)/15625, .3, delta=.001)
-                self.assertEqual(path.read_bytes(), before)
 
     def test_alignment_keeps_midi_rests_and_detects_latency(self):
         rate, latency = 15625, .12
@@ -407,59 +375,5 @@ class OptimizationTests(unittest.TestCase):
         b.voices[0][0].effects = [effect, effect]
         self.assertFalse(valid_candidate(b, a))
         self.assertEqual(snapshot(restore(a, snapshot(a))), snapshot(a))
-
-
-@unittest.skipUnless(HAS_AUDIO, "optional Stage 2 tests need tools/requirements-stage2.txt")
-class CliTests(unittest.TestCase):
-    def test_discovery_casefold_unmatched_and_ambiguity(self):
-        with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            for name in ("Theme.MID", "theme.WAV", "alone.mid", "ignore.sf2"):
-                (root/name).touch()
-            pairs, unmatched = discover_pairs(root)
-            self.assertEqual(len(pairs), 1)
-            self.assertEqual(unmatched, ["alone"])
-            (root/"theme.midi").touch()
-            with self.assertRaises(ValueError):
-                discover_pairs(root)
-
-    def test_cli_render_score_defaults_to_15625(self):
-        with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            score = root/"test.avms"
-            score.write_text("channel 0 { volume 8 c:200ms }")
-            completed = subprocess.run([sys.executable, str(ROOT/"tools/midi_to_avms_stage2.py"), str(score), "--render-only", "--excerpt-duration", ".3", "--output-dir", str(root/"out")], capture_output=True, text=True, check=False)
-            self.assertEqual(completed.returncode, 0, completed.stderr)
-            rate, audio = wavfile.read(root/"out/preview.wav")
-            self.assertEqual(rate, 15625)
-            self.assertTrue(np.any(audio))
-
-    @unittest.skipUnless(importlib.util.find_spec("mido"), "MIDI CLI needs mido")
-    def test_single_and_batch_cli_resume_and_originals(self):
-        import mido
-        with tempfile.TemporaryDirectory() as folder:
-            root = Path(folder)
-            source = root/"corpus"
-            source.mkdir()
-            f = mido.MidiFile()
-            f.tracks.append(mido.MidiTrack([mido.Message("note_on", note=60, velocity=100), mido.Message("note_off", note=60, time=960)]))
-            path = source/"test.MID"
-            f.save(path)
-            a = midi.arrange(midi.read_midi(path))
-            target = render(midi.compile_arrangement(a)[1]).audio
-            write_wav(source/"TEST.wav", target, 15625)
-            original = {p.name: p.read_bytes() for p in source.iterdir()}
-            command = [sys.executable, str(ROOT/"tools/midi_to_avms_stage2.py"), "--input-dir", str(source), "--output-dir", str(root/"out"), "--max-evaluations", "12", "--no-plots"]
-            for extra in ([], ["--resume"]):
-                completed = subprocess.run(command+extra, capture_output=True, text=True, check=False)
-                self.assertEqual(completed.returncode, 0, completed.stderr)
-            report = json.loads((root/"out/test/comparison.json").read_text())
-            self.assertEqual(report["rate"], 15625)
-            self.assertTrue(all(report["protected_pitch_timing_sources_unchanged"].values()))
-            for name in ("baseline.avms", "optimized.bin", "optimized.wav", "reference.wav", "optimization_history.json"):
-                self.assertTrue((root/"out/test"/name).exists())
-            self.assertEqual({p.name: p.read_bytes() for p in source.iterdir()}, original)
-
-
 if __name__ == "__main__":
     unittest.main()

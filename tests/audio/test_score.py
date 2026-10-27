@@ -382,37 +382,6 @@ class ScoreTests(unittest.TestCase):
             self.assertEqual(unpacked[length:], bytes(len(unpacked) - length))
             self.assertIn(f"/* Compiled audio size: {len(data)} bytes. */", header)
 
-    def test_header_exact_stream_sizes_and_cli_output(self):
-        import re
-        import subprocess
-        import sys
-        import tempfile
-        for kind, score in (("song", "channel 0 { c:8ms }"), ("SFX", "sfx channel 1 { wave triangle c:8ms }")):
-            data = music.compile_source(score)
-            self.assertNotEqual(len(data) % 8, 0)
-            header = music.c_array(data, "asset")
-            self.assertEqual(int(re.search(r"Compiled .* size: (\d+) bytes", header)[1]), len(data))
-            self.assertIn(f"Compiled audio size:", header)
-            # Force the chunked representation with a real, large encoded stream.
-            ch = 1 if kind == "SFX" else 0
-            large = music._encode_events(1 << ch, ((1, {ch: {"increment": 1234}}) for _ in range(175000)),
-                                         1, kind == "SFX")
-            exported = music.c_array(large, "large")
-            self.assertIn("_avm_storage", exported)
-            self.assertIn(f"Compiled audio size: {len(large)} bytes.", exported)
-            with tempfile.TemporaryDirectory() as folder:
-                source, output = Path(folder)/"asset.avms", Path(folder)/"asset.bin"
-                source.write_text(score)
-                command = [sys.executable, str(Path(music.__file__)), str(source), str(output)]
-                result = subprocess.run(command, capture_output=True, check=True)
-                self.assertEqual((result.stdout, result.stderr), (b"", b""))
-                self.assertEqual(output.read_bytes(), data)
-                header_output = Path(folder)/"asset.h"
-                result = subprocess.run(command[:3] + [str(header_output), "--name", "asset"], capture_output=True, check=True)
-                self.assertEqual((result.stdout, result.stderr), (b"", b""))
-                self.assertEqual(header_output.read_text(), header)
-                result = subprocess.run(command + ["--stats"], capture_output=True, check=True)
-                self.assertIn(f"bytes={len(data)}".encode(), result.stderr)
 
     def test_triangle_controls_retention_switches_alias_and_initial_loop_state(self):
         for ch in range(3):

@@ -160,7 +160,7 @@ Disassembly of section .text.scalbnf:
  e2 00 00 00           jmpf	scalbnf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.scalbnf+0xe4
- f0 04 e9 ff           ldi16	r0, 0xffe9
+ f0 04 e8 ff           ldi16	r0, 0xffe8
  f0 05 ff ff           ldi16	r1, 0xffff
  f4 02                 ldsp16	r6, [sp+0x0]
  f4 0b                 ldsp16	r7, [sp+0x2]

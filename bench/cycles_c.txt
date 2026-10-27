@@ -37,36 +37,47 @@
        84966   indirect_call.c
     11045125   loop_control.c
      3412152   loop_shapes.c
+      168774   math_acos.c
+      149240   math_asin.c
       145505   math_atan.c
       253003   math_atan2.c
       224218   math_atan2_ratios.c
+      220280   math_cbrt.c
        37519   math_ceil.c
+      135799   math_classify.c
       118562   math_cos.c
       104327   math_cos_small.c
       224389   math_exp.c
+      166616   math_exp2.c
       192205   math_exp_primary.c
       186791   math_exp_scaled.c
+      182758   math_expm1.c
        37598   math_floor.c
        65363   math_fmod.c
        52854   math_fmod_subnormal.c
+       98916   math_frexp.c
       157051   math_hypot.c
      2411451   math_hypot_boundary.c
       173631   math_hypot_scaled.c
+      149904   math_ldexp.c
       225157   math_log.c
       225176   math_log10.c
       196871   math_log10_near_one.c
       186211   math_log10_scaled.c
+      166496   math_log1p.c
       215806   math_log2.c
       187516   math_log2_near_one.c
       176857   math_log2_scaled.c
       196902   math_log_near_one.c
       186194   math_log_scaled.c
-      572479   math_pow.c
-      494194   math_pow_bounded.c
-      469608   math_pow_crossover.c
-      488387   math_pow_extreme.c
-      427423   math_pow_integer.c
-      517369   math_pow_near_one.c
+      106401   math_modf.c
+      122549   math_nextafter.c
+      564682   math_pow.c
+      490146   math_pow_bounded.c
+      466094   math_pow_crossover.c
+      484025   math_pow_extreme.c
+      427172   math_pow_integer.c
+      509588   math_pow_near_one.c
        36195   math_round.c
       115627   math_sin.c
       101311   math_sin_small.c

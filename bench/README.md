@@ -1,5 +1,20 @@
 # AVM benchmarks
 
+The C99 math workloads `math_exp2`, `math_expm1`, `math_log1p`, `math_cbrt`,
+`math_asin`, and `math_acos` each measure 32 calls over a fixed mixture of common,
+boundary, and tiny inputs. `math_ldexp`, `math_frexp`, `math_modf`,
+`math_nextafter`, and `math_classify` cover exact representation operations and
+classification/comparisons. Inputs are in program memory and outputs use
+volatile sinks. The measured interval includes lookup, loop, and sink overhead.
+They participate in `avm_bench_run`; representative new workloads also appear
+in the instruction-mix manifest. Their retained disassemblies are in `c/asm/`.
+
+See the [math runtime C99 report](../runtime/lib/math/README.md#c99-additions)
+for algorithms, baseline policies, measured errors, code sizes, stack usage,
+and comparisons with the evaluated alternatives. After the documented focused
+accuracy and benchmark runs, `python tests/math/report_c99.py` writes a Markdown
+measurement summary under `build/`.
+
 The [fast trig report](../docs/math-runtime/trig-fast/report.md) records the
 current single-float reducer, identical-input before/after measurements, and
 fast/full reproduction commands. Use `avm_trig_bench_run` for the focused set.

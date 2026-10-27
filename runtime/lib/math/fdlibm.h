@@ -20,7 +20,9 @@ typedef uint32_t __uint32_t;
 #define FLT_UWORD_EXP_MAX 0x43000000L
 #define FLT_UWORD_EXP_MIN 0x43160000L
 #define FLT_LARGEST_EXP 254
-#define FLT_SMALLEST_EXP (-22)
+/* Biased exponent -23 still rounds to the smallest subnormal when the
+   significand exceeds one. Let the final multiply resolve the midpoint. */
+#define FLT_SMALLEST_EXP (-23)
 
 #define __ieee754_sqrtf sqrtf
 #define __ieee754_atan2f atan2f

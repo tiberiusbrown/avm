@@ -21,7 +21,17 @@ import mpmath as mp
 
 mp.mp.dps = 100
 FUNCTIONS = ['sqrtf', 'expf', 'logf', 'log2f', 'log10f', 'hypotf', 'powf',
-             'sinf', 'cosf', 'tanf', 'atanf', 'atan2f', 'fmodf', 'sincos_sinf', 'sincos_cosf']
+             'sinf', 'cosf', 'tanf', 'atanf', 'atan2f', 'fmodf', 'sincos_sinf', 'sincos_cosf',
+             'exp2f', 'expm1f', 'log1pf', 'cbrtf', 'asinf', 'acosf']
+
+C99_POLICIES = dict(exp2f='AVM_EXP', expm1f='AVM_EXPM1', log1pf='AVM_LOG',
+                    cbrtf='AVM_CBRT', asinf='AVM_ATAN', acosf='AVM_ATAN')
+C99_BASELINES = dict(exp2f='avr-libc expf accuracy policy, direct base-two reduction',
+    expm1f='lightweight binary32 Taylor / existing avr-libc-comparable expf policy',
+    log1pf='lightweight binary32 series / existing avr-libc-comparable logf policy',
+    cbrtf='avr-libc cbrtf published relative error ~1.2e-7; binary32 rounding allowance 3e-7',
+    asinf='avr-libc asinf; existing inverse-trig absolute policy 1e-6',
+    acosf='avr-libc acosf; existing inverse-trig absolute policy 1e-6')
 
 def value(u):
     return struct.unpack('<f', struct.pack('<I', u))[0]
@@ -54,6 +64,12 @@ def reference(name, a, b):
     try:
         if name == 'sqrtf': return mp.sqrt(x) if x >= 0 else mp.nan
         if name == 'expf': return mp.inf if x > 1000 else mp.mpf(0) if x < -1000 else mp.exp(x)
+        if name == 'exp2f': return mp.inf if x > 1000 else mp.mpf(0) if x < -1000 else mp.power(2,x)
+        if name == 'expm1f': return mp.inf if x > 1000 else mp.mpf(-1) if x < -1000 else mp.expm1(x)
+        if name == 'log1pf': return mp.log1p(x) if x >= -1 else mp.nan
+        if name == 'cbrtf': return mp.sign(x)*mp.root(abs(x),3) if x else x
+        if name == 'asinf': return mp.asin(x) if abs(x)<=1 else mp.nan
+        if name == 'acosf': return mp.acos(x) if abs(x)<=1 else mp.nan
         if name in ['logf', 'log2f', 'log10f']:
             if x < 0: return mp.nan
             return mp.log(x) if name == 'logf' else mp.log(x, 2 if name == 'log2f' else 10)
@@ -101,7 +117,7 @@ def expected_bits(name,a,b,ref):
     name=name.removeprefix('sincos_')
     word=bits(ref)
     if word&0x7fffffff==0:
-        negative=(name in ['sqrtf','sinf','tanf','atanf','atan2f','fmodf'] and a>>31) or (name=='powf' and a>>31 and value(b)%2==1)
+        negative=(name in ['sqrtf','sinf','tanf','atanf','atan2f','fmodf','expm1f','log1pf','cbrtf','asinf'] and a>>31) or (name=='powf' and a>>31 and value(b)%2==1)
         if negative: word|=0x80000000
     return word
 
@@ -181,6 +197,23 @@ def phase34_corpus(name):
                 if name=='atan2f':
                     for e in [-148,-126,-60,0,60,126]:
                         for sy in [-1,1]: neighbors(math.ldexp(sign*x,e), math.ldexp(sy,e))
+    elif name in C99_POLICIES:
+        for x in [-150,-149,-126,-1,-0.5,-0.0625,0,0.0625,0.5,1,127,128]:
+            neighbors(x)
+        for e in range(-149,128):
+            for sign in [-1,1]:
+                neighbors(sign*math.ldexp(1.0,e))
+        if name=='exp2f':
+            for n in range(-150,129): neighbors(n); neighbors(n+0.5)
+        if name=='cbrtf':
+            for n in range(-64,65): neighbors(n**3)
+        if name in ['asinf','acosf']:
+            for u in range(0x3f7fff00,0x3f800003):
+                pairs.add((u,0)); pairs.add((u|0x80000000,0))
+        if name in ['expm1f','log1pf']:
+            for i in range(-1024,1025): neighbors(i/2048)
+        if name in ['asinf','acosf','cbrtf']:
+            for i in range(2049): neighbors(-1+i/1024)
     return sorted(pairs)
 
 def acceptance(name,actual,ref,ulp):
@@ -188,9 +221,10 @@ def acceptance(name,actual,ref,ulp):
     if name == 'sqrtf': return ulp <= 2
     if name == 'hypotf': return ulp <= 4
     if name == 'fmodf': return ulp == 0
-    at, rt = {'expf':(0,1e-5),'powf':(0,5e-5),'sinf':(1e-5,0),'cosf':(1e-5,0),
+    at, rt = {'expf':(0,1e-5),'exp2f':(0,1e-5),'expm1f':(0,3e-5),'cbrtf':(0,3e-7),
+              'asinf':(1e-6,0),'acosf':(1e-6,0),'powf':(0,5e-5),'sinf':(1e-5,0),'cosf':(1e-5,0),
               'tanf':(1e-4,1e-4),'atanf':(1e-6,0),'atan2f':(1e-6,0)}.get(name,(1e-6,1e-6))
-    if name in ['expf','powf'] and abs(ref) < mp.mpf(2)**-126:
+    if name in ['expf','exp2f','powf'] and abs(ref) < mp.mpf(2)**-126:
         at = mp.mpf(rt)*mp.mpf(2)**-126+mp.mpf(2)**-149
     return abs(actual-ref) <= mp.mpf(at)+mp.mpf(rt)*abs(ref)
 
@@ -220,6 +254,7 @@ def main():
                   worst_absolute=None,worst_relative=None,worst_ulp=None,ulp_distribution=[0]*5,
                   ranges={},exceptional_examples=[]) for n in args.functions}
     for n, s in stats.items():
+        if n in C99_BASELINES: s['reference'] = C99_BASELINES[n]+'; errors measured against 100-digit mpmath'
         if n.removeprefix('sincos_') in ['sinf', 'cosf', 'tanf']:
             s['reference'] = 'avr-libc flt40_t pi/2 reduction, then 100-digit sin/cos/tan'
     seeds={n:[] for n in args.functions}
@@ -310,6 +345,7 @@ def main():
     if args.fixtures:
         for n,inputs in retained.items():
             policy={'sqrtf':'AVM_SQRT','expf':'AVM_EXP','hypotf':'AVM_HYPOT','powf':'AVM_POW','sinf':'AVM_SIN','cosf':'AVM_COS','tanf':'AVM_TAN','atanf':'AVM_ATAN','atan2f':'AVM_ATAN2','fmodf':'AVM_EXACT'}.get(n.removeprefix('sincos_'),'AVM_LOG')
+            policy=C99_POLICIES.get(n,policy)
             lines=['/* Generated by tests/math/accuracy_reference.py --fixtures. */','#include "math_test.h"']
             if n.startswith('sincos_'):
                 lines += [f'static float {n}(float x) {{ float s,c; sincosf(x,&s,&c); return {"s" if n=="sincos_sinf" else "c"}; }}']

@@ -2165,12 +2165,24 @@ applications that used them or the former `FF` math instructions with the
 matching compiler and runtime.
 
 The runtime provides `sqrtf`, `sinf`, `cosf`, `atan2f`, `tanf`, `expf`, `logf`,
-`log2f`, `log10f`, `powf`, `hypotf`, `fmodf`, `truncf`, `floorf`, `ceilf`,
+`log2f`, `log10f`, `exp2f`, `expm1f`, `log1pf`, `cbrtf`, `asinf`, `acosf`,
+`ldexpf`, `frexpf`, `modff`, `nextafterf`, `powf`, `hypotf`, `fmodf`, `truncf`, `floorf`, `ceilf`,
 `roundf`, `fmaf`, `fminf`, and `fmaxf` as ordinary C ABI functions. Angles are radians;
 `atan2f` returns an angle in `[-pi, +pi]`. Functions expose no floating-point
 exception state or `errno`. NaN result payloads are unspecified. `fmodf` has
 the sign of its first operand and computes the mathematical remainder with
 quotient truncated toward zero, without forming an overflowing float quotient.
+
+`math.h` also provides `fpclassify`, `isfinite`, `isinf`, `isnan`, `isnormal`,
+`signbit`, and the six C99 ordered/unordered comparison macros. Their arguments
+are evaluated once. Classification uses the existing bit-level FCLASS lowering
+and sign extraction; comparisons use FCMP. AVM float, double, and long double
+are all binary32. The header retains wider types when compiled for a host.
+Signaling NaNs are classified without requiring floating-point exceptions.
+`frexpf`, `modff`, and `nextafterf` use exact representation operations;
+`ldexpf` shares `scalbnf` and its ties-to-even gradual underflow. See the
+[math runtime](../runtime/lib/math/README.md) for algorithms, accuracy policy,
+and measured costs.
 
 ### 49.6. `memcpy`
 

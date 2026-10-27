@@ -135,6 +135,7 @@ list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
 # Float-only libm kernels are linked on demand into guest program memory.
 set(AVM_MATH_KERNELS
+    ef_exp2 ef_expm1 ef_log1p ef_cbrt ef_asin ef_acos sf_decompose
     ef_atan2 ef_exp ef_fmod ef_hypot ef_log ef_log10 ef_pow ef_rem_pio2 ef_sqrt
     kf_cos kf_rem_pio2 kf_sin kf_tan
     sf_atan sf_ceil sf_fma sf_copysign sf_cos sf_fabs sf_floor sf_round sf_scalbn

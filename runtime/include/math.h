@@ -12,6 +12,12 @@ void sincosf(float x, float *sine, float *cosine);
 float atan2f(float y, float x);
 float tanf(float x);
 float expf(float x);
+float exp2f(float x);
+float expm1f(float x);
+float log1pf(float x);
+float cbrtf(float x);
+float asinf(float x);
+float acosf(float x);
 float logf(float x);
 float log2f(float x);
 float log10f(float x);
@@ -24,6 +30,10 @@ float atanf(float x);
 float fabsf(float x);
 float copysignf(float x, float y);
 float scalbnf(float x, int n);
+float ldexpf(float x, int exponent);
+float frexpf(float x, int *exponent);
+float modff(float x, float *integer_part);
+float nextafterf(float x, float y);
 float truncf(float x);
 float floorf(float x);
 float ceilf(float x);
@@ -33,6 +43,30 @@ float fmaxf(float x, float y);
 
 #ifdef __cplusplus
 } // extern "C"
+#endif
+
+/* Clang lowers these builtins to the existing FCLASS/FCMP instructions.
+   typeof is unevaluated: promote integers while retaining wider host types,
+   without doing floating arithmetic or evaluating an argument twice. */
+#if defined(__clang__) || defined(__GNUC__)
+#define FP_NAN 0
+#define FP_INFINITE 1
+#define FP_ZERO 2
+#define FP_SUBNORMAL 3
+#define FP_NORMAL 4
+#define __AVM_MATH_REAL(x) ((__typeof__((x) + 0.0f))(x))
+#define fpclassify(x) __builtin_fpclassify(FP_NAN, FP_INFINITE, FP_NORMAL, FP_SUBNORMAL, FP_ZERO, __AVM_MATH_REAL(x))
+#define isfinite(x) __builtin_isfinite(__AVM_MATH_REAL(x))
+#define isinf(x) __builtin_isinf(__AVM_MATH_REAL(x))
+#define isnan(x) __builtin_isnan(__AVM_MATH_REAL(x))
+#define isnormal(x) __builtin_isnormal(__AVM_MATH_REAL(x))
+#define signbit(x) __builtin_signbit(__AVM_MATH_REAL(x))
+#define isgreater(x,y) __builtin_isgreater(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
+#define isgreaterequal(x,y) __builtin_isgreaterequal(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
+#define isless(x,y) __builtin_isless(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
+#define islessequal(x,y) __builtin_islessequal(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
+#define islessgreater(x,y) __builtin_islessgreater(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
+#define isunordered(x,y) __builtin_isunordered(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
 #endif
 
 #endif // AVM_RUNTIME_MATH_H

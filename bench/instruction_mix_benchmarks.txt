@@ -15,6 +15,16 @@ fixed_point.c
 float.c
 float_conversions.c
 float_comparisons.c
+# C99 math and exact representation operations
+math_exp2.c
+math_expm1.c
+math_log1p.c
+math_cbrt.c
+math_asin.c
+math_acos.c
+math_frexp.c
+math_nextafter.c
+math_classify.c
 # Application workloads
 tile_cache_render.c
 virtual_dispatch.cpp

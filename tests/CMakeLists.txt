@@ -79,8 +79,8 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_source_dependencies)
 
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
-            if(AVM_TEST_NAME STREQUAL "math_native")
-                list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/math_native.c")
+            if(AVM_TEST_NAME MATCHES "^math_(native|c99_exact|c99_classify|c99_functions)$")
+                list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
             elseif(AVM_TEST_NAME STREQUAL "display_system")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/display_system.c")
@@ -717,6 +717,13 @@ add_dependencies(avm_tests_run avm_rounding_tests_run)
 # Run the production shortcuts, sqrt and angle reducer under private names;
 # the harness uses host double libm as an independent binary32 reference.
 add_library(avm_shortcuts_reference_kernels OBJECT
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_exp2.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_expm1.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log1p.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_cbrt.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_asin.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_acos.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_decompose.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_hypot.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_atan2.c"
@@ -736,7 +743,7 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_scalbn.c")
 target_include_directories(avm_shortcuts_reference_kernels PRIVATE
     "${PROJECT_SOURCE_DIR}/runtime/include")
-foreach(function hypotf atan2f atanf sinf cosf sincosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
+foreach(function exp2f expm1f log1pf cbrtf asinf acosf ldexpf frexpf modff nextafterf hypotf atan2f atanf sinf cosf sincosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
     target_compile_definitions(avm_shortcuts_reference_kernels PRIVATE
         "${function}=avm_reference_${function}")
 endforeach()
@@ -751,6 +758,21 @@ add_executable(avm_shortcuts_reference_tests math/shortcuts_reference.c)
 target_link_libraries(avm_shortcuts_reference_tests PRIVATE avm_shortcuts_reference_kernels)
 add_executable(avm_math_accuracy_probe math/accuracy_probe.c)
 target_link_libraries(avm_math_accuracy_probe PRIVATE avm_shortcuts_reference_kernels)
+add_executable(avm_c99_reference_tests math/c99_reference.c)
+target_link_libraries(avm_c99_reference_tests PRIVATE avm_shortcuts_reference_kernels)
+if(MSVC)
+    target_compile_options(avm_c99_reference_tests PRIVATE /fp:strict)
+else()
+    target_compile_options(avm_c99_reference_tests PRIVATE -ffp-contract=off -fno-fast-math)
+    target_link_libraries(avm_c99_reference_tests PRIVATE m)
+endif()
+add_custom_target(avm_c99_tests_run
+    COMMAND "$<TARGET_FILE:avm_c99_reference_tests>"
+    COMMAND "$<TARGET_FILE:clang>" --target=x86_64-w64-windows-gnu -std=c++17
+        -fsyntax-only -nostdinc -I "${PROJECT_SOURCE_DIR}/runtime/include"
+        "${CMAKE_CURRENT_SOURCE_DIR}/math/classify_host.cpp"
+    DEPENDS avm_c99_reference_tests clang USES_TERMINAL VERBATIM)
+add_dependencies(avm_tests_run avm_c99_tests_run)
 if(NOT MSVC)
     target_link_libraries(avm_shortcuts_reference_tests PRIVATE m)
     target_link_libraries(avm_math_accuracy_probe PRIVATE m)
@@ -801,13 +823,14 @@ add_custom_target(avm_math_fast
     COMMAND "$<TARGET_FILE:avm_math_reference_tests>" --quick
     COMMAND "$<TARGET_FILE:avm_math_reduction_tests>" --quick
     COMMAND "$<TARGET_FILE:avm_shortcuts_reference_tests>" --quick
+    COMMAND "$<TARGET_FILE:avm_c99_reference_tests>" --quick
     DEPENDS avm_math_fast_images avm_tests avm_math_reference_tests
-        avm_math_reduction_tests avm_shortcuts_reference_tests avm_fpoly_tests_run
+        avm_math_reduction_tests avm_shortcuts_reference_tests avm_c99_reference_tests avm_fpoly_tests_run
     USES_TERMINAL VERBATIM)
 add_custom_target(avm_math_full
     COMMAND "${CMAKE_COMMAND}" -E time "$<TARGET_FILE:avm_tests>" --filter "^math_"
     DEPENDS avm_math_full_images avm_tests avm_math_reference_tests_run
-        avm_shortcuts_tests_run avm_rounding_tests_run avm_fpoly_tests_run
+        avm_shortcuts_tests_run avm_c99_tests_run avm_rounding_tests_run avm_fpoly_tests_run
     USES_TERMINAL VERBATIM)
 add_custom_target(avm_trig_accelerators_run
     COMMAND "${CMAKE_COMMAND}"

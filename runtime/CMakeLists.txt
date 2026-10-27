@@ -15,15 +15,18 @@ function(avm_add_runtime_object)
 endfunction()
 
 set(RUNTIME_SOURCES
+    atexit
     audio_tone
     avm
     ctype
+    exit
     font_5x7
     font_br4
     font_br5
     font_br5d_x5
     font_br5n
     local_dtor
+    immediate_exit
     math
     pgmspace
     runtime
@@ -31,6 +34,7 @@ set(RUNTIME_SOURCES
     stdlib
     strtof
     string
+    termination
 )
 
 set(AVM_SYSROOT_DIR
@@ -93,6 +97,10 @@ set(AVM_RUNTIME_LIBRARY_OBJECTS)
 foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
     set(runtime_math_options)
+    set(runtime_extra_dependencies)
+    if(RUNTIME_SOURCE STREQUAL "termination")
+        list(APPEND runtime_extra_dependencies "${AVM_CRT_INIT_FINI_HEADER}")
+    endif()
     if(RUNTIME_SOURCE STREQUAL "math")
         set(runtime_math_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
     endif()
@@ -103,6 +111,7 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
         COMPILE_OPTIONS ${runtime_math_options}
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
         DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
+            ${runtime_extra_dependencies}
     )
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 endforeach()
@@ -271,7 +280,7 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
             -mllvm -print-before-all
             -mllvm -print-after-all
         STDERR_OUTPUT "${AVM_RUNTIME_MIR_OUTPUT}"
-        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
+        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
     )
     list(APPEND AVM_RUNTIME_MIR_OUTPUTS
         "${AVM_RUNTIME_MIR_OBJECT}"

@@ -3,10 +3,6 @@
 
 // Compiler-generated vtables can refer to these functions even when the
 // corresponding invalid call path is never taken.
-extern "C" __attribute__((weak, noreturn)) void abort(void) {
-    avm_halt();
-}
-
 extern "C" __attribute__((weak, noreturn)) void __cxa_pure_virtual(void) {
     avm_halt();
 }

@@ -1,5 +1,14 @@
 # AVM end-to-end tests
 
+`avm_termination_checks` inspects linked ELF sections and symbols for unused and
+exit-only zero callback storage, packed capacities 1/4/8/32/255, mixed C++ layout,
+dead registrations, and option validation. It checks known, multiple, unknown and
+overflowing callback stack targets at O0/O2/Oz with native objects and full LTO.
+It runs within `avm_tests_run`. The `atexit_*` and `termination_*` emulator
+fixtures verify exact cleanup sequences at all six optimization levels (O2 uses
+full LTO), including ordinary/test/sketch startup and early exit during C++
+global construction.
+
 `cmake --build build --config RelWithDebInfo --target avm_tests_run` builds and runs every assembly,
 C, and C++ fixture. Each C and C++ source is compiled separately at `-O0`,
 `-O1`, `-O2`, `-O3`, `-Os`, and `-Oz`; assembly fixtures run once.

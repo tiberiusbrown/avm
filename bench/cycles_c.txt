@@ -1,5 +1,5 @@
-     1159889   aggregate_args.c
-     1059966   aggregate_return.c
+     1161329   aggregate_args.c
+     1062270   aggregate_return.c
      2094135   aliasing.c
      1849275   bit_count.c
      1694705   bitfields.c
@@ -38,13 +38,13 @@
      1663031   ctype_tolower.c
      1663031   ctype_toupper.c
      1577424   div_pow2.c
-      759222   divmod.c
+      759366   divmod.c
        18718   draw_text.c
        20826   draw_text_P.c
       736876   dynamic_stack.c
       236880   fibonacci.c
      2943436   fir8.c
-     6783372   fixed_point.c
+     6801804   fixed_point.c
       946391   float.c
       827553   float_comparisons.c
       616391   float_conversions.c
@@ -56,99 +56,99 @@
       159880   math_asin.c
       165224   math_asin_general.c
       206444   math_asinh.c
-      145667   math_atan.c
-      253003   math_atan2.c
-      224218   math_atan2_ratios.c
+      145955   math_atan.c
+      253291   math_atan2.c
+      224506   math_atan2_ratios.c
       147218   math_atan_general.c
       214224   math_atanh.c
       220280   math_cbrt.c
-       37519   math_ceil.c
+       37807   math_ceil.c
       135799   math_classify.c
-      118562   math_cos.c
-      104327   math_cos_small.c
+      118850   math_cos.c
+      104615   math_cos_small.c
       180812   math_cosh.c
-      210272   math_exp.c
+      210560   math_exp.c
       166616   math_exp2.c
-      178118   math_exp_primary.c
-      180624   math_exp_scaled.c
+      178406   math_exp_primary.c
+      180912   math_exp_scaled.c
       143222   math_expm1.c
       141952   math_expm1_general.c
       104149   math_fdim.c
-       37598   math_floor.c
+       37886   math_floor.c
       106497   math_fmaxmag.c
       107585   math_fminmag.c
-       65363   math_fmod.c
-       52854   math_fmod_subnormal.c
-       98916   math_frexp.c
-      148923   math_hypot.c
+       65651   math_fmod.c
+       53142   math_fmod_subnormal.c
+       99204   math_frexp.c
+      149211   math_hypot.c
       710755   math_hypot_boundary.c
-      166519   math_hypot_scaled.c
+      166807   math_hypot_scaled.c
        67504   math_ilogb.c
       109867   math_ldexp.c
-      123079   math_llrint.c
-       90603   math_llround.c
-      225157   math_log.c
-      225176   math_log10.c
-      196871   math_log10_near_one.c
-      186211   math_log10_scaled.c
+      123367   math_llrint.c
+       90891   math_llround.c
+      225445   math_log.c
+      225464   math_log10.c
+      197159   math_log10_near_one.c
+      186499   math_log10_scaled.c
       156650   math_log1p.c
       158968   math_log1p_general.c
       215806   math_log2.c
       187516   math_log2_near_one.c
       176857   math_log2_scaled.c
-      196902   math_log_near_one.c
-      186194   math_log_scaled.c
+      197190   math_log_near_one.c
+      186482   math_log_scaled.c
        79348   math_logb.c
       104076   math_lrint.c
        70704   math_lround.c
-      106401   math_modf.c
+      106689   math_modf.c
        23380   math_nan.c
        80244   math_nearbyint.c
       122549   math_nextafter.c
-      492491   math_pow.c
-      483517   math_pow_bounded.c
-      421584   math_pow_crossover.c
+      492779   math_pow.c
+      483805   math_pow_bounded.c
+      421872   math_pow_crossover.c
       488085   math_pow_extreme.c
-      460377   math_pow_integer.c
-      434193   math_pow_near_one.c
+      460665   math_pow_integer.c
+      434481   math_pow_near_one.c
       194553   math_remainder.c
-      257037   math_remquo.c
+      257325   math_remquo.c
        80244   math_rint.c
-       36195   math_round.c
-      115627   math_sin.c
-      101311   math_sin_small.c
-      175299   math_sincos.c
+       36483   math_round.c
+      115915   math_sin.c
+      101599   math_sin_small.c
+      175587   math_sincos.c
       189040   math_sinh.c
-       49736   math_sqrt.c
-       49636   math_sqrt_mantissas.c
-      397509   math_sqrt_random.c
-       35155   math_sqrt_special.c
-      132625   math_tan.c
-      109984   math_tan_quadrant_direct.c
-      113284   math_tan_quadrant_even.c
-      125219   math_tan_quadrant_odd.c
-      114445   math_tan_reduced.c
-      117079   math_tan_small.c
+       50024   math_sqrt.c
+       49924   math_sqrt_mantissas.c
+      399788   math_sqrt_random.c
+       35443   math_sqrt_special.c
+      132913   math_tan.c
+      110272   math_tan_quadrant_direct.c
+      113572   math_tan_quadrant_even.c
+      125507   math_tan_quadrant_odd.c
+      114733   math_tan_reduced.c
+      117367   math_tan_small.c
       207504   math_tanh.c
        50572   math_trig_correction.c
-       97837   math_trig_cos_direct.c
-      111175   math_trig_cos_edge.c
-      105761   math_trig_cos_game.c
-      133409   math_trig_cos_large.c
-      105751   math_trig_cos_poles.c
+       98125   math_trig_cos_direct.c
+      111463   math_trig_cos_edge.c
+      106049   math_trig_cos_game.c
+      133697   math_trig_cos_large.c
+      106039   math_trig_cos_poles.c
       115931   math_trig_polynomials.c
        62554   math_trig_probe_correct_correction.c
-      106529   math_trig_probe_cos_boundary.c
-      109764   math_trig_probe_cos_cancel.c
-      117093   math_trig_probe_cos_cutoff.c
-      100023   math_trig_probe_cos_direct.c
-      108807   math_trig_probe_cos_even.c
-      130035   math_trig_probe_cos_extended.c
-      105836   math_trig_probe_cos_first.c
-      110805   math_trig_probe_cos_larger.c
-      107658   math_trig_probe_cos_modest.c
-      145502   math_trig_probe_cos_normal.c
-      106998   math_trig_probe_cos_odd.c
+      106817   math_trig_probe_cos_boundary.c
+      110052   math_trig_probe_cos_cancel.c
+      117381   math_trig_probe_cos_cutoff.c
+      100311   math_trig_probe_cos_direct.c
+      109095   math_trig_probe_cos_even.c
+      130323   math_trig_probe_cos_extended.c
+      106124   math_trig_probe_cos_first.c
+      111093   math_trig_probe_cos_larger.c
+      107946   math_trig_probe_cos_modest.c
+      145790   math_trig_probe_cos_normal.c
+      107286   math_trig_probe_cos_odd.c
        63646   math_trig_probe_detect_cancel.c
        39799   math_trig_probe_detectbaseline_cancel.c
        41760   math_trig_probe_identity_boundary.c
@@ -164,14 +164,14 @@
        41586   math_trig_probe_identity_odd.c
       199193   math_trig_probe_inline_boundary.c
       199657   math_trig_probe_inline_cancel.c
-      405513   math_trig_probe_inline_cutoff.c
+      405657   math_trig_probe_inline_cutoff.c
        47609   math_trig_probe_inline_direct.c
       199441   math_trig_probe_inline_even.c
-     1170497   math_trig_probe_inline_extended.c
+     1170785   math_trig_probe_inline_extended.c
       125161   math_trig_probe_inline_first.c
       214025   math_trig_probe_inline_larger.c
       199353   math_trig_probe_inline_modest.c
-      553761   math_trig_probe_inline_normal.c
+      554049   math_trig_probe_inline_normal.c
       199625   math_trig_probe_inline_odd.c
        29664   math_trig_probe_loop_boundary.c
        29674   math_trig_probe_loop_cancel.c
@@ -184,80 +184,80 @@
        29490   math_trig_probe_loop_modest.c
        29664   math_trig_probe_loop_normal.c
        29490   math_trig_probe_loop_odd.c
-      229506   math_trig_probe_outline_boundary.c
-      229970   math_trig_probe_outline_cancel.c
-      411330   math_trig_probe_outline_cutoff.c
-       64962   math_trig_probe_outline_direct.c
-      229754   math_trig_probe_outline_even.c
-     1181034   math_trig_probe_outline_extended.c
-      134802   math_trig_probe_outline_first.c
-      237034   math_trig_probe_outline_larger.c
-      229666   math_trig_probe_outline_modest.c
-      564298   math_trig_probe_outline_normal.c
-      229938   math_trig_probe_outline_odd.c
+      229794   math_trig_probe_outline_boundary.c
+      230258   math_trig_probe_outline_cancel.c
+      411618   math_trig_probe_outline_cutoff.c
+       65250   math_trig_probe_outline_direct.c
+      230042   math_trig_probe_outline_even.c
+     1181322   math_trig_probe_outline_extended.c
+      135090   math_trig_probe_outline_first.c
+      237322   math_trig_probe_outline_larger.c
+      229954   math_trig_probe_outline_modest.c
+      564586   math_trig_probe_outline_normal.c
+      230226   math_trig_probe_outline_odd.c
        55714   math_trig_probe_quotient_modest.c
        91745   math_trig_probe_reconstruct_modest.c
       118080   math_trig_probe_refine_cancel.c
-      103488   math_trig_probe_sin_boundary.c
-      107392   math_trig_probe_sin_cancel.c
-      113544   math_trig_probe_sin_cutoff.c
-       98216   math_trig_probe_sin_direct.c
-      104824   math_trig_probe_sin_even.c
-      127920   math_trig_probe_sin_extended.c
-      103624   math_trig_probe_sin_first.c
-      107784   math_trig_probe_sin_larger.c
-      104864   math_trig_probe_sin_modest.c
-      142856   math_trig_probe_sin_normal.c
-      105368   math_trig_probe_sin_odd.c
-      186904   math_trig_probe_sincos_boundary.c
-      186138   math_trig_probe_sincos_cancel.c
-      196337   math_trig_probe_sincos_cutoff.c
-      173615   math_trig_probe_sincos_direct.c
-      185996   math_trig_probe_sincos_even.c
-      207957   math_trig_probe_sincos_extended.c
-      184371   math_trig_probe_sincos_first.c
-      188541   math_trig_probe_sincos_larger.c
-      185757   math_trig_probe_sincos_modest.c
-      223753   math_trig_probe_sincos_normal.c
-      185791   math_trig_probe_sincos_odd.c
-      114720   math_trig_probe_tan_boundary.c
-      119152   math_trig_probe_tan_cancel.c
-      126016   math_trig_probe_tan_cutoff.c
-      105888   math_trig_probe_tan_direct.c
-      115144   math_trig_probe_tan_even.c
-      147872   math_trig_probe_tan_extended.c
-      126488   math_trig_probe_tan_first.c
-      119968   math_trig_probe_tan_larger.c
-      121104   math_trig_probe_tan_modest.c
-      162752   math_trig_probe_tan_normal.c
-      128256   math_trig_probe_tan_odd.c
-     1114890   math_trig_probe_window_extended.c
-      498154   math_trig_probe_window_normal.c
+      103776   math_trig_probe_sin_boundary.c
+      107680   math_trig_probe_sin_cancel.c
+      113832   math_trig_probe_sin_cutoff.c
+       98504   math_trig_probe_sin_direct.c
+      105112   math_trig_probe_sin_even.c
+      128208   math_trig_probe_sin_extended.c
+      103912   math_trig_probe_sin_first.c
+      108072   math_trig_probe_sin_larger.c
+      105152   math_trig_probe_sin_modest.c
+      143144   math_trig_probe_sin_normal.c
+      105656   math_trig_probe_sin_odd.c
+      187192   math_trig_probe_sincos_boundary.c
+      186426   math_trig_probe_sincos_cancel.c
+      196625   math_trig_probe_sincos_cutoff.c
+      173903   math_trig_probe_sincos_direct.c
+      186284   math_trig_probe_sincos_even.c
+      208245   math_trig_probe_sincos_extended.c
+      184659   math_trig_probe_sincos_first.c
+      188829   math_trig_probe_sincos_larger.c
+      186045   math_trig_probe_sincos_modest.c
+      224041   math_trig_probe_sincos_normal.c
+      186079   math_trig_probe_sincos_odd.c
+      115008   math_trig_probe_tan_boundary.c
+      119440   math_trig_probe_tan_cancel.c
+      126304   math_trig_probe_tan_cutoff.c
+      106176   math_trig_probe_tan_direct.c
+      115432   math_trig_probe_tan_even.c
+      148160   math_trig_probe_tan_extended.c
+      126776   math_trig_probe_tan_first.c
+      120256   math_trig_probe_tan_larger.c
+      121392   math_trig_probe_tan_modest.c
+      163040   math_trig_probe_tan_normal.c
+      128544   math_trig_probe_tan_odd.c
+     1115178   math_trig_probe_window_extended.c
+      498442   math_trig_probe_window_normal.c
        34949   math_trig_quotient_bias.c
        27417   math_trig_quotient_u16.c
        31085   math_trig_quotient_u32.c
        77656   math_trig_reconstruction.c
-       63334   math_trig_reduce_direct.c
-      402928   math_trig_reduce_edge.c
-      195654   math_trig_reduce_game.c
-      486894   math_trig_reduce_large.c
-      168471   math_trig_reduce_poles.c
-       95745   math_trig_sin_direct.c
-      109581   math_trig_sin_edge.c
-      103379   math_trig_sin_game.c
-      131394   math_trig_sin_large.c
-      103312   math_trig_sin_poles.c
-      172202   math_trig_sincos_direct.c
-      189607   math_trig_sincos_edge.c
-      183975   math_trig_sincos_game.c
-      211439   math_trig_sincos_large.c
-      182978   math_trig_sincos_poles.c
-      103429   math_trig_tan_direct.c
-      126580   math_trig_tan_edge.c
-      118675   math_trig_tan_game.c
-      148714   math_trig_tan_large.c
-      121720   math_trig_tan_poles.c
-       36279   math_trunc.c
+       63622   math_trig_reduce_direct.c
+      403216   math_trig_reduce_edge.c
+      195942   math_trig_reduce_game.c
+      487182   math_trig_reduce_large.c
+      168759   math_trig_reduce_poles.c
+       96033   math_trig_sin_direct.c
+      109869   math_trig_sin_edge.c
+      103667   math_trig_sin_game.c
+      131682   math_trig_sin_large.c
+      103600   math_trig_sin_poles.c
+      172490   math_trig_sincos_direct.c
+      189895   math_trig_sincos_edge.c
+      184263   math_trig_sincos_game.c
+      211727   math_trig_sincos_large.c
+      183266   math_trig_sincos_poles.c
+      103717   math_trig_tan_direct.c
+      126868   math_trig_tan_edge.c
+      118963   math_trig_tan_game.c
+      149002   math_trig_tan_large.c
+      122008   math_trig_tan_poles.c
+       36567   math_trunc.c
        18300   memory_services.c
      1063957   mixed_width.c
       765445   multiply.c
@@ -287,10 +287,10 @@
       392231   record_stride_nested.c
      2277115   register_cleanup.c
      1919930   reverse_walk.c
-     1006620   rotate32.c
+     1010076   rotate32.c
      1326952   saturating_math.c
       717297   select.c
-      395141   shifts.c
+      396293   shifts.c
      1669825   short_circuit.c
       377189   sieve.c
       323653   small_memops.c
@@ -300,16 +300,16 @@
      7135388   state_machine.c
       155156   stdlib_abs.c
       801662   stdlib_atoi.c
-     7387604   stdlib_atol.c
+     7391636   stdlib_atol.c
     55433736   stdlib_atoll.c
       164889   stdlib_div.c
       186669   stdlib_labs.c
      5688273   stdlib_ldiv.c
       762376   stdlib_llabs.c
-    41786236   stdlib_lldiv.c
+    41787388   stdlib_lldiv.c
      4369665   stdlib_strtod.c
      4351873   stdlib_strtof.c
-     8281332   stdlib_strtol.c
+     8286228   stdlib_strtol.c
     67340300   stdlib_strtoll.c
      8287572   stdlib_strtoul.c
     68984140   stdlib_strtoull.c
@@ -360,5 +360,5 @@
       511620   wide_add_sub.c
      1104068   wide_compare.c
      2451935   wide_divmod.c
-      481766   wide_mul.c
+      481802   wide_mul.c
       218903   wide_shifts.c

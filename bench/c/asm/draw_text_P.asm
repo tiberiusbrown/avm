@@ -3,39 +3,44 @@ draw_text_P.elf:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
-0000011e l     F .text	00000044 avm_run_constructors
-00000162 l     F .text	00000065 avm_run_destructors
+00000121 l     F .text	00000044 avm_run_constructors
+000009fc l       *ABS*	00000000 .hidden __avm_crt_termination_phase
 00000000 l    df *ABS*	00000000 draw_text_P.c
 00000000 l    df *ABS*	00000000 font_5x7.c
 00000000 l    df *ABS*	00000000 runtime.c
-00000688 l       .init_array	00000000 .hidden __init_array_end
-00000688 l       .init_array	00000000 .hidden __init_array_start
-00000688 l       .fini_array	00000000 .hidden __fini_array_start
-00000688 l       .fini_array	00000000 .hidden __fini_array_end
-00000100 g     F .text	0000001e _start
-000001c7 g     F .text	0000001c avm_test_main
-000001e3 g     F .text	00000002 avm_halt
-00000000  w      *UND*	00000000 __avm_run_local_dtors
+00000000 l    df *ABS*	00000000 termination.c
+0000068b l       .init_array	00000000 .hidden __init_array_end
+0000068b l       .init_array	00000000 .hidden __init_array_start
+0000068b l       .fini_array	00000000 .hidden __fini_array_start
+0000068b l       .fini_array	00000000 .hidden __fini_array_end
+00000100 g     F .text	00000021 _start
+00000165 g     F .text	0000001c avm_test_main
+00000183 g     F .text	00000065 __avm_terminate
+00000181 g     F .text	00000002 avm_halt
 00000500 g       *ABS*	00000000 __avm_framebuffer
-00000211 g     O .rodata	00000477 _avm_font_5x7_storage
+00000214 g     O .rodata	00000477 _avm_font_5x7_storage
+00000000  w      *UND*	00000000 __avm_run_local_dtors
 
 Disassembly of section .text:
 
 <_start>:
  b0                    push16	r0
- d5 1b                 call8	avm_run_constructors
- e1 c1 00              call16	avm_test_main
+ d6 fe                 adjsp	-0x2
+ a0                    xor	r4, r4
+ f4 40                 stsp16	[sp+0x0], r4
+ d5 19                 call8	avm_run_constructors
+ d5 5b                 call8	avm_test_main
  f0 00 46              ldi8	r0, 0x46
  c1 50                 ldi8	r5, 0x50
  f6 2c                 tst16	r4
  fb 05                 cmov.eq	r0, r5
- d5 51                 call8	avm_run_destructors
+ d5 6e                 call8	__avm_terminate
  f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 c5 00              call16	avm_halt
+ d5 60                 call8	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -43,19 +48,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 88 06              ldi16	r4, 0x688
+ c4 8b 06              ldi16	r4, 0x68b
  c1 00                 ldi8	r5, 0x0
- c6 88 06              ldi16	r6, 0x688
+ c6 8b 06              ldi16	r6, 0x68b
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 88 06           ldi16	r0, 0x688
+ f0 04 8b 06           ldi16	r0, 0x68b
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 88 06           ldi16	r2, 0x688
+ f0 06 8b 06           ldi16	r2, 0x68b
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -75,7 +80,27 @@ Disassembly of section .text:
  bb                    pop16	r3
  ef                    ret
 
-<avm_run_destructors>:
+<avm_test_main>:
+ b0                    push16	r0
+ d7 01                 sys	debug_break
+ c4 14 02              ldi16	r4, 0x214
+ c1 00                 ldi8	r5, 0x0
+ d7 31                 sys	set_text_font
+ c6 e8 01              ldi16	r6, 0x1e8
+ c3 00                 ldi8	r7, 0x0
+ f2 30                 sub	r0, r0
+ a0                    xor	r4, r4
+ c1 11                 ldi8	r5, 0x11
+ d7 34                 sys	draw_text_p
+ d7 01                 sys	debug_break
+ f1 20                 mov	r4, r0
+ b8                    pop16	r0
+ ef                    ret
+
+<avm_halt>:
+ d4 fe                 jmp8	avm_halt
+
+<__avm_terminate>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
@@ -87,21 +112,21 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
  d0 03                 breq8	0x3 <L0>
- e1 89 fe              call16	-375 <__avm_run_local_dtors>
+ e1 68 fe              call16	-408 <__avm_run_local_dtors>
 <L0>:
- c4 88 06              ldi16	r4, 0x688
+ c4 8b 06              ldi16	r4, 0x68b
  c1 00                 ldi8	r5, 0x0
- c6 88 06              ldi16	r6, 0x688
+ c6 8b 06              ldi16	r6, 0x68b
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 88 06           ldi16	r2, 0x688
+ f0 06 8b 06           ldi16	r2, 0x68b
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 88 06           ldi16	r0, 0x688
+ f0 04 8b 06           ldi16	r0, 0x68b
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -120,7 +145,7 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
  d0 03                 breq8	0x3 <L3>
- e1 40 fe              call16	-448 <__avm_run_local_dtors>
+ e1 1f fe              call16	-481 <__avm_run_local_dtors>
 <L3>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0
@@ -128,23 +153,3 @@ Disassembly of section .text:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
-
-<avm_test_main>:
- b0                    push16	r0
- d7 01                 sys	debug_break
- c4 11 02              ldi16	r4, 0x211
- c1 00                 ldi8	r5, 0x0
- d7 31                 sys	set_text_font
- c6 e5 01              ldi16	r6, 0x1e5
- c3 00                 ldi8	r7, 0x0
- f2 30                 sub	r0, r0
- a0                    xor	r4, r4
- c1 11                 ldi8	r5, 0x11
- d7 34                 sys	draw_text_p
- d7 01                 sys	debug_break
- f1 20                 mov	r4, r0
- b8                    pop16	r0
- ef                    ret
-
-<avm_halt>:
- d4 fe                 jmp8	avm_halt

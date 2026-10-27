@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <math.h>
 #include <avm.h>
 #include <stdio.h>
@@ -66,3 +67,5 @@ void c_explicit_program_calls(
     (void)avm_draw_textf(0, 10, ram, 7);
     (void)avm_draw_textf_P(0, 10, flash, 7);
 }
+
+int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }

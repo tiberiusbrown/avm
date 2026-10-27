@@ -3,40 +3,45 @@ fixed_point.elf:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
-0000031e l     F .text	00000044 avm_run_constructors
-00000362 l     F .text	00000065 avm_run_destructors
+00000323 l     F .text	00000044 avm_run_constructors
+000009fc l       *ABS*	00000000 .hidden __avm_crt_termination_phase
 00000000 l    df *ABS*	00000000 fixed_point.c
 00000100 l     O .data	00000100 bodies
 00000200 l     O .data	00000002 fixed_point_result
 00000000 l    df *ABS*	00000000 runtime.c
+00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 integer.c
-000004d7 l       .init_array	00000000 .hidden __init_array_end
-000004d7 l       .init_array	00000000 .hidden __init_array_start
-000004d7 l       .fini_array	00000000 .hidden __fini_array_start
-000004d7 l       .fini_array	00000000 .hidden __fini_array_end
-00000300 g     F .text	0000001e _start
-000003c7 g     F .text	000000c6 avm_test_main
-0000048d g     F .text	00000002 avm_halt
+000004dd l       .init_array	00000000 .hidden __init_array_end
+000004dd l       .init_array	00000000 .hidden __init_array_start
+000004dd l       .fini_array	00000000 .hidden __fini_array_start
+000004dd l       .fini_array	00000000 .hidden __fini_array_end
+00000300 g     F .text	00000023 _start
+00000367 g     F .text	000000c7 avm_test_main
+00000430 g     F .text	00000065 __avm_terminate
+0000042e g     F .text	00000002 avm_halt
+00000495 g     F .text	00000048 __avm_mulhisi3
 00000000  w      *UND*	00000000 __avm_run_local_dtors
-0000048f g     F .text	00000048 __avm_mulhisi3
 
 Disassembly of section .text:
 
 <_start>:
  b0                    push16	r0
+ d6 fe                 adjsp	-0x2
+ a0                    xor	r4, r4
+ f4 40                 stsp16	[sp+0x0], r4
  d5 1b                 call8	avm_run_constructors
- e1 c1 00              call16	avm_test_main
+ d5 5d                 call8	avm_test_main
  f0 00 46              ldi8	r0, 0x46
  c1 50                 ldi8	r5, 0x50
  f6 2c                 tst16	r4
  fb 05                 cmov.eq	r0, r5
- d5 51                 call8	avm_run_destructors
+ e1 1a 01              call16	__avm_terminate
  f1 20                 mov	r4, r0
  d7 00                 sys	debug_putc
  c0 0a                 ldi8	r4, 0xa
  d7 00                 sys	debug_putc
  d7 01                 sys	debug_break
- e1 6f 01              call16	avm_halt
+ e1 0b 01              call16	avm_halt
 
 <avm_run_constructors>:
  b3                    push16	r3
@@ -44,19 +49,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 d7 04              ldi16	r4, 0x4d7
+ c4 dd 04              ldi16	r4, 0x4dd
  c1 00                 ldi8	r5, 0x0
- c6 d7 04              ldi16	r6, 0x4d7
+ c6 dd 04              ldi16	r6, 0x4dd
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 d7 04           ldi16	r0, 0x4d7
+ f0 04 dd 04           ldi16	r0, 0x4dd
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 d7 04           ldi16	r2, 0x4d7
+ f0 06 dd 04           ldi16	r2, 0x4dd
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -69,60 +74,6 @@ Disassembly of section .text:
  f0 69 84              cmp32	q2, q1
  d1 ed                 brne8	-0x13 <L0>
 <L1>:
- d6 04                 adjsp	0x4
- b8                    pop16	r0
- b9                    pop16	r1
- ba                    pop16	r2
- bb                    pop16	r3
- ef                    ret
-
-<avm_run_destructors>:
- b3                    push16	r3
- b2                    push16	r2
- b1                    push16	r1
- b0                    push16	r0
- d6 fc                 adjsp	-0x4
- c4 00 00              ldi16	r4, 0x0
- c1 00                 ldi8	r5, 0x0
- aa                    xor	r6, r6
- af                    xor	r7, r7
- f0 69 8c              cmp32	q2, q3
- d0 03                 breq8	0x3 <L0>
- e1 89 fc              call16	-887 <__avm_run_local_dtors>
-<L0>:
- c4 d7 04              ldi16	r4, 0x4d7
- c1 00                 ldi8	r5, 0x0
- c6 d7 04              ldi16	r6, 0x4d7
- c3 00                 ldi8	r7, 0x0
- f0 69 c8              cmp32	q3, q2
- d0 2b                 breq8	0x2b <L2>
- f0 06 d7 04           ldi16	r2, 0x4d7
- f0 03 00              ldi8	r3, 0x0
- c4 fd ff              ldi16	r4, 0xfffd
- c5 ff ff              ldi16	r5, 0xffff
- f4 40                 stsp16	[sp+0x0], r4
- f4 49                 stsp16	[sp+0x2], r5
- f0 04 d7 04           ldi16	r0, 0x4d7
- f0 01 00              ldi8	r1, 0x0
-<L1>:
- f4 00                 ldsp16	r4, [sp+0x0]
- f4 09                 ldsp16	r5, [sp+0x2]
- f7 66                 add32	q1, q2
- f0 63 84              ldp24	q2, [q1]
- ea                    callp	q2
- f2 69                 mov32	q2, q1
- f1 75                 zext8	r5
- f0 69 80              cmp32	q2, q0
- d1 ed                 brne8	-0x13 <L1>
-<L2>:
- c4 00 00              ldi16	r4, 0x0
- c1 00                 ldi8	r5, 0x0
- aa                    xor	r6, r6
- af                    xor	r7, r7
- f0 69 8c              cmp32	q2, q3
- d0 03                 breq8	0x3 <L3>
- e1 40 fc              call16	-960 <__avm_run_local_dtors>
-<L3>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
@@ -172,7 +123,7 @@ Disassembly of section .text:
  f4 01                 ldsp16	r5, [sp+0x0]
  f4 ad                 inc16	r5
  cd 40                 cmpi.s8	r5, 0x40
- d0 63                 breq8	0x63 <L6>
+ d0 64                 breq8	0x64 <L6>
 <L2>:
  f4 41                 stsp16	[sp+0x0], r5
  c1 20                 ldi8	r5, 0x20
@@ -199,7 +150,7 @@ Disassembly of section .text:
  f2 03                 add	r0, r3
  ed 92 22              ld16	r4, [r1+2]
  f1 24                 mov	r5, r0
- d5 3c                 call8	__avm_mulhisi3
+ e1 a1 00              call16	__avm_mulhisi3
  c2 80                 ldi8	r6, 0x80
  af                    xor	r7, r7
  f7 6e                 add32	q3, q2
@@ -220,9 +171,9 @@ Disassembly of section .text:
  c4 ff 7f              ldi16	r4, 0x7fff
  a5                    xor	r5, r5
  f0 69 8c              cmp32	q2, q3
- d9 ac                 brsge8	-0x54 <L3>
+ d9 ab                 brsge8	-0x55 <L3>
  c4 ff 7f              ldi16	r4, 0x7fff
- d4 b2                 jmp8	-0x4e <L4>
+ d4 b1                 jmp8	-0x4f <L4>
 <L6>:
  f0 5a 00 02           stm16	[0x200], r2
  d7 01                 sys	debug_break
@@ -236,6 +187,60 @@ Disassembly of section .text:
 
 <avm_halt>:
  d4 fe                 jmp8	avm_halt
+
+<__avm_terminate>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 fc                 adjsp	-0x4
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	0x3 <L0>
+ e1 bb fb              call16	-1093 <__avm_run_local_dtors>
+<L0>:
+ c4 dd 04              ldi16	r4, 0x4dd
+ c1 00                 ldi8	r5, 0x0
+ c6 dd 04              ldi16	r6, 0x4dd
+ c3 00                 ldi8	r7, 0x0
+ f0 69 c8              cmp32	q3, q2
+ d0 2b                 breq8	0x2b <L2>
+ f0 06 dd 04           ldi16	r2, 0x4dd
+ f0 03 00              ldi8	r3, 0x0
+ c4 fd ff              ldi16	r4, 0xfffd
+ c5 ff ff              ldi16	r5, 0xffff
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 04 dd 04           ldi16	r0, 0x4dd
+ f0 01 00              ldi8	r1, 0x0
+<L1>:
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 66                 add32	q1, q2
+ f0 63 84              ldp24	q2, [q1]
+ ea                    callp	q2
+ f2 69                 mov32	q2, q1
+ f1 75                 zext8	r5
+ f0 69 80              cmp32	q2, q0
+ d1 ed                 brne8	-0x13 <L1>
+<L2>:
+ c4 00 00              ldi16	r4, 0x0
+ c1 00                 ldi8	r5, 0x0
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d0 03                 breq8	0x3 <L3>
+ e1 72 fb              call16	-1166 <__avm_run_local_dtors>
+<L3>:
+ d6 04                 adjsp	0x4
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
 
 <__avm_mulhisi3>:
  d6 fa                 adjsp	-0x6

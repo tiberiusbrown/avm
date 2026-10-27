@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <math.h>
 #include <new>
 #include <avm.h>
@@ -123,3 +124,5 @@ extern "C" void cpp_address_space_pointers(
     (void)strlen(typed_ram);
     (void)strlen(typed_flash);
 }
+
+int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }

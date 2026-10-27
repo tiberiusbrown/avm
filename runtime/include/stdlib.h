@@ -11,6 +11,12 @@ typedef struct { long long quot; long long rem; } lldiv_t;
 extern "C" {
 #endif
 
+int atexit(void (*func)(void));
+/* The attribute works in C99 as well as all supported C++ language modes. */
+__attribute__((noreturn)) void exit(int status);
+__attribute__((noreturn)) void _Exit(int status);
+__attribute__((noreturn)) void abort(void);
+
 /* Integer text conversions use the fixed C locale. strto* accepts bases
  * 2..36 or zero for octal/hexadecimal/decimal detection. Range errors set
  * errno to ERANGE; an invalid base sets EINVAL. Success preserves errno. */

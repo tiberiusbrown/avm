@@ -4,11 +4,12 @@ crt0_sketch.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_sketch.c
 00000000 l    d  .text._start	00000000 .text._start
-00000000 g     F .text._start	00000051 _start
+00000000 g     F .text._start	00000054 _start
 00000000         *UND*	00000000 __init_array_end
 00000000         *UND*	00000000 __init_array_start
 00000000         *UND*	00000000 setup
 00000000         *UND*	00000000 loop
+000009f6 g       *ABS*	00000000 .hidden __avm_crt_termination_phase
 
 Disassembly of section .text._start:
 
@@ -17,7 +18,9 @@ Disassembly of section .text._start:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	-0x4
+ d6 fa                 adjsp	-0x6
+ a0                    xor	r4, r4
+ f4 50                 stsp16	[sp+0x4], r4
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_PROG_LO16	__init_array_end
  c1 00                 ldi8	r5, 0x0
@@ -30,7 +33,7 @@ Disassembly of section .text._start:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_start
-		R_AVM_FAR24	.text._start+0x45
+		R_AVM_FAR24	.text._start+0x48
 <L0>:
  f0 04 00 00           ldi16	r0, 0x0
 		R_AVM_PROG_LO16	__init_array_start
@@ -55,7 +58,7 @@ Disassembly of section .text._start:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_start
-		R_AVM_FAR24	.text._start+0x2e
+		R_AVM_FAR24	.text._start+0x31
 <L1>:
  e3 00 00 00           callf	_start
 		R_AVM_RELAX	*ABS*
@@ -65,4 +68,4 @@ Disassembly of section .text._start:
 		R_AVM_FAR24	loop
  e2 00 00 00           jmpf	_start
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text._start+0x49
+		R_AVM_FAR24	.text._start+0x4c

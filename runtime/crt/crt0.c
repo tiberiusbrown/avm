@@ -3,6 +3,7 @@
 #include "init_fini.h"
 
 extern int main(void);
+extern void __avm_terminate(void);
 
 /*
  * The AVM loader has already initialized .saved and .data, set SP to 0x0A00,
@@ -11,8 +12,9 @@ extern int main(void);
  */
 __attribute__((noreturn, used, section(".text._start")))
 void _start(void) {
+    __builtin_avm_termination_context();
     avm_run_constructors();
     (void)main();
-    avm_run_destructors();
+    __avm_terminate();
     avm_halt();
 }

@@ -92,6 +92,8 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                     "${AVM_CXX_TEST_DIR}/support/separate_compilation_impl.cpp")
                 list(APPEND test_source_dependencies
                     "${AVM_CXX_TEST_DIR}/support/separate_compilation.h")
+            elseif(AVM_TEST_NAME STREQUAL "atexit_lifetime")
+                set(test_support_sources "${AVM_CXX_TEST_DIR}/support/atexit_lifetime.cpp")
             elseif(AVM_TEST_NAME STREQUAL "multiple_translation_units")
                 set(test_support_sources
                     "${AVM_CXX_TEST_DIR}/support/multiple_translation_units_a.cpp"
@@ -109,10 +111,21 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         # emulator as well as retaining the ordinary compilation matrix.
         if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
            AVM_TEST_OPT_LEVEL STREQUAL "O2" AND
-           AVM_TEST_NAME MATCHES "^(virtual_dispatch|member_pointers|global_lifetime|local_static_lifetime|interleaved_lifetime)$")
+           AVM_TEST_NAME MATCHES "^(virtual_dispatch|member_pointers|global_lifetime|local_static_lifetime|interleaved_lifetime|atexit_.*|termination_.*)$")
             list(APPEND test_compile_options -flto=full)
         endif()
 
+        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_OPT_LEVEL STREQUAL "O2"
+           AND AVM_TEST_NAME MATCHES "^(atexit_|termination_)")
+            list(APPEND test_compile_options -flto=full)
+        endif()
+        if(AVM_TEST_NAME MATCHES "^(atexit_|termination_)")
+            list(APPEND test_source_dependencies ${AVM_C_TEST_SOURCES})
+        endif()
+        if(AVM_TEST_NAME STREQUAL "termination_early_exit_only")
+            list(APPEND test_source_dependencies
+                "${AVM_CXX_TEST_DIR}/termination_early_exit.cpp")
+        endif()
         avm_add_object(
             OUTPUT "${AVM_TEST_OBJECT}"
             SOURCE "${AVM_TEST_SOURCE_FILE}"
@@ -131,12 +144,15 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 SOURCE "${test_support_source}"
                 LANGUAGE CXX
                 INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
-                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}"
+                COMPILE_OPTIONS ${test_compile_options}
                 DEPENDS avm_sysroot ${test_source_dependencies}
             )
             list(APPEND test_objects "${test_support_object}")
         endforeach()
         set(test_link_options)
+        if(AVM_TEST_NAME MATCHES "^atexit_capacity([0-9]+)$")
+            list(APPEND test_link_options "--avm-atexit-capacity=${CMAKE_MATCH_1}")
+        endif()
         if(AVM_TEST_NAME STREQUAL "member_pointer_high_address")
             # Keep data and ordinary code below 64 KiB while placing the
             # member-function target at the reported failing address.
@@ -155,12 +171,18 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 "--section-start=.rodata=0x10000"
                 "--section-start=.high_program_bytes=0x1FFFC")
         endif()
+        set(test_startup "${AVM_SYSROOT_DIR}/lib/crt0_test.o")
+        if(AVM_TEST_NAME STREQUAL "termination_main")
+            set(test_startup "${AVM_SYSROOT_DIR}/lib/crt0.o")
+        elseif(AVM_TEST_NAME STREQUAL "termination_sketch")
+            set(test_startup "${AVM_SYSROOT_DIR}/lib/crt0_sketch.o")
+        endif()
         avm_add_image(
             OBJECTS ${test_objects}
             OUTPUT_ELF "${AVM_TEST_ELF}"
             OUTPUT_IMAGE "${AVM_TEST_IMAGE}"
             ENTRY _start
-            STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+            STARTUP "${test_startup}"
             LIBRARIES
                 "${AVM_SYSROOT_DIR}/lib/libavm.a"
                 "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
@@ -907,3 +929,13 @@ if(Python3_FOUND)
 else()
     add_custom_target(avm_validation_full DEPENDS avm_tests_run)
 endif()
+
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_custom_target(avm_termination_checks
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/termination/check_link.py"
+        --compiler "$<TARGET_FILE:clang>"
+        --work "${CMAKE_CURRENT_BINARY_DIR}/termination"
+    DEPENDS avm_sdk
+    COMMENT "Checking AVM termination RAM layout and callback stack bounds"
+    VERBATIM)
+add_dependencies(avm_tests_run avm_termination_checks)

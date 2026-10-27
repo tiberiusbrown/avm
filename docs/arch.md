@@ -5424,17 +5424,83 @@ Virtual member-function pointers encode a byte offset in this three-byte
 layout. VTTs also reside in AS1 and contain 24-bit vtable address points.
 
 Startup runs `.init_array` entries before `main()` or sketch `setup()`.
-Clang emits nonlocal global object destructors into `.fini_array` at compile
-time, without a RAM callback table. When `main()` returns, `.fini_array`
-entries run in reverse order. Function-local static objects with destructors
-register only after construction; the linker reserves a five-byte table slot
-per such object, plus a two-byte next-slot pointer and a two-byte global
-construction counter. These preserve reverse construction order across local
-and nonlocal objects. The registry code and RAM are linked only when needed.
-The sketch loop does not have a normal shutdown path.
-Custom linker scripts using local static destructors must place
-`.data.avm_local_dtor_slot.*` contiguously in `.data` and define
-`__avm_local_dtor_slots_start` and `__avm_local_dtor_slots_end` around them.
+Clang emits nonlocal global object destructors into program-memory `.fini_array`
+entries, visited in reverse order during normal termination. Function-local
+static objects register destructors only after construction; the linker reserves
+one five-byte RAM slot per live object, plus a two-byte next-slot pointer. The
+shared two-byte construction phase lives in the raw startup stack frame and is
+counted by ordinary stack analysis. The registry code and static RAM are linked
+only when needed. Programs with only nonlocal destructors need no RAM registry.
+
+`<stdlib.h>` provides C99 `atexit`, `exit`, `_Exit`, and `abort`, with C linkage
+and nonreturning declarations usable in C99 and C++. Returning from ordinary
+`main()` and calling `exit(status)` perform normal termination: registered
+callbacks and applicable C++ destructors execute, then `avm_halt()` stops guest
+execution. `exit` does not unwind automatic objects. `_Exit(status)` and the
+weak `abort()` implementation call `avm_halt()` immediately, skipping normal
+cleanup. Calling `avm_halt()` directly also skips cleanup. These operations do
+not reset hardware or flush hosted streams. Hardware has no process exit-status
+interface, so `exit` and `_Exit` discard their status argument. The test CRT
+retains its P/F report from `avm_test_main()`'s return value, after cleanup;
+explicit `exit` bypasses that return path and report. The sketch CRT still calls
+`setup()` once and `loop()` indefinitely, with no per-iteration termination work.
+A sketch can terminate explicitly with `exit`.
+
+`atexit` returns zero on success and nonzero when full. The default capacity is
+32 outstanding registrations. Set `-Wl,--avm-atexit-capacity=N` with `avm-clang`
+(or `--avm-atexit-capacity=N` with `avm-ld`) to choose 1..255 entries, subject to
+the static-RAM limit. A capacity below 32 deliberately relaxes the C99 minimum
+guarantee. The linker sizes storage after LTO and section GC; no runtime rebuild
+is needed. Repeated registrations are distinct entries. An entry is consumed
+before its callback runs. Registrations during cleanup run before earlier
+pending entries, reusing consumed capacity. As in C99, recursively calling
+`exit` has undefined behavior.
+
+Plain C uses packed three-byte function pointers plus a one-byte count:
+`3 * N + 1` bytes (13 at capacity 4; 97 at capacity 32). No callback table or
+count is linked without a live `atexit` reference, including programs returning
+from `main`, programs using only `exit`, and existing C++ destructor programs.
+Immediate termination does not itself pull in the normal termination registry.
+With nonlocal or local C++ destructors, callbacks share the local-destructor LIFO:
+each slot contains a three-byte code pointer and a two-byte phase/tag. This
+preserves exact reverse registration order within a construction phase and
+ordering around completed global constructions. Mixed storage is
+`5 * (N + L) + 3` bytes, where L is the number of live local-static destructor
+slots; static bookkeeping is a shared next pointer and callback count. At
+capacity 32 this is 163 bytes plus five per local-static destructor, excluding
+the objects and their existing guards. No heap or analysis-only target records
+are stored in guest RAM. The shared phase/tag supports at most 32767 fini-array
+entries; the linker rejects a larger array when construction tracking is linked.
+
+Global construction/destruction hooks identify the object's fini-array stub
+with its ordinary 24-bit code pointer. Its final array position supplies the
+phase across translation units and initialization priorities. The phase advances
+only after construction completes. Explicit `exit` also links construction
+tracking, so unfinished nonlocal objects are skipped when exiting during
+initialization. Even an explicit C++ `exit` without callbacks needs no additional
+static termination storage: its phase is in the startup frame and there is no
+dynamic-table pointer, callback table, or count. The supplied CRTs reserve and
+initialize the two-byte phase once at startup, including when unused; this is
+stack usage, not static RAM, and adds no sketch-loop work. Rebuild C++
+objects when updating this runtime/compiler hook ABI. The default configuration
+still disables `__cxa_atexit`.
+
+The default linker places `.data.avm_local_dtor_slot.*` contiguously at the start
+of `.data`, followed by optional callback capacity and shared bookkeeping.
+Custom SECTIONS layouts must reproduce this contract:
+`__avm_local_dtor_slots_start/end` bound the compiler slots;
+`__avm_termination_slots_end` follows the callback slots;
+`__avm_termination_next` names a zero-initialized two-byte pointer when there is
+a mixed dynamic table; `__avm_termination_phase` aliases the absolute
+`__avm_crt_termination_phase` address exported for the raw startup frame.
+`__builtin_avm_termination_context()` reserves and initializes that word in
+`_start`; the backend exports its finalized address relative to the loader's
+initial SP of 0x0A00. Absolute `__avm_termination_entry_size` is 3 or 5 and
+`__avm_atexit_capacity` is the requested capacity. A custom CRT without the
+stack-context contract requires a two-byte static phase fallback. Plain C omits
+mixed-registry static bookkeeping. Explicit section-start overrides
+also bypass default allocation. The capacity option configures the default AVM
+layout, not user-supplied SECTIONS allocation expressions.
 
 Persistent AS0 global variables are placed in `.saved` or `.saved.*`. Other
 AS0 global objects are placed in `.data` or `.data.*`, including ordinary

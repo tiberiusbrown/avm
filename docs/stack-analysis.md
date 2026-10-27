@@ -67,9 +67,16 @@ use full LTO for that analysis.
 
 The runtime uses `__builtin_avm_stack_dispatch(fn, kind)` to preserve its
 dispatch contracts through inlining, LTO, and machine tail-call rewrites.
+`__builtin_avm_termination_context()` reserves and zero-initializes a two-byte
+phase word in the raw `_start` frame. The backend exports its finalized absolute
+address as `__avm_crt_termination_phase`; the linker aliases the optional
+termination registry's phase to it. No pointer to this word or extra phase word
+is stored in static RAM. This reservation participates in finalized frames and
+normal stack bounds, including when no termination registry is linked.
+
 Kinds 0 and 1 dispatch the standard init/fini arrays; kind 2 dispatches only
-destructors registered through `__avm_register_local_dtor`; kind 3 performs a
-null-guarded weak-hook call. The builtin emits the ordinary call and metadata,
+callbacks registered through `__avm_register_local_dtor` or `atexit`; kind 3
+performs a null-guarded weak-hook call. The builtin emits the ordinary call and metadata,
 with a runtime null check for kind 3. It is a runtime contract, not a way to
 assert an arbitrary pointer has known targets.
 
@@ -81,13 +88,20 @@ edges. Raw/unresolved entries, explicitly overridden array bounds, and custom
 SECTIONS layouts retain an unknown continuation. Custom layout support needs
 a later analysis of the actual output ranges.
 
-Each local destructor registration emits link-order target metadata. The
-registration routine stays uninlined so its boundary survives full LTO; its
-runtime slots remain five bytes. LLD unions the candidates from live registering
-code and checks all of them at registry dispatches. Unknown or unannotated
+Each local destructor or `atexit` registration emits link-order target metadata.
+Registration boundaries remain uninlined through full LTO. Local-static slots
+remain five bytes; plain C callback slots remain three bytes. LLD unions the
+candidates from live registering code and checks all of them at registry
+dispatches. Unknown or unannotated
 registrations keep dispatch incomplete. Registration phases are conservatively
 merged; recursive destructors remain incomplete. This contract assumes the
-standard registry implementation and exclusive writes through registration.
+standard shared termination registry and exclusive writes through registration.
+A runtime pointer passed to `atexit` remains unknown unless compiler pointer analysis proves its
+entire target set. Dead registering sections and their analysis records disappear
+together under GC. Shared dispatch includes callback frames, outgoing arguments
+and actual return records in the 256-byte overflow check. Registration from a
+callback may create conservative recursive analysis paths without implying
+recursive execution of callbacks by the runtime LIFO.
 
 An absent undefined weak hook is skipped only when metadata proves a non-null
 guard (either kind 3 or a dominating IR control-flow edge). An unguarded weak

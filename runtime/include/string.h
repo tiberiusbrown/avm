@@ -14,8 +14,20 @@ void* memcpy(void* dst, const void* src, size_t size);
 void* memset(void* dst, int value, size_t size);
 void* memmove(void* dst, const void* src, size_t size);
 int memcmp(const void* lhs, const void* rhs, size_t size);
+void* memchr(const void* src, int value, size_t size);
 
 int strcmp(const char* lhs, const char* rhs);
+int strncmp(const char* lhs, const char* rhs, size_t size);
+char* strchr(const char* str, int value);
+char* strrchr(const char* str, int value);
+char* strstr(const char* str, const char* needle);
+char* strpbrk(const char* str, const char* accept);
+size_t strspn(const char* str, const char* accept);
+size_t strcspn(const char* str, const char* reject);
+char* strtok(char* str, const char* delimiters);
+// Reentrant tokenization and bounded length extensions.
+char* strtok_r(char* str, const char* delimiters, char** saveptr);
+size_t strnlen(const char* str, size_t size);
 size_t strlen(const char* str);
 char* strncpy(char* dst, const char* src, size_t size);
 char* strncat(char* dst, const char* src, size_t size);

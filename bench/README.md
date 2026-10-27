@@ -1,5 +1,21 @@
 # AVM benchmarks
 
+The `string_strchr`, `string_strrchr`, `string_strncmp`, `string_strstr`,
+`string_memchr`, `string_strspn`, `string_strcspn`, `string_strpbrk`,
+`string_strnlen`, `string_strtok`, and `string_strtok_r` workloads exercise the
+runtime entry points through volatile function pointers to prevent builtin
+substitution. Each runs 32 iterations over four RAM inputs: empty, distinct
+characters, repeated prefixes, and high-bit bytes. Search workloads mix hits,
+misses, and terminator/empty searches; bounded operations use different limits.
+The tokenization workloads change delimiters on continuation and include the
+cost of copying each input into a mutable buffer. All intervals include loop,
+indirect-call, checksum, and volatile-sink overhead.
+
+Build with `cmake --build build --config RelWithDebInfo --target avm_bench avm_bench_images`,
+then run `build/avm_bench --c-only --filter '^string_(str|memchr)' --c-output build/bench/string-cycles.txt`
+for these 11 workloads. Disassemblies are retained under `c/asm/`. They also
+participate in the complete benchmark sweep.
+
 The C99 math workloads `math_exp2`, `math_expm1`, `math_log1p`, `math_cbrt`,
 `math_asin`, and `math_acos` each measure 32 calls over a fixed mixture of common,
 boundary, and tiny inputs. `math_ldexp`, `math_frexp`, `math_modf`,

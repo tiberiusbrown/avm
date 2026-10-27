@@ -225,7 +225,7 @@ def main():
     with tempfile.TemporaryDirectory(prefix="lldb-invalid-", dir=work) as raw:
         incompatible = Path(raw) / "wrong-abi.elf"
         contents = bytearray(c_image.read_bytes())
-        contents[36] = 2  # ELF e_flags, incompatible AVM ABI version.
+        contents[36] = 1  # ELF e_flags, incompatible AVM ABI version.
         incompatible.write_bytes(contents)
         rejected = subprocess.run(
             [str(executable), "--batch", "-o", "run", str(incompatible)],

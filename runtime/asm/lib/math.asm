@@ -6,9 +6,9 @@ SYMBOL TABLE:
 00000000 l    d  .text.log2f	00000000 .text.log2f
 00000000 l    d  .text.fminf	00000000 .text.fminf
 00000000 l    d  .text.fmaxf	00000000 .text.fmaxf
-00000000 g     F .text.log2f	000000d2 log2f
-00000000 g     F .text.fminf	00000085 fminf
-00000000 g     F .text.fmaxf	0000007b fmaxf
+00000000 g     F .text.log2f	000000df log2f
+00000000 g     F .text.fminf	0000007e fminf
+00000000 g     F .text.fmaxf	0000006e fmaxf
 
 Disassembly of section .text.log2f:
 
@@ -17,7 +17,7 @@ Disassembly of section .text.log2f:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
+ d6 fc                 adjsp	-0x4
  aa                    xor	r6, r6
  c7 80 80              ldi16	r7, 0x8080
  f2 62                 mov32	q0, q2
@@ -26,72 +26,81 @@ Disassembly of section .text.log2f:
  d8 04                 bruge8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0x2e
+		R_AVM_FAR24	.text.log2f+0x2b
 <L0>:
- f2 30                 sub	r0, r0
- f2 39                 sub	r1, r1
- ff c8 68              fcmp	r6, q2, q0
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ ff 14                 fcmp
  f6 2e                 tst16	r6
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0xb5
+		R_AVM_FAR24	.text.log2f+0xbe
 <L1>:
  a0                    xor	r4, r4
  c5 80 ff              ldi16	r5, 0xff80
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0xae
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 03 7f              ldi8	r3, 0x7f
- f0 69 48              cmp32	q1, q2
+		R_AVM_FAR24	.text.log2f+0xb7
+ f0 04 ff ff           ldi16	r0, 0xffff
+ f0 01 7f              ldi8	r1, 0x7f
+ f0 69 08              cmp32	q0, q2
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0x4d
+		R_AVM_FAR24	.text.log2f+0x48
 <L2>:
- f2 30                 sub	r0, r0
- f0 05 00 4c           ldi16	r1, 0x4c00
- ff 28                 fmul	q2, q0
+ aa                    xor	r6, r6
+ c7 00 4c              ldi16	r7, 0x4c00
+ ff 02                 fmul
  c6 68 ff              ldi16	r6, 0xff68
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0x50
+		R_AVM_FAR24	.text.log2f+0x4b
  c6 81 ff              ldi16	r6, 0xff81
- f4 52                 stsp16	[sp+0x4], r6
- f9 50                 and	r2, r4
- f9 74                 and	r3, r5
- c6 20 fb              ldi16	r6, 0xfb20
- c3 4a                 ldi8	r7, 0x4a
- f7 6d                 add32	q3, q1
  f4 42                 stsp16	[sp+0x0], r6
- f4 4b                 stsp16	[sp+0x2], r7
- c2 80                 ldi8	r6, 0x80
- 8b                    and	r6, r7
- f9 79                 or	r3, r6
- f1 2a                 mov	r6, r2
- f1 2f                 mov	r7, r3
+ f9 10                 and	r0, r4
+ f9 34                 and	r1, r5
+ f0 06 20 fb           ldi16	r2, 0xfb20
+ f0 03 4a              ldi8	r3, 0x4a
+ f7 64                 add32	q1, q0
+ c3 80                 ldi8	r7, 0x80
+ f9 ec                 and	r7, r3
+ f9 3d                 or	r1, r7
+ f1 28                 mov	r6, r0
+ f1 2d                 mov	r7, r1
  f2 30                 sub	r0, r0
  f0 05 80 3f           ldi16	r1, 0x3f80
  f9 1a                 xor	r0, r6
  f9 3e                 xor	r1, r7
  01                    mov	r4, r5
  fa 77                 lsr16i	r4, 0x7
- f4 11                 ldsp16	r5, [sp+0x4]
+ f4 01                 ldsp16	r5, [sp+0x0]
  11                    add	r4, r5
- f4 0b                 ldsp16	r7, [sp+0x2]
- 0b                    mov	r6, r7
+ f1 2b                 mov	r6, r3
+ af                    xor	r7, r7
  fa 97                 lsr16i	r6, 0x7
  18                    add	r6, r4
- a0                    xor	r4, r4
- c5 80 bf              ldi16	r5, 0xbf80
- ff 02                 fadd	q0, q2
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ aa                    xor	r6, r6
+ c7 80 bf              ldi16	r7, 0xbf80
  f2 68                 mov32	q2, q0
- ff ca 07 a7 65 34 3e a3 bd 8a be 49 17 97 3e 10 e7 b7 be 96 17 f6 3e 8e ab 38 bf 46 aa b8 3f  fpoly	7, 0.176169023, -0.270978063, 0.295099527, -0.359184742, 0.480648696, -0.721367717, 1.44269633
- ff 28                 fmul	q2, q0
- ff c0 63              s16tof	q3, r6
- ff 0b                 fadd	q2, q3
- d6 06                 adjsp	0x6
+ ff 00                 fadd
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ ff 16 07 a7 65 34 3e a3 bd 8a be 49 17 97 3e 10 e7 b7 be 96 17 f6 3e 8e ab 38 bf 46 aa b8 3f  fpoly	7, 0.176169023, -0.270978063, 0.295099527, -0.359184742, 0.480648696, -0.721367717, 1.44269633
+ ff 02                 fmul
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ f4 00                 ldsp16	r4, [sp+0x0]
+ ff 0c                 s16tof
+ f2 62                 mov32	q0, q2
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
+ ff 00                 fadd
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -103,17 +112,22 @@ Disassembly of section .text.log2f:
  d3 04                 brslt8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0xca
+		R_AVM_FAR24	.text.log2f+0xd3
 <L3>:
- ff 0a                 fadd	q2, q2
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0xae
- ff 1a                 fsub	q2, q2
- ff 38                 fdiv	q2, q0
+		R_AVM_FAR24	.text.log2f+0xb5
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ ff 01                 fsub
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ ff 03                 fdiv
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0xae
+		R_AVM_FAR24	.text.log2f+0xb7
 
 Disassembly of section .text.fminf:
 
@@ -123,12 +137,10 @@ Disassembly of section .text.fminf:
  b1                    push16	r1
  b0                    push16	r0
  d6 f8                 adjsp	-0x8
- f4 52                 stsp16	[sp+0x4], r6
- f4 5b                 stsp16	[sp+0x6], r7
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
  f0 06 ff ff           ldi16	r2, 0xffff
  f0 07 ff 7f           ldi16	r3, 0x7fff
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 59                 stsp16	[sp+0x6], r5
  f9 88                 and	r4, r2
  f9 ac                 and	r5, r3
  f2 30                 sub	r0, r0
@@ -137,56 +149,54 @@ Disassembly of section .text.fminf:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fminf
-		R_AVM_FAR24	.text.fminf+0x2f
+		R_AVM_FAR24	.text.fminf+0x2b
 <L0>:
- f4 10                 ldsp16	r4, [sp+0x4]
- f4 19                 ldsp16	r5, [sp+0x6]
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
  e2 00 00 00           jmpf	fminf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fminf+0x7e
- f4 10                 ldsp16	r4, [sp+0x4]
- f4 19                 ldsp16	r5, [sp+0x6]
+		R_AVM_FAR24	.text.fminf+0x77
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
  f9 88                 and	r4, r2
  f9 ac                 and	r5, r3
  f0 69 08              cmp32	q0, q2
  d2 04                 brult8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fminf
-		R_AVM_FAR24	.text.fminf+0x46
+		R_AVM_FAR24	.text.fminf+0x42
 <L1>:
- 02                    mov	r4, r6
- 07                    mov	r5, r7
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
  e2 00 00 00           jmpf	fminf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fminf+0x7e
- 02                    mov	r4, r6
- 07                    mov	r5, r7
- f0 30 04              ldsp16	r0, [sp+0x4]
- f0 31 06              ldsp16	r1, [sp+0x6]
- f9 81                 or	r4, r0
- f9 a5                 or	r5, r1
- f4 40                 stsp16	[sp+0x0], r4
- f4 49                 stsp16	[sp+0x2], r5
- f9 50                 and	r2, r4
- f9 74                 and	r3, r5
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- f0 69 48              cmp32	q1, q2
+		R_AVM_FAR24	.text.fminf+0x77
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ f2 62                 mov32	q0, q2
+ f9 19                 or	r0, r6
+ f9 3d                 or	r1, r7
+ f0 38 00              stsp16	[sp+0x0], r0
+ f0 39 02              stsp16	[sp+0x2], r1
+ f9 40                 and	r2, r0
+ f9 64                 and	r3, r1
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 40              cmp32	q1, q0
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fminf
-		R_AVM_FAR24	.text.fminf+0x7a
+		R_AVM_FAR24	.text.fminf+0x73
 <L2>:
- f0 30 04              ldsp16	r0, [sp+0x4]
- f0 31 06              ldsp16	r1, [sp+0x6]
- ff c8 4c              fcmp	r4, q3, q0
- cc ff                 cmpi.s8	r4, -0x1
- fb 06                 cmov.eq	r0, r6
- fb 0f                 cmov.eq	r1, r7
- f2 68                 mov32	q2, q0
+ f2 67                 mov32	q1, q3
+ ff 14                 fcmp
+ ce ff                 cmpi.s8	r6, -0x1
+ fb 14                 cmov.eq	r2, r4
+ fb 1d                 cmov.eq	r3, r5
+ f2 69                 mov32	q2, q1
  e2 00 00 00           jmpf	fminf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fminf+0x7e
+		R_AVM_FAR24	.text.fminf+0x77
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
  d6 08                 adjsp	0x8
@@ -203,64 +213,64 @@ Disassembly of section .text.fmaxf:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f2 62                 mov32	q0, q2
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 07 ff 7f           ldi16	r3, 0x7fff
- f9 88                 and	r4, r2
- f9 ac                 and	r5, r3
- f2 42                 sub	r2, r2
- f0 07 80 7f           ldi16	r3, 0x7f80
- f0 69 48              cmp32	q1, q2
+ f2 63                 mov32	q0, q3
+ f2 66                 mov32	q1, q2
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff 7f              ldi16	r7, 0x7fff
+ 82                    and	r4, r6
+ 87                    and	r5, r7
+ aa                    xor	r6, r6
+ c7 80 7f              ldi16	r7, 0x7f80
+ f0 69 c8              cmp32	q3, q2
  d8 04                 bruge8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fmaxf
-		R_AVM_FAR24	.text.fmaxf+0x74
+		R_AVM_FAR24	.text.fmaxf+0x67
 <L0>:
- 02                    mov	r4, r6
- 07                    mov	r5, r7
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 07 ff 7f           ldi16	r3, 0x7fff
- f9 88                 and	r4, r2
- f9 ac                 and	r5, r3
- f2 42                 sub	r2, r2
- f0 07 80 7f           ldi16	r3, 0x7f80
- f0 69 48              cmp32	q1, q2
+ f2 68                 mov32	q2, q0
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff 7f              ldi16	r7, 0x7fff
+ 82                    and	r4, r6
+ 87                    and	r5, r7
+ aa                    xor	r6, r6
+ c7 80 7f              ldi16	r7, 0x7f80
+ f0 69 c8              cmp32	q3, q2
  d2 04                 brult8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fmaxf
-		R_AVM_FAR24	.text.fmaxf+0x44
+		R_AVM_FAR24	.text.fmaxf+0x3a
 <L1>:
- f2 6a                 mov32	q3, q0
+ f2 61                 mov32	q0, q1
  e2 00 00 00           jmpf	fmaxf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fmaxf+0x74
- 02                    mov	r4, r6
- 07                    mov	r5, r7
- f9 81                 or	r4, r0
- f9 a5                 or	r5, r1
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 07 ff 7f           ldi16	r3, 0x7fff
- f9 88                 and	r4, r2
- f9 ac                 and	r5, r3
- f2 42                 sub	r2, r2
- f2 4b                 sub	r3, r3
- f0 69 84              cmp32	q2, q1
+		R_AVM_FAR24	.text.fmaxf+0x67
+ f2 68                 mov32	q2, q0
+ f9 89                 or	r4, r2
+ f9 ad                 or	r5, r3
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff 7f              ldi16	r7, 0x7fff
+ 82                    and	r4, r6
+ 87                    and	r5, r7
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fmaxf
-		R_AVM_FAR24	.text.fmaxf+0x70
+		R_AVM_FAR24	.text.fmaxf+0x63
 <L2>:
- ff c8 43              fcmp	r4, q0, q3
- cc 01                 cmpi.s8	r4, 0x1
- fb 30                 cmov.eq	r6, r0
- fb 39                 cmov.eq	r7, r1
+ f2 69                 mov32	q2, q1
+ f2 6a                 mov32	q3, q0
+ ff 14                 fcmp
+ ce 01                 cmpi.s8	r6, 0x1
+ fb 02                 cmov.eq	r0, r2
+ fb 0b                 cmov.eq	r1, r3
  e2 00 00 00           jmpf	fmaxf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fmaxf+0x74
- f9 c0                 and	r6, r0
- f9 e4                 and	r7, r1
- 02                    mov	r4, r6
- 07                    mov	r5, r7
+		R_AVM_FAR24	.text.fmaxf+0x67
+ f9 08                 and	r0, r2
+ f9 2c                 and	r1, r3
+ f2 68                 mov32	q2, q0
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

@@ -4,7 +4,7 @@ math_kf_cos.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 kf_cos.c
 00000000 l    d  .text.__kernel_cosf	00000000 .text.__kernel_cosf
-00000000 g     F .text.__kernel_cosf	00000038 __kernel_cosf
+00000000 g     F .text.__kernel_cosf	0000003a __kernel_cosf
 
 Disassembly of section .text.__kernel_cosf:
 
@@ -28,8 +28,10 @@ Disassembly of section .text.__kernel_cosf:
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
- ff 2a                 fmul	q2, q2
- ff ca 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ ff 02                 fmul
+ ff 16 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret

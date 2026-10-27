@@ -104,10 +104,10 @@ fpcx_print_exact_state:
     fpcx_set_cc \cc_lhs, \cc_rhs
     fpcx_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
 .Lfpcx_fcmp_begin_\@:
-    fcmp \rd, \ql, \qr
+    fcmp
 .Lfpcx_fcmp_end_\@:
-    .if (.Lfpcx_fcmp_end_\@ - .Lfpcx_fcmp_begin_\@) != 3
-        .error "FCMP must occupy exactly three bytes"
+    .if (.Lfpcx_fcmp_end_\@ - .Lfpcx_fcmp_begin_\@) != 2
+        .error "FCMP must occupy exactly two bytes"
     .endif
     call fpcx_print_exact_state
 .endm
@@ -116,10 +116,10 @@ fpcx_print_exact_state:
     fpcx_set_cc \cc_lhs, \cc_rhs
     fpcx_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
 .Lfpcx_fclass_begin_\@:
-    fclass \rd, \qs
+    fclass
 .Lfpcx_fclass_end_\@:
-    .if (.Lfpcx_fclass_end_\@ - .Lfpcx_fclass_begin_\@) != 3
-        .error "FCLASS must occupy exactly three bytes"
+    .if (.Lfpcx_fclass_end_\@ - .Lfpcx_fclass_begin_\@) != 2
+        .error "FCLASS must occupy exactly two bytes"
     .endif
     call fpcx_print_exact_state
 .endm

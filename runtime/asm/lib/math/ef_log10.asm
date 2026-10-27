@@ -4,7 +4,7 @@ math_ef_log10.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_log10.c
 00000000 l    d  .text.log10f	00000000 .text.log10f
-00000000 g     F .text.log10f	000000da log10f
+00000000 g     F .text.log10f	000000e9 log10f
 
 Disassembly of section .text.log10f:
 
@@ -13,7 +13,7 @@ Disassembly of section .text.log10f:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
+ d6 fc                 adjsp	-0x4
  aa                    xor	r6, r6
  c7 80 80              ldi16	r7, 0x8080
  f2 62                 mov32	q0, q2
@@ -22,75 +22,84 @@ Disassembly of section .text.log10f:
  d8 04                 bruge8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log10f
-		R_AVM_FAR24	.text.log10f+0x2e
+		R_AVM_FAR24	.text.log10f+0x2b
 <L0>:
- f2 30                 sub	r0, r0
- f2 39                 sub	r1, r1
- ff c8 68              fcmp	r6, q2, q0
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ ff 14                 fcmp
  f6 2e                 tst16	r6
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log10f
-		R_AVM_FAR24	.text.log10f+0xbd
+		R_AVM_FAR24	.text.log10f+0xc6
 <L1>:
  a0                    xor	r4, r4
  c5 80 ff              ldi16	r5, 0xff80
  e2 00 00 00           jmpf	log10f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log10f+0xb6
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 03 7f              ldi8	r3, 0x7f
- f0 69 48              cmp32	q1, q2
+		R_AVM_FAR24	.text.log10f+0xbf
+ f0 04 ff ff           ldi16	r0, 0xffff
+ f0 01 7f              ldi8	r1, 0x7f
+ f0 69 08              cmp32	q0, q2
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log10f
-		R_AVM_FAR24	.text.log10f+0x4d
+		R_AVM_FAR24	.text.log10f+0x48
 <L2>:
- f2 30                 sub	r0, r0
- f0 05 00 4c           ldi16	r1, 0x4c00
- ff 28                 fmul	q2, q0
+ aa                    xor	r6, r6
+ c7 00 4c              ldi16	r7, 0x4c00
+ ff 02                 fmul
  c6 68 ff              ldi16	r6, 0xff68
  e2 00 00 00           jmpf	log10f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log10f+0x50
+		R_AVM_FAR24	.text.log10f+0x4b
  c6 81 ff              ldi16	r6, 0xff81
- f4 52                 stsp16	[sp+0x4], r6
- f9 50                 and	r2, r4
- f9 74                 and	r3, r5
- c6 20 fb              ldi16	r6, 0xfb20
- c3 4a                 ldi8	r7, 0x4a
- f7 6d                 add32	q3, q1
  f4 42                 stsp16	[sp+0x0], r6
- f4 4b                 stsp16	[sp+0x2], r7
- c2 80                 ldi8	r6, 0x80
- 8b                    and	r6, r7
- f9 79                 or	r3, r6
- f1 2a                 mov	r6, r2
- f1 2f                 mov	r7, r3
+ f9 10                 and	r0, r4
+ f9 34                 and	r1, r5
+ f0 06 20 fb           ldi16	r2, 0xfb20
+ f0 03 4a              ldi8	r3, 0x4a
+ f7 64                 add32	q1, q0
+ c3 80                 ldi8	r7, 0x80
+ f9 ec                 and	r7, r3
+ f9 3d                 or	r1, r7
+ f1 28                 mov	r6, r0
+ f1 2d                 mov	r7, r1
  f2 30                 sub	r0, r0
  f0 05 80 3f           ldi16	r1, 0x3f80
  f9 1a                 xor	r0, r6
  f9 3e                 xor	r1, r7
  01                    mov	r4, r5
  fa 77                 lsr16i	r4, 0x7
- f4 11                 ldsp16	r5, [sp+0x4]
+ f4 01                 ldsp16	r5, [sp+0x0]
  11                    add	r4, r5
- f4 0b                 ldsp16	r7, [sp+0x2]
- 0b                    mov	r6, r7
+ f1 2b                 mov	r6, r3
+ af                    xor	r7, r7
  fa 97                 lsr16i	r6, 0x7
  18                    add	r6, r4
- a0                    xor	r4, r4
- c5 80 bf              ldi16	r5, 0xbf80
- ff 02                 fadd	q0, q2
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ aa                    xor	r6, r6
+ c7 80 bf              ldi16	r7, 0xbf80
  f2 68                 mov32	q2, q0
- ff ca 07 a7 65 34 3e a3 bd 8a be 49 17 97 3e 10 e7 b7 be 96 17 f6 3e 8e ab 38 bf 46 aa b8 3f  fpoly	7, 0.176169023, -0.270978063, 0.295099527, -0.359184742, 0.480648696, -0.721367717, 1.44269633
- ff 28                 fmul	q2, q0
- ff c0 63              s16tof	q3, r6
- ff 0b                 fadd	q2, q3
+ ff 00                 fadd
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ ff 16 07 a7 65 34 3e a3 bd 8a be 49 17 97 3e 10 e7 b7 be 96 17 f6 3e 8e ab 38 bf 46 aa b8 3f  fpoly	7, 0.176169023, -0.270978063, 0.295099527, -0.359184742, 0.480648696, -0.721367717, 1.44269633
+ ff 02                 fmul
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ f4 00                 ldsp16	r4, [sp+0x0]
+ ff 0c                 s16tof
+ f2 62                 mov32	q0, q2
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
+ f2 6a                 mov32	q3, q0
+ ff 00                 fadd
  c6 9b 20              ldi16	r6, 0x209b
  c7 9a 3e              ldi16	r7, 0x3e9a
- ff 2b                 fmul	q2, q3
- d6 06                 adjsp	0x6
+ ff 02                 fmul
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -102,14 +111,20 @@ Disassembly of section .text.log10f:
  d3 04                 brslt8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log10f
-		R_AVM_FAR24	.text.log10f+0xd2
+		R_AVM_FAR24	.text.log10f+0xdd
 <L3>:
- ff 0a                 fadd	q2, q2
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ ff 00                 fadd
  e2 00 00 00           jmpf	log10f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log10f+0xb6
- ff 1a                 fsub	q2, q2
- ff 38                 fdiv	q2, q0
+		R_AVM_FAR24	.text.log10f+0xbf
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ ff 01                 fsub
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ ff 03                 fdiv
  e2 00 00 00           jmpf	log10f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log10f+0xb6
+		R_AVM_FAR24	.text.log10f+0xbf

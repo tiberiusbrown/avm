@@ -1,8 +1,8 @@
-# AVM debugger ABI, version 1
+# AVM debugger ABI, version 2
 
 This document specifies the debug representation of the AVM ABI in
 [arch.md](arch.md). It applies to `EM_AVM` (`0x4156`) ELF32 little-endian
-executables with `EF_AVM_ABI_V1`. Guest instructions, objects, and pointers
+executables with `EF_AVM_ABI_V2`. Guest instructions, objects, and pointers
 retain their architectural widths. DWARF address fields and program pointers
 are three bytes; ELF section offsets remain four bytes.
 

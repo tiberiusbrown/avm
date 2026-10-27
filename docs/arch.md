@@ -1,6 +1,6 @@
 # Arduboy Virtual Machine Interface Specification
 
-**Status:** Version 1 design draft
+**Status:** Execution contract version 2; image layout version 1
 **Intended consumers:** LLVM backend, Clang target, assembler, disassembler, linker, image writer, debugger, validator, runtime library, system libraries, and conforming VM implementations
 
 ---
@@ -16,7 +16,7 @@ The Arduboy Virtual Machine, abbreviated **AVM**, is a bytecode architecture wit
 - A three-bit architectural condition state.
 - A defined calling convention, system ABI, object-file model, and linked-image format.
 
-This document is the normative Version 1 interface specification. It defines:
+This document is the normative version 2 interface specification. It defines:
 
 - Architectural state.
 - Scalar, pointer, and aggregate representation.
@@ -405,7 +405,7 @@ Plain `char` is signed by default.
 
 `bool` is represented canonically as zero or one.
 
-Source-level `_Float16` is not supported by the Version 1 C or C++ target.
+Source-level `_Float16` is not supported by the AVM C or C++ target.
 Clang MUST diagnose its use rather than assigning it an ABI. LLVM IR may still
 contain `f16` values for data-layout and IR-compatibility purposes; such values
 are not a source-language ABI type and require expansion or promotion before
@@ -648,63 +648,11 @@ else:
     use two upper-register MOV instructions
 ```
 
-### 18.11. Floating-point operand specifiers
+### 18.11. Floating-point operands
 
-The `FF C0-C9` extended forms use one trailing operand byte in one of three
-formats. Reserved bits MUST be zero.
-
-#### `RQSPEC`: scalar register and pair register
-
-```text
-0rrr00qq
-```
-
-`rrr` selects `r0-r7`; `qq` selects `q0-q3`. The secondary opcode determines
-which field is the source and which is the destination.
-
-| Secondary | Instruction | `rrr` | `qq` |
-|---:|---|---|---|
-| `C0` | `S16TOF qD,rS` | `rS` | `qD` |
-| `C1` | `U16TOF qD,rS` | `rS` | `qD` |
-| `C2` | `FTOS16 rD,qS` | `rD` | `qS` |
-| `C3` | `FTOU16 rD,qS` | `rD` | `qS` |
-| `C9` | `FCLASS rD,qS` | `rD` | `qS` |
-
-```text
-RQSPEC(rN,qN) = (rN << 4) | qN
-```
-
-A value is malformed if `(specifier & 0x8C) != 0`.
-
-#### `QQSPEC`: destination pair and source pair
-
-```text
-0000ddss
-```
-
-`dd` selects `qD`; `ss` selects `qS`. This format is used by `C4-C7` and
-matches the low-nibble `ddss` layout of the binary floating-point operations.
-
-```text
-QQSPEC(qD,qS) = (qD << 2) | qS
-```
-
-A value is malformed if `(specifier & 0xF0) != 0`.
-
-#### `RQQSPEC`: scalar destination and two pair sources
-
-```text
-0dddllrr
-```
-
-`ddd` selects `rD`; `ll` selects `qL`; `rr` selects `qR`. This format is used
-by `FCMP` (`C8`).
-
-```text
-RQQSPEC(rD,qL,qR) = (rD << 4) | (qL << 2) | qR
-```
-
-A value is malformed if `(specifier & 0x80) != 0`.
+The FF page has no register-specifier bytes. All operands are fixed except
+FNEG/FABS, whose q-register is encoded in the secondary. Only FPOLY has
+trailing count/coefficient data. See Section 35.1.
 
 ---
 
@@ -770,7 +718,7 @@ A value is malformed if `(specifier & 0x80) != 0`.
 | `FA` | Upper-register 16-bit shift page | 2 | Preserve |
 | `FB-FD` | Conditional-move pages | 2 | Preserve |
 | `FE` | `MUL16` page | 2 | Preserve |
-| `FF` | Floating-point page | 2-3 | Preserve |
+| `FF` | Floating-point page | 2; FPOLY 3 + 4N | Preserve |
 
 ## 20. One-byte instruction semantics
 
@@ -1423,80 +1371,68 @@ rounding direction. NaN result payloads are unspecified except for `FNEG`, `FABS
 `FCLASS`, whose bit-level behavior is defined below. Math functions live in
 the guest runtime; see the [migration measurements](math-runtime-tradeoff.md).
 
-### 35.1.1. Binary matrix
+### 35.1.1. Complete secondary map
 
-For `FF 00-3F`:
+| Secondary | Assembly | Inputs | Outputs | Bytes |
+|---:|---|---|---|---:|
+| `00` | `fadd` | `q2, q3` | `q2` | `2` |
+| `01` | `fsub` | `q2, q3` | `q2` | `2` |
+| `02` | `fmul` | `q2, q3` | `q2` | `2` |
+| `03` | `fdiv` | `q2, q3` | `q2` | `2` |
+| `04-07` | `fneg q0 through fneg q3` | `selected qN` | `same qN` | `2` |
+| `08-0B` | `fabs q0 through fabs q3` | `selected qN` | `same qN` | `2` |
+| `0C` | `s16tof` | `r4` | `q2` | `2` |
+| `0D` | `u16tof` | `r4` | `q2` | `2` |
+| `0E` | `ftos16` | `q2` | `r4` | `2` |
+| `0F` | `ftou16` | `q2` | `r4` | `2` |
+| `10` | `s32tof` | `q2` | `q2` | `2` |
+| `11` | `u32tof` | `q2` | `q2` | `2` |
+| `12` | `ftos32` | `q2` | `q2` | `2` |
+| `13` | `ftou32` | `q2` | `q2` | `2` |
+| `14` | `fcmp` | `q2, q3` | `r6` | `2` |
+| `15` | `fclass` | `q2` | `r6` | `2` |
+| `16` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
+| `17-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
 
-```text
-bits 7:4  operation
-bits 3:2  destination/left qD
-bits 1:0  preserved source/right qS
-```
+Fixed-register mnemonics have no assembly operands. Explicit register operands
+are rejected. No legacy FF encoding is supported. Exactly 23 two-word dispatch
+entries occupy 92 bytes. Far handlers use direct `JMP` entries; nearby handlers
+start in the entry and use `RJMP` to continue. The decoder rejects `>= 0x17`
+before table indexing.
 
-| Secondary | Instruction | Semantics |
-|---:|---|---|
-| `00-0F` | `FADD qD,qS` | `qD = binary32(qD + qS)` |
-| `10-1F` | `FSUB qD,qS` | `qD = binary32(qD - qS)` |
-| `20-2F` | `FMUL qD,qS` | `qD = binary32(qD * qS)` |
-| `30-3F` | `FDIV qD,qS` | `qD = binary32(qD / qS)` |
-| `40-5F` | Reserved (former FMIN/FMAX) | Invalid-secondary trap |
+### 35.1.2. Arithmetic and sign operations
 
-All combinations, including `qD == qS`, are legal.
+Arithmetic computes `q2 = binary32(q2 op q3)`, preserving q3, q0, and q1.
+Subtraction and division use q2 as the left operand. FNEG toggles bit 31 and
+FABS clears it; all other bits, including NaN payloads and signaling state,
+are preserved exactly. Every FF operation preserves CC, SP, guest memory, and
+all architectural registers except its designated output. PC advances by the
+complete instruction length.
 
-Number-preferred minimum and maximum are provided by `fminf` and `fmaxf`
-in `libavm.a`. They prefer the numeric operand when one is NaN and order
-opposite-signed zeros as `-0.0 < +0.0`.
+### 35.1.3. Conversions, comparison, and classification
 
-### 35.1.2. Unary operations
-
-```text
-secondary = operationBase + qD
-```
-
-| Secondary | Instruction | Semantics |
-|---:|---|---|
-| `60-63` | `FNEG qD` | Toggle the binary32 sign bit |
-| `64-67` | `FABS qD` | Clear the binary32 sign bit |
-| `68-7B` | Reserved (former sqrt/rounding) | Invalid-secondary trap |
-| `7C-BF` | Reserved | — |
-
-`FNEG` and `FABS` are bit operations and preserve every non-sign bit,
-including NaN payload and signaling state. Square root and integral rounding
-use ordinary runtime calls and preserve the sign of zero; NaN payloads and
-signaling state are unspecified for those functions.
-
-### 35.1.3. Extended operations
-
-| Secondary | Instruction | Specifier | Semantics |
-|---:|---|---|---|
-| `C0` | `S16TOF qD,rS` | Section 18.11 | Signed `i16` to binary32 |
-| `C1` | `U16TOF qD,rS` | Section 18.11 | Unsigned `i16` to binary32 |
-| `C2` | `FTOS16 rD,qS` | Section 18.11 | Binary32 to signed `i16` |
-| `C3` | `FTOU16 rD,qS` | Section 18.11 | Binary32 to unsigned `i16` |
-| `C4` | `S32TOF qD,qS` | Section 18.11 | Signed `i32` to binary32 |
-| `C5` | `U32TOF qD,qS` | Section 18.11 | Unsigned `i32` to binary32 |
-| `C6` | `FTOS32 qD,qS` | Section 18.11 | Binary32 to signed `i32` |
-| `C7` | `FTOU32 qD,qS` | Section 18.11 | Binary32 to unsigned `i32` |
-| `C8` | `FCMP rD,qL,qR` | Section 18.11 | Four-way comparison result |
-| `C9` | `FCLASS rD,qS` | Section 18.11 | One-hot class mask |
-| `CA` | `FPOLY count` | Inline count and coefficients | Extended Horner evaluation in `q2` |
-| `CB-FF` | Reserved | — | — |
+S16TOF/U16TOF capture original r4 before writing q2 (r4:r5).
+FTOS16/FTOU16 write only r4, preserving r5. The four 32-bit conversions read
+original q2 before replacing it. FCMP captures both original q2/q3 operands
+before defining r6, the low half of q3; q2 and r7 are preserved.
+FCLASS reads q2 and writes r6, preserving q2 and r7. These are ordinary
+read-before-write operations without early clobbers.
 
 Integer-to-float conversion rounds to nearest with ties to even. Float-to-
 integer conversion truncates toward zero for finite in-range inputs. For NaN
 or out-of-range float-to-integer inputs, the result is unspecified; the
 instruction still completes and preserves `CC`.
 
-`FCMP` returns:
+`FCMP` treats signed zeros as equal and returns in r6:
 
 ```text
-0xFFFF  qL < qR
-0x0000  qL == qR
-0x0001  qL > qR
+0xFFFF  q2 < q3
+0x0000  q2 == q3
+0x0001  q2 > q3
 0x0002  unordered because either operand is NaN
 ```
 
-`FCLASS` returns exactly one of:
+`FCLASS` returns in r6 exactly one of:
 
 | Mask | Class |
 |---:|---|
@@ -1513,7 +1449,7 @@ instruction still completes and preserves `CC`.
 
 ### 35.1.4. Inline polynomial evaluation
 
-`FPOLY` has the variable-length encoding `FF CA N C[0] ... C[N-1]`.
+`FPOLY` has the variable-length encoding `FF 16 N C[0] ... C[N-1]`.
 `N` is an unsigned byte in `1..255`; zero enters the invalid-secondary trap.
 Each coefficient occupies four little-endian bytes containing an IEEE-754
 binary32 value, ordered from highest degree to constant. Total size is
@@ -1957,7 +1893,7 @@ A backend may reserve a maximum outgoing area as an internal optimization if it 
 
 ### 47.5. Dynamic allocation and realignment
 
-Variable-sized `alloca`, variable-length arrays, and dynamic stack realignment are unsupported by the Version 1 ABI.
+Variable-sized `alloca`, variable-length arrays, and dynamic stack realignment are unsupported by the AVM ABI.
 
 All fixed stack objects use one-byte alignment.
 
@@ -3064,7 +3000,7 @@ The record size is therefore an unsigned little-endian 16-bit value. A record
 belongs to the current image exactly when its stored size equals the image
 header's current `saveSize`.
 
-The Version 1 Arduboy runtime uses one 4,096-byte erase sector and leaves its
+The Arduboy runtime uses one 4,096-byte erase sector and leaves its
 final two bytes erased. A record is eligible for storage only when:
 
 ```text
@@ -3850,7 +3786,7 @@ ISA CPU name:    avm1
 default tune CPU: avm-interpreter-32u4-v1
 ```
 
-Version 1 defines no optional ISA subtarget features and no feature-dependent
+AVM defines no optional ISA subtarget features and no feature-dependent
 ABI variants. `avm1` identifies the ISA and ABI.
 `avm-interpreter-32u4-v1` identifies the measured optimization and scheduling
 model for the current ATmega32U4 interpreter; it does not change instruction
@@ -4644,7 +4580,7 @@ carry no ordinary call-preserved register mask after lowering.
 
 ## 57. Atomic and volatile policy
 
-AVM Version 1 is single-threaded.
+AVM is single-threaded.
 
 The VM interface exposes:
 
@@ -4736,7 +4672,7 @@ The backend should:
     and uses explicitly.
 13. Place frequently accessed stack objects at low offsets and diagnose
     statically provable single-function stack use above 256 bytes.
-14. Stack-usage metadata is optional. Version 1 does not standardize its
+14. Stack-usage metadata is optional. This contract does not standardize its
     section name, record layout, or semantics; no backend implementation may
     invent a mandatory object-format contract for it.
 
@@ -5743,7 +5679,7 @@ Required ELF header fields:
 ```text
 e_machine = EM_AVM = 0x4156
 e_version = EV_CURRENT
-e_flags   = EF_AVM_ABI_V1 = 0x00000001
+e_flags   = EF_AVM_ABI_V2 = 0x00000002
 ```
 
 Relocatable objects use `ET_REL`.
@@ -6173,11 +6109,11 @@ tail magic[3]    tail-locator revision
 runtimeVersion   complete execution-contract revision
 ```
 
-Version 1 uses:
+The fixed-register FF ISA uses:
 
 ```text
-runtimeVersion = 1
-EF_AVM_ABI_V1 = 1
+runtimeVersion = 2
+EF_AVM_ABI_V2 = 2
 ```
 
 `runtimeVersion` covers:
@@ -6190,7 +6126,12 @@ EF_AVM_ABI_V1 = 1
 - Startup contract.
 - Program-visible save behavior.
 
-After stable Version 1 binaries are published, any incompatible change requires a new `runtimeVersion` and, when object compatibility changes, a new ELF ABI flag value.
+The FF migration bumps runtimeVersion and ELF ABI flags to 2. Header/tail
+layout revisions remain 1. The interpreter rejects runtimeVersion 1 images;
+the linker rejects ABI 0/1 objects, and the image packer requires ABI 2.
+Rebuild all guest objects and images. Old FF bytes must never be silently
+reinterpreted. Future incompatible changes require another contract version
+and corresponding object ABI flag.
 
 ---
 
@@ -6262,7 +6203,7 @@ Assembly:
 
 ELF:
     EM_AVM = 0x4156
-    EF_AVM_ABI_V1 = 1
+    EF_AVM_ABI_V2 = 2
     SHT_RELA only
     R_AVM_PCREL8 and R_AVM_PCREL16
     24-bit absolute relocation and iterative relaxation

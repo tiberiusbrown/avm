@@ -9,5 +9,5 @@ SYMBOL TABLE:
 Disassembly of section .text.fabsf:
 
 <fabsf>:
- ff 66                 fabs	q2
+ ff 0a                 fabs	q2
  ef                    ret

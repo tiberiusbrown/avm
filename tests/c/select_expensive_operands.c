@@ -4,7 +4,9 @@
 #include "test_hex_output.h"
 
 #define NOINLINE __attribute__((noinline))
-#define CHECK(expression) do { if (!(expression)) return __LINE__; } while (0)
+#define CHECK(expression) do { if (!(expression)) { \
+    test_line16("failed-check", __LINE__); return __LINE__; \
+} } while (0)
 
 static NOINLINE float divide(float a, float b) { return a / b; }
 static NOINLINE float conditional_div(float a, float b, int c)

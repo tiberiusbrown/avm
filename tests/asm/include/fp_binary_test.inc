@@ -170,7 +170,7 @@ fp_print_exact_state:
     ldi16 r7, \v7
 
 .Lfp_begin_\@:
-    \mnemonic \qd, \qs
+    \mnemonic
 .Lfp_end_\@:
     .if (.Lfp_end_\@ - .Lfp_begin_\@) != 2
         .error "binary floating-point instruction must occupy exactly two bytes"
@@ -196,7 +196,7 @@ fp_print_exact_state:
     ldi16 r7, \v7
 
 .Lfp_nan_begin_\@:
-    \mnemonic \qd, \qs
+    \mnemonic
 .Lfp_nan_end_\@:
     .if (.Lfp_nan_end_\@ - .Lfp_nan_begin_\@) != 2
         .error "binary floating-point instruction must occupy exactly two bytes"

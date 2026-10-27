@@ -16,10 +16,10 @@ Disassembly of section .text.copysignf:
  f2 30                 sub	r0, r0
  f0 05 00 80           ldi16	r1, 0x8000
  f9 3c                 and	r1, r7
- ff 66                 fabs	q2
+ ff 0a                 fabs	q2
  08                    mov	r6, r4
  0d                    mov	r7, r5
- ff 63                 fneg	q3
+ ff 07                 fneg	q3
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3
  f0 69 04              cmp32	q0, q1

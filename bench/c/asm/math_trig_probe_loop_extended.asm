@@ -135,40 +135,39 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- a0                    xor	r4, r4
- f2 42                 sub	r2, r2
- f2 4b                 sub	r3, r3
  aa                    xor	r6, r6
- af                    xor	r7, r7
- d7 01                 sys	debug_break
- c1 07                 ldi8	r5, 0x7
- f4 41                 stsp16	[sp+0x0], r5
-<L0>:
- f4 48                 stsp16	[sp+0x2], r4
- 04                    mov	r5, r4
- f4 00                 ldsp16	r4, [sp+0x0]
- 84                    and	r5, r4
- 15                    add	r5, r5
- 15                    add	r5, r5
- c4 00 01              ldi16	r4, 0x100
- 14                    add	r5, r4
- f0 6a 0a              ld32	q0, [r5]
+ f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
- c1 03                 ldi8	r5, 0x3
- f9 a4                 and	r5, r1
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  a5                    xor	r5, r5
- f7 66                 add32	q1, q2
- f1 20                 mov	r4, r0
- ff 0e                 fadd	q3, q2
- f4 08                 ldsp16	r4, [sp+0x2]
- f4 ac                 inc16	r4
- cc 20                 cmpi.s8	r4, 0x20
+ d7 01                 sys	debug_break
+ c3 07                 ldi8	r7, 0x7
+ f4 43                 stsp16	[sp+0x0], r7
+<L0>:
+ f4 4a                 stsp16	[sp+0x2], r6
+ f4 03                 ldsp16	r7, [sp+0x0]
+ 8b                    and	r6, r7
+ 1a                    add	r6, r6
+ 1a                    add	r6, r6
+ c7 00 01              ldi16	r7, 0x100
+ 1b                    add	r6, r7
+ f0 6a cc              ld32	q3, [r6]
+ af                    xor	r7, r7
+ f0 03 03              ldi8	r3, 0x3
+ f9 7c                 and	r3, r7
+ f1 13                 mov	r2, r3
+ f2 4b                 sub	r3, r3
+ f7 61                 add32	q0, q1
+ af                    xor	r7, r7
+ ff 00                 fadd
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ f4 ae                 inc16	r6
+ ce 20                 cmpi.s8	r6, 0x20
  d1 db                 brne8	-0x25 <L0>
- c4 20 01              ldi16	r4, 0x120
- f0 6b c8              st32	[r4], q3
+ c6 20 01              ldi16	r6, 0x120
+ f0 6b 8c              st32	[r6], q2
  c4 24 01              ldi16	r4, 0x124
- f0 6b 48              st32	[r4], q1
+ f0 6b 08              st32	[r4], q0
  d7 01                 sys	debug_break
  a0                    xor	r4, r4
  d6 04                 adjsp	0x4

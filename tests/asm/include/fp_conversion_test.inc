@@ -165,10 +165,10 @@ fpc_print_exact_state:
     fpc_set_cc \cc_lhs, \cc_rhs
     fpc_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
 .Lfpc_qr_begin_\@:
-    \mnemonic \qd, \rs
+    \mnemonic
 .Lfpc_qr_end_\@:
-    .if (.Lfpc_qr_end_\@ - .Lfpc_qr_begin_\@) != 3
-        .error "floating-point conversion must occupy exactly three bytes"
+    .if (.Lfpc_qr_end_\@ - .Lfpc_qr_begin_\@) != 2
+        .error "floating-point conversion must occupy exactly two bytes"
     .endif
     call fpc_print_exact_state
 .endm
@@ -178,10 +178,10 @@ fpc_print_exact_state:
     fpc_set_cc \cc_lhs, \cc_rhs
     fpc_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
 .Lfpc_rq_begin_\@:
-    \mnemonic \rd, \qs
+    \mnemonic
 .Lfpc_rq_end_\@:
-    .if (.Lfpc_rq_end_\@ - .Lfpc_rq_begin_\@) != 3
-        .error "floating-point conversion must occupy exactly three bytes"
+    .if (.Lfpc_rq_end_\@ - .Lfpc_rq_begin_\@) != 2
+        .error "floating-point conversion must occupy exactly two bytes"
     .endif
     call fpc_print_exact_state
 .endm
@@ -190,10 +190,10 @@ fpc_print_exact_state:
     fpc_set_cc \cc_lhs, \cc_rhs
     fpc_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
 .Lfpc_rqu_begin_\@:
-    \mnemonic \rd, \qs
+    \mnemonic
 .Lfpc_rqu_end_\@:
-    .if (.Lfpc_rqu_end_\@ - .Lfpc_rqu_begin_\@) != 3
-        .error "floating-point conversion must occupy exactly three bytes"
+    .if (.Lfpc_rqu_end_\@ - .Lfpc_rqu_begin_\@) != 2
+        .error "floating-point conversion must occupy exactly two bytes"
     .endif
     fpc_print_unknown_r_state \rd_index
 .endm
@@ -203,10 +203,10 @@ fpc_print_exact_state:
     fpc_set_cc \cc_lhs, \cc_rhs
     fpc_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
 .Lfpc_qq_begin_\@:
-    \mnemonic \qd, \qs
+    \mnemonic
 .Lfpc_qq_end_\@:
-    .if (.Lfpc_qq_end_\@ - .Lfpc_qq_begin_\@) != 3
-        .error "floating-point conversion must occupy exactly three bytes"
+    .if (.Lfpc_qq_end_\@ - .Lfpc_qq_begin_\@) != 2
+        .error "floating-point conversion must occupy exactly two bytes"
     .endif
     call fpc_print_exact_state
 .endm
@@ -215,10 +215,10 @@ fpc_print_exact_state:
     fpc_set_cc \cc_lhs, \cc_rhs
     fpc_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
 .Lfpc_qqu_begin_\@:
-    \mnemonic \qd, \qs
+    \mnemonic
 .Lfpc_qqu_end_\@:
-    .if (.Lfpc_qqu_end_\@ - .Lfpc_qqu_begin_\@) != 3
-        .error "floating-point conversion must occupy exactly three bytes"
+    .if (.Lfpc_qqu_end_\@ - .Lfpc_qqu_begin_\@) != 2
+        .error "floating-point conversion must occupy exactly two bytes"
     .endif
     fpc_print_unknown_q_state \qd_index
 .endm

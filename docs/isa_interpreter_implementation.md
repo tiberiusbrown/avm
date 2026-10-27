@@ -24,7 +24,7 @@ The reference interpreter is organized around the following design choices:
 5. The decoder computes `tableBase + secondary * slotWords` and performs one `IJMP` directly into the final operand-specialized slot. The `FA` page uses immediate body jumps or register-count forwarding entries to reach shared destination-specific shift bodies; the `FE` multiplication page uses equal-width forwarding entries. The `FB-FD` conditional-move prefixes share one 64-entry operand table after a prefix-specific condition gate.
 6. A truncated table numbers valid entries contiguously from zero, checks one upper bound, and omits the unused tail.
 7. Internal holes that cannot be moved to the tail remain same-width trap slots.
-8. Hot dense instructions do not perform run-time architectural-register decoding; the dedicated `EC` divider, the `ED-EE` displaced-memory family, explicitly cold `F0` forms, and the table-free `F9` and `FF` pages may do so.
+8. Hot dense instructions do not perform run-time architectural-register decoding; the dedicated `EC` divider, the `ED-EE` displaced-memory family, explicitly cold `F0` forms, and the table-free `F9` page may do so. FF has fixed operands and direct sign handlers.
 9. Additional encoded bytes normally contain actual immediates, displacements, or addresses.
 10. The reference interpreter uses a fixed four-word, eight-byte primary dispatch stride. A primary slot either executes a complete short handler ending in `RJMP` to a shared cadence tail, or performs up to three words of setup and uses its fourth word to forward to an out-of-line continuation.
 11. For the size comparisons in this guide, the accounting region begins at the primary table. The primary table is aligned to 256 AVR words (512 bytes); no alignment padding before it is included in the accounted size. The reference layout emits the following code in one text section without interior power-of-two alignment gaps.
@@ -531,7 +531,7 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 | `FC` | `CMOV.ULT` / `CMOV.UGE` condition-family prefix | 2 | 36 false; 37 true |
 | `FD` | `CMOV.SLT` / `CMOV.SGE` condition-family prefix | 2 | 36 false; 37 true |
 | `FE` | Bounded 2-word `MUL16` forwarding page | 2 | 46 |
-| `FF` | Dedicated floating-point page | 2-3 | operation- and helper-dependent |
+| `FF` | Dedicated floating-point page | 2; FPOLY 3 + 4N | operation- and helper-dependent |
 
 All sixteen secondary-page prefixes occupy `F0-FF`. `F0-F7` and `FE` use bounded-page machinery; `F8`, `F9`, `FA`, and `FF` use dedicated runtime decoders; `FB-FD` use the shared condition gate. Their decoder entries and gates are emitted immediately after the primary table, while executable tables and shared bodies are ordered later according to the single-section layout in Section 26.
 
@@ -2095,110 +2095,91 @@ Native `r0:r1`, `X`, and `Z` are interpreter scratch and may be clobbered. No ex
 
 ## 21.1. `FF`: dedicated floating-point page
 
-`FF` uses a table-free decoder. Floating-point operations are sufficiently
-expensive that runtime decoding of two-bit pair fields is preferable to a large
-operand-specialized executable table.
+FF uses exactly 23 two-word entries for secondaries `00-16`. The assembler
+asserts `ff_table_end - ff_table == 92`. The range check compares against
+`(ff_table_end - ff_table) / 4` and rejects every `17-FF` value before doubling
+the index. Z is `pm(ff_table) + 2 * secondary` in AVR program-memory word units;
+the full 16-bit add handles a low-byte carry, then `IJMP` selects the entry.
+Fourteen entries use `JMP` directly to far bodies. Each of the nine nearby
+FNEG/FABS/FCLASS entries executes the implementation's first instruction and
+then `RJMP`s to its continuation. FABS q2/q3 complete their sign change in the
+entry and branch straight to the shared sign tail. There are no veneers,
+reserved entries, or additional register-dispatch tables.
 
-### Encoding groups
+| Secondary | Assembly | Inputs | Outputs | Bytes |
+|---:|---|---|---|---:|
+| `00` | `fadd` | `q2, q3` | `q2` | `2` |
+| `01` | `fsub` | `q2, q3` | `q2` | `2` |
+| `02` | `fmul` | `q2, q3` | `q2` | `2` |
+| `03` | `fdiv` | `q2, q3` | `q2` | `2` |
+| `04-07` | `fneg q0 through fneg q3` | `selected qN` | `same qN` | `2` |
+| `08-0B` | `fabs q0 through fabs q3` | `selected qN` | `same qN` | `2` |
+| `0C` | `s16tof` | `r4` | `q2` | `2` |
+| `0D` | `u16tof` | `r4` | `q2` | `2` |
+| `0E` | `ftos16` | `q2` | `r4` | `2` |
+| `0F` | `ftou16` | `q2` | `r4` | `2` |
+| `10` | `s32tof` | `q2` | `q2` | `2` |
+| `11` | `u32tof` | `q2` | `q2` | `2` |
+| `12` | `ftos32` | `q2` | `q2` | `2` |
+| `13` | `ftou32` | `q2` | `q2` | `2` |
+| `14` | `fcmp` | `q2, q3` | `r6` | `2` |
+| `15` | `fclass` | `q2` | `r6` | `2` |
+| `16` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
+| `17-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
 
-| Secondary | Family | Bytes |
-|---:|---|---:|
-| `00-0F` | `FADD qD,qS` | 2 |
-| `10-1F` | `FSUB qD,qS` | 2 |
-| `20-2F` | `FMUL qD,qS` | 2 |
-| `30-3F` | `FDIV qD,qS` | 2 |
-| `40-4F` | `FMIN qD,qS` | 2 |
-| `50-5F` | `FMAX qD,qS` | 2 |
-| `60-63` | `FNEG qD` | 2 |
-| `64-67` | `FABS qD` | 2 |
-| `68-6B` | `FSQRT qD` | 2 |
-| `6C-7B` | Rounding operations | 2 |
-| `7C-BF` | Reserved | — |
-| `C0-C9` | Conversions, `FCMP`, and `FCLASS` plus specifier | 3 |
-| `CA-FF` | Reserved | — |
+Five setup instructions retain the protected reverse-order secondary
+`CLI/OUT/IN/SEI` handoff. The full 24-bit PC increment finishes before it.
+That handoff starts the following primary, except FPOLY starts the count.
+Direct FNEG/FABS bodies modify only r11/r15/r19/r23. The two-word-table
+dispatch needs no delay NOPs in the shared sign tail. Counting from the
+decoder's `ff_next_byte_out` as cycle 0, the shortest FABS q2/q3 path is:
 
-The extended forms use three operand-byte layouts:
+| Work | Native cycles |
+|---|---:|
+| Read completed secondary; SEI; bounds CPI | 1, 2, 3 |
+| Taken BRLO; LSL index; ADD/ADC table address | 4-8 |
+| IJMP; table ANDI; RJMP to sign tail | 9-13 |
+| RJMP to standard dispatch; ADD low PC | 14-16 |
+| IN following primary; OUT next byte | 17, 18 |
 
-```text
-RQSPEC   0rrr00qq   C0-C3 and C9
-QQSPEC   0000ddss   C4-C7
-RQQSPEC  0dddllrr   C8
-```
+FNEG and FABS q0/q1 perform three more work cycles, so their final IN/OUT
+occur on cycles 20/21. This follows Section 5.1's standard handoff rule;
+the preceding protected reverse handoff remains exactly at cycle 17.
+Native tests assert these minimum times on both FX and FX-C presets across
+consecutive/mixed instructions, PC carries, and all tested Timer1 phases.
+A deliberately altered FABS q2 entry bypasses the tail jump and reads on
+cycle 15; the timing observer must reject that negative control.
+Mixed and consecutive FF streams use the ordinary tail. No
+conversion, comparison, or classification specifier transfers remain.
 
-For `RQSPEC`, `rrr` selects the scalar register and `qq` selects the pair. The
-secondary opcode determines operand direction:
+Binary helpers save r20-r23 (q3). Marshalling captures q2 high in r24:r25,
+moves q3 into helper B (r18:r21), then q2 low into A low (r22:r23). This
+ordering avoids physical overlap. Helpers receive A=q2 and B=q3. Writeback
+defines only q2, then restores q3. The generalized binary bridge, sixteen-row
+marshalling table, and destination-specific continuations are removed.
 
-```text
-C0-C1: rrr=rS, qq=qD
-C2-C3: rrr=rD, qq=qS
-C9:    rrr=rD, qq=qS
-```
+Conversion helpers preserve r18-r21 and save/restore r22:r23 (r7).
+S16TOF/U16TOF capture r4 before writing q2; FTOS16/FTOU16 write only r4 and
+preserve r5. Other conversions replace q2. General source/destination decoding,
+specifier validation, helper lookup tables, and dynamic result routing are removed.
+FCMP captures q2/q3 into scratch before using the existing numerical comparison
+logic, then writes only r20:r21 (r6). FCLASS captures q2, retains all ten masks,
+and writes r6. Both preserve q2 and r7. Every FF operation preserves CC in
+GPIOR0, interpreter constants, VM stack pointer, and nondestination registers.
+Native numerical helpers leave the active SPI transaction open.
 
-For `QQSPEC`, `dd=qD` and `ss=qS`. For `RQQSPEC`, `ddd=rD`, `ll=qL`, and
-`rr=qR`.
-
-The corresponding encodings and validation masks are:
-
-```text
-RQSPEC(rN,qN)       = (rN << 4) | qN
-invalid RQSPEC      = (specifier & 0x8C) != 0
-
-QQSPEC(qD,qS)       = (qD << 2) | qS
-invalid QQSPEC      = (specifier & 0xF0) != 0
-
-RQQSPEC(rD,qL,qR)   = (rD << 4) | (qL << 2) | qR
-invalid RQQSPEC     = (specifier & 0x80) != 0
-```
-
-On AVR, the scalar index is `(specifier >> 4) & 7`, the low pair index is
-`specifier & 3`, and the low nibble of `QQSPEC` or `RQQSPEC` is already a
-`ddss`/`llrr` pair descriptor. Malformed specifiers must branch to the shared
-invalid-instruction trap before register-file access.
-
-The decoder should:
-
-1. consume the secondary byte and launch the next sequential transfer;
-2. reject `7C-BF` and `CA-FF`;
-3. decode `q` indices by converting `qN` to native byte address `r8 + 4*N`;
-4. fetch the trailing specifier for `C0-C9` using a legal SPI handoff;
-5. dispatch to an inline bit operation or a shared helper bridge.
-
-### Inline operations
-
-`FNEG` and `FABS` require only a sign-bit toggle or clear in the most
-significant byte of `qD` and should be implemented inline. `FCLASS` should also
-be inline: inspect sign, exponent, fraction, and the binary32 quiet-NaN bit and
-return the one-hot mask defined by `arch.md`.
-
-`FMIN` and `FMAX` may be inline because they select an original operand rather
-than producing a new arithmetic result. The implementation must test the first
-operand for NaN before the second, preserve the selected operand bit-for-bit,
-and order `-0.0` below `+0.0`.
-
-### Soft-float bridge
-
-Arithmetic, square root, rounding, conversion, and comparison handlers may call
-AVR soft-float routines through one assembly bridge. The bridge must not expose
-the helper register interface to bytecode handlers.
-
-Before entering a helper, it must preserve every live interpreter register not
-covered by the helper's result, including the 24-bit VM PC, VM stack pointer,
-architectural register file, `VM_FLAGS`, permanent constants, and any pending
-SPI state. It must establish the helper's required zero-register state, marshal
-arguments into the AVR-GCC argument registers, call the helper, copy the result
-back to the selected architectural destination, restore interpreter state, and
-restart or resume the bytecode stream safely.
-
-Because helper calls interrupt the fixed SPI pipeline, they should consume the
-already-fetched bytes, stop relying on speculative stream state, and return
-through the common stream-seek/restart path. Exact cycle counts are therefore
-operation- and helper-dependent and must be measured after the bridge and
-linked soft-float routines are selected.
-
-The first implementation should provide `FADD`, `FSUB`, `FMUL`, `FDIV`, `FMIN`,
-`FMAX`, `FNEG`, `FABS`, `FSQRT`, all eight conversions, `FCMP`, and `FCLASS`.
-The rounding encodings may initially trap during development but are reserved
-for their specified operations. No fused operation is assigned.
+LLVM selected pseudos use Q2Only/Q3Only/R4Only/R6Only before allocation.
+Arithmetic and q2-to-q2 conversions tie their source/destination. Partial
+register operations use read-before-write defs without early clobbers; existing
+aliases model q2=r4:r5 and q3=r6:r7. Fixed machine operands remain explicit
+through pseudo expansion for liveness and MachineVerifier, then MC lowering
+omits them. Before allocation, the fixed-float pass inserts physical operand
+copies and result copies around each operation, then recomputes propagated
+singleton classes against all remaining uses. This preserves UpperGPR and
+subregister constraints while allowing live values to spill or use other pairs.
+FNEG/FABS retain unrestricted q-register allocation.
+The assembler, emitter, printer, and disassembler use the map above. Runtime
+and ELF ABI version 2 reject older images and objects.
 
 # Part I-B — Dispatch and Implementation Strategy
 
@@ -3717,7 +3698,7 @@ A thorough implementation should:
 7. Compile a representative Arduboy corpus and compare code size and instruction timing with the reference design.
 
 
-### Native inline Horner evaluation (`FF CA`)
+### Native inline Horner evaluation (`FF 16`)
 
 `ff_poly` saves the count register, the two registers retaining the high half
 of `x`, and `q3` on the native stack. The low half of `x` stays in its original

@@ -1936,643 +1936,1129 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (normal same-sign)
+; BENCH: FADD (normal same-sign)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3fc0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q2,q3 (exact cancellation)
+; BENCH: FADD (exact cancellation)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x3fc0
     ldi16 r6, 0x0000
     ldi16 r7, 0xbfc0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q2, q3
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (large exponent gap)
+; BENCH: FADD (large exponent gap)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3f80
     ldi16 r2, 0x0001
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (subnormal result)
+; BENCH: FADD (subnormal result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0001
     ldi16 r1, 0x0000
     ldi16 r2, 0x0001
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (overflow to +infinity)
+; BENCH: FADD (overflow to +infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0xffff
     ldi16 r1, 0x7f7f
     ldi16 r2, 0xffff
     ldi16 r3, 0x7f7f
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (infinity plus finite)
+; BENCH: FADD (infinity plus finite)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x7f80
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (invalid +infinity plus -infinity)
+; BENCH: FADD (invalid +infinity plus -infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x7f80
     ldi16 r2, 0x0000
     ldi16 r3, 0xff80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (quiet NaN operand)
+; BENCH: FADD (quiet NaN operand)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x2345
     ldi16 r1, 0x7fc1
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q3,q3 (qD == qS)
+; BENCH: FADD (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0x3fc0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q3, q3
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (normal)
+; BENCH: FSUB (normal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x40b0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q2,q3 (exact cancellation)
+; BENCH: FSUB (exact cancellation)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x3fc0
     ldi16 r6, 0x0000
     ldi16 r7, 0x3fc0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q2, q3
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (large exponent gap)
+; BENCH: FSUB (large exponent gap)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3f80
     ldi16 r2, 0x0001
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (subnormal result)
+; BENCH: FSUB (subnormal result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x0080
     ldi16 r2, 0xffff
     ldi16 r3, 0x007f
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (overflow to +infinity)
+; BENCH: FSUB (overflow to +infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0xffff
     ldi16 r1, 0x7f7f
     ldi16 r2, 0xffff
     ldi16 r3, 0xff7f
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (-infinity minus finite)
+; BENCH: FSUB (-infinity minus finite)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0xff80
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (invalid infinity minus infinity)
+; BENCH: FSUB (invalid infinity minus infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x7f80
     ldi16 r2, 0x0000
     ldi16 r3, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (quiet NaN operand)
+; BENCH: FSUB (quiet NaN operand)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x2345
     ldi16 r1, 0x7fc1
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q3,q3 (qD == qS)
+; BENCH: FSUB (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0x3fc0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q3, q3
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (normal)
+; BENCH: FMUL (normal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3fc0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q2,q3 (negative result)
+; BENCH: FMUL (negative result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0xbfc0
     ldi16 r6, 0x0000
     ldi16 r7, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q2, q3
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (signed zero)
+; BENCH: FMUL (signed zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x8000
     ldi16 r2, 0x0000
     ldi16 r3, 0x4040
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (subnormal result)
+; BENCH: FMUL (subnormal result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x0080
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f00
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (underflow halfway to zero)
+; BENCH: FMUL (underflow halfway to zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0001
     ldi16 r1, 0x0000
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f00
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (overflow to +infinity)
+; BENCH: FMUL (overflow to +infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0xffff
     ldi16 r1, 0x7f7f
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (infinity times finite)
+; BENCH: FMUL (infinity times finite)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x7f80
     ldi16 r2, 0x0000
     ldi16 r3, 0xc000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (invalid infinity times zero)
+; BENCH: FMUL (invalid infinity times zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x7f80
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (quiet NaN operand)
+; BENCH: FMUL (quiet NaN operand)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x2345
     ldi16 r1, 0x7fc1
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q3,q3 (qD == qS)
+; BENCH: FMUL (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0xc000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q3, q3
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q0,q1 (finite destination q0)
+; BENCH: FADD (normal sample 0)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3fc0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q0, q1
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q1,q2 (finite destination q1)
+; BENCH: FADD (normal sample 1)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x3fc0
     ldi16 r4, 0x0000
     ldi16 r5, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    push16 r4
+    push16 r5
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q1, q2
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q2,q3 (finite destination q2)
+; BENCH: FADD (normal sample 2)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x3fc0
     ldi16 r6, 0x0000
     ldi16 r7, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q2, q3
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FADD q3,q0 (finite destination q3)
+; BENCH: FADD (normal sample 3)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x4010
     ldi16 r6, 0x0000
     ldi16 r7, 0x3fc0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r0
+    push16 r1
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fadd q3, q0
+    fadd
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q0,q1 (finite destination q0)
+; BENCH: FSUB (normal sample 0)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x40b0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q0, q1
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q1,q2 (finite destination q1)
+; BENCH: FSUB (normal sample 1)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x40b0
     ldi16 r4, 0x0000
     ldi16 r5, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    push16 r4
+    push16 r5
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q1, q2
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q2,q3 (finite destination q2)
+; BENCH: FSUB (normal sample 2)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x40b0
     ldi16 r6, 0x0000
     ldi16 r7, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q2, q3
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FSUB q3,q0 (finite destination q3)
+; BENCH: FSUB (normal sample 3)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x4000
     ldi16 r6, 0x0000
     ldi16 r7, 0x40b0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r0
+    push16 r1
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fsub q3, q0
+    fsub
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q0,q1 (finite destination q0)
+; BENCH: FMUL (normal sample 0)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3fc0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q0, q1
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q1,q2 (finite destination q1)
+; BENCH: FMUL (normal sample 1)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x3fc0
     ldi16 r4, 0x0000
     ldi16 r5, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    push16 r4
+    push16 r5
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q1, q2
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q2,q3 (finite destination q2)
+; BENCH: FMUL (normal sample 2)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x3fc0
     ldi16 r6, 0x0000
     ldi16 r7, 0x4010
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q2, q3
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FMUL q3,q0 (finite destination q3)
+; BENCH: FMUL (normal sample 3)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x4010
     ldi16 r6, 0x0000
     ldi16 r7, 0x3fc0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r0
+    push16 r1
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fmul q3, q0
+    fmul
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (exact normal)
+; BENCH: FDIV (exact normal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x40e0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q2,q3 (recurring normal)
+; BENCH: FDIV (recurring normal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x3f80
     ldi16 r6, 0x0000
     ldi16 r7, 0x4040
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q2, q3
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (negative result)
+; BENCH: FDIV (negative result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0xc0e0
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (signed zero numerator)
+; BENCH: FDIV (signed zero numerator)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x8000
     ldi16 r2, 0x0000
     ldi16 r3, 0xc000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (zero divisor)
+; BENCH: FDIV (zero divisor)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3f80
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (subnormal result)
+; BENCH: FDIV (subnormal result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x0080
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (underflow halfway to zero)
+; BENCH: FDIV (underflow halfway to zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0001
     ldi16 r1, 0x0000
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (overflow)
+; BENCH: FDIV (overflow)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0xffff
     ldi16 r1, 0x7f7f
     ldi16 r2, 0x0000
     ldi16 r3, 0x0080
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (finite divided by infinity)
+; BENCH: FDIV (finite divided by infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x4120
     ldi16 r2, 0x0000
     ldi16 r3, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (infinity divided by finite)
+; BENCH: FDIV (infinity divided by finite)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0xff80
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (invalid zero divided by zero)
+; BENCH: FDIV (invalid zero divided by zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x0000
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (invalid infinity divided by infinity)
+; BENCH: FDIV (invalid infinity divided by infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x7f80
     ldi16 r2, 0x0000
     ldi16 r3, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q0,q1 (quiet NaN operand)
+; BENCH: FDIV (quiet NaN operand)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x2345
     ldi16 r1, 0x7fc1
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q0, q1
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FDIV q3,q3 (qD == qS)
+; BENCH: FDIV (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0xc040
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fdiv q3, q3
+    fdiv
     sys debug_break
 
 ; -----------------------------------------------------------------------------
@@ -2616,691 +3102,1150 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S16TOF q0,r4 (zero)
+; BENCH: S16TOF (zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    pop16 r4
     sys debug_break
-    s16tof q0, r4
+    s16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S16TOF q1,r5 (small positive)
+; BENCH: S16TOF (small positive)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r5, 0x0001
+    ; Capture the original operands in the fixed FF registers.
+    push16 r5
+    pop16 r4
     sys debug_break
-    s16tof q1, r5
+    s16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S16TOF q2,r6 (small negative)
+; BENCH: S16TOF (small negative)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0xffff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    pop16 r4
     sys debug_break
-    s16tof q2, r6
+    s16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S16TOF q3,r7 (INT16_MAX)
+; BENCH: S16TOF (INT16_MAX)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r7, 0x7fff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r7
+    pop16 r4
     sys debug_break
-    s16tof q3, r7
+    s16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S16TOF q0,r0 (INT16_MIN with source overlap)
+; BENCH: S16TOF (INT16_MIN)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x8000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    pop16 r4
     sys debug_break
-    s16tof q0, r0
+    s16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U16TOF q0,r4 (zero)
+; BENCH: U16TOF (zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    pop16 r4
     sys debug_break
-    u16tof q0, r4
+    u16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U16TOF q1,r5 (small)
+; BENCH: U16TOF (small)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r5, 0x0001
+    ; Capture the original operands in the fixed FF registers.
+    push16 r5
+    pop16 r4
     sys debug_break
-    u16tof q1, r5
+    u16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U16TOF q2,r6 (UINT16_MAX)
+; BENCH: U16TOF (UINT16_MAX)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0xffff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    pop16 r4
     sys debug_break
-    u16tof q2, r6
+    u16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U16TOF q3,r7 (high-bit value)
+; BENCH: U16TOF (high-bit value)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r7, 0x8001
+    ; Capture the original operands in the fixed FF registers.
+    push16 r7
+    pop16 r4
     sys debug_break
-    u16tof q3, r7
+    u16tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r4,q0 (+zero)
+; BENCH: FTOS16 (+zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r4, q0
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r5,q1 (-zero)
+; BENCH: FTOS16 (-zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x8000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r5, q1
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r6,q2 (positive fractional)
+; BENCH: FTOS16 (positive fractional)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x8000
     ldi16 r5, 0x42f7
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r6, q2
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r7,q3 (negative fractional)
+; BENCH: FTOS16 (negative fractional)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x8000
     ldi16 r7, 0xc2f7
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r7, q3
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r0,q0 (largest in-range positive neighborhood with overlap)
+; BENCH: FTOS16 (largest in-range positive neighborhood)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0xfe00
     ldi16 r1, 0x46ff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r0, q0
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r1,q1 (INT16_MIN with overlap)
+; BENCH: FTOS16 (INT16_MIN)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0xc700
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r1, q1
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r2,q2 (NaN unspecified result)
+; BENCH: FTOS16 (NaN unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x2345
     ldi16 r5, 0x7fc1
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r2, q2
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS16 r3,q3 (infinity unspecified result)
+; BENCH: FTOS16 (infinity unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos16 r3, q3
+    ftos16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU16 r4,q0 (zero)
+; BENCH: FTOU16 (zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou16 r4, q0
+    ftou16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU16 r5,q1 (positive fractional)
+; BENCH: FTOU16 (positive fractional)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x8000
     ldi16 r3, 0x42f7
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou16 r5, q1
+    ftou16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU16 r6,q2 (UINT16_MAX neighborhood)
+; BENCH: FTOU16 (UINT16_MAX neighborhood)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0xff00
     ldi16 r5, 0x477f
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou16 r6, q2
+    ftou16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU16 r7,q3 (negative unspecified result)
+; BENCH: FTOU16 (negative unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0xbf80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou16 r7, q3
+    ftou16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU16 r0,q0 (NaN unspecified result with overlap)
+; BENCH: FTOU16 (NaN unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x2345
     ldi16 r1, 0x7fc1
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou16 r0, q0
+    ftou16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU16 r1,q1 (infinity unspecified result with overlap)
+; BENCH: FTOU16 (infinity unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou16 r1, q1
+    ftou16
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S32TOF q0,q1 (zero)
+; BENCH: S32TOF (zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    s32tof q0, q1
+    s32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S32TOF q1,q2 (small positive)
+; BENCH: S32TOF (small positive)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0001
     ldi16 r5, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    s32tof q1, q2
+    s32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S32TOF q2,q3 (small negative)
+; BENCH: S32TOF (small negative)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0xffff
     ldi16 r7, 0xffff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    s32tof q2, q3
+    s32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S32TOF q3,q0 (rounding above 2^24)
+; BENCH: S32TOF (rounding above 2^24)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0001
     ldi16 r1, 0x0100
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    s32tof q3, q0
+    s32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S32TOF q0,q1 (INT32_MAX)
+; BENCH: S32TOF (INT32_MAX)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0xffff
     ldi16 r3, 0x7fff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    s32tof q0, q1
+    s32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S32TOF q1,q2 (INT32_MIN)
+; BENCH: S32TOF (INT32_MIN)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x8000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    s32tof q1, q2
+    s32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: S32TOF q3,q3 (qD == qS)
+; BENCH: S32TOF (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0xffff
     ldi16 r7, 0x00ff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    s32tof q3, q3
+    s32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U32TOF q0,q1 (zero)
+; BENCH: U32TOF (zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    u32tof q0, q1
+    u32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U32TOF q1,q2 (small)
+; BENCH: U32TOF (small)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0001
     ldi16 r5, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    u32tof q1, q2
+    u32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U32TOF q2,q3 (ties-to-even neighborhood)
+; BENCH: U32TOF (ties-to-even neighborhood)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0001
     ldi16 r7, 0x0100
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    u32tof q2, q3
+    u32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U32TOF q3,q0 (UINT32_MAX)
+; BENCH: U32TOF (UINT32_MAX)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0xffff
     ldi16 r1, 0xffff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    u32tof q3, q0
+    u32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: U32TOF q3,q3 (qD == qS)
+; BENCH: U32TOF (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0001
     ldi16 r7, 0x8000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    u32tof q3, q3
+    u32tof
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q0,q1 (zero)
+; BENCH: FTOS32 (zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q0, q1
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q1,q2 (positive fractional)
+; BENCH: FTOS32 (positive fractional)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x8000
     ldi16 r5, 0x42f7
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q1, q2
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q2,q3 (negative fractional)
+; BENCH: FTOS32 (negative fractional)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x8000
     ldi16 r7, 0xc2f7
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q2, q3
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q3,q0 (large in-range positive)
+; BENCH: FTOS32 (large in-range positive)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0xffff
     ldi16 r1, 0x4eff
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q3, q0
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q0,q1 (INT32_MIN)
+; BENCH: FTOS32 (INT32_MIN)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0xcf00
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q0, q1
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q1,q2 (NaN unspecified result)
+; BENCH: FTOS32 (NaN unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x2345
     ldi16 r5, 0x7fc1
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q1, q2
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q2,q3 (infinity unspecified result)
+; BENCH: FTOS32 (infinity unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q2, q3
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOS32 q3,q3 (qD == qS)
+; BENCH: FTOS32 (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0xbfa0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftos32 q3, q3
+    ftos32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU32 q0,q1 (zero)
+; BENCH: FTOU32 (zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou32 q0, q1
+    ftou32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU32 q1,q2 (positive fractional)
+; BENCH: FTOU32 (positive fractional)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x8000
     ldi16 r5, 0x42f7
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou32 q1, q2
+    ftou32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU32 q2,q3 (large in-range unsigned)
+; BENCH: FTOU32 (large in-range unsigned)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0xffff
     ldi16 r7, 0x4f7f
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou32 q2, q3
+    ftou32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU32 q3,q0 (negative unspecified result)
+; BENCH: FTOU32 (negative unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0xbf80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou32 q3, q0
+    ftou32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU32 q0,q1 (NaN unspecified result)
+; BENCH: FTOU32 (NaN unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x2345
     ldi16 r3, 0x7fc1
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou32 q0, q1
+    ftou32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU32 q1,q2 (infinity unspecified result)
+; BENCH: FTOU32 (infinity unspecified result)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou32 q1, q2
+    ftou32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FTOU32 q3,q3 (qD == qS)
+; BENCH: FTOU32 (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0x3fa0
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    ftou32 q3, q3
+    ftou32
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r4,q0,q1 (less)
+; BENCH: FCMP (less)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3f80
     ldi16 r2, 0x0000
     ldi16 r3, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r4, q0, q1
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r5,q2,q3 (greater)
+; BENCH: FCMP (greater)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x4000
     ldi16 r6, 0x0000
     ldi16 r7, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r5, q2, q3
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r6,q0,q1 (equal)
+; BENCH: FCMP (equal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3f80
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r6, q0, q1
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r7,q2,q3 (signed zeros equal)
+; BENCH: FCMP (signed zeros equal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x8000
     ldi16 r6, 0x0000
     ldi16 r7, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r7, q2, q3
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r0,q0,q1 (left quiet NaN unordered with destination overlap)
+; BENCH: FCMP (left quiet NaN unordered)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x2345
     ldi16 r1, 0x7fc1
     ldi16 r2, 0x0000
     ldi16 r3, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r0, q0, q1
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r1,q0,q1 (right quiet NaN unordered with destination overlap)
+; BENCH: FCMP (right quiet NaN unordered)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x3f80
     ldi16 r2, 0x4321
     ldi16 r3, 0xffc5
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    push16 r2
+    push16 r3
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r1, q0, q1
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r4,q2,q3 (left signaling NaN unordered)
+; BENCH: FCMP (left signaling NaN unordered)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x2345
     ldi16 r5, 0x7fa1
     ldi16 r6, 0x0000
     ldi16 r7, 0x4000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r4, q2, q3
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCMP r5,q3,q3 (qL == qR)
+; BENCH: FCMP (equal operands)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    push16 r6
+    push16 r7
+    pop16 r7
+    pop16 r6
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fcmp r5, q3, q3
+    fcmp
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r4,q0 (signaling NaN)
+; BENCH: FCLASS (signaling NaN)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x2345
     ldi16 r1, 0x7fa1
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r4, q0
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r5,q1 (quiet NaN)
+; BENCH: FCLASS (quiet NaN)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x2345
     ldi16 r3, 0x7fc1
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r5, q1
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r6,q2 (negative infinity)
+; BENCH: FCLASS (negative infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0xff80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r6, q2
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r7,q3 (negative normal)
+; BENCH: FCLASS (negative normal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0xbf80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r7, q3
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r0,q0 (negative subnormal with destination overlap)
+; BENCH: FCLASS (negative subnormal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0001
     ldi16 r1, 0x8000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r0, q0
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r1,q0 (negative zero with destination overlap)
+; BENCH: FCLASS (negative zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r0, 0x0000
     ldi16 r1, 0x8000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r0
+    push16 r1
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r1, q0
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r2,q1 (positive zero with destination overlap)
+; BENCH: FCLASS (positive zero)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0000
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r2, q1
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r3,q1 (positive subnormal with destination overlap)
+; BENCH: FCLASS (positive subnormal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r2, 0x0001
     ldi16 r3, 0x0000
+    ; Capture the original operands in the fixed FF registers.
+    push16 r2
+    push16 r3
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r3, q1
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r4,q2 (positive normal)
+; BENCH: FCLASS (positive normal)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r4, 0x0000
     ldi16 r5, 0x3f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r4
+    push16 r5
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r4, q2
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
-; BENCH: FCLASS r5,q3 (positive infinity)
+; BENCH: FCLASS (positive infinity)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
     ldi16 r6, 0x0000
     ldi16 r7, 0x7f80
+    ; Capture the original operands in the fixed FF registers.
+    push16 r6
+    push16 r7
+    pop16 r5
+    pop16 r4
     sys debug_break
-    fclass r5, q3
+    fclass
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; -----------------------------------------------------------------------------
+; BENCH: FNEG q1 (negative normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xbfc0
+    sys debug_break
+    fneg q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FNEG q2 (negative subnormal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x8000
+    sys debug_break
+    fneg q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FABS q1 (negative normal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r2, 0x0000
+    ldi16 r3, 0xbfc0
+    sys debug_break
+    fabs q1
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FABS q2 (negative subnormal)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x8000
+    sys debug_break
+    fabs q2
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FPOLY (N=1; x=0.5; coefficients=0.25)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0
+    ldi16 r5, 0x3f00
+    sys debug_break
+    fpoly 1
+    .rept 1
+        .float 0.25
+    .endr
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FPOLY (N=3; x=0.5; coefficients=0.25)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0
+    ldi16 r5, 0x3f00
+    sys debug_break
+    fpoly 3
+    .rept 3
+        .float 0.25
+    .endr
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FPOLY (N=5; x=0.5; coefficients=0.25)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0
+    ldi16 r5, 0x3f00
+    sys debug_break
+    fpoly 5
+    .rept 5
+        .float 0.25
+    .endr
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FPOLY (N=9; x=0.5; coefficients=0.25)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0
+    ldi16 r5, 0x3f00
+    sys debug_break
+    fpoly 9
+    .rept 9
+        .float 0.25
+    .endr
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: FPOLY (N=255; x=0.5; coefficients=0.25)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, 0
+    ldi16 r5, 0x3f00
+    sys debug_break
+    fpoly 255
+    .rept 255
+        .float 0.25
+    .endr
+    sys debug_break
+
 ; BENCH: CMP r4,r5 (upper one-byte)
 ; -----------------------------------------------------------------------------
     bench_reset_sp

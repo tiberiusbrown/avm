@@ -293,6 +293,8 @@ std::vector<std::string> read_benchmark_names(fs::path const& filename)
         throw std::runtime_error(
             "No instruction benchmark names found in " + filename.string());
     }
+    if(names.front() != "SYS debug_break (baseline)")
+        throw std::runtime_error("First instruction benchmark name must be SYS debug_break (baseline)");
     return names;
 }
 

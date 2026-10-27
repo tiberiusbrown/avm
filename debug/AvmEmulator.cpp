@@ -59,8 +59,8 @@ uint32_t read_entry(fs::path const& path) {
   if (bytes.size() < 52 || bytes[0] != '\x7f' || bytes.substr(1, 3) != "ELF" ||
       uint8_t(bytes[4]) != 1 || uint8_t(bytes[5]) != 1 ||
       uint8_t(bytes[16]) != 2 || uint8_t(bytes[18]) != 0x56 ||
-      uint8_t(bytes[19]) != 0x41 || uint8_t(bytes[36]) != 1)
-    throw std::runtime_error("expected an AVM ABI-v1 ELF32LE executable");
+      uint8_t(bytes[19]) != 0x41 || uint8_t(bytes[36]) != 2)
+    throw std::runtime_error("expected an AVM ABI-v2 ELF32LE executable");
   uint32_t entry = 0;
   for (unsigned i = 0; i < 4; ++i)
     entry |= uint32_t(uint8_t(bytes[24 + i])) << (i * 8);

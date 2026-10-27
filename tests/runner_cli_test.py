@@ -39,6 +39,12 @@ def main():
             for jobs in ['0', '-1', '+2', '1x', '', '999999999999999999999999999999']:
                 assert '--jobs' in run(runner, '--jobs', jobs, '--list', success=False)
             run(runner, '--jobs', success=False)
+        # A missing baseline label shifts every instruction measurement.
+        bad_names=tmp/'bad-instruction-names.txt'
+        bad_names.write_text('SYS debug_putc\n')
+        out=run('avm_bench','--instruction-only','--instruction-names',bad_names,
+                '--list',success=False)
+        assert 'First instruction benchmark name' in out,out
         benchdirs=['--c-only','--c-source-dir',tmp/'c','--c-image-dir',tmp/'missing',
                    '--interpreter',tmp/'missing.hex']
         out=run('avm_bench',*benchdirs,'--filter','^math_sinf$','--list')

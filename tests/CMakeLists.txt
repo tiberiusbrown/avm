@@ -97,6 +97,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         endif()
 
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
+        if(AVM_TEST_NAME STREQUAL "ff_fixed")
+            list(APPEND test_compile_options -mllvm -verify-machineinstrs)
+        endif()
         # Exercise whole-program virtual, member-pointer, and lifetime dispatch in the
         # emulator as well as retaining the ordinary compilation matrix.
         if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
@@ -777,7 +780,12 @@ add_custom_target(avm_fpoly_tests_run
     COMMAND "$<TARGET_FILE:avm_fpoly_tests>"
         "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
         "${AVM_PUSH16_TEST_DIR}/push16.bin"
-    DEPENDS avm_fpoly_tests avm_interpreter "${AVM_PUSH16_TEST_DIR}/push16.bin"
+    COMMAND "$<TARGET_FILE:avm_fpoly_tests>"
+        "${PROJECT_BINARY_DIR}/interp/fxc/interp.hex"
+        "${PROJECT_BINARY_DIR}/interp/fxc/interp.lst"
+        "${AVM_PUSH16_TEST_DIR}/push16.bin" FXC
+    DEPENDS avm_fpoly_tests avm_interpreter avm_interpreter_fxc
+        "${AVM_PUSH16_TEST_DIR}/push16.bin"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 add_dependencies(avm_tests_run avm_fpoly_tests_run)

@@ -34,6 +34,82 @@ without rerunning the tests or instruction image, build `avm_bench avm_bench_ima
 `build/avm_bench --c-only` or `build/avm_bench --cpp-only`. The `--instruction-only`
 mode is available for the assembly image.
 
+## Compiler calibration after the fixed-register FF migration
+
+The 2026-10-26 RelWithDebInfo sweep records 866 instruction intervals (including
+the 35-cycle adjacent-break baseline), 278 C workloads, and 8 C++ workloads.
+The instruction image moves inputs into the fixed registers before timing;
+each ordinary FF interval measures only its two-byte instruction. Sign
+operations cover all four register pairs. FPOLY covers counts 1, 3, 5, 9, and
+255, with inline coefficient reads included in the measured operation.
+
+The backend's `AVMCycleCosts.def` and `AVMSchedule.td` use these measurements.
+The table below gives scheduling representatives and observed sample extrema;
+the extrema are not guaranteed bounds for every binary32 input.
+
+| Operation | Typical cycles | Sample minimum | Sample maximum |
+| --- | ---: | ---: | ---: |
+| FADD | 156 | 127 | 162 |
+| FSUB | 156 | 128 | 163 |
+| FMUL | 192 | 124 | 192 |
+| FDIV | 529 | 124 | 1,283 |
+| S16TOF | 125 | 76 | 131 |
+| U16TOF | 123 | 74 | 123 |
+| FTOS16 | 112 | 96 | 118 |
+| FTOU16 | 102 | 86 | 144 |
+| S32TOF | 122 | 73 | 149 |
+| U32TOF | 122 | 73 | 151 |
+| FTOS32 | 115 | 99 | 169 |
+| FTOU32 | 105 | 89 | 147 |
+| FCMP | 83 | 61 | 87 |
+| FCLASS | 110 | 65 | 119 |
+
+Typical values select the normal add/subtract/multiply cases, recurring normal
+division, small positive integer conversions, positive fractional float
+conversions, greater comparison, and positive normal classification. FNEG takes
+38 cycles on every pair. FABS takes 38 cycles on q0/q1 and 35 on q2/q3; the
+compiler uses the conservative 38-cycle representative. FPOLY takes 168, 717,
+1,287, 2,427, and 72,543 cycles for those five counts and inputs. Its latency
+depends on count and data, so it has no fixed schedule class.
+
+The two-word FF table uses 92 bytes and has no veneers. Far entries use direct
+`JMP`; nearby entries execute the first implementation instruction and `RJMP`
+to the rest. FABS q2/q3 branch directly to the shared sign tail. The complete
+interpreter `.text` shrinks from 26,668 to 26,632 bytes, saving 36 bytes including
+alignment. This includes eight additional bytes saved by removing all three
+unneeded sign-tail NOPs after timing verification. Relative to the preceding
+one-word table plus veneers, far FF operations save one cycle, FNEG and FABS
+q0/q1 save two, and FABS q2/q3 save four; FCLASS adds one cycle.
+
+The cycle-17 reverse SPI handoff is unchanged. With no sign-tail padding,
+FABS q2/q3 use the earliest legal standard IN/OUT at cycles 17/18 after that
+handoff; FNEG and FABS q0/q1 use cycles 20/21. AVR emulator tests assert both
+access deadlines on FX and FX-C presets, including consecutive instructions,
+PC carries, and audio interrupts. A negative control that reads at cycle 15
+must fail. See the [SPI timing rules](../docs/isa_interpreter_implementation.md#51-spi-byte-transfer-and-handoff-rules)
+for the reference schedule.
+
+Fixed instruction, branch outcome, and shift-count entries are synchronized
+with their named measurements, including stack, logical, program-memory, and
+control-transfer costs. `AVMCycleCosts.def` records an LF-normalized SHA256 of
+the instruction report for provenance. Historical retired native math entries
+remain unchanged.
+
+The separate runtime-call TTI budgets use each matching `math_*` total divided
+by its 32 calls, rounded up to the next 100 cycles. These conservative workload
+budgets include loads, loop control, and accumulation; they are not isolated
+function latencies. For example, sqrt uses 5,800 cycles, pow 17,900, and fmod
+4,400. Min/max retain their provisional 2,000-cycle estimates because there are
+no matching 32-call workloads. Both ordinary remainder and the fmod intrinsic
+use the same updated budget.
+
+To repeat the complete sweep, build `avm_bench avm_bench_images` with
+RelWithDebInfo and run `build/avm_bench` without filters. Keep the resulting
+cycle reports and disassemblies. The instruction names must start with the
+baseline and then match `; BENCH:` comments in assembly order. Correctness is
+checked separately with `avm_tests` and the LLVM AVM suites; benchmark completion
+alone does not establish numerical correctness.
+
 ```sh
 cmake --build build --config RelWithDebInfo --target avm_bench avm_trig_bench_images --parallel 8
 build/avm_bench --c-only --filter 'math_(sin|cos|tan|sincos)' --list

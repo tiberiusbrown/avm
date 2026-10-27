@@ -39,8 +39,8 @@ uint32_t elf_entry(fs::path const& path)
     if(!in.read(reinterpret_cast<char*>(header.data()), header.size()) ||
        header[0] != 0x7f || header[1] != 'E' || header[2] != 'L' ||
        header[3] != 'F' || header[4] != 1 || header[5] != 1 ||
-       header[18] != 0x56 || header[19] != 0x41 || header[36] != 1)
-        throw std::runtime_error("expected an AVM ABI-v1 ELF32LE executable");
+       header[18] != 0x56 || header[19] != 0x41 || header[36] != 2)
+        throw std::runtime_error("expected an AVM ABI-v2 ELF32LE executable");
     return uint32_t(header[24]) | uint32_t(header[25]) << 8 |
            uint32_t(header[26]) << 16 | uint32_t(header[27]) << 24;
 }

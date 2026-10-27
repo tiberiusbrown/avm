@@ -307,6 +307,8 @@
      5688273   stdlib_ldiv.c
       762376   stdlib_llabs.c
     41786236   stdlib_lldiv.c
+     4369665   stdlib_strtod.c
+     4351873   stdlib_strtof.c
      8281332   stdlib_strtol.c
     67340300   stdlib_strtoll.c
      8287572   stdlib_strtoul.c

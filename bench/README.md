@@ -1,5 +1,12 @@
 # AVM benchmarks
 
+`stdlib_strtof` and `stdlib_strtod` each make 16 passes over eight inputs,
+covering decimal/hexadecimal text, subnormal underflow, overflow, infinity,
+NaN, and no conversion. Volatile function pointers retain the runtime calls;
+checksums consume result bits, end offsets, and errno. Both use AVM binary32.
+They run in the existing C benchmark sweep and update `cycles_c.txt`; their
+disassemblies are retained under `c/asm/`.
+
 The 13 `stdlib_*` workloads cover `atoi`, `atol`, `atoll`, `strtol`,
 `strtoul`, `strtoll`, `strtoull`, `abs`, `labs`, `llabs`, `div`,
 `ldiv`, and `lldiv` through volatile function pointers. Absolute-value

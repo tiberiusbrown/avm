@@ -22,6 +22,12 @@ unsigned long strtoul(const char* str, char** endptr, int base);
 long long strtoll(const char* str, char** endptr, int base);
 unsigned long long strtoull(const char* str, char** endptr, int base);
 
+/* Fixed C-locale decimal/hexadecimal floating conversions, including inf/nan.
+ * AVM float and double are both binary32. Overflow and subnormal/zero
+ * underflow set ERANGE; success and no conversion preserve errno. */
+float strtof(const char* str, char** endptr);
+double strtod(const char* str, char** endptr);
+
 /* The absolute value and division result must be representable. Division
  * truncates toward zero; a nonzero remainder has the numerator's sign. */
 int abs(int value);

@@ -29,6 +29,7 @@ set(RUNTIME_SOURCES
     runtime
     stdio
     stdlib
+    strtof
     string
 )
 

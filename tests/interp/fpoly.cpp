@@ -2,6 +2,7 @@
 #include <absim_regs.hpp>
 #include "avm_spi_observer.hpp"
 #include "../../runtime/lib/math/fpoly.h"
+#include "../../runtime/lib/math/native_math.h"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -22,6 +23,9 @@ struct harness {
     std::unique_ptr<absim::arduboy_t> e = std::make_unique<absim::arduboy_t>();
     std::map<std::string, unsigned> symbols;
     unsigned cases = 0, interrupted = 0;
+    std::array<uint64_t,8> accelerator_min={UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX,
+                                          UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX};
+    std::array<uint64_t,8> accelerator_max{};
     inline static harness *observed = nullptr;
     bool sign_pending = false, sign_read = false;
     unsigned sign_op = 0;
@@ -89,8 +93,8 @@ struct harness {
             while (in >> token) name = token;
             symbols[name] = a;
         }
-        require(symbols.at("ff_table_end") - symbols.at("ff_table") == 92,
-                "FF jump table is not exactly 23 two-word entries");
+        require(symbols.at("ff_table_end") - symbols.at("ff_table") == 124,
+                "FF jump table is not exactly 31 two-word entries");
         if (fxc) {
             e->program_state.cfg.fxport_reg = absim::reg::addr::PORTE;
             e->program_state.cfg.fxport_mask = 1u << 2;
@@ -133,6 +137,64 @@ struct harness {
             if (!sector) { sector = std::make_unique<absim::w25q128_t::sector_t>(); sector->fill(255); }
             (*sector)[addr % 4096] = data[i];
         }
+    }
+    void accelerator(unsigned op, uint32_t a, uint32_t b, uint32_t c,
+                     uint32_t expected, int quadrant = 0, uint32_t address = 0x200,
+                     bool audio = false, unsigned phase = 0) {
+        cpu().st(absim::reg::addr::TIMSK1, 0);
+        cpu().st(absim::reg::addr::TCCR1B, 0);
+        auto resume = cpu().pc;
+        cpu().push(uint8_t(resume)); cpu().push(uint8_t(resume >> 8));
+        cpu().pc = uint16_t(sym("interp_delay_17"));
+        tick(); until([&]{ return cpu().pc == resume; });
+        asset(address, {0xff, uint8_t(op), 0xff, 0x04, 0});
+        word(4, address); cpu().data[6] = uint8_t(address >> 16);
+        cpu().pc = uint16_t(sym("seek_and_dispatch_func")); tick();
+        until([&]{ return boundary(); });
+        for (unsigned r = 8; r < 24; ++r) cpu().data[r] = uint8_t(r*13+7);
+        auto put = [&](unsigned r, uint32_t u) {
+            for (unsigned k=0;k<4;++k) cpu().data[r+k]=uint8_t(u>>(8*k));
+        };
+        put(8,c); put(16,a); put(20,b);
+        word(28,0x980);
+        cpu().data[absim::reg::addr::GPIOR0] = 0xbd;
+        auto before=cpu().data;
+        auto sp=cpu().sp();
+        if (audio) {
+            word(0xa18,0x1234); cpu().data[0xa1a]=96; cpu().data[0xa24]=128;
+            cpu().st(absim::reg::addr::TCNT1H,0);
+            cpu().st(absim::reg::addr::TCNT1L,uint8_t(phase));
+            cpu().st(absim::reg::addr::TCCR1B,10);
+            cpu().st(absim::reg::addr::TIMSK1,2);
+        }
+        auto begin_cycles=cpu().cycle_count;
+        tick(); until([&]{return boundary() && pc()!=address;});
+        if(!audio) {
+            auto cycles=cpu().cycle_count-begin_cycles;
+            accelerator_min[op-0x17]=std::min(accelerator_min[op-0x17],cycles);
+            accelerator_max[op-0x17]=std::max(accelerator_max[op-0x17],cycles);
+        }
+        require(pc()==((address+2)&0xffffff),"accelerator PC advancement");
+        require(cpu().sp()==sp && word(28)==0x980,"accelerator stack preservation");
+        require(cpu().data[absim::reg::addr::GPIOR0]==0xbd,"accelerator CC preservation");
+        for(unsigned r: {2u,3u,7u,8u,9u,10u,11u,12u,13u,14u,15u,22u,23u})
+            require(cpu().data[r]==before[r],"accelerator register preservation");
+        if(op!=0x1d) require(word(20)==(b&0xffff),"accelerator q3 preservation");
+        else require(word(20)==unsigned(quadrant),"FREMPIO2 quadrant");
+        require(std::equal(before.begin()+0x100,before.begin()+0xa00,cpu().data.begin()+0x100),
+                "accelerator guest memory preservation");
+        uint32_t actual=word(16)|(uint32_t(word(18))<<16);
+        if(actual!=expected && !(std::isnan(value(actual)) && std::isnan(value(expected)))) {
+            std::ostringstream msg;
+            msg << "accelerator " << std::hex << op << " inputs " << a << "," << b << "," << c
+                << " actual " << actual << " expected " << expected;
+            throw std::runtime_error(msg.str());
+        }
+        // Mixed FF continuation checks the still-active SPI stream too.
+        auto previous=pc(); tick(); until([&]{return boundary()&&pc()!=previous;});
+        require(cpu().data[11]==(before[11]^0x80),"accelerator mixed FF continuation");
+        require(pc()==((address+4)&0xffffff),"accelerator continuation PC");
+        ++cases;
     }
     void reject_old_image() {
         cpu().st(absim::reg::addr::TIMSK1, 0);
@@ -198,7 +260,7 @@ struct harness {
             cpu().st(absim::reg::addr::TIMSK1, 2);
         }
         tick(); until([&]{return (boundary() && pc() != address) || cpu().pc == sym("invalid_secondary_instruction_func");});
-        if (op >= 23) {
+        if (op >= 31) {
             require(cpu().pc == sym("invalid_secondary_instruction_func"), "reserved FF did not trap");
             return;
         }
@@ -308,10 +370,32 @@ struct harness {
 };
 uint32_t random(uint32_t& s) { s ^= s << 13; s ^= s >> 17; s ^= s << 5; return s; }
 }
+void validate_native_reduction() {
+    double maximum=0;
+    uint32_t worst=0;
+    const double pio2=1.57079632679489661923132169163975144;
+    for(uint32_t u=0x3f490fdb;u<=0x43000000;++u) {
+        float x=value(u);
+        int q;
+        float r=avm_native_rempio2(x,&q);
+        unsigned n=unsigned(std::floor(double(x)/pio2+0.5));
+        double reference=double(x)-n*pio2;
+        double error=std::abs(double(r)-reference);
+        require(q==int(n&3),"native reduction range: quadrant mismatch");
+        require(error<=3.473e-8,"native reduction range: absolute error");
+        require(std::signbit(r)==std::signbit(reference),"native reduction range: zero side");
+        if(std::abs(r)>=0x1p-12f)
+            require(error/std::abs(reference)<2.04e-5,"native reduction range: tangent error");
+        if(error>maximum) {maximum=error;worst=u;}
+    }
+    std::cout << "Native pi/2 range: every binary32 in [pi/4,128], quadrants and zero sides exact; max error "
+              << maximum << " at " << std::hex << worst << std::dec << '\n';
+}
 int main(int argc, char **argv) {
     try {
         require(argc == 4 || (argc == 5 && std::string(argv[4]) == "FXC"),
                 "usage: fpoly interpreter.hex interpreter.lst fxdata.bin [FXC]");
+        if(argc==4) validate_native_reduction();
         harness h(argv, argc == 5);
         for (unsigned op = 0; op < 22; ++op) {
             for (unsigned flags = 0; flags < 8; ++flags)
@@ -320,7 +404,63 @@ int main(int argc, char **argv) {
             for (unsigned phase=0; phase<128; ++phase)
                 h.short_ff(op, 0x200, 0xbd, true, phase);
         }
-        for (unsigned op = 23; op < 256; ++op) h.short_ff(op, 0x200, 0xbd);
+        for (unsigned op = 31; op < 256; ++op) h.short_ff(op, 0x200, 0xbd);
+        auto check_accel = [&](unsigned op, uint32_t a, uint32_t b, uint32_t c,
+                                uint32_t address=0x200, bool audio=false, unsigned phase=0) {
+            float x=value(a), y=value(b), z=value(c), result=0;
+            int q=0;
+            switch(op) {
+            case 0x17: result=float(std::sqrt(double(x))); break;
+            case 0x18: result=float(std::trunc(double(x))); break;
+            case 0x19: result=float(std::floor(double(x))); break;
+            case 0x1a: result=float(std::ceil(double(x))); break;
+            case 0x1b: result=float(std::round(double(x))); break;
+            case 0x1c: result=float(std::fmod(double(x),double(y))); break;
+            case 0x1d: result=avm_native_rempio2(x,&q); break;
+            case 0x1e: result=avm_native_fma(x,y,z); break;
+            }
+            h.accelerator(op,a,b,c,bits(result),q,address,audio,phase);
+        };
+        std::vector<uint32_t> edge={0,0x80000000u,1,0x80000001u,0x7fffff,0x800000,
+            0x3effffff,0x3f000000,0x3f000001,0x3f490fda,0x3f490fdb,
+            0x3f800000,0x3fc00000,0x40200000,0x40c80000,0x4affffff,0x4b000000,
+            0x7f7fffff,0x7f800000,0xff800000,0x7fc12345,0xff812345};
+        for(unsigned e=0;e<256;++e) for(uint32_t m: {0u,1u,0x3fffffu,0x400000u,0x7fffffu})
+            for(unsigned sign=0;sign<2;++sign) edge.push_back((e<<23)|m|(sign<<31));
+        for(unsigned op=0x17;op<=0x1e;++op) {
+            for(auto a:edge) check_accel(op,a,0x40000000,0xbf800000);
+            for(auto a:edge) if(op==0x1c || op==0x1e)
+                check_accel(op,0x3f800001,a,0xbf800000);
+            for(uint32_t address: {0xffffu,0xffffffu})
+                check_accel(op,0x40c80000,0x40000000,0xbf800000,address);
+            for(unsigned phase=0;phase<128;++phase)
+                check_accel(op,0x40c80000,0x40000000,0xbf800000,0x200,true,phase);
+        }
+        for(unsigned n=0;n<=82;++n) for(double offset: {0.0,0.5}) {
+            uint32_t center=bits(float((n+offset)*1.57079632679489661923));
+            for(int delta=-2;delta<=2;++delta) for(unsigned sign=0;sign<2;++sign)
+                if(center>2) check_accel(0x1d,(center+delta)|(sign<<31),0x12345678,0xbf800000);
+        }
+        for(uint32_t u: {0x42ffffffu,0x43000000u,0x43000001u})
+            for(unsigned sign=0;sign<2;++sign) check_accel(0x1d,u|(sign<<31),0x12345678,0xbf800000);
+        for(unsigned signs=0;signs<8;++signs)
+            check_accel(0x1e,(signs&1)<<31,((signs>>1)&1)<<31,((signs>>2)&1)<<31);
+        for(auto v: {std::array<uint32_t,3>{0,0x7f800000,0x3f800000},
+                      {0x7f800000,0,0x3f800000},
+                      {0x7f800000,0x40000000,0xff800000},
+                      {0x7f7fffff,0x40000000,0xff7fffff},
+                      {0x00800000,0x33800000,1},
+                      {1,0x3f000000,1}, {0x3f800001,0x50400000,0xbf800000}})
+            check_accel(0x1e,v[0],v[1],v[2]);
+        uint32_t math_state=0x4653464d;
+        for(unsigned i=0;i<10000;++i) {
+            uint32_t a=random(math_state),b=random(math_state),c=random(math_state);
+            for(unsigned op=0x17;op<=0x1e;++op) check_accel(op,a,b,c);
+        }
+        // A single final rounding retains this residual, whereas FMUL+FADD loses it.
+        h.accelerator(0x1e,0x3f800001,0x40400000,0xc0400000,0x34c00000);
+        // Deliberate avr-libc precision limit: exact fused result is -2^-46.
+        h.accelerator(0x1e,0x3f800001,0x3f7ffffe,0xbf800000,0xafff0000);
         h.run(value(0xbe59ccc4), {value(0x3e59060f),value(0x3d871723),value(0xbf05e4d2),value(0x3c6e2ebd),value(0x3e867041),value(0x3d4ddec6)});
         for (unsigned n : {1u,2u,3u,5u,9u,13u,255u}) {
             std::vector<float> c(n, 0.25f);
@@ -376,6 +516,9 @@ int main(int argc, char **argv) {
             require(rejected && early.early_sign_in == 15,
                     "FF timing observer did not reject the cycle-15 SPI read");
         }
+        for(unsigned i=0;i<8;++i)
+            std::cout << "FF " << std::hex << i+0x17 << std::dec << " observed cycles "
+                      << h.accelerator_min[i] << ".." << h.accelerator_max[i] << '\n';
         std::cout << h.cases << " FF/FPOLY cases passed; " << h.interrupted << " audio interrupts; SPI continuation, flags, registers and PC carries verified\n";
         return 0;
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }

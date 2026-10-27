@@ -79,7 +79,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_source_dependencies)
 
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
-            if(AVM_TEST_NAME STREQUAL "display_system")
+            if(AVM_TEST_NAME STREQUAL "math_native")
+                list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/math_native.c")
+            elseif(AVM_TEST_NAME STREQUAL "display_system")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/display_system.c")
             elseif(AVM_TEST_NAME STREQUAL "separate_compilation")
@@ -164,7 +166,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             DEPENDS avm_sysroot
         )
         list(APPEND AVM_TEST_IMAGE_OUTPUTS "${AVM_TEST_IMAGE}")
-        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME MATCHES "^math_")
+        if(AVM_TEST_NAME MATCHES "^math_")
             list(APPEND AVM_MATH_FULL_IMAGES "${AVM_TEST_IMAGE}")
             if(AVM_TEST_OPT_LEVEL MATCHES "^(O0|O2)$")
                 list(APPEND AVM_MATH_FAST_IMAGES "${AVM_TEST_IMAGE}")
@@ -233,7 +235,7 @@ foreach(preset MINI FXC)
             "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
             "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
             -P "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
-        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm"
+        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm" "${PROJECT_SOURCE_DIR}/interp/native_math.inc"
             "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
             "${hardware_dir}/preset.asm"
         VERBATIM)
@@ -330,7 +332,7 @@ foreach(wiring FX MINI FXC split shared)
             "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
             "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
             -P "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
-        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm"
+        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm" "${PROJECT_SOURCE_DIR}/interp/native_math.inc"
             "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
             "${timer0_dir}/preset.asm"
         VERBATIM)
@@ -423,7 +425,7 @@ foreach(controller SSD1306 SSD1309 SH1106)
             "-DAVR_OBJCOPY:FILEPATH=${AVM_AVR_OBJCOPY}"
             "-DAVR_OBJDUMP:FILEPATH=${AVM_AVR_OBJDUMP}"
             -P "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
-        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm"
+        DEPENDS "${PROJECT_SOURCE_DIR}/interp/interp.asm" "${PROJECT_SOURCE_DIR}/interp/native_math.inc"
             "${PROJECT_SOURCE_DIR}/cmake/BuildAvmInterpreter.cmake"
             "${controller_dir}/preset.asm"
         VERBATIM)

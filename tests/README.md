@@ -26,9 +26,9 @@ bit comparisons; transcendental tolerances are explicit in each vector.
 normalized binary32 mantissa/exponent-parity combination, every positive
 subnormal, all exponent boundaries and random bit patterns, against both the
 saved original implementation and double sqrt rounded to float. NaNs compare
-by classification. `math_sqrtf_lookup` adds two-ULP interpreter fixtures near
+by classification. `math_sqrtf_lookup` retains two-ULP interpreter fixtures near the former
 interpolation boundaries, preserving exact square identities; `python tests/math/generate_sqrt_table.py --check`
-verifies that the table and fixtures match their generator. These
+verifies these independent fixtures. Production sqrt uses FSQRT and has no coefficient table. These
 checks run within `avm_tests_run`. The same target checks all 8,388,608 normalized
 binary32 mantissas of the large-angle reducer's full 280-bit integer product
 against an independent reference using 32-bit limbs and 64-bit arithmetic. See the

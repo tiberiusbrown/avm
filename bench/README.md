@@ -345,7 +345,7 @@ The retained kernel and both table-size finalists matched the saved original
 kernel and host double sqrt on all 16,777,216 normalized mantissa/parity
 inputs, all 8,388,607 positive subnormals, exponent boundaries, and one million
 random bit patterns (NaNs by classification). The generator
-`tests/math/generate_sqrt_table.py` reproduces the 2 KiB table and the AVM
+`tests/math/generate_sqrt_table.py` retains the AVM
 fixtures at every interval's edges and midpoint; `--check` detects stale files.
 All 723 AVM fixtures passed, including the original sqrt vectors and 771
 generated boundary vectors at `-O0`, `-O1`, `-O2`, `-O3`, `-Os` and `-Oz`.

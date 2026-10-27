@@ -55,6 +55,10 @@ std::string family(std::string const& name) {
         {"FADD", "FADD_MC"}, {"FSUB", "FSUB_MC"}, {"FMUL", "FMUL_MC"},
         {"FDIV", "FDIV_MC"}, {"FCMP", "FCMP_MC"}, {"FCLASS", "FCLASS_MC"},
         {"FNEG", "FNEG"}, {"FABS", "FABS"}, {"FPOLY", "FPOLY"},
+        {"FSQRT", "FSQRT_MC"}, {"FTRUNC", "FTRUNC_MC"},
+        {"FFLOOR", "FFLOOR_MC"}, {"FCEIL", "FCEIL_MC"},
+        {"FROUND", "FROUND_MC"}, {"FMOD", "FMOD_MC"},
+        {"FREMPIO2", "FREMPIO2_MC"}, {"FMA", "FMA_MC"},
         {"FCONVERT", "S16TOF_MC S32TOF_MC U16TOF_MC U32TOF_MC FTOS16_MC FTOS32_MC FTOU16_MC FTOU32_MC"},
         {"SYS", "SYS"}
     };

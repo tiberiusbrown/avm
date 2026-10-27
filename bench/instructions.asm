@@ -4246,6 +4246,126 @@ _start:
     .endr
     sys debug_break
 
+; BENCH: FSQRT (normal)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0xbf80
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x40c8
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
+    sys debug_break
+    fsqrt
+    sys debug_break
+
+; BENCH: FSQRT (positive subnormal)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x0000
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
+    sys debug_break
+    fsqrt
+    sys debug_break
+
+; BENCH: FTRUNC (fractional)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x40c8
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
+    sys debug_break
+    ftrunc
+    sys debug_break
+
+; BENCH: FFLOOR (negative fractional)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc0c8
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
+    sys debug_break
+    ffloor
+    sys debug_break
+
+; BENCH: FCEIL (fractional)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x40c8
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
+    sys debug_break
+    fceil
+    sys debug_break
+
+; BENCH: FROUND (negative halfway)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0xc020
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
+    sys debug_break
+    fround
+    sys debug_break
+
+; BENCH: FMOD (normal)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x40c8
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4000
+    sys debug_break
+    fmod
+    sys debug_break
+
+; BENCH: FMOD (large exponent gap)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0xffff
+    ldi16 r5, 0x7f7f
+    ldi16 r6, 0x0001
+    ldi16 r7, 0x0000
+    sys debug_break
+    fmod
+    sys debug_break
+
+; BENCH: FREMPIO2 (6.25 radians)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0x0000
+    ldi16 r4, 0x0000
+    ldi16 r5, 0x40c8
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x0000
+    sys debug_break
+    frempio2
+    sys debug_break
+
+; BENCH: FMA (retained product residual)
+    bench_reset_sp
+    ldi16 r0, 0x0000
+    ldi16 r1, 0xc040
+    ldi16 r4, 0x0001
+    ldi16 r5, 0x3f80
+    ldi16 r6, 0x0000
+    ldi16 r7, 0x4040
+    sys debug_break
+    fma
+    sys debug_break
+
 ; BENCH: CMP r4,r5 (upper one-byte)
 ; -----------------------------------------------------------------------------
     bench_reset_sp

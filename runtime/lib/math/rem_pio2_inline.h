@@ -2,6 +2,7 @@
 #define AVM_REM_PIO2_INLINE_H
 #include "fdlibm.h"
 #include "small_pio2.h"
+#include "native_math.h"
 /* The strict medium path is shared out of line to keep its live state out of
    tangent's common frame. Call only for finite 1024 < abs(x) <= 100000. */
 float avm_rem_pio2f_medium(float, int *);
@@ -16,6 +17,17 @@ static __attribute__((always_inline)) inline float avm_rem_pio2f_mode(float x, i
     uint32_t magnitude = bits & 0x7fffffffUL;
     if (magnitude <= 0x3f490fdaUL) { *quadrant=0; return x; }
     if (magnitude >= 0x7f800000UL) { *quadrant=0; return x-x; }
+    /* The native constant differs from pi/2 by <6.078e-11. Through 128,
+       n<=81, giving <4.924e-9 reduction error before final float rounding.
+       Near tangent poles retain the strict guest split/window reduction. */
+    if (magnitude <= 0x43000000UL) {
+        int native_q;
+        float native_r = avm_native_rempio2(x, &native_q);
+        if (!tangent || __builtin_fabsf(native_r) >= 0x1p-12f) {
+            *quadrant = native_q;
+            return native_r;
+        }
+    }
     float a = __builtin_fabsf(x), r;
     int n;
     if (magnitude < 0x4016cbe4UL) {
@@ -30,21 +42,6 @@ static __attribute__((always_inline)) inline float avm_rem_pio2f_mode(float x, i
         /* One quotient multiply, narrow conversion, and one reconstruction
            multiply/subtract. Only a zero provisional result needs the sign
            refinement below under the bounded absolute-error policy. */
-        if (!tangent && magnitude <= 0x43000000UL) {
-            uint16_t nearest=(((uint16_t)(a*0x1.45f306p0f))+1U)>>1;
-            r=a-(float)nearest*0x1.921fb6p0f;
-            uint32_t rb;
-            GET_FLOAT_WORD(rb,r);
-            /* For these quotients the product error is smaller than either
-               adjacent-float gap (checked by the table generator). Only a
-               zero subtraction can lose the side of the exact multiple. */
-            if (!(rb&0x7fffffffUL))
-                r=(a-avm_small_pio2[nearest].high)-avm_small_pio2[nearest].low;
-            n=(int)(nearest&3UL);
-            if (bits>>31) { r=-r; n=-n; }
-            *quadrant=n;
-            return r;
-        }
         /* Sterbenz makes the high subtraction exact. A precomputed residual
            resolves pole neighbors with two subtractions and no quotient-to-
            float conversion or reconstruction multiplies. */

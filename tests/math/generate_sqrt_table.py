@@ -1,4 +1,4 @@
-"""Regenerate the binary32 sqrt interpolation table and target boundary cases."""
+"""Regenerate retained native sqrt boundary fixtures (table routines are historical)."""
 
 import argparse
 import math
@@ -99,7 +99,6 @@ def main():
     if INTERVALS < 2 or INTERVALS & (INTERVALS-1):
         parser.error("interval count must be a power of two")
     outputs = {
-        ROOT / 'runtime/lib/math/sqrt_table.h': table(),
         ROOT / 'tests/c/math_sqrtf_lookup.c': boundary_cases(),
         ROOT / 'tests/c/math_sqrtf_lookup_output.txt': 'P\n',
     }

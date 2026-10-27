@@ -90,6 +90,10 @@ int main(int argc, char** argv) {
         fails([&] { d.decode({0xf0},0); }, "Cannot classify AVM encoding at PC");
         auto catalogue = d.catalogue();
         check(catalogue.count("FPOLY/FF") && catalogue.at("FPOLY/FF").bytes == 0, "Variable-size form missing");
+        for (auto name : {"FSQRT/FF", "FTRUNC/FF", "FFLOOR/FF", "FCEIL/FF",
+                          "FROUND/FF", "FMOD/FF", "FREMPIO2/FF", "FMA/FF"})
+            check(catalogue.count(name) && catalogue.at(name).bytes == 2,
+                  "Native math form missing");
 
         uint64_t normal_base = 0, normal = 0;
         auto baseline = run(argv[1], argv[3], table, d, normal_base);

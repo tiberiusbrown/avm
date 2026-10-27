@@ -17,7 +17,7 @@ models this extended precision. Exceptional handling and public APIs preserve th
 [function-specific accuracy policy](../../../docs/math-runtime/README.md).
 Polynomial helpers inline into their callers. Internal exponents and quadrants
 use native 16-bit words where safe; quotient estimation uses exact-width uint32_t.
-Ordinary reduction uses one rounded 4/pi multiply, unsigned truncation, integer
+The guest fallback reduction uses one rounded 4/pi multiply, unsigned truncation, integer
 add/shift, and a split pi/2 reconstruction. The high product is exact through
 2^17 radians. Small cancellations use a three-part split; other cancellations
 and large angles use an exponent-indexed 2/pi window. The main window retains
@@ -28,14 +28,11 @@ compensation tail, or general 64-bit guest multiplication. The generator uses
 120-digit arithmetic and the full host arithmetic test covers every normalized
 mantissa. Math builds at -O3 without jump tables or floating-point contraction.
 
-Square root normalizes to [1,4), then uses 512 linear intervals per exponent
-parity in an 8 KiB program-space table. One uninterrupted 8-byte coefficient
-read, one multiply and one add replace the quadratic and exact-midpoint split
-products. Exponent adjustment is exact. Exhaustive mantissa/parity and positive
-subnormal tests observe at most 2 ULP; a 1024-interval table achieved 1 ULP but
-was slower on the direct root workloads. The table generator also reproduces
-the target boundary fixtures (`--check` verifies both). Exact squares and signed
-zero retain exact tests.
+Square root is a thin FSQRT wrapper on AVM. The native avr-libc restoring
+algorithm replaces the 8,192-byte guest lookup table and needs no guest
+coefficient reads or floating arithmetic. Host reference builds use an exact
+integer restoring reference; the original independent test remains available.
+Signed zero, subnormals, perfect squares, infinities, and NaNs retain tests.
 
 Exponential uses centered base-two reduction, a degree-four Remez polynomial
 for 2^r through FPOLY, and exponent packing with a staged subnormal multiply.
@@ -77,20 +74,33 @@ uses native words. A cold two-component atanh-series refinement distinguishes
 overflow and zero-underflow neighbors that a single float product cannot resolve.
 There are no retained high-precision general implementations or precision modes.
 
-`fmodf` uses exact subtraction in the normal y < x < 2*y interval, native
-word leading-zero counts for subnormal exponents, and 16-bit exponent arithmetic.
-Exponent packing in exp, pow and hypot uses unsigned shifts, including negative
-scale adjustments. Bit-level
-rounding does not perform arithmetic solely to raise unsupported exception
-flags. `floorf`, `ceilf`, `roundf`, and `truncf` split binary32 bits into two
-16-bit words. Exponents below 7 clear fractional bits in both words; exponents
-7 through 22 clear only the low word. Masks, rounding increments, and carries
-use native word operations without general 32-bit variable-shift helpers.
-Host reference tests exhaust every mantissa at exponents 6, 7, and 22 with both
-signs, plus exponent boundaries and random inputs. Target tests cover every
-fractional exponent, signed zeros, subnormals, infinities, and NaNs; a symbol
-check prevents the four kernels from reintroducing shift-helper calls.
-`math.c` supplies log2 and number-preferred min/max with signed-zero handling.
+`fmodf` is a thin FMOD wrapper; its native normalized shift/subtract remainder
+is exact for valid finite operands across the binary32 exponent range.
+`floorf`, `ceilf`, `roundf`, and `truncf` use four entries into one native
+bit-level rounding engine. Finite results are exact; `roundf` ties go away
+from zero and signed zeros are preserved. Non-AVM reference builds retain
+portable bit algorithms and exact comparisons.
+
+`fmaf` uses FMA with fixed q2/q3/q0 inputs and q2 output, preserving q0/q3.
+It follows the compact
+[avr-libc version](https://github.com/vancegroup-mirrors/avr-libc/blob/master/avr-libc/libm/fplib/fma.S):
+extended multiply, extended add, one final binary32 rounding. The selected
+flt40_t precision retains a 32-bit significand. It improves many product
+residuals but does not guarantee correct rounding after severe cancellation
+or intermediate overflow/underflow. Exponent gaps above 32 discard the smaller
+operand, even at a rounding midpoint. Tests explicitly distinguish this
+contract from both a full-precision FMA and separate binary32 multiply/add.
+The host model reproduces those limits. No unrelated expressions are forcibly
+contracted. LLVM directly selects sqrt, rounding, remainder, and FMA operations.
+
+FREMPIO2 supplies both remainder and quadrant through an SSA pair. Trig calls
+it for |x|<=128; tangent accepts this path only when |r|>=2^-12. The native
+flt40_t pi/2 constant contributes less than 4.924e-9 absolute error in this
+range before final rounding. Every binary32 argument in [pi/4,128] is checked
+for quadrant, zero side, and error bounds. The existing split-constant and
+exponent-window guest reduction handles pole neighbors and larger inputs.
+There is no additional native reducer. Polynomial coefficients are unchanged,
+and sincos still shares one reduction and squared argument.
 
 `avm_shortcuts_tests_run` compares the production kernels with independent host
 double libm using the function-specific policy (exact for fmod). It exhausts
@@ -113,3 +123,9 @@ classification and sign checks remain unchanged. The window reducer's dense
 See [earlier measurements](../../../docs/math-runtime-tradeoff.md) for historical
 results, the [phase 1–2 study](../../../docs/math-runtime/report.md), and
 [phase 3–4 measurements and validation](../../../docs/math-runtime/phase34/report.md).
+
+The linked native package adds 704 interpreter bytes (26,632 to 27,336),
+including 32 bytes of FF table growth; existing FPOLY brings its package total
+to 906 bytes. The removed 8,192-byte sqrt table is a separate guest-program
+saving. Algorithms, preservation rules, measured per-component sizes, timing,
+and validation are recorded in the [interpreter guide](../../../docs/isa_interpreter_implementation.md#compact-native-math-package-ff-17-1e).

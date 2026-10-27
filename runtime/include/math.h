@@ -18,6 +18,8 @@ float log10f(float x);
 float powf(float x, float y);
 float hypotf(float x, float y);
 float fmodf(float x, float y);
+/* avr-libc extended multiply/add precision, rounded once at the end. */
+float fmaf(float x, float y, float z);
 float atanf(float x);
 float fabsf(float x);
 float copysignf(float x, float y);

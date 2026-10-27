@@ -13,6 +13,8 @@
 ; Copyright (c) 2002  Michael Stumpf  <mistumpf@de.pepperl-fuchs.com>
 ; Copyright (c) 2005  Dmitry Xmelkov
 ; Copyright (c) 2006  Dmitry Xmelkov
+; Copyright (c) 2007  Dmitry Xmelkov
+; Copyright (c) 2008  Ruud v Gessel
 ; Copyright (c) 2025  Georg-Johann Lay
 ; All rights reserved.
 ;
@@ -1906,7 +1908,7 @@ ff_next_byte_out:
     adc   r31, ZERO
     ijmp
 
-; Exactly 23 two-word entries. Z and the doubled index are program-memory
+; Exactly 31 two-word entries. Z and the doubled index are program-memory
 ; WORD units. Far bodies use JMP directly; nearby entries execute their first
 ; implementation instruction before RJMP to the continuation.
 ff_table:
@@ -1950,9 +1952,17 @@ ff_abs_q3:
     movw  r0, r16                ; FCLASS captures q2 low before continuation
     rjmp  ff_class
     jmp   ff_poly
+    jmp   ff_sqrt
+    jmp   ff_trunc
+    jmp   ff_floor
+    jmp   ff_ceil
+    jmp   ff_round
+    jmp   ff_mod
+    jmp   ff_rempio2
+    jmp   ff_fma
 ff_table_end:
-.if (ff_table_end - ff_table) != 92
-    .error "FF table must contain exactly 23 two-word entries"
+.if (ff_table_end - ff_table) != 124
+    .error "FF table must contain exactly 31 two-word entries"
 .endif
 
 ; Direct sign-byte continuations. From ff_next_byte_out (cycle 0), the shortest
@@ -7795,6 +7805,8 @@ ff_poly_delay_16:
     delay_4
     nop
     ret
+
+#include "native_math.inc"
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

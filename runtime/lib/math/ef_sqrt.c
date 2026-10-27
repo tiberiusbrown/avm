@@ -14,61 +14,36 @@
  */
 
 #include "fdlibm.h"
-#include "sqrt_table.h"
-#ifdef __AVM__
-#include <avm/pgmspace.h>
-#endif
 
-/* Table interpolation; exponent scaling is exact. Exhaustive significand,
-   parity and subnormal tests enforce the two-ULP acceptance bound. */
 float __ieee754_sqrtf(float x)
 {
-    uint32_t bits;
-    GET_FLOAT_WORD(bits, x);
-    uint32_t magnitude = bits & 0x7fffffffUL;
-    if (magnitude == 0) return x;
-    if (bits >> 31) {
-        SET_FLOAT_WORD(x, 0x7fc00000UL);
-        return x;
-    }
-    if (magnitude >= 0x7f800000UL) return x+x;
-    int exponent_adjust = 0;
-    if (magnitude < 0x00800000UL) {
-        x *= 0x1p24f;
-        GET_FLOAT_WORD(bits, x);
-        exponent_adjust = -24;
-    }
-    int exponent = (int)(bits >> 23) - 127 + exponent_adjust;
-    uint32_t normalized = (bits & 0x007fffffUL) |
-                          (0x3f800000UL + ((uint32_t)(exponent & 1) << 23));
-    uint16_t index = (uint16_t)((normalized - 0x3f800000UL) >> (23-AVM_SQRT_INTERVAL_BITS));
-    float coefficients[AVM_SQRT_DEGREE+1];
 #ifdef __AVM__
-    /* Keep one uninterrupted program-space read. Without this dependency,
-       scalar replacement turns the copy back into three separate LDP32s. */
-    uint16_t coefficient_bytes = sizeof(coefficients);
-    __asm__("" : "+r"(coefficient_bytes));
-    /* The complete byte offset fits in a native word (at most 8184). */
-    uint16_t offset = index * sizeof(sqrt_table[0]);
-    memcpy_P(coefficients, (const char AVM_PROGMEM *)sqrt_table + offset,
-             coefficient_bytes);
+    register float value __asm__("q2") = x;
+    __asm__("fsqrt" : "+r"(value));
+    return value;
 #else
-    for (unsigned i = 0; i < AVM_SQRT_DEGREE+1; ++i) coefficients[i] = sqrt_table[index][i];
+    /* Exact integer reference for the native restoring algorithm. No table. */
+    uint32_t u;
+    GET_FLOAT_WORD(u, x);
+    uint32_t a = u & 0x7fffffffU;
+    if (!a) return x;
+    if (a > 0x7f800000U) { SET_FLOAT_WORD(x, u | 0x00400000U); return x; }
+    if (u >> 31) { SET_FLOAT_WORD(x, 0x7fc00000U); return x; }
+    if (a == 0x7f800000U) return x;
+    int e = (int)(a >> 23) - 127;
+    uint32_t m = a & 0x7fffffU;
+    if (a >> 23) m |= 0x800000U;
+    else { e = -126; while (!(m & 0x800000U)) { m <<= 1; --e; } }
+    uint64_t n = (uint64_t)m << (23 + (e & 1));
+    uint32_t root = 0;
+    for (uint32_t bit = 0x800000U; bit; bit >>= 1) {
+        uint32_t t = root | bit;
+        if ((uint64_t)t * t <= n) root = t;
+    }
+    if (n - (uint64_t)root * root > root) ++root;
+    int re = (e - (e & 1))/2 + 127;
+    if (root == 0x1000000U) { root >>= 1; ++re; }
+    SET_FLOAT_WORD(x, ((uint32_t)re << 23) | (root & 0x7fffffU));
+    return x;
 #endif
-    float a, r;
-    SET_FLOAT_WORD(a, normalized);
-    float bucket;
-    SET_FLOAT_WORD(bucket, normalized & ~((1UL << (23-AVM_SQRT_INTERVAL_BITS))-1));
-    float t = a-bucket;
-#if AVM_SQRT_DEGREE == 1
-    r = coefficients[0] + t*coefficients[1];
-#else
-    r = coefficients[0] + t*(coefficients[1] + t*coefficients[2]);
-#endif
-
-    uint32_t root_bits;
-    GET_FLOAT_WORD(root_bits, r);
-    root_bits += (uint32_t)(int32_t)(exponent >> 1) << 23;
-    SET_FLOAT_WORD(r, root_bits);
-    return r;
 }

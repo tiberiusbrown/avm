@@ -2095,12 +2095,12 @@ Native `r0:r1`, `X`, and `Z` are interpreter scratch and may be clobbered. No ex
 
 ## 21.1. `FF`: dedicated floating-point page
 
-FF uses exactly 23 two-word entries for secondaries `00-16`. The assembler
-asserts `ff_table_end - ff_table == 92`. The range check compares against
-`(ff_table_end - ff_table) / 4` and rejects every `17-FF` value before doubling
+FF uses exactly 31 two-word entries for secondaries `00-1E`. The assembler
+asserts `ff_table_end - ff_table == 124`. The range check compares against
+`(ff_table_end - ff_table) / 4` and rejects every `1F-FF` value before doubling
 the index. Z is `pm(ff_table) + 2 * secondary` in AVR program-memory word units;
 the full 16-bit add handles a low-byte carry, then `IJMP` selects the entry.
-Fourteen entries use `JMP` directly to far bodies. Each of the nine nearby
+Twenty-two entries use `JMP` directly to far bodies. Each of the nine nearby
 FNEG/FABS/FCLASS entries executes the implementation's first instruction and
 then `RJMP`s to its continuation. FABS q2/q3 complete their sign change in the
 entry and branch straight to the shared sign tail. There are no veneers,
@@ -2125,7 +2125,15 @@ reserved entries, or additional register-dispatch tables.
 | `14` | `fcmp` | `q2, q3` | `r6` | `2` |
 | `15` | `fclass` | `q2` | `r6` | `2` |
 | `16` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
-| `17-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
+| `17` | `fsqrt` | `q2` | `q2` | `2` |
+| `18` | `ftrunc` | `q2` | `q2` | `2` |
+| `19` | `ffloor` | `q2` | `q2` | `2` |
+| `1A` | `fceil` | `q2` | `q2` | `2` |
+| `1B` | `fround` | `q2` | `q2` | `2` |
+| `1C` | `fmod` | `q2, q3` | `q2` | `2` |
+| `1D` | `frempio2` | `q2` | `q2, r6` | `2` |
+| `1E` | `fma` | `q2, q3, q0` | `q2` | `2` |
+| `1F-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
 
 Five setup instructions retain the protected reverse-order secondary
 `CLI/OUT/IN/SEI` handoff. The full 24-bit PC increment finishes before it.
@@ -2180,6 +2188,97 @@ subregister constraints while allowing live values to spill or use other pairs.
 FNEG/FABS retain unrestricted q-register allocation.
 The assembler, emitter, printer, and disassembler use the map above. Runtime
 and ELF ABI version 2 reject older images and objects.
+
+### Compact native math package (`FF 17-1E`)
+
+`interp/native_math.inc` is included beside FPOLY and the embedded floating
+helpers. The implementation follows the
+[avr-libc fplib sources](https://github.com/vancegroup-mirrors/avr-libc/tree/master/avr-libc/libm/fplib).
+FSQRT uses the smaller restoring-square-root variant and shared split/pack
+helpers. FMOD uses normalized 24-bit significands and signed exponent
+counters. Four direct policy entries share one exponent/mask/reconstruction
+rounding engine. Their native scratch never changes architectural CC.
+
+FREMPIO2 adapts `__fp_rempio2`'s flt40_t integer division, then compares the
+unrounded remainder with half the divisor to select the nearest multiple.
+It adjusts remainder sign and quotient independently for negative arguments,
+normalizes, and rounds once. q3's high half is saved/restored; its low half
+is the defined r6 result. NaN/infinity produce NaN with quadrant zero.
+`D=0xC90FDAA2/2^31` differs from pi/2 by less than 6.078e-11. For |x|<=128,
+n<=81, so constant error is below 4.924e-9 before binary32 output rounding.
+The runtime retains guest fallbacks outside that range and for tangent
+|r|<2^-12; the interpreter contains no higher-precision fallback.
+
+FMA follows avr-libc `fma.S`: `__mulsf3x`, load q0 into helper B, clear B's
+extension, `__addsf3x_ext`, and `__fp_round`. The shared extended-add entry
+already used by FPOLY preserves fractional subnormal accumulators. Its
+precision/range remains that of flt40_t, including cancellation and discarded
+small-operand limitations; this is not a full-product correctly rounded FMA.
+The common fixed binary bridge preserves q3 and writes only q2. q0/q1 are
+untouched. Existing FPOLY arithmetic is unchanged.
+
+Linked flash accounting (RelWithDebInfo, FX and FX-C):
+
+| Component | Added bytes |
+|---|---:|
+| FF table, 92 to 124 bytes | 32 |
+| FSQRT, including fixed bridge entry and normalization | 136 |
+| Four policy entries and shared rounding engine | 174 |
+| FMOD, including fixed bridge entry | 162 |
+| FREMPIO2, including preservation and writeback | 182 |
+| FMA, including fixed bridge entry | 18 |
+| New shared helper bytes outside these ranges | 0 |
+| **Total incremental native flash** | **704** |
+
+The complete interpreter grows from 26,632 to 27,336 bytes. Existing FPOLY
+is 202 bytes, giving a 906-byte incremental accelerator package including
+its dispatch growth. Existing general floating-point helpers and the original
+FF table/decoder are shared baseline infrastructure. The guest sqrt table
+removal saves a separate 8,192 bytes of guest program data.
+
+### Accelerator validation and timing
+
+The native harness passes 115,251 FF/FPOLY cases on each of FX and FX-C,
+including 1,147 Timer1 interrupts per preset, all exponent boundaries, random
+bit patterns, pi/2 and half-quadrant neighbors, signed zeros, nonfinite inputs,
+three-input FMA, both FREMPIO2 outputs, reserved secondaries, PC carries, mixed
+fetch streams, CC, guest memory, and both stack pointers. The negative SPI
+timing control still rejects its deliberately early read.
+
+The independent sqrt sweep covers all 16,777,216 normalized mantissa/parity
+inputs, all 8,388,607 positive subnormals, exponent boundaries, and one million
+random bit patterns, observing 0 ULP error. FMOD matches exact reference bits
+in the native corpus; the independent runtime reference checks 1,681,134 fmod
+cases with zero error. Existing rounding bit-pattern sweeps and all 15
+100-digit mpmath accuracy policies pass without changing tolerances.
+The dense native-reducer scan verifies every binary32 argument in [pi/4,128],
+including exact quadrants and remainder signs; maximum absolute error is
+3.17470e-8 at input `0x4245EB9C`. Negative inputs follow by symmetry and have
+separate instruction-level coverage. Full-range trig retains its guest fallback.
+
+Measured representative complete instruction cycles (not worst-case bounds):
+
+| Instruction | Representative cycles | Observed native-test range |
+|---|---:|---:|
+| FSQRT | 629 | 92–784 |
+| FTRUNC | 377 | 46–407 |
+| FFLOOR | 382 | 46–412 |
+| FCEIL | 383 | 46–413 |
+| FROUND | 390 | 44–405 |
+| FMOD | 189 | 105–4,646 |
+| FREMPIO2 | 225 | 84–2,201 |
+| FMA (retained-product residual) | 464 | 192–613 |
+
+The compiler cost and scheduling models use these measurements. The shared
+rounding engine is 160 bytes plus 14 bytes of policy entries; sqrt's shared
+normalization helper is 14 bytes, already included in the component totals.
+No new common floating helper closure is imported. Compiler validation covers
+350 LLVM/MC tests and C/C++ integration at O0, O1, O2, O3, Os, and Oz. The math
+suite has 264 cases across those levels; the complete end-to-end suite has
+892. Benchmarks retain 876 instruction, 278 C, and 8 C++ timing rows plus their
+production disassemblies and instruction-mix report. FMA's documented flt40_t
+cancellation and intermediate-range limits are intentional avr-libc behavior;
+no claim of full-product IEEE FMA rounding is made.
 
 # Part I-B — Dispatch and Implementation Strategy
 
@@ -3599,7 +3698,7 @@ Excluded from the reference interpreter-core size estimate:
 - hardware initialization and other service bodies;
 - save-flash routines;
 - debugger implementation beyond trap entry;
-- the `FF` decoder, bridge, and inline floating handlers until measured;
+- the `FF` decoder, bridge, and native floating handlers, measured separately in Section 21.1;
 - linked runtime-library and soft-float routines.
 
 ---
@@ -3620,11 +3719,12 @@ FA immediate jump table              26
 FA register forwarding table         192
 shared FB-FD move table             256
 FE forwarding table                256
+FF fixed-register table            124
                                   ------
-all executable tables            8,942 bytes
+all executable tables            9,066 bytes
 ```
 
-The secondary executable tables total **6,894 bytes**. `EC`, `ED-EE`, `F8`, `F9`, and `FF` have no executable tables. The 64-byte F8 decoder/dispatch is accounted for separately. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
+The secondary executable tables total **7,018 bytes**, including the 124-byte FF table. `EC`, `ED-EE`, `F8`, and `F9` have no executable tables. The 64-byte F8 decoder/dispatch is accounted for separately. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
 
 ## 34. Reference core-size estimate
 

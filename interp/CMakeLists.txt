@@ -40,6 +40,7 @@ add_custom_command(
         -P "${AVM_INTERPRETER_BUILD_CMAKE}"
     DEPENDS
         "${AVM_INTERPRETER_SOURCE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/native_math.inc"
         "${AVM_INTERPRETER_BUILD_CMAKE}"
     COMMENT "Building the AVR AVM interpreter"
     USES_TERMINAL
@@ -74,6 +75,7 @@ add_custom_command(
         "-DMAX_INTERP_SIZE:STRING=${AVM_INTERPRETER_MAX_SIZE}"
         -P "${AVM_INTERPRETER_BUILD_CMAKE}"
     DEPENDS "${AVM_INTERPRETER_SOURCE}" "${AVM_INTERPRETER_BUILD_CMAKE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/native_math.inc"
         "${AVM_INTERPRETER_FXC_BUILD_DIR}/preset.asm"
     COMMENT "Building the AVR AVM interpreter for Arduboy FX-C"
     VERBATIM)

@@ -26,6 +26,11 @@
 
 float floorf(float x)
 {
+#ifdef __AVM__
+    register float value __asm__("q2") = x;
+    __asm__("ffloor" : "+r"(value));
+    return value;
+#else
     uint32_t bits;
     GET_FLOAT_WORD(bits, x);
     uint16_t hi = (uint16_t)(bits >> 16);
@@ -61,5 +66,6 @@ float floorf(float x)
     }
     SET_FLOAT_WORD(x, ((uint32_t)hi << 16) | lo);
     return x;
+#endif
 }
 

@@ -1392,12 +1392,20 @@ the guest runtime; see the [migration measurements](math-runtime-tradeoff.md).
 | `14` | `fcmp` | `q2, q3` | `r6` | `2` |
 | `15` | `fclass` | `q2` | `r6` | `2` |
 | `16` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
-| `17-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
+| `17` | `fsqrt` | `q2` | `q2` | `2` |
+| `18` | `ftrunc` | `q2` | `q2` | `2` |
+| `19` | `ffloor` | `q2` | `q2` | `2` |
+| `1A` | `fceil` | `q2` | `q2` | `2` |
+| `1B` | `fround` | `q2` | `q2` | `2` |
+| `1C` | `fmod` | `q2, q3` | `q2` | `2` |
+| `1D` | `frempio2` | `q2` | `q2, r6` | `2` |
+| `1E` | `fma` | `q2, q3, q0` | `q2` | `2` |
+| `1F-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
 
 Fixed-register mnemonics have no assembly operands. Explicit register operands
-are rejected. No legacy FF encoding is supported. Exactly 23 two-word dispatch
-entries occupy 92 bytes. Far handlers use direct `JMP` entries; nearby handlers
-start in the entry and use `RJMP` to continue. The decoder rejects `>= 0x17`
+are rejected. No legacy FF encoding is supported. Exactly 31 two-word dispatch
+entries occupy 124 bytes. Far handlers use direct `JMP` entries; nearby handlers
+start in the entry and use `RJMP` to continue. The decoder rejects `>= 0x1F`
 before table indexing.
 
 ### 35.1.2. Arithmetic and sign operations
@@ -1408,6 +1416,44 @@ FABS clears it; all other bits, including NaN payloads and signaling state,
 are preserved exactly. Every FF operation preserves CC, SP, guest memory, and
 all architectural registers except its designated output. PC advances by the
 complete instruction length.
+
+### Native math accelerators
+
+FSQRT uses avr-libc's restoring square root, including subnormal normalization
+and the final rounding decision. Signed zeros and positive infinity are
+preserved; negative nonzero arguments return NaN. The four rounding operations
+share one bit-level engine. FROUND uses halfway-away-from-zero C `roundf`
+semantics; the others truncate, floor, or ceil. FMOD performs exact normalized
+significand shift/subtract division, preserving the dividend's sign on zero.
+These operations define only q2 and preserve q0, q1, q3, CC, SP, and guest memory.
+
+FREMPIO2 returns the nearest-multiple remainder in q2 and the signed quotient
+modulo four in r6 (0–3). It preserves r7, q0, q1, CC, SP, and guest memory.
+Nonfinite inputs return NaN and quadrant zero. Signed zeros pass through.
+The compact avr-libc reducer uses `D = 0xC90FDAA2 * 2^-31` for pi/2, with a
+32-bit significand in a flt40_t value. Division and nearest-quotient correction
+are integer operations; the final remainder rounds once to binary32.
+It accepts all finite inputs, but large-angle quadrants are approximations to
+this constant, not a full-range mathematical-pi guarantee. Production trig
+uses it only through |x| <= 128. Tangent additionally requires |r| >= 2^-12;
+its pole neighbors and larger angles use the existing guest split/window
+reducer. No high-precision fallback is embedded in the interpreter.
+
+FMA uses q2*q3+q0 and preserves q0, q1, and q3. Per the compact avr-libc
+[fma.S implementation](https://github.com/vancegroup-mirrors/avr-libc/blob/master/avr-libc/libm/fplib/fma.S),
+it retains the existing flt40_t multiply/add state and rounds only after the
+addition. This is the selected precision contract: the product retains a
+32-bit significand, not all 48 product bits. Severe cancellation, intermediate
+overflow/underflow, and exponent gaps above 32 can differ from a correctly
+rounded mathematical FMA. For example `(1+2^-23)*(1-2^-23)-1` returns `0xAFFF0000` (-255*2^-39),
+where the exact fused result is -2^-46. Ordinary multiply/add expressions are
+not contracted unless compiler flags permit it.
+
+LLVM models q2 ties, q3 and q0 inputs, and both FREMPIO2 definitions before
+allocation, using Q2Only, Q3Only, Q0Only, and R6Only. The r6/q3 alias remains
+visible to liveness and spilling. `llvm.avm.rempio2` returns `{float,i16}`;
+`__builtin_avm_rempio2(x,&q)` exposes that pair to C/C++ and promotes the local
+quadrant store away during optimization. MC syntax remains operand-free.
 
 ### 35.1.3. Conversions, comparison, and classification
 
@@ -2119,7 +2165,7 @@ matching compiler and runtime.
 
 The runtime provides `sqrtf`, `sinf`, `cosf`, `atan2f`, `tanf`, `expf`, `logf`,
 `log2f`, `log10f`, `powf`, `hypotf`, `fmodf`, `truncf`, `floorf`, `ceilf`,
-`roundf`, `fminf`, and `fmaxf` as ordinary C ABI functions. Angles are radians;
+`roundf`, `fmaf`, `fminf`, and `fmaxf` as ordinary C ABI functions. Angles are radians;
 `atan2f` returns an angle in `[-pi, +pi]`. Functions expose no floating-point
 exception state or `errno`. NaN result payloads are unspecified. `fmodf` has
 the sign of its first operand and computes the mathematical remainder with

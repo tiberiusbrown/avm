@@ -1,8 +1,8 @@
 AVM instruction mix profiling report
 Optimization: O2; benchmarks: 16; AVM ABI v2
-Interpreter HEX SHA256 dc9790c62468d18555ff4420631d40c9d465f9a2e0fc82756c7a598663af7646
+Interpreter HEX SHA256 eaa2c3c1720e035a35de9117bd883b2b8cd3f2d09448ada384deebeb6a1c5d02
 Baseline image SHA256 a1efc4f040532d37731dbf31edff856328d5faff3ec1a56de375c68ad7a14edf
-Compiler executable SHA256 0e091d93fb9b633e6342fad6a34e944a50ba07a804d846bcfaecd1f88f107045
+Compiler executable SHA256 08c8cd4f5340128819d439426dd2c10c97ff030c47984ae3044595874f0b7da5
 Metric: elapsed emulated AVR cycles between consecutive AVM primary-dispatch
 boundaries, including dispatch and operand-dependent work. Interrupts suppressed.
 Setup and both DEBUG_BREAK markers excluded; no estimated/rescaled costs.
@@ -225,7 +225,7 @@ virtual_dispatch.cpp: 698467 cycles; 12291 executions; 56.828 cycles/op
   Families: LOAD 34.599% BRANCH 18.019% CALL/RET 17.959% ADD 10.922% STACK 5.424% MOV 5.222%
 
 Encoding coverage
-Defined executable forms: 218; observed: 110; never executed: 108
+Defined executable forms: 226; observed: 110; never executed: 116
 Reserved/invalid opcode slots and assembly pseudos excluded by the MC decoder.
 Observed forms / workloads exercising them:
   ADD16.general/F2                11
@@ -357,11 +357,19 @@ Unobserved executable forms:
   F5ST16/F5
   F7ST16_POST/F7
   FABS/FF
+  FCEIL/FF
   FCLASS/FF
+  FFLOOR/FF
+  FMA/FF
+  FMOD/FF
   FNEG/FF
   FPOLY/FF
+  FREMPIO2/FF
+  FROUND/FF
+  FSQRT/FF
   FSUB/FF
   FTOU16/FF
+  FTRUNC/FF
   GETSP/F1
   GPST16_POST/F0
   GPST8_POST/F0

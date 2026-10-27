@@ -21,6 +21,15 @@
 
 #include "fdlibm.h"
 
+#ifdef __AVM__
+float __ieee754_fmodf(float x, float y)
+{
+    register float a __asm__("q2") = x;
+    register float b __asm__("q3") = y;
+    __asm__("fmod" : "+r"(a) : "r"(b));
+    return a;
+}
+#else
 static __attribute__((always_inline)) inline int avm_fmod_subnormal_exponent(uint32_t word)
 {
     /* Count in native words: AVM has a 16-bit clz, with no 32-bit helper.
@@ -116,3 +125,5 @@ static __attribute__((always_inline)) inline int avm_fmod_subnormal_exponent(uin
 	}
 	return x;		/* exact output */
 }
+
+#endif

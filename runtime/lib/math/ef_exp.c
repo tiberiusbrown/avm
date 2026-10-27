@@ -27,7 +27,6 @@ float __ieee754_expf(float x)
     }
     if (!(bits >> 31) && magnitude > FLT_UWORD_LOG_MAX) return __math_oflowf(0);
     if ((bits >> 31) && magnitude > FLT_UWORD_LOG_MIN) return __math_uflowf(0);
-    if (magnitude < 0x34000000UL) return 1.0f+x;
     /* Centered base-two reduction. Binary32 reduction error is included in
        the measured 1e-5 relative budget, including both scaling extremes. */
     float u=x*0x1.715476p0f;

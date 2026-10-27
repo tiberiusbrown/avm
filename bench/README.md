@@ -15,6 +15,13 @@ and comparisons with the evaluated alternatives. After the documented focused
 accuracy and benchmark runs, `python tests/math/report_c99.py` writes a Markdown
 measurement summary under `build/`.
 
+`math_asin_general`, `math_atan_general`, `math_expm1_general`, and
+`math_log1p_general` use ordinary fractional inputs to distinguish general-case
+improvements from the older tiny/special-input mixtures. The math runtime's
+[simplification audit](../runtime/lib/math/README.md#general-case-simplification-audit)
+records the selected fits, native-helper reuse, and the integer/tiny-input
+performance tradeoffs. All benchmark disassemblies remain retained.
+
 The [fast trig report](../docs/math-runtime/trig-fast/report.md) records the
 current single-float reducer, identical-input before/after measurements, and
 fast/full reproduction commands. Use `avm_trig_bench_run` for the focused set.

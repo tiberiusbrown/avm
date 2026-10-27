@@ -4,7 +4,7 @@ math_ef_log.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_log.c
 00000000 l    d  .text.logf	00000000 .text.logf
-00000000 g     F .text.logf	000000e9 logf
+00000000 g     F .text.logf	000000e6 logf
 
 Disassembly of section .text.logf:
 
@@ -119,12 +119,9 @@ Disassembly of section .text.logf:
  e2 00 00 00           jmpf	logf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.logf+0xbf
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
- ff 01                 fsub
- aa                    xor	r6, r6
- af                    xor	r7, r7
- ff 03                 fdiv
+ c6 c0 7f              ldi16	r6, 0x7fc0
+ 99                    or	r6, r5
+ 06                    mov	r5, r6
  e2 00 00 00           jmpf	logf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.logf+0xbf

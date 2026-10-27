@@ -6,7 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.log2f	00000000 .text.log2f
 00000000 l    d  .text.fminf	00000000 .text.fminf
 00000000 l    d  .text.fmaxf	00000000 .text.fmaxf
-00000000 g     F .text.log2f	000000df log2f
+00000000 g     F .text.log2f	000000dc log2f
 00000000 g     F .text.fminf	0000007e fminf
 00000000 g     F .text.fmaxf	0000006e fmaxf
 
@@ -119,12 +119,9 @@ Disassembly of section .text.log2f:
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.log2f+0xb5
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
- ff 01                 fsub
- aa                    xor	r6, r6
- af                    xor	r7, r7
- ff 03                 fdiv
+ c6 c0 7f              ldi16	r6, 0x7fc0
+ 99                    or	r6, r5
+ 06                    mov	r5, r6
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.log2f+0xb7

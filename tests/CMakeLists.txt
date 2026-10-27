@@ -773,6 +773,18 @@ add_custom_target(avm_c99_tests_run
         "${CMAKE_CURRENT_SOURCE_DIR}/math/classify_host.cpp"
     DEPENDS avm_c99_reference_tests clang USES_TERMINAL VERBATIM)
 add_dependencies(avm_tests_run avm_c99_tests_run)
+add_executable(avm_hypot_boundary_tests math/hypot_boundary_reference.c)
+if(MSVC)
+    target_compile_options(avm_hypot_boundary_tests PRIVATE /fp:strict
+        "/FI${CMAKE_CURRENT_SOURCE_DIR}/math/host_compat.h")
+else()
+    target_compile_options(avm_hypot_boundary_tests PRIVATE -ffp-contract=off -fno-fast-math)
+    target_link_libraries(avm_hypot_boundary_tests PRIVATE m)
+endif()
+add_custom_target(avm_hypot_boundary_tests_run
+    COMMAND "$<TARGET_FILE:avm_hypot_boundary_tests>"
+    DEPENDS avm_hypot_boundary_tests USES_TERMINAL VERBATIM)
+add_dependencies(avm_tests_run avm_hypot_boundary_tests_run)
 if(NOT MSVC)
     target_link_libraries(avm_shortcuts_reference_tests PRIVATE m)
     target_link_libraries(avm_math_accuracy_probe PRIVATE m)
@@ -826,11 +838,13 @@ add_custom_target(avm_math_fast
     COMMAND "$<TARGET_FILE:avm_c99_reference_tests>" --quick
     DEPENDS avm_math_fast_images avm_tests avm_math_reference_tests
         avm_math_reduction_tests avm_shortcuts_reference_tests avm_c99_reference_tests avm_fpoly_tests_run
+        avm_hypot_boundary_tests_run
     USES_TERMINAL VERBATIM)
 add_custom_target(avm_math_full
     COMMAND "${CMAKE_COMMAND}" -E time "$<TARGET_FILE:avm_tests>" --filter "^math_"
     DEPENDS avm_math_full_images avm_tests avm_math_reference_tests_run
         avm_shortcuts_tests_run avm_c99_tests_run avm_rounding_tests_run avm_fpoly_tests_run
+        avm_hypot_boundary_tests_run
     USES_TERMINAL VERBATIM)
 add_custom_target(avm_trig_accelerators_run
     COMMAND "${CMAKE_COMMAND}"

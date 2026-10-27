@@ -14,43 +14,34 @@
  */
 
 #include "fdlibm.h"
-#include <limits.h>
-#include <float.h>
 
-#if INT_MAX > 50000
-#define OVERFLOW_INT 50000
-#else
-#define OVERFLOW_INT 30000
-#endif
-
-	float scalbnf (float x, int n)
+float scalbnf(float x, int n)
 {
-	__int32_t  k,ix;
-	__uint32_t hx;
-
-	GET_FLOAT_WORD(ix,x);
-	hx = ix&0x7fffffff;
-        k = hx>>23;		/* extract exponent */
-	if (FLT_UWORD_IS_ZERO(hx))
-	    return x;
-        if (!FLT_UWORD_IS_FINITE(hx))
-	    return x+x;		/* NaN or Inf */
-        if (FLT_UWORD_IS_SUBNORMAL(hx)) {
-	    x *= 3.355443200e+07f;
-	    GET_FLOAT_WORD(ix,x);
-	    k = ((ix&0x7f800000)>>23) - 25; 
-            if (n < -30000) return 1.0e-30f*x; 	/*underflow*/
-        }
-        if (n > OVERFLOW_INT) 	/* in case integer overflow in n+k */
-	    return 1.0e+30f*__builtin_copysignf(1.0e+30f,x);	/*overflow*/
-        k = k+n; 
-        if (k > FLT_LARGEST_EXP) return 1.0e+30f*__builtin_copysignf(1.0e+30f,x); /* overflow  */
-        if (k > 0) 				/* normal result */
-	    {SET_FLOAT_WORD(x,(ix&0x807fffff)|(k<<23)); return x;}
-        if (k < FLT_SMALLEST_EXP)
-	    return 1.0e-30f*__builtin_copysignf(1.0e-30f,x);	/*underflow*/
-        k += 25;				/* subnormal result */
-	SET_FLOAT_WORD(x,(ix&0x807fffff)|(k<<23));
-        return x*2.9802322388e-08f;
+    uint32_t u;
+    GET_FLOAT_WORD(u,x);
+    uint32_t magnitude=u&0x7fffffffUL;
+    int e=(int)((uint16_t)(u>>16)&0x7fffU)>>7;
+    if (!magnitude) return x;
+    if (e==255) return x+x;
+    /* Clamp before addition: even host INT_MIN/MAX cannot overflow the
+       bounded native-word exponent. These limits cover every binary32 x. */
+    if (n>276) return __math_oflowf((int)(u>>31));
+    if (n<-277) return __math_uflowf((int)(u>>31));
+    if (!e) {
+        x*=0x1p25f;
+        GET_FLOAT_WORD(u,x);
+        e=(int)((uint16_t)(u>>16)&0x7fffU)>>7;
+        e-=25;
+    }
+    e+=n;
+    if (e>254) return __math_oflowf((int)(u>>31));
+    if (e>0) {
+        SET_FLOAT_WORD(x,(u&0x807fffffUL)|((uint32_t)e<<23));
+        return x;
+    }
+    if (e<-23) return __math_uflowf((int)(u>>31));
+    /* Exactly one rounding when the packed normal is scaled to subnormal. */
+    SET_FLOAT_WORD(x,(u&0x807fffffUL)|((uint32_t)(e+25)<<23));
+    return x*0x1p-25f;
 }
 

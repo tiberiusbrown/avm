@@ -83,6 +83,14 @@ static __attribute__((noinline)) int scaling(void)
         word(ldexpf(1.0f,INT_MIN))!=0 || word(ldexpf(-1.0f,INT_MAX))!=0xff800000UL) return 7;
     if (word(ldexpf(from_bits(0x007fffffUL),-23))!=1 ||
         word(ldexpf(from_bits(0x3fffffffUL),-150))!=1) return 7;
+    static const AVM_PROGMEM struct { uint32_t x; int n; uint32_t expected; } limits[]={
+        {1,276,0x7f000000UL},{1,277,0x7f800000UL},
+        {0x80000001UL,276,0xff000000UL},{0x80000001UL,277,0xff800000UL},
+        {0x7f7fffffUL,-277,1},{0x7f7fffffUL,-278,0},
+        {0xff7fffffUL,-277,0x80000001UL},{0xff7fffffUL,-278,0x80000000UL},
+        {1,-1,0},{3,-1,2},{5,-1,2}};
+    for (unsigned i=0;i<sizeof(limits)/sizeof(limits[0]);++i)
+        if (check_result(ldexpf(from_bits(limits[i].x),limits[i].n),limits[i].expected,0,i)) return 7;
     return 0;
 }
 

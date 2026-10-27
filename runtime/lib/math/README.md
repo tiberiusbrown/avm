@@ -14,7 +14,7 @@ instruction stream; the compiler manages the fixed `q2` operand without a guest
 helper call. The interpreter retains its eight-bit significand extension across
 Horner steps and rounds to binary32 only at the end. The host reference build
 models this extended precision. Exceptional handling and public APIs preserve their semantics. See the
-[function-specific accuracy policy](../../../docs/math-runtime/README.md).
+[function-specific accuracy policy](../../../tests/math/accuracy_policy.h).
 Polynomial helpers inline into their callers. Internal exponents and quadrants
 use native 16-bit words where safe; quotient estimation uses exact-width uint32_t.
 The legacy `__ieee754_rem_pio2f` guest reduction uses one rounded 4/pi multiply, unsigned truncation, integer
@@ -36,14 +36,16 @@ Signed zero, subnormals, perfect squares, infinities, and NaNs retain tests.
 
 Exponential uses centered base-two reduction, a degree-four Remez polynomial
 for 2^r through FPOLY, and exponent packing with a staged subnormal multiply.
-It performs no division. Tiny arguments retain 1+x. The generator and measured
+It performs no division. The shared unity-anchored fit handles tiny and zero
+arguments without a separate 1+x path. The generator and measured
 alternatives are described in the [generated phase 1–2 report](../../../docs/math-runtime/report.md).
 
 `hypotf` takes the square root of the sum of squares without sorting or scaling
 for ordinary inputs. Extreme inputs retain scaling and a magnitude-gap shortcut.
 A cold exact squared-norm comparison preserves the finite/infinite rounding
-boundary despite the approximate square root. Only that boundary uses 64-bit
-guest integer helpers.
+boundary despite sum-of-squares rounding. That boundary uses exact byte/word
+arithmetic, with no 64-bit guest helpers. FSQRT is inlined through the shared
+native helper on all paths.
 
 Sine and cosine retain separate degree-five odd and degree-six even Remez
 polynomials evaluated by native FPOLY. The avr-libc
@@ -101,9 +103,10 @@ A stable natural-log mantissa wrapper is also available to internal callers.
 `powf` replaces the fdlibm general engine with direct 2^(y*log2(x)). It reuses
 the phase-two exponential polynomial and logarithm normalization/mantissa core.
 Large exponents use a degree-eight logarithm fit to bound amplified errors.
-Near one, a short log1p series forms y*(x-1) first. Integer powers through
-magnitude 16 use squaring, inverting first for negative powers; bit-level parity
-uses native words. A cold two-component atanh-series refinement distinguishes
+Near one, a short log1p series forms y*(x-1) first. General positive bases
+use the same log/exp path for integer and noninteger exponents; bit-level parity
+classification is needed only for negative bases. The small-integer squaring
+loop is removed. A cold two-component atanh-series refinement distinguishes
 overflow and zero-underflow neighbors that a single float product cannot resolve.
 There are no retained high-precision general implementations or precision modes.
 
@@ -174,14 +177,14 @@ arithmetic, errno, or floating-point environment state were added.
 | Function | Selected algorithm |
 | --- | --- |
 | `exp2f` | Direct centered base-two reduction, a degree-four relative Remez FPOLY fit constrained to P(0)=1, and shared exponent packing. All integer powers follow the same polynomial path and remain exact, including subnormals and exp2(±0). Native-word range checks precede integer conversion. |
-| `expm1f` | `x+x*x*P4(x)` (degree-six Taylor) for `abs(x)<=1/2`; tiny inputs return x; other inputs call the existing exponential and subtract one. |
-| `log1pf` | `x+x*x*P3(x)` (degree-five alternating series) for `abs(x)<=1/16`; tiny inputs return x. Other inputs inline the existing logarithm normalization and degree-seven mantissa engine on `1+x`. |
+| `expm1f` | `x*P5(x)` for `abs(x)<=1`; relative Remez fits expm1(x)/x with P(0)=1. One FPOLY6 and one multiply also handle tiny values and signed zero. Other inputs reuse expf and subtract one. |
+| `log1pf` | `x*P5(x)` for `abs(x)<=1/4`; relative Remez fits log1p(x)/x with P(0)=1. One FPOLY6 and one multiply preserve tiny values and signed zero. Other inputs inline the logarithm engine on `1+x`. |
 | `cbrtf` | Normalize the significand to [1,2), divide the exponent by three, evaluate a centered degree-seven FPOLY fit on [-1/2,1/2], apply cube-root-of-two/four for the exponent remainder, and pack the result exponent/sign. Subnormals normalize with one exact multiply. No floating division or Newton refinement. |
 | `asinf` | Odd degree-nine approximation `x+x^3*P3(x*x)` on [0,1/2]. Above 1/2, use `pi/2-2*asin(sqrt((1-abs(x))/2))`. FSQRT only runs on the endpoint path. |
 | `acosf` | `pi/2-asin(x)` on [-1/2,1/2]; endpoint paths compute `2*asin(sqrt((1-abs(x))/2))`, subtracting from pi for negative x. Shares the small asin polynomial and inline FSQRT wrapper. |
 
-The scale helper remains shared with `powf`; its existing fit and the `expf`
-fit are unchanged. `tests/math/c99_coefficients.py` reproduces the new Remez fits
+The anchored exponential fit and scale helper are shared by `expf`, `exp2f`,
+and `powf`. `tests/math/c99_coefficients.py` reproduces the selected Remez fits
 using the existing coefficient generator. All coefficients and guest arithmetic
 are binary32; FPOLY uses the already established avr-libc extended accumulator.
 
@@ -201,7 +204,10 @@ returns NaN. Cube root preserves signed infinities, and `expm1f(-INFINITY)`
 returns -1. Exponential overflow returns positive infinity; gradual underflow
 uses the existing round-to-nearest, ties-to-even arithmetic.
 
-`ldexpf` is a thin `scalbnf` wrapper. The shared scaling cutoff was corrected:
+`ldexpf` is a thin `scalbnf` wrapper. The scaler uses native-word exponents,
+clamps extreme n before adding, and constructs signed overflow/zero results
+from their bits. Only gradual underflow needs a final exact power-of-two
+multiply. The shared scaling cutoff was corrected:
 biased exponent -23 can still round up to the smallest subnormal, so it reaches
 the final multiply rather than an early zero return. Permanent tests include
 `ldexpf(0x1.fffffcp-127f,-23)`, both sides of the half-quantum boundary, ties
@@ -234,9 +240,9 @@ rule; high-precision references characterize error rather than require correct
 rounding. `exp2f` shares the existing exponential relative budget of 1e-5,
 including its subnormal allowance. `log1pf` shares the logarithm hybrid budget
 of 1e-6 absolute plus 1e-6 relative. Inverse trig shares the established 1e-6
-absolute atan budget. `expm1f` allows 3e-5 relative because subtracting one on
-the general exponential path amplifies the existing exponential budget near
-the crossover; its Taylor path retains useful relative accuracy near zero.
+absolute atan budget. `expm1f` retains its 3e-5 relative policy, including the
+amplification from subtracting one on the general exponential path. The
+unity-anchored ratio fit retains useful relative accuracy near zero.
 Cube root allows 3e-7 relative for fit/coefficient/reconstruction rounding.
 All signs, zeros, exceptional results, and exact representation operations
 are checked independently of approximation budgets.
@@ -288,8 +294,8 @@ error excludes subnormal results; absolute error includes the full finite range.
 | Function | Max absolute | Max relative | Max ULP | Worst abs / relative / ULP input bits |
 | --- | ---: | ---: | ---: | --- |
 | `exp2f` | 6.90825e+32 | 2.87549e-06 | 43 | `42ff0001` / `41080002` / `3f5481fe` |
-| `expm1f` | 1.32263e+33 | 7.25033e-06 | 92 | `42b0f552` / `42a9f5c4` / `42a9f5c4` |
-| `log1pf` | 6.79034e-06 | 1.66038e-06 | 28 | `75a165cf` / `3df7bde8` / `3e07f734` |
+| `expm1f` | 1.09953e+33 | 7.43936e-06 | 124 | `42b0f552` / `3f568b00` / `3eceffff` |
+| `log1pf` | 6.79034e-06 | 1.5601e-06 | 26 | `75a165cf` / `bdf2e400` / `bdf09c00` |
 | `cbrtf` | 783063 | 1.65031e-07 | 2 | `7f271174` / `ab841f6d` / `00000081` |
 | `asinf` | 4.11096e-07 | 7.84661e-07 | 7 | `bf001200` / `bf001200` / `3f000011` |
 | `acosf` | 5.63349e-07 | 3.50933e-07 | 5 | `bf002480` / `3f001200` / `3f0c02cf` |
@@ -302,18 +308,19 @@ callees. Stack is the measured guest maximum including the benchmark caller.
 | Function | Cycles / 32 calls | Function bytes | Guest stack bytes |
 | --- | ---: | ---: | ---: |
 | `exp2f` | 166,616 | 180 | 26 |
-| `expm1f` | 182,758 | 102 | 37 |
-| `log1pf` | 166,496 | 313 | 28 |
+| `expm1f` | 143,222 | 78 | 33 |
+| `log1pf` | 156,650 | 291 | 28 |
 | `cbrtf` | 220,280 | 244 | 34 |
-| `asinf` | 149,240 | 200 | 28 |
+| `asinf` | 159,880 | 194 | 28 |
 | `acosf` | 168,774 | 217 | 28 |
-| `ldexpf` | 149,904 | 4 | 28 |
+| `ldexpf` | 109,867 | 4 | 24 |
 | `frexpf` | 98,916 | 285 | 36 |
 | `modff` | 106,401 | 211 | 44 |
 | `nextafterf` | 122,549 | 168 | 32 |
 | Classification/comparisons workload | 135,799 | inline | 25 |
 
-The small asin/endpoint implementation measured 149,240 cycles versus 272,362
+Initial C99 comparisons, before the general-case audit below: the small
+asin/endpoint implementation measured 149,240 cycles versus 272,362
 for the stable atan2/sqrt identity on identical inputs; acos measured 168,774
 versus 274,036. The centered cube-root polynomial measured 220,280 versus
 225,362 for a cubic seed plus one Newton step. A quarter-unit expm1 crossover
@@ -342,13 +349,94 @@ helpers. Only expm1 calls expf and ldexp tail-calls the shared scaler; the other
 new approximations inline their kernels. Native stack scratch is separate from
 the guest-stack column and measured at 6–15 additional bytes on these workloads.
 
-The full validation passed 964 interpreter tests across all six optimization
+The initial C99 validation passed 964 interpreter tests across all six optimization
 levels, the existing exhaustive/reference suites, all 21 high-precision math
 policies, 876 instruction intervals, 289 C workloads, and 8 C++ workloads.
-Other existing benchmark cycle rows and disassemblies are unchanged, apart from
+At that point, other benchmark cycle rows and disassemblies were unchanged, apart from
 the intentional scalbn underflow cutoff and pow's shared exponential range
 guards. The six pow workloads improved by 0.06–1.50 percent from the native-word
 integer guards, with their polynomial and accuracy policy unchanged.
 The instruction-mix report includes the new workloads and reconciles with
 cycle timings. `tests/math/report_c99.py` regenerates the tables from build
 reports, final benchmark output, stack traces, and object symbols.
+
+## General-case simplification audit
+
+The Sun Microsystems notices identify the kernels' ancestry; they are retained
+with adapted code. Production paths were reviewed by their actual AVM
+instructions and measured error, rather than the original fdlibm file names.
+Acceptance policies were not relaxed. The chosen changes are:
+
+| Family | Result of review |
+| --- | --- |
+| exp/exp2 | Share the degree-four unity-anchored relative fit and exponent packing. exp no longer dispatches tiny arguments to a separate `1+x` approximation. |
+| expm1/log1p | Fit their ratios to x with constant one, then evaluate `x*P5(x)`. This removes reconstruction multiply/adds and tiny-input dispatch, preserves signed zero, and expands the direct intervals to [-1,1] and [-1/4,1/4]. |
+| atan/asin | The existing anchored/factored polynomials already handle tiny values; remove the redundant tiny-input return. Ordinary-input workloads measure this independently of the older tiny/special-heavy workloads. |
+| pow | Remove positive-base integer classification and the small-integer squaring loop. General integer and noninteger powers share log/exp; parity is still checked for negative bases. Keep direct elementary identities and the cold boundary check required for correct exceptional results. |
+| hypot | Inline existing FSQRT through a shared helper. Replace the cold 64-bit squared-norm comparison with native byte products and word carries. The comparison remains exact; an exponent-gap proof rejects impossible overflow without squaring. |
+| scalbn/ldexp | Replace wide exponent arithmetic and arithmetic overflow/underflow construction with bounded native-word exponents and signed bit results. Preserve the single final ties-to-even rounding for subnormal outputs. |
+| log/log2/log10 | Already use a division-free mantissa polynomial and factored zero at one. Construct exceptional negative results from bits instead of a runtime zero division. |
+| trig/sqrt/fma/fmod/rounding | Already use compact native helpers or short polynomials; retain them. The portable rounding/remainder code and the legacy high-precision guest reducer remain independent reference/benchmark infrastructure, not the public trig path. |
+| frexp/modf/nextafter/classification | Exact representation semantics remain required; no approximation is appropriate. |
+
+The expm1/log1p fits have real-coefficient relative bounds of 7.3572023e-6 and
+1.4628014e-6, respectively. Binary32/native evaluation is validated separately.
+Each ratio fit uses one FPOLY6 and one multiply; the shared exponential stays
+at FPOLY5. No refinement, double precision, or new ISA/native interpreter
+acceleration is introduced.
+
+Two alternatives were measured before selection. Shorter direct intervals
+([−1/2,1/2] for expm1, [−1/8,1/8] for log1p) were slower on ordinary inputs
+than the selected wider intervals. A two-piece atan fit reduced cycles but
+exceeded the unchanged 1e-6 absolute error policy, so the four-piece fit remains.
+Removing tiny-input dispatch improves ordinary atan/asin workloads; their
+existing mixed benchmarks contain many tiny inputs and can become slower.
+Likewise, pow's integer-only workload loses its shortcut, while general
+noninteger workloads benefit.
+
+The rare pow boundary refinement is retained to distinguish finite/infinite
+and zero/subnormal neighbors. Its purpose is correct classification, not a
+tighter ordinary approximation. Hypot needs the same guarantee, but its exact
+comparison now uses six 8x8 products per significand, bounded byte-column sums,
+and 16-bit shifts/carries, with no 64-bit guest helpers. The independent host
+`avm_hypot_boundary_tests_run` compares 1,023,656 random and targeted crossing
+cases against a uint64_t oracle; 64-bit integer arithmetic exists only in that test.
+The scaler tests also include both signs at n=276/277 and -277/-278, and exact
+subnormal rounding midpoints.
+
+### Audit measurements
+
+O2 benchmark callers, O3 runtime, RelWithDebInfo; identical inputs and 32 calls
+per workload, including the existing loop/input/sink overhead. Ordinary-input
+baselines use the original implementations with the newly added general-case
+input distributions. The other baselines are the measurements captured before
+this audit.
+
+| Workload | Before cycles | Selected cycles | Reduction |
+| --- | ---: | ---: | ---: |
+| `math_exp` | 224,389 | 210,272 | 6.3% |
+| `math_exp_primary` | 192,205 | 178,118 | 7.3% |
+| `math_expm1_general` | 191,944 | 141,952 | 26.0% |
+| `math_log1p_general` | 189,960 | 158,968 | 16.3% |
+| `math_atan_general` | 156,306 | 147,218 | 5.8% |
+| `math_asin_general` | 172,776 | 165,224 | 4.4% |
+| `math_pow` | 564,682 | 492,491 | 12.8% |
+| `math_pow_near_one` | 509,588 | 434,193 | 14.8% |
+| `math_ldexp` | 149,904 | 109,867 | 26.7% |
+| `math_hypot` | 157,051 | 148,923 | 5.2% |
+| `math_hypot_scaled` | 173,631 | 166,519 | 4.1% |
+| `math_hypot_boundary` | 2,411,451 | 710,755 | 70.5% |
+
+The integer-only pow workload changed from 427,172 to 460,377 cycles (+7.8%);
+the tiny-heavy asin mix changed from 149,240 to 159,880 (+7.1%). The selected
+implementations prioritize ordinary inputs; the corresponding general-case
+workloads improve as shown above. Hypot's ordinary path also benefits from
+inlining FSQRT: it no longer calls the sqrtf wrapper or guest integer helpers.
+The new scaler is 205 function bytes; expm1 is 78 bytes and log1p 291 bytes.
+
+All 964 interpreter fixtures pass at O0/O1/O2/O3/Os/Oz, all 21 high-precision
+policies pass, and the existing exhaustive/reference suites remain enabled.
+The exact boundary oracle passes all 1,023,656 cases. Benchmarks, instruction
+mix, disassemblies, coefficient generators, and worst-input fixtures are
+refreshed; the ISA, interpreter, LLVM code generation, and public ABI are
+unchanged. All edits are left uncommitted.

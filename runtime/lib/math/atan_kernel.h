@@ -25,7 +25,6 @@ static __attribute__((always_inline)) inline float avm_atan_kernel(float x)
     GET_FLOAT_WORD(hx,x);
     uint32_t ix=hx&0x7fffffffUL;
     if (ix>0x7f800000UL) return x+x;
-    if (ix<0x39800000UL) return x;
     float a=__builtin_fabsf(x), result;
     if (ix>0x3f800000UL) result=0x1.921fb6p0f-avm_atan_unit(1.0f/a);
     else result=avm_atan_unit(a);

@@ -14,4 +14,12 @@ static __attribute__((always_inline)) inline float avm_exp2_polynomial(float x)
 {
     return AVM_FPOLY5(x, 0x1.3a02ccp-7f, 0x1.c9fc46p-5f, 0x1.ec0378p-3f, 0x1.62e12cp-1f, 0x1p+0f);
 }
+static __attribute__((always_inline)) inline float avm_expm1_small(float x)
+{
+    return AVM_FPOLY6(x, 0x1.6ac6f8p-10f, 0x1.1a1e14p-7f, 0x1.55a1ccp-5f, 0x1.552978p-3f, 0x1.fffd48p-2f, 0x1p+0f);
+}
+static __attribute__((always_inline)) inline float avm_log1p_small(float x)
+{
+    return AVM_FPOLY6(x, -0x1.70fe46p-3f, 0x1.b48688p-3f, -0x1.ff3b32p-3f, 0x1.551172p-2f, -0x1.000046p-1f, 0x1p+0f);
+}
 #endif

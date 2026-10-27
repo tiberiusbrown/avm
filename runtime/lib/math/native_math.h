@@ -1,6 +1,21 @@
 #ifndef AVM_NATIVE_MATH_H
 #define AVM_NATIVE_MATH_H
 #include "fdlibm.h"
+
+#ifdef __AVM__
+static __attribute__((always_inline)) inline float avm_native_sqrt(float x)
+{
+    register float value __asm__("q2") = x;
+    __asm__("fsqrt" : "+r"(value));
+    return value;
+}
+#else
+static inline float avm_native_sqrt(float x)
+{
+    return sqrtf(x);
+}
+#endif
+
 #ifdef __AVM__
 static __attribute__((always_inline)) inline float avm_native_fma(float a, float b, float c)
 {

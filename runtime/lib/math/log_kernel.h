@@ -21,8 +21,8 @@
 /* Callers classify once, then share normalization and the mantissa kernel. */
 static __attribute__((always_inline)) inline float avm_log_special(float x, uint32_t ix)
 {
-    if ((ix & 0x7fffffffUL) == 0) return -1.0f/0.0f;
-    if (ix & 0x80000000UL) return (x-x)/0.0f;
+    if ((ix & 0x7fffffffUL) == 0) { SET_FLOAT_WORD(x, 0xff800000UL); return x; }
+    if (ix & 0x80000000UL) { SET_FLOAT_WORD(x, ix | 0x7fc00000UL); return x; }
     return x+x;
 }
 

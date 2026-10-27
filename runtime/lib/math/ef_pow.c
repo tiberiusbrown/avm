@@ -18,6 +18,7 @@
 #include "exp2_kernel.h"
 #include "pow_log_poly.h"
 #include "pow_boundary.h"
+#include "native_math.h"
 
 float __ieee754_powf(float x, float y)
 {
@@ -35,13 +36,13 @@ float __ieee754_powf(float x, float y)
     if (hy==0x3f800000UL) return x;
     if (hy==0xbf800000UL) return 1.0f/x;
     if (hy==0x40000000UL) return x*x;
-    if (hy==0x3f000000UL && !(hx>>31)) return __ieee754_sqrtf(x);
+    if (hy==0x3f000000UL && !(hx>>31)) return avm_native_sqrt(x);
 
     /* Integer classification uses the exponent/mantissa, including the fact
        that every binary32 integer at 2^24 and above is even. */
     unsigned parity=0;
     int integer=0;
-    if ((hx>>31) || (iy>=0x40000000UL && iy<=0x41800000UL)) {
+    if (hx>>31) {
         if (iy>=0x4b800000UL) integer=1;
         else if (iy>=0x3f800000UL) {
             unsigned e=(unsigned)(iy>>23)-127;
@@ -69,25 +70,9 @@ float __ieee754_powf(float x, float y)
         float z=hy>>31 ? 1.0f/a : a;
         return sign ? -z : z;
     }
-    if ((hx>>31) && !integer) return (x-x)/(x-x);
+    if ((hx>>31) && !integer) { SET_FLOAT_WORD(x, hx | 0x7fc00000UL); return x; }
     if (ix==0x3f800000UL) return sign ? -1.0f : 1.0f;
 
-    /* Invert first for negative powers. Squaring a large positive base and
-       then taking its reciprocal can otherwise lose a representable result.
-       Restrict this loop to bases whose reciprocal is normal: outside those
-       bounds integer powers >=2 necessarily overflow or round to zero. */
-    if (integer && iy<=0x41800000UL && ix>=0x00800000UL && ix<=0x7e800000UL) {
-        unsigned n=(unsigned)__builtin_fabsf(y);
-        if (hy>>31) a=1.0f/a;
-        float product=1.0f;
-        do {
-            if (n&1) product*=a;
-            n>>=1;
-            if (!n) break;
-            a*=a;
-        } while (1);
-        return sign ? -product : product;
-    }
     float u;
     if (ix>=0x3f700000UL && ix<=0x3f900000UL) {
         /* ln(1+f)/f through f^6 on |f|<=1/8. Form y*f first so

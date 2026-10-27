@@ -14,13 +14,14 @@
  */
 
 #include "fdlibm.h"
+#ifdef __AVM__
+#include "native_math.h"
+#endif
 
 float __ieee754_sqrtf(float x)
 {
 #ifdef __AVM__
-    register float value __asm__("q2") = x;
-    __asm__("fsqrt" : "+r"(value));
-    return value;
+    return avm_native_sqrt(x);
 #else
     /* Exact integer reference for the native restoring algorithm. No table. */
     uint32_t u;

@@ -231,6 +231,8 @@ AVM_SYS_INLINE uint16_t avm_generate_random_seed(void)
     return __avm_generate_random_seed();
 }
 
+/* All random APIs, including rand()/srand(), share this generator state. */
+void avm_set_random_seed(uint16_t seed);
 void avm_init_random_seed(void);
 uint16_t avm_random(void);
 

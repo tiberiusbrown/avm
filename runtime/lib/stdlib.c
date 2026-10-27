@@ -2,8 +2,19 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <avm.h>
 
 int __avm_errno;
+
+int rand(void)
+{
+    return (int)(avm_random() >> 1);
+}
+
+void srand(unsigned int seed)
+{
+    avm_set_random_seed((uint16_t)seed);
+}
 
 static int digit_value(unsigned char c) {
     if(c >= '0' && c <= '9') return c - '0';

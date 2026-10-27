@@ -11,6 +11,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_just_released	00000000 .text.avm_just_released
 00000000 l    d  .text.avm_init_random_seed	00000000 .text.avm_init_random_seed
 00000000 l     O .data.random_seed	00000002 random_seed
+00000000 l    d  .text.avm_set_random_seed	00000000 .text.avm_set_random_seed
 00000000 l    d  .text.avm_random	00000000 .text.avm_random
 00000000 l    d  .data.random_seed	00000000 .data.random_seed
 00000000 l    d  .data..L_MergedGlobals	00000000 .data..L_MergedGlobals
@@ -26,6 +27,7 @@ SYMBOL TABLE:
 00000000 g     F .text.avm_just_pressed	00000014 avm_just_pressed
 00000000 g     F .text.avm_just_released	00000014 avm_just_released
 00000000 g     F .text.avm_init_random_seed	0000000e avm_init_random_seed
+00000000 g     F .text.avm_set_random_seed	0000000c avm_set_random_seed
 00000000 g     F .text.avm_random	00000015 avm_random
 
 Disassembly of section .text.avm_set_frame_rate:
@@ -155,6 +157,16 @@ Disassembly of section .text.avm_init_random_seed:
 
 <avm_init_random_seed>:
  d7 2b                 sys	generate_random_seed
+ c5 be ba              ldi16	r5, 0xbabe
+ f6 2c                 tst16	r4
+ fb 25                 cmov.eq	r4, r5
+ f0 5c 00 00           stm16	[0x0], r4
+		R_AVM_DATA16	.data.random_seed
+ ef                    ret
+
+Disassembly of section .text.avm_set_random_seed:
+
+<avm_set_random_seed>:
  c5 be ba              ldi16	r5, 0xbabe
  f6 2c                 tst16	r4
  fb 25                 cmov.eq	r4, r5

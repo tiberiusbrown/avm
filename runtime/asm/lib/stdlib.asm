@@ -3,6 +3,8 @@ stdlib.o:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 stdlib.c
+00000000 l    d  .text.rand	00000000 .text.rand
+00000000 l    d  .text.srand	00000000 .text.srand
 00000000 l    d  .text.atoi	00000000 .text.atoi
 00000000 l    d  .text.strtol	00000000 .text.strtol
 00000000 l     F .text.parse_ulong	0000021c parse_ulong
@@ -20,6 +22,10 @@ SYMBOL TABLE:
 00000000 l    d  .text.div	00000000 .text.div
 00000000 l    d  .text.ldiv	00000000 .text.ldiv
 00000000 l    d  .text.lldiv	00000000 .text.lldiv
+00000000 g     F .text.rand	00000007 rand
+00000000         *UND*	00000000 avm_random
+00000000 g     F .text.srand	00000004 srand
+00000000         *UND*	00000000 avm_set_random_seed
 00000000 g     F .text.atoi	00000102 atoi
 00000000         *UND*	00000000 isspace
 00000000 g     O .data.__avm_errno	00000002 __avm_errno
@@ -43,6 +49,22 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_divmodsi4
 00000000 g     F .text.lldiv	00000062 lldiv
 00000000         *UND*	00000000 __avm_divmoddi4
+
+Disassembly of section .text.rand:
+
+<rand>:
+ e3 00 00 00           callf	rand
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	avm_random
+ f4 8c                 lsr16.1	r4
+ ef                    ret
+
+Disassembly of section .text.srand:
+
+<srand>:
+ e2 00 00 00           jmpf	srand
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	avm_set_random_seed
 
 Disassembly of section .text.atoi:
 

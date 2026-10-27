@@ -7,7 +7,7 @@ static bool just_rendered;
 static uint8_t buttons_state_curr;
 static uint8_t buttons_state_prev;
 
-static uint16_t random_seed;
+static uint16_t random_seed = 1;
 
 void avm_set_frame_rate(uint8_t rate_hz)
 {
@@ -65,10 +65,12 @@ bool avm_just_released(uint8_t button)
 
 void avm_init_random_seed(void)
 {
-    uint16_t t = avm_generate_random_seed();
-    if(t == 0)
-        t = 0xbabe;
-    random_seed = t;
+    avm_set_random_seed(avm_generate_random_seed());
+}
+
+void avm_set_random_seed(uint16_t seed)
+{
+    random_seed = seed ? seed : 0xbabe;
 }
 
 uint16_t avm_random(void)

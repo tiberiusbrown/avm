@@ -27,6 +27,7 @@ set(RUNTIME_SOURCES
     font_br5n
     local_dtor
     immediate_exit
+    locale
     math
     pgmspace
     qsort

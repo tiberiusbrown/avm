@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <locale.h>
 
 float direct_math(float x, float y) {
     return sinf(x) + powf(x, y);
@@ -74,3 +75,8 @@ int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }
 clock_t time_direct(void) { return clock(); }
 clock_t (*time_address(void))(void) { return &clock; }
 clock_t time_constant(void) { return CLOCKS_PER_SEC; }
+
+char *locale_direct(void) { return setlocale(LC_ALL, "C"); }
+char *(*locale_setlocale_address(void))(int, const char *) { return &setlocale; }
+struct lconv *localeconv_direct(void) { return localeconv(); }
+struct lconv *(*localeconv_address(void))(void) { return &localeconv; }

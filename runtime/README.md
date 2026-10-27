@@ -97,6 +97,14 @@ unsigned subtraction measures intervals across one wrap when they are shorter
 than a full counter period. This is an elapsed-time approximation, not precise
 CPU-consumption measurement. No calendar-time API is provided.
 
+`<locale.h>` provides the C99 locale interface with a permanently fixed `"C"`
+locale. The native locale selected by `setlocale(category, "")` is also `"C"`;
+no dynamic locale state is required. `localeconv()` uses shared static RAM data:
+all empty strings point to the terminator of the shared `"C"` array, alongside
+the decimal-point string and the `struct lconv` object. Unused locale functions
+consume zero linked RAM. Programs using `localeconv()` retain approximately 38
+bytes of locale data.
+
 ## Startup variants
 
 - `crt0.o` runs `.init_array`, calls `int main(void)`, runs `.fini_array` in

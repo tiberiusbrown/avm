@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.20)
 
+if(POLICY CMP0141)
+    cmake_policy(SET CMP0141 NEW)
+    set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT Embedded)
+endif()
+
 project(avm LANGUAGES C CXX ASM)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")

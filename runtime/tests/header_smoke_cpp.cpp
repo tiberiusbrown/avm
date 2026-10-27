@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+#include <locale.h>
 
 struct cpp_smoke_object {
     int value;
@@ -131,3 +132,11 @@ int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }
 extern "C" clock_t cpp_time_direct(void) { return clock(); }
 extern "C" clock_t (*cpp_time_address(void))(void) { return &clock; }
 extern "C" clock_t cpp_time_constant(void) { return CLOCKS_PER_SEC; }
+extern "C" char *cpp_locale_direct(void) { return setlocale(LC_ALL, "C"); }
+extern "C" char *(*cpp_locale_setlocale_address(void))(int, const char *) {
+    return &setlocale;
+}
+extern "C" struct lconv *cpp_localeconv_direct(void) { return localeconv(); }
+extern "C" struct lconv *(*cpp_localeconv_address(void))(void) {
+    return &localeconv;
+}

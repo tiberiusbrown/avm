@@ -1,6 +1,7 @@
 #include <absim.hpp>
 #include "../tests/runner_selection.h"
 #include "../tests/runner_parallel.h"
+#include "instruction_mix.h"
 
 #include <algorithm>
 #include <cctype>
@@ -93,6 +94,10 @@ struct options_t {
     bool run_cxx = true;
     fs::path stack_output;
     fs::path trace_output;
+    bool instruction_mix = false;
+    fs::path mix_manifest = AVM_BENCH_MIX_MANIFEST;
+    fs::path mix_output = AVM_BENCH_MIX_OUTPUT;
+    fs::path boundary_metadata = AVM_BENCH_BOUNDARY_METADATA;
     runner_selection selection;
     bool instruction_output_explicit = false, c_output_explicit = false, cxx_output_explicit = false;
 };
@@ -116,6 +121,7 @@ std::string usage_text()
         "Filtered runs default to cycles_*.selected.txt; explicit output paths are used verbatim.\n"
         "--jobs defaults to logical processor count; --jobs 1 runs sequentially.\n"
         "Instruction benchmarks always run sequentially.\n"
+        "--instruction-mix profiles the committed representative manifest only.\n"
         "Compiled benchmarks use AVM_OPT_LEVEL; --opt is only for avm_tests.";
 }
 
@@ -163,6 +169,8 @@ options_t parse_options(int argc, char** argv)
             options.stack_output = require_value(arg);
         else if(arg == "--trace-output")
             options.trace_output = require_value(arg);
+        else if(arg == "--instruction-mix")
+            options.instruction_mix = true;
         else if(arg == "--jobs")
             options.jobs = runner_parse_jobs(require_value(arg).string());
         else if(arg == "--filter")
@@ -528,6 +536,91 @@ std::pair<unsigned, unsigned> measure_stack(options_t const& options, fs::path c
     return {0xa00-minimum, native_start-native_minimum};
 }
 
+void run_instruction_mix(options_t const& options)
+{
+    // Use exactly the same manifest as CMake, with no directory-wide discovery.
+    std::ifstream manifest(options.mix_manifest);
+    if(!manifest) throw std::runtime_error("Cannot read instruction-mix manifest");
+    std::vector<c_benchmark_t> benchmarks;
+    std::map<std::string, bool> seen;
+    for(std::string line; std::getline(manifest, line);) {
+        auto comment = line.find('#');
+        if(comment != std::string::npos) line.resize(comment);
+        auto first = line.find_first_not_of(" \t\r"), last = line.find_last_not_of(" \t\r");
+        if(first == std::string::npos) continue;
+        fs::path name = line.substr(first, last-first+1);
+        if(name != name.filename() || (name.extension() != ".c" && name.extension() != ".cpp"))
+            throw std::runtime_error("Invalid instruction-mix manifest entry: " + name.string());
+        if(!seen.emplace(name.string(), true).second)
+            throw std::runtime_error("Duplicate instruction-mix manifest entry: " + name.string());
+        bool cpp = name.extension() == ".cpp";
+        benchmarks.push_back({name.string(),
+            require_file((cpp ? options.cxx_source_dir : options.c_source_dir) / name, "mix source"),
+            require_file((cpp ? options.cxx_image_dir : options.c_image_dir) / (name.stem().string()+".bin"), "mix image")});
+    }
+    if(benchmarks.empty()) throw std::runtime_error("Instruction-mix manifest is empty");
+    if(!options.selection.expression.empty() || options.selection.list ||
+       !options.stack_output.empty() || !options.trace_output.empty() ||
+       !options.run_instructions || !options.run_c || !options.run_cxx)
+        usage_error("--instruction-mix uses its manifest and cannot be combined with selection/trace/stack modes");
+
+    uint32_t table = avm_mix::boundary_table(options.boundary_metadata, options.interpreter);
+    avm_mix::initialize_decoder();
+    avm_mix::Decoder catalogue_decoder;
+    auto catalogue = catalogue_decoder.catalogue();
+    auto workers = runner_worker_count(options.jobs, benchmarks.size());
+    std::vector<std::unique_ptr<compiled_session>> sessions(workers);
+    std::vector<std::unique_ptr<avm_mix::Decoder>> decoders(workers);
+    std::vector<avm_mix::Profile> baselines(workers), profiles(benchmarks.size());
+    auto profile = [&](std::size_t worker, fs::path const& image) {
+        auto& emulator = *sessions[worker]->arduboy;
+        emulator.reset();
+        load_file(emulator, image, "fxdata.bin");
+        run_to_debug_break(emulator);
+        suppress_interrupt_noise(emulator);
+        return avm_mix::collect(emulator, *decoders[worker], table);
+    };
+    std::cout << "Profiling " << benchmarks.size() << " representative AVM workloads ("
+              << workers << " workers)..." << std::endl;
+    runner_parallel_for(benchmarks.size(), workers, [&](std::size_t worker, std::size_t i) {
+        if(!sessions[worker]) {
+            sessions[worker] = std::make_unique<compiled_session>(options.interpreter);
+            decoders[worker] = std::make_unique<avm_mix::Decoder>();
+            auto normal = sessions[worker]->measure(options.c_baseline);
+            baselines[worker] = profile(worker, options.c_baseline);
+            avm_mix::reconcile(baselines[worker], baselines[worker], normal);
+        }
+        auto normal = sessions[worker]->measure(benchmarks[i].image);
+        auto p = profile(worker, benchmarks[i].image);
+        p.name = benchmarks[i].name;
+        p.image_hash = avm_mix::file_hash(benchmarks[i].image);
+        avm_mix::reconcile(p, baselines[worker], normal);
+        profiles[i] = std::move(p);
+    });
+    auto baseline = baselines.front();
+    for(size_t worker = 0; worker < workers; ++worker) if(sessions[worker]) {
+        if(baselines[worker].raw != baseline.raw || baselines[worker].leading != baseline.leading ||
+           baselines[worker].trailing != baseline.trailing)
+            throw std::runtime_error("Instruction-mix baseline differs between workers");
+    }
+    // Format/validate completely before replacing the committed report.
+    std::ostringstream report;
+    avm_mix::report(report, profiles, baseline, catalogue,
+        "Interpreter HEX SHA256 " + avm_mix::file_hash(options.interpreter) +
+        "\nBaseline image SHA256 " + avm_mix::file_hash(options.c_baseline) +
+        "\nCompiler executable SHA256 " + avm_mix::file_hash(AVM_BENCH_COMPILER_BIN),
+        AVM_BENCH_OPT_LEVEL);
+    auto output = open_output(options.mix_output);
+    output << report.str();
+    output.flush();
+    if(!output) throw std::runtime_error("Cannot write instruction-mix report");
+    for(auto const& p : profiles)
+        std::cout << "  " << std::setw(24) << std::left << p.name << std::right
+                  << std::setw(12) << p.cycles << " cycles; " << p.executions
+                  << " instructions; reconciled" << '\n';
+    std::cout << "Wrote " << options.mix_output << std::endl;
+}
+
 void run_compiled_benchmarks(
     options_t const& options,
     fs::path const& source_dir,
@@ -643,6 +736,13 @@ int main(int argc, char** argv)
     try
     {
         options_t options = parse_options(argc, argv);
+        if(options.instruction_mix) {
+            runner_elapsed elapsed;
+            require_file(options.interpreter, "interpreter image");
+            require_file(options.c_baseline, "compiled benchmark baseline image");
+            run_instruction_mix(options);
+            return 0;
+        }
         std::vector<std::string> names;
         std::vector<c_benchmark_t> c, cpp;
         if(options.run_instructions) names = read_benchmark_names(options.instruction_names);

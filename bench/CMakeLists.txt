@@ -215,15 +215,65 @@ add_custom_target(avm_bench_images
         ${AVM_BENCH_DISASSEMBLY_OUTPUTS}
 )
 
+# The manifest shares the existing image rules; requesting the mix does not
+# depend on the all-images, MIR, or test targets.
+set(AVM_BENCH_MIX_MANIFEST "${AVM_BENCH_DIR}/instruction_mix_benchmarks.txt")
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${AVM_BENCH_MIX_MANIFEST}")
+file(STRINGS "${AVM_BENCH_MIX_MANIFEST}" AVM_BENCH_MIX_LINES)
+set(AVM_BENCH_MIX_IMAGES "${AVM_BENCH_BASELINE_IMAGE}")
+set(AVM_BENCH_MIX_ENTRIES)
+foreach(line IN LISTS AVM_BENCH_MIX_LINES)
+    string(REGEX REPLACE "#.*$" "" line "${line}")
+    string(STRIP "${line}" line)
+    if(line STREQUAL "")
+        continue()
+    endif()
+    if(line IN_LIST AVM_BENCH_MIX_ENTRIES)
+        message(FATAL_ERROR "Duplicate instruction-mix workload: ${line}")
+    endif()
+    list(APPEND AVM_BENCH_MIX_ENTRIES "${line}")
+    if(line MATCHES "^[A-Za-z0-9_]+\\.c$")
+        set(source_dir "${AVM_BENCH_C_DIR}")
+        set(binary_dir "${AVM_BENCH_C_BINARY_DIR}")
+    elseif(line MATCHES "^[A-Za-z0-9_]+\\.cpp$")
+        set(source_dir "${AVM_BENCH_CXX_DIR}")
+        set(binary_dir "${AVM_BENCH_CXX_BINARY_DIR}")
+    else()
+        message(FATAL_ERROR "Invalid instruction-mix workload: ${line}")
+    endif()
+    if(NOT EXISTS "${source_dir}/${line}")
+        message(FATAL_ERROR "Missing instruction-mix workload: ${line}")
+    endif()
+    get_filename_component(stem "${line}" NAME_WE)
+    list(APPEND AVM_BENCH_MIX_IMAGES "${binary_dir}/${stem}.bin")
+endforeach()
+if(NOT AVM_BENCH_MIX_ENTRIES)
+    message(FATAL_ERROR "Instruction-mix manifest is empty")
+endif()
+
+# Reuse the authoritative MC decoder. Only MC/Support libraries are needed;
+# there is no LLVM code generator or LLDB dependency in the profiling library.
+add_library(avm_instruction_mix_lib STATIC instruction_mix.cpp)
+target_compile_features(avm_instruction_mix_lib PUBLIC cxx_std_17)
+target_include_directories(avm_instruction_mix_lib PRIVATE
+    "${PROJECT_SOURCE_DIR}/deps/llvm-project/llvm/include"
+    "${CMAKE_BINARY_DIR}/llvm-build/include")
+target_link_libraries(avm_instruction_mix_lib PUBLIC ardensdebuggerlib
+    LLVMAVMDisassembler LLVMAVMDesc LLVMAVMInfo LLVMMCDisassembler LLVMMC LLVMSupport)
+
 add_executable(avm_bench "${AVM_BENCH_SOURCE}")
 set_target_properties(avm_bench PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 target_compile_features(avm_bench PRIVATE cxx_std_17)
 find_package(Threads REQUIRED)
-target_link_libraries(avm_bench PRIVATE ardensdebuggerlib Threads::Threads)
+target_link_libraries(avm_bench PRIVATE avm_instruction_mix_lib Threads::Threads)
 string(REGEX REPLACE "^-" "" AVM_BENCH_DISPLAY_OPT "${AVM_OPT_LEVEL}")
 target_compile_definitions(avm_bench PRIVATE
     AVM_BENCH_OPT_LEVEL="${AVM_BENCH_DISPLAY_OPT}"
+    AVM_BENCH_COMPILER_BIN="$<TARGET_FILE:clang>"
+    AVM_BENCH_MIX_MANIFEST="${AVM_BENCH_MIX_MANIFEST}"
+    AVM_BENCH_MIX_OUTPUT="${AVM_BENCH_DIR}/instruction_mix.txt"
+    AVM_BENCH_BOUNDARY_METADATA="${AVM_INTERPRETER_BOUNDARY_METADATA}"
     AVM_BENCH_INSTRUCTIONS_BIN="${AVM_BENCH_INSTRUCTION_IMAGE}"
     AVM_BENCH_INSTRUCTION_NAMES="${AVM_BENCH_INSTRUCTION_NAMES}"
     AVM_BENCH_INSTRUCTION_OUTPUT="${AVM_BENCH_DIR}/cycles_instruction.txt"
@@ -240,6 +290,29 @@ add_dependencies(avm_bench
     avm_interpreter
 )
 
+add_custom_target(avm_instruction_mix
+    COMMAND "$<TARGET_FILE:avm_bench>" --instruction-mix
+    DEPENDS avm_bench avm_interpreter_boundary ${AVM_BENCH_MIX_IMAGES}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    COMMENT "Profiling representative AVM instruction mix"
+    USES_TERMINAL VERBATIM)
+
+avm_add_object(OUTPUT "${AVM_BENCH_BUILD_DIR}/mix_fixture.o"
+    SOURCE "${PROJECT_SOURCE_DIR}/tests/instruction_mix_fixture.asm" LANGUAGE ASM)
+avm_add_image(OBJECTS "${AVM_BENCH_BUILD_DIR}/mix_fixture.o"
+    OUTPUT_ELF "${AVM_BENCH_BUILD_DIR}/mix_fixture.elf"
+    OUTPUT_IMAGE "${AVM_BENCH_BUILD_DIR}/mix_fixture.bin" ENTRY _start)
+add_executable(avm_instruction_mix_tests "${PROJECT_SOURCE_DIR}/tests/instruction_mix_test.cpp")
+target_link_libraries(avm_instruction_mix_tests PRIVATE avm_instruction_mix_lib)
+add_custom_target(avm_instruction_mix_tests_run
+    COMMAND "$<TARGET_FILE:avm_instruction_mix_tests>" "${AVM_INTERPRETER_HEX}"
+        "${AVM_INTERPRETER_BOUNDARY_METADATA}" "${AVM_BENCH_BASELINE_IMAGE}"
+        "${AVM_BENCH_BUILD_DIR}/mix_fixture.bin"
+    DEPENDS avm_instruction_mix_tests avm_interpreter_boundary
+        "${AVM_BENCH_BASELINE_IMAGE}" "${AVM_BENCH_BUILD_DIR}/mix_fixture.bin"
+    USES_TERMINAL VERBATIM)
+add_dependencies(avm_validation_full avm_instruction_mix_tests_run)
+
 # avm_bench itself is a normal build target; this target additionally runs the
 # test suite, instruction benchmark image, and every C and C++ benchmark.
 add_custom_target(avm_bench_run
@@ -249,6 +322,7 @@ add_custom_target(avm_bench_run
         avm_bench
         avm_bench_images
         avm_bench_mir
+        avm_instruction_mix
         ardurogue2
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running AVM tests, instruction benchmarks, and compiled benchmarks"

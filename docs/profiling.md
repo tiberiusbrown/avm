@@ -116,3 +116,52 @@ fixture took median host times of 0.285 s with collection off, 0.284 s with
 guest collection, and 0.287 s with native collection (three trials each).
 The observed changes were −0.2% and +0.7%, within the run-to-run noise.
 These host times measure profiler overhead; they are not game cycle costs.
+
+## Representative instruction mix
+
+With Ardens enabled, generate the committed plain-text benchmark report with:
+
+```text
+cmake --build build --config RelWithDebInfo --target avm_instruction_mix --parallel
+```
+
+`avm_bench_run` also depends on this target. The standalone target builds only
+the interpreter, runner, baseline, and the C/C++ images selected by
+`bench/instruction_mix_benchmarks.txt`, reusing the normal benchmark image rules
+and configured `AVM_OPT_LEVEL`. It does not run the assembly latency suite,
+tests, other compiled benchmarks, or MIR diagnostics. The only report is
+`bench/instruction_mix.txt`.
+
+The runner's `--instruction-mix` mode steps Ardens with AVR instruction merging
+disabled. Like the debugger profiler, it charges each completed instruction the
+elapsed AVR cycles to the next primary dispatch boundary. Classification is
+cached by guest PC, and independent workloads run in parallel (`--jobs N`).
+The production LLVM AVM MC decoder supplies the operation and actual encoded
+length; its distinct operation identifiers and actual prefix distinguish upper,
+general, lower-register, and extended forms before assembly-printer aliases.
+SYS selectors use the authoritative `AVMSystemCalls.inc` service names.
+Operand values are not separate encoding forms. FPOLY is a variable-size form.
+The runner links the existing MC libraries without adding LLDB or the code
+generator to its profiling library.
+
+The family taxonomy in `bench/instruction_mix.cpp` explicitly lists decoded
+operations. New decoded operations without a family fail with an actionable
+message. Coverage enumerates valid primary/secondary selectors and operand
+descriptors through the same decoder, excluding invalid slots and pseudos;
+unobserved forms are retained in the report's coverage section.
+
+Each workload uses the existing two DEBUG_BREAK stops and interrupt suppression.
+The leading marker tail and final marker head must individually match those
+from the adjacent-marker baseline. Their sum is subtracted exactly; neither
+marker contributes an execution. The sum of boundary costs must equal the raw
+stop-to-stop interval minus that baseline and must match an independent normal
+benchmark run. Any discrepancy fails before replacing the report. Setup outside
+the markers is excluded. The header records firmware, compiler executable,
+baseline and workload image SHA256 identities without timestamps or host paths.
+
+The primary balanced percentages give each workload equal weight; pooled
+percentages weight all measured cycles equally. Tables sort by balanced share,
+then label. Counts, cycle totals and pooled cycles per execution are preserved;
+only displayed percentages are rounded. The per-workload section shows marker
+accounting and the six largest families. Focused synthetic profiler tests run via
+`avm_instruction_mix_tests_run` and are included in `avm_validation_full`.

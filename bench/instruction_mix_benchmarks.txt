@@ -1,0 +1,20 @@
+# Control flow and memory
+loop_shapes.c
+state_machine.c
+pointer_walk.c
+small_memops.c
+progmem_walk.c
+stack_frames.c
+# Integer arithmetic
+mixed_width.c
+multiply.c
+wide_shifts.c
+wide_divmod.c
+fixed_point.c
+# Floating point
+float.c
+float_conversions.c
+float_comparisons.c
+# Application workloads
+tile_cache_render.c
+virtual_dispatch.cpp

@@ -1,5 +1,51 @@
 # AVM single-precision math
 
+The six hyperbolic functions use short binary32 paths, inspired by avr-libc's
+[`sinh.S`](https://github.com/avrdudes/avr-libc/blob/main/libm/fplib/sinh.S),
+[`cosh.S`](https://github.com/avrdudes/avr-libc/blob/main/libm/fplib/cosh.S), and
+[`tanh.S`](https://github.com/avrdudes/avr-libc/blob/main/libm/fplib/tanh.S).
+`sinhf`, `coshf`, and `tanhf` combine small polynomials with one exponential
+and a reciprocal outside the polynomial interval. Large sinh/cosh arguments
+use `exp(abs(x)-ln(2))` to retain the full finite output range; tanh saturates.
+The last finite sinh/cosh input can round the reduced argument above expf's
+threshold; its approximate result saturates to the largest finite float after
+the original input has passed the overflow check.
+`asinhf` combines an odd polynomial with log/sqrt. Near its endpoint,
+`acoshf` uses `sqrt(2*d)*P4(d)` with `d=x-1`, avoiding cancellation and a log
+call; above 2 it uses log/sqrt. `atanhf` combines an odd polynomial with one
+log1p and division. Large inverse arguments use `log(x)+ln(2)`.
+
+The polynomial constant terms are exactly one. The odd kernels preserve tiny
+inputs and signed zeros without a separate dispatch; cosh(0)=1 and acosh(1)=0
+also follow directly from their polynomial forms. Coefficients are reproduced by
+[`hyperbolic_coefficients.py`](../../../tests/math/hyperbolic_coefficients.py),
+and native FPOLY evaluates them with the existing extended significand.
+The hyperbolic acceptance budget is 1e-5 relative error, with exceptional
+values and zero signs checked separately. No errno/fenv or correctly-rounded
+guarantee is added. The native host sweeps, 100-digit adaptive reference, and
+C/C++ fixtures cover cancellation, subnormals, domain endpoints, saturation,
+and the adjacent finite/overflow sinh/cosh inputs.
+
+Measured hyperbolic results (32 calls over the ordinary noninteger benchmark
+inputs; body size excludes shared exp/log helpers):
+
+| Function | AVR cycles | Body bytes | Maximum measured relative error |
+| --- | ---: | ---: | ---: |
+| `sinhf` | 189,040 | 200 | 6.273e-6 |
+| `coshf` | 180,812 | 171 | 6.273e-6 |
+| `tanhf` | 207,504 | 161 | 2.785e-6 |
+| `asinhf` | 206,444 | 148 | 4.702e-6 |
+| `acoshf` | 214,946 | 161 | 2.270e-6 |
+| `atanhf` | 214,224 | 181 | 1.357e-6 |
+
+Errors combine deterministic native host-libm sweeps (557,010–1,067,984
+inputs per function) and 100-digit stratified/adaptive comparisons (over
+57,000 inputs per function). Zero signs and exceptional results pass exact
+classification checks. The acosh endpoint polynomial reduced the same
+workload from 295,120 to 214,946 cycles (27.2%). Native 16-bit threshold
+comparisons improved sinh/asinh/tanh; the full magnitude comparisons remain
+in cosh/atanh because they measured faster after register allocation.
+
 Float kernels adapted from Newlib/fdlibm revision
 `1b7c72fdcc4bde7520407d2d3364146f04fb8312`:
 https://github.com/mirror/newlib-cygwin/tree/1b7c72fdcc4bde7520407d2d3364146f04fb8312/newlib/libm

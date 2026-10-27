@@ -5,7 +5,7 @@
  * fixtures. Exceptional values and exact identities are checked separately. */
 enum avm_accuracy { AVM_EXACT, AVM_SQRT, AVM_HYPOT, AVM_SIN, AVM_COS,
     AVM_TAN, AVM_ATAN, AVM_ATAN2, AVM_EXP, AVM_LOG, AVM_POW,
-    AVM_EXPM1, AVM_CBRT };
+    AVM_EXPM1, AVM_CBRT, AVM_HYPERBOLIC };
 
 static double avm_abs(double x) { return x < 0 ? -x : x; }
 
@@ -30,6 +30,8 @@ static int avm_accuracy_accept(enum avm_accuracy policy, double actual,
        and reconstruction round to binary32, comparable to avr-libc's ~1.2e-7. */
     case AVM_EXPM1: relative = 3e-5; break;
     case AVM_CBRT: relative = 3e-7; break;
+    /* Short unity-anchored polynomials and existing exp/log engines. */
+    case AVM_HYPERBOLIC: relative = 1e-5; break;
     }
     /* Gradual underflow: use the relative budget at the normal boundary,
        plus one binary32 subnormal quantum for final rounding. */

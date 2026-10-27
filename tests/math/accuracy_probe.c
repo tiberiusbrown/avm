@@ -1,6 +1,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+float avm_reference_sinhf(float);
+float avm_reference_coshf(float);
+float avm_reference_tanhf(float);
+float avm_reference_asinhf(float);
+float avm_reference_acoshf(float);
+float avm_reference_atanhf(float);
 float avm_reference_exp2f(float);
 float avm_reference_expm1f(float);
 float avm_reference_log1pf(float);
@@ -30,7 +36,13 @@ int main(void)
     char name[24]; unsigned long a, b;
     while (scanf("%23s %lx %lx", name, &a, &b) == 3) {
         union { uint32_t u; float f; } x = {(uint32_t)a}, y = {(uint32_t)b}, z;
-        if (!strcmp(name, "exp2f")) z.f = avm_reference_exp2f(x.f);
+        if (!strcmp(name, "sinhf")) z.f = avm_reference_sinhf(x.f);
+        else if (!strcmp(name, "coshf")) z.f = avm_reference_coshf(x.f);
+        else if (!strcmp(name, "tanhf")) z.f = avm_reference_tanhf(x.f);
+        else if (!strcmp(name, "asinhf")) z.f = avm_reference_asinhf(x.f);
+        else if (!strcmp(name, "acoshf")) z.f = avm_reference_acoshf(x.f);
+        else if (!strcmp(name, "atanhf")) z.f = avm_reference_atanhf(x.f);
+        else if (!strcmp(name, "exp2f")) z.f = avm_reference_exp2f(x.f);
         else if (!strcmp(name, "expm1f")) z.f = avm_reference_expm1f(x.f);
         else if (!strcmp(name, "log1pf")) z.f = avm_reference_log1pf(x.f);
         else if (!strcmp(name, "cbrtf")) z.f = avm_reference_cbrtf(x.f);

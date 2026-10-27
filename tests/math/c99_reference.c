@@ -17,6 +17,12 @@ float avm_reference_log1pf(float);
 float avm_reference_cbrtf(float);
 float avm_reference_asinf(float);
 float avm_reference_acosf(float);
+float avm_reference_sinhf(float);
+float avm_reference_coshf(float);
+float avm_reference_tanhf(float);
+float avm_reference_asinhf(float);
+float avm_reference_acoshf(float);
+float avm_reference_atanhf(float);
 static uint32_t bits(float x) { uint32_t u; memcpy(&u,&x,4); return u; }
 static float value(uint32_t u) { float x; memcpy(&x,&u,4); return x; }
 static uint32_t state=0x41564d26U;
@@ -38,9 +44,9 @@ static void exact(float x,float y,int n)
     }
 }
 struct stats { double absolute,relative; uint32_t ulp,worst_abs,worst_rel,worst_ulp; unsigned count; };
-static struct stats stats[6];
-static const char *names[]={"exp2f","expm1f","log1pf","cbrtf","asinf","acosf"};
-static const enum avm_accuracy policies[]={AVM_EXP,AVM_EXPM1,AVM_LOG,AVM_CBRT,AVM_ATAN,AVM_ATAN};
+static struct stats stats[12];
+static const char *names[]={"exp2f","expm1f","log1pf","cbrtf","asinf","acosf","sinhf","coshf","tanhf","asinhf","acoshf","atanhf"};
+static const enum avm_accuracy policies[]={AVM_EXP,AVM_EXPM1,AVM_LOG,AVM_CBRT,AVM_ATAN,AVM_ATAN,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC};
 static void approximate(unsigned n,float x,float a,double r)
 {
     struct stats *s=&stats[n]; ++s->count;
@@ -66,6 +72,12 @@ static void unary(float x)
     approximate(3,x,avm_reference_cbrtf(x),cbrt((double)x));
     approximate(4,x,avm_reference_asinf(x),asin((double)x));
     approximate(5,x,avm_reference_acosf(x),acos((double)x));
+    approximate(6,x,avm_reference_sinhf(x),sinh((double)x));
+    approximate(7,x,avm_reference_coshf(x),cosh((double)x));
+    approximate(8,x,avm_reference_tanhf(x),tanh((double)x));
+    approximate(9,x,avm_reference_asinhf(x),asinh((double)x));
+    approximate(10,x,avm_reference_acoshf(x),acosh((double)x));
+    approximate(11,x,avm_reference_atanhf(x),atanh((double)x));
 }
 int main(int argc,char **argv)
 {
@@ -92,7 +104,32 @@ int main(int argc,char **argv)
         unary(value(u)); unary(-value(u));
         exact(value(u),0,127-(int)e); exact(-value(u),value(1),-150+(int)e);
     }
-    for (unsigned n=0;n<6;++n) {
+    /* Dense general inputs, exp overflow neighbors and inverse endpoints. */
+    for (unsigned i=0;i<count;++i) {
+        float x=(float)((double)i/count*90);
+        for (unsigned sign=0;sign<2;++sign) {
+            float a=sign?-x:x;
+            approximate(6,a,avm_reference_sinhf(a),sinh((double)a));
+            approximate(7,a,avm_reference_coshf(a),cosh((double)a));
+            approximate(8,a,avm_reference_tanhf(a),tanh((double)a));
+            approximate(9,a,avm_reference_asinhf(a),asinh((double)a));
+        }
+        float y=1+(float)((double)i/count*15);
+        approximate(10,y,avm_reference_acoshf(y),acosh((double)y));
+    }
+    for (uint32_t u=0x42b2d000U;u<0x42b2d600U;++u) {
+        float x=value(u);
+        approximate(6,x,avm_reference_sinhf(x),sinh((double)x));
+        approximate(6,-x,avm_reference_sinhf(-x),sinh(-(double)x));
+        approximate(7,x,avm_reference_coshf(x),cosh((double)x));
+    }
+    for (uint32_t u=0x3f7ff000U;u<=0x3f801000U;++u) {
+        float x=value(u);
+        approximate(10,x,avm_reference_acoshf(x),acosh((double)x));
+        approximate(11,x,avm_reference_atanhf(x),atanh((double)x));
+        approximate(11,-x,avm_reference_atanhf(-x),atanh(-(double)x));
+    }
+    for (unsigned n=0;n<12;++n) {
         struct stats *s=&stats[n];
         printf("%s count=%u abs=%.9g at %08lx rel=%.9g at %08lx ULP=%lu at %08lx\n",
             names[n],s->count,s->absolute,(unsigned long)s->worst_abs,s->relative,

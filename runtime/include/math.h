@@ -6,6 +6,12 @@ extern "C" {
 #endif
 
 float sqrtf(float x);
+float sinhf(float x);
+float coshf(float x);
+float tanhf(float x);
+float asinhf(float x);
+float acoshf(float x);
+float atanhf(float x);
 float sinf(float x);
 float cosf(float x);
 void sincosf(float x, float *sine, float *cosine);

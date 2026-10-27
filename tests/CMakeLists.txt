@@ -79,7 +79,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_source_dependencies)
 
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
-            if(AVM_TEST_NAME MATCHES "^math_(native|c99_exact|c99_classify|c99_functions)$")
+            if(AVM_TEST_NAME MATCHES "^math_(native|c99_exact|c99_classify|c99_functions|hyperbolic)$")
                 list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
             elseif(AVM_TEST_NAME STREQUAL "display_system")
                 list(APPEND test_source_dependencies
@@ -717,6 +717,12 @@ add_dependencies(avm_tests_run avm_rounding_tests_run)
 # Run the production shortcuts, sqrt and angle reducer under private names;
 # the harness uses host double libm as an independent binary32 reference.
 add_library(avm_shortcuts_reference_kernels OBJECT
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_sinh.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_cosh.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_tanh.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_asinh.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_acosh.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_atanh.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_exp2.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_expm1.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_log1p.c"
@@ -743,7 +749,7 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_scalbn.c")
 target_include_directories(avm_shortcuts_reference_kernels PRIVATE
     "${PROJECT_SOURCE_DIR}/runtime/include")
-foreach(function exp2f expm1f log1pf cbrtf asinf acosf ldexpf frexpf modff nextafterf hypotf atan2f atanf sinf cosf sincosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
+foreach(function sinhf coshf tanhf asinhf acoshf atanhf exp2f expm1f log1pf cbrtf asinf acosf ldexpf frexpf modff nextafterf hypotf atan2f atanf sinf cosf sincosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf fminf fmaxf)
     target_compile_definitions(avm_shortcuts_reference_kernels PRIVATE
         "${function}=avm_reference_${function}")
 endforeach()

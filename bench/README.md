@@ -400,6 +400,12 @@ The interpolation arithmetic and exact midpoint correction are unchanged.
 
 ## Native polynomial workloads
 
+`math_sinh`, `math_cosh`, `math_tanh`, `math_asinh`, `math_acosh`, and
+`math_atanh` each time 32 hyperbolic calls over 16 ordinary noninteger inputs.
+They cover polynomial and exp/log paths; inverse inputs remain in domain.
+Results feed a volatile sink, using the same timing boundaries as the other
+math workloads. Their disassemblies are retained under `c/asm/`.
+
 `math_sin_small`, `math_cos_small`, and `math_tan_small` measure 32 calls with
 paired signs at magnitudes 0.125 through 128, avoiding large-angle reduction.
 The existing broad-range trig benchmarks remain. `poly{1,2,4,8,12}_guest` and

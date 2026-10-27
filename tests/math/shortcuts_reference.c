@@ -51,6 +51,18 @@ static const enum avm_accuracy policies[] = {
 
 static int check(int function, float x, float y, float actual, double reference)
 {
+    /* Independent host reduction by avr-libc's exact dyadic constant. Use
+       libm on the unrounded remainder, not the production reducer or fit. */
+    if ((function==SIN || function==COS || function==TAN) && isfinite(x)) {
+        int quadrant;
+        double r=remquo((double)x, 0x1.921fb544p0, &quadrant);
+        if (function==TAN) reference=(quadrant&1) ? -1/tan(r) : tan(r);
+        else {
+            if (function==COS) ++quadrant;
+            reference=(quadrant&1) ? cos(r) : sin(r);
+            if (quadrant&2) reference=-reference;
+        }
+    }
     float expected = (float)reference;
     uint32_t a = bits(actual), b = bits(expected);
     uint32_t distance = a > b ? a-b : b-a;
@@ -142,6 +154,7 @@ int main(int argc, char **argv)
 {
     int quick=reference_quick(argc,argv);
     if (quick<0) return 2;
+    puts("Trig references use avr-libc's flt40_t pi/2 constant.");
     static const uint32_t special[] = {
         0, 0x80000000, 1, 0x80000001, 0x007fffff, 0x807fffff, 0x00800000, 0x80800000,
         0x3f7fffff, 0x3f800000, 0x3f800001, 0xbf800000, 0x7f7fffff, 0xff7fffff,

@@ -1,7 +1,16 @@
 #ifndef AVM_NATIVE_MATH_H
 #define AVM_NATIVE_MATH_H
 #include "fdlibm.h"
-#ifndef __AVM__
+#ifdef __AVM__
+static __attribute__((always_inline)) inline float avm_native_fma(float a, float b, float c)
+{
+    register float product __asm__("q2") = a;
+    register float factor __asm__("q3") = b;
+    register float addend __asm__("q0") = c;
+    __asm__("fma" : "+r"(product) : "r"(factor), "r"(addend));
+    return product;
+}
+#else
 #include "fpoly.h"
 static inline float avm_native_fma(float a, float b, float c)
 {

@@ -809,6 +809,15 @@ add_custom_target(avm_math_full
     DEPENDS avm_math_full_images avm_tests avm_math_reference_tests_run
         avm_shortcuts_tests_run avm_rounding_tests_run avm_fpoly_tests_run
     USES_TERMINAL VERBATIM)
+add_custom_target(avm_trig_accelerators_run
+    COMMAND "${CMAKE_COMMAND}"
+        "-DAVM_OBJDUMP:FILEPATH=$<TARGET_FILE:llvm-objdump>"
+        "-DAVM_OBJECT_DIR:PATH=${PROJECT_BINARY_DIR}/runtime/objects"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/math/check_trig_accelerators.cmake"
+    DEPENDS avm_sysroot llvm-objdump
+    VERBATIM)
+add_dependencies(avm_math_fast avm_trig_accelerators_run)
+add_dependencies(avm_math_full avm_trig_accelerators_run)
 if(Python3_FOUND)
     add_custom_target(avm_math_accuracy_fast
         COMMAND "${AVM_MATH_PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/math/accuracy_reference.py"

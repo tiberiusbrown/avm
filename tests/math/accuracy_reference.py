@@ -4,6 +4,8 @@ The probe links the existing production reference objects, including the FPOLY
 model. Deterministic stratified sampling is followed by local searches around
 the largest errors. JSON records domains, distributions, worst inputs and ALL
 acceptance/exception failures. --fixtures exports worst cases to the AVR suite.
+Trig references use avr-libc's flt40_t pi/2 constant before evaluating the
+mathematical function on the reduced argument.
 """
 import argparse
 import json
@@ -29,6 +31,22 @@ def bits(x):
         return struct.unpack('<I', struct.pack('<f', float(x)))[0]
     except OverflowError:
         return 0xff800000 if x < 0 else 0x7f800000
+
+def trig_reference(name, x):
+    """Independent high-precision reference at avr-libc's reduction precision.
+
+    Divide exactly by its flt40_t pi/2 constant, then evaluate the mathematical
+    function on the remainder. This does not model the native shift/subtract
+    loop, binary32 rounding, or the production polynomial.
+    """
+    if not mp.isfinite(x): return mp.nan
+    divisor = mp.mpf(0xc90fdaa2) / 2**31
+    n = int(mp.nint(x/divisor))
+    r = x - n*divisor
+    if name == 'tanf': return -1/mp.tan(r) if n&1 else mp.tan(r)
+    if name == 'cosf': n += 1
+    result = mp.cos(r) if n&1 else mp.sin(r)
+    return -result if n&2 else result
 
 def reference(name, a, b):
     name=name.removeprefix('sincos_')
@@ -61,9 +79,7 @@ def reference(name, a, b):
                 return -0.0 if negative else 0.0
             z = mp.power(x,y)
             return z if not isinstance(z,mp.mpc) else mp.nan
-        if name == 'sinf': return mp.sin(x)
-        if name == 'cosf': return mp.cos(x)
-        if name == 'tanf': return mp.tan(x)
+        if name in ['sinf', 'cosf', 'tanf']: return trig_reference(name, x)
         if name == 'atanf': return mp.atan(x)
         if name == 'atan2f':
             if mp.isnan(x) or mp.isnan(y): return mp.nan
@@ -203,6 +219,9 @@ def main():
     stats={n:dict(count=0,failures=0,exceptional_changes=0,max_absolute=0,max_relative_normal=0,max_ulp=0,
                   worst_absolute=None,worst_relative=None,worst_ulp=None,ulp_distribution=[0]*5,
                   ranges={},exceptional_examples=[]) for n in args.functions}
+    for n, s in stats.items():
+        if n.removeprefix('sincos_') in ['sinf', 'cosf', 'tanf']:
+            s['reference'] = 'avr-libc flt40_t pi/2 reduction, then 100-digit sin/cos/tan'
     seeds={n:[] for n in args.functions}
     retained={n:set() for n in args.functions}
     pairs=corpus(args.samples)

@@ -2206,8 +2206,12 @@ normalizes, and rounds once. q3's high half is saved/restored; its low half
 is the defined r6 result. NaN/infinity produce NaN with quadrant zero.
 `D=0xC90FDAA2/2^31` differs from pi/2 by less than 6.078e-11. For |x|<=128,
 n<=81, so constant error is below 4.924e-9 before binary32 output rounding.
-The runtime retains guest fallbacks outside that range and for tangent
-|r|<2^-12; the interpreter contains no higher-precision fallback.
+Public sine, cosine, tangent, and paired sincos unconditionally use this
+reducer for every argument. They evaluate the reduced polynomial and apply
+the quadrant without dispatching by magnitude or falling back near poles.
+Their accuracy follows avr-libc's flt40_t constant across the full input range.
+The legacy guest reducer remains available independently through
+`__ieee754_rem_pio2f`; the interpreter contains no higher-precision fallback.
 
 FMA follows avr-libc `fma.S`: `__mulsf3x`, load q0 into helper B, clear B's
 extension, `__addsf3x_ext`, and `__fp_round`. The shared extended-add entry
@@ -2250,11 +2254,15 @@ inputs, all 8,388,607 positive subnormals, exponent boundaries, and one million
 random bit patterns, observing 0 ULP error. FMOD matches exact reference bits
 in the native corpus; the independent runtime reference checks 1,681,134 fmod
 cases with zero error. Existing rounding bit-pattern sweeps and all 15
-100-digit mpmath accuracy policies pass without changing tolerances.
+100-digit mpmath accuracy policies retain their tolerances. Trig references
+divide exactly by avr-libc's flt40_t pi/2 constant, then evaluate mathematical
+sin/cos/tan on the remainder; this independently checks native reduction and
+the polynomial error without requiring greater argument precision.
 The dense native-reducer scan verifies every binary32 argument in [pi/4,128],
 including exact quadrants and remainder signs; maximum absolute error is
 3.17470e-8 at input `0x4245EB9C`. Negative inputs follow by symmetry and have
-separate instruction-level coverage. Full-range trig retains its guest fallback.
+separate instruction-level coverage. Full-range trig uses the same native
+reduction, with no guest fallback.
 
 Measured representative complete instruction cycles (not worst-case bounds):
 

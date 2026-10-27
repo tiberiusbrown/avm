@@ -4,6 +4,7 @@
  * All products use bounded native byte columns, without wide helpers. */
 #include "fdlibm.h"
 #include "reduction_table.h"
+#include "native_math.h"
 #ifdef __AVM__
 #include <avm/pgmspace.h>
 #endif
@@ -129,7 +130,7 @@ __attribute__((noinline)) float avm_rem_pio2f_medium(float x, int *quadrant)
     uint32_t doubled = (uint32_t)(a*0x1.45f306p0f);
     uint32_t nearest = (doubled+1UL)>>1;
     float fn = (float)nearest;
-    r = (a-fn*0x1.92p0f)-fn*0x1.fb5444p-12f;
+    r = avm_native_fma(-fn, 0x1.fb5444p-12f, a-fn*0x1.92p0f);
     n = (int)(nearest & 3UL);
     if (r > 0x1.921fb6p-1f) {
         ++n;

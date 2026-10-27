@@ -1,4 +1,4 @@
-/* Independent 100-digit mathematical values, including exact signs. */
+/* Independent 100-digit values at avr-libc reduction precision, including exact signs. */
 #include "math_test.h"
 static const AVM_PROGMEM struct math_case cases[] = {
     {0x00000000UL,0x3f800000UL,0x00000000UL,0},
@@ -11,8 +11,8 @@ static const AVM_PROGMEM struct math_case cases[] = {
     {0xff800000UL,0xffc00000UL,0xffc00000UL,0},
     {0x7fc12345UL,0xffc00000UL,0xffc00000UL,0},
     {0x7fa12345UL,0xffc00000UL,0xffc00000UL,0},
-    {0x7f7fffffUL,0x3f5a5f96UL,0xbf0599b3UL,1},
-    {0xff7fffffUL,0x3f5a5f96UL,0x3f0599b3UL,1},
+    {0x7f7fffffUL,0xbe97f51bUL,0xbf747717UL,1},
+    {0xff7fffffUL,0xbe97f51bUL,0x3f747717UL,1},
     {0x3e800000UL,0x3f780aa5UL,0x3e7d5777UL,1},
     {0xbe800000UL,0x3f780aa5UL,0xbe7d5777UL,1},
     {0x3f000000UL,0x3f60a940UL,0x3ef57744UL,1},
@@ -37,10 +37,10 @@ static const AVM_PROGMEM struct math_case cases[] = {
     {0xc1800000UL,0xbf75292cUL,0x3e936810UL,1},
     {0x43000000UL,0xbf31619fUL,0x3f3895edUL,1},
     {0xc3000000UL,0xbf31619fUL,0xbf3895edUL,1},
-    {0x49742400UL,0x3f6fcefdUL,0xbeb33259UL,1},
-    {0xc9742400UL,0x3f6fcefdUL,0x3eb33259UL,1},
-    {0x60ad78ecUL,0x3f411723UL,0x3f281569UL,1},
-    {0xe0ad78ecUL,0x3f411723UL,0xbf281569UL,1},
+    {0x49742400UL,0x3f6fcfe0UL,0xbeb32d99UL,1},
+    {0xc9742400UL,0x3f6fcfe0UL,0x3eb32d99UL,1},
+    {0x60ad78ecUL,0x3f58840dUL,0xbf08971bUL,1},
+    {0xe0ad78ecUL,0x3f58840dUL,0x3f08971bUL,1},
 };
 int avm_test_main(void) {
     for (uint16_t i=0;i<sizeof(cases)/sizeof(cases[0]);++i) {

@@ -17,7 +17,7 @@ models this extended precision. Exceptional handling and public APIs preserve th
 [function-specific accuracy policy](../../../docs/math-runtime/README.md).
 Polynomial helpers inline into their callers. Internal exponents and quadrants
 use native 16-bit words where safe; quotient estimation uses exact-width uint32_t.
-The guest fallback reduction uses one rounded 4/pi multiply, unsigned truncation, integer
+The legacy `__ieee754_rem_pio2f` guest reduction uses one rounded 4/pi multiply, unsigned truncation, integer
 add/shift, and a split pi/2 reconstruction. The high product is exact through
 2^17 radians. Small cancellations use a three-part split; other cancellations
 and large angles use an exponent-indexed 2/pi window. The main window retains
@@ -45,19 +45,52 @@ A cold exact squared-norm comparison preserves the finite/infinite rounding
 boundary despite the approximate square root. Only that boundary uses 64-bit
 guest integer helpers.
 
-Sine and cosine use degree-five odd and degree-six even Remez polynomials on
-the existing reduced interval. The low reduction tail is unnecessary for their
-absolute error budget. Tangent uses x+x^3*P2(x^2) and
-one ordinary reciprocal in odd quadrants. Pole neighbors use the documented
-1e-4 absolute/relative hybrid budget with exact sign/classification checks. `atanf` uses a reciprocal above one and a shared four-interval kernel on
-[0,1], with a degree-seven odd first interval and centered degree-four fits in
-the other intervals. Endpoint anchoring prevents backward jumps at the tested
-branch boundaries. Native-word comparisons select intervals. `atan2f` divides
-the smaller magnitude by the larger and shares this kernel. `sincosf` shares
-one reduction and one square without adding work to standalone sin/cos.
-`tests/math/phase34_coefficients.py` reproduces the selected coefficients.
-The current reducer measurements and workflows are in
-[the fast trig report](../../../docs/math-runtime/trig-fast/report.md).
+Sine and cosine retain separate degree-five odd and degree-six even Remez
+polynomials evaluated by native FPOLY. The avr-libc
+[`sin.S`](https://github.com/avrdudes/avr-libc/blob/main/libm/fplib/sin.S) /
+[`__fp_sinus`](https://github.com/avrdudes/avr-libc/blob/main/libm/fplib/fp_sinus.S)
+shared odd-polynomial approach was evaluated with the same native reduction.
+Separate polynomials were faster on the mixed sine/cosine workloads and paired
+sincos workload, so their coefficients are retained. avr-libc is the precision
+baseline, not a required implementation: AVM math.h functions are never
+required to exceed its precision.
+
+`sinf`, `cosf`, `tanf`, and `sincosf` each unconditionally call FREMPIO2 once,
+then evaluate the reduced polynomial and apply the quadrant. There are no
+magnitude checks to select reduction algorithms and no guest fallback, including
+at tangent poles. `sincosf` shares one reduction and one squared argument. Native FMA
+reconstructs tangent as x+x^3*P2(x^2); it was faster than separate FMUL/FADD
+in the measured tangent workloads. The independent legacy guest reducer's
+medium reconstruction also uses FMA for its low split product/subtraction.
+No native precision or interpreter flash was added. Signed-zero and nonfinite
+behavior is preserved. Large-angle and tangent-pole accuracy follows avr-libc's
+flt40_t pi/2 constant rather than requiring higher-precision argument reduction.
+The kernels always evaluate their polynomials, including for tiny and zero
+inputs. Sine's fitted linear coefficient is slightly below one, so tiny inputs
+can differ from x within the existing accuracy budget. No tiny-input or
+zero-input shortcut adds a branch to these kernels.
+
+`check_trig_accelerators.cmake` verifies that each public trig function emits
+exactly one FREMPIO2 before any branch or call, has no guest-reducer reference,
+and inlines tangent's FMA. Permanent fixtures cover quadrant boundaries,
+pole neighbors, signed zeros, nonfinite inputs, and the full exponent range.
+
+O2 caller cycles for the unconditional paths, compared with the previous
+magnitude-dispatched native/guest paths (32 iterations per workload):
+
+| Workload | Previous | Unconditional |
+|---|---:|---:|
+| Mixed sine | 355,734 | 115,627 |
+| Mixed cosine | 360,712 | 118,562 |
+| Mixed tangent | 386,302 | 132,625 |
+| Small-angle sine | 129,865 | 101,311 |
+| Small-angle cosine | 133,421 | 104,327 |
+| Small-angle tangent | 158,113 | 117,079 |
+| Paired sincos | 199,922 | 175,299 |
+
+`atanf` retains its reciprocal above one and shared four-interval kernel on
+[0,1]. `atan2f` divides the smaller magnitude by the larger and uses that
+kernel. `tests/math/phase34_coefficients.py` reproduces the selected fits.
 
 The three logarithms classify and normalize once, then inline one division-free
 base-two mantissa engine: f*P6(f), where f is the normalized mantissa minus one.
@@ -93,14 +126,15 @@ contract from both a full-precision FMA and separate binary32 multiply/add.
 The host model reproduces those limits. No unrelated expressions are forcibly
 contracted. LLVM directly selects sqrt, rounding, remainder, and FMA operations.
 
-FREMPIO2 supplies both remainder and quadrant through an SSA pair. Trig calls
-it for |x|<=128; tangent accepts this path only when |r|>=2^-12. The native
-flt40_t pi/2 constant contributes less than 4.924e-9 absolute error in this
-range before final rounding. Every binary32 argument in [pi/4,128] is checked
-for quadrant, zero side, and error bounds. The existing split-constant and
-exponent-window guest reduction handles pole neighbors and larger inputs.
-There is no additional native reducer. Polynomial coefficients are unchanged,
-and sincos still shares one reduction and squared argument.
+FREMPIO2 supplies both remainder and quadrant through an SSA pair. Its native
+flt40_t pi/2 constant contributes less than 4.924e-9 absolute error through
+128 radians before final rounding; argument error grows with the quotient.
+Every binary32 argument in [pi/4,128] is checked for quadrant, zero side, and
+error bounds. Trig uses this same reducer throughout the binary32 range.
+Independent tests use exact division by avr-libc's constant and host libm or
+100-digit mpmath on the remainder. Polynomial tolerances are unchanged.
+`generate_trig_regressions.py` refreshes existing trig fixtures against this
+reference. Sine/cosine retain their separate native FPOLY coefficients.
 
 `avm_shortcuts_tests_run` compares the production kernels with independent host
 double libm using the function-specific policy (exact for fmod). It exhausts

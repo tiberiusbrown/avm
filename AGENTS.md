@@ -8,6 +8,11 @@ Documentation exists in the `docs/` directory. Do not create new documents or di
 
 ## Development
 
+AVM `math.h` functions are never required to exceed avr-libc's precision.
+Use it as the precision baseline; choose faster algorithms when available and
+reuse existing native floating-point helpers.
+Confirm before adding wider native arithmetic solely for extra precision.
+
 When developing code generation functionality in the LLVM AVM backend, refer to
 `bench/cycles_instruction.txt` to help select the fastest instruction.
 

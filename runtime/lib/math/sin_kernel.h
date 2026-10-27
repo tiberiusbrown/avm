@@ -20,9 +20,6 @@
 
 static __attribute__((always_inline)) inline float avm_sin_kernel(float x)
 {
-    uint32_t ix;
-    GET_FLOAT_WORD(ix,x);
-    if ((ix&0x7fffffffUL)<0x39800000UL) return x;
     return x*avm_sin_polynomial(x*x);
 }
 #endif

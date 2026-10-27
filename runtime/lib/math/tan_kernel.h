@@ -17,14 +17,12 @@
 
 #include "fdlibm.h"
 #include "trig_poly.h"
+#include "native_math.h"
 
 static __attribute__((always_inline)) inline float avm_tan_kernel(float x, int reciprocal)
 {
-    uint32_t ix;
-    GET_FLOAT_WORD(ix,x);
-    if (!(ix&0x7fffffffUL)) return reciprocal ? -1.0f/x : x;
     float z=x*x;
-    float w=x+(x*z)*avm_tan_polynomial(z);
+    float w=avm_native_fma(x*z, avm_tan_polynomial(z), x);
     return reciprocal ? -1.0f/w : w;
 }
 #endif

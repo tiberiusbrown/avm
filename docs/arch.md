@@ -1433,11 +1433,12 @@ Nonfinite inputs return NaN and quadrant zero. Signed zeros pass through.
 The compact avr-libc reducer uses `D = 0xC90FDAA2 * 2^-31` for pi/2, with a
 32-bit significand in a flt40_t value. Division and nearest-quotient correction
 are integer operations; the final remainder rounds once to binary32.
-It accepts all finite inputs, but large-angle quadrants are approximations to
-this constant, not a full-range mathematical-pi guarantee. Production trig
-uses it only through |x| <= 128. Tangent additionally requires |r| >= 2^-12;
-its pole neighbors and larger angles use the existing guest split/window
-reducer. No high-precision fallback is embedded in the interpreter.
+It accepts all finite inputs. Production `sinf`, `cosf`, `tanf`, and `sincosf`
+unconditionally reduce with FREMPIO2, then evaluate their polynomial and apply
+the quadrant. Their large-angle and tangent-pole accuracy follows avr-libc's
+flt40_t constant. No magnitude dispatch or guest fallback is used by these
+functions. The separate legacy guest reducer remains available through
+`__ieee754_rem_pio2f`.
 
 FMA uses q2*q3+q0 and preserves q0, q1, and q3. Per the compact avr-libc
 [fma.S implementation](https://github.com/vancegroup-mirrors/avr-libc/blob/master/avr-libc/libm/fplib/fma.S),

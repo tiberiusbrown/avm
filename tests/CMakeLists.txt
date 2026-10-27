@@ -87,6 +87,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             elseif(AVM_TEST_NAME STREQUAL "display_system")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/display_system.c")
+            elseif(AVM_TEST_NAME STREQUAL "time_clock")
+                list(APPEND test_source_dependencies
+                    "${AVM_C_TEST_DIR}/time_clock.c")
             elseif(AVM_TEST_NAME STREQUAL "separate_compilation")
                 set(test_support_sources
                     "${AVM_CXX_TEST_DIR}/support/separate_compilation_impl.cpp")

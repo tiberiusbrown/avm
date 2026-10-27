@@ -11,6 +11,7 @@ SYMBOL TABLE:
 00000113 l     O .data	00000004 result_sink
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 stdlib.c
+00000000 l    df *ABS*	00000000 avm.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 strtof.c
 00000b31 l     O .rodata	00000028 decimal_overflows.threshold

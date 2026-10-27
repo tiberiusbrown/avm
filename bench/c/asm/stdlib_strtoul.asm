@@ -13,6 +13,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 stdlib.c
 000002f0 l     F .text	000001ac parse_ulong
+00000000 l    df *ABS*	00000000 avm.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 integer.c

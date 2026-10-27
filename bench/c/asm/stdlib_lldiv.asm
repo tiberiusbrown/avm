@@ -12,6 +12,7 @@ SYMBOL TABLE:
 00000183 l     O .data	00000008 result_sink
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 stdlib.c
+00000000 l    df *ABS*	00000000 avm.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 integer.c

@@ -36,6 +36,7 @@ set(RUNTIME_SOURCES
     stdlib
     strtof
     string
+    time
     termination
 )
 

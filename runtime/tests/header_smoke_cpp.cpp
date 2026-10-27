@@ -4,6 +4,7 @@
 #include <avm.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 struct cpp_smoke_object {
     int value;
@@ -126,3 +127,7 @@ extern "C" void cpp_address_space_pointers(
 }
 
 int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }
+
+extern "C" clock_t cpp_time_direct(void) { return clock(); }
+extern "C" clock_t (*cpp_time_address(void))(void) { return &clock; }
+extern "C" clock_t cpp_time_constant(void) { return CLOCKS_PER_SEC; }

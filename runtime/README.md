@@ -90,6 +90,13 @@ allocator or ordinary `new` operator.
 calls and deleting destructors. Applications can replace the delete traps if
 they provide their own fixed-capacity allocator.
 
+`<time.h>` provides `clock_t`, `CLOCKS_PER_SEC` (1000), and `clock()`. The
+32-bit unsigned counter returns elapsed milliseconds since runtime startup,
+with one-millisecond resolution. It wraps modulo 2^32 after about 49.7 days;
+unsigned subtraction measures intervals across one wrap when they are shorter
+than a full counter period. This is an elapsed-time approximation, not precise
+CPU-consumption measurement. No calendar-time API is provided.
+
 ## Startup variants
 
 - `crt0.o` runs `.init_array`, calls `int main(void)`, runs `.fini_array` in

@@ -3,6 +3,7 @@
 #include <avm.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 float direct_math(float x, float y) {
     return sinf(x) + powf(x, y);
@@ -69,3 +70,7 @@ void c_explicit_program_calls(
 }
 
 int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }
+
+clock_t time_direct(void) { return clock(); }
+clock_t (*time_address(void))(void) { return &clock; }
+clock_t time_constant(void) { return CLOCKS_PER_SEC; }

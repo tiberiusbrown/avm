@@ -29,6 +29,8 @@ set(RUNTIME_SOURCES
     immediate_exit
     math
     pgmspace
+    qsort
+    bsearch
     runtime
     stdio
     stdlib

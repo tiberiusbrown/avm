@@ -12,6 +12,10 @@ extern "C" {
 #endif
 
 int atexit(void (*func)(void));
+void qsort(void *base, size_t nmemb, size_t size,
+           int (*compar)(const void *, const void *));
+void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
+              int (*compar)(const void *, const void *));
 /* The attribute works in C99 as well as all supported C++ language modes. */
 __attribute__((noreturn)) void exit(int status);
 __attribute__((noreturn)) void _Exit(int status);

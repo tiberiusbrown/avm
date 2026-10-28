@@ -110,8 +110,11 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         endif()
 
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
-        if(AVM_TEST_NAME STREQUAL "ff_fixed")
+        if(AVM_TEST_NAME MATCHES "^(ff_fixed|vla)$")
             list(APPEND test_compile_options -mllvm -verify-machineinstrs)
+        endif()
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND AVM_TEST_NAME STREQUAL "vla")
+            list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/vla.c")
         endif()
         # Exercise whole-program virtual, member-pointer, and lifetime dispatch in the
         # emulator as well as retaining the ordinary compilation matrix.

@@ -12,7 +12,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 - [ ] **Minimum `double` precision:** `double` currently uses IEEE-754 binary32 (`DBL_DIG == 6`); C99 requires `DBL_DIG >= 10`, together with the corresponding `DBL_EPSILON` bound.
 - [ ] **Minimum `long double` precision:** `long double` likewise uses binary32 (`LDBL_DIG == 6`); C99 requires `LDBL_DIG >= 10` and the corresponding `LDBL_EPSILON` bound. The two types need not have different representations, but each must meet its own minimum limits.
-- [ ] **Variable-length arrays and variably modified automatic objects:** AVM explicitly does not support runtime-sized stack objects/dynamic `alloca`. Implement C99 VLA semantics, including evaluation of bounds, scope, `sizeof` of VLAs, and stack restoration on scope exit.
 
 ### Minimum translation/execution capacities
 

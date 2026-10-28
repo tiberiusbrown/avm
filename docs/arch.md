@@ -444,7 +444,7 @@ operator delete
 
 Placement `new` is permitted.
 
-Variable-length arrays and unrestricted dynamic `alloca` SHOULD be disabled.
+C99 variable-length arrays and variable-sized `alloca` use the stack as described in Section 47.5. They do not require a heap or global allocation state.
 
 A program may implement a fixed-capacity allocator within its own global or stack storage, but that allocator has no architectural status.
 ---
@@ -1940,17 +1940,21 @@ A backend may reserve a maximum outgoing area as an internal optimization if it 
 
 ### 47.5. Dynamic allocation and realignment
 
-Variable-sized `alloca`, variable-length arrays, and dynamic stack realignment are unsupported by the AVM ABI.
+Variable-sized `alloca` and C99 variable-length arrays allocate below the current 16-bit `SP`: `GETSP` reads the old pointer, subtraction reserves the requested byte count, and `SETSP` installs the resulting object base. Element counts are multiplied by element sizes using the source language's required arithmetic. All stack objects use one-byte alignment; arbitrary dynamic stack realignment is unsupported.
 
-All fixed stack objects use one-byte alignment.
+Only functions requiring a frame pointer reserve `r3`. A function with variable-sized objects saves the incoming `r3` through the normal callee-saved convention and establishes `r3` after allocating its fixed frame. Fixed locals, spills, incoming arguments, and emergency scavenger slots remain relative to that stable base while `SP` changes. Ordinary functions retain frame-pointer omission without additional per-frame storage.
+
+LLVM `stacksave` captures the current `SP`; `stackrestore` restores precisely that value. Clang emits these operations where needed to reclaim VLA storage on lexical scope exits, including nested scopes, loops, `break`, `continue`, and permitted `goto` exits. VLA addresses remain ordinary data pointers across subsequent allocations and calls. Outgoing stack arguments are allocated below the current dynamic `SP` and released after each call. Function epilogues restore `SP` from `r3` before releasing fixed storage and restoring saved registers; tail transfers likewise require the frame to be fully released.
+
+There is no mandatory runtime overflow check. Exceeding the available stack is undefined behavior. Stack-usage metadata reports the known fixed-frame contribution and marks functions with variable-sized objects as having incomplete bounds. LLD continues to diagnose statically provable overflow, but an unknown dynamic contribution alone does not reject a program or certify a complete bound.
 
 ### 47.6. Epilogue and tail calls
 
 An epilogue:
 
-1. Releases fixed local and spill storage.
-2. Restores saved registers.
-3. Restores the entry `SP`.
+1. Discards active dynamic storage by restoring `SP` from `r3`, when a frame pointer is used.
+2. Releases fixed local and spill storage.
+3. Restores saved registers and the entry `SP`.
 4. Executes `RET`.
 
 Mandatory tail-call support is limited to calls that:
@@ -4081,7 +4085,8 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `PTRTOINT` / `INTTOPTR` AS1 | Custom logical 24-bit conversion; wider integer results zero-extend | — | — | — |
 | AS1 pointer comparison | Compare logical bits `23:0`; normalize or use a 24-bit-aware sequence | — | — | — |
 | `ADDRSPACECAST` AS0↔AS1 | Unsupported | Unsupported | Unsupported | Must be explicit through integer conversion |
-| Dynamic `alloca` | Unsupported | — | — | Backend diagnostic |
+| Dynamic `alloca` | — | Expand through `GETSP` / `SUB` / `SETSP` | — | — |
+| `STACKSAVE` / `STACKRESTORE` | — | Expand through `GETSP` / `SETSP` | — | — |
 | `VAARG` | Custom packed-stack lowering | — | — | — |
 | `BR_JT` / switch | Custom program-space jump table or branch tree | — | — | — |
 | AS0-to-AS0 `MEMCPY` | Inline small constants; `SYS 0x0F` or helper otherwise | — | — | — |
@@ -5469,7 +5474,7 @@ The initial C++ environment supports:
 - Placement `new`.
 - Function overloading.
 
-Exceptions, RTTI, general dynamic allocation, and thread-local storage are disabled.
+Exceptions, RTTI, general heap allocation, and thread-local storage are disabled.
 
 AVM vtables and construction vtables reside in AS1 program memory. An object's
 vptr is a 24-bit AS1 pointer to the vtable address point. Every vtable
@@ -6263,7 +6268,7 @@ A validating tool or VM should detect:
 - A flat image larger than `0xFFFF00` bytes or an overflowing 16-bit `imagePageCount`.
 - Invalid persistent save-object size, format, or integrity when a save object is present.
 - Relocation overflow.
-- Unsupported TLS, common symbols, or dynamic stack allocation.
+- Unsupported TLS or common symbols.
 
 ## 73. Unchecked execution
 
@@ -6349,7 +6354,7 @@ Frame:
     saved r0-r3 above fixed storage
     optional r3 frame pointer
     outgoing arguments allocated at call sites
-    dynamic alloca unsupported
+    dynamic alloca -> generic expansion using 16-bit SP, GETSP/SUB/SETSP
 
 LLVM:
     avm-unknown-arduboyfx

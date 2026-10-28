@@ -3226,7 +3226,7 @@ Accepted components are:
 flags:       -  +  space  #  0
 width:       decimal digits or *
 precision:   . followed by decimal digits, *, or no characters
-length:      hh  h  l  z  t
+length:      hh  h  l  ll  z  t
 conversion:  c  s  S  d  i  u  o  x  X  p  P
 ```
 
@@ -3254,7 +3254,9 @@ later byte makes the conversion invalid.
 Any format byte not accepted in the current parser state causes the deterministic
 `-1` result described above. This includes a terminating zero before a
 conversion is complete, an unsupported conversion, or an unsupported length
-such as `ll` or `j`. The parser does not assign implementation-specific
+such as `j`. Incomplete `%ll`, excess length characters (for example `%llld`),
+and noninteger pairs such as `%lls`, `%llc`, `%llp`, and `%llf` are invalid.
+The parser does not assign implementation-specific
 semantics to an unrecognized form.
 
 #### 49.27.3. Variadic argument representation
@@ -3268,6 +3270,7 @@ alignment and no implicit gaps:
 | `%c` | 2 |
 | Integer conversion with `hh`, `h`, default, `z`, or `t` | 2 |
 | Integer conversion with `l` | 4 |
+| Integer conversion with `ll` | 8 |
 | `%s` data pointer | 2 |
 | `%S` program-string pointer | 3 |
 | `%p` data pointer | 2 |
@@ -3286,8 +3289,11 @@ byte 2 = address bits 23:16
 There is no fourth padding byte. A following variadic argument begins
 immediately after byte 2.
 
-No 64-bit integer length is supported. The services do not accept `ll`, `j`,
-or any other path that would consume an eight-byte integer argument.
+For `ll`, all eight bytes are little-endian: byte 0 holds bits 7:0 and byte 7
+holds bits 63:56. The next argument begins immediately after byte 7, even when
+preceded by a three-byte `%P` or `%S` pointer. Neither the explicit `va_list`
+interfaces nor the true-variadic builtins insert alignment padding. The `j`
+length modifier remains unsupported.
 
 #### 49.27.4. Conversion semantics
 
@@ -3316,12 +3322,31 @@ Integer lengths select these effective widths:
 | `h` | 16 bits |
 | default | 16 bits |
 | `l` | 32 bits |
+| `ll` | 64 bits |
 | `z` | 16 bits |
 | `t` | 16 bits |
 
 For signed `hh` conversions, the selected low byte is interpreted as signed
 8-bit. For unsigned `hh` conversions, it is interpreted as unsigned 8-bit.
-Signed magnitude formation correctly handles `INT16_MIN` and `INT32_MIN`.
+Signed magnitude formation correctly handles `INT16_MIN`, `INT32_MIN`, and
+`INT64_MIN`. The `ll` modifier applies to all six integer conversions: `d`,
+`i`, `u`, `o`, `x`, and `X`. Signed decimal supports `INT64_MIN` through
+`INT64_MAX`; unsigned conversions support zero through `UINT64_MAX`. All
+existing integer flags, width, precision, prefix, and output-count semantics
+apply equally to 64-bit values and to every formatting sink.
+
+The nonreentrant native formatter reuses its existing scratch allocation:
+the 22-byte reversed integer digit buffer overlaps conversion-local string
+state, the RAM-format cursor aliases the mutually exclusive program-format
+cursor, and the eight-byte integer magnitude aliases floating-point state.
+All integer lengths use one SRAM conversion engine operating on 1, 2, 4, or
+8 active bytes. It tests the sign bit of the highest active byte and negates
+only those bytes; it does not sign-extend narrower values to eight bytes.
+Decimal digits use the existing bytewise divide-by-ten primitive, while octal
+and hexadecimal digits use one variable-width right-shift loop.
+These aliases add no native SRAM or persistent guest RAM. Integer and float
+conversions initialize their own state before use; `%S` retains separate
+program-string cursors and never overwrites the active format cursor.
 
 #### 49.27.5. Flags, width, and precision
 
@@ -5344,7 +5369,7 @@ The program-format operand is not normalized solely for this service.
 Address-taking uses the out-of-line runtime function.
 
 Target format diagnostics must understand the AVM `%S` and `%P` extensions and
-the absence of 64-bit and floating conversions. Applying an unmodified host
+the supported integer lengths, including `ll`. Applying an unmodified host
 `printf` format attribute is not conforming when it diagnoses `%S` as a wide
 string or fails to recognize `%P`.
 

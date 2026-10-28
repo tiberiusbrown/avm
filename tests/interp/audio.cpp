@@ -2174,10 +2174,12 @@ void decimal_division(char** args) {
             require(h.c().sp()==sp,"decimal division leaked native stack");
         }
     }
+    constexpr unsigned integer_value=private_end+58;
     for(uint32_t value : {0u,9u,10u,255u,256u,65535u,65536u,0x7fffffffu,0x80000000u,0xffffffffu}) {
-        for(unsigned i=0;i<4;++i) h.c().data[20+i]=uint8_t(value>>(8*i));
-        h.routine("format_divide_u32_by_10");
-        uint32_t quotient=h.word(20)|(uint32_t(h.word(22))<<16);
+        h.c().data[20]=4; // active byte count for the shared SRAM divider
+        for(unsigned i=0;i<4;++i) h.c().data[integer_value+i]=uint8_t(value>>(8*i));
+        h.routine("format_divide_integer_by_10");
+        uint32_t quotient=h.word(integer_value)|(uint32_t(h.word(integer_value+2))<<16);
         require(quotient==value/10 && h.c().data[24]==value%10,"decimal u32 division wrong");
     }
     std::cout<<"decimal division: 2560 byte pairs and 10 u32 boundaries passed\n";

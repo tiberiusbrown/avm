@@ -133,13 +133,18 @@
 #define data_format_program_next        (data_end_private+16)
 #define data_format_cache_index         (data_end_private+19)
 #define data_format_cache_length        (data_end_private+20)
-; Formatter status remains in native r17 for the complete call.
+; Integer digits occupy +21..+42 (at most 22 octal digits). String cursors
+; at +33..+40 are dead during integer conversion; %S uses only +21..+32
+; for its 12-byte chunks. Formatter status remains in r17 for the full call.
+#define FORMAT_INTEGER_DIGIT_CAPACITY 22
 #define data_format_digit_buffer        (data_end_private+21)
 #define data_format_progstr_original    (data_end_private+33)
 #define data_format_string_original     data_format_progstr_original
 #define data_format_progstr_cursor      (data_end_private+36)
 #define data_format_string_length       (data_end_private+39)
-#define data_format_ram_ptr             (data_end_private+41)
+; RAM and program format sources are exclusive. %S has its own cursors and
+; read_source, so neither source cursor aliases live integer digits.
+#define data_format_ram_ptr             data_format_program_next
 #define data_format_arg_ptr             (data_end_private+43)
 #define data_format_padding             (data_end_private+45)
 #define data_format_precision_zeroes    (data_end_private+47)
@@ -151,6 +156,9 @@
 #define data_format_prefix              (data_end_private+54)
 #define data_format_read_source         (data_end_private+55)
 #define data_format_float_value         (data_end_private+58)
+; Integer value (1/2/4/8 active bytes at +58) and float state are
+; conversion-local and exclusive. Bytes above the active width are dead.
+#define data_format_integer_value          data_format_float_value
 #define data_format_float_exponent      (data_end_private+62)
 #define data_format_float_ndigits       (data_end_private+64)
 #define data_format_float_flags         (data_end_private+65)
@@ -164,6 +172,9 @@
 #define data_text_current_y              (data_format_scratch_end+2)
 #define data_text_scratch_end            (data_format_scratch_end+4)
 
+.if (data_format_digit_buffer + FORMAT_INTEGER_DIGIT_CAPACITY) > data_format_arg_ptr
+    .error "64-bit integer digit buffer overlaps formatter argument cursor"
+.endif
 .if data_text_scratch_end > (0x0B00-48)
     .error "Formatter/text workspace must leave at least 48 bytes for native stack"
 .endif
@@ -190,6 +201,7 @@
 #define FORMAT_LENGTH_L              3
 #define FORMAT_LENGTH_Z              4
 #define FORMAT_LENGTH_T              5
+#define FORMAT_LENGTH_LL             6
 
 #define FORMAT_INT_BASE_MASK         0x03
 #define FORMAT_INT_BASE_DEC          0
@@ -10727,7 +10739,8 @@ sys_save_exists_impl:
 ;   r14:r15  precision
 ;   r18      per-conversion flags
 ;   r19      length state, then digit-loop scratch
-;   r20:r23  integer magnitude and conversion scratch
+;   r20      active integer byte width (1/2/4/8), then conversion scratch
+;   r21:r23  conversion scratch; integer magnitude lives in aliased SRAM
 ;   Y        bounded-buffer destination, or current text cursor x
 ;
 ; The local va_list cursor and all format/program pointers are held in the
@@ -11200,6 +11213,32 @@ format_arg_u32:
     sts   data_format_arg_ptr+1, r31
     ret
 
+; Consume an integer of effective width r20 = 1, 2, 4 or 8 into SRAM.
+; hh uses only its low byte but consumes both promoted argument bytes. Output
+; r21=highest active byte, r23=OR of active bytes (zero indicator). No inactive
+; bytes are read or written. Clobbers r21:r23, X, Z, SREG H/S/V/N/Z/C;
+; preserves r20 (active width), r24 (conversion), T/I, r17:r19, r8:r15 and Y.
+format_arg_integer:
+    lds   r30, data_format_arg_ptr+0
+    lds   r31, data_format_arg_ptr+1
+    ldi   r26, lo8(data_format_integer_value)
+    ldi   r27, hi8(data_format_integer_value)
+    mov   r22, r20
+    clr   r23
+.Lformat_arg_integer_loop:
+    ld    r21, Z+
+    st    X+, r21
+    or    r23, r21
+    dec   r22
+    brne  .Lformat_arg_integer_loop
+    cpi   r20, 1
+    brne  1f
+    adiw  r30, 1                    ; skip promoted hh argument's high byte
+1:
+    sts   data_format_arg_ptr+0, r30
+    sts   data_format_arg_ptr+1, r31
+    ret
+
 format_arg_program_pointer:
     lds   r30, data_format_arg_ptr+0
     lds   r31, data_format_arg_ptr+1
@@ -11380,6 +11419,10 @@ format_core:
     cpi   r24, 'l'
     brne  1f
     ldi   r19, FORMAT_LENGTH_L
+    rcall format_get_char
+    cpi   r24, 'l'
+    brne  .Lformat_dispatch_conversion
+    ldi   r19, FORMAT_LENGTH_LL
     rcall format_get_char
     rjmp  .Lformat_dispatch_conversion
 1:
@@ -11770,22 +11813,23 @@ format_hex_nibble_to_char:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 format_conversion_integer:
-    ; All recognized integer lengths fit the implemented 8/16/32-bit paths.
-    cpi   r19, FORMAT_LENGTH_L
-    breq  .Lformat_integer_load_long
-    rcall format_arg_u16
-    mov   r20, r24
-    mov   r21, r25
-    clr   r22
-    clr   r23
+    ; Decode effective width once. r19's length lifetime ends here; r20
+    ; retains the active byte count until shared field preparation starts.
+    ldi   r20, 2
     cpi   r19, FORMAT_LENGTH_HH
-    brne  .Lformat_integer_loaded
-    clr   r21
-    rjmp  .Lformat_integer_loaded
-.Lformat_integer_load_long:
-    rcall format_arg_u32
-.Lformat_integer_loaded:
-    lds   r24, data_format_conversion
+    brne  1f
+    ldi   r20, 1
+1:
+    cpi   r19, FORMAT_LENGTH_L
+    brne  2f
+    ldi   r20, 4
+2:
+    cpi   r19, FORMAT_LENGTH_LL
+    brne  3f
+    ldi   r20, 8
+3:
+    rcall format_arg_integer
+    ; r24 still holds the conversion byte; the reader preserves it.
 
     clr   r26
     cpi   r24, 'd'
@@ -11815,39 +11859,17 @@ format_conversion_integer:
 .Lformat_integer_mode_ready:
     sts   data_format_integer_mode, r26
     sts   data_format_sign, ZERO
-
-    ; Sign-extend signed 8- and 16-bit values into the common 32-bit
-    ; magnitude container. A long value already occupies all four bytes.
+    ; Negation preserves whether the representation is zero, so retain the
+    ; reader's reduction before its scratch registers are reused. r21 is the
+    ; highest effective byte; no narrower value needs sign extension.
+    sts   data_format_value_nonzero, r23
     sbrs  r26, FORMAT_INT_SIGNED_BIT
     rjmp  .Lformat_integer_magnitude_ready
-    cpi   r19, FORMAT_LENGTH_L
-    breq  .Lformat_integer_test_sign
-    cpi   r19, FORMAT_LENGTH_HH
-    brne  .Lformat_integer_sign_extend_16
-    sbrs  r20, 7
-    rjmp  .Lformat_integer_test_sign
-    ser   r21
-    ser   r22
-    ser   r23
-    rjmp  .Lformat_integer_test_sign
-.Lformat_integer_sign_extend_16:
     sbrs  r21, 7
-    rjmp  .Lformat_integer_test_sign
-    ser   r22
-    ser   r23
-.Lformat_integer_test_sign:
-    sbrs  r23, 7
     rjmp  .Lformat_integer_positive_sign
     ldi   r24, '-'
     sts   data_format_sign, r24
-    com   r20
-    com   r21
-    com   r22
-    com   r23
-    add   r20, ONE
-    adc   r21, ZERO
-    adc   r22, ZERO
-    adc   r23, ZERO
+    rcall format_negate_integer
     rjmp  .Lformat_integer_magnitude_ready
 .Lformat_integer_positive_sign:
     sbrc  r18, FORMAT_FLAG_PLUS
@@ -11860,149 +11882,151 @@ format_conversion_integer:
 .Lformat_integer_plus_sign:
     ldi   r24, '+'
     sts   data_format_sign, r24
-
 .Lformat_integer_magnitude_ready:
-    mov   r24, r20
-    or    r24, r21
-    or    r24, r22
-    or    r24, r23
-    sts   data_format_value_nonzero, r24
     rcall format_generate_integer_digits
     rcall format_prepare_integer_field
     rcall format_emit_integer_field
     rjmp  .Lformat_main_loop
 
-; Generate reverse-order digits in data_format_digit_buffer and store count.
+; Negate only the r20 active bytes in place, including every signed minimum.
+; EOR, LD/ST and DEC preserve carry between ADCs. Clobbers r22:r24, Z,
+; SREG H/S/V/N/Z/C; preserves r20:r21, r19, T/I, formatter registers and Y.
+format_negate_integer:
+    ldi   r30, lo8(data_format_integer_value)
+    ldi   r31, hi8(data_format_integer_value)
+    mov   r22, r20
+    ldi   r23, 0xff
+    sec
+.Lformat_negate_integer_loop:
+    ld    r24, Z
+    eor   r24, r23
+    adc   r24, ZERO
+    st    Z+, r24
+    dec   r22
+    brne  .Lformat_negate_integer_loop
+    ret
+
+; Divide the r20 active bytes by ten, high byte first. Output r24=remainder,
+; r23=OR of quotient bytes. The byte divider preserves r20:r23 and Z but
+; clobbers r26. Clobbers r22:r26, Z, SREG H/S/V/N/Z/C; preserves r20:r21,
+; r19, T/I, formatter registers and Y. Common hh/default values use 1/2 bytes.
+format_divide_integer_by_10:
+    clr   r24
+    clr   r23
+    ldi   r30, lo8(data_format_integer_value)
+    ldi   r31, hi8(data_format_integer_value)
+    add   r30, r20
+    adc   r31, ZERO
+    mov   r22, r20
+.Lformat_divide_integer_loop:
+    ld    r25, -Z
+    rcall format_divide_byte_by_10
+    st    Z, r25
+    or    r23, r25
+    dec   r22
+    brne  .Lformat_divide_integer_loop
+    ret
+
+; Shift the r20 active bytes right by r19 bits (3 or 4), high byte first.
+; Return r23=OR of resulting bytes. Clear C once per bit pass; OR/DEC preserve
+; C between bytes. Clobbers r19, r22:r23, r25, Z, SREG H/S/V/N/Z/C;
+; preserves r20:r21, r24 (extracted digit), T/I, formatter registers and Y.
+; ADD/ADC in pointer setup may change H; no carry crosses that setup.
+format_shift_integer_right:
+.Lformat_shift_integer_bit:
+    ldi   r30, lo8(data_format_integer_value)
+    ldi   r31, hi8(data_format_integer_value)
+    add   r30, r20
+    adc   r31, ZERO
+    mov   r22, r20
+    clr   r23
+    clc
+.Lformat_shift_integer_byte:
+    ld    r25, -Z
+    ror   r25
+    st    Z, r25
+    or    r23, r25
+    dec   r22
+    brne  .Lformat_shift_integer_byte
+    dec   r19
+    brne  .Lformat_shift_integer_bit
+    ret
+
+; One reversed-digit engine for all integer lengths, including shared zero
+; suppression. Maximum counts: 20 decimal / 22 octal / 16 hex digits. r20
+; retains the active width; r19 is scratch after width decoding. Clobbers
+; r19, r22:r26, Z, SREG H/S/V/N/Z/C; preserves r20:r21, T/I, formatter state
+; and Y. Peak conversion stack: 16 saved bytes + three two-byte return
+; addresses + ten ISR bytes = 32 of 71 bytes above data_text_scratch_end.
 format_generate_integer_digits:
     sts   data_format_digit_count, ZERO
     lds   r24, data_format_value_nonzero
     tst   r24
-    brne  .Lformat_generate_digits_loop
-
-    ; Integer precision zero suppresses the ordinary zero digit.
+    brne  .Lformat_integer_digits_loop
+    ; Integer precision zero suppresses the ordinary zero digit. Alternate
+    ; octal zero is still handled by shared field preparation.
     sbrs  r18, FORMAT_FLAG_PRECISION
     rjmp  .Lformat_generate_zero_digit
     mov   r24, r14
     or    r24, r15
-    brne  1f
-    rjmp  .Lformat_generate_digits_done
-1:
+    breq  .Lformat_integer_digits_done
 .Lformat_generate_zero_digit:
-    ldi   r30, lo8(data_format_digit_buffer)
-    ldi   r31, hi8(data_format_digit_buffer)
     ldi   r24, '0'
-    st    Z, r24
-    ldi   r24, 1
-    sts   data_format_digit_count, r24
-    rjmp  .Lformat_generate_digits_done
+    clr   r23
+    rjmp  .Lformat_integer_store_digit
 
-.Lformat_generate_digits_loop:
-    lds   r26, data_format_integer_mode
-    mov   r27, r26
-    andi  r27, FORMAT_INT_BASE_MASK
-    cpi   r27, FORMAT_INT_BASE_HEX
-    breq  .Lformat_generate_hex_digit
-    cpi   r27, FORMAT_INT_BASE_OCT
-    breq  .Lformat_generate_octal_digit
-
-    rcall format_divide_u32_by_10
-    mov   r26, r24
-    subi  r26, -'0'
-    rjmp  .Lformat_store_generated_digit
-
-.Lformat_generate_hex_digit:
-    mov   r26, r20
-    andi  r26, 0x0f
-    lds   r27, data_format_integer_mode
-    sbrs  r27, FORMAT_INT_UPPER_BIT
-    rjmp  .Lformat_hex_lower_digit
-    cpi   r26, 10
-    brlo  .Lformat_hex_numeric_digit
-    subi  r26, -55
-    rjmp  .Lformat_hex_digit_ready
-.Lformat_hex_lower_digit:
-    cpi   r26, 10
-    brlo  .Lformat_hex_numeric_digit
-    subi  r26, -87
-    rjmp  .Lformat_hex_digit_ready
-.Lformat_hex_numeric_digit:
-    subi  r26, -'0'
-.Lformat_hex_digit_ready:
-    lsr   r23
-    ror   r22
-    ror   r21
-    ror   r20
-    lsr   r23
-    ror   r22
-    ror   r21
-    ror   r20
-    lsr   r23
-    ror   r22
-    ror   r21
-    ror   r20
-    lsr   r23
-    ror   r22
-    ror   r21
-    ror   r20
-    rjmp  .Lformat_store_generated_digit
-
-.Lformat_generate_octal_digit:
-    mov   r26, r20
-    andi  r26, 0x07
-    subi  r26, -'0'
-    lsr   r23
-    ror   r22
-    ror   r21
-    ror   r20
-    lsr   r23
-    ror   r22
-    ror   r21
-    ror   r20
-    lsr   r23
-    ror   r22
-    ror   r21
-    ror   r20
-
-.Lformat_store_generated_digit:
-    lds   r24, data_format_digit_count
+.Lformat_integer_digits_loop:
+    lds   r25, data_format_integer_mode
+    andi  r25, FORMAT_INT_BASE_MASK
+    cpi   r25, FORMAT_INT_BASE_DEC
+    brne  .Lformat_integer_bit_digit
+    rcall format_divide_integer_by_10
+    subi  r24, -'0'
+    rjmp  .Lformat_integer_store_digit
+.Lformat_integer_bit_digit:
+    lds   r24, data_format_integer_value
+    ldi   r19, 3
+    cpi   r25, FORMAT_INT_BASE_OCT
+    breq  .Lformat_integer_octal_digit
+    ldi   r19, 4
+    andi  r24, 0x0f
+    cpi   r24, 10
+    brlo  .Lformat_integer_numeric_digit
+    lds   r25, data_format_integer_mode
+    sbrc  r25, FORMAT_INT_UPPER_BIT
+    rjmp  .Lformat_integer_upper_digit
+    subi  r24, -87
+    rjmp  .Lformat_integer_shift_digit
+.Lformat_integer_upper_digit:
+    subi  r24, -55
+    rjmp  .Lformat_integer_shift_digit
+.Lformat_integer_octal_digit:
+    andi  r24, 0x07
+.Lformat_integer_numeric_digit:
+    subi  r24, -'0'
+.Lformat_integer_shift_digit:
+    rcall format_shift_integer_right
+.Lformat_integer_store_digit:
+    ; Reload Z after division/shift; preserve the r23 quotient indicator.
+    lds   r25, data_format_digit_count
     ldi   r30, lo8(data_format_digit_buffer)
     ldi   r31, hi8(data_format_digit_buffer)
-    add   r30, r24
+    add   r30, r25
     adc   r31, ZERO
-    st    Z, r26
-    inc   r24
-    sts   data_format_digit_count, r24
-    mov   r25, r20
-    or    r25, r21
-    or    r25, r22
-    or    r25, r23
-    breq  1f
-    rjmp  .Lformat_generate_digits_loop
-1:
-.Lformat_generate_digits_done:
-    ret
-
-; Divide r23:r20 by 10 in place; return remainder in r24.
-format_divide_u32_by_10:
-    clr   r24
-    mov   r25, r23
-    rcall format_divide_byte_by_10
-    mov   r23, r25
-    mov   r25, r22
-    rcall format_divide_byte_by_10
-    mov   r22, r25
-    mov   r25, r21
-    rcall format_divide_byte_by_10
-    mov   r21, r25
-    mov   r25, r20
-    rcall format_divide_byte_by_10
-    mov   r20, r25
+    st    Z, r24
+    inc   r25
+    sts   data_format_digit_count, r25
+    tst   r23
+    brne  .Lformat_integer_digits_loop
+.Lformat_integer_digits_done:
     ret
 
 ; Input r24=remainder 0..9, r25=next dividend byte. Output r24=new remainder,
 ; r25=quotient byte. Shift eight dividend bits through the remainder, setting
 ; each quotient bit after at most one subtraction. Small leading bytes skip
 ; the loop. The remainder never exceeds 19, and the formatter's T flag survives.
+; Clobbers r24:r26 and SREG H/S/V/N/Z/C; preserves T/I and all other registers
+; (in particular r22:r23 and Z for the SRAM integer caller).
 format_divide_byte_by_10:
     tst   r24
     brne  .Lformat_divide_byte_bits

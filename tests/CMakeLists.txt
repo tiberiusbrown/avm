@@ -87,6 +87,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             elseif(AVM_TEST_NAME STREQUAL "display_system")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/display_system.c")
+            elseif(AVM_TEST_NAME STREQUAL "printf_long_long")
+                list(APPEND test_source_dependencies
+                    "${AVM_C_TEST_DIR}/printf_long_long.c")
             elseif(AVM_TEST_NAME STREQUAL "time_clock")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/time_clock.c")
@@ -229,6 +232,22 @@ target_compile_definitions(avm_tests PRIVATE
 add_dependencies(avm_tests
     avm_interpreter
 )
+
+# Exercise real AVR helpers with independent host arithmetic, SRAM guards and
+# register/SREG preservation checks, including both values of the text T bit.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_executable(avm_format_long_long_tests interp/format_long_long.cpp)
+target_compile_features(avm_format_long_long_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_format_long_long_tests PRIVATE ardensdebuggerlib)
+add_custom_target(avm_format_long_long_tests_run
+    COMMAND "$<TARGET_FILE:avm_format_long_long_tests>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+    COMMAND "$<TARGET_FILE:avm_format_long_long_tests>"
+        "${PROJECT_BINARY_DIR}/interp/fxc/interp.hex"
+        "${PROJECT_BINARY_DIR}/interp/fxc/interp.lst"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/format/generate_long_long.py" --check
+    DEPENDS avm_format_long_long_tests avm_interpreter avm_interpreter_fxc
+    USES_TERMINAL VERBATIM)
 
 # The runner can be built independently; avm_tests_run builds and runs all images.
 set(AVM_PUSH16_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/interp")
@@ -482,6 +501,7 @@ add_custom_target(avm_tests_run
     USES_TERMINAL
     VERBATIM
 )
+add_dependencies(avm_tests_run avm_format_long_long_tests_run)
 
 # A small, independently built debug image exercises nested frames, a live
 # global and local, both pointer spaces, button input, and delayed display

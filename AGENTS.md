@@ -6,6 +6,8 @@ Never create Git commits or push changes in this repository or its submodules. L
 
 Documentation exists in the `docs/` directory. Do not create new documents or directories inside `docs/` unless explicitly directed. All documentation files should be in Markdown (`.md`) format. Keep existing documentation up to date with new changes as needed.
 
+Keep `docs/c99-compliance-gaps.md` current whenever compiler, ABI, runtime, or header changes affect C99 support. In the same change, remove resolved gaps, revise partially resolved gaps, and add newly identified gaps. Keep freestanding requirements separate from additional hosted requirements; list only missing support. Verify a gap is resolved before removing it.
+
 ## Development
 
 AVM `math.h` functions are never required to exceed avr-libc's precision.

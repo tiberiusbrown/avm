@@ -399,7 +399,9 @@ The VM stack has one-byte alignment.
 | Function pointer | 3 bytes |
 | `size_t` | 2 bytes |
 | `ptrdiff_t` | 2 bytes |
-| `wchar_t` | 2 bytes |
+| `wchar_t` | 1 byte |
+
+`wchar_t` has an unsigned 8-bit representation. In C its underlying type is `unsigned char`; in C++ it remains a distinct built-in type. The compiler's `wint_t` underlying type is signed 16-bit `int`, permitting all `wchar_t` values and a separate negative `WEOF` sentinel. The supported execution locale is `"C"`; no Unicode or wide-character glyph rendering is specified.
 
 Plain `char` is signed by default.
 

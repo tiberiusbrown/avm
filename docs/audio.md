@@ -1344,7 +1344,22 @@ See [audio-benchmarks.md](audio-benchmarks.md) for measured resource results.
 `avm_audio_tests_run` uses Ardens' AVR instruction emulator for samples,
 sequencing, ownership, publication races, SPI and native-stack checks, plus
 Python compiler tests and Mini/FX-C assembly. `avm_tests_run` adds all interpreter
-and guest C/C++ fixtures. Large exported C/C++ assets are exercised beyond 64 KB.
+and guest C/C++ fixtures. The exported C asset traverses all 22,000 attacks beyond
+64 KB; the C++ export receives a start/advancement smoke check.
+
+The comprehensive audio target runs independent `core-isa`, `core-audio`, `demo`,
+`playlist-assets`, `formatter`, `export-c`, and `export-cpp` processes in parallel
+when build parallelism permits. Each uses its own emulator. Individual groups
+can also be run with `avm_audio_tests --suite <name> <interpreter.hex>
+<interpreter.lst> <guest.bin>`; these are partitions of the same suite, not
+coverage tiers. A single-job build runs every group serially.
+
+The demo checks a 100 ms default-rate smoke and a 400 ms effect/pause/resume/rate
+integration. Playlist validation directly executes the real audio APIs against
+all five compiled music assets, checking eight starts and paused/rate state;
+it no longer validates demo-specific button navigation or playlist rendering.
+Phase alignment retains all 1,152 startup/rate-switch configurations and exact
+gap/counter/prescaler checks, without prolonged live timer continuations.
 
 The [three-waveform example](../examples/tonal_waveforms.avms) plays pulse,
 triangle, and saw concurrently and compiles with the normal AVMS command.

@@ -323,17 +323,53 @@ if(Python3_Interpreter_FOUND)
         list(APPEND audio_large_inputs "${audio_large_dir}/${language}.bin")
     endforeach()
 endif()
-add_custom_target(avm_audio_tests_run
-    COMMAND "$<TARGET_FILE:avm_audio_tests>"
-        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
-        "${AVM_PUSH16_TEST_DIR}/audio.bin"
-        "${PROJECT_SOURCE_DIR}/projects/audio_demo/build/audio_demo.bin"
-        "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin"
-        ${audio_large_inputs}
-    DEPENDS avm_audio_tests avm_interpreter avm_audio_hardware_checks avm_audio_demo
-        "${AVM_PUSH16_TEST_DIR}/audio.bin" "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin" ${audio_large_inputs}
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
-    USES_TERMINAL VERBATIM)
+# Direct compiled playlist fixture; generated song headers must be current before
+# compilation. This replaces demo UI navigation/rendering, not asset/API checks.
+set(audio_playlist_headers
+    "${PROJECT_SOURCE_DIR}/projects/audio_demo/music.h"
+    "${PROJECT_SOURCE_DIR}/projects/audio_demo/songs/z1overw.h"
+    "${PROJECT_SOURCE_DIR}/projects/audio_demo/songs/ff1town.h"
+    "${PROJECT_SOURCE_DIR}/projects/audio_demo/songs/ff1overw.h"
+    "${PROJECT_SOURCE_DIR}/projects/audio_demo/songs/ff1matya.h")
+avm_add_object(
+    OUTPUT "${AVM_PUSH16_TEST_DIR}/audio_playlist.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/audio_playlist.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+    COMPILE_OPTIONS -O2
+    DEPENDS avm_sysroot avm_audio_demo ${audio_playlist_headers})
+avm_add_image(
+    OBJECTS "${AVM_PUSH16_TEST_DIR}/audio_playlist.o"
+    OUTPUT_ELF "${AVM_PUSH16_TEST_DIR}/audio_playlist.elf"
+    OUTPUT_IMAGE "${AVM_PUSH16_TEST_DIR}/audio_playlist.bin"
+    ENTRY _start
+    LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a" "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS DEPENDS avm_sysroot)
+
+# Independent processes cover the same comprehensive suite. No console pool:
+# Ninja may run these alongside one another, including on Windows.
+function(avm_add_audio_run target suite image)
+    add_custom_target(${target}
+        COMMAND "$<TARGET_FILE:avm_audio_tests>" --suite "${suite}"
+            "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst" "${image}"
+        DEPENDS avm_audio_tests avm_interpreter "${image}" ${ARGN}
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        VERBATIM)
+endfunction()
+avm_add_audio_run(avm_audio_core_isa_run core-isa "${AVM_PUSH16_TEST_DIR}/audio.bin")
+avm_add_audio_run(avm_audio_core_audio_run core-audio "${AVM_PUSH16_TEST_DIR}/audio.bin"
+    avm_audio_hardware_checks)
+avm_add_audio_run(avm_audio_demo_integration_run demo
+    "${PROJECT_SOURCE_DIR}/projects/audio_demo/build/audio_demo.bin" avm_audio_demo)
+avm_add_audio_run(avm_audio_playlist_assets_run playlist-assets "${AVM_PUSH16_TEST_DIR}/audio_playlist.bin")
+avm_add_audio_run(avm_audio_formatter_run formatter "${AVM_C_TEST_BINARY_DIR}/O0/audio.bin")
+add_custom_target(avm_audio_tests_run DEPENDS avm_audio_core_isa_run avm_audio_core_audio_run
+    avm_audio_demo_integration_run avm_audio_playlist_assets_run avm_audio_formatter_run)
+if(Python3_Interpreter_FOUND)
+    avm_add_audio_run(avm_audio_export_c_run export-c "${audio_large_dir}/C.bin")
+    avm_add_audio_run(avm_audio_export_cpp_run export-cpp "${audio_large_dir}/CXX.bin")
+    add_dependencies(avm_audio_tests_run avm_audio_export_c_run avm_audio_export_cpp_run)
+endif()
 
 # All five hardware configurations receive isolated Timer0 ISR, clock,
 # pending-tick, button-polling and exact cycle-count validation.

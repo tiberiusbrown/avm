@@ -481,6 +481,14 @@ int main(int argc, char **argv) {
         h.run(0.75f, {value(1), 0.0f, 0.0f});
         h.run(0.75f, {value(1), value(1), 0.0f});
         h.run(0.75f, {-value(1), -value(1), 0.0f});
+        // Literal expected bits are independent of the host reference model.
+        {
+            float x=value(0x5b9e5693u);
+            std::vector<float> coefficients={value(0xb8c3b895u),value(0x35fe90ddu),value(0x1b4d26cfu)};
+            require(bits(avm_poly_host(x,coefficients.data(),unsigned(coefficients.size())))==0xf115bf4cu,
+                "FPOLY host exponent-gap reference regression");
+            h.run(x,coefficients);
+        }
         uint32_t state = 0x53504931;
         for (unsigned i = 0; i < 400; ++i) {
             float x = value(0x3e000000 | (random(state) & 0x81ffffff));

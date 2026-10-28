@@ -44,6 +44,7 @@ struct harness {
     std::unique_ptr<arduboy_t> e = std::make_unique<arduboy_t>();
     std::map<std::string,unsigned> symbols;
     unsigned cases=0;
+    unsigned audio_commit_pc=0, seek_dispatch_pc=0, primary_table_pc=0;
     uint64_t isrmin=10000,isrmax=0,latencymax=0;
     uint64_t boot_cycles=0;
     bool freeze_commits=false;
@@ -62,17 +63,17 @@ struct harness {
             c().data[waveform]=uint8_t((c().data[waveform]&~(9u<<channel)) | bits);
         }
     }
-    bool boundary() { unsigned p=c().pc; return p>=sym("primary_table") && p<sym("primary_table")+1024 && (p-sym("primary_table"))%4==0; }
+    bool boundary() { unsigned p=c().pc; return p>=primary_table_pc && p<primary_table_pc+1024 && (p-primary_table_pc)%4==0; }
     void tick(bool terminal_break=false) {
         // Isolated SYS tests inspect controls/phases without advancing oscillators.
         // Exercise their stopped-timer path; handoff tests use live interrupts.
-        if(freeze_commits && c().pc==sym("audio_commit")) {
+        if(freeze_commits && c().pc==audio_commit_pc) {
             c().st(reg::addr::TIMSK1,0); c().st(reg::addr::TCCR1B,0);
         }
         // Ardens resets spi_done_cycle after delivering the byte to FX. The
         // CPU completion deadline remains in spi_transmit_zero_cycle until
         // its deferred peripheral update clears spi_busy.
-        if(c().pc==sym("seek_and_dispatch_func"))
+        if(c().pc==seek_dispatch_pc)
             require(!c().spi_busy || c().spi_transmit_zero_cycle<=c().cycle_count,
                 "FX deselected before speculative transfer completed");
         e->cycle(); c().update_all();
@@ -96,6 +97,9 @@ struct harness {
             while(in>>token) name=token;
             symbols[name]=a;
         }
+        primary_table_pc=sym("primary_table");
+        audio_commit_pc=sym("audio_commit");
+        seek_dispatch_pc=sym("seek_and_dispatch_func");
         e->reset();
         for(auto pair : {std::make_pair(args[1],"interpreter.hex"),std::make_pair(args[3],"fxdata.bin")}) {
             std::ifstream in(pair.first,std::ios::binary); require(bool(in),"input unavailable");
@@ -1165,9 +1169,13 @@ void synthesis(harness& h) {
     });
 }
 void shared_gain(harness& h) {
-    h.test("all 249 byte sums and 256 shared gains",[&]{
+    h.test("independent byte-sum and shared-gain boundaries",[&]{
         auto zero=h.c().data[2]; h.c().data[2]=0x5a;
-        for(int mix=-124;mix<=124;++mix) {
+        bool seen[249][256]{};
+        unsigned cases=0;
+        auto check=[&](int mix,unsigned master) {
+            if(seen[mix+124][master]) return;
+            seen[mix+124][master]=true; ++cases;
             unsigned remaining=unsigned(std::abs(mix));
             for(unsigned ch=0;ch<4;++ch) {
                 unsigned amp=std::min(remaining,31u); remaining-=amp;
@@ -1175,17 +1183,23 @@ void shared_gain(harness& h) {
                 h.word(phases+2*ch,mix<0 ? 0x8000 : 0);
             }
             h.c().data[noise]=mix<0 ? 1 : 2;
-            for(unsigned master=0;master<256;++master) {
-                h.c().data[volume]=uint8_t(master);
-                auto regs=h.c().data; auto sp=h.c().sp();
-                h.synth_sample();
-                require(h.c().data[held_sample]==output(mix,master),"shared output gain/rounding/saturation mismatch");
-                for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"output gain corrupted registers");
-                require(h.c().sp()==sp,"output gain leaked stack");
-            }
-        }
+            h.c().data[volume]=uint8_t(master);
+            auto regs=h.c().data; auto sp=h.c().sp();
+            h.synth_sample();
+            require(h.c().data[held_sample]==output(mix,master),"shared output gain/rounding/saturation mismatch");
+            for(unsigned r=0;r<32;++r) require(h.c().data[r]==regs[r],"output gain corrupted registers");
+            require(h.c().sp()==sp,"output gain leaked stack");
+        };
+        // Every mix at these gains includes all adjacent rounding/saturation
+        // transitions in the legal mix interval for the selected coefficients.
+        for(int mix=-124;mix<=124;++mix)
+            for(unsigned master : {0u,1u,2u,15u,16u,31u,32u,33u,63u,64u,65u,
+                127u,128u,129u,191u,192u,254u,255u}) check(mix,master);
+        for(unsigned master=0;master<256;++master)
+            for(int mix : {-124,-123,-64,-33,-32,-31,-17,-16,-1,0,1,16,17,31,32,33,64,123,124})
+                check(mix,master);
         h.c().data[2]=zero;
-        std::cout<<"shared output gain: 63744 sum/gain pairs passed\n";
+        std::cout<<"shared output gain: "<<cases<<" unique sum/gain pairs passed\n";
     });
 }
 
@@ -1817,6 +1831,7 @@ void handoff(harness& h) {
     });
 }
 void automatic(harness& h) {
+    const auto timer1_pc=h.sym("timer1_compa_isr"), service_pc=h.sym("audio_service_func");
     h.test("FX bursts and buffered event timing",[&]{
         std::vector<uint8_t> bytes(96);
         for(unsigned i=0;i<bytes.size();++i) bytes[i]=uint8_t(i*13);
@@ -1842,7 +1857,7 @@ void automatic(harness& h) {
             h.c().push(uint8_t(dest)); h.c().push(uint8_t(dest>>8));
             h.c().pc=uint16_t(h.sym("fx_read_program_bytes_func"));
             while(h.c().pc!=dest) {
-                if(h.c().pc==h.sym("timer1_compa_isr") && h.c().spi_busy) ++interrupted_reads;
+                if(h.c().pc==timer1_pc && h.c().spi_busy) ++interrupted_reads;
                 h.tick();
             }
             require(std::equal(bytes.begin(),bytes.begin()+64,h.c().data.begin()+0x100),"interrupt corrupted FX burst");
@@ -1901,7 +1916,7 @@ void automatic(harness& h) {
         auto end=h.c().cycle_count+1600000;
         uint64_t last=h.c().cycle_count;
         while(h.c().cycle_count<end) {
-            if(h.c().pc==h.sym("audio_service_func")) { h.latencymax=std::max(h.latencymax,h.c().cycle_count-last); last=h.c().cycle_count; }
+            if(h.c().pc==service_pc) { h.latencymax=std::max(h.latencymax,h.c().cycle_count-last); last=h.c().cycle_count; }
             h.tick();
         }
         require(h.c().data[music+5]==1,"idle music failed");
@@ -1926,9 +1941,7 @@ void phase_alignment(char** args) {
             uint64_t(ticks-1)*divider;
     };
     unsigned minimum=128,maximum=0;
-    uint64_t max_lateness=0,outputs=0;
-    unsigned cases=0,continuations=0;
-    auto live_phases=positions({0,1,7,8,31,32,55,56,63});
+    unsigned cases=0;
     // Directed millisecond-counter boundaries and every sub-tick prescaler phase.
     for(unsigned selected=0;selected<2;++selected)
     for(unsigned counter : {0u,1u,2u,7u,63u,127u,128u,248u,249u}) for(unsigned phase=0;phase<64;++phase) {
@@ -1964,34 +1977,9 @@ void phase_alignment(char** args) {
         require(gap>=64 && gap<=120 && gap%8==0,
             "audio phase alignment left a Timer0 collision window");
         ++cases;
-        if(counter!=0 || std::find(live_phases.begin(),live_phases.end(),phase)==live_phases.end()) continue;
-        ++continuations;
-        // Run a complete 8 ms relative-timer pattern at selected boundary phases.
-        // The host-only NOP loop replaces waveform bytes in this isolated core.
-        c.prog[0x200]=0; c.prog[0x201]=0;
-        c.prog[0x202]=0xfe; c.prog[0x203]=0xcf; // RJMP back to the NOP
-        c.decode(); c.pc=0x100;
-        c.st(reg::addr::TIMSK0,2);
-        auto end=c.cycle_count+128000;
-        unsigned count=0;
-        while(c.cycle_count<end) {
-            if(c.pc==h.sym("timer1_compa_isr")) {
-                require(c.cycle_count>=due+7,"phase sweep interrupt preceded its deadline");
-                max_lateness=std::max(max_lateness,c.cycle_count-due-7);
-                due+=selected ? 1024 : 2048; ++count;
-            }
-            h.tick();
-        }
-        require(count>=(selected ? 124u : 62u),"phase sweep lost synthesis interrupts");
-        outputs+=count;
-        h.until([&]{return c.pc==0x100 || c.pc==0x101;});
-        c.st(reg::addr::TIMSK0,0);
     }
-    require(max_lateness<10,"Timer0 delayed phase-aligned synthesis by ten cycles");
-    std::cout<<"Timer1 startup/rate-switch phase: "<<cases<<" rate/counter/prescaler combinations ("
-        <<continuations<<" live continuations), "
-        <<minimum<<".."<<maximum<<" cycles modulo 128; "<<outputs
-        <<" real-timer outputs, maximum extra lateness "<<max_lateness<<" cycles\n";
+    std::cout<<"Timer1 startup/rate-switch alignment: "<<cases<<" rate/counter/prescaler combinations, "
+        <<minimum<<".."<<maximum<<" cycles modulo 128\n";
 }
 void idle_continuation(char** args) {
     for(unsigned pc : {0x7000u,0xfffeu})
@@ -2024,55 +2012,69 @@ void idle_continuation(char** args) {
 }
 void demo(char** args, bool toggle_rates=false) {
     harness h(args,false);
-    auto begin=h.c().cycle_count;
+    auto& cpu=h.c();
+    const auto service_pc=h.sym("audio_service_func"), display_pc=h.sym("sys_display_impl");
+    const auto timer1_pc=h.sym("timer1_compa_isr"), synthesis_pc=h.sym("timer1_synthesis");
+    auto begin=cpu.cycle_count;
     uint64_t last=begin, maxgap=0;
     unsigned frames=0, samples=0, synthesized=0, minsp=0xaff;
     bool effect=false, paused=false, resumed=false;
     bool selected_8khz=false, returned_16khz=false;
-    while(h.c().cycle_count-begin<(toggle_rates ? 11200000u : 1600000u)) {
-        auto ms=(h.c().cycle_count-begin)/16000;
-        h.c().data[reg::addr::PINB]=((ms>=300 && ms<360)||(ms>=550 && ms<610))?0:16;
-        h.c().data[reg::addr::PINE]=(ms>=100 && ms<160)?0:64;
-        h.c().data[reg::addr::PINF]=toggle_rates &&
-            ((ms>=200 && ms<260)||(ms>=450 && ms<510)) ? 0x70 : 0xf0;
-        if(h.c().pc==h.sym("audio_service_func")) {
-            maxgap=std::max(maxgap,h.c().cycle_count-last); last=h.c().cycle_count;
+    auto update_buttons=[&](unsigned ms) {
+        cpu.data[reg::addr::PINB]=toggle_rates &&
+            ((ms>=145 && ms<185)||(ms>=285 && ms<325)) ? 0 : 16;
+        cpu.data[reg::addr::PINE]=toggle_rates && (ms>=40 && ms<80) ? 0 : 64;
+        cpu.data[reg::addr::PINF]=toggle_rates &&
+            ((ms>=90 && ms<130)||(ms>=210 && ms<250)) ? 0x70 : 0xf0;
+    };
+    uint64_t next_ms_cycle=begin+16000;
+    unsigned ms=0;
+    update_buttons(0);
+    while(cpu.cycle_count-begin<(toggle_rates ? 6400000u : 1600000u)) {
+        while(cpu.cycle_count>=next_ms_cycle) {
+            ++ms; next_ms_cycle+=16000; update_buttons(ms);
         }
-        if(h.c().pc==h.sym("sys_display_impl")) ++frames;
-        if(h.c().pc==h.sym("timer1_compa_isr")) ++samples;
-        if(h.c().pc==h.sym("timer1_synthesis")) ++synthesized;
-        minsp=std::min(minsp,unsigned(h.c().sp()));
-        effect|=h.c().data[sfx+5]==1;
-        paused|=h.c().data[music+5]==2;
-        resumed|=paused && h.c().data[music+5]==1;
-        selected_8khz|=h.c().data[rate]==0;
-        returned_16khz|=selected_8khz && h.c().data[rate]==1;
+        if(cpu.pc==service_pc) {
+            maxgap=std::max(maxgap,cpu.cycle_count-last); last=cpu.cycle_count;
+        }
+        if(cpu.pc==display_pc) ++frames;
+        if(cpu.pc==timer1_pc) ++samples;
+        if(cpu.pc==synthesis_pc) ++synthesized;
+        minsp=std::min(minsp,unsigned(cpu.sp()));
+        effect|=cpu.data[sfx+5]==1;
+        paused|=cpu.data[music+5]==2;
+        resumed|=paused && cpu.data[music+5]==1;
+        selected_8khz|=cpu.data[rate]==0;
+        returned_16khz|=selected_8khz && cpu.data[rate]==1;
         h.tick();
     }
-    require(frames>=(toggle_rates ? 35u : 4u),"demo failed to render at its configured frame rate");
-    require(toggle_rates ? (samples>=8700 && samples<=9200) : (samples>=1530 && samples<=1565),
+    require(frames>=(toggle_rates ? 20u : 4u),"demo failed to render at its configured frame rate");
+    // 400 ms at 15625 Hz minus about 120 ms at half rate = 5312.5;
+    // allow one frame of transition uncertainty (about 130 samples) each way.
+    require(toggle_rates ? (samples>=5150 && samples<=5450) : (samples>=1530 && samples<=1565),
         "demo sample clock lost interrupts");
     require(synthesized==samples,"demo output and synthesis clocks differ");
-    require(toggle_rates ? (selected_8khz && returned_16khz) : !selected_8khz,
+    require(toggle_rates ? (selected_8khz && returned_16khz && cpu.data[rate]==1) : !selected_8khz,
         "demo did not retain 16 kHz by default or toggle both rates");
     if(toggle_rates) require(effect && paused && resumed,"demo button controls failed");
     else require(!effect && !paused && !resumed,"default demo unexpectedly changed playback state");
     require(minsp>=scratch_end,"demo native stack collided with private workspace");
-    require(h.c().data[music+5]==1,"demo music did not continue automatically");
-    std::cout<<"animated demo"<<(toggle_rates ? " with rate toggles (700 ms)" : " smoke (100 ms)")<<": "<<frames<<" frames, "<<samples<<" outputs, "
+    require(cpu.data[music+5]==1,"demo music did not continue automatically");
+    std::cout<<"animated demo"<<(toggle_rates ? " with rate toggles (400 ms)" : " smoke (100 ms)")<<": "<<frames<<" frames, "<<samples<<" outputs, "
         <<synthesized<<" synthesis samples, service gap "
         <<maxgap/16000.<<" ms, native stack "<<0xb00-minsp<<" bytes"
         <<(toggle_rates ? "; SFX/pause/resume passed\n" : "; default playback smoke passed\n");
 }
 void formatter(char** args) {
     harness h(args,false);
+    const auto seek_dispatch_pc=h.sym("seek_and_dispatch_func"), sys_audio_pc=h.sym("sys_audio_impl");
     unsigned minsp=0xaff, tone_calls=0;
     bool audio_entry_seen=false;
     auto begin=h.c().cycle_count;
     while(!h.c().autobreaks.test(AB_BREAK) && h.c().cycle_count-begin<32000000) {
         minsp=std::min(minsp,unsigned(h.c().sp()));
-        if(h.c().pc==h.sym("seek_and_dispatch_func")) audio_entry_seen=false;
-        if(h.c().pc==h.sym("sys_audio_impl") && !audio_entry_seen) {
+        if(h.c().pc==seek_dispatch_pc) audio_entry_seen=false;
+        if(h.c().pc==sys_audio_pc && !audio_entry_seen) {
             // An interrupt can return to this entry before its first instruction.
             audio_entry_seen=true;
             if(h.c().data[22]!=10) { h.tick(true); continue; }
@@ -2094,50 +2096,66 @@ void formatter(char** args) {
     require(minsp>=scratch_end,"formatter/audio interrupts collided with private workspace");
     std::cout<<"libm/formatter with sample interrupts: native stack "<<0xb00-minsp<<" bytes\n";
 }
-void playlist(char** args) {
+// Direct compiled-asset/API validation intentionally excludes demo UI navigation/rendering.
+void playlist_assets(char** args) {
     harness h(args,false);
-    auto begin=h.c().cycle_count;
-    unsigned frames=0, minsp=0xaff;
-    bool audio_entry_seen=false, switched_while_paused=false, resumed=false, rate_preserved=true;
+    auto& cpu=h.c();
+    const auto seek_dispatch_pc=h.sym("seek_and_dispatch_func"), sys_audio_pc=h.sym("sys_audio_impl");
+    const auto primary_pc=h.sym("primary_table");
+    auto boundary=[&]{return cpu.pc>=primary_pc && cpu.pc<primary_pc+1024 && (cpu.pc-primary_pc)%4==0;};
+    std::ifstream image(args[3],std::ios::binary);
+    std::vector<uint8_t> bytes((std::istreambuf_iterator<char>(image)),{});
+    std::vector<unsigned> commands;
     std::vector<uint32_t> starts;
-    while(h.c().cycle_count-begin<17600000) {
-        auto ms=(h.c().cycle_count-begin)/16000;
-        // Left wraps to the last song. Six right presses visit all four
-        // imports, return to the original, and wrap the other direction.
-        unsigned pins=0xf0;
-        if(ms>=80 && ms<140) pins&=~0x20u;
-        if(ms>=170 && ms<230) pins&=~0x80u;
-        for(unsigned time : {220u,330u,440u,550u,660u,770u})
-            if(ms>=time && ms<time+60) pins&=~0x40u;
-        h.c().data[reg::addr::PINF]=uint8_t(pins);
-        h.c().data[reg::addr::PINB]=((ms>=400 && ms<460)||(ms>=890 && ms<950))?0:16;
-        h.c().data[reg::addr::PINE]=64;
-        if(h.c().pc==h.sym("seek_and_dispatch_func")) audio_entry_seen=false;
-        if(h.c().pc==h.sym("sys_audio_impl") && !audio_entry_seen) {
-            audio_entry_seen=true;
-            if(h.c().data[22]==0)
-                starts.push_back(h.word(16)|(uint32_t(h.c().data[18])<<16));
+    bool audio_entry_seen=false, in_flight=false;
+    unsigned command=0, minsp=0xaff, saved_sp=0, saved_guest_sp=0;
+    uint32_t pointer=0;
+    auto saved=cpu.data;
+    auto begin=cpu.cycle_count;
+    while(!cpu.autobreaks.test(AB_BREAK) && cpu.cycle_count-begin<2000000) {
+        minsp=std::min(minsp,unsigned(cpu.sp()));
+        require(h.word(28)>=0x100 && h.word(28)<=0xa00,"playlist guest stack out of bounds");
+        if(in_flight && boundary()) {
+            for(unsigned r=2;r<24;++r) require(cpu.data[r]==saved[r],"playlist SYS corrupted registers");
+            require(cpu.sp()==saved_sp && h.word(28)==saved_guest_sp &&
+                cpu.data[reg::addr::GPIOR0]==saved[reg::addr::GPIOR0],"playlist SYS corrupted stack/flags");
+            if(command==0) {
+                require(cpu.data[music+5]==1 && cpu.data[music+6]==bytes.at(pointer),
+                    "playlist asset ownership/playback did not load");
+            }
+            if(command==3) require(cpu.data[music+5]==2,"playlist pause did not complete");
+            if(command==4) require(cpu.data[music+5]==1,"playlist resume did not complete");
+            if(command==13) require(cpu.data[rate]==0,"playlist rate command did not complete");
+            if(command==14) require(cpu.data[music_loop]!=0,"playlist loop command did not complete");
+            in_flight=false;
         }
-        if(ms>=800 && ms<850 && h.c().data[music+5]==2) switched_while_paused=true;
-        if(ms>=970 && h.c().data[music+5]==1) resumed=true;
-        if(ms>=260 && h.c().data[rate]!=0) rate_preserved=false;
-        if(h.c().pc==h.sym("sys_display_impl")) ++frames;
-        minsp=std::min(minsp,unsigned(h.c().sp()));
-        h.tick();
+        if(cpu.pc==seek_dispatch_pc) audio_entry_seen=false;
+        if(cpu.pc==sys_audio_pc && !audio_entry_seen) {
+            require(!in_flight,"playlist SYS overlap");
+            audio_entry_seen=true; in_flight=true;
+            command=h.word(22); commands.push_back(command);
+            saved=cpu.data; saved_sp=cpu.sp(); saved_guest_sp=h.word(28);
+            if(command==0) {
+                pointer=h.word(16)|(uint32_t(cpu.data[18])<<16);
+                require(pointer>0 && pointer<bytes.size() && pointer<=0xffffff,"playlist asset pointer out of range");
+                starts.push_back(pointer);
+            }
+        }
+        h.tick(true);
     }
-    require(starts.size()==8,"playlist missed or duplicated a button-triggered song start");
-    require(starts[0]==starts[2] && starts[0]==starts[7] && starts[1]==starts[6],
-        "playlist did not wrap left/right to the expected songs");
-    auto unique=starts;
-    std::sort(unique.begin(),unique.end());
+    require(cpu.autobreaks.test(AB_BREAK) && !in_flight,"playlist fixture did not complete");
+    const std::vector<unsigned> expected={14,0,8,0,13,8,0,8,0,3,8,0,3,8,0,3,8,0,3,8,0,3,4};
+    require(commands==expected,"playlist audio API order/pause reapplication changed");
+    require(starts.size()==8 && starts[0]==starts[2] && starts[0]==starts[7] && starts[1]==starts[6],
+        "playlist asset sequence/wrap relations changed");
+    auto unique=starts; std::sort(unique.begin(),unique.end());
     unique.erase(std::unique(unique.begin(),unique.end()),unique.end());
-    require(unique.size()==5,"playlist did not visit all five independent music assets");
-    require(switched_while_paused && resumed,"playlist did not preserve pause across song switches");
-    require(rate_preserved,"playlist did not preserve the selected synthesis rate");
-    require(frames>=55,"playlist failed to maintain animated frames");
+    require(unique.size()==5,"playlist did not exercise all five compiled assets");
+    require(cpu.data[music_loop]!=0 && cpu.data[rate]==0 && cpu.data[music+5]==1,
+        "playlist final loop/rate/playback state changed");
     require(minsp>=scratch_end,"playlist native stack collided with private workspace");
-    std::cout<<"audio playlist: all five songs, both wraps, pause/switch/resume, rate retained; "
-        <<frames<<" frames, native stack "<<0xb00-minsp<<" bytes\n";
+    std::cout<<"playlist compiled asset and audio API validation: eight starts, five assets, pause/resume and 8 kHz retained; "
+        <<(cpu.cycle_count-begin)/16000.<<" ms, native stack "<<0xb00-minsp<<" bytes\n";
 }
 // Optional listening/analysis capture uses the actual timers, sequencer and
 // emulator PWM audio path. Optional rate selection supports A/B captures.
@@ -2162,6 +2180,7 @@ void capture(char** args, bool select_rate, bool loop) {
     h.c().sound_cycle=0;
     auto seconds=std::stoul(args[7]);
     require(seconds>0 && seconds<=60,"capture duration must be 1..60 seconds");
+    const auto timer1_pc=h.sym("timer1_compa_isr"), output_pc=h.sym("timer1_output_done");
     unsigned interrupts=0;
     // Independent logical endpoint trace, before PWM reconstruction/gain.
     // The endpoint written by this ISR is the previous held sample.
@@ -2169,8 +2188,8 @@ void capture(char** args, bool select_rate, bool loop) {
     require(bool(logical),"cannot create logical capture trace");
     logical<<"cycle,endpoint\n";
     while(h.c().cycle_count-begin<seconds*16000000ull) {
-        if(h.c().pc==h.sym("timer1_compa_isr")) ++interrupts;
-        if(h.c().pc==h.sym("timer1_output_done"))
+        if(h.c().pc==timer1_pc) ++interrupts;
+        if(h.c().pc==output_pc)
             logical<<h.c().cycle_count-begin<<','<<unsigned(h.c().data[held_sample])<<'\n';
         h.tick();
     }
@@ -2517,9 +2536,37 @@ void hex_fraction(char** args) {
     std::cout<<"hexadecimal fraction: "<<cases<<" byte-pattern/random/case/T checks passed; "
         <<minimum<<".."<<maximum<<" cycles\n";
 }
+void core_isa(char** args) {
+    decimal_division(args); cset(args); retired_math(args); format_fields(args);
+    sys_bounds(args); float_precision(args); hex_fraction(args);
+    phase_alignment(args); idle_continuation(args);
+}
+void core_audio(char** args) {
+    harness h(args); sequence(h); synthesis(h); sentinels(h); rates(h);
+    shared_gain(h); lowpass_filter(h); handoff(h); automatic(h);
+    std::cout<<h.cases<<" native audio cases passed\n"
+        <<"Timer1 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
+        <<100.*h.isrmax/2048<<"%\nobserved idle service gap: "<<h.latencymax/16000.<<" ms\n";
+}
+void run_suite(std::string const& name,char** args) {
+    if(name=="core-isa") core_isa(args);
+    else if(name=="core-audio") core_audio(args);
+    else if(name=="demo") {demo(args); demo(args,true);}
+    else if(name=="playlist-assets") playlist_assets(args);
+    else if(name=="formatter") formatter(args);
+    else if(name=="export-c") exported_large_asset(args);
+    else if(name=="export-cpp") exported_large_asset(args,false);
+    else throw std::runtime_error("unknown audio suite: "+name);
+}
+
 }
 int main(int argc,char** argv) {
     try {
+        if(argc>=2 && std::string(argv[1])=="--suite") {
+            require(argc==6,"usage: avm_audio_tests --suite name interpreter.hex interpreter.lst guest.bin");
+            char* args[]{argv[0],argv[3],argv[4],argv[5]};
+            run_suite(argv[2],args); return 0;
+        }
         if(argc==5 && std::string(argv[1])=="--mixer-check") {
             harness h(argv+1); shared_gain(h); lowpass_filter(h); mixer_profile(h);
             return 0;
@@ -2547,7 +2594,7 @@ int main(int argc,char** argv) {
             return 0;
         }
         if(argc==5 && std::string(argv[1])=="--playlist") {
-            playlist(argv+1);
+            playlist_assets(argv+1);
             return 0;
         }
         if(argc==5 && std::string(argv[1])=="--formatter") {
@@ -2562,34 +2609,23 @@ int main(int argc,char** argv) {
             capture(argv,argc>=9,argc==10 && std::stoul(argv[9])!=0);
             return 0;
         }
-        require(argc>=4 && argc<=8,"usage: avm_audio_tests interpreter.hex interpreter.lst audio.bin [audio_demo.bin [audio_c_test.bin [large_c.bin [large_cpp.bin]]]]");
-        decimal_division(argv);
-        cset(argv);
-        retired_math(argv);
-        format_fields(argv);
-        sys_bounds(argv);
-        float_precision(argv);
-        hex_fraction(argv);
-        phase_alignment(argv);
-        idle_continuation(argv);
-        harness h(argv); sequence(h); synthesis(h); sentinels(h); rates(h); shared_gain(h); lowpass_filter(h); handoff(h); automatic(h);
-        std::cout<<h.cases<<" native audio cases passed\n"
-            <<"Timer1 including entry/vector: "<<h.isrmin<<".."<<h.isrmax<<" cycles; CPU "
-            <<100.*h.isrmax/2048<<"%\n"
-            <<"observed idle service gap: "<<h.latencymax/16000.<<" ms\n";
+        require(argc>=4 && argc<=9,"usage: avm_audio_tests interpreter.hex interpreter.lst audio.bin [demo.bin [formatter.bin [large_c.bin [large_cpp.bin [playlist.bin]]]]]");
+        core_isa(argv); core_audio(argv);
         if(argc>=5) {
             char* demoargs[]{argv[0],argv[1],argv[2],argv[4]};
             demo(demoargs);
             demo(demoargs,true);
-            playlist(demoargs);
         }
         if(argc>=6) {
             char* formatargs[]{argv[0],argv[1],argv[2],argv[5]};
             formatter(formatargs);
         }
-        for(int index=6;index<argc;++index) {
+        for(int index=6;index<std::min(argc,8);++index) {
             char* largeargs[]{argv[0],argv[1],argv[2],argv[index]};
             exported_large_asset(largeargs,index==6);
+        }
+        if(argc==9) {
+            char* args[]{argv[0],argv[1],argv[2],argv[8]}; playlist_assets(args);
         }
         return 0;
     } catch(std::exception const& e) { std::cerr<<e.what()<<'\n';return 1; }

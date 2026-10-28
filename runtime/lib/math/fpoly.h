@@ -86,6 +86,12 @@ static inline double avm_poly_add(double a, double b, int final)
     unsigned ea = (unsigned)((va.u >> 52) & 2047);
     unsigned eb = (unsigned)((vb.u >> 52) & 2047);
     if (ea == 2047 || eb == 2047) return a+b;
+    /* Match __addsf3x: sufficiently large exponent differences
+       discard the smaller operand before sticky subtraction. */
+    unsigned aa = ea < 897 ? 897 : ea;
+    unsigned bb = eb < 897 ? 897 : eb;
+    if (aa > bb + 32) return final ? a : avm_poly_extended(a);
+    if (bb > aa + 32) return final ? b : avm_poly_extended(b);
     uint32_t ma = ea ? (uint32_t)(((va.u & UINT64_C(0xfffffffffffff)) |
                                  UINT64_C(0x10000000000000)) >> 21) : 0;
     uint32_t mb = eb ? (uint32_t)(((vb.u & UINT64_C(0xfffffffffffff)) |

@@ -953,12 +953,5 @@ else()
     add_custom_target(avm_validation_full DEPENDS avm_tests_run)
 endif()
 
-find_package(Python3 COMPONENTS Interpreter REQUIRED)
-add_custom_target(avm_termination_checks
-    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/termination/check_link.py"
-        --compiler "$<TARGET_FILE:clang>"
-        --work "${CMAKE_CURRENT_BINARY_DIR}/termination"
-    DEPENDS avm_sdk
-    COMMENT "Checking AVM termination RAM layout and callback stack bounds"
-    VERBATIM)
+add_subdirectory(termination)
 add_dependencies(avm_tests_run avm_termination_checks)

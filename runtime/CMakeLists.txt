@@ -163,6 +163,17 @@ avm_add_runtime_object(
     DEPENDS ${AVM_RUNTIME_HEADERS})
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
+set(RUNTIME_OBJECT
+    "${AVM_RUNTIME_OBJECT_DIR}/setjmp.o")
+avm_add_runtime_object(
+    OUTPUT "${RUNTIME_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/setjmp.asm"
+    LANGUAGE ASM
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
+
 # Float-only libm kernels are linked on demand into guest program memory.
 set(AVM_MATH_KERNELS
     ef_remainder ef_remquo sf_rint sf_nearbyint sf_lrint sf_lround sf_llrint sf_llround sf_ilogb sf_logb sf_fdim sf_nan sf_fmaxmag sf_fminmag

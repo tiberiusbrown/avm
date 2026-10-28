@@ -171,3 +171,11 @@ extern "C" void cpp_time_interface_smoke(void)
     void *null_value = NULL;
     (void)c;(void)a;(void)b;(void)d;(void)e;(void)f;(void)g;(void)h;(void)i;(void)null_value;
 }
+#include <setjmp.h>
+static_assert(sizeof(jmp_buf) == 13, "jmp_buf size");
+static_assert(alignof(jmp_buf) == 1, "jmp_buf alignment");
+static void jump_header_helper(jmp_buf env) { longjmp(env, 1); }
+void jump_header_smoke(void) {
+    jmp_buf env;
+    if (setjmp(env) == 0) jump_header_helper(env);
+}

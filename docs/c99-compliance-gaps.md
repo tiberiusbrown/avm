@@ -43,10 +43,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide the missing `float` forms `erff`, `erfcf`, `lgammaf`, `tgammaf`, `scalblnf`, and `nexttowardf`, together with the corresponding unsuffixed/`*l` forms of these families.
 - [ ] Implement standard domain, pole, overflow, and underflow reporting behavior and provide a truthful `math_errhandling` value. AVM's math runtime maintains neither `errno`-based math errors nor floating-point exception state.
 
-### `<setjmp.h>` — nonlocal control transfer
-
-- [ ] Provide `jmp_buf`, `setjmp`, and `longjmp`, preserving/restoring the AVM call-frame, stack, and callee-saved context with the required C99 semantics.
-
 ### `<signal.h>` — signal handling
 
 - [ ] Provide `sig_atomic_t`, `SIG_DFL`, `SIG_ERR`, `SIG_IGN`, and standard signals (`SIGABRT`, `SIGFPE`, `SIGILL`, `SIGINT`, `SIGSEGV`, `SIGTERM`).

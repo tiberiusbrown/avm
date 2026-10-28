@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <assert.h>
+#include <inttypes.h>
 #include <math.h>
 #include <new>
 #include <avm.h>
@@ -128,6 +130,10 @@ extern "C" void cpp_address_space_pointers(
 }
 
 int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }
+extern "C" intmax_t (*cpp_intmax_parse_address(void))(const char*, char**, int) {
+    return &strtoimax;
+}
+extern "C" char* (*cpp_strerror_address(void))(int) { return &strerror; }
 
 extern "C" clock_t cpp_time_direct(void) { return clock(); }
 extern "C" clock_t (*cpp_time_address(void))(void) { return &clock; }

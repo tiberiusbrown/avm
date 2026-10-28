@@ -4,6 +4,9 @@
 #include <stddef.h>
 
 #define RAND_MAX 32767
+#define EXIT_SUCCESS 0
+#define EXIT_FAILURE 1
+#define MB_CUR_MAX 1
 
 typedef struct { int quot; int rem; } div_t;
 typedef struct { long quot; long rem; } ldiv_t;
@@ -41,6 +44,7 @@ unsigned long long strtoull(const char* str, char** endptr, int base);
  * underflow set ERANGE; success and no conversion preserve errno. */
 float strtof(const char* str, char** endptr);
 double strtod(const char* str, char** endptr);
+double atof(const char* str);
 
 /* The absolute value and division result must be representable. Division
  * truncates toward zero; a nonzero remainder has the numerator's sign. */

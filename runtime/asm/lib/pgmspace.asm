@@ -37,7 +37,7 @@ SYMBOL TABLE:
 00000000 g     F .text.strlen_P	00000005 strlen_P
 00000000 g     F .text.strncpy_P	0000000b strncpy_P
 00000000 g     F .text.strncat_P	0000000b strncat_P
-00000000 g     F .text.strcpy_P	0000000c strcpy_P
+00000000 g     F .text.strcpy_P	00000011 strcpy_P
 00000000 g     F .text.strcat_P	0000000c strcat_P
 
 Disassembly of section .text.memchr_P:
@@ -709,10 +709,15 @@ Disassembly of section .text.strcpy_P:
 
 <strcpy_P>:
  b0                    push16	r0
- f1 04                 mov	r0, r4
- c5 ff ff              ldi16	r5, 0xffff
- d7 16                 sys	strncpy_p
- f1 20                 mov	r4, r0
+ 04                    mov	r5, r4
+ f0 65 0c              ldp8u	r0, [q3+]
+ f6 08                 st8	[r5+], r0
+ f4 a0                 tst8	r0
+ d0 04                 breq8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strcpy_P
+		R_AVM_FAR24	.text.strcpy_P+0x2
+<L0>:
  b8                    pop16	r0
  ef                    ret
 

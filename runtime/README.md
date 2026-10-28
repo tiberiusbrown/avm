@@ -249,6 +249,12 @@ avm_draw_textf overloads expand typed argument packs into the existing
 compiler builtins. Program-memory-only debug formatting keeps its explicit
 _P name.
 
+`assert.h` keeps diagnostic text, expression, filename, and function name in
+program memory. A failed assertion emits an AVM debug diagnostic and calls
+`abort()`. This debug channel is not a compliant standard `stderr` stream.
+Defining `NDEBUG` suppresses expression evaluation; reincluding `assert.h`
+updates the macro after changing `NDEBUG`.
+
 `math.h` declares ordinary C ABI functions. Direct calls, parenthesized calls,
 and function pointers all use the same implementations in `libavm.a`. The
 compiler also lowers standard math intrinsics and compatibility `__avm_*f`
@@ -261,6 +267,9 @@ linked on demand with `--gc-sections`. They do not provide errno or fenv state. 
 
 `string.h` retains its function-like call macros; define
 `AVM_STRING_NO_BUILTIN_MACROS` before including it to request ordinary calls.
+`strcpy` and `strcpy_P` are ordinary callable functions that copy through the
+terminating NUL. `strncpy` and `strncpy_P` retain their bounded, zero-padding
+semantics.
 
 `libavm-builtins.a` contains the compiler's 32-bit and 64-bit integer
 multiplication, division, remainder, and shift helpers. Keep this archive after

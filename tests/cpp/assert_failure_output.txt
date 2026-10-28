@@ -1,0 +1,2 @@
+Assertion failed: 0 && "sentinel", function avm_test_main, file assert_failure.c, line 70000.
+A

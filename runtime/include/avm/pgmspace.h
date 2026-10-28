@@ -52,7 +52,6 @@ char* strtok_rP(char* str, const char AVM_PROGMEM* delimiters, char** saveptr);
 #define strlen_P(str) __avm_strlen_P((str))
 #define strncpy_P(dst, src, size) __avm_strncpy_P((dst), (src), (size))
 #define strncat_P(dst, src, size) __avm_strncat_P((dst), (src), (size))
-#define strcpy_P(dst, src) strncpy_P((dst), (src), SIZE_MAX)
 #define strcat_P(dst, src) strncat_P((dst), (src), SIZE_MAX)
 #endif
 

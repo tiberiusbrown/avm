@@ -28,6 +28,7 @@ static size_t (*volatile span)(const char*, const char AVM_PROGMEM*) = strspn_P;
 static size_t (*volatile complement)(const char*, const char AVM_PROGMEM*) = strcspn_P;
 static char* (*volatile token)(char*, const char AVM_PROGMEM*) = strtok_P;
 static char* (*volatile token_r)(char*, const char AVM_PROGMEM*, char**) = strtok_rP;
+static char* (*volatile copy_string)(char*, const char AVM_PROGMEM*) = strcpy_P;
 
 #ifdef __cplusplus
 static_assert(sizeof(strchr_P(text, 0)) == 3, "flash search results must retain 24-bit pointers");
@@ -47,6 +48,12 @@ int avm_test_main(void)
     char* state = NULL;
     char* other_state = NULL;
     char* t;
+    char guarded[8] = {'!', '?', '?', '?', '?', '?', '?', '!'};
+    if(copy_string(guarded + 1, text) != guarded + 1 ||
+       strcmp_P(guarded + 1, text) || guarded[0] != '!' || guarded[7] != '!') return 20;
+    if(strcpy_P(guarded + 1, empty) != guarded + 1 || guarded[1] ||
+       guarded[2] != 'b' || guarded[7] != '!') return 21;
+    if((strcpy_P)(guarded + 1, text) != guarded + 1 || guarded[7] != '!') return 22;
     if(first(text, 'a') != text || last(text, 'a') != text + 4 ||
        first(text, 0) != text + 5 || last(text, 0) != text + 5 ||
        first(text, 'x') || last(empty, 'a') ||

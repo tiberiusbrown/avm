@@ -1,4 +1,6 @@
 #include <stdlib.h>
+#include <assert.h>
+#include <inttypes.h>
 #include <math.h>
 #include <avm.h>
 #include <stdio.h>
@@ -71,6 +73,8 @@ void c_explicit_program_calls(
 }
 
 int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }
+intmax_t (*intmax_parse_address(void))(const char*, char**, int) { return &strtoimax; }
+char* (*strerror_address(void))(int) { return &strerror; }
 
 clock_t time_direct(void) { return clock(); }
 clock_t (*time_address(void))(void) { return &clock; }

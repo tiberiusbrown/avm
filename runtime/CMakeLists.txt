@@ -15,6 +15,7 @@ function(avm_add_runtime_object)
 endfunction()
 
 set(RUNTIME_SOURCES
+    assert
     atexit
     audio_tone
     avm
@@ -27,6 +28,7 @@ set(RUNTIME_SOURCES
     font_br5n
     local_dtor
     immediate_exit
+    inttypes
     locale
     math
     pgmspace

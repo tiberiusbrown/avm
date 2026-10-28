@@ -17,6 +17,9 @@ int memcmp(const void* lhs, const void* rhs, size_t size);
 void* memchr(const void* src, int value, size_t size);
 
 int strcmp(const char* lhs, const char* rhs);
+int strcoll(const char* s1, const char* s2);
+size_t strxfrm(char* dst, const char* src, size_t n);
+char* strerror(int errnum);
 int strncmp(const char* lhs, const char* rhs, size_t size);
 char* strchr(const char* str, int value);
 char* strrchr(const char* str, int value);
@@ -127,7 +130,6 @@ static __attribute__((always_inline)) inline char* __avm_cpp_strncat(
 #define memset(dst, value, size) __avm_memset((dst), (value), (size))
 #define memmove(dst, src, size) __avm_memmove((dst), (src), (size))
 #endif
-#define strcpy(dst, src) strncpy((dst), (src), SIZE_MAX)
 #define strcat(dst, src) strncat((dst), (src), SIZE_MAX)
 
 #endif // AVM_RUNTIME_STRING_H

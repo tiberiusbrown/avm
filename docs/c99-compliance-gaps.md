@@ -27,10 +27,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] **Hosted environment selection:** Supply a truthful hosted C99 compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the complete hosted contract. The current SDK defaults to freestanding compilation.
 - [ ] **Minimum 65,535-byte object:** C99's hosted-only minimum translation/execution limit requires a single object of 65,535 bytes. The ordinary AVM data layout provides at most 1,024 bytes of writable static storage plus a 256-byte VM stack.
 
-### `<assert.h>` — diagnostics
-
-- [ ] Provide the complete `assert` macro, `NDEBUG` suppression, and required diagnostic plus abnormal-termination behavior.
-
 ### `<complex.h>` — complex arithmetic
 
 - [ ] Provide the required complex macros/constants (`complex`, `_Complex_I`, `I`) and a functioning C99 complex library for all three real precisions; C99 imaginary types and `_Imaginary_I` are optional.
@@ -41,18 +37,12 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide `fenv_t`, `fexcept_t`, `FE_DFL_ENV`, `FE_ALL_EXCEPT`, and the applicable floating-point exception and rounding-mode macros, with consistent exception and rounding-state semantics. C99 does not require every possible rounding mode or exception to be supported.
 - [ ] Provide `feclearexcept`, `fegetexceptflag`, `feraiseexcept`, `fesetexceptflag`, `fetestexcept`, `fegetround`, `fesetround`, `fegetenv`, `feholdexcept`, `fesetenv`, and `feupdateenv`.
 
-### `<inttypes.h>` — integer formatting and conversions
-
-- [ ] Provide a working AVM `inttypes.h`, rather than relying on Clang's wrapper that uses `#include_next <inttypes.h>` with no AVM-specific underlying header.
-- [ ] Provide `imaxdiv_t`, `imaxabs`, `imaxdiv`, `strtoimax`, `strtoumax`, `wcstoimax`, and `wcstoumax`.
-- [ ] Provide all applicable C99 `PRI*` and `SCN*` format macros (exact-width, least-width, fast-width, maximum-width, and pointer-width integer types).
-
 ### `<math.h>` — remaining math interfaces
 
+- [ ] Provide the required `float_t` and `double_t` types.
 - [ ] Provide C99's standard `double` and `long double` forms of the existing `*f` functions. This includes all corresponding unsuffixed and `*l` functions in the trigonometric, hyperbolic, exponential/logarithmic, power, rounding, remainder, classification-support, and floating-point manipulation families; aliases are sufficient only if their semantics and types are correct.
 - [ ] Provide the missing `float` forms `erff`, `erfcf`, `lgammaf`, `tgammaf`, `scalblnf`, and `nexttowardf`, together with the corresponding unsuffixed/`*l` forms of these families.
-- [ ] Provide the required `float_t` and `double_t` types and constants/macros `HUGE_VAL`, `HUGE_VALF`, `HUGE_VALL`, `INFINITY`, `NAN` (quiet NaNs are supported), `MATH_ERRNO`, `MATH_ERREXCEPT`, and `math_errhandling`.
-- [ ] Implement the standard domain, pole, overflow, and underflow reporting behavior selected by `math_errhandling`. The AVM mathematical runtime currently maintains neither `errno`-based math errors nor floating-point exception state.
+- [ ] Implement standard domain, pole, overflow, and underflow reporting behavior and provide a truthful `math_errhandling` value. AVM's math runtime maintains neither `errno`-based math errors nor floating-point exception state.
 
 ### `<setjmp.h>` — nonlocal control transfer
 
@@ -78,17 +68,11 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 ### `<stdlib.h>` — utilities beyond AVM's existing subset
 
-- [ ] Define `EXIT_SUCCESS`, `EXIT_FAILURE`, and `MB_CUR_MAX`.
-- [ ] Provide `atof` and `strtold`.
+- [ ] Provide `strtold`.
 - [ ] Provide the four standard allocation functions: `malloc`, `calloc`, `realloc`, and `free`, including failure, alignment, and lifetime semantics.
 - [ ] Provide environment interfaces `getenv` and `system` with their specified return/failure behavior.
 - [ ] Provide multibyte/wide conversions: `mblen`, `mbtowc`, `wctomb`, `mbstowcs`, and `wcstombs`.
 - [ ] Ensure every configuration claiming hosted conformance supports at least 32 `atexit` registrations; `--avm-atexit-capacity` currently permits a smaller capacity.
-
-### `<string.h>` — collation, errors, and copy semantics
-
-- [ ] Provide `strcoll`, `strxfrm`, and `strerror` (a fixed `"C"` locale is sufficient for the first two).
-- [ ] Correct `strcpy` to copy only the source string *including its terminating NUL*. Both the header macro and the addressable function currently implement `strcpy` via `strncpy(dst, src, SIZE_MAX)`, which pads with zero bytes up to `SIZE_MAX` and writes beyond a normally sized destination.
 
 ### `<tgmath.h>` — type-generic math
 

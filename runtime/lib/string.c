@@ -1,5 +1,6 @@
 #define AVM_STRING_IMPLEMENTATION
 #include <string.h>
+#include <errno.h>
 
 void* memchr(const void* src, int value, size_t size) {
     const unsigned char* p = (const unsigned char*)src;
@@ -130,6 +131,32 @@ int strcmp(const char* lhs, const char* rhs) {
     return __avm_strcmp(lhs, rhs);
 }
 
+int strcoll(const char* s1, const char* s2) { return strcmp(s1, s2); }
+
+size_t strxfrm(char* dst, const char* src, size_t n) {
+    size_t length = strlen(src);
+    if(n) {
+        size_t copy = length < n - 1 ? length : n - 1;
+        for(size_t i = 0; i < copy; ++i) dst[i] = src[i];
+        dst[copy] = '\0';
+    }
+    return length;
+}
+
+char* strerror(int errnum) {
+    // Only the returned message needs RAM; keep the message table in flash.
+    static char buffer[32];
+    const char AVM_PROGMEM* message;
+    switch(errnum) {
+    case EDOM: message = F("Numerical argument out of domain"); break;
+    case ERANGE: message = F("Numerical result out of range"); break;
+    case EILSEQ: message = F("Illegal byte sequence"); break;
+    case EINVAL: message = F("Invalid argument"); break;
+    default: message = F("Unknown error"); break;
+    }
+    return strcpy_P(buffer, message);
+}
+
 size_t strlen(const char* str) {
     return __avm_strlen(str);
 }
@@ -142,9 +169,10 @@ char* strncat(char* dst, const char* src, size_t size) {
     return __avm_strncat(dst, src, size);
 }
 
-#undef strcpy
 char* strcpy(char* dst, const char* src) {
-    return strncpy(dst, src, SIZE_MAX);
+    char* result = dst;
+    while((*dst++ = *src++) != '\0') {}
+    return result;
 }
 
 #undef strcat

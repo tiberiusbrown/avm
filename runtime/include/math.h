@@ -1,6 +1,14 @@
 #ifndef _AVM_RUNTIME_MATH_H
 #define _AVM_RUNTIME_MATH_H
 
+#define HUGE_VAL (__builtin_huge_val())
+#define HUGE_VALF (__builtin_huge_valf())
+#define HUGE_VALL (__builtin_huge_vall())
+#define INFINITY (__builtin_inff())
+#define NAN (__builtin_nanf(""))
+#define MATH_ERRNO 1
+#define MATH_ERREXCEPT 2
+
 #if defined(__INT_MAX__)
 #define FP_ILOGB0 (-__INT_MAX__-1)
 #define FP_ILOGBNAN (-__INT_MAX__-1)

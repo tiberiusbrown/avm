@@ -123,9 +123,10 @@ char* strncat_P(char* dst, char const AVM_PROGMEM* src, size_t size) {
     return __avm_strncat_P(dst, src, size);
 }
 
-#undef strcpy_P
 char* strcpy_P(char* dst, char const AVM_PROGMEM* src) {
-    return __avm_strncpy_P(dst, src, SIZE_MAX);
+    char* result = dst;
+    while((*dst++ = *src++) != '\0') {}
+    return result;
 }
 
 #undef strcat_P

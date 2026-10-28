@@ -16,6 +16,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.strtoull	00000000 .text.strtoull
 00000000 l    d  .text.atol	00000000 .text.atol
 00000000 l    d  .text.atoll	00000000 .text.atoll
+00000000 l    d  .text.atof	00000000 .text.atof
 00000000 l    d  .text.abs	00000000 .text.abs
 00000000 l    d  .text.labs	00000000 .text.labs
 00000000 l    d  .text.llabs	00000000 .text.llabs
@@ -41,6 +42,8 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_umodsi3
 00000000 g     F .text.atoll	00000223 atoll
 00000000         *UND*	00000000 __avm_umoddi3
+00000000 g     F .text.atof	00000005 atof
+00000000         *UND*	00000000 strtod
 00000000 g     F .text.abs	00000006 abs
 00000000 g     F .text.labs	00000009 labs
 00000000 g     F .text.llabs	00000034 llabs
@@ -1703,6 +1706,14 @@ Disassembly of section .text.atoll:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
+
+Disassembly of section .text.atof:
+
+<atof>:
+ a5                    xor	r5, r5
+ e2 00 00 00           jmpf	atof
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	strtod
 
 Disassembly of section .text.abs:
 

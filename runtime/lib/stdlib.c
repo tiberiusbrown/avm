@@ -118,6 +118,8 @@ long long atoll(const char* str) {
     return strtoll(str, NULL, 10);
 }
 
+double atof(const char* str) { return strtod(str, NULL); }
+
 int abs(int value) { return value < 0 ? -value : value; }
 long labs(long value) { return value < 0 ? -value : value; }
 long long llabs(long long value) { return value < 0 ? -value : value; }

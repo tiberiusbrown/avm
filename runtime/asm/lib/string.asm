@@ -21,12 +21,22 @@ SYMBOL TABLE:
 00000000 l    d  .text.memmove	00000000 .text.memmove
 00000000 l    d  .text.memcmp	00000000 .text.memcmp
 00000000 l    d  .text.strcmp	00000000 .text.strcmp
+00000000 l    d  .text.strcoll	00000000 .text.strcoll
+00000000 l    d  .text.strxfrm	00000000 .text.strxfrm
 00000000 l    d  .text.strlen	00000000 .text.strlen
+00000000 l    d  .text.strerror	00000000 .text.strerror
+00000000 l     O .data.strerror.buffer	00000020 strerror.buffer
 00000000 l    d  .text.strncpy	00000000 .text.strncpy
 00000000 l    d  .text.strncat	00000000 .text.strncat
 00000000 l    d  .text.strcpy	00000000 .text.strcpy
 00000000 l    d  .text.strcat	00000000 .text.strcat
 00000000 l    d  .data.strtok_next	00000000 .data.strtok_next
+00000000 l    d  .data.strerror.buffer	00000000 .data.strerror.buffer
+00000000 l    d  .rodata..L.avm.flashstr.0	00000000 .rodata..L.avm.flashstr.0
+00000000 l    d  .rodata..L.avm.flashstr.1	00000000 .rodata..L.avm.flashstr.1
+00000000 l    d  .rodata..L.avm.flashstr.2	00000000 .rodata..L.avm.flashstr.2
+00000000 l    d  .rodata..L.avm.flashstr.3	00000000 .rodata..L.avm.flashstr.3
+00000000 l    d  .rodata..L.avm.flashstr.4	00000000 .rodata..L.avm.flashstr.4
 00000000 g     F .text.memchr	0000002a memchr
 00000000 g     F .text.strncmp	0000002e strncmp
 00000000 g     F .text.strchr	00000017 strchr
@@ -45,10 +55,14 @@ SYMBOL TABLE:
 00000000 g     F .text.memmove	00000005 memmove
 00000000 g     F .text.memcmp	00000003 memcmp
 00000000 g     F .text.strcmp	00000003 strcmp
+00000000 g     F .text.strcoll	00000003 strcoll
+00000000 g     F .text.strxfrm	0000003a strxfrm
 00000000 g     F .text.strlen	00000003 strlen
+00000000 g     F .text.strerror	0000005a strerror
+00000000         *UND*	00000000 strcpy_P
 00000000 g     F .text.strncpy	00000005 strncpy
 00000000 g     F .text.strncat	00000005 strncat
-00000000 g     F .text.strcpy	00000008 strcpy
+00000000 g     F .text.strcpy	0000000e strcpy
 00000000 g     F .text.strcat	00000008 strcat
 
 Disassembly of section .text.memchr:
@@ -653,11 +667,132 @@ Disassembly of section .text.strcmp:
  d7 19                 sys	strcmp
  ef                    ret
 
+Disassembly of section .text.strcoll:
+
+<strcoll>:
+ d7 19                 sys	strcmp
+ ef                    ret
+
+Disassembly of section .text.strxfrm:
+
+<strxfrm>:
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ f1 04                 mov	r0, r4
+ 01                    mov	r4, r5
+ d7 1a                 sys	strlen
+ f6 2e                 tst16	r6
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strxfrm
+		R_AVM_FAR24	.text.strxfrm+0x36
+<L0>:
+ f4 b6                 dec16	r6
+ 32                    cmp	r4, r6
+ fc 34                 cmov.ult	r6, r4
+ f6 2e                 tst16	r6
+ d1 04                 brne8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strxfrm
+		R_AVM_FAR24	.text.strxfrm+0x30
+<L1>:
+ f1 08                 mov	r1, r0
+ f1 16                 mov	r2, r6
+ f7 0f                 ld8u	r7, [r5+]
+ f0 6d e3              st8	[r1+], r7
+ f4 b2                 dec16	r2
+ f6 2a                 tst16	r2
+ d0 04                 breq8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strxfrm
+		R_AVM_FAR24	.text.strxfrm+0x21
+<L2>:
+ f2 06                 add	r0, r6
+ a5                    xor	r5, r5
+ ee a0 20              st8	[r0+0], r5
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ ef                    ret
+
 Disassembly of section .text.strlen:
 
 <strlen>:
  d7 1a                 sys	strlen
  ef                    ret
+
+Disassembly of section .text.strerror:
+
+<strerror>:
+ cc 22                 cmpi.s8	r4, 0x22
+ d3 04                 brslt8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x21
+<L0>:
+ cc 16                 cmpi.s8	r4, 0x16
+ d1 04                 brne8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x43
+<L1>:
+ cc 21                 cmpi.s8	r4, 0x21
+ d0 04                 breq8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x3a
+<L2>:
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.0
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.0
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0x51
+ cc 54                 cmpi.s8	r4, 0x54
+ d1 04                 brne8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x4c
+<L3>:
+ cc 22                 cmpi.s8	r4, 0x22
+ d0 04                 breq8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x3a
+<L4>:
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.1
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.1
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0x51
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.4
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.4
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0x51
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.3
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.3
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0x51
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.2
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.2
+ f1 77                 zext8	r7
+ c4 00 00              ldi16	r4, 0x0
+		R_AVM_DATA16	.data.strerror.buffer
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	strcpy_P
 
 Disassembly of section .text.strncpy:
 
@@ -678,10 +813,15 @@ Disassembly of section .text.strncat:
 Disassembly of section .text.strcpy:
 
 <strcpy>:
- 0c                    mov	r7, r4
- c6 ff ff              ldi16	r6, 0xffff
- d7 1b                 sys	strncpy
- 03                    mov	r4, r7
+ 08                    mov	r6, r4
+ f7 0f                 ld8u	r7, [r5+]
+ f6 17                 st8	[r6+], r7
+ f4 a7                 tst8	r7
+ d0 04                 breq8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strcpy
+		R_AVM_FAR24	.text.strcpy+0x1
+<L0>:
  ef                    ret
 
 Disassembly of section .text.strcat:

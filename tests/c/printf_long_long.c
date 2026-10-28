@@ -2,6 +2,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdint.h>
+#include <inttypes.h>
 #include <stdio.h>
 #include <string.h>
 #include "test_hex_output.h"
@@ -136,17 +137,17 @@ NOINLINE static void mixed(void)
 
 NOINLINE static void intmax_format(void)
 {
-    check(snprintf(buffer, sizeof(buffer), "%jd", (-LLONG_MAX - 1LL)),
+    check(snprintf(buffer, sizeof(buffer), "%" PRIdMAX, INTMAX_MIN),
           "-9223372036854775808");
-    check(snprintf(buffer, sizeof(buffer), "%ji", LLONG_MAX),
+    check(snprintf(buffer, sizeof(buffer), "%" PRIiMAX, INTMAX_MAX),
           "9223372036854775807");
-    check(snprintf(buffer, sizeof(buffer), "%ju", ULLONG_MAX),
+    check(snprintf(buffer, sizeof(buffer), "%" PRIuMAX, UINTMAX_MAX),
           "18446744073709551615");
-    check(snprintf(buffer, sizeof(buffer), "%jo", ULLONG_MAX),
+    check(snprintf(buffer, sizeof(buffer), "%" PRIoMAX, UINTMAX_MAX),
           "1777777777777777777777");
-    check(snprintf(buffer, sizeof(buffer), "%jx", ULLONG_MAX),
+    check(snprintf(buffer, sizeof(buffer), "%" PRIxMAX, UINTMAX_MAX),
           "ffffffffffffffff");
-    check(snprintf(buffer, sizeof(buffer), "%jX", ULLONG_MAX),
+    check(snprintf(buffer, sizeof(buffer), "%" PRIXMAX, UINTMAX_MAX),
           "FFFFFFFFFFFFFFFF");
     check(snprintf(buffer, sizeof(buffer), "%d|%jd|%u", 7, (-LLONG_MAX - 1LL), 9u),
           "7|-9223372036854775808|9");

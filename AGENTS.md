@@ -6,7 +6,14 @@ Never create Git commits or push changes in this repository or its submodules. L
 
 Documentation exists in the `docs/` directory. Do not create new documents or directories inside `docs/` unless explicitly directed. All documentation files should be in Markdown (`.md`) format. Keep existing documentation up to date with new changes as needed.
 
-Keep `docs/c99-compliance-gaps.md` current whenever compiler, ABI, runtime, or header changes affect C99 support. In the same change, remove resolved gaps, revise partially resolved gaps, and add newly identified gaps. Keep freestanding requirements separate from additional hosted requirements; list only missing support. Verify a gap is resolved before removing it.
+Keep `docs/c99-compliance-gaps.md` current whenever compiler, ABI, runtime, or header changes affect C99 support. Update it in the same change using these rules:
+
+- Preserve the existing section structure and `- [ ]` checklist format. Keep freestanding requirements separate from additional hosted requirements.
+- List only support that is still missing. Do not describe implemented features, add completion summaries or historical notes, or retain resolved items as checked boxes.
+- Remove fully resolved gaps and any section headings left empty. Narrow partially resolved entries to the remaining missing requirements without describing the completed portion.
+- Add newly identified gaps. Preserve outstanding requirements even when related interfaces have been implemented.
+- Verify required linking, execution, and semantics before removing a gap; declarations or macros alone are not sufficient evidence.
+- If the tracker is absent, report that rather than recreating it from memory.
 
 ## Development
 

@@ -37,6 +37,7 @@ set(RUNTIME_SOURCES
     qsort
     bsearch
     runtime
+    signal
     stdio
     stdlib
     strtof

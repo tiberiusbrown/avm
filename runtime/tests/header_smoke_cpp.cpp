@@ -179,3 +179,18 @@ void jump_header_smoke(void) {
     jmp_buf env;
     if (setjmp(env) == 0) jump_header_helper(env);
 }
+#include <signal.h>
+static_assert(sizeof(sig_atomic_t) == 1 && (sig_atomic_t)-1 < 0, "signal atomic ABI");
+static_assert(sizeof(__avm_sighandler_t) == 3, "packed code pointer ABI");
+static_assert(SIGABRT == 1 && SIGFPE == 2 && SIGILL == 3 && SIGINT == 4 &&
+        SIGSEGV == 5 && SIGTERM == 6, "standard signal numbers");
+/* Static initializers exercise address constants, including the sentinels. */
+static __avm_sighandler_t signal_constants[] = { SIG_DFL, SIG_IGN, SIG_ERR };
+void signal_interface_smoke(void) {
+    __avm_sighandler_t (*volatile install)(int, __avm_sighandler_t) = &signal;
+    int (*volatile deliver)(int) = &raise;
+    (void)install(SIGINT, signal_constants[0]);
+    (void)deliver(SIGINT);
+    (void)signal(SIGTERM, SIG_IGN);
+    (void)raise(SIGTERM);
+}

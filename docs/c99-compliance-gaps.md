@@ -43,11 +43,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide the missing `float` forms `erff`, `erfcf`, `lgammaf`, `tgammaf`, `scalblnf`, and `nexttowardf`, together with the corresponding unsuffixed/`*l` forms of these families.
 - [ ] Implement standard domain, pole, overflow, and underflow reporting behavior and provide a truthful `math_errhandling` value. AVM's math runtime maintains neither `errno`-based math errors nor floating-point exception state.
 
-### `<signal.h>` — signal handling
-
-- [ ] Provide `sig_atomic_t`, `SIG_DFL`, `SIG_ERR`, `SIG_IGN`, and standard signals (`SIGABRT`, `SIGFPE`, `SIGILL`, `SIGINT`, `SIGSEGV`, `SIGTERM`).
-- [ ] Provide `signal` and `raise`, including supported handler disposition and standard return/failure behavior.
-
 ### `<stdio.h>` — narrow streams, formatted I/O, files
 
 - [ ] Provide `FILE`, `fpos_t`, `stdin`, `stdout`, `stderr`, `EOF`, `BUFSIZ`, `FOPEN_MAX`, `FILENAME_MAX`, `L_tmpnam`, `TMP_MAX`, `_IOFBF`, `_IOLBF`, `_IONBF`, and `SEEK_SET`/`SEEK_CUR`/`SEEK_END`.

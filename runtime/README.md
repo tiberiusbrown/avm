@@ -314,3 +314,11 @@ shifts and the sign fill for arithmetic-right shifts. The 32-bit helpers
 decompose values into two 16-bit words and use variable 16-bit shift
 instructions, without a loop over the count. Source-language division by zero
 and out-of-range shift counts remain undefined behavior.
+
+`<signal.h>` supports all six C99 signals with synchronous software delivery
+through `raise()` or `abort()`. Default dispositions halt execution without normal
+termination callbacks. Installed handlers are one-shot: their disposition resets
+to `SIG_DFL` before the call, and handlers may install a replacement. Hardware
+and interpreter exceptions are not automatically converted to C signals.
+The six packed three-byte function pointers occupy 18 bytes of static RAM only
+when signal support is linked; `abort()` alone does not pull in this table.

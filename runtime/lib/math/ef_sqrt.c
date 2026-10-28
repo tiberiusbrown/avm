@@ -18,11 +18,28 @@
 #include "native_math.h"
 #endif
 
-float __ieee754_sqrtf(float x)
+#ifdef __AVM__
+static __attribute__((noinline)) float avm_sqrt_special(float x)
+{
+    uint16_t high = avm_math_high_word(x);
+    uint32_t u;
+    GET_FLOAT_WORD(u, x);
+    uint16_t low = (uint16_t)u;
+    if (high < 0xff80U) {
+        if (high != 0x8000U || low) errno = EDOM;
+    } else if (high == 0xff80U && !low) errno = EDOM;
+    return avm_native_sqrt(x);
+}
+#endif
+
+float sqrtf(float x)
 {
 #ifdef __AVM__
+    if (__builtin_expect(avm_math_high_word(x) & 0x8000U, 0))
+        return avm_sqrt_special(x);
     return avm_native_sqrt(x);
 #else
+    if (x < 0.0f) errno = EDOM;
     /* Exact integer reference for the native restoring algorithm. No table. */
     uint32_t u;
     GET_FLOAT_WORD(u, x);

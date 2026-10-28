@@ -4,7 +4,8 @@ math_sf_sincos.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_sincos.c
 00000000 l    d  .text.sincosf	00000000 .text.sincosf
-00000000 g     F .text.sincosf	0000008d sincosf
+00000000 g     F .text.sincosf	000000aa sincosf
+00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.sincosf:
 
@@ -16,6 +17,16 @@ Disassembly of section .text.sincosf:
  d6 f4                 adjsp	-0xc
  f4 63                 stsp16	[sp+0x8], r7
  f4 5a                 stsp16	[sp+0x6], r6
+ 09                    mov	r6, r5
+ c7 ff 7f              ldi16	r7, 0x7fff
+ 8e                    and	r7, r6
+ c6 80 7f              ldi16	r6, 0x7f80
+ 3e                    cmp	r7, r6
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	sincosf
+		R_AVM_FAR24	.text.sincosf+0x98
+<L0>:
  ff 1d                 frempio2
  f2 62                 mov32	q0, q2
  c0 02                 ldi8	r4, 0x2
@@ -29,9 +40,6 @@ Disassembly of section .text.sincosf:
  ff 02                 fmul
  f2 66                 mov32	q1, q2
  ff 16 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
- f2 68                 mov32	q2, q0
  ff 02                 fmul
  f2 62                 mov32	q0, q2
  f2 69                 mov32	q2, q1
@@ -70,3 +78,15 @@ Disassembly of section .text.sincosf:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
+ f6 2c                 tst16	r4
+ d0 04                 breq8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	sincosf
+		R_AVM_FAR24	.text.sincosf+0x19
+<L1>:
+ c2 21                 ldi8	r6, 0x21
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
+ e2 00 00 00           jmpf	sincosf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.sincosf+0x19

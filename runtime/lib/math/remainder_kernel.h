@@ -1,6 +1,6 @@
 #ifndef AVM_REMAINDER_KERNEL_H
 #define AVM_REMAINDER_KERNEL_H
-#include "fdlibm.h"
+#include "native_math.h"
 
 /* All reduction operands are nonnegative and non-NaN. IEEE word ordering
    then replaces a floating comparison with a native integer comparison. */
@@ -21,7 +21,8 @@ avm_remainder(float x, float y, int *quotient, int quotient_bits)
     uint32_t ax = ux & 0x7fffffffUL, ay = uy & 0x7fffffffUL;
     if (quotient_bits) *quotient = 0;
     if (ax > 0x7f800000UL || ay > 0x7f800000UL) return x+y;
-    if (ax == 0x7f800000UL || !ay) {
+    if (AVM_MATH_UNLIKELY(ax == 0x7f800000UL || !ay)) {
+        errno = EDOM;
         SET_FLOAT_WORD(x, 0x7fc00000UL);
         return x;
     }
@@ -32,7 +33,7 @@ avm_remainder(float x, float y, int *quotient, int quotient_bits)
     /* Scaling by a power of two is exact, including subnormals. If it
        overflows, fmod(finite, infinity) simply returns its first operand.
        Retain only the quotient bits needed for parity / remquo's low 3. */
-    float r = fmodf(x, y*(quotient_bits ? 8.0f : 2.0f));
+    float r = avm_native_fmod(x, y*(quotient_bits ? 8.0f : 2.0f));
     unsigned q = 0;
     if (quotient_bits) {
         float p = y*4.0f;

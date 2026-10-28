@@ -5,7 +5,7 @@ float log2f(float x)
 {
     uint32_t u;
     GET_FLOAT_WORD(u, x);
-    if (u-1U >= 0x7f7fffffUL) return avm_log_special(x, u);
+    if (AVM_MATH_UNLIKELY(u-1U >= 0x7f7fffffUL)) return avm_log_special(x, u);
     int exponent;
     x = avm_log_normalize(x, u, &exponent);
     return (float)exponent + avm_log2_mantissa(x);

@@ -22,12 +22,21 @@
 #include "fdlibm.h"
 
 #ifdef __AVM__
-float __ieee754_fmodf(float x, float y)
+#include "native_math.h"
+static __attribute__((noinline)) float avm_fmod_special(float x, float y)
 {
-    register float a __asm__("q2") = x;
-    register float b __asm__("q3") = y;
-    __asm__("fmod" : "+r"(a) : "r"(b));
-    return a;
+    avm_math_remainder_domain(x, y);
+    return avm_native_fmod(x, y);
+}
+float fmodf(float x, float y)
+{
+    if (AVM_MATH_UNLIKELY(avm_math_high(x) >= 0x7f80U))
+        __attribute__((musttail)) return avm_fmod_special(x, y);
+    uint32_t bits;
+    GET_FLOAT_WORD(bits, y);
+    if (AVM_MATH_UNLIKELY(!(uint16_t)bits && avm_math_high(y) == 0))
+        __attribute__((musttail)) return avm_fmod_special(x, y);
+    return avm_native_fmod(x, y);
 }
 #else
 static __attribute__((always_inline)) inline int avm_fmod_subnormal_exponent(uint32_t word)
@@ -41,6 +50,7 @@ static __attribute__((always_inline)) inline int avm_fmod_subnormal_exponent(uin
 
 	float __ieee754_fmodf(float x, float y)
 {
+    avm_math_remainder_domain(x, y);
 	__int32_t hx,hy,hz,sx;
 	int n,ix,iy;
 

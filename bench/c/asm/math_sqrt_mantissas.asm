@@ -11,16 +11,24 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 ef_sqrt.c
-00000451 l       .init_array	00000000 .hidden __init_array_end
-00000451 l       .init_array	00000000 .hidden __init_array_start
-00000451 l       .fini_array	00000000 .hidden __fini_array_start
-00000451 l       .fini_array	00000000 .hidden __fini_array_end
+00000458 l     F .text	00000025 avm_sqrt_special
+00000000 l    df *ABS*	00000000 stdlib.c
+00000000 l    df *ABS*	00000000 avm.c
+00000000 l    df *ABS*	00000000 ctype.c
+00000000 l    df *ABS*	00000000 strtof.c
+00000000 l    df *ABS*	00000000 integer.c
+00000000 l    df *ABS*	00000000 wide_integer.c
+0000047d l       .init_array	00000000 .hidden __init_array_end
+0000047d l       .init_array	00000000 .hidden __init_array_start
+0000047d l       .fini_array	00000000 .hidden __fini_array_start
+0000047d l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	00000023 _start
 00000267 g     F .text	00000180 avm_test_main
 000003e9 g     F .text	00000065 __avm_terminate
 000003e7 g     F .text	00000002 avm_halt
-0000044e g     F .text	00000003 sqrtf
+0000044e g     F .text	0000000a sqrtf
 00000000  w      *UND*	00000000 __avm_run_local_dtors
+00000184 g     O .data	00000002 __avm_errno
 
 Disassembly of section .text:
 
@@ -49,19 +57,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 51 04              ldi16	r4, 0x451
+ c4 7d 04              ldi16	r4, 0x47d
  c1 00                 ldi8	r5, 0x0
- c6 51 04              ldi16	r6, 0x451
+ c6 7d 04              ldi16	r6, 0x47d
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 51 04           ldi16	r0, 0x451
+ f0 04 7d 04           ldi16	r0, 0x47d
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 51 04           ldi16	r2, 0x451
+ f0 06 7d 04           ldi16	r2, 0x47d
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -244,19 +252,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 02 fc              call16	-1022 <__avm_run_local_dtors>
 <L0>:
- c4 51 04              ldi16	r4, 0x451
+ c4 7d 04              ldi16	r4, 0x47d
  c1 00                 ldi8	r5, 0x0
- c6 51 04              ldi16	r6, 0x451
+ c6 7d 04              ldi16	r6, 0x47d
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 51 04           ldi16	r2, 0x451
+ f0 06 7d 04           ldi16	r2, 0x47d
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 51 04           ldi16	r0, 0x451
+ f0 04 7d 04           ldi16	r0, 0x47d
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -285,5 +293,34 @@ Disassembly of section .text:
  ef                    ret
 
 <sqrtf>:
+ 09                    mov	r6, r5
+ f6 2e                 tst16	r6
+ d3 03                 brslt8	0x3 <L0>
+ ff 17                 fsqrt
+ ef                    ret
+<L0>:
+ d4 00                 jmp8	avm_sqrt_special
+
+<avm_sqrt_special>:
+ 09                    mov	r6, r5
+ c7 7f ff              ldi16	r7, 0xff7f
+ 3e                    cmp	r7, r6
+ d2 0d                 brult8	0xd <L1>
+ f6 2c                 tst16	r4
+ d1 11                 brne8	0x11 <L2>
+ c7 00 80              ldi16	r7, 0x8000
+ 3b                    cmp	r6, r7
+ d1 0b                 brne8	0xb <L2>
+<L0>:
+ ff 17                 fsqrt
+ ef                    ret
+<L1>:
+ f6 2c                 tst16	r4
+ d1 f9                 brne8	-0x7 <L0>
+ ce 80                 cmpi.s8	r6, -0x80
+ d1 f5                 brne8	-0xb <L0>
+<L2>:
+ c2 21                 ldi8	r6, 0x21
+ f0 5e 84 01           stm16	[0x184], r6
  ff 17                 fsqrt
  ef                    ret

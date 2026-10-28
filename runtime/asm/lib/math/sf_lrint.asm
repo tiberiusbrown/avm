@@ -4,7 +4,8 @@ math_sf_lrint.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_lrint.c
 00000000 l    d  .text.lrintf	00000000 .text.lrintf
-00000000 g     F .text.lrintf	0000006c lrintf
+00000000 g     F .text.lrintf	00000081 lrintf
+00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.lrintf:
 
@@ -47,22 +48,39 @@ Disassembly of section .text.lrintf:
  f9 a9                 or	r5, r2
  08                    mov	r6, r4
  0d                    mov	r7, r5
- f0 04 ff ff           ldi16	r0, 0xffff
- f0 05 ff 7f           ldi16	r1, 0x7fff
- f9 18                 and	r0, r6
- f9 3c                 and	r1, r7
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff 7f              ldi16	r5, 0x7fff
+ 82                    and	r4, r6
+ 87                    and	r5, r7
+ f2 30                 sub	r0, r0
+ f0 05 00 4f           ldi16	r1, 0x4f00
+ f0 69 80              cmp32	q2, q0
+ d2 04                 brult8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	lrintf
+		R_AVM_FAR24	.text.lrintf+0x64
+<L1>:
  02                    mov	r4, r6
  07                    mov	r5, r7
  ff 12                 ftos32
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff 4e              ldi16	r7, 0x4eff
- f2 42                 sub	r2, r2
- f0 07 00 80           ldi16	r3, 0x8000
- f0 69 c0              cmp32	q3, q0
- fc 22                 cmov.ult	r4, r2
- fc 2b                 cmov.ult	r5, r3
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
+ a0                    xor	r4, r4
+ c5 00 80              ldi16	r5, 0x8000
+ f2 30                 sub	r0, r0
+ f0 05 00 cf           ldi16	r1, 0xcf00
+ f0 69 c0              cmp32	q3, q0
+ d1 04                 brne8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	lrintf
+		R_AVM_FAR24	.text.lrintf+0x5f
+<L2>:
+ c2 21                 ldi8	r6, 0x21
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
+ e2 00 00 00           jmpf	lrintf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.lrintf+0x5f

@@ -4,9 +4,10 @@ math_sf_llround.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_llround.c
 00000000 l    d  .text.llroundf	00000000 .text.llroundf
-00000000 g     F .text.llroundf	000000e0 llroundf
+00000000 g     F .text.llroundf	000000f6 llroundf
 00000000         *UND*	00000000 __avm_ashlsi3
 00000000         *UND*	00000000 __avm_lshrsi3
+00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.llroundf:
 
@@ -21,28 +22,21 @@ Disassembly of section .text.llroundf:
  c7 ff 7f              ldi16	r7, 0x7fff
  88                    and	r6, r4
  8d                    and	r7, r5
- f0 04 ff ff           ldi16	r0, 0xffff
- f0 05 ff 5e           ldi16	r1, 0x5eff
- f0 69 0c              cmp32	q0, q3
+ f2 30                 sub	r0, r0
+ f0 05 00 5f           ldi16	r1, 0x5f00
+ f0 69 c0              cmp32	q3, q0
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llroundf
-		R_AVM_FAR24	.text.llroundf+0x2b
+		R_AVM_FAR24	.text.llroundf+0xd4
 <L0>:
- aa                    xor	r6, r6
- c7 00 80              ldi16	r7, 0x8000
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- e2 00 00 00           jmpf	llroundf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.llroundf+0xd9
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff 4e           ldi16	r1, 0x4eff
  f0 69 0c              cmp32	q0, q3
  d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llroundf
-		R_AVM_FAR24	.text.llroundf+0x46
+		R_AVM_FAR24	.text.llroundf+0x3a
 <L1>:
  ff 12                 ftos32
  09                    mov	r6, r5
@@ -50,7 +44,7 @@ Disassembly of section .text.llroundf:
  0e                    mov	r7, r6
  e2 00 00 00           jmpf	llroundf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.llroundf+0xd9
+		R_AVM_FAR24	.text.llroundf+0xcd
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  c0 7f                 ldi8	r4, 0x7f
@@ -69,7 +63,7 @@ Disassembly of section .text.llroundf:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llroundf
-		R_AVM_FAR24	.text.llroundf+0x87
+		R_AVM_FAR24	.text.llroundf+0x7b
 <L2>:
  c6 6a ff              ldi16	r6, 0xff6a
  f4 10                 ldsp16	r4, [sp+0x4]
@@ -92,7 +86,7 @@ Disassembly of section .text.llroundf:
  f2 66                 mov32	q1, q2
  e2 00 00 00           jmpf	llroundf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.llroundf+0x9b
+		R_AVM_FAR24	.text.llroundf+0x8f
  c6 4a ff              ldi16	r6, 0xff4a
  f4 10                 ldsp16	r4, [sp+0x4]
  12                    add	r4, r6
@@ -113,13 +107,13 @@ Disassembly of section .text.llroundf:
  d3 04                 brslt8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llroundf
-		R_AVM_FAR24	.text.llroundf+0xb6
+		R_AVM_FAR24	.text.llroundf+0xaa
 <L3>:
  f2 6b                 mov32	q3, q1
  f2 68                 mov32	q2, q0
  e2 00 00 00           jmpf	llroundf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.llroundf+0xd9
+		R_AVM_FAR24	.text.llroundf+0xcd
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  f0 69 08              cmp32	q0, q2
@@ -141,3 +135,22 @@ Disassembly of section .text.llroundf:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
+ aa                    xor	r6, r6
+ c7 00 80              ldi16	r7, 0x8000
+ f2 62                 mov32	q0, q2
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f2 42                 sub	r2, r2
+ f0 07 00 df           ldi16	r3, 0xdf00
+ f0 69 04              cmp32	q0, q1
+ d1 04                 brne8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	llroundf
+		R_AVM_FAR24	.text.llroundf+0xcd
+<L4>:
+ f0 00 21              ldi8	r0, 0x21
+ f0 58 00 00           stm16	[0x0], r0
+		R_AVM_DATA16	__avm_errno
+ e2 00 00 00           jmpf	llroundf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.llroundf+0xcd

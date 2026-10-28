@@ -41,7 +41,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide the required `float_t` and `double_t` types.
 - [ ] Provide C99's standard `double` and `long double` forms of the existing `*f` functions. This includes all corresponding unsuffixed and `*l` functions in the trigonometric, hyperbolic, exponential/logarithmic, power, rounding, remainder, classification-support, and floating-point manipulation families; aliases are sufficient only if their semantics and types are correct.
 - [ ] Provide the missing `float` forms `erff`, `erfcf`, `lgammaf`, `tgammaf`, `scalblnf`, and `nexttowardf`, together with the corresponding unsuffixed/`*l` forms of these families.
-- [ ] Implement standard domain, pole, overflow, and underflow reporting behavior and provide a truthful `math_errhandling` value. AVM's math runtime maintains neither `errno`-based math errors nor floating-point exception state.
 
 ### `<stdio.h>` — narrow streams, formatted I/O, files
 

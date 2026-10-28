@@ -8,7 +8,8 @@ float acoshf(float x)
     GET_FLOAT_WORD(u, x);
     if ((u & 0x7fffffffUL) > 0x7f800000UL) return x+x;
     uint16_t high = (uint16_t)(u >> 16);
-    if ((int16_t)high < 0x3f80) {
+    if (AVM_MATH_UNLIKELY((int16_t)high < 0x3f80)) {
+        errno = EDOM;
         SET_FLOAT_WORD(x, 0x7fc00000UL);
         return x;
     }

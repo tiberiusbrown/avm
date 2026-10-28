@@ -292,7 +292,8 @@ builtins to these functions. No math SYS services are required.
 
 The math kernels use only binary32 arithmetic. Polynomial coefficients and
 range-reduction digits are embedded as instruction immediates; functions are
-linked on demand with `--gc-sections`. They do not provide errno or fenv state. See
+linked on demand with `--gc-sections`. They report math errors through `errno` (`math_errhandling == MATH_ERRNO`);
+floating-point exception state is not provided. See
 [code size and performance measurements](../docs/math-runtime-tradeoff.md).
 
 `string.h` retains its function-like call macros; define

@@ -18,8 +18,10 @@ function(check_trig_instruction object symbol instruction)
         endif()
         string(FIND "${code}" "frempio2" reducer)
         string(SUBSTRING "${code}" 0 ${reducer} prefix)
-        if(prefix MATCHES "[ \t](br[a-z0-9]+|jmp[a-z0-9]*|call[a-z0-9]*)[ \t]")
-            message(FATAL_ERROR "${symbol} must reduce before branching or calling: ${prefix}")
+        # Domain validation may branch to store EDOM before reduction. Keep the
+        # accelerator requirement: no guest calls before the native reducer.
+        if(prefix MATCHES "[ \t]call[a-z0-9]*[ \t]")
+            message(FATAL_ERROR "${symbol} must reduce before calling: ${prefix}")
         endif()
         if(code MATCHES "R_AVM[^\r\n]*(rem_pio2|small_pio2|avm_(sin|cos|tan)_reduced)")
             message(FATAL_ERROR "${symbol} must not call a guest argument reducer")

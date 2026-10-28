@@ -16,7 +16,7 @@
 #include "fdlibm.h"
 #include "exp_poly.h"
 
-float __ieee754_expf(float x)
+static __attribute__((always_inline)) inline float avm_exp_kernel(float x, int report)
 {
     uint32_t bits;
     GET_FLOAT_WORD(bits, x);
@@ -25,8 +25,8 @@ float __ieee754_expf(float x)
         if (magnitude > 0x7f800000UL) return x+x;
         return bits >> 31 ? 0.0f : x;
     }
-    if (!(bits >> 31) && magnitude > FLT_UWORD_LOG_MAX) return __math_oflowf(0);
-    if ((bits >> 31) && magnitude > FLT_UWORD_LOG_MIN) return __math_uflowf(0);
+    if (!(bits >> 31) && magnitude > FLT_UWORD_LOG_MAX) { if (report) errno = ERANGE; return __math_oflowf(0); }
+    if ((bits >> 31) && magnitude > FLT_UWORD_LOG_MIN) { if (report) errno = ERANGE; return __math_uflowf(0); }
     /* Centered base-two reduction. Binary32 reduction error is included in
        the measured 1e-5 relative budget, including both scaling extremes. */
     float u=x*0x1.715476p0f;
@@ -46,5 +46,16 @@ float __ieee754_expf(float x)
     }
     bits += (uint32_t)(k+100) << 23;
     SET_FLOAT_WORD(result, bits);
-    return result*0x1p-100f;
+    result *= 0x1p-100f;
+    return report ? avm_math_check_range(result) : result;
+}
+
+float expf(float x)
+{
+    return avm_exp_kernel(x, 1);
+}
+
+float __avm_expf_noerrno(float x)
+{
+    return avm_exp_kernel(x, 0);
 }

@@ -13,7 +13,7 @@ float tanhf(float x)
     if (high >= 0x4118U) r = 1.0f; /* tanh(9.5) rounds to one. */
     else {
         SET_FLOAT_WORD(t, a);
-        t = expf(-2.0f*t);
+        t = __avm_expf_noerrno(-2.0f*t);
         r = (1.0f-t)/(1.0f+t);
     }
     GET_FLOAT_WORD(a, r);

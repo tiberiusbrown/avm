@@ -16,11 +16,11 @@
 #include "fdlibm.h"
 #include "log_kernel.h"
 
-	float __ieee754_log10f(float x)
+	float log10f(float x)
 {
     uint32_t ix;
     GET_FLOAT_WORD(ix, x);
-    if (ix-1U >= 0x7f7fffffUL) return avm_log_special(x, ix);
+    if (AVM_MATH_UNLIKELY(ix-1U >= 0x7f7fffffUL)) return avm_log_special(x, ix);
     int k;
     x = avm_log_normalize(x, ix, &k);
     return ((float)k+avm_log2_mantissa(x))*0x1.344136p-2f;

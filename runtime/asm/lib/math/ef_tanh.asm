@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_tanh.c
 00000000 l    d  .text.tanhf	00000000 .text.tanhf
 00000000 g     F .text.tanhf	000000a1 tanhf
-00000000         *UND*	00000000 expf
+00000000         *UND*	00000000 __avm_expf_noerrno
 
 Disassembly of section .text.tanhf:
 
@@ -71,7 +71,7 @@ Disassembly of section .text.tanhf:
  ff 02                 fmul
  e3 00 00 00           callf	tanhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	expf
+		R_AVM_FAR24	__avm_expf_noerrno
  f2 62                 mov32	q0, q2
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80

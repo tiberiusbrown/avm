@@ -20,7 +20,7 @@
 #include "pow_boundary.h"
 #include "native_math.h"
 
-float __ieee754_powf(float x, float y)
+float powf(float x, float y)
 {
     uint32_t hx,hy;
     GET_FLOAT_WORD(hx,x);
@@ -30,12 +30,23 @@ float __ieee754_powf(float x, float y)
     if (ix>0x7f800000UL || iy>0x7f800000UL)
         return hx==0x3f800000UL && !issignalingf_inline(y) ? 1.0f : x+y;
     if (iy==0x7f800000UL) {
+        if (AVM_MATH_UNLIKELY(!ix && (hy >> 31))) errno = ERANGE;
         if (ix==0x3f800000UL) return 1.0f;
         return (ix>0x3f800000UL)==!(hy>>31) ? __math_oflowf(0) : 0.0f;
     }
-    if (hy==0x3f800000UL) return x;
-    if (hy==0xbf800000UL) return 1.0f/x;
-    if (hy==0x40000000UL) return x*x;
+    if (hy==0x3f800000UL) {
+        if (AVM_MATH_UNLIKELY(ix && ix < 0x00800000UL)) errno = ERANGE;
+        return x;
+    }
+    if (hy==0xbf800000UL) {
+        if (AVM_MATH_UNLIKELY(!ix)) errno = ERANGE;
+        float z = 1.0f/x;
+        return ix && ix < 0x7f800000UL ? avm_math_check_range(z) : z;
+    }
+    if (hy==0x40000000UL) {
+        float z = x*x;
+        return ix && ix < 0x7f800000UL ? avm_math_check_range(z) : z;
+    }
     if (hy==0x3f000000UL && !(hx>>31)) return avm_native_sqrt(x);
 
     /* Integer classification uses the exponent/mantissa, including the fact
@@ -67,10 +78,11 @@ float __ieee754_powf(float x, float y)
     float a;
     SET_FLOAT_WORD(a,ix);
     if (!ix || ix==0x7f800000UL) {
+        if (AVM_MATH_UNLIKELY(!ix && (hy >> 31))) errno = ERANGE;
         float z=hy>>31 ? 1.0f/a : a;
         return sign ? -z : z;
     }
-    if ((hx>>31) && !integer) { SET_FLOAT_WORD(x, hx | 0x7fc00000UL); return x; }
+    if (AVM_MATH_UNLIKELY((hx>>31) && !integer)) { errno = EDOM; SET_FLOAT_WORD(x, hx | 0x7fc00000UL); return x; }
     if (ix==0x3f800000UL) return sign ? -1.0f : 1.0f;
 
     float u;
@@ -95,10 +107,12 @@ float __ieee754_powf(float x, float y)
         if (u==128.0f) {
             float z;
             SET_FLOAT_WORD(z,refined.lo>=-0x1.715476p-25f ? 0x7f800000UL : 0x7f7fffffUL);
+            if (AVM_MATH_UNLIKELY(avm_math_high(z) == 0x7f80U)) errno = ERANGE;
             return sign ? -z : z;
         }
         if (u==-150.0f) {
             float z;
+            errno = ERANGE;
             SET_FLOAT_WORD(z,refined.lo>0 ? 1 : 0);
             return sign ? -z : z;
         }

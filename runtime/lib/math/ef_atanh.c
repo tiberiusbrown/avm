@@ -8,7 +8,8 @@ float atanhf(float x)
     uint32_t a = u & 0x7fffffffUL;
     if (a <= 0x3f000000UL) return x*avm_atanh_small(x*x);
     if (a > 0x7f800000UL) return x+x;
-    if (a >= 0x3f800000UL) {
+    if (AVM_MATH_UNLIKELY(a >= 0x3f800000UL)) {
+        errno = a == 0x3f800000UL ? ERANGE : EDOM;
         if (a == 0x3f800000UL) return __math_oflowf(u >> 31);
         SET_FLOAT_WORD(x, 0x7fc00000UL);
         return x;

@@ -6,7 +6,8 @@ SYMBOL TABLE:
 00000000 l    d  .text.hypotf	00000000 .text.hypotf
 00000000 l     F .text.avm_hypot_overflows	000002c3 avm_hypot_overflows
 00000000 l    d  .text.avm_hypot_overflows	00000000 .text.avm_hypot_overflows
-00000000 g     F .text.hypotf	000001f4 hypotf
+00000000 g     F .text.hypotf	00000217 hypotf
+00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.hypotf:
 
@@ -161,7 +162,7 @@ Disassembly of section .text.hypotf:
  d8 04                 bruge8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	hypotf
-		R_AVM_FAR24	.text.hypotf+0x183
+		R_AVM_FAR24	.text.hypotf+0x17f
 <L10>:
  aa                    xor	r6, r6
  c7 80 1d              ldi16	r7, 0x1d80
@@ -191,7 +192,7 @@ Disassembly of section .text.hypotf:
  d8 04                 bruge8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	hypotf
-		R_AVM_FAR24	.text.hypotf+0x1be
+		R_AVM_FAR24	.text.hypotf+0x1ba
 <L11>:
  f2 62                 mov32	q0, q2
  f4 20                 ldsp16	r4, [sp+0x8]
@@ -202,12 +203,10 @@ Disassembly of section .text.hypotf:
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.avm_hypot_overflows
  f4 a4                 tst8	r4
- a0                    xor	r4, r4
- c5 80 7f              ldi16	r5, 0x7f80
  d0 04                 breq8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	hypotf
-		R_AVM_FAR24	.text.hypotf+0x5e
+		R_AVM_FAR24	.text.hypotf+0x209
 <L12>:
  c6 ff ff              ldi16	r6, 0xffff
  c7 7f 5d              ldi16	r7, 0x5d7f
@@ -216,7 +215,7 @@ Disassembly of section .text.hypotf:
  d2 04                 brult8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	hypotf
-		R_AVM_FAR24	.text.hypotf+0x1be
+		R_AVM_FAR24	.text.hypotf+0x1ba
 <L13>:
  c4 ff ff              ldi16	r4, 0xffff
  c5 7f 7f              ldi16	r5, 0x7f7f
@@ -230,7 +229,7 @@ Disassembly of section .text.hypotf:
  d8 04                 bruge8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	hypotf
-		R_AVM_FAR24	.text.hypotf+0x1c8
+		R_AVM_FAR24	.text.hypotf+0x1dd
 <L14>:
  aa                    xor	r6, r6
  c7 80 7e              ldi16	r7, 0x7e80
@@ -259,6 +258,21 @@ Disassembly of section .text.hypotf:
  aa                    xor	r6, r6
  c7 80 61              ldi16	r7, 0x6180
  ff 02                 fmul
+ 09                    mov	r6, r5
+ c7 80 7f              ldi16	r7, 0x7f80
+ 8e                    and	r7, r6
+ c6 80 80              ldi16	r6, 0x8080
+ 1b                    add	r6, r7
+ c7 ff 80              ldi16	r7, 0x80ff
+ 3e                    cmp	r7, r6
+ d8 04                 bruge8	0x4 <L15>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	hypotf
+		R_AVM_FAR24	.text.hypotf+0x5e
+<L15>:
+ c2 22                 ldi8	r6, 0x22
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	hypotf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.hypotf+0x5e
@@ -283,6 +297,14 @@ Disassembly of section .text.hypotf:
  aa                    xor	r6, r6
  c7 80 1d              ldi16	r7, 0x1d80
  ff 02                 fmul
+ e2 00 00 00           jmpf	hypotf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.hypotf+0x5e
+ c0 22                 ldi8	r4, 0x22
+ f0 5c 00 00           stm16	[0x0], r4
+		R_AVM_DATA16	__avm_errno
+ a0                    xor	r4, r4
+ c5 80 7f              ldi16	r5, 0x7f80
  e2 00 00 00           jmpf	hypotf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.hypotf+0x5e

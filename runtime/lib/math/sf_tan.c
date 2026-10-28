@@ -18,6 +18,11 @@
 
 float tanf(float x)
 {
+    if (AVM_MATH_UNLIKELY(avm_math_high(x) == 0x7f80U)) {
+        uint32_t u;
+        GET_FLOAT_WORD(u, x);
+        if (AVM_MATH_UNLIKELY(!(uint16_t)u)) errno = EDOM;
+    }
     int n;
     x = avm_native_rempio2(x, &n);
     return avm_tan_kernel(x, n&1);

@@ -9,7 +9,10 @@ static __attribute__((always_inline)) inline long avm_rounded_long(float x)
     GET_FLOAT_WORD(u, x);
     /* Like avr-libc, return LONG_MIN on nonfinite / out-of-range input.
        The exact negative endpoint has the same value. Never cast out of range. */
-    if ((u & 0x7fffffffUL) >= 0x4f000000UL) return (-2147483647L-1);
+    if (AVM_MATH_UNLIKELY((u & 0x7fffffffUL) >= 0x4f000000UL)) {
+        if (AVM_MATH_UNLIKELY(u != 0xcf000000UL)) errno = EDOM;
+        return (-2147483647L-1);
+    }
     return (long)x;
 }
 
@@ -18,7 +21,10 @@ static __attribute__((always_inline)) inline long long avm_rounded_llong(float x
     uint32_t u;
     GET_FLOAT_WORD(u, x);
     uint32_t a = u & 0x7fffffffUL;
-    if (a >= 0x5f000000UL) return LLONG_MIN;
+    if (AVM_MATH_UNLIKELY(a >= 0x5f000000UL)) {
+        if (AVM_MATH_UNLIKELY(u != 0xdf000000UL)) errno = EDOM;
+        return LLONG_MIN;
+    }
     if (a < 0x4f000000UL) return (long long)(long)x;
 
     /* The API requires a 64-bit result, but binary32 inputs here are exact

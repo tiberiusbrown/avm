@@ -16,6 +16,38 @@ static inline float avm_native_sqrt(float x)
 }
 #endif
 
+/* Preserve operand order when the preceding FPOLY already owns q2. */
+#ifdef __AVM__
+static __attribute__((always_inline)) inline float avm_native_mul(float x, float y)
+{
+    register float product __asm__("q2") = x;
+    register float factor __asm__("q3") = y;
+    __asm__("fmul" : "+r"(product) : "r"(factor));
+    return product;
+}
+#else
+static inline float avm_native_mul(float x, float y)
+{
+    return x*y;
+}
+#endif
+
+/* Raw remainder for callers that already validated their operands. */
+#ifdef __AVM__
+static __attribute__((always_inline)) inline float avm_native_fmod(float x, float y)
+{
+    register float a __asm__("q2") = x;
+    register float b __asm__("q3") = y;
+    __asm__("fmod" : "+r"(a) : "r"(b));
+    return a;
+}
+#else
+static inline float avm_native_fmod(float x, float y)
+{
+    return fmodf(x, y);
+}
+#endif
+
 #ifdef __AVM__
 static __attribute__((always_inline)) inline float avm_native_fma(float a, float b, float c)
 {

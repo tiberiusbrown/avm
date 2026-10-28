@@ -11,7 +11,8 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 scalbnf
 00000000 g     F .text.frexpf	0000011d frexpf
 00000000 g     F .text.modff	000000d3 modff
-00000000 g     F .text.nextafterf	000000a8 nextafterf
+00000000 g     F .text.nextafterf	000000bf nextafterf
+00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.ldexpf:
 
@@ -363,7 +364,7 @@ Disassembly of section .text.nextafterf:
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	nextafterf
-		R_AVM_FAR24	.text.nextafterf+0x8e
+		R_AVM_FAR24	.text.nextafterf+0x8c
 <L3>:
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
@@ -375,14 +376,13 @@ Disassembly of section .text.nextafterf:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	nextafterf
-		R_AVM_FAR24	.text.nextafterf+0x9c
+		R_AVM_FAR24	.text.nextafterf+0x9a
 <L4>:
  c2 01                 ldi8	r6, 0x1
  af                    xor	r7, r7
- f7 6b                 add32	q2, q3
  e2 00 00 00           jmpf	nextafterf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.nextafterf+0x43
+		R_AVM_FAR24	.text.nextafterf+0xa0
  c4 00 80              ldi16	r4, 0x8000
  f9 8c                 and	r4, r3
  c1 01                 ldi8	r5, 0x1
@@ -391,10 +391,25 @@ Disassembly of section .text.nextafterf:
  a1                    xor	r4, r5
  e2 00 00 00           jmpf	nextafterf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.nextafterf+0x43
+		R_AVM_FAR24	.text.nextafterf+0xa2
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff ff              ldi16	r7, 0xffff
  f7 6b                 add32	q2, q3
+ 09                    mov	r6, r5
+ c7 80 7f              ldi16	r7, 0x7f80
+ 8e                    and	r7, r6
+ c6 80 80              ldi16	r6, 0x8080
+ 1b                    add	r6, r7
+ c7 ff 80              ldi16	r7, 0x80ff
+ 3e                    cmp	r7, r6
+ d8 04                 bruge8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	nextafterf
+		R_AVM_FAR24	.text.nextafterf+0x43
+<L5>:
+ c2 22                 ldi8	r6, 0x22
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	nextafterf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.nextafterf+0x43

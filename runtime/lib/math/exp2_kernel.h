@@ -27,9 +27,10 @@ static __attribute__((always_inline)) inline float avm_exp2_kernel(float u)
     /* Callers exclude NaNs. Both boundary encodings have zero low words,
        so native-word comparisons suffice. Negative encodings sort backward. */
     uint16_t high = (uint16_t)(bits >> 16);
-    if ((int16_t)high >= 0x4300) return __math_oflowf(0);
-    if (high >= 0xc316U) return 0.0f;
+    if (AVM_MATH_UNLIKELY((int16_t)high >= 0x4300)) { errno = ERANGE; return __math_oflowf(0); }
+    if (AVM_MATH_UNLIKELY(high >= 0xc316U)) { errno = ERANGE; return 0.0f; }
     int k=(int)(u+(u < 0 ? -0.5f : 0.5f));
-    return avm_exp2_scale(avm_exp_polynomial(u-(float)k), k);
+    float result = avm_exp2_scale(avm_exp_polynomial(u-(float)k), k);
+    return AVM_MATH_UNLIKELY(k < -125) ? avm_math_check_range(result) : result;
 }
 #endif

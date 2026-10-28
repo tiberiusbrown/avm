@@ -4,7 +4,8 @@ math_ef_log.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_log.c
 00000000 l    d  .text.logf	00000000 .text.logf
-00000000 g     F .text.logf	000000e6 logf
+00000000 g     F .text.logf	00000115 logf
+00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.logf:
 
@@ -19,40 +20,26 @@ Disassembly of section .text.logf:
  f2 62                 mov32	q0, q2
  f7 63                 add32	q0, q3
  f0 69 c0              cmp32	q3, q0
- d8 04                 bruge8	0x4 <L0>
+ d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	logf
-		R_AVM_FAR24	.text.logf+0x2b
+		R_AVM_FAR24	.text.logf+0xb2
 <L0>:
- aa                    xor	r6, r6
- af                    xor	r7, r7
- ff 14                 fcmp
- f6 2e                 tst16	r6
- d0 04                 breq8	0x4 <L1>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	logf
-		R_AVM_FAR24	.text.logf+0xc6
-<L1>:
- a0                    xor	r4, r4
- c5 80 ff              ldi16	r5, 0xff80
- e2 00 00 00           jmpf	logf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.logf+0xbf
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 01 7f              ldi8	r1, 0x7f
  f0 69 08              cmp32	q0, q2
- d8 04                 bruge8	0x4 <L2>
+ d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	logf
-		R_AVM_FAR24	.text.logf+0x48
-<L2>:
+		R_AVM_FAR24	.text.logf+0x34
+<L1>:
  aa                    xor	r6, r6
  c7 00 4c              ldi16	r7, 0x4c00
  ff 02                 fmul
  c6 68 ff              ldi16	r6, 0xff68
  e2 00 00 00           jmpf	logf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.logf+0x4b
+		R_AVM_FAR24	.text.logf+0x37
  c6 81 ff              ldi16	r6, 0xff81
  f4 42                 stsp16	[sp+0x0], r6
  f9 10                 and	r0, r4
@@ -106,22 +93,59 @@ Disassembly of section .text.logf:
  bb                    pop16	r3
  ef                    ret
  c6 ff ff              ldi16	r6, 0xffff
- c7 ff ff              ldi16	r7, 0xffff
- f0 69 c8              cmp32	q3, q2
+ c7 ff 7f              ldi16	r7, 0x7fff
+ 88                    and	r6, r4
+ 8d                    and	r7, r5
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 c0              cmp32	q3, q0
+ d1 04                 brne8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	logf
+		R_AVM_FAR24	.text.logf+0xe0
+<L2>:
+ f0 04 ff ff           ldi16	r0, 0xffff
+ f0 05 ff ff           ldi16	r1, 0xffff
+ f0 69 08              cmp32	q0, q2
  d3 04                 brslt8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	logf
-		R_AVM_FAR24	.text.logf+0xdd
+		R_AVM_FAR24	.text.logf+0xee
 <L3>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
  e2 00 00 00           jmpf	logf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.logf+0xbf
+		R_AVM_FAR24	.text.logf+0xab
+ c0 22                 ldi8	r4, 0x22
+ f0 5c 00 00           stm16	[0x0], r4
+		R_AVM_DATA16	__avm_errno
+ a0                    xor	r4, r4
+ c5 80 ff              ldi16	r5, 0xff80
+ e2 00 00 00           jmpf	logf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.logf+0xab
+ f2 30                 sub	r0, r0
+ f0 05 80 7f           ldi16	r1, 0x7f80
+ f0 69 0c              cmp32	q0, q3
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	logf
+		R_AVM_FAR24	.text.logf+0x106
+<L4>:
  c6 c0 7f              ldi16	r6, 0x7fc0
  99                    or	r6, r5
  06                    mov	r5, r6
  e2 00 00 00           jmpf	logf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.logf+0xbf
+		R_AVM_FAR24	.text.logf+0xab
+ c2 21                 ldi8	r6, 0x21
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
+ c6 c0 7f              ldi16	r6, 0x7fc0
+ 99                    or	r6, r5
+ 06                    mov	r5, r6
+ e2 00 00 00           jmpf	logf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.logf+0xab

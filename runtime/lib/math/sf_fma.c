@@ -3,7 +3,7 @@
 #ifndef __AVM__
 #include "native_math.h"
 #endif
-float fmaf(float x, float y, float z)
+static float avm_impl_fmaf(float x, float y, float z)
 {
 #ifdef __AVM__
     register float a __asm__("q2") = x;
@@ -14,4 +14,15 @@ float fmaf(float x, float y, float z)
 #else
     return avm_native_fma(x, y, z);
 #endif
+}
+
+/* Report errors from the public operation, not intermediate helpers. */
+float fmaf(float x, float y, float z)
+{
+    float result = avm_impl_fmaf(x, y, z);
+    if (AVM_MATH_UNLIKELY(avm_math_high(result) >= 0x7f80U)) {
+        if (AVM_MATH_UNLIKELY(!avm_math_nan(x) && !avm_math_nan(y) && !avm_math_nan(z) && avm_math_nan(result))) errno = EDOM;
+        else if (AVM_MATH_UNLIKELY(avm_math_finite(x) && avm_math_finite(y) && avm_math_finite(z) && avm_math_inf(result))) errno = ERANGE;
+    }
+    return result;
 }

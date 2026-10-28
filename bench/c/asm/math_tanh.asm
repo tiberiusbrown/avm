@@ -12,6 +12,12 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 ef_tanh.c
 00000000 l    df *ABS*	00000000 ef_exp.c
+00000000 l    df *ABS*	00000000 stdlib.c
+00000000 l    df *ABS*	00000000 avm.c
+00000000 l    df *ABS*	00000000 ctype.c
+00000000 l    df *ABS*	00000000 strtof.c
+00000000 l    df *ABS*	00000000 integer.c
+00000000 l    df *ABS*	00000000 wide_integer.c
 000004cc l       .init_array	00000000 .hidden __init_array_end
 000004cc l       .init_array	00000000 .hidden __init_array_start
 000004cc l       .fini_array	00000000 .hidden __fini_array_start
@@ -22,7 +28,7 @@ SYMBOL TABLE:
 0000029b g     F .text	00000002 avm_halt
 00000302 g     F .text	0000008d tanhf
 00000000  w      *UND*	00000000 __avm_run_local_dtors
-0000038f g     F .text	000000fd expf
+0000038f g     F .text	000000fd __avm_expf_noerrno
 
 Disassembly of section .text:
 
@@ -217,7 +223,7 @@ Disassembly of section .text:
  f4 49                 stsp16	[sp+0x2], r5
  f2 68                 mov32	q2, q0
  ff 02                 fmul
- d5 26                 call8	expf
+ d5 26                 call8	__avm_expf_noerrno
  f2 62                 mov32	q0, q2
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
@@ -246,7 +252,7 @@ Disassembly of section .text:
  bb                    pop16	r3
  ef                    ret
 
-<expf>:
+<__avm_expf_noerrno>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1

@@ -2181,8 +2181,9 @@ The runtime provides `sqrtf`, `sinf`, `cosf`, `atan2f`, `tanf`, `expf`, `logf`,
 `log2f`, `log10f`, `exp2f`, `expm1f`, `log1pf`, `cbrtf`, `asinf`, `acosf`,
 `ldexpf`, `frexpf`, `modff`, `nextafterf`, `powf`, `hypotf`, `fmodf`, `truncf`, `floorf`, `ceilf`,
 `roundf`, `fmaf`, `fminf`, and `fmaxf` as ordinary C ABI functions. Angles are radians;
-`atan2f` returns an angle in `[-pi, +pi]`. Functions expose no floating-point
-exception state or `errno`. NaN result payloads are unspecified. `fmodf` has
+`atan2f` returns an angle in `[-pi, +pi]`. Math errors are reported through
+`errno` (`math_errhandling == MATH_ERRNO`); no floating-point exception state
+is exposed. NaN result payloads are unspecified. `fmodf` has
 the sign of its first operand and computes the mathematical remainder with
 quotient truncated toward zero, without forming an overflowing float quotient.
 
@@ -5150,7 +5151,10 @@ The floating-point math intrinsics are deterministic, have no observable memory 
 set neither `errno` nor floating-point exception state, and have no observable
 side effects. They MAY be common-subexpression eliminated, duplicated,
 speculated, or reordered when ordinary data dependencies and the requested
-floating-point semantics permit it.
+floating-point semantics permit it. This IR contract does not apply to ordinary
+`math.h` runtime calls: those entry points report domain and range errors through
+`errno` (`math_errhandling == MATH_ERRNO`). Optimizations that discard those
+memory effects require an errno-independent math contract.
 
 The memory services have their precise address-space effects:
 

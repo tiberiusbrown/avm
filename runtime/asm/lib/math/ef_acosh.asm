@@ -4,8 +4,9 @@ math_ef_acosh.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_acosh.c
 00000000 l    d  .text.acoshf	00000000 .text.acoshf
-00000000 g     F .text.acoshf	000000a1 acoshf
+00000000 g     F .text.acoshf	000000a7 acoshf
 00000000         *UND*	00000000 logf
+00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.acoshf:
 
@@ -31,24 +32,19 @@ Disassembly of section .text.acoshf:
  b9                    pop16	r1
  ef                    ret
  09                    mov	r6, r5
- c7 80 3f              ldi16	r7, 0x3f80
- 3b                    cmp	r6, r7
+ c7 7f 3f              ldi16	r7, 0x3f7f
+ 3e                    cmp	r7, r6
  d3 04                 brslt8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acoshf
-		R_AVM_FAR24	.text.acoshf+0x33
+		R_AVM_FAR24	.text.acoshf+0x9a
 <L1>:
- a0                    xor	r4, r4
- c5 c0 7f              ldi16	r5, 0x7fc0
- b8                    pop16	r0
- b9                    pop16	r1
- ef                    ret
  c7 80 45              ldi16	r7, 0x4580
  3b                    cmp	r6, r7
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acoshf
-		R_AVM_FAR24	.text.acoshf+0x4c
+		R_AVM_FAR24	.text.acoshf+0x45
 <L2>:
  e3 00 00 00           callf	acoshf
 		R_AVM_RELAX	*ABS*
@@ -64,7 +60,7 @@ Disassembly of section .text.acoshf:
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acoshf
-		R_AVM_FAR24	.text.acoshf+0x71
+		R_AVM_FAR24	.text.acoshf+0x6a
 <L3>:
  f2 62                 mov32	q0, q2
  f2 6a                 mov32	q3, q0
@@ -98,6 +94,14 @@ Disassembly of section .text.acoshf:
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
  ff 02                 fmul
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ef                    ret
+ c0 21                 ldi8	r4, 0x21
+ f0 5c 00 00           stm16	[0x0], r4
+		R_AVM_DATA16	__avm_errno
+ a0                    xor	r4, r4
+ c5 c0 7f              ldi16	r5, 0x7fc0
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret

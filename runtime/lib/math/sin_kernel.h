@@ -15,11 +15,13 @@
  * ====================================================
  */
 
-#include "fdlibm.h"
+#include "native_math.h"
 #include "trig_poly.h"
 
 static __attribute__((always_inline)) inline float avm_sin_kernel(float x)
 {
-    return x*avm_sin_polynomial(x*x);
+    /* FPOLY leaves its result in q2 and preserves x in q3. Keeping that
+       operand order avoids swapping them through a callee-saved pair. */
+    return avm_native_mul(avm_sin_polynomial(x*x), x);
 }
 #endif

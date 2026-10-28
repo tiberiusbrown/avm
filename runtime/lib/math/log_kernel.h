@@ -21,8 +21,10 @@
 /* Callers classify once, then share normalization and the mantissa kernel. */
 static __attribute__((always_inline)) inline float avm_log_special(float x, uint32_t ix)
 {
-    if ((ix & 0x7fffffffUL) == 0) { SET_FLOAT_WORD(x, 0xff800000UL); return x; }
-    if (ix & 0x80000000UL) { SET_FLOAT_WORD(x, ix | 0x7fc00000UL); return x; }
+    if (AVM_MATH_UNLIKELY((ix & 0x7fffffffUL) == 0)) { errno = ERANGE; SET_FLOAT_WORD(x, 0xff800000UL); return x; }
+    if (AVM_MATH_UNLIKELY(ix & 0x80000000UL)) {
+        if (AVM_MATH_UNLIKELY((ix & 0x7fffffffUL) <= 0x7f800000UL)) errno = EDOM;
+        SET_FLOAT_WORD(x, ix | 0x7fc00000UL); return x; }
     return x+x;
 }
 
@@ -54,7 +56,7 @@ static __attribute__((always_inline)) inline float avm_log_kernel(float x)
 {
     uint32_t ix;
     GET_FLOAT_WORD(ix, x);
-    if (ix-1U >= 0x7f7fffffUL) return avm_log_special(x, ix);
+    if (AVM_MATH_UNLIKELY(ix-1U >= 0x7f7fffffUL)) return avm_log_special(x, ix);
     int k;
     x = avm_log_normalize(x, ix, &k);
     return ((float)k+avm_log2_mantissa(x))*0x1.62e43p-1f;

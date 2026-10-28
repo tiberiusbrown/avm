@@ -8,6 +8,7 @@
 #define NAN (__builtin_nanf(""))
 #define MATH_ERRNO 1
 #define MATH_ERREXCEPT 2
+#define math_errhandling MATH_ERRNO
 
 #if defined(__INT_MAX__)
 #define FP_ILOGB0 (-__INT_MAX__-1)

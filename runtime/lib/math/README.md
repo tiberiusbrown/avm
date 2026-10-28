@@ -39,7 +39,7 @@ objects with independent host libm over random bits, exponent strata, all
 small integer tie neighbors, extreme divisors, conversion endpoints and NaNs.
 [`generate_misc_tests.py`](../../../tests/math/generate_misc_tests.py) uses
 exact rational arithmetic for remainder/quotient fixtures, tested as C and C++
-at all six optimization levels. No errno/fenv state is added.
+at all six optimization levels. Math errors use `errno`; floating-point exception state is not provided.
 
 Measured ordinary-input workloads (32 calls, with benchmark setup outside the
 timed interval; body bytes exclude shared helpers):
@@ -88,7 +88,7 @@ also follow directly from their polynomial forms. Coefficients are reproduced by
 [`hyperbolic_coefficients.py`](../../../tests/math/hyperbolic_coefficients.py),
 and native FPOLY evaluates them with the existing extended significand.
 The hyperbolic acceptance budget is 1e-5 relative error, with exceptional
-values and zero signs checked separately. No errno/fenv or correctly-rounded
+values and zero signs checked separately. No floating-point exception state or correctly-rounded
 guarantee is added. The native host sweeps, 100-digit adaptive reference, and
 C/C++ fixtures cover cancellation, subnormals, domain endpoints, saturation,
 and the adjacent finite/overflow sinh/cosh inputs.
@@ -118,7 +118,7 @@ Float kernels adapted from Newlib/fdlibm revision
 https://github.com/mirror/newlib-cygwin/tree/1b7c72fdcc4bde7520407d2d3364146f04fb8312/newlib/libm
 
 Original license notices remain with the kernels, including those moved into
-private headers. The runtime has no errno/fenv state and uses fixed
+private headers. The runtime reports math errors through `errno` and uses fixed
 round-to-nearest, ties-to-even arithmetic.
 
 The polynomial kernels use native `fpoly` through the private `fpoly.h`
@@ -285,7 +285,7 @@ and validation are recorded in the [interpreter guide](../../../docs/isa_interpr
 The public header now declares `exp2f`, `expm1f`, `log1pf`, `cbrtf`, `asinf`,
 `acosf`, `ldexpf`, `frexpf`, `modff`, and `nextafterf`. These are guest library
 functions using the existing ISA. No interpreter accelerators, wider native
-arithmetic, errno, or floating-point environment state were added.
+arithmetic or floating-point environment state were added.
 
 | Function | Selected algorithm |
 | --- | --- |
@@ -553,3 +553,57 @@ The exact boundary oracle passes all 1,023,656 cases. Benchmarks, instruction
 mix, disassemblies, coefficient generators, and worst-input fixtures are
 refreshed; the ISA, interpreter, LLVM code generation, and public ABI are
 unchanged. All edits are left uncommitted.
+
+## Math error reporting
+
+`math_errhandling` is `MATH_ERRNO`. Domain errors set `EDOM`; poles and
+finite-input overflow set `ERANGE`. Successful calls preserve the previous
+`errno`, including NaN propagation and valid infinite inputs. Integer rounding
+conversions report `EDOM` for nonfinite or out-of-range results; the exact
+negative integer endpoint is valid. `ilogbf` reports `EDOM` for zero, infinity,
+and NaN.
+
+Underflow reporting is implementation-defined: `expf`, `exp2f`, `expm1f`, `sinhf`,
+`powf`, and scaling operations report `ERANGE` for subnormal results (including
+rounded zero from a nonzero mathematical result). `nextafterf` reports
+`ERANGE` when a step produces infinity, a subnormal, or zero. Other tiny
+results preserve `errno`. A zero input or a no-op scaling call preserves
+`errno`. Internal helper errors do not escape an otherwise successful public
+operation. Floating-point exception flags and rounding-mode state are not
+provided.
+
+Error stores share the kernels' existing exceptional paths. The private
+`__avm_expf_noerrno` engine is used for intermediate exponential operations,
+including the saturated `sinhf`/`coshf` boundary and negative `expm1f` inputs.
+It cannot modify `errno`. Public entry points do not save and restore `errno`.
+Native-word guards keep the usual finite path out of expensive `FCLASS`
+classification; rare native-math validation is outlined where it would
+otherwise force argument spills on every call.
+
+`AVM_MATH_UNLIKELY` supplies Clang/GCC branch weights on error guards selected
+by benchmark measurement, with an ordinary boolean fallback for MSVC host
+reference builds. These are layout hints, not assumptions that permit skipping
+validation. Broad annotations slowed the shared exponential engine, so its
+existing branch weights are retained. Hints inside an already exceptional path
+are evaluated separately: an error need not be unlikely conditional on reaching
+that path.
+
+`remainderf` and `remquof` report domain errors in their shared classification
+path. After excluding NaNs, infinite dividends, and zero divisors, they use
+`avm_native_fmod` without repeating public-entry validation. The scaled divisor
+can become infinity, which is valid for a finite dividend. Their existing
+quotient-bit reduction and tie-to-even adjustments are unchanged. Tiny-input
+`expm1f` reporting, stepped `nextafterf` results, and negative-input `sqrtf`
+classification use native words while preserving zero and NaN distinctions.
+
+### Trigonometric register reconstruction
+
+The sine polynomial result is multiplied by the reduced argument through
+`avm_native_mul`, preserving FPOLY's `q2` result and the argument in `q3`.
+An ordinary commuted C multiplication is canonicalized back to the swapping
+sequence; the native wrapper avoids that shuffle and its saved register pair.
+Standalone sine/cosine reconstruct the quadrant sign with a high-word XOR,
+using an explicit `cc` clobber. Coefficients, reduction, rounding points, and
+accuracy budgets are unchanged. The native ABI fixture also checks paired
+versus standalone results, odd/even symmetry, signed zeros, quadrant neighbors,
+and preserved errno for finite inputs.

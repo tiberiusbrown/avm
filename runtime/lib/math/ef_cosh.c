@@ -12,9 +12,12 @@ float coshf(float x)
     float t;
     SET_FLOAT_WORD(t, a);
     if (a < 0x41100000UL) {
-        t = expf(t);
+        t = __avm_expf_noerrno(t);
         return 0.5f*(t+1.0f/t);
     }
-    if (a > 0x42b2d4fcUL) return __math_oflowf(0);
+    if (AVM_MATH_UNLIKELY(a > 0x42b2d4fcUL)) {
+        if (AVM_MATH_UNLIKELY(a < 0x7f800000UL)) errno = ERANGE;
+        return __math_oflowf(0);
+    }
     return avm_exp_half(t);
 }

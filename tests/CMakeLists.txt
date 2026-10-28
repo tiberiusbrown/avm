@@ -79,7 +79,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_source_dependencies)
 
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
-            if(AVM_TEST_NAME MATCHES "^math_(native|c99_exact|c99_classify|c99_functions|hyperbolic|misc)$")
+            if(AVM_TEST_NAME MATCHES "^math_(native|c99_exact|c99_classify|c99_functions|hyperbolic|misc|errno)$")
                 list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
             elseif(AVM_TEST_NAME MATCHES "^(ctype|assert_failure|c99_smalllib|inttypes_interface|string_(search|progmem_search)|stdlib_(integer|conversion|float|multibyte|sort|random))$")
                 list(APPEND test_source_dependencies
@@ -735,6 +735,7 @@ add_custom_target(avm_prof_throughput_run
 # and exponent/subnormal packing boundaries against host double sqrt. Check the
 # large-angle reducer's exact integer product with deterministic mantissa samples.
 add_library(avm_math_reference_kernel OBJECT
+    math/errno_storage.c
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_sqrt.c")
 target_include_directories(avm_math_reference_kernel PRIVATE
     "${PROJECT_SOURCE_DIR}/runtime/include")
@@ -810,6 +811,7 @@ add_dependencies(avm_tests_run avm_rounding_tests_run)
 # Run the production shortcuts, sqrt and angle reducer under private names;
 # the harness uses host double libm as an independent binary32 reference.
 add_library(avm_shortcuts_reference_kernels OBJECT
+    math/errno_storage.c
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_remainder.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_remquo.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_rint.c"

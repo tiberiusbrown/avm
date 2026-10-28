@@ -19,8 +19,13 @@
 
 float cosf(float x)
 {
+    if (AVM_MATH_UNLIKELY(avm_math_high(x) == 0x7f80U)) {
+        uint32_t u;
+        GET_FLOAT_WORD(u, x);
+        if (AVM_MATH_UNLIKELY(!(uint16_t)u)) errno = EDOM;
+    }
     int n;
     x = avm_native_rempio2(x, &n);
     float r = (n&1) ? avm_sin_kernel(x) : avm_cos_kernel(x);
-    return ((n+1)&2) ? -r : r;
+    return avm_math_flip_sign(r, ((unsigned)n+1U) & 2U);
 }

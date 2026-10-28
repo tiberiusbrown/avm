@@ -71,7 +71,7 @@ static __attribute__((noinline)) int avm_hypot_overflows(uint32_t ha, uint32_t h
     return w0>=1;
 }
 
-float __ieee754_hypotf(float x, float y)
+float hypotf(float x, float y)
 {
     uint32_t ha,hb;
     GET_FLOAT_WORD(ha,x);
@@ -101,13 +101,13 @@ float __ieee754_hypotf(float x, float y)
             /* Include sum-of-squares rounding as well as sqrt's two ULP.
                Keep a finite approximation unless its final scaling would
                overflow; only that case needs clamping to the largest float. */
-            if (avm_hypot_overflows(ha,hb)) return __math_oflowf(0);
+            if (AVM_MATH_UNLIKELY(avm_hypot_overflows(ha,hb))) { errno = ERANGE; return __math_oflowf(0); }
             if (hw>=0x5d800000UL) {
                 SET_FLOAT_WORD(w,0x7f7fffffUL);
                 return w;
             }
         }
-        return w*0x1p68f;
+        return avm_math_check_range(w*0x1p68f);
     }
     if (ha<0x00800000UL) {
         a*=0x1p126f;

@@ -64,5 +64,8 @@ float nextafterf(float x, float y)
     else if ((x < y) == !(a >> 31)) ++a;
     else --a;
     SET_FLOAT_WORD(x, a);
+    /* Stepping cannot produce a NaN: only the result exponent is needed. */
+    uint16_t high = avm_math_high(x);
+    if (AVM_MATH_UNLIKELY(high < 0x0080U || high >= 0x7f80U)) errno = ERANGE;
     return x;
 }

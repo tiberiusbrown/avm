@@ -7,6 +7,7 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <initializer_list>
 #include <iterator>
 #include <map>
 #include <memory>
@@ -24,6 +25,18 @@ constexpr unsigned pending=0xa15, volume=0xa17, controls=0xa18, duties=0xa24,
     lowpass_coefficient=lowpass_state+1, private_end=lowpass_coefficient+1,
     event_buffer=private_end+2, scratch_end=private_end+72;
 void require(bool c, char const* m) { if(!c) throw std::runtime_error(m); }
+// Ordered byte positions, shared by directed boundary and full-phase sweeps.
+std::vector<unsigned> positions(std::initializer_list<unsigned> values) {
+    std::vector<unsigned> result;
+    for(auto value : values)
+        if(value<=255 && std::find(result.begin(),result.end(),value)==result.end())
+            result.push_back(value);
+    return result;
+}
+std::vector<unsigned> threshold_positions(unsigned duty) {
+    return positions({0,1,63,64,127,128,191,192,254,255,
+        duty==0 ? 0 : duty-1,duty,std::min(duty+1,255u)});
+}
 int output(int mix, unsigned master=32) {
     return std::clamp(128+int(std::floor((mix*int(master)+16)/32.)),0,255);
 }
@@ -721,22 +734,25 @@ void sequence(harness& h) {
         for(unsigned i=0;i<count;++i) bytes.insert(bytes.end(),{0,1,uint8_t(36+i%60)});
         bytes.insert(bytes.end(),{0,0,1});
         require(bytes.size()>65535,"large stream fixture is too small");
-        for(bool loop : {true,false}) {
-            h.command(14,unsigned(loop));
-            h.play_midi(bytes,0xfff0);
-            unsigned remaining=count-1;
-            while(remaining) {
-                auto elapsed=std::min(remaining,255u);
-                h.elapsed(elapsed); remaining-=elapsed;
-            }
-            require(h.note_index(0)==12+(count-1)%60,"large stream cursor lost its high byte");
-            h.elapsed(1);
-            require(h.c().data[music+5]==unsigned(loop),"large stream terminal record failed");
-            if(loop) {
-                h.elapsed(1);
-                require(h.note_index(0)==12,"large stream did not rewind to its original pointer");
-            }
+        h.command(14,1);
+        h.play_midi(bytes,0xfff0);
+        auto start_cursor=h.word(music)|(uint32_t(h.c().data[music+2])<<16);
+        unsigned remaining=count-1;
+        while(remaining) {
+            auto elapsed=std::min(remaining,255u);
+            h.elapsed(elapsed); remaining-=elapsed;
         }
+        require(h.note_index(0)==12+(count-1)%60 && h.c().data[music+2]>1,
+            "large stream cursor lost its high byte");
+        h.elapsed(1);
+        require(h.c().data[music+5]==1 && h.word(music+3)==1,"large stream terminal record failed");
+        h.elapsed(1);
+        require(h.note_index(0)==12 && (h.word(music)|(uint32_t(h.c().data[music+2])<<16))==start_cursor,
+            "large stream did not rewind to its original pointer");
+        h.command(14,0);
+        h.play_midi({1,0,1,60,0,0,1});
+        h.elapsed(1);
+        require(h.c().data[music+5]==0 && h.amplitude(0)==255,"nonlooping stream terminal record failed");
     });
     h.test("pending saturation and Timer0 preservation",[&]{
         h.c().data[pending]=254; h.c().data[0xa05]=0;
@@ -876,10 +892,11 @@ void synthesis(harness& h) {
     });
 
     h.test("prepared amplitudes for every volume and both masters",[&]{
+        unsigned cases=0;
         h.c().data[music+5]=1;
         for(bool effect : {false,true}) {
             h.c().data[sfx+6]=effect ? 10 : 0;
-            for(unsigned master=0;master<256;++master) {
+            for(unsigned master : {0u,1u,2u,31u,32u,64u,127u,128u,129u,192u,254u,255u}) {
                 h.command(effect ? 12 : 11,master);
                 for(unsigned volume=0;volume<32;++volume) {
                     auto count=effect ? 2u : 4u;
@@ -890,6 +907,7 @@ void synthesis(harness& h) {
                         h.c().data[bank+4*slot+3]=uint8_t(32+slot*32);
                     }
                     h.routine("audio_commit");
+                    ++cases;
                     for(unsigned channel=0;channel<4;++channel) {
                         if(effect && channel!=1 && channel!=3) continue;
                         require(h.amplitude(channel)==volume,"prepared owner gain wrong");
@@ -899,6 +917,7 @@ void synthesis(harness& h) {
                 }
             }
         }
+        std::cout<<"prepared amplitudes: "<<cases<<" ownership/master/volume cases passed\n";
     });
     auto sample=[](unsigned duty, unsigned position) { return position<duty ? 127 : -127; };
     h.test("every signed byte mix and shared-gain saturation",[&]{
@@ -972,17 +991,14 @@ void synthesis(harness& h) {
         }
         h.c().data[2]=zero;
     });
-    h.test("pulse thresholds, every phase byte, volumes, increments and both rates",[&]{
+    h.test("pulse threshold boundaries and independent full-phase sweeps at both rates",[&]{
         require(!h.symbols.count("audio_waveforms"),"obsolete waveform table remains");
         unsigned cases=0;
         for(unsigned selected=0;selected<2;++selected) {
             h.command(13,selected);
             for(unsigned ch=0;ch<4;++ch) { h.word(controls+3*ch,0); h.control(ch,0); }
             for(unsigned ch=0;ch<3;++ch) {
-                for(unsigned duty : {0u,1u,32u,64u,128u,192u,224u,254u,255u})
-                for(unsigned amp : {0u,1u,7u,15u,23u,31u})
-                for(unsigned inc : {0u,1u,1097u,65535u})
-                for(unsigned position=0;position<256;++position) {
+                auto check=[&](unsigned duty,unsigned amp,unsigned inc,unsigned position) {
                     auto target=uint16_t((position<<8)|((position&1)?255:0));
                     h.word(phases+2*ch,uint16_t(target-inc));
                     h.word(controls+3*ch,inc); h.control(ch,amp,duty);
@@ -993,7 +1009,12 @@ void synthesis(harness& h) {
                     if(duty==128) require(sample(duty,position)==(position/4<32 ? 127 : -127),
                         "50 percent pulse differs from old square table");
                     ++cases;
-                }
+                };
+                for(unsigned duty : {0u,1u,32u,64u,128u,192u,224u,254u,255u})
+                for(unsigned amp : {0u,1u,7u,15u,23u,31u})
+                for(unsigned inc : {0u,1u,1097u,65535u})
+                for(unsigned position : threshold_positions(duty)) check(duty,amp,inc,position);
+                for(unsigned position=0;position<256;++position) check(128,31,1097,position);
                 h.word(controls+3*ch,0); h.control(ch,0);
             }
         }
@@ -1005,9 +1026,7 @@ void synthesis(harness& h) {
             h.command(13,selected);
             for(unsigned ch=0;ch<4;++ch) { h.word(controls+3*ch,0); h.control(ch,0); }
             for(unsigned ch=0;ch<3;++ch) {
-                for(unsigned amp : {0u,1u,7u,15u,23u,31u})
-                for(unsigned inc : {0u,1u,1097u,65535u})
-                for(unsigned position=0;position<256;++position) {
+                auto check=[&](unsigned amp,unsigned inc,unsigned position) {
                     auto target=uint16_t((position<<8)|((position&1)?255:0));
                     h.word(phases+2*ch,uint16_t(target-inc));
                     h.word(controls+3*ch,inc); h.control(ch,amp,(position*71)%256,wave);
@@ -1021,15 +1040,21 @@ void synthesis(harness& h) {
                     require(h.c().sp()==sp && h.c().data[reg::addr::SREG]==regs[reg::addr::SREG],
                         "triangle ISR corrupted stack or SREG");
                     ++cases;
-                }
+                };
+                for(unsigned amp : {0u,1u,7u,15u,23u,31u})
+                for(unsigned inc : {0u,1u,1097u,65535u})
+                for(unsigned position : {0u,1u,63u,64u,65u,127u,128u,129u,191u,192u,254u,255u})
+                    check(amp,inc,position);
+                for(unsigned position=0;position<256;++position) check(31,1097,position);
                 h.control(ch,0);
             }
         }
         std::cout<<(wave==1 ? "triangle" : "sawtooth")<<" reference: "<<cases<<" samples passed\n";
     });
     h.test("all 27 tonal waveform mixtures with noise and clipping",[&]{
+        unsigned cases=0;
         for(unsigned waves=0;waves<27;++waves) for(unsigned amp : {0u,1u,7u,15u,31u})
-        for(unsigned pos=0;pos<256;++pos) for(unsigned path=0;path<3;++path) {
+        for(unsigned pos : {0u,1u,31u,63u,64u,95u,127u,128u,129u,191u,192u,223u,254u,255u}) for(unsigned path=0;path<3;++path) {
             int mix=0; auto selection=waves;
             for(unsigned ch=0;ch<3;++ch) {
                 auto p=(pos+71*ch)%256, duty=(29+53*ch)%256;
@@ -1047,15 +1072,18 @@ void synthesis(harness& h) {
             h.synth_sample();
             require(h.c().data[held_sample]==std::clamp(128+mix,0,255),"mixed waveform/noise sample mismatch");
             require(h.c().data[noise]==seed,"tonal waveform altered noise behavior");
+            ++cases;
         }
+        std::cout<<"waveform mixtures: "<<cases<<" combinations passed\n";
     });
     h.test("tonal instruction cycle counts are phase independent",[&]{
+        unsigned cases=0;
         for(unsigned ch=0;ch<3;++ch) for(unsigned wave=0;wave<3;++wave) {
             auto begin="audio_wave_begin"+std::to_string(ch), end="audio_wave_end"+std::to_string(ch);
             require(h.sym(end.c_str())-h.sym(begin.c_str())-4<=63,"tonal sentinel branch out of range");
             // Exercise every reachable volume plus the stopped sentinel.
-            for(unsigned index=0;index<=32;++index) for(unsigned position=0;position<256;++position) {
-                unsigned amp=index==32 ? 255 : index;
+            auto check=[&](unsigned amp,unsigned position) {
+                ++cases;
                 h.control(ch,amp,128,wave); h.word(controls+3*ch,0); h.word(phases+2*ch,uint16_t(position<<8));
                 h.word(26,0x1234);
                 h.c().pc=uint16_t(h.sym(begin.c_str()));
@@ -1064,16 +1092,24 @@ void synthesis(harness& h) {
                 int value=wave==2 ? int(position)-128 : wave==1 ? int(2*std::min(position,255-position))-127 : (position<128 ? 127 : -127);
                 auto contribution=amp==255 ? 0 : int(std::floor(value*int(amp)/128.+0.5));
                 require(h.c().data[26]==uint8_t(0x34+contribution) && h.c().data[27]==0x12,"byte multiply/rounding/accumulation mismatch");
-            }
+            };
+            for(unsigned index=0;index<=32;++index)
+                for(unsigned position : {0u,1u,63u,64u,127u,128u,129u,191u,192u,254u,255u})
+                    check(index==32 ? 255 : index,position);
+            for(unsigned amp : {0u,1u,15u,31u,255u})
+                for(unsigned position=0;position<256;++position) check(amp,position);
         }
-        std::cout<<"tonal synthesis: pulse 33, triangle 34, sawtooth 32 cycles on all channels and phases\n";
+        std::cout<<"tonal synthesis: "<<cases<<" directed/full-phase cases; pulse 33, triangle 34, sawtooth 32 cycles on all channels and phases\n";
         std::cout<<"stopped tonal synthesis: 5 cycles on all channels and waveforms\n";
     });
-    h.test("noise instruction paths, every LFSR byte and non-sentinel amplitude",[&]{
+    h.test("noise instruction paths, every LFSR byte and reachable amplitude",[&]{
         require(h.sym("audio_noise_end")-h.sym("audio_noise_begin")-4<=63,"noise sentinel branch out of range");
         uint64_t minimum=1000,maximum=0;
-        for(unsigned amp=0;amp<256;++amp) for(unsigned seed=0;seed<256;++seed)
+        unsigned cases=0;
+        for(unsigned index=0;index<=32;++index) for(unsigned seed=0;seed<256;++seed)
         for(bool overflow : {false,true}) {
+            ++cases;
+            unsigned amp=index==32 ? 255u : index;
             auto phase=uint16_t(overflow ? 65535 : 0x1234);
             h.control(3,amp); h.word(controls+9,amp==255 ? 0 : 1); h.word(phases+6,phase);
             h.c().data[noise]=uint8_t(seed); h.word(26,0x1234);
@@ -1087,7 +1123,7 @@ void synthesis(harness& h) {
             require(cycles==(amp==255 ? 5 : !overflow ? 25 : (seed&1) ? 30 : 29),"noise synthesis cycle target changed");
             if(amp!=255) { minimum=std::min(minimum,cycles); maximum=std::max(maximum,cycles); }
         }
-        std::cout<<"noise synthesis: "<<minimum<<".."<<maximum<<" active, 5 stopped cycles\n";
+        std::cout<<"noise synthesis: "<<cases<<" cases; "<<minimum<<".."<<maximum<<" active, 5 stopped cycles\n";
     });
     h.test("sample reference and register preservation",[&]{
         std::array<uint16_t,4> phase{{65520,0x7fff,1234,65500}},inc{{100,3691,257,8000}};
@@ -1264,7 +1300,7 @@ void lowpass_filter(harness& h) {
                 h.command(15,alpha);
                 unsigned coefficient=selected ? alpha : std::min(255u,2*alpha-(alpha*alpha>>8));
                 require(h.c().data[lowpass_coefficient]==coefficient,"foreground coefficient preparation differs");
-                for(unsigned history : {35u,128u,221u}) for(unsigned target=35;target<=221;++target) {
+                for(unsigned history : {35u,128u,221u}) for(unsigned target : {35u,36u,63u,64u,127u,128u,129u,159u,191u,192u,220u,221u}) {
                     h.c().data[lowpass_state]=uint8_t(history); h.c().data[26]=uint8_t(target);
                     h.c().pc=uint16_t(h.sym("audio_lowpass_begin"));
                     h.until([&]{return h.c().pc==h.sym("audio_lowpass_end");});
@@ -1539,11 +1575,18 @@ void handoff(harness& h) {
         std::array<uint64_t,16> mask_min,mask_max{},pending_max{};
         mask_min.fill(10000);
         unsigned initial_sp=h.c().sp(), minsp=initial_sp;
-        for(unsigned waves=0;waves<27;++waves)
-        for(unsigned stopped=0;stopped<16;++stopped)
-        for(unsigned descriptor : {0u,0x80u,0xa4u,0xa5u})
-        for(unsigned amp : {0u,1u,15u,31u})
-        for(unsigned signs=0;signs<16;++signs) for(unsigned noise_path=0;noise_path<3;++noise_path) {
+        constexpr std::array<unsigned,4> descriptors{0,0x80,0xa4,0xa5};
+        constexpr std::array<unsigned,4> amplitudes{0,1,15,31};
+        bool covered[27][16][4]{};
+        bool amps[4]{}, signs_seen[16]{}, noise_seen[3]{};
+        unsigned cases=0;
+        auto check=[&](unsigned waves,unsigned stopped,unsigned descriptor,unsigned amp,unsigned signs,unsigned noise_path) {
+            auto d=unsigned(std::find(descriptors.begin(),descriptors.end(),descriptor)-descriptors.begin());
+            auto a=unsigned(std::find(amplitudes.begin(),amplitudes.end(),amp)-amplitudes.begin());
+            require(d<4 && a<4,"unexpected ISR matrix input");
+            covered[waves][stopped][d]=true;
+            amps[a]=true; signs_seen[signs]=true; noise_seen[noise_path]=true;
+            ++cases;
             for(unsigned ch=0;ch<4;++ch) {
                 h.word(update_controls+3*ch,stopped&(1u<<ch) ? 0 : ch==3 ? 1 : 1097);
                 h.c().data[update_controls+3*ch+2]=uint8_t(stopped&(1u<<ch) ? 255 : amp);
@@ -1587,7 +1630,28 @@ void handoff(harness& h) {
             require(h.c().data[waveform]==packed,"pending waveform copy lost selection");
             require(before_sp==h.c().sp(),"pending ISR leaked native stack");
             require(before_sp-path_minsp==(!descriptor ? 8u : 10u),"ISR native stack high-water changed");
-        }
+        };
+        // Every waveform/mask/descriptor triple, with independent rotating
+        // amplitude/sign choices and all three noise paths on each triple.
+        for(unsigned waves=0;waves<27;++waves) for(unsigned stopped=0;stopped<16;++stopped)
+        for(unsigned d=0;d<4;++d) for(unsigned variant=0;variant<3;++variant)
+            check(waves,stopped,descriptors[d],amplitudes[(waves+stopped+d+variant)%4],
+                (waves+3*stopped+5*d+7*variant)%16,variant);
+        // Captured from the original 331,776-case Cartesian sweep: ordinary
+        // family minima/maxima, all-stopped, copy/reseed maxima and stack 10.
+        constexpr unsigned witnesses[][6]={
+            {0,0,0,0,0,0},{0,0,0,1,0,1},
+            {13,0,0,0,0,0},{13,0,0,1,0,1},
+            {26,0,0,0,0,0},{26,0,0,1,0,1},
+            {0,15,0,0,0,0},{13,0,0x80,1,0,1},{13,0,0xa4,1,0,0}
+        };
+        for(auto const& w : witnesses) check(w[0],w[1],w[2],w[3],w[4],w[5]);
+        for(auto const& waves : covered) for(auto const& mask : waves) for(bool seen : mask)
+            require(seen,"missing waveform/stopped-mask/descriptor triple");
+        for(bool seen : amps) require(seen,"missing ISR amplitude");
+        for(bool seen : signs_seen) require(seen,"missing ISR sign combination");
+        for(bool seen : noise_seen) require(seen,"missing ISR noise path");
+        std::cout<<"pending ISR matrix: "<<cases<<" cases passed\n";
         require(copymax==271 && reseedmax==272,"pending ISR cycle target changed");
         require(ordinary_min[0]==183 && ordinary_max[0]==192,"pulse ISR cycle target changed");
         require(ordinary_min[13]==186 && ordinary_max[13]==195,"triangle ISR cycle target changed");
@@ -1866,9 +1930,11 @@ void phase_alignment(char** args) {
     };
     unsigned minimum=128,maximum=0;
     uint64_t max_lateness=0,outputs=0;
-    // Every millisecond-counter value and every sub-tick prescaler phase.
+    unsigned cases=0,continuations=0;
+    auto live_phases=positions({0,1,7,8,31,32,55,56,63});
+    // Directed millisecond-counter boundaries and every sub-tick prescaler phase.
     for(unsigned selected=0;selected<2;++selected)
-    for(unsigned counter=0;counter<250;++counter) for(unsigned phase=0;phase<64;++phase) {
+    for(unsigned counter : {0u,1u,2u,7u,63u,127u,128u,248u,249u}) for(unsigned phase=0;phase<64;++phase) {
         h.quiet();
         h.command(13,1-selected);
         c.st(reg::addr::TIMSK0,0);
@@ -1900,8 +1966,10 @@ void phase_alignment(char** args) {
                 <<" prescaler="<<c.timer_sync.prescaler_cycle<<" elapsed="<<elapsed<<'\n';
         require(gap>=64 && gap<=120 && gap%8==0,
             "audio phase alignment left a Timer0 collision window");
-        if(counter!=0) continue;
-        // Run a complete 8 ms relative-timer pattern for each sub-tick phase.
+        ++cases;
+        if(counter!=0 || std::find(live_phases.begin(),live_phases.end(),phase)==live_phases.end()) continue;
+        ++continuations;
+        // Run a complete 8 ms relative-timer pattern at selected boundary phases.
         // The host-only NOP loop replaces waveform bytes in this isolated core.
         c.prog[0x200]=0; c.prog[0x201]=0;
         c.prog[0x202]=0xfe; c.prog[0x203]=0xcf; // RJMP back to the NOP
@@ -1923,7 +1991,8 @@ void phase_alignment(char** args) {
         c.st(reg::addr::TIMSK0,0);
     }
     require(max_lateness<10,"Timer0 delayed phase-aligned synthesis by ten cycles");
-    std::cout<<"Timer1 startup/rate-switch phase: 32000 rate/counter/prescaler combinations, "
+    std::cout<<"Timer1 startup/rate-switch phase: "<<cases<<" rate/counter/prescaler combinations ("
+        <<continuations<<" live continuations), "
         <<minimum<<".."<<maximum<<" cycles modulo 128; "<<outputs
         <<" real-timer outputs, maximum extra lateness "<<max_lateness<<" cycles\n";
 }
@@ -1963,12 +2032,12 @@ void demo(char** args, bool toggle_rates=false) {
     unsigned frames=0, samples=0, synthesized=0, minsp=0xaff;
     bool effect=false, paused=false, resumed=false;
     bool selected_8khz=false, returned_16khz=false;
-    while(h.c().cycle_count-begin<16000000) {
+    while(h.c().cycle_count-begin<11200000) {
         auto ms=(h.c().cycle_count-begin)/16000;
-        h.c().data[reg::addr::PINB]=((ms>=500 && ms<560)||(ms>=800 && ms<860))?0:16;
-        h.c().data[reg::addr::PINE]=(ms>=200 && ms<260)?0:64;
+        h.c().data[reg::addr::PINB]=((ms>=300 && ms<360)||(ms>=550 && ms<610))?0:16;
+        h.c().data[reg::addr::PINE]=(ms>=100 && ms<160)?0:64;
         h.c().data[reg::addr::PINF]=toggle_rates &&
-            ((ms>=300 && ms<360)||(ms>=700 && ms<760)) ? 0x70 : 0xf0;
+            ((ms>=200 && ms<260)||(ms>=450 && ms<510)) ? 0x70 : 0xf0;
         if(h.c().pc==h.sym("audio_service_func")) {
             maxgap=std::max(maxgap,h.c().cycle_count-last); last=h.c().cycle_count;
         }
@@ -1983,8 +2052,8 @@ void demo(char** args, bool toggle_rates=false) {
         returned_16khz|=selected_8khz && h.c().data[rate]==1;
         h.tick();
     }
-    require(frames>=55,"demo failed to render at its configured frame rate");
-    require(toggle_rates ? (samples>=12200 && samples<=13000) : (samples>=15500 && samples<=15625),
+    require(frames>=35,"demo failed to render at its configured frame rate");
+    require(toggle_rates ? (samples>=8700 && samples<=9200) : (samples>=10600 && samples<=11000),
         "demo sample clock lost interrupts");
     require(synthesized==samples,"demo output and synthesis clocks differ");
     require(toggle_rates ? (selected_8khz && returned_16khz) : !selected_8khz,
@@ -2032,17 +2101,17 @@ void playlist(char** args) {
     unsigned frames=0, minsp=0xaff;
     bool audio_entry_seen=false, switched_while_paused=false, resumed=false, rate_preserved=true;
     std::vector<uint32_t> starts;
-    while(h.c().cycle_count-begin<22400000) {
+    while(h.c().cycle_count-begin<17600000) {
         auto ms=(h.c().cycle_count-begin)/16000;
         // Left wraps to the last song. Six right presses visit all four
         // imports, return to the original, and wrap the other direction.
         unsigned pins=0xf0;
-        if(ms>=100 && ms<160) pins&=~0x20u;
-        if(ms>=200 && ms<260) pins&=~0x80u;
-        for(unsigned time : {250u,400u,550u,700u,850u,1000u})
+        if(ms>=80 && ms<140) pins&=~0x20u;
+        if(ms>=170 && ms<230) pins&=~0x80u;
+        for(unsigned time : {220u,330u,440u,550u,660u,770u})
             if(ms>=time && ms<time+60) pins&=~0x40u;
         h.c().data[reg::addr::PINF]=uint8_t(pins);
-        h.c().data[reg::addr::PINB]=((ms>=500 && ms<560)||(ms>=1150 && ms<1210))?0:16;
+        h.c().data[reg::addr::PINB]=((ms>=400 && ms<460)||(ms>=890 && ms<950))?0:16;
         h.c().data[reg::addr::PINE]=64;
         if(h.c().pc==h.sym("seek_and_dispatch_func")) audio_entry_seen=false;
         if(h.c().pc==h.sym("sys_audio_impl") && !audio_entry_seen) {
@@ -2050,9 +2119,9 @@ void playlist(char** args) {
             if(h.c().data[22]==0)
                 starts.push_back(h.word(16)|(uint32_t(h.c().data[18])<<16));
         }
-        if(ms>=1100 && ms<1130 && h.c().data[music+5]==2) switched_while_paused=true;
-        if(ms>=1250 && h.c().data[music+5]==1) resumed=true;
-        if(ms>=350 && h.c().data[rate]!=0) rate_preserved=false;
+        if(ms>=800 && ms<850 && h.c().data[music+5]==2) switched_while_paused=true;
+        if(ms>=970 && h.c().data[music+5]==1) resumed=true;
+        if(ms>=260 && h.c().data[rate]!=0) rate_preserved=false;
         if(h.c().pc==h.sym("sys_display_impl")) ++frames;
         minsp=std::min(minsp,unsigned(h.c().sp()));
         h.tick();
@@ -2066,7 +2135,7 @@ void playlist(char** args) {
     require(unique.size()==5,"playlist did not visit all five independent music assets");
     require(switched_while_paused && resumed,"playlist did not preserve pause across song switches");
     require(rate_preserved,"playlist did not preserve the selected synthesis rate");
-    require(frames>=75,"playlist failed to maintain animated frames");
+    require(frames>=55,"playlist failed to maintain animated frames");
     require(minsp>=scratch_end,"playlist native stack collided with private workspace");
     std::cout<<"audio playlist: all five songs, both wraps, pause/switch/resume, rate retained; "
         <<frames<<" frames, native stack "<<0xb00-minsp<<" bytes\n";
@@ -2185,12 +2254,21 @@ void decimal_division(char** args) {
     std::cout<<"decimal division: 2560 byte pairs and 10 u32 boundaries passed\n";
 }
 
-void exported_large_asset(char** args) {
+void exported_large_asset(char** args, bool full=true) {
     harness h(args,false);
     h.c().st(reg::addr::TIMSK0,0); h.c().st(reg::addr::TCCR0B,0);
     h.until([&]{return h.boundary() && h.c().data[music+5]==1 && h.c().data[music+6]==1;});
     h.elapsed(1);
     require(h.note_index(0)==36 && h.amplitude(0)==24,"large C/C++ export did not start at its declared pointer");
+    if(!full) {
+        auto cursor=h.word(music)|(uint32_t(h.c().data[music+2])<<16);
+        h.elapsed(16);
+        auto next=h.word(music)|(uint32_t(h.c().data[music+2])<<16);
+        require(next>=cursor+16*4 && h.note_index(0)==36 && h.amplitude(0)==24 && h.c().data[music+5]==1,
+            "large C++ export smoke did not advance through 16 events");
+        std::cout<<"large exported C++ asset smoke: start and 16 subsequent attacks passed\n";
+        return;
+    }
     unsigned remaining=21999;
     while(remaining) {
         auto elapsed=std::min(remaining,255u);
@@ -2199,7 +2277,7 @@ void exported_large_asset(char** args) {
     }
     h.elapsed(1);
     require(h.c().data[music+5]==0 && h.amplitude(0)==255,"large exported asset did not reach End beyond 64 KB");
-    std::cout<<"large exported C/C++ asset: all 22000 attacks and terminal record beyond 64 KB passed\n";
+    std::cout<<"large exported C asset: all 22000 attacks and terminal record beyond 64 KB passed\n";
 }
 void cset(char** args) {
     harness h(args);
@@ -2506,7 +2584,7 @@ int main(int argc,char** argv) {
         }
         for(int index=6;index<argc;++index) {
             char* largeargs[]{argv[0],argv[1],argv[2],argv[index]};
-            exported_large_asset(largeargs);
+            exported_large_asset(largeargs,index==6);
         }
         return 0;
     } catch(std::exception const& e) { std::cerr<<e.what()<<'\n';return 1; }

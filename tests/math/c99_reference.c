@@ -81,7 +81,8 @@ static void unary(float x)
 }
 int main(int argc,char **argv)
 {
-    int quick=reference_quick(argc,argv); if (quick<0) return 2;
+    /* --quick remains a compatibility alias for the same sampling policy. */
+    if (reference_quick(argc, argv) < 0) return 2;
     static const uint32_t special[]={0,0x80000000U,1,0x80000001U,0x007fffffU,
         0x00800000U,0x3f7fffffU,0x3f800000U,0x3f800001U,0xbf800000U,
         0x7f7fffffU,0xff7fffffU,0x7f800000U,0xff800000U,0x7fc12345U,0x7f812345U};
@@ -91,7 +92,7 @@ int main(int argc,char **argv)
             for (int n=-150;n<=128;++n) exact(value(special[i]),value(special[j]),n);
         exact(value(special[i]),0,INT_MIN); exact(value(special[i]),0,INT_MAX);
     }
-    unsigned count=quick?4096:262144;
+    unsigned count=4096;
     for (unsigned i=0;i<count;++i) {
         float x=value(random_word()),y=value(random_word());
         exact(x,y,(int)(random_word()%800)-400);

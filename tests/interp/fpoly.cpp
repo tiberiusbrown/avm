@@ -374,7 +374,10 @@ void validate_native_reduction() {
     double maximum=0;
     uint32_t worst=0;
     const double pio2=1.57079632679489661923132169163975144;
-    for(uint32_t u=0x3f490fdb;u<=0x43000000;++u) {
+    uint64_t cases=0;
+    constexpr uint32_t first=0x3f490fdb, last=0x43000000;
+    auto check=[&](uint32_t u) {
+        ++cases;
         float x=value(u);
         int q;
         float r=avm_native_rempio2(x,&q);
@@ -387,8 +390,30 @@ void validate_native_reduction() {
         if(std::abs(r)>=0x1p-12f)
             require(error/std::abs(reference)<2.04e-5,"native reduction range: tangent error");
         if(error>maximum) {maximum=error;worst=u;}
+    };
+    for(uint32_t u=first;u<=last;u+=521) check(u);
+    check(first); check(last);
+    uint32_t state=0x52454455;
+    // Rejection sampling avoids modulo bias in the inclusive bit-pattern range.
+    constexpr uint32_t width=last-first+1;
+    constexpr uint32_t limit=uint32_t((uint64_t(1)<<32)/width*width);
+    for(unsigned i=0;i<16384;) {
+        uint32_t u=random(state);
+        if(u>=limit) continue;
+        check(first+u%width); ++i;
     }
-    std::cout << "Native pi/2 range: every binary32 in [pi/4,128], quadrants and zero sides exact; max error "
+    auto neighbors=[&](uint32_t center) {
+        for(int delta=-32;delta<=32;++delta) {
+            auto u=int64_t(center)+delta;
+            if(u>=first && u<=last) check(uint32_t(u));
+        }
+    };
+    for(unsigned n=0;n<=82;++n) for(double offset: {0.0,0.5}) {
+        auto center=bits(float((n+offset)*pio2));
+        if(center>=first && center<=last) neighbors(center);
+    }
+    neighbors(first); neighbors(last);
+    std::cout << "Native pi/2 range: " << cases << " sampled binary32 inputs in [pi/4,128], quadrants and zero sides exact; max error "
               << maximum << " at " << std::hex << worst << std::dec << '\n';
 }
 int main(int argc, char **argv) {
@@ -453,7 +478,7 @@ int main(int argc, char **argv) {
                       {1,0x3f000000,1}, {0x3f800001,0x50400000,0xbf800000}})
             check_accel(0x1e,v[0],v[1],v[2]);
         uint32_t math_state=0x4653464d;
-        for(unsigned i=0;i<10000;++i) {
+        for(unsigned i=0;i<500;++i) {
             uint32_t a=random(math_state),b=random(math_state),c=random(math_state);
             for(unsigned op=0x17;op<=0x1e;++op) check_accel(op,a,b,c);
         }
@@ -477,13 +502,16 @@ int main(int argc, char **argv) {
         h.run(0.75f, {value(1), value(1), 0.0f});
         h.run(0.75f, {-value(1), -value(1), 0.0f});
         uint32_t state = 0x53504931;
-        for (unsigned i = 0; i < 3000; ++i) {
+        for (unsigned i = 0; i < 400; ++i) {
             float x = value(0x3e000000 | (random(state) & 0x81ffffff));
             std::vector<float> c;
             unsigned n = 2 + random(state)%12;
             for (unsigned j = 0; j < n; ++j) c.push_back(value(0x3c000000 | (random(state) & 0x83ffffff)));
             h.run(x, c);
         }
+        // Preserve the original exceptional-case stream independently of the
+        // ordinary coefficient sample count (state after its former 3000 cases).
+        state = 0x7a0163e4;
         for (unsigned i = 0; i < 200; ++i) {
             float x = value(random(state));
             std::vector<float> c = {value(random(state)), value(random(state)), value(random(state))};

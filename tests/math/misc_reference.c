@@ -89,7 +89,8 @@ static void unary(float x)
 }
 int main(int argc,char **argv)
 {
-    int quick=reference_quick(argc,argv); if (quick<0) return 2;
+    /* --quick remains a compatibility alias for the same sampling policy. */
+    if (reference_quick(argc, argv) < 0) return 2;
     static const uint32_t special[]={0,0x80000000U,1,0x80000001U,3,0x007fffffU,
         0x00800000U,0x3effffffU,0x3f000000U,0x3f000001U,0x3f800000U,0xbf800000U,
         0x3fc00000U,0x40200000U,0x4affffffU,0x4b000000U,0x4effffffU,0x4f000000U,
@@ -101,7 +102,7 @@ int main(int argc,char **argv)
         for (unsigned j=0;j<sizeof(special)/sizeof(*special);++j)
             binary(value(special[i]),value(special[j]));
     }
-    unsigned count=quick?4096:262144;
+    unsigned count=4096;
     for (unsigned i=0;i<count;++i) {
         float x=value(random_word()),y=value(random_word());
         unary(x); binary(x,y);

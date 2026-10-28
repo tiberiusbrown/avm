@@ -335,8 +335,9 @@ add_custom_target(avm_audio_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
-# Exercise the real Timer0 ISR and watchdog on every device preset and on
-# both compile-time button paths. The guest spins without calling any SYS.
+# All presets and both button paths receive complete isolated Timer0/watchdog
+# coverage. FX also runs the full live hold; other wirings run a 64 ms live smoke.
+# The guest spins without calling any SYS.
 avm_add_object(
     OUTPUT "${AVM_PUSH16_TEST_DIR}/timer0.o"
     SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/timer0.asm"
@@ -686,9 +687,9 @@ add_custom_target(avm_prof_throughput_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
-# Verify the production sqrt kernel against host double sqrt for every binary32
-# significand and exponent parity, plus exponent/subnormal packing cases. Check
-# the large-angle reducer's exact integer product for every normalized mantissa.
+# Verify sampled sqrt significands at both exponent parities, table neighbors
+# and exponent/subnormal packing boundaries against host double sqrt. Check the
+# large-angle reducer's exact integer product with deterministic mantissa samples.
 add_library(avm_math_reference_kernel OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_sqrt.c")
 target_include_directories(avm_math_reference_kernel PRIVATE

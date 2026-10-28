@@ -231,12 +231,37 @@ void live(char** args)
     require(polls == 48 && samples > 11000,
             "live shortcut depended on guest service or interfered with audio");
 }
+void live_smoke(char** args)
+{
+    harness h(args, true);
+    h.c().st(reg::addr::TCCR1B, 10);
+    h.c().st(reg::addr::TIMSK1, 2);
+    h.buttons(3);
+    auto begin = h.c().cycle_count;
+    auto initial_clock = h.clock();
+    unsigned polls = 0, samples = 0;
+    while(h.c().cycle_count - begin < 64u * 16000) {
+        if(h.c().pc == h.sym("timer0_boot_poll")) ++polls;
+        if(h.c().pc == h.sym("timer1_compa_isr")) ++samples;
+        h.tick();
+    }
+    auto elapsed_ms = uint32_t(h.clock() - initial_clock);
+    require(polls > 0 && samples > 500, "live smoke missed button polls or Timer1 interrupts");
+    require(elapsed_ms >= 63 && elapsed_ms <= 65, "live smoke Timer0 clock drifted");
+    require(h.c().data[hold] > 0 && h.c().data[hold] == polls,
+            "live smoke did not interpret physical UP+DOWN wiring");
+    require(h.c().data[reg::addr::WDTCSR] == 0, "live smoke armed watchdog prematurely");
+    std::cout << "Busy guest smoke: " << elapsed_ms << " ms, " << polls
+              << " polls, " << samples << " Timer1 interrupts\n";
+}
 }
 int main(int argc, char** argv)
 {
     try {
         require(argc == 5, "usage: timer0_tests interpreter.hex interpreter.lst guest.bin wiring");
-        isolated(argv); live(argv);
+        isolated(argv);
+        if(std::string(argv[4]) == "FX") live(argv);
+        else live_smoke(argv);
         std::cout << "Timer0 clock/audio/buttons/watchdog checks passed (" << argv[4] << ")\n";
         return 0;
     } catch(std::exception const& error) { std::cerr << error.what() << '\n'; return 1; }

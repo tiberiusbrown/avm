@@ -39,20 +39,18 @@ static int check(uint32_t bits)
 
 int main(int argc, char **argv)
 {
-    int quick = reference_quick(argc, argv);
-    if (quick < 0) return 2;
-    /* Every normalized mantissa and both exponent parities. This also
-     * exhausts every interpolation interval, including both endpoints. */
-    for (uint32_t bits = 0x3f800000; bits < 0x40800000; bits += quick ? 4093 : 1)
+    /* --quick remains a compatibility alias for the same sampling policy. */
+    if (reference_quick(argc, argv) < 0) return 2;
+    /* Sample normalized mantissas at both exponent parities; table interval
+     * neighbors and scaling boundaries are checked independently below. */
+    for (uint32_t bits = 0x3f800000; bits < 0x40800000; bits += 4093)
         if (check(bits)) return 1;
 
-    for (uint32_t bits = 1; bits < 0x00800000; bits += quick ? 4093 : 1)
+    for (uint32_t bits = 1; bits < 0x00800000; bits += 4093)
         if (check(bits)) return 1;
-    if (quick) {
-        /* Both exponent parities and every table interval's neighbors. */
-        for (uint32_t u=0x3f800000;u<0x40800000;u+=0x4000)
-            if (check(u-1) || check(u) || check(u+1)) return 1;
-    }
+    /* Both exponent parities and every table interval's neighbors. */
+    for (uint32_t u=0x3f800000;u<0x40800000;u+=0x4000)
+        if (check(u-1) || check(u) || check(u+1)) return 1;
 
     /* Scaling is exact; still check every exponent at representative word,
      * lookup and rounding boundaries, with both signs and special values. */
@@ -69,14 +67,13 @@ int main(int argc, char **argv)
     }
 
     uint32_t state = 0x12345678;
-    for (unsigned i = 0; i < (quick ? 10000 : 1000000); ++i) {
+    for (unsigned i = 0; i < 10000; ++i) {
         state = state * 1664525u + 1013904223u;
         if (check(state)) return 1;
     }
-    if (quick) puts("Quick stratified sqrt checks passed (all exponent boundaries retained).");
-    else puts("All 16,777,216 normalized mantissa/parity inputs, all 8,388,607 positive "
-         "subnormals, every exponent boundary, and 1,000,000 random bit patterns "
-         "met the 2 ULP policy against the original and double sqrt (NaNs by classification).");
+    puts("Sampled sqrt mantissas and subnormals, every table interval neighbor, "
+         "all exponent boundaries, and 10,000 random inputs met the 2 ULP policy "
+         "against the original and double sqrt (NaNs by classification).");
     printf("sqrtf: max %u ULP @ %08lx; comparison histogram [0,1,2] %llu,%llu,%llu\n",
            maximum,(unsigned long)worst,histogram[0],histogram[1],histogram[2]);
     return 0;

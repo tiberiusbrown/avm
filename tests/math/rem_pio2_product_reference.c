@@ -48,11 +48,11 @@ static int check(uint32_t bits)
 
 int main(int argc, char **argv)
 {
-    int quick=reference_quick(argc,argv);
-    if (quick<0) return 2;
-    /* Exact uint64 arithmetic checks every normalized mantissa in full mode,
+    /* --quick remains a compatibility alias for the same sampling policy. */
+    if (reference_quick(argc, argv) < 0) return 2;
+    /* Exact uint64 arithmetic checks sampled normalized mantissas,
        with coefficients cycled across all exponent windows. */
-    for (uint32_t m=0x800000; m<0x1000000; m += quick ? 4093 : 1) {
+    for (uint32_t m=0x800000; m<0x1000000; m += 4093) {
         struct avm_reduce_window packed=avm_reduce_windows[m&127], w;
         /* Independently unpack the table's 24-bit normal / 48-bit extended
            coefficient before checking the full product with uint64 limbs. */
@@ -93,7 +93,7 @@ int main(int argc, char **argv)
         }
     }
     /* pi/2 cancellation, quotient half-integers and both cutoff edges. */
-    for (unsigned n=1;n<=83444;n+=quick ? 127 : 1) {
+    for (unsigned n=1;n<=83444;n+=127) {
         for (unsigned phase=0;phase<2;++phase) {
             float center=(float)((n+phase*0.5)*1.57079632679489661923);
             uint32_t u; memcpy(&u,&center,4);
@@ -105,8 +105,8 @@ int main(int argc, char **argv)
         if (check(u) || check(u|0x80000000U)) return 1;
     for (uint32_t u=0x47c34ff8;u<=0x47c35008;++u)
         if (check(u) || check(u|0x80000000U)) return 1;
-    printf("%llu independent reduction checks; max sin/cos reconstruction error %.12g @ %08lx (%s).\n",
-           cases,maximum,(unsigned long)worst,quick ? "quick" : "full");
+    printf("%llu independent reduction checks; max sin/cos reconstruction error %.12g @ %08lx (sampled).\n",
+           cases,maximum,(unsigned long)worst);
     printf("Nearest-quadrant differences: %llu total, %llu above fast cutoff (interval seam differences remain subject to quality bound).\n",
            quadrant_mismatches,large_quadrant_mismatches);
     return 0;

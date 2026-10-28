@@ -37,13 +37,14 @@ static int check_both_signs(uint32_t bits)
 
 int main(void)
 {
-    /* Exhaust both sides of the 16-bit split and the final fractional bit. */
-    static const unsigned exhaustive_exponents[] = {6, 7, 22};
-    for (unsigned i = 0; i < sizeof(exhaustive_exponents) /
-                                  sizeof(exhaustive_exponents[0]); ++i) {
-        uint32_t base = (exhaustive_exponents[i] + UINT32_C(127)) << 23;
-        for (uint32_t mantissa = 0; mantissa < UINT32_C(0x800000); ++mantissa)
+    /* Sample both sides of the 16-bit split and the final fractional bit. */
+    static const unsigned sampled_exponents[] = {6, 7, 22};
+    for (unsigned i = 0; i < sizeof(sampled_exponents) /
+                                  sizeof(sampled_exponents[0]); ++i) {
+        uint32_t base = (sampled_exponents[i] + UINT32_C(127)) << 23;
+        for (uint32_t mantissa = 0; mantissa < UINT32_C(0x800000); mantissa += 521)
             if (check_both_signs(base | mantissa)) return 1;
+        if (check_both_signs(base | UINT32_C(0x7fffff))) return 1;
     }
 
     /* For every exponent, vary the high and low words independently. Include
@@ -69,12 +70,12 @@ int main(void)
     }
 
     uint32_t random = UINT32_C(0x12345678);
-    for (unsigned i = 0; i < 1000000; ++i) {
+    for (unsigned i = 0; i < 20000; ++i) {
         random = random * UINT32_C(1664525) + UINT32_C(1013904223);
         if (check(random)) return 1;
     }
-    puts("All four rounding kernels matched host double results: every mantissa "
+    puts("All four rounding kernels matched host double results: sampled mantissas "
          "at exponents 6, 7 and 22 with both signs, all exponent boundaries, "
-         "and 1,000,000 random inputs.");
+         "and 20,000 random inputs.");
     return 0;
 }

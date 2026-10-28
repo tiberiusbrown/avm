@@ -7,6 +7,7 @@ SYMBOL TABLE:
 00000000 l     O .rodata.str1.1	00000028 decimal_overflows.threshold
 00000000 l     O .rodata.decimal_value.powers	00000018 decimal_value.powers
 00000000 l    d  .text.strtod	00000000 .text.strtod
+00000000 l    d  .text.strtold	00000000 .text.strtold
 00000000 l    d  .rodata.decimal_value.powers	00000000 .rodata.decimal_value.powers
 00000000 l    d  .rodata.str1.1	00000000 .rodata.str1.1
 00000000 g     F .text.strtof	00000871 strtof
@@ -17,6 +18,7 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_lshrsi3
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.strtod	00000004 strtod
+00000000 g     F .text.strtold	00000004 strtold
 
 Disassembly of section .text.strtof:
 
@@ -1288,5 +1290,12 @@ Disassembly of section .text.strtod:
 
 <strtod>:
  e2 00 00 00           jmpf	strtod
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	strtof
+
+Disassembly of section .text.strtold:
+
+<strtold>:
+ e2 00 00 00           jmpf	strtold
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	strtof

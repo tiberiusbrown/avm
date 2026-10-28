@@ -187,3 +187,10 @@ float strtof(const char* str, char** endptr) {
 double strtod(const char* str, char** endptr) {
     return strtof(str, endptr);
 }
+
+_Static_assert(sizeof(long double) == sizeof(float) && LDBL_MANT_DIG == FLT_MANT_DIG,
+               "AVM strtold shares the binary32 strtof implementation");
+
+long double strtold(const char* str, char** endptr) {
+    return strtof(str, endptr);
+}

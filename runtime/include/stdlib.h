@@ -44,11 +44,21 @@ long long strtoll(const char* str, char** endptr, int base);
 unsigned long long strtoull(const char* str, char** endptr, int base);
 
 /* Fixed C-locale decimal/hexadecimal floating conversions, including inf/nan.
- * AVM float and double are both binary32. Overflow and subnormal/zero
+ * AVM float, double, and long double are binary32. Overflow and subnormal/zero
  * underflow set ERANGE; success and no conversion preserve errno. */
 float strtof(const char* str, char** endptr);
 double strtod(const char* str, char** endptr);
+long double strtold(const char* str, char** endptr);
 double atof(const char* str);
+
+/* Fixed C locale: stateless single-byte encoding, mapping bytes 0..255
+ * directly to unsigned 8-bit wide characters. All byte values are valid;
+ * conversions preserve errno. */
+int mblen(const char* s, size_t n);
+int mbtowc(wchar_t* pwc, const char* s, size_t n);
+int wctomb(char* s, wchar_t wc);
+size_t mbstowcs(wchar_t* pwcs, const char* s, size_t n);
+size_t wcstombs(char* s, const wchar_t* pwcs, size_t n);
 
 /* The absolute value and division result must be representable. Division
  * truncates toward zero; a nonzero remainder has the numerator's sign. */

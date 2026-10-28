@@ -8,13 +8,16 @@
 
 static float (*volatile float_call)(const char*, char**) = strtof;
 static double (*volatile double_call)(const char*, char**) = strtod;
+static long double (*volatile long_double_call)(const char*, char**) = strtold;
 
 #ifdef __cplusplus
-static_assert(sizeof(double) == sizeof(float) && DBL_MANT_DIG == FLT_MANT_DIG,
-              "AVM double must be binary32");
+static_assert(sizeof(double) == sizeof(float) && DBL_MANT_DIG == FLT_MANT_DIG &&
+              sizeof(long double) == sizeof(float) && LDBL_MANT_DIG == FLT_MANT_DIG,
+              "AVM double and long double must be binary32");
 #else
-_Static_assert(sizeof(double) == sizeof(float) && DBL_MANT_DIG == FLT_MANT_DIG,
-               "AVM double must be binary32");
+_Static_assert(sizeof(double) == sizeof(float) && DBL_MANT_DIG == FLT_MANT_DIG &&
+              sizeof(long double) == sizeof(float) && LDBL_MANT_DIG == FLT_MANT_DIG,
+               "AVM double and long double must be binary32");
 #endif
 
 static uint32_t bits(float f) {
@@ -34,6 +37,10 @@ static int check(const char* text, uint32_t expected, unsigned int offset,
         test_line16("ACTLO", (uint16_t)actual);
         return 0;
     }
+    errno = EDOM;
+    end = NULL;
+    if(bits((float)long_double_call(text, &end)) != actual ||
+       end != text + offset || errno != (error ? error : EDOM)) return 0;
     errno = EDOM;
     end = NULL;
     return bits((float)double_call(text, &end)) == actual &&
@@ -112,7 +119,7 @@ int avm_test_main(void) {
     CHECK(large, 0x3f800000UL, 125, 0, 0);
     errno = EDOM;
     if(float_call("1.5", NULL) != 1.5f || double_call("2.5", NULL) != 2.5 ||
-       strtof("3.5", NULL) != 3.5f || strtod("4.5", NULL) != 4.5 || errno != EDOM)
+       strtof("3.5", NULL) != 3.5f || strtod("4.5", NULL) != 4.5 || strtold("5.5", NULL) != 5.5L || errno != EDOM)
         return 2;
     return 0;
 }

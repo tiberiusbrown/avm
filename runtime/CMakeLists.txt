@@ -31,6 +31,7 @@ set(RUNTIME_SOURCES
     inttypes
     locale
     malloc
+    multibyte
     math
     pgmspace
     qsort

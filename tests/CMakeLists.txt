@@ -90,9 +90,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             elseif(AVM_TEST_NAME STREQUAL "printf_long_long")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/printf_long_long.c")
-            elseif(AVM_TEST_NAME STREQUAL "time_clock")
+            elseif(AVM_TEST_NAME MATCHES "^time_(clock|calendar|text|strftime|unavailable)$")
                 list(APPEND test_source_dependencies
-                    "${AVM_C_TEST_DIR}/time_clock.c")
+                    "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
             elseif(AVM_TEST_NAME STREQUAL "separate_compilation")
                 set(test_support_sources
                     "${AVM_CXX_TEST_DIR}/support/separate_compilation_impl.cpp")

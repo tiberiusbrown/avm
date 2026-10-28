@@ -41,6 +41,14 @@ set(RUNTIME_SOURCES
     strtof
     string
     time
+    time_calendar
+    time_mktime
+    time_gmtime
+    time_localtime
+    time_names
+    time_asctime
+    time_ctime
+    time_strftime
     termination
 )
 
@@ -105,6 +113,9 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
     set(runtime_math_options)
     set(runtime_extra_dependencies)
+    if(RUNTIME_SOURCE MATCHES "^time_")
+        list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h")
+    endif()
     if(RUNTIME_SOURCE STREQUAL "termination")
         list(APPEND runtime_extra_dependencies "${AVM_CRT_INIT_FINI_HEADER}")
     endif()
@@ -288,6 +299,7 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
             -mllvm -print-after-all
         STDERR_OUTPUT "${AVM_RUNTIME_MIR_OUTPUT}"
         DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
+            "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h"
     )
     list(APPEND AVM_RUNTIME_MIR_OUTPUTS
         "${AVM_RUNTIME_MIR_OBJECT}"

@@ -146,3 +146,28 @@ extern "C" struct lconv *cpp_localeconv_direct(void) { return localeconv(); }
 extern "C" struct lconv *(*cpp_localeconv_address(void))(void) {
     return &localeconv;
 }
+
+/* Calendar ABI and addressable ordinary C entry points. */
+static_assert(sizeof(time_t) == 8 && (time_t)-1 < 0, "signed 64-bit time_t");
+static_assert(sizeof(clock_t) == 4 && (clock_t)-1 > 0, "unsigned 32-bit clock_t");
+static_assert(CLOCKS_PER_SEC == 1000, "clock scale");
+static_assert(sizeof(struct tm) == 18, "nine 16-bit fields");
+#define TM_FIELD(field, index) static_assert(sizeof(((struct tm *)0)->field) == sizeof(int) && offsetof(struct tm, field) == (index)*2, "tm field ABI")
+TM_FIELD(tm_sec,0); TM_FIELD(tm_min,1); TM_FIELD(tm_hour,2);
+TM_FIELD(tm_mday,3); TM_FIELD(tm_mon,4); TM_FIELD(tm_year,5);
+TM_FIELD(tm_wday,6); TM_FIELD(tm_yday,7); TM_FIELD(tm_isdst,8);
+#undef TM_FIELD
+extern "C" void cpp_time_interface_smoke(void)
+{
+    clock_t (*volatile c)(void) = &clock;
+    time_t (*volatile a)(time_t *) = &time;
+    double (*volatile b)(time_t,time_t) = &difftime;
+    time_t (*volatile d)(struct tm *) = &mktime;
+    struct tm *(*volatile e)(const time_t *) = &gmtime;
+    struct tm *(*volatile f)(const time_t *) = &localtime;
+    char *(*volatile g)(const struct tm *) = &asctime;
+    char *(*volatile h)(const time_t *) = &ctime;
+    size_t (*volatile i)(char *,size_t,const char *,const struct tm *) = &strftime;
+    void *null_value = NULL;
+    (void)c;(void)a;(void)b;(void)d;(void)e;(void)f;(void)g;(void)h;(void)i;(void)null_value;
+}

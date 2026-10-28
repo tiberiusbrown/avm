@@ -106,7 +106,26 @@ they provide their own fixed-capacity allocator.
 with one-millisecond resolution. It wraps modulo 2^32 after about 49.7 days;
 unsigned subtraction measures intervals across one wrap when they are shorter
 than a full counter period. This is an elapsed-time approximation, not precise
-CPU-consumption measurement. No calendar-time API is provided.
+CPU-consumption measurement.
+
+The C99 calendar interface uses signed 64-bit `time_t`, representing integral
+seconds since 1970-01-01 00:00:00 UTC, including negative timestamps. Gregorian
+conversions use the proleptic calendar, fixed UTC, no DST adjustment, and no
+leap-second accounting. `time()` returns `(time_t)-1` (also stored through a
+non-null argument), because current calendar time is unavailable. `difftime()`
+computes differences before converting to the target's floating-point precision.
+`mktime()` normalizes all date and time fields; unrepresentable normalized years
+fail without changing the input. The supported `tm_year` range is -32768..32767.
+
+`gmtime()` and `localtime()` share an 18-byte static `struct tm`; `asctime()` and
+`ctime()` share a 26-byte output buffer. Subsequent calls overwrite these shared
+results. `asctime()` rejects abnormal fields and years outside 1000..9999.
+`strftime()` supports every C99 conversion and applicable E/O modifier in the
+fixed `"C"` locale, including ISO week-years and UTC zone formatting. It writes
+directly into caller storage. No calendar function needs an allocator. Calendar
+names reside in program memory; only the two shared buffers consume permanent
+RAM (44 bytes together), and each is linked only when used. `mktime()` and
+`strftime()` alone require no permanent calendar RAM.
 
 `<locale.h>` provides the C99 locale interface with a permanently fixed `"C"`
 locale. The native locale selected by `setlocale(category, "")` is also `"C"`;

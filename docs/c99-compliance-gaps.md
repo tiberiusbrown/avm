@@ -76,11 +76,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 - [ ] Make the C99 type-generic macros work for the required real and complex argument types with correct selection among `float`, `double`, and `long double` functions. Clang's header depends on missing complex and non-`f` math entry points.
 
-### `<time.h>` — time and calendar facilities
-
-- [ ] Define `time_t`, `struct tm`, and the standard `size_t` exposure from `<time.h>`.
-- [ ] Provide `time`, `difftime`, `mktime`, `gmtime`, `localtime`, `asctime`, `ctime`, and `strftime`.
-
 ### `<wchar.h>` — wide and multibyte functionality
 
 - [ ] Provide `wint_t`, `mbstate_t`, `WEOF`, and the standard wide-character header declarations.

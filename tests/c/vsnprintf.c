@@ -107,11 +107,21 @@ int avm_test_main(void)
     char trunc_storage[10];
     char one_byte[2];
     uint16_t failures = 0;
+    uint8_t n_failures = 0;
     int result;
     int pointer_valid;
     int program_pointer_valid;
     int program_pointer_width_valid;
     size_t i;
+    int count_a = -1;
+    int count_b = -1;
+    signed char count_hh = -1;
+    short count_h = -1;
+    long count_l = -1;
+    long long count_ll = -1;
+    intmax_t count_j = -1;
+    ptrdiff_t count_z = -1;
+    ptrdiff_t count_t = -1;
 
     result = call_vsnprintf(
         buffer, sizeof(buffer), "A:%c:%s:%S:%%",
@@ -230,6 +240,51 @@ int avm_test_main(void)
     if(!program_pointer_width_valid)
         failures |= (uint16_t)(1u << 14);
 
+    result = call_vsnprintf(buffer, sizeof(buffer), "abc%nDEF%n", &count_a, &count_b);
+    if(result != 6 || !text_equal(buffer, "abcDEF") || count_a != 3 || count_b != 6)
+        ++n_failures;
+    result = call_vsnprintf(buffer, sizeof(buffer), "%n%hhn:%d", &count_a,
+                            &count_hh, 7);
+    if(result != 2 || !text_equal(buffer, ":7") || count_a != 0 || count_hh != 0)
+        ++n_failures;
+    result = call_vsnprintf(buffer, sizeof(buffer), "%c%n", 0, &count_a);
+    if(result != 1 || count_a != 1 || buffer[0] != '\0')
+        ++n_failures;
+    result = call_vsnprintf(buffer, 2, "%1000d%n", 1, &count_a);
+    if(result != 1000 || count_a != 1000 || buffer[0] != ' ' || buffer[1] != '\0')
+        ++n_failures;
+    result = call_vsnprintf(buffer, sizeof(buffer), "%5d%lln", 1, &count_ll);
+    if(result != 5 || count_ll != 5)
+        ++n_failures;
+    result = call_vsnprintf(buffer, sizeof(buffer),
+                            "x%hn%ln%jn%zn%tn", &count_h, &count_l,
+                            &count_j, &count_z, &count_t);
+    if(result != 1 || count_h != 1 || count_l != 1 || count_j != 1 ||
+       count_z != 1 || count_t != 1)
+        ++n_failures;
+    result = call_vsnprintf(buffer, sizeof(buffer),
+                            "%P%n%S%n%llx%n%jd%n%u",
+                            program_pointer, &count_a, F("ab"), &count_b,
+                            0x123ULL, &count_ll, (intmax_t)42, &count_j, 7u);
+    if(result != 16 || count_a != 8 || count_b != 10 || count_ll != 13 ||
+       count_j != 15 || !program_pointer_prefix_matches(buffer, program_pointer) ||
+       !text_equal(buffer + 8, "ab123427"))
+        ++n_failures;
+    result = call_vsnprintf((char *)0, 0, "abc%n", &count_a);
+    if(result != 3 || count_a != 3)
+        ++n_failures;
+    result = call_vsnprintf(buffer, 3, "abcdef%n", &count_a);
+    if(result != 6 || count_a != 6 || !text_equal(buffer, "ab"))
+        ++n_failures;
+    count_a = 1234;
+    result = call_vsnprintf(buffer, sizeof(buffer), "%+n", &count_a);
+    if(result != -1 || count_a != 1234)
+        ++n_failures;
+    result = call_vsnprintf_P(buffer, sizeof(buffer), F("%nabc"), &count_a);
+    if(result != 3 || count_a != 0 || !text_equal(buffer, "abc"))
+        ++n_failures;
+
+    test_line16("NF", n_failures);
     test_line16("FM", failures);
-    return failures != 0;
+    return failures != 0 || n_failures != 0;
 }

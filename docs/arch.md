@@ -3204,9 +3204,11 @@ patterns of `r2` and `q3`.
 All three services read the variadic argument area in data space and may read
 additional data-space objects through `%s` and program-space objects through
 `%S`. `vsnprintf_P` and `debug_printfv_P` additionally read their formats from
-program space. The buffer services write only the bounded destination region
-described above; `debug_printfv_P` performs no AVM data-space write. `%P`
-formats a program address value and performs no program-space read.
+program space. The buffer services write the bounded destination region
+described above and may additionally write through `%n` destination pointers.
+`debug_printfv_P` may write through `%n` destination pointers despite having no
+ordinary output buffer. `%P` formats a program address value and performs no
+program-space read.
 
 Debug output is externally observable. `debug_printfv_P` MUST NOT be removed,
 duplicated, speculated, combined with another call, or reordered across another
@@ -3227,7 +3229,7 @@ flags:       -  +  space  #  0
 width:       decimal digits or *
 precision:   . followed by decimal digits, *, or no characters
 length:      hh  h  l  ll  j  z  t  L
-conversion:  c  s  S  d  i  u  o  x  X  p  P  f  F  e  E  g  G  a  A
+conversion:  c  s  S  d  i  u  o  x  X  p  P  f  F  e  E  g  G  a  A  n
 ```
 
 `%%` emits one literal `%` and consumes no argument. It accepts no flags,
@@ -3259,7 +3261,10 @@ Any format byte not accepted in the current parser state causes the deterministi
 conversion is complete, an unsupported conversion, or an unsupported length.
 Incomplete `%ll` or `%j`, excess length characters (for example `%llld`),
 noninteger pairs such as `%lls`, `%llc`, `%llp`, `%llf`, and `%jf`, and
-integer pairs using `L` are invalid.
+integer pairs using `L` are invalid. `%n` accepts no flags, width, or
+precision. It accepts `hh`, `h`, no length, `l`, `ll`, `j`, `z`, and `t`;
+`L` is invalid. Invalid `%n` syntax is rejected before its destination
+pointer is read.
 The parser does not assign implementation-specific
 semantics to an unrecognized form.
 
@@ -3280,6 +3285,7 @@ alignment and no implicit gaps:
 | `%S` program-string pointer | 3 |
 | `%p` data pointer | 2 |
 | `%P` program pointer | 3 |
+| `%n` destination pointer (any valid length) | 2 |
 
 Default argument promotions apply. In particular, `char`, `signed char`,
 `unsigned char`, `bool`, `short`, and `unsigned short` arrive as 16-bit
@@ -3307,6 +3313,7 @@ interfaces nor the true-variadic builtins insert alignment padding.
 |---|---|
 | `%%` | Emit one `%`; consume no argument. |
 | `%c` | Consume a promoted 16-bit integer and emit its low byte. |
+| `%n` | Consume a 16-bit data pointer and store the logical count of previously formatted bytes without emitting output. |
 | `%s` | Consume a 16-bit data pointer and emit its NUL-terminated data-space string. |
 | `%S` | Consume a packed 24-bit program pointer and emit its NUL-terminated program-space string. |
 | `%d`, `%i` | Format a signed decimal integer. |
@@ -3394,7 +3401,18 @@ zero emits an empty string without dereferencing the string pointer. Program-
 string pointer advancement for `%S` is modulo `2^24`.
 
 Formatting is byte-oriented and locale-independent. The supported language has
-no wide-character, `%n`, positional-argument, or locale-specific conversion.
+no wide-character, positional-argument, or locale-specific conversion. `%n`
+stores one byte for `hh`, two bytes for `h`, default, `z`, or `t`, four bytes
+for `l`, and eight bytes for `ll` or `j`. Stores are little-endian; wider
+stores zero-extend the shared 16-bit count. It counts logical bytes even when
+buffer output is truncated or text glyphs are missing, clipped, or invisible.
+It is supported by all five formatting services: `vsnprintf`, `vsnprintf_P`,
+`debug_printfv_P`, `draw_textfv`, and `draw_textfv_P`.
+
+All sinks share the native `r8:r9` logical output counter. The text glyph
+renderer preserves both registers while processing glyphs. `%n` records counts
+through the existing successful 16-bit count range. The counter remains
+16-bit; exact wide `%n` values after count overflow are not defined here.
 
 #### 49.27.6. Caller requirements and ordering
 
@@ -3717,7 +3735,9 @@ cursor. Consequently:
 - formatter-generated spaces, string bytes, and conversion bytes are rendered
   in order;
 - a `%c` argument whose low byte is zero is delivered to ordinary glyph lookup;
-- source terminators for `%s` and `%S` are not emitted; and
+- source terminators for `%s` and `%S` are not emitted;
+- `%n` stores the count reached so far, while a selected font with zero line
+  height retains the existing early return and performs no `%n` store; and
 - malformed format syntax stops processing at the malformed conversion and
   returns the cursor reached after all earlier emitted bytes. There is no
   separate error result, and earlier framebuffer writes remain in place.
@@ -3736,8 +3756,9 @@ way that changes the selected state observed by a draw.
 Every drawing service reads the hidden selected text state, glyph records and
 images in program space, and its explicit source. The formatted services also
 read the variadic area in data space and may indirectly read `%s` and `%S`
-objects in either address space. Drawing reads and writes the fixed framebuffer
-range `0x0500-0x08FF`; it does not update the physical display.
+objects in either address space. Formatted drawing may also write through `%n`
+destination pointers. Drawing reads and writes the fixed framebuffer range
+`0x0500-0x08FF`; it does not update the physical display.
 
 A drawing service MUST NOT be speculated or reordered across a selected-state
 update that may affect it, or across an access that may alias the framebuffer.

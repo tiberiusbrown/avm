@@ -239,6 +239,51 @@ static const uint8_t AVM_PROGMEM pixel_font[] = {
     2, '1', 1, 1, 0, 1, 0, 7, 0, 2, 1
 };
 
+NOINLINE static void percent_n_sinks(void)
+{
+    volatile uint8_t *fb = (volatile uint8_t *)(uintptr_t)0x500;
+    avm_text_cursor_t cursor;
+    uint16_t reference_hash = 0;
+    uint16_t formatted_hash = 0;
+    int emitted = -1;
+    unsigned i;
+    int debug_result = avm_debug_printf_P(F("abc%nZ"), &emitted);
+    if(debug_result != 4 || emitted != 3) ++failures;
+
+    avm_set_text_font(AVM_FONT_5X7);
+    for(i = 0; i < 1024; ++i) fb[i] = 0;
+    (void)avm_draw_text(0, 48, "AB");
+    for(i = 0; i < 1024; ++i)
+        reference_hash = (uint16_t)((reference_hash * 33u) ^ fb[i]);
+    for(i = 0; i < 1024; ++i) fb[i] = 0;
+    emitted = -1;
+    cursor = avm_draw_textf(0, 48, "A%nB", &emitted);
+    if(emitted != 1 || cursor.x != 12 || cursor.baseline_y != 48) ++failures;
+    for(i = 0; i < 1024; ++i)
+        formatted_hash = (uint16_t)((formatted_hash * 33u) ^ fb[i]);
+    if(formatted_hash != reference_hash) ++failures;
+    emitted = -1;
+    cursor = avm_draw_textf_P(0, 48, F("AB%n"), &emitted);
+    if(emitted != 2 || cursor.x != 12 || cursor.baseline_y != 48) ++failures;
+
+    emitted = -1;
+    (void)avm_draw_text(0, 56, "A\nB");
+    cursor = avm_draw_textf(0, 56, "A\nB%n", &emitted);
+    if(emitted != 3 || cursor.x != 6 || cursor.baseline_y != 64) ++failures;
+    emitted = -1;
+    (void)avm_draw_text(0, 56, "     ");
+    cursor = avm_draw_textf(0, 56, "%5s%n", "", &emitted);
+    if(emitted != 5 || cursor.x != 30) ++failures;
+    emitted = -1;
+    cursor = avm_draw_textf(10, 56, "%c%n", 0, &emitted);
+    if(emitted != 1 || cursor.x != 10 || cursor.baseline_y != 56) ++failures;
+
+    avm_set_text_font((const avm_font_t AVM_PROGMEM *)0);
+    emitted = 1234;
+    cursor = avm_draw_textf(7, 56, "%n", &emitted);
+    if(emitted != 1234 || cursor.x != 7 || cursor.baseline_y != 56) ++failures;
+}
+
 NOINLINE static void sinks(void)
 {
     avm_text_cursor_t cursor;
@@ -284,6 +329,7 @@ int avm_test_main(void)
     truncation();
     invalid();
     sinks();
+    percent_n_sinks();
     test_line16("failures", failures);
     return failures != 0;
 }

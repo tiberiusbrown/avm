@@ -10853,9 +10853,12 @@ sys_format_impl:
     movw  r28, VM_R4
     mov   r17, r27                  ; status may now replace incoming r4 high
     set                              ; text sink/renderer contract for full call
+    clr   r8
+    clr   r9
     sts   data_text_current_y+0, VM_R5L
     sts   data_text_current_y+1, VM_R5H
-    ; r8:r11 are buffer-only count/capacity state and are not read by text sinks.
+    ; Formatted drawing shares the logical count in r8:r9 with buffer/debug
+    ; sinks. The glyph renderer preserves this pair across each glyph.
     lds   r24, data_text_line_height
     tst   r24
     brne  1f
@@ -10939,6 +10942,7 @@ format_emit_repeat:
     sbrc  r17, FORMAT_STATUS_SINK_DEBUG
     rjmp  .Lformat_emit_repeat_debug
     brtc  .Lformat_emit_repeat_buffer
+    rcall format_add_count
     rjmp  text_emit_repeat
 .Lformat_emit_repeat_debug:
     rcall format_add_count
@@ -10980,6 +10984,7 @@ format_emit_ram_span:
     sbrc  r17, FORMAT_STATUS_SINK_DEBUG
     rjmp  .Lformat_emit_ram_span_debug
     brtc  .Lformat_emit_ram_span_buffer
+    rcall format_add_count
     rjmp  text_emit_ram_span
 .Lformat_emit_ram_span_debug:
     rcall format_add_count
@@ -11455,8 +11460,14 @@ format_core:
     breq  format_conversion_percent
 1:
     cpi   r24, 'c'
-    breq  format_conversion_char
+    brne  8f
+    rjmp  format_conversion_char
+8:
 2:
+    cpi   r24, 'n'
+    brne  7f
+    rjmp  format_conversion_n
+7:
     cpi   r24, 's'
     brne  3f
     rjmp  format_conversion_string
@@ -11527,6 +11538,40 @@ format_conversion_percent:
     ldi   r24, '%'
     rcall format_emit_char
     rjmp  .Lformat_main_loop
+
+format_conversion_n:
+    ; No flags, width, or precision are accepted.
+    tst   r18
+    brne  .Lformat_n_invalid
+    mov   r24, r12
+    or    r24, r13
+    brne  .Lformat_n_invalid
+    cpi   r19, FORMAT_LENGTH_CAPITAL_L
+    breq  .Lformat_n_invalid
+
+    ; Every %n argument is a 16-bit data pointer.
+    rcall format_arg_u16
+    movw  r30, r24
+    st    Z+, r8
+    cpi   r19, FORMAT_LENGTH_HH
+    breq  .Lformat_n_done
+    st    Z+, r9
+    cpi   r19, FORMAT_LENGTH_L
+    breq  .Lformat_n_four
+    cpi   r19, FORMAT_LENGTH_LL
+    brne  .Lformat_n_done
+    ldi   r24, 6
+    rjmp  .Lformat_n_zero_loop
+.Lformat_n_four:
+    ldi   r24, 2
+.Lformat_n_zero_loop:
+    st    Z+, ZERO
+    dec   r24
+    brne  .Lformat_n_zero_loop
+.Lformat_n_done:
+    rjmp  .Lformat_main_loop
+.Lformat_n_invalid:
+    rjmp  format_unexpected_character
 
 format_conversion_char:
     rcall format_validate_default_length
@@ -12522,6 +12567,11 @@ text_emit_ram_span:
 ; Input r24=byte.
 format_emit_char:
     brtc  .Lformat_emit_char_buffer_or_debug
+    mov   r0, r24
+    ldi   r24, 1
+    clr   r25
+    rcall format_add_count
+    mov   r24, r0
 
 ; Emit one logical text byte. Only newline is special. Missing glyphs have no
 ; framebuffer effect and zero advance. Available records are seven bytes in an
@@ -12570,12 +12620,14 @@ text_emit_char_raw:
     add   r24, r0
     adc   r25, r1
     adc   r26, ZERO
-    delay_4
+    push  r8
+    push  r9
     nop
     out   SPDR, r26                 ; physical record address high, +18
 
-    ; Preserve the union live at direct/repeat/span emission points. r17 is the
-    ; call-lifetime status register and is never touched by the renderer.
+    ; Preserve the union live at direct/repeat/span emission points, including
+    ; the shared formatted-byte counter r8:r9. r17 is the call-lifetime status
+    ; register and is never touched by the renderer.
     push  r12
     push  r13
     push  r14
@@ -12779,7 +12831,6 @@ text_emit_char_raw:
     add   r28, r24
     adc   r29, ZERO
     fx_disable
-    rjmp  .Ltext_emit_char_restore
 
 .Ltext_emit_char_restore:
     pop   r22
@@ -12789,6 +12840,8 @@ text_emit_char_raw:
     pop   r14
     pop   r13
     pop   r12
+    pop   r9
+    pop   r8
     ret
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

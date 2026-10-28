@@ -129,6 +129,13 @@ int avm_test_main(void)
                    "123456789ABCDEF-42|ram|abcdefghijklmnopqrst|123456789"))
         failures |= (uint16_t)(1u << 1);
 
+    result = call_vsnprintf_P(
+        buffer, sizeof(buffer), F("%lf|%LF|%d"),
+        (double)1.5, (long double)2.5L, 42);
+    report_text("FL", result, buffer);
+    if(result != 20 || !text_equal(buffer, "1.500000|2.500000|42"))
+        failures |= (uint16_t)(1u << 15);
+
     result = call_vsnprintf(
         buffer, sizeof(buffer),
         "%+06d|%-5u|%#06x|%#o|%.0u|%hhd|%hd|%ld|%zu|%td",

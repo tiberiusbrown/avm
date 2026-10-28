@@ -3226,8 +3226,8 @@ Accepted components are:
 flags:       -  +  space  #  0
 width:       decimal digits or *
 precision:   . followed by decimal digits, *, or no characters
-length:      hh  h  l  ll  z  t
-conversion:  c  s  S  d  i  u  o  x  X  p  P
+length:      hh  h  l  ll  j  z  t  L
+conversion:  c  s  S  d  i  u  o  x  X  p  P  f  F  e  E  g  G  a  A
 ```
 
 `%%` emits one literal `%` and consumes no argument. It accepts no flags,
@@ -3245,17 +3245,21 @@ The `INT16_MIN` dynamic-width case has width `32768`; it is not subject to
 signed negation overflow. Repeated flags are permitted and have the same effect
 as one occurrence.
 
-Only the integer conversions `d`, `i`, `u`, `o`, `x`, and `X` accept a length
-modifier. Every other conversion requires the default length. The complete
+The integer conversions `d`, `i`, `u`, `o`, `x`, and `X` accept `hh`, `h`,
+`l`, `ll`, `j`, `z`, and `t`; `j` has the same 64-bit width as `ll` on AVM.
+Floating-point conversions `f`, `F`, `e`, `E`, `g`, `G`, `a`, and `A` accept
+the default length, `l`, and `L`. `l` also retains its existing integer use;
+`L` is valid only for floating-point conversions. The complete
 length/conversion pair is validated before its conversion value is consumed.
 Arguments already consumed for `*` width or precision remain consumed if a
 later byte makes the conversion invalid.
 
 Any format byte not accepted in the current parser state causes the deterministic
 `-1` result described above. This includes a terminating zero before a
-conversion is complete, an unsupported conversion, or an unsupported length
-such as `j`. Incomplete `%ll`, excess length characters (for example `%llld`),
-and noninteger pairs such as `%lls`, `%llc`, `%llp`, and `%llf` are invalid.
+conversion is complete, an unsupported conversion, or an unsupported length.
+Incomplete `%ll` or `%j`, excess length characters (for example `%llld`),
+noninteger pairs such as `%lls`, `%llc`, `%llp`, `%llf`, and `%jf`, and
+integer pairs using `L` are invalid.
 The parser does not assign implementation-specific
 semantics to an unrecognized form.
 
@@ -3270,7 +3274,8 @@ alignment and no implicit gaps:
 | `%c` | 2 |
 | Integer conversion with `hh`, `h`, default, `z`, or `t` | 2 |
 | Integer conversion with `l` | 4 |
-| Integer conversion with `ll` | 8 |
+| Integer conversion with `ll` or `j` | 8 |
+| Floating-point conversion with default, `l`, or `L` | 4 |
 | `%s` data pointer | 2 |
 | `%S` program-string pointer | 3 |
 | `%p` data pointer | 2 |
@@ -3278,7 +3283,9 @@ alignment and no implicit gaps:
 
 Default argument promotions apply. In particular, `char`, `signed char`,
 `unsigned char`, `bool`, `short`, and `unsigned short` arrive as 16-bit
-promoted integers. `%S` and `%P` consume packed little-endian program pointers:
+promoted integers. AVM represents `float`, `double`, and `long double` as the
+same 32-bit IEEE-754 binary32 value. `%S` and `%P` consume packed
+little-endian program pointers:
 
 ```text
 byte 0 = address bits 7:0
@@ -3292,8 +3299,7 @@ immediately after byte 2.
 For `ll`, all eight bytes are little-endian: byte 0 holds bits 7:0 and byte 7
 holds bits 63:56. The next argument begins immediately after byte 7, even when
 preceded by a three-byte `%P` or `%S` pointer. Neither the explicit `va_list`
-interfaces nor the true-variadic builtins insert alignment padding. The `j`
-length modifier remains unsupported.
+interfaces nor the true-variadic builtins insert alignment padding.
 
 #### 49.27.4. Conversion semantics
 
@@ -3310,6 +3316,10 @@ length modifier remains unsupported.
 | `%X` | Format an unsigned hexadecimal integer using uppercase digits. |
 | `%p` | Emit `0x` followed by exactly four lowercase hexadecimal digits for a 16-bit data pointer. |
 | `%P` | Emit `0x` followed by exactly six lowercase hexadecimal digits for a packed 24-bit program pointer. |
+| `%f`, `%F` | Format fixed-point decimal; `%F` uses uppercase special values. |
+| `%e`, `%E` | Format exponential decimal. |
+| `%g`, `%G` | Select fixed or exponential decimal form. |
+| `%a`, `%A` | Format hexadecimal floating point. |
 
 `%p` and `%P` always include the prefix and complete fixed-width digit field,
 including for a null pointer. `%P` does not dereference the pointer.
@@ -3323,17 +3333,19 @@ Integer lengths select these effective widths:
 | default | 16 bits |
 | `l` | 32 bits |
 | `ll` | 64 bits |
+| `j` | 64 bits |
 | `z` | 16 bits |
 | `t` | 16 bits |
 
 For signed `hh` conversions, the selected low byte is interpreted as signed
 8-bit. For unsigned `hh` conversions, it is interpreted as unsigned 8-bit.
 Signed magnitude formation correctly handles `INT16_MIN`, `INT32_MIN`, and
-`INT64_MIN`. The `ll` modifier applies to all six integer conversions: `d`,
-`i`, `u`, `o`, `x`, and `X`. Signed decimal supports `INT64_MIN` through
-`INT64_MAX`; unsigned conversions support zero through `UINT64_MAX`. All
-existing integer flags, width, precision, prefix, and output-count semantics
-apply equally to 64-bit values and to every formatting sink.
+`INT64_MIN`. The `ll` and `j` modifiers both select 64 bits for all six integer
+conversions: `d`, `i`, `u`, `o`, `x`, and `X`. Signed decimal supports
+`INT64_MIN` through `INT64_MAX`; unsigned conversions support zero through
+`UINT64_MAX`. All existing integer flags, width, precision, prefix, and
+output-count semantics apply equally to 64-bit values and to every formatting
+sink.
 
 The nonreentrant native formatter reuses its existing scratch allocation:
 the 22-byte reversed integer digit buffer overlaps conversion-local string
@@ -3382,8 +3394,7 @@ zero emits an empty string without dereferencing the string pointer. Program-
 string pointer advancement for `%S` is modulo `2^24`.
 
 Formatting is byte-oriented and locale-independent. The supported language has
-no wide-character, floating-point, `%n`, positional-argument, or locale-specific
-conversion.
+no wide-character, `%n`, positional-argument, or locale-specific conversion.
 
 #### 49.27.6. Caller requirements and ordering
 

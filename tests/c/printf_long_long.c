@@ -134,6 +134,24 @@ NOINLINE static void mixed(void)
           "18446744073709551615|1234");
 }
 
+NOINLINE static void intmax_format(void)
+{
+    check(snprintf(buffer, sizeof(buffer), "%jd", (-LLONG_MAX - 1LL)),
+          "-9223372036854775808");
+    check(snprintf(buffer, sizeof(buffer), "%ji", LLONG_MAX),
+          "9223372036854775807");
+    check(snprintf(buffer, sizeof(buffer), "%ju", ULLONG_MAX),
+          "18446744073709551615");
+    check(snprintf(buffer, sizeof(buffer), "%jo", ULLONG_MAX),
+          "1777777777777777777777");
+    check(snprintf(buffer, sizeof(buffer), "%jx", ULLONG_MAX),
+          "ffffffffffffffff");
+    check(snprintf(buffer, sizeof(buffer), "%jX", ULLONG_MAX),
+          "FFFFFFFFFFFFFFFF");
+    check(snprintf(buffer, sizeof(buffer), "%d|%jd|%u", 7, (-LLONG_MAX - 1LL), 9u),
+          "7|-9223372036854775808|9");
+}
+
 NOINLINE static void mixed_scratch(void)
 {
     const char AVM_PROGMEM *p = F("program string beyond twelve bytes");
@@ -201,7 +219,8 @@ NOINLINE static void truncation(void)
 NOINLINE static void invalid(void)
 {
     static const char AVM_PROGMEM bad[][8] = {
-        "%ll", "%lls", "%llc", "%llp", "%llf", "%llld", "%llS", "%llP", "%ll%"
+        "%ll", "%lls", "%llc", "%llp", "%llf", "%llld", "%llS", "%llP", "%ll%",
+        "%Ld", "%Lu", "%Lx", "%Lo", "%jf", "%jF", "%js", "%llF", "%lls", "%hf", "%zf"
     };
     unsigned i;
     for(i = 0; i < sizeof(bad) / sizeof(bad[0]); ++i) {
@@ -226,16 +245,16 @@ NOINLINE static void sinks(void)
     avm_text_cursor_t reference;
     volatile uint8_t *fb = (volatile uint8_t *)(uintptr_t)0x500;
     unsigned i;
-    int count = avm_debug_printf_P(F("ll:%lld|%llu|%#llX|%llo\n"),
+    int count = avm_debug_printf_P(F("j:%jd|%ju|%#jX|%jo\n"),
                                   LLONG_MIN, ULLONG_MAX, ULLONG_MAX, ULLONG_MAX);
-    if(count != 87) ++failures;
+    if(count != 86) ++failures;
     avm_set_text_font((const avm_font_t AVM_PROGMEM *)pixel_font);
     avm_set_text_mode(AVM_TEXT_WHITE_TRANSPARENT);
     for(i = 0; i < 1024; ++i) fb[i] = 0;
-    cursor = avm_draw_textf(3, 0, "%llu", 11ULL);
+    cursor = avm_draw_textf(3, 0, "%ju", 11ULL);
     if(cursor.x != 7 || cursor.baseline_y != 0 || fb[3] != 1 || fb[5] != 1)
         ++failures;
-    cursor = avm_draw_textf_P(3, 8, F("%llo"), 9ULL);
+    cursor = avm_draw_textf_P(3, 8, F("%jo"), 9ULL);
     if(cursor.x != 7 || cursor.baseline_y != 8 || fb[128 + 3] != 1 || fb[128 + 5] != 1)
         ++failures;
     for(i = 0; i < 1024; ++i)
@@ -257,6 +276,7 @@ int avm_test_main(void)
 {
     vectors();
     mixed();
+    intmax_format();
     mixed_scratch();
     sign_flags();
     narrow_widths();

@@ -202,6 +202,7 @@
 #define FORMAT_LENGTH_Z              4
 #define FORMAT_LENGTH_T              5
 #define FORMAT_LENGTH_LL             6
+#define FORMAT_LENGTH_CAPITAL_L      7
 
 #define FORMAT_INT_BASE_MASK         0x03
 #define FORMAT_INT_BASE_DEC          0
@@ -11417,23 +11418,34 @@ format_core:
     rjmp  .Lformat_dispatch_conversion
 .Lformat_length_not_h:
     cpi   r24, 'l'
-    brne  1f
+    breq  .Lformat_length_l
+    cpi   r24, 'j'
+    breq  .Lformat_length_ll
+    cpi   r24, 'L'
+    breq  .Lformat_length_capital_l
+    cpi   r24, 'z'
+    breq  .Lformat_length_z
+    cpi   r24, 't'
+    breq  .Lformat_length_t
+    rjmp  .Lformat_dispatch_conversion
+.Lformat_length_l:
     ldi   r19, FORMAT_LENGTH_L
     rcall format_get_char
     cpi   r24, 'l'
     brne  .Lformat_dispatch_conversion
+.Lformat_length_ll:
     ldi   r19, FORMAT_LENGTH_LL
     rcall format_get_char
     rjmp  .Lformat_dispatch_conversion
-1:
-    cpi   r24, 'z'
-    brne  2f
+.Lformat_length_capital_l:
+    ldi   r19, FORMAT_LENGTH_CAPITAL_L
+    rjmp  .Lformat_length_single
+.Lformat_length_z:
     ldi   r19, FORMAT_LENGTH_Z
+.Lformat_length_single:
     rcall format_get_char
     rjmp  .Lformat_dispatch_conversion
-2:
-    cpi   r24, 't'
-    brne  .Lformat_dispatch_conversion
+.Lformat_length_t:
     ldi   r19, FORMAT_LENGTH_T
     rcall format_get_char
 
@@ -11473,19 +11485,16 @@ format_core:
     breq  .Lformat_integer_dispatch
     cpi   r24, 'X'
     breq  .Lformat_integer_dispatch
-    cpi   r24, 'f'
+.Lformat_dispatch_float_check:
+    mov   r26, r24
+    ori   r26, 0x20
+    cpi   r26, 'f'
     breq  .Lformat_float_dispatch
-    cpi   r24, 'e'
+    cpi   r26, 'e'
     breq  .Lformat_float_dispatch
-    cpi   r24, 'E'
+    cpi   r26, 'g'
     breq  .Lformat_float_dispatch
-    cpi   r24, 'g'
-    breq  .Lformat_float_dispatch
-    cpi   r24, 'G'
-    breq  .Lformat_float_dispatch
-    cpi   r24, 'a'
-    breq  .Lformat_float_dispatch
-    cpi   r24, 'A'
+    cpi   r26, 'a'
     breq  .Lformat_float_dispatch
     rjmp  format_unexpected_character
 .Lformat_integer_dispatch:
@@ -11813,6 +11822,10 @@ format_hex_nibble_to_char:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 format_conversion_integer:
+    cpi   r19, FORMAT_LENGTH_CAPITAL_L
+    brne  1f
+    rjmp  format_unexpected_character
+1:
     ; Decode effective width once. r19's length lifetime ends here; r20
     ; retains the active byte count until shared field preparation starts.
     ldi   r20, 2
@@ -12813,7 +12826,11 @@ format_float_veneer_emit_ram_span:
     rjmp   format_emit_ram_span
 
 format_conversion_float:
-    rcall format_validate_default_length
+    tst   r19
+    breq  1f
+    cpi   r19, FORMAT_LENGTH_L
+    breq  1f
+    cpi   r19, FORMAT_LENGTH_CAPITAL_L
     breq  1f
     rjmp  format_unexpected_character
 1:
@@ -13022,11 +13039,10 @@ format_conversion_float_decimal:
 
 .Lformat_float_decimal_choose_engine:
     lds   r26, data_format_conversion
+    ori   r26, 0x20
     cpi   r26, 'f'
     breq  .Lformat_float_decimal_engine_f
     cpi   r26, 'e'
-    breq  .Lformat_float_decimal_engine_e
-    cpi   r26, 'E'
     breq  .Lformat_float_decimal_engine_e
 
     ; %g/%G: engine precision is min(significantPrecision-1, 7).
@@ -13114,12 +13130,12 @@ format_conversion_float_decimal:
     rjmp  format_float_emit_special
 1:
     lds   r24, data_format_conversion
+    ori   r24, 0x20
     cpi   r24, 'f'
     breq  format_float_emit_fixed
     cpi   r24, 'e'
     breq  1f
-    cpi   r24, 'E'
-    brne  2f
+    rjmp  2f
 1:
     rjmp   format_float_emit_exponential
 2:

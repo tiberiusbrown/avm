@@ -45,6 +45,31 @@ __attribute__((noinline)) static int print_fixed(void) {
     failures |= result != 68;
 
     result = avm_debug_printf_P(
+        F("F-check:%.0F|%#.0F|%+010.2F|%-12.3F|%F|%F|%F\n"),
+        1.5f, -1.5f, 1.5f, -1.5f, negative_zero,
+        positive_infinity, quiet_nan);
+    failures |= result != 56;
+
+    result = avm_debug_printf_P(F("F-star:[%*.*F]\n"), 10, 3, 1.5f);
+    failures |= result != 20;
+
+    result = avm_debug_printf_P(
+        F("float-lengths:%lf|%LF|%Le|%LG|%lA|%d\n"),
+        (double)1.5, (long double)-2.5, (long double)1.0,
+        (long double)2.0, (double)1.5, 42);
+    failures |= result != 60;
+
+    result = avm_debug_printf_P(
+        F("length-set:%lf|%lF|%le|%lE|%lg|%lG|%la|%lA|%Lf|%LF|%Le|%LE|%Lg|%LG|%La|%LA|%d\n"),
+        (double)1.5, (double)1.5, (double)1.5, (double)1.5,
+        (double)1.5, (double)1.5, (double)1.5, (double)1.5,
+        (long double)1.5L, (long double)1.5L,
+        (long double)1.5L, (long double)1.5L,
+        (long double)1.5L, (long double)1.5L,
+        (long double)1.5L, (long double)1.5L, 42);
+    failures |= result != 154;
+
+    result = avm_debug_printf_P(
         F("carry:%.0f|%.2f|%.3f|%.2e\n"),
         999.5f, 9.99609375f, 0.99951171875f, 9.99609375f);
     failures |= result != 32;

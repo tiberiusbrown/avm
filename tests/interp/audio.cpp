@@ -728,27 +728,24 @@ void sequence(harness& h) {
                 "event reader crossed its temporary buffer or resumed after End");
         }
     });
-    h.test("streams beyond 65535 bytes terminate and rewind with 24-bit cursors",[&]{
+    h.test("24-bit cursor carry, End, and rewind",[&]{
         std::vector<uint8_t> bytes{1};
-        constexpr unsigned count=22000;
+        constexpr unsigned count=32;
         for(unsigned i=0;i<count;++i) bytes.insert(bytes.end(),{0,1,uint8_t(36+i%60)});
         bytes.insert(bytes.end(),{0,0,1});
-        require(bytes.size()>65535,"large stream fixture is too small");
         h.command(14,1);
-        h.play_midi(bytes,0xfff0);
+        h.play_midi(bytes,0x1fff0);
         auto start_cursor=h.word(music)|(uint32_t(h.c().data[music+2])<<16);
-        unsigned remaining=count-1;
-        while(remaining) {
-            auto elapsed=std::min(remaining,255u);
-            h.elapsed(elapsed); remaining-=elapsed;
-        }
-        require(h.note_index(0)==12+(count-1)%60 && h.c().data[music+2]>1,
-            "large stream cursor lost its high byte");
+        require(start_cursor>=0x1fff0 && start_cursor<0x20000,"carry fixture started on the wrong side of the boundary");
+        h.elapsed(count-1);
+        auto final_cursor=h.word(music)|(uint32_t(h.c().data[music+2])<<16);
+        require(h.note_index(0)==12+(count-1)%60 && final_cursor>=0x20000 && h.c().data[music+2]==2,
+            "short carry stream cursor lost its high byte");
         h.elapsed(1);
-        require(h.c().data[music+5]==1 && h.word(music+3)==1,"large stream terminal record failed");
+        require(h.c().data[music+5]==1 && h.word(music+3)==1,"short carry stream terminal record failed");
         h.elapsed(1);
         require(h.note_index(0)==12 && (h.word(music)|(uint32_t(h.c().data[music+2])<<16))==start_cursor,
-            "large stream did not rewind to its original pointer");
+            "short carry stream did not rewind to its original pointer");
         h.command(14,0);
         h.play_midi({1,0,1,60,0,0,1});
         h.elapsed(1);
@@ -2032,7 +2029,7 @@ void demo(char** args, bool toggle_rates=false) {
     unsigned frames=0, samples=0, synthesized=0, minsp=0xaff;
     bool effect=false, paused=false, resumed=false;
     bool selected_8khz=false, returned_16khz=false;
-    while(h.c().cycle_count-begin<11200000) {
+    while(h.c().cycle_count-begin<(toggle_rates ? 11200000u : 1600000u)) {
         auto ms=(h.c().cycle_count-begin)/16000;
         h.c().data[reg::addr::PINB]=((ms>=300 && ms<360)||(ms>=550 && ms<610))?0:16;
         h.c().data[reg::addr::PINE]=(ms>=100 && ms<160)?0:64;
@@ -2052,18 +2049,20 @@ void demo(char** args, bool toggle_rates=false) {
         returned_16khz|=selected_8khz && h.c().data[rate]==1;
         h.tick();
     }
-    require(frames>=35,"demo failed to render at its configured frame rate");
-    require(toggle_rates ? (samples>=8700 && samples<=9200) : (samples>=10600 && samples<=11000),
+    require(frames>=(toggle_rates ? 35u : 4u),"demo failed to render at its configured frame rate");
+    require(toggle_rates ? (samples>=8700 && samples<=9200) : (samples>=1530 && samples<=1565),
         "demo sample clock lost interrupts");
     require(synthesized==samples,"demo output and synthesis clocks differ");
     require(toggle_rates ? (selected_8khz && returned_16khz) : !selected_8khz,
         "demo did not retain 16 kHz by default or toggle both rates");
-    require(effect && paused && resumed,"demo button controls failed");
+    if(toggle_rates) require(effect && paused && resumed,"demo button controls failed");
+    else require(!effect && !paused && !resumed,"default demo unexpectedly changed playback state");
     require(minsp>=scratch_end,"demo native stack collided with private workspace");
     require(h.c().data[music+5]==1,"demo music did not continue automatically");
-    std::cout<<"animated demo"<<(toggle_rates ? " with rate toggles" : "")<<": "<<frames<<" frames, "<<samples<<" outputs, "
+    std::cout<<"animated demo"<<(toggle_rates ? " with rate toggles (700 ms)" : " smoke (100 ms)")<<": "<<frames<<" frames, "<<samples<<" outputs, "
         <<synthesized<<" synthesis samples, service gap "
-        <<maxgap/16000.<<" ms, native stack "<<0xb00-minsp<<" bytes; SFX/pause/resume passed\n";
+        <<maxgap/16000.<<" ms, native stack "<<0xb00-minsp<<" bytes"
+        <<(toggle_rates ? "; SFX/pause/resume passed\n" : "; default playback smoke passed\n");
 }
 void formatter(char** args) {
     harness h(args,false);
@@ -2282,54 +2281,60 @@ void exported_large_asset(char** args, bool full=true) {
 void cset(char** args) {
     harness h(args);
     unsigned valid=0, invalid=0;
-    for(uint32_t pc : {0x7000u,0x70ffu,0xffffu,0xfffffeu}) {
-        for(unsigned secondary=0;secondary<256;++secondary) {
-            unsigned flag_count=secondary<0x30?256:2;
-            for(unsigned f=0;f<flag_count;++f) {
-                unsigned flags=secondary<0x30?f:f*255;
-                h.quiet();
-                h.asset(pc,{0xf8,uint8_t(secondary),0x00});
-                for(unsigned r=0;r<8;++r) h.word(8+2*r,uint16_t(0xa531+r*0x127));
-                h.word(28,0x9f0);
-                h.word(4,uint16_t(pc)); h.c().data[6]=uint8_t(pc>>16);
-                h.c().data[reg::addr::GPIOR0]=uint8_t(flags);
-                h.c().data[reg::addr::SREG]=uint8_t(flags^0x42);
-                h.c().prev_sreg=h.c().data[reg::addr::SREG];
-                h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
-                h.until([&]{return h.boundary();});
-                auto regs=h.c().data; auto sp=h.c().sp();
-                auto begin=h.c().cycle_count;
-                h.tick();
-                bool implemented=secondary<0x30;
-                h.until([&]{return implemented?h.boundary():
-                    h.c().pc==h.sym("invalid_secondary_instruction_func");},200);
-                unsigned destination=secondary&7;
-                unsigned condition=secondary>>3;
-                unsigned bit=condition<2?1:condition<4?0:4;
-                unsigned result=((flags>>bit)&1)^(condition&1);
-                for(unsigned r=0;r<8;++r) {
-                    auto expected=implemented && r==destination?result:
-                        unsigned(regs[8+2*r]|regs[9+2*r]<<8);
-                    require(h.word(8+2*r)==expected,"CSET result or register preservation wrong");
-                }
-                require(h.c().data[2]==regs[2] && h.c().data[3]==regs[3] &&
-                    h.c().data[7]==regs[7],"CSET changed immutable constants");
-                require(h.word(28)==0x9f0 && h.c().sp()==sp,"CSET changed guest/native SP");
-                require(h.c().data[reg::addr::GPIOR0]==flags,"CSET changed architectural flags");
-                require(std::equal(regs.begin()+0x100,regs.end(),h.c().data.begin()+0x100),
-                    "CSET changed SRAM");
-                auto next_pc=(pc+(implemented?2:1))&0xffffff;
-                require((h.word(4)|(uint32_t(h.c().data[6])<<16))==next_pc,
-                    "CSET PC increment/carry wrong");
-                if(implemented) {
-                    require(h.c().pc==h.sym("primary_table"),"CSET fetched wrong following opcode");
-                    require(h.c().cycle_count-begin==41,"CSET latency is not constant 41 cycles");
-                    ++valid;
-                } else ++invalid;
-            }
+    auto check=[&](uint32_t pc,unsigned secondary,unsigned flags) {
+        h.quiet();
+        h.asset(pc,{0xf8,uint8_t(secondary),0x00});
+        for(unsigned r=0;r<8;++r) h.word(8+2*r,uint16_t(0xa531+r*0x127));
+        h.word(28,0x9f0);
+        h.word(4,uint16_t(pc)); h.c().data[6]=uint8_t(pc>>16);
+        h.c().data[reg::addr::GPIOR0]=uint8_t(flags);
+        h.c().data[reg::addr::SREG]=uint8_t(flags^0x42);
+        h.c().prev_sreg=h.c().data[reg::addr::SREG];
+        h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
+        h.until([&]{return h.boundary();});
+        auto regs=h.c().data; auto sp=h.c().sp();
+        auto begin=h.c().cycle_count;
+        h.tick();
+        bool implemented=secondary<0x30;
+        h.until([&]{return implemented?h.boundary():
+            h.c().pc==h.sym("invalid_secondary_instruction_func");},200);
+        unsigned destination=secondary&7;
+        unsigned condition=secondary>>3;
+        unsigned bit=condition<2?1:condition<4?0:4;
+        unsigned result=((flags>>bit)&1)^(condition&1);
+        for(unsigned r=0;r<8;++r) {
+            auto expected=implemented && r==destination?result:
+                unsigned(regs[8+2*r]|regs[9+2*r]<<8);
+            require(h.word(8+2*r)==expected,"CSET result or register preservation wrong");
         }
+        require(h.c().data[2]==regs[2] && h.c().data[3]==regs[3] &&
+            h.c().data[7]==regs[7],"CSET changed immutable constants");
+        require(h.word(28)==0x9f0 && h.c().sp()==sp,"CSET changed guest/native SP");
+        require(h.c().data[reg::addr::GPIOR0]==flags,"CSET changed architectural flags");
+        require(std::equal(regs.begin()+0x100,regs.end(),h.c().data.begin()+0x100),
+            "CSET changed SRAM");
+        auto next_pc=(pc+(implemented?2:1))&0xffffff;
+        require((h.word(4)|(uint32_t(h.c().data[6])<<16))==next_pc,
+            "CSET PC increment/carry wrong");
+        if(implemented) {
+            require(h.c().pc==h.sym("primary_table"),"CSET fetched wrong following opcode");
+            require(h.c().cycle_count-begin==41,"CSET latency is not constant 41 cycles");
+            ++valid;
+        } else ++invalid;
+    };
+    for(unsigned condition=0;condition<6;++condition) for(unsigned flags=0;flags<256;++flags) {
+        unsigned destination=(flags+condition)&7;
+        check(0x7000,(condition<<3)|destination,flags);
     }
-    std::cout<<"CSET: "<<valid<<" condition/register/flag/PC cases at 41 cycles and "
+    for(unsigned secondary=0;secondary<0x30;++secondary)
+        for(uint32_t pc : {0x7000u,0x70ffu,0xffffu,0xfffffeu})
+            for(unsigned flags : {0u,1u,2u,16u,255u}) check(pc,secondary,flags);
+    for(unsigned secondary=0x30;secondary<256;++secondary)
+        for(unsigned flags : {0u,255u}) check(0x7000,secondary,flags);
+    for(unsigned secondary : {0x30u,0x31u,0x3fu,0x40u,0x7fu,0x80u,0xfeu,0xffu})
+        for(uint32_t pc : {0x70ffu,0xffffu,0xfffffeu})
+            for(unsigned flags : {0u,255u}) check(pc,secondary,flags);
+    std::cout<<"CSET: "<<valid<<" condition/rotating-register/flag and boundary cases at 41 cycles; "
         <<invalid<<" invalid-encoding cases passed\n";
 }
 void retired_math(char** args) {

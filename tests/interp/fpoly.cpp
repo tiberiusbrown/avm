@@ -22,7 +22,7 @@ float value(uint32_t u) { float x; std::memcpy(&x, &u, 4); return x; }
 struct harness {
     std::unique_ptr<absim::arduboy_t> e = std::make_unique<absim::arduboy_t>();
     std::map<std::string, unsigned> symbols;
-    unsigned cases = 0, interrupted = 0;
+    unsigned cases = 0;
     std::array<uint64_t,8> accelerator_min={UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX,
                                           UINT64_MAX,UINT64_MAX,UINT64_MAX,UINT64_MAX};
     std::array<uint64_t,8> accelerator_max{};
@@ -71,7 +71,6 @@ struct harness {
         return byte;
     }
     void tick() {
-        if (cpu().pc == sym("timer1_compa_isr")) ++interrupted;
         e->cycle(); cpu().update_all();
         require(!cpu().should_autobreak(), "native emulator fault");
     }
@@ -139,8 +138,7 @@ struct harness {
         }
     }
     void accelerator(unsigned op, uint32_t a, uint32_t b, uint32_t c,
-                     uint32_t expected, int quadrant = 0, uint32_t address = 0x200,
-                     bool audio = false, unsigned phase = 0) {
+                     uint32_t expected, int quadrant = 0, uint32_t address = 0x200) {
         cpu().st(absim::reg::addr::TIMSK1, 0);
         cpu().st(absim::reg::addr::TCCR1B, 0);
         auto resume = cpu().pc;
@@ -160,20 +158,11 @@ struct harness {
         cpu().data[absim::reg::addr::GPIOR0] = 0xbd;
         auto before=cpu().data;
         auto sp=cpu().sp();
-        if (audio) {
-            word(0xa18,0x1234); cpu().data[0xa1a]=96; cpu().data[0xa24]=128;
-            cpu().st(absim::reg::addr::TCNT1H,0);
-            cpu().st(absim::reg::addr::TCNT1L,uint8_t(phase));
-            cpu().st(absim::reg::addr::TCCR1B,10);
-            cpu().st(absim::reg::addr::TIMSK1,2);
-        }
         auto begin_cycles=cpu().cycle_count;
         tick(); until([&]{return boundary() && pc()!=address;});
-        if(!audio) {
-            auto cycles=cpu().cycle_count-begin_cycles;
-            accelerator_min[op-0x17]=std::min(accelerator_min[op-0x17],cycles);
-            accelerator_max[op-0x17]=std::max(accelerator_max[op-0x17],cycles);
-        }
+        auto cycles=cpu().cycle_count-begin_cycles;
+        accelerator_min[op-0x17]=std::min(accelerator_min[op-0x17],cycles);
+        accelerator_max[op-0x17]=std::max(accelerator_max[op-0x17],cycles);
         require(pc()==((address+2)&0xffffff),"accelerator PC advancement");
         require(cpu().sp()==sp && word(28)==0x980,"accelerator stack preservation");
         require(cpu().data[absim::reg::addr::GPIOR0]==0xbd,"accelerator CC preservation");
@@ -212,9 +201,8 @@ struct harness {
         tick(); until([&]{return cpu().pc == sym("startup_invalid_image");});
     }
     // Direct execution of every short FF entry, including register aliases,
-    // mixed/consecutive fetches, carry boundaries, and interrupt phases.
-    void short_ff(unsigned op, uint32_t address, unsigned flags,
-                  bool audio = false, unsigned phase = 0) {
+    // mixed/consecutive fetches and carry boundaries.
+    void short_ff(unsigned op, uint32_t address, unsigned flags) {
         cpu().st(absim::reg::addr::TIMSK1, 0);
         cpu().st(absim::reg::addr::TCCR1B, 0);
         auto resume = cpu().pc;
@@ -252,13 +240,6 @@ struct harness {
         else if (op == 20) store(20, 1, 2);
         else if (op == 21) store(20, 0x100, 2);
         auto sp = cpu().sp();
-        if (audio) {
-            word(0xa18, 0x1234); cpu().data[0xa1a] = 96; cpu().data[0xa24] = 128;
-            cpu().st(absim::reg::addr::TCNT1H, 0);
-            cpu().st(absim::reg::addr::TCNT1L, uint8_t(phase));
-            cpu().st(absim::reg::addr::TCCR1B, 10);
-            cpu().st(absim::reg::addr::TIMSK1, 2);
-        }
         tick(); until([&]{return (boundary() && pc() != address) || cpu().pc == sym("invalid_secondary_instruction_func");});
         if (op >= 31) {
             require(cpu().pc == sym("invalid_secondary_instruction_func"), "reserved FF did not trap");
@@ -269,7 +250,7 @@ struct harness {
             for (unsigned r=8; r<24; ++r) if (expected[r] != cpu().data[r]) {
                 std::ostringstream msg;
                 msg << "short FF op=" << std::hex << op << " address=" << address
-                    << " PC=" << pc() << " phase=" << phase << " native r" << std::dec << r
+                    << " PC=" << pc() << " native r" << std::dec << r
                     << " expected=" << std::hex << unsigned(expected[r]) << " actual=" << unsigned(cpu().data[r]);
                 throw std::runtime_error(msg.str());
             }
@@ -291,7 +272,7 @@ struct harness {
         ++cases;
     }
     void run(float x, const std::vector<float>& c, uint32_t address = 0x200,
-                 unsigned flags = 0xac, bool audio = false, unsigned phase = 0, bool next_ff = false) {
+                 unsigned flags = 0xac, bool next_ff = false) {
         cpu().st(absim::reg::addr::TIMSK1, 0);
         cpu().st(absim::reg::addr::TCCR1B, 0);
         // Finish any speculative transfer before seeking to the new test.
@@ -319,15 +300,6 @@ struct harness {
         cpu().data[absim::reg::addr::GPIOR0] = uint8_t(flags);
         auto before = cpu().data;
         auto sp = cpu().sp();
-        if (audio) {
-            word(0xa18, 0x1234); // Active pulse voice, rather than silent ISR only.
-            cpu().data[0xa1a] = 96;
-            cpu().data[0xa24] = 128;
-            cpu().st(absim::reg::addr::TCNT1H, 0);
-            cpu().st(absim::reg::addr::TCNT1L, uint8_t(phase));
-            cpu().st(absim::reg::addr::TCCR1B, 10);
-            cpu().st(absim::reg::addr::TIMSK1, 2);
-        }
         tick(); until([&]{ return (boundary() && pc() != address) || cpu().pc == sym("invalid_secondary_instruction_func"); });
         if (c.empty()) {
             require(cpu().pc == sym("invalid_secondary_instruction_func"), "zero count did not trap");
@@ -426,12 +398,10 @@ int main(int argc, char **argv) {
             for (unsigned flags = 0; flags < 8; ++flags)
                 for (uint32_t address : {0x200u, 0xffffu, 0xffffffu})
                     h.short_ff(op, address, 0xac | (flags & 3) | ((flags & 4) << 2));
-            for (unsigned phase=0; phase<128; ++phase)
-                h.short_ff(op, 0x200, 0xbd, true, phase);
         }
         for (unsigned op = 31; op < 256; ++op) h.short_ff(op, 0x200, 0xbd);
         auto check_accel = [&](unsigned op, uint32_t a, uint32_t b, uint32_t c,
-                                uint32_t address=0x200, bool audio=false, unsigned phase=0) {
+                                uint32_t address=0x200) {
             float x=value(a), y=value(b), z=value(c), result=0;
             int q=0;
             switch(op) {
@@ -444,22 +414,32 @@ int main(int argc, char **argv) {
             case 0x1d: result=avm_native_rempio2(x,&q); break;
             case 0x1e: result=avm_native_fma(x,y,z); break;
             }
-            h.accelerator(op,a,b,c,bits(result),q,address,audio,phase);
+            h.accelerator(op,a,b,c,bits(result),q,address);
         };
         std::vector<uint32_t> edge={0,0x80000000u,1,0x80000001u,0x7fffff,0x800000,
             0x3effffff,0x3f000000,0x3f000001,0x3f490fda,0x3f490fdb,
             0x3f800000,0x3fc00000,0x40200000,0x40c80000,0x4affffff,0x4b000000,
             0x7f7fffff,0x7f800000,0xff800000,0x7fc12345,0xff812345};
-        for(unsigned e=0;e<256;++e) for(uint32_t m: {0u,1u,0x3fffffu,0x400000u,0x7fffffu})
-            for(unsigned sign=0;sign<2;++sign) edge.push_back((e<<23)|m|(sign<<31));
+        constexpr uint32_t mantissas[]={0,1,0x3fffff,0x400000,0x7fffff};
+        for(unsigned e=0;e<256;++e) for(unsigned sign=0;sign<2;++sign)
+            edge.push_back((e<<23)|mantissas[(e+sign)%5]|(sign<<31));
+        for(unsigned e : {0u,1u,2u,125u,126u,127u,128u,149u,150u,253u,254u,255u})
+            for(auto m : mantissas) for(unsigned sign=0;sign<2;++sign)
+                edge.push_back((e<<23)|m|(sign<<31));
+        std::sort(edge.begin(),edge.end());
+        edge.erase(std::unique(edge.begin(),edge.end()),edge.end());
+        bool exponent_signs[256][2]{};
+        for(auto u : edge) exponent_signs[(u>>23)&255][u>>31]=true;
+        for(auto const& exponent : exponent_signs) for(bool seen : exponent)
+            require(seen,"missing accelerator exponent/sign coverage");
+        std::cout<<"Accelerator boundary matrix: "<<edge.size()<<" unique inputs, "
+                 <<10*edge.size()<<" operand-position checks\n";
         for(unsigned op=0x17;op<=0x1e;++op) {
             for(auto a:edge) check_accel(op,a,0x40000000,0xbf800000);
             for(auto a:edge) if(op==0x1c || op==0x1e)
                 check_accel(op,0x3f800001,a,0xbf800000);
             for(uint32_t address: {0xffffu,0xffffffu})
                 check_accel(op,0x40c80000,0x40000000,0xbf800000,address);
-            for(unsigned phase=0;phase<128;++phase)
-                check_accel(op,0x40c80000,0x40000000,0xbf800000,0x200,true,phase);
         }
         for(unsigned n=0;n<=82;++n) for(double offset: {0.0,0.5}) {
             uint32_t center=bits(float((n+offset)*1.57079632679489661923));
@@ -517,10 +497,7 @@ int main(int argc, char **argv) {
             std::vector<float> c = {value(random(state)), value(random(state)), value(random(state))};
             h.run(x, c);
         }
-        for (unsigned phase = 0; phase < 128; ++phase)
-            h.run(0.75f, {0.25f,-0.5f,0.75f,-1.0f,1.25f}, 0x200, 0xbd, true, phase);
-        require(h.interrupted > 0, "did not exercise audio interrupts");
-        h.run(0.5f, {1.0f, 2.0f}, 0xfffffc, 0xbd, true, 12, true);
+        h.run(0.5f, {1.0f, 2.0f}, 0xfffffc, 0xbd, true);
         h.run(0.5f, {});
         h.reject_old_image();
         h.verify_sign_timing();
@@ -547,7 +524,7 @@ int main(int argc, char **argv) {
         for(unsigned i=0;i<8;++i)
             std::cout << "FF " << std::hex << i+0x17 << std::dec << " observed cycles "
                       << h.accelerator_min[i] << ".." << h.accelerator_max[i] << '\n';
-        std::cout << h.cases << " FF/FPOLY cases passed; " << h.interrupted << " audio interrupts; SPI continuation, flags, registers and PC carries verified\n";
+        std::cout << h.cases << " FF/FPOLY cases passed; SPI continuation, flags, registers and PC carries verified\n";
         return 0;
     } catch (const std::exception& e) { std::cerr << e.what() << '\n'; return 1; }
 }

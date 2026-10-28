@@ -335,9 +335,8 @@ add_custom_target(avm_audio_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
-# All presets and both button paths receive complete isolated Timer0/watchdog
-# coverage. FX also runs the full live hold; other wirings run a 64 ms live smoke.
-# The guest spins without calling any SYS.
+# All five hardware configurations receive isolated Timer0 ISR, clock,
+# pending-tick, button-polling and exact cycle-count validation.
 avm_add_object(
     OUTPUT "${AVM_PUSH16_TEST_DIR}/timer0.o"
     SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/timer0.asm"
@@ -891,7 +890,7 @@ if(Python3_FOUND)
         USES_TERMINAL VERBATIM)
 endif()
 
-# Exercise the real FPOLY handler, active SPI stream and Timer1 interruption.
+# Exercise FF/FPOLY arithmetic, ISA behavior and active SPI stream timing.
 add_executable(avm_fpoly_tests interp/fpoly.cpp)
 target_compile_features(avm_fpoly_tests PRIVATE cxx_std_17)
 target_link_libraries(avm_fpoly_tests PRIVATE ardensdebuggerlib)

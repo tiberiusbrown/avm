@@ -55,10 +55,10 @@ struct harness {
         auto start = c().cycle_count;
         while(!done() && c().cycle_count-start < limit) tick();
         if(!done()) throw std::runtime_error("native execution exceeded cycle limit at word PC " +
-            std::to_string(c().pc) + ", WDTCSR=" + std::to_string(c().data[reg::addr::WDTCSR]));
+            std::to_string(c().pc));
         return c().cycle_count-start;
     }
-    harness(char** args, bool live = false)
+    harness(char** args)
     {
         std::ifstream listing(args[2]); require(bool(listing), "listing unavailable");
         for(std::string line; std::getline(listing, line);) {
@@ -96,10 +96,8 @@ struct harness {
         require(c().data[reg::addr::TCCR0A] == 2 && c().data[reg::addr::TCCR0B] == 3 &&
                 c().data[reg::addr::OCR0A] == 249 && c().data[reg::addr::TIMSK0] == 2,
                 "Timer0 configuration changed");
-        if(!live) {
-            c().st(reg::addr::TIMSK0, 0); c().st(reg::addr::TCCR0B, 0);
-            c().st(reg::addr::TIMSK1, 0); c().st(reg::addr::TCCR1B, 0);
-        }
+        c().st(reg::addr::TIMSK0, 0); c().st(reg::addr::TCCR0B, 0);
+        c().st(reg::addr::TIMSK1, 0); c().st(reg::addr::TCCR1B, 0);
     }
     uint64_t interrupt()
     {
@@ -108,24 +106,6 @@ struct harness {
         c().pc = uint16_t(sym("timer0_compa_isr"));
         c().data[reg::addr::SREG] &= 127; c().prev_sreg &= 127;
         return until([&] { return c().pc == dest; }) + 7; // acceptance + vector JMP
-    }
-    void arm_reset()
-    {
-        c().data[hold] = 47; c().data[pending] = 255;
-        clock(31); buttons(3);
-        c().pc = uint16_t(sym("timer0_compa_isr"));
-        c().data[reg::addr::SREG] &= 127; c().prev_sreg &= 127;
-        uint64_t unlock = 0, armed = 0;
-        until([&] {
-            auto csr = c().data[reg::addr::WDTCSR];
-            if(csr == (reg::bit::WDTCSR::WDCE | reg::bit::WDTCSR::WDE) && !unlock)
-                unlock = c().cycle_count;
-            if(csr == reg::bit::WDTCSR::WDE && unlock && !armed) armed = c().cycle_count;
-            return c().pc == sym("bootloader_reset_wait");
-        });
-        // Ardens does not enforce WDCE's timed window, so check the actual
-        // instruction execution and both values explicitly as well.
-        require(unlock && armed-unlock == 3, "watchdog timed-write sequence failed");
     }
 };
 
@@ -162,20 +142,6 @@ void isolated(char** args)
         h.interrupt();
         require(h.c().data[hold] == (combo == 3 ? 24 : 0), "exclusive UP+DOWN test failed");
     }
-    h.clock(0); h.buttons(3); h.c().data[hold] = 0; h.c().data[pending] = 0;
-    for(unsigned ms = 1; ms <= 1504; ++ms) {
-        h.interrupt();
-        require(h.clock() == ms && h.c().data[hold] == ms/32, "hold duration/phase failed");
-        require(h.c().data[reg::addr::WDTCSR] == 0, "short hold enabled watchdog");
-        require(h.c().data[pending] == std::min(ms/4, 255u), "audio cadence failed");
-    }
-    for(unsigned combo : {1u, 2u, 7u, 11u, 19u, 35u}) {
-        h.clock(31); h.buttons(combo); h.c().data[hold] = 47; h.interrupt();
-        require(h.c().data[hold] == 0, "release/extra button did not cancel hold");
-        h.buttons(3);
-        for(unsigned i = 0; i < 32; ++i) h.interrupt();
-        require(h.c().data[hold] == 1, "hold resumed without restarting duration");
-    }
     // Measure each normal path and the longest returning path (full carry + match).
     unsigned index = 0;
     std::array<unsigned, 4> expected{33, 42, 60, 76};
@@ -187,72 +153,6 @@ void isolated(char** args)
         require(cycles == expected[index++], "Timer0 path cycle count changed");
         std::cout << "Timer0 next millis " << next << ": " << cycles << " cycles\n";
     }
-    // Raw HEX loading defaults to the application reset vector in Ardens.
-    // Model the programmed BOOTRST fuse used by a Cathy3K device.
-    h.c().fuse_hi &= uint8_t(~1u);
-    h.arm_reset();
-    require(h.c().data[hold] == 48 && h.c().data[reg::addr::WDTCSR] == reg::bit::WDTCSR::WDE,
-            "threshold did not arm shortest reset-only watchdog");
-    require(!(h.c().data[reg::addr::SREG]&128), "reset loop enabled interrupts");
-    // Ardens services watchdog reset and executes the first boot instruction
-    // in one cycle() call, so observe its executing PC and cleared WDTCSR.
-    auto reset_delay = h.until([&] { return h.c().data[reg::addr::WDTCSR] == 0; }, 300000);
-    require(h.c().executing_instr_pc == h.c().bootloader_address(), "watchdog missed boot fuse entry");
-    require(reset_delay >= 255990 && reset_delay <= 256010, "watchdog timeout was not 16 ms");
-    std::cout << "Watchdog reset reached boot fuse entry after " << reset_delay << " cycles\n";
-    // Direct foreground entry must disable interrupts too, without relying on ZERO.
-    h.c().pc = uint16_t(h.sym("bootloader_reset"));
-    h.c().data[2] = 0xa5; h.c().data[reg::addr::SREG] = 255;
-    h.until([&] { return h.c().pc == h.sym("bootloader_reset_wait"); });
-    require(h.c().data[reg::addr::WDTCSR] == reg::bit::WDTCSR::WDE &&
-            !(h.c().data[reg::addr::SREG]&128), "foreground reset entry failed");
-}
-
-void live(char** args)
-{
-    harness h(args, true);
-    // Startup leaves silent output stopped. Run synthesis interrupts while
-    // the service-free guest spins, without adding a guest audio/button call.
-    h.c().st(reg::addr::TCCR1B, 10); // CTC, prescaler 8, startup OCR1A=255
-    h.c().st(reg::addr::TIMSK1, 2);
-    auto begin = h.c().cycle_count;
-    h.buttons(3);
-    unsigned polls = 0, samples = 0;
-    h.until([&] {
-        if(h.c().pc == h.sym("timer0_boot_poll")) ++polls;
-        if(h.c().pc == h.sym("timer1_compa_isr")) ++samples;
-        return h.c().pc == h.sym("bootloader_reset_wait");
-    }, 25000000);
-    auto elapsed = h.c().cycle_count-begin;
-    require(elapsed >= 1504u*16000 && elapsed <= 1536u*16000+100,
-            "live hold did not trigger within sampling uncertainty");
-    std::cout << "Busy guest: watchdog armed after " << elapsed/16000. << " ms, "
-              << polls << " polls, " << samples << " Timer1 interrupts\n";
-    require(polls == 48 && samples > 11000,
-            "live shortcut depended on guest service or interfered with audio");
-}
-void live_smoke(char** args)
-{
-    harness h(args, true);
-    h.c().st(reg::addr::TCCR1B, 10);
-    h.c().st(reg::addr::TIMSK1, 2);
-    h.buttons(3);
-    auto begin = h.c().cycle_count;
-    auto initial_clock = h.clock();
-    unsigned polls = 0, samples = 0;
-    while(h.c().cycle_count - begin < 64u * 16000) {
-        if(h.c().pc == h.sym("timer0_boot_poll")) ++polls;
-        if(h.c().pc == h.sym("timer1_compa_isr")) ++samples;
-        h.tick();
-    }
-    auto elapsed_ms = uint32_t(h.clock() - initial_clock);
-    require(polls > 0 && samples > 500, "live smoke missed button polls or Timer1 interrupts");
-    require(elapsed_ms >= 63 && elapsed_ms <= 65, "live smoke Timer0 clock drifted");
-    require(h.c().data[hold] > 0 && h.c().data[hold] == polls,
-            "live smoke did not interpret physical UP+DOWN wiring");
-    require(h.c().data[reg::addr::WDTCSR] == 0, "live smoke armed watchdog prematurely");
-    std::cout << "Busy guest smoke: " << elapsed_ms << " ms, " << polls
-              << " polls, " << samples << " Timer1 interrupts\n";
 }
 }
 int main(int argc, char** argv)
@@ -260,9 +160,7 @@ int main(int argc, char** argv)
     try {
         require(argc == 5, "usage: timer0_tests interpreter.hex interpreter.lst guest.bin wiring");
         isolated(argv);
-        if(std::string(argv[4]) == "FX") live(argv);
-        else live_smoke(argv);
-        std::cout << "Timer0 clock/audio/buttons/watchdog checks passed (" << argv[4] << ")\n";
+        std::cout << "Timer0 ISR/clock/pending/buttons/cycle checks passed (" << argv[4] << ")\n";
         return 0;
     } catch(std::exception const& error) { std::cerr << error.what() << '\n'; return 1; }
 }

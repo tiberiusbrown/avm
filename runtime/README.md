@@ -84,8 +84,19 @@ controller commands without modifying RAM. Callers own controller-state
 compatibility with subsequent `avm_display()` calls. See the
 [command and query contracts](../docs/arch.md#4930-send_display_command).
 `<new>` provides placement `new` and `new[]` for caller-owned storage, with
-their matching placement `delete` overloads. The runtime provides no heap
-allocator or ordinary `new` operator.
+their matching placement `delete` overloads. Ordinary C++ allocation operators
+are not included. `<stdlib.h>` provides `malloc`, `calloc`, `realloc`, and `free`.
+The first-fit implicit-block allocator uses the unused static RAM after the
+final `.saved` and `.data` storage through `0x04ff`, starting at the linker's
+`__avm_heap_start`. It requires exactly two persistent bytes and two header bytes
+per block, with no alignment padding or reserved heap array. Adjacent free
+blocks coalesce immediately, free tail space is reclaimed, and `realloc` resizes
+in place when possible. `malloc(0)` returns NULL and `realloc(p, 0)` frees `p`.
+Allocation failure preserves existing allocations and does not set `errno`.
+The allocator is non-reentrant; interrupt handlers must not interrupt allocator
+operations with another allocator call. `malloc.o` is extracted from `libavm.a`
+only when required, adding no code or RAM to programs that do not use allocation.
+Custom linker scripts must define the equivalent heap-start symbol.
 `libavm.a` contains weak traps for compiler-generated pure or deleted virtual
 calls and deleting destructors. Applications can replace the delete traps if
 they provide their own fixed-capacity allocator.

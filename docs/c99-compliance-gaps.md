@@ -68,7 +68,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 ### `<stdlib.h>` — utilities beyond AVM's existing subset
 
 - [ ] Provide `strtold`.
-- [ ] Provide the four standard allocation functions: `malloc`, `calloc`, `realloc`, and `free`, including failure, alignment, and lifetime semantics.
 - [ ] Provide environment interfaces `getenv` and `system` with their specified return/failure behavior.
 - [ ] Provide multibyte/wide conversions: `mblen`, `mbtowc`, `wctomb`, `mbstowcs`, and `wcstombs`.
 - [ ] Ensure every configuration claiming hosted conformance supports at least 32 `atexit` registrations; `--avm-atexit-capacity` currently permits a smaller capacity.

@@ -30,6 +30,7 @@ set(RUNTIME_SOURCES
     immediate_exit
     inttypes
     locale
+    malloc
     math
     pgmspace
     qsort

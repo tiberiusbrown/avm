@@ -431,20 +431,27 @@ A 64-bit integer occupies four 16-bit registers or is lowered through runtime he
 
 ## 16.1. Allocation model
 
-AVM provides no architectural general-purpose heap.
+The architecture reserves no separate heap region. The standard runtime provides
+`malloc`, `calloc`, `realloc`, and `free` using unused static RAM immediately
+after the final `.saved` and `.data` storage, up to the exclusive boundary
+`0x0500`. The default linker defines the storage-free, hidden absolute symbol
+`__avm_heap_start` at `0x0100 + dataSize`, including any termination reservations
+and the allocator's own state. Custom linker scripts must supply this boundary.
 
-The standard freestanding runtime does not provide usable implementations of:
+The allocator uses a two-byte high-water mark and a two-byte little-endian
+implicit block header (allocation flag and total size). It uses first-fit
+allocation without alignment padding, immediately coalesces adjacent free blocks,
+and reclaims free heap-tail space. `realloc` shrinks or grows in place when
+possible, otherwise copying to a new allocation; failure preserves the original.
+`calloc` checks multiplication overflow and zeros the requested bytes.
+`malloc(0)` returns NULL; `realloc(ptr, 0)` frees a non-NULL allocation and returns
+NULL. Allocation failures do not change `errno`.
 
-```text
-malloc
-calloc
-realloc
-free
-operator new
-operator delete
-```
-
-Placement `new` is permitted.
+Allocator code and state are linked only when allocation functionality is used;
+there is no reserved heap array or storage overhead otherwise. The allocator is
+non-reentrant and must not be called from an interrupt handler that can interrupt
+an allocation operation. All types retain their one-byte ABI alignment.
+Ordinary C++ `new` and `delete` remain unsupported; placement `new` is permitted.
 
 C99 variable-length arrays and variable-sized `alloca` use the stack as described in Section 47.5. They do not require a heap or global allocation state.
 
@@ -5476,7 +5483,7 @@ The initial C++ environment supports:
 - Placement `new`.
 - Function overloading.
 
-Exceptions, RTTI, general heap allocation, and thread-local storage are disabled.
+Exceptions, RTTI, ordinary C++ allocation operators, and thread-local storage are disabled.
 
 AVM vtables and construction vtables reside in AS1 program memory. An object's
 vptr is a 24-bit AS1 pointer to the vtable address point. Every vtable

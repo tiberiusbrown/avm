@@ -2179,7 +2179,12 @@ quotient truncated toward zero, without forming an overflowing float quotient.
 `signbit`, and the six C99 ordered/unordered comparison macros. Their arguments
 are evaluated once. Classification uses native 16-bit integer bit tests
 and sign extraction; comparisons use FCMP. AVM float, double, and long double
-are all binary32. The header retains wider types when compiled for a host.
+are all binary32. All C99 real math functions also have standard unsuffixed
+`double` and `l`-suffixed `long double` entry points with correctly typed
+parameters and results. These adapters reuse the float kernels, including their
+`errno` behavior; `modf` and `modfl` copy the integral output through a float
+local rather than aliasing a differently typed pointer. `float_t` and `double_t`
+follow `FLT_EVAL_METHOD`. The header retains wider types when compiled for a host.
 Signaling NaNs are classified without requiring floating-point exceptions.
 `frexpf`, `modff`, and `nextafterf` use exact representation operations;
 `ldexpf` shares `scalbnf` and its ties-to-even gradual underflow. See the

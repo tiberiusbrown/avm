@@ -19,6 +19,18 @@
 #define FP_ILOGBNAN INT_MIN
 #endif
 
+/* AVM evaluates all real floating types in their binary32 representation. */
+#if __FLT_EVAL_METHOD__ == 0
+typedef float float_t;
+typedef double double_t;
+#elif __FLT_EVAL_METHOD__ == 1
+typedef double float_t;
+typedef double double_t;
+#else
+typedef long double float_t;
+typedef long double double_t;
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -84,6 +96,123 @@ float ceilf(float x);
 float roundf(float x);
 float fminf(float x, float y);
 float fmaxf(float x, float y);
+
+/* Standard real functions retain their declared types even though AVM uses
+   the same representation for float, double, and long double. */
+double sqrt(double x);
+long double sqrtl(long double x);
+double sinh(double x);
+long double sinhl(long double x);
+double cosh(double x);
+long double coshl(long double x);
+double tanh(double x);
+long double tanhl(long double x);
+double asinh(double x);
+long double asinhl(long double x);
+double acosh(double x);
+long double acoshl(long double x);
+double atanh(double x);
+long double atanhl(long double x);
+double sin(double x);
+long double sinl(long double x);
+double cos(double x);
+long double cosl(long double x);
+double atan2(double y, double x);
+long double atan2l(long double y, long double x);
+double tan(double x);
+long double tanl(long double x);
+double lgamma(double x);
+long double lgammal(long double x);
+double tgamma(double x);
+long double tgammal(long double x);
+double erf(double x);
+long double erfl(long double x);
+double erfc(double x);
+long double erfcl(long double x);
+double exp(double x);
+long double expl(long double x);
+double exp2(double x);
+long double exp2l(long double x);
+double expm1(double x);
+long double expm1l(long double x);
+double log1p(double x);
+long double log1pl(long double x);
+double cbrt(double x);
+long double cbrtl(long double x);
+double asin(double x);
+long double asinl(long double x);
+double acos(double x);
+long double acosl(long double x);
+double log(double x);
+long double logl(long double x);
+double log2(double x);
+long double log2l(long double x);
+double log10(double x);
+long double log10l(long double x);
+double pow(double x, double y);
+long double powl(long double x, long double y);
+double hypot(double x, double y);
+long double hypotl(long double x, long double y);
+double fmod(double x, double y);
+long double fmodl(long double x, long double y);
+double fma(double x, double y, double z);
+long double fmal(long double x, long double y, long double z);
+double atan(double x);
+long double atanl(long double x);
+double fabs(double x);
+long double fabsl(long double x);
+double copysign(double x, double y);
+long double copysignl(long double x, long double y);
+double scalbn(double x, int n);
+long double scalbnl(long double x, int n);
+double scalbln(double x, long n);
+long double scalblnl(long double x, long n);
+double ldexp(double x, int exponent);
+long double ldexpl(long double x, int exponent);
+double frexp(double x, int *exponent);
+long double frexpl(long double x, int *exponent);
+double modf(double x, double *integer_part);
+long double modfl(long double x, long double *integer_part);
+double nextafter(double x, double y);
+long double nextafterl(long double x, long double y);
+double nexttoward(double x, long double y);
+long double nexttowardl(long double x, long double y);
+double fdim(double x, double y);
+long double fdiml(long double x, long double y);
+double remainder(double x, double y);
+long double remainderl(long double x, long double y);
+double remquo(double x, double y, int *quotient);
+long double remquol(long double x, long double y, int *quotient);
+double nearbyint(double x);
+long double nearbyintl(long double x);
+double rint(double x);
+long double rintl(long double x);
+long lrint(double x);
+long lrintl(long double x);
+long lround(double x);
+long lroundl(long double x);
+long long llrint(double x);
+long long llrintl(long double x);
+long long llround(double x);
+long long llroundl(long double x);
+double nan(const char *tag);
+long double nanl(const char *tag);
+int ilogb(double x);
+int ilogbl(long double x);
+double logb(double x);
+long double logbl(long double x);
+double trunc(double x);
+long double truncl(long double x);
+double floor(double x);
+long double floorl(long double x);
+double ceil(double x);
+long double ceill(long double x);
+double round(double x);
+long double roundl(long double x);
+double fmin(double x, double y);
+long double fminl(long double x, long double y);
+double fmax(double x, double y);
+long double fmaxl(long double x, long double y);
 
 #ifdef __cplusplus
 } // extern "C"

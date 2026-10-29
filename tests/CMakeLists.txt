@@ -79,7 +79,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_source_dependencies)
 
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
-            if(AVM_TEST_NAME MATCHES "^math_(native|c99_exact|c99_classify|c99_functions|hyperbolic|misc|errno)$")
+            if(AVM_TEST_NAME MATCHES "^math_(standard|native|c99_exact|c99_classify|c99_functions|hyperbolic|misc|errno)$")
                 list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
             elseif(AVM_TEST_NAME MATCHES "^(wctype|ctype|assert_failure|c99_smalllib|inttypes_interface|string_(search|progmem_search)|stdlib_(integer|conversion|float|multibyte|sort|random))$")
                 list(APPEND test_source_dependencies

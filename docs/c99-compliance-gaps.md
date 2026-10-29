@@ -12,6 +12,7 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 - [ ] **Minimum `double` precision:** `double` currently uses IEEE-754 binary32 (`DBL_DIG == 6`); C99 requires `DBL_DIG >= 10`, together with the corresponding `DBL_EPSILON` bound.
 - [ ] **Minimum `long double` precision:** `long double` likewise uses binary32 (`LDBL_DIG == 6`); C99 requires `LDBL_DIG >= 10` and the corresponding `LDBL_EPSILON` bound. The two types need not have different representations, but each must meet its own minimum limits.
+- [ ] **64-bit integer to floating conversion:** Converting a `long long` value to a real floating type fails during instruction selection because the required conversion helper is not available.
 
 ### Minimum translation/execution capacities
 
@@ -30,12 +31,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 - [ ] Provide the required complex macros/constants (`complex`, `_Complex_I`, `I`) and a functioning C99 complex library for all three real precisions; C99 imaginary types and `_Imaginary_I` are optional.
 - [ ] Provide the `float`, `double`, and `long double` complex variants of `cacos`, `casin`, `catan`, `ccos`, `csin`, `ctan`, `cacosh`, `casinh`, `catanh`, `ccosh`, `csinh`, `ctanh`, `cexp`, `clog`, `cabs`, `cpow`, `csqrt`, `carg`, `cimag`, `conj`, `cproj`, and `creal` (the corresponding `f`/`l` spellings where applicable).
-
-### `<math.h>` — remaining math interfaces
-
-- [ ] Provide the required `float_t` and `double_t` types.
-- [ ] Provide C99's standard `double` and `long double` forms of the existing `*f` functions. This includes all corresponding unsuffixed and `*l` functions in the trigonometric, hyperbolic, exponential/logarithmic, power, rounding, remainder, classification-support, and floating-point manipulation families; aliases are sufficient only if their semantics and types are correct.
-- [ ] Provide the unsuffixed/`*l` forms of the `erf`, `erfc`, `lgamma`, and `tgamma` families.
 
 ### `<stdio.h>` — narrow streams, formatted I/O, files
 
@@ -57,7 +52,7 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 ### `<tgmath.h>` — type-generic math
 
-- [ ] Make the C99 type-generic macros work for the required real and complex argument types with correct selection among `float`, `double`, and `long double` functions. Clang's header depends on missing complex and non-`f` math entry points.
+- [ ] Make the C99 type-generic macros work for the required real and complex argument types with correct selection among `float`, `double`, and `long double` functions. Clang's header depends on missing complex math entry points.
 
 ### `<wchar.h>` — wide and multibyte functionality
 

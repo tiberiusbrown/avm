@@ -35,6 +35,7 @@ set(RUNTIME_SOURCES
     malloc
     multibyte
     math
+    math_standard
     pgmspace
     qsort
     bsearch

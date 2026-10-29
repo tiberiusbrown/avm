@@ -27,10 +27,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] **Hosted environment selection:** Supply a truthful hosted C99 compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the complete hosted contract. The current SDK defaults to freestanding compilation.
 - [ ] **Minimum 65,535-byte object:** C99's hosted-only minimum translation/execution limit requires a single object of 65,535 bytes. The ordinary AVM data layout provides at most 1,024 bytes of writable static storage plus a 256-byte VM stack.
 
-### `<stdio.h>` — narrow streams, formatted I/O, files
-
-- [ ] Provide hosted C99 file-access functionality where supported by the execution environment. AVM currently has no filesystem or additional file backend.
-
 ### `<wchar.h>` — wide and multibyte functionality
 
 - [ ] Provide `wint_t`, `mbstate_t`, `WEOF`, and the standard wide-character header declarations.

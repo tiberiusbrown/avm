@@ -52,7 +52,7 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 ### `<tgmath.h>` — type-generic math
 
-- [ ] Make the C99 type-generic macros work for the required real and complex argument types with correct selection among `float`, `double`, and `long double` functions. Clang's header depends on missing complex math entry points.
+- [ ] Provide complex dispatch for the shared real/complex type-generic macros, and the `carg`, `cimag`, `conj`, `cproj`, and `creal` type-generic macros (including their real-argument forms), backed by functioning complex math entry points in all three precisions.
 
 ### `<wchar.h>` — wide and multibyte functionality
 

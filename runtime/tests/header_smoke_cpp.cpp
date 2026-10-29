@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
+#include <tgmath.h>
 #include <new>
 #include <avm.h>
 #include <stdio.h>

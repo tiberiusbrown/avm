@@ -29,7 +29,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("directory", type=Path)
     args = parser.parse_args()
-    expected = {"none": set(), "debug": set(), "include": set(), "snprintf": set(), "vsnprintf": set(),
+    expected = {"scan_literals": set(), "sscanf": set(), "fscanf": set(), "scanf": {"stdin"}, "none": set(), "debug": set(), "include": set(), "snprintf": set(), "vsnprintf": set(),
                 "printf": {"stdout"}, "fprintf": {"stdout"}, "fputs": {"stdout"},
                 "perror": {"stderr"}, "getchar": {"stdin"}, "stderr": {"stderr"},
                 "generic": set(), "one": {"stdout"}, "two": {"stdout", "stderr"},
@@ -44,6 +44,13 @@ def main():
             assert size == 2 and flags & 2 and flags & 0x20000000, (name, stream, size, flags)
         if name in {"none", "debug", "include", "snprintf", "vsnprintf", "one", "two", "three"}:
             assert ram == baseline + 2 * len(streams), (name, ram, baseline)
+        if name == "sscanf":
+            literal_ram = inspect(args.directory / "scan_literals.elf")[0]
+            assert ram == literal_ram, (name, ram, literal_ram)
+            assert "__avm_errno" not in symbols, (name, "unexpected errno storage")
+        if name in {"fscanf", "scanf"}:
+            # Three bytes for "%d", plus existing backend errno/stream state.
+            assert ram == baseline + 3 + 2 + 2 * len(streams), (name, ram, baseline)
         print(f"{name}: streams={','.join(sorted(streams)) or 'none'}, stream RAM={2*len(streams)}, total RAM={ram}, code={code}")
 
 if __name__ == "__main__":

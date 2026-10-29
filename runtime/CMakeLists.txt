@@ -56,11 +56,18 @@ set(RUNTIME_SOURCES
     stdio_printf
     stdio_putchar
     stdio_puts
+    stdio_scan_core
+    stdio_scan_integer
+    stdio_scan_float
+    stdio_scan_string
+    stdio_scan_stream
+    stdio_scan_stdin
     stdio_stderr
     stdio_stdin
     stdio_stdout
     stdlib
     strtof
+    strtof_internal
     string
     time
     time_calendar
@@ -138,8 +145,14 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     if(RUNTIME_SOURCE MATCHES "^stdio_")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h")
     endif()
+    if(RUNTIME_SOURCE MATCHES "^stdio_scan_")
+        list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_scan_internal.h")
+    endif()
     if(RUNTIME_SOURCE MATCHES "^time_")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h")
+    endif()
+    if(RUNTIME_SOURCE MATCHES "^(strtof|stdio_scan_)")
+        list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/strtof_internal.h")
     endif()
     if(RUNTIME_SOURCE STREQUAL "termination")
         list(APPEND runtime_extra_dependencies "${AVM_CRT_INIT_FINI_HEADER}")
@@ -361,6 +374,8 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
         STDERR_OUTPUT "${AVM_RUNTIME_MIR_OUTPUT}"
         DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h"
+            "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_scan_internal.h"
+            "${AVM_RUNTIME_SOURCE_DIR}/lib/strtof_internal.h"
     )
     list(APPEND AVM_RUNTIME_MIR_OUTPUTS
         "${AVM_RUNTIME_MIR_OBJECT}"

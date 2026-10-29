@@ -34,6 +34,8 @@ any unavoidable wider representation and track the backend limitation.
 
 ## Building
 
+Build inside `build/` only.
+
 When building or running any target, always use RelWithDebInfo configuration.
 
 Build through CMake rather than invoking Ninja, MSBuild, or another backend directly:

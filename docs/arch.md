@@ -6460,3 +6460,26 @@ Formatting has variable cost and no fabricated fixed cycle cost.
 
 The public `avm_debug_printf` and `avm_debug_printfv` interfaces complement
 the existing `_P` APIs; C++ overloads select by format pointer address space.
+
+## C99 formatted input representations
+
+The guest runtime provides `scanf`, `fscanf`, `sscanf`, and their `va_list`
+variants through one streaming scanner. It uses one pending input byte and
+constant numeric state, without a token buffer, heap allocation, or persistent
+scanner storage. String input uses a RAM cursor; stream input uses `fgetc` and
+`ungetc`. Only the stdin wrappers name `stdin`.
+
+For `%[`, an internal ascending `a-z` expands to the inclusive byte range.
+Leading and trailing hyphens are literal; reversed ranges are literal.
+The `%p` input representation is hexadecimal, with an optional `0x`/`0X`
+prefix and optional sign, recovering a 16-bit data pointer. This accepts the
+runtime output formatter's pointer representation, including zero.
+The `l` character conversions map each byte directly to the current unsigned
+8-bit `wchar_t` in the stateless C locale.
+
+Integer overflow uses defined unsigned arithmetic and saturates the magnitude
+to the destination limit before applying its sign. Out-of-range destination
+values have undefined behavior in C99. Floating input shares the binary32
+numeric kernels with `strtof`; observable range errors set `errno` to `ERANGE`.
+An application that does not reference `errno` does not retain its storage
+solely through the string scanner.

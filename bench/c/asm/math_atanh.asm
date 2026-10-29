@@ -15,6 +15,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 avm.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 strtof.c
+00000000 l    df *ABS*	00000000 strtof_internal.c
 00000000 l    df *ABS*	00000000 ef_log1p.c
 00000000 l    df *ABS*	00000000 integer.c
 00000000 l    df *ABS*	00000000 wide_integer.c

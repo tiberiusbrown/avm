@@ -21,6 +21,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 avm.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 strtof.c
+00000000 l    df *ABS*	00000000 strtof_internal.c
 00000000 l    df *ABS*	00000000 sf_copysign.c
 00000000 l    df *ABS*	00000000 ef_sqrt.c
 00000d7e l     F .text	00000025 avm_sqrt_special

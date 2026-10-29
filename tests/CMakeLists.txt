@@ -81,9 +81,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
             if(AVM_TEST_NAME MATCHES "^math_(standard|native|c99_exact|c99_classify|c99_functions|hyperbolic|misc|errno)$")
                 list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
-            elseif(AVM_TEST_NAME MATCHES "^(wctype|ctype|assert_failure|c99_smalllib|inttypes_interface|string_(search|progmem_search)|stdlib_(integer|conversion|float|multibyte|sort|random))$")
+            elseif(AVM_TEST_NAME MATCHES "^(stdio_scan_(integers|floats|strings|streams|stress)|wctype|ctype|assert_failure|c99_smalllib|inttypes_interface|string_(search|progmem_search)|stdlib_(integer|conversion|float|multibyte|sort|random))$")
                 list(APPEND test_source_dependencies
-                    "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
+                    "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c" "${AVM_C_TEST_DIR}/stdio_scan_helpers.h")
             elseif(AVM_TEST_NAME STREQUAL "display_system")
                 list(APPEND test_source_dependencies
                     "${AVM_C_TEST_DIR}/display_system.c")
@@ -1041,7 +1041,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 foreach(opt IN LISTS AVM_TEST_OPT_LEVELS)
     set(stdio_linkage_images)
     set(stdio_linkage_dir "${CMAKE_CURRENT_BINARY_DIR}/stdio_linkage/${opt}")
-    foreach(name none include snprintf vsnprintf printf fprintf perror getchar fputs stderr generic one two three debug)
+    foreach(name scan_literals sscanf fscanf scanf none include snprintf vsnprintf printf fprintf perror getchar fputs stderr generic one two three debug)
         set(obj "${stdio_linkage_dir}/${name}.o")
         avm_add_object(OUTPUT "${obj}"
             SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/stdio_linkage/${name}.c"

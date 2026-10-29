@@ -29,7 +29,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 ### `<stdio.h>` — narrow streams, formatted I/O, files
 
-- [ ] Provide formatted-input interfaces: `scanf`, `fscanf`, `sscanf`, `vscanf`, `vfscanf`, and `vsscanf`, including C99 conversion syntax and assignment semantics.
 - [ ] Provide hosted C99 file-access functionality where supported by the execution environment. AVM currently has no filesystem or additional file backend.
 
 ### `<wchar.h>` — wide and multibyte functionality

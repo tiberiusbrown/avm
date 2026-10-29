@@ -69,3 +69,13 @@ float nextafterf(float x, float y)
     if (AVM_MATH_UNLIKELY(high < 0x0080U || high >= 0x7f80U)) errno = ERANGE;
     return x;
 }
+
+float nexttowardf(float x, long double y)
+{
+    /* Compare before narrowing y, even on hosts with wider long double. */
+    if (x != x || y != y) return x + (float)y;
+    if ((long double)x == y) return (float)y;
+    float direction;
+    SET_FLOAT_WORD(direction, (long double)x < y ? 0x7f800000UL : 0xff800000UL);
+    return nextafterf(x, direction);
+}

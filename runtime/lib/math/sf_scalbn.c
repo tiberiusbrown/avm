@@ -15,6 +15,12 @@
 
 #include "fdlibm.h"
 
+float scalblnf(float x, long n)
+{
+    /* Bound the long exponent before narrowing to AVM's 16-bit int. */
+    return scalbnf(x, n > 276L ? 277 : n < -277L ? -278 : (int)n);
+}
+
 float scalbnf(float x, int n)
 {
     uint32_t u;

@@ -11,6 +11,8 @@ float avm_reference_ldexpf(float,int);
 float avm_reference_frexpf(float,int *);
 float avm_reference_modff(float,float *);
 float avm_reference_nextafterf(float,float);
+float avm_reference_nexttowardf(float,long double);
+float avm_reference_scalblnf(float,long);
 float avm_reference_exp2f(float);
 float avm_reference_expm1f(float);
 float avm_reference_log1pf(float);
@@ -39,6 +41,12 @@ static void exact(float x,float y,int n)
     float f=avm_reference_modff(x,&i), g=modff(x,&j);
     if (!same(m,ref) || a!=b || !same(f,g) || !same(i,j) ||
         !same(avm_reference_ldexpf(x,n),ldexpf(x,n)) ||
+        !same(avm_reference_scalblnf(x,(long)n),scalblnf(x,(long)n)) ||
+        !same(avm_reference_scalblnf(x,LONG_MIN),scalblnf(x,LONG_MIN)) ||
+        !same(avm_reference_scalblnf(x,LONG_MAX),scalblnf(x,LONG_MAX)) ||
+        !same(avm_reference_nexttowardf(x,(long double)y),nexttowardf(x,(long double)y)) ||
+        !same(avm_reference_nexttowardf(1.0f,1.0L+0x1p-30L),0x1.000002p0f) ||
+        !same(avm_reference_nexttowardf(1.0f,1.0L-0x1p-30L),0x1.fffffep-1f) ||
         !same(avm_reference_nextafterf(x,y),nextafterf(x,y))) {
         if (failures++<8) printf("FAIL exact x=%08lx y=%08lx n=%d\n",(unsigned long)bits(x),(unsigned long)bits(y),n);
     }

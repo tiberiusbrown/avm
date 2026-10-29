@@ -2,7 +2,7 @@ AVM instruction mix profiling report
 Optimization: O2; benchmarks: 25; AVM ABI v2
 Interpreter HEX SHA256 7942009aeabd8e144f3297fdcf7108b1df8530c8790625d62724e40c6bb7c214
 Baseline image SHA256 4f228282d46777b27e2234c620bb12519453743e9ef947c90e8be999d7dd1ea1
-Compiler executable SHA256 1369eb9ec70d003736c6b2e93f1626fb32ecbd06b0fc82d21f8e7b2864a73cfa
+Compiler executable SHA256 801dea64824de7146fa536c33fc798b7a3c6eb2f0960a284726887dfeae09c78
 Metric: elapsed emulated AVR cycles between consecutive AVM primary-dispatch
 boundaries, including dispatch and operand-dependent work. Interrupts suppressed.
 Setup and both DEBUG_BREAK markers excluded; no estimated/rescaled costs.

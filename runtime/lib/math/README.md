@@ -317,7 +317,8 @@ returns NaN. Cube root preserves signed infinities, and `expm1f(-INFINITY)`
 returns -1. Exponential overflow returns positive infinity; gradual underflow
 uses the existing round-to-nearest, ties-to-even arithmetic.
 
-`ldexpf` is a thin `scalbnf` wrapper. The scaler uses native-word exponents,
+`ldexpf` is a thin `scalbnf` wrapper. `scalblnf` bounds its `long` exponent
+before narrowing to the scaler's native-word exponent. The scaler uses native-word exponents,
 clamps extreme n before adding, and constructs signed overflow/zero results
 from their bits. Only gradual underflow needs a final exact power-of-two
 multiply. The shared scaling cutoff was corrected:
@@ -330,7 +331,10 @@ with bounded integer shifts; it stores exponent zero for zero and nonfinite
 inputs. `modff` masks fractional significand bits, then uses exact Sterbenz
 subtraction; integral inputs and infinities return a zero with the input sign.
 `nextafterf` steps the unsigned representation, with explicit zero/equality/NaN
-handling. These representation operations are exact, without float-to-int
+handling. `nexttowardf` compares its direction in `long double` before using
+the same stepping and range-error handling; equal inputs return the direction's
+signed zero. AVM's `long double` currently has the same binary32 format as `float`.
+These representation operations are exact, without float-to-int
 conversions, signed overflow, or aliasing casts.
 
 ### Classification and comparison

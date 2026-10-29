@@ -1,5 +1,6 @@
 #include "math_test.h"
 #include <limits.h>
+#include <errno.h>
 
 static uint32_t word(float x) { union { float f; uint32_t u; } v={x}; return v.u; }
 
@@ -62,6 +63,10 @@ static __attribute__((noinline)) int decomposition(void)
 static __attribute__((noinline)) int adjacency(void)
 {
     static const AVM_PROGMEM struct math_case adjacent[]={
+        {0x3f800000UL,0x3f800000UL,0x3f800000UL,0},
+        {0x3f800000UL,0x40000000UL,0x3f800001UL,0},
+        {0xbf800000UL,0xc0000000UL,0xbf800001UL,0},
+        {0x7f800000UL,0x7f800000UL,0x7f800000UL,0},
         {0,0x80000000UL,0x80000000UL,0},{0x80000000UL,0,0,0},
         {0,0xbf800000UL,0x80000001UL,0},{0x80000000UL,0x3f800000UL,1,0},
         {1,0x80000000UL,0,0},{0x80000001UL,0,0x80000000UL,0},
@@ -71,6 +76,16 @@ static __attribute__((noinline)) int adjacency(void)
         {0x7f800000UL,0,0x7f7fffffUL,0},{0xff800000UL,0,0xff7fffffUL,0},
         {0x7fc12345UL,0,0x7fc00000UL,0},{0,0x7f812345UL,0x7fc00000UL,0}};
     if (check_binary(nextafterf,adjacent,sizeof(adjacent)/sizeof(adjacent[0]))) return 6;
+    float (*volatile toward)(float, long double) = nexttowardf;
+    for (unsigned i=0; i<sizeof(adjacent)/sizeof(adjacent[0]); ++i) {
+        errno=71;
+        float result=toward(from_bits(adjacent[i].a), (long double)from_bits(adjacent[i].b));
+        if (check_result(result,adjacent[i].expected,0,i)) return 6;
+        uint32_t magnitude=word(result)&0x7fffffffUL;
+        int range=(adjacent[i].a!=adjacent[i].b) && ((adjacent[i].a|adjacent[i].b)&0x7fffffffUL) && magnitude<=0x7f800000UL &&
+            (magnitude<0x00800000UL || magnitude==0x7f800000UL);
+        if (errno!=(range ? ERANGE : 71)) return 6;
+    }
     return 0;
 }
 
@@ -91,6 +106,21 @@ static __attribute__((noinline)) int scaling(void)
         {1,-1,0},{3,-1,2},{5,-1,2}};
     for (unsigned i=0;i<sizeof(limits)/sizeof(limits[0]);++i)
         if (check_result(ldexpf(from_bits(limits[i].x),limits[i].n),limits[i].expected,0,i)) return 7;
+    float (*volatile scale)(float, long) = scalblnf;
+    for (unsigned i=0;i<sizeof(limits)/sizeof(limits[0]);++i)
+        if (check_result(scale(from_bits(limits[i].x),(long)limits[i].n),limits[i].expected,0,i)) return 7;
+    static const AVM_PROGMEM long exponents[]={LONG_MIN,LONG_MAX,32768L,-32769L,65536L,-65536L};
+    for (unsigned i=0;i<sizeof(exponents)/sizeof(exponents[0]);++i) {
+        long n=exponents[i];
+        errno=71;
+        if (word(scale(-1.0f,n))!=(n>0 ? 0xff800000UL : 0x80000000UL) || errno!=ERANGE) return 7;
+        errno=71;
+        if (word(scale(-0.0f,n))!=0x80000000UL || errno!=71 ||
+            word(scale(INFINITY,n))!=0x7f800000UL || errno!=71 ||
+            !isnan(scale(NAN,n)) || errno!=71) return 7;
+    }
+    errno=71;
+    if (word(scale(1.5f,2L))!=0x40c00000UL || errno!=71) return 7;
     return 0;
 }
 

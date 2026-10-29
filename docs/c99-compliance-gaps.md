@@ -75,12 +75,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide multibyte conversion/state APIs: `btowc`, `wctob`, `mbsinit`, `mbrlen`, `mbrtowc`, `wcrtomb`, `mbsrtowcs`, and `wcsrtombs`.
 - [ ] Provide the C99 wide-stream orientation and multibyte conversion semantics for supported locales.
 
-### `<wctype.h>` — wide-character classification and mapping
-
-- [ ] Provide `wctrans_t`, `wctype_t`, and `WEOF` as required by the header.
-- [ ] Provide `iswalnum`, `iswalpha`, `iswblank`, `iswcntrl`, `iswdigit`, `iswgraph`, `iswlower`, `iswprint`, `iswpunct`, `iswspace`, `iswupper`, `iswxdigit`, `iswctype`, and `wctype`.
-- [ ] Provide `towlower`, `towupper`, `towctrans`, and `wctrans`.
-
 ---
 
 C99 reference: [WG14 N1256, ISO/IEC 9899:1999 with Technical Corrigenda](https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf), especially clauses 4, 5.1.2, 5.2.4, and 7.

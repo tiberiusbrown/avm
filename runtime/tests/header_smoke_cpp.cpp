@@ -194,3 +194,11 @@ void signal_interface_smoke(void) {
     (void)signal(SIGTERM, SIG_IGN);
     (void)raise(SIGTERM);
 }
+
+#include <wctype.h>
+#ifdef __cplusplus
+extern "C"
+#endif
+wint_t wide_header_smoke(wint_t c) {
+    return iswctype(c, wctype("alpha")) ? towctrans(c, wctrans("tolower")) : WEOF;
+}

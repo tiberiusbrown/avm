@@ -19,6 +19,7 @@ set(RUNTIME_SOURCES
     atexit
     audio_tone
     avm
+    wctype
     ctype
     exit
     font_5x7

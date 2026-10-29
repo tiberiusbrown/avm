@@ -135,6 +135,11 @@ the decimal-point string and the `struct lconv` object. Unused locale functions
 consume zero linked RAM. Programs using `localeconv()` retain approximately 38
 bytes of locale data.
 
+`<wctype.h>` provides all C99 wide classification and case-mapping interfaces in
+the fixed C locale. `wint_t` is signed 16-bit and `WEOF` is -1; all 256 byte
+values are preserved by case conversion except mapped ASCII letters. Named
+descriptors support the twelve standard classes and `tolower`/`toupper`.
+
 ## Startup variants
 
 - `crt0.o` runs `.init_array`, calls `int main(void)`, runs `.fini_array` in

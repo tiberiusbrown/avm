@@ -3,5 +3,5 @@
         "*.asm": "avr"
     },
     "cmake.generator": "Ninja",
-    "cmake.buildDirectory": "${workspaceFolder}/build"
+    "cmake.buildDirectory": "${workspaceFolder}/build-vscode"
 }

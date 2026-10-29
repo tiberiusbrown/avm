@@ -12,6 +12,8 @@ extern "C" {
 
 void* memcpy(void* dst, const void* src, size_t size);
 void* memset(void* dst, int value, size_t size);
+void* memset_explicit(void* dst, int value, size_t size);
+void* memccpy(void* dst, const void* src, int value, size_t size);
 void* memmove(void* dst, const void* src, size_t size);
 int memcmp(const void* lhs, const void* rhs, size_t size);
 void* memchr(const void* src, int value, size_t size);
@@ -131,5 +133,19 @@ static __attribute__((always_inline)) inline char* __avm_cpp_strncat(
 #define memmove(dst, src, size) __avm_memmove((dst), (src), (size))
 #endif
 #define strcat(dst, src) strncat((dst), (src), SIZE_MAX)
+
+#if !defined(__cplusplus) && defined(__STDC_VERSION__) && \
+    __STDC_VERSION__ >= 202311L && !defined(AVM_STRING_IMPLEMENTATION)
+/* The conditional expression applies array decay without evaluating src.
+ * typeof preserves the pointee qualification; the call remains addressable. */
+#define __AVM_SEARCH_RESULT(src, result) \
+    ((__typeof__((1 ? (src) : (src)) + 0))(result))
+#define memchr(src, value, size) \
+    ((__typeof__(1 ? (src) : (void*)1))(memchr)((src), (value), (size)))
+#define strchr(src, value) __AVM_SEARCH_RESULT(src, (strchr)((src), (value)))
+#define strrchr(src, value) __AVM_SEARCH_RESULT(src, (strrchr)((src), (value)))
+#define strpbrk(src, accept) __AVM_SEARCH_RESULT(src, (strpbrk)((src), (accept)))
+#define strstr(src, needle) __AVM_SEARCH_RESULT(src, (strstr)((src), (needle)))
+#endif
 
 #endif // AVM_RUNTIME_STRING_H

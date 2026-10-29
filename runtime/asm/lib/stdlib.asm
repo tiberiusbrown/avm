@@ -3,6 +3,7 @@ stdlib.o:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 stdlib.c
+00000000 l    d  .text.memalignment	00000000 .text.memalignment
 00000000 l    d  .text.rand	00000000 .text.rand
 00000000 l    d  .text.srand	00000000 .text.srand
 00000000 l    d  .text.atoi	00000000 .text.atoi
@@ -25,6 +26,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.lldiv	00000000 .text.lldiv
 00000000 l    d  .text.getenv	00000000 .text.getenv
 00000000 l    d  .text.system	00000000 .text.system
+00000000 g     F .text.memalignment	00000004 memalignment
 00000000 g     F .text.rand	00000007 rand
 00000000         *UND*	00000000 avm_random
 00000000 g     F .text.srand	00000004 srand
@@ -56,6 +58,14 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_divmoddi4
 00000000 g     F .text.getenv	00000002 getenv
 00000000 g     F .text.system	0000000a system
+
+Disassembly of section .text.memalignment:
+
+<memalignment>:
+ a5                    xor	r5, r5
+ 24                    sub	r5, r4
+ 81                    and	r4, r5
+ ef                    ret
 
 Disassembly of section .text.rand:
 

@@ -2,6 +2,24 @@
 #include <string.h>
 #include <errno.h>
 
+void* memccpy(void* restrict dst, const void* restrict src, int value, size_t size) {
+    unsigned char* d = dst;
+    const unsigned char* s = src;
+    while (size--) {
+        if ((*d++ = *s++) == (unsigned char)value)
+            return d;
+    }
+    return NULL;
+}
+
+void* memset_explicit(void* dst, int value, size_t size) {
+    __avm_memset(dst, value, size);
+    /* The opaque use and memory clobber keep the fill observable even when
+     * the destination becomes dead after clearing (including under LTO). */
+    __asm__ __volatile__("" : : "r"(dst) : "memory");
+    return dst;
+}
+
 void* memchr(const void* src, int value, size_t size) {
     const unsigned char* p = (const unsigned char*)src;
     while(size--) {

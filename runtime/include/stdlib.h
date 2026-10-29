@@ -29,6 +29,7 @@ void *malloc(size_t size);
 void *calloc(size_t nmemb, size_t size);
 void *realloc(void *ptr, size_t size);
 void free(void *ptr);
+size_t memalignment(const void *ptr);
 int rand(void);
 void srand(unsigned int seed);
 void qsort(void *base, size_t nmemb, size_t size,

@@ -3,6 +3,8 @@ string.o:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 string.c
+00000000 l    d  .text.memccpy	00000000 .text.memccpy
+00000000 l    d  .text.memset_explicit	00000000 .text.memset_explicit
 00000000 l    d  .text.memchr	00000000 .text.memchr
 00000000 l    d  .text.strncmp	00000000 .text.strncmp
 00000000 l    d  .text.strchr	00000000 .text.strchr
@@ -41,6 +43,8 @@ SYMBOL TABLE:
 00000000 l    d  .rodata..L.avm.flashstr.6	00000000 .rodata..L.avm.flashstr.6
 00000000 l    d  .rodata..L.avm.flashstr.7	00000000 .rodata..L.avm.flashstr.7
 00000000 l    d  .rodata..L.avm.flashstr.8	00000000 .rodata..L.avm.flashstr.8
+00000000 g     F .text.memccpy	00000025 memccpy
+00000000 g     F .text.memset_explicit	0000000b memset_explicit
 00000000 g     F .text.memchr	0000002a memchr
 00000000 g     F .text.strncmp	0000002e strncmp
 00000000 g     F .text.strchr	00000017 strchr
@@ -68,6 +72,47 @@ SYMBOL TABLE:
 00000000 g     F .text.strncat	00000005 strncat
 00000000 g     F .text.strcpy	0000000e strcpy
 00000000 g     F .text.strcat	00000008 strcat
+
+Disassembly of section .text.memccpy:
+
+<memccpy>:
+ b1                    push16	r1
+ b0                    push16	r0
+ f2 30                 sub	r0, r0
+ f1 76                 zext8	r6
+ f6 2f                 tst16	r7
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	memccpy
+		R_AVM_FAR24	.text.memccpy+0x20
+<L0>:
+ f7 09                 ld8u	r1, [r5+]
+ f6 01                 st8	[r4+], r1
+ f4 b7                 dec16	r7
+ f5 0e                 cmp	r1, r6
+ d0 04                 breq8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	memccpy
+		R_AVM_FAR24	.text.memccpy+0x6
+<L1>:
+ e2 00 00 00           jmpf	memccpy
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.memccpy+0x22
+ f1 20                 mov	r4, r0
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ef                    ret
+
+Disassembly of section .text.memset_explicit:
+
+<memset_explicit>:
+ d6 fe                 adjsp	-0x2
+ 0c                    mov	r7, r4
+ f4 40                 stsp16	[sp+0x0], r4
+ d7 11                 sys	memset
+ 03                    mov	r4, r7
+ d6 02                 adjsp	0x2
+ ef                    ret
 
 Disassembly of section .text.memchr:
 

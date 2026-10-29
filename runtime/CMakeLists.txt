@@ -72,6 +72,7 @@ set(RUNTIME_SOURCES
     stdio_stdin
     stdio_stdout
     stdlib
+    stdbit
     strtof
     strtof_internal
     string

@@ -10,6 +10,7 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 
 ### Language and data model
 
+- [ ] **Bit-precise integer types:** The AVM Clang target rejects `_BitInt(N)`; enable and validate the required widths, ABI, lowering, linking, execution, and use in type-generic library interfaces.
 - [ ] **Minimum `double` precision:** `double` currently uses IEEE-754 binary32 (`DBL_DIG == 6`); C23 requires `DBL_DIG >= 10` and the corresponding epsilon bound.
 - [ ] **Minimum `long double` precision:** `long double` also uses binary32 (`LDBL_DIG == 6`); C23 requires `LDBL_DIG >= 10` and the corresponding epsilon bound. `double` and `long double` may share a representation if it meets these requirements.
 - [ ] **64-bit integer-to-floating conversion:** Conversion of `long long` to real floating types fails instruction selection because the necessary conversion helper is unavailable.
@@ -17,13 +18,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 ### Minimum translation/execution capacities
 
 - [ ] **Required 4,095-character string-literal capacity:** C23 requires a string literal of 4,095 characters after concatenation. Ordinary AVM literals reside in the 1 KiB data-address-space static region, preventing this capacity for ordinary string literals.
-
-### Freestanding C23 library facilities
-
-- [ ] **`<stdbit.h>`:** Provide the C23 endian constants and the complete set of type-specific and type-generic bit-operation macros with correct semantics and single evaluation of arguments.
-- [ ] **`<string.h>` C23 functions:** Provide `memccpy` and `memset_explicit`, including the requirement that explicit memory clearing not be eliminated by optimization.
-- [ ] **`<string.h>` qualifier-generic search interfaces:** Make `memchr`, `strchr`, `strrchr`, `strpbrk`, and `strstr` preserve the source pointer's `const` qualification in C23 while retaining callable, addressable functions.
-- [ ] **`<stdlib.h>` alignment query:** Provide `memalignment(const void *)`, including the required null-pointer result and alignment semantics.
 
 ## II. Additional hosted C23 compliance gaps
 

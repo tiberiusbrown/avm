@@ -121,6 +121,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             set(test_support_sources "${AVM_C_TEST_DIR}/support/complex_abi_impl.c")
         endif()
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
+        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME STREQUAL "c23_freestanding")
+            list(APPEND test_compile_options -std=c23 -pedantic-errors)
+        endif()
         if(AVM_TEST_NAME MATCHES "^(tgmath_real|tgmath_complex|complex_.*)$")
             list(APPEND test_compile_options -std=c99 -pedantic-errors)
         endif()
@@ -1024,6 +1027,19 @@ else()
 endif()
 
 add_subdirectory(termination)
+
+# Inspect a dead-buffer caller with the clearing implementation visible at O3.
+set(c23_explicit_ir "${CMAKE_CURRENT_BINARY_DIR}/c23/explicit.ll")
+avm_add_object(OUTPUT "${c23_explicit_ir}"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/c23/explicit_codegen.c"
+    LANGUAGE C INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+    COMPILE_OPTIONS -O3 -S -emit-llvm
+    DEPENDS avm_sysroot "${PROJECT_SOURCE_DIR}/runtime/lib/string.c")
+add_custom_target(avm_c23_explicit_check
+    COMMAND "${CMAKE_COMMAND}" "-DINPUT:FILEPATH=${c23_explicit_ir}"
+        -P "${CMAKE_CURRENT_SOURCE_DIR}/c23/check_explicit.cmake"
+    DEPENDS "${c23_explicit_ir}" VERBATIM)
+add_dependencies(avm_tests_run avm_c23_explicit_check)
 add_dependencies(avm_tests_run avm_termination_checks)
 
 # MSVC has no C99 complex language support; use an independent Linux reference

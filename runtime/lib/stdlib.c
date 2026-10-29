@@ -6,6 +6,12 @@
 
 int __avm_errno;
 
+size_t memalignment(const void *ptr)
+{
+    uintptr_t address = (uintptr_t)ptr;
+    return (size_t)(address & (uintptr_t)(0 - address));
+}
+
 int rand(void)
 {
     return (int)(avm_random() >> 1);

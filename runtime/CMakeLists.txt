@@ -22,6 +22,7 @@ set(RUNTIME_SOURCES
     wctype
     ctype
     exit
+    fenv
     font_5x7
     font_br4
     font_br5

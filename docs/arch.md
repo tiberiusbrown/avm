@@ -1380,6 +1380,10 @@ rounding direction. NaN result payloads are unspecified except for `FNEG` and `F
 whose bit-level behavior is defined below. Math functions live in
 the guest runtime; see the [migration measurements](math-runtime-tradeoff.md).
 
+The C99 `<fenv.h>` interface supports only `FE_TONEAREST` and no
+exception flags (`FE_ALL_EXCEPT == 0`). Saved environments are invariant;
+the interface adds no architectural state, flags, or traps.
+
 ### 35.1.1. Complete secondary map
 
 | Secondary | Assembly | Inputs | Outputs | Bytes |
@@ -4152,9 +4156,11 @@ the high word; fraction tests include the low word. Every class-mask
 combination, including empty and all-classes masks, is supported. `FCMP` supplies
 ordered and unordered predicates without modifying architectural `CC`.
 
-Strict/constrained floating-point operations remain custom-expanded unless the
-requested exception behavior is compatible with AVM's lack of architectural
-floating-point exception state.
+Constrained binary32 addition, subtraction, multiplication, division, square
+root, comparisons, and 16-/32-bit integer conversions lower to existing
+floating-point operations. The C99 environment fixes dynamic rounding
+to nearest-even and has no observable exception state. See the
+[backend crash regression](fenv-backend-crash.md).
 
 Physical `GPR32` copies select `MOV32`. Upper-pair-to-upper-pair copies expand
 to two compact `MOV` instructions; all other pair copies use `F2 60-6B`.

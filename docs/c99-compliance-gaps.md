@@ -31,11 +31,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide the required complex macros/constants (`complex`, `_Complex_I`, `I`) and a functioning C99 complex library for all three real precisions; C99 imaginary types and `_Imaginary_I` are optional.
 - [ ] Provide the `float`, `double`, and `long double` complex variants of `cacos`, `casin`, `catan`, `ccos`, `csin`, `ctan`, `cacosh`, `casinh`, `catanh`, `ccosh`, `csinh`, `ctanh`, `cexp`, `clog`, `cabs`, `cpow`, `csqrt`, `carg`, `cimag`, `conj`, `cproj`, and `creal` (the corresponding `f`/`l` spellings where applicable).
 
-### `<fenv.h>` — floating-point environment
-
-- [ ] Provide `fenv_t`, `fexcept_t`, `FE_DFL_ENV`, `FE_ALL_EXCEPT`, and the applicable floating-point exception and rounding-mode macros, with consistent exception and rounding-state semantics. C99 does not require every possible rounding mode or exception to be supported.
-- [ ] Provide `feclearexcept`, `fegetexceptflag`, `feraiseexcept`, `fesetexceptflag`, `fetestexcept`, `fegetround`, `fesetround`, `fegetenv`, `feholdexcept`, `fesetenv`, and `feupdateenv`.
-
 ### `<math.h>` — remaining math interfaces
 
 - [ ] Provide the required `float_t` and `double_t` types.

@@ -22,21 +22,11 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 ### Hosted execution environment and implementation limits
 
+- [ ] **Filesystem access:** Provide C99 file opening, reopening, removal, renaming, temporary files, and positioning for file streams; these operations currently lack a filesystem backend.
 - [ ] **Hosted program startup:** Support both `int main(void)` and `int main(int argc, char *argv[])`, including the required `argc`/`argv` guarantees, rather than only the current no-argument startup convention.
 - [ ] **Hosted termination status:** Provide the C99 success/failure status semantics for return from `main`, `exit`, and `_Exit`; AVM currently discards the supplied exit status.
 - [ ] **Hosted environment selection:** Supply a truthful hosted C99 compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the complete hosted contract. The current SDK defaults to freestanding compilation.
 - [ ] **Minimum 65,535-byte object:** C99's hosted-only minimum translation/execution limit requires a single object of 65,535 bytes. The ordinary AVM data layout provides at most 1,024 bytes of writable static storage plus a 256-byte VM stack.
-
-### `<wchar.h>` — wide and multibyte functionality
-
-- [ ] Provide `wint_t`, `mbstate_t`, `WEOF`, and the standard wide-character header declarations.
-- [ ] Provide wide formatted I/O: `fwprintf`, `fwscanf`, `swprintf`, `swscanf`, `vfwprintf`, `vfwscanf`, `vswprintf`, `vswscanf`, `vwprintf`, `vwscanf`, `wprintf`, and `wscanf`.
-- [ ] Provide wide stream/character operations: `fgetwc`, `fgetws`, `fputwc`, `fputws`, `fwide`, `getwc`, `getwchar`, `putwc`, `putwchar`, and `ungetwc`.
-- [ ] Provide wide numeric conversions: `wcstof`, `wcstod`, `wcstold`, `wcstol`, `wcstoll`, `wcstoul`, and `wcstoull`.
-- [ ] Provide wide string and memory operations: `wcscpy`, `wcsncpy`, `wmemcpy`, `wmemmove`, `wcscat`, `wcsncat`, `wcscmp`, `wcscoll`, `wcsncmp`, `wcsxfrm`, `wmemcmp`, `wcschr`, `wcscspn`, `wcspbrk`, `wcsrchr`, `wcsspn`, `wcsstr`, `wcstok`, `wmemchr`, `wcslen`, and `wmemset`.
-- [ ] Provide wide time formatting `wcsftime`.
-- [ ] Provide multibyte conversion/state APIs: `btowc`, `wctob`, `mbsinit`, `mbrlen`, `mbrtowc`, `wcrtomb`, `mbsrtowcs`, and `wcsrtombs`.
-- [ ] Provide the C99 wide-stream orientation and multibyte conversion semantics for supported locales.
 
 ---
 

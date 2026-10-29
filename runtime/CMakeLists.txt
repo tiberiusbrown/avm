@@ -20,6 +20,12 @@ set(RUNTIME_SOURCES
     audio_tone
     avm
     wctype
+    wchar_string
+    wchar_numeric
+    wchar_time
+    wchar_stream
+    wchar_format
+    wchar_scan
     ctype
     exit
     fenv
@@ -142,16 +148,16 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
     set(runtime_math_options)
     set(runtime_extra_dependencies)
-    if(RUNTIME_SOURCE MATCHES "^stdio_")
+    if(RUNTIME_SOURCE MATCHES "^(stdio_|wchar_(stream|format|scan)$)")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h")
     endif()
-    if(RUNTIME_SOURCE MATCHES "^stdio_scan_")
+    if(RUNTIME_SOURCE MATCHES "^(stdio_scan_|wchar_scan$)")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_scan_internal.h")
     endif()
     if(RUNTIME_SOURCE MATCHES "^time_")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h")
     endif()
-    if(RUNTIME_SOURCE MATCHES "^(strtof|stdio_scan_)")
+    if(RUNTIME_SOURCE MATCHES "^(strtof|stdio_scan_|wchar_scan$)")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/strtof_internal.h")
     endif()
     if(RUNTIME_SOURCE STREQUAL "termination")
@@ -374,6 +380,7 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
         STDERR_OUTPUT "${AVM_RUNTIME_MIR_OUTPUT}"
         DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h"
+            "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_scan_internal.h"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/strtof_internal.h"
     )
@@ -416,10 +423,22 @@ avm_add_object(
     DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 
+set(AVM_RUNTIME_WCHAR_C99_CHECK
+    "${AVM_RUNTIME_OBJECT_DIR}/wchar_header_c99.o")
+avm_add_object(
+    OUTPUT "${AVM_RUNTIME_WCHAR_C99_CHECK}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/tests/wchar_header_c99.c"
+    LANGUAGE C
+    COMPILE_OPTIONS -std=c99 -pedantic-errors
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+
 add_custom_target(avm_runtime_checks
     DEPENDS
         "${AVM_RUNTIME_C_HEADER_CHECK}"
         "${AVM_RUNTIME_CXX_HEADER_CHECK}"
+        "${AVM_RUNTIME_WCHAR_C99_CHECK}"
 )
 
 # Describe each staged library artifact as source|destination and expand the

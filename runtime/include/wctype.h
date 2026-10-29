@@ -2,10 +2,9 @@
 #define _AVM_RUNTIME_WCTYPE_H
 
 /* Wide characters use the fixed C locale and the target's byte encoding. */
-typedef __WINT_TYPE__ wint_t;
+#include <avm/wide_types.h>
 typedef unsigned char wctype_t;
 typedef unsigned char wctrans_t;
-#define WEOF ((wint_t)-1)
 
 #ifdef __cplusplus
 extern "C" {

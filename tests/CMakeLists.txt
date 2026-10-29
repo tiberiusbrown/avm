@@ -77,6 +77,14 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_objects "${AVM_TEST_OBJECT}")
         set(test_support_sources)
         set(test_source_dependencies)
+        if(AVM_TEST_NAME MATCHES "^(wchar_(string|multibyte|numeric|time|stream|format|scan))_indirect$")
+            list(APPEND test_source_dependencies
+                "${AVM_C_TEST_DIR}/${CMAKE_MATCH_1}.c")
+        endif()
+        if(AVM_TEST_NAME MATCHES "^wchar_stream(_indirect)?$")
+            list(APPEND test_source_dependencies
+                "${PROJECT_SOURCE_DIR}/runtime/lib/stdio_internal.h")
+        endif()
 
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
             if(AVM_TEST_NAME MATCHES "^math_(standard|native|c99_exact|c99_classify|c99_functions|hyperbolic|misc|errno)$")

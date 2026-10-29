@@ -55,6 +55,8 @@ int avm_test_main(void) {
     CHECK(wctomb(narrow, 'c') == 1 && narrow[0] == 'c');
     CHECK(mbstowcs(wide, "d", 2) == 1 && wide[0] == 'd' && wide[1] == 0);
     CHECK(wcstombs(narrow, chars, 3) == 2 && narrow[2] == 0);
+    CHECK(widen_call(NULL, bytes, 0) == 2 && widen_call(NULL, bytes, 1) == 2);
+    CHECK(narrow_call(NULL, chars, 0) == 2 && narrow_call(NULL, chars, 1) == 2);
     CHECK(errno == EDOM);
     return 0;
 }

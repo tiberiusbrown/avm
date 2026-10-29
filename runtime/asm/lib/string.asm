@@ -25,7 +25,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.strxfrm	00000000 .text.strxfrm
 00000000 l    d  .text.strlen	00000000 .text.strlen
 00000000 l    d  .text.strerror	00000000 .text.strerror
-00000000 l     O .data.strerror.buffer	00000020 strerror.buffer
+00000000 l     O .data.strerror.buffer	00000021 strerror.buffer
 00000000 l    d  .text.strncpy	00000000 .text.strncpy
 00000000 l    d  .text.strncat	00000000 .text.strncat
 00000000 l    d  .text.strcpy	00000000 .text.strcpy
@@ -37,6 +37,10 @@ SYMBOL TABLE:
 00000000 l    d  .rodata..L.avm.flashstr.2	00000000 .rodata..L.avm.flashstr.2
 00000000 l    d  .rodata..L.avm.flashstr.3	00000000 .rodata..L.avm.flashstr.3
 00000000 l    d  .rodata..L.avm.flashstr.4	00000000 .rodata..L.avm.flashstr.4
+00000000 l    d  .rodata..L.avm.flashstr.5	00000000 .rodata..L.avm.flashstr.5
+00000000 l    d  .rodata..L.avm.flashstr.6	00000000 .rodata..L.avm.flashstr.6
+00000000 l    d  .rodata..L.avm.flashstr.7	00000000 .rodata..L.avm.flashstr.7
+00000000 l    d  .rodata..L.avm.flashstr.8	00000000 .rodata..L.avm.flashstr.8
 00000000 g     F .text.memchr	0000002a memchr
 00000000 g     F .text.strncmp	0000002e strncmp
 00000000 g     F .text.strchr	00000017 strchr
@@ -58,7 +62,7 @@ SYMBOL TABLE:
 00000000 g     F .text.strcoll	00000003 strcoll
 00000000 g     F .text.strxfrm	0000003a strxfrm
 00000000 g     F .text.strlen	00000003 strlen
-00000000 g     F .text.strerror	0000005a strerror
+00000000 g     F .text.strerror	000000ae strerror
 00000000         *UND*	00000000 strcpy_P
 00000000 g     F .text.strncpy	00000005 strncpy
 00000000 g     F .text.strncat	00000005 strncat
@@ -725,68 +729,132 @@ Disassembly of section .text.strlen:
 Disassembly of section .text.strerror:
 
 <strerror>:
- cc 22                 cmpi.s8	r4, 0x22
+ cc 21                 cmpi.s8	r4, 0x21
  d3 04                 brslt8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strerror
-		R_AVM_FAR24	.text.strerror+0x21
+		R_AVM_FAR24	.text.strerror+0x29
 <L0>:
  cc 16                 cmpi.s8	r4, 0x16
- d1 04                 brne8	0x4 <L1>
+ d3 04                 brslt8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strerror
-		R_AVM_FAR24	.text.strerror+0x43
+		R_AVM_FAR24	.text.strerror+0x4a
 <L1>:
- cc 21                 cmpi.s8	r4, 0x21
- d0 04                 breq8	0x4 <L2>
+ cc 05                 cmpi.s8	r4, 0x5
+ d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strerror
-		R_AVM_FAR24	.text.strerror+0x3a
+		R_AVM_FAR24	.text.strerror+0x7c
 <L2>:
- c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.0
- c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.0
- e2 00 00 00           jmpf	strerror
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strerror+0x51
- cc 54                 cmpi.s8	r4, 0x54
- d1 04                 brne8	0x4 <L3>
+ cc 09                 cmpi.s8	r4, 0x9
+ d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strerror
-		R_AVM_FAR24	.text.strerror+0x4c
+		R_AVM_FAR24	.text.strerror+0xa0
 <L3>:
- cc 22                 cmpi.s8	r4, 0x22
- d0 04                 breq8	0x4 <L4>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	strerror
-		R_AVM_FAR24	.text.strerror+0x3a
-<L4>:
- c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.1
- c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.1
- e2 00 00 00           jmpf	strerror
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strerror+0x51
  c6 00 00              ldi16	r6, 0x0
 		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.4
  c3 00                 ldi8	r7, 0x0
 		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.4
  e2 00 00 00           jmpf	strerror
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strerror+0x51
+		R_AVM_FAR24	.text.strerror+0xa5
+ cc 26                 cmpi.s8	r4, 0x26
+ d3 04                 brslt8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x63
+<L4>:
+ cc 21                 cmpi.s8	r4, 0x21
+ d1 04                 brne8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x85
+<L5>:
+ cc 22                 cmpi.s8	r4, 0x22
+ d0 04                 breq8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0xa0
+<L6>:
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.1
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.1
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0xa5
+ cc 16                 cmpi.s8	r4, 0x16
+ d1 04                 brne8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x8e
+<L7>:
+ cc 1d                 cmpi.s8	r4, 0x1d
+ d0 04                 breq8	0x4 <L8>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0xa0
+<L8>:
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.5
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.5
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0xa5
+ cc 26                 cmpi.s8	r4, 0x26
+ d1 04                 brne8	0x4 <L9>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0x97
+<L9>:
+ cc 54                 cmpi.s8	r4, 0x54
+ d0 04                 breq8	0x4 <L10>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strerror
+		R_AVM_FAR24	.text.strerror+0xa0
+<L10>:
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.2
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.2
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0xa5
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.6
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.6
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0xa5
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.0
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.0
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0xa5
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.7
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.7
+ e2 00 00 00           jmpf	strerror
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.strerror+0xa5
  c6 00 00              ldi16	r6, 0x0
 		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.3
  c3 00                 ldi8	r7, 0x0
 		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.3
  e2 00 00 00           jmpf	strerror
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strerror+0x51
+		R_AVM_FAR24	.text.strerror+0xa5
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.2
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.8
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.2
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.8
  f1 77                 zext8	r7
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_DATA16	.data.strerror.buffer

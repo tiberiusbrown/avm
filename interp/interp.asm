@@ -782,6 +782,7 @@
 #define SYS_GET_SYSTEM_WIDTH            0x3A
 #define SYS_GET_SYSTEM_HEIGHT           0x3B
 #define SYS_GET_SYSTEM_DISPLAY_TYPE     0x3C
+#define SYS_DEBUG_PRINTFV                0x3D
 
 #define SPRITE_MODE_OVERWRITE    0
 #define SPRITE_MODE_PLUS_MASK    1
@@ -3070,7 +3071,7 @@ sys_decode_func:
     sei
 
 sys_dispatch_func:
-    cpi  PRIMARY_OPCODE, SYS_GET_SYSTEM_DISPLAY_TYPE+1
+    cpi  PRIMARY_OPCODE, SYS_DEBUG_PRINTFV+1
     brsh invalid_syscall_func
     add  r30, PRIMARY_OPCODE
     adc  r31, ZERO
@@ -3194,9 +3195,14 @@ sys_dispatch_table:
     sys_entries 1,   sys_audio_func
     sys_entries 1,   sys_send_display_command_func
     sys_entries 3,   sys_system_info_func
+    sys_entries 1,   sys_debug_printfv_func
 sys_dispatch_table_end:
 
-.if (sys_dispatch_table_end - sys_dispatch_table) != ((SYS_GET_SYSTEM_DISPLAY_TYPE+1) * 2)
+.if SYS_DEBUG_PRINTFV != 0x3D
+    .error "RAM debug formatter must occupy entry 0x3D"
+.endif
+
+.if (sys_dispatch_table_end - sys_dispatch_table) != ((SYS_DEBUG_PRINTFV+1) * 2)
     .error "SYS dispatch table must contain exactly the defined service entries"
 .endif
 
@@ -3273,6 +3279,9 @@ sys_draw_textfv_func:
 sys_draw_textfv_p_func:
     ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_TEXT) | \
                            (1 << FORMAT_STATUS_SOURCE_PROGRAM))
+    jmp   sys_format_impl
+sys_debug_printfv_func:
+    ldi   PRIMARY_OPCODE, (1 << FORMAT_STATUS_SINK_DEBUG)
     jmp   sys_format_impl
 sys_debug_printfv_p_func:
     ldi   PRIMARY_OPCODE, ((1 << FORMAT_STATUS_SINK_DEBUG) | \
@@ -11500,6 +11509,8 @@ format_conversion_n:
     rjmp  format_unexpected_character
 
 format_conversion_char:
+    cpi   r19, FORMAT_LENGTH_L
+    breq  1f
     rcall format_validate_default_length
     breq  1f
     rjmp  format_unexpected_character
@@ -11522,6 +11533,8 @@ format_conversion_char:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 format_conversion_string:
+    cpi   r19, FORMAT_LENGTH_L
+    breq  1f
     rcall format_validate_default_length
     breq  1f
     rjmp  format_unexpected_character

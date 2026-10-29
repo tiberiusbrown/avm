@@ -26,6 +26,13 @@ AVM_SYS_INLINE void avm_debug_putc(uint8_t value)
     __avm_debug_putc(value);
 }
 
+AVM_SYS_INLINE int16_t avm_debug_printfv(char const* fmt, va_list args)
+{
+    return __avm_debug_printfv(fmt, args);
+}
+
+#define avm_debug_printf __avm_debug_printf
+
 AVM_SYS_INLINE int16_t avm_debug_printfv_P(char const AVM_PROGMEM* fmt, va_list args)
 {
     return __avm_debug_printfv_P(fmt, args);
@@ -395,6 +402,21 @@ avm_draw_textf(int16_t x, int16_t y, char const AVM_PROGMEM* fmt,
                Args... args) {
   return __avm_text_cursor_from_u32(
       __avm_draw_textf_P(x, y, fmt, args...));
+}
+#undef avm_debug_printf
+__attribute__((always_inline)) AVM_SYS_INLINE int16_t
+avm_debug_printfv(char const AVM_PROGMEM* fmt, va_list args) {
+    return avm_debug_printfv_P(fmt, args);
+}
+template<class... Args>
+__attribute__((always_inline)) inline int16_t
+avm_debug_printf(char const* fmt, Args... args) {
+    return __avm_debug_printf(fmt, args...);
+}
+template<class... Args>
+__attribute__((always_inline)) inline int16_t
+avm_debug_printf(char const AVM_PROGMEM* fmt, Args... args) {
+    return __avm_debug_printf_P(fmt, args...);
 }
 #endif
 

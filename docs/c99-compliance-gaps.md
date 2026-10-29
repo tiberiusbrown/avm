@@ -29,16 +29,8 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 ### `<stdio.h>` — narrow streams, formatted I/O, files
 
-- [ ] Provide `FILE`, `fpos_t`, `stdin`, `stdout`, `stderr`, `EOF`, `BUFSIZ`, `FOPEN_MAX`, `FILENAME_MAX`, `L_tmpnam`, `TMP_MAX`, `_IOFBF`, `_IOLBF`, `_IONBF`, and `SEEK_SET`/`SEEK_CUR`/`SEEK_END`.
-- [ ] Provide standard stream/file lifecycle, buffering, and filesystem operations: `fopen`, `freopen`, `fclose`, `fflush`, `setbuf`, `setvbuf`, `remove`, `rename`, `tmpfile`, and `tmpnam`.
-- [ ] Provide the remaining formatted-output interfaces: `printf`, `fprintf`, `sprintf`, `vprintf`, `vfprintf`, and `vsprintf`. Expose the existing `snprintf` interface with standard external-function semantics, in addition to direct-call conveniences.
 - [ ] Provide formatted-input interfaces: `scanf`, `fscanf`, `sscanf`, `vscanf`, `vfscanf`, and `vsscanf`, including C99 conversion syntax and assignment semantics.
-- [ ] Complete `printf`-family support for standard wide-character and wide-string conversions (`%lc`, `%ls`) in addition to the already-supported narrow formatting conversions.
-- [ ] Provide character/line/string I/O: `fgetc`, `fgets`, `fputc`, `fputs`, `getc`, `getchar`, `gets` (deprecated in C99, but still required by that edition), `putc`, `putchar`, `puts`, and `ungetc`.
-- [ ] Provide binary-stream I/O: `fread` and `fwrite`.
-- [ ] Provide stream positioning: `fgetpos`, `fseek`, `fsetpos`, `ftell`, and `rewind`.
-- [ ] Provide stream status and error reporting: `clearerr`, `feof`, `ferror`, and `perror`.
-- [ ] Supply the C99 text/binary stream, buffering, stream-orientation, end-of-file, and standard-file semantics underlying these interfaces, not just linkable stubs.
+- [ ] Provide hosted C99 file-access functionality where supported by the execution environment. AVM currently has no filesystem or additional file backend.
 
 ### `<wchar.h>` — wide and multibyte functionality
 

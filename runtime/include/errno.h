@@ -5,6 +5,10 @@
 #define ERANGE 34
 #define EILSEQ 84
 #define EINVAL 22
+#define ENOSYS 38
+#define EBADF 9
+#define ESPIPE 29
+#define EIO 5
 
 #ifdef __cplusplus
 extern "C" {

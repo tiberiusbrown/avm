@@ -13,6 +13,16 @@
       723722   byte_load_liveout.c
      9460839   byte_phi_stream.c
       238967   call_args.c
+       42653   complex_cacosh.c
+       43323   complex_cacosh_O0.c
+       60251   complex_casinh.c
+       60921   complex_casinh_O0.c
+       24573   complex_catanh.c
+       25243   complex_catanh_O0.c
+       50179   complex_cpow.c
+       51381   complex_cpow_O0.c
+         858   complex_creal.c
+        1528   complex_creal_O0.c
       621908   conditional_fdiv_likely.c
       563635   conditional_fdiv_mixed.c
       510232   conditional_fdiv_skipped.c

@@ -145,12 +145,16 @@ size_t strxfrm(char* dst, const char* src, size_t n) {
 
 char* strerror(int errnum) {
     // Only the returned message needs RAM; keep the message table in flash.
-    static char buffer[32];
+    static char buffer[sizeof("Numerical argument out of domain")];
     const char AVM_PROGMEM* message;
     switch(errnum) {
     case EDOM: message = F("Numerical argument out of domain"); break;
     case ERANGE: message = F("Numerical result out of range"); break;
     case EILSEQ: message = F("Illegal byte sequence"); break;
+    case ENOSYS: message = F("Function not implemented"); break;
+    case EBADF: message = F("Bad file descriptor"); break;
+    case ESPIPE: message = F("Illegal seek"); break;
+    case EIO: message = F("Input/output error"); break;
     case EINVAL: message = F("Invalid argument"); break;
     default: message = F("Unknown error"); break;
     }

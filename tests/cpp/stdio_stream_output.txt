@@ -1,0 +1,8 @@
+ABCDE
+azb
+cdazb
+cdazb
+cdprefix: Bad file descriptor
+Illegal seek
+Function not implemented
+P

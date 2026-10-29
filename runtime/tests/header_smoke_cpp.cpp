@@ -203,3 +203,18 @@ extern "C"
 wint_t wide_header_smoke(wint_t c) {
     return iswctype(c, wctype("alpha")) ? towctrans(c, wctrans("tolower")) : WEOF;
 }
+
+/* Compile the complete stream API and its standard external symbols. */
+int avm_stdio_header_smoke(FILE* stream, fpos_t* pos) {
+    int (*read_byte)(FILE*) = &fgetc;
+    int (*write_byte)(int, FILE*) = &fputc;
+    int (*format)(FILE*, const char*, ...) = &fprintf;
+    int (*bounded)(char*, size_t, const char*, ...) = &snprintf;
+    char buffer[8];
+    (void)bounded;
+    (void)read_byte;
+    (void)write_byte;
+    (void)format;
+    (void)buffer;
+    return fgetpos(stream, pos) + _IONBF + SEEK_END + EOF;
+}

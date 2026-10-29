@@ -1,8 +1,8 @@
 AVM instruction mix profiling report
 Optimization: O2; benchmarks: 25; AVM ABI v2
-Interpreter HEX SHA256 7942009aeabd8e144f3297fdcf7108b1df8530c8790625d62724e40c6bb7c214
+Interpreter HEX SHA256 15ebf349213f74d2f8f6508a8149bfe6e2c6b4634a3a06aa4e409f8c426d7e9e
 Baseline image SHA256 4f228282d46777b27e2234c620bb12519453743e9ef947c90e8be999d7dd1ea1
-Compiler executable SHA256 8af4c0fdb027b1a0404dc538ec8d2f177adcdba5a6a1bffb979e6370566fc398
+Compiler executable SHA256 2e359fff0d8236f6e7f20f23373cddd6b8178f9d232f57dc6b73a321259f736c
 Metric: elapsed emulated AVR cycles between consecutive AVM primary-dispatch
 boundaries, including dispatch and operand-dependent work. Interrupts suppressed.
 Setup and both DEBUG_BREAK markers excluded; no estimated/rescaled costs.
@@ -279,7 +279,7 @@ virtual_dispatch.cpp: 698467 cycles; 12291 executions; 56.828 cycles/op
   Families: LOAD 34.599% BRANCH 18.019% CALL/RET 17.959% ADD 10.922% STACK 5.424% MOV 5.222%
 
 Encoding coverage
-Defined executable forms: 225; observed: 123; never executed: 102
+Defined executable forms: 226; observed: 123; never executed: 103
 Reserved/invalid opcode slots and assembly pseudos excluded by the MC decoder.
 Observed forms / workloads exercising them:
   ADD16.general/F2                12
@@ -454,6 +454,7 @@ Unobserved executable forms:
   SYS.buttons
   SYS.cosf
   SYS.debug_break
+  SYS.debug_printfv
   SYS.debug_printfv_p
   SYS.debug_putc
   SYS.display

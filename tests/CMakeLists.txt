@@ -116,6 +116,13 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         if(AVM_TEST_NAME MATCHES "^(tgmath_real|tgmath_complex|complex_.*)$")
             list(APPEND test_compile_options -std=c99 -pedantic-errors)
         endif()
+        if(AVM_TEST_NAME MATCHES "^stdio_(stream|format)(_indirect)?$")
+            list(APPEND test_source_dependencies
+                "${AVM_C_TEST_DIR}/stdio_stream.c" "${AVM_C_TEST_DIR}/stdio_format.c")
+        endif()
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND AVM_TEST_NAME MATCHES "^stdio_(stream|format|large)(_indirect)?$")
+            list(APPEND test_source_dependencies "${AVM_C_TEST_DIR}/${AVM_TEST_NAME}.c")
+        endif()
         if(AVM_TEST_NAME MATCHES "^(ff_fixed|vla)$")
             list(APPEND test_compile_options -mllvm -verify-machineinstrs)
         endif()
@@ -1028,3 +1035,29 @@ if(NOT WIN32 OR AVM_COMPLEX_WSL)
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         USES_TERMINAL VERBATIM)
 endif()
+
+# Check stream extraction in final linked images at every supported optimization.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+foreach(opt IN LISTS AVM_TEST_OPT_LEVELS)
+    set(stdio_linkage_images)
+    set(stdio_linkage_dir "${CMAKE_CURRENT_BINARY_DIR}/stdio_linkage/${opt}")
+    foreach(name none include snprintf vsnprintf printf fprintf perror getchar fputs stderr generic one two three debug)
+        set(obj "${stdio_linkage_dir}/${name}.o")
+        avm_add_object(OUTPUT "${obj}"
+            SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/stdio_linkage/${name}.c"
+            LANGUAGE C INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+            COMPILE_OPTIONS "-${opt}" DEPENDS avm_sysroot)
+        avm_add_image(OBJECTS "${obj}" ENTRY _start GC_SECTIONS
+            OUTPUT_ELF "${stdio_linkage_dir}/${name}.elf"
+            OUTPUT_IMAGE "${stdio_linkage_dir}/${name}.bin"
+            LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a" "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a")
+        list(APPEND stdio_linkage_images "${stdio_linkage_dir}/${name}.bin")
+    endforeach()
+    add_custom_target(avm_stdio_linkage_${opt}
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/stdio_linkage_test.py" "${stdio_linkage_dir}"
+        DEPENDS ${stdio_linkage_images} VERBATIM)
+endforeach()
+add_custom_target(avm_stdio_linkage_tests
+    DEPENDS avm_stdio_linkage_O0 avm_stdio_linkage_O1 avm_stdio_linkage_O2
+        avm_stdio_linkage_O3 avm_stdio_linkage_Os avm_stdio_linkage_Oz)
+add_dependencies(avm_tests_run avm_stdio_linkage_tests)

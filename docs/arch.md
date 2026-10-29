@@ -2052,9 +2052,14 @@ have no generic LLVM representation.
 | `0x34` | `draw_text_P` | `r4 = x`, `r5 = baseline y`, `q3 = program string` | `r4 = final x`, `r5 = final baseline y` | Selected-text, program-space string/font reads; framebuffer reads and writes |
 | `0x35` | `draw_textfv` | `r4 = x`, `r5 = baseline y`, `r6 = RAM format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
 | `0x36` | `draw_textfv_P` | `r4 = x`, `r5 = baseline y`, `q3 = program format`, `r2 = va_list cursor` | `r4 = final x`, `r5 = final baseline y` | Formatted AS0/AS1 reads; selected-text and program-space font reads; framebuffer reads and writes |
-| `0x37` | `debug_printfv_P` | `q3 = program format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Formatted AS0/AS1 reads; debug output |
+| `0x37` | `debug_printfv_P` | `q3 = program format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Formatted AS0/AS1 reads; `%n` AS0 writes; observable debug output |
 | `0x38` | `audio` | `low8(r7) = command`; command-specific `r4-r6` | Status command: zero-extended bit mask in `r4`; otherwise none | Program-space song reads; hidden audio state and speaker output |
-| `0x39-0xFF` | Reserved | — | — | — |
+| `0x39` | `send_display_command` | `low8(r4) = command` | None | Observable display command |
+| `0x3A` | `get_system_width` | None | Width in `r4` | System query |
+| `0x3B` | `get_system_height` | None | Height in `r4` | System query |
+| `0x3C` | `get_system_display_type` | None | Display type in `r4` | System query |
+| `0x3D` | `debug_printfv` | `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | AS0 format/argument reads, indirect AS0/AS1 reads, `%n` AS0 writes; observable debug output |
+| `0x3E-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:
 
@@ -3200,6 +3205,15 @@ buffer services preserve `r0-r3`, `r5-r7`, `CC`, and `SP`. They also preserve
 the complete input bit patterns of `r2`, `r5`, and the applicable format
 register (`r6` or `q3`).
 
+`debug_printfv` (`SYS 0x3D`, encoding `D7 3D`) uses the same formatter and
+debug sink as `debug_printfv_P`, with a 16-bit AS0 format pointer in `r6`
+and a packed AS0 argument cursor in `r2`. It preserves every architectural
+register except the signed 16-bit count/error result in `r4`, as well as CC
+and SP. It reads the RAM format and variadic area, can read indirect AS0/AS1
+arguments, and can write guest RAM through `%n`. Output goes directly to
+`UEDATX`, without guest scratch buffers, static storage, or a second native
+formatter workspace. Both FX and FX-C share this implementation.
+
 `debug_printfv_P` emits every formatted byte to the implementation-defined
 debug output stream and emits no terminating zero. On success it returns the
 number of emitted bytes in `r4`. It returns `-1` under the same invalid-format
@@ -3208,7 +3222,7 @@ invalid construct remain observable, and count overflow does not stop output.
 The service preserves `r0-r3`, `r5-r7`, `CC`, `SP`, and the complete input bit
 patterns of `r2` and `q3`.
 
-All three services read the variadic argument area in data space and may read
+All four services read the variadic argument area in data space and may read
 additional data-space objects through `%s` and program-space objects through
 `%S`. `vsnprintf_P` and `debug_printfv_P` additionally read their formats from
 program space. The buffer services write the bounded destination region
@@ -3238,6 +3252,12 @@ precision:   . followed by decimal digits, *, or no characters
 length:      hh  h  l  ll  j  z  t  L
 conversion:  c  s  S  d  i  u  o  x  X  p  P  f  F  e  E  g  G  a  A  n
 ```
+
+`%lc` and `%ls` use AVM's fixed C locale: `wchar_t` is an unsigned byte,
+all 256 byte values are representable, and no shift state is required. `%lc`
+consumes a promoted two-byte integer and emits its wide-character byte;
+`%ls` consumes a two-byte RAM pointer and uses byte precision and field width.
+`%S` remains the separate three-byte program-memory string extension.
 
 `%%` emits one literal `%` and consumes no argument. It accepts no flags,
 width, precision, or length modifier.
@@ -4105,7 +4125,7 @@ General `i1` values are materialized as 16-bit zero or one. Compare-and-branch p
 | `set_sprite`, `draw_overwrite`, `draw_plus_mask`, `draw_self_masked`, `draw_erase` | Dedicated typed AVM intrinsics and `SYS 0x22-0x26` | — | — | Select an AS1 sprite or draw from selected-sprite state into the fixed framebuffer |
 | `draw_filled_rect_white`, `draw_filled_rect_black` | Dedicated typed AVM intrinsics and `SYS 0x27-0x28` | — | — | Read/write the fixed framebuffer |
 | `vsnprintf`, `vsnprintf_P` | Dedicated typed AVM intrinsics and `SYS 0x2F-0x30` | — | — | Bounded AS0 write; AS0 and AS1 reads selected by the format |
-| `debug_printfv_P` | Dedicated typed AVM intrinsic and `SYS 0x37` | — | — | AS0/AS1 reads selected by the format; externally observable debug output |
+| `debug_printfv_P` | Dedicated typed AVM intrinsic and `SYS 0x37` | — | — | AS0/AS1 reads selected by the format; `%n` AS0 writes; externally observable debug output |
 | `set_text_font`, `set_text_mode`, `draw_text`, `draw_text_P`, `draw_textfv`, `draw_textfv_P` | Dedicated typed AVM intrinsics and `SYS 0x31-0x36` | — | — | Hidden selected-text state; AS0/AS1 source reads; fixed-framebuffer read/write effects |
 
 The `FA` page provides variable and immediate 16-bit shifts restricted to the upper registers.
@@ -4967,6 +4987,7 @@ generic LLVM intrinsic.
 | `llvm.avm.draw.text.p(i16,i16,p1)` | `SYS 0x34` through `SYS_DRAW_TEXT_P` | tied `r4 = x`, tied `r5 = baseline y`, `q3 = string` | tied `q2 = final cursor` |
 | `llvm.avm.draw.textfv(i16,i16,ptr,ptr)` | `SYS 0x35` through `SYS_DRAW_TEXTFV` | tied `r4 = x`, tied `r5 = baseline y`, `r6 = format`, `r2 = ap` | tied `q2 = final cursor` |
 | `llvm.avm.draw.textfv.p(i16,i16,p1,ptr)` | `SYS 0x36` through `SYS_DRAW_TEXTFV_P` | tied `r4 = x`, tied `r5 = baseline y`, `q3 = format`, `r2 = ap` | tied `q2 = final cursor` |
+| `llvm.avm.debug.printfv(ptr,ptr)` | `SYS 0x3D` through `SYS_DEBUG_PRINTFV_PSEUDO` | `r6 = format`, `r2 = ap` | `r4 = signed result` |
 | `llvm.avm.debug.printfv.p(p1,ptr)` | `SYS 0x37` through `SYS_DEBUG_PRINTFV_P` | `q3 = format`, `r2 = ap` | `r4 = signed result` |
 | `llvm.avm.send.display.command(ptr,i16)` | `SYS 0x39` through `SYS_SEND_DISPLAY_COMMAND_PSEUDO` | `r4 = cmd`, `r5 = n` | None |
 | `llvm.avm.get.system.width()` | `SYS 0x3A` through `SYS_GET_SYSTEM_WIDTH_PSEUDO` | None | `r4 = width` |
@@ -5017,7 +5038,8 @@ mask.
 and `r2`. The format address is `q3[23:0]`; `q3[31:24]` is ignored, so selection
 MUST NOT normalize the pointer solely for this service. Its pseudo carries an
 explicit address-space-one format read, an address-space-zero read through
-`ap`, conservative indirect reads from both address spaces, and an unmodeled
+`ap`, conservative indirect reads from both address spaces, indirect AS0 `%n`
+writes, and an unmodeled
 externally observable debug-output side effect. It MUST NOT be marked
 `argmemonly` and has no ordinary call-preserved register mask.
 
@@ -5184,7 +5206,8 @@ The memory services have their precise address-space effects:
   format.
 - `debug_printfv_P` reads its AS1 format, the AS0 variadic area, and any AS0 or
   AS1 strings selected by the format, and produces externally observable debug
-  output without writing a destination buffer.
+  output without writing a destination buffer; `%n` may write indirect AS0 RAM.
+- `debug_printfv` has the same effects with an AS0 format.
 - `set_text_font` conditionally reads an AS1 font header and defines hidden
   selected-font state.
 - `set_text_mode` defines hidden selected-mode state.
@@ -5208,7 +5231,7 @@ when their NUL-termination, padding, bound, and aliasing semantics are
 preserved. Formatted-output calls must remain ordered relative to stores that may change
 their format, variadic arguments, or referenced strings and, for buffer
 services, relative to accesses that may observe destination writes.
-`debug_printfv_P` additionally remains ordered with other observable debug
+Both debug formatters additionally remain ordered with other observable debug
 output and MUST NOT be removed, duplicated, or speculated. Buffer-service
 results and writes may be eliminated only when ordinary nonvolatile memory-
 effect and undefined-behavior rules permit it.
@@ -6418,3 +6441,22 @@ Image:
     highest representable payload byte 0xFFFEF7
     file offsets equal logical program addresses
 ```
+
+### RAM debug formatting compiler interface
+
+`__builtin_avm_debug_printf` / `__avm_debug_printf` accept a RAM format and
+true variadic arguments. `__builtin_avm_debug_printfv` / `__avm_debug_printfv`
+accept a RAM format and explicit `va_list`. All lower to
+`llvm.avm.debug.printfv(ptr, ptr) -> i16`, selected through
+`AVMSystemCalls.inc` into `SYS_DEBUG_PRINTFV_PSEUDO` and finally `SYS 0x3D`.
+The descriptor places format in `r6`, arguments in `r2`, and result in `r4`.
+Inputs are preserved; no ordinary call register mask applies. Packed slots
+retain byte alignment: promoted int/data pointer two bytes, long/float four
+bytes, and program pointer three bytes. The intrinsic retains conservative
+memory effects and observable side effects. The pseudo and memory operands
+model reads and indirect `%n` writes; neither debug formatter may be removed,
+speculated, or reordered across output or potentially aliasing memory accesses.
+Formatting has variable cost and no fabricated fixed cycle cost.
+
+The public `avm_debug_printf` and `avm_debug_printfv` interfaces complement
+the existing `_P` APIs; C++ overloads select by format pointer address space.

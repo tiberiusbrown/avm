@@ -281,7 +281,7 @@ Direct string calls use header dispatch to the AVM system services.
 Parenthesized calls and address-taking select real ABI functions, including
 the program-memory overload. The C++ true-variadic snprintf and
 avm_draw_textf overloads expand typed argument packs into the existing
-compiler builtins. Program-memory-only debug formatting keeps its explicit
+compiler builtins. Program-memory debug formatting keeps its explicit
 _P name.
 
 `assert.h` keeps diagnostic text, expression, filename, and function name in
@@ -328,3 +328,46 @@ to `SIG_DFL` before the call, and handlers may install a replacement. Hardware
 and interpreter exceptions are not automatically converted to C signals.
 The six packed three-byte function pointers occupy 18 bytes of static RAM only
 when signal support is linked; `abort()` alone does not pull in this table.
+
+## Narrow stdio streams
+
+`stdio.h` supplies the C99 narrow-stream interface except the six `scanf`
+functions. Every supported standard function has a callable C ABI symbol;
+parenthesized calls and function pointers work alongside the existing native
+`snprintf`/`vsnprintf` direct-call paths and `_P` extensions.
+
+`stdin`, `stdout`, and `stderr` are distinct, statically initialized two-byte
+objects. Each lives in its own `libavm.a` archive member. Unused streams cost
+zero guest RAM, including programs that only include the header or format
+into buffers. Referencing one stream retains two bytes; two retain four;
+three retain six. Generic functions inspect the supplied object's flags and
+never reference the three named streams. Startup and termination add no
+stdio initialization, registry, buffer, or flushing hook.
+
+Output is unbuffered and goes directly to the debug endpoint. `printf` and
+`fprintf` use native RAM-format `SYS 0x3D`; `_P` debug formatting retains
+`SYS 0x37`. These services share the interpreter formatter and workspace,
+including `%n`, count overflow, integer/floating conversions, and AS1 `%S`.
+The C-locale `%lc`/`%ls` conversions use AVM's unsigned-byte `wchar_t`.
+No output-sized guest buffer is needed, even when output exceeds guest RAM.
+`fwrite` preserves every byte, including NUL and newline.
+
+Input has no backend and reaches EOF immediately, after any single-byte
+`ungetc` pushback. EOF and errors have separate indicators. Closing a stream
+removes its read/write permissions without freeing its static object.
+`_IONBF` is accepted by `setvbuf`; full and line buffering fail with `EINVAL`
+without allocating memory. `fflush(NULL)` succeeds without retaining stream
+objects because there is no buffered output.
+
+There is no filesystem: `fopen`, `freopen`, `remove`, `rename`, `tmpfile`, and
+`tmpnam` fail with `ENOSYS`; `freopen` first closes its old association.
+Positioning operations fail with `ESPIPE`; `rewind` also clears EOF/error
+indicators. Invalid stream state fails with `EBADF`; formatter/transfer
+failures use `EIO`. `perror` writes the current error message to stderr and
+retains no other standard stream. `FOPEN_MAX` is an interface constant and
+does not promise working file storage.
+
+This API coverage does not establish hosted C99 conformance. Compilation
+remains freestanding (`__STDC_HOSTED__ == 0`); filesystem guarantees, buffered
+streams, wide stream orientation/I/O, formatted input, and the hosted execution
+requirements remain tracked in `docs/c99-compliance-gaps.md`.

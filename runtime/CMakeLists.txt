@@ -43,6 +43,22 @@ set(RUNTIME_SOURCES
     runtime
     signal
     stdio
+    stdio_control
+    stdio_error
+    stdio_files
+    stdio_format
+    stdio_getchar
+    stdio_gets
+    stdio_input
+    stdio_output
+    stdio_perror
+    stdio_position
+    stdio_printf
+    stdio_putchar
+    stdio_puts
+    stdio_stderr
+    stdio_stdin
+    stdio_stdout
     stdlib
     strtof
     string
@@ -119,6 +135,9 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
     set(runtime_math_options)
     set(runtime_extra_dependencies)
+    if(RUNTIME_SOURCE MATCHES "^stdio_")
+        list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h")
+    endif()
     if(RUNTIME_SOURCE MATCHES "^time_")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h")
     endif()

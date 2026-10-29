@@ -1,0 +1,2 @@
+extern "C" int avm_test_main(void);
+#include "../c/stdio_stream_indirect.c"

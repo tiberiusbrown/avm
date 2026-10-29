@@ -2448,7 +2448,7 @@ void sys_bounds(char** args) {
     harness h(args);
     auto table=h.sym("sys_dispatch_table"), trap=h.sym("invalid_syscall_func");
     auto services=h.sym("sys_dispatch_table_end")-table;
-    require(services==0x3d,"SYS table has wrong size");
+    require(services==0x3e,"SYS table has wrong size");
     for(unsigned id=0;id<256;++id) {
         h.c().data[24]=uint8_t(id); h.word(30,uint16_t(table));
         auto flags=h.c().data[reg::addr::GPIOR0]; auto sp=h.c().sp();

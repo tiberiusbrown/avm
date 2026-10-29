@@ -17,6 +17,14 @@ extern "C" {
 #endif
 
 int atexit(void (*func)(void));
+/* AVM has an empty environment-variable list. */
+char *getenv(const char *name);
+
+/* AVM has no command processor. NULL returns 0;
+ * non-NULL commands return -1 without execution.
+ * Neither function modifies errno. */
+int system(const char *command);
+
 void *malloc(size_t size);
 void *calloc(size_t nmemb, size_t size);
 void *realloc(void *ptr, size_t size);

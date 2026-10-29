@@ -23,6 +23,8 @@ SYMBOL TABLE:
 00000000 l    d  .text.div	00000000 .text.div
 00000000 l    d  .text.ldiv	00000000 .text.ldiv
 00000000 l    d  .text.lldiv	00000000 .text.lldiv
+00000000 l    d  .text.getenv	00000000 .text.getenv
+00000000 l    d  .text.system	00000000 .text.system
 00000000 g     F .text.rand	00000007 rand
 00000000         *UND*	00000000 avm_random
 00000000 g     F .text.srand	00000004 srand
@@ -52,6 +54,8 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_divmodsi4
 00000000 g     F .text.lldiv	00000062 lldiv
 00000000         *UND*	00000000 __avm_divmoddi4
+00000000 g     F .text.getenv	00000002 getenv
+00000000 g     F .text.system	0000000a system
 
 Disassembly of section .text.rand:
 
@@ -1860,4 +1864,20 @@ Disassembly of section .text.lldiv:
  b9                    pop16	r1
  ba                    pop16	r2
  bb                    pop16	r3
+ ef                    ret
+
+Disassembly of section .text.getenv:
+
+<getenv>:
+ a0                    xor	r4, r4
+ ef                    ret
+
+Disassembly of section .text.system:
+
+<system>:
+ a5                    xor	r5, r5
+ c6 ff ff              ldi16	r6, 0xffff
+ f6 2c                 tst16	r4
+ fb 6e                 cmov.ne	r5, r6
+ 01                    mov	r4, r5
  ef                    ret

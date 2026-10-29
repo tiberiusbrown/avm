@@ -47,7 +47,7 @@ static NOINLINE int integer_rem(int a, int b, int c)
 {
     return c ? a % b : a;
 }
-static NOINLINE float remainder(float a, float b, int c)
+static NOINLINE float conditional_remainder(float a, float b, int c)
 {
     return c ? fmodf(a, b) : a;
 }
@@ -84,7 +84,7 @@ int avm_test_main(void)
             CHECK(same(both_paths(a, 3.0f, c), (c ? q : a) + q));
             for (int d = 0; d < 2; ++d)
                 CHECK(same(nested(a, 3.0f, c, d), c && d ? q : a));
-            CHECK(same(remainder(a, 3.0f, c), c ? fmodf(a, 3.0f) : a));
+            CHECK(same(conditional_remainder(a, 3.0f, c), c ? fmodf(a, 3.0f) : a));
             CHECK(same(helper(a, c), c ? sqrtf(a) : a));
         }
         // An unselected value must retain even a signaling NaN's exact bits.

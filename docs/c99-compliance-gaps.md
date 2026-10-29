@@ -45,11 +45,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide stream status and error reporting: `clearerr`, `feof`, `ferror`, and `perror`.
 - [ ] Supply the C99 text/binary stream, buffering, stream-orientation, end-of-file, and standard-file semantics underlying these interfaces, not just linkable stubs.
 
-### `<stdlib.h>` — utilities beyond AVM's existing subset
-
-- [ ] Provide environment interfaces `getenv` and `system` with their specified return/failure behavior.
-- [ ] Ensure every configuration claiming hosted conformance supports at least 32 `atexit` registrations; `--avm-atexit-capacity` currently permits a smaller capacity.
-
 ### `<tgmath.h>` — type-generic math
 
 - [ ] Provide complex dispatch for the shared real/complex type-generic macros, and the `carg`, `cimag`, `conj`, `cproj`, and `creal` type-generic macros (including their real-argument forms), backed by functioning complex math entry points in all three precisions.

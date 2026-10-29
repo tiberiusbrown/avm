@@ -138,3 +138,14 @@ lldiv_t lldiv(long long numerator, long long denominator) {
     lldiv_t result = {numerator / denominator, numerator % denominator};
     return result;
 }
+
+char *getenv(const char *name)
+{
+    (void)name;
+    return NULL;
+}
+
+int system(const char *command)
+{
+    return command == NULL ? 0 : -1;
+}

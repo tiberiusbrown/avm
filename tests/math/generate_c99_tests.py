@@ -11,10 +11,15 @@ for n,p in C99_POLICIES.items():
         u=bits(x)
         for d in [-1,0,1]:
             if 0<=u+d<=0xffffffff: words.add(u+d)
+    if n in ['erff','erfcf']:
+        for x in [-11,-10,-9.5,-9,-4,-1.25,1.25,4,8,9,9.19455,9.5,10,10.0542,11]:
+            u=bits(x)
+            for d in [-2,-1,0,1,2]: words.add(u+d)
     lines += [f'static const AVM_PROGMEM struct math_case {n}_cases[] = {{']
     for a in sorted(words):
         expected=expected_bits(n,a,0,reference(n,a,0))
-        lines.append(f'    {{0x{a:08x}UL,0,0x{expected:08x}UL,1}},')
+        approximate = int(n not in ['erff','erfcf'] or (a & 0x7fffffff) != 0 and (a & 0x7fffffff) < 0x7f800000)
+        lines.append(f'    {{0x{a:08x}UL,0,0x{expected:08x}UL,{approximate}}},')
     lines += ['};']
 lines += ['static int c99_cases(void)', '{']
 for n,p in C99_POLICIES.items():

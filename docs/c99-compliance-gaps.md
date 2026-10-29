@@ -40,7 +40,7 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 
 - [ ] Provide the required `float_t` and `double_t` types.
 - [ ] Provide C99's standard `double` and `long double` forms of the existing `*f` functions. This includes all corresponding unsuffixed and `*l` functions in the trigonometric, hyperbolic, exponential/logarithmic, power, rounding, remainder, classification-support, and floating-point manipulation families; aliases are sufficient only if their semantics and types are correct.
-- [ ] Provide the missing `float` forms `erff`, `erfcf`, `lgammaf`, and `tgammaf`, together with the corresponding unsuffixed/`*l` forms of these families.
+- [ ] Provide the missing `float` forms `lgammaf` and `tgammaf`, together with the unsuffixed/`*l` forms of the `erf`, `erfc`, `lgamma`, and `tgamma` families.
 
 ### `<stdio.h>` — narrow streams, formatted I/O, files
 

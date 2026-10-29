@@ -35,6 +35,8 @@ float cosf(float x);
 void sincosf(float x, float *sine, float *cosine);
 float atan2f(float y, float x);
 float tanf(float x);
+float erff(float x);
+float erfcf(float x);
 float expf(float x);
 float exp2f(float x);
 float expm1f(float x);

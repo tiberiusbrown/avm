@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+float avm_reference_erff(float);
+float avm_reference_erfcf(float);
 float avm_reference_sinhf(float);
 float avm_reference_coshf(float);
 float avm_reference_tanhf(float);
@@ -36,7 +38,9 @@ int main(void)
     char name[24]; unsigned long a, b;
     while (scanf("%23s %lx %lx", name, &a, &b) == 3) {
         union { uint32_t u; float f; } x = {(uint32_t)a}, y = {(uint32_t)b}, z;
-        if (!strcmp(name, "sinhf")) z.f = avm_reference_sinhf(x.f);
+        if (!strcmp(name, "erff")) z.f = avm_reference_erff(x.f);
+        else if (!strcmp(name, "erfcf")) z.f = avm_reference_erfcf(x.f);
+        else if (!strcmp(name, "sinhf")) z.f = avm_reference_sinhf(x.f);
         else if (!strcmp(name, "coshf")) z.f = avm_reference_coshf(x.f);
         else if (!strcmp(name, "tanhf")) z.f = avm_reference_tanhf(x.f);
         else if (!strcmp(name, "asinhf")) z.f = avm_reference_asinhf(x.f);

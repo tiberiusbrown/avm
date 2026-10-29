@@ -79,6 +79,11 @@
       119972   math_cos.c
       105951   math_cos_small.c
       181068   math_cosh.c
+      159340   math_erf.c
+      350766   math_erf_tail.c
+      283030   math_erfc.c
+      128696   math_erfc_special.c
+      419940   math_erfc_tail.c
       209856   math_exp.c
       153540   math_exp2.c
       177766   math_exp_primary.c

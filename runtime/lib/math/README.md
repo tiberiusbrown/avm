@@ -569,7 +569,7 @@ negative integer endpoint is valid. `ilogbf` reports `EDOM` for zero, infinity,
 and NaN.
 
 Underflow reporting is implementation-defined: `expf`, `exp2f`, `expm1f`, `sinhf`,
-`powf`, and scaling operations report `ERANGE` for subnormal results (including
+`erff`, `erfcf`, `powf`, and scaling operations report `ERANGE` for subnormal results (including
 rounded zero from a nonzero mathematical result). `nextafterf` reports
 `ERANGE` when a step produces infinity, a subnormal, or zero. Other tiny
 results preserve `errno`. A zero input or a no-op scaling call preserves
@@ -611,3 +611,51 @@ using an explicit `cc` clobber. Coefficients, reduction, rounding points, and
 accuracy budgets are unchanged. The native ABI fixture also checks paired
 versus standalone results, odd/even symmetry, signed zeros, quadrant neighbors,
 and preserved errno for finite inputs.
+
+
+## Error functions
+
+`erff` and `erfcf` use lightweight binary32 degree-six approximations, each
+computed by `AVM_FPOLY7`. For `abs(x) < 1.25`, the shared polynomial evaluates
+`erf(x) = x*P(x*x)`; `erfcf` uses `1-x*P(x*x)`. The positive tail uses
+`t = 1/(1+x)` and `erfc(x) = exp(-x*x)*t*Q(t)`, with exactly one call to the
+private `__avm_expf_noerrno` engine. Negative tails use symmetry. `erff`
+saturates at magnitude 4; positive `erfcf` returns zero at 11.
+
+The relative error budgets are `1e-5` for `erff` and `2e-5` for `erfcf`.
+Subnormal references allow the same relative budget plus one binary32
+subnormal quantum (`0x1p-149`). Signed zero, infinities and NaNs have exact
+specified behavior. Successful results preserve `errno`; finite inputs
+producing subnormal `erff` results or subnormal/zero positive `erfcf` results
+set `ERANGE`. Negative `erfcf` results preserve `errno`. No public function
+saves or restores `errno`, and intermediate exponential underflow is private.
+
+
+RelWithDebInfo measurements use O2 callers, O3 runtime kernels, and 32 calls
+with runtime-loaded inputs. Cycles include loop/input/sink overhead and subtract
+the 35-cycle DEBUG_BREAK baseline. Linked `.text` includes startup, caller,
+private exponential and other shared callees; each workload also has 64 bytes
+of input rodata. Packaged images are padded to 5,632 bytes. Guest stack maxima
+include the benchmark caller; native extra stack is reported separately.
+
+| Workload | AVR cycles / 32 calls | Linked `.text` bytes | Guest stack bytes | Native extra stack bytes |
+| --- | ---: | ---: | ---: | ---: |
+| `math_erf` | 159,340 | 791 | 26 | 15 |
+| `math_erf_tail` | 350,766 | 791 | 50 | 14 |
+| `math_erfc` | 283,030 | 875 | 58 | 14 |
+| `math_erfc_tail` | 419,940 | 875 | 58 | 15 |
+| `math_erfc_special` | 128,696 | 875 | 58 | 12 |
+
+The kernel object has 227 unrelaxed bytes for `erff`, 317 for `erfcf`, and 86
+for their shared tail helper. In the benchmark links, relaxation reduces the
+public functions to 188 and 270 bytes respectively; the shared helper occupies
+84 or 85 bytes depending on layout. Disassembly confirms native `fpoly 7`
+evaluations and one private exponential call in the shared tail helper.
+
+Across the 100-digit deterministic/adaptive corpus (over 81,000 inputs per
+function) and independent host libm sweep (90,065 inputs per function), the
+largest normal-result relative errors are `2.46646416e-7` for `erff` at input
+bits `0x3fa53a47` and `9.86428727e-6` for `erfcf` at `0x410989a0`.
+Boundary neighbors at both signs of 1.25, 4, 9, 10 and 11 pass the error budgets,
+including the small/tail crossover; no excessive boundary discontinuity was
+observed. Subnormal and zero transitions use the stated absolute allowance.

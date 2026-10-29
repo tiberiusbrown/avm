@@ -63,7 +63,7 @@ static int check_accuracy_result(float result, uint32_t expected, uint16_t exact
                                  uint16_t index, enum avm_accuracy policy)
 {
     union { float f; uint32_t u; } actual = {result};
-    if (!exact || (expected & 0x7fffffffUL) == 0 ||
+    if (!exact || ((expected & 0x7fffffffUL) == 0 && policy != AVM_ERF && policy != AVM_ERFC) ||
         (expected & 0x7fffffffUL) >= 0x7f800000UL)
         return check_result(result, expected, 0, index);
     if ((actual.u & 0x7fffffffUL) < 0x7f800000UL &&

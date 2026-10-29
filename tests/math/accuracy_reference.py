@@ -22,13 +22,14 @@ import mpmath as mp
 mp.mp.dps = 100
 FUNCTIONS = ['sqrtf', 'expf', 'logf', 'log2f', 'log10f', 'hypotf', 'powf',
              'sinf', 'cosf', 'tanf', 'atanf', 'atan2f', 'fmodf', 'sincos_sinf', 'sincos_cosf',
-             'exp2f', 'expm1f', 'log1pf', 'cbrtf', 'asinf', 'acosf', 'sinhf', 'coshf', 'tanhf', 'asinhf', 'acoshf', 'atanhf']
+             'exp2f', 'expm1f', 'log1pf', 'cbrtf', 'asinf', 'acosf', 'sinhf', 'coshf', 'tanhf', 'asinhf', 'acoshf', 'atanhf', 'erff', 'erfcf']
 
 HYPERBOLIC = ['sinhf', 'coshf', 'tanhf', 'asinhf', 'acoshf', 'atanhf']
 
-C99_POLICIES = dict(exp2f='AVM_EXP', expm1f='AVM_EXPM1', log1pf='AVM_LOG',
+C99_POLICIES = dict(erff='AVM_ERF', erfcf='AVM_ERFC', exp2f='AVM_EXP', expm1f='AVM_EXPM1', log1pf='AVM_LOG',
                     cbrtf='AVM_CBRT', asinf='AVM_ATAN', acosf='AVM_ATAN')
-C99_BASELINES = dict(exp2f='avr-libc expf accuracy policy, direct base-two reduction',
+C99_BASELINES = dict(erff='lightweight degree-six AVM polynomial approximation',
+    erfcf='lightweight degree-six AVM polynomial / private expf approximation', exp2f='avr-libc expf accuracy policy, direct base-two reduction',
     expm1f='lightweight binary32 Taylor / existing avr-libc-comparable expf policy',
     log1pf='lightweight binary32 series / existing avr-libc-comparable logf policy',
     cbrtf='avr-libc cbrtf published relative error ~1.2e-7; binary32 rounding allowance 3e-7',
@@ -67,6 +68,8 @@ def reference(name, a, b):
         if name in ['sinhf', 'coshf']:
             if abs(x)>1000: return (-mp.inf if x<0 and name=='sinhf' else mp.inf)
             return mp.sinh(x) if name=='sinhf' else mp.cosh(x)
+        if name=='erff': return mp.sign(x) if abs(x)>11 else mp.erf(x)
+        if name=='erfcf': return mp.mpf(0 if x>0 else 2) if abs(x)>100 else mp.erfc(x)
         if name=='tanhf': return mp.tanh(x)
         if name=='asinhf': return mp.asinh(x)
         if name=='acoshf': return mp.acosh(x) if x>=1 else mp.nan
@@ -128,7 +131,7 @@ def expected_bits(name,a,b,ref):
     name=name.removeprefix('sincos_')
     word=bits(ref)
     if word&0x7fffffff==0:
-        negative=(name in ['sqrtf','sinf','tanf','atanf','atan2f','fmodf','expm1f','log1pf','cbrtf','asinf','sinhf','tanhf','asinhf','atanhf'] and a>>31) or (name=='powf' and a>>31 and value(b)%2==1)
+        negative=(name in ['sqrtf','sinf','tanf','atanf','atan2f','fmodf','expm1f','log1pf','cbrtf','asinf','sinhf','tanhf','asinhf','atanhf','erff'] and a>>31) or (name=='powf' and a>>31 and value(b)%2==1)
         if negative: word|=0x80000000
     return word
 
@@ -208,6 +211,14 @@ def phase34_corpus(name):
                 if name=='atan2f':
                     for e in [-148,-126,-60,0,60,126]:
                         for sy in [-1,1]: neighbors(math.ldexp(sign*x,e), math.ldexp(sy,e))
+    elif name in ['erff','erfcf']:
+        for x in [1.25,4,9,10,11]:
+            neighbors(x); neighbors(-x)
+        for i in range(8193): neighbors(-11+22*i/8192)
+        # Dense normal/subnormal and subnormal/zero crossings.
+        for center in [9.19455,10.0542]:
+            u=bits(center)
+            for d in range(-1024,1025): pairs.add((u+d,0))
     elif name in HYPERBOLIC:
         for x in [0, 0.5, 1, 9, 9.5, 4096, float(mp.log(2*(mp.mpf(2)**128-mp.mpf(2)**104)))]:
             for sign in [-1,1]: neighbors(sign*x)
@@ -238,6 +249,9 @@ def phase34_corpus(name):
 def acceptance(name,actual,ref,ulp):
     name=name.removeprefix('sincos_')
     if name in HYPERBOLIC: return abs(actual-ref) <= mp.mpf('1e-5')*abs(ref)
+    if name in ['erff','erfcf']:
+        rt=mp.mpf('1e-5' if name=='erff' else '2e-5')
+        return abs(actual-ref) <= rt*abs(ref)+(mp.mpf(2)**-149 if abs(ref)<mp.mpf(2)**-126 else 0)
     if name == 'sqrtf': return ulp <= 2
     if name == 'hypotf': return ulp <= 4
     if name == 'fmodf': return ulp == 0

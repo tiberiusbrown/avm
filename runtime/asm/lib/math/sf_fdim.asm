@@ -6,7 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fdimf	00000000 .text.fdimf
 00000000 l     F .text.unlikely.avm_fdim_special	00000065 avm_fdim_special
 00000000 l    d  .text.unlikely.avm_fdim_special	00000000 .text.unlikely.avm_fdim_special
-00000000 g     F .text.fdimf	0000005a fdimf
+00000000 g     F .text.fdimf	00000060 fdimf
 00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.fdimf:
@@ -16,22 +16,26 @@ Disassembly of section .text.fdimf:
  b1                    push16	r1
  b0                    push16	r0
  f2 63                 mov32	q0, q3
- 09                    mov	r6, r5
  f0 06 80 7f           ldi16	r2, 0x7f80
- f9 c8                 and	r6, r2
- f5 2a                 cmp	r6, r2
- d1 04                 brne8	0x4 <L0>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	fdimf
-		R_AVM_FAR24	.text.fdimf+0x47
-<L0>:
  f1 29                 mov	r6, r1
  f9 c8                 and	r6, r2
  f5 2a                 cmp	r6, r2
- d1 04                 brne8	0x4 <L1>
+ f8 06                 cset.eq	r6
+ 0d                    mov	r7, r5
+ f9 e8                 and	r7, r2
+ f5 2e                 cmp	r7, r2
+ d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fdimf
-		R_AVM_FAR24	.text.fdimf+0x47
+		R_AVM_FAR24	.text.fdimf+0x4d
+<L0>:
+ c3 01                 ldi8	r7, 0x1
+ 8b                    and	r6, r7
+ f4 a6                 tst8	r6
+ d0 04                 breq8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	fdimf
+		R_AVM_FAR24	.text.fdimf+0x4d
 <L1>:
  f2 6a                 mov32	q3, q0
  ff 14                 fcmp
@@ -39,18 +43,17 @@ Disassembly of section .text.fdimf:
  d9 04                 brsge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fdimf
-		R_AVM_FAR24	.text.fdimf+0x41
+		R_AVM_FAR24	.text.fdimf+0x47
 <L2>:
  f2 6a                 mov32	q3, q0
  ff 01                 fsub
- 09                    mov	r6, r5
- c7 ff 7f              ldi16	r7, 0x7fff
- 8e                    and	r7, r6
- f5 2e                 cmp	r7, r2
+ c6 ff 7f              ldi16	r6, 0x7fff
+ 89                    and	r6, r5
+ f5 2a                 cmp	r6, r2
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fdimf
-		R_AVM_FAR24	.text.fdimf+0x50
+		R_AVM_FAR24	.text.fdimf+0x56
 <L3>:
  b8                    pop16	r0
  b9                    pop16	r1

@@ -1,4 +1,4 @@
-; Shared helpers for FCMP and FCLASS tests.
+; Shared helpers for FCMP tests.
 ;
 ; Output line:
 ;   <EQ NE ULT UGE SLT SGE>=<r0>...<r7>
@@ -108,18 +108,6 @@ fpcx_print_exact_state:
 .Lfpcx_fcmp_end_\@:
     .if (.Lfpcx_fcmp_end_\@ - .Lfpcx_fcmp_begin_\@) != 2
         .error "FCMP must occupy exactly two bytes"
-    .endif
-    call fpcx_print_exact_state
-.endm
-
-.macro fpcx_fclass_case rd, qs, cc_lhs, cc_rhs, v0, v1, v2, v3, v4, v5, v6, v7
-    fpcx_set_cc \cc_lhs, \cc_rhs
-    fpcx_load_regs \v0, \v1, \v2, \v3, \v4, \v5, \v6, \v7
-.Lfpcx_fclass_begin_\@:
-    fclass
-.Lfpcx_fclass_end_\@:
-    .if (.Lfpcx_fclass_end_\@ - .Lfpcx_fclass_begin_\@) != 2
-        .error "FCLASS must occupy exactly two bytes"
     .endif
     call fpcx_print_exact_state
 .endm

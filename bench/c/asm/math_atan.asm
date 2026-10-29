@@ -208,7 +208,7 @@ Disassembly of section .text:
  f2 69                 mov32	q2, q1
  f2 6b                 mov32	q3, q1
  ff 02                 fmul
- ff 16 04 16 15 05 be 3e 59 4c 3e 46 aa aa be 00 00 80 3f      fpoly	4, -0.129963249, 0.199559182, -0.333330333, 1.0
+ ff 15 04 16 15 05 be 3e 59 4c 3e 46 aa aa be 00 00 80 3f      fpoly	4, -0.129963249, 0.199559182, -0.333330333, 1.0
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
@@ -225,7 +225,7 @@ Disassembly of section .text:
  f2 68                 mov32	q2, q0
  f2 6a                 mov32	q3, q0
  ff 02                 fmul
- ff 16 04 16 15 05 be 3e 59 4c 3e 46 aa aa be 00 00 80 3f      fpoly	4, -0.129963249, 0.199559182, -0.333330333, 1.0
+ ff 15 04 16 15 05 be 3e 59 4c 3e 46 aa aa be 00 00 80 3f      fpoly	4, -0.129963249, 0.199559182, -0.333330333, 1.0
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
@@ -239,7 +239,7 @@ Disassembly of section .text:
  c7 20 bf              ldi16	r7, 0xbf20
  f2 69                 mov32	q2, q1
  ff 00                 fadd
- ff 16 05 a1 71 d1 3d c3 37 9c 3c ed 79 a5 be fd 17 38 3f 5e 00 0f 3f  fpoly	5, 0.102267511, 0.019069558, -0.323195845, 0.719116032, 0.558599353
+ ff 15 05 a1 71 d1 3d c3 37 9c 3c ed 79 a5 be fd 17 38 3f 5e 00 0f 3f  fpoly	5, 0.102267511, 0.019069558, -0.323195845, 0.719116032, 0.558599353
  e0 89 00              jmp16	137 <L7>
 <L3>:
  c5 3f 3f              ldi16	r5, 0x3f3f
@@ -249,28 +249,28 @@ Disassembly of section .text:
  c7 20 bf              ldi16	r7, 0xbf20
  f2 69                 mov32	q2, q1
  ff 00                 fadd
- ff 16 05 a1 71 d1 3d c3 37 9c 3c ed 79 a5 be fd 17 38 3f 5e 00 0f 3f  fpoly	5, 0.102267511, 0.019069558, -0.323195845, 0.719116032, 0.558599353
+ ff 15 05 a1 71 d1 3d c3 37 9c 3c ed 79 a5 be fd 17 38 3f 5e 00 0f 3f  fpoly	5, 0.102267511, 0.019069558, -0.323195845, 0.719116032, 0.558599353
  d4 6b                 jmp8	0x6b <L8>
 <L4>:
  aa                    xor	r6, r6
  c7 c0 be              ldi16	r7, 0xbec0
  f2 69                 mov32	q2, q1
  ff 00                 fadd
- ff 16 05 29 9e 3f 3e ad d1 05 be 09 8f 93 be 92 70 60 3f c7 b0 b7 3e  fpoly	5, 0.187126771, -0.130682662, -0.288200647, 0.876717686, 0.358770579
+ ff 15 05 29 9e 3f 3e ad d1 05 be 09 8f 93 be 92 70 60 3f c7 b0 b7 3e  fpoly	5, 0.187126771, -0.130682662, -0.288200647, 0.876717686, 0.358770579
  d4 40                 jmp8	0x40 <L7>
 <L5>:
  aa                    xor	r6, r6
  c7 c0 be              ldi16	r7, 0xbec0
  f2 69                 mov32	q2, q1
  ff 00                 fadd
- ff 16 05 29 9e 3f 3e ad d1 05 be 09 8f 93 be 92 70 60 3f c7 b0 b7 3e  fpoly	5, 0.187126771, -0.130682662, -0.288200647, 0.876717686, 0.358770579
+ ff 15 05 29 9e 3f 3e ad d1 05 be 09 8f 93 be 92 70 60 3f c7 b0 b7 3e  fpoly	5, 0.187126771, -0.130682662, -0.288200647, 0.876717686, 0.358770579
  d4 29                 jmp8	0x29 <L8>
 <L6>:
  aa                    xor	r6, r6
  c7 60 bf              ldi16	r7, 0xbf60
  f2 69                 mov32	q2, q1
  ff 00                 fadd
- ff 16 05 d6 da b4 3c 79 68 9e 3d 96 b6 8f be 42 fe 10 3f 3f 05 38 3f  fpoly	5, 0.0220770054, 0.0773477033, -0.280689895, 0.566379666, 0.718830049
+ ff 15 05 d6 da b4 3c 79 68 9e 3d 96 b6 8f be 42 fe 10 3f 3f 05 38 3f  fpoly	5, 0.0220770054, 0.0773477033, -0.280689895, 0.566379666, 0.718830049
 <L7>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
@@ -297,5 +297,5 @@ Disassembly of section .text:
  c7 60 bf              ldi16	r7, 0xbf60
  f2 69                 mov32	q2, q1
  ff 00                 fadd
- ff 16 05 d6 da b4 3c 79 68 9e 3d 96 b6 8f be 42 fe 10 3f 3f 05 38 3f  fpoly	5, 0.0220770054, 0.0773477033, -0.280689895, 0.566379666, 0.718830049
+ ff 15 05 d6 da b4 3c 79 68 9e 3d 96 b6 8f be 42 fe 10 3f 3f 05 38 3f  fpoly	5, 0.0220770054, 0.0773477033, -0.280689895, 0.566379666, 0.718830049
  d4 cb                 jmp8	-0x35 <L8>

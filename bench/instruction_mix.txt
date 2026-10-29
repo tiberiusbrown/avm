@@ -1,8 +1,8 @@
 AVM instruction mix profiling report
 Optimization: O2; benchmarks: 25; AVM ABI v2
-Interpreter HEX SHA256 b96f1bb1e3cc58d79c10e87e22dbeb9e011e02304a9cce1d81a8cddf7bd374c7
+Interpreter HEX SHA256 7942009aeabd8e144f3297fdcf7108b1df8530c8790625d62724e40c6bb7c214
 Baseline image SHA256 4f228282d46777b27e2234c620bb12519453743e9ef947c90e8be999d7dd1ea1
-Compiler executable SHA256 1d951baebd1283228c6adcb45a5643bc998b8635d1518c70b89980335d5c9f90
+Compiler executable SHA256 1369eb9ec70d003736c6b2e93f1626fb32ecbd06b0fc82d21f8e7b2864a73cfa
 Metric: elapsed emulated AVR cycles between consecutive AVM primary-dispatch
 boundaries, including dispatch and operand-dependent work. Interrupts suppressed.
 Setup and both DEBUG_BREAK markers excluded; no estimated/rescaled costs.
@@ -20,161 +20,161 @@ Rounded percentages may differ from 100% by the last printed decimal.
 
 Instruction families (descending balanced cycle share)
 Family                          Balanced %   Pooled %    Total cycles    Executions   Cycles/op
-LOAD                                15.810     15.669         5548194         95653      58.003
-MOV                                 14.592     11.108         3933118        123884      31.748
-BRANCH                              12.616     17.849         6320247         71636      88.227
-ADD                                  7.788      8.376         2965792        103531      28.646
-CMP                                  6.738      9.532         3375312         83072      40.631
-FPOLY                                6.560      0.792          280536           192    1461.125
-STORE                                5.247      6.096         2158497         48670      44.350
-SYS                                  3.689      6.868         2431817          3168     767.619
-CALL/RET                             3.673      2.525          894176          7136     125.305
-SHIFT                                2.677      4.655         1648256         30060      54.832
-AND                                  2.410      1.737          614924         16124      38.137
-FADD                                 2.186      0.849          300648          1812     165.921
-SUB                                  2.149      3.563         1261460         33550      37.599
-XOR                                  2.085      2.095          741792         33216      22.332
-STACK                                2.037      0.810          286848         10896      26.326
-FMUL                                 1.939      0.411          145486           780     186.521
-SELECT                               1.451      1.683          595833         15587      38.226
-FCONVERT                             1.243      0.486          172242          1501     114.751
-EXTEND                               1.221      2.283          808537         21797      37.094
-FCMP                                 1.057      0.404          142892          1856      76.989
-MUL                                  0.591      1.236          437696         11296      38.748
-FDIV                                 0.571      0.381          135055           256     527.559
-FSUB                                 0.546      0.062           21956           120     182.967
+LOAD                                15.765     15.670         5544546         95557      58.023
+MOV                                 14.779     11.116         3933366        123884      31.750
+BRANCH                              12.677     17.862         6320247         71636      88.227
+ADD                                  7.907      8.389         2968544        103659      28.638
+FPOLY                                6.651      0.793          280536           192    1461.125
+CMP                                  6.593      9.520         3368496         83040      40.565
+STORE                                5.230      6.097         2157205         48636      44.354
+CALL/RET                             3.692      2.527          894176          7136     125.305
+SYS                                  3.689      6.873         2431817          3168     767.619
+SHIFT                                2.728      4.662         1649472         30092      54.814
+SUB                                  2.213      3.571         1263588         33606      37.600
+FADD                                 2.196      0.850          300648          1812     165.921
+AND                                  2.138      1.709          604588         15996      37.796
+XOR                                  2.104      2.096          741686         33142      22.379
+STACK                                2.021      0.807          285664         10832      26.372
+FMUL                                 1.945      0.411          145486           780     186.521
+SELECT                               1.512      1.687          596953         15619      38.220
+FCONVERT                             1.255      0.487          172242          1501     114.751
+EXTEND                               1.221      2.285          808537         21797      37.094
+FCMP                                 0.830      0.381          134800          1760      76.591
+MUL                                  0.591      1.237          437696         11296      38.748
+FDIV                                 0.571      0.382          135055           256     527.559
+OR                                   0.565      0.461          163252          6241      26.158
+FSUB                                 0.557      0.062           21956           120     182.967
 FSQRT                                0.393      0.044           15744            32     492.000
-OR                                   0.369      0.444          157172          6081      25.846
-FCLASS                               0.189      0.018            6360            64      99.375
-FABS                                 0.092      0.010            3456            96      36.000
+FABS                                 0.094      0.010            3456            96      36.000
 DIV                                  0.082      0.013            4512            32     141.000
-TOTAL: balanced 100.000%; pooled 100.000%; 35408558 cycles; 722098 executions; 49.036 cycles/op
+TOTAL: balanced 100.000%; pooled 100.000%; 35384268 cycles; 721918 executions; 49.014 cycles/op
 
 Instruction encodings (descending balanced cycle share)
 Encoding                      Family       Bytes  Balanced %   Pooled %    Total cycles    Executions   Cycles/op
-BRNE8                         BRANCH           2       6.656      8.693         3078175         26824     114.755
-FPOLY/FF                      FPOLY          var       6.560      0.792          280536           192    1461.125
-LDI16                         MOV              3       4.437      2.154          762840         14670      52.000
-LDSP16_COMPACT/F4             LOAD             2       3.046      3.847         1362338         35851      38.000
-SYS.draw_overwrite            SYS              2       3.014      6.669         2361545          2528     934.155
-STSP16_COMPACT/F4             STORE            2       2.644      3.287         1163978         30631      38.000
-LDP32/F0                      LOAD             3       2.618      0.272           96480           288     335.000
-MOV32.general/F2              MOV              2       2.403      0.775          274588          7226      38.000
-MOV16.general/F1              MOV              2       2.313      2.013          712842         19266      37.000
-FADD/FF                       FADD             2       2.186      0.849          300648          1812     165.921
-ADD16.upper                   ADD              1       2.042      2.433          861628         50684      17.000
-AND16.general/F9              AND              2       1.996      1.444          511224         10024      51.000
-FMUL/FF                       FMUL             2       1.939      0.411          145486           780     186.521
-LDI8                          MOV              2       1.847      2.621          928165         26519      35.000
-LDM8U/F0                      LOAD             4       1.822      0.416          147456          2048      72.000
-CMP32/F0                      CMP              3       1.816      1.574          557428          6716      83.000
-MOV16.upper                   MOV              1       1.773      2.346          830790         48870      17.000
-ADD16.general/F2              ADD              2       1.710      2.103          744800         19600      38.000
-RET                           CALL/RET         1       1.689      1.149          406752          3568     114.000
-LDSP16/F0                     LOAD             3       1.538      1.928          682816         10669      64.000
-TST16/F6                      CMP              2       1.439      2.012          712296         18264      39.000
-ADD32/F7                      ADD              2       1.409      1.165          412680         10860      38.000
-BREQ8                         BRANCH           2       1.407      3.633         1286363         24728      52.021
-DEC16/F4                      SUB              2       1.401      2.961         1048344         27588      38.000
-COLDLDI16/F0                  MOV              4       1.376      0.393          139018          1958      71.000
-CALL8                         CALL/RET         2       1.308      0.497          176064          1344     131.000
-CMPIS8                        CMP              2       1.245      2.247          795760         22736      35.000
-XOR16.upper                   XOR              1       1.240      1.359          481032         28296      17.000
-FCMP/FF                       FCMP             2       1.057      0.404          142892          1856      76.989
-LD32/F0                       LOAD             3       1.054      0.637          225664          2752      82.000
-STSP16/F0                     STORE            3       1.032      1.350          478016          7469      64.000
-LDP8U/F0                      LOAD             3       0.990      1.648          583680          2048     285.000
-LSR16I/FA                     SHIFT            2       0.952      2.063          730540         12500      58.443
+BRNE8                         BRANCH           2       6.665      8.699         3078175         26824     114.755
+FPOLY/FF                      FPOLY          var       6.651      0.793          280536           192    1461.125
+LDI16                         MOV              3       4.566      2.162          764920         14710      52.000
+SYS.draw_overwrite            SYS              2       3.014      6.674         2361545          2528     934.155
+LDSP16_COMPACT/F4             LOAD             2       2.950      3.840         1358690         35755      38.000
+LDP32/F0                      LOAD             3       2.669      0.273           96480           288     335.000
+STSP16_COMPACT/F4             STORE            2       2.615      3.286         1162686         30597      38.000
+MOV16.general/F1              MOV              2       2.555      2.032          719058         19434      37.000
+FADD/FF                       FADD             2       2.196      0.850          300648          1812     165.921
+MOV32.general/F2              MOV              2       2.133      0.749          264860          6970      38.000
+ADD16.upper                   ADD              1       2.107      2.440          863260         50780      17.000
+FMUL/FF                       FMUL             2       1.945      0.411          145486           780     186.521
+LDI8                          MOV              2       1.862      2.623          928165         26519      35.000
+LDM8U/F0                      LOAD             4       1.822      0.417          147456          2048      72.000
+MOV16.upper                   MOV              1       1.793      2.349          831334         48902      17.000
+ADD16.general/F2              ADD              2       1.713      2.105          744800         19600      38.000
+RET                           CALL/RET         1       1.697      1.150          406752          3568     114.000
+CMP32/F0                      CMP              3       1.673      1.558          551452          6644      83.000
+AND16.general/F9              AND              2       1.667      1.410          498984          9784      51.000
+LDSP16/F0                     LOAD             3       1.538      1.930          682816         10669      64.000
+ADD32/F7                      ADD              2       1.417      1.166          412680         10860      38.000
+COLDLDI16/F0                  MOV              4       1.417      0.396          140154          1974      71.000
+BREQ8                         BRANCH           2       1.411      3.635         1286363         24728      52.021
+DEC16/F4                      SUB              2       1.401      2.963         1048344         27588      38.000
+TST16/F6                      CMP              2       1.375      2.006          709800         18200      39.000
+CALL8                         CALL/RET         2       1.317      0.498          176064          1344     131.000
+XOR16.upper                   XOR              1       1.205      1.354          479230         28190      17.000
+CMPIS8                        CMP              2       1.189      2.243          793520         22672      35.000
+LD32/F0                       LOAD             3       1.054      0.638          225664          2752      82.000
+STSP16/F0                     STORE            3       1.032      1.351          478016          7469      64.000
+LDP8U/F0                      LOAD             3       0.990      1.650          583680          2048     285.000
+LSR16I/FA                     SHIFT            2       0.959      2.065          730540         12500      58.443
+ADDI16.s8.upper               ADD              2       0.951      0.905          320390          9154      35.000
 LDP24/F0                      LOAD             3       0.941      0.464          164352           512     321.000
-BRULT8                        BRANCH           2       0.928      0.107           37926           424      89.448
-ADDI16.s8.upper               ADD              2       0.915      0.902          319270          9122      35.000
-INC16/F4                      ADD              2       0.911      0.632          223782          5889      38.000
-ZEXT8/F1                      EXTEND           2       0.872      2.064          730713         19749      37.000
-BRUGE8                        BRANCH           2       0.871      1.449          513022          4276     119.977
-XOR16.general/F9              XOR              2       0.844      0.736          260760          4920      53.000
-COLDCMPIS8/F0                 CMP              3       0.808      0.365          129360          2352      55.000
-ASR16I/FA                     SHIFT            2       0.804      1.281          453568          8204      55.286
+BRULT8                        BRANCH           2       0.930      0.107           37926           424      89.448
+INC16/F4                      ADD              2       0.917      0.632          223782          5889      38.000
+BRUGE8                        BRANCH           2       0.902      1.453          514142          4308     119.346
+XOR16.general/F9              XOR              2       0.899      0.742          262456          4952      53.000
+ZEXT8/F1                      EXTEND           2       0.872      2.065          730713         19749      37.000
+FCMP/FF                       FCMP             2       0.830      0.381          134800          1760      76.591
+COLDCMPIS8/F0                 CMP              3       0.812      0.366          129360          2352      55.000
+ASR16I/FA                     SHIFT            2       0.804      1.282          453568          8204      55.286
 F7LD8U_POST/F7                LOAD             2       0.776      0.966          341952          8768      39.000
-JMP8                          BRANCH           2       0.734      0.535          189504          1504     126.000
+SUB16.general/F2              SUB              2       0.742      0.521          184262          4849      38.000
+JMP8                          BRANCH           2       0.741      0.536          189504          1504     126.000
 DPLD8U                        LOAD             3       0.712      0.698          247104          4576      54.000
-PUSH16                        STACK            1       0.703      0.154           54416          2864      19.000
-TST8/F4                       CMP              2       0.700      1.849          654664         17228      38.000
-SUB16.general/F2              SUB              2       0.678      0.514          182134          4793      38.000
-CALL16                        CALL/RET         3       0.677      0.879          311360          2224     140.000
-ADJSP                         STACK            2       0.668      0.511          180880          5168      35.000
-POP16                         STACK            1       0.666      0.146           51552          2864      18.000
-CMP16.general/F5              CMP              2       0.610      1.268          449124         11516      39.000
-BRSGE8                        BRANCH           2       0.578      2.598          920061         10288      89.431
-FDIV/FF                       FDIV             2       0.571      0.381          135055           256     527.559
-ST32/F0                       STORE            3       0.562      0.064           22599           279      81.000
-FSUB/FF                       FSUB             2       0.546      0.062           21956           120     182.967
-DPLD16                        LOAD             3       0.533      1.432          506880          9216      55.000
-CMOV_EQ/FB                    SELECT           2       0.533      0.492          174330          4808      36.258
-ADDI16.s8.lower/F0            ADD              3       0.514      0.989          350352          6488      54.000
-COLDLDI8/F0                   MOV              3       0.444      0.805          284875          5375      53.000
-AND16.upper                   AND              1       0.414      0.293          103700          6100      17.000
-SHL16V/FA                     SHIFT            2       0.403      0.411          145636          2516      57.884
-LSL16I/FA                     SHIFT            2       0.396      0.882          312216          6736      46.350
+PUSH16                        STACK            1       0.692      0.152           53808          2832      19.000
+CMP16.general/F5              CMP              2       0.683      1.277          451932         11588      39.000
+CALL16                        CALL/RET         3       0.677      0.880          311360          2224     140.000
+ADJSP                         STACK            2       0.673      0.511          180880          5168      35.000
+TST8/F4                       CMP              2       0.664      1.847          653448         17196      38.000
+POP16                         STACK            1       0.656      0.144           50976          2832      18.000
+FDIV/FF                       FDIV             2       0.571      0.382          135055           256     527.559
+ST32/F0                       STORE            3       0.568      0.064           22599           279      81.000
+FSUB/FF                       FSUB             2       0.557      0.062           21956           120     182.967
+BRSGE8                        BRANCH           2       0.552      2.597          918941         10256      89.600
+DPLD16                        LOAD             3       0.533      1.433          506880          9216      55.000
+ADDI16.s8.lower/F0            ADD              3       0.514      0.990          350352          6488      54.000
+CMOV_EQ/FB                    SELECT           2       0.499      0.489          173178          4776      36.260
+AND16.upper                   AND              1       0.471      0.298          105604          6212      17.000
+COLDLDI8/F0                   MOV              3       0.453      0.805          284875          5375      53.000
+SHL16V/FA                     SHIFT            2       0.403      0.412          145636          2516      57.884
+LSL16I/FA                     SHIFT            2       0.401      0.882          312216          6736      46.350
 FSQRT/FF                      FSQRT            2       0.393      0.044           15744            32     492.000
+OR16.general/F9               OR               2       0.386      0.240           84916          1633      52.000
 GPLD16_POST/F0                LOAD             3       0.354      0.223           78848          1024      77.000
 SEXT8/F6                      EXTEND           2       0.350      0.220           77824          2048      38.000
-GPLD8U_POST/F0                LOAD             3       0.349      1.758          622592          8192      76.000
+GPLD8U_POST/F0                LOAD             3       0.349      1.760          622592          8192      76.000
 F5LD8U/F5                     LOAD             2       0.341      0.608          215232          5664      38.000
 F6ST8_POST/F6                 STORE            2       0.335      0.220           77824          2048      38.000
 JMPP                          BRANCH           1       0.334      0.165           58368           512     114.000
-JMP16                         BRANCH           3       0.308      0.163           57824           416     139.000
+JMP16                         BRANCH           3       0.319      0.163           57824           416     139.000
 LDP32_POST/F0                 LOAD             3       0.306      0.509          180224           512     352.000
 FTOU32/FF                     FCONVERT         2       0.306      0.133           47088           384     122.625
-LEASP/F0                      ADD              3       0.287      0.150           53280           888      60.000
-FTOS16/FF                     FCONVERT         2       0.280      0.083           29532           233     126.747
+LEASP/F0                      ADD              3       0.287      0.151           53280           888      60.000
+FTOS16/FF                     FCONVERT         2       0.287      0.083           29532           233     126.747
+CSET_EQ/F8                    SELECT           2       0.277      0.100           35424           864      41.000
 MUL16/FE                      MUL              2       0.273      0.137           48576          1056      46.000
 SYS.memcpy                    SYS              2       0.259      0.059           20992           320      65.600
-BRNE16                        BRANCH           3       0.245      0.102           36252           540      67.133
-BRUGE16                       BRANCH           3       0.233      0.116           41004           540      75.933
-CSET_NE/F8                    SELECT           2       0.232      0.059           20992           512      41.000
-CSET_EQ/F8                    SELECT           2       0.231      0.096           34112           832      41.000
-OR16.general/F9               OR               2       0.225      0.226           79924          1537      52.000
+CSET_ULT/F8                   SELECT           2       0.241      0.543          192249          4689      41.000
 U16TOF/FF                     FCONVERT         2       0.224      0.125           44144           448      98.536
-STM16/F0                      STORE            4       0.207      0.045           15768           219      72.000
+STM16/F0                      STORE            4       0.214      0.045           15768           219      72.000
 SYS.memset                    SYS              2       0.204      0.047           16512           128     129.000
-CSET_ULT/F8                   SELECT           2       0.198      0.539          190937          4657      41.000
+CMP16.upper                   CMP              1       0.198      0.223           78984          4388      18.000
+BRNE16                        BRANCH           3       0.196      0.098           34620           508      68.150
+BRUGE16                       BRANCH           3       0.196      0.111           39372           508      77.504
 SYS.memmove                   SYS              2       0.189      0.043           15296           128     119.500
-FCLASS/FF                     FCLASS           2       0.189      0.018            6360            64      99.375
 MULU8W/F3                     MUL              2       0.180      0.440          155648          4096      38.000
+OR16.upper                    OR               1       0.179      0.221           78336          4608      17.000
 FTOS32/FF                     FCONVERT         2       0.163      0.071           25128           192     130.875
-STSP8_COMPACT/F1              STORE            2       0.154      0.263           93240          2520      37.000
-OR16.upper                    OR               1       0.144      0.218           77248          4544      17.000
+STSP8_COMPACT/F1              STORE            2       0.154      0.264           93240          2520      37.000
+BREQ16                        BRANCH           3       0.152      0.094           33432           640      52.237
 LD8U                          LOAD             1       0.143      0.095           33624          1868      18.000
-BREQ16                        BRANCH           3       0.143      0.094           33432           640      52.237
+S16TOF/FF                     FCONVERT         2       0.139      0.015            5386            52     103.577
 S32TOF/FF                     FCONVERT         2       0.136      0.059           20964           192     109.188
-S16TOF/FF                     FCONVERT         2       0.134      0.015            5386            52     103.577
-DPST16                        STORE            3       0.133      0.636          225280          4096      55.000
+DPST16                        STORE            3       0.133      0.637          225280          4096      55.000
 STSP8/F0                      STORE            3       0.133      0.228           80640          1344      60.000
-BRSLT8                        BRANCH           2       0.126      0.109           38736           364     106.418
-CMP16.upper                   CMP              1       0.122      0.217           76680          4260      18.000
+BRSLT8                        BRANCH           2       0.130      0.109           38736           364     106.418
+CSET_NE/F8                    SELECT           2       0.118      0.048           17056           416      41.000
 F7LD16_POST/F7                LOAD             2       0.117      0.058           20480           512      40.000
+CMOV_ULT/FC                   SELECT           2       0.107      0.268           94908          2604      36.447
 F5LD16/F5                     LOAD             2       0.104      0.056           19968           512      39.000
 LSR16V/FA                     SHIFT            2       0.095      0.015            5188            84      61.762
+FABS/FF                       FABS             2       0.094      0.010            3456            96      36.000
 MULSU8W/F3                    MUL              2       0.092      0.440          155648          4096      38.000
-FABS/FF                       FABS             2       0.092      0.010            3456            96      36.000
 SDIV16                        DIV              2       0.082      0.013            4512            32     141.000
+BOOL/F7                       SELECT           2       0.078      0.007            2432            64      38.000
+CMOV_NE/FB                    SELECT           2       0.078      0.010            3450            94      36.702
 CMOV_SLT/FD                   SELECT           2       0.074      0.217           76944          2080      36.992
-CMOV_NE/FB                    SELECT           2       0.072      0.010            3450            94      36.702
-CMOV_ULT/FC                   SELECT           2       0.070      0.265           93756          2572      36.453
+BRULT16                       BRANCH           3       0.058      0.005            1836            36      51.000
 LD16                          LOAD             1       0.053      0.026            9216           512      18.000
+LSL16_1/F4                    SHIFT            2       0.051      0.004            1520            40      38.000
 BRSLT16                       BRANCH           3       0.048      0.083           29376           576      51.000
 ST16                          STORE            1       0.046      0.003            1152            64      18.000
 MULS8W/F3                     MUL              2       0.046      0.220           77824          2048      38.000
+BRSGE16                       BRANCH           3       0.043      0.005            1632            32      51.000
 CSET_SLT/F8                   SELECT           2       0.040      0.004            1312            32      41.000
 NEG16/F6                      SUB              2       0.033      0.005            1824            48      38.000
 SUB32/F7                      SUB              2       0.030      0.052           18278           481      38.000
 SYS.set_sprite                SYS              2       0.022      0.049           17472            64     273.000
 ASR16V/FA                     SHIFT            2       0.015      0.002             804            12      67.000
-LSL16_1/F4                    SHIFT            2       0.012      0.001             304             8      38.000
 LDM16/F0                      LOAD             4       0.012      0.026            9288           129      72.000
 SUB16.upper                   SUB              1       0.006      0.031           10880           640      17.000
-BRULT16                       BRANCH           3       0.005      0.001             204             4      51.000
-TOTAL: balanced 100.000%; pooled 100.000%; 35408558 cycles; 722098 executions; 49.036 cycles/op
+TOTAL: balanced 100.000%; pooled 100.000%; 35384268 cycles; 721918 executions; 49.014 cycles/op
 
 Per-benchmark breakdown
 loop_shapes.c: 3412152 cycles; 77603 executions; 43.969 cycles/op
@@ -233,42 +233,42 @@ float_comparisons.c: 827553 cycles; 19851 executions; 41.688 cycles/op
   raw 827588 - baseline 35 = 827553; leading 15; trailing 20; normal delta 0
   image SHA256 37bc167de57c6e2717a0f2d8949ad039cd21ed797419665a6b8a952fae6e86a9
   Families: LOAD 20.063% SELECT 14.379% MOV 11.494% FCMP 10.899% STORE 10.809% CMP 10.032%
-math_exp2.c: 164404 cycles; 2333 executions; 70.469 cycles/op
-  raw 164439 - baseline 35 = 164404; leading 15; trailing 20; normal delta 0
-  image SHA256 1d91a1aaec3b2c6a79c894e57fe3ab57f381efe36067bd9d6aef52a81aed0302
-  Families: FPOLY 25.109% MOV 17.218% BRANCH 9.154% LOAD 7.260% CMP 5.771% CALL/RET 4.769%
-math_expm1.c: 153102 cycles; 1787 executions; 85.675 cycles/op
-  raw 153137 - baseline 35 = 153102; leading 15; trailing 20; normal delta 0
-  image SHA256 4bae9b71b805ac29205a250cb8d858cf3ff28baf31fb4a5f8690e5ee243c59dd
-  Families: FPOLY 33.990% MOV 15.726% BRANCH 8.835% LOAD 7.200% CALL/RET 6.424% CMP 6.252%
+math_exp2.c: 153540 cycles; 2133 executions; 71.983 cycles/op
+  raw 153575 - baseline 35 = 153540; leading 15; trailing 20; normal delta 0
+  image SHA256 c93f0047bb51911bce50f2c6cf309fd04138bdc9c39bfdffbde0da78b4cd5868
+  Families: FPOLY 26.886% MOV 16.185% BRANCH 9.801% LOAD 7.774% CALL/RET 5.106% FCONVERT 4.567%
+math_expm1.c: 150910 cycles; 1747 executions; 86.382 cycles/op
+  raw 150945 - baseline 35 = 150910; leading 15; trailing 20; normal delta 0
+  image SHA256 e254ee2aa3bdd5dd0bfeeaeacb5b300c2b3ab948ac547cb166bf6af1c252d60d
+  Families: FPOLY 34.484% MOV 15.568% BRANCH 8.964% LOAD 7.305% CALL/RET 6.518% CMP 6.110%
 math_log1p.c: 159294 cycles; 1943 executions; 81.984 cycles/op
   raw 159329 - baseline 35 = 159294; leading 15; trailing 20; normal delta 0
-  image SHA256 19bdf8fea19fcbaf2f3495f0b9451abc336ebba55465381f1bb1185c2c229b35
+  image SHA256 55a64118b810af3efe0c48573b926dee4deb3d61fa79d59e8a2bf0358acca6e7
   Families: FPOLY 33.321% MOV 15.584% LOAD 7.302% BRANCH 7.148% FMUL 4.942% CALL/RET 4.922%
 math_cbrt.c: 220280 cycles; 2915 executions; 75.568 cycles/op
   raw 220315 - baseline 35 = 220280; leading 15; trailing 20; normal delta 0
-  image SHA256 5742f7006cf5ba29139b8b321c66232f6c8d8bb46fbcfb95ce5ba242e517b97b
+  image SHA256 c2149a46b45e392544ba0d7c6d746b953a56c23a96a9f86d32377615eb513497
   Families: FPOLY 32.429% MOV 17.426% LOAD 7.420% BRANCH 6.798% STORE 4.489% ADD 4.180%
 math_asin.c: 158536 cycles; 2131 executions; 74.395 cycles/op
   raw 158571 - baseline 35 = 158536; leading 15; trailing 20; normal delta 0
-  image SHA256 50f3d0860ef0ac414a1dd5e0def09d94385128d0d2deb9c7caf1e25b7e26e771
+  image SHA256 d2a55e0a7624b57994ba41fd3f274faf1ad921ff912563f510b2a8148e497b2c
   Families: FPOLY 19.776% MOV 16.280% FMUL 12.398% LOAD 8.054% BRANCH 6.590% FSQRT 4.965%
 math_acos.c: 161766 cycles; 2179 executions; 74.239 cycles/op
   raw 161801 - baseline 35 = 161766; leading 15; trailing 20; normal delta 0
-  image SHA256 f20c3c87f0d2f0e23f64b9ea0c1b83886896c08c4d9b47ddcc63f077502998b7
+  image SHA256 7dafe750f21d6a3a738179e623bb8d02b9f7ba9543822ddca6f42a1e058def6c
   Families: FPOLY 19.381% MOV 16.667% FMUL 12.151% LOAD 7.379% BRANCH 6.458% FSUB 5.298%
 math_frexp.c: 99204 cycles; 2079 executions; 47.717 cycles/op
   raw 99239 - baseline 35 = 99204; leading 15; trailing 20; normal delta 0
   image SHA256 61e0c4052e4c7e1bfd8cb29c501c6cfc4eabac637764348637bb11cf18d6003f
   Families: MOV 23.081% LOAD 13.717% BRANCH 10.672% ADD 8.411% CALL/RET 8.193% STORE 7.935%
-math_nextafter.c: 131261 cycles; 2457 executions; 53.423 cycles/op
-  raw 131296 - baseline 35 = 131261; leading 15; trailing 20; normal delta 0
-  image SHA256 1e185923f04e1dfbeae31ae6cc3f022b8667bba81ce1994a5ae36c7ffb9e53a9
-  Families: MOV 21.156% BRANCH 17.944% LOAD 13.725% CMP 12.116% AND 6.631% STORE 6.009%
-math_classify.c: 134711 cycles; 2984 executions; 45.144 cycles/op
-  raw 134746 - baseline 35 = 134711; leading 15; trailing 20; normal delta 0
-  image SHA256 773b77644efa8804ff6f31df2b24e7d881b95e444e151d67c8a2ff84f6fa711a
-  Families: MOV 26.670% LOAD 13.374% FCMP 9.757% CMP 9.692% BRANCH 7.933% AND 6.865%
+math_nextafter.c: 130717 cycles; 2425 executions; 53.904 cycles/op
+  raw 130752 - baseline 35 = 130717; leading 15; trailing 20; normal delta 0
+  image SHA256 57e7c8abbbd43e2fa711950a87cfd9d2070be56c03c203ce3c707d181cb0b7c9
+  Families: MOV 20.828% BRANCH 18.018% LOAD 13.782% CMP 12.167% AND 6.659% STORE 6.034%
+math_classify.c: 124021 cycles; 3076 executions; 40.319 cycles/op
+  raw 124056 - baseline 35 = 124021; leading 15; trailing 20; normal delta 0
+  image SHA256 60ffbf183e298abbe6209945b172949c1e6727ae7037aa57cf74c7609362ce9f
+  Families: MOV 32.865% LOAD 11.585% BRANCH 8.617% ADD 8.231% SELECT 8.073% CMP 7.586%
 tile_cache_render.c: 3133968 cycles; 19744 executions; 158.730 cycles/op
   raw 3134003 - baseline 35 = 3133968; leading 15; trailing 20; normal delta 0
   image SHA256 f367638df410710334acf1bd6f32a2c5c54fd86434ca97df1ccc60f38135e817
@@ -279,39 +279,41 @@ virtual_dispatch.cpp: 698467 cycles; 12291 executions; 56.828 cycles/op
   Families: LOAD 34.599% BRANCH 18.019% CALL/RET 17.959% ADD 10.922% STACK 5.424% MOV 5.222%
 
 Encoding coverage
-Defined executable forms: 226; observed: 122; never executed: 104
+Defined executable forms: 225; observed: 123; never executed: 102
 Reserved/invalid opcode slots and assembly pseudos excluded by the MC decoder.
 Observed forms / workloads exercising them:
   ADD16.general/F2                12
   ADD16.upper                     23
   ADD32/F7                        15
   ADDI16.s8.lower/F0              7
-  ADDI16.s8.upper                 10
+  ADDI16.s8.upper                 11
   ADJSP                           12
-  AND16.general/F9                14
+  AND16.general/F9                13
   AND16.upper                     12
   ASR16I/FA                       3
   ASR16V/FA                       1
+  BOOL/F7                         1
   BREQ16                          3
   BREQ8                           10
-  BRNE16                          5
+  BRNE16                          4
   BRNE8                           22
-  BRSGE8                          5
+  BRSGE16                         1
+  BRSGE8                          4
   BRSLT16                         2
   BRSLT8                          3
   BRUGE16                         5
   BRUGE8                          6
-  BRULT16                         1
+  BRULT16                         2
   BRULT8                          8
   CALL16                          6
   CALL8                           11
-  CMOV_EQ/FB                      5
+  CMOV_EQ/FB                      4
   CMOV_NE/FB                      4
   CMOV_SLT/FD                     2
-  CMOV_ULT/FC                     2
-  CMP16.general/F5                5
-  CMP16.upper                     5
-  CMP32/F0                        11
+  CMOV_ULT/FC                     3
+  CMP16.general/F5                7
+  CMP16.upper                     6
+  CMP32/F0                        10
   CMPIS8                          16
   COLDCMPIS8/F0                   16
   COLDLDI16/F0                    17
@@ -319,7 +321,7 @@ Observed forms / workloads exercising them:
   CSET_EQ/F8                      3
   CSET_NE/F8                      2
   CSET_SLT/F8                     1
-  CSET_ULT/F8                     4
+  CSET_ULT/F8                     5
   DEC16/F4                        8
   DPLD16                          3
   DPLD8U                          3
@@ -331,7 +333,6 @@ Observed forms / workloads exercising them:
   F7LD8U_POST/F7                  2
   FABS/FF                         3
   FADD/FF                         8
-  FCLASS/FF                       1
   FCMP/FF                         4
   FDIV/FF                         1
   FMUL/FF                         8
@@ -362,7 +363,7 @@ Observed forms / workloads exercising them:
   LDSP16_COMPACT/F4               21
   LEASP/F0                        4
   LSL16I/FA                       6
-  LSL16_1/F4                      1
+  LSL16_1/F4                      2
   LSR16I/FA                       10
   LSR16V/FA                       1
   MOV16.general/F1                24
@@ -373,8 +374,8 @@ Observed forms / workloads exercising them:
   MULSU8W/F3                      1
   MULU8W/F3                       3
   NEG16/F6                        1
-  OR16.general/F9                 5
-  OR16.upper                      8
+  OR16.general/F9                 6
+  OR16.upper                      9
   POP16                           13
   PUSH16                          13
   RET                             14
@@ -390,7 +391,7 @@ Observed forms / workloads exercising them:
   STSP16_COMPACT/F4               22
   STSP8/F0                        1
   STSP8_COMPACT/F1                1
-  SUB16.general/F2                15
+  SUB16.general/F2                17
   SUB16.upper                     1
   SUB32/F7                        1
   SYS.draw_overwrite              1
@@ -399,16 +400,14 @@ Observed forms / workloads exercising them:
   SYS.memset                      1
   SYS.set_sprite                  1
   TST16/F6                        10
-  TST8/F4                         8
+  TST8/F4                         7
   U16TOF/FF                       2
-  XOR16.general/F9                7
+  XOR16.general/F9                8
   XOR16.upper                     22
   ZEXT8/F1                        7
 Unobserved executable forms:
   ASR16_1/F4
   ASR32_1/F7
-  BOOL/F7
-  BRSGE16
   BSWAP16/F6
   CALLF
   CALLP
@@ -512,19 +511,19 @@ Unobserved executable forms:
 
 Quantitative summary
 Highest-cost families by balanced share:
-  LOAD: 15.810% balanced; 15.669% pooled
-  MOV: 14.592% balanced; 11.108% pooled
-  BRANCH: 12.616% balanced; 17.849% pooled
-  ADD: 7.788% balanced; 8.376% pooled
-  CMP: 6.738% balanced; 9.532% pooled
+  LOAD: 15.765% balanced; 15.670% pooled
+  MOV: 14.779% balanced; 11.116% pooled
+  BRANCH: 12.677% balanced; 17.862% pooled
+  ADD: 7.907% balanced; 8.389% pooled
+  FPOLY: 6.651% balanced; 0.793% pooled
 Top 10 encodings by balanced share (cumulative):
-  BRNE8                             6.656%  cumulative 6.656%
-  FPOLY/FF                          6.560%  cumulative 13.216%
-  LDI16                             4.437%  cumulative 17.652%
-  LDSP16_COMPACT/F4                 3.046%  cumulative 20.698%
-  SYS.draw_overwrite                3.014%  cumulative 23.712%
-  STSP16_COMPACT/F4                 2.644%  cumulative 26.356%
-  LDP32/F0                          2.618%  cumulative 28.974%
-  MOV32.general/F2                  2.403%  cumulative 31.377%
-  MOV16.general/F1                  2.313%  cumulative 33.690%
-  FADD/FF                           2.186%  cumulative 35.876%
+  BRNE8                             6.665%  cumulative 6.665%
+  FPOLY/FF                          6.651%  cumulative 13.316%
+  LDI16                             4.566%  cumulative 17.882%
+  SYS.draw_overwrite                3.014%  cumulative 20.896%
+  LDSP16_COMPACT/F4                 2.950%  cumulative 23.846%
+  LDP32/F0                          2.669%  cumulative 26.515%
+  STSP16_COMPACT/F4                 2.615%  cumulative 29.130%
+  MOV16.general/F1                  2.555%  cumulative 31.685%
+  FADD/FF                           2.196%  cumulative 33.881%
+  MOV32.general/F2                  2.133%  cumulative 36.014%

@@ -11,8 +11,7 @@
 ; printed as eight '-' characters because arithmetic NaN payload bits are not
 ; architecturally fixed. All other registers are printed exactly.
 ;
-; These helpers classify NaNs using integer bit tests rather than FCLASS, so a
-; failure in FCLASS cannot hide a failure in the arithmetic instruction.
+; These helpers classify NaNs independently using integer bit tests.
 
 .include "include/debug_output.inc"
 

@@ -83,7 +83,7 @@ float fmaxf(float x, float y);
 } // extern "C"
 #endif
 
-/* Clang lowers these builtins to the existing FCLASS/FCMP instructions.
+/* Clang lowers classification to native integer bit tests and comparisons to FCMP.
    typeof is unevaluated: promote integers while retaining wider host types,
    without doing floating arithmetic or evaluating an argument twice. */
 #if defined(__clang__) || defined(__GNUC__)

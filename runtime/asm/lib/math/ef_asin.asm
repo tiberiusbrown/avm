@@ -42,7 +42,7 @@ Disassembly of section .text.asinf:
  ff 02                 fmul
  08                    mov	r6, r4
  0d                    mov	r7, r5
- ff 16 04 60 4f 3b 3d 30 ef 2b 3d 0b e4 99 3d 5c aa 2a 3e      fpoly	4, 0.0457299948, 0.0419761539, 0.0751419887, 0.166665494
+ ff 15 04 60 4f 3b 3d 30 ef 2b 3d 0b e4 99 3d 5c aa 2a 3e      fpoly	4, 0.0457299948, 0.0419761539, 0.0751419887, 0.166665494
  f2 62                 mov32	q0, q2
  f2 69                 mov32	q2, q1
  ff 02                 fmul
@@ -62,13 +62,13 @@ Disassembly of section .text.asinf:
  aa                    xor	r6, r6
  c7 00 3f              ldi16	r7, 0x3f00
  ff 02                 fmul
- ff 17                 fsqrt
+ ff 16                 fsqrt
  f2 66                 mov32	q1, q2
  f2 6b                 mov32	q3, q1
  ff 02                 fmul
  08                    mov	r6, r4
  0d                    mov	r7, r5
- ff 16 04 60 4f 3b 3d 30 ef 2b 3d 0b e4 99 3d 5c aa 2a 3e      fpoly	4, 0.0457299948, 0.0419761539, 0.0751419887, 0.166665494
+ ff 15 04 60 4f 3b 3d 30 ef 2b 3d 0b e4 99 3d 5c aa 2a 3e      fpoly	4, 0.0457299948, 0.0419761539, 0.0751419887, 0.166665494
  f2 62                 mov32	q0, q2
  f2 69                 mov32	q2, q1
  ff 02                 fmul

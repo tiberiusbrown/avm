@@ -9,7 +9,7 @@
 ; Conditions use A=false/B=true. Register words use A-P hexadecimal nibbles.
 ; For an unspecified arithmetic NaN, the destination pair is printed as eight
 ; dashes. The helper independently checks the raw exponent/fraction pattern;
-; it does not rely on FCLASS.
+; classification uses integer bit tests.
 
 .include "include/debug_output.inc"
 

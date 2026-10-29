@@ -11,7 +11,7 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 scalbnf
 00000000 g     F .text.frexpf	0000011d frexpf
 00000000 g     F .text.modff	000000d3 modff
-00000000 g     F .text.nextafterf	000000bf nextafterf
+00000000 g     F .text.nextafterf	000000be nextafterf
 00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.ldexpf:
@@ -395,9 +395,8 @@ Disassembly of section .text.nextafterf:
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff ff              ldi16	r7, 0xffff
  f7 6b                 add32	q2, q3
- 09                    mov	r6, r5
  c7 80 7f              ldi16	r7, 0x7f80
- 8e                    and	r7, r6
+ 8d                    and	r7, r5
  c6 80 80              ldi16	r6, 0x8080
  1b                    add	r6, r7
  c7 ff 80              ldi16	r7, 0x80ff

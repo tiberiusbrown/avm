@@ -9,5 +9,5 @@ SYMBOL TABLE:
 Disassembly of section .text.ceilf:
 
 <ceilf>:
- ff 1a                 fceil
+ ff 19                 fceil
  ef                    ret

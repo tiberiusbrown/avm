@@ -88,13 +88,7 @@ static inline uint16_t avm_math_high_word(float x)
 {
     uint32_t u;
     GET_FLOAT_WORD(u, x);
-    uint16_t high = (uint16_t)(u >> 16);
-#ifdef __AVM__
-    /* Keep this integer predicate: LLVM otherwise recognizes the bit test
-       and substitutes the much slower emulated FCLASS instruction. */
-    __asm__("" : "+r"(high));
-#endif
-    return high;
+    return (uint16_t)(u >> 16);
 }
 static inline uint16_t avm_math_high(float x)
 {

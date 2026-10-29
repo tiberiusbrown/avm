@@ -27,7 +27,7 @@ Disassembly of section .text.coshf:
  02                    mov	r4, r6
  07                    mov	r5, r7
  ff 02                 fmul
- ff 16 04 68 fb ba 3a cd 9b 2a 3d 0d 00 00 3f 00 00 80 3f      fpoly	4, 0.00142655987, 0.0416524895, 0.500000775, 1.0
+ ff 15 04 68 fb ba 3a cd 9b 2a 3d 0d 00 00 3f 00 00 80 3f      fpoly	4, 0.00142655987, 0.0416524895, 0.500000775, 1.0
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
@@ -86,12 +86,13 @@ Disassembly of section .text.coshf:
  e3 00 00 00           callf	coshf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_expf_noerrno
- aa                    xor	r6, r6
- c7 80 7f              ldi16	r7, 0x7f80
- ff 14                 fcmp
+ c6 80 7f              ldi16	r6, 0x7f80
+ a9                    xor	r6, r5
+ 0c                    mov	r7, r4
+ 9e                    or	r7, r6
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 7f 7f           ldi16	r1, 0x7f7f
- f6 2e                 tst16	r6
+ f6 2f                 tst16	r7
  fb 20                 cmov.eq	r4, r0
  fb 29                 cmov.eq	r5, r1
  b8                    pop16	r0

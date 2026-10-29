@@ -194,7 +194,7 @@ Disassembly of section .text:
  f2 68                 mov32	q2, q0
  f2 6a                 mov32	q3, q0
  ff 02                 fmul
- ff 16 06 2c 50 a4 bb 7f fe a2 3c 0b f0 29 bd 6e da 98 3d c9 a8 2a be 00 00 80 3f      fpoly	6, -0.00501444004, 0.0198967438, -0.0414886884, 0.0746353716, -0.166659489, 1.0
+ ff 15 06 2c 50 a4 bb 7f fe a2 3c 0b f0 29 bd 6e da 98 3d c9 a8 2a be 00 00 80 3f      fpoly	6, -0.00501444004, 0.0198967438, -0.0414886884, 0.0746353716, -0.166659489, 1.0
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
@@ -225,7 +225,7 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
@@ -297,7 +297,7 @@ Disassembly of section .text:
  ff 00                 fadd
  08                    mov	r6, r4
  0d                    mov	r7, r5
- ff 16 07 a7 65 34 3e a3 bd 8a be 49 17 97 3e 10 e7 b7 be 96 17 f6 3e 8e ab 38 bf 46 aa b8 3f  fpoly	7, 0.176169023, -0.270978063, 0.295099527, -0.359184742, 0.480648696, -0.721367717, 1.44269633
+ ff 15 07 a7 65 34 3e a3 bd 8a be 49 17 97 3e 10 e7 b7 be 96 17 f6 3e 8e ab 38 bf 46 aa b8 3f  fpoly	7, 0.176169023, -0.270978063, 0.295099527, -0.359184742, 0.480648696, -0.721367717, 1.44269633
  ff 02                 fmul
  08                    mov	r6, r4
  0d                    mov	r7, r5

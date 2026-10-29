@@ -202,5 +202,5 @@ Disassembly of section .text:
  ef                    ret
 
 <floorf>:
- ff 19                 ffloor
+ ff 18                 ffloor
  ef                    ret

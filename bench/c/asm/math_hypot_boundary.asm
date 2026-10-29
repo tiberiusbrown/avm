@@ -11,22 +11,22 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 ef_hypot.c
-000004dc l     F .text	000002a2 avm_hypot_overflows
+000004db l     F .text	000002a2 avm_hypot_overflows
 00000000 l    df *ABS*	00000000 stdlib.c
 00000000 l    df *ABS*	00000000 avm.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 strtof.c
 00000000 l    df *ABS*	00000000 integer.c
 00000000 l    df *ABS*	00000000 wide_integer.c
-0000077e l       .init_array	00000000 .hidden __init_array_end
-0000077e l       .init_array	00000000 .hidden __init_array_start
-0000077e l       .fini_array	00000000 .hidden __fini_array_start
-0000077e l       .fini_array	00000000 .hidden __fini_array_end
+0000077d l       .init_array	00000000 .hidden __init_array_end
+0000077d l       .init_array	00000000 .hidden __init_array_start
+0000077d l       .fini_array	00000000 .hidden __fini_array_start
+0000077d l       .fini_array	00000000 .hidden __fini_array_end
 00000200 g     F .text	00000023 _start
 00000267 g     F .text	0000003e avm_test_main
 000002a7 g     F .text	00000065 __avm_terminate
 000002a5 g     F .text	00000002 avm_halt
-0000030c g     F .text	000001d0 hypotf
+0000030c g     F .text	000001cf hypotf
 00000000  w      *UND*	00000000 __avm_run_local_dtors
 000001c0 g     O .data	00000002 __avm_errno
 
@@ -57,19 +57,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 7e 07              ldi16	r4, 0x77e
+ c4 7d 07              ldi16	r4, 0x77d
  c1 00                 ldi8	r5, 0x0
- c6 7e 07              ldi16	r6, 0x77e
+ c6 7d 07              ldi16	r6, 0x77d
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 7e 07           ldi16	r0, 0x77e
+ f0 04 7d 07           ldi16	r0, 0x77d
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 7e 07           ldi16	r2, 0x77e
+ f0 06 7d 07           ldi16	r2, 0x77d
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -142,19 +142,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 44 fd              call16	-700 <__avm_run_local_dtors>
 <L0>:
- c4 7e 07              ldi16	r4, 0x77e
+ c4 7d 07              ldi16	r4, 0x77d
  c1 00                 ldi8	r5, 0x0
- c6 7e 07              ldi16	r6, 0x77e
+ c6 7d 07              ldi16	r6, 0x77d
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 7e 07           ldi16	r2, 0x77e
+ f0 06 7d 07           ldi16	r2, 0x77d
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 7e 07           ldi16	r0, 0x77e
+ f0 04 7d 07           ldi16	r0, 0x77d
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -222,7 +222,7 @@ Disassembly of section .text:
  ff 02                 fmul
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
 <L0>:
  d6 0c                 adjsp	0xc
  b8                    pop16	r0
@@ -310,7 +310,7 @@ Disassembly of section .text:
  ff 02                 fmul
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  c2 04                 ldi8	r6, 0x4
  c7 80 a2              ldi16	r7, 0xa280
  f7 6e                 add32	q3, q2
@@ -323,9 +323,9 @@ Disassembly of section .text:
  f4 29                 ldsp16	r5, [sp+0xa]
  f4 02                 ldsp16	r6, [sp+0x0]
  f4 0b                 ldsp16	r7, [sp+0x2]
- e1 a8 00              call16	avm_hypot_overflows
+ e1 a7 00              call16	avm_hypot_overflows
  f4 a4                 tst8	r4
- db 96 00              brne16	0x96 <L8>
+ db 95 00              brne16	0x95 <L8>
  c6 ff ff              ldi16	r6, 0xffff
  c7 7f 5d              ldi16	r7, 0x5d7f
  f2 68                 mov32	q2, q0
@@ -339,7 +339,7 @@ Disassembly of section .text:
  c4 ff ff              ldi16	r4, 0xffff
  c1 7f                 ldi8	r5, 0x7f
  f0 69 84              cmp32	q2, q1
- d2 49                 brult8	0x49 <L7>
+ d2 48                 brult8	0x48 <L7>
  aa                    xor	r6, r6
  c7 80 7e              ldi16	r7, 0x7e80
  f4 10                 ldsp16	r4, [sp+0x4]
@@ -357,7 +357,7 @@ Disassembly of section .text:
  ff 02                 fmul
  f2 6a                 mov32	q3, q0
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  aa                    xor	r6, r6
  c3 80                 ldi8	r7, 0x80
  ff 02                 fmul
@@ -366,17 +366,16 @@ Disassembly of section .text:
  aa                    xor	r6, r6
  c7 80 61              ldi16	r7, 0x6180
  ff 02                 fmul
- 09                    mov	r6, r5
  c7 80 7f              ldi16	r7, 0x7f80
- 8e                    and	r7, r6
+ 8d                    and	r7, r5
  c6 80 80              ldi16	r6, 0x8080
  1b                    add	r6, r7
  c7 ff 80              ldi16	r7, 0x80ff
  3e                    cmp	r7, r6
- dc c7 fe              brult16	-0x139 <L0>
+ dc c8 fe              brult16	-0x138 <L0>
  c2 22                 ldi8	r6, 0x22
  f0 5e c0 01           stm16	[0x1c0], r6
- e0 be fe              jmp16	-322 <L0>
+ e0 bf fe              jmp16	-321 <L0>
 <L7>:
  aa                    xor	r6, r6
  c7 80 61              ldi16	r7, 0x6180
@@ -395,17 +394,17 @@ Disassembly of section .text:
  ff 02                 fmul
  f2 6a                 mov32	q3, q0
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  aa                    xor	r6, r6
  c7 80 1d              ldi16	r7, 0x1d80
  ff 02                 fmul
- e0 93 fe              jmp16	-365 <L0>
+ e0 94 fe              jmp16	-364 <L0>
 <L8>:
  c0 22                 ldi8	r4, 0x22
  f0 5c c0 01           stm16	[0x1c0], r4
  a0                    xor	r4, r4
  c5 80 7f              ldi16	r5, 0x7f80
- e0 86 fe              jmp16	-378 <L0>
+ e0 87 fe              jmp16	-377 <L0>
 
 <avm_hypot_overflows>:
  b3                    push16	r3

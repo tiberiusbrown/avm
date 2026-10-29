@@ -10,7 +10,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_rem_pio2f_medium	00000000 .text.avm_rem_pio2f_medium
 00000000 l    d  .rodata.avm_reduce_windows	00000000 .rodata.avm_reduce_windows
 00000000 g     F .text.__kernel_rem_pio2f	000002ba __kernel_rem_pio2f
-00000000 g     F .text.avm_rem_pio2f_medium	00000118 avm_rem_pio2f_medium
+00000000 g     F .text.avm_rem_pio2f_medium	00000113 avm_rem_pio2f_medium
 00000000 g     O .rodata.avm_small_pio2	00001468 avm_small_pio2
 
 Disassembly of section .text.__kernel_rem_pio2f:
@@ -952,7 +952,7 @@ Disassembly of section .text.avm_rem_pio2f_medium:
  f2 62                 mov32	q0, q2
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
- ff 1e                 fma
+ ff 1d                 fma
  f0 00 03              ldi8	r0, 0x3
  f9 08                 and	r0, r2
  c6 db 0f              ldi16	r6, 0xfdb
@@ -962,7 +962,7 @@ Disassembly of section .text.avm_rem_pio2f_medium:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_rem_pio2f_medium
-		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0x7f
+		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0x8b
 <L0>:
  c6 da 0f              ldi16	r6, 0xfda
  c7 c9 bf              ldi16	r7, 0xbfc9
@@ -971,18 +971,26 @@ Disassembly of section .text.avm_rem_pio2f_medium:
  c7 a2 b3              ldi16	r7, 0xb3a2
  ff 00                 fadd
  f4 a8                 inc16	r0
+ c2 01                 ldi8	r6, 0x1
+ f9 c0                 and	r6, r0
+ f4 a6                 tst8	r6
+ d0 04                 breq8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	avm_rem_pio2f_medium
+		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xd4
+<L1>:
  e2 00 00 00           jmpf	avm_rem_pio2f_medium
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xa1
+		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xb9
  c6 db 0f              ldi16	r6, 0xfdb
  c7 49 bf              ldi16	r7, 0xbf49
  ff 14                 fcmp
  ce ff                 cmpi.s8	r6, -0x1
- d0 04                 breq8	0x4 <L1>
+ d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_rem_pio2f_medium
-		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xa1
-<L1>:
+		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xad
+<L2>:
  c6 da 0f              ldi16	r6, 0xfda
  c7 c9 3f              ldi16	r7, 0x3fc9
  ff 00                 fadd
@@ -991,23 +999,22 @@ Disassembly of section .text.avm_rem_pio2f_medium:
  ff 00                 fadd
  f4 b0                 dec16	r0
  c2 01                 ldi8	r6, 0x1
- f0 38 04              stsp16	[sp+0x4], r0
  f9 c0                 and	r6, r0
  f4 a6                 tst8	r6
- d0 04                 breq8	0x4 <L2>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	avm_rem_pio2f_medium
-		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xcc
-<L2>:
- aa                    xor	r6, r6
- af                    xor	r7, r7
- ff 14                 fcmp
- f6 2e                 tst16	r6
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_rem_pio2f_medium
-		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xed
+		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xd4
 <L3>:
+ 09                    mov	r6, r5
+ 1a                    add	r6, r6
+ 98                    or	r6, r4
+ f6 2e                 tst16	r6
+ d0 04                 breq8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	avm_rem_pio2f_medium
+		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xf5
+<L4>:
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
  f4 32                 ldsp16	r6, [sp+0xc]
@@ -1021,35 +1028,31 @@ Disassembly of section .text.avm_rem_pio2f_medium:
 		R_AVM_FAR24	__kernel_rem_pio2f
  aa                    xor	r6, r6
  c7 80 f5              ldi16	r7, 0xf580
- f0 30 00              ldsp16	r0, [sp+0x0]
- f0 31 02              ldsp16	r1, [sp+0x2]
- f7 6c                 add32	q3, q0
+ f0 32 00              ldsp16	r2, [sp+0x0]
+ f0 33 02              ldsp16	r3, [sp+0x2]
+ f7 6d                 add32	q3, q1
  f0 06 ff ff           ldi16	r2, 0xffff
  f0 07 ff 7f           ldi16	r3, 0x7fff
  f9 50                 and	r2, r4
  f9 74                 and	r3, r5
  f0 69 4c              cmp32	q1, q3
- d8 04                 bruge8	0x4 <L4>
+ d8 04                 bruge8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_rem_pio2f_medium
-		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xbc
-<L4>:
+		R_AVM_FAR24	.text.avm_rem_pio2f_medium+0xc4
+<L5>:
+ aa                    xor	r6, r6
+ f2 58                 sub	r6, r0
+ f0 33 0a              ldsp16	r3, [sp+0xa]
+ f6 2b                 tst16	r3
+ fd 70                 cmov.sge	r6, r0
+ f4 33                 ldsp16	r7, [sp+0xc]
+ 7e                    st16	[r7], r6
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 07                 fneg	q3
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 07 ff ff           ldi16	r3, 0xffff
- f0 30 08              ldsp16	r0, [sp+0x8]
- f0 31 0a              ldsp16	r1, [sp+0xa]
- f0 69 40              cmp32	q1, q0
- fd 34                 cmov.slt	r6, r4
- fd 3d                 cmov.slt	r7, r5
- a0                    xor	r4, r4
- f4 11                 ldsp16	r5, [sp+0x4]
- 21                    sub	r4, r5
- fd 25                 cmov.slt	r4, r5
- f4 31                 ldsp16	r5, [sp+0xc]
- 74                    st16	[r5], r4
+ fd 74                 cmov.sge	r6, r4
+ fd 7d                 cmov.sge	r7, r5
  02                    mov	r4, r6
  07                    mov	r5, r7
  d6 0e                 adjsp	0xe

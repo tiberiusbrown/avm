@@ -202,5 +202,5 @@ Disassembly of section .text:
  ef                    ret
 
 <ceilf>:
- ff 1a                 fceil
+ ff 19                 fceil
  ef                    ret

@@ -202,5 +202,5 @@ Disassembly of section .text:
  ef                    ret
 
 <truncf>:
- ff 18                 ftrunc
+ ff 17                 ftrunc
  ef                    ret

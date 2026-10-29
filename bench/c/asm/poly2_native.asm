@@ -191,7 +191,7 @@ Disassembly of section .text:
  c5 04 01              ldi16	r5, 0x104
  11                    add	r4, r5
  f0 6a 88              ld32	q2, [r4]
- ff 16 03 00 00 80 be 00 00 00 3e 00 00 80 be  fpoly	3, -0.25, 0.125, -0.25
+ ff 15 03 00 00 80 be 00 00 00 3e 00 00 80 be  fpoly	3, -0.25, 0.125, -0.25
  f2 62                 mov32	q0, q2
  02                    mov	r4, r6
  07                    mov	r5, r7

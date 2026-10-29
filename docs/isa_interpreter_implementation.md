@@ -2095,13 +2095,13 @@ Native `r0:r1`, `X`, and `Z` are interpreter scratch and may be clobbered. No ex
 
 ## 21.1. `FF`: dedicated floating-point page
 
-FF uses exactly 31 two-word entries for secondaries `00-1E`. The assembler
-asserts `ff_table_end - ff_table == 124`. The range check compares against
-`(ff_table_end - ff_table) / 4` and rejects every `1F-FF` value before doubling
+FF uses exactly 30 two-word entries for secondaries `00-1D`. The assembler
+asserts `ff_table_end - ff_table == 120`. The range check compares against
+`(ff_table_end - ff_table) / 4` and rejects every `1E-FF` value before doubling
 the index. Z is `pm(ff_table) + 2 * secondary` in AVR program-memory word units;
 the full 16-bit add handles a low-byte carry, then `IJMP` selects the entry.
-Twenty-two entries use `JMP` directly to far bodies. Each of the nine nearby
-FNEG/FABS/FCLASS entries executes the implementation's first instruction and
+Twenty-two entries use `JMP` directly to far bodies. Each of the eight nearby
+FNEG/FABS entries executes the implementation's first instruction and
 then `RJMP`s to its continuation. FABS q2/q3 complete their sign change in the
 entry and branch straight to the shared sign tail. There are no veneers,
 reserved entries, or additional register-dispatch tables.
@@ -2123,17 +2123,16 @@ reserved entries, or additional register-dispatch tables.
 | `12` | `ftos32` | `q2` | `q2` | `2` |
 | `13` | `ftou32` | `q2` | `q2` | `2` |
 | `14` | `fcmp` | `q2, q3` | `r6` | `2` |
-| `15` | `fclass` | `q2` | `r6` | `2` |
-| `16` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
-| `17` | `fsqrt` | `q2` | `q2` | `2` |
-| `18` | `ftrunc` | `q2` | `q2` | `2` |
-| `19` | `ffloor` | `q2` | `q2` | `2` |
-| `1A` | `fceil` | `q2` | `q2` | `2` |
-| `1B` | `fround` | `q2` | `q2` | `2` |
-| `1C` | `fmod` | `q2, q3` | `q2` | `2` |
-| `1D` | `frempio2` | `q2` | `q2, r6` | `2` |
-| `1E` | `fma` | `q2, q3, q0` | `q2` | `2` |
-| `1F-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
+| `15` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
+| `16` | `fsqrt` | `q2` | `q2` | `2` |
+| `17` | `ftrunc` | `q2` | `q2` | `2` |
+| `18` | `ffloor` | `q2` | `q2` | `2` |
+| `19` | `fceil` | `q2` | `q2` | `2` |
+| `1A` | `fround` | `q2` | `q2` | `2` |
+| `1B` | `fmod` | `q2, q3` | `q2` | `2` |
+| `1C` | `frempio2` | `q2` | `q2, r6` | `2` |
+| `1D` | `fma` | `q2, q3, q0` | `q2` | `2` |
+| `1E-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
 
 Five setup instructions retain the protected reverse-order secondary
 `CLI/OUT/IN/SEI` handoff. The full 24-bit PC increment finishes before it.
@@ -2171,8 +2170,7 @@ S16TOF/U16TOF capture r4 before writing q2; FTOS16/FTOU16 write only r4 and
 preserve r5. Other conversions replace q2. General source/destination decoding,
 specifier validation, helper lookup tables, and dynamic result routing are removed.
 FCMP captures q2/q3 into scratch before using the existing numerical comparison
-logic, then writes only r20:r21 (r6). FCLASS captures q2, retains all ten masks,
-and writes r6. Both preserve q2 and r7. Every FF operation preserves CC in
+logic, then writes only r20:r21 (r6), preserving q2 and r7. Every FF operation preserves CC in
 GPIOR0, interpreter constants, VM stack pointer, and nondestination registers.
 Native numerical helpers leave the active SPI transaction open.
 
@@ -2187,9 +2185,11 @@ singleton classes against all remaining uses. This preserves UpperGPR and
 subregister constraints while allowing live values to spill or use other pairs.
 FNEG/FABS retain unrestricted q-register allocation.
 The assembler, emitter, printer, and disassembler use the map above. Runtime
-and ELF ABI version 2 reject older images and objects.
+and ELF ABI version 2 reject older ABI versions. The current FF opcode
+compaction is an intentional ISA compatibility break: rebuild all objects and
+images, including those already using ABI version 2.
 
-### Compact native math package (`FF 17-1E`)
+### Compact native math package (`FF 16-1D`)
 
 `interp/native_math.inc` is included beside FPOLY and the embedded floating
 helpers. The implementation follows the
@@ -2221,29 +2221,17 @@ small-operand limitations; this is not a full-product correctly rounded FMA.
 The common fixed binary bridge preserves q3 and writes only q2. q0/q1 are
 untouched. Existing FPOLY arithmetic is unchanged.
 
-Linked flash accounting (RelWithDebInfo, FX and FX-C):
-
-| Component | Added bytes |
-|---|---:|
-| FF table, 92 to 124 bytes | 32 |
-| FSQRT, including fixed bridge entry and normalization | 136 |
-| Four policy entries and shared rounding engine | 174 |
-| FMOD, including fixed bridge entry | 162 |
-| FREMPIO2, including preservation and writeback | 182 |
-| FMA, including fixed bridge entry | 18 |
-| New shared helper bytes outside these ranges | 0 |
-| **Total incremental native flash** | **704** |
-
-The complete interpreter grows from 26,632 to 27,336 bytes. Existing FPOLY
-is 202 bytes, giving a 906-byte incremental accelerator package including
-its dispatch growth. Existing general floating-point helpers and the original
-FF table/decoder are shared baseline infrastructure. The guest sqrt table
-removal saves a separate 8,192 bytes of guest program data.
+Linked flash accounting (RelWithDebInfo, FX and FX-C): the complete interpreter
+occupies 27,312 bytes. The contiguous FF dispatch table contains 30 two-word
+entries (120 bytes): 22 direct jumps and eight nearby sign entries. Removing
+the classification handler and its dispatch entry saves 88 linked bytes,
+including alignment, against the 27,400-byte baseline. Existing general
+floating-point helpers and the FF decoder remain shared infrastructure.
 
 ### Accelerator validation and timing
 
-The native harness passes 115,251 FF/FPOLY cases on each of FX and FX-C,
-including 1,147 Timer1 interrupts per preset, all exponent boundaries, random
+The native harness passes 12,980 FF/FPOLY cases on each of FX and FX-C,
+including Timer1 interference, all exponent boundaries, random
 bit patterns, pi/2 and half-quadrant neighbors, signed zeros, nonfinite inputs,
 three-input FMA, both FREMPIO2 outputs, reserved secondaries, PC carries, mixed
 fetch streams, CC, guest memory, and both stack pointers. The negative SPI
@@ -3727,12 +3715,12 @@ FA immediate jump table              26
 FA register forwarding table         192
 shared FB-FD move table             256
 FE forwarding table                256
-FF fixed-register table            124
+FF fixed-register table            120
                                   ------
 all executable tables            9,066 bytes
 ```
 
-The secondary executable tables total **7,018 bytes**, including the 124-byte FF table. `EC`, `ED-EE`, `F8`, and `F9` have no executable tables. The 64-byte F8 decoder/dispatch is accounted for separately. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
+The secondary executable tables total **7,014 bytes**, including the 120-byte FF table. `EC`, `ED-EE`, `F8`, and `F9` have no executable tables. The 64-byte F8 decoder/dispatch is accounted for separately. Runtime-decoded `F0` subsystems and the 74-byte `ED-EE` handler are accounted for separately.
 
 ## 34. Reference core-size estimate
 
@@ -3806,7 +3794,7 @@ A thorough implementation should:
 7. Compile a representative Arduboy corpus and compare code size and instruction timing with the reference design.
 
 
-### Native inline Horner evaluation (`FF 16`)
+### Native inline Horner evaluation (`FF 15`)
 
 `ff_poly` saves the count register, the two registers retaining the high half
 of `x`, and `q3` on the native stack. The low half of `x` stays in its original

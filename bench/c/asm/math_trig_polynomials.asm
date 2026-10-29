@@ -198,7 +198,7 @@ Disassembly of section .text:
  07                    mov	r5, r7
  ff 02                 fmul
  f2 66                 mov32	q1, q2
- ff 16 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
+ ff 15 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
  f2 62                 mov32	q0, q2
  02                    mov	r4, r6
  07                    mov	r5, r7
@@ -207,7 +207,7 @@ Disassembly of section .text:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
- ff 16 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
+ ff 15 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
  f2 62                 mov32	q0, q2
  02                    mov	r4, r6
  07                    mov	r5, r7

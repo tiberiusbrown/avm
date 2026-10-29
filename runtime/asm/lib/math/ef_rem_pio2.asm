@@ -4,7 +4,7 @@ math_ef_rem_pio2.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_rem_pio2.c
 00000000 l    d  .text.__ieee754_rem_pio2f	00000000 .text.__ieee754_rem_pio2f
-00000000 g     F .text.__ieee754_rem_pio2f	0000017d __ieee754_rem_pio2f
+00000000 g     F .text.__ieee754_rem_pio2f	00000176 __ieee754_rem_pio2f
 00000000         *UND*	00000000 avm_small_pio2
 00000000         *UND*	00000000 __kernel_rem_pio2f
 00000000         *UND*	00000000 avm_rem_pio2f_medium
@@ -31,7 +31,7 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  7b                    st16	[r6], r7
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x13c
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
  f2 42                 sub	r2, r2
  f0 07 80 7f           ldi16	r3, 0x7f80
  f0 69 04              cmp32	q0, q1
@@ -47,7 +47,7 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  ff 01                 fsub
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x13c
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
  f0 06 e3 cb           ldi16	r2, 0xcbe3
  f0 07 16 40           ldi16	r3, 0x4016
  f0 69 40              cmp32	q1, q0
@@ -85,14 +85,14 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  7b                    st16	[r6], r7
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x13c
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
  f0 06 00 50           ldi16	r2, 0x5000
  f0 07 c3 47           ldi16	r3, 0x47c3
  f0 69 40              cmp32	q1, q0
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x130
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x129
 <L3>:
  f2 42                 sub	r2, r2
  f0 07 80 44           ldi16	r3, 0x4480
@@ -100,7 +100,7 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  d8 04                 bruge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x138
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x131
 <L4>:
  f4 48                 stsp16	[sp+0x2], r4
  f4 51                 stsp16	[sp+0x4], r5
@@ -146,18 +146,16 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  f0 06 dc 0f           ldi16	r2, 0xfdc
  f0 07 49 3f           ldi16	r3, 0x3f49
  f0 69 c4              cmp32	q3, q1
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff ff              ldi16	r7, 0xffff
  d8 04                 bruge8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x155
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x14e
 <L5>:
- f0 69 c8              cmp32	q3, q2
- d3 04                 brslt8	0x4 <L6>
+ f6 2d                 tst16	r5
+ d9 04                 brsge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x143
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x13c
 <L6>:
  c6 da 0f              ldi16	r6, 0xfda
  c7 c9 bf              ldi16	r7, 0xbfc9
@@ -168,13 +166,13 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  f4 a8                 inc16	r0
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x155
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x14e
  e3 00 00 00           callf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__kernel_rem_pio2f
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x13c
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
  e3 00 00 00           callf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	avm_rem_pio2f_medium
@@ -195,10 +193,10 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 07                 fneg	q3
- f0 32 02              ldsp16	r2, [sp+0x2]
- f0 33 04              ldsp16	r3, [sp+0x4]
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff ff           ldi16	r1, 0xffff
+ f0 32 02              ldsp16	r2, [sp+0x2]
+ f0 33 04              ldsp16	r3, [sp+0x4]
  f0 69 04              cmp32	q0, q1
  fd 34                 cmov.slt	r6, r4
  fd 3d                 cmov.slt	r7, r5

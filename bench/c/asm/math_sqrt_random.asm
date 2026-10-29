@@ -10,23 +10,23 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 ef_sqrt.c
-00000669 l     F .text	00000025 avm_sqrt_special
+00000668 l     F .text	00000025 avm_sqrt_special
 00000000 l    df *ABS*	00000000 stdlib.c
 00000000 l    df *ABS*	00000000 avm.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 strtof.c
 00000000 l    df *ABS*	00000000 integer.c
 00000000 l    df *ABS*	00000000 wide_integer.c
-000006f6 l       .init_array	00000000 .hidden __init_array_end
-000006f6 l       .init_array	00000000 .hidden __init_array_start
-000006f6 l       .fini_array	00000000 .hidden __fini_array_start
-000006f6 l       .fini_array	00000000 .hidden __fini_array_end
+000006f5 l       .init_array	00000000 .hidden __init_array_end
+000006f5 l       .init_array	00000000 .hidden __init_array_start
+000006f5 l       .fini_array	00000000 .hidden __fini_array_start
+000006f5 l       .fini_array	00000000 .hidden __fini_array_end
 00000500 g     F .text	00000023 _start
 00000567 g     F .text	00000091 avm_test_main
 000005fa g     F .text	00000065 __avm_terminate
 000005f8 g     F .text	00000002 avm_halt
-0000068e g     F .text	00000068 __avm_mulsi3
-0000065f g     F .text	0000000a sqrtf
+0000068d g     F .text	00000068 __avm_mulsi3
+0000065f g     F .text	00000009 sqrtf
 00000000  w      *UND*	00000000 __avm_run_local_dtors
 000004fc g     O .data	00000002 __avm_errno
 
@@ -57,19 +57,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 f6 06              ldi16	r4, 0x6f6
+ c4 f5 06              ldi16	r4, 0x6f5
  c1 00                 ldi8	r5, 0x0
- c6 f6 06              ldi16	r6, 0x6f6
+ c6 f5 06              ldi16	r6, 0x6f5
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 f6 06           ldi16	r0, 0x6f6
+ f0 04 f5 06           ldi16	r0, 0x6f5
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 f6 06           ldi16	r2, 0x6f6
+ f0 06 f5 06           ldi16	r2, 0x6f5
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -109,7 +109,7 @@ Disassembly of section .text:
  f0 03 7f              ldi8	r3, 0x7f
 <L0>:
  f2 6a                 mov32	q3, q0
- e1 fb 00              call16	__avm_mulsi3
+ e1 fa 00              call16	__avm_mulsi3
  08                    mov	r6, r4
  0d                    mov	r7, r5
  c4 5f f3              ldi16	r4, 0xf35f
@@ -182,19 +182,19 @@ Disassembly of section .text:
  d0 03                 breq8	0x3 <L0>
  e1 f1 f9              call16	-1551 <__avm_run_local_dtors>
 <L0>:
- c4 f6 06              ldi16	r4, 0x6f6
+ c4 f5 06              ldi16	r4, 0x6f5
  c1 00                 ldi8	r5, 0x0
- c6 f6 06              ldi16	r6, 0x6f6
+ c6 f5 06              ldi16	r6, 0x6f5
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 f6 06           ldi16	r2, 0x6f6
+ f0 06 f5 06           ldi16	r2, 0x6f5
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 f6 06           ldi16	r0, 0x6f6
+ f0 04 f5 06           ldi16	r0, 0x6f5
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -223,10 +223,9 @@ Disassembly of section .text:
  ef                    ret
 
 <sqrtf>:
- 09                    mov	r6, r5
- f6 2e                 tst16	r6
+ f6 2d                 tst16	r5
  d3 03                 brslt8	0x3 <L0>
- ff 17                 fsqrt
+ ff 16                 fsqrt
  ef                    ret
 <L0>:
  d4 00                 jmp8	avm_sqrt_special
@@ -234,25 +233,25 @@ Disassembly of section .text:
 <avm_sqrt_special>:
  09                    mov	r6, r5
  c7 7f ff              ldi16	r7, 0xff7f
- 3e                    cmp	r7, r6
- d2 0d                 brult8	0xd <L1>
+ 3d                    cmp	r7, r5
+ d8 0b                 bruge8	0xb <L1>
+ ce 80                 cmpi.s8	r6, -0x80
+ d1 04                 brne8	0x4 <L0>
  f6 2c                 tst16	r4
- d1 11                 brne8	0x11 <L2>
- c7 00 80              ldi16	r7, 0x8000
- 3b                    cmp	r6, r7
- d1 0b                 brne8	0xb <L2>
+ d0 0d                 breq8	0xd <L2>
 <L0>:
- ff 17                 fsqrt
+ ff 16                 fsqrt
  ef                    ret
 <L1>:
+ c7 00 80              ldi16	r7, 0x8000
+ 3b                    cmp	r6, r7
+ d1 04                 brne8	0x4 <L2>
  f6 2c                 tst16	r4
- d1 f9                 brne8	-0x7 <L0>
- ce 80                 cmpi.s8	r6, -0x80
- d1 f5                 brne8	-0xb <L0>
+ d0 f3                 breq8	-0xd <L0>
 <L2>:
  c2 21                 ldi8	r6, 0x21
  f0 5e fc 04           stm16	[0x4fc], r6
- ff 17                 fsqrt
+ ff 16                 fsqrt
  ef                    ret
 
 <__avm_mulsi3>:

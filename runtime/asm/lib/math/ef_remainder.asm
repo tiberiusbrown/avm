@@ -71,7 +71,7 @@ Disassembly of section .text.remainderf:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
- ff 1c                 fmod
+ ff 1b                 fmod
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f2 6a                 mov32	q3, q0

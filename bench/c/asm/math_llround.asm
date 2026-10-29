@@ -191,7 +191,7 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 f8                 adjsp	-0x8
- ff 1b                 fround
+ ff 1a                 fround
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff 7f              ldi16	r7, 0x7fff
  88                    and	r6, r4

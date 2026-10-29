@@ -142,7 +142,6 @@ the extrema are not guaranteed bounds for every binary32 input.
 | FTOS32 | 115 | 99 | 169 |
 | FTOU32 | 105 | 89 | 147 |
 | FCMP | 83 | 61 | 87 |
-| FCLASS | 110 | 65 | 119 |
 
 Typical values select the normal add/subtract/multiply cases, recurring normal
 division, small positive integer conversions, positive fractional float
@@ -152,14 +151,11 @@ compiler uses the conservative 38-cycle representative. FPOLY takes 168, 717,
 1,287, 2,427, and 72,543 cycles for those five counts and inputs. Its latency
 depends on count and data, so it has no fixed schedule class.
 
-The two-word FF table uses 92 bytes and has no veneers. Far entries use direct
-`JMP`; nearby entries execute the first implementation instruction and `RJMP`
-to the rest. FABS q2/q3 branch directly to the shared sign tail. The complete
-interpreter `.text` shrinks from 26,668 to 26,632 bytes, saving 36 bytes including
-alignment. This includes eight additional bytes saved by removing all three
-unneeded sign-tail NOPs after timing verification. Relative to the preceding
-one-word table plus veneers, far FF operations save one cycle, FNEG and FABS
-q0/q1 save two, and FABS q2/q3 save four; FCLASS adds one cycle.
+The two-word FF table contains 30 contiguous entries and occupies 120 bytes.
+Far entries use direct `JMP`; the eight nearby sign entries execute the first
+implementation instruction and `RJMP` to the rest. FABS q2/q3 branch directly
+to the shared sign tail. The complete interpreter occupies 27,312 bytes.
+Every surviving instruction benchmark retains its baseline cycle count.
 
 The cycle-17 reverse SPI handoff is unchanged. With no sign-tail padding,
 FABS q2/q3 use the earliest legal standard IN/OUT at cycles 17/18 after that

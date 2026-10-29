@@ -12,6 +12,6 @@ Disassembly of section .text.__kernel_sinf:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 02                 fmul
- ff 16 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
+ ff 15 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
  ff 02                 fmul
  ef                    ret

@@ -278,7 +278,7 @@ The linked native package adds 704 interpreter bytes (26,632 to 27,336),
 including 32 bytes of FF table growth; existing FPOLY brings its package total
 to 906 bytes. The removed 8,192-byte sqrt table is a separate guest-program
 saving. Algorithms, preservation rules, measured per-component sizes, timing,
-and validation are recorded in the [interpreter guide](../../../docs/isa_interpreter_implementation.md#compact-native-math-package-ff-17-1e).
+and validation are recorded in the [interpreter guide](../../../docs/isa_interpreter_implementation.md#compact-native-math-package-ff-16-1d).
 
 ## C99 additions
 
@@ -338,9 +338,10 @@ conversions, signed overflow, or aliasing casts.
 The header defines `FP_NAN`, `FP_INFINITE`, `FP_ZERO`, `FP_SUBNORMAL`, and
 `FP_NORMAL`, plus `fpclassify`, `isfinite`, `isinf`, `isnan`, `isnormal`, and
 `signbit`. The six comparisons are `isgreater`, `isgreaterequal`, `isless`,
-`islessequal`, `islessgreater`, and `isunordered`. Compiler builtins retain
-FCLASS/FCMP optimization and evaluate each argument once. An unevaluated type
-expression supports integer arguments while retaining double/long-double types
+`islessequal`, `islessgreater`, and `isunordered`. Compiler builtins lower
+classification to native 16-bit integer tests and comparisons to FCMP, while
+evaluating each argument once. An unevaluated type expression supports integer
+arguments while retaining double/long-double types
 on hosts with wider floating types. Classification performs no floating-point
 arithmetic. Signaling NaNs are recognized, with no exception-state requirement.
 C and C++ tests cover signed zero, both NaN forms, mixed arithmetic types,
@@ -576,8 +577,7 @@ Error stores share the kernels' existing exceptional paths. The private
 `__avm_expf_noerrno` engine is used for intermediate exponential operations,
 including the saturated `sinhf`/`coshf` boundary and negative `expm1f` inputs.
 It cannot modify `errno`. Public entry points do not save and restore `errno`.
-Native-word guards keep the usual finite path out of expensive `FCLASS`
-classification; rare native-math validation is outlined where it would
+Classification and native-word guards use 16-bit integer bit tests; rare native-math validation is outlined where it would
 otherwise force argument spills on every call.
 
 `AVM_MATH_UNLIKELY` supplies Clang/GCC branch weights on error guards selected

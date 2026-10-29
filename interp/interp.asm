@@ -1921,7 +1921,7 @@ ff_next_byte_out:
     adc   r31, ZERO
     ijmp
 
-; Exactly 31 two-word entries. Z and the doubled index are program-memory
+; Exactly 30 two-word entries. Z and the doubled index are program-memory
 ; WORD units. Far bodies use JMP directly; nearby entries execute their first
 ; implementation instruction before RJMP to the continuation.
 ff_table:
@@ -1962,8 +1962,6 @@ ff_abs_q3:
     jmp   ff_ftos32
     jmp   ff_ftou32
     jmp   ff_cmp
-    movw  r0, r16                ; FCLASS captures q2 low before continuation
-    rjmp  ff_class
     jmp   ff_poly
     jmp   ff_sqrt
     jmp   ff_trunc
@@ -1974,8 +1972,8 @@ ff_abs_q3:
     jmp   ff_rempio2
     jmp   ff_fma
 ff_table_end:
-.if (ff_table_end - ff_table) != 124
-    .error "FF table must contain exactly 31 two-word entries"
+.if (ff_table_end - ff_table) != 120
+    .error "FF table must contain exactly 30 two-word entries"
 .endif
 
 ; Direct sign-byte continuations. From ff_next_byte_out (cycle 0), the shortest
@@ -2001,78 +1999,6 @@ ff_table_end:
     rjmp  ff_sign_tail
 ff_sign_tail:
     rjmp  cluster_tail_18
-
-ff_class:
-    ; Capture q2 without modifying it; only r6 (native r20:r21) is defined.
-    ; The table entry has already captured q2 low in r0:r1.
-    mov   r25, r18
-    mov   r26, r19
-
-    ; r26 is sign/exponent[7:1], r25 is exponent[0]/fraction[22:16], and
-    ; r1:r0 are fraction[15:0]. Reduce the complete fraction to zero/nonzero
-    ; in r0, then assemble the eight-bit exponent in r24.
-    mov   r24, r25
-    andi  r24, 0x7F
-    or    r0, r1
-    or    r0, r24
-
-    mov   r24, r26
-    lsl   r24
-    sbrc  r25, 7
-    ori   r24, 1
-    breq  .Lff_class_exp_zero
-    cpi   r24, 0xFF
-    breq  .Lff_class_exp_max
-
-    ldi   r25, 8                 ; +normal
-    rjmp  .Lff_class_numeric
-
-.Lff_class_exp_zero:
-    ldi   r25, 6                 ; +zero
-    tst   r0
-    breq  .Lff_class_numeric
-    inc   r25                    ; +subnormal
-    rjmp  .Lff_class_numeric
-
-.Lff_class_exp_max:
-    tst   r0
-    brne  .Lff_class_nan
-    ldi   r25, 9                 ; +infinity
-    rjmp  .Lff_class_numeric
-
-.Lff_class_nan:
-    ; NaN classes ignore the sign. Fraction bit 22 distinguishes quiet from
-    ; signaling NaNs and becomes the one-bit class index directly.
-    bst   r25, 6
-    clr   r25                    ; signaling NaN index 0
-    bld   r25, 0                 ; quiet NaN index 1
-    rjmp  .Lff_class_build_mask
-
-.Lff_class_numeric:
-    ; Positive numeric classes are indices 6-9. Their corresponding negative
-    ; classes are 11-index: +Inf 9 -> -Inf 2 through +zero 6 -> -zero 5.
-    sbrs  r26, 7
-    rjmp  .Lff_class_build_mask
-    neg   r25
-    subi  r25, -11
-
-    ; Convert class index 0-9 into the architectural one-hot mask. The loop
-    ; executes at most nine shifts and is smaller than a 20-byte mask table.
-.Lff_class_build_mask:
-    ldi   r24, 1
-    clr   r26
-    inc   r25
-.Lff_class_shift_loop:
-    dec   r25
-    breq  .Lff_class_store
-    lsl   r24
-    rol   r26
-    rjmp  .Lff_class_shift_loop
-
-.Lff_class_store:
-    mov   r20, r24
-    mov   r21, r26
-    rjmp  cluster_a_tail_18
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; EC dedicated runtime-decoded 16-bit division/remainder page
@@ -7731,7 +7657,7 @@ ff_conversion_store_r4:
 ff_cluster_tail_18:
     dispatch
 
-; FF 16 count, followed by count little-endian binary32 coefficients.
+; FF 15 count, followed by count little-endian binary32 coefficients.
 ; Fixed q2 input/result, highest degree first. Count zero is invalid.
 ; r16:r17 retains x low, r12:r13 retains x high; r8 counts coefficients.
 ; A=r22:r25 with extension r27. The float helpers never touch r16:r17.

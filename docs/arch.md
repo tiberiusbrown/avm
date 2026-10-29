@@ -1376,8 +1376,8 @@ All floating-point operands are IEEE-754 binary32 values held in `q0-q3`.
 Floating-point instructions preserve `CC` and expose no architectural
 floating-point exception state. Arithmetic and conversion results use
 round-to-nearest, ties-to-even unless an instruction specifies another
-rounding direction. NaN result payloads are unspecified except for `FNEG`, `FABS`, and
-`FCLASS`, whose bit-level behavior is defined below. Math functions live in
+rounding direction. NaN result payloads are unspecified except for `FNEG` and `FABS`,
+whose bit-level behavior is defined below. Math functions live in
 the guest runtime; see the [migration measurements](math-runtime-tradeoff.md).
 
 ### 35.1.1. Complete secondary map
@@ -1399,23 +1399,23 @@ the guest runtime; see the [migration measurements](math-runtime-tradeoff.md).
 | `12` | `ftos32` | `q2` | `q2` | `2` |
 | `13` | `ftou32` | `q2` | `q2` | `2` |
 | `14` | `fcmp` | `q2, q3` | `r6` | `2` |
-| `15` | `fclass` | `q2` | `r6` | `2` |
-| `16` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
-| `17` | `fsqrt` | `q2` | `q2` | `2` |
-| `18` | `ftrunc` | `q2` | `q2` | `2` |
-| `19` | `ffloor` | `q2` | `q2` | `2` |
-| `1A` | `fceil` | `q2` | `q2` | `2` |
-| `1B` | `fround` | `q2` | `q2` | `2` |
-| `1C` | `fmod` | `q2, q3` | `q2` | `2` |
-| `1D` | `frempio2` | `q2` | `q2, r6` | `2` |
-| `1E` | `fma` | `q2, q3, q0` | `q2` | `2` |
-| `1F-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
+| `15` | `fpoly count` | `q2, coefficients` | `q2` | `3 + 4N` |
+| `16` | `fsqrt` | `q2` | `q2` | `2` |
+| `17` | `ftrunc` | `q2` | `q2` | `2` |
+| `18` | `ffloor` | `q2` | `q2` | `2` |
+| `19` | `fceil` | `q2` | `q2` | `2` |
+| `1A` | `fround` | `q2` | `q2` | `2` |
+| `1B` | `fmod` | `q2, q3` | `q2` | `2` |
+| `1C` | `frempio2` | `q2` | `q2, r6` | `2` |
+| `1D` | `fma` | `q2, q3, q0` | `q2` | `2` |
+| `1E-FF` | `Reserved` | `—` | `Invalid-secondary trap` | `—` |
 
 Fixed-register mnemonics have no assembly operands. Explicit register operands
-are rejected. No legacy FF encoding is supported. Exactly 31 two-word dispatch
-entries occupy 124 bytes. Far handlers use direct `JMP` entries; nearby handlers
-start in the entry and use `RJMP` to continue. The decoder rejects `>= 0x1F`
-before table indexing.
+are rejected. No legacy FF encoding is supported. Exactly 30 two-word dispatch
+entries occupy 120 bytes. Far handlers use direct `JMP` entries; nearby handlers
+start in the entry and use `RJMP` to continue. The decoder rejects `>= 0x1E`
+before table indexing. This opcode compaction intentionally breaks ISA
+compatibility; rebuild all objects and images. No old encoding aliases exist.
 
 ### 35.1.2. Arithmetic and sign operations
 
@@ -1471,8 +1471,7 @@ S16TOF/U16TOF capture original r4 before writing q2 (r4:r5).
 FTOS16/FTOU16 write only r4, preserving r5. The four 32-bit conversions read
 original q2 before replacing it. FCMP captures both original q2/q3 operands
 before defining r6, the low half of q3; q2 and r7 are preserved.
-FCLASS reads q2 and writes r6, preserving q2 and r7. These are ordinary
-read-before-write operations without early clobbers.
+These are ordinary read-before-write operations without early clobbers.
 
 Integer-to-float conversion rounds to nearest with ties to even. Float-to-
 integer conversion truncates toward zero for finite in-range inputs. For NaN
@@ -1488,24 +1487,9 @@ instruction still completes and preserves `CC`.
 0x0002  unordered because either operand is NaN
 ```
 
-`FCLASS` returns in r6 exactly one of:
-
-| Mask | Class |
-|---:|---|
-| `0x0001` | signaling NaN |
-| `0x0002` | quiet NaN |
-| `0x0004` | negative infinity |
-| `0x0008` | negative normal |
-| `0x0010` | negative subnormal |
-| `0x0020` | negative zero |
-| `0x0040` | positive zero |
-| `0x0080` | positive subnormal |
-| `0x0100` | positive normal |
-| `0x0200` | positive infinity |
-
 ### 35.1.4. Inline polynomial evaluation
 
-`FPOLY` has the variable-length encoding `FF 16 N C[0] ... C[N-1]`.
+`FPOLY` has the variable-length encoding `FF 15 N C[0] ... C[N-1]`.
 `N` is an unsigned byte in `1..255`; zero enters the invalid-secondary trap.
 Each coefficient occupies four little-endian bytes containing an IEEE-754
 binary32 value, ordered from highest degree to constant. Total size is
@@ -2189,7 +2173,7 @@ quotient truncated toward zero, without forming an overflowing float quotient.
 
 `math.h` also provides `fpclassify`, `isfinite`, `isinf`, `isnan`, `isnormal`,
 `signbit`, and the six C99 ordered/unordered comparison macros. Their arguments
-are evaluated once. Classification uses the existing bit-level FCLASS lowering
+are evaluated once. Classification uses native 16-bit integer bit tests
 and sign extraction; comparisons use FCMP. AVM float, double, and long double
 are all binary32. The header retains wider types when compiled for a host.
 Signaling NaNs are classified without requiring floating-point exceptions.
@@ -4152,7 +4136,7 @@ The `FF` page directly implements the binary32 operations listed in Section
 ### 55.1. Floating-point legalization and selection
 
 The backend directly selects `FADD`, `FSUB`, `FMUL`, `FDIV`, `FNEG`, `FABS`,
-integer conversions, `FCMP`, and `FCLASS` for matching `f32` operations. Math
+integer conversions and `FCMP` for matching `f32` operations. Math
 intrinsics, including square root, rounding, number-preferred min/max and
 transcendentals, lower to ordinary calls into `libavm.a`. Legacy
 `llvm.avm.*f` math intrinsics use the same calls. Float/integer bitcasts copy
@@ -4162,10 +4146,11 @@ An arbitrary floating compare plus `select` MUST NOT be folded to a min/max
 call unless its NaN and signed-zero behavior is equivalent or made
 unobservable by fast-math flags.
 
-`FCLASS` returns the LLVM `FPClassTest` one-hot bit. Lower `llvm.is.fpclass` or
-`G_IS_FPCLASS` by applying the requested mask to the `FCLASS` result and testing
-for nonzero. `FCMP` supplies ordered and unordered predicates without modifying
-architectural `CC`.
+`llvm.is.fpclass` lowers to native 16-bit integer tests of the binary32
+exponent, fraction, quiet bit, and sign. Finite and normal predicates use only
+the high word; fraction tests include the low word. Every class-mask
+combination, including empty and all-classes masks, is supported. `FCMP` supplies
+ordered and unordered predicates without modifying architectural `CC`.
 
 Strict/constrained floating-point operations remain custom-expanded unless the
 requested exception behavior is compatible with AVM's lack of architectural

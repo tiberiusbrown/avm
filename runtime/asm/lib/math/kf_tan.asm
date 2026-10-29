@@ -20,12 +20,12 @@ Disassembly of section .text.__kernel_tanf:
  ff 02                 fmul
  08                    mov	r6, r4
  0d                    mov	r7, r5
- ff 16 03 28 48 a9 3d 17 d6 00 3e a9 cf aa 3e  fpoly	3, 0.0826571583, 0.125816688, 0.333615571
+ ff 15 03 28 48 a9 3d 17 d6 00 3e a9 cf aa 3e  fpoly	3, 0.0826571583, 0.125816688, 0.333615571
  f2 66                 mov32	q1, q2
  f2 68                 mov32	q2, q0
  ff 02                 fmul
  f2 6b                 mov32	q3, q1
- ff 1e                 fma
+ ff 1d                 fma
  f2 62                 mov32	q0, q2
  a0                    xor	r4, r4
  c5 80 bf              ldi16	r5, 0xbf80

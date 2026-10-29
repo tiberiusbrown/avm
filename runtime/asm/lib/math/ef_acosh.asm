@@ -68,7 +68,7 @@ Disassembly of section .text.acoshf:
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0
@@ -85,11 +85,11 @@ Disassembly of section .text.acoshf:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  f2 62                 mov32	q0, q2
  02                    mov	r4, r6
  07                    mov	r5, r7
- ff 16 05 29 6f 83 3a 4c 1e a7 bb 44 dc 98 3c 34 a9 aa bd 00 00 80 3f  fpoly	5, 0.00100276351, -0.00510004722, 0.0186597183, -0.0833305418, 1.0
+ ff 15 05 29 6f 83 3a 4c 1e a7 bb 44 dc 98 3c 34 a9 aa bd 00 00 80 3f  fpoly	5, 0.00100276351, -0.00510004722, 0.0186597183, -0.0833305418, 1.0
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 68                 mov32	q2, q0

@@ -250,7 +250,7 @@ Disassembly of section .text:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
- ff 1c                 fmod
+ ff 1b                 fmod
  f2 66                 mov32	q1, q2
  f0 3a 0a              stsp16	[sp+0xa], r2
  f0 3b 0c              stsp16	[sp+0xc], r3

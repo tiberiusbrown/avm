@@ -36,8 +36,7 @@ static NI int inline_fixed(float a, float b) {
     // r6 aliases q3. Capture the result through the low subregister only.
     __asm__("fcmp" : "=r"(result) : "r"(left), "r"(right));
     if (result != 1 || left != a) return 0;
-    __asm__("fclass" : "=r"(result) : "r"(left));
-    return result == 0x100 && left == a;
+    return __builtin_isfpclass(left, 0x100) && left == a;
 }
 int avm_test_main(void) {
     float a=inputs[0], b=inputs[1], c=inputs[2];

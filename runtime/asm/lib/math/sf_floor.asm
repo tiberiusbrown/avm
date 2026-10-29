@@ -9,5 +9,5 @@ SYMBOL TABLE:
 Disassembly of section .text.floorf:
 
 <floorf>:
- ff 19                 ffloor
+ ff 18                 ffloor
  ef                    ret

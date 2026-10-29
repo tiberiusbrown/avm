@@ -6,7 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.hypotf	00000000 .text.hypotf
 00000000 l     F .text.avm_hypot_overflows	000002bd avm_hypot_overflows
 00000000 l    d  .text.avm_hypot_overflows	00000000 .text.avm_hypot_overflows
-00000000 g     F .text.hypotf	00000217 hypotf
+00000000 g     F .text.hypotf	00000216 hypotf
 00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.hypotf:
@@ -59,7 +59,7 @@ Disassembly of section .text.hypotf:
  ff 02                 fmul
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  d6 0c                 adjsp	0xc
  b8                    pop16	r0
  b9                    pop16	r1
@@ -182,7 +182,7 @@ Disassembly of section .text.hypotf:
  ff 02                 fmul
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  c2 04                 ldi8	r6, 0x4
  c7 80 a2              ldi16	r7, 0xa280
  f7 6e                 add32	q3, q2
@@ -206,7 +206,7 @@ Disassembly of section .text.hypotf:
  d0 04                 breq8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	hypotf
-		R_AVM_FAR24	.text.hypotf+0x209
+		R_AVM_FAR24	.text.hypotf+0x208
 <L12>:
  c6 ff ff              ldi16	r6, 0xffff
  c7 7f 5d              ldi16	r7, 0x5d7f
@@ -229,7 +229,7 @@ Disassembly of section .text.hypotf:
  d8 04                 bruge8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	hypotf
-		R_AVM_FAR24	.text.hypotf+0x1dd
+		R_AVM_FAR24	.text.hypotf+0x1dc
 <L14>:
  aa                    xor	r6, r6
  c7 80 7e              ldi16	r7, 0x7e80
@@ -248,7 +248,7 @@ Disassembly of section .text.hypotf:
  ff 02                 fmul
  f2 6a                 mov32	q3, q0
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  aa                    xor	r6, r6
  c3 80                 ldi8	r7, 0x80
  ff 02                 fmul
@@ -258,9 +258,8 @@ Disassembly of section .text.hypotf:
  aa                    xor	r6, r6
  c7 80 61              ldi16	r7, 0x6180
  ff 02                 fmul
- 09                    mov	r6, r5
  c7 80 7f              ldi16	r7, 0x7f80
- 8e                    and	r7, r6
+ 8d                    and	r7, r5
  c6 80 80              ldi16	r6, 0x8080
  1b                    add	r6, r7
  c7 ff 80              ldi16	r7, 0x80ff
@@ -293,7 +292,7 @@ Disassembly of section .text.hypotf:
  ff 02                 fmul
  f2 6a                 mov32	q3, q0
  ff 00                 fadd
- ff 17                 fsqrt
+ ff 16                 fsqrt
  aa                    xor	r6, r6
  c7 80 1d              ldi16	r7, 0x1d80
  ff 02                 fmul

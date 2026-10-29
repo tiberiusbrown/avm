@@ -202,5 +202,5 @@ Disassembly of section .text:
  ef                    ret
 
 <roundf>:
- ff 1b                 fround
+ ff 1a                 fround
  ef                    ret

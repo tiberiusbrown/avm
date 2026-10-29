@@ -9,5 +9,5 @@ SYMBOL TABLE:
 Disassembly of section .text.roundf:
 
 <roundf>:
- ff 1b                 fround
+ ff 1a                 fround
  ef                    ret

@@ -4,7 +4,7 @@ math_sf_llrint.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_llrint.c
 00000000 l    d  .text.llrintf	00000000 .text.llrintf
-00000000 g     F .text.llrintf	00000134 llrintf
+00000000 g     F .text.llrintf	00000131 llrintf
 00000000         *UND*	00000000 __avm_ashlsi3
 00000000         *UND*	00000000 __avm_lshrsi3
 00000000         *UND*	00000000 __avm_errno
@@ -54,13 +54,12 @@ Disassembly of section .text.llrintf:
  c5 ff 7f              ldi16	r5, 0x7fff
  f9 80                 and	r4, r0
  f9 a4                 and	r5, r1
- aa                    xor	r6, r6
- c7 00 5f              ldi16	r7, 0x5f00
- f0 69 8c              cmp32	q2, q3
+ c6 00 5f              ldi16	r6, 0x5f00
+ 36                    cmp	r5, r6
  d2 04                 brult8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llrintf
-		R_AVM_FAR24	.text.llrintf+0x114
+		R_AVM_FAR24	.text.llrintf+0x111
 <L1>:
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff 4e              ldi16	r7, 0x4eff
@@ -68,7 +67,7 @@ Disassembly of section .text.llrintf:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llrintf
-		R_AVM_FAR24	.text.llrintf+0x7a
+		R_AVM_FAR24	.text.llrintf+0x77
 <L2>:
  f2 68                 mov32	q2, q0
  ff 12                 ftos32
@@ -77,7 +76,7 @@ Disassembly of section .text.llrintf:
  0e                    mov	r7, r6
  e2 00 00 00           jmpf	llrintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.llrintf+0x10d
+		R_AVM_FAR24	.text.llrintf+0x10a
  c2 7f                 ldi8	r6, 0x7f
  89                    and	r6, r5
  c3 80                 ldi8	r7, 0x80
@@ -91,7 +90,7 @@ Disassembly of section .text.llrintf:
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llrintf
-		R_AVM_FAR24	.text.llrintf+0xed
+		R_AVM_FAR24	.text.llrintf+0xea
 <L3>:
  c4 6a ff              ldi16	r4, 0xff6a
  12                    add	r4, r6
@@ -123,7 +122,7 @@ Disassembly of section .text.llrintf:
  d9 04                 brsge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llrintf
-		R_AVM_FAR24	.text.llrintf+0x10b
+		R_AVM_FAR24	.text.llrintf+0x108
 <L4>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
@@ -144,7 +143,7 @@ Disassembly of section .text.llrintf:
  f7 78                 sub32	q2, q0
  e2 00 00 00           jmpf	llrintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.llrintf+0x10d
+		R_AVM_FAR24	.text.llrintf+0x10a
  c4 4a ff              ldi16	r4, 0xff4a
  18                    add	r6, r4
  af                    xor	r7, r7
@@ -161,7 +160,7 @@ Disassembly of section .text.llrintf:
  d3 04                 brslt8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llrintf
-		R_AVM_FAR24	.text.llrintf+0xc6
+		R_AVM_FAR24	.text.llrintf+0xc3
 <L5>:
  f2 6b                 mov32	q3, q1
  d6 08                 adjsp	0x8
@@ -180,11 +179,11 @@ Disassembly of section .text.llrintf:
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	llrintf
-		R_AVM_FAR24	.text.llrintf+0x10d
+		R_AVM_FAR24	.text.llrintf+0x10a
 <L6>:
  f0 00 21              ldi8	r0, 0x21
  f0 58 00 00           stm16	[0x0], r0
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	llrintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.llrintf+0x10d
+		R_AVM_FAR24	.text.llrintf+0x10a

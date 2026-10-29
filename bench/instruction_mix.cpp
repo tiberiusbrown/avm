@@ -53,7 +53,7 @@ std::string family(std::string const& name) {
         {"STACK", "PUSH16 POP16 ADJSP GETSP SETSP"},
         {"SELECT", "BOOL CSET_EQ CSET_NE CSET_SGE CSET_SLT CSET_UGE CSET_ULT CMOV_EQ CMOV_NE CMOV_SGE CMOV_SLT CMOV_UGE CMOV_ULT"},
         {"FADD", "FADD_MC"}, {"FSUB", "FSUB_MC"}, {"FMUL", "FMUL_MC"},
-        {"FDIV", "FDIV_MC"}, {"FCMP", "FCMP_MC"}, {"FCLASS", "FCLASS_MC"},
+        {"FDIV", "FDIV_MC"}, {"FCMP", "FCMP_MC"},
         {"FNEG", "FNEG"}, {"FABS", "FABS"}, {"FPOLY", "FPOLY"},
         {"FSQRT", "FSQRT_MC"}, {"FTRUNC", "FTRUNC_MC"},
         {"FFLOOR", "FFLOOR_MC"}, {"FCEIL", "FCEIL_MC"},

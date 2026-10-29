@@ -19,6 +19,8 @@ float avm_reference_log1pf(float);
 float avm_reference_cbrtf(float);
 float avm_reference_asinf(float);
 float avm_reference_acosf(float);
+float avm_reference_lgammaf(float);
+float avm_reference_tgammaf(float);
 float avm_reference_erff(float);
 float avm_reference_erfcf(float);
 float avm_reference_sinhf(float);
@@ -27,6 +29,17 @@ float avm_reference_tanhf(float);
 float avm_reference_asinhf(float);
 float avm_reference_acoshf(float);
 float avm_reference_atanhf(float);
+/* Include a private copy solely to inspect each shipped numerical kernel.
+ * Public end-to-end checks below still call the linked reference objects. */
+float avm_reference_logf(float);
+#define logf avm_reference_logf
+#define lgammaf avm_kernel_lgammaf
+#define tgammaf avm_kernel_tgammaf
+#include "../../runtime/lib/math/ef_gamma.c"
+#undef logf
+#undef lgammaf
+#undef tgammaf
+
 static uint32_t bits(float x) { uint32_t u; memcpy(&u,&x,4); return u; }
 static float value(uint32_t u) { float x; memcpy(&x,&u,4); return x; }
 static uint32_t state=0x41564d26U;
@@ -54,9 +67,9 @@ static void exact(float x,float y,int n)
     }
 }
 struct stats { double absolute,relative; uint32_t ulp,worst_abs,worst_rel,worst_ulp; unsigned count; };
-static struct stats stats[14];
-static const char *names[]={"exp2f","expm1f","log1pf","cbrtf","asinf","acosf","sinhf","coshf","tanhf","asinhf","acoshf","atanhf","erff","erfcf"};
-static const enum avm_accuracy policies[]={AVM_EXP,AVM_EXPM1,AVM_LOG,AVM_CBRT,AVM_ATAN,AVM_ATAN,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_ERF,AVM_ERFC};
+static struct stats stats[16];
+static const char *names[]={"exp2f","expm1f","log1pf","cbrtf","asinf","acosf","sinhf","coshf","tanhf","asinhf","acoshf","atanhf","erff","erfcf","lgammaf","tgammaf"};
+static const enum avm_accuracy policies[]={AVM_EXP,AVM_EXPM1,AVM_LOG,AVM_CBRT,AVM_ATAN,AVM_ATAN,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_HYPERBOLIC,AVM_ERF,AVM_ERFC,AVM_LGAMMA,AVM_TGAMMA};
 static void approximate(unsigned n,float x,float a,double r)
 {
     struct stats *s=&stats[n]; ++s->count;
@@ -74,6 +87,31 @@ static void approximate(unsigned n,float x,float a,double r)
     }
     if (!ok && failures++<8) printf("FAIL %s(%08lx): %08lx expected %08lx\n",names[n],(unsigned long)bits(x),(unsigned long)bits(a),(unsigned long)bits(rounded));
 }
+static double gamma_log_reference(float x)
+{
+    /* MSVCRT lgamma has a cancellation defect near some negative poles.
+       Reflect using double host sin/log/lgamma, independently of AVM's
+       reduced polynomial and binary32 arithmetic. */
+    if (x<0 && isfinite(x) && x!=trunc((double)x)) {
+        double a=-(double)x, f=a-floor(a), d=fmin(f,1-f);
+        return log(3.14159265358979323846)-log(sin(3.14159265358979323846*d))
+             - lgamma(1+a);
+    }
+    return lgamma((double)x);
+}
+
+static double gamma_reference(float x)
+{
+    if (x==0) return copysign(INFINITY,x);
+    if (x==-INFINITY || (x<0 && isfinite(x) && x==trunc(x))) return NAN;
+    double result=tgamma((double)x);
+    /* MSVCRT can lose the reflection sign on deeply underflowed results.
+       Determine it independently for finite negative nonintegers. */
+    if (result==0 && x<0 && x>-0x1p23f)
+        return copysign(0.0, ((uint32_t)(-x)&1) ? 1.0 : -1.0);
+    return result;
+}
+
 static void unary(float x)
 {
     approximate(0,x,avm_reference_exp2f(x),exp2((double)x));
@@ -90,7 +128,40 @@ static void unary(float x)
     approximate(11,x,avm_reference_atanhf(x),atanh((double)x));
     approximate(12,x,avm_reference_erff(x),erf((double)x));
     approximate(13,x,avm_reference_erfcf(x),erfc((double)x));
+    approximate(14,x,avm_reference_lgammaf(x),gamma_log_reference(x));
+    double gamma_ref = gamma_reference(x);
+    approximate(15,x,avm_reference_tgammaf(x),gamma_ref);
 }
+static void gamma_kernels(void)
+{
+    double base_error=0, recurrence_error=0, stirling_error=0, sinc_error=0;
+    uint32_t base_at=0, recurrence_at=0, stirling_at=0, sinc_at=0;
+    for (unsigned i=0;i<=65536;++i) {
+        float t=(float)i/65536.0f;
+        double r=tgamma(1.0+(double)t);
+        double e=fabs((double)avm_gamma_base(t)/r-1);
+        if (e>base_error) { base_error=e; base_at=bits(t); }
+        if (e>3e-5) ++failures;
+        float x=8.0f*(float)(i+1)/65538.0f;
+        r=tgamma((double)x); e=fabs((double)avm_gamma_positive_small(x)/r-1);
+        if (e>recurrence_error) { recurrence_error=e; recurrence_at=bits(x); }
+        if (e>3e-5) ++failures;
+        x=8.0f+27.1f*t; r=lgamma((double)x);
+        e=fabs((double)avm_lgamma_stirling(x)-r);
+        if (e>stirling_error) { stirling_error=e; stirling_at=bits(x); }
+        if (e>1e-5*(1+fabs(r))) ++failures;
+        float d=t*0.5f;
+        r=d ? sin(3.14159265358979323846*(double)d)/(3.14159265358979323846*(double)d) : 1;
+        e=fabs((double)avm_gamma_sincpi(d*d)/r-1);
+        if (e>sinc_error) { sinc_error=e; sinc_at=bits(d); }
+        if (e>1e-6) ++failures;
+    }
+    if (avm_gamma_base(0)!=1 || avm_gamma_base(1)!=1) ++failures;
+    printf("gamma kernels: base rel=%.9g at %08lx recurrence rel=%.9g at %08lx Stirling abs=%.9g at %08lx sinc rel=%.9g at %08lx\n",
+        base_error,(unsigned long)base_at,recurrence_error,(unsigned long)recurrence_at,
+        stirling_error,(unsigned long)stirling_at,sinc_error,(unsigned long)sinc_at);
+}
+
 int main(int argc,char **argv)
 {
     /* --quick remains a compatibility alias for the same sampling policy. */
@@ -104,6 +175,7 @@ int main(int argc,char **argv)
             for (int n=-150;n<=128;++n) exact(value(special[i]),value(special[j]),n);
         exact(value(special[i]),0,INT_MIN); exact(value(special[i]),0,INT_MAX);
     }
+    gamma_kernels();
     unsigned count=4096;
     for (unsigned i=0;i<count;++i) {
         float x=value(random_word()),y=value(random_word());
@@ -146,8 +218,26 @@ int main(int argc,char **argv)
         float x=-11.0f+22.0f*(float)i/65536.0f;
         approximate(12,x,avm_reference_erff(x),erf((double)x));
         approximate(13,x,avm_reference_erfcf(x),erfc((double)x));
+    approximate(14,x,avm_reference_lgammaf(x),gamma_log_reference(x));
+    double gamma_ref = gamma_reference(x);
+    approximate(15,x,avm_reference_tgammaf(x),gamma_ref);
     }
-    for (unsigned n=0;n<14;++n) {
+    for (unsigned i=0;i<=65536;++i) {
+        float x=(float)(-43.0+78.1*i/65536);
+        approximate(14,x,avm_reference_lgammaf(x),gamma_log_reference(x));
+        double r=gamma_reference(x);
+        approximate(15,x,avm_reference_tgammaf(x),r);
+    }
+    for (int k=-43;k<=2;++k) if (k!=0) for (int d=-1;d<=1;++d) {
+        float x=value(bits((float)k)+d);
+        approximate(14,x,avm_reference_lgammaf(x),gamma_log_reference(x));
+        approximate(15,x,avm_reference_tgammaf(x),gamma_reference(x));
+    }
+    for (uint32_t u=0x7c44af6eU;u<0x7c44afafU;++u) {
+        float x=value(u);
+        approximate(14,x,avm_reference_lgammaf(x),gamma_log_reference(x));
+    }
+    for (unsigned n=0;n<16;++n) {
         struct stats *s=&stats[n];
         printf("%s count=%u abs=%.9g at %08lx rel=%.9g at %08lx ULP=%lu at %08lx\n",
             names[n],s->count,s->absolute,(unsigned long)s->worst_abs,s->relative,

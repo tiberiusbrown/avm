@@ -33,12 +33,17 @@ void avm_reference_sincosf(float, float *, float *);
 
 /* A persistent, line-oriented bridge to the SAME production objects used by
    shortcuts_reference.c. No host libm is used to compute these results. */
+float avm_reference_lgammaf(float);
+float avm_reference_tgammaf(float);
+
 int main(void)
 {
     char name[24]; unsigned long a, b;
     while (scanf("%23s %lx %lx", name, &a, &b) == 3) {
         union { uint32_t u; float f; } x = {(uint32_t)a}, y = {(uint32_t)b}, z;
-        if (!strcmp(name, "erff")) z.f = avm_reference_erff(x.f);
+        if (!strcmp(name, "lgammaf")) z.f = avm_reference_lgammaf(x.f);
+        else if (!strcmp(name, "tgammaf")) z.f = avm_reference_tgammaf(x.f);
+        else if (!strcmp(name, "erff")) z.f = avm_reference_erff(x.f);
         else if (!strcmp(name, "erfcf")) z.f = avm_reference_erfcf(x.f);
         else if (!strcmp(name, "sinhf")) z.f = avm_reference_sinhf(x.f);
         else if (!strcmp(name, "coshf")) z.f = avm_reference_coshf(x.f);

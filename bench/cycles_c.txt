@@ -97,11 +97,15 @@
        81907   math_fmod.c
        69398   math_fmod_subnormal.c
        99204   math_frexp.c
+      191663   math_gamma_special.c
       149211   math_hypot.c
       711823   math_hypot_boundary.c
       167223   math_hypot_scaled.c
        57072   math_ilogb.c
        98277   math_ldexp.c
+      437682   math_lgamma.c
+      453586   math_lgamma_large.c
+      714306   math_lgamma_negative.c
       117031   math_llrint.c
        87243   math_llround.c
       222853   math_log.c
@@ -147,6 +151,9 @@
       120301   math_tan_reduced.c
       122935   math_tan_small.c
       206528   math_tanh.c
+      319096   math_tgamma.c
+      610462   math_tgamma_large.c
+      661508   math_tgamma_negative.c
        50572   math_trig_correction.c
       101197   math_trig_cos_direct.c
       112577   math_trig_cos_edge.c

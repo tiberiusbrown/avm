@@ -659,3 +659,98 @@ bits `0x3fa53a47` and `9.86428727e-6` for `erfcf` at `0x410989a0`.
 Boundary neighbors at both signs of 1.25, 4, 9, 10 and 11 pass the error budgets,
 including the small/tail crossover; no excessive boundary discontinuity was
 observed. Subnormal and zero transitions use the stated absolute allowance.
+
+
+## Gamma functions
+
+`lgammaf` and `tgammaf` use the anchored approximation
+`Gamma(1+t) = 1+t*(1-t)*P6(t)` on `[0,1]`, evaluated by `AVM_FPOLY7`.
+Both endpoints return exactly one. Positive arguments below 8 use the gamma
+recurrence; `tgammaf` in this interval needs no logarithm or exponential.
+For arguments below one, the polynomial receives `x` directly before division
+by `x`, avoiding loss of tiny increments in `1+x`.
+
+At 8 the implementation switches to Stirling's logarithmic approximation with
+three correction terms evaluated by `AVM_FPOLY3`. For extremely large inputs,
+the leading expression is rearranged to avoid intermediate overflow before
+subtracting `x`. Negative nonintegers use reflection with
+`d=min(frac(-x),1-frac(-x))` and a degree-five `sincpi` polynomial evaluated
+by `AVM_FPOLY6`. Magnitudes below 7 use direct gamma reflection; larger ones
+use logarithmic reflection and, for `tgammaf`, the private exponential engine.
+Integer parity uses a 32-bit unsigned conversion only below `2^23`; larger
+negative binary32 values are integers and are classified without conversion.
+No permanent scratch storage or global gamma sign state is allocated.
+
+For nonzero `abs(x)<2^-17`, gamma uses `1/x` and logarithmic gamma uses
+`-log(abs(x))`. NaNs propagate with `x+x`. Logarithmic gamma returns positive
+infinity for either infinity, either zero, and negative integer poles; zeros
+and poles set `ERANGE`. Gamma preserves positive infinity, reports `EDOM`
+with quiet NaN for negative infinity and negative integer poles, and returns
+signed infinity with `ERANGE` for signed zero or reciprocal overflow.
+Positive logarithmic gamma overflow is guarded at `0x7c44af8e` to keep
+classification independent of rounded logarithm arithmetic. Positive finite gamma overflow begins at input bits `0x420c2910`; computed
+overflow is also checked. Negative subnormal or zero gamma sets `ERANGE`,
+with parity preserving its sign. Negative nonintegers of magnitude at least
+43 return signed zero directly. Logarithmic gamma reports `ERANGE` if its
+finite positive argument produces infinity. Successful calls preserve errno
+without saving or restoring it; intermediate exponential range errors remain
+private. `lgammaf(1)` and `lgammaf(2)` return exact positive zero.
+
+The acceptance budgets are `1e-5 + 1e-5*abs(reference)` for logarithmic gamma
+and `3e-5*abs(reference)` for gamma. Subnormal gamma adds one binary32
+subnormal quantum (`2^-149`). Exceptional classifications and required signs
+are checked exactly. The host tests inspect the shipped base, recurrence,
+Stirling and reflection polynomials independently against double host libm;
+end-to-end tests additionally use 100-digit mpmath references and generated
+guest fixtures.
+
+
+Independent host-kernel sweeps (65,537 samples each) measured maximum relative
+errors of `8.86177985e-7` for the base at `0x3ec4f600`, `1.01252526e-6`
+for positive recurrence at `0x40ec5c27`, and `1.11350994e-7` for sincpi at
+`0x3effd400`. Stirling's maximum absolute error over `[8,35.1]` was
+`1.97016345e-5` at `0x41af3202`, within the combined logarithmic allowance.
+
+The extended deterministic/adaptive 100-digit run checked 349,748 logarithmic
+gamma inputs and 349,809 gamma inputs with no failures. Gamma's maximum normal
+relative error was `2.9479691844e-5` at `0xc208580f`. Logarithmic gamma used
+at most `0.208901386` of its combined absolute/relative budget, at
+`0xc1200001`. Its maximum absolute error across the very large finite domain
+was `2.66100122e31` at `0x7c351512`; the allowance scales with result size.
+Its maximum relative error of `2.46491203` at `0x3f7fffff` occurs next to a
+zero and is covered by the absolute allowance. Gamma's largest absolute error
+was `5.09210545e33` at `0x420bd688`, likewise within its relative budget.
+
+RelWithDebInfo measurements use O2 callers and O3 runtime kernels, with
+32 runtime-dependent calls per workload. The special workload calls each
+function on the same 16 inputs. Cycles include loop/input/sink overhead and
+subtract the 35-cycle DEBUG_BREAK baseline. Linked `.text` includes startup
+and shared callees; each workload also has 64 bytes of flash input rodata
+and 6 bytes of static guest data (errno and the result sink). The gamma kernel
+itself adds no static RAM. Guest stack maxima include the caller; native extra
+stack is reported separately.
+
+| Workload | AVR cycles / 32 calls | Linked `.text` bytes | Guest stack bytes | Native extra stack bytes |
+| --- | ---: | ---: | ---: | ---: |
+| `math_lgamma` | 437,682 | 1,721 | 74 | 15 |
+| `math_lgamma_negative` | 714,306 | 1,721 | 76 | 15 |
+| `math_lgamma_large` | 453,586 | 1,721 | 74 | 14 |
+| `math_tgamma` | 319,096 | 1,998 | 78 | 13 |
+| `math_tgamma_negative` | 661,508 | 1,998 | 80 | 15 |
+| `math_tgamma_large` | 610,462 | 1,998 | 78 | 15 |
+| `math_gamma_special` | 191,663 | 2,418 | 76 | 15 |
+
+The retained benchmark and runtime disassemblies confirm native FPOLY7,
+FPOLY6 and FPOLY3 operations. Positive gamma below 8 reaches neither log nor
+exp; the private exponential is used only after Stirling or logarithmic
+reflection. Public entry points contain conditional errno stores on error
+paths and no errno loads or save/restore sequences.
+
+Validation passed `avm_math_fast`, `avm_math_full`,
+`avm_math_accuracy_tests_run`, `avm_c99_tests_run`, and `avm_bench_run` in
+RelWithDebInfo. The full math suite ran 438 guest tests across all six
+optimization levels; the broader benchmark dependency suite ran 1,491 guest
+tests. The full high-precision target checked 1,591,205 cases across 31
+functions with zero failures. Generated accuracy fixtures and C/C++ errno
+fixtures passed; no ISA, interpreter, LLVM backend, or pointer ABI changes
+were needed.

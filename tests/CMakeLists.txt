@@ -827,6 +827,7 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_fmaxmag.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_fminmag.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_round.c"
+    "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_gamma.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_erf.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_sinh.c"
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/ef_cosh.c"
@@ -860,7 +861,7 @@ add_library(avm_shortcuts_reference_kernels OBJECT
     "${PROJECT_SOURCE_DIR}/runtime/lib/math/sf_scalbn.c")
 target_include_directories(avm_shortcuts_reference_kernels PRIVATE
     "${PROJECT_SOURCE_DIR}/runtime/include")
-foreach(function erff erfcf remainderf remquof rintf nearbyintf lrintf lroundf llrintf llroundf ilogbf logbf fdimf nanf fmaxmagf fminmagf roundf sinhf coshf tanhf asinhf acoshf atanhf exp2f expm1f log1pf cbrtf asinf acosf ldexpf frexpf modff nextafterf nexttowardf hypotf atan2f atanf sinf cosf sincosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf scalblnf fminf fmaxf)
+foreach(function lgammaf tgammaf erff erfcf remainderf remquof rintf nearbyintf lrintf lroundf llrintf llroundf ilogbf logbf fdimf nanf fmaxmagf fminmagf roundf sinhf coshf tanhf asinhf acoshf atanhf exp2f expm1f log1pf cbrtf asinf acosf ldexpf frexpf modff nextafterf nexttowardf hypotf atan2f atanf sinf cosf sincosf tanf logf log2f log10f powf expf fmodf sqrtf scalbnf scalblnf fminf fmaxf)
     target_compile_definitions(avm_shortcuts_reference_kernels PRIVATE
         "${function}=avm_reference_${function}")
 endforeach()

@@ -20,15 +20,16 @@ import subprocess
 import mpmath as mp
 
 mp.mp.dps = 100
-FUNCTIONS = ['sqrtf', 'expf', 'logf', 'log2f', 'log10f', 'hypotf', 'powf',
+FUNCTIONS = ['lgammaf', 'tgammaf', 'sqrtf', 'expf', 'logf', 'log2f', 'log10f', 'hypotf', 'powf',
              'sinf', 'cosf', 'tanf', 'atanf', 'atan2f', 'fmodf', 'sincos_sinf', 'sincos_cosf',
              'exp2f', 'expm1f', 'log1pf', 'cbrtf', 'asinf', 'acosf', 'sinhf', 'coshf', 'tanhf', 'asinhf', 'acoshf', 'atanhf', 'erff', 'erfcf']
 
 HYPERBOLIC = ['sinhf', 'coshf', 'tanhf', 'asinhf', 'acoshf', 'atanhf']
 
-C99_POLICIES = dict(erff='AVM_ERF', erfcf='AVM_ERFC', exp2f='AVM_EXP', expm1f='AVM_EXPM1', log1pf='AVM_LOG',
+C99_POLICIES = dict(lgammaf='AVM_LGAMMA', tgammaf='AVM_TGAMMA', erff='AVM_ERF', erfcf='AVM_ERFC', exp2f='AVM_EXP', expm1f='AVM_EXPM1', log1pf='AVM_LOG',
                     cbrtf='AVM_CBRT', asinf='AVM_ATAN', acosf='AVM_ATAN')
-C99_BASELINES = dict(erff='lightweight degree-six AVM polynomial approximation',
+C99_BASELINES = dict(lgammaf='anchored gamma / Stirling / reflection, absolute plus relative 1e-5',
+    tgammaf='anchored gamma / Stirling / reflection, relative 3e-5 plus subnormal quantum', erff='lightweight degree-six AVM polynomial approximation',
     erfcf='lightweight degree-six AVM polynomial / private expf approximation', exp2f='avr-libc expf accuracy policy, direct base-two reduction',
     expm1f='lightweight binary32 Taylor / existing avr-libc-comparable expf policy',
     log1pf='lightweight binary32 series / existing avr-libc-comparable logf policy',
@@ -65,6 +66,22 @@ def reference(name, a, b):
     name=name.removeprefix('sincos_')
     x, y = mp.mpf(value(a)), mp.mpf(value(b))
     try:
+        if name in ['lgammaf', 'tgammaf']:
+            if mp.isnan(x): return mp.nan
+            if mp.isinf(x): return mp.inf if name=='lgammaf' or x>0 else mp.nan
+            if x==0: return -mp.inf if name=='tgammaf' and a>>31 else mp.inf
+            if x<0 and x==mp.floor(x): return mp.inf if name=='lgammaf' else mp.nan
+            negative = x<0 and int(mp.floor(-x))%2==0
+            if x>0:
+                logmag=mp.loggamma(x)
+            else:
+                t=-x; f=t-mp.floor(t); d=min(f,1-f)
+                logmag=mp.log(mp.pi)-mp.log(mp.sin(mp.pi*d))-mp.loggamma(1+t)
+            if name=='lgammaf': return logmag
+            if logmag>90: return -mp.inf if negative else mp.inf
+            if logmag < -110: return -0.0 if negative else 0.0
+            result=mp.exp(logmag)
+            return -result if negative else result
         if name in ['sinhf', 'coshf']:
             if abs(x)>1000: return (-mp.inf if x<0 and name=='sinhf' else mp.inf)
             return mp.sinh(x) if name=='sinhf' else mp.cosh(x)
@@ -132,6 +149,7 @@ def expected_bits(name,a,b,ref):
     word=bits(ref)
     if word&0x7fffffff==0:
         negative=(name in ['sqrtf','sinf','tanf','atanf','atan2f','fmodf','expm1f','log1pf','cbrtf','asinf','sinhf','tanhf','asinhf','atanhf','erff'] and a>>31) or (name=='powf' and a>>31 and value(b)%2==1)
+        if name=='tgammaf' and value(a)<0 and math.isfinite(value(a)) and int(-value(a))%2==0: negative=True
         if negative: word|=0x80000000
     return word
 
@@ -211,6 +229,17 @@ def phase34_corpus(name):
                 if name=='atan2f':
                     for e in [-148,-126,-60,0,60,126]:
                         for sy in [-1,1]: neighbors(math.ldexp(sign*x,e), math.ldexp(sy,e))
+    elif name in ['lgammaf','tgammaf']:
+        for x in [-43,-42,-41,-8,-7,-6,-5,-4,-3,-2,-1,-0.0,0,1,2,8,35.0401,
+                  2**-17,-2**-17,-100000,-2**32,-2**64]: neighbors(x)
+        for i in range(1,44): neighbors(-i); neighbors(-i+0.5)
+        for u in range(0x420c290d,0x420c2913): pairs.add((u,0))
+        for u in range(0x7c44af6e,0x7c44afaf): pairs.add((u,0))
+        for u in range(0x7c447995,0x7c4479d6): pairs.add((u,0))
+        for i in range(8193): neighbors(-43+78.1*i/8192)
+        for center in [-33.5,-38.5,-41.5,-42.5]:
+            u=bits(center)
+            for d in range(-256,257): pairs.add((u+d,0))
     elif name in ['erff','erfcf']:
         for x in [1.25,4,9,10,11]:
             neighbors(x); neighbors(-x)
@@ -248,6 +277,8 @@ def phase34_corpus(name):
 
 def acceptance(name,actual,ref,ulp):
     name=name.removeprefix('sincos_')
+    if name=='lgammaf': return abs(actual-ref) <= mp.mpf('1e-5')*(1+abs(ref))
+    if name=='tgammaf': return abs(actual-ref) <= mp.mpf('3e-5')*abs(ref)+(mp.mpf(2)**-149 if abs(ref)<mp.mpf(2)**-126 else 0)
     if name in HYPERBOLIC: return abs(actual-ref) <= mp.mpf('1e-5')*abs(ref)
     if name in ['erff','erfcf']:
         rt=mp.mpf('1e-5' if name=='erff' else '2e-5')
@@ -351,6 +382,12 @@ def main():
             if absolute>bucket['max_absolute']:
                 bucket['max_absolute']=float(absolute); bucket['worst_absolute']=inputs
             ok=acceptance(n,mp.mpf(actual),ref,ulp)
+            if n in ['lgammaf','tgammaf']:
+                budget=(mp.mpf('1e-5')*(1+abs(ref)) if n=='lgammaf' else
+                        mp.mpf('3e-5')*abs(ref)+(mp.mpf(2)**-149 if abs(ref)<mp.mpf(2)**-126 else 0))
+                fraction=float(absolute/budget) if budget else 0
+                if fraction>s.get('max_budget_fraction',0):
+                    s['max_budget_fraction']=fraction; s['worst_budget']=inputs
             if n=='tanf':
                 region='pole_neighbors' if abs(ref)>=10000 else 'away_from_poles'
                 record=s.setdefault('tangent_regions',{}).setdefault(region,

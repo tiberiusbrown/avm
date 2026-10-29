@@ -5,7 +5,7 @@
  * fixtures. Exceptional values and exact identities are checked separately. */
 enum avm_accuracy { AVM_EXACT, AVM_SQRT, AVM_HYPOT, AVM_SIN, AVM_COS,
     AVM_TAN, AVM_ATAN, AVM_ATAN2, AVM_EXP, AVM_LOG, AVM_POW,
-    AVM_EXPM1, AVM_CBRT, AVM_HYPERBOLIC, AVM_ERF, AVM_ERFC };
+    AVM_EXPM1, AVM_CBRT, AVM_HYPERBOLIC, AVM_ERF, AVM_ERFC, AVM_LGAMMA, AVM_TGAMMA };
 
 static double avm_abs(double x) { return x < 0 ? -x : x; }
 
@@ -23,6 +23,8 @@ static int avm_accuracy_accept(enum avm_accuracy policy, double actual,
     case AVM_TAN: absolute = relative = 1e-4; break;
     case AVM_ATAN: case AVM_ATAN2: absolute = 1e-6; break;
     case AVM_LOG: absolute = relative = 1e-6; break;
+    case AVM_LGAMMA: absolute = relative = 1e-5; break;
+    case AVM_TGAMMA: relative = 3e-5; if (avm_abs(reference) < 0x1p-126) absolute = 0x1p-149; break;
     case AVM_ERF: relative = 1e-5; break;
     case AVM_ERFC: relative = 2e-5; break;
     case AVM_EXP: relative = 1e-5; break;

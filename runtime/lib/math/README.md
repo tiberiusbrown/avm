@@ -754,3 +754,92 @@ tests. The full high-precision target checked 1,591,205 cases across 31
 functions with zero failures. Generated accuracy fixtures and C/C++ errno
 fixtures passed; no ISA, interpreter, LLVM backend, or pointer ABI changes
 were needed.
+
+## C99 complex arithmetic
+
+`runtime/lib/complex/` supplies the 22 binary32 complex kernels. The typed
+adapters in `complex_standard.c` export the double and long-double interfaces;
+all three AVM complex representations contain real then imaginary binary32
+components, occupy eight bytes, and have byte alignment. Their C types remain
+distinct. The existing indirect argument and hidden-result ABI is used without
+compiler or interpreter changes. Public declarations and strict freestanding
+C99 fixtures use `__extension__` because Clang diagnoses complex types as an
+extension in freestanding mode. `_Complex_I` is a constant float complex value;
+optional imaginary types and `__STDC_IEC_559_COMPLEX__` are not advertised.
+
+Construction installs both components directly. Accessors preserve component
+bits, conjugation flips the imaginary sign bit, and projection recognizes an
+infinite component even when the other component is NaN. Magnitudes use the
+existing `hypotf`; arguments use `atan2f`. The logarithm scales by the larger
+component and uses `log1pf` near unit magnitude. Square root scales extreme
+inputs before taking the principal root. Exponential multiplies an exact zero
+factor separately and stages four equal exponential factors to retain finite
+components when the other component overflows.
+
+Inverse sine/cosine and inverse hyperbolic sine/cosine use elliptic coordinates
+and rationalized differences; bounded norms use a scaled ratio and `sqrtf`.
+Tiny branch-point inputs, signed axes, and huge magnitudes have separate paths.
+Inverse hyperbolic sine uses an odd polynomial through degree seven below
+magnitude 0.125. Inverse hyperbolic tangent uses `log1pf` and `atan2f` forms,
+with explicit poles and scaling. Rotations construct components directly.
+Power uses the scalar complex-multiply helper between logarithm and exponential.
+Its zero/one policy chooses `0**0 = 1`, `z**0 = 1`, and `1**w = 1`, including
+nonfinite arguments. Zero bases with real exponents use the principal phase;
+integer and half-integer phases retain exact zero factors.
+
+The compiler helpers in `runtime/builtins/complex.c` use the compiler-rt
+multiplication recovery and a division core that normalizes both numerator
+and denominator for extreme exponents. They use only scalar binary32
+arithmetic and bit operations, with no dependency back into `libavm.a`.
+All six conventional helper symbols are available; AVM Clang emits the `sc3`
+helpers for all three real floating types. No helper recursively calls itself.
+
+Accuracy follows AVM/avr-libc scalar math: ordinary components use a combined
+`1e-6 + 1e-5*abs(reference)` acceptance budget. Extreme trigonometric phase
+accuracy follows the existing scalar FREMPIO2 implementation, including its
+avr-libc flt40 pi/2 precision; glibc's extreme-angle quadrants are not required.
+Exact signs and classifications are checked independently on axes, branch cuts,
+poles, and determined nonfinite results. The host reference checks algorithms
+against C99 libm using host scalar kernels; guest golden fixtures check the
+shipped AVM kernels separately. `avm_complex_reference_tests_run` runs the host
+comparison (through WSL/glibc on Windows). Golden data can be regenerated with
+`complex_reference.c --generate` followed by
+`generate_complex_tests.py --reference-csv <csv>` from the repository root.
+
+Function sections and archive garbage collection keep accessors independent of
+transcendental code. Constants and golden tables reside in program memory;
+complex kernels add no persistent writable storage. `bench/c/complex_*` contains
+single-call size/cycle/stack workloads with O2 and O0 callers. Runtime kernels
+use O3. The tests cover all 66 exported names through typed function pointers,
+two translation units, varargs, and all six caller optimization levels.
+`tgmath.h` selects the complex domain if any generic argument is complex and
+gives integer generic arguments double rank; its representative expressions are
+unevaluated and each actual operand executes once.
+
+RelWithDebInfo validation passed all 1,545 guest fixtures, including the 24 new
+complex fixtures and six existing real tgmath fixtures across O0/O1/O2/O3/Os/Oz.
+The compact exceptional-value grid has 998 cases per optimization level.
+The independent host suite passed 46,200 result pairs. Its largest relative
+component error for `abs(reference)>1e-3` was `5.06383344e-6` (power), and its
+largest absolute error was `1.90734863e-6`, within the combined budget.
+
+Single-call benchmark measurements include call and volatile-sink overhead;
+they subtract the 35-cycle DEBUG_BREAK baseline. Text sizes include startup
+and shared callees. Guest stack peaks include the caller; native extra stack
+was at most 15 bytes. All runtime kernels use O3 in both caller configurations.
+
+| Function | O2 text bytes | O2 AVR cycles | O2 guest stack | O0 guest stack |
+| --- | ---: | ---: | ---: | ---: |
+| `crealf` | 260 | 858 | 26 | 34 |
+| `cacoshf` | 3,323 | 42,653 | 128 | 140 |
+| `casinhf` | 4,541 | 60,251 | 154 | 166 |
+| `catanhf` | 3,510 | 24,573 | 97 | 109 |
+| `cpowf` | 4,615 | 50,179 | 187 | 199 |
+
+The empty startup baseline is 210 text bytes and a 4,608-byte packaged image.
+The accessor image is 5,120 bytes; the inverse-cosh image is 8,192 bytes.
+Symbol inspection confirms that the accessor retains only `crealf` from the
+complex library, and inverse cosh retains only `cacoshf` among public complex
+functions. Benchmark and runtime disassemblies are retained alongside their
+existing source-tree counterparts. All 66 public symbols and six compiler
+helpers were verified; the helper object has no undefined dependencies.

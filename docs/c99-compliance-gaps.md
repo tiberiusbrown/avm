@@ -27,11 +27,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] **Hosted environment selection:** Supply a truthful hosted C99 compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the complete hosted contract. The current SDK defaults to freestanding compilation.
 - [ ] **Minimum 65,535-byte object:** C99's hosted-only minimum translation/execution limit requires a single object of 65,535 bytes. The ordinary AVM data layout provides at most 1,024 bytes of writable static storage plus a 256-byte VM stack.
 
-### `<complex.h>` — complex arithmetic
-
-- [ ] Provide the required complex macros/constants (`complex`, `_Complex_I`, `I`) and a functioning C99 complex library for all three real precisions; C99 imaginary types and `_Imaginary_I` are optional.
-- [ ] Provide the `float`, `double`, and `long double` complex variants of `cacos`, `casin`, `catan`, `ccos`, `csin`, `ctan`, `cacosh`, `casinh`, `catanh`, `ccosh`, `csinh`, `ctanh`, `cexp`, `clog`, `cabs`, `cpow`, `csqrt`, `carg`, `cimag`, `conj`, `cproj`, and `creal` (the corresponding `f`/`l` spellings where applicable).
-
 ### `<stdio.h>` — narrow streams, formatted I/O, files
 
 - [ ] Provide `FILE`, `fpos_t`, `stdin`, `stdout`, `stderr`, `EOF`, `BUFSIZ`, `FOPEN_MAX`, `FILENAME_MAX`, `L_tmpnam`, `TMP_MAX`, `_IOFBF`, `_IOLBF`, `_IONBF`, and `SEEK_SET`/`SEEK_CUR`/`SEEK_END`.
@@ -44,10 +39,6 @@ Part I lists gaps that affect **freestanding C99 compliance**. Part II lists the
 - [ ] Provide stream positioning: `fgetpos`, `fseek`, `fsetpos`, `ftell`, and `rewind`.
 - [ ] Provide stream status and error reporting: `clearerr`, `feof`, `ferror`, and `perror`.
 - [ ] Supply the C99 text/binary stream, buffering, stream-orientation, end-of-file, and standard-file semantics underlying these interfaces, not just linkable stubs.
-
-### `<tgmath.h>` — type-generic math
-
-- [ ] Provide complex dispatch for the shared real/complex type-generic macros, and the `carg`, `cimag`, `conj`, `cproj`, and `creal` type-generic macros (including their real-argument forms), backed by functioning complex math entry points in all three precisions.
 
 ### `<wchar.h>` — wide and multibyte functionality
 

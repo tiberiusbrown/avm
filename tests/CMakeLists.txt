@@ -109,8 +109,11 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             endif()
         endif()
 
+        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME STREQUAL "complex_abi")
+            set(test_support_sources "${AVM_C_TEST_DIR}/support/complex_abi_impl.c")
+        endif()
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
-        if(AVM_TEST_NAME STREQUAL "tgmath_real")
+        if(AVM_TEST_NAME MATCHES "^(tgmath_real|tgmath_complex|complex_.*)$")
             list(APPEND test_compile_options -std=c99 -pedantic-errors)
         endif()
         if(AVM_TEST_NAME MATCHES "^(ff_fixed|vla)$")
@@ -154,7 +157,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             avm_add_object(
                 OUTPUT "${test_support_object}"
                 SOURCE "${test_support_source}"
-                LANGUAGE CXX
+                LANGUAGE ${AVM_TEST_LANGUAGE}
                 INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
                 COMPILE_OPTIONS ${test_compile_options}
                 DEPENDS avm_sysroot ${test_source_dependencies}
@@ -1007,3 +1010,21 @@ endif()
 
 add_subdirectory(termination)
 add_dependencies(avm_tests_run avm_termination_checks)
+
+# MSVC has no C99 complex language support; use an independent Linux reference
+# through WSL on Windows. This never links host math into guest images.
+if(WIN32)
+    find_program(AVM_COMPLEX_WSL wsl)
+    if(AVM_COMPLEX_WSL)
+        set(complex_reference_options --wsl)
+    endif()
+endif()
+if(NOT WIN32 OR AVM_COMPLEX_WSL)
+    add_custom_target(avm_complex_reference_tests_run
+        COMMAND "${Python3_EXECUTABLE}"
+            "${CMAKE_CURRENT_SOURCE_DIR}/math/run_complex_reference.py"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/complex-reference"
+            ${complex_reference_options}
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
+endif()

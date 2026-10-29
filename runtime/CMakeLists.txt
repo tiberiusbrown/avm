@@ -36,6 +36,7 @@ set(RUNTIME_SOURCES
     multibyte
     math
     math_standard
+    complex_standard
     pgmspace
     qsort
     bsearch
@@ -200,6 +201,30 @@ foreach(kernel IN LISTS AVM_MATH_KERNELS)
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${math_object}")
 endforeach()
 
+file(GLOB AVM_RUNTIME_COMPLEX_HEADERS CONFIGURE_DEPENDS
+    "${AVM_RUNTIME_SOURCE_DIR}/lib/complex/*.h")
+set(AVM_COMPLEX_KERNELS basic exp_log sqrt pow trig hyperbolic inverse)
+foreach(kernel IN LISTS AVM_COMPLEX_KERNELS)
+    set(complex_object "${AVM_RUNTIME_OBJECT_DIR}/complex_${kernel}.o")
+    avm_add_runtime_object(
+        OUTPUT "${complex_object}"
+        SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/complex/${kernel}.c"
+        LANGUAGE C
+        INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+        COMPILE_OPTIONS -O3 -ffp-contract=off -fwrapv -fno-jump-tables
+        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_COMPLEX_HEADERS})
+    list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${complex_object}")
+endforeach()
+
+set(AVM_BUILTINS_COMPLEX_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/builtins_complex.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_BUILTINS_COMPLEX_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/builtins/complex.c"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    COMPILE_OPTIONS -O3 -ffp-contract=off
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_COMPLEX_HEADERS})
+
 set(AVM_RUNTIME_LIBRARY "${AVM_RUNTIME_BUILD_DIR}/libavm.a")
 avm_add_archive(
     OUTPUT "${AVM_RUNTIME_LIBRARY}"
@@ -243,6 +268,7 @@ avm_add_archive(
         "${AVM_BUILTINS_INTEGER_OBJECT}"
         "${AVM_BUILTINS_WIDE_INTEGER_OBJECT}"
         "${AVM_BUILTINS_ATOMIC_OBJECT}"
+        "${AVM_BUILTINS_COMPLEX_OBJECT}"
 )
 
 # Disassemble production objects, retaining relocations so calls and constant

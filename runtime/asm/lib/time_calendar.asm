@@ -13,7 +13,7 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_mulsi3
 00000000         *UND*	00000000 __avm_divsi3
 00000000 g     F .text.__avm_time_civil	00000143 __avm_time_civil
-00000000 g     F .text.__avm_time_split	00000348 __avm_time_split
+00000000 g     F .text.__avm_time_split	00000347 __avm_time_split
 00000000         *UND*	00000000 __avm_divmoddi4
 00000000         *UND*	00000000 __avm_modsi3
 00000000         *UND*	00000000 __avm_udivmodsi4
@@ -415,7 +415,7 @@ Disassembly of section .text.__avm_time_split:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_time_split
-		R_AVM_FAR24	.text.__avm_time_split+0x341
+		R_AVM_FAR24	.text.__avm_time_split+0x340
 <L1>:
  d6 fe                 adjsp	-0x2
  f0 14 1c              leasp	r4, 0x1c
@@ -566,7 +566,7 @@ Disassembly of section .text.__avm_time_split:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_time_split
-		R_AVM_FAR24	.text.__avm_time_split+0x341
+		R_AVM_FAR24	.text.__avm_time_split+0x340
 <L2>:
  c0 04                 ldi8	r4, 0x4
  a5                    xor	r5, r5
@@ -735,9 +735,8 @@ Disassembly of section .text.__avm_time_split:
  c6 3a f9              ldi16	r6, 0xf93a
  af                    xor	r7, r7
  f7 6e                 add32	q3, q2
- 02                    mov	r4, r6
  f0 35 18              ldsp16	r5, [sp+0x18]
- ee 9a 2e              st16	[r5+14], r4
+ ee da 2e              st16	[r5+14], r6
  c0 01                 ldi8	r4, 0x1
  d6 36                 adjsp	0x36
  b8                    pop16	r0

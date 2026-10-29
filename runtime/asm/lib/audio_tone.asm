@@ -6,7 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_audio_tone	00000000 .text.avm_audio_tone
 00000000 l     O .rodata.note_increments	00000090 note_increments
 00000000 l    d  .rodata.note_increments	00000000 .rodata.note_increments
-00000000 g     F .text.avm_audio_tone	00000035 avm_audio_tone
+00000000 g     F .text.avm_audio_tone	00000033 avm_audio_tone
 00000000         *UND*	00000000 __avm_audio_tone_increment
 
 Disassembly of section .text.avm_audio_tone:
@@ -23,12 +23,11 @@ Disassembly of section .text.avm_audio_tone:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_audio_tone
-		R_AVM_FAR24	.text.avm_audio_tone+0x2c
+		R_AVM_FAR24	.text.avm_audio_tone+0x2a
 <L0>:
- f1 05                 mov	r0, r5
  f0 02 ff              ldi8	r2, 0xff
  f2 4b                 sub	r3, r3
- f9 40                 and	r2, r0
+ f9 54                 and	r2, r5
  f7 65                 add32	q1, q1
  f0 04 00 00           ldi16	r0, 0x0
 		R_AVM_PROG_LO16	.rodata.note_increments
@@ -38,7 +37,7 @@ Disassembly of section .text.avm_audio_tone:
  f0 62 a0              ldp16	r5, [q0]
  e2 00 00 00           jmpf	avm_audio_tone
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_audio_tone+0x2d
+		R_AVM_FAR24	.text.avm_audio_tone+0x2b
  a5                    xor	r5, r5
  b8                    pop16	r0
  b9                    pop16	r1

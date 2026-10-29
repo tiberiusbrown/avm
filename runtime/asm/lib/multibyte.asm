@@ -11,8 +11,8 @@ SYMBOL TABLE:
 00000000 g     F .text.mbtowc	00000025 mbtowc
 00000000 g     F .text.mblen	0000001c mblen
 00000000 g     F .text.wctomb	0000000e wctomb
-00000000 g     F .text.mbstowcs	00000028 mbstowcs
-00000000 g     F .text.wcstombs	00000028 wcstombs
+00000000 g     F .text.mbstowcs	00000027 mbstowcs
+00000000 g     F .text.wcstombs	00000027 wcstombs
 
 Disassembly of section .text.mbtowc:
 
@@ -91,11 +91,11 @@ Disassembly of section .text.mbstowcs:
  b0                    push16	r0
  af                    xor	r7, r7
  f1 07                 mov	r0, r7
- f5 28                 cmp	r6, r0
+ 3b                    cmp	r6, r7
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	mbstowcs
-		R_AVM_FAR24	.text.mbstowcs+0x21
+		R_AVM_FAR24	.text.mbstowcs+0x20
 <L0>:
  f7 09                 ld8u	r1, [r5+]
  f6 01                 st8	[r4+], r1
@@ -109,7 +109,7 @@ Disassembly of section .text.mbstowcs:
 <L1>:
  e2 00 00 00           jmpf	mbstowcs
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.mbstowcs+0x23
+		R_AVM_FAR24	.text.mbstowcs+0x22
  f1 06                 mov	r0, r6
  f1 20                 mov	r4, r0
  b8                    pop16	r0
@@ -123,11 +123,11 @@ Disassembly of section .text.wcstombs:
  b0                    push16	r0
  af                    xor	r7, r7
  f1 07                 mov	r0, r7
- f5 28                 cmp	r6, r0
+ 3b                    cmp	r6, r7
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	wcstombs
-		R_AVM_FAR24	.text.wcstombs+0x21
+		R_AVM_FAR24	.text.wcstombs+0x20
 <L0>:
  f7 09                 ld8u	r1, [r5+]
  f6 01                 st8	[r4+], r1
@@ -141,7 +141,7 @@ Disassembly of section .text.wcstombs:
 <L1>:
  e2 00 00 00           jmpf	wcstombs
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.wcstombs+0x23
+		R_AVM_FAR24	.text.wcstombs+0x22
  f1 06                 mov	r0, r6
  f1 20                 mov	r4, r0
  b8                    pop16	r0

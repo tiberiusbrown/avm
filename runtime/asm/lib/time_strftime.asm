@@ -4,14 +4,14 @@ time_strftime.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 time_strftime.c
 00000000 l    d  .text.strftime	00000000 .text.strftime
-00000000 l     F .text.conversion	000005a5 conversion
+00000000 l     F .text.conversion	000005a4 conversion
 00000000 l     F .text.emit	00000032 emit
 00000000 l    d  .text.emit	00000000 .text.emit
 00000000 l    d  .text.conversion	00000000 .text.conversion
 00000000 l     F .text.text	0000003b text
 00000000 l     F .text.number	00000103 number
 00000000 l     F .text.hms	00000078 hms
-00000000 l     F .text.iso	000000d8 iso
+00000000 l     F .text.iso	000000d7 iso
 00000000 l     F .text.date	0000008c date
 00000000 l     F .text.ampm	0000001d ampm
 00000000 l    d  .text.text	00000000 .text.text
@@ -242,19 +242,19 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x52e
+		R_AVM_FAR24	.text.conversion+0x52d
 <L4>:
  cd 54                 cmpi.s8	r5, 0x54
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x482
+		R_AVM_FAR24	.text.conversion+0x481
 <L5>:
  cd 55                 cmpi.s8	r5, 0x55
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L6>:
  ed b6 2c              ld16	r5, [r3+12]
  01                    mov	r4, r5
@@ -274,7 +274,7 @@ Disassembly of section .text.conversion:
  07                    mov	r5, r7
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x401
+		R_AVM_FAR24	.text.conversion+0x400
  cd 6e                 cmpi.s8	r5, 0x6e
  d3 04                 brslt8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
@@ -291,7 +291,7 @@ Disassembly of section .text.conversion:
  d3 04                 brslt8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x447
+		R_AVM_FAR24	.text.conversion+0x446
 <L9>:
  cd 61                 cmpi.s8	r5, 0x61
  d1 04                 brne8	0x4 <L10>
@@ -309,7 +309,7 @@ Disassembly of section .text.conversion:
  d0 04                 breq8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L12>:
  f0 3b 00              stsp16	[sp+0x0], r3
  ed d6 2c              ld16	r6, [r3+12]
@@ -416,7 +416,7 @@ Disassembly of section .text.conversion:
  f2 6a                 mov32	q3, q0
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x55f
+		R_AVM_FAR24	.text.conversion+0x55e
  cd 44                 cmpi.s8	r5, 0x44
  d9 04                 brsge8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
@@ -433,19 +433,19 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L17>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x417
+		R_AVM_FAR24	.text.conversion+0x416
 <L17>:
  cd 48                 cmpi.s8	r5, 0x48
  d1 04                 brne8	0x4 <L18>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x4a2
+		R_AVM_FAR24	.text.conversion+0x4a1
 <L18>:
  cd 49                 cmpi.s8	r5, 0x49
  d0 04                 breq8	0x4 <L19>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L19>:
  ed b6 24              ld16	r5, [r3+4]
  d6 fd                 adjsp	-0x3
@@ -457,7 +457,7 @@ Disassembly of section .text.conversion:
  ec ee                 srem16	r5, r6
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x555
+		R_AVM_FAR24	.text.conversion+0x554
  cd 75                 cmpi.s8	r5, 0x75
  d9 04                 brsge8	0x4 <L20>
 		R_AVM_RELAX	*ABS*
@@ -468,32 +468,32 @@ Disassembly of section .text.conversion:
  d9 04                 brsge8	0x4 <L21>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x463
+		R_AVM_FAR24	.text.conversion+0x462
 <L21>:
  cd 78                 cmpi.s8	r5, 0x78
  d1 04                 brne8	0x4 <L22>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x490
+		R_AVM_FAR24	.text.conversion+0x48f
 <L22>:
  cd 79                 cmpi.s8	r5, 0x79
  d1 04                 brne8	0x4 <L23>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x507
+		R_AVM_FAR24	.text.conversion+0x506
 <L23>:
  cd 7a                 cmpi.s8	r5, 0x7a
  d0 04                 breq8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L24>:
  ed b6 30              ld16	r5, [r3+16]
  f6 2d                 tst16	r5
  d9 04                 brsge8	0x4 <L25>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L25>:
  c1 2b                 ldi8	r5, 0x2b
  f1 22                 mov	r4, r2
@@ -520,7 +520,7 @@ Disassembly of section .text.conversion:
  f1 25                 mov	r5, r1
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x4ad
+		R_AVM_FAR24	.text.conversion+0x4ac
  cd 58                 cmpi.s8	r5, 0x58
  d9 04                 brsge8	0x4 <L26>
 		R_AVM_RELAX	*ABS*
@@ -531,19 +531,19 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L27>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x482
+		R_AVM_FAR24	.text.conversion+0x481
 <L27>:
  cd 59                 cmpi.s8	r5, 0x59
  d1 04                 brne8	0x4 <L28>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x4f5
+		R_AVM_FAR24	.text.conversion+0x4f4
 <L28>:
  cd 5a                 cmpi.s8	r5, 0x5a
  d0 04                 breq8	0x4 <L29>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L29>:
  c1 55                 ldi8	r5, 0x55
  f1 22                 mov	r4, r2
@@ -558,7 +558,7 @@ Disassembly of section .text.conversion:
  c1 43                 ldi8	r5, 0x43
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x4ab
+		R_AVM_FAR24	.text.conversion+0x4aa
  cd 42                 cmpi.s8	r5, 0x42
  d3 04                 brslt8	0x4 <L30>
 		R_AVM_RELAX	*ABS*
@@ -569,20 +569,20 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L31>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x49c
+		R_AVM_FAR24	.text.conversion+0x49b
 <L31>:
  cd 41                 cmpi.s8	r5, 0x41
  d0 04                 breq8	0x4 <L32>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L32>:
  ed d6 2c              ld16	r6, [r3+12]
  ce 07                 cmpi.s8	r6, 0x7
  d2 04                 brult8	0x4 <L33>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L33>:
  f0 01 0a              ldi8	r1, 0xa
  c3 03                 ldi8	r7, 0x3
@@ -613,13 +613,13 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L35>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x417
+		R_AVM_FAR24	.text.conversion+0x416
 <L35>:
  cd 68                 cmpi.s8	r5, 0x68
  d0 04                 breq8	0x4 <L36>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L36>:
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
@@ -634,17 +634,17 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L38>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x4a9
+		R_AVM_FAR24	.text.conversion+0x4a8
 <L38>:
  cd 70                 cmpi.s8	r5, 0x70
  d0 04                 breq8	0x4 <L39>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L39>:
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x4e1
+		R_AVM_FAR24	.text.conversion+0x4e0
  cd 42                 cmpi.s8	r5, 0x42
  d1 04                 brne8	0x4 <L40>
 		R_AVM_RELAX	*ABS*
@@ -655,7 +655,7 @@ Disassembly of section .text.conversion:
  d0 04                 breq8	0x4 <L41>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L41>:
  c2 64                 ldi8	r6, 0x64
  af                    xor	r7, r7
@@ -665,13 +665,13 @@ Disassembly of section .text.conversion:
 		R_AVM_FAR24	__avm_time_floor
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x407
+		R_AVM_FAR24	.text.conversion+0x406
  ed d6 28              ld16	r6, [r3+8]
  ce 0c                 cmpi.s8	r6, 0xc
  d2 04                 brult8	0x4 <L42>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L42>:
  f0 01 03              ldi8	r1, 0x3
  c3 0a                 ldi8	r7, 0xa
@@ -697,18 +697,18 @@ Disassembly of section .text.conversion:
  d6 02                 adjsp	0x2
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
  cd 6a                 cmpi.s8	r5, 0x6a
  d1 04                 brne8	0x4 <L43>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x4b5
+		R_AVM_FAR24	.text.conversion+0x4b4
 <L43>:
  cd 6d                 cmpi.s8	r5, 0x6d
  d0 04                 breq8	0x4 <L44>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L44>:
  ed b6 28              ld16	r5, [r3+8]
  d6 fd                 adjsp	-0x3
@@ -717,34 +717,34 @@ Disassembly of section .text.conversion:
  c2 02                 ldi8	r6, 0x2
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x4c0
+		R_AVM_FAR24	.text.conversion+0x4bf
  cd 72                 cmpi.s8	r5, 0x72
  d1 04                 brne8	0x4 <L45>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x4ce
+		R_AVM_FAR24	.text.conversion+0x4cd
 <L45>:
  cd 74                 cmpi.s8	r5, 0x74
  d0 04                 breq8	0x4 <L46>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L46>:
  c1 09                 ldi8	r5, 0x9
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x4ab
+		R_AVM_FAR24	.text.conversion+0x4aa
  cd 44                 cmpi.s8	r5, 0x44
  d1 04                 brne8	0x4 <L47>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x490
+		R_AVM_FAR24	.text.conversion+0x48f
 <L47>:
  cd 46                 cmpi.s8	r5, 0x46
  d0 04                 breq8	0x4 <L48>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L48>:
  d6 fd                 adjsp	-0x3
  c1 04                 ldi8	r5, 0x4
@@ -793,13 +793,13 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L49>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x535
+		R_AVM_FAR24	.text.conversion+0x534
 <L49>:
  cd 52                 cmpi.s8	r5, 0x52
  d0 04                 breq8	0x4 <L50>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L50>:
  ed b6 24              ld16	r5, [r3+4]
  d6 fd                 adjsp	-0x3
@@ -830,18 +830,18 @@ Disassembly of section .text.conversion:
  fa ef                 asr16i	r7, 0xf
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x55d
+		R_AVM_FAR24	.text.conversion+0x55c
  cd 56                 cmpi.s8	r5, 0x56
  d1 04                 brne8	0x4 <L51>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x417
+		R_AVM_FAR24	.text.conversion+0x416
 <L51>:
  cd 57                 cmpi.s8	r5, 0x57
  d0 04                 breq8	0x4 <L52>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L52>:
  ed b6 2c              ld16	r5, [r3+12]
  c9 06                 addi.s8	r5, 0x6
@@ -849,10 +849,9 @@ Disassembly of section .text.conversion:
  ec ee                 srem16	r5, r6
  aa                    xor	r6, r6
  29                    sub	r6, r5
- 02                    mov	r4, r6
  06                    mov	r5, r6
  fa cf                 asr16i	r5, 0xf
- f4 40                 stsp16	[sp+0x0], r4
+ f4 42                 stsp16	[sp+0x0], r6
  f4 49                 stsp16	[sp+0x2], r5
  ed b6 2e              ld16	r5, [r3+14]
  01                    mov	r4, r5
@@ -875,7 +874,7 @@ Disassembly of section .text.conversion:
  f4 40                 stsp16	[sp+0x0], r4
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x55d
+		R_AVM_FAR24	.text.conversion+0x55c
  f0 3a 00              stsp16	[sp+0x0], r2
  f0 17 08              leasp	r7, 0x8
  f0 10 04              leasp	r0, 0x4
@@ -891,26 +890,26 @@ Disassembly of section .text.conversion:
  d1 04                 brne8	0x4 <L53>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x4ed
+		R_AVM_FAR24	.text.conversion+0x4ec
 <L53>:
  f0 0f 56              cmpi.s8	r3, 0x56
  d0 04                 breq8	0x4 <L54>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x56c
+		R_AVM_FAR24	.text.conversion+0x56b
 <L54>:
  f4 12                 ldsp16	r6, [sp+0x4]
  f4 1b                 ldsp16	r7, [sp+0x6]
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x58b
+		R_AVM_FAR24	.text.conversion+0x58a
  09                    mov	r6, r5
  ca 9c                 addi.s8	r6, -0x64
  ce 02                 cmpi.s8	r6, 0x2
  d2 04                 brult8	0x4 <L55>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L55>:
  c2 30                 ldi8	r6, 0x30
  c3 20                 ldi8	r7, 0x20
@@ -920,18 +919,18 @@ Disassembly of section .text.conversion:
  d6 fd                 adjsp	-0x3
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x53c
+		R_AVM_FAR24	.text.conversion+0x53b
  cd 75                 cmpi.s8	r5, 0x75
  d1 04                 brne8	0x4 <L56>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x546
+		R_AVM_FAR24	.text.conversion+0x545
 <L56>:
  cd 77                 cmpi.s8	r5, 0x77
  d0 04                 breq8	0x4 <L57>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	conversion
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
 <L57>:
  ed b6 2c              ld16	r5, [r3+12]
  d6 fd                 adjsp	-0x3
@@ -940,7 +939,7 @@ Disassembly of section .text.conversion:
  c2 01                 ldi8	r6, 0x1
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x540
+		R_AVM_FAR24	.text.conversion+0x53f
  af                    xor	r7, r7
  f1 22                 mov	r4, r2
  f1 27                 mov	r5, r3
@@ -950,7 +949,7 @@ Disassembly of section .text.conversion:
 		R_AVM_FAR24	.text.hms
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
  f1 22                 mov	r4, r2
  f1 27                 mov	r5, r3
  e3 00 00 00           callf	conversion
@@ -958,15 +957,15 @@ Disassembly of section .text.conversion:
 		R_AVM_FAR24	.text.date
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
  c1 25                 ldi8	r5, 0x25
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x4ab
+		R_AVM_FAR24	.text.conversion+0x4aa
  ed b6 24              ld16	r5, [r3+4]
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x538
+		R_AVM_FAR24	.text.conversion+0x537
  c1 0a                 ldi8	r5, 0xa
  f1 22                 mov	r4, r2
  e3 00 00 00           callf	conversion
@@ -974,7 +973,7 @@ Disassembly of section .text.conversion:
 		R_AVM_FAR24	.text.emit
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
  ed b6 2e              ld16	r5, [r3+14]
  d6 fd                 adjsp	-0x3
  c2 30                 ldi8	r6, 0x30
@@ -988,7 +987,7 @@ Disassembly of section .text.conversion:
  f7 6e                 add32	q3, q2
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x55d
+		R_AVM_FAR24	.text.conversion+0x55c
  c3 01                 ldi8	r7, 0x1
  f1 22                 mov	r4, r2
  f1 27                 mov	r5, r3
@@ -1008,12 +1007,12 @@ Disassembly of section .text.conversion:
 		R_AVM_FAR24	.text.ampm
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x565
+		R_AVM_FAR24	.text.conversion+0x564
  f4 22                 ldsp16	r6, [sp+0x8]
  f4 2b                 ldsp16	r7, [sp+0xa]
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x58b
+		R_AVM_FAR24	.text.conversion+0x58a
  d6 fd                 adjsp	-0x3
  c1 30                 ldi8	r5, 0x30
  f1 39                 stsp8	[sp+0x2], r5
@@ -1023,7 +1022,7 @@ Disassembly of section .text.conversion:
  f2 6a                 mov32	q3, q0
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x55f
+		R_AVM_FAR24	.text.conversion+0x55e
  c2 64                 ldi8	r6, 0x64
  af                    xor	r7, r7
  f2 68                 mov32	q2, q0
@@ -1045,11 +1044,11 @@ Disassembly of section .text.conversion:
  f2 6a                 mov32	q3, q0
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x55f
+		R_AVM_FAR24	.text.conversion+0x55e
  ed b6 20              ld16	r5, [r3+0]
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x538
+		R_AVM_FAR24	.text.conversion+0x537
  ed b6 22              ld16	r5, [r3+2]
  d6 fd                 adjsp	-0x3
  c2 30                 ldi8	r6, 0x30
@@ -1058,7 +1057,7 @@ Disassembly of section .text.conversion:
  f4 42                 stsp16	[sp+0x0], r6
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x559
+		R_AVM_FAR24	.text.conversion+0x558
  ed b6 2c              ld16	r5, [r3+12]
  d6 fd                 adjsp	-0x3
  c2 30                 ldi8	r6, 0x30
@@ -1110,7 +1109,7 @@ Disassembly of section .text.conversion:
  f0 39 00              stsp16	[sp+0x0], r1
  e2 00 00 00           jmpf	conversion
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.conversion+0x55f
+		R_AVM_FAR24	.text.conversion+0x55e
 
 Disassembly of section .text.text:
 
@@ -1482,10 +1481,9 @@ Disassembly of section .text.iso:
  ed b8 2a              ld16	r5, [r4+10]
  ed 98 26              ld16	r4, [r4+6]
  d6 fc                 adjsp	-0x4
- 08                    mov	r6, r4
  0c                    mov	r7, r4
  fa ef                 asr16i	r7, 0xf
- f4 42                 stsp16	[sp+0x0], r6
+ f4 40                 stsp16	[sp+0x0], r4
  f4 4b                 stsp16	[sp+0x2], r7
  09                    mov	r6, r5
  0d                    mov	r7, r5

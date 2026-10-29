@@ -1,0 +1,877 @@
+Instruction benchmark,Cycles before,Cycles after,Cycle delta,Generated code unchanged
+SYS debug_break (baseline),35,35,0,True
+SYS debug_putc,35,35,0,True
+SYS millis,38,38,0,True
+SYS millis32,42,42,0,True
+"NOP (MOV r4,r4 alias)",17,17,0,True
+"CLR r4 (XOR r4,r4 alias)",17,17,0,True
+"MOV r4,r5 (upper one-byte)",17,17,0,True
+"MOV r0,r1 (full F1)",37,37,0,True
+"MOV32 q0,q1 (full F2)",38,38,0,True
+"LDI8 r4,imm8 (upper)",35,35,0,True
+"LDI8 r0,imm8 (cold lower)",53,53,0,True
+"LDI16 r4,imm16 (upper)",52,52,0,True
+"LDI16 r0,imm16 (cold lower)",71,71,0,True
+ZEXT8 r0,37,37,0,True
+SEXT8 r0,38,38,0,True
+SWAP8 r0,37,37,0,True
+BSWAP16 r0,38,38,0,True
+BOOL r0 (zero),38,38,0,True
+BOOL r0 (nonzero),38,38,0,True
+PUSH16 r0,19,19,0,True
+POP16 r0,18,18,0,True
+ADJSP simm8,35,35,0,True
+GETSP r0,37,37,0,True
+SETSP r0,40,40,0,True
+"LEASP r0,32 (cold)",60,60,0,True
+"ADD r4,r5 (upper one-byte)",17,17,0,True
+"ADD r0,r1 (full F2)",38,38,0,True
+"SUB r4,r5 (upper one-byte)",17,17,0,True
+"SUB r0,r1 (full F2)",38,38,0,True
+"ADDI.S8 r4,simm8 (upper)",35,35,0,True
+"ADDI.S8 r0,simm8 (cold lower)",54,54,0,True
+INC16 r0,38,38,0,True
+DEC16 r0,38,38,0,True
+NEG16 r0,38,38,0,True
+"ADD32 q0,q1",38,38,0,True
+"SUB32 q0,q1",38,38,0,True
+"LSL32.1 q0 (ADD32 q0,q0 alias)",38,38,0,True
+"AND r4,r5 (upper one-byte)",17,17,0,True
+"AND r0,r1 (full F9)",51,51,0,True
+"OR r4,r5 (upper one-byte)",17,17,0,True
+"OR r0,r1 (full F9)",52,52,0,True
+"XOR r4,r5 (upper one-byte)",17,17,0,True
+"XOR r0,r1 (full F9)",53,53,0,True
+NOT16 r0,38,38,0,True
+LSL16.1 r0,38,38,0,True
+LSR16.1 r0,38,38,0,True
+ASR16.1 r0,38,38,0,True
+LSR32.1 q0,38,38,0,True
+ASR32.1 q0,38,38,0,True
+"SHL16V r4,r5 (count 0)",42,42,0,True
+"SHL16V r4,r5 (count 1)",45,45,0,True
+"SHL16V r4,r5 (count 2)",50,50,0,True
+"SHL16V r4,r5 (count 3)",55,55,0,True
+"SHL16V r4,r5 (count 4)",60,60,0,True
+"SHL16V r4,r5 (count 5)",65,65,0,True
+"SHL16V r4,r5 (count 6)",70,70,0,True
+"SHL16V r4,r5 (count 7)",75,75,0,True
+"SHL16V r4,r5 (count 8)",44,44,0,True
+"SHL16V r4,r5 (count 9)",47,47,0,True
+"SHL16V r4,r5 (count 10)",52,52,0,True
+"SHL16V r4,r5 (count 11)",57,57,0,True
+"SHL16V r4,r5 (count 12)",62,62,0,True
+"SHL16V r4,r5 (count 13)",67,67,0,True
+"SHL16V r4,r5 (count 14)",72,72,0,True
+"SHL16V r4,r5 (count 15)",77,77,0,True
+"LSR16V r4,r5 (count 0)",42,42,0,True
+"LSR16V r4,r5 (count 1)",45,45,0,True
+"LSR16V r4,r5 (count 2)",50,50,0,True
+"LSR16V r4,r5 (count 3)",55,55,0,True
+"LSR16V r4,r5 (count 4)",60,60,0,True
+"LSR16V r4,r5 (count 5)",65,65,0,True
+"LSR16V r4,r5 (count 6)",70,70,0,True
+"LSR16V r4,r5 (count 7)",75,75,0,True
+"LSR16V r4,r5 (count 8)",44,44,0,True
+"LSR16V r4,r5 (count 9)",47,47,0,True
+"LSR16V r4,r5 (count 10)",52,52,0,True
+"LSR16V r4,r5 (count 11)",57,57,0,True
+"LSR16V r4,r5 (count 12)",62,62,0,True
+"LSR16V r4,r5 (count 13)",67,67,0,True
+"LSR16V r4,r5 (count 14)",72,72,0,True
+"LSR16V r4,r5 (count 15)",77,77,0,True
+"ASR16V r4,r5 (count 0)",42,42,0,True
+"ASR16V r4,r5 (count 1)",45,45,0,True
+"ASR16V r4,r5 (count 2)",50,50,0,True
+"ASR16V r4,r5 (count 3)",55,55,0,True
+"ASR16V r4,r5 (count 4)",60,60,0,True
+"ASR16V r4,r5 (count 5)",65,65,0,True
+"ASR16V r4,r5 (count 6)",70,70,0,True
+"ASR16V r4,r5 (count 7)",75,75,0,True
+"ASR16V r4,r5 (count 8)",45,45,0,True
+"ASR16V r4,r5 (count 9)",48,48,0,True
+"ASR16V r4,r5 (count 10)",53,53,0,True
+"ASR16V r4,r5 (count 11)",58,58,0,True
+"ASR16V r4,r5 (count 12)",63,63,0,True
+"ASR16V r4,r5 (count 13)",68,68,0,True
+"ASR16V r4,r5 (count 14)",73,73,0,True
+"ASR16V r4,r5 (count 15)",78,78,0,True
+"LSL16I r4,0",44,44,0,True
+"LSL16I r4,1",47,47,0,True
+"LSL16I r4,2",52,52,0,True
+"LSL16I r4,3",57,57,0,True
+"LSL16I r4,4",62,62,0,True
+"LSL16I r4,5",67,67,0,True
+"LSL16I r4,6",72,72,0,True
+"LSL16I r4,7",77,77,0,True
+"LSL16I r4,8",46,46,0,True
+"LSL16I r4,9",49,49,0,True
+"LSL16I r4,10",54,54,0,True
+"LSL16I r4,11",59,59,0,True
+"LSL16I r4,12",64,64,0,True
+"LSL16I r4,13",69,69,0,True
+"LSL16I r4,14",74,74,0,True
+"LSL16I r4,15",79,79,0,True
+"LSR16I r4,0",44,44,0,True
+"LSR16I r4,1",47,47,0,True
+"LSR16I r4,2",52,52,0,True
+"LSR16I r4,3",57,57,0,True
+"LSR16I r4,4",62,62,0,True
+"LSR16I r4,5",67,67,0,True
+"LSR16I r4,6",72,72,0,True
+"LSR16I r4,7",77,77,0,True
+"LSR16I r4,8",46,46,0,True
+"LSR16I r4,9",49,49,0,True
+"LSR16I r4,10",54,54,0,True
+"LSR16I r4,11",59,59,0,True
+"LSR16I r4,12",64,64,0,True
+"LSR16I r4,13",69,69,0,True
+"LSR16I r4,14",74,74,0,True
+"LSR16I r4,15",79,79,0,True
+"ASR16I r4,0",44,44,0,True
+"ASR16I r4,1",47,47,0,True
+"ASR16I r4,2",52,52,0,True
+"ASR16I r4,3",57,57,0,True
+"ASR16I r4,4",62,62,0,True
+"ASR16I r4,5",67,67,0,True
+"ASR16I r4,6",72,72,0,True
+"ASR16I r4,7",77,77,0,True
+"ASR16I r4,8",47,47,0,True
+"ASR16I r4,9",50,50,0,True
+"ASR16I r4,10",55,55,0,True
+"ASR16I r4,11",60,60,0,True
+"ASR16I r4,12",65,65,0,True
+"ASR16I r4,13",70,70,0,True
+"ASR16I r4,14",75,75,0,True
+"ASR16I r4,15",80,80,0,True
+"MUL8 r4,r5",38,38,0,True
+"MULU8.W r4,r5",38,38,0,True
+"MULS8.W r4,r5",38,38,0,True
+"MULSU8.W r4,r5",38,38,0,True
+"MUL16 r0,r1",46,46,0,True
+"UDIV16 r0,r1 (0xa5a5 / 0x0000; zero-divisor fast path)",59,59,0,True
+"UDIV16 r2,r3 (0x0007 / 0x00ff; 8-bit core, quotient popcount 0)",122,122,0,True
+"UDIV16 r1,r6 (0x0080 / 0x0001; 8-bit core, quotient popcount 1)",123,123,0,True
+"UDIV16 r4,r5 (0x00ff / 0x0001; 8-bit core, quotient popcount 8)",130,130,0,True
+"UDIV16 r6,r7 (0x1234 / 0x8000; 16-bit core, quotient popcount 0)",219,219,0,True
+"UDIV16 r3,r4 (0x8000 / 0x0001; 16-bit core, quotient popcount 1)",221,221,0,True
+"UDIV16 r7,r0 (0xffff / 0x0001; 16-bit core, quotient popcount 16)",251,251,0,True
+"UDIV16 r5,r5 (0x00a5 / 0x00a5; 8-bit core, rD == rS)",123,123,0,True
+"UREM16 r0,r1 (0xa5a5 / 0x0000; zero-divisor fast path)",58,58,0,True
+"UREM16 r2,r3 (0x0007 / 0x00ff; 8-bit core, quotient popcount 0)",122,122,0,True
+"UREM16 r1,r6 (0x0080 / 0x0001; 8-bit core, quotient popcount 1)",123,123,0,True
+"UREM16 r4,r5 (0x00ff / 0x0001; 8-bit core, quotient popcount 8)",130,130,0,True
+"UREM16 r6,r7 (0x1234 / 0x8000; 16-bit core, quotient popcount 0)",219,219,0,True
+"UREM16 r3,r4 (0x8000 / 0x0001; 16-bit core, quotient popcount 1)",221,221,0,True
+"UREM16 r7,r0 (0xffff / 0x0001; 16-bit core, quotient popcount 16)",251,251,0,True
+"UREM16 r5,r5 (0x00a5 / 0x00a5; 8-bit core, rD == rS)",123,123,0,True
+"SDIV16 r0,r1 (0xcfc7 / 0x0000; zero-divisor fast path, negative dividend)",59,59,0,True
+"SDIV16 r2,r3 (0x0007 / 0x007f; 8-bit core, positive operands, quotient popcount 0)",132,132,0,True
+"SDIV16 r1,r6 (0xff80 / 0x0001; 8-bit core, one negative input, quotient popcount 1)",139,139,0,True
+"SDIV16 r4,r5 (0xff01 / 0x0001; 8-bit core, one negative input, quotient popcount 8)",146,146,0,True
+"SDIV16 r6,r7 (0x1234 / 0x7fff; 16-bit core, positive operands, quotient popcount 0)",229,229,0,True
+"SDIV16 r3,r4 (0x8000 / 0x0100; 16-bit core, one negative input, quotient popcount 1)",237,237,0,True
+"SDIV16 r7,r0 (0x8001 / 0x0001; 16-bit core, one negative input, quotient popcount 15)",265,265,0,True
+"SDIV16 r5,r2 (0x8000 / 0xffff; 16-bit core, INT16_MIN / -1)",235,235,0,True
+"SDIV16 r4,r4 (0xffff / 0xffff; 8-bit core, two negative inputs, rD == rS)",137,137,0,True
+"SREM16 r0,r1 (0xcfc7 / 0x0000; zero-divisor fast path, negative dividend)",58,58,0,True
+"SREM16 r2,r3 (0x0007 / 0x007f; 8-bit core, positive operands, quotient popcount 0)",132,132,0,True
+"SREM16 r1,r6 (0xff80 / 0x0001; 8-bit core, one negative input, quotient popcount 1)",139,139,0,True
+"SREM16 r4,r5 (0xff01 / 0xffff; 8-bit core, two negative inputs, quotient popcount 8)",148,148,0,True
+"SREM16 r6,r7 (0x1234 / 0x7fff; 16-bit core, positive operands, quotient popcount 0)",229,229,0,True
+"SREM16 r3,r4 (0x8000 / 0x0100; 16-bit core, one negative input, quotient popcount 1)",237,237,0,True
+"SREM16 r7,r0 (0x8001 / 0xffff; 16-bit core, two negative inputs, quotient popcount 15)",267,267,0,True
+"SREM16 r5,r2 (0x8000 / 0xffff; 16-bit core, INT16_MIN / -1)",239,239,0,True
+"SREM16 r4,r4 (0xffff / 0xffff; 8-bit core, two negative inputs, rD == rS)",141,141,0,True
+FADD (normal same-sign),156,156,0,True
+FADD (exact cancellation),127,127,0,True
+FADD (large exponent gap),138,138,0,True
+FADD (subnormal result),142,142,0,True
+FADD (overflow to +infinity),141,141,0,True
+FADD (infinity plus finite),153,153,0,True
+FADD (invalid +infinity plus -infinity),162,162,0,True
+FADD (quiet NaN operand),134,134,0,True
+FADD (equal operands),140,140,0,True
+FSUB (normal),156,156,0,True
+FSUB (exact cancellation),128,128,0,True
+FSUB (large exponent gap),139,139,0,True
+FSUB (subnormal result),146,146,0,True
+FSUB (overflow to +infinity),142,142,0,True
+FSUB (-infinity minus finite),154,154,0,True
+FSUB (invalid infinity minus infinity),163,163,0,True
+FSUB (quiet NaN operand),135,135,0,True
+FSUB (equal operands),128,128,0,True
+FMUL (normal),192,192,0,True
+FMUL (negative result),192,192,0,True
+FMUL (signed zero),124,124,0,True
+FMUL (subnormal result),174,174,0,True
+FMUL (underflow halfway to zero),183,183,0,True
+FMUL (overflow to +infinity),191,191,0,True
+FMUL (infinity times finite),149,149,0,True
+FMUL (invalid infinity times zero),152,152,0,True
+FMUL (quiet NaN operand),131,131,0,True
+FMUL (equal operands),192,192,0,True
+FADD (normal sample 0),156,156,0,True
+FADD (normal sample 1),156,156,0,True
+FADD (normal sample 2),156,156,0,True
+FADD (normal sample 3),156,156,0,True
+FSUB (normal sample 0),156,156,0,True
+FSUB (normal sample 1),156,156,0,True
+FSUB (normal sample 2),156,156,0,True
+FSUB (normal sample 3),156,156,0,True
+FMUL (normal sample 0),192,192,0,True
+FMUL (normal sample 1),192,192,0,True
+FMUL (normal sample 2),192,192,0,True
+FMUL (normal sample 3),192,192,0,True
+FDIV (exact normal),502,502,0,True
+FDIV (recurring normal),529,529,0,True
+FDIV (negative result),502,502,0,True
+FDIV (signed zero numerator),124,124,0,True
+FDIV (zero divisor),124,124,0,True
+FDIV (subnormal result),504,504,0,True
+FDIV (underflow halfway to zero),1283,1283,0,True
+FDIV (overflow),565,565,0,True
+FDIV (finite divided by infinity),157,157,0,True
+FDIV (infinity divided by finite),150,150,0,True
+FDIV (invalid zero divided by zero),126,126,0,True
+FDIV (invalid infinity divided by infinity),159,159,0,True
+FDIV (quiet NaN operand),145,145,0,True
+FDIV (equal operands),496,496,0,True
+FNEG q0 (signed zero),38,38,0,True
+FNEG q3 (NaN payload/sign bit path),38,38,0,True
+FABS q0 (signed zero),38,38,0,True
+FABS q3 (NaN payload/sign bit path),35,35,0,True
+S16TOF (zero),76,76,0,True
+S16TOF (small positive),125,125,0,True
+S16TOF (small negative),131,131,0,True
+S16TOF (INT16_MAX),88,88,0,True
+S16TOF (INT16_MIN),90,90,0,True
+U16TOF (zero),74,74,0,True
+U16TOF (small),123,123,0,True
+U16TOF (UINT16_MAX),82,82,0,True
+U16TOF (high-bit value),82,82,0,True
+FTOS16 (+zero),96,96,0,True
+FTOS16 (-zero),96,96,0,True
+FTOS16 (positive fractional),112,112,0,True
+FTOS16 (negative fractional),118,118,0,True
+FTOS16 (largest in-range positive neighborhood),104,104,0,True
+FTOS16 (INT16_MIN),104,104,0,True
+FTOS16 (NaN unspecified result),105,105,0,True
+FTOS16 (infinity unspecified result),105,105,0,True
+FTOU16 (zero),86,86,0,True
+FTOU16 (positive fractional),102,102,0,True
+FTOU16 (UINT16_MAX neighborhood),88,88,0,True
+FTOU16 (negative unspecified result),144,144,0,True
+FTOU16 (NaN unspecified result),89,89,0,True
+FTOU16 (infinity unspecified result),89,89,0,True
+S32TOF (zero),73,73,0,True
+S32TOF (small positive),122,122,0,True
+S32TOF (small negative),128,128,0,True
+S32TOF (rounding above 2^24),84,84,0,True
+S32TOF (INT32_MAX),142,142,0,True
+S32TOF (INT32_MIN),149,149,0,True
+S32TOF (equal operands),74,74,0,True
+U32TOF (zero),73,73,0,True
+U32TOF (small),122,122,0,True
+U32TOF (ties-to-even neighborhood),84,84,0,True
+U32TOF (UINT32_MAX),151,151,0,True
+U32TOF (equal operands),143,143,0,True
+FTOS32 (zero),99,99,0,True
+FTOS32 (positive fractional),115,115,0,True
+FTOS32 (negative fractional),121,121,0,True
+FTOS32 (large in-range positive),149,149,0,True
+FTOS32 (INT32_MIN),169,169,0,True
+FTOS32 (NaN unspecified result),108,108,0,True
+FTOS32 (infinity unspecified result),108,108,0,True
+FTOS32 (equal operands),157,157,0,True
+FTOU32 (zero),89,89,0,True
+FTOU32 (positive fractional),105,105,0,True
+FTOU32 (large in-range unsigned),147,147,0,True
+FTOU32 (negative unspecified result),147,147,0,True
+FTOU32 (NaN unspecified result),92,92,0,True
+FTOU32 (infinity unspecified result),92,92,0,True
+FTOU32 (equal operands),141,141,0,True
+FCMP (less),78,78,0,True
+FCMP (greater),83,83,0,True
+FCMP (equal),87,87,0,True
+FCMP (signed zeros equal),81,81,0,True
+FCMP (left quiet NaN unordered),61,61,0,True
+FCMP (right quiet NaN unordered),69,69,0,True
+FCMP (left signaling NaN unordered),61,61,0,True
+FCMP (equal operands),87,87,0,True
+FCLASS (signaling NaN),65,65,0,True
+FCLASS (quiet NaN),71,71,0,True
+FCLASS (negative infinity),78,78,0,True
+FCLASS (negative normal),81,81,0,True
+FCLASS (negative subnormal),89,89,0,True
+FCLASS (negative zero),93,93,0,True
+FCLASS (positive zero),98,98,0,True
+FCLASS (positive subnormal),106,106,0,True
+FCLASS (positive normal),110,110,0,True
+FCLASS (positive infinity),119,119,0,True
+FNEG q1 (negative normal),38,38,0,True
+FNEG q2 (negative subnormal),38,38,0,True
+FABS q1 (negative normal),38,38,0,True
+FABS q2 (negative subnormal),35,35,0,True
+FPOLY (N=1; x=0.5; coefficients=0.25),168,168,0,True
+FPOLY (N=3; x=0.5; coefficients=0.25),717,717,0,True
+FPOLY (N=5; x=0.5; coefficients=0.25),1287,1287,0,True
+FPOLY (N=9; x=0.5; coefficients=0.25),2427,2427,0,True
+FPOLY (N=255; x=0.5; coefficients=0.25),72543,72543,0,True
+FSQRT (normal),629,629,0,True
+FSQRT (positive subnormal),784,784,0,True
+FTRUNC (fractional),377,377,0,True
+FFLOOR (negative fractional),382,382,0,True
+FCEIL (fractional),383,383,0,True
+FROUND (negative halfway),390,390,0,True
+FMOD (normal),189,189,0,True
+FMOD (large exponent gap),660,660,0,True
+FREMPIO2 (6.25 radians),225,225,0,True
+FMA (retained product residual),464,464,0,True
+"CMP r4,r5 (upper one-byte)",18,18,0,True
+"CMP r0,r1 (full F5)",39,39,0,True
+"CMP32 q0,q1 (cold F0)",83,83,0,True
+"CMPI.S8 r4,simm8 (upper)",35,35,0,True
+"CMPI.S8 r0,simm8 (cold lower)",55,55,0,True
+TST8 r0,38,38,0,True
+TST16 r0,39,39,0,True
+CSET.EQ r0 (true),41,41,0,True
+CSET.EQ r0 (false),41,41,0,True
+CSET.NE r0 (true),41,41,0,True
+CSET.NE r0 (false),41,41,0,True
+CSET.ULT r0 (true),41,41,0,True
+CSET.ULT r0 (false),41,41,0,True
+CSET.UGE r0 (true),41,41,0,True
+CSET.UGE r0 (false),41,41,0,True
+CSET.SLT r0 (true),41,41,0,True
+CSET.SLT r0 (false),41,41,0,True
+CSET.SGE r0 (true),41,41,0,True
+CSET.SGE r0 (false),41,41,0,True
+"CMOV.EQ r0,r1 (taken)",37,37,0,True
+"CMOV.EQ r0,r1 (not taken)",36,36,0,True
+"CMOV.NE r0,r1 (taken)",37,37,0,True
+"CMOV.NE r0,r1 (not taken)",36,36,0,True
+"CMOV.ULT r0,r1 (taken)",37,37,0,True
+"CMOV.ULT r0,r1 (not taken)",36,36,0,True
+"CMOV.UGE r0,r1 (taken)",37,37,0,True
+"CMOV.UGE r0,r1 (not taken)",36,36,0,True
+"CMOV.SLT r0,r1 (taken)",37,37,0,True
+"CMOV.SLT r0,r1 (not taken)",36,36,0,True
+"CMOV.SGE r0,r1 (taken)",37,37,0,True
+"CMOV.SGE r0,r1 (not taken)",36,36,0,True
+"LD8U r4,[r6] (upper one-byte)",18,18,0,True
+"ST8 [r6],r5 (upper one-byte)",18,18,0,True
+"LD16 r4,[r6] (upper one-byte)",18,18,0,True
+"ST16 [r6],r5 (upper one-byte)",18,18,0,True
+"ST8 [r6],r0 (dense F3)",38,38,0,True
+"LD8U r0,[r6] (dense F5)",38,38,0,True
+"LD16 r0,[r6] (dense F5)",39,39,0,True
+"ST16 [r6],r0 (dense F5)",39,39,0,True
+"LD8U r0,[r6+] (dense F7)",39,39,0,True
+"LD16 r0,[r6+] (dense F7)",40,40,0,True
+"ST8 [r6+],r0 (dense F6)",38,38,0,True
+"ST16 [r6+],r0 (dense F7)",40,40,0,True
+"LD8U r0,[r1] (cold general F0)",70,70,0,True
+"LD16 r0,[r1] (cold general F0)",71,71,0,True
+"ST8 [r1],r0 (cold general F0)",68,68,0,True
+"ST16 [r1],r0 (cold general F0)",69,69,0,True
+"LD8U r0,[r1+7] (displaced ED)",54,54,0,True
+"LD16 r0,[r1-5] (displaced ED)",55,55,0,True
+"ST8 [r1+7],r0 (displaced EE)",54,54,0,True
+"ST16 [r1-5],r0 (displaced EE)",55,55,0,True
+"LD8U r0,[r1+] (cold general F0)",76,76,0,True
+"LD16 r0,[r1+] (cold general F0)",77,77,0,True
+"ST8 [r1+],r0 (cold general F0)",73,73,0,True
+"ST16 [r1+],r0 (cold general F0)",74,74,0,True
+"LDSP8U r4,[SP+8] (upper short)",38,38,0,True
+"STSP8 [SP+8],r4 (upper short)",37,37,0,True
+"LDSP16 r4,[SP+8] (upper short)",38,38,0,True
+"STSP16 [SP+8],r4 (upper short)",38,38,0,True
+"LDSP8U r0,[SP+32] (cold)",62,62,0,True
+"LDSP8S r0,[SP+32] (cold)",64,64,0,True
+"STSP8 [SP+32],r0 (cold)",60,60,0,True
+"LDSP16 r0,[SP+32] (cold)",64,64,0,True
+"STSP16 [SP+32],r0 (cold)",64,64,0,True
+"LDM8U r0,0x0600",72,72,0,True
+"STM8 0x0600,r0",72,72,0,True
+"LDM16 r0,0x0600",72,72,0,True
+"STM16 0x0600,r0",72,72,0,True
+"LD32 q0,[r4]",82,82,0,True
+"ST32 [r4],q0",81,81,0,True
+"LDP8U r0,[q3]",285,285,0,True
+"LDP8S r0,[q3]",287,287,0,True
+"LDP16 r0,[q3]",301,301,0,True
+"LDP24 q0,[q3]",321,321,0,True
+"LDP32 q0,[q3]",335,335,0,True
+"LDP8U r0,[q3+]",302,302,0,True
+"LDP16 r0,[q3+]",318,318,0,True
+"LDP24 q0,[q3+]",338,338,0,True
+"LDP32 q0,[q3+]",352,352,0,True
+BREQ8 (not taken),35,35,0,True
+BREQ8 (taken),132,132,0,True
+BRNE8 (not taken),35,35,0,True
+BRNE8 (taken),132,132,0,True
+BRULT8 (not taken),35,35,0,True
+BRULT8 (taken),132,132,0,True
+BRUGE8 (not taken),35,35,0,True
+BRUGE8 (taken),132,132,0,True
+BRSLT8 (not taken),35,35,0,True
+BRSLT8 (taken),132,132,0,True
+BRSGE8 (not taken),35,35,0,True
+BRSGE8 (taken),132,132,0,True
+BREQ16 (not taken),51,51,0,True
+BREQ16 (taken),139,139,0,True
+BRNE16 (not taken),51,51,0,True
+BRNE16 (taken),139,139,0,True
+BRULT16 (not taken),51,51,0,True
+BRULT16 (taken),139,139,0,True
+BRUGE16 (not taken),51,51,0,True
+BRUGE16 (taken),139,139,0,True
+BRSLT16 (not taken),51,51,0,True
+BRSLT16 (taken),139,139,0,True
+BRSGE16 (not taken),51,51,0,True
+BRSGE16 (taken),139,139,0,True
+JMP8 rel8,126,126,0,True
+CALL8 rel8,131,131,0,True
+JMP16 rel16,139,139,0,True
+CALL16 rel16,140,140,0,True
+JMPF target24,154,154,0,True
+CALLF target24,154,154,0,True
+JMPP q0,114,114,0,True
+CALLP q0,123,123,0,True
+SYS memcpy (n=0),43,43,0,True
+SYS memcpy (n=1),54,54,0,True
+SYS memcpy (n=2),61,61,0,True
+SYS memcpy (n=3),64,64,0,True
+SYS memcpy (n=4),73,73,0,True
+SYS memcpy (n=5),76,76,0,True
+SYS memcpy (n=6),85,85,0,True
+SYS memcpy (n=7),88,88,0,True
+SYS memcpy (n=8),97,97,0,True
+SYS memcpy (n=16),145,145,0,True
+SYS memcpy (n=32),241,241,0,True
+SYS memcpy (n=256),1585,1585,0,True
+SYS memmove (n=0; zero-length fast path),43,43,0,True
+SYS memmove (n=1; forward non-overlap),59,59,0,True
+SYS memmove (n=2; forward overlap),66,66,0,True
+SYS memmove (n=3; forward overlap),69,69,0,True
+SYS memmove (n=4; forward overlap),78,78,0,True
+SYS memmove (n=5; forward overlap),81,81,0,True
+SYS memmove (n=6; forward overlap),90,90,0,True
+SYS memmove (n=7; forward overlap),93,93,0,True
+SYS memmove (n=8; forward overlap),102,102,0,True
+SYS memmove (n=16; forward overlap),150,150,0,True
+SYS memmove (n=32; forward overlap),246,246,0,True
+SYS memmove (n=256; forward overlap),1590,1590,0,True
+SYS memmove (n=2; backward overlap),75,75,0,True
+SYS memmove (n=3; backward overlap),80,80,0,True
+SYS memmove (n=4; backward overlap),87,87,0,True
+SYS memmove (n=5; backward overlap),92,92,0,True
+SYS memmove (n=6; backward overlap),99,99,0,True
+SYS memmove (n=7; backward overlap),104,104,0,True
+SYS memmove (n=8; backward overlap),111,111,0,True
+SYS memmove (n=16; backward overlap),159,159,0,True
+SYS memmove (n=32; backward overlap),255,255,0,True
+SYS memmove (n=256; backward overlap),1599,1599,0,True
+SYS memcpy_P (n=0),44,44,0,True
+SYS memcpy_P (n=1),250,250,0,True
+SYS memcpy_P (n=2),267,267,0,True
+SYS memcpy_P (n=3),284,284,0,True
+SYS memcpy_P (n=4),301,301,0,True
+SYS memcpy_P (n=5),318,318,0,True
+SYS memcpy_P (n=6),335,335,0,True
+SYS memcpy_P (n=7),352,352,0,True
+SYS memcpy_P (n=8),369,369,0,True
+SYS memcpy_P (n=16),505,505,0,True
+SYS memcpy_P (n=32),777,777,0,True
+SYS memcpy_P (n=256),4585,4585,0,True
+SYS memset (n=0),43,43,0,True
+SYS memset (n=1),52,52,0,True
+SYS memset (n=2),57,57,0,True
+SYS memset (n=3),58,58,0,True
+SYS memset (n=4),65,65,0,True
+SYS memset (n=5),66,66,0,True
+SYS memset (n=6),73,73,0,True
+SYS memset (n=7),74,74,0,True
+SYS memset (n=8),81,81,0,True
+SYS memset (n=16),113,113,0,True
+SYS memset (n=32),177,177,0,True
+SYS memset (n=256),1073,1073,0,True
+SYS memcmp (n=0; zero-length fast path),45,45,0,True
+SYS memcmp (n=1; equal),52,52,0,True
+SYS memcmp (n=32; equal),362,362,0,True
+SYS memcmp (n=32; first-byte mismatch),48,48,0,True
+SYS memcmp (n=32; last-byte mismatch),358,358,0,True
+SYS memcmp_P (n=0; zero-length fast path; q3 padding=0xa5),39,39,0,True
+SYS memcmp_P (n=1; equal; q3 padding=0xa5),251,251,0,True
+SYS memcmp_P (n=32; equal; q3 padding=0xa5),778,778,0,True
+SYS memcmp_P (n=32; first-byte mismatch; q3 padding=0xa5),251,251,0,True
+SYS memcmp_P (n=32; last-byte mismatch; q3 padding=0xa5),779,779,0,True
+SYS strcmp (equal empty),47,47,0,True
+SYS strcmp (equal one byte),56,56,0,True
+SYS strcmp (equal length 32),335,335,0,True
+SYS strcmp (first-byte mismatch),44,44,0,True
+SYS strcmp (last-byte mismatch),323,323,0,True
+SYS strcmp (lhs is prefix),116,116,0,True
+SYS strcmp (rhs is prefix),116,116,0,True
+SYS strcmp_P (equal empty; q3 padding=0xa5),246,246,0,True
+SYS strcmp_P (equal one byte; q3 padding=0xa5),263,263,0,True
+SYS strcmp_P (equal length 32; q3 padding=0xa5),790,790,0,True
+SYS strcmp_P (first-byte mismatch; q3 padding=0xa5),247,247,0,True
+SYS strcmp_P (last-byte mismatch; q3 padding=0xa5),775,775,0,True
+SYS strcmp_P (lhs is prefix; q3 padding=0xa5),384,384,0,True
+SYS strcmp_P (rhs is prefix; q3 padding=0xa5),383,383,0,True
+SYS strlen (length 0),43,43,0,True
+SYS strlen (length 1),48,48,0,True
+SYS strlen (length 8),83,83,0,True
+SYS strlen (length 32),203,203,0,True
+SYS strlen (length 256),1323,1323,0,True
+SYS strlen_P (length 0; q3 padding=0xa5),245,245,0,True
+SYS strlen_P (length 1; q3 padding=0xa5),262,262,0,True
+SYS strlen_P (length 8; q3 padding=0xa5),381,381,0,True
+SYS strlen_P (length 32; q3 padding=0xa5),789,789,0,True
+SYS strlen_P (length 256; q3 padding=0xa5),4597,4597,0,True
+SYS strncpy (n=0; zero-length fast path),37,37,0,True
+SYS strncpy (n=1; truncation),58,58,0,True
+SYS strncpy (n=8; source length 3 with padding),114,114,0,True
+SYS strncpy (n=8; source length 8 without copied NUL),135,135,0,True
+SYS strncpy (n=8; source length 32 truncation),135,135,0,True
+SYS strncpy (n=32; source length 3 with long padding),258,258,0,True
+SYS strncpy_P (n=0; zero-length fast path; q3 padding=0xa5),37,37,0,True
+SYS strncpy_P (n=1; truncation; q3 padding=0xa5),264,264,0,True
+SYS strncpy_P (n=8; source length 3 with padding; q3 padding=0xa5),337,337,0,True
+SYS strncpy_P (n=8; source length 8 without copied NUL; q3 padding=0xa5),383,383,0,True
+SYS strncpy_P (n=8; source length 32 truncation; q3 padding=0xa5),383,383,0,True
+SYS strncpy_P (n=32; source length 3 with long padding; q3 padding=0xa5),481,481,0,True
+SYS strncat (n=0; destination length 8),37,37,0,True
+SYS strncat (empty destination and empty source),63,63,0,True
+SYS strncat (empty destination and source length 3),96,96,0,True
+SYS strncat (destination length 8 and source length 3),136,136,0,True
+SYS strncat (destination length 8; source truncated at 4),138,138,0,True
+SYS strncat (destination length 32 and source length 3),256,256,0,True
+SYS strncat (destination length 256 and source length 1),1345,1345,0,True
+SYS strncat_P (n=0; destination length 8; q3 padding=0xa5),37,37,0,True
+SYS strncat_P (empty destination and empty source; q3 padding=0xa5),268,268,0,True
+SYS strncat_P (empty destination and source length 3; q3 padding=0xa5),319,319,0,True
+SYS strncat_P (destination length 8 and source length 3; q3 padding=0xa5),359,359,0,True
+SYS strncat_P (destination length 8; source truncated at 4; q3 padding=0xa5),360,360,0,True
+SYS strncat_P (destination length 32 and source length 3; q3 padding=0xa5),479,479,0,True
+SYS strncat_P (destination length 256 and source length 1; q3 padding=0xa5),1549,1549,0,True
+SYS vsnprintf (empty format; size=0),275,275,0,True
+SYS vsnprintf (one-byte literal),350,350,0,True
+SYS vsnprintf (32-byte literal; complete output),2582,2582,0,True
+SYS vsnprintf (32-byte literal; destination size=8 truncation),2532,2532,0,True
+SYS vsnprintf (%c),532,532,0,True
+SYS vsnprintf (%s; RAM string length 3),588,588,0,True
+SYS vsnprintf (%.8s; RAM string length 32),784,784,0,True
+SYS vsnprintf (%S; program string length 3),1090,1090,0,True
+SYS vsnprintf (%40S; program string length 32 with padding),3807,3807,0,True
+SYS vsnprintf (%d; INT16_MIN),1804,1804,0,True
+SYS vsnprintf (%ld; INT32_MIN),3913,3913,0,True
+SYS vsnprintf (%lu; UINT32_MAX),3881,3881,0,True
+SYS vsnprintf (%#08x; 16-bit alternate zero padding),1727,1727,0,True
+SYS vsnprintf (%*.*u; dynamic width=12 precision=5),1366,1366,0,True
+SYS vsnprintf (conversion split at format-cache boundary),2486,2486,0,True
+SYS vsnprintf (mixed %c %s %S %ld %#x),6095,6095,0,True
+SYS vsnprintf (%p; data pointer),724,724,0,True
+SYS vsnprintf (malformed %q error exit),391,391,0,True
+SYS vsnprintf_P (empty format; size=0; q3 padding=0xa5),456,456,0,True
+SYS vsnprintf_P (one-byte literal; q3 padding=0xa5),568,568,0,True
+SYS vsnprintf_P (32-byte literal; complete output; q3 padding=0xa5),4227,4227,0,True
+SYS vsnprintf_P (32-byte literal; destination size=8 truncation; q3 padding=0xa5),4177,4177,0,True
+SYS vsnprintf_P (%c; q3 padding=0xa5),787,787,0,True
+SYS vsnprintf_P (%s; RAM string length 3; q3 padding=0xa5),843,843,0,True
+SYS vsnprintf_P (%.8s; RAM string length 32; q3 padding=0xa5),1113,1113,0,True
+SYS vsnprintf_P (%S; program string length 3; q3 padding=0xa5),1345,1345,0,True
+SYS vsnprintf_P (%40S; program string length 32 with padding; q3 padding=0xa5),4136,4136,0,True
+SYS vsnprintf_P (%d; INT16_MIN; q3 padding=0xa5),2059,2059,0,True
+SYS vsnprintf_P (%ld; INT32_MIN; q3 padding=0xa5),4205,4205,0,True
+SYS vsnprintf_P (%lu; UINT32_MAX; q3 padding=0xa5),4173,4173,0,True
+SYS vsnprintf_P (%#08x; 16-bit alternate zero padding; q3 padding=0xa5),2093,2093,0,True
+SYS vsnprintf_P (%*.*u; dynamic width=12 precision=5; q3 padding=0xa5),1732,1732,0,True
+SYS vsnprintf_P (conversion split at 16-byte program-format cache boundary; q3 padding=0xa5),3436,3436,0,True
+SYS vsnprintf_P (mixed %c %s %S %ld %#x; q3 padding=0xa5),7378,7378,0,True
+SYS vsnprintf_P (%p; data pointer; q3 padding=0xa5),979,979,0,True
+SYS vsnprintf_P (malformed %q error exit; q3 padding=0xa5),639,639,0,True
+SYS debug_printfv_P (%f; +zero default; q3 padding=0xa5),1310,1310,0,True
+SYS debug_printfv_P (%f; -zero default; q3 padding=0xa5),1344,1344,0,True
+SYS debug_printfv_P (%f; 1.5 normal default; q3 padding=0xa5),2067,2067,0,True
+SYS debug_printfv_P (%.0f; 2.5 half-up rounding; q3 padding=0xa5),1942,1942,0,True
+SYS debug_printfv_P (%.2f; 9.99609375 carry to 10.00; q3 padding=0xa5),2418,2418,0,True
+SYS debug_printfv_P (%.6f; small fixed with leading fractional zeros; q3 padding=0xa5),2142,2142,0,True
+SYS debug_printfv_P (%.10f; precision beyond digit engine; q3 padding=0xa5),2382,2382,0,True
+SYS debug_printfv_P (%+016.3f; positive zero padding; q3 padding=0xa5),2450,2450,0,True
+SYS debug_printfv_P (%-16.3f; negative left alignment; q3 padding=0xa5),2548,2548,0,True
+SYS debug_printfv_P (%#.0f; forced decimal point; q3 padding=0xa5),1842,1842,0,True
+SYS debug_printfv_P (%e; 1.5 normal default; q3 padding=0xa5),2094,2094,0,True
+SYS debug_printfv_P (%E; -0.125 uppercase; q3 padding=0xa5),2208,2208,0,True
+SYS debug_printfv_P (%.0e; rounding below one to exponent zero; q3 padding=0xa5),1935,1935,0,True
+SYS debug_printfv_P (%.2e; carry to next decimal exponent; q3 padding=0xa5),2432,2432,0,True
+SYS debug_printfv_P (%.7e; maximum finite; q3 padding=0xa5),2551,2551,0,True
+SYS debug_printfv_P (%.7e; minimum normal; q3 padding=0xa5),2697,2697,0,True
+SYS debug_printfv_P (%.5e; minimum subnormal supported precision; q3 padding=0xa5),2733,2733,0,True
+SYS debug_printfv_P (%+016.3e; positive zero padding; q3 padding=0xa5),2542,2542,0,True
+SYS debug_printfv_P (%g; fixed-notation branch; q3 padding=0xa5),2280,2280,0,True
+SYS debug_printfv_P (%g; small scientific-notation branch; q3 padding=0xa5),2313,2313,0,True
+SYS debug_printfv_P (%.4g; rounding crosses negative notation threshold; q3 padding=0xa5),2627,2627,0,True
+SYS debug_printfv_P (%.4g; all-digit carry selects scientific notation; q3 padding=0xa5),2454,2454,0,True
+SYS debug_printfv_P (%#g; alternate form retains trailing zeros; q3 padding=0xa5),2222,2222,0,True
+SYS debug_printfv_P (%#.10G; uppercase with synthetic trailing zeros; q3 padding=0xa5),2527,2527,0,True
+SYS debug_printfv_P (%g; +zero; q3 padding=0xa5),1210,1210,0,True
+SYS debug_printfv_P (%g; -zero; q3 padding=0xa5),1244,1244,0,True
+SYS debug_printfv_P (%-16.5G; uppercase scientific left alignment; q3 padding=0xa5),2508,2508,0,True
+SYS debug_printfv_P (%a; +zero; q3 padding=0xa5),1356,1356,0,True
+SYS debug_printfv_P (%a; -zero; q3 padding=0xa5),1390,1390,0,True
+SYS debug_printfv_P (%a; 1.5 exact trimmed; q3 padding=0xa5),1465,1465,0,True
+SYS debug_printfv_P (%A; 0.1 uppercase exact; q3 padding=0xa5),1472,1472,0,True
+SYS debug_printfv_P (%.6a; 0.1 full binary32 fraction; q3 padding=0xa5),1613,1613,0,True
+SYS debug_printfv_P (%a; minimum normal; q3 padding=0xa5),1414,1414,0,True
+SYS debug_printfv_P (%a; minimum subnormal; q3 padding=0xa5),1632,1632,0,True
+SYS debug_printfv_P (%a; largest subnormal normalized; q3 padding=0xa5),1539,1539,0,True
+SYS debug_printfv_P (%.0a; largest subnormal rounds into normal range; q3 padding=0xa5),1955,1955,0,True
+SYS debug_printfv_P (%.0a; maximum finite rounds to exponent +128; q3 padding=0xa5),1941,1941,0,True
+SYS debug_printfv_P (%.1a; maximum finite rounded with explicit fraction; q3 padding=0xa5),1981,1981,0,True
+SYS debug_printfv_P (%+018.3a; positive zero padding after prefix; q3 padding=0xa5),2153,2153,0,True
+SYS debug_printfv_P (%-18.2A; negative uppercase left alignment; q3 padding=0xa5),2128,2128,0,True
+SYS debug_printfv_P (%#.0a; forced radix point; q3 padding=0xa5),1937,1937,0,True
+SYS debug_printfv_P (%.8a; precision beyond exact fraction; q3 padding=0xa5),1612,1612,0,True
+SYS debug_printfv_P (%f; +infinity fast path; q3 padding=0xa5),2109,2109,0,True
+SYS debug_printfv_P (%E; -infinity uppercase fast path; q3 padding=0xa5),2019,2019,0,True
+SYS debug_printfv_P (%G; quiet NaN uppercase fast path; q3 padding=0xa5),1967,1967,0,True
+SYS debug_printfv_P (%+12A; signed quiet NaN with width; q3 padding=0xa5),1214,1214,0,True
+SYS debug_printfv_P (%*.*f; dynamic width=12 precision=4; q3 padding=0xa5),2420,2420,0,True
+SYS debug_printfv_P (%*.*g; negative precision means omitted; q3 padding=0xa5),2322,2322,0,True
+SYS debug_printfv_P (%.*a; dynamic precision=3; q3 padding=0xa5),1772,1772,0,True
+SYS debug_printfv_P (mixed %f %e %g %a; packed float arguments; q3 padding=0xa5),6890,6890,0,True
+SYS display (clear=false; nonzero framebuffer),18595,18595,0,True
+SYS display (clear=true; nonzero framebuffer),18595,18595,0,True
+"SYS draw_filled_rect_white (width=0, height=8; zero-width fast path)",40,40,0,True
+"SYS draw_filled_rect_white (width=8, height=0; zero-height fast path)",42,42,0,True
+"SYS draw_filled_rect_white (1x1 at x=0,y=0)",175,175,0,True
+"SYS draw_filled_rect_white (8x8 at x=40,y=24; aligned)",191,191,0,True
+"SYS draw_filled_rect_white (8x8 at x=40,y=27; unaligned)",310,310,0,True
+"SYS draw_filled_rect_white (16x9 at x=16,y=8; partial final page)",353,353,0,True
+"SYS draw_filled_rect_white (16x9 at x=16,y=11; unaligned)",438,438,0,True
+"SYS draw_filled_rect_white (16x17 at x=16,y=8; three destination pages)",407,407,0,True
+"SYS draw_filled_rect_white (16x17 at x=16,y=13; unaligned three-page path)",492,492,0,True
+"SYS draw_filled_rect_white (32x16 at x=48,y=24; medium aligned rectangle)",344,344,0,True
+"SYS draw_filled_rect_white (64x32 at x=32,y=16; large aligned rectangle)",834,834,0,True
+"SYS draw_filled_rect_white (128x64 at x=0,y=0; full-screen rectangle)",2730,2730,0,True
+"SYS draw_filled_rect_white (16x9 at x=-5,y=11; left clipping)",359,359,0,True
+"SYS draw_filled_rect_white (16x9 at x=120,y=11; right clipping)",310,310,0,True
+"SYS draw_filled_rect_white (16x9 at x=16,y=-4; top clipping)",296,296,0,True
+"SYS draw_filled_rect_white (16x9 at x=16,y=60; bottom clipping)",295,295,0,True
+"SYS draw_filled_rect_white (16x9 at x=-5,y=-4; top-left clipping)",257,257,0,True
+"SYS draw_filled_rect_white (16x9 at x=120,y=60; bottom-right clipping)",231,231,0,True
+"SYS draw_filled_rect_white (16x9 at x=128,y=11; fully off right)",45,45,0,True
+"SYS draw_filled_rect_white (16x9 at x=16,y=64; fully off bottom)",48,48,0,True
+"SYS draw_filled_rect_white (16x9 at x=-16,y=11; fully off left)",54,54,0,True
+"SYS draw_filled_rect_white (16x9 at x=16,y=-9; fully off top)",59,59,0,True
+"SYS draw_filled_rect_black (width=0, height=8; zero-width fast path)",40,40,0,True
+"SYS draw_filled_rect_black (width=8, height=0; zero-height fast path)",42,42,0,True
+"SYS draw_filled_rect_black (1x1 at x=0,y=0)",175,175,0,True
+"SYS draw_filled_rect_black (8x8 at x=40,y=24; aligned)",191,191,0,True
+"SYS draw_filled_rect_black (8x8 at x=40,y=27; unaligned)",310,310,0,True
+"SYS draw_filled_rect_black (16x9 at x=16,y=8; partial final page)",353,353,0,True
+"SYS draw_filled_rect_black (16x9 at x=16,y=11; unaligned)",438,438,0,True
+"SYS draw_filled_rect_black (16x17 at x=16,y=8; three destination pages)",407,407,0,True
+"SYS draw_filled_rect_black (16x17 at x=16,y=13; unaligned three-page path)",492,492,0,True
+"SYS draw_filled_rect_black (32x16 at x=48,y=24; medium aligned rectangle)",344,344,0,True
+"SYS draw_filled_rect_black (64x32 at x=32,y=16; large aligned rectangle)",834,834,0,True
+"SYS draw_filled_rect_black (128x64 at x=0,y=0; full-screen rectangle)",2730,2730,0,True
+"SYS draw_filled_rect_black (16x9 at x=-5,y=11; left clipping)",359,359,0,True
+"SYS draw_filled_rect_black (16x9 at x=120,y=11; right clipping)",310,310,0,True
+"SYS draw_filled_rect_black (16x9 at x=16,y=-4; top clipping)",296,296,0,True
+"SYS draw_filled_rect_black (16x9 at x=16,y=60; bottom clipping)",295,295,0,True
+"SYS draw_filled_rect_black (16x9 at x=-5,y=-4; top-left clipping)",257,257,0,True
+"SYS draw_filled_rect_black (16x9 at x=120,y=60; bottom-right clipping)",231,231,0,True
+"SYS draw_filled_rect_black (16x9 at x=128,y=11; fully off right)",45,45,0,True
+"SYS draw_filled_rect_black (16x9 at x=16,y=64; fully off bottom)",48,48,0,True
+"SYS draw_filled_rect_black (16x9 at x=-16,y=11; fully off left)",54,54,0,True
+"SYS draw_filled_rect_black (16x9 at x=16,y=-9; fully off top)",59,59,0,True
+"SYS draw_sprite_overwrite (width=0, height=8; zero-width fast path)",291,291,0,True
+"SYS draw_sprite_overwrite (width=8, height=0; zero-height fast path)",293,293,0,True
+"SYS draw_sprite_overwrite (1x1 at x=0,y=0)",569,569,0,True
+"SYS draw_sprite_overwrite (8x8 at x=40,y=24; aligned)",677,677,0,True
+"SYS draw_sprite_overwrite (8x8 at x=40,y=27; unaligned)",676,676,0,True
+"SYS draw_sprite_overwrite (16x9 frame=0 at x=16,y=8; partial final page)",1196,1196,0,True
+"SYS draw_sprite_overwrite (16x9 frame=1 at x=16,y=11; unaligned)",1206,1206,0,True
+"SYS draw_sprite_overwrite (16x9 frame=2 at x=16,y=11; later frame)",1206,1206,0,True
+"SYS draw_sprite_overwrite (16x17 at x=16,y=8; three source pages)",1523,1523,0,True
+"SYS draw_sprite_overwrite (16x17 at x=16,y=13; unaligned three-page path)",1522,1522,0,True
+"SYS draw_sprite_overwrite (32x16 at x=48,y=24; medium aligned sprite)",1722,1722,0,True
+"SYS draw_sprite_overwrite (64x32 at x=32,y=16; large aligned sprite)",5252,5252,0,True
+"SYS draw_sprite_overwrite (128x64 at x=0,y=0; full-screen sprite)",19212,19212,0,True
+"SYS draw_sprite_overwrite (16x9 at x=-5,y=11; left clipping)",1099,1099,0,True
+"SYS draw_sprite_overwrite (16x9 at x=120,y=11; right clipping)",969,969,0,True
+"SYS draw_sprite_overwrite (16x9 at x=16,y=-4; top clipping)",1189,1189,0,True
+"SYS draw_sprite_overwrite (16x9 at x=16,y=60; bottom clipping)",821,821,0,True
+"SYS draw_sprite_overwrite (16x9 at x=-5,y=-4; top-left clipping)",1089,1089,0,True
+"SYS draw_sprite_overwrite (16x9 at x=120,y=60; bottom-right clipping)",677,677,0,True
+"SYS draw_sprite_overwrite (16x9 at x=128,y=11; fully off right)",297,297,0,True
+"SYS draw_sprite_overwrite (16x9 at x=16,y=64; fully off bottom)",300,300,0,True
+"SYS draw_sprite_overwrite (16x9 at x=-16,y=11; fully off left)",306,306,0,True
+"SYS draw_sprite_overwrite (16x9 at x=16,y=-9; fully off top)",312,312,0,True
+"SYS draw_sprite_plus_mask (width=0, height=8; zero-width fast path)",292,292,0,True
+"SYS draw_sprite_plus_mask (width=8, height=0; zero-height fast path)",294,294,0,True
+"SYS draw_sprite_plus_mask (1x1 at x=0,y=0)",565,565,0,True
+"SYS draw_sprite_plus_mask (8x8 at x=40,y=24; aligned)",807,807,0,True
+"SYS draw_sprite_plus_mask (8x8 at x=40,y=27; unaligned)",806,806,0,True
+"SYS draw_sprite_plus_mask (16x9 frame=0 at x=16,y=8; partial final page)",1678,1678,0,True
+"SYS draw_sprite_plus_mask (16x9 frame=1 at x=16,y=11; unaligned)",1688,1688,0,True
+"SYS draw_sprite_plus_mask (16x9 frame=2 at x=16,y=11; later frame)",1688,1688,0,True
+"SYS draw_sprite_plus_mask (16x17 at x=16,y=8; three source pages)",2266,2266,0,True
+"SYS draw_sprite_plus_mask (16x17 at x=16,y=13; unaligned three-page path)",2265,2265,0,True
+"SYS draw_sprite_plus_mask (32x16 at x=48,y=24; medium aligned sprite)",2795,2795,0,True
+"SYS draw_sprite_plus_mask (64x32 at x=32,y=16; large aligned sprite)",9571,9571,0,True
+"SYS draw_sprite_plus_mask (128x64 at x=0,y=0; full-screen sprite)",36425,36425,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=-5,y=11; left clipping)",1418,1418,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=120,y=11; right clipping)",1195,1195,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=16,y=-4; top clipping)",1657,1657,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=16,y=60; bottom clipping)",1064,1064,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=-5,y=-4; top-left clipping)",1403,1403,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=120,y=60; bottom-right clipping)",792,792,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=128,y=11; fully off right)",298,298,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=16,y=64; fully off bottom)",301,301,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=-16,y=11; fully off left)",307,307,0,True
+"SYS draw_sprite_plus_mask (16x9 at x=16,y=-9; fully off top)",313,313,0,True
+"SYS draw_sprite_self_masked (width=0, height=8; zero-width fast path)",291,291,0,True
+"SYS draw_sprite_self_masked (width=8, height=0; zero-height fast path)",293,293,0,True
+"SYS draw_sprite_self_masked (1x1 at x=0,y=0)",545,545,0,True
+"SYS draw_sprite_self_masked (8x8 at x=40,y=24; aligned)",668,668,0,True
+"SYS draw_sprite_self_masked (8x8 at x=40,y=27; unaligned)",667,667,0,True
+"SYS draw_sprite_self_masked (16x9 frame=0 at x=16,y=8; partial final page)",1131,1131,0,True
+"SYS draw_sprite_self_masked (16x9 frame=1 at x=16,y=11; unaligned)",1141,1141,0,True
+"SYS draw_sprite_self_masked (16x9 frame=2 at x=16,y=11; later frame)",1141,1141,0,True
+"SYS draw_sprite_self_masked (16x17 at x=16,y=8; three source pages)",1447,1447,0,True
+"SYS draw_sprite_self_masked (16x17 at x=16,y=13; unaligned three-page path)",1446,1446,0,True
+"SYS draw_sprite_self_masked (32x16 at x=48,y=24; medium aligned sprite)",1704,1704,0,True
+"SYS draw_sprite_self_masked (64x32 at x=32,y=16; large aligned sprite)",5216,5216,0,True
+"SYS draw_sprite_self_masked (128x64 at x=0,y=0; full-screen sprite)",19142,19142,0,True
+"SYS draw_sprite_self_masked (16x9 at x=-5,y=11; left clipping)",1040,1040,0,True
+"SYS draw_sprite_self_masked (16x9 at x=120,y=11; right clipping)",920,920,0,True
+"SYS draw_sprite_self_masked (16x9 at x=16,y=-4; top clipping)",1126,1126,0,True
+"SYS draw_sprite_self_masked (16x9 at x=16,y=60; bottom clipping)",805,805,0,True
+"SYS draw_sprite_self_masked (16x9 at x=-5,y=-4; top-left clipping)",1036,1036,0,True
+"SYS draw_sprite_self_masked (16x9 at x=120,y=60; bottom-right clipping)",661,661,0,True
+"SYS draw_sprite_self_masked (16x9 at x=128,y=11; fully off right)",297,297,0,True
+"SYS draw_sprite_self_masked (16x9 at x=16,y=64; fully off bottom)",300,300,0,True
+"SYS draw_sprite_self_masked (16x9 at x=-16,y=11; fully off left)",306,306,0,True
+"SYS draw_sprite_self_masked (16x9 at x=16,y=-9; fully off top)",312,312,0,True
+"SYS draw_sprite_erase (width=0, height=8; zero-width fast path)",291,291,0,True
+"SYS draw_sprite_erase (width=8, height=0; zero-height fast path)",293,293,0,True
+"SYS draw_sprite_erase (1x1 at x=0,y=0)",546,546,0,True
+"SYS draw_sprite_erase (8x8 at x=40,y=24; aligned)",676,676,0,True
+"SYS draw_sprite_erase (8x8 at x=40,y=27; unaligned)",675,675,0,True
+"SYS draw_sprite_erase (16x9 frame=0 at x=16,y=8; partial final page)",1163,1163,0,True
+"SYS draw_sprite_erase (16x9 frame=1 at x=16,y=11; unaligned)",1173,1173,0,True
+"SYS draw_sprite_erase (16x9 frame=2 at x=16,y=11; later frame)",1173,1173,0,True
+"SYS draw_sprite_erase (16x17 at x=16,y=8; three source pages)",1495,1495,0,True
+"SYS draw_sprite_erase (16x17 at x=16,y=13; unaligned three-page path)",1494,1494,0,True
+"SYS draw_sprite_erase (32x16 at x=48,y=24; medium aligned sprite)",1768,1768,0,True
+"SYS draw_sprite_erase (64x32 at x=32,y=16; large aligned sprite)",5472,5472,0,True
+"SYS draw_sprite_erase (128x64 at x=0,y=0; full-screen sprite)",19910,19910,0,True
+"SYS draw_sprite_erase (16x9 at x=-5,y=11; left clipping)",1062,1062,0,True
+"SYS draw_sprite_erase (16x9 at x=120,y=11; right clipping)",936,936,0,True
+"SYS draw_sprite_erase (16x9 at x=16,y=-4; top clipping)",1126,1126,0,True
+"SYS draw_sprite_erase (16x9 at x=16,y=60; bottom clipping)",789,789,0,True
+"SYS draw_sprite_erase (16x9 at x=-5,y=-4; top-left clipping)",1036,1036,0,True
+"SYS draw_sprite_erase (16x9 at x=120,y=60; bottom-right clipping)",653,653,0,True
+"SYS draw_sprite_erase (16x9 at x=128,y=11; fully off right)",297,297,0,True
+"SYS draw_sprite_erase (16x9 at x=16,y=64; fully off bottom)",300,300,0,True
+"SYS draw_sprite_erase (16x9 at x=-16,y=11; fully off left)",306,306,0,True
+"SYS draw_sprite_erase (16x9 at x=16,y=-9; fully off top)",312,312,0,True
+SYS set_sprite (16x9 multi-frame sprite),273,273,0,True
+"SYS draw_overwrite (width=0, height=8; zero-width fast path)",184,184,0,True
+"SYS draw_overwrite (width=8, height=0; zero-height fast path)",186,186,0,True
+"SYS draw_overwrite (1x1 at x=0,y=0)",462,462,0,True
+"SYS draw_overwrite (8x8 at x=40,y=24; aligned)",570,570,0,True
+"SYS draw_overwrite (8x8 at x=40,y=27; unaligned)",569,569,0,True
+"SYS draw_overwrite (16x9 frame=0 at x=16,y=8; partial final page)",1089,1089,0,True
+"SYS draw_overwrite (16x9 frame=1 at x=16,y=11; unaligned)",1099,1099,0,True
+"SYS draw_overwrite (16x9 frame=2 at x=16,y=11; later frame)",1099,1099,0,True
+"SYS draw_overwrite (16x17 at x=16,y=8; three source pages)",1416,1416,0,True
+"SYS draw_overwrite (16x17 at x=16,y=13; unaligned three-page path)",1415,1415,0,True
+"SYS draw_overwrite (32x16 at x=48,y=24; medium aligned sprite)",1615,1615,0,True
+"SYS draw_overwrite (64x32 at x=32,y=16; large aligned sprite)",5145,5145,0,True
+"SYS draw_overwrite (128x64 at x=0,y=0; full-screen sprite)",19105,19105,0,True
+"SYS draw_overwrite (16x9 at x=-5,y=11; left clipping)",992,992,0,True
+"SYS draw_overwrite (16x9 at x=120,y=11; right clipping)",862,862,0,True
+"SYS draw_overwrite (16x9 at x=16,y=-4; top clipping)",1082,1082,0,True
+"SYS draw_overwrite (16x9 at x=16,y=60; bottom clipping)",714,714,0,True
+"SYS draw_overwrite (16x9 at x=-5,y=-4; top-left clipping)",982,982,0,True
+"SYS draw_overwrite (16x9 at x=120,y=60; bottom-right clipping)",570,570,0,True
+"SYS draw_overwrite (16x9 at x=128,y=11; fully off right)",190,190,0,True
+"SYS draw_overwrite (16x9 at x=16,y=64; fully off bottom)",193,193,0,True
+"SYS draw_overwrite (16x9 at x=-16,y=11; fully off left)",199,199,0,True
+"SYS draw_overwrite (16x9 at x=16,y=-9; fully off top)",205,205,0,True
+"SYS draw_plus_mask (width=0, height=8; zero-width fast path)",185,185,0,True
+"SYS draw_plus_mask (width=8, height=0; zero-height fast path)",187,187,0,True
+"SYS draw_plus_mask (1x1 at x=0,y=0)",458,458,0,True
+"SYS draw_plus_mask (8x8 at x=40,y=24; aligned)",700,700,0,True
+"SYS draw_plus_mask (8x8 at x=40,y=27; unaligned)",699,699,0,True
+"SYS draw_plus_mask (16x9 frame=0 at x=16,y=8; partial final page)",1571,1571,0,True
+"SYS draw_plus_mask (16x9 frame=1 at x=16,y=11; unaligned)",1581,1581,0,True
+"SYS draw_plus_mask (16x9 frame=2 at x=16,y=11; later frame)",1581,1581,0,True
+"SYS draw_plus_mask (16x17 at x=16,y=8; three source pages)",2159,2159,0,True
+"SYS draw_plus_mask (16x17 at x=16,y=13; unaligned three-page path)",2158,2158,0,True
+"SYS draw_plus_mask (32x16 at x=48,y=24; medium aligned sprite)",2688,2688,0,True
+"SYS draw_plus_mask (64x32 at x=32,y=16; large aligned sprite)",9464,9464,0,True
+"SYS draw_plus_mask (128x64 at x=0,y=0; full-screen sprite)",36318,36318,0,True
+"SYS draw_plus_mask (16x9 at x=-5,y=11; left clipping)",1311,1311,0,True
+"SYS draw_plus_mask (16x9 at x=120,y=11; right clipping)",1088,1088,0,True
+"SYS draw_plus_mask (16x9 at x=16,y=-4; top clipping)",1550,1550,0,True
+"SYS draw_plus_mask (16x9 at x=16,y=60; bottom clipping)",957,957,0,True
+"SYS draw_plus_mask (16x9 at x=-5,y=-4; top-left clipping)",1296,1296,0,True
+"SYS draw_plus_mask (16x9 at x=120,y=60; bottom-right clipping)",685,685,0,True
+"SYS draw_plus_mask (16x9 at x=128,y=11; fully off right)",191,191,0,True
+"SYS draw_plus_mask (16x9 at x=16,y=64; fully off bottom)",194,194,0,True
+"SYS draw_plus_mask (16x9 at x=-16,y=11; fully off left)",200,200,0,True
+"SYS draw_plus_mask (16x9 at x=16,y=-9; fully off top)",206,206,0,True
+"SYS draw_self_masked (width=0, height=8; zero-width fast path)",184,184,0,True
+"SYS draw_self_masked (width=8, height=0; zero-height fast path)",186,186,0,True
+"SYS draw_self_masked (1x1 at x=0,y=0)",438,438,0,True
+"SYS draw_self_masked (8x8 at x=40,y=24; aligned)",561,561,0,True
+"SYS draw_self_masked (8x8 at x=40,y=27; unaligned)",560,560,0,True
+"SYS draw_self_masked (16x9 frame=0 at x=16,y=8; partial final page)",1024,1024,0,True
+"SYS draw_self_masked (16x9 frame=1 at x=16,y=11; unaligned)",1034,1034,0,True
+"SYS draw_self_masked (16x9 frame=2 at x=16,y=11; later frame)",1034,1034,0,True
+"SYS draw_self_masked (16x17 at x=16,y=8; three source pages)",1340,1340,0,True
+"SYS draw_self_masked (16x17 at x=16,y=13; unaligned three-page path)",1339,1339,0,True
+"SYS draw_self_masked (32x16 at x=48,y=24; medium aligned sprite)",1597,1597,0,True
+"SYS draw_self_masked (64x32 at x=32,y=16; large aligned sprite)",5109,5109,0,True
+"SYS draw_self_masked (128x64 at x=0,y=0; full-screen sprite)",19035,19035,0,True
+"SYS draw_self_masked (16x9 at x=-5,y=11; left clipping)",933,933,0,True
+"SYS draw_self_masked (16x9 at x=120,y=11; right clipping)",813,813,0,True
+"SYS draw_self_masked (16x9 at x=16,y=-4; top clipping)",1019,1019,0,True
+"SYS draw_self_masked (16x9 at x=16,y=60; bottom clipping)",698,698,0,True
+"SYS draw_self_masked (16x9 at x=-5,y=-4; top-left clipping)",929,929,0,True
+"SYS draw_self_masked (16x9 at x=120,y=60; bottom-right clipping)",554,554,0,True
+"SYS draw_self_masked (16x9 at x=128,y=11; fully off right)",190,190,0,True
+"SYS draw_self_masked (16x9 at x=16,y=64; fully off bottom)",193,193,0,True
+"SYS draw_self_masked (16x9 at x=-16,y=11; fully off left)",199,199,0,True
+"SYS draw_self_masked (16x9 at x=16,y=-9; fully off top)",205,205,0,True
+"SYS draw_erase (width=0, height=8; zero-width fast path)",184,184,0,True
+"SYS draw_erase (width=8, height=0; zero-height fast path)",186,186,0,True
+"SYS draw_erase (1x1 at x=0,y=0)",439,439,0,True
+"SYS draw_erase (8x8 at x=40,y=24; aligned)",569,569,0,True
+"SYS draw_erase (8x8 at x=40,y=27; unaligned)",568,568,0,True
+"SYS draw_erase (16x9 frame=0 at x=16,y=8; partial final page)",1056,1056,0,True
+"SYS draw_erase (16x9 frame=1 at x=16,y=11; unaligned)",1066,1066,0,True
+"SYS draw_erase (16x9 frame=2 at x=16,y=11; later frame)",1066,1066,0,True
+"SYS draw_erase (16x17 at x=16,y=8; three source pages)",1388,1388,0,True
+"SYS draw_erase (16x17 at x=16,y=13; unaligned three-page path)",1387,1387,0,True
+"SYS draw_erase (32x16 at x=48,y=24; medium aligned sprite)",1661,1661,0,True
+"SYS draw_erase (64x32 at x=32,y=16; large aligned sprite)",5365,5365,0,True
+"SYS draw_erase (128x64 at x=0,y=0; full-screen sprite)",19803,19803,0,True
+"SYS draw_erase (16x9 at x=-5,y=11; left clipping)",955,955,0,True
+"SYS draw_erase (16x9 at x=120,y=11; right clipping)",829,829,0,True
+"SYS draw_erase (16x9 at x=16,y=-4; top clipping)",1019,1019,0,True
+"SYS draw_erase (16x9 at x=16,y=60; bottom clipping)",682,682,0,True
+"SYS draw_erase (16x9 at x=-5,y=-4; top-left clipping)",929,929,0,True
+"SYS draw_erase (16x9 at x=120,y=60; bottom-right clipping)",546,546,0,True
+"SYS draw_erase (16x9 at x=128,y=11; fully off right)",190,190,0,True
+"SYS draw_erase (16x9 at x=16,y=64; fully off bottom)",193,193,0,True
+"SYS draw_erase (16x9 at x=-16,y=11; fully off left)",199,199,0,True
+"SYS draw_erase (16x9 at x=16,y=-9; fully off top)",205,205,0,True
+RET,114,114,0,True

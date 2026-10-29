@@ -13,19 +13,19 @@ SYMBOL TABLE:
 00000000 l    d  .text.__avm_ashldi3	00000000 .text.__avm_ashldi3
 00000000 l    d  .text.__avm_lshrdi3	00000000 .text.__avm_lshrdi3
 00000000 l    d  .text.__avm_ashrdi3	00000000 .text.__avm_ashrdi3
-00000000 g     F .text.__avm_muldi3	000000a1 __avm_muldi3
+00000000 g     F .text.__avm_muldi3	000000a0 __avm_muldi3
 00000000         *UND*	00000000 __avm_umulhisi3
-00000000 g     F .text.__avm_udivmoddi4	000001ad __avm_udivmoddi4
-00000000 g     F .text.__avm_udivdi3	0000019b __avm_udivdi3
-00000000 g     F .text.__avm_umoddi3	0000013f __avm_umoddi3
-00000000 g     F .text.__avm_divmoddi4	0000033d __avm_divmoddi4
-00000000 g     F .text.__avm_divdi3	000002a2 __avm_divdi3
-00000000 g     F .text.__avm_moddi3	00000239 __avm_moddi3
+00000000 g     F .text.__avm_udivmoddi4	000001a4 __avm_udivmoddi4
+00000000 g     F .text.__avm_udivdi3	00000199 __avm_udivdi3
+00000000 g     F .text.__avm_umoddi3	0000013b __avm_umoddi3
+00000000 g     F .text.__avm_divmoddi4	00000337 __avm_divmoddi4
+00000000 g     F .text.__avm_divdi3	000002a0 __avm_divdi3
+00000000 g     F .text.__avm_moddi3	00000238 __avm_moddi3
 00000000 g     F .text.__avm_ashldi3	0000008b __avm_ashldi3
 00000000         *UND*	00000000 __avm_ashlsi3
 00000000         *UND*	00000000 __avm_lshrsi3
 00000000 g     F .text.__avm_lshrdi3	00000090 __avm_lshrdi3
-00000000 g     F .text.__avm_ashrdi3	00000088 __avm_ashrdi3
+00000000 g     F .text.__avm_ashrdi3	00000086 __avm_ashrdi3
 00000000         *UND*	00000000 __avm_ashrsi3
 
 Disassembly of section .text.__avm_muldi3:
@@ -80,8 +80,7 @@ Disassembly of section .text.__avm_muldi3:
  af                    xor	r7, r7
  f7 6d                 add32	q3, q1
  f7 6e                 add32	q3, q2
- 02                    mov	r4, r6
- f0 6d 93              st16	[r1+], r4
+ f0 6d d3              st16	[r1+], r6
  f1 17                 mov	r2, r7
  f2 4b                 sub	r3, r3
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -153,7 +152,7 @@ Disassembly of section .text.__avm_udivmoddi4:
  f2 64                 mov32	q1, q0
  e2 00 00 00           jmpf	__avm_udivmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_udivmoddi4+0x190
+		R_AVM_FAR24	.text.__avm_udivmoddi4+0x187
  f0 3c 1c              stsp16	[sp+0x1c], r4
  f0 3d 1e              stsp16	[sp+0x1e], r5
  f0 3e 24              stsp16	[sp+0x24], r6
@@ -169,7 +168,7 @@ Disassembly of section .text.__avm_udivmoddi4:
  f4 69                 stsp16	[sp+0xa], r5
  e2 00 00 00           jmpf	__avm_udivmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_udivmoddi4+0xb3
+		R_AVM_FAR24	.text.__avm_udivmoddi4+0xab
  f7 76                 sub32	q1, q2
  f0 30 26              ldsp16	r0, [sp+0x26]
  f0 31 28              ldsp16	r1, [sp+0x28]
@@ -182,26 +181,22 @@ Disassembly of section .text.__avm_udivmoddi4:
  f7 7c                 sub32	q3, q0
  c0 01                 ldi8	r4, 0x1
  f0 30 04              ldsp16	r0, [sp+0x4]
- f0 31 06              ldsp16	r1, [sp+0x6]
  f9 81                 or	r4, r0
- f1 04                 mov	r0, r4
- f0 38 04              stsp16	[sp+0x4], r0
+ f0 3c 04              stsp16	[sp+0x4], r4
  f4 62                 stsp16	[sp+0x8], r6
  f4 6b                 stsp16	[sp+0xa], r7
  f0 32 2a              ldsp16	r2, [sp+0x2a]
  f0 31 2e              ldsp16	r1, [sp+0x2e]
  f0 36 14              ldsp16	r6, [sp+0x14]
  f1 06                 mov	r0, r6
- f4 0b                 ldsp16	r7, [sp+0x2]
  f0 34 10              ldsp16	r4, [sp+0x10]
- 08                    mov	r6, r4
- f4 42                 stsp16	[sp+0x0], r6
+ f4 40                 stsp16	[sp+0x0], r4
  f4 b2                 dec16	r2
  f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_udivmoddi4
-		R_AVM_FAR24	.text.__avm_udivmoddi4+0x173
+		R_AVM_FAR24	.text.__avm_udivmoddi4+0x16a
 <L2>:
  f0 3a 2a              stsp16	[sp+0x2a], r2
  f4 09                 ldsp16	r5, [sp+0x2]
@@ -222,9 +217,8 @@ Disassembly of section .text.__avm_udivmoddi4:
  f9 81                 or	r4, r0
  f0 3c 14              stsp16	[sp+0x14], r4
  f0 3d 16              stsp16	[sp+0x16], r5
- 02                    mov	r4, r6
  f1 27                 mov	r5, r3
- f4 70                 stsp16	[sp+0xc], r4
+ f4 72                 stsp16	[sp+0xc], r6
  f4 79                 stsp16	[sp+0xe], r5
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
@@ -271,13 +265,13 @@ Disassembly of section .text.__avm_udivmoddi4:
  d2 04                 brult8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_udivmoddi4
-		R_AVM_FAR24	.text.__avm_udivmoddi4+0x14d
+		R_AVM_FAR24	.text.__avm_udivmoddi4+0x144
 <L4>:
  f0 3a 18              stsp16	[sp+0x18], r2
  f0 3b 1a              stsp16	[sp+0x1a], r3
  e2 00 00 00           jmpf	__avm_udivmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_udivmoddi4+0x92
+		R_AVM_FAR24	.text.__avm_udivmoddi4+0x8d
  f0 69 48              cmp32	q1, q2
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
@@ -298,7 +292,7 @@ Disassembly of section .text.__avm_udivmoddi4:
  f0 3d 1a              stsp16	[sp+0x1a], r5
  e2 00 00 00           jmpf	__avm_udivmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_udivmoddi4+0x96
+		R_AVM_FAR24	.text.__avm_udivmoddi4+0x91
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
  f0 3c 20              stsp16	[sp+0x20], r4
@@ -447,7 +441,6 @@ Disassembly of section .text.__avm_udivdi3:
  92                    or	r4, r6
  f4 70                 stsp16	[sp+0xc], r4
  f4 79                 stsp16	[sp+0xe], r5
- f4 00                 ldsp16	r4, [sp+0x0]
  f1 25                 mov	r5, r1
  f4 49                 stsp16	[sp+0x2], r5
  f0 30 28              ldsp16	r0, [sp+0x28]
@@ -491,7 +484,7 @@ Disassembly of section .text.__avm_udivdi3:
  d2 04                 brult8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_udivdi3
-		R_AVM_FAR24	.text.__avm_udivdi3+0x161
+		R_AVM_FAR24	.text.__avm_udivdi3+0x15f
 <L4>:
  f4 52                 stsp16	[sp+0x4], r6
  f4 5b                 stsp16	[sp+0x6], r7
@@ -558,7 +551,7 @@ Disassembly of section .text.__avm_umoddi3:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_umoddi3
-		R_AVM_FAR24	.text.__avm_umoddi3+0x138
+		R_AVM_FAR24	.text.__avm_umoddi3+0x134
 <L1>:
  f0 02 40              ldi8	r2, 0x40
  a0                    xor	r4, r4
@@ -602,7 +595,7 @@ Disassembly of section .text.__avm_umoddi3:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_umoddi3
-		R_AVM_FAR24	.text.__avm_umoddi3+0x12e
+		R_AVM_FAR24	.text.__avm_umoddi3+0x12a
 <L2>:
  f0 3a 10              stsp16	[sp+0x10], r2
  f0 32 1a              ldsp16	r2, [sp+0x1a]
@@ -620,10 +613,8 @@ Disassembly of section .text.__avm_umoddi3:
  fa 7f                 lsr16i	r4, 0xf
  f7 65                 add32	q1, q1
  f9 89                 or	r4, r2
- f1 14                 mov	r2, r4
- f0 3a 1a              stsp16	[sp+0x1a], r2
+ f0 3c 1a              stsp16	[sp+0x1a], r4
  f0 3b 1c              stsp16	[sp+0x1c], r3
- f4 00                 ldsp16	r4, [sp+0x0]
  f1 25                 mov	r5, r1
  f4 49                 stsp16	[sp+0x2], r5
  f0 30 16              ldsp16	r0, [sp+0x16]
@@ -655,7 +646,7 @@ Disassembly of section .text.__avm_umoddi3:
  d8 04                 bruge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_umoddi3
-		R_AVM_FAR24	.text.__avm_umoddi3+0x126
+		R_AVM_FAR24	.text.__avm_umoddi3+0x122
 <L4>:
  f0 69 c4              cmp32	q3, q1
  d0 04                 breq8	0x4 <L5>
@@ -742,7 +733,7 @@ Disassembly of section .text.__avm_divmoddi4:
  f0 35 26              ldsp16	r5, [sp+0x26]
  e2 00 00 00           jmpf	__avm_divmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x323
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x31d
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  f0 04 ff ff           ldi16	r0, 0xffff
@@ -841,7 +832,7 @@ Disassembly of section .text.__avm_divmoddi4:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divmoddi4
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x2b2
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x2ac
 <L4>:
  f0 3a 1a              stsp16	[sp+0x1a], r2
  f0 3b 1c              stsp16	[sp+0x1c], r3
@@ -849,7 +840,7 @@ Disassembly of section .text.__avm_divmoddi4:
  f0 33 20              ldsp16	r3, [sp+0x20]
  e2 00 00 00           jmpf	__avm_divmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x2e3
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x2dd
  c2 40                 ldi8	r6, 0x40
  f2 69                 mov32	q2, q1
  f0 3c 1e              stsp16	[sp+0x1e], r4
@@ -860,7 +851,7 @@ Disassembly of section .text.__avm_divmoddi4:
  f0 3d 14              stsp16	[sp+0x14], r5
  e2 00 00 00           jmpf	__avm_divmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x1ca
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x1c8
  f7 79                 sub32	q2, q1
  f0 32 00              ldsp16	r2, [sp+0x0]
  f0 33 02              ldsp16	r3, [sp+0x2]
@@ -879,8 +870,7 @@ Disassembly of section .text.__avm_divmoddi4:
  f7 76                 sub32	q1, q2
  c0 01                 ldi8	r4, 0x1
  f9 81                 or	r4, r0
- f1 04                 mov	r0, r4
- f0 38 1e              stsp16	[sp+0x1e], r0
+ f0 3c 1e              stsp16	[sp+0x1e], r4
  f0 39 20              stsp16	[sp+0x20], r1
  f0 3a 12              stsp16	[sp+0x12], r2
  f0 3b 14              stsp16	[sp+0x14], r3
@@ -920,7 +910,6 @@ Disassembly of section .text.__avm_divmoddi4:
  f9 c9                 or	r6, r2
  f4 62                 stsp16	[sp+0x8], r6
  f4 6b                 stsp16	[sp+0xa], r7
- f4 00                 ldsp16	r4, [sp+0x0]
  f1 25                 mov	r5, r1
  f4 49                 stsp16	[sp+0x2], r5
  f0 32 24              ldsp16	r2, [sp+0x24]
@@ -931,9 +920,8 @@ Disassembly of section .text.__avm_divmoddi4:
  f0 36 1a              ldsp16	r6, [sp+0x1a]
  f0 37 1c              ldsp16	r7, [sp+0x1c]
  f7 6f                 add32	q3, q3
- f1 0f                 mov	r1, r7
  f0 38 1a              stsp16	[sp+0x1a], r0
- f0 39 1c              stsp16	[sp+0x1c], r1
+ f0 3f 1c              stsp16	[sp+0x1c], r7
  92                    or	r4, r6
  f4 50                 stsp16	[sp+0x4], r4
  f4 59                 stsp16	[sp+0x6], r5
@@ -967,7 +955,7 @@ Disassembly of section .text.__avm_divmoddi4:
  d2 04                 brult8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divmoddi4
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x274
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x26e
 <L7>:
  f0 38 1e              stsp16	[sp+0x1e], r0
  f0 39 20              stsp16	[sp+0x20], r1
@@ -977,7 +965,7 @@ Disassembly of section .text.__avm_divmoddi4:
  f0 3f 14              stsp16	[sp+0x14], r7
  e2 00 00 00           jmpf	__avm_divmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x1b0
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x1ae
  f0 69 84              cmp32	q2, q1
  d0 04                 breq8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
@@ -1006,7 +994,7 @@ Disassembly of section .text.__avm_divmoddi4:
  f0 3b 10              stsp16	[sp+0x10], r3
  e2 00 00 00           jmpf	__avm_divmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x1b0
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x1ae
  f0 3a 34              stsp16	[sp+0x34], r2
  f0 3b 36              stsp16	[sp+0x36], r3
  f2 42                 sub	r2, r2
@@ -1030,7 +1018,7 @@ Disassembly of section .text.__avm_divmoddi4:
  d0 04                 breq8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divmoddi4
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x2fd
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x2f7
 <L10>:
  f0 34 12              ldsp16	r4, [sp+0x12]
  f0 35 14              ldsp16	r5, [sp+0x14]
@@ -1038,7 +1026,7 @@ Disassembly of section .text.__avm_divmoddi4:
  f0 31 10              ldsp16	r1, [sp+0x10]
  e2 00 00 00           jmpf	__avm_divmoddi4
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divmoddi4+0x323
+		R_AVM_FAR24	.text.__avm_divmoddi4+0x31d
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  c6 ff ff              ldi16	r6, 0xffff
@@ -1116,7 +1104,7 @@ Disassembly of section .text.__avm_divdi3:
  0d                    mov	r7, r5
  e2 00 00 00           jmpf	__avm_divdi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divdi3+0x29b
+		R_AVM_FAR24	.text.__avm_divdi3+0x299
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  f0 04 ff ff           ldi16	r0, 0xffff
@@ -1214,7 +1202,7 @@ Disassembly of section .text.__avm_divdi3:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divdi3
-		R_AVM_FAR24	.text.__avm_divdi3+0x26d
+		R_AVM_FAR24	.text.__avm_divdi3+0x26b
 <L4>:
  f4 12                 ldsp16	r6, [sp+0x4]
  f4 1b                 ldsp16	r7, [sp+0x6]
@@ -1222,21 +1210,19 @@ Disassembly of section .text.__avm_divdi3:
  f0 35 22              ldsp16	r5, [sp+0x22]
  e2 00 00 00           jmpf	__avm_divdi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divdi3+0x29b
+		R_AVM_FAR24	.text.__avm_divdi3+0x299
  f0 02 40              ldi8	r2, 0x40
  a0                    xor	r4, r4
  a5                    xor	r5, r5
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
- f0 3e 20              stsp16	[sp+0x20], r6
- f0 3f 22              stsp16	[sp+0x22], r7
- f4 72                 stsp16	[sp+0xc], r6
- f4 7b                 stsp16	[sp+0xe], r7
- f0 3e 24              stsp16	[sp+0x24], r6
- f0 3f 26              stsp16	[sp+0x26], r7
+ f0 3c 20              stsp16	[sp+0x20], r4
+ f0 3c 22              stsp16	[sp+0x22], r4
+ f4 70                 stsp16	[sp+0xc], r4
+ f4 78                 stsp16	[sp+0xe], r4
+ f0 3c 24              stsp16	[sp+0x24], r4
+ f0 3c 26              stsp16	[sp+0x26], r4
  e2 00 00 00           jmpf	__avm_divdi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divdi3+0x1a4
+		R_AVM_FAR24	.text.__avm_divdi3+0x1a2
  f0 36 18              ldsp16	r6, [sp+0x18]
  f0 37 1a              ldsp16	r7, [sp+0x1a]
  f7 7b                 sub32	q2, q3
@@ -1331,7 +1317,7 @@ Disassembly of section .text.__avm_divdi3:
  d9 04                 brsge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divdi3
-		R_AVM_FAR24	.text.__avm_divdi3+0x153
+		R_AVM_FAR24	.text.__avm_divdi3+0x151
 <L6>:
  f0 36 18              ldsp16	r6, [sp+0x18]
  f0 37 1a              ldsp16	r7, [sp+0x1a]
@@ -1339,20 +1325,20 @@ Disassembly of section .text.__avm_divdi3:
  d2 04                 brult8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divdi3
-		R_AVM_FAR24	.text.__avm_divdi3+0x231
+		R_AVM_FAR24	.text.__avm_divdi3+0x22f
 <L7>:
  f4 70                 stsp16	[sp+0xc], r4
  f4 79                 stsp16	[sp+0xe], r5
  e2 00 00 00           jmpf	__avm_divdi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divdi3+0x17d
+		R_AVM_FAR24	.text.__avm_divdi3+0x17b
  f0 36 18              ldsp16	r6, [sp+0x18]
  f0 37 1a              ldsp16	r7, [sp+0x1a]
  f0 69 8c              cmp32	q2, q3
  d0 04                 breq8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divdi3
-		R_AVM_FAR24	.text.__avm_divdi3+0x153
+		R_AVM_FAR24	.text.__avm_divdi3+0x151
 <L8>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
@@ -1364,7 +1350,7 @@ Disassembly of section .text.__avm_divdi3:
  d2 04                 brult8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_divdi3
-		R_AVM_FAR24	.text.__avm_divdi3+0x153
+		R_AVM_FAR24	.text.__avm_divdi3+0x151
 <L9>:
  f0 38 20              stsp16	[sp+0x20], r0
  f0 39 22              stsp16	[sp+0x22], r1
@@ -1376,7 +1362,7 @@ Disassembly of section .text.__avm_divdi3:
  f4 79                 stsp16	[sp+0xe], r5
  e2 00 00 00           jmpf	__avm_divdi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_divdi3+0x189
+		R_AVM_FAR24	.text.__avm_divdi3+0x187
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3
  c4 ff ff              ldi16	r4, 0xffff
@@ -1449,7 +1435,7 @@ Disassembly of section .text.__avm_moddi3:
  f2 68                 mov32	q2, q0
  e2 00 00 00           jmpf	__avm_moddi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_moddi3+0x232
+		R_AVM_FAR24	.text.__avm_moddi3+0x231
  f4 42                 stsp16	[sp+0x0], r6
  f4 4b                 stsp16	[sp+0x2], r7
  f0 3c 18              stsp16	[sp+0x18], r4
@@ -1536,7 +1522,7 @@ Disassembly of section .text.__avm_moddi3:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_moddi3
-		R_AVM_FAR24	.text.__avm_moddi3+0x20f
+		R_AVM_FAR24	.text.__avm_moddi3+0x20e
 <L4>:
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
@@ -1544,7 +1530,7 @@ Disassembly of section .text.__avm_moddi3:
  f0 37 16              ldsp16	r7, [sp+0x16]
  e2 00 00 00           jmpf	__avm_moddi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_moddi3+0x232
+		R_AVM_FAR24	.text.__avm_moddi3+0x231
  f0 3a 0c              stsp16	[sp+0xc], r2
  f0 3b 0e              stsp16	[sp+0xe], r3
  f0 38 08              stsp16	[sp+0x8], r0
@@ -1601,8 +1587,7 @@ Disassembly of section .text.__avm_moddi3:
  fa 9f                 lsr16i	r6, 0xf
  f7 6a                 add32	q2, q2
  98                    or	r6, r4
- 02                    mov	r4, r6
- f4 50                 stsp16	[sp+0x4], r4
+ f4 52                 stsp16	[sp+0x4], r6
  f4 59                 stsp16	[sp+0x6], r5
  f4 00                 ldsp16	r4, [sp+0x0]
  f1 14                 mov	r2, r4
@@ -1894,7 +1879,7 @@ Disassembly of section .text.__avm_ashrdi3:
  0d                    mov	r7, r5
  e2 00 00 00           jmpf	__avm_ashrdi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_ashrdi3+0x81
+		R_AVM_FAR24	.text.__avm_ashrdi3+0x7f
  f0 0c 20              cmpi.s8	r0, 0x20
  d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
@@ -1915,16 +1900,15 @@ Disassembly of section .text.__avm_ashrdi3:
  0e                    mov	r7, r6
  e2 00 00 00           jmpf	__avm_ashrdi3
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_ashrdi3+0x81
+		R_AVM_FAR24	.text.__avm_ashrdi3+0x7f
  f6 28                 tst16	r0
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_ashrdi3
-		R_AVM_FAR24	.text.__avm_ashrdi3+0x81
+		R_AVM_FAR24	.text.__avm_ashrdi3+0x7f
 <L2>:
- f1 10                 mov	r2, r0
  f2 4b                 sub	r3, r3
- f0 3a 04              stsp16	[sp+0x4], r2
+ f0 38 04              stsp16	[sp+0x4], r0
  f0 3b 06              stsp16	[sp+0x6], r3
  f2 67                 mov32	q1, q3
  f1 28                 mov	r6, r0

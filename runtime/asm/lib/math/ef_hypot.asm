@@ -4,7 +4,7 @@ math_ef_hypot.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_hypot.c
 00000000 l    d  .text.hypotf	00000000 .text.hypotf
-00000000 l     F .text.avm_hypot_overflows	000002c3 avm_hypot_overflows
+00000000 l     F .text.avm_hypot_overflows	000002bd avm_hypot_overflows
 00000000 l    d  .text.avm_hypot_overflows	00000000 .text.avm_hypot_overflows
 00000000 g     F .text.hypotf	00000217 hypotf
 00000000         *UND*	00000000 __avm_errno
@@ -319,8 +319,7 @@ Disassembly of section .text.avm_hypot_overflows:
  d6 dc                 adjsp	-0x24
  f4 58                 stsp16	[sp+0x6], r4
  f4 61                 stsp16	[sp+0x8], r5
- 02                    mov	r4, r6
- f0 3c 14              stsp16	[sp+0x14], r4
+ f0 3e 14              stsp16	[sp+0x14], r6
  f0 3d 16              stsp16	[sp+0x16], r5
  0b                    mov	r6, r7
  02                    mov	r4, r6
@@ -333,7 +332,7 @@ Disassembly of section .text.avm_hypot_overflows:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_hypot_overflows
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x297
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x291
 <L0>:
  f0 34 14              ldsp16	r4, [sp+0x14]
  08                    mov	r6, r4
@@ -361,7 +360,6 @@ Disassembly of section .text.avm_hypot_overflows:
  f0 3c 10              stsp16	[sp+0x10], r4
  f0 3d 12              stsp16	[sp+0x12], r5
  f4 00                 ldsp16	r4, [sp+0x0]
- f4 09                 ldsp16	r5, [sp+0x2]
  f9 88                 and	r4, r2
  f4 40                 stsp16	[sp+0x0], r4
  1a                    add	r6, r6
@@ -492,7 +490,6 @@ Disassembly of section .text.avm_hypot_overflows:
  fa 87                 lsr16i	r5, 0x7
  f9 a4                 and	r5, r1
  f0 36 10              ldsp16	r6, [sp+0x10]
- f0 37 12              ldsp16	r7, [sp+0x12]
  f6 3a                 mul8	r6, r6
  19                    add	r6, r5
  f4 6a                 stsp16	[sp+0xa], r6
@@ -574,7 +571,7 @@ Disassembly of section .text.avm_hypot_overflows:
  d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_hypot_overflows
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x1f4
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x1ee
 <L1>:
  a0                    xor	r4, r4
  f0 3c 10              stsp16	[sp+0x10], r4
@@ -583,7 +580,7 @@ Disassembly of section .text.avm_hypot_overflows:
  f0 3c 18              stsp16	[sp+0x18], r4
  e2 00 00 00           jmpf	avm_hypot_overflows
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x20d
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x207
  f0 34 22              ldsp16	r4, [sp+0x22]
  f9 80                 and	r4, r0
  f0 35 18              ldsp16	r5, [sp+0x18]
@@ -663,18 +660,18 @@ Disassembly of section .text.avm_hypot_overflows:
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_hypot_overflows
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x29c
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x296
 <L2>:
  cc ff                 cmpi.s8	r4, -0x1
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_hypot_overflows
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x2a8
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x2a2
 <L3>:
  a0                    xor	r4, r4
  e2 00 00 00           jmpf	avm_hypot_overflows
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x2a1
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x29b
  f0 0c 04              cmpi.s8	r0, 0x4
  f8 1c                 cset.uge	r4
  d6 24                 adjsp	0x24
@@ -688,16 +685,16 @@ Disassembly of section .text.avm_hypot_overflows:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_hypot_overflows
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x2bc
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x2b6
 <L4>:
  f4 10                 ldsp16	r4, [sp+0x4]
  f6 2c                 tst16	r4
  f8 0c                 cset.ne	r4
  e2 00 00 00           jmpf	avm_hypot_overflows
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x2a1
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x29b
  32                    cmp	r4, r6
  f8 14                 cset.ult	r4
  e2 00 00 00           jmpf	avm_hypot_overflows
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_hypot_overflows+0x2a1
+		R_AVM_FAR24	.text.avm_hypot_overflows+0x29b

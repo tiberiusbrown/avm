@@ -24,15 +24,15 @@ SYMBOL TABLE:
 00000000 g     F .text.__atomic_exchange	00000030 __atomic_exchange
 00000000 g     F .text.__atomic_compare_exchange	00000069 __atomic_compare_exchange
 00000000 g     F .text.__atomic_load_8	00000044 __atomic_load_8
-00000000 g     F .text.__atomic_store_8	00000060 __atomic_store_8
-00000000 g     F .text.__atomic_exchange_8	000000b3 __atomic_exchange_8
-00000000 g     F .text.__atomic_compare_exchange_8	00000103 __atomic_compare_exchange_8
-00000000 g     F .text.__atomic_fetch_add_8	000000ee __atomic_fetch_add_8
-00000000 g     F .text.__atomic_fetch_sub_8	000000eb __atomic_fetch_sub_8
-00000000 g     F .text.__atomic_fetch_and_8	000000cb __atomic_fetch_and_8
-00000000 g     F .text.__atomic_fetch_or_8	000000cb __atomic_fetch_or_8
-00000000 g     F .text.__atomic_fetch_xor_8	000000cb __atomic_fetch_xor_8
-00000000 g     F .text.__atomic_fetch_nand_8	000000ec __atomic_fetch_nand_8
+00000000 g     F .text.__atomic_store_8	0000005e __atomic_store_8
+00000000 g     F .text.__atomic_exchange_8	000000b1 __atomic_exchange_8
+00000000 g     F .text.__atomic_compare_exchange_8	00000101 __atomic_compare_exchange_8
+00000000 g     F .text.__atomic_fetch_add_8	000000ec __atomic_fetch_add_8
+00000000 g     F .text.__atomic_fetch_sub_8	000000e9 __atomic_fetch_sub_8
+00000000 g     F .text.__atomic_fetch_and_8	000000c8 __atomic_fetch_and_8
+00000000 g     F .text.__atomic_fetch_or_8	000000c8 __atomic_fetch_or_8
+00000000 g     F .text.__atomic_fetch_xor_8	000000c8 __atomic_fetch_xor_8
+00000000 g     F .text.__atomic_fetch_nand_8	000000e8 __atomic_fetch_nand_8
 
 Disassembly of section .text.__atomic_is_lock_free:
 
@@ -253,14 +253,12 @@ Disassembly of section .text.__atomic_store_8:
  fa 98                 lsr16i	r6, 0x8
  f1 4a                 stsp8	[sp+0x6], r6
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 55                 stsp8	[sp+0x9], r5
+ f1 54                 stsp8	[sp+0x9], r4
  fa 78                 lsr16i	r4, 0x8
  f1 50                 stsp8	[sp+0x8], r4
  f4 09                 ldsp16	r5, [sp+0x2]
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 45                 stsp8	[sp+0x5], r5
+ f1 44                 stsp8	[sp+0x5], r4
  fa 78                 lsr16i	r4, 0x8
  f1 40                 stsp8	[sp+0x4], r4
  f3 6c                 ldsp8u	r4, [sp+0xb]
@@ -306,14 +304,12 @@ Disassembly of section .text.__atomic_exchange_8:
  fa 98                 lsr16i	r6, 0x8
  f1 42                 stsp8	[sp+0x4], r6
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 4d                 stsp8	[sp+0x7], r5
+ f1 4c                 stsp8	[sp+0x7], r4
  fa 78                 lsr16i	r4, 0x8
  f1 48                 stsp8	[sp+0x6], r4
  f4 31                 ldsp16	r5, [sp+0xc]
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 3d                 stsp8	[sp+0x3], r5
+ f1 3c                 stsp8	[sp+0x3], r4
  fa 78                 lsr16i	r4, 0x8
  f1 38                 stsp8	[sp+0x2], r4
  ed 40 20              ld8u	r2, [r0+0]
@@ -395,14 +391,12 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  fa 98                 lsr16i	r6, 0x8
  f1 4a                 stsp8	[sp+0x6], r6
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 55                 stsp8	[sp+0x9], r5
+ f1 54                 stsp8	[sp+0x9], r4
  fa 78                 lsr16i	r4, 0x8
  f1 50                 stsp8	[sp+0x8], r4
  f4 09                 ldsp16	r5, [sp+0x2]
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 45                 stsp8	[sp+0x5], r5
+ f1 44                 stsp8	[sp+0x5], r4
  fa 78                 lsr16i	r4, 0x8
  f1 40                 stsp8	[sp+0x4], r4
  ed 80 20              ld8u	r4, [r0+0]
@@ -411,7 +405,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L0>:
  ed 80 21              ld8u	r4, [r0+1]
  ed a2 21              ld8u	r5, [r1+1]
@@ -419,7 +413,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L1>:
  ed 80 22              ld8u	r4, [r0+2]
  ed a2 22              ld8u	r5, [r1+2]
@@ -427,7 +421,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L2>:
  ed 80 23              ld8u	r4, [r0+3]
  ed a2 23              ld8u	r5, [r1+3]
@@ -435,7 +429,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L3>:
  ed 80 24              ld8u	r4, [r0+4]
  ed a2 24              ld8u	r5, [r1+4]
@@ -443,7 +437,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L4>:
  ed 80 25              ld8u	r4, [r0+5]
  ed a2 25              ld8u	r5, [r1+5]
@@ -451,7 +445,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L5>:
  ed 80 26              ld8u	r4, [r0+6]
  ed a2 26              ld8u	r5, [r1+6]
@@ -459,7 +453,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L6>:
  ed 80 27              ld8u	r4, [r0+7]
  ed a2 27              ld8u	r5, [r1+7]
@@ -467,7 +461,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcd
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xcb
 <L7>:
  f3 6c                 ldsp8u	r4, [sp+0xb]
  ee 80 20              st8	[r0+0], r4
@@ -488,7 +482,7 @@ Disassembly of section .text.__atomic_compare_exchange_8:
  c0 01                 ldi8	r4, 0x1
  e2 00 00 00           jmpf	__atomic_compare_exchange_8
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xfe
+		R_AVM_FAR24	.text.__atomic_compare_exchange_8+0xfc
  ed 80 20              ld8u	r4, [r0+0]
  ee 82 20              st8	[r1+0], r4
  ed 80 21              ld8u	r4, [r0+1]
@@ -581,8 +575,7 @@ Disassembly of section .text.__atomic_fetch_add_8:
  fa 98                 lsr16i	r6, 0x8
  f1 5a                 stsp8	[sp+0xa], r6
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 55                 stsp8	[sp+0x9], r5
+ f1 54                 stsp8	[sp+0x9], r4
  fa 78                 lsr16i	r4, 0x8
  f1 50                 stsp8	[sp+0x8], r4
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -592,8 +585,7 @@ Disassembly of section .text.__atomic_fetch_add_8:
  fa 78                 lsr16i	r4, 0x8
  f1 48                 stsp8	[sp+0x6], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 45                 stsp8	[sp+0x5], r5
+ f1 47                 stsp8	[sp+0x5], r7
  fa 78                 lsr16i	r4, 0x8
  f1 40                 stsp8	[sp+0x4], r4
  f3 6c                 ldsp8u	r4, [sp+0xb]
@@ -695,8 +687,7 @@ Disassembly of section .text.__atomic_fetch_sub_8:
  fa 78                 lsr16i	r4, 0x8
  f1 58                 stsp8	[sp+0xa], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 55                 stsp8	[sp+0x9], r5
+ f1 57                 stsp8	[sp+0x9], r7
  fa 78                 lsr16i	r4, 0x8
  f1 50                 stsp8	[sp+0x8], r4
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -706,8 +697,7 @@ Disassembly of section .text.__atomic_fetch_sub_8:
  fa 78                 lsr16i	r4, 0x8
  f1 48                 stsp8	[sp+0x6], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 45                 stsp8	[sp+0x5], r5
+ f1 47                 stsp8	[sp+0x5], r7
  fa 78                 lsr16i	r4, 0x8
  f1 40                 stsp8	[sp+0x4], r4
  f3 6c                 ldsp8u	r4, [sp+0xb]
@@ -764,8 +754,7 @@ Disassembly of section .text.__atomic_fetch_and_8:
  fa 38                 lsl16i	r4, 0x8
  91                    or	r4, r5
  04                    mov	r5, r4
- 03                    mov	r4, r7
- f4 60                 stsp16	[sp+0x8], r4
+ f4 63                 stsp16	[sp+0x8], r7
  f4 69                 stsp16	[sp+0xa], r5
  ed 80 24              ld8u	r4, [r0+4]
  f0 2c 16              stsp8	[sp+0x16], r4
@@ -793,8 +782,7 @@ Disassembly of section .text.__atomic_fetch_and_8:
  fa 78                 lsr16i	r4, 0x8
  f1 48                 stsp8	[sp+0x6], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 45                 stsp8	[sp+0x5], r5
+ f1 47                 stsp8	[sp+0x5], r7
  fa 78                 lsr16i	r4, 0x8
  f1 40                 stsp8	[sp+0x4], r4
  f0 36 10              ldsp16	r6, [sp+0x10]
@@ -806,8 +794,7 @@ Disassembly of section .text.__atomic_fetch_and_8:
  fa 78                 lsr16i	r4, 0x8
  f1 38                 stsp8	[sp+0x2], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 35                 stsp8	[sp+0x1], r5
+ f1 37                 stsp8	[sp+0x1], r7
  fa 78                 lsr16i	r4, 0x8
  f1 30                 stsp8	[sp+0x0], r4
  f3 5c                 ldsp8u	r4, [sp+0x7]
@@ -864,8 +851,7 @@ Disassembly of section .text.__atomic_fetch_or_8:
  fa 38                 lsl16i	r4, 0x8
  91                    or	r4, r5
  04                    mov	r5, r4
- 03                    mov	r4, r7
- f4 60                 stsp16	[sp+0x8], r4
+ f4 63                 stsp16	[sp+0x8], r7
  f4 69                 stsp16	[sp+0xa], r5
  ed 80 24              ld8u	r4, [r0+4]
  f0 2c 16              stsp8	[sp+0x16], r4
@@ -893,8 +879,7 @@ Disassembly of section .text.__atomic_fetch_or_8:
  fa 78                 lsr16i	r4, 0x8
  f1 48                 stsp8	[sp+0x6], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 45                 stsp8	[sp+0x5], r5
+ f1 47                 stsp8	[sp+0x5], r7
  fa 78                 lsr16i	r4, 0x8
  f1 40                 stsp8	[sp+0x4], r4
  f0 36 10              ldsp16	r6, [sp+0x10]
@@ -906,8 +891,7 @@ Disassembly of section .text.__atomic_fetch_or_8:
  fa 78                 lsr16i	r4, 0x8
  f1 38                 stsp8	[sp+0x2], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 35                 stsp8	[sp+0x1], r5
+ f1 37                 stsp8	[sp+0x1], r7
  fa 78                 lsr16i	r4, 0x8
  f1 30                 stsp8	[sp+0x0], r4
  f3 5c                 ldsp8u	r4, [sp+0x7]
@@ -964,8 +948,7 @@ Disassembly of section .text.__atomic_fetch_xor_8:
  fa 38                 lsl16i	r4, 0x8
  91                    or	r4, r5
  04                    mov	r5, r4
- 03                    mov	r4, r7
- f4 60                 stsp16	[sp+0x8], r4
+ f4 63                 stsp16	[sp+0x8], r7
  f4 69                 stsp16	[sp+0xa], r5
  ed 80 24              ld8u	r4, [r0+4]
  f0 2c 16              stsp8	[sp+0x16], r4
@@ -993,8 +976,7 @@ Disassembly of section .text.__atomic_fetch_xor_8:
  fa 78                 lsr16i	r4, 0x8
  f1 48                 stsp8	[sp+0x6], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 45                 stsp8	[sp+0x5], r5
+ f1 47                 stsp8	[sp+0x5], r7
  fa 78                 lsr16i	r4, 0x8
  f1 40                 stsp8	[sp+0x4], r4
  f0 36 10              ldsp16	r6, [sp+0x10]
@@ -1006,8 +988,7 @@ Disassembly of section .text.__atomic_fetch_xor_8:
  fa 78                 lsr16i	r4, 0x8
  f1 38                 stsp8	[sp+0x2], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 35                 stsp8	[sp+0x1], r5
+ f1 37                 stsp8	[sp+0x1], r7
  fa 78                 lsr16i	r4, 0x8
  f1 30                 stsp8	[sp+0x0], r4
  f3 5c                 ldsp8u	r4, [sp+0x7]
@@ -1062,7 +1043,6 @@ Disassembly of section .text.__atomic_fetch_nand_8:
  f0 2f 19              stsp8	[sp+0x19], r7
  fa 68                 lsl16i	r7, 0x8
  9e                    or	r7, r6
- f4 02                 ldsp16	r6, [sp+0x0]
  f4 4b                 stsp16	[sp+0x2], r7
  ed e4 24              ld8u	r7, [r2+4]
  f0 2f 18              stsp8	[sp+0x18], r7
@@ -1105,8 +1085,7 @@ Disassembly of section .text.__atomic_fetch_nand_8:
  fa 98                 lsr16i	r6, 0x8
  f1 6a                 stsp8	[sp+0xe], r6
  01                    mov	r4, r5
- 04                    mov	r5, r4
- f1 65                 stsp8	[sp+0xd], r5
+ f1 64                 stsp8	[sp+0xd], r4
  fa 78                 lsr16i	r4, 0x8
  f1 60                 stsp8	[sp+0xc], r4
  f4 12                 ldsp16	r6, [sp+0x4]
@@ -1116,8 +1095,7 @@ Disassembly of section .text.__atomic_fetch_nand_8:
  fa 78                 lsr16i	r4, 0x8
  f1 58                 stsp8	[sp+0xa], r4
  03                    mov	r4, r7
- 04                    mov	r5, r4
- f1 55                 stsp8	[sp+0x9], r5
+ f1 57                 stsp8	[sp+0x9], r7
  fa 78                 lsr16i	r4, 0x8
  f1 50                 stsp8	[sp+0x8], r4
  f3 7c                 ldsp8u	r4, [sp+0xf]

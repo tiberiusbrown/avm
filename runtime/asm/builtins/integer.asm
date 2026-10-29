@@ -22,9 +22,9 @@ SYMBOL TABLE:
 00000000 g     F .text.__avm_ashrsi3	0000002b __avm_ashrsi3
 00000000 g     F .text.__avm_rotlsi3	00000026 __avm_rotlsi3
 00000000 g     F .text.__avm_rotrsi3	00000026 __avm_rotrsi3
-00000000 g     F .text.__avm_mulhisi3	00000048 __avm_mulhisi3
+00000000 g     F .text.__avm_mulhisi3	00000047 __avm_mulhisi3
 00000000 g     F .text.__avm_umulhisi3	0000004b __avm_umulhisi3
-00000000 g     F .text.__avm_mulsi3	0000006c __avm_mulsi3
+00000000 g     F .text.__avm_mulsi3	00000068 __avm_mulsi3
 00000000 g     F .text.__avm_udivmodsi4	0000007c __avm_udivmodsi4
 00000000 g     F .text.__avm_udivsi3	00000015 __avm_udivsi3
 00000000 g     F .text.__avm_umodsi3	00000019 __avm_umodsi3
@@ -208,8 +208,7 @@ Disassembly of section .text.__avm_mulhisi3:
  f3 31                 mulsu8.w	r4, r5
  04                    mov	r5, r4
  fa c8                 asr16i	r5, 0x8
- 0e                    mov	r7, r6
- 17                    add	r5, r7
+ 16                    add	r5, r6
  f4 02                 ldsp16	r6, [sp+0x0]
  0e                    mov	r7, r6
  fa e8                 asr16i	r7, 0x8
@@ -297,10 +296,9 @@ Disassembly of section .text.__avm_mulsi3:
  fa 8f                 lsr16i	r5, 0xf
  f2 24                 add	r5, r0
  f4 61                 stsp16	[sp+0x8], r5
- f1 07                 mov	r0, r7
  06                    mov	r5, r6
  fa 8f                 lsr16i	r5, 0xf
- f2 24                 add	r5, r0
+ 17                    add	r5, r7
  fe 2c                 mul16	r5, r4
  f4 49                 stsp16	[sp+0x2], r5
  f4 21                 ldsp16	r5, [sp+0x8]
@@ -325,8 +323,7 @@ Disassembly of section .text.__avm_mulsi3:
  f3 32                 mulsu8.w	r4, r6
  04                    mov	r5, r4
  fa c8                 asr16i	r5, 0x8
- 0b                    mov	r6, r7
- 16                    add	r5, r6
+ 17                    add	r5, r7
  f4 03                 ldsp16	r7, [sp+0x0]
  0b                    mov	r6, r7
  fa d8                 asr16i	r6, 0x8

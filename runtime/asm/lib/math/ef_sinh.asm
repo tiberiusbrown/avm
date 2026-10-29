@@ -4,7 +4,7 @@ math_ef_sinh.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_sinh.c
 00000000 l    d  .text.sinhf	00000000 .text.sinhf
-00000000 g     F .text.sinhf	000000ee sinhf
+00000000 g     F .text.sinhf	000000ed sinhf
 00000000         *UND*	00000000 __avm_expf_noerrno
 00000000         *UND*	00000000 __avm_errno
 
@@ -19,11 +19,11 @@ Disassembly of section .text.sinhf:
  ff 0a                 fabs	q2
  f1 15                 mov	r2, r5
  c6 7f 3f              ldi16	r6, 0x3f7f
- f5 2a                 cmp	r6, r2
+ 39                    cmp	r6, r5
  d8 04                 bruge8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinhf
-		R_AVM_FAR24	.text.sinhf+0x4d
+		R_AVM_FAR24	.text.sinhf+0x4c
 <L0>:
  aa                    xor	r6, r6
  af                    xor	r7, r7
@@ -31,14 +31,14 @@ Disassembly of section .text.sinhf:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinhf
-		R_AVM_FAR24	.text.sinhf+0x2a
+		R_AVM_FAR24	.text.sinhf+0x29
 <L1>:
  c0 7f                 ldi8	r4, 0x7f
  f5 22                 cmp	r4, r2
  d2 04                 brult8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinhf
-		R_AVM_FAR24	.text.sinhf+0xc7
+		R_AVM_FAR24	.text.sinhf+0xc6
 <L2>:
  f2 68                 mov32	q2, q0
  f2 6a                 mov32	q3, q0
@@ -50,26 +50,26 @@ Disassembly of section .text.sinhf:
  ff 02                 fmul
  e2 00 00 00           jmpf	sinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinhf+0xc2
+		R_AVM_FAR24	.text.sinhf+0xc1
  c6 80 7f              ldi16	r6, 0x7f80
  f5 16                 cmp	r2, r6
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinhf
-		R_AVM_FAR24	.text.sinhf+0x62
+		R_AVM_FAR24	.text.sinhf+0x61
 <L3>:
  f2 68                 mov32	q2, q0
  f2 6a                 mov32	q3, q0
  ff 00                 fadd
  e2 00 00 00           jmpf	sinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinhf+0xc2
+		R_AVM_FAR24	.text.sinhf+0xc1
  c7 0f 41              ldi16	r7, 0x410f
  f5 2e                 cmp	r7, r2
  d8 04                 bruge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinhf
-		R_AVM_FAR24	.text.sinhf+0x8b
+		R_AVM_FAR24	.text.sinhf+0x8a
 <L4>:
  e3 00 00 00           callf	sinhf
 		R_AVM_RELAX	*ABS*
@@ -89,14 +89,14 @@ Disassembly of section .text.sinhf:
  ff 02                 fmul
  e2 00 00 00           jmpf	sinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinhf+0xbc
+		R_AVM_FAR24	.text.sinhf+0xbb
  f0 06 fd d4           ldi16	r2, 0xd4fd
  f0 07 b2 42           ldi16	r3, 0x42b2
  f0 69 84              cmp32	q2, q1
  d2 04                 brult8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinhf
-		R_AVM_FAR24	.text.sinhf+0xd1
+		R_AVM_FAR24	.text.sinhf+0xd0
 <L5>:
  c6 18 72              ldi16	r6, 0x7218
  c7 31 bf              ldi16	r7, 0xbf31
@@ -125,7 +125,7 @@ Disassembly of section .text.sinhf:
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	sinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinhf+0x2a
+		R_AVM_FAR24	.text.sinhf+0x29
  a0                    xor	r4, r4
  c5 00 80              ldi16	r5, 0x8000
  f9 10                 and	r0, r4
@@ -141,4 +141,4 @@ Disassembly of section .text.sinhf:
  a0                    xor	r4, r4
  e2 00 00 00           jmpf	sinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinhf+0xc2
+		R_AVM_FAR24	.text.sinhf+0xc1

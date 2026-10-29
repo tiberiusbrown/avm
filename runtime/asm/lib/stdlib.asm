@@ -11,7 +11,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.parse_ulong	00000000 .text.parse_ulong
 00000000 l    d  .text.strtoul	00000000 .text.strtoul
 00000000 l    d  .text.strtoll	00000000 .text.strtoll
-00000000 l     F .text.parse_ullong	0000030e parse_ullong
+00000000 l     F .text.parse_ullong	0000030c parse_ullong
 00000000 l    d  .text.parse_ullong	00000000 .text.parse_ullong
 00000000 l    d  .text.strtoull	00000000 .text.strtoull
 00000000 l    d  .text.atol	00000000 .text.atol
@@ -775,7 +775,7 @@ Disassembly of section .text.parse_ullong:
  f0 39 02              stsp16	[sp+0x2], r1
  e2 00 00 00           jmpf	parse_ullong
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_ullong+0x2d2
+		R_AVM_FAR24	.text.parse_ullong+0x2d0
  f0 3e 24              stsp16	[sp+0x24], r6
  f1 18                 mov	r3, r0
  f0 6c 81              ld8u	r4, [r0+]
@@ -851,7 +851,7 @@ Disassembly of section .text.parse_ullong:
  d2 04                 brult8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x2f1
+		R_AVM_FAR24	.text.parse_ullong+0x2ef
 <L10>:
  c6 a9 ff              ldi16	r6, 0xffa9
  19                    add	r6, r5
@@ -888,11 +888,10 @@ Disassembly of section .text.parse_ullong:
  d6 f6                 adjsp	-0xa
  f0 10 30              leasp	r0, 0x30
  f0 38 08              stsp16	[sp+0x8], r0
- f1 02                 mov	r0, r2
  f2 39                 sub	r1, r1
- f0 38 2a              stsp16	[sp+0x2a], r0
+ f0 3a 2a              stsp16	[sp+0x2a], r2
  f0 39 2c              stsp16	[sp+0x2c], r1
- f0 38 00              stsp16	[sp+0x0], r0
+ f0 3a 00              stsp16	[sp+0x0], r2
  f0 39 02              stsp16	[sp+0x2], r1
  f2 30                 sub	r0, r0
  f0 38 04              stsp16	[sp+0x4], r0
@@ -917,7 +916,7 @@ Disassembly of section .text.parse_ullong:
  f0 33 2e              ldsp16	r3, [sp+0x2e]
  e2 00 00 00           jmpf	parse_ullong
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_ullong+0x18b
+		R_AVM_FAR24	.text.parse_ullong+0x189
  c0 01                 ldi8	r4, 0x1
  f4 29                 ldsp16	r5, [sp+0xa]
  74                    st16	[r5], r4
@@ -932,24 +931,24 @@ Disassembly of section .text.parse_ullong:
  d2 04                 brult8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x1b2
+		R_AVM_FAR24	.text.parse_ullong+0x1b0
 <L12>:
  ca d0                 addi.s8	r6, -0x30
  3b                    cmp	r6, r7
  d8 04                 bruge8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x1ea
+		R_AVM_FAR24	.text.parse_ullong+0x1e8
 <L13>:
  f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x2da
+		R_AVM_FAR24	.text.parse_ullong+0x2d8
 <L14>:
  e2 00 00 00           jmpf	parse_ullong
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_ullong+0x2a8
+		R_AVM_FAR24	.text.parse_ullong+0x2a6
  02                    mov	r4, r6
  c8 9f                 addi.s8	r4, -0x61
  f1 74                 zext8	r4
@@ -957,24 +956,24 @@ Disassembly of section .text.parse_ullong:
  d2 04                 brult8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x1d4
+		R_AVM_FAR24	.text.parse_ullong+0x1d2
 <L15>:
  ca a9                 addi.s8	r6, -0x57
  3b                    cmp	r6, r7
  d8 04                 bruge8	0x4 <L16>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x1ea
+		R_AVM_FAR24	.text.parse_ullong+0x1e8
 <L16>:
  f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L17>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x2da
+		R_AVM_FAR24	.text.parse_ullong+0x2d8
 <L17>:
  e2 00 00 00           jmpf	parse_ullong
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_ullong+0x2a8
+		R_AVM_FAR24	.text.parse_ullong+0x2a6
  02                    mov	r4, r6
  c8 c9                 addi.s8	r4, -0x37
  ca bf                 addi.s8	r6, -0x41
@@ -987,7 +986,7 @@ Disassembly of section .text.parse_ullong:
  d2 04                 brult8	0x4 <L18>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x2a0
+		R_AVM_FAR24	.text.parse_ullong+0x29e
 <L18>:
  f4 62                 stsp16	[sp+0x8], r6
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -1006,7 +1005,7 @@ Disassembly of section .text.parse_ullong:
  d0 04                 breq8	0x4 <L19>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x182
+		R_AVM_FAR24	.text.parse_ullong+0x180
 <L19>:
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
@@ -1033,7 +1032,7 @@ Disassembly of section .text.parse_ullong:
  d0 04                 breq8	0x4 <L20>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x24f
+		R_AVM_FAR24	.text.parse_ullong+0x24d
 <L20>:
  f0 36 12              ldsp16	r6, [sp+0x12]
  f4 23                 ldsp16	r7, [sp+0x8]
@@ -1041,7 +1040,7 @@ Disassembly of section .text.parse_ullong:
  d8 04                 bruge8	0x4 <L21>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x182
+		R_AVM_FAR24	.text.parse_ullong+0x180
 <L21>:
  f4 2a                 ldsp16	r6, [sp+0xa]
  6a                    ld16	r6, [r6]
@@ -1049,7 +1048,7 @@ Disassembly of section .text.parse_ullong:
  d0 04                 breq8	0x4 <L22>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x299
+		R_AVM_FAR24	.text.parse_ullong+0x297
 <L22>:
  d6 f8                 adjsp	-0x8
  f4 50                 stsp16	[sp+0x4], r4
@@ -1083,19 +1082,19 @@ Disassembly of section .text.parse_ullong:
  f0 33 2e              ldsp16	r3, [sp+0x2e]
  e2 00 00 00           jmpf	parse_ullong
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_ullong+0x187
+		R_AVM_FAR24	.text.parse_ullong+0x185
  f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L23>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x2da
+		R_AVM_FAR24	.text.parse_ullong+0x2d8
 <L23>:
  f0 34 24              ldsp16	r4, [sp+0x24]
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x2b5
+		R_AVM_FAR24	.text.parse_ullong+0x2b3
 <L24>:
  f5 53                 st16	[r4], r3
  f4 28                 ldsp16	r4, [sp+0xa]
@@ -1104,7 +1103,7 @@ Disassembly of section .text.parse_ullong:
  d1 04                 brne8	0x4 <L25>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_ullong
-		R_AVM_FAR24	.text.parse_ullong+0x2e4
+		R_AVM_FAR24	.text.parse_ullong+0x2e2
 <L25>:
  c0 22                 ldi8	r4, 0x22
  f0 36 18              ldsp16	r6, [sp+0x18]
@@ -1117,7 +1116,7 @@ Disassembly of section .text.parse_ullong:
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	parse_ullong
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_ullong+0x2e4
+		R_AVM_FAR24	.text.parse_ullong+0x2e2
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  f0 38 00              stsp16	[sp+0x0], r0

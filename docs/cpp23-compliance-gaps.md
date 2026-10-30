@@ -29,16 +29,11 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 ### Fundamental freestanding library headers
 
 - [ ] **`<limits>`:** Validate all `std::numeric_limits` specializations and compile-time properties against AVM fundamental types, including integer, floating-point, character, and pointer-related implementation properties.
-- [ ] **`<cstdint>`:** Validate the `std`-namespace fixed-width, least-width, fast-width, maximum-width, and pointer-width integer typedefs and corresponding macros against the 16-bit `ptrdiff_t` and AVM pointer widths.
-- [ ] **`<cstdarg>`:** Provide the required C++ header interface and `va_list`/variadic facilities through the C++23 standard-header path.
-- [ ] **`<initializer_list>`:** Validate `std::initializer_list`, its accessors, lifetime semantics, compiler recognition, and usable braced-initialization support.
-- [ ] **`<source_location>`:** Validate `std::source_location::current()` and its file, function, line, and column queries, including correct compiler-generated values and valid returned string storage.
 
 ### Dynamic allocation — `<new>`
 
-- [ ] **Allocation and deallocation functions:** Implement the replaceable ordinary `operator new`/`operator new[]` and `operator delete`/`operator delete[]` families, including sized, aligned, and nonthrowing overloads, correct zero-size/alignment behavior, and interoperability with the AVM heap. The existing header provides only placement forms, and the weak deleting fallbacks currently halt.
+- [ ] **Allocation and deallocation functions:** Provide executable implementations of the replaceable ordinary `operator new`/`operator new[]` and `operator delete`/`operator delete[]` families, including sized, aligned, and nonthrowing overloads, correct zero-size/alignment behavior, and interoperability with the AVM heap. The libc++ header declares the overloads, but the AVM runtime does not yet implement their required allocation and deallocation behavior.
 - [ ] **Allocation failure and handlers:** Provide `std::bad_alloc`, `std::bad_array_new_length`, `std::nothrow_t`, `std::nothrow`, `std::new_handler`, `std::get_new_handler`, and `std::set_new_handler`, with the required failure, exception, and retry semantics.
-- [ ] **Other `<new>` facilities:** Provide `std::align_val_t`, `std::destroying_delete_t`, `std::destroying_delete`, `std::launder`, and the hardware-interference-size constants where required, preserving their specified values and semantics.
 
 ### Exceptions and runtime type headers
 
@@ -48,17 +43,9 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Core generic library headers
 
-- [ ] **`<type_traits>`:** Provide the required type properties, transformations, queries, variable templates, and C++20/C++23 trait additions, with correct substitution and constant-expression behavior.
-- [ ] **`<concepts>`:** Provide the C++20/C++23 standard concepts, including language, comparison, construction, conversion, and callable concepts.
-- [ ] **`<compare>`:** Provide comparison-category types, comparison concepts and utilities, `std::compare_three_way`, and other required ordering interfaces for C++20/C++23.
-- [ ] **`<bit>`:** Validate `std::bit_cast`, bit counting/rotation, endian, power-of-two, and C++23 byteswap facilities across AVM integer widths, including 64-bit count-leading/trailing-zero runtime semantics.
-- [ ] **`<utility>`:** Provide all freestanding-designated utility types and functions, including pairs where required, forwarding/moving, integer sequences, in-place tags, exchange, and C++23 utility additions.
-- [ ] **`<tuple>`:** Provide the freestanding-designated tuple facilities and tuple protocol, including required accessors, traits, construction, and C++23 additions.
-- [ ] **`<memory>`:** Provide the freestanding-designated pointer, construction/destruction, lifetime, allocator-related, and memory utility interfaces, without incorrectly requiring the entire hosted memory-management library.
-- [ ] **`<functional>`:** Provide the freestanding-designated invoke, reference-wrapper, function-object, and related utilities, without incorrectly requiring the hosted callable-wrapper facilities.
-- [ ] **`<ratio>`:** Provide `std::ratio` and its required compile-time arithmetic and comparisons, with correct overflow and normalization behavior.
-- [ ] **`<iterator>`:** Provide the freestanding-designated iterator tags, concepts, traits, adapters, sentinels, and other iterator utilities.
-- [ ] **`<ranges>`:** Provide the freestanding-designated range concepts, access customization points, borrowed-range machinery, and related range utilities; do not require the complete hosted range-adaptor library in this part.
+- [ ] **`<type_traits>`:** Validate the complete freestanding C++23 set of type properties, transformations, queries, and variable templates against AVM types, including substitution and constant-expression behavior.
+- [ ] **`<concepts>`:** Validate all required C++20/C++23 language, comparison, construction, conversion, and callable concepts.
+- [ ] **`<memory>`:** Provide the remaining freestanding-designated pointer, lifetime, allocator-related, and memory utility interfaces, without incorrectly requiring the entire hosted memory-management library.
 
 ### Atomics — `<atomic>`
 

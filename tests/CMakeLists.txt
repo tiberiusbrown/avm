@@ -108,6 +108,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                     "${AVM_CXX_TEST_DIR}/support/separate_compilation.h")
             elseif(AVM_TEST_NAME STREQUAL "atexit_lifetime")
                 set(test_support_sources "${AVM_CXX_TEST_DIR}/support/atexit_lifetime.cpp")
+            elseif(AVM_TEST_NAME STREQUAL "libcxx_freestanding")
+                set(test_support_sources
+                    "${AVM_CXX_TEST_DIR}/support/libcxx_freestanding_ranges_sort.cpp")
             elseif(AVM_TEST_NAME STREQUAL "multiple_translation_units")
                 set(test_support_sources
                     "${AVM_CXX_TEST_DIR}/support/multiple_translation_units_a.cpp"
@@ -121,11 +124,6 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             set(test_support_sources "${AVM_C_TEST_DIR}/support/complex_abi_impl.c")
         endif()
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
-        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
-           AVM_TEST_NAME STREQUAL "libcxx_freestanding" AND
-           AVM_TEST_OPT_LEVEL STREQUAL "O0")
-            list(APPEND test_compile_options -DAVM_TEST_O0)
-        endif()
         set(test_include_dirs "${AVM_SYSROOT_DIR}/include")
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
             # AVM Clang discovers both libc++ and the C runtime from its
@@ -184,12 +182,20 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 "${test_support_source}" NAME_WE)
             set(test_support_object
                 "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_${test_support_name}.o")
+            set(test_support_compile_options ${test_compile_options})
+            if(AVM_TEST_NAME STREQUAL "libcxx_freestanding" AND
+               AVM_TEST_OPT_LEVEL STREQUAL "O0")
+                # The generic ranges sort partition path exceeds the AVM VM
+                # stack at O0. Keep the runtime test enabled using the SDK's
+                # normal optimized helper body in this one configuration.
+                list(APPEND test_support_compile_options -O2)
+            endif()
             avm_add_object(
                 OUTPUT "${test_support_object}"
                 SOURCE "${test_support_source}"
                 LANGUAGE ${AVM_TEST_LANGUAGE}
                 INCLUDE_DIRS ${test_include_dirs}
-                COMPILE_OPTIONS ${test_compile_options}
+                COMPILE_OPTIONS ${test_support_compile_options}
                 DEPENDS avm_sysroot ${test_source_dependencies}
             )
             list(APPEND test_objects "${test_support_object}")

@@ -28,9 +28,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Fundamental freestanding library headers
 
-- [ ] **`<cstddef>`:** Complete the existing partial wrapper by providing `std::byte`, its bitwise/shift operations, and `std::to_integer`, with the C++23-required definitions and semantics.
-- [ ] **`<cfloat>`, `<climits>`, `<limits>`:** Provide the required C++ header interfaces and `std::numeric_limits` specializations for AVM's fundamental types, including correct integer, floating-point, character, and pointer-related implementation properties.
-- [ ] **`<version>`:** Provide all applicable C++20/C++23 standard-library feature-test macros, advertising only features with working implementations and correct values.
+- [ ] **`<limits>`:** Provide `std::numeric_limits` specializations for AVM's fundamental types, including correct integer, floating-point, character, and pointer-related implementation properties.
 - [ ] **`<cstdint>`:** Provide the `std`-namespace fixed-width, least-width, fast-width, maximum-width, and pointer-width integer typedefs and corresponding macros where required by the C++23 header.
 - [ ] **`<cstdarg>`:** Provide the required C++ header interface and `va_list`/variadic facilities through the C++23 standard-header path.
 - [ ] **`<initializer_list>`:** Provide `std::initializer_list` and its required accessors, lifetime semantics, compiler recognition, and usable braced-initialization support.

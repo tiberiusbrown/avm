@@ -1,0 +1,4 @@
+#ifndef AVM_RUNTIME_CFLOAT
+#define AVM_RUNTIME_CFLOAT
+#include <float.h>
+#endif

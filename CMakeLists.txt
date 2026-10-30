@@ -183,6 +183,8 @@ install(FILES ${AVM_SDK_CLANG_CORE_HEADERS}
 install(DIRECTORY "${AVM_SYSROOT_DIR}/"
     DESTINATION sysroot COMPONENT avm-sdk
     PATTERN ".runtime-stamp" EXCLUDE)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/deps/llvm-project/LICENSE.TXT"
+    DESTINATION share/licenses/libc++ COMPONENT avm-sdk)
 
 add_subdirectory(interp)
 if(AVM_WITH_ARDENS)

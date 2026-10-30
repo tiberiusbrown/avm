@@ -15,8 +15,9 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_heap_start
 00000000 g     F .text.free	00000073 free
 00000000 g     F .text.realloc	00000365 realloc
-00000000 g     F .text.calloc	000000da calloc
+00000000 g     F .text.calloc	000000e8 calloc
 00000000         *UND*	00000000 __avm_umulhisi3
+00000000         *UND*	00000000 memset
 
 Disassembly of section .text.malloc:
 
@@ -878,7 +879,7 @@ Disassembly of section .text.calloc:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0xd3
+		R_AVM_FAR24	.text.calloc+0xe1
 <L1>:
  fe 0a                 mul16	r1, r2
  c4 01 fc              ldi16	r4, 0xfc01
@@ -888,10 +889,10 @@ Disassembly of section .text.calloc:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0xd3
+		R_AVM_FAR24	.text.calloc+0xe1
 <L2>:
- f1 11                 mov	r2, r1
- f0 0a 02              addi.s8	r2, 0x2
+ f1 19                 mov	r3, r1
+ f0 0b 02              addi.s8	r3, 0x2
  f0 55 00 00           ldm16	r5, [0x0]
 		R_AVM_DATA16	.data.heap_top
  c4 00 00              ldi16	r4, 0x0
@@ -902,98 +903,100 @@ Disassembly of section .text.calloc:
  d2 04                 brult8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0x95
+		R_AVM_FAR24	.text.calloc+0x9b
 <L3>:
- c7 00 00              ldi16	r7, 0x0
+ f0 06 00 00           ldi16	r2, 0x0
 		R_AVM_DATA16	__avm_heap_start
- f0 07 ff 7f           ldi16	r3, 0x7fff
+ c7 ff 7f              ldi16	r7, 0x7fff
  e2 00 00 00           jmpf	calloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.calloc+0x5e
- 1e                    add	r7, r6
- 3d                    cmp	r7, r5
+		R_AVM_FAR24	.text.calloc+0x60
+ f2 16                 add	r2, r6
+ f5 15                 cmp	r2, r5
  d2 04                 brult8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0x95
+		R_AVM_FAR24	.text.calloc+0x9b
 <L4>:
- 63                    ld16	r4, [r7]
+ ed 94 20              ld16	r4, [r2+0]
  08                    mov	r6, r4
- f9 cc                 and	r6, r3
+ 8b                    and	r6, r7
  f6 2c                 tst16	r4
  d9 04                 brsge8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
 		R_AVM_FAR24	.text.calloc+0x56
 <L5>:
- f5 2a                 cmp	r6, r2
+ f5 2b                 cmp	r6, r3
  d8 04                 bruge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
 		R_AVM_FAR24	.text.calloc+0x56
 <L6>:
- f2 5a                 sub	r6, r2
+ f2 5b                 sub	r6, r3
  ce 03                 cmpi.s8	r6, 0x3
  d8 04                 bruge8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0xbc
+		R_AVM_FAR24	.text.calloc+0xc4
 <L7>:
  c4 00 80              ldi16	r4, 0x8000
- f9 89                 or	r4, r2
- 7c                    st16	[r7], r4
- f2 17                 add	r2, r7
- ee d4 20              st16	[r2+0], r6
- cb 02                 addi.s8	r7, 0x2
- f6 2f                 tst16	r7
+ f9 8d                 or	r4, r3
+ ee 94 20              st16	[r2+0], r4
+ f2 1a                 add	r3, r2
+ ee d6 20              st16	[r3+0], r6
+ f0 0a 02              addi.s8	r2, 0x2
+ f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0xd3
+		R_AVM_FAR24	.text.calloc+0xe1
 <L8>:
  e2 00 00 00           jmpf	calloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.calloc+0xcb
+		R_AVM_FAR24	.text.calloc+0xd6
  c4 00 05              ldi16	r4, 0x500
  21                    sub	r4, r5
- f5 22                 cmp	r4, r2
+ f5 23                 cmp	r4, r3
  d8 04                 bruge8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0xd3
+		R_AVM_FAR24	.text.calloc+0xe1
 <L9>:
  c4 00 80              ldi16	r4, 0x8000
- f9 89                 or	r4, r2
+ f9 8d                 or	r4, r3
  74                    st16	[r5], r4
- f2 15                 add	r2, r5
- f0 5a 00 00           stm16	[0x0], r2
+ f2 1d                 add	r3, r5
+ f0 5b 00 00           stm16	[0x0], r3
 		R_AVM_DATA16	.data.heap_top
- 0d                    mov	r7, r5
- cb 02                 addi.s8	r7, 0x2
- f6 2f                 tst16	r7
+ f1 15                 mov	r2, r5
+ f0 0a 02              addi.s8	r2, 0x2
+ f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0xd3
+		R_AVM_FAR24	.text.calloc+0xe1
 <L10>:
  e2 00 00 00           jmpf	calloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.calloc+0xcb
+		R_AVM_FAR24	.text.calloc+0xd6
  c5 00 80              ldi16	r5, 0x8000
  91                    or	r4, r5
- 7c                    st16	[r7], r4
- cb 02                 addi.s8	r7, 0x2
- f6 2f                 tst16	r7
+ ee 94 20              st16	[r2+0], r4
+ f0 0a 02              addi.s8	r2, 0x2
+ f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	calloc
-		R_AVM_FAR24	.text.calloc+0xd3
+		R_AVM_FAR24	.text.calloc+0xe1
 <L11>:
- 03                    mov	r4, r7
  a5                    xor	r5, r5
+ f1 22                 mov	r4, r2
  f1 29                 mov	r6, r1
- d7 11                 sys	memset
- f1 07                 mov	r0, r7
+ e3 00 00 00           callf	calloc
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	memset
+ f1 02                 mov	r0, r2
  f1 20                 mov	r4, r0
  b8                    pop16	r0
  b9                    pop16	r1

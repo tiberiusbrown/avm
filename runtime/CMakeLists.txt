@@ -4,6 +4,42 @@ set(AVM_RUNTIME_OBJECT_DIR "${AVM_RUNTIME_BUILD_DIR}/objects")
 set(AVM_RUNTIME_INCLUDE_DIR "${AVM_RUNTIME_SOURCE_DIR}/include")
 set(AVM_RUNTIME_MIR_BUILD_DIR "${AVM_RUNTIME_BUILD_DIR}/mir")
 set(AVM_RUNTIME_ASM_DIR "${AVM_RUNTIME_SOURCE_DIR}/asm")
+set(AVM_LIBCXX_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/llvm-project/libcxx")
+set(AVM_LIBCXX_SOURCE_INCLUDE_DIR "${AVM_LIBCXX_SOURCE_DIR}/include")
+set(AVM_LIBCXX_GENERATED_INCLUDE_DIR "${AVM_RUNTIME_BUILD_DIR}/libcxx/include")
+file(MAKE_DIRECTORY "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}")
+
+# Target-specific libc++ header configuration from the pinned template.
+set(_LIBCPP_ABI_VERSION 1)
+set(_LIBCPP_ABI_NAMESPACE __1)
+set(_LIBCPP_ABI_FORCE_ITANIUM ON)
+set(_LIBCPP_ABI_FORCE_MICROSOFT OFF)
+set(_LIBCPP_HAS_THREADS OFF)
+set(_LIBCPP_HAS_MONOTONIC_CLOCK OFF)
+set(_LIBCPP_HAS_TERMINAL OFF)
+set(_LIBCPP_HAS_MUSL_LIBC OFF)
+set(_LIBCPP_HAS_THREAD_API_PTHREAD OFF)
+set(_LIBCPP_HAS_THREAD_API_EXTERNAL OFF)
+set(_LIBCPP_HAS_THREAD_API_WIN32 OFF)
+set(_LIBCPP_DISABLE_VISIBILITY_ANNOTATIONS ON)
+set(_LIBCPP_HAS_VENDOR_AVAILABILITY_ANNOTATIONS OFF)
+set(_LIBCPP_HAS_FILESYSTEM OFF)
+set(_LIBCPP_HAS_RANDOM_DEVICE OFF)
+set(_LIBCPP_HAS_LOCALIZATION OFF)
+set(_LIBCPP_HAS_UNICODE OFF)
+set(_LIBCPP_HAS_WIDE_CHARACTERS OFF)
+set(_LIBCPP_HAS_TIME_ZONE_DATABASE OFF)
+set(_LIBCPP_PSTL_BACKEND_SERIAL ON)
+set(_LIBCPP_PSTL_BACKEND_STD_THREAD OFF)
+set(_LIBCPP_PSTL_BACKEND_LIBDISPATCH OFF)
+set(_LIBCPP_HARDENING_MODE_DEFAULT _LIBCPP_HARDENING_MODE_NONE)
+set(_LIBCPP_ASSERTION_SEMANTIC_DEFAULT _LIBCPP_ASSERTION_SEMANTIC_IGNORE)
+set(_LIBCPP_LIBC_PICOLIBC OFF)
+set(_LIBCPP_LIBC_NEWLIB OFF)
+configure_file("${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/__config_site.in"
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site" @ONLY)
+configure_file("${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in"
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler" COPYONLY)
 
 # Record the production objects for checked-in disassembly. Diagnostic MIR
 # compilations and header smoke tests do not describe shipped runtime code.
@@ -96,6 +132,8 @@ set(AVM_SYSROOT_LIB_DIR "${AVM_SYSROOT_DIR}/lib")
 
 file(GLOB_RECURSE AVM_RUNTIME_HEADERS CONFIGURE_DEPENDS
     "${AVM_RUNTIME_INCLUDE_DIR}/*")
+file(GLOB_RECURSE AVM_LIBCXX_HEADERS CONFIGURE_DEPENDS LIST_DIRECTORIES false
+    "${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/*")
 set(AVM_RUNTIME_HEADER_MANIFEST
     "${CMAKE_CURRENT_BINARY_DIR}/runtime-headers.txt")
 string(JOIN "\n" AVM_RUNTIME_HEADER_PATHS ${AVM_RUNTIME_HEADERS})
@@ -184,10 +222,29 @@ avm_add_runtime_object(
     OUTPUT "${AVM_RUNTIME_CXX_ABI_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/cxxabi.cpp"
     LANGUAGE CXX
+    INTERNAL_CXX
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_CXX_ABI_OBJECT}")
+
+set(AVM_LIBCXX_ALGORITHM_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_algorithm.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_LIBCXX_ALGORITHM_OBJECT}"
+    SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/algorithm.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
+    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY -Wno-unused-parameter
+    DEPENDS
+        ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+        "${AVM_LIBCXX_SOURCE_DIR}/include/__algorithm/sort.h"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_ALGORITHM_OBJECT}")
 
 set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/framebuffer.o")
 avm_add_runtime_object(
@@ -368,10 +425,20 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
     if(AVM_RUNTIME_MIR_RELATIVE MATCHES "^lib/math[/.]")
         set(math_mir_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
     endif()
+    set(runtime_mir_cxx_options)
+    set(runtime_mir_cxx_dependencies)
+    if(AVM_RUNTIME_MIR_LANGUAGE STREQUAL "CXX")
+        list(APPEND runtime_mir_cxx_options INTERNAL_CXX)
+        list(APPEND runtime_mir_cxx_dependencies
+            ${AVM_LIBCXX_HEADERS}
+            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler")
+    endif()
     avm_add_object(
         OUTPUT "${AVM_RUNTIME_MIR_OBJECT}"
         SOURCE "${AVM_RUNTIME_MIR_SOURCE}"
         LANGUAGE "${AVM_RUNTIME_MIR_LANGUAGE}"
+        ${runtime_mir_cxx_options}
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
         COMPILE_OPTIONS
             ${math_mir_options}
@@ -379,7 +446,8 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
             -mllvm -print-before-all
             -mllvm -print-after-all
         STDERR_OUTPUT "${AVM_RUNTIME_MIR_OUTPUT}"
-        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS} "${AVM_CRT_INIT_FINI_HEADER}"
+        DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
+            ${runtime_mir_cxx_dependencies} "${AVM_CRT_INIT_FINI_HEADER}"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/time_internal.h"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h"
             "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_scan_internal.h"
@@ -414,14 +482,17 @@ avm_add_object(
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/tests/header_smoke.c"
     LANGUAGE C
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
-    DEPENDS ${AVM_RUNTIME_HEADERS}
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
 )
 avm_add_object(
     OUTPUT "${AVM_RUNTIME_CXX_HEADER_CHECK}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/tests/header_smoke_cpp.cpp"
     LANGUAGE CXX
+    INTERNAL_CXX
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     DEPENDS ${AVM_RUNTIME_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
 )
 
 set(AVM_RUNTIME_WCHAR_C99_CHECK
@@ -465,6 +536,44 @@ foreach(STAGE_FILE IN LISTS AVM_SYSROOT_STAGE_FILES)
     list(APPEND AVM_SYSROOT_STAGE_BYPRODUCTS "${STAGE_DESTINATION}")
 endforeach()
 
+# Track every libc++ header as a dependency. CONFIGURE_DEPENDS causes a
+# regeneration when files are added or removed, while copy_directory keeps the
+# Windows/Ninja staging command compact and preserves the full tree.
+foreach(LIBCXX_HEADER IN LISTS AVM_LIBCXX_HEADERS)
+    get_filename_component(LIBCXX_HEADER_NAME "${LIBCXX_HEADER}" NAME)
+    if(LIBCXX_HEADER_NAME STREQUAL "CMakeLists.txt"
+       OR LIBCXX_HEADER MATCHES "\\.in$")
+        continue()
+    endif()
+    list(APPEND AVM_SYSROOT_STAGE_DEPENDS "${LIBCXX_HEADER}")
+endforeach()
+
+list(APPEND AVM_SYSROOT_STAGE_COMMANDS
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory
+        "${AVM_LIBCXX_SOURCE_INCLUDE_DIR}"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1"
+    COMMAND "${CMAKE_COMMAND}" -E rm -f
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/CMakeLists.txt"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site.in"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__cxx03/__config_site.in"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/module.modulemap.in"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler")
+list(APPEND AVM_SYSROOT_STAGE_DEPENDS
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+    "${AVM_LIBCXX_SOURCE_DIR}/include/__config_site.in"
+    "${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in")
+list(APPEND AVM_SYSROOT_STAGE_BYPRODUCTS
+    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site"
+    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler")
+
 set(AVM_SYSROOT_STAMP "${AVM_SYSROOT_DIR}/.runtime-stamp")
 add_custom_command(
     OUTPUT "${AVM_SYSROOT_STAMP}"
@@ -482,6 +591,7 @@ add_custom_command(
     COMMAND "${CMAKE_COMMAND}" -E touch "${AVM_SYSROOT_STAMP}"
     DEPENDS
         ${AVM_RUNTIME_HEADERS}
+        ${AVM_LIBCXX_HEADERS}
         "${AVM_RUNTIME_HEADER_MANIFEST}"
         ${AVM_SYSROOT_STAGE_DEPENDS}
     COMMENT "Staging the AVM runtime sysroot"

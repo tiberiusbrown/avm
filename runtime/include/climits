@@ -1,4 +1,0 @@
-#ifndef AVM_RUNTIME_CLIMITS
-#define AVM_RUNTIME_CLIMITS
-#include <limits.h>
-#endif

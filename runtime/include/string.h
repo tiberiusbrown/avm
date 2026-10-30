@@ -106,6 +106,18 @@ static __attribute__((always_inline)) inline char* __avm_cpp_strncat(
     char* d, const char AVM_PROGMEM* s, size_t n) {
     return __avm_strncat_P(d, s, n);
 }
+
+// Qualified calls such as std::memcpy are still subject to the function-like
+// macros below. Import the implementation helpers so those calls retain the
+// same AVM RAM/PROGMEM overload selection after macro expansion.
+namespace std {
+using ::__avm_cpp_memcpy;
+using ::__avm_cpp_memcmp;
+using ::__avm_cpp_strcmp;
+using ::__avm_cpp_strlen;
+using ::__avm_cpp_strncpy;
+using ::__avm_cpp_strncat;
+}
 #endif
 
 /*
@@ -129,8 +141,6 @@ static __attribute__((always_inline)) inline char* __avm_cpp_strncat(
 #define strncpy(dst, src, size) __avm_strncpy((dst), (src), (size))
 #define strncat(dst, src, size) __avm_strncat((dst), (src), (size))
 #endif
-#define memset(dst, value, size) __avm_memset((dst), (value), (size))
-#define memmove(dst, src, size) __avm_memmove((dst), (src), (size))
 #endif
 #define strcat(dst, src) strncat((dst), (src), SIZE_MAX)
 

@@ -121,6 +121,18 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             set(test_support_sources "${AVM_C_TEST_DIR}/support/complex_abi_impl.c")
         endif()
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
+           AVM_TEST_NAME STREQUAL "libcxx_freestanding" AND
+           AVM_TEST_OPT_LEVEL STREQUAL "O0")
+            list(APPEND test_compile_options -DAVM_TEST_O0)
+        endif()
+        set(test_include_dirs "${AVM_SYSROOT_DIR}/include")
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX")
+            # AVM Clang discovers both libc++ and the C runtime from its
+            # computed sysroot; keep explicit C include paths out of C++ builds
+            # so the driver's libc++-before-C search order remains effective.
+            set(test_include_dirs)
+        endif()
         if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME STREQUAL "c23_freestanding")
             list(APPEND test_compile_options -std=c23 -pedantic-errors)
         endif()
@@ -163,7 +175,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             OUTPUT "${AVM_TEST_OBJECT}"
             SOURCE "${AVM_TEST_SOURCE_FILE}"
             LANGUAGE ${AVM_TEST_LANGUAGE}
-            INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+            INCLUDE_DIRS ${test_include_dirs}
             COMPILE_OPTIONS ${test_compile_options}
             DEPENDS avm_sysroot ${test_source_dependencies} ${AVM_C_TEST_HEADERS}
         )
@@ -176,7 +188,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 OUTPUT "${test_support_object}"
                 SOURCE "${test_support_source}"
                 LANGUAGE ${AVM_TEST_LANGUAGE}
-                INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+                INCLUDE_DIRS ${test_include_dirs}
                 COMPILE_OPTIONS ${test_compile_options}
                 DEPENDS avm_sysroot ${test_source_dependencies}
             )

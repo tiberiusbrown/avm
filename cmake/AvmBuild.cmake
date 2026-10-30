@@ -23,9 +23,10 @@ set(AVM_COMMON_COMPILE_OPTIONS
 )
 
 function(avm_add_object)
+    set(options INTERNAL_CXX)
     set(one_value_args OUTPUT SOURCE LANGUAGE STDERR_OUTPUT)
     set(multi_value_args INCLUDE_DIRS DEPENDS COMPILE_OPTIONS)
-    cmake_parse_arguments(ARG "" "${one_value_args}" "${multi_value_args}" ${ARGN})
+    cmake_parse_arguments(ARG "${options}" "${one_value_args}" "${multi_value_args}" ${ARGN})
 
     foreach(required_arg OUTPUT SOURCE LANGUAGE)
         if(NOT ARG_${required_arg})
@@ -89,6 +90,20 @@ function(avm_add_object)
     foreach(include_dir IN LISTS ARG_INCLUDE_DIRS)
         list(APPEND include_options -isystem "${include_dir}")
     endforeach()
+
+    if(ARG_INTERNAL_CXX)
+        if(NOT ARG_LANGUAGE STREQUAL "CXX")
+            message(FATAL_ERROR "INTERNAL_CXX is only valid for C++ compilations")
+        endif()
+        list(PREPEND include_options
+            -isystem "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}"
+            -isystem "${AVM_LIBCXX_SOURCE_INCLUDE_DIR}"
+            -nostdinc++)
+        list(FIND ARG_INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}" runtime_include_index)
+        if(runtime_include_index EQUAL -1)
+            list(APPEND include_options -isystem "${AVM_RUNTIME_INCLUDE_DIR}")
+        endif()
+    endif()
 
     set(compile_command
         "$<TARGET_FILE:clang>"

@@ -28,11 +28,11 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Fundamental freestanding library headers
 
-- [ ] **`<limits>`:** Provide `std::numeric_limits` specializations for AVM's fundamental types, including correct integer, floating-point, character, and pointer-related implementation properties.
-- [ ] **`<cstdint>`:** Provide the `std`-namespace fixed-width, least-width, fast-width, maximum-width, and pointer-width integer typedefs and corresponding macros where required by the C++23 header.
+- [ ] **`<limits>`:** Validate all `std::numeric_limits` specializations and compile-time properties against AVM fundamental types, including integer, floating-point, character, and pointer-related implementation properties.
+- [ ] **`<cstdint>`:** Validate the `std`-namespace fixed-width, least-width, fast-width, maximum-width, and pointer-width integer typedefs and corresponding macros against the 16-bit `ptrdiff_t` and AVM pointer widths.
 - [ ] **`<cstdarg>`:** Provide the required C++ header interface and `va_list`/variadic facilities through the C++23 standard-header path.
-- [ ] **`<initializer_list>`:** Provide `std::initializer_list` and its required accessors, lifetime semantics, compiler recognition, and usable braced-initialization support.
-- [ ] **`<source_location>`:** Provide `std::source_location::current()` and its file, function, line, and column queries, including correct compiler-generated values and valid returned string storage.
+- [ ] **`<initializer_list>`:** Validate `std::initializer_list`, its accessors, lifetime semantics, compiler recognition, and usable braced-initialization support.
+- [ ] **`<source_location>`:** Validate `std::source_location::current()` and its file, function, line, and column queries, including correct compiler-generated values and valid returned string storage.
 
 ### Dynamic allocation — `<new>`
 
@@ -51,7 +51,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **`<type_traits>`:** Provide the required type properties, transformations, queries, variable templates, and C++20/C++23 trait additions, with correct substitution and constant-expression behavior.
 - [ ] **`<concepts>`:** Provide the C++20/C++23 standard concepts, including language, comparison, construction, conversion, and callable concepts.
 - [ ] **`<compare>`:** Provide comparison-category types, comparison concepts and utilities, `std::compare_three_way`, and other required ordering interfaces for C++20/C++23.
-- [ ] **`<bit>`:** Provide `std::bit_cast`, bit counting/rotation, endian, power-of-two, and C++23 byteswap facilities, as required by the header.
+- [ ] **`<bit>`:** Validate `std::bit_cast`, bit counting/rotation, endian, power-of-two, and C++23 byteswap facilities across AVM integer widths, including 64-bit count-leading/trailing-zero runtime semantics.
 - [ ] **`<utility>`:** Provide all freestanding-designated utility types and functions, including pairs where required, forwarding/moving, integer sequences, in-place tags, exchange, and C++23 utility additions.
 - [ ] **`<tuple>`:** Provide the freestanding-designated tuple facilities and tuple protocol, including required accessors, traits, construction, and C++23 additions.
 - [ ] **`<memory>`:** Provide the freestanding-designated pointer, construction/destruction, lifetime, allocator-related, and memory utility interfaces, without incorrectly requiring the entire hosted memory-management library.
@@ -77,7 +77,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **Hosted mode:** Provide a truthful hosted C++23 compilation/runtime configuration (`__STDC_HOSTED__ == 1`) with the complete hosted language and library contract; AVM currently defaults to freestanding compilation.
 - [ ] **Hosted program entry and termination:** Support the standard `main` forms with required `argc`/`argv` guarantees and observable normal/abnormal termination status, including the requirements shared with the hosted C runtime.
 - [ ] **Hosted concurrency:** Provide a conforming threading execution model and runtime needed by hosted C++ concurrency and memory-model guarantees, rather than assuming the freestanding single-threaded AVM model suffices.
-- [ ] **Standard library distribution:** Make the complete hosted C++23 header set available, with correct declarations, overloads, namespaces, library feature-test macros, ABI, linkage, and required behavior; the current AVM SDK does not ship a hosted C++ standard library.
+- [ ] **Standard library distribution:** Complete and validate the hosted C++23 header set, with declarations, overloads, namespaces, feature-test macros, ABI, linkage, and behavior; the AVM SDK currently ships only a configured freestanding libc++ subset.
 
 ### Hosted library fundamentals and C compatibility
 

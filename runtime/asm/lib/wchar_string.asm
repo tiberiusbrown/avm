@@ -30,7 +30,8 @@ SYMBOL TABLE:
 00000000 g     F .text.wcsncpy	00000005 wcsncpy
 00000000 g     F .text.wcsncat	00000005 wcsncat
 00000000 g     F .text.wmemcpy	00000005 wmemcpy
-00000000 g     F .text.wmemmove	00000005 wmemmove
+00000000 g     F .text.wmemmove	00000004 wmemmove
+00000000         *UND*	00000000 memmove
 00000000 g     F .text.wcscmp	00000003 wcscmp
 00000000 g     F .text.wcscoll	00000003 wcscoll
 00000000 g     F .text.wcsncmp	00000004 wcsncmp
@@ -53,7 +54,8 @@ SYMBOL TABLE:
 00000000 g     F .text.wmemchr	00000004 wmemchr
 00000000         *UND*	00000000 memchr
 00000000 g     F .text.wcslen	00000003 wcslen
-00000000 g     F .text.wmemset	00000005 wmemset
+00000000 g     F .text.wmemset	00000004 wmemset
+00000000         *UND*	00000000 memset
 00000000 g     F .text.wcstok	00000065 wcstok
 
 Disassembly of section .text.wcscpy:
@@ -99,10 +101,9 @@ Disassembly of section .text.wmemcpy:
 Disassembly of section .text.wmemmove:
 
 <wmemmove>:
- 0c                    mov	r7, r4
- d7 12                 sys	memmove
- 03                    mov	r4, r7
- ef                    ret
+ e2 00 00 00           jmpf	wmemmove
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	memmove
 
 Disassembly of section .text.wcscmp:
 
@@ -194,10 +195,9 @@ Disassembly of section .text.wcslen:
 Disassembly of section .text.wmemset:
 
 <wmemset>:
- 0c                    mov	r7, r4
- d7 11                 sys	memset
- 03                    mov	r4, r7
- ef                    ret
+ e2 00 00 00           jmpf	wmemset
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	memset
 
 Disassembly of section .text.wcstok:
 

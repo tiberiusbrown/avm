@@ -1,5 +1,14 @@
 # Debugging AVM programs with LLDB
 
+## Freestanding C++ headers
+
+The installed AVM SDK includes libc++ headers in `sysroot/include/c++/v1`. The
+AVM Clang driver adds this directory for C++ compilations and keeps the C
+runtime headers and Clang resource headers in the same freestanding search
+path. `-nostdinc++` disables libc++ header lookup; `-nostdlibinc` disables
+the SDK C and C++ system headers, and `-nobuiltininc` disables Clang resource
+headers. The default C++ ABI uses libc++ ABI namespace `__1`.
+
 For source-level cycle profiles and cross-build comparisons, see
 [profiling.md](profiling.md).
 

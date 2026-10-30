@@ -332,6 +332,9 @@
       255931   stack_base_nested.c
      2425335   stack_frames.c
      7135388   state_machine.c
+     4235540   stdio_scan_float.c
+     4863348   stdio_scan_integer.c
+     3126292   stdio_scan_string.c
       155156   stdlib_abs.c
       801662   stdlib_atoi.c
      7358036   stdlib_atol.c
@@ -341,8 +344,8 @@
      5688273   stdlib_ldiv.c
       762376   stdlib_llabs.c
     41149308   stdlib_lldiv.c
-     4329857   stdlib_strtod.c
-     4312065   stdlib_strtof.c
+     4368865   stdlib_strtod.c
+     4351073   stdlib_strtof.c
      8245428   stdlib_strtol.c
     66167980   stdlib_strtoll.c
      8246772   stdlib_strtoul.c

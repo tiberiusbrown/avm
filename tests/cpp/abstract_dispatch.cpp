@@ -6,7 +6,7 @@ struct interface {
     virtual ~interface();
 };
 
-interface::interface() { ++constructed; }
+interface::interface() { constructed = constructed + 1; }
 interface::~interface() = default;
 
 struct implementation : interface {

@@ -1,3 +1,16 @@
+#if __cplusplus < 202302L
+#error "AVM C++ compilation must use C++23 by default"
+#endif
+
+#ifndef __cpp_size_t_suffix
+#error "C++23 feature-test macros are not enabled"
+#endif
+
+#ifndef __cpp_if_consteval
+#error "C++23 feature-test macros are not enabled"
+#endif
+
+#include <version>
 #include <stdbit.h>
 #include <string.h>
 #include <stdlib.h>

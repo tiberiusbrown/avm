@@ -5,19 +5,21 @@
 
 #define CHECK(c) do { if (!(c)) { test_line16("line", __LINE__); return 1; } } while (0)
 /* Volatile indirect calls exercise the actual library at every optimization. */
-static __attribute__((noinline)) int unary(float (*volatile call)(float),
+static __attribute__((noinline)) int unary(float (*call)(float),
                                          float x, int error)
 {
+    float (*volatile volatile_call)(float) = call;
     errno = 71;
-    volatile float result = call(x);
+    volatile float result = volatile_call(x);
     (void)result;
     return errno == (error ? error : 71);
 }
-static __attribute__((noinline)) int binary(float (*volatile call)(float, float),
+static __attribute__((noinline)) int binary(float (*call)(float, float),
                                           float x, float y, int error)
 {
+    float (*volatile volatile_call)(float, float) = call;
     errno = 71;
-    volatile float result = call(x, y);
+    volatile float result = volatile_call(x, y);
     (void)result;
     return errno == (error ? error : 71);
 }

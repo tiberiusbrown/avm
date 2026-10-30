@@ -184,7 +184,10 @@ and a development image:
 The native driver defaults to `avm-unknown-arduboyfx`, discovers the build or
 installed sysroot relative to its executable, and uses freestanding AVM
 compile defaults. For C++, exceptions, RTTI, thread-safe statics, and
-`__cxa_atexit` are disabled by default. A link adds `crt0.o`, `libavm.a`,
+`__cxa_atexit` are disabled by default, and the default language mode is
+`-std=c++23`. The SDK supplies Clang's target-independent builtin headers and
+AVM's freestanding headers; it does not include a hosted C++ standard library.
+A link adds `crt0.o`, `libavm.a`,
 `libavm-builtins.a`, and `--gc-sections`, then runs `llvm-avm-image
 --development`. Explicit Clang options can override compile defaults.
 `--sysroot=PATH` selects another AVM sysroot. Standard `-c`, `-S`, `-E`,

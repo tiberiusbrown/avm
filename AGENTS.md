@@ -6,7 +6,7 @@ Never create Git commits or push changes in this repository or its submodules. L
 
 Documentation exists in the `docs/` directory. Do not create new documents or directories inside `docs/` unless explicitly directed. All documentation files should be in Markdown (`.md`) format. Keep existing documentation up to date with new changes as needed.
 
-Keep `docs/c23-compliance-gaps.md` current whenever compiler, ABI, runtime, or header changes affect C23 support. Update it in the same change using these rules:
+Keep `docs/c23-compliance-gaps.md` and `docs/cpp23-compliance-gap.md` current whenever compiler, ABI, runtime, or header changes affect relevant support. Update them in the same change using these rules:
 
 - Preserve the existing section structure and `- [ ]` checklist format. Keep freestanding requirements separate from additional hosted requirements.
 - List only support that is still missing. Do not describe implemented features, add completion summaries or historical notes, or retain resolved items as checked boxes.

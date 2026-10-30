@@ -74,7 +74,7 @@ function(avm_add_object)
         set(language_options -std=c11)
     elseif(ARG_LANGUAGE STREQUAL "CXX")
         set(language_options
-            -std=c++17
+            -std=c++23
             -fno-exceptions
             -fno-rtti
             -fno-threadsafe-statics

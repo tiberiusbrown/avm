@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <iterator>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -95,14 +96,79 @@ constexpr unsigned kFramebufferSize = 1024;
 constexpr unsigned kStackBase = 0x0900;
 constexpr uint16_t kTrapStackTop = 0x0a00;
 
-// avm_trap_location_t, decoded field by field from emulator RAM.
+// avm_trap_location_t as the guest wrote it: a 24-bit function pointer at offset
+// 0, a 24-bit filename pointer at offset 3, and a 32-bit line at offset 6. The
+// pointers are program addresses, so they index the packaged image directly.
 struct location_t {
-    std::string function;
-    std::string file;
+    uint32_t function;
+    uint32_t file;
     uint32_t line;
-    uint8_t has_function;
-    uint8_t has_line;
 };
+
+uint32_t ram_u24(absim::atmega32u4_t const& cpu, unsigned address)
+{
+    return uint32_t(cpu.data[address]) | uint32_t(cpu.data[address + 1]) << 8 |
+           uint32_t(cpu.data[address + 2]) << 16;
+}
+
+location_t read_location(absim::atmega32u4_t const& cpu, unsigned address)
+{
+    location_t out;
+    out.function = ram_u24(cpu, address);
+    out.file = ram_u24(cpu, address + 3);
+    out.line = uint32_t(cpu.data[address + 6]) | uint32_t(cpu.data[address + 7]) << 8 |
+               uint32_t(cpu.data[address + 8]) << 16 | uint32_t(cpu.data[address + 9]) << 24;
+    return out;
+}
+
+// Decodes every record of the AVD1 string pool. A record is a canonical ULEB128
+// length, the characters, and a NUL. The result maps the program address of each
+// first character, the value a guest pointer holds, to its text.
+std::map<uint32_t, std::string> pool_strings(std::vector<uint8_t> const& image, uint32_t crash)
+{
+    uint32_t const entry = crash + 12 + 7 * 4;
+    uint32_t const pool = crash + image_u24(image, entry + 1);
+    uint32_t const pool_end = pool + image_u24(image, entry + 4);
+    std::map<uint32_t, std::string> out;
+    uint32_t cursor = pool;
+    while(cursor < pool_end) {
+        uint32_t length = 0;
+        unsigned shift = 0;
+        uint32_t bytes = 0;
+        for(;;) {
+            require(cursor + bytes < pool_end, "string length prefix is unterminated");
+            require(bytes < 4, "string length prefix exceeds four bytes");
+            uint8_t byte = image[cursor + bytes++];
+            length |= uint32_t(byte & 0x7f) << shift;
+            shift += 7;
+            if(!(byte & 0x80)) {
+                require(bytes == 1 || byte != 0, "string length prefix is overlong");
+                break;
+            }
+        }
+        uint32_t const first = cursor + bytes;
+        require(length > 0 && first + length < pool_end, "string record runs past the pool");
+        require(image[first + length] == 0, "string record is not NUL terminated");
+        std::string text(image.begin() + first, image.begin() + first + length);
+        for(unsigned char c : text)
+            require(c >= 0x20 && c < 0x7f, "string record holds a nonprintable byte");
+        out[first] = text;
+        cursor = first + length + 1;
+    }
+    require(cursor == pool_end, "string pool does not end on a record boundary");
+    return out;
+}
+
+// Text at a guest program pointer, or the empty string for a null pointer. A
+// nonnull pointer that does not start a pool record fails the test.
+std::string pooled(std::map<uint32_t, std::string> const& pool, uint32_t pointer)
+{
+    if(pointer == 0)
+        return "";
+    auto found = pool.find(pointer);
+    require(found != pool.end(), "guest pointer does not name a pool string");
+    return found->second;
+}
 
 std::string c_string(absim::atmega32u4_t const& cpu, unsigned address, unsigned capacity)
 {
@@ -110,18 +176,6 @@ std::string c_string(absim::atmega32u4_t const& cpu, unsigned address, unsigned 
     auto end = std::find(begin, begin + capacity, uint8_t(0));
     require(end != begin + capacity, "location string is not terminated");
     return std::string(begin, end);
-}
-
-location_t read_location(absim::atmega32u4_t const& cpu, unsigned address)
-{
-    location_t out;
-    out.function = c_string(cpu, address, 40);
-    out.file = c_string(cpu, address + 40, 28);
-    out.line = uint32_t(cpu.data[address + 68]) | uint32_t(cpu.data[address + 69]) << 8 |
-               uint32_t(cpu.data[address + 70]) << 16 | uint32_t(cpu.data[address + 71]) << 24;
-    out.has_function = cpu.data[address + 72];
-    out.has_line = cpu.data[address + 73];
-    return out;
 }
 
 // Header checks shared by every build. Default builds must point crashInfo at a
@@ -299,29 +353,28 @@ void check_report(std::vector<uint8_t> const& frame)
         require(band_lit[line], "BR5N report row has no text pixels");
 }
 
-// Checks the probe lookups and the reporter's own lookup at the trap PC.
+// Checks the probe lookups and the reporter's own lookup at the trap PC. A build
+// without metadata must leave every pointer and the line null.
 void check_locations(absim::atmega32u4_t const& cpu, uint32_t raw_pc, uint32_t trap_site,
-                     bool metadata, unsigned trap_line)
+                     bool metadata, unsigned trap_line,
+                     std::map<uint32_t, std::string> const& pool)
 {
     auto low = read_location(cpu, kLowProbe);
     auto high = read_location(cpu, kHighProbe);
     auto trapped = read_location(cpu, kTrapLocation);
     if(!metadata) {
-        for(auto const* location : {&low, &high, &trapped}) {
-            require(location->function == "?" && location->file == "?", "fallback names differ");
-            require(location->has_function == 0 && location->has_line == 0 &&
-                        location->line == 0,
-                    "fallback flags or line differ");
-        }
+        for(auto const* location : {&low, &high, &trapped})
+            require(location->function == 0 && location->file == 0 && location->line == 0,
+                    "fallback pointers or line are not null");
         return;
     }
-    require(low.function == "probe_site" && low.has_function == 1,
-            "low probe function differs: " + low.function);
-    require(low.file == "trap_source.c" && low.has_line == 1 && low.line == kLowProbeLine,
+    require(pooled(pool, low.function) == "probe_site",
+            "low probe function differs: " + pooled(pool, low.function));
+    require(pooled(pool, low.file) == "trap_source.c" && low.line == kLowProbeLine,
             "low probe source differs");
-    require(high.function == "high_probe_site" && high.has_function == 1,
-            "high probe function differs: " + high.function);
-    require(high.file == "trap_source.c" && high.has_line == 1 && high.line == kHighProbeLine,
+    require(pooled(pool, high.function) == "high_probe_site",
+            "high probe function differs: " + pooled(pool, high.function));
+    require(pooled(pool, high.file) == "trap_source.c" && high.line == kHighProbeLine,
             "high probe source differs");
     // The interpreter reports its raw VM_PC, which for this SYS encoding points
     // at the operand byte inside the faulting two-byte instruction. The lookup
@@ -329,10 +382,9 @@ void check_locations(absim::atmega32u4_t const& cpu, uint32_t raw_pc, uint32_t t
     std::ostringstream hex;
     hex << std::hex << "raw trap PC 0x" << raw_pc << " is outside trap_site 0x" << trap_site;
     require(raw_pc >= trap_site && raw_pc < trap_site + 2, hex.str());
-    require(trapped.function == "trap_site" && trapped.has_function == 1,
-            "trap PC function differs: " + trapped.function);
-    require(trapped.file == "trap_source.c" && trapped.has_line == 1 &&
-                trapped.line == trap_line,
+    require(pooled(pool, trapped.function) == "trap_site",
+            "trap PC function differs: " + pooled(pool, trapped.function));
+    require(pooled(pool, trapped.file) == "trap_source.c" && trapped.line == trap_line,
             "trap PC source line differs");
 }
 
@@ -347,7 +399,9 @@ void test_build(char const* name, char const* hex, char const* lst, char const* 
     machine_t m(hex, lst, image_path, listing);
     auto trapped = run_trap(m);
     uint32_t trap_site = symbol(listing, "trap_site", false);
-    check_locations(m.cpu(), trapped.raw_pc, trap_site, metadata, trap_line);
+    auto pool = metadata ? pool_strings(image, image_u24(image, 0x0f))
+                         : std::map<uint32_t, std::string>();
+    check_locations(m.cpu(), trapped.raw_pc, trap_site, metadata, trap_line, pool);
     check_report(trapped.frame);
     require(trapped.lowest_sp >= kStackBase, "reporter stack exceeded its 256-byte block");
     std::cout << name << ": raw trap PC 0x" << std::hex << trapped.raw_pc << std::dec
@@ -357,18 +411,52 @@ void test_build(char const* name, char const* hex, char const* lst, char const* 
     if(frame_out)
         *frame_out = trapped.frame;
 }
+
+// The long-name fixture traps from a function whose demangled name is longer
+// than 128 bytes. The reporter's lookup must return that complete name, and the
+// fixture's %.12S rendering must hold only its first 12 bytes. Both checks read
+// the pooled text, so the stored name is never shortened.
+void test_long_name(char const* hex, char const* lst, char const* image_path,
+                    char const* listing)
+{
+    constexpr char const* kName =
+        "avm_trap_long_name_fixture::TiledFramebufferRasterizer<128u, 64u>::trap_site("
+        "int const&, unsigned long, char const*, unsigned short)";
+    constexpr unsigned kShortText = 0x0320;
+    auto image = read_file(image_path);
+    check_header(image, true);
+    machine_t m(hex, lst, image_path, listing);
+    auto trapped = run_trap(m);
+    auto pool = pool_strings(image, image_u24(image, 0x0f));
+    auto location = read_location(m.cpu(), kTrapLocation);
+    std::string name = pooled(pool, location.function);
+    require(name == kName, "long function name differs: " + name);
+    require(name.size() > 128, "long function name is not longer than 128 bytes");
+    require(pooled(pool, location.file) == "trap_long_name.cpp",
+            "long-name trap source file differs");
+    require(c_string(m.cpu(), kShortText, 16) == name.substr(0, 12),
+            "%.12S rendering is not the first 12 bytes of the name");
+    require(pooled(pool, ram_u24(m.cpu(), 0x0300)) == name,
+            "fixture lookup differs from the reporter's lookup");
+    check_report(trapped.frame);
+    require(trapped.lowest_sp >= kStackBase, "reporter stack exceeded its 256-byte block");
+    std::cout << "long C++ name: " << name.size() << " bytes returned in full, "
+                 "%.12S renders the first 12, reporter verified.\n";
+}
 }
 
 int main(int argc, char** argv)
 {
     try {
-        require(argc == 9, "usage: avm_trap_source_tests interp.hex interp.lst "
-                           "O0.bin O0.asm O2.bin O2.asm nometa.bin nometa.asm");
+        require(argc == 11, "usage: avm_trap_source_tests interp.hex interp.lst "
+                            "O0.bin O0.asm O2.bin O2.asm nometa.bin nometa.asm "
+                            "long.bin long.asm");
         std::vector<uint8_t> o2_frame, nometa_frame;
         test_build("O0", argv[1], argv[2], argv[3], argv[4], true, kTrapLine, nullptr);
         test_build("O2", argv[1], argv[2], argv[5], argv[6], true, kTrapLine, &o2_frame);
         test_build("nometa", argv[1], argv[2], argv[7], argv[8], false, kTrapLine, &nometa_frame);
         require(o2_frame != nometa_frame, "metadata did not change the rendered report");
+        test_long_name(argv[1], argv[2], argv[9], argv[10]);
         std::cout << "Source-aware fatal trap tests passed.\n";
         return 0;
     } catch(std::exception const& error) {

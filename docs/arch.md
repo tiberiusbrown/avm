@@ -6325,13 +6325,11 @@ the name. A sized range is clamped to its section, and an
 unsized function ends at the next function start in its section or at the
 section end. An earlier range that reaches past a later start is truncated there.
 
-A demangled C++ name drops its trailing parameter list and cv or reference
-qualifiers, so `Player::take_damage(int) const` is shown as
-`Player::take_damage`. The qualified name is kept, including operator names. If
-that name is still longer than 39 bytes, each outermost template argument list
-is replaced by `<...>`, unless the name contains an operator token. A name that
-is still too long is cut to 39 bytes. Every byte outside printable ASCII
-becomes `?`.
+A function name is the complete demangled name. The name keeps its namespaces,
+class and template arguments, parameter list, and cv or reference qualifiers, so
+`Player::take_damage(int) const` is stored in full. Nothing is shortened or
+elided. Every byte outside printable ASCII becomes `?`. A symbol whose name
+demangles to nothing has no record.
 
 #### Filename index
 
@@ -6342,10 +6340,20 @@ basename of at most 48 bytes, printable ASCII, and keeps its extension when cut.
 
 #### String pool
 
-The string pool is a sequence of NUL-terminated printable strings. Each distinct
-string appears once. Function names are interned first, in function-index order,
-then filenames in file-ID order. Every string is referenced by at least one
-record, and every reference names the start of a string.
+The string pool is a sequence of records. Each record is a canonical ULEB128 byte
+length, that many printable ASCII characters, and one NUL terminator. The length
+counts the characters and excludes the terminator. A length of zero is invalid,
+so every record holds at least one character.
+
+Each distinct string appears once. Function names are never truncated, and the
+only cut is the filename limit above. Function
+names are interned first, in function-index order, then filenames in file-ID
+order. Every string is referenced by at least one record, and every reference
+names the start of a length prefix, not the first character.
+
+The length prefix lets a reader validate a record from its first four bytes at
+most. The reader confirms that the terminator lies inside the pool and never scans
+the characters. The pool has no padding between records.
 
 #### Source checkpoints
 
@@ -6367,6 +6375,10 @@ tool, `tools/dump-crash.py`, checks each record against a full decode of the
 stream. The guest never scans the stream, so it trusts a record only as far as
 the bounded lookup can check it.
 
+An unmapped checkpoint keeps the file and line of the mapping before it, exactly
+as the transitions do. The mapped flag alone says whether the state answers a
+lookup.
+
 #### Source transition stream
 
 The stream is a uint24 transition count `T`, followed by opcodes. It begins in
@@ -6375,19 +6387,36 @@ and the resulting state applies from that address, inclusive, up to the next
 transition. A transition moves `pc` forward by at least one byte. Its state
 differs from the state before it.
 
+An unmapped state keeps the file and line of the mapping before it, so the next
+mapping can resume them. The mapped flag alone decides whether a lookup has a
+source. A state that has never been mapped has line `0`, and the same-file
+opcodes need a nonzero line.
+
 | Opcode | Operands | Effect |
 |---|---|---|
-| `0x00`-`0x7F` | none | Combined: `pc += (op & 15) + 1`, `line += ((op >> 4) & 7) - 4`, file unchanged. The state must be mapped. |
-| `0x80` | `ULEB128 pcDelta`, `ULEB128 file`, `ULEB128 line` | Set mapping: `pc += pcDelta`, file and line replaced, mapped. |
-| `0x81` | `ULEB128 pcDelta`, `ULEB128 zigzag(lineDelta)` | Large same-file: `pc += pcDelta`, `line += lineDelta`, file unchanged. The state must be mapped. |
-| `0x82` | `ULEB128 pcDelta` | Enter unmapped: `pc += pcDelta`, unmapped, file `0`, line `0`. |
-| `0x83`-`0xFF` | | Invalid. |
+| `0x00`-`0x7F` | none | Combined: `pc += (op & 15) + 1`, `line += ((op >> 4) & 7) - 4`, mapped, file kept. Requires a nonzero line. |
+| `0x80` | `ULEB128 pcDelta`, `ULEB128 file`, `ULEB128 line` | Absolute mapping: `pc += pcDelta`, file and line replaced, mapped. |
+| `0x81` | `ULEB128 pcDelta`, `ULEB128 zigzag(lineDelta)` | Extended same-file: `pc += pcDelta`, `line += lineDelta`, mapped, file kept. Requires a nonzero line. |
+| `0x82` | `ULEB128 pcDelta` | Extended unmapped: `pc += pcDelta`, unmapped, file and line kept. |
+| `0x83`-`0x92` | `ULEB128 zigzag(lineDelta)` | Short large: `pc += op - 0x82`, that is 1 to 16, `line += lineDelta`, mapped, file kept. Requires a nonzero line. |
+| `0x93`-`0xFF` | none | Short unmapped: `pc += op - 0x92`, that is 1 to 109, unmapped, file and line kept. |
 
-The packer chooses the first form that applies, in this order. An unmapped
-transition uses `0x82`. A transition from an unmapped state, or one that changes
-file, uses `0x80`. A transition in the same file with `pcDelta` from 1 to 16 and
-a line change from -4 to +3 uses the combined form. Any other same-file
-transition uses `0x81`.
+Every byte value is an opcode, so no opcode is invalid. The packer chooses the
+first form that applies, in this order:
+
+- An unmapped transition uses `0x93`-`0xFF` when its PC advance is 1 to 109, and
+  `0x82` otherwise.
+- A mapped transition uses `0x80` when no line has been established yet, or when
+  its file differs from the retained file.
+- A same-file mapped transition with a PC advance of 1 to 16 and a line change of
+  -4 to +3 uses the combined form.
+- A same-file mapped transition with a PC advance of 1 to 16 and any other line
+  change uses `0x83`-`0x92`.
+- Any other same-file mapped transition uses `0x81`.
+
+A mapping after a gap resumes the retained file and line, so it uses the same
+same-file forms as any other mapping. Only a file change, or the first mapping,
+needs `0x80`.
 
 `ULEB128` operands are canonical unsigned LEB128 values. A value uses the
 fewest bytes, so a multi-byte value may not end in a zero byte. An operand has at
@@ -6400,6 +6429,7 @@ Every transition must satisfy these rules:
 - `pcDelta` is at least 1, and `pc` stays at or below `0xFFFFFF`.
 - A mapped line is in `1..0xFFFFFF`.
 - A file ID is less than the filename count.
+- A same-file opcode finds a nonzero line in the retained state.
 - An opcode reads its operands entirely inside the stream.
 
 #### Lookup
@@ -6430,19 +6460,24 @@ An unmapped transition is an explicit answer. An address in a gap between
 mapped intervals, after the last one, or before the first one has no source. A
 gap is never filled from a neighbouring mapping.
 
-The reader copies a name into the trap location buffer, 39 bytes for a function
-and 27 bytes for a filename, and always NUL-terminates it. A string cut at that
-capacity is still valid.
+A name is returned as a program address, not a copy. A function name or filename
+is the address of its first character, and the caller reads it with the
+program-memory string functions. Before returning an address, the reader checks
+its record: the length prefix is canonical and nonzero, the terminator lies
+inside the pool, and the byte after the characters is the NUL. A record that
+fails a check yields a null address, so a malformed name reads as absent. The
+reader scans no characters and copies nothing into RAM.
 
 #### Canonical source transitions
 
 The packer builds the transitions from the canonical source intervals. Those
 intervals are the same ones described below, and they are not changed by the
 encoding. Each mapped interval starts a transition. An unmapped transition marks
-the end of an interval that is followed by a gap or ends the sequence. Adjacent
-intervals with the same file and line are one interval, so no transition repeats
-its predecessor. Transitions are emitted in strictly increasing PC order. The
-packer never fabricates a mapping across a gap.
+the end of an interval that is followed by a gap or ends the sequence, and it
+keeps that interval's file and line. Adjacent intervals with the same file and
+line are one interval, so no transition repeats its predecessor. Transitions are
+emitted in strictly increasing PC order. The packer never fabricates a mapping
+across a gap.
 
 The decoded transitions reproduce the intervals exactly. For every program
 address, the lookup returns the source of the interval that contains it, or none
@@ -6454,7 +6489,8 @@ The packer omits a part, with a warning, when the count of function records,
 filenames, checkpoints, or transitions exceeds its field, or when the block does
 not fit the payload limit. If the complete block does not fit, it keeps the
 function records alone when they fit. The packer never truncates a record or a
-string silently. The previous AVD1 layout is not read or written.
+string silently. Filenames are the documented exception: each is cut to the
+48-byte basename limit above. The previous AVD1 layout is not read or written.
 
 #### Worked example
 
@@ -6475,19 +6511,20 @@ Offset  Bytes                                     Meaning
 0x0C    01 2F 00 00 02 00 00                      type 1: offset 47, size 2
 0x13    02 31 00 00 08 00 00                      type 2: offset 49, size 8
 0x1A    03 39 00 00 0E 00 00                      type 3: offset 57, size 14
-0x21    04 47 00 00 11 00 00                      type 4: offset 71, size 17
-0x28    05 58 00 00 08 00 00                      type 5: offset 88, size 8
+0x21    04 47 00 00 0F 00 00                      type 4: offset 71, size 15
+0x28    05 56 00 00 0A 00 00                      type 5: offset 86, size 10
 0x2F    00 00                                     function index: 0 records
-0x31    02 00 00 00 00 04 00 00                  filename index: 2 files, "a.c" at 0, "b.h" at 4
+0x31    02 00 00 00 00 05 00 00                  filename index: 2 files, "a.c" at 0, "b.h" at 5
 0x39    01 00                                     checkpoint count 1
 0x3B    00 00 00 00 00 00 00 00 00 00 00 00      checkpoint 0: pc 0, offset 0, file 0, line 0, unmapped
 0x47    05 00 00                                  transition count 5
-0x4A    80 80 02 00 0A                           set mapping: pc 0x100, file 0, line 10
+0x4A    80 80 02 00 0A                           absolute mapping: pc 0x100, file 0, line 10
 0x4F    57                                        combined: pc 0x108, line 11
-0x50    82 04                                     unmapped at 0x10C
-0x52    80 14 01 2D                               set mapping: pc 0x120, file 1, line 45
-0x56    82 08                                     unmapped at 0x128
-0x58    61 2E 63 00 62 2E 68 00                   string pool: "a.c", "b.h"
+0x50    96                                        short unmapped: pc 0x10C, advance 4
+0x51    80 14 01 2D                               absolute mapping: pc 0x120, file 1, line 45
+0x55    9A                                        short unmapped: pc 0x128, advance 8
+0x56    03 61 2E 63 00                            string "a.c": length 3, characters, NUL
+0x5B    03 62 2E 68 00                            string "b.h": length 3, characters, NUL
 ```
 
 Decoding the stream gives these states, each applying up to the next address:

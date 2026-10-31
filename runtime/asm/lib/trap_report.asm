@@ -17,9 +17,10 @@ SYMBOL TABLE:
 00000000 l    d  .rodata..L.avm.flashstr.10	00000000 .rodata..L.avm.flashstr.10
 00000000 l    d  .rodata..L.avm.flashstr.11	00000000 .rodata..L.avm.flashstr.11
 00000000 l    d  .rodata..L.avm.flashstr.12	00000000 .rodata..L.avm.flashstr.12
+00000000 l    d  .rodata..L.avm.flashstr.13	00000000 .rodata..L.avm.flashstr.13
 00000000         *UND*	00000000 __avm_text_state
 00000000         *UND*	00000000 __avm_framebuffer
-00000000 g     F .text.__avm_trap_report	00000132 __avm_trap_report
+00000000 g     F .text.__avm_trap_report	00000159 __avm_trap_report
 00000000         *UND*	00000000 __avm_trap_lookup
 00000000         *UND*	00000000 memset
 00000000         *UND*	00000000 _avm_font_br5n_storage
@@ -31,7 +32,7 @@ Disassembly of section .text.__avm_trap_report:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
+ d6 f9                 adjsp	-0x7
  f1 04                 mov	r0, r4
  f7 22                 ld16	r2, [r4+]
  f5 33                 ld8u	r3, [r4]
@@ -75,13 +76,6 @@ Disassembly of section .text.__avm_trap_report:
 		R_AVM_FAR24	.text.__avm_trap_report+0x63
 <L2>:
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.10
- c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.10
- e2 00 00 00           jmpf	__avm_trap_report
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_report+0x68
- c6 00 00              ldi16	r6, 0x0
 		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.11
  c3 00                 ldi8	r7, 0x0
 		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.11
@@ -89,16 +83,23 @@ Disassembly of section .text.__avm_trap_report:
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.__avm_trap_report+0x68
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.9
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.12
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.9
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.12
  e2 00 00 00           jmpf	__avm_trap_report
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.__avm_trap_report+0x68
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.12
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.10
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.12
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.10
+ e2 00 00 00           jmpf	__avm_trap_report
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.__avm_trap_report+0x68
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.13
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.13
  a0                    xor	r4, r4
  c1 05                 ldi8	r5, 0x5
  d7 34                 sys	draw_text_p
@@ -111,47 +112,72 @@ Disassembly of section .text.__avm_trap_report:
 		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.0
  c3 00                 ldi8	r7, 0x0
 		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.0
- f1 13                 mov	r2, r3
  a0                    xor	r4, r4
  c1 0b                 ldi8	r5, 0xb
+ f1 13                 mov	r2, r3
  d7 36                 sys	draw_textfv_p
- f0 39 00              stsp16	[sp+0x0], r1
+ f0 6c 93              ld16	r4, [r1+]
+ ed a2 20              ld8u	r5, [r1+0]
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d1 04                 brne8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_trap_report
+		R_AVM_FAR24	.text.__avm_trap_report+0xac
+<L3>:
+ f4 40                 stsp16	[sp+0x0], r4
+ f1 39                 stsp8	[sp+0x2], r5
  c6 00 00              ldi16	r6, 0x0
 		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.1
  c3 00                 ldi8	r7, 0x0
 		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.1
  a0                    xor	r4, r4
  c1 11                 ldi8	r5, 0x11
+ f1 13                 mov	r2, r3
  d7 36                 sys	draw_textfv_p
- c4 69 02              ldi16	r4, 0x269
- 40                    ld8u	r4, [r4]
- f4 a4                 tst8	r4
- d1 04                 brne8	0x4 <L3>
-		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_report
-		R_AVM_FAR24	.text.__avm_trap_report+0xbf
-<L3>:
- c4 48 02              ldi16	r4, 0x248
- f4 40                 stsp16	[sp+0x0], r4
- c4 64 02              ldi16	r4, 0x264
- f0 6a 88              ld32	q2, [r4]
- f4 48                 stsp16	[sp+0x2], r4
- f4 51                 stsp16	[sp+0x4], r5
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.__avm_trap_report+0xb6
  c6 00 00              ldi16	r6, 0x0
 		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.2
  c3 00                 ldi8	r7, 0x0
 		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.2
  a0                    xor	r4, r4
- c1 17                 ldi8	r5, 0x17
- f1 13                 mov	r2, r3
- d7 36                 sys	draw_textfv_p
- e2 00 00 00           jmpf	__avm_trap_report
+ c1 11                 ldi8	r5, 0x11
+ d7 34                 sys	draw_text_p
+ c6 23 02              ldi16	r6, 0x223
+ f7 34                 ld16	r4, [r6+]
+ 46                    ld8u	r5, [r6]
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_report+0xc9
+ e2 00 00 00           jmpf	__avm_trap_report
+		R_AVM_FAR24	.text.__avm_trap_report+0xe6
+<L4>:
+ f4 40                 stsp16	[sp+0x0], r4
+ f1 39                 stsp8	[sp+0x2], r5
+ c4 26 02              ldi16	r4, 0x226
+ f0 6a 88              ld32	q2, [r4]
+ f4 4c                 stsp16	[sp+0x3], r4
+ f4 55                 stsp16	[sp+0x5], r5
+ f0 12 00              leasp	r2, 0x0
  c6 00 00              ldi16	r6, 0x0
 		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.3
  c3 00                 ldi8	r7, 0x0
 		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.3
+ a0                    xor	r4, r4
+ c1 17                 ldi8	r5, 0x17
+ d7 36                 sys	draw_textfv_p
+ e2 00 00 00           jmpf	__avm_trap_report
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.__avm_trap_report+0xf0
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.4
+ c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.4
  a0                    xor	r4, r4
  c1 17                 ldi8	r5, 0x17
  d7 34                 sys	draw_text_p
@@ -161,9 +187,9 @@ Disassembly of section .text.__avm_trap_report:
  f4 48                 stsp16	[sp+0x2], r4
  f0 12 00              leasp	r2, 0x0
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.4
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.5
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.4
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.5
  a0                    xor	r4, r4
  c1 1d                 ldi8	r5, 0x1d
  d7 36                 sys	draw_textfv_p
@@ -172,9 +198,9 @@ Disassembly of section .text.__avm_trap_report:
  ed 90 2e              ld16	r4, [r0+14]
  f4 48                 stsp16	[sp+0x2], r4
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.5
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.6
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.5
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.6
  a0                    xor	r4, r4
  c1 23                 ldi8	r5, 0x23
  d7 36                 sys	draw_textfv_p
@@ -183,9 +209,9 @@ Disassembly of section .text.__avm_trap_report:
  ed 90 32              ld16	r4, [r0+18]
  f4 48                 stsp16	[sp+0x2], r4
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.6
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.7
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.6
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.7
  a0                    xor	r4, r4
  c1 29                 ldi8	r5, 0x29
  d7 36                 sys	draw_textfv_p
@@ -194,18 +220,18 @@ Disassembly of section .text.__avm_trap_report:
  ed 90 36              ld16	r4, [r0+22]
  f4 48                 stsp16	[sp+0x2], r4
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.7
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.8
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.7
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.8
  a0                    xor	r4, r4
  c1 2f                 ldi8	r5, 0x2f
  d7 36                 sys	draw_textfv_p
  ed 80 26              ld8u	r4, [r0+6]
  f4 40                 stsp16	[sp+0x0], r4
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.8
+		R_AVM_PROG_LO16	.rodata..L.avm.flashstr.9
  c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.8
+		R_AVM_PROG_HI8	.rodata..L.avm.flashstr.9
  a0                    xor	r4, r4
  c1 35                 ldi8	r5, 0x35
  d7 36                 sys	draw_textfv_p
@@ -213,4 +239,4 @@ Disassembly of section .text.__avm_trap_report:
  d7 1d                 sys	display
  e2 00 00 00           jmpf	__avm_trap_report
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_report+0x12e
+		R_AVM_FAR24	.text.__avm_trap_report+0x155

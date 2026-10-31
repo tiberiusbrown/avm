@@ -18,22 +18,30 @@
 #define AVD1_FILE_SIZE 3
 #define AVD1_CHECKPOINT_SIZE 12
 #define AVD1_CHECKPOINT_INTERVAL 64
+/* Record offsets by shifts and adds. A 32-bit multiply is a runtime call. */
+#define AVD1_FUNCTION_OFFSET(i) (((i) << 3) + (i))
+#define AVD1_CHECKPOINT_OFFSET(i) (((i) << 3) + ((i) << 2))
+#define AVD1_FILE_OFFSET(i) (((i) << 1) + (i))
 
-/* Validated view of the block. Table fields point past their uint16 counts. */
+/* Validated view of the block. Table fields hold absolute program addresses
+ * that point past their uint16 counts, and the stream and pool bounds are
+ * absolute too, so no lookup recomputes them. */
 typedef struct {
     uint32_t functions;    /* function records */
-    uint32_t files;        /* filename offsets */
+    uint32_t files;        /* filename references */
     uint32_t checkpoints;  /* checkpoint records */
     uint32_t stream;       /* first transition opcode */
-    uint32_t stream_bytes; /* opcode bytes after the transition count */
+    uint32_t stream_end;   /* one past the last opcode */
     uint32_t strings;      /* string pool */
-    uint32_t strings_end;
+    uint32_t strings_end;  /* one past the last pool byte */
     uint16_t function_count;
     uint16_t file_count;
     uint16_t checkpoint_count;
 } avm_crash_block_t;
 
-/* Source state. The stream offset is relative to the first opcode. */
+/* Source state. The stream offset is relative to the first opcode. File and
+ * line survive an unmapped state, so a later mapped transition can resume
+ * from them. Only mapped states answer a lookup. */
 typedef struct {
     uint32_t pc;
     uint32_t offset;
@@ -86,13 +94,13 @@ static uint8_t open_section(avm_crash_block_t *block, uint8_t index,
                             uint32_t section, uint32_t length,
                             uint32_t *transitions) {
     uint32_t count;
-    uint32_t record;
+    uint32_t expected;
     if (index == 3) { /* Source transition stream: a uint24 count, then opcodes. */
         if (length < 3)
             return 0;
         *transitions = read_flash_u24(section);
         block->stream = section + 3;
-        block->stream_bytes = length - 3;
+        block->stream_end = section + length;
         return 1;
     }
     if (index == 4) { /* String pool. */
@@ -100,14 +108,19 @@ static uint8_t open_section(avm_crash_block_t *block, uint8_t index,
         block->strings_end = section + length;
         return 1;
     }
-    /* Function index, filename index, and checkpoints. */
+    /* Function index, filename index, and checkpoints. The expected size is the
+     * count times the record size, written as shifts and adds. */
     if (length < 2)
         return 0;
     count = read_flash_u16(section);
-    record = index == 0 ? AVD1_FUNCTION_SIZE
-             : index == 1 ? AVD1_FILE_SIZE
-                          : AVD1_CHECKPOINT_SIZE;
-    if (length != 2 + count * record)
+    if (index == 0) {
+        expected = AVD1_FUNCTION_OFFSET(count);
+    } else if (index == 1) {
+        expected = AVD1_FILE_OFFSET(count);
+    } else {
+        expected = AVD1_CHECKPOINT_OFFSET(count);
+    }
+    if (length != 2 + expected)
         return 0;
     if (index == 0) {
         block->function_count = (uint16_t)count;
@@ -171,51 +184,62 @@ static uint8_t open_crash_block(avm_crash_block_t *block) {
     return 1;
 }
 
-/* Copies the NUL-terminated string at address into dst, reading no further
- * than capacity - 1 bytes and never past the string pool. A string cut at the
- * capacity is still valid. Returns 0 when no terminator lies in the pool. */
-static uint8_t copy_string(avm_crash_block_t const *block, uint32_t address,
-                           char *dst, uint8_t capacity) {
-    uint32_t available;
-    uint8_t count = capacity - 1;
-    uint8_t i;
-
-    if (address < block->strings || address >= block->strings_end)
+/* Reads one canonical ULEB128 value at *cursor, an absolute program address, and
+ * advances the cursor past it. The operand ends before end, has at most four
+ * bytes, and does not end in a zero byte after its first. Each byte has a fixed
+ * shift, so no variable-shift helper runs. */
+__attribute__((noinline)) static uint8_t read_uleb128(uint32_t *cursor, uint32_t end,
+                                                      uint32_t *value) {
+    uint32_t address = *cursor;
+    uint32_t result;
+    uint8_t byte;
+    if (address >= end)
         return 0;
-    available = block->strings_end - address;
-    if (available < count)
-        count = (uint8_t)available;
-    memcpy_P(dst, (uint8_t const AVM_PROGMEM *)address, count);
-    for (i = 0; i < count; ++i) {
-        if (dst[i] == '\0')
-            return 1;
+    byte = read_flash_u8(address++);
+    result = byte & 0x7f;
+    if (byte & 0x80) {
+        if (address >= end)
+            return 0;
+        byte = read_flash_u8(address++);
+        result |= (uint32_t)(byte & 0x7f) << 7;
+        if (byte & 0x80) {
+            if (address >= end)
+                return 0;
+            byte = read_flash_u8(address++);
+            result |= (uint32_t)(byte & 0x7f) << 14;
+            if (byte & 0x80) {
+                if (address >= end)
+                    return 0;
+                byte = read_flash_u8(address++);
+                if (byte & 0x80)
+                    return 0;
+                result |= (uint32_t)byte << 21;
+            }
+        }
+        if (byte == 0)
+            return 0;
     }
-    dst[count] = '\0';
-    return count == capacity - 1;
+    *cursor = address;
+    *value = result;
+    return 1;
 }
 
-/* Reads one canonical ULEB128 operand. It accepts at most four bytes, rejects
- * an operand that ends in a zero byte after the first, and never reads past
- * the stream. */
-static uint8_t read_uleb128(avm_crash_block_t const *block, uint32_t *offset,
-                            uint32_t *value) {
-    uint32_t result = 0;
-    uint8_t shift = 0;
-    for (;;) {
-        uint8_t byte;
-        if (*offset >= block->stream_bytes || shift > 21)
-            return 0;
-        byte = read_flash_u8(block->stream + *offset);
-        *offset += 1;
-        result |= (uint32_t)(byte & 0x7f) << shift;
-        if ((byte & 0x80) == 0) {
-            if (byte == 0 && shift != 0)
-                return 0;
-            *value = result;
-            return 1;
-        }
-        shift += 7;
-    }
+/* Returns the program address of the string named by a pool offset, or 0. The
+ * record at offset is a canonical ULEB128 length, the characters, and a NUL.
+ * The returned address is the first character, and it is valid only when the
+ * length is nonzero and the NUL lies inside the pool. Only the prefix and the
+ * terminator are read, and nothing is copied to RAM. */
+static char const AVM_PROGMEM *lookup_string(avm_crash_block_t const *block,
+                                             uint32_t offset) {
+    uint32_t cursor = block->strings + offset;
+    uint32_t length;
+    if (!read_uleb128(&cursor, block->strings_end, &length))
+        return 0;
+    if (length == 0 || length >= block->strings_end - cursor)
+        return 0;
+    if (read_flash_u8(cursor + length) != 0)
+        return 0;
+    return (char const AVM_PROGMEM *)cursor;
 }
 
 /* Inverts ZigZag as 32-bit two's complement: 1 maps to -1, 2 to 1, 3 to -2. */
@@ -223,69 +247,75 @@ static uint32_t zigzag_decode(uint32_t value) {
     return (value & 1) ? ~(value >> 1) : (value >> 1);
 }
 
-/* Decodes the transition at in->offset into out. Returns 0 for an unknown
- * opcode, a truncated or noncanonical operand, an invalid file or line, or a
- * PC delta that is zero or overflows. out is undefined when 0 is returned. */
+/* Decodes the transition at in->offset into out, which holds the state from
+ * out->pc through the next transition. Returns 0 for a truncated or noncanonical
+ * operand, an invalid file or line, a zero or overflowing PC delta, or a
+ * same-file opcode with no line to resume from. Every opcode is valid, so the
+ * opcode byte alone never fails. out is undefined when 0 is returned. */
 static uint8_t decode_source_transition(avm_crash_block_t const *block,
                                         avm_source_state_t const *in,
                                         avm_source_state_t *out) {
-    uint32_t offset = in->offset;
+    uint32_t cursor = block->stream + in->offset;
     uint32_t pc_delta = 0;
     uint32_t line = in->line;
+    uint32_t file = in->file;
     uint32_t operand = 0;
+    uint8_t mapped = 1;
     uint8_t opcode;
 
-    if (offset >= block->stream_bytes)
+    if (cursor >= block->stream_end)
         return 0;
-    opcode = read_flash_u8(block->stream + offset);
-    offset += 1;
-    out->file = in->file;
-    out->mapped = in->mapped;
+    opcode = read_flash_u8(cursor++);
     if (opcode < 0x80) {
-        /* One-byte combined: PC delta 1-16, line delta -4 to +3, same file. */
-        if (!in->mapped)
+        /* Combined: PC delta 1-16 and line delta -4 to +3, same file. */
+        if (in->line == 0)
             return 0;
         pc_delta = (uint32_t)(opcode & 0x0f) + 1;
         line = in->line + (uint32_t)((opcode >> 4) & 7) - 4;
     } else if (opcode == 0x80) {
-        /* Set mapping: PC delta, file ID, and absolute line. */
-        if (!read_uleb128(block, &offset, &pc_delta))
-            return 0;
-        if (!read_uleb128(block, &offset, &operand) ||
+        /* Absolute mapping: PC delta, file ID, and line. */
+        if (!read_uleb128(&cursor, block->stream_end, &pc_delta) ||
+            !read_uleb128(&cursor, block->stream_end, &operand) ||
             operand >= block->file_count)
             return 0;
-        out->file = (uint16_t)operand;
-        if (!read_uleb128(block, &offset, &line))
+        file = operand;
+        if (!read_uleb128(&cursor, block->stream_end, &line))
             return 0;
-        out->mapped = 1;
-    } else if (opcode == 0x81) {
-        /* Large same-file transition: PC delta and ZigZag line delta. */
-        if (!in->mapped)
-            return 0;
-        if (!read_uleb128(block, &offset, &pc_delta) ||
-            !read_uleb128(block, &offset, &operand))
-            return 0;
-        line = in->line + zigzag_decode(operand);
-    } else if (opcode == 0x82) {
-        /* Enter an unmapped region. The file and line are cleared. */
-        if (!read_uleb128(block, &offset, &pc_delta))
-            return 0;
-        out->mapped = 0;
-        out->file = 0;
-        line = 0;
+    } else if (opcode >= 0x93) {
+        /* Short unmapped: PC advance 1-109 with no operand. */
+        pc_delta = (uint32_t)opcode - 0x92u;
+        mapped = 0;
     } else {
-        return 0;
+        /* 0x81 and 0x82 carry a ULEB128 PC delta, and 0x83-0x92 carry it in the
+         * opcode. 0x82 is unmapped and has no line operand. The others read a
+         * ZigZag line delta from the same file. */
+        if (opcode == 0x81 || opcode == 0x82) {
+            if (!read_uleb128(&cursor, block->stream_end, &pc_delta))
+                return 0;
+        } else {
+            pc_delta = (uint32_t)opcode - 0x82u;
+        }
+        mapped = opcode != 0x82;
+        if (mapped) {
+            if (in->line == 0 ||
+                !read_uleb128(&cursor, block->stream_end, &operand))
+                return 0;
+            line = in->line + zigzag_decode(operand);
+        }
     }
 
-    /* A mapped line lies in 1..0xFFFFFF, which one unsigned compare checks. A
-     * zero PC delta and an overflowing one fail the same way. */
-    if (out->mapped && line - 1 >= AVD1_MAX_LINE)
+    /* A mapped line lies in 1..0xFFFFFF, which one unsigned compare checks, and
+     * an unsigned line delta wraps to a value that fails the same compare. A zero
+     * PC delta and an overflowing one fail the second compare. */
+    if (mapped && line - 1 >= AVD1_MAX_LINE)
         return 0;
     if (pc_delta - 1 >= AVD1_ADDRESS_LIMIT - 1 - in->pc)
         return 0;
-    out->line = line;
     out->pc = in->pc + pc_delta;
-    out->offset = offset;
+    out->offset = cursor - block->stream;
+    out->line = line;
+    out->file = (uint16_t)file;
+    out->mapped = mapped;
     return 1;
 }
 
@@ -298,14 +328,14 @@ static uint8_t find_checkpoint(avm_crash_block_t const *block, uint32_t pc,
     uint32_t record;
     while (low < high) {
         uint32_t middle = low + (high - low) / 2;
-        if (read_flash_u24(block->checkpoints + middle * AVD1_CHECKPOINT_SIZE) <= pc)
+        if (read_flash_u24(block->checkpoints + AVD1_CHECKPOINT_OFFSET(middle)) <= pc)
             low = middle + 1;
         else
             high = middle;
     }
     if (low == 0)
         return 0;
-    record = block->checkpoints + (low - 1) * AVD1_CHECKPOINT_SIZE;
+    record = block->checkpoints + AVD1_CHECKPOINT_OFFSET(low - 1);
     state->pc = read_flash_u24(record);
     state->offset = read_flash_u24(record + 3);
     state->file = read_flash_u16(record + 6);
@@ -315,47 +345,41 @@ static uint8_t find_checkpoint(avm_crash_block_t const *block, uint32_t pc,
 }
 
 /* Finds the function record with the largest start at or before pc and accepts
- * it only when pc lies before its end. Names are resolved in the string pool. */
+ * it only when pc lies before its end. The name is a flash pointer, or null when
+ * its string record is malformed. */
 static void lookup_function(avm_crash_block_t const *block, uint32_t pc,
                             avm_trap_location_t *out) {
     uint32_t low = 0;
     uint32_t high = block->function_count;
     uint32_t record;
-    uint32_t name;
     while (low < high) {
         uint32_t middle = low + (high - low) / 2;
-        if (read_flash_u24(block->functions + middle * AVD1_FUNCTION_SIZE) <= pc)
+        if (read_flash_u24(block->functions + AVD1_FUNCTION_OFFSET(middle)) <= pc)
             low = middle + 1;
         else
             high = middle;
     }
     if (low == 0)
         return;
-    record = block->functions + (low - 1) * AVD1_FUNCTION_SIZE;
+    record = block->functions + AVD1_FUNCTION_OFFSET(low - 1);
     if (pc >= read_flash_u24(record + 3))
         return;
-    name = block->strings + read_flash_u24(record + 6);
-    if (copy_string(block, name, out->function, sizeof(out->function))) {
-        out->has_function = 1;
-    } else {
-        out->function[0] = '?';
-        out->function[1] = '\0';
-    }
+    out->function = lookup_string(block, read_flash_u24(record + 6));
 }
 
 /* Applies the transitions at or before pc to the checkpoint state. The first
- * transition after pc is decoded but not applied. A checkpoint is at most 64
- * transitions from the answer, so more decodes mean malformed metadata. */
+ * transition after pc is not applied. A checkpoint is at most 64 transitions from
+ * the answer, so more decodes mean malformed metadata. */
 static void lookup_source(avm_crash_block_t const *block, uint32_t pc,
                           avm_trap_location_t *out) {
     avm_source_state_t state;
     avm_source_state_t next;
-    uint32_t entry;
     uint32_t steps;
+    uint32_t entry;
 
     if (!find_checkpoint(block, pc, &state))
         return;
-    for (steps = 0; state.offset < block->stream_bytes; ++steps) {
+    for (steps = 0; block->stream + state.offset < block->stream_end; ++steps) {
         if (steps == AVD1_CHECKPOINT_INTERVAL)
             return;
         if (!decode_source_transition(block, &state, &next))
@@ -366,29 +390,18 @@ static void lookup_source(avm_crash_block_t const *block, uint32_t pc,
     }
     if (!state.mapped || state.file >= block->file_count)
         return;
-
-    entry = block->files + (uint32_t)state.file * AVD1_FILE_SIZE;
-    if (!copy_string(block, block->strings + read_flash_u24(entry),
-                     out->file, sizeof(out->file))) {
-        out->file[0] = '?';
-        out->file[1] = '\0';
-        return;
-    }
-    out->line = state.line;
-    out->has_line = 1;
+    entry = block->files + AVD1_FILE_OFFSET((uint32_t)state.file);
+    out->file = lookup_string(block, read_flash_u24(entry));
+    if (out->file)
+        out->line = state.line;
 }
 
 void __avm_trap_lookup(uint32_t pc, avm_trap_location_t *out) {
     avm_crash_block_t block;
 
-    out->function[0] = '?';
-    out->function[1] = '\0';
-    out->file[0] = '?';
-    out->file[1] = '\0';
+    out->function = 0;
+    out->file = 0;
     out->line = 0;
-    out->has_function = 0;
-    out->has_line = 0;
-
     if (!open_crash_block(&block))
         return;
     lookup_function(&block, pc, out);

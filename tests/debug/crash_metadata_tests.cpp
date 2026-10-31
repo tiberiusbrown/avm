@@ -71,8 +71,10 @@ struct source_state_t {
     bool mapped;
 };
 
-// Decodes one transition of the AVD1 source stream. Returns false for malformed
-// data, so the test fails rather than trusting a bad stream.
+// Decodes one transition of the AVD1 source stream. Every opcode is valid. The
+// same-file opcodes resume from the retained line, and an unmapped transition
+// keeps the file and line it follows. Returns false for malformed data, so the
+// test fails rather than trusting a bad stream.
 bool decode_transition(std::vector<uint8_t> const& image, size_t stream, size_t bytes,
                        uint32_t files, source_state_t const& in, source_state_t& out)
 {
@@ -100,10 +102,11 @@ bool decode_transition(std::vector<uint8_t> const& image, size_t stream, size_t 
     int64_t line = in.line;
     uint32_t operand = 0;
     if(opcode < 0x80) {
-        if(!in.mapped)
+        if(in.line == 0)
             return false;
         delta = (opcode & 0x0f) + 1;
         line += ((opcode >> 4) & 7) - 4;
+        out.mapped = true;
     } else if(opcode == 0x80) {
         if(!uleb(delta) || !uleb(operand) || operand >= files)
             return false;
@@ -113,17 +116,23 @@ bool decode_transition(std::vector<uint8_t> const& image, size_t stream, size_t 
         line = operand;
         out.mapped = true;
     } else if(opcode == 0x81) {
-        if(!in.mapped || !uleb(delta) || !uleb(operand))
+        if(in.line == 0 || !uleb(delta) || !uleb(operand))
             return false;
         line += zigzag(operand);
+        out.mapped = true;
     } else if(opcode == 0x82) {
         if(!uleb(delta))
             return false;
         out.mapped = false;
-        out.file = 0;
-        line = 0;
+    } else if(opcode <= 0x92) {
+        if(in.line == 0 || !uleb(operand))
+            return false;
+        delta = opcode - 0x82u;
+        line += zigzag(operand);
+        out.mapped = true;
     } else {
-        return false;
+        delta = opcode - 0x92u;
+        out.mapped = false;
     }
     if(delta == 0 || delta > 0xffffff - in.pc)
         return false;
@@ -178,13 +187,30 @@ crash_t parse_crash(std::vector<uint8_t> const& image)
     require(next == size, "AVD1 sections do not fill the block");
 
     // Function index: a count, then nine-byte records with pool-relative names.
+    // A pool record is a canonical ULEB128 length, its characters, and a NUL, and
+    // a reference names the length prefix.
     size_t const pool = section[4];
     uint32_t const pool_size = uint32_t(length[4]);
     auto text_at = [&](uint32_t offset) {
         require(offset < pool_size, "string offset outside the string pool");
-        auto end = std::find(image.begin() + pool + offset, image.begin() + pool + pool_size, 0);
-        require(end != image.begin() + pool + pool_size, "unterminated AVD1 string");
-        return std::string(image.begin() + pool + offset, end);
+        uint32_t length_value = 0;
+        uint32_t bytes = 0;
+        for(uint32_t shift = 0;; shift += 7) {
+            require(offset + bytes < pool_size, "string length prefix is unterminated");
+            require(bytes < 4, "string length prefix exceeds four bytes");
+            uint8_t byte = image[pool + offset + bytes++];
+            length_value |= uint32_t(byte & 0x7f) << shift;
+            if(!(byte & 0x80)) {
+                require(bytes == 1 || byte != 0, "string length prefix is overlong");
+                break;
+            }
+        }
+        uint32_t const first = offset + bytes;
+        require(length_value > 0 && first + length_value < pool_size,
+                "string record runs past the string pool");
+        require(image[pool + first + length_value] == 0, "string record is not NUL terminated");
+        auto begin = image.begin() + pool + first;
+        return std::string(begin, begin + length_value);
     };
 
     uint32_t const functions = u16(image, section[0]);
@@ -196,7 +222,6 @@ crash_t parse_crash(std::vector<uint8_t> const& image)
                        text_at(u24(image, record + 6)), 0};
         require(entry.start < entry.end, "empty AVD1 function range");
         require(entry.start >= previous_end, "AVD1 function ranges overlap or are unsorted");
-        require(entry.text.size() <= 39, "function name exceeds 39 bytes");
         previous_end = entry.end;
         out.functions.push_back(entry);
     }

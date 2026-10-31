@@ -100,13 +100,20 @@ includes it in every image by default, so it is a normal part of the image
 rather than a debugging option. `--no-crash-info` and the CMake `NO_CRASH_INFO`
 argument omit it to save flash.
 
-The block holds compact function and source information. Function records map
-each program range to a demangled name without its parameter list. Source
+The block holds compact function and source information. Function records map each program range to its complete demangled name,
+parameter list included. Source
 transitions map each program address to a filename and line, or to no line
 where the DWARF rows have no source. The guest fatal-trap reporter reads it
 from program flash through `__avm_trap_lookup`, and a lookup needs no guest
 allocation. Function names need no `-g`. Source lines need DWARF from a `-g`
 build.
+
+A lookup returns program-memory pointers, so the strings stay where the image
+holds them. `avm_trap_location_t` is ten bytes on AVM: a 24-bit pointer to the
+function name at offset 0, a 24-bit pointer to the filename at offset 3, and the
+32-bit line at offset 6. A null function pointer means no matching function, a
+null file pointer means no matching source location, and line zero means no
+line. Strings are read with `%S`, and nothing is copied into RAM.
 
 The compact encoding does not replace DWARF. LLDB and the host tools continue to
 read the full ELF and its `.debug_info`, `.debug_line`, and `.debug_frame`

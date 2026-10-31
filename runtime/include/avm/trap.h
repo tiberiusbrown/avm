@@ -2,6 +2,7 @@
 #define AVM_TRAP_H
 
 #include <stdint.h>
+#include <avm/pgmspace.h>
 
 #ifdef __cplusplus
 #include <cstddef>
@@ -57,15 +58,31 @@ _Static_assert(offsetof(avm_trap_context_t, reserved1) == 24,
                "reserved1 offset");
 #endif
 
-/* Source location for a trapped PC. Strings are NUL-terminated; function and
- * file hold "?" and line holds 0 when the matching metadata is absent. */
-typedef struct {
-    char function[40];
-    char file[28];
+/* Source location for a trapped PC. The strings are NUL-terminated and live in
+ * program memory, so the pointers are program addresses that the caller reads
+ * with %S. A null function means no matching function, a null file means no
+ * matching source location, and line zero means no line. */
+typedef struct __attribute__((packed)) {
+    char const AVM_PROGMEM *function;
+    char const AVM_PROGMEM *file;
     uint32_t line;
-    uint8_t has_function;
-    uint8_t has_line;
 } avm_trap_location_t;
+
+#ifdef __AVM__
+#ifdef __cplusplus
+static_assert(sizeof(avm_trap_location_t) == 10,
+              "avm_trap_location_t must be 10 bytes");
+static_assert(offsetof(avm_trap_location_t, function) == 0, "function offset");
+static_assert(offsetof(avm_trap_location_t, file) == 3, "file offset");
+static_assert(offsetof(avm_trap_location_t, line) == 6, "line offset");
+#else
+_Static_assert(sizeof(avm_trap_location_t) == 10,
+               "avm_trap_location_t must be 10 bytes");
+_Static_assert(offsetof(avm_trap_location_t, function) == 0, "function offset");
+_Static_assert(offsetof(avm_trap_location_t, file) == 3, "file offset");
+_Static_assert(offsetof(avm_trap_location_t, line) == 6, "line offset");
+#endif
+#endif
 
 /* Looks up pc in the AVD1 block named by header offset 0x0F. Output is always
  * initialized. Reads flash only; does not allocate or touch RAM outside out. */

@@ -364,8 +364,8 @@ are:
 |---|---|
 | 1 | Trap reason: `STACK OVERFLOW`, `INVALID PRIMARY`, `INVALID SECONDARY`, or `UNKNOWN TRAP` |
 | 2 | `PC:xxxxxx SP:xxxx`, the raw 24-bit interpreter PC and the original guest SP |
-| 3 | `FN:<function>`, from crash metadata |
-| 4 | `<filename>:<line>`, from crash metadata |
+| 3 | `FN:<function>`, from crash metadata, showing the first 30 characters |
+| 4 | `<filename>:<line>`, from crash metadata, showing the first 22 characters of the filename |
 | 5-8 | `R0:xxxx R1:xxxx`, `R2:xxxx R3:xxxx`, `R4:xxxx R5:xxxx`, and `R6:xxxx R7:xxxx` |
 | 9 | `CC:xx`, the guest condition flags |
 
@@ -400,10 +400,10 @@ avm_add_project(my_game
 ```
 
 Source lines require `-g`. Function names do not, so a build without `-g` still
-names its functions on the crash screen. Function names come from final linked
-`STT_FUNC` symbols. C++ names are demangled without their parameter lists and
-cut to 39 bytes, which is the reporter's buffer size. Source filenames are
-reduced to their basenames and cut to 48 bytes with their extensions kept.
+names its functions on the crash screen. Function names come from final linked `STT_FUNC` symbols. C++ names are
+demangled in full, with their namespaces, template arguments, and parameter
+lists, and they are stored without truncation. Source filenames are reduced to
+their basenames and cut to 48 bytes with their extensions kept.
 Source lines come from the final DWARF line table, so they follow linker
 relaxation.
 
@@ -417,24 +417,33 @@ packs either way.
 directly from flash:
 
 ```c
-typedef struct {
-    char function[40];
-    char file[28];
+typedef struct __attribute__((packed)) {
+    char const AVM_PROGMEM *function;
+    char const AVM_PROGMEM *file;
     uint32_t line;
-    uint8_t has_function;
-    uint8_t has_line;
 } avm_trap_location_t;
 
 void __avm_trap_lookup(uint32_t pc, avm_trap_location_t *out);
 ```
 
-The lookup always initializes `out`. Missing or malformed metadata yields `"?"`
-strings, zero line, and clear flags. It allocates nothing, reads only bounded
-flash ranges, and does not copy the tables into RAM. A function lookup is a
-binary search over the function records. A source lookup restores the last
-checkpoint at or before the PC and decodes at most 64 transitions, so no step
-scans the whole stream. The reporter stores its result at `0x0220`, the
-disposable area in the trap layout above.
+On AVM the result is ten bytes: the function pointer at offset 0, the filename
+pointer at offset 3, and the line at offset 6. The pointers are 24-bit program
+addresses. They point at the first character of a NUL-terminated string in the
+image's string pool, so the reporter reads them with `%S` and nothing is copied
+into RAM. The header asserts this layout on AVM.
+
+The lookup always initializes `out`. A null function pointer means no matching
+function, a null file pointer means no matching source location, and line zero
+means no line. Malformed metadata yields the same null results, and it never
+traps. The lookup allocates nothing, reads only bounded flash ranges, and does not
+copy the tables into RAM. A function lookup is a binary search over the function
+records. A source lookup restores the last checkpoint at or before the PC and
+decodes at most 64 transitions, so no step scans the whole stream. The reporter
+stores its result at `0x0220`, the disposable area in the trap layout above.
+
+AVD1 does not yet contain unwind information. A lookup describes one program
+address and returns no caller frames, so the crash screen cannot show a call
+stack.
 
 The trap context holds the raw interpreter `VM_PC`, which need not be the start
 of the faulting instruction. The lookup uses that PC unchanged and does not

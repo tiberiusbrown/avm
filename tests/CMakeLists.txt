@@ -618,6 +618,64 @@ foreach(variant IN ITEMS O0 O2 nometa)
         ${variant_crash_info}
         DEPENDS avm_sysroot)
 endforeach()
+# A C++ fixture whose trapping function has a demangled name longer than 128
+# bytes. It is built at -O0 with -g, so its lookup and fatal trap are verified
+# against the complete name.
+set(AVM_TRAP_LONG_NAME_DIR "${CMAKE_CURRENT_BINARY_DIR}/trap_long_name")
+avm_add_object(
+    OUTPUT "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/trap_long_name.cpp"
+    LANGUAGE CXX
+    INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+    COMPILE_OPTIONS -g -O0
+    DEPENDS avm_sysroot)
+avm_add_image(
+    OBJECTS "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.o"
+    OUTPUT_ELF "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.elf"
+    OUTPUT_IMAGE "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.bin"
+    DISASSEMBLY "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.asm"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+    LIBRARIES
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    LINK_OPTIONS "--section-start=.high_text=0x10100"
+    GC_SECTIONS
+    DEPENDS avm_sysroot)
+# Lookup timing: a fixture whose driver looks up probes the host writes into RAM.
+# main references every probe function, so garbage collection keeps them.
+# It is run on demand, outside avm_tests_run, to report guest cycles.
+set(AVM_TRAP_LOOKUP_BENCH_DIR "${CMAKE_CURRENT_BINARY_DIR}/trap_lookup_bench")
+avm_add_object(
+    OUTPUT "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/trap_lookup_bench.c"
+    LANGUAGE C
+    COMPILE_OPTIONS -g -O2
+    DEPENDS avm_sysroot)
+avm_add_image(
+    OBJECTS "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.o"
+    OUTPUT_ELF "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.elf"
+    OUTPUT_IMAGE "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.bin"
+    DISASSEMBLY "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.asm"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+    LIBRARIES
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    LINK_OPTIONS "--section-start=.high_text=0x10100"
+    GC_SECTIONS
+    DEPENDS avm_sysroot)
+add_executable(avm_trap_lookup_bench interp/trap_lookup_bench.cpp)
+target_compile_features(avm_trap_lookup_bench PRIVATE cxx_std_17)
+target_link_libraries(avm_trap_lookup_bench PRIVATE ardensdebuggerlib)
+add_custom_target(avm_trap_lookup_bench_run
+    COMMAND "$<TARGET_FILE:avm_trap_lookup_bench>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+        "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.bin" "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.asm"
+    DEPENDS avm_trap_lookup_bench avm_interpreter "${AVM_TRAP_LOOKUP_BENCH_DIR}/trap_lookup_bench.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+
 add_executable(avm_trap_source_tests interp/trap_source_tests.cpp)
 target_compile_features(avm_trap_source_tests PRIVATE cxx_std_17)
 target_link_libraries(avm_trap_source_tests PRIVATE ardensdebuggerlib)
@@ -627,10 +685,12 @@ add_custom_target(avm_trap_source_tests_run
         "${AVM_TRAP_SOURCE_TEST_DIR}/O0/trap_source.bin" "${AVM_TRAP_SOURCE_TEST_DIR}/O0/trap_source.asm"
         "${AVM_TRAP_SOURCE_TEST_DIR}/O2/trap_source.bin" "${AVM_TRAP_SOURCE_TEST_DIR}/O2/trap_source.asm"
         "${AVM_TRAP_SOURCE_TEST_DIR}/nometa/trap_source.bin" "${AVM_TRAP_SOURCE_TEST_DIR}/nometa/trap_source.asm"
+        "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.bin" "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.asm"
     DEPENDS avm_trap_source_tests avm_interpreter
         "${AVM_TRAP_SOURCE_TEST_DIR}/O0/trap_source.bin"
         "${AVM_TRAP_SOURCE_TEST_DIR}/O2/trap_source.bin"
         "${AVM_TRAP_SOURCE_TEST_DIR}/nometa/trap_source.bin"
+        "${AVM_TRAP_LONG_NAME_DIR}/trap_long_name.bin"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 

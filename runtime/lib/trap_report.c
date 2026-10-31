@@ -38,10 +38,13 @@ void __avm_trap_report(avm_trap_context_t const *context) {
     avm_draw_text_P(0, 5, trap_reason_label(context->reason));
     avm_draw_textf_P(0, 11, AVM_PSTR("PC:%06lX SP:%04X"),
                      (unsigned long)pc, (unsigned)context->sp);
-    /* __avm_trap_lookup stores "?" in function when no name matches. */
-    avm_draw_textf_P(0, 17, AVM_PSTR("FN:%.30s"), location->function);
-    if (location->has_line) {
-        avm_draw_textf_P(0, 23, AVM_PSTR("%.22s:%lu"),
+    if (location->function) {
+        avm_draw_textf_P(0, 17, AVM_PSTR("FN:%.30S"), location->function);
+    } else {
+        avm_draw_text_P(0, 17, AVM_PSTR("FN:?"));
+    }
+    if (location->file) {
+        avm_draw_textf_P(0, 23, AVM_PSTR("%.22S:%lu"),
                          location->file, (unsigned long)location->line);
     } else {
         avm_draw_text_P(0, 23, AVM_PSTR("?:?"));

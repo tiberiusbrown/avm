@@ -185,7 +185,7 @@ function(avm_add_archive)
 endfunction()
 
 function(avm_add_image)
-    set(options GC_SECTIONS)
+    set(options GC_SECTIONS NO_CRASH_INFO)
     set(one_value_args
         OUTPUT_ELF OUTPUT_IMAGE ENTRY STARTUP DISASSEMBLY)
     set(multi_value_args OBJECTS LIBRARIES DEPENDS LINK_OPTIONS)
@@ -259,10 +259,14 @@ function(avm_add_image)
             "${AVM_DISASSEMBLE_SCRIPT}")
     endif()
 
+    set(packer_options --development)
+    if(ARG_NO_CRASH_INFO)
+        list(APPEND packer_options --no-crash-info)
+    endif()
     list(APPEND commands
         COMMAND
             "$<TARGET_FILE:llvm-avm-image>"
-            --development
+            ${packer_options}
             "${ARG_OUTPUT_ELF}"
             -o "${ARG_OUTPUT_IMAGE}"
     )
@@ -300,11 +304,15 @@ endfunction()
 #       GC_SECTIONS
 #   )
 #
+# Every image carries compact AVD1 crash metadata built from its final ELF:
+# function names from the symbol table and, when the program was compiled with
+# -g, source lines from DWARF. Pass NO_CRASH_INFO to omit it and save flash.
+#
 # Relative source and include paths are resolved from CMAKE_CURRENT_SOURCE_DIR.
 # BUILD_DIR defaults to CMAKE_CURRENT_BINARY_DIR; a relative override is
 # resolved from that directory.
 function(avm_add_project name)
-    set(options ALL GC_SECTIONS)
+    set(options ALL GC_SECTIONS NO_CRASH_INFO)
     set(one_value_args
         BUILD_DIR OUTPUT_NAME ENTRY STARTUP IMAGE DISASSEMBLY)
     set(multi_value_args
@@ -416,6 +424,9 @@ function(avm_add_project name)
     set(image_options)
     if(ARG_GC_SECTIONS)
         list(APPEND image_options GC_SECTIONS)
+    endif()
+    if(ARG_NO_CRASH_INFO)
+        list(APPEND image_options NO_CRASH_INFO)
     endif()
 
     set(image_args

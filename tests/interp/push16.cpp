@@ -101,9 +101,12 @@ void run_case(absim::arduboy_t& emulator, uint32_t table,
     }
     uint32_t const pc = guest_pc(cpu);
     uint64_t const begin = cpu.cycle_count;
+    // A fatal trap reads trapEntry from the image header before it reaches the
+    // terminal loop, which takes about 380 cycles for an image without a handler.
+    uint64_t const limit = overflow ? 1000 : 100;
     do {
         tick(emulator);
-    } while(cpu.pc != trap && !boundary(cpu, table) && cpu.cycle_count < begin + 100);
+    } while(cpu.pc != trap && !boundary(cpu, table) && cpu.cycle_count < begin + limit);
 
     require(word(cpu, 28) == result_sp, "incorrect post-operation VM SP");
     require(cpu.data[absim::reg::addr::GPIOR0] == vm_flags, "VM flags changed");

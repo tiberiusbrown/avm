@@ -83,6 +83,7 @@ set(RUNTIME_SOURCES
     qsort
     bsearch
     runtime
+    trap_lookup
     trap_report
     signal
     stdio

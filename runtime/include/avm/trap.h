@@ -57,6 +57,20 @@ _Static_assert(offsetof(avm_trap_context_t, reserved1) == 24,
                "reserved1 offset");
 #endif
 
+/* Source location for a trapped PC. Strings are NUL-terminated; function and
+ * file hold "?" and line holds 0 when the matching metadata is absent. */
+typedef struct {
+    char function[40];
+    char file[28];
+    uint32_t line;
+    uint8_t has_function;
+    uint8_t has_line;
+} avm_trap_location_t;
+
+/* Looks up pc in the AVD1 block named by header offset 0x0F. Output is always
+ * initialized. Reads flash only; does not allocate or touch RAM outside out. */
+void __avm_trap_lookup(uint32_t pc, avm_trap_location_t *out);
+
 /* Default fatal-trap reporter. Never returns. */
 __attribute__((noreturn)) void __avm_trap_report(
     avm_trap_context_t const *context);

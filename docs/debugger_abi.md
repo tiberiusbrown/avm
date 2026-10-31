@@ -86,3 +86,22 @@ distinct stop reason. Interrupt, fault, and user-interrupt stops have distinct
 reasons as well. Time is counted in AVR cycles at 16 MHz; a cycle is exactly
 62,500 ps. The debugger reports both cycles since AVR reset and cycles since
 the first AVM entry boundary.
+
+## Host debugging and on-device crash metadata
+
+Full host-side debugging uses the linked ELF. Its `.symtab`, DWARF
+`.debug_info`, `.debug_line`, and `.debug_frame` sections, together with the
+CFI and location rules above, describe frames, variables, and source positions.
+The host debugger reads these files directly.
+
+On-device crash metadata is a different, compact representation. It is the
+`AVD1` block described in [arch.md](arch.md) Section 69.2. The image packer
+includes it in every image by default, so it is a normal part of the image
+rather than a debugging option. `--no-crash-info` and the CMake `NO_CRASH_INFO`
+argument omit it to save flash. It lives in program flash and is read by the
+guest fatal-trap reporter through `__avm_trap_lookup`. Function names need no
+`-g`; source lines need DWARF from a `-g` build. For one trapped program address it provides a function name
+and a source basename with its line. It does not replace `.debug_frame`, and it
+does not describe frames, CFI rules, locations, or variables. It provides no
+stack unwinding and no caller frames. The lookup uses the raw interpreter PC of
+the trap context, which need not be the first byte of the faulting instruction.

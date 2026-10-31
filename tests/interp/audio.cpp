@@ -2372,8 +2372,8 @@ void retired_math(char** args) {
         auto regs=h.c().data; auto sp=h.c().sp();
         h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
         h.until([&]{return h.c().pc==trap;},1000);
-        for(unsigned i=0;i<10;++i) h.tick();
-        require(h.c().pc==trap,"retired math encoding escaped trap");
+        h.until([&]{return h.c().pc==h.sym("trap_terminal_loop");},1000);
+        require(h.c().pc==h.sym("trap_terminal_loop"),"retired math encoding escaped trap");
         for(unsigned r=8;r<24;++r)
             require(h.c().data[r]==regs[r],"retired math changed guest register");
         require(h.c().sp()==sp,"retired math changed native stack");

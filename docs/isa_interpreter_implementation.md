@@ -3829,15 +3829,18 @@ are 1 (stack overflow), 2 (invalid primary), and 3 (invalid secondary). Native
 
 1. If `STARTUP_TRAP_ACTIVE` (bit 1 of `data_startup_flags`) is set, it jumps to
    `trap_terminal_loop` without changing the saved state.
-2. If the cached three-byte `data_trap_entry` is zero, it jumps to
-   `trap_terminal_loop`. Guest registers, SP, flags, PC, and guest RAM are left
-   as they were, except for writes already made by the faulting instruction.
+2. It reads the three-byte `trapEntry` from header offset `0x0C` through the
+   FX flash. If the address is zero, it jumps to `trap_terminal_loop`. Guest
+   registers, SP, flags, PC, and guest RAM are left as they were, except for
+   writes already made by the faulting instruction. The flash read adds about
+   380 cycles before the terminal loop is reached.
 3. It sets the trap-active bit, saves the 32-byte context at physical `0x0200`
-   with direct `STS` operations, loads VM_PC from the cached address, and enters
+   with direct `STS` operations, loads VM_PC from the header address, and enters
    `seek_and_dispatch_func`. The guest stack is never used.
 
-The header address is cached during startup from `trapEntry` at offset `0x0C`.
-It is not copied to guest static RAM. The trap-active bit is never cleared.
+The header address is read when the trap is taken. Startup keeps no copy of it,
+so the SRAM layout does not depend on `trapEntry`. It is not copied to guest
+static RAM. The trap-active bit is never cleared.
 
 The fast-path stack checks, cycle budgets, branch behavior, and SPI cadence are
 unchanged. The forwarders are the only edits to the fatal labels. Stack overflow

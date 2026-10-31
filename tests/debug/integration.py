@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -45,11 +46,69 @@ def capture_matches(record):
             "capture metadata hash differs from pixel bytes")
 
 
+def launch_route(executable, image, log, *commands):
+    """Runs LLDB with its launch log and returns the output, records, and log."""
+    output, records = lldb(
+        executable, image,
+        f'log enable -f "{log}" lldb target platform process', *commands)
+    return output, records, log.read_text(encoding="utf-8")
+
+
+def launch_route_checks(executable, c_image, work):
+    """Checks that AVM images use ProcessAVM and native images use the host."""
+    failure_text = re.compile(r"execve failed|Exec format error")
+    with tempfile.TemporaryDirectory(prefix="lldb-launch-", dir=work) as raw:
+        directory = Path(raw)
+
+        # Automatic selection: plain run must pick the AVM process plugin.
+        output, records, trace = launch_route(
+            executable, c_image, directory / "run.log",
+            "breakpoint set --name main", "run", "avm stop")
+        require(not failure_text.search(output),
+                f"AVM run reached the host launcher: {output}")
+        require(records[-1]["reason"] == "breakpoint" and
+                records[-1]["cycles"] > 0,
+                "automatic AVM launch did not stop at main")
+        require("getting a process plugin" in trace and
+                "(plugin = avm, " in trace and
+                "asking the platform to debug the process" not in trace,
+                "automatic AVM launch did not select the avm process plugin")
+
+        # Explicit selection: process launch -P avm must select the same plugin.
+        output, records, trace = launch_route(
+            executable, c_image, directory / "explicit.log",
+            "breakpoint set --name main", "process launch -P avm", "avm stop")
+        require(not failure_text.search(output),
+                f"process launch -P avm reached the host launcher: {output}")
+        require(records[-1]["reason"] == "breakpoint",
+                "explicit AVM launch did not stop at main")
+        require("getting a process plugin" in trace and
+                "(plugin = avm, " in trace and
+                "asking the platform to debug the process" not in trace,
+                "explicit AVM launch did not select the avm process plugin")
+
+        # Native regression: a host executable keeps the platform launch path.
+        host_program = shutil.which("true")
+        if host_program is None:
+            print("Native launch regression skipped: no host 'true' executable")
+            return
+        output, _, trace = launch_route(
+            executable, Path(host_program), directory / "native.log",
+            "run", "process status")
+        require("exited with status = 0" in output,
+                f"native host launch did not run to completion: {output}")
+        require("asking the platform to debug the process" in trace and
+                "(plugin = avm, " not in trace,
+                "native host launch did not stay on the platform path")
+
+
 def main():
     executable, c_image, cpp_image, work = map(Path, sys.argv[1:5])
     require(executable.is_file() and c_image.is_file() and cpp_image.is_file(),
             "missing debugger or debug fixture")
     work.mkdir(parents=True, exist_ok=True)
+
+    launch_route_checks(executable, c_image, work)
 
     output, records = lldb(
         executable, c_image,

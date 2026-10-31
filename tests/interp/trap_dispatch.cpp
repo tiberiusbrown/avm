@@ -85,7 +85,9 @@ constexpr unsigned kStartupFlags = 0x0a04;
 constexpr unsigned kTrapActive = 1u << 1;
 constexpr unsigned kStackBase = 0x0900;
 constexpr unsigned kStackSize = 256;
+constexpr unsigned kStackSnapshot = 0x0100;
 constexpr unsigned kTrapContext = 0x0200;
+constexpr unsigned kTrapContextSize = 32;
 constexpr unsigned kFramebuffer = 0x0500;
 constexpr unsigned kFramebufferSize = 1024;
 constexpr uint16_t kTrapStackTop = 0x0a00;
@@ -184,12 +186,12 @@ struct machine_t {
 
 // Seed the complete pre-trap state at the site boundary, then run the
 // faulting instruction to the native fatal dispatch and capture it there.
-fatal_t fault_at(machine_t& m, uint32_t site, uint16_t sp)
+fatal_t fault_at(machine_t& m, uint32_t site, uint16_t sp, uint16_t salt = 0)
 {
     auto& cpu = m.cpu();
     require(m.boundary() && guest_pc(cpu) == site, "fault site not at boundary");
     for(unsigned i = 0; i < kRegs; ++i)
-        write_word(cpu, 8 + i * 2, uint16_t(0x1234 + i * 0x1123));
+        write_word(cpu, 8 + i * 2, uint16_t(0x1234 + i * 0x1123 + salt));
     write_word(cpu, kVmSp, sp);
     cpu.data[absim::reg::addr::GPIOR0] = kGuestFlags;
     for(unsigned i = 0; i < kStackSize; ++i)
@@ -272,56 +274,110 @@ void run_reporter(machine_t& m)
     require(saw_display, "reporter did not reach the SYS display service");
 }
 
-void check_rectangle(machine_t& m)
+std::vector<uint8_t> framebuffer(machine_t& m)
 {
     auto& cpu = m.cpu();
-    for(unsigned i = 0; i < kFramebufferSize; ++i) {
-        // Page 1, columns 8-23, is the only nonzero region.
-        bool lit = i >= 128 + 8 && i < 128 + 24;
-        require(cpu.data[kFramebuffer + i] == (lit ? 0xff : 0x00),
-                "framebuffer differs from the expected rectangle");
+    return {cpu.data.begin() + kFramebuffer,
+            cpu.data.begin() + kFramebuffer + kFramebufferSize};
+}
+
+// Context and stack snapshot, the state the reporter must leave untouched.
+std::vector<uint8_t> diagnostics(machine_t& m)
+{
+    auto& cpu = m.cpu();
+    return {cpu.data.begin() + kStackSnapshot,
+            cpu.data.begin() + kTrapContext + kTrapContextSize};
+}
+
+// BR5N lines are six pixels tall and their baselines sit at these rows. A
+// lit pixel must fall inside one of the bands ending at a baseline, and every
+// band must contain text.
+void check_report(std::vector<uint8_t> const& frame)
+{
+    constexpr unsigned kBaselines[] = {5, 11, 17, 23, 29, 35, 41, 47, 53};
+    bool band_lit[9] = {};
+    for(unsigned y = 0; y < 64; ++y) {
+        for(unsigned x = 0; x < 128; ++x) {
+            if(!(frame[(y / 8) * 128 + x] & (1u << (y % 8))))
+                continue;
+            bool placed = false;
+            for(unsigned line = 0; line < 9; ++line) {
+                if(y + 5 >= kBaselines[line] && y <= kBaselines[line]) {
+                    band_lit[line] = true;
+                    placed = true;
+                }
+            }
+            require(placed, "text pixel outside the BR5N report rows");
+        }
     }
+    for(unsigned line = 0; line < 9; ++line)
+        require(band_lit[line], "BR5N report row has no text pixels");
+}
+
+void check_distinct(std::vector<uint8_t> const& a, std::vector<uint8_t> const& b,
+                    std::string const& what)
+{
+    require(a != b, "framebuffer did not change with " + what);
 }
 
 void test_header(char const* image_path, char const* listing)
 {
     auto image = read_file(image_path);
     require(image.size() >= 256, "image shorter than its header");
-    require(image[4] == 3, "runtimeVersion is not 3");
+    require(image[4] == 4, "runtimeVersion is not 4");
     uint32_t entry = symbol(listing, "__avm_trap_entry", false);
     require(image_u24(image, 0x0c) == entry, "header trapEntry differs from final symbol");
     require(entry >= 0x100, "trap entry address too low");
-    for(unsigned i = 0x0f; i < 0xfc; ++i)
+    // Images get crash metadata by default, so crashInfo names an AVD1 block.
+    uint32_t crash = image_u24(image, 0x0f);
+    require(crash != 0 && crash % 4 == 0 && crash + 4 <= image.size() &&
+            std::string(image.begin() + crash, image.begin() + crash + 4) == "AVD1",
+            "crashInfo does not name the default AVD1 block");
+    for(unsigned i = 0x12; i < 0xfc; ++i)
         require(image[i] == 0, "reserved header byte is not zero");
     uint32_t stored = uint32_t(image[0xfc]) | uint32_t(image[0xfd]) << 8 |
                       uint32_t(image[0xfe]) << 16 | uint32_t(image[0xff]) << 24;
     require(stored == crc32(image.data(), 0xfc), "header CRC32 is wrong");
     symbol(listing, "__avm_trap_report", false);
-    std::cout << "Header: runtimeVersion 3, trapEntry 0x" << std::hex << entry
-              << std::dec << ", CRC32 and reserved bytes verified.\n";
+    std::cout << "Header: runtimeVersion 4, trapEntry 0x" << std::hex << entry
+              << ", crashInfo 0x" << crash << std::dec
+              << ", CRC32 and reserved bytes verified.\n";
 }
 
-void test_invalid_secondary(char const* hex, char const* lst, char const* image_path,
-                            char const* listing)
+// Runs the reporter from a trap and returns the frame it drew.
+std::vector<uint8_t> report_frame(machine_t& m)
+{
+    auto before = diagnostics(m);
+    run_reporter(m);
+    require(diagnostics(m) == before, "reporter modified the trap context or stack snapshot");
+    auto frame = framebuffer(m);
+    check_report(frame);
+    return frame;
+}
+
+std::vector<uint8_t> test_invalid_secondary(char const* hex, char const* lst,
+                                            char const* image_path, char const* listing,
+                                            uint16_t salt)
 {
     machine_t m(hex, lst, image_path);
     m.entry = symbol(listing, "__avm_trap_entry", false);
     m.report = symbol(listing, "__avm_trap_report", false);
     uint32_t site = symbol(listing, "invalid_secondary_site", false);
     m.at(site);
-    auto fatal = fault_at(m, site, 0x0950);
+    auto fatal = fault_at(m, site, 0x0950, salt);
     require(fatal.reason == 3, "invalid-secondary reason is not 3");
     m.until([&] { return m.boundary() && guest_pc(m.cpu()) == m.entry; }, 500000,
             "trap entry");
     check_context(m, fatal);
     check_trampoline(m, fatal);
-    run_reporter(m);
-    check_rectangle(m);
-    std::cout << "Invalid-secondary trap: context, stack copy, SP reset, reporter, and rectangle verified.\n";
+    auto frame = report_frame(m);
+    std::cout << "Invalid-secondary trap (register salt 0x" << std::hex << salt << std::dec
+              << "): context, stack copy, SP reset, and BR5N report verified.\n";
+    return frame;
 }
 
-void test_stack_overflow(char const* hex, char const* lst, char const* image_path,
-                         char const* listing)
+std::vector<uint8_t> test_stack_overflow(char const* hex, char const* lst,
+                                         char const* image_path, char const* listing)
 {
     machine_t m(hex, lst, image_path);
     m.entry = symbol(listing, "__avm_trap_entry", false);
@@ -334,9 +390,9 @@ void test_stack_overflow(char const* hex, char const* lst, char const* image_pat
             "trap entry");
     check_context(m, fatal);
     check_trampoline(m, fatal);
-    run_reporter(m);
-    check_rectangle(m);
-    std::cout << "Stack-overflow trap: post-fault SP, registers, flags, snapshot, and reporter verified.\n";
+    auto frame = report_frame(m);
+    std::cout << "Stack-overflow trap: post-fault SP, registers, flags, snapshot, and BR5N report verified.\n";
+    return frame;
 }
 
 void test_reentrant(char const* hex, char const* lst, char const* image_path,
@@ -406,8 +462,11 @@ int main(int argc, char** argv)
     try {
         require(argc == 7, "usage: avm_trap_dispatch_tests interp.hex interp.lst trap.bin trap.asm high.bin high.asm");
         test_header(argv[3], argv[4]);
-        test_invalid_secondary(argv[1], argv[2], argv[3], argv[4]);
-        test_stack_overflow(argv[1], argv[2], argv[3], argv[4]);
+        auto invalid = test_invalid_secondary(argv[1], argv[2], argv[3], argv[4], 0);
+        auto salted = test_invalid_secondary(argv[1], argv[2], argv[3], argv[4], 0x0101);
+        check_distinct(invalid, salted, "changed register values");
+        auto overflow = test_stack_overflow(argv[1], argv[2], argv[3], argv[4]);
+        check_distinct(invalid, overflow, "changed trap reason and PC");
         test_reentrant(argv[1], argv[2], argv[3], argv[4]);
         test_high_address(argv[1], argv[2], argv[5], argv[6]);
         std::cout << "Trap dispatch integration tests passed.\n";

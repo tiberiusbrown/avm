@@ -356,10 +356,85 @@ No ordinary guest RAM is reserved for this during normal execution. All static
 RAM is disposable after a fatal trap, so the reporter must not rely on
 application globals.
 
-`__avm_trap_report` currently clears the framebuffer, draws a small white
-diagnostic rectangle, updates the OLED, and halts. It ignores the context.
-Source lookup, stack unwinding, exception handling, and resumable traps are
-future work. A second fatal trap halts natively without rerunning the reporter.
+`__avm_trap_report` clears the framebuffer, draws a crash screen with
+`AVM_FONT_BR5N`, updates the OLED once, and loops forever. The six-pixel rows
+are:
+
+| Row | Content |
+|---|---|
+| 1 | Trap reason: `STACK OVERFLOW`, `INVALID PRIMARY`, `INVALID SECONDARY`, or `UNKNOWN TRAP` |
+| 2 | `PC:xxxxxx SP:xxxx`, the raw 24-bit interpreter PC and the original guest SP |
+| 3 | `FN:<function>`, from crash metadata |
+| 4 | `<filename>:<line>`, from crash metadata |
+| 5-8 | `R0:xxxx R1:xxxx`, `R2:xxxx R3:xxxx`, `R4:xxxx R5:xxxx`, and `R6:xxxx R7:xxxx` |
+| 9 | `CC:xx`, the guest condition flags |
+
+The reporter formats with `avm_draw_textf_P` and `avm_draw_text_P`, so it has no
+numeric formatter of its own. Its format strings are in program memory.
+
+Without crash metadata the function row reads `FN:?` and the source row reads
+`?:?`. The register, PC, SP, and flag rows are shown either way. A second fatal
+trap halts natively without rerunning the reporter.
+
+### Crash metadata
+
+Every image carries a compact `AVD1` block by default. The block is part of the
+normal AVM image format, so a program needs no setting to get function names in
+the crash screen. The block holds function names from the final linked symbols
+and, when the program was compiled with `-g`, source lines from DWARF. It needs
+no guest RAM.
+
+Two size-saving opt-outs are available. `avm_add_project()` and
+`avm_add_image()` take `NO_CRASH_INFO`, which passes `--no-crash-info` to
+`llvm-avm-image`. The packer then writes `crashInfo` zero and no block:
+
+```cmake
+avm_add_project(my_game
+    SOURCES main.cpp
+    COMPILE_OPTIONS -O2
+    GC_SECTIONS
+    NO_CRASH_INFO)
+```
+
+Source lines require `-g`. Function names do not, so a build without `-g` still
+names its functions on the crash screen. Function names come from final linked
+`STT_FUNC` symbols. C++ names are demangled and cut to 80 bytes. Source filenames
+are reduced to their basenames and cut to 48 bytes with their extensions kept.
+Source lines come from the final DWARF line table, so they follow linker
+relaxation.
+
+The packer never fails an image over metadata. If a part cannot be built, such
+as unusable DWARF, a limit that is exceeded, or a block that does not fit the
+payload limit, it warns, leaves that part out, and packs the image as it did
+before the metadata existed.
+
+`__avm_trap_lookup` maps a program address to its function and source location
+directly from flash:
+
+```c
+typedef struct {
+    char function[40];
+    char file[28];
+    uint32_t line;
+    uint8_t has_function;
+    uint8_t has_line;
+} avm_trap_location_t;
+
+void __avm_trap_lookup(uint32_t pc, avm_trap_location_t *out);
+```
+
+The lookup always initializes `out`. Missing or malformed metadata yields `"?"`
+strings, zero line, and clear flags. It allocates nothing, reads only bounded
+flash ranges, and does not copy the tables into RAM. The reporter stores its
+result at `0x0220`, the disposable area in the trap layout above.
+
+The trap context holds the raw interpreter `VM_PC`, which need not be the start
+of the faulting instruction. The lookup uses that PC unchanged and does not
+correct it. For an invalid secondary `SYS` encoding, the PC points at the operand
+byte inside that two-byte instruction, and the row containing it gives the line.
+Source locations are best-effort for any trap where the interpreter PC has
+already advanced.
+Stack unwinding and caller frames are not provided.
 
 Links that use `libavm.a` through `avm_add_image()` retain the handler
 automatically through `--undefined=__avm_trap_entry`. Manual `ld.lld` links must

@@ -55,8 +55,7 @@
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
 ;;     0x0A15–0x0A70  persistent timer/audio state (92 bytes)
-;;     0x0A71–0x0A73  cached fatal-trap entry (little-endian uint24)
-;;     0x0A74–0x0ABB  aliased formatter/text or audio service workspace
+;;     0x0A71–0x0AB8  aliased formatter/text or audio service workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -120,9 +119,7 @@
     .error "audio compact pointers must fit in one SRAM page"
 .endif
 
-; Image-relative fatal-trap entry from header 0x0C, cached at startup.
-#define data_trap_entry              data_audio_end
-#define data_end_private             (data_trap_entry+3)
+#define data_end_private             data_audio_end
 #define data_audio_dirty             data_end_private
 ; Reseed commands are transient, never part of retained desired voice state.
 #define data_audio_reseed            (data_audio_dirty+1)
@@ -711,7 +708,7 @@
 #define AVM_HEADER_MAGIC1       0x56
 #define AVM_HEADER_MAGIC2       0x4D
 #define AVM_HEADER_MAGIC3       0x01
-#define AVM_RUNTIME_VERSION          0x03
+#define AVM_RUNTIME_VERSION          0x04
 
 ; Fatal trap context at physical SRAM 0x0200 (see runtime/include/avm/trap.h).
 #define AVM_TRAP_CONTEXT_ADDR        0x0200
@@ -7084,14 +7081,8 @@ startup_read_header:
     rcall fx_startup_read_byte
     mov  r21, r30
 
-    ; trapEntry at header offset 0x0C, packed little-endian 24-bit image
-    ; address. Zero means no guest trap handler is installed.
-    rcall fx_startup_read_byte
-    sts  data_trap_entry+0, r30
-    rcall fx_startup_read_byte
-    sts  data_trap_entry+1, r30
-    rcall fx_startup_read_byte
-    sts  data_trap_entry+2, r30
+    ; trapEntry at header offset 0x0C is read when a fatal trap is taken, so
+    ; startup keeps no copy of it. End this header stream here.
     fx_disable
 
     ; saveSize <= dataSize because the saved region is part of the data image
@@ -15371,23 +15362,58 @@ trap_dispatch_func:
     sbrc r26, STARTUP_TRAP_ACTIVE
     rjmp trap_terminal_loop
 
-    ; B. No installed handler preserves the original fail-stop behavior.
-    ; Only native scratch registers are used before this point.
-    lds  r30, data_trap_entry+0
-    lds  r26, data_trap_entry+1
+    ; B. Read trapEntry from header offset 0x0C now, not at startup. The
+    ; header stream is the same one the startup code uses, and the image base
+    ; is in data_page_data. Native r22 and the caller's SREG are restored
+    ; before anything else, and interrupts are masked only for this read.
+    push r22
+    in   r30, SREG
+    push r30
+    cli
+    ; The interrupted fetch may still be shifting its last byte. Let that
+    ; transfer finish before the first SPDR write, which is otherwise lost.
+    call fx_startup_wake_delay
+    ; Clear a completed transfer's SPIF, so the first wait below sees only
+    ; this read's bytes. The SPSR read followed by SPDR read clears the flag.
+    in   r31, SPSR
+    in   r30, SPDR
+    ldi  r26, 0x0c
+    lds  r27, data_page_data+0
+    lds  r22, data_page_data+1
+    call  fx_startup_begin_read
+    call  fx_startup_read_byte
+    mov  r24, r30
+    call  fx_startup_read_byte
+    mov  r26, r30
+    call  fx_startup_read_byte
+    mov  r27, r30
+    fx_disable
+    pop  r30
+    out  SREG, r30
+    pop  r22
+
+    ; A zero handler address preserves the original fail-stop behavior. The
+    ; caller's registers, SREG, and interrupt state are already restored.
+    mov  r30, r24
     or   r30, r26
-    lds  r26, data_trap_entry+2
-    or   r30, r26
+    or   r30, r27
     breq trap_terminal_loop
 
-    ; C. Mark the trap active before any further guest-visible transfer.
-    lds  r26, data_startup_flags
-    ori  r26, _BV(STARTUP_TRAP_ACTIVE)
-    sts  data_startup_flags, r26
+    ; C. Mark the trap active before any further guest-visible transfer. Step C
+    ; uses r30 because r24, r26, and r27 still hold the handler address bytes.
+    lds  r30, data_startup_flags
+    ori  r30, _BV(STARTUP_TRAP_ACTIVE)
+    sts  data_startup_flags, r30
+
+    ; The handler address waits on the native stack, which is not guest state,
+    ; because the context save below reuses r26 and Z.
+    push r24
+    push r26
+    push r27
 
     ; D. Save the complete context through Z = 0x0200 (physical SRAM). The
-    ; guest SP and stack are untouched. Z is free here because the header
-    ; cache was already consumed in step B.
+    ; guest SP and stack are untouched. VM_PC still holds the raw trap PC, so
+    ; the handler address is not written to it until the context is saved.
     in   r26, VM_FLAGS
     ldi  r30, lo8(AVM_TRAP_CONTEXT_ADDR)
     ldi  r31, hi8(AVM_TRAP_CONTEXT_ADDR)
@@ -15425,7 +15451,7 @@ trap_dispatch_func:
     st   Z+, ZERO
 
     ; E. Jump, not call, to the handler through the shared seek path.
-    lds  VM_PCL, data_trap_entry+0
-    lds  VM_PCM, data_trap_entry+1
-    lds  VM_PCH, data_trap_entry+2
+    pop  VM_PCH
+    pop  VM_PCM
+    pop  VM_PCL
     jmp  seek_and_dispatch_func

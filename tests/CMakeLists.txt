@@ -582,6 +582,58 @@ add_custom_target(avm_trap_dispatch_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
+# Source-aware fatal traps use one fixture built with -g at -O0 and -O2, both
+# with the default crash metadata, and at -O2 with NO_CRASH_INFO.
+set(AVM_TRAP_SOURCE_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/trap_source")
+foreach(variant IN ITEMS O0 O2 nometa)
+    if(variant STREQUAL "O0")
+        set(variant_options -g -O0)
+        set(variant_crash_info)
+    elseif(variant STREQUAL "O2")
+        set(variant_options -g -O2)
+        set(variant_crash_info)
+    else()
+        set(variant_options -g -O2)
+        set(variant_crash_info NO_CRASH_INFO)
+    endif()
+    set(variant_dir "${AVM_TRAP_SOURCE_TEST_DIR}/${variant}")
+    avm_add_object(
+        OUTPUT "${variant_dir}/trap_source.o"
+        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/trap_source.c"
+        LANGUAGE C
+        COMPILE_OPTIONS ${variant_options}
+        DEPENDS avm_sysroot)
+    avm_add_image(
+        OBJECTS "${variant_dir}/trap_source.o"
+        OUTPUT_ELF "${variant_dir}/trap_source.elf"
+        OUTPUT_IMAGE "${variant_dir}/trap_source.bin"
+        DISASSEMBLY "${variant_dir}/trap_source.asm"
+        ENTRY _start
+        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+        LIBRARIES
+            "${AVM_SYSROOT_DIR}/lib/libavm.a"
+            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        LINK_OPTIONS "--section-start=.high_text=0x10100"
+        GC_SECTIONS
+        ${variant_crash_info}
+        DEPENDS avm_sysroot)
+endforeach()
+add_executable(avm_trap_source_tests interp/trap_source_tests.cpp)
+target_compile_features(avm_trap_source_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_trap_source_tests PRIVATE ardensdebuggerlib)
+add_custom_target(avm_trap_source_tests_run
+    COMMAND "$<TARGET_FILE:avm_trap_source_tests>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+        "${AVM_TRAP_SOURCE_TEST_DIR}/O0/trap_source.bin" "${AVM_TRAP_SOURCE_TEST_DIR}/O0/trap_source.asm"
+        "${AVM_TRAP_SOURCE_TEST_DIR}/O2/trap_source.bin" "${AVM_TRAP_SOURCE_TEST_DIR}/O2/trap_source.asm"
+        "${AVM_TRAP_SOURCE_TEST_DIR}/nometa/trap_source.bin" "${AVM_TRAP_SOURCE_TEST_DIR}/nometa/trap_source.asm"
+    DEPENDS avm_trap_source_tests avm_interpreter
+        "${AVM_TRAP_SOURCE_TEST_DIR}/O0/trap_source.bin"
+        "${AVM_TRAP_SOURCE_TEST_DIR}/O2/trap_source.bin"
+        "${AVM_TRAP_SOURCE_TEST_DIR}/nometa/trap_source.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+
 set(display_system_outputs)
 set(display_system_commands)
 set(display_type 0)
@@ -689,7 +741,9 @@ add_custom_target(avm_debug_verify
     DEPENDS avm_debug_images llvm-dwarfdump
     USES_TERMINAL VERBATIM)
 
-# The debug sections must not change the bytes loaded by the interpreter.
+# The debug sections must not change the bytes loaded by the interpreter. Source
+# lines are part of the default crash metadata, so both sides are packaged with
+# --no-crash-info. The comparison then covers the executable payload alone.
 set(AVM_NODEBUG_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/nodebug")
 avm_add_object(
     OUTPUT "${AVM_NODEBUG_DIR}/fixture.o"
@@ -707,12 +761,46 @@ avm_add_image(
     LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a"
               "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
     GC_SECTIONS
+    NO_CRASH_INFO
     DEPENDS avm_sysroot)
+set(AVM_DEBUG_O0_ELF "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf")
+set(AVM_DEBUG_O0_PAYLOAD "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture-no-crash-info.bin")
+add_custom_command(
+    OUTPUT "${AVM_DEBUG_O0_PAYLOAD}"
+    COMMAND "$<TARGET_FILE:llvm-avm-image>"
+        --no-crash-info --development
+        "${AVM_DEBUG_O0_ELF}" -o "${AVM_DEBUG_O0_PAYLOAD}"
+    DEPENDS llvm-avm-image "${AVM_DEBUG_O0_ELF}"
+    VERBATIM)
 add_custom_target(avm_debug_image_equivalence
     COMMAND "${CMAKE_COMMAND}" -E compare_files
         "${AVM_NODEBUG_DIR}/fixture.bin"
+        "${AVM_DEBUG_O0_PAYLOAD}"
+    DEPENDS "${AVM_NODEBUG_DIR}/fixture.bin" "${AVM_DEBUG_O0_PAYLOAD}"
+        avm_debug_images
+    USES_TERMINAL VERBATIM)
+
+# Crash metadata is part of default packaging. These checks cover the packaging
+# path that LLDB and the profiler use, the --no-crash-info opt-out, and identical
+# execution with and without metadata.
+add_executable(avm_crash_metadata_tests debug/crash_metadata_tests.cpp)
+target_compile_features(avm_crash_metadata_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_crash_metadata_tests PRIVATE avm_debug_emulator)
+add_dependencies(avm_crash_metadata_tests avm_debug_images avm_interpreter_boundary)
+add_custom_target(avm_crash_metadata_tests_run
+    COMMAND "$<TARGET_FILE:avm_crash_metadata_tests>"
+        "$<TARGET_FILE:llvm-avm-image>"
+        "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
+        "${AVM_NODEBUG_DIR}/fixture.elf"
         "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.bin"
-    DEPENDS "${AVM_NODEBUG_DIR}/fixture.bin" avm_debug_images
+        "${AVM_DEBUG_O0_PAYLOAD}"
+        "${AVM_NODEBUG_DIR}/fixture.bin"
+        "${AVM_INTERPRETER_HEX}"
+        "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        "${CMAKE_CURRENT_BINARY_DIR}/crash_metadata"
+    DEPENDS avm_crash_metadata_tests avm_debug_images avm_debug_image_equivalence
+        avm_interpreter_boundary llvm-avm-image
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
 # A second image tests C++ types and a live code address beyond 64 KiB.

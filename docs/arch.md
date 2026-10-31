@@ -6194,16 +6194,24 @@ The header is exactly 256 bytes.
 | `0x08` | 2 | `dataSize` | Total `.saved + .data` initializer bytes |
 | `0x0A` | 2 | `saveSize` | Persistent prefix bytes within `dataSize` |
 | `0x0C` | 3 | `trapEntry` | Final linked image-relative byte address of `__avm_trap_entry`; zero means no guest trap handler |
-| `0x0F` | 237 | `reserved` | Must be zero |
-| `0xFC` | 4 | `headerCrc32` | CRC of bytes `0x00-0xFB`, including `trapEntry` |
+| `0x0F` | 3 | `crashInfo` | Final linked image-relative address of the `AVD1` crash metadata block; zero means none |
+| `0x12` | 234 | `reserved` | Must be zero |
+| `0xFC` | 4 | `headerCrc32` | CRC of bytes `0x00-0xFB`, including `trapEntry` and `crashInfo` |
 
 `trapEntry` is little-endian uint24. The packer stores the final address from
 the linked `ET_EXEC` symbol table, after linker relaxation. A zero value means
 the image has no guest fatal-trap handler, and fatal traps halt inside the
 interpreter.
 
-`runtimeVersion` is 3. Images with `runtimeVersion` 2 and no `trapEntry` field
-are not accepted by version 3 interpreters.
+`crashInfo` is little-endian uint24. The packer stores the address of the
+compact crash metadata block by default (Section 69.2). It stores zero when the
+ELF has no usable function or source-line data, and when the packer runs with
+`--no-crash-info`. The interpreter does not cache it. The guest reads it from
+program memory at offset `0x0F` when a fatal trap is reported.
+
+`runtimeVersion` is 4. Version 4 adds `crashInfo` at `0x0F`. The interpreter
+accepts only version 4 images, so images with older header revisions are
+rejected.
 
 ### 69.1. Fatal trap dispatch
 
@@ -6221,11 +6229,109 @@ encoding) is nonresumable. When `trapEntry` is nonzero, the interpreter:
 
 All guest static RAM is disposable after a fatal trap. A second fatal trap while
 the trap-active flag is set halts immediately without reentering the handler,
-rewriting the context, or recopying the stack. A zero `trapEntry` retains the
-native fail-stop behavior. The context PC is the raw interpreter VM_PC at the
-trap site, not normalized to an opcode start.
+rewriting the context, or recopying the stack. The interpreter reads `trapEntry`
+from the image header when the trap is taken, so startup keeps no copy of it. A
+zero `trapEntry` retains the native fail-stop behavior. The context PC is the raw
+interpreter VM_PC at the trap site, not normalized to an opcode start.
 
 `headerCrc32` uses CRC-32/ISO-HDLC and is stored little-endian.
+
+### 69.2. Crash metadata (AVD1)
+
+`crashInfo` names the `AVD1` block that lets the reporter show a function name
+and source line for a trapped program address. Compact crash metadata is a
+normal part of an AVM image. The packer includes it by default, and a program
+needs no special build setting to get function names. Its size is small and it
+costs no guest RAM. The packer can omit it with `--no-crash-info`, and the CMake
+`NO_CRASH_INFO` argument does the same, which saves flash. Without the block, the
+reporter shows only the numeric trap state.
+
+The packer builds the block from the final linked `ET_EXEC`. Function records
+come from final `STT_FUNC` symbols in allocated executable program space, and
+they need no debug information. Source records come from the final `.debug_line`
+rows, which exist only when the program was compiled with `-g`. The AVM assembler
+emits each line-row address as a relocated `DW_LNE_set_address`, and the linker
+adjusts those addresses for relaxation, so the rows describe final code. The
+packer does not read pre-relaxation object addresses.
+
+Metadata is best effort. If a part cannot be built, because the DWARF line
+tables are unusable, a name or range exceeds a limit, or the block does not fit
+the flat-image payload limit, the packer warns, omits that part, and packs the
+image as it did before the metadata existed. A missing part never stops the
+packaging of an otherwise valid image.
+
+The block is appended after the executable payload. Its start is
+`alignTo(payloadEnd, 4)`, which becomes the value of `crashInfo`. It lies before
+the eight-byte tail and does not overlap any section. Unused bytes are `0xFF`.
+The block is never placed in `.data`, `.saved`, or the runtime archive.
+
+All offsets and addresses are little-endian uint24 unless noted. Offsets inside
+the block are relative to its first byte.
+
+| Offset | Size | Field |
+|---:|---:|---|
+| `0x00` | 4 | Magic `AVD1` |
+| `0x04` | 3 | Total block size |
+| `0x07` | 1 | Flags, zero |
+| `0x08` | 2 | Function record count |
+| `0x0A` | 2 | Source-line record count |
+| `0x0C` | 3 | Function table offset, always 24 |
+| `0x0F` | 3 | Source-line table offset |
+| `0x12` | 3 | String table offset |
+| `0x15` | 3 | Reserved, zero |
+
+The tables follow the header consecutively, with no padding:
+
+```text
+24-byte header
+9 x functionCount bytes     function records
+12 x lineCount bytes        source-line records
+NUL-terminated string table
+```
+
+A function record is `pcStart` (3), `pcEnd` (3, exclusive), and `nameOffset`
+(3). A source-line record is `pcStart` (3), `pcEnd` (3, exclusive),
+`filenameOffset` (3), and `lineNumber` (3). Records are sorted by `pcStart`, and
+ranges within each table do not overlap. A program address `pc` matches a record
+only when `pcStart <= pc < pcEnd`.
+
+Strings are printable ASCII. Identical strings share one table entry. Function
+names are demangled with LLVM's demangler and cut to 80 bytes. Other bytes become
+`?`. Source filenames keep only the basename. They are cut to 48 bytes, keeping
+their extension. Records are emitted in deterministic order.
+
+The packer omits a block, with a warning, when it has more than 65,535 function
+or source-line records, when a size or address does not fit 24 bits, or when the
+block cannot fit the payload limit. It never truncates records silently. Except
+for those limits, the image is produced as before.
+
+Overlapping function ranges are resolved by keeping the earlier start and
+truncating the earlier range at the later start. Aliases sharing a start prefer
+a nonempty range, then an externally visible symbol, then a nonsynthetic name.
+An unsized function ends at the next function start in its section, or at the
+section end. Sized ranges are clamped to their section. Line ranges use the
+addresses of each row through the next row in the same sequence, and an
+`end_sequence` row only closes the sequence. Overlapping line ranges from
+different compilation units are resolved in the same way. Adjacent ranges with
+the same file and line are joined.
+
+The guest lookup binary-searches each table with bounded flash reads and copies
+at most the destination capacity of each string. A malformed table or string
+yields absent metadata, never an invalid read. Function and source-line matches
+are independent. A missing or malformed block yields no match. The reporter
+reads only what it needs and never copies the tables into RAM.
+
+The trap context stores the raw interpreter `VM_PC`, which need not be the start
+of the faulting opcode. The lookup uses it without adjustment. The row containing
+that PC gives the location, and it can name a later source line when the PC has
+already advanced. For the invalid-secondary `SYS` trap, the PC points inside its
+two-byte instruction, so the row for that instruction is reported. Source
+locations are best-effort for every trap whose interpreter PC has already
+advanced.
+
+The block gives names and lines only. It does not describe stack frames, does not
+replace `.debug_frame`, and does not unwind callers. Full host-side debugging
+still uses the ELF and DWARF files.
 
 ## 70. Tail locator
 
@@ -6360,12 +6466,13 @@ runtimeVersion   complete execution-contract revision
 The fixed-register FF ISA uses:
 
 ```text
-runtimeVersion = 3
+runtimeVersion = 4
 EF_AVM_ABI_V2 = 2
 ```
 
 Version 3 adds the header `trapEntry` field and the fatal-trap contract in
-Section 69.1. The ELF ABI flag `EF_AVM_ABI_V2`, the image magic, the header size,
+Section 69.1. Version 4 adds the header `crashInfo` field and the crash metadata
+in Section 69.2, which the packer includes by default. The ELF ABI flag `EF_AVM_ABI_V2`, the image magic, the header size,
 and the tail format are unchanged, because instruction encoding and the ordinary
 calling convention did not change.
 

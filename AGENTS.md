@@ -1,6 +1,6 @@
 ## Git changes
 
-Never create Git commits or push changes in this repository or its submodules unless explicityl instructed. Leave all code and test changes uncommitted. A request to update CI, run CI, or fix tests does not authorize committing or pushing. If remote CI requires a push, report that limitation to the user instead of pushing.
+Never create Git commits, create Git branches, or push changes in this repository or its submodules unless explicitly instructed. Leave all code and test changes uncommitted. A request to update CI, run CI, or fix tests does not authorize committing or pushing. If remote CI requires a push, report that limitation to the user instead of pushing.
 
 ## Documentation
 

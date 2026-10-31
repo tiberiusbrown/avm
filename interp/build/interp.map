@@ -1,37 +1,37 @@
 
 Discarded input sections
 
- .data          0x00000000        0x0 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
- .bss           0x00000000        0x0 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
- .avr.prop      0x00000000       0x24 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
+ .data          0x0000000000000000        0x0 /home/brown/avm/interp/build/interp.o
+ .bss           0x0000000000000000        0x0 /home/brown/avm/interp/build/interp.o
+ .avr.prop      0x0000000000000000       0x24 /home/brown/avm/interp/build/interp.o
 
 Memory Configuration
 
 Name             Origin             Length             Attributes
-text             0x00000000         0x00020000         xr
-data             0x00800060         0x0000ffa0         rw!x
-eeprom           0x00810000         0x00010000         rw!x
-fuse             0x00820000         0x00000400         rw!x
-lock             0x00830000         0x00000400         rw!x
-signature        0x00840000         0x00000400         rw!x
-user_signatures  0x00850000         0x00000400         rw!x
-*default*        0x00000000         0xffffffff
+text             0x0000000000000000 0x0000000000020000 xr
+data             0x0000000000800060 0x000000000000ffa0 rw !x
+eeprom           0x0000000000810000 0x0000000000010000 rw !x
+fuse             0x0000000000820000 0x0000000000000400 rw !x
+lock             0x0000000000830000 0x0000000000000400 rw !x
+signature        0x0000000000840000 0x0000000000000400 rw !x
+user_signatures  0x0000000000850000 0x0000000000000400 rw !x
+*default*        0x0000000000000000 0xffffffffffffffff
 
 Linker script and memory map
 
 Address of section .data set to 0x800100
 Address of section .text set to 0x0
 Address of section .data set to 0x800a0b
-LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
-                0x00000000                        __TEXT_REGION_ORIGIN__ = DEFINED (__TEXT_REGION_ORIGIN__)?__TEXT_REGION_ORIGIN__:0x0
-                0x00020000                        __TEXT_REGION_LENGTH__ = DEFINED (__TEXT_REGION_LENGTH__)?__TEXT_REGION_LENGTH__:0x20000
-                0x00800060                        __DATA_REGION_ORIGIN__ = DEFINED (__DATA_REGION_ORIGIN__)?__DATA_REGION_ORIGIN__:0x800060
-                0x0000ffa0                        __DATA_REGION_LENGTH__ = DEFINED (__DATA_REGION_LENGTH__)?__DATA_REGION_LENGTH__:0xffa0
-                0x00010000                        __EEPROM_REGION_LENGTH__ = DEFINED (__EEPROM_REGION_LENGTH__)?__EEPROM_REGION_LENGTH__:0x10000
-                0x00000400                        __FUSE_REGION_LENGTH__ = DEFINED (__FUSE_REGION_LENGTH__)?__FUSE_REGION_LENGTH__:0x400
-                0x00000400                        __LOCK_REGION_LENGTH__ = DEFINED (__LOCK_REGION_LENGTH__)?__LOCK_REGION_LENGTH__:0x400
-                0x00000400                        __SIGNATURE_REGION_LENGTH__ = DEFINED (__SIGNATURE_REGION_LENGTH__)?__SIGNATURE_REGION_LENGTH__:0x400
-                0x00000400                        __USER_SIGNATURE_REGION_LENGTH__ = DEFINED (__USER_SIGNATURE_REGION_LENGTH__)?__USER_SIGNATURE_REGION_LENGTH__:0x400
+LOAD /home/brown/avm/interp/build/interp.o
+                0x0000000000000000                __TEXT_REGION_ORIGIN__ = DEFINED (__TEXT_REGION_ORIGIN__)?__TEXT_REGION_ORIGIN__:0x0
+                0x0000000000800060                __DATA_REGION_ORIGIN__ = DEFINED (__DATA_REGION_ORIGIN__)?__DATA_REGION_ORIGIN__:0x800060
+                0x0000000000020000                __TEXT_REGION_LENGTH__ = DEFINED (__TEXT_REGION_LENGTH__)?__TEXT_REGION_LENGTH__:0x20000
+                0x000000000000ffa0                __DATA_REGION_LENGTH__ = DEFINED (__DATA_REGION_LENGTH__)?__DATA_REGION_LENGTH__:0xffa0
+                0x0000000000010000                __EEPROM_REGION_LENGTH__ = DEFINED (__EEPROM_REGION_LENGTH__)?__EEPROM_REGION_LENGTH__:0x10000
+                0x0000000000000400                __FUSE_REGION_LENGTH__ = DEFINED (__FUSE_REGION_LENGTH__)?__FUSE_REGION_LENGTH__:0x400
+                0x0000000000000400                __LOCK_REGION_LENGTH__ = DEFINED (__LOCK_REGION_LENGTH__)?__LOCK_REGION_LENGTH__:0x400
+                0x0000000000000400                __SIGNATURE_REGION_LENGTH__ = DEFINED (__SIGNATURE_REGION_LENGTH__)?__SIGNATURE_REGION_LENGTH__:0x400
+                0x0000000000000400                __USER_SIGNATURE_REGION_LENGTH__ = DEFINED (__USER_SIGNATURE_REGION_LENGTH__)?__USER_SIGNATURE_REGION_LENGTH__:0x400
 
 .hash
  *(.hash)
@@ -123,30 +123,32 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000     0x6ac0
+.text           0x0000000000000000     0x6ac0
  *(.vectors)
  *(.vectors)
  *(.progmem.gcc*)
-                0x00000000                        . = ALIGN (0x2)
-                0x00000000                        __trampolines_start = .
+                0x0000000000000000                . = ALIGN (0x2)
+                0x0000000000000000                __trampolines_start = .
  *(.trampolines)
- .trampolines   0x00000000        0x0 linker stubs
+ .trampolines   0x0000000000000000        0x0 linker stubs
  *(.trampolines*)
-                0x00000000                        __trampolines_end = .
+                0x0000000000000000                __trampolines_end = .
  *libprintf_flt.a:*(.progmem.data)
  *libc.a:*(.progmem.data)
- *(.progmem.*)
-                0x00000000                        . = ALIGN (0x2)
+ *(.progmem*)
+                0x0000000000000000                . = ALIGN (0x2)
+ *(.jumptables)
+ *(.jumptables*)
  *(.lowtext)
  *(.lowtext*)
-                0x00000000                        __ctors_start = .
+                0x0000000000000000                __ctors_start = .
  *(.ctors)
-                0x00000000                        __ctors_end = .
-                0x00000000                        __dtors_start = .
+                0x0000000000000000                __ctors_end = .
+                0x0000000000000000                __dtors_start = .
  *(.dtors)
-                0x00000000                        __dtors_end = .
- SORT_BY_NAME(*)(.ctors)
- SORT_BY_NAME(*)(.dtors)
+                0x0000000000000000                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
  *(.init0)
  *(.init0)
  *(.init1)
@@ -168,14 +170,14 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  *(.init9)
  *(.init9)
  *(.text)
- .text          0x00000000     0x6ac0 C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
-                0x00000000                __vectors
-                0x00000200                abvm_interp
-                0x00000200                primary_table
-                0x00004150                draw_bitmap_seek_func
-                0x00006ac0                        . = ALIGN (0x2)
+ .text          0x0000000000000000     0x6ac0 /home/brown/avm/interp/build/interp.o
+                0x0000000000000000                __vectors
+                0x0000000000000200                primary_table
+                0x0000000000000200                abvm_interp
+                0x0000000000004150                draw_bitmap_seek_func
+                0x0000000000006ac0                . = ALIGN (0x2)
  *(.text.*)
-                0x00006ac0                        . = ALIGN (0x2)
+                0x0000000000006ac0                . = ALIGN (0x2)
  *(.fini9)
  *(.fini9)
  *(.fini8)
@@ -196,48 +198,40 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
  *(.fini1)
  *(.fini0)
  *(.fini0)
- *(.hightext)
- *(.hightext*)
- *(.progmemx.*)
-                0x00006ac0                        . = ALIGN (0x2)
- *(.jumptables)
- *(.jumptables*)
-                0x00006ac0                        _etext = .
+                0x0000000000006ac0                _etext = .
 
-.data           0x00800a0b        0x1 load address 0x00006ac0
-                [!provide]                        PROVIDE (__data_start = .)
+.data           0x0000000000800a0b        0x1 load address 0x0000000000006ac0
+                [!provide]                        PROVIDE (__data_start, .)
  *(.data)
  *(.data*)
  *(.gnu.linkonce.d*)
  *(.rodata)
  *(.rodata*)
  *(.gnu.linkonce.r*)
-                0x00800a0c                        . = ALIGN (0x2)
- *fill*         0x00800a0b        0x1 
-                0x00800a0c                        _edata = .
-                [!provide]                        PROVIDE (__data_end = .)
+                0x0000000000800a0c                . = ALIGN (0x2)
+ *fill*         0x0000000000800a0b        0x1 
+                0x0000000000800a0c                _edata = .
+                [!provide]                        PROVIDE (__data_end, .)
 
-.bss            0x00800a0c        0x0
-                [!provide]                        PROVIDE (__bss_start = .)
+.bss            0x0000000000800a0c        0x0
+                [!provide]                        PROVIDE (__bss_start, .)
  *(.bss)
  *(.bss*)
  *(COMMON)
-                [!provide]                        PROVIDE (__bss_end = .)
-                0x00006ac0                        __data_load_start = LOADADDR (.data)
-                0x00006ac1                        __data_load_end = (__data_load_start + SIZEOF (.data))
+                [!provide]                        PROVIDE (__bss_end, .)
+                0x0000000000006ac0                __data_load_start = LOADADDR (.data)
+                0x0000000000006ac1                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x00800a0c        0x0
-                [!provide]                        PROVIDE (__noinit_start = .)
- *(.noinit .noinit.* .gnu.linkonce.n.*)
-                [!provide]                        PROVIDE (__noinit_end = .)
-                0x00800a0c                        _end = .
-                [!provide]                        PROVIDE (__heap_start = .)
-                [!provide]                        PROVIDE (__flmap_init_label = DEFINED (__flmap_noinit_start)?__flmap_noinit_start:0x0)
-                [!provide]                        PROVIDE (__flmap = DEFINED (__flmap)?__flmap:0x0)
+.noinit         0x0000000000800a0c        0x0
+                [!provide]                        PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                [!provide]                        PROVIDE (__noinit_end, .)
+                0x0000000000800a0c                _end = .
+                [!provide]                        PROVIDE (__heap_start, .)
 
-.eeprom         0x00810000        0x0
+.eeprom         0x0000000000810000        0x0
  *(.eeprom*)
-                0x00810000                        __eeprom_end = .
+                0x0000000000810000                __eeprom_end = .
 
 .fuse
  *(.fuse)
@@ -250,6 +244,9 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
 
 .signature
  *(.signature*)
+
+.user_signatures
+ *(.user_signatures*)
 
 .stab
  *(.stab)
@@ -271,9 +268,6 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
 
 .comment
  *(.comment)
-
-.gnu.build.attributes
- *(.gnu.build.attributes .gnu.build.attributes.*)
 
 .note.gnu.build-id
  *(.note.gnu.build-id)
@@ -335,28 +329,7 @@ LOAD C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.o
 .debug_ranges
  *(.debug_ranges)
 
-.debug_addr
- *(.debug_addr)
-
-.debug_line_str
- *(.debug_line_str)
-
-.debug_loclists
- *(.debug_loclists)
-
 .debug_macro
  *(.debug_macro)
-
-.debug_names
- *(.debug_names)
-
-.debug_rnglists
- *(.debug_rnglists)
-
-.debug_str_offsets
- *(.debug_str_offsets)
-
-.debug_sup
- *(.debug_sup)
-OUTPUT(C:/Users/Brown/Documents/GitHub/avm/interp/build/interp.elf elf32-avr)
+OUTPUT(/home/brown/avm/interp/build/interp.elf elf32-avr)
 LOAD linker stubs

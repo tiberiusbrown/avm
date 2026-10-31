@@ -246,3 +246,212 @@ int64_t __avm_ashrdi3(int64_t value, uint16_t count)
     }
     return bits.value;
 }
+
+/* --------------------------------------------------------------------
+ * Unsigned 64-bit integer → binary32 conversion helpers.
+ *
+ * Both signed and unsigned helpers share avm_u64_to_float_bits()
+ * which returns the IEEE-754 binary32 bit pattern of the correctly
+ * rounded, non-negative result.
+ * -------------------------------------------------------------------- */
+
+typedef union {
+    uint32_t bits;
+    float value;
+} avm_f32_bits;
+
+/* Return the binary32 bit pattern of the correctly rounded (ties-to-even)
+ * non-negative value represented by |input|.  input must be > 0. */
+static uint32_t avm_u64_to_float_bits(avm_u64 input)
+{
+    uint32_t high = input.words.high;
+    uint32_t low = input.words.low;
+
+    /* Normalize so that the MSB of the original 64-bit value occupies
+     * bit 63.  high != 0, so clzl will always find a set bit. */
+    uint32_t n = (uint32_t)__builtin_clzl((unsigned long)high);
+
+    uint32_t normalized_high;
+    uint32_t normalized_low;
+
+    if (n == 0) {
+        normalized_high = high;
+        normalized_low = low;
+    } else {
+        normalized_high = (high << n) | (low >> (32 - n));
+        normalized_low = low << n;
+    }
+
+    /* Biased exponent: MSB is at position (63 - n), so the exponent
+     * is (63 - n) and the bias is 127. */
+    uint32_t biased_exponent = 190u - n;
+
+    /* Initial result: biased exponent + top 23 bits of the significand.
+     * The implicit leading 1 is not stored. */
+    uint32_t result = (biased_exponent << 23) |
+                      ((normalized_high >> 8) & 0x7fffffu);
+
+    /* Round to nearest, ties-to-even.
+     * Guard bit:   bit 7 of normalized_high
+     * Round bits:  bits 0-6 of normalized_high  |  all of normalized_low
+     * Tie (LSB):   bit 8 of normalized_high     (retained LSB) */
+    if ((normalized_high & 0x80u) != 0 &&
+        (((normalized_high & 0x7fu) != 0) ||
+         normalized_low != 0 ||
+         (normalized_high & 0x100u) != 0)) {
+        ++result;
+    }
+
+    return result;
+}
+
+__attribute__((noinline))
+float __floatundisf(uint64_t value)
+{
+    /* Fast path for zero and values that fit in 32 bits. */
+    if (value == 0)
+        return 0.0f;
+
+    avm_u64 input = {.value = value};
+    if (input.words.high == 0) {
+        /* 32-bit fast path — reuse the native conversion. */
+        avm_f32_bits output;
+        output.value = (float)input.words.low;
+        return output.value;
+    }
+
+    /* Full 64-bit path. */
+    avm_f32_bits output;
+    output.bits = avm_u64_to_float_bits(input);
+    return output.value;
+}
+
+__attribute__((noinline))
+float __floatdisf(int64_t value)
+{
+    avm_i64 bits = {.value = value};
+
+    /* Check sign: bit 31 of the high word. */
+    int is_negative = (int32_t)bits.bits.words.high < 0;
+
+    avm_u64 magnitude = is_negative ? avm_negate64(bits.bits) : bits.bits;
+
+    /* Zero magnitude → return signed zero. */
+    if (magnitude.value == 0)
+        return (float)0.0f;
+
+    uint32_t result_bits;
+
+    /* 32-bit fast path — reuse the native conversion. */
+    if (magnitude.words.high == 0) {
+        avm_f32_bits output;
+        output.value = (float)magnitude.words.low;
+        result_bits = output.bits;
+    } else {
+        result_bits = avm_u64_to_float_bits(magnitude);
+    }
+
+    if (is_negative)
+        result_bits |= 0x80000000u;
+
+    avm_f32_bits output;
+    output.bits = result_bits;
+    return output.value;
+}
+
+/* --------------------------------------------------------------------
+ * Binary32 → signed/unsigned 64-bit integer conversion helpers.
+ *
+ * All conversions truncate toward zero.  NaN, infinity, and
+ * unrepresentable results return zero (deterministic fallback).
+ * -------------------------------------------------------------------- */
+
+static avm_u64 avm_float_significand_to_u64(uint32_t significand,
+                                             int32_t exponent)
+{
+    avm_u64 result = {.value = 0};
+    int32_t shift = exponent - 23;
+
+    if (shift < 0) {
+        /* shift is in [-23, -1] after caller validation. */
+        result.words.low = significand >> (uint32_t)(-shift);
+        result.words.high = 0;
+    } else if (shift == 0) {
+        result.words.low = significand;
+        result.words.high = 0;
+    } else if (shift < 32) {
+        /* shift is in [1, 31]. */
+        result.words.low = significand << shift;
+        result.words.high = significand >> (32 - shift);
+    } else {
+        /* shift is in [32, 40] because max exponent = 63. */
+        result.words.low = 0;
+        result.words.high = significand << (shift - 32);
+    }
+
+    return result;
+}
+
+__attribute__((noinline))
+uint64_t __fixunssfdi(float value)
+{
+    avm_f32_bits representation = {.value = value};
+    uint32_t bits = representation.bits;
+
+    uint32_t sign = bits >> 31;
+    uint32_t raw_exponent = (bits >> 23) & 0xffu;
+    uint32_t fraction = bits & 0x7fffffu;
+    int32_t exponent = (int32_t)raw_exponent - 127;
+
+    /* Classification — order matters. */
+    if (raw_exponent == 255)
+        return 0;               /* NaN / Inf */
+    if (exponent < 0)
+        return 0;               /* |value| < 1 → truncates to 0 */
+    if (exponent > 63)
+        return 0;               /* |value| >= 2^64 */
+    if (sign != 0)
+        return 0;               /* negative → 0 for unsigned */
+
+    /* Normal value: reconstruct the truncated unsigned magnitude. */
+    uint32_t significand = 0x800000u | fraction;
+    avm_u64 result = avm_float_significand_to_u64(significand, exponent);
+    return result.value;
+}
+
+__attribute__((noinline))
+int64_t __fixsfdi(float value)
+{
+    avm_f32_bits representation = {.value = value};
+    uint32_t bits = representation.bits;
+
+    uint32_t sign = bits >> 31;
+    uint32_t raw_exponent = (bits >> 23) & 0xffu;
+    uint32_t fraction = bits & 0x7fffffu;
+    int32_t exponent = (int32_t)raw_exponent - 127;
+
+    /* Classification — order matters. */
+    if (raw_exponent == 255)
+        return 0;               /* NaN / Inf */
+    if (exponent < 0)
+        return 0;               /* |value| < 1 → truncates to 0 */
+    if (exponent > 63)
+        return 0;               /* |value| > 2^63 */
+    if (exponent == 63) {
+        /* Only -2^63 (sign==1, fraction==0) is representable. */
+        if (sign == 0 || fraction != 0)
+            return 0;
+        /* -2^63 → INT64_MIN = 0x8000000000000000. */
+        return INT64_MIN;
+    }
+
+    /* Reconstruct magnitude. */
+    uint32_t significand = 0x800000u | fraction;
+    avm_u64 magnitude = avm_float_significand_to_u64(significand, exponent);
+
+    if (sign != 0)
+        magnitude = avm_negate64(magnitude);
+
+    avm_i64 result = {.bits = magnitude};
+    return result.value;
+}

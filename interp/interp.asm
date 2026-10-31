@@ -55,7 +55,8 @@
 ;;     0x0A0C–0x0A0D  selected sprite width and height
 ;;     0x0A0E–0x0A14  selected text glyph-table base/header/mode
 ;;     0x0A15–0x0A70  persistent timer/audio state (92 bytes)
-;;     0x0A71–0x0AB8  aliased formatter/text or audio service workspace
+;;     0x0A71–0x0A73  cached fatal-trap entry (little-endian uint24)
+;;     0x0A74–0x0ABB  aliased formatter/text or audio service workspace
 ;;     ...–0x0AFF       remaining interpreter-private / native hardware stack
 
 #define data_globals    0x0100
@@ -119,7 +120,9 @@
     .error "audio compact pointers must fit in one SRAM page"
 .endif
 
-#define data_end_private             data_audio_end
+; Image-relative fatal-trap entry from header 0x0C, cached at startup.
+#define data_trap_entry              data_audio_end
+#define data_end_private             (data_trap_entry+3)
 #define data_audio_dirty             data_end_private
 ; Reseed commands are transient, never part of retained desired voice state.
 #define data_audio_reseed            (data_audio_dirty+1)
@@ -223,6 +226,8 @@
 #define FORMAT_FTOA_CARRY            16
 
 #define STARTUP_SAVE_PAGE_VALID  0
+; Set once, before the first transfer to the guest trap entry. Never cleared.
+#define STARTUP_TRAP_ACTIVE      1
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -706,7 +711,13 @@
 #define AVM_HEADER_MAGIC1       0x56
 #define AVM_HEADER_MAGIC2       0x4D
 #define AVM_HEADER_MAGIC3       0x01
-#define AVM_RUNTIME_VERSION          0x02
+#define AVM_RUNTIME_VERSION          0x03
+
+; Fatal trap context at physical SRAM 0x0200 (see runtime/include/avm/trap.h).
+#define AVM_TRAP_CONTEXT_ADDR        0x0200
+#define AVM_TRAP_REASON_STACK_OVERFLOW   1
+#define AVM_TRAP_REASON_INVALID_PRIMARY  2
+#define AVM_TRAP_REASON_INVALID_SECONDARY 3
 #define AVM_HEADER_DATA_SIZE_OFFSET 0x08
 #define AVM_HEADER_SAVE_SIZE_OFFSET 0x0A
 #define AVM_DATA_IMAGE_OFFSET         0x0100
@@ -2598,7 +2609,8 @@ cluster_tail_18_delay_2:
 ; write into the framebuffer; no following guest instruction may execute.
 ; No VM_FLAGS/GPIOR0 write or guest/native stack use is needed here.
 stack_overflow_func:
-    rjmp stack_overflow_func
+    ldi  r25, AVM_TRAP_REASON_STACK_OVERFLOW
+    jmp  trap_dispatch_func
 ; Full-range validator for arbitrary SETSP and either sign of ADJSP. Compare
 ; against exclusive upper bound 0x0A01, then fall through to PUSH16's existing
 ; lower-page check. Six valid-path check cycles plus standard dispatch replace
@@ -3417,11 +3429,13 @@ interp_delay_7:
 
 ; Reserved primary encodings stop here.
 invalid_primary_instruction_func:
-    rjmp invalid_primary_instruction_func
+    ldi  r25, AVM_TRAP_REASON_INVALID_PRIMARY
+    jmp  trap_dispatch_func
 
 ; Reserved secondary encodings use this shared trap.
 invalid_secondary_instruction_func:
-    rjmp invalid_secondary_instruction_func
+    ldi  r25, AVM_TRAP_REASON_INVALID_SECONDARY
+    jmp  trap_dispatch_func
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Fixed-width secondary tables and F0 veneer scaffolding
@@ -7069,6 +7083,15 @@ startup_read_header:
     mov  r20, r30
     rcall fx_startup_read_byte
     mov  r21, r30
+
+    ; trapEntry at header offset 0x0C, packed little-endian 24-bit image
+    ; address. Zero means no guest trap handler is installed.
+    rcall fx_startup_read_byte
+    sts  data_trap_entry+0, r30
+    rcall fx_startup_read_byte
+    sts  data_trap_entry+1, r30
+    rcall fx_startup_read_byte
+    sts  data_trap_entry+2, r30
     fx_disable
 
     ; saveSize <= dataSize because the saved region is part of the data image
@@ -15331,3 +15354,78 @@ audio_init_func:
     sts  data_audio_duty+1, r24
     sts  data_audio_duty+2, r24
     ret
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Fatal trap dispatch (cold path). Entered with r25 = reason. Native r25 is
+; interpreter scratch, not guest state. Guest SP and stack are never touched.
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; Shared native terminal state for every unrecoverable path.
+trap_terminal_loop:
+    rjmp trap_terminal_loop
+
+trap_dispatch_func:
+    ; A. A second fatal trap halts without reentering the handler, touching
+    ; the saved context, or copying the stack again.
+    lds  r26, data_startup_flags
+    sbrc r26, STARTUP_TRAP_ACTIVE
+    rjmp trap_terminal_loop
+
+    ; B. No installed handler preserves the original fail-stop behavior.
+    ; Only native scratch registers are used before this point.
+    lds  r30, data_trap_entry+0
+    lds  r26, data_trap_entry+1
+    or   r30, r26
+    lds  r26, data_trap_entry+2
+    or   r30, r26
+    breq trap_terminal_loop
+
+    ; C. Mark the trap active before any further guest-visible transfer.
+    lds  r26, data_startup_flags
+    ori  r26, _BV(STARTUP_TRAP_ACTIVE)
+    sts  data_startup_flags, r26
+
+    ; D. Save the complete context through Z = 0x0200 (physical SRAM). The
+    ; guest SP and stack are untouched. Z is free here because the header
+    ; cache was already consumed in step B.
+    in   r26, VM_FLAGS
+    ldi  r30, lo8(AVM_TRAP_CONTEXT_ADDR)
+    ldi  r31, hi8(AVM_TRAP_CONTEXT_ADDR)
+    st   Z+, VM_PCL
+    st   Z+, VM_PCM
+    st   Z+, VM_PCH
+    st   Z+, r25
+    st   Z+, VM_SPL
+    st   Z+, VM_SPH
+    st   Z+, r26
+    st   Z+, ZERO
+    st   Z+, r8
+    st   Z+, r9
+    st   Z+, r10
+    st   Z+, r11
+    st   Z+, r12
+    st   Z+, r13
+    st   Z+, r14
+    st   Z+, r15
+    st   Z+, r16
+    st   Z+, r17
+    st   Z+, r18
+    st   Z+, r19
+    st   Z+, r20
+    st   Z+, r21
+    st   Z+, r22
+    st   Z+, r23
+    st   Z+, ZERO
+    st   Z+, ZERO
+    st   Z+, ZERO
+    st   Z+, ZERO
+    st   Z+, ZERO
+    st   Z+, ZERO
+    st   Z+, ZERO
+    st   Z+, ZERO
+
+    ; E. Jump, not call, to the handler through the shared seek path.
+    lds  VM_PCL, data_trap_entry+0
+    lds  VM_PCM, data_trap_entry+1
+    lds  VM_PCH, data_trap_entry+2
+    jmp  seek_and_dispatch_func

@@ -332,6 +332,40 @@ and interpreter exceptions are not automatically converted to C signals.
 The six packed three-byte function pointers occupy 18 bytes of static RAM only
 when signal support is linked; `abort()` alone does not pull in this table.
 
+## Fatal trap reporting
+
+`avm/trap.h` declares the 32-byte `avm_trap_context_t` and the trap reason
+constants. The default handler is `__avm_trap_entry`, an assembly entry in
+`libavm.a`. On a fatal interpreter trap, the interpreter jumps to it directly
+without pushing a return record. The entry copies the complete 256-byte original
+stack from `0x0900-0x09FF` to `0x0100-0x01FF`, sets SP to `0x0A00`, and tail
+jumps to `__avm_trap_report(avm_trap_context_t const *)`.
+
+The fixed trap memory layout is:
+
+| Address | Use |
+|---|---|
+| `0x0100-0x01FF` | Full 256-byte stack snapshot |
+| `0x0200-0x021F` | Trap context, 32 bytes |
+| `0x0220-0x04FF` | Disposable RAM available to the reporter |
+| `0x0500-0x08FF` | Normal OLED framebuffer |
+| `0x0900-0x09FF` | Original stack, reused as the fresh reporter stack |
+| `0x0A00` | Reset guest SP |
+
+No ordinary guest RAM is reserved for this during normal execution. All static
+RAM is disposable after a fatal trap, so the reporter must not rely on
+application globals.
+
+`__avm_trap_report` currently clears the framebuffer, draws a small white
+diagnostic rectangle, updates the OLED, and halts. It ignores the context.
+Source lookup, stack unwinding, exception handling, and resumable traps are
+future work. A second fatal trap halts natively without rerunning the reporter.
+
+Links that use `libavm.a` through `avm_add_image()` retain the handler
+automatically through `--undefined=__avm_trap_entry`. Manual `ld.lld` links must
+pass `--undefined=__avm_trap_entry` to get the default handler. Images without
+it have a zero header `trapEntry` and keep the fail-stop behavior.
+
 ## Narrow stdio streams
 
 `stdio.h` supplies the C99 narrow-stream interface except the six `scanf`

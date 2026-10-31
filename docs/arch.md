@@ -6193,8 +6193,37 @@ The header is exactly 256 bytes.
 | `0x05` | 3 | `entryPoint` | Logical runtime entry address |
 | `0x08` | 2 | `dataSize` | Total `.saved + .data` initializer bytes |
 | `0x0A` | 2 | `saveSize` | Persistent prefix bytes within `dataSize` |
-| `0x0C` | 240 | `reserved` | Must be zero |
-| `0xFC` | 4 | `headerCrc32` | CRC of bytes `0x00-0xFB` |
+| `0x0C` | 3 | `trapEntry` | Final linked image-relative byte address of `__avm_trap_entry`; zero means no guest trap handler |
+| `0x0F` | 237 | `reserved` | Must be zero |
+| `0xFC` | 4 | `headerCrc32` | CRC of bytes `0x00-0xFB`, including `trapEntry` |
+
+`trapEntry` is little-endian uint24. The packer stores the final address from
+the linked `ET_EXEC` symbol table, after linker relaxation. A zero value means
+the image has no guest fatal-trap handler, and fatal traps halt inside the
+interpreter.
+
+`runtimeVersion` is 3. Images with `runtimeVersion` 2 and no `trapEntry` field
+are not accepted by version 3 interpreters.
+
+### 69.1. Fatal trap dispatch
+
+A fatal interpreter trap (stack overflow, invalid primary, or invalid secondary
+encoding) is nonresumable. When `trapEntry` is nonzero, the interpreter:
+
+- transfers control to `trapEntry` with a direct jump, not a call, and pushes no
+  return record;
+- does not use the original guest stack for the transfer;
+- saves the complete original register, flag, SP, and raw PC state in a 32-byte
+  context at `0x0200`, as specified by `avm/trap.h`;
+- preserves the complete 256-byte original stack in `0x0100-0x01FF` after the
+  guest trampoline copies it there;
+- resets SP to `0x0A00` before the C reporter begins.
+
+All guest static RAM is disposable after a fatal trap. A second fatal trap while
+the trap-active flag is set halts immediately without reentering the handler,
+rewriting the context, or recopying the stack. A zero `trapEntry` retains the
+native fail-stop behavior. The context PC is the raw interpreter VM_PC at the
+trap site, not normalized to an opcode start.
 
 `headerCrc32` uses CRC-32/ISO-HDLC and is stored little-endian.
 
@@ -6331,9 +6360,14 @@ runtimeVersion   complete execution-contract revision
 The fixed-register FF ISA uses:
 
 ```text
-runtimeVersion = 2
+runtimeVersion = 3
 EF_AVM_ABI_V2 = 2
 ```
+
+Version 3 adds the header `trapEntry` field and the fatal-trap contract in
+Section 69.1. The ELF ABI flag `EF_AVM_ABI_V2`, the image magic, the header size,
+and the tail format are unchanged, because instruction encoding and the ordinary
+calling convention did not change.
 
 `runtimeVersion` covers:
 

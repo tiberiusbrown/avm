@@ -211,6 +211,15 @@ function(avm_add_image)
     if(ARG_GC_SECTIONS)
         list(APPEND link_options --gc-sections)
     endif()
+    # Pull the default trap handler out of libavm.a and keep it as a GC root.
+    # Images without the runtime archive are linked with no trap handler.
+    foreach(library IN LISTS ARG_LIBRARIES)
+        get_filename_component(library_name "${library}" NAME)
+        if(library_name STREQUAL "libavm.a")
+            list(APPEND link_options --undefined=__avm_trap_entry)
+            break()
+        endif()
+    endforeach()
     list(APPEND link_options ${ARG_LINK_OPTIONS})
 
     set(outputs "${ARG_OUTPUT_ELF}" "${ARG_OUTPUT_IMAGE}")

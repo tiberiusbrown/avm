@@ -80,7 +80,7 @@ struct harness_t {
     harness_t(char** args, bool checked_mode) : checked(checked_mode)
     {
         table = symbol(args[2], "primary_table", true);
-        trap = symbol(args[2], "stack_overflow_func", true);
+        trap = symbol(args[2], "trap_terminal_loop", true);
         seek = symbol(args[2], "seek_and_dispatch_func", true);
         try { (void)symbol(args[2], "seek_and_dispatch_no_audio", true); seek_overhead = 4; }
         catch(std::runtime_error const&) {}

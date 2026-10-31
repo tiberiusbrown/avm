@@ -144,7 +144,7 @@ int main(int argc, char** argv)
     try {
         require(argc == 4, "usage: avm_push16_tests interp.hex interp.lst push16.bin");
         uint32_t const table = symbol(argv[2], "primary_table");
-        uint32_t const trap = symbol(argv[2], "stack_overflow_func");
+        uint32_t const trap = symbol(argv[2], "trap_terminal_loop");
         auto emulator = std::make_unique<absim::arduboy_t>();
         emulator->reset();
         load(*emulator, argv[1], "interpreter.hex");

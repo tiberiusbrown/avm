@@ -83,6 +83,7 @@ set(RUNTIME_SOURCES
     qsort
     bsearch
     runtime
+    trap_report
     signal
     stdio
     stdio_control
@@ -270,6 +271,17 @@ set(RUNTIME_OBJECT
 avm_add_runtime_object(
     OUTPUT "${RUNTIME_OBJECT}"
     SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/setjmp.asm"
+    LANGUAGE ASM
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS}
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
+
+set(RUNTIME_OBJECT
+    "${AVM_RUNTIME_OBJECT_DIR}/trap_entry.o")
+avm_add_runtime_object(
+    OUTPUT "${RUNTIME_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/trap_entry.asm"
     LANGUAGE ASM
     INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
     DEPENDS ${AVM_RUNTIME_HEADERS}

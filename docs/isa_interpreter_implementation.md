@@ -3816,3 +3816,30 @@ accumulators. The only `__fp_round` call occurs after the last coefficient.
 all preserved architectural state and fetch continuation, checks PC carries,
 and exercises Timer1 interruptions. Performance and flash measurements are in
 [fpoly measurements](fpoly-performance.md).
+
+## 39. Fatal trap dispatch
+
+The three fatal paths, `stack_overflow_func`,
+`invalid_primary_instruction_func`, and `invalid_secondary_instruction_func`,
+each load a reason into native `r25` and jump to `trap_dispatch_func`. The reasons
+are 1 (stack overflow), 2 (invalid primary), and 3 (invalid secondary). Native
+`r25` is interpreter scratch and not guest state.
+
+`trap_dispatch_func` checks, in order:
+
+1. If `STARTUP_TRAP_ACTIVE` (bit 1 of `data_startup_flags`) is set, it jumps to
+   `trap_terminal_loop` without changing the saved state.
+2. If the cached three-byte `data_trap_entry` is zero, it jumps to
+   `trap_terminal_loop`. Guest registers, SP, flags, PC, and guest RAM are left
+   as they were, except for writes already made by the faulting instruction.
+3. It sets the trap-active bit, saves the 32-byte context at physical `0x0200`
+   with direct `STS` operations, loads VM_PC from the cached address, and enters
+   `seek_and_dispatch_func`. The guest stack is never used.
+
+The header address is cached during startup from `trapEntry` at offset `0x0C`.
+It is not copied to guest static RAM. The trap-active bit is never cleared.
+
+The fast-path stack checks, cycle budgets, branch behavior, and SPI cadence are
+unchanged. The forwarders are the only edits to the fatal labels. Stack overflow
+may be detected after the offending operation has already written memory, so the
+snapshot keeps the post-fault stack. Overwritten bytes are not recovered.

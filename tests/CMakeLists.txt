@@ -537,6 +537,51 @@ add_executable(avm_display_system_tests interp/display_system.cpp)
 target_compile_features(avm_display_system_tests PRIVATE cxx_std_17)
 target_link_libraries(avm_display_system_tests PRIVATE ardensdebuggerlib)
 
+set(AVM_TRAP_TEST_DIR "${CMAKE_CURRENT_BINARY_DIR}/trap_dispatch")
+avm_add_object(
+    OUTPUT "${AVM_TRAP_TEST_DIR}/trap_dispatch.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/trap_dispatch.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_TRAP_TEST_DIR}/trap_dispatch.o"
+    OUTPUT_ELF "${AVM_TRAP_TEST_DIR}/trap_dispatch.elf"
+    OUTPUT_IMAGE "${AVM_TRAP_TEST_DIR}/trap_dispatch.bin"
+    DISASSEMBLY "${AVM_TRAP_TEST_DIR}/trap_dispatch.asm"
+    ENTRY _start
+    LIBRARIES
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS
+    DEPENDS avm_sysroot)
+avm_add_object(
+    OUTPUT "${AVM_TRAP_TEST_DIR}/trap_high_entry.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/trap_high.c"
+    LANGUAGE C
+    DEPENDS avm_sysroot)
+avm_add_object(
+    OUTPUT "${AVM_TRAP_TEST_DIR}/trap_high.o"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/interp/trap_high.asm"
+    LANGUAGE ASM)
+avm_add_image(
+    OBJECTS "${AVM_TRAP_TEST_DIR}/trap_high.o" "${AVM_TRAP_TEST_DIR}/trap_high_entry.o"
+    OUTPUT_ELF "${AVM_TRAP_TEST_DIR}/trap_high.elf"
+    OUTPUT_IMAGE "${AVM_TRAP_TEST_DIR}/trap_high.bin"
+    DISASSEMBLY "${AVM_TRAP_TEST_DIR}/trap_high.asm"
+    ENTRY _start
+    LINK_OPTIONS "--section-start=.high_trap_text=0x10100")
+add_executable(avm_trap_dispatch_tests interp/trap_dispatch.cpp)
+target_compile_features(avm_trap_dispatch_tests PRIVATE cxx_std_17)
+target_link_libraries(avm_trap_dispatch_tests PRIVATE ardensdebuggerlib)
+add_custom_target(avm_trap_dispatch_tests_run
+    COMMAND "$<TARGET_FILE:avm_trap_dispatch_tests>"
+        "${AVM_INTERPRETER_HEX}" "${PROJECT_SOURCE_DIR}/interp/build/interp.lst"
+        "${AVM_TRAP_TEST_DIR}/trap_dispatch.bin" "${AVM_TRAP_TEST_DIR}/trap_dispatch.asm"
+        "${AVM_TRAP_TEST_DIR}/trap_high.bin" "${AVM_TRAP_TEST_DIR}/trap_high.asm"
+    DEPENDS avm_trap_dispatch_tests avm_interpreter
+        "${AVM_TRAP_TEST_DIR}/trap_dispatch.bin" "${AVM_TRAP_TEST_DIR}/trap_high.bin"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    USES_TERMINAL VERBATIM)
+
 set(display_system_outputs)
 set(display_system_commands)
 set(display_type 0)

@@ -61,8 +61,85 @@ struct crash_t {
     std::vector<record_t> lines;
 };
 
+// Source state at one transition. The stream offset is relative to the first
+// opcode, and the state applies from pc up to the next transition.
+struct source_state_t {
+    uint32_t pc;
+    uint32_t offset;
+    uint32_t line;
+    uint16_t file;
+    bool mapped;
+};
+
+// Decodes one transition of the AVD1 source stream. Returns false for malformed
+// data, so the test fails rather than trusting a bad stream.
+bool decode_transition(std::vector<uint8_t> const& image, size_t stream, size_t bytes,
+                       uint32_t files, source_state_t const& in, source_state_t& out)
+{
+    size_t offset = in.offset;
+    auto uleb = [&](uint32_t& value) {
+        value = 0;
+        for(unsigned count = 0; count < 4; ++count) {
+            if(offset >= bytes)
+                return false;
+            uint8_t byte = image[stream + offset++];
+            value |= uint32_t(byte & 0x7f) << (7 * count);
+            if(!(byte & 0x80))
+                return count == 0 || byte != 0;
+        }
+        return false;
+    };
+    auto zigzag = [](uint32_t value) {
+        return (value & 1) ? -int64_t((value + 1) >> 1) : int64_t(value >> 1);
+    };
+    if(offset >= bytes)
+        return false;
+    uint8_t opcode = image[stream + offset++];
+    out = in;
+    uint32_t delta = 0;
+    int64_t line = in.line;
+    uint32_t operand = 0;
+    if(opcode < 0x80) {
+        if(!in.mapped)
+            return false;
+        delta = (opcode & 0x0f) + 1;
+        line += ((opcode >> 4) & 7) - 4;
+    } else if(opcode == 0x80) {
+        if(!uleb(delta) || !uleb(operand) || operand >= files)
+            return false;
+        out.file = uint16_t(operand);
+        if(!uleb(operand))
+            return false;
+        line = operand;
+        out.mapped = true;
+    } else if(opcode == 0x81) {
+        if(!in.mapped || !uleb(delta) || !uleb(operand))
+            return false;
+        line += zigzag(operand);
+    } else if(opcode == 0x82) {
+        if(!uleb(delta))
+            return false;
+        out.mapped = false;
+        out.file = 0;
+        line = 0;
+    } else {
+        return false;
+    }
+    if(delta == 0 || delta > 0xffffff - in.pc)
+        return false;
+    if(out.mapped && (line < 1 || line > 0xffffff))
+        return false;
+    out.pc = in.pc + delta;
+    out.line = uint32_t(line);
+    out.offset = uint32_t(offset);
+    return true;
+}
+
 // Parses the AVD1 block named by header offset 0x0F and checks the layout the
-// guest reporter depends on. An image without metadata has no records.
+// guest reporter depends on: the section directory, the function index, the
+// filename index, the source transition stream, and the checkpoints. The stream
+// is decoded in full and must agree with every checkpoint. An image without
+// metadata has no records.
 crash_t parse_crash(std::vector<uint8_t> const& image)
 {
     require(image.size() >= 256, "image shorter than its header");
@@ -73,7 +150,7 @@ crash_t parse_crash(std::vector<uint8_t> const& image)
 
     size_t const base = out.address;
     require(base % 4 == 0, "AVD1 block is not 4-byte aligned");
-    require(base + 24 <= image.size(), "AVD1 header lies outside the image");
+    require(base + 47 <= image.size(), "AVD1 header lies outside the image");
     require(has_magic(image, base, "AVD1"), "crashInfo does not name an AVD1 block");
     // With --development the tail is followed by an erased save sector.
     size_t tail = image.size() - 8;
@@ -82,41 +159,98 @@ crash_t parse_crash(std::vector<uint8_t> const& image)
     require(has_magic(image, tail, "AVT\x01"), "missing AVM tail");
 
     uint32_t const size = u24(image, base + 4);
-    uint32_t const functions = u16(image, base + 8);
-    uint32_t const lines = u16(image, base + 10);
-    require(image[base + 7] == 0, "nonzero AVD1 flags");
-    require(u24(image, base + 12) == 24, "function table is not after the header");
-    require(u24(image, base + 15) == 24 + 9 * functions, "line table misplaced");
-    require(u24(image, base + 18) == 24 + 9 * functions + 12 * lines,
-            "string table misplaced");
-    require(size >= 24 + 9 * functions + 12 * lines, "AVD1 size is too small");
+    require(image[base + 7] == 5, "AVD1 section count is not five");
+    require(image[base + 8] == 0 && u24(image, base + 9) == 0,
+            "nonzero AVD1 flags or reserved bytes");
     require(base + size <= tail, "AVD1 block overlaps the tail");
 
+    // Section offsets are relative to the block and must be consecutive.
+    size_t section[5], length[5];
+    uint32_t next = 47;
+    for(unsigned i = 0; i < 5; ++i) {
+        size_t const entry = base + 12 + 7 * i;
+        require(image[entry] == i + 1, "AVD1 section type is out of order");
+        require(u24(image, entry + 1) == next, "AVD1 sections are not consecutive");
+        section[i] = base + next;
+        length[i] = u24(image, entry + 4);
+        next += length[i];
+    }
+    require(next == size, "AVD1 sections do not fill the block");
+
+    // Function index: a count, then nine-byte records with pool-relative names.
+    size_t const pool = section[4];
+    uint32_t const pool_size = uint32_t(length[4]);
     auto text_at = [&](uint32_t offset) {
-        size_t const start = base + offset;
-        require(offset < size, "string offset outside the AVD1 block");
-        auto end = std::find(image.begin() + start, image.begin() + base + size, 0);
-        require(end != image.begin() + base + size, "unterminated AVD1 string");
-        return std::string(image.begin() + start, end);
+        require(offset < pool_size, "string offset outside the string pool");
+        auto end = std::find(image.begin() + pool + offset, image.begin() + pool + pool_size, 0);
+        require(end != image.begin() + pool + pool_size, "unterminated AVD1 string");
+        return std::string(image.begin() + pool + offset, end);
     };
 
-    auto read_records = [&](std::vector<record_t> &out_records, uint32_t count,
-                            size_t table, size_t stride, bool has_line) {
-        uint32_t previous_end = 0;
-        for(uint32_t i = 0; i < count; ++i) {
-            size_t const record = base + table + stride * i;
-            record_t entry{u24(image, record), u24(image, record + 3),
-                           text_at(u24(image, record + 6)), 0};
-            if(has_line)
-                entry.line = u24(image, record + 9);
-            require(entry.start < entry.end, "empty AVD1 range");
-            require(entry.start >= previous_end, "AVD1 ranges overlap or are unsorted");
-            previous_end = entry.end;
-            out_records.push_back(entry);
-        }
-    };
-    read_records(out.functions, functions, 24, 9, false);
-    read_records(out.lines, lines, 24 + 9 * functions, 12, true);
+    uint32_t const functions = u16(image, section[0]);
+    require(length[0] == 2 + 9 * size_t(functions), "function index size is wrong");
+    uint32_t previous_end = 0;
+    for(uint32_t i = 0; i < functions; ++i) {
+        size_t const record = section[0] + 2 + 9 * size_t(i);
+        record_t entry{u24(image, record), u24(image, record + 3),
+                       text_at(u24(image, record + 6)), 0};
+        require(entry.start < entry.end, "empty AVD1 function range");
+        require(entry.start >= previous_end, "AVD1 function ranges overlap or are unsorted");
+        require(entry.text.size() <= 39, "function name exceeds 39 bytes");
+        previous_end = entry.end;
+        out.functions.push_back(entry);
+    }
+
+    // Filename index: a count, then 24-bit pool-relative basenames.
+    uint32_t const files = u16(image, section[1]);
+    require(length[1] == 2 + 3 * size_t(files), "filename index size is wrong");
+    std::vector<std::string> names;
+    for(uint32_t i = 0; i < files; ++i) {
+        names.push_back(text_at(u24(image, section[1] + 2 + 3 * size_t(i))));
+        require(names.back().find('/') == std::string::npos, "filename is not a basename");
+    }
+
+    // Source transition stream: a count, then opcodes. Every transition is
+    // decoded, and each checkpoint is compared with the state it records.
+    size_t const stream = section[3] + 3;
+    size_t const stream_bytes = length[3] - 3;
+    uint32_t const transitions = u24(image, section[3]);
+    uint32_t const checkpoints = u16(image, section[2]);
+    require(checkpoints == transitions / 64 + 1, "checkpoint count is wrong");
+    require(length[2] == 2 + 12 * size_t(checkpoints), "checkpoint section size is wrong");
+
+    std::vector<source_state_t> states{{0, 0, 0, 0, false}};
+    std::vector<size_t> ends;
+    for(uint32_t i = 0; i < transitions; ++i) {
+        source_state_t next{};
+        require(decode_transition(image, stream, stream_bytes, files, states.back(), next),
+                "malformed AVD1 source transition");
+        require(next.pc > states.back().pc, "AVD1 transition PCs do not increase");
+        states.push_back(next);
+        ends.push_back(next.offset);
+    }
+    require(ends.empty() ? stream_bytes == 0 : ends.back() == stream_bytes,
+            "AVD1 source stream has trailing bytes");
+    for(uint32_t i = 0; i < checkpoints; ++i) {
+        size_t const record = section[2] + 2 + 12 * size_t(i);
+        uint32_t const expected_index = i * 64;
+        source_state_t const& state = states[expected_index];
+        require(u24(image, record) == state.pc && u16(image, record + 6) == state.file &&
+                    u24(image, record + 8) == state.line &&
+                    (image[record + 11] != 0) == state.mapped,
+                "AVD1 checkpoint disagrees with the stream");
+        size_t const offset = expected_index == 0 ? 0 : ends[expected_index - 1];
+        require(u24(image, record + 3) == offset, "AVD1 checkpoint offset is wrong");
+    }
+
+    // Each mapped run is one interval, from its transition to the next.
+    for(uint32_t i = 0; i < transitions; ++i) {
+        source_state_t const& state = states[i + 1];
+        if(!state.mapped)
+            continue;
+        uint32_t const end = i + 2 < states.size() ? states[i + 2].pc : 0x1000000;
+        out.lines.push_back({state.pc, end, names.at(state.file), state.line});
+    }
     return out;
 }
 

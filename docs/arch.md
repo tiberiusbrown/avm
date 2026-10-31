@@ -6239,7 +6239,7 @@ interpreter VM_PC at the trap site, not normalized to an opcode start.
 ### 69.2. Crash metadata (AVD1)
 
 `crashInfo` names the `AVD1` block that lets the reporter show a function name
-and source line for a trapped program address. Compact crash metadata is a
+and source location for a trapped program address. Compact crash metadata is a
 normal part of an AVM image. The packer includes it by default, and a program
 needs no special build setting to get function names. Its size is small and it
 costs no guest RAM. The packer can omit it with `--no-crash-info`, and the CMake
@@ -6254,84 +6254,267 @@ emits each line-row address as a relocated `DW_LNE_set_address`, and the linker
 adjusts those addresses for relaxation, so the rows describe final code. The
 packer does not read pre-relaxation object addresses.
 
-Metadata is best effort. If a part cannot be built, because the DWARF line
-tables are unusable, a name or range exceeds a limit, or the block does not fit
-the flat-image payload limit, the packer warns, omits that part, and packs the
-image as it did before the metadata existed. A missing part never stops the
-packaging of an otherwise valid image.
+Metadata is best effort. A part that cannot be built, because the DWARF line
+tables are unusable or a name or range exceeds a limit, is omitted with a
+warning, and the image is packed without it. When the complete block does not fit
+the payload limit, the packer drops the source transitions and keeps the
+function records if they fit alone. A missing part never stops the packaging of
+an otherwise valid image.
 
 The block is appended after the executable payload. Its start is
 `alignTo(payloadEnd, 4)`, which becomes the value of `crashInfo`. It lies before
 the eight-byte tail and does not overlap any section. Unused bytes are `0xFF`.
 The block is never placed in `.data`, `.saved`, or the runtime archive.
 
-All offsets and addresses are little-endian uint24 unless noted. Offsets inside
-the block are relative to its first byte.
+#### Layout
+
+All integers are little-endian. Addresses and offsets are uint24 unless noted.
+Offsets are relative to the first byte of the block.
+
+The block begins with a 12-byte header:
+
+| Offset | Size | Field | Description |
+|---:|---:|---|---|
+| `0x00` | 4 | Magic | `41 56 44 31`, ASCII `AVD1` |
+| `0x04` | 3 | Total size | Header, directory, and all sections |
+| `0x07` | 1 | Section count | Exactly 5 |
+| `0x08` | 1 | Flags | Zero |
+| `0x09` | 3 | Reserved | Zero |
+
+Five seven-byte directory entries follow the header, in ascending type order:
 
 | Offset | Size | Field |
 |---:|---:|---|
-| `0x00` | 4 | Magic `AVD1` |
-| `0x04` | 3 | Total block size |
-| `0x07` | 1 | Flags, zero |
-| `0x08` | 2 | Function record count |
-| `0x0A` | 2 | Source-line record count |
-| `0x0C` | 3 | Function table offset, always 24 |
-| `0x0F` | 3 | Source-line table offset |
-| `0x12` | 3 | String table offset |
-| `0x15` | 3 | Reserved, zero |
+| 0 | 1 | Section type |
+| 1 | 3 | Section offset |
+| 4 | 3 | Section size |
 
-The tables follow the header consecutively, with no padding:
+| Type | Section |
+|---:|---|
+| 1 | Function index |
+| 2 | Filename index |
+| 3 | Source checkpoints |
+| 4 | Source transition stream |
+| 5 | String pool |
+
+The first section begins at offset 47. Each section begins where the previous
+one ends, with no padding, and the five sections fill the block exactly. A
+reader rejects the block unless the type, offset, and size of every entry match
+this rule, the flags and reserved bytes are zero, and the total size is inside
+the image. The directory order leaves room for a later section type to be
+appended without moving existing sections. The present reader requires exactly
+five entries, so such a change is a new revision of this layout, not a silent
+extension.
+
+#### Function index
+
+The function index is a uint16 count followed by that many 9-byte records:
+
+| Offset | Size | Field |
+|---:|---:|---|
+| 0 | 3 | `pcStart` |
+| 3 | 3 | `pcEndExclusive` |
+| 6 | 3 | Name offset in the string pool |
+
+Records are sorted by `pcStart`, and their ranges do not overlap. A record
+matches a program address `pc` only when `pcStart <= pc < pcEndExclusive`.
+
+The packer chooses one symbol for each start address. Aliases at one start prefer a
+sized symbol, then an externally visible one, then a nonsynthetic one, and then
+the name. A sized range is clamped to its section, and an
+unsized function ends at the next function start in its section or at the
+section end. An earlier range that reaches past a later start is truncated there.
+
+A demangled C++ name drops its trailing parameter list and cv or reference
+qualifiers, so `Player::take_damage(int) const` is shown as
+`Player::take_damage`. The qualified name is kept, including operator names. If
+that name is still longer than 39 bytes, each outermost template argument list
+is replaced by `<...>`, unless the name contains an operator token. A name that
+is still too long is cut to 39 bytes. Every byte outside printable ASCII
+becomes `?`.
+
+#### Filename index
+
+The filename index is a uint16 count followed by that many uint24 offsets into
+the string pool. File IDs are zero-based. They are assigned in order of first
+occurrence over the source intervals sorted by address. Each filename is a
+basename of at most 48 bytes, printable ASCII, and keeps its extension when cut.
+
+#### String pool
+
+The string pool is a sequence of NUL-terminated printable strings. Each distinct
+string appears once. Function names are interned first, in function-index order,
+then filenames in file-ID order. Every string is referenced by at least one
+record, and every reference names the start of a string.
+
+#### Source checkpoints
+
+The checkpoint section is a uint16 count followed by 12-byte records:
+
+| Offset | Size | Field |
+|---:|---:|---|
+| 0 | 3 | `pc` |
+| 3 | 3 | Stream offset of the next opcode |
+| 6 | 2 | File ID |
+| 8 | 3 | Line |
+| 11 | 1 | Mapped flag, `0` or `1` |
+
+The first record is always the initial state: `pc` zero, offset zero, file zero,
+line zero, unmapped. A record for each 64th transition follows. It holds the
+state after that transition and the offset of the opcode that comes next. The
+count is `1 + floor(T / 64)`, where `T` is the transition count. The inspection
+tool, `tools/dump-crash.py`, checks each record against a full decode of the
+stream. The guest never scans the stream, so it trusts a record only as far as
+the bounded lookup can check it.
+
+#### Source transition stream
+
+The stream is a uint24 transition count `T`, followed by opcodes. It begins in
+the state `pc = 0`, unmapped, file `0`, line `0`. Each transition advances `pc`,
+and the resulting state applies from that address, inclusive, up to the next
+transition. A transition moves `pc` forward by at least one byte. Its state
+differs from the state before it.
+
+| Opcode | Operands | Effect |
+|---|---|---|
+| `0x00`-`0x7F` | none | Combined: `pc += (op & 15) + 1`, `line += ((op >> 4) & 7) - 4`, file unchanged. The state must be mapped. |
+| `0x80` | `ULEB128 pcDelta`, `ULEB128 file`, `ULEB128 line` | Set mapping: `pc += pcDelta`, file and line replaced, mapped. |
+| `0x81` | `ULEB128 pcDelta`, `ULEB128 zigzag(lineDelta)` | Large same-file: `pc += pcDelta`, `line += lineDelta`, file unchanged. The state must be mapped. |
+| `0x82` | `ULEB128 pcDelta` | Enter unmapped: `pc += pcDelta`, unmapped, file `0`, line `0`. |
+| `0x83`-`0xFF` | | Invalid. |
+
+The packer chooses the first form that applies, in this order. An unmapped
+transition uses `0x82`. A transition from an unmapped state, or one that changes
+file, uses `0x80`. A transition in the same file with `pcDelta` from 1 to 16 and
+a line change from -4 to +3 uses the combined form. Any other same-file
+transition uses `0x81`.
+
+`ULEB128` operands are canonical unsigned LEB128 values. A value uses the
+fewest bytes, so a multi-byte value may not end in a zero byte. An operand has at
+most four bytes, and a value that does not fit its operand is invalid. A
+`ZigZag` line delta maps `0` to `0`, `-1` to `1`, `+1` to `2`, `-2` to `3`, and so
+on. Line arithmetic uses at least 32 bits.
+
+Every transition must satisfy these rules:
+
+- `pcDelta` is at least 1, and `pc` stays at or below `0xFFFFFF`.
+- A mapped line is in `1..0xFFFFFF`.
+- A file ID is less than the filename count.
+- An opcode reads its operands entirely inside the stream.
+
+#### Lookup
+
+The guest opens the block once per lookup. Opening reads and validates the
+header, the directory, the count of each table, the transition count, and the
+checkpoint 0 record. It never scans a table. Each lookup then runs in two
+independent steps. The function
+step binary-searches the function records for the last `pcStart <= pc` and
+accepts it only when `pc < pcEndExclusive`. The source step is bounded as
+follows:
+
+1. Binary-search the checkpoints for the last record whose `pc` is at most the
+   requested PC, and restore that state.
+2. Decode up to 64 transitions. Stop before applying the first transition whose
+   `pc` is greater than the requested PC.
+3. The state reached is the answer. If it is unmapped, the source is absent.
+
+The checkpoint interval bounds step 2, since the transitions between two
+checkpoints number at most 63. A lookup that needs more decodes than that
+indicates malformed metadata, and it returns no source. Malformed metadata
+never traps and never allocates memory. Opening may read a section count at an
+offset that a malformed directory places past the block, but it stays inside the
+24-bit program space, and the final size check rejects the block before any
+lookup uses it.
+
+An unmapped transition is an explicit answer. An address in a gap between
+mapped intervals, after the last one, or before the first one has no source. A
+gap is never filled from a neighbouring mapping.
+
+The reader copies a name into the trap location buffer, 39 bytes for a function
+and 27 bytes for a filename, and always NUL-terminates it. A string cut at that
+capacity is still valid.
+
+#### Canonical source transitions
+
+The packer builds the transitions from the canonical source intervals. Those
+intervals are the same ones described below, and they are not changed by the
+encoding. Each mapped interval starts a transition. An unmapped transition marks
+the end of an interval that is followed by a gap or ends the sequence. Adjacent
+intervals with the same file and line are one interval, so no transition repeats
+its predecessor. Transitions are emitted in strictly increasing PC order. The
+packer never fabricates a mapping across a gap.
+
+The decoded transitions reproduce the intervals exactly. For every program
+address, the lookup returns the source of the interval that contains it, or none
+when no interval does.
+
+#### Limits and fallback
+
+The packer omits a part, with a warning, when the count of function records,
+filenames, checkpoints, or transitions exceeds its field, or when the block does
+not fit the payload limit. If the complete block does not fit, it keeps the
+function records alone when they fit. The packer never truncates a record or a
+string silently. The previous AVD1 layout is not read or written.
+
+#### Worked example
+
+The following intervals are the packer's input for an image linked at `0x100`:
 
 ```text
-24-byte header
-9 x functionCount bytes     function records
-12 x lineCount bytes        source-line records
-NUL-terminated string table
+[0x100, 0x108) a.c:10
+[0x108, 0x10C) a.c:11
+[0x120, 0x128) b.h:45
 ```
 
-A function record is `pcStart` (3), `pcEnd` (3, exclusive), and `nameOffset`
-(3). A source-line record is `pcStart` (3), `pcEnd` (3, exclusive),
-`filenameOffset` (3), and `lineNumber` (3). Records are sorted by `pcStart`, and
-ranges within each table do not overlap. A program address `pc` matches a record
-only when `pcStart <= pc < pcEnd`.
+The packer emits this 96-byte block. The `crashInfo` value is the address of
+its first byte.
 
-Strings are printable ASCII. Identical strings share one table entry. Function
-names are demangled with LLVM's demangler and cut to 80 bytes. Other bytes become
-`?`. Source filenames keep only the basename. They are cut to 48 bytes, keeping
-their extension. Records are emitted in deterministic order.
+```text
+Offset  Bytes                                     Meaning
+0x00    41 56 44 31 60 00 00 05 00 00 00 00       magic, 96 bytes, 5 sections, flags, reserved
+0x0C    01 2F 00 00 02 00 00                      type 1: offset 47, size 2
+0x13    02 31 00 00 08 00 00                      type 2: offset 49, size 8
+0x1A    03 39 00 00 0E 00 00                      type 3: offset 57, size 14
+0x21    04 47 00 00 11 00 00                      type 4: offset 71, size 17
+0x28    05 58 00 00 08 00 00                      type 5: offset 88, size 8
+0x2F    00 00                                     function index: 0 records
+0x31    02 00 00 00 00 04 00 00                  filename index: 2 files, "a.c" at 0, "b.h" at 4
+0x39    01 00                                     checkpoint count 1
+0x3B    00 00 00 00 00 00 00 00 00 00 00 00      checkpoint 0: pc 0, offset 0, file 0, line 0, unmapped
+0x47    05 00 00                                  transition count 5
+0x4A    80 80 02 00 0A                           set mapping: pc 0x100, file 0, line 10
+0x4F    57                                        combined: pc 0x108, line 11
+0x50    82 04                                     unmapped at 0x10C
+0x52    80 14 01 2D                               set mapping: pc 0x120, file 1, line 45
+0x56    82 08                                     unmapped at 0x128
+0x58    61 2E 63 00 62 2E 68 00                   string pool: "a.c", "b.h"
+```
 
-The packer omits a block, with a warning, when it has more than 65,535 function
-or source-line records, when a size or address does not fit 24 bits, or when the
-block cannot fit the payload limit. It never truncates records silently. Except
-for those limits, the image is produced as before.
+Decoding the stream gives these states, each applying up to the next address:
 
-Overlapping function ranges are resolved by keeping the earlier start and
-truncating the earlier range at the later start. Aliases sharing a start prefer
-a nonempty range, then an externally visible symbol, then a nonsynthetic name.
-An unsized function ends at the next function start in its section, or at the
-section end. Sized ranges are clamped to their section. Line ranges use the
-addresses of each row through the next row in the same sequence, and an
-`end_sequence` row only closes the sequence. Overlapping line ranges from
-different compilation units are resolved in the same way. Adjacent ranges with
-the same file and line are joined.
+| Program address | Source |
+|---|---|
+| `0x100`-`0x107` | `a.c:10` |
+| `0x108`-`0x10B` | `a.c:11` |
+| `0x10C`-`0x11F` | none |
+| `0x120`-`0x127` | `b.h:45` |
+| `0x128` and above | none |
 
-The guest lookup binary-searches each table with bounded flash reads and copies
-at most the destination capacity of each string. A malformed table or string
-yields absent metadata, never an invalid read. Function and source-line matches
-are independent. A missing or malformed block yields no match. The reporter
-reads only what it needs and never copies the tables into RAM.
+A lookup at `0x10E` restores checkpoint 0. It applies the transitions at
+`0x100`, `0x108`, and `0x10C`, then stops before the transition at `0x120`. The
+state is unmapped, so the source is absent.
 
-The trap context stores the raw interpreter `VM_PC`, which need not be the start
-of the faulting opcode. The lookup uses it without adjustment. The row containing
-that PC gives the location, and it can name a later source line when the PC has
-already advanced. For the invalid-secondary `SYS` trap, the PC points inside its
-two-byte instruction, so the row for that instruction is reported. Source
-locations are best-effort for every trap whose interpreter PC has already
-advanced.
+#### Default generation and opt-out
 
-The block gives names and lines only. It does not describe stack frames, does not
-replace `.debug_frame`, and does not unwind callers. Full host-side debugging
-still uses the ELF and DWARF files.
+Function names come from `STT_FUNC` symbols, so they need no debug information.
+Source transitions come from `-g` line rows. Both are included by default.
+`--no-crash-info` and the CMake `NO_CRASH_INFO` argument leave `crashInfo` zero
+and omit the block entirely.
+
+The block is part of the image contract, not a debugging feature. It gives names
+and lines only. It does not describe stack frames, does not replace
+`.debug_frame`, and does not unwind callers. Full host-side debugging still uses
+the ELF and DWARF files. The AVD1 layout has no unwind section.
 
 ## 70. Tail locator
 

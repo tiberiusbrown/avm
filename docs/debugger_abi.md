@@ -98,10 +98,21 @@ On-device crash metadata is a different, compact representation. It is the
 `AVD1` block described in [arch.md](arch.md) Section 69.2. The image packer
 includes it in every image by default, so it is a normal part of the image
 rather than a debugging option. `--no-crash-info` and the CMake `NO_CRASH_INFO`
-argument omit it to save flash. It lives in program flash and is read by the
-guest fatal-trap reporter through `__avm_trap_lookup`. Function names need no
-`-g`; source lines need DWARF from a `-g` build. For one trapped program address it provides a function name
-and a source basename with its line. It does not replace `.debug_frame`, and it
-does not describe frames, CFI rules, locations, or variables. It provides no
-stack unwinding and no caller frames. The lookup uses the raw interpreter PC of
-the trap context, which need not be the first byte of the faulting instruction.
+argument omit it to save flash.
+
+The block holds compact function and source information. Function records map
+each program range to a demangled name without its parameter list. Source
+transitions map each program address to a filename and line, or to no line
+where the DWARF rows have no source. The guest fatal-trap reporter reads it
+from program flash through `__avm_trap_lookup`, and a lookup needs no guest
+allocation. Function names need no `-g`. Source lines need DWARF from a `-g`
+build.
+
+The compact encoding does not replace DWARF. LLDB and the host tools continue to
+read the full ELF and its `.debug_info`, `.debug_line`, and `.debug_frame`
+sections, and they need nothing from AVD1. For one trapped program address,
+AVD1 provides a function name and a source basename with its line. It does not
+replace `.debug_frame`, and it does not describe frames, CFI rules, locations,
+or variables. AVD1 does not yet contain unwind metadata, so it provides no stack
+unwinding and no caller frames. The lookup uses the raw interpreter PC of the
+trap context, which need not be the first byte of the faulting instruction.

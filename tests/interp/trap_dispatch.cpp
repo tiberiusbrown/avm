@@ -330,9 +330,10 @@ void test_header(char const* image_path, char const* listing)
     require(entry >= 0x100, "trap entry address too low");
     // Images get crash metadata by default, so crashInfo names an AVD1 block.
     uint32_t crash = image_u24(image, 0x0f);
-    require(crash != 0 && crash % 4 == 0 && crash + 4 <= image.size() &&
+    require(crash != 0 && crash % 4 == 0 && crash + 47 <= image.size() &&
             std::string(image.begin() + crash, image.begin() + crash + 4) == "AVD1",
             "crashInfo does not name the default AVD1 block");
+    require(image[crash + 7] == 5, "AVD1 section count is not five");
     for(unsigned i = 0x12; i < 0xfc; ++i)
         require(image[i] == 0, "reserved header byte is not zero");
     uint32_t stored = uint32_t(image[0xfc]) | uint32_t(image[0xfd]) << 8 |

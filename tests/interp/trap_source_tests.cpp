@@ -141,20 +141,26 @@ void check_header(std::vector<uint8_t> const& image, bool metadata)
         return;
     }
     require(crash != 0 && crash % 4 == 0, "crashInfo is zero or misaligned");
-    require(crash + 24 <= image.size(), "AVD1 header lies outside the image");
+    require(crash + 47 <= image.size(), "AVD1 header lies outside the image");
     require(std::equal(image.begin() + crash, image.begin() + crash + 4,
                        reinterpret_cast<uint8_t const*>("AVD1")),
             "AVD1 magic missing at crashInfo");
     uint32_t size = image_u24(image, crash + 4);
-    uint32_t functions = image[crash + 8] | uint32_t(image[crash + 9]) << 8;
-    uint32_t lines = image[crash + 10] | uint32_t(image[crash + 11]) << 8;
-    require(image_u24(image, crash + 12) == 24, "function table is not after the header");
-    require(image_u24(image, crash + 15) == 24 + 9 * functions, "line table misplaced");
-    require(image_u24(image, crash + 18) == 24 + 9 * functions + 12 * lines,
-            "string table misplaced");
-    require(size >= 24 + 9 * functions + 12 * lines && crash + size <= image.size(),
-            "AVD1 size runs past the image");
-    require(image[crash + size - 1] == 0, "AVD1 string table is not NUL terminated");
+    require(image[crash + 7] == 5, "AVD1 section count is not five");
+    require(image[crash + 8] == 0 && image_u24(image, crash + 9) == 0,
+            "AVD1 flags or reserved bytes are nonzero");
+    // Five section descriptors follow the header. Sections are consecutive in
+    // type order and exactly fill the block, starting after the 47-byte prefix.
+    uint32_t next = 47;
+    for(unsigned i = 0; i < 5; ++i) {
+        uint32_t entry = crash + 12 + 7 * i;
+        require(image[entry] == i + 1, "AVD1 section type is out of order");
+        require(image_u24(image, entry + 1) == next, "AVD1 sections are not consecutive");
+        next += image_u24(image, entry + 4);
+    }
+    require(next == size && crash + size <= image.size(),
+            "AVD1 sections do not fill the block inside the image");
+    require(image[crash + size - 1] == 0, "AVD1 string pool is not NUL terminated");
 }
 
 struct machine_t {

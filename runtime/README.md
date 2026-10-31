@@ -382,7 +382,10 @@ Every image carries a compact `AVD1` block by default. The block is part of the
 normal AVM image format, so a program needs no setting to get function names in
 the crash screen. The block holds function names from the final linked symbols
 and, when the program was compiled with `-g`, source lines from DWARF. It needs
-no guest RAM.
+no guest RAM. Its internal layout is a 12-byte header and a five-section
+directory: a function index, a filename index, source checkpoints, a delta-encoded
+source transition stream, and a string pool. `docs/arch.md` Section 69.2 gives
+the full layout, and `tools/dump-crash.py` inspects it.
 
 Two size-saving opt-outs are available. `avm_add_project()` and
 `avm_add_image()` take `NO_CRASH_INFO`, which passes `--no-crash-info` to
@@ -398,15 +401,17 @@ avm_add_project(my_game
 
 Source lines require `-g`. Function names do not, so a build without `-g` still
 names its functions on the crash screen. Function names come from final linked
-`STT_FUNC` symbols. C++ names are demangled and cut to 80 bytes. Source filenames
-are reduced to their basenames and cut to 48 bytes with their extensions kept.
+`STT_FUNC` symbols. C++ names are demangled without their parameter lists and
+cut to 39 bytes, which is the reporter's buffer size. Source filenames are
+reduced to their basenames and cut to 48 bytes with their extensions kept.
 Source lines come from the final DWARF line table, so they follow linker
 relaxation.
 
 The packer never fails an image over metadata. If a part cannot be built, such
-as unusable DWARF, a limit that is exceeded, or a block that does not fit the
-payload limit, it warns, leaves that part out, and packs the image as it did
-before the metadata existed.
+as unusable DWARF or a limit that is exceeded, it warns and leaves that part out.
+If the complete block does not fit the payload limit, the source lines are
+dropped first and the function names are kept when they fit alone. The image
+packs either way.
 
 `__avm_trap_lookup` maps a program address to its function and source location
 directly from flash:
@@ -425,8 +430,11 @@ void __avm_trap_lookup(uint32_t pc, avm_trap_location_t *out);
 
 The lookup always initializes `out`. Missing or malformed metadata yields `"?"`
 strings, zero line, and clear flags. It allocates nothing, reads only bounded
-flash ranges, and does not copy the tables into RAM. The reporter stores its
-result at `0x0220`, the disposable area in the trap layout above.
+flash ranges, and does not copy the tables into RAM. A function lookup is a
+binary search over the function records. A source lookup restores the last
+checkpoint at or before the PC and decodes at most 64 transitions, so no step
+scans the whole stream. The reporter stores its result at `0x0220`, the
+disposable area in the trap layout above.
 
 The trap context holds the raw interpreter `VM_PC`, which need not be the start
 of the faulting instruction. The lookup uses that PC unchanged and does not

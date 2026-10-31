@@ -211,7 +211,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 "--image-base=0x100"
                 "--section-start=.data=0x100"
                 "--section-start=.text=0x200"
-                "--section-start=.rodata=0x1000"
+                "--section-start=.rodata=0x2000"
                 "--section-start=.high_member_text=0x101F6")
         elseif(AVM_TEST_NAME STREQUAL "setjmp_high_address")
             list(APPEND test_link_options
@@ -824,7 +824,7 @@ avm_add_image(
     LINK_OPTIONS "--image-base=0x100"
                  "--section-start=.data=0x100"
                  "--section-start=.text=0x200"
-                 "--section-start=.rodata=0x1000"
+                 "--section-start=.rodata=0x2000"
                  "--section-start=.high_debug_text=0x10100"
                  "--section-start=.high_debug_rodata=0x11000"
     DEPENDS avm_sysroot)

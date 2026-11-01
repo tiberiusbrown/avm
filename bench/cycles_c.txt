@@ -21,8 +21,8 @@
        25243   complex_catanh_O0.c
        50179   complex_cpow.c
        51381   complex_cpow_O0.c
-         858   complex_creal.c
-        1528   complex_creal_O0.c
+         867   complex_creal.c
+        1537   complex_creal_O0.c
       621908   conditional_fdiv_likely.c
       563635   conditional_fdiv_mixed.c
       510232   conditional_fdiv_skipped.c
@@ -61,17 +61,17 @@
        84966   indirect_call.c
     11045125   loop_control.c
      3412152   loop_shapes.c
-      161766   math_acos.c
-      210708   math_acosh.c
-      158536   math_asin.c
-      163880   math_asin_general.c
-      205148   math_asinh.c
+      162054   math_acos.c
+      210996   math_acosh.c
+      158824   math_asin.c
+      164168   math_asin_general.c
+      205436   math_asinh.c
       145955   math_atan.c
       248107   math_atan2.c
       219322   math_atan2_ratios.c
-      147218   math_atan_general.c
-      213360   math_atanh.c
-      220280   math_cbrt.c
+      147506   math_atan_general.c
+      213648   math_atanh.c
+      220568   math_cbrt.c
        37807   math_ceil.c
       124021   math_classify.c
        52432   math_classify_fpclassify_exceptional.c
@@ -88,71 +88,71 @@
        36880   math_classify_signbit_normal.c
       119972   math_cos.c
       105951   math_cos_small.c
-      181068   math_cosh.c
-      159340   math_erf.c
-      350766   math_erf_tail.c
+      181356   math_cosh.c
+      159628   math_erf.c
+      351054   math_erf_tail.c
       283030   math_erfc.c
       128696   math_erfc_special.c
       419940   math_erfc_tail.c
       209856   math_exp.c
-      153540   math_exp2.c
+      153828   math_exp2.c
       177766   math_exp_primary.c
       182498   math_exp_scaled.c
-      150910   math_expm1.c
-      147956   math_expm1_general.c
-       72587   math_fdim.c
+      151198   math_expm1.c
+      148244   math_expm1_general.c
+       72875   math_fdim.c
        37886   math_floor.c
-      106497   math_fmaxmag.c
-      107585   math_fminmag.c
+      106785   math_fmaxmag.c
+      107873   math_fminmag.c
        81907   math_fmod.c
        69398   math_fmod_subnormal.c
        99204   math_frexp.c
       191663   math_gamma_special.c
       149211   math_hypot.c
-      711823   math_hypot_boundary.c
+      712111   math_hypot_boundary.c
       167223   math_hypot_scaled.c
-       57072   math_ilogb.c
-       98277   math_ldexp.c
-      437682   math_lgamma.c
-      453586   math_lgamma_large.c
-      714306   math_lgamma_negative.c
+       57360   math_ilogb.c
+       98565   math_ldexp.c
+      437970   math_lgamma.c
+      453874   math_lgamma_large.c
+      714594   math_lgamma_negative.c
       117031   math_llrint.c
        87243   math_llround.c
       222853   math_log.c
       222872   math_log10.c
       194567   math_log10_near_one.c
       183907   math_log10_scaled.c
-      159294   math_log1p.c
-      161612   math_log1p_general.c
+      159582   math_log1p.c
+      161900   math_log1p_general.c
       213214   math_log2.c
       184924   math_log2_near_one.c
       174265   math_log2_scaled.c
       194598   math_log_near_one.c
       183890   math_log_scaled.c
-       80436   math_logb.c
-       90060   math_lrint.c
-       62608   math_lround.c
+       80724   math_logb.c
+       90348   math_lrint.c
+       62896   math_lround.c
       106689   math_modf.c
        23380   math_nan.c
-       80244   math_nearbyint.c
-      130717   math_nextafter.c
+       80532   math_nearbyint.c
+      131005   math_nextafter.c
       499484   math_pow.c
       491569   math_pow_bounded.c
       425897   math_pow_crossover.c
-      499679   math_pow_extreme.c
+      499967   math_pow_extreme.c
       469370   math_pow_integer.c
       438061   math_pow_near_one.c
-      172633   math_remainder.c
+      172921   math_remainder.c
       249405   math_remquo.c
-       80244   math_rint.c
+       80532   math_rint.c
        36483   math_round.c
       117061   math_sin.c
       102519   math_sin_small.c
       178851   math_sincos.c
-      192720   math_sinh.c
+      193008   math_sinh.c
        52392   math_sqrt.c
        52292   math_sqrt_mantissas.c
-      418327   math_sqrt_random.c
+      418336   math_sqrt_random.c
        48973   math_sqrt_special.c
       138481   math_tan.c
       115840   math_tan_quadrant_direct.c
@@ -160,7 +160,7 @@
       131075   math_tan_quadrant_odd.c
       120301   math_tan_reduced.c
       122935   math_tan_small.c
-      206528   math_tanh.c
+      206816   math_tanh.c
       319096   math_tgamma.c
       610462   math_tgamma_large.c
       661508   math_tgamma_negative.c
@@ -397,5 +397,5 @@
       511620   wide_add_sub.c
      1104068   wide_compare.c
      2403586   wide_divmod.c
-      479082   wide_mul.c
-      218607   wide_shifts.c
+      480522   wide_mul.c
+      218823   wide_shifts.c

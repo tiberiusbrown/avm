@@ -8,6 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__avm_note_global_ctor	00000000 .text.__avm_note_global_ctor
 00000000 l    d  .text.__avm_run_local_dtors	00000000 .text.__avm_run_local_dtors
 00000000 l    d  .text.__avm_before_global_dtor	00000000 .text.__avm_before_global_dtor
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__avm_register_local_dtor	0000002c __avm_register_local_dtor
 00000000         *UND*	00000000 __avm_termination_next
 00000000         *UND*	00000000 __avm_local_dtor_slots_start

@@ -13,6 +13,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.cx_asinh_small	00000000 .text.cx_asinh_small
 00000000 l    d  .text.catanhf	00000000 .text.catanhf
 00000000 l    d  .text.catanf	00000000 .text.catanf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.cacosf	0000003a cacosf
 00000000         *UND*	00000000 fabsf
 00000000         *UND*	00000000 acoshf

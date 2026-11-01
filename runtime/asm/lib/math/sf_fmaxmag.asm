@@ -4,6 +4,7 @@ math_sf_fmaxmag.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_fmaxmag.c
 00000000 l    d  .text.fmaxmagf	00000000 .text.fmaxmagf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fmaxmagf	000000d6 fmaxmagf
 
 Disassembly of section .text.fmaxmagf:

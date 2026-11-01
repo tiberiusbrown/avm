@@ -8,6 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.ungetc	00000000 .text.ungetc
 00000000 l    d  .text.fgets	00000000 .text.fgets
 00000000 l    d  .text.fread	00000000 .text.fread
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fgetc	00000060 fgetc
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.getc	00000060 getc

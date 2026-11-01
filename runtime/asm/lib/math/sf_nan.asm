@@ -4,6 +4,7 @@ math_sf_nan.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_nan.c
 00000000 l    d  .text.nanf	00000000 .text.nanf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.nanf	00000005 nanf
 
 Disassembly of section .text.nanf:

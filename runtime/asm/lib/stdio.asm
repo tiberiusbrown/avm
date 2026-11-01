@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.snprintf_P	00000000 .text.snprintf_P
 00000000 l    d  .text.sprintf	00000000 .text.sprintf
 00000000 l    d  .text.vsprintf	00000000 .text.vsprintf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.vsnprintf	00000007 vsnprintf
 00000000 g     F .text.vsnprintf_P	00000008 vsnprintf_P
 00000000 g     F .text.snprintf	00000015 snprintf

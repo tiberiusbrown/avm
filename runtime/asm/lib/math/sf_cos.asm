@@ -4,6 +4,7 @@ math_sf_cos.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_cos.c
 00000000 l    d  .text.cosf	00000000 .text.cosf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.cosf	00000074 cosf
 00000000         *UND*	00000000 __avm_errno
 

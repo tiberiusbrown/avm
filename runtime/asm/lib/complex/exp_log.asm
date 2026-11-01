@@ -5,6 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 exp_log.c
 00000000 l    d  .text.cexpf	00000000 .text.cexpf
 00000000 l    d  .text.clogf	00000000 .text.clogf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.cexpf	00000178 cexpf
 00000000         *UND*	00000000 expf
 00000000         *UND*	00000000 copysignf

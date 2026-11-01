@@ -4,6 +4,7 @@ time_ctime.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 time_ctime.c
 00000000 l    d  .text.ctime	00000000 .text.ctime
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.ctime	00000012 ctime
 00000000         *UND*	00000000 localtime
 00000000         *UND*	00000000 asctime

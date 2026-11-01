@@ -21,6 +21,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.strncat_P	00000000 .text.strncat_P
 00000000 l    d  .text.strcpy_P	00000000 .text.strcpy_P
 00000000 l    d  .text.strcat_P	00000000 .text.strcat_P
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.memchr_P	0000003b memchr_P
 00000000 g     F .text.strchr_P	00000024 strchr_P
 00000000 g     F .text.strrchr_P	00000025 strrchr_P

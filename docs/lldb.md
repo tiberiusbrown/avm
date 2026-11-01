@@ -188,8 +188,9 @@ AVM boundary; `fault_cycle` identifies the later AVR cycle of the fault.
 - A timed event is applied on the first native instruction boundary at or
   after its requested cycle. A timed run stops at the next guest instruction
   boundary; inspect the returned actual cycle to measure any overshoot.
-- CFI is emitted for compiler-generated AVM functions. Handwritten assembly
-  without CFI can only use LLDB's conservative function-entry fallback.
+- CFI is emitted for compiler-generated AVM functions by default, with or
+  without `-g`. Handwritten assembly without `.cfi_startproc` has no CFI and can
+  only use LLDB's conservative function-entry fallback.
 - Unwinding works at a raw function-entry or prologue address, but parameters
   already assigned a stack DWARF location can display stale values before the
   prologue stores them. A source or function breakpoint after the prologue

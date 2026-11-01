@@ -4,6 +4,7 @@ math_sf_copysign.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_copysign.c
 00000000 l    d  .text.copysignf	00000000 .text.copysignf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.copysignf	00000015 copysignf
 
 Disassembly of section .text.copysignf:

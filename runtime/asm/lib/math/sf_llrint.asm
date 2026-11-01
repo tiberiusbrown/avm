@@ -4,6 +4,7 @@ math_sf_llrint.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_llrint.c
 00000000 l    d  .text.llrintf	00000000 .text.llrintf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.llrintf	00000131 llrintf
 00000000         *UND*	00000000 __avm_ashlsi3
 00000000         *UND*	00000000 __avm_lshrsi3

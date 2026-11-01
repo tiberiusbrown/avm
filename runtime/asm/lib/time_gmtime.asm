@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.gmtime	00000000 .text.gmtime
 00000000 l     O .data.gmtime.result	00000012 gmtime.result
 00000000 l    d  .data.gmtime.result	00000000 .data.gmtime.result
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.gmtime	00000027 gmtime
 00000000         *UND*	00000000 __avm_time_split
 

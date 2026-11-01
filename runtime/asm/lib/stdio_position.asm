@@ -8,6 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fgetpos	00000000 .text.fgetpos
 00000000 l    d  .text.fsetpos	00000000 .text.fsetpos
 00000000 l    d  .text.rewind	00000000 .text.rewind
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fseek	00000028 fseek
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.ftell	0000002b ftell

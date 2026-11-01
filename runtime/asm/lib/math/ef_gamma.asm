@@ -13,6 +13,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_gamma_reflection_small	00000000 .text.avm_gamma_reflection_small
 00000000 l    d  .text.avm_lgamma_reflection_large	00000000 .text.avm_lgamma_reflection_large
 00000000 l    d  .text.tgammaf	00000000 .text.tgammaf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.lgammaf	000001e4 lgammaf
 00000000         *UND*	00000000 __avm_errno
 00000000         *UND*	00000000 logf

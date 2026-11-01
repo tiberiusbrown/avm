@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.log2f	00000000 .text.log2f
 00000000 l    d  .text.fminf	00000000 .text.fminf
 00000000 l    d  .text.fmaxf	00000000 .text.fmaxf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.log2f	0000010b log2f
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.fminf	0000007e fminf

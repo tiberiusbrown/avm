@@ -4,6 +4,7 @@ math_ef_cbrt.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_cbrt.c
 00000000 l    d  .text.cbrtf	00000000 .text.cbrtf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.cbrtf	000000f4 cbrtf
 
 Disassembly of section .text.cbrtf:

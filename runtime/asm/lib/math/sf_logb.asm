@@ -4,6 +4,7 @@ math_sf_logb.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_logb.c
 00000000 l    d  .text.logbf	00000000 .text.logbf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.logbf	000000e9 logbf
 00000000         *UND*	00000000 __avm_errno
 

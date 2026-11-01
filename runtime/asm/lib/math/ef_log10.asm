@@ -4,6 +4,7 @@ math_ef_log10.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_log10.c
 00000000 l    d  .text.log10f	00000000 .text.log10f
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.log10f	00000115 log10f
 00000000         *UND*	00000000 __avm_errno
 

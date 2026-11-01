@@ -18,6 +18,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__atomic_fetch_or_8	00000000 .text.__atomic_fetch_or_8
 00000000 l    d  .text.__atomic_fetch_xor_8	00000000 .text.__atomic_fetch_xor_8
 00000000 l    d  .text.__atomic_fetch_nand_8	00000000 .text.__atomic_fetch_nand_8
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__atomic_is_lock_free	0000000c __atomic_is_lock_free
 00000000 g     F .text.__atomic_load	00000017 __atomic_load
 00000000 g     F .text.__atomic_store	00000017 __atomic_store

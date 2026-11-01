@@ -73,6 +73,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.stdc_bit_width_ull	00000000 .text.stdc_bit_width_ull
 00000000 l    d  .text.stdc_bit_floor_ull	00000000 .text.stdc_bit_floor_ull
 00000000 l    d  .text.stdc_bit_ceil_ull	00000000 .text.stdc_bit_ceil_ull
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.stdc_leading_zeros_uc	00000056 stdc_leading_zeros_uc
 00000000 g     F .text.stdc_leading_ones_uc	0000005d stdc_leading_ones_uc
 00000000 g     F .text.stdc_trailing_zeros_uc	00000038 stdc_trailing_zeros_uc

@@ -4,6 +4,7 @@ math_sf_llround.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_llround.c
 00000000 l    d  .text.llroundf	00000000 .text.llroundf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.llroundf	000000f6 llroundf
 00000000         *UND*	00000000 __avm_ashlsi3
 00000000         *UND*	00000000 __avm_lshrsi3

@@ -7,6 +7,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fflush	00000000 .text.fflush
 00000000 l    d  .text.setvbuf	00000000 .text.setvbuf
 00000000 l    d  .text.setbuf	00000000 .text.setbuf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fclose	0000002a fclose
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.fflush	00000024 fflush

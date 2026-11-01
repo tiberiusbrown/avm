@@ -4,6 +4,7 @@ math_sf_nearbyint.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_nearbyint.c
 00000000 l    d  .text.nearbyintf	00000000 .text.nearbyintf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.nearbyintf	0000004b nearbyintf
 
 Disassembly of section .text.nearbyintf:

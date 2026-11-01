@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.sqrtf	00000000 .text.sqrtf
 00000000 l     F .text.avm_sqrt_special	00000039 avm_sqrt_special
 00000000 l    d  .text.avm_sqrt_special	00000000 .text.avm_sqrt_special
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.sqrtf	0000000f sqrtf
 00000000         *UND*	00000000 __avm_errno
 

@@ -5928,6 +5928,10 @@ For an allocated section, these flags are mutually exclusive and identify the AV
 | `.debug_*` | Tool-defined nonallocated debug section types | No `SHF_ALLOC` | None |
 | `.rela.*` | `SHT_RELA` | No `SHF_ALLOC` | None |
 
+Unwind information is emitted to the nonallocated `.debug_frame` section, not to
+an allocated `.eh_frame`. [debugger_abi.md](debugger_abi.md) gives the call-frame
+rules.
+
 `.rela.*` sections use the ELF32 `Elf32_Rela` layout:
 
 ```text
@@ -6551,7 +6555,8 @@ and omit the block entirely.
 The block is part of the image contract, not a debugging feature. It gives names
 and lines only. It does not describe stack frames, does not replace
 `.debug_frame`, and does not unwind callers. Full host-side debugging still uses
-the ELF and DWARF files. The AVD1 layout has no unwind section.
+the ELF and DWARF files, including the call-frame information in `.debug_frame`.
+The AVD1 layout has no unwind section.
 
 ## 70. Tail locator
 

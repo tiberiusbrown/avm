@@ -17,6 +17,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.isxdigit	00000000 .text.isxdigit
 00000000 l    d  .text.tolower	00000000 .text.tolower
 00000000 l    d  .text.toupper	00000000 .text.toupper
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.isalnum	00000011 isalnum
 00000000 g     F .text.isalpha	0000000a isalpha
 00000000 g     F .text.isdigit	00000007 isdigit

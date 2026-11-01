@@ -5,6 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_exp.c
 00000000 l    d  .text.expf	00000000 .text.expf
 00000000 l    d  .text.__avm_expf_noerrno	00000000 .text.__avm_expf_noerrno
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.expf	00000142 expf
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.__avm_expf_noerrno	00000129 __avm_expf_noerrno

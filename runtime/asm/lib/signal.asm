@@ -8,6 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.raise	00000000 .text.raise
 00000000 l    d  .text.__avm_signal_abort	00000000 .text.__avm_signal_abort
 00000000 l    d  .data.handlers	00000000 .data.handlers
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.signal	00000048 signal
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.raise	00000058 raise

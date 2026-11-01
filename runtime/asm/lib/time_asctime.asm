@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.asctime	00000000 .text.asctime
 00000000 l     O .data.asctime.result	0000001a asctime.result
 00000000 l    d  .data.asctime.result	00000000 .data.asctime.result
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.asctime	000001c7 asctime
 00000000         *UND*	00000000 __avm_mulhisi3
 00000000         *UND*	00000000 __avm_time_weekdays

@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_reduce_extended	00000000 .text.avm_reduce_extended
 00000000 l    d  .text.avm_rem_pio2f_medium	00000000 .text.avm_rem_pio2f_medium
 00000000 l    d  .rodata.avm_reduce_windows	00000000 .rodata.avm_reduce_windows
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__kernel_rem_pio2f	000002ba __kernel_rem_pio2f
 00000000 g     F .text.avm_rem_pio2f_medium	00000113 avm_rem_pio2f_medium
 00000000 g     O .rodata.avm_small_pio2	00001468 avm_small_pio2

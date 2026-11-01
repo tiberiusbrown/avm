@@ -14,6 +14,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.feholdexcept	00000000 .text.feholdexcept
 00000000 l    d  .text.fesetenv	00000000 .text.fesetenv
 00000000 l    d  .text.feupdateenv	00000000 .text.feupdateenv
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.feclearexcept	00000005 feclearexcept
 00000000 g     F .text.fegetexceptflag	0000000f fegetexceptflag
 00000000 g     F .text.feraiseexcept	00000005 feraiseexcept

@@ -11,6 +11,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.realloc	00000000 .text.realloc
 00000000 l    d  .text.calloc	00000000 .text.calloc
 00000000 l    d  .data.heap_top	00000000 .data.heap_top
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.malloc	00000091 malloc
 00000000         *UND*	00000000 __avm_heap_start
 00000000 g     F .text.free	00000073 free

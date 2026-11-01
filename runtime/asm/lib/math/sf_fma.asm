@@ -4,6 +4,7 @@ math_sf_fma.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_fma.c
 00000000 l    d  .text.fmaf	00000000 .text.fmaf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fmaf	00000103 fmaf
 00000000         *UND*	00000000 __avm_errno
 

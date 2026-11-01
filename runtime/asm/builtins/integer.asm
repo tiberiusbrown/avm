@@ -17,6 +17,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__avm_divmodsi4	00000000 .text.__avm_divmodsi4
 00000000 l    d  .text.__avm_divsi3	00000000 .text.__avm_divsi3
 00000000 l    d  .text.__avm_modsi3	00000000 .text.__avm_modsi3
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__avm_ashlsi3	0000002c __avm_ashlsi3
 00000000 g     F .text.__avm_lshrsi3	0000002c __avm_lshrsi3
 00000000 g     F .text.__avm_ashrsi3	0000002b __avm_ashrsi3

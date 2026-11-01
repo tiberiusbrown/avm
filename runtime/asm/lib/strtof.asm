@@ -10,6 +10,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.strtod	00000000 .text.strtod
 00000000 l    d  .text.strtold	00000000 .text.strtold
 00000000 l    d  .rodata.str1.1	00000000 .rodata.str1.1
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.strtof	000004a0 strtof
 00000000         *UND*	00000000 isspace
 00000000         *UND*	00000000 isalnum

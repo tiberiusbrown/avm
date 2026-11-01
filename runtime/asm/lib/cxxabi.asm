@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text._ZdaPv	00000000 .text._ZdaPv
 00000000 l    d  .text._ZdlPvj	00000000 .text._ZdlPvj
 00000000 l    d  .text._ZdaPvj	00000000 .text._ZdaPvj
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000  w    F .text.__cxa_pure_virtual	00000004 __cxa_pure_virtual
 00000000         *UND*	00000000 avm_halt
 00000000  w    F .text.__cxa_deleted_virtual	00000004 __cxa_deleted_virtual

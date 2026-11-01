@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.string_read	00000000 .text.string_read
 00000000 l    d  .text.string_unread	00000000 .text.string_unread
 00000000 l    d  .text.sscanf	00000000 .text.sscanf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.vsscanf	00000044 vsscanf
 00000000         *UND*	00000000 __avm_vscan
 00000000 g     F .text.sscanf	0000004f sscanf

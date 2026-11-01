@@ -43,6 +43,7 @@ SYMBOL TABLE:
 00000000 l    d  .rodata..L.avm.flashstr.6	00000000 .rodata..L.avm.flashstr.6
 00000000 l    d  .rodata..L.avm.flashstr.7	00000000 .rodata..L.avm.flashstr.7
 00000000 l    d  .rodata..L.avm.flashstr.8	00000000 .rodata..L.avm.flashstr.8
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.memccpy	00000025 memccpy
 00000000 g     F .text.memset_explicit	0000000b memset_explicit
 00000000 g     F .text.memchr	0000002a memchr

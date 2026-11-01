@@ -5,6 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_scalbn.c
 00000000 l    d  .text.scalblnf	00000000 .text.scalblnf
 00000000 l    d  .text.scalbnf	00000000 .text.scalbnf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.scalblnf	00000184 scalblnf
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.scalbnf	00000107 scalbnf

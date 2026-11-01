@@ -17,6 +17,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fwscanf	00000000 .text.fwscanf
 00000000 l    d  .text.swscanf	00000000 .text.swscanf
 00000000 l    d  .text.wscanf	00000000 .text.wscanf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.vswscanf	00000044 vswscanf
 00000000         *UND*	00000000 __avm_vscan
 00000000 g     F .text.vfwscanf	00000092 vfwscanf

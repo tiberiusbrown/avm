@@ -10,7 +10,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Language mode and target integration
 
-- [ ] **Exception-capable C++ language mode:** Support `throw`, `try`/`catch`, exception specifications, propagation, stack unwinding, and destructor cleanup. The AVM C++ configuration currently specifies `-fno-exceptions` and disables unwind-table generation.
+- [ ] **Exception-capable C++ language mode:** Support `throw`, `try`/`catch`, exception specifications, propagation, stack unwinding, and destructor cleanup. The AVM C++ configuration currently specifies `-fno-exceptions`.
 - [ ] **Runtime type identification:** Support `typeid` and `dynamic_cast` in the cases required by C++, including polymorphic types, multiple/virtual inheritance, and runtime failure cases. The AVM C++ configuration currently specifies `-fno-rtti`.
 - [ ] **C++20 modules:** Support compilation, dependency ordering, interface/implementation units, imports, linking, and cross-translation-unit semantics for language modules in the AVM SDK, including relevant AVM target and toolchain integration. This concerns the core language, not the hosted library modules `std` and `std.compat`.
 - [ ] **Coroutines:** Validate and provide AVM lowering and execution for C++20/C++23 coroutine creation, suspension, resumption, destruction, frame allocation, cleanup, and cross-translation-unit references.

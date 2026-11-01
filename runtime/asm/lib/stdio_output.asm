@@ -7,6 +7,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.putc	00000000 .text.putc
 00000000 l    d  .text.fputs	00000000 .text.fputs
 00000000 l    d  .text.fwrite	00000000 .text.fwrite
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fputc	00000048 fputc
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.putc	00000048 putc

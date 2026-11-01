@@ -4,6 +4,7 @@ wchar_time.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 wchar_time.c
 00000000 l    d  .text.wcsftime	00000000 .text.wcsftime
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.wcsftime	00000004 wcsftime
 00000000         *UND*	00000000 strftime
 

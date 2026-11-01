@@ -47,6 +47,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.creall	00000000 .text.creall
 00000000 l    d  .text.conjl	00000000 .text.conjl
 00000000 l    d  .text.cprojl	00000000 .text.cprojl
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.cacos	0000004a cacos
 00000000         *UND*	00000000 cacosf
 00000000 g     F .text.casin	0000004a casin

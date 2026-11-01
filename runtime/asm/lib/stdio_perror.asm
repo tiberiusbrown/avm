@@ -4,6 +4,7 @@ stdio_perror.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 stdio_perror.c
 00000000 l    d  .text.perror	00000000 .text.perror
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.perror	0000005b perror
 00000000         *UND*	00000000 __avm_errno
 00000000         *UND*	00000000 strerror

@@ -4,6 +4,7 @@ stdio_gets.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 stdio_gets.c
 00000000 l    d  .text.gets	00000000 .text.gets
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.gets	00000046 gets
 00000000         *UND*	00000000 __avm_stdin
 00000000         *UND*	00000000 fgetc

@@ -4,6 +4,7 @@ math_ef_acosh.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_acosh.c
 00000000 l    d  .text.acoshf	00000000 .text.acoshf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.acoshf	000000a7 acoshf
 00000000         *UND*	00000000 logf
 00000000         *UND*	00000000 __avm_errno

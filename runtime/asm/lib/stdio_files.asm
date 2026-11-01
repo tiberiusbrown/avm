@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.rename	00000000 .text.rename
 00000000 l    d  .text.tmpfile	00000000 .text.tmpfile
 00000000 l    d  .text.tmpnam	00000000 .text.tmpnam
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fopen	00000008 fopen
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.freopen	0000000d freopen

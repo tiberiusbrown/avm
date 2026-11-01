@@ -7,6 +7,7 @@ SYMBOL TABLE:
 00000000 l     F .text.avm_erfc_positive_tail	00000056 avm_erfc_positive_tail
 00000000 l    d  .text.avm_erfc_positive_tail	00000000 .text.avm_erfc_positive_tail
 00000000 l    d  .text.erfcf	00000000 .text.erfcf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.erff	000000e3 erff
 00000000         *UND*	00000000 __avm_errno
 00000000         *UND*	00000000 __avm_expf_noerrno

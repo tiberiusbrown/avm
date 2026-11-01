@@ -4,6 +4,7 @@ complex_sqrt.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sqrt.c
 00000000 l    d  .text.csqrtf	00000000 .text.csqrtf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.csqrtf	00000256 csqrtf
 00000000         *UND*	00000000 fabsf
 00000000         *UND*	00000000 sqrtf

@@ -5,6 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 stdio_format.c
 00000000 l    d  .text.vfprintf	00000000 .text.vfprintf
 00000000 l    d  .text.fprintf	00000000 .text.fprintf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.vfprintf	00000075 vfprintf
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.fprintf	0000006d fprintf

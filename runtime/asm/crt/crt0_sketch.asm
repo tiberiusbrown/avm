@@ -4,6 +4,7 @@ crt0_sketch.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_sketch.c
 00000000 l    d  .text._start	00000000 .text._start
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text._start	00000054 _start
 00000000         *UND*	00000000 __init_array_end
 00000000         *UND*	00000000 __init_array_start

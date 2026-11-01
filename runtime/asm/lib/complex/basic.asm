@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.cprojf	00000000 .text.cprojf
 00000000 l    d  .text.cabsf	00000000 .text.cabsf
 00000000 l    d  .text.cargf	00000000 .text.cargf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.crealf	00000004 crealf
 00000000 g     F .text.cimagf	00000006 cimagf
 00000000 g     F .text.conjf	00000019 conjf

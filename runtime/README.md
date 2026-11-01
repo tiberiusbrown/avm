@@ -445,6 +445,12 @@ AVD1 does not yet contain unwind information. A lookup describes one program
 address and returns no caller frames, so the crash screen cannot show a call
 stack.
 
+Compiler-generated call-frame information is kept in the linked ELF's
+`.debug_frame` section for host debugging and for future compact unwind
+extraction. The image packer does not copy it into the AVM flat image, so it
+uses no guest flash or RAM. Unwind tables are on by default, so this information
+is present without `-g`.
+
 The trap context holds the raw interpreter `VM_PC`, which need not be the start
 of the faulting instruction. The lookup uses that PC unchanged and does not
 correct it. For an invalid secondary `SYS` encoding, the PC points at the operand

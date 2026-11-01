@@ -62,7 +62,7 @@ add_custom_command(
     OUTPUT "${AUDIO_DEMO_OBJECT}"
     COMMAND "${AVM_CLANG}" --target=avm-unknown-arduboyfx
         -g -std=c11 -O2 -flto -ffreestanding -fomit-frame-pointer
-        -fno-stack-protector -fno-unwind-tables -fno-asynchronous-unwind-tables
+        -fno-stack-protector -funwind-tables -fasynchronous-unwind-tables
         -ffunction-sections -fdata-sections -Wall -Wextra -Werror
         -isystem "${AVM_SYSROOT}/include"
         -c "${CMAKE_CURRENT_SOURCE_DIR}/main.c" -o "${AUDIO_DEMO_OBJECT}"

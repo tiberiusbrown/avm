@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.powf	00000000 .text.powf
 00000000 l     F .text.avm_pow_boundary	00000964 avm_pow_boundary
 00000000 l    d  .text.avm_pow_boundary	00000000 .text.avm_pow_boundary
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.powf	00000671 powf
 00000000         *UND*	00000000 __avm_errno
 

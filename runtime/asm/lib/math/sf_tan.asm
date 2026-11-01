@@ -4,6 +4,7 @@ math_sf_tan.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_tan.c
 00000000 l    d  .text.tanf	00000000 .text.tanf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.tanf	00000072 tanf
 00000000         *UND*	00000000 __avm_errno
 

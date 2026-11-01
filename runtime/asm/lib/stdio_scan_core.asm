@@ -8,6 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__avm_scan_finish	00000000 .text.__avm_scan_finish
 00000000 l    d  .text.__avm_scan_skip_space	00000000 .text.__avm_scan_skip_space
 00000000 l    d  .text.__avm_vscan	00000000 .text.__avm_vscan
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__avm_scan_peek	00000026 __avm_scan_peek
 00000000 g     F .text.__avm_scan_take	00000045 __avm_scan_take
 00000000 g     F .text.__avm_scan_finish	00000024 __avm_scan_finish

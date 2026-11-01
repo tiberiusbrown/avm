@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.hypotf	00000000 .text.hypotf
 00000000 l     F .text.avm_hypot_overflows	000002bd avm_hypot_overflows
 00000000 l    d  .text.avm_hypot_overflows	00000000 .text.avm_hypot_overflows
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.hypotf	00000216 hypotf
 00000000         *UND*	00000000 __avm_errno
 

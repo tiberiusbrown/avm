@@ -73,6 +73,54 @@ use the widths and address classes above. A location list gap or an absent
 location for an optimized variable means unavailable/optimized out; a
 debugger must not display a guessed value.
 
+## Unwind tables and call-frame information
+
+AVM builds emit unwind tables by default. The common compile options
+`-funwind-tables` and `-fasynchronous-unwind-tables` apply to C and C++ objects,
+and they require neither `-g` nor C++ exceptions. A compilation may override
+them with later compile options. The compiler places call-frame information in
+`.debug_frame`, which is nonallocated, rather than in the allocated
+`.eh_frame`. The packaged image never contains it, so only the linked ELF
+carries it.
+
+Call-frame information (CFI) gives, at each instruction address, the canonical
+frame address (CFA) and the location of each saved register and of the return
+`pc`. It is separate from the other debug sections. `.debug_line` maps code
+addresses to source lines and exists only with `-g`. The AVD1 block maps a
+trapped address to a function name and source line; it carries no CFI.
+
+The CIE establishes `DW_CFA_def_cfa sp, 3` and `DW_CFA_offset pc, -3`. At entry,
+the CFA is `sp + 3`, and the saved return `pc` is at `CFA − 3`. The data
+alignment factor is −1, so rule offsets are byte counts. Each callee-saved
+register `r0`–`r3` occupies a two-byte slot at the offset recorded by its
+`PUSH16`. The prologue and epilogue record the CFA after every `PUSH16`,
+`ADJSP`, and `POP16`. When `r3` is a frame pointer, the CFA becomes `r3 +
+offset` after `GETSP r3`, with the offset unchanged. A dynamic allocation moves
+`sp` but not that CFA, and `SETSP r3` restores `sp` before the frame is
+released.
+
+Each row change is a `DW_CFA_set_loc` operand rather than a relative advance.
+The assembler records each row address as a three-byte absolute operand with an
+`R_AVM_DEBUG24` relocation, so linker relaxation can move it, and the FDE's
+initial location carries the same relocation. LLD adjusts each FDE's range
+for the bytes that relaxation removes. The FDE of a discarded function keeps
+its place, but its range becomes empty and its instructions become no-ops, so
+it describes no code.
+
+Code placed after an epilogue starts from the state that the epilogue leaves,
+so the linked code restates its own state there: body code restates the body
+state, and a shared return tail restates the state after the epilogue. This
+keeps every row correct after block layout and tail duplication.
+
+Outgoing call arguments stay inside their block. Without a frame pointer, the
+CFI row after each argument-area `ADJSP` describes the stack in that block, so
+branch folding neither hoists the adjustment into a predecessor nor tail-merges
+it into a shared block. Every block therefore starts with no outgoing arguments
+allocated, which is the state the restatement assumes.
+
+A valid `.debug_frame` does not by itself mean that stack unwinding works on
+the device. The guest has no unwinder, and AVD1 has no unwind section.
+
 ## Stops and time
 
 A guest stop snapshot is taken at a coherent AVM instruction boundary. Its

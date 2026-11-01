@@ -4,6 +4,7 @@ math_ef_log1p.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_log1p.c
 00000000 l    d  .text.log1pf	00000000 .text.log1pf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.log1pf	00000157 log1pf
 00000000         *UND*	00000000 __avm_errno
 

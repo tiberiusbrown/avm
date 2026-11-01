@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.csinhf	00000000 .text.csinhf
 00000000 l    d  .text.ccoshf	00000000 .text.ccoshf
 00000000 l    d  .text.ctanhf	00000000 .text.ctanhf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.csinhf	000001d4 csinhf
 00000000         *UND*	00000000 sinhf
 00000000         *UND*	00000000 sincosf

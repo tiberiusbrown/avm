@@ -18,6 +18,7 @@ SYMBOL TABLE:
 00000000 l    d  .rodata..L.avm.flashstr.11	00000000 .rodata..L.avm.flashstr.11
 00000000 l    d  .rodata..L.avm.flashstr.12	00000000 .rodata..L.avm.flashstr.12
 00000000 l    d  .rodata..L.avm.flashstr.13	00000000 .rodata..L.avm.flashstr.13
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000         *UND*	00000000 __avm_text_state
 00000000         *UND*	00000000 __avm_framebuffer
 00000000 g     F .text.__avm_trap_report	00000159 __avm_trap_report

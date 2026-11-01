@@ -13,6 +13,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.putwc	00000000 .text.putwc
 00000000 l    d  .text.putwchar	00000000 .text.putwchar
 00000000 l    d  .text.ungetwc	00000000 .text.ungetwc
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fwide	00000054 fwide
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.fgetwc	00000070 fgetwc

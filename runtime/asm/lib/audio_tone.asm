@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_audio_tone	00000000 .text.avm_audio_tone
 00000000 l     O .rodata.note_increments	00000090 note_increments
 00000000 l    d  .rodata.note_increments	00000000 .rodata.note_increments
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.avm_audio_tone	00000033 avm_audio_tone
 00000000         *UND*	00000000 __avm_audio_tone_increment
 

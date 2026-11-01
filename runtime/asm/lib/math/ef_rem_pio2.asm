@@ -4,6 +4,7 @@ math_ef_rem_pio2.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_rem_pio2.c
 00000000 l    d  .text.__ieee754_rem_pio2f	00000000 .text.__ieee754_rem_pio2f
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__ieee754_rem_pio2f	00000176 __ieee754_rem_pio2f
 00000000         *UND*	00000000 avm_small_pio2
 00000000         *UND*	00000000 __kernel_rem_pio2f

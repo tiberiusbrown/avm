@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.cpowf	00000000 .text.cpowf
 00000000 l     F .text.cx_pow_zero	0000027a cx_pow_zero
 00000000 l    d  .text.cx_pow_zero	00000000 .text.cx_pow_zero
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.cpowf	0000032c cpowf
 00000000         *UND*	00000000 clogf
 00000000         *UND*	00000000 __mulsc3

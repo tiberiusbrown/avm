@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fwprintf	00000000 .text.fwprintf
 00000000 l    d  .text.swprintf	00000000 .text.swprintf
 00000000 l    d  .text.wprintf	00000000 .text.wprintf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.vfwprintf	00000077 vfwprintf
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.vswprintf	00000018 vswprintf

@@ -20,6 +20,7 @@ SYMBOL TABLE:
 00000002 l     O .data..L_MergedGlobals	00000001 frame_start
 00000003 l     O .data..L_MergedGlobals	00000001 buttons_state_curr
 00000004 l     O .data..L_MergedGlobals	00000001 buttons_state_prev
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.avm_set_frame_rate	0000001c avm_set_frame_rate
 00000000 g     F .text.avm_set_frame_duration	00000011 avm_set_frame_duration
 00000000 g     F .text.avm_next_frame	00000041 avm_next_frame

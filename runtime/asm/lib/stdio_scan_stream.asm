@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.stream_read	00000000 .text.stream_read
 00000000 l    d  .text.stream_unread	00000000 .text.stream_unread
 00000000 l    d  .text.fscanf	00000000 .text.fscanf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.vfscanf	0000008f vfscanf
 00000000         *UND*	00000000 __avm_vscan
 00000000         *UND*	00000000 __avm_errno

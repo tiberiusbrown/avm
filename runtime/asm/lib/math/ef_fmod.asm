@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fmodf	00000000 .text.fmodf
 00000000 l     F .text.avm_fmod_special	00000090 avm_fmod_special
 00000000 l    d  .text.avm_fmod_special	00000000 .text.avm_fmod_special
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fmodf	0000002b fmodf
 00000000         *UND*	00000000 __avm_errno
 

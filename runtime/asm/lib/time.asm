@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.clock	00000000 .text.clock
 00000000 l    d  .text.time	00000000 .text.time
 00000000 l    d  .text.difftime	00000000 .text.difftime
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.clock	00000003 clock
 00000000 g     F .text.time	0000001f time
 00000000 g     F .text.difftime	00000134 difftime

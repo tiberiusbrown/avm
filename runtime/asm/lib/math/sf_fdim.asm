@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fdimf	00000000 .text.fdimf
 00000000 l     F .text.unlikely.avm_fdim_special	00000065 avm_fdim_special
 00000000 l    d  .text.unlikely.avm_fdim_special	00000000 .text.unlikely.avm_fdim_special
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.fdimf	00000060 fdimf
 00000000         *UND*	00000000 __avm_errno
 

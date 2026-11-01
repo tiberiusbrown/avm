@@ -11,6 +11,7 @@ SYMBOL TABLE:
 00000000 l     F .text.parse_wide	0000030e parse_wide
 00000000 l    d  .text.parse_wide	00000000 .text.parse_wide
 00000000 l    d  .text.wcstoumax	00000000 .text.wcstoumax
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.imaxabs	00000004 imaxabs
 00000000         *UND*	00000000 llabs
 00000000 g     F .text.imaxdiv	00000072 imaxdiv

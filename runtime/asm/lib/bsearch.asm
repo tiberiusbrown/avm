@@ -4,6 +4,7 @@ bsearch.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 bsearch.c
 00000000 l    d  .text.bsearch	00000000 .text.bsearch
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.bsearch	00000080 bsearch
 
 Disassembly of section .text.bsearch:

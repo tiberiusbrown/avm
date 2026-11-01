@@ -12,8 +12,8 @@ set(AVM_COMMON_COMPILE_OPTIONS
     -ffreestanding
     -fomit-frame-pointer
     -fno-stack-protector
-    -fno-unwind-tables
-    -fno-asynchronous-unwind-tables
+    -funwind-tables
+    -fasynchronous-unwind-tables
     -ffunction-sections
     -fdata-sections
     "${AVM_OPT_LEVEL}"

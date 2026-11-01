@@ -8,6 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.modff	00000000 .text.modff
 00000000 l    d  .text.nextafterf	00000000 .text.nextafterf
 00000000 l    d  .text.nexttowardf	00000000 .text.nexttowardf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.ldexpf	00000004 ldexpf
 00000000         *UND*	00000000 scalbnf
 00000000 g     F .text.frexpf	0000011d frexpf

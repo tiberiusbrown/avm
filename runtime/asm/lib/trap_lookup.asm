@@ -8,6 +8,7 @@ SYMBOL TABLE:
 00000000 l     F .text.read_uleb128	00000131 read_uleb128
 00000000 l    d  .text.open_section	00000000 .text.open_section
 00000000 l    d  .text.read_uleb128	00000000 .text.read_uleb128
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__avm_trap_lookup	000007fc __avm_trap_lookup
 00000000         *UND*	00000000 __avm_mulsi3
 00000000         *UND*	00000000 __avm_umulhisi3

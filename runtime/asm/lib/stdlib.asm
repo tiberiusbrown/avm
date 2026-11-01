@@ -26,6 +26,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.lldiv	00000000 .text.lldiv
 00000000 l    d  .text.getenv	00000000 .text.getenv
 00000000 l    d  .text.system	00000000 .text.system
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.memalignment	00000004 memalignment
 00000000 g     F .text.rand	00000007 rand
 00000000         *UND*	00000000 avm_random

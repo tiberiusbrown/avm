@@ -5,6 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 stdio_scan_stdin.c
 00000000 l    d  .text.vscanf	00000000 .text.vscanf
 00000000 l    d  .text.scanf	00000000 .text.scanf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.vscanf	00000009 vscanf
 00000000         *UND*	00000000 __avm_stdin
 00000000         *UND*	00000000 vfscanf

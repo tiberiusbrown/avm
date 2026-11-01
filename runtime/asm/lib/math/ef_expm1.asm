@@ -4,6 +4,7 @@ math_ef_expm1.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_expm1.c
 00000000 l    d  .text.expm1f	00000000 .text.expm1f
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.expm1f	00000084 expm1f
 00000000         *UND*	00000000 __avm_expf_noerrno
 00000000         *UND*	00000000 expf

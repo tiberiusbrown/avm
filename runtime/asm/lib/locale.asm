@@ -11,6 +11,7 @@ SYMBOL TABLE:
 00000000 l    d  .data.c_locale	00000000 .data.c_locale
 00000000 l     O .data.c_decimal_point	00000002 c_decimal_point
 00000000 l    d  .data.c_decimal_point	00000000 .data.c_decimal_point
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.setlocale	00000033 setlocale
 00000000 g     F .text.localeconv	00000004 localeconv
 

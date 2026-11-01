@@ -17,6 +17,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__floatdisf	00000000 .text.__floatdisf
 00000000 l    d  .text.__fixunssfdi	00000000 .text.__fixunssfdi
 00000000 l    d  .text.__fixsfdi	00000000 .text.__fixsfdi
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__avm_muldi3	000000a0 __avm_muldi3
 00000000         *UND*	00000000 __avm_umulhisi3
 00000000 g     F .text.__avm_udivmoddi4	000001a4 __avm_udivmoddi4

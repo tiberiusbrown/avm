@@ -4,6 +4,7 @@ math_ef_atan2.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_atan2.c
 00000000 l    d  .text.atan2f	00000000 .text.atan2f
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.atan2f	00000265 atan2f
 
 Disassembly of section .text.atan2f:

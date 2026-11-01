@@ -4,6 +4,7 @@ math_ef_atanh.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_atanh.c
 00000000 l    d  .text.atanhf	00000000 .text.atanhf
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.atanhf	000000b8 atanhf
 00000000         *UND*	00000000 log1pf
 00000000         *UND*	00000000 __avm_errno

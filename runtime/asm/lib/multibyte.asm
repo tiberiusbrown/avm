@@ -16,6 +16,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.wcsrtombs	00000000 .text.wcsrtombs
 00000000 l    d  .text.mbstowcs	00000000 .text.mbstowcs
 00000000 l    d  .text.wcstombs	00000000 .text.wcstombs
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.mbtowc	00000025 mbtowc
 00000000 g     F .text.mblen	0000001c mblen
 00000000 g     F .text.wctomb	0000000e wctomb

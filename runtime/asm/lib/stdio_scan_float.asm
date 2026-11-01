@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__avm_scan_float	00000000 .text.__avm_scan_float
 00000000 l     O .rodata.str1.1	00000028 __avm_scan_float.threshold
 00000000 l    d  .rodata.str1.1	00000000 .rodata.str1.1
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__avm_scan_float	00000993 __avm_scan_float
 00000000         *UND*	00000000 __avm_scan_peek
 00000000         *UND*	00000000 __avm_scan_take

@@ -7,6 +7,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__avm_decimal_value	00000000 .text.__avm_decimal_value
 00000000 l     O .rodata.__avm_decimal_value.powers	00000018 __avm_decimal_value.powers
 00000000 l    d  .rodata.__avm_decimal_value.powers	00000000 .rodata.__avm_decimal_value.powers
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__avm_hex_value	000002ab __avm_hex_value
 00000000         *UND*	00000000 __avm_ashlsi3
 00000000         *UND*	00000000 __avm_lshrsi3

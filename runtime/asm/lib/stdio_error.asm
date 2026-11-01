@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.clearerr	00000000 .text.clearerr
 00000000 l    d  .text.feof	00000000 .text.feof
 00000000 l    d  .text.ferror	00000000 .text.ferror
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.clearerr	0000000e clearerr
 00000000 g     F .text.feof	00000011 feof
 00000000 g     F .text.ferror	00000011 ferror

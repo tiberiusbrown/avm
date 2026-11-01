@@ -117,6 +117,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fminl	00000000 .text.fminl
 00000000 l    d  .text.fmax	00000000 .text.fmax
 00000000 l    d  .text.fmaxl	00000000 .text.fmaxl
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.sqrt	00000004 sqrt
 00000000         *UND*	00000000 sqrtf
 00000000 g     F .text.sqrtl	00000004 sqrtl

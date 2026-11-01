@@ -4,6 +4,7 @@ stdio_putchar.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 stdio_putchar.c
 00000000 l    d  .text.putchar	00000000 .text.putchar
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.putchar	00000007 putchar
 00000000         *UND*	00000000 __avm_stdout
 00000000         *UND*	00000000 fputc

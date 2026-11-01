@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__divdc3	00000000 .text.__divdc3
 00000000 l    d  .text.__mulxc3	00000000 .text.__mulxc3
 00000000 l    d  .text.__divxc3	00000000 .text.__divxc3
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.__mulsc3	0000041c __mulsc3
 00000000 g     F .text.__divsc3	000007da __divsc3
 00000000 g     F .text.__muldc3	0000041c __muldc3

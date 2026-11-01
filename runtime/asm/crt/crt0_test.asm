@@ -6,6 +6,7 @@ SYMBOL TABLE:
 00000000 l    d  .text._start	00000000 .text._start
 00000000 l     F .text.avm_run_constructors	0000004c avm_run_constructors
 00000000 l    d  .text.avm_run_constructors	00000000 .text.avm_run_constructors
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text._start	00000029 _start
 00000000         *UND*	00000000 avm_test_main
 00000000         *UND*	00000000 __avm_terminate

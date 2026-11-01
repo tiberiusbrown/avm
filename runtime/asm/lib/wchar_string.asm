@@ -24,6 +24,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.wcslen	00000000 .text.wcslen
 00000000 l    d  .text.wmemset	00000000 .text.wmemset
 00000000 l    d  .text.wcstok	00000000 .text.wcstok
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.wcscpy	00000004 wcscpy
 00000000         *UND*	00000000 strcpy
 00000000 g     F .text.wcscat	00000008 wcscat

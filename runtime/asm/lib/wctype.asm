@@ -35,6 +35,7 @@ SYMBOL TABLE:
 00000000 l    d  .rodata..L.avm.flashstr.11	00000000 .rodata..L.avm.flashstr.11
 00000000 l    d  .rodata..L.avm.flashstr.12	00000000 .rodata..L.avm.flashstr.12
 00000000 l    d  .rodata..L.avm.flashstr.13	00000000 .rodata..L.avm.flashstr.13
+00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.iswalnum	00000004 iswalnum
 00000000         *UND*	00000000 isalnum
 00000000 g     F .text.iswalpha	00000004 iswalpha

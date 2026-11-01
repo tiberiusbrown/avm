@@ -338,7 +338,7 @@ add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
 # and checks that a program which never references the runtime has none.
 set(AVM_EH_VERIFY_ARGS)
 foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
-    foreach(AVM_EH_VERIFY_NAME IN ITEMS eh_catch_all eh_call8)
+    foreach(AVM_EH_VERIFY_NAME IN ITEMS eh_catch_all eh_call8 eh_cleanup)
         set(AVM_EH_ELF "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/${AVM_EH_VERIFY_NAME}.elf")
         set(AVM_EH_IMAGE "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/${AVM_EH_VERIFY_NAME}.bin")
         list(APPEND AVM_EH_VERIFY_ARGS --eh-elf "${AVM_EH_ELF}" --eh-image "${AVM_EH_IMAGE}")
@@ -350,7 +350,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 # in their own image directory, so the runners select them with --cpp-bin-dir.
 set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
 set(AVM_EH_LTO_IMAGES)
-foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler)
+foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup)
     set(AVM_EH_LTO_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.o")
     set(AVM_EH_LTO_ELF "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.elf")
     set(AVM_EH_LTO_IMAGE "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.bin")
@@ -459,6 +459,92 @@ add_custom_target(avm_eh_catch_all_run
     VERBATIM
 )
 add_dependencies(avm_eh_catch_all_run avm_eh_catch_all_lto_run avm_eh_hardening_run)
+
+# Stage 2 cleanup fixtures. The cleanup chain of the first throw is checked against
+# the machine code, the packed AVEH3 block, and the probe's events, at O0, O2, and
+# LTO/O2. Each cleanup frame's landing SP is checked: the zero, two, and eight
+# argument-byte cases, the r3-based frame, and the relaxed call8 and call16 sites.
+# The termination fixtures run here too, since their output is the halt report.
+set(AVM_EH_CLEANUP_PROBE_RUN
+    --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+    --interpreter "${AVM_INTERPRETER_HEX}"
+    --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}")
+set(AVM_EH_CLEANUP_IMAGE_DIRS
+    "${AVM_CXX_TEST_BINARY_DIR}/O0"
+    "${AVM_CXX_TEST_BINARY_DIR}/O2"
+    "${AVM_EH_LTO_BIN_DIR}/O2")
+set(AVM_EH_CLEANUP_COMMANDS)
+foreach(AVM_CLEANUP_DIR IN LISTS AVM_EH_CLEANUP_IMAGE_DIRS)
+    list(APPEND AVM_EH_CLEANUP_COMMANDS
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_cleanup_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --frame leaf --frame middle --frame outer --frame demonstration
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --function leaf --callee __cxa_throw
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --function middle --callee leaf
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --function stack_argument_frame --callee eight_arguments
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --function five_argument_frame --callee five_arguments
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --function dynamic_frame --callee eight_arguments
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --function near_frame --callee near_throw --encoding call8
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+            --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+            --image "${AVM_CLEANUP_DIR}/eh_cleanup.bin"
+            --elf "${AVM_CLEANUP_DIR}/eh_cleanup.elf"
+            --function far_frame --callee far_throw --encoding call16
+    )
+endforeach()
+
+add_custom_target(avm_eh_cleanup_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_cleanup" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_cleanup$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    ${AVM_EH_CLEANUP_COMMANDS}
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_corruption_verify.py"
+        --cleanup ${AVM_EH_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup_corrupt_target.elf"
+        --nm "$<TARGET_FILE_DIR:llvm-avm-image>/llvm-nm"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_corruption_verify.py"
+        --cleanup ${AVM_EH_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_cleanup_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_cleanup_corrupt_target.elf"
+        --nm "$<TARGET_FILE_DIR:llvm-avm-image>/llvm-nm"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_stack_report.py"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image-dir "${AVM_CXX_TEST_BINARY_DIR}"
+    DEPENDS avm_tests avm_eh_stack_probe avm_eh_catch_all_images llvm-avm-image
+        avm_eh_metadata_verify ${AVM_EH_LTO_IMAGES}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_cleanup_run)
 
 # The runner discovers ASM, C, and C++ sources, maps each source to its adjacent
 # name_output.txt file and corresponding generated image, loads the interpreter

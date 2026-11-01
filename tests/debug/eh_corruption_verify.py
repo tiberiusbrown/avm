@@ -28,6 +28,11 @@ FLAG_SAVED_MASK = 0x0f
 
 VALID = 'TCP\\n'
 HALT = 'TH\\n'
+# The cleanup target prints a digit from each destructor that runs, between the T and
+# the catch's C, so its valid output is T32CP. A corrupted cleanup run may stop after
+# some digits, and it must still end with the halt report.
+CLEANUP_VALID = 'T32CP\\n'
+CLEANUP_HALT_END = 'H\\n'
 
 
 class Failure(Exception):
@@ -104,6 +109,29 @@ def parse_block(data, block):
     return functions, limit
 
 
+def handler_site(data, record):
+    """Returns the offset of the first site of record whose action is not zero. The
+    cleanup mutations name that site, since a record also holds gap sites."""
+    for index in range(record['site_count']):
+        offset = record['sites'] + SITE_SIZE * index
+        if data[offset + 9]:
+            return offset
+    raise Failure('the record at 0x%x has no handler or cleanup site' % record['start'])
+
+
+def call_in_site(data, record, site):
+    """Returns the offset of the call record whose return PC lies in the site. A
+    record also holds the calls that its cleanup pad makes, so the cleanup mutations
+    name the call that the handler site covers."""
+    start = read_u(data, site, 3)
+    end = read_u(data, site + 3, 3)
+    for index in range(record['call_count']):
+        offset = record['calls'] + CALL_SIZE * index
+        if start < read_u(data, offset, 3) <= end:
+            return offset
+    raise Failure('the record at 0x%x has no call record in its handler site' % record['start'])
+
+
 def mutate(data, block, functions, limit, names, name):
     """Returns a copy of data with one field changed, or the copy itself for the
     controls. Each mutation names the record it changes."""
@@ -114,7 +142,8 @@ def mutate(data, block, functions, limit, names, name):
     leaf = next(f for f in functions if f['start'] <= names['leaf'] < f['end'])
     # The first record past the throwing chain. A throw stops at leaf's record, so no
     # lookup reads this record.
-    after = [f for f in functions if f['start'] >= leaf['end']]
+    chain = (protected, middle, unrelated)
+    after = [f for f in functions if f['start'] >= leaf['end'] and not any(f is c for c in chain)]
     leaf_pad = middle['start']  # outside protected_frame, inside the block
 
     def put(offset, value, size):
@@ -172,6 +201,25 @@ def mutate(data, block, functions, limit, names, name):
         record = after[0]
         put(record['header'] + 15, record['next'] - record['header'] + 1, 3)
         return out
+    elif name == 'leaf_pad_outside_function':
+        # The throw's cleanup pad in leaf names an address in middle.
+        put(handler_site(data, leaf) + 6, middle['start'], 3)
+    elif name == 'middle_site_action_catch':
+        # middle's cleanup pad is taken for a catch-all, and it then resumes.
+        put(handler_site(data, middle) + 9, 1, 1)
+    elif name == 'middle_site_action_reserved':
+        put(handler_site(data, middle) + 9, 0x06, 1)
+    elif name == 'middle_call_bytes_too_large':
+        put(call_in_site(data, middle, handler_site(data, middle)) + 3, 0x0100, 2)
+    elif name == 'middle_call_record_moved':
+        # The call record now names a return PC that the call does not reach.
+        put(call_in_site(data, middle, handler_site(data, middle)), middle['end'], 3)
+    elif name == 'middle_cfa_outside_stack':
+        # Every row of middle places its CFA above the stack window.
+        for row in middle['rows']:
+            put(row + 3, 0x0400, 2)
+    elif name == 'protected_row_reserved_flag':
+        out[protected['rows'][0] + 2] |= 0x10
     else:
         raise Failure('unknown mutation %s' % name)
     check(out != data, 'mutation %s changed nothing' % name)
@@ -190,6 +238,23 @@ MUST_MATCH = ['control_unrelated_call_bytes', 'control_after_throw_next_offset']
 # The packer and avm_eh_validate_block check the function count. The throw walks
 # to the block end instead, so this mutation may halt or run the valid path.
 ANY_CLEAN = ['function_count']
+# The cleanup target. Each of these breaks a field that the throw consumes through a
+# cleanup or a frame that a cleanup must unwind, so the run must halt. The halt can
+# come after some destructors have run, and it must still end with the halt report.
+MUST_HALT_CLEANUP = ['leaf_pad_outside_function', 'middle_site_action_catch',
+                     'middle_site_action_reserved', 'middle_call_bytes_too_large',
+                     'middle_call_record_moved', 'middle_cfa_outside_stack',
+                     'protected_row_reserved_flag']
+MUST_MATCH_CLEANUP = ['control_unrelated_call_bytes', 'control_after_throw_next_offset']
+
+
+def halts(serial, cleanup):
+    """True when the run ended with the halt report. A cleanup run may print digits
+    from the destructors it ran first, but it never prints a catch or pass marker."""
+    if not cleanup:
+        return serial == HALT
+    return (serial.startswith('T') and serial.endswith(CLEANUP_HALT_END)
+            and not any(mark in serial for mark in 'CPU'))
 
 
 def run_probe(probe, interpreter, boundary, image, elf, cycle_limit):
@@ -216,7 +281,14 @@ def main():
     parser.add_argument('--elf', required=True)
     parser.add_argument('--nm', required=True)
     parser.add_argument('--cycle-limit', type=int, default=200000000)
+    parser.add_argument('--cleanup', action='store_true',
+                        help='run the cleanup-target mutations against the cleanup target')
     args = parser.parse_args()
+    cleanup = args.cleanup
+    valid = CLEANUP_VALID if cleanup else VALID
+    must_halt = MUST_HALT_CLEANUP if cleanup else MUST_HALT
+    must_match = MUST_MATCH_CLEANUP if cleanup else MUST_MATCH
+    any_clean = [] if cleanup else ANY_CLEAN
 
     with open(args.image, 'rb') as handle:
         data = handle.read()
@@ -229,12 +301,12 @@ def main():
     # The valid image must produce the valid output before any mutant means anything.
     serial, finished, fault = run_probe(args.probe, args.interpreter, args.boundary,
                                         args.image, args.elf, args.cycle_limit)
-    check(finished and not fault and serial == VALID,
-          'the valid image did not print %s (got %r)' % (VALID, serial))
+    check(finished and not fault and serial == valid,
+          'the valid image did not print %s (got %r)' % (valid, serial))
 
     failures = []
     with tempfile.TemporaryDirectory() as scratch:
-        for name in MUST_HALT + MUST_MATCH + ANY_CLEAN:
+        for name in must_halt + must_match + any_clean:
             mutant = mutate(data, block, functions, limit, names, name)
             path = os.path.join(scratch, name + '.bin')
             with open(path, 'wb') as handle:
@@ -247,12 +319,12 @@ def main():
                 outcome = 'native fault or stack range violation'
             elif 'U' in serial:
                 outcome = 'entered the unrelated handler'
-            elif name in MUST_HALT and serial != HALT:
-                outcome = 'expected %s, got %r' % (HALT, serial)
-            elif name in MUST_MATCH and serial != VALID:
-                outcome = 'expected %s, got %r' % (VALID, serial)
-            elif name in ANY_CLEAN and serial not in (VALID, HALT):
-                outcome = 'expected %s or %s, got %r' % (VALID, HALT, serial)
+            elif name in must_halt and not halts(serial, cleanup):
+                outcome = 'expected the halt report, got %r' % serial
+            elif name in must_match and serial != valid:
+                outcome = 'expected %s, got %r' % (valid, serial)
+            elif name in any_clean and serial not in (valid, HALT):
+                outcome = 'expected %s or %s, got %r' % (valid, HALT, serial)
             else:
                 outcome = None
             label = 'ok' if outcome is None else 'FAIL'

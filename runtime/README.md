@@ -467,11 +467,12 @@ it have a zero header `trapEntry` and keep the fail-stop behavior.
 
 ## C++ exceptions
 
-Stage 1 supports a `throw` that reaches a `catch (...)` handler in an enclosing
-frame. Build with `-fexceptions`, which overrides the SDK's `-fno-exceptions`
-default. The compiler emits LLVM's DWARF landing pads. It records each call
-site as an entry in `.avm.eh_sites`, and it records each call in a function with
-landing pads in `.avm.eh_calls`. The packer turns those records and the
+Build with `-fexceptions`, which overrides the SDK's `-fno-exceptions` default. A
+`throw` runs the destructors of the automatic objects between it and its
+`catch (...)` handler, and then the handler runs. The compiler emits LLVM's DWARF
+landing pads. A cleanup pad destroys its objects and calls `_Unwind_Resume`. Each
+call site is an entry in `.avm.eh_sites`, and each call in a function with landing
+pads is an entry in `.avm.eh_calls`. The packer turns those records and the
 `.debug_frame` rows into the `AVEH3` block described in
 [arch.md](arch.md) Section 69.3. The unwinder's `eh_unwind.c` is built without
 unwind tables, because the unwinder never unwinds through its own frames.
@@ -480,29 +481,33 @@ The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, and
 `eh_cxa_throw.asm`. They are archive members of `libavm.a`, so a program links
 them only when it references one of their symbols. The C++ ABI subset provides
 `__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`,
-`__cxa_begin_catch`, `__cxa_end_catch`, `__gxx_personality_v0`, and a `_ZTIi`
-type-descriptor placeholder.
+`__cxa_begin_catch`, `__cxa_end_catch`, `_Unwind_Resume`, `__gxx_personality_v0`,
+`std::terminate`, and placeholder descriptors for `int` and for a class type. The
+descriptors are compared by address and never read.
+
+Propagation has two phases. Phase one searches the frames from the throw for a
+catch-all handler, and it runs no destructor. If no frame has one, the program
+halts before any cleanup runs. Phase two enters each cleanup pad in turn with
+selector 0. A cleanup pad runs its destructors and calls `_Unwind_Resume`, which
+continues from the caller that the pad saved. The handler is entered last with
+selector 1, and it calls `__cxa_begin_catch`. `__cxa_end_catch` destroys the
+exception object and frees it. A cleanup pad never ends the exception.
 
 `__cxa_throw` is a frameless shim. It stores the throw site into the exception
-header, which lies 23 bytes below the object, and then tail-transfers to
-`__avm_eh_throw`. The header holds the throwing frame's context: its
-continuation, its caller SP, and its r0-r3. The unwinder updates that context
-in place. `__avm_eh_install_context` resumes at the landing pad with `JMPP`.
+header, which lies 38 bytes below the object, and then tail-transfers to
+`__avm_eh_throw`. The header holds the landing context, the type token, the
+destructor, the size, the lifecycle state, and the resume cursor. The landing SP
+of each pad is the caller SP at the call plus the call's outgoing argument bytes.
+A frame that uses r3 as its CFA base keeps its dynamic allocations, because the SP
+never comes from r3. Call records match the exact return PC.
 
-The landing SP is the caller SP at the call plus the call's outgoing argument
-bytes, and the landing pad's SP is the one its normal return path would have
-after releasing those bytes. A frame that uses r3 as its CFA base keeps its
-dynamic allocations, because the SP never comes from r3. The return PC is the
-saved return address, and the call lookup uses `return PC - 1` for sites. Call
-records match the exact return PC.
-
-Only one exception is active at a time, and only catch-all handlers are
-supported. A typed catch, an exception filter, or a cleanup landing pad is a
-compile-time error. The `_ZTIi` placeholder is an opaque token, and no
-type-descriptor RTTI exists yet. Rethrow is not provided, so `__cxa_rethrow` is
-an undefined symbol at link time. Destructors do not run during propagation.
-When no handler exists, when metadata is malformed, or when allocation fails,
-the runtime calls `abort()`, which halts the guest.
+Only one exception is active at a time. A throw while one is active, including a
+throw from a destructor that runs during unwinding, halts the program. Typed
+catch clauses, exception filters, and rethrow are not provided. The backend
+rejects a typed catch or a filter at compile time, and `__cxa_rethrow` is an
+undefined symbol at link time. RTTI matching is not implemented. When no handler
+exists, when metadata is malformed, or when allocation fails, the runtime calls
+`abort()`, which halts the guest.
 
 Every frame between a throw and its handler needs an unwind entry. A function
 without `.debug_frame` CFI stops the search at that frame, which halts the
@@ -511,15 +516,17 @@ program. The unwinder reads the metadata through the flash anchor
 the records it consumes, and `avm_eh_validate_block` checks the whole block.
 
 The guest stack holds 256 bytes, so the exception runtime's own stack use
-matters. Measured peaks are in [arch.md](arch.md) Section 69.3. The exception
-header is 23 bytes, and the Stage 1 header was 8 bytes.
+matters. Measured peaks, the header size, and the metadata and image costs are in
+[arch.md](arch.md) Section 69.3.
 
-Tests use the `avm_eh_catch_all_run` target. It builds `tests/cpp/eh_*.cpp`
-and `tests/asm/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`.
-It also runs `avm_eh_hardening_run`, which checks the landing-pad SP, the
-throw context, the corrupted-metadata behavior, and the stack measurements
-against the emulator. The ordinary C++ and assembly matrices exclude the `eh_`
-prefix.
+Tests use the `avm_eh_catch_all_run` target. It builds `tests/cpp/eh_*.cpp` and
+`tests/asm/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`. It also
+runs `avm_eh_cleanup_run`, which executes the cleanup fixtures at O0, O2, and
+LTO/O2, and checks each cleanup chain and landing SP against the emulator and the
+packed block. It also runs the corrupted-metadata cases for cleanup, and the
+termination fixtures. `avm_eh_hardening_run` checks the landing-pad SP, the throw
+context, the corrupted-metadata behavior, and the stack measurements against the
+emulator. The ordinary C++ and assembly matrices exclude the `eh_` prefix.
 
 ## Narrow stdio streams
 

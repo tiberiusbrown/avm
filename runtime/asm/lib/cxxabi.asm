@@ -9,6 +9,7 @@ SYMBOL TABLE:
 00000000 l    d  .text._ZdaPv	00000000 .text._ZdaPv
 00000000 l    d  .text._ZdlPvj	00000000 .text._ZdlPvj
 00000000 l    d  .text._ZdaPvj	00000000 .text._ZdaPvj
+00000000 l    d  .text._ZSt9terminatev	00000000 .text._ZSt9terminatev
 00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000  w    F .text.__cxa_pure_virtual	00000004 __cxa_pure_virtual
 00000000         *UND*	00000000 avm_halt
@@ -17,6 +18,8 @@ SYMBOL TABLE:
 00000000  w    F .text._ZdaPv	00000004 operator delete[](void*)
 00000000  w    F .text._ZdlPvj	00000004 operator delete(void*, unsigned int)
 00000000  w    F .text._ZdaPvj	00000004 operator delete[](void*, unsigned int)
+00000000 g     F .text._ZSt9terminatev	00000004 std::terminate()
+00000000         *UND*	00000000 abort
 
 Disassembly of section .text.__cxa_pure_virtual:
 
@@ -59,3 +62,10 @@ Disassembly of section .text._ZdaPvj:
  e3 00 00 00           callf	_ZdaPvj
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	avm_halt
+
+Disassembly of section .text._ZSt9terminatev:
+
+<std::terminate()>:
+ e3 00 00 00           callf	_ZSt9terminatev
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	abort

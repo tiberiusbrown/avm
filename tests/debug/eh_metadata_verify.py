@@ -43,6 +43,12 @@ ARGUMENT_LIMIT = 256
 FLAG_R3_BASE = 0x80
 FLAG_RESERVED = 0x70
 FLAG_SAVED_MASK = 0x0f
+# Site actions are flags. Bit 0 is a catch-all handler and bit 1 is a cleanup, so
+# action 3 is a landing pad that cleans up and then catches.
+ACTION_NONE = 0
+ACTION_CATCH_ALL = 0x01
+ACTION_CLEANUP = 0x02
+ACTION_MASK = ACTION_CATCH_ALL | ACTION_CLEANUP
 
 
 class Failure(Exception):
@@ -239,13 +245,12 @@ def decode_block(image, block):
             check(site_start < site_end, 'AVEH3 site range is empty')
             check(site_start >= previous_site_end, 'AVEH3 sites overlap or are unsorted')
             check(site_end <= function_end, 'AVEH3 site extends past its function')
-            if action == 0:
+            check(action & ~ACTION_MASK == 0, 'AVEH3 site has unknown action bits in %d' % action)
+            if action == ACTION_NONE:
                 check(landing == 0, 'AVEH3 action 0 site has a landing pad')
-            elif action == 1:
-                check(start <= landing < function_end,
-                      'AVEH3 catch-all landing pad lies outside its function')
             else:
-                raise Failure('AVEH3 site has unsupported action %d' % action)
+                check(start <= landing < function_end,
+                      'AVEH3 handler or cleanup landing pad lies outside its function')
             sites.append({'start': site_start, 'end': site_end,
                           'landing': landing, 'action': action})
             previous_site_end = site_end
@@ -266,9 +271,9 @@ def decode_block(image, block):
             cursor += CALL_SIZE
         check(cursor == record + next_offset, 'AVEH3 record does not end at next_offset')
         for site in sites:
-            if site['action'] == 1:
+            if site['action'] != ACTION_NONE:
                 check(any(site['start'] < pc <= site['end'] for pc, _ in calls),
-                      'AVEH3 catch-all site at 0x%x has no call record' % site['start'])
+                      'AVEH3 handler or cleanup site at 0x%x has no call record' % site['start'])
         functions.append({'start': start, 'end': function_end, 'record': record,
                           'rows': rows, 'sites': sites, 'calls': calls})
         record += next_offset
@@ -306,6 +311,13 @@ def verify_mutations_rejected(image, block, functions):
         ('next_offset_inconsistent', put(first + 15, next_offset + 1, 3)),
         ('block_truncated_in_last_record', put(block + 7, size - 1, 3)),
     ]
+    # The first site that has an action gets a reserved bit, and then every bit.
+    site_fn = next((fn for fn in functions if fn['sites']), None)
+    if site_fn is not None:
+        action_at = site_fn['record'] + read_u(image, site_fn['record'] + 12, 3) + 9
+        mutants.append(('site_action_reserved_bit',
+                        put(action_at, ACTION_CATCH_ALL | 0x04, 1)))
+        mutants.append(('site_action_all_bits', put(action_at, 0xff, 1)))
     for name, mutant in mutants:
         try:
             decode_block(mutant, block)
@@ -364,7 +376,7 @@ def verify_eh_image(args, elf, image_path):
             for address in (site['start'], site['end']):
                 check(address in boundaries or address == fn['end'],
                       'site endpoint 0x%x is not an instruction boundary' % address)
-            if site['action'] == 1:
+            if site['action'] != ACTION_NONE:
                 check(site['landing'] in boundaries,
                       'landing pad 0x%x is not an instruction' % site['landing'])
                 check(in_executable(code, site['landing']),

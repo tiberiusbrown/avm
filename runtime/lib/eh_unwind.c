@@ -1,9 +1,9 @@
-/* Stage 1 C++ exception unwinder for catch-all handlers.
+/* C++ exception unwinder for catch-all handlers and cleanups.
  *
  * llvm-avm-image writes the AVEH3 block from the linked ELF. Its address is
  * stored in __avm_eh_metadata_ptr, a three-byte program-space anchor that the
  * packer patches. Each frame is unwound from the CFI rows in AVEH3, and every
- * frame's call sites are checked against its catch-all records.
+ * frame's call sites are checked against its handler and cleanup records.
  *
  * The packer validates the whole block. A throw checks each record it consumes,
  * with the same record checks that avm_eh_validate_block applies to all records.
@@ -20,8 +20,12 @@
  *             flags bit 7: CFA base is r3 (else SP). Bits 3:0: saved r0-r3.
  *             Bits 6:4 are reserved and must be zero.
  *   site:     u24 start, u24 end, u24 landing pad, u8 action
- *             action 0: no handler, landing pad 0
+ *             action is a set of flags: bit 0 is a catch-all handler, and bit 1
+ *             is a cleanup. Bits 7:2 must be zero.
+ *             action 0: no handler or cleanup, landing pad 0
  *             action 1: catch-all handler, landing pad inside the function
+ *             action 2: cleanup only, landing pad inside the function
+ *             action 3: cleanup and catch-all in one landing pad
  *   call:     u24 return PC, u16 outgoing argument bytes. The return PC is the
  *             address after the call instruction, which is the saved return PC
  *             of the callee's frame. The bytes are the stack arguments that the
@@ -49,7 +53,9 @@
 #define AVEH3_SITE_SIZE 10
 #define AVEH3_CALL_SIZE 5
 #define AVEH3_ACTION_NONE 0
-#define AVEH3_ACTION_CATCH_ALL 1
+#define AVEH3_ACTION_CATCH_ALL 0x01
+#define AVEH3_ACTION_CLEANUP 0x02
+#define AVEH3_ACTION_MASK (AVEH3_ACTION_CATCH_ALL | AVEH3_ACTION_CLEANUP)
 #define AVEH3_FLAG_R3_BASE 0x80
 #define AVEH3_FLAG_RESERVED 0x70
 #define AVEH3_FLAG_SAVED_MASK 0x0f
@@ -242,20 +248,21 @@ static inline uint8_t row_ok(uint32_t fh, uint32_t row, uint32_t previous) {
     return read_flash_u24(fh) + delta < read_flash_u24(fh + 3);
 }
 
-/* One site. Sites are ordered and lie inside the function. A catch-all landing
- * pad lies inside the function, and a site without a handler has no pad. */
+/* One site. Sites are ordered and lie inside the function. A site with a handler
+ * or a cleanup has a landing pad inside the function, and a site with neither has
+ * no pad. The action may set only the two flags. */
 AVEH3_NOINLINE uint8_t site_ok(uint32_t fh, uint32_t site, uint32_t previous) {
     uint32_t previous_end = previous ? read_flash_u24(previous + 3) : read_flash_u24(fh);
     if (read_flash_u24(site) >= read_flash_u24(site + 3) ||
         read_flash_u24(site) < previous_end || read_flash_u24(site + 3) > read_flash_u24(fh + 3))
         return 0;
     uint8_t action = read_flash_u8(site + 9);
+    if (action & ~AVEH3_ACTION_MASK)
+        return 0;
+    uint32_t pad = read_flash_u24(site + 6);
     if (action == AVEH3_ACTION_NONE)
-        return read_flash_u24(site + 6) == 0;
-    if (action == AVEH3_ACTION_CATCH_ALL)
-        return read_flash_u24(site + 6) >= read_flash_u24(fh) &&
-               read_flash_u24(site + 6) < read_flash_u24(fh + 3);
-    return 0;
+        return pad == 0;
+    return pad >= read_flash_u24(fh) && pad < read_flash_u24(fh + 3);
 }
 
 /* One call. Return PCs strictly increase inside (start, end], and the stack
@@ -268,6 +275,20 @@ AVEH3_NOINLINE uint8_t call_ok(uint32_t fh, uint32_t call, uint32_t previous) {
     if (return_pc <= start || return_pc > end || return_pc <= previous_return)
         return 0;
     return read_flash_u16(call + 3) < AVEH3_ARGUMENT_LIMIT;
+}
+
+/* Returns 1 when one of the count call records from calls returns inside site.
+ * The packer enforces the same rule, and the call that threw must have a record
+ * whatever the site's action. */
+AVEH3_NOINLINE uint8_t site_has_call(uint32_t site, uint32_t calls, uint16_t count) {
+    uint32_t start = read_flash_u24(site);
+    uint32_t end = read_flash_u24(site + 3);
+    for (uint16_t c = 0; c < count; c++) {
+        uint32_t pc = read_flash_u24(calls + times5(c));
+        if (pc > start && pc <= end)
+            return 1;
+    }
+    return 0;
 }
 
 /* Returns the function record that covers lookup. Returns 0 when no record does,
@@ -400,6 +421,7 @@ uint8_t avm_eh_validate_block(uint32_t block) {
                 return 0;
             previous = address;
         }
+        uint32_t calls = address;
         previous = 0;
         for (uint16_t c = 0; c < call_count; c++, address += AVEH3_CALL_SIZE) {
             if (!call_ok(fh, address, previous))
@@ -408,6 +430,12 @@ uint8_t avm_eh_validate_block(uint32_t block) {
         }
         if (address != next)
             return 0;
+        /* A site with a handler or a cleanup releases a call's stack arguments, so
+         * one call record must return inside it. */
+        for (uint32_t s = rows_end; s < calls; s += AVEH3_SITE_SIZE) {
+            if (read_flash_u8(s + 9) && !site_has_call(s, calls, call_count))
+                return 0;
+        }
         fh = next;
     }
     return fh == limit;
@@ -443,18 +471,37 @@ AVEH3_NOINLINE uint8_t unwind_frame(struct avm_eh_context *context, uint32_t row
     return 1;
 }
 
+/* Writes the landing state of the pad at pad into landing, for the call that
+ * returned to the frame at cursor. The call is the one at the cursor's PC in the
+ * function fh. Its outgoing argument bytes are released before the pad runs, so
+ * the landing SP is the frame's SP at the call plus those bytes. The dynamic
+ * allocations of the frame stay in place. The SP is never derived from r3, because
+ * r3 gives the frame base and not the dynamic SP. landing may be cursor itself.
+ * Returns 0 when the call has no record or the SP leaves the stack window. */
+AVEH3_INLINE uint8_t land_at(struct avm_eh_context *landing,
+                             const struct avm_eh_context *cursor, uint32_t fh,
+                             uint32_t pad) {
+    uint32_t outgoing = find_call(fh, context_pc(cursor));
+    if (outgoing == AVEH3_BAD)
+        return 0;
+    uint32_t sp = (uint32_t)cursor->sp + outgoing;
+    if (sp > AVM_TRAP_STACK_TOP)
+        return 0;
+    *landing = *cursor;
+    landing->sp = (uint16_t)sp;
+    set_context_pc(landing, pad);
+    return 1;
+}
+
 /* Finds a catch-all handler for the exception that is being thrown.
  *
  * On entry, *context is the state of the frame that executed the throw: its
  * continuation PC, its SP, and its r0-r3. The walk changes *context only while it
  * unwinds, and it fails without a handler. Each step looks up the call site at
- * PC-1 in the current frame. A catch-all site enters the handler. Any other frame
- * unwinds to its caller with its CFI row.
- *
- * The landing SP is the frame's SP at the call plus the call's outgoing argument
- * bytes. The landing pad expects the stack with those bytes released, and the
- * dynamic allocations of the frame stay in place. The SP is never derived from
- * r3, because r3 gives the frame base and not the dynamic SP.
+ * PC-1 in the current frame. A site whose action has the catch-all flag enters
+ * the handler, and the landing state replaces *context. Any other frame,
+ * including a cleanup-only frame, unwinds to its caller with its CFI row. The
+ * search never runs a cleanup.
  *
  * Returns 0 when no handler exists, or when a frame or record is malformed. */
 uint8_t avm_eh_find_handler(struct avm_eh_context *context) {
@@ -474,21 +521,55 @@ uint8_t avm_eh_find_handler(struct avm_eh_context *context) {
         if (row == AVEH3_BAD || row == 0 || site == AVEH3_BAD)
             return 0;
 
-        if (site && read_flash_u8(site + 9) == AVEH3_ACTION_CATCH_ALL) {
-            uint32_t outgoing = find_call(fh, context_pc(context));
-            if (outgoing == AVEH3_BAD)
-                return 0;
-            uint32_t sp = (uint32_t)context->sp + outgoing;
-            if (sp > AVM_TRAP_STACK_TOP)
-                return 0;
-            context->sp = (uint16_t)sp;
-            set_context_pc(context, read_flash_u24(site + 6));
-            return 1;
-        }
+        if (site && (read_flash_u8(site + 9) & AVEH3_ACTION_CATCH_ALL))
+            return land_at(context, context, fh, read_flash_u24(site + 6));
 
         /* Unwind to the caller. The CFA must lie above the current SP, so every
          * unwind step moves toward the top of the stack. */
         if (!unwind_frame(context, row))
             return 0;
+    }
+}
+
+/* Prepares the next landing pad of a propagating exception, from the header's
+ * resume context. The search is the same as avm_eh_find_handler, but it stops at
+ * the first frame whose site has a cleanup or a handler. A cleanup-only frame
+ * records its landing state in the header's context, then moves the resume
+ * context to the caller. The moved cursor is saved before the pad runs, so a
+ * cleanup's _Unwind_Resume continues from the caller and not from the pad. A
+ * handler records its landing state and leaves the resume context where it is.
+ *
+ * Phase one has already established that a handler exists, so this search finds
+ * the same handler. Every frame passed is checked as the search reads it, and a
+ * malformed frame returns AVM_EH_STEP_INVALID with no pad installed. */
+uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
+    struct avm_eh_context *cursor = &header->resume_context;
+    for (;;) {
+        if (cursor->sp < AVM_TRAP_STACK_BASE || cursor->sp >= AVM_TRAP_STACK_TOP)
+            return AVM_EH_STEP_INVALID;
+        uint32_t lookup = context_pc(cursor) - 1;
+
+        uint32_t fh = find_function(lookup);
+        if (!fh)
+            return AVM_EH_STEP_INVALID;
+        uint32_t row = find_row(fh, lookup);
+        uint32_t site = find_site(fh, lookup);
+        if (row == AVEH3_BAD || row == 0 || site == AVEH3_BAD)
+            return AVM_EH_STEP_INVALID;
+
+        uint8_t action = site ? read_flash_u8(site + 9) : AVEH3_ACTION_NONE;
+        if (action & (AVEH3_ACTION_CATCH_ALL | AVEH3_ACTION_CLEANUP)) {
+            if (!land_at(&header->context, cursor, fh, read_flash_u24(site + 6)))
+                return AVM_EH_STEP_INVALID;
+            header->context.exception = (uint16_t)(uintptr_t)header;
+            if (action & AVEH3_ACTION_CATCH_ALL)
+                return AVM_EH_STEP_CATCH;
+            if (!unwind_frame(cursor, row))
+                return AVM_EH_STEP_INVALID;
+            return AVM_EH_STEP_CLEANUP;
+        }
+
+        if (!unwind_frame(cursor, row))
+            return AVM_EH_STEP_INVALID;
     }
 }

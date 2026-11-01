@@ -31,6 +31,9 @@ FIXTURES = [
     ('eh_unhandled', 'unhandled exception: halt report'),
     ('eh_allocation_failure', 'exception allocation failure: abort'),
     ('eh_missing_cfi', 'frame without CFI: deterministic halt'),
+    ('eh_cleanup', 'cleanup chains, combined pad, partial construction, stack-argument and dynamic-frame cleanups, relaxed calls'),
+    ('eh_cleanup_no_handler', 'cleanup frames with no handler: deterministic halt before any destructor'),
+    ('eh_cleanup_dtor_throw', 'destructor throws during unwinding: deterministic halt'),
     (NO_THROW, 'no-throw control'),
 ]
 

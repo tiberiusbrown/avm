@@ -139,15 +139,17 @@ def verify(args):
     check(anchor is not None, 'the ELF lacks the metadata anchor')
     block = aveh.read_u(image, anchor, 3)
     functions, _ = aveh.decode_block(image, block)
-    # The landing pad of each call is the catch-all site whose range covers the call.
+    # The landing pad of each call is the handler or cleanup site whose range covers
+    # the call. Cleanup pads and catch-all pads have the same landing contract.
     record = next(f for f in functions if f['start'] <= calls[0][0] < f['end'])
 
     points = []
     expected = {}
     for call_pc, return_pc, callee, outgoing in calls:
         sites = [s for s in record['sites']
-                 if s['action'] == 1 and s['start'] <= return_pc - 1 < s['end']]
-        check(len(sites) == 1, 'the call at 0x%x is not covered by one catch-all site' % call_pc)
+                 if s['action'] != 0 and s['start'] <= return_pc - 1 < s['end']]
+        check(len(sites) == 1, 'the call at 0x%x is not covered by one handler or cleanup site'
+              % call_pc)
         pad = sites[0]['landing']
         expected[call_pc] = (return_pc, callee, outgoing, pad)
         for point in (call_pc, pad):

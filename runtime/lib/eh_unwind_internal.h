@@ -20,23 +20,31 @@ struct avm_eh_context {
     uint16_t exception; /* +13 exception header pointer for the landing pad */
 };
 
-/* Header that precedes each thrown object. The throw shim stores the throwing
- * frame's context and the type token and destructor, and the unwinder updates
- * the context in place. Keeping the context here, not in the throw frame, means
- * the throw path needs no stack-resident copy of it. */
+/* Header that precedes each thrown object. The context is the state installed
+ * when a landing pad is entered. The resume context is the frame cursor from
+ * which propagation continues, and it is kept in the header so that no unwind
+ * state lives on the guest stack. The throw shim stores the throwing frame's
+ * registers and the type token and destructor. */
 struct avm_eh_exception {
-    struct avm_eh_context context; /* +0  thrower state; exception = this header */
-    const void *type;              /* +15 type-descriptor token (r5) */
-    void (*destructor)(void *);    /* +17 program address (r6:r7) */
-    uint16_t size;                 /* +20 object size */
-    uint8_t state;                 /* +22 AVM_EH_STATE_* */
+    struct avm_eh_context context;        /* +0  landing state; exception = this header */
+    const void *type;                     /* +15 type-descriptor token (r5) */
+    void (*destructor)(void *);           /* +17 program address (r6:r7) */
+    uint16_t size;                        /* +20 object size */
+    uint8_t state;                        /* +22 AVM_EH_STATE_* */
+    struct avm_eh_context resume_context; /* +23 frame cursor for the next step */
 };
 
-/* Non-returning installer. Loads the landing pad, stack pointer, and r0-r3
- * from the context, then passes the exception header in r4 and selector 1 in
- * r5. */
+/* Results of avm_eh_prepare_next. A cleanup or catch step fills the header's
+ * context. */
+#define AVM_EH_STEP_INVALID 0
+#define AVM_EH_STEP_CLEANUP 1
+#define AVM_EH_STEP_CATCH   2
+
+/* Non-returning installer. Loads the landing pad, stack pointer, and r0-r3 from
+ * the context. It passes the exception header in r4 and the selector in r5: 0
+ * for a cleanup-only landing pad, and 1 for a catch-all handler. */
 __attribute__((noreturn)) void
-__avm_eh_install_context(const struct avm_eh_context *context);
+__avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector);
 
 /* Entry from the __cxa_throw shim, which tail-jumps here with the header in r4.
  * Searches for a handler and never returns. */
@@ -50,5 +58,12 @@ uint8_t avm_eh_validate_block(uint32_t block);
  * *context becomes the landing-pad state and the function returns 1. It
  * returns 0 when no handler exists or the metadata cannot describe a frame. */
 uint8_t avm_eh_find_handler(struct avm_eh_context *context);
+
+/* Advances the header's resume context to the next cleanup or handler. For a
+ * cleanup, the header's context becomes its landing state and the resume context
+ * moves to the cleanup's caller. For a handler, the context becomes its landing
+ * state and the resume context is left at the handler. Returns one of the
+ * AVM_EH_STEP values. */
+uint8_t avm_eh_prepare_next(struct avm_eh_exception *header);
 
 #endif /* AVM_EH_UNWIND_INTERNAL_H */

@@ -343,14 +343,123 @@ def unwind_checks(executable, unwind_dir, work):
           "and tail-call stops verified")
 
 
+def source_line(source, marker):
+    matches = [number for number, text in
+               enumerate(source.read_text().splitlines(), 1) if marker in text]
+    require(len(matches) == 1, f"marker {marker!r} is not unique in {source.name}")
+    return matches[0]
+
+
+def relax_debug_checks(executable, relax_image):
+    # The relaxed fixture stops inside an inlined body, after a relaxed call, and
+    # inside a callee, so each stop must name the physical and inlined frames.
+    source = Path(__file__).resolve().parent / "relax_debug_info_fixture.cpp"
+    require(source.is_file(), "missing relaxation fixture source")
+    mix_line = source_line(source, "if (result & 1) relax_debug_step(result);")
+    tail_line = source_line(source, "relax_debug_step(tail);")
+
+    output, _ = lldb(
+        executable, relax_image,
+        f"breakpoint set --file relax_debug_info_fixture.cpp --line {mix_line}",
+        "run", "thread backtrace", "avm stop")
+    require(f"relax_debug_info_fixture.cpp:{mix_line}" in output and
+            "relax_debug_mix" in output and "relax_debug_outer" in output,
+            "breakpoint inside an inlined relaxed range lost its scope")
+
+    output, _ = lldb(
+        executable, relax_image,
+        f"breakpoint set --file relax_debug_info_fixture.cpp --line {tail_line}",
+        "run", "thread backtrace", "avm stop")
+    require(f"relax_debug_info_fixture.cpp:{tail_line}" in output and
+            "relax_debug_outer" in output,
+            "breakpoint after relaxed calls resolved to the wrong line")
+
+    output, _ = lldb(
+        executable, relax_image,
+        "breakpoint set --name relax_debug_step", "run", "thread backtrace",
+        "avm stop")
+    require("relax_debug_step" in output and "relax_debug_outer" in output
+            and "`main" in output,
+            "callee of a relaxed call lost its physical backtrace")
+    print("AVM LLDB relaxation: inlined, post-call, and callee stops verified")
+
+
+# Each stop reads variables whose location list entry covers the stop address.
+# The fixture's input is the volatile 6 that main stores, so every expected value
+# is what the source computes: mixed = 6 ^ 3, scaled = 6 << 1, total = 5 + 12,
+# tail = 17 ^ 6, first = 6 + 1, second = 7 + 6, and the inlined fold results.
+RELAX_VARIABLE_STOPS = (
+    (0xe04, (("input", 6, "0x"),
+             ("*(volatile unsigned char *)$sp", 6, None))),
+    (0xe1c, (("seed", 6, "r0"),)),
+    (0xe48, (("seed", 6, "r0"), ("mixed", 5, "r1"))),
+    (0xe5c, (("scaled", 12, "r3"),)),
+    (0xe69, (("a", 17, "r1"), ("b", 6, "r0"))),
+    (0xe7a, (("total", 17, "r1"), ("tail", 23, "r0"))),
+    (0xe88, (("seed", 6, "r4"),)),
+    (0xe8e, (("seed", 6, "r0"),)),
+    (0xe97, (("folded", 7, "r2"), ("a", 6, "r0"))),
+    (0xea4, (("seed", 6, "r0"), ("first", 7, "r2"))),
+    (0xeab, (("folded", 13, "r0"),)),
+    (0xeba, (("second", 13, "r0"),)),
+)
+
+
+def relax_variable_checks(executable, relax_image):
+    """Reads known values from location lists, a stack slot, and inlined scopes."""
+    commands = [f"breakpoint set --address {address:#x}"
+                for address, _ in RELAX_VARIABLE_STOPS]
+    commands.append("run")
+    for index, (_, reads) in enumerate(RELAX_VARIABLE_STOPS):
+        commands.append("frame variable -L")
+        commands.extend(f"expr -- (unsigned){name}" for name, _, _ in reads)
+        if index + 1 < len(RELAX_VARIABLE_STOPS):
+            commands.append("continue")
+    output, _ = lldb(executable, relax_image, *commands)
+
+    # Each stop begins with its breakpoint report, so split the output per stop.
+    stops = re.split(r"(?=\* thread #1, stop reason = breakpoint )", output)[1:]
+    require(len(stops) == len(RELAX_VARIABLE_STOPS),
+            f"expected {len(RELAX_VARIABLE_STOPS)} variable stops, got {len(stops)}")
+    for index, ((address, reads), block) in enumerate(
+            zip(RELAX_VARIABLE_STOPS, stops)):
+        require(f"stop reason = breakpoint {index + 1}.1" in block,
+                f"variable stop {index + 1} was not breakpoint {index + 1}")
+        require(re.search(rf"frame #0: 0x0*{address:x} ", block),
+                f"variable stop at {address:#x} stopped elsewhere")
+        values = [int(value) for value in
+                  re.findall(r"\(unsigned int\) \$\d+ = (\d+)", block)]
+        require(values == [expected for _, expected, _ in reads],
+                f"values at {address:#x} were {values}, expected "
+                f"{[expected for _, expected, _ in reads]}")
+        for name, _, location in reads:
+            if location is None:
+                continue
+            match = re.search(rf"^(\S*): .*\) {re.escape(name)} = ", block,
+                              re.MULTILINE)
+            require(match is not None and match.group(1).startswith(location),
+                    f"{name} at {address:#x} is not located at {location}")
+
+    # Stop at the entry of relax_debug_outer, where seed starts in r4 and moves.
+    output, _ = lldb(executable, relax_image, "breakpoint set --address 0xe16",
+                     "run", "frame variable -L", "expr -- (unsigned)seed")
+    require("r4: (uint8_t) seed" in output and "(unsigned int) $0 = 6" in output,
+            "seed at relax_debug_outer entry was not in r4 with value 6")
+    print("AVM LLDB relaxation: location-list, stack, and inlined values verified")
+
+
 def main():
-    executable, c_image, cpp_image, unwind_dir, work = map(Path, sys.argv[1:6])
-    require(executable.is_file() and c_image.is_file() and cpp_image.is_file(),
+    executable, c_image, cpp_image, unwind_dir, work, relax_image = map(
+        Path, sys.argv[1:7])
+    require(executable.is_file() and c_image.is_file() and cpp_image.is_file()
+            and relax_image.is_file(),
             "missing debugger or debug fixture")
     work.mkdir(parents=True, exist_ok=True)
 
     launch_route_checks(executable, c_image, work)
     unwind_checks(executable, unwind_dir, work)
+    relax_debug_checks(executable, relax_image)
+    relax_variable_checks(executable, relax_image)
 
     output, records = lldb(
         executable, c_image,

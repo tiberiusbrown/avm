@@ -1008,6 +1008,63 @@ if(Python3_Interpreter_FOUND)
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         USES_TERMINAL VERBATIM)
     add_dependencies(avm_tests_run avm_unwind_cfi_selftest)
+    # The relaxation fixture is linked with and without relaxation. Its verifier
+    # checks that the relaxed DWARF agrees with the relaxed instruction layout
+    # after confirming that inlining and relaxation both happened.
+    set(AVM_RELAX_DEBUG_DIR "${CMAKE_CURRENT_BINARY_DIR}/relax_debug_info")
+    avm_add_object(
+        OUTPUT "${AVM_RELAX_DEBUG_DIR}/fixture.o"
+        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/relax_debug_info_fixture.cpp"
+        LANGUAGE CXX
+        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+        COMPILE_OPTIONS -g -O2 -flto -fomit-frame-pointer
+        DEPENDS avm_sysroot)
+    # The base unit holds a single function, so its compile unit has one range and
+    # a nonzero DW_AT_low_pc. Its location lists must select a zero base first.
+    avm_add_object(
+        OUTPUT "${AVM_RELAX_DEBUG_DIR}/base.o"
+        SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/relax_debug_info_base.cpp"
+        LANGUAGE CXX
+        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+        COMPILE_OPTIONS -g -O2 -flto -fomit-frame-pointer
+        DEPENDS avm_sysroot)
+    avm_add_image(
+        OBJECTS "${AVM_RELAX_DEBUG_DIR}/fixture.o"
+                "${AVM_RELAX_DEBUG_DIR}/base.o"
+        OUTPUT_ELF "${AVM_RELAX_DEBUG_DIR}/relaxed.elf"
+        OUTPUT_IMAGE "${AVM_RELAX_DEBUG_DIR}/relaxed.bin"
+        ENTRY _start
+        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+        LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a"
+                  "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        GC_SECTIONS
+        DEPENDS avm_sysroot)
+    avm_add_image(
+        OBJECTS "${AVM_RELAX_DEBUG_DIR}/fixture.o"
+                "${AVM_RELAX_DEBUG_DIR}/base.o"
+        OUTPUT_ELF "${AVM_RELAX_DEBUG_DIR}/norelax.elf"
+        OUTPUT_IMAGE "${AVM_RELAX_DEBUG_DIR}/norelax.bin"
+        ENTRY _start
+        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+        LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a"
+                  "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        GC_SECTIONS
+        LINK_OPTIONS --no-relax
+        DEPENDS avm_sysroot)
+    add_custom_target(avm_relax_debug_info_verify
+        COMMAND "${Python3_EXECUTABLE}" -I
+            "${CMAKE_CURRENT_SOURCE_DIR}/debug/relax_debug_info_verify.py"
+            --llvm-dwarfdump "$<TARGET_FILE:llvm-dwarfdump>"
+            --llvm-objdump "$<TARGET_FILE:llvm-objdump>"
+            --llvm-nm "$<TARGET_FILE:llvm-nm>"
+            --relaxed "${AVM_RELAX_DEBUG_DIR}/relaxed.elf"
+            --norelax "${AVM_RELAX_DEBUG_DIR}/norelax.elf"
+        DEPENDS "${AVM_RELAX_DEBUG_DIR}/relaxed.elf"
+                "${AVM_RELAX_DEBUG_DIR}/norelax.elf"
+                llvm-dwarfdump llvm-objdump llvm-nm
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
+    add_dependencies(avm_tests_run avm_relax_debug_info_verify)
     add_custom_target(avm_prof_integration_run
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/debug/prof_integration.py"
@@ -1032,7 +1089,9 @@ if(Python3_Interpreter_FOUND)
             "${AVM_DEBUG_CPP_DIR}/fixture.elf"
             "${AVM_UNWIND_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}/debug"
+            "${AVM_RELAX_DEBUG_DIR}/relaxed.elf"
         DEPENDS avm_lldb avm_debug_images avm_debug_cpp_verify avm_unwind_images
+                "${AVM_RELAX_DEBUG_DIR}/relaxed.elf"
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         USES_TERMINAL VERBATIM)
     add_custom_target(avm_lldb_long_replay_run

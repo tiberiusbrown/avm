@@ -197,6 +197,9 @@ AVM boundary; `fault_cycle` identifies the later AVR cycle of the fault.
   provides reliable parameter values.
 - Optimized builds may have variables with no valid DWARF location; LLDB
   reports them unavailable or optimized out.
+- After a breakpoint stop, `continue` does not report a breakpoint on the
+  instruction that executes next, and the guest runs past it. A breakpoint on
+  an instruction two or more steps later is reported.
 - The installed SDK and integration gates have been exercised on Windows with
   the configured MSVC toolchain. Unix SDK installation and host-specific LLDB
   behavior have not been verified in this checkout.

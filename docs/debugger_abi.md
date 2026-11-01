@@ -142,6 +142,16 @@ Full host-side debugging uses the linked ELF. Its `.symtab`, DWARF
 CFI and location rules above, describe frames, variables, and source positions.
 The host debugger reads these files directly.
 
+Every code address in `.debug_info`, `.debug_ranges`, `.debug_loc`, and
+`.debug_line` is a three-byte absolute operand with an `R_AVM_DEBUG24`
+relocation. Linker relaxation shortens instructions after assembly, so a
+difference between two labels in the same section would be a constant that no
+relocation can update. DWARF 4 range and location lists are relative to the
+compile unit's base address, so each list that needs one starts with a base
+address entry of zero. The linker moves each address by the bytes removed
+before its original target, and a reference to a defined code symbol with an
+addend is translated from the symbol's original offset plus that addend.
+
 On-device crash metadata is a different, compact representation. It is the
 `AVD1` block described in [arch.md](arch.md) Section 69.2. The image packer
 includes it in every image by default, so it is a normal part of the image

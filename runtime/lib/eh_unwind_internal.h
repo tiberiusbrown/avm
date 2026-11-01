@@ -24,14 +24,16 @@ struct avm_eh_context {
  * when a landing pad is entered. The resume context is the frame cursor from
  * which propagation continues, and it is kept in the header so that no unwind
  * state lives on the guest stack. The throw shim stores the throwing frame's
- * registers and the type token and destructor. */
+ * registers, the type-descriptor program address, and the destructor program
+ * address. The two program addresses are 24-bit, so they are stored as bytes
+ * and never as 16-bit data pointers. */
 struct avm_eh_exception {
     struct avm_eh_context context;        /* +0  landing state; exception = this header */
-    const void *type;                     /* +15 type-descriptor token (r5) */
-    void (*destructor)(void *);           /* +17 program address (r6:r7) */
-    uint16_t size;                        /* +20 object size */
-    uint8_t state;                        /* +22 AVM_EH_STATE_* */
-    struct avm_eh_context resume_context; /* +23 frame cursor for the next step */
+    uint8_t type_address[3];              /* +15 type-descriptor program address (r6:r7) */
+    void (*destructor)(void *);           /* +18 program address (stack argument) */
+    uint16_t size;                        /* +21 object size */
+    uint8_t state;                        /* +23 AVM_EH_STATE_* */
+    struct avm_eh_context resume_context; /* +24 frame cursor for the next step */
 };
 
 /* Results of avm_eh_prepare_next. A cleanup or catch step fills the header's

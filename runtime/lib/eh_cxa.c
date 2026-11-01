@@ -7,19 +7,20 @@
  * at the first unsupported call.
  *
  * The header precedes the thrown object and holds the landing context, the
- * resume context, the type token, and the destructor. The unwinder updates both
- * contexts in place. Propagation alternates between cleanup and resume: each
- * cleanup pad runs its destructors and then calls _Unwind_Resume, which continues
- * from the saved resume context. __cxa_end_catch frees the header. The shim that
- * fills the header is in eh_cxa_throw.asm.
+ * resume context, the type-descriptor address, and the destructor. The unwinder
+ * updates both contexts in place. Propagation alternates between cleanup and
+ * resume: each cleanup pad runs its destructors and then calls _Unwind_Resume,
+ * which continues from the saved resume context. __cxa_end_catch frees the
+ * header. The shim that fills the header is in eh_cxa_throw.asm.
  *
- * Type descriptors are opaque tokens here. Each _ZTI symbol is a one-byte
- * placeholder whose address is the token, so catch-all code never reads it.
- * Typed matching will need a flash-resident RTTI layout, and it must not reuse
- * these placeholders. */
+ * The type-descriptor address is a 24-bit program address that the runtime
+ * stores but never reads. Typed matching is not implemented, so the descriptors
+ * in flash are not interpreted here. */
 
+#include <avm/pgmspace.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "eh_unwind_internal.h"
 
@@ -38,28 +39,34 @@
  * __cxa_end_catch. */
 static struct avm_eh_exception *active_exception;
 
-/* Opaque type-descriptor tokens for the scalar types that the tests throw. Their
- * addresses are the only values compared. */
-const char _ZTIi[1] = {0};
-
-/* A class type descriptor names this vtable, so a class thrown by value links
- * without RTTI. The descriptor is compared by address and never read, so the
- * vtable is only a placeholder with the address that the descriptor needs. */
-const char _ZTVN10__cxxabiv117__class_type_infoE[8] = {0};
+/* Itanium RTTI support vtables for the descriptors that Clang emits. A descriptor
+ * refers to the address point, which lies two 24-bit entries past the symbol,
+ * so each object begins with those two entries. One reserved entry follows the
+ * address point, which keeps the point inside its own object, so no two vtables
+ * can share an address point. Nothing reads these entries or calls them yet, and
+ * they are zero. They live in program space, where the descriptors and their
+ * vtable references are placed. */
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv123__fundamental_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__class_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv120__si_class_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv121__vmi_class_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv119__pointer_type_infoE[9] = {0};
 
 /* eh_cxa_throw.asm stores the header fields at these offsets, and it computes the
  * object address from the header size. Keep it in sync with this layout. */
-_Static_assert(sizeof(struct avm_eh_exception) == 38,
-               "__cxa_throw assumes a 38-byte exception header");
-_Static_assert(offsetof(struct avm_eh_exception, type) == 15,
-               "exception type offset");
-_Static_assert(offsetof(struct avm_eh_exception, destructor) == 17,
+_Static_assert(sizeof(struct avm_eh_exception) == 39,
+               "__cxa_throw assumes a 39-byte exception header");
+_Static_assert(offsetof(struct avm_eh_exception, context) == 0,
+               "exception context offset");
+_Static_assert(offsetof(struct avm_eh_exception, type_address) == 15,
+               "exception type address offset");
+_Static_assert(offsetof(struct avm_eh_exception, destructor) == 18,
                "exception destructor offset");
-_Static_assert(offsetof(struct avm_eh_exception, size) == 20,
+_Static_assert(offsetof(struct avm_eh_exception, size) == 21,
                "exception size offset");
-_Static_assert(offsetof(struct avm_eh_exception, state) == 22,
+_Static_assert(offsetof(struct avm_eh_exception, state) == 23,
                "exception state offset");
-_Static_assert(offsetof(struct avm_eh_exception, resume_context) == 23,
+_Static_assert(offsetof(struct avm_eh_exception, resume_context) == 24,
                "exception resume context offset");
 
 void *__cxa_allocate_exception(size_t size) {
@@ -69,7 +76,7 @@ void *__cxa_allocate_exception(size_t size) {
         malloc(sizeof(struct avm_eh_exception) + size);
     if (!header)
         abort();
-    header->type = NULL;
+    memset(header->type_address, 0, sizeof header->type_address);
     header->destructor = NULL;
     header->size = (uint16_t)size;
     header->state = AVM_EH_STATE_ALLOCATED;

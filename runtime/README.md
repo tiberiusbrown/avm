@@ -482,8 +482,11 @@ The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, and
 them only when it references one of their symbols. The C++ ABI subset provides
 `__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`,
 `__cxa_begin_catch`, `__cxa_end_catch`, `_Unwind_Resume`, `__gxx_personality_v0`,
-`std::terminate`, and placeholder descriptors for `int` and for a class type. The
-descriptors are compared by address and never read.
+`std::terminate`. The runtime defines the Itanium support vtables that the
+descriptors name, in program space: `__class_type_info`, `__fundamental_type_info`,
+`__si_class_type_info`, `__vmi_class_type_info`, and `__pointer_type_info`. Each is
+a nine-byte object whose address point lies six bytes in. The descriptors themselves
+are emitted by the compiler into program flash; see [arch.md](arch.md) Section 60.1.
 
 Propagation has two phases. Phase one searches the frames from the throw for a
 catch-all handler, and it runs no destructor. If no frame has one, the program
@@ -493,10 +496,12 @@ continues from the caller that the pad saved. The handler is entered last with
 selector 1, and it calls `__cxa_begin_catch`. `__cxa_end_catch` destroys the
 exception object and frees it. A cleanup pad never ends the exception.
 
-`__cxa_throw` is a frameless shim. It stores the throw site into the exception
-header, which lies 38 bytes below the object, and then tail-transfers to
-`__avm_eh_throw`. The header holds the landing context, the type token, the
-destructor, the size, the lifecycle state, and the resume cursor. The landing SP
+`__cxa_throw` is a frameless shim. It takes the object in r4, the type-descriptor
+program address in r6:r7, and the destructor program address as a three-byte stack
+argument. It stores the throw site into the exception header, which lies 39 bytes
+below the object, and then tail-transfers to `__avm_eh_throw`. The header holds the
+landing context, the 24-bit type-descriptor address, the 24-bit destructor address,
+the size, the lifecycle state, and the resume cursor. The landing SP
 of each pad is the caller SP at the call plus the call's outgoing argument bytes.
 A frame that uses r3 as its CFA base keeps its dynamic allocations, because the SP
 never comes from r3. Call records match the exact return PC.

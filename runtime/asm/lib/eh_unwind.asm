@@ -2179,7 +2179,7 @@ Disassembly of section .text.avm_eh_prepare_next:
  d6 e8                 adjsp	-0x18
  04                    mov	r5, r4
  f1 05                 mov	r0, r5
- f0 08 17              addi.s8	r0, 0x17
+ f0 08 18              addi.s8	r0, 0x18
  c4 00 f6              ldi16	r4, 0xf600
  f4 58                 stsp16	[sp+0x6], r4
  a0                    xor	r4, r4
@@ -2187,7 +2187,7 @@ Disassembly of section .text.avm_eh_prepare_next:
  c4 00 ff              ldi16	r4, 0xff00
  f4 68                 stsp16	[sp+0xa], r4
  f0 3d 10              stsp16	[sp+0x10], r5
- c9 19                 addi.s8	r5, 0x19
+ c9 1a                 addi.s8	r5, 0x1a
  f4 51                 stsp16	[sp+0x4], r5
  f0 38 16              stsp16	[sp+0x16], r0
  e2 00 00 00           jmpf	avm_eh_prepare_next

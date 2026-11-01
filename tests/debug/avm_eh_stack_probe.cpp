@@ -55,6 +55,9 @@ struct options_t {
     std::string stop_at;
     std::string measure_from;
     unsigned trace_tail = 0;
+    // Bytes of guest RAM to print at the address in r4 for each snapshot. The
+    // exception runtime passes the header in r4, so this reads the captured fields.
+    unsigned snapshot_bytes = 0;
 };
 
 std::string read_text(fs::path const& path)
@@ -348,7 +351,17 @@ int run(options_t const& options)
                                       uint32_t(cpu.data[(sp + 1) & 0xffff]) << 8 |
                                       uint32_t(cpu.data[(sp + 2) & 0xffff]) << 16;
                     std::cout << " record=0x" << std::setw(6) << std::setfill('0')
-                              << record << std::setfill(' ') << std::dec << '\n';
+                              << record << std::setfill(' ') << std::dec;
+                    // The bytes are printed in address order, two hex digits each.
+                    if(options.snapshot_bytes) {
+                        std::cout << " bytes=" << std::hex << std::setfill('0');
+                        uint32_t const base = sample.regs[4];
+                        for(unsigned i = 0; i < options.snapshot_bytes; ++i)
+                            std::cout << std::setw(2)
+                                      << unsigned(cpu.data[(base + i) & 0xffff]);
+                        std::cout << std::setfill(' ') << std::dec;
+                    }
+                    std::cout << '\n';
                 }
             }
         }
@@ -431,6 +444,8 @@ options_t parse(int argc, char** argv)
         else if(arg == "--elf") options.elf = value();
         else if(arg == "--cycle-limit") options.cycle_limit = std::stoull(value());
         else if(arg == "--snapshot") options.snapshots.push_back(value());
+        else if(arg == "--snapshot-bytes")
+            options.snapshot_bytes = unsigned(std::stoul(value()));
         else if(arg == "--trace-tail") options.trace_tail = unsigned(std::stoul(value()));
         else if(arg == "--stop-at") options.stop_at = value();
         else if(arg == "--measure-from") options.measure_from = value();

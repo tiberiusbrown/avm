@@ -129,7 +129,7 @@ unwind table, and it does not describe variables or locations.
 A landing pad is entered in one of two ways, and a debugger sees both through the
 installer. Selector 0 in r5 enters a cleanup pad, which runs destructors and then
 calls `_Unwind_Resume`. Selector 1 enters the handler, which calls
-`__cxa_begin_catch`. In both cases r4 holds the exception header, which is 38 bytes
+`__cxa_begin_catch`. In both cases r4 holds the exception header, which is 39 bytes
 and lies below the thrown object. Its first 15 bytes are the landing context, and
 its last 15 bytes are the resume cursor that the next `_Unwind_Resume` continues
 from. The landing SP is the call-site SP plus the call's outgoing argument bytes.

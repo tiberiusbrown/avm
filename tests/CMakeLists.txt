@@ -301,6 +301,8 @@ foreach(AVM_TEST_ASM IN LISTS AVM_EH_ASM_TEST_SOURCES)
     list(APPEND AVM_EH_TEST_IMAGES "${AVM_TEST_IMAGE}")
 endforeach()
 
+# Headers that exception fixtures include from their support translation units.
+set(AVM_EH_SUPPORT_HEADERS "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity.h")
 foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
     get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
     foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
@@ -315,10 +317,38 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
             SOURCE "${AVM_TEST_SOURCE_FILE}"
             LANGUAGE CXX
             COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
-            DEPENDS avm_sysroot
+            DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
         )
+        set(AVM_EH_IMAGE_OBJECTS "${AVM_TEST_OBJECT}")
+        set(AVM_EH_IMAGE_LINK_OPTIONS)
+        if(AVM_TEST_NAME STREQUAL "eh_rtti_identity")
+            # The second unit throws the same class, so its descriptor must
+            # merge with the one emitted by the main unit.
+            set(AVM_EH_UNIT_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_unit.o")
+            avm_add_object(
+                OUTPUT "${AVM_EH_UNIT_OBJECT}"
+                SOURCE "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity_unit.cpp"
+                LANGUAGE CXX
+                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
+                DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+            )
+            list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
+        elseif(AVM_TEST_NAME STREQUAL "eh_rtti_high_address")
+            # Put the descriptors and the destructor above 0xFFFF. The image keeps
+            # its data and ordinary code below 64 KiB, as the other high-address
+            # fixtures do. Explicit section starts replace the AVM default layout,
+            # which would define __avm_heap_start after .data, so the heap start is
+            # given here. The 16 bytes of .data end at 0x110.
+            list(APPEND AVM_EH_IMAGE_LINK_OPTIONS
+                "--image-base=0x100"
+                "--section-start=.data=0x100"
+                "--section-start=.text=0x200"
+                "--section-start=.rodata=0x10000"
+                "--section-start=.high_far_text=0x11000"
+                "--defsym=__avm_heap_start=0x110")
+        endif()
         avm_add_image(
-            OBJECTS "${AVM_TEST_OBJECT}"
+            OBJECTS ${AVM_EH_IMAGE_OBJECTS}
             OUTPUT_ELF "${AVM_TEST_ELF}"
             OUTPUT_IMAGE "${AVM_TEST_IMAGE}"
             ENTRY _start
@@ -326,6 +356,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
             LIBRARIES
                 "${AVM_SYSROOT_DIR}/lib/libavm.a"
                 "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+            LINK_OPTIONS ${AVM_EH_IMAGE_LINK_OPTIONS}
             GC_SECTIONS
             DEPENDS avm_sysroot
         )
@@ -350,7 +381,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 # in their own image directory, so the runners select them with --cpp-bin-dir.
 set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
 set(AVM_EH_LTO_IMAGES)
-foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup)
+foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object)
     set(AVM_EH_LTO_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.o")
     set(AVM_EH_LTO_ELF "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.elf")
     set(AVM_EH_LTO_IMAGE "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.bin")
@@ -379,7 +410,12 @@ endforeach()
 add_custom_target(avm_eh_catch_all_lto_run
     COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_catch_all$" --opt O2
         --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    # A class-typed throw whose destructor is passed to __cxa_throw. Its
+    # descriptor and destructor are program addresses, and LTO must keep them.
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_cleanup_object$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
     DEPENDS avm_tests "${AVM_EH_LTO_BIN_DIR}/O2/eh_catch_all.bin"
+        "${AVM_EH_LTO_BIN_DIR}/O2/eh_cleanup_object.bin"
     VERBATIM
 )
 
@@ -391,6 +427,49 @@ add_custom_target(avm_eh_metadata_verify
         ${AVM_EH_VERIFY_ARGS}
         --no-eh-elf "${AVM_EH_NO_THROW_ELF}" --no-eh-image "${AVM_EH_NO_THROW_IMAGE}"
     DEPENDS avm_eh_catch_all_images llvm-avm-image
+    VERBATIM
+)
+
+# Flash-resident RTTI: program-space placement, descriptor pointers, one descriptor
+# per type across translation units, every class hierarchy form, and the header
+# captured by a throw whose descriptor and destructor lie above 0xFFFF.
+set(AVM_EH_RTTI_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rtti_verify.py")
+add_custom_target(avm_eh_rtti_verify
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup_object.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup_object.bin"
+        --expect _ZTIN12_GLOBAL__N_16ThrownE
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_cleanup_object.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_cleanup_object.bin"
+        --expect _ZTIN12_GLOBAL__N_16ThrownE
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_cleanup_object.elf"
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_cleanup_object.bin"
+        --expect _ZTIN12_GLOBAL__N_16ThrownE
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_rtti_identity.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_rtti_identity.bin"
+        --expect _ZTI6Shared --expect _ZTI8Distinct
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_rtti_hierarchy.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_rtti_hierarchy.bin"
+        --expect _ZTIN12_GLOBAL__N_15PlainE --expect _ZTIN12_GLOBAL__N_15BaseAE
+        --expect _ZTIN12_GLOBAL__N_15BaseBE --expect _ZTIN12_GLOBAL__N_16SingleE
+        --expect _ZTIN12_GLOBAL__N_18MultipleE --expect _ZTIN12_GLOBAL__N_111PolymorphicE
+        --expect _ZTIN12_GLOBAL__N_111VirtualBaseE
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_rtti_high_address.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_rtti_high_address.bin"
+        --expect _ZTIN12_GLOBAL__N_13FarE --high _ZTIN12_GLOBAL__N_13FarE
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --thrown-type _ZTIN12_GLOBAL__N_13FarE
+        --destructor _ZN12_GLOBAL__N_13FarD2Ev --size 2
+    DEPENDS avm_eh_catch_all_images ${AVM_EH_LTO_IMAGES} avm_eh_stack_probe
+        llvm-avm-image
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
 )
 
@@ -544,7 +623,7 @@ add_custom_target(avm_eh_cleanup_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
 )
-add_dependencies(avm_eh_catch_all_run avm_eh_cleanup_run)
+add_dependencies(avm_eh_catch_all_run avm_eh_cleanup_run avm_eh_rtti_verify)
 
 # The runner discovers ASM, C, and C++ sources, maps each source to its adjacent
 # name_output.txt file and corresponding generated image, loads the interpreter

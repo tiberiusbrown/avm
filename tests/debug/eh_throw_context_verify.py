@@ -48,7 +48,11 @@ def verify(args):
     throws = landing.throwing_calls(listing, ['__cxa_throw'])
     landing.check(len(throws) == 1, 'expected one __cxa_throw call in %s' % args.thrower)
     throw_pc, return_pc, _, outgoing = throws[0]
-    landing.check(outgoing == 0, 'the throw call has stack arguments')
+    # The type descriptor travels in r6:r7, and the destructor is the only stack
+    # argument, a three-byte program address that is null for a trivial type.
+    landing.check(outgoing == 3,
+                  'the throw call passes %d stack bytes, expected the 3-byte destructor'
+                  % outgoing)
     mnemonic = next(line.split()[1] for line in listing
                     if line.lstrip().startswith('%x:' % throw_pc))
 

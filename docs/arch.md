@@ -5507,15 +5507,17 @@ The initial C++ environment supports:
 - Function overloading.
 
 Exceptions are disabled by default, and an explicit `-fexceptions` enables the
-exception runtime in [Section 69.3](#693-exception-metadata-aveh3). RTTI,
-ordinary C++ allocation operators, and thread-local storage remain disabled.
+exception runtime in [Section 69.3](#693-exception-metadata-aveh3). Typed
+`typeid` and `dynamic_cast` remain unavailable because RTTI is disabled, and
+ordinary C++ allocation operators and thread-local storage remain disabled. The
+exception type descriptors of [Section 60.1](#601-flash-resident-rtti) are present
+in any program that throws.
 
 AVM vtables and construction vtables reside in AS1 program memory. An object's
 vptr is a 24-bit AS1 pointer to the vtable address point. Every vtable
-component occupies three little-endian bytes: function entries hold a 24-bit
-program address, signed offsets use 24-bit two's-complement form, and data
-addresses (including an RTTI address if one is emitted) occupy the low two
-bytes with a zero high byte. Virtual calls load function entries with `LDP24`.
+component occupies three little-endian bytes: function entries and RTTI descriptor
+addresses hold 24-bit program addresses, and signed offsets use 24-bit
+two's-complement form. Virtual calls load function entries with `LDP24`.
 Virtual member-function pointers encode a byte offset in this three-byte
 layout. VTTs also reside in AS1 and contain 24-bit vtable address points.
 
@@ -5613,6 +5615,54 @@ contracts are authoritative.
 
 Zero-initialized AS0 globals in either `.saved` or `.data` are emitted with
 explicit zero initializer bytes.
+
+### 60.1. Flash-resident RTTI
+
+With `-fexceptions`, Clang emits an Itanium type descriptor for each type that a
+`throw` names. Each descriptor, and its mangled type-name string, is an AS1
+constant in program flash, so neither occupies RAM. Descriptors and names are
+`linkonce_odr` with COMDAT groups, so the linker keeps one copy of each type's
+descriptor even when several translation units throw that type, and distinct types
+keep distinct descriptors. The fundamental-type descriptors that the standard
+library would otherwise supply, such as `_ZTIi`, are emitted by each translation
+unit that throws them.
+
+Every pointer field is a 24-bit program address in three little-endian bytes. The
+layouts are:
+
+| Descriptor | Layout | Size |
+|---|---|---:|
+| Class without bases, and fundamental types | vtable address point, type name | 6 bytes |
+| Single public nonvirtual base | vtable address point, type name, base descriptor | 9 bytes |
+| Multiple or virtual bases | vtable address point, type name, `u16` flags, `u16` base count, then per base a base descriptor and a 32-bit offset-and-flags word | 10 bytes, plus 7 per base |
+
+The vtable address point is the vtable symbol plus six: two 24-bit entries precede
+it, as in every AVM vtable. Clang names that address point with
+`getelementptr` over a zero-length AS1 array declaration and does not mark the
+address calculation `inbounds`, because the vtable's length is not known to the
+translation unit. The runtime defines each support vtable as a nine-byte object,
+which keeps its address point inside the object (see [runtime/README.md](../runtime/README.md)).
+
+The runtime defines the support vtables that descriptors name in program space:
+`__class_type_info`, `__fundamental_type_info`, `__si_class_type_info`,
+`__vmi_class_type_info`, and `__pointer_type_info`. The descriptors are not
+interpreted. Typed catch matching, `typeid`, `dynamic_cast`, and base-class
+adjustment are not implemented, so an exception matches only a catch-all handler.
+
+### 60.2. Throw ABI
+
+`__cxa_throw` takes the thrown object's address in `r4`, the type-descriptor program
+address in the register pair `r6:r7`, and the destructor's program address as a
+three-byte stack argument. A 16-bit object pointer occupies `r4`, so `r5` is left
+unused: the next 24-bit program address aligns to `r6:r7`, and the one after it
+goes to the stack. On entry the destructor occupies `SP+3..5`, after the 3-byte
+return record. A null destructor address is passed for a type with a trivial
+destructor. The compiler declares the function as
+`__cxa_throw(ptr, ptr addrspace(1), ptr addrspace(1))`, so the call site and the
+declaration agree.
+
+The shim stores both program addresses in the 39-byte exception header
+([Section 69.3](#693-exception-metadata-aveh3)).
 
 ---
 
@@ -6720,22 +6770,24 @@ and decodes the packed sites independently of the packer.
 
 #### Exception object and landing contract
 
-`__cxa_allocate_exception` returns the object, which lies 38 bytes above its
+`__cxa_allocate_exception` returns the object, which lies 39 bytes above its
 header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_internal.h`:
 
 | Offset | Size | Field | Contents |
 |---:|---:|---|---|
 | 0 | 15 | `context` | Landing state: SP, program address, r0-r3, and the header |
-| 15 | 2 | `type` | Type token |
-| 17 | 3 | `destructor` | Destructor program address, or zero |
-| 20 | 2 | `size` | Object size |
-| 22 | 1 | `state` | Lifecycle state |
-| 23 | 15 | `resume_context` | Frame cursor for the next step of propagation |
+| 15 | 3 | `type_address` | Type-descriptor program address (r6:r7), 24 bits |
+| 18 | 3 | `destructor` | Destructor program address (stack argument), or zero |
+| 21 | 2 | `size` | Object size |
+| 23 | 1 | `state` | Lifecycle state |
+| 24 | 15 | `resume_context` | Frame cursor for the next step of propagation |
 
-The header is 38 bytes. The `__cxa_throw` shim captures the throwing frame into
-`context` and stores the type token and destructor. The unwinder then copies
-`context` into `resume_context`, and the two cursors move as described below. The
-header is heap memory, so each thrown exception costs 38 bytes, not 23.
+The header is 39 bytes. The `__cxa_throw` shim captures the throwing frame into
+`context` and stores the type-descriptor and destructor program addresses, each in
+three bytes so that the high byte is kept. The runtime does not read the descriptor.
+The unwinder then copies `context` into `resume_context`, and the two cursors move
+as described below. The header is heap memory, so each thrown exception costs 39
+bytes.
 
 The header's address is the exception pointer. A landing pad receives it in r4,
 and the installer passes the selector in r5. Selector 0 enters a cleanup-only pad,
@@ -6854,43 +6906,60 @@ times, and its runtime figure includes the deepest of those throws.
 
 | Fixture | Opt | Before total | Before runtime | After total | After runtime |
 |---|---|---:|---:|---:|---:|
-| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 125 | 101 | 137 | 113 |
-| `eh_catch_all` | O2 | 105 | 83 | 117 | 95 |
-| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 181 | 79 | 193 | 91 |
-| `eh_dynamic_handler` | O2 | 149 | 79 | 161 | 91 |
-| `eh_unhandled` | O0, O2 | 89 | 76 | 91 | 78 |
-| `eh_cleanup` (cleanup chains, combined pad, partial construction) | O0 | N/A | N/A | 184 | 114 |
-| `eh_cleanup` | O2 | N/A | N/A | 140 | 116 |
+| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 137 | 113 | 140 | 113 |
+| `eh_catch_all` | O2 | 117 | 95 | 120 | 95 |
+| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 193 | 91 | 196 | 91 |
+| `eh_dynamic_handler` | O2 | 161 | 91 | 164 | 91 |
+| `eh_unhandled` | O0, O2 | 91 | 78 | 94 | 78 |
+| `eh_cleanup` (cleanup chains, combined pad, partial construction) | O0 | 184 | 114 | 187 | 114 |
+| `eh_cleanup` | O2 | 140 | 116 | 143 | 116 |
 
-The "before" columns are measured on the runtime before this change, and the
-"after" columns are measured on the current runtime. The lowest SP of any fixture is `0x093f`,
-which leaves at least 63 bytes of the window. The phase-two dispatch is one frame
-shallower than it would be with a separate `__avm_eh_continue`, and its searcher
-frame is about 12 bytes larger than before, which is the cost of the second cursor
-and the landing helper.
+The "before" columns are measured before the flash-resident RTTI change, and the
+"after" columns are measured on the current runtime. Each throw site now reserves
+three bytes for the destructor argument, so each total rises by exactly three. The
+runtime column is unchanged, because the runtime window begins inside the shim. The
+lowest SP of any fixture is `0x093c`, which leaves at least 60 bytes of the window.
+
+The flash-resident RTTI change, measured on `eh_cleanup_object` at O2 with the
+pre-change runtime and compiler output as the baseline:
+
+| Metric | Before | After | Delta |
+|---|---:|---:|---:|
+| Exception header | 38 B | 39 B | +1 B per thrown exception |
+| Class RTTI in `.data`: descriptor, name, and vtable placeholder | 36 B | 0 B | -36 B |
+| Class RTTI in program flash (`.rodata`) | 0 B | 39 B | +39 B |
+| Persistent RAM, `.data` section | 52 B | 16 B | -36 B |
+| EH runtime text, linked from the runtime objects | 3323 B | 3353 B | +30 B |
+| Guest stack peak, whole program | 109 B | 112 B | +3 B |
+| Emulated cycles to complete the fixture | 6446334 | 6468947 | +0.35% |
+| Packed image, flash-paged to 256 bytes | 14848 B | 14848 B | 0 |
 
 Code and metadata, from the linked images:
 
 | Metric | Before | After | Delta |
 |---|---:|---:|---:|
-| EH runtime text in the linked `eh_catch_all` image | 2437 | 2772 | +335 |
-| Of which `avm_eh_prepare_next` (phase two) | 0 | 294 | +294 |
-| Metadata, O2 `eh_catch_all` (functions, rows, sites, calls) | 2246 (38, 150, 18, 26) | 2255 (38, 151, 18, 26) | +9 |
-| Metadata, O0 `eh_catch_all` (functions, rows, sites, calls) | 2410 (40, 176, 18, 26) | 2419 (40, 177, 18, 26) | +9 |
-| Image, O2 `eh_catch_all` | 15872 | 16384 | +512 |
-| Image, O0 `eh_catch_all` | 16640 | 16896 | +256 |
-| Image, O2 `eh_dynamic_handler` | 14592 | 15104 | +512 |
-| Image, O0 `eh_dynamic_handler` | 14848 | 15360 | +512 |
-| Exception header | 23 B | 38 B | +15 B per exception |
-| Persistent RAM, runtime state (`active_exception` and the `_ZTIi` token) | 3 B | 3 B | 0 |
+| AVEH3 block, O2 `eh_cleanup_object` (functions, rows, sites, calls) | 1628 (23, 128, 5, 6) | 1678 (23, 134, 5, 6) | +50 |
+| AVEH3 block, O2 `eh_catch_all` (functions, rows, sites, calls) | 2255 (38, 151, 18, 26) | 2329 (38, 161, 18, 26) | +74 |
+| AVEH3 block, O0 `eh_catch_all` (functions, rows, sites, calls) | 2419 (40, 177, 18, 26) | 2503 (40, 189, 18, 26) | +84 |
+| Image, O2 `eh_catch_all` | 16384 | 16640 | +256 |
+| Image, O0 `eh_catch_all` | 16896 | 17152 | +256 |
+| Image, O2 `eh_dynamic_handler` | 15104 | 15104 | 0 |
+| Image, O0 `eh_dynamic_handler` | 15360 | 15360 | 0 |
+
+Each `__cxa_throw` call now reserves the three-byte destructor argument, which
+changes the SP that the unwind rows describe at those calls. The rows grow by
+roughly seven bytes each in the AVEH3 block. The format and its record checks are
+unchanged. The `eh_catch_all` fixture throws `int`, so its fundamental descriptor
+and support vtable now occupy flash; that growth crosses a 256-byte page.
 
 The image sizes are multiples of 256 bytes, because the flash payload is paged.
 The `_Unwind_Resume` routine is 65 bytes, and it is linked into an image only when
-that image has a cleanup pad. The `eh_cleanup` image has 2837 bytes of EH text.
-The class type descriptor's vtable placeholder is linked only when a class is
-thrown. Constant descriptors are placed in `.data`, so the placeholder occupies
-8 bytes of RAM there. A class-typed throw adds the 4-byte descriptor and its
-24-byte name to `.data` as well.
+that image has a cleanup pad. EH runtime text is the sum of the sizes of the
+runtime functions that the image links, and the `eh_cleanup` image links 3353 bytes.
+Type descriptors, their names, and their support vtables are program-space
+constants in `.rodata`, so they cost flash only. A class-typed throw links the
+six-byte descriptor, its name, and the nine-byte class support vtable, and it adds
+no RAM.
 
 Changes, by source of cost:
 
@@ -6906,12 +6975,12 @@ Changes, by source of cost:
    records, and its block is 3791 bytes. The optimizer removes the combined pad's
    cleanup flag, so that site has action 1, and it also inlines and merges other
    sites.
-4. Exception allocation overhead: 15 bytes per thrown exception.
+4. Exception allocation overhead: the 39-byte header of each thrown exception.
 
-Programs without exception support gain no code, metadata, or RAM. None of the 146
-ordinary C++ images in the build tree references `_Unwind_Resume`, `__cxa_throw`,
-the typeinfo placeholders, or `std::terminate`, so those runtime sections are not
-linked into them.
+Programs without exception support gain no code, metadata, or RAM. A program that
+never throws references none of `_Unwind_Resume`, `__cxa_throw`, or
+`std::terminate`, and it links no type descriptor, so those runtime sections and
+descriptors are absent from its image.
 
 #### Checks and tests
 
@@ -6929,6 +6998,16 @@ throwing call, including cleanup pads. The cases are the zero, two, and eight
 argument-byte calls, the r3-based frame with a live dynamic allocation, and the
 relaxed `call8` and `call16` sites. The check compares the emulator's SP and r0-r3
 at the call and at the pad against the machine code.
+
+`tests/debug/eh_rtti_verify.py` checks the flash-resident descriptors of the RTTI
+fixtures. It reads the ELF symbols and section flags, and it requires each RTTI
+object to be read-only program space with no `_ZTI` object in `.data`. It decodes
+each descriptor from the packed image by its vtable kind. Each pointer must land on
+the symbol at its exact 24-bit value, and each name string must match its mangled
+name. Each identity must be defined once, even when two translation units throw the
+type. For the high-address fixture, the probe's `--snapshot-bytes` option prints the
+39 header bytes that the shim captured at `__avm_eh_throw`, and the verifier checks
+the type address, the destructor, the size, and the allocated state.
 
 `tests/debug/eh_corruption_verify.py` mutates one field of a valid block and runs
 the image through the probe. The base mutations run against `eh_corrupt_target`.
@@ -6964,11 +7043,12 @@ implemented:
   so a throw while one is active, including from a destructor, terminates;
 - `std::set_terminate` and `std::get_terminate`; `std::terminate` calls `abort()`.
 
-The backend and the bitcode reader do not yet handle a class-typed throw under
-link-time optimization. The class's type descriptor refers to a vtable at an
-offset, and LLVM's bitcode reader rejects that constant when the program is built
-with `-flto=full`. `tests/cpp/eh_cleanup_object.cpp` covers a class-typed throw
-without LTO for that reason.
+A class-typed throw links under `-flto=full`. Earlier, the bitcode reader rejected
+the module, because the compiler declared `__cxa_throw` with an AS0 destructor
+parameter and called it with a program-space destructor. The declaration now names
+program space, so the call's operand types match. `tests/cpp/eh_cleanup_object.cpp`
+runs at O0, O2, and O2 with full LTO, and `tests/debug/eh_rtti_verify.py` checks its
+descriptor in the linked image.
 
 A frame without CFI in `.debug_frame` terminates the program deterministically,
 which `tests/cpp/eh_missing_cfi.cpp` checks. The metadata that the throw trusts is

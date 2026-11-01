@@ -832,12 +832,36 @@ add_custom_command(
         "${AVM_DEBUG_O0_ELF}" -o "${AVM_DEBUG_O0_PAYLOAD}"
     DEPENDS llvm-avm-image "${AVM_DEBUG_O0_ELF}"
     VERBATIM)
+# Unwind tables are nonallocated debug information. The same fixture built
+# without them must package the same payload as the default unwind-table build.
+set(AVM_NOUNWIND_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/nounwind")
+avm_add_object(
+    OUTPUT "${AVM_NOUNWIND_DIR}/fixture.o"
+    SOURCE "${AVM_DEBUG_FIXTURE_SOURCE}"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+    COMPILE_OPTIONS -O0 -fno-unwind-tables -fno-asynchronous-unwind-tables
+    DEPENDS avm_sysroot)
+avm_add_image(
+    OBJECTS "${AVM_NOUNWIND_DIR}/fixture.o"
+    OUTPUT_ELF "${AVM_NOUNWIND_DIR}/fixture.elf"
+    OUTPUT_IMAGE "${AVM_NOUNWIND_DIR}/fixture.bin"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+    LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a"
+              "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS
+    NO_CRASH_INFO
+    DEPENDS avm_sysroot)
 add_custom_target(avm_debug_image_equivalence
     COMMAND "${CMAKE_COMMAND}" -E compare_files
         "${AVM_NODEBUG_DIR}/fixture.bin"
         "${AVM_DEBUG_O0_PAYLOAD}"
+    COMMAND "${CMAKE_COMMAND}" -E compare_files
+        "${AVM_NODEBUG_DIR}/fixture.bin"
+        "${AVM_NOUNWIND_DIR}/fixture.bin"
     DEPENDS "${AVM_NODEBUG_DIR}/fixture.bin" "${AVM_DEBUG_O0_PAYLOAD}"
-        avm_debug_images
+        "${AVM_NOUNWIND_DIR}/fixture.bin" avm_debug_images
     USES_TERMINAL VERBATIM)
 
 # Crash metadata is part of default packaging. These checks cover the packaging
@@ -894,12 +918,96 @@ add_custom_target(avm_debug_cpp_verify
     DEPENDS "${AVM_DEBUG_CPP_DIR}/fixture.elf" llvm-dwarfdump
     USES_TERMINAL VERBATIM)
 
+# Focused unwind fixtures are compiled with the common unwind-table flags. The
+# frame-pointer variant makes r3 the frame base, and the LTO variant produces
+# its call-frame information during final code generation. Each variant has
+# every shape named in unwind_cfi_fixture.c. unwind_tail_fixture.c is built
+# with the same variant options but without disabling sibling-call
+# optimization, so its direct returns can become tail jumps.
+set(AVM_UNWIND_FIXTURE_SOURCE
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug/unwind_cfi_fixture.c")
+set(AVM_UNWIND_TAIL_SOURCE
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug/unwind_tail_fixture.c")
+set(AVM_UNWIND_DIR "${CMAKE_CURRENT_BINARY_DIR}/unwind_cfi")
+set(AVM_UNWIND_IMAGE_OUTPUTS)
+foreach(variant IN ITEMS O0 O2 O2-fp O2-nodebug LTO)
+    if(variant STREQUAL "O0")
+        set(variant_options -g -O0 -fomit-frame-pointer)
+    elseif(variant STREQUAL "O2")
+        set(variant_options -g -O2 -fomit-frame-pointer)
+    elseif(variant STREQUAL "O2-fp")
+        set(variant_options -g -O2 -fno-omit-frame-pointer)
+    elseif(variant STREQUAL "O2-nodebug")
+        set(variant_options -O2 -fomit-frame-pointer)
+    else()
+        set(variant_options -g -O2 -flto -fomit-frame-pointer)
+    endif()
+    set(variant_dir "${AVM_UNWIND_DIR}/${variant}")
+    avm_add_object(
+        OUTPUT "${variant_dir}/fixture.o"
+        SOURCE "${AVM_UNWIND_FIXTURE_SOURCE}"
+        LANGUAGE C
+        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+        COMPILE_OPTIONS ${variant_options} -fno-optimize-sibling-calls
+        DEPENDS avm_sysroot)
+    avm_add_object(
+        OUTPUT "${variant_dir}/tail.o"
+        SOURCE "${AVM_UNWIND_TAIL_SOURCE}"
+        LANGUAGE C
+        INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+        COMPILE_OPTIONS ${variant_options}
+        DEPENDS avm_sysroot)
+    avm_add_image(
+        OBJECTS "${variant_dir}/fixture.o" "${variant_dir}/tail.o"
+        OUTPUT_ELF "${variant_dir}/fixture.elf"
+        OUTPUT_IMAGE "${variant_dir}/fixture.bin"
+        ENTRY _start
+        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0.o"
+        LIBRARIES "${AVM_SYSROOT_DIR}/lib/libavm.a"
+                  "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        GC_SECTIONS
+        DEPENDS avm_sysroot)
+    list(APPEND AVM_UNWIND_IMAGE_OUTPUTS
+        "${variant_dir}/fixture.elf" "${variant_dir}/fixture.bin")
+endforeach()
+add_custom_target(avm_unwind_images DEPENDS ${AVM_UNWIND_IMAGE_OUTPUTS})
+
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_Interpreter_FOUND)
     add_custom_target(avm_music_tests_run
         COMMAND "${Python3_EXECUTABLE}" -m unittest discover -s tests/audio -v
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" VERBATIM)
     add_dependencies(avm_audio_tests_run avm_music_tests_run)
+    add_custom_target(avm_unwind_cfi_verify
+        COMMAND "${Python3_EXECUTABLE}" -I
+            "${CMAKE_CURRENT_SOURCE_DIR}/debug/unwind_cfi_verify.py"
+            --llvm-dwarfdump "$<TARGET_FILE:llvm-dwarfdump>"
+            --llvm-readobj "$<TARGET_FILE:llvm-readobj>"
+            --llvm-nm "$<TARGET_FILE:llvm-nm>"
+            --llvm-objdump "$<TARGET_FILE:llvm-objdump>"
+            --case "O0:${AVM_UNWIND_DIR}/O0/fixture.elf:omit:debug"
+            --case "O2:${AVM_UNWIND_DIR}/O2/fixture.elf:omit:debug"
+            --case "O2-fp:${AVM_UNWIND_DIR}/O2-fp/fixture.elf:fp:debug"
+            --case "O2-nodebug:${AVM_UNWIND_DIR}/O2-nodebug/fixture.elf:omit:nodebug"
+            --case "LTO:${AVM_UNWIND_DIR}/LTO/fixture.elf:omit:debug"
+        DEPENDS avm_unwind_images llvm-dwarfdump llvm-readobj llvm-nm llvm-objdump
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
+    add_dependencies(avm_tests_run avm_unwind_cfi_verify)
+    add_custom_target(avm_unwind_cfi_selftest
+        COMMAND "${Python3_EXECUTABLE}" -I
+            "${CMAKE_CURRENT_SOURCE_DIR}/debug/unwind_cfi_selftest.py"
+            --llvm-dwarfdump "$<TARGET_FILE:llvm-dwarfdump>"
+            --llvm-readobj "$<TARGET_FILE:llvm-readobj>"
+            --llvm-nm "$<TARGET_FILE:llvm-nm>"
+            --llvm-objdump "$<TARGET_FILE:llvm-objdump>"
+            --case "O0:${AVM_UNWIND_DIR}/O0/fixture.elf:omit:debug"
+            --case "O2-fp:${AVM_UNWIND_DIR}/O2-fp/fixture.elf:fp:debug"
+            --case "O2-nodebug:${AVM_UNWIND_DIR}/O2-nodebug/fixture.elf:omit:nodebug"
+        DEPENDS avm_unwind_images llvm-dwarfdump llvm-readobj llvm-nm llvm-objdump
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+        USES_TERMINAL VERBATIM)
+    add_dependencies(avm_tests_run avm_unwind_cfi_selftest)
     add_custom_target(avm_prof_integration_run
         COMMAND "${Python3_EXECUTABLE}"
             "${CMAKE_CURRENT_SOURCE_DIR}/debug/prof_integration.py"
@@ -922,8 +1030,9 @@ if(Python3_Interpreter_FOUND)
             "${AVM_SDK_BUILD_BIN}/avm-lldb${CMAKE_EXECUTABLE_SUFFIX}"
             "${CMAKE_CURRENT_BINARY_DIR}/debug/O0/fixture.elf"
             "${AVM_DEBUG_CPP_DIR}/fixture.elf"
+            "${AVM_UNWIND_DIR}"
             "${CMAKE_CURRENT_BINARY_DIR}/debug"
-        DEPENDS avm_lldb avm_debug_images avm_debug_cpp_verify
+        DEPENDS avm_lldb avm_debug_images avm_debug_cpp_verify avm_unwind_images
         WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
         USES_TERMINAL VERBATIM)
     add_custom_target(avm_lldb_long_replay_run

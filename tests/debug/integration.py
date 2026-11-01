@@ -16,15 +16,17 @@ def require(condition, message):
         raise AssertionError(message)
 
 
-def lldb(executable, image, *commands, on_crash=None):
+def lldb(executable, image, *commands, on_crash=()):
     argv = [str(executable), "--batch"]
     for command in commands:
         argv.extend(("-o", command))
-    if on_crash:
-        argv.extend(("-k", on_crash))
+    for command in on_crash:
+        argv.extend(("-k", command))
     argv.append(str(image))
-    completed = subprocess.run(argv, text=True, stdout=subprocess.PIPE,
-                               stderr=subprocess.STDOUT, timeout=90)
+    # LLDB waits for input at exit after an on-crash stop when stdin is open.
+    completed = subprocess.run(argv, text=True, stdin=subprocess.DEVNULL,
+                               stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                               timeout=90)
     require(completed.returncode == 0,
             f"LLDB failed ({completed.returncode}):\n{completed.stdout}")
     records = []
@@ -102,13 +104,253 @@ def launch_route_checks(executable, c_image, work):
                 "native host launch did not stay on the platform path")
 
 
+# The deterministic chain in unwind_cfi_fixture.c, innermost frame first. The
+# leaf is frameless, unwind_chain_args takes stack arguments, unwind_chain_dynamic
+# moves SP at run time with r3 as its frame pointer, and unwind_chain_top is
+# frameless. _start is the crt0 entry that calls main.
+UNWIND_CHAIN = ("unwind_chain_leaf", "unwind_chain_args",
+                "unwind_chain_dynamic", "unwind_chain_top", "main", "_start")
+DISASSEMBLY_LINE = re.compile(
+    r"^\s*(?:->)?\s*(?:[^\s\[]*\[)?0x([0-9a-fA-F]+)\]?(?: <\+\d+>)?:"
+    r"\s+(\S+)\s*(.*?)\s*$")
+FRAME_LINE = re.compile(r"frame #(\d+): 0x([0-9a-fA-F]+) [^\s`]*`([A-Za-z_]\w*)")
+REGISTER_LINE = re.compile(r"^\s*\w+ = 0x([0-9a-fA-F]+)\s*$", re.MULTILINE)
+
+
+def command_texts(output, command):
+    """Return the text LLDB printed after each echo of one batch command."""
+    marker = f"(lldb) {command}\n"
+    texts = []
+    start = output.find(marker)
+    while start != -1:
+        start += len(marker)
+        end = output.find("\n(lldb) ", start)
+        texts.append(output[start:] if end == -1 else output[start:end])
+        start = output.find(marker, start)
+    return texts
+
+
+def disassembly(executable, image, function):
+    """Return (address, mnemonic, operands) for each instruction of function."""
+    command = f"disassemble --name {function}"
+    output, _ = lldb(executable, image, command)
+    instructions = []
+    for line in command_texts(output, command)[0].splitlines():
+        match = DISASSEMBLY_LINE.match(line)
+        if match:
+            instructions.append((int(match.group(1), 16), match.group(2),
+                                 match.group(3)))
+    require(instructions, f"no disassembly for {function}")
+    return instructions
+
+
+def frame_offsets(code, pc):
+    """Return (sp, r3) offsets from the entry SP at pc, None when unknown.
+
+    The entry SP is CFA0 - 3. A PUSH16 moves SP by two bytes, ADJSP by its
+    immediate, GETSP r3 records the current offset in r3, and SETSP r3
+    restores it. Any other SETSP makes SP unknown."""
+    sp = 0
+    r3 = None
+    for address, mnemonic, operands in code:
+        if address >= pc:
+            break
+        if mnemonic == "push16" and sp is not None:
+            sp -= 2
+        elif mnemonic == "pop16" and sp is not None:
+            sp += 2
+        elif mnemonic == "adjsp" and sp is not None:
+            sp += int(operands, 0)
+        elif mnemonic == "getsp" and operands == "r3":
+            r3 = sp
+        elif mnemonic == "setsp":
+            sp = r3 if operands == "r3" else None
+    return sp, r3
+
+
+def caller_stack(code, pc, sp, r3):
+    """Return (CFA0, sp_known) for the frame at pc, from its own rule.
+
+    An SP-based frame uses the SP value. Once SP is unknown, the frame must
+    be recovered through r3, which is the frame-pointer rule."""
+    sp_offset, r3_offset = frame_offsets(code, pc)
+    if sp_offset is not None:
+        return sp + 3 - sp_offset, True
+    require(r3 is not None and r3_offset is not None,
+            f"frame at {pc:#x} has neither a known SP nor a known r3")
+    return r3 + 3 - r3_offset, False
+
+
+def return_addresses(caller, callee_start):
+    """Return the instruction after each call that enters callee_start."""
+    returns = []
+    for index, (_, mnemonic, operands) in enumerate(caller[:-1]):
+        if not mnemonic.startswith("call"):
+            continue
+        try:
+            displacement = int(operands.split()[0], 0)
+        except ValueError:
+            continue
+        next_address = caller[index + 1][0]
+        if next_address + displacement == callee_start:
+            returns.append(next_address)
+    return returns
+
+
+def stop_frames(executable, image, stop_commands):
+    """Return (pc, name, sp, r3) for each frame at a stop.
+
+    A SYS debug_break stop aborts the batch commands, so the same inspection
+    commands also run as on-crash commands. A breakpoint stop runs them as
+    ordinary commands and never reaches the on-crash list."""
+    inspect = ["thread backtrace"]
+    output, _ = lldb(executable, image, *stop_commands, *inspect,
+                     on_crash=inspect)
+    listing = command_texts(output, "thread backtrace")[0]
+    frames = [(int(match.group(2), 16), match.group(3))
+              for match in FRAME_LINE.finditer(listing)]
+    require(frames, f"no frames at stop: {output}")
+    inspect = []
+    for index in range(len(frames)):
+        inspect += [f"frame select {index}", "register read sp",
+                    "register read r3"]
+    output, _ = lldb(executable, image, *stop_commands, *inspect,
+                     on_crash=inspect)
+    values = []
+    for name in ("register read sp", "register read r3"):
+        texts = command_texts(output, name)
+        require(len(texts) == len(frames), f"missing registers: {output}")
+        values.append([int(REGISTER_LINE.search(text).group(1), 16)
+                       for text in texts])
+    return [(pc, name, values[0][index], values[1][index])
+            for index, (pc, name) in enumerate(frames)]
+
+
+def check_stop(executable, image, label, stop_commands, expected_names,
+               expected_pc=None, dynamic=(), entered_by=None):
+    """Check one stop's frames against the ELF.
+
+    A caller's PC must be the return address of a call to its callee, and
+    each caller SP must equal the CFA that the callee's SP or r3 rule gives.
+    Frames named in dynamic must have an unknown SP, so their caller comes
+    from r3. entered_by maps a frame reached by a tail jump to the function
+    whose call returns to its caller."""
+    frames = stop_frames(executable, image, stop_commands)
+    names = tuple(name for _, name, _, _ in frames)
+    require(names == expected_names,
+            f"{label}: frames {names} differ from {expected_names}")
+    if expected_pc is not None:
+        require(frames[0][0] == expected_pc,
+                f"{label}: stop PC {frames[0][0]:#x} is not {expected_pc:#x}")
+    codes = {name: disassembly(executable, image, name) for name in names}
+    for index in range(len(frames) - 1):
+        pc, name, sp, r3 = frames[index]
+        callee_code = codes[name]
+        caller_pc, caller_name, _, _ = frames[index + 1]
+        entry = (entered_by or {}).get(name, name)
+        callee_start = disassembly(executable, image, entry)[0][0]
+        require(caller_pc in return_addresses(codes[caller_name], callee_start),
+                f"{label}: {caller_name} PC {caller_pc:#x} is not the return "
+                f"address of a call to {name}")
+        cfa, sp_known = caller_stack(callee_code, pc, sp, r3)
+        require(sp_known == (name not in dynamic),
+                f"{label}: {name} at {pc:#x} is "
+                f"{'SP' if sp_known else 'r3'}-based, not as expected")
+        require(frames[index + 1][2] == cfa,
+                f"{label}: caller {caller_name} SP {frames[index + 1][2]:#x}"
+                f" differs from CFA {cfa:#x} of {name}")
+    return frames
+
+
+def unwind_checks(executable, unwind_dir, work):
+    """Checks LLDB's stack unwinding on the deterministic unwind fixtures."""
+    o0 = unwind_dir / "O0" / "fixture.elf"
+    o2 = unwind_dir / "O2" / "fixture.elf"
+    nodebug = unwind_dir / "O2-nodebug" / "fixture.elf"
+    fp = unwind_dir / "O2-fp" / "fixture.elf"
+    for image in (o0, o2, nodebug, fp):
+        require(image.is_file(), f"missing unwind fixture {image}")
+
+    dynamic_fn = "unwind_chain_dynamic"
+    dynamic_code = disassembly(executable, o0, dynamic_fn)
+    addresses = [address for address, _, _ in dynamic_code]
+    index_of = {(mnemonic, operands): index for index, (_, mnemonic, operands)
+                in enumerate(dynamic_code)}
+    after_push = addresses[1]
+    after_fp = addresses[index_of[("getsp", "r3")] + 1]
+    setsp_index = next(index for index, (_, mnemonic, operands)
+                       in enumerate(dynamic_code)
+                       if mnemonic == "setsp" and operands != "r3")
+    after_alloc = addresses[setsp_index + 1]
+    after_restore = addresses[index_of[("setsp", "r3")] + 1]
+    ret_address = addresses[index_of[("ret", "")]]
+    call_index = next(index for index, (_, mnemonic, _) in enumerate(dynamic_code)
+                      if mnemonic.startswith("call"))
+    after_call = addresses[call_index + 1]
+    require(dynamic_code[0][1] == "push16" and after_fp > after_push,
+            "dynamic function does not start with its frame-pointer prologue")
+
+    def breakpoint_at(address):
+        return f"breakpoint set --address 0x{address:x}"
+
+    dynamic_tail = ("unwind_chain_dynamic", "unwind_chain_top", "main",
+                    "_start")
+    for label, address in (
+            ("after first push", after_push),
+            ("after frame pointer", after_fp),
+            ("after stack allocation", after_alloc),
+            ("after SP restoration", after_restore),
+            ("before return", ret_address),
+            ("after call returns", after_call)):
+        check_stop(executable, o0, f"O0 {label}",
+                   (breakpoint_at(address), "run"),
+                   dynamic_tail, expected_pc=address,
+                   dynamic=(dynamic_fn,)
+                   if label in ("after stack allocation", "after call returns")
+                   else ())
+
+    # Function entry of the leaf, then the nested chain for each variant.
+    for image, label in ((o0, "O0"), (o2, "O2"), (nodebug, "O2-nodebug"),
+                         (fp, "O2-fp")):
+        entry = disassembly(executable, image, "unwind_chain_leaf")[0][0]
+        check_stop(executable, image, f"{label} leaf entry",
+                   (breakpoint_at(entry), "run"), UNWIND_CHAIN,
+                   expected_pc=entry, dynamic=(dynamic_fn,))
+
+    # Dynamic-SP stop: the caller of the dynamic frame is recovered through r3.
+    entry = disassembly(executable, o0, "unwind_chain_args")[0][0]
+    check_stop(executable, o0, "dynamic caller", (breakpoint_at(entry), "run"),
+               UNWIND_CHAIN[1:], expected_pc=entry, dynamic=(dynamic_fn,))
+
+    # Trap stop: the leaf executes SYS debug_break inside the nested chain. The
+    # O2 build inlines the service, so the leaf is the innermost frame.
+    leaf = disassembly(executable, o2, "unwind_chain_leaf")
+    service = next(index for index, (_, mnemonic, operands) in enumerate(leaf)
+                   if mnemonic == "sys" and operands == "debug_break")
+    output, records = lldb(executable, o2, "run", on_crash=("avm stop",))
+    require(records[-1]["reason"] == "debug_break",
+            f"trap stop reason was {records[-1]['reason']}")
+    check_stop(executable, o2, "trap stop", ("run",), UNWIND_CHAIN,
+               expected_pc=leaf[service + 1][0], dynamic=(dynamic_fn,))
+
+    # Tail call: unwind_tail_select jumps to unwind_tail_direct, which has no
+    # caller of its own, so only main and _start remain as physical frames.
+    tail = disassembly(executable, o2, "unwind_tail_direct")[0][0]
+    check_stop(executable, o2, "tail call", (breakpoint_at(tail), "run"),
+               ("unwind_tail_direct", "main", "_start"), expected_pc=tail,
+               entered_by={"unwind_tail_direct": "unwind_tail_select"})
+    print("AVM LLDB unwind: deterministic chain, dynamic-SP, trap, boundary, "
+          "and tail-call stops verified")
+
+
 def main():
-    executable, c_image, cpp_image, work = map(Path, sys.argv[1:5])
+    executable, c_image, cpp_image, unwind_dir, work = map(Path, sys.argv[1:6])
     require(executable.is_file() and c_image.is_file() and cpp_image.is_file(),
             "missing debugger or debug fixture")
     work.mkdir(parents=True, exist_ok=True)
 
     launch_route_checks(executable, c_image, work)
+    unwind_checks(executable, unwind_dir, work)
 
     output, records = lldb(
         executable, c_image,
@@ -359,7 +601,7 @@ def main():
         "frame variable -f x program_pointer[0]",
         "frame variable -f x pair.left", "frame variable -f x pair.right",
         "expr pair.left + pair.right", "expr (unsigned)program_pointer[0]",
-        "continue", on_crash="avm stop")
+        "continue", on_crash=("avm stop",))
     require("0x00010108" in output and "DebugPair" in output and
             "`main" in output and "ldp8u" in output,
             "far C++ code, types, or unwind unavailable")

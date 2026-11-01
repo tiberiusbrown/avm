@@ -184,8 +184,9 @@ and a development image:
 The native driver defaults to `avm-unknown-arduboyfx`, discovers the build or
 installed sysroot relative to its executable, and uses freestanding AVM
 compile defaults. For C++, exceptions, RTTI, thread-safe statics, and
-`__cxa_atexit` are disabled by default, and the default language mode is
-`-std=c++23`. The SDK supplies Clang's target-independent builtin headers and
+`__cxa_atexit` are disabled by default. An explicit `-fexceptions` enables the
+catch-all runtime in [C++ exceptions](#c-exceptions), and the default language
+mode is `-std=c++23`. The SDK supplies Clang's target-independent builtin headers and
 AVM's freestanding headers; it does not include a hosted C++ standard library.
 A link adds `crt0.o`, `libavm.a`,
 `libavm-builtins.a`, and `--gc-sections`, then runs `llvm-avm-image
@@ -463,6 +464,61 @@ Links that use `libavm.a` through `avm_add_image()` retain the handler
 automatically through `--undefined=__avm_trap_entry`. Manual `ld.lld` links must
 pass `--undefined=__avm_trap_entry` to get the default handler. Images without
 it have a zero header `trapEntry` and keep the fail-stop behavior.
+
+## C++ exceptions
+
+Stage 1 supports a `throw` that reaches a `catch (...)` handler in an enclosing
+frame. Build with `-fexceptions`, which overrides the SDK's `-fno-exceptions`
+default. The compiler emits LLVM's DWARF landing pads. It records each call
+site as an entry in `.avm.eh_sites`, and it records each call in a function with
+landing pads in `.avm.eh_calls`. The packer turns those records and the
+`.debug_frame` rows into the `AVEH2` block described in
+[arch.md](arch.md) Section 69.3.
+
+The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, and
+`eh_cxa_throw.asm`. They are archive members of `libavm.a`, so a program links
+them only when it references one of their symbols. The C++ ABI subset provides
+`__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`,
+`__cxa_begin_catch`, `__cxa_end_catch`, `__gxx_personality_v0`, and a `_ZTIi`
+type-descriptor placeholder.
+
+`__cxa_throw` is a frameless shim. It stores the throw site into the exception
+header, which lies 23 bytes below the object, and then tail-transfers to
+`__avm_eh_throw`. The header holds the throwing frame's context: its
+continuation, its caller SP, and its r0-r3. The unwinder updates that context
+in place. `__avm_eh_install_context` resumes at the landing pad with `JMPP`.
+
+The landing SP is the caller SP at the call plus the call's outgoing argument
+bytes, and the landing pad's SP is the one its normal return path would have
+after releasing those bytes. A frame that uses r3 as its CFA base keeps its
+dynamic allocations, because the SP never comes from r3. The return PC is the
+saved return address, and the call lookup uses `return PC - 1` for sites. Call
+records match the exact return PC.
+
+Only one exception is active at a time, and only catch-all handlers are
+supported. A typed catch, an exception filter, or a cleanup landing pad is a
+compile-time error. The `_ZTIi` placeholder is an opaque token, and no
+type-descriptor RTTI exists yet. Rethrow is not provided, so `__cxa_rethrow` is
+an undefined symbol at link time. Destructors do not run during propagation.
+When no handler exists, when metadata is malformed, or when allocation fails,
+the runtime calls `abort()`, which halts the guest.
+
+Every frame between a throw and its handler needs an unwind entry. A function
+without `.debug_frame` CFI stops the search at that frame, which halts the
+program. The unwinder reads the metadata through the flash anchor
+`__avm_eh_metadata_ptr`. It does not copy the table into RAM. Each throw checks
+the records it consumes, and `avm_eh_validate_block` checks the whole block.
+
+The guest stack holds 256 bytes, so the exception runtime's own stack use
+matters. Measured peaks are in [arch.md](arch.md) Section 69.3. The exception
+header is 23 bytes, and the Stage 1 header was 8 bytes.
+
+Tests use the `avm_eh_catch_all_run` target. It builds `tests/cpp/eh_*.cpp`
+and `tests/asm/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`.
+It also runs `avm_eh_hardening_run`, which checks the landing-pad SP, the
+throw context, the corrupted-metadata behavior, and the stack measurements
+against the emulator. The ordinary C++ and assembly matrices exclude the `eh_`
+prefix.
 
 ## Narrow stdio streams
 

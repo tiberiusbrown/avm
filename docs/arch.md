@@ -5506,7 +5506,9 @@ The initial C++ environment supports:
 - Placement `new`.
 - Function overloading.
 
-Exceptions, RTTI, ordinary C++ allocation operators, and thread-local storage are disabled.
+Exceptions are disabled by default, and an explicit `-fexceptions` enables the
+Stage 1 catch-all runtime in [Section 69.3](#693-exception-metadata-aveh2). RTTI,
+ordinary C++ allocation operators, and thread-local storage remain disabled.
 
 AVM vtables and construction vtables reside in AS1 program memory. An object's
 vptr is a 24-bit AS1 pointer to the vtable address point. Every vtable
@@ -5925,6 +5927,7 @@ For an allocated section, these flags are mutually exclusive and identify the AV
 | `.init_array` | `SHT_INIT_ARRAY` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
 | `.fini_array` | `SHT_FINI_ARRAY` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
 | `.avm.metadata` | `SHT_PROGBITS` | No `SHF_ALLOC` by default | None |
+| `.avm.eh_sites` | `SHT_PROGBITS` | No `SHF_ALLOC`; grouped with its function | None |
 | `.debug_*` | Tool-defined nonallocated debug section types | No `SHF_ALLOC` | None |
 | `.rela.*` | `SHT_RELA` | No `SHF_ALLOC` | None |
 
@@ -6557,6 +6560,241 @@ and lines only. It does not describe stack frames, does not replace
 `.debug_frame`, and does not unwind callers. Full host-side debugging still uses
 the ELF and DWARF files, including the call-frame information in `.debug_frame`.
 The AVD1 layout has no unwind section.
+
+### 69.3. Exception metadata (AVEH2)
+
+A program that references the Stage 1 exception runtime carries an `AVEH2` block.
+A program that does not reference it has no block, and its image is unchanged.
+The block is not part of the image header and does not depend on `AVD1`.
+`--no-crash-info` does not remove it.
+
+`AVEH2` replaces `AVEH1`. The per-function header gained a call count, and each
+function now has call records. The packer does not read `AVEH1` blocks, and the
+runtime does not accept them.
+
+#### Flash pointer anchor
+
+The runtime defines `__avm_eh_metadata_ptr`, a three-byte, read-only
+program-space object that the ELF stores as zero. The packer finds exactly one
+defined symbol with that name. It must lie in a read-only AVM program-space
+section, outside the reserved header range, and it must be three bytes long.
+The packer patches its three bytes with the final image address of the
+`AVEH2` block. Multiple, undefined, or misplaced anchors are rejected. The
+block follows the crash metadata at a 4-byte boundary and must fit in the
+flash payload limit. The guest reads the anchor with an AS1 load.
+
+#### Layout
+
+All integers are little-endian. Code addresses are 24-bit program addresses.
+
+| Field | Size | Contents |
+|---|---:|---|
+| Magic | 5 | `41 56 45 48 32`, ASCII `AVEH2` |
+| `function_count` | 2 | Number of function records |
+| `block_size` | 3 | Total block size in bytes, including this header |
+
+Each function record is a 12-byte header, then its rows, its sites, and its calls:
+
+| Field | Size | Contents |
+|---|---:|---|
+| `function_start` | 3 | First address of the function |
+| `function_end` | 3 | One past the last address of the function |
+| `row_count` | 2 | Number of CFI rows, at least one |
+| `site_count` | 2 | Number of call-site records |
+| `call_count` | 2 | Number of call records |
+
+A row is `u16 pc_delta`, `u8 flags`, `i16 cfa_offset`, and one `i16` slot for
+each saved register. `pc_delta` is measured from `function_start`. The first
+row has delta zero, and later deltas increase strictly and stay inside the
+function. Bit 7 of `flags` selects the CFA base: clear for SP, set for r3.
+Bits 3:0 are the saved mask for r0-r3, and bits 6:4 must be zero. Each slot is
+the offset from the CFA where that register's caller value is stored, in
+r0-r3 order. The return address is implicit: it is the three-byte value at
+`CFA-3`.
+
+A site is `u24 start`, `u24 end`, `u24 landing_pad`, and `u8 action`. Action 0
+means no handler, and its landing pad is zero. Action 1 is a catch-all
+handler, and its landing pad lies inside the function. Sites are sorted and do
+not overlap. Action 2 (cleanup) is never emitted, and the packer rejects it.
+
+A call is `u24 return_pc` and `u16 outgoing_bytes`. The return PC is the
+address after the call instruction, which is the saved return PC of the callee's
+frame. The outgoing bytes are the stack arguments that the call left on the
+stack, which the landing pad releases. Calls are sorted and strictly increasing
+inside `(function_start, function_end]`, and each is below 256 bytes.
+
+#### Why calls have their own records
+
+The compiler's call-site table merges consecutive invokes that share a landing
+pad into one range. A site therefore can cover two calls with different
+outgoing argument sizes, and no one count is correct for it. Each call in a
+function with landing pads gets its own record, and the unwinder matches the
+frame's saved return PC against it exactly. The `.avm.stackcalls` record cannot
+do this: it is keyed by the function's begin address, not by the call.
+
+#### Compiler and linker
+
+For each function with landing pads, the AVM asm printer emits a label after
+every ordinary call and writes `.avm.eh_calls`. Each record is `u24` function
+start, `u16` count, then one `u24` return label and `u16` outgoing bytes per call.
+The label is after the call instruction, so relaxation moves it with the call.
+The section is link-ordered with its function, so a discarded function drops its
+records. Tail transfers never return, so they get no record.
+
+The packer builds the block from the final linked ELF. Rows come from
+`.debug_frame` through LLVM's CFI decoder, sites come from `.avm.eh_sites`, and
+calls come from `.avm.eh_calls`. Those addresses already include relaxation.
+Every function with an FDE gets a record. A discarded FDE, whose initial
+location is zero, is skipped.
+
+The packer validates the complete block before it writes the image. It rejects:
+
+- a magic other than `AVEH2`, or a block size that is too small or too large;
+- a function without an FDE, an FDE outside executable program code, or an
+  overlapping function range;
+- a CFA rule other than SP or r3 plus an offset, or a saved-register rule other
+  than an offset for r0-r3;
+- rows that are empty, unordered, or outside their function, or that set reserved
+  bits;
+- a site whose function has no FDE, an empty or overlapping site, a site outside
+  its function, a cleanup action, or a landing pad outside its function;
+- a catch-all site with no call record inside it, since its invoke's call must
+  release its outgoing bytes;
+- a call record without a function, a return PC outside `(start, end]`, a
+  duplicate or unordered return PC, or outgoing bytes of 256 or more;
+- any record that extends past the block, or a count above 65535.
+
+It also rejects an image that hides `.debug_frame` or `.avm.eh_calls` while
+references remain. `tests/debug/eh_metadata_verify.py` checks these rejections.
+
+#### Guest unwinder
+
+The throw path checks each record it consumes, with the same record checks
+that `avm_eh_validate_block` applies to every record. A corrupt record fails the
+throw. It never ends the search at a handler that the record does not name. The
+search checks:
+
+- the function record that covers the lookup, including its size, its order, and
+  whether it is a gap;
+- the row that covers the lookup, including its delta order and reserved bits;
+- the site that covers the lookup, including its action and landing pad;
+- the call whose return PC equals the saved PC, including its outgoing bytes.
+
+Every stack address that the unwinder reads or writes must lie in the guest
+stack window, which is `[0x900, 0xa00)`. Each unwind step requires its CFA to lie
+above the current SP and inside the window, so the walk always moves toward the
+top of the stack and terminates.
+
+The search runs in one frame. The record helpers are `always_inline`, because a
+separate call adds a return record and a register save per level. The unwinder
+reads the block directly and does not copy the throw context.
+
+Phase one searches without changing any frame. Starting from the throwing
+frame's continuation PC, it looks up the call site at `PC-1` in each frame. A
+catch-all site ends the search. Otherwise the frame is unwound with its CFI
+row at `PC-1`: `CFA = (r3 or SP) + cfa_offset`, the caller PC is the 24-bit value
+at `CFA-3`, saved r0-r3 values come from `CFA + slot`, and the caller SP is
+`CFA`. A frame without a function record, or without a covering row, has no
+handler, so the program terminates.
+
+Phase two installs the handler. The landing SP is the frame's SP at the call
+plus the call's outgoing bytes:
+
+```text
+landing_sp = caller_sp_at_call + outgoing_bytes(return_pc)
+```
+
+`caller_sp_at_call` is the SP that the unwinder holds for the frame. It is the
+throwing frame's SP for the first frame, and the child's CFA for each frame
+above it. The landing pad expects the normal return path's SP after its
+cleanup, so this value includes any dynamic allocation that is still live. The
+SP is never derived from r3, because r3 gives only the frame base. Phase two
+then restores r0-r3, sets r4 to the exception header and r5 to the selector, and
+jumps through `JMPP`.
+
+The throwing frame is captured by `__cxa_throw` before any C code runs. The
+shim has no stack frame. It stores the continuation, the caller's SP (the entry
+SP plus three), and r0-r3 into the 23-byte exception header, which lies below
+the object. It then tail-transfers to `__avm_eh_throw`.
+
+#### Measured stack and code
+
+The guest stack holds 256 bytes, from `0xa00` down to `0x900`. The checked
+interpreter traps on any SP outside that window. The measurements below use
+`tests/debug/eh_stack_report.py`. The runtime figure is the stack used after the
+first entry into `__cxa_throw`, and the total is the high-water mark from the
+start of the program.
+
+| Fixture | Opt | Total peak | Runtime peak |
+|---|---|---:|---:|
+| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 146 | 122 |
+| `eh_catch_all` | O2 | 126 | 104 |
+| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 202 | 100 |
+| `eh_dynamic_handler` | O2 | 170 | 100 |
+| `eh_unhandled` | O0, O2 | 113 | 100 |
+| `eh_missing_cfi` | O0 | 127 | 100 |
+| `eh_allocation_failure` | O0, O2 | 33, 26 | not reached |
+| `eh_no_throw` | O0, O2 | 19 | none |
+
+The Stage 1 runtime used about 161 bytes after `__cxa_throw` on the first throw
+of an earlier revision of `eh_dynamic_handler`, and that run peaked at 253 bytes
+in total. The earlier revision passed its arguments as constants, so it is not
+an exact match for the current fixture. The current runtime uses 100 bytes after
+`__cxa_throw` and 202 in total on the current fixture. The runtime target of 64
+bytes is not met. The remaining cost is the flattened search frame, which holds
+the lookup locals, and the saved-register pushes of each function that uses
+r0-r3.
+
+The Stage 1 unwinder's search frame was 69 bytes, and the flattened search frame
+is 84 bytes. The reduction comes from removing the nested validator, the
+`__cxa_throw` frame, and the copied context.
+
+The linked O2 code for the EH runtime functions in `eh_catch_all` sums to about
+2208 bytes, excluding the shared `__avm_umulhisi3` helper. The Stage 1 estimates
+in the task summed to about 2122 bytes, and that sum includes the validator,
+which is no longer on the throw path. The search code grew because its record
+checks are inlined into the lookup, and the validator is no longer linked into
+an image that only throws.
+
+#### Landing-pad and throw-context checks
+
+`tests/debug/eh_landing_pad_verify.py` checks the landing-pad contract against the
+emulator. For each throwing call, the expected landing SP is the call-site SP plus
+the outgoing bytes that the normal path releases with an `adjsp` right after the
+call. The check also compares `r0`-`r3` at the call and at the pad. The pad
+address comes from the packed block. The check passes at O0 and O2 for
+`eh_dynamic_handler`, with 8-byte and 2-byte outgoing counts that share one
+handler.
+
+`tests/debug/eh_throw_context_verify.py` checks the initial throw context. It
+decodes the length of the `__cxa_throw` call, takes the return PC, and compares it
+with the captured record. It also checks that the captured caller SP equals the
+SP before the call, and that the thrower's CFA from its CFI row equals the caller
+SP of the frame chain's entry call. The fixtures' throw calls relax to `call16`, so
+no `call8` throw site is covered yet.
+
+#### Corrupted-metadata checks
+
+`tests/debug/eh_corruption_verify.py` mutates one field of a valid block and runs
+the image through the probe. It mutates the magic, the declared length, a row's
+PC delta, the CFA base, a reserved mask bit, a saved slot, a landing pad, a site
+range, an outgoing byte count, a record length, and a call count. Each of those
+must end in the halt report, `TH`. A control mutation in a record that the throw
+never reads must still print the valid output. No mutant may fault, time out,
+or enter the unrelated handler. The function count is not checked by the throw
+path, which walks to the block end, so that mutant may run the valid path.
+
+#### Catch-all limitations
+
+Only catch-all handlers are supported. The backend rejects a typed catch,
+an exception filter, or a cleanup landing pad with a diagnostic. Stage 1 does
+not implement rethrow or nested exceptions, and it allows one active exception
+at a time. Destructors do not run during propagation. The runtime's
+`__gxx_personality_v0` is a stub that terminates. Every frame between a throw
+and its handler must have CFI in `.debug_frame`, which `-funwind-tables`
+provides. A frame without CFI terminates the program deterministically, which
+`tests/cpp/eh_missing_cfi.cpp` checks. The default configuration still specifies
+`-fno-exceptions`.
 
 ## 70. Tail locator
 

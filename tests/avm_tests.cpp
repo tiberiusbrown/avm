@@ -500,8 +500,14 @@ std::vector<test_case_t> discover_tests(options_t const& options)
                  options.c_bin_dir, ".c", optimization_levels);
     append_tests(tests, test_kind_t::cpp, options.cpp_dir,
                  options.cpp_bin_dir, ".cpp", optimization_levels);
+    // Exception fixtures are built with -fexceptions and linked with the EH
+    // runtime. They run only when a filter selects them, such as the
+    // avm_eh_catch_all_run target, and never in an unfiltered suite.
     tests.erase(std::remove_if(tests.begin(), tests.end(), [&](test_case_t const& test) {
-        return !options.selection.matches(test.source.stem().string());
+        std::string const stem = test.source.stem().string();
+        if(options.selection.expression.empty() && stem.rfind("eh_", 0) == 0)
+            return true;
+        return !options.selection.matches(stem);
     }), tests.end());
 
     std::sort(tests.begin(), tests.end(),

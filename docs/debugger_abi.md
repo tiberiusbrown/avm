@@ -81,7 +81,8 @@ and they require neither `-g` nor C++ exceptions. A compilation may override
 them with later compile options. The compiler places call-frame information in
 `.debug_frame`, which is nonallocated, rather than in the allocated
 `.eh_frame`. The packaged image never contains it, so only the linked ELF
-carries it.
+carries it. With `-fexceptions`, a function that needs an unwind entry and has
+a personality also places its CFI in `.debug_frame`.
 
 Call-frame information (CFI) gives, at each instruction address, the canonical
 frame address (CFA) and the location of each saved register and of the return
@@ -119,7 +120,11 @@ it into a shared block. Every block therefore starts with no outgoing arguments
 allocated, which is the state the restatement assumes.
 
 A valid `.debug_frame` does not by itself mean that stack unwinding works on
-the device. The guest has no unwinder, and AVD1 has no unwind section.
+the device. AVD1 has no unwind section. The guest unwinds only for C++ exceptions,
+using the `AVEH2` block described in [arch.md](arch.md) Section 69.3. That block
+is derived from `.debug_frame`, `.avm.eh_sites`, and `.avm.eh_calls`, and it exists only in
+programs that reference the exception runtime. It is not a general debugger
+unwind table, and it does not describe variables or locations.
 
 ## Stops and time
 

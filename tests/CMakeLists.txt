@@ -17,6 +17,11 @@ set(AVM_TEST_ADVANCE_LIMIT
 # CONFIGURE_DEPENDS makes CMake regenerate when a test is added or removed.
 file(GLOB AVM_ASM_TEST_SOURCES CONFIGURE_DEPENDS
     "${AVM_ASM_TEST_DIR}/*.asm")
+# Exception-runtime assembly tests link libavm.a, so the ordinary matrix leaves
+# them out. avm_eh_catch_all_run builds and runs them.
+list(FILTER AVM_ASM_TEST_SOURCES EXCLUDE REGEX "/eh_[^/]*\\.asm$")
+file(GLOB AVM_EH_ASM_TEST_SOURCES CONFIGURE_DEPENDS
+    "${AVM_ASM_TEST_DIR}/eh_*.asm")
 file(GLOB_RECURSE AVM_ASM_TEST_SUPPORT_SOURCES CONFIGURE_DEPENDS
     "${AVM_ASM_TEST_DIR}/include/*")
 file(GLOB AVM_C_TEST_SOURCES CONFIGURE_DEPENDS
@@ -25,6 +30,11 @@ file(GLOB AVM_C_TEST_HEADERS CONFIGURE_DEPENDS "${AVM_C_TEST_DIR}/*.h")
 list(APPEND AVM_C_TEST_HEADERS "${CMAKE_CURRENT_SOURCE_DIR}/math/accuracy_policy.h")
 file(GLOB AVM_CXX_TEST_SOURCES CONFIGURE_DEPENDS
     "${AVM_CXX_TEST_DIR}/*.cpp")
+# Exception fixtures need -fexceptions and the EH runtime, so the ordinary
+# matrix leaves them out. avm_eh_catch_all_run builds and runs them instead.
+list(FILTER AVM_CXX_TEST_SOURCES EXCLUDE REGEX "/eh_[^/]*\\.cpp$")
+file(GLOB AVM_EH_CXX_TEST_SOURCES CONFIGURE_DEPENDS
+    "${AVM_CXX_TEST_DIR}/eh_*.cpp")
 
 set(AVM_TEST_IMAGE_OUTPUTS)
 
@@ -259,6 +269,189 @@ foreach(AVM_TEST_LANGUAGE C CXX)
 endforeach()
 
 add_custom_target(avm_test_images DEPENDS ${AVM_TEST_IMAGE_OUTPUTS})
+
+# Stage 1 catch-all exception fixtures. The images use the standard C++ image
+# paths, and the runner selects them by the eh_ prefix. The ordinary matrix
+# above does not build them.
+set(AVM_EH_TEST_OPT_LEVELS O0 O2)
+set(AVM_EH_TEST_IMAGES)
+foreach(AVM_TEST_ASM IN LISTS AVM_EH_ASM_TEST_SOURCES)
+    get_filename_component(AVM_TEST_NAME "${AVM_TEST_ASM}" NAME_WE)
+    set(AVM_TEST_OBJECT "${AVM_ASM_TEST_BINARY_DIR}/${AVM_TEST_NAME}.o")
+    set(AVM_TEST_ELF "${AVM_ASM_TEST_BINARY_DIR}/${AVM_TEST_NAME}.elf")
+    set(AVM_TEST_IMAGE "${AVM_ASM_TEST_BINARY_DIR}/${AVM_TEST_NAME}.bin")
+    avm_add_object(
+        OUTPUT "${AVM_TEST_OBJECT}"
+        SOURCE "${AVM_TEST_ASM}"
+        LANGUAGE ASM
+        INCLUDE_DIRS "${AVM_ASM_TEST_DIR}"
+        DEPENDS avm_sysroot ${AVM_ASM_TEST_SUPPORT_SOURCES}
+    )
+    avm_add_image(
+        OBJECTS "${AVM_TEST_OBJECT}"
+        OUTPUT_ELF "${AVM_TEST_ELF}"
+        OUTPUT_IMAGE "${AVM_TEST_IMAGE}"
+        ENTRY _start
+        LIBRARIES
+            "${AVM_SYSROOT_DIR}/lib/libavm.a"
+            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        GC_SECTIONS
+        DEPENDS avm_sysroot
+    )
+    list(APPEND AVM_EH_TEST_IMAGES "${AVM_TEST_IMAGE}")
+endforeach()
+
+foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
+    get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
+    foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
+        set(AVM_OPT_TEST_BINARY_DIR
+            "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}")
+        set(AVM_TEST_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.o")
+        set(AVM_TEST_ELF "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.elf")
+        set(AVM_TEST_IMAGE "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.bin")
+        # -fexceptions follows the SDK's -fno-exceptions default, so it wins.
+        avm_add_object(
+            OUTPUT "${AVM_TEST_OBJECT}"
+            SOURCE "${AVM_TEST_SOURCE_FILE}"
+            LANGUAGE CXX
+            COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
+            DEPENDS avm_sysroot
+        )
+        avm_add_image(
+            OBJECTS "${AVM_TEST_OBJECT}"
+            OUTPUT_ELF "${AVM_TEST_ELF}"
+            OUTPUT_IMAGE "${AVM_TEST_IMAGE}"
+            ENTRY _start
+            STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+            LIBRARIES
+                "${AVM_SYSROOT_DIR}/lib/libavm.a"
+                "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+            GC_SECTIONS
+            DEPENDS avm_sysroot
+        )
+        list(APPEND AVM_EH_TEST_IMAGES "${AVM_TEST_IMAGE}")
+    endforeach()
+endforeach()
+
+add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
+# Checks the AVEH1 block of each exception-enabled image against the linked ELF,
+# and checks that a program which never references the runtime has none.
+set(AVM_EH_VERIFY_ARGS)
+foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
+    set(AVM_EH_ELF "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/eh_catch_all.elf")
+    set(AVM_EH_IMAGE "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/eh_catch_all.bin")
+    list(APPEND AVM_EH_VERIFY_ARGS --eh-elf "${AVM_EH_ELF}" --eh-image "${AVM_EH_IMAGE}")
+endforeach()
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+# The O2 link-time-optimized variants of the frame-sensitive fixtures. They live
+# in their own image directory, so the runners select them with --cpp-bin-dir.
+set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
+set(AVM_EH_LTO_IMAGES)
+foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler)
+    set(AVM_EH_LTO_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.o")
+    set(AVM_EH_LTO_ELF "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.elf")
+    set(AVM_EH_LTO_IMAGE "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.bin")
+    avm_add_object(
+        OUTPUT "${AVM_EH_LTO_OBJECT}"
+        SOURCE "${AVM_CXX_TEST_DIR}/${AVM_EH_LTO_NAME}.cpp"
+        LANGUAGE CXX
+        COMPILE_OPTIONS -O2 -fexceptions -flto=full
+        DEPENDS avm_sysroot
+    )
+    avm_add_image(
+        OBJECTS "${AVM_EH_LTO_OBJECT}"
+        OUTPUT_ELF "${AVM_EH_LTO_ELF}"
+        OUTPUT_IMAGE "${AVM_EH_LTO_IMAGE}"
+        ENTRY _start
+        STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+        LIBRARIES
+            "${AVM_SYSROOT_DIR}/lib/libavm.a"
+            "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+        GC_SECTIONS
+        DEPENDS avm_sysroot
+    )
+    list(APPEND AVM_EH_LTO_IMAGES "${AVM_EH_LTO_IMAGE}")
+endforeach()
+
+add_custom_target(avm_eh_catch_all_lto_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_catch_all$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    DEPENDS avm_tests "${AVM_EH_LTO_BIN_DIR}/O2/eh_catch_all.bin"
+    VERBATIM
+)
+
+set(AVM_EH_NO_THROW_ELF "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_no_throw.elf")
+set(AVM_EH_NO_THROW_IMAGE "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_no_throw.bin")
+add_custom_target(avm_eh_metadata_verify
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_metadata_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        ${AVM_EH_VERIFY_ARGS}
+        --no-eh-elf "${AVM_EH_NO_THROW_ELF}" --no-eh-image "${AVM_EH_NO_THROW_IMAGE}"
+    DEPENDS avm_eh_catch_all_images llvm-avm-image
+    VERBATIM
+)
+
+# Landing-pad SP, throw context, corrupted metadata, and stack measurements. Each
+# step runs the probe and compares the emulator state with the machine code and
+# with the packed block. Every step fails the target on a mismatch.
+set(AVM_EH_HARDENING_DIR "${AVM_CXX_TEST_BINARY_DIR}")
+set(AVM_EH_PROBE_RUN
+    --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+    --interpreter "${AVM_INTERPRETER_HEX}"
+    --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}")
+set(AVM_EH_BIN_DIR "$<TARGET_FILE_DIR:llvm-avm-image>")
+add_custom_target(avm_eh_hardening_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_dynamic_handler$" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_dynamic_handler$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+        --bin-dir "${AVM_EH_BIN_DIR}" ${AVM_EH_PROBE_RUN}
+        --image "${AVM_EH_HARDENING_DIR}/O0/eh_dynamic_handler.bin"
+        --elf "${AVM_EH_HARDENING_DIR}/O0/eh_dynamic_handler.elf"
+        --function dynamic_handler --callee throw_eight --callee throw_five
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+        --bin-dir "${AVM_EH_BIN_DIR}" ${AVM_EH_PROBE_RUN}
+        --image "${AVM_EH_HARDENING_DIR}/O2/eh_dynamic_handler.bin"
+        --elf "${AVM_EH_HARDENING_DIR}/O2/eh_dynamic_handler.elf"
+        --function dynamic_handler --callee throw_eight --callee throw_five
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_throw_context_verify.py"
+        --bin-dir "${AVM_EH_BIN_DIR}" ${AVM_EH_PROBE_RUN}
+        --image "${AVM_EH_HARDENING_DIR}/O0/eh_catch_all.bin"
+        --elf "${AVM_EH_HARDENING_DIR}/O0/eh_catch_all.elf"
+        --thrower inner --caller demo_main --entry outer
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_throw_context_verify.py"
+        --bin-dir "${AVM_EH_BIN_DIR}" ${AVM_EH_PROBE_RUN}
+        --image "${AVM_EH_HARDENING_DIR}/O2/eh_catch_all.bin"
+        --elf "${AVM_EH_HARDENING_DIR}/O2/eh_catch_all.elf"
+        --thrower inner --caller middle --entry inner
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_corruption_verify.py"
+        ${AVM_EH_PROBE_RUN}
+        --image "${AVM_EH_HARDENING_DIR}/O0/eh_corrupt_target.bin"
+        --elf "${AVM_EH_HARDENING_DIR}/O0/eh_corrupt_target.elf"
+        --nm "$<TARGET_FILE_DIR:llvm-avm-image>/llvm-nm"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_corruption_verify.py"
+        ${AVM_EH_PROBE_RUN}
+        --image "${AVM_EH_HARDENING_DIR}/O2/eh_corrupt_target.bin"
+        --elf "${AVM_EH_HARDENING_DIR}/O2/eh_corrupt_target.elf"
+        --nm "$<TARGET_FILE_DIR:llvm-avm-image>/llvm-nm"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_stack_report.py"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image-dir "${AVM_EH_HARDENING_DIR}"
+    DEPENDS avm_tests avm_eh_stack_probe avm_eh_catch_all_images llvm-avm-image
+        ${AVM_EH_LTO_IMAGES}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+
+add_custom_target(avm_eh_catch_all_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_" --opt O0,O2
+    DEPENDS avm_tests avm_eh_catch_all_images avm_eh_metadata_verify
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_catch_all_lto_run avm_eh_hardening_run)
 
 # The runner discovers ASM, C, and C++ sources, maps each source to its adjacent
 # name_output.txt file and corresponding generated image, loads the interpreter
@@ -1118,6 +1311,12 @@ add_custom_target(avm_boundary_probe_run
     DEPENDS avm_boundary_probe
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
+
+# Host-side stack and snapshot probe used by the exception tests. It reads the
+# guest state at each dispatch boundary and never writes guest state.
+add_executable(avm_eh_stack_probe debug/avm_eh_stack_probe.cpp)
+target_compile_features(avm_eh_stack_probe PRIVATE cxx_std_17)
+target_link_libraries(avm_eh_stack_probe PRIVATE ardensdebuggerlib)
 
 add_executable(avm_prof_throughput debug/prof_throughput.cpp)
 target_compile_features(avm_prof_throughput PRIVATE cxx_std_17)

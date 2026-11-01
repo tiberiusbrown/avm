@@ -75,6 +75,8 @@ set(RUNTIME_SOURCES
     inttypes
     locale
     malloc
+    eh_cxa
+    eh_unwind
     multibyte
     math
     math_standard
@@ -189,6 +191,9 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
     set(runtime_math_options)
     set(runtime_extra_dependencies)
+    if(RUNTIME_SOURCE MATCHES "^eh_")
+        list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h")
+    endif()
     if(RUNTIME_SOURCE MATCHES "^(stdio_|wchar_(stream|format|scan)$)")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h")
     endif()
@@ -277,6 +282,19 @@ avm_add_runtime_object(
     DEPENDS ${AVM_RUNTIME_HEADERS}
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
+
+# Exception support is linked only when a program references these objects.
+foreach(eh_asm eh_context eh_cxa_throw)
+    set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${eh_asm}.o")
+    avm_add_runtime_object(
+        OUTPUT "${RUNTIME_OBJECT}"
+        SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/${eh_asm}.asm"
+        LANGUAGE ASM
+        INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+        DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h"
+    )
+    list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
+endforeach()
 
 set(RUNTIME_OBJECT
     "${AVM_RUNTIME_OBJECT_DIR}/trap_entry.o")

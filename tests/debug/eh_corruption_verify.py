@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs corrupted AVEH2 blocks through the production unwinder.
+"""Runs corrupted AVEH3 blocks through the production unwinder.
 
 Each mutant is a copy of a valid exception image with one field of the metadata
 changed. The guest throws through protected_frame, and the probe reports how the
@@ -17,9 +17,9 @@ import subprocess
 import sys
 import tempfile
 
-MAGIC = b'AVEH2'
+MAGIC = b'AVEH3'
 HEADER_SIZE = 10
-FUNCTION_HEADER_SIZE = 12
+FUNCTION_HEADER_SIZE = 18
 ROW_HEADER_SIZE = 5
 SITE_SIZE = 10
 CALL_SIZE = 5
@@ -71,47 +71,59 @@ def row_size(flags):
 
 
 def parse_block(data, block):
-    """Returns the record offsets of every function, found with the same walk
-    that the unwinder uses."""
+    """Returns the offsets of every function record. Each record's next record comes
+    from its own next_offset, so no row is read to skip a record. The rows are read
+    only inside a record, for the mutations that name them."""
+    count = read_u(data, block + 5, 2)
     size = read_u(data, block + 7, 3)
     limit = block + size
     functions = []
     fh = block + HEADER_SIZE
-    while fh < limit:
+    for _ in range(count):
+        check(fh + FUNCTION_HEADER_SIZE <= limit, 'the function header is truncated')
         start = read_u(data, fh, 3)
         end = read_u(data, fh + 3, 3)
         rows = read_u(data, fh + 6, 2)
         sites = read_u(data, fh + 8, 2)
         calls = read_u(data, fh + 10, 2)
+        sites_offset = read_u(data, fh + 12, 3)
+        next_offset = read_u(data, fh + 15, 3)
         row_offsets = []
         cursor = fh + FUNCTION_HEADER_SIZE
         for _ in range(rows):
             row_offsets.append(cursor)
             cursor += row_size(data[cursor + 2])
-        site_offset = cursor
-        call_offset = site_offset + sites * SITE_SIZE
+        check(cursor == fh + sites_offset, 'the rows do not end at sites_offset')
+        site_offset = fh + sites_offset
         functions.append({'start': start, 'end': end, 'rows': row_offsets,
                           'sites': site_offset, 'site_count': sites,
-                          'calls': call_offset, 'call_count': calls,
-                          'header': fh})
-        fh = call_offset + calls * CALL_SIZE
+                          'calls': site_offset + SITE_SIZE * sites, 'call_count': calls,
+                          'header': fh, 'next': fh + next_offset})
+        fh = fh + next_offset
     check(fh == limit, 'the block does not end at its declared size')
-    return functions
+    return functions, limit
 
 
-def mutate(data, block, functions, names, name):
-    """Returns a copy of data with one field changed, or None for the control."""
+def mutate(data, block, functions, limit, names, name):
+    """Returns a copy of data with one field changed, or the copy itself for the
+    controls. Each mutation names the record it changes."""
     out = bytearray(data)
     protected = next(f for f in functions if f['start'] <= names['protected_frame'] < f['end'])
     middle = next(f for f in functions if f['start'] <= names['middle'] < f['end'])
     unrelated = next(f for f in functions if f['start'] <= names['unrelated'] < f['end'])
+    leaf = next(f for f in functions if f['start'] <= names['leaf'] < f['end'])
+    # The first record past the throwing chain. A throw stops at leaf's record, so no
+    # lookup reads this record.
+    after = [f for f in functions if f['start'] >= leaf['end']]
     leaf_pad = middle['start']  # outside protected_frame, inside the block
 
     def put(offset, value, size):
         out[offset:offset + size] = int(value).to_bytes(size, 'little')
 
-    if name == 'magic_version':
-        out[block + 4] = ord('1')
+    sites_offset = protected['sites'] - protected['header']
+    next_offset = protected['next'] - protected['header']
+    if name == 'magic_mismatch':
+        out[block] = ord('X')
     elif name == 'declared_length':
         put(block + 7, 0x10, 3)
     elif name == 'function_count':
@@ -136,13 +148,29 @@ def mutate(data, block, functions, names, name):
         put(protected['sites'] + 3, protected['end'] + 2, 3)
     elif name == 'outgoing_argument_bytes':
         put(protected['calls'] + 3, 0x0100, 2)
-    elif name == 'record_length':
+    elif name == 'site_count_inconsistent':
         put(protected['header'] + 8, 0xffff, 2)
     elif name == 'call_count_zero':
         put(protected['header'] + 10, 0, 2)
+    elif name == 'sites_offset_large':
+        put(protected['header'] + 12, sites_offset + 1, 3)
+    elif name == 'next_offset_zero':
+        put(protected['header'] + 15, 0, 3)
+    elif name == 'next_offset_backward':
+        put(protected['header'] + 15, sites_offset - 1, 3)
+    elif name == 'next_offset_past_block':
+        put(protected['header'] + 15, limit - protected['header'] + 1, 3)
+    elif name == 'next_offset_inconsistent':
+        put(protected['header'] + 15, next_offset + 1, 3)
     elif name == 'control_unrelated_call_bytes':
         check(unrelated['call_count'] > 0, 'unrelated has no call record')
         put(unrelated['calls'] + 3, 2, 2)
+        return out
+    elif name == 'control_after_throw_next_offset':
+        # The throw never reads this record, so the valid output must remain.
+        check(after, 'no record follows the throwing chain to use as a control')
+        record = after[0]
+        put(record['header'] + 15, record['next'] - record['header'] + 1, 3)
         return out
     else:
         raise Failure('unknown mutation %s' % name)
@@ -151,12 +179,14 @@ def mutate(data, block, functions, names, name):
 
 
 # Mutations that break a field the throw consumes must halt cleanly.
-MUST_HALT = ['magic_version', 'declared_length', 'row_pc_delta', 'cfa_base_register',
+MUST_HALT = ['magic_mismatch', 'declared_length', 'row_pc_delta', 'cfa_base_register',
              'reserved_mask_bit', 'saved_slot_offset', 'landing_pad', 'call_range',
-             'outgoing_argument_bytes', 'record_length', 'call_count_zero']
-# This control changes a record that the throw never reads. Its output must match
-# the valid run.
-MUST_MATCH = ['control_unrelated_call_bytes']
+             'outgoing_argument_bytes', 'site_count_inconsistent', 'call_count_zero',
+             'sites_offset_large', 'next_offset_zero', 'next_offset_backward',
+             'next_offset_past_block', 'next_offset_inconsistent']
+# These controls change a record that the throw never reads. Their output must
+# match the valid run.
+MUST_MATCH = ['control_unrelated_call_bytes', 'control_after_throw_next_offset']
 # The packer and avm_eh_validate_block check the function count. The throw walks
 # to the block end instead, so this mutation may halt or run the valid path.
 ANY_CLEAN = ['function_count']
@@ -191,9 +221,9 @@ def main():
     with open(args.image, 'rb') as handle:
         data = handle.read()
     block = data.find(MAGIC)
-    check(block >= 0, 'the image has no AVEH2 block')
-    check(data.find(MAGIC, block + 1) < 0, 'the image has more than one AVEH2 block')
-    functions = parse_block(data, block)
+    check(block >= 0, 'the image has no AVEH3 block')
+    check(data.find(MAGIC, block + 1) < 0, 'the image has more than one AVEH3 block')
+    functions, limit = parse_block(data, block)
     names = function_symbols(args.nm, args.elf)
 
     # The valid image must produce the valid output before any mutant means anything.
@@ -205,7 +235,7 @@ def main():
     failures = []
     with tempfile.TemporaryDirectory() as scratch:
         for name in MUST_HALT + MUST_MATCH + ANY_CLEAN:
-            mutant = mutate(data, block, functions, names, name)
+            mutant = mutate(data, block, functions, limit, names, name)
             path = os.path.join(scratch, name + '.bin')
             with open(path, 'wb') as handle:
                 handle.write(mutant)

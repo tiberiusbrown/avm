@@ -334,13 +334,15 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
 endforeach()
 
 add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
-# Checks the AVEH1 block of each exception-enabled image against the linked ELF,
+# Checks the AVEH3 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.
 set(AVM_EH_VERIFY_ARGS)
 foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
-    set(AVM_EH_ELF "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/eh_catch_all.elf")
-    set(AVM_EH_IMAGE "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/eh_catch_all.bin")
-    list(APPEND AVM_EH_VERIFY_ARGS --eh-elf "${AVM_EH_ELF}" --eh-image "${AVM_EH_IMAGE}")
+    foreach(AVM_EH_VERIFY_NAME IN ITEMS eh_catch_all eh_call8)
+        set(AVM_EH_ELF "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/${AVM_EH_VERIFY_NAME}.elf")
+        set(AVM_EH_IMAGE "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/${AVM_EH_VERIFY_NAME}.bin")
+        list(APPEND AVM_EH_VERIFY_ARGS --eh-elf "${AVM_EH_ELF}" --eh-image "${AVM_EH_IMAGE}")
+    endforeach()
 endforeach()
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
@@ -420,6 +422,11 @@ add_custom_target(avm_eh_hardening_run
         --image "${AVM_EH_HARDENING_DIR}/O0/eh_catch_all.bin"
         --elf "${AVM_EH_HARDENING_DIR}/O0/eh_catch_all.elf"
         --thrower inner --caller demo_main --entry outer
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_landing_pad_verify.py"
+        --bin-dir "${AVM_EH_BIN_DIR}" ${AVM_EH_PROBE_RUN}
+        --image "${AVM_EH_HARDENING_DIR}/O2/eh_call8.bin"
+        --elf "${AVM_EH_HARDENING_DIR}/O2/eh_call8.elf"
+        --function near_caller --callee throw_near --encoding call8
     COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_throw_context_verify.py"
         --bin-dir "${AVM_EH_BIN_DIR}" ${AVM_EH_PROBE_RUN}
         --image "${AVM_EH_HARDENING_DIR}/O2/eh_catch_all.bin"

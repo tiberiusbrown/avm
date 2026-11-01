@@ -472,8 +472,9 @@ frame. Build with `-fexceptions`, which overrides the SDK's `-fno-exceptions`
 default. The compiler emits LLVM's DWARF landing pads. It records each call
 site as an entry in `.avm.eh_sites`, and it records each call in a function with
 landing pads in `.avm.eh_calls`. The packer turns those records and the
-`.debug_frame` rows into the `AVEH2` block described in
-[arch.md](arch.md) Section 69.3.
+`.debug_frame` rows into the `AVEH3` block described in
+[arch.md](arch.md) Section 69.3. The unwinder's `eh_unwind.c` is built without
+unwind tables, because the unwinder never unwinds through its own frames.
 
 The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, and
 `eh_cxa_throw.asm`. They are archive members of `libavm.a`, so a program links

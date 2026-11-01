@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""Verify the AVEH2 exception metadata in packed AVM images.
+"""Verify the AVEH3 exception metadata in packed AVM images.
 
 For an image built with the exception runtime, this script checks that:
 
 * the program-space anchor __avm_eh_metadata_ptr is patched to a block whose
-  header is AVEH2 and whose size fits in the image;
+  header is AVEH3 and whose size fits in the image;
+* each function record's sites_offset and next_offset match the sizes of its
+  rows, sites, and calls, which are computed from the record's counts and flags;
 * every function record lies in executable code, its rows and sites are
   ordered and in bounds, and its landing pads are executable code;
 * every function start, row PC, call-site endpoint, and landing pad is an
   instruction boundary in the linked ELF, so relaxation did not move any
   metadata address off an instruction;
-* packing with --no-crash-info still emits the block.
+* packing with --no-crash-info still emits the block;
+* the decoder rejects each malformed block in a fixed set of mutations.
 
 For an image built without the exception runtime, it checks that the anchor
-does not exist and that the image contains no AVEH2 block.
+does not exist and that the image contains no AVEH3 block.
 
 The layout is documented in docs/arch.md, Section 69.3. The script reads the
 linked ELF with llvm-nm, llvm-readelf, and llvm-objdump, and the image bytes
@@ -29,10 +32,11 @@ import sys
 import tempfile
 
 ANCHOR = '__avm_eh_metadata_ptr'
-MAGIC = b'AVEH2'
+MAGIC = b'AVEH3'
 HEADER_SIZE = 10
-FUNCTION_HEADER_SIZE = 12
+FUNCTION_HEADER_SIZE = 18
 ROW_HEADER_SIZE = 5
+ROW_MAX_SIZE = 13
 SITE_SIZE = 10
 CALL_SIZE = 5
 ARGUMENT_LIMIT = 256
@@ -155,99 +159,159 @@ def in_executable(ranges, address):
 
 
 def read_u(image, offset, size):
-    check(offset + size <= len(image), 'AVEH2 read past the end of the image')
+    check(offset + size <= len(image), 'AVEH3 read past the end of the image')
     return int.from_bytes(image[offset:offset + size], 'little')
 
 
 def decode_block(image, block):
-    """Decodes AVEH2 and returns a list of function dicts."""
-    check(block + HEADER_SIZE <= len(image), 'AVEH2 header lies outside the image')
-    check(image[block:block + 5] == MAGIC, 'AVEH2 magic is missing')
+    """Decodes AVEH3 and returns (function dicts, block size).
+
+    Each record's sites_offset and next_offset are read from the image bytes. They
+    are compared with sizes computed from the record's own counts, and the row
+    bytes are summed from each row's flags, so the expected values do not come from
+    the decoder's cursor."""
+    check(block + HEADER_SIZE <= len(image), 'AVEH3 header lies outside the image')
+    check(image[block:block + 5] == MAGIC, 'AVEH3 magic is missing')
     count = read_u(image, block + 5, 2)
     size = read_u(image, block + 7, 3)
-    check(size >= HEADER_SIZE, 'AVEH2 block size is smaller than its header')
-    check(block + size <= len(image), 'AVEH2 block extends past the image')
+    check(size >= HEADER_SIZE, 'AVEH3 block size is smaller than its header')
+    check(block + size <= len(image), 'AVEH3 block extends past the image')
     end = block + size
     functions = []
-    cursor = block + HEADER_SIZE
+    record = block + HEADER_SIZE
     previous_end = 0
     for _ in range(count):
-        check(cursor + FUNCTION_HEADER_SIZE <= end, 'AVEH2 function header is truncated')
-        start = read_u(image, cursor, 3)
-        function_end = read_u(image, cursor + 3, 3)
-        row_count = read_u(image, cursor + 6, 2)
-        site_count = read_u(image, cursor + 8, 2)
-        call_count = read_u(image, cursor + 10, 2)
-        check(start < function_end, 'AVEH2 function range is empty')
-        check(start >= previous_end, 'AVEH2 function ranges overlap or are unsorted')
-        check(row_count > 0, 'AVEH2 function has no CFI rows')
+        check(record + FUNCTION_HEADER_SIZE <= end, 'AVEH3 function header is truncated')
+        start = read_u(image, record, 3)
+        function_end = read_u(image, record + 3, 3)
+        row_count = read_u(image, record + 6, 2)
+        site_count = read_u(image, record + 8, 2)
+        call_count = read_u(image, record + 10, 2)
+        sites_offset = read_u(image, record + 12, 3)
+        next_offset = read_u(image, record + 15, 3)
+        check(start < function_end, 'AVEH3 function range is empty')
+        check(start >= previous_end, 'AVEH3 function ranges overlap or are unsorted')
+        check(row_count > 0, 'AVEH3 function has no CFI rows')
+        check(0 < next_offset <= end - record, 'AVEH3 next_offset does not end inside the block')
         previous_end = function_end
-        cursor += FUNCTION_HEADER_SIZE
+
+        # Walk the rows to measure them, then compare that size with sites_offset.
+        cursor = record + FUNCTION_HEADER_SIZE
         rows = []
         previous_delta = None
         for index in range(row_count):
-            check(cursor + ROW_HEADER_SIZE <= end, 'AVEH2 row is truncated')
+            check(cursor + ROW_HEADER_SIZE <= end, 'AVEH3 row is truncated')
             delta = read_u(image, cursor, 2)
             flags = image[cursor + 2]
             cfa_offset = struct.unpack_from('<h', image, cursor + 3)[0]
             mask = flags & FLAG_SAVED_MASK
-            check(not flags & FLAG_RESERVED, 'AVEH2 row sets reserved flag bits')
+            check(not flags & FLAG_RESERVED, 'AVEH3 row sets reserved flag bits')
             if index == 0:
-                check(delta == 0, 'AVEH2 first row is not at the function start')
+                check(delta == 0, 'AVEH3 first row is not at the function start')
             else:
-                check(delta > previous_delta, 'AVEH2 rows are not strictly increasing')
-            check(start + delta < function_end, 'AVEH2 row lies outside its function')
+                check(delta > previous_delta, 'AVEH3 rows are not strictly increasing')
+            check(start + delta < function_end, 'AVEH3 row lies outside its function')
             previous_delta = delta
             saved_count = bin(mask).count('1')
             slots_size = 2 * saved_count
-            check(cursor + ROW_HEADER_SIZE + slots_size <= end, 'AVEH2 row slots are truncated')
+            check(cursor + ROW_HEADER_SIZE + slots_size <= end, 'AVEH3 row slots are truncated')
             rows.append({'pc': start + delta, 'r3': bool(flags & FLAG_R3_BASE),
                          'cfa_offset': cfa_offset, 'mask': mask})
             cursor += ROW_HEADER_SIZE + slots_size
+        row_bytes = cursor - (record + FUNCTION_HEADER_SIZE)
+        expected_sites_offset = FUNCTION_HEADER_SIZE + row_bytes
+        check(sites_offset == expected_sites_offset,
+              'AVEH3 sites_offset is %d, but the rows end at %d' % (
+                  sites_offset, expected_sites_offset))
+        expected_next_offset = sites_offset + SITE_SIZE * site_count + CALL_SIZE * call_count
+        check(next_offset == expected_next_offset,
+              'AVEH3 next_offset is %d, but sites and calls end at %d' % (
+                  next_offset, expected_next_offset))
+
         sites = []
+        check(cursor + site_count * SITE_SIZE <= end, 'AVEH3 sites are truncated')
         previous_site_end = start
-        check(cursor + site_count * SITE_SIZE <= end, 'AVEH2 sites are truncated')
         for _ in range(site_count):
             site_start = read_u(image, cursor, 3)
             site_end = read_u(image, cursor + 3, 3)
             landing = read_u(image, cursor + 6, 3)
             action = image[cursor + 9]
-            check(site_start < site_end, 'AVEH2 site range is empty')
-            check(site_start >= previous_site_end, 'AVEH2 sites overlap or are unsorted')
-            check(site_end <= function_end, 'AVEH2 site extends past its function')
+            check(site_start < site_end, 'AVEH3 site range is empty')
+            check(site_start >= previous_site_end, 'AVEH3 sites overlap or are unsorted')
+            check(site_end <= function_end, 'AVEH3 site extends past its function')
             if action == 0:
-                check(landing == 0, 'AVEH2 action 0 site has a landing pad')
+                check(landing == 0, 'AVEH3 action 0 site has a landing pad')
             elif action == 1:
                 check(start <= landing < function_end,
-                      'AVEH2 catch-all landing pad lies outside its function')
+                      'AVEH3 catch-all landing pad lies outside its function')
             else:
-                raise Failure('AVEH2 site has unsupported action %d' % action)
+                raise Failure('AVEH3 site has unsupported action %d' % action)
             sites.append({'start': site_start, 'end': site_end,
                           'landing': landing, 'action': action})
             previous_site_end = site_end
             cursor += SITE_SIZE
         calls = []
-        check(cursor + call_count * CALL_SIZE <= end, 'AVEH2 calls are truncated')
+        check(cursor + call_count * CALL_SIZE <= end, 'AVEH3 calls are truncated')
         previous_return = start
         for _ in range(call_count):
             return_pc = read_u(image, cursor, 3)
             outgoing = read_u(image, cursor + 3, 2)
             check(start < return_pc <= function_end,
-                  'AVEH2 call return PC lies outside its function')
-            check(return_pc > previous_return, 'AVEH2 call records are not strictly increasing')
+                  'AVEH3 call return PC lies outside its function')
+            check(return_pc > previous_return, 'AVEH3 call records are not strictly increasing')
             check(outgoing < ARGUMENT_LIMIT,
-                  'AVEH2 call passes more outgoing bytes than the stack holds')
+                  'AVEH3 call passes more outgoing bytes than the stack holds')
             calls.append((return_pc, outgoing))
             previous_return = return_pc
             cursor += CALL_SIZE
+        check(cursor == record + next_offset, 'AVEH3 record does not end at next_offset')
         for site in sites:
             if site['action'] == 1:
                 check(any(site['start'] < pc <= site['end'] for pc, _ in calls),
-                      'AVEH2 catch-all site at 0x%x has no call record' % site['start'])
-        functions.append({'start': start, 'end': function_end,
+                      'AVEH3 catch-all site at 0x%x has no call record' % site['start'])
+        functions.append({'start': start, 'end': function_end, 'record': record,
                           'rows': rows, 'sites': sites, 'calls': calls})
-    check(cursor == end, 'AVEH2 block size does not match its records')
+        record += next_offset
+    check(record == end, 'AVEH3 block size does not match its records')
     return functions, size
+
+
+def verify_mutations_rejected(image, block, functions):
+    """Damages one field of a valid block at a time, and checks that the decoder
+    rejects each mutant. The mutations cover the header, the record offsets, and the
+    tail of the block. The decoder is the independent one above, so each rejection
+    comes from the bytes and not from the production runtime."""
+    first = functions[0]['record']
+    count = read_u(image, block + 5, 2)
+    size = read_u(image, block + 7, 3)
+    end = block + size
+    sites_offset = read_u(image, first + 12, 3)
+    next_offset = read_u(image, first + 15, 3)
+
+    def put(address, value, width):
+        out = bytearray(image)
+        out[address:address + width] = (value & ((1 << (8 * width)) - 1)).to_bytes(width, 'little')
+        return bytes(out)
+
+    mutants = [
+        ('magic', put(block, ord('X'), 1)),
+        ('function_count_small', put(block + 5, count - 1, 2)),
+        ('function_count_large', put(block + 5, count + 1, 2)),
+        ('sites_offset_small', put(first + 12, sites_offset - 1, 3)),
+        ('sites_offset_large', put(first + 12, sites_offset + 1, 3)),
+        ('sites_offset_into_row', put(first + 12, FUNCTION_HEADER_SIZE + 2, 3)),
+        ('next_offset_zero', put(first + 15, 0, 3)),
+        ('next_offset_backward', put(first + 15, sites_offset - 1, 3)),
+        ('next_offset_beyond_block', put(first + 15, end - first + 1, 3)),
+        ('next_offset_inconsistent', put(first + 15, next_offset + 1, 3)),
+        ('block_truncated_in_last_record', put(block + 7, size - 1, 3)),
+    ]
+    for name, mutant in mutants:
+        try:
+            decode_block(mutant, block)
+        except Failure:
+            continue
+        raise Failure('the decoder accepted the %s mutation' % name)
 
 
 def verify_eh_image(args, elf, image_path):
@@ -257,32 +321,33 @@ def verify_eh_image(args, elf, image_path):
     check(anchor is not None, 'exception image lacks the %s anchor' % ANCHOR)
     check(anchor + 3 <= len(image), 'anchor lies outside the image')
     block = read_u(image, anchor, 3)
-    check(block != 0, 'anchor is not patched with an AVEH2 address')
+    check(block != 0, 'anchor is not patched with an AVEH3 address')
 
     functions, size = decode_block(image, block)
+    verify_mutations_rejected(image, block, functions)
     expected = compiler_sites(args.objdump, elf)
     for fn in functions:
         packed = [(s['start'], s['end'], s['landing'], s['action']) for s in fn['sites']]
         if fn['start'] in expected:
             end, sites = expected[fn['start']]
-            check(end == fn['end'], 'function 0x%x ends at 0x%x in AVEH2 but 0x%x in the compiler records' % (
+            check(end == fn['end'], 'function 0x%x ends at 0x%x in AVEH3 but 0x%x in the compiler records' % (
                 fn['start'], fn['end'], end))
             check(sorted(sites) == sorted(packed),
-                  'AVEH2 sites for 0x%x differ from the compiler records' % fn['start'])
+                  'AVEH3 sites for 0x%x differ from the compiler records' % fn['start'])
         else:
-            check(not packed, 'AVEH2 sites for 0x%x have no compiler records' % fn['start'])
+            check(not packed, 'AVEH3 sites for 0x%x have no compiler records' % fn['start'])
     expected_calls = compiler_calls(args.objdump, elf)
     for fn in functions:
         if fn['start'] in expected_calls:
             check(fn['calls'] == expected_calls[fn['start']],
-                  'AVEH2 calls for 0x%x differ from the compiler records' % fn['start'])
+                  'AVEH3 calls for 0x%x differ from the compiler records' % fn['start'])
         else:
-            check(not fn['calls'], 'AVEH2 calls for 0x%x have no compiler records' % fn['start'])
+            check(not fn['calls'], 'AVEH3 calls for 0x%x have no compiler records' % fn['start'])
     packed_starts = {fn['start'] for fn in functions}
     missing = sorted(start for start in list(expected) + list(expected_calls)
                      if start not in packed_starts)
     if missing:
-        raise Failure('compiler records for 0x%x have no AVEH2 function' % missing[0])
+        raise Failure('compiler records for 0x%x have no AVEH3 function' % missing[0])
     boundaries = instruction_boundaries(args.objdump, elf)
     code = executable_ranges(args.readelf, elf)
     site_count = 0
@@ -340,7 +405,7 @@ def verify_no_eh_image(args, elf, image_path):
           'image without the exception runtime defines %s' % ANCHOR)
     with open(image_path, 'rb') as handle:
         image = handle.read()
-    check(MAGIC not in image, 'image without the exception runtime contains AVEH2')
+    check(MAGIC not in image, 'image without the exception runtime contains AVEH3')
 
 
 def main():
@@ -367,7 +432,7 @@ def main():
     for elf, image in zip(args.eh_elf, args.eh_image):
         try:
             stats = verify_eh_image(args, elf, image)
-            print('%s: AVEH2 at 0x%06x, %d bytes, %d functions, %d rows, %d sites, %d calls' % (
+            print('%s: AVEH3 at 0x%06x, %d bytes, %d functions, %d rows, %d sites, %d calls' % (
                 os.path.basename(elf), stats['block'], stats['size'],
                 stats['functions'], stats['rows'], stats['sites'], stats['calls']))
             with tempfile.TemporaryDirectory() as scratch:
@@ -375,7 +440,7 @@ def main():
                 run_tool(packer, ['--development', '--no-crash-info', elf, '-o', plain])
                 with open(plain, 'rb') as handle:
                     no_crash = handle.read()
-                check(MAGIC in no_crash, '--no-crash-info removed the AVEH2 block')
+                check(MAGIC in no_crash, '--no-crash-info removed the AVEH3 block')
                 verify_eh_image(args, elf, plain)
                 verify_packer_rejects(packer, elf, scratch)
         except Failure as error:

@@ -6561,16 +6561,16 @@ and lines only. It does not describe stack frames, does not replace
 the ELF and DWARF files, including the call-frame information in `.debug_frame`.
 The AVD1 layout has no unwind section.
 
-### 69.3. Exception metadata (AVEH2)
+### 69.3. Exception metadata (AVEH3)
 
-A program that references the Stage 1 exception runtime carries an `AVEH2` block.
+A program that references the Stage 1 exception runtime carries one `AVEH3` block.
 A program that does not reference it has no block, and its image is unchanged.
 The block is not part of the image header and does not depend on `AVD1`.
 `--no-crash-info` does not remove it.
 
-`AVEH2` replaces `AVEH1`. The per-function header gained a call count, and each
-function now has call records. The packer does not read `AVEH1` blocks, and the
-runtime does not accept them.
+AVEH3 is the only exception metadata format. The packer writes it, and the runtime
+reads it. The magic identifies the format so that a malformed or mismatched image
+is rejected. Nothing else is accepted.
 
 #### Flash pointer anchor
 
@@ -6579,7 +6579,7 @@ program-space object that the ELF stores as zero. The packer finds exactly one
 defined symbol with that name. It must lie in a read-only AVM program-space
 section, outside the reserved header range, and it must be three bytes long.
 The packer patches its three bytes with the final image address of the
-`AVEH2` block. Multiple, undefined, or misplaced anchors are rejected. The
+`AVEH3` block. Multiple, undefined, or misplaced anchors are rejected. The
 block follows the crash metadata at a 4-byte boundary and must fit in the
 flash payload limit. The guest reads the anchor with an AS1 load.
 
@@ -6589,11 +6589,11 @@ All integers are little-endian. Code addresses are 24-bit program addresses.
 
 | Field | Size | Contents |
 |---|---:|---|
-| Magic | 5 | `41 56 45 48 32`, ASCII `AVEH2` |
+| Magic | 5 | `41 56 45 48 33`, ASCII `AVEH3` |
 | `function_count` | 2 | Number of function records |
 | `block_size` | 3 | Total block size in bytes, including this header |
 
-Each function record is a 12-byte header, then its rows, its sites, and its calls:
+Each function record is an 18-byte header, then its rows, its sites, and its calls:
 
 | Field | Size | Contents |
 |---|---:|---|
@@ -6602,15 +6602,36 @@ Each function record is a 12-byte header, then its rows, its sites, and its call
 | `row_count` | 2 | Number of CFI rows, at least one |
 | `site_count` | 2 | Number of call-site records |
 | `call_count` | 2 | Number of call records |
+| `sites_offset` | 3 | Offset from the record start to the first site |
+| `next_offset` | 3 | Offset from the record start to the next record |
 
-A row is `u16 pc_delta`, `u8 flags`, `i16 cfa_offset`, and one `i16` slot for
-each saved register. `pc_delta` is measured from `function_start`. The first
-row has delta zero, and later deltas increase strictly and stay inside the
-function. Bit 7 of `flags` selects the CFA base: clear for SP, set for r3.
-Bits 3:0 are the saved mask for r0-r3, and bits 6:4 must be zero. Each slot is
-the offset from the CFA where that register's caller value is stored, in
-r0-r3 order. The return address is implicit: it is the three-byte value at
-`CFA-3`.
+`sites_offset` and `next_offset` are unsigned 24-bit values measured from the start
+of their own record. The rows fill the bytes from the header to `sites_offset`.
+The sites follow, then the calls, and the calls end at `next_offset`:
+
+```text
+record + 0             18-byte header
+record + 18            rows
+record + sites_offset  sites (10 bytes each)
+                       calls (5 bytes each)
+record + next_offset   next record, or the block end
+```
+
+The records are back to back, so the last record ends at `block_size`. The packer
+and the runtime require:
+
+- `18 + 5 * row_count <= sites_offset <= 18 + 13 * row_count`, because a row is
+  five to thirteen bytes;
+- `next_offset - sites_offset == 10 * site_count + 5 * call_count`;
+- `next_offset >= 23`, so every record advances.
+
+A row is `u16 pc_delta`, `u8 flags`, `i16 cfa_offset`, and one `i16` slot for each
+saved register. `pc_delta` is measured from `function_start`. The first row has
+delta zero, and later deltas increase strictly and stay inside the function. Bit 7
+of `flags` selects the CFA base: clear for SP, set for r3. Bits 3:0 are the saved
+mask for r0-r3, and bits 6:4 must be zero. Each slot is the offset from the CFA
+where that register's caller value is stored, in r0-r3 order. The return address
+is implicit: it is the three-byte value at `CFA-3`.
 
 A site is `u24 start`, `u24 end`, `u24 landing_pad`, and `u8 action`. Action 0
 means no handler, and its landing pad is zero. Action 1 is a catch-all
@@ -6647,15 +6668,25 @@ calls come from `.avm.eh_calls`. Those addresses already include relaxation.
 Every function with an FDE gets a record. A discarded FDE, whose initial
 location is zero, is skipped.
 
-The packer validates the complete block before it writes the image. It rejects:
+The runtime's own unwinder objects are built without unwind tables
+(`-fno-unwind-tables -fno-asynchronous-unwind-tables`, set per source in
+`runtime/CMakeLists.txt`). The unwinder never unwinds through its own frames, so
+its helpers have no CFI and no records. Without that setting, each helper would
+add a record of its own.
 
-- a magic other than `AVEH2`, or a block size that is too small or too large;
+The packer computes both offsets from the records it writes, and it checks them
+against the bounds above before it patches them. It validates the complete block
+before it writes the image. It rejects:
+
+- a magic other than `AVEH3`, or a block size that is too small or too large;
 - a function without an FDE, an FDE outside executable program code, or an
   overlapping function range;
 - a CFA rule other than SP or r3 plus an offset, or a saved-register rule other
   than an offset for r0-r3;
 - rows that are empty, unordered, or outside their function, or that set reserved
   bits;
+- a `sites_offset` outside the row range, or a `next_offset` that does not equal
+  the sites and calls it bounds;
 - a site whose function has no FDE, an empty or overlapping site, a site outside
   its function, a cleanup action, or a landing pad outside its function;
 - a catch-all site with no call record inside it, since its invoke's call must
@@ -6671,23 +6702,41 @@ references remain. `tests/debug/eh_metadata_verify.py` checks these rejections.
 
 The throw path checks each record it consumes, with the same record checks
 that `avm_eh_validate_block` applies to every record. A corrupt record fails the
-throw. It never ends the search at a handler that the record does not name. The
-search checks:
+throw. It never ends the search at a handler that the record does not name.
 
-- the function record that covers the lookup, including its size, its order, and
-  whether it is a gap;
-- the row that covers the lookup, including its delta order and reserved bits;
-- the site that covers the lookup, including its action and landing pad;
-- the call whose return PC equals the saved PC, including its outgoing bytes.
+The search reads each record through its offsets, so no CFI row is read to skip a
+record:
 
-Every stack address that the unwinder reads or writes must lie in the guest
-stack window, which is `[0x900, 0xa00)`. Each unwind step requires its CFA to lie
-above the current SP and inside the window, so the walk always moves toward the
-top of the stack and terminates.
+- `find_function` walks the record headers from the block start, following
+  `next_offset`. It reads at most `function_count` records. For each record it
+  passes, it checks the header sizes, the record's order, and whether the lookup
+  is in a gap. It stops at the record that covers the lookup. A lookup in a gap
+  or past the last record finds no record, and the throw has no handler.
+- `find_row` reads the rows from the header to `sites_offset`. It checks each
+  row it reads, and it stops at the first row past the lookup.
+- `find_site` reads the sites at `sites_offset`, and it stops at the first site
+  past the lookup.
+- `find_call` reads the calls at `sites_offset + 10 * site_count`. It does not read
+  any row or site to find them. It stops at the first call past the return PC.
 
-The search runs in one frame. The record helpers are `always_inline`, because a
-separate call adds a return record and a register save per level. The unwinder
-reads the block directly and does not copy the throw context.
+The header check fixes `sites_offset` once `next_offset` and the counts are
+known, so any change to either offset alone fails it. A `next_offset` that does
+not advance, or that leaves the block, fails it too. Every flash read lies inside
+the record that the walk has validated, or inside the block, except the three-byte
+anchor.
+
+`avm_eh_find_handler` is the outer loop. It holds the context pointer, the
+function record, the covering row, and the covering site. `find_function`,
+`find_row`, `find_site`, `find_call`, and `unwind_frame` are kept out of line, so
+each frame holds only its own live values. The header and row checks are inlined
+into their walks. The site and call checks are out of line, because inlining them
+enlarged the search frame. The cursor is the exception
+header, so the search copies no state onto the guest stack. Each unwind step
+requires its CFA to lie above the current SP and inside the window, so the walk
+always moves toward the top of the stack and terminates.
+
+The guest stack holds 256 bytes, from `0xa00` down to `0x900`. Every stack address
+that the unwinder reads or writes must lie in that window.
 
 Phase one searches without changing any frame. Starting from the throwing
 frame's continuation PC, it looks up the call site at `PC-1` in each frame. A
@@ -6717,44 +6766,59 @@ shim has no stack frame. It stores the continuation, the caller's SP (the entry
 SP plus three), and r0-r3 into the 23-byte exception header, which lies below
 the object. It then tail-transfers to `__avm_eh_throw`.
 
+`avm_eh_validate_block` applies every record check to the whole block, and it
+requires each record's rows to end at `sites_offset` and each record to end at
+`next_offset`. Throws do not call it. The unit test `tests/cpp/eh_block_validation.cpp`
+runs it on valid and malformed blocks.
+
 #### Measured stack and code
 
-The guest stack holds 256 bytes, from `0xa00` down to `0x900`. The checked
-interpreter traps on any SP outside that window. The measurements below use
-`tests/debug/eh_stack_report.py`. The runtime figure is the stack used after the
-first entry into `__cxa_throw`, and the total is the high-water mark from the
-start of the program.
+The measurements use `tests/debug/eh_stack_report.py`. Total is the high-water
+mark from the start of the program. Runtime is the lowest SP reached after the
+first entry into `__cxa_throw`, which is the window in which the unwinder runs.
+That window also contains any user frames that are live during a later runtime
+call, so it can exceed the unwinder's own depth.
 
-| Fixture | Opt | Total peak | Runtime peak |
-|---|---|---:|---:|
-| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 146 | 122 |
-| `eh_catch_all` | O2 | 126 | 104 |
-| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 202 | 100 |
-| `eh_dynamic_handler` | O2 | 170 | 100 |
-| `eh_unhandled` | O0, O2 | 113 | 100 |
-| `eh_missing_cfi` | O0 | 127 | 100 |
-| `eh_allocation_failure` | O0, O2 | 33, 26 | not reached |
-| `eh_no_throw` | O0, O2 | 19 | none |
+| Fixture | Opt | Before total | Before runtime | After total | After runtime |
+|---|---|---:|---:|---:|---:|
+| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 146 | 122 | 125 | 101 |
+| `eh_catch_all` | O2 | 126 | 104 | 105 | 83 |
+| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 202 | 100 | 181 | 79 |
+| `eh_dynamic_handler` | O2 | 170 | 100 | 149 | 79 |
+| `eh_unhandled` | O0, O2 | 113 | 100 | 89 | 76 |
 
-The Stage 1 runtime used about 161 bytes after `__cxa_throw` on the first throw
-of an earlier revision of `eh_dynamic_handler`, and that run peaked at 253 bytes
-in total. The earlier revision passed its arguments as constants, so it is not
-an exact match for the current fixture. The current runtime uses 100 bytes after
-`__cxa_throw` and 202 in total on the current fixture. The runtime target of 64
-bytes is not met. The remaining cost is the flattened search frame, which holds
-the lookup locals, and the saved-register pushes of each function that uses
-r0-r3.
+The searcher frame, which is the locals and the saved r0-r3, shrank from 84 bytes
+to 22. The deepest runtime frame is now the `find_call` path or the
+`find_row` path, at about 70 bytes.
 
-The Stage 1 unwinder's search frame was 69 bytes, and the flattened search frame
-is 84 bytes. The reduction comes from removing the nested validator, the
-`__cxa_throw` frame, and the copied context.
+Code size, from the linked `eh_catch_all` image:
 
-The linked O2 code for the EH runtime functions in `eh_catch_all` sums to about
-2208 bytes, excluding the shared `__avm_umulhisi3` helper. The Stage 1 estimates
-in the task summed to about 2122 bytes, and that sum includes the validator,
-which is no longer on the throw path. The search code grew because its record
-checks are inlined into the lookup, and the validator is no longer linked into
-an image that only throws.
+| Metric | Before | After | Delta |
+|---|---:|---:|---:|
+| `avm_eh_find_handler` in the linked image | 1981 | 233 | -1748 |
+| EH runtime text in the linked image (all helpers) | 2208 | 2437 | +229 |
+| Metadata, O2 (functions, rows, sites, calls) | 2146 (39, 162, 18, 26) | 2246 (38, 150, 18, 26) | +100 |
+| Metadata, O0 (functions, rows, sites, calls) | 2298 (41, 188, 18, 26) | 2410 (40, 176, 18, 26) | +112 |
+| Image, O2 `eh_catch_all` | 15616 | 15872 | +256 |
+| Image, O0 `eh_catch_all` | 16128 | 16640 | +512 |
+| Image, O2 `eh_dynamic_handler` | 14336 | 14592 | +256 |
+| Image, O0 `eh_dynamic_handler` | 14592 | 14848 | +256 |
+
+The metadata grows by 6 bytes per function, because the header is 18 bytes, not
+12. The 38 records cost 228 more bytes. The runtime's own record is gone, along
+with 116 bytes of its rows, so the net growth is 100 bytes at O2. The linked text
+grows by 229 bytes, because the search is now split into helpers, and each
+helper has its own prologue and epilogue. The exception header stays at 23 bytes,
+and persistent RAM stays at 2 bytes (`active_exception`).
+
+Targets: the O2 runtime peak is 83 against a target of 80, and the O0 runtime
+peak on `eh_catch_all` is 101 against 96. The `eh_dynamic_handler` peak is 79 at
+both levels. The searcher frame is 22 bytes against a target of 48. The
+EH-enabled images grow by 256 to 512 bytes, so the no-growth target is not met.
+
+The no-exception images are unchanged. Of the 2,437 test images in the build tree,
+2,421 match the image from before the change byte for byte. The 16 that changed
+are exception fixtures, and `eh_no_throw` is identical.
 
 #### Landing-pad and throw-context checks
 
@@ -6764,25 +6828,35 @@ the outgoing bytes that the normal path releases with an `adjsp` right after the
 call. The check also compares `r0`-`r3` at the call and at the pad. The pad
 address comes from the packed block. The check passes at O0 and O2 for
 `eh_dynamic_handler`, with 8-byte and 2-byte outgoing counts that share one
-handler.
+handler. With `--encoding call8`, it also requires the throwing call to use the
+two-byte form. `eh_call8` is a fixture whose throwing call relaxes to `call8`,
+and the check passes at O2 with a landing SP that equals the call-site SP.
 
 `tests/debug/eh_throw_context_verify.py` checks the initial throw context. It
 decodes the length of the `__cxa_throw` call, takes the return PC, and compares it
 with the captured record. It also checks that the captured caller SP equals the
 SP before the call, and that the thrower's CFA from its CFI row equals the caller
-SP of the frame chain's entry call. The fixtures' throw calls relax to `call16`, so
-no `call8` throw site is covered yet.
+SP of the frame chain's entry call.
 
 #### Corrupted-metadata checks
 
 `tests/debug/eh_corruption_verify.py` mutates one field of a valid block and runs
-the image through the probe. It mutates the magic, the declared length, a row's
+the image through the probe. The mutations that break a field the throw consumes
+must end in the halt report, `TH`. They are the magic, the declared length, a row's
 PC delta, the CFA base, a reserved mask bit, a saved slot, a landing pad, a site
-range, an outgoing byte count, a record length, and a call count. Each of those
-must end in the halt report, `TH`. A control mutation in a record that the throw
-never reads must still print the valid output. No mutant may fault, time out,
-or enter the unrelated handler. The function count is not checked by the throw
-path, which walks to the block end, so that mutant may run the valid path.
+range, an outgoing byte count, a site count, a call count, `sites_offset`, and
+`next_offset` (zero, backward, past the block, and inconsistent with the counts).
+Two controls change a record that the throw never reads. Each must still print the
+valid output. One is the call bytes of an unrelated function, and the other is the
+`next_offset` of the first record past the throwing chain. No mutant may fault,
+time out, or enter the unrelated handler. The function count is not checked by the
+throw path, which walks to the block end, so that mutant may run the valid path.
+
+`tests/debug/eh_metadata_verify.py` applies a second set of mutations to the
+packed block and requires its independent decoder to reject each one. These cover
+the function count in both directions, `sites_offset` too small, too large, and
+pointing into a row, `next_offset` zero, backward, past the block end, and
+inconsistent with the counts, and a block truncated inside its last record.
 
 #### Catch-all limitations
 

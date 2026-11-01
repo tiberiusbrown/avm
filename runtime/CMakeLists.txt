@@ -189,7 +189,7 @@ file(GLOB AVM_RUNTIME_MATH_HEADERS CONFIGURE_DEPENDS
 set(AVM_RUNTIME_LIBRARY_OBJECTS)
 foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${RUNTIME_SOURCE}.o")
-    set(runtime_math_options)
+    set(runtime_source_options)
     set(runtime_extra_dependencies)
     if(RUNTIME_SOURCE MATCHES "^eh_")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h")
@@ -210,13 +210,18 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
         list(APPEND runtime_extra_dependencies "${AVM_CRT_INIT_FINI_HEADER}")
     endif()
     if(RUNTIME_SOURCE STREQUAL "math")
-        set(runtime_math_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
+        set(runtime_source_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
+    endif()
+    # The unwinder never unwinds through its own frames, so its helpers need no
+    # CFI. Each FDE would otherwise add an AVEH3 record for every helper.
+    if(RUNTIME_SOURCE STREQUAL "eh_unwind")
+        set(runtime_source_options -fno-unwind-tables -fno-asynchronous-unwind-tables)
     endif()
     avm_add_runtime_object(
         OUTPUT "${RUNTIME_OBJECT}"
         SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/${RUNTIME_SOURCE}.c"
         LANGUAGE C
-        COMPILE_OPTIONS ${runtime_math_options}
+        COMPILE_OPTIONS ${runtime_source_options}
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
         DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_RUNTIME_MATH_HEADERS}
             ${runtime_extra_dependencies}

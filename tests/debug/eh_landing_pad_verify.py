@@ -8,7 +8,7 @@ call plus that adjsp amount. The probe observes the SP at the call instruction a
 at the landing pad, and this check compares them. It also checks that r0-r3 at the
 landing pad equal their values at the call, since the frame's callee-saved
 registers must come back unchanged. The landing pad address is read from the
-packed AVEH2 block, which is what the unwinder uses.
+packed AVEH3 block, which is what the unwinder uses.
 """
 
 import argparse
@@ -96,6 +96,15 @@ def throwing_calls(listing, callees):
     return rows
 
 
+def call_mnemonic(listing, address):
+    """Returns the encoding of the call at address, such as call8 or call16."""
+    for line in listing:
+        match = CALL_LINE.match(line)
+        if match and int(match.group(1), 16) == address:
+            return match.group(2)
+    return None
+
+
 def probe_events(probe, interpreter, boundary, image, elf, points):
     args = [probe, '--interpreter', interpreter, '--boundary', boundary,
             '--image', image, '--elf', elf, '--cycle-limit', '400000000']
@@ -116,6 +125,12 @@ def verify(args):
     function, listing = function_listing(objdump, args.elf, args.function)
     calls = throwing_calls(listing, args.callee)
     check(calls, 'no calls to %s in %s' % (', '.join(args.callee), function))
+    if args.encoding:
+        for call_pc, _, callee, _ in calls:
+            encoding = call_mnemonic(listing, call_pc)
+            check(encoding == args.encoding,
+                  'the call to %s at 0x%x is %s, not %s' % (
+                      callee, call_pc, encoding, args.encoding))
 
     with open(args.image, 'rb') as handle:
         image = handle.read()
@@ -190,6 +205,8 @@ def main():
                         help='substring of the demangled-symbol name that holds the calls')
     parser.add_argument('--callee', action='append', required=True,
                         help='substring of a throwing callee name')
+    parser.add_argument('--encoding', default=None,
+                        help='required encoding of each throwing call, such as call8')
     args = parser.parse_args()
     try:
         verify(args)

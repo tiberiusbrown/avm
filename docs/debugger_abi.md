@@ -121,7 +121,7 @@ allocated, which is the state the restatement assumes.
 
 A valid `.debug_frame` does not by itself mean that stack unwinding works on
 the device. AVD1 has no unwind section. The guest unwinds only for C++ exceptions,
-using the `AVEH2` block described in [arch.md](arch.md) Section 69.3. That block
+using the `AVEH3` block described in [arch.md](arch.md) Section 69.3. That block
 is derived from `.debug_frame`, `.avm.eh_sites`, and `.avm.eh_calls`, and it exists only in
 programs that reference the exception runtime. It is not a general debugger
 unwind table, and it does not describe variables or locations.

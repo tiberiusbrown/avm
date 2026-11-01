@@ -92,7 +92,7 @@ void __cxa_end_catch(void) {
     free(header);
 }
 
-/* The Stage 1 unwinder uses AVEH2 instead of personality routines, so this
+/* The Stage 1 unwinder uses AVEH3 instead of personality routines, so this
  * function is never reached. It exists because LLVM names it in the EH
  * personality, and it terminates if a program ever calls it. */
 int __gxx_personality_v0(void) {

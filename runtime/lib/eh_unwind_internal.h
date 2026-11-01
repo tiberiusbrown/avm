@@ -42,7 +42,7 @@ __avm_eh_install_context(const struct avm_eh_context *context);
  * Searches for a handler and never returns. */
 __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header);
 
-/* Returns 1 when the AVEH2 block at the 24-bit flash address is well formed. It
+/* Returns 1 when the AVEH3 block at the 24-bit flash address is well formed. It
  * applies the same bounded checks that the unwinder uses for each record. */
 uint8_t avm_eh_validate_block(uint32_t block);
 

@@ -7,7 +7,9 @@ mutation must end the run with the failure report, which means the throw was not
 caught, and the handler never ran. The mutations cover an unknown vtable address point
 on the thrown class and on a base, an out-of-range base address, an excessive base
 count, a reserved flag bit, an offset that is negative or past the object, a cycle,
-and a virtual edge, which matches nothing and so ends the throw as unhandled.
+and a virtual edge whose vtable slot lies below program space. A virtual edge reads its
+displacement through the vptr of the thrown object, so that slot is outside the address
+range, and the throw fails.
 """
 
 import argparse
@@ -57,6 +59,90 @@ def put(data, address, value, size):
         data[address + i] = (value >> (8 * i)) & 0xff
 
 
+# The virtual corruption target: CorruptVirtual has one virtual base, CorruptBase, which lies
+# five bytes into the object. Its vtable has no virtual functions, so the vbase offset is the
+# first of its three entries, and the vptr is the address point, nine bytes in.
+VIRTUAL_TARGET = '_ZTIN12_GLOBAL__N_114CorruptVirtualE'
+VIRTUAL_VTABLE = '_ZTVN12_GLOBAL__N_114CorruptVirtualE'
+VIRTUAL_MODE = '_ZN12_GLOBAL__N_115corruption_modeE'
+VIRTUAL_VTABLE_SIZE = 9
+VIRTUAL_DISPLACEMENT = 5
+# The RTTI of CorruptVirtual is a VMI with one base, whose entry follows the 10-byte header.
+VMI_COUNT = 8
+VMI_ENTRY = 10
+
+
+def virtual_mutations(vmi, slot, mode):
+    """Each mutation names its effect and patches a copy of the image. The mode byte makes
+    the constructor store a corrupt vptr, and the other patches change the RTTI or the
+    vtable slot that a virtual base reads."""
+    entry = vmi + VMI_ENTRY
+    return [
+        ('vptr zero', lambda d: d.__setitem__(mode, 1)),
+        ('vptr near the top of the 24-bit range',
+         lambda d: d.__setitem__(mode, 2)),
+        ('vptr plus the RTTI offset underflows, below program address zero',
+         lambda d: d.__setitem__(mode, 3)),
+        ('vptr plus the RTTI offset overflows, past program address 0xFFFFFD',
+         lambda d: (d.__setitem__(mode, 2), put(d, entry + OFFSET, 0x000010, 3))),
+        ('virtual displacement past the end of the object',
+         lambda d: put(d, slot, 0x000100, 3)),
+        ('virtual displacement before the start of the object',
+         lambda d: put(d, slot, 0xfffff0, 3)),
+        ('reserved flag bit set on the virtual base',
+         lambda d: d.__setitem__(entry + FLAGS, d[entry + FLAGS] | 0x04)),
+        ('base address below the reserved header',
+         lambda d: put(d, entry, 0x000010, 3)),
+        ('excessive base count',
+         lambda d: put(d, vmi + VMI_COUNT, 0x0100, 2)),
+        ('cycle back to the thrown class',
+         lambda d: put(d, entry, vmi, 3)),
+    ]
+
+
+def verify_virtual(args):
+    elf = rtti.Elf(args.elf)
+    with open(args.image, 'rb') as handle:
+        original = bytearray(handle.read())
+    decoded = rtti.decode_descriptor(elf, rtti.Image(args.image), VIRTUAL_TARGET)
+    check([edge['virtual'] for edge in decoded['edges']] == [True],
+          'CorruptVirtual does not have one virtual base')
+    check(decoded['bases'] == [rtti.defined(elf, '_ZTIN12_GLOBAL__N_111CorruptBaseE')['value']],
+          'CorruptVirtual does not name CorruptBase')
+    vmi = rtti.defined(elf, VIRTUAL_TARGET)['value']
+    vtable = rtti.defined(elf, VIRTUAL_VTABLE)
+    check(vtable['size'] == VIRTUAL_VTABLE_SIZE,
+          'the vtable of CorruptVirtual is %d bytes, not %d'
+          % (vtable['size'], VIRTUAL_VTABLE_SIZE))
+    slot = vtable['value']
+    displacement = rtti.u24(original[slot:slot + 3])
+    check(displacement == VIRTUAL_DISPLACEMENT,
+          'the vbase slot holds %d, not %d' % (displacement, VIRTUAL_DISPLACEMENT))
+    mode = rtti.defined(elf, VIRTUAL_MODE)['value']
+    check(original[mode] == 0, 'the corruption mode is not zero in the unpatched image')
+
+    serial = run(args, args.image)
+    check(serial.endswith('P\\n'), 'the unchanged image did not report success: %r' % serial)
+    print('  unchanged: %s' % serial)
+
+    os.makedirs(args.scratch_dir, exist_ok=True)
+    count = 0
+    for index, (label, patch) in enumerate(virtual_mutations(vmi, slot, mode)):
+        data = bytearray(original)
+        patch(data)
+        check(bytes(data) != bytes(original), 'the %s mutation changed nothing' % label)
+        path = os.path.join(args.scratch_dir, 'virtual_corrupt_%02d.bin' % index)
+        with open(path, 'wb') as handle:
+            handle.write(data)
+        serial = run(args, path)
+        check(serial.endswith('H\\n') and 'P' not in serial,
+              '%s: the throw did not fail, serial %r' % (label, serial))
+        print('  %s: %s' % (label, serial))
+        count += 1
+    print('eh_inheritance_corrupt_verify: %s: %d malformed virtual base fields fail the throw'
+          % (os.path.basename(args.elf), count))
+
+
 def mutations(pair, left, right):
     """Each mutation names its effect and patches a copy of the image."""
     right_entry = pair + RIGHT_ENTRY
@@ -74,8 +160,9 @@ def mutations(pair, left, right):
          lambda d: put(d, pair + COUNT, 0x0100, 2)),
         ('reserved flag bit set on a base',
          lambda d: d.__setitem__(right_flags, d[right_flags] | 0x04)),
-        ('virtual base edge',
-         lambda d: d.__setitem__(right_flags, d[right_flags] | 0x01)),
+        ('virtual base whose vtable slot lies below program space',
+         lambda d: (d.__setitem__(right_flags, d[right_flags] | 0x01),
+                    put(d, right_offset, 0x800000, 3))),
         ('offset below the start of the object',
          lambda d: put(d, right_offset, 0x800000, 3)),
         ('offset past the end of the object',
@@ -127,8 +214,13 @@ def main():
     parser.add_argument('--image', required=True)
     parser.add_argument('--elf', required=True)
     parser.add_argument('--scratch-dir', required=True)
+    parser.add_argument('--virtual', action='store_true',
+                        help='check the virtual base target instead of the nonvirtual one')
     args = parser.parse_args()
-    verify(args)
+    if args.virtual:
+        verify_virtual(args)
+    else:
+        verify(args)
 
 
 if __name__ == '__main__':

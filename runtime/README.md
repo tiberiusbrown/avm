@@ -494,10 +494,10 @@ Propagation has two phases. Phase one searches the frames from the throw for the
 first catch that matches the thrown type. The search looks up each frame's function by
 binary search over the `AVEH5` index, so its cost grows with the logarithm of the
 function count, not with the program size. A typed catch matches when its descriptor
-address equals the thrown one, or when it names a public nonvirtual base subobject of
-the thrown class that occurs exactly once. A catch-all matches everything. The base
-subobject's byte offset is the handler adjustment, which phase one records with the
-selector. Phase one runs no destructor. When no frame before the handler has a cleanup,
+address equals the thrown one, or when it names a base subobject of the thrown class,
+virtual or nonvirtual, that occurs exactly once and is reached by a public path. A
+catch-all matches everything. The base subobject's byte offset is the handler adjustment,
+which phase one records with the selector. Phase one runs no destructor. When no frame before the handler has a cleanup,
 the handler's landing state is installed directly, and phase two does not run. If no
 frame has a matching catch, the program halts before any cleanup runs. The search
 records the matched selector in the header. Phase two enters each
@@ -523,11 +523,16 @@ never comes from r3. Call records match the exact return PC.
 
 Only one exception is active at a time. A throw while one is active, including a
 throw from a destructor that runs during unwinding, halts the program. Base matching
-reads the class descriptors in program flash. It walks at most eight descriptor levels
-and 512 base edges for one clause, and a walk past either limit fails the throw. A
-virtual base edge matches nothing, and a malformed descriptor fails the throw. Virtual
-base conversions, pointer and qualification conversions, exception filters, and
-rethrow are not provided.
+reads the class descriptors in program flash, and the vptrs of the thrown object in RAM.
+It walks at most eight descriptor levels and 512 base edges for one clause, and a walk
+past either limit fails the throw. A virtual base's offset is read through the vptr of
+the subobject that holds the virtual edge. The RTTI names the vtable slot that holds the
+base's signed displacement, relative to the vtable address point, and the runtime reads
+that three-byte slot in program flash. A zero vptr, a slot outside the 24-bit address
+range, or a base outside the object fails the throw. The runtime does not know the
+extent of the packed image, so a slot inside the address range is read, and only its
+effect on the object is checked. Pointer and qualification conversions, exception
+filters, and rethrow are not provided.
 The backend rejects a filter at compile time, and `__cxa_rethrow` is an undefined
 symbol at link time. When no handler exists, when metadata is malformed, or when
 allocation fails, the runtime calls `abort()`, which halts the guest.

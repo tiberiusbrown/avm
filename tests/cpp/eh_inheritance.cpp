@@ -1,8 +1,8 @@
-// Public nonvirtual base catches. A catch of a base type matches a thrown class when
-// that base is one subobject, reached only by public edges, and the handler binds to
-// that subobject. A nonzero offset therefore selects a different part of the object.
-// Ambiguous and inaccessible bases do not match, and a virtual base is not converted
-// at all, which eh_inheritance_virtual_unhandled covers. Each thrown object is built
+// Base catches. A catch of a base type matches a thrown class when that base is one
+// subobject, reached only by public edges, and the handler binds to that subobject. A
+// nonzero offset therefore selects a different part of the object. Ambiguous and
+// inaccessible bases do not match. Virtual bases are matched through the vptrs of the
+// thrown object, which eh_virtual_inheritance covers in depth. Each thrown object is built
 // by its own constructor, which records its address, so an identity check can compare
 // a handler's reference with the subobject of the object that was actually thrown.
 extern "C" int avm_test_main(void);
@@ -510,8 +510,8 @@ __attribute__((noinline)) int cleanup_then_base_catch() {
     return 1;
 }
 
-// O: a virtual base is not converted, and the exact clause of the derived class still
-// matches. The virtual base's RTTI entry is never read as an object offset.
+// O: a virtual base is matched through its virtual edge. The base clause comes first, so
+// it wins. Reversing the clauses reaches the exact derived clause instead.
 struct VirtualBase {
     int vb;
     VirtualBase(int v) : vb(v) {}
@@ -529,10 +529,21 @@ __attribute__((noinline)) void throw_virtual() {
 __attribute__((noinline)) int catch_virtual() {
     try {
         throw_virtual();
-    } catch (VirtualBase &) {
-        return 1;
+    } catch (VirtualBase &base) {
+        return base.vb == 5 ? 1 : 0;
     } catch (VirtualDerived &d) {
         return d.vd == 6 ? 2 : 3;
+    }
+    return 0;
+}
+
+__attribute__((noinline)) int catch_virtual_exact() {
+    try {
+        throw_virtual();
+    } catch (VirtualDerived &d) {
+        return d.vd == 6 ? 2 : 3;
+    } catch (VirtualBase &) {
+        return 1;
     }
     return 0;
 }
@@ -585,7 +596,8 @@ extern "C" int avm_test_main(void) {
     expect(cleanup_then_base_catch() == 1);
     expect(log_count == 2 && log_entries[0] == 3 && log_entries[1] == 27);
 
-    expect(catch_virtual() == 2);
+    expect(catch_virtual() == 1);
+    expect(catch_virtual_exact() == 2);
     expect(pointer_not_converted() == 2);
     return failures == 0 ? 0 : 1;
 }

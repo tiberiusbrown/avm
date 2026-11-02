@@ -305,7 +305,8 @@ endforeach()
 set(AVM_EH_SUPPORT_HEADERS
     "${AVM_CXX_TEST_DIR}/support/eh_inheritance.h"
     "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity.h"
-    "${AVM_CXX_TEST_DIR}/support/eh_typed.h")
+    "${AVM_CXX_TEST_DIR}/support/eh_typed.h"
+    "${AVM_CXX_TEST_DIR}/support/eh_virtual.h")
 foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
     get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
     foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
@@ -358,9 +359,21 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
                 DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
             )
             list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
+        elseif(AVM_TEST_NAME STREQUAL "eh_virtual_cross_unit")
+            # The unit throws VMost, and the main unit catches its virtual base.
+            set(AVM_EH_UNIT_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_unit.o")
+            avm_add_object(
+                OUTPUT "${AVM_EH_UNIT_OBJECT}"
+                SOURCE "${AVM_CXX_TEST_DIR}/support/eh_virtual_unit.cpp"
+                LANGUAGE CXX
+                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
+                DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+            )
+            list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
         elseif(AVM_TEST_NAME STREQUAL "eh_rtti_high_address"
                OR AVM_TEST_NAME STREQUAL "eh_typed_high_address"
-               OR AVM_TEST_NAME STREQUAL "eh_inheritance_high_address")
+               OR AVM_TEST_NAME STREQUAL "eh_inheritance_high_address"
+               OR AVM_TEST_NAME STREQUAL "eh_virtual_high_address")
             # Put the descriptors and the destructor above 0xFFFF. The image keeps
             # its data and ordinary code below 64 KiB, as the other high-address
             # fixtures do. Explicit section starts replace the AVM default layout,
@@ -409,7 +422,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
 set(AVM_EH_LTO_IMAGES)
 foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object eh_typed
-        eh_inheritance eh_inheritance_cross_unit)
+        eh_inheritance eh_inheritance_cross_unit eh_virtual_inheritance eh_virtual_cross_unit)
     set(AVM_EH_LTO_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.o")
     set(AVM_EH_LTO_ELF "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.elf")
     set(AVM_EH_LTO_IMAGE "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.bin")
@@ -441,6 +454,19 @@ foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_c
         avm_add_object(
             OUTPUT "${AVM_EH_LTO_UNIT_OBJECT}"
             SOURCE "${AVM_CXX_TEST_DIR}/support/eh_inheritance_unit.cpp"
+            LANGUAGE CXX
+            COMPILE_OPTIONS -O2 -fexceptions -flto=full
+            DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+        )
+        list(APPEND AVM_EH_LTO_OBJECTS "${AVM_EH_LTO_UNIT_OBJECT}")
+    endif()
+    if(AVM_EH_LTO_NAME STREQUAL "eh_virtual_cross_unit")
+        # The unit throws VMost, and the main unit catches its virtual base. LTO must keep
+        # the vtable and descriptor of VMost one object across the program.
+        set(AVM_EH_LTO_UNIT_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}_unit.o")
+        avm_add_object(
+            OUTPUT "${AVM_EH_LTO_UNIT_OBJECT}"
+            SOURCE "${AVM_CXX_TEST_DIR}/support/eh_virtual_unit.cpp"
             LANGUAGE CXX
             COMPILE_OPTIONS -O2 -fexceptions -flto=full
             DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
@@ -780,10 +806,11 @@ add_custom_target(avm_eh_typed_run
 )
 add_dependencies(avm_eh_catch_all_run avm_eh_typed_run)
 
-# Nonvirtual base catches. The O0 and O2 fixtures also run through avm_eh_catch_all_run.
-# This target adds the whole-program and cross-unit LTO runs, the packed base edges, the
-# selector and adjustment of each handler against the emulator, and the corrupted RTTI
-# fields, which must each fail a throw. Every probe run uses the interpreter boundary.
+# Base catches, with nonvirtual and virtual bases. The O0 and O2 fixtures also run through
+# avm_eh_catch_all_run. This target adds the whole-program and cross-unit LTO runs, the
+# packed base edges, the selector and adjustment of each handler against the emulator, and
+# the corrupted RTTI fields, which must each fail a throw. Every probe run uses the
+# interpreter boundary.
 set(AVM_EH_INHERITANCE_PROBE_RUN
     --probe "$<TARGET_FILE:avm_eh_stack_probe>"
     --interpreter "${AVM_INTERPRETER_HEX}"
@@ -864,6 +891,116 @@ add_custom_target(avm_eh_inheritance_run
     VERBATIM
 )
 add_dependencies(avm_eh_catch_all_run avm_eh_inheritance_run)
+
+# Virtual base catches. The O0 and O2 fixtures also run through avm_eh_catch_all_run. This
+# target adds the whole-program LTO/O2 and cross-unit runs, the RTTI edges of the virtual
+# classes with their vtable-slot displacements, the high-address vtable and descriptor, the
+# independent virtual-offset verifier, and the malformed virtual RTTI and vptr fields.
+set(AVM_EH_VIRTUAL_RTTI_ARGS_O0
+    --expect _ZTIN12_GLOBAL__N_17DerivedE --expect _ZTIN12_GLOBAL__N_18PrecededE
+    --expect _ZTIN12_GLOBAL__N_17DiamondE --expect _ZTIN12_GLOBAL__N_14Top3E
+    --expect _ZTIN12_GLOBAL__N_116SecondaryDerivedE --expect _ZTIN12_GLOBAL__N_112MixedDerivedE
+    --expect _ZTIN12_GLOBAL__N_19BothPathsE --expect _ZTIN12_GLOBAL__N_114PrivateVirtualE
+    --expect _ZTIN12_GLOBAL__N_116ProtectedVirtualE --expect _ZTIN12_GLOBAL__N_110MixedPlainE
+    --expect _ZTIN12_GLOBAL__N_16HolderE --expect _ZTIN12_GLOBAL__N_16NvPairE
+    --edge _ZTIN12_GLOBAL__N_17DerivedE:_ZTIN12_GLOBAL__N_14BaseE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_18PrecededE:_ZTIN12_GLOBAL__N_16FillerE:3:public
+    --edge _ZTIN12_GLOBAL__N_18PrecededE:_ZTIN12_GLOBAL__N_14BaseE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_17DiamondE:_ZTIN12_GLOBAL__N_14LeftE:0:public
+    --edge _ZTIN12_GLOBAL__N_17DiamondE:_ZTIN12_GLOBAL__N_15RightE:5:public
+    --edge _ZTIN12_GLOBAL__N_14LeftE:_ZTIN12_GLOBAL__N_16SharedE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_15RightE:_ZTIN12_GLOBAL__N_16SharedE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_14Top3E:_ZTIN12_GLOBAL__N_16Other2E:0:public
+    --edge _ZTIN12_GLOBAL__N_14Top3E:_ZTIN12_GLOBAL__N_14Mid2E:5:public
+    --edge _ZTIN12_GLOBAL__N_14Mid2E:_ZTIN12_GLOBAL__N_14Mid1E:0:public
+    --edge _ZTIN12_GLOBAL__N_14Mid1E:_ZTIN12_GLOBAL__N_14CoreE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_112MixedDerivedE:_ZTIN12_GLOBAL__N_16Other2E:0:public
+    --edge _ZTIN12_GLOBAL__N_112MixedDerivedE:_ZTIN12_GLOBAL__N_16Chain2E:5:public
+    --edge _ZTIN12_GLOBAL__N_16Chain2E:_ZTIN12_GLOBAL__N_15Left2E:0:public
+    --edge _ZTIN12_GLOBAL__N_15Left2E:_ZTIN12_GLOBAL__N_16SharedE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_116SecondaryDerivedE:_ZTIN12_GLOBAL__N_17PrimaryE:0:public
+    --edge _ZTIN12_GLOBAL__N_116SecondaryDerivedE:_ZTIN12_GLOBAL__N_19SecondaryE:5:public
+    --edge _ZTIN12_GLOBAL__N_19SecondaryE:_ZTIN12_GLOBAL__N_16SharedE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_19BothPathsE:_ZTIN12_GLOBAL__N_110PublicPathE:0:public
+    --edge _ZTIN12_GLOBAL__N_19BothPathsE:_ZTIN12_GLOBAL__N_111PrivatePathE:5:public
+    --edge _ZTIN12_GLOBAL__N_110PublicPathE:_ZTIN12_GLOBAL__N_16SharedE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_111PrivatePathE:_ZTIN12_GLOBAL__N_16SharedE:-9:nonpublic+virtual
+    --edge _ZTIN12_GLOBAL__N_114PrivateVirtualE:_ZTIN12_GLOBAL__N_16SharedE:-9:nonpublic+virtual
+    --edge _ZTIN12_GLOBAL__N_116ProtectedVirtualE:_ZTIN12_GLOBAL__N_16SharedE:-9:nonpublic+virtual
+    --edge _ZTIN12_GLOBAL__N_110MixedPlainE:_ZTIN12_GLOBAL__N_112VirtualPlainE:0:public
+    --edge _ZTIN12_GLOBAL__N_110MixedPlainE:_ZTIN12_GLOBAL__N_15PlainE:5:public
+    --edge _ZTIN12_GLOBAL__N_112VirtualPlainE:_ZTIN12_GLOBAL__N_15PlainE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_16HolderE:_ZTIN12_GLOBAL__N_17PayloadE:-9:public+virtual
+    --edge _ZTIN12_GLOBAL__N_16NvPairE:_ZTIN12_GLOBAL__N_16NvLeftE:0:public
+    --edge _ZTIN12_GLOBAL__N_16NvPairE:_ZTIN12_GLOBAL__N_17NvRightE:2:public)
+set(AVM_EH_VIRTUAL_CORRUPT_DIR "${CMAKE_CURRENT_BINARY_DIR}/eh_virtual_corrupt")
+add_custom_target(avm_eh_virtual_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_virtual" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_virtual_inheritance$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_virtual_cross_unit$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_virtual_lattice$" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_virtual_lattice_unhandled$" --opt O0,O2
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_inheritance.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_inheritance.bin"
+        ${AVM_EH_VIRTUAL_RTTI_ARGS_O0}
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_virtual_inheritance.elf"
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_virtual_inheritance.bin"
+        ${AVM_EH_VIRTUAL_RTTI_ARGS_O0}
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_virtual_cross_unit.elf"
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_virtual_cross_unit.bin"
+        --expect _ZTI5VMost --expect _ZTI4VMid --expect _ZTI5VBase
+        --edge _ZTI5VMost:_ZTI4VMid:0:public
+        --edge _ZTI4VMid:_ZTI5VBase:-9:public+virtual
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_high_address.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_high_address.bin"
+        --expect _ZTIN12_GLOBAL__N_17FartherE --expect _ZTIN12_GLOBAL__N_13FarE
+        --high _ZTIN12_GLOBAL__N_17FartherE
+        --high-symbol _ZTVN12_GLOBAL__N_17FartherE
+        --edge _ZTIN12_GLOBAL__N_17FartherE:_ZTIN12_GLOBAL__N_13FarE:-9:public+virtual
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_virtual_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_inheritance.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_virtual_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_virtual_inheritance.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_virtual_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_virtual_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_virtual_inheritance.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_virtual_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_corrupt_verify.py"
+        --virtual ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_virtual_corrupt_target.elf"
+        --scratch-dir "${AVM_EH_VIRTUAL_CORRUPT_DIR}/O0"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_corrupt_verify.py"
+        --virtual ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_virtual_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_virtual_corrupt_target.elf"
+        --scratch-dir "${AVM_EH_VIRTUAL_CORRUPT_DIR}/O2"
+    # The guest stack high-water marks of the virtual fixtures, each at O0 and O2. A fixture
+    # whose probe peak exceeds the 256-byte stack fails the report.
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_stack_report.py"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image-dir "${AVM_CXX_TEST_BINARY_DIR}"
+        --fixture eh_virtual_inheritance --fixture eh_virtual_cross_unit
+        --fixture eh_virtual_high_address --fixture eh_virtual_corrupt_target
+        --fixture eh_virtual_lattice --fixture eh_virtual_lattice_unhandled
+    DEPENDS avm_tests avm_eh_stack_probe avm_eh_catch_all_images llvm-avm-image
+        ${AVM_EH_LTO_IMAGES} avm_eh_metadata_verify
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_virtual_run)
 
 # The runner discovers ASM, C, and C++ sources, maps each source to its adjacent
 # name_output.txt file and corresponding generated image, loads the interpreter

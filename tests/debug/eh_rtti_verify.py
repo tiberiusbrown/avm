@@ -228,11 +228,18 @@ def decode_descriptor(elf, image, name):
 
 def check_edge(elf, image, spec, decoded):
     """Checks one base edge against an expected layout, given as
-    DERIVED:BASE:OFFSET:ACCESS, where ACCESS is public, nonpublic, or virtual."""
+    DERIVED:BASE:OFFSET:ACCESS. ACCESS is public or nonpublic, and +virtual is appended
+    for a virtual edge. A nonvirtual offset is the base's offset inside the derived class.
+    A virtual offset is the signed displacement, in bytes, from the vtable address point
+    of the derived class to the slot that holds the virtual base's offset, so it is
+    reported as a vtable-slot displacement and never as an object offset."""
     try:
         derived, base_name, offset, access = spec.split(':')
     except ValueError:
         check(False, 'an edge needs DERIVED:BASE:OFFSET:ACCESS, not %r' % spec)
+    visibility, _, virtual_flag = access.partition('+')
+    check(visibility in ('public', 'nonpublic') and virtual_flag in ('', 'virtual'),
+          'an access is public or nonpublic, with an optional +virtual, not %r' % access)
     if derived not in decoded:
         decoded[derived] = decode_descriptor(elf, image, derived)
     info = decoded[derived]
@@ -244,13 +251,17 @@ def check_edge(elf, image, spec, decoded):
     check(edge['offset'] == int(offset, 0),
           '%s -> %s has offset %d, expected %s'
           % (derived, base_name, edge['offset'], offset))
-    if access == 'virtual':
-        check(edge['virtual'], '%s -> %s is not virtual' % (derived, base_name))
-    else:
-        check(not edge['virtual'] and edge['public'] == (access == 'public'),
-              '%s -> %s is not %s' % (derived, base_name, access))
-    print('  edge %s -> %s at 0x%06x: offset %d, %s%s'
-          % (derived, base_name, base_address, edge['offset'],
+    check(edge['virtual'] == (virtual_flag == 'virtual'),
+          '%s -> %s is %s, expected %s' % (derived, base_name,
+                                          'virtual' if edge['virtual'] else 'nonvirtual',
+                                          access))
+    check(edge['public'] == (visibility == 'public'),
+          '%s -> %s is %s, expected %s' % (derived, base_name,
+                                          'public' if edge['public'] else 'nonpublic',
+                                          visibility))
+    label = 'vtable-slot displacement' if edge['virtual'] else 'object offset'
+    print('  edge %s at 0x%06x -> %s at 0x%06x: %s %d, %s%s'
+          % (derived, info['address'], base_name, base_address, label, edge['offset'],
              'public' if edge['public'] else 'nonpublic',
              ', virtual' if edge['virtual'] else ''))
 
@@ -302,6 +313,8 @@ def main():
                         help='a descriptor that must lie above program address 0xFFFF')
     parser.add_argument('--edge', action='append', default=[],
                         help='an expected base edge, DERIVED:BASE:OFFSET:ACCESS')
+    parser.add_argument('--high-symbol', action='append', default=[],
+                        help='a symbol, such as a vtable, that must lie above 0xFFFF')
     parser.add_argument('--probe', help='avm_eh_stack_probe, for the header check')
     parser.add_argument('--interpreter')
     parser.add_argument('--boundary')
@@ -324,6 +337,10 @@ def main():
               % name)
         check(decoded[name]['address'] > 0xffff,
               '%s is at 0x%06x, not above 0xFFFF' % (name, decoded[name]['address']))
+    for name in args.high_symbol:
+        address = defined(elf, name)['value']
+        check(address > 0xffff, '%s is at 0x%06x, not above 0xFFFF' % (name, address))
+        print('  %s at 0x%06x, above 0xFFFF' % (name, address))
     for name in args.expect:
         info = decoded[name]
         bases = ', '.join('0x%06x' % b for b in info['bases']) or 'none'

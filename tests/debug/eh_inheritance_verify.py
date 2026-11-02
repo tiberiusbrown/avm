@@ -3,7 +3,8 @@
 
 The probe reports each installation of a landing context, and each return from
 __cxa_begin_catch and __cxa_get_exception_ptr. The expected base offsets come from the
-RTTI edges of the packed image, walked here, and not from the runtime's matcher. The
+RTTI edges of the packed image and the thrown object's vptrs, walked here, and not from
+the runtime's matcher. The
 check reads the packed AVEH5 block and the machine code to confirm, for each handler,
 that:
 
@@ -11,8 +12,10 @@ that:
     equals the selector in r5 at the installer;
   - the pad's action list names that selector, and every clause before it is a typed
     clause that does not match, so the selected clause is the first match;
-  - the handler adjustment equals the byte offset of the unique public nonvirtual base
-    subobject, or zero for an exact or catch-all clause;
+  - the handler adjustment equals the byte offset of the unique public base subobject,
+    virtual or nonvirtual, or zero for an exact or catch-all clause. A virtual base is
+    located through the vptr that the thrown object holds, read from the probe's snapshot
+    of the object, and the displacement that the packed image holds in its vtable;
   - the pointer returned by __cxa_get_exception_ptr and by __cxa_begin_catch is the
     header plus the header size, which is where the object begins, plus the adjustment,
     so the catch object is the selected subobject;
@@ -45,6 +48,9 @@ FREE = 'free'
 RETURNS = (BEGIN, GET_PTR)
 
 HEADER_SIZE = 51
+# Each snapshot holds the header and the start of the thrown object. The fixtures' objects
+# are smaller than this, and a larger object fails the check that reads it.
+OBJECT_LIMIT = 64
 # Program-space and stack layout of the guest, as llvm/BinaryFormat/AVM.h defines it.
 STACK_BASE = 0x900
 STACK_TOP = 0xa00
@@ -64,14 +70,10 @@ SNAPSHOT = re.compile(
 INSTRUCTION = re.compile(r'^\s*([0-9a-f]+):\s+(.*)$')
 
 
-class Unsupported(Exception):
-    """A virtual edge: the clause does not match, as the runtime treats it."""
-
-
 def run_probe(args, names):
     command = [args.probe, '--interpreter', args.interpreter, '--boundary', args.boundary,
                '--image', args.image, '--elf', args.elf, '--cycle-limit', '600000000',
-               '--snapshot-bytes', str(HEADER_SIZE)]
+               '--snapshot-bytes', str(HEADER_SIZE + OBJECT_LIMIT)]
     for name in names:
         command += ['--snapshot', name]
     result = subprocess.run(command, capture_output=True, text=True)
@@ -135,9 +137,22 @@ class Reference:
                     return True
         return False
 
-    def adjustment(self, thrown, catch):
-        """0 for an exact match, the offset of the unique public base for a base match,
-        and None when the clause does not match."""
+    def virtual_offset(self, obj, containing, slot_offset):
+        """The offset of a virtual base of the subobject at containing. The subobject's
+        vptr is its first three bytes in the thrown object, and the signed 24-bit
+        displacement lies in the packed image slot_offset bytes from that vptr. The
+        displacement is relative to the containing subobject."""
+        check(containing + 3 <= len(obj), 'a virtual base lies past the thrown object')
+        vptr = rtti.u24(obj[containing:containing + 3])
+        displacement = rtti.u24(self.image.read(vptr + slot_offset, 3))
+        if displacement & 0x800000:
+            displacement -= 0x1000000
+        return containing + displacement
+
+    def adjustment(self, thrown, catch, obj):
+        """0 for an exact match, the offset of the unique public base subobject for a base
+        match, and None when the clause does not match. Distinct paths to one virtual base
+        name one subobject, so they must agree on its offset."""
         if catch == thrown:
             return 0
         if not self.is_class(thrown) or not self.is_class(catch):
@@ -150,16 +165,15 @@ class Reference:
                 found.append((offset, public))
             for edge in self.decode(address)['edges']:
                 if edge['virtual']:
-                    raise Unsupported()
-                visit(edge['base'], offset + edge['offset'],
-                      public and edge['public'], level + 1)
+                    base = self.virtual_offset(obj, offset, edge['offset'])
+                else:
+                    base = offset + edge['offset']
+                visit(edge['base'], base, public and edge['public'], level + 1)
 
-        try:
-            visit(thrown, 0, True, 1)
-        except Unsupported:
-            return None
-        if len(found) == 1 and found[0][1]:
-            return found[0][0]
+        visit(thrown, 0, True, 1)
+        offsets = set(offset for offset, _ in found)
+        if len(offsets) == 1 and any(public for _, public in found):
+            return offsets.pop()
         return None
 
 
@@ -193,6 +207,7 @@ def verify(args):
     expected_returns = {}
     handlers = 0
     nonzero = 0
+    installed = []
     begins = 0
     ends = 0
     frees = 0
@@ -202,7 +217,7 @@ def verify(args):
         regs = event['regs']
         data = event['bytes']
         if name == INSTALL:
-            check(len(data) == HEADER_SIZE,
+            check(len(data) >= HEADER_SIZE,
                   'the installer header is %d bytes, not %d' % (len(data), HEADER_SIZE))
             state = data[23]
             sp = data[0] | data[1] << 8
@@ -220,6 +235,10 @@ def verify(args):
                   % (selector, recorded))
             thrown = rtti.u24(data[15:18])
             adjustment = data[41] | data[42] << 8
+            size = data[21] | data[22] << 8
+            check(size <= OBJECT_LIMIT, 'the thrown object has %d bytes, more than the probe reads'
+                  % size)
+            obj = data[HEADER_SIZE:HEADER_SIZE + size]
             clause = [entry for entry in entries if entry[0] == selector]
             check(len(clause) == 1, 'selector %d names no clause of its pad' % selector)
             catch = clause[0][1]
@@ -227,13 +246,13 @@ def verify(args):
                 if other_selector == selector:
                     break
                 check(other != 0, 'a catch-all precedes the selected clause')
-                check(reference.adjustment(thrown, other) is None,
+                check(reference.adjustment(thrown, other, obj) is None,
                       'clause 0x%06x matches thrown 0x%06x before the selected clause'
                       % (other, thrown))
             if catch == 0:
                 expected = 0
             else:
-                expected = reference.adjustment(thrown, catch)
+                expected = reference.adjustment(thrown, catch, obj)
                 check(expected is not None,
                       'selected clause 0x%06x does not match thrown 0x%06x' % (catch, thrown))
             check(adjustment == expected,
@@ -243,12 +262,16 @@ def verify(args):
                 check(adjustment == 0, 'an exact or catch-all handler has adjustment %d'
                       % adjustment)
             handlers += 1
+            installed.append({'header': regs[4], 'thrown': thrown, 'catch': catch,
+                              'adjustment': adjustment,
+                              'object': data[HEADER_SIZE:HEADER_SIZE + size],
+                              'selector': selector})
             if adjustment:
                 nonzero += 1
             print('  handler: thrown 0x%06x, catch 0x%06x, selector %d, adjustment %d'
                   % (thrown, catch, selector, adjustment))
         elif name == GET_PTR or name == BEGIN:
-            check(len(data) == HEADER_SIZE, 'the header snapshot is %d bytes' % len(data))
+            check(len(data) >= HEADER_SIZE, 'the header snapshot is %d bytes' % len(data))
             header = regs[4]
             adjustment = data[41] | data[42] << 8
             expected = header + HEADER_SIZE + adjustment
@@ -276,6 +299,7 @@ def verify(args):
     check(frees == ends, '%d exceptions ended but %d were freed' % (ends, frees))
     print('eh_inheritance_verify: %s: %d handlers verified, %d with a base adjustment'
           % (os.path.basename(args.elf), handlers, nonzero))
+    return installed
 
 
 def main():

@@ -3,10 +3,11 @@
  * Only one exception can be active at a time, and it cannot be rethrown. A throw
  * while one is active, including a throw from a destructor that runs during
  * unwinding, terminates through abort(). A catch matches its exact type, or a public
- * nonvirtual base of the thrown class that occurs once in the hierarchy. The
- * unwinder compares types and walks the base subobjects in eh_unwind.c. A base
- * catch binds to the base subobject, and the handler adjustment locates it.
- * Virtual bases, pointer conversions, and rethrow are not implemented.
+ * base of the thrown class, virtual or nonvirtual, that occurs once in the hierarchy.
+ * The unwinder compares types and walks the base subobjects in eh_unwind.c, reading
+ * the thrown object's vptrs for a virtual base. A base catch binds to the base
+ * subobject, and the handler adjustment locates it. Pointer conversions and rethrow are
+ * not implemented.
  *
  * The header precedes the thrown object and holds the landing context, the
  * resume context, the type-descriptor address, the destructor, the selector of

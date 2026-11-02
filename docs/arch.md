@@ -5647,11 +5647,23 @@ The runtime defines the support vtables that descriptors name in program space:
 `__class_type_info`, `__fundamental_type_info`, `__si_class_type_info`,
 `__vmi_class_type_info`, `__pointer_type_info`, `__enum_type_info`,
 `__function_type_info`, `__pointer_to_member_type_info`, and `__array_type_info`.
-The runtime interprets the class descriptors only to match catch clauses against
-public nonvirtual base subobjects, as [Section 69.3](#693-exception-metadata-aveh5)
+The runtime interprets the class descriptors to match catch clauses against public base
+subobjects, virtual or nonvirtual, as [Section 69.3](#693-exception-metadata-aveh5)
 describes. It reads the vtable address point to classify a descriptor, and the base
-descriptors and offset-and-flags words of the single and multiple inheritance
-layouts. `typeid`, `dynamic_cast`, and virtual-base adjustment are not implemented.
+descriptors and offset-and-flags words of the single and multiple inheritance layouts.
+For a virtual base, the upper 24 bits of the offset-and-flags word are not an object
+offset. They are a signed byte displacement from the vtable address point of the
+containing class to a slot, and that slot holds the base's displacement from the
+containing subobject. The runtime reads the slot through the vptr of the containing
+subobject. `typeid`, `dynamic_cast`, and pointer conversions are not implemented.
+
+Virtual-base slots are three-byte entries. Clang places each one before the address point,
+with the offset-to-top and RTTI entries, and `getVirtualBaseOffsetOffset` gives its byte
+displacement from the address point. The vptr that a class object stores is also three
+bytes. The compiler loads a virtual base displacement with `PtrDiffTy`, which is 16 bits
+on AVM, so it reads the low 16 bits of the slot, while the runtime reads all 24 bits and
+sign-extends them. The two agree for every displacement that fits a 16-bit signed value,
+and a displacement that does not fit would need an object larger than 32 KiB.
 
 ### 60.2. Throw ABI
 
@@ -6795,12 +6807,13 @@ clause in source order wins:
   are equal when they are the same linked object, and each type has one descriptor in a
   program, even across translation units. The adjustment is zero.
 - Base subobject: the thrown class has exactly one base subobject of the clause's type,
-  and every edge on its path is public and nonvirtual. The adjustment is that
-  subobject's byte offset from the start of the thrown object.
+  virtual or nonvirtual, and at least one path to it has only public edges. The
+  adjustment is that subobject's byte offset from the start of the thrown object.
 - Catch-all: `catch (...)` matches everything, with adjustment zero.
 
 Exact matching compares addresses only. The base walk, `match_class_base` in
-`runtime/lib/eh_unwind.c`, reads only the program flash of the packed image:
+`runtime/lib/eh_unwind.c`, reads the program flash of the packed image and the vptrs of
+the thrown object in RAM:
 
 - Each descriptor is classified by its vtable address point. A class descriptor without
   bases, a single-inheritance descriptor, and a multiple-inheritance descriptor are
@@ -6809,29 +6822,45 @@ Exact matching compares addresses only. The base walk, `match_class_base` in
 - A single-inheritance descriptor has one public nonvirtual base at offset zero. A
   multiple-inheritance entry has the base descriptor's 24-bit address and a 32-bit
   offset-and-flags word. Bit 0 is virtual, bit 1 is public, and bits 2 to 7 are reserved
-  and must be zero. Bits 8 to 31 are a signed 24-bit byte offset from the containing
-  subobject. The walk adds the offsets along each path, and it ANDs the public bits.
-- The walk is depth-first and bounded to eight descriptor levels and 512 base edges for
-  one clause. It counts every matching subobject, public or not, and saturates the
-  count at two. Two subobjects are ambiguous, and one nonpublic subobject is
-  inaccessible. Neither matches. The whole hierarchy is walked before the decision.
-- A virtual edge matches nothing, because its offset locates a vtable entry and not an
-  object offset. A malformed descriptor or edge fails the throw. So does a walk past its
-  limits, which cannot prove that a base is unique. Malformed means a base count above
-  32, a reserved flag bit, a base that is not a class, or an offset outside the thrown
-  object. A cycle needs no separate check, because it stays on one path until the depth
-  limit.
+  and must be zero. Bits 8 to 31 are a signed 24-bit value.
+- A nonvirtual edge's value is the base's byte offset within its containing subobject,
+  so the base lies at the containing offset plus the value.
+- A virtual edge's value is a signed byte displacement from the vtable address point of
+  the containing class to the slot that holds the base's displacement. The walk reads the
+  containing subobject's vptr from the first three bytes of the thrown object, reads the
+  24-bit slot at that vptr plus the value, sign-extends it, and adds it to the containing
+  offset. A zero vptr, a slot outside program addresses 0 to 0xFFFFFD, or a base outside
+  the thrown object fails the throw. The runtime does not know the packed image's extent,
+  so a slot inside the address range is read, and only the effect of its value on the
+  object is checked.
+- Each subobject has one offset in the thrown object, and every path to a virtual base
+  reaches the same offset, so that offset identifies the subobject. The walk records the
+  offset of the first match and counts the distinct offsets, saturated at two. A shared
+  virtual base reached by two paths is one subobject. Two different subobjects, virtual
+  or nonvirtual, are ambiguous. The match is accessible when at least one of its paths is
+  public, so a shared base reached by a public path and a private path matches. A private
+  or protected virtual base with no public path does not match.
+- The walk is depth-first over the whole hierarchy, and it is bounded to eight descriptor
+  levels and 512 base edges for one clause. A descriptor past either limit fails the
+  throw, because the walk cannot prove the base unique. Malformed means a base count above
+  32, a reserved flag bit, a base that is not a class, an offset outside the thrown object,
+  or a vptr or slot that the runtime cannot read. A cycle stays on one path until the depth
+  limit, so it also fails the throw. The whole hierarchy is walked before the decision,
+  because a second match may lie past the first.
 
 The walk keeps one byte per level, the index of the next direct base to visit, and it
-replays each level's descriptor, offset, and access from the thrown class. Its stack is
-eight bytes, because the linker bounds the stack of every image and a 64-byte frame
-per level exceeded that bound.
+replays each level's offset and access from the thrown class. A replay resolves the
+virtual edges again, so the walk needs no per-level storage for offsets or descriptors.
+The matcher receives the exception header, which holds the thrown type and the object
+size, and it returns the code in its low byte with the adjustment in bits 31:16. Its frame
+is 74 bytes at O2, against 62 bytes before virtual bases. The linker bounds the stack of
+every image, and each exception fixture stays under 256 bytes.
 
 Pointer conversions, qualification conversions, and `nullptr` compatibility are not
 matched. A thrown `Derived` is caught by `catch (Base &)` as a base subobject, but a
 thrown `Derived *` is not caught by `catch (Base *)`, and a thrown `T *` is not caught
-by a `const T *` clause. A program with no matching clause terminates. A virtual base
-is one such case, as `tests/cpp/eh_inheritance_virtual_unhandled.cpp` checks.
+by a `const T *` clause. A catch of a non-class type is unsupported and matches nothing.
+A program with no matching clause terminates.
 
 The selector of a typed clause is the LLVM type ID of its descriptor in the
 function, and the landing pad compares the selector that it receives in r5 against
@@ -7322,12 +7351,16 @@ adjustment, and returned pointers against the emulator and the packed RTTI.
 
 #### Limitations
 
-The exception runtime implements exact and public nonvirtual base catches, catch-all
+The exception runtime implements exact, public base, virtual or nonvirtual, catch-all
 handlers, and cleanups. These are not implemented:
 
-- virtual base matching, and any conversion from a thrown type to a clause's type,
-  including pointer, qualification, and `nullptr` conversions. A base that the walk
-  cannot decide within its limits fails the throw;
+- any conversion from a thrown type to a clause's type, including pointer,
+  qualification, and `nullptr` conversions. A base that the walk cannot decide within its
+  limits fails the throw. Shared virtual bases are walked once per path, so a hierarchy
+  with many paths can exceed the 512-edge budget: three classes at each of six levels,
+  each deriving virtually from all three below, fail the throw
+  (`tests/cpp/eh_virtual_lattice_unhandled.cpp`), while five levels match
+  (`tests/cpp/eh_virtual_lattice.cpp`);
 - exception filters, which the backend rejects with a diagnostic;
 - rethrow with `throw;`, and nested exceptions: only one exception may be active,
   so a throw while one is active, including from a destructor, terminates;

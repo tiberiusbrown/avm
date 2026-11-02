@@ -20,6 +20,8 @@ PEAK = re.compile(r'^peak_bytes: (\d+)', re.MULTILINE)
 RUNTIME = re.compile(r'^measured_from \S+: entry_sp=0x([0-9a-f]+) min_sp=0x([0-9a-f]+) '
                      r'at 0x([0-9a-f]+) \((.*)\) peak_after_bytes=(\d+)$', re.MULTILINE)
 STATUS = re.compile(r'^status: (.*)$', re.MULTILINE)
+# The guest stack is 256 bytes, and a fixture whose total peak exceeds it overflows.
+STACK_LIMIT = 256
 
 # Fixtures and what each one exercises. eh_catch_all holds the direct, nested,
 # relaxed-call, and stack-argument cases, and its first throw is the multi-frame one.
@@ -41,6 +43,13 @@ FIXTURES = [
     ('eh_inheritance_cross_unit', 'base catches of a descriptor thrown by another translation unit'),
     ('eh_inheritance_high_address', 'base catches with descriptors above 0xFFFF'),
     ('eh_inheritance_corrupt_target', 'base catch that the corruption verifier patches'),
+    ('eh_virtual_inheritance', 'virtual base catches: direct, diamond, nested, secondary vptr, '
+     'mixed, by value, inaccessible, ambiguous, clause order, cleanups'),
+    ('eh_virtual_cross_unit', 'virtual base catch of a VMost thrown by another translation unit'),
+    ('eh_virtual_high_address', 'virtual base catch with the vtable and descriptors above 0xFFFF'),
+    ('eh_virtual_corrupt_target', 'virtual base catch that the virtual corruption verifier patches'),
+    ('eh_virtual_lattice', 'a lattice whose walk visits 363 edges, within the budget'),
+    ('eh_virtual_lattice_unhandled', 'a lattice whose walk exceeds the 512-edge budget: halt report'),
     (NO_THROW, 'no-throw control'),
 ]
 
@@ -86,12 +95,17 @@ def main():
     parser.add_argument('--image-dir', required=True,
                         help='directory holding O0/ and O2/ subdirectories of images')
     parser.add_argument('--opt', action='append', default=[])
+    parser.add_argument('--fixture', action='append', default=[],
+                        help='measure only this fixture, by name')
     args = parser.parse_args()
     opts = args.opt or ['O0', 'O2']
+    fixtures = [(name, text) for name, text in FIXTURES
+                if not args.fixture or name in args.fixture]
 
     print('| fixture | opt | initial SP | min SP | total peak | runtime peak | deepest runtime frame | status |')
     print('|---|---|---:|---:|---:|---:|---|---|')
-    for fixture, _ in FIXTURES:
+    overflow = False
+    for fixture, _ in fixtures:
         for opt in opts:
             try:
                 row = measure(args, fixture, opt)
@@ -103,10 +117,14 @@ def main():
                 fixture, opt, row['initial'] or 0, row['min'] or 0,
                 row['peak'] if row['peak'] is not None else '-', runtime,
                 row['runtime_deepest'] or row['deepest'] or '-', row['status']))
+            if row['peak'] is None or row['peak'] > STACK_LIMIT:
+                print('FAIL: %s %s peaks at %s bytes, the stack is %d bytes'
+                      % (fixture, opt, row['peak'], STACK_LIMIT), file=sys.stderr)
+                overflow = True
     print()
-    for fixture, description in FIXTURES:
+    for fixture, description in fixtures:
         print('%s: %s' % (fixture, description))
-    return 0
+    return 1 if overflow else 0
 
 
 if __name__ == '__main__':

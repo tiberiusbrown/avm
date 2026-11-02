@@ -38,8 +38,9 @@
  *             u24 type address. The address is the program address of an RTTI
  *             descriptor, and zero is catch(...), which must be the last entry.
  *             The entries are in clause order, so the first match wins. An entry
- *             matches its exact type, or a public nonvirtual base subobject of the
- *             thrown class, which match_class_base finds from the RTTI.
+ *             matches its exact type, or a public base subobject of the thrown
+ *             class, virtual or nonvirtual. match_class_base finds the subobject
+ *             from the RTTI, and from the thrown object's vptrs for a virtual base.
  *
  * sites_offset and next_offset are measured from the start of their function
  * record. The rows fill the bytes from the header to sites_offset, the sites
@@ -132,6 +133,15 @@ AVEH5_INLINE uint32_t read_flash_u24(uint32_t address) {
 }
 #endif
 
+/* Reads a signed 24-bit program-space value, such as a virtual base displacement. The
+ * raw bits are sign-extended from bit 23, so the result is exact in 32 bits. */
+AVEH5_INLINE int32_t read_flash_i24(uint32_t address) {
+    uint32_t raw = read_flash_u24(address);
+    if (raw & 0x800000u)
+        return (int32_t)raw - 0x1000000l;
+    return (int32_t)raw;
+}
+
 /* Stack and frame memory are data-space addresses, which fit in 16 bits. */
 AVEH5_INLINE uint8_t read_ram_u8(uint16_t address) {
     return *(uint8_t *)(uintptr_t)address;
@@ -139,6 +149,13 @@ AVEH5_INLINE uint8_t read_ram_u8(uint16_t address) {
 
 AVEH5_INLINE uint16_t read_ram_u16(uint16_t address) {
     return *(uint16_t *)(uintptr_t)address;
+}
+
+/* Reads a 24-bit value stored as three little-endian bytes of data space, such as an
+ * object's vptr. The caller checks that all three bytes lie inside the object, and
+ * that the address leaves room for them below 0x10000. */
+AVEH5_INLINE uint32_t read_ram_u24(uint16_t address) {
+    return read_ram_u16(address) | ((uint32_t)read_ram_u8((uint16_t)(address + 2)) << 16);
 }
 
 _Static_assert(sizeof(struct avm_eh_context) == 15,
@@ -508,14 +525,20 @@ extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv121__vmi_class_type_infoE[9];
 #define AVM_RTTI_MAX_DEPTH 8
 #define AVM_RTTI_MAX_BASES 32
 #define AVM_RTTI_MAX_EDGES 512
-/* Results of match_class_base. A virtual edge is UNSUPPORTED, and it matches
- * nothing. A walk that exceeds its limits is LIMIT, which cannot decide the clause,
- * so the throw fails. INVALID is a malformed descriptor, which also fails the throw. */
+/* Results of match_class_base. A catch of a type that is not a class needs a conversion
+ * that is not implemented, such as a pointer conversion, so it is UNSUPPORTED and matches
+ * nothing. A walk that exceeds its limits is LIMIT, which cannot decide the clause, so the
+ * throw fails. INVALID is a malformed descriptor or a malformed virtual base offset, which
+ * also fails the throw. */
 #define AVM_RTTI_NO_MATCH 0
 #define AVM_RTTI_MATCH 1
 #define AVM_RTTI_UNSUPPORTED 2
 #define AVM_RTTI_INVALID 3
 #define AVM_RTTI_LIMIT 4
+/* Results of resolve_virtual_base. A malformed vtable slot or displacement is INVALID,
+ * because no clause can be decided from it. */
+#define AVM_RTTI_OFFSET_OK 0
+#define AVM_RTTI_OFFSET_INVALID 1
 
 enum avm_rtti_kind {
     AVM_RTTI_OTHER,
@@ -570,22 +593,84 @@ AVEH5_INLINE uint32_t read_base_edge(uint32_t descriptor, enum avm_rtti_kind kin
     return read_flash_u24(entry);
 }
 
-/* Decides whether catch_type is the unique public nonvirtual base subobject of the
- * thrown class. The walk is a depth-first search over the class descriptors. It keeps
- * one byte per level, the index of the next direct base to visit there, so its stack
- * is eight bytes. A level's descriptor, offset, and access are replayed from the
- * thrown class and those indices. Each distinct path to catch_type is a distinct
- * subobject. The walk records the first match and counts the rest, so two subobjects
- * make the conversion ambiguous, and a nonpublic path to the only one makes it
- * inaccessible. Both return NO_MATCH. The whole hierarchy is walked before the
- * decision, because a second match may lie past the first.
+/* The thrown type is the 24-bit descriptor address that the throw shim stored. */
+AVEH5_INLINE uint32_t thrown_type_of(const struct avm_eh_exception *header) {
+    return load24(header->type_address);
+}
+
+/* The complete thrown object lies just past its header, in 16-bit RAM. A virtual base
+ * offset is read from its vptrs, so the matcher receives the object address. */
+AVEH5_INLINE uint16_t object_of(const struct avm_eh_exception *header) {
+    return (uint16_t)(uintptr_t)(header + 1);
+}
+
+/* Resolves the offset of a virtual base of the subobject at containing, the offset of
+ * that subobject in the thrown object. The subobject's vptr is its first three bytes, and
+ * the vtable slot lies vtable_offset bytes from the vptr. The slot holds a signed 24-bit
+ * displacement from the containing subobject, not from the complete object, so the base
+ * lies at containing plus the displacement. A zero vptr, a slot outside the 24-bit program
+ * address range, a subobject or base outside the object, or a base outside 16-bit RAM is
+ * INVALID. The packed image's extent is not known here, so a slot inside the address range
+ * is read, and only the effect of its value on the object is checked. Offsets are 16-bit,
+ * because the object is in 16-bit RAM and the walk keeps them small. */
+static uint8_t resolve_virtual_base(uint16_t object_address, uint16_t exception_size,
+                                    uint16_t containing, int32_t vtable_offset, uint16_t *base) {
+    if ((uint32_t)containing + 3 > exception_size)
+        return AVM_RTTI_OFFSET_INVALID;
+    uint32_t vptr_address = (uint32_t)object_address + containing;
+    if (vptr_address > 0xfffdul)
+        return AVM_RTTI_OFFSET_INVALID;
+    uint32_t vptr = read_ram_u24((uint16_t)vptr_address);
+    if (vptr == 0)
+        return AVM_RTTI_OFFSET_INVALID;
+    int32_t slot = (int32_t)vptr + vtable_offset;
+    if (slot < 0 || slot > 0xfffffdl)
+        return AVM_RTTI_OFFSET_INVALID;
+    int32_t offset = (int32_t)containing + read_flash_i24((uint32_t)slot);
+    if (offset < 0 || offset >= exception_size)
+        return AVM_RTTI_OFFSET_INVALID;
+    if ((uint32_t)object_address + (uint32_t)offset > 0xffffu)
+        return AVM_RTTI_OFFSET_INVALID;
+    *base = (uint16_t)offset;
+    return AVM_RTTI_OFFSET_OK;
+}
+
+/* The offset of the base subobject that a base edge names, when its containing subobject
+ * lies at containing. A nonvirtual edge's offset is the base's offset inside the container,
+ * so the base lies at containing plus that offset. A virtual edge's offset locates a vtable
+ * slot, which resolve_virtual_base reads. */
+AVEH5_INLINE uint8_t base_offset(uint16_t object_address, uint16_t exception_size,
+                                 uint16_t containing, int32_t edge, uint8_t flags,
+                                 uint16_t *base) {
+    if (flags & AVM_RTTI_BASE_VIRTUAL)
+        return resolve_virtual_base(object_address, exception_size, containing, edge, base);
+    int32_t offset = (int32_t)containing + edge;
+    if (offset < 0 || offset >= exception_size)
+        return AVM_RTTI_OFFSET_INVALID;
+    *base = (uint16_t)offset;
+    return AVM_RTTI_OFFSET_OK;
+}
+
+/* Decides whether catch_type is the unique public base subobject of the thrown class,
+ * virtual or nonvirtual. The walk is a depth-first search over the class descriptors. It
+ * keeps one byte per level, the index of the next direct base to visit there, so its
+ * stack is eight bytes. A level's descriptor, offset, and access are replayed from the
+ * thrown class and those indices. Each offset is the subobject's offset in the thrown
+ * object. A nonvirtual edge adds its static offset, and a virtual edge reads its
+ * displacement from the vptr of the containing subobject, so the walk needs the object's
+ * address. Every path to one virtual base gives the same offset, which identifies the
+ * subobject. The walk records the offset of the first match and counts the distinct
+ * offsets, so two subobjects make the conversion ambiguous. A match is accessible when at
+ * least one of its paths is public. An ambiguous or inaccessible match returns NO_MATCH.
+ * The whole hierarchy is walked before the decision, because a second match may lie past
+ * the first.
  *
- * A virtual edge returns UNSUPPORTED, since its offset locates a vtable entry and not
- * a subobject. A malformed descriptor or edge returns INVALID. A walk past its depth
- * or edge budget returns LIMIT. A cycle stays on one path until the depth limit, so
- * it also returns LIMIT. The adjustment is written only when the result is MATCH. */
-AVEH5_NOINLINE uint8_t match_class_base(uint32_t thrown_type, uint32_t catch_type,
-                                        uint16_t exception_size, uint16_t *adjustment) {
+ * A malformed descriptor, edge, or virtual base offset returns INVALID. A walk past its
+ * depth or edge budget returns LIMIT. A cycle stays on one path until the depth limit, so
+ * it also returns LIMIT. The result is the code in its low byte, and a MATCH carries the
+ * base adjustment in bits 31:16. */
+AVEH5_NOINLINE uint32_t match_class_base(uint32_t catch_type,
+                                         const struct avm_eh_exception *header) {
     uint8_t next[AVM_RTTI_MAX_DEPTH];
     uint8_t depth = 0;
     uint8_t matches = 0;
@@ -593,21 +678,27 @@ AVEH5_NOINLINE uint8_t match_class_base(uint32_t thrown_type, uint32_t catch_typ
     uint16_t match_offset = 0;
     uint16_t edges = 0;
 
-    if (rtti_kind(catch_type) == AVM_RTTI_OTHER || rtti_kind(thrown_type) == AVM_RTTI_OTHER)
+    if (rtti_kind(thrown_type_of(header)) == AVM_RTTI_OTHER)
         return AVM_RTTI_NO_MATCH;
+    if (rtti_kind(catch_type) == AVM_RTTI_OTHER)
+        return AVM_RTTI_UNSUPPORTED;
     next[0] = 0;
     for (;;) {
-        /* Replays the path to the top node. Each edge on the path was checked when the
-         * walk pushed it, so the replay checks nothing again. */
-        uint32_t descriptor = thrown_type;
-        int32_t cumulative = 0;
+        /* Replays the path to the top node. Each edge on the path was checked when the walk
+         * pushed it, and the replay resolves the same offsets from the same reads. */
+        uint32_t descriptor = thrown_type_of(header);
+        uint16_t cumulative = 0;
         uint8_t public_path = 1;
         for (uint8_t level = 0; level < depth; level++) {
-            int32_t offset;
+            int32_t edge;
             uint8_t flags;
-            descriptor = read_base_edge(descriptor, rtti_kind(descriptor), next[level] - 1,
-                                        &offset, &flags);
-            cumulative += offset;
+            enum avm_rtti_kind parent = rtti_kind(descriptor);
+            descriptor = read_base_edge(descriptor, parent, next[level] - 1, &edge, &flags);
+            uint16_t base;
+            if (base_offset(object_of(header), header->size, cumulative, edge, flags,
+                            &base) != AVM_RTTI_OFFSET_OK)
+                return AVM_RTTI_INVALID;
+            cumulative = base;
             if (!(flags & AVM_RTTI_BASE_PUBLIC))
                 public_path = 0;
         }
@@ -629,28 +720,33 @@ AVEH5_NOINLINE uint8_t match_class_base(uint32_t thrown_type, uint32_t catch_typ
             continue;
         }
 
-        int32_t offset;
+        int32_t edge;
         uint8_t flags;
-        uint32_t base = read_base_edge(descriptor, kind, next[depth]++, &offset, &flags);
-        if (flags & AVM_RTTI_BASE_VIRTUAL)
-            return AVM_RTTI_UNSUPPORTED;
+        uint32_t base_type = read_base_edge(descriptor, kind, next[depth]++, &edge, &flags);
         if (flags & AVM_RTTI_BASE_RESERVED)
             return AVM_RTTI_INVALID;
-        int32_t child_offset = cumulative + offset;
-        if (child_offset < 0 || child_offset >= exception_size)
-            return AVM_RTTI_INVALID;
-        if (rtti_kind(base) == AVM_RTTI_OTHER)
+        if (rtti_kind(base_type) == AVM_RTTI_OTHER)
             return AVM_RTTI_INVALID;
         if (++edges > AVM_RTTI_MAX_EDGES || depth + 1 >= AVM_RTTI_MAX_DEPTH)
             return AVM_RTTI_LIMIT;
 
+        uint16_t base;
+        if (base_offset(object_of(header), header->size, cumulative, edge, flags,
+                        &base) != AVM_RTTI_OFFSET_OK)
+            return AVM_RTTI_INVALID;
         uint8_t child_public = (public_path && (flags & AVM_RTTI_BASE_PUBLIC)) ? 1 : 0;
-        if (base == catch_type) {
-            if (matches < 2)
-                matches++;
-            if (matches == 1) {
-                match_offset = (uint16_t)child_offset;
+        if (base_type == catch_type) {
+            /* The first match records its offset. A later path to the same offset is the
+             * same subobject, and it can only make the match accessible. A different
+             * offset is a second subobject. */
+            if (matches == 0) {
+                matches = 1;
+                match_offset = base;
                 match_public = child_public;
+            } else if (base != match_offset) {
+                matches = 2;
+            } else {
+                match_public |= child_public;
             }
         }
         depth++;
@@ -659,13 +755,7 @@ AVEH5_NOINLINE uint8_t match_class_base(uint32_t thrown_type, uint32_t catch_typ
 
     if (matches != 1 || !match_public)
         return AVM_RTTI_NO_MATCH;
-    *adjustment = match_offset;
-    return AVM_RTTI_MATCH;
-}
-
-/* The thrown type is the 24-bit descriptor address that the throw shim stored. */
-AVEH5_INLINE uint32_t thrown_type_of(const struct avm_eh_exception *header) {
-    return load24(header->type_address);
+    return ((uint32_t)match_offset << 16) | AVM_RTTI_MATCH;
 }
 
 /* Checks the action list at list of the function at fh. The list lies in the pool, and
@@ -722,13 +812,12 @@ AVEH5_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list,
         uint32_t type = read_flash_u24(entry + 2);
         if (type == 0 || type == thrown_type_of(header))
             return selector;
-        uint16_t adjustment = 0;
-        uint8_t result = match_class_base(thrown_type_of(header), type, header->size,
-                                          &adjustment);
-        if (result == AVM_RTTI_INVALID || result == AVM_RTTI_LIMIT)
+        uint32_t result = match_class_base(type, header);
+        uint8_t code = (uint8_t)result;
+        if (code == AVM_RTTI_INVALID || code == AVM_RTTI_LIMIT)
             return AVEH5_BAD;
-        if (result == AVM_RTTI_MATCH)
-            return selector | ((uint32_t)adjustment << 16);
+        if (code == AVM_RTTI_MATCH)
+            return selector | (result & 0xffff0000ul);
     }
     return (valid & AVEH5_ACTION_CLEANUP) ? AVEH5_MATCH_CLEANUP : 0;
 }

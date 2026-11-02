@@ -41,7 +41,8 @@ jobs:
         run: >-
           cmake --build build/ci --parallel 2 --target
           avm_toolchain FileCheck count llvm-config not split-file
-          llc llvm-as llvm-dis llvm-mca opt yaml2obj
+          llc llvm-as llvm-dis llvm-dwarfdump llvm-mca llvm-nm llvm-readelf
+          opt yaml2obj
 
       - name: Run avm_tests
         id: avm

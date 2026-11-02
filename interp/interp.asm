@@ -4748,16 +4748,12 @@ sys_progmem_prepare_func:
     clt
     nop
     nop
-    add   VM_PCL, ONE
-    adc   VM_PCM, ZERO
-    adc   VM_PCH, ZERO
     movw  r24, VM_R6
     mov   r26, VM_R7L
-    rjmp  fx_start_program_read_func
 
-; Image-relative variant for AS0 flash-window sources. The caller has already
-; placed the translated address in r24:r25:r26. This consumes the service byte
-; and tail-enters the same transaction start as sys_progmem_prepare_func.
+; Image-relative entry for AS0 flash-window callers, which place the translated
+; address in r24:r25:r26 before the call. Both entries consume the service byte
+; and enter the same transaction start; the _P entry falls through into it.
 sys_progmem_image_prepare_func:
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
@@ -5136,18 +5132,13 @@ sys_strlen_p_impl:
 .Lsys_strlen_p_finish_wait:
     rjmp  .Lsys_progmem_finish
 
-; Shared bounded copy-until-NUL engine for strncpy_P and strncat_P.
-; Inputs: Z=destination, r0:r1=nonzero maximum count, q3=source.
+; Shared bounded copy-until-NUL engine for strncpy_P, strncat_P, and their AS0
+; flash-window forms.
+; Inputs: r24:r26 = image-relative source, Z = RAM destination, r0:r1 = nonzero
+; maximum count.
 ; Output: Z one past copied bytes, r0:r1 remaining count, T=1 iff a NUL was
 ; copied. The transaction is disabled before RET. The nonterminal path from
 ; one data OUT to the next is exactly seventeen cycles.
-fx_copy_program_string_n_func:
-    clt
-    rcall sys_progmem_prepare_func
-    rcall fx_read_program_delay_9
-    rjmp  .Lfx_copy_program_string_n_loop
-
-; AS0 flash-window copy. The caller supplies the translated source in r24:r26.
 fx_copy_image_string_n_func:
     clt
     rcall sys_progmem_image_prepare_func
@@ -5185,12 +5176,24 @@ fx_copy_image_string_n_func:
 ;   r4 = dst/result, q3 = src, r5 = n
 sys_strncpy_p_impl:
     movw  r0, VM_R5
+    movw  r24, VM_R6
+    mov   r26, VM_R7L
+    rjmp  .Lsys_flash_strncpy_common
+
+; AS0 strncpy from the flash window: the RAM destination is padded as for strncpy_P.
+; The source is r5 and the bound is r6; both are preserved.
+sys_strncpy_flash_impl:
+    movw  r0, VM_R6
+    movw  r24, VM_R5
+    subi  r25, 0x06
+    clr   r26
+
+.Lsys_flash_strncpy_common:
     mov   r27, r0
     or    r27, r1
     breq  .Lsys_strncpy_p_zero
-
     movw  r30, VM_R4
-    rcall fx_copy_program_string_n_func
+    rcall fx_copy_image_string_n_func
 
     ; A nonzero remainder exists only when the source NUL was copied. Pad all
     ; remaining destination bytes as required by strncpy.
@@ -5208,39 +5211,38 @@ sys_strncpy_p_impl:
 .Lsys_strncpy_p_zero:
     rjmp  cluster_tail_18
 
-; AS0 strncpy from the flash window: the RAM destination is padded as for strncpy_P.
-; The source is r5 and the bound is r6; both are preserved.
-sys_strncpy_flash_impl:
-    movw  r0, VM_R6
-    mov   r27, r0
-    or    r27, r1
-    breq  .Lsys_strncpy_p_zero
-    movw  r30, VM_R4
-    mov   r24, VM_R5L
-    mov   r25, VM_R5H
-    subi  r25, 0x06
-    clr   r26
-    rcall fx_copy_image_string_n_func
-    rjmp  .Lsys_strncpy_p_after_copy
-
 ; char *strncat_P(char *dst, progptr/uint24_t src, uint16_t n)
 ;   r4 = dst/result, q3 = src, r5 = n
 sys_strncat_p_impl:
     movw  r0, VM_R5
+    movw  r24, VM_R6
+    mov   r26, VM_R7L
+    rjmp  .Lsys_flash_strncat_common
+
+; AS0 strncat from the flash window: scan the RAM destination, then copy the
+; translated source. The bound is r6 and the source r5, both preserved.
+sys_strncat_flash_impl:
+    movw  r0, VM_R6
+    movw  r24, VM_R5
+    subi  r25, 0x06
+    clr   r26
+
+.Lsys_flash_strncat_common:
     mov   r27, r0
     or    r27, r1
     breq  .Lsys_strncat_p_zero
 
     ; Find the existing RAM terminator. Z is left one past it, then moved back
-    ; so the program string overwrites that terminator.
+    ; so the copied source overwrites that terminator. The scan uses r27 so the
+    ; normalized source in r24:r26 and the count in r0:r1 survive it.
     movw  r30, VM_R4
-.Lsys_strncat_p_scan:
-    ld    r24, Z+
-    tst   r24
-    brne  .Lsys_strncat_p_scan
+.Lsys_flash_strncat_scan:
+    ld    r27, Z+
+    tst   r27
+    brne  .Lsys_flash_strncat_scan
     sbiw  r30, 1
 
-    rcall fx_copy_program_string_n_func
+    rcall fx_copy_image_string_n_func
 .Lsys_strncat_p_after_copy:
     brts  .Lsys_strncat_p_done
     st    Z, ZERO                ; count exhausted before source NUL
@@ -5249,29 +5251,9 @@ sys_strncat_p_impl:
 .Lsys_strncat_p_zero:
     rjmp  cluster_tail_18
 
-; AS0 strncat from the flash window: scan the RAM destination, then copy the
-; translated source. The bound is r6 and the source r5, both preserved.
-sys_strncat_flash_impl:
-    movw  r0, VM_R6
-    mov   r27, r0
-    or    r27, r1
-    breq  .Lsys_strncat_p_zero
-    movw  r30, VM_R4
-.Lsys_strncat_flash_scan:
-    ld    r24, Z+
-    tst   r24
-    brne  .Lsys_strncat_flash_scan
-    sbiw  r30, 1
-    mov   r24, VM_R5L
-    mov   r25, VM_R5H
-    subi  r25, 0x06
-    clr   r26
-    rcall fx_copy_image_string_n_func
-    rjmp  .Lsys_strncat_p_after_copy
-
 sys_progmem_services_end:
-.if (sys_progmem_services_end - sys_progmem_services_start) != 736
-    .error "program-memory SYS subsystem must occupy exactly 368 AVR words"
+.if (sys_progmem_services_end - sys_progmem_services_start) != 696
+    .error "program-memory SYS subsystem must occupy exactly 348 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -9155,54 +9137,41 @@ sys_memcpy_impl:
 .Lsys_memcpy_done:
     jmp   cluster_tail_18
 
-; AS0 memcpy/memmove from the flash window. One fixed-count reader transaction
-; copies n bytes from the translated image offset into RAM at dst. Zero length
-; returns without touching either pointer; the service byte is consumed once.
-;   r4 = dst/result, r5 = AS0 source at or above 0x0B00, r6 = n
+; AS0 memcpy/memmove from the flash window and memcpy_P share one fixed-count
+; reader transaction. Each prefix normalizes its source to image-relative
+; r24:r25:r26 and its count to r0:r1; the common tail performs the zero test,
+; consumes the service byte once, and restarts the stream after the copy.
+;   AS0:      r4 = dst/result, r5 = AS0 source at or above 0x0B00, r6 = n
+;   memcpy_P: r4 = dst/result, q3[23:0] = source, r5 = n
+;   q3[31:24] is ignored and preserved.
 sys_memcpy_flash_impl:
     movw  r0, VM_R6              ; reader count
-    mov   r27, r0
-    or    r27, r1
-    breq  .Lsys_memcpy_flash_done
-    add   VM_PCL, ONE            ; service byte -> following primary opcode
-    adc   VM_PCM, ZERO
-    adc   VM_PCH, ZERO
-    movw  r30, VM_R4             ; reader destination
-    mov   r24, VM_R5L            ; image-relative low = AS0 low
-    mov   r25, VM_R5H
+    movw  r24, VM_R5             ; AS0 low byte and AS0 high byte
     subi  r25, 0x06              ; image-relative high = AS0 high - 0x06
     clr   r26
-    call  fx_read_program_bytes_func
-    jmp   seek_and_dispatch_func
-.Lsys_memcpy_flash_done:
-    jmp   cluster_tail_18
+    rjmp  .Lsys_flash_memcpy_common
 
 ; void *memcpy_P(void *dst, progptr/uint24_t src, uint16_t n)
 ;   r4 = dst/result, q3[23:0] = src, r5 = n
-;   q3[31:24] is ignored and preserved. This three-cycle landing retains the
-;   previous successful-path timing; the skipped NOPs retain the four-word
-;   layout so no later range-constrained code moves.
 sys_memcpy_p_impl:
-    rjmp  .Lsys_memcpy_p_padding_done
-    nop
-    nop
-.Lsys_memcpy_p_padding_done:
-    nop
-    movw  r0, VM_R5              ; shared reader count
+    movw  r0, VM_R5              ; reader count
+    movw  r24, VM_R6             ; source bits 15:0
+    mov   r26, VM_R7L            ; source bits 23:16
+
+.Lsys_flash_memcpy_common:
     mov   r27, r0
     or    r27, r1
-    breq  .Lsys_memcpy_p_done
+    breq  .Lsys_flash_memcpy_zero
 
     add   VM_PCL, ONE            ; service byte -> following primary opcode
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
 
-    movw  r30, VM_R4             ; shared reader destination
-    movw  r24, VM_R6             ; source bits 15:0
-    mov   r26, VM_R7L            ; source bits 23:16
+    movw  r30, VM_R4             ; reader destination
     call  fx_read_program_bytes_func
     jmp   seek_and_dispatch_func
-.Lsys_memcpy_p_done:
+
+.Lsys_flash_memcpy_zero:
     jmp   cluster_tail_18
 
 ; void *memset(void *dst, int16_t val, uint16_t n)

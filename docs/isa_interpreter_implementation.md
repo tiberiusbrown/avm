@@ -553,7 +553,19 @@ The slow compare engine costs about 309 cycles per compared position and about 1
 
 The `FX-C` variant was not cycle-measured: `avm_bench` has no FX-C wiring option.
 
-Both the normal and FX-C interpreters have a `.text` size of 28,720 bytes. That is 1,212 bytes above the 27,508-byte build before the window feature and 976 bytes below the 29,696-byte limit.
+Both the normal and FX-C interpreters have a `.text` size of 28,644 bytes. That is 1,136 bytes above the 27,508-byte build before the window feature and 1,052 bytes below the 29,696-byte limit. Deduplicating the AS0 and program-memory copy setup saved 76 bytes from the previous 28,720-byte size: 36 bytes from the shared `memcpy`/`memcpy_P` tail, 32 from the single bounded-copy entry with shared `strncpy`/`strncat` setup, and 8 from the shared program-read preparation.
+
+The fixed setup costs of that deduplication are below, measured against `2282a60` with the same probe protocol. Per-byte streaming rates are unchanged. RAM `memcpy`, `memmove`, `strncpy`, and `strncat`, and every `memcmp_P`, `strcmp_P`, and `strlen_P` instruction row, are unchanged. The `sys_strncpy_p` and `sys_strncat_p` C workloads each drop by one cycle.
+
+| Path | Before | After | Note |
+|---|---|---|---|
+| Program `memcpy_P`, `n=0` / `1` / `8` / `16` / `32` / `256` | 44 / 250 / 369 / 505 / 777 / 4585 | 43 / 247 / 366 / 502 / 774 / 4582 | command launch three cycles earlier; zero length one cycle faster |
+| Flash `memcpy`, `n=0` / `1` / `8` / `16` / `32` / `256` | 44 / 252 / 371 / 507 / 779 / 4587 | 49 / 253 / 372 / 508 / 780 / 4588 | zero length +5 through the shared tail; nonzero +1 |
+| Flash `memmove`, `n=8`, forward | 371 | 372 | shares the AS0 `memcpy` prefix |
+| Program `strncpy_P`, `n=0` / `8` padded / `8` no NUL / `8` NUL at bound / `8` truncated | 37 / 337 / 383 / 383 / 383 | 41 / 336 / 382 / 382 / 382 | |
+| Flash `strncpy`, same five cases | 43 / 344 / 390 / 390 / 390 | 46 / 341 / 387 / 387 / 387 | |
+| Program `strncat_P`, `n=0` / empty + empty / empty + 3 / 8 + 3 / 8 + 7 NUL at bound / 8 + 32 truncated | 37 / 268 / 319 / 359 / 427 / 428 | 41 / 267 / 318 / 358 / 426 / 427 | |
+| Flash `strncat`, same six cases | 43 / 275 / 326 / 366 / 434 / 435 | 46 / 272 / 323 / 363 / 431 / 432 | |
 
 ## 6. Primary opcode map
 
@@ -3545,13 +3557,15 @@ SYS cadence tail.
 
 ### 30.1.1. Shared transaction preparation
 
-All five services call one small preparation helper. It:
+`memcmp_P` with a RAM left operand, `strcmp_P` with a RAM left operand, and `strlen_P` call `sys_progmem_prepare_func`. It copies program-pointer bits `23:0` into native `r24:r25:r26` without inspecting bits `31:24`, then falls through into `sys_progmem_image_prepare_func`. The image-ready entry is also used by the AS0 comparison, AS0 `strlen`, and bounded-copy callers, which place their translated source in `r24:r26` first. It:
 
 1. advances `VM_PC` from the service byte to the already-fetched following
    primary opcode;
-2. copies program-pointer bits `23:0` into native `r24:r25:r26` without
-   inspecting bits `31:24`;
-3. tail-enters the alternate shared program-read startup.
+2. tail-enters the alternate shared program-read startup.
+
+`memcpy_P` and the AS0 `memcpy`/`memmove` forms normalize their sources to `r24:r26` and their counts to `r0:r1`, then share one fixed-count tail. Both prefixes consume the service byte only after the zero-length test, so zero length returns through the ordinary SYS tail without touching either pointer.
+
+The `memcpy_P` landing no longer carries the three-cycle padding that preserved timing after its operand validation was removed. That padding was not SPI protection. The SYS decode `OUT` starts the following-opcode transfer at cycle 0, and that transfer completes on cycle 17. Counting from the same `OUT` through the dispatch `IJMP`, the table `RJMP`, and the veneer `JMP`, the new `memcpy_P` path begins chip select at cycle 28 and launches the command at cycle 33. The old path did so at cycles 31 and 36, and flash `memcpy` moves from 33 and 38 to 34 and 39. A scratch logger that records `PORTD` and `SPDR` stores with cycle counts measured these values in both interpreters. Both new `memcpy_P` events remain after completion, so no padding is needed. Every interpreter test also runs under the SPI write observer in `tests/avm_tests.cpp`, which rejects an `SPDR` write issued before the in-flight transfer completes.
 
 The alternate startup duplicates only the four-word command launch:
 
@@ -3564,7 +3578,7 @@ out   SPDR, r27
 
 It then tail-jumps through one `NOP` into the same physical-address and command/address transfer sequence used by `fx_read_program_bytes_func`. The caller’s original `RCALL` return address remains on the hardware stack, so the shared startup’s `RET` returns directly to the service body five cycles after the first data-byte transfer was launched.
 
-The fixed-count reader retains its own four-word command launch and reaches the shared address phase with `RCALL`. That call executes entirely inside the command-transfer window. Its first-byte and steady-state schedules are unchanged, so existing `F0 60-68` instructions and `memcpy_P` have no performance regression.
+The fixed-count reader retains its own four-word command launch and reaches the shared address phase with `RCALL`. That call executes entirely inside the command-transfer window. Its first-byte and steady-state schedules are unchanged, so existing `F0 60-68` instructions have no performance regression. The `memcpy_P` setup change is listed in section 5.4.
 
 ### 30.1.2. Specialized comparison and scan loops
 
@@ -3592,13 +3606,13 @@ Mismatch and NUL paths leave these loops immediately and disable flash chip sele
 
 ### 30.1.3. Shared bounded copy-until-NUL engine
 
-`strncpy_P` and `strncat_P` share one bounded streaming engine:
+`strncpy_P`, `strncat_P`, and their AS0 flash-window forms share one bounded streaming engine, `fx_copy_image_string_n_func`:
 
 ```text
 inputs:
   Z       destination byte pointer
   r0:r1   nonzero maximum count
-  q3      program source; bits 31:24 ignored
+  r24:r26 image-relative source; the caller normalizes q3 or the AS0 address
 
 outputs:
   Z       one byte past the copied bytes
@@ -3628,14 +3642,15 @@ The fixed 256-word SYS dispatch table does not grow: five formerly invalid entri
 
 ```text
 shared reader alternate entry and refactoring    8 words /  16 bytes
-five-service program-memory SYS subsystem      128 words / 256 bytes
+five-service program-memory SYS subsystem      348 words / 696 bytes
                                                    -------------------
-total added implementation                    136 words / 272 bytes
+total added implementation                    356 words / 712 bytes
 ```
 
-The 128-word subsystem includes shared pointer preparation and comparison
-results, all four cadence-critical loops, `strncpy_P` padding, and the RAM
-prefix scan used by `strncat_P`.
+The 348-word subsystem includes shared pointer preparation and comparison
+results, all four cadence-critical loops, the bounded copy engine with its
+`strncpy_P` padding, and the RAM destination scan shared by `strncat_P` and
+its AS0 form.
 
 ## 30.2. Data-memory string and comparison SYS services
 

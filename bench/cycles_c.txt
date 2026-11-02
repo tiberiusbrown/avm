@@ -29,7 +29,7 @@
       623444   conditional_fdiv_taken.c
       477464   conditional_fdiv_unlikely.c
      7316692   constant_arith.c
-      294282   constant_init.c
+      293898   constant_init.c
       725956   count_leading_zeros.c
       582496   count_trailing_zeros.c
       530882   crc16.c
@@ -376,15 +376,15 @@
       446861   struct_copy.c
       950957   switch.c
         2904   sys_memcmp.c
-        5163   sys_memcmp_p.c
+        5165   sys_memcmp_p.c
         2513   sys_strcmp.c
-        5420   sys_strcmp_p.c
+        5424   sys_strcmp_p.c
         2111   sys_strlen.c
         7020   sys_strlen_p.c
         2234   sys_strncat.c
-        3520   sys_strncat_p.c
+        3519   sys_strncat_p.c
         2144   sys_strncpy.c
-        3556   sys_strncpy_p.c
+        3555   sys_strncpy_p.c
       487473   tail_calls.c
        52140   text.c
      3139912   tile_cache_render.c

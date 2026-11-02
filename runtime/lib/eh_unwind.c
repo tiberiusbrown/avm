@@ -33,7 +33,9 @@
  *             selector, which is nonzero and distinct within the list, and a
  *             u24 type address. The address is the program address of an RTTI
  *             descriptor, and zero is catch(...), which must be the last entry.
- *             The entries are in clause order, so the first match wins.
+ *             The entries are in clause order, so the first match wins. An entry
+ *             matches its exact type, or a public nonvirtual base subobject of the
+ *             thrown class, which match_class_base finds from the RTTI.
  *
  * sites_offset and next_offset are measured from the start of their function
  * record. The rows fill the bytes from the header to sites_offset, the sites
@@ -393,50 +395,254 @@ AVEH4_NOINLINE uint32_t find_call(uint32_t fh, uint32_t return_pc) {
     return AVEH4_BAD;
 }
 
-/* Evaluates the action list at list for thrown_type. The list lies in the pool of
- * the function at fh, and the whole list is checked: its flags, catch count, and
- * entries must lie inside the record, the flags may set only the cleanup bit, each
- * selector is nonzero and distinct, and a catch-all is last. Returns AVEH4_BAD when
- * the list is malformed. Otherwise it returns the selector of the first entry that
- * matches, which is zero when none does. A valid list that matches nothing is not an
- * error, and the cleanup flag is read from the list by the caller that needs it. */
-AVEH4_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list, uint32_t thrown_type) {
+/* The support vtables that eh_cxa.c defines for the class descriptors. A class
+ * descriptor begins with its vtable address point, which lies six bytes into the
+ * vtable of its kind. The three kinds below are the layouts that carry base
+ * information. The other kinds are exact-match-only. */
+extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__class_type_infoE[9];
+extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv120__si_class_type_infoE[9];
+extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv121__vmi_class_type_infoE[9];
+
+#define AVM_RTTI_ADDRESS_POINT 6
+/* An SI descriptor holds one base descriptor after its vtable and type name. */
+#define AVM_RTTI_SI_BASE 6
+/* A VMI descriptor holds its direct base count after its flags, and the base
+ * entries follow the 10-byte header. */
+#define AVM_RTTI_VMI_COUNT 8
+#define AVM_RTTI_VMI_HEADER 10
+/* The low byte of a base entry's offset-and-flags word. The upper 24 bits are the
+ * signed byte offset of the base subobject within its containing subobject. */
+#define AVM_RTTI_BASE_VIRTUAL 0x01
+#define AVM_RTTI_BASE_PUBLIC 0x02
+#define AVM_RTTI_BASE_RESERVED 0xfc
+/* The walk holds the thrown class and up to seven levels of its bases, and it reads
+ * at most this many base edges for one clause. */
+#define AVM_RTTI_MAX_DEPTH 8
+#define AVM_RTTI_MAX_BASES 32
+#define AVM_RTTI_MAX_EDGES 512
+/* Results of match_class_base. A virtual edge is UNSUPPORTED, and it matches
+ * nothing. A walk that exceeds its limits is LIMIT, which cannot decide the clause,
+ * so the throw fails. INVALID is a malformed descriptor, which also fails the throw. */
+#define AVM_RTTI_NO_MATCH 0
+#define AVM_RTTI_MATCH 1
+#define AVM_RTTI_UNSUPPORTED 2
+#define AVM_RTTI_INVALID 3
+#define AVM_RTTI_LIMIT 4
+
+enum avm_rtti_kind {
+    AVM_RTTI_OTHER,
+    AVM_RTTI_CLASS,
+    AVM_RTTI_SI,
+    AVM_RTTI_VMI
+};
+
+/* Seven times a count, by shifts and a subtraction. The empty asm keeps the optimizer
+ * from folding the subtraction back into a multiply, as times5 does. */
+AVEH4_INLINE uint32_t times7(uint32_t count) {
+    uint32_t shifted = count << 3;
+    __asm__("" : "+q"(count));
+    return shifted - count;
+}
+
+/* Classifies the descriptor at address. An address below the reserved header, or
+ * one too close to the 24-bit limit for the VMI header, is OTHER, so the walk never
+ * reads outside program space. */
+AVEH4_INLINE enum avm_rtti_kind rtti_kind(uint32_t address) {
+    if (address < AVEH4_TYPE_BASE || address > AVEH4_ADDRESS_LIMIT - AVM_RTTI_VMI_HEADER)
+        return AVM_RTTI_OTHER;
+    uint32_t point = read_flash_u24(address);
+    if (point == (uint32_t)_ZTVN10__cxxabiv117__class_type_infoE + AVM_RTTI_ADDRESS_POINT)
+        return AVM_RTTI_CLASS;
+    if (point == (uint32_t)_ZTVN10__cxxabiv120__si_class_type_infoE + AVM_RTTI_ADDRESS_POINT)
+        return AVM_RTTI_SI;
+    if (point == (uint32_t)_ZTVN10__cxxabiv121__vmi_class_type_infoE + AVM_RTTI_ADDRESS_POINT)
+        return AVM_RTTI_VMI;
+    return AVM_RTTI_OTHER;
+}
+
+/* Reads the base edge at position index in the class descriptor at descriptor, whose
+ * kind is kind, and returns the base's descriptor address. An SI class has one base,
+ * which lies at offset zero and is public. A VMI entry's offset-and-flags word holds
+ * the flags in its low byte and the signed offset in its upper 24 bits. The flags are
+ * read as their own byte, and the offset from the three bytes above them, so the
+ * offset is never truncated to 16 bits. */
+AVEH4_INLINE uint32_t read_base_edge(uint32_t descriptor, enum avm_rtti_kind kind,
+                                     uint8_t index, int32_t *offset, uint8_t *flags) {
+    if (kind == AVM_RTTI_SI) {
+        *offset = 0;
+        *flags = AVM_RTTI_BASE_PUBLIC;
+        return read_flash_u24(descriptor + AVM_RTTI_SI_BASE);
+    }
+    uint32_t entry = descriptor + AVM_RTTI_VMI_HEADER + times7(index);
+    int32_t edge = read_flash_u24(entry + 4);
+    if (edge & 0x800000)
+        edge -= 0x1000000;
+    *offset = edge;
+    *flags = read_flash_u8(entry + 3);
+    return read_flash_u24(entry);
+}
+
+/* Decides whether catch_type is the unique public nonvirtual base subobject of the
+ * thrown class. The walk is a depth-first search over the class descriptors. It keeps
+ * one byte per level, the index of the next direct base to visit there, so its stack
+ * is eight bytes. A level's descriptor, offset, and access are replayed from the
+ * thrown class and those indices. Each distinct path to catch_type is a distinct
+ * subobject. The walk records the first match and counts the rest, so two subobjects
+ * make the conversion ambiguous, and a nonpublic path to the only one makes it
+ * inaccessible. Both return NO_MATCH. The whole hierarchy is walked before the
+ * decision, because a second match may lie past the first.
+ *
+ * A virtual edge returns UNSUPPORTED, since its offset locates a vtable entry and not
+ * a subobject. A malformed descriptor or edge returns INVALID. A walk past its depth
+ * or edge budget returns LIMIT. A cycle stays on one path until the depth limit, so
+ * it also returns LIMIT. The adjustment is written only when the result is MATCH. */
+AVEH4_NOINLINE uint8_t match_class_base(uint32_t thrown_type, uint32_t catch_type,
+                                        uint16_t exception_size, uint16_t *adjustment) {
+    uint8_t next[AVM_RTTI_MAX_DEPTH];
+    uint8_t depth = 0;
+    uint8_t matches = 0;
+    uint8_t match_public = 0;
+    uint16_t match_offset = 0;
+    uint16_t edges = 0;
+
+    if (rtti_kind(catch_type) == AVM_RTTI_OTHER || rtti_kind(thrown_type) == AVM_RTTI_OTHER)
+        return AVM_RTTI_NO_MATCH;
+    next[0] = 0;
+    for (;;) {
+        /* Replays the path to the top node. Each edge on the path was checked when the
+         * walk pushed it, so the replay checks nothing again. */
+        uint32_t descriptor = thrown_type;
+        int32_t cumulative = 0;
+        uint8_t public_path = 1;
+        for (uint8_t level = 0; level < depth; level++) {
+            int32_t offset;
+            uint8_t flags;
+            descriptor = read_base_edge(descriptor, rtti_kind(descriptor), next[level] - 1,
+                                        &offset, &flags);
+            cumulative += offset;
+            if (!(flags & AVM_RTTI_BASE_PUBLIC))
+                public_path = 0;
+        }
+
+        enum avm_rtti_kind kind = rtti_kind(descriptor);
+        uint16_t count = 0;
+        if (kind == AVM_RTTI_SI) {
+            count = 1;
+        } else if (kind == AVM_RTTI_VMI) {
+            count = read_flash_u16(descriptor + AVM_RTTI_VMI_COUNT);
+            if (count > AVM_RTTI_MAX_BASES ||
+                descriptor > AVEH4_ADDRESS_LIMIT - (AVM_RTTI_VMI_HEADER + times7(count)))
+                return AVM_RTTI_INVALID;
+        }
+        if (next[depth] >= count) {
+            if (depth == 0)
+                break;
+            depth--;
+            continue;
+        }
+
+        int32_t offset;
+        uint8_t flags;
+        uint32_t base = read_base_edge(descriptor, kind, next[depth]++, &offset, &flags);
+        if (flags & AVM_RTTI_BASE_VIRTUAL)
+            return AVM_RTTI_UNSUPPORTED;
+        if (flags & AVM_RTTI_BASE_RESERVED)
+            return AVM_RTTI_INVALID;
+        int32_t child_offset = cumulative + offset;
+        if (child_offset < 0 || child_offset >= exception_size)
+            return AVM_RTTI_INVALID;
+        if (rtti_kind(base) == AVM_RTTI_OTHER)
+            return AVM_RTTI_INVALID;
+        if (++edges > AVM_RTTI_MAX_EDGES || depth + 1 >= AVM_RTTI_MAX_DEPTH)
+            return AVM_RTTI_LIMIT;
+
+        uint8_t child_public = (public_path && (flags & AVM_RTTI_BASE_PUBLIC)) ? 1 : 0;
+        if (base == catch_type) {
+            if (matches < 2)
+                matches++;
+            if (matches == 1) {
+                match_offset = (uint16_t)child_offset;
+                match_public = child_public;
+            }
+        }
+        depth++;
+        next[depth] = 0;
+    }
+
+    if (matches != 1 || !match_public)
+        return AVM_RTTI_NO_MATCH;
+    *adjustment = match_offset;
+    return AVM_RTTI_MATCH;
+}
+
+/* Checks the action list at list of the function at fh. The list lies in the pool, and
+ * its flags, catch count, and entries must lie inside the record. The flags may set
+ * only the cleanup bit, each selector is nonzero and distinct, and a catch-all is last.
+ * Returns 0 when the list is malformed. The block validator and the throw path both
+ * call it, so the matcher is not on the validator's call path. */
+AVEH4_NOINLINE uint8_t list_ok(uint32_t fh, uint32_t list) {
     uint32_t end = fh + read_flash_u24(fh + 15);
     if (list < fh + pool_offset(fh) || list > end || end - list < AVEH4_ACTION_HEADER_SIZE)
-        return AVEH4_BAD;
+        return 0;
     uint8_t flags = read_flash_u8(list);
     uint16_t count = read_flash_u16(list + 1);
     if ((flags & ~AVEH4_ACTION_CLEANUP) || (flags == 0 && count == 0))
-        return AVEH4_BAD;
+        return 0;
     if (end - list - AVEH4_ACTION_HEADER_SIZE < times5(count))
-        return AVEH4_BAD;
-    uint32_t selected = 0;
+        return 0;
     uint32_t entry = list + AVEH4_ACTION_HEADER_SIZE;
     uint32_t stop = entry + times5(count);
     for (; entry != stop; entry += AVEH4_CATCH_SIZE) {
         uint16_t selector = read_flash_u16(entry);
         uint32_t type = read_flash_u24(entry + 2);
         if (selector == 0 || (type == 0 && entry + AVEH4_CATCH_SIZE != stop))
-            return AVEH4_BAD;
+            return 0;
         if (type != 0 && type < AVEH4_TYPE_BASE)
-            return AVEH4_BAD;
+            return 0;
         for (uint32_t prior = list + AVEH4_ACTION_HEADER_SIZE; prior != entry;
              prior += AVEH4_CATCH_SIZE)
             if (read_flash_u16(prior) == selector)
-                return AVEH4_BAD;
-        /* The first match wins, and the later entries are still validated above. */
-        if (!selected && (type == 0 || type == thrown_type))
-            selected = selector;
+                return 0;
     }
-    return selected;
+    return 1;
 }
 
-/* The selector of the site's action for thrown_type. A site with no action selects
- * nothing, which is zero, and otherwise the action is the list that match_list
- * checks. Inlined into its callers, so the matcher adds no frame of its own. */
-AVEH4_INLINE uint32_t match_action(uint32_t fh, uint32_t site, uint32_t thrown_type) {
+/* Matches the action list at list for a thrown object of size bytes whose type is
+ * thrown_type. The whole list is checked first by list_ok, so a malformed list fails
+ * whichever entry would have matched. The entries are then read in clause order, and
+ * the first one that matches decides. Returns AVEH4_BAD when the list is malformed, or
+ * when the RTTI of a clause cannot be decided. Otherwise it returns the selector of the
+ * matching entry in the low 16 bits, and that entry's base adjustment in the high 16
+ * bits. A selector of zero means no entry matches, which is not an error. */
+AVEH4_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list, uint32_t thrown_type,
+                                   uint16_t size) {
+    if (!list_ok(fh, list))
+        return AVEH4_BAD;
+    uint32_t entry = list + AVEH4_ACTION_HEADER_SIZE;
+    uint32_t stop = entry + times5(read_flash_u16(list + 1));
+    for (; entry != stop; entry += AVEH4_CATCH_SIZE) {
+        uint16_t selector = read_flash_u16(entry);
+        uint32_t type = read_flash_u24(entry + 2);
+        if (type == 0 || type == thrown_type)
+            return selector;
+        uint16_t adjustment = 0;
+        uint8_t result = match_class_base(thrown_type, type, size, &adjustment);
+        if (result == AVM_RTTI_INVALID || result == AVM_RTTI_LIMIT)
+            return AVEH4_BAD;
+        if (result == AVM_RTTI_MATCH)
+            return selector | ((uint32_t)adjustment << 16);
+    }
+    return 0;
+}
+
+/* The match of the site's action for thrown_type, in match_list's encoding. A site
+ * with no action selects nothing, which is zero, and otherwise the action is the list
+ * that match_list checks. Inlined into its callers, so the matcher adds no frame of
+ * its own. */
+AVEH4_INLINE uint32_t match_action(uint32_t fh, uint32_t site, uint32_t thrown_type,
+                                   uint16_t size) {
     uint32_t action = read_flash_u24(site + 9);
-    return action ? match_list(fh, fh + action, thrown_type) : 0;
+    return action ? match_list(fh, fh + action, thrown_type, size) : 0;
 }
 
 /* True when the site's action has the cleanup flag. A site with no action has none. */
@@ -472,7 +678,7 @@ AVEH4_NOINLINE uint8_t pool_ok(uint32_t fh, uint32_t sites, uint16_t site_count,
                                uint32_t next) {
     uint32_t list = fh + pool_offset(fh);
     while (list < next) {
-        if (match_list(fh, list, 0) == AVEH4_BAD)
+        if (!list_ok(fh, list))
             return 0;
         if (!list_named(sites, site_count, list - fh))
             return 0;
@@ -615,8 +821,9 @@ AVEH4_INLINE uint8_t land_at(struct avm_eh_context *landing,
 /* Phase one. Finds the handler for the thrown type in the header, and it runs no
  * cleanup. The walk starts at the header's resume context, which the caller has
  * set to the throw site. A frame whose site has a matching catch enters the
- * handler: the header records the matched selector, and its resume context becomes
- * the landing state of the handler's pad. Any other frame, including a frame with
+ * handler: the header records the matched selector and the base adjustment, and its
+ * resume context becomes the landing state of the handler's pad. Any other frame,
+ * including a frame with
  * only a cleanup, unwinds to its caller with its CFI row.
  *
  * Returns 0 when no handler exists, or when a frame or record is malformed. */
@@ -639,11 +846,12 @@ uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
             return 0;
 
         if (site) {
-            uint32_t selector = match_action(fh, site, thrown_type_of(header));
-            if (selector == AVEH4_BAD)
+            uint32_t match = match_action(fh, site, thrown_type_of(header), header->size);
+            if (match == AVEH4_BAD)
                 return 0;
-            if (selector) {
-                header->handler_selector = (uint16_t)selector;
+            if ((uint16_t)match) {
+                header->handler_selector = (uint16_t)match;
+                header->handler_adjustment = (uint16_t)(match >> 16);
                 return land_at(cursor, cursor, fh, read_flash_u24(site + 6));
             }
         }
@@ -657,7 +865,8 @@ uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
 
 /* Phase two. Prepares the next landing pad of a propagating exception, from the
  * header's resume context. A frame whose action list matches the thrown type enters
- * the handler, and its selector must equal the one that phase one recorded. A frame
+ * the handler, and its selector and adjustment must equal the ones that phase one
+ * recorded. A frame
  * whose list has only a cleanup enters the cleanup with selector zero, and its
  * resume context moves to the caller before the pad runs. The moved cursor is saved
  * before the pad runs, so a cleanup's _Unwind_Resume continues from the caller and
@@ -682,12 +891,15 @@ uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
             return AVM_EH_STEP_INVALID;
 
         if (site) {
-            uint32_t selector = match_action(fh, site, thrown_type_of(header));
-            if (selector == AVEH4_BAD)
+            uint32_t match = match_action(fh, site, thrown_type_of(header), header->size);
+            if (match == AVEH4_BAD)
                 return AVM_EH_STEP_INVALID;
+            uint16_t selector = (uint16_t)match;
+            uint16_t adjustment = (uint16_t)(match >> 16);
             uint32_t pad = read_flash_u24(site + 6);
             if (selector) {
-                if (selector != header->handler_selector)
+                if (selector != header->handler_selector ||
+                    adjustment != header->handler_adjustment)
                     return AVM_EH_STEP_INVALID;
                 if (!land_at(&header->context, cursor, fh, pad))
                     return AVM_EH_STEP_INVALID;

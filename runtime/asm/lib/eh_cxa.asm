@@ -14,7 +14,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__gxx_personality_v0	00000000 .text.__gxx_personality_v0
 00000000 l    d  .data.active_exception	00000000 .data.active_exception
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.__cxa_allocate_exception	0000004d __cxa_allocate_exception
+00000000 g     F .text.__cxa_allocate_exception	00000051 __cxa_allocate_exception
 00000000         *UND*	00000000 malloc
 00000000         *UND*	00000000 memset
 00000000         *UND*	00000000 abort
@@ -25,8 +25,8 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 avm_eh_prepare_next
 00000000         *UND*	00000000 __avm_eh_install_context
 00000000 g     F .text._Unwind_Resume	00000062 _Unwind_Resume
-00000000 g     F .text.__cxa_begin_catch	00000022 __cxa_begin_catch
-00000000 g     F .text.__cxa_get_exception_ptr	0000001d __cxa_get_exception_ptr
+00000000 g     F .text.__cxa_begin_catch	00000053 __cxa_begin_catch
+00000000 g     F .text.__cxa_get_exception_ptr	00000043 __cxa_get_exception_ptr
 00000000 g     F .text.__cxa_end_catch	0000003f __cxa_end_catch
 00000000 g     F .text.__gxx_personality_v0	00000004 __gxx_personality_v0
 00000000 g     O .rodata._ZTVN10__cxxabiv123__fundamental_type_infoE	00000009 vtable for __cxxabiv1::__fundamental_type_info
@@ -46,14 +46,14 @@ Disassembly of section .text.__cxa_allocate_exception:
  b1                    push16	r1
  b0                    push16	r0
  f1 04                 mov	r0, r4
- f0 0c d7              cmpi.s8	r0, -0x29
+ f0 0c d5              cmpi.s8	r0, -0x2b
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_allocate_exception
-		R_AVM_FAR24	.text.__cxa_allocate_exception+0x49
+		R_AVM_FAR24	.text.__cxa_allocate_exception+0x4d
 <L0>:
  f1 20                 mov	r4, r0
- c8 29                 addi.s8	r4, 0x29
+ c8 2b                 addi.s8	r4, 0x2b
  e3 00 00 00           callf	__cxa_allocate_exception
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	malloc
@@ -61,29 +61,31 @@ Disassembly of section .text.__cxa_allocate_exception:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_allocate_exception
-		R_AVM_FAR24	.text.__cxa_allocate_exception+0x49
+		R_AVM_FAR24	.text.__cxa_allocate_exception+0x4d
 <L1>:
  04                    mov	r5, r4
  c9 0f                 addi.s8	r5, 0xf
- f2 39                 sub	r1, r1
+ f2 42                 sub	r2, r2
  c2 03                 ldi8	r6, 0x3
- f1 14                 mov	r2, r4
+ f1 0c                 mov	r1, r4
  01                    mov	r4, r5
- f1 25                 mov	r5, r1
+ f1 26                 mov	r5, r2
  e3 00 00 00           callf	__cxa_allocate_exception
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	memset
- f1 22                 mov	r4, r2
- c8 12                 addi.s8	r4, 0x12
+ f1 21                 mov	r4, r1
+ c8 27                 addi.s8	r4, 0x27
  aa                    xor	r6, r6
  af                    xor	r7, r7
+ f0 6b c8              st32	[r4], q3
+ f1 21                 mov	r4, r1
+ c8 12                 addi.s8	r4, 0x12
  f7 46                 st16	[r4+], r6
  53                    st8	[r4], r7
- ee 34 47              st16	[r2+39], r1
- ee 24 37              st8	[r2+23], r1
- ee 14 35              st16	[r2+21], r0
- f0 0a 29              addi.s8	r2, 0x29
- f1 22                 mov	r4, r2
+ ee 42 37              st8	[r1+23], r2
+ ee 12 35              st16	[r1+21], r0
+ f0 09 2b              addi.s8	r1, 0x2b
+ f1 21                 mov	r4, r1
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -95,7 +97,7 @@ Disassembly of section .text.__cxa_allocate_exception:
 Disassembly of section .text.__cxa_free_exception:
 
 <__cxa_free_exception>:
- c8 d7                 addi.s8	r4, -0x29
+ c8 d5                 addi.s8	r4, -0x2b
  e2 00 00 00           jmpf	__cxa_free_exception
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	free
@@ -251,24 +253,57 @@ Disassembly of section .text._Unwind_Resume:
 Disassembly of section .text.__cxa_begin_catch:
 
 <__cxa_begin_catch>:
+ b1                    push16	r1
+ b0                    push16	r0
  f0 55 00 00           ldm16	r5, [0x0]
 		R_AVM_DATA16	.data.active_exception
  31                    cmp	r4, r5
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_begin_catch
-		R_AVM_FAR24	.text.__cxa_begin_catch+0x1e
+		R_AVM_FAR24	.text.__cxa_begin_catch+0x4f
 <L0>:
  ed a8 37              ld8u	r5, [r4+23]
  cd 04                 cmpi.s8	r5, 0x4
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_begin_catch
-		R_AVM_FAR24	.text.__cxa_begin_catch+0x1e
+		R_AVM_FAR24	.text.__cxa_begin_catch+0x4f
 <L1>:
+ ed b8 49              ld16	r5, [r4+41]
+ f6 2d                 tst16	r5
+ d1 04                 brne8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_begin_catch
+		R_AVM_FAR24	.text.__cxa_begin_catch+0x2d
+<L2>:
+ ed d8 35              ld16	r6, [r4+21]
+ 36                    cmp	r5, r6
+ d2 04                 brult8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_begin_catch
+		R_AVM_FAR24	.text.__cxa_begin_catch+0x4f
+<L3>:
+ f1 05                 mov	r0, r5
+ f2 39                 sub	r1, r1
+ 04                    mov	r5, r4
+ c9 2b                 addi.s8	r5, 0x2b
+ 09                    mov	r6, r5
+ af                    xor	r7, r7
+ f7 6c                 add32	q3, q0
+ f2 30                 sub	r0, r0
+ f0 01 01              ldi8	r1, 0x1
+ f0 69 c0              cmp32	q3, q0
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_begin_catch
+		R_AVM_FAR24	.text.__cxa_begin_catch+0x4f
+<L4>:
  c1 02                 ldi8	r5, 0x2
  ee a8 37              st8	[r4+23], r5
- c8 29                 addi.s8	r4, 0x29
+ 02                    mov	r4, r6
+ b8                    pop16	r0
+ b9                    pop16	r1
  ef                    ret
  e3 00 00 00           callf	__cxa_begin_catch
 		R_AVM_RELAX	*ABS*
@@ -283,16 +318,42 @@ Disassembly of section .text.__cxa_get_exception_ptr:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_get_exception_ptr
-		R_AVM_FAR24	.text.__cxa_get_exception_ptr+0x19
+		R_AVM_FAR24	.text.__cxa_get_exception_ptr+0x3f
 <L0>:
  ed a8 37              ld8u	r5, [r4+23]
  cd 04                 cmpi.s8	r5, 0x4
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_get_exception_ptr
-		R_AVM_FAR24	.text.__cxa_get_exception_ptr+0x19
+		R_AVM_FAR24	.text.__cxa_get_exception_ptr+0x3f
 <L1>:
- c8 29                 addi.s8	r4, 0x29
+ ed b8 49              ld16	r5, [r4+41]
+ f6 2d                 tst16	r5
+ d1 04                 brne8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_get_exception_ptr
+		R_AVM_FAR24	.text.__cxa_get_exception_ptr+0x2b
+<L2>:
+ ed d8 35              ld16	r6, [r4+21]
+ 36                    cmp	r5, r6
+ d2 04                 brult8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_get_exception_ptr
+		R_AVM_FAR24	.text.__cxa_get_exception_ptr+0x3f
+<L3>:
+ 09                    mov	r6, r5
+ af                    xor	r7, r7
+ c8 2b                 addi.s8	r4, 0x2b
+ a5                    xor	r5, r5
+ f7 6b                 add32	q2, q3
+ aa                    xor	r6, r6
+ c3 01                 ldi8	r7, 0x1
+ f0 69 8c              cmp32	q2, q3
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_get_exception_ptr
+		R_AVM_FAR24	.text.__cxa_get_exception_ptr+0x3f
+<L4>:
  ef                    ret
  e3 00 00 00           callf	__cxa_get_exception_ptr
 		R_AVM_RELAX	*ABS*
@@ -333,7 +394,7 @@ Disassembly of section .text.__cxa_end_catch:
 		R_AVM_FAR24	.text.__cxa_end_catch+0x34
 <L2>:
  f1 20                 mov	r4, r0
- c8 29                 addi.s8	r4, 0x29
+ c8 2b                 addi.s8	r4, 0x2b
  eb                    callp	q3
  f1 20                 mov	r4, r0
  b8                    pop16	r0

@@ -36,6 +36,11 @@ FIXTURES = [
     ('eh_cleanup_dtor_throw', 'destructor throws during unwinding: deterministic halt'),
     ('eh_typed', 'exact typed catches: first match, nonmatching cleanups, combined pads'),
     ('eh_typed_high_address', 'exact typed matching with descriptors above 0xFFFF'),
+    ('eh_inheritance', 'base catches: direct, chained, eight levels, nested offsets, by reference and value, '
+     'ambiguous and inaccessible bases, clause order, cleanups, virtual base, pointer'),
+    ('eh_inheritance_cross_unit', 'base catches of a descriptor thrown by another translation unit'),
+    ('eh_inheritance_high_address', 'base catches with descriptors above 0xFFFF'),
+    ('eh_inheritance_corrupt_target', 'base catch that the corruption verifier patches'),
     (NO_THROW, 'no-throw control'),
 ]
 

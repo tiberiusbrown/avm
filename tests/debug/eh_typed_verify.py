@@ -46,7 +46,7 @@ END = '__cxa_end_catch'
 RESUME = '_Unwind_Resume'
 FREE = 'free'
 
-HEADER_SIZE = 41
+HEADER_SIZE = 43
 STATE_IN_CLEANUP = 3
 STATE_ENTERING_CATCH = 4
 

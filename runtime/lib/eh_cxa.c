@@ -2,14 +2,16 @@
  *
  * Only one exception can be active at a time, and it cannot be rethrown. A throw
  * while one is active, including a throw from a destructor that runs during
- * unwinding, terminates through abort(). Matching is exact: a catch matches when
- * its RTTI descriptor address equals the thrown object's, which the unwinder
- * compares in eh_unwind.c. Inheritance, reference and pointer conversions, and
- * rethrow are not implemented.
+ * unwinding, terminates through abort(). A catch matches its exact type, or a public
+ * nonvirtual base of the thrown class that occurs once in the hierarchy. The
+ * unwinder compares types and walks the base subobjects in eh_unwind.c. A base
+ * catch binds to the base subobject, and the handler adjustment locates it.
+ * Virtual bases, pointer conversions, and rethrow are not implemented.
  *
  * The header precedes the thrown object and holds the landing context, the
- * resume context, the type-descriptor address, the destructor, and the selector
- * of the matched catch. The unwinder updates both contexts in place. Propagation
+ * resume context, the type-descriptor address, the destructor, the selector of
+ * the matched catch, and its base adjustment. The unwinder updates both contexts
+ * in place. Propagation
  * alternates between cleanup and resume: each cleanup pad runs its destructors
  * and then calls _Unwind_Resume, which continues from the saved resume context.
  * __cxa_end_catch frees the header. The shim that fills the header is in
@@ -57,8 +59,8 @@ const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__array_type_infoE[9] = {0};
 
 /* eh_cxa_throw.asm stores the header fields at these offsets, and it computes the
  * object address from the header size. Keep it in sync with this layout. */
-_Static_assert(sizeof(struct avm_eh_exception) == 41,
-               "__cxa_throw assumes a 41-byte exception header");
+_Static_assert(sizeof(struct avm_eh_exception) == 43,
+               "__cxa_throw assumes a 43-byte exception header");
 _Static_assert(offsetof(struct avm_eh_exception, context) == 0,
                "exception context offset");
 _Static_assert(offsetof(struct avm_eh_exception, type_address) == 15,
@@ -73,6 +75,8 @@ _Static_assert(offsetof(struct avm_eh_exception, resume_context) == 24,
                "exception resume context offset");
 _Static_assert(offsetof(struct avm_eh_exception, handler_selector) == 39,
                "exception handler selector offset");
+_Static_assert(offsetof(struct avm_eh_exception, handler_adjustment) == 41,
+               "exception handler adjustment offset");
 
 void *__cxa_allocate_exception(size_t size) {
     if (size > UINT16_MAX - sizeof(struct avm_eh_exception))
@@ -86,6 +90,7 @@ void *__cxa_allocate_exception(size_t size) {
     header->size = (uint16_t)size;
     header->state = AVM_EH_STATE_ALLOCATED;
     header->handler_selector = 0;
+    header->handler_adjustment = 0;
     return header + 1;
 }
 
@@ -148,29 +153,47 @@ __attribute__((noreturn)) void _Unwind_Resume(void *exception) {
     continue_unwind(header);
 }
 
-/* The landing pad passes the exception header, and this returns the object. The
+/* Returns the catch object of the header: the thrown object for an exact or catch-all
+ * match, or the base subobject that phase one matched. The adjustment must lie inside
+ * the thrown object, and the adjusted address must lie in 16-bit RAM. The allocation
+ * itself is not moved, so the destructor and the free still use the header. */
+static void *catch_object(struct avm_eh_exception *header) {
+    uint16_t adjustment = header->handler_adjustment;
+    if (adjustment != 0 && adjustment >= header->size)
+        abort();
+    uint32_t address = (uint32_t)(uintptr_t)(header + 1) + adjustment;
+    if (address > UINT16_MAX)
+        abort();
+    return (void *)(uintptr_t)address;
+}
+
+/* The landing pad passes the exception header, and this returns the catch object. The
  * state must be ENTERING_CATCH, which only the final handler's dispatch sets, so a
  * cleanup pad cannot begin a catch. */
 void *__cxa_begin_catch(void *exception) {
     struct avm_eh_exception *header = exception;
     if (header != active_exception || header->state != AVM_EH_STATE_ENTERING_CATCH)
         abort();
+    void *object = catch_object(header);
     header->state = AVM_EH_STATE_CAUGHT;
-    return header + 1;
+    return object;
 }
 
-/* Returns the object address of the entering exception without changing its state.
+/* Returns the catch object of the entering exception without changing its state.
  * Clang calls this for a by-value catch with a copy constructor, and the copy runs
- * before __cxa_begin_catch, so the exception is still ENTERING_CATCH. */
+ * before __cxa_begin_catch, so the exception is still ENTERING_CATCH. The copy reads
+ * the base subobject that the adjustment locates, never the start of the object. */
 void *__cxa_get_exception_ptr(void *exception) {
     struct avm_eh_exception *header = exception;
     if (header != active_exception || header->state != AVM_EH_STATE_ENTERING_CATCH)
         abort();
-    return header + 1;
+    return catch_object(header);
 }
 
 /* Ends the catch that the active exception began. The exception is destroyed and
- * freed here, and only here. Cleanup pads never reach this function. */
+ * freed here, and only here. The destructor receives the complete thrown object, not
+ * the catch object, which may be a base subobject. Cleanup pads never reach this
+ * function. */
 void __cxa_end_catch(void) {
     struct avm_eh_exception *header = active_exception;
     if (!header || header->state != AVM_EH_STATE_CAUGHT)

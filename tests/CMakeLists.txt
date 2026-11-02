@@ -303,6 +303,7 @@ endforeach()
 
 # Headers that exception fixtures include from their support translation units.
 set(AVM_EH_SUPPORT_HEADERS
+    "${AVM_CXX_TEST_DIR}/support/eh_inheritance.h"
     "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity.h"
     "${AVM_CXX_TEST_DIR}/support/eh_typed.h")
 foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
@@ -346,8 +347,20 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
                 DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
             )
             list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
+        elseif(AVM_TEST_NAME STREQUAL "eh_inheritance_cross_unit")
+            # The unit builds and throws Joined, which the main unit catches by its bases.
+            set(AVM_EH_UNIT_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_unit.o")
+            avm_add_object(
+                OUTPUT "${AVM_EH_UNIT_OBJECT}"
+                SOURCE "${AVM_CXX_TEST_DIR}/support/eh_inheritance_unit.cpp"
+                LANGUAGE CXX
+                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
+                DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+            )
+            list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
         elseif(AVM_TEST_NAME STREQUAL "eh_rtti_high_address"
-               OR AVM_TEST_NAME STREQUAL "eh_typed_high_address")
+               OR AVM_TEST_NAME STREQUAL "eh_typed_high_address"
+               OR AVM_TEST_NAME STREQUAL "eh_inheritance_high_address")
             # Put the descriptors and the destructor above 0xFFFF. The image keeps
             # its data and ordinary code below 64 KiB, as the other high-address
             # fixtures do. Explicit section starts replace the AVM default layout,
@@ -395,7 +408,8 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 # in their own image directory, so the runners select them with --cpp-bin-dir.
 set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
 set(AVM_EH_LTO_IMAGES)
-foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object eh_typed)
+foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object eh_typed
+        eh_inheritance eh_inheritance_cross_unit)
     set(AVM_EH_LTO_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.o")
     set(AVM_EH_LTO_ELF "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.elf")
     set(AVM_EH_LTO_IMAGE "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.bin")
@@ -414,6 +428,19 @@ foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_c
         avm_add_object(
             OUTPUT "${AVM_EH_LTO_UNIT_OBJECT}"
             SOURCE "${AVM_CXX_TEST_DIR}/support/eh_typed_unit.cpp"
+            LANGUAGE CXX
+            COMPILE_OPTIONS -O2 -fexceptions -flto=full
+            DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+        )
+        list(APPEND AVM_EH_LTO_OBJECTS "${AVM_EH_LTO_UNIT_OBJECT}")
+    endif()
+    if(AVM_EH_LTO_NAME STREQUAL "eh_inheritance_cross_unit")
+        # The unit throws Joined, and the main unit catches its bases. LTO must merge
+        # the descriptors and keep the base offsets across the whole program.
+        set(AVM_EH_LTO_UNIT_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}_unit.o")
+        avm_add_object(
+            OUTPUT "${AVM_EH_LTO_UNIT_OBJECT}"
+            SOURCE "${AVM_CXX_TEST_DIR}/support/eh_inheritance_unit.cpp"
             LANGUAGE CXX
             COMPILE_OPTIONS -O2 -fexceptions -flto=full
             DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
@@ -689,6 +716,91 @@ add_custom_target(avm_eh_typed_run
     VERBATIM
 )
 add_dependencies(avm_eh_catch_all_run avm_eh_typed_run)
+
+# Nonvirtual base catches. The O0 and O2 fixtures also run through avm_eh_catch_all_run.
+# This target adds the whole-program and cross-unit LTO runs, the packed base edges, the
+# selector and adjustment of each handler against the emulator, and the corrupted RTTI
+# fields, which must each fail a throw. Every probe run uses the interpreter boundary.
+set(AVM_EH_INHERITANCE_PROBE_RUN
+    --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+    --interpreter "${AVM_INTERPRETER_HEX}"
+    --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}")
+set(AVM_EH_INHERITANCE_CORRUPT_DIR "${CMAKE_CURRENT_BINARY_DIR}/eh_inheritance_corrupt")
+add_custom_target(avm_eh_inheritance_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_inheritance" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_inheritance$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_inheritance_cross_unit$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance.bin"
+        --expect _ZTIN12_GLOBAL__N_14PairE --expect _ZTIN12_GLOBAL__N_17DerivedE
+        --expect _ZTIN12_GLOBAL__N_13TopE --expect _ZTIN12_GLOBAL__N_114PrivateDerivedE
+        --edge _ZTIN12_GLOBAL__N_17DerivedE:_ZTIN12_GLOBAL__N_14BaseE:0:public
+        --edge _ZTIN12_GLOBAL__N_14PairE:_ZTIN12_GLOBAL__N_14LeftE:0:public
+        --edge _ZTIN12_GLOBAL__N_14PairE:_ZTIN12_GLOBAL__N_15RightE:2:public
+        --edge _ZTIN12_GLOBAL__N_13TopE:_ZTIN12_GLOBAL__N_13MidE:2:public
+        --edge _ZTIN12_GLOBAL__N_13MidE:_ZTIN12_GLOBAL__N_12LoE:0:public
+        --edge _ZTIN12_GLOBAL__N_13MidE:_ZTIN12_GLOBAL__N_12HiE:2:public
+        --edge _ZTIN12_GLOBAL__N_114PrivateDerivedE:_ZTIN12_GLOBAL__N_111PrivateBaseE:0:nonpublic
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance_high_address.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance_high_address.bin"
+        --expect _ZTIN12_GLOBAL__N_14BothE --expect _ZTIN12_GLOBAL__N_13FarE
+        --high _ZTIN12_GLOBAL__N_14BothE
+        --edge _ZTIN12_GLOBAL__N_14BothE:_ZTIN12_GLOBAL__N_13FarE:0:public
+        --edge _ZTIN12_GLOBAL__N_14BothE:_ZTIN12_GLOBAL__N_17FartherE:2:public
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_EH_RTTI_VERIFY}"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_inheritance_cross_unit.elf"
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_inheritance_cross_unit.bin"
+        --expect _ZTI6Joined --expect _ZTI4Lead --expect _ZTI5Trail
+        --edge _ZTI6Joined:_ZTI4Lead:0:public
+        --edge _ZTI6Joined:_ZTI5Trail:2:public
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_inheritance.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance_cross_unit.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance_cross_unit.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_inheritance_cross_unit.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_inheritance_cross_unit.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance_high_address.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance_high_address.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance_high_address.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance_high_address.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_corrupt_verify.py"
+        ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_inheritance_corrupt_target.elf"
+        --scratch-dir "${AVM_EH_INHERITANCE_CORRUPT_DIR}/O0"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_inheritance_corrupt_verify.py"
+        ${AVM_EH_INHERITANCE_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_inheritance_corrupt_target.elf"
+        --scratch-dir "${AVM_EH_INHERITANCE_CORRUPT_DIR}/O2"
+    DEPENDS avm_tests avm_eh_stack_probe avm_eh_catch_all_images llvm-avm-image
+        ${AVM_EH_LTO_IMAGES}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_inheritance_run)
 
 # The runner discovers ASM, C, and C++ sources, maps each source to its adjacent
 # name_output.txt file and corresponding generated image, loads the interpreter

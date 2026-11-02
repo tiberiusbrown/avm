@@ -132,10 +132,12 @@ installer. Selector 0 in r5 enters a cleanup pad, which runs destructors and the
 calls `_Unwind_Resume`. A nonzero selector enters the handler, which calls
 `__cxa_begin_catch`. The selector is the LLVM type ID of the matched catch, and the
 pad compares it with the IDs of its own clauses. In both cases r4 holds the exception
-header, which is 41 bytes and lies below the thrown object. Its first 15 bytes are
+header, which is 43 bytes and lies below the thrown object. Its first 15 bytes are
 the landing context, and its last 15 bytes are the resume cursor that the next
 `_Unwind_Resume` continues from. Bytes 15 to 17 hold the thrown type's descriptor
-address, and bytes 39 and 40 hold the selector that phase one recorded. The landing
+address, bytes 39 and 40 hold the selector that phase one recorded, and bytes 41 and
+42 hold the handler adjustment, the byte offset of the caught base subobject. The
+catch object begins at the header plus 43 bytes plus that adjustment. The landing
 SP is the call-site SP plus the call's outgoing argument bytes. An AVEH4 site has an
 action that names an action list. The list's flag bit 0 is a cleanup, and its catch
 entries are a selector and an RTTI address each, where a zero address is catch-all.

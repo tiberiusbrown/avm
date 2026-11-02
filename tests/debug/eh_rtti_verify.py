@@ -25,8 +25,12 @@ SHN_LORESERVE = 0xff00
 
 # Two 24-bit entries precede the address point that descriptors name.
 ADDRESS_POINT = 6
-HEADER_SIZE = 41
+HEADER_SIZE = 43
 DESCRIPTOR_TYPE = re.compile(r'^_Z(T[IV]|TS)')
+# The low byte of a base entry's offset-and-flags word. Its other bits are reserved.
+RTTI_BASE_VIRTUAL = 0x01
+RTTI_BASE_PUBLIC = 0x02
+RTTI_BASE_RESERVED = 0xfc
 
 # The vtable that a descriptor names selects its layout. The class, fundamental,
 # single-inheritance, and multiple-inheritance forms are the ones the fixtures use.
@@ -190,21 +194,65 @@ def decode_descriptor(elf, image, name):
           '%s points at %s' % (name, type_name))
 
     bases = []
+    edges = []
     if kind == 'si':
+        # An SI class has one public nonvirtual base at offset zero.
         bases.append(u24(raw[6:9]))
+        edges.append({'base': bases[-1], 'offset': 0, 'public': True, 'virtual': False})
     elif kind == 'vmi':
         count = u16(raw[8:10])
         size = 10 + 7 * count
         check(symbol['size'] >= size, '%s is too short for %d bases' % (name, count))
         raw = image.read(address, size)
         for i in range(count):
-            base = 10 + 7 * i
-            bases.append(u24(raw[base:base + 3]))
+            entry = 10 + 7 * i
+            # The offset-and-flags word is 32 bits. Its low byte holds the flags, and
+            # the upper 24 bits hold the signed offset.
+            word = u32(raw[entry + 3:entry + 7])
+            flags = word & 0xff
+            check(flags & RTTI_BASE_RESERVED == 0,
+                  '%s base %d sets reserved flag bits 0x%02x' % (name, i, flags))
+            offset = word >> 8
+            if offset & 0x800000:
+                offset -= 0x1000000
+            bases.append(u24(raw[entry:entry + 3]))
+            edges.append({'base': bases[-1], 'offset': offset,
+                          'public': bool(flags & RTTI_BASE_PUBLIC),
+                          'virtual': bool(flags & RTTI_BASE_VIRTUAL)})
     for base in bases:
         check(find_symbol_at(elf, '_ZTI', base) is not None,
               '%s base 0x%06x names no _ZTI object' % (name, base))
     return {'address': address, 'vtable': vtable_name, 'name': type_name,
-            'bases': bases, 'size': symbol['size']}
+            'bases': bases, 'edges': edges, 'size': symbol['size']}
+
+
+def check_edge(elf, image, spec, decoded):
+    """Checks one base edge against an expected layout, given as
+    DERIVED:BASE:OFFSET:ACCESS, where ACCESS is public, nonpublic, or virtual."""
+    try:
+        derived, base_name, offset, access = spec.split(':')
+    except ValueError:
+        check(False, 'an edge needs DERIVED:BASE:OFFSET:ACCESS, not %r' % spec)
+    if derived not in decoded:
+        decoded[derived] = decode_descriptor(elf, image, derived)
+    info = decoded[derived]
+    base_address = defined(elf, base_name)['value']
+    matches = [edge for edge in info['edges'] if edge['base'] == base_address]
+    check(len(matches) == 1, '%s has %d edges to %s at 0x%06x, expected one'
+          % (derived, len(matches), base_name, base_address))
+    edge = matches[0]
+    check(edge['offset'] == int(offset, 0),
+          '%s -> %s has offset %d, expected %s'
+          % (derived, base_name, edge['offset'], offset))
+    if access == 'virtual':
+        check(edge['virtual'], '%s -> %s is not virtual' % (derived, base_name))
+    else:
+        check(not edge['virtual'] and edge['public'] == (access == 'public'),
+              '%s -> %s is not %s' % (derived, base_name, access))
+    print('  edge %s -> %s at 0x%06x: offset %d, %s%s'
+          % (derived, base_name, base_address, edge['offset'],
+             'public' if edge['public'] else 'nonpublic',
+             ', virtual' if edge['virtual'] else ''))
 
 
 def run_probe(args):
@@ -252,6 +300,8 @@ def main():
                         help='a descriptor that must be defined exactly once')
     parser.add_argument('--high', action='append', default=[],
                         help='a descriptor that must lie above program address 0xFFFF')
+    parser.add_argument('--edge', action='append', default=[],
+                        help='an expected base edge, DERIVED:BASE:OFFSET:ACCESS')
     parser.add_argument('--probe', help='avm_eh_stack_probe, for the header check')
     parser.add_argument('--interpreter')
     parser.add_argument('--boundary')
@@ -280,6 +330,8 @@ def main():
         print('  %s at 0x%06x: %d bytes, address point of %s, name %s, bases %s'
               % (name, info['address'], info['size'], info['vtable'], info['name'],
                  bases))
+    for spec in args.edge:
+        check_edge(elf, image, spec, decoded)
     if args.probe:
         check(args.thrown_type and args.destructor and args.size and args.interpreter
               and args.boundary, 'the header check needs its probe arguments')

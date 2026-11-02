@@ -27,7 +27,9 @@ struct avm_eh_context {
  * registers, the type-descriptor program address, and the destructor program
  * address. The two program addresses are 24-bit, so they are stored as bytes
  * and never as 16-bit data pointers. The handler selector is the LLVM type ID
- * that phase one matched, and phase two passes it to the handler's pad. */
+ * that phase one matched, and phase two passes it to the handler's pad. The
+ * adjustment is the byte offset of the caught base subobject within the thrown
+ * object, and it is zero for an exact or catch-all match. */
 struct avm_eh_exception {
     struct avm_eh_context context;        /* +0  landing state; exception = this header */
     uint8_t type_address[3];              /* +15 type-descriptor program address (r6:r7) */
@@ -36,6 +38,7 @@ struct avm_eh_exception {
     uint8_t state;                        /* +23 AVM_EH_STATE_* */
     struct avm_eh_context resume_context; /* +24 frame cursor for the next step */
     uint16_t handler_selector;            /* +39 selector of the matched catch */
+    uint16_t handler_adjustment;          /* +41 byte offset of the matched base subobject */
 };
 
 /* Results of avm_eh_prepare_next. A cleanup or catch step fills the header's

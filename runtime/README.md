@@ -492,8 +492,10 @@ The descriptors themselves are emitted by the compiler into program flash; see
 
 Propagation has two phases. Phase one searches the frames from the throw for the
 first catch that matches the thrown type. A typed catch matches when its descriptor
-address equals the thrown one, and a catch-all matches everything. Phase one runs no
-destructor. If no frame has a matching catch, the program halts before any cleanup
+address equals the thrown one, or when it names a public nonvirtual base subobject of
+the thrown class that occurs exactly once. A catch-all matches everything. The base
+subobject's byte offset is the handler adjustment, which phase one records with the
+selector. Phase one runs no destructor. If no frame has a matching catch, the program halts before any cleanup
 runs. The search records the matched selector in the header. Phase two enters each
 cleanup pad in turn with selector 0. A cleanup pad runs its destructors and calls
 `_Unwind_Resume`, which continues from the caller that the pad saved. A pad that
@@ -504,19 +506,24 @@ object and frees it. A cleanup pad never ends the exception.
 
 `__cxa_throw` is a frameless shim. It takes the object in r4, the type-descriptor
 program address in r6:r7, and the destructor program address as a three-byte stack
-argument. It stores the throw site into the exception header, which lies 41 bytes
+argument. It stores the throw site into the exception header, which lies 43 bytes
 below the object, and then tail-transfers to `__avm_eh_throw`. The header holds the
 landing context, the 24-bit type-descriptor address, the 24-bit destructor address,
-the size, the lifecycle state, the resume cursor, and the handler's selector. The
+the size, the lifecycle state, the resume cursor, the handler's selector, and the
+handler adjustment. `__cxa_begin_catch` and `__cxa_get_exception_ptr` return the
+object plus the adjustment, and `__cxa_end_catch` destroys the complete object. The
 landing SP
 of each pad is the caller SP at the call plus the call's outgoing argument bytes.
 A frame that uses r3 as its CFA base keeps its dynamic allocations, because the SP
 never comes from r3. Call records match the exact return PC.
 
 Only one exception is active at a time. A throw while one is active, including a
-throw from a destructor that runs during unwinding, halts the program. Matching is
-exact: a catch matches the thrown descriptor's address and nothing else. Inheritance,
-reference and pointer conversions, exception filters, and rethrow are not provided.
+throw from a destructor that runs during unwinding, halts the program. Base matching
+reads the class descriptors in program flash. It walks at most eight descriptor levels
+and 512 base edges for one clause, and a walk past either limit fails the throw. A
+virtual base edge matches nothing, and a malformed descriptor fails the throw. Virtual
+base conversions, pointer and qualification conversions, exception filters, and
+rethrow are not provided.
 The backend rejects a filter at compile time, and `__cxa_rethrow` is an undefined
 symbol at link time. When no handler exists, when metadata is malformed, or when
 allocation fails, the runtime calls `abort()`, which halts the guest.
@@ -533,6 +540,9 @@ matters. Measured peaks, the header size, and the metadata and image costs are i
 
 Tests use the `avm_eh_catch_all_run` target. It builds `tests/cpp/eh_*.cpp` and
 `tests/asm/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`. The
+`avm_eh_inheritance_run` target runs the base-matching fixtures at O0, O2, and LTO/O2.
+It checks each handler's selector and adjustment against the emulator and the packed
+RTTI, and it checks that each malformed RTTI field fails the throw. The
 `avm_eh_typed_run` target runs the exact-matching fixtures at O0, O2, and LTO/O2,
 checks each handler against the emulator and the packed block, and runs the malformed
 block cases. It also

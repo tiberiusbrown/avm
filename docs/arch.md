@@ -5647,9 +5647,11 @@ The runtime defines the support vtables that descriptors name in program space:
 `__class_type_info`, `__fundamental_type_info`, `__si_class_type_info`,
 `__vmi_class_type_info`, `__pointer_type_info`, `__enum_type_info`,
 `__function_type_info`, `__pointer_to_member_type_info`, and `__array_type_info`.
-The descriptors are not interpreted. A typed catch matches a thrown object only when
-their descriptor addresses are equal, as [Section 69.3](#693-exception-metadata-aveh4)
-describes. `typeid`, `dynamic_cast`, and base-class adjustment are not implemented.
+The runtime interprets the class descriptors only to match catch clauses against
+public nonvirtual base subobjects, as [Section 69.3](#693-exception-metadata-aveh4)
+describes. It reads the vtable address point to classify a descriptor, and the base
+descriptors and offset-and-flags words of the single and multiple inheritance
+layouts. `typeid`, `dynamic_cast`, and virtual-base adjustment are not implemented.
 
 ### 60.2. Throw ABI
 
@@ -5663,7 +5665,7 @@ destructor. The compiler declares the function as
 `__cxa_throw(ptr, ptr addrspace(1), ptr addrspace(1))`, so the call site and the
 declaration agree.
 
-The shim stores both program addresses in the 41-byte exception header
+The shim stores both program addresses in the 43-byte exception header
 ([Section 69.3](#693-exception-metadata-aveh4)).
 
 ---
@@ -6735,18 +6737,51 @@ when a throw uses them, and it does not copy them into RAM.
 
 #### Typed matching semantics
 
-Matching is exact. A typed catch matches a thrown object when its descriptor address
-equals the thrown object's descriptor address, which is the final 24-bit program
-address that the linker assigned. Two descriptors are equal when they are the same
-linked object, and each type has one descriptor in a program, even across
-translation units. The runtime does not dereference descriptors. Matching does not
-compare names, sizes, or the bytes of a descriptor.
+A typed catch matches a thrown object in one of three ways, and the first matching
+clause in source order wins:
 
-Inheritance, reference and pointer conversions, qualification conversions, and
-`nullptr` compatibility are not matched. A thrown `Derived` is not caught by a
-`catch (Base &)`, and a thrown `T *` is not caught by a `const T *` clause. Such a
-program terminates when no exact clause matches, as
-`tests/cpp/eh_typed_unsupported.cpp` checks.
+- Exact: the clause's descriptor address equals the thrown object's descriptor address,
+  which is the final 24-bit program address that the linker assigned. Two descriptors
+  are equal when they are the same linked object, and each type has one descriptor in a
+  program, even across translation units. The adjustment is zero.
+- Base subobject: the thrown class has exactly one base subobject of the clause's type,
+  and every edge on its path is public and nonvirtual. The adjustment is that
+  subobject's byte offset from the start of the thrown object.
+- Catch-all: `catch (...)` matches everything, with adjustment zero.
+
+Exact matching compares addresses only. The base walk, `match_class_base` in
+`runtime/lib/eh_unwind.c`, reads only the program flash of the packed image:
+
+- Each descriptor is classified by its vtable address point. A class descriptor without
+  bases, a single-inheritance descriptor, and a multiple-inheritance descriptor are
+  walked. Any other kind, such as a fundamental, enum, or pointer type, matches by
+  exact address only.
+- A single-inheritance descriptor has one public nonvirtual base at offset zero. A
+  multiple-inheritance entry has the base descriptor's 24-bit address and a 32-bit
+  offset-and-flags word. Bit 0 is virtual, bit 1 is public, and bits 2 to 7 are reserved
+  and must be zero. Bits 8 to 31 are a signed 24-bit byte offset from the containing
+  subobject. The walk adds the offsets along each path, and it ANDs the public bits.
+- The walk is depth-first and bounded to eight descriptor levels and 512 base edges for
+  one clause. It counts every matching subobject, public or not, and saturates the
+  count at two. Two subobjects are ambiguous, and one nonpublic subobject is
+  inaccessible. Neither matches. The whole hierarchy is walked before the decision.
+- A virtual edge matches nothing, because its offset locates a vtable entry and not an
+  object offset. A malformed descriptor or edge fails the throw. So does a walk past its
+  limits, which cannot prove that a base is unique. Malformed means a base count above
+  32, a reserved flag bit, a base that is not a class, or an offset outside the thrown
+  object. A cycle needs no separate check, because it stays on one path until the depth
+  limit.
+
+The walk keeps one byte per level, the index of the next direct base to visit, and it
+replays each level's descriptor, offset, and access from the thrown class. Its stack is
+eight bytes, because the linker bounds the stack of every image and a 64-byte frame
+per level exceeded that bound.
+
+Pointer conversions, qualification conversions, and `nullptr` compatibility are not
+matched. A thrown `Derived` is caught by `catch (Base &)` as a base subobject, but a
+thrown `Derived *` is not caught by `catch (Base *)`, and a thrown `T *` is not caught
+by a `const T *` clause. A program with no matching clause terminates. A virtual base
+is one such case, as `tests/cpp/eh_inheritance_virtual_unhandled.cpp` checks.
 
 The selector of a typed clause is the LLVM type ID of its descriptor in the
 function, and the landing pad compares the selector that it receives in r5 against
@@ -6847,7 +6882,7 @@ and decodes the packed sites and lists independently of the packer.
 
 #### Exception object and landing contract
 
-`__cxa_allocate_exception` returns the object, which lies 41 bytes above its
+`__cxa_allocate_exception` returns the object, which lies 43 bytes above its
 header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_internal.h`:
 
 | Offset | Size | Field | Contents |
@@ -6859,13 +6894,13 @@ header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_intern
 | 23 | 1 | `state` | Lifecycle state |
 | 24 | 15 | `resume_context` | Frame cursor for the next step of propagation |
 | 39 | 2 | `handler_selector` | Selector of the catch that phase one matched |
+| 41 | 2 | `handler_adjustment` | Byte offset of the matched base subobject, zero for an exact or catch-all match |
 
-The header is 41 bytes. The `__cxa_throw` shim captures the throwing frame into
+The header is 43 bytes. The `__cxa_throw` shim captures the throwing frame into
 `context` and stores the type-descriptor and destructor program addresses, each in
 three bytes so that the high byte is kept. The unwinder then copies `context` into
 `resume_context`, and the two cursors move as described below. The header is heap
-memory, so each thrown exception costs 41 bytes, which is two more than before the
-selector field.
+memory, so each thrown exception costs 43 bytes.
 
 The header's address is the exception pointer. A landing pad receives it in r4,
 and the installer passes the selector in r5. Selector 0 enters a cleanup-only pad,
@@ -6993,7 +7028,7 @@ pad was entered.
 
 The throwing frame is captured by `__cxa_throw` before any C code runs. The shim
 has no stack frame. It stores the continuation, the caller's SP (the entry SP plus
-three), and r0-r3 into the 41-byte header, which lies below the object. It then
+three), and r0-r3 into the 43-byte header, which lies below the object. It then
 tail-transfers to `__avm_eh_throw`, which initializes `resume_context` from
 `context`.
 
@@ -7013,28 +7048,45 @@ it can exceed the unwinder's own depth.
 
 | Fixture | Opt | Before total | Before runtime | After total | After runtime |
 |---|---|---:|---:|---:|---:|
-| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 140 | 113 | 143 | 116 |
-| `eh_catch_all` | O2 | 120 | 95 | 123 | 98 |
-| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 196 | 91 | 199 | 94 |
-| `eh_dynamic_handler` | O2 | 164 | 91 | 167 | 94 |
-| `eh_unhandled` | O0, O2 | 94 | 78 | 102 | 86 |
-| `eh_cleanup` (cleanup chains, combined pad, partial construction) | O0 | 187 | 114 | 190 | 117 |
-| `eh_cleanup` | O2 | 143 | 116 | 146 | 119 |
-| `eh_typed` (exact typed catches) | O0 | - | - | 150 | 108 |
-| `eh_typed` | O2 | - | - | 120 | 94 |
-| `eh_typed_high_address` (descriptors above 0xFFFF) | O0 | - | - | 134 | 94 |
-| `eh_typed_high_address` | O2 | - | - | 116 | 96 |
+| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 143 | 116 | 152 | 125 |
+| `eh_catch_all` | O2 | 123 | 98 | 132 | 107 |
+| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 199 | 94 | 208 | 103 |
+| `eh_dynamic_handler` | O2 | 167 | 94 | 176 | 103 |
+| `eh_unhandled` | O0, O2 | 102 | 86 | 102 | 86 |
+| `eh_cleanup` (cleanup chains, combined pad, partial construction) | O0 | 190 | 117 | 199 | 126 |
+| `eh_cleanup` | O2 | 146 | 119 | 155 | 128 |
+| `eh_typed` (exact and base catches) | O0 | 150 | 108 | 209 | 167 |
+| `eh_typed` | O2 | 120 | 94 | 179 | 153 |
+| `eh_typed_high_address` (descriptors above 0xFFFF) | O0 | 134 | 94 | 193 | 153 |
+| `eh_typed_high_address` | O2 | 116 | 96 | 175 | 155 |
+| `eh_inheritance` (direct, chained, nested, ambiguous, private) | O0 | - | - | 214 | 177 |
+| `eh_inheritance` | O2 | - | - | 182 | 159 |
+| `eh_inheritance_cross_unit` | O0 | - | - | 202 | 153 |
+| `eh_inheritance_cross_unit` | O2 | - | - | 180 | 153 |
+| `eh_inheritance_high_address` | O0 | - | - | 204 | 153 |
+| `eh_inheritance_high_address` | O2 | - | - | 176 | 153 |
 
-The "before" columns are the values that the previous change documented, which are
-measured on the previous runtime, with the 39-byte header. The "after" columns are the
-current runtime. Every fixture in the table that has a handler gains three bytes at
-both levels, and `eh_unhandled` gains eight. In each fixture in the table the deepest
-runtime frame is `find_function`, the walk to the function record. The `eh_unhandled`
-difference lies in the frames above that walk, since the function itself is unchanged.
+The before columns are measured on the runtime before base matching, with exact
+matching only. The after columns are measured on the current runtime, with the
+43-byte header and base matching. The growth in the typed fixtures has two sources. The
+deepest runtime frame of a typed fixture is `match_class_base`, which runs for each
+class-typed clause that is not an exact match, and `list_ok`, which validates each
+action list, is the deepest frame of the other fixtures. The base walk's frame is 62
+bytes at O2, plus its four saved registers. The `eh_unhandled` fixture never reaches a
+clause, so it is unchanged. The worst fixture, `eh_inheritance` at O0, peaks at 214
+bytes of guest stack, which stays inside the 256-byte window.
 
-The exception header grows from 39 to 41 bytes, so each thrown exception allocates two
-more bytes on the heap. The new program-space vtables for the enumeration, function,
-pointer-to-member, and array descriptors are nine bytes each, and they cost flash only.
+Base matching adds to the runtime text, the packed image, and the AVEH4 block. At O2,
+`eh_unwind.o` grows by 1,291 bytes of text and `eh_cxa.o` by 91 bytes. The packed
+`eh_catch_all` image at O0 grows from 17,920 to 19,200 bytes. Its AVEH4 block grows from
+2,417 to 2,640 bytes, because the four new runtime functions carry unwind rows, which the
+packer records for every function. The AVEH4 format is unchanged. The runtime's static
+data and bss sizes are unchanged, so persistent RAM does not grow. Each thrown exception
+allocates 43 bytes of header, which is two more than before.
+
+The exception header is 43 bytes, so each thrown exception allocates 43 bytes of
+header. The support vtables for the enumeration, function, pointer-to-member, and
+array descriptors are nine bytes each, and they cost flash only.
 `.data` of `eh_cleanup_object` at O2 is unchanged at 16 bytes, so the change adds no
 persistent RAM. The runtime's linked EH text, measured on `eh_cleanup_object` at O2 as
 the sum of the sizes of the text symbols that the EH objects define and the image
@@ -7043,10 +7095,10 @@ linked into ordinary images.
 
 | Metric | Value |
 |---|---:|
-| AVEH4 block, O0 `eh_typed` (functions, rows, sites, action lists, calls) | 4718 (54, 281, 63, 24, 148) |
-| AVEH4 block, O2 `eh_typed` | 4444 (46, 267, 58, 21, 98) |
-| AVEH4 block, LTO O2 `eh_typed` | 4418 (46, 264, 58, 21, 97) |
-| AVEH4 block, O0 `eh_catch_all` (functions, rows, sites, action lists, calls) | 2603 (40, 189, 18, 8, 26) |
+| AVEH4 block, O0 `eh_typed` (functions, rows, sites, action lists, calls) | 4755 (54, 286, 63, 24, 148) |
+| AVEH4 block, O2 `eh_typed` | 4481 (46, 272, 58, 21, 98) |
+| AVEH4 block, LTO O2 `eh_typed` | 4455 (46, 269, 58, 21, 97) |
+| AVEH4 block, O0 `eh_catch_all` (functions, rows, sites, action lists, calls) | 2640 (40, 194, 18, 8, 26) |
 | Previous-format block, O0 `eh_catch_all` (functions, rows, sites, calls) | 2503 (40, 189, 18, 26) |
 | Packed image, O0 `eh_typed` | 23552 B |
 | Packed image, O2 `eh_typed` | 21504 B |
@@ -7066,7 +7118,7 @@ Changes, by source of cost:
    branch to its pad. Its size is not separated from the rest of the image.
 3. Action lists: each distinct list costs three bytes plus five per catch entry. Each
    site's action costs three bytes, where the previous format cost one.
-4. Exception allocation overhead: the 41-byte header of each thrown exception.
+4. Exception allocation overhead: the 43-byte header of each thrown exception.
 
 Programs without exception support gain no code, metadata, or RAM. A program that
 never throws references none of `_Unwind_Resume`, `__cxa_throw`, `__cxa_get_exception_ptr`,
@@ -7133,22 +7185,34 @@ exception filter still fails the compile. `clang/test/CodeGenCXX/avm-eh-pointer-
 checks the pointer catch and the copy path.
 
 The runtime fixtures are `tests/cpp/eh_typed.cpp`, which covers the exact cases, with
-its cross-translation-unit support in `tests/cpp/support/eh_typed_unit.cpp`,
-`tests/cpp/eh_typed_high_address.cpp`, and `tests/cpp/eh_typed_unsupported.cpp`. Each
-runs at O0 and O2, and `eh_typed` also runs under full LTO.
+its cross-translation-unit support in `tests/cpp/support/eh_typed_unit.cpp`, and
+`tests/cpp/eh_typed_high_address.cpp`. Each runs at O0 and O2, and `eh_typed` also runs
+under full LTO.
+
+The base-matching fixtures are `tests/cpp/eh_inheritance.cpp`, which covers the direct,
+chained, eight-level, nested, by-reference, by-value, private, protected, ambiguous,
+clause-order, cleanup, virtual, and pointer cases, with the cross-translation-unit
+support in `tests/cpp/support/eh_inheritance_unit.cpp`. `eh_inheritance_high_address.cpp`
+places its descriptors above 0xFFFF, and `eh_inheritance_cross_unit.cpp` runs under
+full LTO too. `eh_inheritance_virtual_unhandled.cpp` and
+`eh_inheritance_depth_unhandled.cpp` check the two terminating limits, and
+`eh_inheritance_corrupt_target.cpp` is the image that `tests/debug/eh_inheritance_corrupt_verify.py`
+patches. `tests/debug/eh_inheritance_verify.py` checks each handler's selector,
+adjustment, and returned pointers against the emulator and the packed RTTI.
 
 #### Limitations
 
-The exception runtime implements exact typed catches, catch-all handlers, and
-cleanups. These are not implemented:
+The exception runtime implements exact and public nonvirtual base catches, catch-all
+handlers, and cleanups. These are not implemented:
 
-- inheritance matching, and any conversion from a thrown type to a clause's type,
-  including reference, pointer, qualification, and `nullptr` conversions;
+- virtual base matching, and any conversion from a thrown type to a clause's type,
+  including pointer, qualification, and `nullptr` conversions. A base that the walk
+  cannot decide within its limits fails the throw;
 - exception filters, which the backend rejects with a diagnostic;
 - rethrow with `throw;`, and nested exceptions: only one exception may be active,
   so a throw while one is active, including from a destructor, terminates;
 - `std::set_terminate` and `std::get_terminate`; `std::terminate` calls `abort()`;
-- `typeid` and `dynamic_cast`, which need RTTI and the base-class adjustments.
+- `typeid` and `dynamic_cast`, which need RTTI and the virtual-base offsets.
 
 Selectors above 65535 are rejected by the compiler, so an action list holds 16-bit
 selectors only. The 24-bit descriptor addresses are not truncated.

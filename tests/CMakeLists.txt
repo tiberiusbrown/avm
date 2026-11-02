@@ -51,11 +51,23 @@ foreach(AVM_TEST_ASM IN LISTS AVM_ASM_TEST_SOURCES)
         INCLUDE_DIRS "${AVM_ASM_TEST_DIR}"
         DEPENDS ${AVM_ASM_TEST_SUPPORT_SOURCES}
     )
+    # The AS0 flash-window fixtures place rodata at image offset 0x500 so the
+    # numeric AS0 aliases 0x0B00 and above address that rodata through the
+    # interpreter's fixed-offset read path. The layout is test-only.
+    set(AVM_TEST_LINK_OPTIONS)
+    if(AVM_TEST_NAME MATCHES "^flash_window_")
+        set(AVM_TEST_LINK_OPTIONS
+            "--image-base=0x100"
+            "--section-start=.data=0x100"
+            "--section-start=.rodata=0x500"
+            "--section-start=.text=0x2000")
+    endif()
     avm_add_image(
         OBJECTS "${AVM_TEST_OBJECT}"
         OUTPUT_ELF "${AVM_TEST_ELF}"
         OUTPUT_IMAGE "${AVM_TEST_IMAGE}"
         ENTRY _start
+        LINK_OPTIONS ${AVM_TEST_LINK_OPTIONS}
     )
     list(APPEND AVM_TEST_IMAGE_OUTPUTS "${AVM_TEST_IMAGE}")
 endforeach()

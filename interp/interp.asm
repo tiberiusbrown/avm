@@ -1105,14 +1105,17 @@ oled_boot_program_end:
     assert_primary_slot_width \label
 .endm
 
-; Capture the address in X before overwriting the destination. This preserves
-; the specified alias behavior when rD == rA.
-.macro emit_primary_ld8u label, dstl, dsth, addr
+; Flash-capable scalar load slot. X captures the AS0 address before any
+; destination write, so rD == rA is legal. CPI classifies the high byte: C=1
+; for native SRAM and C=0 for the AS0 flash window. LDI preloads the native
+; destination address in Z for the shared flash reader. The final RJMP selects
+; the destination-specific continuation.
+.macro emit_primary_ld8u label, addr, dstaddr, cont
 \label:
     movw r26, \addr
-    ld   \dstl, X
-    clr  \dsth
-    rjmp cluster_tail_18_delay_1
+    cpi  r27, 0x0B
+    ldi  r30, \dstaddr
+    rjmp \cont
     assert_primary_slot_width \label
 .endm
 
@@ -1125,12 +1128,12 @@ oled_boot_program_end:
     assert_primary_slot_width \label
 .endm
 
-.macro emit_primary_ld16 label, dstl, dsth, addr
+.macro emit_primary_ld16 label, addr, dstaddr, cont
 \label:
     movw r26, \addr
-    ld   \dstl, X+
-    ld   \dsth, X
-    rjmp cluster_tail_18
+    cpi  r27, 0x0B
+    ldi  r30, \dstaddr
+    rjmp \cont
     assert_primary_slot_width \label
 .endm
 
@@ -1291,22 +1294,22 @@ emit_primary_cmp primary_3F, VM_R7L, VM_R7H, VM_R7L, VM_R7H
 ; 0x40-0x4F: LD8U rD,[rA] (rD,rA in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_ld8u primary_40, VM_R4L, VM_R4H, VM_R4
-emit_primary_ld8u primary_41, VM_R4L, VM_R4H, VM_R5
-emit_primary_ld8u primary_42, VM_R4L, VM_R4H, VM_R6
-emit_primary_ld8u primary_43, VM_R4L, VM_R4H, VM_R7
-emit_primary_ld8u primary_44, VM_R5L, VM_R5H, VM_R4
-emit_primary_ld8u primary_45, VM_R5L, VM_R5H, VM_R5
-emit_primary_ld8u primary_46, VM_R5L, VM_R5H, VM_R6
-emit_primary_ld8u primary_47, VM_R5L, VM_R5H, VM_R7
-emit_primary_ld8u primary_48, VM_R6L, VM_R6H, VM_R4
-emit_primary_ld8u primary_49, VM_R6L, VM_R6H, VM_R5
-emit_primary_ld8u primary_4A, VM_R6L, VM_R6H, VM_R6
-emit_primary_ld8u primary_4B, VM_R6L, VM_R6H, VM_R7
-emit_primary_ld8u primary_4C, VM_R7L, VM_R7H, VM_R4
-emit_primary_ld8u primary_4D, VM_R7L, VM_R7H, VM_R5
-emit_primary_ld8u primary_4E, VM_R7L, VM_R7H, VM_R6
-emit_primary_ld8u primary_4F, VM_R7L, VM_R7H, VM_R7
+emit_primary_ld8u primary_40, VM_R4, 16, primary_ld8u_r4_cont
+emit_primary_ld8u primary_41, VM_R5, 16, primary_ld8u_r4_cont
+emit_primary_ld8u primary_42, VM_R6, 16, primary_ld8u_r4_cont
+emit_primary_ld8u primary_43, VM_R7, 16, primary_ld8u_r4_cont
+emit_primary_ld8u primary_44, VM_R4, 18, primary_ld8u_r5_cont
+emit_primary_ld8u primary_45, VM_R5, 18, primary_ld8u_r5_cont
+emit_primary_ld8u primary_46, VM_R6, 18, primary_ld8u_r5_cont
+emit_primary_ld8u primary_47, VM_R7, 18, primary_ld8u_r5_cont
+emit_primary_ld8u primary_48, VM_R4, 20, primary_ld8u_r6_cont
+emit_primary_ld8u primary_49, VM_R5, 20, primary_ld8u_r6_cont
+emit_primary_ld8u primary_4A, VM_R6, 20, primary_ld8u_r6_cont
+emit_primary_ld8u primary_4B, VM_R7, 20, primary_ld8u_r6_cont
+emit_primary_ld8u primary_4C, VM_R4, 22, primary_ld8u_r7_cont
+emit_primary_ld8u primary_4D, VM_R5, 22, primary_ld8u_r7_cont
+emit_primary_ld8u primary_4E, VM_R6, 22, primary_ld8u_r7_cont
+emit_primary_ld8u primary_4F, VM_R7, 22, primary_ld8u_r7_cont
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x50-0x5F: ST8 [rA],rS (rA,rS in r4-r7)
@@ -1333,22 +1336,22 @@ emit_primary_st8 primary_5F, VM_R7, VM_R7L
 ; 0x60-0x6F: LD16 rD,[rA] (rD,rA in r4-r7)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-emit_primary_ld16 primary_60, VM_R4L, VM_R4H, VM_R4
-emit_primary_ld16 primary_61, VM_R4L, VM_R4H, VM_R5
-emit_primary_ld16 primary_62, VM_R4L, VM_R4H, VM_R6
-emit_primary_ld16 primary_63, VM_R4L, VM_R4H, VM_R7
-emit_primary_ld16 primary_64, VM_R5L, VM_R5H, VM_R4
-emit_primary_ld16 primary_65, VM_R5L, VM_R5H, VM_R5
-emit_primary_ld16 primary_66, VM_R5L, VM_R5H, VM_R6
-emit_primary_ld16 primary_67, VM_R5L, VM_R5H, VM_R7
-emit_primary_ld16 primary_68, VM_R6L, VM_R6H, VM_R4
-emit_primary_ld16 primary_69, VM_R6L, VM_R6H, VM_R5
-emit_primary_ld16 primary_6A, VM_R6L, VM_R6H, VM_R6
-emit_primary_ld16 primary_6B, VM_R6L, VM_R6H, VM_R7
-emit_primary_ld16 primary_6C, VM_R7L, VM_R7H, VM_R4
-emit_primary_ld16 primary_6D, VM_R7L, VM_R7H, VM_R5
-emit_primary_ld16 primary_6E, VM_R7L, VM_R7H, VM_R6
-emit_primary_ld16 primary_6F, VM_R7L, VM_R7H, VM_R7
+emit_primary_ld16 primary_60, VM_R4, 16, primary_ld16_r4_cont
+emit_primary_ld16 primary_61, VM_R5, 16, primary_ld16_r4_cont
+emit_primary_ld16 primary_62, VM_R6, 16, primary_ld16_r4_cont
+emit_primary_ld16 primary_63, VM_R7, 16, primary_ld16_r4_cont
+emit_primary_ld16 primary_64, VM_R4, 18, primary_ld16_r5_cont
+emit_primary_ld16 primary_65, VM_R5, 18, primary_ld16_r5_cont
+emit_primary_ld16 primary_66, VM_R6, 18, primary_ld16_r5_cont
+emit_primary_ld16 primary_67, VM_R7, 18, primary_ld16_r5_cont
+emit_primary_ld16 primary_68, VM_R4, 20, primary_ld16_r6_cont
+emit_primary_ld16 primary_69, VM_R5, 20, primary_ld16_r6_cont
+emit_primary_ld16 primary_6A, VM_R6, 20, primary_ld16_r6_cont
+emit_primary_ld16 primary_6B, VM_R7, 20, primary_ld16_r6_cont
+emit_primary_ld16 primary_6C, VM_R4, 22, primary_ld16_r7_cont
+emit_primary_ld16 primary_6D, VM_R5, 22, primary_ld16_r7_cont
+emit_primary_ld16 primary_6E, VM_R6, 22, primary_ld16_r7_cont
+emit_primary_ld16 primary_6F, VM_R7, 22, primary_ld16_r7_cont
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; 0x70-0x7F: ST16 [rA],rS (rA,rS in r4-r7)
@@ -1812,6 +1815,77 @@ primary_table_end:
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+; Flash-capable primary LD8U/LD16 continuations
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;
+; Each continuation is entered four cycles after the slot's CPI, so BRSH sees
+; C=0 only for an AS0 address at or above 0x0B00. Native SRAM loads directly
+; into the already-selected destination and dispatches from the continuation.
+; The flash entries use the Z destination preloaded by the slot and the
+; fixed-count reader. X still names the original AS0 address there.
+
+.macro emit_primary_ld8u_cont label, dstl, dsth
+\label:
+    brsh primary_ld8u_flash
+    ld   \dstl, X
+    clr  \dsth
+    dispatch
+.endm
+
+.macro emit_primary_ld16_cont label, dstl, dsth
+\label:
+    brsh primary_ld16_flash
+    ld   \dstl, X+
+    ld   \dsth, X
+    dispatch
+.endm
+
+emit_primary_ld8u_cont  primary_ld8u_r4_cont, VM_R4L, VM_R4H
+emit_primary_ld8u_cont  primary_ld8u_r5_cont, VM_R5L, VM_R5H
+emit_primary_ld8u_cont  primary_ld8u_r6_cont, VM_R6L, VM_R6H
+emit_primary_ld8u_cont  primary_ld8u_r7_cont, VM_R7L, VM_R7H
+
+; Z names the destination low byte. The fixed-count reader leaves Z on that
+; byte, so the high byte is cleared after the single-byte transaction.
+; VM_PC names the selected opcode on entry; its successor is already in flight.
+; The skipped RAM dispatch would have advanced past that one-byte opcode, so the
+; flash path does the same before the independent transaction and re-seek.
+primary_ld8u_flash:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    mov   r24, r26              ; image-relative low = AS0 low
+    mov   r25, r27
+    subi  r25, 0x06             ; image-relative high = AS0 high - 0x06
+    clr   r26
+    clr   r31                   ; Z = destination register-file address
+    mov   r0, ONE               ; count = 1
+    clr   r1
+    rcall fx_read_program_bytes_func
+    std   Z+1, ZERO
+    rjmp  seek_and_dispatch_func_disabled
+
+emit_primary_ld16_cont  primary_ld16_r4_cont, VM_R4L, VM_R4H
+emit_primary_ld16_cont  primary_ld16_r5_cont, VM_R5L, VM_R5H
+emit_primary_ld16_cont  primary_ld16_r6_cont, VM_R6L, VM_R6H
+emit_primary_ld16_cont  primary_ld16_r7_cont, VM_R7L, VM_R7H
+
+primary_ld16_flash:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    mov   r24, r26
+    mov   r25, r27
+    subi  r25, 0x06
+    clr   r26
+    clr   r31
+    mov   r0, ONE               ; count = 2, little-endian destination
+    lsl   r0
+    clr   r1
+    rcall fx_read_program_bytes_func
+    rjmp  seek_and_dispatch_func_disabled
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ED-EE full-register biased-displacement data-space memory
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;
@@ -1879,6 +1953,11 @@ displaced_memory_entry:
     brts  displaced_memory_store
 
 displaced_memory_load:
+    ; The complete effective address decides between SRAM and the AS0 flash
+    ; window before the destination in X is written.
+    cpi   r31, 0x0B
+    brsh  displaced_flash_load
+
     ; Load through Z before touching the dynamically selected destination in X.
     ; Byte loads leave r1 cleared; word loads conditionally replace it.
     ld    r0, Z+
@@ -1899,9 +1978,31 @@ displaced_memory_store:
     st    Z,  r1
     rjmp  cluster_a_tail_18
 
+; Flash-window ED load. X names the destination register-file address and Z the
+; complete AS0 effective address. VM_PC names the offset byte, so the following
+; opcode is one byte beyond it and is reached by the re-seek after the read.
+displaced_flash_load:
+    mov   r0, DISPLACED_SPEC     ; keep the width bit for the count select
+    mov   r24, r30
+    mov   r25, r31
+    subi  r25, 0x06
+    movw  r30, r26               ; Z = destination register-file address
+    clr   r26
+    std   Z+1, ZERO              ; byte loads clear the high byte; words overwrite it
+    ldi   r27, 1
+    sbrc  r0, 4
+    ldi   r27, 2
+    mov   r0, r27
+    clr   r1
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    rcall fx_read_program_bytes_func
+    rjmp  seek_and_dispatch_func_disabled
+
 displaced_memory_end:
-.if (displaced_memory_end - displaced_memory_start) != 74
-    .error "ED-EE displaced-memory handler must occupy exactly 37 AVR words"
+.if (displaced_memory_end - displaced_memory_start) != 112
+    .error "ED-EE displaced-memory handler must occupy exactly 56 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3561,7 +3662,7 @@ invalid_secondary_instruction_func:
 .Lf3_st8_start_\@:
     movw  r26, \addr
     st    X, \srcl
-    rjmp  cluster_a_tail_18_delay_1
+    rjmp  f3_cluster_tail_18_delay_1
 .Lf3_st8_end_\@:
     .if (.Lf3_st8_end_\@ - .Lf3_st8_start_\@) != 6
         .error "F3 ST8 slot is not exactly three words"
@@ -3572,7 +3673,7 @@ invalid_secondary_instruction_func:
 .Lf3_mul_start_\@:
     \op   \dstl, \srcl
     movw  \dstl, r0
-    rjmp  cluster_a_tail_18_delay_1
+    rjmp  f3_cluster_tail_18_delay_1
 .Lf3_mul_end_\@:
     .if (.Lf3_mul_end_\@ - .Lf3_mul_start_\@) != 6
         .error "F3 widening multiply slot is not exactly three words"
@@ -3583,7 +3684,7 @@ invalid_secondary_instruction_func:
 .Lf3_ldsp8u_start_\@:
     ldd   \dstl, Y+\q
     clr   \dsth
-    rjmp  cluster_a_tail_18_delay_1
+    rjmp  f3_cluster_tail_18_delay_1
 .Lf3_ldsp8u_end_\@:
     .if (.Lf3_ldsp8u_end_\@ - .Lf3_ldsp8u_start_\@) != 6
         .error "F3 LDSP8U slot is not exactly three words"
@@ -3690,24 +3791,27 @@ invalid_secondary_instruction_func:
     .endif
 .endm
 
-.macro emit_f5_ld8u dstl, dsth, addr
+; Flash-capable F5 scalar loads. The slot captures X, classifies the high byte,
+; preloads the native destination address in Z, and forwards to a
+; destination-specific continuation. The flash path is the shared primary body.
+.macro emit_f5_ld8u addr, dstaddr, cont
 .Lf5_ld8u_start_\@:
     movw  r26, \addr
-    ld    \dstl, X
-    clr   \dsth
-    rjmp  cluster_b_tail_18
+    cpi   r27, 0x0B
+    ldi   r30, \dstaddr
+    rjmp  \cont
 .Lf5_ld8u_end_\@:
     .if (.Lf5_ld8u_end_\@ - .Lf5_ld8u_start_\@) != 8
         .error "F5 LD8U slot is not exactly four words"
     .endif
 .endm
 
-.macro emit_f5_ld16 dstl, dsth, addr
+.macro emit_f5_ld16 addr, dstaddr, cont
 .Lf5_ld16_start_\@:
     movw  r26, \addr
-    ld    \dstl, X+
-    ld    \dsth, X
-    rjmp  cluster_b_tail_18
+    cpi   r27, 0x0B
+    ldi   r30, \dstaddr
+    rjmp  \cont
 .Lf5_ld16_end_\@:
     .if (.Lf5_ld16_end_\@ - .Lf5_ld16_start_\@) != 8
         .error "F5 LD16 slot is not exactly four words"
@@ -3798,26 +3902,30 @@ invalid_secondary_instruction_func:
     .endif
 .endm
 
-.macro emit_f7_ld8u_post dstl, dsth, addr
+; Flash-capable F7 post-increment scalar loads keep the five-word slot. LD8U
+; classifies the pre-increment address in the slot and clears the high byte in
+; its continuation. LD16 has no room to classify before its second load, so the
+; continuation recovers the pre-increment address with SBIW after the write-back.
+.macro emit_f7_ld8u_post dstl, dsth, addr, cont
 .Lf7_ld8u_post_start_\@:
     movw  r26, \addr
+    cpi   r27, 0x0B
     ld    \dstl, X+
     movw  \addr, r26
-    clr   \dsth
-    rjmp  cluster_c_tail_18
+    rjmp  \cont
 .Lf7_ld8u_post_end_\@:
     .if (.Lf7_ld8u_post_end_\@ - .Lf7_ld8u_post_start_\@) != 10
         .error "F7 LD8U postincrement slot is not exactly five words"
     .endif
 .endm
 
-.macro emit_f7_ld16_post dstl, dsth, addr
+.macro emit_f7_ld16_post dstl, dsth, addr, cont
 .Lf7_ld16_post_start_\@:
     movw  r26, \addr
     ld    \dstl, X+
     ld    \dsth, X+
     movw  \addr, r26
-    rjmp  cluster_c_tail_18
+    rjmp  \cont
 .Lf7_ld16_post_end_\@:
     .if (.Lf7_ld16_post_end_\@ - .Lf7_ld16_post_start_\@) != 10
         .error "F7 LD16 postincrement slot is not exactly five words"
@@ -4219,10 +4327,15 @@ f0_absolute_tail_18_delay_5:
 
 f0_ldm8u_r_body:
     rcall f0_fetch_addr16_decode_r_to_xz
+    cpi   r31, 0x0B              ; AS0 flash window at 0x0B00 and above
+    brsh  f0_ldm8u_flash
     ld    r0, Z
     st    X+, r0
     st    X,  ZERO
     rjmp  cluster_tail_18_delay_3
+f0_ldm8u_flash:
+    clr   DISPLACED_SPEC         ; byte width for the shared flash body
+    rjmp  displaced_flash_load
 
 f0_stm8_r_body:
     rcall f0_fetch_addr16_decode_r_to_xz
@@ -4232,11 +4345,16 @@ f0_stm8_r_body:
 
 f0_ldm16_r_body:
     rcall f0_fetch_addr16_decode_r_to_xz
+    cpi   r31, 0x0B
+    brsh  f0_ldm16_flash
     ld    r0, Z+
     ld    r1, Z
     st    X+, r0
     st    X,  r1
     rjmp  cluster_tail_18_delay_1
+f0_ldm16_flash:
+    ldi   DISPLACED_SPEC, 0x10   ; word width for the shared flash body
+    rjmp  displaced_flash_load
 
 f0_stm16_r_body:
     rcall f0_fetch_addr16_decode_r_to_xz
@@ -4246,8 +4364,8 @@ f0_stm16_r_body:
     st    Z,  r1
     rjmp  cluster_tail_18_delay_1
 f0_absolute_bodies_end:
-.if (f0_absolute_bodies_end - f0_absolute_bodies_start) != 46
-    .error "F0 absolute data-space bodies must occupy exactly twenty-three AVR words"
+.if (f0_absolute_bodies_end - f0_absolute_bodies_start) != 62
+    .error "F0 absolute data-space bodies must occupy exactly thirty-one AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4628,6 +4746,15 @@ sys_progmem_prepare_func:
     mov   r26, VM_R7L
     rjmp  fx_start_program_read_func
 
+; Image-relative variant for AS0 flash-window sources. The caller has already
+; placed the translated address in r24:r25:r26. This consumes the service byte
+; and tail-enters the same transaction start as sys_progmem_prepare_func.
+sys_progmem_image_prepare_func:
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    rjmp  fx_start_program_read_func
+
 ; Shared comparison results. CP is always RAM byte minus program byte, so C
 ; means the RAM operand is lexicographically smaller.
 .Lsys_progmem_compare_mismatch:
@@ -4649,6 +4776,10 @@ sys_progmem_prepare_func:
 ; int memcmp_P(void const *lhs, progptr/uint24_t rhs, uint16_t n)
 ;   r4 = RAM lhs/result, q3 = program rhs, r5 = n
 sys_memcmp_p_impl:
+    cpi   VM_R4H, 0x0B           ; flash-window lhs with an AS1 rhs needs staging
+    brlo  .Lsys_memcmp_p_lhs_ram
+    jmp   sys_flash_window_unsupported
+.Lsys_memcmp_p_lhs_ram:
     movw  r0, VM_R5
     mov   r27, r0
     or    r27, r1
@@ -4686,6 +4817,10 @@ sys_memcmp_p_impl:
 ; int strcmp_P(char const *lhs, progptr/uint24_t rhs)
 ;   r4 = RAM lhs/result, q3 = program rhs
 sys_strcmp_p_impl:
+    cpi   VM_R4H, 0x0B           ; flash-window lhs with an AS1 rhs needs staging
+    brlo  .Lsys_strcmp_p_lhs_ram
+    jmp   sys_flash_window_unsupported
+.Lsys_strcmp_p_lhs_ram:
     movw  r30, VM_R4             ; Z = RAM lhs
     rcall sys_progmem_prepare_func
 
@@ -4707,6 +4842,148 @@ sys_strcmp_p_impl:
     delay_4
     nop
     rjmp  .Lsys_strcmp_p_loop
+
+; AS0 memcmp/strcmp with a flash-window rhs and RAM lhs. The program-memory engine
+; streams the flash operand while the RAM lhs is compared, exactly as memcmp_P and
+; strcmp_P compare their RAM operand.
+sys_memcmp_rhs_flash_impl:
+    cpi   VM_R4H, 0x0B           ; both operands in the flash window: not yet supported
+    brlo  .Lsys_pair_ok_0
+    jmp   sys_flash_window_unsupported
+.Lsys_pair_ok_0:
+    movw  r0, VM_R6
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_memcmp_p_zero
+    movw  r30, VM_R4             ; Z = RAM lhs
+    mov   r24, VM_R5L
+    mov   r25, VM_R5H
+    subi  r25, 0x06
+    clr   r26
+    rcall sys_progmem_image_prepare_func
+    ld    r24, Z+
+    rcall fx_read_program_delay_7
+    rjmp  .Lsys_memcmp_p_loop
+
+sys_strcmp_rhs_flash_impl:
+    cpi   VM_R4H, 0x0B
+    brlo  .Lsys_pair_ok_1
+    jmp   sys_flash_window_unsupported
+.Lsys_pair_ok_1:
+    movw  r30, VM_R4             ; Z = RAM lhs
+    mov   r24, VM_R5L
+    mov   r25, VM_R5H
+    subi  r25, 0x06
+    clr   r26
+    rcall sys_progmem_image_prepare_func
+    ld    r0, Z+
+    rcall fx_read_program_delay_7
+    rjmp  .Lsys_strcmp_p_loop
+
+; AS0 memcmp/strcmp with a flash-window lhs and RAM rhs. The flash operand is the
+; streamed side, so the mismatch outcome is inverted: C=1 when the RAM rhs byte is
+; smaller, which makes the flash lhs greater.
+sys_memcmp_lhs_flash_impl:
+    cpi   VM_R5H, 0x0B
+    brlo  .Lsys_pair_ok_2
+    jmp   sys_flash_window_unsupported
+.Lsys_pair_ok_2:
+    movw  r0, VM_R6
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_memcmp_p_zero
+    movw  r30, VM_R5             ; Z = RAM rhs
+    mov   r24, VM_R4L
+    mov   r25, VM_R4H
+    subi  r25, 0x06
+    clr   r26
+    rcall sys_progmem_image_prepare_func
+    ld    r24, Z+
+    rcall fx_read_program_delay_7
+    rjmp  .Lsys_memcmp_lhs_flash_loop
+.Lsys_memcmp_lhs_flash_loop:
+    cli
+    out   SPDR, ZERO
+    in    r27, SPDR
+    sei
+
+    cp    r24, r27
+    brne  .Lsys_memcmp_lhs_flash_mismatch
+    sub   r0, ONE
+    sbc   r1, ZERO
+    breq  .Lsys_memcmp_lhs_flash_equal
+    ld    r24, Z+
+    delay_4
+    rjmp  .Lsys_memcmp_lhs_flash_loop
+.Lsys_memcmp_lhs_flash_equal:
+    rjmp  .Lsys_progmem_compare_equal
+.Lsys_memcmp_lhs_flash_mismatch:
+    brlo  .Lsys_memcmp_lhs_flash_greater
+    ser   VM_R4L
+    ser   VM_R4H
+    rjmp  .Lsys_progmem_finish
+.Lsys_memcmp_lhs_flash_greater:
+    mov   VM_R4L, ONE
+    mov   VM_R4H, ZERO
+    rjmp  .Lsys_progmem_finish
+
+sys_strcmp_lhs_flash_impl:
+    cpi   VM_R5H, 0x0B
+    brlo  .Lsys_pair_ok_3
+    jmp   sys_flash_window_unsupported
+.Lsys_pair_ok_3:
+    movw  r30, VM_R5             ; Z = RAM rhs
+    mov   r24, VM_R4L
+    mov   r25, VM_R4H
+    subi  r25, 0x06
+    clr   r26
+    rcall sys_progmem_image_prepare_func
+    ld    r0, Z+
+    rcall fx_read_program_delay_7
+    rjmp  .Lsys_strcmp_lhs_flash_loop
+.Lsys_strcmp_lhs_flash_loop:
+    cli
+    out   SPDR, ZERO
+    in    r27, SPDR
+    sei
+
+    cp    r0, r27
+    brne  .Lsys_strcmp_lhs_flash_mismatch
+    tst   r27
+    breq  .Lsys_strcmp_lhs_flash_equal
+    ld    r0, Z+
+    delay_4
+    nop
+    rjmp  .Lsys_strcmp_lhs_flash_loop
+.Lsys_strcmp_lhs_flash_equal:
+    rjmp  .Lsys_progmem_compare_equal
+.Lsys_strcmp_lhs_flash_mismatch:
+    brlo  .Lsys_strcmp_lhs_flash_greater
+    ser   VM_R4L
+    ser   VM_R4H
+    rjmp  .Lsys_progmem_finish
+.Lsys_strcmp_lhs_flash_greater:
+    mov   VM_R4L, ONE
+    mov   VM_R4H, ZERO
+    rjmp  .Lsys_progmem_finish
+
+; Two flash-window operands need staged chunk comparison, which is not implemented.
+; Reject the call rather than comparing unmapped RAM.
+sys_flash_window_unsupported:
+    jmp   invalid_secondary_instruction_func
+
+; AS0 strlen from the flash window. r4 names the source and receives the count;
+; the source is translated before r4 is cleared.
+sys_strlen_flash_impl:
+    mov   r24, VM_R4L
+    mov   r25, VM_R4H
+    subi  r25, 0x06
+    clr   r26
+    clr   VM_R4L
+    clr   VM_R4H
+    rcall sys_progmem_image_prepare_func
+    rcall fx_read_program_delay_9
+    rjmp  .Lsys_strlen_p_loop
 
 ; uint16_t strlen_P(progptr/uint24_t src)
 ;   q3 = program src, r4 = result
@@ -4745,6 +5022,13 @@ sys_strlen_p_impl:
 fx_copy_program_string_n_func:
     clt
     rcall sys_progmem_prepare_func
+    rcall fx_read_program_delay_9
+    rjmp  .Lfx_copy_program_string_n_loop
+
+; AS0 flash-window copy. The caller supplies the translated source in r24:r26.
+fx_copy_image_string_n_func:
+    clt
+    rcall sys_progmem_image_prepare_func
     rcall fx_read_program_delay_9
     rjmp  .Lfx_copy_program_string_n_loop
 
@@ -4788,6 +5072,7 @@ sys_strncpy_p_impl:
 
     ; A nonzero remainder exists only when the source NUL was copied. Pad all
     ; remaining destination bytes as required by strncpy.
+.Lsys_strncpy_p_after_copy:
     mov   r24, r0
     or    r24, r1
     breq  .Lsys_strncpy_p_done
@@ -4800,6 +5085,21 @@ sys_strncpy_p_impl:
     rjmp  seek_and_dispatch_func
 .Lsys_strncpy_p_zero:
     rjmp  cluster_tail_18
+
+; AS0 strncpy from the flash window: the RAM destination is padded as for strncpy_P.
+; The source is r5 and the bound is r6; both are preserved.
+sys_strncpy_flash_impl:
+    movw  r0, VM_R6
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_strncpy_p_zero
+    movw  r30, VM_R4
+    mov   r24, VM_R5L
+    mov   r25, VM_R5H
+    subi  r25, 0x06
+    clr   r26
+    rcall fx_copy_image_string_n_func
+    rjmp  .Lsys_strncpy_p_after_copy
 
 ; char *strncat_P(char *dst, progptr/uint24_t src, uint16_t n)
 ;   r4 = dst/result, q3 = src, r5 = n
@@ -4819,6 +5119,7 @@ sys_strncat_p_impl:
     sbiw  r30, 1
 
     rcall fx_copy_program_string_n_func
+.Lsys_strncat_p_after_copy:
     brts  .Lsys_strncat_p_done
     st    Z, ZERO                ; count exhausted before source NUL
 .Lsys_strncat_p_done:
@@ -4826,9 +5127,29 @@ sys_strncat_p_impl:
 .Lsys_strncat_p_zero:
     rjmp  cluster_tail_18
 
+; AS0 strncat from the flash window: scan the RAM destination, then copy the
+; translated source. The bound is r6 and the source r5, both preserved.
+sys_strncat_flash_impl:
+    movw  r0, VM_R6
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_strncat_p_zero
+    movw  r30, VM_R4
+.Lsys_strncat_flash_scan:
+    ld    r24, Z+
+    tst   r24
+    brne  .Lsys_strncat_flash_scan
+    sbiw  r30, 1
+    mov   r24, VM_R5L
+    mov   r25, VM_R5H
+    subi  r25, 0x06
+    clr   r26
+    rcall fx_copy_image_string_n_func
+    rjmp  .Lsys_strncat_p_after_copy
+
 sys_progmem_services_end:
-.if (sys_progmem_services_end - sys_progmem_services_start) != 258
-    .error "program-memory SYS subsystem must occupy exactly 129 AVR words"
+.if (sys_progmem_services_end - sys_progmem_services_start) != 568
+    .error "program-memory SYS subsystem must occupy exactly 284 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -4864,6 +5185,10 @@ sys_ram_string_services_start:
 ; int memcmp(void const *lhs, void const *rhs, uint16_t n)
 ;   r4 = lhs/result, r5 = rhs, r6 = n
 sys_memcmp_impl:
+    cpi   VM_R5H, 0x0B           ; AS0 flash-window rhs
+    brsh  .Lsys_memcmp_rhs_flash_relay
+    cpi   VM_R4H, 0x0B           ; AS0 flash-window lhs
+    brsh  .Lsys_memcmp_lhs_flash_relay
     movw  r26, VM_R4             ; X = lhs
     movw  r30, VM_R5             ; Z = rhs
     movw  r24, VM_R6             ; remaining count
@@ -4877,10 +5202,18 @@ sys_memcmp_impl:
     sbiw  r24, 1
     brne  .Lsys_memcmp_loop
     rjmp  .Lsys_ram_compare_store_difference
+.Lsys_memcmp_rhs_flash_relay:
+    jmp   sys_memcmp_rhs_flash_impl
+.Lsys_memcmp_lhs_flash_relay:
+    jmp   sys_memcmp_lhs_flash_impl
 
 ; int strcmp(char const *lhs, char const *rhs)
 ;   r4 = lhs/result, r5 = rhs
 sys_strcmp_impl:
+    cpi   VM_R5H, 0x0B           ; AS0 flash-window rhs
+    brsh  .Lsys_strcmp_rhs_flash_relay
+    cpi   VM_R4H, 0x0B           ; AS0 flash-window lhs
+    brsh  .Lsys_strcmp_lhs_flash_relay
     movw  r26, VM_R4             ; X = lhs
     movw  r30, VM_R5             ; Z = rhs
 .Lsys_strcmp_loop:
@@ -4891,10 +5224,16 @@ sys_strcmp_impl:
     tst   r1
     brne  .Lsys_strcmp_loop
     rjmp  .Lsys_ram_compare_store_difference
+.Lsys_strcmp_rhs_flash_relay:
+    jmp   sys_strcmp_rhs_flash_impl
+.Lsys_strcmp_lhs_flash_relay:
+    jmp   sys_strcmp_lhs_flash_impl
 
 ; uint16_t strlen(char const *src)
 ;   r4 = src/result
 sys_strlen_impl:
+    cpi   VM_R4H, 0x0B           ; AS0 flash window
+    brsh  .Lsys_strlen_as0_relay
     movw  r26, VM_R4             ; X = source
 .Lsys_strlen_loop:
     ld    r0, X+
@@ -4909,6 +5248,8 @@ sys_strlen_impl:
     sbiw  r24, 1
     movw  VM_R4, r24
     rjmp  cluster_tail_18
+.Lsys_strlen_as0_relay:
+    jmp   sys_strlen_flash_impl
 
 ; Shared bounded RAM copy-until-NUL engine for strncpy and strncat.
 ; Inputs: X=source, Z=destination, r24:r25=nonzero maximum count.
@@ -4931,6 +5272,8 @@ sys_copy_string_n_func:
 ; char *strncpy(char *dst, char const *src, uint16_t n)
 ;   r4 = dst/result, r5 = src, r6 = n
 sys_strncpy_impl:
+    cpi   VM_R5H, 0x0B           ; AS0 flash window
+    brsh  .Lsys_strncpy_as0_relay
     movw  r24, VM_R6
     sbiw  r24, 0
     breq  .Lsys_ram_string_done
@@ -4946,10 +5289,14 @@ sys_strncpy_impl:
     sbiw  r24, 1
     brne  .Lsys_strncpy_pad
     rjmp  .Lsys_ram_string_done
+.Lsys_strncpy_as0_relay:
+    jmp   sys_strncpy_flash_impl
 
 ; char *strncat(char *dst, char const *src, uint16_t n)
 ;   r4 = dst/result, r5 = src, r6 = n
 sys_strncat_impl:
+    cpi   VM_R5H, 0x0B           ; AS0 flash window
+    brsh  .Lsys_strncat_as0_relay
     movw  r24, VM_R6
     sbiw  r24, 0
     breq  .Lsys_ram_string_done
@@ -4968,10 +5315,12 @@ sys_strncat_impl:
     st    Z, ZERO                ; count exhausted before source NUL
 .Lsys_ram_string_done:
     rjmp  cluster_tail_18
+.Lsys_strncat_as0_relay:
+    jmp   sys_strncat_flash_impl
 
 sys_ram_string_services_end:
-.if (sys_ram_string_services_end - sys_ram_string_services_start) != 142
-    .error "data-memory string SYS subsystem must occupy exactly 71 AVR words"
+.if (sys_ram_string_services_end - sys_ram_string_services_start) != 198
+    .error "data-memory string SYS subsystem must occupy exactly 99 AVR words"
 .endif
 
 
@@ -5198,6 +5547,8 @@ f0_cold32_st32:
     rjmp  cluster_a_tail_18
 
 f0_cold32_ld32:
+    cpi   r31, 0x0B              ; AS0 flash window at 0x0B00 and above
+    brsh  f0_cold32_ld32_flash
     ld    r24, Z+
     st    X+, r24
     ld    r24, Z+
@@ -5235,9 +5586,26 @@ f0_cold32_cmp32:
 f0_cold32_invalid:
     rjmp  invalid_secondary_instruction_func
 
+; Four contiguous flash bytes land at the destination register quad. Z is the
+; captured effective address and X the destination; one transaction copies all.
+f0_cold32_ld32_flash:
+    mov   r24, r30
+    mov   r25, r31
+    subi  r25, 0x06
+    movw  r30, r26               ; Z = destination register-file address
+    clr   r26
+    ldi   r27, 4
+    mov   r0, r27
+    clr   r1
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    rcall fx_read_program_bytes_func
+    rjmp  seek_and_dispatch_func_disabled
+
 f0_cold32_end:
-.if (f0_cold32_end - f0_cold32_start) != 126
-    .error "F0 cold-32 subsystem must occupy exactly sixty-three AVR words"
+.if (f0_cold32_end - f0_cold32_start) != 156
+    .error "F0 cold-32 subsystem must occupy exactly seventy-eight AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -5291,6 +5659,8 @@ f0_coldmem_load:
     ld    r24, Z+
     ld    r25, Z
     movw  Z, r24
+    cpi   r31, 0x0B              ; AS0 flash window at 0x0B00 and above
+    brsh  f0_coldmem_flash
 
     ; Load one byte, zero-extend, and conditionally load the high byte.
     ld    r24, Z+
@@ -5312,6 +5682,48 @@ f0_coldmem_post_writeback:
     st    X+, r30
     st    X,  r31
     rjmp  cluster_a_tail_18
+
+; Flash-window F0 6C load. Z names the complete AS0 effective address, X the
+; destination, r0 the rA register-file address, and r1 the F0 spec. The reader
+; clobbers every scratch register, so the write-back state lives on the native
+; stack until the transaction ends. P=1 then writes E+width back to rA last,
+; matching the RAM order.
+f0_coldmem_flash:
+    push  r0
+    push  r1
+    push  r30
+    push  r31
+    mov   r24, r30
+    mov   r25, r31
+    subi  r25, 0x06
+    movw  r30, r26               ; Z = destination register-file address
+    clr   r26
+    std   Z+1, ZERO              ; byte loads clear the high byte; words overwrite it
+    ldi   r27, 1
+    sbrc  r1, 4
+    ldi   r27, 2
+    mov   r0, r27
+    clr   r1
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    rcall fx_read_program_bytes_func
+    pop   r31
+    pop   r30
+    pop   r1
+    pop   r0
+    ldi   r24, 1
+    sbrc  r1, 4
+    ldi   r24, 2
+    add   r30, r24
+    adc   r31, ZERO
+    sbrs  r1, 0
+    rjmp  seek_and_dispatch_func_disabled
+    mov   r26, r0
+    clr   r27
+    st    X+, r30
+    st    X,  r31
+    rjmp  seek_and_dispatch_func_disabled
 
 f0_coldmem_store:
     ; Capture both source bytes before reading rA, preserving every
@@ -5338,8 +5750,8 @@ f0_coldmem_store:
     rjmp  cluster_a_tail_18
 
 f0_coldmem_end:
-.if (f0_coldmem_end - f0_coldmem_start) != 92
-    .error "F0 general-pointer subsystem must occupy exactly forty-six AVR words"
+.if (f0_coldmem_end - f0_coldmem_start) != 166
+    .error "F0 general-pointer subsystem must occupy exactly eighty-three AVR words"
 .endif
 
 ; F0 retains one-word veneers for every cold form. All valid secondaries
@@ -5846,6 +6258,46 @@ f3_table_end:
     .error "f3_table has incorrect size"
 .endif
 
+; Local copy of the Cluster A 18-cycle tail for the F3 slots. The cluster itself
+; now lies beyond RJMP reach from this table, and the copy has identical timing.
+f3_cluster_tail_18_delay_1:
+    nop
+f3_cluster_tail_18:
+    dispatch
+
+; F5 dense scalar loads. Each destination-specific continuation performs the
+; native RAM load and returns through Cluster B. BRSH reaches a local veneer that
+; enters the shared primary flash body; VM_PC names the F5 secondary byte there.
+.macro emit_f5_ld8u_cont label, dstl, dsth
+\label:
+    brsh  f5_ld8u_flash
+    ld    \dstl, X
+    clr   \dsth
+    rjmp  cluster_b_tail_18
+.endm
+
+.macro emit_f5_ld16_cont label, dstl, dsth
+\label:
+    brsh  f5_ld16_flash
+    ld    \dstl, X+
+    ld    \dsth, X
+    rjmp  cluster_b_tail_18
+.endm
+
+emit_f5_ld8u_cont  f5_ld8u_d0_cont, r8, r9
+emit_f5_ld8u_cont  f5_ld8u_d1_cont, r10, r11
+emit_f5_ld8u_cont  f5_ld8u_d2_cont, r12, r13
+emit_f5_ld8u_cont  f5_ld8u_d3_cont, r14, r15
+f5_ld8u_flash:
+    jmp   primary_ld8u_flash
+
+emit_f5_ld16_cont  f5_ld16_d0_cont, r8, r9
+emit_f5_ld16_cont  f5_ld16_d1_cont, r10, r11
+emit_f5_ld16_cont  f5_ld16_d2_cont, r12, r13
+emit_f5_ld16_cont  f5_ld16_d3_cont, r14, r15
+f5_ld16_flash:
+    jmp   primary_ld16_flash
+
 ; Cluster B serves F4-F6 and provides both one- and two-cycle flag-commit
 ; landings needed by TST8, CMP, and TST16 families.
 cluster_b_start:
@@ -5874,7 +6326,7 @@ cluster_b_end:
 ; used only by the reserved postincrement-load alias entries in F7.
 secondary_tables_before_cluster_c:
 secondary_invalid_b_func:
-    rjmp invalid_secondary_instruction_func
+    jmp invalid_secondary_instruction_func
 
 f4_table:
     ; F4: bounded three-word stack, unary, and fixed-shift table
@@ -6117,38 +6569,38 @@ f5_table:
     emit_f5_cmp r22, r23, r10, r11
     emit_f5_cmp r22, r23, r12, r13
     emit_f5_cmp r22, r23, r14, r15
-    emit_f5_ld8u r8, r9, r16
-    emit_f5_ld8u r10, r11, r16
-    emit_f5_ld8u r12, r13, r16
-    emit_f5_ld8u r14, r15, r16
-    emit_f5_ld8u r8, r9, r18
-    emit_f5_ld8u r10, r11, r18
-    emit_f5_ld8u r12, r13, r18
-    emit_f5_ld8u r14, r15, r18
-    emit_f5_ld8u r8, r9, r20
-    emit_f5_ld8u r10, r11, r20
-    emit_f5_ld8u r12, r13, r20
-    emit_f5_ld8u r14, r15, r20
-    emit_f5_ld8u r8, r9, r22
-    emit_f5_ld8u r10, r11, r22
-    emit_f5_ld8u r12, r13, r22
-    emit_f5_ld8u r14, r15, r22
-    emit_f5_ld16 r8, r9, r16
-    emit_f5_ld16 r10, r11, r16
-    emit_f5_ld16 r12, r13, r16
-    emit_f5_ld16 r14, r15, r16
-    emit_f5_ld16 r8, r9, r18
-    emit_f5_ld16 r10, r11, r18
-    emit_f5_ld16 r12, r13, r18
-    emit_f5_ld16 r14, r15, r18
-    emit_f5_ld16 r8, r9, r20
-    emit_f5_ld16 r10, r11, r20
-    emit_f5_ld16 r12, r13, r20
-    emit_f5_ld16 r14, r15, r20
-    emit_f5_ld16 r8, r9, r22
-    emit_f5_ld16 r10, r11, r22
-    emit_f5_ld16 r12, r13, r22
-    emit_f5_ld16 r14, r15, r22
+    emit_f5_ld8u r16, 8, f5_ld8u_d0_cont
+    emit_f5_ld8u r16, 10, f5_ld8u_d1_cont
+    emit_f5_ld8u r16, 12, f5_ld8u_d2_cont
+    emit_f5_ld8u r16, 14, f5_ld8u_d3_cont
+    emit_f5_ld8u r18, 8, f5_ld8u_d0_cont
+    emit_f5_ld8u r18, 10, f5_ld8u_d1_cont
+    emit_f5_ld8u r18, 12, f5_ld8u_d2_cont
+    emit_f5_ld8u r18, 14, f5_ld8u_d3_cont
+    emit_f5_ld8u r20, 8, f5_ld8u_d0_cont
+    emit_f5_ld8u r20, 10, f5_ld8u_d1_cont
+    emit_f5_ld8u r20, 12, f5_ld8u_d2_cont
+    emit_f5_ld8u r20, 14, f5_ld8u_d3_cont
+    emit_f5_ld8u r22, 8, f5_ld8u_d0_cont
+    emit_f5_ld8u r22, 10, f5_ld8u_d1_cont
+    emit_f5_ld8u r22, 12, f5_ld8u_d2_cont
+    emit_f5_ld8u r22, 14, f5_ld8u_d3_cont
+    emit_f5_ld16 r16, 8, f5_ld16_d0_cont
+    emit_f5_ld16 r16, 10, f5_ld16_d1_cont
+    emit_f5_ld16 r16, 12, f5_ld16_d2_cont
+    emit_f5_ld16 r16, 14, f5_ld16_d3_cont
+    emit_f5_ld16 r18, 8, f5_ld16_d0_cont
+    emit_f5_ld16 r18, 10, f5_ld16_d1_cont
+    emit_f5_ld16 r18, 12, f5_ld16_d2_cont
+    emit_f5_ld16 r18, 14, f5_ld16_d3_cont
+    emit_f5_ld16 r20, 8, f5_ld16_d0_cont
+    emit_f5_ld16 r20, 10, f5_ld16_d1_cont
+    emit_f5_ld16 r20, 12, f5_ld16_d2_cont
+    emit_f5_ld16 r20, 14, f5_ld16_d3_cont
+    emit_f5_ld16 r22, 8, f5_ld16_d0_cont
+    emit_f5_ld16 r22, 10, f5_ld16_d1_cont
+    emit_f5_ld16 r22, 12, f5_ld16_d2_cont
+    emit_f5_ld16 r22, 14, f5_ld16_d3_cont
     emit_f5_st16 r16, r8, r9
     emit_f5_st16 r16, r10, r11
     emit_f5_st16 r16, r12, r13
@@ -6259,69 +6711,69 @@ f6_table_end:
 
 f7_table:
     ; F7: bounded five-word postincrement, 32-bit, and BOOL table
-    emit_f7_ld8u_post r8, r9, r16
-    emit_f7_ld8u_post r10, r11, r16
-    emit_f7_ld8u_post r12, r13, r16
-    emit_f7_ld8u_post r14, r15, r16
+    emit_f7_ld8u_post r8, r9, r16, f7_ld8u_d0_cont
+    emit_f7_ld8u_post r10, r11, r16, f7_ld8u_d1_cont
+    emit_f7_ld8u_post r12, r13, r16, f7_ld8u_d2_cont
+    emit_f7_ld8u_post r14, r15, r16, f7_ld8u_d3_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld8u_post r18, r19, r16
-    emit_f7_ld8u_post r20, r21, r16
-    emit_f7_ld8u_post r22, r23, r16
-    emit_f7_ld8u_post r8, r9, r18
-    emit_f7_ld8u_post r10, r11, r18
-    emit_f7_ld8u_post r12, r13, r18
-    emit_f7_ld8u_post r14, r15, r18
-    emit_f7_ld8u_post r16, r17, r18
+    emit_f7_ld8u_post r18, r19, r16, f7_ld8u_d5_cont
+    emit_f7_ld8u_post r20, r21, r16, f7_ld8u_d6_cont
+    emit_f7_ld8u_post r22, r23, r16, f7_ld8u_d7_cont
+    emit_f7_ld8u_post r8, r9, r18, f7_ld8u_d0_cont
+    emit_f7_ld8u_post r10, r11, r18, f7_ld8u_d1_cont
+    emit_f7_ld8u_post r12, r13, r18, f7_ld8u_d2_cont
+    emit_f7_ld8u_post r14, r15, r18, f7_ld8u_d3_cont
+    emit_f7_ld8u_post r16, r17, r18, f7_ld8u_d4_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld8u_post r20, r21, r18
-    emit_f7_ld8u_post r22, r23, r18
-    emit_f7_ld8u_post r8, r9, r20
-    emit_f7_ld8u_post r10, r11, r20
-    emit_f7_ld8u_post r12, r13, r20
-    emit_f7_ld8u_post r14, r15, r20
-    emit_f7_ld8u_post r16, r17, r20
-    emit_f7_ld8u_post r18, r19, r20
+    emit_f7_ld8u_post r20, r21, r18, f7_ld8u_d6_cont
+    emit_f7_ld8u_post r22, r23, r18, f7_ld8u_d7_cont
+    emit_f7_ld8u_post r8, r9, r20, f7_ld8u_d0_cont
+    emit_f7_ld8u_post r10, r11, r20, f7_ld8u_d1_cont
+    emit_f7_ld8u_post r12, r13, r20, f7_ld8u_d2_cont
+    emit_f7_ld8u_post r14, r15, r20, f7_ld8u_d3_cont
+    emit_f7_ld8u_post r16, r17, r20, f7_ld8u_d4_cont
+    emit_f7_ld8u_post r18, r19, r20, f7_ld8u_d5_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld8u_post r22, r23, r20
-    emit_f7_ld8u_post r8, r9, r22
-    emit_f7_ld8u_post r10, r11, r22
-    emit_f7_ld8u_post r12, r13, r22
-    emit_f7_ld8u_post r14, r15, r22
-    emit_f7_ld8u_post r16, r17, r22
-    emit_f7_ld8u_post r18, r19, r22
-    emit_f7_ld8u_post r20, r21, r22
+    emit_f7_ld8u_post r22, r23, r20, f7_ld8u_d7_cont
+    emit_f7_ld8u_post r8, r9, r22, f7_ld8u_d0_cont
+    emit_f7_ld8u_post r10, r11, r22, f7_ld8u_d1_cont
+    emit_f7_ld8u_post r12, r13, r22, f7_ld8u_d2_cont
+    emit_f7_ld8u_post r14, r15, r22, f7_ld8u_d3_cont
+    emit_f7_ld8u_post r16, r17, r22, f7_ld8u_d4_cont
+    emit_f7_ld8u_post r18, r19, r22, f7_ld8u_d5_cont
+    emit_f7_ld8u_post r20, r21, r22, f7_ld8u_d6_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r8, r9, r16
-    emit_f7_ld16_post r10, r11, r16
-    emit_f7_ld16_post r12, r13, r16
-    emit_f7_ld16_post r14, r15, r16
+    emit_f7_ld16_post r8, r9, r16, f7_ld16_d0_cont
+    emit_f7_ld16_post r10, r11, r16, f7_ld16_d1_cont
+    emit_f7_ld16_post r12, r13, r16, f7_ld16_d2_cont
+    emit_f7_ld16_post r14, r15, r16, f7_ld16_d3_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r18, r19, r16
-    emit_f7_ld16_post r20, r21, r16
-    emit_f7_ld16_post r22, r23, r16
-    emit_f7_ld16_post r8, r9, r18
-    emit_f7_ld16_post r10, r11, r18
-    emit_f7_ld16_post r12, r13, r18
-    emit_f7_ld16_post r14, r15, r18
-    emit_f7_ld16_post r16, r17, r18
+    emit_f7_ld16_post r18, r19, r16, f7_ld16_d5_cont
+    emit_f7_ld16_post r20, r21, r16, f7_ld16_d6_cont
+    emit_f7_ld16_post r22, r23, r16, f7_ld16_d7_cont
+    emit_f7_ld16_post r8, r9, r18, f7_ld16_d0_cont
+    emit_f7_ld16_post r10, r11, r18, f7_ld16_d1_cont
+    emit_f7_ld16_post r12, r13, r18, f7_ld16_d2_cont
+    emit_f7_ld16_post r14, r15, r18, f7_ld16_d3_cont
+    emit_f7_ld16_post r16, r17, r18, f7_ld16_d4_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r20, r21, r18
-    emit_f7_ld16_post r22, r23, r18
-    emit_f7_ld16_post r8, r9, r20
-    emit_f7_ld16_post r10, r11, r20
-    emit_f7_ld16_post r12, r13, r20
-    emit_f7_ld16_post r14, r15, r20
-    emit_f7_ld16_post r16, r17, r20
-    emit_f7_ld16_post r18, r19, r20
+    emit_f7_ld16_post r20, r21, r18, f7_ld16_d6_cont
+    emit_f7_ld16_post r22, r23, r18, f7_ld16_d7_cont
+    emit_f7_ld16_post r8, r9, r20, f7_ld16_d0_cont
+    emit_f7_ld16_post r10, r11, r20, f7_ld16_d1_cont
+    emit_f7_ld16_post r12, r13, r20, f7_ld16_d2_cont
+    emit_f7_ld16_post r14, r15, r20, f7_ld16_d3_cont
+    emit_f7_ld16_post r16, r17, r20, f7_ld16_d4_cont
+    emit_f7_ld16_post r18, r19, r20, f7_ld16_d5_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r22, r23, r20
-    emit_f7_ld16_post r8, r9, r22
-    emit_f7_ld16_post r10, r11, r22
-    emit_f7_ld16_post r12, r13, r22
-    emit_f7_ld16_post r14, r15, r22
-    emit_f7_ld16_post r16, r17, r22
-    emit_f7_ld16_post r18, r19, r22
-    emit_f7_ld16_post r20, r21, r22
+    emit_f7_ld16_post r22, r23, r20, f7_ld16_d7_cont
+    emit_f7_ld16_post r8, r9, r22, f7_ld16_d0_cont
+    emit_f7_ld16_post r10, r11, r22, f7_ld16_d1_cont
+    emit_f7_ld16_post r12, r13, r22, f7_ld16_d2_cont
+    emit_f7_ld16_post r14, r15, r22, f7_ld16_d3_cont
+    emit_f7_ld16_post r16, r17, r22, f7_ld16_d4_cont
+    emit_f7_ld16_post r18, r19, r22, f7_ld16_d5_cont
+    emit_f7_ld16_post r20, r21, r22, f7_ld16_d6_cont
     emit_f7_invalid secondary_invalid_b_func
     emit_f7_st16_post r16, r8, r9
     emit_f7_st16_post r16, r10, r11
@@ -6427,6 +6879,51 @@ cluster_c_end:
 .if (cluster_c_end - cluster_c_start) != 46
     .error "secondary cadence Cluster C must occupy 23 AVR words"
 .endif
+
+; F7 continuation pairs. LD8U returns through Cluster C after clearing the high
+; byte; LD16 returns after its address recovery. Each flash entry names the
+; destination, restores the pre-increment address, and enters the primary body.
+.macro emit_f7_ld8u_cont label, flash, dsth, dstaddr
+\label:
+    brsh  \flash
+    clr   \dsth
+    rjmp  cluster_c_tail_18
+\flash:
+    sbiw  r26, 1
+    ldi   r30, \dstaddr
+    jmp   primary_ld8u_flash
+.endm
+
+.macro emit_f7_ld16_cont label, flash, dstaddr
+\label:
+    sbiw  r26, 2
+    cpi   r27, 0x0B
+    brsh  \flash
+    rjmp  cluster_c_tail_18
+\flash:
+    ldi   r30, \dstaddr
+    jmp   primary_ld16_flash
+.endm
+
+emit_f7_ld8u_cont f7_ld8u_d0_cont, f7_ld8u_d0_flash, r9, 8
+emit_f7_ld8u_cont f7_ld8u_d1_cont, f7_ld8u_d1_flash, r11, 10
+emit_f7_ld8u_cont f7_ld8u_d2_cont, f7_ld8u_d2_flash, r13, 12
+emit_f7_ld8u_cont f7_ld8u_d3_cont, f7_ld8u_d3_flash, r15, 14
+emit_f7_ld8u_cont f7_ld8u_d4_cont, f7_ld8u_d4_flash, r17, 16
+emit_f7_ld8u_cont f7_ld8u_d5_cont, f7_ld8u_d5_flash, r19, 18
+emit_f7_ld8u_cont f7_ld8u_d6_cont, f7_ld8u_d6_flash, r21, 20
+emit_f7_ld8u_cont f7_ld8u_d7_cont, f7_ld8u_d7_flash, r23, 22
+
+emit_f7_ld16_cont f7_ld16_d0_cont, f7_ld16_d0_flash, 8
+emit_f7_ld16_cont f7_ld16_d1_cont, f7_ld16_d1_flash, 10
+emit_f7_ld16_cont f7_ld16_d2_cont, f7_ld16_d2_flash, 12
+emit_f7_ld16_cont f7_ld16_d3_cont, f7_ld16_d3_flash, 14
+emit_f7_ld16_cont f7_ld16_d4_cont, f7_ld16_d4_flash, 16
+emit_f7_ld16_cont f7_ld16_d5_cont, f7_ld16_d5_flash, 18
+emit_f7_ld16_cont f7_ld16_d6_cont, f7_ld16_d6_flash, 20
+emit_f7_ld16_cont f7_ld16_d7_cont, f7_ld16_d7_flash, 22
+
+
 
 ; FA contains immediate body jumps,
 ; register-count forwarding entries, and destination-specialized shift bodies;
@@ -8458,6 +8955,8 @@ avrlibm_embedded_end:
 ; Copy backward exactly when dst > src and unsigned(dst - src) < n.
 ; The forward cases enter memcpy's shared forward-copy loop below.
 sys_memmove_impl:
+    cpi   VM_R5H, 0x0B           ; AS0 flash-window source is a forward flash copy
+    brsh  sys_memcpy_flash_impl
     movw  r30, VM_R4             ; Z = destination
     movw  r26, VM_R5             ; X = source
     movw  r24, VM_R6             ; r25:r24 = remaining count
@@ -8504,6 +9003,8 @@ sys_memmove_impl:
 ; void *memcpy(void *dst, void const *src, uint16_t n)
 ;   r4 = dst/result, r5 = src, r6 = n
 sys_memcpy_impl:
+    cpi   VM_R5H, 0x0B           ; AS0 flash-window source takes the reader path
+    brsh  sys_memcpy_flash_impl
     movw  r30, VM_R4             ; Z = destination
     movw  r26, VM_R5             ; X = source
     movw  r24, VM_R6             ; r25:r24 = remaining count
@@ -8529,6 +9030,28 @@ sys_memcpy_impl:
     ld    r0, X+
     st    Z+, r0
 .Lsys_memcpy_done:
+    jmp   cluster_tail_18
+
+; AS0 memcpy/memmove from the flash window. One fixed-count reader transaction
+; copies n bytes from the translated image offset into RAM at dst. Zero length
+; returns without touching either pointer; the service byte is consumed once.
+;   r4 = dst/result, r5 = AS0 source at or above 0x0B00, r6 = n
+sys_memcpy_flash_impl:
+    movw  r0, VM_R6              ; reader count
+    mov   r27, r0
+    or    r27, r1
+    breq  .Lsys_memcpy_flash_done
+    add   VM_PCL, ONE            ; service byte -> following primary opcode
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+    movw  r30, VM_R4             ; reader destination
+    mov   r24, VM_R5L            ; image-relative low = AS0 low
+    mov   r25, VM_R5H
+    subi  r25, 0x06              ; image-relative high = AS0 high - 0x06
+    clr   r26
+    call  fx_read_program_bytes_func
+    jmp   seek_and_dispatch_func
+.Lsys_memcpy_flash_done:
     jmp   cluster_tail_18
 
 ; void *memcpy_P(void *dst, progptr/uint24_t src, uint16_t n)
@@ -10704,6 +11227,10 @@ sys_format_impl:
     mov   r27, PRIMARY_OPCODE       ; retain source/sink status through setup
     sbrc  r27, FORMAT_STATUS_SOURCE_PROGRAM
     rjmp  .Lformat_init_program_source
+    cpi   VM_R6H, 0x0B           ; AS0 flash-window format: not yet supported
+    brlo  .Lformat_ram_source_ram
+    jmp   sys_flash_window_unsupported
+.Lformat_ram_source_ram:
     sts   data_format_ram_ptr+0, VM_R6L
     sts   data_format_ram_ptr+1, VM_R6H
     rjmp  .Lformat_source_initialized
@@ -11554,6 +12081,10 @@ format_conversion_string:
     rjmp  format_unexpected_character
 1:
     rcall format_arg_u16
+    cpi   r25, 0x0B              ; AS0 flash-window %s argument: not yet supported
+    brlo  .Lformat_string_ram_arg
+    jmp   sys_flash_window_unsupported
+.Lformat_string_ram_arg:
     sts   data_format_string_original+0, r24
     sts   data_format_string_original+1, r25
 
@@ -12323,6 +12854,10 @@ sys_text_raw_impl:
     mov   r27, PRIMARY_OPCODE
     sbrc  r27, FORMAT_STATUS_SOURCE_PROGRAM
     rjmp  .Ltext_raw_init_program_source
+    cpi   VM_R6H, 0x0B           ; AS0 flash-window string: not yet supported
+    brlo  .Ltext_raw_source_ram
+    jmp   sys_flash_window_unsupported
+.Ltext_raw_source_ram:
     sts   data_format_ram_ptr+0, VM_R6L
     sts   data_format_ram_ptr+1, VM_R6H
     rjmp  .Ltext_raw_source_initialized

@@ -123,7 +123,7 @@ LOAD /home/brown/avm/interp/build/interp.o
 .rela.plt
  *(.rela.plt)
 
-.text           0x0000000000000000     0x6b74
+.text           0x0000000000000000     0x6ff4
  *(.vectors)
  *(.vectors)
  *(.progmem.gcc*)
@@ -170,14 +170,14 @@ LOAD /home/brown/avm/interp/build/interp.o
  *(.init9)
  *(.init9)
  *(.text)
- .text          0x0000000000000000     0x6b74 /home/brown/avm/interp/build/interp.o
+ .text          0x0000000000000000     0x6ff4 /home/brown/avm/interp/build/interp.o
                 0x0000000000000000                __vectors
                 0x0000000000000200                primary_table
                 0x0000000000000200                abvm_interp
-                0x000000000000415c                draw_bitmap_seek_func
-                0x0000000000006b74                . = ALIGN (0x2)
+                0x00000000000045c4                draw_bitmap_seek_func
+                0x0000000000006ff4                . = ALIGN (0x2)
  *(.text.*)
-                0x0000000000006b74                . = ALIGN (0x2)
+                0x0000000000006ff4                . = ALIGN (0x2)
  *(.fini9)
  *(.fini9)
  *(.fini8)
@@ -198,9 +198,9 @@ LOAD /home/brown/avm/interp/build/interp.o
  *(.fini1)
  *(.fini0)
  *(.fini0)
-                0x0000000000006b74                _etext = .
+                0x0000000000006ff4                _etext = .
 
-.data           0x0000000000800a0b        0x1 load address 0x0000000000006b74
+.data           0x0000000000800a0b        0x1 load address 0x0000000000006ff4
                 [!provide]                        PROVIDE (__data_start, .)
  *(.data)
  *(.data*)
@@ -219,8 +219,8 @@ LOAD /home/brown/avm/interp/build/interp.o
  *(.bss*)
  *(COMMON)
                 [!provide]                        PROVIDE (__bss_end, .)
-                0x0000000000006b74                __data_load_start = LOADADDR (.data)
-                0x0000000000006b75                __data_load_end = (__data_load_start + SIZEOF (.data))
+                0x0000000000006ff4                __data_load_start = LOADADDR (.data)
+                0x0000000000006ff5                __data_load_end = (__data_load_start + SIZEOF (.data))
 
 .noinit         0x0000000000800a0c        0x0
                 [!provide]                        PROVIDE (__noinit_start, .)

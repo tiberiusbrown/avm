@@ -183,9 +183,13 @@ The conventional runtime layout is:
 | `0x0500-0x08FF` | 1,024 bytes | Display framebuffer |
 | `0x0900-0x09FF` | 256 bytes | VM stack |
 | `0x0A00-0x0AFF` | 256 bytes | Runtime-reserved data |
-| `0x0B00-0xFFFF` | — | Platform-defined or unimplemented |
+| `0x0B00-0xFFFF` | — | Read-only AS0 flash window in the AVM interpreter; otherwise platform-defined |
 
 The null data pointer is `0x0000`.
+
+### 9.1. AS0 flash window (interpreter feature)
+
+The AVM interpreter treats a read whose 16-bit AS0 address lies in `0x0B00-0xFFFF` as a read of the external W25Q128 image at the fixed image-relative offset `address - 0x0600`, which covers image offsets `0x0500-0xF9FF`. The current image-page base is applied as for all program-space reads. The window is read-only, and it does not change the ISA encoding, the pointer width, or the program address space. Writes to the window, guest objects that cross `0x0AFF/0x0B00`, and C/C++ objects that are not explicitly placed there are not covered by this behaviour. Compiler and linker support for placing objects in the window is not yet implemented. The interpreter implements scalar loads, `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat`, and the RAM/flash `memcmp` and `strcmp` combinations; the flash/flash, flash-left program-memory, and flash-format and `%s` cases trap as unsupported. See [isa_interpreter_implementation.md](isa_interpreter_implementation.md) for the implementation contract and cycle costs.
 
 Access to unsupported, reserved, or platform-defined addresses has target-defined behavior and may be rejected by a validating implementation.
 

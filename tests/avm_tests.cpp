@@ -84,6 +84,7 @@ struct options_t {
     fs::path cpp_bin_dir = AVM_TEST_CXX_BIN_DIR;
     std::uint64_t advance_limit = kDefaultAdvanceLimit;
     bool verbose = false;
+    bool fxc = false;
     std::size_t jobs = 0;
     runner_selection selection;
     std::vector<std::string> optimizations = runner_optimizations(AVM_TEST_OPT_LEVELS);
@@ -109,7 +110,7 @@ std::string usage_text()
         "Usage: avm_tests [--interpreter FILE] [--asm-dir DIR] "
         "[--c-dir DIR] [--cpp-dir DIR] [--bin-dir DIR] "
         "[--c-bin-dir DIR] [--cpp-bin-dir DIR] "
-        "[--advance-limit PICOSECONDS] [--jobs N] [--verbose] [--filter REGEX] [--opt O0,O2] [--list]\n"
+        "[--advance-limit PICOSECONDS] [--jobs N] [--verbose] [--fxc] [--filter REGEX] [--opt O0,O2] [--list]\n"
         "Filter searches source stems; --opt selects compiled tests (ASM runs once).\n"
         "--jobs defaults to logical processor count; --jobs 1 runs sequentially.\n"
         "--list needs no interpreter or built images. No filters runs the full suite.";
@@ -169,6 +170,8 @@ options_t parse_options(int argc, char** argv)
             options.jobs = runner_parse_jobs(std::string(require_value(arg)));
         else if(arg == "--verbose")
             options.verbose = true;
+        else if(arg == "--fxc")
+            options.fxc = true;
         else if(arg == "--filter")
             options.selection.filter(std::string(require_value(arg)));
         else if(arg == "--opt")
@@ -384,9 +387,15 @@ void load_file(absim::arduboy_t& arduboy,
 
 std::vector<std::uint8_t> run_image(fs::path const& interpreter,
                                     fs::path const& image,
-                                    std::uint64_t advance_limit)
+                                    std::uint64_t advance_limit,
+                                    bool fxc)
 {
     auto arduboy = std::make_unique<absim::arduboy_t>();
+    if(fxc) {
+        // FX-C serial-flash chip select is PE2 instead of the default PD1 line.
+        arduboy->program_state.cfg.fxport_reg = absim::reg::addr::PORTE;
+        arduboy->program_state.cfg.fxport_mask = 1u << 2;
+    }
     arduboy->reset();
 
     load_file(*arduboy, interpreter, "interpreter.hex");
@@ -540,7 +549,7 @@ std::string test_label(test_case_t const& test)
 void run_test(test_case_t const& test,
               fs::path const& interpreter,
               std::uint64_t advance_limit,
-              bool verbose, std::ostream& log)
+              bool fxc, bool verbose, std::ostream& log)
 {
     require_file(test.expected, "expected-output file");
     require_file(test.image, "built AVM test image");
@@ -553,7 +562,7 @@ void run_test(test_case_t const& test,
 
     std::vector<std::uint8_t> const expected = read_binary_file(test.expected);
     std::vector<std::uint8_t> const actual =
-        run_image(interpreter, test.image, advance_limit);
+        run_image(interpreter, test.image, advance_limit, fxc);
 
     if(normalize_newlines(actual) != normalize_newlines(expected)) {
         write_binary_file(test.actual, actual);
@@ -615,7 +624,7 @@ int main(int argc, char** argv)
         runner_parallel_for(tests.size(), workers, [&](std::size_t, std::size_t i) {
             std::ostringstream log;
             try {
-                run_test(tests[i], options.interpreter, options.advance_limit,
+                run_test(tests[i], options.interpreter, options.advance_limit, options.fxc,
                          options.verbose, log);
             }
             catch(std::exception const& error) {

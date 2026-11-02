@@ -469,6 +469,56 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 
 ---
 
+### 5.4. AS0 flash-window reads (interpreter feature)
+
+This subsection describes an interpreter-only feature pending compiler and linker integration. It does not change the ISA encoding, the 16-bit AS0 pointer width, the bytecode stream, or the primary/secondary stride.
+
+A read whose effective AS0 address is in `0x0B00-0xFFFF` is performed from the external W25Q128 image at image-relative offset `address - 0x0600` through the existing fixed-count reader, which applies `data_page_data` as for every program-space read. The window is read-only. Writes, guest objects that cross `0x0AFF/0x0B00`, and C/C++ objects that are not explicitly placed in the window are outside this contract.
+
+The classification is a single `CPI` on the high byte of the captured address. Every slot captures its address before any destination write, so `rD == rA` remains legal. A flash branch abandons the in-flight opcode stream, performs one independent read transaction, advances `VM_PC` past the instruction exactly once, and re-seeks the stream at the following opcode. `VM_FLAGS` is preserved. Post-increment forms advance the 16-bit guest pointer by the access width and keep the ordinary writeback order.
+
+Implemented flash reads:
+
+| Family | Forms |
+|---|---|
+| Primary `0x40-0x4F`, `0x60-0x6F` | `LD8U`, `LD16` through every destination/pointer pair |
+| `F5` dense | `LD8U`, `LD16` into `r0`-`r3` through `r4`-`r7` |
+| `F7` post-increment | `LD8U`, `LD16` into `r0`-`r7` through `r4`-`r7`, excluding reserved aliases |
+| `ED`-`EE` displaced | `LD8U`, `LD16` with classification after the displacement |
+| `F0` absolute | `LDM8U`, `LDM16` |
+| `F0` general pointer | `LD8U`, `LD16` through lower pointers `r0`-`r3`, with and without post-increment |
+| `F0` `LD32` | four bytes through any valid destination pair |
+| `SYS` `memcpy`, `memmove` | flash source copied in one reader transaction; RAM overlap behaviour unchanged |
+| `SYS` `strlen`, `strncpy`, `strncat` | flash source through the bounded program-string engine |
+| `SYS` `memcmp`, `strcmp` | RAM/flash in either order; mismatch sign inverted for flash-left |
+
+Not implemented. These cases trap through `invalid_secondary_instruction_func` rather than read unmapped RAM:
+
+- Both operands in the window for `memcmp`/`strcmp`, which needs staged chunk comparison.
+- Flash-left `memcmp_P`/`strcmp_P`, which pairs an AS0 flash operand with an AS1 operand.
+- Flash-backed format strings for `vsnprintf`, `draw_textfv`, `debug_printfv`, and raw `draw_text`, and flash `%s` arguments.
+
+Cycle costs, measured on the instruction benchmark and a probe image with the same break protocol:
+
+| Path | Before | After | Note |
+|---|---:|---:|---|
+| RAM `LD8U r4,[r6]` | 18 | 20 | classification on the primary slot |
+| RAM `LD16 r4,[r6]` | 18 | 21 | classification on the primary slot |
+| RAM `F5`/`F7` loads | 38-40 | 43-46 | classification and cluster return |
+| RAM `F0`, `ED`, `LD32` loads | 54-82 | 56-84 | one two-cycle check |
+| RAM `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat` | — | +2 | one check on entry |
+| RAM `memcmp`, `strcmp` | — | +4 | two checks on entry |
+| Flash `LD8U r4,[r6]` | — | 230 | single SPI transaction and re-seek |
+| Flash `LD16 r4,[r6]` | — | 246 | |
+| Flash `LDM16 r0,[0x0B00]` | — | 300 | absolute form |
+| Flash `LD32 q0,[r4]` | — | 329 | four bytes |
+| Flash `memcpy` `n=1` / `n=16` / `n=256` | — | 252 / 507 / 4587 | sequential reader, about 16-18 cycles per byte |
+| Flash `strlen` length 6 | — | 352 | |
+| Flash `strcmp` RAM/flash, equal length 6 | — | 256-258 | |
+| Flash `memcmp` RAM/flash, `n=16` | — | 277 | |
+
+The `before` column is blank for flash rows because the previous interpreter read unmapped RAM there. Those rows are absolute values only. The FX-C variant was not cycle-measured: `avm_bench` has no FX-C wiring option. Its size and full test-suite results are reported separately.
+
 ## 6. Primary opcode map
 
 | Primary range | Family | Bytes | Typical cycles |

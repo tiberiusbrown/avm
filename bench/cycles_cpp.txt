@@ -1,8 +1,8 @@
-     1238476   aggregate_byte_dispatch.cpp
-     1596220   aggregate_byte_packing.cpp
-     2292893   aggregate_byte_packing_hoisted.cpp
-     1083864   lambda_capture.cpp
-      386951   member_pointers.cpp
-      641050   scoped_lifetime.cpp
-     1860613   template_specialization.cpp
-      698467   virtual_dispatch.cpp
+     1244620   aggregate_byte_dispatch.cpp
+     1604924   aggregate_byte_packing.cpp
+     2301341   aggregate_byte_packing_hoisted.cpp
+     1089240   lambda_capture.cpp
+      392327   member_pointers.cpp
+      643546   scoped_lifetime.cpp
+     1865221   template_specialization.cpp
+      706659   virtual_dispatch.cpp

@@ -5,7 +5,7 @@ The throw crosses the frames named by --frame, innermost first. The first frame
 throws into __cxa_throw, and each later frame calls the frame before it. Every
 frame but the last must have a cleanup landing pad at its throwing call, and the
 last frame must have a catch-all pad. The machine code gives each call and the
-bytes it releases. The packed AVEH3 block gives each pad, which the unwinder reads.
+bytes it releases. The packed AVEH4 block gives each pad, which the unwinder reads.
 The probe observes the calls, the pads, every installation of a landing context,
 each _Unwind_Resume, and the catch and exception-object calls. The check requires:
 
@@ -80,15 +80,17 @@ def steps_of(objdump, elf, functions, frames):
         check(len(sites) == 1, 'the call in %s at 0x%x is not covered by one site' % (name, call_pc))
         site = sites[0]
         last = index == len(frames) - 1
+        check(site['action'] is not None, 'frame %s has no handler or cleanup at its call' % name)
+        has_cleanup, entries = site['action']
+        catch_all = [selector for selector, address in entries if address == 0]
         if last:
-            check(site['action'] & aveh.ACTION_CATCH_ALL,
-                  'the outermost frame %s does not catch at its call' % name)
+            check(catch_all, 'the outermost frame %s does not catch at its call' % name)
         else:
-            check(site['action'] & aveh.ACTION_CLEANUP,
-                  'frame %s has action %d, which does not clean up' % (name, site['action']))
+            check(has_cleanup, 'frame %s has no cleanup flag at its call' % name)
         steps.append({'frame': name, 'call': call_pc, 'outgoing': outgoing,
-                      'pad': site['landing'], 'action': site['action'], 'last': last,
-                      'selector': 1 if last else 0})
+                      'pad': site['landing'], 'last': last,
+                      'action': 'catch-all %d' % catch_all[0] if last else 'cleanup',
+                      'selector': catch_all[0] if last else 0})
     return steps
 
 
@@ -214,10 +216,10 @@ def verify(args):
             failures.append('%s ran %d times, expected %d' % (name, counts.get(name, 0), want))
 
     print('%s: %s' % (os.path.basename(args.elf), ' -> '.join(args.frame)))
-    print('  %-14s %-7s %-4s %-8s %-8s %-8s %-4s' % (
+    print('  %-14s %-14s %-4s %-8s %-8s %-8s %-4s' % (
         'frame', 'action', 'out', 'call_sp', 'pad_sp', 'expect', 'sel'))
     for step in steps:
-        print('  %-14s %-7d %-4d 0x%04x   0x%04x   0x%04x   %-4d' % (
+        print('  %-14s %-14s %-4d 0x%04x   0x%04x   0x%04x   %-4d' % (
             step['frame'], step['action'], step['outgoing'], step['call_sp'],
             step['pad_sp'], step['call_sp'] + step['outgoing'], step['install_r5']))
     if failures:

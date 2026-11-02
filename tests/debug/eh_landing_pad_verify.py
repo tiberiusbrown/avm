@@ -8,7 +8,7 @@ call plus that adjsp amount. The probe observes the SP at the call instruction a
 at the landing pad, and this check compares them. It also checks that r0-r3 at the
 landing pad equal their values at the call, since the frame's callee-saved
 registers must come back unchanged. The landing pad address is read from the
-packed AVEH3 block, which is what the unwinder uses.
+packed AVEH4 block, which is what the unwinder uses.
 """
 
 import argparse
@@ -147,7 +147,7 @@ def verify(args):
     expected = {}
     for call_pc, return_pc, callee, outgoing in calls:
         sites = [s for s in record['sites']
-                 if s['action'] != 0 and s['start'] <= return_pc - 1 < s['end']]
+                 if s['action'] is not None and s['start'] <= return_pc - 1 < s['end']]
         check(len(sites) == 1, 'the call at 0x%x is not covered by one handler or cleanup site'
               % call_pc)
         pad = sites[0]['landing']

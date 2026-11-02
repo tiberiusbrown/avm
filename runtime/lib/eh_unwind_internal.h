@@ -26,7 +26,8 @@ struct avm_eh_context {
  * state lives on the guest stack. The throw shim stores the throwing frame's
  * registers, the type-descriptor program address, and the destructor program
  * address. The two program addresses are 24-bit, so they are stored as bytes
- * and never as 16-bit data pointers. */
+ * and never as 16-bit data pointers. The handler selector is the LLVM type ID
+ * that phase one matched, and phase two passes it to the handler's pad. */
 struct avm_eh_exception {
     struct avm_eh_context context;        /* +0  landing state; exception = this header */
     uint8_t type_address[3];              /* +15 type-descriptor program address (r6:r7) */
@@ -34,6 +35,7 @@ struct avm_eh_exception {
     uint16_t size;                        /* +21 object size */
     uint8_t state;                        /* +23 AVM_EH_STATE_* */
     struct avm_eh_context resume_context; /* +24 frame cursor for the next step */
+    uint16_t handler_selector;            /* +39 selector of the matched catch */
 };
 
 /* Results of avm_eh_prepare_next. A cleanup or catch step fills the header's
@@ -44,7 +46,7 @@ struct avm_eh_exception {
 
 /* Non-returning installer. Loads the landing pad, stack pointer, and r0-r3 from
  * the context. It passes the exception header in r4 and the selector in r5: 0
- * for a cleanup-only landing pad, and 1 for a catch-all handler. */
+ * for a cleanup-only landing pad, and the handler's LLVM type ID for a catch. */
 __attribute__((noreturn)) void
 __avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector);
 
@@ -52,19 +54,21 @@ __avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector
  * Searches for a handler and never returns. */
 __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header);
 
-/* Returns 1 when the AVEH3 block at the 24-bit flash address is well formed. It
+/* Returns 1 when the AVEH4 block at the 24-bit flash address is well formed. It
  * applies the same bounded checks that the unwinder uses for each record. */
 uint8_t avm_eh_validate_block(uint32_t block);
 
-/* Walks frames from *context until a catch-all handler is found. On success,
- * *context becomes the landing-pad state and the function returns 1. It
- * returns 0 when no handler exists or the metadata cannot describe a frame. */
-uint8_t avm_eh_find_handler(struct avm_eh_context *context);
+/* Phase one. Walks frames from the header's resume context until one has a catch
+ * that matches the thrown type. On success, the header's handler_selector holds
+ * the matched selector, and the resume context becomes the handler's landing
+ * state. It returns 0 when no handler exists or the metadata cannot describe a
+ * frame. */
+uint8_t avm_eh_find_handler(struct avm_eh_exception *header);
 
-/* Advances the header's resume context to the next cleanup or handler. For a
- * cleanup, the header's context becomes its landing state and the resume context
- * moves to the cleanup's caller. For a handler, the context becomes its landing
- * state and the resume context is left at the handler. Returns one of the
+/* Phase two. Advances the header's resume context to the next cleanup or handler.
+ * For a cleanup, the header's context becomes its landing state and the resume
+ * context moves to the cleanup's caller. For a handler, the context becomes its
+ * landing state, and the resume context is left at the handler. Returns one of the
  * AVM_EH_STEP values. */
 uint8_t avm_eh_prepare_next(struct avm_eh_exception *header);
 

@@ -25,7 +25,7 @@ SHN_LORESERVE = 0xff00
 
 # Two 24-bit entries precede the address point that descriptors name.
 ADDRESS_POINT = 6
-HEADER_SIZE = 39
+HEADER_SIZE = 41
 DESCRIPTOR_TYPE = re.compile(r'^_Z(T[IV]|TS)')
 
 # The vtable that a descriptor names selects its layout. The class, fundamental,

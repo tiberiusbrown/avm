@@ -10,7 +10,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Language mode and target integration
 
-- [ ] **Exception-capable C++ language mode:** Support typed `catch` clauses, exception specifications, `throw;` rethrow, and nested exceptions. The default AVM C++ configuration still specifies `-fno-exceptions`.
+- [ ] **Exception-capable C++ language mode:** Support catch clauses that match base classes or convert the thrown type, exception specifications, `throw;` rethrow, and nested exceptions. The default AVM C++ configuration still specifies `-fno-exceptions`.
 - [ ] **Runtime type identification:** Support `typeid` and `dynamic_cast` in the cases required by C++, including polymorphic types, multiple/virtual inheritance, and runtime failure cases. The AVM C++ configuration currently specifies `-fno-rtti`.
 - [ ] **C++20 modules:** Support compilation, dependency ordering, interface/implementation units, imports, linking, and cross-translation-unit semantics for language modules in the AVM SDK, including relevant AVM target and toolchain integration. This concerns the core language, not the hosted library modules `std` and `std.compat`.
 - [ ] **Coroutines:** Validate and provide AVM lowering and execution for C++20/C++23 coroutine creation, suspension, resumption, destruction, frame allocation, cleanup, and cross-translation-unit references.
@@ -20,10 +20,9 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### C++ ABI, object lifetime, and exception runtime
 
-- [ ] **Exception ABI:** Provide typed catch matching that interprets the exception-type descriptors, exception-object state for nested and rethrown exceptions, and stack-unwind support for exceptions thrown from allocation functions.
+- [ ] **Exception ABI:** Provide base-class and conversion matching for catch clauses, which interprets the base-class fields of exception-type descriptors, exception-object state for nested and rethrown exceptions, and stack-unwind support for exceptions thrown from allocation functions.
 - [ ] **Stack cleanup and termination:** Ensure destructors execute for the fully constructed elements of an array whose construction fails; invoke `std::terminate` for the required failure cases, including violations of `noexcept`.
-- [ ] **RTTI ABI:** Interpret class type descriptors, base-class relationships, vtable RTTI fields, and type names at run time, and support the runtime operations needed by `dynamic_cast`, `typeid`, and catch matching.
-- [ ] **RTTI support vtables for other type categories:** Define the Itanium support vtables that exception descriptors name for enumeration, function, and pointer-to-member types, so that a `throw` of those types links and runs.
+- [ ] **RTTI ABI:** Interpret class type descriptors, base-class relationships, vtable RTTI fields, and type names at run time, and support the runtime operations needed by `dynamic_cast`, `typeid`, and base-class catch matching.
 - [ ] **Dynamic initialization and destruction:** Complete initialization guards, recursive-initialization handling, and destructor registration/order semantics for namespace-scope, function-local static, and thread-local objects in the supported execution model, including early termination and exception paths.
 - [ ] **Required termination callback capacity:** Guarantee registration of at least 32 functions through C++ `std::atexit` and separately through `std::at_quick_exit`, with the specified callback ordering and failure semantics in a conforming C++23 mode. AVM's `atexit` storage is currently linker-capacity-dependent and quick-termination support is missing.
 

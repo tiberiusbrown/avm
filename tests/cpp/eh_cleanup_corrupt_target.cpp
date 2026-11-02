@@ -4,7 +4,7 @@
 // and then C from the catch. unrelated has its own catch-all, which prints U. It
 // runs before the throw and never sees the exception.
 //
-// The runner in tests/debug/eh_corruption_verify.py --cleanup mutates the AVEH3
+// The runner in tests/debug/eh_corruption_verify.py --cleanup mutates the AVEH4
 // block of this image. A corrupted run must end cleanly: it prints the halt report
 // after whatever destructors ran, and it prints neither C, P, nor U.
 #include <avm.h>

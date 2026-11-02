@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs corrupted AVEH3 blocks through the production unwinder.
+"""Runs corrupted AVEH4 blocks through the production unwinder.
 
 Each mutant is a copy of a valid exception image with one field of the metadata
 changed. The guest throws through protected_frame, and the probe reports how the
@@ -17,12 +17,15 @@ import subprocess
 import sys
 import tempfile
 
-MAGIC = b'AVEH3'
+MAGIC = b'AVEH4'
 HEADER_SIZE = 10
 FUNCTION_HEADER_SIZE = 18
 ROW_HEADER_SIZE = 5
-SITE_SIZE = 10
+SITE_SIZE = 12
 CALL_SIZE = 5
+ACTION_CLEANUP = 0x01
+ACTION_HEADER_SIZE = 3
+CATCH_SIZE = 5
 FLAG_R3_BASE = 0x80
 FLAG_SAVED_MASK = 0x0f
 
@@ -103,7 +106,8 @@ def parse_block(data, block):
         functions.append({'start': start, 'end': end, 'rows': row_offsets,
                           'sites': site_offset, 'site_count': sites,
                           'calls': site_offset + SITE_SIZE * sites, 'call_count': calls,
-                          'header': fh, 'next': fh + next_offset})
+                          'header': fh, 'next': fh + next_offset,
+                          'pool': fh + sites_offset + SITE_SIZE * sites + CALL_SIZE * calls})
         fh = fh + next_offset
     check(fh == limit, 'the block does not end at its declared size')
     return functions, limit
@@ -111,12 +115,18 @@ def parse_block(data, block):
 
 def handler_site(data, record):
     """Returns the offset of the first site of record whose action is not zero. The
-    cleanup mutations name that site, since a record also holds gap sites."""
+    action mutations name that site, since a record also holds gap sites."""
     for index in range(record['site_count']):
         offset = record['sites'] + SITE_SIZE * index
-        if data[offset + 9]:
+        if read_u(data, offset + 9, 3):
             return offset
     raise Failure('the record at 0x%x has no handler or cleanup site' % record['start'])
+
+
+def action_list(data, record, site):
+    """Returns the offset of the action list that the site names. The offset is
+    measured from the record, so it is added to the record's header offset."""
+    return record['header'] + read_u(data, site + 9, 3)
 
 
 def call_in_site(data, record, site):
@@ -204,11 +214,15 @@ def mutate(data, block, functions, limit, names, name):
     elif name == 'leaf_pad_outside_function':
         # The throw's cleanup pad in leaf names an address in middle.
         put(handler_site(data, leaf) + 6, middle['start'], 3)
-    elif name == 'middle_site_action_catch':
-        # middle's cleanup pad is taken for a catch-all, and it then resumes.
-        put(handler_site(data, middle) + 9, 1, 1)
-    elif name == 'middle_site_action_reserved':
-        put(handler_site(data, middle) + 9, 0x06, 1)
+    elif name == 'middle_action_reserved':
+        # middle's cleanup list sets a reserved flag bit, so the list is malformed.
+        out[action_list(data, middle, handler_site(data, middle))] |= 0x02
+    elif name == 'middle_action_offset_outside':
+        # The site names an offset past its record, which is not a list in the pool.
+        put(handler_site(data, middle) + 9, middle['next'] - middle['header'] + 4, 3)
+    elif name == 'middle_action_offset_before_pool':
+        # The site names an offset inside its sites, before the action pool.
+        put(handler_site(data, middle) + 9, middle['sites'] - middle['header'] + 1, 3)
     elif name == 'middle_call_bytes_too_large':
         put(call_in_site(data, middle, handler_site(data, middle)) + 3, 0x0100, 2)
     elif name == 'middle_call_record_moved':
@@ -220,6 +234,19 @@ def mutate(data, block, functions, limit, names, name):
             put(row + 3, 0x0400, 2)
     elif name == 'protected_row_reserved_flag':
         out[protected['rows'][0] + 2] |= 0x10
+    elif name == 'protected_action_reserved':
+        # The catch-all list sets a reserved flag bit.
+        out[action_list(data, protected, handler_site(data, protected))] |= 0x02
+    elif name == 'protected_action_selector_zero':
+        # The catch-all entry names selector zero, which no list may hold.
+        entry = action_list(data, protected, handler_site(data, protected)) + ACTION_HEADER_SIZE
+        put(entry, 0, 2)
+    elif name == 'protected_action_count_large':
+        put(action_list(data, protected, handler_site(data, protected)) + 1, 0x0100, 2)
+    elif name == 'protected_action_offset_outside':
+        put(handler_site(data, protected) + 9, protected['next'] - protected['header'] + 4, 3)
+    elif name == 'protected_action_offset_before_pool':
+        put(handler_site(data, protected) + 9, protected['sites'] - protected['header'] + 1, 3)
     else:
         raise Failure('unknown mutation %s' % name)
     check(out != data, 'mutation %s changed nothing' % name)
@@ -231,7 +258,10 @@ MUST_HALT = ['magic_mismatch', 'declared_length', 'row_pc_delta', 'cfa_base_regi
              'reserved_mask_bit', 'saved_slot_offset', 'landing_pad', 'call_range',
              'outgoing_argument_bytes', 'site_count_inconsistent', 'call_count_zero',
              'sites_offset_large', 'next_offset_zero', 'next_offset_backward',
-             'next_offset_past_block', 'next_offset_inconsistent']
+             'next_offset_past_block', 'next_offset_inconsistent',
+             'protected_action_reserved', 'protected_action_selector_zero',
+             'protected_action_count_large', 'protected_action_offset_outside',
+             'protected_action_offset_before_pool']
 # These controls change a record that the throw never reads. Their output must
 # match the valid run.
 MUST_MATCH = ['control_unrelated_call_bytes', 'control_after_throw_next_offset']
@@ -241,10 +271,10 @@ ANY_CLEAN = ['function_count']
 # The cleanup target. Each of these breaks a field that the throw consumes through a
 # cleanup or a frame that a cleanup must unwind, so the run must halt. The halt can
 # come after some destructors have run, and it must still end with the halt report.
-MUST_HALT_CLEANUP = ['leaf_pad_outside_function', 'middle_site_action_catch',
-                     'middle_site_action_reserved', 'middle_call_bytes_too_large',
-                     'middle_call_record_moved', 'middle_cfa_outside_stack',
-                     'protected_row_reserved_flag']
+MUST_HALT_CLEANUP = ['leaf_pad_outside_function', 'middle_action_reserved',
+                     'middle_action_offset_outside', 'middle_action_offset_before_pool',
+                     'middle_call_bytes_too_large', 'middle_call_record_moved',
+                     'middle_cfa_outside_stack', 'protected_row_reserved_flag']
 MUST_MATCH_CLEANUP = ['control_unrelated_call_bytes', 'control_after_throw_next_offset']
 
 
@@ -293,8 +323,8 @@ def main():
     with open(args.image, 'rb') as handle:
         data = handle.read()
     block = data.find(MAGIC)
-    check(block >= 0, 'the image has no AVEH3 block')
-    check(data.find(MAGIC, block + 1) < 0, 'the image has more than one AVEH3 block')
+    check(block >= 0, 'the image has no AVEH4 block')
+    check(data.find(MAGIC, block + 1) < 0, 'the image has more than one AVEH4 block')
     functions, limit = parse_block(data, block)
     names = function_symbols(args.nm, args.elf)
 

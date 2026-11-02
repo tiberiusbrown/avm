@@ -10,10 +10,11 @@
 ; caller's SP is SP+3 on entry, and the return record at SP+0 is the caller's
 ; continuation.
 ;
-; The 39-byte header is struct avm_eh_exception in eh_unwind_internal.h, and the
+; The 41-byte header is struct avm_eh_exception in eh_unwind_internal.h, and the
 ; offsets below must match it. The context is first, so the unwinder reads the
-; throw site in place without a stack copy. The resume context after the context
-; is not written here: __avm_eh_throw initializes it from the context.
+; throw site in place without a stack copy. The resume context and the handler
+; selector are not written here: __avm_eh_throw initializes the resume context
+; from the context, and phase one sets the selector.
 ;
 ; The assembler encodes stack stores of r4-r7 only at offsets 0-15, and this
 ; shim uses only heap-relative stores, so it needs no temporary stack slot.
@@ -23,8 +24,8 @@
 .globl __cxa_throw
 .type __cxa_throw, @function
 __cxa_throw:
-    ; r4 = header, which lies 39 bytes below the object.
-    addi.s8 r4, -39
+    ; r4 = header, which lies 41 bytes below the object.
+    addi.s8 r4, -41
 
     ; Store the incoming registers before any of them is reused. The
     ; header's exception field is written by __avm_eh_throw.

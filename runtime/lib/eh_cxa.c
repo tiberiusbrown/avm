@@ -1,21 +1,19 @@
-/* Itanium C++ ABI subset for catch-all handlers and cleanups.
+/* Itanium C++ ABI subset for typed catches, catch-all handlers, and cleanups.
  *
  * Only one exception can be active at a time, and it cannot be rethrown. A throw
  * while one is active, including a throw from a destructor that runs during
- * unwinding, terminates through abort(). Typed catches, filters, and RTTI
- * matching are not implemented. A program that needs them fails at link time or
- * at the first unsupported call.
+ * unwinding, terminates through abort(). Matching is exact: a catch matches when
+ * its RTTI descriptor address equals the thrown object's, which the unwinder
+ * compares in eh_unwind.c. Inheritance, reference and pointer conversions, and
+ * rethrow are not implemented.
  *
  * The header precedes the thrown object and holds the landing context, the
- * resume context, the type-descriptor address, and the destructor. The unwinder
- * updates both contexts in place. Propagation alternates between cleanup and
- * resume: each cleanup pad runs its destructors and then calls _Unwind_Resume,
- * which continues from the saved resume context. __cxa_end_catch frees the
- * header. The shim that fills the header is in eh_cxa_throw.asm.
- *
- * The type-descriptor address is a 24-bit program address that the runtime
- * stores but never reads. Typed matching is not implemented, so the descriptors
- * in flash are not interpreted here. */
+ * resume context, the type-descriptor address, the destructor, and the selector
+ * of the matched catch. The unwinder updates both contexts in place. Propagation
+ * alternates between cleanup and resume: each cleanup pad runs its destructors
+ * and then calls _Unwind_Resume, which continues from the saved resume context.
+ * __cxa_end_catch frees the header. The shim that fills the header is in
+ * eh_cxa_throw.asm. */
 
 #include <avm/pgmspace.h>
 #include <stdint.h>
@@ -45,17 +43,22 @@ static struct avm_eh_exception *active_exception;
  * address point, which keeps the point inside its own object, so no two vtables
  * can share an address point. Nothing reads these entries or calls them yet, and
  * they are zero. They live in program space, where the descriptors and their
- * vtable references are placed. */
+ * vtable references are placed. Each vtable is defined here and linked only when a
+ * descriptor references it. */
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv123__fundamental_type_infoE[9] = {0};
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__class_type_infoE[9] = {0};
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv120__si_class_type_infoE[9] = {0};
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv121__vmi_class_type_infoE[9] = {0};
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv119__pointer_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv116__enum_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv120__function_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv129__pointer_to_member_type_infoE[9] = {0};
+const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__array_type_infoE[9] = {0};
 
 /* eh_cxa_throw.asm stores the header fields at these offsets, and it computes the
  * object address from the header size. Keep it in sync with this layout. */
-_Static_assert(sizeof(struct avm_eh_exception) == 39,
-               "__cxa_throw assumes a 39-byte exception header");
+_Static_assert(sizeof(struct avm_eh_exception) == 41,
+               "__cxa_throw assumes a 41-byte exception header");
 _Static_assert(offsetof(struct avm_eh_exception, context) == 0,
                "exception context offset");
 _Static_assert(offsetof(struct avm_eh_exception, type_address) == 15,
@@ -68,6 +71,8 @@ _Static_assert(offsetof(struct avm_eh_exception, state) == 23,
                "exception state offset");
 _Static_assert(offsetof(struct avm_eh_exception, resume_context) == 24,
                "exception resume context offset");
+_Static_assert(offsetof(struct avm_eh_exception, handler_selector) == 39,
+               "exception handler selector offset");
 
 void *__cxa_allocate_exception(size_t size) {
     if (size > UINT16_MAX - sizeof(struct avm_eh_exception))
@@ -80,6 +85,7 @@ void *__cxa_allocate_exception(size_t size) {
     header->destructor = NULL;
     header->size = (uint16_t)size;
     header->state = AVM_EH_STATE_ALLOCATED;
+    header->handler_selector = 0;
     return header + 1;
 }
 
@@ -90,10 +96,11 @@ void __cxa_free_exception(void *object) {
 /* Enters the next landing pad of the active unwind. The header's resume context
  * is the frame cursor, and avm_eh_prepare_next has set the context to the pad. A
  * cleanup pad receives selector 0, and the state is IN_CLEANUP until it calls
- * _Unwind_Resume. The final handler receives selector 1, and the state is
- * ENTERING_CATCH until it calls __cxa_begin_catch. Every transfer discards the
- * frames of this dispatch, because the installer sets the stack pointer. It is
- * inlined into its two callers, which saves one frame on the guest stack. */
+ * _Unwind_Resume. The final handler receives the selector that phase one matched,
+ * and the state is ENTERING_CATCH until it calls __cxa_begin_catch. A handler's
+ * selector is never zero. Every transfer discards the frames of this dispatch,
+ * because the installer sets the stack pointer. It is inlined into its two callers,
+ * which saves one frame on the guest stack. */
 static __attribute__((noreturn, always_inline)) inline void
 continue_unwind(struct avm_eh_exception *header) {
     uint8_t step = avm_eh_prepare_next(header);
@@ -101,16 +108,17 @@ continue_unwind(struct avm_eh_exception *header) {
         header->state = AVM_EH_STATE_IN_CLEANUP;
         __avm_eh_install_context(&header->context, 0);
     }
-    if (step != AVM_EH_STEP_CATCH)
+    if (step != AVM_EH_STEP_CATCH || header->handler_selector == 0)
         abort();
     header->state = AVM_EH_STATE_ENTERING_CATCH;
-    __avm_eh_install_context(&header->context, 1);
+    __avm_eh_install_context(&header->context, header->handler_selector);
 }
 
 /* Entered by tail transfer from __cxa_throw, after the shim has captured the
  * throw site into the header. The header is in r4. Phase one searches from a copy
- * of the throw site for a catch-all handler, and nothing runs while it searches.
- * Phase two starts again from the throw site and runs each cleanup in turn. */
+ * of the throw site for the handler whose catch matches the thrown type, and
+ * nothing runs while it searches. Phase two starts again from the throw site and
+ * runs each cleanup in turn. */
 __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header) {
     if (active_exception)
         abort();
@@ -120,7 +128,7 @@ __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header) {
     active_exception = header;
 
     header->resume_context = header->context;
-    if (!avm_eh_find_handler(&header->resume_context))
+    if (!avm_eh_find_handler(header))
         abort();
 
     header->resume_context = header->context;
@@ -151,6 +159,16 @@ void *__cxa_begin_catch(void *exception) {
     return header + 1;
 }
 
+/* Returns the object address of the entering exception without changing its state.
+ * Clang calls this for a by-value catch with a copy constructor, and the copy runs
+ * before __cxa_begin_catch, so the exception is still ENTERING_CATCH. */
+void *__cxa_get_exception_ptr(void *exception) {
+    struct avm_eh_exception *header = exception;
+    if (header != active_exception || header->state != AVM_EH_STATE_ENTERING_CATCH)
+        abort();
+    return header + 1;
+}
+
 /* Ends the catch that the active exception began. The exception is destroyed and
  * freed here, and only here. Cleanup pads never reach this function. */
 void __cxa_end_catch(void) {
@@ -163,7 +181,7 @@ void __cxa_end_catch(void) {
     free(header);
 }
 
-/* The AVEH3 unwinder uses no personality routines, so this function is never
+/* The AVEH4 unwinder uses no personality routines, so this function is never
  * reached. It exists because LLVM names it in the EH personality, and it
  * terminates if a program ever calls it. */
 int __gxx_personality_v0(void) {

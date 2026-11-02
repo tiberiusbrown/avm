@@ -302,7 +302,9 @@ foreach(AVM_TEST_ASM IN LISTS AVM_EH_ASM_TEST_SOURCES)
 endforeach()
 
 # Headers that exception fixtures include from their support translation units.
-set(AVM_EH_SUPPORT_HEADERS "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity.h")
+set(AVM_EH_SUPPORT_HEADERS
+    "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity.h"
+    "${AVM_CXX_TEST_DIR}/support/eh_typed.h")
 foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
     get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
     foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
@@ -333,7 +335,19 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
                 DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
             )
             list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
-        elseif(AVM_TEST_NAME STREQUAL "eh_rtti_high_address")
+        elseif(AVM_TEST_NAME STREQUAL "eh_typed")
+            # The unit throws Remote, which the main unit catches by exact type.
+            set(AVM_EH_UNIT_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_unit.o")
+            avm_add_object(
+                OUTPUT "${AVM_EH_UNIT_OBJECT}"
+                SOURCE "${AVM_CXX_TEST_DIR}/support/eh_typed_unit.cpp"
+                LANGUAGE CXX
+                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
+                DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+            )
+            list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
+        elseif(AVM_TEST_NAME STREQUAL "eh_rtti_high_address"
+               OR AVM_TEST_NAME STREQUAL "eh_typed_high_address")
             # Put the descriptors and the destructor above 0xFFFF. The image keeps
             # its data and ordinary code below 64 KiB, as the other high-address
             # fixtures do. Explicit section starts replace the AVM default layout,
@@ -365,11 +379,11 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
 endforeach()
 
 add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
-# Checks the AVEH3 block of each exception-enabled image against the linked ELF,
+# Checks the AVEH4 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.
 set(AVM_EH_VERIFY_ARGS)
 foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
-    foreach(AVM_EH_VERIFY_NAME IN ITEMS eh_catch_all eh_call8 eh_cleanup)
+    foreach(AVM_EH_VERIFY_NAME IN ITEMS eh_catch_all eh_call8 eh_cleanup eh_typed)
         set(AVM_EH_ELF "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/${AVM_EH_VERIFY_NAME}.elf")
         set(AVM_EH_IMAGE "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}/${AVM_EH_VERIFY_NAME}.bin")
         list(APPEND AVM_EH_VERIFY_ARGS --eh-elf "${AVM_EH_ELF}" --eh-image "${AVM_EH_IMAGE}")
@@ -381,19 +395,33 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 # in their own image directory, so the runners select them with --cpp-bin-dir.
 set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
 set(AVM_EH_LTO_IMAGES)
-foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object)
+foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object eh_typed)
     set(AVM_EH_LTO_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.o")
     set(AVM_EH_LTO_ELF "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.elf")
     set(AVM_EH_LTO_IMAGE "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.bin")
+    set(AVM_EH_LTO_OBJECTS "${AVM_EH_LTO_OBJECT}")
     avm_add_object(
         OUTPUT "${AVM_EH_LTO_OBJECT}"
         SOURCE "${AVM_CXX_TEST_DIR}/${AVM_EH_LTO_NAME}.cpp"
         LANGUAGE CXX
         COMPILE_OPTIONS -O2 -fexceptions -flto=full
-        DEPENDS avm_sysroot
+        DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
     )
+    if(AVM_EH_LTO_NAME STREQUAL "eh_typed")
+        # The unit is compiled with LTO too, so cross-unit descriptors must merge
+        # after the whole program is optimized.
+        set(AVM_EH_LTO_UNIT_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}_unit.o")
+        avm_add_object(
+            OUTPUT "${AVM_EH_LTO_UNIT_OBJECT}"
+            SOURCE "${AVM_CXX_TEST_DIR}/support/eh_typed_unit.cpp"
+            LANGUAGE CXX
+            COMPILE_OPTIONS -O2 -fexceptions -flto=full
+            DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+        )
+        list(APPEND AVM_EH_LTO_OBJECTS "${AVM_EH_LTO_UNIT_OBJECT}")
+    endif()
     avm_add_image(
-        OBJECTS "${AVM_EH_LTO_OBJECT}"
+        OBJECTS ${AVM_EH_LTO_OBJECTS}
         OUTPUT_ELF "${AVM_EH_LTO_ELF}"
         OUTPUT_IMAGE "${AVM_EH_LTO_IMAGE}"
         ENTRY _start
@@ -540,7 +568,7 @@ add_custom_target(avm_eh_catch_all_run
 add_dependencies(avm_eh_catch_all_run avm_eh_catch_all_lto_run avm_eh_hardening_run)
 
 # Stage 2 cleanup fixtures. The cleanup chain of the first throw is checked against
-# the machine code, the packed AVEH3 block, and the probe's events, at O0, O2, and
+# the machine code, the packed AVEH4 block, and the probe's events, at O0, O2, and
 # LTO/O2. Each cleanup frame's landing SP is checked: the zero, two, and eight
 # argument-byte cases, the r3-based frame, and the relaxed call8 and call16 sites.
 # The termination fixtures run here too, since their output is the halt report.
@@ -624,6 +652,43 @@ add_custom_target(avm_eh_cleanup_run
     VERBATIM
 )
 add_dependencies(avm_eh_catch_all_run avm_eh_cleanup_run avm_eh_rtti_verify)
+
+# Stage 3 typed catch fixtures. Exact matching is checked at O0, O2, and LTO/O2. The
+# probe reports each landing context, and eh_typed_verify checks its selector, its
+# first matching clause, and its pad against the packed AVEH4 block and the machine
+# code. The block fixture covers malformed metadata, and the high-address fixture
+# places its descriptors above program address 0xFFFF.
+add_custom_target(avm_eh_typed_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_typed" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_typed$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_block_validation$" --opt O0,O2
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_typed_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_typed.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_typed.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_typed_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_typed.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_typed.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_typed_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>" ${AVM_EH_CLEANUP_PROBE_RUN}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_typed.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_typed.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_metadata_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --eh-elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_typed.elf"
+        --eh-image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_typed.bin"
+        --eh-elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_typed.elf"
+        --eh-image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_typed.bin"
+        --eh-elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_typed.elf"
+        --eh-image "${AVM_EH_LTO_BIN_DIR}/O2/eh_typed.bin"
+    DEPENDS avm_tests avm_eh_stack_probe avm_eh_catch_all_images llvm-avm-image
+        ${AVM_EH_LTO_IMAGES}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_typed_run)
 
 # The runner discovers ASM, C, and C++ sources, maps each source to its adjacent
 # name_output.txt file and corresponding generated image, loads the interpreter

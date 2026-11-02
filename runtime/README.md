@@ -472,8 +472,8 @@ Build with `-fexceptions`, which overrides the SDK's `-fno-exceptions` default. 
 `catch (...)` handler, and then the handler runs. The compiler emits LLVM's DWARF
 landing pads. A cleanup pad destroys its objects and calls `_Unwind_Resume`. Each
 call site is an entry in `.avm.eh_sites`, and each call in a function with landing
-pads is an entry in `.avm.eh_calls`. The packer turns those records and the
-`.debug_frame` rows into the `AVEH3` block described in
+pads is an entry in `.avm.eh_calls`. The packer turns those records, the action lists
+in `.avm.eh_sites`, and the `.debug_frame` rows into the `AVEH4` block described in
 [arch.md](arch.md) Section 69.3. The unwinder's `eh_unwind.c` is built without
 unwind tables, because the unwinder never unwinds through its own frames.
 
@@ -481,38 +481,45 @@ The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, and
 `eh_cxa_throw.asm`. They are archive members of `libavm.a`, so a program links
 them only when it references one of their symbols. The C++ ABI subset provides
 `__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`,
-`__cxa_begin_catch`, `__cxa_end_catch`, `_Unwind_Resume`, `__gxx_personality_v0`,
-`std::terminate`. The runtime defines the Itanium support vtables that the
+`__cxa_begin_catch`, `__cxa_get_exception_ptr`, `__cxa_end_catch`, `_Unwind_Resume`,
+`__gxx_personality_v0`, `std::terminate`. The runtime defines the Itanium support vtables that the
 descriptors name, in program space: `__class_type_info`, `__fundamental_type_info`,
-`__si_class_type_info`, `__vmi_class_type_info`, and `__pointer_type_info`. Each is
-a nine-byte object whose address point lies six bytes in. The descriptors themselves
-are emitted by the compiler into program flash; see [arch.md](arch.md) Section 60.1.
+`__si_class_type_info`, `__vmi_class_type_info`, `__pointer_type_info`,
+`__enum_type_info`, `__function_type_info`, `__pointer_to_member_type_info`, and
+`__array_type_info`. Each is a nine-byte object whose address point lies six bytes in.
+The descriptors themselves are emitted by the compiler into program flash; see
+[arch.md](arch.md) Section 60.1.
 
-Propagation has two phases. Phase one searches the frames from the throw for a
-catch-all handler, and it runs no destructor. If no frame has one, the program
-halts before any cleanup runs. Phase two enters each cleanup pad in turn with
-selector 0. A cleanup pad runs its destructors and calls `_Unwind_Resume`, which
-continues from the caller that the pad saved. The handler is entered last with
-selector 1, and it calls `__cxa_begin_catch`. `__cxa_end_catch` destroys the
-exception object and frees it. A cleanup pad never ends the exception.
+Propagation has two phases. Phase one searches the frames from the throw for the
+first catch that matches the thrown type. A typed catch matches when its descriptor
+address equals the thrown one, and a catch-all matches everything. Phase one runs no
+destructor. If no frame has a matching catch, the program halts before any cleanup
+runs. The search records the matched selector in the header. Phase two enters each
+cleanup pad in turn with selector 0. A cleanup pad runs its destructors and calls
+`_Unwind_Resume`, which continues from the caller that the pad saved. A pad that
+has both a cleanup and typed clauses is entered as a handler when a clause matches,
+and as a cleanup when none does. The handler is entered last with the recorded
+selector, and it calls `__cxa_begin_catch`. `__cxa_end_catch` destroys the exception
+object and frees it. A cleanup pad never ends the exception.
 
 `__cxa_throw` is a frameless shim. It takes the object in r4, the type-descriptor
 program address in r6:r7, and the destructor program address as a three-byte stack
-argument. It stores the throw site into the exception header, which lies 39 bytes
+argument. It stores the throw site into the exception header, which lies 41 bytes
 below the object, and then tail-transfers to `__avm_eh_throw`. The header holds the
 landing context, the 24-bit type-descriptor address, the 24-bit destructor address,
-the size, the lifecycle state, and the resume cursor. The landing SP
+the size, the lifecycle state, the resume cursor, and the handler's selector. The
+landing SP
 of each pad is the caller SP at the call plus the call's outgoing argument bytes.
 A frame that uses r3 as its CFA base keeps its dynamic allocations, because the SP
 never comes from r3. Call records match the exact return PC.
 
 Only one exception is active at a time. A throw while one is active, including a
-throw from a destructor that runs during unwinding, halts the program. Typed
-catch clauses, exception filters, and rethrow are not provided. The backend
-rejects a typed catch or a filter at compile time, and `__cxa_rethrow` is an
-undefined symbol at link time. RTTI matching is not implemented. When no handler
-exists, when metadata is malformed, or when allocation fails, the runtime calls
-`abort()`, which halts the guest.
+throw from a destructor that runs during unwinding, halts the program. Matching is
+exact: a catch matches the thrown descriptor's address and nothing else. Inheritance,
+reference and pointer conversions, exception filters, and rethrow are not provided.
+The backend rejects a filter at compile time, and `__cxa_rethrow` is an undefined
+symbol at link time. When no handler exists, when metadata is malformed, or when
+allocation fails, the runtime calls `abort()`, which halts the guest.
 
 Every frame between a throw and its handler needs an unwind entry. A function
 without `.debug_frame` CFI stops the search at that frame, which halts the
@@ -525,7 +532,10 @@ matters. Measured peaks, the header size, and the metadata and image costs are i
 [arch.md](arch.md) Section 69.3.
 
 Tests use the `avm_eh_catch_all_run` target. It builds `tests/cpp/eh_*.cpp` and
-`tests/asm/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`. It also
+`tests/asm/eh_*.asm` at O0 and O2, and it runs them through `avm_tests`. The
+`avm_eh_typed_run` target runs the exact-matching fixtures at O0, O2, and LTO/O2,
+checks each handler against the emulator and the packed block, and runs the malformed
+block cases. It also
 runs `avm_eh_cleanup_run`, which executes the cleanup fixtures at O0, O2, and
 LTO/O2, and checks each cleanup chain and landing SP against the emulator and the
 packed block. It also runs the corrupted-metadata cases for cleanup, and the

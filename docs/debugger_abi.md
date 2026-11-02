@@ -121,20 +121,24 @@ allocated, which is the state the restatement assumes.
 
 A valid `.debug_frame` does not by itself mean that stack unwinding works on
 the device. AVD1 has no unwind section. The guest unwinds only for C++ exceptions,
-using the `AVEH3` block described in [arch.md](arch.md) Section 69.3. That block
-is derived from `.debug_frame`, `.avm.eh_sites`, and `.avm.eh_calls`, and it exists only in
-programs that reference the exception runtime. It is not a general debugger
-unwind table, and it does not describe variables or locations.
+using the `AVEH4` block described in [arch.md](arch.md) Section 69.3. That block
+is derived from `.debug_frame`, `.avm.eh_sites`, `.avm.eh_calls`, and the action
+lists in `.avm.eh_sites`, and it exists only in programs that reference the exception
+runtime. It is not a general debugger unwind table, and it does not describe variables
+or locations.
 
 A landing pad is entered in one of two ways, and a debugger sees both through the
 installer. Selector 0 in r5 enters a cleanup pad, which runs destructors and then
-calls `_Unwind_Resume`. Selector 1 enters the handler, which calls
-`__cxa_begin_catch`. In both cases r4 holds the exception header, which is 39 bytes
-and lies below the thrown object. Its first 15 bytes are the landing context, and
-its last 15 bytes are the resume cursor that the next `_Unwind_Resume` continues
-from. The landing SP is the call-site SP plus the call's outgoing argument bytes.
-The AVEH3 site action is a set of two flags: bit 0 for a handler and bit 1 for a
-cleanup, so an action of 3 is a pad that cleans up and then catches.
+calls `_Unwind_Resume`. A nonzero selector enters the handler, which calls
+`__cxa_begin_catch`. The selector is the LLVM type ID of the matched catch, and the
+pad compares it with the IDs of its own clauses. In both cases r4 holds the exception
+header, which is 41 bytes and lies below the thrown object. Its first 15 bytes are
+the landing context, and its last 15 bytes are the resume cursor that the next
+`_Unwind_Resume` continues from. Bytes 15 to 17 hold the thrown type's descriptor
+address, and bytes 39 and 40 hold the selector that phase one recorded. The landing
+SP is the call-site SP plus the call's outgoing argument bytes. An AVEH4 site has an
+action that names an action list. The list's flag bit 0 is a cleanup, and its catch
+entries are a selector and an RTTI address each, where a zero address is catch-all.
 
 ## Stops and time
 

@@ -34,6 +34,8 @@ FIXTURES = [
     ('eh_cleanup', 'cleanup chains, combined pad, partial construction, stack-argument and dynamic-frame cleanups, relaxed calls'),
     ('eh_cleanup_no_handler', 'cleanup frames with no handler: deterministic halt before any destructor'),
     ('eh_cleanup_dtor_throw', 'destructor throws during unwinding: deterministic halt'),
+    ('eh_typed', 'exact typed catches: first match, nonmatching cleanups, combined pads'),
+    ('eh_typed_high_address', 'exact typed matching with descriptors above 0xFFFF'),
     (NO_THROW, 'no-throw control'),
 ]
 

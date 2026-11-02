@@ -71,7 +71,8 @@ def verify(args):
     functions, _ = aveh.decode_block(image, block)
     fn = next(f for f in functions if f['start'] <= throw_pc < f['end'])
     row = [r for r in fn['rows'] if r['pc'] <= throw_pc][-1]
-    in_site = [s for s in fn['sites'] if s['action'] == 1 and s['start'] <= return_pc - 1 < s['end']]
+    in_site = [s for s in fn['sites'] if s['action'] and any(
+        address == 0 for _, address in s['action'][1]) and s['start'] <= return_pc - 1 < s['end']]
 
     throw_name = '0x%06x' % throw_pc
     caller_name = '0x%06x' % entry_pc

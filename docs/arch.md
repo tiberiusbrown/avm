@@ -5507,7 +5507,7 @@ The initial C++ environment supports:
 - Function overloading.
 
 Exceptions are disabled by default, and an explicit `-fexceptions` enables the
-exception runtime in [Section 69.3](#693-exception-metadata-aveh4). Typed
+exception runtime in [Section 69.3](#693-exception-metadata-aveh5). Typed
 `typeid` and `dynamic_cast` remain unavailable because RTTI is disabled, and
 ordinary C++ allocation operators and thread-local storage remain disabled. The
 exception type descriptors of [Section 60.1](#601-flash-resident-rtti) are present
@@ -5648,7 +5648,7 @@ The runtime defines the support vtables that descriptors name in program space:
 `__vmi_class_type_info`, `__pointer_type_info`, `__enum_type_info`,
 `__function_type_info`, `__pointer_to_member_type_info`, and `__array_type_info`.
 The runtime interprets the class descriptors only to match catch clauses against
-public nonvirtual base subobjects, as [Section 69.3](#693-exception-metadata-aveh4)
+public nonvirtual base subobjects, as [Section 69.3](#693-exception-metadata-aveh5)
 describes. It reads the vtable address point to classify a descriptor, and the base
 descriptors and offset-and-flags words of the single and multiple inheritance
 layouts. `typeid`, `dynamic_cast`, and virtual-base adjustment are not implemented.
@@ -5665,8 +5665,8 @@ destructor. The compiler declares the function as
 `__cxa_throw(ptr, ptr addrspace(1), ptr addrspace(1))`, so the call site and the
 declaration agree.
 
-The shim stores both program addresses in the 43-byte exception header
-([Section 69.3](#693-exception-metadata-aveh4)).
+The shim stores both program addresses in the 51-byte exception header
+([Section 69.3](#693-exception-metadata-aveh5)).
 
 ---
 
@@ -6615,14 +6615,14 @@ and lines only. It does not describe stack frames, does not replace
 the ELF and DWARF files, including the call-frame information in `.debug_frame`.
 The AVD1 layout has no unwind section.
 
-### 69.3. Exception metadata (AVEH4)
+### 69.3. Exception metadata (AVEH5)
 
-A program that references the exception runtime carries one `AVEH4` block. A
+A program that references the exception runtime carries one `AVEH5` block. A
 program that does not reference it has no block, and its image is unchanged. The
 block is not part of the image header and does not depend on `AVD1`.
 `--no-crash-info` does not remove it.
 
-AVEH4 is the only exception metadata format. The packer writes it, and the runtime
+AVEH5 is the only exception metadata format. The packer writes it, and the runtime
 reads it. The magic identifies the format, so a malformed or mismatched image is
 rejected. Nothing else is accepted.
 
@@ -6632,7 +6632,7 @@ The runtime defines `__avm_eh_metadata_ptr`, a three-byte, read-only
 program-space object that the ELF stores as zero. The packer finds exactly one
 defined symbol with that name. It must lie in a read-only AVM program-space
 section, outside the reserved header range, and it must be three bytes long.
-The packer patches its three bytes with the final image address of the `AVEH4`
+The packer patches its three bytes with the final image address of the `AVEH5`
 block. Multiple, undefined, or misplaced anchors are rejected. The block follows
 the crash metadata at a 4-byte boundary and must fit in the flash payload limit.
 The guest reads the anchor with an AS1 load.
@@ -6644,9 +6644,22 @@ All integers are little-endian. Code addresses and type-descriptor addresses are
 
 | Field | Size | Contents |
 |---|---:|---|
-| Magic | 5 | `41 56 45 48 34`, ASCII `AVEH4` |
-| `function_count` | 2 | Number of function records |
-| `block_size` | 3 | Total block size in bytes, including this header |
+| Magic | 5 | `41 56 45 48 35`, ASCII `AVEH5` |
+| `function_count` | 2 | Number of function records and index entries |
+| `block_size` | 3 | Total block size in bytes, including this header and the index |
+
+The header is followed by the function index, one six-byte entry for each function,
+in ascending order of start address:
+
+| Field | Size | Contents |
+|---|---:|---|
+| `function_start` | 3 | First address of the function, which equals its record's start |
+| `record_offset` | 3 | Offset from the block start to the function's record |
+
+The first record follows the index, so its offset is `10 + 6 * function_count`. Each
+record follows the one before it, and the last record ends at `block_size`. The
+runtime binary-searches the index, so a lookup reads about `log2(function_count)`
+entries and not every record. [Indexed lookup](#indexed-lookup) describes the search.
 
 Each function record is an 18-byte header, then its rows, its sites, its calls, and
 its action pool:
@@ -6678,6 +6691,13 @@ record + next_offset   next record, or the block end
 The records are back to back, so the last record ends at `block_size`. The packer
 and the runtime require:
 
+- the index entries are in strictly ascending order of start, and each entry's
+  start equals its record's `function_start`;
+- each entry's `record_offset` names the record that follows the previous one, so
+  the first is `10 + 6 * function_count`, and no record starts before its index
+  entry or after the block end;
+- each record's `next_offset` ends at the next entry's `record_offset`, and the last
+  record's `next_offset` ends at `block_size`;
 - `18 + 5 * row_count <= sites_offset <= 18 + 13 * row_count`, because a row is
   five to thirteen bytes;
 - `next_offset - sites_offset >= 12 * site_count + 5 * call_count`, and the rest of
@@ -6704,6 +6724,36 @@ after the call instruction, which is the saved return PC of the callee's frame. 
 outgoing bytes are the stack arguments that the call left on the stack, which the
 landing pad releases. Calls are sorted and strictly increasing inside
 `(function_start, function_end]`, and each is below 256 bytes.
+
+#### Indexed lookup
+
+`find_function` maps a return address to its function record. The lookup is the
+return PC minus one, which lies in the call instruction. The search is an
+upper-bound binary search over the index:
+
+```text
+lo = 0, hi = function_count
+while lo < hi:
+    mid = lo + (hi - lo) / 2
+    if index[mid].function_start <= lookup: lo = mid + 1
+    else: hi = mid
+```
+
+The selected entry is `lo - 1`, and a lookup below the first start selects nothing.
+The selected record must pass the checks that a walk would make for it. Its header
+start equals the entry's start. Its end lies above its start and above the lookup.
+The next entry starts at or after that end. Its `next_offset` ends at the next
+entry's record offset, or at the block end for the last record. Any failure returns
+no record, so the throw fails, and no landing pad is named.
+
+A lookup reads at most `ceil(log2(function_count + 1))` index entries, then the entry
+after the selected one, then the selected record's header. The throw checks no other
+entry or record. The packer checks the whole index when it writes the block, so a
+corrupt entry that the throw never reads cannot change it.
+
+The exception header caches the block address, the block end, and the function count.
+`avm_eh_open_exception` fills them once per throw, so each lookup in that throw reads
+none of the anchor, the magic, or the size.
 
 #### Action lists and catch entries
 
@@ -6853,7 +6903,7 @@ The packer computes both offsets, and the pool's size, from the records it write
 and it checks them against the bounds above before it patches them. It validates
 the complete block before it writes the image. It rejects:
 
-- a magic other than `AVEH4`, or a block size that is too small or too large;
+- a magic other than `AVEH5`, or a block size that is too small or too large;
 - a function without an FDE, an FDE outside executable program code, or an
   overlapping function range;
 - a CFA rule other than SP or r3 plus an offset, or a saved-register rule other
@@ -6882,7 +6932,7 @@ and decodes the packed sites and lists independently of the packer.
 
 #### Exception object and landing contract
 
-`__cxa_allocate_exception` returns the object, which lies 43 bytes above its
+`__cxa_allocate_exception` returns the object, which lies 51 bytes above its
 header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_internal.h`:
 
 | Offset | Size | Field | Contents |
@@ -6895,12 +6945,15 @@ header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_intern
 | 24 | 15 | `resume_context` | Frame cursor for the next step of propagation |
 | 39 | 2 | `handler_selector` | Selector of the catch that phase one matched |
 | 41 | 2 | `handler_adjustment` | Byte offset of the matched base subobject, zero for an exact or catch-all match |
+| 43 | 3 | `eh_block_address` | Program address of the `AVEH5` block, from `avm_eh_open_exception` |
+| 46 | 3 | `eh_block_end` | Program address of the block end |
+| 49 | 2 | `eh_function_count` | Number of function index entries |
 
-The header is 43 bytes. The `__cxa_throw` shim captures the throwing frame into
+The header is 51 bytes. The `__cxa_throw` shim captures the throwing frame into
 `context` and stores the type-descriptor and destructor program addresses, each in
 three bytes so that the high byte is kept. The unwinder then copies `context` into
 `resume_context`, and the two cursors move as described below. The header is heap
-memory, so each thrown exception costs 43 bytes.
+memory, so each thrown exception costs 51 bytes.
 
 The header's address is the exception pointer. A landing pad receives it in r4,
 and the installer passes the selector in r5. Selector 0 enters a cleanup-only pad,
@@ -6946,11 +6999,11 @@ never transfers control to a cleanup or handler that the record does not describ
 The search reads each record through its offsets, so no CFI row is read to skip a
 record:
 
-- `find_function` walks the record headers from the block start, following
-  `next_offset`. It reads at most `function_count` records. For each record it
-  passes, it checks the header sizes, the record's order, and whether the lookup
-  is in a gap. It stops at the record that covers the lookup. A lookup in a gap
-  or past the last record finds no record, and the throw has no handler.
+- `find_function` binary-searches the index, as described in
+  [Indexed lookup](#indexed-lookup). It reads the selected record's header, and it
+  checks that the record matches its entry and that the lookup lies in the record. A
+  lookup in a gap or past the last record finds no record, and the throw has no
+  handler.
 - `find_row` reads the rows from the header to `sites_offset`. It checks each
   row it reads, and it stops at the first row past the lookup.
 - `find_site` reads the sites at `sites_offset`, and it stops at the first site
@@ -6965,24 +7018,36 @@ record:
 The header check fixes `sites_offset` once `next_offset` and the counts are known,
 so any change to either offset alone fails it. A `next_offset` that does not advance,
 or that leaves the block, fails it too. Every flash read lies inside the record that
-the walk has validated, or inside the block, except the three-byte anchor.
+the throw has validated, or inside the block, except the three-byte anchor, which
+`avm_eh_open_exception` reads once per throw.
 
 The guest stack holds 256 bytes, from `0xa00` down to `0x900`. Every stack address
 that the unwinder reads or writes must lie in that window. Each unwind step
 requires its CFA to lie above the current SP and inside the window, so every walk
 moves toward the top of the stack and terminates.
 
+`__avm_eh_throw` opens the exception's metadata once, before it searches. The search
+then reads the block bounds from the header. A throw with no metadata, or with an
+index that does not fit in its block, fails before phase one.
+
 The throw runs in two phases over the same frames, and neither phase runs a
-destructor in the search itself.
+destructor in the search itself. Phase one reports whether a cleanup lies on the way
+to the handler. When none does, the handler's landing state is the state that phase
+two would produce, so `__avm_eh_throw` installs it directly and never enters
+`avm_eh_prepare_next`. A throw with a cleanup on the way runs phase two as described
+below.
 
 Matching. A site's action is matched against the thrown type, which the header
-holds as a 24-bit address. `match_list` returns the selector of the first entry whose
-address is zero, which is catch-all, or equals the thrown address, or zero when no
-entry matches. A malformed list is an error, which fails the throw. A list that
-matches nothing is valid, and the walk continues. Every entry of the list is
-validated, including the entries after the match, so a malformed tail cannot change
-which handler runs. The cleanup flag is read from the list by the caller that needs
-it.
+holds as a 24-bit address. `match_list` returns one 32-bit result. A matching entry
+returns its selector in bits 15:0 and its base adjustment in bits 31:16. The selector
+is the first entry whose address is zero, which is catch-all, or equals the thrown
+address, or the first base entry that `match_class_base` accepts. When no entry
+matches, the selector is zero, and bit 16 is set when the list has a cleanup. A
+matching entry never sets bit 16, because its handler ends the search. A malformed
+list is an error, which fails the throw, and the result is then `0xffffffff`. Every
+entry of the list is validated, including the entries after the match, so a malformed
+tail cannot change which handler runs. The site's action offset is read once for the
+whole match, and the cleanup flag comes with the same result.
 
 Phase one finds the final handler. It starts from a copy of the throw site in
 `resume_context`. Each frame's call site at `PC-1` is looked up. A site whose
@@ -6991,7 +7056,9 @@ the landing state replaces the cursor. A frame whose action has only a cleanup i
 not a handler, and neither is a typed clause that does not match, so both are
 unwound with their CFI rows: `CFA = (r3 or SP) + cfa_offset`, the caller PC is the
 24-bit value at `CFA-3`, saved r0-r3 values come from `CFA + slot`, and the caller
-SP is `CFA`. A frame without a function record, without a covering row, or
+SP is `CFA`. A frame with a cleanup that is unwound this way sets the header's state
+to `SEARCH_HAS_CLEANUP`, which tells `__avm_eh_throw` that phase two must run. The
+state is not cleared by later frames. A frame without a function record, without a covering row, or
 without a matching handler after the last frame has no handler, so the program
 terminates before any cleanup runs. The search then restarts from the throw site.
 
@@ -7028,7 +7095,7 @@ pad was entered.
 
 The throwing frame is captured by `__cxa_throw` before any C code runs. The shim
 has no stack frame. It stores the continuation, the caller's SP (the entry SP plus
-three), and r0-r3 into the 43-byte header, which lies below the object. It then
+three), and r0-r3 into the 51-byte header, which lies below the object. It then
 tail-transfers to `__avm_eh_throw`, which initializes `resume_context` from
 `context`.
 
@@ -7038,92 +7105,124 @@ requires every site's action to name the start of a list, requires every list to
 be named, and requires the pool to end at `next_offset`. Throws do not call it. The
 unit test `tests/cpp/eh_block_validation.cpp` runs it on valid and malformed blocks.
 
-#### Measured stack, code, and memory
+#### Measured stack, cycles, and memory
 
-The measurements use `tests/debug/eh_stack_report.py`. Total is the high-water
-mark from the start of the program. Runtime is the lowest SP reached after the first
-entry into `__cxa_throw`, which is the window in which the unwinder runs. That
-window also contains any user frames that are live during a later runtime call, so
-it can exceed the unwinder's own depth.
+The "before" columns are the tree at the start of this change, and the "after"
+columns are the current tree. Each row is measured with the same tools on both trees.
+
+Stack peaks come from `tests/debug/eh_stack_report.py`. Total is the high-water mark
+from the start of the program. Runtime is the lowest SP reached after the first entry
+into `__cxa_throw`, which is the window in which the unwinder runs. That window also
+contains any user frames that are live during a later runtime call. No fixture's total
+or runtime peak is larger after this change.
 
 | Fixture | Opt | Before total | Before runtime | After total | After runtime |
 |---|---|---:|---:|---:|---:|
-| `eh_catch_all` (direct, multi-frame, stack arguments) | O0 | 143 | 116 | 152 | 125 |
-| `eh_catch_all` | O2 | 123 | 98 | 132 | 107 |
-| `eh_dynamic_handler` (dynamic frame, two call sizes) | O0 | 199 | 94 | 208 | 103 |
-| `eh_dynamic_handler` | O2 | 167 | 94 | 176 | 103 |
-| `eh_unhandled` | O0, O2 | 102 | 86 | 102 | 86 |
-| `eh_cleanup` (cleanup chains, combined pad, partial construction) | O0 | 190 | 117 | 199 | 126 |
-| `eh_cleanup` | O2 | 146 | 119 | 155 | 128 |
-| `eh_typed` (exact and base catches) | O0 | 150 | 108 | 209 | 167 |
-| `eh_typed` | O2 | 120 | 94 | 179 | 153 |
-| `eh_typed_high_address` (descriptors above 0xFFFF) | O0 | 134 | 94 | 193 | 153 |
-| `eh_typed_high_address` | O2 | 116 | 96 | 175 | 155 |
-| `eh_inheritance` (direct, chained, nested, ambiguous, private) | O0 | - | - | 214 | 177 |
-| `eh_inheritance` | O2 | - | - | 182 | 159 |
-| `eh_inheritance_cross_unit` | O0 | - | - | 202 | 153 |
-| `eh_inheritance_cross_unit` | O2 | - | - | 180 | 153 |
-| `eh_inheritance_high_address` | O0 | - | - | 204 | 153 |
-| `eh_inheritance_high_address` | O2 | - | - | 176 | 153 |
+| `eh_allocation_failure` | O0 | 37 | - | 37 | - |
+| `eh_allocation_failure` | O2 | 30 | - | 30 | - |
+| `eh_catch_all` | O0 | 152 | 125 | 140 | 113 |
+| `eh_catch_all` | O2 | 132 | 107 | 120 | 95 |
+| `eh_cleanup` | O0 | 199 | 126 | 187 | 114 |
+| `eh_cleanup` | O2 | 155 | 128 | 143 | 116 |
+| `eh_cleanup_dtor_throw` | O0 | 135 | 103 | 123 | 91 |
+| `eh_cleanup_dtor_throw` | O2 | 122 | 103 | 110 | 91 |
+| `eh_cleanup_no_handler` | O0 | 128 | 95 | 124 | 91 |
+| `eh_cleanup_no_handler` | O2 | 114 | 95 | 110 | 91 |
+| `eh_dynamic_handler` | O0 | 208 | 103 | 196 | 91 |
+| `eh_dynamic_handler` | O2 | 176 | 103 | 164 | 91 |
+| `eh_inheritance` | O0 | 214 | 177 | 200 | 163 |
+| `eh_inheritance` | O2 | 182 | 159 | 168 | 145 |
+| `eh_inheritance_corrupt_target` | O0 | 190 | 153 | 176 | 139 |
+| `eh_inheritance_corrupt_target` | O2 | 174 | 153 | 160 | 139 |
+| `eh_inheritance_cross_unit` | O0 | 202 | 153 | 188 | 139 |
+| `eh_inheritance_cross_unit` | O2 | 180 | 153 | 166 | 139 |
+| `eh_inheritance_high_address` | O0 | 204 | 153 | 190 | 139 |
+| `eh_inheritance_high_address` | O2 | 176 | 153 | 162 | 139 |
+| `eh_missing_cfi` | O0 | 116 | 86 | 110 | 80 |
+| `eh_missing_cfi` | O2 | 108 | 86 | 102 | 80 |
+| `eh_typed` | O0 | 209 | 167 | 195 | 153 |
+| `eh_typed` | O2 | 179 | 153 | 165 | 139 |
+| `eh_typed_high_address` | O0 | 193 | 153 | 179 | 139 |
+| `eh_typed_high_address` | O2 | 175 | 155 | 161 | 141 |
+| `eh_unhandled` | O0 | 102 | 86 | 96 | 80 |
+| `eh_unhandled` | O2 | 102 | 86 | 96 | 80 |
 
-The before columns are measured on the runtime before base matching, with exact
-matching only. The after columns are measured on the current runtime, with the
-43-byte header and base matching. The growth in the typed fixtures has two sources. The
-deepest runtime frame of a typed fixture is `match_class_base`, which runs for each
-class-typed clause that is not an exact match, and `list_ok`, which validates each
-action list, is the deepest frame of the other fixtures. The base walk's frame is 62
-bytes at O2, plus its four saved registers. The `eh_unhandled` fixture never reaches a
-clause, so it is unchanged. The worst fixture, `eh_inheritance` at O0, peaks at 214
-bytes of guest stack, which stays inside the 256-byte window.
+Cycles are emulated AVR cycles between entry points, read from the probe's snapshots by
+`tests/debug/eh_throw_cycles.py`. "Entry to landing" runs from
+`__cxa_throw` until the selected handler's landing state is installed. "Throw to
+completion" runs until `__cxa_end_catch` returns, so it includes the destructors that
+run on the way. The frame count is the number of frames that phase one searched.
 
-Base matching adds to the runtime text, the packed image, and the AVEH4 block. At O2,
-`eh_unwind.o` grows by 1,291 bytes of text and `eh_cxa.o` by 91 bytes. The packed
-`eh_catch_all` image at O0 grows from 17,920 to 19,200 bytes. Its AVEH4 block grows from
-2,417 to 2,640 bytes, because the four new runtime functions carry unwind rows, which the
-packer records for every function. The AVEH4 format is unchanged. The runtime's static
-data and bss sizes are unchanged, so persistent RAM does not grow. Each thrown exception
-allocates 43 bytes of header, which is two more than before.
+| Case | Run | Throw | Frames searched | Before entry to landing | After entry to landing | Change | Before throw to completion | After throw to completion |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Direct catch | O0-eh_catch_all | 1 | 4 | 394,569 | 144,825 | -63% | 398,727 | 148,938 |
+| Direct catch | O2-eh_catch_all | 1 | 4 | 347,203 | 133,875 | -61% | 351,007 | 137,679 |
+| Multi-frame, no cleanup | O0-eh_catch_all | 4 | 6 | 1,178,098 | 184,607 | -84% | 1,182,256 | 188,687 |
+| Multi-frame, no cleanup | O0-eh_catch_all | 7 | 6 | 1,064,872 | 207,043 | -81% | 1,069,090 | 211,261 |
+| Multi-frame, no cleanup | O2-eh_catch_all | 3 | 6 | 950,257 | 168,753 | -82% | 954,061 | 172,557 |
+| Multi-frame, no cleanup | O2-eh_catch_all | 7 | 6 | 961,143 | 194,921 | -80% | 965,061 | 198,839 |
+| Typed, exact | O0-eh_typed | 0 | 2 | 292,403 | 120,730 | -59% | 297,263 | 125,624 |
+| Typed, exact | O2-eh_typed | 0 | 2 | 323,151 | 137,009 | -58% | 327,304 | 141,162 |
+| Typed, base subobject | O0-eh_inheritance | 3 | 4 | 1,105,993 | 220,418 | -80% | 1,111,680 | 226,072 |
+| Typed, base subobject | O2-eh_inheritance | 2 | 4 | 1,174,868 | 322,168 | -73% | 1,178,766 | 326,066 |
+| Cleanup chain | O0-eh_cleanup | 0 | 8 | 1,870,715 | 670,205 | -64% | 1,879,055 | 678,545 |
+| Cleanup chain | O0-eh_cleanup | 9 | 10 | 3,224,963 | 765,245 | -76% | 3,234,293 | 774,575 |
+| Cleanup chain | O2-eh_cleanup | 0 | 8 | 1,626,949 | 615,362 | -62% | 1,631,327 | 619,773 |
+| Cleanup chain | lto-O2-eh_cleanup | 0 | 8 | 3,983,242 | 609,636 | -85% | 3,987,620 | 614,014 |
+| Dynamic stack | O0-eh_dynamic_handler | 0 | 4 | 527,879 | 178,551 | -66% | 561,348 | 211,986 |
+| Dynamic stack | O2-eh_dynamic_handler | 0 | 4 | 492,577 | 178,896 | -64% | 510,083 | 196,357 |
+| Unhandled (phase one only) | O0-eh_unhandled | 0 | 3 | 200,451 (phase one) | 147,273 (phase one) | -27% | - | - |
+| Unhandled (phase one only) | O2-eh_unhandled | 0 | 3 | 182,411 (phase one) | 143,973 (phase one) | -21% | - | - |
 
-The exception header is 43 bytes, so each thrown exception allocates 43 bytes of
-header. The support vtables for the enumeration, function, pointer-to-member, and
-array descriptors are nine bytes each, and they cost flash only.
-`.data` of `eh_cleanup_object` at O2 is unchanged at 16 bytes, so the change adds no
-persistent RAM. The runtime's linked EH text, measured on `eh_cleanup_object` at O2 as
-the sum of the sizes of the text symbols that the EH objects define and the image
-links, is 3588 bytes, against 3353 bytes in the previous change. The validator is not
-linked into ordinary images.
+Each throw's phases were also measured on `eh_catch_all` at O0. The intermediate
+stages were measured on that fixture only, so the other fixtures have no intermediate
+figures:
 
-| Metric | Value |
-|---|---:|
-| AVEH4 block, O0 `eh_typed` (functions, rows, sites, action lists, calls) | 4755 (54, 286, 63, 24, 148) |
-| AVEH4 block, O2 `eh_typed` | 4481 (46, 272, 58, 21, 98) |
-| AVEH4 block, LTO O2 `eh_typed` | 4455 (46, 269, 58, 21, 97) |
-| AVEH4 block, O0 `eh_catch_all` (functions, rows, sites, action lists, calls) | 2640 (40, 194, 18, 8, 26) |
-| Previous-format block, O0 `eh_catch_all` (functions, rows, sites, calls) | 2503 (40, 189, 18, 26) |
-| Packed image, O0 `eh_typed` | 23552 B |
-| Packed image, O2 `eh_typed` | 21504 B |
-| Packed image, LTO O2 `eh_typed` | 21760 B |
+| Stage | Direct catch (throw 1) | Change | Three frames, no cleanup (throw 4) | Change |
+|---|---:|---:|---:|---:|
+| Before | 394,569 | - | 1,178,098 | - |
+| Phase two skipped when no cleanup lies on the way | 198,936 | -50% | 590,640 | -50% |
+| Indexed function lookup and one match per action | 171,278 | -57% | 221,441 | -81% |
+| Header caches the block bounds | 158,442 | -60% | 199,529 | -83% |
+| Row walk reads its function bounds once | 144,825 | -63% | 184,607 | -84% |
 
-The previous-format row shows the block before this change for the same fixture. It
-had no action pool, so its tuple has no list count. The block grows by
-about 100 bytes for `eh_catch_all` at O0, which is the action lists and the
-per-site action offsets. The typed images had no earlier build to compare with, so
-their packed sizes are reported without a baseline.
+Remaining cost, from `avm-prof` over the eight throws of `eh_catch_all` at O0:
+`find_function` 34%, `find_row` 24%, `avm_eh_find_handler` 6%, `list_ok` 6%,
+`avm_eh_open_exception` 5%, `find_call` 4%, `unwind_frame` 4%, `site_ok` 4%, and
+`find_site` 3%. Before this change, `find_function` was 72% of the same run. A flash
+read costs about 300 emulated cycles, and a simple AVM instruction about 37. In
+`find_function`, about two thirds of the cycles are instructions, not flash reads: the
+32-bit search arithmetic and its stack spills are longer than the reads, so further
+reductions need fewer instructions in the search rather than fewer reads.
 
-Changes, by source of cost:
+Memory:
 
-1. Runtime matching and the two-phase walk: `match_list` and its inlined callers,
-   `pool_ok` in the validator, and the phase-two cleanup check.
-2. Compiler-generated landing-pad code: each typed clause adds a compare and a
-   branch to its pad. Its size is not separated from the rest of the image.
-3. Action lists: each distinct list costs three bytes plus five per catch entry. Each
-   site's action costs three bytes, where the previous format cost one.
-4. Exception allocation overhead: the 43-byte header of each thrown exception.
+| Metric | Before | After |
+|---|---:|---:|
+| Exception header | 43 bytes | 51 bytes |
+| Function index | none | 6 bytes per function |
+| Runtime text, the four EH objects | 8,050 bytes | 8,675 bytes |
+| Linked EH text, `eh_catch_all` at O0 | 4,692 bytes | 5,022 bytes |
+| AVEH block, O0 `eh_catch_all` (40 functions) | 2,640 bytes | 2,891 bytes |
+| AVEH block, O0 `eh_typed` (54 functions) | 4,755 bytes | 5,090 bytes |
+| AVEH block, O0 `eh_inheritance` (84 functions) | 5,858 bytes | 6,373 bytes |
+| Packed image, O0 `eh_catch_all` | 19,200 bytes | 19,968 bytes |
+| Packed image, O0 `eh_typed` | 24,832 bytes | 25,600 bytes |
+| Persistent RAM (`.data` and `.bss`), `eh_catch_all` | 8 bytes | 8 bytes |
+| Heap per thrown exception | 43 + object size | 51 + object size |
 
-Programs without exception support gain no code, metadata, or RAM. A program that
-never throws references none of `_Unwind_Resume`, `__cxa_throw`, `__cxa_get_exception_ptr`,
-or `std::terminate`, and it links no type descriptor, so those runtime sections and
-descriptors are absent from its image.
+The index costs six bytes for each function. The rest of the growth in the block comes
+from the runtime's own functions, which carry CFI rows, and from the packer's action
+lists. The runtime text grows because the binary search, the cached open, and the
+index checks are code. The validator is not linked into ordinary images. Persistent
+RAM does not change, and the index is never copied: the header caches two 3-byte block
+addresses and a 2-byte count, so an exception allocates eight more bytes than before.
+
+Changes that affect code, metadata, or RAM are confined to the exception runtime,
+its packer path, and the exception fixtures. Every image in the test and benchmark trees
+that does not reference the exception runtime is byte-identical to its image before this
+change: 2,355 images. A program that never references the runtime has no block and no
+anchor, and `tests/debug/eh_metadata_verify.py` checks that for its no-throw control.
 
 #### Checks and tests
 
@@ -7139,7 +7238,7 @@ once, and the landing SP increases within a throw. The run must include a handle
 with a selector above one, and a cleanup, so the nonmatching and combined cases are
 exercised. The check runs at O0, O2, and LTO/O2.
 
-`tests/debug/eh_metadata_verify.py` decodes the AVEH4 block independently, checks the
+`tests/debug/eh_metadata_verify.py` decodes the AVEH5 block independently, checks the
 action pools in full, requires every typed address to name an `_ZTI` object in the
 ELF, and checks that the descriptors lie in program space. It compares the packed
 sites and lists with the records that the compiler wrote into `.avm.eh_sites`, and
@@ -7148,15 +7247,20 @@ record, inside a list, and before the pool, reserved flags, a zero selector, a
 repeated selector, a catch-all that is not last, and a type address outside program
 space.
 
-`tests/cpp/eh_block_validation.cpp` checks `avm_eh_validate_block` on valid blocks
-with cleanup-only, combined, typed, and shared action lists, and on 45 malformed
-blocks. The malformed blocks cover the record checks, the action pool, and the
-catch entries. Each block is generated from named fields, so each differs from its
-valid neighbor in the one field that its comment names.
+`tests/cpp/eh_block_validation.cpp` checks `avm_eh_validate_block` on six valid
+blocks, with cleanup-only, combined, typed, and shared action lists, and a two-function
+block with its index. It also checks 59 malformed blocks. These cover the index, the
+record checks, the action pool, and the catch entries. Each malformed block differs
+from its valid neighbor in the one field that its comment names.
 
 `tests/debug/eh_corruption_verify.py` mutates one field of a valid block and runs
 the image through the probe. The base mutations run against `eh_corrupt_target`,
-and the action mutations change the catch-all list of its protected frame. The
+and the action mutations change the catch-all list of its protected frame. The index
+mutations change the entry count, the block size, the first record's offset, the
+start and offset of the protected frame's entry, the order and duplicates of the
+entries around it, and the start of an entry that the search reads for the protected
+frame without selecting it. Each of these must halt, because the throw reads that
+entry or the record it names. The
 `--cleanup` mode runs cleanup mutations against `eh_cleanup_corrupt_target`, whose
 valid output records each destructor. A mutation that breaks a field the throw
 consumes must halt. A halt that comes after destructors have run is accepted, and
@@ -7172,11 +7276,27 @@ require the probe's events to occur in order.
 `tests/debug/eh_rtti_verify.py` checks the flash-resident descriptors of the RTTI
 fixtures. It reads the ELF symbols and section flags, and it requires each RTTI
 object to be read-only program space with no `_ZTI` object in `.data`. For the
-high-address fixture, the probe's `--snapshot-bytes` option prints the 41 header bytes
+high-address fixture, the probe's `--snapshot-bytes` option prints the 51 header bytes
 that the shim captured at `__avm_eh_throw`.
 
 `tests/debug/eh_stack_report.py` reports the stack peaks above for every exception
 fixture.
+
+`tests/debug/eh_index_complexity_verify.py` builds synthetic AVEH5 blocks of 1, 4, 16,
+64, and 256 functions. It replays the search of `find_function` over the index bytes,
+and it counts the entries that each search reads. Every lookup must find the covering
+function, or no function in a gap, before the first function, or after the last. Every
+search must read no more than `ceil(log2(N + 1))` entries. The runtime's own lookups
+are checked by `tests/cpp/eh_index_lookup.cpp`, which throws through 48 functions, each
+caught in its own caller. The index holds about a hundred functions, so the lookups
+reach its first, middle, and last entries, and every caught value must match.
+
+`tests/debug/eh_unwind_fastpath_verify.py` reads each throw's events from the probe. It
+checks that `avm_eh_prepare_next` runs exactly when the throw has a cleanup landing, so
+direct and multi-frame catches skip it. It checks that each cleanup landing is followed
+by one `_Unwind_Resume`, that no cleanup pad runs twice in one throw, and that the
+handler's selector is in its packed action list. A throw with no handler must install
+nothing and enter no phase two, so no destructor runs before the failed search ends.
 
 `llvm/test/CodeGen/AVM/eh-typed.ll` checks the lowered action lists, their selectors,
 and their relocations. It also checks that the landing pad compares `r5` with the

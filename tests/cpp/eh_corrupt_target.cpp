@@ -3,7 +3,7 @@
 // unrelated has its own catch-all, which prints U. It runs before the throw and
 // never sees the exception, so a U in any corrupted run means a handler was
 // entered in the wrong frame. The runner in tests/debug/eh_corruption_verify.py
-// mutates the AVEH4 block of this image. A corrupted run must end cleanly with
+// mutates the AVEH5 block of this image. A corrupted run must end cleanly with
 // TCP or TH. TH is the halt report from avm_halt below.
 #include <avm.h>
 #include <avm/runtime.h>

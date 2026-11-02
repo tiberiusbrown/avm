@@ -25,7 +25,7 @@ SHN_LORESERVE = 0xff00
 
 # Two 24-bit entries precede the address point that descriptors name.
 ADDRESS_POINT = 6
-HEADER_SIZE = 43
+HEADER_SIZE = 51
 DESCRIPTOR_TYPE = re.compile(r'^_Z(T[IV]|TS)')
 # The low byte of a base entry's offset-and-flags word. Its other bits are reserved.
 RTTI_BASE_VIRTUAL = 0x01

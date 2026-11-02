@@ -8,7 +8,7 @@ call plus that adjsp amount. The probe observes the SP at the call instruction a
 at the landing pad, and this check compares them. It also checks that r0-r3 at the
 landing pad equal their values at the call, since the frame's callee-saved
 registers must come back unchanged. The landing pad address is read from the
-packed AVEH4 block, which is what the unwinder uses.
+packed AVEH5 block, which is what the unwinder uses.
 """
 
 import argparse

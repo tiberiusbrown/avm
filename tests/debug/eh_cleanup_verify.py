@@ -5,7 +5,7 @@ The throw crosses the frames named by --frame, innermost first. The first frame
 throws into __cxa_throw, and each later frame calls the frame before it. Every
 frame but the last must have a cleanup landing pad at its throwing call, and the
 last frame must have a catch-all pad. The machine code gives each call and the
-bytes it releases. The packed AVEH4 block gives each pad, which the unwinder reads.
+bytes it releases. The packed AVEH5 block gives each pad, which the unwinder reads.
 The probe observes the calls, the pads, every installation of a landing context,
 each _Unwind_Resume, and the catch and exception-object calls. The check requires:
 

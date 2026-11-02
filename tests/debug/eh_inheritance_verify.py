@@ -4,7 +4,7 @@
 The probe reports each installation of a landing context, and each return from
 __cxa_begin_catch and __cxa_get_exception_ptr. The expected base offsets come from the
 RTTI edges of the packed image, walked here, and not from the runtime's matcher. The
-check reads the packed AVEH4 block and the machine code to confirm, for each handler,
+check reads the packed AVEH5 block and the machine code to confirm, for each handler,
 that:
 
   - the header holds the thrown descriptor, and the selector that phase one recorded
@@ -44,7 +44,7 @@ END = '__cxa_end_catch'
 FREE = 'free'
 RETURNS = (BEGIN, GET_PTR)
 
-HEADER_SIZE = 43
+HEADER_SIZE = 51
 # Program-space and stack layout of the guest, as llvm/BinaryFormat/AVM.h defines it.
 STACK_BASE = 0x900
 STACK_TOP = 0xa00

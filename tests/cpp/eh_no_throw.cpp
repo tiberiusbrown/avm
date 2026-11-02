@@ -1,5 +1,5 @@
 // Built with -fexceptions, but it never throws or catches. Nothing references
-// the exception runtime, so the image must contain no AVEH4 block and no
+// the exception runtime, so the image must contain no AVEH5 block and no
 // __avm_eh_metadata_ptr anchor.
 extern "C" int avm_test_main(void);
 

@@ -29,7 +29,9 @@ struct avm_eh_context {
  * and never as 16-bit data pointers. The handler selector is the LLVM type ID
  * that phase one matched, and phase two passes it to the handler's pad. The
  * adjustment is the byte offset of the caught base subobject within the thrown
- * object, and it is zero for an exact or catch-all match. */
+ * object, and it is zero for an exact or catch-all match. The block fields cache the
+ * AVEH5 block that avm_eh_open_exception validated, so each lookup in this throw uses
+ * the same block address, end, and function count without reading the anchor again. */
 struct avm_eh_exception {
     struct avm_eh_context context;        /* +0  landing state; exception = this header */
     uint8_t type_address[3];              /* +15 type-descriptor program address (r6:r7) */
@@ -39,7 +41,24 @@ struct avm_eh_exception {
     struct avm_eh_context resume_context; /* +24 frame cursor for the next step */
     uint16_t handler_selector;            /* +39 selector of the matched catch */
     uint16_t handler_adjustment;          /* +41 byte offset of the matched base subobject */
+    uint8_t eh_block_address[3];          /* +43 program address of the AVEH5 block */
+    uint8_t eh_block_end[3];              /* +46 program address of the block end */
+    uint16_t eh_function_count;           /* +49 number of function index entries */
 };
+
+/* Lifecycle of the active exception. The header is ALLOCATED until it is thrown.
+ * THROWN means propagation is searching or between landing pads. IN_CLEANUP means a
+ * cleanup pad is running and must call _Unwind_Resume. ENTERING_CATCH means the final
+ * handler is about to run, and it must call __cxa_begin_catch. CAUGHT means the catch
+ * body is running, and __cxa_end_catch frees the header. SEARCH_HAS_CLEANUP means
+ * phase one passed a frame with a cleanup and no matching catch, so the handler must be
+ * reached through phase two. */
+#define AVM_EH_STATE_ALLOCATED          0
+#define AVM_EH_STATE_THROWN             1
+#define AVM_EH_STATE_CAUGHT             2
+#define AVM_EH_STATE_IN_CLEANUP         3
+#define AVM_EH_STATE_ENTERING_CATCH     4
+#define AVM_EH_STATE_SEARCH_HAS_CLEANUP 5
 
 /* Results of avm_eh_prepare_next. A cleanup or catch step fills the header's
  * context. */
@@ -57,7 +76,12 @@ __avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector
  * Searches for a handler and never returns. */
 __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header);
 
-/* Returns 1 when the AVEH4 block at the 24-bit flash address is well formed. It
+/* Opens the AVEH5 metadata for the exception at header, once per throw. It validates the
+ * block header and the index bounds, and it caches the block address, block end, and
+ * function count in the header. Returns 0 when the anchor names no well-formed block. */
+uint8_t avm_eh_open_exception(struct avm_eh_exception *header);
+
+/* Returns 1 when the AVEH5 block at the 24-bit flash address is well formed. It
  * applies the same bounded checks that the unwinder uses for each record. */
 uint8_t avm_eh_validate_block(uint32_t block);
 

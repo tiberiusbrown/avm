@@ -24,17 +24,6 @@
 
 #include "eh_unwind_internal.h"
 
-/* Lifecycle of the active exception. The header is ALLOCATED until it is thrown.
- * THROWN means propagation is searching or between landing pads. IN_CLEANUP
- * means a cleanup pad is running and must call _Unwind_Resume. ENTERING_CATCH
- * means the final handler is about to run, and it must call __cxa_begin_catch.
- * CAUGHT means the catch body is running, and __cxa_end_catch frees the header. */
-#define AVM_EH_STATE_ALLOCATED      0
-#define AVM_EH_STATE_THROWN         1
-#define AVM_EH_STATE_CAUGHT         2
-#define AVM_EH_STATE_IN_CLEANUP     3
-#define AVM_EH_STATE_ENTERING_CATCH 4
-
 /* The one active exception. It is set by the throw and cleared by
  * __cxa_end_catch. */
 static struct avm_eh_exception *active_exception;
@@ -59,8 +48,8 @@ const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__array_type_infoE[9] = {0};
 
 /* eh_cxa_throw.asm stores the header fields at these offsets, and it computes the
  * object address from the header size. Keep it in sync with this layout. */
-_Static_assert(sizeof(struct avm_eh_exception) == 43,
-               "__cxa_throw assumes a 43-byte exception header");
+_Static_assert(sizeof(struct avm_eh_exception) == 51,
+               "__cxa_throw assumes a 51-byte exception header");
 _Static_assert(offsetof(struct avm_eh_exception, context) == 0,
                "exception context offset");
 _Static_assert(offsetof(struct avm_eh_exception, type_address) == 15,
@@ -77,6 +66,12 @@ _Static_assert(offsetof(struct avm_eh_exception, handler_selector) == 39,
                "exception handler selector offset");
 _Static_assert(offsetof(struct avm_eh_exception, handler_adjustment) == 41,
                "exception handler adjustment offset");
+_Static_assert(offsetof(struct avm_eh_exception, eh_block_address) == 43,
+               "exception block address offset");
+_Static_assert(offsetof(struct avm_eh_exception, eh_block_end) == 46,
+               "exception block end offset");
+_Static_assert(offsetof(struct avm_eh_exception, eh_function_count) == 49,
+               "exception function count offset");
 
 void *__cxa_allocate_exception(size_t size) {
     if (size > UINT16_MAX - sizeof(struct avm_eh_exception))
@@ -122,8 +117,10 @@ continue_unwind(struct avm_eh_exception *header) {
 /* Entered by tail transfer from __cxa_throw, after the shim has captured the
  * throw site into the header. The header is in r4. Phase one searches from a copy
  * of the throw site for the handler whose catch matches the thrown type, and
- * nothing runs while it searches. Phase two starts again from the throw site and
- * runs each cleanup in turn. */
+ * nothing runs while it searches. When no frame before the handler has a cleanup,
+ * phase one has already reached the handler's landing state, which is installed
+ * directly. Otherwise phase two starts again from the throw site and runs each
+ * cleanup in turn. */
 __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header) {
     if (active_exception)
         abort();
@@ -132,10 +129,20 @@ __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header) {
     header->state = AVM_EH_STATE_THROWN;
     active_exception = header;
 
+    if (!avm_eh_open_exception(header))
+        abort();
     header->resume_context = header->context;
     if (!avm_eh_find_handler(header))
         abort();
 
+    if (header->state == AVM_EH_STATE_THROWN) {
+        header->context = header->resume_context;
+        header->context.exception = (uint16_t)(uintptr_t)header;
+        header->state = AVM_EH_STATE_ENTERING_CATCH;
+        __avm_eh_install_context(&header->context, header->handler_selector);
+    }
+
+    header->state = AVM_EH_STATE_THROWN;
     header->resume_context = header->context;
     continue_unwind(header);
 }
@@ -204,7 +211,7 @@ void __cxa_end_catch(void) {
     free(header);
 }
 
-/* The AVEH4 unwinder uses no personality routines, so this function is never
+/* The AVEH5 unwinder uses no personality routines, so this function is never
  * reached. It exists because LLVM names it in the EH personality, and it
  * terminates if a program ever calls it. */
 int __gxx_personality_v0(void) {

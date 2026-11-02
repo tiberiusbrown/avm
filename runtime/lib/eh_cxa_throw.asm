@@ -10,7 +10,7 @@
 ; caller's SP is SP+3 on entry, and the return record at SP+0 is the caller's
 ; continuation.
 ;
-; The 43-byte header is struct avm_eh_exception in eh_unwind_internal.h, and the
+; The 51-byte header is struct avm_eh_exception in eh_unwind_internal.h, and the
 ; offsets below must match it. The context is first, so the unwinder reads the
 ; throw site in place without a stack copy. The resume context, the handler
 ; selector, and the handler adjustment are not written here: __avm_eh_throw
@@ -25,8 +25,8 @@
 .globl __cxa_throw
 .type __cxa_throw, @function
 __cxa_throw:
-    ; r4 = header, which lies 43 bytes below the object.
-    addi.s8 r4, -43
+    ; r4 = header, which lies 51 bytes below the object.
+    addi.s8 r4, -51
 
     ; Store the incoming registers before any of them is reused. The
     ; header's exception field is written by __avm_eh_throw.

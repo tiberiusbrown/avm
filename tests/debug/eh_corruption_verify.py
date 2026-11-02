@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs corrupted AVEH4 blocks through the production unwinder.
+"""Runs corrupted AVEH5 blocks through the production unwinder.
 
 Each mutant is a copy of a valid exception image with one field of the metadata
 changed. The guest throws through protected_frame, and the probe reports how the
@@ -17,8 +17,10 @@ import subprocess
 import sys
 import tempfile
 
-MAGIC = b'AVEH4'
+MAGIC = b'AVEH5'
 HEADER_SIZE = 10
+# Each index entry is a u24 function start and a u24 record offset from the block.
+INDEX_ENTRY_SIZE = 6
 FUNCTION_HEADER_SIZE = 18
 ROW_HEADER_SIZE = 5
 SITE_SIZE = 12
@@ -81,13 +83,16 @@ def row_size(flags):
 def parse_block(data, block):
     """Returns the offsets of every function record. Each record's next record comes
     from its own next_offset, so no row is read to skip a record. The rows are read
-    only inside a record, for the mutations that name them."""
+    only inside a record, for the mutations that name them. The first record follows
+    the index, and each index entry names its record."""
     count = read_u(data, block + 5, 2)
     size = read_u(data, block + 7, 3)
     limit = block + size
     functions = []
-    fh = block + HEADER_SIZE
-    for _ in range(count):
+    fh = block + HEADER_SIZE + INDEX_ENTRY_SIZE * count
+    for position in range(count):
+        check(read_u(data, block + HEADER_SIZE + INDEX_ENTRY_SIZE * position + 3, 3) == fh - block,
+              'index entry %d does not name its record' % position)
         check(fh + FUNCTION_HEADER_SIZE <= limit, 'the function header is truncated')
         start = read_u(data, fh, 3)
         end = read_u(data, fh + 3, 3)
@@ -111,6 +116,23 @@ def parse_block(data, block):
         fh = fh + next_offset
     check(fh == limit, 'the block does not end at its declared size')
     return functions, limit
+
+
+def search_path(data, block, lookup):
+    """Replays the runtime's upper-bound search for lookup, and returns the index
+    positions it reads, in order, with the position of the entry it selects."""
+    count = read_u(data, block + 5, 2)
+    lo = 0
+    hi = count
+    visited = []
+    while lo < hi:
+        mid = lo + ((hi - lo) >> 1)
+        visited.append(mid)
+        if read_u(data, block + HEADER_SIZE + INDEX_ENTRY_SIZE * mid, 3) <= lookup:
+            lo = mid + 1
+        else:
+            hi = mid
+    return visited, lo - 1
 
 
 def handler_site(data, record):
@@ -147,6 +169,7 @@ def mutate(data, block, functions, limit, names, name):
     controls. Each mutation names the record it changes."""
     out = bytearray(data)
     protected = next(f for f in functions if f['start'] <= names['protected_frame'] < f['end'])
+    protected_index = functions.index(protected)
     middle = next(f for f in functions if f['start'] <= names['middle'] < f['end'])
     unrelated = next(f for f in functions if f['start'] <= names['unrelated'] < f['end'])
     leaf = next(f for f in functions if f['start'] <= names['leaf'] < f['end'])
@@ -158,6 +181,15 @@ def mutate(data, block, functions, limit, names, name):
 
     def put(offset, value, size):
         out[offset:offset + size] = int(value).to_bytes(size, 'little')
+
+    def entry_of(block_address, position):
+        return block_address + HEADER_SIZE + INDEX_ENTRY_SIZE * position
+
+    def previous_offset(image, block_address, position):
+        return read_u(image, entry_of(block_address, position - 1) + 3, 3)
+
+    def size_of(block_address, end):
+        return end - block_address
 
     sites_offset = protected['sites'] - protected['header']
     next_offset = protected['next'] - protected['header']
@@ -247,6 +279,38 @@ def mutate(data, block, functions, limit, names, name):
         put(handler_site(data, protected) + 9, protected['next'] - protected['header'] + 4, 3)
     elif name == 'protected_action_offset_before_pool':
         put(handler_site(data, protected) + 9, protected['sites'] - protected['header'] + 1, 3)
+    elif name == 'function_count_capacity':
+        # 0xffff entries cannot fit in the block, so the index is rejected at open.
+        put(block + 5, 0xffff, 2)
+    elif name == 'index_truncated':
+        put(block + 7, HEADER_SIZE + INDEX_ENTRY_SIZE * read_u(data, block + 5, 2) - 1, 3)
+    elif name == 'first_record_inside_index':
+        put(block + HEADER_SIZE + 3, HEADER_SIZE + 2, 3)
+    elif name == 'first_record_past_block':
+        put(block + HEADER_SIZE + 3, size_of(block, limit), 3)
+    elif name == 'protected_index_offset_into_record':
+        put(entry_of(block, protected_index) + 3, protected['header'] - block + 6, 3)
+    elif name == 'protected_index_offset_into_pool':
+        put(entry_of(block, protected_index) + 3, protected['pool'] - block, 3)
+    elif name == 'protected_index_offset_duplicate':
+        check(protected_index > 0, 'protected is the first record')
+        put(entry_of(block, protected_index) + 3, previous_offset(data, block, protected_index), 3)
+    elif name == 'protected_index_start_duplicate':
+        check(protected_index > 0, 'protected is the first record')
+        put(entry_of(block, protected_index), read_u(data, entry_of(block, protected_index - 1), 3), 3)
+    elif name == 'protected_index_start_decrease':
+        put(entry_of(block, protected_index), protected['start'] - 1, 3)
+    elif name == 'protected_index_start_increase':
+        put(entry_of(block, protected_index), protected['start'] + 1, 3)
+    elif name == 'protected_end_overlaps_next':
+        check(protected_index + 1 < len(functions), 'protected is the last record')
+        put(protected['header'] + 3, functions[protected_index + 1]['start'] + 1, 3)
+    elif name == 'visited_entry_start_corrupt':
+        # The search for protected reads this entry, and it is not the selected one.
+        visited, selected = search_path(data, block, protected['start'])
+        others = [v for v in visited if v != selected]
+        check(others, 'the search for protected reads only the selected entry')
+        put(entry_of(block, others[0]), 0, 3)
     else:
         raise Failure('unknown mutation %s' % name)
     check(out != data, 'mutation %s changed nothing' % name)
@@ -261,7 +325,12 @@ MUST_HALT = ['magic_mismatch', 'declared_length', 'row_pc_delta', 'cfa_base_regi
              'next_offset_past_block', 'next_offset_inconsistent',
              'protected_action_reserved', 'protected_action_selector_zero',
              'protected_action_count_large', 'protected_action_offset_outside',
-             'protected_action_offset_before_pool']
+             'protected_action_offset_before_pool', 'function_count_capacity',
+             'index_truncated', 'first_record_inside_index', 'first_record_past_block',
+             'protected_index_offset_into_record', 'protected_index_offset_into_pool',
+             'protected_index_offset_duplicate', 'protected_index_start_duplicate',
+             'protected_index_start_decrease', 'protected_index_start_increase',
+             'protected_end_overlaps_next', 'visited_entry_start_corrupt']
 # These controls change a record that the throw never reads. Their output must
 # match the valid run.
 MUST_MATCH = ['control_unrelated_call_bytes', 'control_after_throw_next_offset']
@@ -323,8 +392,8 @@ def main():
     with open(args.image, 'rb') as handle:
         data = handle.read()
     block = data.find(MAGIC)
-    check(block >= 0, 'the image has no AVEH4 block')
-    check(data.find(MAGIC, block + 1) < 0, 'the image has more than one AVEH4 block')
+    check(block >= 0, 'the image has no AVEH5 block')
+    check(data.find(MAGIC, block + 1) < 0, 'the image has more than one AVEH5 block')
     functions, limit = parse_block(data, block)
     names = function_symbols(args.nm, args.elf)
 

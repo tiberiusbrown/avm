@@ -392,7 +392,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
 endforeach()
 
 add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
-# Checks the AVEH4 block of each exception-enabled image against the linked ELF,
+# Checks the AVEH5 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.
 set(AVM_EH_VERIFY_ARGS)
 foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_EH_TEST_OPT_LEVELS)
@@ -592,10 +592,73 @@ add_custom_target(avm_eh_catch_all_run
     DEPENDS avm_tests avm_eh_catch_all_images avm_eh_metadata_verify
     VERBATIM
 )
+
+# The AVEH5 index: the lookup bound, checked on synthetic blocks of 1 to 256 functions.
+add_custom_target(avm_eh_index_run
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_index_complexity_verify.py"
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_index_run)
+
+# The phase-two shortcut: direct, cleanup, unhandled, and combined throws, at O0 and O2.
+add_custom_target(avm_eh_fastpath_run
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_unwind_fastpath_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_catch_all.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_catch_all.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_unwind_fastpath_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_catch_all.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_catch_all.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_unwind_fastpath_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_unwind_fastpath_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_cleanup.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_cleanup.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_unwind_fastpath_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_typed.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_typed.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_unwind_fastpath_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_unhandled.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_unhandled.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_unwind_fastpath_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup_no_handler.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/eh_cleanup_no_handler.elf"
+    DEPENDS avm_eh_stack_probe avm_eh_catch_all_images llvm-avm-image
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_fastpath_run)
 add_dependencies(avm_eh_catch_all_run avm_eh_catch_all_lto_run avm_eh_hardening_run)
 
 # Stage 2 cleanup fixtures. The cleanup chain of the first throw is checked against
-# the machine code, the packed AVEH4 block, and the probe's events, at O0, O2, and
+# the machine code, the packed AVEH5 block, and the probe's events, at O0, O2, and
 # LTO/O2. Each cleanup frame's landing SP is checked: the zero, two, and eight
 # argument-byte cases, the r3-based frame, and the relaxed call8 and call16 sites.
 # The termination fixtures run here too, since their output is the halt report.
@@ -682,7 +745,7 @@ add_dependencies(avm_eh_catch_all_run avm_eh_cleanup_run avm_eh_rtti_verify)
 
 # Stage 3 typed catch fixtures. Exact matching is checked at O0, O2, and LTO/O2. The
 # probe reports each landing context, and eh_typed_verify checks its selector, its
-# first matching clause, and its pad against the packed AVEH4 block and the machine
+# first matching clause, and its pad against the packed AVEH5 block and the machine
 # code. The block fixture covers malformed metadata, and the high-address fixture
 # places its descriptors above program address 0xFFFF.
 add_custom_target(avm_eh_typed_run

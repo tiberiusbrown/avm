@@ -4,7 +4,7 @@
 The probe reports each installation of a landing context. At the installer's
 entry, r4 is the header, so the probe's header bytes give the landing state, the
 landing pad, the thrown type, and the handler selector that phase one recorded. The
-check reads the packed AVEH4 block and the machine code to confirm, for each
+check reads the packed AVEH5 block and the machine code to confirm, for each
 installation, that:
 
   - a handler installation (state ENTERING_CATCH) passes in r5 the selector that
@@ -46,7 +46,7 @@ END = '__cxa_end_catch'
 RESUME = '_Unwind_Resume'
 FREE = 'free'
 
-HEADER_SIZE = 43
+HEADER_SIZE = 51
 STATE_IN_CLEANUP = 3
 STATE_ENTERING_CATCH = 4
 

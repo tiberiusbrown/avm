@@ -121,7 +121,7 @@ allocated, which is the state the restatement assumes.
 
 A valid `.debug_frame` does not by itself mean that stack unwinding works on
 the device. AVD1 has no unwind section. The guest unwinds only for C++ exceptions,
-using the `AVEH4` block described in [arch.md](arch.md) Section 69.3. That block
+using the `AVEH5` block described in [arch.md](arch.md) Section 69.3. That block
 is derived from `.debug_frame`, `.avm.eh_sites`, `.avm.eh_calls`, and the action
 lists in `.avm.eh_sites`, and it exists only in programs that reference the exception
 runtime. It is not a general debugger unwind table, and it does not describe variables
@@ -132,13 +132,14 @@ installer. Selector 0 in r5 enters a cleanup pad, which runs destructors and the
 calls `_Unwind_Resume`. A nonzero selector enters the handler, which calls
 `__cxa_begin_catch`. The selector is the LLVM type ID of the matched catch, and the
 pad compares it with the IDs of its own clauses. In both cases r4 holds the exception
-header, which is 43 bytes and lies below the thrown object. Its first 15 bytes are
-the landing context, and its last 15 bytes are the resume cursor that the next
+header, which is 51 bytes and lies below the thrown object. Its first 15 bytes are
+the landing context, and its next 15 bytes are the resume cursor that the next
 `_Unwind_Resume` continues from. Bytes 15 to 17 hold the thrown type's descriptor
 address, bytes 39 and 40 hold the selector that phase one recorded, and bytes 41 and
-42 hold the handler adjustment, the byte offset of the caught base subobject. The
-catch object begins at the header plus 43 bytes plus that adjustment. The landing
-SP is the call-site SP plus the call's outgoing argument bytes. An AVEH4 site has an
+42 hold the handler adjustment, the byte offset of the caught base subobject. Bytes 43
+to 45 and 46 to 48 hold the AVEH5 block's address and end, and bytes 49 and 50 hold its
+function count. The catch object begins at the header plus 51 bytes plus that
+adjustment. The landing SP is the call-site SP plus the call's outgoing argument bytes. An AVEH5 site has an
 action that names an action list. The list's flag bit 0 is a cleanup, and its catch
 entries are a selector and an RTTI address each, where a zero address is catch-all.
 

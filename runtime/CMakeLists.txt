@@ -213,7 +213,7 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
         set(runtime_source_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
     endif()
     # The unwinder never unwinds through its own frames, so its helpers need no
-    # CFI. Each FDE would otherwise add an AVEH4 record for every helper.
+    # CFI. Each FDE would otherwise add an AVEH5 record for every helper.
     if(RUNTIME_SOURCE STREQUAL "eh_unwind")
         set(runtime_source_options -fno-unwind-tables -fno-asynchronous-unwind-tables)
     endif()

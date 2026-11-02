@@ -1,10 +1,16 @@
 #!/usr/bin/env python3
-"""Verify the AVEH4 exception metadata in packed AVM images.
+"""Verify the AVEH5 exception metadata in packed AVM images.
 
 For an image built with the exception runtime, this script checks that:
 
 * the program-space anchor __avm_eh_metadata_ptr is patched to a block whose
-  header is AVEH4 and whose size fits in the image;
+  header is AVEH5 and whose size fits in the image;
+* the function index holds one entry per function, sorted by start, and each entry
+  names its record by offset. The records follow the index exactly, each record's
+  next_offset names the record after it, and the last record ends at the block end;
+* the binary search that the runtime uses, replayed on the index bytes, finds the
+  function that covers each representative PC: each start, interior point, and end,
+  every gap, and the PCs before the first function and after the last;
 * each function record's sites_offset and next_offset match the sizes of its
   rows, sites, and calls, and the action pool fills the rest of the record;
 * each action pool is a sequence of complete action lists. Every site's action
@@ -21,7 +27,7 @@ For an image built with the exception runtime, this script checks that:
 * the decoder rejects each malformed block in a fixed set of mutations.
 
 For an image built without the exception runtime, it checks that the anchor does
-not exist and that the image contains no AVEH4 block.
+not exist and that the image contains no AVEH5 block.
 
 The layout is documented in docs/arch.md. The decoder below reads the image bytes
 directly, and it shares no code with the packer. The ELF is read with llvm-nm,
@@ -41,8 +47,10 @@ sys.path.insert(0, HERE)
 import eh_rtti_verify  # noqa: E402  (program-space placement of RTTI objects)
 
 ANCHOR = '__avm_eh_metadata_ptr'
-MAGIC = b'AVEH4'
+MAGIC = b'AVEH5'
 HEADER_SIZE = 10
+# Each index entry is a u24 function start and a u24 record offset from the block.
+INDEX_ENTRY_SIZE = 6
 FUNCTION_HEADER_SIZE = 18
 ROW_HEADER_SIZE = 5
 ROW_MAX_SIZE = 13
@@ -246,30 +254,62 @@ def in_executable(ranges, address):
 
 
 def read_u(image, offset, size):
-    check(offset + size <= len(image), 'AVEH4 read past the end of the image')
+    check(offset + size <= len(image), 'AVEH5 read past the end of the image')
     return int.from_bytes(image[offset:offset + size], 'little')
 
 
-def decode_block(image, block):
-    """Decodes AVEH4 and returns (function dicts, block size).
+def decode_index(image, block, count, size):
+    """Reads the function index and checks its layout, and returns (start, offset) per
+    entry. The offsets are measured from the block start. Each entry must lie after the
+    index, the starts must strictly increase, and the first record must follow the
+    index. The decoder reads the entries as bytes, so it shares no code with the
+    packer."""
+    index_end = HEADER_SIZE + INDEX_ENTRY_SIZE * count
+    check(index_end <= size, 'AVEH5 function index does not fit in the block')
+    entries = []
+    for position in range(count):
+        entry = block + HEADER_SIZE + INDEX_ENTRY_SIZE * position
+        entries.append((read_u(image, entry, 3), read_u(image, entry + 3, 3)))
+    if count:
+        check(entries[0][1] == index_end,
+              'AVEH5 first record is at 0x%x, but the index ends at 0x%x' % (
+                  entries[0][1], index_end))
+    previous_start = None
+    for position, (start, offset) in enumerate(entries):
+        check(index_end <= offset < size,
+              'AVEH5 index entry %d names offset 0x%x outside the records' % (position, offset))
+        check(previous_start is None or start > previous_start,
+              'AVEH5 index entry %d is not after the entry before it' % position)
+        previous_start = start
+    return entries
 
-    Each record's sites_offset and next_offset are read from the image bytes. They
-    are compared with sizes computed from the record's own counts and rows, so the
+
+def decode_block(image, block):
+    """Decodes AVEH5 and returns (function dicts, block size).
+
+    The index is decoded first, and each record must start where its entry says. The
+    records fill the bytes after the index, so each record starts where the one before
+    it ends. Each record's sites_offset and next_offset are read from the image bytes.
+    They are compared with sizes computed from the record's own counts and rows, so the
     expected values do not come from the decoder's cursor. The action pool is the
     tail of the record, and it is decoded in full, so an action offset must name the
     start of one of its lists."""
-    check(block + HEADER_SIZE <= len(image), 'AVEH4 header lies outside the image')
-    check(image[block:block + 5] == MAGIC, 'AVEH4 magic is missing')
+    check(block + HEADER_SIZE <= len(image), 'AVEH5 header lies outside the image')
+    check(image[block:block + 5] == MAGIC, 'AVEH5 magic is missing')
     count = read_u(image, block + 5, 2)
     size = read_u(image, block + 7, 3)
-    check(size >= HEADER_SIZE, 'AVEH4 block size is smaller than its header')
-    check(block + size <= len(image), 'AVEH4 block extends past the image')
+    check(size >= HEADER_SIZE, 'AVEH5 block size is smaller than its header')
+    check(block + size <= len(image), 'AVEH5 block extends past the image')
     end = block + size
+    entries = decode_index(image, block, count, size)
     functions = []
-    record = block + HEADER_SIZE
+    record = block + HEADER_SIZE + INDEX_ENTRY_SIZE * count
     previous_end = 0
-    for _ in range(count):
-        check(record + FUNCTION_HEADER_SIZE <= end, 'AVEH4 function header is truncated')
+    for position in range(count):
+        check(record + FUNCTION_HEADER_SIZE <= end, 'AVEH5 function header is truncated')
+        check(record - block == entries[position][1],
+              'AVEH5 index entry %d names offset 0x%x, but its record is at 0x%x' % (
+                  position, entries[position][1], record - block))
         start = read_u(image, record, 3)
         function_end = read_u(image, record + 3, 3)
         row_count = read_u(image, record + 6, 2)
@@ -277,10 +317,13 @@ def decode_block(image, block):
         call_count = read_u(image, record + 10, 2)
         sites_offset = read_u(image, record + 12, 3)
         next_offset = read_u(image, record + 15, 3)
-        check(start < function_end, 'AVEH4 function range is empty')
-        check(start >= previous_end, 'AVEH4 function ranges overlap or are unsorted')
-        check(row_count > 0, 'AVEH4 function has no CFI rows')
-        check(0 < next_offset <= end - record, 'AVEH4 next_offset does not end inside the block')
+        check(start == entries[position][0],
+              'AVEH5 index entry %d starts at 0x%x, but its record starts at 0x%x' % (
+                  position, entries[position][0], start))
+        check(start < function_end, 'AVEH5 function range is empty')
+        check(start >= previous_end, 'AVEH5 function ranges overlap or are unsorted')
+        check(row_count > 0, 'AVEH5 function has no CFI rows')
+        check(0 < next_offset <= end - record, 'AVEH5 next_offset does not end inside the block')
         previous_end = function_end
 
         # Walk the rows to measure them, then compare that size with sites_offset.
@@ -288,72 +331,72 @@ def decode_block(image, block):
         rows = []
         previous_delta = None
         for index in range(row_count):
-            check(cursor + ROW_HEADER_SIZE <= end, 'AVEH4 row is truncated')
+            check(cursor + ROW_HEADER_SIZE <= end, 'AVEH5 row is truncated')
             delta = read_u(image, cursor, 2)
             flags = image[cursor + 2]
             cfa_offset = struct.unpack_from('<h', image, cursor + 3)[0]
             mask = flags & FLAG_SAVED_MASK
-            check(not flags & FLAG_RESERVED, 'AVEH4 row sets reserved flag bits')
+            check(not flags & FLAG_RESERVED, 'AVEH5 row sets reserved flag bits')
             if index == 0:
-                check(delta == 0, 'AVEH4 first row is not at the function start')
+                check(delta == 0, 'AVEH5 first row is not at the function start')
             else:
-                check(delta > previous_delta, 'AVEH4 rows are not strictly increasing')
-            check(start + delta < function_end, 'AVEH4 row lies outside its function')
+                check(delta > previous_delta, 'AVEH5 rows are not strictly increasing')
+            check(start + delta < function_end, 'AVEH5 row lies outside its function')
             previous_delta = delta
             saved_count = bin(mask).count('1')
             slots_size = 2 * saved_count
-            check(cursor + ROW_HEADER_SIZE + slots_size <= end, 'AVEH4 row slots are truncated')
+            check(cursor + ROW_HEADER_SIZE + slots_size <= end, 'AVEH5 row slots are truncated')
             rows.append({'pc': start + delta, 'r3': bool(flags & FLAG_R3_BASE),
                          'cfa_offset': cfa_offset, 'mask': mask})
             cursor += ROW_HEADER_SIZE + slots_size
         row_bytes = cursor - (record + FUNCTION_HEADER_SIZE)
         expected_sites_offset = FUNCTION_HEADER_SIZE + row_bytes
         check(sites_offset == expected_sites_offset,
-              'AVEH4 sites_offset is %d, but the rows end at %d' % (
+              'AVEH5 sites_offset is %d, but the rows end at %d' % (
                   sites_offset, expected_sites_offset))
         pool_offset = sites_offset + SITE_SIZE * site_count + CALL_SIZE * call_count
         check(pool_offset <= next_offset,
-              'AVEH4 sites and calls end at %d, past next_offset %d' % (pool_offset, next_offset))
+              'AVEH5 sites and calls end at %d, past next_offset %d' % (pool_offset, next_offset))
 
         sites = []
-        check(cursor + site_count * SITE_SIZE <= end, 'AVEH4 sites are truncated')
+        check(cursor + site_count * SITE_SIZE <= end, 'AVEH5 sites are truncated')
         previous_site_end = start
         for _ in range(site_count):
             site_start = read_u(image, cursor, 3)
             site_end = read_u(image, cursor + 3, 3)
             landing = read_u(image, cursor + 6, 3)
             action = read_u(image, cursor + 9, 3)
-            check(site_start < site_end, 'AVEH4 site range is empty')
-            check(site_start >= previous_site_end, 'AVEH4 sites overlap or are unsorted')
-            check(site_end <= function_end, 'AVEH4 site extends past its function')
+            check(site_start < site_end, 'AVEH5 site range is empty')
+            check(site_start >= previous_site_end, 'AVEH5 sites overlap or are unsorted')
+            check(site_end <= function_end, 'AVEH5 site extends past its function')
             if action == 0:
-                check(landing == 0, 'AVEH4 site with no action has a landing pad')
+                check(landing == 0, 'AVEH5 site with no action has a landing pad')
             else:
                 check(start <= landing < function_end,
-                      'AVEH4 handler or cleanup landing pad lies outside its function')
+                      'AVEH5 handler or cleanup landing pad lies outside its function')
                 check(pool_offset <= action < next_offset,
-                      'AVEH4 site action 0x%x lies outside the action pool' % action)
+                      'AVEH5 site action 0x%x lies outside the action pool' % action)
             sites.append({'start': site_start, 'end': site_end, 'landing': landing,
                           'action_offset': action, 'action': None})
             previous_site_end = site_end
             cursor += SITE_SIZE
 
         calls = []
-        check(cursor + call_count * CALL_SIZE <= end, 'AVEH4 calls are truncated')
+        check(cursor + call_count * CALL_SIZE <= end, 'AVEH5 calls are truncated')
         previous_return = start
         for _ in range(call_count):
             return_pc = read_u(image, cursor, 3)
             outgoing = read_u(image, cursor + 3, 2)
             check(start < return_pc <= function_end,
-                  'AVEH4 call return PC lies outside its function')
-            check(return_pc > previous_return, 'AVEH4 call records are not strictly increasing')
+                  'AVEH5 call return PC lies outside its function')
+            check(return_pc > previous_return, 'AVEH5 call records are not strictly increasing')
             check(outgoing < ARGUMENT_LIMIT,
-                  'AVEH4 call passes more outgoing bytes than the stack holds')
+                  'AVEH5 call passes more outgoing bytes than the stack holds')
             calls.append((return_pc, outgoing))
             previous_return = return_pc
             cursor += CALL_SIZE
         check(cursor == record + pool_offset,
-              'AVEH4 calls do not end where the action pool starts')
+              'AVEH5 calls do not end where the action pool starts')
 
         # The pool fills the rest of the record. Each list is decoded in full, and
         # its offset is relative to the function record, as the sites name it.
@@ -363,21 +406,81 @@ def decode_block(image, block):
         for site in sites:
             if site['action_offset']:
                 check(site['action_offset'] in lists,
-                      'AVEH4 site action 0x%x is not the start of an action list'
+                      'AVEH5 site action 0x%x is not the start of an action list'
                       % site['action_offset'])
                 site['action'] = lists[site['action_offset']]
                 check(any(site['start'] < pc <= site['end'] for pc, _ in calls),
-                      'AVEH4 handler or cleanup site at 0x%x has no call record' % site['start'])
+                      'AVEH5 handler or cleanup site at 0x%x has no call record' % site['start'])
         used = {site['action_offset'] for site in sites if site['action_offset']}
-        check(used == set(lists), 'AVEH4 action pool holds a list that no site uses')
+        check(used == set(lists), 'AVEH5 action pool holds a list that no site uses')
 
         functions.append({'start': start, 'end': function_end, 'record': record,
                           'sites_offset': sites_offset, 'next_offset': next_offset,
                           'rows': rows, 'sites': sites, 'calls': calls,
                           'lists': lists})
         record += next_offset
-    check(record == end, 'AVEH4 block size does not match its records')
+    check(record == end, 'AVEH5 block size does not match its records')
     return functions, size
+
+
+def index_lookup(image, block, count, size, pc):
+    """Replays the runtime's search for pc over the index bytes. It returns the record
+    address that covers pc, or None, and the number of index entries the search read.
+    The runtime also checks each selected record's header, and decode_block has checked
+    every header, so the replay checks only the start and end of the selected record and
+    the start of the next entry."""
+    index_base = block + HEADER_SIZE
+    lo = 0
+    hi = count
+    probes = 0
+    while lo < hi:
+        mid = lo + ((hi - lo) >> 1)
+        probes += 1
+        if read_u(image, index_base + INDEX_ENTRY_SIZE * mid, 3) <= pc:
+            lo = mid + 1
+        else:
+            hi = mid
+    if lo == 0:
+        return None, probes
+    selected = index_base + INDEX_ENTRY_SIZE * (lo - 1)
+    start = read_u(image, selected, 3)
+    record = block + read_u(image, selected + 3, 3)
+    function_end = read_u(image, record + 3, 3)
+    if not start <= pc < function_end:
+        return None, probes
+    if lo < count and read_u(image, index_base + INDEX_ENTRY_SIZE * lo, 3) < function_end:
+        return None, probes
+    return record, probes
+
+
+def check_lookups(image, block, functions, size):
+    """Checks the indexed lookup against the function ranges at representative PCs: each
+    start, the byte before it, its interior, its last byte, and the byte after its end.
+    It also covers the midpoint of each gap, the PC before the first function, and the
+    PC after the last. The expected records come from the decoded ranges, not the index.
+    Every search must read no more entries than a binary search of count entries can."""
+    count = read_u(image, block + 5, 2)
+    ranges = [(fn['start'], fn['end'], fn['record']) for fn in functions]
+    points = {0, 0xffffff}
+    previous_end = 0
+    for start, end, _ in ranges:
+        points.update({start - 1, start, start + (end - start) // 2, end - 1, end})
+        if start > previous_end:
+            points.update({previous_end, (previous_end + start) // 2, start - 1})
+        previous_end = end
+    points.update({previous_end, previous_end + 1})
+    # ceil(log2(count + 1)) probes, which is the bit length of count.
+    bound = count.bit_length()
+    for pc in sorted(p for p in points if 0 <= p <= 0xffffff):
+        expected = next((record for start, end, record in ranges if start <= pc < end), None)
+        found, probes = index_lookup(image, block, count, size, pc)
+        check(found == expected,
+              'lookup of 0x%x finds %s, but the covering record is %s' % (
+                  pc, 'nothing' if found is None else '0x%x' % found,
+                  'nothing' if expected is None else '0x%x' % expected))
+        check(probes <= bound,
+              'lookup of 0x%x read %d index entries, above the bound %d' % (pc, probes, bound))
+    return len(points)
 
 
 def verify_mutations_rejected(image, block, functions):
@@ -410,6 +513,22 @@ def verify_mutations_rejected(image, block, functions):
         ('next_offset_inside_list', put(first + 15, next_offset - 1, 3)),
         ('block_truncated_in_last_record', put(block + 7, size - 1, 3)),
     ]
+    # The index sits right after the header, so these mutants damage its entries.
+    index_end = HEADER_SIZE + INDEX_ENTRY_SIZE * count
+    first_entry = block + HEADER_SIZE
+    mutants += [
+        ('index_truncated', put(block + 7, index_end - 1, 3)),
+        ('index_start_wrong', put(first_entry, functions[0]['start'] + 1, 3)),
+        ('index_offset_wrong', put(first_entry + 3, index_end + 1, 3)),
+        ('index_offset_into_index', put(first_entry + 3, HEADER_SIZE, 3)),
+        ('index_offset_past_block', put(first_entry + 3, size, 3)),
+    ]
+    if count > 1:
+        second_entry = first_entry + INDEX_ENTRY_SIZE
+        mutants += [
+            ('index_start_duplicate', put(second_entry, functions[0]['start'], 3)),
+            ('index_offset_duplicate', put(second_entry + 3, index_end, 3)),
+        ]
     site_fn = next((fn for fn in functions if any(s['action_offset'] for s in fn['sites'])), None)
     if site_fn is not None:
         site_index = next(i for i, s in enumerate(site_fn['sites']) if s['action_offset'])
@@ -452,24 +571,24 @@ def compare_compiler(functions, objdump, elf):
         packed = [(s['start'], s['end'], s['landing'], s['action']) for s in fn['sites']]
         if fn['start'] in expected:
             end, sites = expected[fn['start']]
-            check(end == fn['end'], 'function 0x%x ends at 0x%x in AVEH4 but 0x%x in the compiler records' % (
+            check(end == fn['end'], 'function 0x%x ends at 0x%x in AVEH5 but 0x%x in the compiler records' % (
                 fn['start'], fn['end'], end))
             check(sorted(sites, key=lambda t: t[0]) == sorted(packed, key=lambda t: t[0]),
-                  'AVEH4 sites for 0x%x differ from the compiler records' % fn['start'])
+                  'AVEH5 sites for 0x%x differ from the compiler records' % fn['start'])
         else:
-            check(not packed, 'AVEH4 sites for 0x%x have no compiler records' % fn['start'])
+            check(not packed, 'AVEH5 sites for 0x%x have no compiler records' % fn['start'])
     expected_calls = compiler_calls(objdump, elf)
     for fn in functions:
         if fn['start'] in expected_calls:
             check(fn['calls'] == expected_calls[fn['start']],
-                  'AVEH4 calls for 0x%x differ from the compiler records' % fn['start'])
+                  'AVEH5 calls for 0x%x differ from the compiler records' % fn['start'])
         else:
-            check(not fn['calls'], 'AVEH4 calls for 0x%x have no compiler records' % fn['start'])
+            check(not fn['calls'], 'AVEH5 calls for 0x%x have no compiler records' % fn['start'])
     packed_starts = {fn['start'] for fn in functions}
     missing = sorted(start for start in list(expected) + list(expected_calls)
                      if start not in packed_starts)
     if missing:
-        raise Failure('compiler records for 0x%x have no AVEH4 function' % missing[0])
+        raise Failure('compiler records for 0x%x have no AVEH5 function' % missing[0])
 
 
 def verify_eh_image(args, elf, image_path):
@@ -479,10 +598,11 @@ def verify_eh_image(args, elf, image_path):
     check(anchor is not None, 'exception image lacks the %s anchor' % ANCHOR)
     check(anchor + 3 <= len(image), 'anchor lies outside the image')
     block = read_u(image, anchor, 3)
-    check(block != 0, 'anchor is not patched with an AVEH4 address')
+    check(block != 0, 'anchor is not patched with an AVEH5 address')
 
     functions, size = decode_block(image, block)
     verify_mutations_rejected(image, block, functions)
+    lookups = check_lookups(image, block, functions, size)
     compare_compiler(functions, args.objdump, elf)
 
     # Every typed catch names a _ZTI object, and every such object is program data.
@@ -527,7 +647,7 @@ def verify_eh_image(args, elf, image_path):
             check(pc in boundaries, 'call return PC 0x%x is not an instruction boundary' % pc)
     return {'anchor': anchor, 'block': block, 'size': size,
             'functions': len(functions), 'rows': row_count, 'sites': site_count,
-            'calls': call_count, 'lists': list_count}
+            'calls': call_count, 'lists': list_count, 'lookups': lookups}
 
 
 def verify_packer_rejects(packer, elf, scratch):
@@ -557,7 +677,7 @@ def verify_no_eh_image(args, elf, image_path):
           'image without the exception runtime defines %s' % ANCHOR)
     with open(image_path, 'rb') as handle:
         image = handle.read()
-    check(MAGIC not in image, 'image without the exception runtime contains AVEH4')
+    check(MAGIC not in image, 'image without the exception runtime contains AVEH5')
 
 
 def main():
@@ -584,16 +704,17 @@ def main():
     for elf, image in zip(args.eh_elf, args.eh_image):
         try:
             stats = verify_eh_image(args, elf, image)
-            print('%s: AVEH4 at 0x%06x, %d bytes, %d functions, %d rows, %d sites, %d lists, %d calls' % (
-                os.path.basename(elf), stats['block'], stats['size'],
-                stats['functions'], stats['rows'], stats['sites'], stats['lists'],
-                stats['calls']))
+            print('%s: AVEH5 at 0x%06x, %d bytes, %d functions, %d rows, %d sites, %d lists, %d calls, '
+                  '%d index lookups' % (
+                      os.path.basename(elf), stats['block'], stats['size'],
+                      stats['functions'], stats['rows'], stats['sites'], stats['lists'],
+                      stats['calls'], stats['lookups']))
             with tempfile.TemporaryDirectory() as scratch:
                 plain = os.path.join(scratch, 'plain.bin')
                 run_tool(packer, ['--development', '--no-crash-info', elf, '-o', plain])
                 with open(plain, 'rb') as handle:
                     no_crash = handle.read()
-                check(MAGIC in no_crash, '--no-crash-info removed the AVEH4 block')
+                check(MAGIC in no_crash, '--no-crash-info removed the AVEH5 block')
                 verify_eh_image(args, elf, plain)
                 verify_packer_rejects(packer, elf, scratch)
         except Failure as error:

@@ -8,7 +8,7 @@ SYMBOL TABLE:
 Disassembly of section .text:
 
 <__cxa_throw>:
- c8 d5                 addi.s8	r4, -0x2b
+ c8 cd                 addi.s8	r4, -0x33
  ee 18 25              st16	[r4+5], r0
  ee 38 27              st16	[r4+7], r1
  ee 58 29              st16	[r4+9], r2

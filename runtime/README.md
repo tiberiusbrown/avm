@@ -473,7 +473,7 @@ Build with `-fexceptions`, which overrides the SDK's `-fno-exceptions` default. 
 landing pads. A cleanup pad destroys its objects and calls `_Unwind_Resume`. Each
 call site is an entry in `.avm.eh_sites`, and each call in a function with landing
 pads is an entry in `.avm.eh_calls`. The packer turns those records, the action lists
-in `.avm.eh_sites`, and the `.debug_frame` rows into the `AVEH4` block described in
+in `.avm.eh_sites`, and the `.debug_frame` rows into the `AVEH5` block described in
 [arch.md](arch.md) Section 69.3. The unwinder's `eh_unwind.c` is built without
 unwind tables, because the unwinder never unwinds through its own frames.
 
@@ -491,12 +491,16 @@ The descriptors themselves are emitted by the compiler into program flash; see
 [arch.md](arch.md) Section 60.1.
 
 Propagation has two phases. Phase one searches the frames from the throw for the
-first catch that matches the thrown type. A typed catch matches when its descriptor
+first catch that matches the thrown type. The search looks up each frame's function by
+binary search over the `AVEH5` index, so its cost grows with the logarithm of the
+function count, not with the program size. A typed catch matches when its descriptor
 address equals the thrown one, or when it names a public nonvirtual base subobject of
 the thrown class that occurs exactly once. A catch-all matches everything. The base
 subobject's byte offset is the handler adjustment, which phase one records with the
-selector. Phase one runs no destructor. If no frame has a matching catch, the program halts before any cleanup
-runs. The search records the matched selector in the header. Phase two enters each
+selector. Phase one runs no destructor. When no frame before the handler has a cleanup,
+the handler's landing state is installed directly, and phase two does not run. If no
+frame has a matching catch, the program halts before any cleanup runs. The search
+records the matched selector in the header. Phase two enters each
 cleanup pad in turn with selector 0. A cleanup pad runs its destructors and calls
 `_Unwind_Resume`, which continues from the caller that the pad saved. A pad that
 has both a cleanup and typed clauses is entered as a handler when a clause matches,
@@ -506,7 +510,7 @@ object and frees it. A cleanup pad never ends the exception.
 
 `__cxa_throw` is a frameless shim. It takes the object in r4, the type-descriptor
 program address in r6:r7, and the destructor program address as a three-byte stack
-argument. It stores the throw site into the exception header, which lies 43 bytes
+argument. It stores the throw site into the exception header, which lies 51 bytes
 below the object, and then tail-transfers to `__avm_eh_throw`. The header holds the
 landing context, the 24-bit type-descriptor address, the 24-bit destructor address,
 the size, the lifecycle state, the resume cursor, the handler's selector, and the

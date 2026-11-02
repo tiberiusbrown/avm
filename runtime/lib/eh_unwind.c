@@ -38,9 +38,12 @@
  *             u24 type address. The address is the program address of an RTTI
  *             descriptor, and zero is catch(...), which must be the last entry.
  *             The entries are in clause order, so the first match wins. An entry
- *             matches its exact type, or a public base subobject of the thrown
- *             class, virtual or nonvirtual. match_class_base finds the subobject
- *             from the RTTI, and from the thrown object's vptrs for a virtual base.
+ *             matches its exact type. A reference marker matches its underlying
+ *             pointer type exactly. A pointer entry matches a thrown pointer by the
+ *             pointer conversions, and a null pointer by std::nullptr_t. A class
+ *             entry matches a public base subobject of the thrown class, virtual or
+ *             nonvirtual. The walks find the subobject from the RTTI, and from the
+ *             vptrs of the object or of the pointee for a virtual base.
  *
  * sites_offset and next_offset are measured from the start of their function
  * record. The rows fill the bytes from the header to sites_offset, the sites
@@ -500,13 +503,19 @@ AVEH5_NOINLINE uint32_t find_call(uint32_t fh, uint32_t return_pc) {
     return AVEH5_BAD;
 }
 
-/* The support vtables that eh_cxa.c defines for the class descriptors. A class
- * descriptor begins with its vtable address point, which lies six bytes into the
- * vtable of its kind. The three kinds below are the layouts that carry base
- * information. The other kinds are exact-match-only. */
+/* The support vtables that eh_cxa.c defines for the descriptors. A descriptor begins with
+ * its vtable address point, which lies six bytes into the vtable of its kind. The class
+ * kinds carry base information, the pointer kind carries flags and a pointee, the
+ * fundamental and function kinds name a type, and the marker kind names the pointer type
+ * that a catch of a non-const pointer by reference must match exactly. Other kinds are
+ * matched by exact address only. */
 extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__class_type_infoE[9];
 extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv120__si_class_type_infoE[9];
 extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv121__vmi_class_type_infoE[9];
+extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv119__pointer_type_infoE[9];
+extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv123__fundamental_type_infoE[9];
+extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv120__function_type_infoE[9];
+extern const uint8_t AVM_PROGMEM __avm_eh_exact_pointer_ref_type_info[9];
 
 #define AVM_RTTI_ADDRESS_POINT 6
 /* An SI descriptor holds one base descriptor after its vtable and type name. */
@@ -515,6 +524,17 @@ extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv121__vmi_class_type_infoE[9];
  * entries follow the 10-byte header. */
 #define AVM_RTTI_VMI_COUNT 8
 #define AVM_RTTI_VMI_HEADER 10
+/* A fundamental or function descriptor holds its type name after its address point. */
+#define AVM_RTTI_NAME 3
+/* A pointer descriptor is the vtable address point, the type name, a u16 flag word, and
+ * the pointee descriptor. */
+#define AVM_RTTI_POINTER_FLAGS 6
+#define AVM_RTTI_POINTER_POINTEE 8
+#define AVM_RTTI_POINTER_SIZE 11
+/* A marker is the vtable address point, three reserved zero bytes, and the descriptor of
+ * the pointer type that it names. */
+#define AVM_RTTI_MARKER_RESERVED 3
+#define AVM_RTTI_MARKER_UNDERLYING 6
 /* The low byte of a base entry's offset-and-flags word. The upper 24 bits are the
  * signed byte offset of the base subobject within its containing subobject. */
 #define AVM_RTTI_BASE_VIRTUAL 0x01
@@ -525,26 +545,56 @@ extern const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv121__vmi_class_type_infoE[9];
 #define AVM_RTTI_MAX_DEPTH 8
 #define AVM_RTTI_MAX_BASES 32
 #define AVM_RTTI_MAX_EDGES 512
-/* Results of match_class_base. A catch of a type that is not a class needs a conversion
- * that is not implemented, such as a pointer conversion, so it is UNSUPPORTED and matches
- * nothing. A walk that exceeds its limits is LIMIT, which cannot decide the clause, so the
- * throw fails. INVALID is a malformed descriptor or a malformed virtual base offset, which
- * also fails the throw. */
+/* A pointer conversion descends through at most this many pointer levels. */
+#define AVM_RTTI_MAX_POINTER_LEVELS 8
+/* Flags of a pointer descriptor. Clang writes them for the pointee: the cv-qualifiers, restrict,
+ * incomplete, noexcept for a function pointee, and the AVM bit for a 24-bit representation. The
+ * class-incomplete bit belongs to member pointers, so an ordinary pointer that carries it is
+ * malformed, as is any undefined bit. */
+#define AVM_PTR_CONST 0x01
+#define AVM_PTR_VOLATILE 0x02
+#define AVM_PTR_RESTRICT 0x04
+#define AVM_PTR_INCOMPLETE 0x08
+#define AVM_PTR_CLASS_INCOMPLETE 0x10
+#define AVM_PTR_NOEXCEPT 0x40
+#define AVM_PTR_WIDE 0x80
+#define AVM_PTR_QUALIFIERS (AVM_PTR_CONST | AVM_PTR_VOLATILE)
+#define AVM_PTR_DEFINED                                                                       \
+    (AVM_PTR_CONST | AVM_PTR_VOLATILE | AVM_PTR_RESTRICT | AVM_PTR_INCOMPLETE | AVM_PTR_NOEXCEPT | \
+     AVM_PTR_WIDE)
+/* Results of the matchers. A match code sits in the low byte, and a class walk's match
+ * carries its base adjustment in bits 31:16. A catch of a type that cannot match returns
+ * NO_MATCH. A malformed descriptor, edge, or virtual base offset returns INVALID, and a
+ * walk past its depth or edge budget returns LIMIT. Both fail the throw. A pointer
+ * conversion that needs no base walk returns CONVERT, and one that needs the class walk
+ * of the pointee returns BASE. */
 #define AVM_RTTI_NO_MATCH 0
 #define AVM_RTTI_MATCH 1
-#define AVM_RTTI_UNSUPPORTED 2
 #define AVM_RTTI_INVALID 3
 #define AVM_RTTI_LIMIT 4
-/* Results of resolve_virtual_base. A malformed vtable slot or displacement is INVALID,
- * because no clause can be decided from it. */
+#define AVM_RTTI_CONVERT 5
+#define AVM_RTTI_BASE 6
+/* Results of resolve_virtual_base and cross_base. A malformed vtable slot or displacement is
+ * INVALID, because no clause can be decided from it. */
 #define AVM_RTTI_OFFSET_OK 0
 #define AVM_RTTI_OFFSET_INVALID 1
+/* How the class walk locates a subobject. An object walk starts at the thrown object, whose
+ * subobjects lie inside it. A pointer walk starts at the object a nonnull pointer addresses,
+ * and it may reach any address in 16-bit RAM, because the pointee's size is unknown. A null
+ * walk reads no memory, and it identifies a subobject by its anchor and its offset in it. */
+#define AVM_WALK_OBJECT 0
+#define AVM_WALK_POINTER 1
+#define AVM_WALK_NULL 2
 
 enum avm_rtti_kind {
     AVM_RTTI_OTHER,
     AVM_RTTI_CLASS,
     AVM_RTTI_SI,
-    AVM_RTTI_VMI
+    AVM_RTTI_VMI,
+    AVM_RTTI_POINTER,
+    AVM_RTTI_FUNCTION,
+    AVM_RTTI_FUNDAMENTAL,
+    AVM_RTTI_MARKER
 };
 
 /* Seven times a count, by shifts and a subtraction. The empty asm keeps the optimizer
@@ -555,11 +605,16 @@ AVEH5_INLINE uint32_t times7(uint32_t count) {
     return shifted - count;
 }
 
-/* Classifies the descriptor at address. An address below the reserved header, or
- * one too close to the 24-bit limit for the VMI header, is OTHER, so the walk never
- * reads outside program space. */
-AVEH5_INLINE enum avm_rtti_kind rtti_kind(uint32_t address) {
-    if (address < AVEH5_TYPE_BASE || address > AVEH5_ADDRESS_LIMIT - AVM_RTTI_VMI_HEADER)
+/* Returns 1 when address can hold a descriptor, which is the largest kind's size below the
+ * 24-bit limit and above the reserved header. */
+AVEH5_INLINE uint8_t descriptor_in_range(uint32_t address) {
+    return address >= AVEH5_TYPE_BASE && address <= AVEH5_ADDRESS_LIMIT - AVM_RTTI_POINTER_SIZE;
+}
+
+/* Classifies the descriptor at address. An address outside the descriptor range is OTHER,
+ * so the walk never reads outside program space. */
+AVEH5_NOINLINE enum avm_rtti_kind rtti_kind(uint32_t address) {
+    if (!descriptor_in_range(address))
         return AVM_RTTI_OTHER;
     uint32_t point = read_flash_u24(address);
     if (point == (uint32_t)_ZTVN10__cxxabiv117__class_type_infoE + AVM_RTTI_ADDRESS_POINT)
@@ -568,7 +623,19 @@ AVEH5_INLINE enum avm_rtti_kind rtti_kind(uint32_t address) {
         return AVM_RTTI_SI;
     if (point == (uint32_t)_ZTVN10__cxxabiv121__vmi_class_type_infoE + AVM_RTTI_ADDRESS_POINT)
         return AVM_RTTI_VMI;
+    if (point == (uint32_t)_ZTVN10__cxxabiv119__pointer_type_infoE + AVM_RTTI_ADDRESS_POINT)
+        return AVM_RTTI_POINTER;
+    if (point == (uint32_t)_ZTVN10__cxxabiv123__fundamental_type_infoE + AVM_RTTI_ADDRESS_POINT)
+        return AVM_RTTI_FUNDAMENTAL;
+    if (point == (uint32_t)_ZTVN10__cxxabiv120__function_type_infoE + AVM_RTTI_ADDRESS_POINT)
+        return AVM_RTTI_FUNCTION;
+    if (point == (uint32_t)__avm_eh_exact_pointer_ref_type_info + AVM_RTTI_ADDRESS_POINT)
+        return AVM_RTTI_MARKER;
     return AVM_RTTI_OTHER;
+}
+
+AVEH5_INLINE uint8_t is_class_kind(enum avm_rtti_kind kind) {
+    return kind == AVM_RTTI_CLASS || kind == AVM_RTTI_SI || kind == AVM_RTTI_VMI;
 }
 
 /* Reads the base edge at position index in the class descriptor at descriptor, whose
@@ -604,101 +671,166 @@ AVEH5_INLINE uint16_t object_of(const struct avm_eh_exception *header) {
     return (uint16_t)(uintptr_t)(header + 1);
 }
 
-/* Resolves the offset of a virtual base of the subobject at containing, the offset of
- * that subobject in the thrown object. The subobject's vptr is its first three bytes, and
- * the vtable slot lies vtable_offset bytes from the vptr. The slot holds a signed 24-bit
- * displacement from the containing subobject, not from the complete object, so the base
- * lies at containing plus the displacement. A zero vptr, a slot outside the 24-bit program
- * address range, a subobject or base outside the object, or a base outside 16-bit RAM is
- * INVALID. The packed image's extent is not known here, so a slot inside the address range
- * is read, and only the effect of its value on the object is checked. Offsets are 16-bit,
- * because the object is in 16-bit RAM and the walk keeps them small. */
-static uint8_t resolve_virtual_base(uint16_t object_address, uint16_t exception_size,
-                                    uint16_t containing, int32_t vtable_offset, uint16_t *base) {
-    if ((uint32_t)containing + 3 > exception_size)
+/* A pointer descriptor's flags and pointee. A descriptor of this kind is always 11 bytes,
+ * and the callers have classified it as a pointer before they read these fields. */
+AVEH5_INLINE uint16_t pointer_flags_of(uint32_t descriptor) {
+    return read_flash_u16(descriptor + AVM_RTTI_POINTER_FLAGS);
+}
+
+AVEH5_INLINE uint32_t pointee_of(uint32_t descriptor) {
+    return read_flash_u24(descriptor + AVM_RTTI_POINTER_POINTEE);
+}
+
+/* Returns 1 when a pointer's flag word has only the bits that clang defines. */
+AVEH5_INLINE uint8_t pointer_flags_ok(uint16_t flags) {
+    return (flags & ~AVM_PTR_DEFINED) == 0;
+}
+
+/* Returns 1 when the fundamental descriptor names void, whose type name is "v". The name
+ * must end at its terminating zero, and it must lie in program space. */
+static uint8_t names_void(uint32_t descriptor) {
+    uint32_t name = read_flash_u24(descriptor + AVM_RTTI_NAME);
+    if (!descriptor_in_range(name))
+        return 0;
+    return read_flash_u8(name) == 'v' && read_flash_u8(name + 1) == 0;
+}
+
+/* Returns 1 when the fundamental descriptor names std::nullptr_t, whose type name is "Dn". */
+static uint8_t names_nullptr(uint32_t descriptor) {
+    uint32_t name = read_flash_u24(descriptor + AVM_RTTI_NAME);
+    if (!descriptor_in_range(name))
+        return 0;
+    return read_flash_u8(name) == 'D' && read_flash_u8(name + 1) == 'n' &&
+           read_flash_u8(name + 2) == 0;
+}
+
+/* The pointer value of a converted pointer's representation: 24-bit for a function pointer or
+ * a program pointer, which clang marks with the AVM bit, and 16-bit for a data pointer. */
+AVEH5_INLINE uint8_t pointer_mode_of(uint32_t thrown) {
+    return (pointer_flags_of(thrown) & AVM_PTR_WIDE) ? AVM_EH_CONVERT_PROGRAM : AVM_EH_CONVERT_DATA;
+}
+
+/* True when an address lies inside the walk's bounds. An object walk keeps every subobject
+ * inside the thrown object, and a pointer walk keeps it inside 16-bit RAM. A null walk reads
+ * no memory, so it never asks. */
+AVEH5_INLINE uint8_t walk_address_ok(int32_t address, const struct avm_eh_exception *header,
+                                     uint8_t mode) {
+    if (mode == AVM_WALK_OBJECT)
+        return address >= (int32_t)object_of(header) &&
+               address < (int32_t)object_of(header) + header->size;
+    return address >= 0 && address <= 0xffff;
+}
+
+/* Resolves the address of a virtual base of the subobject at containing, whose address is in
+ * 16-bit RAM. The subobject's vptr is its first three bytes, and the vtable slot lies
+ * vtable_offset bytes from the vptr. The slot holds a signed 24-bit displacement from the
+ * containing subobject, not from the complete object, so the base lies at containing plus the
+ * displacement. A subobject whose vptr lies outside the walk's bounds, a zero vptr, a slot
+ * outside the 24-bit program address range, or a base outside the walk's bounds is INVALID.
+ * The packed image's extent is not known here, so a slot inside the address range is read, and
+ * only the effect of its value on the walk is checked. */
+AVEH5_INLINE uint8_t resolve_virtual_base(uint16_t containing, int32_t vtable_offset,
+                                          const struct avm_eh_exception *header, uint8_t mode,
+                                          uint16_t *base) {
+    if (!walk_address_ok(containing, header, mode) || !walk_address_ok(containing + 2, header, mode))
         return AVM_RTTI_OFFSET_INVALID;
-    uint32_t vptr_address = (uint32_t)object_address + containing;
-    if (vptr_address > 0xfffdul)
-        return AVM_RTTI_OFFSET_INVALID;
-    uint32_t vptr = read_ram_u24((uint16_t)vptr_address);
+    uint32_t vptr = read_ram_u24(containing);
     if (vptr == 0)
         return AVM_RTTI_OFFSET_INVALID;
     int32_t slot = (int32_t)vptr + vtable_offset;
     if (slot < 0 || slot > 0xfffffdl)
         return AVM_RTTI_OFFSET_INVALID;
-    int32_t offset = (int32_t)containing + read_flash_i24((uint32_t)slot);
-    if (offset < 0 || offset >= exception_size)
+    int32_t address = (int32_t)containing + read_flash_i24((uint32_t)slot);
+    if (!walk_address_ok(address, header, mode))
         return AVM_RTTI_OFFSET_INVALID;
-    if ((uint32_t)object_address + (uint32_t)offset > 0xffffu)
-        return AVM_RTTI_OFFSET_INVALID;
-    *base = (uint16_t)offset;
+    *base = (uint16_t)address;
     return AVM_RTTI_OFFSET_OK;
 }
 
-/* The offset of the base subobject that a base edge names, when its containing subobject
- * lies at containing. A nonvirtual edge's offset is the base's offset inside the container,
- * so the base lies at containing plus that offset. A virtual edge's offset locates a vtable
- * slot, which resolve_virtual_base reads. */
-AVEH5_INLINE uint8_t base_offset(uint16_t object_address, uint16_t exception_size,
-                                 uint16_t containing, int32_t edge, uint8_t flags,
-                                 uint16_t *base) {
+/* Moves the walk's identity of a subobject across one base edge. The identity of a subobject
+ * is its anchor and its position. In the object and pointer walks, the anchor is zero, and the
+ * position is the subobject's 16-bit address. In a null walk the anchor is the nearest virtual
+ * base's descriptor, or the complete type, and the position is the offset from that anchor. A
+ * virtual edge therefore resets the anchor to the base, and a nonvirtual edge adds its offset. */
+AVEH5_INLINE uint8_t cross_base(uint8_t mode, const struct avm_eh_exception *header,
+                                uint32_t base_type, int32_t edge, uint8_t flags, uint32_t *anchor,
+                                uint16_t *position) {
+    if (mode == AVM_WALK_NULL) {
+        if (flags & AVM_RTTI_BASE_VIRTUAL) {
+            *anchor = base_type;
+            *position = 0;
+            return AVM_RTTI_OFFSET_OK;
+        }
+        int32_t offset = (int32_t)*position + edge;
+        if (offset < 0 || offset > 0xffff)
+            return AVM_RTTI_OFFSET_INVALID;
+        *position = (uint16_t)offset;
+        return AVM_RTTI_OFFSET_OK;
+    }
+    /* A nonvirtual edge's value is the base's offset inside the containing subobject. A
+     * virtual edge's value locates a vtable slot, which resolve_virtual_base reads. */
     if (flags & AVM_RTTI_BASE_VIRTUAL)
-        return resolve_virtual_base(object_address, exception_size, containing, edge, base);
-    int32_t offset = (int32_t)containing + edge;
-    if (offset < 0 || offset >= exception_size)
+        return resolve_virtual_base(*position, edge, header, mode, position);
+    int32_t address = (int32_t)*position + edge;
+    if (!walk_address_ok(address, header, mode))
         return AVM_RTTI_OFFSET_INVALID;
-    *base = (uint16_t)offset;
+    *position = (uint16_t)address;
     return AVM_RTTI_OFFSET_OK;
 }
 
-/* Decides whether catch_type is the unique public base subobject of the thrown class,
- * virtual or nonvirtual. The walk is a depth-first search over the class descriptors. It
- * keeps one byte per level, the index of the next direct base to visit there, so its
- * stack is eight bytes. A level's descriptor, offset, and access are replayed from the
- * thrown class and those indices. Each offset is the subobject's offset in the thrown
- * object. A nonvirtual edge adds its static offset, and a virtual edge reads its
- * displacement from the vptr of the containing subobject, so the walk needs the object's
- * address. Every path to one virtual base gives the same offset, which identifies the
- * subobject. The walk records the offset of the first match and counts the distinct
- * offsets, so two subobjects make the conversion ambiguous. A match is accessible when at
- * least one of its paths is public. An ambiguous or inaccessible match returns NO_MATCH.
- * The whole hierarchy is walked before the decision, because a second match may lie past
- * the first.
+/* Decides whether catch_type is the unique public base subobject of the thrown class in the
+ * walk's mode. The walk is a depth-first search over the class descriptors. It keeps one byte
+ * per level, the index of the next direct base to visit there, so its stack is eight bytes. A
+ * level's descriptor and identity are replayed from the root and those indices. A replay
+ * resolves the same edges from the same reads, so the walk needs no per-level storage.
  *
- * A malformed descriptor, edge, or virtual base offset returns INVALID. A walk past its
- * depth or edge budget returns LIMIT. A cycle stays on one path until the depth limit, so
- * it also returns LIMIT. The result is the code in its low byte, and a MATCH carries the
- * base adjustment in bits 31:16. */
-AVEH5_NOINLINE uint32_t match_class_base(uint32_t catch_type,
-                                         const struct avm_eh_exception *header) {
+ * In an object walk the root is the thrown class, and its subobjects lie in the thrown object.
+ * In a pointer walk the root is the pointee of the thrown pointer, and the pointer value is the
+ * root's address. A null pointer walks the root by type only, and identifies each subobject by
+ * its anchor and offset, as cross_base describes. Each identity is compared with the first
+ * match, so the walk counts the distinct subobjects of catch_type. A match is accessible when
+ * at least one of its paths is public. An ambiguous or inaccessible match returns NO_MATCH.
+ * The whole hierarchy is walked before the decision, because a second match may lie past the
+ * first.
+ *
+ * A malformed descriptor, edge, or virtual base offset returns INVALID. A walk past its depth
+ * or edge budget returns LIMIT. A cycle stays on one path until the depth limit, so it also
+ * returns LIMIT. The result is the code in its low byte, and a MATCH carries the base adjustment
+ * in bits 31:16. A null walk's match carries no adjustment, because its value stays null. */
+AVEH5_INLINE uint32_t walk_hierarchy(uint8_t mode, uint32_t catch_type,
+                                       const struct avm_eh_exception *header) {
     uint8_t next[AVM_RTTI_MAX_DEPTH];
     uint8_t depth = 0;
     uint8_t matches = 0;
     uint8_t match_public = 0;
-    uint16_t match_offset = 0;
+    uint32_t match_anchor = 0;
+    uint16_t match_position = 0;
     uint16_t edges = 0;
 
-    if (rtti_kind(thrown_type_of(header)) == AVM_RTTI_OTHER)
+    /* The root is the thrown class, or the pointee of a thrown pointer. Its subobjects start
+     * at the object, at the pointer's value, or, for a null pointer, at no address at all. */
+    uint32_t root = mode == AVM_WALK_OBJECT ? thrown_type_of(header) : pointee_of(thrown_type_of(header));
+    uint16_t origin = mode == AVM_WALK_OBJECT ? object_of(header)
+                                              : (mode == AVM_WALK_POINTER ? read_ram_u16(object_of(header)) : 0);
+    if (!is_class_kind(rtti_kind(root)))
         return AVM_RTTI_NO_MATCH;
-    if (rtti_kind(catch_type) == AVM_RTTI_OTHER)
-        return AVM_RTTI_UNSUPPORTED;
     next[0] = 0;
     for (;;) {
         /* Replays the path to the top node. Each edge on the path was checked when the walk
-         * pushed it, and the replay resolves the same offsets from the same reads. */
-        uint32_t descriptor = thrown_type_of(header);
-        uint16_t cumulative = 0;
+         * pushed it, and the replay resolves the same identities from the same reads. */
+        uint32_t descriptor = root;
+        uint32_t anchor = mode == AVM_WALK_NULL ? root : 0;
+        uint16_t position = mode == AVM_WALK_NULL ? 0 : origin;
         uint8_t public_path = 1;
         for (uint8_t level = 0; level < depth; level++) {
             int32_t edge;
             uint8_t flags;
             enum avm_rtti_kind parent = rtti_kind(descriptor);
-            descriptor = read_base_edge(descriptor, parent, next[level] - 1, &edge, &flags);
-            uint16_t base;
-            if (base_offset(object_of(header), header->size, cumulative, edge, flags,
-                            &base) != AVM_RTTI_OFFSET_OK)
+            uint32_t base_type = read_base_edge(descriptor, parent, next[level] - 1, &edge, &flags);
+            if (cross_base(mode, header, base_type, edge, flags, &anchor, &position) !=
+                AVM_RTTI_OFFSET_OK)
                 return AVM_RTTI_INVALID;
-            cumulative = base;
+            descriptor = base_type;
             if (!(flags & AVM_RTTI_BASE_PUBLIC))
                 public_path = 0;
         }
@@ -730,20 +862,20 @@ AVEH5_NOINLINE uint32_t match_class_base(uint32_t catch_type,
         if (++edges > AVM_RTTI_MAX_EDGES || depth + 1 >= AVM_RTTI_MAX_DEPTH)
             return AVM_RTTI_LIMIT;
 
-        uint16_t base;
-        if (base_offset(object_of(header), header->size, cumulative, edge, flags,
-                        &base) != AVM_RTTI_OFFSET_OK)
+        if (cross_base(mode, header, base_type, edge, flags, &anchor, &position) !=
+            AVM_RTTI_OFFSET_OK)
             return AVM_RTTI_INVALID;
         uint8_t child_public = (public_path && (flags & AVM_RTTI_BASE_PUBLIC)) ? 1 : 0;
         if (base_type == catch_type) {
-            /* The first match records its offset. A later path to the same offset is the
-             * same subobject, and it can only make the match accessible. A different
-             * offset is a second subobject. */
+            /* The first match records its identity. A later path to the same identity is the
+             * same subobject, and it can only make the match accessible. A different identity
+             * is a second subobject. */
             if (matches == 0) {
                 matches = 1;
-                match_offset = base;
+                match_anchor = anchor;
+                match_position = position;
                 match_public = child_public;
-            } else if (base != match_offset) {
+            } else if (anchor != match_anchor || position != match_position) {
                 matches = 2;
             } else {
                 match_public |= child_public;
@@ -755,7 +887,92 @@ AVEH5_NOINLINE uint32_t match_class_base(uint32_t catch_type,
 
     if (matches != 1 || !match_public)
         return AVM_RTTI_NO_MATCH;
-    return ((uint32_t)match_offset << 16) | AVM_RTTI_MATCH;
+    if (mode == AVM_WALK_NULL)
+        return AVM_RTTI_MATCH;
+    uint16_t adjustment = match_position - origin;
+    return ((uint32_t)adjustment << 16) | AVM_RTTI_MATCH;
+}
+
+/* The three walks. Each keeps only the state its mode needs, so a walk of the thrown object
+ * does not hold a null pointer's anchor, and only one of them is on the stack at a time. */
+AVEH5_NOINLINE uint32_t match_object_base(uint32_t catch_type, const struct avm_eh_exception *header) {
+    return walk_hierarchy(AVM_WALK_OBJECT, catch_type, header);
+}
+
+AVEH5_NOINLINE uint32_t match_pointer_base(uint32_t catch_type, const struct avm_eh_exception *header) {
+    return walk_hierarchy(AVM_WALK_POINTER, catch_type, header);
+}
+
+AVEH5_NOINLINE uint32_t match_null_base(uint32_t catch_type, const struct avm_eh_exception *header) {
+    return walk_hierarchy(AVM_WALK_NULL, catch_type, header);
+}
+
+/* Matches a thrown pointer descriptor, source, against the descriptor of a catch's pointer type,
+ * target, by the pointer conversions that need no walk of classes. The walk descends the pointee
+ * chain one level at a time, and at each level the source and target must agree on the
+ * representation and on restrict. The source qualifiers must be a subset of the target's. A level
+ * whose qualifiers differ requires every target level above it to be const-qualified, which is
+ * the qualification rule of C++ for nested pointers. The chain ends at a pointee that is not a
+ * pointer. Identical pointees match, and a function pointer may drop noexcept at the top level.
+ * At the top level a pointer may also convert to void, when its pointee is an object type, or to
+ * a base class, which the caller walks. A class pointer in 24-bit program memory has no base
+ * conversion. A chain of more than AVM_RTTI_MAX_POINTER_LEVELS levels is LIMIT.
+ *
+ * Returns CONVERT for a conversion with no walk, BASE for a base conversion, or NO_MATCH,
+ * INVALID, or LIMIT. */
+AVEH5_NOINLINE uint8_t match_pointer_chain(uint32_t source, uint32_t target) {
+    uint8_t depth = 0;
+    uint8_t const_above = 1;
+    for (;;) {
+        uint16_t source_flags = pointer_flags_of(source);
+        uint16_t target_flags = pointer_flags_of(target);
+        if (!pointer_flags_ok(source_flags) || !pointer_flags_ok(target_flags))
+            return AVM_RTTI_INVALID;
+        if ((source_flags ^ target_flags) & (AVM_PTR_WIDE | AVM_PTR_RESTRICT))
+            return AVM_RTTI_NO_MATCH;
+        uint16_t source_cv = source_flags & AVM_PTR_QUALIFIERS;
+        uint16_t target_cv = target_flags & AVM_PTR_QUALIFIERS;
+        if (source_cv & ~target_cv)
+            return AVM_RTTI_NO_MATCH;
+        if (source_cv != target_cv && !const_above)
+            return AVM_RTTI_NO_MATCH;
+        const_above = const_above && (target_cv & AVM_PTR_CONST) != 0;
+
+        uint32_t source_pointee = pointee_of(source);
+        uint32_t target_pointee = pointee_of(target);
+        if (!descriptor_in_range(source_pointee) || !descriptor_in_range(target_pointee))
+            return AVM_RTTI_INVALID;
+        enum avm_rtti_kind source_kind = rtti_kind(source_pointee);
+        enum avm_rtti_kind target_kind = rtti_kind(target_pointee);
+        if (source_kind == AVM_RTTI_POINTER && target_kind == AVM_RTTI_POINTER) {
+            if (depth + 1 >= AVM_RTTI_MAX_POINTER_LEVELS)
+                return AVM_RTTI_LIMIT;
+            source = source_pointee;
+            target = target_pointee;
+            depth++;
+            continue;
+        }
+
+        if (source_pointee == target_pointee) {
+            if ((source_flags | target_flags) & AVM_PTR_NOEXCEPT) {
+                if (source_kind != AVM_RTTI_FUNCTION)
+                    return AVM_RTTI_INVALID;
+                /* Dropping noexcept is a conversion at the top level only. */
+                if (depth == 0 ? (target_flags & AVM_PTR_NOEXCEPT) && !(source_flags & AVM_PTR_NOEXCEPT)
+                               : ((source_flags ^ target_flags) & AVM_PTR_NOEXCEPT))
+                    return AVM_RTTI_NO_MATCH;
+            }
+            if (source_kind == AVM_RTTI_FUNCTION && !(source_flags & AVM_PTR_WIDE))
+                return AVM_RTTI_INVALID;
+            return AVM_RTTI_CONVERT;
+        }
+        if (depth == 0 && is_class_kind(source_kind) && is_class_kind(target_kind))
+            return (source_flags & AVM_PTR_WIDE) ? AVM_RTTI_NO_MATCH : AVM_RTTI_BASE;
+        if (depth == 0 && target_kind == AVM_RTTI_FUNDAMENTAL && names_void(target_pointee) &&
+            source_kind != AVM_RTTI_FUNCTION)
+            return AVM_RTTI_CONVERT;
+        return AVM_RTTI_NO_MATCH;
+    }
 }
 
 /* Checks the action list at list of the function at fh. The list lies in the pool, and
@@ -798,26 +1015,88 @@ AVEH5_NOINLINE uint8_t list_ok(uint32_t fh, uint32_t list) {
  * decides. Returns AVEH5_BAD when the list is malformed, or when the RTTI of a clause
  * cannot be decided. A matching clause returns its selector and base adjustment, as
  * AVEH5_MATCH_CLEANUP's comment describes. When no clause matches, the selector is zero,
- * and the result carries AVEH5_MATCH_CLEANUP if the list has a cleanup. The thrown type
- * and size are read from the header, so the loop keeps only the header pointer. */
-AVEH5_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list,
-                                   const struct avm_eh_exception *header) {
+ * and the result carries AVEH5_MATCH_CLEANUP if the list has a cleanup.
+ *
+ * A clause is an exact match, a catch-all, a reference marker, a pointer conversion, a null
+ * pointer, or a class base. The header's conversion mode is set on each match, and only then.
+ * The class walk and the pointer chain are the only calls, and the walk is shared by the
+ * class and pointer cases, so the matcher's stack holds one walk at a time. */
+AVEH5_INLINE uint32_t match_entry(uint32_t type, struct avm_eh_exception *header) {
+    uint32_t thrown = thrown_type_of(header);
+    enum avm_rtti_kind kind = rtti_kind(type);
+    if (kind == AVM_RTTI_MARKER) {
+        /* A reference marker matches its underlying pointer type exactly. */
+        uint32_t underlying = read_flash_u24(type + AVM_RTTI_MARKER_UNDERLYING);
+        if (read_flash_u24(type + AVM_RTTI_MARKER_RESERVED) != 0 ||
+            !descriptor_in_range(underlying) || rtti_kind(underlying) != AVM_RTTI_POINTER)
+            return AVM_RTTI_INVALID;
+        if (underlying != thrown)
+            return AVM_RTTI_NO_MATCH;
+        header->handler_pointer_converted = AVM_EH_CONVERT_NONE;
+        return AVM_RTTI_MATCH;
+    }
+    enum avm_rtti_kind thrown_kind = rtti_kind(thrown);
+    if (thrown_kind == AVM_RTTI_POINTER) {
+        if (kind != AVM_RTTI_POINTER)
+            return AVM_RTTI_NO_MATCH;
+        uint8_t code = match_pointer_chain(thrown, type);
+        if (code == AVM_RTTI_CONVERT) {
+            header->handler_pointer_converted = pointer_mode_of(thrown);
+            return AVM_RTTI_MATCH;
+        }
+        if (code != AVM_RTTI_BASE)
+            return code;
+        uint32_t pointee = pointee_of(type);
+        uint32_t result = read_ram_u16(object_of(header)) ? match_pointer_base(pointee, header)
+                                                         : match_null_base(pointee, header);
+        if ((uint8_t)result == AVM_RTTI_MATCH)
+            header->handler_pointer_converted = AVM_EH_CONVERT_DATA;
+        return result;
+    }
+    if (thrown_kind == AVM_RTTI_FUNDAMENTAL && kind == AVM_RTTI_POINTER && names_nullptr(thrown)) {
+        if (!pointer_flags_ok(pointer_flags_of(type)))
+            return AVM_RTTI_INVALID;
+        header->handler_pointer_converted = AVM_EH_CONVERT_NULL;
+        return AVM_RTTI_MATCH;
+    }
+    if (is_class_kind(thrown_kind) && is_class_kind(kind)) {
+        uint32_t result = match_object_base(type, header);
+        if ((uint8_t)result == AVM_RTTI_MATCH)
+            header->handler_pointer_converted = AVM_EH_CONVERT_NONE;
+        return result;
+    }
+    return AVM_RTTI_NO_MATCH;
+}
+
+/* Matches the action list at list against the thrown object in header. The whole list
+ * is checked first by list_ok, so a malformed list fails whichever entry would have
+ * matched. The entries are then read in clause order, and the first one that matches
+ * decides. Returns AVEH5_BAD when the list is malformed, or when the RTTI of a clause
+ * cannot be decided. A matching clause returns its selector and base adjustment, as
+ * AVEH5_MATCH_CLEANUP's comment describes. When no clause matches, the selector is zero,
+ * and the result carries AVEH5_MATCH_CLEANUP if the list has a cleanup.
+ *
+ * A clause is an exact match, a catch-all, or one of the cases of match_entry. The header's
+ * conversion mode is set on each match, and only then. The loop keeps its entry, count, and
+ * header across the calls, and the callees are the walks and the pointer chain, which are the
+ * only calls, so the frame holds little beyond those values. */
+AVEH5_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list, struct avm_eh_exception *header) {
     uint8_t valid = list_ok(fh, list);
     if (!valid)
         return AVEH5_BAD;
     uint32_t entry = list + AVEH5_ACTION_HEADER_SIZE;
-    uint32_t stop = entry + times5(read_flash_u16(list + 1));
-    for (; entry != stop; entry += AVEH5_CATCH_SIZE) {
-        uint16_t selector = read_flash_u16(entry);
+    for (uint16_t count = read_flash_u16(list + 1); count != 0; count--, entry += AVEH5_CATCH_SIZE) {
         uint32_t type = read_flash_u24(entry + 2);
-        if (type == 0 || type == thrown_type_of(header))
-            return selector;
-        uint32_t result = match_class_base(type, header);
+        if (type == 0 || type == thrown_type_of(header)) {
+            header->handler_pointer_converted = AVM_EH_CONVERT_NONE;
+            return read_flash_u16(entry);
+        }
+        uint32_t result = match_entry(type, header);
         uint8_t code = (uint8_t)result;
         if (code == AVM_RTTI_INVALID || code == AVM_RTTI_LIMIT)
             return AVEH5_BAD;
         if (code == AVM_RTTI_MATCH)
-            return selector | (result & 0xffff0000ul);
+            return read_flash_u16(entry) | (result & 0xffff0000ul);
     }
     return (valid & AVEH5_ACTION_CLEANUP) ? AVEH5_MATCH_CLEANUP : 0;
 }
@@ -826,8 +1105,7 @@ AVEH5_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list,
  * with no action selects nothing, which is zero, and otherwise the action is the list
  * that match_list checks. Inlined into its callers, so the matcher adds no frame of
  * its own. The callers read the site's action once, through this match. */
-AVEH5_INLINE uint32_t match_action(uint32_t fh, uint32_t site,
-                                   const struct avm_eh_exception *header) {
+AVEH5_INLINE uint32_t match_action(uint32_t fh, uint32_t site, struct avm_eh_exception *header) {
     uint32_t action = read_flash_u24(site + 9);
     return action ? match_list(fh, fh + action, header) : 0;
 }

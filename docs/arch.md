@@ -5632,9 +5632,27 @@ layouts are:
 
 | Descriptor | Layout | Size |
 |---|---|---:|
-| Class without bases, and fundamental types | vtable address point, type name | 6 bytes |
+| Class without bases, fundamental types, and function types | vtable address point, type name | 6 bytes |
 | Single public nonvirtual base | vtable address point, type name, base descriptor | 9 bytes |
 | Multiple or virtual bases | vtable address point, type name, `u16` flags, `u16` base count, then per base a base descriptor and a 32-bit offset-and-flags word | 10 bytes, plus 7 per base |
+| Pointer | vtable address point, type name, `u16` flags, pointee descriptor | 11 bytes |
+| Reference marker for a non-const pointer caught by reference | vtable address point of the marker vtable, three reserved zero bytes, underlying pointer descriptor | 9 bytes |
+
+A pointer descriptor's flag word holds the pointee's qualifiers and attributes, as
+Itanium defines them: `0x01` const, `0x02` volatile, `0x04` restrict, `0x08`
+incomplete, and `0x40` noexcept for a function pointee. Clang sets `0x10`, the
+class-incomplete bit, only for member pointers, so an ordinary pointer with it is
+malformed. AVM adds `0x80` for a pointer whose representation is 24 bits: a function
+pointer, or a pointer into program memory. Clang takes the width from the target's
+pointer and function-pointer widths, not from the spelling of the type, so a
+16-bit data pointer leaves the bit clear. Any other bit is reserved, and the runtime
+treats a descriptor that sets one as malformed.
+
+A reference marker is not a standard descriptor. A catch of a pointer that is not
+const-qualified, by reference, names the marker of its reference type, `_ZTIR` followed
+by the pointer's mangled name. The marker's vtable is `__avm_eh_exact_pointer_ref_type_info`,
+so the runtime classifies it by that vtable alone, and it matches the thrown pointer
+type exactly. The marker is linkonce_odr with a comdat, like the descriptors it names.
 
 The vtable address point is the vtable symbol plus six: two 24-bit entries precede
 it, as in every AVM vtable. Clang names that address point with
@@ -5651,11 +5669,13 @@ The runtime interprets the class descriptors to match catch clauses against publ
 subobjects, virtual or nonvirtual, as [Section 69.3](#693-exception-metadata-aveh5)
 describes. It reads the vtable address point to classify a descriptor, and the base
 descriptors and offset-and-flags words of the single and multiple inheritance layouts.
+It also reads the pointer descriptors and markers to match pointer catches, as Section
+69.3 describes.
 For a virtual base, the upper 24 bits of the offset-and-flags word are not an object
 offset. They are a signed byte displacement from the vtable address point of the
 containing class to a slot, and that slot holds the base's displacement from the
 containing subobject. The runtime reads the slot through the vptr of the containing
-subobject. `typeid`, `dynamic_cast`, and pointer conversions are not implemented.
+subobject. `typeid` and `dynamic_cast` are not implemented.
 
 Virtual-base slots are three-byte entries. Clang places each one before the address point,
 with the offset-to-top and RTTI entries, and `getVirtualBaseOffsetOffset` gives its byte
@@ -5677,7 +5697,7 @@ destructor. The compiler declares the function as
 `__cxa_throw(ptr, ptr addrspace(1), ptr addrspace(1))`, so the call site and the
 declaration agree.
 
-The shim stores both program addresses in the 51-byte exception header
+The shim stores both program addresses in the 55-byte exception header
 ([Section 69.3](#693-exception-metadata-aveh5)).
 
 ---
@@ -6799,26 +6819,35 @@ when a throw uses them, and it does not copy them into RAM.
 
 #### Typed matching semantics
 
-A typed catch matches a thrown object in one of three ways, and the first matching
+A typed catch matches a thrown object in one of these ways, and the first matching
 clause in source order wins:
 
 - Exact: the clause's descriptor address equals the thrown object's descriptor address,
   which is the final 24-bit program address that the linker assigned. Two descriptors
   are equal when they are the same linked object, and each type has one descriptor in a
-  program, even across translation units. The adjustment is zero.
+  program, even across translation units. The adjustment is zero, and the handler
+  receives the thrown object.
+- Reference marker: a catch of a non-const pointer by reference matches only the exact
+  pointer type that the marker names. The handler binds to the thrown pointer object.
+- Pointer conversion: a thrown pointer converts to a catch pointer by the rules of the
+  next subsection. The handler receives the converted value in the header's buffer.
+- Null pointer: a thrown `std::nullptr_t` converts to any pointer type, and the handler
+  receives a null pointer.
 - Base subobject: the thrown class has exactly one base subobject of the clause's type,
   virtual or nonvirtual, and at least one path to it has only public edges. The
   adjustment is that subobject's byte offset from the start of the thrown object.
 - Catch-all: `catch (...)` matches everything, with adjustment zero.
 
-Exact matching compares addresses only. The base walk, `match_class_base` in
-`runtime/lib/eh_unwind.c`, reads the program flash of the packed image and the vptrs of
-the thrown object in RAM:
+Exact matching compares addresses only. The class walk, which
+`walk_hierarchy` in `runtime/lib/eh_unwind.c` implements for `match_object_base`,
+`match_pointer_base`, and `match_null_base`, reads the program flash of the packed
+image and the vptrs of the thrown object or of its pointee in RAM:
 
 - Each descriptor is classified by its vtable address point. A class descriptor without
   bases, a single-inheritance descriptor, and a multiple-inheritance descriptor are
-  walked. Any other kind, such as a fundamental, enum, or pointer type, matches by
-  exact address only.
+  walked. A pointer descriptor and a marker follow the pointer rules below. Any other
+  kind, such as an enum, a function type, or a member pointer, matches by exact address
+  only.
 - A single-inheritance descriptor has one public nonvirtual base at offset zero. A
   multiple-inheritance entry has the base descriptor's 24-bit address and a 32-bit
   offset-and-flags word. Bit 0 is virtual, bit 1 is public, and bits 2 to 7 are reserved
@@ -6849,18 +6878,41 @@ the thrown object in RAM:
   because a second match may lie past the first.
 
 The walk keeps one byte per level, the index of the next direct base to visit, and it
-replays each level's offset and access from the thrown class. A replay resolves the
-virtual edges again, so the walk needs no per-level storage for offsets or descriptors.
-The matcher receives the exception header, which holds the thrown type and the object
-size, and it returns the code in its low byte with the adjustment in bits 31:16. Its frame
-is 74 bytes at O2, against 62 bytes before virtual bases. The linker bounds the stack of
-every image, and each exception fixture stays under 256 bytes.
+replays each level's identity from the root. A replay resolves the virtual edges again,
+so the walk needs no per-level storage for offsets or descriptors. The walk's root is the
+thrown class, or, for a pointer, the class that the thrown pointer addresses. Its identity
+of a subobject is its 16-bit address, or, for a null pointer, its anchor and its offset in
+the anchor. The three walks are separate functions, so each keeps only the state of its own
+mode, and only one of them is on the stack at a time. The result is the code in its low byte
+with the adjustment in bits 31:16. The linker bounds the stack of every image, and each
+exception fixture stays under 256 bytes.
 
-Pointer conversions, qualification conversions, and `nullptr` compatibility are not
-matched. A thrown `Derived` is caught by `catch (Base &)` as a base subobject, but a
-thrown `Derived *` is not caught by `catch (Base *)`, and a thrown `T *` is not caught
-by a `const T *` clause. A catch of a non-class type is unsupported and matches nothing.
-A program with no matching clause terminates.
+Pointer matching follows the C++ pointer conversions, and the runtime applies them to the
+thrown pointer's descriptor and its pointee chain:
+
+- Qualification: the source's qualifiers must be a subset of the target's at every
+  level. Where a level's qualifiers differ, every target level above it must be const.
+  The chain must have the same representation, the AVM bit and restrict, at each level, and
+  the bottom pointees must be the same descriptor. The chain is walked up to eight levels,
+  and a longer chain fails the throw.
+- Void: a top-level pointer converts to a pointer to void when the source pointee is an
+  object type, not a function. The representation must match.
+- Base class: a top-level pointer to a class converts to a pointer to a public, unique base
+  class, through the walk above. A class pointee in 24-bit program memory has no base
+  conversion.
+- Function pointers: a function pointer converts to a function pointer whose type is the
+  same, and it may drop `noexcept` at the top level. The full 24-bit value is kept.
+- Null: `std::nullptr_t` converts to any pointer. A null thrown pointer converts to a base
+  pointer through the walk by type alone, and it stays null.
+
+The matched value is written to the header's buffer, and the thrown object is never
+changed. A data pointer is the thrown value plus the signed adjustment, which must stay in
+16-bit RAM. A pointer to a void or a qualified type copies its value. A reference marker and
+an exact match leave the conversion mode at none, and the handler binds to the object.
+
+A catch of a non-class type that is not a pointer matches nothing. A thrown pointer
+caught by a class clause does not match, and a thrown class does not match a pointer
+clause. A program with no matching clause terminates.
 
 The selector of a typed clause is the LLVM type ID of its descriptor in the
 function, and the landing pad compares the selector that it receives in r5 against
@@ -6961,7 +7013,7 @@ and decodes the packed sites and lists independently of the packer.
 
 #### Exception object and landing contract
 
-`__cxa_allocate_exception` returns the object, which lies 51 bytes above its
+`__cxa_allocate_exception` returns the object, which lies 55 bytes above its
 header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_internal.h`:
 
 | Offset | Size | Field | Contents |
@@ -6977,12 +7029,20 @@ header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_intern
 | 43 | 3 | `eh_block_address` | Program address of the `AVEH5` block, from `avm_eh_open_exception` |
 | 46 | 3 | `eh_block_end` | Program address of the block end |
 | 49 | 2 | `eh_function_count` | Number of function index entries |
+| 51 | 3 | `converted_pointer` | Converted value of a pointer handler, which is the header's own buffer |
+| 54 | 1 | `handler_pointer_converted` | Conversion mode of the matched handler: none, a 16-bit data pointer, a 24-bit program pointer, or a null pointer |
 
-The header is 51 bytes. The `__cxa_throw` shim captures the throwing frame into
+The header is 55 bytes. The `__cxa_throw` shim captures the throwing frame into
 `context` and stores the type-descriptor and destructor program addresses, each in
 three bytes so that the high byte is kept. The unwinder then copies `context` into
 `resume_context`, and the two cursors move as described below. The header is heap
-memory, so each thrown exception costs 51 bytes.
+memory, so each thrown exception costs 55 bytes.
+
+The converted buffer is written only when a pointer handler is entered, and it is never
+written for an exact, catch-all, or class handler. The thrown pointer object is never
+changed, so a pointer that a handler converts remains the original value for the
+destructor and the free. The buffer has three bytes, which hold a 24-bit program pointer. A
+16-bit data pointer uses the first two bytes, and its third byte is zero.
 
 The header's address is the exception pointer. A landing pad receives it in r4,
 and the installer passes the selector in r5. Selector 0 enters a cleanup-only pad,
@@ -7070,7 +7130,9 @@ Matching. A site's action is matched against the thrown type, which the header
 holds as a 24-bit address. `match_list` returns one 32-bit result. A matching entry
 returns its selector in bits 15:0 and its base adjustment in bits 31:16. The selector
 is the first entry whose address is zero, which is catch-all, or equals the thrown
-address, or the first base entry that `match_class_base` accepts. When no entry
+address, or a reference marker or a pointer conversion that Section 69.3 describes, or
+the first base entry that the class walk accepts. The walk is `match_object_base` for a
+thrown class, and `match_pointer_base` or `match_null_base` for a thrown pointer. When no entry
 matches, the selector is zero, and bit 16 is set when the list has a cleanup. A
 matching entry never sets bit 16, because its handler ends the search. A malformed
 list is an error, which fails the throw, and the result is then `0xffffffff`. Every
@@ -7124,7 +7186,7 @@ pad was entered.
 
 The throwing frame is captured by `__cxa_throw` before any C code runs. The shim
 has no stack frame. It stores the continuation, the caller's SP (the entry SP plus
-three), and r0-r3 into the 51-byte header, which lies below the object. It then
+three), and r0-r3 into the 55-byte header, which lies below the object. It then
 tail-transfers to `__avm_eh_throw`, which initializes `resume_context` from
 `context`.
 
@@ -7253,6 +7315,105 @@ that does not reference the exception runtime is byte-identical to its image bef
 change: 2,355 images. A program that never references the runtime has no block and no
 anchor, and `tests/debug/eh_metadata_verify.py` checks that for its no-throw control.
 
+#### Pointer conversions: measured change
+
+This change adds the pointer rules and the reference markers. The "before" column is the
+`HEAD` runtime, relinked with the same fixture objects and the same tools, so each row differs
+only by the runtime. `eh_inheritance` also lost its pointer case, which the pointer fixture now
+covers, so its row includes that fixture change.
+
+| Item | Before | After |
+|---|---:|---:|
+| Exception header | 51 B | 55 B |
+| Pointer RTTI descriptor | 11 B | 11 B |
+| Reference marker | none | 9 B per unique marker, in flash |
+| `avm_eh_find_handler` frame | 20 B | 20 B |
+| `match_list` frame | 10 B | 14 B |
+| Object class walk (`match_class_base` before, `match_object_base` after) | 74 B | 64 B |
+| Pointer class walk (`match_pointer_base`) | none | 58 B |
+| Null pointer walk (`match_null_base`) | none | 58 B |
+| Pointer chain (`match_pointer_chain`) | none | 20 B |
+| `rtti_kind` | inline | out of line, 11 B per call |
+| Max static stack bound, `eh_cleanup` at O0 | 233 B | 238 B |
+| Persistent RAM (`.data`), `eh_catch_all` | 8 B | 8 B |
+| EH runtime `.text`, the four EH objects | 9,129 B | 12,493 B |
+| AVEH5 block, O0 `eh_catch_all` (40 functions) | 2,891 B | 2,891 B |
+| Linked image, O0 `eh_catch_all` | 20,224 B | 23,552 B |
+| Linked image, O0 `eh_typed` | 25,856 B | 28,928 B |
+
+The matcher's frames grew by at most a few bytes, and the walk that the object path uses is
+10 bytes smaller than before, so the object path's peak is about the same. The out-of-line
+`rtti_kind` adds its return record and four pushed registers while it runs, which is the
+increase in the peaks below. Inlining it made the matcher's frames 40 to 60 bytes larger,
+because the compiler keeps its seven vtable addresses in the frame, so it stays out of line.
+
+Stack peaks of the existing fixtures, in bytes. The before values are measured with the HEAD
+runtime, and the after values with the current runtime:
+
+| Fixture | Opt | Before total | After total | Change | Before runtime | After runtime | Change |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `eh_allocation_failure` | O0 | 37 | 37 | +0 | - | - | - |
+| `eh_allocation_failure` | O2 | 30 | 30 | +0 | - | - | - |
+| `eh_catch_all` | O0 | 138 | 142 | +4 | 111 | 115 | +4 |
+| `eh_catch_all` | O2 | 118 | 122 | +4 | 93 | 97 | +4 |
+| `eh_cleanup` | O0 | 185 | 189 | +4 | 112 | 116 | +4 |
+| `eh_cleanup` | O2 | 141 | 145 | +4 | 114 | 118 | +4 |
+| `eh_cleanup_dtor_throw` | O0 | 121 | 125 | +4 | 89 | 93 | +4 |
+| `eh_cleanup_dtor_throw` | O2 | 108 | 112 | +4 | 89 | 93 | +4 |
+| `eh_cleanup_no_handler` | O0 | 122 | 126 | +4 | 89 | 93 | +4 |
+| `eh_cleanup_no_handler` | O2 | 108 | 112 | +4 | 89 | 93 | +4 |
+| `eh_dynamic_handler` | O0 | 194 | 198 | +4 | 89 | 93 | +4 |
+| `eh_dynamic_handler` | O2 | 162 | 166 | +4 | 89 | 93 | +4 |
+| `eh_inheritance` | O0 | 206 | 211 | +5 | 169 | 174 | +5 |
+| `eh_inheritance` | O2 | 174 | 179 | +5 | 151 | 156 | +5 |
+| `eh_inheritance_corrupt_target` | O0 | 182 | 187 | +5 | 145 | 150 | +5 |
+| `eh_inheritance_corrupt_target` | O2 | 166 | 171 | +5 | 145 | 150 | +5 |
+| `eh_inheritance_cross_unit` | O0 | 194 | 199 | +5 | 145 | 150 | +5 |
+| `eh_inheritance_cross_unit` | O2 | 172 | 177 | +5 | 145 | 150 | +5 |
+| `eh_inheritance_high_address` | O0 | 196 | 201 | +5 | 145 | 150 | +5 |
+| `eh_inheritance_high_address` | O2 | 168 | 173 | +5 | 145 | 150 | +5 |
+| `eh_missing_cfi` | O0 | 110 | 110 | +0 | 80 | 80 | +0 |
+| `eh_missing_cfi` | O2 | 102 | 102 | +0 | 80 | 80 | +0 |
+| `eh_no_throw` | O0 | - | 19 | - | - | - | - |
+| `eh_no_throw` | O2 | - | 19 | - | - | - | - |
+| `eh_typed` | O0 | 201 | 195 | -6 | 159 | 153 | -6 |
+| `eh_typed` | O2 | 171 | 175 | +4 | 145 | 149 | +4 |
+| `eh_typed_high_address` | O0 | 185 | 190 | +5 | 145 | 150 | +5 |
+| `eh_typed_high_address` | O2 | 167 | 170 | +3 | 147 | 150 | +3 |
+| `eh_unhandled` | O0 | 96 | 96 | +0 | 80 | 80 | +0 |
+| `eh_unhandled` | O2 | 96 | 96 | +0 | 80 | 80 | +0 |
+| `eh_virtual_corrupt_target` | O0 | 182 | 187 | +5 | 145 | 150 | +5 |
+| `eh_virtual_corrupt_target` | O2 | 168 | 173 | +5 | 145 | 150 | +5 |
+| `eh_virtual_cross_unit` | O0 | 200 | 205 | +5 | 145 | 150 | +5 |
+| `eh_virtual_cross_unit` | O2 | 176 | 181 | +5 | 145 | 150 | +5 |
+| `eh_virtual_high_address` | O0 | 198 | 203 | +5 | 145 | 150 | +5 |
+| `eh_virtual_high_address` | O2 | 168 | 173 | +5 | 145 | 150 | +5 |
+| `eh_virtual_inheritance` | O0 | 208 | 213 | +5 | 157 | 162 | +5 |
+| `eh_virtual_inheritance` | O2 | 172 | 177 | +5 | 149 | 154 | +5 |
+| `eh_virtual_lattice` | O0 | 178 | 183 | +5 | 145 | 150 | +5 |
+| `eh_virtual_lattice` | O2 | 166 | 171 | +5 | 145 | 150 | +5 |
+| `eh_virtual_lattice_unhandled` | O0 | 178 | 183 | +5 | 145 | 150 | +5 |
+| `eh_virtual_lattice_unhandled` | O2 | 166 | 171 | +5 | 145 | 150 | +5 |
+
+The new fixtures' peaks, in bytes:
+
+| Fixture | Opt | Total peak | Runtime peak |
+|---|---|---:|---:|
+| `eh_pointer_conversion` | O0 | 204 | 168 |
+| `eh_pointer_conversion` | O2 | 178 | 156 |
+| `eh_pointer_cross_unit` | O0 | 187 | 144 |
+| `eh_pointer_cross_unit` | O2 | 165 | 144 |
+| `eh_pointer_high_address` | O0 | 182 | 148 |
+| `eh_pointer_high_address` | O2 | 166 | 148 |
+| `eh_pointer_corrupt_target` | O0 | 194 | 144 |
+| `eh_pointer_corrupt_target` | O2 | 176 | 144 |
+| `eh_pointer_depth_unhandled` | O0 | 159 | 106 |
+| `eh_pointer_depth_unhandled` | O2 | 145 | 106 |
+
+The guest stack limit of 256 bytes holds for every fixture. The largest static bound is 238
+bytes, for `eh_cleanup` at O0, and the largest probe peak is 213 bytes, for
+`eh_virtual_inheritance` at O0.
+
 #### Checks and tests
 
 `tests/debug/eh_typed_verify.py` checks each handler that the probe reports. The probe
@@ -7305,7 +7466,7 @@ require the probe's events to occur in order.
 `tests/debug/eh_rtti_verify.py` checks the flash-resident descriptors of the RTTI
 fixtures. It reads the ELF symbols and section flags, and it requires each RTTI
 object to be read-only program space with no `_ZTI` object in `.data`. For the
-high-address fixture, the probe's `--snapshot-bytes` option prints the 51 header bytes
+high-address fixture, the probe's `--snapshot-bytes` option prints the 55 header bytes
 that the shim captured at `__avm_eh_throw`.
 
 `tests/debug/eh_stack_report.py` reports the stack peaks above for every exception
@@ -7349,14 +7510,43 @@ full LTO too. `eh_inheritance_virtual_unhandled.cpp` and
 patches. `tests/debug/eh_inheritance_verify.py` checks each handler's selector,
 adjustment, and returned pointers against the emulator and the packed RTTI.
 
+The pointer fixtures are `tests/cpp/eh_pointer_conversion.cpp`, which covers the base,
+qualification, void, noexcept, nullptr, exact and converted reference, clause-order, cleanup,
+and exact-regression cases. `tests/cpp/eh_pointer_high_address.cpp` places a program pointer, a
+function, and their descriptors above 0xFFFF. `tests/cpp/eh_pointer_cross_unit.cpp` catches a
+derived pointer that `tests/cpp/support/eh_pointer_conversion_unit.cpp` throws, with the shared
+types in `tests/cpp/support/eh_pointer_conversion.h`. Each runs at O0 and O2, and the
+cross-unit and main fixtures also run under full LTO. `tests/cpp/eh_pointer_depth_unhandled.cpp`
+is a nine-level chain that must halt. `tests/cpp/eh_pointer_corrupt_target.cpp` is the image
+that `tests/debug/eh_pointer_corrupt_verify.py` patches. Its four paths throw a virtual-base
+pointer, a mutable base reference, a noexcept function pointer, and a nested pointer. The
+unchanged image reports success on every path, and each of the sixteen patches must halt.
+
+`tests/debug/eh_pointer_conversion_verify.py` checks each pointer handler that the probe
+reports, against a model of the conversions that reads the packed RTTI and the thrown
+pointer's target. For each handler it checks the selected clause, the clauses before it, the
+conversion mode, the adjustment, the returned pointer, and the converted bytes. A virtual base
+is located through the vptr of the pointee, which the probe prints with `--target-bytes`.
+`tests/debug/eh_rtti_verify.py` decodes the pointer descriptors, the function and fundamental
+descriptors, and the markers, and checks their flag words, pointees, and reserved bytes. The
+target `avm_eh_pointer_conversion_run` runs all of these, and `avm_eh_catch_all_run` includes it.
+
 #### Limitations
 
-The exception runtime implements exact, public base, virtual or nonvirtual, catch-all
-handlers, and cleanups. These are not implemented:
+The exception runtime implements exact, public base, virtual or nonvirtual, pointer
+conversion, reference marker, null pointer, catch-all handlers, and cleanups. These are not
+implemented:
 
-- any conversion from a thrown type to a clause's type, including pointer,
-  qualification, and `nullptr` conversions. A base that the walk cannot decide within its
-  limits fails the throw. Shared virtual bases are walked once per path, so a hierarchy
+- pointer-to-member conversions, which include the containing-class and member-pointer
+  qualification conversions, and `std::nullptr_t` to a pointer-to-member type. A pointer to
+  a member matches only its exact type;
+- a base conversion of a class pointer into 24-bit program memory. Such a pointer matches no
+  base catch;
+- a pointer chain deeper than eight levels, which fails the throw. A pointer whose pointee
+  object is in 16-bit RAM but whose vptr was overwritten with another RAM address is walked
+  as written, because the runtime cannot know the pointee's size;
+- any other conversion from a thrown type to a clause's type. A base that the walk cannot decide
+  within its limits fails the throw. Shared virtual bases are walked once per path, so a hierarchy
   with many paths can exceed the 512-edge budget: three classes at each of six levels,
   each deriving virtually from all three below, fail the throw
   (`tests/cpp/eh_virtual_lattice_unhandled.cpp`), while five levels match

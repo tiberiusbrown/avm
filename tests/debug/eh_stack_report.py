@@ -39,7 +39,7 @@ FIXTURES = [
     ('eh_typed', 'exact typed catches: first match, nonmatching cleanups, combined pads'),
     ('eh_typed_high_address', 'exact typed matching with descriptors above 0xFFFF'),
     ('eh_inheritance', 'base catches: direct, chained, eight levels, nested offsets, by reference and value, '
-     'ambiguous and inaccessible bases, clause order, cleanups, virtual base, pointer'),
+     'ambiguous and inaccessible bases, clause order, cleanups, virtual base'),
     ('eh_inheritance_cross_unit', 'base catches of a descriptor thrown by another translation unit'),
     ('eh_inheritance_high_address', 'base catches with descriptors above 0xFFFF'),
     ('eh_inheritance_corrupt_target', 'base catch that the corruption verifier patches'),
@@ -50,6 +50,14 @@ FIXTURES = [
     ('eh_virtual_corrupt_target', 'virtual base catch that the virtual corruption verifier patches'),
     ('eh_virtual_lattice', 'a lattice whose walk visits 363 edges, within the budget'),
     ('eh_virtual_lattice_unhandled', 'a lattice whose walk exceeds the 512-edge budget: halt report'),
+    ('eh_pointer_conversion', 'pointer conversions: base, qualification, void, noexcept, nullptr, '
+     'exact and converted references, clause order, cleanups, exact pointer regressions'),
+    ('eh_pointer_cross_unit', 'a derived pointer thrown by another translation unit, caught as a base, void, '
+     'and exact reference'),
+    ('eh_pointer_high_address', 'pointer conversions of program pointers, function pointers, and descriptors '
+     'above 0xFFFF'),
+    ('eh_pointer_corrupt_target', 'malformed pointer descriptors and markers: the conversion and marker paths'),
+    ('eh_pointer_depth_unhandled', 'a nine-level pointer chain whose walk reaches the depth limit: halt report'),
     (NO_THROW, 'no-throw control'),
 ]
 

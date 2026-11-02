@@ -58,6 +58,10 @@ struct options_t {
     // Bytes of guest RAM to print at the address in r4 for each snapshot. The
     // exception runtime passes the header in r4, so this reads the captured fields.
     unsigned snapshot_bytes = 0;
+    // Bytes of guest RAM to print at the address that a thrown pointer holds, for each snapshot.
+    // The header's object follows the 55-byte exception header, so the probe reads the pointer
+    // value there, and prints this many bytes at it. A pointer value of zero prints no bytes.
+    unsigned target_bytes = 0;
 };
 
 std::string read_text(fs::path const& path)
@@ -361,6 +365,21 @@ int run(options_t const& options)
                                       << unsigned(cpu.data[(base + i) & 0xffff]);
                         std::cout << std::setfill(' ') << std::dec;
                     }
+                    // The thrown object's pointer value names the target, which is read at the
+                    // same snapshot. A null value, or one outside 16-bit RAM, prints no bytes.
+                    if(options.target_bytes) {
+                        uint32_t const object = (sample.regs[4] + 55) & 0xffff;
+                        uint32_t const target = uint32_t(cpu.data[object]) |
+                                                uint32_t(cpu.data[(object + 1) & 0xffff]) << 8;
+                        std::cout << " target=" << std::hex << std::setw(4) << std::setfill('0')
+                                  << target << std::setfill(' ') << std::dec;
+                        if(target != 0 && target + options.target_bytes <= 0x10000) {
+                            std::cout << " targetbytes=" << std::hex << std::setfill('0');
+                            for(unsigned i = 0; i < options.target_bytes; ++i)
+                                std::cout << std::setw(2) << unsigned(cpu.data[target + i]);
+                            std::cout << std::setfill(' ') << std::dec;
+                        }
+                    }
                     std::cout << '\n';
                 }
             }
@@ -446,6 +465,8 @@ options_t parse(int argc, char** argv)
         else if(arg == "--snapshot") options.snapshots.push_back(value());
         else if(arg == "--snapshot-bytes")
             options.snapshot_bytes = unsigned(std::stoul(value()));
+        else if(arg == "--target-bytes")
+            options.target_bytes = unsigned(std::stoul(value()));
         else if(arg == "--trace-tail") options.trace_tail = unsigned(std::stoul(value()));
         else if(arg == "--stop-at") options.stop_at = value();
         else if(arg == "--measure-from") options.measure_from = value();
@@ -456,7 +477,7 @@ options_t parse(int argc, char** argv)
         throw std::runtime_error(
             "usage: avm_eh_stack_probe --interpreter HEX --boundary JSON "
             "--image BIN --elf ELF [--snapshot SYMBOL]... [--trace-tail N] "
-            "[--cycle-limit N]");
+            "[--cycle-limit N] [--snapshot-bytes N] [--target-bytes N]");
     return options;
 }
 

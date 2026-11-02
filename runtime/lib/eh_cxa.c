@@ -6,17 +6,23 @@
  * base of the thrown class, virtual or nonvirtual, that occurs once in the hierarchy.
  * The unwinder compares types and walks the base subobjects in eh_unwind.c, reading
  * the thrown object's vptrs for a virtual base. A base catch binds to the base
- * subobject, and the handler adjustment locates it. Pointer conversions and rethrow are
- * not implemented.
+ * subobject, and the handler adjustment locates it.
+ *
+ * A pointer catch matches a thrown pointer by the conversions of C++ pointer
+ * conversion: qualification, a derived pointer to a public base pointer, a pointer to
+ * void, a function pointer that drops noexcept, and a null pointer. The matched value
+ * is formed in the header's converted buffer, so the thrown pointer is never changed.
+ * A catch of a non-const pointer by reference matches only the exact pointer type, and
+ * it binds to the thrown pointer object itself.
  *
  * The header precedes the thrown object and holds the landing context, the
  * resume context, the type-descriptor address, the destructor, the selector of
- * the matched catch, and its base adjustment. The unwinder updates both contexts
- * in place. Propagation
+ * the matched catch, its base adjustment, and the conversion of a pointer catch. The
+ * unwinder updates both contexts in place. Propagation
  * alternates between cleanup and resume: each cleanup pad runs its destructors
  * and then calls _Unwind_Resume, which continues from the saved resume context.
  * __cxa_end_catch frees the header. The shim that fills the header is in
- * eh_cxa_throw.asm. */
+ * eh_cxa_throw.asm. Rethrow and nested exceptions are not implemented. */
 
 #include <avm/pgmspace.h>
 #include <stdint.h>
@@ -46,11 +52,15 @@ const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv116__enum_type_infoE[9] = {0};
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv120__function_type_infoE[9] = {0};
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv129__pointer_to_member_type_infoE[9] = {0};
 const uint8_t AVM_PROGMEM _ZTVN10__cxxabiv117__array_type_infoE[9] = {0};
+/* The marker that a catch of a non-const pointer by reference names. Its descriptor is
+ * nine bytes: this vtable's address point, three reserved bytes, and the pointer's own
+ * descriptor. The runtime classifies it by the vtable alone. */
+const uint8_t AVM_PROGMEM __avm_eh_exact_pointer_ref_type_info[9] = {0};
 
 /* eh_cxa_throw.asm stores the header fields at these offsets, and it computes the
  * object address from the header size. Keep it in sync with this layout. */
-_Static_assert(sizeof(struct avm_eh_exception) == 51,
-               "__cxa_throw assumes a 51-byte exception header");
+_Static_assert(sizeof(struct avm_eh_exception) == 55,
+               "__cxa_throw assumes a 55-byte exception header");
 _Static_assert(offsetof(struct avm_eh_exception, context) == 0,
                "exception context offset");
 _Static_assert(offsetof(struct avm_eh_exception, type_address) == 15,
@@ -73,6 +83,10 @@ _Static_assert(offsetof(struct avm_eh_exception, eh_block_end) == 46,
                "exception block end offset");
 _Static_assert(offsetof(struct avm_eh_exception, eh_function_count) == 49,
                "exception function count offset");
+_Static_assert(offsetof(struct avm_eh_exception, converted_pointer) == 51,
+               "exception converted pointer offset");
+_Static_assert(offsetof(struct avm_eh_exception, handler_pointer_converted) == 54,
+               "exception conversion mode offset");
 
 void *__cxa_allocate_exception(size_t size) {
     if (size > UINT16_MAX - sizeof(struct avm_eh_exception))
@@ -87,6 +101,7 @@ void *__cxa_allocate_exception(size_t size) {
     header->state = AVM_EH_STATE_ALLOCATED;
     header->handler_selector = 0;
     header->handler_adjustment = 0;
+    header->handler_pointer_converted = AVM_EH_CONVERT_NONE;
     return header + 1;
 }
 
@@ -128,6 +143,7 @@ __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header) {
 
     header->context.exception = (uint16_t)(uintptr_t)header;
     header->state = AVM_EH_STATE_THROWN;
+    header->handler_pointer_converted = AVM_EH_CONVERT_NONE;
     active_exception = header;
 
     if (!avm_eh_open_exception(header))
@@ -161,11 +177,52 @@ __attribute__((noreturn)) void _Unwind_Resume(void *exception) {
     continue_unwind(header);
 }
 
+/* Forms the value of a pointer handler in the header's converted buffer, and returns the
+ * buffer's address. The thrown pointer is read from the object and is never written. A
+ * data pointer is the thrown value plus the signed adjustment, and it must stay in 16-bit
+ * RAM. A null value stays null, so a base conversion of a null pointer is zero. A program
+ * pointer is copied with no adjustment. A std::nullptr_t gives zero, and it reads nothing.
+ * The thrown object's size must match the width of the conversion. */
+static void *convert_pointer(struct avm_eh_exception *header) {
+    const uint8_t *object = (const uint8_t *)(header + 1);
+    uint8_t *converted = header->converted_pointer;
+    switch (header->handler_pointer_converted) {
+    case AVM_EH_CONVERT_NULL:
+        memset(converted, 0, sizeof header->converted_pointer);
+        break;
+    case AVM_EH_CONVERT_DATA: {
+        if (header->size != 2)
+            abort();
+        int32_t value = object[0] | ((int32_t)object[1] << 8);
+        if (value != 0) {
+            value += (int16_t)header->handler_adjustment;
+            if (value < 0 || value > UINT16_MAX)
+                abort();
+        }
+        converted[0] = (uint8_t)value;
+        converted[1] = (uint8_t)((uint32_t)value >> 8);
+        converted[2] = 0;
+        break;
+    }
+    case AVM_EH_CONVERT_PROGRAM:
+        if (header->size != 3 || header->handler_adjustment != 0)
+            abort();
+        memcpy(converted, object, 3);
+        break;
+    default:
+        abort();
+    }
+    return converted;
+}
+
 /* Returns the catch object of the header: the thrown object for an exact or catch-all
- * match, or the base subobject that phase one matched. The adjustment must lie inside
- * the thrown object, and the adjusted address must lie in 16-bit RAM. The allocation
- * itself is not moved, so the destructor and the free still use the header. */
+ * match, the base subobject that phase one matched, or the converted buffer of a pointer
+ * handler. The adjustment must lie inside the thrown object, and the adjusted address must
+ * lie in 16-bit RAM. The allocation itself is not moved, so the destructor and the free
+ * still use the header. */
 static void *catch_object(struct avm_eh_exception *header) {
+    if (header->handler_pointer_converted != AVM_EH_CONVERT_NONE)
+        return convert_pointer(header);
     uint16_t adjustment = header->handler_adjustment;
     if (adjustment != 0 && adjustment >= header->size)
         abort();

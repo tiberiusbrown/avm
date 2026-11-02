@@ -47,7 +47,7 @@ END = '__cxa_end_catch'
 FREE = 'free'
 RETURNS = (BEGIN, GET_PTR)
 
-HEADER_SIZE = 51
+HEADER_SIZE = 55
 # Each snapshot holds the header and the start of the thrown object. The fixtures' objects
 # are smaller than this, and a larger object fails the check that reads it.
 OBJECT_LIMIT = 64

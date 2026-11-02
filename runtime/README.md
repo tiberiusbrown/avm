@@ -487,6 +487,9 @@ descriptors name, in program space: `__class_type_info`, `__fundamental_type_inf
 `__si_class_type_info`, `__vmi_class_type_info`, `__pointer_type_info`,
 `__enum_type_info`, `__function_type_info`, `__pointer_to_member_type_info`, and
 `__array_type_info`. Each is a nine-byte object whose address point lies six bytes in.
+`__avm_eh_exact_pointer_ref_type_info` is the marker vtable. A reference marker names the
+pointer type that a catch of a non-const pointer by reference must match exactly, and the
+runtime classifies it by this vtable alone.
 The descriptors themselves are emitted by the compiler into program flash; see
 [arch.md](arch.md) Section 60.1.
 
@@ -497,7 +500,11 @@ function count, not with the program size. A typed catch matches when its descri
 address equals the thrown one, or when it names a base subobject of the thrown class,
 virtual or nonvirtual, that occurs exactly once and is reached by a public path. A
 catch-all matches everything. The base subobject's byte offset is the handler adjustment,
-which phase one records with the selector. Phase one runs no destructor. When no frame before the handler has a cleanup,
+which phase one records with the selector. Phase one runs no destructor. A pointer catch
+matches a thrown pointer by the C++ pointer conversions: qualification, a public base of a
+derived pointee, a pointer to void, a function pointer that drops `noexcept`, and a null
+pointer from `std::nullptr_t`. The matched value is formed in the exception header's buffer,
+and the thrown pointer is never changed. When no frame before the handler has a cleanup,
 the handler's landing state is installed directly, and phase two does not run. If no
 frame has a matching catch, the program halts before any cleanup runs. The search
 records the matched selector in the header. Phase two enters each
@@ -510,12 +517,13 @@ object and frees it. A cleanup pad never ends the exception.
 
 `__cxa_throw` is a frameless shim. It takes the object in r4, the type-descriptor
 program address in r6:r7, and the destructor program address as a three-byte stack
-argument. It stores the throw site into the exception header, which lies 51 bytes
+argument. It stores the throw site into the exception header, which lies 55 bytes
 below the object, and then tail-transfers to `__avm_eh_throw`. The header holds the
 landing context, the 24-bit type-descriptor address, the 24-bit destructor address,
 the size, the lifecycle state, the resume cursor, the handler's selector, and the
-handler adjustment. `__cxa_begin_catch` and `__cxa_get_exception_ptr` return the
-object plus the adjustment, and `__cxa_end_catch` destroys the complete object. The
+handler adjustment, and the conversion of a pointer handler. `__cxa_begin_catch` and
+`__cxa_get_exception_ptr` return the object plus the adjustment, or the converted buffer of a
+pointer handler, and `__cxa_end_catch` destroys the complete object. The
 landing SP
 of each pad is the caller SP at the call plus the call's outgoing argument bytes.
 A frame that uses r3 as its CFA base keeps its dynamic allocations, because the SP

@@ -548,21 +548,6 @@ __attribute__((noinline)) int catch_virtual_exact() {
     return 0;
 }
 
-// P: a pointer to a derived class is not converted to a pointer to its base. The
-// thrown type is Derived *, which has only the exact match.
-__attribute__((noinline)) int pointer_not_converted() {
-    Derived local{{1}, 2};
-    Derived *p = &local;
-    try {
-        throw p;
-    } catch (Base *) {
-        return 1;
-    } catch (Derived *q) {
-        return q == &local ? 2 : 3;
-    }
-    return 0;
-}
-
 } // namespace
 
 extern "C" int avm_test_main(void) {
@@ -598,6 +583,5 @@ extern "C" int avm_test_main(void) {
 
     expect(catch_virtual() == 1);
     expect(catch_virtual_exact() == 2);
-    expect(pointer_not_converted() == 2);
     return failures == 0 ? 0 : 1;
 }

@@ -29,9 +29,16 @@ struct avm_eh_context {
  * and never as 16-bit data pointers. The handler selector is the LLVM type ID
  * that phase one matched, and phase two passes it to the handler's pad. The
  * adjustment is the byte offset of the caught base subobject within the thrown
- * object, and it is zero for an exact or catch-all match. The block fields cache the
- * AVEH5 block that avm_eh_open_exception validated, so each lookup in this throw uses
- * the same block address, end, and function count without reading the anchor again. */
+ * object, and it is zero for an exact or catch-all match. A pointer conversion keeps the
+ * adjustment as a signed 16-bit byte offset, because a virtual base can lie before its
+ * derived subobject. The block fields cache the AVEH5 block that avm_eh_open_exception
+ * validated, so each lookup in this throw uses the same block address, end, and function
+ * count without reading the anchor again.
+ *
+ * The converted pointer holds the caught pointer value of a pointer handler, when the
+ * matched clause converts it. The original thrown pointer is never changed, and the
+ * conversion mode says how the converted value is formed. The buffer is three bytes, so
+ * it holds a 24-bit program pointer, and a 16-bit data pointer uses its first two. */
 struct avm_eh_exception {
     struct avm_eh_context context;        /* +0  landing state; exception = this header */
     uint8_t type_address[3];              /* +15 type-descriptor program address (r6:r7) */
@@ -44,7 +51,19 @@ struct avm_eh_exception {
     uint8_t eh_block_address[3];          /* +43 program address of the AVEH5 block */
     uint8_t eh_block_end[3];              /* +46 program address of the block end */
     uint16_t eh_function_count;           /* +49 number of function index entries */
+    uint8_t converted_pointer[3];         /* +51 converted value of the pointer handler */
+    uint8_t handler_pointer_converted;    /* +54 AVM_EH_CONVERT_* of the matched catch */
 };
+
+/* How the selected handler receives a pointer. A clause that matches the thrown type
+ * exactly, or a catch-all, leaves the handler with the thrown object, so its mode is NONE.
+ * DATA is a 16-bit data pointer, formed from the thrown value and the adjustment. PROGRAM
+ * is a 24-bit function or program-memory pointer, formed from the thrown value, with no
+ * adjustment. NULL is a std::nullptr_t, whose converted value is zero. */
+#define AVM_EH_CONVERT_NONE    0
+#define AVM_EH_CONVERT_DATA    1
+#define AVM_EH_CONVERT_PROGRAM 2
+#define AVM_EH_CONVERT_NULL    3
 
 /* Lifecycle of the active exception. The header is ALLOCATED until it is thrown.
  * THROWN means propagation is searching or between landing pads. IN_CLEANUP means a

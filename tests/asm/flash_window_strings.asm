@@ -390,6 +390,118 @@ _start:
     ldi16 r7, 0x4444
     sys 0x19
     call debug_print_upper_regs
+    ; dual AS0 strcmp: equal abc
+    ldi16 r4, 0x0B30
+    ldi16 r5, 0x0B30
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: abc < abd
+    ldi16 r4, 0x0B30
+    ldi16 r5, 0x0B34
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: abd > abc
+    ldi16 r4, 0x0B34
+    ldi16 r5, 0x0B30
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: ab < abc (NUL before c)
+    ldi16 r4, 0x0B38
+    ldi16 r5, 0x0B30
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: abc > ab
+    ldi16 r4, 0x0B30
+    ldi16 r5, 0x0B38
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: empty equal
+    ldi16 r4, 0x0B3B
+    ldi16 r5, 0x0B3B
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: empty < a
+    ldi16 r4, 0x0B3B
+    ldi16 r5, 0x0B3C
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: 0x80 > a unsigned
+    ldi16 r4, 0x0B3E
+    ldi16 r5, 0x0B3C
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: a < 0x80 unsigned
+    ldi16 r4, 0x0B3C
+    ldi16 r5, 0x0B3E
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual AS0 strcmp: 0xFF > 0x80 unsigned
+    ldi16 r4, 0x0B3F
+    ldi16 r5, 0x0B3E
+    ldi16 r6, 0x3333
+    ldi16 r7, 0x4444
+    sys 0x19
+    call debug_print_upper_regs
+    ; dual flash-lhs strcmp_P: flash lhs equal abc AS1
+    ldi16 r4, 0x0B30
+    ldi16 r5, 0x5555
+    ldi16 r6, 0x0530
+    ldi16 r7, 0xA500
+    sys 0x14
+    call debug_print_upper_regs
+    ; dual flash-lhs strcmp_P: flash lhs abc < abd AS1
+    ldi16 r4, 0x0B30
+    ldi16 r5, 0x5555
+    ldi16 r6, 0x0534
+    ldi16 r7, 0xA500
+    sys 0x14
+    call debug_print_upper_regs
+    ; dual flash-lhs strcmp_P: flash lhs abd > abc AS1
+    ldi16 r4, 0x0B34
+    ldi16 r5, 0x5555
+    ldi16 r6, 0x0530
+    ldi16 r7, 0xA500
+    sys 0x14
+    call debug_print_upper_regs
+    ; dual flash-lhs strcmp_P: flash lhs ab < abc AS1
+    ldi16 r4, 0x0B38
+    ldi16 r5, 0x5555
+    ldi16 r6, 0x0530
+    ldi16 r7, 0xA500
+    sys 0x14
+    call debug_print_upper_regs
+    ; dual flash-lhs strcmp_P: flash lhs 0x80 > a AS1
+    ldi16 r4, 0x0B3E
+    ldi16 r5, 0x5555
+    ldi16 r6, 0x053C
+    ldi16 r7, 0xA500
+    sys 0x14
+    call debug_print_upper_regs
+    ; dual flash-lhs strcmp_P: flash lhs empty equal AS1
+    ldi16 r4, 0x0B3B
+    ldi16 r5, 0x5555
+    ldi16 r6, 0x053B
+    ldi16 r7, 0xA500
+    sys 0x14
+    call debug_print_upper_regs
     sys debug_break
 
 .section .rodata,"a",@progbits
@@ -399,3 +511,17 @@ program_strings:
     .byte 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37
     .byte 0x38, 0x39, 0x41, 0x42, 0x43, 0x44, 0x45, 0x46
     .byte 0x47, 0x48, 0x49, 0x4A, 0x00
+
+; Dual-window strings at image 0x530 (AS0 0x0B30, AS1 0x530), after program_strings.
+; The assembly-time checks pin the offsets used by the AS0 aliases above.
+.fill 11, 1, 0x00                            ; pad program_strings (37 bytes) to 0x530
+dual_strings:
+    .byte 0x61, 0x62, 0x63, 0x00                 ; "abc"        AS0 0x0B30
+    .byte 0x61, 0x62, 0x64, 0x00                 ; "abd"        AS0 0x0B34
+    .byte 0x61, 0x62, 0x00                       ; "ab"         AS0 0x0B38
+    .byte 0x00                                   ; ""           AS0 0x0B3B
+    .byte 0x61, 0x00                             ; "a"          AS0 0x0B3C
+    .byte 0x80, 0xFF, 0x00                       ; "\x80\xFF"   AS0 0x0B3E
+.if (dual_strings - program_strings) != 0x30
+    .error "dual_strings must start at image offset 0x530 (AS0 0x0B30)"
+.endif

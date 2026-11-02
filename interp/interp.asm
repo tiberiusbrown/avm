@@ -172,6 +172,20 @@
 #define data_text_current_y              (data_format_scratch_end+2)
 #define data_text_scratch_end            (data_format_scratch_end+4)
 
+; Dual AS0 flash-window comparison scratch. These bytes alias the formatter
+; workspace only while this nonnested SYS runs. The audio event buffer aliases
+; the same base only in its own nonnested command path, and no ISR touches
+; these addresses.
+#define data_compare_left24       (data_end_private+0)
+#define data_compare_left_byte    (data_end_private+3)
+#define data_compare_right24      (data_end_private+4)
+#define data_compare_right_byte   (data_end_private+7)
+#define data_compare_remaining    (data_end_private+8)
+#define data_compare_mode         (data_end_private+10)
+.if data_compare_mode >= data_format_scratch_end
+    .error "dual-flash comparison scratch must stay within the formatter workspace"
+.endif
+
 .if (data_format_digit_buffer + FORMAT_INTEGER_DIGIT_CAPACITY) > data_format_arg_ptr
     .error "64-bit integer digit buffer overlaps formatter argument cursor"
 .endif
@@ -1850,7 +1864,16 @@ emit_primary_ld8u_cont  primary_ld8u_r7_cont, VM_R7L, VM_R7H
 ; VM_PC names the selected opcode on entry; its successor is already in flight.
 ; The skipped RAM dispatch would have advanced past that one-byte opcode, so the
 ; flash path does the same before the independent transaction and re-seek.
+; Both scalar flash entries share one reader body. Each sets the byte count in
+; r0 and Z names the destination low byte. The destination high byte is cleared
+; before the read: LD8U keeps it zero, and LD16's second byte overwrites it.
 primary_ld8u_flash:
+    mov   r0, ONE               ; count = 1
+    rjmp  primary_flash_common
+primary_ld16_flash:
+    mov   r0, ONE               ; count = 2, little-endian destination
+    lsl   r0
+primary_flash_common:
     add   VM_PCL, ONE
     adc   VM_PCM, ZERO
     adc   VM_PCH, ZERO
@@ -1859,31 +1882,15 @@ primary_ld8u_flash:
     subi  r25, 0x06             ; image-relative high = AS0 high - 0x06
     clr   r26
     clr   r31                   ; Z = destination register-file address
-    mov   r0, ONE               ; count = 1
+    std   Z+1, ZERO
     clr   r1
     rcall fx_read_program_bytes_func
-    std   Z+1, ZERO
     rjmp  seek_and_dispatch_func_disabled
 
 emit_primary_ld16_cont  primary_ld16_r4_cont, VM_R4L, VM_R4H
 emit_primary_ld16_cont  primary_ld16_r5_cont, VM_R5L, VM_R5H
 emit_primary_ld16_cont  primary_ld16_r6_cont, VM_R6L, VM_R6H
 emit_primary_ld16_cont  primary_ld16_r7_cont, VM_R7L, VM_R7H
-
-primary_ld16_flash:
-    add   VM_PCL, ONE
-    adc   VM_PCM, ZERO
-    adc   VM_PCH, ZERO
-    mov   r24, r26
-    mov   r25, r27
-    subi  r25, 0x06
-    clr   r26
-    clr   r31
-    mov   r0, ONE               ; count = 2, little-endian destination
-    lsl   r0
-    clr   r1
-    rcall fx_read_program_bytes_func
-    rjmp  seek_and_dispatch_func_disabled
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; ED-EE full-register biased-displacement data-space memory
@@ -4730,13 +4737,15 @@ sys_progmem_services_start:
 
 ; Consume the service byte in VM_PC, copy only q3[23:0] into native source
 ; scratch, and tail-enter the alternate shared transaction start. q3[31:24]
-; is neither inspected nor modified. The three NOPs preserve the established
-; transaction-start timing and code layout of the former canonicality check.
+; is neither inspected nor modified. The three one-cycle slots preserve the
+; established transaction-start timing. The first slot clears T, selecting the
+; RAM-left orientation of the shared comparison loops. The image variant leaves
+; T to its caller, which sets it before the call.
 ; Called with RCALL; the transaction start's RET returns directly to the service
 ; body five cycles after the first data-byte OUT. Z and r0:r1 are preserved;
 ; r24:r27 are clobbered.
 sys_progmem_prepare_func:
-    nop
+    clt
     nop
     nop
     add   VM_PCL, ONE
@@ -4755,10 +4764,14 @@ sys_progmem_image_prepare_func:
     adc   VM_PCH, ZERO
     rjmp  fx_start_program_read_func
 
-; Shared comparison results. CP is always RAM byte minus program byte, so C
-; means the RAM operand is lexicographically smaller.
+; Shared comparison results. The streamed loops always execute CP RAM byte,
+; program byte, so C means the RAM byte is smaller. T is the entry-once
+; orientation: CLT when the RAM operand is the logical lhs, SET when the
+; program-space operand is the logical lhs. Only a mismatch reads T.
 .Lsys_progmem_compare_mismatch:
-    brlo  .Lsys_progmem_compare_less
+    brts  .Lsys_progmem_compare_flash_lhs ; rare orientation, reversed sense
+    brlo  .Lsys_progmem_compare_less      ; RAM lhs is smaller
+.Lsys_progmem_compare_greater:
     mov   VM_R4L, ONE
     mov   VM_R4H, ZERO
     rjmp  .Lsys_progmem_finish
@@ -4766,6 +4779,9 @@ sys_progmem_image_prepare_func:
     ser   VM_R4L
     ser   VM_R4H
     rjmp  .Lsys_progmem_finish
+.Lsys_progmem_compare_flash_lhs:
+    brcc  .Lsys_progmem_compare_less      ; RAM rhs is larger: flash lhs is smaller
+    rjmp  .Lsys_progmem_compare_greater
 .Lsys_progmem_compare_equal:
     clr   VM_R4L
     clr   VM_R4H
@@ -4778,7 +4794,7 @@ sys_progmem_image_prepare_func:
 sys_memcmp_p_impl:
     cpi   VM_R4H, 0x0B           ; flash-window lhs with an AS1 rhs needs staging
     brlo  .Lsys_memcmp_p_lhs_ram
-    jmp   sys_flash_window_unsupported
+    jmp   sys_memcmp_dual_p_impl
 .Lsys_memcmp_p_lhs_ram:
     movw  r0, VM_R5
     mov   r27, r0
@@ -4819,7 +4835,7 @@ sys_memcmp_p_impl:
 sys_strcmp_p_impl:
     cpi   VM_R4H, 0x0B           ; flash-window lhs with an AS1 rhs needs staging
     brlo  .Lsys_strcmp_p_lhs_ram
-    jmp   sys_flash_window_unsupported
+    jmp   sys_strcmp_dual_p_impl
 .Lsys_strcmp_p_lhs_ram:
     movw  r30, VM_R4             ; Z = RAM lhs
     rcall sys_progmem_prepare_func
@@ -4849,7 +4865,7 @@ sys_strcmp_p_impl:
 sys_memcmp_rhs_flash_impl:
     cpi   VM_R4H, 0x0B           ; both operands in the flash window: not yet supported
     brlo  .Lsys_pair_ok_0
-    jmp   sys_flash_window_unsupported
+    jmp   sys_memcmp_dual_impl
 .Lsys_pair_ok_0:
     movw  r0, VM_R6
     mov   r27, r0
@@ -4860,6 +4876,7 @@ sys_memcmp_rhs_flash_impl:
     mov   r25, VM_R5H
     subi  r25, 0x06
     clr   r26
+    clt                          ; RAM-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r24, Z+
     rcall fx_read_program_delay_7
@@ -4868,109 +4885,214 @@ sys_memcmp_rhs_flash_impl:
 sys_strcmp_rhs_flash_impl:
     cpi   VM_R4H, 0x0B
     brlo  .Lsys_pair_ok_1
-    jmp   sys_flash_window_unsupported
+    jmp   sys_strcmp_dual_impl
 .Lsys_pair_ok_1:
     movw  r30, VM_R4             ; Z = RAM lhs
     mov   r24, VM_R5L
     mov   r25, VM_R5H
     subi  r25, 0x06
     clr   r26
+    clt                          ; RAM-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r0, Z+
     rcall fx_read_program_delay_7
     rjmp  .Lsys_strcmp_p_loop
 
-; AS0 memcmp/strcmp with a flash-window lhs and RAM rhs. The flash operand is the
-; streamed side, so the mismatch outcome is inverted: C=1 when the RAM rhs byte is
-; smaller, which makes the flash lhs greater.
+; AS0 memcmp/strcmp with a flash-window lhs and RAM rhs. The shared program-space
+; loops stream the flash lhs against the RAM rhs byte. T=1 reverses the mismatch
+; sign so the flash lhs is the logical left operand.
 sys_memcmp_lhs_flash_impl:
     cpi   VM_R5H, 0x0B
     brlo  .Lsys_pair_ok_2
-    jmp   sys_flash_window_unsupported
+    jmp   sys_memcmp_dual_impl
 .Lsys_pair_ok_2:
     movw  r0, VM_R6
     mov   r27, r0
     or    r27, r1
-    breq  .Lsys_memcmp_p_zero
+    brne  .Lsys_memcmp_lhs_flash_start
+    rjmp  .Lsys_memcmp_p_zero    ; zero bound: no read, no flash transaction
+.Lsys_memcmp_lhs_flash_start:
     movw  r30, VM_R5             ; Z = RAM rhs
     mov   r24, VM_R4L
     mov   r25, VM_R4H
     subi  r25, 0x06
     clr   r26
+    set                          ; flash-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r24, Z+
     rcall fx_read_program_delay_7
-    rjmp  .Lsys_memcmp_lhs_flash_loop
-.Lsys_memcmp_lhs_flash_loop:
-    cli
-    out   SPDR, ZERO
-    in    r27, SPDR
-    sei
-
-    cp    r24, r27
-    brne  .Lsys_memcmp_lhs_flash_mismatch
-    sub   r0, ONE
-    sbc   r1, ZERO
-    breq  .Lsys_memcmp_lhs_flash_equal
-    ld    r24, Z+
-    delay_4
-    rjmp  .Lsys_memcmp_lhs_flash_loop
-.Lsys_memcmp_lhs_flash_equal:
-    rjmp  .Lsys_progmem_compare_equal
-.Lsys_memcmp_lhs_flash_mismatch:
-    brlo  .Lsys_memcmp_lhs_flash_greater
-    ser   VM_R4L
-    ser   VM_R4H
-    rjmp  .Lsys_progmem_finish
-.Lsys_memcmp_lhs_flash_greater:
-    mov   VM_R4L, ONE
-    mov   VM_R4H, ZERO
-    rjmp  .Lsys_progmem_finish
+    rjmp  .Lsys_memcmp_p_loop
 
 sys_strcmp_lhs_flash_impl:
     cpi   VM_R5H, 0x0B
     brlo  .Lsys_pair_ok_3
-    jmp   sys_flash_window_unsupported
+    jmp   sys_strcmp_dual_impl
 .Lsys_pair_ok_3:
     movw  r30, VM_R5             ; Z = RAM rhs
     mov   r24, VM_R4L
     mov   r25, VM_R4H
     subi  r25, 0x06
     clr   r26
+    set                          ; flash-left orientation for the shared loop
     rcall sys_progmem_image_prepare_func
     ld    r0, Z+
     rcall fx_read_program_delay_7
-    rjmp  .Lsys_strcmp_lhs_flash_loop
-.Lsys_strcmp_lhs_flash_loop:
-    cli
-    out   SPDR, ZERO
-    in    r27, SPDR
-    sei
+    rjmp  .Lsys_strcmp_p_loop
 
-    cp    r0, r27
-    brne  .Lsys_strcmp_lhs_flash_mismatch
-    tst   r27
-    breq  .Lsys_strcmp_lhs_flash_equal
-    ld    r0, Z+
-    delay_4
-    nop
-    rjmp  .Lsys_strcmp_lhs_flash_loop
-.Lsys_strcmp_lhs_flash_equal:
+; Dual AS0 flash-window comparisons. The slow engine is entered when both
+; operands are in the window, or when an AS0 window operand meets an AS1
+; operand. Each logical byte is read by its own fixed-count transaction, so the
+; operands are never copied into guest RAM. The cursors are image-relative
+; (AS0 - 0x0600), and their state lives only in private scratch.
+;
+; Normalization leaves the right cursor in r24:r26, stores it with the left
+; cursor from VM_R4, and stores the memcmp bound or strcmp mode. Every path
+; then shares one loop. A zero memcmp bound returns before any read.
+;
+; The loop consumes the service byte once. It ends by re-seeking the bytecode
+; stream once.
+
+sys_memcmp_dual_impl:
+    movw  r0, VM_R6
+    mov   r27, r0
+    or    r27, r1
+    brne  1f
+    rjmp  .Lsys_memcmp_p_zero
+1:
+    sts   data_compare_remaining+0, VM_R6L
+    sts   data_compare_remaining+1, VM_R6H
+    sts   data_compare_mode, ZERO
+    mov   r24, VM_R5L
+    mov   r25, VM_R5H
+    subi  r25, 0x06
+    clr   r26
+    rjmp  .Lsys_dual_store
+
+sys_strcmp_dual_impl:
+    sts   data_compare_mode, ONE
+    mov   r24, VM_R5L
+    mov   r25, VM_R5H
+    subi  r25, 0x06
+    clr   r26
+    rjmp  .Lsys_dual_store
+
+; The AS1 right operand is q3[23:0], already image-relative. q3[31:24] is not
+; read, and the left operand remains the AS0 window pointer in r4.
+sys_memcmp_dual_p_impl:
+    movw  r0, VM_R5
+    mov   r27, r0
+    or    r27, r1
+    brne  1f
+    rjmp  .Lsys_memcmp_p_zero
+1:
+    sts   data_compare_remaining+0, VM_R5L
+    sts   data_compare_remaining+1, VM_R5H
+    sts   data_compare_mode, ZERO
+    mov   r24, VM_R6L
+    mov   r25, VM_R6H
+    mov   r26, VM_R7L
+    rjmp  .Lsys_dual_store
+
+sys_strcmp_dual_p_impl:
+    sts   data_compare_mode, ONE
+    mov   r24, VM_R6L
+    mov   r25, VM_R6H
+    mov   r26, VM_R7L
+
+.Lsys_dual_store:
+    sts   data_compare_right24+0, r24
+    sts   data_compare_right24+1, r25
+    sts   data_compare_right24+2, r26
+    sts   data_compare_left24+0, VM_R4L
+    mov   r24, VM_R4H
+    subi  r24, 0x06
+    sts   data_compare_left24+1, r24
+    sts   data_compare_left24+2, ZERO
+
+    ; VM_PC names the service byte. Advance it once; the final re-seek then
+    ; dispatches the following primary opcode.
+    add   VM_PCL, ONE
+    adc   VM_PCM, ZERO
+    adc   VM_PCH, ZERO
+
+.Lsys_dual_compare_loop:
+    ; Each byte is a separate transaction. Each cursor address is passed in Z,
+    ; and its byte is stored three bytes later. The reader leaves CS deselected.
+    ldi   r30, lo8(data_compare_left24)
+    ldi   r31, hi8(data_compare_left24)
+    rcall sys_dual_read_byte_func
+    ldi   r30, lo8(data_compare_right24)
+    ldi   r31, hi8(data_compare_right24)
+    rcall sys_dual_read_byte_func
+
+    lds   r24, data_compare_left_byte
+    lds   r25, data_compare_right_byte
+    cp    r24, r25
+    brne  .Lsys_dual_compare_mismatch
+
+    lds   r24, data_compare_mode
+    tst   r24
+    brne  .Lsys_dual_strcmp_equal
+
+    ; memcmp: a reached zero bound is equal, and NUL is an ordinary byte.
+    lds   r24, data_compare_remaining+0
+    lds   r25, data_compare_remaining+1
+    subi  r24, 1
+    sbci  r25, 0
+    sts   data_compare_remaining+0, r24
+    sts   data_compare_remaining+1, r25
+    or    r24, r25
+    brne  .Lsys_dual_advance
     rjmp  .Lsys_progmem_compare_equal
-.Lsys_strcmp_lhs_flash_mismatch:
-    brlo  .Lsys_strcmp_lhs_flash_greater
-    ser   VM_R4L
-    ser   VM_R4H
-    rjmp  .Lsys_progmem_finish
-.Lsys_strcmp_lhs_flash_greater:
-    mov   VM_R4L, ONE
-    mov   VM_R4H, ZERO
-    rjmp  .Lsys_progmem_finish
 
-; Two flash-window operands need staged chunk comparison, which is not implemented.
-; Reject the call rather than comparing unmapped RAM.
-sys_flash_window_unsupported:
-    jmp   invalid_secondary_instruction_func
+.Lsys_dual_strcmp_equal:
+    lds   r24, data_compare_left_byte
+    tst   r24
+    brne  .Lsys_dual_advance
+    rjmp  .Lsys_progmem_compare_equal
+
+.Lsys_dual_advance:
+    ldi   r30, lo8(data_compare_left24)
+    ldi   r31, hi8(data_compare_left24)
+    rcall sys_dual_increment24_func
+    ldi   r30, lo8(data_compare_right24)
+    ldi   r31, hi8(data_compare_right24)
+    rcall sys_dual_increment24_func
+    rjmp  .Lsys_dual_compare_loop
+
+; CP left, right leaves C set when left is smaller. Equal bytes never reach
+; this path. The shared handlers already return the signed result sense.
+.Lsys_dual_compare_mismatch:
+    brsh  1f
+    rjmp  .Lsys_progmem_compare_less
+1:
+    rjmp  .Lsys_progmem_compare_greater
+
+; Read the byte named by the 24-bit cursor at Z. The reader stores that byte at
+; Z+3, its cursor-private slot, and returns with CS deselected.
+sys_dual_read_byte_func:
+    ld    r24, Z+
+    ld    r25, Z+
+    ld    r26, Z+
+    mov   r0, ONE
+    clr   r1
+    rjmp  fx_read_program_bytes_func
+
+; Increment the little-endian 24-bit image-relative cursor addressed by Z.
+; SUBI with 0xFF carries exactly when the low byte was 0xFF, so SBCI can
+; propagate the carry without a wider add.
+sys_dual_increment24_func:
+    ld    r24, Z
+    ldd   r25, Z+1
+    ldd   r26, Z+2
+    subi  r24, 0xFF
+    sbci  r25, 0xFF
+    sbci  r26, 0xFF
+    st    Z,   r24
+    std   Z+1, r25
+    std   Z+2, r26
+    ret
+
 
 ; AS0 strlen from the flash window. r4 names the source and receives the count;
 ; the source is translated before r4 is cleared.
@@ -5148,8 +5270,8 @@ sys_strncat_flash_impl:
     rjmp  .Lsys_strncat_p_after_copy
 
 sys_progmem_services_end:
-.if (sys_progmem_services_end - sys_progmem_services_start) != 568
-    .error "program-memory SYS subsystem must occupy exactly 284 AVR words"
+.if (sys_progmem_services_end - sys_progmem_services_start) != 736
+    .error "program-memory SYS subsystem must occupy exactly 368 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -6743,37 +6865,37 @@ f7_table:
     emit_f7_ld8u_post r18, r19, r22, f7_ld8u_d5_cont
     emit_f7_ld8u_post r20, r21, r22, f7_ld8u_d6_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r8, r9, r16, f7_ld16_d0_cont
-    emit_f7_ld16_post r10, r11, r16, f7_ld16_d1_cont
-    emit_f7_ld16_post r12, r13, r16, f7_ld16_d2_cont
-    emit_f7_ld16_post r14, r15, r16, f7_ld16_d3_cont
+    emit_f7_ld16_post r8, r9, r16, f7_ld16_cont
+    emit_f7_ld16_post r10, r11, r16, f7_ld16_cont
+    emit_f7_ld16_post r12, r13, r16, f7_ld16_cont
+    emit_f7_ld16_post r14, r15, r16, f7_ld16_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r18, r19, r16, f7_ld16_d5_cont
-    emit_f7_ld16_post r20, r21, r16, f7_ld16_d6_cont
-    emit_f7_ld16_post r22, r23, r16, f7_ld16_d7_cont
-    emit_f7_ld16_post r8, r9, r18, f7_ld16_d0_cont
-    emit_f7_ld16_post r10, r11, r18, f7_ld16_d1_cont
-    emit_f7_ld16_post r12, r13, r18, f7_ld16_d2_cont
-    emit_f7_ld16_post r14, r15, r18, f7_ld16_d3_cont
-    emit_f7_ld16_post r16, r17, r18, f7_ld16_d4_cont
+    emit_f7_ld16_post r18, r19, r16, f7_ld16_cont
+    emit_f7_ld16_post r20, r21, r16, f7_ld16_cont
+    emit_f7_ld16_post r22, r23, r16, f7_ld16_cont
+    emit_f7_ld16_post r8, r9, r18, f7_ld16_cont
+    emit_f7_ld16_post r10, r11, r18, f7_ld16_cont
+    emit_f7_ld16_post r12, r13, r18, f7_ld16_cont
+    emit_f7_ld16_post r14, r15, r18, f7_ld16_cont
+    emit_f7_ld16_post r16, r17, r18, f7_ld16_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r20, r21, r18, f7_ld16_d6_cont
-    emit_f7_ld16_post r22, r23, r18, f7_ld16_d7_cont
-    emit_f7_ld16_post r8, r9, r20, f7_ld16_d0_cont
-    emit_f7_ld16_post r10, r11, r20, f7_ld16_d1_cont
-    emit_f7_ld16_post r12, r13, r20, f7_ld16_d2_cont
-    emit_f7_ld16_post r14, r15, r20, f7_ld16_d3_cont
-    emit_f7_ld16_post r16, r17, r20, f7_ld16_d4_cont
-    emit_f7_ld16_post r18, r19, r20, f7_ld16_d5_cont
+    emit_f7_ld16_post r20, r21, r18, f7_ld16_cont
+    emit_f7_ld16_post r22, r23, r18, f7_ld16_cont
+    emit_f7_ld16_post r8, r9, r20, f7_ld16_cont
+    emit_f7_ld16_post r10, r11, r20, f7_ld16_cont
+    emit_f7_ld16_post r12, r13, r20, f7_ld16_cont
+    emit_f7_ld16_post r14, r15, r20, f7_ld16_cont
+    emit_f7_ld16_post r16, r17, r20, f7_ld16_cont
+    emit_f7_ld16_post r18, r19, r20, f7_ld16_cont
     emit_f7_invalid secondary_invalid_b_func
-    emit_f7_ld16_post r22, r23, r20, f7_ld16_d7_cont
-    emit_f7_ld16_post r8, r9, r22, f7_ld16_d0_cont
-    emit_f7_ld16_post r10, r11, r22, f7_ld16_d1_cont
-    emit_f7_ld16_post r12, r13, r22, f7_ld16_d2_cont
-    emit_f7_ld16_post r14, r15, r22, f7_ld16_d3_cont
-    emit_f7_ld16_post r16, r17, r22, f7_ld16_d4_cont
-    emit_f7_ld16_post r18, r19, r22, f7_ld16_d5_cont
-    emit_f7_ld16_post r20, r21, r22, f7_ld16_d6_cont
+    emit_f7_ld16_post r22, r23, r20, f7_ld16_cont
+    emit_f7_ld16_post r8, r9, r22, f7_ld16_cont
+    emit_f7_ld16_post r10, r11, r22, f7_ld16_cont
+    emit_f7_ld16_post r12, r13, r22, f7_ld16_cont
+    emit_f7_ld16_post r14, r15, r22, f7_ld16_cont
+    emit_f7_ld16_post r16, r17, r22, f7_ld16_cont
+    emit_f7_ld16_post r18, r19, r22, f7_ld16_cont
+    emit_f7_ld16_post r20, r21, r22, f7_ld16_cont
     emit_f7_invalid secondary_invalid_b_func
     emit_f7_st16_post r16, r8, r9
     emit_f7_st16_post r16, r10, r11
@@ -6880,48 +7002,49 @@ cluster_c_end:
     .error "secondary cadence Cluster C must occupy 23 AVR words"
 .endif
 
-; F7 continuation pairs. LD8U returns through Cluster C after clearing the high
-; byte; LD16 returns after its address recovery. Each flash entry names the
-; destination, restores the pre-increment address, and enters the primary body.
-.macro emit_f7_ld8u_cont label, flash, dsth, dstaddr
+; F7 continuations. Each LD8U destination keeps a native RAM continuation that
+; clears the high byte and returns through Cluster C. The flash decode is shared:
+; SECONDARY_OPCODE still names the destination index in bits 2:0, so
+; Z = 8 + 2 * index needs no destination-specific copy. SBIW restores the
+; pre-increment address before the shared primary flash body reads it.
+.macro emit_f7_ld8u_cont label, dsth
 \label:
-    brsh  \flash
+    brsh  f7_ld8u_shared_flash
     clr   \dsth
     rjmp  cluster_c_tail_18
-\flash:
-    sbiw  r26, 1
-    ldi   r30, \dstaddr
-    jmp   primary_ld8u_flash
 .endm
 
-.macro emit_f7_ld16_cont label, flash, dstaddr
-\label:
+f7_ld8u_shared_flash:
+    sbiw  r26, 1
+    mov   r30, SECONDARY_OPCODE
+    andi  r30, 0x07
+    lsl   r30
+    subi  r30, -8                ; Z = register-file address of the destination
+    jmp   primary_ld8u_flash
+
+emit_f7_ld8u_cont f7_ld8u_d0_cont, r9
+emit_f7_ld8u_cont f7_ld8u_d1_cont, r11
+emit_f7_ld8u_cont f7_ld8u_d2_cont, r13
+emit_f7_ld8u_cont f7_ld8u_d3_cont, r15
+emit_f7_ld8u_cont f7_ld8u_d4_cont, r17
+emit_f7_ld8u_cont f7_ld8u_d5_cont, r19
+emit_f7_ld8u_cont f7_ld8u_d6_cont, r21
+emit_f7_ld8u_cont f7_ld8u_d7_cont, r23
+
+; One LD16 continuation serves all eight destinations. The table slot has already
+; written the destination pair, so the RAM path needs no destination dispatch.
+; The flash path decodes the destination from SECONDARY_OPCODE as above.
+f7_ld16_cont:
     sbiw  r26, 2
     cpi   r27, 0x0B
-    brsh  \flash
+    brsh  f7_ld16_flash
     rjmp  cluster_c_tail_18
-\flash:
-    ldi   r30, \dstaddr
+f7_ld16_flash:
+    mov   r30, SECONDARY_OPCODE
+    andi  r30, 0x07
+    lsl   r30
+    subi  r30, -8
     jmp   primary_ld16_flash
-.endm
-
-emit_f7_ld8u_cont f7_ld8u_d0_cont, f7_ld8u_d0_flash, r9, 8
-emit_f7_ld8u_cont f7_ld8u_d1_cont, f7_ld8u_d1_flash, r11, 10
-emit_f7_ld8u_cont f7_ld8u_d2_cont, f7_ld8u_d2_flash, r13, 12
-emit_f7_ld8u_cont f7_ld8u_d3_cont, f7_ld8u_d3_flash, r15, 14
-emit_f7_ld8u_cont f7_ld8u_d4_cont, f7_ld8u_d4_flash, r17, 16
-emit_f7_ld8u_cont f7_ld8u_d5_cont, f7_ld8u_d5_flash, r19, 18
-emit_f7_ld8u_cont f7_ld8u_d6_cont, f7_ld8u_d6_flash, r21, 20
-emit_f7_ld8u_cont f7_ld8u_d7_cont, f7_ld8u_d7_flash, r23, 22
-
-emit_f7_ld16_cont f7_ld16_d0_cont, f7_ld16_d0_flash, 8
-emit_f7_ld16_cont f7_ld16_d1_cont, f7_ld16_d1_flash, 10
-emit_f7_ld16_cont f7_ld16_d2_cont, f7_ld16_d2_flash, 12
-emit_f7_ld16_cont f7_ld16_d3_cont, f7_ld16_d3_flash, 14
-emit_f7_ld16_cont f7_ld16_d4_cont, f7_ld16_d4_flash, 16
-emit_f7_ld16_cont f7_ld16_d5_cont, f7_ld16_d5_flash, 18
-emit_f7_ld16_cont f7_ld16_d6_cont, f7_ld16_d6_flash, 20
-emit_f7_ld16_cont f7_ld16_d7_cont, f7_ld16_d7_flash, 22
 
 
 
@@ -11227,9 +11350,19 @@ sys_format_impl:
     mov   r27, PRIMARY_OPCODE       ; retain source/sink status through setup
     sbrc  r27, FORMAT_STATUS_SOURCE_PROGRAM
     rjmp  .Lformat_init_program_source
-    cpi   VM_R6H, 0x0B           ; AS0 flash-window format: not yet supported
+    cpi   VM_R6H, 0x0B           ; AS0 flash window: image-relative program source
     brlo  .Lformat_ram_source_ram
-    jmp   sys_flash_window_unsupported
+    ; The existing program-format cache and parser read this source unchanged.
+    ; Only the status bit and the image-relative pointer differ from _P input.
+    ori   r27, (1 << FORMAT_STATUS_SOURCE_PROGRAM)
+    mov   r24, VM_R6H
+    subi  r24, 0x06
+    sts   data_format_program_next+0, VM_R6L
+    sts   data_format_program_next+1, r24
+    sts   data_format_program_next+2, ZERO
+    sts   data_format_cache_index, ZERO
+    sts   data_format_cache_length, ZERO
+    rjmp  .Lformat_source_initialized
 .Lformat_ram_source_ram:
     sts   data_format_ram_ptr+0, VM_R6L
     sts   data_format_ram_ptr+1, VM_R6H
@@ -12081,9 +12214,11 @@ format_conversion_string:
     rjmp  format_unexpected_character
 1:
     rcall format_arg_u16
-    cpi   r25, 0x0B              ; AS0 flash-window %s argument: not yet supported
+    cpi   r25, 0x0B              ; AS0 flash window: the %S body reads the string
     brlo  .Lformat_string_ram_arg
-    jmp   sys_flash_window_unsupported
+    subi  r25, 0x06              ; image-relative high byte; r26 is the bank byte
+    clr   r26
+    rjmp  .Lformat_program_pointer_ready
 .Lformat_string_ram_arg:
     sts   data_format_string_original+0, r24
     sts   data_format_string_original+1, r25
@@ -12139,6 +12274,8 @@ format_conversion_program_string:
     rjmp  format_unexpected_character
 1:
     rcall format_arg_program_pointer
+.Lformat_program_pointer_ready:
+    ; %s from the AS0 flash window enters here with an image-relative r24:r26.
     sts   data_format_progstr_original+0, r24
     sts   data_format_progstr_original+1, r25
     sts   data_format_progstr_original+2, r26
@@ -12854,9 +12991,18 @@ sys_text_raw_impl:
     mov   r27, PRIMARY_OPCODE
     sbrc  r27, FORMAT_STATUS_SOURCE_PROGRAM
     rjmp  .Ltext_raw_init_program_source
-    cpi   VM_R6H, 0x0B           ; AS0 flash-window string: not yet supported
+    cpi   VM_R6H, 0x0B           ; AS0 flash window: image-relative program source
     brlo  .Ltext_raw_source_ram
-    jmp   sys_flash_window_unsupported
+    ; r17 still holds VM_R4H here, so only scratch r27 and r24 are written.
+    ori   r27, (1 << FORMAT_STATUS_SOURCE_PROGRAM)
+    mov   r24, VM_R6H
+    subi  r24, 0x06
+    sts   data_format_program_next+0, VM_R6L
+    sts   data_format_program_next+1, r24
+    sts   data_format_program_next+2, ZERO
+    sts   data_format_cache_index, ZERO
+    sts   data_format_cache_length, ZERO
+    rjmp  .Ltext_raw_source_initialized
 .Ltext_raw_source_ram:
     sts   data_format_ram_ptr+0, VM_R6L
     sts   data_format_ram_ptr+1, VM_R6H

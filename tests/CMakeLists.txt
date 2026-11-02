@@ -55,7 +55,17 @@ foreach(AVM_TEST_ASM IN LISTS AVM_ASM_TEST_SOURCES)
     # numeric AS0 aliases 0x0B00 and above address that rodata through the
     # interpreter's fixed-offset read path. The layout is test-only.
     set(AVM_TEST_LINK_OPTIONS)
-    if(AVM_TEST_NAME MATCHES "^flash_window_")
+    if(AVM_TEST_NAME STREQUAL "flash_window_high")
+        # The AVM linker script merges program-space sections such as .rodata.*
+        # into .rodata, so the high pair cannot have its own section start. Link
+        # .rodata at image 0xF8FE: the pair lands at 0xF9FE/0xF9FF (AS0
+        # 0xFFFE/0xFFFF), and the carry bytes sit below it.
+        set(AVM_TEST_LINK_OPTIONS
+            "--image-base=0x100"
+            "--section-start=.data=0x100"
+            "--section-start=.rodata=0xF8FE"
+            "--section-start=.text=0x2000")
+    elseif(AVM_TEST_NAME MATCHES "^flash_window_")
         set(AVM_TEST_LINK_OPTIONS
             "--image-base=0x100"
             "--section-start=.data=0x100"

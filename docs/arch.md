@@ -189,7 +189,7 @@ The null data pointer is `0x0000`.
 
 ### 9.1. AS0 flash window (interpreter feature)
 
-The AVM interpreter treats a read whose 16-bit AS0 address lies in `0x0B00-0xFFFF` as a read of the external W25Q128 image at the fixed image-relative offset `address - 0x0600`, which covers image offsets `0x0500-0xF9FF`. The current image-page base is applied as for all program-space reads. The window is read-only, and it does not change the ISA encoding, the pointer width, or the program address space. Writes to the window, guest objects that cross `0x0AFF/0x0B00`, and C/C++ objects that are not explicitly placed there are not covered by this behaviour. Compiler and linker support for placing objects in the window is not yet implemented. The interpreter implements scalar loads, `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat`, and the RAM/flash `memcmp` and `strcmp` combinations; the flash/flash, flash-left program-memory, and flash-format and `%s` cases trap as unsupported. See [isa_interpreter_implementation.md](isa_interpreter_implementation.md) for the implementation contract and cycle costs.
+The AVM interpreter treats a read whose 16-bit AS0 address lies in `0x0B00-0xFFFF` as a read of the external W25Q128 image at the fixed image-relative offset `address - 0x0600`, which covers image offsets `0x0500-0xF9FF`. The current image-page base is applied as for all program-space reads. The window is read-only, and it does not change the ISA encoding, the pointer width, or the program address space. Writes to the window, guest objects that cross `0x0AFF/0x0B00`, and C/C++ objects that are not explicitly placed there are not covered by this behaviour. Compiler and linker support for placing objects in the window is not yet implemented. The interpreter implements scalar loads, `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat`, every `memcmp`, `strcmp`, `memcmp_P`, and `strcmp_P` combination of AS0 and AS1 operands, window-backed format strings for `vsnprintf`, `vsnprintf_P`, `draw_textfv`, `draw_textfv_P`, and `debug_printfv`, window `%s` arguments, and window raw text for `draw_text`. A comparison with any window operand returns `-1`, `0`, or `+1`. Stores to the window and `%n` destinations in the window are outside this behaviour. See [isa_interpreter_implementation.md](isa_interpreter_implementation.md) for the implementation contract and cycle costs.
 
 Access to unsupported, reserved, or platform-defined addresses has target-defined behavior and may be rejected by a validating implementation.
 
@@ -2025,8 +2025,8 @@ have no generic LLVM representation.
 | `0x15` | `strlen_P` | `q3 = program string` | `r4 = length` | Program-space reads |
 | `0x16` | `strncpy_P` | `r4 = dst`, `q3 = program src`, `r5 = n` | `r4 = dst` | Program-space reads; data-space writes |
 | `0x17` | `strncat_P` | `r4 = dst`, `q3 = program src`, `r5 = n` | `r4 = dst` | Data- and program-space reads; data-space writes |
-| `0x18` | `memcmp` | `r4 = lhs`, `r5 = rhs`, `r6 = n` | exact signed byte difference in `r4` | Data-space reads |
-| `0x19` | `strcmp` | `r4 = lhs`, `r5 = rhs` | exact signed byte difference in `r4` | Data-space reads |
+| `0x18` | `memcmp` | `r4 = lhs`, `r5 = rhs`, `r6 = n` | exact signed byte difference in `r4` for RAM operands; `-1`, `0`, or `+1` when an operand is in the AS0 window | Data-space reads; window reads when an operand is in the AS0 window |
+| `0x19` | `strcmp` | `r4 = lhs`, `r5 = rhs` | exact signed byte difference in `r4` for RAM operands; `-1`, `0`, or `+1` when an operand is in the AS0 window | Data-space reads; window reads when an operand is in the AS0 window |
 | `0x1A` | `strlen` | `r4 = string` | `r4 = length` | Data-space reads |
 | `0x1B` | `strncpy` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
 | `0x1C` | `strncat` | `r4 = dst`, `r5 = src`, `r6 = n` | `r4 = dst` | Data-space reads and writes |
@@ -2048,7 +2048,7 @@ have no generic LLVM representation.
 | `0x2C` | `save` | None | None | Image-header read; persistent-storage read, erase, and write; saved-prefix read |
 | `0x2D` | `load` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads; saved-prefix write on success |
 | `0x2E` | `save_exists` | None | canonical Boolean in `r4` | Image-header and persistent-storage reads |
-| `0x2F` | `vsnprintf` | `r4 = dst`, `r5 = size`, `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Data-space reads and writes; possible program-space reads |
+| `0x2F` | `vsnprintf` | `r4 = dst`, `r5 = size`, `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Data-space reads and writes; possible program-space reads; the format and `%s` arguments may be AS0 window pointers |
 | `0x30` | `vsnprintf_P` | `r4 = dst`, `r5 = size`, `q3 = program format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | Data-space reads and writes; program-space reads |
 | `0x31` | `set_text_font` | `q2 = program font` | None | Program-space header read; selected-font state update |
 | `0x32` | `set_text_mode` | `low8(r4) = mode` | None | Selected-mode state update |
@@ -2062,7 +2062,7 @@ have no generic LLVM representation.
 | `0x3A` | `get_system_width` | None | Width in `r4` | System query |
 | `0x3B` | `get_system_height` | None | Height in `r4` | System query |
 | `0x3C` | `get_system_display_type` | None | Display type in `r4` | System query |
-| `0x3D` | `debug_printfv` | `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | AS0 format/argument reads, indirect AS0/AS1 reads, `%n` AS0 writes; observable debug output |
+| `0x3D` | `debug_printfv` | `r6 = RAM format`, `r2 = va_list cursor` | signed count or `-1` in `r4` | AS0 format/argument reads, including window format and `%s` pointers, indirect AS0/AS1 reads, `%n` AS0 writes; observable debug output |
 | `0x3E-0xFF` | Reserved | — | — | — |
 
 Every defined service preserves:

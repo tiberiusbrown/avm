@@ -490,34 +490,70 @@ Implemented flash reads:
 | `F0` `LD32` | four bytes through any valid destination pair |
 | `SYS` `memcpy`, `memmove` | flash source copied in one reader transaction; RAM overlap behaviour unchanged |
 | `SYS` `strlen`, `strncpy`, `strncat` | flash source through the bounded program-string engine |
-| `SYS` `memcmp`, `strcmp` | RAM/flash in either order; mismatch sign inverted for flash-left |
+| `SYS` `memcmp`, `strcmp` | RAM/flash in either order; both operands in the window through a slow engine |
+| `SYS` `memcmp_P`, `strcmp_P` | AS0 window lhs with an AS1 rhs through the same slow engine |
+| `SYS` `vsnprintf`, `vsnprintf_P`, `draw_textfv`, `draw_textfv_P`, `debug_printfv` | AS0 window format through the program-format reader |
+| `SYS` `draw_text` | AS0 window raw string through the program-string reader |
+| `SYS` formatted `%s` | AS0 window string argument through the program-string body; two bytes consumed |
 
-Not implemented. These cases trap through `invalid_secondary_instruction_func` rather than read unmapped RAM:
+`memcmp` and `strcmp` return the exact signed byte difference only when both operands are RAM. A window operand makes the result `-1`, `0`, or `+1`. `memcmp_P` and `strcmp_P` always return `-1`, `0`, or `+1`.
 
-- Both operands in the window for `memcmp`/`strcmp`, which needs staged chunk comparison.
-- Flash-left `memcmp_P`/`strcmp_P`, which pairs an AS0 flash operand with an AS1 operand.
-- Flash-backed format strings for `vsnprintf`, `draw_textfv`, `debug_printfv`, and raw `draw_text`, and flash `%s` arguments.
+Writes to window addresses and `%n` destinations in the window remain outside the contract. The window itself needs no compiler or linker support beyond the test-only placement described in [arch.md](arch.md).
 
-Cycle costs, measured on the instruction benchmark and a probe image with the same break protocol:
+Flash `memcmp`, `strcmp`, `memcmp_P`, and `strcmp_P` use one byte-at-a-time engine. Each logical byte is an independent SFC_READ transaction, two per compared position, with image-relative cursors in private call-lifetime scratch at `data_end_private`. This path is deliberately slow and never copies an operand into guest RAM. A zero bound returns before any read. The loop consumes the service byte once and re-seeks once.
+
+The program-space comparison loops use `T` as an entry-once orientation flag: clear for RAM-left, set for flash-left. The shared program-space prepare clears it. The mismatch handler reads it only on a mismatch, so equal bytes never see a per-byte `T` check.
+
+Cycle costs, measured on the instruction benchmark and on a probe image with the same break protocol. Before values come from the pre-change interpreter at `fb48690`. Rows marked new have no before measurement:
 
 | Path | Before | After | Note |
 |---|---:|---:|---|
 | RAM `LD8U r4,[r6]` | 18 | 20 | classification on the primary slot |
 | RAM `LD16 r4,[r6]` | 18 | 21 | classification on the primary slot |
-| RAM `F5`/`F7` loads | 38-40 | 43-46 | classification and cluster return |
+| RAM `F5`/`F7` loads | 38-40 | 43-46 | unchanged by the scalar consolidation |
 | RAM `F0`, `ED`, `LD32` loads | 54-82 | 56-84 | one two-cycle check |
 | RAM `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat` | — | +2 | one check on entry |
 | RAM `memcmp`, `strcmp` | — | +4 | two checks on entry |
-| Flash `LD8U r4,[r6]` | — | 230 | single SPI transaction and re-seek |
-| Flash `LD16 r4,[r6]` | — | 246 | |
-| Flash `LDM16 r0,[0x0B00]` | — | 300 | absolute form |
-| Flash `LD32 q0,[r4]` | — | 329 | four bytes |
-| Flash `memcpy` `n=1` / `n=16` / `n=256` | — | 252 / 507 / 4587 | sequential reader, about 16-18 cycles per byte |
-| Flash `strlen` length 6 | — | 352 | |
-| Flash `strcmp` RAM/flash, equal length 6 | — | 256-258 | |
-| Flash `memcmp` RAM/flash, `n=16` | — | 277 | |
+| RAM `memcmp_P`, `strcmp_P` mismatch | 254 / 250 | 255 / 251 | one extra `T` branch on a mismatch only |
+| RAM `memcmp_P` equal `n=32` | 781 | 781 | unchanged streaming cadence |
+| Flash `LD8U r4,[r6]` | 230 | 232 | shared primary body with a single `RJMP` |
+| Flash `LD16 r4,[r6]` | 246 | 248 | shared primary body |
+| Flash `LD8U r0,[r6]` (F5) | 254 | 256 | |
+| Flash `LD16 r0,[r6]` (F5) | 270 | 272 | |
+| Flash `LD8U r0,[r6+]` (F7) | 259 | 264 | decodes the destination in the shared continuation |
+| Flash `LD16 r0,[r6+]` (F7) | 277 | 282 | |
+| Flash `LD8U r0,[r1]` (F0) | 262 | 262 | unchanged |
+| Flash `LD8U r0,[r1+7]` (ED) | 262 | 262 | unchanged |
+| Flash `memcpy` `n=8` / `n=32` | 371 / 779 | 371 / 779 | unchanged |
+| Flash `memcpy_P` `n=8` | 369 | 369 | unchanged |
+| Flash `strlen` length 8 | 386 | 386 | unchanged |
+| Flash `strncpy` `n=8` | 390 | 390 | unchanged |
+| Flash `LDM16 r0,[0x0B03]` (F0 absolute) | 300 | 300 | |
+| Flash `LD32 q0,[r4]` | 329 | 329 | four bytes |
+| Flash `memcpy` `n=1` / `n=16` / `n=256` | 252 / 507 / 4587 | 252 / 507 / 4587 | sequential reader, about 16-18 cycles per byte |
+| Flash `strlen` length 6 | 352 | 352 | |
+| RAM lhs / flash rhs `strcmp`, equal length 6 | 356 | 357 | `CLT` added to the setup |
+| Flash lhs / RAM rhs `strcmp`, equal length 6 | 360 | 359 | |
+| RAM lhs / flash rhs `memcmp`, `n=16`, equal | 514 | 515 | `CLT` added to the setup |
+| Flash lhs / RAM rhs `memcmp`, `n=16`, equal | 518 | 518 | |
+| RAM lhs / flash rhs `memcmp` `n=8`, equal | 378 | 379 | `CLT` added to the setup |
+| Flash lhs / RAM rhs `memcmp` `n=8`, equal | 382 | 382 | |
+| RAM lhs / flash rhs `strcmp`, equal length 8 | 390 | 391 | `CLT` added to the setup |
+| Both AS0 `memcmp` `n=8`, equal | — | 2583 | new; slow engine |
+| Both AS0 `memcmp` `n=8`, first byte differs | — | 422 | new; setup and one byte |
+| Both AS0 `memcmp` `n=8`, last byte differs | — | 2571 | new |
+| Both AS0 `strcmp`, equal length 8 | — | 2818 | new |
+| Both AS0 `strcmp`, last byte differs | — | 2513 | new |
+| AS0 lhs / AS1 rhs `memcmp_P` `n=8`, last byte differs | — | 2564 | new |
+| AS0 lhs / AS1 rhs `strcmp_P`, last byte differs | — | 2504 | new |
+| `vsnprintf` flash format `%d` | — | 1337 | new; RAM format `%d` is 1011 |
+| `vsnprintf` flash format `[%s]`, flash argument | — | 1726 | new; RAM format and RAM argument is 815 |
 
-The `before` column is blank for flash rows because the previous interpreter read unmapped RAM there. Those rows are absolute values only. The FX-C variant was not cycle-measured: `avm_bench` has no FX-C wiring option. Its size and full test-suite results are reported separately.
+The slow compare engine costs about 309 cycles per compared position and about 113 cycles of setup. Its equal-byte path and its mismatch path have the same per-byte cost, because a mismatch returns only after its two reads. The `before` column is blank in the rows marked new. Those paths trapped before this change.
+
+The `FX-C` variant was not cycle-measured: `avm_bench` has no FX-C wiring option.
+
+Both the normal and FX-C interpreters have a `.text` size of 28,720 bytes. That is 1,212 bytes above the 27,508-byte build before the window feature and 976 bytes below the 29,696-byte limit.
 
 ## 6. Primary opcode map
 

@@ -390,6 +390,139 @@ _start:
     ldi16 r7, 0x4444
     sys 0x18
     call debug_print_upper_regs
+    ; dual AS0 memcmp: both window equal n=8
+    ldi16 r4, 0x0B20
+    ldi16 r5, 0x0B20
+    ldi16 r6, 8
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window lhs<rhs third byte n=3
+    ldi16 r4, 0x0B20
+    ldi16 r5, 0x0B28
+    ldi16 r6, 3
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window lhs>rhs third byte n=3
+    ldi16 r4, 0x0B28
+    ldi16 r5, 0x0B20
+    ldi16 r6, 3
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window 0x80 lhs < 0xFF rhs n=1
+    ldi16 r4, 0x0B23
+    ldi16 r5, 0x0B24
+    ldi16 r6, 1
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window 0xFF lhs > 0x80 rhs n=1
+    ldi16 r4, 0x0B24
+    ldi16 r5, 0x0B23
+    ldi16 r6, 1
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window NUL is ordinary n=2 equal
+    ldi16 r4, 0x0B20
+    ldi16 r5, 0x0B28
+    ldi16 r6, 2
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window NUL 00 lhs < 61 rhs n=1
+    ldi16 r4, 0x0B25
+    ldi16 r5, 0x0B26
+    ldi16 r6, 1
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window n=0 reads nothing
+    ldi16 r4, 0x0B20
+    ldi16 r5, 0x0B21
+    ldi16 r6, 0
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window mismatch after NUL n=4
+    ldi16 r4, 0x0B20
+    ldi16 r5, 0x0B28
+    ldi16 r6, 4
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window continues past NUL n=7 (lhs>rhs)
+    ldi16 r4, 0x0B20
+    ldi16 r5, 0x0B26
+    ldi16 r6, 7
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual AS0 memcmp: both window equal across NUL n=2 reversed
+    ldi16 r4, 0x0B26
+    ldi16 r5, 0x0B20
+    ldi16 r6, 2
+    ldi16 r7, 0x4444
+    sys 0x18
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs equal n=8
+    ldi16 r4, 0x0B20
+    ldi16 r5, 8
+    ldi16 r6, 0x0520
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs lhs<rhs third byte n=3
+    ldi16 r4, 0x0B20
+    ldi16 r5, 3
+    ldi16 r6, 0x0528
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs lhs>rhs third byte n=3
+    ldi16 r4, 0x0B28
+    ldi16 r5, 3
+    ldi16 r6, 0x0520
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs 0x80 < 0xFF n=1
+    ldi16 r4, 0x0B23
+    ldi16 r5, 1
+    ldi16 r6, 0x0524
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs 0xFF > 0x80 n=1
+    ldi16 r4, 0x0B24
+    ldi16 r5, 1
+    ldi16 r6, 0x0523
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs n=0 reads nothing
+    ldi16 r4, 0x0B20
+    ldi16 r5, 0
+    ldi16 r6, 0x0520
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs NUL 00 lhs < 61 rhs n=1
+    ldi16 r4, 0x0B25
+    ldi16 r5, 1
+    ldi16 r6, 0x0526
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
+    ; dual flash-lhs memcmp_P: flash lhs AS1 rhs lhs 61 61 < 61 62 n=3
+    ldi16 r4, 0x0B26
+    ldi16 r5, 3
+    ldi16 r6, 0x0520
+    ldi16 r7, 0xA500
+    sys 0x13
+    call debug_print_upper_regs
     sys debug_break
 
 .section .rodata,"a",@progbits
@@ -398,3 +531,13 @@ flash_bytes:
     .byte 0x12, 0x34, 0x56, 0x78, 0x9A, 0xBC, 0xDE, 0xF0
     .byte 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
     .byte 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10
+
+; Dual-window data for comparisons that take both operands from the flash window
+; or pair a window operand with an AS1 program operand. The symbols below check the
+; image offset: dual_bytes must follow flash_bytes at image 0x520 (AS0 0x0B20).
+dual_bytes:
+    .byte 0x61, 0x00, 0x62, 0x80, 0xFF, 0x00, 0x61, 0x00   ; AS0 0x0B20..0x0B27
+    .byte 0x61, 0x00, 0x63, 0x80, 0x00, 0x7F               ; AS0 0x0B28..0x0B2D
+.if (dual_bytes - flash_bytes) != 0x20
+    .error "dual_bytes must follow flash_bytes at image offset 0x520"
+.endif

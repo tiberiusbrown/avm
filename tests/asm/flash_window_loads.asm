@@ -942,6 +942,22 @@ _start:
     ldi16 r6, 0x0B06
     ld16 r7, [r6+]
     call debug_print_upper_regs
+    ; VM flags survive a flash F7 postincrement load: cmp sets Z, and the load must
+    ; not clear it. Prints P when Z is still set.
+    ldi16 r0, 0x1234
+    cmp   r0, r0
+    ldi16 r6, 0x0B09
+    ld8u  r4, [r6+]
+    breq8 .Lflags_z_kept
+    ldi8  r4, 'F'
+    sys   debug_putc
+    jmp8  .Lflags_done
+.Lflags_z_kept:
+    ldi8  r4, 'P'
+    sys   debug_putc
+.Lflags_done:
+    ldi8  r4, '\n'
+    sys   debug_putc
     sys debug_break
 
 .section .rodata,"a",@progbits

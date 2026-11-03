@@ -785,6 +785,28 @@ add_custom_target(avm_rtti_mixed_link_run
     VERBATIM
 )
 
+# A mixed -frtti and -fno-rtti link with a live dynamic typeid. The selected vtable must name
+# a valid descriptor, so the -fno-rtti copy is rejected at O0, O2, and full LTO, while the
+# -frtti copy links and its image runs. A link without dynamic typeid, and a link whose typeid
+# helper is collected, keep the -fno-rtti copy.
+set(AVM_RTTI_MIXED_VTABLE_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_mixed_vtable_verify.py")
+add_custom_target(avm_rtti_mixed_vtable_run
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_MIXED_VTABLE_VERIFY}"
+        --clang "$<TARGET_FILE:clang>"
+        --ld "$<TARGET_FILE_DIR:lld>/ld.lld"
+        --packer "$<TARGET_FILE:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --sysroot-lib "${AVM_SYSROOT_DIR}/lib"
+        --support-dir "${AVM_CXX_TEST_DIR}/support"
+        --scratch-dir "${AVM_CXX_TEST_BINARY_DIR}/rtti-mixed-vtable"
+    DEPENDS clang lld llvm-avm-image avm_eh_stack_probe avm_interpreter avm_sysroot
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_rtti_polymorphic_run avm_rtti_mixed_vtable_run)
+
 # Checks the AVEH5 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.
 set(AVM_EH_VERIFY_ARGS)

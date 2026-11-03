@@ -5774,9 +5774,42 @@ so a construction vtable's RTTI slot names the class under construction. A const
 destructor therefore sees the dynamic type that the standard specifies at that point.
 
 A vtable emitted without RTTI has a null RTTI slot, and the runtime does not fabricate a
-descriptor for it. If a link keeps such a vtable for a class whose objects are queried
-dynamically, the query aborts. The linker does not reject that link, because the
-vtable has no descriptor for it to check.
+descriptor for it. A link that keeps such a vtable and links the dynamic helper would
+otherwise abort at the first query, so the linker checks it instead. When
+`__avm_typeid_from_object` is defined in a live section after symbol resolution, LTO, and
+garbage collection, every retained ordinary C++ vtable must contain a valid RTTI reference.
+Otherwise the link fails:
+
+```text
+ld.lld: error: AVM polymorphic RTTI required, but selected vtable '_ZTVN10rtti_mixed7DerivedE' has no RTTI entry
+```
+
+The check covers complete-object vtables (`_ZTV`) and construction vtables (`_ZTC`),
+including vtables with local linkage. It reads the definition that the link selected, so
+a discarded COMDAT copy does not count, and a retained RTTI-enabled copy that wins is
+accepted. Each selected vtable needs a three-byte program-address entry whose target is a
+live `_ZTI` descriptor. That descriptor must be nonzero and lie in the flash window, with
+the same bounds as the alias check. A reference to an undefined or zero target, or to a
+descriptor outside the window, is reported as an invalid RTTI target. A vtable whose extent
+cannot be verified, because it is zero-sized or lies outside its input section, is rejected.
+
+The nine `__cxxabiv1` kind placeholders that `eh_cxa.c` defines are excluded, since they
+are zero-filled classifiers and not vtables. `_ZTVSt9type_info` is excluded as well. The
+runtime compiles its key function without RTTI, and the class has a deleted copy
+constructor and no other constructor, so no object can have that exact dynamic type.
+`std::exception` and `std::bad_typeid` carry RTTI and are checked like any other vtable.
+
+The check runs only when a live helper exists. A program without dynamic `typeid` keeps
+its existing behavior, and an exception-only program never links the helper. Static
+`typeid` alone does not activate the check. An undefined helper, a helper that
+`--gc-sections` removes, and an unused archive member do not activate it either. The check
+changes only which links are accepted. An accepted image has the same bytes as before.
+
+The check is conservative. The linker does not prove which objects a dynamic query can
+reach, so while the helper is live it rejects every retained RTTI-disabled ordinary vtable,
+including a class that no query reaches. A mixed program whose selected vtable lacks RTTI
+therefore fails at link time, where it previously aborted at the first query. A program that
+links without the helper is unaffected.
 
 #### std::bad_typeid
 

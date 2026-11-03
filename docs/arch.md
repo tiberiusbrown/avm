@@ -196,9 +196,10 @@ The compiler, linker, and image packer place immutable AS0 objects in the window
 - An AS0 global variable is placed in the window when LLVM marks it constant (`GlobalVariable::isConstant`), has an initializer, is not thread-local or externally initialized, has no explicit section, and is a definition that contributes storage. Clang clears that property for objects that need runtime initialization and for objects with writable `mutable` subobjects, so those stay in `.data`. Whole-program vtable blobs that carry type metadata also stay in `.data`, because dispatch reads them with program-space loads.
 - A string literal is placed in the window unless the translation unit keeps it writable, as `-fwritable-strings` does.
 - Writable globals, writable pointers that refer to window objects, and AS1 objects do not move.
+- With `-frtti`, each RTTI descriptor and type name is a program-space object in the `.avm.rtti` section, which the linker places directly after the flash image bytes. Section [60.1](#601-flash-resident-rtti) describes their AS0 aliases. The RTTI bytes share the window capacity with `.flash`.
 - Each object keeps its own `.flash.<symbol>` input section under `-fdata-sections`, so unused objects are garbage collected. Merged literals keep their merge sections, COMDAT groups keep their group semantics, and weak definitions keep their normal resolution.
 
-A window object has an ELF VMA in `0x0B00-0xFFFF` and stores its bytes at image offset `VMA - 0x0600`. A pointer to a window object is an ordinary 16-bit AS0 address, so `R_AVM_DATA16` produces it with no run-time adjustment. The retained window contents, including alignment padding and merged literals, may not exceed `0xF500` (62,720) bytes. The linker measures this size after garbage collection, COMDAT selection, literal merging, and layout, so an unreferenced oversized object does not count. An overflow fails the link:
+A window object has an ELF VMA in `0x0B00-0xFFFF` and stores its bytes at image offset `VMA - 0x0600`. A pointer to a window object is an ordinary 16-bit AS0 address, so `R_AVM_DATA16` produces it with no run-time adjustment. The retained window contents, including alignment padding, merged literals, and the `.avm.rtti` bytes, may not exceed `0xF500` (62,720) bytes. The linker measures this size after garbage collection, COMDAT selection, literal merging, and layout, so an unreferenced oversized object does not count. An overflow fails the link:
 
 ```text
 ld.lld: error: AVM flash window overflow:
@@ -206,7 +207,7 @@ ld.lld: error: AVM flash window overflow:
 (AS0 addresses 0x0B00-0xFFFF)
 ```
 
-The window section begins on a 256-byte boundary, so an input alignment above 256 bytes is rejected. A `.flash` section that is writable, executable, or not `SHT_PROGBITS` is also rejected. A custom `SECTIONS` layout must place `.flash` at `0x0B00`, and the same checks apply to it.
+The window section begins on a 256-byte boundary, so an input alignment above 256 bytes is rejected. A `.flash` section that is writable, executable, or not `SHT_PROGBITS` is also rejected. A custom `SECTIONS` layout must place `.flash` at `0x0B00`, and the same checks apply to it. An `.avm.rtti` section must begin at or after the end of `.flash` in the image, and its last program address must be `0xF9FF` or below.
 
 A window load is much slower than the RAM load of the same encoding. The 2026-11-03 cycle report measures window loads at 232 to 329 cycles, against 20 to 84 cycles for the RAM forms ([bench/README.md](../bench/README.md)). The compiler's cost model charges a load from a window object at those measured costs, so an optimization that creates a table weighs the lookup against the work it replaces.
 
@@ -5703,7 +5704,7 @@ For a virtual base, the upper 24 bits of the offset-and-flags word are not an ob
 offset. They are a signed byte displacement from the vtable address point of the
 containing class to a slot, and that slot holds the base's displacement from the
 containing subobject. The runtime reads the slot through the vptr of the containing
-subobject. `typeid` and `dynamic_cast` are not implemented.
+subobject. Polymorphic `typeid` and `dynamic_cast` are not implemented; the static forms of `typeid` are described below.
 
 Virtual-base slots are three-byte entries. Clang places each one before the address point,
 with the offset-to-top and RTTI entries, and `getVirtualBaseOffsetOffset` gives its byte
@@ -5712,6 +5713,24 @@ bytes. The compiler loads a virtual base displacement with `PtrDiffTy`, which is
 on AVM, so it reads the low 16 bits of the slot, while the runtime reads all 24 bits and
 sign-extends them. The two agree for every displacement that fits a 16-bit signed value,
 and a displacement that does not fit would need an object larger than 32 KiB.
+
+With `-frtti`, which the AVM driver leaves off by default, static `typeid` names the type's descriptor in the flash window. Clang places descriptors in `.avm.rtti.type` sections and type names in `.avm.rtti.name` sections. Under `-fdata-sections` each object gets a section named after its symbol, as in `.avm.rtti.type._ZTI5Alpha`, so the linker can discard unused objects independently. The default AVM layout gathers the RTTI inputs into one `.avm.rtti` output section that follows `.flash`, and `.text` follows that section. The section lies in program addresses `0x0500` through `0xF9FF`, which the window aliases, and its bytes count toward the window's 62,720-byte capacity. An overflow fails the link:
+
+```text
+ld.lld: error: AVM RTTI flash-window overflow:
+RTTI section ends at program address 0x00FA10,
+but the last addressable byte is 0x00F9FF
+```
+
+The AS0 alias of a descriptor or a type name is its 24-bit program address plus `0x0600`, a 16-bit address in the window. Clang forms the alias with 32-bit arithmetic, truncates the sum to 16 bits, and uses the result as an ordinary AS0 pointer. The same form appears in function bodies and in constant initializers. A constant initializer holds a 16-bit data reference to the descriptor, and the linker resolves it to the alias.
+
+The alias is formed from the program address at run time, so a relocation does not show which descriptors `typeid` names. Each `typeid` operand therefore adds a weak undefined marker, `__avm_rtti_alias.<symbol>`, for its descriptor and its type name. The linker resolves each marker to the definition that the link selected and checks that definition's window placement. If the link keeps a `-fno-rtti` copy of a descriptor that a `-frtti` object names, and that copy lies outside the window, the link fails and the error names the symbol. A window-resident copy wins a link that keeps it, and the other copy is discarded:
+
+```text
+ld.lld: error: AVM type_info descriptor '_ZTI5Alpha' is not addressable through the AS0 flash window
+```
+
+A `type_info` object is six bytes: a 24-bit vptr, then the 24-bit program address of its mangled name. Its alignment is one byte, and its name pointer is a program address. `name()` returns the AS0 alias of that name as a `const char*`, which points into flash, so the name is never copied. Equality compares the object addresses and the name addresses, and it falls back to comparing the names. `before()` orders the names with `strcmp`. `hash_code()` is a 16-bit FNV-1a hash, and its multiplication by `0x0193` is written as shifts and adds. The runtime defines the out-of-line destructor. Static `typeid` needs no RAM and no initialization. An expression that needs a vptr lookup is rejected with a compile-time error, because the compiler does not yet emit that lookup for AVM, and `std::bad_typeid`, `std::bad_cast`, and `dynamic_cast` are not implemented.
 
 ### 60.2. Throw ABI
 

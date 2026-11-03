@@ -11,7 +11,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 ### Language mode and target integration
 
 - [ ] **Exception-capable C++ language mode:** Support catch clauses that convert the thrown type through pointer-to-member conversions, exception specifications, `throw;` rethrow, and nested exceptions. The default AVM C++ configuration still specifies `-fno-exceptions`.
-- [ ] **Runtime type identification:** Support `typeid` and `dynamic_cast` in the cases required by C++, including polymorphic types, multiple/virtual inheritance, and runtime failure cases. The AVM C++ configuration currently specifies `-fno-rtti`.
+- [ ] **Runtime type identification:** Support polymorphic `typeid` and `dynamic_cast` in the cases required by C++, including polymorphic types, multiple/virtual inheritance, and runtime failure cases. The AVM C++ configuration currently specifies `-fno-rtti`.
 - [ ] **C++20 modules:** Support compilation, dependency ordering, interface/implementation units, imports, linking, and cross-translation-unit semantics for language modules in the AVM SDK, including relevant AVM target and toolchain integration. This concerns the core language, not the hosted library modules `std` and `std.compat`.
 - [ ] **Coroutines:** Validate and provide AVM lowering and execution for C++20/C++23 coroutine creation, suspension, resumption, destruction, frame allocation, cleanup, and cross-translation-unit references.
 - [ ] **Thread storage duration:** Provide correct `thread_local` initialization, access, and destruction for the freestanding execution model AVM advertises, including compiler-generated TLS references and destructors.
@@ -25,7 +25,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **Pointer conversions in program memory:** Match a derived class pointer into 24-bit program memory to a base class pointer. The runtime walks the bases of ordinary 16-bit class pointers only, so a 24-bit derived pointer matches no base catch.
 - [ ] **Base-class match depth:** Match catch clauses against class hierarchies deeper than eight descriptor levels, against more than 512 base edges for one clause, or against pointer qualification chains deeper than eight levels. A throw past any of these limits fails instead of matching.
 - [ ] **Stack cleanup and termination:** Ensure destructors execute for the fully constructed elements of an array whose construction fails; invoke `std::terminate` for the required failure cases, including violations of `noexcept`.
-- [ ] **RTTI ABI:** Support the runtime operations needed by `dynamic_cast` and `typeid`, including the vtable RTTI fields and type names that they read at run time.
+- [ ] **RTTI ABI:** Support the run-time operations that polymorphic `typeid` and `dynamic_cast` need, including the vtable RTTI fields that they read through an object's vptr.
 - [ ] **Dynamic initialization and destruction:** Complete initialization guards, recursive-initialization handling, and destructor registration/order semantics for namespace-scope, function-local static, and thread-local objects in the supported execution model, including early termination and exception paths.
 - [ ] **Required termination callback capacity:** Guarantee registration of at least 32 functions through C++ `std::atexit` and separately through `std::at_quick_exit`, with the specified callback ordering and failure semantics in a conforming C++23 mode. AVM's `atexit` storage is currently linker-capacity-dependent and quick-termination support is missing.
 
@@ -41,7 +41,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 ### Exceptions and runtime type headers
 
 - [ ] **`<exception>`:** Provide `std::exception`, `std::bad_exception`, `std::exception_ptr`, `std::current_exception`, `std::make_exception_ptr`, `std::rethrow_exception`, `std::nested_exception`, `std::throw_with_nested`, `std::rethrow_if_nested`, `std::terminate`, `std::get_terminate`, `std::set_terminate`, and other required C++23 exception interfaces with correct behavior.
-- [ ] **`<typeinfo>`:** Provide `std::type_info`, `std::bad_cast`, and `std::bad_typeid`, with required equality, ordering, hash/name access, and exceptions on invalid RTTI operations.
+- [ ] **`<typeinfo>`:** Provide `std::bad_cast` and `std::bad_typeid`, and the exceptions that invalid RTTI operations throw, including those from polymorphic `typeid` and `dynamic_cast`.
 - [ ] **`<coroutine>`:** Provide the required `std::coroutine_traits`, `std::coroutine_handle` forms, `std::noop_coroutine`, `std::suspend_always`, `std::suspend_never`, and related operations, connected to the AVM coroutine implementation.
 
 ### Core generic library headers

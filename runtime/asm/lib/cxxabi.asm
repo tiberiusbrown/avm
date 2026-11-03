@@ -10,6 +10,8 @@ SYMBOL TABLE:
 00000000 l    d  .text._ZdlPvj	00000000 .text._ZdlPvj
 00000000 l    d  .text._ZdaPvj	00000000 .text._ZdaPvj
 00000000 l    d  .text._ZSt9terminatev	00000000 .text._ZSt9terminatev
+00000000 l    d  .text._ZNSt9type_infoD2Ev	00000000 .text._ZNSt9type_infoD2Ev
+00000000 l    d  .text._ZNSt9type_infoD0Ev	00000000 .text._ZNSt9type_infoD0Ev
 00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000  w    F .text.__cxa_pure_virtual	00000004 __cxa_pure_virtual
 00000000         *UND*	00000000 avm_halt
@@ -20,6 +22,10 @@ SYMBOL TABLE:
 00000000  w    F .text._ZdaPvj	00000004 operator delete[](void*, unsigned int)
 00000000 g     F .text._ZSt9terminatev	00000004 std::terminate()
 00000000         *UND*	00000000 abort
+00000000 g     F .text._ZNSt9type_infoD2Ev	00000001 std::type_info::~type_info()
+00000000 g     F .text._ZNSt9type_infoD0Ev	00000006 std::type_info::~type_info()
+00000000 g     O .rodata._ZTVSt9type_info	0000000c vtable for std::type_info
+00000000 g     F .text._ZNSt9type_infoD2Ev	00000001 std::type_info::~type_info()
 
 Disassembly of section .text.__cxa_pure_virtual:
 
@@ -69,3 +75,16 @@ Disassembly of section .text._ZSt9terminatev:
  e3 00 00 00           callf	_ZSt9terminatev
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	abort
+
+Disassembly of section .text._ZNSt9type_infoD2Ev:
+
+<std::type_info::~type_info()>:
+ ef                    ret
+
+Disassembly of section .text._ZNSt9type_infoD0Ev:
+
+<std::type_info::~type_info()>:
+ c1 06                 ldi8	r5, 0x6
+ e2 00 00 00           jmpf	_ZNSt9type_infoD0Ev
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	operator delete(void*, unsigned int)

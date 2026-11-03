@@ -510,11 +510,14 @@ std::vector<test_case_t> discover_tests(options_t const& options)
     append_tests(tests, test_kind_t::cpp, options.cpp_dir,
                  options.cpp_bin_dir, ".cpp", optimization_levels);
     // Exception fixtures are built with -fexceptions and linked with the EH
-    // runtime. They run only when a filter selects them, such as the
-    // avm_eh_catch_all_run target, and never in an unfiltered suite.
+    // runtime, and static typeid fixtures are built with -frtti. Each builds
+    // with its own options, so they run only when a filter selects them, such
+    // as the avm_eh_catch_all_run or avm_rtti_static_run target, and never in
+    // an unfiltered suite.
     tests.erase(std::remove_if(tests.begin(), tests.end(), [&](test_case_t const& test) {
         std::string const stem = test.source.stem().string();
-        if(options.selection.expression.empty() && stem.rfind("eh_", 0) == 0)
+        if(options.selection.expression.empty() &&
+           (stem.rfind("eh_", 0) == 0 || stem.rfind("rtti_", 0) == 0))
             return true;
         return !options.selection.matches(stem);
     }), tests.end());

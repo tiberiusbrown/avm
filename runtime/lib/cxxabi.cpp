@@ -1,6 +1,7 @@
 #include <avm/runtime.h>
 #include <cstddef>
 #include <stdlib.h>
+#include <typeinfo>
 
 // Compiler-generated vtables can refer to these functions even when the
 // corresponding invalid call path is never taken.
@@ -28,4 +29,9 @@ __attribute__((weak)) void operator delete[](void*, std::size_t) noexcept {
 // unwinder terminates with abort(), so this function does the same.
 namespace std {
 [[noreturn]] void terminate() noexcept { abort(); }
+
+// The header declares the type_info destructor virtual but does not define it.
+// Static typeid never destroys a type_info, so the destructor only has to exist
+// for the ABI symbols that refer to it.
+type_info::~type_info() noexcept = default;
 } // namespace std

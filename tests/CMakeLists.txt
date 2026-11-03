@@ -35,6 +35,11 @@ file(GLOB AVM_CXX_TEST_SOURCES CONFIGURE_DEPENDS
 list(FILTER AVM_CXX_TEST_SOURCES EXCLUDE REGEX "/eh_[^/]*\\.cpp$")
 file(GLOB AVM_EH_CXX_TEST_SOURCES CONFIGURE_DEPENDS
     "${AVM_CXX_TEST_DIR}/eh_*.cpp")
+# Static typeid fixtures need -frtti, which the ordinary matrix does not pass.
+# avm_rtti_static_run builds them with their own options.
+list(FILTER AVM_CXX_TEST_SOURCES EXCLUDE REGEX "/rtti_[^/]*\\.cpp$")
+file(GLOB AVM_RTTI_CXX_TEST_SOURCES CONFIGURE_DEPENDS
+    "${AVM_CXX_TEST_DIR}/rtti_*.cpp")
 
 set(AVM_TEST_IMAGE_OUTPUTS)
 
@@ -339,6 +344,7 @@ set(AVM_EH_SUPPORT_HEADERS
     "${AVM_CXX_TEST_DIR}/support/eh_pointer_conversion.h"
     "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity.h"
     "${AVM_CXX_TEST_DIR}/support/eh_typed.h"
+    "${AVM_CXX_TEST_DIR}/support/eh_typeinfo_identity.h"
     "${AVM_CXX_TEST_DIR}/support/eh_virtual.h")
 foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
     get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
@@ -349,16 +355,32 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
         set(AVM_TEST_ELF "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.elf")
         set(AVM_TEST_IMAGE "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.bin")
         # -fexceptions follows the SDK's -fno-exceptions default, so it wins.
+        set(AVM_EH_TEST_COMPILE_OPTIONS -fexceptions)
+        if(AVM_TEST_NAME STREQUAL "eh_typeinfo_identity")
+            # Static typeid needs RTTI, which the SDK's -fno-rtti default disables.
+            list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -frtti)
+        endif()
         avm_add_object(
             OUTPUT "${AVM_TEST_OBJECT}"
             SOURCE "${AVM_TEST_SOURCE_FILE}"
             LANGUAGE CXX
-            COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
+            COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" ${AVM_EH_TEST_COMPILE_OPTIONS}
             DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
         )
         set(AVM_EH_IMAGE_OBJECTS "${AVM_TEST_OBJECT}")
         set(AVM_EH_IMAGE_LINK_OPTIONS)
-        if(AVM_TEST_NAME STREQUAL "eh_rtti_identity")
+        if(AVM_TEST_NAME STREQUAL "eh_typeinfo_identity")
+            # The unit throws Remote, which the main unit names with typeid and catches.
+            set(AVM_EH_UNIT_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_unit.o")
+            avm_add_object(
+                OUTPUT "${AVM_EH_UNIT_OBJECT}"
+                SOURCE "${AVM_CXX_TEST_DIR}/support/eh_typeinfo_identity_unit.cpp"
+                LANGUAGE CXX
+                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" ${AVM_EH_TEST_COMPILE_OPTIONS}
+                DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+            )
+            list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
+        elseif(AVM_TEST_NAME STREQUAL "eh_rtti_identity")
             # The second unit throws the same class, so its descriptor must
             # merge with the one emitted by the main unit.
             set(AVM_EH_UNIT_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_unit.o")
@@ -450,6 +472,152 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
 endforeach()
 
 add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
+
+# Static typeid fixtures. They are built with -frtti at O0 and O2. The cross-unit
+# fixture is also linked with full LTO, so its descriptors must merge after the
+# whole program is optimized. avm_rtti_static_run runs them and their verifier.
+set(AVM_RTTI_SUPPORT_HEADERS "${AVM_CXX_TEST_DIR}/support/rtti_static.h")
+set(AVM_RTTI_TEST_OPT_LEVELS O0 O2)
+set(AVM_RTTI_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/rtti-lto")
+set(AVM_RTTI_TEST_IMAGES)
+foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
+    get_filename_component(AVM_TEST_NAME "${AVM_TEST_SOURCE_FILE}" NAME_WE)
+    set(AVM_RTTI_UNIT_SOURCES)
+    if(AVM_TEST_NAME STREQUAL "rtti_cross_unit")
+        list(APPEND AVM_RTTI_UNIT_SOURCES
+            "${AVM_CXX_TEST_DIR}/support/rtti_static_unit.cpp")
+    endif()
+    foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_RTTI_TEST_OPT_LEVELS)
+        set(AVM_OPT_TEST_BINARY_DIR
+            "${AVM_CXX_TEST_BINARY_DIR}/${AVM_TEST_OPT_LEVEL}")
+        set(AVM_TEST_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.o")
+        set(AVM_TEST_ELF "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.elf")
+        set(AVM_TEST_IMAGE "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.bin")
+        avm_add_object(
+            OUTPUT "${AVM_TEST_OBJECT}"
+            SOURCE "${AVM_TEST_SOURCE_FILE}"
+            LANGUAGE CXX
+            COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -frtti
+            DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+        )
+        set(AVM_RTTI_IMAGE_OBJECTS "${AVM_TEST_OBJECT}")
+        foreach(AVM_RTTI_UNIT_SOURCE IN LISTS AVM_RTTI_UNIT_SOURCES)
+            get_filename_component(AVM_RTTI_UNIT_NAME "${AVM_RTTI_UNIT_SOURCE}" NAME_WE)
+            set(AVM_RTTI_UNIT_OBJECT
+                "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_${AVM_RTTI_UNIT_NAME}.o")
+            avm_add_object(
+                OUTPUT "${AVM_RTTI_UNIT_OBJECT}"
+                SOURCE "${AVM_RTTI_UNIT_SOURCE}"
+                LANGUAGE CXX
+                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -frtti
+                DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+            )
+            list(APPEND AVM_RTTI_IMAGE_OBJECTS "${AVM_RTTI_UNIT_OBJECT}")
+        endforeach()
+        set(AVM_RTTI_LINK_OPTIONS)
+        if(AVM_TEST_NAME STREQUAL "rtti_static")
+            # The verifier reads the constant typeid initializer, which is otherwise
+            # unreferenced at run time, so keep it through garbage collection.
+            list(APPEND AVM_RTTI_LINK_OPTIONS --undefined=global_alpha)
+        endif()
+        avm_add_image(
+            OBJECTS ${AVM_RTTI_IMAGE_OBJECTS}
+            OUTPUT_ELF "${AVM_TEST_ELF}"
+            OUTPUT_IMAGE "${AVM_TEST_IMAGE}"
+            ENTRY _start
+            STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+            LIBRARIES
+                "${AVM_SYSROOT_DIR}/lib/libavm.a"
+                "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+            LINK_OPTIONS ${AVM_RTTI_LINK_OPTIONS}
+            GC_SECTIONS
+            DEPENDS avm_sysroot
+        )
+        list(APPEND AVM_RTTI_TEST_IMAGES "${AVM_TEST_IMAGE}")
+    endforeach()
+endforeach()
+
+# The cross-unit fixture, linked with full LTO at O2 so the descriptors merge after the
+# whole program is optimized.
+set(AVM_RTTI_LTO_OBJECT "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_cross_unit.o")
+set(AVM_RTTI_LTO_ELF "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_cross_unit.elf")
+set(AVM_RTTI_LTO_IMAGE "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_cross_unit.bin")
+set(AVM_RTTI_LTO_UNIT_OBJECT "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_cross_unit_rtti_static_unit.o")
+avm_add_object(
+    OUTPUT "${AVM_RTTI_LTO_OBJECT}"
+    SOURCE "${AVM_CXX_TEST_DIR}/rtti_cross_unit.cpp"
+    LANGUAGE CXX
+    COMPILE_OPTIONS -O2 -frtti -flto=full
+    DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+)
+avm_add_object(
+    OUTPUT "${AVM_RTTI_LTO_UNIT_OBJECT}"
+    SOURCE "${AVM_CXX_TEST_DIR}/support/rtti_static_unit.cpp"
+    LANGUAGE CXX
+    COMPILE_OPTIONS -O2 -frtti -flto=full
+    DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+)
+avm_add_image(
+    OBJECTS "${AVM_RTTI_LTO_OBJECT}" "${AVM_RTTI_LTO_UNIT_OBJECT}"
+    OUTPUT_ELF "${AVM_RTTI_LTO_ELF}"
+    OUTPUT_IMAGE "${AVM_RTTI_LTO_IMAGE}"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+    LIBRARIES
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS
+    DEPENDS avm_sysroot
+)
+
+# The exception integration fixture is part of this matrix, because it names its
+# type with typeid and throws it from the other unit. Its EH images are built in the
+# EH matrix above.
+add_custom_target(avm_rtti_static_images DEPENDS
+    ${AVM_RTTI_TEST_IMAGES} "${AVM_RTTI_LTO_IMAGE}")
+
+# Runs the static typeid fixtures at O0 and O2, the full-LTO cross-unit image, and the
+# exception integration fixture. Each typeid descriptor is also checked in the packed
+# image by rtti_static_verify.py.
+# This block precedes the file's shared find_package(Python3) call, so it locates
+# the interpreter itself. Its verifier commands would otherwise have no executable.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+set(AVM_RTTI_STATIC_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_static_verify.py")
+add_custom_target(avm_rtti_static_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^rtti_(static|cross_unit)$" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^rtti_cross_unit$" --opt O2
+        --cpp-bin-dir "${AVM_RTTI_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_typeinfo_identity$" --opt O0,O2
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_STATIC_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_static.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_static.bin"
+        --expect _ZTI5Alpha --expect _ZTI4Beta --expect _ZTI5Gamma
+        --expect _ZTI5Delta --expect _ZTI8RttiPoly --expect _ZTIi
+        --expect _ZTIN12_GLOBAL__N_19AnonymousE
+        --observed global_alpha=_ZTI5Alpha
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_STATIC_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_static.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_static.bin"
+        --expect _ZTI5Alpha --expect _ZTI4Beta --expect _ZTI5Gamma
+        --expect _ZTI5Delta --expect _ZTI8RttiPoly --expect _ZTIi
+        --expect _ZTIN12_GLOBAL__N_19AnonymousE
+        --observed global_alpha=_ZTI5Alpha --forbid malloc --forbid free
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_STATIC_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_cross_unit.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_cross_unit.bin"
+        --expect _ZTI11SharedAlpha --expect _ZTI10SharedBeta --expect _ZTI11SharedKeyed
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_STATIC_VERIFY}"
+        --elf "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_cross_unit.elf"
+        --image "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_cross_unit.bin"
+        --expect _ZTI11SharedAlpha --expect _ZTI10SharedBeta --expect _ZTI11SharedKeyed
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_STATIC_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_typeinfo_identity.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/eh_typeinfo_identity.bin"
+        --expect _ZTI6Remote --expect _ZTI5Local
+    DEPENDS avm_tests avm_eh_catch_all_images avm_rtti_static_images llvm-avm-image
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
 # Checks the AVEH5 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.
 set(AVM_EH_VERIFY_ARGS)
@@ -1693,6 +1861,7 @@ add_custom_target(avm_tests_run
     VERBATIM
 )
 add_dependencies(avm_tests_run avm_format_long_long_tests_run)
+add_dependencies(avm_tests_run avm_rtti_static_run)
 
 # A small, independently built debug image exercises nested frames, a live
 # global and local, both pointer spaces, button input, and delayed display
@@ -1834,7 +2003,9 @@ add_custom_target(avm_crash_metadata_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
-# A second image tests C++ types and a live code address beyond 64 KiB.
+# A second image tests C++ types and a live code address beyond 64 KiB. Its immutable
+# local initializer is an AS0 flash-window object, so the link pins .flash to its VMA
+# and starts .text after the flash image bytes, which end at 0x503.
 set(AVM_DEBUG_CPP_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/cpp")
 avm_add_object(
     OUTPUT "${AVM_DEBUG_CPP_DIR}/fixture.o"
@@ -1854,7 +2025,8 @@ avm_add_image(
     GC_SECTIONS
     LINK_OPTIONS "--image-base=0x100"
                  "--section-start=.data=0x100"
-                 "--section-start=.text=0x200"
+                 "--section-start=.flash=0x0B00"
+                 "--section-start=.text=0x503"
                  "--section-start=.rodata=0x2000"
                  "--section-start=.high_debug_text=0x10100"
                  "--section-start=.high_debug_rodata=0x11000"

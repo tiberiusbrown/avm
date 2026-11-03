@@ -584,6 +584,20 @@ termination fixtures. `avm_eh_hardening_run` checks the landing-pad SP, the thro
 context, the corrupted-metadata behavior, and the stack measurements against the
 emulator. The ordinary C++ and assembly matrices exclude the `eh_` prefix.
 
+## Run-time type information
+
+`-frtti` enables static `typeid`. Clang places each descriptor and type name in the
+`.avm.rtti` output section, which lies in the AS0 flash window directly after `.flash`.
+A `typeid` expression returns the window alias of its descriptor, which is the program
+address plus `0x0600`, so the runtime needs no table or copy. `lib/cxxabi.cpp` defines
+the out-of-line destructor of `std::type_info`. The equality, ordering, hash, and name
+members are inline in the AVM branch of libc++'s `<typeinfo>`, where `name()` returns
+the flash alias of the mangled name. Static `typeid` never calls through the support
+vtables above, so they need no RAM or destructor entries. Polymorphic `typeid`,
+`dynamic_cast`, `std::bad_typeid`, and `std::bad_cast` are not implemented. The layout
+and the linker checks are described in
+[docs/arch.md](../docs/arch.md), Section 60.1.
+
 ## Narrow stdio streams
 
 `stdio.h` supplies the C99 narrow-stream interface except the six `scanf`

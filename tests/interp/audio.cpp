@@ -2536,10 +2536,55 @@ void hex_fraction(char** args) {
     std::cout<<"hexadecimal fraction: "<<cases<<" byte-pattern/random/case/T checks passed; "
         <<minimum<<".."<<maximum<<" cycles\n";
 }
+// Runs one flash-string SYS from a fresh harness. The copy engine returns through
+// fx_copy_image_string_return, so that PC gets the chip-select rule that tick()
+// applies at the seek entry: the final transfer must complete before the seek.
+template<class Check> void flash_string_service(char** args,unsigned service,std::vector<uint8_t> const& text,unsigned dst,unsigned n,Check check) {
+    constexpr uint32_t code=0x320, src=0x300;
+    harness h(args);
+    h.asset(src,text);
+    h.asset(code,{0xd7,uint8_t(service),0x00});
+    h.word(4,uint16_t(code)); h.c().data[6]=uint8_t(code>>16);
+    h.c().pc=uint16_t(h.sym("seek_and_dispatch_func")); h.tick();
+    h.until([&]{return h.boundary();});
+    h.word(16,uint16_t(dst)); h.word(18,uint16_t(n));
+    h.word(20,uint16_t(src)); h.c().data[22]=uint8_t(src>>16);
+    auto const copy_return=uint16_t(h.sym("fx_copy_image_string_return"));
+    bool released_early=false;
+    h.tick();
+    h.until([&]{
+        if(h.c().pc==copy_return && h.c().spi_busy && h.c().spi_transmit_zero_cycle>h.c().cycle_count)
+            released_early=true;
+        return h.boundary();
+    });
+    require(!released_early,"flash string copy released chip select before its final transfer completed");
+    check(h);
+}
+void flash_copy_exits(char** args) {
+    constexpr unsigned dest=0xa40;
+    flash_string_service(args,0x16,{'A','B','C',0},dest,8,[&](harness& h){
+        constexpr uint8_t padded[8]={'A','B','C',0,0,0,0,0};
+        for(unsigned i=0;i<8;++i) require(h.c().data[dest+i]==padded[i],"strncpy_P copied the wrong bytes at the NUL exit");
+    });
+    flash_string_service(args,0x16,{'A','B','C',0},dest+8,2,[&](harness& h){
+        require(h.c().data[dest+8]=='A' && h.c().data[dest+9]=='B',"strncpy_P copied the wrong bytes at the count exit");
+    });
+    std::cout<<"flash string copy exits: NUL and count exits keep chip select until completion\n";
+}
+void flash_strlen_exits(char** args) {
+    flash_string_service(args,0x15,{'A','B','C',0},0,0,[](harness& h){
+        require(h.word(16)==3,"strlen_P returned the wrong length for a flash string");
+    });
+    flash_string_service(args,0x15,{0},0,0,[](harness& h){
+        require(h.word(16)==0,"strlen_P returned the wrong length for an empty flash string");
+    });
+    std::cout<<"flash string strlen exits: NUL exits keep chip select until completion\n";
+}
 void core_isa(char** args) {
     decimal_division(args); cset(args); retired_math(args); format_fields(args);
     sys_bounds(args); float_precision(args); hex_fraction(args);
     phase_alignment(args); idle_continuation(args);
+    flash_copy_exits(args); flash_strlen_exits(args);
 }
 void core_audio(char** args) {
     harness h(args); sequence(h); synthesis(h); sentinels(h); rates(h);

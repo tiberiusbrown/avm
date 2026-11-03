@@ -4760,13 +4760,9 @@ sys_progmem_image_prepare_func:
     adc   VM_PCH, ZERO
     rjmp  fx_start_program_read_func
 
-; Shared comparison results. The streamed loops always execute CP RAM byte,
-; program byte, so C means the RAM byte is smaller. T is the entry-once
-; orientation: CLT when the RAM operand is the logical lhs, SET when the
-; program-space operand is the logical lhs. Only a mismatch reads T.
-.Lsys_progmem_compare_mismatch:
-    brts  .Lsys_progmem_compare_flash_lhs ; rare orientation, reversed sense
-    brlo  .Lsys_progmem_compare_less      ; RAM lhs is smaller
+; Dual-engine comparison results. Its final transaction has already completed
+; and released CS, so these exits need no drain. strlen_P's NUL landing also uses
+; the shared finish, which is unchanged.
 .Lsys_progmem_compare_greater:
     mov   VM_R4L, ONE
     mov   VM_R4H, ZERO
@@ -4775,14 +4771,57 @@ sys_progmem_image_prepare_func:
     ser   VM_R4L
     ser   VM_R4H
     rjmp  .Lsys_progmem_finish
-.Lsys_progmem_compare_flash_lhs:
-    brcc  .Lsys_progmem_compare_less      ; RAM rhs is larger: flash lhs is smaller
-    rjmp  .Lsys_progmem_compare_greater
 .Lsys_progmem_compare_equal:
     clr   VM_R4L
     clr   VM_R4H
 .Lsys_progmem_finish:
     fx_disable
+    rjmp  seek_and_dispatch_func
+
+; Streamed comparison results. The streamed loops always execute CP RAM byte,
+; program byte, so C means the RAM byte is smaller. T is the entry-once
+; orientation: CLT when the RAM operand is the logical lhs, SET when the
+; program-space operand is the logical lhs. Only a mismatch reads T.
+;
+; Every streamed exit comes within 14 cycles of the loop's last OUT, before the
+; loop has re-enabled interrupts. That OUT's dummy transfer is still in flight,
+; and its SPIF is not set until cycle 18.
+.Lsys_stream_compare_mismatch:
+    brts  .Lsys_stream_compare_flash_lhs ; rare orientation, reversed sense
+    brlo  .Lsys_stream_compare_less      ; RAM lhs is smaller
+.Lsys_stream_compare_greater:
+    mov   VM_R4L, ONE
+    mov   VM_R4H, ZERO
+    rjmp  .Lsys_progmem_stream_drain
+.Lsys_stream_compare_less:
+    ser   VM_R4L
+    ser   VM_R4H
+    rjmp  .Lsys_progmem_stream_drain
+.Lsys_stream_compare_flash_lhs:
+    brcc  .Lsys_stream_compare_less      ; RAM rhs is larger: flash lhs is smaller
+    rjmp  .Lsys_stream_compare_greater
+.Lsys_stream_compare_equal:
+    clr   VM_R4L
+    clr   VM_R4H
+
+; Chip select is released only after the in-flight transfer completes. The
+; streamed compare exits and the strlen_P NUL exit share this drain. Interrupts
+; are still masked here. The SPIF still set from the transfer before the last
+; OUT is cleared first. That flag was set at cycle 1 of the last iteration, so
+; no later poll can see it, and the final SPIF cannot set before that clear.
+; The poll then waits for the final transfer's SPIF, and the SPDR read
+; acknowledges it, so no flag is left behind for a later SPSR poll. SEI
+; re-enables interrupts before the seek restarts.
+.Lsys_progmem_stream_drain:
+    in    r24, SPSR
+    in    r24, SPDR
+.Lsys_progmem_stream_wait:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lsys_progmem_stream_wait
+    in    r24, SPDR
+    fx_disable
+    sei
     rjmp  seek_and_dispatch_func
 
 ; int memcmp_P(void const *lhs, progptr/uint24_t rhs, uint16_t n)
@@ -4810,13 +4849,14 @@ sys_memcmp_p_impl:
     cli
     out   SPDR, ZERO
     in    r27, SPDR
-    sei
 
     cp    r24, r27
-    brne  .Lsys_progmem_compare_mismatch
+    brne  .Lsys_stream_compare_mismatch
     sub   r0, ONE
     sbc   r1, ZERO
-    breq  .Lsys_progmem_compare_equal
+    breq  .Lsys_stream_compare_equal
+    ; SEI follows the exit branches, so no exit runs with interrupts enabled.
+    sei
     ld    r24, Z+
     delay_4
     rjmp  .Lsys_memcmp_p_loop
@@ -4844,12 +4884,13 @@ sys_strcmp_p_impl:
     cli
     out   SPDR, ZERO
     in    r27, SPDR
-    sei
 
     cp    r0, r27
-    brne  .Lsys_progmem_compare_mismatch
+    brne  .Lsys_stream_compare_mismatch
     tst   r27
-    breq  .Lsys_progmem_compare_equal
+    breq  .Lsys_stream_compare_equal
+    ; SEI follows the exit branches, so no exit runs with interrupts enabled.
+    sei
     ld    r0, Z+
     delay_4
     nop
@@ -5117,28 +5158,28 @@ sys_strlen_p_impl:
     cli
     out   SPDR, ZERO
     in    r27, SPDR
-    sei
 
     tst   r27
-    breq  .Lsys_strlen_p_finish_wait
+    breq  .Lsys_strlen_p_nul
+    ; SEI follows the NUL test, so the NUL exit never runs with interrupts enabled.
+    sei
     add   VM_R4L, ONE
     adc   VM_R4H, ZERO
     rcall fx_read_program_delay_7
     rjmp  .Lsys_strlen_p_loop
 
-; The NUL path is two cycles shorter than the other program-memory terminal
-; paths. This one-word landing delays the stream restart until the preceding
-; dummy transfer has completed at the required seventeen-cycle SPI boundary.
-.Lsys_strlen_p_finish_wait:
-    rjmp  .Lsys_progmem_finish
+; BREQ cannot reach the shared stream drain. The NUL exit lands here with the final
+; OUT's transfer in flight, then drains it as the streamed compare exits do.
+.Lsys_strlen_p_nul:
+    rjmp  .Lsys_progmem_stream_drain
 
 ; Shared bounded copy-until-NUL engine for strncpy_P, strncat_P, and their AS0
 ; flash-window forms.
 ; Inputs: r24:r26 = image-relative source, Z = RAM destination, r0:r1 = nonzero
 ; maximum count.
 ; Output: Z one past copied bytes, r0:r1 remaining count, T=1 iff a NUL was
-; copied. The transaction is disabled before RET. The nonterminal path from
-; one data OUT to the next is exactly seventeen cycles.
+; copied. The final transfer completes before chip select is released and RET.
+; The nonterminal path from one data OUT to the next is exactly seventeen cycles.
 fx_copy_image_string_n_func:
     clt
     rcall sys_progmem_image_prepare_func
@@ -5149,7 +5190,6 @@ fx_copy_image_string_n_func:
     cli
     out   SPDR, ZERO
     in    r27, SPDR
-    sei
 
     st    Z+, r27
     sub   r0, ONE
@@ -5164,12 +5204,25 @@ fx_copy_image_string_n_func:
 
 .Lfx_copy_program_string_n_nonzero:
     breq  .Lfx_copy_program_string_n_done
+    ; SEI follows both exits, so neither exit runs with interrupts enabled.
+    sei
     delay_2
     nop
     rjmp  .Lfx_copy_program_string_n_loop
 
+; Both exits leave with the final OUT's transfer in flight. Drain it as the streamed
+; compare exits do, release chip select, then re-enable interrupts before RET.
 .Lfx_copy_program_string_n_done:
+    in    r24, SPSR
+    in    r24, SPDR
+.Lfx_copy_program_string_n_wait:
+    in    r24, SPSR
+    sbrs  r24, SPIF
+    rjmp  .Lfx_copy_program_string_n_wait
+    in    r24, SPDR
     fx_disable
+    sei
+fx_copy_image_string_return:
     ret
 
 ; char *strncpy_P(char *dst, progptr/uint24_t src, uint16_t n)
@@ -5252,8 +5305,8 @@ sys_strncat_flash_impl:
     rjmp  cluster_tail_18
 
 sys_progmem_services_end:
-.if (sys_progmem_services_end - sys_progmem_services_start) != 696
-    .error "program-memory SYS subsystem must occupy exactly 348 AVR words"
+.if (sys_progmem_services_end - sys_progmem_services_start) != 744
+    .error "program-memory SYS subsystem must occupy exactly 372 AVR words"
 .endif
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

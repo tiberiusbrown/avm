@@ -471,9 +471,9 @@ The resulting fixed-width secondary latencies for the shown organization, measur
 
 ### 5.4. AS0 flash-window reads (interpreter feature)
 
-This subsection describes an interpreter-only feature pending compiler and linker integration. It does not change the ISA encoding, the 16-bit AS0 pointer width, the bytecode stream, or the primary/secondary stride.
+The compiler, linker, and image packer place immutable AS0 objects in this window, as described in `arch.md` section 9.1. This subsection is the interpreter contract for those reads. It does not change the ISA encoding, the 16-bit AS0 pointer width, the bytecode stream, or the primary/secondary stride.
 
-A read whose effective AS0 address is in `0x0B00-0xFFFF` is performed from the external W25Q128 image at image-relative offset `address - 0x0600` through the existing fixed-count reader, which applies `data_page_data` as for every program-space read. The window is read-only. Writes, guest objects that cross `0x0AFF/0x0B00`, and C/C++ objects that are not explicitly placed in the window are outside this contract.
+A read whose effective AS0 address is in `0x0B00-0xFFFF` is performed from the external W25Q128 image at image-relative offset `address - 0x0600` through the existing fixed-count reader, which applies `data_page_data` as for every program-space read. The window is read-only. Writes and guest objects that cross `0x0AFF/0x0B00` are outside this contract. The linker never places a writable object in the window, and it rejects a window section larger than `0xF500` bytes.
 
 The classification is a single `CPI` on the high byte of the captured address. Every slot captures its address before any destination write, so `rD == rA` remains legal. A flash branch abandons the in-flight opcode stream, performs one independent read transaction, advances `VM_PC` past the instruction exactly once, and re-seeks the stream at the following opcode. `VM_FLAGS` is preserved. Post-increment forms advance the 16-bit guest pointer by the access width and keep the ordinary writeback order.
 
@@ -514,8 +514,8 @@ Cycle costs, measured on the instruction benchmark and on a probe image with the
 | RAM `F0`, `ED`, `LD32` loads | 54-82 | 56-84 | one two-cycle check |
 | RAM `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat` | — | +2 | one check on entry |
 | RAM `memcmp`, `strcmp` | — | +4 | two checks on entry |
-| RAM `memcmp_P`, `strcmp_P` mismatch | 254 / 250 | 255 / 251 | one extra `T` branch on a mismatch only |
-| RAM `memcmp_P` equal `n=32` | 781 | 781 | unchanged streaming cadence |
+| RAM `memcmp_P`, `strcmp_P` mismatch | 254 / 250 | 269 / 265 | one extra `T` branch, plus the exit drain of the in-flight transfer |
+| RAM `memcmp_P` equal `n=32` | 781 | 795 | per-byte cadence unchanged; the final exit drains its in-flight transfer |
 | Flash `LD8U r4,[r6]` | 230 | 232 | shared primary body with a single `RJMP` |
 | Flash `LD16 r4,[r6]` | 246 | 248 | shared primary body |
 | Flash `LD8U r0,[r6]` (F5) | 254 | 256 | |
@@ -553,7 +553,7 @@ The slow compare engine costs about 309 cycles per compared position and about 1
 
 The `FX-C` variant was not cycle-measured: `avm_bench` has no FX-C wiring option.
 
-Both the normal and FX-C interpreters have a `.text` size of 28,644 bytes. That is 1,136 bytes above the 27,508-byte build before the window feature and 1,052 bytes below the 29,696-byte limit. Deduplicating the AS0 and program-memory copy setup saved 76 bytes from the previous 28,720-byte size: 36 bytes from the shared `memcpy`/`memcpy_P` tail, 32 from the single bounded-copy entry with shared `strncpy`/`strncat` setup, and 8 from the shared program-read preparation.
+Both the normal and FX-C interpreters have a `.text` size of 28,692 bytes. That is 1,184 bytes above the 27,508-byte build before the window feature and 1,004 bytes below the 29,696-byte limit. Deduplicating the AS0 and program-memory copy setup saved 76 bytes from the previous 28,720-byte size: 36 bytes from the shared `memcpy`/`memcpy_P` tail, 32 from the single bounded-copy entry with shared `strncpy`/`strncat` setup, and 8 from the shared program-read preparation.
 
 The fixed setup costs of that deduplication are below, measured against `2282a60` with the same probe protocol. Per-byte streaming rates are unchanged. RAM `memcpy`, `memmove`, `strncpy`, and `strncat`, and every `memcmp_P`, `strcmp_P`, and `strlen_P` instruction row, are unchanged. The `sys_strncpy_p` and `sys_strncat_p` C workloads each drop by one cycle.
 
@@ -562,10 +562,10 @@ The fixed setup costs of that deduplication are below, measured against `2282a60
 | Program `memcpy_P`, `n=0` / `1` / `8` / `16` / `32` / `256` | 44 / 250 / 369 / 505 / 777 / 4585 | 43 / 247 / 366 / 502 / 774 / 4582 | command launch three cycles earlier; zero length one cycle faster |
 | Flash `memcpy`, `n=0` / `1` / `8` / `16` / `32` / `256` | 44 / 252 / 371 / 507 / 779 / 4587 | 49 / 253 / 372 / 508 / 780 / 4588 | zero length +5 through the shared tail; nonzero +1 |
 | Flash `memmove`, `n=8`, forward | 371 | 372 | shares the AS0 `memcpy` prefix |
-| Program `strncpy_P`, `n=0` / `8` padded / `8` no NUL / `8` NUL at bound / `8` truncated | 37 / 337 / 383 / 383 / 383 | 41 / 336 / 382 / 382 / 382 | |
-| Flash `strncpy`, same five cases | 43 / 344 / 390 / 390 / 390 | 46 / 341 / 387 / 387 / 387 | |
-| Program `strncat_P`, `n=0` / empty + empty / empty + 3 / 8 + 3 / 8 + 7 NUL at bound / 8 + 32 truncated | 37 / 268 / 319 / 359 / 427 / 428 | 41 / 267 / 318 / 358 / 426 / 427 | |
-| Flash `strncat`, same six cases | 43 / 275 / 326 / 366 / 434 / 435 | 46 / 272 / 323 / 363 / 431 / 432 | |
+| Program `strncpy_P`, `n=0` / `8` padded / `8` no NUL / `8` NUL at bound / `8` truncated | 37 / 337 / 383 / 383 / 383 | 41 / 350 / 396 / 396 / 396 | nonzero copy exits +14 from the drain (§30.1.3) |
+| Flash `strncpy`, same five cases | 43 / 344 / 390 / 390 / 390 | 46 / 355 / 401 / 401 / 401 | nonzero copy exits +14 from the drain |
+| Program `strncat_P`, `n=0` / empty + empty / empty + 3 / 8 + 3 / 8 + 7 NUL at bound / 8 + 32 truncated | 37 / 268 / 319 / 359 / 427 / 428 | 41 / 281 / 332 / 372 / 440 / 441 | nonzero copy exits +14 from the drain |
+| Flash `strncat`, same six cases | 43 / 275 / 326 / 366 / 434 / 435 | 46 / 286 / 337 / 377 / 445 / 446 | nonzero copy exits +14 from the drain |
 
 ## 6. Primary opcode map
 
@@ -3590,19 +3590,19 @@ The equal, nonterminal paths use the following exact schedules, with the current
 
 ```text
 memcmp_P:
-  IN 1, SEI 2, CP 3, BRNE 4, SUB 5, SBC 6, BREQ 7,
+  IN 1, CP 2, BRNE 3, SUB 4, SBC 5, BREQ 6, SEI 7,
   LD 8-9, delay 10-13, RJMP 14-15, CLI 16, OUT 17
 
 strcmp_P:
-  IN 1, SEI 2, CP 3, BRNE 4, TST 5, BREQ 6,
+  IN 1, CP 2, BRNE 3, TST 4, BREQ 5, SEI 6,
   LD 7-8, delay 9-13, RJMP 14-15, CLI 16, OUT 17
 
 strlen_P:
-  IN 1, SEI 2, TST 3, BREQ 4, ADD 5, ADC 6,
+  IN 1, TST 2, BREQ 3, SEI 4, ADD 5, ADC 6,
   seven-cycle delay 7-13, RJMP 14-15, CLI 16, OUT 17
 ```
 
-Mismatch and NUL paths leave these loops immediately and disable flash chip select; only continuing paths launch another byte.
+A `memcmp_P` or `strcmp_P` mismatch or equal exit, and the `strlen_P` NUL exit, leave before `SEI`, with interrupts still masked, so no interrupt can run between the final `OUT` and the drain. The drain clears the previous byte's SPIF, polls for the final transfer's SPIF, reads SPDR to acknowledge it, disables flash chip select, and then re-enables interrupts. Only continuing paths re-enable interrupts and launch another byte. The `strlen_P` NUL exit reaches the drain through a one-word landing, because `BREQ` cannot reach it. The shared copy engine (§30.1.3) uses the same drain for its exits.
 
 ### 30.1.3. Shared bounded copy-until-NUL engine
 
@@ -3625,12 +3625,12 @@ outputs:
 The continuing nonzero-byte path is exactly:
 
 ```text
-IN 1, SEI 2, ST 3-4, SUB 5, SBC 6, CPSE 7,
-RJMP 8-9, BREQ 10, delay 11-13, RJMP 14-15,
+IN 1, ST 2-3, SUB 4, SBC 5, CPSE 6,
+RJMP 7-8, BREQ 9, SEI 10, delay 11-13, RJMP 14-15,
 CLI 16, OUT 17
 ```
 
-`CPSE` does not modify the count’s native `Z` flag. A zero source byte skips the nonzero-path jump, sets `T`, disables the transaction, and returns. Count exhaustion with a nonzero source byte returns with `T` clear.
+`CPSE` does not modify the count’s native `Z` flag. A zero source byte skips the nonzero-path jump, sets `T`, and leaves for the done path. Count exhaustion with a nonzero source byte leaves with `T` clear. Both exits drain the final transfer, as the streamed compare exits do (§30.1.2): chip select is released only after it completes, and interrupts are re-enabled before `RET`.
 
 `strncpy_P` copies through the source NUL when it occurs within `n`, then pads the remaining destination bytes with zero. If no NUL occurs in the first `n` bytes, it performs no padding.
 

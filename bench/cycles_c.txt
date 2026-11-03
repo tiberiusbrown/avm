@@ -32,7 +32,7 @@
       293898   constant_init.c
       725956   count_leading_zeros.c
       582496   count_trailing_zeros.c
-      530882   crc16.c
+      763330   crc16.c
      2045655   ctype_isalnum.c
      1782487   ctype_isalpha.c
      1794823   ctype_isblank.c
@@ -49,7 +49,7 @@
      1679479   ctype_toupper.c
      1581264   div_pow2.c
       760326   divmod.c
-       18873   draw_text.c
+       20928   draw_text.c
        20978   draw_text_P.c
       738750   dynamic_stack.c
       236880   fibonacci.c
@@ -332,59 +332,59 @@
       257083   stack_base_nested.c
      2452217   stack_frames.c
      7151772   state_machine.c
-     4249556   stdio_scan_float.c
-     4873428   stdio_scan_integer.c
-     3132084   stdio_scan_string.c
+     4492820   stdio_scan_float.c
+     5048852   stdio_scan_integer.c
+     3503796   stdio_scan_string.c
       157204   stdlib_abs.c
-      804094   stdlib_atoi.c
-     7360788   stdlib_atol.c
-    54765640   stdlib_atoll.c
-      166425   stdlib_div.c
+      952478   stdlib_atoi.c
+     7542132   stdlib_atol.c
+    55035368   stdlib_atoll.c
+      228633   stdlib_div.c
       188717   stdlib_labs.c
-     5689809   stdlib_ldiv.c
-      764424   stdlib_llabs.c
-    41151356   stdlib_lldiv.c
-     4373633   stdlib_strtod.c
-     4355841   stdlib_strtof.c
-     8252676   stdlib_strtol.c
-    66252828   stdlib_strtoll.c
-     8254020   stdlib_strtoul.c
-    67789292   stdlib_strtoull.c
+     5752529   stdlib_ldiv.c
+      889864   stdlib_llabs.c
+    41276796   stdlib_lldiv.c
+     4700001   stdlib_strtod.c
+     4682209   stdlib_strtof.c
+     8541700   stdlib_strtol.c
+    66601052   stdlib_strtoll.c
+     8543044   stdlib_strtoul.c
+    68144108   stdlib_strtoull.c
      2439856   string_memchr.c
      4707352   string_memchr_p.c
     26108298   string_scan.c
      1214224   string_strchr.c
      2402360   string_strchr_p.c
-     3318320   string_strcspn.c
+     5014320   string_strcspn.c
      5931737   string_strcspn_p.c
-     1486512   string_strncmp.c
+     1663312   string_strncmp.c
      2299155   string_strncmp_p.c
       997648   string_strnlen.c
      1917738   string_strnlen_p.c
-     3363312   string_strpbrk.c
+     5059312   string_strpbrk.c
      6001753   string_strpbrk_p.c
      1793008   string_strrchr.c
      3522360   string_strrchr_p.c
-     4298992   string_strspn.c
+     6829424   string_strspn.c
      8075865   string_strspn_p.c
-     1853616   string_strstr.c
+     1981552   string_strstr.c
      2222073   string_strstr_p.c
-     2516323   string_strtok.c
+     3533923   string_strtok.c
      4553634   string_strtok_p.c
-     2661180   string_strtok_r.c
+     3683580   string_strtok_r.c
      4416930   string_strtok_r_p.c
       446861   struct_copy.c
       950957   switch.c
         2904   sys_memcmp.c
-        5165   sys_memcmp_p.c
+        5227   sys_memcmp_p.c
         2513   sys_strcmp.c
-        5424   sys_strcmp_p.c
+        5642   sys_strcmp_p.c
         2111   sys_strlen.c
-        7020   sys_strlen_p.c
+        7110   sys_strlen_p.c
         2234   sys_strncat.c
-        3519   sys_strncat_p.c
+        3589   sys_strncat_p.c
         2144   sys_strncpy.c
-        3555   sys_strncpy_p.c
+        3625   sys_strncpy_p.c
       487473   tail_calls.c
        52140   text.c
      3139912   tile_cache_render.c

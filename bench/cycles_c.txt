@@ -350,10 +350,10 @@
     66601052   stdlib_strtoll.c
      8543044   stdlib_strtoul.c
     68144108   stdlib_strtoull.c
-     2439856   string_memchr.c
+     2506616   string_memchr.c
      4707352   string_memchr_p.c
     26108298   string_scan.c
-     1214224   string_strchr.c
+     1256271   string_strchr.c
      2402360   string_strchr_p.c
      5014320   string_strcspn.c
      5931737   string_strcspn_p.c
@@ -361,14 +361,14 @@
      2299155   string_strncmp_p.c
       997648   string_strnlen.c
      1917738   string_strnlen_p.c
-     5059312   string_strpbrk.c
-     6001753   string_strpbrk_p.c
-     1793008   string_strrchr.c
+     5104742   string_strpbrk.c
+     6066947   string_strpbrk_p.c
+     1835055   string_strrchr.c
      3522360   string_strrchr_p.c
      6829424   string_strspn.c
      8075865   string_strspn_p.c
-     1981552   string_strstr.c
-     2222073   string_strstr_p.c
+     2026982   string_strstr.c
+     2287267   string_strstr_p.c
      3533923   string_strtok.c
      4553634   string_strtok_p.c
      3683580   string_strtok_r.c

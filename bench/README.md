@@ -164,6 +164,15 @@ that takes the access width from the slot.
 against the same 16 bytes, so the timings are known to load the intended values.
 The `AS1` `LDP` rows and every `SYS` row keep their previous cycle counts.
 
+Benchmark rows cover every implemented ISA opcode form that a row measures,
+including forms the compiler never emits. The raw F0 general-unindexed loads
+(`LD8U r0,[r1]` and `LD16 r0,[r1]`, RAM and flash) are examples: the backend lowers
+zero-displacement loads to `DPLD8U` and `DPLD16`, so those forms have no cost kind
+in `AVMCycleCosts.def`. That file holds only the backend-emitted cost kinds, and
+`AVMSchedule.td` and the TTI use them. A 24-bit pointer load from AS0 is not a
+single kind: the TTI prices its two-load expansion from the `F7LD16_POST` and
+`LD8U` kinds.
+
 The backend's `AVMCycleCosts.def` and `AVMSchedule.td` use these measurements.
 The table below gives scheduling representatives and observed sample extrema;
 the extrema are not guaranteed bounds for every binary32 input.

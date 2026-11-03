@@ -8,6 +8,13 @@
 // executing at the lowest SP, and the peak usage. Snapshots record the guest
 // state when a named ELF symbol is reached, which is how the exception tests
 // read the landing-pad SP and the throw-site return record.
+//
+// An arrival at a primary slot with the same guest state (VM_PC, SP, and
+// registers) as the previous arrival is the same instruction boundary entered
+// again, not a new one. The case seen in practice is an interrupt that returns
+// to the slot after the stream seek re-enables interrupts. No guest instruction
+// executes in between, so the arrival is not sampled. The trace options print
+// every arrival in a cycle window.
 
 #include <absim.hpp>
 #include <absim_regs.hpp>
@@ -62,6 +69,14 @@ struct options_t {
     // The header's object follows the 55-byte exception header, so the probe reads the pointer
     // value there, and prints this many bytes at it. A pointer value of zero prints no bytes.
     unsigned target_bytes = 0;
+    // Diagnostic dispatch trace: one line for each primary dispatch whose CPU cycle lies in
+    // the inclusive range. Without these options the output is unchanged.
+    bool trace_cycles = false;
+    bool trace_native = false;
+    bool have_trace_start = false;
+    bool have_trace_end = false;
+    uint64_t trace_cycle_start = 0;
+    uint64_t trace_cycle_end = 0;
 };
 
 std::string read_text(fs::path const& path)
@@ -208,6 +223,39 @@ struct stats_t {
     bool wrap_suspect = false;
 };
 
+// Prints one line for a primary dispatch in the trace window. The exception runtime's
+// active_exception pointer is read only when the ELF names it. Its header byte at +23 is
+// read only when the pointer is nonzero and the whole header lies in 16-bit RAM.
+void print_dispatch(absim::atmega32u4_t const& cpu, std::vector<symbol_t> const& symbols,
+                    uint32_t native, uint32_t table, bool reentry,
+                    std::optional<uint32_t> active_address)
+{
+    uint32_t const pc = guest_pc(cpu);
+    uint32_t const sp = guest_sp(cpu);
+    uint32_t const record = uint32_t(cpu.data[sp & 0xffff]) |
+                            uint32_t(cpu.data[(sp + 1) & 0xffff]) << 8 |
+                            uint32_t(cpu.data[(sp + 2) & 0xffff]) << 16;
+    std::cout << "dispatch cycle=" << std::dec << cpu.cycle_count << std::hex
+              << std::setfill('0') << " native=0x" << std::setw(4) << native
+              << " slot=0x" << std::setw(2) << (native - table) / 4
+              << " vm_pc=0x" << std::setw(6) << pc << " sp=0x" << std::setw(4) << sp
+              << " at=" << describe(symbols, pc) << " record=0x" << std::setw(6) << record;
+    for(unsigned r = 0; r < 8; ++r)
+        std::cout << " r" << r << "=0x" << std::setw(4) << guest_register(cpu, r);
+    std::cout << " active=";
+    if(!active_address) {
+        std::cout << "unknown byte23=unknown";
+    } else {
+        uint32_t const pointer = guest_word(cpu, *active_address);
+        std::cout << "0x" << std::setw(4) << pointer << " byte23=";
+        if(pointer != 0 && pointer + 23 <= 0xffff)
+            std::cout << "0x" << std::setw(2) << unsigned(cpu.data[pointer + 23]);
+        else
+            std::cout << "unknown";
+    }
+    std::cout << " reentry=" << (reentry ? 1 : 0) << std::setfill(' ') << std::dec << '\n';
+}
+
 int run(options_t const& options)
 {
     std::string const metadata = read_text(options.boundary);
@@ -256,6 +304,10 @@ int run(options_t const& options)
         stop_address = (*found)->address;
     }
 
+    std::optional<uint32_t> active_address;
+    if(auto found = find_symbol(symbols, "active_exception"))
+        active_address = (*found)->address;
+
     std::optional<uint32_t> measure_address;
     if(!options.measure_from.empty()) {
         auto found = find_symbol(symbols, options.measure_from);
@@ -273,22 +325,45 @@ int run(options_t const& options)
     stats_t stats;
     std::deque<sample_t> tail;
     uint16_t last_native = UINT16_MAX;
+    // The guest state at the last primary arrival that began a guest instruction boundary.
+    std::optional<sample_t> last_boundary;
     bool saw_entry = false;
     bool finished = false;
     uint64_t cycles = 0;
 
     while(cycles < options.cycle_limit) {
         uint32_t const native = cpu.pc;
+        if(options.trace_native && options.trace_cycles &&
+           cpu.cycle_count >= options.trace_cycle_start &&
+           cpu.cycle_count <= options.trace_cycle_end)
+            std::cout << "native cycle=" << std::dec << cpu.cycle_count << " pc=0x"
+                      << std::hex << std::setw(4) << std::setfill('0') << native
+                      << std::setfill(' ') << std::dec << '\n';
         if(native >= table && native < table + 256u * 4u &&
            (native - table) % 4u == 0 && native != last_native) {
             uint32_t const pc = guest_pc(cpu);
             uint32_t const sp = guest_sp(cpu);
+            sample_t sample{pc, sp, cpu.cycle_count, {}};
+            for(unsigned r = 0; r < 8; ++r)
+                sample.regs[r] = guest_register(cpu, r);
+            // A guest instruction boundary is a primary arrival that follows an executed
+            // instruction, so the guest state (VM_PC, SP, registers) has changed since the
+            // last boundary. An arrival with unchanged state is the same boundary entered
+            // again: an interrupt returned to the slot, or the stream was re-sought before
+            // the opcode executed. Neither executes a guest instruction, so it is not sampled.
+            bool const reentry = last_boundary && last_boundary->pc == pc &&
+                                 last_boundary->sp == sp && last_boundary->regs == sample.regs;
+            if(!reentry)
+                last_boundary = sample;
+            if(options.trace_cycles && cpu.cycle_count >= options.trace_cycle_start &&
+               cpu.cycle_count <= options.trace_cycle_end)
+                print_dispatch(cpu, symbols, native, table, reentry, active_address);
             if(!saw_entry && pc == entry) {
                 saw_entry = true;
                 stats.initial_sp = sp;
                 stats.prev_sp = sp;
             }
-            if(saw_entry) {
+            if(saw_entry && !reentry) {
                 ++stats.samples;
                 if(sp < kStackLimit || sp > kStackTop) {
                     if(!stats.range_violation) {
@@ -307,9 +382,6 @@ int run(options_t const& options)
                 }
                 stats.max_sp = std::max(stats.max_sp, sp);
 
-                sample_t sample{pc, sp, cpu.cycle_count, {}};
-                for(unsigned r = 0; r < 8; ++r)
-                    sample.regs[r] = guest_register(cpu, r);
                 if(options.trace_tail) {
                     tail.push_back(sample);
                     if(tail.size() > options.trace_tail)
@@ -468,16 +540,32 @@ options_t parse(int argc, char** argv)
         else if(arg == "--target-bytes")
             options.target_bytes = unsigned(std::stoul(value()));
         else if(arg == "--trace-tail") options.trace_tail = unsigned(std::stoul(value()));
+        else if(arg == "--trace-native") options.trace_native = true;
+        else if(arg == "--trace-cycle-start") {
+            options.trace_cycle_start = std::stoull(value());
+            options.have_trace_start = true;
+        } else if(arg == "--trace-cycle-end") {
+            options.trace_cycle_end = std::stoull(value());
+            options.have_trace_end = true;
+        }
         else if(arg == "--stop-at") options.stop_at = value();
         else if(arg == "--measure-from") options.measure_from = value();
         else throw std::runtime_error("unknown option: " + arg);
+    }
+    if(options.have_trace_start || options.have_trace_end) {
+        if(!options.have_trace_start || !options.have_trace_end)
+            throw std::runtime_error("--trace-cycle-start and --trace-cycle-end go together");
+        if(options.trace_cycle_end < options.trace_cycle_start)
+            throw std::runtime_error("--trace-cycle-end precedes --trace-cycle-start");
+        options.trace_cycles = true;
     }
     if(options.interpreter.empty() || options.boundary.empty() ||
        options.image.empty() || options.elf.empty())
         throw std::runtime_error(
             "usage: avm_eh_stack_probe --interpreter HEX --boundary JSON "
             "--image BIN --elf ELF [--snapshot SYMBOL]... [--trace-tail N] "
-            "[--cycle-limit N] [--snapshot-bytes N] [--target-bytes N]");
+            "[--cycle-limit N] [--snapshot-bytes N] [--target-bytes N] "
+            "[--trace-cycle-start N --trace-cycle-end M [--trace-native]]");
     return options;
 }
 

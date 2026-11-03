@@ -51,8 +51,8 @@ STATE_IN_CLEANUP = 3
 STATE_ENTERING_CATCH = 4
 
 SNAPSHOT = re.compile(
-    r'^snapshot (\S+) pc=0x[0-9a-f]+ sp=0x([0-9a-f]+) cycle=\d+ '
-    r'regs=([0-9a-f,]+) record=0x[0-9a-f]+(?: bytes=([0-9a-f]+))?',
+    r'^snapshot (\S+) pc=0x([0-9a-f]+) sp=0x([0-9a-f]+) cycle=(\d+) '
+    r'regs=([0-9a-f,]+) record=0x([0-9a-f]+)(?: bytes=([0-9a-f]+))?',
     re.MULTILINE)
 # A selector compare has two shapes. Usually it is cmpi.s8 rN, N. At -O0 the constant is
 # loaded into r6 and compared with q2, which holds the selector, by cmp32 q2, q3.
@@ -78,9 +78,12 @@ def run_probe(args):
     for match in SNAPSHOT.finditer(result.stdout):
         events.append({
             'name': match.group(1),
-            'sp': int(match.group(2), 16),
-            'regs': [int(v, 16) for v in match.group(3).split(',')],
-            'bytes': bytes.fromhex(match.group(4)) if match.group(4) else b'',
+            'pc': int(match.group(2), 16),
+            'sp': int(match.group(3), 16),
+            'cycle': int(match.group(4)),
+            'regs': [int(v, 16) for v in match.group(5).split(',')],
+            'record': int(match.group(6), 16),
+            'bytes': bytes.fromhex(match.group(7)) if match.group(7) else b'',
         })
     return events
 
@@ -133,6 +136,15 @@ def verify(args):
                 if fn['start'] <= address < fn['end']}
 
     events = run_probe(args)
+    # The probe samples one event per guest instruction boundary. Two consecutive events
+    # of one kind with the same guest state (PC, SP, record, registers) would be one
+    # dispatch reported twice, which the protocol below forbids for every kind.
+    for previous, event in zip(events, events[1:]):
+        same_state = (previous['pc'], previous['sp'], previous['record'], previous['regs']) == (
+            event['pc'], event['sp'], event['record'], event['regs'])
+        check(not (same_state and previous['name'] == event['name']),
+              '%s at cycle %d repeats cycle %d with the same guest state' % (
+                  event['name'], event['cycle'], previous['cycle']))
     handler_selectors = []
     cleanup_installs = 0
     throws = 0

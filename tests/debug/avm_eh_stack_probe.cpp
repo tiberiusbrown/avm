@@ -9,12 +9,13 @@
 // state when a named ELF symbol is reached, which is how the exception tests
 // read the landing-pad SP and the throw-site return record.
 //
-// An arrival at a primary slot with the same guest state (VM_PC, SP, and
-// registers) as the previous arrival is the same instruction boundary entered
-// again, not a new one. The case seen in practice is an interrupt that returns
-// to the slot after the stream seek re-enables interrupts. No guest instruction
-// executes in between, so the arrival is not sampled. The trace options print
-// every arrival in a cycle window.
+// A guest instruction boundary is a primary slot arrival whose first native AVR
+// instruction executes. The probe decides this after each step. An interrupt that
+// preempts the slot is taken before the instruction runs, so that arrival is
+// discarded, and the return to the same slot is sampled when its instruction
+// executes. Repeated guest state is not evidence of a repeated arrival: a
+// self-branching guest instruction keeps its state and still executes. The trace
+// options print every arrival in a cycle window, marked executed or preempted.
 
 #include <absim.hpp>
 #include <absim_regs.hpp>
@@ -223,11 +224,13 @@ struct stats_t {
     bool wrap_suspect = false;
 };
 
-// Prints one line for a primary dispatch in the trace window. The exception runtime's
-// active_exception pointer is read only when the ELF names it. Its header byte at +23 is
-// read only when the pointer is nonzero and the whole header lies in 16-bit RAM.
-void print_dispatch(absim::atmega32u4_t const& cpu, std::vector<symbol_t> const& symbols,
-                    uint32_t native, uint32_t table, bool reentry,
+// Writes the dispatch line for a primary slot arrival in the trace window. It is written before
+// the arrival's first native instruction runs, so it shows the state that instruction starts
+// from. The caller appends the outcome, because an interrupt may preempt the instruction. The
+// exception runtime's active_exception pointer is read only when the ELF names it. Its header
+// byte at +23 is read only when the pointer is nonzero and the whole header lies in 16-bit RAM.
+void print_dispatch(std::ostream& out, absim::atmega32u4_t const& cpu,
+                    std::vector<symbol_t> const& symbols, uint32_t native, uint32_t table,
                     std::optional<uint32_t> active_address)
 {
     uint32_t const pc = guest_pc(cpu);
@@ -235,25 +238,119 @@ void print_dispatch(absim::atmega32u4_t const& cpu, std::vector<symbol_t> const&
     uint32_t const record = uint32_t(cpu.data[sp & 0xffff]) |
                             uint32_t(cpu.data[(sp + 1) & 0xffff]) << 8 |
                             uint32_t(cpu.data[(sp + 2) & 0xffff]) << 16;
-    std::cout << "dispatch cycle=" << std::dec << cpu.cycle_count << std::hex
-              << std::setfill('0') << " native=0x" << std::setw(4) << native
-              << " slot=0x" << std::setw(2) << (native - table) / 4
-              << " vm_pc=0x" << std::setw(6) << pc << " sp=0x" << std::setw(4) << sp
-              << " at=" << describe(symbols, pc) << " record=0x" << std::setw(6) << record;
+    out << "dispatch cycle=" << std::dec << cpu.cycle_count << std::hex
+        << std::setfill('0') << " native=0x" << std::setw(4) << native
+        << " slot=0x" << std::setw(2) << (native - table) / 4
+        << " vm_pc=0x" << std::setw(6) << pc << " sp=0x" << std::setw(4) << sp
+        << " at=" << describe(symbols, pc) << " record=0x" << std::setw(6) << record;
     for(unsigned r = 0; r < 8; ++r)
-        std::cout << " r" << r << "=0x" << std::setw(4) << guest_register(cpu, r);
-    std::cout << " active=";
+        out << " r" << r << "=0x" << std::setw(4) << guest_register(cpu, r);
+    out << " active=";
     if(!active_address) {
-        std::cout << "unknown byte23=unknown";
+        out << "unknown byte23=unknown";
     } else {
         uint32_t const pointer = guest_word(cpu, *active_address);
-        std::cout << "0x" << std::setw(4) << pointer << " byte23=";
+        out << "0x" << std::setw(4) << pointer << " byte23=";
         if(pointer != 0 && pointer + 23 <= 0xffff)
-            std::cout << "0x" << std::setw(2) << unsigned(cpu.data[pointer + 23]);
+            out << "0x" << std::setw(2) << unsigned(cpu.data[pointer + 23]);
         else
-            std::cout << "unknown";
+            out << "unknown";
     }
-    std::cout << " reentry=" << (reentry ? 1 : 0) << std::setfill(' ') << std::dec << '\n';
+    out << std::setfill(' ') << std::dec;
+}
+
+bool in_trace_window(options_t const& options, uint64_t cycle)
+{
+    return options.trace_cycles && cycle >= options.trace_cycle_start &&
+           cycle <= options.trace_cycle_end;
+}
+
+// A primary slot arrival, read before its first native instruction runs. The instruction may
+// change the guest state, so the sample, trace line, and snapshot lines are all taken here, and
+// they are printed only once the instruction is known to have executed.
+struct boundary_t {
+    uint32_t native;
+    sample_t sample;
+    std::string trace;
+    std::string snapshots;
+};
+
+// Formats the snapshot lines for a boundary whose guest PC names a snapshot. The bytes are
+// read from the boundary's pre-execution state.
+std::string snapshot_lines(absim::atmega32u4_t const& cpu, sample_t const& sample,
+                           std::vector<std::pair<std::string, uint32_t>> const& points,
+                           options_t const& options)
+{
+    std::ostringstream out;
+    uint32_t const pc = sample.pc;
+    uint32_t const sp = sample.sp;
+    for(auto const& [name, address] : points) {
+        if(pc != address)
+            continue;
+        out << "snapshot " << name << " pc=0x" << std::hex
+            << std::setw(6) << std::setfill('0') << pc
+            << std::setfill(' ') << " sp=0x" << std::setw(4)
+            << std::setfill('0') << sp << std::setfill(' ')
+            << std::dec << " cycle=" << sample.cycle
+            << " regs=";
+        for(unsigned r = 0; r < 8; ++r)
+            out << std::hex << std::setw(4) << std::setfill('0')
+                << sample.regs[r] << std::setfill(' ')
+                << (r == 7 ? "" : ",");
+        // The three bytes at SP hold a return PC when the snapshot
+        // is a callee entry.
+        uint32_t const record = uint32_t(cpu.data[sp & 0xffff]) |
+                                uint32_t(cpu.data[(sp + 1) & 0xffff]) << 8 |
+                                uint32_t(cpu.data[(sp + 2) & 0xffff]) << 16;
+        out << " record=0x" << std::setw(6) << std::setfill('0')
+            << record << std::setfill(' ') << std::dec;
+        // The bytes are printed in address order, two hex digits each.
+        if(options.snapshot_bytes) {
+            out << " bytes=" << std::hex << std::setfill('0');
+            uint32_t const base = sample.regs[4];
+            for(unsigned i = 0; i < options.snapshot_bytes; ++i)
+                out << std::setw(2) << unsigned(cpu.data[(base + i) & 0xffff]);
+            out << std::setfill(' ') << std::dec;
+        }
+        // The thrown object's pointer value names the target, which is read at the
+        // same snapshot. A null value, or one outside 16-bit RAM, prints no bytes.
+        if(options.target_bytes) {
+            uint32_t const object = (sample.regs[4] + 55) & 0xffff;
+            uint32_t const target = uint32_t(cpu.data[object]) |
+                                    uint32_t(cpu.data[(object + 1) & 0xffff]) << 8;
+            out << " target=" << std::hex << std::setw(4) << std::setfill('0')
+                << target << std::setfill(' ') << std::dec;
+            if(target != 0 && target + options.target_bytes <= 0x10000) {
+                out << " targetbytes=" << std::hex << std::setfill('0');
+                for(unsigned i = 0; i < options.target_bytes; ++i)
+                    out << std::setw(2) << unsigned(cpu.data[target + i]);
+                out << std::setfill(' ') << std::dec;
+            }
+        }
+        out << '\n';
+    }
+    return out.str();
+}
+
+boundary_t capture_boundary(absim::atmega32u4_t const& cpu, std::vector<symbol_t> const& symbols,
+                            uint32_t native, uint32_t table, options_t const& options,
+                            std::vector<std::pair<std::string, uint32_t>> const& snapshot_points,
+                            std::optional<uint32_t> active_address)
+{
+    boundary_t boundary{native, {guest_pc(cpu), guest_sp(cpu), cpu.cycle_count, {}}, {}, {}};
+    for(unsigned r = 0; r < 8; ++r)
+        boundary.sample.regs[r] = guest_register(cpu, r);
+    if(in_trace_window(options, cpu.cycle_count)) {
+        std::ostringstream out;
+        print_dispatch(out, cpu, symbols, native, table, active_address);
+        boundary.trace = out.str();
+    }
+    bool const named = std::any_of(
+        snapshot_points.begin(), snapshot_points.end(),
+        [&](auto const& point) { return point.second == boundary.sample.pc; });
+    if(named)
+        boundary.snapshots = snapshot_lines(cpu, boundary.sample, snapshot_points, options);
+    return boundary;
 }
 
 int run(options_t const& options)
@@ -324,46 +421,52 @@ int run(options_t const& options)
 
     stats_t stats;
     std::deque<sample_t> tail;
-    uint16_t last_native = UINT16_MAX;
-    // The guest state at the last primary arrival that began a guest instruction boundary.
-    std::optional<sample_t> last_boundary;
     bool saw_entry = false;
     bool finished = false;
     uint64_t cycles = 0;
 
     while(cycles < options.cycle_limit) {
         uint32_t const native = cpu.pc;
-        if(options.trace_native && options.trace_cycles &&
-           cpu.cycle_count >= options.trace_cycle_start &&
-           cpu.cycle_count <= options.trace_cycle_end)
+        if(options.trace_native && in_trace_window(options, cpu.cycle_count))
             std::cout << "native cycle=" << std::dec << cpu.cycle_count << " pc=0x"
                       << std::hex << std::setw(4) << std::setfill('0') << native
                       << std::setfill(' ') << std::dec << '\n';
-        if(native >= table && native < table + 256u * 4u &&
-           (native - table) % 4u == 0 && native != last_native) {
-            uint32_t const pc = guest_pc(cpu);
-            uint32_t const sp = guest_sp(cpu);
-            sample_t sample{pc, sp, cpu.cycle_count, {}};
-            for(unsigned r = 0; r < 8; ++r)
-                sample.regs[r] = guest_register(cpu, r);
-            // A guest instruction boundary is a primary arrival that follows an executed
-            // instruction, so the guest state (VM_PC, SP, registers) has changed since the
-            // last boundary. An arrival with unchanged state is the same boundary entered
-            // again: an interrupt returned to the slot, or the stream was re-sought before
-            // the opcode executed. Neither executes a guest instruction, so it is not sampled.
-            bool const reentry = last_boundary && last_boundary->pc == pc &&
-                                 last_boundary->sp == sp && last_boundary->regs == sample.regs;
-            if(!reentry)
-                last_boundary = sample;
-            if(options.trace_cycles && cpu.cycle_count >= options.trace_cycle_start &&
-               cpu.cycle_count <= options.trace_cycle_end)
-                print_dispatch(cpu, symbols, native, table, reentry, active_address);
+        // A primary slot arrival is a candidate boundary. It is read before the step, since the
+        // step may change the state it names, and it counts only if the step executes the slot's
+        // first native instruction.
+        std::optional<boundary_t> candidate;
+        if(native >= table && native < table + 256u * 4u && (native - table) % 4u == 0)
+            candidate = capture_boundary(cpu, symbols, native, table, options,
+                                         snapshot_points, active_address);
+        bool const was_active = cpu.active;
+
+        emulator->cycle();
+        cpu.update_all();
+        ++cycles;
+        bool const faulted = cpu.autobreaks.test(absim::AB_UNKNOWN_INSTR) ||
+                             cpu.autobreaks.test(absim::AB_OOB_PC);
+        // An interrupt that preempts the slot is taken before the instruction runs. Such a step
+        // leaves just_interrupted set, and the return to the slot is then a new candidate. With
+        // no_merged set, an active step that is not preempted runs exactly one native instruction,
+        // at the address it started from.
+        bool const executed = candidate && was_active && !cpu.just_interrupted && !faulted;
+        if(executed && cpu.executing_instr_pc != native)
+            throw std::runtime_error("the executed instruction is not the boundary's first one");
+        if(candidate && !executed && !candidate->trace.empty())
+            std::cout << candidate->trace << " executed=0 preempted="
+                      << (cpu.just_interrupted ? 1 : 0) << '\n';
+        if(executed) {
+            sample_t const& sample = candidate->sample;
+            uint32_t const pc = sample.pc;
+            uint32_t const sp = sample.sp;
+            if(!candidate->trace.empty())
+                std::cout << candidate->trace << " executed=1 preempted=0\n";
             if(!saw_entry && pc == entry) {
                 saw_entry = true;
                 stats.initial_sp = sp;
                 stats.prev_sp = sp;
             }
-            if(saw_entry && !reentry) {
+            if(saw_entry) {
                 ++stats.samples;
                 if(sp < kStackLimit || sp > kStackTop) {
                     if(!stats.range_violation) {
@@ -398,71 +501,23 @@ int run(options_t const& options)
                     measure_min_sp = sp;
                     measure_min_pc = pc;
                 }
+                // The stop is taken after the boundary's first instruction has executed, so
+                // the run ends one native instruction later than the arrival. The state
+                // printed here is the state before that instruction, which is the boundary.
                 if(stop_address && pc == *stop_address) {
                     std::cout << "stopped at " << options.stop_at << " sp=0x"
                               << std::hex << sp << std::dec << " cycle="
-                              << cpu.cycle_count << '\n';
+                              << sample.cycle << '\n';
                     finished = false;
                     stop_address.reset();
                     // Print the trace leading to the stop, then end the run.
                     tail.push_back(sample);
                     break;
                 }
-                for(auto const& [name, address] : snapshot_points) {
-                    if(pc != address)
-                        continue;
-                    std::cout << "snapshot " << name << " pc=0x" << std::hex
-                              << std::setw(6) << std::setfill('0') << pc
-                              << std::setfill(' ') << " sp=0x" << std::setw(4)
-                              << std::setfill('0') << sp << std::setfill(' ')
-                              << std::dec << " cycle=" << cpu.cycle_count
-                              << " regs=";
-                    for(unsigned r = 0; r < 8; ++r)
-                        std::cout << std::hex << std::setw(4) << std::setfill('0')
-                                  << sample.regs[r] << std::setfill(' ')
-                                  << (r == 7 ? "" : ",");
-                    // The three bytes at SP hold a return PC when the snapshot
-                    // is a callee entry.
-                    uint32_t record = uint32_t(cpu.data[sp & 0xffff]) |
-                                      uint32_t(cpu.data[(sp + 1) & 0xffff]) << 8 |
-                                      uint32_t(cpu.data[(sp + 2) & 0xffff]) << 16;
-                    std::cout << " record=0x" << std::setw(6) << std::setfill('0')
-                              << record << std::setfill(' ') << std::dec;
-                    // The bytes are printed in address order, two hex digits each.
-                    if(options.snapshot_bytes) {
-                        std::cout << " bytes=" << std::hex << std::setfill('0');
-                        uint32_t const base = sample.regs[4];
-                        for(unsigned i = 0; i < options.snapshot_bytes; ++i)
-                            std::cout << std::setw(2)
-                                      << unsigned(cpu.data[(base + i) & 0xffff]);
-                        std::cout << std::setfill(' ') << std::dec;
-                    }
-                    // The thrown object's pointer value names the target, which is read at the
-                    // same snapshot. A null value, or one outside 16-bit RAM, prints no bytes.
-                    if(options.target_bytes) {
-                        uint32_t const object = (sample.regs[4] + 55) & 0xffff;
-                        uint32_t const target = uint32_t(cpu.data[object]) |
-                                                uint32_t(cpu.data[(object + 1) & 0xffff]) << 8;
-                        std::cout << " target=" << std::hex << std::setw(4) << std::setfill('0')
-                                  << target << std::setfill(' ') << std::dec;
-                        if(target != 0 && target + options.target_bytes <= 0x10000) {
-                            std::cout << " targetbytes=" << std::hex << std::setfill('0');
-                            for(unsigned i = 0; i < options.target_bytes; ++i)
-                                std::cout << std::setw(2) << unsigned(cpu.data[target + i]);
-                            std::cout << std::setfill(' ') << std::dec;
-                        }
-                    }
-                    std::cout << '\n';
-                }
+                std::cout << candidate->snapshots;
             }
         }
-        last_native = static_cast<uint16_t>(native);
-
-        emulator->cycle();
-        cpu.update_all();
-        ++cycles;
-        if(cpu.autobreaks.test(absim::AB_UNKNOWN_INSTR) ||
-           cpu.autobreaks.test(absim::AB_OOB_PC)) {
+        if(faulted) {
             std::cout << "native fault: unknown instruction or out-of-range PC\n";
             break;
         }

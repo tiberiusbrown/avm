@@ -136,15 +136,14 @@ def verify(args):
                 if fn['start'] <= address < fn['end']}
 
     events = run_probe(args)
-    # The probe samples one event per guest instruction boundary. Two consecutive events
-    # of one kind with the same guest state (PC, SP, record, registers) would be one
-    # dispatch reported twice, which the protocol below forbids for every kind.
+    # The probe reports each executed guest boundary once, in execution order, and reads its
+    # state before the boundary runs. Each event comes from a different boundary, so the cycle
+    # stamps strictly increase. Repeated guest state is not an error: a function may be
+    # entered twice with identical values.
     for previous, event in zip(events, events[1:]):
-        same_state = (previous['pc'], previous['sp'], previous['record'], previous['regs']) == (
-            event['pc'], event['sp'], event['record'], event['regs'])
-        check(not (same_state and previous['name'] == event['name']),
-              '%s at cycle %d repeats cycle %d with the same guest state' % (
-                  event['name'], event['cycle'], previous['cycle']))
+        check(event['cycle'] > previous['cycle'],
+              '%s at cycle %d does not follow %s at cycle %d' % (
+                  event['name'], event['cycle'], previous['name'], previous['cycle']))
     handler_selectors = []
     cleanup_installs = 0
     throws = 0

@@ -865,6 +865,41 @@ add_custom_target(avm_eh_typed_run
 )
 add_dependencies(avm_eh_catch_all_run avm_eh_typed_run)
 
+# Boundary sampling on a guest that never finishes. The self-loop fixture ends only at the
+# cycle limit, so the probe must report "did not finish" and record every execution of its
+# jump, although each execution leaves the guest state unchanged. The fixture is linked
+# outside the terminating asm matrix, which globs tests/asm only.
+set(AVM_EH_PROBE_FIXTURE_DIR "${CMAKE_CURRENT_BINARY_DIR}/debug/fixtures")
+set(AVM_EH_PROBE_SELF_LOOP_OBJECT "${AVM_EH_PROBE_FIXTURE_DIR}/eh_probe_self_loop.o")
+set(AVM_EH_PROBE_SELF_LOOP_ELF "${AVM_EH_PROBE_FIXTURE_DIR}/eh_probe_self_loop.elf")
+set(AVM_EH_PROBE_SELF_LOOP_IMAGE "${AVM_EH_PROBE_FIXTURE_DIR}/eh_probe_self_loop.bin")
+avm_add_object(
+    OUTPUT "${AVM_EH_PROBE_SELF_LOOP_OBJECT}"
+    SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/debug/fixtures/eh_probe_self_loop.asm"
+    LANGUAGE ASM
+)
+avm_add_image(
+    OBJECTS "${AVM_EH_PROBE_SELF_LOOP_OBJECT}"
+    OUTPUT_ELF "${AVM_EH_PROBE_SELF_LOOP_ELF}"
+    OUTPUT_IMAGE "${AVM_EH_PROBE_SELF_LOOP_IMAGE}"
+    ENTRY _start
+)
+add_custom_target(avm_eh_probe_boundary_images DEPENDS "${AVM_EH_PROBE_SELF_LOOP_IMAGE}")
+add_custom_target(avm_eh_probe_boundary_run
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_probe_boundary_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_EH_PROBE_SELF_LOOP_IMAGE}"
+        --elf "${AVM_EH_PROBE_SELF_LOOP_ELF}"
+    DEPENDS avm_eh_stack_probe avm_interpreter_boundary avm_eh_probe_boundary_images
+        llvm-avm-image
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_probe_boundary_run)
+
 # Base catches, with nonvirtual and virtual bases. The O0 and O2 fixtures also run through
 # avm_eh_catch_all_run. This target adds the whole-program and cross-unit LTO runs, the
 # packed base edges, the selector and adjustment of each handler against the emulator, and

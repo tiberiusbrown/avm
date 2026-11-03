@@ -5704,7 +5704,7 @@ For a virtual base, the upper 24 bits of the offset-and-flags word are not an ob
 offset. They are a signed byte displacement from the vtable address point of the
 containing class to a slot, and that slot holds the base's displacement from the
 containing subobject. The runtime reads the slot through the vptr of the containing
-subobject. Polymorphic `typeid` and `dynamic_cast` are not implemented; the static forms of `typeid` are described below.
+subobject. Dynamic `typeid` is described in the subsections below, and `dynamic_cast` is not implemented.
 
 Virtual-base slots are three-byte entries. Clang places each one before the address point,
 with the offset-to-top and RTTI entries, and `getVirtualBaseOffsetOffset` gives its byte
@@ -5730,7 +5730,75 @@ The alias is formed from the program address at run time, so a relocation does n
 ld.lld: error: AVM type_info descriptor '_ZTI5Alpha' is not addressable through the AS0 flash window
 ```
 
-A `type_info` object is six bytes: a 24-bit vptr, then the 24-bit program address of its mangled name. Its alignment is one byte, and its name pointer is a program address. `name()` returns the AS0 alias of that name as a `const char*`, which points into flash, so the name is never copied. Equality compares the object addresses and the name addresses, and it falls back to comparing the names. `before()` orders the names with `strcmp`. `hash_code()` is a 16-bit FNV-1a hash, and its multiplication by `0x0193` is written as shifts and adds. The runtime defines the out-of-line destructor. Static `typeid` needs no RAM and no initialization. An expression that needs a vptr lookup is rejected with a compile-time error, because the compiler does not yet emit that lookup for AVM, and `std::bad_typeid`, `std::bad_cast`, and `dynamic_cast` are not implemented.
+A `type_info` object is six bytes: a 24-bit vptr, then the 24-bit program address of its mangled name. Its alignment is one byte, and its name pointer is a program address. `name()` returns the AS0 alias of that name as a `const char*`, which points into flash, so the name is never copied. Equality compares the object addresses and the name addresses, and it falls back to comparing the names. `before()` orders the names with `strcmp`. `hash_code()` is a 16-bit FNV-1a hash, and its multiplication by `0x0193` is written as shifts and adds. The runtime defines the out-of-line destructor. Static `typeid` needs no RAM and no initialization. `std::bad_cast` and `dynamic_cast` are not implemented.
+
+#### Dynamic typeid
+
+A polymorphic object stores its vptr in its own RAM, as three bytes that hold a 24-bit
+program address. The address names the vtable's address point. Each vtable entry is three
+bytes, and the entries before the address point hold the offset to top at vptr - 6, and
+the RTTI descriptor address at vptr - 3. A virtual base adds more entries before them,
+and the RTTI slot stays immediately before the address point.
+
+Typeid of a polymorphic glvalue calls the runtime helper `__avm_typeid_from_object`
+with the AS0 address of the subobject that the operand names. The helper, in
+`runtime/lib/rtti_dynamic.c`, reads the three vptr bytes from that RAM, reads the
+descriptor address with a 24-bit program-space load at vptr - 3, and checks that
+the descriptor's six-byte prefix lies in the window: `0x0500 <= P` and `P + 6 <= 0xFA00`.
+It returns the AS0 alias `P + 0x0600` as an ordinary 16-bit pointer, which is the
+canonical `std::type_info` that static typeid names, so the two forms compare equal.
+The helper uses no heap, no RAM, and no hierarchy walk, and it calls `abort()` on a null
+object, an object whose three vptr bytes would pass the end of 16-bit RAM, a vptr too
+small to hold its slot, a zero slot, or a slot outside the window.
+A malformed slot therefore ends the program at the lookup, and it never yields an
+alias of zero or of an arbitrary address.
+
+Clang emits the helper call before any generic vtable load, so the three-byte vptr and
+the 24-bit slot never pass through a 16-bit AS1 load. A null pointer operand is checked
+first. A null dereference branches to `__cxa_bad_typeid`, which is a potentially
+throwing call. Operands that are not polymorphic, and polymorphic operands whose most
+derived type is known, keep their static lowering. A polymorphic operand is evaluated
+once, and a nonpolymorphic operand is not evaluated.
+
+Each vtable and each construction vtable with RTTI names its class's descriptor and
+type name with the same weak markers that static typeid emits, so the linker checks
+the window placement of every descriptor that a dynamic lookup can reach. A descriptor
+that is outside the window fails the link even when the program never names its type,
+and the error names the symbol. The static descriptor is emitted once per class, so the
+dynamic and static forms name the same object.
+
+A subobject query uses that subobject's own vptr. Its address is not the complete
+object's address, and the offset to top relates the two. During construction and
+destruction, each class's vptr names the class whose constructor or destructor is running,
+so a construction vtable's RTTI slot names the class under construction. A constructor or
+destructor therefore sees the dynamic type that the standard specifies at that point.
+
+A vtable emitted without RTTI has a null RTTI slot, and the runtime does not fabricate a
+descriptor for it. If a link keeps such a vtable for a class whose objects are queried
+dynamically, the query aborts. The linker does not reject that link, because the
+vtable has no descriptor for it to check.
+
+#### std::bad_typeid
+
+The class is `std::bad_typeid`, and its mangled names use the length of the identifier
+(`bad_typeid` has ten characters): the descriptor is `_ZTISt10bad_typeid`, the vtable is
+`_ZTVSt10bad_typeid`, and the complete destructor is `_ZNSt10bad_typeidD1Ev`. It derives
+publicly from `std::exception`, whose descriptor is `_ZTISt9exception`. The object is three
+bytes, its vptr alone. The vtable holds the offset to top, the descriptor, the complete and
+deleting destructors, and `what()`, which returns `"std::bad_typeid"`.
+
+`eh_bad_typeid.cpp` defines the out-of-line members and `__cxa_bad_typeid`. It is compiled
+with `-frtti -fexceptions`, so the throw is an ordinary `__cxa_allocate_exception` and
+`__cxa_throw` with the 55-byte header, and the thrown descriptor is `_ZTISt10bad_typeid`.
+`exception_base.cpp` defines the members of `std::exception`, also with `-frtti`. The
+runtime keeps no static state for either class. A catch of `std::bad_typeid` or of
+`std::exception` matches through the ordinary typed matcher, and the object is destroyed
+once by `__cxa_end_catch` and freed once.
+
+Only one exception can be active. A throw from a handler or from a destructor that runs
+while another exception unwinds therefore aborts, which means `std::bad_typeid` is not
+thrown inside such a context. An uncaught `std::bad_typeid` ends the program through the
+unhandled-exception path that the other exceptions use.
 
 ### 60.2. Throw ABI
 

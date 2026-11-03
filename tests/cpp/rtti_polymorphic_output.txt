@@ -1,0 +1,2 @@
+rtti-polymorphic=ok
+P

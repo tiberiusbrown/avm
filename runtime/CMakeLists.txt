@@ -77,6 +77,7 @@ set(RUNTIME_SOURCES
     malloc
     eh_cxa
     eh_unwind
+    rtti_dynamic
     multibyte
     math
     math_standard
@@ -257,6 +258,37 @@ avm_add_runtime_object(
         "${AVM_LIBCXX_SOURCE_DIR}/include/__algorithm/sort.h"
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_ALGORITHM_OBJECT}")
+
+# Standard exception classes and std::bad_typeid live in their own objects, so a
+# program that does not name them links none of their RTTI or vtables. The
+# -frtti and -fexceptions options follow the SDK defaults, so they take effect.
+set(AVM_RUNTIME_EXCEPTION_BASE_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/exception_base.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_EXCEPTION_BASE_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/exception_base.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -frtti
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EXCEPTION_BASE_OBJECT}")
+
+set(AVM_RUNTIME_EH_BAD_TYPEID_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_typeid.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_EH_BAD_TYPEID_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_typeid.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -frtti -fexceptions
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_TYPEID_OBJECT}")
 
 set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/framebuffer.o")
 avm_add_runtime_object(
@@ -461,6 +493,14 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
     if(AVM_RUNTIME_MIR_RELATIVE MATCHES "^lib/math[/.]")
         set(math_mir_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
     endif()
+    # The standard exception objects need the same RTTI and exception options as
+    # their production builds, or the diagnostic compile of their throw fails.
+    set(runtime_mir_rtti_options)
+    if(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/exception_base.cpp")
+        set(runtime_mir_rtti_options -frtti)
+    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_typeid.cpp")
+        set(runtime_mir_rtti_options -frtti -fexceptions)
+    endif()
     set(runtime_mir_cxx_options)
     set(runtime_mir_cxx_dependencies)
     if(AVM_RUNTIME_MIR_LANGUAGE STREQUAL "CXX")
@@ -478,6 +518,7 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
         COMPILE_OPTIONS
             ${math_mir_options}
+            ${runtime_mir_rtti_options}
             -fno-color-diagnostics
             -mllvm -print-before-all
             -mllvm -print-after-all

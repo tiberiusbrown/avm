@@ -1,0 +1,2 @@
+rtti-bad-typeid=ok
+P

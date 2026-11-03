@@ -496,7 +496,7 @@ The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, and
 them only when it references one of their symbols. The C++ ABI subset provides
 `__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`,
 `__cxa_begin_catch`, `__cxa_get_exception_ptr`, `__cxa_end_catch`, `_Unwind_Resume`,
-`__gxx_personality_v0`, `std::terminate`. The runtime defines the Itanium support vtables that the
+`__gxx_personality_v0`, `__cxa_bad_typeid`, `std::terminate`. The runtime defines the Itanium support vtables that the
 descriptors name, in program space: `__class_type_info`, `__fundamental_type_info`,
 `__si_class_type_info`, `__vmi_class_type_info`, `__pointer_type_info`,
 `__enum_type_info`, `__function_type_info`, `__pointer_to_member_type_info`, and
@@ -586,17 +586,25 @@ emulator. The ordinary C++ and assembly matrices exclude the `eh_` prefix.
 
 ## Run-time type information
 
-`-frtti` enables static `typeid`. Clang places each descriptor and type name in the
+`-frtti` enables `typeid`. Clang places each descriptor and type name in the
 `.avm.rtti` output section, which lies in the AS0 flash window directly after `.flash`.
 A `typeid` expression returns the window alias of its descriptor, which is the program
 address plus `0x0600`, so the runtime needs no table or copy. `lib/cxxabi.cpp` defines
 the out-of-line destructor of `std::type_info`. The equality, ordering, hash, and name
 members are inline in the AVM branch of libc++'s `<typeinfo>`, where `name()` returns
 the flash alias of the mangled name. Static `typeid` never calls through the support
-vtables above, so they need no RAM or destructor entries. Polymorphic `typeid`,
-`dynamic_cast`, `std::bad_typeid`, and `std::bad_cast` are not implemented. The layout
-and the linker checks are described in
-[docs/arch.md](../docs/arch.md), Section 60.1.
+vtables above, so they need no RAM or destructor entries.
+
+A polymorphic `typeid` calls `__avm_typeid_from_object`, which `lib/rtti_dynamic.c`
+defines. It reads the object's 24-bit vptr from RAM, reads the RTTI slot three bytes
+below it, and returns the flash alias of that descriptor, or calls `abort()` for a
+malformed object or slot. `lib/exception_base.cpp` defines the out-of-line members of
+`std::exception`, and `lib/eh_bad_typeid.cpp` defines the members of `std::bad_typeid`
+and `__cxa_bad_typeid`, which a null polymorphic operand calls. The last two are archive
+members that a program links only when it refers to them, and they are built with
+`-frtti` and, for `eh_bad_typeid.cpp`, `-fexceptions`. `dynamic_cast` and `std::bad_cast`
+are not implemented. The lookup, the linker checks, and the remaining limitations are
+described in [docs/arch.md](../docs/arch.md), Section 60.1.
 
 ## Narrow stdio streams
 

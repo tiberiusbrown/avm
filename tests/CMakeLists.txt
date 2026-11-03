@@ -476,7 +476,9 @@ add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
 # Static typeid fixtures. They are built with -frtti at O0 and O2. The cross-unit
 # fixture is also linked with full LTO, so its descriptors must merge after the
 # whole program is optimized. avm_rtti_static_run runs them and their verifier.
-set(AVM_RTTI_SUPPORT_HEADERS "${AVM_CXX_TEST_DIR}/support/rtti_static.h")
+set(AVM_RTTI_SUPPORT_HEADERS
+    "${AVM_CXX_TEST_DIR}/support/rtti_static.h"
+    "${AVM_CXX_TEST_DIR}/support/rtti_polymorphic.h")
 set(AVM_RTTI_TEST_OPT_LEVELS O0 O2)
 set(AVM_RTTI_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/rtti-lto")
 set(AVM_RTTI_TEST_IMAGES)
@@ -486,6 +488,15 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
     if(AVM_TEST_NAME STREQUAL "rtti_cross_unit")
         list(APPEND AVM_RTTI_UNIT_SOURCES
             "${AVM_CXX_TEST_DIR}/support/rtti_static_unit.cpp")
+    elseif(AVM_TEST_NAME STREQUAL "rtti_polymorphic_cross_unit")
+        list(APPEND AVM_RTTI_UNIT_SOURCES
+            "${AVM_CXX_TEST_DIR}/support/rtti_polymorphic_unit.cpp")
+    endif()
+    # The standard exception fixtures throw, so they need -fexceptions as well as
+    # -frtti. The SDK defaults are -fno-exceptions and -fno-rtti, and later flags win.
+    set(AVM_RTTI_TEST_COMPILE_OPTIONS -frtti)
+    if(AVM_TEST_NAME MATCHES "^rtti_bad_typeid")
+        list(APPEND AVM_RTTI_TEST_COMPILE_OPTIONS -fexceptions)
     endif()
     foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_RTTI_TEST_OPT_LEVELS)
         set(AVM_OPT_TEST_BINARY_DIR
@@ -497,7 +508,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
             OUTPUT "${AVM_TEST_OBJECT}"
             SOURCE "${AVM_TEST_SOURCE_FILE}"
             LANGUAGE CXX
-            COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -frtti
+            COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" ${AVM_RTTI_TEST_COMPILE_OPTIONS}
             DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
         )
         set(AVM_RTTI_IMAGE_OBJECTS "${AVM_TEST_OBJECT}")
@@ -519,6 +530,19 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
             # The verifier reads the constant typeid initializer, which is otherwise
             # unreferenced at run time, so keep it through garbage collection.
             list(APPEND AVM_RTTI_LINK_OPTIONS --undefined=global_alpha)
+        elseif(AVM_TEST_NAME STREQUAL "rtti_polymorphic_high_address")
+            # The vtables must lie above 0xFFFF, so .rodata starts at 0x10000. The
+            # descriptors must stay in the flash window, so .avm.rtti follows the
+            # flash image at 0x500, and the code follows the descriptors. The
+            # program's data ends at 0x110, which the heap start follows.
+            list(APPEND AVM_RTTI_LINK_OPTIONS
+                "--image-base=0x100"
+                "--section-start=.data=0x100"
+                "--section-start=.flash=0x0B00"
+                "--section-start=.avm.rtti=0x0580"
+                "--section-start=.text=0x0A00"
+                "--section-start=.rodata=0x10000"
+                "--defsym=__avm_heap_start=0x110")
         endif()
         avm_add_image(
             OBJECTS ${AVM_RTTI_IMAGE_OBJECTS}
@@ -570,11 +594,46 @@ avm_add_image(
     DEPENDS avm_sysroot
 )
 
+# The polymorphic cross-unit fixture, linked with full LTO at O2. Its unit defines the
+# key functions, so each class's vtable and descriptor are emitted once, in the unit,
+# after the whole program is optimized.
+set(AVM_RTTI_POLY_LTO_OBJECT "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_polymorphic_cross_unit.o")
+set(AVM_RTTI_POLY_LTO_ELF "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_polymorphic_cross_unit.elf")
+set(AVM_RTTI_POLY_LTO_IMAGE "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_polymorphic_cross_unit.bin")
+set(AVM_RTTI_POLY_LTO_UNIT_OBJECT
+    "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_polymorphic_cross_unit_rtti_polymorphic_unit.o")
+avm_add_object(
+    OUTPUT "${AVM_RTTI_POLY_LTO_OBJECT}"
+    SOURCE "${AVM_CXX_TEST_DIR}/rtti_polymorphic_cross_unit.cpp"
+    LANGUAGE CXX
+    COMPILE_OPTIONS -O2 -frtti -flto=full
+    DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+)
+avm_add_object(
+    OUTPUT "${AVM_RTTI_POLY_LTO_UNIT_OBJECT}"
+    SOURCE "${AVM_CXX_TEST_DIR}/support/rtti_polymorphic_unit.cpp"
+    LANGUAGE CXX
+    COMPILE_OPTIONS -O2 -frtti -flto=full
+    DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+)
+avm_add_image(
+    OBJECTS "${AVM_RTTI_POLY_LTO_OBJECT}" "${AVM_RTTI_POLY_LTO_UNIT_OBJECT}"
+    OUTPUT_ELF "${AVM_RTTI_POLY_LTO_ELF}"
+    OUTPUT_IMAGE "${AVM_RTTI_POLY_LTO_IMAGE}"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+    LIBRARIES
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS
+    DEPENDS avm_sysroot
+)
+
 # The exception integration fixture is part of this matrix, because it names its
 # type with typeid and throws it from the other unit. Its EH images are built in the
 # EH matrix above.
 add_custom_target(avm_rtti_static_images DEPENDS
-    ${AVM_RTTI_TEST_IMAGES} "${AVM_RTTI_LTO_IMAGE}")
+    ${AVM_RTTI_TEST_IMAGES} "${AVM_RTTI_LTO_IMAGE}" "${AVM_RTTI_POLY_LTO_IMAGE}")
 
 # Runs the static typeid fixtures at O0 and O2, the full-LTO cross-unit image, and the
 # exception integration fixture. Each typeid descriptor is also checked in the packed
@@ -618,6 +677,114 @@ add_custom_target(avm_rtti_static_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
 )
+# Dynamic typeid and std::bad_typeid. The runner builds each fixture at O0 and O2, the
+# cross-unit fixture is also linked with full LTO, and the verifiers decode each query
+# from emulator RAM and the packed image. The corrupt target is verified only by patching,
+# so the runner does not select it.
+set(AVM_RTTI_POLY_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_polymorphic_verify.py")
+set(AVM_RTTI_POLY_CORRUPT_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_polymorphic_corrupt_verify.py")
+set(AVM_RTTI_BAD_TYPEID_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_bad_typeid_verify.py")
+set(AVM_RTTI_POLY_PROBE_ARGS
+    --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+    --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+    --interpreter "${AVM_INTERPRETER_HEX}"
+    --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}")
+set(AVM_RTTI_POLY_TYPES
+    --expect _ZTIN12_GLOBAL__N_17DerivedE --expect _ZTIN12_GLOBAL__N_11CE
+    --expect _ZTIN12_GLOBAL__N_11BE --expect _ZTIN12_GLOBAL__N_15CBaseE
+    --expect _ZTIN12_GLOBAL__N_15SLeftE --expect _ZTIN12_GLOBAL__N_16SRightE
+    --expect _ZTIN12_GLOBAL__N_15SBothE --expect _ZTIN12_GLOBAL__N_16VCBaseE
+    --expect _ZTIN12_GLOBAL__N_16VCLeftE --expect _ZTIN12_GLOBAL__N_17VCRightE
+    --expect _ZTIN12_GLOBAL__N_15VCTopE --expect _ZTIN12_GLOBAL__N_110HelperCtorE
+    --expect _ZTIN12_GLOBAL__N_18CDerivedE --expect _ZTIN12_GLOBAL__N_18GDerivedE
+    --expect _ZTIN12_GLOBAL__N_18VDiamondE --expect _ZTIN12_GLOBAL__N_19LeftRightE)
+set(AVM_RTTI_POLY_LTO_TYPES
+    --expect _ZTIN9rtti_poly13SharedDerivedE --expect _ZTIN9rtti_poly13InlineDerivedE)
+add_custom_target(avm_rtti_polymorphic_run
+    COMMAND "$<TARGET_FILE:avm_tests>"
+        --filter "^rtti_polymorphic(_cross_unit|_high_address)?$" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>"
+        --filter "^rtti_polymorphic_cross_unit$" --opt O2 --cpp-bin-dir "${AVM_RTTI_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^rtti_bad_typeid(_unhandled)?$" --opt O0,O2
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_VERIFY}" ${AVM_RTTI_POLY_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_polymorphic.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_polymorphic.elf"
+        --trace 2 ${AVM_RTTI_POLY_TYPES}
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_VERIFY}" ${AVM_RTTI_POLY_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic.elf"
+        ${AVM_RTTI_POLY_TYPES}
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_VERIFY}" ${AVM_RTTI_POLY_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_polymorphic_high_address.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_polymorphic_high_address.elf"
+        --high --secondary --expect _ZTIN12_GLOBAL__N_18HDerivedE
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_VERIFY}" ${AVM_RTTI_POLY_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic_high_address.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic_high_address.elf"
+        --high --secondary --expect _ZTIN12_GLOBAL__N_18HDerivedE
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_VERIFY}" ${AVM_RTTI_POLY_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic_cross_unit.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic_cross_unit.elf"
+        ${AVM_RTTI_POLY_LTO_TYPES}
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_VERIFY}" ${AVM_RTTI_POLY_PROBE_ARGS}
+        --image "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_polymorphic_cross_unit.bin"
+        --elf "${AVM_RTTI_LTO_BIN_DIR}/O2/rtti_polymorphic_cross_unit.elf"
+        ${AVM_RTTI_POLY_LTO_TYPES}
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_STATIC_VERIFY}"
+        --elf "${AVM_RTTI_POLY_LTO_ELF}" --image "${AVM_RTTI_POLY_LTO_IMAGE}"
+        --expect _ZTIN9rtti_poly13SharedDerivedE --expect _ZTIN9rtti_poly13InlineDerivedE
+        --expect _ZTIN9rtti_poly6SharedE --expect _ZTIN9rtti_poly6InlineE
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_CORRUPT_VERIFY}"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_polymorphic_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_polymorphic_corrupt_target.elf"
+        --scratch-dir "${AVM_CXX_TEST_BINARY_DIR}/rtti-corrupt-O0"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_POLY_CORRUPT_VERIFY}"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_polymorphic_corrupt_target.elf"
+        --scratch-dir "${AVM_CXX_TEST_BINARY_DIR}/rtti-corrupt-O2"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_BAD_TYPEID_VERIFY}"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_bad_typeid.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_bad_typeid.elf" --throws 6
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_BAD_TYPEID_VERIFY}"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_bad_typeid.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_bad_typeid.elf" --throws 6
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_STATIC_VERIFY}"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_bad_typeid.elf"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_bad_typeid.bin"
+        --expect _ZTISt10bad_typeid --expect _ZTISt9exception
+    DEPENDS avm_tests avm_eh_stack_probe avm_rtti_static_images llvm-avm-image llvm-objdump
+        avm_interpreter
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+
+# A mixed -frtti and -fno-rtti link. The high-address copy of the descriptor is selected
+# in one order, and the vtable's marker must reject that link. The window copy first links.
+set(AVM_RTTI_MIXED_LINK_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_mixed_link_verify.py")
+add_custom_target(avm_rtti_mixed_link_run
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_MIXED_LINK_VERIFY}"
+        --clang "$<TARGET_FILE:clang>"
+        --ld "$<TARGET_FILE_DIR:lld>/ld.lld"
+        --sysroot-lib "${AVM_SYSROOT_DIR}/lib"
+        --support-dir "${AVM_CXX_TEST_DIR}/support"
+        --scratch-dir "${AVM_CXX_TEST_BINARY_DIR}/rtti-mixed-link"
+    DEPENDS clang lld avm_sysroot
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+
 # Checks the AVEH5 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.
 set(AVM_EH_VERIFY_ARGS)
@@ -1862,6 +2029,8 @@ add_custom_target(avm_tests_run
 )
 add_dependencies(avm_tests_run avm_format_long_long_tests_run)
 add_dependencies(avm_tests_run avm_rtti_static_run)
+add_dependencies(avm_tests_run avm_rtti_polymorphic_run)
+add_dependencies(avm_tests_run avm_rtti_mixed_link_run)
 
 # A small, independently built debug image exercises nested frames, a live
 # global and local, both pointer spaces, button input, and delayed display

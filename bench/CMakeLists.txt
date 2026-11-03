@@ -29,14 +29,26 @@ set(AVM_BENCH_BASELINE_DISASSEMBLY
 
 # Build the single instruction-benchmark image. Its DEBUG_BREAK-delimited
 # intervals and benchmark_names.txt entries are consumed sequentially by the
-# benchmark runner.
+# benchmark runner. The compiled flash fixture supplies the immutable AS0 table
+# that the flash-window load intervals read; the compiler places it in .flash.
+set(AVM_BENCH_FLASH_FIXTURE_SOURCE
+    "${AVM_BENCH_DIR}/instruction_flash_fixture.c")
+set(AVM_BENCH_FLASH_FIXTURE_OBJECT
+    "${AVM_BENCH_BUILD_DIR}/instruction_flash_fixture.o")
 avm_add_object(
     OUTPUT "${AVM_BENCH_INSTRUCTION_OBJECT}"
     SOURCE "${AVM_BENCH_INSTRUCTION_SOURCE}"
     LANGUAGE ASM
 )
+avm_add_object(
+    OUTPUT "${AVM_BENCH_FLASH_FIXTURE_OBJECT}"
+    SOURCE "${AVM_BENCH_FLASH_FIXTURE_SOURCE}"
+    LANGUAGE C
+    INCLUDE_DIRS "${AVM_SYSROOT_DIR}/include"
+    DEPENDS avm_sysroot
+)
 avm_add_image(
-    OBJECTS "${AVM_BENCH_INSTRUCTION_OBJECT}"
+    OBJECTS "${AVM_BENCH_INSTRUCTION_OBJECT}" "${AVM_BENCH_FLASH_FIXTURE_OBJECT}"
     OUTPUT_ELF "${AVM_BENCH_INSTRUCTION_ELF}"
     OUTPUT_IMAGE "${AVM_BENCH_INSTRUCTION_IMAGE}"
     ENTRY _start

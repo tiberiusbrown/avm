@@ -116,12 +116,53 @@ mode is available for the assembly image.
 
 ## Compiler calibration after the fixed-register FF migration
 
-The 2026-10-26 RelWithDebInfo sweep records 866 instruction intervals (including
+The 2026-11-03 RelWithDebInfo sweep records 881 instruction intervals (including
 the 35-cycle adjacent-break baseline), 278 C workloads, and 8 C++ workloads.
 The instruction image moves inputs into the fixed registers before timing;
 each ordinary FF interval measures only its two-byte instruction. Sign
 operations cover all four register pairs. FPOLY covers counts 1, 3, 5, 9, and
 255, with inline coefficient reads included in the measured operation.
+
+The instruction image has three AS0 load memories. Addresses below `0x0B00`
+are RAM: static storage at `0x0100-0x04FF`, the framebuffer region, and the
+guest stack at `0x09xx`. Addresses `0x0B00-0xFFFF` read the external flash
+image through the AS0 flash window (see [docs/arch.md](../docs/arch.md#91-as0-flash-window)).
+Program-space (AS1) loads read the program image through the `LDP` family. The
+instruction image places the immutable table in `bench/instruction_flash_fixture.c`
+in the flash window, and the flash rows read it at `0x0B00`. Its 16 bytes are
+`12 34 56 78 90 AB CD EF 11 22 33 44 55 66 77 88`.
+
+Fifteen intervals measure AS0 flash-window loads. Each repeats the encoding of
+its RAM row and changes only the source address, so the two rows of a pair
+differ only in memory. The table gives each measured flash row and its RAM counterpart:
+
+| Flash row | RAM row | Flash cycles | RAM cycles |
+| --- | --- | ---: | ---: |
+| `LD8U r4,[r6]` (flash upper one-byte) | `LD8U r4,[r6]` (upper one-byte) | 232 | 20 |
+| `LD16 r4,[r6]` (flash upper one-byte) | `LD16 r4,[r6]` (upper one-byte) | 248 | 21 |
+| `LD8U r0,[r6]` (flash dense F5) | `LD8U r0,[r6]` (dense F5) | 256 | 43 |
+| `LD16 r0,[r6]` (flash dense F5) | `LD16 r0,[r6]` (dense F5) | 272 | 44 |
+| `LD8U r0,[r6+]` (flash dense F7) | `LD8U r0,[r6+]` (dense F7) | 264 | 43 |
+| `LD16 r0,[r6+]` (flash dense F7) | `LD16 r0,[r6+]` (dense F7) | 282 | 46 |
+| `LD8U r0,[r1]` (flash cold general F0) | `LD8U r0,[r1]` (cold general F0) | 298 | 72 |
+| `LD16 r0,[r1]` (flash cold general F0) | `LD16 r0,[r1]` (cold general F0) | 315 | 73 |
+| `LD8U r0,[r1+7]` (flash displaced ED) | `LD8U r0,[r1+7]` (displaced ED) | 262 | 56 |
+| `LD16 r0,[r1-5]` (flash displaced ED) | `LD16 r0,[r1-5]` (displaced ED) | 279 | 57 |
+| `LD8U r0,[r1+]` (flash cold general F0) | `LD8U r0,[r1+]` (cold general F0) | 305 | 78 |
+| `LD16 r0,[r1+]` (flash cold general F0) | `LD16 r0,[r1+]` (cold general F0) | 322 | 79 |
+| `LDM8U r0,avm_bench_flash_words` (flash absolute F0) | `LDM8U r0,0x0600` | 283 | 74 |
+| `LDM16 r0,avm_bench_flash_words` (flash absolute F0) | `LDM16 r0,0x0600` | 300 | 74 |
+| `LD32 q0,[r4]` (flash wide) | `LD32 q0,[r4]` | 329 | 84 |
+
+Each flash row uses the same encoding as its RAM row, and the interpreter selects
+its window path from the source address. Primary `LD8U` and `LD16` share one
+flash reader body. The F5 and F7 scalar forms have flash-capable entries of their
+own. ED-displaced and F0-absolute (`LDM8U`, `LDM16`) loads share one flash body
+that takes the access width from the slot.
+
+`tests/asm/flash_window_bench_loads.asm` checks the readback of every flash row
+against the same 16 bytes, so the timings are known to load the intended values.
+The `AS1` `LDP` rows and every `SYS` row keep their previous cycle counts.
 
 The backend's `AVMCycleCosts.def` and `AVMSchedule.td` use these measurements.
 The table below gives scheduling representatives and observed sample extrema;

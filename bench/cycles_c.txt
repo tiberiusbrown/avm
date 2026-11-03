@@ -311,7 +311,7 @@
       153341   poly8_guest.c
       105210   poly8_native.c
       298291   popcount.c
-     1937720   progmem_record_index.c
+     1937668   progmem_record_index.c
      2358308   progmem_walk.c
       531946   progmem_widen_ldp16.c
       721763   progmem_widen_ldp32_bytes.c

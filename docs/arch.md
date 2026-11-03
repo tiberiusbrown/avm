@@ -208,6 +208,8 @@ ld.lld: error: AVM flash window overflow:
 
 The window section begins on a 256-byte boundary, so an input alignment above 256 bytes is rejected. A `.flash` section that is writable, executable, or not `SHT_PROGBITS` is also rejected. A custom `SECTIONS` layout must place `.flash` at `0x0B00`, and the same checks apply to it.
 
+A window load is much slower than the RAM load of the same encoding. The 2026-11-03 cycle report measures window loads at 232 to 329 cycles, against 20 to 84 cycles for the RAM forms ([bench/README.md](../bench/README.md)). The compiler's cost model charges a load from a window object at those measured costs, so an optimization that creates a table weighs the lookup against the work it replaces.
+
 The interpreter implements scalar loads, `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat`, every `memcmp`, `strcmp`, `memcmp_P`, and `strcmp_P` combination of AS0 and AS1 operands, window-backed format strings for `vsnprintf`, `vsnprintf_P`, `draw_textfv`, `draw_textfv_P`, and `debug_printfv`, window `%s` arguments, and window raw text for `draw_text`. A comparison with any window operand returns `-1`, `0`, or `+1`. Stores to the window and `%n` destinations in the window are outside this behaviour. See [isa_interpreter_implementation.md](isa_interpreter_implementation.md) for the implementation contract and cycle costs.
 
 Access to unsupported, reserved, or platform-defined addresses has target-defined behavior and may be rejected by a validating implementation.

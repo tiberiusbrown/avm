@@ -16,6 +16,8 @@
 ; Coverage policy:
 ;   * Distinct upper, dense/full, displaced, cold, absolute, postincrement,
 ;     program-space, and 32-bit implementation paths are benchmarked separately.
+;     Each AS0 load from the flash window has a row beside its RAM row, using
+;     the compiled table in instruction_flash_fixture.c at AS0 0x0B00.
 ;   * Conditional instructions are measured both taken/true and not-taken/false.
 ;   * Every variable and immediate 16-bit shift family is measured at counts
 ;     0 through 15.
@@ -4583,6 +4585,15 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: LD8U r4,[r6] (flash upper one-byte)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, avm_bench_flash_words
+    sys debug_break
+    .byte 0x42
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: ST8 [r6],r5 (upper one-byte)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -4600,6 +4611,15 @@ _start:
     ldi16 r5, 0xa55a
     st16 [r6], r5
     ldi16 r6, 0x0600
+    sys debug_break
+    .byte 0x62
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD16 r4,[r6] (flash upper one-byte)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, avm_bench_flash_words
     sys debug_break
     .byte 0x62
     sys debug_break
@@ -4637,6 +4657,15 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: LD8U r0,[r6] (flash dense F5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, avm_bench_flash_words
+    sys debug_break
+    .byte 0xf5, 0x38
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: LD16 r0,[r6] (dense F5)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -4644,6 +4673,15 @@ _start:
     ldi16 r5, 0xa55a
     st16 [r6], r5
     ldi16 r6, 0x0600
+    sys debug_break
+    .byte 0xf5, 0x48
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD16 r0,[r6] (flash dense F5)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, avm_bench_flash_words
     sys debug_break
     .byte 0xf5, 0x48
     sys debug_break
@@ -4671,6 +4709,15 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: LD8U r0,[r6+] (flash dense F7)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, avm_bench_flash_words
+    sys debug_break
+    .byte 0xf7, 0x10
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: LD16 r0,[r6+] (dense F7)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -4678,6 +4725,15 @@ _start:
     ldi16 r5, 0xa55a
     st16 [r6], r5
     ldi16 r6, 0x0600
+    sys debug_break
+    .byte 0xf7, 0x30
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD16 r0,[r6+] (flash dense F7)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r6, avm_bench_flash_words
     sys debug_break
     .byte 0xf7, 0x30
     sys debug_break
@@ -4715,6 +4771,15 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: LD8U r0,[r1] (flash cold general F0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, avm_bench_flash_words
+    sys debug_break
+    .byte 0xf0, 0x6c, 0x02
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: LD16 r0,[r1] (cold general F0)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -4722,6 +4787,15 @@ _start:
     ldi16 r5, 0xa55a
     st16 [r6], r5
     ldi16 r1, 0x0600
+    sys debug_break
+    .byte 0xf0, 0x6c, 0x12
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD16 r0,[r1] (flash cold general F0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, avm_bench_flash_words
     sys debug_break
     .byte 0xf0, 0x6c, 0x12
     sys debug_break
@@ -4759,6 +4833,15 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: LD8U r0,[r1+7] (flash displaced ED)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, avm_bench_flash_words
+    sys debug_break
+    ld8u r0, [r1+7]
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: LD16 r0,[r1-5] (displaced ED)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -4766,6 +4849,15 @@ _start:
     ldi16 r5, 0xa55a
     st16 [r6], r5
     ldi16 r1, 0x0608
+    sys debug_break
+    ld16 r0, [r1-5]
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD16 r0,[r1-5] (flash displaced ED)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, avm_bench_flash_words+5
     sys debug_break
     ld16 r0, [r1-5]
     sys debug_break
@@ -4803,6 +4895,15 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: LD8U r0,[r1+] (flash cold general F0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, avm_bench_flash_words
+    sys debug_break
+    .byte 0xf0, 0x6c, 0x03
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: LD16 r0,[r1+] (cold general F0)
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -4810,6 +4911,15 @@ _start:
     ldi16 r5, 0xa55a
     st16 [r6], r5
     ldi16 r1, 0x0600
+    sys debug_break
+    .byte 0xf0, 0x6c, 0x13
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD16 r0,[r1+] (flash cold general F0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r1, avm_bench_flash_words
     sys debug_break
     .byte 0xf0, 0x6c, 0x13
     sys debug_break
@@ -4937,6 +5047,14 @@ _start:
     sys debug_break
 
 ; -----------------------------------------------------------------------------
+; BENCH: LDM8U r0,avm_bench_flash_words (flash absolute F0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    sys debug_break
+    ldm8u r0, [avm_bench_flash_words]
+    sys debug_break
+
+; -----------------------------------------------------------------------------
 ; BENCH: STM8 0x0600,r0
 ; -----------------------------------------------------------------------------
     bench_reset_sp
@@ -4954,6 +5072,14 @@ _start:
     st16 [r6], r5
     sys debug_break
     .byte 0xf0, 0x50, 0x00, 0x06
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LDM16 r0,avm_bench_flash_words (flash absolute F0)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    sys debug_break
+    ldm16 r0, [avm_bench_flash_words]
     sys debug_break
 
 ; -----------------------------------------------------------------------------
@@ -4976,6 +5102,15 @@ _start:
     ldi16 r5, 0x7856
     st16 [r6], r5
     ldi16 r4, 0x0600
+    sys debug_break
+    .byte 0xf0, 0x6a, 0x08
+    sys debug_break
+
+; -----------------------------------------------------------------------------
+; BENCH: LD32 q0,[r4] (flash wide)
+; -----------------------------------------------------------------------------
+    bench_reset_sp
+    ldi16 r4, avm_bench_flash_words
     sys debug_break
     .byte 0xf0, 0x6a, 0x08
     sys debug_break

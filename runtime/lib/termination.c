@@ -2,5 +2,5 @@
 #include "../crt/init_fini.h"
 
 void __avm_terminate(void) {
-    avm_run_destructors();
+    __avm_run_destructors();
 }

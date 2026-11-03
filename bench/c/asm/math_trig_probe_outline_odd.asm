@@ -3,7 +3,7 @@ math_trig_probe_outline_odd.elf:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
-00000223 l     F .text	00000044 avm_run_constructors
+00000223 l     F .text	00000044 __avm_run_constructors
 000009fc l       *ABS*	00000000 .hidden __avm_crt_termination_phase
 00000000 l    df *ABS*	00000000 math_trig_probe_outline_odd.c
 00000100 l     O .data	00000020 probe_inputs
@@ -52,7 +52,7 @@ Disassembly of section .text:
  d6 fe                 adjsp	-0x2
  a0                    xor	r4, r4
  f4 40                 stsp16	[sp+0x0], r4
- d5 1b                 call8	avm_run_constructors
+ d5 1b                 call8	__avm_run_constructors
  d5 5d                 call8	avm_test_main
  f0 00 46              ldi8	r0, 0x46
  c1 50                 ldi8	r5, 0x50
@@ -66,7 +66,7 @@ Disassembly of section .text:
  d7 01                 sys	debug_break
  e1 9f 00              call16	avm_halt
 
-<avm_run_constructors>:
+<__avm_run_constructors>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1

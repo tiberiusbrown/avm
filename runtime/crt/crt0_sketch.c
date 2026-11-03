@@ -6,7 +6,7 @@ extern void loop(void);
 __attribute__((noreturn, used, section(".text._start")))
 void _start(void) {
     __builtin_avm_termination_context();
-    avm_run_constructors();
+    __avm_run_constructors();
     setup();
     for (;;)
         loop();

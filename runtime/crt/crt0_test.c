@@ -13,7 +13,7 @@ static void test_putc(uint8_t value) {
 __attribute__((noreturn, used, section(".text._start")))
 void _start(void) {
     __builtin_avm_termination_context();
-    avm_run_constructors();
+    __avm_run_constructors();
     const int result = avm_test_main();
     __avm_terminate();
 

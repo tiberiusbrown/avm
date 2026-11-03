@@ -4,8 +4,8 @@ crt0_test.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
 00000000 l    d  .text._start	00000000 .text._start
-00000000 l     F .text.avm_run_constructors	0000004c avm_run_constructors
-00000000 l    d  .text.avm_run_constructors	00000000 .text.avm_run_constructors
+00000000 l     F .text.__avm_run_constructors	0000004c __avm_run_constructors
+00000000 l    d  .text.__avm_run_constructors	00000000 .text.__avm_run_constructors
 00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text._start	00000029 _start
 00000000         *UND*	00000000 avm_test_main
@@ -24,7 +24,7 @@ Disassembly of section .text._start:
  f4 40                 stsp16	[sp+0x0], r4
  e3 00 00 00           callf	_start
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_run_constructors
+		R_AVM_FAR24	.text.__avm_run_constructors
  e3 00 00 00           callf	_start
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	avm_test_main
@@ -44,9 +44,9 @@ Disassembly of section .text._start:
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	avm_halt
 
-Disassembly of section .text.avm_run_constructors:
+Disassembly of section .text.__avm_run_constructors:
 
-<avm_run_constructors>:
+<__avm_run_constructors>:
  b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
@@ -63,8 +63,8 @@ Disassembly of section .text.avm_run_constructors:
  f0 69 c8              cmp32	q3, q2
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	avm_run_constructors
-		R_AVM_FAR24	.text.avm_run_constructors+0x45
+ e2 00 00 00           jmpf	__avm_run_constructors
+		R_AVM_FAR24	.text.__avm_run_constructors+0x45
 <L0>:
  f0 04 00 00           ldi16	r0, 0x0
 		R_AVM_PROG_LO16	__init_array_start
@@ -88,8 +88,8 @@ Disassembly of section .text.avm_run_constructors:
  f0 69 84              cmp32	q2, q1
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	avm_run_constructors
-		R_AVM_FAR24	.text.avm_run_constructors+0x2e
+ e2 00 00 00           jmpf	__avm_run_constructors
+		R_AVM_FAR24	.text.__avm_run_constructors+0x2e
 <L1>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0

@@ -329,7 +329,7 @@ void report(std::ostream& out, std::vector<Profile> const& profiles, Profile con
         if(!catalogue.count(row.label)) throw std::runtime_error("Executed form absent from decoder catalogue: " + row.label);
     out << "AVM instruction mix profiling report\n"
         << "Optimization: " << optimization << "; benchmarks: " << profiles.size() << "; AVM ABI v2\n"
-        << identity << "\n"
+        << (identity.empty() ? std::string() : identity + "\n")
         << "Metric: elapsed emulated AVR cycles between consecutive AVM primary-dispatch\n"
         << "boundaries, including dispatch and operand-dependent work. Interrupts suppressed.\n"
         << "Setup and both DEBUG_BREAK markers excluded; no estimated/rescaled costs.\n"
@@ -371,7 +371,7 @@ void report(std::ostream& out, std::vector<Profile> const& profiles, Profile con
             << double(p.cycles)/double(p.executions) << " cycles/op\n"
             << "  raw " << p.raw << " - baseline " << baseline.raw << " = " << p.cycles
             << "; leading " << p.leading << "; trailing " << p.trailing << "; normal delta 0\n"
-            << "  image SHA256 " << p.image_hash << "\n  Families:";
+            << "  Families:";
         auto local = aggregate({p}, true);
         for(size_t i = 0; i < std::min<size_t>(6, local.size()); ++i)
             out << ' ' << local[i].label << ' ' << local[i].pooled << '%';

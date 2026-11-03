@@ -593,7 +593,6 @@ void run_instruction_mix(options_t const& options)
         auto normal = sessions[worker]->measure(benchmarks[i].image);
         auto p = profile(worker, benchmarks[i].image);
         p.name = benchmarks[i].name;
-        p.image_hash = avm_mix::file_hash(benchmarks[i].image);
         avm_mix::reconcile(p, baselines[worker], normal);
         profiles[i] = std::move(p);
     });
@@ -605,11 +604,7 @@ void run_instruction_mix(options_t const& options)
     }
     // Format/validate completely before replacing the committed report.
     std::ostringstream report;
-    avm_mix::report(report, profiles, baseline, catalogue,
-        "Interpreter HEX SHA256 " + avm_mix::file_hash(options.interpreter) +
-        "\nBaseline image SHA256 " + avm_mix::file_hash(options.c_baseline) +
-        "\nCompiler executable SHA256 " + avm_mix::file_hash(AVM_BENCH_COMPILER_BIN),
-        AVM_BENCH_OPT_LEVEL);
+    avm_mix::report(report, profiles, baseline, catalogue, "", AVM_BENCH_OPT_LEVEL);
     auto output = open_output(options.mix_output);
     output << report.str();
     output.flush();

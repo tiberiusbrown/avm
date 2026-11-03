@@ -156,8 +156,7 @@ from the adjacent-marker baseline. Their sum is subtracted exactly; neither
 marker contributes an execution. The sum of boundary costs must equal the raw
 stop-to-stop interval minus that baseline and must match an independent normal
 benchmark run. Any discrepancy fails before replacing the report. Setup outside
-the markers is excluded. The header records firmware, compiler executable,
-baseline and workload image SHA256 identities without timestamps or host paths.
+the markers is excluded. The report omits timestamps and host paths.
 
 The primary balanced percentages give each workload equal weight; pooled
 percentages weight all measured cycles equally. Tables sort by balanced share,

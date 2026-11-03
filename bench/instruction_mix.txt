@@ -1,8 +1,5 @@
 AVM instruction mix profiling report
 Optimization: O2; benchmarks: 25; AVM ABI v2
-Interpreter HEX SHA256 f7284a683fccf0d3eeac27c806ce0f123d4f10bdb7ae95bc51f93688e2326ef7
-Baseline image SHA256 25f2b10858dfa5c787bab973282d99ccfdabfed7d2ca521f104f5b93d99c959e
-Compiler executable SHA256 59f65476adaa329b4ff578a0c1b7c645037adcff15d82c62521a0dc27114d3aa
 Metric: elapsed emulated AVR cycles between consecutive AVM primary-dispatch
 boundaries, including dispatch and operand-dependent work. Interrupts suppressed.
 Setup and both DEBUG_BREAK markers excluded; no estimated/rescaled costs.
@@ -179,103 +176,78 @@ TOTAL: balanced 100.000%; pooled 100.000%; 35517566 cycles; 721918 executions; 4
 Per-benchmark breakdown
 loop_shapes.c: 3437912 cycles; 77603 executions; 44.301 cycles/op
   raw 3437947 - baseline 35 = 3437912; leading 15; trailing 20; normal delta 0
-  image SHA256 c159eaa1d239809b424b1035034500b3bf0328c040607457ad59e7a0046f67c9
   Families: BRANCH 31.596% MOV 17.002% CMP 15.079% ADD 10.381% SUB 8.843% LOAD 6.479%
 state_machine.c: 7151772 cycles; 157129 executions; 45.515 cycles/op
   raw 7151807 - baseline 35 = 7151772; leading 15; trailing 20; normal delta 0
-  image SHA256 2fe2731a3cfd46928b6db545dee4d2787bd644be33d523094adc4ce568f19bc1
   Families: BRANCH 34.588% CMP 18.004% LOAD 12.301% MOV 8.777% SUB 5.525% EXTEND 4.239%
 pointer_walk.c: 938003 cycles; 18531 executions; 50.618 cycles/op
   raw 938038 - baseline 35 = 938003; leading 15; trailing 20; normal delta 0
-  image SHA256 17cdd0f67a7ed0e84352e19a908998b3ab1100791a3235304beb2fa63e026412
   Families: BRANCH 28.870% ADD 16.658% XOR 11.572% LOAD 9.388% CMP 8.609% STORE 8.304%
 small_memops.c: 328645 cycles; 6596 executions; 49.825 cycles/op
   raw 328680 - baseline 35 = 328645; leading 15; trailing 20; normal delta 0
-  image SHA256 3856181b02c6d391a25ed4ca85812ac8e72708005778caf98f39567b6c493e06
   Families: LOAD 46.114% MOV 21.622% SYS 16.339% ADD 11.412% BRANCH 2.680% CMP 0.740%
 progmem_walk.c: 2358308 cycles; 42180 executions; 55.911 cycles/op
   raw 2358343 - baseline 35 = 2358308; leading 15; trailing 20; normal delta 0
-  image SHA256 28310930c64ef2263a5a7220653b16cfa3d0458354d230d46b367b3450634dd3
   Families: LOAD 33.243% ADD 17.264% BRANCH 14.283% MOV 12.224% SHIFT 7.012% AND 5.905%
 stack_frames.c: 2452217 cycles; 52824 executions; 46.422 cycles/op
   raw 2452252 - baseline 35 = 2452217; leading 15; trailing 20; normal delta 0
-  image SHA256 ec7aa5f3b0004d8086658e0f4249d055d2845c698e56a10240f70b9a00f0ae40
   Families: BRANCH 34.844% LOAD 11.898% ADD 11.038% CMP 10.687% SUB 10.413% STORE 7.205%
 mixed_width.c: 1070101 cycles; 23187 executions; 46.151 cycles/op
   raw 1070136 - baseline 35 = 1070101; leading 15; trailing 20; normal delta 0
-  image SHA256 b017f87101ab15bf98fec0c6ee79f4301a7fd8d5f2c83ab846d348243efee8ec
   Families: LOAD 26.755% SHIFT 17.512% ADD 16.181% MOV 13.977% STORE 8.581% BRANCH 6.359%
 multiply.c: 774149 cycles; 20044 executions; 38.622 cycles/op
   raw 774184 - baseline 35 = 774149; leading 15; trailing 20; normal delta 0
-  image SHA256 0decf372fb5a53d223153ea4dbcdd1f8da9292a254b0ec4c3d34e7a15ef3d95c
   Families: LOAD 24.444% MOV 21.203% ADD 20.079% BRANCH 8.754% MUL 8.598% AND 5.622%
 wide_shifts.c: 218919 cycles; 4510 executions; 48.541 cycles/op
   raw 218954 - baseline 35 = 218919; leading 15; trailing 20; normal delta 0
-  image SHA256 332a9506d33281a45c494aca9eeef91225f0dd453ef070cb29b8e0d834e25410
   Families: BRANCH 18.628% CALL/RET 16.708% LOAD 13.212% STORE 9.634% MOV 9.341% CMP 8.655%
 wide_divmod.c: 2403650 cycles; 46125 executions; 52.112 cycles/op
   raw 2403685 - baseline 35 = 2403650; leading 15; trailing 20; normal delta 0
-  image SHA256 afef6fb70902385dcd08ff99721a16b2c391f23bc9ca434281e27c09a93d91ea
   Families: LOAD 32.503% STORE 24.712% BRANCH 9.102% CMP 7.811% SHIFT 6.771% MOV 5.638%
 fixed_point.c: 6783372 cycles; 174595 executions; 38.852 cycles/op
   raw 6783407 - baseline 35 = 6783372; leading 15; trailing 20; normal delta 0
-  image SHA256 66b1bf895ff7b2c2e28fc2b784b7b6a8d21a18217c3991978ca15c6394a32eb6
   Families: LOAD 16.098% MOV 14.170% SHIFT 12.590% STORE 10.242% ADD 9.848% CALL/RET 7.669%
 float.c: 947415 cycles; 15239 executions; 62.170 cycles/op
   raw 947450 - baseline 35 = 947415; leading 15; trailing 20; normal delta 0
-  image SHA256 def075d6562f421e440a99cdc10932ef458892293815e4c27552af5bafe0c5e7
   Families: MOV 23.085% FADD 17.902% FDIV 14.255% LOAD 11.475% FMUL 4.992% STORE 4.954%
 float_conversions.c: 617159 cycles; 10841 executions; 56.928 cycles/op
   raw 617194 - baseline 35 = 617159; leading 15; trailing 20; normal delta 0
-  image SHA256 ec0feee6dd70dd28cced74298ef5c172b41da74df2d78a61c95d0079ba359a89
   Families: MOV 24.039% FCONVERT 21.783% FADD 15.518% LOAD 11.211% ADD 6.949% FMUL 5.973%
 float_comparisons.c: 829089 cycles; 19851 executions; 41.766 cycles/op
   raw 829124 - baseline 35 = 829089; leading 15; trailing 20; normal delta 0
-  image SHA256 599cfd48d2cfe71be9995fccaf4a30a58efda40937be59afa70dfb5a1465e054
   Families: LOAD 20.211% SELECT 14.352% MOV 11.473% FCMP 10.878% STORE 10.789% CMP 10.013%
 math_exp2.c: 153828 cycles; 2133 executions; 72.118 cycles/op
   raw 153863 - baseline 35 = 153828; leading 15; trailing 20; normal delta 0
-  image SHA256 ad79909365016f9d96b8e917e5b26bc24895da786690cec53f6d47ef90817899
   Families: FPOLY 26.835% MOV 16.155% BRANCH 9.783% LOAD 7.759% CALL/RET 5.284% FCONVERT 4.558%
 math_expm1.c: 151198 cycles; 1747 executions; 86.547 cycles/op
   raw 151233 - baseline 35 = 151198; leading 15; trailing 20; normal delta 0
-  image SHA256 3c4b6b55894883da94434466d2b270966530781e66e53a9b26ef74d2014b7a16
   Families: FPOLY 34.418% MOV 15.538% BRANCH 8.947% LOAD 7.291% CALL/RET 6.696% CMP 6.098%
 math_log1p.c: 159582 cycles; 1943 executions; 82.132 cycles/op
   raw 159617 - baseline 35 = 159582; leading 15; trailing 20; normal delta 0
-  image SHA256 201a4895068d0683c609ec2977c5e1f7ebf981453eaa036dc2e40ac663140e6e
   Families: FPOLY 33.261% MOV 15.556% LOAD 7.289% BRANCH 7.136% CALL/RET 5.093% FMUL 4.933%
 math_cbrt.c: 220568 cycles; 2915 executions; 75.667 cycles/op
   raw 220603 - baseline 35 = 220568; leading 15; trailing 20; normal delta 0
-  image SHA256 444d4660d202f2403f7c161cda10fb286fd9f6ffaa3da10157506deec004782c
   Families: FPOLY 32.386% MOV 17.403% LOAD 7.410% BRANCH 6.789% STORE 4.483% ADD 4.175%
 math_asin.c: 158824 cycles; 2131 executions; 74.530 cycles/op
   raw 158859 - baseline 35 = 158824; leading 15; trailing 20; normal delta 0
-  image SHA256 0fccdd85fa90373f1749a4cd7aa9359cd0bf95707aa053bdfd8c5c511f6a3366
   Families: FPOLY 19.740% MOV 16.250% FMUL 12.376% LOAD 8.039% BRANCH 6.578% CALL/RET 5.118%
 math_acos.c: 162054 cycles; 2179 executions; 74.371 cycles/op
   raw 162089 - baseline 35 = 162054; leading 15; trailing 20; normal delta 0
-  image SHA256 e9f52882b41209345ee0e76debba6dd345be437ca81cd2732ad08ccee37d406c
   Families: FPOLY 19.347% MOV 16.637% FMUL 12.129% LOAD 7.365% BRANCH 6.447% FSUB 5.288%
 math_frexp.c: 99204 cycles; 2079 executions; 47.717 cycles/op
   raw 99239 - baseline 35 = 99204; leading 15; trailing 20; normal delta 0
-  image SHA256 f2d267ed17d33266381f6fda1450114bee307d1cd170319ebbade656b9eb5d02
   Families: MOV 23.081% LOAD 13.717% BRANCH 10.672% ADD 8.411% CALL/RET 8.193% STORE 7.935%
 math_nextafter.c: 131005 cycles; 2425 executions; 54.023 cycles/op
   raw 131040 - baseline 35 = 131005; leading 15; trailing 20; normal delta 0
-  image SHA256 584e113a67fafc69b996c5f6e630522b4d7aa05e0a51e7ae310f3fc42a91e8d3
   Families: MOV 20.782% BRANCH 17.979% LOAD 13.752% CMP 12.140% AND 6.644% CALL/RET 6.204%
 math_classify.c: 124021 cycles; 3076 executions; 40.319 cycles/op
   raw 124056 - baseline 35 = 124021; leading 15; trailing 20; normal delta 0
-  image SHA256 492cb3b1eed96c1de52e92cffc8fbef52fab63434c1dee4f8b86a51a63de6f52
   Families: MOV 32.865% LOAD 11.585% BRANCH 8.617% ADD 8.231% SELECT 8.073% CMP 7.586%
 tile_cache_render.c: 3139912 cycles; 19744 executions; 159.031 cycles/op
   raw 3139947 - baseline 35 = 3139912; leading 15; trailing 20; normal delta 0
-  image SHA256 2c203eabd241205a618bca374deec9663d6dc08ef724e9f2c0c899d68ffb13cd
   Families: SYS 75.767% BRANCH 5.647% LOAD 5.167% CMP 4.269% MOV 3.889% ADD 3.791%
 virtual_dispatch.cpp: 706659 cycles; 12291 executions; 57.494 cycles/op
   raw 706694 - baseline 35 = 706659; leading 15; trailing 20; normal delta 0
-  image SHA256 5ea1d934fe7d75aced206768ee60638335cf40fbe2967b6bfc68be6a433b973a
   Families: LOAD 35.357% BRANCH 17.810% CALL/RET 17.751% ADD 10.796% STACK 5.362% MOV 5.162%
 
 Encoding coverage

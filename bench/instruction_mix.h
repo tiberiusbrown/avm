@@ -38,7 +38,7 @@ struct PcCounter {
     Counter cost;
 };
 struct Profile {
-    std::string name, image_hash;
+    std::string name;
     uint64_t raw = 0, leading = 0, trailing = 0;
     uint64_t cycles = 0, executions = 0;
     std::map<uint32_t, PcCounter> pcs;

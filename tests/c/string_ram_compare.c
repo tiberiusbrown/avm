@@ -27,21 +27,23 @@ NOINLINE size_t test_call_strlen(const char *src)
 
 int avm_test_main(void)
 {
-    static const uint8_t eq_a[] = {0x11, 0x22, 0x33, 0x44, 0x55};
-    static const uint8_t eq_b[] = {0x11, 0x22, 0x33, 0x44, 0x55};
-    static const uint8_t low[] = {0x11, 0x22, 0x01, 0x44, 0x55};
-    static const uint8_t high[] = {0x11, 0x22, 0xff, 0x44, 0x55};
-    static const uint8_t high2[] = {0x11, 0x22, 0xfe, 0x44, 0x55};
-    static const uint8_t low2[] = {0x11, 0x22, 0x02, 0x44, 0x55};
-    static const uint8_t late_a[] = {1, 2, 3, 4, 0x55};
-    static const uint8_t late_b[] = {1, 2, 3, 4, 0x50};
+    // These operands stay in SRAM. Const objects live in the flash window, and
+    // comparisons that read both operands from flash return only the sign.
+    static uint8_t eq_a[] = {0x11, 0x22, 0x33, 0x44, 0x55};
+    static uint8_t eq_b[] = {0x11, 0x22, 0x33, 0x44, 0x55};
+    static uint8_t low[] = {0x11, 0x22, 0x01, 0x44, 0x55};
+    static uint8_t high[] = {0x11, 0x22, 0xff, 0x44, 0x55};
+    static uint8_t high2[] = {0x11, 0x22, 0xfe, 0x44, 0x55};
+    static uint8_t low2[] = {0x11, 0x22, 0x02, 0x44, 0x55};
+    static uint8_t late_a[] = {1, 2, 3, 4, 0x55};
+    static uint8_t late_b[] = {1, 2, 3, 4, 0x50};
 
-    static const char alpha[] = "Alpha";
-    static const char alphz[] = "Alphz";
-    static const char cat[] = "cat";
-    static const char catalog[] = "catalog";
-    static const char unsigned_hi[] = {(char)0xf0, '\0'};
-    static const char unsigned_lo[] = {(char)0x10, '\0'};
+    static char alpha[] = "Alpha";
+    static char alphz[] = "Alphz";
+    static char cat[] = "cat";
+    static char catalog[] = "catalog";
+    static char unsigned_hi[] = {(char)0xf0, '\0'};
+    static char unsigned_lo[] = {(char)0x10, '\0'};
 
     static char long_text[261];
     for(uint16_t i = 0; i < 260; ++i)

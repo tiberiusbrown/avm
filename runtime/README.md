@@ -265,6 +265,20 @@ memcpy(dst, ram, n);
 memcpy_P(dst, flash, n);
 ~~~
 
+Immutable address-space-zero objects and string literals need no program-memory
+name. The compiler places them in the AS0 flash window automatically, and an
+ordinary AS0 pointer reads them through the same SYS services as RAM. Writable
+objects, including a writable pointer that refers to a literal, stay in RAM. An
+object that needs runtime initialization, or that has a writable `mutable`
+member, also stays in RAM. The window holds at most 62,720 bytes of retained
+objects. The `_P` names remain the way to read address-space-one data.
+
+~~~c
+static const char message[] = "Hello";   /* flash window */
+static const char *current = message;     /* RAM pointer to a flash object */
+memcpy(dst, message, sizeof message);     /* AS0 pointer, no _P name */
+~~~
+
 C++ normally uses one name. Overload resolution selects from the source
 pointer type:
 

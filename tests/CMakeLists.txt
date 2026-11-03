@@ -155,6 +155,9 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME STREQUAL "complex_abi")
             set(test_support_sources "${AVM_C_TEST_DIR}/support/complex_abi_impl.c")
         endif()
+        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME STREQUAL "flash_cross_unit")
+            set(test_support_sources "${AVM_C_TEST_DIR}/support/flash_cross_unit_impl.c")
+        endif()
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
         set(test_include_dirs "${AVM_SYSROOT_DIR}/include")
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
@@ -192,6 +195,10 @@ foreach(AVM_TEST_LANGUAGE C CXX)
 
         if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_OPT_LEVEL STREQUAL "O2"
            AND AVM_TEST_NAME MATCHES "^(atexit_|termination_)")
+            list(APPEND test_compile_options -flto=full)
+        endif()
+        # Flash placement must also survive whole-program optimization.
+        if(AVM_TEST_OPT_LEVEL STREQUAL "O2" AND AVM_TEST_NAME MATCHES "^flash_")
             list(APPEND test_compile_options -flto=full)
         endif()
         if(AVM_TEST_NAME MATCHES "^(atexit_|termination_)")
@@ -253,10 +260,13 @@ foreach(AVM_TEST_LANGUAGE C CXX)
                 "--section-start=.high_setjmp_text=0x10100")
         elseif(AVM_TEST_NAME STREQUAL "progmem_address_hoisting")
             # Exercise high program bases, low-word carries and wide offsets.
+            # The immutable AS0 tables are flash-window objects. They need their
+            # architectural VMA, and code must start after their image bytes.
             list(APPEND test_link_options
                 "--image-base=0x100"
                 "--section-start=.data=0x100"
-                "--section-start=.text=0x200"
+                "--section-start=.flash=0x0B00"
+                "--section-start=.text=0x600"
                 "--section-start=.rodata=0x10000"
                 "--section-start=.high_program_bytes=0x1FFFC")
         endif()

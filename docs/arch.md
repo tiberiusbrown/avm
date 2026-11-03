@@ -183,13 +183,32 @@ The conventional runtime layout is:
 | `0x0500-0x08FF` | 1,024 bytes | Display framebuffer |
 | `0x0900-0x09FF` | 256 bytes | VM stack |
 | `0x0A00-0x0AFF` | 256 bytes | Runtime-reserved data |
-| `0x0B00-0xFFFF` | — | Read-only AS0 flash window in the AVM interpreter; otherwise platform-defined |
+| `0x0B00-0xFFFF` | 62,720 bytes | Read-only AS0 flash window for immutable objects (section 9.1); otherwise platform-defined |
 
 The null data pointer is `0x0000`.
 
-### 9.1. AS0 flash window (interpreter feature)
+### 9.1. AS0 flash window
 
-The AVM interpreter treats a read whose 16-bit AS0 address lies in `0x0B00-0xFFFF` as a read of the external W25Q128 image at the fixed image-relative offset `address - 0x0600`, which covers image offsets `0x0500-0xF9FF`. The current image-page base is applied as for all program-space reads. The window is read-only, and it does not change the ISA encoding, the pointer width, or the program address space. Writes to the window, guest objects that cross `0x0AFF/0x0B00`, and C/C++ objects that are not explicitly placed there are not covered by this behaviour. Compiler and linker support for placing objects in the window is not yet implemented. The interpreter implements scalar loads, `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat`, every `memcmp`, `strcmp`, `memcmp_P`, and `strcmp_P` combination of AS0 and AS1 operands, window-backed format strings for `vsnprintf`, `vsnprintf_P`, `draw_textfv`, `draw_textfv_P`, and `debug_printfv`, window `%s` arguments, and window raw text for `draw_text`. A comparison with any window operand returns `-1`, `0`, or `+1`. Stores to the window and `%n` destinations in the window are outside this behaviour. See [isa_interpreter_implementation.md](isa_interpreter_implementation.md) for the implementation contract and cycle costs.
+The AVM interpreter treats a read whose 16-bit AS0 address lies in `0x0B00-0xFFFF` as a read of the external W25Q128 image at the fixed image-relative offset `address - 0x0600`, which covers image offsets `0x0500-0xF9FF`. The current image-page base is applied as for all program-space reads. The window is read-only, and it does not change the ISA encoding, the pointer width, or the program address space. Stores to the window, and guest objects that cross `0x0AFF/0x0B00`, are outside this behaviour.
+
+The compiler, linker, and image packer place immutable AS0 objects in the window automatically:
+
+- An AS0 global variable is placed in the window when LLVM marks it constant (`GlobalVariable::isConstant`), has an initializer, is not thread-local or externally initialized, has no explicit section, and is a definition that contributes storage. Clang clears that property for objects that need runtime initialization and for objects with writable `mutable` subobjects, so those stay in `.data`. Whole-program vtable blobs that carry type metadata also stay in `.data`, because dispatch reads them with program-space loads.
+- A string literal is placed in the window unless the translation unit keeps it writable, as `-fwritable-strings` does.
+- Writable globals, writable pointers that refer to window objects, and AS1 objects do not move.
+- Each object keeps its own `.flash.<symbol>` input section under `-fdata-sections`, so unused objects are garbage collected. Merged literals keep their merge sections, COMDAT groups keep their group semantics, and weak definitions keep their normal resolution.
+
+A window object has an ELF VMA in `0x0B00-0xFFFF` and stores its bytes at image offset `VMA - 0x0600`. A pointer to a window object is an ordinary 16-bit AS0 address, so `R_AVM_DATA16` produces it with no run-time adjustment. The retained window contents, including alignment padding and merged literals, may not exceed `0xF500` (62,720) bytes. The linker measures this size after garbage collection, COMDAT selection, literal merging, and layout, so an unreferenced oversized object does not count. An overflow fails the link:
+
+```text
+ld.lld: error: AVM flash window overflow:
+62721 bytes required, 62720 bytes available
+(AS0 addresses 0x0B00-0xFFFF)
+```
+
+The window section begins on a 256-byte boundary, so an input alignment above 256 bytes is rejected. A `.flash` section that is writable, executable, or not `SHT_PROGBITS` is also rejected. A custom `SECTIONS` layout must place `.flash` at `0x0B00`, and the same checks apply to it.
+
+The interpreter implements scalar loads, `memcpy`, `memmove`, `strlen`, `strncpy`, `strncat`, every `memcmp`, `strcmp`, `memcmp_P`, and `strcmp_P` combination of AS0 and AS1 operands, window-backed format strings for `vsnprintf`, `vsnprintf_P`, `draw_textfv`, `draw_textfv_P`, and `debug_printfv`, window `%s` arguments, and window raw text for `draw_text`. A comparison with any window operand returns `-1`, `0`, or `+1`. Stores to the window and `%n` destinations in the window are outside this behaviour. See [isa_interpreter_implementation.md](isa_interpreter_implementation.md) for the implementation contract and cycle costs.
 
 Access to unsupported, reserved, or platform-defined addresses has target-defined behavior and may be rejected by a validating implementation.
 
@@ -202,7 +221,9 @@ Writable static storage occupies:
 ```
 
 All static storage has explicit initializer bytes in the image. AVM has no runtime
-`.bss` region and no allocated `SHT_NOBITS` static-storage section.
+`.bss` region and no allocated `SHT_NOBITS` static-storage section. Immutable AS0
+objects and string literals are not static storage; they occupy the flash window
+described in section 9.1.
 
 Layout:
 
@@ -3959,7 +3980,8 @@ Functions reside in address space one. Function pointers therefore use the
 
 Unqualified C data pointers, ordinary globals, string literals, and automatic
 objects use address space zero. A `const` qualifier does not by itself move an
-object to program space.
+object to program space. Immutable address-space-zero objects and string literals
+are placed in the flash window (section 9.1) and remain address space zero.
 
 Program-resident data must be declared explicitly in address space one, using
 Clang's generic `__attribute__((address_space(1)))` spelling or a target header
@@ -5605,10 +5627,10 @@ also bypass default allocation. The capacity option configures the default AVM
 layout, not user-supplied SECTIONS allocation expressions.
 
 Persistent AS0 global variables are placed in `.saved` or `.saved.*`. Other
-AS0 global objects are placed in `.data` or `.data.*`, including ordinary
-`const` objects and string literals. A source-level `const` qualifier never
-changes the address space because an unqualified C pointer must still be able to
-address the object.
+writable AS0 global objects are placed in `.data` or `.data.*`. Immutable AS0
+global objects and string literals are placed in `.flash` or `.flash.*` (section
+9.1). A source-level `const` qualifier never changes the address space because an
+unqualified C pointer must still be able to address the object.
 
 Functions are placed in `.text`. Data objects explicitly declared in AS1 are
 placed in `.rodata` or `.rodata.*` and are accessed through 24-bit program
@@ -6014,6 +6036,7 @@ For an allocated section, these flags are mutually exclusive and identify the AV
 | `.rodata` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
 | `.saved` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_WRITE | SHF_AVM_DATASPACE` | Data |
 | `.data` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_WRITE | SHF_AVM_DATASPACE` | Data |
+| `.flash` | `SHT_PROGBITS` | `SHF_ALLOC | SHF_AVM_DATASPACE` (no `SHF_WRITE`, `SHF_EXECINSTR`, or `SHF_AVM_PROGSPACE`) | Data, flash window at VMA `0x0B00` |
 | `.init_array` | `SHT_INIT_ARRAY` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
 | `.fini_array` | `SHT_FINI_ARRAY` | `SHF_ALLOC | SHF_AVM_PROGSPACE` | Program |
 | `.avm.metadata` | `SHT_PROGBITS` | No `SHF_ALLOC` by default | None |
@@ -6045,6 +6068,10 @@ relocation  = R_AVM_PROG24
 contain ordinary global objects. Both initialized and language-level
 zero-initialized objects use `SHT_PROGBITS`; zero-initialized objects contribute
 explicit zero bytes.
+
+`.flash` and `.flash.*` contain immutable AS0 objects. The linker merges all live
+`.flash` inputs into one output section whose VMA is `0x0B00`. Its bytes are
+stored once at image offset `0x0500`, and its size may not exceed `0xF500` bytes.
 
 A linked image merges all live `.saved` inputs before all live `.data` inputs.
 The complete `.saved` range is therefore one contiguous prefix beginning at
@@ -6223,6 +6250,7 @@ The linker must:
 6. Relax marked calls, jumps, and conditional transfers.
 7. Lay out all live `.saved` input sections as one contiguous data-space prefix beginning at `0x0100`.
 8. Lay out all live ordinary `.data` input sections immediately after `.saved`.
+8a. Lay out all live `.flash` input sections as one window section at VMA `0x0B00`, and reject it if it exceeds `0xF500` bytes.
 9. Materialize language-level zero-initialized globals as explicit zero bytes; do not create a runtime `.bss`.
 10. Emit the complete `.saved + .data` initializer prefix into the linked program image.
 11. Record both `saveSize` and total `dataSize` in the runtime header.
@@ -6240,6 +6268,7 @@ The executable image is a flat little-endian binary:
 0x000000-0x0000FF                           fixed header
 0x000100-0x000100+saveSize-1                .saved default initializer
 0x000100+saveSize-0x000100+dataSize-1       ordinary .data initializer
+0x000500-0x000500+flashSize-1               .flash window bytes, when present
 ...-programStart-1                          0xFF padding
 programStart-...                            program-space contents
 ...-fileSize-9                              0xFF final padding
@@ -6249,7 +6278,7 @@ fileSize-8-fileSize-1                       mandatory tail
 Definitions:
 
 ```text
-programStart   = align_up(0x000100 + dataSize, 0x100)
+programStart   = flashSize ? 0x000500 + flashSize : align_up(0x000100 + dataSize, 0x100)
 endOfPayload   = first byte after the highest occupied payload byte
 fileSize       = align_up(endOfPayload + 8, 0x100)
 file offset    = logical program address
@@ -6257,8 +6286,15 @@ fileSize mod 0x100 = 0
 ```
 
 Here `dataSize` is the total byte count of `.saved + .data`, not merely the
-ordinary `.data` suffix. Every static byte, including every language-level
-zero-initialized byte, occupies one initializer byte in the flat image.
+ordinary `.data` suffix, and it excludes `.flash`. Every static byte, including
+every language-level zero-initialized byte, occupies one initializer byte in the
+flat image. The default layout places `.text` at `align_up(programStart, text
+alignment)`. Program-space code therefore starts after the flash image bytes
+when `.flash` is present, and no 256-byte padding is added after them. Without
+`.flash`, the layout is the historical one.
+
+Each flash window object occupies image offset `VMA - 0x0600`, and the image
+stores its bytes once.
 
 The Version 1 tail uses an unsigned 16-bit page count, so a packaged image is
 limited to:

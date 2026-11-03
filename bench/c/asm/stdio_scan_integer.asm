@@ -3,66 +3,66 @@ stdio_scan_integer.elf:	file format elf32-avm
 
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 crt0_test.c
-00000223 l     F .text	00000044 avm_run_constructors
+00000532 l     F .text	00000044 avm_run_constructors
 000009fc l       *ABS*	00000000 .hidden __avm_crt_termination_phase
 00000000 l    df *ABS*	00000000 stdio_scan_integer.c
-00000112 l     O .data	00000004 result_sink
+00000103 l     O .data	00000004 result_sink
 00000100 l     O .data	00000003 call
 00000000 l    df *ABS*	00000000 runtime.c
 00000000 l    df *ABS*	00000000 stdio_scan_string.c
-000002ad l     F .text	00000010 string_read
-000002bd l     F .text	00000006 string_unread
+000005bc l     F .text	00000010 string_read
+000005cc l     F .text	00000006 string_unread
 00000000 l    df *ABS*	00000000 stdio_scan_core.c
 00000000 l    df *ABS*	00000000 ctype.c
 00000000 l    df *ABS*	00000000 stdio_scan_integer.c
 00000000 l    df *ABS*	00000000 stdio_scan_float.c
-000028f3 l     O .rodata	00000028 __avm_scan_float.threshold
+00002c02 l     O .rodata	00000028 __avm_scan_float.threshold
 00000000 l    df *ABS*	00000000 strtof_internal.c
-0000291b l     O .rodata	00000018 __avm_decimal_value.powers
+00002c2a l     O .rodata	00000018 __avm_decimal_value.powers
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 trap_report.c
 00000000 l    df *ABS*	00000000 trap_lookup.c
-000024d0 l     F .text	0000010f open_section
-000025df l     F .text	00000103 read_uleb128
+000027df l     F .text	0000010f open_section
+000028ee l     F .text	00000103 read_uleb128
 00000000 l    df *ABS*	00000000 string.c
 00000000 l    df *ABS*	00000000 pgmspace.c
 00000000 l    df *ABS*	00000000 font_br5n.c
 00000000 l    df *ABS*	00000000 integer.c
 00000000 l    df *ABS*	00000000 wide_integer.c
-00002d87 l       .init_array	00000000 .hidden __init_array_end
-00002d87 l       .init_array	00000000 .hidden __init_array_start
-00002d87 l       .fini_array	00000000 .hidden __fini_array_start
-00002d87 l       .fini_array	00000000 .hidden __fini_array_end
-00001c60 g     F .text	00000015 __avm_trap_entry
-00000200 g     F .text	00000023 _start
-00000267 g     F .text	00000044 avm_test_main
-00001bfb g     F .text	00000065 __avm_terminate
-000002ab g     F .text	00000002 avm_halt
-000002c3 g     F .text	0000004d sscanf
-000009ea g     F .text	00000011 isalnum
-000009fb g     F .text	0000000c isspace
-000029e6 g     O .rodata	000003a1 _avm_font_br5n_storage
+00003096 l       .init_array	00000000 .hidden __init_array_end
+00003096 l       .init_array	00000000 .hidden __init_array_start
+00003096 l       .fini_array	00000000 .hidden __fini_array_start
+00003096 l       .fini_array	00000000 .hidden __fini_array_end
+00001f6f g     F .text	00000015 __avm_trap_entry
+0000050f g     F .text	00000023 _start
+00000576 g     F .text	00000044 avm_test_main
+00001f0a g     F .text	00000065 __avm_terminate
+000005ba g     F .text	00000002 avm_halt
+000005d2 g     F .text	0000004d sscanf
+00000cf9 g     F .text	00000011 isalnum
+00000d0a g     F .text	0000000c isspace
+00002cf5 g     O .rodata	000003a1 _avm_font_br5n_storage
 00000000  w      *UND*	00000000 __avm_run_local_dtors
-00001dac g     F .text	00000724 __avm_trap_lookup
-00001c75 g     F .text	00000137 __avm_trap_report
-00000310 g     F .text	00000022 __avm_scan_peek
-00000332 g     F .text	0000003b __avm_scan_take
-0000036d g     F .text	0000067d __avm_vscan
-00000a07 g     F .text	00000059 __avm_scan_count
-00000a60 g     F .text	00000662 __avm_scan_integer
-000010c2 g     F .text	000007ff __avm_scan_float
-0000278a g     F .text	00000068 __avm_mulsi3
-00002864 g     F .text	00000013 __avm_udivsi3
-00002877 g     F .text	0000007c __avm_lshrdi3
-00001b0b g     F .text	000000f0 __avm_decimal_value
-000018c1 g     F .text	0000024a __avm_hex_value
+000020bb g     F .text	00000724 __avm_trap_lookup
+00001f84 g     F .text	00000137 __avm_trap_report
+0000061f g     F .text	00000022 __avm_scan_peek
+00000641 g     F .text	0000003b __avm_scan_take
+0000067c g     F .text	0000067d __avm_vscan
+00000d16 g     F .text	00000059 __avm_scan_count
+00000d6f g     F .text	00000662 __avm_scan_integer
+000013d1 g     F .text	000007ff __avm_scan_float
+00002a99 g     F .text	00000068 __avm_mulsi3
+00002b73 g     F .text	00000013 __avm_udivsi3
+00002b86 g     F .text	0000007c __avm_lshrdi3
+00001e1a g     F .text	000000f0 __avm_decimal_value
+00001bd0 g     F .text	0000024a __avm_hex_value
 00000000  w      *UND*	00000000 __avm_errno
-000026e7 g     F .text	0000002c __avm_ashlsi3
-00002713 g     F .text	0000002c __avm_lshrsi3
-000026e2 g     F .text	00000005 memset
+000029f6 g     F .text	0000002c __avm_ashlsi3
+00002a22 g     F .text	0000002c __avm_lshrsi3
+000029f1 g     F .text	00000005 memset
 00000500 g       *ABS*	00000000 __avm_framebuffer
-0000273f g     F .text	0000004b __avm_umulhisi3
-000027f2 g     F .text	00000072 __avm_udivmodsi4
+00002a4e g     F .text	0000004b __avm_umulhisi3
+00002b01 g     F .text	00000072 __avm_udivmodsi4
 
 Disassembly of section .text:
 
@@ -91,19 +91,19 @@ Disassembly of section .text:
  b1                    push16	r1
  b0                    push16	r0
  d6 fc                 adjsp	-0x4
- c4 87 2d              ldi16	r4, 0x2d87
+ c4 96 30              ldi16	r4, 0x3096
  c1 00                 ldi8	r5, 0x0
- c6 87 2d              ldi16	r6, 0x2d87
+ c6 96 30              ldi16	r6, 0x3096
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 28                 breq8	0x28 <L1>
- f0 04 87 2d           ldi16	r0, 0x2d87
+ f0 04 96 30           ldi16	r0, 0x3096
  f0 01 00              ldi8	r1, 0x0
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 06 87 2d           ldi16	r2, 0x2d87
+ f0 06 96 30           ldi16	r2, 0x3096
  f0 03 00              ldi8	r3, 0x0
 <L0>:
  f0 63 80              ldp24	q2, [q0]
@@ -131,9 +131,9 @@ Disassembly of section .text:
  d6 fc                 adjsp	-0x4
  f0 00 20              ldi8	r0, 0x20
  d7 01                 sys	debug_break
- f0 06 0e 01           ldi16	r2, 0x10e
- f0 07 03 01           ldi16	r3, 0x103
- f0 05 12 01           ldi16	r1, 0x112
+ f0 06 0b 0b           ldi16	r2, 0xb0b
+ f0 07 00 0b           ldi16	r3, 0xb00
+ f0 05 03 01           ldi16	r1, 0x103
 <L0>:
  c4 00 01              ldi16	r4, 0x100
  f7 26                 ld16	r6, [r4+]
@@ -193,13 +193,13 @@ Disassembly of section .text:
  f0 16 1f              leasp	r6, 0x1f
  f4 62                 stsp16	[sp+0x8], r6
  f4 68                 stsp16	[sp+0xa], r4
- f0 04 ad 02           ldi16	r0, 0x2ad
+ f0 04 bc 05           ldi16	r0, 0x5bc
  f0 01 00              ldi8	r1, 0x0
  f0 38 0e              stsp16	[sp+0xe], r0
  f0 29 10              stsp8	[sp+0x10], r1
  f1 20                 mov	r4, r0
  f1 38                 stsp8	[sp+0x2], r4
- f0 04 bd 02           ldi16	r0, 0x2bd
+ f0 04 cc 05           ldi16	r0, 0x5cc
  f0 01 00              ldi8	r1, 0x0
  f0 38 11              stsp16	[sp+0x11], r0
  f0 29 13              stsp8	[sp+0x13], r1
@@ -2469,7 +2469,7 @@ Disassembly of section .text:
  f0 35 18              ldsp16	r5, [sp+0x18]
  09                    mov	r6, r5
  af                    xor	r7, r7
- f0 06 f3 28           ldi16	r2, 0x28f3
+ f0 06 02 2c           ldi16	r2, 0x2c02
  f0 03 00              ldi8	r3, 0x0
  f7 6d                 add32	q3, q1
  f0 61 ac              ldp8s	r5, [q3]
@@ -3359,7 +3359,7 @@ Disassembly of section .text:
  fa 7f                 lsr16i	r4, 0xf
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 1b 29           ldi16	r0, 0x291b
+ f0 04 2a 2c           ldi16	r0, 0x2c2a
  f0 01 00              ldi8	r1, 0x0
  d4 21                 jmp8	0x21 <L5>
 <L2>:
@@ -3443,21 +3443,21 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
  d0 03                 breq8	0x3 <L0>
- e1 f0 e3              call16	-7184 <__avm_run_local_dtors>
+ e1 e1 e0              call16	-7967 <__avm_run_local_dtors>
 <L0>:
- c4 87 2d              ldi16	r4, 0x2d87
+ c4 96 30              ldi16	r4, 0x3096
  c1 00                 ldi8	r5, 0x0
- c6 87 2d              ldi16	r6, 0x2d87
+ c6 96 30              ldi16	r6, 0x3096
  c3 00                 ldi8	r7, 0x0
  f0 69 c8              cmp32	q3, q2
  d0 2b                 breq8	0x2b <L2>
- f0 06 87 2d           ldi16	r2, 0x2d87
+ f0 06 96 30           ldi16	r2, 0x3096
  f0 03 00              ldi8	r3, 0x0
  c4 fd ff              ldi16	r4, 0xfffd
  c5 ff ff              ldi16	r5, 0xffff
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 04 87 2d           ldi16	r0, 0x2d87
+ f0 04 96 30           ldi16	r0, 0x3096
  f0 01 00              ldi8	r1, 0x0
 <L1>:
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -3476,7 +3476,7 @@ Disassembly of section .text:
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
  d0 03                 breq8	0x3 <L3>
- e1 a7 e3              call16	-7257 <__avm_run_local_dtors>
+ e1 98 e0              call16	-8040 <__avm_run_local_dtors>
 <L3>:
  d6 04                 adjsp	0x4
  b8                    pop16	r0
@@ -3512,7 +3512,7 @@ Disassembly of section .text:
  a5                    xor	r5, r5
  c6 00 04              ldi16	r6, 0x400
  e1 4c 0a              call16	memset
- c4 e6 29              ldi16	r4, 0x29e6
+ c4 f5 2c              ldi16	r4, 0x2cf5
  c1 00                 ldi8	r5, 0x0
  d7 31                 sys	set_text_font
  a0                    xor	r4, r4
@@ -3524,19 +3524,19 @@ Disassembly of section .text:
  d0 0b                 breq8	0xb <L0>
  cc 02                 cmpi.s8	r4, 0x2
  d1 15                 brne8	0x15 <L2>
- c6 b7 29              ldi16	r6, 0x29b7
+ c6 c6 2c              ldi16	r6, 0x2cc6
  c3 00                 ldi8	r7, 0x0
  d4 13                 jmp8	0x13 <L3>
 <L0>:
- c6 c7 29              ldi16	r6, 0x29c7
+ c6 d6 2c              ldi16	r6, 0x2cd6
  c3 00                 ldi8	r7, 0x0
  d4 0c                 jmp8	0xc <L3>
 <L1>:
- c6 a8 29              ldi16	r6, 0x29a8
+ c6 b7 2c              ldi16	r6, 0x2cb7
  c3 00                 ldi8	r7, 0x0
  d4 05                 jmp8	0x5 <L3>
 <L2>:
- c6 d9 29              ldi16	r6, 0x29d9
+ c6 e8 2c              ldi16	r6, 0x2ce8
  c3 00                 ldi8	r7, 0x0
 <L3>:
  a0                    xor	r4, r4
@@ -3547,7 +3547,7 @@ Disassembly of section .text:
  ed 90 24              ld16	r4, [r0+4]
  f4 50                 stsp16	[sp+0x4], r4
  f0 13 00              leasp	r3, 0x0
- c6 33 29              ldi16	r6, 0x2933
+ c6 42 2c              ldi16	r6, 0x2c42
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 0b                 ldi8	r5, 0xb
@@ -3561,7 +3561,7 @@ Disassembly of section .text:
  d0 12                 breq8	0x12 <L4>
  f4 40                 stsp16	[sp+0x0], r4
  f1 39                 stsp8	[sp+0x2], r5
- c6 44 29              ldi16	r6, 0x2944
+ c6 53 2c              ldi16	r6, 0x2c53
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 11                 ldi8	r5, 0x11
@@ -3569,7 +3569,7 @@ Disassembly of section .text:
  d7 36                 sys	draw_textfv_p
  d4 0a                 jmp8	0xa <L5>
 <L4>:
- c6 4d 29              ldi16	r6, 0x294d
+ c6 5c 2c              ldi16	r6, 0x2c5c
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 11                 ldi8	r5, 0x11
@@ -3589,14 +3589,14 @@ Disassembly of section .text:
  f4 4c                 stsp16	[sp+0x3], r4
  f4 55                 stsp16	[sp+0x5], r5
  f0 12 00              leasp	r2, 0x0
- c6 52 29              ldi16	r6, 0x2952
+ c6 61 2c              ldi16	r6, 0x2c61
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 17                 ldi8	r5, 0x17
  d7 36                 sys	draw_textfv_p
  d4 0a                 jmp8	0xa <L7>
 <L6>:
- c6 5c 29              ldi16	r6, 0x295c
+ c6 6b 2c              ldi16	r6, 0x2c6b
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 17                 ldi8	r5, 0x17
@@ -3607,7 +3607,7 @@ Disassembly of section .text:
  ed 90 2a              ld16	r4, [r0+10]
  f4 48                 stsp16	[sp+0x2], r4
  f0 12 00              leasp	r2, 0x0
- c6 60 29              ldi16	r6, 0x2960
+ c6 6f 2c              ldi16	r6, 0x2c6f
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 1d                 ldi8	r5, 0x1d
@@ -3616,7 +3616,7 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
  ed 90 2e              ld16	r4, [r0+14]
  f4 48                 stsp16	[sp+0x2], r4
- c6 70 29              ldi16	r6, 0x2970
+ c6 7f 2c              ldi16	r6, 0x2c7f
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 23                 ldi8	r5, 0x23
@@ -3625,7 +3625,7 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
  ed 90 32              ld16	r4, [r0+18]
  f4 48                 stsp16	[sp+0x2], r4
- c6 80 29              ldi16	r6, 0x2980
+ c6 8f 2c              ldi16	r6, 0x2c8f
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 29                 ldi8	r5, 0x29
@@ -3634,14 +3634,14 @@ Disassembly of section .text:
  f4 40                 stsp16	[sp+0x0], r4
  ed 90 36              ld16	r4, [r0+22]
  f4 48                 stsp16	[sp+0x2], r4
- c6 90 29              ldi16	r6, 0x2990
+ c6 9f 2c              ldi16	r6, 0x2c9f
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 2f                 ldi8	r5, 0x2f
  d7 36                 sys	draw_textfv_p
  ed 80 26              ld8u	r4, [r0+6]
  f4 40                 stsp16	[sp+0x0], r4
- c6 a0 29              ldi16	r6, 0x29a0
+ c6 af 2c              ldi16	r6, 0x2caf
  c3 00                 ldi8	r7, 0x0
  a0                    xor	r4, r4
  c1 35                 ldi8	r5, 0x35

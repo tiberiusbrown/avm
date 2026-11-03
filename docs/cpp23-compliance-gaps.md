@@ -17,6 +17,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **Thread storage duration:** Provide correct `thread_local` initialization, access, and destruction for the freestanding execution model AVM advertises, including compiler-generated TLS references and destructors.
 - [ ] **64-bit integer-to-floating conversions:** Supply the AVM lowering/runtime helpers needed for conversion of `long long` values to floating-point types; the corresponding target gap is also tracked for C23.
 - [ ] **Floating-point type minimums:** Provide conforming `double` and `long double` representations and operations. AVM currently implements both as binary32, below the required minimum precision; keep this item aligned with the shared C23 language/data-model gaps.
+- [ ] **Required 65,536-character string-literal capacity:** C++23 requires a string literal of 65,536 characters after concatenation. Immutable literals reside in the AS0 flash window, which holds at most 62,720 bytes, and writable literals reside in the 1 KiB static region, so neither can hold this literal.
 
 ### C++ ABI, object lifetime, and exception runtime
 

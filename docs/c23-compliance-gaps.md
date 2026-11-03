@@ -15,10 +15,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 - [ ] **Minimum `long double` precision:** `long double` also uses binary32 (`LDBL_DIG == 6`); C23 requires `LDBL_DIG >= 10` and the corresponding epsilon bound. `double` and `long double` may share a representation if it meets these requirements.
 - [ ] **64-bit integer-to-floating conversion:** Conversion of `long long` to real floating types fails instruction selection because the necessary conversion helper is unavailable.
 
-### Minimum translation/execution capacities
-
-- [ ] **Required 4,095-character string-literal capacity:** C23 requires a string literal of 4,095 characters after concatenation. Ordinary AVM literals reside in the 1 KiB data-address-space static region, preventing this capacity for ordinary string literals.
-
 ## II. Additional hosted C23 compliance gaps
 
 ### Hosted execution environment and implementation limits

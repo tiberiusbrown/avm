@@ -43,7 +43,7 @@ The debugger maps program addresses `p` to load addresses `p` and data
 addresses `d` to load addresses `0x01000000 + d`. This mapping exists only in
 the debugger. Register and memory values remain raw guest values. Code,
 rodata, and function ranges use the program mapping; `.data`, `.bss`,
-`.saved`, stack, and framebuffer use the data mapping. A data address and a
+`.saved`, `.flash`, stack, and framebuffer use the data mapping. A data address and a
 program address with the same low bits must resolve to different sections.
 For an untyped LLDB `memory read`, `0x02000000 + p` explicitly selects
 program space, including when `p` overlaps a data address. This tagged

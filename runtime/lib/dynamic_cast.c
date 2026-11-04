@@ -1,8 +1,8 @@
-/* Runtime dynamic_cast for polymorphic AVM objects.
+/* Runtime dynamic_cast to a class type for polymorphic AVM objects.
  *
- * Clang lowers a dynamic_cast to a class type to __dynamic_cast, and a
- * dynamic_cast to void* to __avm_dynamic_cast_to_void. The second needs only the
- * offset-to-top of the object, and it never reads the RTTI.
+ * Clang lowers a dynamic_cast to a class type to __dynamic_cast. The dynamic_cast to void*
+ * routine, __avm_dynamic_cast_to_void, is defined in dynamic_cast_void.c. That file is a
+ * separate archive member, so a program that casts only to void* never extracts this object.
  *
  * A polymorphic subobject's vptr is three bytes of its own RAM, and it names the
  * vtable address point. The vtable holds the signed offset to the complete object at
@@ -10,11 +10,11 @@
  * the address point of one of the runtime's support vtables, which eh_cxa.c defines.
  * Its kind decides the layout of its base list.
  *
- * Each cast starts from the source subobject's own vptr. The dynamic type comes from
- * that vptr, and the complete object is the source plus the offset-to-top. A
- * constructor or destructor stage can install a vtable whose complete object does not
- * hold the source subobject. The source is then the root of its dynamic type. The
- * second root is used only when the first does not contain the source.
+ * Each cast starts from the source subobject's own vptr. The active vptr identifies the
+ * dynamic RTTI hierarchy and its offset-to-top. The runtime walks that hierarchy from the
+ * calculated complete-object address, which is the source plus the offset-to-top. If the
+ * actual source subobject is absent, the object representation is inconsistent and the
+ * runtime aborts.
  *
  * The hierarchy is walked by a nonrecursive depth-first iterator, whose state lives in
  * the caller's frame. It keeps one byte per level for the next base, and it replays the
@@ -478,21 +478,10 @@ static uint8_t dynamic_root(uint16_t source, uint16_t *complete_address, uint32_
     return 1;
 }
 
-/* dynamic_cast<void *>. The result is the complete object of the source, which needs only the
- * offset-to-top at vptr - 6. The RTTI is not read, so this path does not need the hierarchy. */
-void *__avm_dynamic_cast_to_void(const void *sub) {
-    if (!sub)
-        return NULL;
-    uint32_t vptr;
-    uint16_t complete;
-    if (!read_complete((uint16_t)(uintptr_t)sub, &vptr, &complete))
-        abort();
-    return (void *)(uintptr_t)complete;
-}
-
 /* dynamic_cast to a class pointer or reference. A null source yields null, and a valid cast
- * that has no target yields null. The result for a reference is checked by the caller, which
- * calls __cxa_bad_cast on null. The src2dst hint is not used. */
+ * that has no target yields null. An active hierarchy that lacks the source subobject aborts.
+ * The result for a reference is checked by the caller, which calls __cxa_bad_cast on null.
+ * The src2dst hint is not used. */
 void *__dynamic_cast(const void *sub, const void AVM_PROGMEM *src_type,
                      const void AVM_PROGMEM *dst_type, ptrdiff_t src2dst_offset) {
     (void)src2dst_offset;
@@ -514,16 +503,10 @@ void *__dynamic_cast(const void *sub, const void AVM_PROGMEM *src_type,
     query.root_address = complete;
     if (classify(&query) != AVM_DC_DONE)
         abort();
-    if (!query.result.source_found) {
-        /* A construction or destruction vtable names the class of the subobject under
-         * construction, and its complete object is the outer object. The subobject is then
-         * the dynamic object itself. */
-        if (complete == source)
-            abort();
-        query.root_address = source;
-        if (classify(&query) != AVM_DC_DONE || !query.result.source_found)
-            abort();
-    }
+    /* The hierarchy of the active vptr must contain the source subobject. If it does not, the
+     * object representation is inconsistent, so the cast ends here. */
+    if (!query.result.source_found)
+        abort();
 
     const struct avm_dc_result *result = &query.result;
     if (result->downcast_count == 1)

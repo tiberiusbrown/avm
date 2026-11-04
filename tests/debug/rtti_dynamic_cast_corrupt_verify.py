@@ -17,6 +17,9 @@ an excessive VMI base count, reserved VMI and base flags, an invalid base descri
 base offset that underflows or overflows, and a displacement outside AS0. The runtime-only vptr
 cases and the depth and edge limits need no image patch. The verifier never runs the runtime's
 own algorithm to compute an expected value.
+
+Case 14 names a source that the active hierarchy lacks. Its premise is checked from the ELF and the
+patched bytes, and the image must halt on two runs with identical output.
 """
 
 import argparse
@@ -39,6 +42,8 @@ DERIVED_TYPE = '_ZTIN12_GLOBAL__N_17DerivedE'
 DERIVED_VTABLE = '_ZTVN12_GLOBAL__N_17DerivedE'
 UNRELATED_TYPE = '_ZTIN12_GLOBAL__N_19UnrelatedE'
 BOTH_TYPE = '_ZTIN12_GLOBAL__N_14BothE'
+BOTH_VTABLE = '_ZTVN12_GLOBAL__N_14BothE'
+RIGHT_TYPE = '_ZTIN12_GLOBAL__N_15RightE'
 VSIDE_TYPE = '_ZTIN12_GLOBAL__N_15VSideE'
 VSIDE_VTABLE = '_ZTVN12_GLOBAL__N_15VSideE'
 # The RTTI slot lies three bytes past the vtable symbol, and the VMI entries follow the ten-byte
@@ -49,6 +54,11 @@ VMI_COUNT = 8
 VMI_ENTRY = 10
 ENTRY_FLAGS = 3
 ENTRY_OFFSET = 4
+# Both's vtable holds a primary group, then a secondary group for its Right subobject. Each group
+# is a six-byte header and two three-byte destructor entries, so the secondary header is at 12.
+BOTH_SECONDARY = 12
+# A class with no bases has a descriptor of its vptr and its name only, six bytes in all.
+PLAIN_CLASS_SIZE = 6
 WINDOW_START = 0x0500
 WINDOW_END = 0xfa00
 STATUS = 'status: debug_break'
@@ -70,6 +80,7 @@ CASES = {
     'vptr_one': 11,
     'slot_overflow': 12,
     'virtual_base': 13,
+    'source_absent': 14,
 }
 
 
@@ -193,7 +204,7 @@ def verify(args):
     baseline = [
         ('derived', 'match'), ('both', 'match'), ('cross', 'match'), ('virtual_full', 'match'),
         ('depth_ok', 'match'), ('edge_ok', 'match'), ('nonmatching', 'null'),
-        ('virtual_base', 'match'),
+        ('virtual_base', 'match'), ('source_absent', 'match'),
     ]
     for case_name, outcome in baseline:
         serial = run(args, image_for(case_name, None))
@@ -209,12 +220,52 @@ def verify(args):
         serial = run(args, data_path)
         expect(serial, outcome, label)
 
-    total = len(baseline) + len(runtime_cases()) + len(patched)
+    # Case 14 must halt. Its premise comes from the ELF and the patched bytes, and a second run of
+    # the same image must halt with the same output, so the halt does not depend on earlier runs.
+    source_absent_premise(elf, original)
+    absent = source_absent_patch(elf)
+    first = run(args, image_for('source_absent', absent))
+    expect(first, 'halt', 'source absent from the active hierarchy')
+    second = run(args, image_for('source_absent', absent))
+    check(second == first, 'the source-absent halt differs between runs: %r and %r'
+          % (first, second))
+    print('  source absent, second run: identical')
+
+    total = len(baseline) + len(runtime_cases()) + len(patched) + 2
     print('rtti_dynamic_cast_corrupt_verify: %d runs behaved as expected' % total)
 
 
 def sym_offset(elf, name):
     return rtti.defined(elf, name)['value']
+
+
+def source_absent_patch(elf):
+    """Points the secondary RTTI slot of Both's vtable at the descriptor of Right."""
+    slot = sym_offset(elf, BOTH_VTABLE) + BOTH_SECONDARY + RTTI_SLOT_OFFSET
+    right = sym_offset(elf, RIGHT_TYPE)
+    return lambda d: put(d, slot, right, 3)
+
+
+def source_absent_premise(elf, original):
+    """Checks from the ELF and the patched bytes that case 14's source is absent from its hierarchy.
+
+    The patched secondary group names Right, and Right's descriptor is a plain class with no bases.
+    Rooted at the complete object, the active hierarchy of Right therefore holds only that root.
+    The offset-to-top is negative, so the source lies at a nonzero distance above the root and is
+    absent. A retry rooted at the source would hold the source at distance zero, so the retired
+    retry would have classified it and returned a value rather than halting.
+    """
+    data = bytearray(original)
+    source_absent_patch(elf)(data)
+    group = sym_offset(elf, BOTH_VTABLE) + BOTH_SECONDARY
+    check(rtti.u24(data[group + RTTI_SLOT_OFFSET:][:3]) == sym_offset(elf, RIGHT_TYPE),
+          'the patched secondary RTTI slot does not name %s' % RIGHT_TYPE)
+    check(rtti.defined(elf, RIGHT_TYPE)['size'] == PLAIN_CLASS_SIZE,
+          '%s is not a plain class descriptor, so it may have bases' % RIGHT_TYPE)
+    top = rtti.u24(data[group:][:3])
+    if top & 0x800000:
+        top -= 1 << 24
+    check(top < 0, 'the secondary offset-to-top %d does not place the source above the root' % top)
 
 
 def main():

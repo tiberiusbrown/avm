@@ -604,17 +604,19 @@ and `__cxa_bad_typeid`, which a null polymorphic operand calls. The last two are
 members that a program links only when it refers to them, and they are built with
 `-frtti` and, for `eh_bad_typeid.cpp`, `-fexceptions`.
 
-`__dynamic_cast` and `__avm_dynamic_cast_to_void` are defined in `lib/dynamic_cast.c`.
-The first implements a class `dynamic_cast`. It reads the source vptr, the offset to top,
-and the dynamic descriptor from the packed image, then walks the dynamic class hierarchy with
-a nonrecursive iterator whose state lives in the caller's frame. The second implements
-`dynamic_cast<void *>` from the offset to top alone. `lib/eh_bad_cast.cpp` defines
-`std::bad_cast` and `__cxa_bad_cast`, which a failed reference cast calls. Both are archive
-members, and they are built with `-frtti` and, for `eh_bad_cast.cpp`, `-fexceptions`. The
-archive object `dynamic_cast.o` holds both entry points in separate sections, so a program
-that uses only `dynamic_cast<void *>` does not keep `__dynamic_cast` after garbage
-collection. The walk is bounded at eight levels and 512 edges, and a larger hierarchy ends
-the program. The lookup, the linker checks, and the remaining limitations are described in
+`__dynamic_cast` is defined in `lib/dynamic_cast.c`. It reads the source vptr, the offset to
+top, and the dynamic descriptor from the packed image, then walks the dynamic class hierarchy
+with a nonrecursive iterator whose state lives in the caller's frame. `__avm_dynamic_cast_to_void`
+is defined in `lib/dynamic_cast_void.c`. It implements `dynamic_cast<void *>` from the offset to
+top alone. The two are separate archive members, `dynamic_cast.o` and `dynamic_cast_void.o`, so a
+program that uses only `dynamic_cast<void *>` never extracts `dynamic_cast.o`, with or without
+garbage collection. The void member references only `abort`, and it has no data or bss. `lib/eh_bad_cast.cpp`
+defines `std::bad_cast` and `__cxa_bad_cast`, which a failed reference cast calls. Both are archive
+members, and they are built with `-frtti` and, for `eh_bad_cast.cpp`, `-fexceptions`. The walk is
+bounded at eight levels and 512 edges, and a larger hierarchy ends the program. The walk has one
+root, the complete object that the offset to top names. A hierarchy that does not contain the source
+at its actual address also ends the program. The lookup, the
+linker checks, and the remaining limitations are described in
 [docs/arch.md](../docs/arch.md), Section 60.1.
 
 ## Narrow stdio streams

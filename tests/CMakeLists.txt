@@ -40,6 +40,8 @@ file(GLOB AVM_EH_CXX_TEST_SOURCES CONFIGURE_DEPENDS
 list(FILTER AVM_CXX_TEST_SOURCES EXCLUDE REGEX "/rtti_[^/]*\\.cpp$")
 file(GLOB AVM_RTTI_CXX_TEST_SOURCES CONFIGURE_DEPENDS
     "${AVM_CXX_TEST_DIR}/rtti_*.cpp")
+# The void-only fixture is built without RTTI, and avm_dynamic_cast_nogc_images builds it.
+list(FILTER AVM_RTTI_CXX_TEST_SOURCES EXCLUDE REGEX "/rtti_dynamic_cast_void_nogc\\.cpp$")
 
 set(AVM_TEST_IMAGE_OUTPUTS)
 
@@ -854,20 +856,48 @@ set(AVM_DYNAMIC_CAST_CORRUPT_VERIFY
     "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_dynamic_cast_corrupt_verify.py")
 set(AVM_DYNAMIC_CAST_STACK_REPORT
     "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_dynamic_cast_stack_report.py")
+set(AVM_DYNAMIC_CAST_MUTATION_TEST
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_dynamic_cast_verify_mutation_test.py")
+set(AVM_PROBE_SNAPSHOT_TEST
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug/avm_eh_stack_probe_snapshot_test.py")
 set(AVM_DYNAMIC_CAST_PROBE_ARGS
     --probe "$<TARGET_FILE:avm_eh_stack_probe>"
     --interpreter "${AVM_INTERPRETER_HEX}"
     --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}")
 set(AVM_DYNAMIC_CAST_CASES rtti_dynamic_cast rtti_dynamic_cast_cross_unit
     rtti_dynamic_cast_high_address rtti_dynamic_cast_construction)
+# Every final image is measured: the class-cast fixtures and the corruption target, the handled and
+# unhandled std::bad_cast fixtures, and the void-only images with and without GC. The void-only
+# images are measured from __avm_dynamic_cast_to_void.
 set(AVM_DYNAMIC_CAST_STACK_IMAGES)
 foreach(AVM_DC_OPT IN ITEMS O0 O2)
-    foreach(AVM_DC_CASE IN LISTS AVM_DYNAMIC_CAST_CASES rtti_dynamic_cast_corrupt_target)
+    foreach(AVM_DC_CASE IN LISTS AVM_DYNAMIC_CAST_CASES ITEMS rtti_dynamic_cast_corrupt_target
+            rtti_dynamic_cast_bad_cast)
         list(APPEND AVM_DYNAMIC_CAST_STACK_IMAGES --image
             "${AVM_CXX_TEST_BINARY_DIR}/${AVM_DC_OPT}/${AVM_DC_CASE}.bin")
     endforeach()
+    list(APPEND AVM_DYNAMIC_CAST_STACK_IMAGES --unhandled
+        "${AVM_CXX_TEST_BINARY_DIR}/${AVM_DC_OPT}/rtti_dynamic_cast_bad_cast_unhandled.bin")
+    foreach(AVM_DC_VARIANT IN ITEMS nogc gc)
+        list(APPEND AVM_DYNAMIC_CAST_STACK_IMAGES --void
+            "${AVM_CXX_TEST_BINARY_DIR}/dynamic-cast-void/${AVM_DC_VARIANT}/${AVM_DC_OPT}/rtti_dynamic_cast_void_nogc.bin")
+    endforeach()
 endforeach()
 list(APPEND AVM_DYNAMIC_CAST_STACK_IMAGES --image "${AVM_DYNAMIC_CAST_LTO_IMAGE}")
+# Checks the opt-in snapshot fields of the host probe: stack arguments and a RAM range. The probe
+# output and the guest memory must agree, and invalid requests must be rejected.
+add_custom_target(avm_probe_snapshot_run
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_PROBE_SNAPSHOT_TEST}"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.elf"
+    DEPENDS avm_eh_stack_probe avm_interpreter avm_rtti_static_images
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+
 add_custom_target(avm_dynamic_cast_run
     COMMAND "$<TARGET_FILE:avm_tests>"
         --filter "^rtti_dynamic_cast(_bad_cast|_cross_unit|_high_address|_construction)?$"
@@ -895,29 +925,56 @@ add_custom_target(avm_dynamic_cast_run
         --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast.bin"
         --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast.elf" --secondary
+        --min-virtual 1 --min-null 1 --min-nonzero 1
     COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
         --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.bin"
         --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.elf" --secondary
+        --min-virtual 1 --min-null 1 --min-nonzero 1
     COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
         --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_high_address.bin"
         --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_high_address.elf" --high
+        --min-virtual 1 --min-nonzero 1
     COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
         --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_high_address.bin"
         --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_high_address.elf" --high
+        --min-virtual 1 --min-nonzero 1
     COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
         --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_cross_unit.bin"
         --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_cross_unit.elf"
+        --min-virtual 1 --min-nonzero 1
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_cross_unit.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_cross_unit.elf"
+        --min-virtual 1 --min-nonzero 1
     COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
         --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         --image "${AVM_DYNAMIC_CAST_LTO_IMAGE}" --elf "${AVM_DYNAMIC_CAST_LTO_ELF}"
+        --min-virtual 1 --min-nonzero 1
     COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
         --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_construction.bin"
         --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_construction.elf"
+        --min-null 1 --min-nonzero 1
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_construction.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_construction.elf"
+        --min-null 1 --min-nonzero 1
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_MUTATION_TEST}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.elf"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_PROBE_SNAPSHOT_TEST}"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.elf"
     COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_STACK_REPORT}"
         ${AVM_DYNAMIC_CAST_PROBE_ARGS}
         ${AVM_DYNAMIC_CAST_STACK_IMAGES}
@@ -926,6 +983,74 @@ add_custom_target(avm_dynamic_cast_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     VERBATIM
 )
+
+# dynamic_cast<void*> in a program without RTTI. The fixture is built with -fno-rtti at O0 and O2,
+# and each object is linked twice: without --gc-sections, where no archive member is collected,
+# and with it. The image is linked with the ordinary archive resolution, so no --whole-archive is
+# used. avm_dynamic_cast_nogc_run re-links each object, checks each ELF and its RTTI slot, runs
+# both images, and checks the class-cast negative control.
+set(AVM_DYNAMIC_CAST_NOGC_SOURCE "${AVM_CXX_TEST_DIR}/rtti_dynamic_cast_void_nogc.cpp")
+set(AVM_DYNAMIC_CAST_NOGC_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/dynamic-cast-void")
+set(AVM_DYNAMIC_CAST_NOGC_IMAGES)
+foreach(AVM_NOGC_OPT IN ITEMS O0 O2)
+    set(AVM_NOGC_OBJECT
+        "${AVM_DYNAMIC_CAST_NOGC_BIN_DIR}/${AVM_NOGC_OPT}/rtti_dynamic_cast_void_nogc.o")
+    avm_add_object(
+        OUTPUT "${AVM_NOGC_OBJECT}"
+        SOURCE "${AVM_DYNAMIC_CAST_NOGC_SOURCE}"
+        LANGUAGE CXX
+        COMPILE_OPTIONS "-${AVM_NOGC_OPT}" -fno-rtti -fno-exceptions
+        DEPENDS avm_sysroot
+    )
+    foreach(AVM_NOGC_VARIANT IN ITEMS nogc gc)
+        set(AVM_NOGC_DIR "${AVM_DYNAMIC_CAST_NOGC_BIN_DIR}/${AVM_NOGC_VARIANT}/${AVM_NOGC_OPT}")
+        set(AVM_NOGC_ELF "${AVM_NOGC_DIR}/rtti_dynamic_cast_void_nogc.elf")
+        set(AVM_NOGC_IMAGE "${AVM_NOGC_DIR}/rtti_dynamic_cast_void_nogc.bin")
+        set(AVM_NOGC_GC_OPTIONS)
+        if(AVM_NOGC_VARIANT STREQUAL "gc")
+            set(AVM_NOGC_GC_OPTIONS GC_SECTIONS)
+        endif()
+        avm_add_image(
+            OBJECTS "${AVM_NOGC_OBJECT}"
+            OUTPUT_ELF "${AVM_NOGC_ELF}"
+            OUTPUT_IMAGE "${AVM_NOGC_IMAGE}"
+            ENTRY _start
+            STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+            LIBRARIES
+                "${AVM_SYSROOT_DIR}/lib/libavm.a"
+                "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+            # The text services name __avm_text_state as a compiler-only anchor, which no
+            # relocation uses. Without --gc-sections, the runtime's trap report keeps the
+            # undefined anchor, and llvm-avm-image rejects any global undefined symbol. The
+            # anchor is defined as an absolute zero, which nothing reads, in both variants,
+            # so they differ only by --gc-sections.
+            LINK_OPTIONS --defsym=__avm_text_state=0
+            ${AVM_NOGC_GC_OPTIONS}
+            DEPENDS avm_sysroot
+        )
+        list(APPEND AVM_DYNAMIC_CAST_NOGC_IMAGES "${AVM_NOGC_IMAGE}")
+    endforeach()
+endforeach()
+add_custom_target(avm_dynamic_cast_nogc_images DEPENDS ${AVM_DYNAMIC_CAST_NOGC_IMAGES})
+
+set(AVM_DYNAMIC_CAST_NOGC_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_dynamic_cast_nogc_verify.py")
+add_custom_target(avm_dynamic_cast_nogc_run
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_NOGC_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>"
+        --clang "$<TARGET_FILE:clang>"
+        --ld "$<TARGET_FILE_DIR:lld>/ld.lld"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --void-dir "${AVM_DYNAMIC_CAST_NOGC_BIN_DIR}"
+        --sysroot-lib "${AVM_SYSROOT_DIR}/lib"
+        --scratch-dir "${AVM_CXX_TEST_BINARY_DIR}/dynamic-cast-void-negative"
+    DEPENDS avm_dynamic_cast_nogc_images clang lld llvm-objdump llvm-nm llvm-readobj
+        avm_eh_stack_probe avm_interpreter avm_sysroot
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_dynamic_cast_run avm_dynamic_cast_nogc_run avm_probe_snapshot_run)
 
 # Checks the AVEH5 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.

@@ -79,6 +79,7 @@ set(RUNTIME_SOURCES
     eh_unwind
     rtti_dynamic
     dynamic_cast
+    dynamic_cast_void
     multibyte
     math
     math_standard

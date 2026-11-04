@@ -336,6 +336,16 @@ __attribute__((noinline)) int case_virtual_base() {
     return 0;
 }
 
+// 14. A cast from the Right subobject of Both. The verifier points Both's secondary RTTI slot at
+// Right's descriptor, so the active hierarchy is Right alone, rooted at the complete object. The
+// source lies past that root, so the cast must halt.
+__attribute__((noinline)) int case_source_absent() {
+    Right *right = static_cast<Right *>(&both_object);
+    Both *result = dynamic_cast<Both *>(right);
+    report(reinterpret_cast<uintptr_t>(&both_object), result);
+    return 0;
+}
+
 } // namespace
 
 extern "C" int avm_test_main(void) {
@@ -354,6 +364,7 @@ extern "C" int avm_test_main(void) {
     case 11: return case_vptr(0x000001u);
     case 12: return case_slot_overflow();
     case 13: return case_virtual_base();
+    case 14: return case_source_absent();
     default: return 1;
     }
 }

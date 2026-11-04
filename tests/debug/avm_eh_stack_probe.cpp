@@ -7,7 +7,9 @@
 // The report gives the initial and lowest guest SP, the guest PC that was
 // executing at the lowest SP, and the peak usage. Snapshots record the guest
 // state when a named ELF symbol is reached, which is how the exception tests
-// read the landing-pad SP and the throw-site return record.
+// read the landing-pad SP and the throw-site return record. Two opt-in options
+// add to each snapshot: the bytes that follow the return record (stack
+// arguments), and a bounded range of guest RAM. Neither changes the run.
 //
 // A guest instruction boundary is a primary slot arrival whose first native AVR
 // instruction executes. The probe decides this after each step. An interrupt that
@@ -47,6 +49,12 @@ namespace fs = std::filesystem;
 constexpr uint32_t kStackTop = 0xa00;
 constexpr uint32_t kStackLimit = kStackTop - 256;
 
+// The emulated data space. The probe reads guest RAM only below its end, which is where the flash
+// window begins in AS0, so no snapshot read leaves the emulator's array.
+constexpr uint32_t kDataSpaceSize = absim::atmega32u4_t::DATA_SIZE_BYTES;
+// The stack-argument snapshot is bounded, so one output line stays short.
+constexpr unsigned kMaxSnapshotStackArgs = 16;
+
 struct symbol_t {
     std::string name;
     uint32_t address;
@@ -70,6 +78,13 @@ struct options_t {
     // The header's object follows the 55-byte exception header, so the probe reads the pointer
     // value there, and prints this many bytes at it. A pointer value of zero prints no bytes.
     unsigned target_bytes = 0;
+    // Stack-argument bytes to print for each snapshot. They follow the three-byte return record,
+    // so they start at SP + 3. Zero, the default, prints nothing.
+    unsigned snapshot_stack_args = 0;
+    // Guest RAM bytes to print, from ram_start, for each snapshot. The default prints nothing.
+    bool have_ram_range = false;
+    uint32_t ram_start = 0;
+    uint32_t ram_length = 0;
     // Diagnostic dispatch trace: one line for each primary dispatch whose CPU cycle lies in
     // the inclusive range. Without these options the output is unchanged.
     bool trace_cycles = false;
@@ -310,6 +325,32 @@ std::string snapshot_lines(absim::atmega32u4_t const& cpu, sample_t const& sampl
             uint32_t const base = sample.regs[4];
             for(unsigned i = 0; i < options.snapshot_bytes; ++i)
                 out << std::setw(2) << unsigned(cpu.data[(base + i) & 0xffff]);
+            out << std::setfill(' ') << std::dec;
+        }
+        // The stack arguments follow the return record, so they begin at SP + 3. The SP must lie
+        // in the guest stack, and every byte read must lie in the data space. A violation ends the
+        // run, because the state cannot be described without reading outside the emulator.
+        if(options.snapshot_stack_args) {
+            if(sp < kStackLimit || sp > kStackTop)
+                throw std::runtime_error("snapshot stack arguments: SP 0x" + std::to_string(sp) +
+                                         " at pc 0x" + std::to_string(pc) +
+                                         " lies outside the guest stack");
+            uint32_t const first = sp + 3;
+            if(first + options.snapshot_stack_args > kDataSpaceSize)
+                throw std::runtime_error("snapshot stack arguments: SP 0x" + std::to_string(sp) +
+                                         " leaves no room for the requested bytes");
+            out << " stackargs=" << std::hex << std::setfill('0');
+            for(unsigned i = 0; i < options.snapshot_stack_args; ++i)
+                out << std::setw(2) << unsigned(cpu.data[first + i]);
+            out << std::setfill(' ') << std::dec;
+        }
+        // The requested guest RAM range is printed in address order, two hex digits each. The
+        // range was validated when it was parsed, so every read lies in the data space.
+        if(options.have_ram_range) {
+            out << " ram_start=" << std::hex << std::setfill('0') << std::setw(4)
+                << options.ram_start << " ram=";
+            for(uint32_t i = 0; i < options.ram_length; ++i)
+                out << std::setw(2) << unsigned(cpu.data[options.ram_start + i]);
             out << std::setfill(' ') << std::dec;
         }
         // The thrown object's pointer value names the target, which is read at the
@@ -574,6 +615,66 @@ int run(options_t const& options)
     return finished ? 0 : 1;
 }
 
+// Parses a hexadecimal value of one to eight digits, with an optional 0x prefix. Any other text is
+// rejected, so a number too wide for the range cannot be read as a smaller one.
+std::optional<uint32_t> parse_hex(std::string text)
+{
+    if(text.size() >= 2 && text[0] == '0' && (text[1] == 'x' || text[1] == 'X'))
+        text.erase(0, 2);
+    if(text.empty() || text.size() > 8)
+        return std::nullopt;
+    uint32_t value = 0;
+    for(char const c : text) {
+        uint32_t digit = 0;
+        if(c >= '0' && c <= '9')
+            digit = uint32_t(c - '0');
+        else if(c >= 'a' && c <= 'f')
+            digit = uint32_t(c - 'a' + 10);
+        else if(c >= 'A' && c <= 'F')
+            digit = uint32_t(c - 'A' + 10);
+        else
+            return std::nullopt;
+        value = value * 16 + digit;
+    }
+    return value;
+}
+
+// Parses the decimal count of stack-argument bytes, which must be from 1 to the maximum.
+unsigned parse_count(std::string const& text, std::string const& option)
+{
+    std::string const range = "needs a decimal count from 1 to " +
+                              std::to_string(kMaxSnapshotStackArgs) + ": " + text;
+    if(text.empty() || text.size() > 2 || text.find_first_not_of("0123456789") != std::string::npos)
+        throw std::runtime_error(option + " " + range);
+    unsigned const count = unsigned(std::stoul(text));
+    if(count < 1 || count > kMaxSnapshotStackArgs)
+        throw std::runtime_error(option + " " + range);
+    return count;
+}
+
+// Parses START:LENGTH in hexadecimal. The range must be nonempty, and its end must lie within the
+// data space, so the read cannot wrap past 0xFFFF or leave the emulator's array.
+void parse_ram_range(std::string const& text, options_t& options)
+{
+    std::string const option = "--snapshot-ram-range";
+    std::optional<uint32_t> start;
+    std::optional<uint32_t> length;
+    auto const colon = text.find(':');
+    if(colon != std::string::npos) {
+        start = parse_hex(text.substr(0, colon));
+        length = parse_hex(text.substr(colon + 1));
+    }
+    if(!start || !length)
+        throw std::runtime_error(option + " needs START:LENGTH in hexadecimal: " + text);
+    if(*length == 0)
+        throw std::runtime_error(option + " has a zero length: " + text);
+    if(uint64_t(*start) + uint64_t(*length) > kDataSpaceSize)
+        throw std::runtime_error(option + " leaves the emulated guest RAM (0x0000-0x0AFF): " + text);
+    options.have_ram_range = true;
+    options.ram_start = *start;
+    options.ram_length = *length;
+}
+
 options_t parse(int argc, char** argv)
 {
     options_t options;
@@ -594,6 +695,10 @@ options_t parse(int argc, char** argv)
             options.snapshot_bytes = unsigned(std::stoul(value()));
         else if(arg == "--target-bytes")
             options.target_bytes = unsigned(std::stoul(value()));
+        else if(arg == "--snapshot-stack-args")
+            options.snapshot_stack_args = parse_count(value(), arg);
+        else if(arg == "--snapshot-ram-range")
+            parse_ram_range(value(), options);
         else if(arg == "--trace-tail") options.trace_tail = unsigned(std::stoul(value()));
         else if(arg == "--trace-native") options.trace_native = true;
         else if(arg == "--trace-cycle-start") {
@@ -620,6 +725,7 @@ options_t parse(int argc, char** argv)
             "usage: avm_eh_stack_probe --interpreter HEX --boundary JSON "
             "--image BIN --elf ELF [--snapshot SYMBOL]... [--trace-tail N] "
             "[--cycle-limit N] [--snapshot-bytes N] [--target-bytes N] "
+            "[--snapshot-stack-args N] [--snapshot-ram-range START:LENGTH] "
             "[--trace-cycle-start N --trace-cycle-end M [--trace-native]]");
     return options;
 }

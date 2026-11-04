@@ -5884,21 +5884,54 @@ Two subobjects of the destination type that are both public containers of the so
 ambiguous, and so are two distinct targets in the cross-cast rule. A private source never
 cross-casts, even when a public target exists. A null result from a valid cast is not an error.
 
-A constructor or destructor sees the class in progress as its dynamic type. A construction vtable
-names that class as its RTTI, and its offset to top names the outer object. When the complete
-object that the offset names does not contain the source, the source is the root of its dynamic
-type instead. The standard limits these casts to the class under construction or destruction and
-its bases, and the runtime answers exactly those.
+A constructor or destructor sees the class in progress as its dynamic type. The offset to top names
+the complete object that holds the source, and the walk starts there. Clang places a construction
+vtable only in a virtual base slot, and the virtual base's own constructor overwrites that slot
+before any user code runs, so no cast reads a construction vtable. The runtime has one root. If the
+hierarchy of the active vptr does not contain the source at its actual address, the object
+representation is inconsistent, and the runtime aborts. The standard limits these casts to the class
+under construction or destruction and its bases, and the runtime answers exactly those.
 
-`dynamic_cast<void *>` calls `__avm_dynamic_cast_to_void`, which reads the vptr and the offset to
-top. It reads no RTTI, walks no hierarchy, and allocates nothing, so it needs neither the RTTI
-window nor the exception runtime. It aborts on a vptr that cannot be a vtable address point.
+`dynamic_cast<void *>` calls `__avm_dynamic_cast_to_void`, which `runtime/lib/dynamic_cast_void.c`
+defines in its own archive member. It reads the vptr and the offset to top. It reads no RTTI,
+walks no hierarchy, and allocates nothing, so it needs neither the RTTI window nor the exception
+runtime. It aborts on a vptr that cannot be a vtable address point, and its only external
+reference is `abort`.
 
 The linker treats a live `__dynamic_cast` as a dynamic RTTI reader, so it applies the vtable check
-of the typeid helper. `__avm_dynamic_cast_to_void` is in the same object, `dynamic_cast.o`, and it
-does not count. A program that uses only `dynamic_cast<void *>` therefore keeps `__dynamic_cast`
-collected, which is the behavior of `--gc-sections`, the flag the AVM driver always passes. Without
-that flag the object is live, and its check applies.
+of the typeid helper. `__avm_dynamic_cast_to_void` does not count. Because the two entry points are
+in separate archive members, a program that uses only `dynamic_cast<void *>` never extracts
+`dynamic_cast.o`, so the check does not apply with or without `--gc-sections`. A class cast extracts
+`dynamic_cast.o`, which keeps `__dynamic_cast` live, and without GC that activates the check.
+
+A link without `--gc-sections` keeps the runtime's trap report, which names the text-service anchor
+`__avm_text_state` as an undefined global. `llvm-avm-image` rejects such a link, so the no-GC
+fixture defines the anchor as an absolute zero in both its variants. No other image needs it.
+
+Host verification. `tests/debug/rtti_dynamic_cast_verify.py` decodes each class cast from the
+probe's entry snapshot, which carries the destination descriptor and the hint in the five stack
+argument bytes, and guest RAM from 0x0100 through 0x0AFF. The probe adds those fields only on
+request, with `--snapshot-stack-args N` (1 to 16 bytes from SP + 3) and
+`--snapshot-ram-range START:LENGTH` (hexadecimal, within the 0x0000 to 0x0AFF data space). Both
+are read-only, and an invalid request exits with an error before the run. It enumerates the complete object's
+subobjects from the packed image and the captured vptrs. A virtual edge reads the vptr of the
+subobject that holds it and the displacement at the vtable slot, and no edge that the expected
+result needs is skipped. The verifier then requires the returned pointer to be exactly the
+subobject that the downcast or cross-cast rule selects, or null when no rule applies. A null result
+is accepted only where that rule yields null, and a zero pointer alone is never accepted. A virtual
+base occupies one address per complete object. The mutation test in
+`tests/debug/rtti_dynamic_cast_verify_mutation_test.py` confirms that the verifier rejects nine
+kinds of wrong data, including a source that the active hierarchy lacks. The corruption target
+checks the same condition on the image. Its case 14 points the secondary RTTI slot of `Both` at
+`Right`, so the source lies outside the hierarchy of the complete object. The image must halt, and a
+second run must halt with the same output. `tests/debug/rtti_dynamic_cast_corrupt_verify.py`
+checks that premise from the ELF and the patched bytes before it runs the image.
+
+Stack. The final fixtures measure 154 to 214 bytes at their total peak, with 125 to 168 bytes of
+that inside the runtime. The void-only images measure 34 to 49 bytes, with 12 bytes inside
+`__avm_dynamic_cast_to_void`. The linker's complete static bounds for the complete-object,
+cross-unit, high-address, construction, corruption-target, and full-LTO images are 159 to 225 bytes.
+The bounds for the bad-cast images are not complete, so the linker proves no maximum for them.
 
 #### std::bad_cast
 

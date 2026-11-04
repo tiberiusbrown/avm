@@ -429,6 +429,8 @@ The VM stack has one-byte alignment.
 | `ptrdiff_t` | 2 bytes |
 | `wchar_t` | 1 byte |
 
+Bit-precise integer types `_BitInt(N)` and `unsigned _BitInt(N)` are supported for 1 ≤ N ≤ 64, and `BITINT_MAXWIDTH` is 64. Each occupies ⌈N/8⌉ bytes with one-byte alignment. Arguments and return values use the classes of Section 41.1 for the integer of N bits: one unit for N ≤ 16, two units for N ≤ 32, and four units otherwise. Wider bit-precise types are rejected. Their operations match the integer type of the same width, modulo 2^N for unsigned types.
+
 `wchar_t` has an unsigned 8-bit representation. In C its underlying type is `unsigned char`; in C++ it remains a distinct built-in type. The compiler's `wint_t` underlying type is signed 16-bit `int`, permitting all `wchar_t` values and a separate negative `WEOF` sentinel. The supported execution locale is `"C"`; no Unicode or wide-character glyph rendering is specified.
 
 Plain `char` is signed by default.
@@ -4108,6 +4110,8 @@ pointer value.
 | `f64` | Not an AVM ABI type | Unsupported; frontend maps `double` and `long double` to `f32` |
 | `p0:16` | `PTR16` | Legal |
 | `p1:24` | Logical 24-bit `PROGPTR` backed by `GPR32`; padding byte unspecified | Custom |
+
+Integer widths other than 8, 16, 32, and 64 bits, and other than `i1`, are legalized by promotion or expansion. The `AVMWidenOddIntegers` IR pass computes their shifts, bit counts, signed division and remainder, signed comparisons, sign extensions, overflow operations, and integer/floating conversions in the next container: `i16` up to 16 bits, `i32` up to 32 bits, and `i64` otherwise. Each result equals the original modulo 2^N.
 
 General `i8` arithmetic is promoted to `i16`, performed at 16-bit width, and truncated when an `i8` result is required.
 

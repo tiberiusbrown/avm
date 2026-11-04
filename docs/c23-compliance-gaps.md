@@ -10,7 +10,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 
 ### Language and data model
 
-- [ ] **Bit-precise integer types:** The AVM Clang target rejects `_BitInt(N)`; enable and validate the required widths, ABI, lowering, linking, execution, and use in type-generic library interfaces.
 - [ ] **Minimum `double` precision:** `double` currently uses IEEE-754 binary32 (`DBL_DIG == 6`); C23 requires `DBL_DIG >= 10` and the corresponding epsilon bound.
 - [ ] **Minimum `long double` precision:** `long double` also uses binary32 (`LDBL_DIG == 6`); C23 requires `LDBL_DIG >= 10` and the corresponding epsilon bound. `double` and `long double` may share a representation if it meets these requirements.
 - [ ] **64-bit integer-to-floating conversion:** Conversion of `long long` to real floating types fails instruction selection because the necessary conversion helper is unavailable.

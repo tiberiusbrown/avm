@@ -13,6 +13,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 string.c
 00000185 l     O .data	00000002 strtok_next
 00000000 l    df *ABS*	00000000 pgmspace.c
+00000000 l    df *ABS*	00000000 malloc.c
 00000000 l    df *ABS*	00000000 termination.c
 00000000 l    df *ABS*	00000000 trap_report.c
 00000000 l    df *ABS*	00000000 trap_lookup.c
@@ -24,6 +25,7 @@ SYMBOL TABLE:
 000016ab l       .init_array	00000000 .hidden __init_array_start
 000016ab l       .fini_array	00000000 .hidden __fini_array_start
 000016ab l       .fini_array	00000000 .hidden __fini_array_end
+00000187 l       *ABS*	00000000 .hidden __avm_heap_start
 00000722 g     F .text	00000015 __avm_trap_entry
 00000506 g     F .text	00000023 _start
 0000056d g     F .text	000000e2 avm_test_main
@@ -35,9 +37,9 @@ SYMBOL TABLE:
 0000086e g     F .text	00000724 __avm_trap_lookup
 00000737 g     F .text	00000137 __avm_trap_report
 000006b8 g     F .text	00000005 memset
+000011a4 g     F .text	0000004b __avm_umulhisi3
 00000500 g       *ABS*	00000000 __avm_framebuffer
 000011ef g     F .text	00000068 __avm_mulsi3
-000011a4 g     F .text	0000004b __avm_umulhisi3
 
 Disassembly of section .text:
 

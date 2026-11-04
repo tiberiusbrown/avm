@@ -16,12 +16,14 @@ SYMBOL TABLE:
 00000de2 l     F .text	00000103 read_uleb128
 00000000 l    df *ABS*	00000000 string.c
 00000000 l    df *ABS*	00000000 pgmspace.c
+00000000 l    df *ABS*	00000000 malloc.c
 00000000 l    df *ABS*	00000000 font_br5n.c
 00000000 l    df *ABS*	00000000 integer.c
 000013f1 l       .init_array	00000000 .hidden __init_array_end
 000013f1 l       .init_array	00000000 .hidden __init_array_start
 000013f1 l       .fini_array	00000000 .hidden __fini_array_start
 000013f1 l       .fini_array	00000000 .hidden __fini_array_end
+00000142 l       *ABS*	00000000 .hidden __avm_heap_start
 00000463 g     F .text	00000015 __avm_trap_entry
 00000200 g     F .text	00000024 _start
 00000293 g     F .text	00000169 avm_test_main
@@ -244,12 +246,12 @@ Disassembly of section .text:
  f4 20                 ldsp16	r4, [sp+0x8]
  e1 b1 fe              call16	_Z8consume26Bytes2
  f1 0c                 mov	r1, r4
+ f1 73                 zext8	r3
  f4 20                 ldsp16	r4, [sp+0x8]
  f1 27                 mov	r5, r3
- e1 af fe              call16	_Z8consume36Bytes3
+ e1 ad fe              call16	_Z8consume36Bytes3
  f2 08                 add	r1, r0
  f2 0c                 add	r1, r4
- f1 73                 zext8	r3
  f4 10                 ldsp16	r4, [sp+0x4]
  fa 38                 lsl16i	r4, 0x8
  f9 8d                 or	r4, r3

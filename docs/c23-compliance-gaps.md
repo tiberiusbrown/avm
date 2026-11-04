@@ -12,7 +12,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 
 - [ ] **Minimum `double` precision:** `double` currently uses IEEE-754 binary32 (`DBL_DIG == 6`); C23 requires `DBL_DIG >= 10` and the corresponding epsilon bound.
 - [ ] **Minimum `long double` precision:** `long double` also uses binary32 (`LDBL_DIG == 6`); C23 requires `LDBL_DIG >= 10` and the corresponding epsilon bound. `double` and `long double` may share a representation if it meets these requirements.
-- [ ] **64-bit integer-to-floating conversion:** Conversion of `long long` to real floating types fails instruction selection because the necessary conversion helper is unavailable.
 
 ## II. Additional hosted C23 compliance gaps
 
@@ -22,7 +21,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 - [ ] **Hosted program startup:** Support both `int main(void)` and `int main(int argc, char *argv[])`, with the required `argc`/`argv` guarantees, rather than only no-argument startup.
 - [ ] **Hosted termination status:** Preserve the success/failure status semantics of returning from `main`, `exit`, `_Exit`, and C11 `quick_exit`; AVM currently discards termination status.
 - [ ] **Hosted environment selection:** Supply a truthful hosted compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the full hosted contract. The SDK defaults to freestanding mode.
-- [ ] **Minimum 32,767-byte object:** C23's hosted-only minimum execution limit requires an ordinary object of 32,767 bytes. AVM has up to 1,024 bytes of writable static storage and a 256-byte VM stack.
 
 ### Formatted input/output and integer conversion
 

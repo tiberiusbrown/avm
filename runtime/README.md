@@ -340,9 +340,10 @@ terminating NUL. `strncpy` and `strncpy_P` retain their bounded, zero-padding
 semantics.
 
 `libavm-builtins.a` contains the compiler's 32-bit and 64-bit integer
-multiplication, division, remainder, and shift helpers. Keep this archive after
-application objects and `libavm.a` in the link command so references from both
-are resolved.
+multiplication, division, remainder, and shift helpers, and the 64-bit
+integer-to-float conversion helpers `__floatdisf` and `__floatundisf`. Keep this
+archive after application objects and `libavm.a` in the link command so
+references from both are resolved.
 
 The 64-bit division helpers use the same zero-divisor convention as their
 32-bit counterparts: unsigned quotient is `UINT64_MAX`, signed quotient is

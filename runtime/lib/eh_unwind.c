@@ -1323,9 +1323,12 @@ uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
                 return land_at(cursor, cursor, fh, read_flash_u24(site + 6));
             }
             /* A cleanup passed on the way to the handler needs phase two, which
-             * runs it. The marker is idempotent, so later frames leave it set. */
+             * runs it. The marker is idempotent, so later frames leave it set. A
+             * pending rethrow keeps its bit, which only the abandoned catch's
+             * release clears. */
             if (match & AVEH5_MATCH_CLEANUP)
-                header->state = AVM_EH_STATE_SEARCH_HAS_CLEANUP;
+                header->state = (header->state & AVM_EH_RETHROW_PENDING) |
+                                AVM_EH_STATE_SEARCH_HAS_CLEANUP;
         }
 
         /* Unwind to the caller. The CFA must lie above the current SP, so every

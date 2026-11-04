@@ -5968,6 +5968,11 @@ declaration agree.
 The shim stores both program addresses in the 55-byte exception header
 ([Section 69.3](#693-exception-metadata-aveh5)).
 
+`__cxa_rethrow` takes no argument. The `throw;` in a catch body calls it, and it
+propagates the active caught exception with its original header, object, and
+destructor. Its shim records the rethrow site in that header, as described in the
+rethrow subsection of [Section 69.3](#693-exception-metadata-aveh5).
+
 ---
 
 # Part X — MC and Assembly Language Contract
@@ -7347,7 +7352,9 @@ The lifecycle states are:
 catch. `_Unwind_Resume` accepts only `IN_CLEANUP` for the active header, so a
 resume without a cleanup, after a catch, or on a stale pointer terminates.
 `__cxa_end_catch` frees the header and calls its destructor, and it accepts only
-`CAUGHT`. Cleanup pads never call it.
+`CAUGHT`. Cleanup pads never call it, except the cleanup of an abandoned catch during a
+rethrow, which releases the catch without ending the exception. The rethrow subsection
+below describes that release.
 
 `__cxa_get_exception_ptr` returns the object address while the exception is
 `ENTERING_CATCH`, without changing its state. Clang calls it for a by-value catch
@@ -7359,6 +7366,58 @@ which is narrower than a 24-bit program pointer. The landing code therefore load
 the pointer from the object, and the load keeps the pointer's address space. A
 function pointer is read as a 24-bit value. AVM has no lowering for a cast between
 address spaces 0 and 1, so the catch does not cast the returned address.
+
+#### Rethrow
+
+`throw;` calls `__cxa_rethrow` with no argument, from the catch body that holds the
+exception. The call is an ordinary call site, so its return record and its call record
+name the rethrow site, and its landing pad is the pad of the enclosing scope. The
+getter `__avm_eh_rethrow_header` returns the active exception only while it is
+`CAUGHT`, and it terminates in every other state, including a rethrow from a destructor
+that runs during propagation. The shim in `runtime/lib/eh_cxa_rethrow.asm` then fills the
+header's `context` from the rethrow site: the SP is the caller's SP, the program address is
+the return record, and r0-r3 are the site's callee-saved values. It tail-transfers to
+`__avm_eh_rethrow`.
+
+The object, its type descriptor, its destructor, and its size are not written. The rethrow
+therefore propagates the original object at its original address, and it allocates
+nothing. `__avm_eh_rethrow` sets `state` to `THROWN | 0x80`, where `0x80` is
+`AVM_EH_RETHROW_PENDING`. The low seven bits keep their lifecycle values. The pending bit
+means that the caught exception is propagating again, and that the abandoned catch has not
+yet released it. Both phases then run from the rethrow site, with the same AVEH5 search as a
+throw. A rethrow never takes the direct handler path of a fresh throw. Phase one recomputes
+the selector, the base adjustment, and the pointer conversion for the new handler.
+
+The pending bit is cleared only by the release of the abandoned catch. Clang emits that
+catch's `__cxa_end_catch` into the landing pad of the rethrow site, ahead of the dispatch.
+When an enclosing handler matches in that same pad, the pad is entered with the outer
+selector and the state `ENTERING_CATCH | 0x80`. Its `__cxa_end_catch` sees the pending bit,
+clears it, keeps the base state, and returns without destroying or freeing the object. A
+cleanup-only pad is entered with `IN_CLEANUP | 0x80`, and its release keeps `IN_CLEANUP`, so
+`_Unwind_Resume` continues the search. `_Unwind_Resume` accepts the base state and keeps the
+bit. `__cxa_begin_catch` and `__cxa_get_exception_ptr` accept only the state without the
+bit, so a handler that is reached before the release terminates before its catch body runs.
+
+The header stays the only record of the exception. A rethrow that finds no handler
+terminates through `abort()` without releasing, destroying, or freeing the exception, as a
+throw with no handler does. The rethrow path adds no persistent RAM and no header field. The
+shim `__cxa_rethrow` has no frame, as `__cxa_throw` has none, and `__avm_eh_rethrow` has the
+6-byte frame of `__avm_eh_throw`. The shim's getter call uses one temporary return record,
+which the stack analysis counts as an ordinary call.
+
+Measured with `tests/debug/eh_stack_report.py`, the rethrow fixtures peak at 203 bytes
+(`eh_rethrow_standard` at O0) and the largest static bound of a rethrow image is 214 bytes
+(`eh_rethrow_inheritance` at O0). Both are inside the 256-byte guest stack.
+
+The C++ tests are `tests/cpp/eh_rethrow*.cpp`. `tests/debug/eh_rethrow_verify.py` checks the
+probe trace of each linear rethrow image: the header's identity, the state at each runtime
+boundary, the order throw, begin, rethrow, release, end, destructor, and free, the rethrow
+context against the disassembly, and that the release precedes the next catch. It also decodes
+the AVEH5 block, and it requires that at least one rethrow call lies in a site whose action
+names a cleanup. The `avm_eh_rethrow_run` target runs it at O0, O2, and full LTO.
+`tests/debug/eh_rethrow_corrupt_verify.py` checks the runtime check at which each malformed
+state halts. Those states include a rethrow whose action list has a count beyond the list, which
+the runtime rejects in phase one.
 
 #### Guest unwinder
 
@@ -7834,8 +7893,12 @@ implemented:
   (`tests/cpp/eh_virtual_lattice_unhandled.cpp`), while five levels match
   (`tests/cpp/eh_virtual_lattice.cpp`);
 - exception filters, which the backend rejects with a diagnostic;
-- rethrow with `throw;`, and nested exceptions: only one exception may be active,
-  so a throw while one is active, including from a destructor, terminates;
+- nested exceptions: only one exception may be active, so a throw while one is active,
+  including from a destructor, terminates;
+- overlapping catches of one exception: a rethrow that a handler inside the still-active
+  abandoned catch would catch terminates when that catch begins
+  (`tests/cpp/eh_rethrow_nested_handler.cpp`), because the runtime keeps no count of
+  simultaneous catches;
 - `std::set_terminate` and `std::get_terminate`; `std::terminate` calls `abort()`;
 - `typeid` and `dynamic_cast`, which need RTTI and the virtual-base offsets.
 

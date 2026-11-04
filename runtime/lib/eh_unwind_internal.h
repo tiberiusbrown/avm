@@ -44,7 +44,7 @@ struct avm_eh_exception {
     uint8_t type_address[3];              /* +15 type-descriptor program address (r6:r7) */
     void (*destructor)(void *);           /* +18 program address (stack argument) */
     uint16_t size;                        /* +21 object size */
-    uint8_t state;                        /* +23 AVM_EH_STATE_* */
+    uint8_t state;                        /* +23 AVM_EH_STATE_* | AVM_EH_RETHROW_PENDING */
     struct avm_eh_context resume_context; /* +24 frame cursor for the next step */
     uint16_t handler_selector;            /* +39 selector of the matched catch */
     uint16_t handler_adjustment;          /* +41 byte offset of the matched base subobject */
@@ -71,13 +71,20 @@ struct avm_eh_exception {
  * handler is about to run, and it must call __cxa_begin_catch. CAUGHT means the catch
  * body is running, and __cxa_end_catch frees the header. SEARCH_HAS_CLEANUP means
  * phase one passed a frame with a cleanup and no matching catch, so the handler must be
- * reached through phase two. */
+ * reached through phase two. The low seven bits hold this lifecycle. */
 #define AVM_EH_STATE_ALLOCATED          0
 #define AVM_EH_STATE_THROWN             1
 #define AVM_EH_STATE_CAUGHT             2
 #define AVM_EH_STATE_IN_CLEANUP         3
 #define AVM_EH_STATE_ENTERING_CATCH     4
 #define AVM_EH_STATE_SEARCH_HAS_CLEANUP 5
+
+/* The high bit of the state marks a rethrow in progress. The caught exception is
+ * propagating again, and the cleanup of the abandoned catch has not yet released its
+ * handler ownership. It marks the current propagation of the one exception, and it
+ * is not a second exception. */
+#define AVM_EH_STATE_MASK        0x7fu
+#define AVM_EH_RETHROW_PENDING   0x80u
 
 /* Results of avm_eh_prepare_next. A cleanup or catch step fills the header's
  * context. */
@@ -94,6 +101,15 @@ __avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector
 /* Entry from the __cxa_throw shim, which tail-jumps here with the header in r4.
  * Searches for a handler and never returns. */
 __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header);
+
+/* Returns the header of the caught exception for the __cxa_rethrow shim. The exception
+ * must be the active one and must be CAUGHT, or the call terminates. */
+struct avm_eh_exception *__avm_eh_rethrow_header(void);
+
+/* Entry from the __cxa_rethrow shim, which tail-jumps here with the header in r4 after
+ * capturing the rethrow site into the header's context. It restarts both phases from that
+ * site, and it never returns. */
+__attribute__((noreturn)) void __avm_eh_rethrow(struct avm_eh_exception *header);
 
 /* Opens the AVEH5 metadata for the exception at header, once per throw. It validates the
  * block header and the index bounds, and it caches the block address, block end, and

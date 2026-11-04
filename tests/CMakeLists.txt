@@ -344,6 +344,7 @@ endforeach()
 set(AVM_EH_SUPPORT_HEADERS
     "${AVM_CXX_TEST_DIR}/support/eh_inheritance.h"
     "${AVM_CXX_TEST_DIR}/support/eh_pointer_conversion.h"
+    "${AVM_CXX_TEST_DIR}/support/eh_rethrow.h"
     "${AVM_CXX_TEST_DIR}/support/eh_rtti_identity.h"
     "${AVM_CXX_TEST_DIR}/support/eh_typed.h"
     "${AVM_CXX_TEST_DIR}/support/eh_typeinfo_identity.h"
@@ -358,8 +359,10 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
         set(AVM_TEST_IMAGE "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}.bin")
         # -fexceptions follows the SDK's -fno-exceptions default, so it wins.
         set(AVM_EH_TEST_COMPILE_OPTIONS -fexceptions)
-        if(AVM_TEST_NAME STREQUAL "eh_typeinfo_identity")
-            # Static typeid needs RTTI, which the SDK's -fno-rtti default disables.
+        if(AVM_TEST_NAME STREQUAL "eh_typeinfo_identity"
+           OR AVM_TEST_NAME STREQUAL "eh_rethrow_standard")
+            # Static typeid and the standard exceptions need RTTI, which the SDK's
+            # -fno-rtti default disables.
             list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -frtti)
         endif()
         avm_add_object(
@@ -433,6 +436,18 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
             avm_add_object(
                 OUTPUT "${AVM_EH_UNIT_OBJECT}"
                 SOURCE "${AVM_CXX_TEST_DIR}/support/eh_pointer_conversion_unit.cpp"
+                LANGUAGE CXX
+                COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
+                DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+            )
+            list(APPEND AVM_EH_IMAGE_OBJECTS "${AVM_EH_UNIT_OBJECT}")
+        elseif(AVM_TEST_NAME STREQUAL "eh_rethrow_cross_unit")
+            # The unit throws a Relay, catches it, and rethrows it to this unit, which catches
+            # the original object and rethrows it again.
+            set(AVM_EH_UNIT_OBJECT "${AVM_OPT_TEST_BINARY_DIR}/${AVM_TEST_NAME}_unit.o")
+            avm_add_object(
+                OUTPUT "${AVM_EH_UNIT_OBJECT}"
+                SOURCE "${AVM_CXX_TEST_DIR}/support/eh_rethrow_unit.cpp"
                 LANGUAGE CXX
                 COMPILE_OPTIONS "-${AVM_TEST_OPT_LEVEL}" -fexceptions
                 DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
@@ -1070,7 +1085,8 @@ set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
 set(AVM_EH_LTO_IMAGES)
 foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object eh_typed
         eh_inheritance eh_inheritance_cross_unit eh_virtual_inheritance eh_virtual_cross_unit
-        eh_pointer_conversion eh_pointer_cross_unit)
+        eh_pointer_conversion eh_pointer_cross_unit
+        eh_rethrow eh_rethrow_cleanup eh_rethrow_inheritance eh_rethrow_cross_unit)
     set(AVM_EH_LTO_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.o")
     set(AVM_EH_LTO_ELF "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.elf")
     set(AVM_EH_LTO_IMAGE "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}.bin")
@@ -1128,6 +1144,19 @@ foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_c
         avm_add_object(
             OUTPUT "${AVM_EH_LTO_UNIT_OBJECT}"
             SOURCE "${AVM_CXX_TEST_DIR}/support/eh_pointer_conversion_unit.cpp"
+            LANGUAGE CXX
+            COMPILE_OPTIONS -O2 -fexceptions -flto=full
+            DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
+        )
+        list(APPEND AVM_EH_LTO_OBJECTS "${AVM_EH_LTO_UNIT_OBJECT}")
+    endif()
+    if(AVM_EH_LTO_NAME STREQUAL "eh_rethrow_cross_unit")
+        # The unit throws, catches, and rethrows a Relay. LTO must keep its single descriptor
+        # and destructor across the whole program, so the rethrow crosses the unit unchanged.
+        set(AVM_EH_LTO_UNIT_OBJECT "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_LTO_NAME}_unit.o")
+        avm_add_object(
+            OUTPUT "${AVM_EH_LTO_UNIT_OBJECT}"
+            SOURCE "${AVM_CXX_TEST_DIR}/support/eh_rethrow_unit.cpp"
             LANGUAGE CXX
             COMPILE_OPTIONS -O2 -fexceptions -flto=full
             DEPENDS avm_sysroot ${AVM_EH_SUPPORT_HEADERS}
@@ -1466,6 +1495,102 @@ add_custom_target(avm_eh_typed_run
     VERBATIM
 )
 add_dependencies(avm_eh_catch_all_run avm_eh_typed_run)
+
+# Linear rethrow (throw;). The O0 and O2 images run every rethrow fixture: the single-unit
+# and cross-unit lifecycles, the cleanup and inheritance cases, the standard exceptions, and
+# the expected-termination cases. The full-LTO images of the single-unit and cross-unit
+# fixtures run at O2. The lifecycle verifier checks the probe trace of each linear rethrow
+# against the exception protocol, the corruption verifier checks where each malformed state
+# halts, and the metadata verifier checks the AVEH5 blocks of the rethrow images.
+set(AVM_EH_RETHROW_DIR "${AVM_CXX_TEST_BINARY_DIR}")
+set(AVM_EH_RETHROW_LTO_IMAGES)
+foreach(AVM_EH_RETHROW_LTO_NAME IN ITEMS eh_rethrow eh_rethrow_cleanup eh_rethrow_inheritance
+        eh_rethrow_cross_unit)
+    list(APPEND AVM_EH_RETHROW_LTO_IMAGES "${AVM_EH_LTO_BIN_DIR}/O2/${AVM_EH_RETHROW_LTO_NAME}.bin")
+endforeach()
+set(AVM_EH_RETHROW_VERIFY_ARGS
+    --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+    --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+    --interpreter "${AVM_INTERPRETER_HEX}"
+    --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}")
+add_custom_target(avm_eh_rethrow_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_rethrow" --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_rethrow$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_rethrow_cleanup$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_rethrow_inheritance$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_rethrow_cross_unit$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow.bin"
+        --elf "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow.elf" --min-rethrows 2
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_RETHROW_DIR}/O2/eh_rethrow.bin"
+        --elf "${AVM_EH_RETHROW_DIR}/O2/eh_rethrow.elf" --min-rethrows 2
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_cleanup.bin"
+        --elf "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_cleanup.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_RETHROW_DIR}/O2/eh_rethrow_cleanup.bin"
+        --elf "${AVM_EH_RETHROW_DIR}/O2/eh_rethrow_cleanup.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_inheritance.bin"
+        --elf "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_cross_unit.bin"
+        --elf "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_cross_unit.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow.elf" --min-rethrows 2
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_cleanup.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_cleanup.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_inheritance.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_inheritance.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_cross_unit.bin"
+        --elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_cross_unit.elf"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_rethrow_corrupt_verify.py"
+        ${AVM_EH_RETHROW_VERIFY_ARGS}
+        --image-dir "${AVM_EH_RETHROW_DIR}"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_metadata_verify.py"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-avm-image>"
+        --eh-elf "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow.elf"
+        --eh-image "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow.bin"
+        --eh-elf "${AVM_EH_RETHROW_DIR}/O2/eh_rethrow.elf"
+        --eh-image "${AVM_EH_RETHROW_DIR}/O2/eh_rethrow.bin"
+        --eh-elf "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_inheritance.elf"
+        --eh-image "${AVM_EH_RETHROW_DIR}/O0/eh_rethrow_inheritance.bin"
+        --eh-elf "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_cross_unit.elf"
+        --eh-image "${AVM_EH_LTO_BIN_DIR}/O2/eh_rethrow_cross_unit.bin"
+    COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/debug/eh_stack_report.py"
+        --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+        --interpreter "${AVM_INTERPRETER_HEX}"
+        --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}"
+        --image-dir "${AVM_CXX_TEST_BINARY_DIR}"
+        --opt O0 --opt O2
+        --fixture eh_rethrow --fixture eh_rethrow_cleanup --fixture eh_rethrow_inheritance
+        --fixture eh_rethrow_standard --fixture eh_rethrow_cross_unit
+        --fixture eh_rethrow_unhandled
+    DEPENDS avm_tests avm_eh_catch_all_images avm_eh_stack_probe llvm-avm-image llvm-nm
+        llvm-objdump ${AVM_EH_RETHROW_LTO_IMAGES}
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_eh_catch_all_run avm_eh_rethrow_run)
 
 # Boundary sampling on a guest that never finishes. The self-loop fixture ends only at the
 # cycle limit, so the probe must report "did not finish" and record every execution of its

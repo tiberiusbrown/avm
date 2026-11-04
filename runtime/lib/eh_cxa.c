@@ -1,8 +1,12 @@
-/* Itanium C++ ABI subset for typed catches, catch-all handlers, and cleanups.
+/* Itanium C++ ABI subset for typed catches, catch-all handlers, cleanups, and rethrow.
  *
- * Only one exception can be active at a time, and it cannot be rethrown. A throw
- * while one is active, including a throw from a destructor that runs during
- * unwinding, terminates through abort(). A catch matches its exact type, or a public
+ * Only one exception can be active at a time. A throw while one is active, including a
+ * throw from a destructor that runs during unwinding, terminates through abort(). A
+ * rethrow (throw;) propagates the active exception again, with its original header,
+ * object, and destructor. The rethrow must come from a catch body that is still CAUGHT,
+ * and it keeps the header's handler ownership pending until the abandoned catch's own
+ * __cxa_end_catch releases it, so no catch of the same exception begins before that
+ * release. A catch matches its exact type, or a public
  * base of the thrown class, virtual or nonvirtual, that occurs once in the hierarchy.
  * The unwinder compares types and walks the base subobjects in eh_unwind.c, reading
  * the thrown object's vptrs for a virtual base. A base catch binds to the base
@@ -21,8 +25,8 @@
  * unwinder updates both contexts in place. Propagation
  * alternates between cleanup and resume: each cleanup pad runs its destructors
  * and then calls _Unwind_Resume, which continues from the saved resume context.
- * __cxa_end_catch frees the header. The shim that fills the header is in
- * eh_cxa_throw.asm. Rethrow and nested exceptions are not implemented. */
+ * __cxa_end_catch frees the header. The shims that fill the header are in
+ * eh_cxa_throw.asm and eh_cxa_rethrow.asm. Nested exceptions are not implemented. */
 
 #include <avm/pgmspace.h>
 #include <stdint.h>
@@ -34,6 +38,16 @@
 /* The one active exception. It is set by the throw and cleared by
  * __cxa_end_catch. */
 static struct avm_eh_exception *active_exception;
+
+/* The lifecycle value of the state, without the rethrow-pending bit. */
+static inline uint8_t eh_base_state(const struct avm_eh_exception *header) {
+    return header->state & AVM_EH_STATE_MASK;
+}
+
+/* Sets the lifecycle value, and keeps the rethrow-pending bit as it was. */
+static inline void eh_set_state(struct avm_eh_exception *header, uint8_t state) {
+    header->state = (header->state & AVM_EH_RETHROW_PENDING) | state;
+}
 
 /* Itanium RTTI support vtables for the descriptors that Clang emits. A descriptor
  * refers to the address point, which lies two 24-bit entries past the symbol,
@@ -116,17 +130,21 @@ void __cxa_free_exception(void *object) {
  * and the state is ENTERING_CATCH until it calls __cxa_begin_catch. A handler's
  * selector is never zero. Every transfer discards the frames of this dispatch,
  * because the installer sets the stack pointer. It is inlined into its two callers,
- * which saves one frame on the guest stack. */
+ * which saves one frame on the guest stack. The rethrow-pending bit is kept on both
+ * entries. A pending catch entry is the landing pad of the abandoned catch's own scope.
+ * Clang emits that pad with its __cxa_end_catch ahead of the dispatch, and the release
+ * clears the bit there. __cxa_begin_catch requires the bit clear, so a pad that does not
+ * release the abandoned catch terminates before the new catch body runs. */
 static __attribute__((noreturn, always_inline)) inline void
 continue_unwind(struct avm_eh_exception *header) {
     uint8_t step = avm_eh_prepare_next(header);
     if (step == AVM_EH_STEP_CLEANUP) {
-        header->state = AVM_EH_STATE_IN_CLEANUP;
+        eh_set_state(header, AVM_EH_STATE_IN_CLEANUP);
         __avm_eh_install_context(&header->context, 0);
     }
     if (step != AVM_EH_STEP_CATCH || header->handler_selector == 0)
         abort();
-    header->state = AVM_EH_STATE_ENTERING_CATCH;
+    eh_set_state(header, AVM_EH_STATE_ENTERING_CATCH);
     __avm_eh_install_context(&header->context, header->handler_selector);
 }
 
@@ -164,16 +182,57 @@ __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header) {
     continue_unwind(header);
 }
 
+/* Returns the header of the active exception for the __cxa_rethrow shim. The exception
+ * must be CAUGHT, which holds only while a catch body that began it is running. A
+ * rethrow anywhere else terminates here, and no exception is synthesized. */
+struct avm_eh_exception *__avm_eh_rethrow_header(void) {
+    struct avm_eh_exception *header = active_exception;
+    if (!header || header->state != AVM_EH_STATE_CAUGHT)
+        abort();
+    return header;
+}
+
+/* Entered by tail transfer from __cxa_rethrow, after the shim has captured the rethrow
+ * site into the header's context. The header is in r4, and it is the active CAUGHT
+ * exception. Its object, type, destructor, and size are not written. The handler fields
+ * are reset, and the state becomes THROWN with the pending bit. Both phases then run from
+ * the rethrow site. Phase one validates that a handler exists, and phase two installs the
+ * first pad that matches. That pad always comes from the rethrow site's own scope, or from
+ * a frame outward of it. The rethrow never takes the direct handler path of __avm_eh_throw,
+ * because a handler is entered only through a landing pad that releases the abandoned catch. */
+__attribute__((noreturn)) void __avm_eh_rethrow(struct avm_eh_exception *header) {
+    if (!header || header != active_exception || header->state != AVM_EH_STATE_CAUGHT)
+        abort();
+
+    header->context.exception = (uint16_t)(uintptr_t)header;
+    header->handler_selector = 0;
+    header->handler_adjustment = 0;
+    header->handler_pointer_converted = AVM_EH_CONVERT_NONE;
+    header->state = AVM_EH_STATE_THROWN | AVM_EH_RETHROW_PENDING;
+    header->resume_context = header->context;
+
+    if (!avm_eh_open_exception(header))
+        abort();
+    if (!avm_eh_find_handler(header))
+        abort();
+
+    header->state = AVM_EH_STATE_THROWN | AVM_EH_RETHROW_PENDING;
+    header->resume_context = header->context;
+    continue_unwind(header);
+}
+
 /* Called by a cleanup pad after its destructors have run. The exception pointer
  * is the header that the pad received in r4. Resumption continues from the resume
- * context, which the previous step saved before entering this pad. */
+ * context, which the previous step saved before entering this pad. A pending rethrow
+ * may resume here, so the pending bit is kept. Only the abandoned catch's cleanup,
+ * through __cxa_end_catch, clears it. */
 __attribute__((noreturn)) void _Unwind_Resume(void *exception) {
     struct avm_eh_exception *header = exception;
     if (!header || header != active_exception ||
-        header->state != AVM_EH_STATE_IN_CLEANUP)
+        eh_base_state(header) != AVM_EH_STATE_IN_CLEANUP)
         abort();
 
-    header->state = AVM_EH_STATE_THROWN;
+    eh_set_state(header, AVM_EH_STATE_THROWN);
     continue_unwind(header);
 }
 
@@ -257,11 +316,25 @@ void *__cxa_get_exception_ptr(void *exception) {
 
 /* Ends the catch that the active exception began. The exception is destroyed and
  * freed here, and only here. The destructor receives the complete thrown object, not
- * the catch object, which may be a base subobject. Cleanup pads never reach this
- * function. */
+ * the catch object, which may be a base subobject.
+ *
+ * A pending rethrow reaches this function from the cleanup of the abandoned catch. That
+ * landing pad may be entered in either base state. An IN_CLEANUP pad resumes afterward,
+ * and an ENTERING_CATCH pad dispatches to the matched handler afterward. The release clears
+ * the pending bit, keeps the base state, and returns, so the exception is not destroyed and
+ * not freed. Any other state that reaches here is an error, including a second release. */
 void __cxa_end_catch(void) {
     struct avm_eh_exception *header = active_exception;
-    if (!header || header->state != AVM_EH_STATE_CAUGHT)
+    if (!header)
+        abort();
+    if (header->state & AVM_EH_RETHROW_PENDING) {
+        uint8_t base = eh_base_state(header);
+        if (base != AVM_EH_STATE_IN_CLEANUP && base != AVM_EH_STATE_ENTERING_CATCH)
+            abort();
+        header->state = base;
+        return;
+    }
+    if (header->state != AVM_EH_STATE_CAUGHT)
         abort();
     active_exception = NULL;
     if (header->destructor)

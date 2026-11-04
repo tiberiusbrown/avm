@@ -512,10 +512,10 @@ in `.avm.eh_sites`, and the `.debug_frame` rows into the `AVEH5` block described
 [arch.md](arch.md) Section 69.3. The unwinder's `eh_unwind.c` is built without
 unwind tables, because the unwinder never unwinds through its own frames.
 
-The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, and
-`eh_cxa_throw.asm`. They are archive members of `libavm.a`, so a program links
+The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, `eh_cxa_throw.asm`,
+and `eh_cxa_rethrow.asm`. They are archive members of `libavm.a`, so a program links
 them only when it references one of their symbols. The C++ ABI subset provides
-`__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`,
+`__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`, `__cxa_rethrow`,
 `__cxa_begin_catch`, `__cxa_get_exception_ptr`, `__cxa_end_catch`, `_Unwind_Resume`,
 `__gxx_personality_v0`, `__cxa_bad_typeid`, `std::terminate`. The runtime defines the Itanium support vtables that the
 descriptors name, in program space: `__class_type_info`, `__fundamental_type_info`,
@@ -549,6 +549,18 @@ has both a cleanup and typed clauses is entered as a handler when a clause match
 and as a cleanup when none does. The handler is entered last with the recorded
 selector, and it calls `__cxa_begin_catch`. `__cxa_end_catch` destroys the exception
 object and frees it. A cleanup pad never ends the exception.
+
+`throw;` calls `__cxa_rethrow`. The shim in `eh_cxa_rethrow.asm` takes the active caught
+exception from `__avm_eh_rethrow_header`, which terminates unless one is caught, and it
+records the rethrow site in the header's landing context. The object, its type
+descriptor, its destructor, and its size keep their addresses and values, and no memory
+is allocated. `__avm_eh_rethrow` sets the state to `THROWN` with the rethrow-pending bit,
+`0x80`, and it runs both phases from the rethrow site. The pending bit is cleared only by
+the release of the abandoned catch: the `__cxa_end_catch` in the rethrow site's landing
+pad, which Clang places ahead of the dispatch to an enclosing handler. That release keeps
+the base state, so the pad either resumes or dispatches. `__cxa_begin_catch` accepts only
+a state without the bit, so a handler that is reached before the release terminates. An
+unhandled rethrow terminates without releasing or freeing the exception.
 
 `__cxa_throw` is a frameless shim. It takes the object in r4, the type-descriptor
 program address in r6:r7, and the destructor program address as a three-byte stack

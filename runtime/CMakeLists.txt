@@ -342,7 +342,7 @@ avm_add_runtime_object(
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
 # Exception support is linked only when a program references these objects.
-foreach(eh_asm eh_context eh_cxa_throw)
+foreach(eh_asm eh_context eh_cxa_throw eh_cxa_rethrow)
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${eh_asm}.o")
     avm_add_runtime_object(
         OUTPUT "${RUNTIME_OBJECT}"

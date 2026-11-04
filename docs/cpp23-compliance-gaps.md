@@ -10,7 +10,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Language mode and target integration
 
-- [ ] **Exception-capable C++ language mode:** Support catch clauses that convert the thrown type through pointer-to-member conversions, exception specifications, `throw;` rethrow, and nested exceptions. The default AVM C++ configuration still specifies `-fno-exceptions`.
+- [ ] **Exception-capable C++ language mode:** Support catch clauses that convert the thrown type through pointer-to-member conversions, exception specifications, and nested exceptions. The default AVM C++ configuration still specifies `-fno-exceptions`.
 - [ ] **Runtime type identification:** The AVM C++ configuration still specifies `-fno-rtti`, so `dynamic_cast` requires `-frtti`.
 - [ ] **C++20 modules:** Support compilation, dependency ordering, interface/implementation units, imports, linking, and cross-translation-unit semantics for language modules in the AVM SDK, including relevant AVM target and toolchain integration. This concerns the core language, not the hosted library modules `std` and `std.compat`.
 - [ ] **Coroutines:** Validate and provide AVM lowering and execution for C++20/C++23 coroutine creation, suspension, resumption, destruction, frame allocation, cleanup, and cross-translation-unit references.
@@ -21,7 +21,8 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### C++ ABI, object lifetime, and exception runtime
 
-- [ ] **Exception ABI:** Provide pointer-to-member conversion matching for catch clauses, including containing-class and member-pointer qualification conversions and `std::nullptr_t` conversions to pointer-to-member types, plus exception-object state for nested and rethrown exceptions and stack-unwind support for exceptions thrown from allocation functions.
+- [ ] **Exception ABI:** Provide pointer-to-member conversion matching for catch clauses, including containing-class and member-pointer qualification conversions and `std::nullptr_t` conversions to pointer-to-member types, plus exception-object state for nested exceptions and stack-unwind support for exceptions thrown from allocation functions.
+- [ ] **Overlapping catches of one exception:** Support a rethrow that a nested handler inside the still-active abandoned catch catches, and any other catch of one exception that begins while another catch of that exception is active. This needs handler-depth tracking and simultaneous catch objects, including their converted-pointer buffers.
 - [ ] **Pointer conversions in program memory:** Match a derived class pointer into 24-bit program memory to a base class pointer. The runtime walks the bases of ordinary 16-bit class pointers only, so a 24-bit derived pointer matches no base catch.
 - [ ] **Base-class match depth:** Match catch clauses and `dynamic_cast` operations against class hierarchies deeper than eight descriptor levels, against more than 512 base edges for one clause or one cast, or against pointer qualification chains deeper than eight levels. A throw or cast past any of these limits fails instead of matching.
 - [ ] **Stack cleanup and termination:** Ensure destructors execute for the fully constructed elements of an array whose construction fails; invoke `std::terminate` for the required failure cases, including violations of `noexcept`.

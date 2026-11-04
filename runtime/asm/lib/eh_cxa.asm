@@ -7,6 +7,8 @@ SYMBOL TABLE:
 00000000 l    d  .text.__cxa_free_exception	00000000 .text.__cxa_free_exception
 00000000 l    d  .text.__avm_eh_throw	00000000 .text.__avm_eh_throw
 00000000 l     O .data.active_exception	00000002 active_exception
+00000000 l    d  .text.__avm_eh_rethrow_header	00000000 .text.__avm_eh_rethrow_header
+00000000 l    d  .text.__avm_eh_rethrow	00000000 .text.__avm_eh_rethrow
 00000000 l    d  .text._Unwind_Resume	00000000 .text._Unwind_Resume
 00000000 l    d  .text.__cxa_begin_catch	00000000 .text.__cxa_begin_catch
 00000000 l     F .text.catch_object	000000ed catch_object
@@ -22,15 +24,17 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 abort
 00000000 g     F .text.__cxa_free_exception	00000006 __cxa_free_exception
 00000000         *UND*	00000000 free
-00000000 g     F .text.__avm_eh_throw	000000b8 __avm_eh_throw
+00000000 g     F .text.__avm_eh_throw	000000c6 __avm_eh_throw
 00000000         *UND*	00000000 avm_eh_open_exception
 00000000         *UND*	00000000 avm_eh_find_handler
 00000000         *UND*	00000000 __avm_eh_install_context
 00000000         *UND*	00000000 avm_eh_prepare_next
-00000000 g     F .text._Unwind_Resume	00000062 _Unwind_Resume
+00000000 g     F .text.__avm_eh_rethrow_header	0000001c __avm_eh_rethrow_header
+00000000 g     F .text.__avm_eh_rethrow	000000b7 __avm_eh_rethrow
+00000000 g     F .text._Unwind_Resume	00000074 _Unwind_Resume
 00000000 g     F .text.__cxa_begin_catch	0000002b __cxa_begin_catch
 00000000 g     F .text.__cxa_get_exception_ptr	0000001e __cxa_get_exception_ptr
-00000000 g     F .text.__cxa_end_catch	0000003f __cxa_end_catch
+00000000 g     F .text.__cxa_end_catch	0000005f __cxa_end_catch
 00000000 g     F .text.__gxx_personality_v0	00000004 __gxx_personality_v0
 00000000 g     O .rodata._ZTVN10__cxxabiv123__fundamental_type_infoE	00000009 vtable for __cxxabiv1::__fundamental_type_info
 00000000 g     O .rodata._ZTVN10__cxxabiv117__class_type_infoE	00000009 vtable for __cxxabiv1::__class_type_info
@@ -191,7 +195,7 @@ Disassembly of section .text.__avm_eh_throw:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_eh_throw
-		R_AVM_FAR24	.text.__avm_eh_throw+0xa2
+		R_AVM_FAR24	.text.__avm_eh_throw+0xa9
 <L4>:
  cc 01                 cmpi.s8	r4, 0x1
  d0 04                 breq8	0x4 <L5>
@@ -199,7 +203,11 @@ Disassembly of section .text.__avm_eh_throw:
  e2 00 00 00           jmpf	__avm_eh_throw
 		R_AVM_FAR24	.text.__avm_eh_throw+0x4b
 <L5>:
+ ed 80 37              ld8u	r4, [r0+23]
+ c1 80                 ldi8	r5, 0x80
+ 84                    and	r5, r4
  c0 03                 ldi8	r4, 0x3
+ 91                    or	r4, r5
  ee 80 37              st8	[r0+23], r4
  a5                    xor	r5, r5
  f1 20                 mov	r4, r0
@@ -213,10 +221,157 @@ Disassembly of section .text.__avm_eh_throw:
  e2 00 00 00           jmpf	__avm_eh_throw
 		R_AVM_FAR24	.text.__avm_eh_throw+0x4b
 <L6>:
+ ed 80 37              ld8u	r4, [r0+23]
+ c2 80                 ldi8	r6, 0x80
+ 88                    and	r6, r4
  c0 04                 ldi8	r4, 0x4
+ 92                    or	r4, r6
  ee 80 37              st8	[r0+23], r4
  f1 20                 mov	r4, r0
  e3 00 00 00           callf	__avm_eh_throw
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_eh_install_context
+
+Disassembly of section .text.__avm_eh_rethrow_header:
+
+<__avm_eh_rethrow_header>:
+ f0 54 00 00           ldm16	r4, [0x0]
+		R_AVM_DATA16	.data.active_exception
+ f6 2c                 tst16	r4
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow_header
+		R_AVM_FAR24	.text.__avm_eh_rethrow_header+0x18
+<L0>:
+ ed a8 37              ld8u	r5, [r4+23]
+ cd 02                 cmpi.s8	r5, 0x2
+ d0 04                 breq8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow_header
+		R_AVM_FAR24	.text.__avm_eh_rethrow_header+0x18
+<L1>:
+ ef                    ret
+ e3 00 00 00           callf	__avm_eh_rethrow_header
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	abort
+
+Disassembly of section .text.__avm_eh_rethrow:
+
+<__avm_eh_rethrow>:
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ f6 2c                 tst16	r4
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0xa1
+<L0>:
+ f0 55 00 00           ldm16	r5, [0x0]
+		R_AVM_DATA16	.data.active_exception
+ 31                    cmp	r4, r5
+ d0 04                 breq8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0xa1
+<L1>:
+ ed a8 37              ld8u	r5, [r4+23]
+ cd 02                 cmpi.s8	r5, 0x2
+ d0 04                 breq8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0xa1
+<L2>:
+ 04                    mov	r5, r4
+ c9 27                 addi.s8	r5, 0x27
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 6b ca              st32	[r5], q3
+ a5                    xor	r5, r5
+ ee a8 56              st8	[r4+54], r5
+ f0 01 81              ldi8	r1, 0x81
+ ee 28 37              st8	[r4+23], r1
+ ee 98 2d              st16	[r4+13], r4
+ f1 14                 mov	r2, r4
+ f0 0a 18              addi.s8	r2, 0x18
+ 0c                    mov	r7, r4
+ f1 22                 mov	r4, r2
+ 07                    mov	r5, r7
+ c2 0f                 ldi8	r6, 0xf
+ d7 0f                 sys	memcpy
+ f1 07                 mov	r0, r7
+ 03                    mov	r4, r7
+ e3 00 00 00           callf	__avm_eh_rethrow
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	avm_eh_open_exception
+ f4 a4                 tst8	r4
+ d1 04                 brne8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0xa1
+<L3>:
+ f1 20                 mov	r4, r0
+ e3 00 00 00           callf	__avm_eh_rethrow
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	avm_eh_find_handler
+ f4 a4                 tst8	r4
+ d1 04                 brne8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0xa1
+<L4>:
+ f1 2c                 mov	r7, r0
+ ee 2e 37              st8	[r7+23], r1
+ f1 22                 mov	r4, r2
+ 07                    mov	r5, r7
+ c2 0f                 ldi8	r6, 0xf
+ d7 0f                 sys	memcpy
+ 03                    mov	r4, r7
+ e3 00 00 00           callf	__avm_eh_rethrow
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	avm_eh_prepare_next
+ f1 74                 zext8	r4
+ cc 02                 cmpi.s8	r4, 0x2
+ d1 04                 brne8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0x96
+<L5>:
+ cc 01                 cmpi.s8	r4, 0x1
+ d0 04                 breq8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0xa1
+<L6>:
+ ed a0 37              ld8u	r5, [r0+23]
+ c2 80                 ldi8	r6, 0x80
+ 89                    and	r6, r5
+ c1 03                 ldi8	r5, 0x3
+ 96                    or	r5, r6
+ ee a0 37              st8	[r0+23], r5
+ a5                    xor	r5, r5
+ f1 20                 mov	r4, r0
+ e3 00 00 00           callf	__avm_eh_rethrow
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_eh_install_context
+ ed b0 47              ld16	r5, [r0+39]
+ f6 2d                 tst16	r5
+ d0 04                 breq8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__avm_eh_rethrow
+		R_AVM_FAR24	.text.__avm_eh_rethrow+0xa5
+<L7>:
+ e3 00 00 00           callf	__avm_eh_rethrow
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	abort
+ ed c0 37              ld8u	r6, [r0+23]
+ c3 80                 ldi8	r7, 0x80
+ 8e                    and	r7, r6
+ c2 04                 ldi8	r6, 0x4
+ 9b                    or	r6, r7
+ ee c0 37              st8	[r0+23], r6
+ f1 20                 mov	r4, r0
+ e3 00 00 00           callf	__avm_eh_rethrow
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_eh_install_context
 
@@ -228,7 +383,7 @@ Disassembly of section .text._Unwind_Resume:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_Unwind_Resume
-		R_AVM_FAR24	.text._Unwind_Resume+0x55
+		R_AVM_FAR24	.text._Unwind_Resume+0x60
 <L0>:
  f0 55 00 00           ldm16	r5, [0x0]
 		R_AVM_DATA16	.data.active_exception
@@ -236,16 +391,19 @@ Disassembly of section .text._Unwind_Resume:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_Unwind_Resume
-		R_AVM_FAR24	.text._Unwind_Resume+0x55
+		R_AVM_FAR24	.text._Unwind_Resume+0x60
 <L1>:
  ed a8 37              ld8u	r5, [r4+23]
- cd 03                 cmpi.s8	r5, 0x3
+ c2 7f                 ldi8	r6, 0x7f
+ 89                    and	r6, r5
+ ce 03                 cmpi.s8	r6, 0x3
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_Unwind_Resume
-		R_AVM_FAR24	.text._Unwind_Resume+0x55
+		R_AVM_FAR24	.text._Unwind_Resume+0x60
 <L2>:
- c1 01                 ldi8	r5, 0x1
+ c2 81                 ldi8	r6, 0x81
+ 86                    and	r5, r6
  ee a8 37              st8	[r4+23], r5
  f1 04                 mov	r0, r4
  e3 00 00 00           callf	_Unwind_Resume
@@ -256,16 +414,20 @@ Disassembly of section .text._Unwind_Resume:
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_Unwind_Resume
-		R_AVM_FAR24	.text._Unwind_Resume+0x48
+		R_AVM_FAR24	.text._Unwind_Resume+0x53
 <L3>:
  cc 01                 cmpi.s8	r4, 0x1
  f1 20                 mov	r4, r0
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_Unwind_Resume
-		R_AVM_FAR24	.text._Unwind_Resume+0x55
+		R_AVM_FAR24	.text._Unwind_Resume+0x60
 <L4>:
+ ed a8 37              ld8u	r5, [r4+23]
+ c2 80                 ldi8	r6, 0x80
+ 89                    and	r6, r5
  c1 03                 ldi8	r5, 0x3
+ 96                    or	r5, r6
  ee a8 37              st8	[r4+23], r5
  a5                    xor	r5, r5
  e3 00 00 00           callf	_Unwind_Resume
@@ -277,12 +439,16 @@ Disassembly of section .text._Unwind_Resume:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_Unwind_Resume
-		R_AVM_FAR24	.text._Unwind_Resume+0x59
+		R_AVM_FAR24	.text._Unwind_Resume+0x64
 <L5>:
  e3 00 00 00           callf	_Unwind_Resume
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	abort
+ ed c8 37              ld8u	r6, [r4+23]
+ c3 80                 ldi8	r7, 0x80
+ 8e                    and	r7, r6
  c2 04                 ldi8	r6, 0x4
+ 9b                    or	r6, r7
  ee c8 37              st8	[r4+23], r6
  e3 00 00 00           callf	_Unwind_Resume
 		R_AVM_RELAX	*ABS*
@@ -510,15 +676,22 @@ Disassembly of section .text.__cxa_end_catch:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_end_catch
-		R_AVM_FAR24	.text.__cxa_end_catch+0x3b
+		R_AVM_FAR24	.text.__cxa_end_catch+0x5b
 <L0>:
  ed 80 37              ld8u	r4, [r0+23]
- cc 02                 cmpi.s8	r4, 0x2
- d0 04                 breq8	0x4 <L1>
+ f6 44                 sext8	r4
+ f4 a4                 tst8	r4
+ d9 04                 brsge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_end_catch
-		R_AVM_FAR24	.text.__cxa_end_catch+0x3b
+		R_AVM_FAR24	.text.__cxa_end_catch+0x46
 <L1>:
+ cc 02                 cmpi.s8	r4, 0x2
+ d0 04                 breq8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_end_catch
+		R_AVM_FAR24	.text.__cxa_end_catch+0x5b
+<L2>:
  a0                    xor	r4, r4
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	.data.active_exception
@@ -529,19 +702,34 @@ Disassembly of section .text.__cxa_end_catch:
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  f0 69 c8              cmp32	q3, q2
- d1 04                 brne8	0x4 <L2>
+ d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_end_catch
-		R_AVM_FAR24	.text.__cxa_end_catch+0x34
-<L2>:
+		R_AVM_FAR24	.text.__cxa_end_catch+0x3e
+<L3>:
  f1 20                 mov	r4, r0
  c8 37                 addi.s8	r4, 0x37
  eb                    callp	q3
  f1 20                 mov	r4, r0
- b8                    pop16	r0
- e2 00 00 00           jmpf	__cxa_end_catch
+ e3 00 00 00           callf	__cxa_end_catch
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	free
+ b8                    pop16	r0
+ ef                    ret
+ c1 7f                 ldi8	r5, 0x7f
+ 81                    and	r4, r5
+ 04                    mov	r5, r4
+ c9 fd                 addi.s8	r5, -0x3
+ f1 75                 zext8	r5
+ cd 02                 cmpi.s8	r5, 0x2
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	__cxa_end_catch
+		R_AVM_FAR24	.text.__cxa_end_catch+0x5b
+<L4>:
+ ee 80 37              st8	[r0+23], r4
+ b8                    pop16	r0
+ ef                    ret
  e3 00 00 00           callf	__cxa_end_catch
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	abort

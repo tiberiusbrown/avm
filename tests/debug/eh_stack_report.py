@@ -58,6 +58,12 @@ FIXTURES = [
      'above 0xFFFF'),
     ('eh_pointer_corrupt_target', 'malformed pointer descriptors and markers: the conversion and marker paths'),
     ('eh_pointer_depth_unhandled', 'a nine-level pointer chain whose walk reaches the depth limit: halt report'),
+    ('eh_rethrow', 'linear rethrows: basic, catch-all, derived, identity, sequential, and a helper rethrow'),
+    ('eh_rethrow_cleanup', 'rethrow across cleanup frames, by-value catches, and a catch-all rethrow'),
+    ('eh_rethrow_inheritance', 'rethrow across nonvirtual, multiple, and virtual bases, and converted pointers'),
+    ('eh_rethrow_standard', 'rethrow of std::bad_typeid and std::bad_cast'),
+    ('eh_rethrow_cross_unit', 'rethrow across a translation-unit boundary, twice'),
+    ('eh_rethrow_unhandled', 'an unhandled rethrow: halt report, with the exception not destroyed'),
     (NO_THROW, 'no-throw control'),
 ]
 

@@ -42,7 +42,7 @@ SYMBOL TABLE:
 00000000 g     F .text.avm_eh_open_exception	00000141 avm_eh_open_exception
 00000000 g     O .rodata.__avm_eh_metadata_ptr	00000003 __avm_eh_metadata_ptr
 00000000 g     F .text.avm_eh_validate_block	0000076c avm_eh_validate_block
-00000000 g     F .text.avm_eh_find_handler	0000016c avm_eh_find_handler
+00000000 g     F .text.avm_eh_find_handler	00000173 avm_eh_find_handler
 00000000 g     F .text.avm_eh_prepare_next	000001d7 avm_eh_prepare_next
 00000000         *UND*	00000000 vtable for __cxxabiv1::__class_type_info
 00000000         *UND*	00000000 vtable for __cxxabiv1::__si_class_type_info
@@ -1770,7 +1770,7 @@ Disassembly of section .text.avm_eh_find_handler:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L0>:
  ed 90 20              ld16	r4, [r0+0]
  f4 11                 ldsp16	r5, [sp+0x4]
@@ -1780,7 +1780,7 @@ Disassembly of section .text.avm_eh_find_handler:
  d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L1>:
  f4 18                 ldsp16	r4, [sp+0x6]
  f7 22                 ld16	r2, [r4+]
@@ -1800,7 +1800,7 @@ Disassembly of section .text.avm_eh_find_handler:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L2>:
  f2 68                 mov32	q2, q0
  f2 6b                 mov32	q3, q1
@@ -1829,7 +1829,7 @@ Disassembly of section .text.avm_eh_find_handler:
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L3>:
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
@@ -1837,11 +1837,11 @@ Disassembly of section .text.avm_eh_find_handler:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L4>:
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- f0 69 48              cmp32	q1, q2
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 40              cmp32	q1, q0
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
@@ -1851,9 +1851,7 @@ Disassembly of section .text.avm_eh_find_handler:
  a5                    xor	r5, r5
  f7 69                 add32	q2, q1
  f0 63 c8              ldp24	q3, [q2]
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- f0 69 c8              cmp32	q3, q2
+ f0 69 c0              cmp32	q3, q0
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
@@ -1876,13 +1874,13 @@ Disassembly of section .text.avm_eh_find_handler:
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L7>:
  f6 2c                 tst16	r4
  d0 04                 breq8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x115
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x11c
 <L8>:
  aa                    xor	r6, r6
  c3 01                 ldi8	r7, 0x1
@@ -1895,9 +1893,13 @@ Disassembly of section .text.avm_eh_find_handler:
  e2 00 00 00           jmpf	avm_eh_find_handler
 		R_AVM_FAR24	.text.avm_eh_find_handler+0x27
 <L9>:
+ f4 02                 ldsp16	r6, [sp+0x0]
+ ed 8c 37              ld8u	r4, [r6+23]
+ c1 80                 ldi8	r5, 0x80
+ 84                    and	r5, r4
  c0 05                 ldi8	r4, 0x5
- f4 01                 ldsp16	r5, [sp+0x0]
- ee 8a 37              st8	[r5+23], r4
+ 91                    or	r4, r5
+ ee 8c 37              st8	[r6+23], r4
  e2 00 00 00           jmpf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.avm_eh_find_handler+0x27
@@ -1921,7 +1923,7 @@ Disassembly of section .text.avm_eh_find_handler:
  d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L10>:
  f0 36 12              ldsp16	r6, [sp+0x12]
  6a                    ld16	r6, [r6]
@@ -1932,7 +1934,7 @@ Disassembly of section .text.avm_eh_find_handler:
  d8 04                 bruge8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x162
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x169
 <L11>:
  f4 02                 ldsp16	r6, [sp+0x0]
  ee 9c 38              st16	[r6+24], r4

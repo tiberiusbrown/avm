@@ -1,9 +1,17 @@
 #ifndef _AVM_RUNTIME_COMPLEX_H
 #define _AVM_RUNTIME_COMPLEX_H
+#define __STDC_VERSION_COMPLEX_H__ 202311L
 
 #define complex _Complex
 #define _Complex_I (__extension__ __builtin_complex(0.0f, 1.0f))
 #define I _Complex_I
+
+/* Each macro builds its parts directly. An infinite or NaN imaginary part
+ * therefore cannot affect the real part, as it would through x + I * y. */
+#define CMPLX(x, y) (__extension__ __builtin_complex((double)(x), (double)(y)))
+#define CMPLXF(x, y) (__extension__ __builtin_complex((float)(x), (float)(y)))
+#define CMPLXL(x, y) \
+    (__extension__ __builtin_complex((long double)(x), (long double)(y)))
 
 #ifdef __cplusplus
 extern "C" {

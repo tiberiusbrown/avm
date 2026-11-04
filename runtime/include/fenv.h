@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_FENV_H
 #define _AVM_RUNTIME_FENV_H
+#define __STDC_VERSION_FENV_H__ 202311L
 
 typedef unsigned char fenv_t;
 typedef unsigned char fexcept_t;

@@ -93,6 +93,11 @@ per block, with no alignment padding or reserved heap array. Adjacent free
 blocks coalesce immediately, free tail space is reclaimed, and `realloc` resizes
 in place when possible. `malloc(0)` returns NULL and `realloc(p, 0)` frees `p`.
 Allocation failure preserves existing allocations and does not set `errno`.
+`aligned_alloc` supports only alignment 1, the fundamental alignment of every
+AVM type, and returns NULL for any other alignment. `free_sized` and
+`free_aligned_sized` free their block and ignore the size and alignment
+arguments. `strdup` and `strndup` allocate through `malloc`, so they fail when
+that allocation fails.
 The allocator is non-reentrant; interrupt handlers must not interrupt allocator
 operations with another allocator call. `malloc.o` is extracted from `libavm.a`
 only when required, adding no code or RAM to programs that do not use allocation.
@@ -139,6 +144,12 @@ bytes of locale data.
 the fixed C locale. `wint_t` is signed 16-bit and `WEOF` is -1; all 256 byte
 values are preserved by case conversion except mapped ASCII letters. Named
 descriptors support the twelve standard classes and `tolower`/`toupper`.
+
+`<uchar.h>` converts between UTF-8, UTF-16, or UTF-32 and the fixed C locale.
+Each byte with value `v` denotes the code point `v`, so every byte converts, and
+code points above 255 fail with `EILSEQ`. `mbstate_t` is one byte and holds only
+a pending unit of a partial sequence: the second UTF-8 unit of U+0080 through
+U+00FF, the lead byte of `c8rtomb`, or a pending high surrogate for `c16rtomb`.
 
 ## Startup variants
 
@@ -306,7 +317,10 @@ _P name.
 program memory. A failed assertion emits an AVM debug diagnostic and calls
 `abort()`. This debug channel is not a compliant standard `stderr` stream.
 Defining `NDEBUG` suppresses expression evaluation; reincluding `assert.h`
-updates the macro after changing `NDEBUG`.
+updates the macro after changing `NDEBUG`. As C23 specifies, `assert` takes an
+ellipsis, but an enabled assertion accepts exactly one expression: `assert(a, b)`
+and `assert()` are preprocessing errors. A parenthesized comma expression counts
+as one expression.
 
 `math.h` declares ordinary C ABI functions. Direct calls, parenthesized calls,
 and function pointers all use the same implementations in `libavm.a`. The
@@ -346,6 +360,13 @@ to `SIG_DFL` before the call, and handlers may install a replacement. Hardware
 and interpreter exceptions are not automatically converted to C signals.
 The six packed three-byte function pointers occupy 18 bytes of static RAM only
 when signal support is linked; `abort()` alone does not pull in this table.
+
+`at_quick_exit` and `quick_exit` keep their own table of 32 callbacks, the C11
+minimum. Registration returns zero on success and nonzero when the table is full
+or the function is NULL. `quick_exit` runs the registered callbacks in reverse
+order, removing each one before its call, then calls `_Exit`. It runs no `atexit`
+callbacks and no C++ destructors. The table and its count occupy 97 bytes of
+static RAM only when a program references either function.
 
 ## Fatal trap reporting
 

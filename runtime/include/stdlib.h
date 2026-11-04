@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_STDLIB_H
 #define _AVM_RUNTIME_STDLIB_H
+#define __STDC_VERSION_STDLIB_H__ 202311L
 
 #include <stddef.h>
 
@@ -17,6 +18,10 @@ extern "C" {
 #endif
 
 int atexit(void (*func)(void));
+/* quick_exit runs at_quick_exit registrations, not atexit registrations. AVM
+ * keeps 32 quick-exit slots. Registration fails with a nonzero result when
+ * they are full or when func is NULL. */
+int at_quick_exit(void (*func)(void));
 /* AVM has an empty environment-variable list. */
 char *getenv(const char *name);
 
@@ -29,6 +34,13 @@ void *malloc(size_t size);
 void *calloc(size_t nmemb, size_t size);
 void *realloc(void *ptr, size_t size);
 void free(void *ptr);
+/* AVM's heap guarantees only byte alignment, the fundamental alignment of
+ * every type here. aligned_alloc returns NULL for any other alignment. */
+void *aligned_alloc(size_t alignment, size_t size);
+/* The size and alignment arguments must match the original allocation. AVM
+ * allocations record their size internally, so these functions only free. */
+void free_sized(void *ptr, size_t size);
+void free_aligned_sized(void *ptr, size_t alignment, size_t size);
 size_t memalignment(const void *ptr);
 int rand(void);
 void srand(unsigned int seed);
@@ -36,9 +48,18 @@ void qsort(void *base, size_t nmemb, size_t size,
            int (*compar)(const void *, const void *));
 void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
               int (*compar)(const void *, const void *));
+/* C23 makes bsearch generic in the qualification of base. A bare name, or a
+ * name in parentheses, still denotes the addressable function. */
+#if !defined(__cplusplus) && defined(__STDC_VERSION__) && \
+    __STDC_VERSION__ >= 202311L && !defined(AVM_STDLIB_IMPLEMENTATION)
+#define bsearch(key, base, nmemb, size, compar) \
+    ((__typeof__(1 ? (base) : (void *)1))(bsearch)( \
+        (key), (base), (nmemb), (size), (compar)))
+#endif
 /* The attribute works in C99 as well as all supported C++ language modes. */
 __attribute__((noreturn)) void exit(int status);
 __attribute__((noreturn)) void _Exit(int status);
+__attribute__((noreturn)) void quick_exit(int status);
 __attribute__((noreturn)) void abort(void);
 
 /* Integer text conversions use the fixed C locale. strto* accepts bases
@@ -59,6 +80,17 @@ float strtof(const char* str, char** endptr);
 double strtod(const char* str, char** endptr);
 long double strtold(const char* str, char** endptr);
 double atof(const char* str);
+
+/* strfrom* behave like snprintf for a format of an optional precision and one
+ * of a, A, e, E, f, F, g, or G. Any other format is copied to s without
+ * conversion, truncated as snprintf would truncate it. The return value is
+ * the number of characters that would have been written. */
+int strfromd(char* __restrict s, size_t n, const char* __restrict format,
+             double fp);
+int strfromf(char* __restrict s, size_t n, const char* __restrict format,
+             float fp);
+int strfroml(char* __restrict s, size_t n, const char* __restrict format,
+             long double fp);
 
 /* Fixed C locale: stateless single-byte encoding, mapping bytes 0..255
  * directly to unsigned 8-bit wide characters. All byte values are valid;

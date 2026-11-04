@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_MATH_H
 #define _AVM_RUNTIME_MATH_H
+#define __STDC_VERSION_MATH_H__ 202311L
 
 #define HUGE_VAL (__builtin_huge_val())
 #define HUGE_VALF (__builtin_huge_valf())

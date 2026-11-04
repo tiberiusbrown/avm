@@ -226,3 +226,30 @@ size_t (*wide_type_mbrtowc)(wchar_t *__restrict pwc, const char *__restrict s, s
 size_t (*wide_type_wcrtomb)(char *__restrict s, wchar_t wc, mbstate_t *__restrict ps) = &wcrtomb;
 size_t (*wide_type_mbsrtowcs)(wchar_t *__restrict dst, const char **__restrict src, size_t len, mbstate_t *__restrict ps) = &mbsrtowcs;
 size_t (*wide_type_wcsrtombs)(char *__restrict dst, const wchar_t **__restrict src, size_t len, mbstate_t *__restrict ps) = &wcsrtombs;
+
+/* Revision macros and the C11/C23 interfaces added to the AVM library headers. */
+#include <uchar.h>
+#include <complex.h>
+_Static_assert(__STDC_VERSION_ASSERT_H__ == 202311L && __STDC_VERSION_STDLIB_H__ == 202311L &&
+    __STDC_VERSION_STRING_H__ == 202311L && __STDC_VERSION_UCHAR_H__ == 202311L &&
+    __STDC_VERSION_COMPLEX_H__ == 202311L, "C23 revision macros");
+size_t (*uchar_mbrtoc8_address(void))(char8_t*, const char*, size_t, mbstate_t*) { return &mbrtoc8; }
+size_t (*uchar_c8rtomb_address(void))(char*, char8_t, mbstate_t*) { return &c8rtomb; }
+size_t (*uchar_mbrtoc16_address(void))(char16_t*, const char*, size_t, mbstate_t*) { return &mbrtoc16; }
+size_t (*uchar_c16rtomb_address(void))(char*, char16_t, mbstate_t*) { return &c16rtomb; }
+size_t (*uchar_mbrtoc32_address(void))(char32_t*, const char*, size_t, mbstate_t*) { return &mbrtoc32; }
+size_t (*uchar_c32rtomb_address(void))(char*, char32_t, mbstate_t*) { return &c32rtomb; }
+int (*strfromd_address(void))(char*, size_t, const char*, double) { return &strfromd; }
+int (*strfromf_address(void))(char*, size_t, const char*, float) { return &strfromf; }
+int (*strfroml_address(void))(char*, size_t, const char*, long double) { return &strfroml; }
+int (*at_quick_exit_address(void))(void (*)(void)) { return &at_quick_exit; }
+void (*quick_exit_address(void))(int) { return &quick_exit; }
+void *(*aligned_alloc_address(void))(size_t, size_t) { return &aligned_alloc; }
+void (*free_sized_address(void))(void*, size_t) { return &free_sized; }
+void (*free_aligned_sized_address(void))(void*, size_t, size_t) { return &free_aligned_sized; }
+char *(*strdup_address(void))(const char*) { return &strdup; }
+char *(*strndup_address(void))(const char*, size_t) { return &strndup; }
+void *(*bsearch_address(void))(const void*, const void*, size_t, size_t, int (*)(const void*, const void*)) { return &bsearch; }
+double _Complex cmplx_double_smoke(void) { return CMPLX(1.0, 2.0); }
+float _Complex cmplx_float_smoke(void) { return CMPLXF(1.0f, 2.0f); }
+long double _Complex cmplx_long_smoke(void) { return CMPLXL(1.0L, 2.0L); }

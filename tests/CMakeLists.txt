@@ -173,7 +173,7 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             # so the driver's libc++-before-C search order remains effective.
             set(test_include_dirs)
         endif()
-        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME STREQUAL "c23_freestanding")
+        if(AVM_TEST_LANGUAGE STREQUAL "C" AND AVM_TEST_NAME MATCHES "^c23_")
             list(APPEND test_compile_options -std=c23 -pedantic-errors)
         endif()
         if(AVM_TEST_NAME MATCHES "^(tgmath_real|tgmath_complex|complex_.*)$")
@@ -2285,6 +2285,19 @@ add_custom_target(avm_display_system_tests_run
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     USES_TERMINAL VERBATIM)
 
+# Checks compile-time diagnostics that the AVM library headers must produce or
+# avoid, such as assert with more or fewer than one expression.
+set(AVM_HEADER_DIAGNOSTICS_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/c/diagnostics/check_header_diagnostics.py")
+add_custom_target(avm_header_diagnostics_run
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_HEADER_DIAGNOSTICS_VERIFY}"
+        --clang "$<TARGET_FILE:clang>"
+        --sysroot-include "${AVM_SYSROOT_DIR}/include"
+        --source-dir "${CMAKE_CURRENT_SOURCE_DIR}/c/diagnostics"
+    DEPENDS clang avm_sysroot
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+
 add_custom_target(avm_tests_run
     COMMAND "$<TARGET_FILE:avm_tests>"
     DEPENDS avm_tests avm_test_images avm_push16_tests_run avm_stack_bounds_tests_run avm_audio_tests_run
@@ -2295,6 +2308,7 @@ add_custom_target(avm_tests_run
     VERBATIM
 )
 add_dependencies(avm_tests_run avm_format_long_long_tests_run)
+add_dependencies(avm_tests_run avm_header_diagnostics_run)
 add_dependencies(avm_tests_run avm_rtti_static_run)
 add_dependencies(avm_tests_run avm_rtti_polymorphic_run)
 add_dependencies(avm_tests_run avm_rtti_mixed_link_run)

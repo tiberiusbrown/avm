@@ -25,19 +25,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 - [ ] **Hosted environment selection:** Supply a truthful hosted compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the full hosted contract. The SDK defaults to freestanding mode.
 - [ ] **Minimum 32,767-byte object:** C23's hosted-only minimum execution limit requires an ordinary object of 32,767 bytes. AVM has up to 1,024 bytes of writable static storage and a 256-byte VM stack.
 
-### C11 and C23 library headers and utilities
-
-- [ ] **`<stdckdint.h>` (C23):** Provide `ckd_add`, `ckd_sub`, and `ckd_mul` with the specified checked-arithmetic semantics, including mixed integer types and overflow reporting.
-- [ ] **`<assert.h>` (C23):** Implement variadic `assert(...)` and the required header-version macro with correct `NDEBUG` and failed-assertion behavior.
-- [ ] **`<stdlib.h>` allocation (C11/C23):** Provide `aligned_alloc`, `free_sized`, and `free_aligned_sized` with the specified alignment, size, and deallocation contracts.
-- [ ] **`<stdlib.h>` quick termination (C11):** Provide `at_quick_exit` and `quick_exit`, including registration capacity, callback ordering, and separation from ordinary `atexit` callbacks.
-- [ ] **`<stdlib.h>` float-to-string conversion (C23):** Provide `strfromf`, `strfromd`, and `strfroml` with the required formatting and return-value semantics.
-- [ ] **`<stdlib.h>` qualifier-generic binary search (C23):** Make `bsearch` preserve the searched array's `const` qualification in C23 while retaining an addressable function.
-- [ ] **`<string.h>` duplication (C23):** Provide `strdup` and `strndup` with allocation, termination, and failure semantics.
-- [ ] **`<uchar.h>` (C11/C23):** Provide the `char16_t`/`char32_t`/`char8_t` API integration and conversions `mbrtoc16`, `c16rtomb`, `mbrtoc32`, `c32rtomb`, `mbrtoc8`, and `c8rtomb`, including `mbstate_t` state and invalid-sequence behavior in AVM's supported locale.
-- [ ] **`<complex.h>` construction (C11):** Provide `CMPLX`, `CMPLXF`, and `CMPLXL`, with correct complex construction independent of intermediate arithmetic.
-- [ ] **Header revision interfaces (C23):** Define the required `__STDC_VERSION_*_H__` macros in AVM-owned library headers and reconcile other C23 header contracts, without duplicating compiler-provided headers.
-
 ### Formatted input/output and integer conversion
 
 - [ ] **Binary formatted output (C23):** Implement mandatory `%b` conversion in all narrow and wide `printf`-family entry points, including flags, width, precision, and length modifiers.

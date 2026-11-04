@@ -32,6 +32,8 @@ SYMBOL TABLE:
 00000000 l    d  .text.strncat	00000000 .text.strncat
 00000000 l    d  .text.strcpy	00000000 .text.strcpy
 00000000 l    d  .text.strcat	00000000 .text.strcat
+00000000 l    d  .text.strdup	00000000 .text.strdup
+00000000 l    d  .text.strndup	00000000 .text.strndup
 00000000 l    d  .data.strtok_next	00000000 .data.strtok_next
 00000000 l    d  .data.strerror.buffer	00000000 .data.strerror.buffer
 00000000 l    d  .rodata..L.avm.flashstr.0	00000000 .rodata..L.avm.flashstr.0
@@ -73,6 +75,9 @@ SYMBOL TABLE:
 00000000 g     F .text.strncat	00000005 strncat
 00000000 g     F .text.strcpy	0000000e strcpy
 00000000 g     F .text.strcat	00000008 strcat
+00000000 g     F .text.strdup	00000024 strdup
+00000000         *UND*	00000000 malloc
+00000000 g     F .text.strndup	00000048 strndup
 
 Disassembly of section .text.memccpy:
 
@@ -945,4 +950,88 @@ Disassembly of section .text.strcat:
  c6 ff ff              ldi16	r6, 0xffff
  d7 1c                 sys	strncat
  03                    mov	r4, r7
+ ef                    ret
+
+Disassembly of section .text.strdup:
+
+<strdup>:
+ b1                    push16	r1
+ b0                    push16	r0
+ f1 04                 mov	r0, r4
+ d7 1a                 sys	strlen
+ f1 0c                 mov	r1, r4
+ f4 a9                 inc16	r1
+ f1 21                 mov	r4, r1
+ e3 00 00 00           callf	strdup
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	malloc
+ 0c                    mov	r7, r4
+ f6 2f                 tst16	r7
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strdup
+		R_AVM_FAR24	.text.strdup+0x20
+<L0>:
+ 03                    mov	r4, r7
+ f1 24                 mov	r5, r0
+ f1 29                 mov	r6, r1
+ d7 0f                 sys	memcpy
+ 03                    mov	r4, r7
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ef                    ret
+
+Disassembly of section .text.strndup:
+
+<strndup>:
+ b1                    push16	r1
+ b0                    push16	r0
+ f1 04                 mov	r0, r4
+ f2 39                 sub	r1, r1
+ f6 2d                 tst16	r5
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strndup
+		R_AVM_FAR24	.text.strndup+0x27
+<L0>:
+ f1 20                 mov	r4, r0
+ 48                    ld8u	r6, [r4]
+ f4 a6                 tst8	r6
+ d1 04                 brne8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strndup
+		R_AVM_FAR24	.text.strndup+0x27
+<L1>:
+ f4 ac                 inc16	r4
+ f4 a9                 inc16	r1
+ f5 25                 cmp	r5, r1
+ d0 04                 breq8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strndup
+		R_AVM_FAR24	.text.strndup+0x10
+<L2>:
+ f1 0d                 mov	r1, r5
+ f1 21                 mov	r4, r1
+ f4 ac                 inc16	r4
+ e3 00 00 00           callf	strndup
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	malloc
+ 0c                    mov	r7, r4
+ f6 2f                 tst16	r7
+ d1 04                 brne8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	strndup
+		R_AVM_FAR24	.text.strndup+0x44
+<L3>:
+ 03                    mov	r4, r7
+ f1 24                 mov	r5, r0
+ f1 29                 mov	r6, r1
+ d7 0f                 sys	memcpy
+ 07                    mov	r5, r7
+ f2 25                 add	r5, r1
+ aa                    xor	r6, r6
+ 56                    st8	[r5], r6
+ 03                    mov	r4, r7
+ b8                    pop16	r0
+ b9                    pop16	r1
  ef                    ret

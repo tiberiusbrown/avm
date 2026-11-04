@@ -155,6 +155,30 @@ void *realloc(void *ptr, size_t size)
     return replacement;
 }
 
+/* Every AVM type has byte alignment, so byte alignment is the only supported
+ * alignment. Larger powers of two and zero fail with a null pointer. */
+void *aligned_alloc(size_t alignment, size_t size)
+{
+    if (alignment != 1)
+        return NULL;
+    return malloc(size);
+}
+
+/* Each block stores its own size. These functions ignore the size and alignment
+ * arguments, which the caller must still match to the original allocation. */
+void free_sized(void *ptr, size_t size)
+{
+    (void)size;
+    free(ptr);
+}
+
+void free_aligned_sized(void *ptr, size_t alignment, size_t size)
+{
+    (void)alignment;
+    (void)size;
+    free(ptr);
+}
+
 void *calloc(size_t nmemb, size_t size)
 {
     size_t total;

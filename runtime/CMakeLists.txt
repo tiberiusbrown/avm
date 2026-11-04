@@ -115,6 +115,9 @@ set(RUNTIME_SOURCES
     stdio_stdin
     stdio_stdout
     stdlib
+    quick_exit
+    strfrom
+    uchar
     stdbit
     strtof
     strtof_internal

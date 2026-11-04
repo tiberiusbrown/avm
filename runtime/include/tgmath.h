@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_TGMATH_H
 #define _AVM_RUNTIME_TGMATH_H
+#define __STDC_VERSION_TGMATH_H__ 202311L
 
 #include <math.h>
 #include <complex.h>

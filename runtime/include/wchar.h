@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_WCHAR_H
 #define _AVM_RUNTIME_WCHAR_H
+#define __STDC_VERSION_WCHAR_H__ 202311L
 #include <stddef.h>
 #include <stdarg.h>
 #include <stdio.h>

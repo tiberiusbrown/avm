@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_STRING_H
 #define _AVM_RUNTIME_STRING_H
+#define __STDC_VERSION_STRING_H__ 202311L
 
 #include <stddef.h>
 #include <stdint.h>
@@ -38,6 +39,9 @@ char* strncpy(char* dst, const char* src, size_t size);
 char* strncat(char* dst, const char* src, size_t size);
 char* strcpy(char* dst, const char* src);
 char* strcat(char* dst, const char* src);
+/* The copies are allocated as if by malloc. NULL means no space was available. */
+char* strdup(const char* s);
+char* strndup(const char* s, size_t n);
 
 #ifdef __cplusplus
 } // extern "C"

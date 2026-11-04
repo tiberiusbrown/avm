@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_TIME_H
 #define _AVM_RUNTIME_TIME_H
+#define __STDC_VERSION_TIME_H__ 202311L
 
 #include <stdint.h>
 #include <stddef.h>

@@ -27,7 +27,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **Stack cleanup and termination:** Ensure destructors execute for the fully constructed elements of an array whose construction fails; invoke `std::terminate` for the required failure cases, including violations of `noexcept`.
 - [ ] **Mixed RTTI with dynamic typeid:** When dynamic `typeid` or a `dynamic_cast` to a class is linked, the linker rejects every retained ordinary vtable that is emitted without RTTI, even a class that no such operation reaches. Retain such vtables when no operation can reach them.
 - [ ] **Dynamic initialization and destruction:** Complete initialization guards, recursive-initialization handling, and destructor registration/order semantics for namespace-scope, function-local static, and thread-local objects in the supported execution model, including early termination and exception paths.
-- [ ] **Required termination callback capacity:** Guarantee registration of at least 32 functions through C++ `std::atexit` and separately through `std::at_quick_exit`, with the specified callback ordering and failure semantics in a conforming C++23 mode. AVM's `atexit` storage is currently linker-capacity-dependent and quick-termination support is missing.
+- [ ] **Required termination callback capacity:** Guarantee registration of at least 32 functions through C++ `std::atexit`, with the specified callback ordering and failure semantics in a conforming C++23 mode. AVM's `atexit` storage is currently linker-capacity-dependent.
 
 ### Fundamental freestanding library headers
 
@@ -57,7 +57,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Freestanding termination — `<cstdlib>`
 
-- [ ] **C++ termination interfaces:** Supply the required `std`-namespace declarations/overloads for `abort`, `atexit`, `at_quick_exit`, `exit`, `_Exit`, and `quick_exit`, including their `noexcept`, linkage, and termination contracts. Implement missing quick-exit registration/execution and preserve the distinction from normal termination.
+- [ ] **C++ termination interfaces:** Supply the required `std`-namespace declarations/overloads for `abort`, `atexit`, `at_quick_exit`, `exit`, `_Exit`, and `quick_exit`, including their `noexcept` and linkage contracts.
 
 ## II. Additional hosted C++23 conformance gaps
 
@@ -70,7 +70,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Hosted library fundamentals and C compatibility
 
-- [ ] **C-library compatibility headers:** Provide the required C++ wrappers/interfaces for the C17-derived library facilities, including `<cassert>`, `<cctype>`, `<cerrno>`, `<cfenv>`, `<cmath>`, `<ccomplex>`, `<csetjmp>`, `<csignal>`, `<cstdio>`, `<cstdlib>`, `<cstring>`, `<ctime>`, `<cuchar>`, `<cwchar>`, `<cwctype>`, `<cinttypes>`, and related C++23-standard headers, with correct `std`-namespace forms and overloads.
+- [ ] **C-library compatibility headers:** Provide the required C++ wrappers/interfaces for the C17-derived library facilities, including `<cassert>`, `<cctype>`, `<cerrno>`, `<cfenv>`, `<cmath>`, `<ccomplex>`, `<csetjmp>`, `<csignal>`, `<cstdio>`, `<cstdlib>`, `<cstring>`, `<ctime>`, `<cuchar>` (except `std::mbrtoc8` and `std::c8rtomb`, which the vendored libc++ enables only for GNU libc 2.36 or newer), `<cwchar>`, `<cwctype>`, `<cinttypes>`, and related C++23-standard headers, with correct `std`-namespace forms and overloads.
 - [ ] **C++ `<cstdlib>` hosted facilities:** Complete the non-freestanding `std::` functions/types, including C allocation, numeric conversions, environment, random-number utilities, sorting/searching, and specified overloads, with correct interaction with the AVM C runtime.
 - [ ] **Hosted exception and RTTI integration:** Ensure all hosted library facilities interoperate with standard exception types, allocation failure, dynamic casts, exception propagation, and ABI-compatible error reporting.
 

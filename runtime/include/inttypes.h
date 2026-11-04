@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_INTTYPES_H
 #define _AVM_RUNTIME_INTTYPES_H
+#define __STDC_VERSION_INTTYPES_H__ 202311L
 
 #include <stdint.h>
 #include <stddef.h>

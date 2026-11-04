@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_SETJMP_H
 #define _AVM_RUNTIME_SETJMP_H
+#define __STDC_VERSION_SETJMP_H__ 202311L
 
 typedef struct {
     unsigned char __state[13];

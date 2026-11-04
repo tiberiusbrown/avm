@@ -1,5 +1,6 @@
 #ifndef _AVM_RUNTIME_STDIO_H
 #define _AVM_RUNTIME_STDIO_H
+#define __STDC_VERSION_STDIO_H__ 202311L
 
 #include <stdarg.h>
 #include <stddef.h>

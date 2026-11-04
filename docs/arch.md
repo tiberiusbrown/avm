@@ -473,7 +473,10 @@ and reclaims free heap-tail space. `realloc` shrinks or grows in place when
 possible, otherwise copying to a new allocation; failure preserves the original.
 `calloc` checks multiplication overflow and zeros the requested bytes.
 `malloc(0)` returns NULL; `realloc(ptr, 0)` frees a non-NULL allocation and returns
-NULL. Allocation failures do not change `errno`.
+NULL. Allocation failures do not change `errno`. `aligned_alloc` accepts only
+alignment 1, the fundamental alignment of every AVM type; it returns NULL for any
+other alignment. `free_sized` and `free_aligned_sized` free the block and ignore
+their size and alignment arguments.
 
 Allocator code and state are linked only when allocation functionality is used;
 there is no reserved heap array or storage overhead otherwise. The allocator is
@@ -5582,6 +5585,14 @@ is needed. Repeated registrations are distinct entries. An entry is consumed
 before its callback runs. Registrations during cleanup run before earlier
 pending entries, reusing consumed capacity. As in C99, recursively calling
 `exit` has undefined behavior.
+
+`at_quick_exit` uses a separate table of 32 callbacks, the C11 minimum, and returns
+nonzero when the table is full or the function is NULL. `quick_exit(status)`
+calls those callbacks in reverse registration order, removing each entry before
+its call, and then calls `_Exit(status)`. It never runs `atexit` callbacks or C++
+destructors, and it does not depend on the `atexit` capacity option. The table
+holds three-byte code pointers and a one-byte count, 97 bytes in total. It is
+linked only when a program references `at_quick_exit` or `quick_exit`.
 
 Plain C uses packed three-byte function pointers plus a one-byte count:
 `3 * N + 1` bytes (13 at capacity 4; 97 at capacity 32). No callback table or

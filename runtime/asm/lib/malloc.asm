@@ -9,6 +9,9 @@ SYMBOL TABLE:
 00000000 l    d  .text.coalesce	00000000 .text.coalesce
 00000000 l     F .text.coalesce	0000006c coalesce
 00000000 l    d  .text.realloc	00000000 .text.realloc
+00000000 l    d  .text.aligned_alloc	00000000 .text.aligned_alloc
+00000000 l    d  .text.free_sized	00000000 .text.free_sized
+00000000 l    d  .text.free_aligned_sized	00000000 .text.free_aligned_sized
 00000000 l    d  .text.calloc	00000000 .text.calloc
 00000000 l    d  .data.heap_top	00000000 .data.heap_top
 00000000 l    d  .debug_frame	00000000 .debug_frame
@@ -16,6 +19,9 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_heap_start
 00000000 g     F .text.free	00000073 free
 00000000 g     F .text.realloc	00000365 realloc
+00000000 g     F .text.aligned_alloc	00000096 aligned_alloc
+00000000 g     F .text.free_sized	00000073 free_sized
+00000000 g     F .text.free_aligned_sized	00000073 free_aligned_sized
 00000000 g     F .text.calloc	000000e8 calloc
 00000000         *UND*	00000000 __avm_umulhisi3
 00000000         *UND*	00000000 memset
@@ -853,6 +859,282 @@ Disassembly of section .text.realloc:
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.realloc+0x2b7
+
+Disassembly of section .text.aligned_alloc:
+
+<aligned_alloc>:
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ 08                    mov	r6, r4
+ a0                    xor	r4, r4
+ ce 01                 cmpi.s8	r6, 0x1
+ d0 04                 breq8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x92
+<L0>:
+ c6 01 fc              ldi16	r6, 0xfc01
+ 19                    add	r6, r5
+ c7 02 fc              ldi16	r7, 0xfc02
+ 3b                    cmp	r6, r7
+ d8 04                 bruge8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x92
+<L1>:
+ c9 02                 addi.s8	r5, 0x2
+ f0 50 00 00           ldm16	r0, [0x0]
+		R_AVM_DATA16	.data.heap_top
+ c6 00 00              ldi16	r6, 0x0
+		R_AVM_DATA16	__avm_heap_start
+ f6 28                 tst16	r0
+ fb 06                 cmov.eq	r0, r6
+ f5 28                 cmp	r6, r0
+ d2 04                 brult8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x6d
+<L2>:
+ c7 00 00              ldi16	r7, 0x0
+		R_AVM_DATA16	__avm_heap_start
+ f0 05 ff 7f           ldi16	r1, 0x7fff
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.aligned_alloc+0x44
+ 1e                    add	r7, r6
+ f5 2c                 cmp	r7, r0
+ d2 04                 brult8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x6d
+<L3>:
+ f5 4e                 ld16	r2, [r7]
+ f1 2a                 mov	r6, r2
+ f9 c4                 and	r6, r1
+ f6 2a                 tst16	r2
+ d9 04                 brsge8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x3b
+<L4>:
+ 39                    cmp	r6, r5
+ d8 04                 bruge8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x3b
+<L5>:
+ 29                    sub	r6, r5
+ c4 00 80              ldi16	r4, 0x8000
+ ce 03                 cmpi.s8	r6, 0x3
+ d8 04                 bruge8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x8b
+<L6>:
+ 91                    or	r4, r5
+ 7c                    st16	[r7], r4
+ 17                    add	r5, r7
+ 76                    st16	[r5], r6
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.aligned_alloc+0x8f
+ c6 00 05              ldi16	r6, 0x500
+ f2 58                 sub	r6, r0
+ 39                    cmp	r6, r5
+ d8 04                 bruge8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_FAR24	.text.aligned_alloc+0x92
+<L7>:
+ c6 00 80              ldi16	r6, 0x8000
+ 99                    or	r6, r5
+ f1 20                 mov	r4, r0
+ f7 46                 st16	[r4+], r6
+ f2 05                 add	r0, r5
+ f0 58 00 00           stm16	[0x0], r0
+		R_AVM_DATA16	.data.heap_top
+ e2 00 00 00           jmpf	aligned_alloc
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.aligned_alloc+0x92
+ f9 51                 or	r2, r4
+ f5 5e                 st16	[r7], r2
+ cb 02                 addi.s8	r7, 0x2
+ 03                    mov	r4, r7
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ ef                    ret
+
+Disassembly of section .text.free_sized:
+
+<free_sized>:
+ b1                    push16	r1
+ b0                    push16	r0
+ f6 2c                 tst16	r4
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x70
+<L0>:
+ ed b8 1e              ld16	r5, [r4-2]
+ f0 04 ff 7f           ldi16	r0, 0x7fff
+ f9 a0                 and	r5, r0
+ ee b8 1e              st16	[r4-2], r5
+ f0 51 00 00           ldm16	r1, [0x0]
+		R_AVM_DATA16	.data.heap_top
+ c4 00 00              ldi16	r4, 0x0
+		R_AVM_DATA16	__avm_heap_start
+ f5 21                 cmp	r4, r1
+ d2 04                 brult8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x70
+<L1>:
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.free_sized+0x32
+ 11                    add	r4, r5
+ f5 21                 cmp	r4, r1
+ d2 04                 brult8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x70
+<L2>:
+ 64                    ld16	r5, [r4]
+ f6 2d                 tst16	r5
+ f9 a0                 and	r5, r0
+ d9 04                 brsge8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x29
+<L3>:
+ 0d                    mov	r7, r5
+ 1c                    add	r7, r4
+ f5 2d                 cmp	r7, r1
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x5b
+<L4>:
+ 6b                    ld16	r6, [r7]
+ f6 2e                 tst16	r6
+ d9 04                 brsge8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x5b
+<L5>:
+ 16                    add	r5, r6
+ 0d                    mov	r7, r5
+ 1c                    add	r7, r4
+ f5 2d                 cmp	r7, r1
+ d8 04                 bruge8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x47
+<L6>:
+ f5 2d                 cmp	r7, r1
+ d1 04                 brne8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_FAR24	.text.free_sized+0x6c
+<L7>:
+ 71                    st16	[r4], r5
+ f0 51 00 00           ldm16	r1, [0x0]
+		R_AVM_DATA16	.data.heap_top
+ e2 00 00 00           jmpf	free_sized
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.free_sized+0x29
+ f0 5c 00 00           stm16	[0x0], r4
+		R_AVM_DATA16	.data.heap_top
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ef                    ret
+
+Disassembly of section .text.free_aligned_sized:
+
+<free_aligned_sized>:
+ b1                    push16	r1
+ b0                    push16	r0
+ f6 2c                 tst16	r4
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x70
+<L0>:
+ ed b8 1e              ld16	r5, [r4-2]
+ f0 04 ff 7f           ldi16	r0, 0x7fff
+ f9 a0                 and	r5, r0
+ ee b8 1e              st16	[r4-2], r5
+ f0 51 00 00           ldm16	r1, [0x0]
+		R_AVM_DATA16	.data.heap_top
+ c4 00 00              ldi16	r4, 0x0
+		R_AVM_DATA16	__avm_heap_start
+ f5 21                 cmp	r4, r1
+ d2 04                 brult8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x70
+<L1>:
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.free_aligned_sized+0x32
+ 11                    add	r4, r5
+ f5 21                 cmp	r4, r1
+ d2 04                 brult8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x70
+<L2>:
+ 64                    ld16	r5, [r4]
+ f6 2d                 tst16	r5
+ f9 a0                 and	r5, r0
+ d9 04                 brsge8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x29
+<L3>:
+ 0d                    mov	r7, r5
+ 1c                    add	r7, r4
+ f5 2d                 cmp	r7, r1
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x5b
+<L4>:
+ 6b                    ld16	r6, [r7]
+ f6 2e                 tst16	r6
+ d9 04                 brsge8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x5b
+<L5>:
+ 16                    add	r5, r6
+ 0d                    mov	r7, r5
+ 1c                    add	r7, r4
+ f5 2d                 cmp	r7, r1
+ d8 04                 bruge8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x47
+<L6>:
+ f5 2d                 cmp	r7, r1
+ d1 04                 brne8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_FAR24	.text.free_aligned_sized+0x6c
+<L7>:
+ 71                    st16	[r4], r5
+ f0 51 00 00           ldm16	r1, [0x0]
+		R_AVM_DATA16	.data.heap_top
+ e2 00 00 00           jmpf	free_aligned_sized
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.free_aligned_sized+0x29
+ f0 5c 00 00           stm16	[0x0], r4
+		R_AVM_DATA16	.data.heap_top
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ef                    ret
 
 Disassembly of section .text.calloc:
 

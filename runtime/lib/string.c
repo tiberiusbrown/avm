@@ -1,6 +1,7 @@
 #define AVM_STRING_IMPLEMENTATION
 #include <string.h>
 #include <errno.h>
+#include <stdlib.h>
 
 void* memccpy(void* restrict dst, const void* restrict src, int value, size_t size) {
     unsigned char* d = dst;
@@ -200,4 +201,22 @@ char* strcpy(char* dst, const char* src) {
 #undef strcat
 char* strcat(char* dst, const char* src) {
     return strncat(dst, src, SIZE_MAX);
+}
+
+/* Each copy uses one malloc block, so AVM's heap limit is also its limit. */
+char* strdup(const char* s) {
+    size_t length = strlen(s);
+    char* copy = malloc(length + 1);
+    if (copy) memcpy(copy, s, length + 1);
+    return copy;
+}
+
+char* strndup(const char* s, size_t n) {
+    size_t length = strnlen(s, n);
+    char* copy = malloc(length + 1);
+    if (copy) {
+        memcpy(copy, s, length);
+        copy[length] = '\0';
+    }
+    return copy;
 }

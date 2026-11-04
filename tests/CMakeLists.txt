@@ -478,7 +478,8 @@ add_custom_target(avm_eh_catch_all_images DEPENDS ${AVM_EH_TEST_IMAGES})
 # whole program is optimized. avm_rtti_static_run runs them and their verifier.
 set(AVM_RTTI_SUPPORT_HEADERS
     "${AVM_CXX_TEST_DIR}/support/rtti_static.h"
-    "${AVM_CXX_TEST_DIR}/support/rtti_polymorphic.h")
+    "${AVM_CXX_TEST_DIR}/support/rtti_polymorphic.h"
+    "${AVM_CXX_TEST_DIR}/support/rtti_dynamic_cast.h")
 set(AVM_RTTI_TEST_OPT_LEVELS O0 O2)
 set(AVM_RTTI_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/rtti-lto")
 set(AVM_RTTI_TEST_IMAGES)
@@ -491,11 +492,14 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
     elseif(AVM_TEST_NAME STREQUAL "rtti_polymorphic_cross_unit")
         list(APPEND AVM_RTTI_UNIT_SOURCES
             "${AVM_CXX_TEST_DIR}/support/rtti_polymorphic_unit.cpp")
+    elseif(AVM_TEST_NAME STREQUAL "rtti_dynamic_cast_cross_unit")
+        list(APPEND AVM_RTTI_UNIT_SOURCES
+            "${AVM_CXX_TEST_DIR}/support/rtti_dynamic_cast_unit.cpp")
     endif()
     # The standard exception fixtures throw, so they need -fexceptions as well as
     # -frtti. The SDK defaults are -fno-exceptions and -fno-rtti, and later flags win.
     set(AVM_RTTI_TEST_COMPILE_OPTIONS -frtti)
-    if(AVM_TEST_NAME MATCHES "^rtti_bad_typeid")
+    if(AVM_TEST_NAME MATCHES "^rtti_(bad_typeid|dynamic_cast_bad_cast)")
         list(APPEND AVM_RTTI_TEST_COMPILE_OPTIONS -fexceptions)
     endif()
     foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_RTTI_TEST_OPT_LEVELS)
@@ -530,7 +534,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
             # The verifier reads the constant typeid initializer, which is otherwise
             # unreferenced at run time, so keep it through garbage collection.
             list(APPEND AVM_RTTI_LINK_OPTIONS --undefined=global_alpha)
-        elseif(AVM_TEST_NAME STREQUAL "rtti_polymorphic_high_address")
+        elseif(AVM_TEST_NAME MATCHES "^rtti_(polymorphic|dynamic_cast)_high_address$")
             # The vtables must lie above 0xFFFF, so .rodata starts at 0x10000. The
             # descriptors must stay in the flash window, so .avm.rtti follows the
             # flash image at 0x500, and the code follows the descriptors. The
@@ -806,6 +810,122 @@ add_custom_target(avm_rtti_mixed_vtable_run
     VERBATIM
 )
 add_dependencies(avm_rtti_polymorphic_run avm_rtti_mixed_vtable_run)
+
+# dynamic_cast fixtures. The O0 and O2 images come from the RTTI loop above. The full-LTO
+# cross-unit image is built here from the same support unit, so the class descriptors merge
+# after the whole program is optimized. avm_dynamic_cast_run runs each fixture and the
+# corruption target, checks each cast against the packed image and RAM, and measures the stack.
+set(AVM_DYNAMIC_CAST_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/dynamic-cast-lto")
+set(AVM_DYNAMIC_CAST_LTO_OBJECT "${AVM_DYNAMIC_CAST_LTO_BIN_DIR}/O2/rtti_dynamic_cast_cross_unit.o")
+set(AVM_DYNAMIC_CAST_LTO_ELF "${AVM_DYNAMIC_CAST_LTO_BIN_DIR}/O2/rtti_dynamic_cast_cross_unit.elf")
+set(AVM_DYNAMIC_CAST_LTO_IMAGE "${AVM_DYNAMIC_CAST_LTO_BIN_DIR}/O2/rtti_dynamic_cast_cross_unit.bin")
+set(AVM_DYNAMIC_CAST_LTO_UNIT_OBJECT
+    "${AVM_DYNAMIC_CAST_LTO_BIN_DIR}/O2/rtti_dynamic_cast_cross_unit_rtti_dynamic_cast_unit.o")
+avm_add_object(
+    OUTPUT "${AVM_DYNAMIC_CAST_LTO_OBJECT}"
+    SOURCE "${AVM_CXX_TEST_DIR}/rtti_dynamic_cast_cross_unit.cpp"
+    LANGUAGE CXX
+    COMPILE_OPTIONS -O2 -frtti -flto=full
+    DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+)
+avm_add_object(
+    OUTPUT "${AVM_DYNAMIC_CAST_LTO_UNIT_OBJECT}"
+    SOURCE "${AVM_CXX_TEST_DIR}/support/rtti_dynamic_cast_unit.cpp"
+    LANGUAGE CXX
+    COMPILE_OPTIONS -O2 -frtti -flto=full
+    DEPENDS avm_sysroot ${AVM_RTTI_SUPPORT_HEADERS}
+)
+avm_add_image(
+    OBJECTS "${AVM_DYNAMIC_CAST_LTO_OBJECT}" "${AVM_DYNAMIC_CAST_LTO_UNIT_OBJECT}"
+    OUTPUT_ELF "${AVM_DYNAMIC_CAST_LTO_ELF}"
+    OUTPUT_IMAGE "${AVM_DYNAMIC_CAST_LTO_IMAGE}"
+    ENTRY _start
+    STARTUP "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+    LIBRARIES
+        "${AVM_SYSROOT_DIR}/lib/libavm.a"
+        "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
+    GC_SECTIONS
+    DEPENDS avm_sysroot
+)
+add_custom_target(avm_dynamic_cast_lto_images DEPENDS "${AVM_DYNAMIC_CAST_LTO_IMAGE}")
+
+set(AVM_DYNAMIC_CAST_VERIFY "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_dynamic_cast_verify.py")
+set(AVM_DYNAMIC_CAST_CORRUPT_VERIFY
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_dynamic_cast_corrupt_verify.py")
+set(AVM_DYNAMIC_CAST_STACK_REPORT
+    "${CMAKE_CURRENT_SOURCE_DIR}/debug/rtti_dynamic_cast_stack_report.py")
+set(AVM_DYNAMIC_CAST_PROBE_ARGS
+    --probe "$<TARGET_FILE:avm_eh_stack_probe>"
+    --interpreter "${AVM_INTERPRETER_HEX}"
+    --boundary "${AVM_INTERPRETER_BOUNDARY_METADATA}")
+set(AVM_DYNAMIC_CAST_CASES rtti_dynamic_cast rtti_dynamic_cast_cross_unit
+    rtti_dynamic_cast_high_address rtti_dynamic_cast_construction)
+set(AVM_DYNAMIC_CAST_STACK_IMAGES)
+foreach(AVM_DC_OPT IN ITEMS O0 O2)
+    foreach(AVM_DC_CASE IN LISTS AVM_DYNAMIC_CAST_CASES rtti_dynamic_cast_corrupt_target)
+        list(APPEND AVM_DYNAMIC_CAST_STACK_IMAGES --image
+            "${AVM_CXX_TEST_BINARY_DIR}/${AVM_DC_OPT}/${AVM_DC_CASE}.bin")
+    endforeach()
+endforeach()
+list(APPEND AVM_DYNAMIC_CAST_STACK_IMAGES --image "${AVM_DYNAMIC_CAST_LTO_IMAGE}")
+add_custom_target(avm_dynamic_cast_run
+    COMMAND "$<TARGET_FILE:avm_tests>"
+        --filter "^rtti_dynamic_cast(_bad_cast|_cross_unit|_high_address|_construction)?$"
+        --opt O0,O2
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^rtti_dynamic_cast_cross_unit$" --opt O2
+        --cpp-bin-dir "${AVM_DYNAMIC_CAST_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^rtti_dynamic_cast_bad_cast_unhandled$" --opt O0,O2
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_BAD_TYPEID_VERIFY}" --kind cast
+        ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_bad_cast.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_bad_cast.elf" --throws 6
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_RTTI_BAD_TYPEID_VERIFY}" --kind cast
+        ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_bad_cast.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_bad_cast.elf" --throws 6
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_CORRUPT_VERIFY}" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_corrupt_target.elf"
+        --scratch-dir "${AVM_CXX_TEST_BINARY_DIR}/dynamic-cast-corrupt-O0"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_CORRUPT_VERIFY}" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_corrupt_target.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_corrupt_target.elf"
+        --scratch-dir "${AVM_CXX_TEST_BINARY_DIR}/dynamic-cast-corrupt-O2"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast.elf" --secondary
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast.elf" --secondary
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_high_address.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O0/rtti_dynamic_cast_high_address.elf" --high
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_high_address.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_high_address.elf" --high
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_cross_unit.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_cross_unit.elf"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_DYNAMIC_CAST_LTO_IMAGE}" --elf "${AVM_DYNAMIC_CAST_LTO_ELF}"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_VERIFY}"
+        --bin-dir "$<TARGET_FILE_DIR:llvm-objdump>" ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        --image "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_construction.bin"
+        --elf "${AVM_CXX_TEST_BINARY_DIR}/O2/rtti_dynamic_cast_construction.elf"
+    COMMAND "${Python3_EXECUTABLE}" -I "${AVM_DYNAMIC_CAST_STACK_REPORT}"
+        ${AVM_DYNAMIC_CAST_PROBE_ARGS}
+        ${AVM_DYNAMIC_CAST_STACK_IMAGES}
+    DEPENDS avm_tests avm_eh_stack_probe avm_rtti_static_images avm_dynamic_cast_lto_images
+        llvm-avm-image llvm-objdump avm_interpreter
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
 
 # Checks the AVEH5 block of each exception-enabled image against the linked ELF,
 # and checks that a program which never references the runtime has none.
@@ -2053,6 +2173,7 @@ add_dependencies(avm_tests_run avm_format_long_long_tests_run)
 add_dependencies(avm_tests_run avm_rtti_static_run)
 add_dependencies(avm_tests_run avm_rtti_polymorphic_run)
 add_dependencies(avm_tests_run avm_rtti_mixed_link_run)
+add_dependencies(avm_tests_run avm_dynamic_cast_run)
 
 # A small, independently built debug image exercises nested frames, a live
 # global and local, both pointer spaces, button input, and delayed display

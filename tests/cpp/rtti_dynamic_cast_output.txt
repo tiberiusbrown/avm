@@ -1,0 +1,2 @@
+rtti-dynamic-cast=ok
+P

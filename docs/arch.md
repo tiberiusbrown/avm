@@ -5776,8 +5776,9 @@ destructor therefore sees the dynamic type that the standard specifies at that p
 A vtable emitted without RTTI has a null RTTI slot, and the runtime does not fabricate a
 descriptor for it. A link that keeps such a vtable and links the dynamic helper would
 otherwise abort at the first query, so the linker checks it instead. When
-`__avm_typeid_from_object` is defined in a live section after symbol resolution, LTO, and
-garbage collection, every retained ordinary C++ vtable must contain a valid RTTI reference.
+`__avm_typeid_from_object` or `__dynamic_cast` is defined in a live section after symbol
+resolution, LTO, and garbage collection, every retained ordinary C++ vtable must contain a
+valid RTTI reference.
 Otherwise the link fails:
 
 ```text
@@ -5799,8 +5800,9 @@ runtime compiles its key function without RTTI, and the class has a deleted copy
 constructor and no other constructor, so no object can have that exact dynamic type.
 `std::exception` and `std::bad_typeid` carry RTTI and are checked like any other vtable.
 
-The check runs only when a live helper exists. A program without dynamic `typeid` keeps
-its existing behavior, and an exception-only program never links the helper. Static
+The check runs only when a live helper exists. A program without dynamic `typeid` or a
+class `dynamic_cast` keeps its existing behavior, and an exception-only program never links
+the helper. Static
 `typeid` alone does not activate the check. An undefined helper, a helper that
 `--gc-sections` removes, and an unused archive member do not activate it either. The check
 changes only which links are accepted. An accepted image has the same bytes as before.
@@ -5832,6 +5834,80 @@ Only one exception can be active. A throw from a handler or from a destructor th
 while another exception unwinds therefore aborts, which means `std::bad_typeid` is not
 thrown inside such a context. An uncaught `std::bad_typeid` ends the program through the
 unhandled-exception path that the other exceptions use.
+
+#### Dynamic cast
+
+`dynamic_cast` to a class pointer or reference calls `__dynamic_cast`, which
+`runtime/lib/dynamic_cast.c` defines. Clang declares it as
+`ptr @__dynamic_cast(ptr, ptr addrspace(1), ptr addrspace(1), i16)`, with an AS0 result.
+The arguments are assigned as follows, and this was confirmed from the O0 call sites. The source
+pointer is in r4. The source descriptor is in r6:r7. The destination descriptor is the first
+stack argument, in outgoing bytes 0 to 2, and the signed 16-bit hint is in bytes 3 and 4. Both
+descriptors are 24-bit program addresses. The hint is never read. The hierarchy is authoritative,
+so a hint of -2 for a cross-cast does not reject it.
+
+Clang keeps its own control flow for the cast. A null source yields null, and a failed reference
+cast calls `__cxa_bad_cast`. Three operations are AVM-specific. The exact-vptr path for an
+effectively final destination is disabled, because the generic path compares vptrs that are
+24 bits wide. `dynamic_cast<void *>` calls `__avm_dynamic_cast_to_void`, and the RTTI parameters
+name the program address space. A cast to an unambiguous, accessible base of the static source type
+stays the implicit derived-to-base conversion that Sema produces, so it calls no runtime function.
+
+The runtime reads the source vptr from RAM as three bytes. It reads the offset to top at vptr - 6
+and the descriptor at vptr - 3 with 24-bit program loads, and the descriptor must lie in the flash
+window, `0x0500 <= P` and `P + 6 <= 0xFA00`. The complete object is the source plus the signed
+offset to top, which must fit in 16 bits. The dynamic type is the class of that descriptor.
+
+The hierarchy is walked by a nonrecursive depth-first iterator. Its state is in the caller's
+frame, and its path keeps one byte per level, so a node is rebuilt by replaying the path from the
+root. A walk holds at most eight levels and 512 edges, and an overrun, a malformed descriptor, a
+reserved flag bit, an invalid base, a zero vptr, or a slot or displacement outside the address
+space ends the program with `abort()`. A subobject is identified by its descriptor and its AS0
+address. A virtual base reached through several paths is one subobject, and two copies of a
+nonvirtual base at different addresses stay distinct. A virtual edge reads the vptr of the
+subobject that holds the edge, and its 24-bit displacement is relative to that subobject, so a
+secondary subobject uses its own vtable group.
+
+Every root path to the source subobject is visited. A target that publicly contains the source is
+an ancestor of the source on such a path, and the edges from it to the source are all public. The
+runtime therefore checks each target ancestor of each source occurrence, and it needs no second
+walk. The result follows the two rules of the standard:
+
+- If exactly one distinct subobject of the destination type publicly contains the source, that
+  subobject is the result.
+- Otherwise, if the source is publicly reachable from the complete object, the complete object has
+  exactly one distinct subobject of the destination type, and that subobject is publicly reachable,
+  it is the result.
+- Otherwise the result is null.
+
+Two subobjects of the destination type that are both public containers of the source are
+ambiguous, and so are two distinct targets in the cross-cast rule. A private source never
+cross-casts, even when a public target exists. A null result from a valid cast is not an error.
+
+A constructor or destructor sees the class in progress as its dynamic type. A construction vtable
+names that class as its RTTI, and its offset to top names the outer object. When the complete
+object that the offset names does not contain the source, the source is the root of its dynamic
+type instead. The standard limits these casts to the class under construction or destruction and
+its bases, and the runtime answers exactly those.
+
+`dynamic_cast<void *>` calls `__avm_dynamic_cast_to_void`, which reads the vptr and the offset to
+top. It reads no RTTI, walks no hierarchy, and allocates nothing, so it needs neither the RTTI
+window nor the exception runtime. It aborts on a vptr that cannot be a vtable address point.
+
+The linker treats a live `__dynamic_cast` as a dynamic RTTI reader, so it applies the vtable check
+of the typeid helper. `__avm_dynamic_cast_to_void` is in the same object, `dynamic_cast.o`, and it
+does not count. A program that uses only `dynamic_cast<void *>` therefore keeps `__dynamic_cast`
+collected, which is the behavior of `--gc-sections`, the flag the AVM driver always passes. Without
+that flag the object is live, and its check applies.
+
+#### std::bad_cast
+
+The class is `std::bad_cast`, with the descriptor `_ZTISt8bad_cast` and the vtable
+`_ZTVSt8bad_cast`. It derives publicly from `std::exception`, and its `what()` returns
+`"std::bad_cast"`. `eh_bad_cast.cpp` defines its members and `__cxa_bad_cast`, and it is compiled
+with `-frtti -fexceptions`. The string is an immutable literal in the flash window, and the object
+keeps no static state. The failed reference cast throws it through the ordinary AVEH5 path, so it
+is caught by its own type or by `std::exception`, and its object is destroyed once and freed once.
 
 ### 60.2. Throw ABI
 

@@ -78,6 +78,7 @@ set(RUNTIME_SOURCES
     eh_cxa
     eh_unwind
     rtti_dynamic
+    dynamic_cast
     multibyte
     math
     math_standard
@@ -290,6 +291,22 @@ avm_add_runtime_object(
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_TYPEID_OBJECT}")
 
+# std::bad_cast and __cxa_bad_cast are a separate object, so a program that never fails a
+# reference cast links none of them. It has the same flags as the bad_typeid object.
+set(AVM_RUNTIME_EH_BAD_CAST_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_cast.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_EH_BAD_CAST_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_cast.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -frtti -fexceptions
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_CAST_OBJECT}")
+
 set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/framebuffer.o")
 avm_add_runtime_object(
     OUTPUT "${RUNTIME_OBJECT}"
@@ -499,6 +516,8 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
     if(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/exception_base.cpp")
         set(runtime_mir_rtti_options -frtti)
     elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_typeid.cpp")
+        set(runtime_mir_rtti_options -frtti -fexceptions)
+    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_cast.cpp")
         set(runtime_mir_rtti_options -frtti -fexceptions)
     endif()
     set(runtime_mir_cxx_options)

@@ -43,6 +43,18 @@ BAD_COMPLETE_DTOR = '_ZNSt10bad_typeidD1Ev'
 BAD_DELETING_DTOR = '_ZNSt10bad_typeidD0Ev'
 BAD_WHAT = '_ZNKSt10bad_typeid4whatEv'
 EXCEPTION = '_ZTISt9exception'
+
+# The dynamic_cast family throws std::bad_cast. Only the class and the raise routine
+# differ, so --kind cast replaces these names in main.
+CAST_NAMES = {
+    'RAISE': '__cxa_bad_cast',
+    'BAD_TYPEID': '_ZTISt8bad_cast',
+    'BAD_VTABLE': '_ZTVSt8bad_cast',
+    'BAD_NAME': '_ZTSSt8bad_cast',
+    'BAD_COMPLETE_DTOR': '_ZNSt8bad_castD1Ev',
+    'BAD_DELETING_DTOR': '_ZNSt8bad_castD0Ev',
+    'BAD_WHAT': '_ZNKSt8bad_cast4whatEv',
+}
 EXCEPTION_NAME = '_ZTSSt9exception'
 SI_PLACEHOLDER = '_ZTVN10__cxxabiv120__si_class_type_infoE'
 CLASS_PLACEHOLDER = '_ZTVN10__cxxabiv117__class_type_infoE'
@@ -232,9 +244,13 @@ def main():
     parser.add_argument('--boundary', required=True)
     parser.add_argument('--image', required=True)
     parser.add_argument('--elf', required=True)
+    parser.add_argument('--kind', choices=('typeid', 'cast'), default='typeid',
+                        help='bad_typeid from typeid, or bad_cast from dynamic_cast')
     parser.add_argument('--throws', type=int, required=True,
                         help='the number of std::bad_typeid throws the fixture makes')
     args = parser.parse_args()
+    if args.kind == 'cast':
+        globals().update(CAST_NAMES)
     verify(args)
 
 

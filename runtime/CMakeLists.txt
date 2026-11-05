@@ -89,6 +89,7 @@ set(RUNTIME_SOURCES
     multibyte
     math
     math_standard
+    math_c23
     complex_standard
     pgmspace
     qsort
@@ -227,7 +228,7 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     if(RUNTIME_SOURCE STREQUAL "termination")
         list(APPEND runtime_extra_dependencies "${AVM_CRT_INIT_FINI_HEADER}")
     endif()
-    if(RUNTIME_SOURCE STREQUAL "math")
+    if(RUNTIME_SOURCE MATCHES "^math(_c23)?$")
         set(runtime_source_options -O3 -ffp-contract=off -fwrapv -fno-jump-tables)
     endif()
     # The unwinder never unwinds through its own frames, so its helpers need no

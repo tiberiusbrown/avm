@@ -5,7 +5,7 @@
 #include <math.h>
 #include <complex.h>
 
-/* C99 7.22 type-generic dispatch.
+/* C type-generic dispatch.
    Clang supports generic selection as an extension in C99 mode. The selection
    expressions are unevaluated, so every call evaluates each argument once.
    Integer arguments have double rank, even when combined with float. */
@@ -54,6 +54,24 @@
 #define log(x) __AVM_TG_C1(log, clog, (x))
 #define sqrt(x) __AVM_TG_C1(sqrt, csqrt, (x))
 #define fabs(x) __AVM_TG_C1(fabs, cabs, (x))
+#define sinpi(x) __AVM_TG1(sinpi, (x))
+#define cospi(x) __AVM_TG1(cospi, (x))
+#define tanpi(x) __AVM_TG1(tanpi, (x))
+#define asinpi(x) __AVM_TG1(asinpi, (x))
+#define acospi(x) __AVM_TG1(acospi, (x))
+#define atanpi(x) __AVM_TG1(atanpi, (x))
+#define exp10(x) __AVM_TG1(exp10, (x))
+#define exp10m1(x) __AVM_TG1(exp10m1, (x))
+#define exp2m1(x) __AVM_TG1(exp2m1, (x))
+#define logp1(x) __AVM_TG1(logp1, (x))
+#define log2p1(x) __AVM_TG1(log2p1, (x))
+#define log10p1(x) __AVM_TG1(log10p1, (x))
+#define rsqrt(x) __AVM_TG1(rsqrt, (x))
+#define atan2pi(x, y) __AVM_TG2(atan2pi, (x), (y))
+#define powr(x, y) __AVM_TG2(powr, (x), (y))
+#define pown(x, n) __AVM_TG_SELECT(pown, __AVM_TG_PROMOTE(x))((x), (n))
+#define rootn(x, n) __AVM_TG_SELECT(rootn, __AVM_TG_PROMOTE(x))((x), (n))
+#define compoundn(x, n) __AVM_TG_SELECT(compoundn, __AVM_TG_PROMOTE(x))((x), (n))
 #define cbrt(x) __AVM_TG1(cbrt, (x))
 #define ceil(x) __AVM_TG1(ceil, (x))
 #define erf(x) __AVM_TG1(erf, (x))
@@ -76,12 +94,24 @@
 #define round(x) __AVM_TG1(round, (x))
 #define tgamma(x) __AVM_TG1(tgamma, (x))
 #define trunc(x) __AVM_TG1(trunc, (x))
+#define llogb(x) __AVM_TG1(llogb, (x))
+#define nextup(x) __AVM_TG1(nextup, (x))
+#define nextdown(x) __AVM_TG1(nextdown, (x))
+#define roundeven(x) __AVM_TG1(roundeven, (x))
 #define pow(x, y) __AVM_TG_C2(pow, cpow, (x), (y))
 #define atan2(x, y) __AVM_TG2(atan2, (x), (y))
 #define copysign(x, y) __AVM_TG2(copysign, (x), (y))
 #define fdim(x, y) __AVM_TG2(fdim, (x), (y))
 #define fmax(x, y) __AVM_TG2(fmax, (x), (y))
 #define fmin(x, y) __AVM_TG2(fmin, (x), (y))
+#define fmaximum(x, y) __AVM_TG2(fmaximum, (x), (y))
+#define fminimum(x, y) __AVM_TG2(fminimum, (x), (y))
+#define fmaximum_mag(x, y) __AVM_TG2(fmaximum_mag, (x), (y))
+#define fminimum_mag(x, y) __AVM_TG2(fminimum_mag, (x), (y))
+#define fmaximum_num(x, y) __AVM_TG2(fmaximum_num, (x), (y))
+#define fminimum_num(x, y) __AVM_TG2(fminimum_num, (x), (y))
+#define fmaximum_mag_num(x, y) __AVM_TG2(fmaximum_mag_num, (x), (y))
+#define fminimum_mag_num(x, y) __AVM_TG2(fminimum_mag_num, (x), (y))
 #define fmod(x, y) __AVM_TG2(fmod, (x), (y))
 #define hypot(x, y) __AVM_TG2(hypot, (x), (y))
 #define nextafter(x, y) __AVM_TG2(nextafter, (x), (y))
@@ -90,6 +120,14 @@
 
 /* Only parameters corresponding to real floating parameters in the double
    prototype are generic. In particular, nexttoward's direction is fixed. */
+#define fromfp(x, rnd, width) \
+    __AVM_TG_SELECT(fromfp, __AVM_TG_PROMOTE(x))((x), (rnd), (width))
+#define ufromfp(x, rnd, width) \
+    __AVM_TG_SELECT(ufromfp, __AVM_TG_PROMOTE(x))((x), (rnd), (width))
+#define fromfpx(x, rnd, width) \
+    __AVM_TG_SELECT(fromfpx, __AVM_TG_PROMOTE(x))((x), (rnd), (width))
+#define ufromfpx(x, rnd, width) \
+    __AVM_TG_SELECT(ufromfpx, __AVM_TG_PROMOTE(x))((x), (rnd), (width))
 #define frexp(x, p) __AVM_TG_SELECT(frexp, __AVM_TG_PROMOTE(x))((x), (p))
 #define ldexp(x, n) __AVM_TG_SELECT(ldexp, __AVM_TG_PROMOTE(x))((x), (n))
 #define scalbn(x, n) __AVM_TG_SELECT(scalbn, __AVM_TG_PROMOTE(x))((x), (n))
@@ -97,5 +135,28 @@
 #define nexttoward(x, y) __AVM_TG_SELECT(nexttoward, __AVM_TG_PROMOTE(x))((x), (y))
 #define remquo(x, y, p) \
     __AVM_TG_SELECT(remquo, __AVM_TG_PROMOTE(x) + __AVM_TG_PROMOTE(y))((x), (y), (p))
+/* Narrowing f operations select the long-double-parameter function if any
+   operand is long double; d operations always select that function. */
+#define __AVM_TG_NARROW(name, rank) (__extension__ _Generic((rank), \
+    float: name, double: name, long double: name##l))
+#define __AVM_TG_NARROW1(name, x) \
+    __AVM_TG_NARROW(name, __AVM_TG_PROMOTE(x))((x))
+#define __AVM_TG_NARROW2(name, x, y) \
+    __AVM_TG_NARROW(name, __AVM_TG_PROMOTE(x)+__AVM_TG_PROMOTE(y))((x), (y))
+#define __AVM_TG_NARROW3(name, x, y, z) \
+    __AVM_TG_NARROW(name, __AVM_TG_PROMOTE(x)+__AVM_TG_PROMOTE(y)+ \
+                          __AVM_TG_PROMOTE(z))((x), (y), (z))
+#define fadd(x, y) __AVM_TG_NARROW2(fadd, (x), (y))
+#define fsub(x, y) __AVM_TG_NARROW2(fsub, (x), (y))
+#define fmul(x, y) __AVM_TG_NARROW2(fmul, (x), (y))
+#define fdiv(x, y) __AVM_TG_NARROW2(fdiv, (x), (y))
+#define ffma(x, y, z) __AVM_TG_NARROW3(ffma, (x), (y), (z))
+#define fsqrt(x) __AVM_TG_NARROW1(fsqrt, (x))
+#define dadd(x, y) daddl((x), (y))
+#define dsub(x, y) dsubl((x), (y))
+#define dmul(x, y) dmull((x), (y))
+#define ddiv(x, y) ddivl((x), (y))
+#define dfma(x, y, z) dfmal((x), (y), (z))
+#define dsqrt(x) dsqrtl((x))
 #endif /* !__cplusplus */
 #endif

@@ -23,11 +23,7 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 
 ### Floating-point library extensions
 
-- [ ] **`<math.h>` π-scaled trigonometry (C23):** Provide `sinpi`, `cospi`, `tanpi`, `asinpi`, `acospi`, `atanpi`, and `atan2pi` families.
-- [ ] **`<math.h>` exponentials and logarithms (C23):** Provide `exp10`, `exp10m1`, `exp2m1`, `logp1`, `log2p1`, and `log10p1` families.
-- [ ] **`<math.h>` power/root operations (C23):** Provide `pown`, `powr`, `rootn`, `compoundn`, and `rsqrt` families.
 - [ ] **`<math.h>` inexact reporting for `fromfpx` and `ufromfpx` (C23):** Raise the "inexact" floating-point exception when a rounded result within the width's range differs in value from the argument. AVM does not yet provide floating-point exception flags.
-- [ ] **`<tgmath.h>` C23 generic interfaces:** Extend type-generic math dispatch to cover the new required real/complex mathematical interfaces for supported types.
 
 ---
 

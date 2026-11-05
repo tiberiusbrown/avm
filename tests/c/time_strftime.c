@@ -16,6 +16,7 @@ int avm_test_main(void)
 {
     struct tm t={0,34,13,28,9,126,3,300,0};
     CHECK(!match(&t,"%a|%A|%b|%h|%B","Wed|Wednesday|Oct|Oct|October"));
+    CHECK(!match(&t,"%Ob|%OB|%b|%B","Oct|October|Oct|October"));
     CHECK(!match(&t,"%c|%x|%X","Wed Oct 28 13:34:00 2026|10/28/26|13:34:00"));
     CHECK(!match(&t,"%C|%d|%D|%e|%F","20|28|10/28/26|28|2026-10-28"));
     CHECK(!match(&t,"%g|%G|%V|%U|%W","26|2026|44|43|43"));
@@ -26,9 +27,10 @@ int avm_test_main(void)
     t.tm_isdst=-1;CHECK(!match(&t,"%z%Z","UTC"));
     t.tm_hour=0;CHECK(!match(&t,"%I %p %r","12 AM 12:34:00 AM"));
     t.tm_hour=12;CHECK(!match(&t,"%I %p %r","12 PM 12:34:00 PM"));
-    t.tm_year=115;t.tm_mon=11;t.tm_mday=31;CHECK(!match(&t,"%G-%V-%g","2015-53-15"));
-    t.tm_year=116;t.tm_mon=0;t.tm_mday=1;CHECK(!match(&t,"%G-%V","2015-53"));
-    t.tm_year=118;t.tm_mon=11;t.tm_mday=31;CHECK(!match(&t,"%G-%V","2019-01"));
+    t.tm_year=115;t.tm_mon=11;t.tm_mday=31;t.tm_wday=4;t.tm_yday=364;CHECK(!match(&t,"%G-%V-%g","2015-53-15"));
+    t.tm_year=116;t.tm_mon=0;t.tm_mday=1;t.tm_wday=5;t.tm_yday=0;CHECK(!match(&t,"%G-%V","2015-53"));
+    t.tm_year=118;t.tm_mon=11;t.tm_mday=31;t.tm_wday=1;t.tm_yday=364;CHECK(!match(&t,"%G-%V","2019-01"));
+    t.tm_mon=0;t.tm_mday=1;CHECK(!match(&t,"%G-%V-%g|%OV","2019-01-19|01"));
     t.tm_year=121;t.tm_mon=0;t.tm_mday=1;t.tm_wday=5;t.tm_yday=0;
     CHECK(!match(&t,"%G-%V %U %W","2020-53 00 00"));
     t.tm_mday=3;t.tm_wday=0;t.tm_yday=2;CHECK(!match(&t,"%U %W","01 00"));
@@ -37,7 +39,7 @@ int avm_test_main(void)
     CHECK(!match(&t,"%F %j %G %V","2000-02-29 060 2000 09"));
     t.tm_year=0;t.tm_mon=2;t.tm_mday=1;t.tm_wday=4;t.tm_yday=59;
     CHECK(!match(&t,"%F %j %G %V","1900-03-01 060 1900 09"));
-    t.tm_year=8100;CHECK(!match(&t,"%Y","10000"));t.tm_mon=0;t.tm_mday=4;t.tm_year=-1901;CHECK(!match(&t,"%Y %C %y","-001 -1 99"));
+    t.tm_year=8100;CHECK(!match(&t,"%Y","10000"));t.tm_mon=0;t.tm_mday=4;t.tm_year=-1901;CHECK(!match(&t,"%Y %C %y","-001 00 99"));
     CHECK(!match(&t,"literal","literal")&&!match(&t,"","")&&!match(&t,"%d%m","0401"));
     t.tm_sec=60;CHECK(!match(&t,"%e|%S"," 4|60"));
     char b[4]={'!','!','!','!'};

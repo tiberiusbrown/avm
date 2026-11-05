@@ -45,7 +45,7 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     endforeach()
 endif()
 
-# Match ardurogue2: one intermediate directory for parent and standalone builds.
+# Use one intermediate directory for parent and standalone builds.
 set(AUDIO_DEMO_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/build")
 file(MAKE_DIRECTORY "${AUDIO_DEMO_BUILD_DIR}")
 set(AUDIO_DEMO_OBJECT "${AUDIO_DEMO_BUILD_DIR}/main.o")

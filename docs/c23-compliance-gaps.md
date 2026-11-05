@@ -22,10 +22,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 - [ ] **Hosted termination status:** Preserve the success/failure status semantics of returning from `main`, `exit`, `_Exit`, and C11 `quick_exit`; AVM currently discards termination status.
 - [ ] **Hosted environment selection:** Supply a truthful hosted compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the full hosted contract. The SDK defaults to freestanding mode.
 
-### Time and character handling
-
-- [ ] **C23 calendar formatting:** Extend `strftime` and `wcsftime` to handle the C23 additions to format conversion syntax and required semantics.
-
 ### Floating-point library extensions
 
 - [ ] **`<fenv.h>` C23 interfaces:** Provide `fesetexcept`, `fetestexceptflag`, `fegetmode`, `fesetmode`, and the associated mode type and macros, consistently with AVM's supported floating-point environment.

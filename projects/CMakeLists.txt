@@ -28,8 +28,5 @@ add_custom_target(avm_sdk_install
     VERBATIM
 )
 
-add_subdirectory(ardurogue2)
-add_dependencies(ardurogue2 avm_sdk_install)
-
 add_subdirectory(audio_demo)
 add_dependencies(avm_audio_demo avm_sdk_install)

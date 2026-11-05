@@ -85,7 +85,7 @@ cmake -S projects/audio_demo -B projects/audio_demo/build -DCMAKE_BUILD_TYPE=Rel
 cmake --build projects/audio_demo/build --config RelWithDebInfo
 ```
 
-Like `ardurogue2`, this uses the installed SDK's Clang, linker, image packer,
+This uses the installed SDK's Clang, linker, image packer,
 and interpreter. The repository build installs its SDK before building the demo.
 Both builds copy the package to `projects/audio_demo/audio_demo.arduboy`.
 Objects, ELF, and the development FX image stay in `projects/audio_demo/build`.

@@ -38,18 +38,26 @@ static __attribute__((noinline)) void date(struct writer *w, const struct tm *t)
     int32_t y = (int32_t)t->tm_year + 1900;
     number(w, y - __avm_time_floor(y, 100) * 100, 2, '0');
 }
-/* Thursday determines the ISO year; January 4 determines its first Monday. */
+static int leap_year(int32_t y)
+{ return y % 4 == 0 && (y % 100 != 0 || y % 400 == 0); }
+static int iso_weeks(int32_t y, int jan1)
+{ return jan1 == 4 || (jan1 == 3 && leap_year(y)) ? 53 : 52; }
+/* ISO conversions use only the fields specified for them: year, weekday,
+ * and day of year. Month and day of month need not agree with those fields. */
 static __attribute__((noinline)) void iso(const struct tm *t, int32_t *year, int32_t *week)
 {
-    int32_t z = __avm_time_days((int32_t)t->tm_year + 1900, (int32_t)t->tm_mon + 1, t->tm_mday);
-    int32_t weekday = (z + 3) % 7;
-    if(weekday < 0) weekday += 7;
-    int32_t m, d;
-    __avm_time_civil(z + 3 - weekday, year, &m, &d);
-    int32_t jan4 = __avm_time_days(*year, 1, 4);
-    int32_t wd = (jan4 + 3) % 7;
-    if(wd < 0) wd += 7;
-    *week = (z - (jan4 - wd)) / 7 + 1;
+    *year = (int32_t)t->tm_year + 1900;
+    int weekday = t->tm_wday ? t->tm_wday : 7;
+    int jan1 = (t->tm_wday + 7 - t->tm_yday % 7) % 7;
+    *week = ((int32_t)t->tm_yday + 11 - weekday) / 7;
+    if(*week == 0) {
+        --*year;
+        jan1 = (jan1 + 7 - (1 + leap_year(*year))) % 7;
+        *week = iso_weeks(*year, jan1);
+    } else if(*week > iso_weeks(*year, jan1)) {
+        ++*year;
+        *week = 1;
+    }
 }
 static __attribute__((noinline)) void conversion(struct writer *w, char c, const struct tm *t)
 {
@@ -69,7 +77,7 @@ static __attribute__((noinline)) void conversion(struct writer *w, char c, const
         if(t->tm_mon >= 0 && t->tm_mon < 12) text(w, __avm_time_months[t->tm_mon], 3);
         emit(w, ' '); number(w, t->tm_mday, 2, ' '); emit(w, ' ');
         hms(w, t, 0); emit(w, ' '); number(w, y, 4, '0'); break;
-    case 'C': number(w, __avm_time_floor(y, 100), 2, '0'); break;
+    case 'C': number(w, y / 100, 2, '0'); break;
     case 'd': case 'e': number(w, t->tm_mday, 2, c == 'e' ? ' ' : '0'); break;
     case 'D': case 'x': date(w, t); break;
     case 'F': number(w, y, 4, '0'); emit(w, '-');
@@ -110,6 +118,8 @@ size_t strftime(char *restrict s, size_t maxsize, const char *restrict format,
         if(c != '%') emit(&w, c);
         else {
             c = *format++;
+            /* The C locale has no alternative representations, including
+             * the C23 %Ob and %OB alternative month names. */
             if(c == 'E' || c == 'O') c = *format++;
             if(!c) break;
             conversion(&w, c, timeptr);

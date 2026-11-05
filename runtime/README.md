@@ -126,9 +126,9 @@ fail without changing the input. The supported `tm_year` range is -32768..32767.
 `gmtime()` and `localtime()` share an 18-byte static `struct tm`; `asctime()` and
 `ctime()` share a 26-byte output buffer. Subsequent calls overwrite these shared
 results. `asctime()` rejects abnormal fields and years outside 1000..9999.
-`strftime()` supports every C99 conversion and applicable E/O modifier in the
-fixed `"C"` locale, including ISO week-years and UTC zone formatting. It writes
-directly into caller storage. No calendar function needs an allocator. Calendar
+`strftime()` and `wcsftime()` support C23 conversions and applicable E/O
+modifiers in the fixed `"C"` locale, including ISO week-years and UTC zone
+formatting. Both write directly into caller storage. No calendar function needs an allocator. Calendar
 names reside in program memory; only the two shared buffers consume permanent
 RAM (44 bytes together), and each is linked only when used. `mktime()` and
 `strftime()` alone require no permanent calendar RAM.

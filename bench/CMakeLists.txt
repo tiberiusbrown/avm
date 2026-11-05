@@ -335,7 +335,6 @@ add_custom_target(avm_bench_run
         avm_bench_images
         avm_bench_mir
         avm_instruction_mix
-        ardurogue2
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
     COMMENT "Running AVM tests, instruction benchmarks, and compiled benchmarks"
     USES_TERMINAL

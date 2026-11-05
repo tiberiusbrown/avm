@@ -38,9 +38,8 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Core generic library headers
 
-- [ ] **`<type_traits>`:** Validate the complete freestanding C++23 set of type properties, transformations, queries, and variable templates against AVM types, including substitution and constant-expression behavior.
-- [ ] **`<concepts>`:** Validate all required C++20/C++23 language, comparison, construction, conversion, and callable concepts.
-- [ ] **`<memory>`:** Provide the remaining freestanding-designated pointer, lifetime, allocator-related, and memory utility interfaces, without incorrectly requiring the entire hosted memory-management library.
+- [ ] **`<type_traits>` relationships and feature-test macros:** Provide `std::is_layout_compatible`, `std::is_pointer_interconvertible_base_of`, `std::is_corresponding_member`, and `std::is_pointer_interconvertible_with_class` with their required constant-expression behavior, and define their required feature-test macros, including `__cpp_lib_reference_from_temporary`.
+- [ ] **`<memory>` explicit lifetime management:** Provide the freestanding `std::start_lifetime_as` and `std::start_lifetime_as_array` interfaces, mandate checks, and compiler-supported object creation with stored-representation preservation; define `__cpp_lib_start_lifetime_as` only when those semantics are supported.
 
 ## II. Additional hosted C++23 conformance gaps
 

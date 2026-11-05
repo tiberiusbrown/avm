@@ -277,6 +277,22 @@ avm_add_runtime_object(
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_ALGORITHM_OBJECT}")
 
+# The standard freestanding hash specializations in <memory> use this helper
+# when libc++'s configured deployment version exports it from the runtime.
+set(AVM_LIBCXX_HASH_MEMORY_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_hash_memory.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_LIBCXX_HASH_MEMORY_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/libcxx_hash_memory.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    INCLUDE_DIRS "${AVM_RUNTIME_SOURCE_DIR}/include"
+    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY
+    DEPENDS ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_HASH_MEMORY_OBJECT}")
+
 # Standard exception classes and std::bad_typeid live in their own objects, so a
 # program that does not name them links none of their RTTI or vtables. The
 # -frtti and -fexceptions options follow the SDK defaults, so they take effect.

@@ -166,6 +166,13 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             set(test_support_sources "${AVM_C_TEST_DIR}/support/flash_cross_unit_impl.c")
         endif()
         set(test_compile_options "-${AVM_TEST_OPT_LEVEL}")
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
+           AVM_TEST_NAME STREQUAL "memory_freestanding" AND
+           AVM_TEST_OPT_LEVEL STREQUAL "O0")
+            # The allocator-construction and raw-memory API coverage exceeds
+            # the VM stack budget in an unoptimized translation unit.
+            list(APPEND test_compile_options -O2)
+        endif()
         set(test_include_dirs "${AVM_SYSROOT_DIR}/include")
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
             # AVM Clang discovers both libc++ and the C runtime from its

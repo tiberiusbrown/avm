@@ -1,3 +1,4 @@
+#define AVM_WCHAR_IMPLEMENTATION
 #include <wchar.h>
 #include <string.h>
 

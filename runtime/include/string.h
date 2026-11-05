@@ -150,10 +150,7 @@ using ::__avm_cpp_strncat;
 
 #if !defined(__cplusplus) && defined(__STDC_VERSION__) && \
     __STDC_VERSION__ >= 202311L && !defined(AVM_STRING_IMPLEMENTATION)
-/* The conditional expression applies array decay without evaluating src.
- * typeof preserves the pointee qualification; the call remains addressable. */
-#define __AVM_SEARCH_RESULT(src, result) \
-    ((__typeof__((1 ? (src) : (src)) + 0))(result))
+#include <avm/qualifier_generic.h>
 #define memchr(src, value, size) \
     ((__typeof__(1 ? (src) : (void*)1))(memchr)((src), (value), (size)))
 #define strchr(src, value) __AVM_SEARCH_RESULT(src, (strchr)((src), (value)))

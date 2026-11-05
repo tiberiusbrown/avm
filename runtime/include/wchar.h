@@ -82,4 +82,17 @@ size_t wcsrtombs(char *__restrict dst, const wchar_t **__restrict src, size_t le
 #ifdef __cplusplus
 }
 #endif
+
+/* The macros follow the declarations, so the prototypes are not expanded. In
+ * C23 the search results keep the qualification of the searched pointer. A
+ * bare name, or a parenthesized one, still names the addressable function. */
+#if !defined(__cplusplus) && defined(__STDC_VERSION__) && \
+    __STDC_VERSION__ >= 202311L && !defined(AVM_WCHAR_IMPLEMENTATION)
+#include <avm/qualifier_generic.h>
+#define wcschr(src, wc) __AVM_SEARCH_RESULT(src, (wcschr)((src), (wc)))
+#define wcsrchr(src, wc) __AVM_SEARCH_RESULT(src, (wcsrchr)((src), (wc)))
+#define wcspbrk(src, set) __AVM_SEARCH_RESULT(src, (wcspbrk)((src), (set)))
+#define wcsstr(src, set) __AVM_SEARCH_RESULT(src, (wcsstr)((src), (set)))
+#define wmemchr(src, wc, n) __AVM_SEARCH_RESULT(src, (wmemchr)((src), (wc), (n)))
+#endif
 #endif

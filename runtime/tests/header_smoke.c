@@ -93,6 +93,7 @@ _Static_assert(sizeof(time_t) == 8 && (time_t)-1 < 0, "signed 64-bit time_t");
 _Static_assert(sizeof(clock_t) == 4 && (clock_t)-1 > 0, "unsigned 32-bit clock_t");
 _Static_assert(CLOCKS_PER_SEC == 1000, "clock scale");
 _Static_assert(sizeof(struct tm) == 18, "nine 16-bit fields");
+_Static_assert(sizeof(struct timespec) == 12 && TIME_UTC == 1, "timespec ABI");
 #define TM_FIELD(field, index) _Static_assert(sizeof(((struct tm *)0)->field) == sizeof(int) && offsetof(struct tm, field) == (index)*2, "tm field ABI")
 TM_FIELD(tm_sec,0); TM_FIELD(tm_min,1); TM_FIELD(tm_hour,2);
 TM_FIELD(tm_mday,3); TM_FIELD(tm_mon,4); TM_FIELD(tm_year,5);
@@ -109,8 +110,14 @@ void time_interface_smoke(void)
     char *(*volatile g)(const struct tm *) = &asctime;
     char *(*volatile h)(const time_t *) = &ctime;
     size_t (*volatile i)(char *,size_t,const char *,const struct tm *) = &strftime;
+    int (*volatile j)(struct timespec *, int) = &timespec_get;
+    int (*volatile k)(struct timespec *, int) = &timespec_getres;
+    struct tm *(*volatile l)(const time_t *__restrict, struct tm *__restrict) = &gmtime_r;
+    struct tm *(*volatile m)(const time_t *__restrict, struct tm *__restrict) = &localtime_r;
+    time_t (*volatile n)(struct tm *) = &timegm;
     void *null_value = NULL;
-    (void)c;(void)a;(void)b;(void)d;(void)e;(void)f;(void)g;(void)h;(void)i;(void)null_value;
+    (void)c;(void)a;(void)b;(void)d;(void)e;(void)f;(void)g;(void)h;(void)i;
+    (void)j;(void)k;(void)l;(void)m;(void)n;(void)null_value;
 }
 #include <setjmp.h>
 _Static_assert(sizeof(jmp_buf) == 13, "jmp_buf size");

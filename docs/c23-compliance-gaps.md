@@ -32,10 +32,7 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 
 ### Time and character handling
 
-- [ ] **`<time.h>` time specifications (C11/C23):** Provide `struct timespec`, `TIME_UTC`, `timespec_get`, and `timespec_getres` with permitted failure behavior when calendar time is unavailable.
-- [ ] **`<time.h>` reentrant/UTC conversions (C23):** Provide `gmtime_r`, `localtime_r`, and `timegm`, using the existing fixed-UTC calendar model where applicable.
 - [ ] **C23 calendar formatting:** Extend `strftime` and `wcsftime` to handle the C23 additions to format conversion syntax and required semantics.
-- [ ] **`<wchar.h>` qualifier-generic search interfaces (C23):** Make `wcschr`, `wcsrchr`, `wcspbrk`, `wcsstr`, and `wmemchr` preserve source-pointer `const` qualification in C23 while retaining addressable functions.
 
 ### Floating-point library extensions
 

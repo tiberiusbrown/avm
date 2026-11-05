@@ -133,6 +133,16 @@ names reside in program memory; only the two shared buffers consume permanent
 RAM (44 bytes together), and each is linked only when used. `mktime()` and
 `strftime()` alone require no permanent calendar RAM.
 
+`gmtime_r()` and `localtime_r()` write into the caller's `struct tm` and use no
+shared buffer. Both return NULL and leave that object unchanged when the time is
+unrepresentable. The local time zone is UTC, so `localtime_r()` shares the
+fixed-UTC conversion. `timegm()` shares `mktime()`'s conversion, which normalizes
+the fields and fails without changing them.
+
+`struct timespec` holds a 64-bit `tv_sec` and a 32-bit `tv_nsec`. `TIME_UTC` is
+1. Calendar time is unavailable, so `timespec_get()` and `timespec_getres()` fail
+for every base, returning zero and leaving the caller's object unchanged.
+
 `<locale.h>` provides the C99 locale interface with a permanently fixed `"C"`
 locale. The native locale selected by `setlocale(category, "")` is also `"C"`;
 no dynamic locale state is required. `localeconv()` uses shared static RAM data:
@@ -145,6 +155,12 @@ bytes of locale data.
 the fixed C locale. `wint_t` is signed 16-bit and `WEOF` is -1; all 256 byte
 values are preserved by case conversion except mapped ASCII letters. Named
 descriptors support the twelve standard classes and `tolower`/`toupper`.
+
+In C23 mode, `memchr`, `strchr`, `strrchr`, `strpbrk`, and `strstr` from
+`<string.h>`, and `wmemchr`, `wcschr`, `wcsrchr`, `wcspbrk`, and `wcsstr` from
+`<wchar.h>`, are qualifier-generic macros: each result keeps the qualification of
+the searched pointer. A parenthesized name, or a use that is not a call, still
+denotes the addressable function.
 
 `<uchar.h>` converts between UTF-8, UTF-16, or UTF-32 and the fixed C locale.
 Each byte with value `v` denotes the code point `v`, so every byte converts, and

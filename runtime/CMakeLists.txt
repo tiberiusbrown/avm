@@ -137,6 +137,10 @@ set(RUNTIME_SOURCES
     time_asctime
     time_ctime
     time_strftime
+    time_timespec
+    time_gmtime_r
+    time_localtime_r
+    time_timegm
     termination
 )
 

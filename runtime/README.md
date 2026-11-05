@@ -756,8 +756,11 @@ removes its read/write permissions without freeing its static object.
 without allocating memory. `fflush(NULL)` succeeds without retaining stream
 objects because there is no buffered output.
 
-There is no filesystem: `fopen`, `freopen`, `remove`, `rename`, `tmpfile`, and
-`tmpnam` fail with `ENOSYS`; `freopen` first closes its old association.
+There is no filesystem: `fopen`, `freopen`, `remove`, `rename`, and `tmpfile`
+fail with `ENOSYS`; this includes exclusive `fopen` modes. `tmpnam` generates
+distinct dummy names until its counter is exhausted; opening them also fails.
+`freopen` first closes its old association and clears its indicators; no
+mode changes via a null filename are supported.
 Positioning operations fail with `ESPIPE`; `rewind` also clears EOF/error
 indicators. Invalid stream state fails with `EBADF`; formatter/transfer
 failures use `EIO`. `perror` writes the current error message to stderr and
@@ -767,4 +770,8 @@ does not promise working file storage.
 This API coverage does not establish hosted C99 conformance. Compilation
 remains freestanding (`__STDC_HOSTED__ == 0`); filesystem guarantees, buffered
 streams, wide stream orientation/I/O, and the hosted execution requirements
-remain tracked in `docs/c99-compliance-gaps.md`.
+remain tracked in `docs/c23-compliance-gaps.md`.
+
+`fenv.h` exposes a fixed floating-point environment: round-to-nearest is the
+only rounding mode, no exception flags are supported, and saving or restoring
+the environment or C23 control modes has no effect on arithmetic.

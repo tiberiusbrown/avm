@@ -17,14 +17,12 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 
 ### Hosted execution environment and implementation limits
 
-- [ ] **Filesystem access:** Provide standard file opening, reopening (including C11 exclusive `"x"` modes), removal, renaming, temporary files, and stream positioning. AVM currently has no filesystem backend.
 - [ ] **Hosted program startup:** Support both `int main(void)` and `int main(int argc, char *argv[])`, with the required `argc`/`argv` guarantees, rather than only no-argument startup.
 - [ ] **Hosted termination status:** Preserve the success/failure status semantics of returning from `main`, `exit`, `_Exit`, and C11 `quick_exit`; AVM currently discards termination status.
 - [ ] **Hosted environment selection:** Supply a truthful hosted compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the full hosted contract. The SDK defaults to freestanding mode.
 
 ### Floating-point library extensions
 
-- [ ] **`<fenv.h>` C23 interfaces:** Provide `fesetexcept`, `fetestexceptflag`, `fegetmode`, `fesetmode`, and the associated mode type and macros, consistently with AVM's supported floating-point environment.
 - [ ] **`<math.h>` π-scaled trigonometry (C23):** Provide `sinpi`, `cospi`, `tanpi`, `asinpi`, `acospi`, `atanpi`, and `atan2pi` families.
 - [ ] **`<math.h>` exponentials and logarithms (C23):** Provide `exp10`, `exp10m1`, `exp2m1`, `logp1`, `log2p1`, and `log10p1` families.
 - [ ] **`<math.h>` power/root operations (C23):** Provide `pown`, `powr`, `rootn`, `compoundn`, and `rsqrt` families.

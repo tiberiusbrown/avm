@@ -17,6 +17,11 @@ int feraiseexcept(int excepts)
     return excepts == 0 ? 0 : 1;
 }
 
+int fesetexcept(int excepts)
+{
+    return excepts == 0 ? 0 : 1;
+}
+
 int fesetexceptflag(const fexcept_t *flagp, int excepts)
 {
     (void)flagp;
@@ -26,6 +31,25 @@ int fesetexceptflag(const fexcept_t *flagp, int excepts)
 int fetestexcept(int excepts)
 {
     (void)excepts;
+    return 0;
+}
+
+int fetestexceptflag(const fexcept_t *flagp, int excepts)
+{
+    (void)flagp;
+    (void)excepts;
+    return 0;
+}
+
+int fegetmode(femode_t *modep)
+{
+    *modep = 0;
+    return 0;
+}
+
+int fesetmode(const femode_t *modep)
+{
+    (void)modep;
     return 0;
 }
 

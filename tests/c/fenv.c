@@ -62,6 +62,10 @@ int avm_test_main(void)
     int (*volatile raise)(int) = feraiseexcept;
     int (*volatile setflag)(const fexcept_t *, int) = fesetexceptflag;
     int (*volatile test)(int) = fetestexcept;
+    int (*volatile setexcept)(int) = fesetexcept;
+    int (*volatile testflag)(const fexcept_t *, int) = fetestexceptflag;
+    int (*volatile getmode)(femode_t *) = fegetmode;
+    int (*volatile setmode)(const femode_t *) = fesetmode;
     int (*volatile getround)(void) = fegetround;
     int (*volatile setround)(int) = fesetround;
     int (*volatile getenv_call)(fenv_t *) = fegetenv;
@@ -71,6 +75,7 @@ int avm_test_main(void)
     const fenv_t *default_env = FE_DFL_ENV;
     fenv_t saved = 99, held = 77;
     fexcept_t flags = 55;
+    femode_t mode = 55;
     CHECK(sizeof(fenv_t) == 1 && sizeof(fexcept_t) == 1);
     CHECK(FLT_ROUNDS == 1);
     CHECK(math_errhandling == MATH_ERRNO);
@@ -84,6 +89,10 @@ int avm_test_main(void)
     CHECK(getflag(&flags, FE_ALL_EXCEPT) == 0 && flags == 0);
     CHECK(setflag(&flags, FE_ALL_EXCEPT) == 0);
     CHECK(test(FE_ALL_EXCEPT) == 0);
+    CHECK(setexcept(FE_ALL_EXCEPT) == 0 && testflag(&flags, FE_ALL_EXCEPT) == 0);
+    CHECK(getmode(&mode) == 0 && mode == 0);
+    CHECK(setmode(&mode) == 0 && setmode(FE_DFL_MODE) == 0);
+    CHECK(getround() == FE_TONEAREST && test(FE_ALL_EXCEPT) == 0);
     CHECK(getenv_call(&saved) == 0 && saved == 0);
     CHECK(hold(&held) == 0 && held == 0);
     CHECK(setenv_call(&saved) == 0 && update(&held) == 0);
@@ -100,6 +109,7 @@ int avm_test_main(void)
     /* Defensive failures are outside the supported C99 mask set. */
     flags = 42;
     CHECK(clear(1) != 0 && raise(1) != 0 && setflag(&flags, 1) != 0);
+    CHECK(setexcept(1) != 0 && testflag(&flags, 1) == 0);
     CHECK(getflag(&flags, 1) != 0 && flags == 42);
     CHECK(default_arithmetic() == 0 && enabled_arithmetic() == 0);
     CHECK(errno == 71);

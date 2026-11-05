@@ -6,8 +6,12 @@ SYMBOL TABLE:
 00000000 l    d  .text.feclearexcept	00000000 .text.feclearexcept
 00000000 l    d  .text.fegetexceptflag	00000000 .text.fegetexceptflag
 00000000 l    d  .text.feraiseexcept	00000000 .text.feraiseexcept
+00000000 l    d  .text.fesetexcept	00000000 .text.fesetexcept
 00000000 l    d  .text.fesetexceptflag	00000000 .text.fesetexceptflag
 00000000 l    d  .text.fetestexcept	00000000 .text.fetestexcept
+00000000 l    d  .text.fetestexceptflag	00000000 .text.fetestexceptflag
+00000000 l    d  .text.fegetmode	00000000 .text.fegetmode
+00000000 l    d  .text.fesetmode	00000000 .text.fesetmode
 00000000 l    d  .text.fegetround	00000000 .text.fegetround
 00000000 l    d  .text.fesetround	00000000 .text.fesetround
 00000000 l    d  .text.fegetenv	00000000 .text.fegetenv
@@ -18,8 +22,12 @@ SYMBOL TABLE:
 00000000 g     F .text.feclearexcept	00000005 feclearexcept
 00000000 g     F .text.fegetexceptflag	0000000f fegetexceptflag
 00000000 g     F .text.feraiseexcept	00000005 feraiseexcept
+00000000 g     F .text.fesetexcept	00000005 fesetexcept
 00000000 g     F .text.fesetexceptflag	00000005 fesetexceptflag
 00000000 g     F .text.fetestexcept	00000002 fetestexcept
+00000000 g     F .text.fetestexceptflag	00000002 fetestexceptflag
+00000000 g     F .text.fegetmode	00000004 fegetmode
+00000000 g     F .text.fesetmode	00000002 fesetmode
 00000000 g     F .text.fegetround	00000002 fegetround
 00000000 g     F .text.fesetround	00000005 fesetround
 00000000 g     F .text.fegetenv	00000004 fegetenv
@@ -57,6 +65,13 @@ Disassembly of section .text.feraiseexcept:
  f8 0c                 cset.ne	r4
  ef                    ret
 
+Disassembly of section .text.fesetexcept:
+
+<fesetexcept>:
+ f6 2c                 tst16	r4
+ f8 0c                 cset.ne	r4
+ ef                    ret
+
 Disassembly of section .text.fesetexceptflag:
 
 <fesetexceptflag>:
@@ -67,6 +82,26 @@ Disassembly of section .text.fesetexceptflag:
 Disassembly of section .text.fetestexcept:
 
 <fetestexcept>:
+ a0                    xor	r4, r4
+ ef                    ret
+
+Disassembly of section .text.fetestexceptflag:
+
+<fetestexceptflag>:
+ a0                    xor	r4, r4
+ ef                    ret
+
+Disassembly of section .text.fegetmode:
+
+<fegetmode>:
+ a5                    xor	r5, r5
+ 51                    st8	[r4], r5
+ 01                    mov	r4, r5
+ ef                    ret
+
+Disassembly of section .text.fesetmode:
+
+<fesetmode>:
  a0                    xor	r4, r4
  ef                    ret
 

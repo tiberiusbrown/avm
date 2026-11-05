@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <avm.h>
 #define CHECK(x) do { if(!(x)) return __LINE__; } while(0)
@@ -48,10 +49,32 @@ int avm_test_main(void) {
     setbuf(stdout, NULL);
     CHECK(fflush(NULL) == 0 && fflush(stdout) == 0);
     CHECK(fopen("x", "w") == NULL && errno == ENOSYS);
+    const char *modes[] = {"r", "rb", "r+", "r+b", "rb+", "w", "wb",
+                           "w+", "w+b", "wb+", "wx", "wbx", "w+x",
+                           "w+bx", "wb+x", "a", "ab", "a+", "a+b", "ab+"};
+    for (size_t i = 0; i < sizeof modes / sizeof modes[0]; ++i) {
+        errno = 0;
+        CHECK(fopen("x", modes[i]) == NULL && errno == ENOSYS);
+    }
     CHECK(remove("x") != 0 && errno == ENOSYS);
     CHECK(rename("x", "y") != 0 && errno == ENOSYS);
     CHECK(tmpfile() == NULL && errno == ENOSYS);
-    CHECK(tmpnam(NULL) == NULL && tmpnam(buf) == NULL && errno == ENOSYS);
+    char previous[L_tmpnam], current[L_tmpnam];
+    char *temporary = tmpnam(NULL);
+    CHECK(temporary != NULL && strlen(temporary) < L_tmpnam);
+    strcpy(previous, temporary);
+    unsigned long last_name = strtoul(previous + 3, NULL, 16);
+    for (int i = 0; i < TMP_MAX + 256; ++i) {
+        CHECK(tmpnam(current) == current && strlen(current) < L_tmpnam);
+        CHECK(strcmp(previous, current) != 0);
+        unsigned long next_name = strtoul(current + 3, NULL, 16);
+        CHECK(next_name == last_name + 1);
+        last_name = next_name;
+        strcpy(previous, current);
+    }
+    temporary = tmpnam(NULL);
+    CHECK(temporary != NULL && strcmp(previous, temporary) != 0);
+    CHECK(fopen(current, "w") == NULL && errno == ENOSYS);
     CHECK(fwrite(buf, (size_t)-1, 2, stdout) == 0 && ferror(stdout) && errno == EIO);
     clearerr(stdout);
     CHECK(fwrite(buf, 0, 20, stdout) == 0 && fwrite(buf, 1, 0, stdout) == 0);
@@ -73,9 +96,12 @@ int avm_test_main(void) {
     CHECK(fclose(stdout) == 0);
     CHECK(fputc('x', stdout) == EOF && errno == EBADF && ferror(stdout));
     CHECK(fflush(stdout) == EOF);
+    CHECK(fputc('x', stdin) == EOF && ferror(stdin));
     CHECK(freopen("x", "r", stdin) == NULL && errno == ENOSYS);
+    CHECK(!feof(stdin) && !ferror(stdin));
     CHECK(fgetc(stdin) == EOF && ferror(stdin) && errno == EBADF);
-    CHECK(fclose(stderr) == 0);
+    CHECK(freopen(NULL, "wx", stderr) == NULL && errno == ENOSYS);
+    CHECK(fclose(stderr) == EOF && errno == EBADF);
     CHECK(fputs("x", stderr) == EOF);
     return 0;
 }

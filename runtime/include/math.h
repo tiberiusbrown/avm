@@ -20,6 +20,24 @@
 #define FP_ILOGBNAN INT_MIN
 #endif
 
+/* Rounding directions for fromfp and related functions. Their values are
+   implementation-defined, but they must be distinct. */
+#define FP_INT_UPWARD 0
+#define FP_INT_DOWNWARD 1
+#define FP_INT_TOWARDZERO 2
+#define FP_INT_TONEARESTFROMZERO 3
+#define FP_INT_TONEAREST 4
+
+/* llogb returns LONG_MIN for zero and NaN because FP_ILOGB0 and FP_ILOGBNAN are INT_MIN. */
+#if defined(__LONG_MAX__)
+#define FP_LLOGB0 (-__LONG_MAX__-1L)
+#define FP_LLOGBNAN (-__LONG_MAX__-1L)
+#else
+#include <limits.h>
+#define FP_LLOGB0 LONG_MIN
+#define FP_LLOGBNAN LONG_MIN
+#endif
+
 /* AVM evaluates all real floating types in their binary32 representation. */
 #if __FLT_EVAL_METHOD__ == 0
 typedef float float_t;
@@ -215,6 +233,80 @@ long double fminl(long double x, long double y);
 double fmax(double x, double y);
 long double fmaxl(long double x, long double y);
 
+/* C23 interfaces. Narrowing functions are named by their result type: f for
+   float and d for double. A trailing l selects long double parameters. */
+float roundevenf(float x);
+double roundeven(double x);
+long double roundevenl(long double x);
+float fromfpf(float x, int rnd, unsigned int width);
+double fromfp(double x, int rnd, unsigned int width);
+long double fromfpl(long double x, int rnd, unsigned int width);
+float ufromfpf(float x, int rnd, unsigned int width);
+double ufromfp(double x, int rnd, unsigned int width);
+long double ufromfpl(long double x, int rnd, unsigned int width);
+float fromfpxf(float x, int rnd, unsigned int width);
+double fromfpx(double x, int rnd, unsigned int width);
+long double fromfpxl(long double x, int rnd, unsigned int width);
+float ufromfpxf(float x, int rnd, unsigned int width);
+double ufromfpx(double x, int rnd, unsigned int width);
+long double ufromfpxl(long double x, int rnd, unsigned int width);
+long llogbf(float x);
+long llogb(double x);
+long llogbl(long double x);
+float nextupf(float x);
+double nextup(double x);
+long double nextupl(long double x);
+float nextdownf(float x);
+double nextdown(double x);
+long double nextdownl(long double x);
+int canonicalizef(float *cx, const float *x);
+int canonicalize(double *cx, const double *x);
+int canonicalizel(long double *cx, const long double *x);
+float fmaximumf(float x, float y);
+double fmaximum(double x, double y);
+long double fmaximuml(long double x, long double y);
+float fminimumf(float x, float y);
+double fminimum(double x, double y);
+long double fminimuml(long double x, long double y);
+float fmaximum_magf(float x, float y);
+double fmaximum_mag(double x, double y);
+long double fmaximum_magl(long double x, long double y);
+float fminimum_magf(float x, float y);
+double fminimum_mag(double x, double y);
+long double fminimum_magl(long double x, long double y);
+float fmaximum_numf(float x, float y);
+double fmaximum_num(double x, double y);
+long double fmaximum_numl(long double x, long double y);
+float fminimum_numf(float x, float y);
+double fminimum_num(double x, double y);
+long double fminimum_numl(long double x, long double y);
+float fmaximum_mag_numf(float x, float y);
+double fmaximum_mag_num(double x, double y);
+long double fmaximum_mag_numl(long double x, long double y);
+float fminimum_mag_numf(float x, float y);
+double fminimum_mag_num(double x, double y);
+long double fminimum_mag_numl(long double x, long double y);
+float fadd(double x, double y);
+float faddl(long double x, long double y);
+double daddl(long double x, long double y);
+float fsub(double x, double y);
+float fsubl(long double x, long double y);
+double dsubl(long double x, long double y);
+float fmul(double x, double y);
+float fmull(long double x, long double y);
+double dmull(long double x, long double y);
+float fdiv(double x, double y);
+float fdivl(long double x, long double y);
+double ddivl(long double x, long double y);
+float ffma(double x, double y, double z);
+float ffmal(long double x, long double y, long double z);
+double dfmal(long double x, long double y, long double z);
+float fsqrt(double x);
+float fsqrtl(long double x);
+double dsqrtl(long double x);
+/* Implementation support for the iseqsig macro: a domain error for NaN operands. */
+int __avm_iseqsigf(float x, float y);
+
 #ifdef __cplusplus
 } // extern "C"
 #endif
@@ -241,6 +333,16 @@ long double fmaxl(long double x, long double y);
 #define islessequal(x,y) __builtin_islessequal(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
 #define islessgreater(x,y) __builtin_islessgreater(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
 #define isunordered(x,y) __builtin_isunordered(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
+/* C23 type-generic macros. They are C-only: these names would otherwise become
+   function-like macros in C++ code that includes <cmath>. */
+#ifndef __cplusplus
+#define issignaling(x) __builtin_issignaling(__AVM_MATH_REAL(x))
+#define issubnormal(x) __builtin_issubnormal(__AVM_MATH_REAL(x))
+#define iszero(x) __builtin_iszero(__AVM_MATH_REAL(x))
+/* Every binary32 encoding is canonical. The argument is still evaluated once. */
+#define iscanonical(x) ((void)__AVM_MATH_REAL(x), 1)
+#define iseqsig(x, y) __avm_iseqsigf(__AVM_MATH_REAL(x), __AVM_MATH_REAL(y))
+#endif
 #endif
 
 #endif // AVM_RUNTIME_MATH_H

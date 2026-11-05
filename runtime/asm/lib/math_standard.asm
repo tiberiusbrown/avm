@@ -117,6 +117,40 @@ SYMBOL TABLE:
 00000000 l    d  .text.fminl	00000000 .text.fminl
 00000000 l    d  .text.fmax	00000000 .text.fmax
 00000000 l    d  .text.fmaxl	00000000 .text.fmaxl
+00000000 l    d  .text.roundeven	00000000 .text.roundeven
+00000000 l    d  .text.roundevenl	00000000 .text.roundevenl
+00000000 l    d  .text.fromfp	00000000 .text.fromfp
+00000000 l    d  .text.fromfpl	00000000 .text.fromfpl
+00000000 l    d  .text.ufromfp	00000000 .text.ufromfp
+00000000 l    d  .text.ufromfpl	00000000 .text.ufromfpl
+00000000 l    d  .text.fromfpx	00000000 .text.fromfpx
+00000000 l    d  .text.fromfpxl	00000000 .text.fromfpxl
+00000000 l    d  .text.ufromfpx	00000000 .text.ufromfpx
+00000000 l    d  .text.ufromfpxl	00000000 .text.ufromfpxl
+00000000 l    d  .text.llogb	00000000 .text.llogb
+00000000 l    d  .text.llogbl	00000000 .text.llogbl
+00000000 l    d  .text.nextup	00000000 .text.nextup
+00000000 l    d  .text.nextupl	00000000 .text.nextupl
+00000000 l    d  .text.nextdown	00000000 .text.nextdown
+00000000 l    d  .text.nextdownl	00000000 .text.nextdownl
+00000000 l    d  .text.canonicalize	00000000 .text.canonicalize
+00000000 l    d  .text.canonicalizel	00000000 .text.canonicalizel
+00000000 l    d  .text.fmaximum	00000000 .text.fmaximum
+00000000 l    d  .text.fmaximuml	00000000 .text.fmaximuml
+00000000 l    d  .text.fminimum	00000000 .text.fminimum
+00000000 l    d  .text.fminimuml	00000000 .text.fminimuml
+00000000 l    d  .text.fmaximum_mag	00000000 .text.fmaximum_mag
+00000000 l    d  .text.fmaximum_magl	00000000 .text.fmaximum_magl
+00000000 l    d  .text.fminimum_mag	00000000 .text.fminimum_mag
+00000000 l    d  .text.fminimum_magl	00000000 .text.fminimum_magl
+00000000 l    d  .text.fmaximum_num	00000000 .text.fmaximum_num
+00000000 l    d  .text.fmaximum_numl	00000000 .text.fmaximum_numl
+00000000 l    d  .text.fminimum_num	00000000 .text.fminimum_num
+00000000 l    d  .text.fminimum_numl	00000000 .text.fminimum_numl
+00000000 l    d  .text.fmaximum_mag_num	00000000 .text.fmaximum_mag_num
+00000000 l    d  .text.fmaximum_mag_numl	00000000 .text.fmaximum_mag_numl
+00000000 l    d  .text.fminimum_mag_num	00000000 .text.fminimum_mag_num
+00000000 l    d  .text.fminimum_mag_numl	00000000 .text.fminimum_mag_numl
 00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.sqrt	00000004 sqrt
 00000000         *UND*	00000000 sqrtf
@@ -289,6 +323,57 @@ SYMBOL TABLE:
 00000000 g     F .text.fmax	00000004 fmax
 00000000         *UND*	00000000 fmaxf
 00000000 g     F .text.fmaxl	00000004 fmaxl
+00000000 g     F .text.roundeven	00000004 roundeven
+00000000         *UND*	00000000 roundevenf
+00000000 g     F .text.roundevenl	00000004 roundevenl
+00000000 g     F .text.fromfp	00000004 fromfp
+00000000         *UND*	00000000 fromfpf
+00000000 g     F .text.fromfpl	00000004 fromfpl
+00000000 g     F .text.ufromfp	00000004 ufromfp
+00000000         *UND*	00000000 ufromfpf
+00000000 g     F .text.ufromfpl	00000004 ufromfpl
+00000000 g     F .text.fromfpx	00000004 fromfpx
+00000000         *UND*	00000000 fromfpxf
+00000000 g     F .text.fromfpxl	00000004 fromfpxl
+00000000 g     F .text.ufromfpx	00000004 ufromfpx
+00000000         *UND*	00000000 ufromfpxf
+00000000 g     F .text.ufromfpxl	00000004 ufromfpxl
+00000000 g     F .text.llogb	00000004 llogb
+00000000         *UND*	00000000 llogbf
+00000000 g     F .text.llogbl	00000004 llogbl
+00000000 g     F .text.nextup	00000004 nextup
+00000000         *UND*	00000000 nextupf
+00000000 g     F .text.nextupl	00000004 nextupl
+00000000 g     F .text.nextdown	00000004 nextdown
+00000000         *UND*	00000000 nextdownf
+00000000 g     F .text.nextdownl	00000004 nextdownl
+00000000 g     F .text.canonicalize	00000021 canonicalize
+00000000         *UND*	00000000 canonicalizef
+00000000 g     F .text.canonicalizel	00000021 canonicalizel
+00000000 g     F .text.fmaximum	00000004 fmaximum
+00000000         *UND*	00000000 fmaximumf
+00000000 g     F .text.fmaximuml	00000004 fmaximuml
+00000000 g     F .text.fminimum	00000004 fminimum
+00000000         *UND*	00000000 fminimumf
+00000000 g     F .text.fminimuml	00000004 fminimuml
+00000000 g     F .text.fmaximum_mag	00000004 fmaximum_mag
+00000000         *UND*	00000000 fmaximum_magf
+00000000 g     F .text.fmaximum_magl	00000004 fmaximum_magl
+00000000 g     F .text.fminimum_mag	00000004 fminimum_mag
+00000000         *UND*	00000000 fminimum_magf
+00000000 g     F .text.fminimum_magl	00000004 fminimum_magl
+00000000 g     F .text.fmaximum_num	00000004 fmaximum_num
+00000000         *UND*	00000000 fmaximum_numf
+00000000 g     F .text.fmaximum_numl	00000004 fmaximum_numl
+00000000 g     F .text.fminimum_num	00000004 fminimum_num
+00000000         *UND*	00000000 fminimum_numf
+00000000 g     F .text.fminimum_numl	00000004 fminimum_numl
+00000000 g     F .text.fmaximum_mag_num	00000004 fmaximum_mag_num
+00000000         *UND*	00000000 fmaximum_mag_numf
+00000000 g     F .text.fmaximum_mag_numl	00000004 fmaximum_mag_numl
+00000000 g     F .text.fminimum_mag_num	00000004 fminimum_mag_num
+00000000         *UND*	00000000 fminimum_mag_numf
+00000000 g     F .text.fminimum_mag_numl	00000004 fminimum_mag_numl
 
 Disassembly of section .text.sqrt:
 
@@ -1143,3 +1228,269 @@ Disassembly of section .text.fmaxl:
  e2 00 00 00           jmpf	fmaxl
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	fmaxf
+
+Disassembly of section .text.roundeven:
+
+<roundeven>:
+ e2 00 00 00           jmpf	roundeven
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	roundevenf
+
+Disassembly of section .text.roundevenl:
+
+<roundevenl>:
+ e2 00 00 00           jmpf	roundevenl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	roundevenf
+
+Disassembly of section .text.fromfp:
+
+<fromfp>:
+ e2 00 00 00           jmpf	fromfp
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fromfpf
+
+Disassembly of section .text.fromfpl:
+
+<fromfpl>:
+ e2 00 00 00           jmpf	fromfpl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fromfpf
+
+Disassembly of section .text.ufromfp:
+
+<ufromfp>:
+ e2 00 00 00           jmpf	ufromfp
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	ufromfpf
+
+Disassembly of section .text.ufromfpl:
+
+<ufromfpl>:
+ e2 00 00 00           jmpf	ufromfpl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	ufromfpf
+
+Disassembly of section .text.fromfpx:
+
+<fromfpx>:
+ e2 00 00 00           jmpf	fromfpx
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fromfpxf
+
+Disassembly of section .text.fromfpxl:
+
+<fromfpxl>:
+ e2 00 00 00           jmpf	fromfpxl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fromfpxf
+
+Disassembly of section .text.ufromfpx:
+
+<ufromfpx>:
+ e2 00 00 00           jmpf	ufromfpx
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	ufromfpxf
+
+Disassembly of section .text.ufromfpxl:
+
+<ufromfpxl>:
+ e2 00 00 00           jmpf	ufromfpxl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	ufromfpxf
+
+Disassembly of section .text.llogb:
+
+<llogb>:
+ e2 00 00 00           jmpf	llogb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	llogbf
+
+Disassembly of section .text.llogbl:
+
+<llogbl>:
+ e2 00 00 00           jmpf	llogbl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	llogbf
+
+Disassembly of section .text.nextup:
+
+<nextup>:
+ e2 00 00 00           jmpf	nextup
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	nextupf
+
+Disassembly of section .text.nextupl:
+
+<nextupl>:
+ e2 00 00 00           jmpf	nextupl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	nextupf
+
+Disassembly of section .text.nextdown:
+
+<nextdown>:
+ e2 00 00 00           jmpf	nextdown
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	nextdownf
+
+Disassembly of section .text.nextdownl:
+
+<nextdownl>:
+ e2 00 00 00           jmpf	nextdownl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	nextdownf
+
+Disassembly of section .text.canonicalize:
+
+<canonicalize>:
+ b0                    push16	r0
+ d6 f8                 adjsp	-0x8
+ f1 04                 mov	r0, r4
+ f0 6a 8a              ld32	q2, [r5]
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 59                 stsp16	[sp+0x6], r5
+ f0 14 00              leasp	r4, 0x0
+ f0 15 04              leasp	r5, 0x4
+ e3 00 00 00           callf	canonicalize
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	canonicalizef
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f0 6b c0              st32	[r0], q3
+ d6 08                 adjsp	0x8
+ b8                    pop16	r0
+ ef                    ret
+
+Disassembly of section .text.canonicalizel:
+
+<canonicalizel>:
+ b0                    push16	r0
+ d6 f8                 adjsp	-0x8
+ f1 04                 mov	r0, r4
+ f0 6a 8a              ld32	q2, [r5]
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 59                 stsp16	[sp+0x6], r5
+ f0 14 00              leasp	r4, 0x0
+ f0 15 04              leasp	r5, 0x4
+ e3 00 00 00           callf	canonicalizel
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	canonicalizef
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f0 6b c0              st32	[r0], q3
+ d6 08                 adjsp	0x8
+ b8                    pop16	r0
+ ef                    ret
+
+Disassembly of section .text.fmaximum:
+
+<fmaximum>:
+ e2 00 00 00           jmpf	fmaximum
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximumf
+
+Disassembly of section .text.fmaximuml:
+
+<fmaximuml>:
+ e2 00 00 00           jmpf	fmaximuml
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximumf
+
+Disassembly of section .text.fminimum:
+
+<fminimum>:
+ e2 00 00 00           jmpf	fminimum
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimumf
+
+Disassembly of section .text.fminimuml:
+
+<fminimuml>:
+ e2 00 00 00           jmpf	fminimuml
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimumf
+
+Disassembly of section .text.fmaximum_mag:
+
+<fmaximum_mag>:
+ e2 00 00 00           jmpf	fmaximum_mag
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximum_magf
+
+Disassembly of section .text.fmaximum_magl:
+
+<fmaximum_magl>:
+ e2 00 00 00           jmpf	fmaximum_magl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximum_magf
+
+Disassembly of section .text.fminimum_mag:
+
+<fminimum_mag>:
+ e2 00 00 00           jmpf	fminimum_mag
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimum_magf
+
+Disassembly of section .text.fminimum_magl:
+
+<fminimum_magl>:
+ e2 00 00 00           jmpf	fminimum_magl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimum_magf
+
+Disassembly of section .text.fmaximum_num:
+
+<fmaximum_num>:
+ e2 00 00 00           jmpf	fmaximum_num
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximum_numf
+
+Disassembly of section .text.fmaximum_numl:
+
+<fmaximum_numl>:
+ e2 00 00 00           jmpf	fmaximum_numl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximum_numf
+
+Disassembly of section .text.fminimum_num:
+
+<fminimum_num>:
+ e2 00 00 00           jmpf	fminimum_num
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimum_numf
+
+Disassembly of section .text.fminimum_numl:
+
+<fminimum_numl>:
+ e2 00 00 00           jmpf	fminimum_numl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimum_numf
+
+Disassembly of section .text.fmaximum_mag_num:
+
+<fmaximum_mag_num>:
+ e2 00 00 00           jmpf	fmaximum_mag_num
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximum_mag_numf
+
+Disassembly of section .text.fmaximum_mag_numl:
+
+<fmaximum_mag_numl>:
+ e2 00 00 00           jmpf	fmaximum_mag_numl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fmaximum_mag_numf
+
+Disassembly of section .text.fminimum_mag_num:
+
+<fminimum_mag_num>:
+ e2 00 00 00           jmpf	fminimum_mag_num
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimum_mag_numf
+
+Disassembly of section .text.fminimum_mag_numl:
+
+<fminimum_mag_numl>:
+ e2 00 00 00           jmpf	fminimum_mag_numl
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	fminimum_mag_numf

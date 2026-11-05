@@ -27,7 +27,6 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **Stack cleanup and termination:** Ensure destructors execute for the fully constructed elements of an array whose construction fails; invoke `std::terminate` for the required failure cases, including violations of `noexcept`.
 - [ ] **Mixed RTTI with dynamic typeid:** When dynamic `typeid` or a `dynamic_cast` to a class is linked, the linker rejects every retained ordinary vtable that is emitted without RTTI, even a class that no such operation reaches. Retain such vtables when no operation can reach them.
 - [ ] **Dynamic initialization and destruction:** Complete initialization guards, recursive-initialization handling, and destructor registration/order semantics for namespace-scope, function-local static, and thread-local objects in the supported execution model, including early termination and exception paths.
-- [ ] **Required termination callback capacity:** Guarantee registration of at least 32 functions through C++ `std::atexit`, with the specified callback ordering and failure semantics in a conforming C++23 mode. AVM's `atexit` storage is currently linker-capacity-dependent.
 
 ### Dynamic allocation — `<new>`
 

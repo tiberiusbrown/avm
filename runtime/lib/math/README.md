@@ -478,6 +478,47 @@ The instruction-mix report includes the new workloads and reconciles with
 cycle timings. `tests/math/report_c99.py` regenerates the tables from build
 reports, final benchmark output, stack traces, and object symbols.
 
+## C23 additions
+
+The C23 interfaces follow the C99 policy: binary32 arithmetic, no floating-point
+exception state, and `errno` for domain, pole, and range errors. AVM's `double`
+and `long double` share binary32, so the wider forms call the float kernels.
+C23 returns the integer results of the `fromfp` family as floating values, so
+those functions need no 64-bit integer conversion.
+
+| Function family | Selected algorithm |
+| --- | --- |
+| `roundeven` | Shares the `rint` kernel. The fixed ties-to-even rounding keeps signed zeros, and NaNs stay NaN. |
+| `fromfp`, `ufromfp`, `fromfpx`, `ufromfpx` | Rounds with the existing ceil, floor, trunc, round-away, or rint kernel. Exact power-of-two bounds check the width. A zero width, NaN, infinity, or out-of-range integer returns NaN and sets `EDOM`. |
+| `llogb` | Shares the `ilogb` exponent kernel with `long` results. Zero, infinity, and NaN follow `ilogb`, returning `FP_LLOGB0`, `LONG_MAX`, and `FP_LLOGBNAN`. |
+| `nextup`, `nextdown` | Step the binary32 bit pattern. Zeros move to the least subnormal of the requested sign, infinities saturate, and NaNs are quieted with their sign and payload kept. |
+| `canonicalize` | Copies the value, because every binary32 encoding is canonical. A signaling NaN is stored as its quiet form. Pointer forms copy through `float` objects, so they do not pun pointer types. |
+| `fmaximum`, `fminimum`, and their `_mag`, `_num`, and `_mag_num` forms | One kernel selects the result. IEEE forms propagate NaNs, `_num` forms return the number when only one operand is NaN, and `_mag` forms compare absolute values. The ordering puts +0 above -0. |
+| `fadd` through `dsqrtl` (narrowing) | Each operation is one correctly rounded binary32 operation, so the narrow result equals the value of the operation. A finite-operand overflow or pole error sets `ERANGE`, and an invalid result from non-NaN operands sets `EDOM`. `ffma` uses `fmaf`, and `fsqrt` uses `sqrtf`. |
+| `issignaling`, `issubnormal`, `iszero` | Clang classification builtins. `iscanonical` is the constant one and evaluates its argument once. |
+| `iseqsig` | Quiet equality through `__avm_iseqsigf`, which sets `EDOM` for a NaN operand. |
+
+Limits:
+
+* AVM has no floating-point exception flags, so `fromfpx` and `ufromfpx` do not
+  raise "inexact", and signaling NaN operands raise no "invalid". Errno reporting
+  is unaffected, because `math_errhandling` is `MATH_ERRNO`.
+* `totalorder`, `totalordermag`, `getpayload`, `setpayload`, and `setpayloadsig`
+  are Annex F functions. They depend on `__STDC_IEC_60559_BFP__`, which AVM does
+  not define, so they are not provided.
+* The C23 classification macros are C-only. Declaring those names as function-like
+  macros would break ordinary C++ identifiers in code that includes `<cmath>`.
+* `ffma` inherits the `fmaf` policy: a single rounding is not guaranteed after
+  severe cancellation or intermediate overflow.
+
+Coverage: `tests/c/math_c23_*.c` checks these families at O0 and O2, including
+boundary widths, rounding directions, zero signs, NaN and infinity rules, errno
+values, and the wider forms. Off-target checks against host libm used glibc 2.39
+for `roundeven`, `nextup`, `nextdown`, `llogb`, the max/min families, and the
+narrowing arithmetic. Glibc 2.39's `fromfp` family returns non-integer values
+for in-range inputs, so the width and rounding rules were checked against a
+reference built from correctly rounded primitives instead.
+
 ## General-case simplification audit
 
 The Sun Microsystems notices identify the kernels' ancestry; they are retained

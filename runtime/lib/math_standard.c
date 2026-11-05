@@ -580,3 +580,183 @@ long double fmaxl(long double x, long double y)
 {
     return (long double)fmaxf((float)x, (float)y);
 }
+
+double roundeven(double x)
+{
+    return (double)roundevenf((float)x);
+}
+
+long double roundevenl(long double x)
+{
+    return (long double)roundevenf((float)x);
+}
+
+double fromfp(double x, int rnd, unsigned int width)
+{
+    return (double)fromfpf((float)x, rnd, width);
+}
+
+long double fromfpl(long double x, int rnd, unsigned int width)
+{
+    return (long double)fromfpf((float)x, rnd, width);
+}
+
+double ufromfp(double x, int rnd, unsigned int width)
+{
+    return (double)ufromfpf((float)x, rnd, width);
+}
+
+long double ufromfpl(long double x, int rnd, unsigned int width)
+{
+    return (long double)ufromfpf((float)x, rnd, width);
+}
+
+double fromfpx(double x, int rnd, unsigned int width)
+{
+    return (double)fromfpxf((float)x, rnd, width);
+}
+
+long double fromfpxl(long double x, int rnd, unsigned int width)
+{
+    return (long double)fromfpxf((float)x, rnd, width);
+}
+
+double ufromfpx(double x, int rnd, unsigned int width)
+{
+    return (double)ufromfpxf((float)x, rnd, width);
+}
+
+long double ufromfpxl(long double x, int rnd, unsigned int width)
+{
+    return (long double)ufromfpxf((float)x, rnd, width);
+}
+
+long llogb(double x)
+{
+    return llogbf((float)x);
+}
+
+long llogbl(long double x)
+{
+    return llogbf((float)x);
+}
+
+double nextup(double x)
+{
+    return (double)nextupf((float)x);
+}
+
+long double nextupl(long double x)
+{
+    return (long double)nextupf((float)x);
+}
+
+double nextdown(double x)
+{
+    return (double)nextdownf((float)x);
+}
+
+long double nextdownl(long double x)
+{
+    return (long double)nextdownf((float)x);
+}
+
+/* Pointer arguments are copied through float objects so no pointer type punning
+   is needed. The binary32 representation is the same for every AVM type. */
+int canonicalize(double *cx, const double *x)
+{
+    float value = (float)*x;
+    float result;
+    int status = canonicalizef(&result, &value);
+    *cx = (double)result;
+    return status;
+}
+
+int canonicalizel(long double *cx, const long double *x)
+{
+    float value = (float)*x;
+    float result;
+    int status = canonicalizef(&result, &value);
+    *cx = (long double)result;
+    return status;
+}
+
+double fmaximum(double x, double y)
+{
+    return (double)fmaximumf((float)x, (float)y);
+}
+
+long double fmaximuml(long double x, long double y)
+{
+    return (long double)fmaximumf((float)x, (float)y);
+}
+
+double fminimum(double x, double y)
+{
+    return (double)fminimumf((float)x, (float)y);
+}
+
+long double fminimuml(long double x, long double y)
+{
+    return (long double)fminimumf((float)x, (float)y);
+}
+
+double fmaximum_mag(double x, double y)
+{
+    return (double)fmaximum_magf((float)x, (float)y);
+}
+
+long double fmaximum_magl(long double x, long double y)
+{
+    return (long double)fmaximum_magf((float)x, (float)y);
+}
+
+double fminimum_mag(double x, double y)
+{
+    return (double)fminimum_magf((float)x, (float)y);
+}
+
+long double fminimum_magl(long double x, long double y)
+{
+    return (long double)fminimum_magf((float)x, (float)y);
+}
+
+double fmaximum_num(double x, double y)
+{
+    return (double)fmaximum_numf((float)x, (float)y);
+}
+
+long double fmaximum_numl(long double x, long double y)
+{
+    return (long double)fmaximum_numf((float)x, (float)y);
+}
+
+double fminimum_num(double x, double y)
+{
+    return (double)fminimum_numf((float)x, (float)y);
+}
+
+long double fminimum_numl(long double x, long double y)
+{
+    return (long double)fminimum_numf((float)x, (float)y);
+}
+
+double fmaximum_mag_num(double x, double y)
+{
+    return (double)fmaximum_mag_numf((float)x, (float)y);
+}
+
+long double fmaximum_mag_numl(long double x, long double y)
+{
+    return (long double)fmaximum_mag_numf((float)x, (float)y);
+}
+
+double fminimum_mag_num(double x, double y)
+{
+    return (double)fminimum_mag_numf((float)x, (float)y);
+}
+
+long double fminimum_mag_numl(long double x, long double y)
+{
+    return (long double)fminimum_mag_numf((float)x, (float)y);
+}

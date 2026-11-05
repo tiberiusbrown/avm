@@ -40,10 +40,7 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 - [ ] **`<math.h>` π-scaled trigonometry (C23):** Provide `sinpi`, `cospi`, `tanpi`, `asinpi`, `acospi`, `atanpi`, and `atan2pi` families.
 - [ ] **`<math.h>` exponentials and logarithms (C23):** Provide `exp10`, `exp10m1`, `exp2m1`, `logp1`, `log2p1`, and `log10p1` families.
 - [ ] **`<math.h>` power/root operations (C23):** Provide `pown`, `powr`, `rootn`, `compoundn`, and `rsqrt` families.
-- [ ] **`<math.h>` rounding and integer-result conversions (C23):** Provide `roundeven`, `fromfp`, `ufromfp`, `fromfpx`, and `ufromfpx` families.
-- [ ] **`<math.h>` ordering and classification (C23):** Provide the newly required classification and comparison interfaces (including `issignaling`, `issubnormal`, `iszero`, and `iseqsig`) and other C23-specified operations for AVM's supported real floating types.
-- [ ] **`<math.h>` successor and minimum/maximum operations (C23):** Provide `nextup`, `nextdown`, and the `fmaximum`/`fminimum` numeric and magnitude families.
-- [ ] **`<math.h>` narrow-result arithmetic (C23):** Provide the applicable `fadd`, `fsub`, `fmul`, `fdiv`, `ffma`, and related narrow-result families.
+- [ ] **`<math.h>` inexact reporting for `fromfpx` and `ufromfpx` (C23):** Raise the "inexact" floating-point exception when a rounded result within the width's range differs in value from the argument. AVM does not yet provide floating-point exception flags.
 - [ ] **`<tgmath.h>` C23 generic interfaces:** Extend type-generic math dispatch to cover the new required real/complex mathematical interfaces for supported types.
 
 ---

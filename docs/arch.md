@@ -3309,8 +3309,8 @@ The `INT16_MIN` dynamic-width case has width `32768`; it is not subject to
 signed negation overflow. Repeated flags are permitted and have the same effect
 as one occurrence.
 
-The integer conversions `d`, `i`, `u`, `o`, `x`, and `X` accept `hh`, `h`,
-`l`, `ll`, `j`, `z`, and `t`; `j` has the same 64-bit width as `ll` on AVM.
+The integer conversions `d`, `i`, `u`, `o`, `x`, `X`, `b`, and `B` accept `hh`,
+`h`, `l`, `ll`, `j`, `z`, and `t`; `j` has the same 64-bit width as `ll` on AVM.
 Floating-point conversions `f`, `F`, `e`, `E`, `g`, `G`, `a`, and `A` accept
 the default length, `l`, and `L`. `l` also retains its existing integer use;
 `L` is valid only for floating-point conversions. The complete
@@ -3383,6 +3383,7 @@ interfaces nor the true-variadic builtins insert alignment padding.
 | `%o` | Format an unsigned octal integer. |
 | `%x` | Format an unsigned hexadecimal integer using lowercase digits. |
 | `%X` | Format an unsigned hexadecimal integer using uppercase digits. |
+| `%b`, `%B` | Format an unsigned binary integer. The digits are `0` and `1`; `%B` only changes the `#` prefix to `0B`. |
 | `%p` | Emit `0x` followed by exactly four lowercase hexadecimal digits for a 16-bit data pointer. |
 | `%P` | Emit `0x` followed by exactly six lowercase hexadecimal digits for a packed 24-bit program pointer. |
 | `%f`, `%F` | Format fixed-point decimal; `%F` uses uppercase special values. |
@@ -3409,8 +3410,8 @@ Integer lengths select these effective widths:
 For signed `hh` conversions, the selected low byte is interpreted as signed
 8-bit. For unsigned `hh` conversions, it is interpreted as unsigned 8-bit.
 Signed magnitude formation correctly handles `INT16_MIN`, `INT32_MIN`, and
-`INT64_MIN`. The `ll` and `j` modifiers both select 64 bits for all six integer
-conversions: `d`, `i`, `u`, `o`, `x`, and `X`. Signed decimal supports
+`INT64_MIN`. The `ll` and `j` modifiers both select 64 bits for all eight integer
+conversions: `d`, `i`, `u`, `o`, `x`, `X`, `b`, and `B`. Signed decimal supports
 `INT64_MIN` through `INT64_MAX`; unsigned conversions support zero through
 `UINT64_MAX`. All existing integer flags, width, precision, prefix, and
 output-count semantics apply equally to 64-bit values and to every formatting
@@ -3424,7 +3425,11 @@ All integer lengths use one SRAM conversion engine operating on 1, 2, 4, or
 8 active bytes. It tests the sign bit of the highest active byte and negates
 only those bytes; it does not sign-extend narrower values to eight bytes.
 Decimal digits use the existing bytewise divide-by-ten primitive, while octal
-and hexadecimal digits use one variable-width right-shift loop.
+and hexadecimal digits use one variable-width right-shift loop. Binary digits
+never enter the digit buffer, which a 64-digit result would overflow: the
+conversion records the position of the highest set bit as its digit count, and
+the emitter reads each digit from the unchanged SRAM value, most significant
+bit first.
 These aliases add no native SRAM or persistent guest RAM. Integer and float
 conversions initialize their own state before use; `%S` retains separate
 program-string cursors and never overwrites the active format cursor.
@@ -3441,8 +3446,8 @@ For integer conversions:
 - `+` emits a plus sign for a nonnegative signed decimal result.
 - space emits a leading space for a nonnegative signed decimal result when `+`
   is absent.
-- `#` prefixes a nonzero hexadecimal value with `0x` or `0X` and requests an
-  octal leading zero.
+- `#` prefixes a nonzero hexadecimal value with `0x` or `0X`, a nonzero binary
+  value with `0b` (`%b`) or `0B` (`%B`), and requests an octal leading zero.
 - `0` pads between any sign/prefix and the digits when `-` is absent and no
   precision was specified.
 - an explicit precision gives the minimum number of digits and disables `0`

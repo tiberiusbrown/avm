@@ -133,9 +133,10 @@
 #define data_format_program_next        (data_end_private+16)
 #define data_format_cache_index         (data_end_private+19)
 #define data_format_cache_length        (data_end_private+20)
-; Integer digits occupy +21..+42 (at most 22 octal digits). String cursors
-; at +33..+40 are dead during integer conversion; %S uses only +21..+32
-; for its 12-byte chunks. Formatter status remains in r17 for the full call.
+; Integer digits occupy +21..+42 (at most 22 octal digits); binary digits are
+; read from the SRAM value instead. String cursors at +33..+40 are dead during
+; integer conversion; %S uses only +21..+32 for its 12-byte chunks. Formatter
+; status remains in r17 for the full call.
 #define FORMAT_INTEGER_DIGIT_CAPACITY 22
 #define data_format_digit_buffer        (data_end_private+21)
 #define data_format_progstr_original    (data_end_private+33)
@@ -222,13 +223,14 @@
 #define FORMAT_INT_BASE_DEC          0
 #define FORMAT_INT_BASE_OCT          1
 #define FORMAT_INT_BASE_HEX          2
+#define FORMAT_INT_BASE_BIN          3
 #define FORMAT_INT_SIGNED_BIT        2
 #define FORMAT_INT_UPPER_BIT         3
 
+; data_format_prefix is zero (none), FORMAT_PREFIX_OCTAL (a lone leading
+; zero), or the radix letter x, X, b or B that follows a "0".
 #define FORMAT_PREFIX_NONE           0
 #define FORMAT_PREFIX_OCTAL          1
-#define FORMAT_PREFIX_HEX_LOWER      2
-#define FORMAT_PREFIX_HEX_UPPER      3
 
 #define FORMAT_FTOA_MINUS            1
 #define FORMAT_FTOA_ZERO             2
@@ -12138,6 +12140,8 @@ format_core:
     breq  .Lformat_float_dispatch
     cpi   r26, 'a'
     breq  .Lformat_float_dispatch
+    cpi   r26, 'b'
+    breq  .Lformat_integer_dispatch
     rjmp  format_unexpected_character
 .Lformat_integer_dispatch:
     rjmp  format_conversion_integer
@@ -12545,18 +12549,22 @@ format_conversion_integer:
     ori   r26, FORMAT_INT_BASE_OCT
     rjmp  .Lformat_integer_mode_ready
 1:
-    cpi   r24, 'x'
-    breq  2f
-    cpi   r24, 'X'
-    brne  .Lformat_integer_decimal_mode
-2:
-    ori   r26, FORMAT_INT_BASE_HEX
-    cpi   r24, 'X'
-    brne  .Lformat_integer_mode_ready
+    ; X and B are the only uppercase integer conversions; the upper bit is
+    ; ignored by decimal and octal. Folding the case selects hex or binary.
+    cpi   r24, 'a'
+    brsh  2f
     ori   r26, (1 << FORMAT_INT_UPPER_BIT)
+2:
+    mov   r25, r24
+    ori   r25, 0x20
+    cpi   r25, 'x'
+    brne  3f
+    ori   r26, FORMAT_INT_BASE_HEX
     rjmp  .Lformat_integer_mode_ready
-.Lformat_integer_decimal_mode:
-    ori   r26, FORMAT_INT_BASE_DEC
+3:
+    cpi   r25, 'b'
+    brne  .Lformat_integer_mode_ready
+    ori   r26, FORMAT_INT_BASE_BIN
 .Lformat_integer_mode_ready:
     sts   data_format_integer_mode, r26
     sts   data_format_sign, ZERO
@@ -12654,11 +12662,12 @@ format_shift_integer_right:
     ret
 
 ; One reversed-digit engine for all integer lengths, including shared zero
-; suppression. Maximum counts: 20 decimal / 22 octal / 16 hex digits. r20
-; retains the active width; r19 is scratch after width decoding. Clobbers
-; r19, r22:r26, Z, SREG H/S/V/N/Z/C; preserves r20:r21, T/I, formatter state
-; and Y. Peak conversion stack: 16 saved bytes + three two-byte return
-; addresses + ten ISR bytes = 32 of 71 bytes above data_text_scratch_end.
+; suppression. Maximum counts: 20 decimal / 22 octal / 16 hex digits; binary
+; (up to 64) stores only its count. r20 retains the active width; r19 is
+; scratch after width decoding. Clobbers r19, r22:r26, Z, SREG H/S/V/N/Z/C;
+; preserves r20:r21, T/I, formatter state and Y. Peak conversion stack: 16
+; saved bytes + three two-byte return addresses + ten ISR bytes = 32 of 71
+; bytes above data_text_scratch_end.
 format_generate_integer_digits:
     sts   data_format_digit_count, ZERO
     lds   r24, data_format_value_nonzero
@@ -12685,6 +12694,8 @@ format_generate_integer_digits:
     subi  r24, -'0'
     rjmp  .Lformat_integer_store_digit
 .Lformat_integer_bit_digit:
+    cpi   r25, FORMAT_INT_BASE_BIN
+    breq  .Lformat_integer_binary_count
     lds   r24, data_format_integer_value
     ldi   r19, 3
     cpi   r25, FORMAT_INT_BASE_OCT
@@ -12720,6 +12731,49 @@ format_generate_integer_digits:
     tst   r23
     brne  .Lformat_integer_digits_loop
 .Lformat_integer_digits_done:
+    ret
+
+; Binary digits never enter the 22-byte digit buffer, which a 64-bit value
+; would overflow. A nonzero value only needs its digit count here: scan down
+; from the top bit for the first one. The emitter reads the bits from the
+; unchanged SRAM value. Same register contract as the generator; r20 retained.
+.Lformat_integer_binary_count:
+    mov   r19, r20
+    lsl   r19
+    lsl   r19
+    lsl   r19
+1:
+    dec   r19
+    rcall format_integer_binary_digit
+    cpi   r24, '1'
+    brne  1b
+    inc   r19
+    sts   data_format_digit_count, r19
+    ret
+
+; Input r19=bit index (0..63). Output r24='0' or '1' for that bit of the active
+; integer value. Clobbers r25, Z and SREG H/S/V/N/Z/C; preserves r19, T/I and
+; everything else, so it is safe between sink calls.
+format_integer_binary_digit:
+    ldi   r30, lo8(data_format_integer_value)
+    ldi   r31, hi8(data_format_integer_value)
+    mov   r24, r19
+    lsr   r24
+    lsr   r24
+    lsr   r24
+    add   r30, r24
+    adc   r31, ZERO
+    ld    r24, Z
+    mov   r25, r19
+    andi  r25, 7
+    breq  2f
+1:
+    lsr   r24
+    dec   r25
+    brne  1b
+2:
+    andi  r24, 1
+    subi  r24, -'0'
     ret
 
 ; Input r24=remainder 0..9, r25=next dividend byte. Output r24=new remainder,
@@ -12776,17 +12830,17 @@ format_prepare_integer_field:
     sbrs  r18, FORMAT_FLAG_ALT
     rjmp  .Lformat_integer_prefix_ready
     cpi   r27, FORMAT_INT_BASE_HEX
-    brne  .Lformat_integer_check_octal_prefix
+    brlo  .Lformat_integer_check_octal_prefix
+    ; Hex and binary: a nonzero value gets "0" plus its radix letter, stored
+    ; as the prefix byte itself. Only binary has base bit 0 set here.
     lds   r24, data_format_value_nonzero
     tst   r24
     breq  .Lformat_integer_prefix_ready
-    sbrs  r26, FORMAT_INT_UPPER_BIT
-    rjmp  .Lformat_integer_hex_lower_prefix
-    ldi   r24, FORMAT_PREFIX_HEX_UPPER
-    sts   data_format_prefix, r24
-    rjmp  .Lformat_integer_prefix_ready
-.Lformat_integer_hex_lower_prefix:
-    ldi   r24, FORMAT_PREFIX_HEX_LOWER
+    ldi   r24, 'x'
+    sbrc  r27, 0
+    ldi   r24, 'b'
+    sbrc  r26, FORMAT_INT_UPPER_BIT
+    andi  r24, 0xdf
     sts   data_format_prefix, r24
     rjmp  .Lformat_integer_prefix_ready
 .Lformat_integer_check_octal_prefix:
@@ -12869,13 +12923,7 @@ format_emit_integer_field:
     lds   r26, data_format_prefix
     cpi   r26, FORMAT_PREFIX_OCTAL
     breq  .Lformat_integer_emit_width_zeroes
-    cpi   r26, FORMAT_PREFIX_HEX_UPPER
-    breq  1f
-    ldi   r24, 'x'
-    rjmp  2f
-1:
-    ldi   r24, 'X'
-2:
+    mov   r24, r26
     rcall format_emit_char
 
 .Lformat_integer_emit_width_zeroes:
@@ -12898,6 +12946,10 @@ format_emit_integer_field:
     lds   r19, data_format_digit_count
     tst   r19
     breq  .Lformat_integer_emit_post
+    lds   r24, data_format_integer_mode
+    com   r24
+    andi  r24, FORMAT_INT_BASE_MASK
+    breq  .Lformat_integer_emit_binary
 .Lformat_integer_emit_digits_loop:
     dec   r19
     ldi   r30, lo8(data_format_digit_buffer)
@@ -12915,6 +12967,13 @@ format_emit_integer_field:
     rcall format_emit_post_padding
 .Lformat_integer_emit_done:
     ret
+.Lformat_integer_emit_binary:
+    dec   r19
+    rcall format_integer_binary_digit
+    rcall format_emit_char
+    tst   r19
+    brne  .Lformat_integer_emit_binary
+    rjmp  .Lformat_integer_emit_post
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

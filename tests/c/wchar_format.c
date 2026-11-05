@@ -39,6 +39,7 @@ int avm_test_main(void) {
     CHECK(swprintf(b,32,L"%04x:%d%n",42,-7,&count)==7 && count==7 && !wcscmp(b,L"002a:-7"));
     CHECK(forward(b,32,L"%5.1ls",L"abc")==5 && !wcscmp(b,L"    a"));
     CHECK(forward(b,32,L"%-*.*ls",5,2,L"abc")==5 && !wcscmp(b,L"ab   "));
+    CHECK(swprintf(b,32,L"%b:%#B:%#.0b",10,10,0)==12 && !wcscmp(b,L"1010:0B1010:"));
     CHECK(swprintf(b,32,L"%%")==1 && !wcscmp(b,L"%"));
     CHECK(swprintf(b,4,L"abc")==3 && !wcscmp(b,L"abc"));
     CHECK(swprintf(b,3,L"abc")<0 && !wcscmp(b,L"ab"));

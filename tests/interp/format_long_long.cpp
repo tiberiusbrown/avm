@@ -149,6 +149,24 @@ struct harness {
                         require(value(integer_value,width)==n>>shift && bool(cpu().data[23])==bool(n>>shift),
                                 "integer shift result");
                     }
+                    // Binary bypasses the 22-byte digit buffer: the helper tests
+                    // one bit of the unchanged SRAM value, and generation only
+                    // records the digit count (one digit for zero).
+                    for(unsigned bit=0; bit<width*8; ++bit) {
+                        prepare(t); value(integer_value,n,width); cpu().data[19]=uint8_t(bit);
+                        call("format_integer_binary_digit", {24,25,30,31}, 0x3f, {});
+                        require(cpu().data[24]==char('0'+((n >> bit) & 1)), "binary digit bit");
+                    }
+                    for(unsigned binary_mode : {3u,11u}) {
+                        unsigned length=0;
+                        for(uint64_t rest=n; rest; rest >>= 1) ++length;
+                        prepare(t); value(integer_value,n,width); cpu().data[20]=uint8_t(width);
+                        cpu().data[nonzero]=uint8_t(bool(n)); cpu().data[mode]=uint8_t(binary_mode);
+                        call("format_generate_integer_digits", {19,22,23,24,25,26,30,31}, 0x3f,
+                             {{digits,digits+1},{count,count+1}});
+                        require(cpu().data[count]==std::max(length,1u), "binary digit count");
+                        require(value(integer_value,width)==n, "binary value preserved");
+                    }
                     unsigned base=i%4;
                     std::ostringstream expected;
                     if(base==1) expected << std::oct;
@@ -170,13 +188,18 @@ struct harness {
         // Exhaust all signed/unsigned hh representations through the parser
         // and shared field emitter, with a nonzero discarded promoted byte
         // and a following 16-bit argument to check exact cursor advancement.
-        for(unsigned n=0; n<256; ++n) for(char conversion : std::string("diuoxX")) {
+        for(unsigned n=0; n<256; ++n) for(char conversion : std::string("diuoxXbB")) {
             std::string format="%hh"; format+=conversion; format+="|%u";
             std::ostringstream reference;
             if(conversion=='o') reference << std::oct;
             if(conversion=='x' || conversion=='X') reference << std::hex;
             if(conversion=='X') reference << std::uppercase;
             if(conversion=='d' || conversion=='i') reference << (n>=128 ? int(n)-256 : int(n));
+            else if(conversion=='b' || conversion=='B') {
+                std::string digits;
+                for(unsigned rest=n; rest; rest >>= 1) digits.insert(digits.begin(), char('0'+(rest & 1)));
+                reference << (digits.empty() ? "0" : digits);
+            }
             else reference << n;
             reference << "|" << std::dec << 1234;
             auto expected=reference.str();
@@ -194,7 +217,7 @@ struct harness {
             ++cases;
         }
         for(const char *format : {"%ll", "%lls", "%llc", "%llp", "%llf", "%llld",
-                                  "%llS", "%llP", "%ll%", "%*.*lls"}) {
+                                  "%llS", "%llP", "%ll%", "%*.*lls", "%Lb", "%LB"}) {
             prepare(false);
             std::copy(format, format+std::char_traits<char>::length(format)+1, cpu().data.begin()+0x200);
             word(source,0x200); word(args,0x301); word(0x301,2); word(0x303,3);
@@ -206,7 +229,9 @@ struct harness {
             require(cpu().sp()==0xaff, "invalid parser leaked return address");
             ++cases;
         }
-        for(const char *format : {"%+025lld|%u", "%#025llo|%u", "%#018llX|%u"}) {
+        // Maximal binary: 64 digits, "0b" and zero padding to width 70.
+        const std::string binary_expected = "0b0000" + std::string(64, '1') + "|1234";
+        for(const char *format : {"%+025lld|%u", "%#025llo|%u", "%#018llX|%u", "%#070llb|%u"}) {
             prepare(false);
             std::copy(format, format+std::char_traits<char>::length(format)+1, cpu().data.begin()+0x200);
             word(source,0x200); word(args,0x301);
@@ -219,6 +244,10 @@ struct harness {
             require(!inject_interrupt || interrupted, "missing interrupt coverage");
             inject_interrupt = false;
             require(word(args)==0x30b && !(cpu().data[17]&8), "mixed formatter cursor");
+            if(format[7]=='b')
+                require(word(8)==binary_expected.size() &&
+                        std::equal(binary_expected.begin(),binary_expected.end(),cpu().data.begin()+0x400),
+                        "maximal binary output");
             require(cpu().sp()==0xaef, "formatter native stack leak");
             maximum_stack = std::max(maximum_stack, 0xaffu-cpu().min_stack);
             require(cpu().min_stack >= scratch_end, "formatter native stack overlaps workspace");

@@ -1,6 +1,7 @@
 #include <avm.h>
 #include <limits.h>
 #include <stdarg.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <inttypes.h>
 #include <stdio.h>
@@ -12,7 +13,7 @@
 struct integer_vector {
     unsigned long long value;
     char format[16];
-    char expected[48];
+    char expected[80];
     int width, precision;
     unsigned char kind; /* signed=1, dynamic width/precision=2 */
 };
@@ -186,6 +187,34 @@ NOINLINE static void narrow_widths(void)
           "|0|-2147483648|4294967295");
 }
 
+NOINLINE static void binary_widths(void)
+{
+    /* Every length modifier reads its own argument width; hh drops the
+       promoted high byte. */
+    check(snprintf(buffer, sizeof(buffer), "%hhb|%hb|%b|%lb",
+                   0x5a85u, 0x1234u, 0x8001u, 4294967295UL),
+          "10000101|1001000110100|1000000000000001|11111111111111111111111111111111");
+    check(snprintf(buffer, sizeof(buffer), "%zb|%tb|%jb", (size_t)6, (ptrdiff_t)7,
+                   (uintmax_t)9), "110|111|1001");
+}
+
+NOINLINE static void binary_flags(void)
+{
+    /* The prefix needs a nonzero value; precision zero suppresses zero, and
+       a precision disables zero padding. Digits never use the 22-byte
+       buffer, so the surrounding %S and float state must stay intact. */
+    check(snprintf(buffer, sizeof(buffer), "%b|%#B|%08.3b|%-6bx|%#b|%#.0b|%.0b",
+                   10u, 10u, 5u, 5u, 0u, 0u, 0u),
+          "1010|0B1010|     101|101   x|0||");
+    check(snprintf(buffer, sizeof(buffer), "%.1f|%llb|%S|%.1f",
+                   1.5f, ULLONG_MAX, F("ok"), -2.5f),
+          "1.5|1111111111111111111111111111111111111111111111111111111111111111|ok|-2.5");
+    check(program_v(0, buffer, sizeof(buffer),
+                    F("12345678%S|%llb|%S|%.1f"),
+                    F("before"), ULLONG_MAX, F("after"), 3.5f),
+          "12345678before|1111111111111111111111111111111111111111111111111111111111111111|after|3.5");
+}
+
 NOINLINE static void program_builtin(void)
 {
     /* A cache refill separates the two 'l' bytes. Maximal octal then reuses
@@ -221,7 +250,8 @@ NOINLINE static void invalid(void)
 {
     static const char AVM_PROGMEM bad[][8] = {
         "%ll", "%lls", "%llc", "%llp", "%llf", "%llld", "%llS", "%llP", "%ll%",
-        "%Ld", "%Lu", "%Lx", "%Lo", "%jf", "%jF", "%js", "%llF", "%lls", "%hf", "%zf"
+        "%Ld", "%Lu", "%Lx", "%Lo", "%Lb", "%LB", "%jf", "%jF", "%js", "%llF", "%lls",
+        "%hf", "%zf"
     };
     unsigned i;
     for(i = 0; i < sizeof(bad) / sizeof(bad[0]); ++i) {
@@ -318,6 +348,34 @@ NOINLINE static void sinks(void)
     avm_set_text_font((const avm_font_t AVM_PROGMEM *)0);
 }
 
+NOINLINE static void binary_sinks(void)
+{
+    avm_text_cursor_t cursor;
+    avm_text_cursor_t reference;
+    volatile uint8_t *fb = (volatile uint8_t *)(uintptr_t)0x500;
+    unsigned i;
+    int count = avm_debug_printf_P(F("b:%jb|%#jB\n"), 5ULL, ULLONG_MAX);
+    if(count != 73) ++failures;
+    avm_set_text_font((const avm_font_t AVM_PROGMEM *)pixel_font);
+    avm_set_text_mode(AVM_TEXT_WHITE_TRANSPARENT);
+    for(i = 0; i < 1024; ++i) fb[i] = 0;
+    cursor = avm_draw_textf(3, 0, "%jb", 3ULL);
+    if(cursor.x != 7 || cursor.baseline_y != 0 || fb[3] != 1 || fb[5] != 1)
+        ++failures;
+    /* Maximal binary with a prefix and zero padding: both formatted sources
+       must advance exactly like the equivalent literal text. */
+    avm_set_text_font(AVM_FONT_5X7);
+    reference = avm_draw_text(-100, 32,
+        "0B00001111111111111111111111111111111111111111111111111111111111111111");
+    cursor = avm_draw_textf(-100, 32, "%#070llB", ULLONG_MAX);
+    if(cursor.x != reference.x || cursor.baseline_y != 32) ++failures;
+    reference = avm_draw_text_P(-100, 40,
+        F("0b00001111111111111111111111111111111111111111111111111111111111111111"));
+    cursor = avm_draw_textf_P(-100, 40, F("%#070llb"), ULLONG_MAX);
+    if(cursor.x != reference.x || cursor.baseline_y != 40) ++failures;
+    avm_set_text_font((const avm_font_t AVM_PROGMEM *)0);
+}
+
 int avm_test_main(void)
 {
     vectors();
@@ -326,10 +384,13 @@ int avm_test_main(void)
     mixed_scratch();
     sign_flags();
     narrow_widths();
+    binary_widths();
+    binary_flags();
     program_builtin();
     truncation();
     invalid();
     sinks();
+    binary_sinks();
     percent_n_sinks();
     test_line16("failures", failures);
     return failures != 0;

@@ -24,10 +24,9 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 
 ### Formatted input/output and integer conversion
 
-- [ ] **Binary formatted output (C23):** Implement mandatory `%b` conversion in all narrow and wide `printf`-family entry points, including flags, width, precision, and length modifiers.
 - [ ] **Binary formatted input (C23):** Implement `%b` conversion and C23 binary-prefix acceptance where applicable in the narrow and wide `scanf`-family entry points, preserving matching, conversion, and assignment rules.
 - [ ] **Exact/fast-width format modifiers (C23):** Support `wN` and `wfN` length modifiers in all narrow and wide formatted-input/output interfaces for the supported exact-, minimum-, and fast-width integer types.
-- [ ] **`<inttypes.h>` binary formats (C23):** Add the mandatory `PRIb*` and `SCNb*` macros for supported integer types and ensure compatibility with C23 format parsing. `PRIB*` and `%B` are optional and need not be supported.
+- [ ] **`<inttypes.h>` binary input formats (C23):** Add the mandatory `SCNb*` macros for supported integer types, matching the `%b` input conversion.
 - [ ] **Binary-prefixed integer strings (C23):** Recognize `0b`/`0B` where required in `strtol`, `strtoul`, `strtoll`, `strtoull`, `strtoimax`, `strtoumax`, and their wide-character equivalents, with correct base detection, end pointers, and range handling.
 
 ### Time and character handling

@@ -555,6 +555,8 @@ The `FX-C` variant was not cycle-measured: `avm_bench` has no FX-C wiring option
 
 Both the normal and FX-C interpreters have a `.text` size of 28,692 bytes. That is 1,184 bytes above the 27,508-byte build before the window feature and 1,004 bytes below the 29,696-byte limit. Deduplicating the AS0 and program-memory copy setup saved 76 bytes from the previous 28,720-byte size: 36 bytes from the shared `memcpy`/`memcpy_P` tail, 32 from the single bounded-copy entry with shared `strncpy`/`strncat` setup, and 8 from the shared program-read preparation.
 
+The C23 binary `%b` and `%B` conversions later raised both interpreters to 28,776 bytes, which is 920 bytes below the limit. Binary digits are emitted straight from the SRAM integer value, so the 22-byte digit buffer and the formatter workspace are unchanged. The conversions share the hexadecimal prefix path, whose prefix byte now holds the radix letter itself. The other integer conversions pay for the new code. `avm_bench --instruction-only` shows every decimal integer `vsnprintf` and `vsnprintf_P` row 10 cycles slower (by instruction count, 5 in the conversion's mode selection and 5 in the shared emitter's base test), `%#08x` 13 slower, the mixed `%c %s %S %ld %#x` row 23 slower, and the malformed `%q` exit 2 slower. The `%d` rows in the table above are each 10 cycles higher.
+
 The fixed setup costs of that deduplication are below, measured against `2282a60` with the same probe protocol. Per-byte streaming rates are unchanged. RAM `memcpy`, `memmove`, `strncpy`, and `strncat`, and every `memcmp_P`, `strcmp_P`, and `strlen_P` instruction row, are unchanged. The `sys_strncpy_p` and `sys_strncat_p` C workloads each drop by one cycle.
 
 | Path | Before | After | Note |

@@ -25,6 +25,20 @@ CHECK_ALIASES(32);
 CHECK_ALIASES(64);
 STATIC_CHECK(sizeof(INPUT_FORMATS(MAX)) == sizeof("lldllillollullx"), "maximum scan types");
 STATIC_CHECK(sizeof(INPUT_FORMATS(PTR)) == sizeof("dioux"), "pointer scan types");
+/* The binary macros carry the same length modifiers as the hex macros. */
+#define BINARY_MATCHES_HEX(w) \
+    STATIC_CHECK(sizeof(PRIb##w) == sizeof(PRIx##w) && sizeof(PRIB##w) == sizeof(PRIX##w), \
+                 "binary and hex modifiers match")
+BINARY_MATCHES_HEX(8);
+BINARY_MATCHES_HEX(16);
+BINARY_MATCHES_HEX(32);
+BINARY_MATCHES_HEX(64);
+BINARY_MATCHES_HEX(LEAST8);
+BINARY_MATCHES_HEX(LEAST64);
+BINARY_MATCHES_HEX(FAST16);
+BINARY_MATCHES_HEX(FAST32);
+BINARY_MATCHES_HEX(MAX);
+BINARY_MATCHES_HEX(PTR);
 STATIC_CHECK(sizeof(imaxdiv_t) == 2 * sizeof(intmax_t), "packed maximum division ABI");
 
 static intmax_t (*volatile signed_call)(const char*, char**, int) = strtoimax;
@@ -90,6 +104,47 @@ DEFINE_FORMAT_TEST(FAST64, int_fast64_t, uint_fast64_t)
 DEFINE_FORMAT_TEST(MAX, intmax_t, uintmax_t)
 DEFINE_FORMAT_TEST(PTR, intptr_t, uintptr_t)
 
+/* Each width prints 5 and 10, plain and with the uppercase prefix. */
+#define DEFINE_BINARY_TEST(w, ut) \
+static __attribute__((noinline)) int binary_##w(void) { \
+    CHECK(snprintf(format_buffer, sizeof format_buffer, "%" PRIb##w "/%#" PRIB##w, \
+                   (ut)5, (ut)10) == 10); \
+    CHECK(strcmp(format_buffer, "101/0B1010") == 0); \
+    return 0; \
+}
+DEFINE_BINARY_TEST(8, uint8_t)
+DEFINE_BINARY_TEST(16, uint16_t)
+DEFINE_BINARY_TEST(32, uint32_t)
+DEFINE_BINARY_TEST(64, uint64_t)
+DEFINE_BINARY_TEST(LEAST8, uint_least8_t)
+DEFINE_BINARY_TEST(LEAST16, uint_least16_t)
+DEFINE_BINARY_TEST(LEAST32, uint_least32_t)
+DEFINE_BINARY_TEST(LEAST64, uint_least64_t)
+DEFINE_BINARY_TEST(FAST8, uint_fast8_t)
+DEFINE_BINARY_TEST(FAST16, uint_fast16_t)
+DEFINE_BINARY_TEST(FAST32, uint_fast32_t)
+DEFINE_BINARY_TEST(FAST64, uint_fast64_t)
+DEFINE_BINARY_TEST(MAX, uintmax_t)
+DEFINE_BINARY_TEST(PTR, uintptr_t)
+
+static int check_binary_formats(void) {
+    CHECK(binary_8() == 0 && binary_16() == 0 && binary_32() == 0 && binary_64() == 0);
+    CHECK(binary_LEAST8() == 0 && binary_LEAST16() == 0 && binary_LEAST32() == 0 && binary_LEAST64() == 0);
+    CHECK(binary_FAST8() == 0 && binary_FAST16() == 0 && binary_FAST32() == 0 && binary_FAST64() == 0);
+    CHECK(binary_MAX() == 0 && binary_PTR() == 0);
+    return 0;
+}
+
+static char binary_buffer[72];
+static int check_maximum_binary(void) {
+    CHECK(snprintf(binary_buffer, sizeof binary_buffer, "%#" PRIbMAX, UINTMAX_MAX) == 66);
+    CHECK(binary_buffer[0] == '0' && binary_buffer[1] == 'b');
+    CHECK(strspn(binary_buffer + 2, "1") == 64);
+    CHECK(snprintf(binary_buffer, sizeof binary_buffer, "%" PRIBMAX, (uintmax_t)1 << 63) == 64);
+    CHECK(binary_buffer[0] == '1' && strspn(binary_buffer + 1, "0") == 63);
+    return 0;
+}
+
 static int check_formats(void) {
     CHECK(format_8() == 0 && format_16() == 0 && format_32() == 0 && format_64() == 0);
     CHECK(format_LEAST8() == 0 && format_LEAST16() == 0 && format_LEAST32() == 0 && format_LEAST64() == 0);
@@ -109,6 +164,8 @@ static int check_maximum_formats(void) {
 int avm_test_main(void) {
     CHECK(check_formats() == 0);
     CHECK(check_maximum_formats() == 0);
+    CHECK(check_binary_formats() == 0);
+    CHECK(check_maximum_binary() == 0);
     CHECK(check_signed("9223372036854775807!", 10, INTMAX_MAX, 19, 0));
     CHECK(check_signed("-9223372036854775808!", 10, INTMAX_MIN, 20, 0));
     CHECK(check_signed("9223372036854775808!", 10, INTMAX_MAX, 19, ERANGE));

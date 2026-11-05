@@ -386,7 +386,7 @@
         2144   sys_strncpy.c
         3625   sys_strncpy_p.c
       487473   tail_calls.c
-       52140   text.c
+       52150   text.c
      3139912   tile_cache_render.c
        42482   tilesrect.c
        90928   tilessprite.c

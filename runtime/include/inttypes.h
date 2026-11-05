@@ -120,6 +120,42 @@ uintmax_t wcstoumax(const wchar_t*, wchar_t**, int);
 #define PRIxPTR __UINTPTR_FMTx__
 #define PRIXPTR __UINTPTR_FMTX__
 
+/* C23 binary conversions. Clang predefines __UINT*_FMTb__ only in C23 mode, so
+ * the length modifiers are written out for the AVM data model: int is 16 bits,
+ * long is 32 and long long is 64. They match the __UINT*_FMTx__ modifiers.
+ * The B conversion is supported, so the PRIB macros are defined as well. */
+#define PRIb8 "hhb"
+#define PRIb16 "b"
+#define PRIb32 "lb"
+#define PRIb64 "llb"
+#define PRIB8 "hhB"
+#define PRIB16 "B"
+#define PRIB32 "lB"
+#define PRIB64 "llB"
+
+#define PRIbLEAST8 PRIb8
+#define PRIbLEAST16 PRIb16
+#define PRIbLEAST32 PRIb32
+#define PRIbLEAST64 PRIb64
+#define PRIBLEAST8 PRIB8
+#define PRIBLEAST16 PRIB16
+#define PRIBLEAST32 PRIB32
+#define PRIBLEAST64 PRIB64
+
+#define PRIbFAST8 PRIb8
+#define PRIbFAST16 PRIb16
+#define PRIbFAST32 PRIb32
+#define PRIbFAST64 PRIb64
+#define PRIBFAST8 PRIB8
+#define PRIBFAST16 PRIB16
+#define PRIBFAST32 PRIB32
+#define PRIBFAST64 PRIB64
+
+#define PRIbMAX PRIb64
+#define PRIBMAX PRIB64
+#define PRIbPTR PRIb16
+#define PRIBPTR PRIB16
+
 #define SCNd8 __INT8_FMTd__
 #define SCNi8 __INT8_FMTi__
 #define SCNo8 __UINT8_FMTo__

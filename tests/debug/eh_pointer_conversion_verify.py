@@ -19,7 +19,7 @@ For each handler the check reads the packed AVEH5 block and the machine code, an
   - the conversion mode and the handler adjustment equal the model's;
   - the pointer returned by __cxa_begin_catch or __cxa_get_exception_ptr is the converted
     buffer, which lies at the header plus 51, for a converted handler, and the caught object,
-    which lies at the header plus 55, for an exact handler;
+    which lies at the header plus 59, for an exact handler;
   - a converted buffer holds the model's value in its first two bytes for a data pointer, and in
     all three bytes for a program pointer, and it is zero for a std::nullptr_t;
   - each handler is begun once, ended once, and its exception object is freed once.
@@ -49,7 +49,7 @@ END = '__cxa_end_catch'
 FREE = 'free'
 RETURNS = (BEGIN, GET_PTR)
 
-HEADER_SIZE = 55
+HEADER_SIZE = 59
 CONVERTED_OFFSET = 51
 CONVERSION_OFFSET = 54
 OBJECT_LIMIT = 8

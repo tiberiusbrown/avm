@@ -3875,7 +3875,7 @@ Disassembly of section .text.match_list:
  f7 62                 add32	q0, q2
  f0 63 80              ldp24	q2, [q0]
  f0 30 06              ldsp16	r0, [sp+0x6]
- ed d0 57              ld16	r6, [r0+55]
+ ed d0 5b              ld16	r6, [r0+59]
  f6 2e                 tst16	r6
  d1 04                 brne8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
@@ -4519,7 +4519,7 @@ Disassembly of section .text.match_pointer_base:
  a5                    xor	r5, r5
  f7 62                 add32	q0, q2
  f0 63 80              ldp24	q2, [q0]
- ed 1c 57              ld16	r0, [r6+55]
+ ed 1c 5b              ld16	r0, [r6+59]
  f0 3c 12              stsp16	[sp+0x12], r4
  f0 3d 14              stsp16	[sp+0x14], r5
  e3 00 00 00           callf	match_pointer_base
@@ -5722,7 +5722,7 @@ Disassembly of section .text.match_object_base:
  bb                    pop16	r3
  ef                    ret
  f1 21                 mov	r4, r1
- c8 37                 addi.s8	r4, 0x37
+ c8 3b                 addi.s8	r4, 0x3b
  a5                    xor	r5, r5
  f0 2d 2e              stsp8	[sp+0x2e], r5
  f0 3c 12              stsp16	[sp+0x12], r4

@@ -53,7 +53,16 @@ struct avm_eh_exception {
     uint16_t eh_function_count;           /* +49 number of function index entries */
     uint8_t converted_pointer[3];         /* +51 converted value of the pointer handler */
     uint8_t handler_pointer_converted;    /* +54 AVM_EH_CONVERT_* of the matched catch */
+    struct avm_eh_exception *next;        /* +55 next exception on the caught stack */
+    uint16_t refcount;                    /* +57 in-flight or handler reference, plus exception_ptr copies */
 };
+
+/* The header is followed by the thrown object. The reference count holds one reference
+ * while the exception is thrown or caught, and one for each std::exception_ptr that names
+ * the object. The last release destroys the object and frees the header. The caught
+ * stack links each CAUGHT exception to the one caught before it, so nested catch bodies
+ * unwind in order. */
+#define AVM_EH_HEADER_SIZE 59
 
 /* How the selected handler receives a pointer. A clause that matches the thrown type
  * exactly, or a catch-all, leaves the handler with the thrown object, so its mode is NONE.
@@ -65,13 +74,15 @@ struct avm_eh_exception {
 #define AVM_EH_CONVERT_PROGRAM 2
 #define AVM_EH_CONVERT_NULL    3
 
-/* Lifecycle of the active exception. The header is ALLOCATED until it is thrown.
- * THROWN means propagation is searching or between landing pads. IN_CLEANUP means a
- * cleanup pad is running and must call _Unwind_Resume. ENTERING_CATCH means the final
- * handler is about to run, and it must call __cxa_begin_catch. CAUGHT means the catch
- * body is running, and __cxa_end_catch frees the header. SEARCH_HAS_CLEANUP means
- * phase one passed a frame with a cleanup and no matching catch, so the handler must be
- * reached through phase two. The low seven bits hold this lifecycle. */
+/* Lifecycle of an exception. The header is ALLOCATED until it is thrown, and again after
+ * its last catch ends while std::exception_ptr copies still name it. THROWN means
+ * propagation is searching or between landing pads, and only one exception is in flight at
+ * a time. IN_CLEANUP means a cleanup pad is running and must call _Unwind_Resume.
+ * ENTERING_CATCH means the final handler is about to run, and it must call
+ * __cxa_begin_catch. CAUGHT means a catch body is running; such an exception is on the
+ * caught stack, and __cxa_end_catch ends it. SEARCH_HAS_CLEANUP means phase one passed a
+ * frame with a cleanup and no matching catch, so the handler must be reached through phase
+ * two. The low seven bits hold this lifecycle. */
 #define AVM_EH_STATE_ALLOCATED          0
 #define AVM_EH_STATE_THROWN             1
 #define AVM_EH_STATE_CAUGHT             2
@@ -102,14 +113,20 @@ __avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector
  * Searches for a handler and never returns. */
 __attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header);
 
-/* Returns the header of the caught exception for the __cxa_rethrow shim. The exception
- * must be the active one and must be CAUGHT, or the call terminates. */
+/* Returns the header of the innermost caught exception for the __cxa_rethrow shim. That
+ * exception must be CAUGHT, or the call terminates. */
 struct avm_eh_exception *__avm_eh_rethrow_header(void);
 
 /* Entry from the __cxa_rethrow shim, which tail-jumps here with the header in r4 after
  * capturing the rethrow site into the header's context. It restarts both phases from that
  * site, and it never returns. */
 __attribute__((noreturn)) void __avm_eh_rethrow(struct avm_eh_exception *header);
+/* Entry from the __avm_rethrow_primary_exception shim, which tail-jumps here with the
+ * header in r4 after capturing the call site, as __cxa_throw does. The header must be a
+ * non-null object that a std::exception_ptr names. An innermost CAUGHT exception is
+ * rethrown as a pending rethrow, and any other ALLOCATED exception is thrown anew. It
+ * never returns. */
+__attribute__((noreturn)) void __avm_eh_rethrow_primary(struct avm_eh_exception *header);
 
 /* Opens the AVEH5 metadata for the exception at header, once per throw. It validates the
  * block header and the index bounds, and it caches the block address, block end, and

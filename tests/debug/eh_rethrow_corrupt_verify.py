@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import eh_metadata_verify as aveh  # noqa: E402
 import eh_rethrow_verify as rv  # noqa: E402
 
-HEADER_SIZE = 55
+HEADER_SIZE = 59
 STATE_ENTERING_CATCH_PENDING = 0x84
 STATE_CAUGHT = 2
 

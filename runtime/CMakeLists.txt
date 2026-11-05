@@ -7,6 +7,7 @@ set(AVM_RUNTIME_ASM_DIR "${AVM_RUNTIME_SOURCE_DIR}/asm")
 set(AVM_LIBCXX_SOURCE_DIR "${CMAKE_SOURCE_DIR}/deps/llvm-project/libcxx")
 set(AVM_LIBCXX_SOURCE_INCLUDE_DIR "${AVM_LIBCXX_SOURCE_DIR}/include")
 set(AVM_LIBCXX_GENERATED_INCLUDE_DIR "${AVM_RUNTIME_BUILD_DIR}/libcxx/include")
+set(AVM_LIBCXX_OVERRIDE_DIR "${AVM_RUNTIME_SOURCE_DIR}/libcxx-overrides")
 file(MAKE_DIRECTORY "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}")
 
 # Target-specific libc++ header configuration from the pinned template.
@@ -15,7 +16,8 @@ set(_LIBCPP_ABI_NAMESPACE __1)
 set(_LIBCPP_ABI_FORCE_ITANIUM ON)
 set(_LIBCPP_ABI_FORCE_MICROSOFT OFF)
 set(_LIBCPP_HAS_THREADS OFF)
-set(_LIBCPP_HAS_MONOTONIC_CLOCK OFF)
+# AVM provides steady_clock from the millisecond counter behind clock(), see lib/chrono_steady.cpp.
+set(_LIBCPP_HAS_MONOTONIC_CLOCK ON)
 set(_LIBCPP_HAS_TERMINAL OFF)
 set(_LIBCPP_HAS_MUSL_LIBC OFF)
 set(_LIBCPP_HAS_THREAD_API_PTHREAD OFF)
@@ -40,6 +42,10 @@ configure_file("${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/__config_site.in"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site" @ONLY)
 configure_file("${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler" COPYONLY)
+# AVM's threads-off atomic wait, staged over the libc++ header in the sysroot.
+file(MAKE_DIRECTORY "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic")
+configure_file("${AVM_LIBCXX_OVERRIDE_DIR}/__atomic/atomic_sync.h"
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h" COPYONLY)
 
 # Record the production objects for checked-in disassembly. Diagnostic MIR
 # compilations and header smoke tests do not describe shipped runtime code.
@@ -144,6 +150,8 @@ file(GLOB_RECURSE AVM_RUNTIME_HEADERS CONFIGURE_DEPENDS
     "${AVM_RUNTIME_INCLUDE_DIR}/*")
 file(GLOB_RECURSE AVM_LIBCXX_HEADERS CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/*")
+# AVM's overrides of libc++ headers are build inputs of the same kind, so they are listed here.
+list(APPEND AVM_LIBCXX_HEADERS "${AVM_LIBCXX_OVERRIDE_DIR}/__atomic/atomic_sync.h")
 set(AVM_RUNTIME_HEADER_MANIFEST
     "${CMAKE_CURRENT_BINARY_DIR}/runtime-headers.txt")
 string(JOIN "\n" AVM_RUNTIME_HEADER_PATHS ${AVM_RUNTIME_HEADERS})
@@ -311,6 +319,149 @@ avm_add_runtime_object(
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_CAST_OBJECT}")
 
+# Allocation functions. Each replaceable function is weak in new.o, which needs -fexceptions
+# to throw std::bad_alloc through the AVM exception ABI. Each class and function group is in
+# its own object, so a program links only the groups that it names.
+set(AVM_RUNTIME_NEW_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/new.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_NEW_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/new.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -fexceptions
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_RUNTIME_SOURCE_DIR}/lib/new_internal.h"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_NEW_OBJECT}")
+
+# The deallocation functions never throw, so they are a separate object. A program that only
+# deletes objects, such as one with a virtual destructor, links no exception classes.
+set(AVM_RUNTIME_DELETE_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/delete.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_DELETE_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/delete.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_RUNTIME_SOURCE_DIR}/lib/new_internal.h"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_DELETE_OBJECT}")
+
+# std::set_new_handler and std::get_new_handler, and std::nothrow and std::__throw_bad_alloc,
+# come from the pinned libc++ sources. The helpers throw bad_alloc, so they need -fexceptions.
+set(AVM_LIBCXX_NEW_HANDLER_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_new_handler.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_LIBCXX_NEW_HANDLER_OBJECT}"
+    SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/new_handler.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
+    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY
+    DEPENDS
+        ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_NEW_HANDLER_OBJECT}")
+
+set(AVM_LIBCXX_NEW_HELPERS_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_new_helpers.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_LIBCXX_NEW_HELPERS_OBJECT}"
+    SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/new_helpers.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
+    COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY -fexceptions
+    DEPENDS
+        ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_NEW_HELPERS_OBJECT}")
+
+# The standard exception classes for allocation and dynamic-typing failures, which name the
+# RTTI and vtable of their key functions, as eh_bad_typeid.o and eh_bad_cast.o do.
+set(AVM_RUNTIME_EH_BAD_ALLOC_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_alloc.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_EH_BAD_ALLOC_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_alloc.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -frtti -fexceptions
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_ALLOC_OBJECT}")
+
+set(AVM_RUNTIME_EH_BAD_EXCEPTION_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/eh_bad_exception.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_EH_BAD_EXCEPTION_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_bad_exception.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -frtti
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EH_BAD_EXCEPTION_OBJECT}")
+
+# std::exception_ptr and its operations. The rethrow passes its parameter's reference through
+# unwinding, so the object needs -fexceptions for the parameter's destructor.
+set(AVM_RUNTIME_EXCEPTION_PTR_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/exception_ptr.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_EXCEPTION_PTR_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/exception_ptr.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -frtti -fexceptions
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EXCEPTION_PTR_OBJECT}")
+
+# std::terminate and its handler slot. A throwing handler reaches the terminate landing pad,
+# so the object needs -fexceptions.
+set(AVM_RUNTIME_EXCEPTION_TERMINATE_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/exception_terminate.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_EXCEPTION_TERMINATE_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/exception_terminate.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    COMPILE_OPTIONS -fexceptions
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_EXCEPTION_TERMINATE_OBJECT}")
+
+# std::chrono::steady_clock, which high_resolution_clock names under the monotonic-clock setting
+# above.
+set(AVM_RUNTIME_CHRONO_STEADY_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/chrono_steady.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_RUNTIME_CHRONO_STEADY_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/chrono_steady.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+)
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_RUNTIME_CHRONO_STEADY_OBJECT}")
+
 set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/framebuffer.o")
 avm_add_runtime_object(
     OUTPUT "${RUNTIME_OBJECT}"
@@ -342,7 +493,7 @@ avm_add_runtime_object(
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 
 # Exception support is linked only when a program references these objects.
-foreach(eh_asm eh_context eh_cxa_throw eh_cxa_rethrow)
+foreach(eh_asm eh_context eh_cxa_throw eh_cxa_rethrow eh_cxa_rethrow_primary)
     set(RUNTIME_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/${eh_asm}.o")
     avm_add_runtime_object(
         OUTPUT "${RUNTIME_OBJECT}"
@@ -523,6 +674,14 @@ foreach(AVM_RUNTIME_MIR_SOURCE IN LISTS AVM_RUNTIME_MIR_SOURCES)
         set(runtime_mir_rtti_options -frtti -fexceptions)
     elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_cast.cpp")
         set(runtime_mir_rtti_options -frtti -fexceptions)
+    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_alloc.cpp")
+        set(runtime_mir_rtti_options -frtti -fexceptions)
+    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/eh_bad_exception.cpp")
+        set(runtime_mir_rtti_options -frtti)
+    elseif(AVM_RUNTIME_MIR_RELATIVE STREQUAL "lib/exception_ptr.cpp")
+        set(runtime_mir_rtti_options -frtti -fexceptions)
+    elseif(AVM_RUNTIME_MIR_RELATIVE MATCHES "^lib/(new|exception_terminate)\\.cpp$")
+        set(runtime_mir_rtti_options -fexceptions)
     endif()
     set(runtime_mir_cxx_options)
     set(runtime_mir_cxx_dependencies)
@@ -664,15 +823,20 @@ list(APPEND AVM_SYSROOT_STAGE_COMMANDS
         "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler")
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h")
 list(APPEND AVM_SYSROOT_STAGE_DEPENDS
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h"
     "${AVM_LIBCXX_SOURCE_DIR}/include/__config_site.in"
     "${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in")
 list(APPEND AVM_SYSROOT_STAGE_BYPRODUCTS
     "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site"
-    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler")
+    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler"
+    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h")
 
 set(AVM_SYSROOT_STAMP "${AVM_SYSROOT_DIR}/.runtime-stamp")
 add_custom_command(

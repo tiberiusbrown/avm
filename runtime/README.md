@@ -84,8 +84,9 @@ controller commands without modifying RAM. Callers own controller-state
 compatibility with subsequent `avm_display()` calls. See the
 [command and query contracts](../docs/arch.md#4930-send_display_command).
 `<new>` provides placement `new` and `new[]` for caller-owned storage, with
-their matching placement `delete` overloads. Ordinary C++ allocation operators
-are not included. `<stdlib.h>` provides `malloc`, `calloc`, `realloc`, and `free`.
+their matching placement `delete` overloads, and the replaceable allocation
+functions described in [C++ allocation](#c-allocation). `<stdlib.h>` provides
+`malloc`, `calloc`, `realloc`, and `free`.
 The first-fit implicit-block allocator uses the unused static RAM after the
 final `.saved` and `.data` storage through `0x04ff`, starting at the linker's
 `__avm_heap_start`. It requires exactly two persistent bytes and two header bytes
@@ -102,16 +103,16 @@ The allocator is non-reentrant; interrupt handlers must not interrupt allocator
 operations with another allocator call. `malloc.o` is extracted from `libavm.a`
 only when required, adding no code or RAM to programs that do not use allocation.
 Custom linker scripts must define the equivalent heap-start symbol.
-`libavm.a` contains weak traps for compiler-generated pure or deleted virtual
-calls and deleting destructors. Applications can replace the delete traps if
-they provide their own fixed-capacity allocator.
+`libavm.a` contains weak traps for compiler-generated pure and deleted virtual calls.
+Deleting destructors reach the `operator delete` functions of `<new>`.
 
 `<time.h>` provides `clock_t`, `CLOCKS_PER_SEC` (1000), and `clock()`. The
 32-bit unsigned counter returns elapsed milliseconds since runtime startup,
 with one-millisecond resolution. It wraps modulo 2^32 after about 49.7 days;
 unsigned subtraction measures intervals across one wrap when they are shorter
 than a full counter period. This is an elapsed-time approximation, not precise
-CPU-consumption measurement.
+CPU-consumption measurement. The C++ `std::chrono::steady_clock` reads the same counter
+in milliseconds, and `high_resolution_clock` names it.
 
 The C99 calendar interface uses signed 64-bit `time_t`, representing integral
 seconds since 1970-01-01 00:00:00 UTC, including negative timestamps. Gregorian
@@ -501,6 +502,26 @@ automatically through `--undefined=__avm_trap_entry`. Manual `ld.lld` links must
 pass `--undefined=__avm_trap_entry` to get the default handler. Images without
 it have a zero header `trapEntry` and keep the fail-stop behavior.
 
+## C++ allocation
+
+`operator new` and `operator new[]` are replaceable. Each form is a weak definition in `new.o`:
+plain, nothrow, sized deletes, and aligned, in both array and scalar forms. A program that defines
+a function with the same signature replaces it at link time. Allocation calls the installed
+`std::new_handler` and retries after each failure, and only a missing handler turns the failure
+into `std::bad_alloc`. The throwing forms throw that exception through the exception runtime, and
+the nothrow forms catch it and return null. A zero-byte request still returns a distinct non-null
+block, because `malloc(0)` returns NULL on AVM.
+
+An alignment up to the default new alignment, which is one byte on AVM, uses the heap block
+directly. A larger alignment allocates room for the alignment and a stored block address, and it
+returns the aligned address. Deallocation applies the same alignment test, so it releases the
+stored block. The `operator delete` forms return blocks to the heap.
+
+Because the throwing forms need the exception runtime, a program that calls `operator new` links
+it. The throw path also places the unwinder's match frames, about 136 bytes at `-O2`, below each
+call to `operator new` in the static stack bound. An allocation made deep in a call tree can
+therefore exceed the 256-byte guest stack and fail to link.
+
 ## C++ exceptions
 
 Build with `-fexceptions`, which overrides the SDK's `-fno-exceptions` default. A
@@ -514,11 +535,15 @@ in `.avm.eh_sites`, and the `.debug_frame` rows into the `AVEH5` block described
 unwind tables, because the unwinder never unwinds through its own frames.
 
 The runtime objects are `eh_cxa.c`, `eh_unwind.c`, `eh_context.asm`, `eh_cxa_throw.asm`,
-and `eh_cxa_rethrow.asm`. They are archive members of `libavm.a`, so a program links
+`eh_cxa_rethrow.asm`, and `eh_cxa_rethrow_primary.asm`. They are archive members of `libavm.a`, so a program links
 them only when it references one of their symbols. The C++ ABI subset provides
-`__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_throw`, `__cxa_rethrow`,
-`__cxa_begin_catch`, `__cxa_get_exception_ptr`, `__cxa_end_catch`, `_Unwind_Resume`,
-`__gxx_personality_v0`, `__cxa_bad_typeid`, `std::terminate`. The runtime defines the Itanium support vtables that the
+`__cxa_allocate_exception`, `__cxa_free_exception`, `__cxa_init_primary_exception`,
+`__cxa_throw`, `__cxa_rethrow`, `__cxa_begin_catch`, `__cxa_get_exception_ptr`,
+`__cxa_end_catch`, `__cxa_current_primary_exception`, `__cxa_increment_exception_refcount`,
+`__cxa_decrement_exception_refcount`, `__cxa_uncaught_exceptions`, `_Unwind_Resume`,
+`__gxx_personality_v0`, `__cxa_bad_typeid`, and `std::terminate`. The `std::exception_ptr`
+operations use the reference-counting entries, and `__avm_rethrow_primary_exception` is the
+shim that `std::rethrow_exception` calls. The runtime defines the Itanium support vtables that the
 descriptors name, in program space: `__class_type_info`, `__fundamental_type_info`,
 `__si_class_type_info`, `__vmi_class_type_info`, `__pointer_type_info`,
 `__enum_type_info`, `__function_type_info`, `__pointer_to_member_type_info`, and
@@ -548,10 +573,11 @@ cleanup pad in turn with selector 0. A cleanup pad runs its destructors and call
 `_Unwind_Resume`, which continues from the caller that the pad saved. A pad that
 has both a cleanup and typed clauses is entered as a handler when a clause matches,
 and as a cleanup when none does. The handler is entered last with the recorded
-selector, and it calls `__cxa_begin_catch`. `__cxa_end_catch` destroys the exception
-object and frees it. A cleanup pad never ends the exception.
+selector, and it calls `__cxa_begin_catch`. `__cxa_end_catch` releases the handler's
+reference, and the last release destroys the object and frees it. A cleanup pad never
+ends the exception.
 
-`throw;` calls `__cxa_rethrow`. The shim in `eh_cxa_rethrow.asm` takes the active caught
+`throw;` calls `__cxa_rethrow`. The shim in `eh_cxa_rethrow.asm` takes the innermost caught
 exception from `__avm_eh_rethrow_header`, which terminates unless one is caught, and it
 records the rethrow site in the header's landing context. The object, its type
 descriptor, its destructor, and its size keep their addresses and values, and no memory
@@ -565,11 +591,12 @@ unhandled rethrow terminates without releasing or freeing the exception.
 
 `__cxa_throw` is a frameless shim. It takes the object in r4, the type-descriptor
 program address in r6:r7, and the destructor program address as a three-byte stack
-argument. It stores the throw site into the exception header, which lies 55 bytes
+argument. It stores the throw site into the exception header, which lies 59 bytes
 below the object, and then tail-transfers to `__avm_eh_throw`. The header holds the
 landing context, the 24-bit type-descriptor address, the 24-bit destructor address,
 the size, the lifecycle state, the resume cursor, the handler's selector, and the
-handler adjustment, and the conversion of a pointer handler. `__cxa_begin_catch` and
+handler adjustment, the conversion of a pointer handler, the link to the next caught
+exception, and the reference count. `__cxa_begin_catch` and
 `__cxa_get_exception_ptr` return the object plus the adjustment, or the converted buffer of a
 pointer handler, and `__cxa_end_catch` destroys the complete object. The
 landing SP
@@ -577,8 +604,9 @@ of each pad is the caller SP at the call plus the call's outgoing argument bytes
 A frame that uses r3 as its CFA base keeps its dynamic allocations, because the SP
 never comes from r3. Call records match the exact return PC.
 
-Only one exception is active at a time. A throw while one is active, including a
-throw from a destructor that runs during unwinding, halts the program. Base matching
+At most one exception is in flight at a time. A throw while one is in flight, including a
+throw from a destructor that runs during unwinding, halts the program. A throw from a catch
+body is allowed; see [Nested exceptions and exception pointers](#nested-exceptions-and-exception-pointers). Base matching
 reads the class descriptors in program flash, and the vptrs of the thrown object in RAM.
 It walks at most eight descriptor levels and 512 base edges for one clause, and a walk
 past either limit fails the throw. A virtual base's offset is read through the vptr of
@@ -587,11 +615,40 @@ base's signed displacement, relative to the vtable address point, and the runtim
 that three-byte slot in program flash. A zero vptr, a slot outside the 24-bit address
 range, or a base outside the object fails the throw. The runtime does not know the
 extent of the packed image, so a slot inside the address range is read, and only its
-effect on the object is checked. Pointer and qualification conversions, exception
-filters, and rethrow are not provided.
-The backend rejects a filter at compile time, and `__cxa_rethrow` is an undefined
-symbol at link time. When no handler exists, when metadata is malformed, or when
-allocation fails, the runtime calls `abort()`, which halts the guest.
+effect on the object is checked. Exception filters are not provided, and the
+backend rejects a filter at compile time. When no handler exists, when metadata is
+malformed, or when the header's bookkeeping is inconsistent, the runtime calls `abort()`,
+which halts the guest.
+
+### Nested exceptions and exception pointers
+
+A throw from a catch body is allowed. The caught exception stays on the caught stack, and the
+new exception nests inside it. In the inner handler, `std::current_exception` returns the inner
+exception, and after that handler ends it returns the outer one. `__cxa_end_catch` ends the
+innermost catch. That catch can be one whose cleanup runs while a newer exception unwinds
+through it, so the exception in flight need not be the one that ends.
+
+Each exception header counts its references. The throw holds one, which the handler's
+`__cxa_end_catch` releases, and each `std::exception_ptr` holds one more. The last release
+destroys the object with its destructor and frees the header. `std::current_exception` adds a
+reference to the innermost handled exception. It returns null outside every handler, and during
+a rethrow that has not yet left its abandoned catch.
+
+`std::rethrow_exception` of the innermost handled exception, called from that handler, transfers
+the handler's reference to the rethrow, as `throw;` does, and a catch outside the handler
+receives it. A rethrow that a catch nested in the same handler receives is not provided, and
+neither is a rethrow of an exception whose catch is still active further out. In both cases a
+catch begins while another catch of the same exception is active, which the runtime rejects.
+
+`std::make_exception_ptr` throws and catches a copy when RTTI is disabled. With `-frtti`, libc++
+calls `__cxa_init_primary_exception`, which records the descriptor address that the typeid alias
+of the copy names.
+
+`std::terminate` calls the handler that `std::set_terminate` installed, or `abort()` when none is
+installed. A handler that returns leads to `abort()`. A handler that throws reaches the landing pad
+that terminate's `noexcept` contract adds, which calls terminate again, and that nested call
+aborts. `std::uncaught_exceptions` returns one while an exception is in flight, including during
+a destructor that runs for unwinding.
 
 Every frame between a throw and its handler needs an unwind entry. A function
 without `.debug_frame` CFI stops the search at that frame, which halts the

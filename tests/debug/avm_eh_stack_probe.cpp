@@ -75,7 +75,7 @@ struct options_t {
     // exception runtime passes the header in r4, so this reads the captured fields.
     unsigned snapshot_bytes = 0;
     // Bytes of guest RAM to print at the address that a thrown pointer holds, for each snapshot.
-    // The header's object follows the 55-byte exception header, so the probe reads the pointer
+    // The header's object follows the 59-byte exception header, so the probe reads the pointer
     // value there, and prints this many bytes at it. A pointer value of zero prints no bytes.
     unsigned target_bytes = 0;
     // Stack-argument bytes to print for each snapshot. They follow the three-byte return record,
@@ -356,7 +356,8 @@ std::string snapshot_lines(absim::atmega32u4_t const& cpu, sample_t const& sampl
         // The thrown object's pointer value names the target, which is read at the
         // same snapshot. A null value, or one outside 16-bit RAM, prints no bytes.
         if(options.target_bytes) {
-            uint32_t const object = (sample.regs[4] + 55) & 0xffff;
+            // The thrown object lies just above the 59-byte exception header.
+            uint32_t const object = (sample.regs[4] + 59) & 0xffff;
             uint32_t const target = uint32_t(cpu.data[object]) |
                                     uint32_t(cpu.data[(object + 1) & 0xffff]) << 8;
             out << " target=" << std::hex << std::setw(4) << std::setfill('0')

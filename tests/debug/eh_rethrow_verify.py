@@ -2,8 +2,8 @@
 """Checks the rethrow lifecycle of an EH image against the emulator.
 
 The probe reports each runtime boundary of the rethrow path. The boundaries that take
-the header have it at r4, with its 55 bytes. __cxa_end_catch takes no argument, so its
-header is read from active_exception in a window of guest RAM, and the free and the
+the header have it at r4, with its 59 bytes. __cxa_end_catch takes no argument, so its
+header is read from caught_exceptions in a window of guest RAM, and the free and the
 destructor are matched by their arguments. The check groups the events by header and
 confirms that:
 
@@ -36,7 +36,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import eh_metadata_verify as aveh  # noqa: E402
 
-HEADER_SIZE = 55
+HEADER_SIZE = 59
 RAM_WINDOW = 0x100
 ADDRESS_MASK = 0xffff
 
@@ -163,8 +163,9 @@ def main():
     nm = os.path.join(args.bin_dir, 'llvm-nm')
     objdump = os.path.join(args.bin_dir, 'llvm-objdump')
 
-    active_address = aveh.symbol_address(nm, args.elf, 'active_exception')
-    check(active_address is not None, 'the image has no active_exception symbol')
+    # __cxa_end_catch ends the innermost caught exception, so its identity is the caught stack top.
+    active_address = aveh.symbol_address(nm, args.elf, 'caught_exceptions')
+    check(active_address is not None, 'the image has no caught_exceptions symbol')
     returns = rethrow_returns(objdump, args.elf)
     calls, with_action, with_cleanup = static_rethrow_sites(args, returns)
     print('static: %d __cxa_rethrow call sites, %d with an action, %d with a cleanup'
@@ -271,7 +272,7 @@ def main():
                   '_Unwind_Resume from state 0x%02x at %s' % (raw[23], event.describe()))
         elif name == '__cxa_end_catch':
             header = le16(event.ram_slice(active_address, 2), 0)
-            check(header != 0, 'end of catch with no active exception at %s' % event.describe())
+            check(header != 0, 'end of catch with no caught exception at %s' % event.describe())
             life = live_at(header, event)
             raw = event.ram_slice(header, HEADER_SIZE)
             check(raw is not None, 'the RAM window does not hold the header at %s'

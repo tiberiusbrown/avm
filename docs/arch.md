@@ -407,7 +407,9 @@ All scalar ABI alignments are one byte.
 
 Unaligned 16-, 24-, 32-, and 64-bit memory objects are permitted.
 
-The VM stack has one-byte alignment.
+The VM stack has one-byte alignment. The stack pointer and every frame object are byte-aligned, so a
+stack object that requests a larger alignment is given one-byte alignment instead. The backend relies on
+alignment to fold `sp + offset` into `sp | offset`, which is wrong for an unaligned stack pointer.
 
 ## 15. C and C++ data model
 
@@ -4777,9 +4779,16 @@ Atomic operations are accepted for source compatibility.
 
 Because no concurrent AVM observer exists:
 
-- Atomic loads and stores lower to ordinary loads and stores.
-- Atomic read-modify-write operations lower to ordinary load/compute/store sequences.
-- `cmpxchg` lowers to one ordinary compare and conditional store sequence.
+- Atomic loads and stores of one, two, and four bytes lower to ordinary loads and stores.
+- Atomic read-modify-write operations of those sizes lower to ordinary load/compute/store
+  sequences, and `cmpxchg` lowers to one ordinary compare and conditional store sequence.
+- Eight-byte atomic loads, stores, read-modify-write operations, and `cmpxchg` call the
+  `__atomic_*_8` helpers in `libavm-builtins.a` directly. The helpers accept any address,
+  because the stack and every object have byte alignment on AVM. Operations without a helper,
+  such as minimum and maximum, stay with LLVM's expansion.
+- A memory order that is not a constant is strengthened to `seq_cst`. The runtime ignores
+  orders, and a stronger order never violates a requested one. This keeps one operation per
+  site, which is what keeps the `-O0` frames of the library wrappers within the stack bound.
 - No machine fence instruction is required.
 - LLVM ordering constraints remain compiler-ordering constraints.
 - An atomic fence emits no instruction but acts as a compiler scheduling barrier.
@@ -4792,7 +4801,7 @@ The target reports these sizes as always lock-free at any data-space alignment:
 4 bytes
 ```
 
-Eight-byte atomics are not reported as lock-free and are expanded through runtime support when required.
+Eight-byte atomics are not reported as lock-free, and they call the runtime helpers described above.
 
 Atomic operations on platform-defined or externally observed memory do not gain additional hardware-atomic guarantees from this ABI.
 
@@ -5839,7 +5848,7 @@ deleting destructors, and `what()`, which returns `"std::bad_typeid"`.
 
 `eh_bad_typeid.cpp` defines the out-of-line members and `__cxa_bad_typeid`. It is compiled
 with `-frtti -fexceptions`, so the throw is an ordinary `__cxa_allocate_exception` and
-`__cxa_throw` with the 55-byte header, and the thrown descriptor is `_ZTISt10bad_typeid`.
+`__cxa_throw` with the 59-byte header, and the thrown descriptor is `_ZTISt10bad_typeid`.
 `exception_base.cpp` defines the members of `std::exception`, also with `-frtti`. The
 runtime keeps no static state for either class. A catch of `std::bad_typeid` or of
 `std::exception` matches through the ordinary typed matcher, and the object is destroyed
@@ -5969,7 +5978,7 @@ destructor. The compiler declares the function as
 `__cxa_throw(ptr, ptr addrspace(1), ptr addrspace(1))`, so the call site and the
 declaration agree.
 
-The shim stores both program addresses in the 55-byte exception header
+The shim stores both program addresses in the 59-byte exception header
 ([Section 69.3](#693-exception-metadata-aveh5)).
 
 `__cxa_rethrow` takes no argument. The `throw;` in a catch body calls it, and it
@@ -7304,7 +7313,7 @@ and decodes the packed sites and lists independently of the packer.
 
 #### Exception object and landing contract
 
-`__cxa_allocate_exception` returns the object, which lies 55 bytes above its
+`__cxa_allocate_exception` returns the object, which lies 59 bytes above its
 header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_internal.h`:
 
 | Offset | Size | Field | Contents |
@@ -7322,12 +7331,14 @@ header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_intern
 | 49 | 2 | `eh_function_count` | Number of function index entries |
 | 51 | 3 | `converted_pointer` | Converted value of a pointer handler, which is the header's own buffer |
 | 54 | 1 | `handler_pointer_converted` | Conversion mode of the matched handler: none, a 16-bit data pointer, a 24-bit program pointer, or a null pointer |
+| 55 | 2 | `next` | Next exception on the caught stack, while this one is caught |
+| 57 | 2 | `refcount` | References: the throw or handler's reference, plus each `std::exception_ptr` that names the object |
 
-The header is 55 bytes. The `__cxa_throw` shim captures the throwing frame into
+The header is 59 bytes. The `__cxa_throw` shim captures the throwing frame into
 `context` and stores the type-descriptor and destructor program addresses, each in
 three bytes so that the high byte is kept. The unwinder then copies `context` into
 `resume_context`, and the two cursors move as described below. The header is heap
-memory, so each thrown exception costs 55 bytes.
+memory, so each thrown exception costs 59 bytes.
 
 The converted buffer is written only when a pointer handler is entered, and it is never
 written for an exact, catch-all, or class handler. The thrown pointer object is never
@@ -7531,7 +7542,7 @@ pad was entered.
 
 The throwing frame is captured by `__cxa_throw` before any C code runs. The shim
 has no stack frame. It stores the continuation, the caller's SP (the entry SP plus
-three), and r0-r3 into the 55-byte header, which lies below the object. It then
+three), and r0-r3 into the 59-byte header, which lies below the object. It then
 tail-transfers to `__avm_eh_throw`, which initializes `resume_context` from
 `context`.
 

@@ -13,15 +13,23 @@ typedef struct { int quot; int rem; } div_t;
 typedef struct { long quot; long rem; } ldiv_t;
 typedef struct { long long quot; long long rem; } lldiv_t;
 
+/* C++ declares these termination and registration functions noexcept. The
+ * macro is empty in C, where the contract has no effect. */
+#ifdef __cplusplus
+#define AVM_STDLIB_NOEXCEPT noexcept
+#else
+#define AVM_STDLIB_NOEXCEPT
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int atexit(void (*func)(void));
+int atexit(void (*func)(void)) AVM_STDLIB_NOEXCEPT;
 /* quick_exit runs at_quick_exit registrations, not atexit registrations. AVM
  * keeps 32 quick-exit slots. Registration fails with a nonzero result when
  * they are full or when func is NULL. */
-int at_quick_exit(void (*func)(void));
+int at_quick_exit(void (*func)(void)) AVM_STDLIB_NOEXCEPT;
 /* AVM has an empty environment-variable list. */
 char *getenv(const char *name);
 
@@ -57,10 +65,10 @@ void *bsearch(const void *key, const void *base, size_t nmemb, size_t size,
         (key), (base), (nmemb), (size), (compar)))
 #endif
 /* The attribute works in C99 as well as all supported C++ language modes. */
-__attribute__((noreturn)) void exit(int status);
-__attribute__((noreturn)) void _Exit(int status);
-__attribute__((noreturn)) void quick_exit(int status);
-__attribute__((noreturn)) void abort(void);
+__attribute__((noreturn)) void exit(int status) AVM_STDLIB_NOEXCEPT;
+__attribute__((noreturn)) void _Exit(int status) AVM_STDLIB_NOEXCEPT;
+__attribute__((noreturn)) void quick_exit(int status) AVM_STDLIB_NOEXCEPT;
+__attribute__((noreturn)) void abort(void) AVM_STDLIB_NOEXCEPT;
 
 /* Integer text conversions use the fixed C locale. strto* accepts bases
  * 2..36 or zero for octal/hexadecimal/decimal detection. Range errors set

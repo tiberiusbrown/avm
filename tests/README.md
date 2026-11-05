@@ -175,3 +175,15 @@ SPI coefficient reads and resumed opcode fetching with an active audio voice
 at 128 Timer1 phases. These checks run within `avm_tests_run`; C/C++ inline-asm
 fixtures run at all six optimization levels. The mathematical reference target
 now includes dense sin/cos checks as well as the other production kernels.
+
+`cstdlib_termination_contracts` checks the `noexcept` and `[[noreturn]]` contracts of the
+termination functions in `<cstdlib>`, and `limits_numeric_properties` checks every
+`std::numeric_limits` specialization against the compiler's type macros. The atomic fixtures
+cover every value class: one-, two-, and four-byte integers, eight-byte integers through the
+runtime helpers, RAM pointers, code and program-memory pointers, `atomic_flag`, and `atomic_ref`.
+`atomic_interrupts` checks exact counts while the timer interrupts run. The `eh_new_allocation`,
+`eh_exception_ptr`, and `eh_terminate_*` fixtures cover the allocation and exception runtime, and
+`rtti_exception_ptr` covers the RTTI-dependent `make_exception_ptr` path and `rethrow_if_nested`.
+`atomic_wait_notify` runs the wait and notify overloads on an integer, an eight-byte integer, a RAM
+pointer, and an `atomic_flag`. Each wait sees a value that already differs from the expected one,
+so it returns on its first poll.

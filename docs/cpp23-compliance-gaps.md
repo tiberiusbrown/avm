@@ -20,7 +20,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### C++ ABI, object lifetime, and exception runtime
 
-- [ ] **Exception ABI:** Provide pointer-to-member conversion matching for catch clauses, including containing-class and member-pointer qualification conversions and `std::nullptr_t` conversions to pointer-to-member types, plus exception-object state for nested exceptions and stack-unwind support for exceptions thrown from allocation functions.
+- [ ] **Exception ABI:** Provide pointer-to-member conversion matching for catch clauses, including containing-class and member-pointer qualification conversions and `std::nullptr_t` conversions to pointer-to-member types.
 - [ ] **Overlapping catches of one exception:** Support a rethrow that a nested handler inside the still-active abandoned catch catches, and any other catch of one exception that begins while another catch of that exception is active. This needs handler-depth tracking and simultaneous catch objects, including their converted-pointer buffers.
 - [ ] **Pointer conversions in program memory:** Match a derived class pointer into 24-bit program memory to a base class pointer. The runtime walks the bases of ordinary 16-bit class pointers only, so a 24-bit derived pointer matches no base catch.
 - [ ] **Base-class match depth:** Match catch clauses and `dynamic_cast` operations against class hierarchies deeper than eight descriptor levels, against more than 512 base edges for one clause or one cast, or against pointer qualification chains deeper than eight levels. A throw or cast past any of these limits fails instead of matching.
@@ -29,18 +29,12 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **Dynamic initialization and destruction:** Complete initialization guards, recursive-initialization handling, and destructor registration/order semantics for namespace-scope, function-local static, and thread-local objects in the supported execution model, including early termination and exception paths.
 - [ ] **Required termination callback capacity:** Guarantee registration of at least 32 functions through C++ `std::atexit`, with the specified callback ordering and failure semantics in a conforming C++23 mode. AVM's `atexit` storage is currently linker-capacity-dependent.
 
-### Fundamental freestanding library headers
-
-- [ ] **`<limits>`:** Validate all `std::numeric_limits` specializations and compile-time properties against AVM fundamental types, including integer, floating-point, character, and pointer-related implementation properties.
-
 ### Dynamic allocation — `<new>`
 
-- [ ] **Allocation and deallocation functions:** Provide executable implementations of the replaceable ordinary `operator new`/`operator new[]` and `operator delete`/`operator delete[]` families, including sized, aligned, and nonthrowing overloads, correct zero-size/alignment behavior, and interoperability with the AVM heap. The libc++ header declares the overloads, but the AVM runtime does not yet implement their required allocation and deallocation behavior.
-- [ ] **Allocation failure and handlers:** Provide `std::bad_alloc`, `std::bad_array_new_length`, `std::nothrow_t`, `std::nothrow`, `std::new_handler`, `std::get_new_handler`, and `std::set_new_handler`, with the required failure, exception, and retry semantics.
+- [ ] **Array-length errors:** Throw `std::bad_array_new_length` for a new-expression whose element count is negative or whose total size overflows. The compiler does not check the count, and `new int[-1]` throws `std::bad_alloc` from `operator new[]`.
 
 ### Exceptions and runtime type headers
 
-- [ ] **`<exception>`:** Provide `std::bad_exception`, `std::exception_ptr`, `std::current_exception`, `std::make_exception_ptr`, `std::rethrow_exception`, `std::nested_exception`, `std::throw_with_nested`, `std::rethrow_if_nested`, `std::terminate`, `std::get_terminate`, `std::set_terminate`, and other required C++23 exception interfaces with correct behavior.
 - [ ] **`<coroutine>`:** Provide the required `std::coroutine_traits`, `std::coroutine_handle` forms, `std::noop_coroutine`, `std::suspend_always`, `std::suspend_never`, and related operations, connected to the AVM coroutine implementation.
 
 ### Core generic library headers
@@ -48,16 +42,6 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 - [ ] **`<type_traits>`:** Validate the complete freestanding C++23 set of type properties, transformations, queries, and variable templates against AVM types, including substitution and constant-expression behavior.
 - [ ] **`<concepts>`:** Validate all required C++20/C++23 language, comparison, construction, conversion, and callable concepts.
 - [ ] **`<memory>`:** Provide the remaining freestanding-designated pointer, lifetime, allocator-related, and memory utility interfaces, without incorrectly requiring the entire hosted memory-management library.
-
-### Atomics — `<atomic>`
-
-- [ ] **Atomic types and operations:** Provide required `std::atomic<T>`, `std::atomic_ref<T>`, pointer/integral specializations, `atomic_flag`, free-function operations, aliases, memory-order constants, and lock-free property macros, including correct behavior on AVM's distinct pointer representations.
-- [ ] **Atomic synchronization:** Implement or correctly lower loads/stores, read-modify-write operations, compare/exchange, fences, and memory-order semantics through the compiler, VM, and required helper routines. Test operations that are not natively lock-free and effects of interpreter interrupts.
-- [ ] **Atomic wait/notify:** Provide the required waiting and notification interfaces with correct observable semantics under AVM's documented single-threaded execution model (or a future supported multithreaded model).
-
-### Freestanding termination — `<cstdlib>`
-
-- [ ] **C++ termination interfaces:** Supply the required `std`-namespace declarations/overloads for `abort`, `atexit`, `at_quick_exit`, `exit`, `_Exit`, and `quick_exit`, including their `noexcept` and linkage contracts.
 
 ## II. Additional hosted C++23 conformance gaps
 
@@ -95,7 +79,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Time, threads, synchronization, and other facilities
 
-- [ ] **Chrono:** Provide `<chrono>` and `<ctime>`-related C++ calendar, clock, duration, time-zone, and formatting facilities, including any required environment services.
+- [ ] **Chrono:** Provide the remaining `<chrono>` system clock, calendar, time-zone, and formatting facilities, and the `<ctime>`-related C++ interfaces that need the environment. `<chrono>` does not compile on targets with 16-bit `int`, because its calendar types require 32-bit `int`.
 - [ ] **Threads and synchronization:** Provide `<thread>`, `<stop_token>`, `<mutex>`, `<shared_mutex>`, `<condition_variable>`, `<semaphore>`, `<latch>`, `<barrier>`, and hosted synchronization and lifetime semantics.
 - [ ] **Futures and execution policies:** Provide `<future>`, `<execution>`, and the required asynchronous operation, task, and parallel-algorithm interfaces.
 - [ ] **Diagnostics and utility headers:** Provide hosted `<system_error>`, `<stdexcept>`, `<stacktrace>`, `<charconv>`, and other hosted error, stack inspection, and character conversion facilities.

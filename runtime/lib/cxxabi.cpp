@@ -1,6 +1,4 @@
 #include <avm/runtime.h>
-#include <cstddef>
-#include <stdlib.h>
 #include <typeinfo>
 
 // Compiler-generated vtables can refer to these functions even when the
@@ -13,25 +11,9 @@ extern "C" __attribute__((weak, noreturn)) void __cxa_deleted_virtual(void) {
     avm_halt();
 }
 
-// A virtual destructor emits a deleting destructor even for stack objects.
-// These weak fallbacks satisfy that ABI reference without providing a heap.
-__attribute__((weak)) void operator delete(void*) noexcept { avm_halt(); }
-__attribute__((weak)) void operator delete[](void*) noexcept { avm_halt(); }
-__attribute__((weak)) void operator delete(void*, std::size_t) noexcept {
-    avm_halt();
-}
-__attribute__((weak)) void operator delete[](void*, std::size_t) noexcept {
-    avm_halt();
-}
-
-// Reached when an exception cannot be handled. A catch body whose call may throw
-// passes its exception to this function through __clang_call_terminate. The
-// unwinder terminates with abort(), so this function does the same.
-namespace std {
-[[noreturn]] void terminate() noexcept { abort(); }
-
 // The header declares the type_info destructor virtual but does not define it.
 // Static typeid never destroys a type_info, so the destructor only has to exist
 // for the ABI symbols that refer to it.
+namespace std {
 type_info::~type_info() noexcept = default;
 } // namespace std

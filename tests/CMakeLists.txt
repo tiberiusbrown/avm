@@ -516,7 +516,7 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_RTTI_CXX_TEST_SOURCES)
     # The standard exception fixtures throw, so they need -fexceptions as well as
     # -frtti. The SDK defaults are -fno-exceptions and -fno-rtti, and later flags win.
     set(AVM_RTTI_TEST_COMPILE_OPTIONS -frtti)
-    if(AVM_TEST_NAME MATCHES "^rtti_(bad_typeid|dynamic_cast_bad_cast)")
+    if(AVM_TEST_NAME MATCHES "^rtti_(bad_typeid|dynamic_cast_bad_cast|exception_ptr)")
         list(APPEND AVM_RTTI_TEST_COMPILE_OPTIONS -fexceptions)
     endif()
     foreach(AVM_TEST_OPT_LEVEL IN LISTS AVM_RTTI_TEST_OPT_LEVELS)
@@ -2438,6 +2438,16 @@ add_dependencies(avm_tests_run avm_rtti_static_run)
 add_dependencies(avm_tests_run avm_rtti_polymorphic_run)
 add_dependencies(avm_tests_run avm_rtti_mixed_link_run)
 add_dependencies(avm_tests_run avm_dynamic_cast_run)
+
+# std::exception_ptr with RTTI: the typeid-driven make_exception_ptr path and rethrow_if_nested
+# on polymorphic types. The fixture needs -frtti and -fexceptions, which the ordinary matrix omits.
+add_custom_target(avm_rtti_exception_ptr_run
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^rtti_exception_ptr$" --opt O0,O2
+    DEPENDS avm_tests avm_test_images
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}"
+    VERBATIM
+)
+add_dependencies(avm_tests_run avm_rtti_exception_ptr_run)
 
 # A small, independently built debug image exercises nested frames, a live
 # global and local, both pointer spaces, button input, and delayed display

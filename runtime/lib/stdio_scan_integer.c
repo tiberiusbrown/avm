@@ -49,7 +49,8 @@ int scan_integer(avm_scan_state *s, const avm_scan_conversion *c, va_list *args)
     unsigned long width = c->width;
     int ch = scan_peek(s), negative = 0, any = 0;
     int sign = c->specifier == 'd' || c->specifier == 'i';
-    int base = c->specifier == 'o' ? 8 :
+    int base = c->specifier == 'b' ? 2 :
+        c->specifier == 'o' ? 8 :
         (c->specifier == 'x' || c->specifier == 'X' || c->specifier == 'p') ? 16 :
         c->specifier == 'i' ? 0 : 10;
     if(ch == EOF) return SCAN_INPUT;
@@ -69,10 +70,18 @@ int scan_integer(avm_scan_state *s, const avm_scan_conversion *c, va_list *args)
     int overflow = 0;
     if(width && scan_peek(s) == '0') {
         scan_take(s); --width; any = 1;
-        if(base == 0) base = 8;
-        if(width && (base == 8 || base == 16) && c->specifier != 'o' &&
-           (scan_peek(s) == 'x' || scan_peek(s) == 'X')) {
-            scan_take(s); --width; base = 16; any = 0;
+        /* %b and %i accept the C23 binary prefix. As for 0x, a prefix without a
+         * following digit is a matching failure, because fscanf pushes back only
+         * one character. */
+        if(width && (base == 0 || base == 2) &&
+           (scan_peek(s) == 'b' || scan_peek(s) == 'B')) {
+            scan_take(s); --width; base = 2; any = 0;
+        } else {
+            if(base == 0) base = 8;
+            if(width && (base == 8 || base == 16) && c->specifier != 'o' &&
+               (scan_peek(s) == 'x' || scan_peek(s) == 'X')) {
+                scan_take(s); --width; base = 16; any = 0;
+            }
         }
     }
     if(!base) base = 10;
@@ -90,7 +99,7 @@ int scan_integer(avm_scan_state *s, const avm_scan_conversion *c, va_list *args)
         }
         cutlim = sign ? 7 + negative : 5;
     } else {
-        cutoff = base == 8 ? limit >> 3 : limit >> 4;
+        cutoff = base == 8 ? limit >> 3 : base == 16 ? limit >> 4 : limit >> 1;
         cutlim = (unsigned int)limit & (base - 1);
     }
     while(width) {
@@ -108,7 +117,8 @@ int scan_integer(avm_scan_state *s, const avm_scan_conversion *c, va_list *args)
                 value = ((unsigned long long)hi << 32) | low;
             }
             else if(base == 8) value <<= 3;
-            else value <<= 4;
+            else if(base == 16) value <<= 4;
+            else value <<= 1;
             value += (unsigned)digit;
         }
     }

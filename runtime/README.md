@@ -728,7 +728,7 @@ linker checks, and the remaining limitations are described in
 
 ## Narrow stdio streams
 
-`stdio.h` supplies the C99 narrow-stream interface except the six `scanf`
+`stdio.h` supplies the C99 narrow-stream interface, including the six `scanf`
 functions. Every supported standard function has a callable C ABI symbol;
 parenthesized calls and function pointers work alongside the existing native
 `snprintf`/`vsnprintf` direct-call paths and `_P` extensions.
@@ -766,5 +766,5 @@ does not promise working file storage.
 
 This API coverage does not establish hosted C99 conformance. Compilation
 remains freestanding (`__STDC_HOSTED__ == 0`); filesystem guarantees, buffered
-streams, wide stream orientation/I/O, formatted input, and the hosted execution
-requirements remain tracked in `docs/c99-compliance-gaps.md`.
+streams, wide stream orientation/I/O, and the hosted execution requirements
+remain tracked in `docs/c99-compliance-gaps.md`.

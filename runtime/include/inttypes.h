@@ -240,4 +240,26 @@ uintmax_t wcstoumax(const wchar_t*, wchar_t**, int);
 #define SCNuPTR __UINTPTR_FMTu__
 #define SCNxPTR __UINTPTR_FMTx__
 
+/* C23 binary input conversions for the b conversion of fscanf and fwscanf.
+ * The modifiers name each type's pointer target: the least and fast 16-bit
+ * types are unsigned short, so they use h, while uint16_t and uintptr_t are
+ * unsigned int. */
+#define SCNb8 "hhb"
+#define SCNb16 "b"
+#define SCNb32 "lb"
+#define SCNb64 "llb"
+
+#define SCNbLEAST8 SCNb8
+#define SCNbLEAST16 "hb"
+#define SCNbLEAST32 SCNb32
+#define SCNbLEAST64 SCNb64
+
+#define SCNbFAST8 SCNb8
+#define SCNbFAST16 "hb"
+#define SCNbFAST32 SCNb32
+#define SCNbFAST64 SCNb64
+
+#define SCNbMAX SCNb64
+#define SCNbPTR SCNb16
+
 #endif // _AVM_RUNTIME_INTTYPES_H

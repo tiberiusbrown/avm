@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
+#include <string.h>
 
 #include "test_hex_output.h"
 
@@ -77,7 +78,35 @@ int avm_test_main(void)
     CHECK(check_slong("0x", 0, 0, 1, 0));
     CHECK(check_slong("0xg", 16, 0, 1, 0));
     CHECK(check_slong("0Xff!", 16, 255, 4, 0));
-    CHECK(check_slong("0b11", 0, 0, 1, 0));
+    CHECK(check_slong("0b11", 0, 3, 4, 0));
+    CHECK(check_slong("0B101!", 0, 5, 5, 0));
+    CHECK(check_slong("-0b11!", 0, -3, 5, 0));
+    CHECK(check_slong("+0b1", 2, 1, 4, 0));
+    CHECK(check_slong("0B11", 2, 3, 4, 0));
+    CHECK(check_slong("0b", 0, 0, 1, 0));
+    CHECK(check_slong("0b", 2, 0, 1, 0));
+    CHECK(check_slong("0b2", 0, 0, 1, 0));
+    CHECK(check_slong("0bz", 2, 0, 1, 0));
+    CHECK(check_slong("0b12", 2, 1, 3, 0));
+    CHECK(check_slong("0b0b1", 0, 0, 3, 0));
+    CHECK(check_slong("0x1", 2, 0, 1, 0));
+    CHECK(check_slong("0b1", 8, 0, 1, 0));
+    CHECK(check_slong("0b1f", 16, 0xb1f, 4, 0));
+    CHECK(check_ulong("0b1010", 2, 10, 6, 0));
+    CHECK(check_ulong("-0b1!", 0, ULONG_MAX, 4, 0));
+    CHECK(check_slong("0b11111111111111111111111111111111!", 0, LONG_MAX, 34, ERANGE));
+    CHECK(check_ulong("0b11111111111111111111111111111111!", 0, ULONG_MAX, 34, 0));
+    CHECK(check_ulong("0b100000000000000000000000000000000!", 0, ULONG_MAX, 35, ERANGE));
+    {
+        static char bits[72] = "0b";
+        memset(bits + 2, '1', 64);
+        bits[66] = '!';
+        bits[67] = 0;
+        CHECK(check_ullong(bits, 0, ULLONG_MAX, 66, 0));
+        CHECK(check_sllong(bits, 0, LLONG_MAX, 66, ERANGE));
+        bits[65] = 0;
+        CHECK(check_sllong(bits, 0, LLONG_MAX, 65, 0));
+    }
     CHECK(check_slong("Zz!", 36, 1295, 2, 0));
     CHECK(check_slong("2147483647!", 10, LONG_MAX, 10, 0));
     CHECK(check_slong("-2147483648!", 10, LONG_MIN, 11, 0));

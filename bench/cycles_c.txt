@@ -332,9 +332,9 @@
       257083   stack_base_nested.c
      2452217   stack_frames.c
      7151772   state_machine.c
-     4492820   stdio_scan_float.c
-     5048852   stdio_scan_integer.c
-     3503796   stdio_scan_string.c
+     4499444   stdio_scan_float.c
+     4875700   stdio_scan_integer.c
+     3500564   stdio_scan_string.c
       157204   stdlib_abs.c
       952478   stdlib_atoi.c
      7542132   stdlib_atol.c
@@ -346,10 +346,10 @@
     41276796   stdlib_lldiv.c
      4700001   stdlib_strtod.c
      4682209   stdlib_strtof.c
-     8541700   stdlib_strtol.c
-    66601052   stdlib_strtoll.c
-     8543044   stdlib_strtoul.c
-    68144108   stdlib_strtoull.c
+     8567860   stdlib_strtol.c
+    66654092   stdlib_strtoll.c
+     8569204   stdlib_strtoul.c
+    68197148   stdlib_strtoull.c
      2506616   string_memchr.c
      4707352   string_memchr_p.c
     26108298   string_scan.c
@@ -386,7 +386,7 @@
         2144   sys_strncpy.c
         3625   sys_strncpy_p.c
       487473   tail_calls.c
-       52150   text.c
+       52153   text.c
      3139912   tile_cache_render.c
        42482   tilesrect.c
        90928   tilessprite.c

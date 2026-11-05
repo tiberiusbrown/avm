@@ -3311,6 +3311,9 @@ as one occurrence.
 
 The integer conversions `d`, `i`, `u`, `o`, `x`, `X`, `b`, and `B` accept `hh`,
 `h`, `l`, `ll`, `j`, `z`, and `t`; `j` has the same 64-bit width as `ll` on AVM.
+They also accept `wN` and `wfN` for N = 8, 16, 32, or 64, the C23 exact-width,
+minimum-width, and fastest-width spellings. On AVM each fastest type has the
+width of the exact type with the same N, so `wN` and `wfN` select the same width.
 Floating-point conversions `f`, `F`, `e`, `E`, `g`, `G`, `a`, and `A` accept
 the default length, `l`, and `L`. `l` also retains its existing integer use;
 `L` is valid only for floating-point conversions. The complete
@@ -3324,9 +3327,13 @@ conversion is complete, an unsupported conversion, or an unsupported length.
 Incomplete `%ll` or `%j`, excess length characters (for example `%llld`),
 noninteger pairs such as `%lls`, `%llc`, `%llp`, `%llf`, and `%jf`, and
 integer pairs using `L` are invalid. `%n` accepts no flags, width, or
-precision. It accepts `hh`, `h`, no length, `l`, `ll`, `j`, `z`, and `t`;
-`L` is invalid. Invalid `%n` syntax is rejected before its destination
+precision. It accepts `hh`, `h`, no length, `l`, `ll`, `j`, `z`, `t`, and the
+`wN` and `wfN` forms for N = 8, 16, 32, or 64; `L` is invalid. Invalid `%n`
+syntax is rejected before its destination
 pointer is read.
+A `wN` or `wfN` modifier with another N, with no N or a leading zero, or with a
+conversion other than the integer conversions and `%n` (for example `%w32s`,
+`%w16f`, or `%w8c`) is invalid.
 The parser does not assign implementation-specific
 semantics to an unrecognized form.
 
@@ -3342,6 +3349,9 @@ alignment and no implicit gaps:
 | Integer conversion with `hh`, `h`, default, `z`, or `t` | 2 |
 | Integer conversion with `l` | 4 |
 | Integer conversion with `ll` or `j` | 8 |
+| Integer conversion with `w8`, `wf8`, `w16`, or `wf16` | 2 |
+| Integer conversion with `w32` or `wf32` | 4 |
+| Integer conversion with `w64` or `wf64` | 8 |
 | Floating-point conversion with default, `l`, or `L` | 4 |
 | `%s` data pointer | 2 |
 | `%S` program-string pointer | 3 |
@@ -3406,9 +3416,16 @@ Integer lengths select these effective widths:
 | `j` | 64 bits |
 | `z` | 16 bits |
 | `t` | 16 bits |
+| `w8` or `wf8` | Low 8 bits of a promoted 16-bit argument |
+| `w16` or `wf16` | 16 bits |
+| `w32` or `wf32` | 32 bits |
+| `w64` or `wf64` | 64 bits |
 
 For signed `hh` conversions, the selected low byte is interpreted as signed
-8-bit. For unsigned `hh` conversions, it is interpreted as unsigned 8-bit.
+8-bit. For unsigned `hh` conversions, it is interpreted as unsigned 8-bit. The
+`w8` and `wf8` forms behave as `hh`. `w16` and `wf16` behave as `h`, `w32` and
+`wf32` as `l`, and `w64` and `wf64` as `ll`, except that `w32` is rejected by
+the conversions that accept `l` for other purposes.
 Signed magnitude formation correctly handles `INT16_MIN`, `INT32_MIN`, and
 `INT64_MIN`. The `ll` and `j` modifiers both select 64 bits for all eight integer
 conversions: `d`, `i`, `u`, `o`, `x`, `X`, `b`, and `B`. Signed decimal supports

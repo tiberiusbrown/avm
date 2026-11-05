@@ -35,12 +35,14 @@ static int floats(const char *s) {
     return 0;
 }
 int avm_test_main(void) {
-    static const char *const ints[]={"","  -42z","0xff!","077","10101","xyz","2147483647","-2147483648","4294967295","9223372036854775807","-9223372036854775808","18446744073709551615","9999999999999999999999","-9999999999999999999999"};
+    static const char *const ints[]={"0b101","0B11","-0b1","0b","0b2","0b0b1","0b11111111111111111111111111111111","0b100000000000000000000000000000000","","  -42z","0xff!","077","10101","xyz","2147483647","-2147483648","4294967295","9223372036854775807","-9223372036854775808","18446744073709551615","9999999999999999999999","-9999999999999999999999"};
     for(unsigned int i=0;i<sizeof(ints)/sizeof(*ints);++i) CHECK(!integers(ints[i]));
     static const char *const fp[]={"","  +1.25z","-0x1.8p2!","inf","-infinity","nan","none","1e99","1e-99"};
     for(unsigned int i=0;i<sizeof(fp)/sizeof(*fp);++i) CHECK(!floats(fp[i]));
     CHECK(wcstof(L"2",NULL)==2 && wcstod(L"2",NULL)==2 && wcstold(L"2",NULL)==2);
     CHECK(wcstol(L"2",NULL,10)==2 && wcstoll(L"2",NULL,10)==2);
+    CHECK(wcstol(L"0b11",NULL,0)==3 && wcstoul(L"0B11",NULL,2)==3 && wcstoll(L"-0b11",NULL,0)==-3);
+    CHECK(wcstoull(L"0b11",NULL,2)==3 && wcstoul(L"0b11",NULL,16)==0xb11);
     CHECK(wcstoul(L"2",NULL,10)==2 && wcstoull(L"2",NULL,10)==2);
     return 0;
 }

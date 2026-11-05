@@ -52,6 +52,13 @@ static uintmax_t parse_wide(const wchar_t* str, wchar_t** endptr, int base,
         p += 2;
         base = 16;
     }
+    /* C23: 0b/0B is a binary constant for base 0 and an optional prefix for base 2. */
+    if((base == 0 || base == 2) && p[0] == L'0' &&
+       (p[1] == L'b' || p[1] == L'B') &&
+       (p[2] == L'0' || p[2] == L'1')) {
+        p += 2;
+        base = 2;
+    }
     if(!base) base = *p == L'0' ? 8 : 10;
     uintmax_t limit = *negative ? negative_limit : positive_limit;
     uintmax_t cutoff = limit / (uintmax_t)base;

@@ -55,6 +55,13 @@ static type name(const char* str, char** endptr, int base, \
         p += 2; \
         base = 16; \
     } \
+    /* C23: 0b/0B is a binary constant for base 0 and an optional prefix for base 2. */ \
+    if((base == 0 || base == 2) && p[0] == '0' && \
+       (p[1] == 'b' || p[1] == 'B') && \
+       (p[2] == '0' || p[2] == '1')) { \
+        p += 2; \
+        base = 2; \
+    } \
     if(!base) base = *p == '0' ? 8 : 10; \
     type limit = *negative ? negative_limit : positive_limit; \
     type cutoff = limit / (type)base; \

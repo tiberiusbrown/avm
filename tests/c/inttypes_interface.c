@@ -39,6 +39,20 @@ BINARY_MATCHES_HEX(FAST16);
 BINARY_MATCHES_HEX(FAST32);
 BINARY_MATCHES_HEX(MAX);
 BINARY_MATCHES_HEX(PTR);
+
+/* The mandatory C23 binary input macros name each pointer target's modifier.
+ * The least and fast 16-bit types are unsigned short, so they use h. */
+STATIC_CHECK(sizeof(SCNb8) == sizeof("hhb") && sizeof(SCNbLEAST8) == sizeof("hhb") &&
+             sizeof(SCNbFAST8) == sizeof("hhb"), "8-bit binary scan types");
+STATIC_CHECK(sizeof(SCNb16) == sizeof("b") && sizeof(SCNbPTR) == sizeof("b"),
+             "16-bit and pointer binary scan types");
+STATIC_CHECK(sizeof(SCNbLEAST16) == sizeof("hb") && sizeof(SCNbFAST16) == sizeof("hb"),
+             "least and fast 16-bit binary scan types");
+STATIC_CHECK(sizeof(SCNb32) == sizeof("lb") && sizeof(SCNbLEAST32) == sizeof("lb") &&
+             sizeof(SCNbFAST32) == sizeof("lb"), "32-bit binary scan types");
+STATIC_CHECK(sizeof(SCNb64) == sizeof("llb") && sizeof(SCNbLEAST64) == sizeof("llb") &&
+             sizeof(SCNbFAST64) == sizeof("llb") && sizeof(SCNbMAX) == sizeof("llb"),
+             "64-bit and maximum binary scan types");
 STATIC_CHECK(sizeof(imaxdiv_t) == 2 * sizeof(intmax_t), "packed maximum division ABI");
 
 static intmax_t (*volatile signed_call)(const char*, char**, int) = strtoimax;
@@ -145,6 +159,53 @@ static int check_maximum_binary(void) {
     return 0;
 }
 
+/* Each SCNb macro reads binary through the matching pointer type. */
+static int check_binary_input(void) {
+    static char ones[72];
+    static uint8_t u8 = 0; static uint_least16_t l16 = 0; static uint16_t u16 = 0;
+    static uint32_t u32 = 0; static uint_fast8_t f8 = 0; static uint_fast32_t f32 = 0;
+    static uint64_t u64 = 0; static uintmax_t um = 0; static uintptr_t up = 0;
+    static int n = -1;
+    memset(ones, '1', 64);
+    ones[64] = 0;
+    CHECK(sscanf("11111111", "%" SCNb8, &u8) == 1 && u8 == UINT8_MAX);
+    CHECK(sscanf("0b1010", "%" SCNbLEAST16, &l16) == 1 && l16 == 10);
+    CHECK(sscanf("0b1111", "%" SCNbFAST8, &f8) == 1 && f8 == 15);
+    CHECK(sscanf("101", "%" SCNb16, &u16) == 1 && u16 == 5);
+    CHECK(sscanf(ones + 32, "%" SCNb32, &u32) == 1 && u32 == UINT32_MAX);
+    CHECK(sscanf("11", "%" SCNbFAST32, &f32) == 1 && f32 == 3);
+    CHECK(sscanf(ones, "%" SCNb64, &u64) == 1 && u64 == UINT64_MAX);
+    CHECK(sscanf("0b11", "%" SCNbMAX "%n", &um, &n) == 1 && um == 3 && n == 4);
+    CHECK(sscanf("10", "%" SCNbPTR, &up) == 1 && up == 2);
+    return 0;
+}
+
+/* The binary prefix is accepted by base 0, which the maximum-width functions
+ * forward, and by base 2. Wide and narrow end pointers agree. */
+static int check_binary_strings(void) {
+    static wchar_t wide[] = L"0b12";
+    static wchar_t *end;
+    CHECK(strtoimax("0b101", NULL, 0) == 5 && strtoumax("0B11", NULL, 2) == 3);
+    CHECK(strtoimax("-0b11", NULL, 0) == -3 && strtoumax("0b1111", NULL, 2) == 15);
+    CHECK(wcstoimax(L"-0b11", NULL, 0) == -3 && wcstoumax(L"0b1111", NULL, 2) == 15);
+    CHECK(wcstoimax(wide, &end, 0) == 1 && end == wide + 3);
+    CHECK(wcstoumax(L"0b", NULL, 0) == 0);
+    /* 64 binary digits fill the maximum; a 65th digit overflows. */
+    static wchar_t bits[72];
+    bits[0] = L'0';
+    bits[1] = L'b';
+    for(unsigned i = 2; i < 66; ++i) bits[i] = L'1';
+    bits[66] = 0;
+    errno = 0;
+    CHECK(wcstoumax(bits, NULL, 0) == UINTMAX_MAX && errno == 0);
+    CHECK(wcstoimax(bits, NULL, 0) == INTMAX_MAX && errno == ERANGE);
+    bits[66] = L'1';
+    bits[67] = 0;
+    errno = 0;
+    CHECK(wcstoumax(bits, NULL, 0) == UINTMAX_MAX && errno == ERANGE);
+    return 0;
+}
+
 static int check_formats(void) {
     CHECK(format_8() == 0 && format_16() == 0 && format_32() == 0 && format_64() == 0);
     CHECK(format_LEAST8() == 0 && format_LEAST16() == 0 && format_LEAST32() == 0 && format_LEAST64() == 0);
@@ -166,6 +227,8 @@ int avm_test_main(void) {
     CHECK(check_maximum_formats() == 0);
     CHECK(check_binary_formats() == 0);
     CHECK(check_maximum_binary() == 0);
+    CHECK(check_binary_input() == 0);
+    CHECK(check_binary_strings() == 0);
     CHECK(check_signed("9223372036854775807!", 10, INTMAX_MAX, 19, 0));
     CHECK(check_signed("-9223372036854775808!", 10, INTMAX_MIN, 20, 0));
     CHECK(check_signed("9223372036854775808!", 10, INTMAX_MAX, 19, ERANGE));

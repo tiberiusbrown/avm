@@ -188,8 +188,9 @@ struct harness {
         // Exhaust all signed/unsigned hh representations through the parser
         // and shared field emitter, with a nonzero discarded promoted byte
         // and a following 16-bit argument to check exact cursor advancement.
-        for(unsigned n=0; n<256; ++n) for(char conversion : std::string("diuoxXbB")) {
-            std::string format="%hh"; format+=conversion; format+="|%u";
+        // C23 %w8 and %wf8 select the 8-bit path on AVM, so they share the hh reference.
+        for(unsigned n=0; n<256; ++n) for(char conversion : std::string("diuoxXbB")) for(const char *length : {"%hh", "%w8", "%wf8"}) {
+            std::string format=length; format+=conversion; format+="|%u";
             std::ostringstream reference;
             if(conversion=='o') reference << std::oct;
             if(conversion=='x' || conversion=='X') reference << std::hex;
@@ -217,7 +218,10 @@ struct harness {
             ++cases;
         }
         for(const char *format : {"%ll", "%lls", "%llc", "%llp", "%llf", "%llld",
-                                  "%llS", "%llP", "%ll%", "%*.*lls", "%Lb", "%LB"}) {
+                                  "%llS", "%llP", "%ll%", "%*.*lls", "%Lb", "%LB",
+                                  "%w", "%wf", "%w0d", "%w08d", "%w7d", "%wf7x", "%w65d",
+                                  "%w128d", "%w8%", "%w8s", "%w16f", "%w32s",
+                                  "%w32f", "%w32c", "%w32p", "%w64S", "%w32ld", "%w8hd", "%w8lld"}) {
             prepare(false);
             std::copy(format, format+std::char_traits<char>::length(format)+1, cpu().data.begin()+0x200);
             word(source,0x200); word(args,0x301); word(0x301,2); word(0x303,3);

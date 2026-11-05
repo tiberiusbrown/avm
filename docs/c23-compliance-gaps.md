@@ -22,13 +22,6 @@ Part I contains the requirements for **freestanding C23 compliance**. Part II co
 - [ ] **Hosted termination status:** Preserve the success/failure status semantics of returning from `main`, `exit`, `_Exit`, and C11 `quick_exit`; AVM currently discards termination status.
 - [ ] **Hosted environment selection:** Supply a truthful hosted compilation/runtime mode (`__STDC_HOSTED__ == 1`) with the full hosted contract. The SDK defaults to freestanding mode.
 
-### Formatted input/output and integer conversion
-
-- [ ] **Binary formatted input (C23):** Implement `%b` conversion and C23 binary-prefix acceptance where applicable in the narrow and wide `scanf`-family entry points, preserving matching, conversion, and assignment rules.
-- [ ] **Exact/fast-width format modifiers (C23):** Support `wN` and `wfN` length modifiers in all narrow and wide formatted-input/output interfaces for the supported exact-, minimum-, and fast-width integer types.
-- [ ] **`<inttypes.h>` binary input formats (C23):** Add the mandatory `SCNb*` macros for supported integer types, matching the `%b` input conversion.
-- [ ] **Binary-prefixed integer strings (C23):** Recognize `0b`/`0B` where required in `strtol`, `strtoul`, `strtoll`, `strtoull`, `strtoimax`, `strtoumax`, and their wide-character equivalents, with correct base detection, end pointers, and range handling.
-
 ### Time and character handling
 
 - [ ] **C23 calendar formatting:** Extend `strftime` and `wcsftime` to handle the C23 additions to format conversion syntax and required semantics.

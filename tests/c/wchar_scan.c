@@ -18,6 +18,7 @@ static int standard(const wchar_t *fmt,...) {
 static int (*volatile indirect)(const wchar_t *,const wchar_t *,...)=swscanf;
 int avm_test_main(void) {
     int i=0,n=-1; float f=0; wchar_t w[8]; char b[8];
+    unsigned u=0; signed char sc=0; unsigned char uc=0; long lg=0; unsigned long ul=0;
     CHECK(indirect(L"  -42!",L"%d%n",&i,&n)==1 && i==-42 && n==5);
     CHECK(forward(L"1.25",L"%f",&f)==1 && f==1.25f);
     CHECK(swscanf(L"abc def",L"%3ls%n",w,&n)==1 && !wcscmp(w,L"abc") && n==3);
@@ -32,6 +33,16 @@ int avm_test_main(void) {
     CHECK(swscanf(L"a \t b%",L"a b%%")==0);
     const wchar_t high[]={255,128,0};
     CHECK(swscanf(high,L"%lc%lc%n",w,w+1,&n)==2 && w[0]==255 && w[1]==128 && n==2);
+    CHECK(swscanf(L"1011 0b11",L"%b%i",&u,&i)==2 && u==11 && i==3);
+    CHECK(swscanf(L"-0b101",L"%i",&i)==1 && i==-5);
+    CHECK(swscanf(L"0b",L"%b",&u)==0 && swscanf(L"0bz",L"%i",&i)==0);
+    CHECK(swscanf(L"0b1",L"%1b%n%lc",&u,&n,w)==2 && u==0 && n==1 && w[0]=='b');
+    CHECK(swscanf(L"0b1",L"%2b",&u)==0);
+    CHECK(swscanf(L"-128 255",L"%w8d%wf8u",&sc,&uc)==2 && sc==-128 && uc==255);
+    CHECK(swscanf(L"-32768 65535",L"%w16d%w16u",&i,&u)==2 && i==-32768 && u==65535);
+    CHECK(swscanf(L"4294967295 -1",L"%w32u%w32d",&ul,&lg)==2 && ul==4294967295UL && lg==-1);
+    CHECK(swscanf(L"ab",L"ab%w8n",&sc)==0 && sc==2);
+    CHECK(swscanf(L"1",L"%w7d",&i)==0);
     CHECK(fwide(stdin,0)==0);
     CHECK(stream(stdin,L"")==0 && fwide(stdin,0)>0);
     CHECK(ungetwc('7',stdin)=='7' && fwscanf(stdin,L"%d",&i)==1 && i==7);

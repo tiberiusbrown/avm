@@ -218,6 +218,9 @@
 #define FORMAT_LENGTH_T              5
 #define FORMAT_LENGTH_LL             6
 #define FORMAT_LENGTH_CAPITAL_L      7
+; wN and wfN with N = 32. L is the 32-bit class, but %c, %s, and the floating
+; conversions also accept L, so wN needs its own class to reject those pairs.
+#define FORMAT_LENGTH_W32            8
 
 #define FORMAT_INT_BASE_MASK         0x03
 #define FORMAT_INT_BASE_DEC          0
@@ -11552,6 +11555,65 @@ format_unexpected_character:
     ori   r17, (1 << FORMAT_STATUS_FATAL_ERROR)
     rjmp  format_finish
 
+; C23 wN and wfN: N is 8, 16, 32, or 64 without leading zeros, and the f
+; spelling selects the same widths on AVM. r19 holds N while the digits are
+; read; format_get_char preserves it. A digit after a value of 7 or more
+; cannot yield a supported width, so the accumulation stays within a byte.
+; The routine follows an unconditional jump so that no short branch in the
+; length parser or conversion dispatch spans it. Entry comes from a far rjmp.
+.Lformat_length_w:
+    rcall format_get_char
+    cpi   r24, 'f'
+    brne  .Lformat_length_w_first
+    rcall format_get_char
+.Lformat_length_w_first:
+    cpi   r24, '1'
+    brlo  .Lformat_length_w_unsupported
+    cpi   r24, '9'+1
+    brsh  .Lformat_length_w_unsupported
+    subi  r24, '0'
+    mov   r19, r24
+    rcall format_get_char
+.Lformat_length_w_more:
+    cpi   r24, '0'
+    brlo  .Lformat_length_w_check
+    cpi   r24, '9'+1
+    brsh  .Lformat_length_w_check
+    cpi   r19, 7
+    brsh  .Lformat_length_w_unsupported
+    mov   r20, r19
+    lsl   r19
+    lsl   r20
+    lsl   r20
+    lsl   r20
+    add   r19, r20
+    subi  r24, '0'
+    add   r19, r24
+    rcall format_get_char
+    rjmp  .Lformat_length_w_more
+.Lformat_length_w_check:
+    cpi   r19, 8
+    brne  1f
+    ldi   r19, FORMAT_LENGTH_HH
+    rjmp  .Lformat_dispatch_conversion
+1:
+    cpi   r19, 16
+    brne  2f
+    ldi   r19, FORMAT_LENGTH_H
+    rjmp  .Lformat_dispatch_conversion
+2:
+    cpi   r19, 32
+    brne  3f
+    ldi   r19, FORMAT_LENGTH_W32
+    rjmp  .Lformat_dispatch_conversion
+3:
+    cpi   r19, 64
+    brne  .Lformat_length_w_unsupported
+    ldi   r19, FORMAT_LENGTH_LL
+    rjmp  .Lformat_dispatch_conversion
+.Lformat_length_w_unsupported:
+    rjmp  format_unexpected_character
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ; Output sink
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -12065,7 +12127,9 @@ format_core:
     breq  .Lformat_length_z
     cpi   r24, 't'
     breq  .Lformat_length_t
-    rjmp  .Lformat_dispatch_conversion
+    cpi   r24, 'w'
+    brne  .Lformat_dispatch_conversion
+    rjmp  .Lformat_length_w
 .Lformat_length_l:
     ldi   r19, FORMAT_LENGTH_L
     rcall format_get_char
@@ -12192,6 +12256,8 @@ format_conversion_n:
     breq  .Lformat_n_done
     st    Z+, r9
     cpi   r19, FORMAT_LENGTH_L
+    breq  .Lformat_n_four
+    cpi   r19, FORMAT_LENGTH_W32
     breq  .Lformat_n_four
     cpi   r19, FORMAT_LENGTH_LL
     brne  .Lformat_n_done
@@ -12526,7 +12592,10 @@ format_conversion_integer:
     ldi   r20, 1
 1:
     cpi   r19, FORMAT_LENGTH_L
+    breq  .Lformat_integer_width_four
+    cpi   r19, FORMAT_LENGTH_W32
     brne  2f
+.Lformat_integer_width_four:
     ldi   r20, 4
 2:
     cpi   r19, FORMAT_LENGTH_LL

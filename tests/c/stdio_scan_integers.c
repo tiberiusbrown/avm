@@ -24,6 +24,45 @@ static int integers(void) {
     CHECK(sscanf("1234", "%2d%n%d", &a, &n, &b) == 2 && a == 12 && n == 2 && b == 34);
     CHECK(sscanf("0x1", "%2x", &u) == 0);
     CHECK((sscanf)("42", "%d", &a) == 1 && a == 42);
+    /* C23 b conversion and the binary prefix accepted by i. */
+    CHECK(sscanf("1011 0b11 -0B1", "%b%i%i", &u, &v, &a) == 3 && u == 11 && v == 3 && a == -1);
+    CHECK(sscanf("0b101 0b", "%i%n", &a, &n) == 1 && a == 5 && n == 5);
+    CHECK(sscanf("0b12", "%i%n", &a, &n) == 1 && a == 1 && n == 3);
+    CHECK(sscanf("-0b11", "%i", &a) == 1 && a == -3);
+    CHECK(sscanf("0b", "%b", &u) == 0 && sscanf("0bx", "%i", &a) == 0);
+    CHECK(sscanf("101", "%b%n", &u, &n) == 1 && u == 5 && n == 3);
+    CHECK(sscanf("102", "%b%n", &u, &n) == 1 && u == 2 && n == 2);
+    CHECK(sscanf("1011", "%2b%n", &u, &n) == 1 && u == 2 && n == 2);
+    CHECK(sscanf("0b1", "%1b%n%c", &u, &n, &sc) == 2 && u == 0 && n == 1 && sc == 'b');
+    CHECK(sscanf("0b1", "%2b", &u) == 0);
+    CHECK(sscanf("0B10!", "%3i%n%c", &a, &n, &sc) == 2 && a == 1 && n == 3 && sc == '0');
+    CHECK(sscanf("11 101", "%*b%b", &u) == 1 && u == 5);
+    CHECK(sscanf("-1", "%b", &u) == 1 && u == 65535u);
+    CHECK(sscanf("11111111", "%hhb", &uc) == 1 && uc == UCHAR_MAX);
+    CHECK(sscanf("11111111111111111111111111111111", "%lb", &ul) == 1 && ul == ULONG_MAX);
+    CHECK(sscanf("1111111111111111111111111111111111111111111111111111111111111111", "%llb",
+                 &ull) == 1 && ull == ULLONG_MAX);
+    CHECK(sscanf("0b1111111111111111111111111111111111111111111111111111111111111111", "%jb",
+                 &uj) == 1 && uj == UINTMAX_MAX);
+    CHECK(sscanf("11", "%zb", &z) == 1 && z == 3);
+    /* C23 wN and wfN length modifiers. */
+    CHECK(sscanf("-128 255", "%w8d%wf8u", &sc, &uc) == 2 && sc == SCHAR_MIN && uc == UCHAR_MAX);
+    CHECK(sscanf("-32768 65535", "%w16d%w16u", &a, &u) == 2 && a == INT_MIN && u == UINT_MAX);
+    CHECK(sscanf("-32768 0x7f", "%wf16d%w8x", &sh, &uc) == 2 && sh == SHRT_MIN && uc == 127);
+    CHECK(sscanf("-2147483648 4294967295", "%w32d%wf32u", &l, &ul) == 2 &&
+          l == LONG_MIN && ul == ULONG_MAX);
+    CHECK(sscanf("-9223372036854775808 18446744073709551615", "%w64d%wf64u", &ll, &ull) == 2 &&
+          ll == LLONG_MIN && ull == ULLONG_MAX);
+    CHECK(sscanf("1011", "%w8b%n", &uc, &n) == 1 && uc == 11 && n == 4);
+    CHECK(sscanf("12 1", "%w8d%n", &sc, &n) == 1 && sc == 12 && n == 2);
+    CHECK(sscanf("abc", "abc%w8n", &sc) == 0 && sc == 3);
+    CHECK(sscanf("abc", "abc%wf32n", &l) == 0 && l == 3);
+    CHECK(sscanf("abcd", "abcd%w16n", &a) == 0 && a == 4);
+    CHECK(sscanf("abc", "abc%w64n", &ll) == 0 && ll == 3);
+    /* Unsupported widths and missing widths fail the conversion. */
+    CHECK(sscanf("1", "%w7d", &a) == 0 && sscanf("1", "%w0d", &a) == 0);
+    CHECK(sscanf("1", "%w", &a) == 0 && sscanf("1", "%wf", &a) == 0);
+    CHECK(sscanf("1", "%w128d", &a) == 0 && sscanf("1", "%w08d", &a) == 0);
     return 0;
 }
 

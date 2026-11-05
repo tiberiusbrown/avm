@@ -40,6 +40,12 @@ int avm_test_main(void) {
     CHECK(forward(b,32,L"%5.1ls",L"abc")==5 && !wcscmp(b,L"    a"));
     CHECK(forward(b,32,L"%-*.*ls",5,2,L"abc")==5 && !wcscmp(b,L"ab   "));
     CHECK(swprintf(b,32,L"%b:%#B:%#.0b",10,10,0)==12 && !wcscmp(b,L"1010:0B1010:"));
+    CHECK(swprintf(b,32,L"%w8d|%w16u|%w32x|%wf8X|%#w64b",-1,65535u,0xbeefL,0xab,5LL)==22 &&
+          !wcscmp(b,L"-1|65535|beef|AB|0b101"));
+    CHECK(swprintf(b,32,L"%w32o|%w16o|%#w8o",0777L,8,8)==10 && !wcscmp(b,L"777|10|010"));
+    long lc=-1;
+    CHECK(swprintf(b,32,L"ab%w32n",&lc)==2 && lc==2);
+    CHECK(swprintf(b,32,L"%w7d",1)<0 && swprintf(b,32,L"%w32s",L"x")<0);
     CHECK(swprintf(b,32,L"%%")==1 && !wcscmp(b,L"%"));
     CHECK(swprintf(b,4,L"abc")==3 && !wcscmp(b,L"abc"));
     CHECK(swprintf(b,3,L"abc")<0 && !wcscmp(b,L"ab"));

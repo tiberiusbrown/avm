@@ -65,6 +65,30 @@ static int scan_chars(avm_scan_state *s, const avm_scan_conversion *c,
     }
     return SCAN_OK;
 }
+/* C23 wN and wfN select an exact, minimum, or fastest integer width. On AVM,
+ * the fastest 8-, 16-, 32-, and 64-bit types have the same widths as their
+ * exact counterparts (int_fast16_t is short, and int16_t is int). Unsupported
+ * widths fail the conversion. */
+static int scan_width_length(const char **format, unsigned char *length) {
+    const char *p = *format + 1;
+    int fast = *p == 'f';
+    unsigned long bits = 0;
+    if(fast) ++p;
+    if(*p < '1' || *p > '9') return 0;
+    while(*p >= '0' && *p <= '9') {
+        bits = bits * 10 + (unsigned long)(*p++ - '0');
+        if(bits > 64) return 0;
+    }
+    switch(bits) {
+    case 8: *length = SCAN_HH; break;
+    case 16: *length = fast ? SCAN_H : SCAN_NONE; break;
+    case 32: *length = SCAN_L; break;
+    case 64: *length = SCAN_LL; break;
+    default: return 0;
+    }
+    *format = p;
+    return 1;
+}
 int __avm_vscan(avm_scan_reader reader, const char *format, va_list arguments) {
     avm_scan_state state = {reader, 0, 0, 0, 0};
     va_list args;
@@ -96,7 +120,9 @@ int __avm_vscan(avm_scan_reader reader, const char *format, va_list arguments) {
             } while(*format >= '0' && *format <= '9');
             if(!c.width) break;
         }
-        switch(*format) {
+        if(*format == 'w') {
+            if(!scan_width_length(&format, &c.length)) { status = SCAN_MATCH; break; }
+        } else switch(*format) {
         case 'h': ++format; c.length = SCAN_H;
             if(*format == 'h') { ++format; c.length = SCAN_HH; } break;
         case 'l': ++format; c.length = SCAN_L;
@@ -123,7 +149,7 @@ int __avm_vscan(avm_scan_reader reader, const char *format, va_list arguments) {
         }
         if(c.specifier != 'c' && c.specifier != '[') scan_skip_space(&state);
         switch(c.specifier) {
-        case 'd': case 'i': case 'o': case 'u': case 'x': case 'X': case 'p':
+        case 'b': case 'd': case 'i': case 'o': case 'u': case 'x': case 'X': case 'p':
             status = scan_integer(&state, &c, &args); break;
         case 'a': case 'A': case 'e': case 'E': case 'f': case 'F': case 'g': case 'G':
             status = scan_float(&state, &c, &args); break;

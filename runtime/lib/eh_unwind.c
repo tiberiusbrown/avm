@@ -612,24 +612,26 @@ AVEH5_INLINE uint8_t descriptor_in_range(uint32_t address) {
 }
 
 /* Classifies the descriptor at address. An address outside the descriptor range is OTHER,
- * so the walk never reads outside program space. */
+ * so the walk never reads outside program space. Keep each address-point offset inside
+ * the pointer expression, so the linker folds it into the 24-bit relocation instead of
+ * adding it at runtime and keeping extra register pairs live. */
 AVEH5_NOINLINE enum avm_rtti_kind rtti_kind(uint32_t address) {
     if (!descriptor_in_range(address))
         return AVM_RTTI_OTHER;
     uint32_t point = read_flash_u24(address);
-    if (point == (uint32_t)_ZTVN10__cxxabiv117__class_type_infoE + AVM_RTTI_ADDRESS_POINT)
+    if (point == (uint32_t)(_ZTVN10__cxxabiv117__class_type_infoE + AVM_RTTI_ADDRESS_POINT))
         return AVM_RTTI_CLASS;
-    if (point == (uint32_t)_ZTVN10__cxxabiv120__si_class_type_infoE + AVM_RTTI_ADDRESS_POINT)
+    if (point == (uint32_t)(_ZTVN10__cxxabiv120__si_class_type_infoE + AVM_RTTI_ADDRESS_POINT))
         return AVM_RTTI_SI;
-    if (point == (uint32_t)_ZTVN10__cxxabiv121__vmi_class_type_infoE + AVM_RTTI_ADDRESS_POINT)
+    if (point == (uint32_t)(_ZTVN10__cxxabiv121__vmi_class_type_infoE + AVM_RTTI_ADDRESS_POINT))
         return AVM_RTTI_VMI;
-    if (point == (uint32_t)_ZTVN10__cxxabiv119__pointer_type_infoE + AVM_RTTI_ADDRESS_POINT)
+    if (point == (uint32_t)(_ZTVN10__cxxabiv119__pointer_type_infoE + AVM_RTTI_ADDRESS_POINT))
         return AVM_RTTI_POINTER;
-    if (point == (uint32_t)_ZTVN10__cxxabiv123__fundamental_type_infoE + AVM_RTTI_ADDRESS_POINT)
+    if (point == (uint32_t)(_ZTVN10__cxxabiv123__fundamental_type_infoE + AVM_RTTI_ADDRESS_POINT))
         return AVM_RTTI_FUNDAMENTAL;
-    if (point == (uint32_t)_ZTVN10__cxxabiv120__function_type_infoE + AVM_RTTI_ADDRESS_POINT)
+    if (point == (uint32_t)(_ZTVN10__cxxabiv120__function_type_infoE + AVM_RTTI_ADDRESS_POINT))
         return AVM_RTTI_FUNCTION;
-    if (point == (uint32_t)__avm_eh_exact_pointer_ref_type_info + AVM_RTTI_ADDRESS_POINT)
+    if (point == (uint32_t)(__avm_eh_exact_pointer_ref_type_info + AVM_RTTI_ADDRESS_POINT))
         return AVM_RTTI_MARKER;
     return AVM_RTTI_OTHER;
 }
@@ -1009,18 +1011,10 @@ AVEH5_NOINLINE uint8_t list_ok(uint32_t fh, uint32_t list) {
     return AVEH5_LIST_VALID | flags;
 }
 
-/* Matches the action list at list against the thrown object in header. The whole list
- * is checked first by list_ok, so a malformed list fails whichever entry would have
- * matched. The entries are then read in clause order, and the first one that matches
- * decides. Returns AVEH5_BAD when the list is malformed, or when the RTTI of a clause
- * cannot be decided. A matching clause returns its selector and base adjustment, as
- * AVEH5_MATCH_CLEANUP's comment describes. When no clause matches, the selector is zero,
- * and the result carries AVEH5_MATCH_CLEANUP if the list has a cleanup.
- *
- * A clause is an exact match, a catch-all, a reference marker, a pointer conversion, a null
- * pointer, or a class base. The header's conversion mode is set on each match, and only then.
- * The class walk and the pointer chain are the only calls, and the walk is shared by the
- * class and pointer cases, so the matcher's stack holds one walk at a time. */
+/* Matches a clause that is neither an exact match nor a catch-all. It can name a
+ * reference marker, a pointer conversion, a null pointer, or a class base. The header's
+ * conversion mode is set on each match, and only then. The result carries a match code
+ * and any base adjustment, as AVM_RTTI_MATCH's comment describes. */
 AVEH5_INLINE uint32_t match_entry(uint32_t type, struct avm_eh_exception *header) {
     uint32_t thrown = thrown_type_of(header);
     enum avm_rtti_kind kind = rtti_kind(type);
@@ -1068,22 +1062,18 @@ AVEH5_INLINE uint32_t match_entry(uint32_t type, struct avm_eh_exception *header
     return AVM_RTTI_NO_MATCH;
 }
 
-/* Matches the action list at list against the thrown object in header. The whole list
- * is checked first by list_ok, so a malformed list fails whichever entry would have
- * matched. The entries are then read in clause order, and the first one that matches
- * decides. Returns AVEH5_BAD when the list is malformed, or when the RTTI of a clause
- * cannot be decided. A matching clause returns its selector and base adjustment, as
- * AVEH5_MATCH_CLEANUP's comment describes. When no clause matches, the selector is zero,
- * and the result carries AVEH5_MATCH_CLEANUP if the list has a cleanup.
+/* Matches the action list at list against the thrown object in header. The caller has
+ * checked the whole list with list_ok and passes its flags in valid. The entries are
+ * read in clause order, and the first one that matches decides. Returns AVEH5_BAD when
+ * the RTTI of a clause cannot be decided. A matching clause returns its selector and
+ * base adjustment, as AVEH5_MATCH_CLEANUP's comment describes. When no clause matches,
+ * the selector is zero, and the result carries AVEH5_MATCH_CLEANUP if the list has a cleanup.
  *
  * A clause is an exact match, a catch-all, or one of the cases of match_entry. The header's
  * conversion mode is set on each match, and only then. The loop keeps its entry, count, and
  * header across the calls, and the callees are the walks and the pointer chain, which are the
  * only calls, so the frame holds little beyond those values. */
-AVEH5_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list, struct avm_eh_exception *header) {
-    uint8_t valid = list_ok(fh, list);
-    if (!valid)
-        return AVEH5_BAD;
+AVEH5_NOINLINE uint32_t match_list(uint32_t list, struct avm_eh_exception *header, uint8_t valid) {
     uint32_t entry = list + AVEH5_ACTION_HEADER_SIZE;
     for (uint16_t count = read_flash_u16(list + 1); count != 0; count--, entry += AVEH5_CATCH_SIZE) {
         uint32_t type = read_flash_u24(entry + 2);
@@ -1103,11 +1093,17 @@ AVEH5_NOINLINE uint32_t match_list(uint32_t fh, uint32_t list, struct avm_eh_exc
 
 /* The match of the site's action for thrown_type, in match_list's encoding. A site
  * with no action selects nothing, which is zero, and otherwise the action is the list
- * that match_list checks. Inlined into its callers, so the matcher adds no frame of
- * its own. The callers read the site's action once, through this match. */
+ * that list_ok checks before matching any entry. Validation runs before entering
+ * match_list, so its frame does not overlap the matcher's frame. Inlined into its
+ * callers, so the dispatch adds no frame of its own. The callers read the site's
+ * action once, through this match. */
 AVEH5_INLINE uint32_t match_action(uint32_t fh, uint32_t site, struct avm_eh_exception *header) {
     uint32_t action = read_flash_u24(site + 9);
-    return action ? match_list(fh, fh + action, header) : 0;
+    if (!action)
+        return 0;
+    uint32_t list = fh + action;
+    uint8_t valid = list_ok(fh, list);
+    return valid ? match_list(list, header, valid) : AVEH5_BAD;
 }
 
 /* True when a stack address lies in the guest stack window. */

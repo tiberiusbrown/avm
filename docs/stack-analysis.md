@@ -198,6 +198,62 @@ callee peak after releasing the caller frame, without adding an ordinary-call
 return record. A tail-position call that still has a live frame or outgoing
 argument area remains an ordinary call.
 
+## Exception runtime stack
+
+Exception propagation adds runtime frames below the application frames that are
+still live at the throw. The two unwind contexts already live in the 59-byte
+heap-allocated exception header, together with the thrown object. Installing a
+landing pad discards the runtime frames. A throw with no intervening cleanup
+uses the handler state from the search directly, without a second unwind pass.
+
+Use the emulator measurements alongside link-time stack reports. The exception
+fixtures include dynamic frames, rethrows, cleanup dispatch and indirect
+destructor calls, so their executed paths are useful even when a static bound
+is incomplete. Run the existing measurement and hardening checks with:
+
+```sh
+cmake --build build --config RelWithDebInfo --parallel --target avm_eh_hardening_run
+```
+
+`tests/debug/eh_stack_report.py` reports both the total high-water mark and the
+additional stack below SP at the first `__cxa_throw` entry. The latter measures
+the remainder of the fixture, including later throws and destructor calls; it
+is not a bound for an arbitrary application. With the production runtime and
+the O0/O2 fixture builds, representative additional-stack measurements are:
+
+| Fixture | O0 bytes | O2 bytes |
+| --- | ---: | ---: |
+| `eh_catch_all` | 107 | 90 |
+| `eh_dynamic_handler` | 86 | 86 |
+| `eh_cleanup` | 107 | 111 |
+| `eh_inheritance` | 170 | 152 |
+| `eh_virtual_inheritance` | 158 | 150 |
+| `eh_pointer_conversion` | 164 | 152 |
+
+The action-list validator runs before entering the matcher, so those frames
+do not overlap. RTTI address-point offsets stay inside pointer expressions,
+allowing the linker to resolve them as 24-bit relocation addends. This keeps
+the classifier's saved-register area at four bytes. Stored code pointers and
+the exception header retain their 24-bit layouts.
+
+Further reductions require broader work:
+
+- Move transient lookup and hierarchy-walk state into reusable RAM scratch
+  space. The object-base matcher alone has a 72-byte fixed frame, including
+  saved registers; its eight-byte path array is only part of that cost.
+  Heap or static scratch would trade stack space for RAM and would need explicit
+  ownership across cleanup, nested catches, rethrows and allocation failures.
+- Reduce metadata-reader register pressure or change the packed unwind format.
+  `find_row` has a 48-byte fixed frame and becomes the deepest frame on simple
+  throw paths. Predecoded rows or a smaller live cursor could help, but require
+  coordinated runtime, image-packer and malformed-metadata validation work.
+- Give nonreturning propagation entries a calling convention that avoids
+  preserving registers already captured in the exception header. The C throw
+  and rethrow entries each save six bytes, and `_Unwind_Resume` saves two.
+  Reclaiming the throw shim's captured return record and destructor argument
+  could recover another six bytes at throw entry. These changes need matching
+  backend, assembly and stack-analysis accounting before they can be relied on.
+
 ## ELF metadata
 
 LLVM automatically emits `.stack_sizes` using the finalized machine frame.

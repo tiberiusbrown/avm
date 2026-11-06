@@ -18,7 +18,7 @@ SYMBOL TABLE:
 00000000 l     F .text.find_function	0000034c find_function
 00000000 l     F .text.find_row	0000018a find_row
 00000000 l     F .text.find_site	00000109 find_site
-00000000 l     F .text.match_list	000002db match_list
+00000000 l     F .text.match_list	000002aa match_list
 00000000 l     F .text.find_call	00000183 find_call
 00000000 l    d  .text.find_function	00000000 .text.find_function
 00000000 l    d  .text.find_row	00000000 .text.find_row
@@ -28,7 +28,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.list_ok	00000000 .text.list_ok
 00000000 l    d  .text.list_named	00000000 .text.list_named
 00000000 l    d  .text.match_list	00000000 .text.match_list
-00000000 l     F .text.rtti_kind	000000c3 rtti_kind
+00000000 l     F .text.rtti_kind	000000ac rtti_kind
 00000000 l     F .text.match_pointer_chain	00000216 match_pointer_chain
 00000000 l     F .text.match_object_base	000005c0 match_object_base
 00000000 l     F .text.match_pointer_base	0000047c match_pointer_base
@@ -42,8 +42,8 @@ SYMBOL TABLE:
 00000000 g     F .text.avm_eh_open_exception	00000141 avm_eh_open_exception
 00000000 g     O .rodata.__avm_eh_metadata_ptr	00000003 __avm_eh_metadata_ptr
 00000000 g     F .text.avm_eh_validate_block	00000739 avm_eh_validate_block
-00000000 g     F .text.avm_eh_find_handler	0000016f avm_eh_find_handler
-00000000 g     F .text.avm_eh_prepare_next	000001d0 avm_eh_prepare_next
+00000000 g     F .text.avm_eh_find_handler	00000176 avm_eh_find_handler
+00000000 g     F .text.avm_eh_prepare_next	000001e2 avm_eh_prepare_next
 00000000         *UND*	00000000 vtable for __cxxabiv1::__class_type_info
 00000000         *UND*	00000000 vtable for __cxxabiv1::__si_class_type_info
 00000000         *UND*	00000000 vtable for __cxxabiv1::__vmi_class_type_info
@@ -1707,23 +1707,23 @@ Disassembly of section .text.avm_eh_find_handler:
  b1                    push16	r1
  b0                    push16	r0
  d6 ee                 adjsp	-0x12
- f1 04                 mov	r0, r4
- f0 08 18              addi.s8	r0, 0x18
+ f1 14                 mov	r2, r4
+ f0 0a 18              addi.s8	r2, 0x18
  c5 00 f6              ldi16	r5, 0xf600
- f4 51                 stsp16	[sp+0x4], r5
+ f4 61                 stsp16	[sp+0x8], r5
  c5 00 ff              ldi16	r5, 0xff00
- f4 49                 stsp16	[sp+0x2], r5
- f4 40                 stsp16	[sp+0x0], r4
+ f4 59                 stsp16	[sp+0x6], r5
+ f4 50                 stsp16	[sp+0x4], r4
  c8 1a                 addi.s8	r4, 0x1a
- f4 58                 stsp16	[sp+0x6], r4
- f0 38 10              stsp16	[sp+0x10], r0
+ f4 68                 stsp16	[sp+0xa], r4
+ f0 3a 10              stsp16	[sp+0x10], r2
  e2 00 00 00           jmpf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.avm_eh_find_handler+0x39
- f0 30 10              ldsp16	r0, [sp+0x10]
- f1 20                 mov	r4, r0
- f4 32                 ldsp16	r6, [sp+0xc]
- f4 3b                 ldsp16	r7, [sp+0xe]
+ f0 32 10              ldsp16	r2, [sp+0x10]
+ f1 22                 mov	r4, r2
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
  e3 00 00 00           callf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.unwind_frame
@@ -1732,49 +1732,47 @@ Disassembly of section .text.avm_eh_find_handler:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x155
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
 <L0>:
- ed 90 20              ld16	r4, [r0+0]
- f4 11                 ldsp16	r5, [sp+0x4]
+ ed 94 20              ld16	r4, [r2+0]
+ f4 21                 ldsp16	r5, [sp+0x8]
  11                    add	r4, r5
- f4 09                 ldsp16	r5, [sp+0x2]
+ f4 19                 ldsp16	r5, [sp+0x6]
  31                    cmp	r4, r5
  d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x155
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
 <L1>:
- f4 18                 ldsp16	r4, [sp+0x6]
+ f4 28                 ldsp16	r4, [sp+0xa]
  f7 20                 ld16	r0, [r4+]
  f5 31                 ld8u	r1, [r4]
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
  f7 62                 add32	q0, q2
- f4 00                 ldsp16	r4, [sp+0x0]
+ f4 10                 ldsp16	r4, [sp+0x4]
  f2 6a                 mov32	q3, q0
  e3 00 00 00           callf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.find_function
- f2 66                 mov32	q1, q2
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- f0 69 48              cmp32	q1, q2
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x155
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
 <L2>:
- f2 69                 mov32	q2, q1
+ f2 66                 mov32	q1, q2
  f2 6a                 mov32	q3, q0
  e3 00 00 00           callf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.find_row
- f2 6b                 mov32	q3, q1
- f2 66                 mov32	q1, q2
- f4 62                 stsp16	[sp+0x8], r6
- f4 6b                 stsp16	[sp+0xa], r7
- 02                    mov	r4, r6
- 07                    mov	r5, r7
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 3a 0c              stsp16	[sp+0xc], r2
+ f0 3b 0e              stsp16	[sp+0xe], r3
+ f2 69                 mov32	q2, q1
  f2 6a                 mov32	q3, q0
  e3 00 00 00           callf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
@@ -1782,16 +1780,16 @@ Disassembly of section .text.avm_eh_find_handler:
  f2 62                 mov32	q0, q2
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
- f0 3a 0c              stsp16	[sp+0xc], r2
- f0 3b 0e              stsp16	[sp+0xe], r3
- f7 69                 add32	q2, q1
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f7 6b                 add32	q2, q3
  c2 02                 ldi8	r6, 0x2
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x155
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
 <L3>:
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
@@ -1799,11 +1797,11 @@ Disassembly of section .text.avm_eh_find_handler:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x155
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
 <L4>:
- f2 42                 sub	r2, r2
- f2 4b                 sub	r3, r3
- f0 69 04              cmp32	q0, q1
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 0c              cmp32	q0, q3
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
@@ -1812,50 +1810,59 @@ Disassembly of section .text.avm_eh_find_handler:
  c0 09                 ldi8	r4, 0x9
  a5                    xor	r5, r5
  f7 68                 add32	q2, q0
- f0 63 c8              ldp24	q3, [q2]
- f0 69 c4              cmp32	q3, q1
+ f0 63 48              ldp24	q1, [q2]
+ f0 69 4c              cmp32	q1, q3
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
 		R_AVM_FAR24	.text.avm_eh_find_handler+0x22
 <L6>:
- d6 fe                 adjsp	-0x2
- f4 08                 ldsp16	r4, [sp+0x2]
- f4 40                 stsp16	[sp+0x0], r4
- f0 32 0a              ldsp16	r2, [sp+0xa]
- f0 33 0c              ldsp16	r3, [sp+0xc]
- f7 6d                 add32	q3, q1
- f2 69                 mov32	q2, q1
+ f4 30                 ldsp16	r4, [sp+0xc]
+ f4 39                 ldsp16	r5, [sp+0xe]
+ f7 66                 add32	q1, q2
+ f2 6b                 mov32	q3, q1
  e3 00 00 00           callf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list
- d6 02                 adjsp	0x2
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff ff              ldi16	r7, 0xffff
- f0 69 8c              cmp32	q2, q3
+		R_AVM_FAR24	.text.list_ok
+ 0c                    mov	r7, r4
+ f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x155
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
 <L7>:
- f6 2c                 tst16	r4
- d0 04                 breq8	0x4 <L8>
+ f1 77                 zext8	r7
+ f2 69                 mov32	q2, q1
+ f4 12                 ldsp16	r6, [sp+0x4]
+ e3 00 00 00           callf	avm_eh_find_handler
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.match_list
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
+ f0 69 8c              cmp32	q2, q3
+ d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x117
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
 <L8>:
+ f6 2c                 tst16	r4
+ d0 04                 breq8	0x4 <L9>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	avm_eh_find_handler
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x11c
+<L9>:
  aa                    xor	r6, r6
  c3 01                 ldi8	r7, 0x1
  82                    and	r4, r6
  87                    and	r5, r7
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
- d1 04                 brne8	0x4 <L9>
+ d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
 		R_AVM_FAR24	.text.avm_eh_find_handler+0x22
-<L9>:
- f4 02                 ldsp16	r6, [sp+0x0]
+<L10>:
+ f4 12                 ldsp16	r6, [sp+0x4]
  ed 8c 37              ld8u	r4, [r6+23]
  c1 80                 ldi8	r5, 0x80
  84                    and	r5, r4
@@ -1865,7 +1872,7 @@ Disassembly of section .text.avm_eh_find_handler:
  e2 00 00 00           jmpf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.avm_eh_find_handler+0x22
- f4 02                 ldsp16	r6, [sp+0x0]
+ f4 12                 ldsp16	r6, [sp+0x4]
  ee 9c 47              st16	[r6+39], r4
  01                    mov	r4, r5
  a5                    xor	r5, r5
@@ -1873,32 +1880,33 @@ Disassembly of section .text.avm_eh_find_handler:
  c0 06                 ldi8	r4, 0x6
  f7 62                 add32	q0, q2
  f0 63 00              ldp24	q0, [q0]
- f4 18                 ldsp16	r4, [sp+0x6]
+ f4 28                 ldsp16	r4, [sp+0xa]
  f7 26                 ld16	r6, [r4+]
  4c                    ld8u	r7, [r4]
- f2 69                 mov32	q2, q1
+ f4 30                 ldsp16	r4, [sp+0xc]
+ f4 39                 ldsp16	r5, [sp+0xe]
  e3 00 00 00           callf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.find_call
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff ff              ldi16	r7, 0xffff
  f0 69 8c              cmp32	q2, q3
- d1 04                 brne8	0x4 <L10>
+ d1 04                 brne8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x155
-<L10>:
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15c
+<L11>:
  f0 36 10              ldsp16	r6, [sp+0x10]
  6a                    ld16	r6, [r6]
  af                    xor	r7, r7
  f7 6b                 add32	q2, q3
  c6 00 0a              ldi16	r6, 0xa00
  f0 69 c8              cmp32	q3, q2
- d2 04                 brult8	0x4 <L11>
+ d2 04                 brult8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_find_handler
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x15d
-<L11>:
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x164
+<L12>:
  a0                    xor	r4, r4
  d6 12                 adjsp	0x12
  b8                    pop16	r0
@@ -1906,7 +1914,7 @@ Disassembly of section .text.avm_eh_find_handler:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
- f4 02                 ldsp16	r6, [sp+0x0]
+ f4 12                 ldsp16	r6, [sp+0x4]
  ee 9c 38              st16	[r6+24], r4
  ee 1c 3a              st16	[r6+26], r0
  a5                    xor	r5, r5
@@ -1914,7 +1922,7 @@ Disassembly of section .text.avm_eh_find_handler:
  c0 01                 ldi8	r4, 0x1
  e2 00 00 00           jmpf	avm_eh_find_handler
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_eh_find_handler+0x156
+		R_AVM_FAR24	.text.avm_eh_find_handler+0x15d
 
 Disassembly of section .text.find_function:
 
@@ -2901,20 +2909,21 @@ Disassembly of section .text.avm_eh_prepare_next:
  b1                    push16	r1
  b0                    push16	r0
  d6 ee                 adjsp	-0x12
- f1 04                 mov	r0, r4
+ f1 0c                 mov	r1, r4
+ f1 01                 mov	r0, r1
  f0 08 18              addi.s8	r0, 0x18
- c5 00 f6              ldi16	r5, 0xf600
- f4 61                 stsp16	[sp+0x8], r5
- c5 00 ff              ldi16	r5, 0xff00
- f4 59                 stsp16	[sp+0x6], r5
- 04                    mov	r5, r4
- c9 1a                 addi.s8	r5, 0x1a
- f4 69                 stsp16	[sp+0xa], r5
+ c4 00 f6              ldi16	r4, 0xf600
+ f4 58                 stsp16	[sp+0x6], r4
+ c4 00 ff              ldi16	r4, 0xff00
  f4 50                 stsp16	[sp+0x4], r4
+ f1 21                 mov	r4, r1
+ c8 1a                 addi.s8	r4, 0x1a
+ f4 60                 stsp16	[sp+0x8], r4
+ f0 39 0e              stsp16	[sp+0xe], r1
  f0 38 10              stsp16	[sp+0x10], r0
  e2 00 00 00           jmpf	avm_eh_prepare_next
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x44
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x49
  c0 06                 ldi8	r4, 0x6
  a5                    xor	r5, r5
  f7 66                 add32	q1, q2
@@ -2928,28 +2937,29 @@ Disassembly of section .text.avm_eh_prepare_next:
 		R_AVM_FAR24	.text.unwind_frame
  f1 74                 zext8	r4
  f4 a4                 tst8	r4
- f4 10                 ldsp16	r4, [sp+0x4]
+ f0 31 0e              ldsp16	r1, [sp+0xe]
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
 <L0>:
- ed b0 20              ld16	r5, [r0+0]
- f4 22                 ldsp16	r6, [sp+0x8]
- 16                    add	r5, r6
- f4 1a                 ldsp16	r6, [sp+0x6]
- 36                    cmp	r5, r6
+ ed 90 20              ld16	r4, [r0+0]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ 11                    add	r4, r5
+ f4 11                 ldsp16	r5, [sp+0x4]
+ 31                    cmp	r4, r5
  d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
 <L1>:
- f4 29                 ldsp16	r5, [sp+0xa]
- f7 2a                 ld16	r2, [r5+]
- f5 37                 ld8u	r3, [r5]
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff ff              ldi16	r7, 0xffff
- f7 67                 add32	q1, q3
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f7 22                 ld16	r2, [r4+]
+ f5 33                 ld8u	r3, [r4]
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ f7 66                 add32	q1, q2
+ f1 21                 mov	r4, r1
  f2 6b                 mov32	q3, q1
  e3 00 00 00           callf	avm_eh_prepare_next
 		R_AVM_RELAX	*ABS*
@@ -2960,7 +2970,7 @@ Disassembly of section .text.avm_eh_prepare_next:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
 <L2>:
  f2 62                 mov32	q0, q2
  f2 6b                 mov32	q3, q1
@@ -2969,8 +2979,8 @@ Disassembly of section .text.avm_eh_prepare_next:
 		R_AVM_FAR24	.text.find_row
  f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
- f0 38 0c              stsp16	[sp+0xc], r0
- f0 39 0e              stsp16	[sp+0xe], r1
+ f0 38 0a              stsp16	[sp+0xa], r0
+ f0 39 0c              stsp16	[sp+0xc], r1
  f2 68                 mov32	q2, q0
  f2 6b                 mov32	q3, q1
  e3 00 00 00           callf	avm_eh_prepare_next
@@ -2988,7 +2998,7 @@ Disassembly of section .text.avm_eh_prepare_next:
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
 <L3>:
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff ff              ldi16	r5, 0xffff
@@ -2996,99 +3006,110 @@ Disassembly of section .text.avm_eh_prepare_next:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
 <L4>:
- f2 30                 sub	r0, r0
- f2 39                 sub	r1, r1
- f0 69 40              cmp32	q1, q0
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 4c              cmp32	q1, q3
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x2b
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x2f
 <L5>:
  c0 09                 ldi8	r4, 0x9
  a5                    xor	r5, r5
  f7 69                 add32	q2, q1
- f0 63 c8              ldp24	q3, [q2]
- f0 69 c0              cmp32	q3, q0
+ f0 63 08              ldp24	q0, [q2]
+ f0 69 0c              cmp32	q0, q3
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x23
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x27
 <L6>:
- d6 fe                 adjsp	-0x2
- f4 18                 ldsp16	r4, [sp+0x6]
- f4 40                 stsp16	[sp+0x0], r4
- f4 38                 ldsp16	r4, [sp+0xe]
- f0 35 10              ldsp16	r5, [sp+0x10]
- f7 6e                 add32	q3, q2
+ f4 28                 ldsp16	r4, [sp+0xa]
+ f4 31                 ldsp16	r5, [sp+0xc]
+ f7 62                 add32	q0, q2
+ f2 6a                 mov32	q3, q0
  e3 00 00 00           callf	avm_eh_prepare_next
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list
- d6 02                 adjsp	0x2
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff ff              ldi16	r7, 0xffff
- f0 69 8c              cmp32	q2, q3
+		R_AVM_FAR24	.text.list_ok
+ 0c                    mov	r7, r4
+ f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
 <L7>:
+ f1 77                 zext8	r7
+ f2 68                 mov32	q2, q0
+ f4 3a                 ldsp16	r6, [sp+0xe]
+ e3 00 00 00           callf	avm_eh_prepare_next
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.match_list
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
+ f0 69 8c              cmp32	q2, q3
+ d1 04                 brne8	0x4 <L8>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	avm_eh_prepare_next
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
+<L8>:
  c2 06                 ldi8	r6, 0x6
  af                    xor	r7, r7
  f7 67                 add32	q1, q3
- f0 63 44              ldp24	q1, [q1]
+ f0 63 04              ldp24	q0, [q1]
  f6 2c                 tst16	r4
- d0 04                 breq8	0x4 <L8>
+ d0 04                 breq8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x166
-<L8>:
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x178
+<L9>:
  aa                    xor	r6, r6
  c3 01                 ldi8	r7, 0x1
  82                    and	r4, r6
  87                    and	r5, r7
- f0 69 80              cmp32	q2, q0
- d1 04                 brne8	0x4 <L9>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x2b
-<L9>:
- f4 28                 ldsp16	r4, [sp+0xa]
- f7 26                 ld16	r6, [r4+]
- 4c                    ld8u	r7, [r4]
- f4 30                 ldsp16	r4, [sp+0xc]
- f4 39                 ldsp16	r5, [sp+0xe]
- e3 00 00 00           callf	avm_eh_prepare_next
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.find_call
- f2 62                 mov32	q0, q2
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff ff              ldi16	r7, 0xffff
- f0 69 0c              cmp32	q0, q3
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
  d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x2f
 <L10>:
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f7 26                 ld16	r6, [r4+]
+ 4c                    ld8u	r7, [r4]
+ f4 28                 ldsp16	r4, [sp+0xa]
+ f4 31                 ldsp16	r5, [sp+0xc]
+ e3 00 00 00           callf	avm_eh_prepare_next
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_call
+ f2 66                 mov32	q1, q2
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
+ f0 69 4c              cmp32	q1, q3
+ d1 04                 brne8	0x4 <L11>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	avm_eh_prepare_next
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
+<L11>:
  f0 35 10              ldsp16	r5, [sp+0x10]
  69                    ld16	r6, [r5]
  af                    xor	r7, r7
- f7 63                 add32	q0, q3
+ f7 67                 add32	q1, q3
  c6 00 0a              ldi16	r6, 0xa00
- f0 69 c0              cmp32	q3, q0
- d8 04                 bruge8	0x4 <L11>
+ f0 69 c4              cmp32	q3, q1
+ d8 04                 bruge8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
-<L11>:
- f4 10                 ldsp16	r4, [sp+0x4]
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
+<L12>:
+ f4 38                 ldsp16	r4, [sp+0xe]
  c2 0d                 ldi8	r6, 0xd
  d7 0f                 sys	memcpy
- f4 13                 ldsp16	r7, [sp+0x4]
- ee 6e 24              st8	[r7+4], r3
- ee 5e 22              st16	[r7+2], r2
- f1 20                 mov	r4, r0
+ f4 3b                 ldsp16	r7, [sp+0xe]
+ ee 2e 24              st8	[r7+4], r1
+ ee 1e 22              st16	[r7+2], r0
+ f1 22                 mov	r4, r2
  7c                    st16	[r7], r4
  ee fe 2d              st16	[r7+13], r7
  f0 34 10              ldsp16	r4, [sp+0x10]
@@ -3100,51 +3121,51 @@ Disassembly of section .text.avm_eh_prepare_next:
  f1 74                 zext8	r4
  e2 00 00 00           jmpf	avm_eh_prepare_next
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1af
- f4 13                 ldsp16	r7, [sp+0x4]
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c1
+ f4 3b                 ldsp16	r7, [sp+0xe]
  ed de 47              ld16	r6, [r7+39]
- 38                    cmp	r6, r4
- d0 04                 breq8	0x4 <L12>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
-<L12>:
- ed de 49              ld16	r6, [r7+41]
- 01                    mov	r4, r5
  38                    cmp	r6, r4
  d0 04                 breq8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
 <L13>:
- f4 28                 ldsp16	r4, [sp+0xa]
+ ed de 49              ld16	r6, [r7+41]
+ 01                    mov	r4, r5
+ 38                    cmp	r6, r4
+ d0 04                 breq8	0x4 <L14>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	avm_eh_prepare_next
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
+<L14>:
+ f4 20                 ldsp16	r4, [sp+0x8]
  f7 26                 ld16	r6, [r4+]
  4c                    ld8u	r7, [r4]
- f4 30                 ldsp16	r4, [sp+0xc]
- f4 39                 ldsp16	r5, [sp+0xe]
+ f4 28                 ldsp16	r4, [sp+0xa]
+ f4 31                 ldsp16	r5, [sp+0xc]
  e3 00 00 00           callf	avm_eh_prepare_next
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.find_call
- f2 62                 mov32	q0, q2
+ f2 66                 mov32	q1, q2
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff ff              ldi16	r7, 0xffff
- f0 69 0c              cmp32	q0, q3
- d1 04                 brne8	0x4 <L14>
+ f0 69 4c              cmp32	q1, q3
+ d1 04                 brne8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1ae
-<L14>:
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c0
+<L15>:
  f0 35 10              ldsp16	r5, [sp+0x10]
  69                    ld16	r6, [r5]
  af                    xor	r7, r7
- f7 63                 add32	q0, q3
+ f7 67                 add32	q1, q3
  c6 00 0a              ldi16	r6, 0xa00
- f0 69 c0              cmp32	q3, q0
- d2 04                 brult8	0x4 <L15>
+ f0 69 c4              cmp32	q3, q1
+ d2 04                 brult8	0x4 <L16>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_eh_prepare_next
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1b6
-<L15>:
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c8
+<L16>:
  a0                    xor	r4, r4
  d6 12                 adjsp	0x12
  b8                    pop16	r0
@@ -3152,19 +3173,19 @@ Disassembly of section .text.avm_eh_prepare_next:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
- f4 10                 ldsp16	r4, [sp+0x4]
+ f4 38                 ldsp16	r4, [sp+0xe]
  c2 0d                 ldi8	r6, 0xd
  d7 0f                 sys	memcpy
- f4 11                 ldsp16	r5, [sp+0x4]
- ee 6a 24              st8	[r5+4], r3
- ee 5a 22              st16	[r5+2], r2
- f1 20                 mov	r4, r0
+ f4 39                 ldsp16	r5, [sp+0xe]
+ ee 2a 24              st8	[r5+4], r1
+ ee 1a 22              st16	[r5+2], r0
+ f1 22                 mov	r4, r2
  74                    st16	[r5], r4
  ee ba 2d              st16	[r5+13], r5
  c0 02                 ldi8	r4, 0x2
  e2 00 00 00           jmpf	avm_eh_prepare_next
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1af
+		R_AVM_FAR24	.text.avm_eh_prepare_next+0x1c1
 
 Disassembly of section .text.list_ok:
 
@@ -3499,89 +3520,78 @@ Disassembly of section .text.match_list:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f2                 adjsp	-0xe
- f2 67                 mov32	q1, q3
- f0 30 19              ldsp16	r0, [sp+0x19]
- e3 00 00 00           callf	match_list
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.list_ok
+ d6 ee                 adjsp	-0x12
+ f0 3f 10              stsp16	[sp+0x10], r7
+ f4 5a                 stsp16	[sp+0x6], r6
+ f0 00 01              ldi8	r0, 0x1
+ f2 39                 sub	r1, r1
  08                    mov	r6, r4
- c4 ff ff              ldi16	r4, 0xffff
- c5 ff ff              ldi16	r5, 0xffff
- f4 a6                 tst8	r6
+ 0d                    mov	r7, r5
+ f7 6c                 add32	q3, q0
+ f0 62 cc              ldp16	r6, [q3]
+ f6 2e                 tst16	r6
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x287
+		R_AVM_FAR24	.text.match_list+0x21e
 <L0>:
- f4 42                 stsp16	[sp+0x0], r6
- f0 38 06              stsp16	[sp+0x6], r0
- c2 01                 ldi8	r6, 0x1
+ f0 00 03              ldi8	r0, 0x3
+ f2 39                 sub	r1, r1
+ f7 68                 add32	q2, q0
+ e2 00 00 00           jmpf	match_list
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.match_list+0x3f
+ c2 05                 ldi8	r6, 0x5
  af                    xor	r7, r7
- f2 69                 mov32	q2, q1
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
  f7 6b                 add32	q2, q3
- f0 62 88              ldp16	r4, [q2]
- f6 2c                 tst16	r4
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 b6                 dec16	r6
+ f6 2e                 tst16	r6
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x23c
+		R_AVM_FAR24	.text.match_list+0x21e
 <L1>:
- c2 03                 ldi8	r6, 0x3
- af                    xor	r7, r7
- f7 67                 add32	q1, q3
- e2 00 00 00           jmpf	match_list
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x4f
- c0 05                 ldi8	r4, 0x5
- a5                    xor	r5, r5
- f7 66                 add32	q1, q2
- f4 20                 ldsp16	r4, [sp+0x8]
- f4 b4                 dec16	r4
- f6 2c                 tst16	r4
- d1 04                 brne8	0x4 <L2>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x23c
-<L2>:
- f4 60                 stsp16	[sp+0x8], r4
- f2 69                 mov32	q2, q1
- c2 02                 ldi8	r6, 0x2
- af                    xor	r7, r7
- f7 6b                 add32	q2, q3
+ f0 00 02              ldi8	r0, 0x2
+ f2 39                 sub	r1, r1
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f7 68                 add32	q2, q0
  f0 63 08              ldp24	q0, [q2]
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  f0 69 08              cmp32	q0, q2
+ d1 04                 brne8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	match_list
+		R_AVM_FAR24	.text.match_list+0x229
+<L2>:
+ f4 18                 ldsp16	r4, [sp+0x6]
+ c8 0f                 addi.s8	r4, 0xf
+ f7 22                 ld16	r2, [r4+]
+ f5 33                 ld8u	r3, [r4]
+ f0 3a 08              stsp16	[sp+0x8], r2
+ f0 3b 0a              stsp16	[sp+0xa], r3
+ f0 69 04              cmp32	q0, q1
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x246
+		R_AVM_FAR24	.text.match_list+0x229
 <L3>:
- f4 18                 ldsp16	r4, [sp+0x6]
- c8 0f                 addi.s8	r4, 0xf
- f7 26                 ld16	r6, [r4+]
- 4c                    ld8u	r7, [r4]
- f4 6a                 stsp16	[sp+0xa], r6
- f4 73                 stsp16	[sp+0xc], r7
- f0 69 0c              cmp32	q0, q3
- d1 04                 brne8	0x4 <L4>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x246
-<L4>:
+ f4 52                 stsp16	[sp+0x4], r6
  f2 68                 mov32	q2, q0
  e3 00 00 00           callf	match_list
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.rtti_kind
- cc 07                 cmpi.s8	r4, 0x7
- d0 04                 breq8	0x4 <L5>
+ f1 14                 mov	r2, r4
+ f0 0e 07              cmpi.s8	r2, 0x7
+ d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0xe6
-<L5>:
- f0 3a 02              stsp16	[sp+0x2], r2
- f0 3b 04              stsp16	[sp+0x4], r3
+		R_AVM_FAR24	.text.match_list+0xde
+<L4>:
  c0 06                 ldi8	r4, 0x6
  a5                    xor	r5, r5
  f7 68                 add32	q2, q0
@@ -3590,183 +3600,173 @@ Disassembly of section .text.match_list:
  a5                    xor	r5, r5
  f7 62                 add32	q0, q2
  f0 63 80              ldp24	q2, [q0]
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
+ f4 72                 stsp16	[sp+0xc], r6
+ f4 7b                 stsp16	[sp+0xe], r7
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  f0 69 80              cmp32	q2, q0
- d0 04                 breq8	0x4 <L6>
+ d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x281
-<L6>:
+		R_AVM_FAR24	.text.match_list+0x290
+<L5>:
  c0 0a                 ldi8	r4, 0xa
  c5 00 ff              ldi16	r5, 0xff00
  f7 69                 add32	q2, q1
  c6 0a 01              ldi16	r6, 0x10a
  c7 00 ff              ldi16	r7, 0xff00
  f0 69 8c              cmp32	q2, q3
- d8 04                 bruge8	0x4 <L7>
+ d8 04                 bruge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x277
-<L7>:
+		R_AVM_FAR24	.text.match_list+0x290
+<L6>:
  f2 69                 mov32	q2, q1
  e3 00 00 00           callf	match_list
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.rtti_kind
  cc 04                 cmpi.s8	r4, 0x4
+ d0 04                 breq8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	match_list
+		R_AVM_FAR24	.text.match_list+0x290
+<L7>:
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f4 29                 ldsp16	r5, [sp+0xa]
+ f0 69 48              cmp32	q1, q2
  d0 04                 breq8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x254
+		R_AVM_FAR24	.text.match_list+0x2a
 <L8>:
- f4 28                 ldsp16	r4, [sp+0xa]
- f4 31                 ldsp16	r5, [sp+0xc]
- f0 69 48              cmp32	q1, q2
- f0 32 02              ldsp16	r2, [sp+0x2]
- f0 33 04              ldsp16	r3, [sp+0x4]
- d0 04                 breq8	0x4 <L9>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
-<L9>:
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x25e
- f4 48                 stsp16	[sp+0x2], r4
- f4 28                 ldsp16	r4, [sp+0xa]
- f4 31                 ldsp16	r5, [sp+0xc]
+		R_AVM_FAR24	.text.match_list+0x23b
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f4 29                 ldsp16	r5, [sp+0xa]
  e3 00 00 00           callf	match_list
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.rtti_kind
  cc 04                 cmpi.s8	r4, 0x4
+ d0 04                 breq8	0x4 <L9>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	match_list
+		R_AVM_FAR24	.text.match_list+0x124
+<L9>:
+ f0 0e 04              cmpi.s8	r2, 0x4
  d0 04                 breq8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x12f
+		R_AVM_FAR24	.text.match_list+0x2a
 <L10>:
- f4 08                 ldsp16	r4, [sp+0x2]
- cc 04                 cmpi.s8	r4, 0x4
- d0 04                 breq8	0x4 <L11>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
-<L11>:
- f4 28                 ldsp16	r4, [sp+0xa]
- f4 31                 ldsp16	r5, [sp+0xc]
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f4 29                 ldsp16	r5, [sp+0xa]
  f2 6a                 mov32	q3, q0
  e3 00 00 00           callf	match_list
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.match_pointer_chain
  f1 74                 zext8	r4
  cc 06                 cmpi.s8	r4, 0x6
+ d1 04                 brne8	0x4 <L11>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	match_list
+		R_AVM_FAR24	.text.match_list+0x1b9
+<L11>:
+ cc 05                 cmpi.s8	r4, 0x5
  d1 04                 brne8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x1d7
+		R_AVM_FAR24	.text.match_list+0x24e
 <L12>:
- cc 05                 cmpi.s8	r4, 0x5
- d1 04                 brne8	0x4 <L13>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x28e
-<L13>:
  a5                    xor	r5, r5
  08                    mov	r6, r4
  0e                    mov	r7, r6
  cb fd                 addi.s8	r7, -0x3
  cf 02                 cmpi.s8	r7, 0x2
- d8 04                 bruge8	0x4 <L14>
+ d8 04                 bruge8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x26d
+		R_AVM_FAR24	.text.match_list+0x286
+<L13>:
+ e2 00 00 00           jmpf	match_list
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.match_list+0x208
+ f0 0e 04              cmpi.s8	r2, 0x4
+ d0 04                 breq8	0x4 <L14>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	match_list
+		R_AVM_FAR24	.text.match_list+0x188
 <L14>:
- e2 00 00 00           jmpf	match_list
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x226
- f4 09                 ldsp16	r5, [sp+0x2]
- cd 04                 cmpi.s8	r5, 0x4
+ cc 06                 cmpi.s8	r4, 0x6
  d0 04                 breq8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x1a8
+		R_AVM_FAR24	.text.match_list+0x188
 <L15>:
- cc 06                 cmpi.s8	r4, 0x6
- d0 04                 breq8	0x4 <L16>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x1a8
-<L16>:
  c0 03                 ldi8	r4, 0x3
  a5                    xor	r5, r5
- f4 2a                 ldsp16	r6, [sp+0xa]
- f4 33                 ldsp16	r7, [sp+0xc]
+ f4 22                 ldsp16	r6, [sp+0x8]
+ f4 2b                 ldsp16	r7, [sp+0xa]
  f7 6e                 add32	q3, q2
- f0 63 8c              ldp24	q2, [q3]
+ f0 63 4c              ldp24	q1, [q3]
  c2 0a                 ldi8	r6, 0xa
  c7 00 ff              ldi16	r7, 0xff00
- f4 68                 stsp16	[sp+0xa], r4
- f4 71                 stsp16	[sp+0xc], r5
- f7 6e                 add32	q3, q2
- f2 69                 mov32	q2, q1
- f0 06 0a 01           ldi16	r2, 0x10a
- f0 07 00 ff           ldi16	r3, 0xff00
- f0 69 c4              cmp32	q3, q1
- f2 66                 mov32	q1, q2
- d8 04                 bruge8	0x4 <L17>
+ f7 6d                 add32	q3, q1
+ c4 0a 01              ldi16	r4, 0x10a
+ c5 00 ff              ldi16	r5, 0xff00
+ f0 69 c8              cmp32	q3, q2
+ d8 04                 bruge8	0x4 <L16>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
+		R_AVM_FAR24	.text.match_list+0x2a
+<L16>:
+ f0 60 84              ldp8u	r4, [q1]
+ cc 44                 cmpi.s8	r4, 0x44
+ d0 04                 breq8	0x4 <L17>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	match_list
+		R_AVM_FAR24	.text.match_list+0x2a
 <L17>:
- f4 28                 ldsp16	r4, [sp+0xa]
- f4 31                 ldsp16	r5, [sp+0xc]
- f0 60 c8              ldp8u	r6, [q2]
- ce 44                 cmpi.s8	r6, 0x44
+ f2 69                 mov32	q2, q1
+ c2 01                 ldi8	r6, 0x1
+ af                    xor	r7, r7
+ f7 6b                 add32	q2, q3
+ f0 60 88              ldp8u	r4, [q2]
+ cc 6e                 cmpi.s8	r4, 0x6e
  d0 04                 breq8	0x4 <L18>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
+		R_AVM_FAR24	.text.match_list+0x2a
 <L18>:
- f4 2a                 ldsp16	r6, [sp+0xa]
- f4 33                 ldsp16	r7, [sp+0xc]
- c0 01                 ldi8	r4, 0x1
+ c0 02                 ldi8	r4, 0x2
  a5                    xor	r5, r5
- f7 6e                 add32	q3, q2
- f0 60 cc              ldp8u	r6, [q3]
- ce 6e                 cmpi.s8	r6, 0x6e
+ f7 66                 add32	q1, q2
+ f0 60 84              ldp8u	r4, [q1]
+ f4 a4                 tst8	r4
  d0 04                 breq8	0x4 <L19>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
+		R_AVM_FAR24	.text.match_list+0x2a
 <L19>:
- c0 02                 ldi8	r4, 0x2
- a5                    xor	r5, r5
- f4 2a                 ldsp16	r6, [sp+0xa]
- f4 33                 ldsp16	r7, [sp+0xc]
- f7 6e                 add32	q3, q2
- f0 60 8c              ldp8u	r4, [q3]
- f4 a4                 tst8	r4
- d0 04                 breq8	0x4 <L20>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
-<L20>:
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x2b2
+		R_AVM_FAR24	.text.match_list+0x272
  c8 fc                 addi.s8	r4, -0x4
  cc fd                 cmpi.s8	r4, -0x3
+ d8 04                 bruge8	0x4 <L20>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	match_list
+		R_AVM_FAR24	.text.match_list+0x2a
+<L20>:
+ f0 0a fc              addi.s8	r2, -0x4
+ f0 0e fd              cmpi.s8	r2, -0x3
  d8 04                 bruge8	0x4 <L21>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
+		R_AVM_FAR24	.text.match_list+0x2a
 <L21>:
- c9 fc                 addi.s8	r5, -0x4
- cd fd                 cmpi.s8	r5, -0x3
- d8 04                 bruge8	0x4 <L22>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
-<L22>:
  f2 68                 mov32	q2, q0
  f0 30 06              ldsp16	r0, [sp+0x6]
  f1 28                 mov	r6, r0
@@ -3776,15 +3776,15 @@ Disassembly of section .text.match_list:
  08                    mov	r6, r4
  f1 76                 zext8	r6
  ce 01                 cmpi.s8	r6, 0x1
- d0 04                 breq8	0x4 <L23>
+ d0 04                 breq8	0x4 <L22>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x218
-<L23>:
+		R_AVM_FAR24	.text.match_list+0x1fa
+<L22>:
  aa                    xor	r6, r6
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x215
+		R_AVM_FAR24	.text.match_list+0x1f7
  c0 08                 ldi8	r4, 0x8
  a5                    xor	r5, r5
  f7 62                 add32	q0, q2
@@ -3792,11 +3792,11 @@ Disassembly of section .text.match_list:
  f0 30 06              ldsp16	r0, [sp+0x6]
  ed d0 5b              ld16	r6, [r0+59]
  f6 2e                 tst16	r6
- d1 04                 brne8	0x4 <L24>
+ d1 04                 brne8	0x4 <L23>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x202
-<L24>:
+		R_AVM_FAR24	.text.match_list+0x1e4
+<L23>:
  f1 28                 mov	r6, r0
  e3 00 00 00           callf	match_list
 		R_AVM_RELAX	*ABS*
@@ -3804,14 +3804,14 @@ Disassembly of section .text.match_list:
  08                    mov	r6, r4
  f1 76                 zext8	r6
  ce 01                 cmpi.s8	r6, 0x1
- d0 04                 breq8	0x4 <L25>
+ d0 04                 breq8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x218
-<L25>:
+		R_AVM_FAR24	.text.match_list+0x1fa
+<L24>:
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x213
+		R_AVM_FAR24	.text.match_list+0x1f5
  f1 28                 mov	r6, r0
  e3 00 00 00           callf	match_list
 		R_AVM_RELAX	*ABS*
@@ -3819,11 +3819,11 @@ Disassembly of section .text.match_list:
  08                    mov	r6, r4
  f1 76                 zext8	r6
  ce 01                 cmpi.s8	r6, 0x1
- d0 04                 breq8	0x4 <L26>
+ d0 04                 breq8	0x4 <L25>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x218
-<L26>:
+		R_AVM_FAR24	.text.match_list+0x1fa
+<L25>:
  c2 01                 ldi8	r6, 0x1
  ee c0 56              st8	[r0+54], r6
  08                    mov	r6, r4
@@ -3831,75 +3831,56 @@ Disassembly of section .text.match_list:
  0e                    mov	r7, r6
  cb fd                 addi.s8	r7, -0x3
  cf 02                 cmpi.s8	r7, 0x2
- d8 04                 bruge8	0x4 <L27>
+ d8 04                 bruge8	0x4 <L26>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x26d
-<L27>:
+		R_AVM_FAR24	.text.match_list+0x286
+<L26>:
  f2 62                 mov32	q0, q2
  ce 01                 cmpi.s8	r6, 0x1
- d0 04                 breq8	0x4 <L28>
+ d0 04                 breq8	0x4 <L27>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x3e
-<L28>:
+		R_AVM_FAR24	.text.match_list+0x2a
+<L27>:
  a0                    xor	r4, r4
  c5 ff ff              ldi16	r5, 0xffff
  f9 10                 and	r0, r4
  f9 34                 and	r1, r5
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x264
+		R_AVM_FAR24	.text.match_list+0x241
  c0 01                 ldi8	r4, 0x1
- f4 01                 ldsp16	r5, [sp+0x0]
+ f0 35 10              ldsp16	r5, [sp+0x10]
  84                    and	r5, r4
  a0                    xor	r4, r4
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x287
+		R_AVM_FAR24	.text.match_list+0x28c
  a0                    xor	r4, r4
  f4 19                 ldsp16	r5, [sp+0x6]
  ee 8a 56              st8	[r5+54], r4
- f0 62 84              ldp16	r4, [q1]
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f0 62 88              ldp16	r4, [q2]
  a5                    xor	r5, r5
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x287
- c4 ff ff              ldi16	r4, 0xffff
- c5 ff ff              ldi16	r5, 0xffff
- e2 00 00 00           jmpf	match_list
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x287
+		R_AVM_FAR24	.text.match_list+0x28c
  a0                    xor	r4, r4
  f4 19                 ldsp16	r5, [sp+0x6]
  ee 8a 56              st8	[r5+54], r4
- f0 62 84              ldp16	r4, [q1]
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f0 62 88              ldp16	r4, [q2]
  f1 25                 mov	r5, r1
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x287
- c4 ff ff              ldi16	r4, 0xffff
- c5 ff ff              ldi16	r5, 0xffff
- e2 00 00 00           jmpf	match_list
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x287
- c4 ff ff              ldi16	r4, 0xffff
- c5 ff ff              ldi16	r5, 0xffff
- e2 00 00 00           jmpf	match_list
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x287
- c4 ff ff              ldi16	r4, 0xffff
- c5 ff ff              ldi16	r5, 0xffff
- d6 0e                 adjsp	0xe
- b8                    pop16	r0
- b9                    pop16	r1
- ba                    pop16	r2
- bb                    pop16	r3
- ef                    ret
+		R_AVM_FAR24	.text.match_list+0x28c
  c0 06                 ldi8	r4, 0x6
  a5                    xor	r5, r5
- f4 2a                 ldsp16	r6, [sp+0xa]
- f4 33                 ldsp16	r7, [sp+0xc]
+ f4 22                 ldsp16	r6, [sp+0x8]
+ f4 2b                 ldsp16	r7, [sp+0xa]
  f7 6e                 add32	q3, q2
  f0 62 8c              ldp16	r4, [q3]
  c1 80                 ldi8	r5, 0x80
@@ -3914,7 +3895,7 @@ Disassembly of section .text.match_list:
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x264
+		R_AVM_FAR24	.text.match_list+0x241
  c0 06                 ldi8	r4, 0x6
  a5                    xor	r5, r5
  f7 62                 add32	q0, q2
@@ -3922,13 +3903,23 @@ Disassembly of section .text.match_list:
  c5 30 ff              ldi16	r5, 0xff30
  84                    and	r5, r4
  f6 2d                 tst16	r5
- c4 ff ff              ldi16	r4, 0xffff
- c5 ff ff              ldi16	r5, 0xffff
- d0 04                 breq8	0x4 <L29>
+ d1 04                 brne8	0x4 <L28>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	match_list
-		R_AVM_FAR24	.text.match_list+0x287
-<L29>:
+		R_AVM_FAR24	.text.match_list+0x29b
+<L28>:
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ f4 70                 stsp16	[sp+0xc], r4
+ f4 79                 stsp16	[sp+0xe], r5
+ f4 30                 ldsp16	r4, [sp+0xc]
+ f4 39                 ldsp16	r5, [sp+0xe]
+ d6 12                 adjsp	0x12
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
  c0 03                 ldi8	r4, 0x3
  f4 19                 ldsp16	r5, [sp+0x6]
  ee 8a 56              st8	[r5+54], r4
@@ -3936,13 +3927,11 @@ Disassembly of section .text.match_list:
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	match_list
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.match_list+0x264
+		R_AVM_FAR24	.text.match_list+0x241
 
 Disassembly of section .text.rtti_kind:
 
 <rtti_kind>:
- b3                    push16	r3
- b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
  c2 0a                 ldi8	r6, 0xa
@@ -3954,118 +3943,107 @@ Disassembly of section .text.rtti_kind:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rtti_kind
-		R_AVM_FAR24	.text.rtti_kind+0x21
+		R_AVM_FAR24	.text.rtti_kind+0x1f
 <L0>:
  a0                    xor	r4, r4
  e2 00 00 00           jmpf	rtti_kind
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.rtti_kind+0xbe
- c2 06                 ldi8	r6, 0x6
- af                    xor	r7, r7
- f0 06 00 00           ldi16	r2, 0x0
-		R_AVM_PROG_LO16	vtable for __cxxabiv1::__class_type_info
- f0 03 00              ldi8	r3, 0x0
-		R_AVM_PROG_HI8	vtable for __cxxabiv1::__class_type_info
- f7 67                 add32	q1, q3
- f0 63 08              ldp24	q0, [q2]
- f0 69 04              cmp32	q0, q1
+		R_AVM_FAR24	.text.rtti_kind+0xa9
+ f0 63 c8              ldp24	q3, [q2]
+ c4 00 00              ldi16	r4, 0x0
+		R_AVM_PROG_LO16	vtable for __cxxabiv1::__class_type_info+0x6
+ c1 00                 ldi8	r5, 0x0
+		R_AVM_PROG_HI8	vtable for __cxxabiv1::__class_type_info+0x6
+ f0 69 c8              cmp32	q3, q2
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rtti_kind
-		R_AVM_FAR24	.text.rtti_kind+0x3f
+		R_AVM_FAR24	.text.rtti_kind+0x36
 <L1>:
  c0 01                 ldi8	r4, 0x1
  e2 00 00 00           jmpf	rtti_kind
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.rtti_kind+0xbe
+		R_AVM_FAR24	.text.rtti_kind+0xa9
  c4 00 00              ldi16	r4, 0x0
-		R_AVM_PROG_LO16	vtable for __cxxabiv1::__si_class_type_info
+		R_AVM_PROG_LO16	vtable for __cxxabiv1::__si_class_type_info+0x6
  c1 00                 ldi8	r5, 0x0
-		R_AVM_PROG_HI8	vtable for __cxxabiv1::__si_class_type_info
- f7 6b                 add32	q2, q3
- f0 69 08              cmp32	q0, q2
+		R_AVM_PROG_HI8	vtable for __cxxabiv1::__si_class_type_info+0x6
+ f0 69 c8              cmp32	q3, q2
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rtti_kind
-		R_AVM_FAR24	.text.rtti_kind+0x55
+		R_AVM_FAR24	.text.rtti_kind+0x4a
 <L2>:
  c0 02                 ldi8	r4, 0x2
  e2 00 00 00           jmpf	rtti_kind
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.rtti_kind+0xbe
+		R_AVM_FAR24	.text.rtti_kind+0xa9
  c4 00 00              ldi16	r4, 0x0
-		R_AVM_PROG_LO16	vtable for __cxxabiv1::__vmi_class_type_info
+		R_AVM_PROG_LO16	vtable for __cxxabiv1::__vmi_class_type_info+0x6
  c1 00                 ldi8	r5, 0x0
-		R_AVM_PROG_HI8	vtable for __cxxabiv1::__vmi_class_type_info
- f7 6b                 add32	q2, q3
- f0 69 08              cmp32	q0, q2
+		R_AVM_PROG_HI8	vtable for __cxxabiv1::__vmi_class_type_info+0x6
+ f0 69 c8              cmp32	q3, q2
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rtti_kind
-		R_AVM_FAR24	.text.rtti_kind+0x6b
+		R_AVM_FAR24	.text.rtti_kind+0x5e
 <L3>:
  c0 03                 ldi8	r4, 0x3
  e2 00 00 00           jmpf	rtti_kind
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.rtti_kind+0xbe
+		R_AVM_FAR24	.text.rtti_kind+0xa9
  c4 00 00              ldi16	r4, 0x0
-		R_AVM_PROG_LO16	vtable for __cxxabiv1::__pointer_type_info
+		R_AVM_PROG_LO16	vtable for __cxxabiv1::__pointer_type_info+0x6
  c1 00                 ldi8	r5, 0x0
-		R_AVM_PROG_HI8	vtable for __cxxabiv1::__pointer_type_info
- f7 6b                 add32	q2, q3
- f0 69 08              cmp32	q0, q2
+		R_AVM_PROG_HI8	vtable for __cxxabiv1::__pointer_type_info+0x6
+ f0 69 c8              cmp32	q3, q2
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rtti_kind
-		R_AVM_FAR24	.text.rtti_kind+0x81
+		R_AVM_FAR24	.text.rtti_kind+0x72
 <L4>:
  c0 04                 ldi8	r4, 0x4
  e2 00 00 00           jmpf	rtti_kind
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.rtti_kind+0xbe
+		R_AVM_FAR24	.text.rtti_kind+0xa9
  c4 00 00              ldi16	r4, 0x0
-		R_AVM_PROG_LO16	vtable for __cxxabiv1::__fundamental_type_info
+		R_AVM_PROG_LO16	vtable for __cxxabiv1::__fundamental_type_info+0x6
  c1 00                 ldi8	r5, 0x0
-		R_AVM_PROG_HI8	vtable for __cxxabiv1::__fundamental_type_info
- f7 6b                 add32	q2, q3
- f0 69 08              cmp32	q0, q2
+		R_AVM_PROG_HI8	vtable for __cxxabiv1::__fundamental_type_info+0x6
+ f0 69 c8              cmp32	q3, q2
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rtti_kind
-		R_AVM_FAR24	.text.rtti_kind+0x97
+		R_AVM_FAR24	.text.rtti_kind+0x86
 <L5>:
  c0 06                 ldi8	r4, 0x6
  e2 00 00 00           jmpf	rtti_kind
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.rtti_kind+0xbe
+		R_AVM_FAR24	.text.rtti_kind+0xa9
  c4 00 00              ldi16	r4, 0x0
-		R_AVM_PROG_LO16	vtable for __cxxabiv1::__function_type_info
+		R_AVM_PROG_LO16	vtable for __cxxabiv1::__function_type_info+0x6
  c1 00                 ldi8	r5, 0x0
-		R_AVM_PROG_HI8	vtable for __cxxabiv1::__function_type_info
- f7 6b                 add32	q2, q3
- f0 69 08              cmp32	q0, q2
+		R_AVM_PROG_HI8	vtable for __cxxabiv1::__function_type_info+0x6
+ f0 69 c8              cmp32	q3, q2
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rtti_kind
-		R_AVM_FAR24	.text.rtti_kind+0xad
+		R_AVM_FAR24	.text.rtti_kind+0x9a
 <L6>:
  c0 05                 ldi8	r4, 0x5
  e2 00 00 00           jmpf	rtti_kind
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.rtti_kind+0xbe
- f0 06 00 00           ldi16	r2, 0x0
-		R_AVM_PROG_LO16	__avm_eh_exact_pointer_ref_type_info
- f0 03 00              ldi8	r3, 0x0
-		R_AVM_PROG_HI8	__avm_eh_exact_pointer_ref_type_info
- f7 67                 add32	q1, q3
+		R_AVM_FAR24	.text.rtti_kind+0xa9
+ f0 04 00 00           ldi16	r0, 0x0
+		R_AVM_PROG_LO16	__avm_eh_exact_pointer_ref_type_info+0x6
+ f0 01 00              ldi8	r1, 0x0
+		R_AVM_PROG_HI8	__avm_eh_exact_pointer_ref_type_info+0x6
  a0                    xor	r4, r4
  c1 07                 ldi8	r5, 0x7
- f0 69 04              cmp32	q0, q1
+ f0 69 c0              cmp32	q3, q0
  fb 25                 cmov.eq	r4, r5
  b8                    pop16	r0
  b9                    pop16	r1
- ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret
 
 Disassembly of section .text.match_pointer_chain:

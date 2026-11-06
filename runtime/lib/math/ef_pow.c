@@ -27,12 +27,17 @@ float powf(float x, float y)
     GET_FLOAT_WORD(hy,y);
     uint32_t ix=hx&0x7fffffffUL, iy=hy&0x7fffffffUL;
     if (!iy) return issignalingf_inline(x) ? x+y : 1.0f;
-    if (ix>0x7f800000UL || iy>0x7f800000UL)
-        return hx==0x3f800000UL && !issignalingf_inline(y) ? 1.0f : x+y;
-    if (iy==0x7f800000UL) {
-        if (AVM_MATH_UNLIKELY(!ix && (hy >> 31))) errno = ERANGE;
-        if (ix==0x3f800000UL) return 1.0f;
-        return (ix>0x3f800000UL)==!(hy>>31) ? __math_oflowf(0) : 0.0f;
+    /* Finite inputs need only two native-word exponent tests. Inspect the
+       complete encodings on the uncommon NaN/infinity paths. */
+    if (AVM_MATH_UNLIKELY((uint16_t)(ix >> 16) >= 0x7f80U ||
+                          (uint16_t)(iy >> 16) >= 0x7f80U)) {
+        if (ix>0x7f800000UL || iy>0x7f800000UL)
+            return hx==0x3f800000UL && !issignalingf_inline(y) ? 1.0f : x+y;
+        if (iy==0x7f800000UL) {
+            if (AVM_MATH_UNLIKELY(!ix && (hy >> 31))) errno = ERANGE;
+            if (ix==0x3f800000UL) return 1.0f;
+            return (ix>0x3f800000UL)==!(hy>>31) ? __math_oflowf(0) : 0.0f;
+        }
     }
     if (hy==0x3f800000UL) {
         if (AVM_MATH_UNLIKELY(ix && ix < 0x00800000UL)) errno = ERANGE;

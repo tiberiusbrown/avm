@@ -223,8 +223,9 @@ Disassembly of section .text.asctime:
  f0 09 30              addi.s8	r1, 0x30
  f0 49 00 00           stm8	[0x0], r1
 		R_AVM_DATA16	.data.asctime.result+0xf
- f0 01 30              ldi8	r1, 0x30
- f9 85                 or	r4, r1
+ c1 30                 ldi8	r5, 0x30
+ f1 0d                 mov	r1, r5
+ 91                    or	r4, r5
  f9 e5                 or	r7, r1
  f4 11                 ldsp16	r5, [sp+0x4]
  f5 45                 ld16	r1, [r5]

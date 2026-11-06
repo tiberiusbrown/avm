@@ -8,7 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.strtoimax	00000000 .text.strtoimax
 00000000 l    d  .text.strtoumax	00000000 .text.strtoumax
 00000000 l    d  .text.wcstoimax	00000000 .text.wcstoimax
-00000000 l     F .text.parse_wide	0000031b parse_wide
+00000000 l     F .text.parse_wide	0000031a parse_wide
 00000000 l    d  .text.parse_wide	00000000 .text.parse_wide
 00000000 l    d  .text.wcstoumax	00000000 .text.wcstoumax
 00000000 l    d  .debug_frame	00000000 .debug_frame
@@ -225,7 +225,7 @@ Disassembly of section .text.parse_wide:
  f0 39 02              stsp16	[sp+0x2], r1
  e2 00 00 00           jmpf	parse_wide
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_wide+0x2fc
+		R_AVM_FAR24	.text.parse_wide+0x2fb
  f4 ac                 inc16	r4
  44                    ld8u	r5, [r4]
  0d                    mov	r7, r5
@@ -428,11 +428,10 @@ Disassembly of section .text.parse_wide:
  f4 49                 stsp16	[sp+0x2], r5
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
- af                    xor	r7, r7
- f1 17                 mov	r2, r7
+ f2 42                 sub	r2, r2
  e2 00 00 00           jmpf	parse_wide
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_wide+0x1d6
+		R_AVM_FAR24	.text.parse_wide+0x1d5
  c0 01                 ldi8	r4, 0x1
  f4 29                 ldsp16	r5, [sp+0xa]
  74                    st16	[r5], r4
@@ -447,12 +446,12 @@ Disassembly of section .text.parse_wide:
  d2 04                 brult8	0x4 <L19>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x1ec
+		R_AVM_FAR24	.text.parse_wide+0x1eb
 <L19>:
  ca d0                 addi.s8	r6, -0x30
  e2 00 00 00           jmpf	parse_wide
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_wide+0x20e
+		R_AVM_FAR24	.text.parse_wide+0x20d
  02                    mov	r4, r6
  c8 9f                 addi.s8	r4, -0x61
  f1 74                 zext8	r4
@@ -460,12 +459,12 @@ Disassembly of section .text.parse_wide:
  d2 04                 brult8	0x4 <L20>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x1ff
+		R_AVM_FAR24	.text.parse_wide+0x1fe
 <L20>:
  ca a9                 addi.s8	r6, -0x57
  e2 00 00 00           jmpf	parse_wide
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_wide+0x20e
+		R_AVM_FAR24	.text.parse_wide+0x20d
  02                    mov	r4, r6
  c8 c9                 addi.s8	r4, -0x37
  ca bf                 addi.s8	r6, -0x41
@@ -479,7 +478,7 @@ Disassembly of section .text.parse_wide:
  d2 04                 brult8	0x4 <L21>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x2ca
+		R_AVM_FAR24	.text.parse_wide+0x2c9
 <L21>:
  f4 62                 stsp16	[sp+0x8], r6
  f0 3b 22              stsp16	[sp+0x22], r3
@@ -499,7 +498,7 @@ Disassembly of section .text.parse_wide:
  d0 04                 breq8	0x4 <L22>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x1ca
+		R_AVM_FAR24	.text.parse_wide+0x1c9
 <L22>:
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 09                 ldsp16	r5, [sp+0x2]
@@ -524,7 +523,7 @@ Disassembly of section .text.parse_wide:
  d0 04                 breq8	0x4 <L23>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x279
+		R_AVM_FAR24	.text.parse_wide+0x278
 <L23>:
  f0 36 12              ldsp16	r6, [sp+0x12]
  f4 23                 ldsp16	r7, [sp+0x8]
@@ -532,7 +531,7 @@ Disassembly of section .text.parse_wide:
  d8 04                 bruge8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x1ca
+		R_AVM_FAR24	.text.parse_wide+0x1c9
 <L24>:
  f4 2a                 ldsp16	r6, [sp+0xa]
  6a                    ld16	r6, [r6]
@@ -540,7 +539,7 @@ Disassembly of section .text.parse_wide:
  d0 04                 breq8	0x4 <L25>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x1cf
+		R_AVM_FAR24	.text.parse_wide+0x1ce
 <L25>:
  d6 f8                 adjsp	-0x8
  f4 50                 stsp16	[sp+0x4], r4
@@ -574,19 +573,19 @@ Disassembly of section .text.parse_wide:
  f7 62                 add32	q0, q2
  e2 00 00 00           jmpf	parse_wide
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_wide+0x1cf
+		R_AVM_FAR24	.text.parse_wide+0x1ce
  f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L26>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x304
+		R_AVM_FAR24	.text.parse_wide+0x303
 <L26>:
  f0 34 1c              ldsp16	r4, [sp+0x1c]
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L27>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x2df
+		R_AVM_FAR24	.text.parse_wide+0x2de
 <L27>:
  f5 53                 st16	[r4], r3
  f4 28                 ldsp16	r4, [sp+0xa]
@@ -595,7 +594,7 @@ Disassembly of section .text.parse_wide:
  d1 04                 brne8	0x4 <L28>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	parse_wide
-		R_AVM_FAR24	.text.parse_wide+0x30e
+		R_AVM_FAR24	.text.parse_wide+0x30d
 <L28>:
  c0 22                 ldi8	r4, 0x22
  f0 36 26              ldsp16	r6, [sp+0x26]
@@ -608,7 +607,7 @@ Disassembly of section .text.parse_wide:
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	parse_wide
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.parse_wide+0x30e
+		R_AVM_FAR24	.text.parse_wide+0x30d
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  f0 38 00              stsp16	[sp+0x0], r0

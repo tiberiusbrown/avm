@@ -14,7 +14,7 @@ SYMBOL TABLE:
 00000000 g     F .text.__avm_scan_finish	00000024 __avm_scan_finish
 00000000 g     F .text.__avm_scan_skip_space	00000085 __avm_scan_skip_space
 00000000         *UND*	00000000 isspace
-00000000 g     F .text.__avm_vscan	00000916 __avm_vscan
+00000000 g     F .text.__avm_vscan	00000933 __avm_vscan
 00000000         *UND*	00000000 __avm_mulsi3
 00000000         *UND*	00000000 __avm_udivsi3
 00000000         *UND*	00000000 __avm_scan_count
@@ -215,7 +215,7 @@ Disassembly of section .text.__avm_vscan:
  b0                    push16	r0
  d6 d2                 adjsp	-0x2e
  f1 05                 mov	r0, r5
- f0 3e 1c              stsp16	[sp+0x1c], r6
+ f0 3e 20              stsp16	[sp+0x20], r6
  f0 6a c8              ld32	q3, [r4]
  c8 04                 addi.s8	r4, 0x4
  f0 6a 88              ld32	q2, [r4]
@@ -227,8 +227,8 @@ Disassembly of section .text.__avm_vscan:
  a5                    xor	r5, r5
  c2 09                 ldi8	r6, 0x9
  d7 11                 sys	memset
- f0 34 1c              ldsp16	r4, [sp+0x1c]
- f0 3c 26              stsp16	[sp+0x26], r4
+ f0 34 20              ldsp16	r4, [sp+0x20]
+ f0 3c 24              stsp16	[sp+0x24], r4
  c0 01                 ldi8	r4, 0x1
  ed 20 20              ld8u	r1, [r0+0]
  f4 a1                 tst8	r1
@@ -240,7 +240,7 @@ Disassembly of section .text.__avm_vscan:
  f1 0c                 mov	r1, r4
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -252,7 +252,7 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8d1
+		R_AVM_FAR24	.text.__avm_vscan+0x8ee
 <L1>:
  a0                    xor	r4, r4
  f0 2c 10              stsp8	[sp+0x10], r4
@@ -268,8 +268,10 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x896
+		R_AVM_FAR24	.text.__avm_vscan+0x8b3
 <L2>:
+ f1 10                 mov	r2, r0
+ f4 aa                 inc16	r2
  f1 21                 mov	r4, r1
  e3 00 00 00           callf	__avm_vscan
 		R_AVM_RELAX	*ABS*
@@ -278,7 +280,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0xa6
+		R_AVM_FAR24	.text.__avm_vscan+0xaa
 <L3>:
  ed 80 21              ld8u	r4, [r0+1]
  f4 a8                 inc16	r0
@@ -289,14 +291,14 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x7c
+		R_AVM_FAR24	.text.__avm_vscan+0x80
 <L4>:
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0xc3
+		R_AVM_FAR24	.text.__avm_vscan+0xc5
 <L5>:
  f4 38                 ldsp16	r4, [sp+0xe]
  cc ff                 cmpi.s8	r4, -0x1
@@ -307,26 +309,24 @@ Disassembly of section .text.__avm_vscan:
 <L6>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0xd9
- f1 24                 mov	r5, r0
- f4 ad                 inc16	r5
+		R_AVM_FAR24	.text.__avm_vscan+0xdb
  f0 0d 25              cmpi.s8	r1, 0x25
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0xf8
+		R_AVM_FAR24	.text.__avm_vscan+0xfa
 <L7>:
- 41                    ld8u	r4, [r5]
+ ed 84 20              ld8u	r4, [r2+0]
  cc 25                 cmpi.s8	r4, 0x25
  d0 04                 breq8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x11c
+		R_AVM_FAR24	.text.__avm_vscan+0x11e
 <L8>:
  f0 08 02              addi.s8	r0, 0x2
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0xfa
+		R_AVM_FAR24	.text.__avm_vscan+0xfc
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -355,13 +355,13 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x1e7
+		R_AVM_FAR24	.text.__avm_vscan+0x1e0
 <L11>:
  f4 38                 ldsp16	r4, [sp+0xe]
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x1f0
- f1 05                 mov	r0, r5
+		R_AVM_FAR24	.text.__avm_vscan+0x1e9
+ f1 02                 mov	r0, r2
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L12>
@@ -382,18 +382,16 @@ Disassembly of section .text.__avm_vscan:
  fb 0c                 cmov.eq	r1, r4
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8ab
+		R_AVM_FAR24	.text.__avm_vscan+0x8c8
  a0                    xor	r4, r4
  f0 3c 19              stsp16	[sp+0x19], r4
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff ff              ldi16	r7, 0xffff
  f0 3e 15              stsp16	[sp+0x15], r6
  f0 3f 17              stsp16	[sp+0x17], r7
- f1 15                 mov	r2, r5
- 41                    ld8u	r4, [r5]
+ ed 84 20              ld8u	r4, [r2+0]
  cc 2a                 cmpi.s8	r4, 0x2a
- f0 3c 1e              stsp16	[sp+0x1e], r4
- f1 1c                 mov	r3, r4
+ f0 3c 1c              stsp16	[sp+0x1c], r4
  d0 04                 breq8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
@@ -401,27 +399,27 @@ Disassembly of section .text.__avm_vscan:
 <L14>:
  c0 01                 ldi8	r4, 0x1
  f0 2c 19              stsp8	[sp+0x19], r4
- ed 60 22              ld8u	r3, [r0+2]
+ ed 80 22              ld8u	r4, [r0+2]
  f0 08 02              addi.s8	r0, 0x2
  f1 10                 mov	r2, r0
- f1 27                 mov	r5, r3
+ 04                    mov	r5, r4
  c9 d0                 addi.s8	r5, -0x30
  f1 75                 zext8	r5
- f0 3d 20              stsp16	[sp+0x20], r5
+ f0 3d 22              stsp16	[sp+0x22], r5
  cd 0a                 cmpi.s8	r5, 0xa
  d2 04                 brult8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x27a
+		R_AVM_FAR24	.text.__avm_vscan+0x273
 <L15>:
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  f0 38 15              stsp16	[sp+0x15], r0
  f0 39 17              stsp16	[sp+0x17], r1
- ed 64 20              ld8u	r3, [r2+0]
+ ed 84 20              ld8u	r4, [r2+0]
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x19b
+		R_AVM_FAR24	.text.__avm_vscan+0x199
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
  f2 68                 mov32	q2, q0
@@ -434,8 +432,8 @@ Disassembly of section .text.__avm_vscan:
  f7 62                 add32	q0, q2
  f0 38 15              stsp16	[sp+0x15], r0
  f0 39 17              stsp16	[sp+0x17], r1
- ed 64 20              ld8u	r3, [r2+0]
- f1 27                 mov	r5, r3
+ ed 84 20              ld8u	r4, [r2+0]
+ 04                    mov	r5, r4
  c9 d0                 addi.s8	r5, -0x30
  f1 75                 zext8	r5
  cd 0a                 cmpi.s8	r5, 0xa
@@ -444,10 +442,9 @@ Disassembly of section .text.__avm_vscan:
  d2 04                 brult8	0x4 <L16>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x26f
+		R_AVM_FAR24	.text.__avm_vscan+0x268
 <L16>:
- f0 0b d0              addi.s8	r3, -0x30
- f1 23                 mov	r4, r3
+ c8 d0                 addi.s8	r4, -0x30
  a5                    xor	r5, r5
  f0 3c 11              stsp16	[sp+0x11], r4
  f0 3d 13              stsp16	[sp+0x13], r5
@@ -463,14 +460,14 @@ Disassembly of section .text.__avm_vscan:
  d2 04                 brult8	0x4 <L17>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x16b
+		R_AVM_FAR24	.text.__avm_vscan+0x16a
 <L17>:
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff ff              ldi16	r7, 0xffff
  f0 3e 15              stsp16	[sp+0x15], r6
  f0 3f 17              stsp16	[sp+0x17], r7
- ed 64 20              ld8u	r3, [r2+0]
- f1 27                 mov	r5, r3
+ ed 84 20              ld8u	r4, [r2+0]
+ 04                    mov	r5, r4
  c9 d0                 addi.s8	r5, -0x30
  f1 75                 zext8	r5
  cd 0a                 cmpi.s8	r5, 0xa
@@ -478,17 +475,17 @@ Disassembly of section .text.__avm_vscan:
  d8 04                 bruge8	0x4 <L18>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x19b
+		R_AVM_FAR24	.text.__avm_vscan+0x199
 <L18>:
- f0 0f 6c              cmpi.s8	r3, 0x6c
+ cc 6c                 cmpi.s8	r4, 0x6c
  d9 04                 brsge8	0x4 <L19>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x2a5
+		R_AVM_FAR24	.text.__avm_vscan+0x29a
 <L19>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x283
+		R_AVM_FAR24	.text.__avm_vscan+0x27b
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -502,7 +499,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L20>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x20b
+		R_AVM_FAR24	.text.__avm_vscan+0x204
 <L20>:
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
@@ -516,7 +513,7 @@ Disassembly of section .text.__avm_vscan:
  f0 01 01              ldi8	r1, 0x1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x220
+		R_AVM_FAR24	.text.__avm_vscan+0x219
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -544,12 +541,12 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L23>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x24c
+		R_AVM_FAR24	.text.__avm_vscan+0x245
 <L23>:
  f4 38                 ldsp16	r4, [sp+0xe]
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x255
+		R_AVM_FAR24	.text.__avm_vscan+0x24e
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -561,7 +558,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x219
+		R_AVM_FAR24	.text.__avm_vscan+0x212
 <L24>:
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
@@ -570,76 +567,76 @@ Disassembly of section .text.__avm_vscan:
  f4 69                 stsp16	[sp+0xa], r5
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x219
+		R_AVM_FAR24	.text.__avm_vscan+0x212
  aa                    xor	r6, r6
  af                    xor	r7, r7
  f0 69 0c              cmp32	q0, q3
  d1 04                 brne8	0x4 <L25>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x89d
+		R_AVM_FAR24	.text.__avm_vscan+0x8ba
 <L25>:
- f0 0f 6c              cmpi.s8	r3, 0x6c
+ cc 6c                 cmpi.s8	r4, 0x6c
  d9 04                 brsge8	0x4 <L26>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x2a5
+		R_AVM_FAR24	.text.__avm_vscan+0x29a
 <L26>:
- f0 0f 77              cmpi.s8	r3, 0x77
+ cc 77                 cmpi.s8	r4, 0x77
  d3 04                 brslt8	0x4 <L27>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x2c7
+		R_AVM_FAR24	.text.__avm_vscan+0x2b9
 <L27>:
- f0 0f 6c              cmpi.s8	r3, 0x6c
+ cc 6c                 cmpi.s8	r4, 0x6c
  d1 04                 brne8	0x4 <L28>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x343
+		R_AVM_FAR24	.text.__avm_vscan+0x331
 <L28>:
- f0 0f 74              cmpi.s8	r3, 0x74
+ cc 74                 cmpi.s8	r4, 0x74
  d0 04                 breq8	0x4 <L29>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x4cd
+		R_AVM_FAR24	.text.__avm_vscan+0x4bc
 <L29>:
  f0 01 07              ldi8	r1, 0x7
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x361
- f0 0f 4c              cmpi.s8	r3, 0x4c
+		R_AVM_FAR24	.text.__avm_vscan+0x34f
+ cc 4c                 cmpi.s8	r4, 0x4c
  d1 04                 brne8	0x4 <L30>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x33c
+		R_AVM_FAR24	.text.__avm_vscan+0x32a
 <L30>:
- f0 0f 68              cmpi.s8	r3, 0x68
+ cc 68                 cmpi.s8	r4, 0x68
  d1 04                 brne8	0x4 <L31>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x432
+		R_AVM_FAR24	.text.__avm_vscan+0x421
 <L31>:
- f0 0f 6a              cmpi.s8	r3, 0x6a
+ cc 6a                 cmpi.s8	r4, 0x6a
  d0 04                 breq8	0x4 <L32>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x492
+		R_AVM_FAR24	.text.__avm_vscan+0x481
 <L32>:
  f0 01 05              ldi8	r1, 0x5
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x361
- f0 0f 7a              cmpi.s8	r3, 0x7a
+		R_AVM_FAR24	.text.__avm_vscan+0x34f
+ cc 7a                 cmpi.s8	r4, 0x7a
  d1 04                 brne8	0x4 <L33>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x35e
+		R_AVM_FAR24	.text.__avm_vscan+0x34c
 <L33>:
- f0 0f 77              cmpi.s8	r3, 0x77
+ cc 77                 cmpi.s8	r4, 0x77
  d0 04                 breq8	0x4 <L34>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x4d5
+		R_AVM_FAR24	.text.__avm_vscan+0x4c4
 <L34>:
  ed c4 21              ld8u	r6, [r2+1]
  f1 02                 mov	r0, r2
@@ -649,9 +646,9 @@ Disassembly of section .text.__avm_vscan:
  ce 66                 cmpi.s8	r6, 0x66
  fb 04                 cmov.eq	r0, r4
  f0 01 01              ldi8	r1, 0x1
- c3 02                 ldi8	r7, 0x2
+ c1 02                 ldi8	r5, 0x2
  f1 21                 mov	r4, r1
- fb 27                 cmov.eq	r4, r7
+ fb 25                 cmov.eq	r4, r5
  f2 22                 add	r4, r2
  40                    ld8u	r4, [r4]
  c8 c6                 addi.s8	r4, -0x3a
@@ -661,7 +658,7 @@ Disassembly of section .text.__avm_vscan:
  d8 04                 bruge8	0x4 <L35>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8e4
+		R_AVM_FAR24	.text.__avm_vscan+0x901
 <L35>:
  f0 3e 11              stsp16	[sp+0x11], r6
  a0                    xor	r4, r4
@@ -674,7 +671,7 @@ Disassembly of section .text.__avm_vscan:
  d2 04                 brult8	0x4 <L36>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x49a
+		R_AVM_FAR24	.text.__avm_vscan+0x489
 <L36>:
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
@@ -683,7 +680,6 @@ Disassembly of section .text.__avm_vscan:
 		R_AVM_FAR24	__avm_mulsi3
  08                    mov	r6, r4
  0d                    mov	r7, r5
- f2 4b                 sub	r3, r3
  c0 ff                 ldi8	r4, 0xff
  a5                    xor	r5, r5
  f9 88                 and	r4, r2
@@ -695,15 +691,15 @@ Disassembly of section .text.__avm_vscan:
  d2 04                 brult8	0x4 <L37>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x306
+		R_AVM_FAR24	.text.__avm_vscan+0x2f6
 <L37>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8de
+		R_AVM_FAR24	.text.__avm_vscan+0x8fb
  f0 01 08              ldi8	r1, 0x8
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x361
+		R_AVM_FAR24	.text.__avm_vscan+0x34f
  f0 01 03              ldi8	r1, 0x3
  f0 29 1a              stsp8	[sp+0x1a], r1
  ed 84 21              ld8u	r4, [r2+1]
@@ -711,13 +707,13 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L38>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x44d
+		R_AVM_FAR24	.text.__avm_vscan+0x43c
 <L38>:
  f0 01 04              ldi8	r1, 0x4
  f0 0a 02              addi.s8	r2, 0x2
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x363
+		R_AVM_FAR24	.text.__avm_vscan+0x351
  f0 01 06              ldi8	r1, 0x6
  f4 aa                 inc16	r2
  f1 02                 mov	r0, r2
@@ -727,39 +723,38 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L39>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x89d
+		R_AVM_FAR24	.text.__avm_vscan+0x8ba
 <L39>:
  f0 2c 1b              stsp8	[sp+0x1b], r4
- f1 28                 mov	r6, r0
- f4 ae                 inc16	r6
+ f1 2c                 mov	r7, r0
+ f4 af                 inc16	r7
  cc 5b                 cmpi.s8	r4, 0x5b
  d0 04                 breq8	0x4 <L40>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x397
+		R_AVM_FAR24	.text.__avm_vscan+0x382
 <L40>:
- 46                    ld8u	r5, [r6]
+ 47                    ld8u	r5, [r7]
  cd 5e                 cmpi.s8	r5, 0x5e
- f0 3e 2c              stsp16	[sp+0x2c], r6
  d0 04                 breq8	0x4 <L41>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x3b6
+		R_AVM_FAR24	.text.__avm_vscan+0x39f
 <L41>:
  c2 02                 ldi8	r6, 0x2
  ed a0 22              ld8u	r5, [r0+2]
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x3b8
- f1 06                 mov	r0, r6
+		R_AVM_FAR24	.text.__avm_vscan+0x3a1
+ f1 07                 mov	r0, r7
  a5                    xor	r5, r5
  f1 15                 mov	r2, r5
- f0 3a 2c              stsp16	[sp+0x2c], r2
+ 0d                    mov	r7, r5
  cc 5b                 cmpi.s8	r4, 0x5b
  d0 04                 breq8	0x4 <L42>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x3e5
+		R_AVM_FAR24	.text.__avm_vscan+0x3d2
 <L42>:
  08                    mov	r6, r4
  ca a8                 addi.s8	r6, -0x58
@@ -767,11 +762,11 @@ Disassembly of section .text.__avm_vscan:
  d8 04                 bruge8	0x4 <L43>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x5d3
+		R_AVM_FAR24	.text.__avm_vscan+0x5c8
 <L43>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x593
+		R_AVM_FAR24	.text.__avm_vscan+0x584
  c2 01                 ldi8	r6, 0x1
  f2 06                 add	r0, r6
  cd 5d                 cmpi.s8	r5, 0x5d
@@ -782,49 +777,51 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L44>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x89d
+		R_AVM_FAR24	.text.__avm_vscan+0x8ba
 <L44>:
  cd 5d                 cmpi.s8	r5, 0x5d
+ f1 26                 mov	r5, r2
+ f4 ad                 inc16	r5
  d1 04                 brne8	0x4 <L45>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x3d9
+		R_AVM_FAR24	.text.__avm_vscan+0x3c6
 <L45>:
- f4 aa                 inc16	r2
+ f1 15                 mov	r2, r5
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x3c0
+		R_AVM_FAR24	.text.__avm_vscan+0x3a9
  f1 02                 mov	r0, r2
  f4 a8                 inc16	r0
  cc 5b                 cmpi.s8	r4, 0x5b
  d1 04                 brne8	0x4 <L46>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x588
+		R_AVM_FAR24	.text.__avm_vscan+0x579
 <L46>:
  cc 63                 cmpi.s8	r4, 0x63
  d1 04                 brne8	0x4 <L47>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x588
+		R_AVM_FAR24	.text.__avm_vscan+0x579
 <L47>:
  cc 6e                 cmpi.s8	r4, 0x6e
  d0 04                 breq8	0x4 <L48>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x419
+		R_AVM_FAR24	.text.__avm_vscan+0x406
 <L48>:
- f0 34 1e              ldsp16	r4, [sp+0x1e]
+ f0 34 1c              ldsp16	r4, [sp+0x1c]
  cc 2a                 cmpi.s8	r4, 0x2a
  d1 04                 brne8	0x4 <L49>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x634
+		R_AVM_FAR24	.text.__avm_vscan+0x629
 <L49>:
  f4 22                 ldsp16	r6, [sp+0x8]
  f4 2b                 ldsp16	r7, [sp+0xa]
  d6 fe                 adjsp	-0x2
- f0 14 28              leasp	r4, 0x28
+ f0 14 26              leasp	r4, 0x26
  f4 40                 stsp16	[sp+0x0], r4
  f1 71                 zext8	r1
  f1 21                 mov	r4, r1
@@ -834,24 +831,25 @@ Disassembly of section .text.__avm_vscan:
  d6 02                 adjsp	0x2
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x634
+		R_AVM_FAR24	.text.__avm_vscan+0x629
+ f1 1f                 mov	r3, r7
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L50>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x45d
+		R_AVM_FAR24	.text.__avm_vscan+0x44c
 <L50>:
  f4 38                 ldsp16	r4, [sp+0xe]
  cc ff                 cmpi.s8	r4, -0x1
  d1 04                 brne8	0x4 <L51>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x585
+		R_AVM_FAR24	.text.__avm_vscan+0x574
 <L51>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x473
+		R_AVM_FAR24	.text.__avm_vscan+0x462
  f0 01 02              ldi8	r1, 0x2
  f0 29 1a              stsp8	[sp+0x1a], r1
  ed 84 21              ld8u	r4, [r2+1]
@@ -859,24 +857,24 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L52>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x44d
+		R_AVM_FAR24	.text.__avm_vscan+0x43c
 <L52>:
  f0 01 01              ldi8	r1, 0x1
  f0 0a 02              addi.s8	r2, 0x2
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x363
+		R_AVM_FAR24	.text.__avm_vscan+0x351
  f4 aa                 inc16	r2
  f1 02                 mov	r0, r2
  f4 a4                 tst8	r4
  d0 04                 breq8	0x4 <L53>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x373
+		R_AVM_FAR24	.text.__avm_vscan+0x361
 <L53>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x89d
+		R_AVM_FAR24	.text.__avm_vscan+0x8ba
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -888,7 +886,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L54>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x585
+		R_AVM_FAR24	.text.__avm_vscan+0x574
 <L54>:
  f1 74                 zext8	r4
  e3 00 00 00           callf	__avm_vscan
@@ -898,31 +896,31 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L55>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x585
+		R_AVM_FAR24	.text.__avm_vscan+0x574
 <L55>:
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L56>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x4fc
+		R_AVM_FAR24	.text.__avm_vscan+0x4eb
 <L56>:
  f4 38                 ldsp16	r4, [sp+0xe]
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x505
+		R_AVM_FAR24	.text.__avm_vscan+0x4f4
  f2 39                 sub	r1, r1
  f1 02                 mov	r0, r2
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x368
+		R_AVM_FAR24	.text.__avm_vscan+0x356
  c2 1f                 ldi8	r6, 0x1f
  af                    xor	r7, r7
  f0 69 c8              cmp32	q3, q2
  d9 04                 brsge8	0x4 <L57>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x4dd
+		R_AVM_FAR24	.text.__avm_vscan+0x4cc
 <L57>:
  c2 08                 ldi8	r6, 0x8
  af                    xor	r7, r7
@@ -930,7 +928,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L58>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x365
+		R_AVM_FAR24	.text.__avm_vscan+0x353
 <L58>:
  c2 10                 ldi8	r6, 0x10
  af                    xor	r7, r7
@@ -938,7 +936,7 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L59>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x90a
+		R_AVM_FAR24	.text.__avm_vscan+0x927
 <L59>:
  f0 34 11              ldsp16	r4, [sp+0x11]
  cc 66                 cmpi.s8	r4, 0x66
@@ -947,24 +945,24 @@ Disassembly of section .text.__avm_vscan:
  fb 0c                 cmov.eq	r1, r4
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x365
+		R_AVM_FAR24	.text.__avm_vscan+0x353
  f2 39                 sub	r1, r1
  f1 02                 mov	r0, r2
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x368
+		R_AVM_FAR24	.text.__avm_vscan+0x356
  f2 39                 sub	r1, r1
  f1 02                 mov	r0, r2
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x368
+		R_AVM_FAR24	.text.__avm_vscan+0x356
  c2 20                 ldi8	r6, 0x20
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
  d1 04                 brne8	0x4 <L60>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x88f
+		R_AVM_FAR24	.text.__avm_vscan+0x8ac
 <L60>:
  c2 40                 ldi8	r6, 0x40
  af                    xor	r7, r7
@@ -972,12 +970,12 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L61>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x910
+		R_AVM_FAR24	.text.__avm_vscan+0x92d
 <L61>:
  f0 01 04              ldi8	r1, 0x4
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x365
+		R_AVM_FAR24	.text.__avm_vscan+0x353
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -989,7 +987,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L62>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x51e
+		R_AVM_FAR24	.text.__avm_vscan+0x50d
 <L62>:
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
@@ -1005,7 +1003,7 @@ Disassembly of section .text.__avm_vscan:
  f0 01 01              ldi8	r1, 0x1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x533
+		R_AVM_FAR24	.text.__avm_vscan+0x522
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -1016,7 +1014,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L63>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x585
+		R_AVM_FAR24	.text.__avm_vscan+0x574
 <L63>:
  f1 74                 zext8	r4
  e3 00 00 00           callf	__avm_vscan
@@ -1026,19 +1024,19 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L64>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x585
+		R_AVM_FAR24	.text.__avm_vscan+0x574
 <L64>:
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L65>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x55f
+		R_AVM_FAR24	.text.__avm_vscan+0x54e
 <L65>:
  f4 38                 ldsp16	r4, [sp+0xe]
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x568
+		R_AVM_FAR24	.text.__avm_vscan+0x557
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
@@ -1050,7 +1048,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L66>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x52c
+		R_AVM_FAR24	.text.__avm_vscan+0x51b
 <L66>:
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
@@ -1061,15 +1059,16 @@ Disassembly of section .text.__avm_vscan:
  f4 6b                 stsp16	[sp+0xa], r7
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x52c
+		R_AVM_FAR24	.text.__avm_vscan+0x51b
  f0 1c 1b              ldsp8u	r4, [sp+0x1b]
+ f1 2f                 mov	r7, r3
  08                    mov	r6, r4
  ca a8                 addi.s8	r6, -0x58
  ce 10                 cmpi.s8	r6, 0x10
  d8 04                 bruge8	0x4 <L67>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x5d3
+		R_AVM_FAR24	.text.__avm_vscan+0x5c8
 <L67>:
  04                    mov	r5, r4
  c9 97                 addi.s8	r5, -0x69
@@ -1077,30 +1076,32 @@ Disassembly of section .text.__avm_vscan:
  d2 04                 brult8	0x4 <L68>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x5b6
+		R_AVM_FAR24	.text.__avm_vscan+0x5ab
 <L68>:
  c2 01                 ldi8	r6, 0x1
  fa 09                 shl16v	r6, r5
+ f1 0f                 mov	r1, r7
  c7 c1 90              ldi16	r7, 0x90c1
  8e                    and	r7, r6
  f6 2f                 tst16	r7
+ f1 2d                 mov	r7, r1
  d0 04                 breq8	0x4 <L69>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x5ef
+		R_AVM_FAR24	.text.__avm_vscan+0x5e4
 <L69>:
  cd 0a                 cmpi.s8	r5, 0xa
  d1 04                 brne8	0x4 <L70>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x64f
+		R_AVM_FAR24	.text.__avm_vscan+0x644
 <L70>:
  c8 bf                 addi.s8	r4, -0x41
  cc 07                 cmpi.s8	r4, 0x7
  d2 04                 brult8	0x4 <L71>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x904
+		R_AVM_FAR24	.text.__avm_vscan+0x921
 <L71>:
  c1 01                 ldi8	r5, 0x1
  fa 04                 shl16v	r5, r4
@@ -1110,11 +1111,11 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L72>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8fe
+		R_AVM_FAR24	.text.__avm_vscan+0x91b
 <L72>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x60b
+		R_AVM_FAR24	.text.__avm_vscan+0x600
  c1 01                 ldi8	r5, 0x1
  fa 06                 shl16v	r5, r6
  c6 00 e2              ldi16	r6, 0xe200
@@ -1123,7 +1124,7 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L73>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x60b
+		R_AVM_FAR24	.text.__avm_vscan+0x600
 <L73>:
  c6 01 14              ldi16	r6, 0x1401
  89                    and	r6, r5
@@ -1131,11 +1132,11 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L74>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x643
+		R_AVM_FAR24	.text.__avm_vscan+0x638
 <L74>:
  f0 14 00              leasp	r4, 0x0
  f0 15 15              leasp	r5, 0x15
- f0 16 26              leasp	r6, 0x26
+ f0 16 24              leasp	r6, 0x24
  e3 00 00 00           callf	__avm_vscan
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_scan_integer
@@ -1144,14 +1145,14 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L75>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
 <L75>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x623
+		R_AVM_FAR24	.text.__avm_vscan+0x618
  f0 14 00              leasp	r4, 0x0
  f0 15 15              leasp	r5, 0x15
- f0 16 26              leasp	r6, 0x26
+ f0 16 24              leasp	r6, 0x24
  e3 00 00 00           callf	__avm_vscan
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_scan_float
@@ -1160,14 +1161,14 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L76>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
 <L76>:
  f0 1c 19              ldsp8u	r4, [sp+0x19]
  f4 a4                 tst8	r4
  d0 04                 breq8	0x4 <L77>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x634
+		R_AVM_FAR24	.text.__avm_vscan+0x629
 <L77>:
  f4 30                 ldsp16	r4, [sp+0xc]
  f4 ac                 inc16	r4
@@ -1181,113 +1182,115 @@ Disassembly of section .text.__avm_vscan:
 <L78>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x89d
+		R_AVM_FAR24	.text.__avm_vscan+0x8ba
  c6 08 08              ldi16	r6, 0x808
  86                    and	r5, r6
  f6 2d                 tst16	r5
  d1 04                 brne8	0x4 <L79>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x593
+		R_AVM_FAR24	.text.__avm_vscan+0x584
 <L79>:
- f0 35 20              ldsp16	r5, [sp+0x20]
+ f0 3f 2c              stsp16	[sp+0x2c], r7
+ f0 35 22              ldsp16	r5, [sp+0x22]
  cd 0a                 cmpi.s8	r5, 0xa
  d8 04                 bruge8	0x4 <L80>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x675
+		R_AVM_FAR24	.text.__avm_vscan+0x66d
 <L80>:
  cc 63                 cmpi.s8	r4, 0x63
  d0 04                 breq8	0x4 <L81>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x675
+		R_AVM_FAR24	.text.__avm_vscan+0x66d
 <L81>:
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
- f0 3c 22              stsp16	[sp+0x22], r4
- f0 3d 24              stsp16	[sp+0x24], r5
+ f0 3c 1c              stsp16	[sp+0x1c], r4
+ f0 3d 1e              stsp16	[sp+0x1e], r5
  f0 3c 15              stsp16	[sp+0x15], r4
  f0 3d 17              stsp16	[sp+0x17], r5
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x681
+		R_AVM_FAR24	.text.__avm_vscan+0x679
  f0 34 15              ldsp16	r4, [sp+0x15]
  f0 35 17              ldsp16	r5, [sp+0x17]
- f0 3c 22              stsp16	[sp+0x22], r4
- f0 3d 24              stsp16	[sp+0x24], r5
+ f0 3c 1c              stsp16	[sp+0x1c], r4
+ f0 3d 1e              stsp16	[sp+0x1e], r5
  f0 1c 19              ldsp8u	r4, [sp+0x19]
  f4 a4                 tst8	r4
  a0                    xor	r4, r4
- f0 3c 20              stsp16	[sp+0x20], r4
- f0 3c 1e              stsp16	[sp+0x1e], r4
+ f0 3c 28              stsp16	[sp+0x28], r4
+ f0 3c 22              stsp16	[sp+0x22], r4
  d0 04                 breq8	0x4 <L82>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x6ae
+		R_AVM_FAR24	.text.__avm_vscan+0x6a7
 <L82>:
- f0 34 26              ldsp16	r4, [sp+0x26]
+ f0 34 24              ldsp16	r4, [sp+0x24]
  04                    mov	r5, r4
  c9 02                 addi.s8	r5, 0x2
- f0 3d 26              stsp16	[sp+0x26], r5
- 68                    ld16	r6, [r4]
+ f0 3d 24              stsp16	[sp+0x24], r5
+ f5 41                 ld16	r1, [r4]
  f0 1c 1a              ldsp8u	r4, [sp+0x1a]
  cc 03                 cmpi.s8	r4, 0x3
  a0                    xor	r4, r4
  04                    mov	r5, r4
- fb 2e                 cmov.eq	r5, r6
- f0 3d 1e              stsp16	[sp+0x1e], r5
- fb 34                 cmov.eq	r6, r4
- f0 3e 20              stsp16	[sp+0x20], r6
+ fb 29                 cmov.eq	r5, r1
+ f0 3d 22              stsp16	[sp+0x22], r5
+ fb 0c                 cmov.eq	r1, r4
+ f0 39 28              stsp16	[sp+0x28], r1
  aa                    xor	r6, r6
  af                    xor	r7, r7
- f0 34 22              ldsp16	r4, [sp+0x22]
- f0 35 24              ldsp16	r5, [sp+0x24]
+ f0 34 1c              ldsp16	r4, [sp+0x1c]
+ f0 35 1e              ldsp16	r5, [sp+0x1e]
  f0 69 8c              cmp32	q2, q3
  d1 04                 brne8	0x4 <L83>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8ea
+		R_AVM_FAR24	.text.__avm_vscan+0x907
 <L83>:
  c0 01                 ldi8	r4, 0x1
- f0 3c 28              stsp16	[sp+0x28], r4
+ f0 3c 26              stsp16	[sp+0x26], r4
  f2 4b                 sub	r3, r3
  f0 3b 11              stsp16	[sp+0x11], r3
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x6f1
- f0 34 22              ldsp16	r4, [sp+0x22]
- f0 35 24              ldsp16	r5, [sp+0x24]
- f7 6b                 add32	q2, q3
- c2 01                 ldi8	r6, 0x1
- f0 3e 11              stsp16	[sp+0x11], r6
- f0 3c 22              stsp16	[sp+0x22], r4
- f0 3d 24              stsp16	[sp+0x24], r5
+		R_AVM_FAR24	.text.__avm_vscan+0x6e2
+ c0 01                 ldi8	r4, 0x1
+ f0 3c 11              stsp16	[sp+0x11], r4
+ f0 34 1c              ldsp16	r4, [sp+0x1c]
+ f0 35 1e              ldsp16	r5, [sp+0x1e]
  aa                    xor	r6, r6
  af                    xor	r7, r7
  f0 69 8c              cmp32	q2, q3
- f0 39 1e              stsp16	[sp+0x1e], r1
- f0 3b 20              stsp16	[sp+0x20], r3
+ f0 39 22              stsp16	[sp+0x22], r1
+ f0 3b 28              stsp16	[sp+0x28], r3
  d1 04                 brne8	0x4 <L84>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x868
+		R_AVM_FAR24	.text.__avm_vscan+0x885
 <L84>:
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L85>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x703
+		R_AVM_FAR24	.text.__avm_vscan+0x6fa
 <L85>:
  f0 31 0e              ldsp16	r1, [sp+0xe]
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x714
+		R_AVM_FAR24	.text.__avm_vscan+0x711
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
  eb                    callp	q3
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
  f1 0c                 mov	r1, r4
  c0 01                 ldi8	r4, 0x1
  f0 2c 10              stsp8	[sp+0x10], r4
@@ -1297,31 +1300,33 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L86>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x83d
+		R_AVM_FAR24	.text.__avm_vscan+0x85a
 <L86>:
  cc 73                 cmpi.s8	r4, 0x73
  d0 04                 breq8	0x4 <L87>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x73b
+		R_AVM_FAR24	.text.__avm_vscan+0x73e
 <L87>:
  f1 21                 mov	r4, r1
  f1 74                 zext8	r4
  e3 00 00 00           callf	__avm_vscan
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	isspace
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
  f6 2c                 tst16	r4
  d0 04                 breq8	0x4 <L88>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x857
+		R_AVM_FAR24	.text.__avm_vscan+0x874
 <L88>:
  f0 1c 1b              ldsp8u	r4, [sp+0x1b]
  cc 5b                 cmpi.s8	r4, 0x5b
  d0 04                 breq8	0x4 <L89>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x7d2
+		R_AVM_FAR24	.text.__avm_vscan+0x7db
 <L89>:
  f0 33 2c              ldsp16	r3, [sp+0x2c]
  ed 86 20              ld8u	r4, [r3+0]
@@ -1332,14 +1337,14 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L90>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x7ca
+		R_AVM_FAR24	.text.__avm_vscan+0x7d3
 <L90>:
  f0 3d 2a              stsp16	[sp+0x2a], r5
  aa                    xor	r6, r6
  f1 2f                 mov	r7, r3
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x773
+		R_AVM_FAR24	.text.__avm_vscan+0x776
  f5 0c                 cmp	r1, r4
  f8 04                 cset.eq	r4
  f1 1f                 mov	r3, r7
@@ -1350,7 +1355,7 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L91>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x7bc
+		R_AVM_FAR24	.text.__avm_vscan+0x7bf
 <L91>:
  f7 1c                 ld8u	r4, [r7+]
  f1 27                 mov	r5, r3
@@ -1359,7 +1364,7 @@ Disassembly of section .text.__avm_vscan:
  d2 04                 brult8	0x4 <L92>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x761
+		R_AVM_FAR24	.text.__avm_vscan+0x764
 <L92>:
  f0 3b 11              stsp16	[sp+0x11], r3
  f1 1a                 mov	r3, r2
@@ -1372,14 +1377,14 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L93>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x761
+		R_AVM_FAR24	.text.__avm_vscan+0x764
 <L93>:
  45                    ld8u	r5, [r5]
  34                    cmp	r5, r4
  d8 04                 bruge8	0x4 <L94>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x761
+		R_AVM_FAR24	.text.__avm_vscan+0x764
 <L94>:
  f5 25                 cmp	r5, r1
  f8 2d                 cset.sge	r5
@@ -1395,49 +1400,53 @@ Disassembly of section .text.__avm_vscan:
  d0 04                 breq8	0x4 <L95>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x773
+		R_AVM_FAR24	.text.__avm_vscan+0x776
 <L95>:
  f0 34 2a              ldsp16	r4, [sp+0x2a]
  38                    cmp	r6, r4
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
  d1 04                 brne8	0x4 <L96>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x857
+		R_AVM_FAR24	.text.__avm_vscan+0x874
 <L96>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x7d2
+		R_AVM_FAR24	.text.__avm_vscan+0x7db
  cc 5e                 cmpi.s8	r4, 0x5e
  d0 04                 breq8	0x4 <L97>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x857
+		R_AVM_FAR24	.text.__avm_vscan+0x874
 <L97>:
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L98>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x7e3
+		R_AVM_FAR24	.text.__avm_vscan+0x7ec
 <L98>:
  f4 38                 ldsp16	r4, [sp+0xe]
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x7ec
+		R_AVM_FAR24	.text.__avm_vscan+0x7fb
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 0a                 ldsp16	r6, [sp+0x2]
  f3 53                 ldsp8u	r7, [sp+0x4]
  eb                    callp	q3
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
  f4 78                 stsp16	[sp+0xe], r4
  f0 39 11              stsp16	[sp+0x11], r1
  a5                    xor	r5, r5
- f0 3d 28              stsp16	[sp+0x28], r5
+ f0 3d 26              stsp16	[sp+0x26], r5
  f0 2d 10              stsp8	[sp+0x10], r5
  cc ff                 cmpi.s8	r4, -0x1
  d1 04                 brne8	0x4 <L99>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x80b
+		R_AVM_FAR24	.text.__avm_vscan+0x820
 <L99>:
  c0 01                 ldi8	r4, 0x1
  a5                    xor	r5, r5
@@ -1446,69 +1455,74 @@ Disassembly of section .text.__avm_vscan:
  f7 6e                 add32	q3, q2
  f4 62                 stsp16	[sp+0x8], r6
  f4 6b                 stsp16	[sp+0xa], r7
- f0 34 20              ldsp16	r4, [sp+0x20]
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff ff              ldi16	r7, 0xffff
+ f0 34 1c              ldsp16	r4, [sp+0x1c]
+ f0 35 1e              ldsp16	r5, [sp+0x1e]
+ f7 6b                 add32	q2, q3
+ f0 3c 1c              stsp16	[sp+0x1c], r4
+ f0 3d 1e              stsp16	[sp+0x1e], r5
+ f0 34 28              ldsp16	r4, [sp+0x28]
  f6 2c                 tst16	r4
  f2 4b                 sub	r3, r3
  d1 04                 brne8	0x4 <L100>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x81f
+		R_AVM_FAR24	.text.__avm_vscan+0x842
 <L100>:
  f0 35 11              ldsp16	r5, [sp+0x11]
  f6 05                 st8	[r4+], r5
  f1 1c                 mov	r3, r4
- f0 34 1e              ldsp16	r4, [sp+0x1e]
+ f0 34 22              ldsp16	r4, [sp+0x22]
  f6 2c                 tst16	r4
  f2 39                 sub	r1, r1
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff ff              ldi16	r7, 0xffff
  d1 04                 brne8	0x4 <L101>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x6cd
+		R_AVM_FAR24	.text.__avm_vscan+0x6c6
 <L101>:
  f0 35 11              ldsp16	r5, [sp+0x11]
  f6 05                 st8	[r4+], r5
  f1 0c                 mov	r1, r4
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x6cd
+		R_AVM_FAR24	.text.__avm_vscan+0x6c6
  cc 63                 cmpi.s8	r4, 0x63
  f8 0c                 cset.ne	r4
  f0 35 11              ldsp16	r5, [sp+0x11]
  84                    and	r5, r4
  f4 a5                 tst8	r5
- f0 33 20              ldsp16	r3, [sp+0x20]
- f0 31 1e              ldsp16	r1, [sp+0x1e]
+ f0 33 28              ldsp16	r3, [sp+0x28]
+ f0 31 22              ldsp16	r1, [sp+0x22]
  d1 04                 brne8	0x4 <L102>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8f0
+		R_AVM_FAR24	.text.__avm_vscan+0x90d
 <L102>:
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x873
- f0 34 28              ldsp16	r4, [sp+0x28]
+		R_AVM_FAR24	.text.__avm_vscan+0x890
+ f0 34 26              ldsp16	r4, [sp+0x26]
  f4 a4                 tst8	r4
- f0 31 1e              ldsp16	r1, [sp+0x1e]
- f0 33 20              ldsp16	r3, [sp+0x20]
+ f0 31 22              ldsp16	r1, [sp+0x22]
+ f0 33 28              ldsp16	r3, [sp+0x28]
  d0 04                 breq8	0x4 <L103>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8f8
+		R_AVM_FAR24	.text.__avm_vscan+0x915
 <L103>:
  f0 1e 1b              ldsp8u	r6, [sp+0x1b]
  ce 63                 cmpi.s8	r6, 0x63
  d1 04                 brne8	0x4 <L104>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x623
+		R_AVM_FAR24	.text.__avm_vscan+0x618
 <L104>:
  f6 2b                 tst16	r3
  d1 04                 brne8	0x4 <L105>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x87f
+		R_AVM_FAR24	.text.__avm_vscan+0x89c
 <L105>:
  aa                    xor	r6, r6
  ee c6 20              st8	[r3+0], r6
@@ -1516,35 +1530,35 @@ Disassembly of section .text.__avm_vscan:
  d1 04                 brne8	0x4 <L106>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x623
+		R_AVM_FAR24	.text.__avm_vscan+0x618
 <L106>:
  a0                    xor	r4, r4
  ee 82 20              st8	[r1+0], r4
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x623
+		R_AVM_FAR24	.text.__avm_vscan+0x618
  f0 01 03              ldi8	r1, 0x3
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x365
+		R_AVM_FAR24	.text.__avm_vscan+0x353
  f0 01 01              ldi8	r1, 0x1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f0 01 01              ldi8	r1, 0x1
  f0 1c 10              ldsp8u	r4, [sp+0x10]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L107>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8bc
+		R_AVM_FAR24	.text.__avm_vscan+0x8d9
 <L107>:
  f4 39                 ldsp16	r5, [sp+0xe]
  cd ff                 cmpi.s8	r5, -0x1
  d1 04                 brne8	0x4 <L108>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_vscan
-		R_AVM_FAR24	.text.__avm_vscan+0x8bc
+		R_AVM_FAR24	.text.__avm_vscan+0x8d9
 <L108>:
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 16                 ldsp16	r6, [sp+0x5]
@@ -1568,40 +1582,40 @@ Disassembly of section .text.__avm_vscan:
  fb 0c                 cmov.eq	r1, r4
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8ab
+		R_AVM_FAR24	.text.__avm_vscan+0x8c8
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f0 05 ff ff           ldi16	r1, 0xffff
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	__avm_vscan
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_vscan+0x8a0
+		R_AVM_FAR24	.text.__avm_vscan+0x8bd

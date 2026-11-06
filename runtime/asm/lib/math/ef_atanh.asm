@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_atanh.c
 00000000 l    d  .text.atanhf	00000000 .text.atanhf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.atanhf	000000bf atanhf
+00000000 g     F .text.atanhf	000000bb atanhf
 00000000         *UND*	00000000 log1pf
 00000000         *UND*	00000000 __avm_errno
 
@@ -91,18 +91,17 @@ Disassembly of section .text.atanhf:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	atanhf
-		R_AVM_FAR24	.text.atanhf+0xb7
+		R_AVM_FAR24	.text.atanhf+0xb3
 <L3>:
- c6 00 80              ldi16	r6, 0x8000
- f9 c4                 and	r6, r1
+ c4 00 80              ldi16	r4, 0x8000
+ f9 84                 and	r4, r1
+ a5                    xor	r5, r5
+ c6 80 7f              ldi16	r6, 0x7f80
+ c7 80 ff              ldi16	r7, 0xff80
+ 31                    cmp	r4, r5
+ fb 77                 cmov.ne	r6, r7
+ 06                    mov	r5, r6
  a0                    xor	r4, r4
- c5 80 7f              ldi16	r5, 0x7f80
- f2 30                 sub	r0, r0
- f0 05 80 ff           ldi16	r1, 0xff80
- af                    xor	r7, r7
- 3b                    cmp	r6, r7
- fb 60                 cmov.ne	r4, r0
- fb 69                 cmov.ne	r5, r1
  e2 00 00 00           jmpf	atanhf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.atanhf+0x81

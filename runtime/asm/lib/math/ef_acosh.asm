@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_acosh.c
 00000000 l    d  .text.acoshf	00000000 .text.acoshf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.acoshf	000000b3 acoshf
+00000000 g     F .text.acoshf	000000ab acoshf
 00000000         *UND*	00000000 logf
 00000000         *UND*	00000000 __avm_errno
 
@@ -16,38 +16,32 @@ Disassembly of section .text.acoshf:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- c6 ff ff              ldi16	r6, 0xffff
- c7 ff 7f              ldi16	r7, 0x7fff
- 88                    and	r6, r4
- 8d                    and	r7, r5
- f0 00 01              ldi8	r0, 0x1
- f0 05 80 7f           ldi16	r1, 0x7f80
- f0 69 c0              cmp32	q3, q0
+ 08                    mov	r6, r4
+ f7 8e                 bool	r6
+ 0d                    mov	r7, r5
+ 1f                    add	r7, r7
+ 9e                    or	r7, r6
+ c6 00 ff              ldi16	r6, 0xff00
+ 3b                    cmp	r6, r7
  d8 04                 bruge8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acoshf
-		R_AVM_FAR24	.text.acoshf+0x24
+		R_AVM_FAR24	.text.acoshf+0xa3
 <L0>:
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
- ff 00                 fadd
- e2 00 00 00           jmpf	acoshf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.acoshf+0xa0
  09                    mov	r6, r5
  c7 7f 3f              ldi16	r7, 0x3f7f
  3e                    cmp	r7, r6
  d3 04                 brslt8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acoshf
-		R_AVM_FAR24	.text.acoshf+0xa5
+		R_AVM_FAR24	.text.acoshf+0x95
 <L1>:
  c7 80 45              ldi16	r7, 0x4580
  3b                    cmp	r6, r7
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acoshf
-		R_AVM_FAR24	.text.acoshf+0x49
+		R_AVM_FAR24	.text.acoshf+0x39
 <L2>:
  e3 00 00 00           callf	acoshf
 		R_AVM_RELAX	*ABS*
@@ -57,13 +51,13 @@ Disassembly of section .text.acoshf:
  ff 00                 fadd
  e2 00 00 00           jmpf	acoshf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.acoshf+0xa0
+		R_AVM_FAR24	.text.acoshf+0x90
  c7 00 40              ldi16	r7, 0x4000
  3b                    cmp	r6, r7
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acoshf
-		R_AVM_FAR24	.text.acoshf+0x73
+		R_AVM_FAR24	.text.acoshf+0x63
 <L3>:
  f2 42                 sub	r2, r2
  f0 07 80 bf           ldi16	r3, 0xbf80
@@ -82,7 +76,7 @@ Disassembly of section .text.acoshf:
 		R_AVM_FAR24	logf
  e2 00 00 00           jmpf	acoshf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.acoshf+0xa0
+		R_AVM_FAR24	.text.acoshf+0x90
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
  ff 00                 fadd
@@ -110,4 +104,10 @@ Disassembly of section .text.acoshf:
  c5 c0 7f              ldi16	r5, 0x7fc0
  e2 00 00 00           jmpf	acoshf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.acoshf+0xa0
+		R_AVM_FAR24	.text.acoshf+0x90
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ ff 00                 fadd
+ e2 00 00 00           jmpf	acoshf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.acoshf+0x90

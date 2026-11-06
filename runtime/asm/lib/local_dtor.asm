@@ -18,11 +18,11 @@ SYMBOL TABLE:
 00000000 g     F .text.__avm_register_exit_callback	00000049 __avm_register_exit_callback
 00000000         *UND*	00000000 __avm_termination_entry_size
 00000000  w      *UND*	00000000 __avm_atexit_count
-00000000 g     F .text.__avm_note_global_ctor	00000076 __avm_note_global_ctor
+00000000 g     F .text.__avm_note_global_ctor	00000072 __avm_note_global_ctor
 00000000         *UND*	00000000 __fini_array_end
 00000000         *UND*	00000000 __fini_array_start
-00000000 g     F .text.__avm_run_local_dtors	000000bd __avm_run_local_dtors
-00000000 g     F .text.__avm_before_global_dtor	00000140 __avm_before_global_dtor
+00000000 g     F .text.__avm_run_local_dtors	000000b9 __avm_run_local_dtors
+00000000 g     F .text.__avm_before_global_dtor	0000013a __avm_before_global_dtor
 
 Disassembly of section .text.__avm_register_local_dtor:
 
@@ -116,59 +116,55 @@ Disassembly of section .text.__avm_note_global_ctor:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f8                 adjsp	-0x8
- f4 50                 stsp16	[sp+0x4], r4
- f4 59                 stsp16	[sp+0x6], r5
- c4 00 00              ldi16	r4, 0x0
-		R_AVM_PROG_LO16	__fini_array_end
- c1 00                 ldi8	r5, 0x0
-		R_AVM_PROG_HI8	__fini_array_end
+ d6 fc                 adjsp	-0x4
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	__fini_array_start
+		R_AVM_PROG_LO16	__fini_array_end
  c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	__fini_array_end
+ f0 04 00 00           ldi16	r0, 0x0
+		R_AVM_PROG_LO16	__fini_array_start
+ f0 01 00              ldi8	r1, 0x0
 		R_AVM_PROG_HI8	__fini_array_start
- f0 69 c8              cmp32	q3, q2
+ f0 69 0c              cmp32	q0, q3
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_note_global_ctor
-		R_AVM_FAR24	.text.__avm_note_global_ctor+0x5f
+		R_AVM_FAR24	.text.__avm_note_global_ctor+0x5b
 <L0>:
  f0 04 00 00           ldi16	r0, 0x0
 		R_AVM_PROG_LO16	__fini_array_start
  f0 01 00              ldi8	r1, 0x0
 		R_AVM_PROG_HI8	__fini_array_start
- c0 03                 ldi8	r4, 0x3
- a5                    xor	r5, r5
- f4 40                 stsp16	[sp+0x0], r4
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f1 75                 zext8	r5
  f4 49                 stsp16	[sp+0x2], r5
- f4 1b                 ldsp16	r7, [sp+0x6]
- f1 77                 zext8	r7
- f4 5b                 stsp16	[sp+0x6], r7
- f0 06 00 00           ldi16	r2, 0x0
+ c4 00 00              ldi16	r4, 0x0
 		R_AVM_PROG_LO16	__fini_array_end
- f0 03 00              ldi8	r3, 0x0
+ c1 00                 ldi8	r5, 0x0
 		R_AVM_PROG_HI8	__fini_array_end
  f2 6a                 mov32	q3, q0
- f4 00                 ldsp16	r4, [sp+0x0]
- f4 09                 ldsp16	r5, [sp+0x2]
- f7 6e                 add32	q3, q2
+ f0 02 03              ldi8	r2, 0x3
+ f2 4b                 sub	r3, r3
+ f7 6d                 add32	q3, q1
  f0 63 00              ldp24	q0, [q0]
- f4 10                 ldsp16	r4, [sp+0x4]
- f4 19                 ldsp16	r5, [sp+0x6]
- f0 69 08              cmp32	q0, q2
+ f0 32 00              ldsp16	r2, [sp+0x0]
+ f0 33 02              ldsp16	r3, [sp+0x2]
+ f0 69 04              cmp32	q0, q1
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_note_global_ctor
-		R_AVM_FAR24	.text.__avm_note_global_ctor+0x63
+		R_AVM_FAR24	.text.__avm_note_global_ctor+0x5f
 <L1>:
  f2 63                 mov32	q0, q3
  f1 71                 zext8	r1
- f0 69 04              cmp32	q0, q1
+ f0 69 08              cmp32	q0, q2
  f2 63                 mov32	q0, q3
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_note_global_ctor
-		R_AVM_FAR24	.text.__avm_note_global_ctor+0x3a
+		R_AVM_FAR24	.text.__avm_note_global_ctor+0x33
 <L2>:
  e3 00 00 00           callf	__avm_note_global_ctor
 		R_AVM_RELAX	*ABS*
@@ -180,7 +176,7 @@ Disassembly of section .text.__avm_note_global_ctor:
  ec b4                 sdiv16	r6, r4
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_termination_phase
- d6 08                 adjsp	0x8
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -192,7 +188,6 @@ Disassembly of section .text.__avm_run_local_dtors:
 <__avm_run_local_dtors>:
  b3                    push16	r3
  b2                    push16	r2
- b1                    push16	r1
  b0                    push16	r0
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_DATA16	__avm_termination_entry_size
@@ -200,7 +195,7 @@ Disassembly of section .text.__avm_run_local_dtors:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0x82
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0x7f
 <L0>:
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_DATA16	__avm_local_dtor_slots_start
@@ -210,7 +205,7 @@ Disassembly of section .text.__avm_run_local_dtors:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
 <L1>:
  f0 56 00 00           ldm16	r6, [0x0]
 		R_AVM_DATA16	__avm_termination_next
@@ -218,7 +213,7 @@ Disassembly of section .text.__avm_run_local_dtors:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
 <L2>:
  c5 00 00              ldi16	r5, 0x0
 		R_AVM_DATA16	__avm_local_dtor_slots_start
@@ -226,10 +221,9 @@ Disassembly of section .text.__avm_run_local_dtors:
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
 <L3>:
- f0 00 01              ldi8	r0, 0x1
- f0 05 00 00           ldi16	r1, 0x0
+ f0 04 00 00           ldi16	r0, 0x0
 		R_AVM_DATA16	__avm_local_dtor_slots_start
  ed bc 1e              ld16	r5, [r6-2]
  01                    mov	r4, r5
@@ -240,7 +234,7 @@ Disassembly of section .text.__avm_run_local_dtors:
  d8 04                 bruge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
 <L4>:
  ca fb                 addi.s8	r6, -0x5
  02                    mov	r4, r6
@@ -248,12 +242,13 @@ Disassembly of section .text.__avm_run_local_dtors:
  f5 33                 ld8u	r3, [r4]
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_termination_next
- f9 a0                 and	r5, r0
+ c0 01                 ldi8	r4, 0x1
+ 84                    and	r5, r4
  f4 a5                 tst8	r5
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0x69
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0x66
 <L5>:
  f0 44 00 00           ldm8u	r4, [0x0]
 		R_AVM_DATA16	__avm_atexit_count
@@ -267,24 +262,24 @@ Disassembly of section .text.__avm_run_local_dtors:
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
 <L6>:
- f5 29                 cmp	r6, r1
+ f5 28                 cmp	r6, r0
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0x39
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0x35
 <L7>:
  e2 00 00 00           jmpf	__avm_run_local_dtors
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_DATA16	__avm_atexit_count
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
 <L8>:
  f0 44 00 00           ldm8u	r4, [0x0]
 		R_AVM_DATA16	__avm_atexit_count
@@ -292,7 +287,7 @@ Disassembly of section .text.__avm_run_local_dtors:
  d1 04                 brne8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb8
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0xb5
 <L9>:
  f0 04 00 00           ldi16	r0, 0x0
 		R_AVM_DATA16	__avm_local_dtor_slots_start
@@ -312,10 +307,9 @@ Disassembly of section .text.__avm_run_local_dtors:
  d0 04                 breq8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_run_local_dtors
-		R_AVM_FAR24	.text.__avm_run_local_dtors+0x9d
+		R_AVM_FAR24	.text.__avm_run_local_dtors+0x9a
 <L10>:
  b8                    pop16	r0
- b9                    pop16	r1
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
@@ -327,59 +321,55 @@ Disassembly of section .text.__avm_before_global_dtor:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 f8                 adjsp	-0x8
- f4 50                 stsp16	[sp+0x4], r4
- f4 59                 stsp16	[sp+0x6], r5
- c4 00 00              ldi16	r4, 0x0
-		R_AVM_PROG_LO16	__fini_array_end
- c1 00                 ldi8	r5, 0x0
-		R_AVM_PROG_HI8	__fini_array_end
+ d6 fc                 adjsp	-0x4
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
  c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	__fini_array_start
+		R_AVM_PROG_LO16	__fini_array_end
  c3 00                 ldi8	r7, 0x0
+		R_AVM_PROG_HI8	__fini_array_end
+ f0 04 00 00           ldi16	r0, 0x0
+		R_AVM_PROG_LO16	__fini_array_start
+ f0 01 00              ldi8	r1, 0x0
 		R_AVM_PROG_HI8	__fini_array_start
- f0 69 c8              cmp32	q3, q2
+ f0 69 0c              cmp32	q0, q3
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x5d
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x57
 <L0>:
  f0 04 00 00           ldi16	r0, 0x0
 		R_AVM_PROG_LO16	__fini_array_start
  f0 01 00              ldi8	r1, 0x0
 		R_AVM_PROG_HI8	__fini_array_start
- c0 03                 ldi8	r4, 0x3
- a5                    xor	r5, r5
- f4 40                 stsp16	[sp+0x0], r4
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f1 75                 zext8	r5
  f4 49                 stsp16	[sp+0x2], r5
- f4 1b                 ldsp16	r7, [sp+0x6]
- f1 77                 zext8	r7
- f4 5b                 stsp16	[sp+0x6], r7
- c6 00 00              ldi16	r6, 0x0
+ c4 00 00              ldi16	r4, 0x0
 		R_AVM_PROG_LO16	__fini_array_end
- c3 00                 ldi8	r7, 0x0
+ c1 00                 ldi8	r5, 0x0
 		R_AVM_PROG_HI8	__fini_array_end
  f2 64                 mov32	q1, q0
- f4 00                 ldsp16	r4, [sp+0x0]
- f4 09                 ldsp16	r5, [sp+0x2]
- f7 66                 add32	q1, q2
+ c2 03                 ldi8	r6, 0x3
+ af                    xor	r7, r7
+ f7 67                 add32	q1, q3
  f0 63 00              ldp24	q0, [q0]
- f4 10                 ldsp16	r4, [sp+0x4]
- f4 19                 ldsp16	r5, [sp+0x6]
- f0 69 08              cmp32	q0, q2
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f0 69 0c              cmp32	q0, q3
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x61
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x5b
 <L1>:
  f2 61                 mov32	q0, q1
  f1 71                 zext8	r1
- f0 69 0c              cmp32	q0, q3
+ f0 69 08              cmp32	q0, q2
  f2 61                 mov32	q0, q1
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x38
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x33
 <L2>:
  e3 00 00 00           callf	__avm_before_global_dtor
 		R_AVM_RELAX	*ABS*
@@ -395,12 +385,12 @@ Disassembly of section .text.__avm_before_global_dtor:
  d2 04                 brult8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x7b
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x75
 <L3>:
  a0                    xor	r4, r4
  e2 00 00 00           jmpf	__avm_before_global_dtor
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x139
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x133
  f0 5a 00 00           stm16	[0x0], r2
 		R_AVM_DATA16	__avm_termination_phase
  c4 00 00              ldi16	r4, 0x0
@@ -409,7 +399,7 @@ Disassembly of section .text.__avm_before_global_dtor:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0xfb
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0xf5
 <L4>:
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_DATA16	__avm_local_dtor_slots_start
@@ -419,7 +409,7 @@ Disassembly of section .text.__avm_before_global_dtor:
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
 <L5>:
  f0 56 00 00           ldm16	r6, [0x0]
 		R_AVM_DATA16	__avm_termination_next
@@ -427,7 +417,7 @@ Disassembly of section .text.__avm_before_global_dtor:
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
 <L6>:
  c5 00 00              ldi16	r5, 0x0
 		R_AVM_DATA16	__avm_local_dtor_slots_start
@@ -435,9 +425,10 @@ Disassembly of section .text.__avm_before_global_dtor:
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
 <L7>:
- f0 03 01              ldi8	r3, 0x1
+ f0 07 00 00           ldi16	r3, 0x0
+		R_AVM_DATA16	__avm_local_dtor_slots_start
  ed bc 1e              ld16	r5, [r6-2]
  01                    mov	r4, r5
  f4 8c                 lsr16.1	r4
@@ -447,7 +438,7 @@ Disassembly of section .text.__avm_before_global_dtor:
  d8 04                 bruge8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
 <L8>:
  ca fb                 addi.s8	r6, -0x5
  02                    mov	r4, r6
@@ -455,12 +446,13 @@ Disassembly of section .text.__avm_before_global_dtor:
  f5 31                 ld8u	r1, [r4]
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_termination_next
- f9 ac                 and	r5, r3
+ c0 01                 ldi8	r4, 0x1
+ 84                    and	r5, r4
  f4 a5                 tst8	r5
  d1 04                 brne8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0xe0
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0xdc
 <L9>:
  f0 44 00 00           ldm8u	r4, [0x0]
 		R_AVM_DATA16	__avm_atexit_count
@@ -474,26 +466,24 @@ Disassembly of section .text.__avm_before_global_dtor:
  d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
 <L10>:
- c4 00 00              ldi16	r4, 0x0
-		R_AVM_DATA16	__avm_local_dtor_slots_start
- 38                    cmp	r6, r4
+ f5 2b                 cmp	r6, r3
  d0 04                 breq8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0xb0
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0xab
 <L11>:
  e2 00 00 00           jmpf	__avm_before_global_dtor
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_DATA16	__avm_atexit_count
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
 <L12>:
  f0 44 00 00           ldm8u	r4, [0x0]
 		R_AVM_DATA16	__avm_atexit_count
@@ -501,7 +491,7 @@ Disassembly of section .text.__avm_before_global_dtor:
  d1 04                 brne8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x131
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x12b
 <L13>:
  f0 05 00 00           ldi16	r1, 0x0
 		R_AVM_DATA16	__avm_local_dtor_slots_start
@@ -521,13 +511,13 @@ Disassembly of section .text.__avm_before_global_dtor:
  d0 04                 breq8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_before_global_dtor
-		R_AVM_FAR24	.text.__avm_before_global_dtor+0x116
+		R_AVM_FAR24	.text.__avm_before_global_dtor+0x110
 <L14>:
  c0 01                 ldi8	r4, 0x1
  f4 b2                 dec16	r2
  f0 5a 00 00           stm16	[0x0], r2
 		R_AVM_DATA16	__avm_termination_phase
- d6 08                 adjsp	0x8
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

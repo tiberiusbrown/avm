@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sqrt.c
 00000000 l    d  .text.csqrtf	00000000 .text.csqrtf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.csqrtf	0000024b csqrtf
+00000000 g     F .text.csqrtf	00000247 csqrtf
 00000000         *UND*	00000000 fabsf
 00000000         *UND*	00000000 sqrtf
 00000000         *UND*	00000000 copysignf
@@ -60,7 +60,7 @@ Disassembly of section .text.csqrtf:
  f4 1b                 ldsp16	r7, [sp+0x6]
  e2 00 00 00           jmpf	csqrtf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.csqrtf+0x20e
+		R_AVM_FAR24	.text.csqrtf+0x20c
  f1 21                 mov	r4, r1
  10                    add	r4, r4
  c6 00 ff              ldi16	r6, 0xff00
@@ -109,7 +109,7 @@ Disassembly of section .text.csqrtf:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	csqrtf
-		R_AVM_FAR24	.text.csqrtf+0x23f
+		R_AVM_FAR24	.text.csqrtf+0x23d
 <L4>:
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
@@ -147,7 +147,7 @@ Disassembly of section .text.csqrtf:
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	csqrtf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.csqrtf+0x20e
+		R_AVM_FAR24	.text.csqrtf+0x20c
  f0 30 08              ldsp16	r0, [sp+0x8]
  f0 31 0a              ldsp16	r1, [sp+0xa]
  f1 20                 mov	r4, r0
@@ -171,7 +171,7 @@ Disassembly of section .text.csqrtf:
  0d                    mov	r7, r5
  e2 00 00 00           jmpf	csqrtf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.csqrtf+0x20e
+		R_AVM_FAR24	.text.csqrtf+0x20c
  c6 c2 bd              ldi16	r6, 0xbdc2
  c7 f0 7c              ldi16	r7, 0x7cf0
  f4 30                 ldsp16	r4, [sp+0xc]
@@ -202,7 +202,7 @@ Disassembly of section .text.csqrtf:
  d0 04                 breq8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	csqrtf
-		R_AVM_FAR24	.text.csqrtf+0x22f
+		R_AVM_FAR24	.text.csqrtf+0x22d
 <L9>:
  f2 69                 mov32	q2, q1
  f2 64                 mov32	q1, q0
@@ -213,7 +213,7 @@ Disassembly of section .text.csqrtf:
  d0 04                 breq8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	csqrtf
-		R_AVM_FAR24	.text.csqrtf+0x221
+		R_AVM_FAR24	.text.csqrtf+0x21f
 <L10>:
  aa                    xor	r6, r6
  c7 80 4b              ldi16	r7, 0x4b80
@@ -257,9 +257,9 @@ Disassembly of section .text.csqrtf:
  e3 00 00 00           callf	csqrtf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	hypotf
- f2 30                 sub	r0, r0
- f0 05 00 3f           ldi16	r1, 0x3f00
- f2 6a                 mov32	q3, q0
+ 2a                    sub	r6, r6
+ c7 00 3f              ldi16	r7, 0x3f00
+ f2 63                 mov32	q0, q3
  ff 02                 fmul
  f4 60                 stsp16	[sp+0x8], r4
  f4 69                 stsp16	[sp+0xa], r5
@@ -344,9 +344,9 @@ Disassembly of section .text.csqrtf:
  e2 00 00 00           jmpf	csqrtf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.csqrtf+0x189
- f2 30                 sub	r0, r0
- f0 05 c0 7f           ldi16	r1, 0x7fc0
- f2 6a                 mov32	q3, q0
+ 2a                    sub	r6, r6
+ c7 c0 7f              ldi16	r7, 0x7fc0
+ f2 63                 mov32	q0, q3
  e2 00 00 00           jmpf	csqrtf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.csqrtf+0x20e
+		R_AVM_FAR24	.text.csqrtf+0x20c

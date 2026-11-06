@@ -88,7 +88,15 @@ int avm_test_main(void)
     SHIFTS(33, 0x13579bde00000000, 0x000000004091a2b3, 0xffffffffc091a2b3);
     SHIFTS(63, 0x8000000000000000, 0x0000000000000001, 0xffffffffffffffff);
     SHIFTS(64, 0x0000000000000000, 0x0000000000000000, 0xffffffffffffffff);
+    SHIFTS(17, 0x8acf13579bde0000, 0x00004091a2b3c4d5, 0xffffc091a2b3c4d5);
+    SHIFTS(47, 0xe6f7800000000000, 0x0000000000010246, 0xffffffffffff0246);
+    SHIFTS(48, 0xcdef000000000000, 0x0000000000008123, 0xffffffffffff8123);
+    SHIFTS(49, 0x9bde000000000000, 0x0000000000004091, 0xffffffffffffc091);
+    SHIFTS(65, 0x0000000000000000, 0x0000000000000000, 0xffffffffffffffff);
+    SHIFTS(65535, 0x0000000000000000, 0x0000000000000000, 0xffffffffffffffff);
 #undef SHIFTS
+    CHECK(__avm_ashrdi3(INT64_MAX, 64) == 0);
+    CHECK(__avm_ashrdi3(0, 63) == 0);
 
     return 0;
 }

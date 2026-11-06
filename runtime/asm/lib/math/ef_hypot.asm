@@ -361,8 +361,9 @@ Disassembly of section .text.avm_hypot_overflows:
  f0 02 7f              ldi8	r2, 0x7f
  f0 36 14              ldsp16	r6, [sp+0x14]
  f9 c8                 and	r6, r2
- f0 03 80              ldi8	r3, 0x80
- f9 cd                 or	r6, r3
+ c0 80                 ldi8	r4, 0x80
+ f1 1c                 mov	r3, r4
+ 98                    or	r6, r4
  0e                    mov	r7, r6
  f4 38                 ldsp16	r4, [sp+0xe]
  f3 1c                 mulu8.w	r7, r4
@@ -425,8 +426,9 @@ Disassembly of section .text.avm_hypot_overflows:
  13                    add	r4, r7
  0c                    mov	r7, r4
  f3 1a                 mulu8.w	r6, r6
- f0 06 00 ff           ldi16	r2, 0xff00
- f9 c8                 and	r6, r2
+ c4 00 ff              ldi16	r4, 0xff00
+ f1 14                 mov	r2, r4
+ 88                    and	r6, r4
  c4 00 07              ldi16	r4, 0x700
  f0 35 1a              ldsp16	r5, [sp+0x1a]
  84                    and	r5, r4

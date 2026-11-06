@@ -46,17 +46,17 @@ SYMBOL TABLE:
 00000000 l    d  .rodata..L.avm.flashstr.7	00000000 .rodata..L.avm.flashstr.7
 00000000 l    d  .rodata..L.avm.flashstr.8	00000000 .rodata..L.avm.flashstr.8
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.memccpy	00000031 memccpy
+00000000 g     F .text.memccpy	00000024 memccpy
 00000000 g     F .text.memset_explicit	0000000b memset_explicit
-00000000 g     F .text.memchr	0000002a memchr
-00000000 g     F .text.strncmp	00000039 strncmp
-00000000 g     F .text.strchr	00000017 strchr
-00000000 g     F .text.strrchr	00000019 strrchr
-00000000 g     F .text.strstr	0000004e strstr
-00000000 g     F .text.strspn	0000003c strspn
-00000000 g     F .text.strcspn	00000038 strcspn
+00000000 g     F .text.memchr	00000020 memchr
+00000000 g     F .text.strncmp	00000031 strncmp
+00000000 g     F .text.strchr	00000016 strchr
+00000000 g     F .text.strrchr	00000013 strrchr
+00000000 g     F .text.strstr	00000049 strstr
+00000000 g     F .text.strspn	0000003a strspn
+00000000 g     F .text.strcspn	00000036 strcspn
 00000000 g     F .text.strpbrk	00000034 strpbrk
-00000000 g     F .text.strnlen	00000020 strnlen
+00000000 g     F .text.strnlen	0000001f strnlen
 00000000 g     F .text.strtok_r	00000098 strtok_r
 00000000 g     F .text.strtok	00000099 strtok
 00000000 g     F .text.strtok_P	00000010 strtok_P
@@ -75,46 +75,38 @@ SYMBOL TABLE:
 00000000 g     F .text.strncat	00000005 strncat
 00000000 g     F .text.strcpy	0000000e strcpy
 00000000 g     F .text.strcat	00000008 strcat
-00000000 g     F .text.strdup	00000024 strdup
+00000000 g     F .text.strdup	00000023 strdup
 00000000         *UND*	00000000 malloc
-00000000 g     F .text.strndup	00000048 strndup
+00000000 g     F .text.strndup	00000045 strndup
 
 Disassembly of section .text.memccpy:
 
 <memccpy>:
- b1                    push16	r1
  b0                    push16	r0
- f1 04                 mov	r0, r4
- a0                    xor	r4, r4
  f6 2f                 tst16	r7
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	memccpy
-		R_AVM_FAR24	.text.memccpy+0x2e
+		R_AVM_FAR24	.text.memccpy+0x21
 <L0>:
  f1 76                 zext8	r6
- f5 35                 ld8u	r1, [r5]
- f0 6d 21              st8	[r0+], r1
- f5 0e                 cmp	r1, r6
+ f7 08                 ld8u	r0, [r5+]
+ f6 00                 st8	[r4+], r0
+ f5 06                 cmp	r0, r6
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	memccpy
-		R_AVM_FAR24	.text.memccpy+0x2c
+		R_AVM_FAR24	.text.memccpy+0x22
 <L1>:
- f4 ad                 inc16	r5
  f4 b7                 dec16	r7
  f6 2f                 tst16	r7
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	memccpy
-		R_AVM_FAR24	.text.memccpy+0xf
+		R_AVM_FAR24	.text.memccpy+0xb
 <L2>:
- e2 00 00 00           jmpf	memccpy
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.memccpy+0x2e
- f1 20                 mov	r4, r0
+ a0                    xor	r4, r4
  b8                    pop16	r0
- b9                    pop16	r1
  ef                    ret
 
 Disassembly of section .text.memset_explicit:
@@ -131,182 +123,164 @@ Disassembly of section .text.memset_explicit:
 Disassembly of section .text.memchr:
 
 <memchr>:
- b0                    push16	r0
- f1 04                 mov	r0, r4
- a0                    xor	r4, r4
  f6 2e                 tst16	r6
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	memchr
-		R_AVM_FAR24	.text.memchr+0x24
+		R_AVM_FAR24	.text.memchr+0x1e
 <L0>:
  f1 75                 zext8	r5
- ed e0 20              ld8u	r7, [r0+0]
+ 4c                    ld8u	r7, [r4]
  3d                    cmp	r7, r5
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	memchr
-		R_AVM_FAR24	.text.memchr+0x26
+		R_AVM_FAR24	.text.memchr+0x1f
 <L1>:
- f4 a8                 inc16	r0
+ f4 ac                 inc16	r4
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	memchr
-		R_AVM_FAR24	.text.memchr+0xe
+		R_AVM_FAR24	.text.memchr+0xa
 <L2>:
- b8                    pop16	r0
- ef                    ret
- f1 20                 mov	r4, r0
- b8                    pop16	r0
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.strncmp:
 
 <strncmp>:
- b1                    push16	r1
  b0                    push16	r0
- f2 30                 sub	r0, r0
  f6 2e                 tst16	r6
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strncmp
-		R_AVM_FAR24	.text.strncmp+0x2d
+		R_AVM_FAR24	.text.strncmp+0x27
 <L0>:
- f5 35                 ld8u	r1, [r5]
- 4c                    ld8u	r7, [r4]
+ f7 08                 ld8u	r0, [r5+]
+ f7 07                 ld8u	r7, [r4+]
  f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strncmp
-		R_AVM_FAR24	.text.strncmp+0x33
+		R_AVM_FAR24	.text.strncmp+0x2c
 <L1>:
- f5 2d                 cmp	r7, r1
+ f5 2c                 cmp	r7, r0
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strncmp
-		R_AVM_FAR24	.text.strncmp+0x33
+		R_AVM_FAR24	.text.strncmp+0x2c
 <L2>:
- f4 ac                 inc16	r4
- f4 ad                 inc16	r5
  f4 b6                 dec16	r6
  f6 2e                 tst16	r6
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strncmp
-		R_AVM_FAR24	.text.strncmp+0xc
+		R_AVM_FAR24	.text.strncmp+0x9
 <L3>:
- f1 2c                 mov	r7, r0
+ af                    xor	r7, r7
  e2 00 00 00           jmpf	strncmp
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strncmp+0x35
- f2 5d                 sub	r7, r1
+		R_AVM_FAR24	.text.strncmp+0x2e
+ f2 5c                 sub	r7, r0
  03                    mov	r4, r7
  b8                    pop16	r0
- b9                    pop16	r1
  ef                    ret
 
 Disassembly of section .text.strchr:
 
 <strchr>:
  f1 75                 zext8	r5
- aa                    xor	r6, r6
- 4c                    ld8u	r7, [r4]
- 3d                    cmp	r7, r5
+ 48                    ld8u	r6, [r4]
+ 39                    cmp	r6, r5
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strchr
-		R_AVM_FAR24	.text.strchr+0x16
+		R_AVM_FAR24	.text.strchr+0x15
 <L0>:
  f4 ac                 inc16	r4
- f4 a7                 tst8	r7
+ f4 a6                 tst8	r6
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strchr
-		R_AVM_FAR24	.text.strchr+0x3
+		R_AVM_FAR24	.text.strchr+0x2
 <L1>:
- 02                    mov	r4, r6
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.strrchr:
 
 <strrchr>:
- b0                    push16	r0
- f1 04                 mov	r0, r4
+ 08                    mov	r6, r4
  a0                    xor	r4, r4
  f1 75                 zext8	r5
- f1 2c                 mov	r7, r0
- f7 1e                 ld8u	r6, [r7+]
- 39                    cmp	r6, r5
- fb 20                 cmov.eq	r4, r0
- f4 a6                 tst8	r6
- f1 07                 mov	r0, r7
+ 4e                    ld8u	r7, [r6]
+ 3d                    cmp	r7, r5
+ fb 26                 cmov.eq	r4, r6
+ f4 ae                 inc16	r6
+ f4 a7                 tst8	r7
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strrchr
-		R_AVM_FAR24	.text.strrchr+0x8
+		R_AVM_FAR24	.text.strrchr+0x4
 <L0>:
- b8                    pop16	r0
  ef                    ret
 
 Disassembly of section .text.strstr:
 
 <strstr>:
- b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- f5 35                 ld8u	r1, [r5]
- f4 a1                 tst8	r1
+ f5 34                 ld8u	r0, [r5]
+ f4 a0                 tst8	r0
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strstr
-		R_AVM_FAR24	.text.strstr+0x49
+		R_AVM_FAR24	.text.strstr+0x45
 <L0>:
- f2 30                 sub	r0, r0
  48                    ld8u	r6, [r4]
  f4 a6                 tst8	r6
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strstr
-		R_AVM_FAR24	.text.strstr+0x47
+		R_AVM_FAR24	.text.strstr+0x44
 <L1>:
- f1 1d                 mov	r3, r5
- f1 11                 mov	r2, r1
+ f1 15                 mov	r2, r5
+ f1 08                 mov	r1, r0
  08                    mov	r6, r4
  4e                    ld8u	r7, [r6]
- f5 2e                 cmp	r7, r2
+ f5 2d                 cmp	r7, r1
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strstr
-		R_AVM_FAR24	.text.strstr+0x3a
+		R_AVM_FAR24	.text.strstr+0x37
 <L2>:
  f4 ae                 inc16	r6
- ed 46 21              ld8u	r2, [r3+1]
- f4 ab                 inc16	r3
- f4 a2                 tst8	r2
+ ed 24 21              ld8u	r1, [r2+1]
+ f4 aa                 inc16	r2
+ f4 a1                 tst8	r1
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strstr
-		R_AVM_FAR24	.text.strstr+0x1e
+		R_AVM_FAR24	.text.strstr+0x1b
 <L3>:
  e2 00 00 00           jmpf	strstr
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strstr+0x49
+		R_AVM_FAR24	.text.strstr+0x45
  ed c8 21              ld8u	r6, [r4+1]
  f4 ac                 inc16	r4
  f4 a6                 tst8	r6
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strstr
-		R_AVM_FAR24	.text.strstr+0x19
+		R_AVM_FAR24	.text.strstr+0x16
 <L4>:
- f1 20                 mov	r4, r0
+ a0                    xor	r4, r4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret
 
 Disassembly of section .text.strspn:
@@ -320,34 +294,33 @@ Disassembly of section .text.strspn:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strspn
-		R_AVM_FAR24	.text.strspn+0x35
+		R_AVM_FAR24	.text.strspn+0x33
 <L0>:
- f1 04                 mov	r0, r4
  09                    mov	r6, r5
  4e                    ld8u	r7, [r6]
  f5 2d                 cmp	r7, r1
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strspn
-		R_AVM_FAR24	.text.strspn+0x28
+		R_AVM_FAR24	.text.strspn+0x26
 <L1>:
  f4 ae                 inc16	r6
  f4 a7                 tst8	r7
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strspn
-		R_AVM_FAR24	.text.strspn+0x11
+		R_AVM_FAR24	.text.strspn+0xf
 <L2>:
  e2 00 00 00           jmpf	strspn
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strspn+0x35
+		R_AVM_FAR24	.text.strspn+0x33
  ed 20 21              ld8u	r1, [r0+1]
  f4 a8                 inc16	r0
  f4 a1                 tst8	r1
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strspn
-		R_AVM_FAR24	.text.strspn+0x10
+		R_AVM_FAR24	.text.strspn+0xe
 <L3>:
  f2 34                 sub	r0, r4
  f1 20                 mov	r4, r0
@@ -366,23 +339,22 @@ Disassembly of section .text.strcspn:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strcspn
-		R_AVM_FAR24	.text.strcspn+0x31
+		R_AVM_FAR24	.text.strcspn+0x2f
 <L0>:
- f1 04                 mov	r0, r4
  09                    mov	r6, r5
  4e                    ld8u	r7, [r6]
  f5 2d                 cmp	r7, r1
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strcspn
-		R_AVM_FAR24	.text.strcspn+0x31
+		R_AVM_FAR24	.text.strcspn+0x2f
 <L1>:
  f4 ae                 inc16	r6
  f4 a7                 tst8	r7
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strcspn
-		R_AVM_FAR24	.text.strcspn+0x11
+		R_AVM_FAR24	.text.strcspn+0xf
 <L2>:
  ed 20 21              ld8u	r1, [r0+1]
  f4 a8                 inc16	r0
@@ -390,7 +362,7 @@ Disassembly of section .text.strcspn:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strcspn
-		R_AVM_FAR24	.text.strcspn+0x10
+		R_AVM_FAR24	.text.strcspn+0xe
 <L3>:
  f2 34                 sub	r0, r4
  f1 20                 mov	r4, r0
@@ -448,16 +420,15 @@ Disassembly of section .text.strnlen:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strnlen
-		R_AVM_FAR24	.text.strnlen+0x1f
+		R_AVM_FAR24	.text.strnlen+0x1e
 <L0>:
- 4e                    ld8u	r7, [r6]
+ f7 17                 ld8u	r7, [r6+]
  f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strnlen
-		R_AVM_FAR24	.text.strnlen+0x1f
+		R_AVM_FAR24	.text.strnlen+0x1e
 <L1>:
- f4 ae                 inc16	r6
  f4 ac                 inc16	r4
  34                    cmp	r5, r4
  d0 04                 breq8	0x4 <L2>
@@ -986,9 +957,8 @@ Disassembly of section .text.strdup:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strdup
-		R_AVM_FAR24	.text.strdup+0x20
+		R_AVM_FAR24	.text.strdup+0x1f
 <L0>:
- 03                    mov	r4, r7
  f1 24                 mov	r5, r0
  f1 29                 mov	r6, r1
  d7 0f                 sys	memcpy
@@ -1008,15 +978,14 @@ Disassembly of section .text.strndup:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strndup
-		R_AVM_FAR24	.text.strndup+0x27
+		R_AVM_FAR24	.text.strndup+0x25
 <L0>:
- f1 20                 mov	r4, r0
  48                    ld8u	r6, [r4]
  f4 a6                 tst8	r6
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strndup
-		R_AVM_FAR24	.text.strndup+0x27
+		R_AVM_FAR24	.text.strndup+0x25
 <L1>:
  f4 ac                 inc16	r4
  f4 a9                 inc16	r1
@@ -1024,7 +993,7 @@ Disassembly of section .text.strndup:
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strndup
-		R_AVM_FAR24	.text.strndup+0x10
+		R_AVM_FAR24	.text.strndup+0xe
 <L2>:
  f1 0d                 mov	r1, r5
  f1 21                 mov	r4, r1
@@ -1037,9 +1006,8 @@ Disassembly of section .text.strndup:
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strndup
-		R_AVM_FAR24	.text.strndup+0x44
+		R_AVM_FAR24	.text.strndup+0x41
 <L3>:
- 03                    mov	r4, r7
  f1 24                 mov	r5, r0
  f1 29                 mov	r6, r1
  d7 0f                 sys	memcpy

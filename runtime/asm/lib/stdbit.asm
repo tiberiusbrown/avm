@@ -76,12 +76,12 @@ SYMBOL TABLE:
 00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.stdc_leading_zeros_uc	00000056 stdc_leading_zeros_uc
 00000000 g     F .text.stdc_leading_ones_uc	0000005d stdc_leading_ones_uc
-00000000 g     F .text.stdc_trailing_zeros_uc	00000038 stdc_trailing_zeros_uc
-00000000 g     F .text.stdc_trailing_ones_uc	0000003d stdc_trailing_ones_uc
+00000000 g     F .text.stdc_trailing_zeros_uc	0000002e stdc_trailing_zeros_uc
+00000000 g     F .text.stdc_trailing_ones_uc	00000033 stdc_trailing_ones_uc
 00000000 g     F .text.stdc_first_leading_zero_uc	0000005d stdc_first_leading_zero_uc
 00000000 g     F .text.stdc_first_leading_one_uc	00000056 stdc_first_leading_one_uc
-00000000 g     F .text.stdc_first_trailing_zero_uc	00000039 stdc_first_trailing_zero_uc
-00000000 g     F .text.stdc_first_trailing_one_uc	00000032 stdc_first_trailing_one_uc
+00000000 g     F .text.stdc_first_trailing_zero_uc	00000032 stdc_first_trailing_zero_uc
+00000000 g     F .text.stdc_first_trailing_one_uc	0000002b stdc_first_trailing_one_uc
 00000000 g     F .text.stdc_count_zeros_uc	0000001a stdc_count_zeros_uc
 00000000 g     F .text.stdc_count_ones_uc	00000019 stdc_count_ones_uc
 00000000 g     F .text.stdc_has_single_bit_uc	00000013 stdc_has_single_bit_uc
@@ -90,11 +90,11 @@ SYMBOL TABLE:
 00000000 g     F .text.stdc_bit_ceil_uc	0000006f stdc_bit_ceil_uc
 00000000 g     F .text.stdc_leading_zeros_us	000000bc stdc_leading_zeros_us
 00000000 g     F .text.stdc_leading_ones_us	000000bc stdc_leading_ones_us
-00000000 g     F .text.stdc_trailing_zeros_us	0000002d stdc_trailing_zeros_us
-00000000 g     F .text.stdc_trailing_ones_us	00000031 stdc_trailing_ones_us
+00000000 g     F .text.stdc_trailing_zeros_us	0000002b stdc_trailing_zeros_us
+00000000 g     F .text.stdc_trailing_ones_us	0000002f stdc_trailing_ones_us
 00000000 g     F .text.stdc_first_leading_zero_us	000000bc stdc_first_leading_zero_us
 00000000 g     F .text.stdc_first_leading_one_us	000000bc stdc_first_leading_one_us
-00000000 g     F .text.stdc_first_trailing_zero_us	0000002f stdc_first_trailing_zero_us
+00000000 g     F .text.stdc_first_trailing_zero_us	0000002e stdc_first_trailing_zero_us
 00000000 g     F .text.stdc_first_trailing_one_us	00000028 stdc_first_trailing_one_us
 00000000 g     F .text.stdc_count_zeros_us	0000001a stdc_count_zeros_us
 00000000 g     F .text.stdc_count_ones_us	00000019 stdc_count_ones_us
@@ -104,11 +104,11 @@ SYMBOL TABLE:
 00000000 g     F .text.stdc_bit_ceil_us	000000ec stdc_bit_ceil_us
 00000000 g     F .text.stdc_leading_zeros_ui	000000bc stdc_leading_zeros_ui
 00000000 g     F .text.stdc_leading_ones_ui	000000bc stdc_leading_ones_ui
-00000000 g     F .text.stdc_trailing_zeros_ui	0000002d stdc_trailing_zeros_ui
-00000000 g     F .text.stdc_trailing_ones_ui	00000031 stdc_trailing_ones_ui
+00000000 g     F .text.stdc_trailing_zeros_ui	0000002b stdc_trailing_zeros_ui
+00000000 g     F .text.stdc_trailing_ones_ui	0000002f stdc_trailing_ones_ui
 00000000 g     F .text.stdc_first_leading_zero_ui	000000bc stdc_first_leading_zero_ui
 00000000 g     F .text.stdc_first_leading_one_ui	000000bc stdc_first_leading_one_ui
-00000000 g     F .text.stdc_first_trailing_zero_ui	0000002f stdc_first_trailing_zero_ui
+00000000 g     F .text.stdc_first_trailing_zero_ui	0000002e stdc_first_trailing_zero_ui
 00000000 g     F .text.stdc_first_trailing_one_ui	00000028 stdc_first_trailing_one_ui
 00000000 g     F .text.stdc_count_zeros_ui	0000001a stdc_count_zeros_ui
 00000000 g     F .text.stdc_count_ones_ui	00000019 stdc_count_ones_ui
@@ -118,12 +118,12 @@ SYMBOL TABLE:
 00000000 g     F .text.stdc_bit_ceil_ui	000000ec stdc_bit_ceil_ui
 00000000 g     F .text.stdc_leading_zeros_ul	0000026e stdc_leading_zeros_ul
 00000000 g     F .text.stdc_leading_ones_ul	0000000c stdc_leading_ones_ul
-00000000 g     F .text.stdc_trailing_zeros_ul	00000038 stdc_trailing_zeros_ul
-00000000 g     F .text.stdc_trailing_ones_ul	00000044 stdc_trailing_ones_ul
+00000000 g     F .text.stdc_trailing_zeros_ul	00000034 stdc_trailing_zeros_ul
+00000000 g     F .text.stdc_trailing_ones_ul	00000046 stdc_trailing_ones_ul
 00000000 g     F .text.stdc_first_leading_zero_ul	0000001a stdc_first_leading_zero_ul
 00000000 g     F .text.stdc_first_leading_one_ul	00000014 stdc_first_leading_one_ul
-00000000 g     F .text.stdc_first_trailing_zero_ul	0000003e stdc_first_trailing_zero_ul
-00000000 g     F .text.stdc_first_trailing_one_ul	00000032 stdc_first_trailing_one_ul
+00000000 g     F .text.stdc_first_trailing_zero_ul	00000042 stdc_first_trailing_zero_ul
+00000000 g     F .text.stdc_first_trailing_one_ul	00000034 stdc_first_trailing_one_ul
 00000000 g     F .text.stdc_count_zeros_ul	0000004c stdc_count_zeros_ul
 00000000 g     F .text.stdc_count_ones_ul	0000004b stdc_count_ones_ul
 00000000 g     F .text.stdc_has_single_bit_ul	00000028 stdc_has_single_bit_ul
@@ -131,9 +131,9 @@ SYMBOL TABLE:
 00000000 g     F .text.stdc_bit_floor_ul	00000020 stdc_bit_floor_ul
 00000000         *UND*	00000000 __avm_ashlsi3
 00000000 g     F .text.stdc_bit_ceil_ul	00000028 stdc_bit_ceil_ul
-00000000 g     F .text.stdc_leading_zeros_ull	0000004a stdc_leading_zeros_ull
+00000000 g     F .text.stdc_leading_zeros_ull	00000046 stdc_leading_zeros_ull
 00000000         *UND*	00000000 __avm_lshrdi3
-00000000 g     F .text.stdc_leading_ones_ull	0000004a stdc_leading_ones_ull
+00000000 g     F .text.stdc_leading_ones_ull	00000046 stdc_leading_ones_ull
 00000000 g     F .text.stdc_trailing_zeros_ull	00000055 stdc_trailing_zeros_ull
 00000000 g     F .text.stdc_trailing_ones_ull	00000061 stdc_trailing_ones_ull
 00000000 g     F .text.stdc_first_leading_zero_ull	0000005d stdc_first_leading_zero_ull
@@ -143,7 +143,7 @@ SYMBOL TABLE:
 00000000 g     F .text.stdc_count_zeros_ull	0000006c stdc_count_zeros_ull
 00000000 g     F .text.stdc_count_ones_ull	0000006a stdc_count_ones_ull
 00000000 g     F .text.stdc_has_single_bit_ull	00000047 stdc_has_single_bit_ull
-00000000 g     F .text.stdc_bit_width_ull	0000004e stdc_bit_width_ull
+00000000 g     F .text.stdc_bit_width_ull	0000004a stdc_bit_width_ull
 00000000 g     F .text.stdc_bit_floor_ull	00000072 stdc_bit_floor_ull
 00000000         *UND*	00000000 __avm_ashldi3
 00000000 g     F .text.stdc_bit_ceil_ull	00000099 stdc_bit_ceil_ull
@@ -290,12 +290,11 @@ Disassembly of section .text.stdc_leading_ones_uc:
 Disassembly of section .text.stdc_trailing_zeros_uc:
 
 <stdc_trailing_zeros_uc>:
- b0                    push16	r0
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_zeros_uc
-		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x2e
+		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x29
 <L0>:
  c1 01                 ldi8	r5, 0x1
  84                    and	r5, r4
@@ -303,13 +302,13 @@ Disassembly of section .text.stdc_trailing_zeros_uc:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_zeros_uc
-		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x34
+		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x2c
 <L1>:
  a5                    xor	r5, r5
- f0 00 02              ldi8	r0, 0x2
- c3 fe                 ldi8	r7, 0xfe
  08                    mov	r6, r4
- f9 c0                 and	r6, r0
+ c3 02                 ldi8	r7, 0x2
+ 8b                    and	r6, r7
+ c3 fe                 ldi8	r7, 0xfe
  83                    and	r4, r7
  f4 ad                 inc16	r5
  f4 8c                 lsr16.1	r4
@@ -317,30 +316,24 @@ Disassembly of section .text.stdc_trailing_zeros_uc:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_zeros_uc
-		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x1a
+		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x14
 <L2>:
- e2 00 00 00           jmpf	stdc_trailing_zeros_uc
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x35
- c1 08                 ldi8	r5, 0x8
- e2 00 00 00           jmpf	stdc_trailing_zeros_uc
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_zeros_uc+0x35
- a5                    xor	r5, r5
  01                    mov	r4, r5
- b8                    pop16	r0
+ ef                    ret
+ c0 08                 ldi8	r4, 0x8
+ ef                    ret
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.stdc_trailing_ones_uc:
 
 <stdc_trailing_ones_uc>:
- b0                    push16	r0
  c1 ff                 ldi8	r5, 0xff
  31                    cmp	r4, r5
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_uc
-		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x1a
+		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x16
 <L0>:
  c1 01                 ldi8	r5, 0x1
  84                    and	r5, r4
@@ -348,23 +341,19 @@ Disassembly of section .text.stdc_trailing_ones_uc:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_uc
-		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x20
+		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x19
 <L1>:
- a5                    xor	r5, r5
- e2 00 00 00           jmpf	stdc_trailing_ones_uc
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x3a
- c1 08                 ldi8	r5, 0x8
- e2 00 00 00           jmpf	stdc_trailing_ones_uc
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x3a
+ a0                    xor	r4, r4
+ ef                    ret
+ c0 08                 ldi8	r4, 0x8
+ ef                    ret
  c5 ff ff              ldi16	r5, 0xffff
  a1                    xor	r4, r5
  a5                    xor	r5, r5
- f0 00 02              ldi8	r0, 0x2
- c3 fe                 ldi8	r7, 0xfe
  08                    mov	r6, r4
- f9 c0                 and	r6, r0
+ c3 02                 ldi8	r7, 0x2
+ 8b                    and	r6, r7
+ c3 fe                 ldi8	r7, 0xfe
  83                    and	r4, r7
  f4 ad                 inc16	r5
  f4 8c                 lsr16.1	r4
@@ -372,10 +361,9 @@ Disassembly of section .text.stdc_trailing_ones_uc:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_uc
-		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x2a
+		R_AVM_FAR24	.text.stdc_trailing_ones_uc+0x1e
 <L2>:
  01                    mov	r4, r5
- b8                    pop16	r0
  ef                    ret
 
 Disassembly of section .text.stdc_first_leading_zero_uc:
@@ -520,13 +508,12 @@ Disassembly of section .text.stdc_first_leading_one_uc:
 Disassembly of section .text.stdc_first_trailing_zero_uc:
 
 <stdc_first_trailing_zero_uc>:
- b0                    push16	r0
  c1 ff                 ldi8	r5, 0xff
  31                    cmp	r4, r5
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_zero_uc
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_uc+0x35
+		R_AVM_FAR24	.text.stdc_first_trailing_zero_uc+0x30
 <L0>:
  c1 01                 ldi8	r5, 0x1
  08                    mov	r6, r4
@@ -535,15 +522,15 @@ Disassembly of section .text.stdc_first_trailing_zero_uc:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_zero_uc
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_uc+0x36
+		R_AVM_FAR24	.text.stdc_first_trailing_zero_uc+0x2e
 <L1>:
  c5 ff ff              ldi16	r5, 0xffff
  a1                    xor	r4, r5
  c1 01                 ldi8	r5, 0x1
- f0 00 02              ldi8	r0, 0x2
- c3 fe                 ldi8	r7, 0xfe
  08                    mov	r6, r4
- f9 c0                 and	r6, r0
+ c3 02                 ldi8	r7, 0x2
+ 8b                    and	r6, r7
+ c3 fe                 ldi8	r7, 0xfe
  83                    and	r4, r7
  f4 ad                 inc16	r5
  f4 8c                 lsr16.1	r4
@@ -551,25 +538,21 @@ Disassembly of section .text.stdc_first_trailing_zero_uc:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_zero_uc
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_uc+0x21
+		R_AVM_FAR24	.text.stdc_first_trailing_zero_uc+0x1b
 <L2>:
- e2 00 00 00           jmpf	stdc_first_trailing_zero_uc
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_uc+0x36
- a5                    xor	r5, r5
  01                    mov	r4, r5
- b8                    pop16	r0
+ ef                    ret
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.stdc_first_trailing_one_uc:
 
 <stdc_first_trailing_one_uc>:
- b0                    push16	r0
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_one_uc
-		R_AVM_FAR24	.text.stdc_first_trailing_one_uc+0x2e
+		R_AVM_FAR24	.text.stdc_first_trailing_one_uc+0x29
 <L0>:
  c1 01                 ldi8	r5, 0x1
  08                    mov	r6, r4
@@ -578,12 +561,12 @@ Disassembly of section .text.stdc_first_trailing_one_uc:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_one_uc
-		R_AVM_FAR24	.text.stdc_first_trailing_one_uc+0x2f
+		R_AVM_FAR24	.text.stdc_first_trailing_one_uc+0x27
 <L1>:
- f0 00 02              ldi8	r0, 0x2
- c3 fe                 ldi8	r7, 0xfe
  08                    mov	r6, r4
- f9 c0                 and	r6, r0
+ c3 02                 ldi8	r7, 0x2
+ 8b                    and	r6, r7
+ c3 fe                 ldi8	r7, 0xfe
  83                    and	r4, r7
  f4 ad                 inc16	r5
  f4 8c                 lsr16.1	r4
@@ -591,14 +574,11 @@ Disassembly of section .text.stdc_first_trailing_one_uc:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_one_uc
-		R_AVM_FAR24	.text.stdc_first_trailing_one_uc+0x1a
+		R_AVM_FAR24	.text.stdc_first_trailing_one_uc+0x14
 <L2>:
- e2 00 00 00           jmpf	stdc_first_trailing_one_uc
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_first_trailing_one_uc+0x2f
- a5                    xor	r5, r5
  01                    mov	r4, r5
- b8                    pop16	r0
+ ef                    ret
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.stdc_count_zeros_uc:
@@ -1168,7 +1148,7 @@ Disassembly of section .text.stdc_trailing_zeros_us:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_zeros_us
-		R_AVM_FAR24	.text.stdc_trailing_zeros_us+0x2a
+		R_AVM_FAR24	.text.stdc_trailing_zeros_us+0x29
 <L1>:
  a5                    xor	r5, r5
  c2 02                 ldi8	r6, 0x2
@@ -1184,11 +1164,9 @@ Disassembly of section .text.stdc_trailing_zeros_us:
 <L2>:
  01                    mov	r4, r5
  ef                    ret
- c1 10                 ldi8	r5, 0x10
- 01                    mov	r4, r5
+ c0 10                 ldi8	r4, 0x10
  ef                    ret
- a5                    xor	r5, r5
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.stdc_trailing_ones_us:
@@ -1198,7 +1176,7 @@ Disassembly of section .text.stdc_trailing_ones_us:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_us
-		R_AVM_FAR24	.text.stdc_trailing_ones_us+0x16
+		R_AVM_FAR24	.text.stdc_trailing_ones_us+0x15
 <L0>:
  c1 01                 ldi8	r5, 0x1
  84                    and	r5, r4
@@ -1206,13 +1184,11 @@ Disassembly of section .text.stdc_trailing_ones_us:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_us
-		R_AVM_FAR24	.text.stdc_trailing_ones_us+0x1a
+		R_AVM_FAR24	.text.stdc_trailing_ones_us+0x18
 <L1>:
- a5                    xor	r5, r5
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
- c1 10                 ldi8	r5, 0x10
- 01                    mov	r4, r5
+ c0 10                 ldi8	r4, 0x10
  ef                    ret
  c5 ff ff              ldi16	r5, 0xffff
  a1                    xor	r4, r5
@@ -1226,7 +1202,7 @@ Disassembly of section .text.stdc_trailing_ones_us:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_us
-		R_AVM_FAR24	.text.stdc_trailing_ones_us+0x21
+		R_AVM_FAR24	.text.stdc_trailing_ones_us+0x1f
 <L2>:
  01                    mov	r4, r5
  ef                    ret
@@ -1540,8 +1516,7 @@ Disassembly of section .text.stdc_first_trailing_zero_us:
 <L2>:
  01                    mov	r4, r5
  ef                    ret
- a5                    xor	r5, r5
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.stdc_first_trailing_one_us:
@@ -2392,7 +2367,7 @@ Disassembly of section .text.stdc_trailing_zeros_ui:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_zeros_ui
-		R_AVM_FAR24	.text.stdc_trailing_zeros_ui+0x2a
+		R_AVM_FAR24	.text.stdc_trailing_zeros_ui+0x29
 <L1>:
  a5                    xor	r5, r5
  c2 02                 ldi8	r6, 0x2
@@ -2408,11 +2383,9 @@ Disassembly of section .text.stdc_trailing_zeros_ui:
 <L2>:
  01                    mov	r4, r5
  ef                    ret
- c1 10                 ldi8	r5, 0x10
- 01                    mov	r4, r5
+ c0 10                 ldi8	r4, 0x10
  ef                    ret
- a5                    xor	r5, r5
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.stdc_trailing_ones_ui:
@@ -2422,7 +2395,7 @@ Disassembly of section .text.stdc_trailing_ones_ui:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_ui
-		R_AVM_FAR24	.text.stdc_trailing_ones_ui+0x16
+		R_AVM_FAR24	.text.stdc_trailing_ones_ui+0x15
 <L0>:
  c1 01                 ldi8	r5, 0x1
  84                    and	r5, r4
@@ -2430,13 +2403,11 @@ Disassembly of section .text.stdc_trailing_ones_ui:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_ui
-		R_AVM_FAR24	.text.stdc_trailing_ones_ui+0x1a
+		R_AVM_FAR24	.text.stdc_trailing_ones_ui+0x18
 <L1>:
- a5                    xor	r5, r5
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
- c1 10                 ldi8	r5, 0x10
- 01                    mov	r4, r5
+ c0 10                 ldi8	r4, 0x10
  ef                    ret
  c5 ff ff              ldi16	r5, 0xffff
  a1                    xor	r4, r5
@@ -2450,7 +2421,7 @@ Disassembly of section .text.stdc_trailing_ones_ui:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_ui
-		R_AVM_FAR24	.text.stdc_trailing_ones_ui+0x21
+		R_AVM_FAR24	.text.stdc_trailing_ones_ui+0x1f
 <L2>:
  01                    mov	r4, r5
  ef                    ret
@@ -2764,8 +2735,7 @@ Disassembly of section .text.stdc_first_trailing_zero_ui:
 <L2>:
  01                    mov	r4, r5
  ef                    ret
- a5                    xor	r5, r5
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
 
 Disassembly of section .text.stdc_first_trailing_one_ui:
@@ -3735,22 +3705,22 @@ Disassembly of section .text.stdc_trailing_zeros_ul:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_zeros_ul
-		R_AVM_FAR24	.text.stdc_trailing_zeros_ul+0x2e
+		R_AVM_FAR24	.text.stdc_trailing_zeros_ul+0x2d
 <L0>:
  c2 01                 ldi8	r6, 0x1
  88                    and	r6, r4
+ f2 30                 sub	r0, r0
  f4 a6                 tst8	r6
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_zeros_ul
-		R_AVM_FAR24	.text.stdc_trailing_zeros_ul+0x34
+		R_AVM_FAR24	.text.stdc_trailing_zeros_ul+0x30
 <L1>:
- aa                    xor	r6, r6
- f0 00 02              ldi8	r0, 0x2
+ c2 02                 ldi8	r6, 0x2
  0c                    mov	r7, r4
- f9 e0                 and	r7, r0
+ 8e                    and	r7, r6
  f7 82                 lsr32.1	q2
- f4 ae                 inc16	r6
+ f4 a8                 inc16	r0
  f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
@@ -3759,13 +3729,9 @@ Disassembly of section .text.stdc_trailing_zeros_ul:
 <L2>:
  e2 00 00 00           jmpf	stdc_trailing_zeros_ul
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_zeros_ul+0x35
- c2 20                 ldi8	r6, 0x20
- e2 00 00 00           jmpf	stdc_trailing_zeros_ul
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_zeros_ul+0x35
- aa                    xor	r6, r6
- 02                    mov	r4, r6
+		R_AVM_FAR24	.text.stdc_trailing_zeros_ul+0x30
+ f0 00 20              ldi8	r0, 0x20
+ f1 20                 mov	r4, r0
  b8                    pop16	r0
  ef                    ret
 
@@ -3780,7 +3746,7 @@ Disassembly of section .text.stdc_trailing_ones_ul:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_ul
-		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x23
+		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x24
 <L0>:
  c2 01                 ldi8	r6, 0x1
  88                    and	r6, r4
@@ -3788,31 +3754,31 @@ Disassembly of section .text.stdc_trailing_ones_ul:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_ul
-		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x29
+		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x2b
 <L1>:
- aa                    xor	r6, r6
+ f2 30                 sub	r0, r0
  e2 00 00 00           jmpf	stdc_trailing_ones_ul
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x40
- c2 20                 ldi8	r6, 0x20
+		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x41
+ f0 00 20              ldi8	r0, 0x20
  e2 00 00 00           jmpf	stdc_trailing_ones_ul
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x40
+		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x41
  f9 82                 xor	r4, r0
  f9 a6                 xor	r5, r1
- aa                    xor	r6, r6
- f0 00 02              ldi8	r0, 0x2
+ f2 30                 sub	r0, r0
+ c2 02                 ldi8	r6, 0x2
  0c                    mov	r7, r4
- f9 e0                 and	r7, r0
+ 8e                    and	r7, r6
  f7 82                 lsr32.1	q2
- f4 ae                 inc16	r6
+ f4 a8                 inc16	r0
  f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_trailing_ones_ul
-		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x31
+		R_AVM_FAR24	.text.stdc_trailing_ones_ul+0x33
 <L2>:
- 02                    mov	r4, r6
+ f1 20                 mov	r4, r0
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret
@@ -3860,6 +3826,7 @@ Disassembly of section .text.stdc_first_leading_one_ul:
 Disassembly of section .text.stdc_first_trailing_zero_ul:
 
 <stdc_first_trailing_zero_ul>:
+ b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
  f0 04 ff ff           ldi16	r0, 0xffff
@@ -3868,37 +3835,38 @@ Disassembly of section .text.stdc_first_trailing_zero_ul:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_zero_ul
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x39
+		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x3a
 <L0>:
- c2 01                 ldi8	r6, 0x1
+ f0 02 01              ldi8	r2, 0x1
  0c                    mov	r7, r4
- 8e                    and	r7, r6
+ f9 e8                 and	r7, r2
  f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_zero_ul
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x3a
+		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x3c
 <L1>:
  f9 82                 xor	r4, r0
  f9 a6                 xor	r5, r1
- f0 00 02              ldi8	r0, 0x2
+ c2 02                 ldi8	r6, 0x2
  0c                    mov	r7, r4
- f9 e0                 and	r7, r0
- f4 ae                 inc16	r6
+ 8e                    and	r7, r6
+ f4 aa                 inc16	r2
  f7 82                 lsr32.1	q2
  f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_zero_ul
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x26
+		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x28
 <L2>:
  e2 00 00 00           jmpf	stdc_first_trailing_zero_ul
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x3a
- aa                    xor	r6, r6
- 02                    mov	r4, r6
+		R_AVM_FAR24	.text.stdc_first_trailing_zero_ul+0x3c
+ f2 42                 sub	r2, r2
+ f1 22                 mov	r4, r2
  b8                    pop16	r0
  b9                    pop16	r1
+ ba                    pop16	r2
  ef                    ret
 
 Disassembly of section .text.stdc_first_trailing_one_ul:
@@ -3913,31 +3881,31 @@ Disassembly of section .text.stdc_first_trailing_one_ul:
  e2 00 00 00           jmpf	stdc_first_trailing_one_ul
 		R_AVM_FAR24	.text.stdc_first_trailing_one_ul+0x2e
 <L0>:
- c2 01                 ldi8	r6, 0x1
+ f0 00 01              ldi8	r0, 0x1
  0c                    mov	r7, r4
- 8e                    and	r7, r6
+ f9 e0                 and	r7, r0
  f4 a7                 tst8	r7
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_one_ul
-		R_AVM_FAR24	.text.stdc_first_trailing_one_ul+0x2f
+		R_AVM_FAR24	.text.stdc_first_trailing_one_ul+0x30
 <L1>:
- f0 00 02              ldi8	r0, 0x2
+ c2 02                 ldi8	r6, 0x2
  0c                    mov	r7, r4
- f9 e0                 and	r7, r0
- f4 ae                 inc16	r6
+ 8e                    and	r7, r6
+ f4 a8                 inc16	r0
  f7 82                 lsr32.1	q2
  f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_first_trailing_one_ul
-		R_AVM_FAR24	.text.stdc_first_trailing_one_ul+0x1b
+		R_AVM_FAR24	.text.stdc_first_trailing_one_ul+0x1c
 <L2>:
  e2 00 00 00           jmpf	stdc_first_trailing_one_ul
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_first_trailing_one_ul+0x2f
- aa                    xor	r6, r6
- 02                    mov	r4, r6
+		R_AVM_FAR24	.text.stdc_first_trailing_one_ul+0x30
+ f2 30                 sub	r0, r0
+ f1 20                 mov	r4, r0
  b8                    pop16	r0
  ef                    ret
 
@@ -4140,30 +4108,28 @@ Disassembly of section .text.stdc_leading_zeros_ull:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
- f4 4a                 stsp16	[sp+0x2], r6
- f4 53                 stsp16	[sp+0x4], r7
+ d6 fc                 adjsp	-0x4
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
  f2 66                 mov32	q1, q2
  f2 30                 sub	r0, r0
  f0 01 3f              ldi8	r1, 0x3f
- c0 01                 ldi8	r4, 0x1
- f4 40                 stsp16	[sp+0x0], r4
  d6 fe                 adjsp	-0x2
  f0 39 00              stsp16	[sp+0x0], r1
  f2 69                 mov32	q2, q1
- f4 12                 ldsp16	r6, [sp+0x4]
- f4 1b                 ldsp16	r7, [sp+0x6]
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ f4 13                 ldsp16	r7, [sp+0x4]
  e3 00 00 00           callf	stdc_leading_zeros_ull
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_lshrdi3
  d6 02                 adjsp	0x2
- f4 01                 ldsp16	r5, [sp+0x0]
+ c1 01                 ldi8	r5, 0x1
  81                    and	r4, r5
  f4 a4                 tst8	r4
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_leading_zeros_ull
-		R_AVM_FAR24	.text.stdc_leading_zeros_ull+0x41
+		R_AVM_FAR24	.text.stdc_leading_zeros_ull+0x3d
 <L0>:
  f4 b1                 dec16	r1
  f4 a8                 inc16	r0
@@ -4171,11 +4137,11 @@ Disassembly of section .text.stdc_leading_zeros_ull:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_leading_zeros_ull
-		R_AVM_FAR24	.text.stdc_leading_zeros_ull+0x15
+		R_AVM_FAR24	.text.stdc_leading_zeros_ull+0x11
 <L1>:
  f0 00 40              ldi8	r0, 0x40
  f1 20                 mov	r4, r0
- d6 06                 adjsp	0x6
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -4189,30 +4155,28 @@ Disassembly of section .text.stdc_leading_ones_ull:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
- f4 4a                 stsp16	[sp+0x2], r6
- f4 53                 stsp16	[sp+0x4], r7
+ d6 fc                 adjsp	-0x4
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
  f2 66                 mov32	q1, q2
  f2 30                 sub	r0, r0
  f0 01 3f              ldi8	r1, 0x3f
- c0 01                 ldi8	r4, 0x1
- f4 40                 stsp16	[sp+0x0], r4
  d6 fe                 adjsp	-0x2
  f0 39 00              stsp16	[sp+0x0], r1
  f2 69                 mov32	q2, q1
- f4 12                 ldsp16	r6, [sp+0x4]
- f4 1b                 ldsp16	r7, [sp+0x6]
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ f4 13                 ldsp16	r7, [sp+0x4]
  e3 00 00 00           callf	stdc_leading_ones_ull
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_lshrdi3
  d6 02                 adjsp	0x2
- f4 01                 ldsp16	r5, [sp+0x0]
+ c1 01                 ldi8	r5, 0x1
  81                    and	r4, r5
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_leading_ones_ull
-		R_AVM_FAR24	.text.stdc_leading_ones_ull+0x41
+		R_AVM_FAR24	.text.stdc_leading_ones_ull+0x3d
 <L0>:
  f4 b1                 dec16	r1
  f4 a8                 inc16	r0
@@ -4220,11 +4184,11 @@ Disassembly of section .text.stdc_leading_ones_ull:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_leading_ones_ull
-		R_AVM_FAR24	.text.stdc_leading_ones_ull+0x15
+		R_AVM_FAR24	.text.stdc_leading_ones_ull+0x11
 <L1>:
  f0 00 40              ldi8	r0, 0x40
  f1 20                 mov	r4, r0
- d6 06                 adjsp	0x6
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
@@ -4774,30 +4738,28 @@ Disassembly of section .text.stdc_bit_width_ull:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
- f4 4a                 stsp16	[sp+0x2], r6
- f4 53                 stsp16	[sp+0x4], r7
+ d6 fc                 adjsp	-0x4
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
  f2 66                 mov32	q1, q2
  f2 30                 sub	r0, r0
  f0 01 3f              ldi8	r1, 0x3f
- c0 01                 ldi8	r4, 0x1
- f4 40                 stsp16	[sp+0x0], r4
  d6 fe                 adjsp	-0x2
  f0 39 00              stsp16	[sp+0x0], r1
  f2 69                 mov32	q2, q1
- f4 12                 ldsp16	r6, [sp+0x4]
- f4 1b                 ldsp16	r7, [sp+0x6]
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ f4 13                 ldsp16	r7, [sp+0x4]
  e3 00 00 00           callf	stdc_bit_width_ull
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_lshrdi3
  d6 02                 adjsp	0x2
- f4 01                 ldsp16	r5, [sp+0x0]
+ c1 01                 ldi8	r5, 0x1
  81                    and	r4, r5
  f4 a4                 tst8	r4
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_bit_width_ull
-		R_AVM_FAR24	.text.stdc_bit_width_ull+0x43
+		R_AVM_FAR24	.text.stdc_bit_width_ull+0x3f
 <L0>:
  f4 b1                 dec16	r1
  f4 a8                 inc16	r0
@@ -4805,15 +4767,15 @@ Disassembly of section .text.stdc_bit_width_ull:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	stdc_bit_width_ull
-		R_AVM_FAR24	.text.stdc_bit_width_ull+0x15
+		R_AVM_FAR24	.text.stdc_bit_width_ull+0x11
 <L1>:
  a0                    xor	r4, r4
  e2 00 00 00           jmpf	stdc_bit_width_ull
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.stdc_bit_width_ull+0x47
+		R_AVM_FAR24	.text.stdc_bit_width_ull+0x43
  c0 40                 ldi8	r4, 0x40
  f2 50                 sub	r4, r0
- d6 06                 adjsp	0x6
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

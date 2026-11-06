@@ -195,19 +195,50 @@ int64_t __avm_moddi3(int64_t numerator, int64_t denominator)
     return result.value;
 }
 
+/* Shift in native words, avoiding three nested 32-bit helper calls for the
+ * cross-word pieces. Whole-word moves run before the remaining 1..15-bit
+ * shifts, so no C shift has an out-of-range count. */
 __attribute__((noinline))
 uint64_t __avm_ashldi3(uint64_t value, uint16_t count)
 {
     avm_u64 bits = {.value = value};
-    if (count >= 64)
-        return 0;
-    if (count >= 32) {
-        bits.words.high = bits.words.low << (count - 32);
+    if (count == 1) {
+        uint16_t carry = bits.limbs[1] >> 15;
+        bits.words.low += bits.words.low;
+        bits.words.high += bits.words.high;
+        bits.limbs[2] |= carry;
+        return bits.value;
+    }
+    if (count >= 64) return 0;
+    if (count >= 48) {
+        uint16_t high = (uint16_t)(bits.limbs[0] << (count - 48));
         bits.words.low = 0;
-    } else if (count != 0) {
-        bits.words.high = (bits.words.high << count) |
-                          (bits.words.low >> (32 - count));
-        bits.words.low <<= count;
+        bits.limbs[2] = 0;
+        bits.limbs[3] = high;
+        return bits.value;
+    }
+    if (count >= 32) {
+        bits.limbs[3] = bits.limbs[1];
+        bits.limbs[2] = bits.limbs[0];
+        bits.limbs[1] = bits.limbs[0] = 0;
+        count -= 32;
+    }
+    if (count >= 16) {
+        bits.limbs[3] = bits.limbs[2];
+        bits.limbs[2] = bits.limbs[1];
+        bits.limbs[1] = bits.limbs[0];
+        bits.limbs[0] = 0;
+        count -= 16;
+    }
+    if (count) {
+        unsigned opposite = 16 - count;
+        bits.limbs[3] = (uint16_t)((bits.limbs[3] << count) |
+                                   (bits.limbs[2] >> opposite));
+        bits.limbs[2] = (uint16_t)((bits.limbs[2] << count) |
+                                   (bits.limbs[1] >> opposite));
+        bits.limbs[1] = (uint16_t)((bits.limbs[1] << count) |
+                                   (bits.limbs[0] >> opposite));
+        bits.limbs[0] = (uint16_t)(bits.limbs[0] << count);
     }
     return bits.value;
 }
@@ -216,15 +247,43 @@ __attribute__((noinline))
 uint64_t __avm_lshrdi3(uint64_t value, uint16_t count)
 {
     avm_u64 bits = {.value = value};
-    if (count >= 64)
-        return 0;
-    if (count >= 32) {
-        bits.words.low = bits.words.high >> (count - 32);
+    if (count == 1) {
+        uint16_t carry = (uint16_t)(bits.limbs[2] << 15);
+        bits.words.low >>= 1;
+        bits.words.high >>= 1;
+        bits.limbs[1] |= carry;
+        return bits.value;
+    }
+    if (count >= 64) return 0;
+    if (count >= 48) {
+        uint16_t low = (uint16_t)(bits.limbs[3] >> (count - 48));
+        bits.limbs[0] = low;
+        bits.limbs[1] = 0;
         bits.words.high = 0;
-    } else if (count != 0) {
-        bits.words.low = (bits.words.low >> count) |
-                         (bits.words.high << (32 - count));
-        bits.words.high >>= count;
+        return bits.value;
+    }
+    if (count >= 32) {
+        bits.limbs[0] = bits.limbs[2];
+        bits.limbs[1] = bits.limbs[3];
+        bits.limbs[2] = bits.limbs[3] = 0;
+        count -= 32;
+    }
+    if (count >= 16) {
+        bits.limbs[0] = bits.limbs[1];
+        bits.limbs[1] = bits.limbs[2];
+        bits.limbs[2] = bits.limbs[3];
+        bits.limbs[3] = 0;
+        count -= 16;
+    }
+    if (count) {
+        unsigned opposite = 16 - count;
+        bits.limbs[0] = (uint16_t)((bits.limbs[0] >> count) |
+                                   (bits.limbs[1] << opposite));
+        bits.limbs[1] = (uint16_t)((bits.limbs[1] >> count) |
+                                   (bits.limbs[2] << opposite));
+        bits.limbs[2] = (uint16_t)((bits.limbs[2] >> count) |
+                                   (bits.limbs[3] << opposite));
+        bits.limbs[3] = (uint16_t)(bits.limbs[3] >> count);
     }
     return bits.value;
 }
@@ -233,16 +292,44 @@ __attribute__((noinline))
 int64_t __avm_ashrdi3(int64_t value, uint16_t count)
 {
     avm_i64 bits = {.value = value};
-    int32_t high = (int32_t)bits.bits.words.high;
-    if (count >= 64)
-        return value < 0 ? -1 : 0;
+    if (count == 1) {
+        uint16_t carry = (uint16_t)(bits.bits.limbs[2] << 15);
+        bits.bits.words.low >>= 1;
+        bits.bits.words.high = (uint32_t)((int32_t)bits.bits.words.high >> 1);
+        bits.bits.limbs[1] |= carry;
+        return bits.value;
+    }
+    uint16_t sign = (uint16_t)((int16_t)bits.bits.limbs[3] >> 15);
+    if (count >= 64) return sign ? -1 : 0;
+    if (count >= 48) {
+        uint16_t low = (uint16_t)((int16_t)bits.bits.limbs[3] >> (count - 48));
+        bits.bits.limbs[0] = low;
+        bits.bits.limbs[1] = sign;
+        bits.bits.limbs[2] = bits.bits.limbs[3] = sign;
+        return bits.value;
+    }
     if (count >= 32) {
-        bits.bits.words.low = (uint32_t)(high >> (count - 32));
-        bits.bits.words.high = high < 0 ? UINT32_MAX : 0;
-    } else if (count != 0) {
-        bits.bits.words.low = (bits.bits.words.low >> count) |
-                              (bits.bits.words.high << (32 - count));
-        bits.bits.words.high = (uint32_t)(high >> count);
+        bits.bits.limbs[0] = bits.bits.limbs[2];
+        bits.bits.limbs[1] = bits.bits.limbs[3];
+        bits.bits.limbs[2] = bits.bits.limbs[3] = sign;
+        count -= 32;
+    }
+    if (count >= 16) {
+        bits.bits.limbs[0] = bits.bits.limbs[1];
+        bits.bits.limbs[1] = bits.bits.limbs[2];
+        bits.bits.limbs[2] = bits.bits.limbs[3];
+        bits.bits.limbs[3] = sign;
+        count -= 16;
+    }
+    if (count) {
+        unsigned opposite = 16 - count;
+        bits.bits.limbs[0] = (uint16_t)((bits.bits.limbs[0] >> count) |
+                                        (bits.bits.limbs[1] << opposite));
+        bits.bits.limbs[1] = (uint16_t)((bits.bits.limbs[1] >> count) |
+                                        (bits.bits.limbs[2] << opposite));
+        bits.bits.limbs[2] = (uint16_t)((bits.bits.limbs[2] >> count) |
+                                        (bits.bits.limbs[3] << opposite));
+        bits.bits.limbs[3] = (uint16_t)((int16_t)bits.bits.limbs[3] >> count);
     }
     return bits.value;
 }

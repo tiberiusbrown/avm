@@ -29,7 +29,11 @@ static __attribute__((always_inline)) inline float avm_exp2_kernel(float u)
     uint16_t high = (uint16_t)(bits >> 16);
     if (AVM_MATH_UNLIKELY((int16_t)high >= 0x4300)) { errno = ERANGE; return __math_oflowf(0); }
     if (AVM_MATH_UNLIKELY(high >= 0xc316U)) { errno = ERANGE; return 0.0f; }
-    int k=(int)(u+(u < 0 ? -0.5f : 0.5f));
+    /* The sign bit selects the rounding bias without a floating comparison.
+       Either bias truncates to zero for signed zero. Callers exclude NaNs. */
+    float bias;
+    SET_FLOAT_WORD(bias, (bits & 0x80000000UL) | 0x3f000000UL);
+    int k=(int)(u+bias);
     float result = avm_exp2_scale(avm_exp_polynomial(u-(float)k), k);
     return AVM_MATH_UNLIKELY(k < -125) ? avm_math_check_range(result) : result;
 }

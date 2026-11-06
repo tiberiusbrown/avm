@@ -6,7 +6,7 @@ float acoshf(float x)
 {
     uint32_t u;
     GET_FLOAT_WORD(u, x);
-    if ((u & 0x7fffffffUL) > 0x7f800000UL) return x+x;
+    if (__builtin_isnan(x)) return x+x;
     uint16_t high = (uint16_t)(u >> 16);
     if (AVM_MATH_UNLIKELY((int16_t)high < 0x3f80)) {
         errno = EDOM;

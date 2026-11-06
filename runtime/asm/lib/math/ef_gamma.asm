@@ -4,8 +4,8 @@ math_ef_gamma.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_gamma.c
 00000000 l    d  .text.lgammaf	00000000 .text.lgammaf
-00000000 l     F .text.avm_gamma_reflection_small	0000014e avm_gamma_reflection_small
-00000000 l     F .text.avm_gamma_positive_small	000000e3 avm_gamma_positive_small
+00000000 l     F .text.avm_gamma_reflection_small	00000146 avm_gamma_reflection_small
+00000000 l     F .text.avm_gamma_positive_small	000000df avm_gamma_positive_small
 00000000 l     F .text.avm_lgamma_stirling	0000009b avm_lgamma_stirling
 00000000 l     F .text.avm_lgamma_reflection_large	000000bb avm_lgamma_reflection_large
 00000000 l    d  .text.avm_gamma_positive_small	00000000 .text.avm_gamma_positive_small
@@ -14,10 +14,10 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_lgamma_reflection_large	00000000 .text.avm_lgamma_reflection_large
 00000000 l    d  .text.tgammaf	00000000 .text.tgammaf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.lgammaf	000001b1 lgammaf
+00000000 g     F .text.lgammaf	000001a9 lgammaf
 00000000         *UND*	00000000 __avm_errno
 00000000         *UND*	00000000 logf
-00000000 g     F .text.tgammaf	000001e0 tgammaf
+00000000 g     F .text.tgammaf	000001dc tgammaf
 00000000         *UND*	00000000 __avm_expf_noerrno
 
 Disassembly of section .text.lgammaf:
@@ -46,14 +46,14 @@ Disassembly of section .text.lgammaf:
  ff 00                 fadd
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
  a0                    xor	r4, r4
  c5 80 7f              ldi16	r5, 0x7f80
  f0 69 48              cmp32	q1, q2
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
 <L1>:
  a0                    xor	r4, r4
  a5                    xor	r5, r5
@@ -70,12 +70,12 @@ Disassembly of section .text.lgammaf:
  c5 80 7f              ldi16	r5, 0x7f80
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
  f0 69 08              cmp32	q0, q2
  d9 04                 brsge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0x97
+		R_AVM_FAR24	.text.lgammaf+0x95
 <L3>:
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
@@ -87,7 +87,7 @@ Disassembly of section .text.lgammaf:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
 <L4>:
  aa                    xor	r6, r6
  c7 00 40              ldi16	r7, 0x4000
@@ -99,7 +99,7 @@ Disassembly of section .text.lgammaf:
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
 <L5>:
  aa                    xor	r6, r6
  c7 00 37              ldi16	r7, 0x3700
@@ -109,12 +109,11 @@ Disassembly of section .text.lgammaf:
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0x158
+		R_AVM_FAR24	.text.lgammaf+0x154
 <L6>:
- f2 68                 mov32	q2, q0
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.lgammaf+0xa9
+		R_AVM_FAR24	.text.lgammaf+0xa7
  aa                    xor	r6, r6
  c7 00 b7              ldi16	r7, 0xb700
  f2 68                 mov32	q2, q0
@@ -124,7 +123,7 @@ Disassembly of section .text.lgammaf:
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0xb6
+		R_AVM_FAR24	.text.lgammaf+0xb4
 <L7>:
  e3 00 00 00           callf	lgammaf
 		R_AVM_RELAX	*ABS*
@@ -162,7 +161,6 @@ Disassembly of section .text.lgammaf:
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_FAR24	.text.lgammaf+0x44
 <L9>:
- f2 69                 mov32	q2, q1
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
  ff 01                 fsub
@@ -204,7 +202,7 @@ Disassembly of section .text.lgammaf:
  d0 04                 breq8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0x1a5
+		R_AVM_FAR24	.text.lgammaf+0x19d
 <L10>:
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
@@ -216,18 +214,16 @@ Disassembly of section .text.lgammaf:
 		R_AVM_FAR24	logf
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
  aa                    xor	r6, r6
  c7 00 41              ldi16	r7, 0x4100
- f2 68                 mov32	q2, q0
  ff 14                 fcmp
  ce ff                 cmpi.s8	r6, -0x1
  d0 04                 breq8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0x176
+		R_AVM_FAR24	.text.lgammaf+0x16e
 <L11>:
- f2 68                 mov32	q2, q0
  e3 00 00 00           callf	lgammaf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.avm_gamma_positive_small
@@ -236,7 +232,7 @@ Disassembly of section .text.lgammaf:
 		R_AVM_FAR24	logf
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
  c4 8e af              ldi16	r4, 0xaf8e
  c5 44 7c              ldi16	r5, 0x7c44
  f0 69 08              cmp32	q0, q2
@@ -259,14 +255,14 @@ Disassembly of section .text.lgammaf:
  d0 04                 breq8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	lgammaf
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
 <L13>:
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
  f4 0a                 ldsp16	r6, [sp+0x2]
  f4 13                 ldsp16	r7, [sp+0x4]
  e3 00 00 00           callf	lgammaf
@@ -274,7 +270,7 @@ Disassembly of section .text.lgammaf:
 		R_AVM_FAR24	.text.avm_lgamma_reflection_large
  e2 00 00 00           jmpf	lgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.lgammaf+0xaf
+		R_AVM_FAR24	.text.lgammaf+0xad
 
 Disassembly of section .text.avm_gamma_positive_small:
 
@@ -291,9 +287,8 @@ Disassembly of section .text.avm_gamma_positive_small:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_gamma_positive_small
-		R_AVM_FAR24	.text.avm_gamma_positive_small+0x57
+		R_AVM_FAR24	.text.avm_gamma_positive_small+0x55
 <L0>:
- f2 68                 mov32	q2, q0
  ff 15 07 23 77 16 bd 49 d6 26 3e ac 19 ab be f6 2f e1 3e 9d 4b fa be dd a9 d2 3e 2a c4 13 bf  fpoly	7, -0.0367347114, 0.162926808, -0.334180236, 0.439819038, -0.488858134, 0.411452204, -0.577211976
  f2 66                 mov32	q1, q2
  a0                    xor	r4, r4
@@ -313,10 +308,9 @@ Disassembly of section .text.avm_gamma_positive_small:
  ff 03                 fdiv
  e2 00 00 00           jmpf	avm_gamma_positive_small
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_gamma_positive_small+0xde
+		R_AVM_FAR24	.text.avm_gamma_positive_small+0xda
  aa                    xor	r6, r6
  c7 00 40              ldi16	r7, 0x4000
- f2 68                 mov32	q2, q0
  ff 14                 fcmp
  f2 42                 sub	r2, r2
  f0 07 80 3f           ldi16	r3, 0x3f80
@@ -324,26 +318,26 @@ Disassembly of section .text.avm_gamma_positive_small:
  d2 04                 brult8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_gamma_positive_small
-		R_AVM_FAR24	.text.avm_gamma_positive_small+0x8f
+		R_AVM_FAR24	.text.avm_gamma_positive_small+0x8b
 <L1>:
+ f2 68                 mov32	q2, q0
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
- f2 68                 mov32	q2, q0
  ff 00                 fadd
  f2 62                 mov32	q0, q2
  f2 69                 mov32	q2, q1
  f2 6a                 mov32	q3, q0
  ff 02                 fmul
  f2 66                 mov32	q1, q2
+ f2 68                 mov32	q2, q0
  aa                    xor	r6, r6
  c7 00 40              ldi16	r7, 0x4000
- f2 68                 mov32	q2, q0
  ff 14                 fcmp
  ce 02                 cmpi.s8	r6, 0x2
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_gamma_positive_small
-		R_AVM_FAR24	.text.avm_gamma_positive_small+0x6d
+		R_AVM_FAR24	.text.avm_gamma_positive_small+0x69
 <L2>:
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
@@ -483,11 +477,11 @@ Disassembly of section .text.avm_gamma_reflection_small:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_gamma_reflection_small
-		R_AVM_FAR24	.text.avm_gamma_reflection_small+0x5f
+		R_AVM_FAR24	.text.avm_gamma_reflection_small+0x5d
 <L0>:
- f2 42                 sub	r2, r2
- f0 07 80 3f           ldi16	r3, 0x3f80
- f2 69                 mov32	q2, q1
+ 20                    sub	r4, r4
+ c5 80 3f              ldi16	r5, 0x3f80
+ f2 66                 mov32	q1, q2
  f2 6a                 mov32	q3, q0
  ff 01                 fsub
  08                    mov	r6, r4
@@ -507,10 +501,9 @@ Disassembly of section .text.avm_gamma_reflection_small:
  ff 00                 fadd
  e2 00 00 00           jmpf	avm_gamma_reflection_small
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_gamma_reflection_small+0x137
+		R_AVM_FAR24	.text.avm_gamma_reflection_small+0x12f
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
- f2 68                 mov32	q2, q0
  ff 00                 fadd
  f2 66                 mov32	q1, q2
  ff 14                 fcmp
@@ -518,9 +511,8 @@ Disassembly of section .text.avm_gamma_reflection_small:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_gamma_reflection_small
-		R_AVM_FAR24	.text.avm_gamma_reflection_small+0xb6
+		R_AVM_FAR24	.text.avm_gamma_reflection_small+0xb0
 <L1>:
- f2 69                 mov32	q2, q1
  ff 15 07 23 77 16 bd 49 d6 26 3e ac 19 ab be f6 2f e1 3e 9d 4b fa be dd a9 d2 3e 2a c4 13 bf  fpoly	7, -0.0367347114, 0.162926808, -0.334180236, 0.439819038, -0.488858134, 0.411452204, -0.577211976
  f2 62                 mov32	q0, q2
  a0                    xor	r4, r4
@@ -540,10 +532,9 @@ Disassembly of section .text.avm_gamma_reflection_small:
  ff 03                 fdiv
  e2 00 00 00           jmpf	avm_gamma_reflection_small
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.avm_gamma_reflection_small+0x137
+		R_AVM_FAR24	.text.avm_gamma_reflection_small+0x12f
  aa                    xor	r6, r6
  c7 00 40              ldi16	r7, 0x4000
- f2 69                 mov32	q2, q1
  ff 14                 fcmp
  f2 30                 sub	r0, r0
  f0 05 80 3f           ldi16	r1, 0x3f80
@@ -551,26 +542,26 @@ Disassembly of section .text.avm_gamma_reflection_small:
  d2 04                 brult8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_gamma_reflection_small
-		R_AVM_FAR24	.text.avm_gamma_reflection_small+0xee
+		R_AVM_FAR24	.text.avm_gamma_reflection_small+0xe6
 <L2>:
+ f2 69                 mov32	q2, q1
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
- f2 69                 mov32	q2, q1
  ff 00                 fadd
  f2 66                 mov32	q1, q2
  f2 68                 mov32	q2, q0
  f2 6b                 mov32	q3, q1
  ff 02                 fmul
  f2 62                 mov32	q0, q2
+ f2 69                 mov32	q2, q1
  aa                    xor	r6, r6
  c7 00 40              ldi16	r7, 0x4000
- f2 69                 mov32	q2, q1
  ff 14                 fcmp
  ce 02                 cmpi.s8	r6, 0x2
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	avm_gamma_reflection_small
-		R_AVM_FAR24	.text.avm_gamma_reflection_small+0xcc
+		R_AVM_FAR24	.text.avm_gamma_reflection_small+0xc4
 <L3>:
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
@@ -741,14 +732,14 @@ Disassembly of section .text.tgammaf:
  ff 00                 fadd
  e2 00 00 00           jmpf	tgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
  f2 30                 sub	r0, r0
  f0 05 80 7f           ldi16	r1, 0x7f80
  f0 69 80              cmp32	q2, q0
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
 <L1>:
  f2 30                 sub	r0, r0
  f0 05 80 ff           ldi16	r1, 0xff80
@@ -765,7 +756,7 @@ Disassembly of section .text.tgammaf:
  c5 c0 7f              ldi16	r5, 0x7fc0
  e2 00 00 00           jmpf	tgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
  f0 69 c0              cmp32	q3, q0
@@ -798,14 +789,14 @@ Disassembly of section .text.tgammaf:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
 <L5>:
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	tgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno
@@ -814,12 +805,12 @@ Disassembly of section .text.tgammaf:
  06                    mov	r5, r6
  e2 00 00 00           jmpf	tgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
  f0 69 80              cmp32	q2, q0
  d9 04                 brsge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0xc8
+		R_AVM_FAR24	.text.tgammaf+0xc6
 <L6>:
  aa                    xor	r6, r6
  c7 00 41              ldi16	r7, 0x4100
@@ -829,15 +820,14 @@ Disassembly of section .text.tgammaf:
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0x188
+		R_AVM_FAR24	.text.tgammaf+0x186
 <L7>:
- f2 68                 mov32	q2, q0
  e3 00 00 00           callf	tgammaf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.avm_gamma_positive_small
  e2 00 00 00           jmpf	tgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
  f2 30                 sub	r0, r0
  f0 05 00 4b           ldi16	r1, 0x4b00
  f0 69 c0              cmp32	q3, q0
@@ -921,7 +911,7 @@ Disassembly of section .text.tgammaf:
  d0 04                 breq8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0x1c0
+		R_AVM_FAR24	.text.tgammaf+0x1bc
 <L11>:
  f2 6b                 mov32	q3, q1
  e3 00 00 00           callf	tgammaf
@@ -929,16 +919,15 @@ Disassembly of section .text.tgammaf:
 		R_AVM_FAR24	.text.avm_gamma_reflection_small
  e2 00 00 00           jmpf	tgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tgammaf+0x1d9
+		R_AVM_FAR24	.text.tgammaf+0x1d5
  c6 10 29              ldi16	r6, 0x2910
  c7 0c 42              ldi16	r7, 0x420c
  f0 69 0c              cmp32	q0, q3
  d2 04                 brult8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0x1af
+		R_AVM_FAR24	.text.tgammaf+0x1ab
 <L12>:
- f2 68                 mov32	q2, q0
  e3 00 00 00           callf	tgammaf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.avm_lgamma_stirling
@@ -953,7 +942,7 @@ Disassembly of section .text.tgammaf:
  d0 04                 breq8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5
 <L13>:
  c0 22                 ldi8	r4, 0x22
  f0 5c 00 00           stm16	[0x0], r4
@@ -978,7 +967,7 @@ Disassembly of section .text.tgammaf:
  d8 04                 bruge8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tgammaf
-		R_AVM_FAR24	.text.tgammaf+0x1d9
+		R_AVM_FAR24	.text.tgammaf+0x1d5
 <L14>:
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
@@ -987,4 +976,4 @@ Disassembly of section .text.tgammaf:
  97                    or	r5, r7
  e2 00 00 00           jmpf	tgammaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tgammaf+0x1b9
+		R_AVM_FAR24	.text.tgammaf+0x1b5

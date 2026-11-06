@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_rem_pio2.c
 00000000 l    d  .text.__ieee754_rem_pio2f	00000000 .text.__ieee754_rem_pio2f
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.__ieee754_rem_pio2f	00000176 __ieee754_rem_pio2f
+00000000 g     F .text.__ieee754_rem_pio2f	0000016f __ieee754_rem_pio2f
 00000000         *UND*	00000000 avm_small_pio2
 00000000         *UND*	00000000 __kernel_rem_pio2f
 00000000         *UND*	00000000 avm_rem_pio2f_medium
@@ -32,7 +32,7 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  7b                    st16	[r6], r7
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x12e
  f2 42                 sub	r2, r2
  f0 07 80 7f           ldi16	r3, 0x7f80
  f0 69 04              cmp32	q0, q1
@@ -48,7 +48,7 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  ff 01                 fsub
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x12e
  f0 06 e3 cb           ldi16	r2, 0xcbe3
  f0 07 16 40           ldi16	r3, 0x4016
  f0 69 40              cmp32	q1, q0
@@ -86,14 +86,14 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  7b                    st16	[r6], r7
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x12e
  f0 06 00 50           ldi16	r2, 0x5000
  f0 07 c3 47           ldi16	r3, 0x47c3
  f0 69 40              cmp32	q1, q0
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x129
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x122
 <L3>:
  f2 42                 sub	r2, r2
  f0 07 80 44           ldi16	r3, 0x4480
@@ -101,7 +101,7 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  d8 04                 bruge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x131
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x12a
 <L4>:
  f4 48                 stsp16	[sp+0x2], r4
  f4 51                 stsp16	[sp+0x4], r5
@@ -120,22 +120,17 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  15                    add	r5, r5
  15                    add	r5, r5
  15                    add	r5, r5
- f1 15                 mov	r2, r5
- f1 1e                 mov	r3, r6
- c4 00 00              ldi16	r4, 0x0
+ 01                    mov	r4, r5
+ 06                    mov	r5, r6
+ f0 06 00 00           ldi16	r2, 0x0
 		R_AVM_PROG_LO16	avm_small_pio2
- c1 00                 ldi8	r5, 0x0
+ f0 03 00              ldi8	r3, 0x0
 		R_AVM_PROG_HI8	avm_small_pio2
- f7 69                 add32	q2, q1
- f0 64 c8              ldp32	q3, [q2]
+ f7 66                 add32	q1, q2
+ f0 68 c4              ldp32	q3, [q1+]
  f2 68                 mov32	q2, q0
  ff 01                 fsub
- c6 00 00              ldi16	r6, 0x0
-		R_AVM_PROG_LO16	avm_small_pio2+0x4
- c3 00                 ldi8	r7, 0x0
-		R_AVM_PROG_HI8	avm_small_pio2+0x4
- f7 6d                 add32	q3, q1
- f0 64 cc              ldp32	q3, [q3]
+ f0 64 c4              ldp32	q3, [q1]
  ff 01                 fsub
  f0 00 03              ldi8	r0, 0x3
  f4 02                 ldsp16	r6, [sp+0x0]
@@ -150,13 +145,13 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  d8 04                 bruge8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x14e
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x147
 <L5>:
  f6 2d                 tst16	r5
  d9 04                 brsge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x13c
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
 <L6>:
  c6 da 0f              ldi16	r6, 0xfda
  c7 c9 bf              ldi16	r7, 0xbfc9
@@ -167,13 +162,13 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  f4 a8                 inc16	r0
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x14e
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x147
  e3 00 00 00           callf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__kernel_rem_pio2f
  e2 00 00 00           jmpf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x135
+		R_AVM_FAR24	.text.__ieee754_rem_pio2f+0x12e
  e3 00 00 00           callf	__ieee754_rem_pio2f
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	avm_rem_pio2f_medium

@@ -78,6 +78,8 @@ size_t strcspn_P(const char* str, const char AVM_PROGMEM* reject) {
 }
 
 char* strpbrk_P(const char* str, const char AVM_PROGMEM* accept) {
+    if(!*accept)
+        return NULL;
     str += strcspn_P(str, accept);
     return *str ? (char*)str : NULL;
 }

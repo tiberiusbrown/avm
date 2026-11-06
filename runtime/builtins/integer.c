@@ -18,7 +18,13 @@ typedef union {
  */
 AVM_ALWAYS_INLINE uint32_t avm_shl32_1(uint32_t value)
 {
-    __asm__("add32 %0, %0" : "+q"(value));
+    __asm__("add32 %0, %0" : "+q"(value) : : "cc");
+    return value;
+}
+
+AVM_ALWAYS_INLINE uint32_t avm_lsr32_1(uint32_t value)
+{
+    __asm__("lsr32.1 %0" : "+q"(value) : : "cc");
     return value;
 }
 
@@ -367,29 +373,47 @@ uint32_t __avm_udivmodsi4(uint32_t numerator, uint32_t denominator,
                           uint32_t *remainder_out)
 {
     uint32_t quotient = 0;
-    uint32_t remainder = 0;
 
     if (denominator == 0) {
         *remainder_out = numerator;
         return 0xffffffffu;
     }
 
-    for (uint16_t i = 0; i < 32; ++i) {
-        uint32_t carry = numerator & 0x80000000u;
-
-        numerator = avm_shl32_1(numerator);
-        remainder = avm_shl32_1(remainder);
-        if (carry != 0)
-            remainder |= 1u;
-
-        quotient = avm_shl32_1(quotient);
-        if (remainder >= denominator) {
-            remainder -= denominator;
-            quotient |= 1u;
-        }
+    if (numerator < denominator) {
+        *remainder_out = numerator;
+        return 0;
+    }
+    if (denominator == 1) {
+        *remainder_out = 0;
+        return numerator;
     }
 
-    *remainder_out = remainder;
+    /* Use the native divider when both operands fit a word. The subtraction
+       reuses its quotient instead of issuing a second divide for the remainder. */
+    if ((numerator | denominator) <= 0xffffu) {
+        uint16_t n = (uint16_t)numerator;
+        uint16_t d = (uint16_t)denominator;
+        uint16_t q = n / d;
+        *remainder_out = (uint16_t)(n - q * d);
+        return q;
+    }
+
+    /* Align the divisor's leading bit with the dividend. Only quotient bits
+       between those positions can be nonzero; each step needs a subtraction
+       and a native right shift, rather than three full-width left shifts. */
+    uint16_t shift = (uint16_t)(__builtin_clzl(denominator) -
+                                __builtin_clzl(numerator));
+    denominator <<= shift;
+    for (uint16_t steps = shift + 1; steps != 0; --steps) {
+        quotient = avm_shl32_1(quotient);
+        if (numerator >= denominator) {
+            numerator -= denominator;
+            quotient |= 1u;
+        }
+        denominator = avm_lsr32_1(denominator);
+    }
+
+    *remainder_out = numerator;
     return quotient;
 }
 

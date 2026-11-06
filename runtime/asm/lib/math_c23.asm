@@ -58,10 +58,10 @@ SYMBOL TABLE:
 00000000 l    d  .text.rsqrt	00000000 .text.rsqrt
 00000000 l    d  .text.rsqrtl	00000000 .text.rsqrtl
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.sinpif	0000016a sinpif
+00000000 g     F .text.sinpif	00000160 sinpif
 00000000         *UND*	00000000 __avm_errno
-00000000 g     F .text.cospif	00000125 cospif
-00000000 g     F .text.tanpif	00000198 tanpif
+00000000 g     F .text.cospif	00000121 cospif
+00000000 g     F .text.tanpif	00000195 tanpif
 00000000 g     F .text.asinpif	00000035 asinpif
 00000000         *UND*	00000000 asinf
 00000000 g     F .text.acospif	0000000d acospif
@@ -72,9 +72,9 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 atan2f
 00000000 g     F .text.exp10f	0000006a exp10f
 00000000         *UND*	00000000 expf
-00000000 g     F .text.exp10m1f	0000007d exp10m1f
+00000000 g     F .text.exp10m1f	0000007b exp10m1f
 00000000         *UND*	00000000 expm1f
-00000000 g     F .text.exp2m1f	0000007d exp2m1f
+00000000 g     F .text.exp2m1f	0000007b exp2m1f
 00000000 g     F .text.logp1f	0000002a logp1f
 00000000         *UND*	00000000 log1pf
 00000000 g     F .text.log2p1f	00000035 log2p1f
@@ -86,12 +86,12 @@ SYMBOL TABLE:
 00000000 g     F .text.rootnf	000001bc rootnf
 00000000         *UND*	00000000 cbrtf
 00000000         *UND*	00000000 sqrtf
-00000000 g     F .text.compoundnf	000003fa compoundnf
-00000000 g     F .text.rsqrtf	00000039 rsqrtf
+00000000 g     F .text.compoundnf	000003f6 compoundnf
+00000000 g     F .text.rsqrtf	0000002f rsqrtf
 00000000 g     F .text.sinpi	00000004 sinpi
 00000000 g     F .text.sinpil	00000004 sinpil
-00000000 g     F .text.cospi	00000125 cospi
-00000000 g     F .text.cospil	00000125 cospil
+00000000 g     F .text.cospi	00000121 cospi
+00000000 g     F .text.cospil	00000121 cospil
 00000000 g     F .text.tanpi	00000004 tanpi
 00000000 g     F .text.tanpil	00000004 tanpil
 00000000 g     F .text.asinpi	00000035 asinpi
@@ -104,10 +104,10 @@ SYMBOL TABLE:
 00000000 g     F .text.atan2pil	0000000d atan2pil
 00000000 g     F .text.exp10	0000006a exp10
 00000000 g     F .text.exp10l	0000006a exp10l
-00000000 g     F .text.exp10m1	0000007d exp10m1
-00000000 g     F .text.exp10m1l	0000007d exp10m1l
-00000000 g     F .text.exp2m1	0000007d exp2m1
-00000000 g     F .text.exp2m1l	0000007d exp2m1l
+00000000 g     F .text.exp10m1	0000007b exp10m1
+00000000 g     F .text.exp10m1l	0000007b exp10m1l
+00000000 g     F .text.exp2m1	0000007b exp2m1
+00000000 g     F .text.exp2m1l	0000007b exp2m1l
 00000000 g     F .text.logp1	0000002a logp1
 00000000 g     F .text.logp1l	0000002a logp1l
 00000000 g     F .text.log2p1	00000035 log2p1
@@ -122,8 +122,8 @@ SYMBOL TABLE:
 00000000 g     F .text.rootnl	000001bc rootnl
 00000000 g     F .text.compoundn	00000021 compoundn
 00000000 g     F .text.compoundnl	00000021 compoundnl
-00000000 g     F .text.rsqrt	00000039 rsqrt
-00000000 g     F .text.rsqrtl	00000039 rsqrtl
+00000000 g     F .text.rsqrt	0000002f rsqrt
+00000000 g     F .text.rsqrtl	0000002f rsqrtl
 
 Disassembly of section .text.sinpif:
 
@@ -153,14 +153,14 @@ Disassembly of section .text.sinpif:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinpif
-		R_AVM_FAR24	.text.sinpif+0xc2
+		R_AVM_FAR24	.text.sinpif+0xba
 <L1>:
  f2 69                 mov32	q2, q1
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
  e2 00 00 00           jmpf	sinpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinpif+0x159
+		R_AVM_FAR24	.text.sinpif+0x14f
  aa                    xor	r6, r6
  c7 00 4b              ldi16	r7, 0x4b00
  f2 68                 mov32	q2, q0
@@ -169,7 +169,7 @@ Disassembly of section .text.sinpif:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinpif
-		R_AVM_FAR24	.text.sinpif+0xd0
+		R_AVM_FAR24	.text.sinpif+0xc8
 <L2>:
  a0                    xor	r4, r4
  c5 00 bf              ldi16	r5, 0xbf00
@@ -221,7 +221,7 @@ Disassembly of section .text.sinpif:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinpif
-		R_AVM_FAR24	.text.sinpif+0xf5
+		R_AVM_FAR24	.text.sinpif+0xeb
 <L4>:
  f1 20                 mov	r4, r0
  81                    and	r4, r5
@@ -229,21 +229,17 @@ Disassembly of section .text.sinpif:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinpif
-		R_AVM_FAR24	.text.sinpif+0xf5
+		R_AVM_FAR24	.text.sinpif+0xeb
 <L5>:
- c6 00 80              ldi16	r6, 0x8000
- f9 cc                 and	r6, r3
+ c4 00 80              ldi16	r4, 0x8000
+ f9 70                 and	r3, r4
+ f5 19                 cmp	r3, r1
+ fb 4c                 cmov.ne	r1, r4
+ f1 25                 mov	r5, r1
  a0                    xor	r4, r4
- a5                    xor	r5, r5
- f1 2d                 mov	r7, r1
- f2 30                 sub	r0, r0
- f0 05 00 80           ldi16	r1, 0x8000
- 3b                    cmp	r6, r7
- fb 60                 cmov.ne	r4, r0
- fb 69                 cmov.ne	r5, r1
  e2 00 00 00           jmpf	sinpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinpif+0x159
+		R_AVM_FAR24	.text.sinpif+0x14f
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -251,10 +247,9 @@ Disassembly of section .text.sinpif:
  c5 c0 7f              ldi16	r5, 0x7fc0
  e2 00 00 00           jmpf	sinpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinpif+0x159
+		R_AVM_FAR24	.text.sinpif+0x14f
  aa                    xor	r6, r6
  c7 80 4b              ldi16	r7, 0x4b80
- f2 68                 mov32	q2, q0
  ff 14                 fcmp
  f4 80                 lsl16.1	r0
  c0 02                 ldi8	r4, 0x2
@@ -283,14 +278,14 @@ Disassembly of section .text.sinpif:
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinpif
-		R_AVM_FAR24	.text.sinpif+0x11c
+		R_AVM_FAR24	.text.sinpif+0x112
 <L7>:
  ff 15 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
  ff 02                 fmul
  f2 39                 sub	r1, r1
  e2 00 00 00           jmpf	sinpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinpif+0x131
+		R_AVM_FAR24	.text.sinpif+0x127
  ff 15 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
  f2 39                 sub	r1, r1
  f4 88                 lsr16.1	r0
@@ -307,7 +302,7 @@ Disassembly of section .text.sinpif:
  d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinpif
-		R_AVM_FAR24	.text.sinpif+0x159
+		R_AVM_FAR24	.text.sinpif+0x14f
 <L8>:
  c6 ff 7f              ldi16	r6, 0x7fff
  89                    and	r6, r5
@@ -316,7 +311,7 @@ Disassembly of section .text.sinpif:
  d2 04                 brult8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	sinpif
-		R_AVM_FAR24	.text.sinpif+0x160
+		R_AVM_FAR24	.text.sinpif+0x156
 <L9>:
  d6 08                 adjsp	0x8
  b8                    pop16	r0
@@ -329,7 +324,7 @@ Disassembly of section .text.sinpif:
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	sinpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.sinpif+0x159
+		R_AVM_FAR24	.text.sinpif+0x14f
 
 Disassembly of section .text.cospif:
 
@@ -358,14 +353,14 @@ Disassembly of section .text.cospif:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospif
-		R_AVM_FAR24	.text.cospif+0xc8
+		R_AVM_FAR24	.text.cospif+0xc6
 <L1>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
  e2 00 00 00           jmpf	cospif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospif+0x11e
+		R_AVM_FAR24	.text.cospif+0x11a
  aa                    xor	r6, r6
  c7 00 4b              ldi16	r7, 0x4b00
  f2 69                 mov32	q2, q1
@@ -375,11 +370,10 @@ Disassembly of section .text.cospif:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospif
-		R_AVM_FAR24	.text.cospif+0xd6
+		R_AVM_FAR24	.text.cospif+0xd4
 <L2>:
  f2 30                 sub	r0, r0
  f0 05 00 bf           ldi16	r1, 0xbf00
- f2 69                 mov32	q2, q1
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
  ff 13                 ftou32
@@ -398,7 +392,7 @@ Disassembly of section .text.cospif:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospif
-		R_AVM_FAR24	.text.cospif+0x75
+		R_AVM_FAR24	.text.cospif+0x73
 <L3>:
  aa                    xor	r6, r6
  c7 00 bf              ldi16	r7, 0xbf00
@@ -423,7 +417,7 @@ Disassembly of section .text.cospif:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospif
-		R_AVM_FAR24	.text.cospif+0xa3
+		R_AVM_FAR24	.text.cospif+0xa1
 <L4>:
  f1 20                 mov	r4, r0
  f9 88                 and	r4, r2
@@ -431,7 +425,7 @@ Disassembly of section .text.cospif:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospif
-		R_AVM_FAR24	.text.cospif+0xfb
+		R_AVM_FAR24	.text.cospif+0xf7
 <L5>:
  f9 40                 and	r2, r0
  02                    mov	r4, r6
@@ -441,12 +435,12 @@ Disassembly of section .text.cospif:
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospif
-		R_AVM_FAR24	.text.cospif+0x101
+		R_AVM_FAR24	.text.cospif+0xfd
 <L6>:
  ff 15 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
  e2 00 00 00           jmpf	cospif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospif+0x112
+		R_AVM_FAR24	.text.cospif+0x10e
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -454,10 +448,9 @@ Disassembly of section .text.cospif:
  c5 c0 7f              ldi16	r5, 0x7fc0
  e2 00 00 00           jmpf	cospif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospif+0x11e
+		R_AVM_FAR24	.text.cospif+0x11a
  aa                    xor	r6, r6
  c7 80 4b              ldi16	r7, 0x4b80
- f2 69                 mov32	q2, q1
  ff 14                 fcmp
  f4 82                 lsl16.1	r2
  c0 02                 ldi8	r4, 0x2
@@ -474,13 +467,13 @@ Disassembly of section .text.cospif:
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospif
-		R_AVM_FAR24	.text.cospif+0xa3
+		R_AVM_FAR24	.text.cospif+0xa1
 <L7>:
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  e2 00 00 00           jmpf	cospif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospif+0x11e
+		R_AVM_FAR24	.text.cospif+0x11a
  ff 15 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
  ff 02                 fmul
  f0 08 fd              addi.s8	r0, -0x3
@@ -530,7 +523,7 @@ Disassembly of section .text.tanpif:
  ff 00                 fadd
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0x187
+		R_AVM_FAR24	.text.tanpif+0x184
  aa                    xor	r6, r6
  c7 00 4b              ldi16	r7, 0x4b00
  f2 68                 mov32	q2, q0
@@ -565,7 +558,7 @@ Disassembly of section .text.tanpif:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanpif
-		R_AVM_FAR24	.text.tanpif+0xb6
+		R_AVM_FAR24	.text.tanpif+0xb4
 <L3>:
  aa                    xor	r6, r6
  c7 00 bf              ldi16	r7, 0xbf00
@@ -574,7 +567,7 @@ Disassembly of section .text.tanpif:
  f4 a8                 inc16	r0
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0xb9
+		R_AVM_FAR24	.text.tanpif+0xb7
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -582,10 +575,9 @@ Disassembly of section .text.tanpif:
  c5 c0 7f              ldi16	r5, 0x7fc0
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0x187
+		R_AVM_FAR24	.text.tanpif+0x184
  aa                    xor	r6, r6
  c7 80 4b              ldi16	r7, 0x4b80
- f2 68                 mov32	q2, q0
  ff 14                 fcmp
  f4 80                 lsl16.1	r0
  c0 02                 ldi8	r4, 0x2
@@ -601,11 +593,11 @@ Disassembly of section .text.tanpif:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanpif
-		R_AVM_FAR24	.text.tanpif+0xf5
+		R_AVM_FAR24	.text.tanpif+0xf3
 <L4>:
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0xe2
+		R_AVM_FAR24	.text.tanpif+0xe0
  f0 30 04              ldsp16	r0, [sp+0x4]
  c6 db 0f              ldi16	r6, 0xfdb
  c7 49 40              ldi16	r7, 0x4049
@@ -619,7 +611,7 @@ Disassembly of section .text.tanpif:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanpif
-		R_AVM_FAR24	.text.tanpif+0x110
+		R_AVM_FAR24	.text.tanpif+0x10e
 <L5>:
  c0 03                 ldi8	r4, 0x3
  f9 10                 and	r0, r4
@@ -631,7 +623,7 @@ Disassembly of section .text.tanpif:
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanpif
-		R_AVM_FAR24	.text.tanpif+0xf5
+		R_AVM_FAR24	.text.tanpif+0xf3
 <L6>:
  f0 0c 02              cmpi.s8	r0, 0x2
  f8 05                 cset.eq	r5
@@ -644,7 +636,7 @@ Disassembly of section .text.tanpif:
  a6                    xor	r5, r6
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0x187
+		R_AVM_FAR24	.text.tanpif+0x184
  f0 0c 03              cmpi.s8	r0, 0x3
  f8 05                 cset.eq	r5
  c6 00 80              ldi16	r6, 0x8000
@@ -659,9 +651,8 @@ Disassembly of section .text.tanpif:
  a6                    xor	r5, r6
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0x187
+		R_AVM_FAR24	.text.tanpif+0x184
  02                    mov	r4, r6
- 07                    mov	r5, r7
  ff 02                 fmul
  f4 50                 stsp16	[sp+0x4], r4
  f4 59                 stsp16	[sp+0x6], r5
@@ -678,7 +669,7 @@ Disassembly of section .text.tanpif:
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanpif
-		R_AVM_FAR24	.text.tanpif+0x158
+		R_AVM_FAR24	.text.tanpif+0x155
 <L7>:
  f2 63                 mov32	q0, q3
  08                    mov	r6, r4
@@ -686,7 +677,7 @@ Disassembly of section .text.tanpif:
  f2 68                 mov32	q2, q0
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0x15a
+		R_AVM_FAR24	.text.tanpif+0x157
  ff 06                 fneg	q2
  ff 03                 fdiv
  f0 04 ff ff           ldi16	r0, 0xffff
@@ -702,7 +693,7 @@ Disassembly of section .text.tanpif:
  d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanpif
-		R_AVM_FAR24	.text.tanpif+0x187
+		R_AVM_FAR24	.text.tanpif+0x184
 <L8>:
  c6 ff 7f              ldi16	r6, 0x7fff
  89                    and	r6, r5
@@ -711,7 +702,7 @@ Disassembly of section .text.tanpif:
  d2 04                 brult8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	tanpif
-		R_AVM_FAR24	.text.tanpif+0x18e
+		R_AVM_FAR24	.text.tanpif+0x18b
 <L9>:
  d6 08                 adjsp	0x8
  b8                    pop16	r0
@@ -724,7 +715,7 @@ Disassembly of section .text.tanpif:
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	tanpif
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanpif+0x187
+		R_AVM_FAR24	.text.tanpif+0x184
 
 Disassembly of section .text.asinpif:
 
@@ -946,7 +937,6 @@ Disassembly of section .text.exp10m1f:
  ef                    ret
  c6 8e 5d              ldi16	r6, 0x5d8e
  c7 13 40              ldi16	r7, 0x4013
- f2 68                 mov32	q2, q0
  ff 02                 fmul
  e3 00 00 00           callf	exp10m1f
 		R_AVM_RELAX	*ABS*
@@ -1027,7 +1017,6 @@ Disassembly of section .text.exp2m1f:
  ef                    ret
  c6 18 72              ldi16	r6, 0x7218
  c7 31 3f              ldi16	r7, 0x3f31
- f2 68                 mov32	q2, q0
  ff 02                 fmul
  e3 00 00 00           callf	exp2m1f
 		R_AVM_RELAX	*ABS*
@@ -1999,21 +1988,19 @@ Disassembly of section .text.compoundnf:
  d2 04                 brult8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	compoundnf
-		R_AVM_FAR24	.text.compoundnf+0x3d8
+		R_AVM_FAR24	.text.compoundnf+0x3d4
 <L14>:
  aa                    xor	r6, r6
  c7 80 3f              ldi16	r7, 0x3f80
- f2 69                 mov32	q2, q1
  ff 14                 fcmp
  ce 01                 cmpi.s8	r6, 0x1
  d3 04                 brslt8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	compoundnf
-		R_AVM_FAR24	.text.compoundnf+0x3d8
+		R_AVM_FAR24	.text.compoundnf+0x3d4
 <L15>:
  aa                    xor	r6, r6
  c7 00 40              ldi16	r7, 0x4000
- f2 69                 mov32	q2, q1
  ff 00                 fadd
  08                    mov	r6, r4
  0d                    mov	r7, r5
@@ -2189,8 +2176,6 @@ Disassembly of section .text.compoundnf:
 Disassembly of section .text.rsqrtf:
 
 <rsqrtf>:
- b1                    push16	r1
- b0                    push16	r0
  09                    mov	r6, r5
  1a                    add	r6, r6
  98                    or	r6, r4
@@ -2198,23 +2183,20 @@ Disassembly of section .text.rsqrtf:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rsqrtf
-		R_AVM_FAR24	.text.rsqrtf+0x2a
+		R_AVM_FAR24	.text.rsqrtf+0x22
 <L0>:
- c6 00 80              ldi16	r6, 0x8000
- 89                    and	r6, r5
- a0                    xor	r4, r4
- c5 80 7f              ldi16	r5, 0x7f80
- f2 30                 sub	r0, r0
- f0 05 80 ff           ldi16	r1, 0xff80
- af                    xor	r7, r7
- 3b                    cmp	r6, r7
- fb 60                 cmov.ne	r4, r0
- fb 69                 cmov.ne	r5, r1
- c2 22                 ldi8	r6, 0x22
- f0 5e 00 00           stm16	[0x0], r6
+ c4 00 80              ldi16	r4, 0x8000
+ 81                    and	r4, r5
+ a5                    xor	r5, r5
+ c6 80 7f              ldi16	r6, 0x7f80
+ c7 80 ff              ldi16	r7, 0xff80
+ 31                    cmp	r4, r5
+ fb 77                 cmov.ne	r6, r7
+ c0 22                 ldi8	r4, 0x22
+ f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
- b8                    pop16	r0
- b9                    pop16	r1
+ 06                    mov	r5, r6
+ a0                    xor	r4, r4
  ef                    ret
  e3 00 00 00           callf	rsqrtf
 		R_AVM_RELAX	*ABS*
@@ -2224,8 +2206,6 @@ Disassembly of section .text.rsqrtf:
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  ff 03                 fdiv
- b8                    pop16	r0
- b9                    pop16	r1
  ef                    ret
 
 Disassembly of section .text.sinpi:
@@ -2269,14 +2249,14 @@ Disassembly of section .text.cospi:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospi
-		R_AVM_FAR24	.text.cospi+0xc8
+		R_AVM_FAR24	.text.cospi+0xc6
 <L1>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
  e2 00 00 00           jmpf	cospi
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospi+0x11e
+		R_AVM_FAR24	.text.cospi+0x11a
  aa                    xor	r6, r6
  c7 00 4b              ldi16	r7, 0x4b00
  f2 69                 mov32	q2, q1
@@ -2286,11 +2266,10 @@ Disassembly of section .text.cospi:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospi
-		R_AVM_FAR24	.text.cospi+0xd6
+		R_AVM_FAR24	.text.cospi+0xd4
 <L2>:
  f2 30                 sub	r0, r0
  f0 05 00 bf           ldi16	r1, 0xbf00
- f2 69                 mov32	q2, q1
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
  ff 13                 ftou32
@@ -2309,7 +2288,7 @@ Disassembly of section .text.cospi:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospi
-		R_AVM_FAR24	.text.cospi+0x75
+		R_AVM_FAR24	.text.cospi+0x73
 <L3>:
  aa                    xor	r6, r6
  c7 00 bf              ldi16	r7, 0xbf00
@@ -2334,7 +2313,7 @@ Disassembly of section .text.cospi:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospi
-		R_AVM_FAR24	.text.cospi+0xa3
+		R_AVM_FAR24	.text.cospi+0xa1
 <L4>:
  f1 20                 mov	r4, r0
  f9 88                 and	r4, r2
@@ -2342,7 +2321,7 @@ Disassembly of section .text.cospi:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospi
-		R_AVM_FAR24	.text.cospi+0xfb
+		R_AVM_FAR24	.text.cospi+0xf7
 <L5>:
  f9 40                 and	r2, r0
  02                    mov	r4, r6
@@ -2352,12 +2331,12 @@ Disassembly of section .text.cospi:
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospi
-		R_AVM_FAR24	.text.cospi+0x101
+		R_AVM_FAR24	.text.cospi+0xfd
 <L6>:
  ff 15 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
  e2 00 00 00           jmpf	cospi
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospi+0x112
+		R_AVM_FAR24	.text.cospi+0x10e
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -2365,10 +2344,9 @@ Disassembly of section .text.cospi:
  c5 c0 7f              ldi16	r5, 0x7fc0
  e2 00 00 00           jmpf	cospi
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospi+0x11e
+		R_AVM_FAR24	.text.cospi+0x11a
  aa                    xor	r6, r6
  c7 80 4b              ldi16	r7, 0x4b80
- f2 69                 mov32	q2, q1
  ff 14                 fcmp
  f4 82                 lsl16.1	r2
  c0 02                 ldi8	r4, 0x2
@@ -2385,13 +2363,13 @@ Disassembly of section .text.cospi:
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospi
-		R_AVM_FAR24	.text.cospi+0xa3
+		R_AVM_FAR24	.text.cospi+0xa1
 <L7>:
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  e2 00 00 00           jmpf	cospi
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospi+0x11e
+		R_AVM_FAR24	.text.cospi+0x11a
  ff 15 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
  ff 02                 fmul
  f0 08 fd              addi.s8	r0, -0x3
@@ -2433,14 +2411,14 @@ Disassembly of section .text.cospil:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospil
-		R_AVM_FAR24	.text.cospil+0xc8
+		R_AVM_FAR24	.text.cospil+0xc6
 <L1>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
  e2 00 00 00           jmpf	cospil
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospil+0x11e
+		R_AVM_FAR24	.text.cospil+0x11a
  aa                    xor	r6, r6
  c7 00 4b              ldi16	r7, 0x4b00
  f2 69                 mov32	q2, q1
@@ -2450,11 +2428,10 @@ Disassembly of section .text.cospil:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospil
-		R_AVM_FAR24	.text.cospil+0xd6
+		R_AVM_FAR24	.text.cospil+0xd4
 <L2>:
  f2 30                 sub	r0, r0
  f0 05 00 bf           ldi16	r1, 0xbf00
- f2 69                 mov32	q2, q1
  f2 6b                 mov32	q3, q1
  ff 00                 fadd
  ff 13                 ftou32
@@ -2473,7 +2450,7 @@ Disassembly of section .text.cospil:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospil
-		R_AVM_FAR24	.text.cospil+0x75
+		R_AVM_FAR24	.text.cospil+0x73
 <L3>:
  aa                    xor	r6, r6
  c7 00 bf              ldi16	r7, 0xbf00
@@ -2498,7 +2475,7 @@ Disassembly of section .text.cospil:
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospil
-		R_AVM_FAR24	.text.cospil+0xa3
+		R_AVM_FAR24	.text.cospil+0xa1
 <L4>:
  f1 20                 mov	r4, r0
  f9 88                 and	r4, r2
@@ -2506,7 +2483,7 @@ Disassembly of section .text.cospil:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospil
-		R_AVM_FAR24	.text.cospil+0xfb
+		R_AVM_FAR24	.text.cospil+0xf7
 <L5>:
  f9 40                 and	r2, r0
  02                    mov	r4, r6
@@ -2516,12 +2493,12 @@ Disassembly of section .text.cospil:
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospil
-		R_AVM_FAR24	.text.cospil+0x101
+		R_AVM_FAR24	.text.cospil+0xfd
 <L6>:
  ff 15 04 bf 12 b2 ba 76 9e 2a 3d d0 ff ff be 00 00 80 3f      fpoly	4, -0.0013585909, 0.0416550264, -0.499998569, 1.0
  e2 00 00 00           jmpf	cospil
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospil+0x112
+		R_AVM_FAR24	.text.cospil+0x10e
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -2529,10 +2506,9 @@ Disassembly of section .text.cospil:
  c5 c0 7f              ldi16	r5, 0x7fc0
  e2 00 00 00           jmpf	cospil
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospil+0x11e
+		R_AVM_FAR24	.text.cospil+0x11a
  aa                    xor	r6, r6
  c7 80 4b              ldi16	r7, 0x4b80
- f2 69                 mov32	q2, q1
  ff 14                 fcmp
  f4 82                 lsl16.1	r2
  c0 02                 ldi8	r4, 0x2
@@ -2549,13 +2525,13 @@ Disassembly of section .text.cospil:
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cospil
-		R_AVM_FAR24	.text.cospil+0xa3
+		R_AVM_FAR24	.text.cospil+0xa1
 <L7>:
  a0                    xor	r4, r4
  a5                    xor	r5, r5
  e2 00 00 00           jmpf	cospil
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.cospil+0x11e
+		R_AVM_FAR24	.text.cospil+0x11a
  ff 15 03 70 8e 05 3c b1 9f 2a be e8 ff 7f 3f  fpoly	3, 0.00815163552, -0.166624799, 0.999998569
  ff 02                 fmul
  f0 08 fd              addi.s8	r0, -0x3
@@ -2972,7 +2948,6 @@ Disassembly of section .text.exp10m1:
  ef                    ret
  c6 8e 5d              ldi16	r6, 0x5d8e
  c7 13 40              ldi16	r7, 0x4013
- f2 68                 mov32	q2, q0
  ff 02                 fmul
  e3 00 00 00           callf	exp10m1
 		R_AVM_RELAX	*ABS*
@@ -3053,7 +3028,6 @@ Disassembly of section .text.exp10m1l:
  ef                    ret
  c6 8e 5d              ldi16	r6, 0x5d8e
  c7 13 40              ldi16	r7, 0x4013
- f2 68                 mov32	q2, q0
  ff 02                 fmul
  e3 00 00 00           callf	exp10m1l
 		R_AVM_RELAX	*ABS*
@@ -3134,7 +3108,6 @@ Disassembly of section .text.exp2m1:
  ef                    ret
  c6 18 72              ldi16	r6, 0x7218
  c7 31 3f              ldi16	r7, 0x3f31
- f2 68                 mov32	q2, q0
  ff 02                 fmul
  e3 00 00 00           callf	exp2m1
 		R_AVM_RELAX	*ABS*
@@ -3215,7 +3188,6 @@ Disassembly of section .text.exp2m1l:
  ef                    ret
  c6 18 72              ldi16	r6, 0x7218
  c7 31 3f              ldi16	r7, 0x3f31
- f2 68                 mov32	q2, q0
  ff 02                 fmul
  e3 00 00 00           callf	exp2m1l
 		R_AVM_RELAX	*ABS*
@@ -4459,8 +4431,6 @@ Disassembly of section .text.compoundnl:
 Disassembly of section .text.rsqrt:
 
 <rsqrt>:
- b1                    push16	r1
- b0                    push16	r0
  09                    mov	r6, r5
  1a                    add	r6, r6
  98                    or	r6, r4
@@ -4468,23 +4438,20 @@ Disassembly of section .text.rsqrt:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rsqrt
-		R_AVM_FAR24	.text.rsqrt+0x2a
+		R_AVM_FAR24	.text.rsqrt+0x22
 <L0>:
- c6 00 80              ldi16	r6, 0x8000
- 89                    and	r6, r5
- a0                    xor	r4, r4
- c5 80 7f              ldi16	r5, 0x7f80
- f2 30                 sub	r0, r0
- f0 05 80 ff           ldi16	r1, 0xff80
- af                    xor	r7, r7
- 3b                    cmp	r6, r7
- fb 60                 cmov.ne	r4, r0
- fb 69                 cmov.ne	r5, r1
- c2 22                 ldi8	r6, 0x22
- f0 5e 00 00           stm16	[0x0], r6
+ c4 00 80              ldi16	r4, 0x8000
+ 81                    and	r4, r5
+ a5                    xor	r5, r5
+ c6 80 7f              ldi16	r6, 0x7f80
+ c7 80 ff              ldi16	r7, 0xff80
+ 31                    cmp	r4, r5
+ fb 77                 cmov.ne	r6, r7
+ c0 22                 ldi8	r4, 0x22
+ f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
- b8                    pop16	r0
- b9                    pop16	r1
+ 06                    mov	r5, r6
+ a0                    xor	r4, r4
  ef                    ret
  e3 00 00 00           callf	rsqrt
 		R_AVM_RELAX	*ABS*
@@ -4494,15 +4461,11 @@ Disassembly of section .text.rsqrt:
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  ff 03                 fdiv
- b8                    pop16	r0
- b9                    pop16	r1
  ef                    ret
 
 Disassembly of section .text.rsqrtl:
 
 <rsqrtl>:
- b1                    push16	r1
- b0                    push16	r0
  09                    mov	r6, r5
  1a                    add	r6, r6
  98                    or	r6, r4
@@ -4510,23 +4473,20 @@ Disassembly of section .text.rsqrtl:
  d0 04                 breq8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	rsqrtl
-		R_AVM_FAR24	.text.rsqrtl+0x2a
+		R_AVM_FAR24	.text.rsqrtl+0x22
 <L0>:
- c6 00 80              ldi16	r6, 0x8000
- 89                    and	r6, r5
- a0                    xor	r4, r4
- c5 80 7f              ldi16	r5, 0x7f80
- f2 30                 sub	r0, r0
- f0 05 80 ff           ldi16	r1, 0xff80
- af                    xor	r7, r7
- 3b                    cmp	r6, r7
- fb 60                 cmov.ne	r4, r0
- fb 69                 cmov.ne	r5, r1
- c2 22                 ldi8	r6, 0x22
- f0 5e 00 00           stm16	[0x0], r6
+ c4 00 80              ldi16	r4, 0x8000
+ 81                    and	r4, r5
+ a5                    xor	r5, r5
+ c6 80 7f              ldi16	r6, 0x7f80
+ c7 80 ff              ldi16	r7, 0xff80
+ 31                    cmp	r4, r5
+ fb 77                 cmov.ne	r6, r7
+ c0 22                 ldi8	r4, 0x22
+ f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
- b8                    pop16	r0
- b9                    pop16	r1
+ 06                    mov	r5, r6
+ a0                    xor	r4, r4
  ef                    ret
  e3 00 00 00           callf	rsqrtl
 		R_AVM_RELAX	*ABS*
@@ -4536,6 +4496,4 @@ Disassembly of section .text.rsqrtl:
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  ff 03                 fdiv
- b8                    pop16	r0
- b9                    pop16	r1
  ef                    ret

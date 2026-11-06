@@ -13,9 +13,9 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 ceilf
 00000000         *UND*	00000000 truncf
 00000000         *UND*	00000000 __avm_errno
-00000000 g     F .text.ufromfpf	00000116 ufromfpf
+00000000 g     F .text.ufromfpf	00000114 ufromfpf
 00000000 g     F .text.fromfpxf	00000118 fromfpxf
-00000000 g     F .text.ufromfpxf	00000116 ufromfpxf
+00000000 g     F .text.ufromfpxf	00000114 ufromfpxf
 
 Disassembly of section .text.fromfpf:
 
@@ -241,7 +241,7 @@ Disassembly of section .text.ufromfpf:
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L3>:
  e2 00 00 00           jmpf	ufromfpf
 		R_AVM_RELAX	*ABS*
@@ -263,7 +263,7 @@ Disassembly of section .text.ufromfpf:
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L6>:
  e2 00 00 00           jmpf	ufromfpf
 		R_AVM_RELAX	*ABS*
@@ -294,7 +294,7 @@ Disassembly of section .text.ufromfpf:
  d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L8>:
  e2 00 00 00           jmpf	ufromfpf
 		R_AVM_RELAX	*ABS*
@@ -307,7 +307,7 @@ Disassembly of section .text.ufromfpf:
  d1 04                 brne8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L9>:
  e2 00 00 00           jmpf	ufromfpf
 		R_AVM_RELAX	*ABS*
@@ -320,7 +320,7 @@ Disassembly of section .text.ufromfpf:
  d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L10>:
  e2 00 00 00           jmpf	ufromfpf
 		R_AVM_RELAX	*ABS*
@@ -339,7 +339,7 @@ Disassembly of section .text.ufromfpf:
  d1 04                 brne8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L11>:
  c6 ff 7f              ldi16	r6, 0x7fff
  89                    and	r6, r5
@@ -348,7 +348,7 @@ Disassembly of section .text.ufromfpf:
  d8 04                 bruge8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L12>:
  aa                    xor	r6, r6
  af                    xor	r7, r7
@@ -358,7 +358,7 @@ Disassembly of section .text.ufromfpf:
  d2 04                 brult8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x101
+		R_AVM_FAR24	.text.ufromfpf+0xff
 <L13>:
  c2 7f                 ldi8	r6, 0x7f
  f4 03                 ldsp16	r7, [sp+0x0]
@@ -366,7 +366,7 @@ Disassembly of section .text.ufromfpf:
  d8 04                 bruge8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x10d
+		R_AVM_FAR24	.text.ufromfpf+0x10b
 <L14>:
  fa 67                 lsl16i	r7, 0x7
  c6 80 3f              ldi16	r6, 0x3f80
@@ -374,12 +374,11 @@ Disassembly of section .text.ufromfpf:
  0e                    mov	r7, r6
  aa                    xor	r6, r6
  ff 14                 fcmp
- f2 62                 mov32	q0, q2
  ce ff                 cmpi.s8	r6, -0x1
  d1 04                 brne8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpf
-		R_AVM_FAR24	.text.ufromfpf+0x10d
+		R_AVM_FAR24	.text.ufromfpf+0x10b
 <L15>:
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
@@ -618,7 +617,7 @@ Disassembly of section .text.ufromfpxf:
  d1 04                 brne8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L3>:
  e2 00 00 00           jmpf	ufromfpxf
 		R_AVM_RELAX	*ABS*
@@ -640,7 +639,7 @@ Disassembly of section .text.ufromfpxf:
  d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L6>:
  e2 00 00 00           jmpf	ufromfpxf
 		R_AVM_RELAX	*ABS*
@@ -671,7 +670,7 @@ Disassembly of section .text.ufromfpxf:
  d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L8>:
  e2 00 00 00           jmpf	ufromfpxf
 		R_AVM_RELAX	*ABS*
@@ -684,7 +683,7 @@ Disassembly of section .text.ufromfpxf:
  d1 04                 brne8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L9>:
  e2 00 00 00           jmpf	ufromfpxf
 		R_AVM_RELAX	*ABS*
@@ -697,7 +696,7 @@ Disassembly of section .text.ufromfpxf:
  d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L10>:
  e2 00 00 00           jmpf	ufromfpxf
 		R_AVM_RELAX	*ABS*
@@ -716,7 +715,7 @@ Disassembly of section .text.ufromfpxf:
  d1 04                 brne8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L11>:
  c6 ff 7f              ldi16	r6, 0x7fff
  89                    and	r6, r5
@@ -725,7 +724,7 @@ Disassembly of section .text.ufromfpxf:
  d8 04                 bruge8	0x4 <L12>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L12>:
  aa                    xor	r6, r6
  af                    xor	r7, r7
@@ -735,7 +734,7 @@ Disassembly of section .text.ufromfpxf:
  d2 04                 brult8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x101
+		R_AVM_FAR24	.text.ufromfpxf+0xff
 <L13>:
  c2 7f                 ldi8	r6, 0x7f
  f4 03                 ldsp16	r7, [sp+0x0]
@@ -743,7 +742,7 @@ Disassembly of section .text.ufromfpxf:
  d8 04                 bruge8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x10d
+		R_AVM_FAR24	.text.ufromfpxf+0x10b
 <L14>:
  fa 67                 lsl16i	r7, 0x7
  c6 80 3f              ldi16	r6, 0x3f80
@@ -751,12 +750,11 @@ Disassembly of section .text.ufromfpxf:
  0e                    mov	r7, r6
  aa                    xor	r6, r6
  ff 14                 fcmp
- f2 62                 mov32	q0, q2
  ce ff                 cmpi.s8	r6, -0x1
  d1 04                 brne8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	ufromfpxf
-		R_AVM_FAR24	.text.ufromfpxf+0x10d
+		R_AVM_FAR24	.text.ufromfpxf+0x10b
 <L15>:
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4

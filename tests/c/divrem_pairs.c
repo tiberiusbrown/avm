@@ -17,6 +17,14 @@ struct divrem64_case { uint64_t n, d, q, r; };
 
 /* Fixed expected values also cover direct helpers' zero/overflow convention. */
 static const struct divrem32_case AVM_PROGMEM unsigned32_cases[] = {
+    {UINT32_C(0xffff), UINT32_C(0xffff), UINT32_C(0x1), UINT32_C(0x0)},
+    {UINT32_C(0xffff), UINT32_C(0x100), UINT32_C(0xff), UINT32_C(0xff)},
+    {UINT32_C(0xffff), UINT32_C(0x101), UINT32_C(0xff), UINT32_C(0x0)},
+    {UINT32_C(0x10000), UINT32_C(0x3), UINT32_C(0x5555), UINT32_C(0x1)},
+    {UINT32_C(0x10000), UINT32_C(0xffff), UINT32_C(0x1), UINT32_C(0x1)},
+    {UINT32_C(0x10001), UINT32_C(0x10000), UINT32_C(0x1), UINT32_C(0x1)},
+    {UINT32_C(0x12345), UINT32_C(0x101), UINT32_C(0x122), UINT32_C(0x23)},
+    {UINT32_C(0x7fffffff), UINT32_C(0x10001), UINT32_C(0x7fff), UINT32_C(0x8000)},
     {UINT32_C(0x0), UINT32_C(0x1), UINT32_C(0x0), UINT32_C(0x0)},
     {UINT32_C(0x1), UINT32_C(0x3), UINT32_C(0x0), UINT32_C(0x1)},
     {UINT32_C(0x3), UINT32_C(0x80000000), UINT32_C(0x0), UINT32_C(0x3)},

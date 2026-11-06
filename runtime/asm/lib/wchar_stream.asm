@@ -19,7 +19,7 @@ SYMBOL TABLE:
 00000000 g     F .text.fgetwc	00000070 fgetwc
 00000000 g     F .text.fputwc	00000049 fputwc
 00000000 g     F .text.fgetws	000000b6 fgetws
-00000000 g     F .text.fputws	00000065 fputws
+00000000 g     F .text.fputws	00000064 fputws
 00000000 g     F .text.getwc	00000070 getwc
 00000000 g     F .text.getwchar	0000006e getwchar
 00000000         *UND*	00000000 __avm_stdin
@@ -395,15 +395,14 @@ Disassembly of section .text.fputws:
  d3 04                 brslt8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputws
-		R_AVM_FAR24	.text.fputws+0x5f
+		R_AVM_FAR24	.text.fputws+0x5e
 <L3>:
- a5                    xor	r5, r5
  42                    ld8u	r4, [r6]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputws
-		R_AVM_FAR24	.text.fputws+0x5d
+		R_AVM_FAR24	.text.fputws+0x5c
 <L4>:
  d7 00                 sys	debug_putc
  ed 8c 21              ld8u	r4, [r6+1]
@@ -412,9 +411,9 @@ Disassembly of section .text.fputws:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputws
-		R_AVM_FAR24	.text.fputws+0x4e
+		R_AVM_FAR24	.text.fputws+0x4d
 <L5>:
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
  c2 16                 ldi8	r6, 0x16
  e2 00 00 00           jmpf	fputws

@@ -8,7 +8,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_erfc_positive_tail	00000000 .text.avm_erfc_positive_tail
 00000000 l    d  .text.erfcf	00000000 .text.erfcf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.erff	000000e7 erff
+00000000 g     F .text.erff	000000e3 erff
 00000000         *UND*	00000000 __avm_errno
 00000000         *UND*	00000000 __avm_expf_noerrno
 00000000 g     F .text.erfcf	0000012d erfcf
@@ -27,7 +27,7 @@ Disassembly of section .text.erff:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	erff
-		R_AVM_FAR24	.text.erff+0xd4
+		R_AVM_FAR24	.text.erff+0xd0
 <L0>:
  aa                    xor	r6, r6
  af                    xor	r7, r7
@@ -35,7 +35,7 @@ Disassembly of section .text.erff:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	erff
-		R_AVM_FAR24	.text.erff+0xcf
+		R_AVM_FAR24	.text.erff+0xcb
 <L1>:
  aa                    xor	r6, r6
  c7 80 40              ldi16	r7, 0x4080
@@ -43,28 +43,27 @@ Disassembly of section .text.erff:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	erff
-		R_AVM_FAR24	.text.erff+0x43
+		R_AVM_FAR24	.text.erff+0x3f
 <L2>:
- c6 00 80              ldi16	r6, 0x8000
- 89                    and	r6, r5
+ c4 00 80              ldi16	r4, 0x8000
+ 81                    and	r4, r5
+ a5                    xor	r5, r5
+ c6 80 3f              ldi16	r6, 0x3f80
+ c7 80 bf              ldi16	r7, 0xbf80
+ 31                    cmp	r4, r5
+ fb 77                 cmov.ne	r6, r7
+ 06                    mov	r5, r6
  a0                    xor	r4, r4
- c5 80 3f              ldi16	r5, 0x3f80
- f2 30                 sub	r0, r0
- f0 05 80 bf           ldi16	r1, 0xbf80
- af                    xor	r7, r7
- 3b                    cmp	r6, r7
- fb 60                 cmov.ne	r4, r0
- fb 69                 cmov.ne	r5, r1
  e2 00 00 00           jmpf	erff
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.erff+0xcf
+		R_AVM_FAR24	.text.erff+0xcb
  c6 ff ff              ldi16	r6, 0xffff
  c7 9f 3f              ldi16	r7, 0x3f9f
  f0 69 c0              cmp32	q3, q0
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	erff
-		R_AVM_FAR24	.text.erff+0xa2
+		R_AVM_FAR24	.text.erff+0x9e
 <L3>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
@@ -81,7 +80,7 @@ Disassembly of section .text.erff:
  d8 04                 bruge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	erff
-		R_AVM_FAR24	.text.erff+0xcf
+		R_AVM_FAR24	.text.erff+0xcb
 <L4>:
  09                    mov	r6, r5
  c7 80 7f              ldi16	r7, 0x7f80
@@ -90,14 +89,14 @@ Disassembly of section .text.erff:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	erff
-		R_AVM_FAR24	.text.erff+0xcf
+		R_AVM_FAR24	.text.erff+0xcb
 <L5>:
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	erff
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.erff+0xcf
+		R_AVM_FAR24	.text.erff+0xcb
  f2 66                 mov32	q1, q2
  f2 68                 mov32	q2, q0
  e3 00 00 00           callf	erff
@@ -110,7 +109,7 @@ Disassembly of section .text.erff:
  d3 04                 brslt8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	erff
-		R_AVM_FAR24	.text.erff+0xc7
+		R_AVM_FAR24	.text.erff+0xc3
 <L6>:
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
@@ -118,7 +117,7 @@ Disassembly of section .text.erff:
  ff 01                 fsub
  e2 00 00 00           jmpf	erff
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.erff+0xcf
+		R_AVM_FAR24	.text.erff+0xcb
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
  f2 68                 mov32	q2, q0
@@ -140,7 +139,7 @@ Disassembly of section .text.erff:
  0d                    mov	r7, r5
  e2 00 00 00           jmpf	erff
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.erff+0xcd
+		R_AVM_FAR24	.text.erff+0xc9
 
 Disassembly of section .text.avm_erfc_positive_tail:
 

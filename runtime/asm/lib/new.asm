@@ -28,7 +28,7 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 std::terminate()
 00000000  w    F .text._Znaj	00000004 operator new[](unsigned int)
 00000000  w    F .text._ZnajRKSt9nothrow_t	00000013 operator new[](unsigned int, std::nothrow_t const&)
-00000000  w    F .text._ZnwjSt11align_val_t	000000e4 operator new(unsigned int, std::align_val_t)
+00000000  w    F .text._ZnwjSt11align_val_t	000000e2 operator new(unsigned int, std::align_val_t)
 00000000  w    F .text._ZnwjSt11align_val_tRKSt9nothrow_t	00000013 operator new(unsigned int, std::align_val_t, std::nothrow_t const&)
 00000000  w    F .text._ZnajSt11align_val_t	00000004 operator new[](unsigned int, std::align_val_t)
 00000000  w    F .text._ZnajSt11align_val_tRKSt9nothrow_t	00000013 operator new[](unsigned int, std::align_val_t, std::nothrow_t const&)
@@ -179,16 +179,15 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d8 04                 bruge8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xa4
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xa2
 <L0>:
- f1 24                 mov	r5, r0
  f4 b5                 dec16	r5
  f9 a0                 and	r5, r0
  f6 2d                 tst16	r5
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x80
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x7e
 <L1>:
  f0 01 01              ldi8	r1, 0x1
  cc 02                 cmpi.s8	r4, 0x2
@@ -199,7 +198,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x80
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x7e
 <L2>:
  f1 20                 mov	r4, r0
  f4 ac                 inc16	r4
@@ -213,7 +212,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x6d
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x6b
 <L3>:
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3
@@ -227,7 +226,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x80
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x7e
 <L4>:
  ea                    callp	q2
  f1 21                 mov	r4, r1
@@ -238,7 +237,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d1 04                 brne8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x4d
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x4b
 <L5>:
  a5                    xor	r5, r5
  f2 54                 sub	r5, r0
@@ -251,7 +250,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d0 04                 breq8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xdd
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xdb
 <L6>:
  c0 03                 ldi8	r4, 0x3
  e3 00 00 00           callf	_ZnwjSt11align_val_t
@@ -288,7 +287,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xdd
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xdb
 <L7>:
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3
@@ -302,7 +301,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d1 04                 brne8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x80
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0x7e
 <L8>:
  ea                    callp	q2
  f1 20                 mov	r4, r0
@@ -313,7 +312,7 @@ Disassembly of section .text._ZnwjSt11align_val_t:
  d1 04                 brne8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_ZnwjSt11align_val_t
-		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xbd
+		R_AVM_FAR24	.text._ZnwjSt11align_val_t+0xbb
 <L9>:
  d6 02                 adjsp	0x2
  b8                    pop16	r0

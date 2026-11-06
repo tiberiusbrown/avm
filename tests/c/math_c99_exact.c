@@ -142,10 +142,45 @@ static __attribute__((noinline)) int randomized(void)
     return 0;
 }
 
+static __attribute__((noinline)) int exponential_classes(void)
+{
+    float (*volatile exponential)(float) = exp2f;
+    float (*volatile power)(float, float) = powf;
+    float (*volatile inverse_hyperbolic)(float) = acoshf;
+    float (*volatile quadrant)(float, float) = atan2f;
+    static const uint32_t nan_bits[] = {
+        0x7f800001UL, 0xff800001UL, 0x7fc12345UL, 0xffc12345UL
+    };
+    /* A NaN may have the same high word as infinity. Preserve its low-word
+       payload test when the normal path classifies only native high words. */
+    for (unsigned i=0; i<sizeof(nan_bits)/sizeof(nan_bits[0]); ++i) {
+        float x=from_bits(nan_bits[i]);
+        errno=71;
+        if (!isnan(exponential(x)) || errno!=71 ||
+            !isnan(power(x,2.0f)) || errno!=71 ||
+            !isnan(power(2.0f,x)) || errno!=71 ||
+            !isnan(inverse_hyperbolic(x)) || errno!=71 ||
+            !isnan(quadrant(x,1.0f)) || errno!=71 ||
+            !isnan(quadrant(1.0f,x)) || errno!=71) return 9;
+    }
+    errno=71;
+    if (word(exponential(-INFINITY))!=0 || errno!=71 ||
+        word(exponential(INFINITY))!=0x7f800000UL || errno!=71 ||
+        word(exponential(-0.0f))!=0x3f800000UL || errno!=71 ||
+        word(power(-1.0f,INFINITY))!=0x3f800000UL || errno!=71 ||
+        word(inverse_hyperbolic(INFINITY))!=0x7f800000UL || errno!=71 ||
+        word(quadrant(-0.0f,1.0f))!=0x80000000UL || errno!=71 ||
+        word(quadrant(1.0f,INFINITY))!=0 || errno!=71 ||
+        word(quadrant(-1.0f,INFINITY))!=0x80000000UL || errno!=71 ||
+        word(quadrant(INFINITY,INFINITY))!=0x3f490fdbUL || errno!=71)
+        return 9;
+    return 0;
+}
+
 #ifdef __cplusplus
 extern "C"
 #endif
 int avm_test_main(void)
 {
-    return exponent_classes() || exceptions() || decomposition() || adjacency() || scaling() || randomized();
+    return exponent_classes() || exceptions() || decomposition() || adjacency() || scaling() || randomized() || exponential_classes();
 }

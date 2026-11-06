@@ -23,7 +23,7 @@ float __ieee754_atan2f(float y, float x)
     GET_FLOAT_WORD(hx,x);
     GET_FLOAT_WORD(hy,y);
     uint32_t ix=hx&0x7fffffffUL, iy=hy&0x7fffffffUL;
-    if (ix>0x7f800000UL || iy>0x7f800000UL) return x+y;
+    if (__builtin_isnan(x) || __builtin_isnan(y)) return x+y;
     if (!iy) return hx>>31 ? __builtin_copysignf(0x1.921fb6p1f,y) : y;
     if (!ix) return __builtin_copysignf(0x1.921fb6p0f,y);
     float z;

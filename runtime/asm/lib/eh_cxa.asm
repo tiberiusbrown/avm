@@ -25,7 +25,7 @@ SYMBOL TABLE:
 00000000 l     O .data..L_MergedGlobals	00000002 active_exception
 00000002 l     O .data..L_MergedGlobals	00000002 caught_exceptions
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.__cxa_allocate_exception	0000005b __cxa_allocate_exception
+00000000 g     F .text.__cxa_allocate_exception	00000059 __cxa_allocate_exception
 00000000         *UND*	00000000 malloc
 00000000         *UND*	00000000 memset
 00000000         *UND*	00000000 abort
@@ -71,9 +71,8 @@ Disassembly of section .text.__cxa_allocate_exception:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_allocate_exception
-		R_AVM_FAR24	.text.__cxa_allocate_exception+0x57
+		R_AVM_FAR24	.text.__cxa_allocate_exception+0x55
 <L0>:
- f1 20                 mov	r4, r0
  c8 3b                 addi.s8	r4, 0x3b
  e3 00 00 00           callf	__cxa_allocate_exception
 		R_AVM_RELAX	*ABS*
@@ -82,7 +81,7 @@ Disassembly of section .text.__cxa_allocate_exception:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__cxa_allocate_exception
-		R_AVM_FAR24	.text.__cxa_allocate_exception+0x57
+		R_AVM_FAR24	.text.__cxa_allocate_exception+0x55
 <L1>:
  04                    mov	r5, r4
  c9 0f                 addi.s8	r5, 0xf

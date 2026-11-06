@@ -11,7 +11,7 @@ SYMBOL TABLE:
 00000000 g     F .text.fputc	00000048 fputc
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.putc	00000048 putc
-00000000 g     F .text.fputs	00000061 fputs
+00000000 g     F .text.fputs	00000060 fputs
 00000000 g     F .text.fwrite	000000b9 fwrite
 00000000         *UND*	00000000 __avm_umulhisi3
 
@@ -131,7 +131,7 @@ Disassembly of section .text.fputs:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputs
-		R_AVM_FAR24	.text.fputs+0x47
+		R_AVM_FAR24	.text.fputs+0x46
 <L0>:
  41                    ld8u	r4, [r5]
  c3 22                 ldi8	r7, 0x22
@@ -140,7 +140,7 @@ Disassembly of section .text.fputs:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputs
-		R_AVM_FAR24	.text.fputs+0x4d
+		R_AVM_FAR24	.text.fputs+0x4c
 <L1>:
  c3 c0                 ldi8	r7, 0xc0
  8c                    and	r7, r4
@@ -154,18 +154,17 @@ Disassembly of section .text.fputs:
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputs
-		R_AVM_FAR24	.text.fputs+0x53
+		R_AVM_FAR24	.text.fputs+0x52
 <L3>:
  c3 40                 ldi8	r7, 0x40
  93                    or	r4, r7
  54                    st8	[r5], r4
- a5                    xor	r5, r5
  42                    ld8u	r4, [r6]
  f4 a4                 tst8	r4
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputs
-		R_AVM_FAR24	.text.fputs+0x45
+		R_AVM_FAR24	.text.fputs+0x44
 <L4>:
  d7 00                 sys	debug_putc
  ed 8c 21              ld8u	r4, [r6+1]
@@ -174,18 +173,18 @@ Disassembly of section .text.fputs:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fputs
-		R_AVM_FAR24	.text.fputs+0x36
+		R_AVM_FAR24	.text.fputs+0x35
 <L5>:
- 01                    mov	r4, r5
+ a0                    xor	r4, r4
  ef                    ret
  c2 09                 ldi8	r6, 0x9
  e2 00 00 00           jmpf	fputs
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fputs+0x59
+		R_AVM_FAR24	.text.fputs+0x58
  c2 09                 ldi8	r6, 0x9
  e2 00 00 00           jmpf	fputs
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fputs+0x55
+		R_AVM_FAR24	.text.fputs+0x54
  c2 16                 ldi8	r6, 0x16
  c3 08                 ldi8	r7, 0x8
  93                    or	r4, r7

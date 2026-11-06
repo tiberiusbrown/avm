@@ -14,7 +14,7 @@ SYMBOL TABLE:
 00000000 g     F .text.getc	00000060 getc
 00000000 g     F .text.ungetc	0000007d ungetc
 00000000 g     F .text.fgets	000000a6 fgets
-00000000 g     F .text.fread	000000e6 fread
+00000000 g     F .text.fread	000000e2 fread
 00000000         *UND*	00000000 __avm_umulhisi3
 
 Disassembly of section .text.fgetc:
@@ -400,7 +400,7 @@ Disassembly of section .text.fread:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fread
-		R_AVM_FAR24	.text.fread+0xd0
+		R_AVM_FAR24	.text.fread+0xcc
 <L5>:
  c0 40                 ldi8	r4, 0x40
  f9 31                 or	r1, r4
@@ -447,39 +447,38 @@ Disassembly of section .text.fread:
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.fread+0x5f
  a0                    xor	r4, r4
- f0 01 10              ldi8	r1, 0x10
- f1 27                 mov	r5, r3
  f0 3a 00              stsp16	[sp+0x0], r2
  f0 32 02              ldsp16	r2, [sp+0x2]
- f1 2e                 mov	r7, r2
- f5 37                 ld8u	r3, [r5]
- f1 2b                 mov	r6, r3
- f9 c4                 and	r6, r1
+ c3 10                 ldi8	r7, 0x10
+ f1 0a                 mov	r1, r2
+ ed a6 20              ld8u	r5, [r3+0]
+ 09                    mov	r6, r5
+ 8b                    and	r6, r7
  f4 a6                 tst8	r6
  d1 04                 brne8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fread
-		R_AVM_FAR24	.text.fread+0xdc
+		R_AVM_FAR24	.text.fread+0xd8
 <L7>:
  c2 ef                 ldi8	r6, 0xef
- f9 78                 and	r3, r6
- f3 07                 st8	[r5], r3
- ed ca 21              ld8u	r6, [r5+1]
- f0 6d c1              st8	[r0+], r6
- f4 b7                 dec16	r7
- f6 2f                 tst16	r7
+ 86                    and	r5, r6
+ ee a6 20              st8	[r3+0], r5
+ ed a6 21              ld8u	r5, [r3+1]
+ f0 6d a1              st8	[r0+], r5
+ f4 b1                 dec16	r1
+ f6 29                 tst16	r1
  d0 04                 breq8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fread
-		R_AVM_FAR24	.text.fread+0x9b
+		R_AVM_FAR24	.text.fread+0x98
 <L8>:
  f4 ac                 inc16	r4
- f4 02                 ldsp16	r6, [sp+0x0]
- 32                    cmp	r4, r6
+ f4 01                 ldsp16	r5, [sp+0x0]
+ 31                    cmp	r4, r5
  d0 04                 breq8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fread
-		R_AVM_FAR24	.text.fread+0x99
+		R_AVM_FAR24	.text.fread+0x96
 <L9>:
  f4 00                 ldsp16	r4, [sp+0x0]
  e2 00 00 00           jmpf	fread
@@ -493,8 +492,8 @@ Disassembly of section .text.fread:
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.fread+0x5b
  c2 04                 ldi8	r6, 0x4
- f9 79                 or	r3, r6
- f3 07                 st8	[r5], r3
+ 96                    or	r5, r6
+ ee a6 20              st8	[r3+0], r5
  e2 00 00 00           jmpf	fread
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.fread+0x5f

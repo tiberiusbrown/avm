@@ -4,12 +4,12 @@ trap_lookup.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 trap_lookup.c
 00000000 l    d  .text.__avm_trap_lookup	00000000 .text.__avm_trap_lookup
-00000000 l     F .text.open_section	00000140 open_section
+00000000 l     F .text.open_section	0000013e open_section
 00000000 l     F .text.read_uleb128	00000131 read_uleb128
 00000000 l    d  .text.open_section	00000000 .text.open_section
 00000000 l    d  .text.read_uleb128	00000000 .text.read_uleb128
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.__avm_trap_lookup	000007d5 __avm_trap_lookup
+00000000 g     F .text.__avm_trap_lookup	000007c7 __avm_trap_lookup
 00000000         *UND*	00000000 __avm_mulsi3
 00000000         *UND*	00000000 __avm_umulhisi3
 
@@ -324,7 +324,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L19>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x36c
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x36a
 <L19>:
  f0 36 38              ldsp16	r6, [sp+0x38]
  f0 37 3a              ldsp16	r7, [sp+0x3a]
@@ -378,10 +378,8 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L21>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x36c
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x36a
 <L21>:
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
  f7 6a                 add32	q2, q2
  f7 6a                 add32	q2, q2
  f7 6a                 add32	q2, q2
@@ -399,7 +397,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d2 04                 brult8	0x4 <L22>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x36c
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x36a
 <L22>:
  c4 f7 ff              ldi16	r4, 0xfff7
  c5 ff ff              ldi16	r5, 0xffff
@@ -429,7 +427,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L23>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x365
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x363
 <L23>:
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
@@ -439,7 +437,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x365
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x363
 <L24>:
  f0 34 22              ldsp16	r4, [sp+0x22]
  f0 35 24              ldsp16	r5, [sp+0x24]
@@ -448,7 +446,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d2 04                 brult8	0x4 <L25>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x365
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x363
 <L25>:
  f7 6e                 add32	q3, q2
  f0 60 cc              ldp8u	r6, [q3]
@@ -456,7 +454,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d0 04                 breq8	0x4 <L26>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x365
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x363
 <L26>:
  c6 ff ff              ldi16	r6, 0xffff
  c3 ff                 ldi8	r7, 0xff
@@ -475,10 +473,6 @@ Disassembly of section .text.__avm_trap_lookup:
 <L27>:
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
- c0 0c                 ldi8	r4, 0xc
- a5                    xor	r5, r5
- f0 3c 1e              stsp16	[sp+0x1e], r4
- f0 3d 20              stsp16	[sp+0x20], r5
  f0 32 18              ldsp16	r2, [sp+0x18]
  f0 33 1a              ldsp16	r3, [sp+0x1a]
  f2 68                 mov32	q2, q0
@@ -489,8 +483,8 @@ Disassembly of section .text.__avm_trap_lookup:
  f7 80                 lsr32.1	q0
  f7 62                 add32	q0, q2
  f2 68                 mov32	q2, q0
- f0 36 1e              ldsp16	r6, [sp+0x1e]
- f0 37 20              ldsp16	r7, [sp+0x20]
+ c2 0c                 ldi8	r6, 0xc
+ af                    xor	r7, r7
  e3 00 00 00           callf	__avm_trap_lookup
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	__avm_mulsi3
@@ -514,7 +508,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d8 04                 bruge8	0x4 <L28>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x38a
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x37f
 <L28>:
  a0                    xor	r4, r4
  a5                    xor	r5, r5
@@ -572,7 +566,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d2 04                 brult8	0x4 <L30>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x6ec
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x6de
 <L30>:
  f0 34 56              ldsp16	r4, [sp+0x56]
  f0 3c 32              stsp16	[sp+0x32], r4
@@ -610,7 +604,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d9 04                 brsge8	0x4 <L31>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x591
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x583
 <L31>:
  a0                    xor	r4, r4
  a5                    xor	r5, r5
@@ -688,7 +682,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d8 04                 bruge8	0x4 <L35>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x712
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x704
 <L35>:
  f0 34 18              ldsp16	r4, [sp+0x18]
  f0 35 1a              ldsp16	r5, [sp+0x1a]
@@ -696,7 +690,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d2 04                 brult8	0x4 <L36>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x6fe
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x6f0
 <L36>:
  f0 00 01              ldi8	r0, 0x1
  f2 39                 sub	r1, r1
@@ -719,7 +713,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d0 04                 breq8	0x4 <L37>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x46e
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x460
 <L37>:
  e2 00 00 00           jmpf	__avm_trap_lookup
 		R_AVM_RELAX	*ABS*
@@ -729,7 +723,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d0 04                 breq8	0x4 <L38>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x621
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x613
 <L38>:
  d6 fe                 adjsp	-0x2
  f0 14 30              leasp	r4, 0x30
@@ -799,7 +793,7 @@ Disassembly of section .text.__avm_trap_lookup:
  f4 69                 stsp16	[sp+0xa], r5
  e2 00 00 00           jmpf	__avm_trap_lookup
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x4e3
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x4d5
  c2 ff                 ldi8	r6, 0xff
  f4 20                 ldsp16	r4, [sp+0x8]
  a5                    xor	r5, r5
@@ -809,7 +803,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d8 04                 bruge8	0x4 <L43>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x655
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x647
 <L43>:
  c6 6e ff              ldi16	r6, 0xff6e
  c7 ff ff              ldi16	r7, 0xffff
@@ -826,14 +820,14 @@ Disassembly of section .text.__avm_trap_lookup:
  f0 3e 14              stsp16	[sp+0x14], r6
  e2 00 00 00           jmpf	__avm_trap_lookup
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x502
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x4f4
  c6 82 ff              ldi16	r6, 0xff82
  f4 23                 ldsp16	r7, [sp+0x8]
  3b                    cmp	r6, r7
  d8 04                 bruge8	0x4 <L44>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x68f
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x681
 <L44>:
  d6 fe                 adjsp	-0x2
  f0 14 30              leasp	r4, 0x30
@@ -857,11 +851,11 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L46>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x63f
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x631
 <L46>:
  e2 00 00 00           jmpf	__avm_trap_lookup
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x69d
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x68f
  c6 7e ff              ldi16	r6, 0xff7e
  c7 ff ff              ldi16	r7, 0xffff
  f7 6b                 add32	q2, q3
@@ -910,7 +904,7 @@ Disassembly of section .text.__avm_trap_lookup:
  f7 63                 add32	q0, q3
  e2 00 00 00           jmpf	__avm_trap_lookup
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x4d7
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x4c9
  f0 35 56              ldsp16	r5, [sp+0x56]
  f0 3d 32              stsp16	[sp+0x32], r5
  f4 a4                 tst8	r4
@@ -921,7 +915,7 @@ Disassembly of section .text.__avm_trap_lookup:
 <L49>:
  e2 00 00 00           jmpf	__avm_trap_lookup
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x721
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x713
  f0 34 26              ldsp16	r4, [sp+0x26]
  f0 3c 2c              stsp16	[sp+0x2c], r4
  f0 34 14              ldsp16	r4, [sp+0x14]
@@ -978,7 +972,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L52>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x7a2
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x794
 <L52>:
  f0 36 2e              ldsp16	r6, [sp+0x2e]
  f0 37 30              ldsp16	r7, [sp+0x30]
@@ -988,7 +982,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L53>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x7a2
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x794
 <L53>:
  f0 34 22              ldsp16	r4, [sp+0x22]
  f0 35 24              ldsp16	r5, [sp+0x24]
@@ -997,7 +991,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d2 04                 brult8	0x4 <L54>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x7a2
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x794
 <L54>:
  f7 6e                 add32	q3, q2
  f0 60 cc              ldp8u	r6, [q3]
@@ -1005,7 +999,7 @@ Disassembly of section .text.__avm_trap_lookup:
  d1 04                 brne8	0x4 <L55>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_trap_lookup
-		R_AVM_FAR24	.text.__avm_trap_lookup+0x7b0
+		R_AVM_FAR24	.text.__avm_trap_lookup+0x7a2
 <L55>:
  f0 34 1c              ldsp16	r4, [sp+0x1c]
  c8 03                 addi.s8	r4, 0x3
@@ -1125,7 +1119,7 @@ Disassembly of section .text.open_section:
 <L6>:
  e2 00 00 00           jmpf	open_section
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.open_section+0x11c
+		R_AVM_FAR24	.text.open_section+0x11a
  f4 58                 stsp16	[sp+0x6], r4
  f0 63 8c              ldp24	q2, [q3]
  f0 3a 02              stsp16	[sp+0x2], r2
@@ -1175,7 +1169,6 @@ Disassembly of section .text.open_section:
 		R_AVM_FAR24	.text.open_section+0x40
  f4 41                 stsp16	[sp+0x0], r5
  c1 0c                 ldi8	r5, 0xc
- f1 20                 mov	r4, r0
  f4 4a                 stsp16	[sp+0x2], r6
  f4 53                 stsp16	[sp+0x4], r7
  e3 00 00 00           callf	open_section
@@ -1199,7 +1192,7 @@ Disassembly of section .text.open_section:
  d0 04                 breq8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	open_section
-		R_AVM_FAR24	.text.open_section+0x12e
+		R_AVM_FAR24	.text.open_section+0x12c
 <L9>:
  f4 20                 ldsp16	r4, [sp+0x8]
  ee 18 3e              st16	[r4+30], r0

@@ -4,14 +4,14 @@ strtof.o:	file format elf32-avm
 SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 strtof.c
 00000000 l    d  .text.strtof	00000000 .text.strtof
-00000000 l     F .text.decimal_overflows	00000073 decimal_overflows
+00000000 l     F .text.decimal_overflows	0000006f decimal_overflows
 00000000 l    d  .text.decimal_overflows	00000000 .text.decimal_overflows
 00000000 l     O .rodata.str1.1	00000028 decimal_overflows.threshold
 00000000 l    d  .text.strtod	00000000 .text.strtod
 00000000 l    d  .text.strtold	00000000 .text.strtold
 00000000 l    d  .rodata.str1.1	00000000 .rodata.str1.1
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.strtof	000004af strtof
+00000000 g     F .text.strtof	000004ad strtof
 00000000         *UND*	00000000 isspace
 00000000         *UND*	00000000 isalnum
 00000000         *UND*	00000000 __avm_mulsi3
@@ -246,7 +246,7 @@ Disassembly of section .text.strtof:
  f2 30                 sub	r0, r0
  e2 00 00 00           jmpf	strtof
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strtof+0x4a6
+		R_AVM_FAR24	.text.strtof+0x4a4
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
  f4 7a                 stsp16	[sp+0xe], r6
@@ -478,7 +478,7 @@ Disassembly of section .text.strtof:
  d1 04                 brne8	0x4 <L35>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x4a6
+		R_AVM_FAR24	.text.strtof+0x4a4
 <L35>:
  f1 27                 mov	r5, r3
  c9 fe                 addi.s8	r5, -0x2
@@ -533,7 +533,7 @@ Disassembly of section .text.strtof:
  d0 04                 breq8	0x4 <L41>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x46d
+		R_AVM_FAR24	.text.strtof+0x46b
 <L41>:
  f0 34 20              ldsp16	r4, [sp+0x20]
  e3 00 00 00           callf	strtof
@@ -541,7 +541,7 @@ Disassembly of section .text.strtof:
 		R_AVM_FAR24	.text.decimal_overflows
  e2 00 00 00           jmpf	strtof
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strtof+0x46e
+		R_AVM_FAR24	.text.strtof+0x46c
  c2 20                 ldi8	r6, 0x20
  92                    or	r4, r6
  cc 70                 cmpi.s8	r4, 0x70
@@ -575,16 +575,16 @@ Disassembly of section .text.strtof:
  d2 04                 brult8	0x4 <L45>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x410
+		R_AVM_FAR24	.text.strtof+0x40e
 <L45>:
  e2 00 00 00           jmpf	strtof
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strtof+0x3c8
+		R_AVM_FAR24	.text.strtof+0x3c6
  f0 30 14              ldsp16	r0, [sp+0x14]
  f0 31 16              ldsp16	r1, [sp+0x16]
  e2 00 00 00           jmpf	strtof
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strtof+0x4a6
+		R_AVM_FAR24	.text.strtof+0x4a4
  d6 fe                 adjsp	-0x2
  f4 38                 ldsp16	r4, [sp+0xe]
  f4 40                 stsp16	[sp+0x0], r4
@@ -597,18 +597,17 @@ Disassembly of section .text.strtof:
  d6 02                 adjsp	0x2
  e2 00 00 00           jmpf	strtof
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strtof+0x481
+		R_AVM_FAR24	.text.strtof+0x47f
  c3 01                 ldi8	r7, 0x1
  f1 04                 mov	r0, r4
  f1 1e                 mov	r3, r6
- f1 20                 mov	r4, r0
  c8 d0                 addi.s8	r4, -0x30
  f1 74                 zext8	r4
  cc 0a                 cmpi.s8	r4, 0xa
  d2 04                 brult8	0x4 <L46>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x410
+		R_AVM_FAR24	.text.strtof+0x40e
 <L46>:
  f0 3f 1e              stsp16	[sp+0x1e], r7
  f1 0b                 mov	r1, r3
@@ -620,7 +619,7 @@ Disassembly of section .text.strtof:
  d3 04                 brslt8	0x4 <L47>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x3fb
+		R_AVM_FAR24	.text.strtof+0x3f9
 <L47>:
  ed 02 21              ld8u	r0, [r1+1]
  f4 a9                 inc16	r1
@@ -631,13 +630,13 @@ Disassembly of section .text.strtof:
  d2 04                 brult8	0x4 <L48>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x436
+		R_AVM_FAR24	.text.strtof+0x434
 <L48>:
  f0 69 48              cmp32	q1, q2
  d9 04                 brsge8	0x4 <L49>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x3df
+		R_AVM_FAR24	.text.strtof+0x3dd
 <L49>:
  c2 0a                 ldi8	r6, 0xa
  af                    xor	r7, r7
@@ -652,7 +651,7 @@ Disassembly of section .text.strtof:
  f7 6b                 add32	q2, q3
  e2 00 00 00           jmpf	strtof
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.strtof+0x3df
+		R_AVM_FAR24	.text.strtof+0x3dd
  f0 32 08              ldsp16	r2, [sp+0x8]
  f0 33 0a              ldsp16	r3, [sp+0xa]
  f0 34 12              ldsp16	r4, [sp+0x12]
@@ -726,7 +725,7 @@ Disassembly of section .text.strtof:
  d8 04                 bruge8	0x4 <L54>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	strtof
-		R_AVM_FAR24	.text.strtof+0x49e
+		R_AVM_FAR24	.text.strtof+0x49c
 <L54>:
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
@@ -750,7 +749,7 @@ Disassembly of section .text.decimal_overflows:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	-0x4
+ d6 fe                 adjsp	-0x2
  e2 00 00 00           jmpf	decimal_overflows
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.decimal_overflows+0xc
@@ -769,8 +768,6 @@ Disassembly of section .text.decimal_overflows:
 		R_AVM_FAR24	.text.decimal_overflows+0xa
 <L1>:
  f2 30                 sub	r0, r0
- c1 30                 ldi8	r5, 0x30
- f4 41                 stsp16	[sp+0x0], r5
  f0 06 00 00           ldi16	r2, 0x0
 		R_AVM_PROG_LO16	.rodata.str1.1
  f0 03 00              ldi8	r3, 0x0
@@ -784,9 +781,9 @@ Disassembly of section .text.decimal_overflows:
  c8 d0                 addi.s8	r4, -0x30
  f1 74                 zext8	r4
  cc 0a                 cmpi.s8	r4, 0xa
- f4 02                 ldsp16	r6, [sp+0x0]
+ c2 30                 ldi8	r6, 0x30
  fc 35                 cmov.ult	r6, r5
- f0 38 02              stsp16	[sp+0x2], r0
+ f0 38 00              stsp16	[sp+0x0], r0
  f2 39                 sub	r1, r1
  f7 61                 add32	q0, q1
  f0 60 a0              ldp8u	r5, [q0]
@@ -794,28 +791,28 @@ Disassembly of section .text.decimal_overflows:
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	decimal_overflows
-		R_AVM_FAR24	.text.decimal_overflows+0x67
+		R_AVM_FAR24	.text.decimal_overflows+0x63
 <L2>:
  cc 0a                 cmpi.s8	r4, 0xa
  f8 14                 cset.ult	r4
  1c                    add	r7, r4
- f0 30 02              ldsp16	r0, [sp+0x2]
+ f0 30 00              ldsp16	r0, [sp+0x0]
  f4 a8                 inc16	r0
  f0 0c 27              cmpi.s8	r0, 0x27
  03                    mov	r4, r7
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	decimal_overflows
-		R_AVM_FAR24	.text.decimal_overflows+0x2a
+		R_AVM_FAR24	.text.decimal_overflows+0x26
 <L3>:
  c0 01                 ldi8	r4, 0x1
  e2 00 00 00           jmpf	decimal_overflows
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.decimal_overflows+0x6c
+		R_AVM_FAR24	.text.decimal_overflows+0x68
  f1 76                 zext8	r6
  36                    cmp	r5, r6
  f8 14                 cset.ult	r4
- d6 04                 adjsp	0x4
+ d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

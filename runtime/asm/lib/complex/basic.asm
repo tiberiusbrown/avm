@@ -13,7 +13,7 @@ SYMBOL TABLE:
 00000000 g     F .text.crealf	00000004 crealf
 00000000 g     F .text.cimagf	00000006 cimagf
 00000000 g     F .text.conjf	00000019 conjf
-00000000 g     F .text.cprojf	0000005c cprojf
+00000000 g     F .text.cprojf	0000005a cprojf
 00000000         *UND*	00000000 copysignf
 00000000 g     F .text.cabsf	00000012 cabsf
 00000000         *UND*	00000000 hypotf
@@ -88,11 +88,11 @@ Disassembly of section .text.cprojf:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cprojf
-		R_AVM_FAR24	.text.cprojf+0x4a
+		R_AVM_FAR24	.text.cprojf+0x48
 <L1>:
- f2 30                 sub	r0, r0
- f2 39                 sub	r1, r1
- f2 68                 mov32	q2, q0
+ 20                    sub	r4, r4
+ 25                    sub	r5, r5
+ f2 62                 mov32	q0, q2
  f2 6b                 mov32	q3, q1
  e3 00 00 00           callf	cprojf
 		R_AVM_RELAX	*ABS*

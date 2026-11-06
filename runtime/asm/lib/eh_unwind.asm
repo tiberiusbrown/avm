@@ -16,7 +16,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.avm_eh_find_handler	00000000 .text.avm_eh_find_handler
 00000000 l     F .text.unwind_frame	000000de unwind_frame
 00000000 l     F .text.find_function	0000034c find_function
-00000000 l     F .text.find_row	0000018a find_row
+00000000 l     F .text.find_row	000001ad find_row
 00000000 l     F .text.find_site	00000109 find_site
 00000000 l     F .text.match_list	000002aa match_list
 00000000 l     F .text.find_call	00000183 find_call
@@ -2386,217 +2386,236 @@ Disassembly of section .text.find_row:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 d8                 adjsp	-0x28
- f0 3e 14              stsp16	[sp+0x14], r6
- f0 3f 16              stsp16	[sp+0x16], r7
- c2 03                 ldi8	r6, 0x3
- af                    xor	r7, r7
- f7 6e                 add32	q3, q2
- f0 63 08              ldp24	q0, [q2]
- f0 38 1c              stsp16	[sp+0x1c], r0
- f0 39 1e              stsp16	[sp+0x1e], r1
- f0 63 cc              ldp24	q3, [q3]
- f4 72                 stsp16	[sp+0xc], r6
- f4 7b                 stsp16	[sp+0xe], r7
- c2 0c                 ldi8	r6, 0xc
- af                    xor	r7, r7
- f7 6e                 add32	q3, q2
- f0 63 0c              ldp24	q0, [q3]
+ d6 e8                 adjsp	-0x18
+ f4 52                 stsp16	[sp+0x4], r6
+ f4 5b                 stsp16	[sp+0x6], r7
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f0 00 03              ldi8	r0, 0x3
+ f2 39                 sub	r1, r1
+ f7 62                 add32	q0, q2
+ f0 63 c8              ldp24	q3, [q2]
+ f4 62                 stsp16	[sp+0x8], r6
+ f4 6b                 stsp16	[sp+0xa], r7
+ f0 63 80              ldp24	q2, [q0]
+ f0 06 ff ff           ldi16	r2, 0xffff
+ f0 07 ff ff           ldi16	r3, 0xffff
+ f0 30 08              ldsp16	r0, [sp+0x8]
+ f0 31 0a              ldsp16	r1, [sp+0xa]
+ f9 0a                 xor	r0, r2
+ f9 2e                 xor	r1, r3
+ f7 62                 add32	q0, q2
+ c0 0c                 ldi8	r4, 0xc
+ a5                    xor	r5, r5
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f7 6b                 add32	q2, q3
+ f0 63 48              ldp24	q1, [q2]
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ f4 22                 ldsp16	r6, [sp+0x8]
+ f4 2b                 ldsp16	r7, [sp+0xa]
+ f7 7b                 sub32	q2, q3
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 59                 stsp16	[sp+0x6], r5
  c2 06                 ldi8	r6, 0x6
  af                    xor	r7, r7
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
  f7 6e                 add32	q3, q2
- f0 62 cc              ldp16	r6, [q3]
- f6 2e                 tst16	r6
+ f4 62                 stsp16	[sp+0x8], r6
+ f4 6b                 stsp16	[sp+0xa], r7
+ c4 ff ff              ldi16	r4, 0xffff
+ a5                    xor	r5, r5
+ f0 69 08              cmp32	q0, q2
+ 08                    mov	r6, r4
+ 0d                    mov	r7, r5
+ fc 30                 cmov.ult	r6, r0
+ fc 39                 cmov.ult	r7, r1
+ f0 3e 14              stsp16	[sp+0x14], r6
+ f0 3f 16              stsp16	[sp+0x16], r7
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 1b                 ldsp16	r7, [sp+0x6]
+ f0 69 c8              cmp32	q3, q2
+ fc 26                 cmov.ult	r4, r6
+ fc 2f                 cmov.ult	r5, r7
+ f0 3c 10              stsp16	[sp+0x10], r4
+ f0 3d 12              stsp16	[sp+0x12], r5
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f4 29                 ldsp16	r5, [sp+0xa]
+ f0 62 e8              ldp16	r7, [q2]
+ f6 2f                 tst16	r7
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x17d
+		R_AVM_FAR24	.text.find_row+0x158
 <L0>:
- f4 5a                 stsp16	[sp+0x6], r6
+ c4 ee ff              ldi16	r4, 0xffee
+ c5 ff ff              ldi16	r5, 0xffff
+ f7 66                 add32	q1, q2
+ c0 12                 ldi8	r4, 0x12
+ a5                    xor	r5, r5
+ f0 30 00              ldsp16	r0, [sp+0x0]
+ f0 31 02              ldsp16	r1, [sp+0x2]
  f7 62                 add32	q0, q2
- f0 38 18              stsp16	[sp+0x18], r0
- f0 39 1a              stsp16	[sp+0x1a], r1
- c2 12                 ldi8	r6, 0x12
- af                    xor	r7, r7
- f7 6e                 add32	q3, q2
- f0 3e 10              stsp16	[sp+0x10], r6
- f0 3f 12              stsp16	[sp+0x12], r7
- aa                    xor	r6, r6
- af                    xor	r7, r7
+ f0 38 00              stsp16	[sp+0x0], r0
+ f0 39 02              stsp16	[sp+0x2], r1
  a0                    xor	r4, r4
- f4 68                 stsp16	[sp+0xa], r4
- a0                    xor	r4, r4
- a5                    xor	r5, r5
- f0 69 c8              cmp32	q3, q2
- f8 04                 cset.eq	r4
- f4 50                 stsp16	[sp+0x4], r4
- f0 02 01              ldi8	r2, 0x1
- f0 34 10              ldsp16	r4, [sp+0x10]
- f0 35 12              ldsp16	r5, [sp+0x12]
- f2 63                 mov32	q0, q3
- d1 04                 brne8	0x4 <L1>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x8f
-<L1>:
- c0 02                 ldi8	r4, 0x2
- a5                    xor	r5, r5
- f7 68                 add32	q2, q0
- f0 60 88              ldp8u	r4, [q2]
- 04                    mov	r5, r4
- f4 8d                 lsr16.1	r5
- f9 a8                 and	r5, r2
- 08                    mov	r6, r4
- f9 c8                 and	r6, r2
- 19                    add	r6, r5
- 04                    mov	r5, r4
- fa 82                 lsr16i	r5, 0x2
- f9 a8                 and	r5, r2
- 16                    add	r5, r6
- fa 73                 lsr16i	r4, 0x3
- f9 88                 and	r4, r2
- 11                    add	r4, r5
- 10                    add	r4, r4
- c8 05                 addi.s8	r4, 0x5
- a5                    xor	r5, r5
- f7 68                 add32	q2, q0
- f0 38 24              stsp16	[sp+0x24], r0
- f0 39 26              stsp16	[sp+0x26], r1
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 07 ff ff           ldi16	r3, 0xffff
- f0 36 18              ldsp16	r6, [sp+0x18]
- f0 37 1a              ldsp16	r7, [sp+0x1a]
- f0 69 c8              cmp32	q3, q2
- d8 04                 bruge8	0x4 <L2>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
-<L2>:
- f7 7e                 sub32	q3, q2
- f2 62                 mov32	q0, q2
+ f4 60                 stsp16	[sp+0x8], r4
+ f4 78                 stsp16	[sp+0xe], r4
  c0 05                 ldi8	r4, 0x5
  a5                    xor	r5, r5
- f0 69 c8              cmp32	q3, q2
+ f0 69 48              cmp32	q1, q2
+ d8 04                 bruge8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	find_row
+		R_AVM_FAR24	.text.find_row+0x15e
+<L1>:
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f0 66 c8              ldp16	r6, [q2+]
+ f4 52                 stsp16	[sp+0x4], r6
+ f0 60 c8              ldp8u	r6, [q2]
+ c0 70                 ldi8	r4, 0x70
+ 82                    and	r4, r6
+ f4 a4                 tst8	r4
+ d0 04                 breq8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	find_row
+		R_AVM_FAR24	.text.find_row+0x178
+<L2>:
+ f4 73                 stsp16	[sp+0xc], r7
+ 06                    mov	r5, r6
+ f4 8d                 lsr16.1	r5
+ c0 01                 ldi8	r4, 0x1
+ f1 04                 mov	r0, r4
+ 84                    and	r5, r4
+ 02                    mov	r4, r6
+ f9 80                 and	r4, r0
+ 11                    add	r4, r5
+ 0e                    mov	r7, r6
+ fa a2                 lsr16i	r7, 0x2
+ f9 e0                 and	r7, r0
+ 1c                    add	r7, r4
+ fa 93                 lsr16i	r6, 0x3
+ f9 c0                 and	r6, r0
+ 1b                    add	r6, r7
+ 1a                    add	r6, r6
+ ca 05                 addi.s8	r6, 0x5
+ f1 06                 mov	r0, r6
+ f2 39                 sub	r1, r1
+ f0 69 40              cmp32	q1, q0
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
+		R_AVM_FAR24	.text.find_row+0x182
 <L3>:
- f0 38 20              stsp16	[sp+0x20], r0
- f0 39 22              stsp16	[sp+0x22], r1
- f2 68                 mov32	q2, q0
- f0 66 28              ldp16	r1, [q2+]
- f0 60 88              ldp8u	r4, [q2]
- f4 40                 stsp16	[sp+0x0], r4
- c1 70                 ldi8	r5, 0x70
- 84                    and	r5, r4
- f4 a5                 tst8	r5
- d0 04                 breq8	0x4 <L4>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
-<L4>:
- f4 00                 ldsp16	r4, [sp+0x0]
- 04                    mov	r5, r4
- f4 8d                 lsr16.1	r5
- f0 00 01              ldi8	r0, 0x1
- f9 a0                 and	r5, r0
- f4 49                 stsp16	[sp+0x2], r5
- 04                    mov	r5, r4
- f9 a0                 and	r5, r0
- f4 08                 ldsp16	r4, [sp+0x2]
- 14                    add	r5, r4
- f4 61                 stsp16	[sp+0x8], r5
- f4 01                 ldsp16	r5, [sp+0x0]
- fa 82                 lsr16i	r5, 0x2
- f9 a0                 and	r5, r0
- f4 49                 stsp16	[sp+0x2], r5
- f4 21                 ldsp16	r5, [sp+0x8]
- f4 08                 ldsp16	r4, [sp+0x2]
- 11                    add	r4, r5
- f4 01                 ldsp16	r5, [sp+0x0]
- fa 83                 lsr16i	r5, 0x3
- f9 a0                 and	r5, r0
- 14                    add	r5, r4
- 15                    add	r5, r5
- c9 05                 addi.s8	r5, 0x5
- 01                    mov	r4, r5
- a5                    xor	r5, r5
- f0 69 c8              cmp32	q3, q2
- d8 04                 bruge8	0x4 <L5>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
-<L5>:
- f4 10                 ldsp16	r4, [sp+0x4]
- f9 80                 and	r4, r0
+ f4 20                 ldsp16	r4, [sp+0x8]
  f4 a4                 tst8	r4
- d0 04                 breq8	0x4 <L6>
+ f4 33                 ldsp16	r7, [sp+0xc]
+ d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x127
+		R_AVM_FAR24	.text.find_row+0x11e
+<L4>:
+ f4 38                 ldsp16	r4, [sp+0xe]
+ f4 11                 ldsp16	r5, [sp+0x4]
+ 31                    cmp	r4, r5
+ d2 04                 brult8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	find_row
+		R_AVM_FAR24	.text.find_row+0x196
+<L5>:
+ f0 34 14              ldsp16	r4, [sp+0x14]
+ f4 11                 ldsp16	r5, [sp+0x4]
+ 31                    cmp	r4, r5
+ d8 04                 bruge8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	find_row
+		R_AVM_FAR24	.text.find_row+0x1a0
 <L6>:
- f4 28                 ldsp16	r4, [sp+0xa]
- f5 21                 cmp	r4, r1
- d2 04                 brult8	0x4 <L7>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
-<L7>:
  e2 00 00 00           jmpf	find_row
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.find_row+0x12f
- f6 29                 tst16	r1
- d0 04                 breq8	0x4 <L8>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
-<L8>:
- f0 39 00              stsp16	[sp+0x0], r1
- f1 21                 mov	r4, r1
- a5                    xor	r5, r5
- f0 36 1c              ldsp16	r6, [sp+0x1c]
- f0 37 1e              ldsp16	r7, [sp+0x1e]
- f7 6b                 add32	q2, q3
- f4 32                 ldsp16	r6, [sp+0xc]
- f4 3b                 ldsp16	r7, [sp+0xe]
- f0 69 8c              cmp32	q2, q3
- f0 30 24              ldsp16	r0, [sp+0x24]
- f0 31 26              ldsp16	r1, [sp+0x26]
- d2 04                 brult8	0x4 <L9>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
-<L9>:
- f0 36 14              ldsp16	r6, [sp+0x14]
- f0 37 16              ldsp16	r7, [sp+0x16]
- f0 69 c8              cmp32	q3, q2
- f2 64                 mov32	q1, q0
- d8 04                 bruge8	0x4 <L10>
-		R_AVM_RELAX	*ABS*
- e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x181
-<L10>:
- f4 18                 ldsp16	r4, [sp+0x6]
- f4 b4                 dec16	r4
- f4 58                 stsp16	[sp+0x6], r4
+		R_AVM_FAR24	.text.find_row+0x128
+ f4 10                 ldsp16	r4, [sp+0x4]
  f6 2c                 tst16	r4
+ d0 04                 breq8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	find_row
+		R_AVM_FAR24	.text.find_row+0x18c
+<L7>:
+ f0 34 10              ldsp16	r4, [sp+0x10]
+ f4 11                 ldsp16	r5, [sp+0x4]
+ 31                    cmp	r4, r5
+ d8 04                 bruge8	0x4 <L8>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	find_row
+		R_AVM_FAR24	.text.find_row+0x168
+<L8>:
+ f7 74                 sub32	q1, q0
  f4 00                 ldsp16	r4, [sp+0x0]
- f0 32 20              ldsp16	r2, [sp+0x20]
- f0 33 22              ldsp16	r3, [sp+0x22]
- f2 6b                 mov32	q3, q1
- d0 04                 breq8	0x4 <L11>
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 68                 add32	q2, q0
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 62                 stsp16	[sp+0x8], r6
+ d0 04                 breq8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	find_row
-		R_AVM_FAR24	.text.find_row+0x51
-<L11>:
+		R_AVM_FAR24	.text.find_row+0xa9
+<L9>:
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 78                 sub32	q2, q0
  e2 00 00 00           jmpf	find_row
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.find_row+0x181
- f2 42                 sub	r2, r2
- f2 4b                 sub	r3, r3
- f2 69                 mov32	q2, q1
- d6 28                 adjsp	0x28
+		R_AVM_FAR24	.text.find_row+0x1a6
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ e2 00 00 00           jmpf	find_row
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_row+0x1a6
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ e2 00 00 00           jmpf	find_row
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_row+0x1a6
+ f4 20                 ldsp16	r4, [sp+0x8]
+ c2 ff                 ldi8	r6, 0xff
+ af                    xor	r7, r7
+ 88                    and	r6, r4
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f4 09                 ldsp16	r5, [sp+0x2]
+ f7 7b                 sub32	q2, q3
+ e2 00 00 00           jmpf	find_row
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_row+0x1a6
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ e2 00 00 00           jmpf	find_row
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_row+0x1a6
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ e2 00 00 00           jmpf	find_row
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_row+0x1a6
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ e2 00 00 00           jmpf	find_row
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_row+0x1a6
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ e2 00 00 00           jmpf	find_row
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.find_row+0x1a6
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ d6 18                 adjsp	0x18
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

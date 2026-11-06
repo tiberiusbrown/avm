@@ -223,9 +223,9 @@ the O0/O2 fixture builds, representative additional-stack measurements are:
 
 | Fixture | O0 bytes | O2 bytes |
 | --- | ---: | ---: |
-| `eh_catch_all` | 107 | 90 |
-| `eh_dynamic_handler` | 86 | 86 |
-| `eh_cleanup` | 107 | 111 |
+| `eh_catch_all` | 103 | 86 |
+| `eh_dynamic_handler` | 82 | 82 |
+| `eh_cleanup` | 103 | 107 |
 | `eh_inheritance` | 170 | 152 |
 | `eh_virtual_inheritance` | 158 | 150 |
 | `eh_pointer_conversion` | 164 | 152 |
@@ -236,6 +236,13 @@ allowing the linker to resolve them as 24-bit relocation addends. This keeps
 the classifier's saved-register area at four bytes. Stored code pointers and
 the exception header retain their 24-bit layouts.
 
+The row scanner compares clamped 16-bit PC deltas instead of retaining the
+function's start, end and lookup addresses throughout the walk. One full row
+address and a remaining-byte count preserve the complete 24-bit metadata
+range, while the previous row's byte size recovers its address. Its fixed frame
+is 32 bytes. The AVEH5 format and its validation rules are unchanged; functions
+and lookups beyond the 16-bit delta range remain supported.
+
 Further reductions require broader work:
 
 - Move transient lookup and hierarchy-walk state into reusable RAM scratch
@@ -243,9 +250,9 @@ Further reductions require broader work:
   saved registers; its eight-byte path array is only part of that cost.
   Heap or static scratch would trade stack space for RAM and would need explicit
   ownership across cleanup, nested catches, rethrows and allocation failures.
-- Reduce metadata-reader register pressure or change the packed unwind format.
-  `find_row` has a 48-byte fixed frame and becomes the deepest frame on simple
-  throw paths. Predecoded rows or a smaller live cursor could help, but require
+- Reduce the remaining metadata-reader register pressure or change the packed
+  unwind format. `find_function` has a 44-byte fixed frame and is the deepest
+  frame on simple throw paths. Predecoded records could help, but require
   coordinated runtime, image-packer and malformed-metadata validation work.
 - Give nonreturning propagation entries a calling convention that avoids
   preserving registers already captured in the exception header. The C throw

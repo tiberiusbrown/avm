@@ -438,34 +438,40 @@ AVEH5_NOINLINE uint32_t find_function(const struct avm_eh_exception *header, uin
  * between the header and sites_offset, and each row must fit there. The walk stops
  * at the first row past lookup, so later rows are not read. */
 AVEH5_NOINLINE uint32_t find_row(uint32_t fh, uint32_t lookup) {
-    /* The function's start and end, and the end of its rows, are read once. row_ok
-     * checks each row against the same three values. */
+    /* find_function has checked start <= lookup < end and the row area bounds.
+     * Row PCs are 16-bit deltas, so clamp the lookup and last valid delta before
+     * scanning instead of keeping three full program addresses live. */
     uint32_t start = read_flash_u24(fh);
-    uint32_t end = read_flash_u24(fh + 3);
-    uint32_t rows_end = sites_of(fh);
-    /* found is the covering row so far, and it is the predecessor of the next row. It
-     * is 0 before the first row, and previous_delta is then unused. */
-    uint32_t found = 0;
+    uint32_t distance = lookup - start;
+    uint16_t lookup_delta = distance > UINT16_MAX ? UINT16_MAX : (uint16_t)distance;
+    uint32_t last = read_flash_u24(fh + 3) - start - 1;
+    uint16_t last_delta = last > UINT16_MAX ? UINT16_MAX : (uint16_t)last;
+    uint32_t remaining = read_flash_u24(fh + 12) - AVEH5_FUNCTION_HEADER_SIZE;
+    uint32_t row = fh + AVEH5_FUNCTION_HEADER_SIZE;
+    /* The previous row is at row - previous_size. Its size is at most thirteen
+     * bytes, so it needs no second full address or another flash read. */
+    uint8_t previous_size = 0;
     uint16_t previous_delta = 0;
-    for (uint16_t r = 0, count = read_flash_u16(fh + 6); r < count; r++) {
-        uint32_t row = found ? found + row_size(read_flash_u8(found + 2))
-                             : fh + AVEH5_FUNCTION_HEADER_SIZE;
-        if (rows_end < row || rows_end - row < AVEH5_ROW_HEADER_SIZE)
+    for (uint16_t count = read_flash_u16(fh + 6); count != 0; count--) {
+        if (remaining < AVEH5_ROW_HEADER_SIZE)
             return AVEH5_BAD;
         uint8_t flags = read_flash_u8(row + 2);
         uint16_t delta = read_flash_u16(row);
-        if (row_size(flags) > rows_end - row || (flags & AVEH5_FLAG_RESERVED))
+        uint8_t size = (uint8_t)row_size(flags);
+        if (size > remaining || (flags & AVEH5_FLAG_RESERVED))
             return AVEH5_BAD;
-        if (found ? delta <= previous_delta : delta != 0)
+        if (previous_size ? delta <= previous_delta : delta != 0)
             return AVEH5_BAD;
-        if (start + delta >= end)
+        if (delta > last_delta)
             return AVEH5_BAD;
-        if (start + delta > lookup)
-            break;
-        found = row;
+        if (delta > lookup_delta)
+            return row - previous_size;
+        row += size;
+        remaining -= size;
+        previous_size = size;
         previous_delta = delta;
     }
-    return found;
+    return previous_size ? row - previous_size : 0;
 }
 
 /* Returns the site record that covers lookup, 0 when no record does (a gap between

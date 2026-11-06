@@ -201,7 +201,7 @@ argument area remains an ordinary call.
 ## Exception runtime stack
 
 Exception propagation adds runtime frames below the application frames that are
-still live at the throw. The two unwind contexts already live in the 59-byte
+still live at the throw. The two unwind contexts already live in the 53-byte
 heap-allocated exception header, together with the thrown object. Installing a
 landing pad discards the runtime frames. A throw with no intervening cleanup
 uses the handler state from the search directly, without a second unwind pass.
@@ -223,12 +223,53 @@ the O0/O2 fixture builds, representative additional-stack measurements are:
 
 | Fixture | O0 bytes | O2 bytes |
 | --- | ---: | ---: |
-| `eh_catch_all` | 89 | 72 |
-| `eh_dynamic_handler` | 68 | 68 |
-| `eh_cleanup` | 91 | 95 |
-| `eh_inheritance` | 158 | 140 |
-| `eh_virtual_inheritance` | 146 | 138 |
-| `eh_pointer_conversion` | 154 | 142 |
+| `eh_catch_all` | 85 | 68 |
+| `eh_dynamic_handler` | 64 | 64 |
+| `eh_cleanup` | 89 | 93 |
+| `eh_inheritance` | 154 | 137 |
+| `eh_virtual_inheritance` | 142 | 135 |
+| `eh_pointer_conversion` | 150 | 138 |
+
+The context layout reductions were measured one at a time, cumulatively, over
+32 fixtures at O0 and O2 (64 runs at each stage). Sizes and measured maxima are:
+
+| Cumulative feature | Context bytes | Header bytes | Peak total bytes | Largest runtime increment bytes |
+|---|---:|---:|---:|---:|
+| Baseline | 15 | 59 | 197 | 158 |
+| + eight-bit SP | 14 | 57 | 193 | 154 |
+| + remove context.exception | 12 | 53 | 193 | 154 |
+
+The largest total is `eh_virtual_inheritance` at O0; the largest runtime increment
+is `eh_inheritance` at O0. These maxima belong to different executed paths.
+No measured fixture regressed. The context and header sizes are heap costs, so
+the six-byte header reduction is separate from the four-byte peak stack saving.
+These changes add no static RAM. SP uses depth `0x0A00 - SP`: a captured caller
+SP is at least `0x0903` because the three-byte return record is already present.
+Unwinding and argument release only increase SP, with bounds checks before
+encoding, so depth stays in 0..253; the full-stack endpoint is never stored.
+Both contexts omit the exception pointer because the landing context's address
+is already the header address in r4. Pointer-conversion mode retains its separate byte.
+
+The layout alternatives were also timed across six fixtures at O0 and O2 (250
+throws across twelve builds), using `tests/debug/eh_throw_cycles.py`. Relative
+to the same runtime before each change:
+
+| Change | Entry to landing | Through catch completion | Decision |
+|---|---:|---:|---|
+| Remove both `context.exception` fields | -0.0961% | -0.0916% | Keep: faster in all twelve builds |
+| Pack conversion mode into `state` | +0.0399% | +0.1976% | Revert: slower in all twelve builds, with no stack saving |
+
+Packing would save one more heap byte, but conversion mode remains a separate
+byte because the packed representation adds executed flag operations. Removing
+the exception fields saves four heap bytes and reduces copies, stores, and the
+installer's loads, even though the peak stack is unchanged.
+
+Integer arithmetic on converted stack addresses retains its 16-bit wrapping
+semantics. The backend materializes the frame address before applying a
+negative constant, so optimized range checks no longer fail as invalid frame
+displacements. Stack-access displacement and frame-size checks remain enforced.
+The row-lookup regression calls the SP encoder directly; C and C++ execution
+tests cover address subtraction and wraparound with both SP and r3 frame bases.
 
 The action-list validator runs before entering the matcher, so those frames
 do not overlap. RTTI address-point offsets stay inside pointer expressions,
@@ -253,7 +294,9 @@ return record, giving another 40-byte path.
 Search and cleanup preparation match clauses before looking up the frame's
 CFI row, and every successful path still validates the row before landing or
 unwinding. This keeps the row address out of the live state across the matcher.
-Their fixed frames are 22 and 24 bytes, respectively.
+Their fixed frames are 18 and 22 bytes, respectively. Decoding SP increases
+`unwind_frame` from 28 to 32 bytes, but this path stays below the measured
+maximum; the matcher path determines the four-byte peak reduction.
 
 The hierarchy matchers keep their eight path indices on the stack. The object,
 pointer and null-pointer matchers have fixed frames of 70, 66 and 64 bytes.

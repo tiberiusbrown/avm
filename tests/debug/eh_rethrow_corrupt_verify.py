@@ -27,11 +27,11 @@ import sys
 import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
+import eh_runtime_layout as layout  # noqa: E402
 import eh_metadata_verify as aveh  # noqa: E402
 import eh_rethrow_verify as rv  # noqa: E402
 
-HEADER_SIZE = 59
+HEADER_SIZE = layout.HEADER_SIZE
 STATE_ENTERING_CATCH_PENDING = 0x84
 STATE_CAUGHT = 2
 
@@ -138,7 +138,7 @@ def check_nested_pending(args, opt):
     last = begins[-1]
     aveh.check(last.group(7) is not None and len(last.group(7)) == 2 * HEADER_SIZE,
                'no header at the nested __cxa_begin_catch')
-    state = int(last.group(7)[2 * 23:2 * 23 + 2], 16)
+    state = int(last.group(7)[2 * layout.STATE_OFFSET:2 * layout.STATE_OFFSET + 2], 16)
     aveh.check(state == STATE_ENTERING_CATCH_PENDING,
                'the nested catch began in state 0x%02x, not 0x%02x'
                % (state, STATE_ENTERING_CATCH_PENDING))
@@ -160,8 +160,8 @@ def check_unhandled_keeps_exception(args, opt):
                'an unhandled rethrow released or freed the exception: %s' % after)
     rethrow = [m for m in SNAPSHOT.finditer(output) if m.group(1) == '__avm_eh_rethrow'][-1]
     raw = bytes.fromhex(rethrow.group(7))
-    aveh.check(raw[23] == STATE_CAUGHT, 'the unhandled rethrow began in state 0x%02x, not CAUGHT'
-               % raw[23])
+    aveh.check(layout.state(raw) == STATE_CAUGHT, 'the unhandled rethrow began in state 0x%02x, not CAUGHT'
+               % layout.state(raw))
 
 
 def main():

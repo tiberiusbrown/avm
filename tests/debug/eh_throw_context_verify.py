@@ -20,14 +20,17 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import eh_landing_pad_verify as landing  # noqa: E402
 import eh_metadata_verify as aveh  # noqa: E402
+import eh_runtime_layout as layout  # noqa: E402
 
 SNAPSHOT = re.compile(r'^snapshot (\S+) pc=0x[0-9a-f]+ sp=0x([0-9a-f]+) cycle=\d+ '
-                      r'regs=([0-9a-f,]+) record=0x([0-9a-f]+)', re.MULTILINE)
+                      r'regs=([0-9a-f,]+) record=0x([0-9a-f]+) bytes=([0-9a-f]+)',
+                      re.MULTILINE)
 
 
 def run_probe(args, points):
     cmd = [args.probe, '--interpreter', args.interpreter, '--boundary', args.boundary,
-           '--image', args.image, '--elf', args.elf, '--cycle-limit', '400000000']
+           '--image', args.image, '--elf', args.elf, '--cycle-limit', '400000000',
+           '--snapshot-bytes', str(layout.CONTEXT_SIZE)]
     for point in points:
         cmd += ['--snapshot', point]
     result = subprocess.run(cmd, capture_output=True, text=True)
@@ -37,7 +40,8 @@ def run_probe(args, points):
     for match in SNAPSHOT.finditer(result.stdout):
         regs = [int(v, 16) for v in match.group(3).split(',')]
         events.setdefault(match.group(1), []).append(
-            {'sp': int(match.group(2), 16), 'regs': regs, 'record': int(match.group(4), 16)})
+            {'sp': int(match.group(2), 16), 'regs': regs, 'record': int(match.group(4), 16),
+             'bytes': bytes.fromhex(match.group(5))})
     return events
 
 
@@ -76,7 +80,7 @@ def verify(args):
 
     throw_name = '0x%06x' % throw_pc
     caller_name = '0x%06x' % entry_pc
-    events = run_probe(args, [throw_name, caller_name, '__cxa_throw'])
+    events = run_probe(args, [throw_name, caller_name, '__cxa_throw', '__avm_eh_throw'])
     throw_call = events.get(throw_name, [{}])[0]
     entry = events.get('__cxa_throw', [None])[0]
     landing.check(throw_call and entry, 'the throw path was not observed')
@@ -86,6 +90,18 @@ def verify(args):
     landing.check(entry['sp'] + 3 == throw_call['sp'],
                   'captured caller SP 0x%04x, expected 0x%04x before the call' % (
                       entry['sp'] + 3, throw_call['sp']))
+    captured = events.get('__avm_eh_throw', [None])[0]
+    landing.check(captured is not None, 'the captured throw context was not observed')
+    context = captured['bytes']
+    landing.check(layout.context_sp(context) == entry['sp'] + 3 and
+                  context[layout.CONTEXT_SP_OFFSET] <= layout.SP_MAX_DEPTH,
+                  'the stored eight-bit depth does not decode to the caller SP')
+    landing.check(layout.context_pc(context) == return_pc,
+                  'the stored 24-bit PC does not match the throw continuation')
+    for register in range(4):
+        landing.check(layout.u16(context, layout.CONTEXT_R_OFFSET + 2 * register) ==
+                      entry['regs'][register],
+                      'the captured throw context changed r%d' % register)
 
     # An r3-based row takes its CFA from r3, which the probe saw at the call.
     base = throw_call['regs'][3] if row['r3'] else throw_call['sp']

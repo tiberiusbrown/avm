@@ -28,6 +28,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+import eh_runtime_layout as layout  # noqa: E402
+
 import eh_rtti_verify as rtti  # noqa: E402
 
 check = rtti.check
@@ -62,10 +64,10 @@ SHF_EXECINSTR = 0x4
 SHF_AVM_DATASPACE = 0x20000000
 ADDRESS_POINT = 6
 VTABLE_ENTRY = 3
-HEADER_SIZE = 59
-TYPE_OFFSET = 15
-DESTRUCTOR_OFFSET = 18
-SIZE_OFFSET = 21
+HEADER_SIZE = layout.HEADER_SIZE
+TYPE_OFFSET = layout.TYPE_OFFSET
+DESTRUCTOR_OFFSET = layout.DESTRUCTOR_OFFSET
+SIZE_OFFSET = layout.SIZE_OFFSET
 PLACEHOLDER_SIZE = 9
 WINDOW_START = 0x0500
 WINDOW_END = 0xfa00

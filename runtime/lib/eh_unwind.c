@@ -161,16 +161,20 @@ AVEH5_INLINE uint32_t read_ram_u24(uint16_t address) {
     return read_ram_u16(address) | ((uint32_t)read_ram_u8((uint16_t)(address + 2)) << 16);
 }
 
-_Static_assert(sizeof(struct avm_eh_context) == 15,
-               "eh_context.asm assumes a 15-byte context");
-_Static_assert(offsetof(struct avm_eh_context, sp) == 0, "context SP offset");
-_Static_assert(offsetof(struct avm_eh_context, pc_low) == 2,
+_Static_assert(AVM_EH_STACK_TOP == AVM_TRAP_STACK_TOP &&
+               AVM_EH_STACK_BASE == AVM_TRAP_STACK_BASE &&
+               AVM_EH_SP_MAX_DEPTH == AVM_TRAP_STACK_SIZE - AVEH5_RETURN_RECORD,
+               "stored stack depth must match the interpreter stack and CALL record");
+_Static_assert(sizeof(struct avm_eh_context) == AVM_EH_CONTEXT_SIZE,
+               "eh_context.asm context size");
+_Static_assert(offsetof(struct avm_eh_context, sp_depth) == AVM_EH_CONTEXT_SP_OFFSET,
+               "context stack depth offset");
+_Static_assert(offsetof(struct avm_eh_context, pc_low) == AVM_EH_CONTEXT_PC_OFFSET,
                "context PC offset");
-_Static_assert(offsetof(struct avm_eh_context, pc_high) == 4,
+_Static_assert(offsetof(struct avm_eh_context, pc_high) == AVM_EH_CONTEXT_PC_HIGH_OFFSET,
                "context PC high offset");
-_Static_assert(offsetof(struct avm_eh_context, r) == 5, "context r0 offset");
-_Static_assert(offsetof(struct avm_eh_context, exception) == 13,
-               "context exception offset");
+_Static_assert(offsetof(struct avm_eh_context, r) == AVM_EH_CONTEXT_R_OFFSET,
+               "context r0 offset");
 _Static_assert(sizeof(void (*)(void *)) == 3,
                "exception destructor must be a 24-bit program address");
 
@@ -1247,9 +1251,9 @@ uint8_t avm_eh_validate_block(uint32_t block) {
 AVEH5_NOINLINE uint8_t unwind_frame(struct avm_eh_context *context, uint32_t row) {
     uint8_t flags = read_flash_u8(row + 2);
     uint16_t frame_base = (flags & AVEH5_FLAG_R3_BASE) ? context->r[3]
-                                                        : context->sp;
+                                                        : avm_eh_context_sp(context);
     int32_t cfa = (uint16_t)(frame_base + read_flash_u16(row + 3));
-    if (cfa <= context->sp || cfa > AVM_TRAP_STACK_TOP ||
+    if (cfa <= avm_eh_context_sp(context) || cfa > AVM_TRAP_STACK_TOP ||
         cfa < AVM_TRAP_STACK_BASE + AVEH5_RETURN_RECORD)
         return 0;
     uint32_t return_pc = read_ram_u16((uint16_t)(cfa - AVEH5_RETURN_RECORD)) |
@@ -1265,7 +1269,8 @@ AVEH5_NOINLINE uint8_t unwind_frame(struct avm_eh_context *context, uint32_t row
             return 0;
         context->r[r] = read_ram_u16((uint16_t)address);
     }
-    context->sp = (uint16_t)cfa;
+    if (!avm_eh_set_context_sp(context, (uint16_t)cfa))
+        return 0;
     set_context_pc(context, return_pc);
     return 1;
 }
@@ -1283,11 +1288,12 @@ AVEH5_INLINE uint8_t land_at(struct avm_eh_context *landing,
     uint32_t outgoing = find_call(fh, context_pc(cursor));
     if (outgoing == AVEH5_BAD)
         return 0;
-    uint32_t sp = (uint32_t)cursor->sp + outgoing;
+    uint32_t sp = (uint32_t)avm_eh_context_sp(cursor) + outgoing;
     if (sp > AVM_TRAP_STACK_TOP)
         return 0;
     *landing = *cursor;
-    landing->sp = (uint16_t)sp;
+    if (!avm_eh_set_context_sp(landing, (uint16_t)sp))
+        return 0;
     set_context_pc(landing, pad);
     return 1;
 }
@@ -1306,7 +1312,7 @@ AVEH5_INLINE uint8_t land_at(struct avm_eh_context *landing,
 uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
     struct avm_eh_context *cursor = &header->resume_context;
     for (;;) {
-        if (cursor->sp < AVM_TRAP_STACK_BASE || cursor->sp >= AVM_TRAP_STACK_TOP)
+        if (!avm_eh_context_has_frame(cursor))
             return 0;
         /* The PC is a return address, so the call instruction is one byte
          * earlier. The throw frame's continuation follows the same rule. */
@@ -1367,7 +1373,7 @@ uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
 uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
     struct avm_eh_context *cursor = &header->resume_context;
     for (;;) {
-        if (cursor->sp < AVM_TRAP_STACK_BASE || cursor->sp >= AVM_TRAP_STACK_TOP)
+        if (!avm_eh_context_has_frame(cursor))
             return AVM_EH_STEP_INVALID;
         uint32_t lookup = context_pc(cursor) - 1;
 
@@ -1392,7 +1398,7 @@ uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
                 if (row == AVEH5_BAD || row == 0 ||
                     !land_at(&header->context, cursor, fh, read_flash_u24(site + 6)))
                     return AVM_EH_STEP_INVALID;
-                header->context.exception = (uint16_t)(uintptr_t)header;
+
                 return AVM_EH_STEP_CATCH;
             }
             if (match & AVEH5_MATCH_CLEANUP) {
@@ -1400,7 +1406,7 @@ uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
                 if (row == AVEH5_BAD || row == 0 ||
                     !land_at(&header->context, cursor, fh, read_flash_u24(site + 6)))
                     return AVM_EH_STEP_INVALID;
-                header->context.exception = (uint16_t)(uintptr_t)header;
+
                 if (!unwind_frame(cursor, row))
                     return AVM_EH_STEP_INVALID;
                 return AVM_EH_STEP_CLEANUP;

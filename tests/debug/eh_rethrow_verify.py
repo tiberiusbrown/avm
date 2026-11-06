@@ -2,7 +2,7 @@
 """Checks the rethrow lifecycle of an EH image against the emulator.
 
 The probe reports each runtime boundary of the rethrow path. The boundaries that take
-the header have it at r4, with its 59 bytes. __cxa_end_catch takes no argument, so its
+the header have it at r4, with its complete header. __cxa_end_catch takes no argument, so its
 header is read from caught_exceptions in a window of guest RAM, and the free and the
 destructor are matched by their arguments. The check groups the events by header and
 confirms that:
@@ -33,10 +33,12 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import eh_runtime_layout as layout
+
 
 import eh_metadata_verify as aveh  # noqa: E402
 
-HEADER_SIZE = 59
+HEADER_SIZE = layout.HEADER_SIZE
 RAM_WINDOW = 0x100
 ADDRESS_MASK = 0xffff
 
@@ -142,7 +144,7 @@ def rethrow_returns(objdump, elf):
 
 
 def header_bytes(event, header):
-    """The 55 header bytes that an event holds, from r4 or from the RAM window."""
+    """The header bytes that an event holds, from r4 or from the RAM window."""
     if event.bytes is not None and event.regs[4] == header:
         return event.bytes
     return event.ram_slice(header, HEADER_SIZE)
@@ -177,7 +179,7 @@ def main():
     destructors = set()
     for event in events:
         if event.name == '__avm_eh_throw' and event.bytes is not None:
-            destructor = le24(event.bytes, 18)
+            destructor = le24(event.bytes, layout.DESTRUCTOR_OFFSET)
             if destructor:
                 destructors.add(destructor)
     if destructors:
@@ -221,26 +223,26 @@ def main():
         elif name == '__avm_eh_throw':
             header = event.regs[4]
             raw = header_of_event(event)
-            check(raw[23] == STATE_ALLOCATED,
+            check(layout.state(raw) == STATE_ALLOCATED,
                   'throw from state 0x%02x, not ALLOCATED, at %s'
-                  % (raw[23], event.describe()))
+                  % (layout.state(raw), event.describe()))
             check(header not in live, 'exception 0x%04x was thrown while live' % header)
-            life = {'header': header, 'destructor': le24(raw, 18), 'entries': [('throw', event)]}
+            life = {'header': header, 'destructor': le24(raw, layout.DESTRUCTOR_OFFSET), 'entries': [('throw', event)]}
             lifetimes.append(life)
             live[header] = life
         elif name == '__cxa_begin_catch':
             life = live_at(event.regs[4], event)
             raw = header_of_event(event)
-            check(raw[23] == STATE_ENTERING_CATCH,
+            check(layout.state(raw) == STATE_ENTERING_CATCH,
                   'catch began in state 0x%02x, not ENTERING_CATCH, at %s'
-                  % (raw[23], event.describe()))
+                  % (layout.state(raw), event.describe()))
             life['entries'].append(('begin', event))
         elif name == '__avm_eh_rethrow':
             life = live_at(event.regs[4], event)
             raw = header_of_event(event)
-            check(raw[23] == STATE_CAUGHT,
+            check(layout.state(raw) == STATE_CAUGHT,
                   'rethrow from state 0x%02x, not CAUGHT, at %s'
-                  % (raw[23], event.describe()))
+                  % (layout.state(raw), event.describe()))
             check(pending_cxa_rethrow is not None,
                   '__avm_eh_rethrow without __cxa_rethrow at %s' % event.describe())
             rethrow_contexts.append((pending_cxa_rethrow, event))
@@ -250,26 +252,27 @@ def main():
             life = live_at(event.regs[4], event)
             raw = header_of_event(event)
             if life['entries'][-1][0] == 'rethrow':
-                check(raw[23] == (RETHROW_PENDING | STATE_THROWN),
+                check(layout.state(raw) == (RETHROW_PENDING | STATE_THROWN),
                       'rethrow search began in state 0x%02x at %s'
-                      % (raw[23], event.describe()))
+                      % (layout.state(raw), event.describe()))
                 context = rethrow_contexts[-1][1].bytes
-                check(le16(raw, 24) == le16(context, 0) and le24(raw, 26) == le24(context, 2),
+                check(layout.context_sp(raw, layout.RESUME_OFFSET) == layout.context_sp(context) and
+                      layout.context_pc(raw, layout.RESUME_OFFSET) == layout.context_pc(context),
                       'phase one did not start at the rethrow context at %s'
                       % event.describe())
             else:
-                check(raw[23] == STATE_THROWN,
-                      'throw search began in state 0x%02x at %s' % (raw[23], event.describe()))
+                check(layout.state(raw) == STATE_THROWN,
+                      'throw search began in state 0x%02x at %s' % (layout.state(raw), event.describe()))
         elif name == 'avm_eh_prepare_next':
             live_at(event.regs[4], event)
             raw = header_of_event(event)
-            check(raw[23] & 0x7f == STATE_THROWN,
-                  'phase two began in state 0x%02x at %s' % (raw[23], event.describe()))
+            check(layout.state(raw) & layout.STATE_MASK == STATE_THROWN,
+                  'phase two began in state 0x%02x at %s' % (layout.state(raw), event.describe()))
         elif name == '_Unwind_Resume':
             live_at(event.regs[4], event)
             raw = header_of_event(event)
-            check(raw[23] & 0x7f == STATE_IN_CLEANUP,
-                  '_Unwind_Resume from state 0x%02x at %s' % (raw[23], event.describe()))
+            check(layout.state(raw) & layout.STATE_MASK == STATE_IN_CLEANUP,
+                  '_Unwind_Resume from state 0x%02x at %s' % (layout.state(raw), event.describe()))
         elif name == '__cxa_end_catch':
             header = le16(event.ram_slice(active_address, 2), 0)
             check(header != 0, 'end of catch with no caught exception at %s' % event.describe())
@@ -277,13 +280,13 @@ def main():
             raw = event.ram_slice(header, HEADER_SIZE)
             check(raw is not None, 'the RAM window does not hold the header at %s'
                   % event.describe())
-            if raw[23] & RETHROW_PENDING:
-                check(raw[23] & 0x7f in (STATE_IN_CLEANUP, STATE_ENTERING_CATCH),
-                      'release from base state 0x%02x at %s' % (raw[23], event.describe()))
+            if layout.state(raw) & RETHROW_PENDING:
+                check(layout.state(raw) & layout.STATE_MASK in (STATE_IN_CLEANUP, STATE_ENTERING_CATCH),
+                      'release from base state 0x%02x at %s' % (layout.state(raw), event.describe()))
                 life['entries'].append(('release', event))
             else:
-                check(raw[23] == STATE_CAUGHT,
-                      'final end from state 0x%02x at %s' % (raw[23], event.describe()))
+                check(layout.state(raw) == STATE_CAUGHT,
+                      'final end from state 0x%02x at %s' % (layout.state(raw), event.describe()))
                 life['entries'].append(('end', event))
         elif name == 'free':
             header = event.regs[4]
@@ -299,19 +302,16 @@ def main():
         check(cxa_event.record in returns,
               'the rethrow record 0x%06x is not the return of a __cxa_rethrow call at %s'
               % (cxa_event.record, cxa_event.describe()))
-        check(le24(raw, 2) == cxa_event.record,
+        check(layout.context_pc(raw) == cxa_event.record,
               'the saved PC 0x%06x is not the rethrow continuation 0x%06x'
-              % (le24(raw, 2), cxa_event.record))
-        check(le16(raw, 0) == (cxa_event.sp + 3) & ADDRESS_MASK,
+              % (layout.context_pc(raw), cxa_event.record))
+        check(layout.context_sp(raw) == (cxa_event.sp + 3) & ADDRESS_MASK,
               'the saved SP 0x%04x is not the caller SP 0x%04x'
-              % (le16(raw, 0), (cxa_event.sp + 3) & ADDRESS_MASK))
+              % (layout.context_sp(raw), (cxa_event.sp + 3) & ADDRESS_MASK))
         for register in range(4):
-            check(le16(raw, 5 + 2 * register) == cxa_event.regs[register],
+            check(le16(raw, layout.CONTEXT_R_OFFSET + 2 * register) == cxa_event.regs[register],
                   'saved r%d 0x%04x differs from the call register 0x%04x'
-                  % (register, le16(raw, 5 + 2 * register), cxa_event.regs[register]))
-        header = rethrow_event.regs[4]
-        check(le16(raw, 13) == header, 'the saved exception is not the header at %s'
-              % rethrow_event.describe())
+                  % (register, le16(raw, layout.CONTEXT_R_OFFSET + 2 * register), cxa_event.regs[register]))
 
     # Each exception's lifecycle must match the grammar, and its identity must not change.
     total_rethrows = 0
@@ -336,7 +336,7 @@ def main():
                 if raw is None:
                     raw = event.ram_slice(life['header'], HEADER_SIZE)
                 if raw is not None:
-                    identities.add((le24(raw, 15), le24(raw, 18), le16(raw, 21)))
+                    identities.add((le24(raw, layout.TYPE_OFFSET), le24(raw, layout.DESTRUCTOR_OFFSET), le16(raw, layout.SIZE_OFFSET)))
         check(len(identities) == 1, 'exception %d changed its type, destructor, or size: %s'
               % (number, sorted(identities)))
         total_rethrows += rethrows

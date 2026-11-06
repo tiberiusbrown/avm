@@ -78,7 +78,8 @@ static int check(const uint8_t AVM_PROGMEM *block, uint16_t size,
     store24(header.eh_block_end, (uint32_t)block + size);
     header.eh_function_count = 2;
     header.state = AVM_EH_STATE_THROWN;
-    header.resume_context.sp = (uint16_t)(uintptr_t)returns;
+    if (!avm_eh_set_context_sp(&header.resume_context, (uint16_t)(uintptr_t)returns))
+        return 1;
     uint32_t pc = START + lookup + 1;
     header.resume_context.pc_low = (uint16_t)pc;
     header.resume_context.pc_high = (uint8_t)(pc >> 16);
@@ -88,7 +89,7 @@ static int check(const uint8_t AVM_PROGMEM *block, uint16_t size,
     if (!found)
         return 0;
     return header.handler_selector != 1 ||
-           header.resume_context.sp != (uint16_t)(uintptr_t)(returns + 3) ||
+           avm_eh_context_sp(&header.resume_context) != (uint16_t)(uintptr_t)(returns + 3) ||
            header.resume_context.pc_low != (uint16_t)(CALLER + 4) ||
            header.resume_context.pc_high != (uint8_t)(CALLER >> 16);
 }

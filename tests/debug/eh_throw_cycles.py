@@ -16,10 +16,14 @@ inclusive cycles of each helper.
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
 from collections import Counter
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import eh_runtime_layout as layout  # noqa: E402
 
 ENTRY_SYMBOLS = [
     '__cxa_throw', '__avm_eh_throw', 'avm_eh_find_handler', 'avm_eh_prepare_next',
@@ -96,7 +100,7 @@ def analyze(events):
                 current['eh_throw'] = cycle
             if name == '__avm_eh_install_context':
                 b = e['bytes']
-                landing = b[2] | (b[3] << 8) | (b[4] << 16)
+                landing = layout.context_pc(b)
                 current['installs'].append({'cycle': cycle, 'selector': e['regs'][5],
                                             'landing': landing})
                 pending_landing = landing
@@ -138,7 +142,7 @@ def main():
 
     present = present_symbols(args.nm, args.elf)
     names = [s for s in ENTRY_SYMBOLS if s in present]
-    pass1, status1 = run_probe(args, names, 15)
+    pass1, status1 = run_probe(args, names, layout.CONTEXT_SIZE)
     # Only the call sites' return PCs and the landing PCs are added in pass 2.
     raw = set()
     for e in pass1:
@@ -146,8 +150,8 @@ def main():
             raw.add(e['record'])
         if e['name'] == '__avm_eh_install_context':
             b = e['bytes']
-            raw.add(b[2] | (b[3] << 8) | (b[4] << 16))
-    pass2, status2 = run_probe(args, names + ['0x%06x' % a for a in sorted(raw)], 15)
+            raw.add(layout.context_pc(b))
+    pass2, status2 = run_probe(args, names + ['0x%06x' % a for a in sorted(raw)], layout.CONTEXT_SIZE)
 
     # Pass 2 keeps every stamp of pass 1, which the check below confirms.
     stamps1 = [(e['name'], e['cycle']) for e in pass1]

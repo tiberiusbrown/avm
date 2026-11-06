@@ -21,6 +21,7 @@
 
 #include <absim.hpp>
 #include <absim_regs.hpp>
+#include "../../runtime/lib/eh_unwind_layout.h"
 
 #include <algorithm>
 #include <array>
@@ -75,7 +76,7 @@ struct options_t {
     // exception runtime passes the header in r4, so this reads the captured fields.
     unsigned snapshot_bytes = 0;
     // Bytes of guest RAM to print at the address that a thrown pointer holds, for each snapshot.
-    // The header's object follows the 59-byte exception header, so the probe reads the pointer
+    // The header's object follows AVM_EH_HEADER_SIZE bytes, so the probe reads the pointer
     // value there, and prints this many bytes at it. A pointer value of zero prints no bytes.
     unsigned target_bytes = 0;
     // Stack-argument bytes to print for each snapshot. They follow the three-byte return record,
@@ -243,7 +244,7 @@ struct stats_t {
 // the arrival's first native instruction runs, so it shows the state that instruction starts
 // from. The caller appends the outcome, because an interrupt may preempt the instruction. The
 // exception runtime's active_exception pointer is read only when the ELF names it. Its header
-// byte at +23 is read only when the pointer is nonzero and the whole header lies in 16-bit RAM.
+// state byte is read only when the pointer is nonzero and the state lies in 16-bit RAM.
 void print_dispatch(std::ostream& out, absim::atmega32u4_t const& cpu,
                     std::vector<symbol_t> const& symbols, uint32_t native, uint32_t table,
                     std::optional<uint32_t> active_address)
@@ -262,12 +263,12 @@ void print_dispatch(std::ostream& out, absim::atmega32u4_t const& cpu,
         out << " r" << r << "=0x" << std::setw(4) << guest_register(cpu, r);
     out << " active=";
     if(!active_address) {
-        out << "unknown byte23=unknown";
+        out << "unknown state=unknown";
     } else {
         uint32_t const pointer = guest_word(cpu, *active_address);
-        out << "0x" << std::setw(4) << pointer << " byte23=";
-        if(pointer != 0 && pointer + 23 <= 0xffff)
-            out << "0x" << std::setw(2) << unsigned(cpu.data[pointer + 23]);
+        out << "0x" << std::setw(4) << pointer << " state=";
+        if(pointer != 0 && pointer + AVM_EH_STATE_OFFSET <= 0xffff)
+            out << "0x" << std::setw(2) << unsigned(cpu.data[pointer + AVM_EH_STATE_OFFSET]);
         else
             out << "unknown";
     }
@@ -356,8 +357,8 @@ std::string snapshot_lines(absim::atmega32u4_t const& cpu, sample_t const& sampl
         // The thrown object's pointer value names the target, which is read at the
         // same snapshot. A null value, or one outside 16-bit RAM, prints no bytes.
         if(options.target_bytes) {
-            // The thrown object lies just above the 59-byte exception header.
-            uint32_t const object = (sample.regs[4] + 59) & 0xffff;
+            // The thrown object lies just above the exception header.
+            uint32_t const object = (sample.regs[4] + AVM_EH_HEADER_SIZE) & 0xffff;
             uint32_t const target = uint32_t(cpu.data[object]) |
                                     uint32_t(cpu.data[(object + 1) & 0xffff]) << 8;
             out << " target=" << std::hex << std::setw(4) << std::setfill('0')

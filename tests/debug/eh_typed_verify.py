@@ -34,6 +34,8 @@ import subprocess
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import eh_runtime_layout as layout
+
 
 import eh_metadata_verify as aveh  # noqa: E402
 
@@ -46,7 +48,7 @@ END = '__cxa_end_catch'
 RESUME = '_Unwind_Resume'
 FREE = 'free'
 
-HEADER_SIZE = 59
+HEADER_SIZE = layout.HEADER_SIZE
 STATE_IN_CLEANUP = 3
 STATE_ENTERING_CATCH = 4
 
@@ -164,9 +166,9 @@ def verify(args):
                   'a landing context was installed while another was still running')
             check(len(data) == HEADER_SIZE,
                   'the installer header is %d bytes, not %d' % (len(data), HEADER_SIZE))
-            state = data[23]
-            sp = data[0] | data[1] << 8
-            pad = data[2] | data[3] << 8 | data[4] << 16
+            state = layout.state(data)
+            sp = layout.context_sp(data)
+            pad = layout.context_pc(data)
             check(last_sp is None or sp > last_sp,
                   'landing SP 0x%04x does not move toward the caller of 0x%04x' % (sp, last_sp or 0))
             last_sp = sp
@@ -174,11 +176,11 @@ def verify(args):
             fn, (has_cleanup, entries) = pads[pad]
             selector = regs[5]
             if state == STATE_ENTERING_CATCH:
-                recorded = data[39] | data[40] << 8
+                recorded = layout.u16(data, layout.SELECTOR_OFFSET)
                 check(selector != 0 and selector == recorded,
                       'handler installed with selector %d, but phase one recorded %d' % (
                           selector, recorded))
-                thrown = data[15] | data[16] << 8 | data[17] << 16
+                thrown = layout.u24(data, layout.TYPE_OFFSET)
                 first = next((i for i, (sel, _) in enumerate(entries) if sel == selector), None)
                 check(first is not None,
                       'the pad at 0x%06x has no catch entry for selector %d' % (pad, selector))

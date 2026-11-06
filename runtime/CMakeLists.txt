@@ -215,7 +215,8 @@ foreach(RUNTIME_SOURCE ${RUNTIME_SOURCES})
     set(runtime_source_options)
     set(runtime_extra_dependencies)
     if(RUNTIME_SOURCE MATCHES "^eh_")
-        list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h")
+        list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h"
+            "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_layout.h")
     endif()
     if(RUNTIME_SOURCE MATCHES "^(stdio_|wchar_(stream|format|scan)$)")
         list(APPEND runtime_extra_dependencies "${AVM_RUNTIME_SOURCE_DIR}/lib/stdio_internal.h")
@@ -543,6 +544,7 @@ foreach(eh_asm eh_context eh_cxa_throw eh_cxa_rethrow eh_cxa_rethrow_primary eh_
         LANGUAGE ASM
         INCLUDE_DIRS "${AVM_RUNTIME_INCLUDE_DIR}"
         DEPENDS ${AVM_RUNTIME_HEADERS} "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_internal.h"
+            "${AVM_RUNTIME_SOURCE_DIR}/lib/eh_unwind_layout.h"
     )
     list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${RUNTIME_OBJECT}")
 endforeach()

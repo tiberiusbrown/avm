@@ -116,6 +116,15 @@ foreach(AVM_TEST_LANGUAGE C CXX)
         set(test_objects "${AVM_TEST_OBJECT}")
         set(test_support_sources)
         set(test_source_dependencies)
+        if(AVM_TEST_NAME STREQUAL "stack_address_arithmetic")
+            list(APPEND test_source_dependencies
+                "${AVM_C_TEST_DIR}/stack_address_arithmetic.c")
+        endif()
+        if(AVM_TEST_NAME MATCHES "^eh_(context_sp|row_lookup)$")
+            list(APPEND test_source_dependencies
+                "${PROJECT_SOURCE_DIR}/runtime/lib/eh_unwind_internal.h"
+                "${PROJECT_SOURCE_DIR}/runtime/lib/eh_unwind_layout.h")
+        endif()
         if(AVM_TEST_NAME MATCHES "^(wchar_(string|multibyte|numeric|time|stream|format|scan))_indirect$")
             list(APPEND test_source_dependencies
                 "${AVM_C_TEST_DIR}/${CMAKE_MATCH_1}.c")

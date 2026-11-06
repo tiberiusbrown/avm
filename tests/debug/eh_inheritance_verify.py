@@ -34,6 +34,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+import eh_runtime_layout as layout  # noqa: E402
+
 import eh_metadata_verify as aveh  # noqa: E402
 import eh_rtti_verify as rtti  # noqa: E402
 
@@ -47,7 +49,7 @@ END = '__cxa_end_catch'
 FREE = 'free'
 RETURNS = (BEGIN, GET_PTR)
 
-HEADER_SIZE = 59
+HEADER_SIZE = layout.HEADER_SIZE
 # Each snapshot holds the header and the start of the thrown object. The fixtures' objects
 # are smaller than this, and a larger object fails the check that reads it.
 OBJECT_LIMIT = 64
@@ -219,23 +221,23 @@ def verify(args):
         if name == INSTALL:
             check(len(data) >= HEADER_SIZE,
                   'the installer header is %d bytes, not %d' % (len(data), HEADER_SIZE))
-            state = data[23]
-            sp = data[0] | data[1] << 8
+            state = layout.state(data)
+            sp = layout.context_sp(data)
             check(STACK_BASE <= sp < STACK_TOP, 'landing SP 0x%04x is outside the stack' % sp)
-            pad = data[2] | data[3] << 8 | data[4] << 16
+            pad = layout.context_pc(data)
             check(pad in pads, 'landing pad 0x%06x is not a landing pad of the packed block'
                   % pad)
             fn, (has_cleanup, entries) = pads[pad]
             if state != STATE_ENTERING_CATCH:
                 continue
             selector = regs[5]
-            recorded = data[39] | data[40] << 8
+            recorded = layout.u16(data, layout.SELECTOR_OFFSET)
             check(selector != 0 and selector == recorded,
                   'handler installed with selector %d, but phase one recorded %d'
                   % (selector, recorded))
-            thrown = rtti.u24(data[15:18])
-            adjustment = data[41] | data[42] << 8
-            size = data[21] | data[22] << 8
+            thrown = rtti.u24(data[layout.TYPE_OFFSET:layout.TYPE_OFFSET + 3])
+            adjustment = layout.u16(data, layout.ADJUSTMENT_OFFSET)
+            size = layout.u16(data, layout.SIZE_OFFSET)
             check(size <= OBJECT_LIMIT, 'the thrown object has %d bytes, more than the probe reads'
                   % size)
             obj = data[HEADER_SIZE:HEADER_SIZE + size]
@@ -273,7 +275,7 @@ def verify(args):
         elif name == GET_PTR or name == BEGIN:
             check(len(data) >= HEADER_SIZE, 'the header snapshot is %d bytes' % len(data))
             header = regs[4]
-            adjustment = data[41] | data[42] << 8
+            adjustment = layout.u16(data, layout.ADJUSTMENT_OFFSET)
             expected = header + HEADER_SIZE + adjustment
             check(expected <= 0xffff, 'adjusted object address overflows 16-bit RAM')
             if name == BEGIN:

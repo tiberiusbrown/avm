@@ -26,21 +26,22 @@ __cxa_rethrow:
     callf __avm_eh_rethrow_header
 
     ; Store the callee-saved registers of the rethrow site.
-    st16 [r4+5], r0
-    st16 [r4+7], r1
-    st16 [r4+9], r2
-    st16 [r4+11], r3
+    st16 [r4+4], r0
+    st16 [r4+6], r1
+    st16 [r4+8], r2
+    st16 [r4+10], r3
 
     ; The continuation is the 3-byte return record at SP+0, the return PC of the rethrow call.
     ldsp16 r0, [sp+0]
-    st16 [r4+2], r0
+    st16 [r4+1], r0
     ldsp8u r0, [sp+2]
-    st8 [r4+4], r0
+    st8 [r4+3], r0
 
-    ; The rethrow site's SP is the entry SP plus three.
+    ; Depth = TOP - (entry SP + 3); the full-stack endpoint is never captured.
     getsp r0
-    addi.s8 r0, 3
-    st16 [r4+0], r0
+    ldi16 r5, 0x09fd
+    sub r5, r0
+    st8 [r4+0], r5
 
     jmp __avm_eh_rethrow
 .size __cxa_rethrow, .-__cxa_rethrow

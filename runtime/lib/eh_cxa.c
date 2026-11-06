@@ -93,36 +93,36 @@ const uint8_t AVM_PROGMEM __avm_eh_exact_pointer_ref_type_info[9] = {0};
 /* eh_cxa_throw.asm stores the header fields at these offsets, and it computes the
  * object address from the header size. Keep it in sync with this layout. */
 _Static_assert(sizeof(struct avm_eh_exception) == AVM_EH_HEADER_SIZE,
-               "__cxa_throw assumes a 59-byte exception header");
+               "exception header size matches assembly shims");
 _Static_assert(offsetof(struct avm_eh_exception, context) == 0,
                "exception context offset");
-_Static_assert(offsetof(struct avm_eh_exception, type_address) == 15,
+_Static_assert(offsetof(struct avm_eh_exception, type_address) == AVM_EH_TYPE_OFFSET,
                "exception type address offset");
-_Static_assert(offsetof(struct avm_eh_exception, destructor) == 18,
+_Static_assert(offsetof(struct avm_eh_exception, destructor) == AVM_EH_DESTRUCTOR_OFFSET,
                "exception destructor offset");
-_Static_assert(offsetof(struct avm_eh_exception, size) == 21,
+_Static_assert(offsetof(struct avm_eh_exception, size) == AVM_EH_SIZE_OFFSET,
                "exception size offset");
-_Static_assert(offsetof(struct avm_eh_exception, state) == 23,
+_Static_assert(offsetof(struct avm_eh_exception, state) == AVM_EH_STATE_OFFSET,
                "exception state offset");
-_Static_assert(offsetof(struct avm_eh_exception, resume_context) == 24,
+_Static_assert(offsetof(struct avm_eh_exception, resume_context) == AVM_EH_RESUME_OFFSET,
                "exception resume context offset");
-_Static_assert(offsetof(struct avm_eh_exception, handler_selector) == 39,
+_Static_assert(offsetof(struct avm_eh_exception, handler_selector) == AVM_EH_SELECTOR_OFFSET,
                "exception handler selector offset");
-_Static_assert(offsetof(struct avm_eh_exception, handler_adjustment) == 41,
+_Static_assert(offsetof(struct avm_eh_exception, handler_adjustment) == AVM_EH_ADJUSTMENT_OFFSET,
                "exception handler adjustment offset");
-_Static_assert(offsetof(struct avm_eh_exception, eh_block_address) == 43,
+_Static_assert(offsetof(struct avm_eh_exception, eh_block_address) == AVM_EH_BLOCK_OFFSET,
                "exception block address offset");
-_Static_assert(offsetof(struct avm_eh_exception, eh_block_end) == 46,
+_Static_assert(offsetof(struct avm_eh_exception, eh_block_end) == AVM_EH_BLOCK_END_OFFSET,
                "exception block end offset");
-_Static_assert(offsetof(struct avm_eh_exception, eh_function_count) == 49,
+_Static_assert(offsetof(struct avm_eh_exception, eh_function_count) == AVM_EH_FUNCTION_COUNT_OFFSET,
                "exception function count offset");
-_Static_assert(offsetof(struct avm_eh_exception, converted_pointer) == 51,
+_Static_assert(offsetof(struct avm_eh_exception, converted_pointer) == AVM_EH_CONVERTED_OFFSET,
                "exception converted pointer offset");
-_Static_assert(offsetof(struct avm_eh_exception, handler_pointer_converted) == 54,
+_Static_assert(offsetof(struct avm_eh_exception, handler_pointer_converted) == AVM_EH_CONVERSION_OFFSET,
                "exception conversion mode offset");
-_Static_assert(offsetof(struct avm_eh_exception, next) == 55,
+_Static_assert(offsetof(struct avm_eh_exception, next) == AVM_EH_NEXT_OFFSET,
                "exception caught-stack link offset");
-_Static_assert(offsetof(struct avm_eh_exception, refcount) == 57,
+_Static_assert(offsetof(struct avm_eh_exception, refcount) == AVM_EH_REFCOUNT_OFFSET,
                "exception reference count offset");
 
 void *__cxa_allocate_exception(size_t size) {
@@ -208,7 +208,6 @@ AVM_EH_PROPAGATE void __avm_eh_throw(struct avm_eh_exception *header) {
     if (active_exception)
         abort();
 
-    header->context.exception = (uint16_t)(uintptr_t)header;
     header->state = AVM_EH_STATE_THROWN;
     header->handler_pointer_converted = AVM_EH_CONVERT_NONE;
     /* The throw holds one reference, which the handler's __cxa_end_catch releases. */
@@ -223,7 +222,7 @@ AVM_EH_PROPAGATE void __avm_eh_throw(struct avm_eh_exception *header) {
 
     if (header->state == AVM_EH_STATE_THROWN) {
         header->context = header->resume_context;
-        header->context.exception = (uint16_t)(uintptr_t)header;
+
         header->state = AVM_EH_STATE_ENTERING_CATCH;
         __avm_eh_install_context(&header->context, header->handler_selector);
     }
@@ -256,7 +255,6 @@ AVM_EH_PROPAGATE void __avm_eh_rethrow(struct avm_eh_exception *header) {
         active_exception)
         abort();
 
-    header->context.exception = (uint16_t)(uintptr_t)header;
     header->handler_selector = 0;
     header->handler_adjustment = 0;
     header->handler_pointer_converted = AVM_EH_CONVERT_NONE;

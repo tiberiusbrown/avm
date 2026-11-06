@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "eh_unwind_layout.h"
 
 /* The shims have captured r0-r3 in the header before entering propagation.
  * These internal entries never return, so they need no second copy of r0-r2
@@ -17,17 +18,41 @@
 #define AVM_EH_PROPAGATE __attribute__((noreturn))
 #endif
 
-/* Register state in one frame: the stack pointer, a 24-bit program address,
- * the callee-saved r0-r3 values, and the exception header passed in r4. The
+/* Register state in one frame: the stack depth, a 24-bit program address,
+ * and the callee-saved r0-r3 values. The
  * program address is split so that the assembly can load it with 16-bit and
  * 8-bit accesses. */
 struct avm_eh_context {
-    uint16_t sp;        /* +0  */
-    uint16_t pc_low;    /* +2  bits 15:0 of the program address */
-    uint8_t pc_high;    /* +4  bits 23:16 of the program address */
-    uint16_t r[4];      /* +5  r0, +7 r1, +9 r2, +11 r3 */
-    uint16_t exception; /* +13 exception header pointer for the landing pad */
+    uint8_t sp_depth;   /* +0  AVM_EH_STACK_TOP - SP */
+    uint16_t pc_low;    /* +1  bits 15:0 of the program address */
+    uint8_t pc_high;    /* +3  bits 23:16 of the program address */
+    uint16_t r[4];      /* +4  r0, +6 r1, +8 r2, +10 r3 */
 };
+
+/* Each capture has a valid three-byte ABI return record (from CALL or an
+ * inherited tail-call record). The interpreter-checked entry SP is at least
+ * STACK_BASE, and the captured caller SP is entry SP + 3, at least BASE + 3.
+ * Unwinding strictly increases SP, and landing only releases outgoing bytes.
+ * Thus every initialized context has BASE + 3 <= SP <= TOP: depth 0..253.
+ * The full-stack endpoint BASE (depth 256) is never stored. Depth zero retains
+ * the empty-stack endpoint TOP, but does not describe a frame to search. */
+static inline __attribute__((always_inline)) uint16_t
+avm_eh_context_sp(const struct avm_eh_context *context) {
+    return AVM_EH_STACK_TOP - context->sp_depth;
+}
+
+static inline __attribute__((always_inline)) uint8_t
+avm_eh_set_context_sp(struct avm_eh_context *context, uint16_t sp) {
+    if (sp < AVM_EH_STACK_TOP - AVM_EH_SP_MAX_DEPTH || sp > AVM_EH_STACK_TOP)
+        return 0;
+    context->sp_depth = (uint8_t)(AVM_EH_STACK_TOP - sp);
+    return 1;
+}
+
+static inline __attribute__((always_inline)) uint8_t
+avm_eh_context_has_frame(const struct avm_eh_context *context) {
+    return context->sp_depth != 0 && context->sp_depth <= AVM_EH_SP_MAX_DEPTH;
+}
 
 /* Header that precedes each thrown object. The context is the state installed
  * when a landing pad is entered. The resume context is the frame cursor from
@@ -49,21 +74,21 @@ struct avm_eh_context {
  * conversion mode says how the converted value is formed. The buffer is three bytes, so
  * it holds a 24-bit program pointer, and a 16-bit data pointer uses its first two. */
 struct avm_eh_exception {
-    struct avm_eh_context context;        /* +0  landing state; exception = this header */
-    uint8_t type_address[3];              /* +15 type-descriptor program address (r6:r7) */
-    void (*destructor)(void *);           /* +18 program address (stack argument) */
-    uint16_t size;                        /* +21 object size */
-    uint8_t state;                        /* +23 AVM_EH_STATE_* | AVM_EH_RETHROW_PENDING */
-    struct avm_eh_context resume_context; /* +24 frame cursor for the next step */
-    uint16_t handler_selector;            /* +39 selector of the matched catch */
-    uint16_t handler_adjustment;          /* +41 byte offset of the matched base subobject */
-    uint8_t eh_block_address[3];          /* +43 program address of the AVEH5 block */
-    uint8_t eh_block_end[3];              /* +46 program address of the block end */
-    uint16_t eh_function_count;           /* +49 number of function index entries */
-    uint8_t converted_pointer[3];         /* +51 converted value of the pointer handler */
-    uint8_t handler_pointer_converted;    /* +54 AVM_EH_CONVERT_* of the matched catch */
-    struct avm_eh_exception *next;        /* +55 next exception on the caught stack */
-    uint16_t refcount;                    /* +57 in-flight or handler reference, plus exception_ptr copies */
+    struct avm_eh_context context;        /* +0  landing state; prefix of this header */
+    uint8_t type_address[3];              /* +12 type-descriptor program address (r6:r7) */
+    void (*destructor)(void *);           /* +15 program address (stack argument) */
+    uint16_t size;                        /* +18 object size */
+    uint8_t state;                        /* +20 AVM_EH_STATE_* | AVM_EH_RETHROW_PENDING */
+    struct avm_eh_context resume_context; /* +21 frame cursor for the next step */
+    uint16_t handler_selector;            /* +33 selector of the matched catch */
+    uint16_t handler_adjustment;          /* +35 byte offset of the matched base subobject */
+    uint8_t eh_block_address[3];          /* +37 program address of the AVEH5 block */
+    uint8_t eh_block_end[3];              /* +40 program address of the block end */
+    uint16_t eh_function_count;           /* +43 number of function index entries */
+    uint8_t converted_pointer[3];         /* +45 converted value of the pointer handler */
+    uint8_t handler_pointer_converted;    /* +48 AVM_EH_CONVERT_* of the matched catch */
+    struct avm_eh_exception *next;        /* +49 next exception on the caught stack */
+    uint16_t refcount;                    /* +51 in-flight or handler reference, plus exception_ptr copies */
 };
 
 /* The header is followed by the thrown object. The reference count holds one reference
@@ -71,7 +96,6 @@ struct avm_eh_exception {
  * the object. The last release destroys the object and frees the header. The caught
  * stack links each CAUGHT exception to the one caught before it, so nested catch bodies
  * unwind in order. */
-#define AVM_EH_HEADER_SIZE 59
 
 /* How the selected handler receives a pointer. A clause that matches the thrown type
  * exactly, or a catch-all, leaves the handler with the thrown object, so its mode is NONE.
@@ -103,8 +127,6 @@ struct avm_eh_exception {
  * propagating again, and the cleanup of the abandoned catch has not yet released its
  * handler ownership. It marks the current propagation of the one exception, and it
  * is not a second exception. */
-#define AVM_EH_STATE_MASK        0x7fu
-#define AVM_EH_RETHROW_PENDING   0x80u
 
 /* Results of avm_eh_prepare_next. A cleanup or catch step fills the header's
  * context. */
@@ -113,7 +135,8 @@ struct avm_eh_exception {
 #define AVM_EH_STEP_CATCH   2
 
 /* Non-returning installer. Loads the landing pad, stack pointer, and r0-r3 from
- * the context. It passes the exception header in r4 and the selector in r5: 0
+ * the context, which must be the header's first member. The input address is
+ * already the exception header in r4; the selector in r5 is 0
  * for a cleanup-only landing pad, and the handler's LLVM type ID for a catch. */
 __attribute__((noreturn)) void
 __avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector);

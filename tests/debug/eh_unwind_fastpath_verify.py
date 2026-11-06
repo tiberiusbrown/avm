@@ -27,6 +27,8 @@ import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
+
+import eh_runtime_layout as layout  # noqa: E402
 import eh_metadata_verify as aveh  # noqa: E402
 
 SNAPSHOTS = [
@@ -53,7 +55,7 @@ def run_probe(args, names):
                '--image', args.image, '--elf', args.elf, '--cycle-limit', '400000000']
     for name in names:
         command += ['--snapshot', name]
-    command += ['--snapshot-bytes', '15']
+    command += ['--snapshot-bytes', str(layout.CONTEXT_SIZE)]
     result = subprocess_run(command)
     status = re.search(r'^status: (.*)$', result, re.MULTILINE)
     check(status is not None, 'the probe produced no status')
@@ -62,7 +64,7 @@ def run_probe(args, names):
         event = {'name': m.group(1), 'regs': [int(x, 16) for x in m.group(5).split(',')]}
         if m.group(7):
             b = bytes.fromhex(m.group(7))
-            event['landing'] = b[2] | (b[3] << 8) | (b[4] << 16)
+            event['landing'] = layout.context_pc(b)
         events.append(event)
     return events, status.group(1)
 

@@ -10,7 +10,7 @@
 ; caller's SP is SP+3 on entry, and the return record at SP+0 is the caller's
 ; continuation.
 ;
-; The 59-byte header is struct avm_eh_exception in eh_unwind_internal.h, and the
+; The 53-byte header is struct avm_eh_exception in eh_unwind_internal.h, and the
 ; offsets below must match it. The context is first, so the unwinder reads the
 ; throw site in place without a stack copy. The resume context, the handler
 ; selector, and the handler adjustment are not written here: __avm_eh_throw
@@ -25,37 +25,37 @@
 .globl __cxa_throw
 .type __cxa_throw, @function
 __cxa_throw:
-    ; r4 = header, which lies 59 bytes below the object.
-    addi.s8 r4, -59
+    ; r4 = header, which lies 53 bytes below the object.
+    addi.s8 r4, -53
 
-    ; Store the incoming registers before any of them is reused. The
-    ; header's exception field is written by __avm_eh_throw.
-    st16 [r4+5], r0
-    st16 [r4+7], r1
-    st16 [r4+9], r2
-    st16 [r4+11], r3
+    ; Store the incoming registers before any of them is reused.
+    st16 [r4+4], r0
+    st16 [r4+6], r1
+    st16 [r4+8], r2
+    st16 [r4+10], r3
 
     ; Type-descriptor program address, passed in r6:r7. r7 carries bits 23:16.
-    st16 [r4+15], r6
-    st8 [r4+17], r7
+    st16 [r4+12], r6
+    st8 [r4+14], r7
 
     ; Destructor program address, the third argument on the stack. Its three
     ; bytes are read before the shim reuses r0 for the return record.
     ldsp16 r0, [sp+3]
-    st16 [r4+18], r0
+    st16 [r4+15], r0
     ldsp8u r0, [sp+5]
-    st8 [r4+20], r0
+    st8 [r4+17], r0
 
     ; The continuation is the 3-byte return record at SP+0.
     ldsp16 r0, [sp+0]
-    st16 [r4+2], r0
+    st16 [r4+1], r0
     ldsp8u r0, [sp+2]
-    st8 [r4+4], r0
+    st8 [r4+3], r0
 
-    ; The caller's SP is the entry SP plus three.
+    ; Depth = TOP - (entry SP + 3), in 0..253 for a valid ABI return record.
     getsp r0
-    addi.s8 r0, 3
-    st16 [r4+0], r0
+    ldi16 r5, 0x09fd
+    sub r5, r0
+    st8 [r4+0], r5
 
     jmp __avm_eh_throw
 .size __cxa_throw, .-__cxa_throw

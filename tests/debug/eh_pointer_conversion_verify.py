@@ -18,8 +18,8 @@ For each handler the check reads the packed AVEH5 block and the machine code, an
   - every clause before the selected one does not match, and the selected clause matches;
   - the conversion mode and the handler adjustment equal the model's;
   - the pointer returned by __cxa_begin_catch or __cxa_get_exception_ptr is the converted
-    buffer, which lies at the header plus 51, for a converted handler, and the caught object,
-    which lies at the header plus 59, for an exact handler;
+    buffer, at CONVERTED_OFFSET in the header, for a converted handler, and the caught object,
+    at HEADER_SIZE after the header, for an exact handler;
   - a converted buffer holds the model's value in its first two bytes for a data pointer, and in
     all three bytes for a program pointer, and it is zero for a std::nullptr_t;
   - each handler is begun once, ended once, and its exception object is freed once.
@@ -36,6 +36,8 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
 
+import eh_runtime_layout as layout  # noqa: E402
+
 import eh_metadata_verify as aveh  # noqa: E402
 import eh_rtti_verify as rtti  # noqa: E402
 
@@ -49,9 +51,8 @@ END = '__cxa_end_catch'
 FREE = 'free'
 RETURNS = (BEGIN, GET_PTR)
 
-HEADER_SIZE = 59
-CONVERTED_OFFSET = 51
-CONVERSION_OFFSET = 54
+HEADER_SIZE = layout.HEADER_SIZE
+CONVERTED_OFFSET = layout.CONVERTED_OFFSET
 OBJECT_LIMIT = 8
 TARGET_BYTES = 24
 STATE_ENTERING_CATCH = 4
@@ -347,22 +348,22 @@ def verify(args):
         if name == INSTALL:
             check(len(data) >= HEADER_SIZE,
                   'the installer header is %d bytes, not %d' % (len(data), HEADER_SIZE))
-            if data[23] != STATE_ENTERING_CATCH:
+            if layout.state(data) != STATE_ENTERING_CATCH:
                 continue
-            pad = data[2] | data[3] << 8 | data[4] << 16
+            pad = layout.context_pc(data)
             check(pad in pads, 'landing pad 0x%06x is not a landing pad of the packed block'
                   % pad)
             _, (_, entries) = pads[pad]
             selector = regs[5]
-            recorded = data[39] | data[40] << 8
+            recorded = layout.u16(data, layout.SELECTOR_OFFSET)
             check(selector != 0 and selector == recorded,
                   'handler installed with selector %d, but phase one recorded %d'
                   % (selector, recorded))
             clause = [entry for entry in entries if entry[0] == selector]
             check(len(clause) == 1, 'selector %d names no clause of its pad' % selector)
             catch = clause[0][1]
-            thrown = rtti.u24(data[15:18])
-            size = data[21] | data[22] << 8
+            thrown = rtti.u24(data[layout.TYPE_OFFSET:layout.TYPE_OFFSET + 3])
+            size = layout.u16(data, layout.SIZE_OFFSET)
             check(size <= OBJECT_LIMIT, 'the thrown object has %d bytes, more than the probe reads'
                   % size)
             if model.address_point(thrown) == 'pointer':
@@ -390,8 +391,8 @@ def verify(args):
                 check(expected is not None,
                       'selected clause 0x%06x does not match thrown 0x%06x' % (catch, thrown))
                 mode, adjustment, converted_value = expected
-            recorded_mode = data[CONVERSION_OFFSET]
-            recorded_adjustment = data[41] | data[42] << 8
+            recorded_mode = layout.conversion_mode(data)
+            recorded_adjustment = layout.u16(data, layout.ADJUSTMENT_OFFSET)
             check(recorded_mode == mode,
                   'conversion mode is %d, but the model gives %d for 0x%06x -> 0x%06x'
                   % (recorded_mode, mode, thrown, catch))

@@ -5870,7 +5870,7 @@ deleting destructors, and `what()`, which returns `"std::bad_typeid"`.
 
 `eh_bad_typeid.cpp` defines the out-of-line members and `__cxa_bad_typeid`. It is compiled
 with `-frtti -fexceptions`, so the throw is an ordinary `__cxa_allocate_exception` and
-`__cxa_throw` with the 59-byte header, and the thrown descriptor is `_ZTISt10bad_typeid`.
+`__cxa_throw` with the 53-byte header, and the thrown descriptor is `_ZTISt10bad_typeid`.
 `exception_base.cpp` defines the members of `std::exception`, also with `-frtti`. The
 runtime keeps no static state for either class. A catch of `std::bad_typeid` or of
 `std::exception` matches through the ordinary typed matcher, and the object is destroyed
@@ -6000,7 +6000,7 @@ destructor. The compiler declares the function as
 `__cxa_throw(ptr, ptr addrspace(1), ptr addrspace(1))`, so the call site and the
 declaration agree.
 
-The shim stores both program addresses in the 59-byte exception header
+The shim stores both program addresses in the 53-byte exception header
 ([Section 69.3](#693-exception-metadata-aveh5)).
 
 `__cxa_rethrow` takes no argument. The `throw;` in a catch body calls it, and it
@@ -7344,32 +7344,49 @@ and decodes the packed sites and lists independently of the packer.
 
 #### Exception object and landing contract
 
-`__cxa_allocate_exception` returns the object, which lies 59 bytes above its
+`__cxa_allocate_exception` returns the object, which lies 53 bytes above its
 header. The header is `struct avm_eh_exception` in `runtime/lib/eh_unwind_internal.h`:
 
 | Offset | Size | Field | Contents |
 |---:|---:|---|---|
-| 0 | 15 | `context` | Landing state: SP, program address, r0-r3, and the header |
-| 15 | 3 | `type_address` | Type-descriptor program address (r6:r7), 24 bits |
-| 18 | 3 | `destructor` | Destructor program address (stack argument), or zero |
-| 21 | 2 | `size` | Object size |
-| 23 | 1 | `state` | Lifecycle state |
-| 24 | 15 | `resume_context` | Frame cursor for the next step of propagation |
-| 39 | 2 | `handler_selector` | Selector of the catch that phase one matched |
-| 41 | 2 | `handler_adjustment` | Byte offset of the matched base subobject, zero for an exact or catch-all match |
-| 43 | 3 | `eh_block_address` | Program address of the `AVEH5` block, from `avm_eh_open_exception` |
-| 46 | 3 | `eh_block_end` | Program address of the block end |
-| 49 | 2 | `eh_function_count` | Number of function index entries |
-| 51 | 3 | `converted_pointer` | Converted value of a pointer handler, which is the header's own buffer |
-| 54 | 1 | `handler_pointer_converted` | Conversion mode of the matched handler: none, a 16-bit data pointer, a 24-bit program pointer, or a null pointer |
-| 55 | 2 | `next` | Next exception on the caught stack, while this one is caught |
-| 57 | 2 | `refcount` | References: the throw or handler's reference, plus each `std::exception_ptr` that names the object |
+| 0 | 12 | `context` | Landing state: encoded SP, 24-bit program address, and r0-r3 |
+| 12 | 3 | `type_address` | Type-descriptor program address (r6:r7), 24 bits |
+| 15 | 3 | `destructor` | Destructor program address (stack argument), or zero |
+| 18 | 2 | `size` | Object size |
+| 20 | 1 | `state` | Lifecycle in bits 6:0, pending rethrow in bit 7 |
+| 21 | 12 | `resume_context` | Frame cursor for the next step of propagation |
+| 33 | 2 | `handler_selector` | Selector of the catch that phase one matched |
+| 35 | 2 | `handler_adjustment` | Byte offset of the matched base subobject, zero for an exact or catch-all match |
+| 37 | 3 | `eh_block_address` | Program address of the `AVEH5` block, from `avm_eh_open_exception` |
+| 40 | 3 | `eh_block_end` | Program address of the block end |
+| 43 | 2 | `eh_function_count` | Number of function index entries |
+| 45 | 3 | `converted_pointer` | Converted value of a pointer handler, which is the header's own buffer |
+| 48 | 1 | `handler_pointer_converted` | Conversion mode of the matched catch: none, data, program, or null |
+| 49 | 2 | `next` | Next exception on the caught stack, while this one is caught |
+| 51 | 2 | `refcount` | References: the throw or handler's reference, plus each `std::exception_ptr` that names the object |
 
-The header is 59 bytes. The `__cxa_throw` shim captures the throwing frame into
+The header is 53 bytes. The `__cxa_throw` shim captures the throwing frame into
 `context` and stores the type-descriptor and destructor program addresses, each in
 three bytes so that the high byte is kept. The unwinder then copies `context` into
 `resume_context`, and the two cursors move as described below. The header is heap
-memory, so each thrown exception costs 59 bytes.
+memory, so each thrown exception costs 53 bytes.
+
+Each context stores one byte of depth at +0, the PC at +1..3, and r0-r3 at
++4..11. Depth is `0x0A00 - SP`. A capture has a valid three-byte ABI return
+record, including when reached through a tail jump. Its entry SP is at least
+`0x0900`, so the captured caller SP is at least `0x0903`. Unwinding strictly
+increases SP, and landing only releases outgoing argument bytes; both check
+bounds before encoding. Initialized contexts therefore have SP in
+`0x0903..0x0A00`, or depth 0..253. The full-stack endpoint `0x0900` is never
+stored. Depth zero retains the empty-stack endpoint, which cannot be searched
+as a frame; depths 254 and 255 are invalid. No extra endpoint flag is needed.
+
+The landing context is the header's first member. Its address is already the
+exception pointer that the installer receives in r4, so neither context stores
+a duplicate exception pointer. The installer retains r4 while restoring SP,
+PC, and r0-r3. Conversion mode is stored separately from lifecycle state.
+Lifecycle updates preserve the pending-rethrow bit, and exact state checks
+reject it when a transition requires the abandoned catch to have ended.
 
 The converted buffer is written only when a pointer handler is entered, and it is never
 written for an exact, catch-all, or class handler. The thrown pointer object is never
@@ -7428,7 +7445,7 @@ the return record, and r0-r3 are the site's callee-saved values. It tail-transfe
 The object, its type descriptor, its destructor, and its size are not written. The rethrow
 therefore propagates the original object at its original address, and it allocates
 nothing. `__avm_eh_rethrow` sets `state` to `THROWN | 0x80`, where `0x80` is
-`AVM_EH_RETHROW_PENDING`. The low seven bits keep their lifecycle values. The pending bit
+`AVM_EH_RETHROW_PENDING`. The low seven bits hold the lifecycle; pointer-conversion mode has its own byte. The pending bit
 means that the caught exception is propagating again, and that the abandoned catch has not
 yet released it. Both phases then run from the rethrow site, with the same AVEH5 search as a
 throw. A rethrow never takes the direct handler path of a fresh throw. Phase one recomputes
@@ -7573,7 +7590,7 @@ pad was entered.
 
 The throwing frame is captured by `__cxa_throw` before any C code runs. The shim
 has no stack frame. It stores the continuation, the caller's SP (the entry SP plus
-three), and r0-r3 into the 59-byte header, which lies below the object. It then
+three), and r0-r3 into the 53-byte header, which lies below the object. It then
 tail-transfers to `__avm_eh_throw`, which initializes `resume_context` from
 `context`.
 
@@ -7585,45 +7602,61 @@ unit test `tests/cpp/eh_block_validation.cpp` runs it on valid and malformed blo
 
 #### Measured stack, cycles, and memory
 
-The "before" columns are the tree at the start of this change, and the "after"
-columns are the current tree. Each row is measured with the same tools on both trees.
+The context layout changes were measured cumulatively with
+`tests/debug/eh_stack_report.py`, using 32 fixtures at O0 and O2. Total is the
+high-water mark from program start. Runtime is the additional depth below SP
+at the first `__cxa_throw` entry, including later fixture activity. These are
+observed paths, not a bound for every application.
 
-Stack peaks come from `tests/debug/eh_stack_report.py`. Total is the high-water mark
-from the start of the program. Runtime is the lowest SP reached after the first entry
-into `__cxa_throw`, which is the window in which the unwinder runs. That window also
-contains any user frames that are live during a later runtime call. No fixture's total
-or runtime peak is larger after this change.
+| Cumulative feature | Context bytes | Header bytes | Peak total bytes | Largest runtime increment bytes |
+|---|---:|---:|---:|---:|
+| Baseline | 15 | 59 | 197 | 158 |
+| + eight-bit SP | 14 | 57 | 193 | 154 |
+| + remove context.exception | 12 | 53 | 193 | 154 |
+
+The maximum total is `eh_virtual_inheritance` at O0, and the maximum runtime
+increment is `eh_inheritance` at O0. Representative baseline/final results:
 
 | Fixture | Opt | Before total | Before runtime | After total | After runtime |
 |---|---|---:|---:|---:|---:|
-| `eh_allocation_failure` | O0 | 37 | - | 37 | - |
-| `eh_allocation_failure` | O2 | 30 | - | 30 | - |
-| `eh_catch_all` | O0 | 152 | 125 | 140 | 113 |
-| `eh_catch_all` | O2 | 132 | 107 | 120 | 95 |
-| `eh_cleanup` | O0 | 199 | 126 | 187 | 114 |
-| `eh_cleanup` | O2 | 155 | 128 | 143 | 116 |
-| `eh_cleanup_dtor_throw` | O0 | 135 | 103 | 123 | 91 |
-| `eh_cleanup_dtor_throw` | O2 | 122 | 103 | 110 | 91 |
-| `eh_cleanup_no_handler` | O0 | 128 | 95 | 124 | 91 |
-| `eh_cleanup_no_handler` | O2 | 114 | 95 | 110 | 91 |
-| `eh_dynamic_handler` | O0 | 208 | 103 | 196 | 91 |
-| `eh_dynamic_handler` | O2 | 176 | 103 | 164 | 91 |
-| `eh_inheritance` | O0 | 214 | 177 | 200 | 163 |
-| `eh_inheritance` | O2 | 182 | 159 | 168 | 145 |
-| `eh_inheritance_corrupt_target` | O0 | 190 | 153 | 176 | 139 |
-| `eh_inheritance_corrupt_target` | O2 | 174 | 153 | 160 | 139 |
-| `eh_inheritance_cross_unit` | O0 | 202 | 153 | 188 | 139 |
-| `eh_inheritance_cross_unit` | O2 | 180 | 153 | 166 | 139 |
-| `eh_inheritance_high_address` | O0 | 204 | 153 | 190 | 139 |
-| `eh_inheritance_high_address` | O2 | 176 | 153 | 162 | 139 |
-| `eh_missing_cfi` | O0 | 116 | 86 | 110 | 80 |
-| `eh_missing_cfi` | O2 | 108 | 86 | 102 | 80 |
-| `eh_typed` | O0 | 209 | 167 | 195 | 153 |
-| `eh_typed` | O2 | 179 | 153 | 165 | 139 |
-| `eh_typed_high_address` | O0 | 193 | 153 | 179 | 139 |
-| `eh_typed_high_address` | O2 | 175 | 155 | 161 | 141 |
-| `eh_unhandled` | O0 | 102 | 86 | 96 | 80 |
-| `eh_unhandled` | O2 | 102 | 86 | 96 | 80 |
+| `eh_catch_all` | O0 | 116 | 89 | 112 | 85 |
+| `eh_catch_all` | O2 | 97 | 72 | 93 | 68 |
+| `eh_dynamic_handler` | O0 | 171 | 68 | 167 | 64 |
+| `eh_dynamic_handler` | O2 | 141 | 68 | 137 | 64 |
+| `eh_cleanup` | O0 | 164 | 91 | 162 | 89 |
+| `eh_cleanup` | O2 | 122 | 95 | 120 | 93 |
+| `eh_typed` | O0 | 179 | 137 | 175 | 133 |
+| `eh_typed` | O2 | 159 | 133 | 155 | 129 |
+| `eh_inheritance` | O0 | 195 | 158 | 191 | 154 |
+| `eh_inheritance` | O2 | 163 | 140 | 160 | 137 |
+| `eh_virtual_inheritance` | O0 | 197 | 146 | 193 | 142 |
+| `eh_virtual_inheritance` | O2 | 161 | 138 | 158 | 135 |
+| `eh_pointer_conversion` | O0 | 190 | 154 | 186 | 150 |
+| `eh_pointer_conversion` | O2 | 164 | 142 | 160 | 138 |
+| `eh_rethrow_inheritance` | O0 | 182 | 150 | 178 | 146 |
+| `eh_rethrow_inheritance` | O2 | 162 | 142 | 158 | 138 |
+
+The changes add no static RAM. Heap cost per live exception falls from
+59 + object size to 53 + object size. See `docs/stack-analysis.md` for the
+frame effects and SP invariant.
+
+The layout alternatives were also timed across six fixtures at O0 and O2 (250
+throws across twelve builds), using `tests/debug/eh_throw_cycles.py`. Relative
+to the same runtime before each change:
+
+| Change | Entry to landing | Through catch completion | Decision |
+|---|---:|---:|---|
+| Remove both `context.exception` fields | -0.0961% | -0.0916% | Keep: faster in all twelve builds |
+| Pack conversion mode into `state` | +0.0399% | +0.1976% | Revert: slower in all twelve builds, with no stack saving |
+
+Packing would save one more heap byte, but conversion mode remains a separate
+byte because the packed representation adds executed flag operations. Removing
+the exception fields saves four heap bytes and reduces copies, stores, and the
+installer's loads, even though the peak stack is unchanged.
+
+The timing and memory comparisons below record the earlier indexed-unwind
+experiment. Their "after" columns describe that experiment, rather than the
+current context layout.
 
 Cycles are emulated AVR cycles between entry points, read from the probe's snapshots by
 `tests/debug/eh_throw_cycles.py`. "Entry to landing" runs from

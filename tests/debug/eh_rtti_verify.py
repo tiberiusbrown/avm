@@ -15,6 +15,9 @@ import struct
 import subprocess
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import eh_runtime_layout as layout
+
 SHF_WRITE = 0x1
 SHF_AVM_PROGSPACE = 0x10000000
 SHF_AVM_DATASPACE = 0x20000000
@@ -25,7 +28,7 @@ SHN_LORESERVE = 0xff00
 
 # Two 24-bit entries precede the address point that descriptors name.
 ADDRESS_POINT = 6
-HEADER_SIZE = 59
+HEADER_SIZE = layout.HEADER_SIZE
 DESCRIPTOR_TYPE = re.compile(r'^_Z(T[IV]|TS)')
 # The low byte of a base entry's offset-and-flags word. Its other bits are reserved.
 RTTI_BASE_VIRTUAL = 0x01
@@ -376,17 +379,17 @@ def check_header(args, elf):
     header = run_probe(args)
     descriptor = defined(elf, args.thrown_type)['value']
     destructor = defined(elf, args.destructor)['value']
-    type_address = u24(header[15:18])
-    dtor = u24(header[18:21])
+    type_address = u24(header[layout.TYPE_OFFSET:layout.TYPE_OFFSET + 3])
+    dtor = u24(header[layout.DESTRUCTOR_OFFSET:layout.DESTRUCTOR_OFFSET + 3])
     check(type_address == descriptor,
           'captured type address 0x%06x is not %s at 0x%06x'
           % (type_address, args.thrown_type, descriptor))
     check(dtor == destructor,
           'captured destructor 0x%06x is not %s at 0x%06x'
           % (dtor, args.destructor, destructor))
-    check(u16(header[21:23]) == args.size,
-          'captured object size %d is not %d' % (u16(header[21:23]), args.size))
-    check(header[23] == 0, 'a new exception header is not in the allocated state')
+    check(u16(header[layout.SIZE_OFFSET:layout.SIZE_OFFSET + 2]) == args.size,
+          'captured object size %d is not %d' % (u16(header[layout.SIZE_OFFSET:layout.SIZE_OFFSET + 2]), args.size))
+    check(layout.state(header) == 0, 'a new exception header is not in the allocated state')
     print('  header: type 0x%06x, destructor 0x%06x, size %d'
           % (type_address, dtor, args.size))
 

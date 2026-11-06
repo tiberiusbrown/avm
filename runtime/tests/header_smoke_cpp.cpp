@@ -63,31 +63,31 @@ extern "C" int (*cpp_snprintf_program_address(void))(
     return &snprintf_P;
 }
 
-// Every paired interface accepts either source address space under its
-// ordinary C++ name. Explicit _P spellings remain available.
+// Standard C functions accept ordinary pointers; program-memory access uses
+// the explicit _P interfaces. AVM APIs retain their address-space overloads.
 extern "C" void cpp_address_space_calls(
     char* dst, const char* ram, const char AVM_PROGMEM* flash,
     size_t n, va_list args) {
     memcpy(dst, ram, n);
-    memcpy(dst, flash, n);
+    memcpy_P(dst, flash, n);
     memcmp(dst, ram, n);
-    memcmp(dst, flash, n);
+    memcmp_P(dst, flash, n);
     strcmp(dst, ram);
-    strcmp(dst, flash);
+    strcmp_P(dst, flash);
     strlen(ram);
-    strlen(flash);
+    strlen_P(flash);
     strncpy(dst, ram, n);
-    strncpy(dst, flash, n);
+    strncpy_P(dst, flash, n);
     strncat(dst, ram, n);
-    strncat(dst, flash, n);
+    strncat_P(dst, flash, n);
     strcpy(dst, ram);
-    strcpy(dst, flash);
+    strcpy_P(dst, flash);
     strcat(dst, ram);
-    strcat(dst, flash);
+    strcat_P(dst, flash);
     vsnprintf(dst, n, ram, args);
-    vsnprintf(dst, n, flash, args);
+    vsnprintf_P(dst, n, flash, args);
     snprintf(dst, n, ram, 7);
-    snprintf(dst, n, flash, 7);
+    snprintf_P(dst, n, flash, 7);
     avm_draw_text(0, 10, ram);
     avm_draw_text(0, 10, flash);
     avm_text_width(ram);
@@ -96,17 +96,17 @@ extern "C" void cpp_address_space_calls(
     avm_draw_textfv(0, 10, flash, args);
     avm_draw_textf(0, 10, ram, 7);
     avm_draw_textf(0, 10, flash, 7);
-    strlen(F("abc"));
-    strlen(PSTR("abc"));
-    strcpy(dst, PSTR("abc"));
+    strlen_P(F("abc"));
+    strlen_P(PSTR("abc"));
+    strcpy_P(dst, PSTR("abc"));
     avm_draw_text(0, 10, F("hello"));
     avm_draw_text(0, 10, PSTR("hello"));
     avm_text_width(F("hello"));
     avm_text_width(PSTR("hello"));
     avm_draw_textf(0, 10, F("%u"), 7u);
     avm_draw_textf(0, 10, PSTR("%u"), 7u);
-    snprintf(dst, n, F("%u"), 7u);
-    snprintf(dst, n, PSTR("%u"), 7u);
+    snprintf_P(dst, n, F("%u"), 7u);
+    snprintf_P(dst, n, PSTR("%u"), 7u);
     memcpy_P(dst, flash, n);
     avm_draw_text_P(0, 10, flash);
     avm_text_width_P(flash);
@@ -117,19 +117,16 @@ extern "C" void cpp_address_space_calls(
 extern "C" void cpp_address_space_pointers(
     char* dst, const void* ram, const void AVM_PROGMEM* flash, size_t n) {
     void* (*ram_copy)(void*, const void*, size_t) = &memcpy;
-    void* (*flash_copy)(void*, const void AVM_PROGMEM*, size_t) = &memcpy;
     void* (*explicit_copy)(void*, const void AVM_PROGMEM*, size_t) = &memcpy_P;
-    char* (*flash_strcpy)(char*, const char AVM_PROGMEM*) = &strcpy;
+    char* (*flash_strcpy)(char*, const char AVM_PROGMEM*) = &strcpy_P;
     (memcpy)(dst, ram, n);
-    (memcpy)(dst, flash, n);
     ram_copy(dst, ram, n);
-    flash_copy(dst, flash, n);
     explicit_copy(dst, flash, n);
     flash_strcpy(dst, (const char AVM_PROGMEM*)flash);
     const char* typed_ram = nullptr;
     const char AVM_PROGMEM* typed_flash = nullptr;
     (void)strlen(typed_ram);
-    (void)strlen(typed_flash);
+    (void)strlen_P(typed_flash);
 }
 
 int termination_header_smoke(void (*fn)(void)) { return atexit(fn); }

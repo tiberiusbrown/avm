@@ -5,6 +5,8 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 algorithm.cpp
 00000000 l    d  .text._ZNSt3__16__sortIRNS_6__lessIccEEPcEEvT0_S5_T_	00000000 .text._ZNSt3__16__sortIRNS_6__lessIccEEPcEEvT0_S5_T_
 00000000 l    d  .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPcLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb	00000000 .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPcLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+00000000 l    d  .text._ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_	00000000 .text._ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_
+00000000 l    d  .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb	00000000 .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
 00000000 l    d  .text._ZNSt3__16__sortIRNS_6__lessIaaEEPaEEvT0_S5_T_	00000000 .text._ZNSt3__16__sortIRNS_6__lessIaaEEPaEEvT0_S5_T_
 00000000 l    d  .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPaLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb	00000000 .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPaLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
 00000000 l    d  .text._ZNSt3__16__sortIRNS_6__lessIhhEEPhEEvT0_S5_T_	00000000 .text._ZNSt3__16__sortIRNS_6__lessIhhEEPhEEvT0_S5_T_
@@ -34,6 +36,9 @@ SYMBOL TABLE:
 00000000 l    d  .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPcNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_	00000000 .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPcNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
 00000000 l    d  .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPcEEbT1_S5_T0_	00000000 .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPcEEbT1_S5_T0_
 00000000 l    d  .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPcS5_EET1_S6_S6_T2_OT0_	00000000 .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPcS5_EET1_S6_S6_T2_OT0_
+00000000 l    d  .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_	00000000 .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+00000000 l    d  .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_	00000000 .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+00000000 l    d  .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_	00000000 .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
 00000000 l    d  .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPaNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_	00000000 .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPaNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
 00000000 l    d  .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPaEEbT1_S5_T0_	00000000 .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPaEEbT1_S5_T0_
 00000000 l    d  .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPaS5_EET1_S6_S6_T2_OT0_	00000000 .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPaS5_EET1_S6_S6_T2_OT0_
@@ -79,6 +84,11 @@ SYMBOL TABLE:
 00000000  w    F .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPcNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_	000009e1 .hidden std::__1::pair<char*, bool> std::__1::__bitset_partition[abi:n240000in23]<std::__1::_ClassicAlgPolicy, char*, std::__1::ranges::less>(char*, char*, std::__1::ranges::less)
 00000000  w    F .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPcEEbT1_S5_T0_	0000023c .hidden bool std::__1::__insertion_sort_incomplete[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, char*>(char*, char*, std::__1::ranges::less)
 00000000  w    F .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPcS5_EET1_S6_S6_T2_OT0_	000002af .hidden char* std::__1::__partial_sort_impl[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less&, char*, char*>(char*, char*, char*, std::__1::ranges::less&)
+00000000  w    F .text._ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_	0000003e void std::__1::__sort<std::__1::__less<wchar_t, wchar_t>&, wchar_t*>(wchar_t*, wchar_t*, std::__1::__less<wchar_t, wchar_t>&)
+00000000  w    F .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb	000004a8 .hidden void std::__1::__introsort[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*, true>(wchar_t*, wchar_t*, std::__1::ranges::less, std::__1::iterator_traits<wchar_t*>::difference_type, bool)
+00000000  w    F .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_	000009c9 .hidden std::__1::pair<wchar_t*, bool> std::__1::__bitset_partition[abi:n240000in23]<std::__1::_ClassicAlgPolicy, wchar_t*, std::__1::ranges::less>(wchar_t*, wchar_t*, std::__1::ranges::less)
+00000000  w    F .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_	000001fd .hidden bool std::__1::__insertion_sort_incomplete[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*>(wchar_t*, wchar_t*, std::__1::ranges::less)
+00000000  w    F .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_	00000286 .hidden wchar_t* std::__1::__partial_sort_impl[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less&, wchar_t*, wchar_t*>(wchar_t*, wchar_t*, wchar_t*, std::__1::ranges::less&)
 00000000  w    F .text._ZNSt3__16__sortIRNS_6__lessIaaEEPaEEvT0_S5_T_	0000003e void std::__1::__sort<std::__1::__less<signed char, signed char>&, signed char*>(signed char*, signed char*, std::__1::__less<signed char, signed char>&)
 00000000  w    F .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPaLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb	00000533 .hidden void std::__1::__introsort[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, signed char*, true>(signed char*, signed char*, std::__1::ranges::less, std::__1::iterator_traits<signed char*>::difference_type, bool)
 00000000  w    F .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPaNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_	000009e1 .hidden std::__1::pair<signed char*, bool> std::__1::__bitset_partition[abi:n240000in23]<std::__1::_ClassicAlgPolicy, signed char*, std::__1::ranges::less>(signed char*, signed char*, std::__1::ranges::less)
@@ -952,6 +962,750 @@ Disassembly of section .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicA
  e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPcLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPcLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x4e4
+
+Disassembly of section .text._ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_:
+
+<void std::__1::__sort<std::__1::__less<wchar_t, wchar_t>&, wchar_t*>(wchar_t*, wchar_t*, std::__1::__less<wchar_t, wchar_t>&)>:
+ b1                    push16	r1
+ b0                    push16	r0
+ 31                    cmp	r4, r5
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_
+		R_AVM_FAR24	.text._ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_+0x3b
+<L0>:
+ 09                    mov	r6, r5
+ 28                    sub	r6, r4
+ f6 2e                 tst16	r6
+ d1 04                 brne8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_
+		R_AVM_FAR24	.text._ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_+0x28
+<L1>:
+ f1 04                 mov	r0, r4
+ 02                    mov	r4, r6
+ f1 0d                 mov	r1, r5
+ ff 0d                 u16tof
+ 0d                    mov	r7, r5
+ f1 20                 mov	r4, r0
+ f1 25                 mov	r5, r1
+ fa a7                 lsr16i	r7, 0x7
+ c2 8e                 ldi8	r6, 0x8e
+ 2b                    sub	r6, r7
+ e2 00 00 00           jmpf	_ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_+0x2a
+ c2 10                 ldi8	r6, 0x10
+ d6 ff                 adjsp	-0x1
+ c3 01                 ldi8	r7, 0x1
+ f1 33                 stsp8	[sp+0x0], r7
+ 1a                    add	r6, r6
+ c3 1e                 ldi8	r7, 0x1e
+ 2e                    sub	r7, r6
+ aa                    xor	r6, r6
+ e3 00 00 00           callf	_ZNSt3__16__sortIRNS_6__lessIwwEEPwEEvT0_S5_T_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	void std::__1::__introsort[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*, true>(wchar_t*, wchar_t*, std::__1::ranges::less, std::__1::iterator_traits<wchar_t*>::difference_type, bool)
+ d6 01                 adjsp	0x1
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ef                    ret
+
+Disassembly of section .text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb:
+
+<void std::__1::__introsort[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*, true>(wchar_t*, wchar_t*, std::__1::ranges::less, std::__1::iterator_traits<wchar_t*>::difference_type, bool)>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 f5                 adjsp	-0xb
+ f1 1c                 mov	r3, r4
+ f1 5a                 stsp8	[sp+0xa], r6
+ f0 1c 16              ldsp8u	r4, [sp+0x16]
+ f4 48                 stsp16	[sp+0x2], r4
+ f4 61                 stsp16	[sp+0x8], r5
+ c0 01                 ldi8	r4, 0x1
+ 23                    sub	r4, r7
+ f4 22                 ldsp16	r6, [sp+0x8]
+ f1 0c                 mov	r1, r4
+ 06                    mov	r5, r6
+ f2 57                 sub	r5, r3
+ cd 03                 cmpi.s8	r5, 0x3
+ f1 16                 mov	r2, r6
+ d3 04                 brslt8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x39
+<L0>:
+ cd 02                 cmpi.s8	r5, 0x2
+ d8 04                 bruge8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+<L1>:
+ cd 02                 cmpi.s8	r5, 0x2
+ d1 04                 brne8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x36f
+<L2>:
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x51
+ cd 03                 cmpi.s8	r5, 0x3
+ d1 04                 brne8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x2a5
+<L3>:
+ cd 04                 cmpi.s8	r5, 0x4
+ d1 04                 brne8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x386
+<L4>:
+ cd 05                 cmpi.s8	r5, 0x5
+ d1 04                 brne8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x2dd
+<L5>:
+ cd 18                 cmpi.s8	r5, 0x18
+ d9 04                 brsge8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x3d8
+<L6>:
+ f0 0d 01              cmpi.s8	r1, 0x1
+ d1 04                 brne8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x446
+<L7>:
+ 01                    mov	r4, r5
+ f4 8c                 lsr16.1	r4
+ f2 23                 add	r4, r3
+ ed c4 1f              ld8u	r6, [r2-1]
+ c3 81                 ldi8	r7, 0x81
+ 37                    cmp	r5, r7
+ d8 04                 bruge8	0x4 <L8>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x137
+<L8>:
+ 44                    ld8u	r5, [r4]
+ 39                    cmp	r6, r5
+ 0e                    mov	r7, r6
+ fc 3d                 cmov.ult	r7, r5
+ ee e4 1f              st8	[r2-1], r7
+ fc 75                 cmov.uge	r6, r5
+ 52                    st8	[r4], r6
+ ed a6 20              ld8u	r5, [r3+0]
+ ed c4 1f              ld8u	r6, [r2-1]
+ 36                    cmp	r5, r6
+ 0d                    mov	r7, r5
+ fc 3e                 cmov.ult	r7, r6
+ ee e4 1f              st8	[r2-1], r7
+ fc 6e                 cmov.uge	r5, r6
+ 48                    ld8u	r6, [r4]
+ ed e6 20              ld8u	r7, [r3+0]
+ 36                    cmp	r5, r6
+ fc 37                 cmov.ult	r6, r7
+ ee c6 20              st8	[r3+0], r6
+ 48                    ld8u	r6, [r4]
+ fc 2e                 cmov.ult	r5, r6
+ 51                    st8	[r4], r5
+ ed a8 1f              ld8u	r5, [r4-1]
+ ed c4 1e              ld8u	r6, [r2-2]
+ 39                    cmp	r6, r5
+ 0e                    mov	r7, r6
+ fc 3d                 cmov.ult	r7, r5
+ ee e4 1e              st8	[r2-2], r7
+ fc 75                 cmov.uge	r6, r5
+ ee c8 1f              st8	[r4-1], r6
+ ed a6 21              ld8u	r5, [r3+1]
+ ed c4 1e              ld8u	r6, [r2-2]
+ 36                    cmp	r5, r6
+ 0d                    mov	r7, r5
+ fc 3e                 cmov.ult	r7, r6
+ ee e4 1e              st8	[r2-2], r7
+ fc 6e                 cmov.uge	r5, r6
+ ed c8 1f              ld8u	r6, [r4-1]
+ ed e6 21              ld8u	r7, [r3+1]
+ 36                    cmp	r5, r6
+ fc 37                 cmov.ult	r6, r7
+ ee c6 21              st8	[r3+1], r6
+ ed c8 1f              ld8u	r6, [r4-1]
+ fc 2e                 cmov.ult	r5, r6
+ ee a8 1f              st8	[r4-1], r5
+ ed a8 21              ld8u	r5, [r4+1]
+ ed c4 1d              ld8u	r6, [r2-3]
+ 39                    cmp	r6, r5
+ 0e                    mov	r7, r6
+ fc 3d                 cmov.ult	r7, r5
+ ee e4 1d              st8	[r2-3], r7
+ fc 75                 cmov.uge	r6, r5
+ ee c8 21              st8	[r4+1], r6
+ ed a6 22              ld8u	r5, [r3+2]
+ ed c4 1d              ld8u	r6, [r2-3]
+ 36                    cmp	r5, r6
+ 0d                    mov	r7, r5
+ fc 3e                 cmov.ult	r7, r6
+ ee e4 1d              st8	[r2-3], r7
+ fc 6e                 cmov.uge	r5, r6
+ ed c8 21              ld8u	r6, [r4+1]
+ ed e6 22              ld8u	r7, [r3+2]
+ 36                    cmp	r5, r6
+ fc 37                 cmov.ult	r6, r7
+ ee c6 22              st8	[r3+2], r6
+ ed c8 21              ld8u	r6, [r4+1]
+ fc 2e                 cmov.ult	r5, r6
+ f5 30                 ld8u	r0, [r4]
+ f5 24                 cmp	r5, r0
+ 0d                    mov	r7, r5
+ fc 38                 cmov.ult	r7, r0
+ ed 48 1f              ld8u	r2, [r4-1]
+ f5 17                 cmp	r2, r7
+ f1 2a                 mov	r6, r2
+ fc 37                 cmov.ult	r6, r7
+ ee c8 21              st8	[r4+1], r6
+ f5 05                 cmp	r0, r5
+ fc 28                 cmov.ult	r5, r0
+ f5 2e                 cmp	r7, r2
+ f1 2a                 mov	r6, r2
+ fc 37                 cmov.ult	r6, r7
+ f5 15                 cmp	r2, r5
+ fc 35                 cmov.ult	r6, r5
+ fc 2a                 cmov.ult	r5, r2
+ f0 32 08              ldsp16	r2, [sp+0x8]
+ ee a8 1f              st8	[r4-1], r5
+ 52                    st8	[r4], r6
+ ed a6 20              ld8u	r5, [r3+0]
+ ee c6 20              st8	[r3+0], r6
+ 51                    st8	[r4], r5
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x163
+ ed a6 20              ld8u	r5, [r3+0]
+ 39                    cmp	r6, r5
+ 0e                    mov	r7, r6
+ fc 3d                 cmov.ult	r7, r5
+ ee e4 1f              st8	[r2-1], r7
+ fc 75                 cmov.uge	r6, r5
+ ee c6 20              st8	[r3+0], r6
+ 44                    ld8u	r5, [r4]
+ ed c4 1f              ld8u	r6, [r2-1]
+ 36                    cmp	r5, r6
+ 0d                    mov	r7, r5
+ fc 3e                 cmov.ult	r7, r6
+ ee e4 1f              st8	[r2-1], r7
+ fc 6e                 cmov.uge	r5, r6
+ ed c6 20              ld8u	r6, [r3+0]
+ 4c                    ld8u	r7, [r4]
+ 36                    cmp	r5, r6
+ fc 37                 cmov.ult	r6, r7
+ 52                    st8	[r4], r6
+ ed 86 20              ld8u	r4, [r3+0]
+ fc 2c                 cmov.ult	r5, r4
+ ee a6 20              st8	[r3+0], r5
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ c0 01                 ldi8	r4, 0x1
+ 88                    and	r6, r4
+ f4 a6                 tst8	r6
+ d0 04                 breq8	0x4 <L9>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x17d
+<L9>:
+ ed 86 20              ld8u	r4, [r3+0]
+ ed a6 1f              ld8u	r5, [r3-1]
+ 34                    cmp	r5, r4
+ d2 04                 brult8	0x4 <L10>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x1f9
+<L10>:
+ f4 42                 stsp16	[sp+0x0], r6
+ f0 39 06              stsp16	[sp+0x6], r1
+ aa                    xor	r6, r6
+ f1 23                 mov	r4, r3
+ f1 26                 mov	r5, r2
+ e3 00 00 00           callf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	std::__1::pair<wchar_t*, bool> std::__1::__bitset_partition[abi:n240000in23]<std::__1::_ClassicAlgPolicy, wchar_t*, std::__1::ranges::less>(wchar_t*, wchar_t*, std::__1::ranges::less)
+ f1 03                 mov	r0, r3
+ f2 66                 mov32	q1, q2
+ a0                    xor	r4, r4
+ c1 01                 ldi8	r5, 0x1
+ f9 ac                 and	r5, r3
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d1 04                 brne8	0x4 <L11>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x1dc
+<L11>:
+ f1 1a                 mov	r3, r2
+ f4 ab                 inc16	r3
+ f2 39                 sub	r1, r1
+ f0 38 04              stsp16	[sp+0x4], r0
+ f1 20                 mov	r4, r0
+ f1 26                 mov	r5, r2
+ f1 29                 mov	r6, r1
+ e3 00 00 00           callf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	bool std::__1::__insertion_sort_incomplete[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*>(wchar_t*, wchar_t*, std::__1::ranges::less)
+ f1 04                 mov	r0, r4
+ f1 23                 mov	r4, r3
+ f4 21                 ldsp16	r5, [sp+0x8]
+ f1 29                 mov	r6, r1
+ e3 00 00 00           callf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	bool std::__1::__insertion_sort_incomplete[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*>(wchar_t*, wchar_t*, std::__1::ranges::less)
+ c1 01                 ldi8	r5, 0x1
+ 81                    and	r4, r5
+ f4 a4                 tst8	r4
+ d0 04                 breq8	0x4 <L12>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x28c
+<L12>:
+ f9 14                 and	r0, r5
+ f4 18                 ldsp16	r4, [sp+0x6]
+ f4 ac                 inc16	r4
+ f4 a0                 tst8	r0
+ f4 22                 ldsp16	r6, [sp+0x8]
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ d0 04                 breq8	0x4 <L13>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x16
+<L13>:
+ d6 ff                 adjsp	-0x1
+ f4 04                 ldsp16	r4, [sp+0x1]
+ f1 30                 stsp8	[sp+0x0], r4
+ aa                    xor	r6, r6
+ 0e                    mov	r7, r6
+ f0 31 07              ldsp16	r1, [sp+0x7]
+ f2 5d                 sub	r7, r1
+ f1 20                 mov	r4, r0
+ f1 26                 mov	r5, r2
+ e3 00 00 00           callf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	void std::__1::__introsort[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*, true>(wchar_t*, wchar_t*, std::__1::ranges::less, std::__1::iterator_traits<wchar_t*>::difference_type, bool)
+ d6 01                 adjsp	0x1
+ f4 aa                 inc16	r2
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x280
+ ed a4 1f              ld8u	r5, [r2-1]
+ 31                    cmp	r4, r5
+ f1 13                 mov	r2, r3
+ d2 04                 brult8	0x4 <L14>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x215
+<L14>:
+ ed a4 21              ld8u	r5, [r2+1]
+ f4 aa                 inc16	r2
+ 31                    cmp	r4, r5
+ d2 04                 brult8	0x4 <L15>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x205
+<L15>:
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x22b
+ f4 aa                 inc16	r2
+ f4 21                 ldsp16	r5, [sp+0x8]
+ f5 15                 cmp	r2, r5
+ d2 04                 brult8	0x4 <L16>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x22b
+<L16>:
+ ed a4 20              ld8u	r5, [r2+0]
+ 31                    cmp	r4, r5
+ d2 04                 brult8	0x4 <L17>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x215
+<L17>:
+ f4 21                 ldsp16	r5, [sp+0x8]
+ f5 15                 cmp	r2, r5
+ d2 04                 brult8	0x4 <L18>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x241
+<L18>:
+ f4 21                 ldsp16	r5, [sp+0x8]
+ f4 b5                 dec16	r5
+ 49                    ld8u	r6, [r5]
+ 32                    cmp	r4, r6
+ d8 04                 bruge8	0x4 <L19>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x237
+<L19>:
+ f5 15                 cmp	r2, r5
+ d2 04                 brult8	0x4 <L20>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x26f
+<L20>:
+ 4d                    ld8u	r7, [r5]
+ ed c4 20              ld8u	r6, [r2+0]
+ ee e4 20              st8	[r2+0], r7
+ 56                    st8	[r5], r6
+ ed c4 21              ld8u	r6, [r2+1]
+ f4 aa                 inc16	r2
+ 32                    cmp	r4, r6
+ d2 04                 brult8	0x4 <L21>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x251
+<L21>:
+ f4 b5                 dec16	r5
+ 4d                    ld8u	r7, [r5]
+ 33                    cmp	r4, r7
+ d8 04                 bruge8	0x4 <L22>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x25d
+<L22>:
+ f5 15                 cmp	r2, r5
+ d8 04                 bruge8	0x4 <L23>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x24d
+<L23>:
+ f1 26                 mov	r5, r2
+ f4 b5                 dec16	r5
+ f5 1d                 cmp	r3, r5
+ d1 04                 brne8	0x4 <L24>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x27f
+<L24>:
+ 49                    ld8u	r6, [r5]
+ ee c6 20              st8	[r3+0], r6
+ 54                    st8	[r5], r4
+ a0                    xor	r4, r4
+ f4 48                 stsp16	[sp+0x2], r4
+ 0c                    mov	r7, r4
+ f2 5d                 sub	r7, r1
+ f1 1a                 mov	r3, r2
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x11
+ f4 18                 ldsp16	r4, [sp+0x6]
+ f2 3c                 sub	r1, r4
+ f9 14                 and	r0, r5
+ f4 a0                 tst8	r0
+ f1 26                 mov	r5, r2
+ f0 33 04              ldsp16	r3, [sp+0x4]
+ f1 2d                 mov	r7, r1
+ d1 04                 brne8	0x4 <L25>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0xf
+<L25>:
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+ ed 84 1f              ld8u	r4, [r2-1]
+ ed a6 21              ld8u	r5, [r3+1]
+ 31                    cmp	r4, r5
+ 08                    mov	r6, r4
+ fc 35                 cmov.ult	r6, r5
+ ee c4 1f              st8	[r2-1], r6
+ fc 65                 cmov.uge	r4, r5
+ ee 86 21              st8	[r3+1], r4
+ ed 86 20              ld8u	r4, [r3+0]
+ ed a4 1f              ld8u	r5, [r2-1]
+ 31                    cmp	r4, r5
+ 08                    mov	r6, r4
+ fc 35                 cmov.ult	r6, r5
+ ee c4 1f              st8	[r2-1], r6
+ fc 65                 cmov.uge	r4, r5
+ ed a6 21              ld8u	r5, [r3+1]
+ ed c6 20              ld8u	r6, [r3+0]
+ 31                    cmp	r4, r5
+ 0d                    mov	r7, r5
+ fc 3e                 cmov.ult	r7, r6
+ 34                    cmp	r5, r4
+ fc 2c                 cmov.ult	r5, r4
+ ee a6 21              st8	[r3+1], r5
+ ee e6 20              st8	[r3+0], r7
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+ ed 86 21              ld8u	r4, [r3+1]
+ ed a6 20              ld8u	r5, [r3+0]
+ 31                    cmp	r4, r5
+ 08                    mov	r6, r4
+ fc 35                 cmov.ult	r6, r5
+ ee c6 21              st8	[r3+1], r6
+ fc 65                 cmov.uge	r4, r5
+ ee 86 20              st8	[r3+0], r4
+ ed 86 23              ld8u	r4, [r3+3]
+ ed a4 1f              ld8u	r5, [r2-1]
+ 34                    cmp	r5, r4
+ 09                    mov	r6, r5
+ fc 34                 cmov.ult	r6, r4
+ ee c4 1f              st8	[r2-1], r6
+ fc 6c                 cmov.uge	r5, r4
+ ee a6 23              st8	[r3+3], r5
+ ed 86 22              ld8u	r4, [r3+2]
+ ed a4 1f              ld8u	r5, [r2-1]
+ 31                    cmp	r4, r5
+ 08                    mov	r6, r4
+ fc 35                 cmov.ult	r6, r5
+ ee c4 1f              st8	[r2-1], r6
+ fc 65                 cmov.uge	r4, r5
+ ed a6 23              ld8u	r5, [r3+3]
+ ed c6 22              ld8u	r6, [r3+2]
+ 31                    cmp	r4, r5
+ 0d                    mov	r7, r5
+ fc 3e                 cmov.ult	r7, r6
+ 34                    cmp	r5, r4
+ fc 2c                 cmov.ult	r5, r4
+ ee a6 23              st8	[r3+3], r5
+ ee e6 22              st8	[r3+2], r7
+ ed a6 21              ld8u	r5, [r3+1]
+ ed e4 1f              ld8u	r7, [r2-1]
+ 3d                    cmp	r7, r5
+ 0b                    mov	r6, r7
+ fc 35                 cmov.ult	r6, r5
+ ee c4 1f              st8	[r2-1], r6
+ fc 7d                 cmov.uge	r7, r5
+ ed 06 20              ld8u	r0, [r3+0]
+ ed c6 23              ld8u	r6, [r3+3]
+ f5 06                 cmp	r0, r6
+ f1 10                 mov	r2, r0
+ fc 16                 cmov.ult	r2, r6
+ f5 2e                 cmp	r7, r2
+ 03                    mov	r4, r7
+ fc 22                 cmov.ult	r4, r2
+ ee 86 23              st8	[r3+3], r4
+ f5 28                 cmp	r6, r0
+ f1 20                 mov	r4, r0
+ fc 26                 cmov.ult	r4, r6
+ ed a6 22              ld8u	r5, [r3+2]
+ 31                    cmp	r4, r5
+ 09                    mov	r6, r5
+ fc 30                 cmov.ult	r6, r0
+ ee c6 20              st8	[r3+0], r6
+ 34                    cmp	r5, r4
+ fc 2c                 cmov.ult	r5, r4
+ f5 17                 cmp	r2, r7
+ 03                    mov	r4, r7
+ fc 22                 cmov.ult	r4, r2
+ 31                    cmp	r4, r5
+ 09                    mov	r6, r5
+ fc 37                 cmov.ult	r6, r7
+ 34                    cmp	r5, r4
+ fc 2c                 cmov.ult	r5, r4
+ ee a6 22              st8	[r3+2], r5
+ ee c6 21              st8	[r3+1], r6
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+ ed 86 20              ld8u	r4, [r3+0]
+ ed a4 1f              ld8u	r5, [r2-1]
+ 34                    cmp	r5, r4
+ d2 04                 brult8	0x4 <L26>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+<L26>:
+ ee a6 20              st8	[r3+0], r5
+ ee 84 1f              st8	[r2-1], r4
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+ ed 86 22              ld8u	r4, [r3+2]
+ ed a6 20              ld8u	r5, [r3+0]
+ 31                    cmp	r4, r5
+ 08                    mov	r6, r4
+ fc 35                 cmov.ult	r6, r5
+ ee c6 22              st8	[r3+2], r6
+ fc 65                 cmov.uge	r4, r5
+ ee 86 20              st8	[r3+0], r4
+ ed 86 21              ld8u	r4, [r3+1]
+ ed a4 1f              ld8u	r5, [r2-1]
+ 34                    cmp	r5, r4
+ 09                    mov	r6, r5
+ fc 34                 cmov.ult	r6, r4
+ ee c4 1f              st8	[r2-1], r6
+ fc 6c                 cmov.uge	r5, r4
+ ed 86 20              ld8u	r4, [r3+0]
+ 34                    cmp	r5, r4
+ 09                    mov	r6, r5
+ fc 34                 cmov.ult	r6, r4
+ ee c6 21              st8	[r3+1], r6
+ fc 6c                 cmov.uge	r5, r4
+ ee a6 20              st8	[r3+0], r5
+ ed 86 22              ld8u	r4, [r3+2]
+ ed a4 1f              ld8u	r5, [r2-1]
+ 34                    cmp	r5, r4
+ 09                    mov	r6, r5
+ fc 34                 cmov.ult	r6, r4
+ ee c4 1f              st8	[r2-1], r6
+ fc 6c                 cmov.uge	r5, r4
+ ed 86 21              ld8u	r4, [r3+1]
+ 34                    cmp	r5, r4
+ 09                    mov	r6, r5
+ fc 34                 cmov.ult	r6, r4
+ ee c6 22              st8	[r3+2], r6
+ fc 6c                 cmov.uge	r5, r4
+ ee a6 21              st8	[r3+1], r5
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+ f5 1a                 cmp	r3, r2
+ f8 06                 cset.eq	r6
+ f1 23                 mov	r4, r3
+ f4 ac                 inc16	r4
+ f5 22                 cmp	r4, r2
+ f8 05                 cset.eq	r5
+ 96                    or	r5, r6
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ c3 01                 ldi8	r7, 0x1
+ 8b                    and	r6, r7
+ 87                    and	r5, r7
+ f4 a6                 tst8	r6
+ d1 04                 brne8	0x4 <L27>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x457
+<L27>:
+ f4 a5                 tst8	r5
+ d0 04                 breq8	0x4 <L28>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+<L28>:
+ f1 2b                 mov	r6, r3
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x411
+ 0e                    mov	r7, r6
+ 5c                    st8	[r7], r4
+ f1 20                 mov	r4, r0
+ f4 ac                 inc16	r4
+ f5 22                 cmp	r4, r2
+ f1 28                 mov	r6, r0
+ d1 04                 brne8	0x4 <L29>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+<L29>:
+ f1 04                 mov	r0, r4
+ 46                    ld8u	r5, [r6]
+ ed 8c 21              ld8u	r4, [r6+1]
+ 31                    cmp	r4, r5
+ d2 04                 brult8	0x4 <L30>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x403
+<L30>:
+ ee ac 21              st8	[r6+1], r5
+ f5 2b                 cmp	r6, r3
+ f1 2f                 mov	r7, r3
+ d1 04                 brne8	0x4 <L31>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x402
+<L31>:
+ 0e                    mov	r7, r6
+ f4 b7                 dec16	r7
+ 47                    ld8u	r5, [r7]
+ 31                    cmp	r4, r5
+ d2 04                 brult8	0x4 <L32>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x401
+<L32>:
+ 59                    st8	[r6], r5
+ f5 2f                 cmp	r7, r3
+ 0b                    mov	r6, r7
+ d0 04                 breq8	0x4 <L33>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x42b
+<L33>:
+ f1 2f                 mov	r7, r3
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x402
+ f0 17 0a              leasp	r7, 0xa
+ f1 23                 mov	r4, r3
+ f1 26                 mov	r5, r2
+ f1 2a                 mov	r6, r2
+ e3 00 00 00           callf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	wchar_t* std::__1::__partial_sort_impl[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less&, wchar_t*, wchar_t*>(wchar_t*, wchar_t*, wchar_t*, std::__1::ranges::less&)
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+ f4 a5                 tst8	r5
+ d1 04                 brne8	0x4 <L34>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x474
+<L34>:
+ d6 0b                 adjsp	0xb
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+ f1 20                 mov	r4, r0
+ f4 ac                 inc16	r4
+ f5 22                 cmp	r4, r2
+ f1 18                 mov	r3, r0
+ d1 04                 brne8	0x4 <L35>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
+<L35>:
+ f1 04                 mov	r0, r4
+ ed c6 20              ld8u	r6, [r3+0]
+ ed 86 21              ld8u	r4, [r3+1]
+ 32                    cmp	r4, r6
+ d2 04                 brult8	0x4 <L36>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x466
+<L36>:
+ f1 2c                 mov	r7, r0
+ 07                    mov	r5, r7
+ f1 2f                 mov	r7, r3
+ 56                    st8	[r5], r6
+ f4 b3                 dec16	r3
+ ed c6 20              ld8u	r6, [r3+0]
+ 32                    cmp	r4, r6
+ d8 04                 bruge8	0x4 <L37>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x485
+<L37>:
+ 5c                    st8	[r7], r4
+ f1 20                 mov	r4, r0
+ f4 ac                 inc16	r4
+ f5 22                 cmp	r4, r2
+ f1 18                 mov	r3, r0
+ d0 04                 breq8	0x4 <L38>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x474
+<L38>:
+ e2 00 00 00           jmpf	_ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__111__introsortB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwLb1EEEvT1_S5_T0_NS_15iterator_traitsIS5_E15difference_typeEb+0x45f
 
 Disassembly of section .text._ZNSt3__16__sortIRNS_6__lessIaaEEPaEEvT0_S5_T_:
 
@@ -18465,6 +19219,2009 @@ Disassembly of section .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_
  e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPcS5_EET1_S6_S6_T2_OT0_
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPcS5_EET1_S6_S6_T2_OT0_+0x23c
+
+Disassembly of section .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_:
+
+<std::__1::pair<wchar_t*, bool> std::__1::__bitset_partition[abi:n240000in23]<std::__1::_ClassicAlgPolicy, wchar_t*, std::__1::ranges::less>(wchar_t*, wchar_t*, std::__1::ranges::less)>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 ce                 adjsp	-0x32
+ 48                    ld8u	r6, [r4]
+ ed ea 1f              ld8u	r7, [r5-1]
+ 3b                    cmp	r6, r7
+ f0 3c 2e              stsp16	[sp+0x2e], r4
+ 0c                    mov	r7, r4
+ d2 04                 brult8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x2c
+<L0>:
+ ed 8e 21              ld8u	r4, [r7+1]
+ f4 af                 inc16	r7
+ 38                    cmp	r6, r4
+ d2 04                 brult8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x15
+<L1>:
+ 3d                    cmp	r7, r5
+ d2 04                 brult8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x4e
+<L2>:
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x44
+ f4 af                 inc16	r7
+ 3d                    cmp	r7, r5
+ d2 04                 brult8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x3d
+<L3>:
+ 43                    ld8u	r4, [r7]
+ 38                    cmp	r6, r4
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x2c
+<L4>:
+ 3d                    cmp	r7, r5
+ d2 04                 brult8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x4e
+<L5>:
+ f4 b5                 dec16	r5
+ 41                    ld8u	r4, [r5]
+ 38                    cmp	r6, r4
+ d8 04                 bruge8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x44
+<L6>:
+ 3d                    cmp	r7, r5
+ f1 0f                 mov	r1, r7
+ d2 04                 brult8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x5f
+<L7>:
+ f5 3c                 ld8u	r0, [r7]
+ 41                    ld8u	r4, [r5]
+ f0 6d 83              st8	[r1+], r4
+ f3 04                 st8	[r5], r0
+ 01                    mov	r4, r5
+ f4 b4                 dec16	r4
+ f0 3c 12              stsp16	[sp+0x12], r4
+ f0 39 14              stsp16	[sp+0x14], r1
+ f2 51                 sub	r4, r1
+ cc 7f                 cmpi.s8	r4, 0x7f
+ f0 3e 10              stsp16	[sp+0x10], r6
+ f0 3d 30              stsp16	[sp+0x30], r5
+ f0 3f 2c              stsp16	[sp+0x2c], r7
+ d9 04                 brsge8	0x4 <L8>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x401
+<L8>:
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 59                 stsp16	[sp+0x6], r5
+ f0 3c 26              stsp16	[sp+0x26], r4
+ f0 3d 28              stsp16	[sp+0x28], r5
+ f2 66                 mov32	q1, q2
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0xf9
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 59                 stsp16	[sp+0x6], r5
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ f0 38 22              stsp16	[sp+0x22], r0
+ f0 39 24              stsp16	[sp+0x24], r1
+ f9 19                 or	r0, r6
+ f9 3d                 or	r1, r7
+ a0                    xor	r4, r4
+ c1 40                 ldi8	r5, 0x40
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 04              cmp32	q0, q1
+ 08                    mov	r6, r4
+ fb 35                 cmov.eq	r6, r5
+ f4 72                 stsp16	[sp+0xc], r6
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 1b                 ldsp16	r7, [sp+0x6]
+ f0 32 26              ldsp16	r2, [sp+0x26]
+ f0 33 28              ldsp16	r3, [sp+0x28]
+ f9 c9                 or	r6, r2
+ f9 ed                 or	r7, r3
+ c5 c0 ff              ldi16	r5, 0xffc0
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 c4              cmp32	q3, q1
+ fb 25                 cmov.eq	r4, r5
+ f0 35 12              ldsp16	r5, [sp+0x12]
+ 14                    add	r5, r4
+ f0 32 14              ldsp16	r2, [sp+0x14]
+ f4 30                 ldsp16	r4, [sp+0xc]
+ f2 14                 add	r2, r4
+ f0 3d 12              stsp16	[sp+0x12], r5
+ f0 3a 14              stsp16	[sp+0x14], r2
+ f2 56                 sub	r5, r2
+ f0 32 22              ldsp16	r2, [sp+0x22]
+ f0 33 24              ldsp16	r3, [sp+0x24]
+ cd 7f                 cmpi.s8	r5, 0x7f
+ d9 04                 brsge8	0x4 <L9>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x412
+<L9>:
+ f2 69                 mov32	q2, q1
+ f0 30 00              ldsp16	r0, [sp+0x0]
+ f0 31 02              ldsp16	r1, [sp+0x2]
+ f9 81                 or	r4, r0
+ f9 a5                 or	r5, r1
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ f2 6a                 mov32	q3, q0
+ d0 04                 breq8	0x4 <L10>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x152
+<L10>:
+ f2 30                 sub	r0, r0
+ f0 35 14              ldsp16	r5, [sp+0x14]
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f2 67                 mov32	q1, q3
+ f0 38 22              stsp16	[sp+0x22], r0
+ f7 0c                 ld8u	r4, [r5+]
+ f4 41                 stsp16	[sp+0x0], r5
+ f0 35 10              ldsp16	r5, [sp+0x10]
+ 31                    cmp	r4, r5
+ f8 1c                 cset.uge	r4
+ d6 fe                 adjsp	-0x2
+ f0 38 00              stsp16	[sp+0x0], r0
+ a5                    xor	r5, r5
+ f2 63                 mov32	q0, q3
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ e3 00 00 00           callf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_ashldi3
+ d6 02                 adjsp	0x2
+ f9 19                 or	r0, r6
+ f9 3d                 or	r1, r7
+ f2 6a                 mov32	q3, q0
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f9 51                 or	r2, r4
+ f9 75                 or	r3, r5
+ f4 01                 ldsp16	r5, [sp+0x0]
+ f4 a8                 inc16	r0
+ f0 0c 40              cmpi.s8	r0, 0x40
+ d0 04                 breq8	0x4 <L11>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x11b
+<L11>:
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ f0 3a 22              stsp16	[sp+0x22], r2
+ f0 3b 24              stsp16	[sp+0x24], r3
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 1b                 ldsp16	r7, [sp+0x6]
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
+ f0 32 26              ldsp16	r2, [sp+0x26]
+ f0 33 28              ldsp16	r3, [sp+0x28]
+ f9 89                 or	r4, r2
+ f9 ad                 or	r5, r3
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 80              cmp32	q2, q0
+ d0 04                 breq8	0x4 <L12>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x1b4
+<L12>:
+ f2 30                 sub	r0, r0
+ f0 31 12              ldsp16	r1, [sp+0x12]
+ 2a                    sub	r6, r6
+ 2f                    sub	r7, r7
+ f2 67                 mov32	q1, q3
+ f4 52                 stsp16	[sp+0x4], r6
+ f4 5b                 stsp16	[sp+0x6], r7
+ ed 82 20              ld8u	r4, [r1+0]
+ f0 35 10              ldsp16	r5, [sp+0x10]
+ 31                    cmp	r4, r5
+ f8 14                 cset.ult	r4
+ d6 fe                 adjsp	-0x2
+ f0 38 00              stsp16	[sp+0x0], r0
+ a5                    xor	r5, r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ e3 00 00 00           callf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_ashldi3
+ d6 02                 adjsp	0x2
+ f9 59                 or	r2, r6
+ f9 7d                 or	r3, r7
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 1b                 ldsp16	r7, [sp+0x6]
+ 98                    or	r6, r4
+ 9d                    or	r7, r5
+ f4 b1                 dec16	r1
+ f4 a8                 inc16	r0
+ f0 0c 40              cmpi.s8	r0, 0x40
+ d0 04                 breq8	0x4 <L13>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x182
+<L13>:
+ f4 52                 stsp16	[sp+0x4], r6
+ f4 5b                 stsp16	[sp+0x6], r7
+ f0 3a 26              stsp16	[sp+0x26], r2
+ f0 3b 28              stsp16	[sp+0x28], r3
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ f2 68                 mov32	q2, q0
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ 92                    or	r4, r6
+ 97                    or	r5, r7
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 84              cmp32	q2, q1
+ d1 04                 brne8	0x4 <L14>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x3f9
+<L14>:
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ f0 36 26              ldsp16	r6, [sp+0x26]
+ f0 37 28              ldsp16	r7, [sp+0x28]
+ 92                    or	r4, r6
+ 97                    or	r5, r7
+ f0 69 84              cmp32	q2, q1
+ d1 04                 brne8	0x4 <L15>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x3f5
+<L15>:
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f2 68                 mov32	q2, q0
+ 92                    or	r4, r6
+ 97                    or	r5, r7
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 84              cmp32	q2, q1
+ f0 02 40              ldi8	r2, 0x40
+ f1 22                 mov	r4, r2
+ f4 60                 stsp16	[sp+0x8], r4
+ f0 3a 0c              stsp16	[sp+0xc], r2
+ f0 3b 0e              stsp16	[sp+0xe], r3
+ f0 38 22              stsp16	[sp+0x22], r0
+ f0 39 24              stsp16	[sp+0x24], r1
+ d1 04                 brne8	0x4 <L16>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x28c
+<L16>:
+ f2 67                 mov32	q1, q3
+ a0                    xor	r4, r4
+ 0c                    mov	r7, r4
+ f2 5d                 sub	r7, r1
+ f9 e4                 and	r7, r1
+ f2 50                 sub	r4, r0
+ f9 80                 and	r4, r0
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 81                 addi.s8	r5, -0x7f
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ 03                    mov	r4, r7
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 28                 tst16	r0
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ fb 3d                 cmov.eq	r7, r5
+ f4 4b                 stsp16	[sp+0x2], r7
+ a0                    xor	r4, r4
+ 04                    mov	r5, r4
+ f2 57                 sub	r5, r3
+ f9 ac                 and	r5, r3
+ f4 71                 stsp16	[sp+0xc], r5
+ f2 52                 sub	r4, r2
+ f9 88                 and	r4, r2
+ ff 0d                 u16tof
+ 0d                    mov	r7, r5
+ fa a7                 lsr16i	r7, 0x7
+ cb 81                 addi.s8	r7, -0x7f
+ f4 30                 ldsp16	r4, [sp+0xc]
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 2a                 tst16	r2
+ fb 3d                 cmov.eq	r7, r5
+ 03                    mov	r4, r7
+ a5                    xor	r5, r5
+ c2 20                 ldi8	r6, 0x20
+ af                    xor	r7, r7
+ f7 6b                 add32	q2, q3
+ f4 70                 stsp16	[sp+0xc], r4
+ f4 79                 stsp16	[sp+0xe], r5
+ f2 6b                 mov32	q3, q1
+ f4 09                 ldsp16	r5, [sp+0x2]
+ 01                    mov	r4, r5
+ a5                    xor	r5, r5
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ f0 69 04              cmp32	q0, q1
+ f0 30 0c              ldsp16	r0, [sp+0xc]
+ f0 31 0e              ldsp16	r1, [sp+0xe]
+ fb 20                 cmov.eq	r4, r0
+ fb 29                 cmov.eq	r5, r1
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ f4 70                 stsp16	[sp+0xc], r4
+ f4 79                 stsp16	[sp+0xe], r5
+ f2 64                 mov32	q1, q0
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ f7 66                 add32	q1, q2
+ f0 3a 16              stsp16	[sp+0x16], r2
+ f0 3b 18              stsp16	[sp+0x18], r3
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f2 66                 mov32	q1, q2
+ f0 69 04              cmp32	q0, q1
+ f8 04                 cset.eq	r4
+ f2 63                 mov32	q0, q3
+ f7 72                 sub32	q0, q2
+ f0 38 1a              stsp16	[sp+0x1a], r0
+ f0 39 1c              stsp16	[sp+0x1c], r1
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ f9 81                 or	r4, r0
+ f9 a5                 or	r5, r1
+ f0 69 84              cmp32	q2, q1
+ d1 04                 brne8	0x4 <L17>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x34c
+<L17>:
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ f2 42                 sub	r2, r2
+ f1 2e                 mov	r7, r2
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ f0 31 06              ldsp16	r1, [sp+0x6]
+ f2 5d                 sub	r7, r1
+ f9 e4                 and	r7, r1
+ f1 22                 mov	r4, r2
+ f2 50                 sub	r4, r0
+ f9 80                 and	r4, r0
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 81                 addi.s8	r5, -0x7f
+ f4 60                 stsp16	[sp+0x8], r4
+ f4 69                 stsp16	[sp+0xa], r5
+ 03                    mov	r4, r7
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 28                 tst16	r0
+ f4 2b                 ldsp16	r7, [sp+0xa]
+ fb 3d                 cmov.eq	r7, r5
+ f4 6b                 stsp16	[sp+0xa], r7
+ f1 22                 mov	r4, r2
+ f1 04                 mov	r0, r4
+ f0 32 26              ldsp16	r2, [sp+0x26]
+ f0 33 28              ldsp16	r3, [sp+0x28]
+ f2 33                 sub	r0, r3
+ f9 0c                 and	r0, r3
+ f2 52                 sub	r4, r2
+ f9 88                 and	r4, r2
+ ff 0d                 u16tof
+ 0d                    mov	r7, r5
+ fa a7                 lsr16i	r7, 0x7
+ cb 81                 addi.s8	r7, -0x7f
+ f1 20                 mov	r4, r0
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 2a                 tst16	r2
+ fb 3d                 cmov.eq	r7, r5
+ 03                    mov	r4, r7
+ a5                    xor	r5, r5
+ c2 20                 ldi8	r6, 0x20
+ af                    xor	r7, r7
+ f7 6b                 add32	q2, q3
+ f0 3c 1e              stsp16	[sp+0x1e], r4
+ f0 3d 20              stsp16	[sp+0x20], r5
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f4 29                 ldsp16	r5, [sp+0xa]
+ 01                    mov	r4, r5
+ a5                    xor	r5, r5
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 32 04              ldsp16	r2, [sp+0x4]
+ f0 33 06              ldsp16	r3, [sp+0x6]
+ f0 69 40              cmp32	q1, q0
+ f0 30 1e              ldsp16	r0, [sp+0x1e]
+ f0 31 20              ldsp16	r1, [sp+0x20]
+ fb 20                 cmov.eq	r4, r0
+ fb 29                 cmov.eq	r5, r1
+ f4 60                 stsp16	[sp+0x8], r4
+ f4 69                 stsp16	[sp+0xa], r5
+ f0 34 16              ldsp16	r4, [sp+0x16]
+ f0 35 18              ldsp16	r5, [sp+0x18]
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ f9 10                 and	r0, r4
+ f9 34                 and	r1, r5
+ f0 38 22              stsp16	[sp+0x22], r0
+ f0 39 24              stsp16	[sp+0x24], r1
+ f0 34 1a              ldsp16	r4, [sp+0x1a]
+ f0 35 1c              ldsp16	r5, [sp+0x1c]
+ 88                    and	r6, r4
+ 8d                    and	r7, r5
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ f0 34 12              ldsp16	r4, [sp+0x12]
+ f0 32 08              ldsp16	r2, [sp+0x8]
+ f2 52                 sub	r4, r2
+ f0 35 14              ldsp16	r5, [sp+0x14]
+ f0 32 0c              ldsp16	r2, [sp+0xc]
+ f2 15                 add	r2, r5
+ ed a4 20              ld8u	r5, [r2+0]
+ 48                    ld8u	r6, [r4]
+ ee c4 20              st8	[r2+0], r6
+ 51                    st8	[r4], r5
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 1b                 ldsp16	r7, [sp+0x6]
+ f2 67                 mov32	q1, q3
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ f7 66                 add32	q1, q2
+ f9 58                 and	r2, r6
+ f9 7c                 and	r3, r7
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f0 69 c8              cmp32	q3, q2
+ f8 04                 cset.eq	r4
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ f2 6a                 mov32	q3, q0
+ f7 7e                 sub32	q3, q2
+ f9 18                 and	r0, r6
+ f9 3c                 and	r1, r7
+ f2 6b                 mov32	q3, q1
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
+ f0 38 26              stsp16	[sp+0x26], r0
+ f0 39 28              stsp16	[sp+0x28], r1
+ f9 81                 or	r4, r0
+ f9 a5                 or	r5, r1
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 80              cmp32	q2, q0
+ d1 04                 brne8	0x4 <L18>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x91
+<L18>:
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ f2 68                 mov32	q2, q0
+ f0 32 00              ldsp16	r2, [sp+0x0]
+ f0 33 02              ldsp16	r3, [sp+0x2]
+ f9 89                 or	r4, r2
+ f9 ad                 or	r5, r3
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 84              cmp32	q2, q1
+ f4 52                 stsp16	[sp+0x4], r6
+ f4 5b                 stsp16	[sp+0x6], r7
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ d0 04                 breq8	0x4 <L19>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x1f2
+<L19>:
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x9d
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x9d
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 02 01              ldi8	r2, 0x1
+ f0 38 04              stsp16	[sp+0x4], r0
+ f0 39 06              stsp16	[sp+0x6], r1
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x483
+ f0 38 0c              stsp16	[sp+0xc], r0
+ f0 39 0e              stsp16	[sp+0xe], r1
+ f0 3d 1e              stsp16	[sp+0x1e], r5
+ f2 69                 mov32	q2, q1
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ f0 31 06              ldsp16	r1, [sp+0x6]
+ f9 81                 or	r4, r0
+ f9 a5                 or	r5, r1
+ f0 30 00              ldsp16	r0, [sp+0x0]
+ f0 31 02              ldsp16	r1, [sp+0x2]
+ f0 32 26              ldsp16	r2, [sp+0x26]
+ f0 33 28              ldsp16	r3, [sp+0x28]
+ f9 09                 or	r0, r2
+ f9 2d                 or	r1, r3
+ f9 11                 or	r0, r4
+ f9 35                 or	r1, r5
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 c4              cmp32	q3, q1
+ f8 06                 cset.eq	r6
+ f4 62                 stsp16	[sp+0x8], r6
+ f0 69 04              cmp32	q0, q1
+ d1 04                 brne8	0x4 <L20>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x474
+<L20>:
+ f0 37 1e              ldsp16	r7, [sp+0x1e]
+ cb c1                 addi.s8	r7, -0x3f
+ f4 30                 ldsp16	r4, [sp+0xc]
+ f4 39                 ldsp16	r5, [sp+0xe]
+ f0 69 84              cmp32	q2, q1
+ c0 40                 ldi8	r4, 0x40
+ 04                    mov	r5, r4
+ f0 36 10              ldsp16	r6, [sp+0x10]
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ f0 32 08              ldsp16	r2, [sp+0x8]
+ d1 04                 brne8	0x4 <L21>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x48b
+<L21>:
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x517
+ f0 34 1e              ldsp16	r4, [sp+0x1e]
+ f0 36 10              ldsp16	r6, [sp+0x10]
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ f0 32 08              ldsp16	r2, [sp+0x8]
+ f4 ac                 inc16	r4
+ c1 02                 ldi8	r5, 0x2
+ 0c                    mov	r7, r4
+ ec bd                 sdiv16	r7, r5
+ 23                    sub	r4, r7
+ f0 3a 08              stsp16	[sp+0x8], r2
+ cf 01                 cmpi.s8	r7, 0x1
+ d9 04                 brsge8	0x4 <L22>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x502
+<L22>:
+ f0 3c 16              stsp16	[sp+0x16], r4
+ f0 38 26              stsp16	[sp+0x26], r0
+ f0 39 28              stsp16	[sp+0x28], r1
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ a5                    xor	r5, r5
+ f0 3f 1e              stsp16	[sp+0x1e], r7
+ f2 64                 mov32	q1, q0
+ f0 34 14              ldsp16	r4, [sp+0x14]
+ f0 3c 22              stsp16	[sp+0x22], r4
+ f4 73                 stsp16	[sp+0xc], r7
+ f4 41                 stsp16	[sp+0x0], r5
+ f0 37 22              ldsp16	r7, [sp+0x22]
+ f7 1c                 ld8u	r4, [r7+]
+ f0 3f 22              stsp16	[sp+0x22], r7
+ 32                    cmp	r4, r6
+ f8 1c                 cset.uge	r4
+ d6 fe                 adjsp	-0x2
+ f4 41                 stsp16	[sp+0x0], r5
+ a5                    xor	r5, r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ e3 00 00 00           callf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_ashldi3
+ d6 02                 adjsp	0x2
+ f9 59                 or	r2, r6
+ f9 7d                 or	r3, r7
+ f0 36 10              ldsp16	r6, [sp+0x10]
+ f9 11                 or	r0, r4
+ f9 35                 or	r1, r5
+ f4 33                 ldsp16	r7, [sp+0xc]
+ f4 01                 ldsp16	r5, [sp+0x0]
+ f4 ad                 inc16	r5
+ f4 b7                 dec16	r7
+ f6 2f                 tst16	r7
+ d0 04                 breq8	0x4 <L23>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x4af
+<L23>:
+ f0 3a 00              stsp16	[sp+0x0], r2
+ f0 3b 02              stsp16	[sp+0x2], r3
+ f0 38 22              stsp16	[sp+0x22], r0
+ f0 39 24              stsp16	[sp+0x24], r1
+ f0 35 1e              ldsp16	r5, [sp+0x1e]
+ f0 37 16              ldsp16	r7, [sp+0x16]
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x514
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 3a 22              stsp16	[sp+0x22], r2
+ f0 3b 24              stsp16	[sp+0x24], r3
+ f0 3a 00              stsp16	[sp+0x0], r2
+ f0 3b 02              stsp16	[sp+0x2], r3
+ 07                    mov	r5, r7
+ 0c                    mov	r7, r4
+ f0 32 08              ldsp16	r2, [sp+0x8]
+ f0 3d 2a              stsp16	[sp+0x2a], r5
+ f0 3f 1e              stsp16	[sp+0x1e], r7
+ f4 a2                 tst8	r2
+ d1 04                 brne8	0x4 <L24>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x57a
+<L24>:
+ f0 35 1e              ldsp16	r5, [sp+0x1e]
+ cd 01                 cmpi.s8	r5, 0x1
+ f2 64                 mov32	q1, q0
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ f0 31 06              ldsp16	r1, [sp+0x6]
+ d9 04                 brsge8	0x4 <L25>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x582
+<L25>:
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f2 64                 mov32	q1, q0
+ af                    xor	r7, r7
+ f0 34 12              ldsp16	r4, [sp+0x12]
+ f0 3c 26              stsp16	[sp+0x26], r4
+ f4 53                 stsp16	[sp+0x4], r7
+ 40                    ld8u	r4, [r4]
+ 32                    cmp	r4, r6
+ f8 14                 cset.ult	r4
+ d6 fe                 adjsp	-0x2
+ f4 43                 stsp16	[sp+0x0], r7
+ a5                    xor	r5, r5
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ e3 00 00 00           callf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_ashldi3
+ d6 02                 adjsp	0x2
+ f9 59                 or	r2, r6
+ f9 7d                 or	r3, r7
+ f4 13                 ldsp16	r7, [sp+0x4]
+ f0 36 10              ldsp16	r6, [sp+0x10]
+ f9 11                 or	r0, r4
+ f9 35                 or	r1, r5
+ f0 34 26              ldsp16	r4, [sp+0x26]
+ f0 35 1e              ldsp16	r5, [sp+0x1e]
+ f4 b4                 dec16	r4
+ f4 af                 inc16	r7
+ 3d                    cmp	r7, r5
+ d0 04                 breq8	0x4 <L26>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x542
+<L26>:
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x582
+ f2 64                 mov32	q1, q0
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ f0 31 06              ldsp16	r1, [sp+0x6]
+ f0 38 04              stsp16	[sp+0x4], r0
+ f0 39 06              stsp16	[sp+0x6], r1
+ f0 3a 26              stsp16	[sp+0x26], r2
+ f0 3b 28              stsp16	[sp+0x28], r3
+ f0 34 22              ldsp16	r4, [sp+0x22]
+ f0 35 24              ldsp16	r5, [sp+0x24]
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ 92                    or	r4, r6
+ 97                    or	r5, r7
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 80              cmp32	q2, q0
+ d1 04                 brne8	0x4 <L27>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x7a9
+<L27>:
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ f0 36 26              ldsp16	r6, [sp+0x26]
+ f0 37 28              ldsp16	r7, [sp+0x28]
+ 92                    or	r4, r6
+ 97                    or	r5, r7
+ f0 69 80              cmp32	q2, q0
+ d1 04                 brne8	0x4 <L28>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x79b
+<L28>:
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f0 34 22              ldsp16	r4, [sp+0x22]
+ f0 35 24              ldsp16	r5, [sp+0x24]
+ 92                    or	r4, r6
+ 97                    or	r5, r7
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 80              cmp32	q2, q0
+ c0 40                 ldi8	r4, 0x40
+ a5                    xor	r5, r5
+ f4 70                 stsp16	[sp+0xc], r4
+ f4 79                 stsp16	[sp+0xe], r5
+ d1 04                 brne8	0x4 <L29>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x64e
+<L29>:
+ f2 63                 mov32	q0, q3
+ a0                    xor	r4, r4
+ 08                    mov	r6, r4
+ f0 32 22              ldsp16	r2, [sp+0x22]
+ f0 33 24              ldsp16	r3, [sp+0x24]
+ f2 5b                 sub	r6, r3
+ f9 cc                 and	r6, r3
+ f2 52                 sub	r4, r2
+ f9 88                 and	r4, r2
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 81                 addi.s8	r5, -0x7f
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ 02                    mov	r4, r6
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 2a                 tst16	r2
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ fb 3d                 cmov.eq	r7, r5
+ f4 4b                 stsp16	[sp+0x2], r7
+ a0                    xor	r4, r4
+ f1 14                 mov	r2, r4
+ f2 41                 sub	r2, r1
+ f9 44                 and	r2, r1
+ f2 50                 sub	r4, r0
+ f9 80                 and	r4, r0
+ ff 0d                 u16tof
+ 0d                    mov	r7, r5
+ fa a7                 lsr16i	r7, 0x7
+ cb 81                 addi.s8	r7, -0x7f
+ f1 22                 mov	r4, r2
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 28                 tst16	r0
+ fb 3d                 cmov.eq	r7, r5
+ 03                    mov	r4, r7
+ a5                    xor	r5, r5
+ c2 20                 ldi8	r6, 0x20
+ af                    xor	r7, r7
+ f7 6b                 add32	q2, q3
+ f4 70                 stsp16	[sp+0xc], r4
+ f4 79                 stsp16	[sp+0xe], r5
+ f2 6a                 mov32	q3, q0
+ f4 09                 ldsp16	r5, [sp+0x2]
+ 01                    mov	r4, r5
+ a5                    xor	r5, r5
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 32 22              ldsp16	r2, [sp+0x22]
+ f0 69 40              cmp32	q1, q0
+ f0 30 0c              ldsp16	r0, [sp+0xc]
+ f0 31 0e              ldsp16	r1, [sp+0xe]
+ fb 20                 cmov.eq	r4, r0
+ fb 29                 cmov.eq	r5, r1
+ f4 70                 stsp16	[sp+0xc], r4
+ f4 79                 stsp16	[sp+0xe], r5
+ f0 32 22              ldsp16	r2, [sp+0x22]
+ f0 33 24              ldsp16	r3, [sp+0x24]
+ f2 61                 mov32	q0, q1
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ f7 62                 add32	q0, q2
+ f0 38 16              stsp16	[sp+0x16], r0
+ f0 39 18              stsp16	[sp+0x18], r1
+ f2 69                 mov32	q2, q1
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 84              cmp32	q2, q1
+ f8 04                 cset.eq	r4
+ a5                    xor	r5, r5
+ f2 63                 mov32	q0, q3
+ f7 72                 sub32	q0, q2
+ f0 38 1a              stsp16	[sp+0x1a], r0
+ f0 39 1c              stsp16	[sp+0x1c], r1
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ f9 81                 or	r4, r0
+ f9 a5                 or	r5, r1
+ f0 69 84              cmp32	q2, q1
+ c0 40                 ldi8	r4, 0x40
+ d1 04                 brne8	0x4 <L30>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x700
+<L30>:
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ af                    xor	r7, r7
+ 0b                    mov	r6, r7
+ f0 32 04              ldsp16	r2, [sp+0x4]
+ f0 33 06              ldsp16	r3, [sp+0x6]
+ f2 5b                 sub	r6, r3
+ f9 cc                 and	r6, r3
+ 03                    mov	r4, r7
+ f1 07                 mov	r0, r7
+ f2 52                 sub	r4, r2
+ f9 88                 and	r4, r2
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 81                 addi.s8	r5, -0x7f
+ f4 60                 stsp16	[sp+0x8], r4
+ f4 69                 stsp16	[sp+0xa], r5
+ 02                    mov	r4, r6
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 2a                 tst16	r2
+ f4 2b                 ldsp16	r7, [sp+0xa]
+ fb 3d                 cmov.eq	r7, r5
+ f4 6b                 stsp16	[sp+0xa], r7
+ f1 20                 mov	r4, r0
+ 04                    mov	r5, r4
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ f2 55                 sub	r5, r1
+ f9 a4                 and	r5, r1
+ f1 0d                 mov	r1, r5
+ f2 50                 sub	r4, r0
+ f9 80                 and	r4, r0
+ ff 0d                 u16tof
+ 0d                    mov	r7, r5
+ fa a7                 lsr16i	r7, 0x7
+ cb 81                 addi.s8	r7, -0x7f
+ f1 21                 mov	r4, r1
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c9 91                 addi.s8	r5, -0x6f
+ f6 28                 tst16	r0
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ fb 3d                 cmov.eq	r7, r5
+ 0b                    mov	r6, r7
+ af                    xor	r7, r7
+ c0 20                 ldi8	r4, 0x20
+ a5                    xor	r5, r5
+ f7 6e                 add32	q3, q2
+ f4 29                 ldsp16	r5, [sp+0xa]
+ 01                    mov	r4, r5
+ f0 69 40              cmp32	q1, q0
+ fb 26                 cmov.eq	r4, r6
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ f0 30 16              ldsp16	r0, [sp+0x16]
+ f0 31 18              ldsp16	r1, [sp+0x18]
+ f0 32 22              ldsp16	r2, [sp+0x22]
+ f0 33 24              ldsp16	r3, [sp+0x24]
+ f9 40                 and	r2, r0
+ f9 64                 and	r3, r1
+ f0 3a 22              stsp16	[sp+0x22], r2
+ f0 3b 24              stsp16	[sp+0x24], r3
+ f0 30 1a              ldsp16	r0, [sp+0x1a]
+ f0 31 1c              ldsp16	r1, [sp+0x1c]
+ f9 c0                 and	r6, r0
+ f9 e4                 and	r7, r1
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ f0 35 12              ldsp16	r5, [sp+0x12]
+ 24                    sub	r5, r4
+ f0 34 14              ldsp16	r4, [sp+0x14]
+ f0 30 0c              ldsp16	r0, [sp+0xc]
+ f2 04                 add	r0, r4
+ ed 80 20              ld8u	r4, [r0+0]
+ 49                    ld8u	r6, [r5]
+ ee c0 20              st8	[r0+0], r6
+ 54                    st8	[r5], r4
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 1b                 ldsp16	r7, [sp+0x6]
+ f2 63                 mov32	q0, q3
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ f7 62                 add32	q0, q2
+ f9 18                 and	r0, r6
+ f9 3c                 and	r1, r7
+ a0                    xor	r4, r4
+ a5                    xor	r5, r5
+ f0 69 c8              cmp32	q3, q2
+ f8 04                 cset.eq	r4
+ f0 32 26              ldsp16	r2, [sp+0x26]
+ f0 33 28              ldsp16	r3, [sp+0x28]
+ f2 6b                 mov32	q3, q1
+ f7 7e                 sub32	q3, q2
+ f9 58                 and	r2, r6
+ f9 7c                 and	r3, r7
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f2 68                 mov32	q2, q0
+ f0 3a 26              stsp16	[sp+0x26], r2
+ f0 3b 28              stsp16	[sp+0x28], r3
+ f9 89                 or	r4, r2
+ f9 ad                 or	r5, r3
+ f0 69 8c              cmp32	q2, q3
+ d1 04                 brne8	0x4 <L31>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x7a1
+<L31>:
+ f0 34 22              ldsp16	r4, [sp+0x22]
+ f0 35 24              ldsp16	r5, [sp+0x24]
+ f0 32 00              ldsp16	r2, [sp+0x0]
+ f0 33 02              ldsp16	r3, [sp+0x2]
+ f9 89                 or	r4, r2
+ f9 ad                 or	r5, r3
+ f0 69 8c              cmp32	q2, q3
+ f0 38 04              stsp16	[sp+0x4], r0
+ f0 39 06              stsp16	[sp+0x6], r1
+ f2 6b                 mov32	q3, q1
+ d0 04                 breq8	0x4 <L32>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x5c0
+<L32>:
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x7af
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ f0 31 06              ldsp16	r1, [sp+0x6]
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x7af
+ f0 30 04              ldsp16	r0, [sp+0x4]
+ f0 31 06              ldsp16	r1, [sp+0x6]
+ f0 38 0c              stsp16	[sp+0xc], r0
+ f0 39 0e              stsp16	[sp+0xe], r1
+ f2 64                 mov32	q1, q0
+ f0 34 26              ldsp16	r4, [sp+0x26]
+ f0 35 28              ldsp16	r5, [sp+0x28]
+ f9 51                 or	r2, r4
+ f9 75                 or	r3, r5
+ f0 3a 04              stsp16	[sp+0x4], r2
+ f0 3b 06              stsp16	[sp+0x6], r3
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 40              cmp32	q1, q0
+ 02                    mov	r4, r6
+ 07                    mov	r5, r7
+ f2 42                 sub	r2, r2
+ f1 2a                 mov	r6, r2
+ f0 37 1e              ldsp16	r7, [sp+0x1e]
+ fb 37                 cmov.eq	r6, r7
+ f0 33 12              ldsp16	r3, [sp+0x12]
+ f2 4e                 sub	r3, r6
+ f0 36 22              ldsp16	r6, [sp+0x22]
+ f0 37 24              ldsp16	r7, [sp+0x24]
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
+ 98                    or	r6, r4
+ 9d                    or	r7, r5
+ f0 69 c0              cmp32	q3, q0
+ f1 22                 mov	r4, r2
+ f0 35 2a              ldsp16	r5, [sp+0x2a]
+ fb 25                 cmov.eq	r4, r5
+ f0 35 14              ldsp16	r5, [sp+0x14]
+ 14                    add	r5, r4
+ f0 3d 14              stsp16	[sp+0x14], r5
+ f4 10                 ldsp16	r4, [sp+0x4]
+ f4 19                 ldsp16	r5, [sp+0x6]
+ f0 69 80              cmp32	q2, q0
+ f8 04                 cset.eq	r4
+ f0 69 c0              cmp32	q3, q0
+ d1 04                 brne8	0x4 <L33>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x8df
+<L33>:
+ f0 30 00              ldsp16	r0, [sp+0x0]
+ f0 31 02              ldsp16	r1, [sp+0x2]
+ f1 2b                 mov	r6, r3
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x836
+ f2 68                 mov32	q2, q0
+ f0 3c 22              stsp16	[sp+0x22], r4
+ f0 3d 24              stsp16	[sp+0x24], r5
+ f9 89                 or	r4, r2
+ f9 ad                 or	r5, r3
+ f4 b6                 dec16	r6
+ f2 61                 mov32	q0, q1
+ f2 42                 sub	r2, r2
+ f2 4b                 sub	r3, r3
+ f0 69 84              cmp32	q2, q1
+ d1 04                 brne8	0x4 <L34>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x9a1
+<L34>:
+ f0 38 00              stsp16	[sp+0x0], r0
+ f0 39 02              stsp16	[sp+0x2], r1
+ f4 52                 stsp16	[sp+0x4], r6
+ f1 21                 mov	r4, r1
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c3 8e                 ldi8	r7, 0x8e
+ 03                    mov	r4, r7
+ 21                    sub	r4, r5
+ f1 04                 mov	r0, r4
+ f4 00                 ldsp16	r4, [sp+0x0]
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c2 9e                 ldi8	r6, 0x9e
+ 02                    mov	r4, r6
+ 21                    sub	r4, r5
+ f1 19                 mov	r3, r1
+ f6 2b                 tst16	r3
+ f1 10                 mov	r2, r0
+ fb 14                 cmov.eq	r2, r4
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ f1 21                 mov	r4, r1
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ 2d                    sub	r7, r5
+ f1 20                 mov	r4, r0
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ 29                    sub	r6, r5
+ f6 29                 tst16	r1
+ fb 3e                 cmov.eq	r7, r6
+ 03                    mov	r4, r7
+ a5                    xor	r5, r5
+ c2 20                 ldi8	r6, 0x20
+ af                    xor	r7, r7
+ f7 6b                 add32	q2, q3
+ f1 2a                 mov	r6, r2
+ f0 32 00              ldsp16	r2, [sp+0x0]
+ f2 30                 sub	r0, r0
+ f2 39                 sub	r1, r1
+ f0 69 40              cmp32	q1, q0
+ fb 34                 cmov.eq	r6, r4
+ f0 00 3f              ldi8	r0, 0x3f
+ f9 1a                 xor	r0, r6
+ d6 fe                 adjsp	-0x2
+ f0 38 00              stsp16	[sp+0x0], r0
+ f0 34 16              ldsp16	r4, [sp+0x16]
+ f2 04                 add	r0, r4
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ f2 66                 mov32	q1, q2
+ f2 6b                 mov32	q3, q1
+ e3 00 00 00           callf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_ashldi3
+ d6 02                 adjsp	0x2
+ f9 ca                 xor	r6, r2
+ f9 ee                 xor	r7, r3
+ f0 32 00              ldsp16	r2, [sp+0x0]
+ f0 33 02              ldsp16	r3, [sp+0x2]
+ f9 58                 and	r2, r6
+ f9 7c                 and	r3, r7
+ f1 2c                 mov	r7, r0
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f0 04 ff ff           ldi16	r0, 0xffff
+ f0 05 ff ff           ldi16	r1, 0xffff
+ f9 82                 xor	r4, r0
+ f9 a6                 xor	r5, r1
+ f0 30 22              ldsp16	r0, [sp+0x22]
+ f0 31 24              ldsp16	r1, [sp+0x24]
+ f9 10                 and	r0, r4
+ f9 34                 and	r1, r5
+ 3b                    cmp	r6, r7
+ d1 04                 brne8	0x4 <L35>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x819
+<L35>:
+ 43                    ld8u	r4, [r7]
+ 46                    ld8u	r5, [r6]
+ 5d                    st8	[r7], r5
+ 58                    st8	[r6], r4
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x819
+ c1 01                 ldi8	r5, 0x1
+ 81                    and	r4, r5
+ f4 a4                 tst8	r4
+ d0 04                 breq8	0x4 <L36>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x99c
+<L36>:
+ f0 34 14              ldsp16	r4, [sp+0x14]
+ f4 50                 stsp16	[sp+0x4], r4
+ f0 30 26              ldsp16	r0, [sp+0x26]
+ f0 31 28              ldsp16	r1, [sp+0x28]
+ f0 3b 12              stsp16	[sp+0x12], r3
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x90f
+ f9 81                 or	r4, r0
+ f9 a5                 or	r5, r1
+ f4 ae                 inc16	r6
+ f4 52                 stsp16	[sp+0x4], r6
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 8c              cmp32	q2, q3
+ d1 04                 brne8	0x4 <L37>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x9a1
+<L37>:
+ f1 21                 mov	r4, r1
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c3 8e                 ldi8	r7, 0x8e
+ 0b                    mov	r6, r7
+ 29                    sub	r6, r5
+ f1 20                 mov	r4, r0
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c0 9e                 ldi8	r4, 0x9e
+ 21                    sub	r4, r5
+ f6 29                 tst16	r1
+ fb 34                 cmov.eq	r6, r4
+ f0 32 0c              ldsp16	r2, [sp+0xc]
+ f0 33 0e              ldsp16	r3, [sp+0xe]
+ f1 23                 mov	r4, r3
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ 2d                    sub	r7, r5
+ f1 22                 mov	r4, r2
+ ff 0d                 u16tof
+ fa 87                 lsr16i	r5, 0x7
+ c0 9e                 ldi8	r4, 0x9e
+ 21                    sub	r4, r5
+ f6 2b                 tst16	r3
+ fb 3c                 cmov.eq	r7, r4
+ 03                    mov	r4, r7
+ a5                    xor	r5, r5
+ f0 02 20              ldi8	r2, 0x20
+ f2 4b                 sub	r3, r3
+ f7 69                 add32	q2, q1
+ f1 16                 mov	r2, r6
+ aa                    xor	r6, r6
+ af                    xor	r7, r7
+ f0 69 0c              cmp32	q0, q3
+ fb 14                 cmov.eq	r2, r4
+ f0 37 12              ldsp16	r7, [sp+0x12]
+ d6 fe                 adjsp	-0x2
+ f0 3a 00              stsp16	[sp+0x0], r2
+ f2 17                 add	r2, r7
+ c4 ff ff              ldi16	r4, 0xffff
+ c5 ff ff              ldi16	r5, 0xffff
+ c6 ff ff              ldi16	r6, 0xffff
+ c7 ff 7f              ldi16	r7, 0x7fff
+ e3 00 00 00           callf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	__avm_lshrdi3
+ d6 02                 adjsp	0x2
+ f9 18                 and	r0, r6
+ f9 3c                 and	r1, r7
+ f4 32                 ldsp16	r6, [sp+0xc]
+ f4 3b                 ldsp16	r7, [sp+0xe]
+ 88                    and	r6, r4
+ 8d                    and	r7, r5
+ f4 72                 stsp16	[sp+0xc], r6
+ f4 7b                 stsp16	[sp+0xe], r7
+ f0 0a c1              addi.s8	r2, -0x3f
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f5 2a                 cmp	r6, r2
+ f4 30                 ldsp16	r4, [sp+0xc]
+ 07                    mov	r5, r7
+ d1 04                 brne8	0x4 <L38>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x8fc
+<L38>:
+ ed 84 20              ld8u	r4, [r2+0]
+ 46                    ld8u	r5, [r6]
+ ee a4 20              st8	[r2+0], r5
+ 58                    st8	[r6], r4
+ f4 30                 ldsp16	r4, [sp+0xc]
+ f4 39                 ldsp16	r5, [sp+0xe]
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x8fc
+ f0 34 14              ldsp16	r4, [sp+0x14]
+ f4 50                 stsp16	[sp+0x4], r4
+ f4 12                 ldsp16	r6, [sp+0x4]
+ f4 b6                 dec16	r6
+ f0 35 2e              ldsp16	r5, [sp+0x2e]
+ 36                    cmp	r5, r6
+ d1 04                 brne8	0x4 <L39>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_
+		R_AVM_FAR24	.text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPwNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_+0x9b1
+<L39>:
+ 42                    ld8u	r4, [r6]
+ 54                    st8	[r5], r4
+ f0 34 30              ldsp16	r4, [sp+0x30]
+ f0 35 2c              ldsp16	r5, [sp+0x2c]
+ 34                    cmp	r5, r4
+ c1 01                 ldi8	r5, 0x1
+ a0                    xor	r4, r4
+ fc 2c                 cmov.ult	r5, r4
+ f0 34 10              ldsp16	r4, [sp+0x10]
+ 58                    st8	[r6], r4
+ 02                    mov	r4, r6
+ d6 32                 adjsp	0x32
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+
+Disassembly of section .text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_:
+
+<bool std::__1::__insertion_sort_incomplete[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less, wchar_t*>(wchar_t*, wchar_t*, std::__1::ranges::less)>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ 09                    mov	r6, r5
+ 28                    sub	r6, r4
+ ce 03                 cmpi.s8	r6, 0x3
+ d3 04                 brslt8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x31
+<L0>:
+ ce 02                 cmpi.s8	r6, 0x2
+ d8 04                 bruge8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ec
+<L1>:
+ ce 02                 cmpi.s8	r6, 0x2
+ d0 04                 breq8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x112
+<L2>:
+ 48                    ld8u	r6, [r4]
+ ed ea 1f              ld8u	r7, [r5-1]
+ 3e                    cmp	r7, r6
+ d2 04                 brult8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ec
+<L3>:
+ 53                    st8	[r4], r7
+ ee ca 1f              st8	[r5-1], r6
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ec
+ ce 03                 cmpi.s8	r6, 0x3
+ d1 04                 brne8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0xdd
+<L4>:
+ ce 04                 cmpi.s8	r6, 0x4
+ d1 04                 brne8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x19e
+<L5>:
+ ce 05                 cmpi.s8	r6, 0x5
+ d0 04                 breq8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x112
+<L6>:
+ ed e8 21              ld8u	r7, [r4+1]
+ f5 30                 ld8u	r0, [r4]
+ f5 2c                 cmp	r7, r0
+ 0b                    mov	r6, r7
+ fc 30                 cmov.ult	r6, r0
+ ee c8 21              st8	[r4+1], r6
+ fc 78                 cmov.uge	r7, r0
+ 53                    st8	[r4], r7
+ ed 08 23              ld8u	r0, [r4+3]
+ ed ca 1f              ld8u	r6, [r5-1]
+ f5 28                 cmp	r6, r0
+ 0e                    mov	r7, r6
+ fc 38                 cmov.ult	r7, r0
+ ee ea 1f              st8	[r5-1], r7
+ fc 70                 cmov.uge	r6, r0
+ ee c8 23              st8	[r4+3], r6
+ ed e8 22              ld8u	r7, [r4+2]
+ ed 0a 1f              ld8u	r0, [r5-1]
+ f5 2c                 cmp	r7, r0
+ 0b                    mov	r6, r7
+ fc 30                 cmov.ult	r6, r0
+ ee ca 1f              st8	[r5-1], r6
+ fc 78                 cmov.uge	r7, r0
+ ed c8 23              ld8u	r6, [r4+3]
+ ed 08 22              ld8u	r0, [r4+2]
+ 3e                    cmp	r7, r6
+ f1 0e                 mov	r1, r6
+ fc 08                 cmov.ult	r1, r0
+ 3b                    cmp	r6, r7
+ fc 37                 cmov.ult	r6, r7
+ ee c8 23              st8	[r4+3], r6
+ ee 28 22              st8	[r4+2], r1
+ ed e8 21              ld8u	r7, [r4+1]
+ ed 0a 1f              ld8u	r0, [r5-1]
+ f5 07                 cmp	r0, r7
+ f1 28                 mov	r6, r0
+ fc 37                 cmov.ult	r6, r7
+ ee ca 1f              st8	[r5-1], r6
+ fc 47                 cmov.uge	r0, r7
+ f5 32                 ld8u	r2, [r4]
+ ed 28 23              ld8u	r1, [r4+3]
+ f5 11                 cmp	r2, r1
+ f1 1a                 mov	r3, r2
+ fc 19                 cmov.ult	r3, r1
+ f5 03                 cmp	r0, r3
+ f1 2c                 mov	r7, r0
+ fc 3b                 cmov.ult	r7, r3
+ ee e8 23              st8	[r4+3], r7
+ f5 0a                 cmp	r1, r2
+ f1 2a                 mov	r6, r2
+ fc 31                 cmov.ult	r6, r1
+ ed a8 22              ld8u	r5, [r4+2]
+ 39                    cmp	r6, r5
+ 0d                    mov	r7, r5
+ fc 3a                 cmov.ult	r7, r2
+ 53                    st8	[r4], r7
+ 36                    cmp	r5, r6
+ fc 2e                 cmov.ult	r5, r6
+ f5 18                 cmp	r3, r0
+ f1 28                 mov	r6, r0
+ fc 33                 cmov.ult	r6, r3
+ 39                    cmp	r6, r5
+ 0d                    mov	r7, r5
+ fc 38                 cmov.ult	r7, r0
+ 36                    cmp	r5, r6
+ fc 2e                 cmov.ult	r5, r6
+ ee a8 22              st8	[r4+2], r5
+ ee e8 21              st8	[r4+1], r7
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ec
+ ed ea 1f              ld8u	r7, [r5-1]
+ ed 08 21              ld8u	r0, [r4+1]
+ f5 2c                 cmp	r7, r0
+ 0b                    mov	r6, r7
+ fc 30                 cmov.ult	r6, r0
+ ee ca 1f              st8	[r5-1], r6
+ fc 78                 cmov.uge	r7, r0
+ ee e8 21              st8	[r4+1], r7
+ 4c                    ld8u	r7, [r4]
+ ed 0a 1f              ld8u	r0, [r5-1]
+ f5 2c                 cmp	r7, r0
+ 0b                    mov	r6, r7
+ fc 30                 cmov.ult	r6, r0
+ ee ca 1f              st8	[r5-1], r6
+ fc 78                 cmov.uge	r7, r0
+ ed a8 21              ld8u	r5, [r4+1]
+ f5 30                 ld8u	r0, [r4]
+ 3d                    cmp	r7, r5
+ 09                    mov	r6, r5
+ fc 30                 cmov.ult	r6, r0
+ 37                    cmp	r5, r7
+ fc 2f                 cmov.ult	r5, r7
+ ee a8 21              st8	[r4+1], r5
+ 52                    st8	[r4], r6
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ec
+ ed c8 22              ld8u	r6, [r4+2]
+ ed 08 21              ld8u	r0, [r4+1]
+ f5 06                 cmp	r0, r6
+ f1 0e                 mov	r1, r6
+ fc 08                 cmov.ult	r1, r0
+ f5 28                 cmp	r6, r0
+ fc 30                 cmov.ult	r6, r0
+ 4c                    ld8u	r7, [r4]
+ 3b                    cmp	r6, r7
+ f1 07                 mov	r0, r7
+ fc 06                 cmov.ult	r0, r6
+ f5 2d                 cmp	r7, r1
+ fc 01                 cmov.ult	r0, r1
+ fc 0f                 cmov.ult	r1, r7
+ 3e                    cmp	r7, r6
+ fc 3e                 cmov.ult	r7, r6
+ ee e8 22              st8	[r4+2], r7
+ f3 01                 st8	[r4], r1
+ ee 08 21              st8	[r4+1], r0
+ f1 0c                 mov	r1, r4
+ f0 09 03              addi.s8	r1, 0x3
+ f5 0d                 cmp	r1, r5
+ d1 04                 brne8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ec
+<L7>:
+ f1 1c                 mov	r3, r4
+ f0 0b 02              addi.s8	r3, 0x2
+ f2 30                 sub	r0, r0
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x170
+ f1 1c                 mov	r3, r4
+ ee 46 20              st8	[r3+0], r2
+ f4 a8                 inc16	r0
+ f0 0c 08              cmpi.s8	r0, 0x8
+ d1 04                 brne8	0x4 <L8>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1f3
+<L8>:
+ f1 29                 mov	r6, r1
+ f4 ae                 inc16	r6
+ 39                    cmp	r6, r5
+ f1 19                 mov	r3, r1
+ f1 0e                 mov	r1, r6
+ d1 04                 brne8	0x4 <L9>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ec
+<L9>:
+ ed c6 20              ld8u	r6, [r3+0]
+ ed 42 20              ld8u	r2, [r1+0]
+ f5 16                 cmp	r2, r6
+ d2 04                 brult8	0x4 <L10>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x161
+<L10>:
+ ee c2 20              st8	[r1+0], r6
+ f1 2b                 mov	r6, r3
+ f4 b6                 dec16	r6
+ 4e                    ld8u	r7, [r6]
+ f5 17                 cmp	r2, r7
+ d2 04                 brult8	0x4 <L11>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x153
+<L11>:
+ ee e6 20              st8	[r3+0], r7
+ 38                    cmp	r6, r4
+ f1 1e                 mov	r3, r6
+ d0 04                 breq8	0x4 <L12>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x183
+<L12>:
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x151
+ ed e8 22              ld8u	r7, [r4+2]
+ f5 30                 ld8u	r0, [r4]
+ f5 2c                 cmp	r7, r0
+ 0b                    mov	r6, r7
+ fc 30                 cmov.ult	r6, r0
+ ee c8 22              st8	[r4+2], r6
+ fc 78                 cmov.uge	r7, r0
+ 53                    st8	[r4], r7
+ ed 08 21              ld8u	r0, [r4+1]
+ ed 2a 1f              ld8u	r1, [r5-1]
+ f5 08                 cmp	r1, r0
+ f1 2d                 mov	r7, r1
+ fc 38                 cmov.ult	r7, r0
+ ee ea 1f              st8	[r5-1], r7
+ fc 48                 cmov.uge	r1, r0
+ 4c                    ld8u	r7, [r4]
+ f5 0f                 cmp	r1, r7
+ f1 29                 mov	r6, r1
+ fc 37                 cmov.ult	r6, r7
+ ee c8 21              st8	[r4+1], r6
+ fc 4f                 cmov.uge	r1, r7
+ f3 01                 st8	[r4], r1
+ ed 08 22              ld8u	r0, [r4+2]
+ ed ca 1f              ld8u	r6, [r5-1]
+ f5 28                 cmp	r6, r0
+ 0e                    mov	r7, r6
+ fc 38                 cmov.ult	r7, r0
+ ee ea 1f              st8	[r5-1], r7
+ fc 70                 cmov.uge	r6, r0
+ ed a8 21              ld8u	r5, [r4+1]
+ 39                    cmp	r6, r5
+ 0e                    mov	r7, r6
+ fc 3d                 cmov.ult	r7, r5
+ ee e8 22              st8	[r4+2], r7
+ fc 75                 cmov.uge	r6, r5
+ ee c8 21              st8	[r4+1], r6
+ c0 01                 ldi8	r4, 0x1
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+ f4 a9                 inc16	r1
+ f5 0d                 cmp	r1, r5
+ f8 04                 cset.eq	r4
+ e2 00 00 00           jmpf	_ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__127__insertion_sort_incompleteB11n240000in23INS_17_ClassicAlgPolicyENS_6ranges4lessEPwEEbT1_S5_T0_+0x1ee
+
+Disassembly of section .text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_:
+
+<wchar_t* std::__1::__partial_sort_impl[abi:n240000in23]<std::__1::_ClassicAlgPolicy, std::__1::ranges::less&, wchar_t*, wchar_t*>(wchar_t*, wchar_t*, wchar_t*, std::__1::ranges::less&)>:
+ b3                    push16	r3
+ b2                    push16	r2
+ b1                    push16	r1
+ b0                    push16	r0
+ d6 f6                 adjsp	-0xa
+ 31                    cmp	r4, r5
+ d1 04                 brne8	0x4 <L0>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x20e
+<L0>:
+ f4 4a                 stsp16	[sp+0x2], r6
+ 09                    mov	r6, r5
+ f4 58                 stsp16	[sp+0x6], r4
+ 28                    sub	r6, r4
+ f4 62                 stsp16	[sp+0x8], r6
+ ce 02                 cmpi.s8	r6, 0x2
+ f4 51                 stsp16	[sp+0x4], r5
+ d9 04                 brsge8	0x4 <L1>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x7a
+<L1>:
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f1 0c                 mov	r1, r4
+ c1 01                 ldi8	r5, 0x1
+ f9 34                 and	r1, r5
+ f2 0c                 add	r1, r4
+ f4 b1                 dec16	r1
+ f0 0d 01              cmpi.s8	r1, 0x1
+ f4 18                 ldsp16	r4, [sp+0x6]
+ d9 04                 brsge8	0x4 <L2>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x3f
+<L2>:
+ f0 0d 01              cmpi.s8	r1, 0x1
+ d0 04                 breq8	0x4 <L3>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x216
+<L3>:
+ f4 11                 ldsp16	r5, [sp+0x4]
+ f1 0d                 mov	r1, r5
+ f4 b1                 dec16	r1
+ ed 02 20              ld8u	r0, [r1+0]
+ f4 22                 ldsp16	r6, [sp+0x8]
+ ca fe                 addi.s8	r6, -0x2
+ f4 8e                 lsr16.1	r6
+ 12                    add	r4, r6
+ 4c                    ld8u	r7, [r4]
+ f5 2c                 cmp	r7, r0
+ d2 04                 brult8	0x4 <L4>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x7a
+<L4>:
+ f1 14                 mov	r2, r4
+ ee e2 20              st8	[r1+0], r7
+ f6 2e                 tst16	r6
+ d1 04                 brne8	0x4 <L5>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x77
+<L5>:
+ f4 b6                 dec16	r6
+ f4 8e                 lsr16.1	r6
+ f4 18                 ldsp16	r4, [sp+0x6]
+ 12                    add	r4, r6
+ 4c                    ld8u	r7, [r4]
+ f5 2c                 cmp	r7, r0
+ f1 0a                 mov	r1, r2
+ d8 04                 bruge8	0x4 <L6>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x58
+<L6>:
+ ee 04 20              st8	[r2+0], r0
+ f4 08                 ldsp16	r4, [sp+0x2]
+ 34                    cmp	r5, r4
+ f4 18                 ldsp16	r4, [sp+0x6]
+ f4 23                 ldsp16	r7, [sp+0x8]
+ d1 04                 brne8	0x4 <L7>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x138
+<L7>:
+ f1 1f                 mov	r3, r7
+ f0 0b fe              addi.s8	r3, -0x2
+ f4 8b                 lsr16.1	r3
+ f4 11                 ldsp16	r5, [sp+0x4]
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0xa4
+ 18                    add	r6, r4
+ f3 08                 st8	[r6], r0
+ f4 01                 ldsp16	r5, [sp+0x0]
+ f4 ad                 inc16	r5
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ 36                    cmp	r5, r6
+ d1 04                 brne8	0x4 <L8>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x138
+<L8>:
+ 48                    ld8u	r6, [r4]
+ f5 34                 ld8u	r0, [r5]
+ f5 06                 cmp	r0, r6
+ d2 04                 brult8	0x4 <L9>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x99
+<L9>:
+ 56                    st8	[r5], r6
+ f3 00                 st8	[r4], r0
+ cf 02                 cmpi.s8	r7, 0x2
+ d9 04                 brsge8	0x4 <L10>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x99
+<L10>:
+ f4 41                 stsp16	[sp+0x0], r5
+ ed a8 21              ld8u	r5, [r4+1]
+ cf 02                 cmpi.s8	r7, 0x2
+ d0 04                 breq8	0x4 <L11>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0xd0
+<L11>:
+ f1 0d                 mov	r1, r5
+ f0 02 01              ldi8	r2, 0x1
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0xe0
+ ed 28 22              ld8u	r1, [r4+2]
+ f0 02 01              ldi8	r2, 0x1
+ c0 02                 ldi8	r4, 0x2
+ f5 25                 cmp	r5, r1
+ fc 14                 cmov.ult	r2, r4
+ f5 0d                 cmp	r1, r5
+ fc 0d                 cmov.ult	r1, r5
+ f1 21                 mov	r4, r1
+ f1 74                 zext8	r4
+ f5 20                 cmp	r4, r0
+ f4 18                 ldsp16	r4, [sp+0x6]
+ f4 01                 ldsp16	r5, [sp+0x0]
+ d8 04                 bruge8	0x4 <L12>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x99
+<L12>:
+ a5                    xor	r5, r5
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x112
+ 11                    add	r4, r5
+ f5 31                 ld8u	r1, [r4]
+ 43                    ld8u	r4, [r7]
+ f5 21                 cmp	r4, r1
+ fc 15                 cmov.ult	r2, r5
+ f5 0c                 cmp	r1, r4
+ fc 0c                 cmov.ult	r1, r4
+ f1 21                 mov	r4, r1
+ f1 74                 zext8	r4
+ f5 20                 cmp	r4, r0
+ 06                    mov	r5, r6
+ f4 18                 ldsp16	r4, [sp+0x6]
+ f4 23                 ldsp16	r7, [sp+0x8]
+ d8 04                 bruge8	0x4 <L13>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x94
+<L13>:
+ f1 2a                 mov	r6, r2
+ 14                    add	r5, r4
+ f3 05                 st8	[r5], r1
+ f5 1e                 cmp	r3, r6
+ d9 04                 brsge8	0x4 <L14>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x94
+<L14>:
+ 06                    mov	r5, r6
+ 15                    add	r5, r5
+ f0 02 01              ldi8	r2, 0x1
+ f9 55                 or	r2, r5
+ c9 02                 addi.s8	r5, 0x2
+ 37                    cmp	r5, r7
+ 0c                    mov	r7, r4
+ f2 2e                 add	r7, r2
+ d9 04                 brsge8	0x4 <L15>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0xf5
+<L15>:
+ f5 3d                 ld8u	r1, [r7]
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x101
+ cf 02                 cmpi.s8	r7, 0x2
+ d9 04                 brsge8	0x4 <L16>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x207
+<L16>:
+ f4 41                 stsp16	[sp+0x0], r5
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x15a
+ f4 08                 ldsp16	r4, [sp+0x2]
+ 54                    st8	[r5], r4
+ f4 18                 ldsp16	r4, [sp+0x6]
+ f0 3b 04              stsp16	[sp+0x4], r3
+ f4 23                 ldsp16	r7, [sp+0x8]
+ cf 03                 cmpi.s8	r7, 0x3
+ f4 b7                 dec16	r7
+ d9 04                 brsge8	0x4 <L17>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x20c
+<L17>:
+ 44                    ld8u	r5, [r4]
+ f4 49                 stsp16	[sp+0x2], r5
+ f4 63                 stsp16	[sp+0x8], r7
+ f1 17                 mov	r2, r7
+ f0 0a fe              addi.s8	r2, -0x2
+ f4 8a                 lsr16.1	r2
+ 04                    mov	r5, r4
+ af                    xor	r7, r7
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x17a
+ f1 2d                 mov	r7, r1
+ 41                    ld8u	r4, [r5]
+ ee 80 20              st8	[r0+0], r4
+ f5 17                 cmp	r2, r7
+ d9 04                 brsge8	0x4 <L18>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x1ac
+<L18>:
+ f1 05                 mov	r0, r5
+ 09                    mov	r6, r5
+ 1b                    add	r6, r7
+ 1f                    add	r7, r7
+ f0 01 01              ldi8	r1, 0x1
+ f9 3d                 or	r1, r7
+ 06                    mov	r5, r6
+ f4 ad                 inc16	r5
+ f1 1f                 mov	r3, r7
+ f0 0b 02              addi.s8	r3, 0x2
+ f4 20                 ldsp16	r4, [sp+0x8]
+ f5 1c                 cmp	r3, r4
+ d3 04                 brslt8	0x4 <L19>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x16c
+<L19>:
+ ed 8c 22              ld8u	r4, [r6+2]
+ 4d                    ld8u	r7, [r5]
+ 3c                    cmp	r7, r4
+ f1 2d                 mov	r7, r1
+ d2 04                 brult8	0x4 <L20>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x16e
+<L20>:
+ ca 02                 addi.s8	r6, 0x2
+ 06                    mov	r5, r6
+ f1 2f                 mov	r7, r3
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x16e
+ f0 33 04              ldsp16	r3, [sp+0x4]
+ f4 b3                 dec16	r3
+ f5 27                 cmp	r5, r3
+ d1 04                 brne8	0x4 <L21>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x146
+<L21>:
+ ed 86 20              ld8u	r4, [r3+0]
+ 54                    st8	[r5], r4
+ f4 08                 ldsp16	r4, [sp+0x2]
+ ee 86 20              st8	[r3+0], r4
+ 0d                    mov	r7, r5
+ f4 18                 ldsp16	r4, [sp+0x6]
+ 2c                    sub	r7, r4
+ f4 af                 inc16	r7
+ cf 02                 cmpi.s8	r7, 0x2
+ d9 04                 brsge8	0x4 <L22>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x14b
+<L22>:
+ cb fe                 addi.s8	r7, -0x2
+ f4 8f                 lsr16.1	r7
+ 08                    mov	r6, r4
+ 1b                    add	r6, r7
+ f5 3a                 ld8u	r2, [r6]
+ f5 35                 ld8u	r1, [r5]
+ f5 11                 cmp	r2, r1
+ d2 04                 brult8	0x4 <L23>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x14b
+<L23>:
+ f1 06                 mov	r0, r6
+ f3 06                 st8	[r5], r2
+ f6 2f                 tst16	r7
+ d1 04                 brne8	0x4 <L24>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x200
+<L24>:
+ f4 b7                 dec16	r7
+ f4 8f                 lsr16.1	r7
+ 08                    mov	r6, r4
+ 1b                    add	r6, r7
+ f5 3a                 ld8u	r2, [r6]
+ f5 11                 cmp	r2, r1
+ f1 24                 mov	r5, r0
+ d8 04                 bruge8	0x4 <L25>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x1e2
+<L25>:
+ ee 20 20              st8	[r0+0], r1
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x14b
+ 09                    mov	r6, r5
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x20e
+ f4 02                 ldsp16	r6, [sp+0x0]
+ 02                    mov	r4, r6
+ d6 0a                 adjsp	0xa
+ b8                    pop16	r0
+ b9                    pop16	r1
+ ba                    pop16	r2
+ bb                    pop16	r3
+ ef                    ret
+ f0 09 fe              addi.s8	r1, -0x2
+ f4 89                 lsr16.1	r1
+ f1 11                 mov	r2, r1
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x22f
+ 1c                    add	r7, r4
+ f3 0f                 st8	[r7], r3
+ f0 0e 01              cmpi.s8	r2, 0x1
+ f4 b2                 dec16	r2
+ d9 04                 brsge8	0x4 <L26>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x3f
+<L26>:
+ f1 2a                 mov	r6, r2
+ 1a                    add	r6, r6
+ 04                    mov	r5, r4
+ 16                    add	r5, r6
+ c3 01                 ldi8	r7, 0x1
+ 9b                    or	r6, r7
+ ed aa 22              ld8u	r5, [r5+2]
+ 0c                    mov	r7, r4
+ 1e                    add	r7, r6
+ 4f                    ld8u	r7, [r7]
+ 3d                    cmp	r7, r5
+ f8 15                 cset.ult	r5
+ 16                    add	r5, r6
+ 08                    mov	r6, r4
+ f2 2a                 add	r6, r2
+ 0c                    mov	r7, r4
+ 1d                    add	r7, r5
+ f5 3c                 ld8u	r0, [r7]
+ f5 3b                 ld8u	r3, [r6]
+ f5 03                 cmp	r0, r3
+ d8 04                 bruge8	0x4 <L27>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x224
+<L27>:
+ f1 2a                 mov	r6, r2
+ 0d                    mov	r7, r5
+ 18                    add	r6, r4
+ f3 08                 st8	[r6], r0
+ f5 0f                 cmp	r1, r7
+ d9 04                 brsge8	0x4 <L28>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x221
+<L28>:
+ 0b                    mov	r6, r7
+ 1a                    add	r6, r6
+ 04                    mov	r5, r4
+ 16                    add	r5, r6
+ c0 01                 ldi8	r4, 0x1
+ 98                    or	r6, r4
+ ed aa 22              ld8u	r5, [r5+2]
+ f4 18                 ldsp16	r4, [sp+0x6]
+ 12                    add	r4, r6
+ 40                    ld8u	r4, [r4]
+ 31                    cmp	r4, r5
+ f8 15                 cset.ult	r5
+ 16                    add	r5, r6
+ f4 18                 ldsp16	r4, [sp+0x6]
+ 11                    add	r4, r5
+ f5 30                 ld8u	r0, [r4]
+ f4 18                 ldsp16	r4, [sp+0x6]
+ f5 03                 cmp	r0, r3
+ 0b                    mov	r6, r7
+ d2 04                 brult8	0x4 <L29>
+		R_AVM_RELAX	*ABS*
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x254
+<L29>:
+ e2 00 00 00           jmpf	_ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text._ZNSt3__119__partial_sort_implB11n240000in23INS_17_ClassicAlgPolicyERNS_6ranges4lessEPwS5_EET1_S6_S6_T2_OT0_+0x221
 
 Disassembly of section .text._ZNSt3__118__bitset_partitionB11n240000in23INS_17_ClassicAlgPolicyEPaNS_6ranges4lessEEENS_4pairIT0_bEES6_S6_T1_:
 

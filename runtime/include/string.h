@@ -46,74 +46,29 @@ char* strndup(const char* s, size_t n);
 #ifdef __cplusplus
 } // extern "C"
 
-// The overloads have C++ linkage for overload resolution, but bind to the
-// existing C ABI entry points when used as function pointers.
-void* memcpy(void*, const void AVM_PROGMEM*, size_t) __asm__("memcpy_P");
-int memcmp(const void*, const void AVM_PROGMEM*, size_t) __asm__("memcmp_P");
-int strcmp(const char*, const char AVM_PROGMEM*) __asm__("strcmp_P");
-size_t strlen(const char AVM_PROGMEM*) __asm__("strlen_P");
-char* strncpy(char*, const char AVM_PROGMEM*, size_t) __asm__("strncpy_P");
-char* strncat(char*, const char AVM_PROGMEM*, size_t) __asm__("strncat_P");
-char* strcpy(char*, const char AVM_PROGMEM*) __asm__("strcpy_P");
-char* strcat(char*, const char AVM_PROGMEM*) __asm__("strcat_P");
-const void AVM_PROGMEM* memchr(const void AVM_PROGMEM*, int, size_t) __asm__("memchr_P");
-const char AVM_PROGMEM* strchr(const char AVM_PROGMEM*, int) __asm__("strchr_P");
-const char AVM_PROGMEM* strrchr(const char AVM_PROGMEM*, int) __asm__("strrchr_P");
-size_t strnlen(const char AVM_PROGMEM*, size_t) __asm__("strnlen_P");
-int strncmp(const char*, const char AVM_PROGMEM*, size_t) __asm__("strncmp_P");
-char* strstr(const char*, const char AVM_PROGMEM*) __asm__("strstr_P");
-char* strpbrk(const char*, const char AVM_PROGMEM*) __asm__("strpbrk_P");
-size_t strspn(const char*, const char AVM_PROGMEM*) __asm__("strspn_P");
-size_t strcspn(const char*, const char AVM_PROGMEM*) __asm__("strcspn_P");
-char* strtok(char*, const char AVM_PROGMEM*) __asm__("strtok_P");
-char* strtok_r(char*, const char AVM_PROGMEM*, char**) __asm__("strtok_rP");
-
-// Direct call syntax keeps the system-service path at all optimization levels.
+// Direct RAM calls use the system-service path; program-memory inputs use the
+// explicit *_P interfaces declared in <avm/pgmspace.h>.
 static __attribute__((always_inline)) inline void* __avm_cpp_memcpy(void* d, const void* s, size_t n) {
     return __avm_memcpy(d, s, n);
-}
-static __attribute__((always_inline)) inline void* __avm_cpp_memcpy(
-    void* d, const void AVM_PROGMEM* s, size_t n) {
-    return __avm_memcpy_P(d, s, n);
 }
 static __attribute__((always_inline)) inline int __avm_cpp_memcmp(const void* a, const void* b, size_t n) {
     return __avm_memcmp(a, b, n);
 }
-static __attribute__((always_inline)) inline int __avm_cpp_memcmp(
-    const void* a, const void AVM_PROGMEM* b, size_t n) {
-    return __avm_memcmp_P(a, b, n);
-}
 static __attribute__((always_inline)) inline int __avm_cpp_strcmp(const char* a, const char* b) {
     return __avm_strcmp(a, b);
-}
-static __attribute__((always_inline)) inline int __avm_cpp_strcmp(
-    const char* a, const char AVM_PROGMEM* b) {
-    return __avm_strcmp_P(a, b);
 }
 static __attribute__((always_inline)) inline size_t __avm_cpp_strlen(const char* s) {
     return __avm_strlen(s);
 }
-static __attribute__((always_inline)) inline size_t __avm_cpp_strlen(const char AVM_PROGMEM* s) {
-    return __avm_strlen_P(s);
-}
 static __attribute__((always_inline)) inline char* __avm_cpp_strncpy(char* d, const char* s, size_t n) {
     return __avm_strncpy(d, s, n);
-}
-static __attribute__((always_inline)) inline char* __avm_cpp_strncpy(
-    char* d, const char AVM_PROGMEM* s, size_t n) {
-    return __avm_strncpy_P(d, s, n);
 }
 static __attribute__((always_inline)) inline char* __avm_cpp_strncat(char* d, const char* s, size_t n) {
     return __avm_strncat(d, s, n);
 }
-static __attribute__((always_inline)) inline char* __avm_cpp_strncat(
-    char* d, const char AVM_PROGMEM* s, size_t n) {
-    return __avm_strncat_P(d, s, n);
-}
 
-// Qualified calls such as std::memcpy are still subject to the function-like
-// macros below. Import the implementation helpers so those calls retain the
-// same AVM RAM/PROGMEM overload selection after macro expansion.
+// Qualified direct calls such as std::memcpy are still subject to the
+// function-like macros below, so import the RAM-only implementation helpers.
 namespace std {
 using ::__avm_cpp_memcpy;
 using ::__avm_cpp_memcmp;

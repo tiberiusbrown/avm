@@ -29,7 +29,8 @@ set(_LIBCPP_HAS_FILESYSTEM OFF)
 set(_LIBCPP_HAS_RANDOM_DEVICE OFF)
 set(_LIBCPP_HAS_LOCALIZATION OFF)
 set(_LIBCPP_HAS_UNICODE OFF)
-set(_LIBCPP_HAS_WIDE_CHARACTERS OFF)
+# AVM's C runtime provides the wide-character interfaces with an 8-bit wchar_t.
+set(_LIBCPP_HAS_WIDE_CHARACTERS ON)
 set(_LIBCPP_HAS_TIME_ZONE_DATABASE OFF)
 set(_LIBCPP_PSTL_BACKEND_SERIAL ON)
 set(_LIBCPP_PSTL_BACKEND_STD_THREAD OFF)
@@ -279,6 +280,23 @@ avm_add_runtime_object(
         "${AVM_LIBCXX_SOURCE_DIR}/include/__algorithm/sort.h"
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_ALGORITHM_OBJECT}")
+
+# Header-driven libc++ facilities with small out-of-line runtime pieces.
+foreach(LIBCXX_SOURCE any expected hash memory valarray variant verbose_abort)
+    set(AVM_LIBCXX_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_${LIBCXX_SOURCE}.o")
+    avm_add_runtime_object(
+        OUTPUT "${AVM_LIBCXX_OBJECT}"
+        SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/${LIBCXX_SOURCE}.cpp"
+        LANGUAGE CXX
+        INTERNAL_CXX
+        INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
+        COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY -fexceptions
+        DEPENDS
+            ${AVM_LIBCXX_HEADERS}
+            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+            "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler")
+    list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_OBJECT}")
+endforeach()
 
 # The standard freestanding hash specializations in <memory> use this helper
 # when libc++'s configured deployment version exports it from the runtime.

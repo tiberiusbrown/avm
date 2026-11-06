@@ -111,19 +111,9 @@ int snprintf_P(char* __restrict s, size_t n,
 #ifdef __cplusplus
 } // extern "C"
 
-int snprintf(char*, size_t, const char AVM_PROGMEM*, ...)
-    __asm__("snprintf_P");
-
-int vsnprintf(char*, size_t, const char AVM_PROGMEM*, va_list)
-    __asm__("vsnprintf_P");
-
 static __attribute__((always_inline)) inline int __avm_cpp_vsnprintf(
     char* s, size_t n, const char* fmt, va_list args) {
     return __avm_vsnprintf(s, n, fmt, args);
-}
-static __attribute__((always_inline)) inline int __avm_cpp_vsnprintf(
-    char* s, size_t n, const char AVM_PROGMEM* fmt, va_list args) {
-    return __avm_vsnprintf_P(s, n, fmt, args);
 }
 
 template<class... Args>
@@ -132,10 +122,11 @@ __attribute__((always_inline)) inline int __avm_cpp_snprintf(
     return __avm_snprintf(s, n, fmt, args...);
 }
 
-template<class... Args>
-__attribute__((always_inline)) inline int __avm_cpp_snprintf(
-    char* s, size_t n, const char AVM_PROGMEM* fmt, Args... args) {
-    return __avm_snprintf_P(s, n, fmt, args...);
+// Keep qualified calls such as std::snprintf usable after the function-like
+// macro below redirects them through the AVM RAM formatter.
+namespace std {
+using ::__avm_cpp_vsnprintf;
+using ::__avm_cpp_snprintf;
 }
 
 #if !defined(AVM_STDIO_IMPLEMENTATION) && \

@@ -52,22 +52,18 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Hosted library fundamentals and C compatibility
 
-- [ ] **C-library compatibility headers:** Provide the required C++ wrappers/interfaces for the C17-derived library facilities, including `<cassert>`, `<cctype>`, `<cerrno>`, `<cfenv>`, `<cmath>`, `<ccomplex>`, `<csetjmp>`, `<csignal>`, `<cstdio>`, `<cstdlib>`, `<cstring>`, `<ctime>`, `<cuchar>` (except `std::mbrtoc8` and `std::c8rtomb`, which the vendored libc++ enables only for GNU libc 2.36 or newer), `<cwchar>`, `<cwctype>`, `<cinttypes>`, and related C++23-standard headers, with correct `std`-namespace forms and overloads.
-- [ ] **C++ `<cstdlib>` hosted facilities:** Complete the non-freestanding `std::` functions/types, including C allocation, numeric conversions, environment, random-number utilities, sorting/searching, and specified overloads, with correct interaction with the AVM C runtime.
 - [ ] **Hosted exception and RTTI integration:** Ensure all hosted library facilities interoperate with standard exception types, allocation failure, dynamic casts, exception propagation, and ABI-compatible error reporting.
 
 ### Containers, strings, and memory management
 
-- [ ] **Sequence and associative containers:** Provide `<vector>`, `<deque>`, `<list>`, `<forward_list>`, `<map>`, `<set>`, `<unordered_map>`, `<unordered_set>`, `<array>`, and the container adaptor interfaces, with required iterators, allocators, lifetime, and exception guarantees.
-- [ ] **Strings and views:** Provide `<string>`, `<string_view>`, `<span>`, `<bitset>`, and the required character traits, conversions, iterators, and overloads, including correct handling of ordinary C++ object address space.
-- [ ] **Vocabulary and type-erasure types:** Provide `<optional>`, `<variant>`, `<any>`, `<expected>`, `<memory_resource>`, and hosted portions of `<memory>`, `<functional>`, `<tuple>`, and `<utility>`.
+- [ ] **Sequence and associative containers:** Provide and verify standard-allocator allocation and exception paths for dynamically allocating `<vector>`, `<deque>`, `<list>`, `<forward_list>`, `<map>`, `<set>`, `<unordered_map>`, and container adaptors within the AVM stack limit; libc++ deque and map paths currently exceed it.
+- [ ] **Strings and views:** Provide the hosted `<string>` runtime operations and required conversions and overloads with correct ordinary C++ object address-space handling.
+- [ ] **Vocabulary and type-erasure types:** Provide `<memory_resource>` and complete allocation-dependent and error paths for hosted `<any>`, `<memory>`, and `<functional>`, with the required exception behavior for these and `<variant>`/`<expected>`.
 
 ### Algorithms, ranges, numerics, and random facilities
 
-- [ ] **Algorithms and iterators:** Complete `<algorithm>`, `<iterator>`, `<ranges>`, `<numeric>`, and the corresponding hosted-only interfaces, adaptors, and execution-policy overloads.
-- [ ] **Numerical utilities:** Provide `<numbers>`, `<complex>`, `<valarray>`, `<random>`, and `<bit>`/`<cmath>` hosted interfaces, including required special functions and distributions.
-- [ ] **C++23 multi-dimensional and other numerical facilities:** Provide `<mdspan>` and other C++23 hosted numerical library additions with correct layout and accessor semantics.
-
+- [ ] **Algorithms and iterators:** Provide hosted iterator/range adaptors and `<execution>` policy overloads, including sorting paths whose libc++ radix-sort stack use exceeds AVM's 256-byte limit.
+- [ ] **Numerical utilities:** Provide `<random_device>` with an entropy source, libc++'s standard 32-bit random-engine aliases on the 16-bit-`int` target, and `<valarray>` operations within the AVM stack limit.
 ### I/O, formatting, locale, and filesystems
 
 - [ ] **Streams:** Provide `<ios>`, `<iosfwd>`, `<iostream>`, `<istream>`, `<ostream>`, `<streambuf>`, `<sstream>`, `<fstream>`, `<iomanip>`, and `<syncstream>`, including standard stream objects and error/locale semantics.
@@ -79,7 +75,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 - [ ] **Chrono:** Provide the remaining `<chrono>` system clock, calendar, time-zone, and formatting facilities, and the `<ctime>`-related C++ interfaces that need the environment. `<chrono>` does not compile on targets with 16-bit `int`, because its calendar types require 32-bit `int`.
 - [ ] **Threads and synchronization:** Provide `<thread>`, `<stop_token>`, `<mutex>`, `<shared_mutex>`, `<condition_variable>`, `<semaphore>`, `<latch>`, `<barrier>`, and hosted synchronization and lifetime semantics.
-- [ ] **Futures and execution policies:** Provide `<future>`, `<execution>`, and the required asynchronous operation, task, and parallel-algorithm interfaces.
+- [ ] **Futures:** Provide `<future>` and the required asynchronous operation and task interfaces.
 - [ ] **Diagnostics and utility headers:** Provide hosted `<system_error>`, `<stdexcept>`, `<stacktrace>`, `<charconv>`, and other hosted error, stack inspection, and character conversion facilities.
 
 ### Standard library modules

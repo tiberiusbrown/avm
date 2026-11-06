@@ -8,6 +8,24 @@ foreach(REQUIRED_VARIABLE AVM_OBJDUMP AVM_INPUT AVM_OUTPUT)
     endif()
 endforeach()
 
+if(AVM_FOCUSED)
+    execute_process(
+        COMMAND "${AVM_PYTHON}" "${AVM_FOCUSED_SCRIPT}"
+            --objdump "${AVM_OBJDUMP}"
+            --input "${AVM_INPUT}"
+            --output "${AVM_OUTPUT}"
+            --link-map "${AVM_LINK_MAP}"
+            --startup "${AVM_STARTUP}"
+        RESULT_VARIABLE AVM_FOCUSED_RESULT
+        ERROR_VARIABLE AVM_FOCUSED_ERROR)
+    if(NOT AVM_FOCUSED_RESULT EQUAL 0)
+        file(REMOVE "${AVM_OUTPUT}")
+        message(FATAL_ERROR
+            "Focused disassembly failed for ${AVM_INPUT}:\n${AVM_FOCUSED_ERROR}")
+    endif()
+    return()
+endif()
+
 set(AVM_OBJDUMP_EXTRA_OPTIONS)
 if(AVM_RELOCATIONS)
     list(APPEND AVM_OBJDUMP_EXTRA_OPTIONS --reloc)

@@ -4,6 +4,8 @@ include(CMakeParseArguments)
 
 set(AVM_CAPTURE_STDERR_SCRIPT
     "${CMAKE_CURRENT_LIST_DIR}/RunAndCaptureStderr.cmake")
+set(AVM_FOCUSED_DISASSEMBLE_SCRIPT
+    "${CMAKE_CURRENT_LIST_DIR}/../tools/disassemble_avm.py")
 
 set(AVM_TARGET_TRIPLE "avm-unknown-arduboyfx")
 set(AVM_OPT_LEVEL "-O2" CACHE STRING
@@ -190,7 +192,7 @@ function(avm_add_archive)
 endfunction()
 
 function(avm_add_image)
-    set(options GC_SECTIONS NO_CRASH_INFO)
+    set(options GC_SECTIONS NO_CRASH_INFO FOCUSED_DISASSEMBLY)
     set(one_value_args
         OUTPUT_ELF OUTPUT_IMAGE ENTRY STARTUP DISASSEMBLY)
     set(multi_value_args OBJECTS LIBRARIES DEPENDS LINK_OPTIONS)
@@ -207,6 +209,9 @@ function(avm_add_image)
     if(ARG_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR
             "Unknown avm_add_image arguments: ${ARG_UNPARSED_ARGUMENTS}")
+    endif()
+    if(ARG_FOCUSED_DISASSEMBLY AND NOT ARG_DISASSEMBLY)
+        message(FATAL_ERROR "FOCUSED_DISASSEMBLY requires DISASSEMBLY")
     endif()
 
     get_filename_component(elf_dir "${ARG_OUTPUT_ELF}" DIRECTORY)
@@ -228,6 +233,16 @@ function(avm_add_image)
     list(APPEND link_options ${ARG_LINK_OPTIONS})
 
     set(outputs "${ARG_OUTPUT_ELF}" "${ARG_OUTPUT_IMAGE}")
+    if(ARG_FOCUSED_DISASSEMBLY)
+        if(NOT Python3_Interpreter_FOUND)
+            find_package(Python3 COMPONENTS Interpreter REQUIRED)
+        endif()
+        # The map identifies private runtime helpers by their input object,
+        # including helpers whose names also occur in the program under test.
+        set(disassembly_map "${ARG_OUTPUT_ELF}.map")
+        list(APPEND link_options "--Map=${disassembly_map}")
+        list(APPEND outputs "${disassembly_map}")
+    endif()
     set(commands
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${elf_dir}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${image_dir}"
@@ -250,6 +265,16 @@ function(avm_add_image)
         endif()
         get_filename_component(disassembly_dir "${ARG_DISASSEMBLY}" DIRECTORY)
         list(APPEND outputs "${ARG_DISASSEMBLY}")
+        set(disassembly_options)
+        if(ARG_FOCUSED_DISASSEMBLY)
+            list(APPEND disassembly_options
+                "-DAVM_FOCUSED:BOOL=ON"
+                "-DAVM_PYTHON:FILEPATH=${Python3_EXECUTABLE}"
+                "-DAVM_FOCUSED_SCRIPT:FILEPATH=${AVM_FOCUSED_DISASSEMBLE_SCRIPT}"
+                "-DAVM_LINK_MAP:FILEPATH=${disassembly_map}"
+                "-DAVM_STARTUP:FILEPATH=${ARG_STARTUP}")
+            list(APPEND tool_dependencies "${AVM_FOCUSED_DISASSEMBLE_SCRIPT}")
+        endif()
         list(APPEND commands
             COMMAND "${CMAKE_COMMAND}" -E make_directory "${disassembly_dir}"
             COMMAND
@@ -257,6 +282,7 @@ function(avm_add_image)
                 "-DAVM_OBJDUMP:FILEPATH=$<TARGET_FILE:llvm-objdump>"
                 "-DAVM_INPUT:FILEPATH=${ARG_OUTPUT_ELF}"
                 "-DAVM_OUTPUT:FILEPATH=${ARG_DISASSEMBLY}"
+                ${disassembly_options}
                 -P "${AVM_DISASSEMBLE_SCRIPT}"
         )
         list(APPEND tool_dependencies
@@ -312,12 +338,14 @@ endfunction()
 # Every image carries compact AVD1 crash metadata built from its final ELF:
 # function names from the symbol table and, when the program was compiled with
 # -g, source lines from DWARF. Pass NO_CRASH_INFO to omit it and save flash.
+# FOCUSED_DISASSEMBLY hides startup, termination, and trap infrastructure from
+# DISASSEMBLY while retaining the final linked instructions and library helpers.
 #
 # Relative source and include paths are resolved from CMAKE_CURRENT_SOURCE_DIR.
 # BUILD_DIR defaults to CMAKE_CURRENT_BINARY_DIR; a relative override is
 # resolved from that directory.
 function(avm_add_project name)
-    set(options ALL GC_SECTIONS NO_CRASH_INFO)
+    set(options ALL GC_SECTIONS NO_CRASH_INFO FOCUSED_DISASSEMBLY)
     set(one_value_args
         BUILD_DIR OUTPUT_NAME ENTRY STARTUP IMAGE DISASSEMBLY)
     set(multi_value_args
@@ -432,6 +460,9 @@ function(avm_add_project name)
     endif()
     if(ARG_NO_CRASH_INFO)
         list(APPEND image_options NO_CRASH_INFO)
+    endif()
+    if(ARG_FOCUSED_DISASSEMBLY)
+        list(APPEND image_options FOCUSED_DISASSEMBLY)
     endif()
 
     set(image_args

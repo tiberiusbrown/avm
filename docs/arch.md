@@ -6163,6 +6163,15 @@ uses this option when generating disassembly artifacts. Relative branch operands
 are offsets from the end of the instruction; the accompanying `<L...>` annotation
 identifies the destination. Indirect transfers retain their register operands.
 
+Benchmark listings use `FOCUSED_DISASSEMBLY` in `avm_add_image` (also available
+in `avm_add_project`). This mode uses the final ELF and its linker map to omit
+the selected startup object and the runtime's halt, termination, and trap
+infrastructure, including private helpers. It retains benchmark functions,
+other library members, instruction bytes, local labels, and symbolic calls,
+while omitting absolute listing addresses and the full symbol table. Filtering
+does not change the executable or its measured instructions. Runtime object
+listings and specialized test listings use the default full disassembly mode.
+
 It may print:
 
 ```text

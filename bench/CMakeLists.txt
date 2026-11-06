@@ -1,3 +1,6 @@
+# Discover once for all focused listings rather than once per image.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
 set(AVM_BENCH_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(AVM_BENCH_SOURCE "${AVM_BENCH_DIR}/avm_bench.cpp")
 set(AVM_BENCH_INSTRUCTION_SOURCE "${AVM_BENCH_DIR}/instructions.asm")
@@ -92,6 +95,7 @@ avm_add_image(
         "${AVM_SYSROOT_DIR}/lib/libavm.a"
         "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
     DISASSEMBLY "${AVM_BENCH_BASELINE_DISASSEMBLY}"
+    FOCUSED_DISASSEMBLY
     GC_SECTIONS
     DEPENDS avm_sysroot
 )
@@ -125,6 +129,7 @@ foreach(AVM_BENCH_C_SOURCE IN LISTS AVM_BENCH_C_SOURCES)
             "${AVM_SYSROOT_DIR}/lib/libavm.a"
             "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
         DISASSEMBLY "${AVM_BENCH_DISASSEMBLY}"
+        FOCUSED_DISASSEMBLY
         GC_SECTIONS
         DEPENDS avm_sysroot
     )
@@ -180,6 +185,7 @@ foreach(AVM_BENCH_CXX_SOURCE IN LISTS AVM_BENCH_CXX_SOURCES)
             "${AVM_SYSROOT_DIR}/lib/libavm.a"
             "${AVM_SYSROOT_DIR}/lib/libavm-builtins.a"
         DISASSEMBLY "${AVM_BENCH_DISASSEMBLY}"
+        FOCUSED_DISASSEMBLY
         GC_SECTIONS
         DEPENDS avm_sysroot
     )
@@ -343,6 +349,15 @@ add_custom_target(avm_bench_run
 
 find_package(Python3 COMPONENTS Interpreter QUIET)
 if(Python3_FOUND)
+    add_custom_target(avm_disassembly_tests_run
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/disassembly_test.py"
+            --build "${CMAKE_BINARY_DIR}"
+            --startup "${AVM_SYSROOT_DIR}/lib/crt0_test.o"
+        DEPENDS "${AVM_BENCH_C_BINARY_DIR}/constant_arith.bin"
+            "${AVM_BENCH_C_BINARY_DIR}/complex_cacosh.bin"
+            "${AVM_BENCH_CXX_BINARY_DIR}/aggregate_byte_dispatch.bin"
+        WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}" USES_TERMINAL VERBATIM)
+    add_dependencies(avm_validation_full avm_disassembly_tests_run)
     add_custom_target(avm_runner_cli_tests_run
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/runner_cli_test.py"
             --build "${CMAKE_BINARY_DIR}"

@@ -1090,7 +1090,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 # in their own image directory, so the runners select them with --cpp-bin-dir.
 set(AVM_EH_LTO_BIN_DIR "${AVM_CXX_TEST_BINARY_DIR}/lto")
 set(AVM_EH_LTO_IMAGES)
-foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object eh_typed
+foreach(AVM_EH_LTO_NAME IN ITEMS eh_catch_all eh_dynamic_handler eh_cleanup eh_cleanup_object eh_typed eh_preserve_none
         eh_inheritance eh_inheritance_cross_unit eh_virtual_inheritance eh_virtual_cross_unit
         eh_pointer_conversion eh_pointer_cross_unit
         eh_rethrow eh_rethrow_cleanup eh_rethrow_inheritance eh_rethrow_cross_unit)
@@ -1192,8 +1192,11 @@ add_custom_target(avm_eh_catch_all_lto_run
     # descriptor and destructor are program addresses, and LTO must keep them.
     COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_cleanup_object$" --opt O2
         --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
+    COMMAND "$<TARGET_FILE:avm_tests>" --filter "^eh_preserve_none$" --opt O2
+        --cpp-bin-dir "${AVM_EH_LTO_BIN_DIR}"
     DEPENDS avm_tests "${AVM_EH_LTO_BIN_DIR}/O2/eh_catch_all.bin"
         "${AVM_EH_LTO_BIN_DIR}/O2/eh_cleanup_object.bin"
+        "${AVM_EH_LTO_BIN_DIR}/O2/eh_preserve_none.bin"
     VERBATIM
 )
 

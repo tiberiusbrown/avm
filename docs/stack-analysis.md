@@ -223,12 +223,12 @@ the O0/O2 fixture builds, representative additional-stack measurements are:
 
 | Fixture | O0 bytes | O2 bytes |
 | --- | ---: | ---: |
-| `eh_catch_all` | 103 | 86 |
-| `eh_dynamic_handler` | 82 | 82 |
-| `eh_cleanup` | 103 | 107 |
-| `eh_inheritance` | 170 | 152 |
-| `eh_virtual_inheritance` | 158 | 150 |
-| `eh_pointer_conversion` | 164 | 152 |
+| `eh_catch_all` | 89 | 72 |
+| `eh_dynamic_handler` | 68 | 68 |
+| `eh_cleanup` | 91 | 95 |
+| `eh_inheritance` | 158 | 140 |
+| `eh_virtual_inheritance` | 146 | 138 |
+| `eh_pointer_conversion` | 154 | 142 |
 
 The action-list validator runs before entering the matcher, so those frames
 do not overlap. RTTI address-point offsets stay inside pointer expressions,
@@ -243,23 +243,46 @@ range, while the previous row's byte size recovers its address. Its fixed frame
 is 32 bytes. The AVEH5 format and its validation rules are unchanged; functions
 and lookups beyond the 16-bit delta range remain supported.
 
+Function lookup releases the block end before validating a record against its
+indexed successor. Site validation derives its predecessor from the fixed
+record stride and receives only a one-byte predecessor flag. Their fixed
+frames are 40 bytes for `find_function`, 16 for `find_site`, and 20 for
+`site_ok`; the latter two overlap with one argument byte and a three-byte
+return record, giving another 40-byte path.
+
+Search and cleanup preparation match clauses before looking up the frame's
+CFI row, and every successful path still validates the row before landing or
+unwinding. This keeps the row address out of the live state across the matcher.
+Their fixed frames are 22 and 24 bytes, respectively.
+
+The hierarchy matchers keep their eight path indices on the stack. The object,
+pointer and null-pointer matchers have fixed frames of 70, 66 and 64 bytes.
+Their transient traversal state consumes no static RAM, and the exception
+header does not grow.
+
+AVM supports `__attribute__((preserve_none))` with the C argument and return
+layout, including 24-bit code pointers. Only SP and the frame-pointer register
+r3 remain callee-saved. Callers spill other live registers as needed, and a C
+caller cannot use a sibling tail transfer into this convention. The internal
+throw, rethrow, primary-rethrow and resume entries use it after their public
+assembly shims, with zero-byte fixed frames. The public entries retain their
+C argument layout; the shims and landing-context installer never return.
+
 Further reductions require broader work:
 
-- Move transient lookup and hierarchy-walk state into reusable RAM scratch
-  space. The object-base matcher alone has a 72-byte fixed frame, including
-  saved registers; its eight-byte path array is only part of that cost.
-  Heap or static scratch would trade stack space for RAM and would need explicit
-  ownership across cleanup, nested catches, rethrows and allocation failures.
+- Move more transient lookup or hierarchy-walk state into RAM scratch space.
+  The object matcher still has a 70-byte fixed frame, including saved registers.
+  Further savings would consume more RAM and need explicit ownership across
+  cleanup, nested catches and rethrows.
 - Reduce the remaining metadata-reader register pressure or change the packed
-  unwind format. `find_function` has a 44-byte fixed frame and is the deepest
-  frame on simple throw paths. Predecoded records could help, but require
+  unwind format. Function lookup and the site-validation chain both reach
+  40 bytes, so reducing either path alone soon exposes the other. Predecoded
+  records could help, but require
   coordinated runtime, image-packer and malformed-metadata validation work.
-- Give nonreturning propagation entries a calling convention that avoids
-  preserving registers already captured in the exception header. The C throw
-  and rethrow entries each save six bytes, and `_Unwind_Resume` saves two.
-  Reclaiming the throw shim's captured return record and destructor argument
-  could recover another six bytes at throw entry. These changes need matching
-  backend, assembly and stack-analysis accounting before they can be relied on.
+- Reclaim the throw shim's captured return record and destructor argument.
+  This could recover another six bytes at throw entry, but needs matching
+  stack-analysis accounting for releasing caller-owned stack space. The shims
+  currently keep those bytes reserved.
 
 ## ELF metadata
 

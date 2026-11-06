@@ -204,7 +204,7 @@ continue_unwind(struct avm_eh_exception *header) {
  * phase one has already reached the handler's landing state, which is installed
  * directly. Otherwise phase two starts again from the throw site and runs each
  * cleanup in turn. */
-__attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header) {
+AVM_EH_PROPAGATE void __avm_eh_throw(struct avm_eh_exception *header) {
     if (active_exception)
         abort();
 
@@ -251,7 +251,7 @@ struct avm_eh_exception *__avm_eh_rethrow_header(void) {
  * first pad that matches. That pad always comes from the rethrow site's own scope, or from
  * a frame outward of it. The rethrow never takes the direct handler path of __avm_eh_throw,
  * because a handler is entered only through a landing pad that releases the abandoned catch. */
-__attribute__((noreturn)) void __avm_eh_rethrow(struct avm_eh_exception *header) {
+AVM_EH_PROPAGATE void __avm_eh_rethrow(struct avm_eh_exception *header) {
     if (!header || header != caught_exceptions || header->state != AVM_EH_STATE_CAUGHT ||
         active_exception)
         abort();
@@ -282,7 +282,7 @@ __attribute__((noreturn)) void __avm_eh_rethrow(struct avm_eh_exception *header)
  * over that catch's reference, exactly as a rethrow does, and the abandoned catch releases
  * it on the way out. Otherwise the exception is ALLOCATED, and the rethrow throws it anew
  * with one more reference. Any other state terminates. */
-__attribute__((noreturn)) void __avm_eh_rethrow_primary(struct avm_eh_exception *header) {
+AVM_EH_PROPAGATE void __avm_eh_rethrow_primary(struct avm_eh_exception *header) {
     if (!header)
         abort();
     if (header->state == AVM_EH_STATE_CAUGHT && header == caught_exceptions)
@@ -297,8 +297,7 @@ __attribute__((noreturn)) void __avm_eh_rethrow_primary(struct avm_eh_exception 
  * context, which the previous step saved before entering this pad. A pending rethrow
  * may resume here, so the pending bit is kept. Only the abandoned catch's cleanup,
  * through __cxa_end_catch, clears it. */
-__attribute__((noreturn)) void _Unwind_Resume(void *exception) {
-    struct avm_eh_exception *header = exception;
+AVM_EH_PROPAGATE void __avm_eh_resume(struct avm_eh_exception *header) {
     if (!header || header != active_exception ||
         eh_base_state(header) != AVM_EH_STATE_IN_CLEANUP)
         abort();

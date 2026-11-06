@@ -16,7 +16,7 @@ static const char AVM_PROGMEM long_text[] =
     TEN_A TEN_A TEN_A TEN_A TEN_A TEN_A "b";
 #undef TEN_A
 
-/* Also verify address-taking binds each C++ overload to the C ABI symbol. */
+/* Also verify address-taking binds each flash interface to its C ABI symbol. */
 static const char AVM_PROGMEM* (*volatile first)(const char AVM_PROGMEM*, int) = strchr_P;
 static const char AVM_PROGMEM* (*volatile last)(const char AVM_PROGMEM*, int) = strrchr_P;
 static const void AVM_PROGMEM* (*volatile byte)(const void AVM_PROGMEM*, int, size_t) = memchr_P;
@@ -104,7 +104,7 @@ int avm_test_main(void)
         t = token(NULL, empty);
         if(!t || strcmp(t, "d") || token(NULL, empty)) return 14;
     }
-    /* Direct syntax exercises automatic selection separately from pointers. */
+    /* Direct syntax exercises the flash calls separately from pointers. */
     if(strchr_P(text, 'b') != text + 1 || strrchr_P(text, 'b') != text + 3 ||
        memchr_P(binary, -1, 4) != binary + 2 || strnlen_P(text, 3) != 3 ||
        strncmp_P(ram, text, 5) || strstr_P(ram, late) != ram + 1 ||

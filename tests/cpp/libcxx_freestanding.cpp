@@ -555,7 +555,9 @@ static AVM_TEST_NOINLINE int check_c_runtime_interop() {
     if (strlen(text) != 3 || text[0] != 'a')
         return 9;
     char copy[6] = {};
-    if (std::memcpy(copy, libcxx_progmem_text, 6) != copy ||
+    if (std::memcpy(copy, text, sizeof text) != copy || copy[2] != 'm')
+        return 10;
+    if (memcpy_P(copy, libcxx_progmem_text, 6) != copy ||
         copy[0] != 'f' || copy[4] != 'h' || copy[5] != '\0')
         return 10;
     return 0;

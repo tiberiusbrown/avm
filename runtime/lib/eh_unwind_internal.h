@@ -8,6 +8,15 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* The shims have captured r0-r3 in the header before entering propagation.
+ * These internal entries never return, so they need no second copy of r0-r2
+ * on the stack. R3 and all argument locations retain the C ABI. */
+#ifdef __AVM__
+#define AVM_EH_PROPAGATE __attribute__((noreturn, preserve_none))
+#else
+#define AVM_EH_PROPAGATE __attribute__((noreturn))
+#endif
+
 /* Register state in one frame: the stack pointer, a 24-bit program address,
  * the callee-saved r0-r3 values, and the exception header passed in r4. The
  * program address is split so that the assembly can load it with 16-bit and
@@ -111,7 +120,7 @@ __avm_eh_install_context(const struct avm_eh_context *context, uint16_t selector
 
 /* Entry from the __cxa_throw shim, which tail-jumps here with the header in r4.
  * Searches for a handler and never returns. */
-__attribute__((noreturn)) void __avm_eh_throw(struct avm_eh_exception *header);
+AVM_EH_PROPAGATE void __avm_eh_throw(struct avm_eh_exception *header);
 
 /* Returns the header of the innermost caught exception for the __cxa_rethrow shim. That
  * exception must be CAUGHT, or the call terminates. */
@@ -120,13 +129,17 @@ struct avm_eh_exception *__avm_eh_rethrow_header(void);
 /* Entry from the __cxa_rethrow shim, which tail-jumps here with the header in r4 after
  * capturing the rethrow site into the header's context. It restarts both phases from that
  * site, and it never returns. */
-__attribute__((noreturn)) void __avm_eh_rethrow(struct avm_eh_exception *header);
+AVM_EH_PROPAGATE void __avm_eh_rethrow(struct avm_eh_exception *header);
 /* Entry from the __avm_rethrow_primary_exception shim, which tail-jumps here with the
  * header in r4 after capturing the call site, as __cxa_throw does. The header must be a
  * non-null object that a std::exception_ptr names. An innermost CAUGHT exception is
  * rethrown as a pending rethrow, and any other ALLOCATED exception is thrown anew. It
  * never returns. */
-__attribute__((noreturn)) void __avm_eh_rethrow_primary(struct avm_eh_exception *header);
+AVM_EH_PROPAGATE void __avm_eh_rethrow_primary(struct avm_eh_exception *header);
+
+/* Entry from the public _Unwind_Resume shim. The pending frame cursor is
+ * already in the header, so the cleanup's registers need no additional save. */
+AVM_EH_PROPAGATE void __avm_eh_resume(struct avm_eh_exception *header);
 
 /* Opens the AVEH5 metadata for the exception at header, once per throw. It validates the
  * block header and the index bounds, and it caches the block address, block end, and

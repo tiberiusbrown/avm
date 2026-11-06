@@ -316,8 +316,11 @@ static inline uint8_t row_ok(uint32_t fh, uint32_t row, uint32_t previous) {
  * The action's offset is not checked here. Each reader of an action checks the
  * offset before it reads the list, in match_list, so a site that no throw reads
  * does not cost the scan a pool check. */
-AVEH5_NOINLINE uint8_t site_ok(uint32_t fh, uint32_t site, uint32_t previous) {
-    uint32_t previous_end = previous ? read_flash_u24(previous + 3) : read_flash_u24(fh);
+/* Sites have a fixed stride, so only the presence of a predecessor is needed,
+ * rather than a third full program address passed on the stack. */
+AVEH5_NOINLINE uint8_t site_ok(uint32_t fh, uint32_t site, uint8_t has_previous) {
+    uint32_t previous_end = has_previous ? read_flash_u24(site - AVEH5_SITE_SIZE + 3)
+                                         : read_flash_u24(fh);
     if (read_flash_u24(site) >= read_flash_u24(site + 3) ||
         read_flash_u24(site) < previous_end || read_flash_u24(site + 3) > read_flash_u24(fh + 3))
         return 0;
@@ -428,7 +431,10 @@ AVEH5_NOINLINE uint32_t find_function(const struct avm_eh_exception *header, uin
             return 0;
         next = block + read_flash_u24(selected + AVEH5_INDEX_ENTRY_SIZE + 3);
     }
-    if (record_next(fh, limit) != next)
+    /* Bound the record by its indexed successor. This releases the block end
+     * before checking the record's fields, and still requires an exact end. */
+    if (next > limit || next < fh + AVEH5_FUNCTION_HEADER_SIZE ||
+        record_next(fh, next) != next)
         return 0;
     return fh;
 }
@@ -481,7 +487,7 @@ AVEH5_NOINLINE uint32_t find_site(uint32_t fh, uint32_t lookup) {
     uint32_t address = sites_of(fh);
     for (uint16_t s = 0, count = read_flash_u16(fh + 8); s < count;
          s++, address += AVEH5_SITE_SIZE) {
-        if (!site_ok(fh, address, s ? address - AVEH5_SITE_SIZE : 0))
+        if (!site_ok(fh, address, s != 0))
             return AVEH5_BAD;
         if (lookup < read_flash_u24(address))
             return 0;
@@ -788,7 +794,7 @@ AVEH5_INLINE uint8_t cross_base(uint8_t mode, const struct avm_eh_exception *hea
 
 /* Decides whether catch_type is the unique public base subobject of the thrown class in the
  * walk's mode. The walk is a depth-first search over the class descriptors. It keeps one byte
- * per level, the index of the next direct base to visit there, so its stack is eight bytes. A
+ * per level on the stack, the index of the next direct base to visit there. A
  * level's descriptor and identity are replayed from the root and those indices. A replay
  * resolves the same edges from the same reads, so the walk needs no per-level storage.
  *
@@ -865,13 +871,15 @@ AVEH5_INLINE uint32_t walk_hierarchy(uint8_t mode, uint32_t catch_type,
         uint32_t base_type = read_base_edge(descriptor, kind, next[depth]++, &edge, &flags);
         if (flags & AVM_RTTI_BASE_RESERVED)
             return AVM_RTTI_INVALID;
-        if (rtti_kind(base_type) == AVM_RTTI_OTHER)
-            return AVM_RTTI_INVALID;
         if (++edges > AVM_RTTI_MAX_EDGES || depth + 1 >= AVM_RTTI_MAX_DEPTH)
             return AVM_RTTI_LIMIT;
 
         if (cross_base(mode, header, base_type, edge, flags, &anchor, &position) !=
             AVM_RTTI_OFFSET_OK)
+            return AVM_RTTI_INVALID;
+        /* Classify after consuming the displacement, so it is not retained
+         * across rtti_kind. cross_base never dereferences base_type. */
+        if (rtti_kind(base_type) == AVM_RTTI_OTHER)
             return AVM_RTTI_INVALID;
         uint8_t child_public = (public_path && (flags & AVM_RTTI_BASE_PUBLIC)) ? 1 : 0;
         if (base_type == catch_type) {
@@ -1205,12 +1213,10 @@ uint8_t avm_eh_validate_block(uint32_t block) {
         }
         if (address != rows_end)
             return 0;
-        previous = 0;
         uint32_t sites = address;
         for (uint16_t s = 0; s < site_count; s++, address += AVEH5_SITE_SIZE) {
-            if (!site_ok(fh, address, previous))
+            if (!site_ok(fh, address, s != 0))
                 return 0;
-            previous = address;
         }
         uint32_t calls = address;
         previous = 0;
@@ -1310,9 +1316,8 @@ uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
         if (!fh)
             return 0;
 
-        uint32_t row = find_row(fh, lookup);
         uint32_t site = find_site(fh, lookup);
-        if (row == AVEH5_BAD || row == 0 || site == AVEH5_BAD)
+        if (site == AVEH5_BAD)
             return 0;
 
         if (site) {
@@ -1322,6 +1327,9 @@ uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
             if ((uint16_t)match) {
                 header->handler_selector = (uint16_t)match;
                 header->handler_adjustment = (uint16_t)(match >> 16);
+                uint32_t row = find_row(fh, context_pc(cursor) - 1);
+                if (row == AVEH5_BAD || row == 0)
+                    return 0;
                 return land_at(cursor, cursor, fh, read_flash_u24(site + 6));
             }
             /* A cleanup passed on the way to the handler needs phase two, which
@@ -1335,7 +1343,10 @@ uint8_t avm_eh_find_handler(struct avm_eh_exception *header) {
 
         /* Unwind to the caller. The CFA must lie above the current SP, so every
          * unwind step moves toward the top of the stack. */
-        if (!unwind_frame(cursor, row))
+        /* Match first, and consume the row only after matching is complete.
+         * Every successful path still validates it before landing or unwinding. */
+        uint32_t row = find_row(fh, context_pc(cursor) - 1);
+        if (row == AVEH5_BAD || row == 0 || !unwind_frame(cursor, row))
             return 0;
     }
 }
@@ -1363,9 +1374,8 @@ uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
         uint32_t fh = find_function(header, lookup);
         if (!fh)
             return AVM_EH_STEP_INVALID;
-        uint32_t row = find_row(fh, lookup);
         uint32_t site = find_site(fh, lookup);
-        if (row == AVEH5_BAD || row == 0 || site == AVEH5_BAD)
+        if (site == AVEH5_BAD)
             return AVM_EH_STEP_INVALID;
 
         if (site) {
@@ -1374,18 +1384,21 @@ uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
                 return AVM_EH_STEP_INVALID;
             uint16_t selector = (uint16_t)match;
             uint16_t adjustment = (uint16_t)(match >> 16);
-            uint32_t pad = read_flash_u24(site + 6);
             if (selector) {
                 if (selector != header->handler_selector ||
                     adjustment != header->handler_adjustment)
                     return AVM_EH_STEP_INVALID;
-                if (!land_at(&header->context, cursor, fh, pad))
+                uint32_t row = find_row(fh, context_pc(cursor) - 1);
+                if (row == AVEH5_BAD || row == 0 ||
+                    !land_at(&header->context, cursor, fh, read_flash_u24(site + 6)))
                     return AVM_EH_STEP_INVALID;
                 header->context.exception = (uint16_t)(uintptr_t)header;
                 return AVM_EH_STEP_CATCH;
             }
             if (match & AVEH5_MATCH_CLEANUP) {
-                if (!land_at(&header->context, cursor, fh, pad))
+                uint32_t row = find_row(fh, context_pc(cursor) - 1);
+                if (row == AVEH5_BAD || row == 0 ||
+                    !land_at(&header->context, cursor, fh, read_flash_u24(site + 6)))
                     return AVM_EH_STEP_INVALID;
                 header->context.exception = (uint16_t)(uintptr_t)header;
                 if (!unwind_frame(cursor, row))
@@ -1394,7 +1407,8 @@ uint8_t avm_eh_prepare_next(struct avm_eh_exception *header) {
             }
         }
 
-        if (!unwind_frame(cursor, row))
+        uint32_t row = find_row(fh, context_pc(cursor) - 1);
+        if (row == AVEH5_BAD || row == 0 || !unwind_frame(cursor, row))
             return AVM_EH_STEP_INVALID;
     }
 }

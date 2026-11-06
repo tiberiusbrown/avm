@@ -34,9 +34,7 @@ struct Derived : Base {
 // Keeps each allocation live, so the heap fills and the throwing form has to fail.
 volatile void *sink[64];
 
-} // namespace
-
-extern "C" int avm_test_main(void) {
+int test_basic_allocations() {
     int *one = new int(5);
     if (*one != 5)
         return 1;
@@ -64,7 +62,10 @@ extern "C" int avm_test_main(void) {
     if (!nothrow_array)
         return 5;
     ::operator delete[](nothrow_array, std::nothrow);
+    return 0;
+}
 
+int test_aligned_allocations() {
     // Over-aligned blocks are aligned, and a one-byte alignment uses the ordinary block.
     void *aligned = ::operator new(10, std::align_val_t(8));
     if (reinterpret_cast<std::uintptr_t>(aligned) % 8 != 0)
@@ -88,7 +89,10 @@ extern "C" int avm_test_main(void) {
     if (polymorphic->value != 7)
         return 10;
     delete polymorphic;
+    return 0;
+}
 
+int test_allocation_failures() {
     // With no handler installed, a failed nothrow request returns null.
     if (std::get_new_handler() != nullptr)
         return 11;
@@ -138,4 +142,16 @@ extern "C" int avm_test_main(void) {
             return 19;
     }
     return 0;
+}
+
+} // namespace
+
+extern "C" int avm_test_main(void) {
+    int result = test_basic_allocations();
+    if (result)
+        return result;
+    result = test_aligned_allocations();
+    if (result)
+        return result;
+    return test_allocation_failures();
 }

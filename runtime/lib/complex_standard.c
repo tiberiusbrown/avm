@@ -75,7 +75,6 @@ double cabs(double _Complex z) {
     float _Complex a=__builtin_complex((float)__real__ z,(float)__imag__ z);
     return (double)cabsf(a);
 }
-double _Complex cpow(double _Complex z,double _Complex w) {return (double _Complex)cpowf((float _Complex)z,(float _Complex)w);}
 double _Complex csqrt(double _Complex z) {
     float _Complex a=__builtin_complex((float)__real__ z,(float)__imag__ z);
     float _Complex r=csqrtf(a);
@@ -177,7 +176,6 @@ long double cabsl(long double _Complex z) {
     float _Complex a=__builtin_complex((float)__real__ z,(float)__imag__ z);
     return (long double)cabsf(a);
 }
-long double _Complex cpowl(long double _Complex z,long double _Complex w) {return (long double _Complex)cpowf((float _Complex)z,(float _Complex)w);}
 long double _Complex csqrtl(long double _Complex z) {
     float _Complex a=__builtin_complex((float)__real__ z,(float)__imag__ z);
     float _Complex r=csqrtf(a);

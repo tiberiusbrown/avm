@@ -14,7 +14,7 @@ SYMBOL TABLE:
 00000000         *UND*	00000000 __avm_mulsi3
 00000000         *UND*	00000000 __avm_divsi3
 00000000 g     F .text.__avm_time_civil	00000143 __avm_time_civil
-00000000 g     F .text.__avm_time_split	00000347 __avm_time_split
+00000000 g     F .text.__avm_time_split	00000345 __avm_time_split
 00000000         *UND*	00000000 __avm_divmoddi4
 00000000         *UND*	00000000 __avm_modsi3
 00000000         *UND*	00000000 __avm_udivmodsi4
@@ -416,7 +416,7 @@ Disassembly of section .text.__avm_time_split:
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_time_split
-		R_AVM_FAR24	.text.__avm_time_split+0x340
+		R_AVM_FAR24	.text.__avm_time_split+0x33e
 <L1>:
  d6 fe                 adjsp	-0x2
  f0 14 1c              leasp	r4, 0x1c
@@ -550,7 +550,6 @@ Disassembly of section .text.__avm_time_split:
  f7 67                 add32	q1, q3
  f1 2a                 mov	r6, r2
  f4 72                 stsp16	[sp+0xc], r6
- f4 7b                 stsp16	[sp+0xe], r7
  f0 69 40              cmp32	q1, q0
  f8 26                 cset.slt	r6
  af                    xor	r7, r7
@@ -567,7 +566,7 @@ Disassembly of section .text.__avm_time_split:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_time_split
-		R_AVM_FAR24	.text.__avm_time_split+0x340
+		R_AVM_FAR24	.text.__avm_time_split+0x33e
 <L2>:
  c0 04                 ldi8	r4, 0x4
  a5                    xor	r5, r5

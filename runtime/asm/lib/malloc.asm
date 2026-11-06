@@ -18,7 +18,7 @@ SYMBOL TABLE:
 00000000 g     F .text.malloc	00000091 malloc
 00000000         *UND*	00000000 __avm_heap_start
 00000000 g     F .text.free	00000073 free
-00000000 g     F .text.realloc	00000365 realloc
+00000000 g     F .text.realloc	00000372 realloc
 00000000 g     F .text.aligned_alloc	00000096 aligned_alloc
 00000000 g     F .text.free_sized	00000073 free_sized
 00000000 g     F .text.free_aligned_sized	00000073 free_aligned_sized
@@ -322,7 +322,7 @@ Disassembly of section .text.realloc:
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L2>:
  f1 2c                 mov	r7, r0
  cb fe                 addi.s8	r7, -0x2
@@ -348,14 +348,14 @@ Disassembly of section .text.realloc:
  d2 04                 brult8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1ef
+		R_AVM_FAR24	.text.realloc+0x1f2
 <L4>:
  ed f4 20              ld16	r7, [r2+0]
  f6 2f                 tst16	r7
  d9 04                 brsge8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1ef
+		R_AVM_FAR24	.text.realloc+0x1f2
 <L5>:
  c6 ff 7f              ldi16	r6, 0x7fff
  8e                    and	r7, r6
@@ -365,7 +365,7 @@ Disassembly of section .text.realloc:
  d8 04                 bruge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1ef
+		R_AVM_FAR24	.text.realloc+0x1f2
 <L6>:
  03                    mov	r4, r7
  f2 51                 sub	r4, r1
@@ -373,7 +373,7 @@ Disassembly of section .text.realloc:
  d8 04                 bruge8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2be
+		R_AVM_FAR24	.text.realloc+0x2c1
 <L7>:
  c6 00 80              ldi16	r6, 0x8000
  f9 39                 or	r1, r6
@@ -386,7 +386,7 @@ Disassembly of section .text.realloc:
  f1 20                 mov	r4, r0
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  c6 01 fc              ldi16	r6, 0xfc01
  19                    add	r6, r5
  c7 02 fc              ldi16	r7, 0xfc02
@@ -394,7 +394,7 @@ Disassembly of section .text.realloc:
  d8 04                 bruge8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L8>:
  c9 02                 addi.s8	r5, 0x2
  f0 50 00 00           ldm16	r0, [0x0]
@@ -443,7 +443,7 @@ Disassembly of section .text.realloc:
  d8 04                 bruge8	0x4 <L13>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x298
+		R_AVM_FAR24	.text.realloc+0x29b
 <L13>:
  91                    or	r4, r5
  7c                    st16	[r7], r4
@@ -453,7 +453,7 @@ Disassembly of section .text.realloc:
  03                    mov	r4, r7
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  ed b0 1e              ld16	r5, [r0-2]
  f0 05 ff 7f           ldi16	r1, 0x7fff
  f9 a4                 and	r5, r1
@@ -466,29 +466,29 @@ Disassembly of section .text.realloc:
  d2 04                 brult8	0x4 <L14>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L14>:
  f0 06 00 00           ldi16	r2, 0x0
 		R_AVM_DATA16	__avm_heap_start
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.realloc+0x11c
- f2 17                 add	r2, r7
+ f2 16                 add	r2, r6
  f5 10                 cmp	r2, r0
  d2 04                 brult8	0x4 <L15>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L15>:
- ed f4 20              ld16	r7, [r2+0]
- f6 2f                 tst16	r7
- f9 e4                 and	r7, r1
+ ed d4 20              ld16	r6, [r2+0]
+ f6 2e                 tst16	r6
+ f9 c4                 and	r6, r1
  d9 04                 brsge8	0x4 <L16>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
 		R_AVM_FAR24	.text.realloc+0x112
 <L16>:
- 07                    mov	r5, r7
+ 06                    mov	r5, r6
  f2 26                 add	r5, r2
  f5 24                 cmp	r5, r0
  d2 04                 brult8	0x4 <L17>
@@ -496,15 +496,15 @@ Disassembly of section .text.realloc:
  e2 00 00 00           jmpf	realloc
 		R_AVM_FAR24	.text.realloc+0x149
 <L17>:
- 69                    ld16	r6, [r5]
- f6 2e                 tst16	r6
+ 6d                    ld16	r7, [r5]
+ f6 2f                 tst16	r7
  d9 04                 brsge8	0x4 <L18>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
 		R_AVM_FAR24	.text.realloc+0x149
 <L18>:
- 1e                    add	r7, r6
- 07                    mov	r5, r7
+ 1b                    add	r6, r7
+ 06                    mov	r5, r6
  f2 26                 add	r5, r2
  f5 24                 cmp	r5, r0
  d8 04                 bruge8	0x4 <L19>
@@ -516,12 +516,12 @@ Disassembly of section .text.realloc:
  d1 04                 brne8	0x4 <L20>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x26b
+		R_AVM_FAR24	.text.realloc+0x26e
 <L20>:
- ee f4 20              st16	[r2+0], r7
+ ee d4 20              st16	[r2+0], r6
  f0 50 00 00           ldm16	r0, [0x0]
 		R_AVM_DATA16	.data.heap_top
- f2 17                 add	r2, r7
+ f2 16                 add	r2, r6
  f5 10                 cmp	r2, r0
  d8 04                 bruge8	0x4 <L21>
 		R_AVM_RELAX	*ABS*
@@ -530,14 +530,14 @@ Disassembly of section .text.realloc:
 <L21>:
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  c6 00 05              ldi16	r6, 0x500
  f2 58                 sub	r6, r0
  39                    cmp	r6, r5
  d8 04                 bruge8	0x4 <L22>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L22>:
  c6 00 80              ldi16	r6, 0x8000
  99                    or	r6, r5
@@ -548,14 +548,14 @@ Disassembly of section .text.realloc:
 		R_AVM_DATA16	.data.heap_top
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  f2 59                 sub	r6, r1
  c4 00 80              ldi16	r4, 0x8000
  ce 03                 cmpi.s8	r6, 0x3
  d8 04                 bruge8	0x4 <L23>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x261
+		R_AVM_FAR24	.text.realloc+0x264
 <L23>:
  f9 31                 or	r1, r4
  ee 30 1e              st16	[r0-2], r1
@@ -566,71 +566,73 @@ Disassembly of section .text.realloc:
  c4 00 00              ldi16	r4, 0x0
 		R_AVM_DATA16	__avm_heap_start
  f5 21                 cmp	r4, r1
- d8 04                 bruge8	0x4 <L24>
+ d2 04                 brult8	0x4 <L24>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1c2
+		R_AVM_FAR24	.text.realloc+0x2b8
 <L24>:
+ c5 00 00              ldi16	r5, 0x0
+		R_AVM_DATA16	__avm_heap_start
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b5
+		R_AVM_FAR24	.text.realloc+0x1c5
  f5 2d                 cmp	r7, r1
  d1 04                 brne8	0x4 <L25>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b1
+		R_AVM_FAR24	.text.realloc+0x2ce
 <L25>:
- 72                    st16	[r4], r6
+ 76                    st16	[r5], r6
  f0 51 00 00           ldm16	r1, [0x0]
 		R_AVM_DATA16	.data.heap_top
- 12                    add	r4, r6
- f5 21                 cmp	r4, r1
+ 16                    add	r5, r6
+ f5 25                 cmp	r5, r1
  d2 04                 brult8	0x4 <L26>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b5
+		R_AVM_FAR24	.text.realloc+0x2b8
 <L26>:
- 68                    ld16	r6, [r4]
+ 69                    ld16	r6, [r5]
  f6 2e                 tst16	r6
  f9 c8                 and	r6, r2
  d9 04                 brsge8	0x4 <L27>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1b9
+		R_AVM_FAR24	.text.realloc+0x1bc
 <L27>:
  0e                    mov	r7, r6
- 1c                    add	r7, r4
+ 1d                    add	r7, r5
  f5 2d                 cmp	r7, r1
  d2 04                 brult8	0x4 <L28>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1ac
+		R_AVM_FAR24	.text.realloc+0x1af
 <L28>:
- 67                    ld16	r5, [r7]
- f6 2d                 tst16	r5
+ 63                    ld16	r4, [r7]
+ f6 2c                 tst16	r4
  d9 04                 brsge8	0x4 <L29>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1ac
+		R_AVM_FAR24	.text.realloc+0x1af
 <L29>:
- 19                    add	r6, r5
+ 18                    add	r6, r4
  0e                    mov	r7, r6
- 1c                    add	r7, r4
+ 1d                    add	r7, r5
  f5 2d                 cmp	r7, r1
  d8 04                 bruge8	0x4 <L30>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x1d7
+		R_AVM_FAR24	.text.realloc+0x1da
 <L30>:
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x1ac
+		R_AVM_FAR24	.text.realloc+0x1af
  f5 13                 cmp	r2, r3
  c7 00 05              ldi16	r7, 0x500
  d0 04                 breq8	0x4 <L31>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x209
+		R_AVM_FAR24	.text.realloc+0x20c
 <L31>:
  f1 25                 mov	r5, r1
  f4 0a                 ldsp16	r6, [sp+0x2]
@@ -641,7 +643,7 @@ Disassembly of section .text.realloc:
  d2 04                 brult8	0x4 <L32>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2a3
+		R_AVM_FAR24	.text.realloc+0x2a6
 <L32>:
  c5 00 00              ldi16	r5, 0x0
 		R_AVM_DATA16	__avm_heap_start
@@ -651,20 +653,20 @@ Disassembly of section .text.realloc:
  d2 04                 brult8	0x4 <L33>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x273
+		R_AVM_FAR24	.text.realloc+0x276
 <L33>:
  f0 06 00 00           ldi16	r2, 0x0
 		R_AVM_DATA16	__avm_heap_start
  c7 ff 7f              ldi16	r7, 0x7fff
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x22d
+		R_AVM_FAR24	.text.realloc+0x230
  f2 15                 add	r2, r5
  f5 13                 cmp	r2, r3
  d2 04                 brult8	0x4 <L34>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x273
+		R_AVM_FAR24	.text.realloc+0x276
 <L34>:
  ed d4 20              ld16	r6, [r2+0]
  06                    mov	r5, r6
@@ -673,20 +675,20 @@ Disassembly of section .text.realloc:
  d9 04                 brsge8	0x4 <L35>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x223
+		R_AVM_FAR24	.text.realloc+0x226
 <L35>:
  f5 25                 cmp	r5, r1
  d8 04                 bruge8	0x4 <L36>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x223
+		R_AVM_FAR24	.text.realloc+0x226
 <L36>:
  f2 55                 sub	r5, r1
  cd 03                 cmpi.s8	r5, 0x3
  d8 04                 bruge8	0x4 <L37>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2cb
+		R_AVM_FAR24	.text.realloc+0x2d8
 <L37>:
  c6 00 80              ldi16	r6, 0x8000
  f9 c5                 or	r6, r1
@@ -696,25 +698,25 @@ Disassembly of section .text.realloc:
  f0 05 ff 7f           ldi16	r1, 0x7fff
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2d6
+		R_AVM_FAR24	.text.realloc+0x2e3
  f9 71                 or	r3, r4
  f5 5f                 st16	[r7], r3
  f1 20                 mov	r4, r0
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  f0 5a 00 00           stm16	[0x0], r2
 		R_AVM_DATA16	.data.heap_top
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  c5 00 05              ldi16	r5, 0x500
  f2 57                 sub	r5, r3
  f5 25                 cmp	r5, r1
  d8 04                 bruge8	0x4 <L38>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L38>:
  c5 00 80              ldi16	r5, 0x8000
  f9 a5                 or	r5, r1
@@ -726,14 +728,14 @@ Disassembly of section .text.realloc:
  f0 05 ff 7f           ldi16	r1, 0x7fff
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2d6
+		R_AVM_FAR24	.text.realloc+0x2e3
  f9 51                 or	r2, r4
  f5 5e                 st16	[r7], r2
  cb 02                 addi.s8	r7, 0x2
  03                    mov	r4, r7
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  c4 00 80              ldi16	r4, 0x8000
  f9 31                 or	r1, r4
  f4 00                 ldsp16	r4, [sp+0x0]
@@ -757,7 +759,13 @@ Disassembly of section .text.realloc:
  f1 20                 mov	r4, r0
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
+ f0 5d 00 00           stm16	[0x0], r5
+		R_AVM_DATA16	.data.heap_top
+ f1 20                 mov	r4, r0
+ e2 00 00 00           jmpf	realloc
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.realloc+0x2ba
  c5 00 80              ldi16	r5, 0x8000
  99                    or	r6, r5
  ee d4 20              st16	[r2+0], r6
@@ -768,7 +776,7 @@ Disassembly of section .text.realloc:
  d1 04                 brne8	0x4 <L39>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L39>:
  ca fe                 addi.s8	r6, -0x2
  f1 22                 mov	r4, r2
@@ -786,20 +794,20 @@ Disassembly of section .text.realloc:
  d2 04                 brult8	0x4 <L40>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L40>:
  c6 00 00              ldi16	r6, 0x0
 		R_AVM_DATA16	__avm_heap_start
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x316
+		R_AVM_FAR24	.text.realloc+0x323
  19                    add	r6, r5
  f5 28                 cmp	r6, r0
  f1 22                 mov	r4, r2
  d2 04                 brult8	0x4 <L41>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 <L41>:
  66                    ld16	r5, [r6]
  f6 2d                 tst16	r5
@@ -807,7 +815,7 @@ Disassembly of section .text.realloc:
  d9 04                 brsge8	0x4 <L42>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x30b
+		R_AVM_FAR24	.text.realloc+0x318
 <L42>:
  01                    mov	r4, r5
  12                    add	r4, r6
@@ -815,14 +823,14 @@ Disassembly of section .text.realloc:
  d2 04                 brult8	0x4 <L43>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x33f
+		R_AVM_FAR24	.text.realloc+0x34c
 <L43>:
  6c                    ld16	r7, [r4]
  f6 2f                 tst16	r7
  d9 04                 brsge8	0x4 <L44>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x33f
+		R_AVM_FAR24	.text.realloc+0x34c
 <L44>:
  17                    add	r5, r7
  01                    mov	r4, r5
@@ -831,13 +839,13 @@ Disassembly of section .text.realloc:
  d8 04                 bruge8	0x4 <L45>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x32b
+		R_AVM_FAR24	.text.realloc+0x338
 <L45>:
  f5 20                 cmp	r4, r0
  d1 04                 brne8	0x4 <L46>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x35b
+		R_AVM_FAR24	.text.realloc+0x368
 <L46>:
  79                    st16	[r6], r5
  f0 50 00 00           ldm16	r0, [0x0]
@@ -848,17 +856,17 @@ Disassembly of section .text.realloc:
  d8 04                 bruge8	0x4 <L47>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	realloc
-		R_AVM_FAR24	.text.realloc+0x316
+		R_AVM_FAR24	.text.realloc+0x323
 <L47>:
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	.data.heap_top
  f1 22                 mov	r4, r2
  e2 00 00 00           jmpf	realloc
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.realloc+0x2b7
+		R_AVM_FAR24	.text.realloc+0x2ba
 
 Disassembly of section .text.aligned_alloc:
 

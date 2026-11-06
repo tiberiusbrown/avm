@@ -7,7 +7,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.fminf	00000000 .text.fminf
 00000000 l    d  .text.fmaxf	00000000 .text.fmaxf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.log2f	0000010b log2f
+00000000 g     F .text.log2f	000000ff log2f
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.fminf	0000007e fminf
 00000000 g     F .text.fmaxf	0000006e fmaxf
@@ -28,7 +28,7 @@ Disassembly of section .text.log2f:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0xaa
+		R_AVM_FAR24	.text.log2f+0x9e
 <L0>:
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 01 7f              ldi8	r1, 0x7f
@@ -46,7 +46,6 @@ Disassembly of section .text.log2f:
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.log2f+0x37
  c6 81 ff              ldi16	r6, 0xff81
- f4 42                 stsp16	[sp+0x0], r6
  f9 10                 and	r0, r4
  f9 34                 and	r1, r5
  f0 06 20 fb           ldi16	r2, 0xfb20
@@ -55,25 +54,21 @@ Disassembly of section .text.log2f:
  c3 80                 ldi8	r7, 0x80
  f9 ec                 and	r7, r3
  f9 3d                 or	r1, r7
- f1 28                 mov	r6, r0
- f1 2d                 mov	r7, r1
- f2 30                 sub	r0, r0
- f0 05 80 3f           ldi16	r1, 0x3f80
- f9 1a                 xor	r0, r6
- f9 3e                 xor	r1, r7
  01                    mov	r4, r5
  fa 77                 lsr16i	r4, 0x7
- f4 01                 ldsp16	r5, [sp+0x0]
- 11                    add	r4, r5
+ 12                    add	r4, r6
  f1 2b                 mov	r6, r3
  af                    xor	r7, r7
  fa 97                 lsr16i	r6, 0x7
  18                    add	r6, r4
  f4 42                 stsp16	[sp+0x0], r6
  f4 4b                 stsp16	[sp+0x2], r7
+ a0                    xor	r4, r4
+ c5 80 3f              ldi16	r5, 0x3f80
+ f9 82                 xor	r4, r0
+ f9 a6                 xor	r5, r1
  aa                    xor	r6, r6
  c7 80 bf              ldi16	r7, 0xbf80
- f2 68                 mov32	q2, q0
  ff 00                 fadd
  08                    mov	r6, r4
  0d                    mov	r7, r5
@@ -104,7 +99,7 @@ Disassembly of section .text.log2f:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0xd6
+		R_AVM_FAR24	.text.log2f+0xca
 <L2>:
  f0 04 ff ff           ldi16	r0, 0xffff
  f0 05 ff ff           ldi16	r1, 0xffff
@@ -112,13 +107,13 @@ Disassembly of section .text.log2f:
  d3 04                 brslt8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0xe4
+		R_AVM_FAR24	.text.log2f+0xd8
 <L3>:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0xa1
+		R_AVM_FAR24	.text.log2f+0x95
  c0 22                 ldi8	r4, 0x22
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -126,21 +121,21 @@ Disassembly of section .text.log2f:
  c5 80 ff              ldi16	r5, 0xff80
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0xa3
+		R_AVM_FAR24	.text.log2f+0x97
  f2 30                 sub	r0, r0
  f0 05 80 7f           ldi16	r1, 0x7f80
  f0 69 0c              cmp32	q0, q3
  d2 04                 brult8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	log2f
-		R_AVM_FAR24	.text.log2f+0xfc
+		R_AVM_FAR24	.text.log2f+0xf0
 <L4>:
  c6 c0 7f              ldi16	r6, 0x7fc0
  99                    or	r6, r5
  06                    mov	r5, r6
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0xa3
+		R_AVM_FAR24	.text.log2f+0x97
  c2 21                 ldi8	r6, 0x21
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno
@@ -149,7 +144,7 @@ Disassembly of section .text.log2f:
  06                    mov	r5, r6
  e2 00 00 00           jmpf	log2f
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.log2f+0xa3
+		R_AVM_FAR24	.text.log2f+0x97
 
 Disassembly of section .text.fminf:
 

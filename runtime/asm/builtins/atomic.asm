@@ -23,7 +23,7 @@ SYMBOL TABLE:
 00000000 g     F .text.__atomic_load	00000017 __atomic_load
 00000000 g     F .text.__atomic_store	00000017 __atomic_store
 00000000 g     F .text.__atomic_exchange	00000030 __atomic_exchange
-00000000 g     F .text.__atomic_compare_exchange	00000069 __atomic_compare_exchange
+00000000 g     F .text.__atomic_compare_exchange	00000061 __atomic_compare_exchange
 00000000 g     F .text.__atomic_load_8	00000044 __atomic_load_8
 00000000 g     F .text.__atomic_store_8	0000005e __atomic_store_8
 00000000 g     F .text.__atomic_exchange_8	000000b1 __atomic_exchange_8
@@ -130,31 +130,29 @@ Disassembly of section .text.__atomic_compare_exchange:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fa                 adjsp	-0x6
+ d6 fe                 adjsp	-0x2
  f1 04                 mov	r0, r4
  c0 01                 ldi8	r4, 0x1
  f6 28                 tst16	r0
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange
-		R_AVM_FAR24	.text.__atomic_compare_exchange+0x62
+		R_AVM_FAR24	.text.__atomic_compare_exchange+0x5a
 <L0>:
- f4 49                 stsp16	[sp+0x2], r5
- f4 42                 stsp16	[sp+0x0], r6
+ f4 43                 stsp16	[sp+0x0], r7
+ f1 0d                 mov	r1, r5
  f1 16                 mov	r2, r6
  f1 18                 mov	r3, r0
- 41                    ld8u	r4, [r5]
- f4 50                 stsp16	[sp+0x4], r4
+ ed e2 20              ld8u	r7, [r1+0]
  ed 84 20              ld8u	r4, [r2+0]
- f0 31 04              ldsp16	r1, [sp+0x4]
- f5 0c                 cmp	r1, r4
+ 3c                    cmp	r7, r4
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange
-		R_AVM_FAR24	.text.__atomic_compare_exchange+0x4f
+		R_AVM_FAR24	.text.__atomic_compare_exchange+0x4b
 <L1>:
  f4 aa                 inc16	r2
- f4 ad                 inc16	r5
+ f4 a9                 inc16	r1
  f4 b3                 dec16	r3
  f6 2b                 tst16	r3
  d0 04                 breq8	0x4 <L2>
@@ -162,33 +160,31 @@ Disassembly of section .text.__atomic_compare_exchange:
  e2 00 00 00           jmpf	__atomic_compare_exchange
 		R_AVM_FAR24	.text.__atomic_compare_exchange+0x1a
 <L2>:
- f4 09                 ldsp16	r5, [sp+0x2]
- f7 1c                 ld8u	r4, [r7+]
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f7 14                 ld8u	r4, [r6+]
  f6 0c                 st8	[r5+], r4
  f4 b0                 dec16	r0
  f6 28                 tst16	r0
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange
-		R_AVM_FAR24	.text.__atomic_compare_exchange+0x3b
+		R_AVM_FAR24	.text.__atomic_compare_exchange+0x37
 <L3>:
  c0 01                 ldi8	r4, 0x1
  e2 00 00 00           jmpf	__atomic_compare_exchange
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.__atomic_compare_exchange+0x62
+		R_AVM_FAR24	.text.__atomic_compare_exchange+0x5a
  a0                    xor	r4, r4
- f4 01                 ldsp16	r5, [sp+0x0]
- f4 0a                 ldsp16	r6, [sp+0x2]
- f7 17                 ld8u	r7, [r6+]
- f6 0f                 st8	[r5+], r7
+ f7 0f                 ld8u	r7, [r5+]
+ f6 17                 st8	[r6+], r7
  f4 b0                 dec16	r0
  f6 28                 tst16	r0
  d0 04                 breq8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__atomic_compare_exchange
-		R_AVM_FAR24	.text.__atomic_compare_exchange+0x54
+		R_AVM_FAR24	.text.__atomic_compare_exchange+0x4c
 <L4>:
- d6 06                 adjsp	0x6
+ d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

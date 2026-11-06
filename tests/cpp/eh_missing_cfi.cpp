@@ -69,6 +69,8 @@ __attribute__((noinline)) int above_missing_frame() {
 extern "C" int avm_test_main(void) {
     avm_debug_putc('M');
     above_missing_frame();
+    if (catches)
+        avm_debug_putc('C');
     avm_debug_putc('X');
     return 0;
 }

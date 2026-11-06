@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_asin.c
 00000000 l    d  .text.asinf	00000000 .text.asinf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.asinf	000000da asinf
+00000000 g     F .text.asinf	000000de asinf
 00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.asinf:
@@ -26,7 +26,7 @@ Disassembly of section .text.asinf:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asinf
-		R_AVM_FAR24	.text.asinf+0xb3
+		R_AVM_FAR24	.text.asinf+0xb7
 <L0>:
  a0                    xor	r4, r4
  c5 00 3f              ldi16	r5, 0x3f00
@@ -55,7 +55,7 @@ Disassembly of section .text.asinf:
  ff 00                 fadd
  e2 00 00 00           jmpf	asinf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.asinf+0xa3
+		R_AVM_FAR24	.text.asinf+0xa7
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  f2 6b                 mov32	q3, q1
@@ -81,13 +81,14 @@ Disassembly of section .text.asinf:
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
  ff 00                 fadd
+ f0 04 db 0f           ldi16	r0, 0xfdb
+ f0 05 c9 3f           ldi16	r1, 0x3fc9
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
  08                    mov	r6, r4
  0d                    mov	r7, r5
- c4 db 0f              ldi16	r4, 0xfdb
- c5 c9 3f              ldi16	r5, 0x3fc9
+ f2 68                 mov32	q2, q0
  ff 01                 fsub
  c6 00 80              ldi16	r6, 0x8000
  f0 31 02              ldsp16	r1, [sp+0x2]
@@ -105,7 +106,7 @@ Disassembly of section .text.asinf:
  d2 04                 brult8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asinf
-		R_AVM_FAR24	.text.asinf+0xca
+		R_AVM_FAR24	.text.asinf+0xce
 <L2>:
  c4 c0 7f              ldi16	r4, 0x7fc0
  93                    or	r4, r7
@@ -113,7 +114,7 @@ Disassembly of section .text.asinf:
  02                    mov	r4, r6
  e2 00 00 00           jmpf	asinf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.asinf+0xac
+		R_AVM_FAR24	.text.asinf+0xb0
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -123,4 +124,4 @@ Disassembly of section .text.asinf:
  02                    mov	r4, r6
  e2 00 00 00           jmpf	asinf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.asinf+0xac
+		R_AVM_FAR24	.text.asinf+0xb0

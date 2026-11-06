@@ -11,7 +11,7 @@ SYMBOL TABLE:
 00000000 l    d  .debug_frame	00000000 .debug_frame
 00000000 g     F .text.ldexpf	00000004 ldexpf
 00000000         *UND*	00000000 scalbnf
-00000000 g     F .text.frexpf	0000011d frexpf
+00000000 g     F .text.frexpf	0000011b frexpf
 00000000 g     F .text.modff	000000d3 modff
 00000000 g     F .text.nextafterf	000000be nextafterf
 00000000         *UND*	00000000 __avm_errno
@@ -83,7 +83,7 @@ Disassembly of section .text.frexpf:
  d2 04                 brult8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	frexpf
-		R_AVM_FAR24	.text.frexpf+0xce
+		R_AVM_FAR24	.text.frexpf+0xcc
 <L3>:
  f0 06 ff ff           ldi16	r2, 0xffff
  f0 03 3f              ldi8	r3, 0x3f
@@ -91,7 +91,7 @@ Disassembly of section .text.frexpf:
  d2 04                 brult8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	frexpf
-		R_AVM_FAR24	.text.frexpf+0xf9
+		R_AVM_FAR24	.text.frexpf+0xf7
 <L4>:
  f0 06 ff ff           ldi16	r2, 0xffff
  f0 03 7f              ldi8	r3, 0x7f
@@ -122,7 +122,6 @@ Disassembly of section .text.frexpf:
  bb                    pop16	r3
  ef                    ret
  f4 50                 stsp16	[sp+0x4], r4
- f4 59                 stsp16	[sp+0x6], r5
  03                    mov	r4, r7
  fa 38                 lsl16i	r4, 0x8
  0e                    mov	r7, r6

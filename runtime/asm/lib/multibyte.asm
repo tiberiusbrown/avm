@@ -28,8 +28,8 @@ SYMBOL TABLE:
 00000000 g     F .text.wcrtomb	0000000c wcrtomb
 00000000 g     F .text.mbsrtowcs	0000006b mbsrtowcs
 00000000 g     F .text.wcsrtombs	0000006b wcsrtombs
-00000000 g     F .text.mbstowcs	0000004d mbstowcs
-00000000 g     F .text.wcstombs	0000004d wcstombs
+00000000 g     F .text.mbstowcs	0000004e mbstowcs
+00000000 g     F .text.wcstombs	0000004e wcstombs
 
 Disassembly of section .text.mbtowc:
 
@@ -349,36 +349,36 @@ Disassembly of section .text.mbstowcs:
 
 <mbstowcs>:
  b0                    push16	r0
- 0c                    mov	r7, r4
- f6 2f                 tst16	r7
+ f1 04                 mov	r0, r4
+ f6 28                 tst16	r0
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	mbstowcs
-		R_AVM_FAR24	.text.mbstowcs+0x2f
+		R_AVM_FAR24	.text.mbstowcs+0x30
 <L0>:
  a0                    xor	r4, r4
  f6 2e                 tst16	r6
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	mbstowcs
-		R_AVM_FAR24	.text.mbstowcs+0x48
+		R_AVM_FAR24	.text.mbstowcs+0x49
 <L1>:
- f5 34                 ld8u	r0, [r5]
- f3 0c                 st8	[r7], r0
- f4 a0                 tst8	r0
+ 4d                    ld8u	r7, [r5]
+ ee e0 20              st8	[r0+0], r7
+ f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	mbstowcs
-		R_AVM_FAR24	.text.mbstowcs+0x48
+		R_AVM_FAR24	.text.mbstowcs+0x49
 <L2>:
- f4 af                 inc16	r7
+ f4 a8                 inc16	r0
  f4 ad                 inc16	r5
  f4 ac                 inc16	r4
  38                    cmp	r6, r4
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	mbstowcs
-		R_AVM_FAR24	.text.mbstowcs+0x13
+		R_AVM_FAR24	.text.mbstowcs+0x14
 <L3>:
  02                    mov	r4, r6
  b8                    pop16	r0
@@ -388,7 +388,7 @@ Disassembly of section .text.mbstowcs:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	mbstowcs
-		R_AVM_FAR24	.text.mbstowcs+0x4a
+		R_AVM_FAR24	.text.mbstowcs+0x4b
 <L4>:
  a0                    xor	r4, r4
  f4 ac                 inc16	r4
@@ -398,7 +398,7 @@ Disassembly of section .text.mbstowcs:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	mbstowcs
-		R_AVM_FAR24	.text.mbstowcs+0x39
+		R_AVM_FAR24	.text.mbstowcs+0x3a
 <L5>:
  b8                    pop16	r0
  ef                    ret
@@ -410,36 +410,36 @@ Disassembly of section .text.wcstombs:
 
 <wcstombs>:
  b0                    push16	r0
- 0c                    mov	r7, r4
- f6 2f                 tst16	r7
+ f1 04                 mov	r0, r4
+ f6 28                 tst16	r0
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	wcstombs
-		R_AVM_FAR24	.text.wcstombs+0x2f
+		R_AVM_FAR24	.text.wcstombs+0x30
 <L0>:
  a0                    xor	r4, r4
  f6 2e                 tst16	r6
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	wcstombs
-		R_AVM_FAR24	.text.wcstombs+0x48
+		R_AVM_FAR24	.text.wcstombs+0x49
 <L1>:
- f5 34                 ld8u	r0, [r5]
- f3 0c                 st8	[r7], r0
- f4 a0                 tst8	r0
+ 4d                    ld8u	r7, [r5]
+ ee e0 20              st8	[r0+0], r7
+ f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	wcstombs
-		R_AVM_FAR24	.text.wcstombs+0x48
+		R_AVM_FAR24	.text.wcstombs+0x49
 <L2>:
- f4 af                 inc16	r7
+ f4 a8                 inc16	r0
  f4 ad                 inc16	r5
  f4 ac                 inc16	r4
  38                    cmp	r6, r4
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	wcstombs
-		R_AVM_FAR24	.text.wcstombs+0x13
+		R_AVM_FAR24	.text.wcstombs+0x14
 <L3>:
  02                    mov	r4, r6
  b8                    pop16	r0
@@ -449,7 +449,7 @@ Disassembly of section .text.wcstombs:
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	wcstombs
-		R_AVM_FAR24	.text.wcstombs+0x4a
+		R_AVM_FAR24	.text.wcstombs+0x4b
 <L4>:
  a0                    xor	r4, r4
  f4 ac                 inc16	r4
@@ -459,7 +459,7 @@ Disassembly of section .text.wcstombs:
  d0 04                 breq8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	wcstombs
-		R_AVM_FAR24	.text.wcstombs+0x39
+		R_AVM_FAR24	.text.wcstombs+0x3a
 <L5>:
  b8                    pop16	r0
  ef                    ret

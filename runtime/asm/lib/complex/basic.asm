@@ -13,7 +13,7 @@ SYMBOL TABLE:
 00000000 g     F .text.crealf	00000004 crealf
 00000000 g     F .text.cimagf	00000006 cimagf
 00000000 g     F .text.conjf	00000019 conjf
-00000000 g     F .text.cprojf	00000061 cprojf
+00000000 g     F .text.cprojf	0000005c cprojf
 00000000         *UND*	00000000 copysignf
 00000000 g     F .text.cabsf	00000012 cabsf
 00000000         *UND*	00000000 hypotf
@@ -59,20 +59,19 @@ Disassembly of section .text.cprojf:
  b1                    push16	r1
  b0                    push16	r0
  d6 fe                 adjsp	-0x2
- 0c                    mov	r7, r4
+ f4 40                 stsp16	[sp+0x0], r4
  f0 6a 0a              ld32	q0, [r5]
  f1 29                 mov	r6, r1
  1a                    add	r6, r6
- c4 00 ff              ldi16	r4, 0xff00
- a8                    xor	r6, r4
+ c7 00 ff              ldi16	r7, 0xff00
+ ab                    xor	r6, r7
  f1 20                 mov	r4, r0
  92                    or	r4, r6
  c9 04                 addi.s8	r5, 0x4
  f0 6a 4a              ld32	q1, [r5]
  f1 27                 mov	r5, r3
  15                    add	r5, r5
- c6 00 ff              ldi16	r6, 0xff00
- a6                    xor	r5, r6
+ a7                    xor	r5, r7
  f1 2a                 mov	r6, r2
  99                    or	r6, r5
  f6 2e                 tst16	r6
@@ -81,7 +80,7 @@ Disassembly of section .text.cprojf:
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cprojf
-		R_AVM_FAR24	.text.cprojf+0x3a
+		R_AVM_FAR24	.text.cprojf+0x38
 <L0>:
  c0 01                 ldi8	r4, 0x1
  84                    and	r5, r4
@@ -89,24 +88,22 @@ Disassembly of section .text.cprojf:
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	cprojf
-		R_AVM_FAR24	.text.cprojf+0x50
+		R_AVM_FAR24	.text.cprojf+0x4a
 <L1>:
  f2 30                 sub	r0, r0
  f2 39                 sub	r1, r1
- f4 43                 stsp16	[sp+0x0], r7
  f2 68                 mov32	q2, q0
  f2 6b                 mov32	q3, q1
  e3 00 00 00           callf	cprojf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	copysignf
  f2 66                 mov32	q1, q2
- f4 03                 ldsp16	r7, [sp+0x0]
  f0 05 80 7f           ldi16	r1, 0x7f80
- f0 6b 0e              st32	[r7], q0
- 07                    mov	r5, r7
+ f4 00                 ldsp16	r4, [sp+0x0]
+ f0 6b 08              st32	[r4], q0
+ 04                    mov	r5, r4
  c9 04                 addi.s8	r5, 0x4
  f0 6b 4a              st32	[r5], q1
- 03                    mov	r4, r7
  d6 02                 adjsp	0x2
  b8                    pop16	r0
  b9                    pop16	r1

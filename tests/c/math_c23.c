@@ -43,6 +43,7 @@ static int samples(void)
 {
     for (unsigned i=0; i<sizeof(c23_cases)/sizeof(c23_cases[0]); ++i) {
         const AVM_PROGMEM struct c23_case *c=&c23_cases[i];
+        if (c->op == 16) continue;
         float x=c->x, y=c->y, value;
         switch (c->op) {
         case 0: value=sinpif(x); break; case 1: value=cospif(x); break;
@@ -53,8 +54,22 @@ static int samples(void)
         case 10: value=logp1f(x); break; case 11: value=log2p1f(x); break;
         case 12: value=log10p1f(x); break; case 13: value=pownf(x,c->n); break;
         case 14: value=powrf(x,y); break; case 15: value=rootnf(x,c->n); break;
-        case 16: value=compoundnf(x,c->n); break; default: value=rsqrtf(x); break;
+        default: value=rsqrtf(x); break;
         }
+        if (!(fabsf(value-c->expected) <= 0.00001f*fabsf(c->expected))) {
+            test_line16("case",i); test_line16("op",c->op);
+            test_line32("actual",bits(value)); test_line32("expected",bits(c->expected));
+            return 1;
+        }
+    }
+    return 0;
+}
+static int compound_samples(void)
+{
+    for (unsigned i=0; i<sizeof(c23_cases)/sizeof(c23_cases[0]); ++i) {
+        const AVM_PROGMEM struct c23_case *c=&c23_cases[i];
+        if (c->op != 16) continue;
+        float value=compoundnf(c->x,c->n);
         if (!(fabsf(value-c->expected) <= 0.00001f*fabsf(c->expected))) {
             test_line16("case",i); test_line16("op",c->op);
             test_line32("actual",bits(value)); test_line32("expected",bits(c->expected));
@@ -221,5 +236,5 @@ extern "C"
 #endif
 int avm_test_main(void)
 {
-    return checks_0() || checks_1() || checks_2() || checks_3() || checks_4() || checks_5() || checks_6() || checks_7() || checks_8() || checks_9() || checks_10() || checks_11() || checks_12() || checks_13() || checks_14() || checks_15() || checks_16() || checks_17() || checks_18() || checks_19() || checks_20() || checks_21() || checks_22() || checks_23() || checks_24() || checks_25() || checks_26() || checks_27() || generic_checks() || samples();
+    return checks_0() || checks_1() || checks_2() || checks_3() || checks_4() || checks_5() || checks_6() || checks_7() || checks_8() || checks_9() || checks_10() || checks_11() || checks_12() || checks_13() || checks_14() || checks_15() || checks_16() || checks_17() || checks_18() || checks_19() || checks_20() || checks_21() || checks_22() || checks_23() || checks_24() || checks_25() || checks_26() || checks_27() || generic_checks() || samples() || compound_samples();
 }

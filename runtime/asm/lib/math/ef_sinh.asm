@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_sinh.c
 00000000 l    d  .text.sinhf	00000000 .text.sinhf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.sinhf	000000e6 sinhf
+00000000 g     F .text.sinhf	000000ec sinhf
 00000000         *UND*	00000000 __avm_expf_noerrno
 00000000         *UND*	00000000 __avm_errno
 
@@ -127,17 +127,19 @@ Disassembly of section .text.sinhf:
  e2 00 00 00           jmpf	sinhf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.sinhf+0x29
- c4 00 80              ldi16	r4, 0x8000
- f9 84                 and	r4, r1
- a5                    xor	r5, r5
- c6 80 ff              ldi16	r6, 0xff80
- 31                    cmp	r4, r5
- fb 56                 cmov.ne	r2, r6
- c0 22                 ldi8	r4, 0x22
- f0 5c 00 00           stm16	[0x0], r4
-		R_AVM_DATA16	__avm_errno
- f1 26                 mov	r5, r2
+ c6 00 80              ldi16	r6, 0x8000
+ f9 c4                 and	r6, r1
  a0                    xor	r4, r4
+ c5 80 7f              ldi16	r5, 0x7f80
+ f2 30                 sub	r0, r0
+ f0 05 80 ff           ldi16	r1, 0xff80
+ af                    xor	r7, r7
+ 3b                    cmp	r6, r7
+ fb 60                 cmov.ne	r4, r0
+ fb 69                 cmov.ne	r5, r1
+ c2 22                 ldi8	r6, 0x22
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	sinhf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.sinhf+0xbe

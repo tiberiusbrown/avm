@@ -6,9 +6,9 @@ SYMBOL TABLE:
 00000000 l    d  .text.scalblnf	00000000 .text.scalblnf
 00000000 l    d  .text.scalbnf	00000000 .text.scalbnf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.scalblnf	00000184 scalblnf
+00000000 g     F .text.scalblnf	0000017c scalblnf
 00000000         *UND*	00000000 __avm_errno
-00000000 g     F .text.scalbnf	00000107 scalbnf
+00000000 g     F .text.scalbnf	00000101 scalbnf
 
 Disassembly of section .text.scalblnf:
 
@@ -40,7 +40,7 @@ Disassembly of section .text.scalblnf:
 <L1>:
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
  f0 04 eb fe           ldi16	r0, 0xfeeb
  f0 05 ff ff           ldi16	r1, 0xffff
  c6 ea fe              ldi16	r6, 0xfeea
@@ -54,7 +54,7 @@ Disassembly of section .text.scalblnf:
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
 <L2>:
  f2 62                 mov32	q0, q2
  f0 38 04              stsp16	[sp+0x4], r0
@@ -64,12 +64,11 @@ Disassembly of section .text.scalblnf:
  f1 76                 zext8	r6
  f0 03 ff              ldi8	r3, 0xff
  f4 42                 stsp16	[sp+0x0], r6
- f4 49                 stsp16	[sp+0x2], r5
  f5 2b                 cmp	r6, r3
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0x76
+		R_AVM_FAR24	.text.scalblnf+0x74
 <L3>:
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
@@ -78,33 +77,33 @@ Disassembly of section .text.scalblnf:
  ff 00                 fadd
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
  f6 2a                 tst16	r2
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0xe3
+		R_AVM_FAR24	.text.scalblnf+0xe1
 <L4>:
  c7 15 01              ldi16	r7, 0x115
  f5 17                 cmp	r2, r7
  d3 04                 brslt8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0x122
+		R_AVM_FAR24	.text.scalblnf+0x120
 <L5>:
  c7 ea fe              ldi16	r7, 0xfeea
  f5 2e                 cmp	r7, r2
  d3 04                 brslt8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0x13e
+		R_AVM_FAR24	.text.scalblnf+0x140
 <L6>:
  f4 00                 ldsp16	r4, [sp+0x0]
  f4 a4                 tst8	r4
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0xbc
+		R_AVM_FAR24	.text.scalblnf+0xba
 <L7>:
  f2 30                 sub	r0, r0
  f0 05 00 4c           ldi16	r1, 0x4c00
@@ -124,13 +123,13 @@ Disassembly of section .text.scalblnf:
  d3 04                 brslt8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0x151
+		R_AVM_FAR24	.text.scalblnf+0x153
 <L8>:
  cc 01                 cmpi.s8	r4, 0x1
  d9 04                 brsge8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0xeb
+		R_AVM_FAR24	.text.scalblnf+0xe9
 <L9>:
  c6 7f 80              ldi16	r6, 0x807f
  f0 32 04              ldsp16	r2, [sp+0x4]
@@ -142,18 +141,18 @@ Disassembly of section .text.scalblnf:
  f1 22                 mov	r4, r2
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
  cc e9                 cmpi.s8	r4, -0x17
  08                    mov	r6, r4
  d9 04                 brsge8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0x166
+		R_AVM_FAR24	.text.scalblnf+0x168
 <L10>:
  c7 7f 80              ldi16	r7, 0x807f
  f4 10                 ldsp16	r4, [sp+0x4]
@@ -175,7 +174,7 @@ Disassembly of section .text.scalblnf:
  d2 04                 brult8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalblnf
-		R_AVM_FAR24	.text.scalblnf+0x17a
+		R_AVM_FAR24	.text.scalblnf+0x136
 <L11>:
  d6 08                 adjsp	0x8
  b8                    pop16	r0
@@ -183,22 +182,23 @@ Disassembly of section .text.scalblnf:
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
- c4 00 80              ldi16	r4, 0x8000
- f4 1b                 ldsp16	r7, [sp+0x6]
- 83                    and	r4, r7
- a5                    xor	r5, r5
- c6 80 7f              ldi16	r6, 0x7f80
- c7 80 ff              ldi16	r7, 0xff80
- 31                    cmp	r4, r5
- fb 77                 cmov.ne	r6, r7
- c0 22                 ldi8	r4, 0x22
- f0 5c 00 00           stm16	[0x0], r4
-		R_AVM_DATA16	__avm_errno
- 06                    mov	r5, r6
+ c6 00 80              ldi16	r6, 0x8000
+ f4 19                 ldsp16	r5, [sp+0x6]
+ 89                    and	r6, r5
  a0                    xor	r4, r4
+ c5 80 7f              ldi16	r5, 0x7f80
+ f2 30                 sub	r0, r0
+ f0 05 80 ff           ldi16	r1, 0xff80
+ af                    xor	r7, r7
+ 3b                    cmp	r6, r7
+ fb 60                 cmov.ne	r4, r0
+ fb 69                 cmov.ne	r5, r1
+ c2 22                 ldi8	r6, 0x22
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno
@@ -210,7 +210,7 @@ Disassembly of section .text.scalblnf:
  07                    mov	r5, r7
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
  c0 22                 ldi8	r4, 0x22
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -222,7 +222,7 @@ Disassembly of section .text.scalblnf:
  a0                    xor	r4, r4
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
  c2 22                 ldi8	r6, 0x22
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno
@@ -234,13 +234,7 @@ Disassembly of section .text.scalblnf:
  87                    and	r5, r7
  e2 00 00 00           jmpf	scalblnf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
- c2 22                 ldi8	r6, 0x22
- f0 5e 00 00           stm16	[0x0], r6
-		R_AVM_DATA16	__avm_errno
- e2 00 00 00           jmpf	scalblnf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalblnf+0x11b
+		R_AVM_FAR24	.text.scalblnf+0x119
 
 Disassembly of section .text.scalbnf:
 
@@ -294,7 +288,7 @@ Disassembly of section .text.scalbnf:
  d3 04                 brslt8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalbnf
-		R_AVM_FAR24	.text.scalbnf+0xc9
+		R_AVM_FAR24	.text.scalbnf+0xcd
 <L4>:
  f4 a6                 tst8	r6
  d0 04                 breq8	0x4 <L5>
@@ -315,7 +309,7 @@ Disassembly of section .text.scalbnf:
  d3 04                 brslt8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalbnf
-		R_AVM_FAR24	.text.scalbnf+0xda
+		R_AVM_FAR24	.text.scalbnf+0xde
 <L6>:
  ce 01                 cmpi.s8	r6, 0x1
  d9 04                 brsge8	0x4 <L7>
@@ -335,7 +329,7 @@ Disassembly of section .text.scalbnf:
  d9 04                 brsge8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalbnf
-		R_AVM_FAR24	.text.scalbnf+0xed
+		R_AVM_FAR24	.text.scalbnf+0xf1
 <L8>:
  c7 7f 80              ldi16	r7, 0x807f
  8d                    and	r7, r5
@@ -355,25 +349,26 @@ Disassembly of section .text.scalbnf:
  d2 04                 brult8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	scalbnf
-		R_AVM_FAR24	.text.scalbnf+0xfd
+		R_AVM_FAR24	.text.scalbnf+0xc3
 <L9>:
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
  bb                    pop16	r3
  ef                    ret
- c4 00 80              ldi16	r4, 0x8000
- 81                    and	r4, r5
- a5                    xor	r5, r5
- c6 80 7f              ldi16	r6, 0x7f80
- c7 80 ff              ldi16	r7, 0xff80
- 31                    cmp	r4, r5
- fb 77                 cmov.ne	r6, r7
- c0 22                 ldi8	r4, 0x22
- f0 5c 00 00           stm16	[0x0], r4
-		R_AVM_DATA16	__avm_errno
- 06                    mov	r5, r6
+ c6 00 80              ldi16	r6, 0x8000
+ 89                    and	r6, r5
  a0                    xor	r4, r4
+ c5 80 7f              ldi16	r5, 0x7f80
+ f2 30                 sub	r0, r0
+ f0 05 80 ff           ldi16	r1, 0xff80
+ af                    xor	r7, r7
+ 3b                    cmp	r6, r7
+ fb 60                 cmov.ne	r4, r0
+ fb 69                 cmov.ne	r5, r1
+ c2 22                 ldi8	r6, 0x22
+ f0 5e 00 00           stm16	[0x0], r6
+		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	scalbnf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.scalbnf+0xaa
@@ -406,12 +401,6 @@ Disassembly of section .text.scalbnf:
  c7 00 80              ldi16	r7, 0x8000
  82                    and	r4, r6
  87                    and	r5, r7
- e2 00 00 00           jmpf	scalbnf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.scalbnf+0xaa
- c2 22                 ldi8	r6, 0x22
- f0 5e 00 00           stm16	[0x0], r6
-		R_AVM_DATA16	__avm_errno
  e2 00 00 00           jmpf	scalbnf
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.scalbnf+0xaa

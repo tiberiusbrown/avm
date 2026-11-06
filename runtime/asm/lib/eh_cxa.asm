@@ -12,7 +12,7 @@ SYMBOL TABLE:
 00000000 l    d  .text.__avm_eh_rethrow_primary	00000000 .text.__avm_eh_rethrow_primary
 00000000 l    d  .text._Unwind_Resume	00000000 .text._Unwind_Resume
 00000000 l    d  .text.__cxa_begin_catch	00000000 .text.__cxa_begin_catch
-00000000 l     F .text.catch_object	000000ed catch_object
+00000000 l     F .text.catch_object	000000e9 catch_object
 00000000 l    d  .text.catch_object	00000000 .text.catch_object
 00000000 l    d  .text.__cxa_get_exception_ptr	00000000 .text.__cxa_get_exception_ptr
 00000000 l    d  .text.__cxa_end_catch	00000000 .text.__cxa_end_catch
@@ -324,29 +324,29 @@ Disassembly of section .text.__avm_eh_rethrow:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
+ f0 55 00 00           ldm16	r5, [0x0]
+		R_AVM_DATA16	.data..L_MergedGlobals+0x2
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_eh_rethrow
 		R_AVM_FAR24	.text.__avm_eh_rethrow+0xb1
 <L0>:
- f0 55 00 00           ldm16	r5, [0x0]
-		R_AVM_DATA16	.data..L_MergedGlobals+0x2
  31                    cmp	r4, r5
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_eh_rethrow
 		R_AVM_FAR24	.text.__avm_eh_rethrow+0xb1
 <L1>:
- ed a8 37              ld8u	r5, [r4+23]
- cd 02                 cmpi.s8	r5, 0x2
+ f0 55 00 00           ldm16	r5, [0x0]
+		R_AVM_DATA16	.data..L_MergedGlobals
+ ed c8 37              ld8u	r6, [r4+23]
+ ce 02                 cmpi.s8	r6, 0x2
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	__avm_eh_rethrow
 		R_AVM_FAR24	.text.__avm_eh_rethrow+0xb1
 <L2>:
- f0 55 00 00           ldm16	r5, [0x0]
-		R_AVM_DATA16	.data..L_MergedGlobals
  f6 2d                 tst16	r5
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
@@ -460,6 +460,8 @@ Disassembly of section .text.__avm_eh_rethrow_primary:
  e3 00 00 00           callf	__avm_eh_rethrow_primary
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	abort
+ f0 56 00 00           ldm16	r6, [0x0]
+		R_AVM_DATA16	.data..L_MergedGlobals+0x2
  ed a8 37              ld8u	r5, [r4+23]
  cd 02                 cmpi.s8	r5, 0x2
  d0 04                 breq8	0x4 <L1>
@@ -467,8 +469,6 @@ Disassembly of section .text.__avm_eh_rethrow_primary:
  e2 00 00 00           jmpf	__avm_eh_rethrow_primary
 		R_AVM_FAR24	.text.__avm_eh_rethrow_primary+0x26
 <L1>:
- f0 56 00 00           ldm16	r6, [0x0]
-		R_AVM_DATA16	.data..L_MergedGlobals+0x2
  32                    cmp	r4, r6
  d0 04                 breq8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
@@ -492,14 +492,14 @@ Disassembly of section .text._Unwind_Resume:
 
 <_Unwind_Resume>:
  b0                    push16	r0
+ f0 55 00 00           ldm16	r5, [0x0]
+		R_AVM_DATA16	.data..L_MergedGlobals
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	_Unwind_Resume
 		R_AVM_FAR24	.text._Unwind_Resume+0x60
 <L0>:
- f0 55 00 00           ldm16	r5, [0x0]
-		R_AVM_DATA16	.data..L_MergedGlobals
  31                    cmp	r4, r5
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
@@ -614,145 +614,146 @@ Disassembly of section .text.catch_object:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
- d6 fc                 adjsp	-0x4
- f1 1c                 mov	r3, r4
- ed c6 56              ld8u	r6, [r3+54]
- f4 a6                 tst8	r6
+ d6 f8                 adjsp	-0x8
+ 04                    mov	r5, r4
+ ed ea 56              ld8u	r7, [r5+54]
+ f4 a7                 tst8	r7
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0x3d
+		R_AVM_FAR24	.text.catch_object+0x3f
 <L0>:
- f1 13                 mov	r2, r3
- f0 0a 33              addi.s8	r2, 0x33
- ce 01                 cmpi.s8	r6, 0x1
+ f1 05                 mov	r0, r5
+ f0 08 33              addi.s8	r0, 0x33
+ 09                    mov	r6, r5
+ ca 3b                 addi.s8	r6, 0x3b
+ cf 01                 cmpi.s8	r7, 0x1
  d1 04                 brne8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0x92
+		R_AVM_FAR24	.text.catch_object+0x89
 <L1>:
- ce 02                 cmpi.s8	r6, 0x2
+ cf 02                 cmpi.s8	r7, 0x2
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0x6d
+		R_AVM_FAR24	.text.catch_object+0x68
 <L2>:
- ce 03                 cmpi.s8	r6, 0x3
+ cf 03                 cmpi.s8	r7, 0x3
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xe9
+		R_AVM_FAR24	.text.catch_object+0xe5
 <L3>:
  a5                    xor	r5, r5
  c2 03                 ldi8	r6, 0x3
- f1 22                 mov	r4, r2
+ f1 20                 mov	r4, r0
  e3 00 00 00           callf	catch_object
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	memset
  e2 00 00 00           jmpf	catch_object
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.catch_object+0xe0
- ed 96 49              ld16	r4, [r3+41]
+		R_AVM_FAR24	.text.catch_object+0xdc
+ ed 9a 49              ld16	r4, [r5+41]
  f6 2c                 tst16	r4
  d1 04                 brne8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0x52
+		R_AVM_FAR24	.text.catch_object+0x54
 <L4>:
- ed d6 35              ld16	r6, [r3+21]
+ ed da 35              ld16	r6, [r5+21]
  32                    cmp	r4, r6
  d2 04                 brult8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xe9
+		R_AVM_FAR24	.text.catch_object+0xe5
 <L5>:
- 08                    mov	r6, r4
- af                    xor	r7, r7
- f0 0b 3b              addi.s8	r3, 0x3b
- f1 13                 mov	r2, r3
- f2 4b                 sub	r3, r3
- f7 67                 add32	q1, q3
- aa                    xor	r6, r6
- c3 01                 ldi8	r7, 0x1
- f0 69 4c              cmp32	q1, q3
- d2 04                 brult8	0x4 <L6>
+ 14                    add	r5, r4
+ c9 3b                 addi.s8	r5, 0x3b
+ 34                    cmp	r5, r4
+ f8 14                 cset.ult	r4
+ cc 01                 cmpi.s8	r4, 0x1
+ d1 04                 brne8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xe9
+		R_AVM_FAR24	.text.catch_object+0xe5
 <L6>:
+ f1 05                 mov	r0, r5
  e2 00 00 00           jmpf	catch_object
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.catch_object+0xe0
- ed d6 35              ld16	r6, [r3+21]
- ce 03                 cmpi.s8	r6, 0x3
+		R_AVM_FAR24	.text.catch_object+0xdc
+ ed fa 35              ld16	r7, [r5+21]
+ cf 03                 cmpi.s8	r7, 0x3
  d0 04                 breq8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xe9
+		R_AVM_FAR24	.text.catch_object+0xe5
 <L7>:
- ed d6 49              ld16	r6, [r3+41]
- f6 2e                 tst16	r6
+ ed ba 49              ld16	r5, [r5+41]
+ f6 2d                 tst16	r5
  d0 04                 breq8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xe9
+		R_AVM_FAR24	.text.catch_object+0xe5
 <L8>:
- f0 0b 3b              addi.s8	r3, 0x3b
- f1 22                 mov	r4, r2
- f1 27                 mov	r5, r3
+ f1 20                 mov	r4, r0
+ 06                    mov	r5, r6
  c2 03                 ldi8	r6, 0x3
  d7 0f                 sys	memcpy
  e2 00 00 00           jmpf	catch_object
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.catch_object+0xe0
- ed d6 35              ld16	r6, [r3+21]
- ce 02                 cmpi.s8	r6, 0x2
+		R_AVM_FAR24	.text.catch_object+0xdc
+ ed fa 35              ld16	r7, [r5+21]
+ cf 02                 cmpi.s8	r7, 0x2
  d0 04                 breq8	0x4 <L9>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xe9
+		R_AVM_FAR24	.text.catch_object+0xe5
 <L9>:
- f2 30                 sub	r0, r0
- ed d6 5b              ld16	r6, [r3+59]
- af                    xor	r7, r7
- f6 2e                 tst16	r6
- f1 08                 mov	r1, r0
- f1 20                 mov	r4, r0
+ a0                    xor	r4, r4
+ f5 49                 ld16	r1, [r6]
+ f6 29                 tst16	r1
+ 08                    mov	r6, r4
+ 0c                    mov	r7, r4
  d1 04                 brne8	0x4 <L10>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xd7
+		R_AVM_FAR24	.text.catch_object+0xd3
 <L10>:
- f4 42                 stsp16	[sp+0x0], r6
- f4 4b                 stsp16	[sp+0x2], r7
- ed d6 49              ld16	r6, [r3+41]
+ f1 11                 mov	r2, r1
+ f2 4b                 sub	r3, r3
+ ed da 49              ld16	r6, [r5+41]
  0e                    mov	r7, r6
  fa ef                 asr16i	r7, 0xf
- f4 00                 ldsp16	r4, [sp+0x0]
- f4 09                 ldsp16	r5, [sp+0x2]
- f7 6b                 add32	q2, q3
- aa                    xor	r6, r6
- c3 01                 ldi8	r7, 0x1
- f0 69 8c              cmp32	q2, q3
- 08                    mov	r6, r4
- 0d                    mov	r7, r5
+ f7 6d                 add32	q3, q1
+ f2 42                 sub	r2, r2
+ f0 03 01              ldi8	r3, 0x1
+ f0 69 c4              cmp32	q3, q1
  d2 04                 brult8	0x4 <L11>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	catch_object
-		R_AVM_FAR24	.text.catch_object+0xe9
+		R_AVM_FAR24	.text.catch_object+0xe5
 <L11>:
- 03                    mov	r4, r7
- fa 38                 lsl16i	r4, 0x8
- 0e                    mov	r7, r6
- fa a8                 lsr16i	r7, 0x8
- 9c                    or	r7, r4
- 03                    mov	r4, r7
- f1 0e                 mov	r1, r6
- ee 06 55              st8	[r3+53], r0
- ee 86 54              st8	[r3+52], r4
- ee 26 53              st8	[r3+51], r1
- f1 22                 mov	r4, r2
- d6 04                 adjsp	0x4
+ f4 52                 stsp16	[sp+0x4], r6
+ f4 5b                 stsp16	[sp+0x6], r7
+ 0b                    mov	r6, r7
+ af                    xor	r7, r7
+ fa 58                 lsl16i	r6, 0x8
+ f4 42                 stsp16	[sp+0x0], r6
+ f4 4b                 stsp16	[sp+0x2], r7
+ f4 12                 ldsp16	r6, [sp+0x4]
+ 02                    mov	r4, r6
+ fa 78                 lsr16i	r4, 0x8
+ f4 02                 ldsp16	r6, [sp+0x0]
+ 92                    or	r4, r6
+ f4 12                 ldsp16	r6, [sp+0x4]
+ 0c                    mov	r7, r4
+ a0                    xor	r4, r4
+ ee 8a 55              st8	[r5+53], r4
+ ee ea 54              st8	[r5+52], r7
+ ee ca 53              st8	[r5+51], r6
+ f1 20                 mov	r4, r0
+ d6 08                 adjsp	0x8
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

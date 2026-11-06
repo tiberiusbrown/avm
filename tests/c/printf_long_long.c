@@ -65,11 +65,15 @@ static void check(int result, const char *expected)
 
 NOINLINE static void vectors(void)
 {
-    unsigned i;
-    for(i = 0; i < sizeof(integer_vectors) / sizeof(integer_vectors[0]); ++i) {
-        const char AVM_PROGMEM *pf = integer_vectors[i].format;
+    unsigned group, i;
+    for(group = 0; group < sizeof(integer_vector_groups) /
+                         sizeof(integer_vector_groups[0]); ++group) {
+        const struct integer_vector AVM_PROGMEM *table =
+            integer_vector_groups[group].vectors;
+        for(i = 0; i < integer_vector_groups[group].count; ++i) {
+        const char AVM_PROGMEM *pf = table[i].format;
         unsigned indirect;
-        memcpy_P(&current, &integer_vectors[i], sizeof(current));
+        memcpy_P(&current, &table[i], sizeof(current));
         /* Exercise true-variadic builtins and both real va_list ABI functions
            for every vector, in C and through the C++ typed overloads. */
         if(current.kind & 1) {
@@ -108,6 +112,7 @@ NOINLINE static void vectors(void)
                     check(program_v(indirect, buffer, sizeof(buffer), pf, value), current.expected);
                 }
             }
+        }
         }
     }
 }

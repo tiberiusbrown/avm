@@ -3,7 +3,7 @@
 
 /* Both exponent parities, at every interval's edges and middle,
  * plus failures from rejected coarse approximations. */
-static const AVM_PROGMEM struct math_case cases[] = {
+static const AVM_PROGMEM struct math_case cases_0[] = {
     {0x3f800000UL, 0, 0x3f800000UL, 0},
     {0x3f800001UL, 0, 0x3f800000UL, 2},
     {0x3f801fffUL, 0, 0x3f800fffUL, 2},
@@ -4100,6 +4100,9 @@ static const AVM_PROGMEM struct math_case cases[] = {
     {0x402a6001UL, 0, 0x3fd0d82eUL, 2},
     {0x402a7fffUL, 0, 0x3fd0ebc9UL, 2},
     {0x402a8000UL, 0, 0x3fd0ebc9UL, 2},
+};
+
+static const AVM_PROGMEM struct math_case cases_1[] = {
     {0x402a8001UL, 0, 0x3fd0ebcaUL, 2},
     {0x402a9fffUL, 0, 0x3fd0ff63UL, 2},
     {0x402aa000UL, 0, 0x3fd0ff63UL, 2},
@@ -6155,5 +6158,7 @@ static const AVM_PROGMEM struct math_case cases[] = {
 
 int avm_test_main(void)
 {
-    return check_unary(sqrtf, cases, sizeof(cases) / sizeof(cases[0]));
+    if (check_unary(sqrtf, cases_0, sizeof(cases_0) / sizeof(cases_0[0]))) return 1;
+    if (check_unary(sqrtf, cases_1, sizeof(cases_1) / sizeof(cases_1[0]))) return 1;
+    return 0;
 }

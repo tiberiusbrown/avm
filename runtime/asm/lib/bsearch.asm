@@ -34,24 +34,24 @@ Disassembly of section .text.bsearch:
  e2 00 00 00           jmpf	bsearch
 		R_AVM_FAR24	.text.bsearch+0x77
 <L1>:
- f2 4b                 sub	r3, r3
+ f2 42                 sub	r2, r2
  e2 00 00 00           jmpf	bsearch
 		R_AVM_RELAX	*ABS*
 		R_AVM_FAR24	.text.bsearch+0x38
- f1 2a                 mov	r6, r2
+ f1 2b                 mov	r6, r3
  f1 2c                 mov	r7, r0
- f5 1e                 cmp	r3, r6
+ f5 16                 cmp	r2, r6
  d2 04                 brult8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	bsearch
 		R_AVM_FAR24	.text.bsearch+0x75
 <L2>:
  f4 62                 stsp16	[sp+0x8], r6
- f1 16                 mov	r2, r6
- f2 43                 sub	r2, r3
- f4 8a                 lsr16.1	r2
- f2 13                 add	r2, r3
- f1 0a                 mov	r1, r2
+ f1 1e                 mov	r3, r6
+ f2 4a                 sub	r3, r2
+ f4 8b                 lsr16.1	r3
+ f2 1a                 add	r3, r2
+ f1 0b                 mov	r1, r3
  f1 07                 mov	r0, r7
  fe 0f                 mul16	r1, r7
  f4 18                 ldsp16	r4, [sp+0x6]
@@ -75,9 +75,9 @@ Disassembly of section .text.bsearch:
  e2 00 00 00           jmpf	bsearch
 		R_AVM_FAR24	.text.bsearch+0x77
 <L4>:
- f4 aa                 inc16	r2
- f1 1a                 mov	r3, r2
- f5 1e                 cmp	r3, r6
+ f4 ab                 inc16	r3
+ f1 13                 mov	r2, r3
+ f5 16                 cmp	r2, r6
  d8 04                 bruge8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	bsearch

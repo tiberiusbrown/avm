@@ -9,6 +9,7 @@ import struct
 ROOT = Path(__file__).resolve().parents[2]
 INTERVALS = 512
 DEGREE = 1
+MAX_CASES_PER_ARRAY = 4096
 
 
 def binary32(value):
@@ -62,8 +63,7 @@ def boundary_cases():
         '#include "math_test.h"',
         '',
         '/* Both exponent parities, at every interval\'s edges and middle,',
-        ' * plus failures from rejected coarse approximations. */',
-        'static const AVM_PROGMEM struct math_case cases[] = {'
+        ' * plus failures from rejected coarse approximations. */'
     ]
     inputs = {0x3f800001, 0x3f809b4e, 0x3f8439e4, 0x400068fb}
     for parity in range(2):
@@ -72,6 +72,7 @@ def boundary_cases():
             half = 1 << (shift-1)
             for offset in [0, 1, half-1, half, half+1, (1<<shift)-1]:
                 inputs.add(0x3f800000 + (parity << 23) + (index << shift) + offset)
+    cases = []
     for bits in sorted(inputs):
         value = struct.unpack('<f', struct.pack('<I', bits))[0]
         expected = struct.unpack('<I', struct.pack('<f', math.sqrt(value)))[0]
@@ -79,12 +80,24 @@ def boundary_cases():
         # grid. Newly added midpoints use the requested two-ULP budget;
         # exact rounding at every representable square is not required.
         exact = binary32(math.sqrt(value))**2 == value and (bits & 0xffff) == 0
-        lines.append(f'    {{0x{bits:08x}UL, 0, 0x{expected:08x}UL, {0 if exact else 2}}},')
-    lines.extend([
-        '};', '', 'int avm_test_main(void)', '{',
-        '    return check_unary(sqrtf, cases, sizeof(cases) / sizeof(cases[0]));',
-        '}', ''
-    ])
+        cases.append(f'    {{0x{bits:08x}UL, 0, 0x{expected:08x}UL, {0 if exact else 2}}},')
+
+    chunks = [cases[i:i + MAX_CASES_PER_ARRAY]
+              for i in range(0, len(cases), MAX_CASES_PER_ARRAY)]
+    for index, chunk in enumerate(chunks):
+        lines.extend([
+            f'static const AVM_PROGMEM struct math_case cases_{index}[] = {{',
+            *chunk,
+            '};',
+            ''
+        ])
+    lines.extend(['int avm_test_main(void)', '{'])
+    for index in range(len(chunks)):
+        lines.append(
+            f'    if (check_unary(sqrtf, cases_{index}, '
+            f'sizeof(cases_{index}) / sizeof(cases_{index}[0]))) return 1;'
+        )
+    lines.extend(['    return 0;', '}', ''])
     return '\n'.join(lines)
 
 

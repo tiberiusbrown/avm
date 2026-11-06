@@ -126,7 +126,8 @@ struct Decoder::Impl {
         instructions.reset(target->createMCInstrInfo());
         subtarget.reset(target->createMCSubtargetInfo(triple, "", ""));
         assembly.reset(target->createMCAsmInfo(*registers, triple, llvm::MCTargetOptions()));
-        context = std::make_unique<llvm::MCContext>(triple, assembly.get(), registers.get(), subtarget.get());
+        context = std::make_unique<llvm::MCContext>(
+            triple, *assembly, *registers, *subtarget);
         decoder.reset(target->createMCDisassembler(*subtarget, *context));
         if(!decoder) throw std::runtime_error("Cannot create AVM MC decoder");
     }

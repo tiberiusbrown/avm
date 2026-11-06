@@ -30,3 +30,6 @@ float complex cpowf(float complex z,float complex w) {
     float complex l=clogf(z);
     return cx_exp(__mulsc3(a,b,__real__ l,__imag__ l));
 }
+/* AVM complex precisions share the same binary32 ABI. */
+__asm__(".globl cpow\n.type cpow,@function\n.set cpow,cpowf\n"
+        ".globl cpowl\n.type cpowl,@function\n.set cpowl,cpowf");

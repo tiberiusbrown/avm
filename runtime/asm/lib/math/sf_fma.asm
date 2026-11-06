@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 sf_fma.c
 00000000 l    d  .text.fmaf	00000000 .text.fmaf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.fmaf	00000103 fmaf
+00000000 g     F .text.fmaf	00000105 fmaf
 00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.fmaf:
@@ -65,22 +65,22 @@ Disassembly of section .text.fmaf:
  e2 00 00 00           jmpf	fmaf
 		R_AVM_FAR24	.text.fmaf+0x25
 <L1>:
- f2 68                 mov32	q2, q0
+ f2 64                 mov32	q1, q0
  f4 62                 stsp16	[sp+0x8], r6
  f4 6b                 stsp16	[sp+0xa], r7
  f0 30 10              ldsp16	r0, [sp+0x10]
  f0 31 12              ldsp16	r1, [sp+0x12]
  c6 ff ff              ldi16	r6, 0xffff
  c7 ff 7f              ldi16	r7, 0x7fff
- 82                    and	r4, r6
- 87                    and	r5, r7
+ f9 58                 and	r2, r6
+ f9 7c                 and	r3, r7
  aa                    xor	r6, r6
  c7 80 7f              ldi16	r7, 0x7f80
- f0 69 c8              cmp32	q3, q2
+ f0 69 c4              cmp32	q3, q1
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fmaf
-		R_AVM_FAR24	.text.fmaf+0xac
+		R_AVM_FAR24	.text.fmaf+0xae
 <L2>:
  c4 ff ff              ldi16	r4, 0xffff
  c5 ff 7f              ldi16	r5, 0x7fff
@@ -90,7 +90,7 @@ Disassembly of section .text.fmaf:
  d8 04                 bruge8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fmaf
-		R_AVM_FAR24	.text.fmaf+0xac
+		R_AVM_FAR24	.text.fmaf+0xae
 <L3>:
  f4 20                 ldsp16	r4, [sp+0x8]
  f4 29                 ldsp16	r5, [sp+0xa]
@@ -99,7 +99,7 @@ Disassembly of section .text.fmaf:
  d8 04                 bruge8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	fmaf
-		R_AVM_FAR24	.text.fmaf+0xf9
+		R_AVM_FAR24	.text.fmaf+0xfb
 <L4>:
  f4 10                 ldsp16	r4, [sp+0x4]
  f4 19                 ldsp16	r5, [sp+0x6]
@@ -145,7 +145,7 @@ Disassembly of section .text.fmaf:
  c2 22                 ldi8	r6, 0x22
  e2 00 00 00           jmpf	fmaf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.fmaf+0xfb
+		R_AVM_FAR24	.text.fmaf+0xfd
  c2 21                 ldi8	r6, 0x21
  f0 5e 00 00           stm16	[0x0], r6
 		R_AVM_DATA16	__avm_errno

@@ -59,11 +59,13 @@ Disassembly of section .text.__ieee754_rem_pio2f:
 <L2>:
  f0 06 da 0f           ldi16	r2, 0xfda
  f0 07 c9 bf           ldi16	r3, 0xbfc9
- f4 48                 stsp16	[sp+0x2], r4
- f4 51                 stsp16	[sp+0x4], r5
+ f0 3a 02              stsp16	[sp+0x2], r2
+ f0 3b 04              stsp16	[sp+0x4], r3
+ f2 66                 mov32	q1, q2
  f2 68                 mov32	q2, q0
  f4 5a                 stsp16	[sp+0x6], r6
- f2 6b                 mov32	q3, q1
+ f4 0a                 ldsp16	r6, [sp+0x2]
+ f4 13                 ldsp16	r7, [sp+0x4]
  ff 00                 fadd
  c6 69 21              ldi16	r6, 0x2169
  c7 a2 b3              ldi16	r7, 0xb3a2
@@ -71,14 +73,12 @@ Disassembly of section .text.__ieee754_rem_pio2f:
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 06                 fneg	q2
- f0 06 ff ff           ldi16	r2, 0xffff
- f0 07 ff ff           ldi16	r3, 0xffff
- f0 30 02              ldsp16	r0, [sp+0x2]
- f0 31 04              ldsp16	r1, [sp+0x4]
- f0 69 40              cmp32	q1, q0
+ f0 04 ff ff           ldi16	r0, 0xffff
+ f0 05 ff ff           ldi16	r1, 0xffff
+ f0 69 04              cmp32	q0, q1
  fd 26                 cmov.slt	r4, r6
  fd 2f                 cmov.slt	r5, r7
- f1 29                 mov	r6, r1
+ f1 2b                 mov	r6, r3
  fa df                 asr16i	r6, 0xf
  c3 01                 ldi8	r7, 0x1
  9e                    or	r7, r6

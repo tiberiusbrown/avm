@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_tanh.c
 00000000 l    d  .text.tanhf	00000000 .text.tanhf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.tanhf	000000a1 tanhf
+00000000 g     F .text.tanhf	0000009f tanhf
 00000000         *UND*	00000000 __avm_expf_noerrno
 
 Disassembly of section .text.tanhf:
@@ -37,7 +37,7 @@ Disassembly of section .text.tanhf:
  ff 02                 fmul
  e2 00 00 00           jmpf	tanhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanhf+0x9a
+		R_AVM_FAR24	.text.tanhf+0x98
  f0 02 01              ldi8	r2, 0x1
  f0 07 80 7f           ldi16	r3, 0x7f80
  f0 69 04              cmp32	q0, q1
@@ -51,7 +51,7 @@ Disassembly of section .text.tanhf:
  ff 00                 fadd
  e2 00 00 00           jmpf	tanhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanhf+0x9a
+		R_AVM_FAR24	.text.tanhf+0x98
  c4 17 41              ldi16	r4, 0x4117
  32                    cmp	r4, r6
  d2 04                 brult8	0x4 <L2>
@@ -63,10 +63,9 @@ Disassembly of section .text.tanhf:
  c7 80 3f              ldi16	r7, 0x3f80
  e2 00 00 00           jmpf	tanhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.tanhf+0x93
+		R_AVM_FAR24	.text.tanhf+0x91
  aa                    xor	r6, r6
  c7 00 c0              ldi16	r7, 0xc000
- f4 40                 stsp16	[sp+0x0], r4
  f4 49                 stsp16	[sp+0x2], r5
  f2 68                 mov32	q2, q0
  ff 02                 fmul

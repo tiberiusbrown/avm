@@ -21,76 +21,75 @@ Disassembly of section .text.asctime:
  b1                    push16	r1
  b0                    push16	r0
  d6 f6                 adjsp	-0xa
+ ed d8 2a              ld16	r6, [r4+10]
  a5                    xor	r5, r5
- ed d8 2c              ld16	r6, [r4+12]
- ce 07                 cmpi.s8	r6, 0x7
+ ed f8 2c              ld16	r7, [r4+12]
+ cf 07                 cmpi.s8	r7, 0x7
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L0>:
- ed d8 28              ld16	r6, [r4+8]
- ce 0c                 cmpi.s8	r6, 0xc
+ ed f8 28              ld16	r7, [r4+8]
+ cf 0c                 cmpi.s8	r7, 0xc
  d2 04                 brult8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L1>:
- ed d8 26              ld16	r6, [r4+6]
- ca e0                 addi.s8	r6, -0x20
- ce e1                 cmpi.s8	r6, -0x1f
+ ed f8 26              ld16	r7, [r4+6]
+ cb e0                 addi.s8	r7, -0x20
+ cf e1                 cmpi.s8	r7, -0x1f
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L2>:
- ed d8 24              ld16	r6, [r4+4]
- ce 18                 cmpi.s8	r6, 0x18
+ ed f8 24              ld16	r7, [r4+4]
+ cf 18                 cmpi.s8	r7, 0x18
  d2 04                 brult8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L3>:
- ed d8 22              ld16	r6, [r4+2]
- ce 3c                 cmpi.s8	r6, 0x3c
+ ed f8 22              ld16	r7, [r4+2]
+ cf 3c                 cmpi.s8	r7, 0x3c
  d2 04                 brult8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L4>:
- 68                    ld16	r6, [r4]
- ce 3d                 cmpi.s8	r6, 0x3d
+ 6c                    ld16	r7, [r4]
+ cf 3d                 cmpi.s8	r7, 0x3d
  d2 04                 brult8	0x4 <L5>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L5>:
- ed d8 2e              ld16	r6, [r4+14]
- f6 2e                 tst16	r6
+ ed 18 2e              ld16	r0, [r4+14]
+ f6 28                 tst16	r0
  d9 04                 brsge8	0x4 <L6>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L6>:
  c7 6d 01              ldi16	r7, 0x16d
- 3e                    cmp	r7, r6
+ f5 2c                 cmp	r7, r0
  d8 04                 bruge8	0x4 <L7>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L7>:
- ed 18 2a              ld16	r0, [r4+10]
- c7 5c e0              ldi16	r7, 0xe05c
- f2 2c                 add	r7, r0
- c6 d8 dc              ldi16	r6, 0xdcd8
- 3e                    cmp	r7, r6
+ f0 04 5c e0           ldi16	r0, 0xe05c
+ f2 06                 add	r0, r6
+ c7 d8 dc              ldi16	r7, 0xdcd8
+ f5 07                 cmp	r0, r7
  d8 04                 bruge8	0x4 <L8>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asctime
 		R_AVM_FAR24	.text.asctime+0x1bf
 <L8>:
- f1 28                 mov	r6, r0
- f1 2c                 mov	r7, r0
+ 0e                    mov	r7, r6
  fa ef                 asr16i	r7, 0xf
  f0 04 6c 07           ldi16	r0, 0x76c
  f2 39                 sub	r1, r1

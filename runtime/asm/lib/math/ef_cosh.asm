@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_cosh.c
 00000000 l    d  .text.coshf	00000000 .text.coshf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.coshf	000000bc coshf
+00000000 g     F .text.coshf	000000c0 coshf
 00000000         *UND*	00000000 __avm_expf_noerrno
 00000000         *UND*	00000000 __avm_errno
 
@@ -109,9 +109,11 @@ Disassembly of section .text.coshf:
  e2 00 00 00           jmpf	coshf
 		R_AVM_FAR24	.text.coshf+0x2c
 <L4>:
- c2 22                 ldi8	r6, 0x22
- f0 5e 00 00           stm16	[0x0], r6
+ c0 22                 ldi8	r4, 0x22
+ f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
+ a0                    xor	r4, r4
+ c5 80 7f              ldi16	r5, 0x7f80
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret

@@ -105,6 +105,11 @@ function(avm_add_object)
         endif()
     endif()
 
+    set(compile_action -c)
+    if("-S" IN_LIST ARG_COMPILE_OPTIONS OR "-E" IN_LIST ARG_COMPILE_OPTIONS)
+        set(compile_action)
+    endif()
+
     set(compile_command
         "$<TARGET_FILE:clang>"
         "--target=${AVM_TARGET_TRIPLE}"
@@ -112,7 +117,7 @@ function(avm_add_object)
         ${language_options}
         ${include_options}
         ${ARG_COMPILE_OPTIONS}
-        -c "${ARG_SOURCE}"
+        ${compile_action} "${ARG_SOURCE}"
         -o "${ARG_OUTPUT}"
     )
 

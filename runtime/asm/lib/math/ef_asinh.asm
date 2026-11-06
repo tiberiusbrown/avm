@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_asinh.c
 00000000 l    d  .text.asinhf	00000000 .text.asinhf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.asinhf	00000094 asinhf
+00000000 g     F .text.asinhf	000000a0 asinhf
 00000000         *UND*	00000000 logf
 
 Disassembly of section .text.asinhf:
@@ -15,6 +15,7 @@ Disassembly of section .text.asinhf:
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
+ d6 fc                 adjsp	-0x4
  f2 62                 mov32	q0, q2
  f2 64                 mov32	q1, q0
  ff 09                 fabs	q1
@@ -24,7 +25,7 @@ Disassembly of section .text.asinhf:
  d8 04                 bruge8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asinhf
-		R_AVM_FAR24	.text.asinhf+0x41
+		R_AVM_FAR24	.text.asinhf+0x43
 <L0>:
  f2 68                 mov32	q2, q0
  f2 6a                 mov32	q3, q0
@@ -36,26 +37,26 @@ Disassembly of section .text.asinhf:
  ff 02                 fmul
  e2 00 00 00           jmpf	asinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.asinhf+0x8f
+		R_AVM_FAR24	.text.asinhf+0x99
  c5 80 7f              ldi16	r5, 0x7f80
  31                    cmp	r4, r5
  d8 04                 bruge8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asinhf
-		R_AVM_FAR24	.text.asinhf+0x55
+		R_AVM_FAR24	.text.asinhf+0x57
 <L1>:
  f2 68                 mov32	q2, q0
  f2 6a                 mov32	q3, q0
  ff 00                 fadd
  e2 00 00 00           jmpf	asinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.asinhf+0x8f
+		R_AVM_FAR24	.text.asinhf+0x99
  c5 80 45              ldi16	r5, 0x4580
  31                    cmp	r4, r5
  d8 04                 bruge8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	asinhf
-		R_AVM_FAR24	.text.asinhf+0x71
+		R_AVM_FAR24	.text.asinhf+0x73
 <L2>:
  f2 69                 mov32	q2, q1
  e3 00 00 00           callf	asinhf
@@ -66,12 +67,16 @@ Disassembly of section .text.asinhf:
  ff 00                 fadd
  e2 00 00 00           jmpf	asinhf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.asinhf+0x89
+		R_AVM_FAR24	.text.asinhf+0x93
+ a0                    xor	r4, r4
+ c5 80 3f              ldi16	r5, 0x3f80
+ f4 40                 stsp16	[sp+0x0], r4
+ f4 49                 stsp16	[sp+0x2], r5
  f2 68                 mov32	q2, q0
  f2 6a                 mov32	q3, q0
  ff 02                 fmul
- aa                    xor	r6, r6
- c7 80 3f              ldi16	r7, 0x3f80
+ f4 02                 ldsp16	r6, [sp+0x0]
+ f4 0b                 ldsp16	r7, [sp+0x2]
  ff 00                 fadd
  ff 16                 fsqrt
  08                    mov	r6, r4
@@ -84,6 +89,7 @@ Disassembly of section .text.asinhf:
  c6 00 80              ldi16	r6, 0x8000
  f9 c4                 and	r6, r1
  96                    or	r5, r6
+ d6 04                 adjsp	0x4
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2

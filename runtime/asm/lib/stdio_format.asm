@@ -6,89 +6,80 @@ SYMBOL TABLE:
 00000000 l    d  .text.vfprintf	00000000 .text.vfprintf
 00000000 l    d  .text.fprintf	00000000 .text.fprintf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.vfprintf	00000075 vfprintf
+00000000 g     F .text.vfprintf	0000006a vfprintf
 00000000         *UND*	00000000 __avm_errno
 00000000 g     F .text.fprintf	0000006d fprintf
 
 Disassembly of section .text.vfprintf:
 
 <vfprintf>:
- b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
  f1 16                 mov	r2, r6
- f0 04 ff ff           ldi16	r0, 0xffff
- f6 2c                 tst16	r4
+ f1 0c                 mov	r1, r4
+ c4 ff ff              ldi16	r4, 0xffff
+ f6 29                 tst16	r1
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfprintf
-		R_AVM_FAR24	.text.vfprintf+0x40
+		R_AVM_FAR24	.text.vfprintf+0x4d
 <L0>:
- f5 33                 ld8u	r3, [r4]
+ ed 02 20              ld8u	r0, [r1+0]
  c3 22                 ldi8	r7, 0x22
- f9 ec                 and	r7, r3
+ f9 e0                 and	r7, r0
  cf 02                 cmpi.s8	r7, 0x2
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfprintf
-		R_AVM_FAR24	.text.vfprintf+0x46
+		R_AVM_FAR24	.text.vfprintf+0x53
 <L1>:
  c3 c0                 ldi8	r7, 0xc0
- f9 ec                 and	r7, r3
+ f9 e0                 and	r7, r0
  cf 40                 cmpi.s8	r7, 0x40
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfprintf
-		R_AVM_FAR24	.text.vfprintf+0x4c
+		R_AVM_FAR24	.text.vfprintf+0x3c
 <L2>:
  f4 a7                 tst8	r7
  d0 04                 breq8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfprintf
-		R_AVM_FAR24	.text.vfprintf+0x63
+		R_AVM_FAR24	.text.vfprintf+0x59
 <L3>:
- c3 40                 ldi8	r7, 0x40
- f9 7d                 or	r3, r7
- f1 0c                 mov	r1, r4
- f3 03                 st8	[r4], r3
- e2 00 00 00           jmpf	vfprintf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfprintf+0x4e
- c1 09                 ldi8	r5, 0x9
- e2 00 00 00           jmpf	vfprintf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfprintf+0x6a
- c1 09                 ldi8	r5, 0x9
- e2 00 00 00           jmpf	vfprintf
-		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfprintf+0x65
- f1 0c                 mov	r1, r4
+ c0 40                 ldi8	r4, 0x40
+ f9 11                 or	r0, r4
+ ee 02 20              st8	[r1+0], r0
  09                    mov	r6, r5
  d7 3d                 sys	debug_printfv
- f1 04                 mov	r0, r4
- f6 28                 tst16	r0
+ f6 2c                 tst16	r4
  d3 04                 brslt8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfprintf
-		R_AVM_FAR24	.text.vfprintf+0x6e
+		R_AVM_FAR24	.text.vfprintf+0x66
 <L4>:
  c1 05                 ldi8	r5, 0x5
- f1 21                 mov	r4, r1
  e2 00 00 00           jmpf	vfprintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfprintf+0x65
+		R_AVM_FAR24	.text.vfprintf+0x5b
+ c1 09                 ldi8	r5, 0x9
+ e2 00 00 00           jmpf	vfprintf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.vfprintf+0x62
+ c1 09                 ldi8	r5, 0x9
+ e2 00 00 00           jmpf	vfprintf
+		R_AVM_RELAX	*ABS*
+		R_AVM_FAR24	.text.vfprintf+0x5b
  c1 16                 ldi8	r5, 0x16
  c2 08                 ldi8	r6, 0x8
- f9 cd                 or	r6, r3
- 52                    st8	[r4], r6
+ f9 c1                 or	r6, r0
+ ee c2 20              st8	[r1+0], r6
  f0 5d 00 00           stm16	[0x0], r5
 		R_AVM_DATA16	__avm_errno
- f1 20                 mov	r4, r0
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret
 
 Disassembly of section .text.fprintf:

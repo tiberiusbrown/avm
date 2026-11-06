@@ -389,40 +389,53 @@ def relax_debug_checks(executable, relax_image):
 # is what the source computes: mixed = 6 ^ 3, scaled = 6 << 1, total = 5 + 12,
 # tail = 17 ^ 6, first = 6 + 1, second = 7 + 6, and the inlined fold results.
 RELAX_VARIABLE_STOPS = (
-    (0xe04, (("input", 6, "0x"),
+    ("main", 0x0c, (("input", 6, "0x"),
              ("*(volatile unsigned char *)$sp", 6, None))),
-    (0xe1c, (("seed", 6, "r0"),)),
-    (0xe48, (("seed", 6, "r0"), ("mixed", 5, "r1"))),
-    (0xe5c, (("scaled", 12, "r3"),)),
-    (0xe69, (("a", 17, "r1"), ("b", 6, "r0"))),
-    (0xe7a, (("total", 17, "r1"), ("tail", 23, "r0"))),
-    (0xe88, (("seed", 6, "r4"),)),
-    (0xe8e, (("seed", 6, "r0"),)),
-    (0xe97, (("folded", 7, "r2"), ("a", 6, "r0"))),
-    (0xea4, (("seed", 6, "r0"), ("first", 7, "r2"))),
-    (0xeab, (("folded", 13, "r0"),)),
-    (0xeba, (("second", 13, "r0"),)),
+    ("relax_debug_outer", 0x06, (("seed", 6, "r0"),)),
+    ("relax_debug_outer", 0x32, (("seed", 6, "r0"), ("mixed", 5, "r1"))),
+    ("relax_debug_outer", 0x46, (("scaled", 12, "r3"),)),
+    ("relax_debug_outer", 0x53, (("a", 17, "r1"), ("b", 6, "r0"))),
+    ("relax_debug_outer", 0x64, (("total", 17, "r1"), ("tail", 23, "r0"))),
+    ("relax_debug_base_outer", 0x00, (("seed", 6, "r4"),)),
+    ("relax_debug_base_outer", 0x06, (("seed", 6, "r0"),)),
+    ("relax_debug_base_outer", 0x0f, (("folded", 7, "r2"), ("a", 6, "r0"))),
+    ("relax_debug_base_outer", 0x1c, (("seed", 6, "r0"), ("first", 7, "r2"))),
+    ("relax_debug_base_outer", 0x23, (("folded", 13, "r0"),)),
+    ("relax_debug_base_outer", 0x32, (("second", 13, "r0"),)),
 )
 
 
 def relax_variable_checks(executable, relax_image):
     """Reads known values from location lists, a stack slot, and inlined scopes."""
+    # Keep offsets relative to their fixture functions: unrelated runtime code
+    # can grow or shrink before these symbols during the main-branch merge.
+    anchors = {}
+    for function, _, _ in RELAX_VARIABLE_STOPS:
+        if function in anchors:
+            continue
+        lookup, _ = lldb(executable, relax_image, f"image lookup -n {function}")
+        match = re.search(rf"Address: {re.escape(relax_image.name)}"
+                          r"\[0x([0-9a-fA-F]+)\]", lookup)
+        require(match is not None, f"{function} entry was not resolved")
+        anchors[function] = int(match.group(1), 16)
+    variable_stops = tuple((anchors[function] + offset, reads)
+                           for function, offset, reads in RELAX_VARIABLE_STOPS)
     commands = [f"breakpoint set --address {address:#x}"
-                for address, _ in RELAX_VARIABLE_STOPS]
+                for address, _ in variable_stops]
     commands.append("run")
-    for index, (_, reads) in enumerate(RELAX_VARIABLE_STOPS):
+    for index, (_, reads) in enumerate(variable_stops):
         commands.append("frame variable -L")
         commands.extend(f"expr -- (unsigned){name}" for name, _, _ in reads)
-        if index + 1 < len(RELAX_VARIABLE_STOPS):
+        if index + 1 < len(variable_stops):
             commands.append("continue")
     output, _ = lldb(executable, relax_image, *commands)
 
     # Each stop begins with its breakpoint report, so split the output per stop.
     stops = re.split(r"(?=\* thread #1, stop reason = breakpoint )", output)[1:]
-    require(len(stops) == len(RELAX_VARIABLE_STOPS),
-            f"expected {len(RELAX_VARIABLE_STOPS)} variable stops, got {len(stops)}")
+    require(len(stops) == len(variable_stops),
+            f"expected {len(variable_stops)} variable stops, got {len(stops)}")
     for index, ((address, reads), block) in enumerate(
-            zip(RELAX_VARIABLE_STOPS, stops)):
+            zip(variable_stops, stops)):
         require(f"stop reason = breakpoint {index + 1}.1" in block,
                 f"variable stop {index + 1} was not breakpoint {index + 1}")
         require(re.search(rf"frame #0: 0x0*{address:x} ", block),
@@ -441,7 +454,7 @@ def relax_variable_checks(executable, relax_image):
                     f"{name} at {address:#x} is not located at {location}")
 
     # Stop at the entry of relax_debug_outer, where seed starts in r4 and moves.
-    output, _ = lldb(executable, relax_image, "breakpoint set --address 0xe16",
+    output, _ = lldb(executable, relax_image, f"breakpoint set --address {anchors['relax_debug_outer']:#x}",
                      "run", "frame variable -L", "expr -- (unsigned)seed")
     require("r4: (uint8_t) seed" in output and "(unsigned int) $0 = 6" in output,
             "seed at relax_debug_outer entry was not in r4 with value 6")

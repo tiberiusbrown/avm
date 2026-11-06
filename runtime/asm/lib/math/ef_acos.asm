@@ -5,7 +5,7 @@ SYMBOL TABLE:
 00000000 l    df *ABS*	00000000 ef_acos.c
 00000000 l    d  .text.acosf	00000000 .text.acosf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.acosf	000000ee acosf
+00000000 g     F .text.acosf	000000f2 acosf
 00000000         *UND*	00000000 __avm_errno
 
 Disassembly of section .text.acosf:
@@ -25,7 +25,7 @@ Disassembly of section .text.acosf:
  d2 04                 brult8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acosf
-		R_AVM_FAR24	.text.acosf+0xc3
+		R_AVM_FAR24	.text.acosf+0xc7
 <L0>:
  a0                    xor	r4, r4
  c5 00 3f              ldi16	r5, 0x3f00
@@ -59,7 +59,7 @@ Disassembly of section .text.acosf:
  0d                    mov	r7, r5
  e2 00 00 00           jmpf	acosf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.acosf+0xba
+		R_AVM_FAR24	.text.acosf+0xbe
  a0                    xor	r4, r4
  c5 80 3f              ldi16	r5, 0x3f80
  ff 01                 fsub
@@ -86,13 +86,14 @@ Disassembly of section .text.acosf:
  0d                    mov	r7, r5
  f2 69                 mov32	q2, q1
  ff 00                 fadd
+ f0 06 db 0f           ldi16	r2, 0xfdb
+ f0 07 49 40           ldi16	r3, 0x4049
  08                    mov	r6, r4
  0d                    mov	r7, r5
  ff 00                 fadd
  08                    mov	r6, r4
  0d                    mov	r7, r5
- c4 db 0f              ldi16	r4, 0xfdb
- c5 49 40              ldi16	r5, 0x4049
+ f2 69                 mov32	q2, q1
  ff 01                 fsub
  f2 42                 sub	r2, r2
  f2 4b                 sub	r3, r3
@@ -113,7 +114,7 @@ Disassembly of section .text.acosf:
  d2 04                 brult8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	acosf
-		R_AVM_FAR24	.text.acosf+0xdc
+		R_AVM_FAR24	.text.acosf+0xe0
 <L2>:
  c4 c0 7f              ldi16	r4, 0x7fc0
  f9 85                 or	r4, r1
@@ -121,7 +122,7 @@ Disassembly of section .text.acosf:
  0c                    mov	r7, r4
  e2 00 00 00           jmpf	acosf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.acosf+0xba
+		R_AVM_FAR24	.text.acosf+0xbe
  c0 21                 ldi8	r4, 0x21
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
@@ -131,4 +132,4 @@ Disassembly of section .text.acosf:
  0c                    mov	r7, r4
  e2 00 00 00           jmpf	acosf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.acosf+0xba
+		R_AVM_FAR24	.text.acosf+0xbe

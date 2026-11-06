@@ -22,6 +22,7 @@ struct Base {
 };
 
 struct Derived : Base {};
+struct Final final : Base {};
 
 // The callee is not inlined, so only the operand's static type is known at the call.
 __attribute__((noinline)) const std::type_info &inspect(Base &value) {
@@ -277,6 +278,12 @@ __attribute__((noinline)) int check_evaluation_and_static() {
     int evaluations = 0;
     CHECK(&typeid(counted_base(&evaluations, derived)) == &typeid(Derived));
     CHECK(evaluations == 1);
+
+    // Knowing the final dynamic type avoids the vtable lookup, but the
+    // polymorphic operand must still run exactly once.
+    Final final_object;
+    CHECK(&typeid((++evaluations, final_object)) == &typeid(Final));
+    CHECK(evaluations == 2);
 
     CHECK(plain_calls == 0);
 

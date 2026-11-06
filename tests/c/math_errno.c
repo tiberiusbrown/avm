@@ -32,10 +32,7 @@ static float math_value(uint32_t bits)
 #define UNARY(fn, x, error) CHECK(unary(fn, x, error))
 #define BINARY(fn, x, y, error) CHECK(binary(fn, x, y, error))
 
-#ifdef __cplusplus
-extern "C"
-#endif
-int avm_test_main(void)
+static __attribute__((noinline)) int gamma_checks(void)
 {
     CHECK(math_errhandling == MATH_ERRNO);
     UNARY(lgammaf, 0.0f, ERANGE);
@@ -88,6 +85,11 @@ int avm_test_main(void)
     CHECK(lgamma_call(1)==0 && !signbit(lgamma_call(1)));
     CHECK(lgamma_call(2)==0 && !signbit(lgamma_call(2)));
 
+    return 0;
+}
+
+static __attribute__((noinline)) int erf_checks(void)
+{
     UNARY(erff, 0.0f, 0);
     UNARY(erff, -0.0f, 0);
     UNARY(erff, 1, 0);
@@ -123,6 +125,11 @@ int avm_test_main(void)
     CHECK(erfc_call(INFINITY) == 0 && erfc_call(-INFINITY) == 2);
     CHECK(erfc_call(11) == 0 && erfc_call(-11) == 2);
     CHECK(erfc_call(9.5f) > 0 && erfc_call(9.5f) < 0x1p-126f);
+    return 0;
+}
+
+static __attribute__((noinline)) int elementary_checks(void)
+{
     UNARY(sqrtf, -1, EDOM);
     UNARY(sqrtf, -INFINITY, EDOM);
     UNARY(asinf, 2, EDOM);
@@ -199,6 +206,11 @@ int avm_test_main(void)
     UNARY(log1pf, -NAN, 0);
     UNARY(asinf, -NAN, 0);
     UNARY(atanhf, -NAN, 0);
+    return 0;
+}
+
+static __attribute__((noinline)) int binary_checks(void)
+{
     BINARY(fmodf, INFINITY, NAN, 0);
     BINARY(fmodf, -NAN, 0, 0);
     BINARY(fmodf, 1, 0x1p-149f, 0);
@@ -252,6 +264,11 @@ int avm_test_main(void)
     BINARY(nextafterf, math_value(0x007fffffUL), 1, 0);
     BINARY(nextafterf, -0x1p-126f, 0, ERANGE);
     BINARY(nextafterf, math_value(0x807fffffUL), -1, 0);
+    return 0;
+}
+
+static __attribute__((noinline)) int conversion_checks(void)
+{
     float (*volatile scale)(float, int) = scalbnf;
     float (*volatile ldexp_call)(float, int) = ldexpf;
     errno = 71; CHECK(isinf(scale(1, INT_MAX)) && errno == ERANGE);
@@ -296,4 +313,13 @@ int avm_test_main(void)
     UNARY(sqrtf, -0.0f, 0);
     UNARY(expf, 1, 0);
     return 0;
+}
+
+#ifdef __cplusplus
+extern "C"
+#endif
+int avm_test_main(void)
+{
+    return gamma_checks() || erf_checks() || elementary_checks() ||
+           binary_checks() || conversion_checks();
 }

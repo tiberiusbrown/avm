@@ -358,11 +358,12 @@ Disassembly of section .text.c32rtomb:
 <c32rtomb>:
  b1                    push16	r1
  b0                    push16	r0
- f6 2c                 tst16	r4
+ 04                    mov	r5, r4
+ f6 2d                 tst16	r5
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	c32rtomb
-		R_AVM_FAR24	.text.c32rtomb+0x25
+		R_AVM_FAR24	.text.c32rtomb+0x26
 <L0>:
  f0 00 ff              ldi8	r0, 0xff
  f2 39                 sub	r1, r1
@@ -370,24 +371,23 @@ Disassembly of section .text.c32rtomb:
  d2 04                 brult8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	c32rtomb
-		R_AVM_FAR24	.text.c32rtomb+0x25
+		R_AVM_FAR24	.text.c32rtomb+0x26
 <L1>:
  c0 54                 ldi8	r4, 0x54
  f0 5c 00 00           stm16	[0x0], r4
 		R_AVM_DATA16	__avm_errno
- c5 ff ff              ldi16	r5, 0xffff
+ c4 ff ff              ldi16	r4, 0xffff
  e2 00 00 00           jmpf	c32rtomb
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.c32rtomb+0x30
- c1 01                 ldi8	r5, 0x1
- f6 2c                 tst16	r4
+		R_AVM_FAR24	.text.c32rtomb+0x31
+ c0 01                 ldi8	r4, 0x1
+ f6 2d                 tst16	r5
  d1 04                 brne8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	c32rtomb
-		R_AVM_FAR24	.text.c32rtomb+0x30
+		R_AVM_FAR24	.text.c32rtomb+0x31
 <L2>:
- 52                    st8	[r4], r6
- 01                    mov	r4, r5
+ 56                    st8	[r5], r6
  b8                    pop16	r0
  b9                    pop16	r1
  ef                    ret

@@ -10,94 +10,88 @@ SYMBOL TABLE:
 00000000 l    d  .text.swprintf	00000000 .text.swprintf
 00000000 l    d  .text.wprintf	00000000 .text.wprintf
 00000000 l    d  .debug_frame	00000000 .debug_frame
-00000000 g     F .text.vfwprintf	00000077 vfwprintf
+00000000 g     F .text.vfwprintf	00000070 vfwprintf
 00000000         *UND*	00000000 __avm_errno
-00000000 g     F .text.vswprintf	00000018 vswprintf
+00000000 g     F .text.vswprintf	00000017 vswprintf
 00000000 g     F .text.vwprintf	0000005f vwprintf
 00000000         *UND*	00000000 __avm_stdout
 00000000 g     F .text.fwprintf	00000073 fwprintf
-00000000 g     F .text.swprintf	00000022 swprintf
+00000000 g     F .text.swprintf	00000021 swprintf
 00000000 g     F .text.wprintf	00000063 wprintf
 
 Disassembly of section .text.vfwprintf:
 
 <vfwprintf>:
- b3                    push16	r3
  b2                    push16	r2
  b1                    push16	r1
  b0                    push16	r0
  f1 16                 mov	r2, r6
- f0 04 ff ff           ldi16	r0, 0xffff
- f6 2c                 tst16	r4
+ f1 0c                 mov	r1, r4
+ c4 ff ff              ldi16	r4, 0xffff
+ f6 29                 tst16	r1
  d1 04                 brne8	0x4 <L0>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfwprintf
 		R_AVM_FAR24	.text.vfwprintf+0x36
 <L0>:
- f5 33                 ld8u	r3, [r4]
+ ed 02 20              ld8u	r0, [r1+0]
  c3 22                 ldi8	r7, 0x22
- f9 ec                 and	r7, r3
+ f9 e0                 and	r7, r0
  cf 02                 cmpi.s8	r7, 0x2
  d0 04                 breq8	0x4 <L1>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfwprintf
 		R_AVM_FAR24	.text.vfwprintf+0x3c
 <L1>:
- f0 0f 40              cmpi.s8	r3, 0x40
+ f0 0c 40              cmpi.s8	r0, 0x40
  d2 04                 brult8	0x4 <L2>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfwprintf
 		R_AVM_FAR24	.text.vfwprintf+0x42
 <L2>:
- c7 80 ff              ldi16	r7, 0xff80
- f9 7d                 or	r3, r7
- f1 0c                 mov	r1, r4
- f3 03                 st8	[r4], r3
+ c4 80 ff              ldi16	r4, 0xff80
+ f9 11                 or	r0, r4
+ ee 02 20              st8	[r1+0], r0
  e2 00 00 00           jmpf	vfwprintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfwprintf+0x50
+		R_AVM_FAR24	.text.vfwprintf+0x4e
  c1 09                 ldi8	r5, 0x9
  e2 00 00 00           jmpf	vfwprintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfwprintf+0x6c
+		R_AVM_FAR24	.text.vfwprintf+0x68
  c1 09                 ldi8	r5, 0x9
  e2 00 00 00           jmpf	vfwprintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfwprintf+0x67
- f1 2f                 mov	r7, r3
+		R_AVM_FAR24	.text.vfwprintf+0x61
+ f1 2c                 mov	r7, r0
  f6 47                 sext8	r7
  cf c0                 cmpi.s8	r7, -0x40
  d3 04                 brslt8	0x4 <L3>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfwprintf
-		R_AVM_FAR24	.text.vfwprintf+0x65
+		R_AVM_FAR24	.text.vfwprintf+0x5f
 <L3>:
- f1 0c                 mov	r1, r4
  09                    mov	r6, r5
  d7 3d                 sys	debug_printfv
- f1 04                 mov	r0, r4
- f6 28                 tst16	r0
+ f6 2c                 tst16	r4
  d3 04                 brslt8	0x4 <L4>
 		R_AVM_RELAX	*ABS*
  e2 00 00 00           jmpf	vfwprintf
-		R_AVM_FAR24	.text.vfwprintf+0x70
+		R_AVM_FAR24	.text.vfwprintf+0x6c
 <L4>:
  c1 05                 ldi8	r5, 0x5
- f1 21                 mov	r4, r1
  e2 00 00 00           jmpf	vfwprintf
 		R_AVM_RELAX	*ABS*
-		R_AVM_FAR24	.text.vfwprintf+0x67
+		R_AVM_FAR24	.text.vfwprintf+0x61
  c1 16                 ldi8	r5, 0x16
  c2 08                 ldi8	r6, 0x8
- f9 cd                 or	r6, r3
- 52                    st8	[r4], r6
+ f9 c1                 or	r6, r0
+ ee c2 20              st8	[r1+0], r6
  f0 5d 00 00           stm16	[0x0], r5
 		R_AVM_DATA16	__avm_errno
- f1 20                 mov	r4, r0
  b8                    pop16	r0
  b9                    pop16	r1
  ba                    pop16	r2
- bb                    pop16	r3
  ef                    ret
 
 Disassembly of section .text.vswprintf:
@@ -109,10 +103,10 @@ Disassembly of section .text.vswprintf:
  f1 17                 mov	r2, r7
  d7 2f                 sys	vsnprintf
  08                    mov	r6, r4
+ 0e                    mov	r7, r6
+ fa ef                 asr16i	r7, 0xf
+ 9e                    or	r7, r6
  c4 ff ff              ldi16	r4, 0xffff
- f6 2e                 tst16	r6
- 0c                    mov	r7, r4
- fd 7e                 cmov.sge	r7, r6
  f5 28                 cmp	r6, r0
  fc 27                 cmov.ult	r4, r7
  b8                    pop16	r0
@@ -274,10 +268,10 @@ Disassembly of section .text.swprintf:
  07                    mov	r5, r7
  d7 2f                 sys	vsnprintf
  04                    mov	r5, r4
+ 09                    mov	r6, r5
+ fa df                 asr16i	r6, 0xf
+ 99                    or	r6, r5
  c4 ff ff              ldi16	r4, 0xffff
- f6 2d                 tst16	r5
- 08                    mov	r6, r4
- fd 75                 cmov.sge	r6, r5
  37                    cmp	r5, r7
  fc 26                 cmov.ult	r4, r6
  d6 02                 adjsp	0x2

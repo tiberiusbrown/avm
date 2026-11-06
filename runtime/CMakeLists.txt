@@ -38,6 +38,9 @@ set(_LIBCPP_HARDENING_MODE_DEFAULT _LIBCPP_HARDENING_MODE_NONE)
 set(_LIBCPP_ASSERTION_SEMANTIC_DEFAULT _LIBCPP_ASSERTION_SEMANTIC_IGNORE)
 set(_LIBCPP_LIBC_PICOLIBC OFF)
 set(_LIBCPP_LIBC_NEWLIB OFF)
+# AVM compiles libc++ with -Werror; newer libc++ ABI annotation pragmas need
+# their diagnostic guard active in implementation translation units.
+set(_LIBCPP_EXTRA_SITE_DEFINES "#define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER")
 configure_file("${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/__config_site.in"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site" @ONLY)
 configure_file("${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in"

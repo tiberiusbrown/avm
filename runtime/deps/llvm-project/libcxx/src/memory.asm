@@ -20,6 +20,12 @@ SYMBOL TABLE:
 00000000 l    d  .text._ZNSt3__15alignEjjRPvRj	00000000 .text._ZNSt3__15alignEjjRPvRj
 00000000 l    d  .flash.str1.1	00000000 .flash.str1.1
 00000000 l    d  .debug_frame	00000000 .debug_frame
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTINSt3__114__shared_countE
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTSNSt3__114__shared_countE
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTINSt3__119__shared_weak_countE
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTSNSt3__119__shared_weak_countE
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTINSt3__112bad_weak_ptrE
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTSNSt3__112bad_weak_ptrE
 00000000 g     F .text._ZNSt3__112bad_weak_ptrD2Ev	00000004 std::__1::bad_weak_ptr::~bad_weak_ptr()
 00000000         *UND*	00000000 std::exception::~exception()
 00000000 g     F .text._ZNSt3__112bad_weak_ptrD0Ev	00000010 std::__1::bad_weak_ptr::~bad_weak_ptr()
@@ -39,9 +45,19 @@ SYMBOL TABLE:
 00000000 g     F .text._ZNKSt3__119__shared_weak_count13__get_deleterERKSt9type_info	00000002 std::__1::__shared_weak_count::__get_deleter(std::type_info const&) const
 00000000 g     F .text._ZNSt3__15alignEjjRPvRj	0000003f std::__1::align(unsigned int, unsigned int, void*&, unsigned int&)
 00000000 g     O .rodata._ZTVNSt3__114__shared_countE	0000000f vtable for std::__1::__shared_count
+00000000 g     O .avm.rtti.type._ZTINSt3__114__shared_countE	00000006 typeinfo for std::__1::__shared_count
 00000000         *UND*	00000000 __cxa_pure_virtual
+00000000         *UND*	00000000 vtable for __cxxabiv1::__class_type_info
+00000000 g     O .avm.rtti.name._ZTSNSt3__114__shared_countE	00000019 typeinfo name for std::__1::__shared_count
 00000000 g     O .rodata._ZTVNSt3__119__shared_weak_countE	00000015 vtable for std::__1::__shared_weak_count
+00000000 g     O .avm.rtti.type._ZTINSt3__119__shared_weak_countE	00000011 typeinfo for std::__1::__shared_weak_count
+00000000         *UND*	00000000 vtable for __cxxabiv1::__vmi_class_type_info
+00000000 g     O .avm.rtti.name._ZTSNSt3__119__shared_weak_countE	0000001e typeinfo name for std::__1::__shared_weak_count
 00000000 g     O .rodata._ZTVNSt3__112bad_weak_ptrE	0000000f vtable for std::__1::bad_weak_ptr
+00000000 g     O .avm.rtti.type._ZTINSt3__112bad_weak_ptrE	00000009 typeinfo for std::__1::bad_weak_ptr
+00000000         *UND*	00000000 vtable for __cxxabiv1::__si_class_type_info
+00000000 g     O .avm.rtti.name._ZTSNSt3__112bad_weak_ptrE	00000017 typeinfo name for std::__1::bad_weak_ptr
+00000000         *UND*	00000000 typeinfo for std::exception
 00000000 g     F .text._ZNSt3__112bad_weak_ptrD2Ev	00000004 std::__1::bad_weak_ptr::~bad_weak_ptr()
 00000000 g     F .text._ZNSt3__114__shared_countD2Ev	00000001 std::__1::__shared_count::~__shared_count()
 00000000 g     F .text._ZNSt3__114__shared_countD2Ev	00000001 std::__1::__shared_weak_count::~__shared_weak_count()

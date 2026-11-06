@@ -2,13 +2,21 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <memory_resource>
 #include <optional>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 #include <variant>
 
-extern "C" int avm_test_main()
+namespace {
+
+struct large_payload {
+    unsigned char bytes[24];
+    int value;
+};
+
+__attribute__((noinline)) int vocabulary_basics()
 {
     std::optional<int> maybe = 7;
     if(!maybe || *maybe != 7 || maybe.value_or(0) != 7)
@@ -42,11 +50,90 @@ extern "C" int avm_test_main()
     if(std::get<0>(tuple) + std::get<1>(tuple) != 7)
         return 7;
 
+    return 0;
+}
+
+__attribute__((noinline)) int allocation_dependent_types()
+{
+    large_payload payload{};
+    payload.value = 19;
+    std::any erased = payload;
+    const large_payload* stored = std::any_cast<large_payload>(&erased);
+    if(!stored || stored->value != 19)
+        return 1;
+
+    std::shared_ptr<int> shared = std::make_shared<int>(23);
+    std::weak_ptr<int> weak = shared;
+    if(!shared || *shared != 23 || shared.use_count() != 1 || weak.expired())
+        return 2;
+    shared.reset();
+    return weak.expired() ? 0 : 3;
+}
+
+__attribute__((noinline)) int memory_resource_operations()
+{
+    std::pmr::memory_resource* resource = std::pmr::new_delete_resource();
+    std::pmr::polymorphic_allocator<unsigned char> allocator(resource);
+    unsigned char* bytes = allocator.allocate(3);
+    bytes[0] = 31;
+    bytes[1] = 32;
+    bytes[2] = 33;
+    if(bytes[0] != 31 || bytes[2] != 33)
+        return 1;
+    allocator.deallocate(bytes, 3);
+
+    alignas(std::max_align_t) unsigned char local_buffer[48];
+    std::pmr::monotonic_buffer_resource monotonic(
+        local_buffer, sizeof(local_buffer), resource);
+    int* value = static_cast<int*>(monotonic.allocate(sizeof(int), alignof(int)));
+    *value = 41;
+    if(*value != 41)
+        return 2;
+
+    std::pmr::pool_options options{};
+    options.max_blocks_per_chunk = 16;
+    options.largest_required_pool_block = 8;
+    std::pmr::unsynchronized_pool_resource pool(options, resource);
+    void* pooled = pool.allocate(1, 1);
+    pool.deallocate(pooled, 1, 1);
+    return 0;
+}
+
+__attribute__((noinline)) int synchronized_pool_operations()
+{
+    std::pmr::memory_resource* resource = std::pmr::new_delete_resource();
+    std::pmr::pool_options options{};
+    options.max_blocks_per_chunk = 16;
+    options.largest_required_pool_block = 8;
+    std::pmr::synchronized_pool_resource pool(options, resource);
+    void* pooled = pool.allocate(1, 1);
+    pool.deallocate(pooled, 1, 1);
+    return pool.upstream_resource() == resource ? 0 : 1;
+}
+
+__attribute__((noinline)) int shared_ptr_aliasing()
+{
     int storage = 12;
     std::shared_ptr<int> empty;
     std::shared_ptr<int> alias(empty, &storage);
     if(alias.get() != &storage || !alias || alias.use_count() != 0)
-        return 8;
+        return 1;
+    return 0;
+}
 
+}
+
+extern "C" int avm_test_main()
+{
+    if(vocabulary_basics() != 0)
+        return 1;
+    if(allocation_dependent_types() != 0)
+        return 2;
+    if(memory_resource_operations() != 0)
+        return 3;
+    if(synchronized_pool_operations() != 0)
+        return 4;
+    if(shared_ptr_aliasing() != 0)
+        return 5;
     return 0;
 }

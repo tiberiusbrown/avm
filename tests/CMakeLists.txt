@@ -182,6 +182,21 @@ foreach(AVM_TEST_LANGUAGE C CXX)
             # the VM stack budget in an unoptimized translation unit.
             list(APPEND test_compile_options -O2)
         endif()
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
+           AVM_TEST_NAME STREQUAL "libcxx_containers" AND
+           AVM_TEST_OPT_LEVEL MATCHES "^(O0|Oz)$")
+            # libc++'s allocating container templates exceed the guest stack
+            # in O0 and Oz builds. Exercise the hosted allocator paths
+            # here with the SDK's optimized code shape.
+            list(APPEND test_compile_options -O2)
+        endif()
+        if(AVM_TEST_LANGUAGE STREQUAL "CXX" AND
+           AVM_TEST_NAME STREQUAL "libcxx_vocabulary" AND
+           AVM_TEST_OPT_LEVEL STREQUAL "O0")
+            # Allocation-dependent shared ownership exceeds the guest stack
+            # in an O0 translation unit.
+            list(APPEND test_compile_options -O2)
+        endif()
         set(test_include_dirs "${AVM_SYSROOT_DIR}/include")
         if(AVM_TEST_LANGUAGE STREQUAL "CXX")
             # AVM Clang discovers both libc++ and the C runtime from its
@@ -376,10 +391,17 @@ foreach(AVM_TEST_SOURCE_FILE IN LISTS AVM_EH_CXX_TEST_SOURCES)
         # -fexceptions follows the SDK's -fno-exceptions default, so it wins.
         set(AVM_EH_TEST_COMPILE_OPTIONS -fexceptions)
         if(AVM_TEST_NAME STREQUAL "eh_typeinfo_identity"
-           OR AVM_TEST_NAME STREQUAL "eh_rethrow_standard")
+           OR AVM_TEST_NAME STREQUAL "eh_rethrow_standard"
+           OR AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional|vocabulary)$")
             # Static typeid and the standard exceptions need RTTI, which the SDK's
             # -fno-rtti default disables.
             list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -frtti)
+        endif()
+        if(AVM_TEST_OPT_LEVEL STREQUAL "O0"
+           AND AVM_TEST_NAME MATCHES "^eh_libcxx_(allocation_failures|containers|functional|vocabulary)$")
+            # Keep exception-sensitive hosted fixtures in a code shape that
+            # fits the VM stack and produces valid unwind ranges at O0.
+            list(APPEND AVM_EH_TEST_COMPILE_OPTIONS -O2)
         endif()
         avm_add_object(
             OUTPUT "${AVM_TEST_OBJECT}"

@@ -41,7 +41,8 @@ set(_LIBCPP_LIBC_PICOLIBC OFF)
 set(_LIBCPP_LIBC_NEWLIB OFF)
 # AVM compiles libc++ with -Werror; newer libc++ ABI annotation pragmas need
 # their diagnostic guard active in implementation translation units.
-set(_LIBCPP_EXTRA_SITE_DEFINES "#define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER")
+set(_LIBCPP_EXTRA_SITE_DEFINES
+    "#define _LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER\n#define _LIBCPP_ABI_USE_SMALL_DEQUE_BLOCK_SIZE")
 configure_file("${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/__config_site.in"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site" @ONLY)
 configure_file("${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in"
@@ -50,6 +51,11 @@ configure_file("${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.i
 file(MAKE_DIRECTORY "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic")
 configure_file("${AVM_LIBCXX_OVERRIDE_DIR}/__atomic/atomic_sync.h"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h" COPYONLY)
+file(MAKE_DIRECTORY "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__memory_resource")
+configure_file(
+    "${AVM_LIBCXX_OVERRIDE_DIR}/__memory_resource/unsynchronized_pool_resource.h"
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__memory_resource/unsynchronized_pool_resource.h"
+    COPYONLY)
 
 # Record the production objects for checked-in disassembly. Diagnostic MIR
 # compilations and header smoke tests do not describe shipped runtime code.
@@ -161,6 +167,8 @@ file(GLOB_RECURSE AVM_LIBCXX_HEADERS CONFIGURE_DEPENDS LIST_DIRECTORIES false
     "${AVM_LIBCXX_SOURCE_INCLUDE_DIR}/*")
 # AVM's overrides of libc++ headers are build inputs of the same kind, so they are listed here.
 list(APPEND AVM_LIBCXX_HEADERS "${AVM_LIBCXX_OVERRIDE_DIR}/__atomic/atomic_sync.h")
+list(APPEND AVM_LIBCXX_HEADERS
+    "${AVM_LIBCXX_OVERRIDE_DIR}/__memory_resource/unsynchronized_pool_resource.h")
 set(AVM_RUNTIME_HEADER_MANIFEST
     "${CMAKE_CURRENT_BINARY_DIR}/runtime-headers.txt")
 string(JOIN "\n" AVM_RUNTIME_HEADER_PATHS ${AVM_RUNTIME_HEADERS})
@@ -283,15 +291,23 @@ avm_add_runtime_object(
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_ALGORITHM_OBJECT}")
 
 # Header-driven libc++ facilities with small out-of-line runtime pieces.
-foreach(LIBCXX_SOURCE any expected hash memory valarray variant verbose_abort)
+foreach(LIBCXX_SOURCE
+        any expected hash memory memory_resource stdexcept string valarray variant verbose_abort)
     set(AVM_LIBCXX_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_${LIBCXX_SOURCE}.o")
+    set(libcxx_source_options -D_LIBCPP_BUILDING_LIBRARY -fexceptions)
+    if(LIBCXX_SOURCE STREQUAL "memory_resource")
+        list(APPEND libcxx_source_options -Wno-unused-parameter)
+    endif()
+    if(LIBCXX_SOURCE MATCHES "^(any|expected|memory|stdexcept|variant)$")
+        list(APPEND libcxx_source_options -frtti)
+    endif()
     avm_add_runtime_object(
         OUTPUT "${AVM_LIBCXX_OBJECT}"
         SOURCE "${AVM_LIBCXX_SOURCE_DIR}/src/${LIBCXX_SOURCE}.cpp"
         LANGUAGE CXX
         INTERNAL_CXX
         INCLUDE_DIRS "${AVM_LIBCXX_SOURCE_DIR}/src" "${AVM_RUNTIME_INCLUDE_DIR}"
-        COMPILE_OPTIONS -D_LIBCPP_BUILDING_LIBRARY -fexceptions
+        COMPILE_OPTIONS ${libcxx_source_options}
         DEPENDS
             ${AVM_LIBCXX_HEADERS}
             "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
@@ -314,6 +330,22 @@ avm_add_runtime_object(
         "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
 )
 list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_HASH_MEMORY_OBJECT}")
+
+# std::function's failure exception has out-of-line ABI members in libc++. Keep
+# those members without pulling in libc++'s hash implementation, whose supported
+# word sizes do not include AVM's 16-bit size_t.
+set(AVM_LIBCXX_FUNCTIONAL_OBJECT "${AVM_RUNTIME_OBJECT_DIR}/libcxx_functional.o")
+avm_add_runtime_object(
+    OUTPUT "${AVM_LIBCXX_FUNCTIONAL_OBJECT}"
+    SOURCE "${AVM_RUNTIME_SOURCE_DIR}/lib/libcxx_functional.cpp"
+    LANGUAGE CXX
+    INTERNAL_CXX
+    INCLUDE_DIRS "${AVM_RUNTIME_SOURCE_DIR}/include"
+    COMPILE_OPTIONS -frtti
+    DEPENDS ${AVM_RUNTIME_HEADERS} ${AVM_LIBCXX_HEADERS}
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler")
+list(APPEND AVM_RUNTIME_LIBRARY_OBJECTS "${AVM_LIBCXX_FUNCTIONAL_OBJECT}")
 
 # Standard exception classes and std::bad_typeid live in their own objects, so a
 # program that does not name them links none of their RTTI or vtables. The
@@ -871,17 +903,24 @@ list(APPEND AVM_SYSROOT_STAGE_COMMANDS
         "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler"
     COMMAND "${CMAKE_COMMAND}" -E copy_if_different
         "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h"
-        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h")
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__memory_resource"
+    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+        "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__memory_resource/unsynchronized_pool_resource.h"
+        "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__memory_resource/unsynchronized_pool_resource.h")
 list(APPEND AVM_SYSROOT_STAGE_DEPENDS
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__config_site"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__assertion_handler"
     "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__atomic/atomic_sync.h"
+    "${AVM_LIBCXX_GENERATED_INCLUDE_DIR}/__memory_resource/unsynchronized_pool_resource.h"
     "${AVM_LIBCXX_SOURCE_DIR}/include/__config_site.in"
     "${AVM_LIBCXX_SOURCE_DIR}/vendor/llvm/default_assertion_handler.in")
 list(APPEND AVM_SYSROOT_STAGE_BYPRODUCTS
     "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__config_site"
     "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__assertion_handler"
-    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h")
+    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__atomic/atomic_sync.h"
+    "${AVM_SYSROOT_INCLUDE_DIR}/c++/v1/__memory_resource/unsynchronized_pool_resource.h")
 
 set(AVM_SYSROOT_STAMP "${AVM_SYSROOT_DIR}/.runtime-stamp")
 add_custom_command(

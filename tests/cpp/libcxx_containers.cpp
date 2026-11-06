@@ -1,7 +1,15 @@
 #include <array>
 #include <cstddef>
+#include <deque>
+#include <forward_list>
+#include <list>
+#include <map>
 #include <memory>
+#include <queue>
+#include <set>
 #include <stack>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace {
@@ -10,6 +18,12 @@ alignas(std::max_align_t) unsigned char allocator_storage[64];
 std::size_t allocator_offset;
 
 void reset_allocator() { allocator_offset = 0; }
+
+using standard_unordered_map = std::unordered_map<int, int>;
+alignas(standard_unordered_map)
+unsigned char standard_unordered_map_storage[sizeof(standard_unordered_map)];
+using standard_queue = std::queue<int>;
+alignas(standard_queue) unsigned char standard_queue_storage[sizeof(standard_queue)];
 
 template<class T>
 struct arena_allocator {
@@ -66,6 +80,94 @@ int adaptor_test()
     return values.top() == 21 ? 0 : 2;
 }
 
+int standard_vector_test()
+{
+    std::vector<int> values;
+    values.push_back(31);
+    values.push_back(32);
+    return values.size() == 2 && values[0] == 31 && values[1] == 32 ? 0 : 1;
+}
+
+int deque_test()
+{
+    std::deque<int> values;
+    values.push_back(42);
+    return values.size() == 1 && values.front() == 42 ? 0 : 1;
+}
+
+int list_test()
+{
+    std::list<int> values;
+    values.push_back(51);
+    values.push_back(52);
+    return values.size() == 2 && values.front() == 51 && values.back() == 52 ? 0 : 1;
+}
+
+int forward_list_test()
+{
+    std::forward_list<int> values;
+    values.push_front(62);
+    values.push_front(61);
+    return values.front() == 61 && *values.begin() == 61 ? 0 : 1;
+}
+
+int map_test()
+{
+    std::map<int, int> values;
+    values[1] = 71;
+    values[2] = 72;
+    return values.size() == 2 && values.find(2)->second == 72 ? 0 : 1;
+}
+
+int set_test()
+{
+    std::set<int> values;
+    values.insert(81);
+    values.insert(82);
+    return values.size() == 2 && values.find(82) != values.end() ? 0 : 1;
+}
+
+__attribute__((noinline)) int unordered_map_test()
+{
+    auto* values = std::construct_at(
+        reinterpret_cast<standard_unordered_map*>(standard_unordered_map_storage));
+    (*values)[1] = 91;
+    (*values)[2] = 92;
+    const int result = values->size() == 2 && values->find(2)->second == 92 ? 0 : 1;
+    std::destroy_at(values);
+    return result;
+}
+
+int unordered_set_test()
+{
+    std::unordered_set<int> values;
+    values.insert(101);
+    values.insert(102);
+    return values.size() == 2 && values.find(102) != values.end() ? 0 : 1;
+}
+
+int queue_test()
+{
+    auto* values = std::construct_at(
+        reinterpret_cast<standard_queue*>(standard_queue_storage));
+    values->push(111);
+    int result = values->front() == 111 && values->back() == 111 && values->size() == 1
+        ? 0 : 1;
+    values->pop();
+    if(!values->empty())
+        result = 2;
+    std::destroy_at(values);
+    return result;
+}
+
+int priority_queue_test()
+{
+    std::priority_queue<int> values;
+    values.push(121);
+    values.push(122);
+    return values.top() == 122 ? 0 : 1;
+}
+
 }
 
 extern "C" int avm_test_main()
@@ -75,5 +177,10 @@ extern "C" int avm_test_main()
         return 1;
     if(vector_test() != 0)
         return 2;
-    return adaptor_test() == 0 ? 0 : 3;
+    if(adaptor_test() != 0 || standard_vector_test() != 0 || deque_test() != 0 ||
+       list_test() != 0 || forward_list_test() != 0 || map_test() != 0 ||
+       set_test() != 0 || unordered_map_test() != 0 || unordered_set_test() != 0 ||
+       queue_test() != 0 || priority_queue_test() != 0)
+        return 3;
+    return 0;
 }

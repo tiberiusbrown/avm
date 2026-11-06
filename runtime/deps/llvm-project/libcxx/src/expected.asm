@@ -7,11 +7,17 @@ SYMBOL TABLE:
 00000000 l    d  .text._ZNSt3__119bad_expected_accessIvED0Ev	00000000 .text._ZNSt3__119bad_expected_accessIvED0Ev
 00000000 l    d  .flash.str1.1	00000000 .flash.str1.1
 00000000 l    d  .debug_frame	00000000 .debug_frame
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTINSt3__119bad_expected_accessIvEE
+00000000  w      *UND*	00000000 __avm_rtti_alias._ZTSNSt3__119bad_expected_accessIvEE
 00000000 g     F .text._ZNKSt3__119bad_expected_accessIvE4whatEv	00000004 std::__1::bad_expected_access<void>::what() const
 00000000  w    F .text._ZNSt3__119bad_expected_accessIvED0Ev	00000010 std::__1::bad_expected_access<void>::~bad_expected_access()
 00000000         *UND*	00000000 std::exception::~exception()
 00000000         *UND*	00000000 operator delete(void*, unsigned int)
 00000000 g     O .rodata._ZTVNSt3__119bad_expected_accessIvEE	0000000f vtable for std::__1::bad_expected_access<void>
+00000000 g     O .avm.rtti.type._ZTINSt3__119bad_expected_accessIvEE	00000009 typeinfo for std::__1::bad_expected_access<void>
+00000000         *UND*	00000000 vtable for __cxxabiv1::__si_class_type_info
+00000000 g     O .avm.rtti.name._ZTSNSt3__119bad_expected_accessIvEE	00000021 typeinfo name for std::__1::bad_expected_access<void>
+00000000         *UND*	00000000 typeinfo for std::exception
 
 Disassembly of section .text._ZNKSt3__119bad_expected_accessIvE4whatEv:
 

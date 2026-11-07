@@ -329,6 +329,37 @@ Further reductions require broader work:
   stack-analysis accounting for releasing caller-owned stack space. The shims
   currently keep those bytes reserved.
 
+## O0 container paths
+
+AVM hash insertion selects key-aware and fallback overloads at compile time,
+without runtime callback objects. Extraction uses the same exact-key, pair,
+two-argument and piecewise-construction cases as libc++'s callback dispatcher.
+The key-aware overload searches before constructing a node, so duplicates do
+not allocate or move mapped arguments. A separate helper computes whether
+rehashing is needed and its requested bucket count; that helper returns before
+rehash begins. The existing rehash canonicalization remains in use. A node guard
+covers rehash failures, and construction still precedes any bucket changes.
+
+For `unordered_map<int, int>` at O0, the key-aware insertion frame is 58 bytes
+without exceptions and 66 bytes with exceptions. These frames contain 38/44
+bytes of local slots and 20/22 bytes of spills and saved registers respectively.
+The growth-decision helper has a 29-byte frame, which is absent from allocation and throw paths.
+Standalone probes selecting the original unordered-map checks give these
+maximum known stack paths, including return records and outgoing arguments:
+
+| Probe | Callback dispatch with combined growth helper | Direct dispatch with separate growth calculation |
+|---|---:|---:|
+| `unordered_map_test()` | 387 bytes | 316 bytes |
+| Allocation-failure check using `try_emplace` | 427 bytes | 365 bytes |
+
+The remaining maximum hash paths pass through `__construct_node_hash`, two
+`construct_at` wrappers, the node constructor, allocator construction, and pair
+construction. Their forwarding frames remain live together at O0. The complete
+`libcxx_containers` and expanded `eh_libcxx_containers` fixtures reach 376 and
+420 bytes respectively, with `map` insertion now determining both maxima.
+The 256-byte link check continues to reject those configurations. Other
+optimization levels link and execute; no optimization override is applied.
+
 ## ELF metadata
 
 LLVM automatically emits `.stack_sizes` using the finalized machine frame.

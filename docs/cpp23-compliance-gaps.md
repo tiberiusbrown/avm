@@ -56,7 +56,7 @@ Part I contains requirements for **freestanding C++23 conformance**. Part II con
 
 ### Containers, strings, and memory management
 
-- [ ] **Container allocation stack limits:** Keep standard-allocator allocation and failure paths for dynamically allocating containers and deque-backed adaptors within AVM's 256-byte stack. libc++ `<deque>` growth and `<map>` insertion exceed it at O0; `<unordered_map>` growth reaches 398 bytes at O0, and the container allocation-failure fixture reaches 437 bytes at O0.
+- [ ] **Container allocation stack limits:** Keep standard-allocator allocation and failure paths for dynamically allocating containers and deque-backed adaptors within AVM's 256-byte stack. libc++ `<deque>` growth and `<map>` insertion exceed it at O0; the container fixture reaches 376 bytes and the allocation-failure fixture reaches 420 bytes. An isolated O0 `<unordered_map>` insertion probe still reaches 316 bytes.
 - [ ] **Hosted allocation and exception paths at O0:** Keep allocation/error paths for hosted `<any>`, `<memory>`, `<functional>`, `<memory_resource>`, `<variant>`, and `<expected>` within AVM's 256-byte stack. With automatic payloads and ownership holders, the `std::function` allocation path reaches 257 bytes and the `std::make_shared` allocation path reaches 279 bytes.
 
 ### Algorithms, ranges, numerics, and random facilities

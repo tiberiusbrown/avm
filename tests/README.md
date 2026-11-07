@@ -27,14 +27,17 @@ reports these failures; they are not replaced by optimized images or skipped.
 
 | Fixture | Failing configurations | libc++ headers on the failing paths |
 |---|---|---|
-| `libcxx_containers` | O0: 398 bytes | `__hash_table`, construction/allocator helpers, and key forwarding; isolated O0 deque/map paths also exceed the limit in `deque`, `__split_buffer`, and `__tree` |
-| `eh_libcxx_containers` | O0: 437 bytes | `__hash_table`, `__utility/try_key_extraction.h`, construction and allocator headers |
+| `libcxx_containers` | O0: 376 bytes | `__tree` key forwarding and node-construction helpers on the maximum path; isolated O0 hash/deque paths also exceed the limit in `__hash_table`, `deque`, and `__split_buffer` |
+| `eh_libcxx_containers` | O0: 420 bytes | `__tree`, `__utility/try_key_extraction.h`, node-construction and allocator headers |
 
 `libcxx_algorithms` checks classic and ranges sorting at lengths 0 through 65,
 including duplicates, sorted/reverse inputs, permutation preservation, a
 comparison-count bound, move-only values, projections, and constant evaluation.
 It also checks key-extraction overload selection. The container exception fixture
-checks that duplicate-key `try_emplace` neither allocates nor moves its argument.
+checks that duplicate-key `try_emplace` and key-extractable `emplace` neither
+allocate nor move their arguments, while convertible keys retain the construction
+path. It also fails bucket allocation after constructing a node, verifies node
+cleanup and preservation of existing elements and buckets, then retries growth.
 The AVM generic sorter uses a nonrecursive heapsort; the standard comparison
 complexity and public overloads are retained.
 
